@@ -62,6 +62,7 @@
 #define ALSA_PCM_NEW_SW_PARAMS_API
 #include "alsa.h"
 #include "wine/library.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
@@ -150,7 +151,7 @@ typedef struct {
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
     WAVEFORMATPCMEX		format;
-    WAVEOUTCAPSA		caps;
+    WAVEOUTCAPSW		caps;
 
     /* ALSA information (ALSA 0.9/1.x uses two different devices for playback/capture) */
     char*                       device;
@@ -196,7 +197,7 @@ typedef struct {
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
     WAVEFORMATPCMEX		format;
-    WAVEOUTCAPSA		caps;
+    WAVEOUTCAPSW		caps;
 
     /* ALSA information (ALSA 0.9/1.x uses two different devices for playback/capture) */
     char*                       device;
@@ -642,7 +643,7 @@ static char* ALSA_strdup(char *s) {
  * Returns either "default" or reads the registry so the user can
  * override the playback/record device used.
  */
-static char *ALSA_GetDeviceFromReg(char *value)
+static char *ALSA_GetDeviceFromReg(const char *value)
 {
     DWORD res;
     DWORD type;
@@ -688,6 +689,8 @@ LONG ALSA_WaveInit(void)
     int err=0;
     WINE_WAVEOUT*	        wwo;
     WINE_WAVEIN*	        wwi;
+    static const WCHAR init_out[] = {'S','B','1','6',' ','W','a','v','e',' ','O','u','t',0};
+    static const WCHAR init_in [] = {'S','B','1','6',' ','W','a','v','e',' ','I','n',0};
 
     wwo = &WOutDev[0];
 
@@ -699,7 +702,7 @@ LONG ALSA_WaveInit(void)
 
     wwo->caps.wMid = 0x0002;
     wwo->caps.wPid = 0x0104;
-    strcpy(wwo->caps.szPname, "SB16 Wave Out");
+    strcpyW(wwo->caps.szPname, init_out);
     wwo->caps.vDriverVersion = 0x0100;
     wwo->caps.dwFormats = 0x00000000;
     wwo->caps.dwSupport = WAVECAPS_VOLUME;
@@ -813,7 +816,7 @@ LONG ALSA_WaveInit(void)
 
     wwi->caps.wMid = 0x0002;
     wwi->caps.wPid = 0x0104;
-    strcpy(wwi->caps.szPname, "SB16 Wave In");
+    strcpyW(wwi->caps.szPname, init_in);
     wwi->caps.vDriverVersion = 0x0100;
     wwi->caps.dwFormats = 0x00000000;
     wwi->caps.dwSupport = WAVECAPS_VOLUME;
@@ -932,7 +935,7 @@ static int ALSA_InitRingMessage(ALSA_MSG_RING* omr)
         ERR("could not create pipe, error=%s\n", strerror(errno));
     }
 #else
-    omr->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    omr->msg_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 #endif
     omr->ring_buffer_size = ALSA_RING_BUFFER_INCREMENT;
     omr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,omr->ring_buffer_size * sizeof(ALSA_MSG));
@@ -989,7 +992,7 @@ static int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWOR
     }
     if (wait)
     {
-        hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+        hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
         if (hEvent == INVALID_HANDLE_VALUE)
         {
             ERR("can't create event !?\n");
@@ -1564,7 +1567,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 /**************************************************************************
  * 			wodGetDevCaps				[internal]
  */
-static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSA lpCaps, DWORD dwSize)
+static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
@@ -1782,7 +1785,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
 
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
-	wwo->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+	wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
 	WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
 	CloseHandle(wwo->hStartUpEvent);
@@ -2150,7 +2153,7 @@ DWORD WINAPI ALSA_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 	return 0;
     case WODM_OPEN:	 	return wodOpen		(wDevID, (LPWAVEOPENDESC)dwParam1,	dwParam2);
     case WODM_CLOSE:	 	return wodClose		(wDevID);
-    case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSA)dwParam1,	dwParam2);
+    case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSW)dwParam1,	dwParam2);
     case WODM_GETNUMDEVS:	return wodGetNumDevs	();
     case WODM_GETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
     case WODM_SETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
@@ -2762,7 +2765,7 @@ static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD 
 /**************************************************************************
  * 			widGetDevCaps				[internal]
  */
-static DWORD widGetDevCaps(WORD wDevID, LPWAVEOUTCAPSA lpCaps, DWORD dwSize)
+static DWORD widGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
@@ -3282,7 +3285,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	  wwi->format.Format.nBlockAlign);
 
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
-	wwi->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+	wwi->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 	wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD)wDevID, 0, &(wwi->dwThreadID));
 	WaitForSingleObject(wwi->hStartUpEvent, INFINITE);
 	CloseHandle(wwi->hStartUpEvent);
@@ -3561,7 +3564,7 @@ DWORD WINAPI ALSA_widMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WIDM_ADDBUFFER:	return widAddBuffer	(wDevID, (LPWAVEHDR)dwParam1,		dwParam2);
     case WIDM_PREPARE:	 	return widPrepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
     case WIDM_UNPREPARE: 	return widUnprepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
-    case WIDM_GETDEVCAPS:	return widGetDevCaps	(wDevID, (LPWAVEOUTCAPSA)dwParam1,	dwParam2);
+    case WIDM_GETDEVCAPS:	return widGetDevCaps	(wDevID, (LPWAVEOUTCAPSW)dwParam1,	dwParam2);
     case WIDM_GETNUMDEVS:	return widGetNumDevs	();
     case WIDM_GETPOS:	 	return widGetPosition	(wDevID, (LPMMTIME)dwParam1, 		dwParam2);
     case WIDM_RESET:		return widReset		(wDevID);

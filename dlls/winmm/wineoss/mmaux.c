@@ -1,4 +1,3 @@
-/* -*- tab-width: 8; c-basic-offset: 4 -*- */
 /*
  * Sample AUXILARY Wine Driver
  *
@@ -19,8 +18,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define EMULATE_SB16
-
 #include "config.h"
 
 #include <stdarg.h>
@@ -38,6 +35,7 @@
 #include "winbase.h"
 #include "mmddk.h"
 #include "oss.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmaux);
@@ -67,9 +65,10 @@ static	int	AUXDRV_Init(void)
 /**************************************************************************
  * 				AUX_GetDevCaps			[internal]
  */
-static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSA lpCaps, DWORD dwSize)
+static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSW lpCaps, DWORD dwSize)
 {
-    int 	mixer,volume;
+    int 	mixer, volume;
+    static const WCHAR ini[] = {'O','S','S',' ','A','u','x',0};
 
     TRACE("(%04X, %p, %lu);\n", wDevID, lpCaps, dwSize);
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
@@ -83,50 +82,13 @@ static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSA lpCaps, DWORD dwSize)
 	return MMSYSERR_NOTENABLED;
     }
     close(mixer);
-#ifdef EMULATE_SB16
-    lpCaps->wMid = 0x0002;
-    lpCaps->vDriverVersion = 0x0200;
-    lpCaps->dwSupport = AUXCAPS_VOLUME | AUXCAPS_LRVOLUME;
-    switch (wDevID) {
-    case 0:
-	lpCaps->wPid = 0x0196;
-	strcpy(lpCaps->szPname, "SB16 Aux: Wave");
-	lpCaps->wTechnology = AUXCAPS_AUXIN;
-	break;
-    case 1:
-	lpCaps->wPid = 0x0197;
-	strcpy(lpCaps->szPname, "SB16 Aux: Midi Synth");
-	lpCaps->wTechnology = AUXCAPS_AUXIN;
-	break;
-    case 2:
-	lpCaps->wPid = 0x0191;
-	strcpy(lpCaps->szPname, "SB16 Aux: CD");
-	lpCaps->wTechnology = AUXCAPS_CDAUDIO;
-	break;
-    case 3:
-	lpCaps->wPid = 0x0192;
-	strcpy(lpCaps->szPname, "SB16 Aux: Line-In");
-	lpCaps->wTechnology = AUXCAPS_AUXIN;
-	break;
-    case 4:
-	lpCaps->wPid = 0x0193;
-	strcpy(lpCaps->szPname, "SB16 Aux: Mic");
-	lpCaps->wTechnology = AUXCAPS_AUXIN;
-	break;
-    case 5:
-	lpCaps->wPid = 0x0194;
-	strcpy(lpCaps->szPname, "SB16 Aux: Master");
-	lpCaps->wTechnology = AUXCAPS_AUXIN;
-	break;
-    }
-#else
     lpCaps->wMid = 0xAA;
     lpCaps->wPid = 0x55;
     lpCaps->vDriverVersion = 0x0100;
-    strcpy(lpCaps->szPname, "Generic Linux Auxiliary Driver");
+    strcpyW(lpCaps->szPname, ini);
     lpCaps->wTechnology = AUXCAPS_CDAUDIO;
     lpCaps->dwSupport = AUXCAPS_VOLUME | AUXCAPS_LRVOLUME;
-#endif
+
     return MMSYSERR_NOERROR;
 }
 
@@ -264,7 +226,7 @@ DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 	/* FIXME: Pretend this is supported */
 	return 0;
     case AUXDM_GETDEVCAPS:
-	return AUX_GetDevCaps(wDevID, (LPAUXCAPSA)dwParam1,dwParam2);
+	return AUX_GetDevCaps(wDevID, (LPAUXCAPSW)dwParam1, dwParam2);
     case AUXDM_GETNUMDEVS:
 	TRACE("return %d;\n", NumDev);
 	return NumDev;

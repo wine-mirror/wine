@@ -47,10 +47,8 @@
 # include <sys/time.h>
 #endif
 #include <fcntl.h>
+#include <math.h>
 
-#if 0
-#define EMULATE_SB16
-#endif
 #define FRAG_SIZE  1024
 #define FRAG_COUNT 10
 
@@ -75,12 +73,13 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "winerror.h"
-#include "wine/winuser16.h"
 #include "mmddk.h"
 #include "dsound.h"
 #include "dsdriver.h"
 #include "nas.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
@@ -148,7 +147,7 @@ typedef struct {
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
     PCMWAVEFORMAT		format;
-    WAVEOUTCAPSA		caps;
+    WAVEOUTCAPSW		caps;
     int				Id;
 
     int                         open;
@@ -417,25 +416,15 @@ LONG NAS_WaveInit(void)
     /* initialize all device handles to -1 */
     for (i = 0; i < MAX_WAVEOUTDRV; ++i)
     {
+        static const WCHAR ini[] = {'N','A','S',' ','W','A','V','E','O','U','T',' ','D','r','i','v','e','r',0};
 	memset(&WOutDev[i].caps, 0, sizeof(WOutDev[i].caps)); /* zero out caps values */
 
         WOutDev[i].AuServ = AuServ;
         WOutDev[i].AuDev = AuNone;
 	WOutDev[i].Id = i;
-    /* FIXME: some programs compare this string against the content of the registry
-     * for MM drivers. The names have to match in order for the program to work
-     * (e.g. MS win9x mplayer.exe)
-     */
-#ifdef EMULATE_SB16
-    	WOutDev[i].caps.wMid = 0x0002;
-    	WOutDev[i].caps.wPid = 0x0104;
-    	strcpy(WOutDev[i].caps.szPname, "SB16 Wave Out");
-#else
     	WOutDev[i].caps.wMid = 0x00FF; 	/* Manufac ID */
     	WOutDev[i].caps.wPid = 0x0001; 	/* Product ID */
-    /*    strcpy(WOutDev[i].caps.szPname, "OpenSoundSystem WAVOUT Driver");*/
-    	strcpy(WOutDev[i].caps.szPname, "CS4236/37/38");
-#endif
+        strcpyW(WOutDev[i].caps.szPname, ini);
         WOutDev[i].AuFlow = 0;
     	WOutDev[i].caps.vDriverVersion = 0x0100;
     	WOutDev[i].caps.dwFormats = 0x00000000;
@@ -472,7 +461,7 @@ static int NAS_InitRingMessage(MSG_RING* mr)
 {
     mr->msg_toget = 0;
     mr->msg_tosave = 0;
-    mr->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    mr->msg_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     mr->ring_buffer_size = NAS_RING_BUFFER_INCREMENT;
     mr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,mr->ring_buffer_size * sizeof(RING_MSG));
     InitializeCriticalSection(&mr->msg_crst);
@@ -522,7 +511,7 @@ static int NAS_AddRingMessage(MSG_RING* mr, enum win_wm_message msg, DWORD param
     }
     if (wait)
     {
-        hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+        hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
         if (hEvent == INVALID_HANDLE_VALUE)
         {
             ERR("can't create event !?\n");
@@ -884,7 +873,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 /**************************************************************************
  * 			wodGetDevCaps				[internal]
  */
-static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSA lpCaps, DWORD dwSize)
+static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
@@ -969,7 +958,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     /* create player thread */
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
-	wwo->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+	wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
 	WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
 	CloseHandle(wwo->hStartUpEvent);
@@ -1273,7 +1262,7 @@ DWORD WINAPI NAS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_BREAKLOOP: 	return wodBreakLoop     (wDevID);
     case WODM_PREPARE:	 	return wodPrepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
     case WODM_UNPREPARE: 	return wodUnprepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
-    case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSA)dwParam1,	dwParam2);
+    case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSW)dwParam1,	dwParam2);
     case WODM_GETNUMDEVS:	return wodGetNumDevs	();
     case WODM_GETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
     case WODM_SETPITCH:	 	return MMSYSERR_NOTSUPPORTED;

@@ -84,9 +84,9 @@ typedef struct tagOSS_DEVICE {
     char*                       mixer_name;
     char*                       interface_name;
     unsigned                    open_count;
-    WAVEOUTCAPSA                out_caps;
-    WAVEOUTCAPSA                duplex_out_caps;
-    WAVEINCAPSA                 in_caps;
+    WAVEOUTCAPSW                out_caps;
+    WAVEOUTCAPSW                duplex_out_caps;
+    WAVEINCAPSW                 in_caps;
     DWORD                       in_caps_support;
     unsigned                    open_access;
     int                         fd;

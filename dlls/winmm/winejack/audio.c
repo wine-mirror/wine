@@ -1,4 +1,3 @@
-/* -*- tab-width: 8; c-basic-offset: 2 -*- */
 /*
  * Wine Driver for jack Sound Server
  *   http://jackit.sourceforge.net
@@ -48,7 +47,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
-#include "wine/winuser16.h"
 #include "mmddk.h"
 #include "dsound.h"
 #include "dsdriver.h"
@@ -126,7 +124,7 @@ typedef struct {
     WAVEOPENDESC      waveDesc;
     WORD              wFlags;
     PCMWAVEFORMAT     format;
-    WAVEOUTCAPSA      caps;
+    WAVEOUTCAPSW      caps;
     WORD              wDevID;
     char              interface_name[32];
 
@@ -169,7 +167,7 @@ typedef struct {
     PCMWAVEFORMAT   format;
     LPWAVEHDR       lpQueuePtr;
     DWORD           dwTotalRecorded;
-    WAVEINCAPSA     caps;
+    WAVEINCAPSW     caps;
     BOOL            bTriggerSupport;
     WORD              wDevID;
     char              interface_name[32];
@@ -894,6 +892,9 @@ LONG JACK_WaveInit(void)
 {
     int i;
 
+    static const WCHAR ini_out[] = {'J','A','C','K',' ','W','a','v','e','O','u','t',' ','D','r','i','v','e','r',0};
+    static const WCHAR ini_in [] = {'J','A','C','K',' ','W','a','v','e','I','n',' ',' ','D','r','i','v','e','r',0};
+
     TRACE("called\n");
 
     /* setup function pointers */
@@ -928,20 +929,9 @@ LONG JACK_WaveInit(void)
 
       memset(&WOutDev[i].caps, 0, sizeof(WOutDev[i].caps));
 
-      /* FIXME: some programs compare this string against the content of the registry
-       * for MM drivers. The names have to match in order for the program to work 
-       * (e.g. MS win9x mplayer.exe)
-       */
-#ifdef EMULATE_SB16
-      WOutDev[i].caps.wMid = 0x0002;
-      WOutDev[i].caps.wPid = 0x0104;
-      strcpy(WOutDev[i].caps.szPname, "SB16 Wave Out");
-#else
       WOutDev[i].caps.wMid = 0x00FF; 	/* Manufac ID */
       WOutDev[i].caps.wPid = 0x0001; 	/* Product ID */
-      /*    strcpy(WOutDev[i].caps.szPname, "OpenSoundSystem WAVOUT Driver");*/
-      strcpy(WOutDev[i].caps.szPname, "CS4236/37/38");
-#endif
+      strcpyW(WOutDev[i].caps.szPname, ini_out);
 
       snprintf(WOutDev[i].interface_name, sizeof(WOutDev[i].interface_name), "winejack: %d", i);
 
@@ -973,19 +963,9 @@ LONG JACK_WaveInit(void)
       /* TODO: we should initialize read stuff here */
       memset(&WInDev[0].caps, 0, sizeof(WInDev[0].caps));
 
-    /* FIXME: some programs compare this string against the content of the registry
-     * for MM drivers. The names have to match in order for the program to work
-     * (e.g. MS win9x mplayer.exe)
-     */
-#ifdef EMULATE_SB16
-    	WInDev[i].caps.wMid = 0x0002;
-    	WInDev[i].caps.wPid = 0x0104;
-    	strcpy(WInDev[i].caps.szPname, "SB16 Wave In");
-#else
 	WInDev[i].caps.wMid = 0x00FF;
 	WInDev[i].caps.wPid = 0x0001;
-	strcpy(WInDev[i].caps.szPname,"CS4236/37/38");
-#endif
+        strcpyW(WInDev[i].caps.szPname, ini_in);
         snprintf(WInDev[i].interface_name, sizeof(WInDev[i].interface_name), "winejack: %d", i);
 
 	WInDev[i].caps.vDriverVersion = 0x0100;
@@ -1237,7 +1217,7 @@ static  void  wodHelper_Reset(WINE_WAVEOUT* wwo, BOOL reset)
 /**************************************************************************
  * 			wodGetDevCaps				[internal]
  */
-static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSA lpCaps, DWORD dwSize)
+static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
     
@@ -1751,7 +1731,7 @@ DWORD WINAPI JACK_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
   case WODM_BREAKLOOP:        return wodBreakLoop(wDevID);
   case WODM_PREPARE:          return wodPrepare(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
   case WODM_UNPREPARE:        return wodUnprepare(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
-  case WODM_GETDEVCAPS:       return wodGetDevCaps(wDevID, (LPWAVEOUTCAPSA)dwParam1,	dwParam2);
+  case WODM_GETDEVCAPS:       return wodGetDevCaps(wDevID, (LPWAVEOUTCAPSW)dwParam1,	dwParam2);
   case WODM_GETNUMDEVS:       return wodGetNumDevs();
   case WODM_GETPITCH:         return MMSYSERR_NOTSUPPORTED;
   case WODM_SETPITCH:         return MMSYSERR_NOTSUPPORTED;
@@ -2094,7 +2074,7 @@ static int JACK_OpenWaveInDevice(WINE_WAVEIN* wwi, WORD nChannels)
 /**************************************************************************
  * 			widGetDevCaps				[internal]
  */
-static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSA lpCaps, DWORD dwSize)
+static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
@@ -2486,7 +2466,7 @@ DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_ADDBUFFER:	return widAddBuffer	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
     case WIDM_PREPARE:		return widPrepare	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
     case WIDM_UNPREPARE:	return widUnprepare	(wDevID, (LPWAVEHDR)dwParam1, dwParam2);
-    case WIDM_GETDEVCAPS:	return widGetDevCaps	(wDevID, (LPWAVEINCAPSA)dwParam1,	dwParam2);
+    case WIDM_GETDEVCAPS:	return widGetDevCaps	(wDevID, (LPWAVEINCAPSW)dwParam1,	dwParam2);
     case WIDM_GETNUMDEVS:	return widGetNumDevs();
     case WIDM_RESET:		return widReset		(wDevID);
     case WIDM_START:		return widStart		(wDevID);

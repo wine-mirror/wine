@@ -1,4 +1,3 @@
-/* -*- tab-width: 8; c-basic-offset: 4 -*- */
 /*
  * joystick functions
  *
@@ -22,14 +21,18 @@
  *
  * NOTES:
  *
- * nearly all joystick functions can be regarded as obsolete,
- * as Linux (2.1.x) now supports extended joysticks
- * with a completely new joystick driver interface
- * new driver's docu says:
- * "For backward compatibility the old interface is still included,
- * but will be dropped in the future."
- * Thus we should implement the new interface and at most keep the old
- * routines for backward compatibility.
+ * - nearly all joystick functions can be regarded as obsolete,
+ *   as Linux (2.1.x) now supports extended joysticks with a completely 
+ *   new joystick driver interface
+ *   New driver's docu says:
+ *     "For backward compatibility the old interface is still included,
+ *     but will be dropped in the future."
+ *   Thus we should implement the new interface and at most keep the old
+ *   routines for backward compatibility.
+ * - better support of enhanced joysticks (Linux 2.2 interface is available)
+ * - support more joystick drivers (like the XInput extension)
+ * - should load joystick DLL as any other driver (instead of hardcoding)
+ *   the driver's name, and load it as any low lever driver.
  */
 
 #include "config.h"
@@ -60,6 +63,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "mmddk.h"
 #include "wine/debug.h"
 
@@ -168,10 +172,11 @@ static	int	JSTCK_OpenDevice(WINE_JSTCK* jstick)
     return (jstick->dev = open(buf, flags));
 }
 
+
 /**************************************************************************
  * 				JoyGetDevCaps		[MMSYSTEM.102]
  */
-static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
+static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSW lpCaps, DWORD dwSize)
 {
     WINE_JSTCK*	jstck;
 #ifdef HAVE_LINUX_22_JOYSTICK_API
@@ -180,6 +185,8 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
     char	nrOfButtons;
     char	identString[MAXPNAMELEN];
     int		driverVersion;
+#else
+static const WCHAR ini[] = {'W','i','n','e',' ','J','o','y','s','t','i','c','k',' ','D','r','i','v','e','r',0};
 #endif
 
     if ((jstck = JSTCK_drvGet(dwDevID)) == NULL)
@@ -195,7 +202,7 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
 	  driverVersion, identString, nrOfAxes, nrOfButtons);
     lpCaps->wMid = MM_MICROSOFT;
     lpCaps->wPid = MM_PC_JOYSTICK;
-    strncpy(lpCaps->szPname, identString, MAXPNAMELEN);
+    MultiByteToWideChar(CP_ACP, 0, identString, -1, lpCaps->szPname, MAXPNAMELEN);
     lpCaps->szPname[MAXPNAMELEN-1] = '\0';
     lpCaps->wXmin = 0;
     lpCaps->wXmax = 0xFFFF;
@@ -216,7 +223,7 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
 #else
     lpCaps->wNumButtons = nrOfButtons;
 #endif
-    if (dwSize == sizeof(JOYCAPSA)) {
+    if (dwSize == sizeof(JOYCAPSW)) {
 	/* since we suppose ntOfAxes <= 6 in the following code, do it explicitly */
 	if (nrOfAxes > 6) nrOfAxes = 6;
 	/* complete 95 structure */
@@ -229,8 +236,8 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
 	lpCaps->wMaxAxes = 6; /* same as MS Joystick Driver */
 	lpCaps->wNumAxes = nrOfAxes; /* nr of axes in use */
 	lpCaps->wMaxButtons = 32; /* same as MS Joystick Driver */
-	strcpy(lpCaps->szRegKey, "");
-	strcpy(lpCaps->szOEMVxD, "");
+	lpCaps->szRegKey[0] = 0;
+	lpCaps->szOEMVxD[0] = 0;
 	lpCaps->wCaps = 0;
 	switch(nrOfAxes) {
 	case 6: lpCaps->wCaps |= JOYCAPS_HASV;
@@ -244,7 +251,7 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
 #else
     lpCaps->wMid = MM_MICROSOFT;
     lpCaps->wPid = MM_PC_JOYSTICK;
-    strcpy(lpCaps->szPname, "WineJoy"); /* joystick product name */
+    strcpyW(lpCaps->szPname, ini); /* joystick product name */
     lpCaps->wXmin = 0;
     lpCaps->wXmax = 0xFFFF;
     lpCaps->wYmin = 0;
@@ -252,7 +259,7 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
     lpCaps->wZmin = 0;
     lpCaps->wZmax = 0;
     lpCaps->wNumButtons = 2;
-    if (dwSize == sizeof(JOYCAPSA)) {
+    if (dwSize == sizeof(JOYCAPSW)) {
 	/* complete 95 structure */
 	lpCaps->wRmin = 0;
 	lpCaps->wRmax = 0;
@@ -264,8 +271,8 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
 	lpCaps->wMaxAxes = 2;
 	lpCaps->wNumAxes = 2;
 	lpCaps->wMaxButtons = 4;
-	strcpy(lpCaps->szRegKey,"");
-	strcpy(lpCaps->szOEMVxD,"");
+	lpCaps->szRegKey[0] = 0;
+	lpCaps->szOEMVxD[0] = 0;
     }
 #endif
 
@@ -439,7 +446,7 @@ LONG CALLBACK	JSTCK_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case DRV_REMOVE:		return DRVCNF_RESTART;
 
     case JDD_GETNUMDEVS:	return 1;
-    case JDD_GETDEVCAPS:	return JSTCK_GetDevCaps(dwDevID, (LPJOYCAPSA)dwParam1, dwParam2);
+    case JDD_GETDEVCAPS:	return JSTCK_GetDevCaps(dwDevID, (LPJOYCAPSW)dwParam1, dwParam2);
     case JDD_GETPOS:		return JSTCK_GetPos(dwDevID, (LPJOYINFO)dwParam1);
     case JDD_SETCALIBRATION:
     case JDD_CONFIGCHANGED:	return JOYERR_NOCANDO;

@@ -46,6 +46,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "mmddk.h"
 #ifdef HAVE_ALSA
 # include "alsa.h"
@@ -67,7 +68,7 @@ typedef struct {
     unsigned char	incPrev;
     char		incLen;
     DWORD		startTime;
-    MIDIINCAPSA         caps;
+    MIDIINCAPSW         caps;
     snd_seq_addr_t      addr;
 } WINE_MIDIIN;
 
@@ -79,7 +80,7 @@ typedef struct {
     LPMIDIHDR	 	lpQueueHdr;
     DWORD		dwTotalPlayed;
     void*		lpExtra;	 	/* according to port type (MIDI, FM...), extra data when needed */
-    MIDIOUTCAPSA        caps;
+    MIDIOUTCAPSW        caps;
     snd_seq_addr_t      addr;
 } WINE_MIDIOUT;
 
@@ -395,7 +396,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 /**************************************************************************
  * 				midGetDevCaps			[internal]
  */
-static DWORD midGetDevCaps(WORD wDevID, LPMIDIINCAPSA lpCaps, DWORD dwSize)
+static DWORD midGetDevCaps(WORD wDevID, LPMIDIINCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
 
@@ -665,7 +666,7 @@ static DWORD midStop(WORD wDevID)
 /**************************************************************************
  * 				modGetDevCaps			[internal]
  */
-static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSA lpCaps, DWORD dwSize)
+static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
 
@@ -1117,7 +1118,9 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	 * not MIDICAPS_CACHE.
 	 */
 	MidiOutDev[MODM_NumDevs].caps.dwSupport      = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
-	strcpy(MidiOutDev[MODM_NumDevs].caps.szPname, snd_seq_client_info_get_name(cinfo));
+	MultiByteToWideChar(CP_ACP, 0, snd_seq_client_info_get_name(cinfo), -1,
+                            MidiOutDev[MODM_NumDevs].caps.szPname,
+                            sizeof(MidiOutDev[MODM_NumDevs].caps.szPname) / sizeof(WCHAR));
 
 	MidiOutDev[MODM_NumDevs].caps.wTechnology = MIDI_AlsaToWindowsDeviceType(type);
 	MidiOutDev[MODM_NumDevs].caps.wVoices     = 16;
@@ -1132,10 +1135,11 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 
 	TRACE("MidiOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%ld\n"
 	    "\tALSA info: midi dev-type=%lx, capa=%lx\n",
-	    MODM_NumDevs, MidiOutDev[MODM_NumDevs].caps.szPname, MidiOutDev[MODM_NumDevs].caps.wTechnology,
-	    MidiOutDev[MODM_NumDevs].caps.wVoices, MidiOutDev[MODM_NumDevs].caps.wNotes,
-	    MidiOutDev[MODM_NumDevs].caps.wChannelMask, MidiOutDev[MODM_NumDevs].caps.dwSupport,
-	    (long)type, (long)0);
+              MODM_NumDevs, wine_dbgstr_w(MidiOutDev[MODM_NumDevs].caps.szPname),
+              MidiOutDev[MODM_NumDevs].caps.wTechnology,
+              MidiOutDev[MODM_NumDevs].caps.wVoices, MidiOutDev[MODM_NumDevs].caps.wNotes,
+              MidiOutDev[MODM_NumDevs].caps.wChannelMask, MidiOutDev[MODM_NumDevs].caps.dwSupport,
+              (long)type, (long)0);
 		
 	MODM_NumDevs++;
     }
@@ -1169,14 +1173,16 @@ static void ALSA_AddMidiPort(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* 
 	 * not MIDICAPS_CACHE.
 	 */
 	MidiInDev[MIDM_NumDevs].caps.dwSupport      = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
-	strcpy(MidiInDev[MIDM_NumDevs].caps.szPname, snd_seq_client_info_get_name(cinfo));
-
+	MultiByteToWideChar(CP_ACP, 0, snd_seq_client_info_get_name(cinfo), -1,
+                            MidiInDev[MIDM_NumDevs].caps.szPname,
+                            sizeof(MidiInDev[MIDM_NumDevs].caps.szPname) / sizeof(WCHAR));
 	MidiInDev[MIDM_NumDevs].state = 0;
 
 	TRACE("MidiIn [%d]\tname='%s' support=%ld\n"
-	    "\tALSA info: midi dev-type=%lx, capa=%lx\n",
-	    MIDM_NumDevs, MidiInDev[MIDM_NumDevs].caps.szPname, MidiInDev[MIDM_NumDevs].caps.dwSupport,
-	    (long)type, (long)0);
+              "\tALSA info: midi dev-type=%lx, capa=%lx\n",
+              MIDM_NumDevs, wine_dbgstr_w(MidiInDev[MIDM_NumDevs].caps.szPname),
+              MidiInDev[MIDM_NumDevs].caps.dwSupport,
+              (long)type, (long)0);
 
 	MIDM_NumDevs++;
     }
@@ -1280,7 +1286,7 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case MIDM_UNPREPARE:
 	return midUnprepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
     case MIDM_GETDEVCAPS:
-	return midGetDevCaps(wDevID, (LPMIDIINCAPSA)dwParam1,dwParam2);
+	return midGetDevCaps(wDevID, (LPMIDIINCAPSW)dwParam1,dwParam2);
     case MIDM_GETNUMDEVS:
 	return MIDM_NumDevs;
     case MIDM_RESET:
@@ -1326,7 +1332,7 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case MODM_UNPREPARE:
 	return modUnprepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
     case MODM_GETDEVCAPS:
-	return modGetDevCaps(wDevID, (LPMIDIOUTCAPSA)dwParam1, dwParam2);
+	return modGetDevCaps(wDevID, (LPMIDIOUTCAPSW)dwParam1, dwParam2);
     case MODM_GETNUMDEVS:
 	return MODM_NumDevs;
     case MODM_GETVOLUME:

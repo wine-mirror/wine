@@ -60,8 +60,10 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 #include "mmddk.h"
 #include "oss.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
@@ -81,7 +83,7 @@ typedef struct {
     unsigned char	incPrev;
     char		incLen;
     DWORD		startTime;
-    MIDIINCAPSA         caps;
+    MIDIINCAPSW         caps;
 } WINE_MIDIIN;
 
 typedef struct {
@@ -92,7 +94,7 @@ typedef struct {
     LPMIDIHDR	 	lpQueueHdr;
     DWORD		dwTotalPlayed;
     void*		lpExtra;	 	/* according to port type (MIDI, FM...), extra data when needed */
-    MIDIOUTCAPSA        caps;
+    MIDIOUTCAPSW        caps;
 } WINE_MIDIOUT;
 
 static WINE_MIDIIN	MidiInDev [MAX_MIDIINDRV ];
@@ -159,7 +161,6 @@ static	int 	MIDI_UnixToWindowsDeviceType(int type)
 	    "Assuming FM Synth\n");
 	return MOD_FMSYNTH;
     }
-    return MOD_FMSYNTH;
 }
 
 /**************************************************************************
@@ -221,16 +222,19 @@ BOOL OSS_MidiInit(void)
 	sinfo.device = i;
 	status = ioctl(midiSeqFD, SNDCTL_SYNTH_INFO, &sinfo);
 	if (status == -1) {
+            static const WCHAR fmt[] = {'W','i','n','e',' ','O','S','S',' ','M','i','d','i',' ','O','u','t',' ','(','#','%','d',')',' ','-',' ','d','i','s','a','b','l','e','d',0};
 	    ERR("ioctl for synth info failed on %d, disabling it.\n", i);
 
-            sprintf(MidiOutDev[i].caps.szPname, "Wine OSS Midi Out (#%d) - disabled", i);
+            wsprintfW(MidiOutDev[i].caps.szPname, fmt, i);
 
             MidiOutDev[i].caps.wTechnology = MOD_MIDIPORT;
             MidiOutDev[i].caps.wVoices     = 16;
             MidiOutDev[i].caps.wNotes      = 16;
             MidiOutDev[i].bEnabled = FALSE;
 	} else {
-            strcpy(MidiOutDev[i].caps.szPname, sinfo.name);
+            MultiByteToWideChar( CP_ACP, 0, sinfo.name, -1,
+                                 MidiOutDev[i].caps.szPname,
+                                 sizeof(MidiOutDev[i].caps.szPname)/sizeof(WCHAR) );
 
             MidiOutDev[i].caps.wTechnology = MIDI_UnixToWindowsDeviceType(sinfo.synth_type);
             MidiOutDev[i].caps.wVoices     = sinfo.nr_voices;
@@ -253,7 +257,8 @@ BOOL OSS_MidiInit(void)
 
 	TRACE("SynthOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%ld\n"
 	      "\tOSS info: synth subtype=%d capa=%lx\n",
-	      i, MidiOutDev[i].caps.szPname, MidiOutDev[i].caps.wTechnology, 
+	      i, wine_dbgstr_w(MidiOutDev[i].caps.szPname), 
+              MidiOutDev[i].caps.wTechnology, 
               MidiOutDev[i].caps.wVoices, MidiOutDev[i].caps.wNotes, 
               MidiOutDev[i].caps.wChannelMask, MidiOutDev[i].caps.dwSupport,
 	      sinfo.synth_subtype, (long)sinfo.capabilities);
@@ -297,10 +302,13 @@ BOOL OSS_MidiInit(void)
 	/* Product Version. We simply say "1" */
 	MidiOutDev[numsynthdevs + i].caps.vDriverVersion = 0x001;
         if (status == -1) {
-            sprintf(MidiOutDev[numsynthdevs + i].caps.szPname, "Wine OSS Midi Out (#%d) - disabled", numsynthdevs + i);
+            static const WCHAR fmt[] = {'W','i','n','e',' ','O','S','S',' ','M','i','d','i',' ','O','u','t',' ','(','#','%','d',')',' ','-',' ','d','i','s','a','b','l','e','d',0};
+            wsprintfW(MidiOutDev[numsynthdevs + i].caps.szPname, fmt, numsynthdevs + i);
             MidiOutDev[numsynthdevs + i].bEnabled = FALSE;
         } else {
-            strcpy(MidiOutDev[numsynthdevs + i].caps.szPname, minfo.name);
+            MultiByteToWideChar(CP_ACP, 0, minfo.name, -1, 
+                                MidiOutDev[numsynthdevs + i].caps.szPname,
+                                sizeof(MidiOutDev[numsynthdevs + i].caps.szPname) / sizeof(WCHAR));
             MidiOutDev[numsynthdevs + i].bEnabled = TRUE;
         }
 	MidiOutDev[numsynthdevs + i].caps.wTechnology = MOD_MIDIPORT; /* FIXME Is this right? */
@@ -325,10 +333,13 @@ BOOL OSS_MidiInit(void)
 	/* Product Version. We simply say "1" */
 	MidiInDev[i].caps.vDriverVersion = 0x001;
         if (status == -1) {
-            sprintf(MidiInDev[i].caps.szPname, "Wine OSS Midi In (#%d) - disabled", numsynthdevs + i);
+            static const WCHAR fmt[] = {'W','i','n','e',' ','O','S','S',' ','M','i','d','i',' ','I','n',' ','(','#','%','d',')',' ','-',' ','d','i','s','a','b','l','e','d',0};
+            wsprintfW(MidiInDev[i].caps.szPname, fmt, numsynthdevs + i);
             MidiInDev[i].state = -1;
         } else {
-            strcpy(MidiInDev[i].caps.szPname, minfo.name);
+            MultiByteToWideChar(CP_ACP, 0, minfo.name, -1, 
+                                MidiInDev[i].caps.szPname,
+                                sizeof(MidiInDev[i].caps.szPname) / sizeof(WCHAR));
             MidiInDev[i].state = 0;
         }
 	/* FIXME : could we get better information than that ? */
@@ -337,10 +348,11 @@ BOOL OSS_MidiInit(void)
 	TRACE("MidiOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%ld\n"
               "MidiIn [%d]\tname='%s' support=%ld\n"
 	      "\tOSS info: midi dev-type=%d, capa=%lx\n",
-	      i, MidiOutDev[numsynthdevs + i].caps.szPname, MidiOutDev[numsynthdevs + i].caps.wTechnology,
+	      i, wine_dbgstr_w(MidiOutDev[numsynthdevs + i].caps.szPname), 
+              MidiOutDev[numsynthdevs + i].caps.wTechnology,
 	      MidiOutDev[numsynthdevs + i].caps.wVoices, MidiOutDev[numsynthdevs + i].caps.wNotes,
 	      MidiOutDev[numsynthdevs + i].caps.wChannelMask, MidiOutDev[numsynthdevs + i].caps.dwSupport,
-	      i, MidiInDev[i].caps.szPname, MidiInDev[i].caps.dwSupport,
+	      i, wine_dbgstr_w(MidiInDev[i].caps.szPname), MidiInDev[i].caps.dwSupport,
 	      minfo.dev_type, (long)minfo.capabilities);
     }
 
@@ -663,7 +675,7 @@ static DWORD WINAPI midRecThread(LPVOID arg)
 /**************************************************************************
  * 				midGetDevCaps			[internal]
  */
-static DWORD midGetDevCaps(WORD wDevID, LPMIDIINCAPSA lpCaps, DWORD dwSize)
+static DWORD midGetDevCaps(WORD wDevID, LPMIDIINCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
 
@@ -1037,7 +1049,7 @@ static	void modFMReset(WORD wDevID)
 /**************************************************************************
  * 				modGetDevCaps			[internal]
  */
-static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSA lpCaps, DWORD dwSize)
+static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
 
@@ -1669,7 +1681,7 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case MIDM_UNPREPARE:
 	return midUnprepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
     case MIDM_GETDEVCAPS:
-	return midGetDevCaps(wDevID, (LPMIDIINCAPSA)dwParam1,dwParam2);
+	return midGetDevCaps(wDevID, (LPMIDIINCAPSW)dwParam1,dwParam2);
     case MIDM_GETNUMDEVS:
 	return MIDM_NumDevs;
     case MIDM_RESET:
@@ -1715,7 +1727,7 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case MODM_UNPREPARE:
 	return modUnprepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
     case MODM_GETDEVCAPS:
-	return modGetDevCaps(wDevID, (LPMIDIOUTCAPSA)dwParam1, dwParam2);
+	return modGetDevCaps(wDevID, (LPMIDIOUTCAPSW)dwParam1, dwParam2);
     case MODM_GETNUMDEVS:
 	return MODM_NumDevs;
     case MODM_GETVOLUME:

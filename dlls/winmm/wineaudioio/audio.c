@@ -1,4 +1,3 @@
-/* -*- tab-width: 8; c-basic-offset: 4 -*- */
 /*
  * Wine Driver for Libaudioio
  * Derived from the Wine OSS Sample Driver
@@ -36,8 +35,6 @@
  *	better)
  */
 
-/*#define EMULATE_SB16*/
-
 #include "config.h"
 
 #include <stdlib.h>
@@ -62,7 +59,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
-#include "wine/winuser16.h"
 #include "mmddk.h"
 #include "dsound.h"
 #include "dsdriver.h"
@@ -150,7 +146,7 @@ typedef struct {
     int				msg_toget;
     HANDLE			msg_event;
     CRITICAL_SECTION		msg_crst;
-    WAVEOUTCAPSA		caps;
+    WAVEOUTCAPSW		caps;
 
     /* DirectSound stuff */
     LPBYTE			mapping;
@@ -166,7 +162,7 @@ typedef struct {
     PCMWAVEFORMAT		format;
     LPWAVEHDR			lpQueuePtr;
     DWORD			dwTotalRecorded;
-    WAVEINCAPSA			caps;
+    WAVEINCAPSW			caps;
     BOOL                        bTriggerSupport;
 
     /* synchronization stuff */
@@ -248,49 +244,40 @@ LONG LIBAUDIOIO_WaveInit(void)
     int		bytespersmpl;
     int 	caps;
     int		mask;
-	int 	i;
+    int 	i;
 
-	int audio_fd;
-	int mode;
+    int audio_fd;
+    int mode;
+
+    static const WCHAR ini_out[] = {'A','u','d','i','o','I','O',' ','W','a','v','e','O','u','t',' ','D','r','i','v','e','r',0};
+    static const WCHAR ini_in [] = {'A','u','d','i','o','I','O',' ','W','a','v','e','I','n',' ',' ','D','r','i','v','e','r',0};
+
     TRACE("Init ENTERED rate = %d\n",spec[PLAYBACK].rate);
-       spec[RECORD].channels=spec[PLAYBACK].channels=2;
-        spec[RECORD].max_blocks=spec[PLAYBACK].max_blocks=16;
-        spec[RECORD].rate=spec[PLAYBACK].rate=44100;
-        spec[RECORD].encoding=spec[PLAYBACK].encoding= ENCODE_PCM;
-        spec[RECORD].precision=spec[PLAYBACK].precision=16 ;
-        spec[RECORD].endian=spec[PLAYBACK].endian=ENDIAN_INTEL;
-        spec[RECORD].disable_threads=spec[PLAYBACK].disable_threads=1;
-	spec[RECORD].type=spec[PLAYBACK].type=TYPE_SIGNED; /* in 16 bit mode this is what typical PC hardware expects */
+    spec[RECORD].channels=spec[PLAYBACK].channels=2;
+    spec[RECORD].max_blocks=spec[PLAYBACK].max_blocks=16;
+    spec[RECORD].rate=spec[PLAYBACK].rate=44100;
+    spec[RECORD].encoding=spec[PLAYBACK].encoding= ENCODE_PCM;
+    spec[RECORD].precision=spec[PLAYBACK].precision=16 ;
+    spec[RECORD].endian=spec[PLAYBACK].endian=ENDIAN_INTEL;
+    spec[RECORD].disable_threads=spec[PLAYBACK].disable_threads=1;
+    spec[RECORD].type=spec[PLAYBACK].type=TYPE_SIGNED; /* in 16 bit mode this is what typical PC hardware expects */
 
-	mode = O_WRONLY|O_NDELAY;
+    mode = O_WRONLY|O_NDELAY;
 
-	/* start with output device */
+    /* start with output device */
 
-	/* initialize all device handles to -1 */
-	for (i = 0; i < MAX_WAVEOUTDRV; ++i)
-	{
-		WOutDev[i].unixdev = -1;
-	}
+    /* initialize all device handles to -1 */
+    for (i = 0; i < MAX_WAVEOUTDRV; ++i)
+    {
+        WOutDev[i].unixdev = -1;
+    }
 
     /* FIXME: only one device is supported */
     memset(&WOutDev[0].caps, 0, sizeof(WOutDev[0].caps));
 
-
-
-    /* FIXME: some programs compare this string against the content of the registry
-     * for MM drivers. The names have to match in order for the program to work
-     * (e.g. MS win9x mplayer.exe)
-     */
-#ifdef EMULATE_SB16
-    WOutDev[0].caps.wMid = 0x0002;
-    WOutDev[0].caps.wPid = 0x0104;
-    strcpy(WOutDev[0].caps.szPname, "SB16 Wave Out");
-#else
     WOutDev[0].caps.wMid = 0x00FF; 	/* Manufac ID */
     WOutDev[0].caps.wPid = 0x0001; 	/* Product ID */
-    /*    strcpy(WOutDev[0].caps.szPname, "OpenSoundSystem WAVOUT Driver");*/
-    strcpy(WOutDev[0].caps.szPname, "CS4236/37/38");
-#endif
+    strcpyW(WOutDev[0].caps.szPname, ini_out);
     WOutDev[0].caps.vDriverVersion = 0x0100;
     WOutDev[0].caps.dwFormats = 0x00000000;
     WOutDev[0].caps.dwSupport = WAVECAPS_VOLUME;
@@ -317,9 +304,9 @@ LONG LIBAUDIOIO_WaveInit(void)
  * For Big Endian machines libaudioio will convert the data to bigendian for us
  */
 
-	    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_4M16;
-	    if (WOutDev[0].caps.wChannels > 1)
-		WOutDev[0].caps.dwFormats |= WAVE_FORMAT_4S16;
+    WOutDev[0].caps.dwFormats |= WAVE_FORMAT_4M16;
+    if (WOutDev[0].caps.wChannels > 1)
+        WOutDev[0].caps.dwFormats |= WAVE_FORMAT_4S16;
 
 /* Don't understand this yet, but I don't think this functionality is portable, leave it here for future evaluation
  *   if (IOCTL(audio, SNDCTL_DSP_GETCAPS, caps) == 0) {
@@ -342,24 +329,16 @@ LONG LIBAUDIOIO_WaveInit(void)
     TRACE("out dwFormats = %08lX, dwSupport = %08lX\n",
 	  WOutDev[0].caps.dwFormats, WOutDev[0].caps.dwSupport);
 
-	for (i = 0; i < MAX_WAVEINDRV; ++i)
-	{
-		WInDev[i].unixdev = -1;
-	}
+    for (i = 0; i < MAX_WAVEINDRV; ++i)
+    {
+        WInDev[i].unixdev = -1;
+    }
 
-	memset(&WInDev[0].caps, 0, sizeof(WInDev[0].caps));
+    memset(&WInDev[0].caps, 0, sizeof(WInDev[0].caps));
 
-
-
-#ifdef EMULATE_SB16
-    WInDev[0].caps.wMid = 0x0002;
-    WInDev[0].caps.wPid = 0x0004;
-    strcpy(WInDev[0].caps.szPname, "SB16 Wave In");
-#else
     WInDev[0].caps.wMid = 0x00FF; 	/* Manufac ID */
     WInDev[0].caps.wPid = 0x0001; 	/* Product ID */
-    strcpy(WInDev[0].caps.szPname, "OpenSoundSystem WAVIN Driver");
-#endif
+    strcpyW(WInDev[0].caps.szPname, ini_in);
     WInDev[0].caps.dwFormats = 0x00000000;
     WInDev[0].caps.wChannels = spec[RECORD].channels;
 
@@ -778,7 +757,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 /**************************************************************************
  * 			wodGetDevCaps				[internal]
  */
-static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSA lpCaps, DWORD dwSize)
+static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
@@ -912,12 +891,12 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     wwo->msg_toget = 0;
     wwo->msg_tosave = 0;
-    wwo->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    wwo->msg_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     memset(wwo->messages, 0, sizeof(WWO_MSG)*WWO_RING_BUFFER_SIZE);
     InitializeCriticalSection(&wwo->msg_crst);
 
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
-	wwo->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+	wwo->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
 	WaitForSingleObject(wwo->hEvent, INFINITE);
     } else {
@@ -1247,7 +1226,7 @@ DWORD WINAPI LIBAUDIOIO_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_BREAKLOOP: 	return MMSYSERR_NOTSUPPORTED;
     case WODM_PREPARE:	 	return wodPrepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
     case WODM_UNPREPARE: 	return wodUnprepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
-    case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSA)dwParam1,	dwParam2);
+    case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSW)dwParam1,	dwParam2);
     case WODM_GETNUMDEVS:	return wodGetNumDevs	();
     case WODM_GETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
     case WODM_SETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
@@ -1708,7 +1687,7 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 /**************************************************************************
  * 			widGetDevCaps				[internal]
  */
-static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSA lpCaps, DWORD dwSize)
+static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
@@ -2041,7 +2020,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	  wwi->format.wf.nSamplesPerSec, wwi->format.wf.nChannels,
 	  wwi->format.wf.nBlockAlign);
 
-    wwi->hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    wwi->hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD)wDevID, 0, &(wwi->dwThreadID));
     WaitForSingleObject(wwi->hEvent, INFINITE);
 
@@ -2239,7 +2218,7 @@ DWORD WINAPI LIBAUDIOIO_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_ADDBUFFER:	return widAddBuffer  (wDevID, (LPWAVEHDR)dwParam1, dwParam2);
     case WIDM_PREPARE:		return widPrepare    (wDevID, (LPWAVEHDR)dwParam1, dwParam2);
     case WIDM_UNPREPARE:	return widUnprepare  (wDevID, (LPWAVEHDR)dwParam1, dwParam2);
-    case WIDM_GETDEVCAPS:	return widGetDevCaps (wDevID, (LPWAVEINCAPSA)dwParam1, dwParam2);
+    case WIDM_GETDEVCAPS:	return widGetDevCaps (wDevID, (LPWAVEINCAPSW)dwParam1, dwParam2);
     case WIDM_GETNUMDEVS:	return wodGetNumDevs ();	/* same number of devices in output as in input */
     case WIDM_GETPOS:		return widGetPosition(wDevID, (LPMMTIME)dwParam1, dwParam2);
     case WIDM_RESET:		return widReset      (wDevID);

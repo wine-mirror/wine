@@ -45,8 +45,10 @@
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
+#include "winnls.h"
 #include "mmddk.h"
 #include "oss.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mixer);
@@ -82,7 +84,7 @@ static const char*	MIX_Names [SOUND_MIXER_NRDEVICES] = SOUND_DEVICE_NAMES;
 struct mixerCtrl
 {
     DWORD		dwLineID;
-    MIXERCONTROLA	ctrl;
+    MIXERCONTROLW	ctrl;
 };
 
 struct mixer
@@ -257,6 +259,11 @@ static const char * getTargetType(DWORD dwType)
     return str;
 }
 
+static const WCHAR sz_short_volume [] = {'V','o','l',0};
+static const WCHAR sz_long_volume  [] = {'V','o','l','u','m','e',0};
+static const WCHAR sz_shrtlng_mute [] = {'M','u','t','e',0};
+static const WCHAR sz_shrtlng_mixer[] = {'M','i','x','e','r',0};
+
 /**************************************************************************
  * 				MIX_FillLineControls		[internal]
  */
@@ -270,7 +277,7 @@ static void MIX_FillLineControls(struct mixer* mix, int c, DWORD lineID,
           getControlType(dwControlType));
 
     mc->dwLineID = lineID;
-    mc->ctrl.cbStruct = sizeof(MIXERCONTROLA);
+    mc->ctrl.cbStruct = sizeof(MIXERCONTROLW);
     mc->ctrl.dwControlID = c + 1;
     mc->ctrl.dwControlType = dwControlType;
 
@@ -279,8 +286,8 @@ static void MIX_FillLineControls(struct mixer* mix, int c, DWORD lineID,
     case MIXERCONTROL_CONTROLTYPE_VOLUME:
 	mc->ctrl.fdwControl = 0;
 	mc->ctrl.cMultipleItems = 0;
-	lstrcpynA(mc->ctrl.szShortName, "Vol", MIXER_SHORT_NAME_CHARS);
-	lstrcpynA(mc->ctrl.szName, "Volume", MIXER_LONG_NAME_CHARS);
+	strcpyW(mc->ctrl.szShortName, sz_short_volume);
+	strcpyW(mc->ctrl.szName, sz_long_volume);
 	memset(&mc->ctrl.Bounds, 0, sizeof(mc->ctrl.Bounds));
 	/* CONTROLTYPE_VOLUME uses the MIXER_CONTROLDETAILS_UNSIGNED struct,
 	 * [0, 100] is the range supported by OSS
@@ -296,8 +303,8 @@ static void MIX_FillLineControls(struct mixer* mix, int c, DWORD lineID,
     case MIXERCONTROL_CONTROLTYPE_ONOFF:
 	mc->ctrl.fdwControl = 0;
 	mc->ctrl.cMultipleItems = 0;
-	lstrcpynA(mc->ctrl.szShortName, "Mute", MIXER_SHORT_NAME_CHARS);
-	lstrcpynA(mc->ctrl.szName, "Mute", MIXER_LONG_NAME_CHARS);
+	strcpyW(mc->ctrl.szShortName, sz_shrtlng_mute);
+	strcpyW(mc->ctrl.szName, sz_shrtlng_mute);
 	memset(&mc->ctrl.Bounds, 0, sizeof(mc->ctrl.Bounds));
 	mc->ctrl.Bounds.s1.dwMinimum = 0;
 	mc->ctrl.Bounds.s1.dwMaximum = 1;
@@ -310,8 +317,8 @@ static void MIX_FillLineControls(struct mixer* mix, int c, DWORD lineID,
 	for (j = 0; j < SOUND_MIXER_NRDEVICES; j++)
 	    if (WINE_CHN_SUPPORTS(mix->recMask, j))
 		mc->ctrl.cMultipleItems++;
-	lstrcpynA(mc->ctrl.szShortName, "Mixer", MIXER_SHORT_NAME_CHARS);
-	lstrcpynA(mc->ctrl.szName, "Mixer", MIXER_LONG_NAME_CHARS);
+	strcpyW(mc->ctrl.szShortName, sz_shrtlng_mixer);
+	strcpyW(mc->ctrl.szName, sz_shrtlng_mixer);
 	memset(&mc->ctrl.Bounds, 0, sizeof(mc->ctrl.Bounds));
         mc->ctrl.Bounds.s1.dwMaximum = mc->ctrl.cMultipleItems - 1;
 	memset(&mc->ctrl.Metrics, 0, sizeof(mc->ctrl.Metrics));
@@ -589,10 +596,11 @@ static BOOL	MIX_SetRecSrc(struct mixer* mix, unsigned mask)
 /**************************************************************************
  * 				MIX_GetDevCaps			[internal]
  */
-static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPSA lpCaps, DWORD dwSize)
+static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPSW lpCaps, DWORD dwSize)
 {
     struct mixer*	mix;
-    MIXERCAPSA		capsA;
+    MIXERCAPSW		capsW;
+    const char*         name;
 
     TRACE("(%04X, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
@@ -606,18 +614,15 @@ static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPSA lpCaps, DWORD dwSize)
         return MMSYSERR_BADDEVICEID;
     }
 
-    capsA.wMid = WINE_MIXER_MANUF_ID;
-    capsA.wPid = WINE_MIXER_PRODUCT_ID;
-    capsA.vDriverVersion = WINE_MIXER_VERSION;
-    if (mix->name)
-        strcpy(capsA.szPname, mix->name);
-    else
-        strcpy(capsA.szPname, WINE_MIXER_NAME);
+    capsW.wMid = WINE_MIXER_MANUF_ID;
+    capsW.wPid = WINE_MIXER_PRODUCT_ID;
+    capsW.vDriverVersion = WINE_MIXER_VERSION;
+    if (!(name = mix->name)) name = WINE_MIXER_NAME;
+    MultiByteToWideChar(CP_ACP, 0, name, -1, capsW.szPname, sizeof(capsW.szPname) / sizeof(WCHAR));
+    capsW.cDestinations = 2; /* speakers & record */
+    capsW.fdwSupport = 0; /* No bits defined yet */
 
-    capsA.cDestinations = 2; /* speakers & record */
-    capsA.fdwSupport = 0; /* No bits defined yet */
-
-    memcpy(lpCaps, &capsA, min(dwSize, sizeof(capsA)));
+    memcpy(lpCaps, &capsW, min(dwSize, sizeof(capsW)));
 
     return MMSYSERR_NOERROR;
 }
@@ -625,7 +630,7 @@ static DWORD MIX_GetDevCaps(WORD wDevID, LPMIXERCAPSA lpCaps, DWORD dwSize)
 /**************************************************************************
  * 				MIX_GetLineInfoDst	[internal]
  */
-static	DWORD	MIX_GetLineInfoDst(struct mixer* mix, LPMIXERLINEA lpMl,
+static	DWORD	MIX_GetLineInfoDst(struct mixer* mix, LPMIXERLINEW lpMl,
                                    DWORD dst)
 {
     unsigned mask;
@@ -653,8 +658,8 @@ static	DWORD	MIX_GetLineInfoDst(struct mixer* mix, LPMIXERLINEA lpMl,
 	return MMSYSERR_ERROR;
     }
     lpMl->dwSource = 0xFFFFFFFF;
-    lstrcpynA(lpMl->szShortName, MIX_Labels[j], MIXER_SHORT_NAME_CHARS);
-    lstrcpynA(lpMl->szName, MIX_Names[j], MIXER_LONG_NAME_CHARS);
+    MultiByteToWideChar(CP_ACP, 0, MIX_Labels[j], -1, lpMl->szShortName, sizeof(lpMl->szShortName) / sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, MIX_Names[j],  -1, lpMl->szName,      sizeof(lpMl->szName) / sizeof(WCHAR));
 
     /* we have all connections found in the MIX_DevMask */
     lpMl->cConnections = 0;
@@ -676,7 +681,7 @@ static	DWORD	MIX_GetLineInfoDst(struct mixer* mix, LPMIXERLINEA lpMl,
 /**************************************************************************
  * 				MIX_GetLineInfoSrc	[internal]
  */
-static	DWORD	MIX_GetLineInfoSrc(struct mixer* mix, LPMIXERLINEA lpMl,
+static	DWORD	MIX_GetLineInfoSrc(struct mixer* mix, LPMIXERLINEW lpMl,
                                    DWORD idx, DWORD dst)
 {
     int		i, j;
@@ -684,8 +689,8 @@ static	DWORD	MIX_GetLineInfoSrc(struct mixer* mix, LPMIXERLINEA lpMl,
 
     TRACE("(%p, %p, %ld, %08lx)\n", mix, lpMl, idx, dst);
 
-    strcpy(lpMl->szShortName, MIX_Labels[idx]);
-    strcpy(lpMl->szName, MIX_Names[idx]);
+    MultiByteToWideChar(CP_ACP, 0, MIX_Labels[idx], -1, lpMl->szShortName, sizeof(lpMl->szShortName) / sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, MIX_Names[idx],  -1, lpMl->szName,      sizeof(lpMl->szName) / sizeof(WCHAR));
     lpMl->dwLineID = MAKELONG(dst, idx);
     lpMl->dwDestination = dst;
     lpMl->cConnections = 1;
@@ -760,7 +765,7 @@ static BOOL MIX_CheckLine(DWORD lineID)
 /**************************************************************************
  * 				MIX_GetLineInfo			[internal]
  */
-static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEA lpMl, DWORD fdwInfo)
+static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEW lpMl, DWORD fdwInfo)
 {
     int 		i, j;
     DWORD		ret = MMSYSERR_NOERROR;
@@ -908,14 +913,13 @@ static DWORD MIX_GetLineInfo(WORD wDevID, LPMIXERLINEA lpMl, DWORD fdwInfo)
     }
 
     if ((fdwInfo & MIXER_GETLINEINFOF_QUERYMASK) != MIXER_GETLINEINFOF_TARGETTYPE) {
+        const char* name;
         lpMl->Target.dwDeviceID = 0xFFFFFFFF;
         lpMl->Target.wMid = WINE_MIXER_MANUF_ID;
         lpMl->Target.wPid = WINE_MIXER_PRODUCT_ID;
         lpMl->Target.vDriverVersion = WINE_MIXER_VERSION;
-        if (mix->name)
-            strcpy(lpMl->Target.szPname, mix->name);
-        else
-            strcpy(lpMl->Target.szPname, WINE_MIXER_NAME);
+        if (!(name = mix->name)) name = WINE_MIXER_NAME;
+        MultiByteToWideChar(CP_ACP, 0, name, -1, lpMl->Target.szPname, sizeof(lpMl->Target.szPname) / sizeof(WCHAR));
     }
 
     return ret;
@@ -935,7 +939,7 @@ static BOOL	MIX_CheckControl(struct mixer* mix, DWORD ctrlID)
 /**************************************************************************
  * 				MIX_GetLineControls		[internal]
  */
-static	DWORD	MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSA lpMlc,
+static	DWORD	MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSW lpMlc,
                                     DWORD flags)
 {
     DWORD		dwRet = MMSYSERR_NOERROR;
@@ -954,9 +958,9 @@ static	DWORD	MIX_GetLineControls(WORD wDevID, LPMIXERLINECONTROLSA lpMlc,
 	return MMSYSERR_INVALPARAM;
     }
 
-    if (lpMlc->cbmxctrl < sizeof(MIXERCONTROLA)) {
+    if (lpMlc->cbmxctrl < sizeof(MIXERCONTROLW)) {
         WARN("invalid parameter: lpMlc->cbmxctrl = %ld < %d\n",
-             lpMlc->cbmxctrl, sizeof(MIXERCONTROLA));
+             lpMlc->cbmxctrl, sizeof(MIXERCONTROLW));
 	return MMSYSERR_INVALPARAM;
     }
 
@@ -1212,17 +1216,18 @@ static	DWORD	MIX_GetControlDetails(WORD wDevID, LPMIXERCONTROLDETAILS lpmcd,
 	    if (mix->ctrl[c].ctrl.dwControlType == MIXERCONTROL_CONTROLTYPE_MUX ||
 		mix->ctrl[c].ctrl.dwControlType == MIXERCONTROL_CONTROLTYPE_MIXER)
 	    {
-		LPMIXERCONTROLDETAILS_LISTTEXTA	mcdlt;
+		LPMIXERCONTROLDETAILS_LISTTEXTW	mcdlt;
 		int i, j;
 
-		mcdlt = (LPMIXERCONTROLDETAILS_LISTTEXTA)lpmcd->paDetails;
+		mcdlt = (LPMIXERCONTROLDETAILS_LISTTEXTW)lpmcd->paDetails;
 		for (i = j = 0; j < SOUND_MIXER_NRDEVICES; j++)
 		{
 		    if (WINE_CHN_SUPPORTS(mix->recMask, j))
 		    {
 			mcdlt[i].dwParam1 = MAKELONG(LINEID_RECORD, j);
 			mcdlt[i].dwParam2 = 0;
-			strcpy(mcdlt[i].szName, MIX_Names[j]);
+			MultiByteToWideChar(CP_ACP, 0, MIX_Names[j], -1, 
+                                            mcdlt[i].szName, sizeof(mcdlt[i]) / sizeof(WCHAR));
 			i++;
 		    }
 		}
@@ -1529,9 +1534,9 @@ DWORD WINAPI OSS_mxdMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 	/* FIXME: Pretend this is supported */
 	return 0;
     case MXDM_GETDEVCAPS:
-	return MIX_GetDevCaps(wDevID, (LPMIXERCAPSA)dwParam1, dwParam2);
+	return MIX_GetDevCaps(wDevID, (LPMIXERCAPSW)dwParam1, dwParam2);
     case MXDM_GETLINEINFO:
-	return MIX_GetLineInfo(wDevID, (LPMIXERLINEA)dwParam1, dwParam2);
+	return MIX_GetLineInfo(wDevID, (LPMIXERLINEW)dwParam1, dwParam2);
     case MXDM_GETNUMDEVS:
 	return MIX_GetNumDevs();
     case MXDM_OPEN:
@@ -1540,7 +1545,7 @@ DWORD WINAPI OSS_mxdMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case MXDM_CLOSE:
 	return MMSYSERR_NOERROR;
     case MXDM_GETLINECONTROLS:
-	return MIX_GetLineControls(wDevID, (LPMIXERLINECONTROLSA)dwParam1, dwParam2);
+	return MIX_GetLineControls(wDevID, (LPMIXERLINECONTROLSW)dwParam1, dwParam2);
     case MXDM_GETCONTROLDETAILS:
 	return MIX_GetControlDetails(wDevID, (LPMIXERCONTROLDETAILS)dwParam1, dwParam2);
     case MXDM_SETCONTROLDETAILS:

@@ -46,8 +46,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "winerror.h"
-#include "wine/winuser16.h"
 #include "mmddk.h"
 #include "mmreg.h"
 #include "dsound.h"
@@ -920,7 +920,7 @@ static HRESULT WINAPI IDsDriverNotifyImpl_Create(
 
     *pdsdn = dsdn;
     return DS_OK;
-};
+}
 
 DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
 {

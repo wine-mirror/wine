@@ -112,7 +112,7 @@ typedef struct {
     WAVEOPENDESC		waveDesc;
     WORD			wFlags;
     PCMWAVEFORMAT		format;
-    WAVEOUTCAPSA		caps;
+    WAVEOUTCAPSW		caps;
 
     /* ALSA information */
     snd_pcm_t*                  handle;                 /* handle to ALSA device */
@@ -171,6 +171,8 @@ LONG ALSA_WaveInit(void)
     snd_pcm_t*                  h;
     snd_pcm_info_t              info;
     snd_pcm_channel_info_t      chn_info;
+
+    static const WCHAR ini_out[] = {'A','L','S','A',' ','W','a','v','e','O','u','t',' ','D','r','i','v','e','r',0};
 
     TRACE("There are %d cards\n", snd_cards());
 
@@ -241,7 +243,7 @@ LONG ALSA_WaveInit(void)
     /* FIXME: use better values */
     WOutDev[0].caps.wMid = 0x0002;
     WOutDev[0].caps.wPid = 0x0104;
-    strcpy(WOutDev[0].caps.szPname, "SB16 Wave Out");
+    strcpyW(WOutDev[0].caps.szPname, ini);
     WOutDev[0].caps.vDriverVersion = 0x0100;
     WOutDev[0].caps.dwFormats = 0x00000000;
     WOutDev[0].caps.dwSupport = WAVECAPS_VOLUME;
@@ -297,7 +299,7 @@ static int ALSA_InitRingMessage(ALSA_MSG_RING* omr)
 {
     omr->msg_toget = 0;
     omr->msg_tosave = 0;
-    omr->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    omr->msg_event = CreateEventW(NULL, FALSE, FALSE, NULL);
     memset(omr->messages, 0, sizeof(ALSA_MSG) * ALSA_RING_BUFFER_SIZE);
     InitializeCriticalSection(&omr->msg_crst);
     return 0;
@@ -332,7 +334,7 @@ static int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWOR
     }
     if (wait)
     {
-        hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+        hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
         if (hEvent == INVALID_HANDLE_VALUE)
         {
             ERR("can't create event !?\n");
@@ -409,7 +411,8 @@ static DWORD wodNotifyClient(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dwParam1, DWORD
     case WOM_CLOSE:
     case WOM_DONE:
 	if (wwo->wFlags != DCB_NULL &&
-	    !DriverCallback(wwo->waveDesc.dwCallback, wwo->wFlags, wwo->waveDesc.hWave,
+	    !DriverCallback(wwo->waveDesc.dwCallback, wwo->wFlags, 
+                            (HDRVR)wwo->waveDesc.hWave,
 			    wMsg, wwo->waveDesc.dwInstance, dwParam1, dwParam2)) {
 	    WARN("can't notify client !\n");
 	    return MMSYSERR_ERROR;
@@ -839,7 +842,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 /**************************************************************************
  * 			wodGetDevCaps				[internal]
  */
-static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSA lpCaps, DWORD dwSize)
+static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
@@ -963,7 +966,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     ALSA_InitRingMessage(&wwo->msgRing);
 
     if (!(dwFlags & WAVE_DIRECTSOUND)) {
-	wwo->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+	wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
 	WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
 	CloseHandle(wwo->hStartUpEvent);
@@ -1331,7 +1334,7 @@ DWORD WINAPI ALSA_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_BREAKLOOP: 	return wodBreakLoop     (wDevID);
     case WODM_PREPARE:	 	return wodPrepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
     case WODM_UNPREPARE: 	return wodUnprepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
-    case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSA)dwParam1,	dwParam2);
+    case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSW)dwParam1,	dwParam2);
     case WODM_GETNUMDEVS:	return wodGetNumDevs	();
     case WODM_GETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
     case WODM_SETPITCH:	 	return MMSYSERR_NOTSUPPORTED;

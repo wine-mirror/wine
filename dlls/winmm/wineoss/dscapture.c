@@ -43,8 +43,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "winerror.h"
-#include "wine/winuser16.h"
 #include "mmddk.h"
 #include "mmreg.h"
 #include "dsound.h"
@@ -961,8 +961,6 @@ static DWORD CALLBACK DSCDB_Thread(LPVOID lpParameter)
             }
         }
     }
-
-    return TRUE;
 }
 
 static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
@@ -1202,8 +1200,8 @@ static HRESULT WINAPI IDsCaptureDriverImpl_CreateCaptureBuffer(
 
     This->capture_buffer = *ippdscdb;
 
-    (*ippdscdb)->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
-    (*ippdscdb)->hExitEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    (*ippdscdb)->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+    (*ippdscdb)->hExitEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 
     (*ippdscdb)->hThread = CreateThread(NULL, 0,  DSCDB_Thread, (LPVOID)(*ippdscdb), 0, &((*ippdscdb)->dwThreadID));
     WaitForSingleObject((*ippdscdb)->hStartUpEvent, INFINITE);

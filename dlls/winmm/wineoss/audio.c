@@ -26,8 +26,6 @@
  *	Direct Sound Capture driver does not work (not complete yet)
  */
 
-/*#define EMULATE_SB16*/
-
 /* an exact wodGetPosition is usually not worth the extra context switches,
  * as we're going to have near fragment accuracy anyway */
 #define EXACT_WODPOSITION
@@ -58,8 +56,9 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winuser.h"
+#include "winnls.h"
 #include "winerror.h"
-#include "wine/winuser16.h"
 #include "mmddk.h"
 #include "mmreg.h"
 #include "dsound.h"
@@ -121,7 +120,7 @@ static const char * getCmdString(enum win_wm_message msg)
 #undef MSG_TO_STR
     sprintf(unknown, "UNKNOWN(0x%08x)", msg);
     return unknown;
-};
+}
 
 int getEnables(OSS_DEVICE *ossdev)
 {
@@ -518,9 +517,10 @@ void	OSS_CloseDevice(OSS_DEVICE* ossdev)
     }
     if (ossdev->open_count == 0)
     {
-       /* reset the device before we close it in case it is in a bad state */
-       ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
-       close(ossdev->fd);
+        fcntl(ossdev->fd, F_SETFL, fcntl(ossdev->fd, F_GETFL) & ~O_NDELAY);
+        /* reset the device before we close it in case it is in a bad state */
+        ioctl(ossdev->fd, SNDCTL_DSP_RESET, 0);
+        if (close(ossdev->fd) != 0) FIXME("Cannot close %d: %s\n", ossdev->fd, strerror(errno));
     }
 }
 
@@ -555,9 +555,9 @@ static DWORD     OSS_ResetDevice(OSS_DEVICE* ossdev)
     return ret;
 }
 
-const static int win_std_oss_fmts[2]={AFMT_U8,AFMT_S16_LE};
-const static int win_std_rates[5]={96000,48000,44100,22050,11025};
-const static int win_std_formats[2][2][5]=
+static const int win_std_oss_fmts[2]={AFMT_U8,AFMT_S16_LE};
+static const int win_std_rates[5]={96000,48000,44100,22050,11025};
+static const int win_std_formats[2][2][5]=
     {{{WAVE_FORMAT_96M08, WAVE_FORMAT_48M08, WAVE_FORMAT_4M08,
        WAVE_FORMAT_2M08,  WAVE_FORMAT_1M08},
       {WAVE_FORMAT_96S08, WAVE_FORMAT_48S08, WAVE_FORMAT_4S08,
@@ -688,7 +688,9 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
             if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
                 strncpy(ossdev->ds_desc.szDesc, info.name, sizeof(info.name));
                 strcpy(ossdev->ds_desc.szDrvName, "wineoss.drv");
-                strncpy(ossdev->out_caps.szPname, info.name, sizeof(info.name));
+                MultiByteToWideChar(CP_ACP, 0, info.name, sizeof(info.name), 
+                                    ossdev->out_caps.szPname, 
+                                    sizeof(ossdev->out_caps.szPname) / sizeof(WCHAR));
                 TRACE("%s\n", ossdev->ds_desc.szDesc);
             } else {
                 /* FreeBSD up to at least 5.2 provides this ioctl, but does not
@@ -709,18 +711,9 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
     if (WINE_TRACE_ON(wave))
         OSS_Info(ossdev->fd);
 
-    /* FIXME: some programs compare this string against the content of the
-     * registry for MM drivers. The names have to match in order for the
-     * program to work (e.g. MS win9x mplayer.exe)
-     */
-#ifdef EMULATE_SB16
-    ossdev->out_caps.wMid = 0x0002;
-    ossdev->out_caps.wPid = 0x0104;
-    strcpy(ossdev->out_caps.szPname, "SB16 Wave Out");
-#else
     ossdev->out_caps.wMid = 0x00FF; /* Manufac ID */
     ossdev->out_caps.wPid = 0x0001; /* Product ID */
-#endif
+
     ossdev->out_caps.vDriverVersion = 0x0100;
     ossdev->out_caps.wChannels = 1;
     ossdev->out_caps.dwFormats = 0x00000000;
@@ -844,7 +837,9 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
         if ((mixer = open(ossdev->mixer_name, O_RDONLY|O_NDELAY)) >= 0) {
             mixer_info info;
             if (ioctl(mixer, SOUND_MIXER_INFO, &info) >= 0) {
-                strncpy(ossdev->in_caps.szPname, info.name, sizeof(info.name));
+                MultiByteToWideChar(CP_ACP, 0, info.name, -1, 
+                                    ossdev->in_caps.szPname, 
+                                    sizeof(ossdev->in_caps.szPname) / sizeof(WCHAR));
                 TRACE("%s\n", ossdev->ds_desc.szDesc);
             } else {
                 /* FreeBSD up to at least 5.2 provides this ioctl, but does not
@@ -865,15 +860,9 @@ static BOOL OSS_WaveInInit(OSS_DEVICE* ossdev)
     if (WINE_TRACE_ON(wave))
         OSS_Info(ossdev->fd);
 
-    /* See comment in OSS_WaveOutInit */
-#ifdef EMULATE_SB16
-    ossdev->in_caps.wMid = 0x0002;
-    ossdev->in_caps.wPid = 0x0004;
-    strcpy(ossdev->in_caps.szPname, "SB16 Wave In");
-#else
     ossdev->in_caps.wMid = 0x00FF; /* Manufac ID */
     ossdev->in_caps.wPid = 0x0001; /* Product ID */
-#endif
+
     ossdev->in_caps.dwFormats = 0x00000000;
     ossdev->in_caps.wChannels = 1;
     ossdev->in_caps.wReserved1 = 0;
@@ -1128,7 +1117,7 @@ static int OSS_InitRingMessage(OSS_MSG_RING* omr)
 	ERR("could not create pipe, error=%s\n", strerror(errno));
     }
 #else
-    omr->msg_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    omr->msg_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 #endif
     omr->ring_buffer_size = OSS_RING_BUFFER_INCREMENT;
     omr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,omr->ring_buffer_size * sizeof(OSS_MSG));
@@ -1185,7 +1174,7 @@ static int OSS_AddRingMessage(OSS_MSG_RING* omr, enum win_wm_message msg, DWORD 
     }
     if (wait)
     {
-        hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+        hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
         if (hEvent == INVALID_HANDLE_VALUE)
         {
             ERR("can't create event !?\n");
@@ -1477,8 +1466,9 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
      * - we hit the beginning of a running loop
      * - we hit a wavehdr which hasn't finished playing
      */
-    while ((lpWaveHdr = wwo->lpQueuePtr) &&
-           (force ||
+#if 0
+    while ((lpWaveHdr = wwo->lpQueuePtr) && 
+           (force || 
             (lpWaveHdr != wwo->lpPlayPtr &&
              lpWaveHdr != wwo->lpLoopPtr &&
              lpWaveHdr->reserved <= wwo->dwPlayedTotal))) {
@@ -1490,7 +1480,26 @@ static DWORD wodPlayer_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
 
 	wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
     }
-    return  (lpWaveHdr && lpWaveHdr != wwo->lpPlayPtr && lpWaveHdr != wwo->lpLoopPtr) ?
+#else
+    for (;;)
+    {
+        lpWaveHdr = wwo->lpQueuePtr;
+        if (!lpWaveHdr) {TRACE("Empty queue\n"); break;}
+        if (!force)
+        {
+            if (lpWaveHdr == wwo->lpPlayPtr) {TRACE("play %p\n", lpWaveHdr); break;}
+            if (lpWaveHdr == wwo->lpLoopPtr) {TRACE("loop %p\n", lpWaveHdr); break;}
+            if (lpWaveHdr->reserved > wwo->dwPlayedTotal){TRACE("still playing %p (%lu/%lu)\n", lpWaveHdr, lpWaveHdr->reserved, wwo->dwPlayedTotal);break;}
+        }
+	wwo->lpQueuePtr = lpWaveHdr->lpNext;
+
+	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+	lpWaveHdr->dwFlags |= WHDR_DONE;
+
+	wodNotifyClient(wwo, WOM_DONE, (DWORD)lpWaveHdr, 0);
+    }
+#endif
+    return  (lpWaveHdr && lpWaveHdr != wwo->lpPlayPtr && lpWaveHdr != wwo->lpLoopPtr) ? 
         wodPlayer_NotifyWait(wwo, lpWaveHdr) : INFINITE;
 }
 
@@ -1649,7 +1658,7 @@ static DWORD wodPlayer_FeedDSP(WINE_WAVEOUT* wwo)
     audio_buf_info dspspace;
     DWORD       availInQ;
 
-    wodUpdatePlayedTotal(wwo, &dspspace);
+    if (!wodUpdatePlayedTotal(wwo, &dspspace)) return INFINITE;
     availInQ = dspspace.bytes;
     TRACE("fragments=%d/%d, fragsize=%d, bytes=%d\n",
 	  dspspace.fragments, dspspace.fragstotal, dspspace.fragsize, dspspace.bytes);
@@ -1742,7 +1751,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 /**************************************************************************
  * 			wodGetDevCaps				[internal]
  */
-static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSA lpCaps, DWORD dwSize)
+static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
@@ -1922,7 +1931,7 @@ DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     OSS_InitRingMessage(&wwo->msgRing);
 
-    wwo->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    wwo->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
     WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
     CloseHandle(wwo->hStartUpEvent);
@@ -2257,7 +2266,7 @@ DWORD WINAPI OSS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     case WODM_BREAKLOOP: 	return wodBreakLoop     (wDevID);
     case WODM_PREPARE:	 	return wodPrepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
     case WODM_UNPREPARE: 	return wodUnprepare	(wDevID, (LPWAVEHDR)dwParam1, 		dwParam2);
-    case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSA)dwParam1,	dwParam2);
+    case WODM_GETDEVCAPS:	return wodGetDevCaps	(wDevID, (LPWAVEOUTCAPSW)dwParam1,	dwParam2);
     case WODM_GETNUMDEVS:	return numOutDev;
     case WODM_GETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
     case WODM_SETPITCH:	 	return MMSYSERR_NOTSUPPORTED;
@@ -2313,7 +2322,7 @@ static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD 
 /**************************************************************************
  * 			widGetDevCaps				[internal]
  */
-static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSA lpCaps, DWORD dwSize)
+static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
 {
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
@@ -2810,7 +2819,7 @@ DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     OSS_InitRingMessage(&wwi->msgRing);
 
-    wwi->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    wwi->hStartUpEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     wwi->hThread = CreateThread(NULL, 0, widRecorder, (LPVOID)(DWORD)wDevID, 0, &(wwi->dwThreadID));
     WaitForSingleObject(wwi->hStartUpEvent, INFINITE);
     CloseHandle(wwi->hStartUpEvent);
@@ -3006,7 +3015,7 @@ DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     case WIDM_ADDBUFFER:	return widAddBuffer  (wDevID, (LPWAVEHDR)dwParam1, dwParam2);
     case WIDM_PREPARE:		return widPrepare    (wDevID, (LPWAVEHDR)dwParam1, dwParam2);
     case WIDM_UNPREPARE:	return widUnprepare  (wDevID, (LPWAVEHDR)dwParam1, dwParam2);
-    case WIDM_GETDEVCAPS:	return widGetDevCaps (wDevID, (LPWAVEINCAPSA)dwParam1, dwParam2);
+    case WIDM_GETDEVCAPS:	return widGetDevCaps (wDevID, (LPWAVEINCAPSW)dwParam1, dwParam2);
     case WIDM_GETNUMDEVS:	return numInDev;
     case WIDM_GETPOS:		return widGetPosition(wDevID, (LPMMTIME)dwParam1, dwParam2);
     case WIDM_RESET:		return widReset      (wDevID);
