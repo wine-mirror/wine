@@ -483,97 +483,6 @@ typedef struct tagMEMORYSTATUS
 } MEMORYSTATUS, *LPMEMORYSTATUS;
 
 
-#ifndef NOLOGERROR
-
-/* LogParamError and LogError values */
-
-/* Error modifier bits */
-#define ERR_WARNING             0x8000
-#define ERR_PARAM               0x4000
-
-#define ERR_SIZE_MASK           0x3000
-#define ERR_BYTE                0x1000
-#define ERR_WORD                0x2000
-#define ERR_DWORD               0x3000
-
-/* LogParamError() values */
-
-/* Generic parameter values */
-#define ERR_BAD_VALUE           0x6001
-#define ERR_BAD_FLAGS           0x6002
-#define ERR_BAD_INDEX           0x6003
-#define ERR_BAD_DVALUE          0x7004
-#define ERR_BAD_DFLAGS          0x7005
-#define ERR_BAD_DINDEX          0x7006
-#define ERR_BAD_PTR             0x7007
-#define ERR_BAD_FUNC_PTR        0x7008
-#define ERR_BAD_SELECTOR        0x6009
-#define ERR_BAD_STRING_PTR      0x700a
-#define ERR_BAD_HANDLE          0x600b
-
-/* KERNEL parameter errors */
-#define ERR_BAD_HINSTANCE       0x6020
-#define ERR_BAD_HMODULE         0x6021
-#define ERR_BAD_GLOBAL_HANDLE   0x6022
-#define ERR_BAD_LOCAL_HANDLE    0x6023
-#define ERR_BAD_ATOM            0x6024
-#define ERR_BAD_HFILE           0x6025
-
-/* USER parameter errors */
-#define ERR_BAD_HWND            0x6040
-#define ERR_BAD_HMENU           0x6041
-#define ERR_BAD_HCURSOR         0x6042
-#define ERR_BAD_HICON           0x6043
-#define ERR_BAD_HDWP            0x6044
-#define ERR_BAD_CID             0x6045
-#define ERR_BAD_HDRVR           0x6046
-
-/* GDI parameter errors */
-#define ERR_BAD_COORDS          0x7060
-#define ERR_BAD_GDI_OBJECT      0x6061
-#define ERR_BAD_HDC             0x6062
-#define ERR_BAD_HPEN            0x6063
-#define ERR_BAD_HFONT           0x6064
-#define ERR_BAD_HBRUSH          0x6065
-#define ERR_BAD_HBITMAP         0x6066
-#define ERR_BAD_HRGN            0x6067
-#define ERR_BAD_HPALETTE        0x6068
-#define ERR_BAD_HMETAFILE       0x6069
-
-
-/* LogError() values */
-
-/* KERNEL errors */
-#define ERR_GALLOC              0x0001
-#define ERR_GREALLOC            0x0002
-#define ERR_GLOCK               0x0003
-#define ERR_LALLOC              0x0004
-#define ERR_LREALLOC            0x0005
-#define ERR_LLOCK               0x0006
-#define ERR_ALLOCRES            0x0007
-#define ERR_LOCKRES             0x0008
-#define ERR_LOADMODULE          0x0009
-
-/* USER errors */
-#define ERR_CREATEDLG           0x0040
-#define ERR_CREATEDLG2          0x0041
-#define ERR_REGISTERCLASS       0x0042
-#define ERR_DCBUSY              0x0043
-#define ERR_CREATEWND           0x0044
-#define ERR_STRUCEXTRA          0x0045
-#define ERR_LOADSTR             0x0046
-#define ERR_LOADMENU            0x0047
-#define ERR_NESTEDBEGINPAINT    0x0048
-#define ERR_BADINDEX            0x0049
-#define ERR_CREATEMENU          0x004a
-
-/* GDI errors */
-#define ERR_CREATEDC            0x0080
-#define ERR_CREATEMETA          0x0081
-#define ERR_DELOBJSELECTED      0x0082
-#define ERR_SELBITMAP           0x0083
-
-
 
 /* Debugging support (DEBUG SYSTEM ONLY) */
 typedef struct
@@ -622,8 +531,6 @@ typedef struct
 #define DBF_PENWIN          0x0020
 #define DBF_APPLICATION     0x0008
 #define DBF_DRIVER          0x0010
-
-#endif /* NOLOGERROR */
 
 typedef struct {
         WORD wYear;
