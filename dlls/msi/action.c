@@ -1350,6 +1350,10 @@ static UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action,
             LPWSTR actiondata = load_dynamic_property(package,action,NULL);
             if (actiondata)
                 MSI_SetPropertyW(package,szActionData,actiondata);
+
+            /* dont allow asyncronous actions on forces. This is not 
+             * fully correct as some exes can run after install finishes */
+            type &= ~0xc0;
         }
     }
 
@@ -4097,21 +4101,13 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, INT
 static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
 {
     LPWSTR productcode;
-    WCHAR squished_pc[0x100];
-    WCHAR squished_cc[0x100];
+    WCHAR squished_pc[GUID_SIZE];
+    WCHAR squished_cc[GUID_SIZE];
     UINT rc;
     DWORD i;
-    HKEY hkey=0,hkey2=0,hkey3=0;
+    HKEY hkey=0,hkey2=0;
     static const WCHAR szProductCode[]=
          {'P','r','o','d','u','c','t','C','o','d','e',0};
-    static const WCHAR szInstaller[] = {
-         'S','o','f','t','w','a','r','e','\\',
-         'M','i','c','r','o','s','o','f','t','\\',
-         'W','i','n','d','o','w','s','\\',
-         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-         'I','n','s','t','a','l','l','e','r',0 };
-    static const WCHAR szComponents[] = {
-         'C','o','m','p','o','n','e','n','t','s',0 };
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -4121,15 +4117,11 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
     if (!productcode)
         return rc;
 
-    squash_guid(productcode,squished_pc);
-    rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller,&hkey);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = RegCreateKeyW(hkey,szComponents,&hkey2);
+    rc = MSIREG_OpenComponents(&hkey);
     if (rc != ERROR_SUCCESS)
         goto end;
       
+    squash_guid(productcode,squished_pc);
     ui_progress(package,1,COMPONENT_PROGRESS_VALUE,1,0);
     for (i = 0; i < package->loaded_components; i++)
     {
@@ -4140,16 +4132,16 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             MSIRECORD * uirow;
 
             squash_guid(package->components[i].ComponentId,squished_cc);
-            rc = RegCreateKeyW(hkey2,squished_cc,&hkey3);
+            rc = RegCreateKeyW(hkey,squished_cc,&hkey2);
             if (rc != ERROR_SUCCESS)
                 continue;
            
             keypath = resolve_keypath(package,i);
             if (keypath)
             {
-                RegSetValueExW(hkey3,squished_pc,0,REG_SZ,(LPVOID)keypath,
+                RegSetValueExW(hkey2,squished_pc,0,REG_SZ,(LPVOID)keypath,
                             (strlenW(keypath)+1)*sizeof(WCHAR));
-                RegCloseKey(hkey3);
+                RegCloseKey(hkey2);
         
                 /* UI stuff */
                 uirow = MSI_CreateRecord(3);
@@ -4165,7 +4157,6 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
     } 
 end:
     HeapFree(GetProcessHeap(), 0, productcode);
-    RegCloseKey(hkey2);
     RegCloseKey(hkey);
     return rc;
 }
@@ -5010,31 +5001,17 @@ static UINT ACTION_PublishProduct(MSIPACKAGE *package)
     DWORD sz;
     /* for registry stuff */
     LPWSTR productcode;
-    WCHAR squished_pc[0x100];
-    HKEY hkey=0,hkey2=0,hkey3=0;
-    HKEY hukey=0,hukey2=0,hukey3=0,hukey4=0;
+    HKEY hkey=0;
+    HKEY hukey=0;
     static const WCHAR szProductCode[]=
          {'P','r','o','d','u','c','t','C','o','d','e',0};
-    static const WCHAR szInstaller[] = {
-         'S','o','f','t','w','a','r','e','\\',
-         'M','i','c','r','o','s','o','f','t','\\',
-         'W','i','n','d','o','w','s','\\',
-         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-         'I','n','s','t','a','l','l','e','r',0 };
-    static const WCHAR szUserInstaller[] = {
-         'S','o','f','t','w','a','r','e','\\',
-         'M','i','c','r','o','s','o','f','t','\\',
-         'I','n','s','t','a','l','l','e','r',0 };
-    static const WCHAR szProducts[] = {
-         'P','r','o','d','u','c','t','s',0};
     static const WCHAR szProductName[] = {
          'P','r','o','d','u','c','t','N','a','m','e',0};
-    static const WCHAR szSourceList[] = {
-         'S','o','u','r','c','e','L','i','s','t',0};
-    static const WCHAR szLUS[] = {
-         'L','a','s','t','U','s','e','d','S','o','u','r','c','e',0};
+    static const WCHAR szPackageCode[] = {
+         'P','a','c','k','a','g','e','C','o','d','e',0};
     LPWSTR buffer;
     DWORD size;
+    MSIHANDLE hDb, hSumInfo;
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -5119,54 +5096,58 @@ next:
     if (!productcode)
         return rc;
 
-    squash_guid(productcode,squished_pc);
-
-    rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller,&hkey);
+    rc = MSIREG_OpenProductsKey(productcode,&hkey,TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    rc = RegCreateKeyW(HKEY_CURRENT_USER,szUserInstaller,&hukey);
+    rc = MSIREG_OpenUserProductsKey(productcode,&hukey,TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    rc = RegCreateKeyW(hkey,szProducts,&hkey2);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = RegCreateKeyW(hukey,szProducts,&hukey2);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = RegCreateKeyW(hkey2,squished_pc,&hkey3);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = RegCreateKeyW(hukey2,squished_pc,&hukey3);
-    if (rc != ERROR_SUCCESS)
-        goto end;
 
     buffer = load_dynamic_property(package,szProductName,NULL);
     size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hukey3,szProductName,0,REG_SZ, (LPSTR)buffer,size);
+    RegSetValueExW(hukey,szProductName,0,REG_SZ, (LPSTR)buffer,size);
     HeapFree(GetProcessHeap(),0,buffer);
     FIXME("Need to write more keys to the user registry\n");
+  
+    hDb= msiobj_findhandle( &package->db->hdr );
+    rc = MsiGetSummaryInformationW(hDb, NULL, 0, &hSumInfo); 
+    if (rc == ERROR_SUCCESS)
+    {
+        WCHAR guidbuffer[0x200];
+        size = 0x200;
+        rc = MsiSummaryInfoGetPropertyW(hSumInfo, 8, NULL, NULL, NULL,
+                                        guidbuffer, &size);
+        if (rc == ERROR_SUCCESS)
+        {
+            WCHAR squashed[GUID_SIZE];
+            /* for now we only care about the first guid */
+            LPWSTR ptr = strchrW(guidbuffer,';');
+            if (ptr) *ptr = 0;
+            squash_guid(guidbuffer,squashed);
+            size = strlenW(guidbuffer)*sizeof(WCHAR);
+            RegSetValueExW(hukey,szPackageCode,0,REG_SZ, (LPSTR)guidbuffer,
+                           size);
+            
+        }
+        else
+        {
+            ERR("Unable to query Revision_Number... \n");
+            rc = ERROR_SUCCESS;
+        }
+        MsiCloseHandle(hSumInfo);
+    }
+    else
+    {
+        ERR("Unable to open Summary Information\n");
+        rc = ERROR_SUCCESS;
+    }
 
-    FIXME("This may not be in the right place. I dont know when todo this\n");
-    RegCreateKeyW(hukey3, szSourceList, &hukey4);
-    buffer = load_dynamic_property(package,cszSourceDir,NULL);
-    size = strlenW(buffer)*sizeof(WCHAR);
-    RegSetValueExW(hukey4,szLUS,0,REG_SZ,(LPSTR)buffer,size);
-    HeapFree(GetProcessHeap(),0,buffer); 
-
-    RegCloseKey(hukey4);
 end:
 
     HeapFree(GetProcessHeap(),0,productcode);    
-    RegCloseKey(hkey3);
-    RegCloseKey(hkey2);
     RegCloseKey(hkey);
-    RegCloseKey(hukey3);
-    RegCloseKey(hukey2);
     RegCloseKey(hukey);
 
     return rc;
@@ -5397,26 +5378,13 @@ static UINT ACTION_SelfRegModules(MSIPACKAGE *package)
 static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
 {
     LPWSTR productcode;
-    WCHAR squished_pc[0x100];
     UINT rc;
     DWORD i;
-    HKEY hkey=0,hkey2=0,hkey3=0;
-    HKEY hukey=0,hukey2=0,hukey3=0;
+    HKEY hkey=0;
+    HKEY hukey=0;
     static const WCHAR szProductCode[]=
          {'P','r','o','d','u','c','t','C','o','d','e',0};
-    static const WCHAR szInstaller[] = {
-         'S','o','f','t','w','a','r','e','\\',
-         'M','i','c','r','o','s','o','f','t','\\',
-         'W','i','n','d','o','w','s','\\',
-         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-         'I','n','s','t','a','l','l','e','r',0 };
-    static const WCHAR szUserInstaller[] = {
-         'S','o','f','t','w','a','r','e','\\',
-         'M','i','c','r','o','s','o','f','t','\\',
-         'I','n','s','t','a','l','l','e','r',0 };
-    static const WCHAR szFeatures[] = {
-         'F','e','a','t','u','r','e','s',0 };
-
+    
     if (!package)
         return ERROR_INVALID_HANDLE;
 
@@ -5424,28 +5392,11 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
     if (!productcode)
         return rc;
 
-    squash_guid(productcode,squished_pc);
-    rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller,&hkey);
+    rc = MSIREG_OpenFeaturesKey(productcode,&hkey,TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
 
-    rc = RegCreateKeyW(HKEY_CURRENT_USER,szUserInstaller,&hukey);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = RegCreateKeyW(hkey,szFeatures,&hkey2);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = RegCreateKeyW(hukey,szFeatures,&hukey2);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = RegCreateKeyW(hkey2,squished_pc,&hkey3);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = RegCreateKeyW(hukey2,squished_pc,&hukey3);
+    rc = MSIREG_OpenUserFeaturesKey(productcode,&hukey,TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
 
@@ -5486,37 +5437,27 @@ static UINT ACTION_PublishFeatures(MSIPACKAGE *package)
         }
 
         size = (strlenW(data)+1)*sizeof(WCHAR);
-        RegSetValueExW(hkey3,package->features[i].Feature,0,REG_SZ,
+        RegSetValueExW(hkey,package->features[i].Feature,0,REG_SZ,
                        (LPSTR)data,size);
         HeapFree(GetProcessHeap(),0,data);
 
         size = strlenW(package->features[i].Feature_Parent)*sizeof(WCHAR);
-        RegSetValueExW(hukey3,package->features[i].Feature,0,REG_SZ,
+        RegSetValueExW(hukey,package->features[i].Feature,0,REG_SZ,
                        (LPSTR)package->features[i].Feature_Parent,size);
     }
 
-    RegCloseKey(hkey3);
-    RegCloseKey(hukey3);
 end:
-    HeapFree(GetProcessHeap(), 0, productcode);
-    RegCloseKey(hkey2);
-    RegCloseKey(hukey2);
     RegCloseKey(hkey);
     RegCloseKey(hukey);
+    HeapFree(GetProcessHeap(), 0, productcode);
     return rc;
 }
 
 static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
 {
-    static const WCHAR szKey[] = {
-        'S','o','f','t','w','a','r','e','\\',
-        'M','i','c','r','o','s','o','f','t','\\',
-        'W','i','n','d','o','w','s','\\',
-        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-        'U','n','i','n','s','t','a','l','l',0 };
     static const WCHAR szProductCode[]=
          {'P','r','o','d','u','c','t','C','o','d','e',0};
-    HKEY hkey=0,hkey2=0;
+    HKEY hkey=0;
     LPWSTR buffer;
     LPWSTR productcode;
     UINT rc,i;
@@ -5581,11 +5522,7 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     if (!productcode)
         return rc;
 
-    rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,szKey,&hkey);
-    if (rc != ERROR_SUCCESS)
-        goto end;
-
-    rc = RegCreateKeyW(hkey,productcode,&hkey2);
+    rc = MSIREG_OpenUninstallKey(productcode,&hkey,TRUE);
     if (rc != ERROR_SUCCESS)
         goto end;
 
@@ -5599,13 +5536,13 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
         if (rc != ERROR_SUCCESS)
             buffer = szNONE;
         size = strlenW(buffer)*sizeof(WCHAR);
-        RegSetValueExW(hkey2,szRegKeys[i],0,REG_SZ,(LPSTR)buffer,size);
+        RegSetValueExW(hkey,szRegKeys[i],0,REG_SZ,(LPSTR)buffer,size);
         i++;
     }
 
     rc = 0x1;
     size = sizeof(rc);
-    RegSetValueExW(hkey2,szWindowsInstaler,0,REG_DWORD,(LPSTR)&rc,size);
+    RegSetValueExW(hkey,szWindowsInstaler,0,REG_DWORD,(LPSTR)&rc,size);
     
     /* copy the package locally */
     num = GetTickCount() & 0xffff;
@@ -5632,12 +5569,11 @@ static UINT ACTION_RegisterProduct(MSIPACKAGE *package)
     create_full_pathW(path);
     CopyFileW(package->PackagePath,packagefile,FALSE);
     size = strlenW(packagefile)/sizeof(WCHAR);
-    RegSetValueExW(hkey2,szLocalPackage,0,REG_SZ,(LPSTR)packagefile,size);
+    RegSetValueExW(hkey,szLocalPackage,0,REG_SZ,(LPSTR)packagefile,size);
     
 end:
     HeapFree(GetProcessHeap(),0,productcode);
     RegCloseKey(hkey);
-    RegCloseKey(hkey2);
 
     return ERROR_SUCCESS;
 }
@@ -5713,13 +5649,19 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     'A','F','T','E','R','R','E','B','O','O','T','=','1',' ',
     'R','U','N','O','N','C','E','E','N','T','R','Y','=','\"','%','s','\"',0};
     WCHAR buffer[256];
-    HKEY hkey;
+    HKEY hkey,hukey;
     LPWSTR productcode;
     WCHAR  squished_pc[100];
     INT rc;
     DWORD size;
     static const WCHAR szProductCode[]=
          {'P','r','o','d','u','c','t','C','o','d','e',0};
+    static const WCHAR szLUS[] = {
+         'L','a','s','t','U','s','e','d','S','o','u','r','c','e',0};
+    static const WCHAR szSourceList[] = {
+         'S','o','u','r','c','e','L','i','s','t',0};
+    static const WCHAR szPackageName[] = { 
+        'P','a','c','k','a','g','e','N','a','m','e',0};
 
     if (!package)
         return ERROR_INVALID_HANDLE;
@@ -5744,10 +5686,30 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     RegSetValueExW(hkey,squished_pc,0,REG_SZ,(LPSTR)buffer,size);
     RegCloseKey(hkey);
 
+    rc = MSIREG_OpenUserProductsKey(productcode,&hukey,TRUE);
+    if (rc == ERROR_SUCCESS)
+    {
+        HKEY hukey2;
+        LPWSTR buf;
+        RegCreateKeyW(hukey, szSourceList, &hukey2);
+        buf = load_dynamic_property(package,cszSourceDir,NULL);
+        size = strlenW(buf)*sizeof(WCHAR);
+        RegSetValueExW(hukey2,szLUS,0,REG_SZ,(LPSTR)buf,size);
+        HeapFree(GetProcessHeap(),0,buf); 
+
+        buf = strrchrW(package->PackagePath,'\\');
+        if (buf)
+        {
+            buf++;
+            size = strlenW(buf)*sizeof(WCHAR);
+            RegSetValueExW(hukey2,szPackageName,0,REG_SZ,(LPSTR)buf,size);
+        }
+
+        RegCloseKey(hukey2);
+    }
     HeapFree(GetProcessHeap(),0,productcode);
 
-    ExitWindowsEx(EWX_REBOOT,0);
-    return -1;
+    return ERROR_INSTALL_SUSPEND;
 }
 
 /* Msi functions that seem appropriate here */
