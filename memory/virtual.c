@@ -237,7 +237,7 @@ static FILE_VIEW *VIRTUAL_CreateView( UINT base, UINT size, UINT flags,
 
     /* Duplicate the mapping handle */
 
-    if ((view->mapping != -1) &&
+    if (view->mapping &&
         !DuplicateHandle( GetCurrentProcess(), view->mapping,
                           GetCurrentProcess(), &view->mapping,
                           0, FALSE, DUPLICATE_SAME_ACCESS ))
@@ -288,7 +288,7 @@ static void VIRTUAL_DeleteView(
     if (view->prev) view->prev->next = view->next;
     else VIRTUAL_FirstView = view->next;
     LeaveCriticalSection(&csVirtual);
-    if (view->mapping) CloseHandle( view->mapping );
+    if (view->mapping) NtClose( view->mapping );
     free( view );
 }
 
@@ -844,7 +844,7 @@ LPVOID WINAPI VirtualAlloc(
 	    return NULL;
         }
         if (!(view = VIRTUAL_CreateView( ptr, size, (type & MEM_SYSTEM) ?
-                                         VFLAG_SYSTEM : 0, vprot, -1 )))
+                                         VFLAG_SYSTEM : 0, vprot, 0 )))
         {
             munmap( (void *)ptr, size );
             SetLastError( ERROR_OUTOFMEMORY );
