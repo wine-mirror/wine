@@ -1186,12 +1186,13 @@ static HRESULT DSOUND_PrimaryStop(IDirectSoundBufferImpl *dsb)
 			IDsDriverBuffer_Release(primarybuf->hwbuf);
 			waveOutClose(dsb->dsound->hwo);
 			dsb->dsound->hwo = 0;
-			waveOutOpen(&(dsb->dsound->hwo), dsb->dsound->drvdesc.dnDevNode,
-				    &(primarybuf->wfx), (DWORD)DSOUND_callback, (DWORD)dsb->dsound,
-				    CALLBACK_FUNCTION | WAVE_DIRECTSOUND);
-			err = IDsDriver_CreateSoundBuffer(dsb->dsound->driver,&(dsb->wfx),dsb->dsbd.dwFlags,0,
-							  &(dsb->buflen),&(dsb->buffer),
-							  (LPVOID)&(dsb->hwbuf));
+			err = mmErr(waveOutOpen(&(dsb->dsound->hwo), dsb->dsound->drvdesc.dnDevNode,
+                                                &(primarybuf->wfx), (DWORD)DSOUND_callback, (DWORD)dsb->dsound,
+                                                CALLBACK_FUNCTION | WAVE_DIRECTSOUND));
+                        if (err == DS_OK)
+                            err = IDsDriver_CreateSoundBuffer(dsb->dsound->driver,&(dsb->wfx),dsb->dsbd.dwFlags,0,
+                                                              &(dsb->buflen),&(dsb->buffer),
+                                                              (LPVOID)&(dsb->hwbuf));
 		}
 	}
 	else
@@ -1253,10 +1254,11 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
 		DSOUND_PrimaryClose(primarybuf);
 		waveOutClose(This->dsound->hwo);
 		This->dsound->hwo = 0;
-                waveOutOpen(&(This->dsound->hwo), This->dsound->drvdesc.dnDevNode,
-			    &(primarybuf->wfx), (DWORD)DSOUND_callback, (DWORD)This->dsound,
-			    CALLBACK_FUNCTION | WAVE_DIRECTSOUND);
-		DSOUND_PrimaryOpen(primarybuf);
+                err = mmErr(waveOutOpen(&(This->dsound->hwo), This->dsound->drvdesc.dnDevNode,
+                                        &(primarybuf->wfx), (DWORD)DSOUND_callback, (DWORD)This->dsound,
+                                        CALLBACK_FUNCTION | WAVE_DIRECTSOUND));
+                if (err == DS_OK)
+                    DSOUND_PrimaryOpen(primarybuf);
 	}
 	if (primarybuf->hwbuf) {
 		err = IDsDriverBuffer_SetFormat(primarybuf->hwbuf, &(primarybuf->wfx));
@@ -1269,13 +1271,14 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetFormat(
 			if (primarybuf->state == STATE_PLAYING) primarybuf->state = STATE_STARTING;
 			else if (primarybuf->state == STATE_STOPPING) primarybuf->state = STATE_STOPPED;
 		}
+                /* FIXME: should we set err back to DS_OK in all cases ? */
 	}
 	DSOUND_RecalcFormat(primarybuf);
 
 	LeaveCriticalSection(&(This->dsound->lock));
 	/* **** */
 
-	return DS_OK;
+	return err;
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_SetVolume(
