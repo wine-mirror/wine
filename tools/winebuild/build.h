@@ -98,7 +98,7 @@ typedef struct
     int              nb_entry_points;    /* number of used entry points */
     int              alloc_entry_points; /* number of allocated entry points */
     int              nb_names;           /* number of entry points with names */
-    int              nb_resources;       /* number of resources */
+    unsigned int     nb_resources;       /* number of resources */
     int              characteristics;    /* characteristics for the PE header */
     int              subsystem;          /* subsystem id */
     int              subsystem_major;    /* subsystem version major number */
