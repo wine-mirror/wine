@@ -812,7 +812,7 @@ BOOL X11DRV_WND_SetHostAttr(WND* wnd, INT ha, INT value)
 			    else
 			    {
 				XEvent xe;
-				XMapWindow(display, w );
+				TSXMapWindow(display, w );
 				while( !TSXCheckTypedWindowEvent( display, w, MapNotify, &xe) );
 			    }
 			}
