@@ -190,6 +190,7 @@ typedef struct tagINPUT
 
 
 /***** Dialogs *****/
+
 /* Gcc on Solaris has a version of this that we don't care about */
 #undef FSHIFT
 
@@ -264,6 +265,73 @@ typedef struct
 #define WPF_RESTORETOMAXIMIZED  0x0002
 
 /***** Dialogs *****/
+
+#define MAKEINTRESOURCEA(i) (LPSTR)((DWORD)((WORD)(i)))
+#define MAKEINTRESOURCEW(i) (LPWSTR)((DWORD)((WORD)(i)))
+#define MAKEINTRESOURCE WINELIB_NAME_AW(MAKEINTRESOURCE)
+
+/* Predefined resource types */
+#define RT_CURSORA         MAKEINTRESOURCEA(1)
+#define RT_CURSORW         MAKEINTRESOURCEW(1)
+#define RT_CURSOR            WINELIB_NAME_AW(RT_CURSOR)
+#define RT_BITMAPA         MAKEINTRESOURCEA(2)
+#define RT_BITMAPW         MAKEINTRESOURCEW(2)
+#define RT_BITMAP            WINELIB_NAME_AW(RT_BITMAP)
+#define RT_ICONA           MAKEINTRESOURCEA(3)
+#define RT_ICONW           MAKEINTRESOURCEW(3)
+#define RT_ICON              WINELIB_NAME_AW(RT_ICON)
+#define RT_MENUA           MAKEINTRESOURCEA(4)
+#define RT_MENUW           MAKEINTRESOURCEW(4)
+#define RT_MENU              WINELIB_NAME_AW(RT_MENU)
+#define RT_DIALOGA         MAKEINTRESOURCEA(5)
+#define RT_DIALOGW         MAKEINTRESOURCEW(5)
+#define RT_DIALOG            WINELIB_NAME_AW(RT_DIALOG)
+#define RT_STRINGA         MAKEINTRESOURCEA(6)
+#define RT_STRINGW         MAKEINTRESOURCEW(6)
+#define RT_STRING            WINELIB_NAME_AW(RT_STRING)
+#define RT_FONTDIRA        MAKEINTRESOURCEA(7)
+#define RT_FONTDIRW        MAKEINTRESOURCEW(7)
+#define RT_FONTDIR           WINELIB_NAME_AW(RT_FONTDIR)
+#define RT_FONTA           MAKEINTRESOURCEA(8)
+#define RT_FONTW           MAKEINTRESOURCEW(8)
+#define RT_FONT              WINELIB_NAME_AW(RT_FONT)
+#define RT_ACCELERATORA    MAKEINTRESOURCEA(9)
+#define RT_ACCELERATORW    MAKEINTRESOURCEW(9)
+#define RT_ACCELERATOR       WINELIB_NAME_AW(RT_ACCELERATOR)
+#define RT_RCDATAA         MAKEINTRESOURCEA(10)
+#define RT_RCDATAW         MAKEINTRESOURCEW(10)
+#define RT_RCDATA            WINELIB_NAME_AW(RT_RCDATA)
+#define RT_MESSAGETABLEA   MAKEINTRESOURCEA(11)
+#define RT_MESSAGETABLEW   MAKEINTRESOURCEW(11)
+#define RT_MESSAGETABLE       WINELIB_NAME_AW(RT_MESSAGETABLE)
+#define RT_GROUP_CURSORA   MAKEINTRESOURCEA(12)
+#define RT_GROUP_CURSORW   MAKEINTRESOURCEW(12)
+#define RT_GROUP_CURSOR      WINELIB_NAME_AW(RT_GROUP_CURSOR)
+#define RT_GROUP_ICONA     MAKEINTRESOURCEA(14)
+#define RT_GROUP_ICONW     MAKEINTRESOURCEW(14)
+#define RT_GROUP_ICON        WINELIB_NAME_AW(RT_GROUP_ICON)
+#define RT_VERSIONA        MAKEINTRESOURCEA(16)
+#define RT_VERSIONW        MAKEINTRESOURCEW(16)
+#define RT_VERSION           WINELIB_NAME_AW(RT_VERSION)
+#define RT_DLGINCLUDEA     MAKEINTRESOURCEA(17)
+#define RT_DLGINCLUDEW     MAKEINTRESOURCEW(17)
+#define RT_DLGINCLUDE        WINELIB_NAME_AW(RT_DLGINCLUDE)
+#define RT_PLUGPLAYA       MAKEINTRESOURCEA(19)
+#define RT_PLUGPLAYW       MAKEINTRESOURCEW(19)
+#define RT_PLUGPLAY          WINELIB_NAME_AW(RT_PLUGPLAY)
+#define RT_VXDA            MAKEINTRESOURCEA(20)
+#define RT_VXDW            MAKEINTRESOURCEW(20)
+#define RT_VXD               WINELIB_NAME_AW(RT_VXD)
+#define RT_ANICURSORA      MAKEINTRESOURCEA(21)
+#define RT_ANICURSORW      MAKEINTRESOURCEW(21)
+#define RT_ANICURSOR         WINELIB_NAME_AW(RT_ANICURSOR)
+#define RT_ANIICONA        MAKEINTRESOURCEA(22)
+#define RT_ANIICONW        MAKEINTRESOURCEW(22)
+#define RT_ANIICON           WINELIB_NAME_AW(RT_ANIICON)
+#define RT_HTMLA           MAKEINTRESOURCEA(23)
+#define RT_HTMLW           MAKEINTRESOURCEW(23)
+#define RT_HTML              WINELIB_NAME_AW(RT_HTML)
+
 
   /* cbWndExtra bytes for dialog class */
 #define DLGWINDOWEXTRA      30
@@ -2003,6 +2071,10 @@ DECL_WINELIB_TYPE_AW(LPMSGBOXPARAMS)
 
 #define MONITORINFOF_PRIMARY        0x00000001
 
+#ifndef CCHDEVICENAME
+#define CCHDEVICENAME 32
+#endif
+
 typedef struct tagMONITORINFO
 {
     DWORD   cbSize;
@@ -2375,6 +2447,7 @@ typedef struct
 #define SPIF_SENDWININICHANGE           2
 #define SPIF_SENDCHANGE                 SPIF_SENDWININICHANGE
 
+#if defined(_WINGDI_) && !defined(NOGDI)
 typedef struct {
 	UINT		cbSize;
 	INT		iBorderWidth;
@@ -2415,6 +2488,27 @@ DECL_WINELIB_TYPE_AW(NONCLIENTMETRICS)
 DECL_WINELIB_TYPE_AW(PNONCLIENTMETRICS)
 DECL_WINELIB_TYPE_AW(LPNONCLIENTMETRICS)
 
+typedef struct tagICONMETRICSA {
+    UINT cbSize;
+    int iHorzSpacing;
+    int iVertSpacing;
+    int iTitleWrap;
+    LOGFONTA lfFont;
+} ICONMETRICSA, *PICONMETRICSA, *LPICONMETRICSA;
+
+typedef struct tagICONMETRICSW {
+    UINT cbSize;
+    int iHorzSpacing;
+    int iVertSpacing;
+    int iTitleWrap;
+    LOGFONTW lfFont;
+} ICONMETRICSW, *PICONMETRICSW, *LPICONMETRICSW;
+
+DECL_WINELIB_TYPE_AW(ICONMETRICS)
+DECL_WINELIB_TYPE_AW(PICONMETRICS)
+DECL_WINELIB_TYPE_AW(LPICONMETRICS)
+#endif /* defined(_WINGDI_) && !defined(NOGDI) */
+
 #define ARW_BOTTOMLEFT              0x0000L
 #define ARW_BOTTOMRIGHT             0x0001L
 #define ARW_TOPLEFT                 0x0002L
@@ -2436,26 +2530,6 @@ typedef struct tagMINIMIZEDMETRICS {
     int iVertGap;
     int iArrange;
 } MINIMIZEDMETRICS, *PMINIMIZEDMETRICS, *LPMINIMIZEDMETRICS;
-
-typedef struct tagICONMETRICSA {
-    UINT cbSize;
-    int iHorzSpacing;
-    int iVertSpacing;
-    int iTitleWrap;
-    LOGFONTA lfFont;
-} ICONMETRICSA, *PICONMETRICSA, *LPICONMETRICSA;
-
-typedef struct tagICONMETRICSW {
-    UINT cbSize;
-    int iHorzSpacing;
-    int iVertSpacing;
-    int iTitleWrap;
-    LOGFONTW lfFont;
-} ICONMETRICSW, *PICONMETRICSW, *LPICONMETRICSW;
-
-DECL_WINELIB_TYPE_AW(ICONMETRICS)
-DECL_WINELIB_TYPE_AW(PICONMETRICS)
-DECL_WINELIB_TYPE_AW(LPICONMETRICS)
 
 /* Window Styles */
 #define WS_OVERLAPPED    0x00000000L
@@ -3173,6 +3247,21 @@ typedef  HDEVNOTIFY     *PHDEVNOTIFY;
 #define     AnsiToOemBuffW CharToOemBuffW
 #define     AnsiToOemBuff WINELIB_NAME_AW(AnsiToOemBuff)
 
+#if defined(_WINGDI_) && !defined(NOGDI)
+LONG        WINAPI ChangeDisplaySettingsA(LPDEVMODEA,DWORD);
+LONG        WINAPI ChangeDisplaySettingsW(LPDEVMODEW,DWORD);
+#define     ChangeDisplaySettings WINELIB_NAME_AW(ChangeDisplaySettings)
+LONG        WINAPI ChangeDisplaySettingsExA(LPCSTR,LPDEVMODEA,HWND,DWORD,LPARAM);
+LONG        WINAPI ChangeDisplaySettingsExW(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPARAM);
+#define     ChangeDisplaySettingsEx WINELIB_NAME_AW(ChangeDisplaySettingsEx)
+BOOL        WINAPI EnumDisplayDevicesA(LPVOID,DWORD,LPDISPLAY_DEVICEA,DWORD);
+BOOL        WINAPI EnumDisplayDevicesW(LPVOID,DWORD,LPDISPLAY_DEVICEW,DWORD);
+#define     EnumDisplayDevices WINELIB_NAME_AW(EnumDisplayDevices)
+BOOL        WINAPI EnumDisplaySettingsA(LPCSTR,DWORD,LPDEVMODEA);
+BOOL        WINAPI EnumDisplaySettingsW(LPCWSTR,DWORD,LPDEVMODEW);
+#define     EnumDisplaySettings WINELIB_NAME_AW(EnumDisplaySettings)
+#endif /* defined(_WINGDI_) && !defined(NOGDI) */
+
 HKL         WINAPI ActivateKeyboardLayout(HKL,UINT);
 LONG        WINAPI BroadcastSystemMessage(DWORD,LPDWORD,UINT,WPARAM,LPARAM);
 WORD        WINAPI CascadeWindows(HWND, UINT, const LPRECT, UINT, const HWND *);
@@ -3188,12 +3277,6 @@ BOOL        WINAPI EnumDesktopsA(HWINSTA,DESKTOPENUMPROCA,LPARAM);
 BOOL        WINAPI EnumDesktopsW(HWINSTA,DESKTOPENUMPROCW,LPARAM);
 #define     EnumDesktops WINELIB_NAME_AW(EnumDesktops)
 BOOL      WINAPI EnumDisplayMonitors(HDC,LPRECT,MONITORENUMPROC,LPARAM);
-BOOL        WINAPI EnumDisplayDevicesA(LPVOID,DWORD,LPDISPLAY_DEVICEA,DWORD);
-BOOL        WINAPI EnumDisplayDevicesW(LPVOID,DWORD,LPDISPLAY_DEVICEW,DWORD);
-#define     EnumDisplayDevices WINELIB_NAME_AW(EnumDisplayDevices)
-BOOL        WINAPI EnumDisplaySettingsA(LPCSTR,DWORD,LPDEVMODEA);
-BOOL        WINAPI EnumDisplaySettingsW(LPCWSTR,DWORD,LPDEVMODEW);
-#define     EnumDisplaySettings WINELIB_NAME_AW(EnumDisplaySettings)
 INT       WINAPI EnumPropsExA(HWND,PROPENUMPROCEXA,LPARAM);
 INT       WINAPI EnumPropsExW(HWND,PROPENUMPROCEXW,LPARAM);
 #define     EnumPropsEx WINELIB_NAME_AW(EnumPropsEx)
@@ -3310,12 +3393,6 @@ LRESULT     WINAPI CallWindowProcA(WNDPROC,HWND,UINT,WPARAM,LPARAM);
 LRESULT     WINAPI CallWindowProcW(WNDPROC,HWND,UINT,WPARAM,LPARAM);
 #define     CallWindowProc WINELIB_NAME_AW(CallWindowProc)
 BOOL      WINAPI ChangeClipboardChain(HWND,HWND);
-LONG        WINAPI ChangeDisplaySettingsA(LPDEVMODEA,DWORD);
-LONG        WINAPI ChangeDisplaySettingsW(LPDEVMODEW,DWORD);
-#define     ChangeDisplaySettings WINELIB_NAME_AW(ChangeDisplaySettings)
-LONG        WINAPI ChangeDisplaySettingsExA(LPCSTR,LPDEVMODEA,HWND,DWORD,LPARAM);
-LONG        WINAPI ChangeDisplaySettingsExW(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPARAM);
-#define     ChangeDisplaySettingsEx WINELIB_NAME_AW(ChangeDisplaySettingsEx)
 BOOL      WINAPI ChangeMenuA(HMENU,UINT,LPCSTR,UINT,UINT);
 BOOL      WINAPI ChangeMenuW(HMENU,UINT,LPCWSTR,UINT,UINT);
 #define     ChangeMenu WINELIB_NAME_AW(ChangeMenu)

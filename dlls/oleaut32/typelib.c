@@ -48,6 +48,7 @@
 #include "winerror.h"
 #include "winnls.h"         /* for PRIMARYLANGID */
 #include "winreg.h"         /* for HKEY_LOCAL_MACHINE */
+#include "winuser.h"
 
 #include "wine/unicode.h"
 #include "wine/obj_base.h"

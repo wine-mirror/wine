@@ -4,6 +4,8 @@
  * Copyright 2000 Jon Griffiths
  */
 #include "winnt.h"
+#include "winbase.h"
+#include "winuser.h"
 
 #include "msvcrt.h"
 #include "msvcrt/locale.h"
