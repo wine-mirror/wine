@@ -7,28 +7,29 @@ sub check_function {
     my $output = shift;
     my $return_type = shift;
     my $calling_convention = shift;
-    my $name = shift;
+    my $external_name = shift;
+    my $internal_name = shift;
     my $refargument_types = shift;
     my @argument_types = @$refargument_types;
     my $winapi = shift;
 
-    my $module = $winapi->function_module($name);
+    my $module = $winapi->function_module($external_name);
        
     if($winapi->name eq "win16") {
-	my $name16 = $name;
+	my $name16 = $external_name;
 	$name16 =~ s/16$//;
-	if($name16 ne $name && $winapi->function_stub($name16)) {
+	if($name16 ne $external_name && $winapi->function_stub($name16)) {
 	    if($options->implemented) {
 		&$output("function implemented but declared as stub in .spec file");
 	    }
 	    return;
-	} elsif($winapi->function_stub($name)) {
+	} elsif($winapi->function_stub($external_name)) {
 	    if($options->implemented_win32) {
 		&$output("32-bit variant of function implemented but declared as stub in .spec file");
 	    }
 	    return;
 	}
-    } elsif($winapi->function_stub($name)) {
+    } elsif($winapi->function_stub($external_name)) {
 	if($options->implemented) {
 	    &$output("function implemented but declared as stub in .spec file");
 	}
@@ -79,8 +80,8 @@ sub check_function {
 	}
     }
 
-    my $declared_calling_convention = $winapi->function_calling_convention($name);
-    my @declared_argument_kinds = split(/\s+/, $winapi->function_arguments($name));
+    my $declared_calling_convention = $winapi->function_calling_convention($external_name);
+    my @declared_argument_kinds = split(/\s+/, $winapi->function_arguments($external_name));
 
     if($declared_calling_convention =~ /^register|interrupt$/) {
 	push @declared_argument_kinds, "ptr";
@@ -111,12 +112,12 @@ sub check_function {
     }
 
     if($#argument_types != -1 && $argument_types[$#argument_types] eq "CONTEXT *" &&
-       $name !~ /^(Get|Set)ThreadContext$/)
+       $external_name !~ /^(Get|Set)ThreadContext$/) # FIXME: Kludge
     {
 	$#argument_types--;
     }
     
-    if($name =~ /^CRTDLL__ftol|CRTDLL__CIpow$/) {
+    if($internal_name =~ /^CRTDLL__ftol|CRTDLL__CIpow$/) { # FIXME: Kludge
 	# ignore
     } else {
 	my $n = 0;
@@ -167,7 +168,7 @@ sub check_function {
 
     }
 
-    if($segmented && $options->shared_segmented && $winapi->is_shared_function($name)) {
+    if($segmented && $options->shared_segmented && $winapi->is_shared_function($internal_name)) {
 	&$output("function using segmented pointers shared between Win16 och Win32");
     }
 }

@@ -1,6 +1,7 @@
 % dlls/advapi32/advapi32.spec
 
 dlls/advapi32
+misc
 
 % dlls/avifil32/avifil32.spec
 
@@ -25,6 +26,7 @@ dlls/commdlg
 % dlls/crtdll/crtdll.spec
 
 dlls/crtdll
+misc
 
 % dlls/dciman32/dciman32.spec
 
@@ -33,6 +35,7 @@ dlls/dciman32
 % dlls/ddraw/ddraw.spec
 
 dlls/ddraw
+dlls/ddraw/dclipper
 
 % dlls/dinput/dinput.spec
 
@@ -41,6 +44,7 @@ dlls/dinput
 % dlls/display/display.spec
 
 dlls/display
+objects
 
 % dlls/dplayx/dplay.spec
 
@@ -57,10 +61,21 @@ dlls/dsound
 % dlls/gdi/gdi.spec
 
 dlls/gdi
+graphics/metafiledrv
+graphics/win16drv
+graphics
+memory
+misc
+objects
 
 % dlls/gdi/gdi32.spec
 
 dlls/gdi
+graphics/enhmetafiledrv
+graphics/metafiledrv
+graphics
+misc
+objects
 
 % dlls/icmp/icmp.spec
 
@@ -113,6 +128,9 @@ dlls/msvideo
 % dlls/ntdll/ntdll.spec
 
 dlls/ntdll
+loader
+misc
+scheduler
 
 % dlls/odbc32/odbc32.spec
 
@@ -121,6 +139,7 @@ dlls/odbc32
 % dlls/ole32/compobj.spec
 
 dlls/ole32
+files
 
 % dlls/ole32/ole2.spec
 
@@ -189,14 +208,17 @@ dlls/setupx
 % dlls/shell32/shell.spec
 
 dlls/shell32
+misc
 
 % dlls/shell32/shell32.spec
 
 dlls/shell32
+memory
 
 % dlls/shell32/shlwapi.spec
 
 dlls/shell32
+memory
 
 % dlls/sound/sound.spec
 
@@ -214,17 +236,38 @@ dlls/tapi32
 
 dlls/ttydrv
 
+% dlls/urlmon/urlmon.spec
+
+dlls/urlmon
+
 % dlls/user/keyboard.spec
 
 dlls/user
+memory
+windows
 
 % dlls/user/user.spec
 
+controls
 dlls/user
+if1632
+loader
+objects
+memory
+misc
+windows
 
 % dlls/user/user32.spec
 
+controls
 dlls/user
+loader
+objects
+memory
+misc
+scheduler
+win32
+windows
 
 % dlls/version/ver.spec
 
@@ -237,6 +280,7 @@ dlls/version
 % dlls/win32s/w32skrnl.spec
 
 dlls/win32s
+loader
 
 % dlls/win32s/w32sys.spec
 
@@ -245,6 +289,8 @@ dlls/win32s
 % dlls/win32s/win32s16.spec
 
 dlls/win32s
+memory
+scheduler
 
 % dlls/win87em/win87em.spec
 
@@ -265,6 +311,10 @@ dlls/windebug
 % dlls/wing/wing.spec
 
 dlls/wing
+
+% dlls/wininet/wininet.spec
+
+dlls/wininet
 
 % dlls/winmm/joystick/joystick.spec
 
@@ -308,7 +358,8 @@ dlls/winmm
 
 % dlls/winmm/winmm.spec
 
-dlls/winmm/winmm
+dlls/winmm
+windows
 
 % dlls/winsock/winsock.spec
 
@@ -317,26 +368,87 @@ dlls/winsock
 % dlls/winsock/wsock32.spec
 
 dlls/winsock
+misc
 
 % dlls/winspool/winspool.spec
 
 dlls/winspool
+win32
 
 % dlls/x11drv/x11drv.spec
 
 dlls/x11drv
 
 % if1632/comm.spec
+
 % if1632/ddeml.spec
+
+misc
+
 % if1632/dispdib.spec
+
+graphics
+
 % if1632/kernel.spec
+
+files
+if1632
+loader/ne
+loader
+memory
+misc
+msdos
+relay32
+scheduler
+win32
+
 % if1632/ole2conv.spec
+
 % if1632/ole2nls.spec
+
+ole
+
 % if1632/ole2prox.spec
+
 % if1632/ole2thk.spec
+
 % if1632/system.spec
+
+misc
+
 % if1632/toolhelp.spec
+
+loader/ne
+loader
+memory
+misc
+windows
+
 % if1632/wineps.spec
+
+graphics/psdrv
+
 % if1632/wprocs.spec
+
+if1632
+loader/ne
+msdos
+relay32
+windows
+
 % relay32/kernel32.spec
+
+files
+loader/ne
+loader
+memory
+misc
+objects
+ole
+relay32
+scheduler
+win32
+
 % relay32/wow32.spec
+
+relay32

@@ -1,12 +1,17 @@
 %long
 
+BOOL
 HRESULT
 
 %ptr
 
 IMoniker *
 IMoniker **
+LPVOID *
+REFCLSID
+REFIID
 
 %wstr
 
+LPCWSTR
 LPWSTR

@@ -44,6 +44,16 @@ BEGIN {
     import winapi_parser;
 }
 
+my $current_dir = ".";
+if(length($wine_dir) != 1) {
+    my $pwd; chomp($pwd = `pwd`);
+    foreach my $n (1..((length($wine_dir) + 1) / 3)) {
+	$pwd =~ s/\/([^\/]*)$//;
+	$current_dir = "$1/$current_dir";
+    }
+    $current_dir =~ s/\/.$//;
+}
+
 my $options = winapi_options->new(\@ARGV, $wine_dir);
 if($options->help) {
     $options->show_help;
@@ -52,7 +62,7 @@ if($options->help) {
 
 my $output = 'output'->new;
 
-my $modules = 'modules'->new($options, $output, "$winapi_check_dir/modules.dat");
+my $modules = 'modules'->new($options, $output, $wine_dir, $current_dir, "$winapi_check_dir/modules.dat");
 
 my $win16api = 'winapi'->new($options, $output, "win16", "$winapi_check_dir/win16");
 my $win32api = 'winapi'->new($options, $output, "win32", "$winapi_check_dir/win32");
@@ -61,7 +71,7 @@ sub file_type {
     my $file = shift;
 
     my $file_dir = $file;
-    if(!($file_dir =~ s/(.*?)\/[^\/]*$/$1/)) {
+    if(!($file_dir =~ s/^(.*?)\/[^\/]*$/$1/)) {
 	$file_dir = ".";
     }
     
@@ -79,7 +89,12 @@ sub file_type {
     }
 }
 
-'winapi'->read_spec_files($wine_dir, \&file_type, $win16api, $win32api);
+if($options->global) {
+    'winapi'->read_all_spec_files($modules, $wine_dir, $current_dir, \&file_type, $win16api, $win32api);
+} else {
+    my @spec_files = $modules->allowed_spec_files($wine_dir, $current_dir);
+    'winapi'->read_spec_files($modules, $wine_dir, $current_dir, \@spec_files, $win16api, $win32api);
+}
 
 my $nativeapi = 'nativeapi'->new($options, $output, "$winapi_check_dir/nativeapi.dat", "$wine_dir/configure.in", "$wine_dir/include/config.h.in");
 
@@ -180,8 +195,9 @@ my %module_pseudo_stub_count32;
 
 foreach my $file ($options->c_files) {
     my %functions = ();
-    my $file_module16;
-    my $file_module32;
+
+    my $file_module16 = $modules->allowed_modules_in_file("$current_dir/$file");
+    my $file_module32 = $modules->allowed_modules_in_file("$current_dir/$file");
 
     $progress_current++;
     if($options->progress) {
@@ -200,7 +216,8 @@ foreach my $file ($options->c_files) {
 	my $linkage = shift;
 	my $return_type = shift;
 	my $calling_convention = shift;
-	my $name = shift;
+	my $internal_name = shift;
+	my $external_name = $internal_name;
 	my $refarguments = shift;
 	my @arguments = @$refarguments;
 	my $statements = shift;
@@ -213,23 +230,57 @@ foreach my $file ($options->c_files) {
 		$win32api->found_type($argument) if $options->win32;
 	    }
 	    
-	    $win16api->found_function($name) if $options->win16;
-	    $win32api->found_function($name) if $options->win32;
+	    $win16api->found_function($internal_name) if $options->win16;
+	    $win32api->found_function($internal_name) if $options->win32;
 	}
 	
 	if($file_type ne "application") {
-	    my $module16 = $win16api->function_module($name);
-	    my $module32 = $win32api->function_module($name);
+	    my $module16 = $win16api->function_module($internal_name);
+	    if(!defined($module16)) {
+		if($internal_name =~ /^(.*?)_(.*?)$/) {
+		    my $module2 = lc($1);
+		    my $name2 = $2;
+		    if($win16api->is_module($module2)) {
+			$module16 = $win16api->function_module($name2);
+			if(defined($module16)) {
+			    if(uc($module16) !~ /\U$module2\E/) {
+				$external_name = $name2;
+			    } else {
+				$module16 = undef;
+			    }
+			}
+		    }
+		}
+	    }
+
+	    my $module32 = $win32api->function_module($internal_name);
+	    if(!defined($module32)) {
+		if($internal_name =~ /^(.*?)_(.*?)$/) {
+		    my $module2 = lc($1);
+		    my $name2 = $2;
+		    if($win32api->is_module($module2)) {
+			$module32 = $win32api->function_module($name2);
+			if(defined($module32)) {
+			    if(uc($module32) =~ /\U$module2\E/) {
+				$external_name = $name2;
+			    } else {
+				$module32 = undef;
+			    }
+			}
+		    }
+		}
+	    }
 
 	    my $function = 'winapi_function'->new;
-	    $functions{$name} = $function;
+	    $functions{$internal_name} = $function;
 	   
  	    $function->documentation($documentation);
 	    $function->linkage($linkage);
 	    $function->file($file);
 	    $function->return_type($return_type); 
 	    $function->calling_convention($calling_convention);
-	    $function->name($name); 
+	    $function->external_name($external_name);
+	    $function->internal_name($internal_name);
 	    $function->arguments([@arguments]);
 	    $function->statements($statements);
 	    $function->module16($module16);
@@ -241,23 +292,15 @@ foreach my $file ($options->c_files) {
 		    my $msg = shift;
 		    $output->write("$file: $module: $return_type ");
 		    $output->write("$calling_convention ") if $calling_convention;
-		    $output->write("$name(" . join(",", @arguments) . "): $msg\n");
+		    $output->write("$internal_name(" . join(",", @arguments) . "): $msg\n");
 		}
 	    };
 	    my $output16 = &$output_module($module16);
 	    my $output32 = &$output_module($module32);
 
-	    # FIXME: Improve heuristics
-	    if(!defined($file_module16)) {
-		$file_module16 = $module16;
-	    }
-
-	    # FIXME: Improve heuristics
-	    if(!defined($file_module32)) {
-		$file_module32 = $module32;
-	    }
-
-	    if($options->local && $options->misplaced) {
+	    if($options->local && $options->misplaced &&
+	       $linkage ne "extern" && $statements) 
+	    {
 		if($options->win16 && $options->report_module($module16)) {
 		    my $match = 0;
 		    foreach my $module (split(/ & /, $module16)) {
@@ -268,7 +311,7 @@ foreach my $file ($options->c_files) {
 			}
 		    }
 		    if(!$match) {
-			&$output16("doesn't belong to file module ($file_module16)");
+			&$output16("is misplaced\n");
 		    }
 		}
 
@@ -282,13 +325,13 @@ foreach my $file ($options->c_files) {
 			}
 		    }
 		    if(!$match) {
-			&$output32("doesn't belong to file module ($file_module32)");
+			&$output32("is misplaced");
 		    }
 		}
 	    }
 
 	    if($options->local && $options->headers) {
-		if(!$declared_functions{$name}) {
+		if(!$declared_functions{$internal_name}) {
 		    if($options->win16 && $options->report_module($module16)) {
 			&$output16("no prototype");
 		    }
@@ -301,11 +344,11 @@ foreach my $file ($options->c_files) {
 	    if($options->local && $options->argument) {
 		if($options->win16 && $options->report_module($module16)) {
 		  winapi_local::check_function $options, $output16,
-		    $return_type, $calling_convention, $name, [@arguments], $win16api;
+		    $return_type, $calling_convention, $external_name, $internal_name, [@arguments], $win16api;
 		}	
 		if($options->win32 && $options->report_module($module32)) {
 		  winapi_local::check_function $options, $output32,
-		    $return_type, $calling_convention, $name, [@arguments], $win32api;
+		    $return_type, $calling_convention, $external_name, $internal_name, [@arguments], $win32api;
 		}
 	    }
 
@@ -317,11 +360,11 @@ foreach my $file ($options->c_files) {
 			$_ = $';
 			my $called_name = $1;
 			if($called_name !~ /^if|for|while|switch|sizeof$/) {
-			    $functions{$name}->function_called($called_name);
+			    $functions{$internal_name}->function_called($called_name);
 			    if(!defined($functions{$called_name})) {
 				$functions{$called_name} = 'winapi_function'->new;
 			    }
-			    $functions{$called_name}->function_called_by($name);
+			    $functions{$called_name}->function_called_by($internal_name);
 			}
 		    } else {
 		       undef $_
@@ -346,7 +389,7 @@ foreach my $file ($options->c_files) {
 	    
 	    if($options->local && $options->documentation &&
 	       (defined($module16) || defined($module32)) &&
-	       $linkage ne "extern" && $statements ne "")
+	       $linkage ne "extern" && $statements)
 	    {
 		my $name1;
 		my $name2;
@@ -355,7 +398,7 @@ foreach my $file ($options->c_files) {
 		    my @uc_modules16 = split(/\s*\&\s*/, uc($module16));
 		    push @uc_modules16, "WIN16";
 
-		    $name1 = $name;
+		    $name1 = $internal_name;
 		    foreach my $uc_module16 (@uc_modules16) {
 			if($name1 =~ s/^$uc_module16\_//) { last; }
 		    }
@@ -366,7 +409,7 @@ foreach my $file ($options->c_files) {
 		} elsif(!defined($module16) && defined($module32)) {
 		    my @uc_modules32 = split(/\s*\&\s*/, uc($module32));
 
-		    $name1 = $name;
+		    $name1 = $internal_name;
 		    foreach my $uc_module32 (@uc_modules32) {
 			if($name1 =~ s/^$uc_module32\_//) { last; }
 		    }
@@ -377,7 +420,7 @@ foreach my $file ($options->c_files) {
 		    my @uc_modules = split(/\s*\&\s*/, uc($module16));
 		    push @uc_modules, split(/\s*\&\s*/, uc($module32));
 
-		    $name1 = $name;
+		    $name1 = $internal_name;
 		    foreach my $uc_module (@uc_modules) {
 			if($name1 =~ s/^$uc_module\_//) { last; }
 		    }
@@ -385,8 +428,8 @@ foreach my $file ($options->c_files) {
 		    $name2 = $name1;
 		}
 
-		if($documentation !~ /\b($name|$name1|$name2)\b/) {
-		    $output->write("$file: $name: \\\n");
+		if($documentation !~ /\b($internal_name|$name1|$name2)\b/) {
+		    $output->write("$file: $internal_name: \\\n");
 		    $output->write("$documentation\n");
 		}
 
@@ -396,7 +439,7 @@ foreach my $file ($options->c_files) {
 			
 			$comment_width{$width}++;
 			if($width <= 65 || $width >= 81) {
-			    $output->write("$file: $name: comment is $width columns wide\n");
+			    $output->write("$file: $internal_name: comment is $width columns wide\n");
 			}
 		    }
 		}

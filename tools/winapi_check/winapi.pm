@@ -108,26 +108,55 @@ sub get_spec_file_type {
 
     my $file = shift;
 
+    my $module;
     my $type;
 
     open(IN, "< $file") || die "$file: $!\n";
-    $/ = "\n";
+    local $/ = "\n";
     while(<IN>) {
-	if(/^type\s*(\w+)/) {
-	    $type = $1;
-	    last;
-	}
+	s/^\s*(.*?)\s*$/$1/;
+	s/^(.*?)\s*#.*$/$1/;
+	/^$/ && next;
+
+	if(/^name\s*(\S*)/) { $module = $1; }
+	if(/^type\s*(\w+)/) { $type = $1; }
+
+	if(defined($module) && defined($type)) { last; }
     }
     close(IN);
 
-    return $type;
+    return ($type, $module);
 }
 
 sub read_spec_files {
     my $proto = shift;
     my $class = ref($proto) || $proto;
 
-    my $path = shift;
+    my $modules = shift;
+    my $wine_dir = shift;
+    my $current_dir = shift;
+    my $files = shift;
+    my $win16api = shift;
+    my $win32api = shift;
+
+    foreach my $file (@$files) {
+	(my $type, my $module) = 'winapi'->get_spec_file_type("$wine_dir/$file");
+	$modules->spec_file_module($file, $module);
+	if($type eq "win16") {
+	    $win16api->parse_spec_file("$wine_dir/$file");
+	} elsif($type eq "win32") {
+	    $win32api->parse_spec_file("$wine_dir/$file");
+	}
+    }
+}
+
+sub read_all_spec_files {
+    my $proto = shift;
+    my $class = ref($proto) || $proto;
+
+    my $modules = shift;    
+    my $wine_dir = shift;
+    my $current_dir = shift;
     my $file_type = shift;
     my $win16api = shift;
     my $win32api = shift;
@@ -139,16 +168,9 @@ sub read_spec_files {
 	} else {
 	    ();
 	}
-    } split(/\n/, `find $path -name \\*.spec`);
-
-    foreach my $file (@files) {
-	my $type = 'winapi'->get_spec_file_type($file);
-	if($type eq "win16") {
-	    $win16api->parse_spec_file($file);
-	} elsif($type eq "win32") {
-	    $win32api->parse_spec_file($file);
-	}
-    }
+    } split(/\n/, `find $wine_dir -name \\*.spec`);
+    
+    'winapi'->read_spec_files($modules, $wine_dir, $current_dir, \@files, $win16api, $win32api); 
 }
 
 sub parse_spec_file {
@@ -420,6 +442,15 @@ sub all_modules {
     my $modules = \%{$self->{MODULES}};
 
     return sort(keys(%$modules));
+}
+
+sub is_module {
+    my $self = shift;
+    my $modules = \%{$self->{MODULES}};
+
+    my $name = shift;
+
+    return $$modules{$name};
 }
 
 sub all_functions {

@@ -59,7 +59,7 @@ my %options = (
 	description => "argument kind checking"
     },
     "calling-convention" => { default => 0, parent => "local", description => "calling convention checking" },
-    "misplaced" => { default => 0, parent => "local", description => "check for misplaced functions" },
+    "misplaced" => { default => 1, parent => "local", description => "check for misplaced functions" },
     "cross-call" => { default => 0, parent => "local", description => "check for cross calling functions" },
     "documentation" => { default => 1, parent => "local", description => "check for documentation inconsistances\n" },
     "documentation-width" => { default => 0, parent => "documentation", description => "check for documentation width inconsistances\n" },

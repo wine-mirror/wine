@@ -66,15 +66,26 @@ sub calling_convention {
     return $$calling_convention;
 }
 
-sub name {
+sub external_name {
     my $self = shift;
-    my $name = \${$self->{NAME}};
+    my $external_name = \${$self->{EXTERNAL_NAME}};
 
     local $_ = shift;
 
-    if(defined($_)) { $$name = $_; }
+    if(defined($_)) { $$external_name = $_; }
     
-    return $$name;
+    return $$external_name;
+}
+
+sub internal_name {
+    my $self = shift;
+    my $internal_name = \${$self->{INTERNAL_NAME}};
+
+    local $_ = shift;
+
+    if(defined($_)) { $$internal_name = $_; }
+    
+    return $$internal_name;
 }
 
 sub arguments {
