@@ -3,6 +3,7 @@
 
 #include "windef.h"
 #include "wine/obj_queryassociations.h"
+#include "wine/obj_shellfolder.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,9 +77,47 @@ BOOL WINAPI PathStripToRootA(LPSTR pszPath);
 BOOL WINAPI PathStripToRootW(LPWSTR pszPath);
 #define PathStripToRoot WINELIB_NAME_AW(PathStripToRoot)
 
+INT WINAPI StrCSpnA(LPCSTR lpStr, LPCSTR lpSet);
+INT WINAPI StrCSpnW(LPCWSTR lpStr, LPCWSTR lpSet);
+#define StrCSpn WINELIB_NAME_AW(StrCSpn)
+
+INT WINAPI StrCSpnIA(LPCSTR lpStr, LPCSTR lpSet);
+INT WINAPI StrCSpnIW(LPCWSTR lpStr, LPCWSTR lpSet);
+#define StrCSpnI WINELIB_NAME_AW(StrCSpnI)
+
+#define StrCatA lstrcatA
+LPWSTR WINAPI StrCatW(LPWSTR front, LPCWSTR back);
+#define StrCat WINELIB_NAME_AW(StrCat)
+
+LPSTR WINAPI StrCatBuffA(LPSTR front, LPCSTR back, INT size);
+LPWSTR WINAPI StrCatBuffW(LPWSTR front, LPCWSTR back, INT size);
+#define StrCatBuff WINELIB_NAME_AW(StrCatBuff)
+
 LPSTR WINAPI StrChrA(LPCSTR lpStart, WORD wMatch);
 LPWSTR WINAPI StrChrW(LPCWSTR lpStart, WCHAR wMatch); 
 #define StrChr WINELIB_NAME_AW(StrChr)
+
+LPSTR WINAPI StrChrIA(LPCSTR lpStart, WORD wMatch);
+LPWSTR WINAPI StrChrIW(LPCWSTR lpStart, WCHAR wMatch); 
+#define StrChrI WINELIB_NAME_AW(StrChrI)
+
+INT WINAPI StrCmpNA(LPCSTR lpStr1, LPCSTR lpStr2, INT nChar);
+INT WINAPI StrCmpNW(LPCWSTR lpStr1, LPCWSTR lpStr2, INT nChar);
+#define StrCmpN WINELIB_NAME_AW(StrCmpN)
+
+INT WINAPI StrCmpNIA(LPCSTR lpStr1, LPCSTR lpStr2, INT nChar);
+INT WINAPI StrCmpNIW(LPCWSTR lpStr1, LPCWSTR lpStr2, INT nChar);
+#define StrCmpNI WINELIB_NAME_AW(StrCmpNI)
+
+LPSTR WINAPI StrDupA(LPCSTR lpSrc);
+LPWSTR WINAPI StrDupW(LPCWSTR lpSrc);
+#define StrDup WINELIB_NAME_AW(StrDup)
+
+HRESULT WINAPI StrRetToBufA(LPSTRRET src, LPITEMIDLIST pidl, LPSTR dest,
+			    DWORD len);
+HRESULT WINAPI StrRetToBufW(LPSTRRET src, LPITEMIDLIST pidl, LPWSTR dest,
+			    DWORD len);
+#define StrRetToBuf WINELIB_NAME_AW(StrRetToBuf)
 
 void WINAPI PathRemoveBlanksA(LPSTR lpszPath);
 void WINAPI PathRemoveBlanksW(LPWSTR lpszPath);

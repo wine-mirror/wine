@@ -4,7 +4,10 @@
 #include <string.h>
 
 #include "winerror.h"
-#include "wine/undocshell.h"
+#include "windef.h"
+#include "wingdi.h"
+#include "winuser.h"
+#include "shlwapi.h"
 #include "wine/unicode.h"
 #include "heap.h"
 #include "debugtools.h"
@@ -14,7 +17,7 @@ DEFAULT_DEBUG_CHANNEL(shell);
 /*************************************************************************
  * StrChrA					[SHLWAPI]
  */
-LPSTR WINAPI StrChrA (LPCSTR str, INT c)
+LPSTR WINAPI StrChrA (LPCSTR str, WORD c)
 {
 	TRACE("%s %i\n", str,c);
 	return strchr(str, c);
@@ -24,7 +27,7 @@ LPSTR WINAPI StrChrA (LPCSTR str, INT c)
  * StrChrW					[SHLWAPI]
  *
  */
-LPWSTR WINAPI StrChrW (LPWSTR str, WCHAR x )
+LPWSTR WINAPI StrChrW (LPCWSTR str, WCHAR x )
 {
 	TRACE("%s 0x%04x\n",debugstr_w(str),x);
 	return strchrW(str, x);

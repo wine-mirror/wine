@@ -8,6 +8,7 @@
 #include "debugtools.h"
 #include "heap.h"
 
+#include "shlwapi.h"
 #include "shellapi.h"
 #include "shell32_main.h"
 #include "wine/undocshell.h"

@@ -2,7 +2,6 @@
 #define __WINE_UNDOCSHELL_H
 
 #include "windef.h"
-//#include "shell.h"
 #include "commctrl.h"
 #include "wine/obj_shellfolder.h"
 #include "wine/obj_shellview.h"
@@ -113,17 +112,6 @@ HRESULT WINAPI StrRetToStrNAW (
 	LPSTRRET src,
 	LPITEMIDLIST pidl);
 
-HRESULT WINAPI StrRetToBufA (
-	LPSTRRET src,
-	LPITEMIDLIST pidl,
-	LPSTR dest,
-	DWORD len);
-
-HRESULT WINAPI StrRetToBufW (
-	LPSTRRET src,
-	LPITEMIDLIST pidl,
-	LPWSTR dest,
-	DWORD len);
 
 /****************************************************************************
 * SHChangeNotifyRegister API
@@ -681,7 +669,7 @@ int WINAPI PathProcessCommand(
 
 void WINAPI PathStripPath(LPWSTR lpszPath);
 
-BOOL WINAPI PathStripToRoot(LPWSTR lpszPath);
+BOOL WINAPI PathStripToRootAW(LPVOID lpszPath);
 
 void WINAPI PathRemoveArgs(LPWSTR lpszPath);
 
