@@ -373,6 +373,7 @@ static DWORD MIDI_NotifyClient(UINT wDevID, WORD wMsg,
 	0 : MCIERR_INTERNAL;
 }
 
+static int midi_warn = 1;
 /**************************************************************************
  * 			midiOpenSeq				[internal]
  */
@@ -381,16 +382,14 @@ static int midiOpenSeq(void)
     if (numOpenMidiSeq == 0) {
 	midiSeqFD = open(MIDI_SEQ, O_RDWR, 0);
 	if (midiSeqFD == -1) {
-	    /* don't bark when we're facing a config without midi driver available */
-	    if (errno != ENODEV && errno != ENXIO) {
-		ERR("can't open '%s' ! (%d)\n", MIDI_SEQ, errno);
-	    } else {
-		TRACE("No midi device present\n");
-	    }
+	    if (midi_warn)
+		MESSAGE("Can't open MIDI device '%s', errno %d (%s) !\n",
+					MIDI_SEQ, errno, strerror(errno));
+	    midi_warn = 0;
 	    return -1;
 	}
 	if (fcntl(midiSeqFD, F_SETFL, O_NONBLOCK) < 0) {
-	    WARN("can't set sequencer fd to non blocking (%d)\n", errno);
+	    WARN("can't set sequencer fd to non-blocking, errno %d (%s)\n", errno, strerror(errno));
 	    close(midiSeqFD);
 	    midiSeqFD = -1;
 	    return -1;
@@ -426,8 +425,8 @@ void seqbuf_dump(void)
 {
     if (_seqbufptr) {
 	if (write(midiSeqFD, _seqbuf, _seqbufptr) == -1) {
-	    WARN("Can't write data to sequencer (%d/%d)!\n", 
-		 midiSeqFD, errno);
+	    WARN("Can't write data to sequencer %d, errno %d (%s)!\n", 
+		 midiSeqFD, errno, strerror(errno));
 	}
 	/* FIXME:
 	 *	in any case buffer is lost so that if many errors occur the buffer 
@@ -557,14 +556,14 @@ static VOID WINAPI midTimeCallback(HWND hwnd, UINT msg, UINT id, DWORD dwTime)
     
     if (len < 0) return;
     if ((len % 4) != 0) {
-	WARN("bad length %d (%d)\n", len, errno);
+	WARN("Bad length %d, errno %d (%s)\n", len, errno, strerror(errno));
 	return;
     }
     
     for (idx = 0; idx < len; ) {
 	if (buffer[idx] & 0x80) {
 	    TRACE(
-		  "reading<8> %02x %02x %02x %02x %02x %02x %02x %02x\n", 
+		  "Reading<8> %02x %02x %02x %02x %02x %02x %02x %02x\n", 
 		  buffer[idx + 0], buffer[idx + 1], 
 		  buffer[idx + 2], buffer[idx + 3], 
 		  buffer[idx + 4], buffer[idx + 5], 
@@ -693,7 +692,7 @@ static DWORD midClose(WORD wDevID)
     TRACE("(%04X);\n", wDevID);
     
     if (wDevID >= MAX_MIDIINDRV) {
-	WARN("wDevID too bif (%u) !\n", wDevID);
+	WARN("wDevID too big (%u) !\n", wDevID);
 	return MMSYSERR_BADDEVICEID;
     }
     if (MidiInDev[wDevID].midiDesc == 0) {
@@ -900,7 +899,7 @@ static int modFMLoad(int dev)
 	memcpy(sbi.operators, midiFMInstrumentPatches + i * 16, 16);
 	
 	if (write(midiSeqFD, (char*)&sbi, sizeof(sbi)) == -1) {
-	    WARN("Couldn't write patch for instrument %d (%d)!\n", sbi.channel, errno);
+	    WARN("Couldn't write patch for instrument %d, errno %d (%s)!\n", sbi.channel, errno, strerror(errno));
 	    return -1;
 	}
     } 
@@ -909,7 +908,7 @@ static int modFMLoad(int dev)
 	memcpy(sbi.operators, midiFMDrumsPatches + i * 16, 16);
 	
 	if (write(midiSeqFD, (char*)&sbi, sizeof(sbi)) == -1) {
-	    WARN("Couldn't write patch for drum %d (%d)!\n", sbi.channel, errno);
+	    WARN("Couldn't write patch for drum %d, errno %d (%s)!\n", sbi.channel, errno, strerror(errno));
 	    return -1;
 	}
     } 
@@ -1073,7 +1072,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	WARN("can't notify client !\n");
 	return MMSYSERR_INVALPARAM;
     }
-    TRACE("Succesful !\n");
+    TRACE("Successful !\n");
     return MMSYSERR_NOERROR;
 }
 
