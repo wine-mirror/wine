@@ -23,8 +23,10 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define COBJMACROS
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"

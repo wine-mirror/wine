@@ -19,6 +19,9 @@
 
 #include <stdarg.h>
 #include <string.h>
+
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"

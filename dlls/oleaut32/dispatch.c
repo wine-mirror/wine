@@ -28,6 +28,8 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "objbase.h"

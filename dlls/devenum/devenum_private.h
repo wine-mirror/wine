@@ -30,7 +30,9 @@
 #include "winreg.h"
 #include "winerror.h"
 
+#define COBJMACROS
 #define COM_NO_WINDOWS_H
+
 #include "ole2.h"
 #include "strmif.h"
 #include "olectl.h"

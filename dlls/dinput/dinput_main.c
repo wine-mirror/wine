@@ -34,6 +34,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#define COBJMACROS
+
 #include "wine/debug.h"
 #include "wine/unicode.h"
 #include "windef.h"

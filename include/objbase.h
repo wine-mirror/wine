@@ -235,8 +235,6 @@
 
 /* C interface */
 
-#define COBJMACROS
-
 #define STDMETHOD(method)        HRESULT (STDMETHODCALLTYPE *method)
 #define STDMETHOD_(type,method)  type (STDMETHODCALLTYPE *method)
 #define STDMETHODV(method)       HRESULT (STDMETHODVCALLTYPE *method)

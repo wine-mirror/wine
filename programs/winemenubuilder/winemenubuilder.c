@@ -47,6 +47,8 @@
 #include <errno.h>
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #include <windows.h>
 #include <shlobj.h>
 #include <objidl.h>

@@ -23,8 +23,10 @@
 #include <assert.h>
 #include <string.h>
 
+#define COBJMACROS
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+
 #include "winerror.h"
 #include "mesa_private.h"
 #include "wine/debug.h"
