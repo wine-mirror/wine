@@ -216,7 +216,8 @@ print "\nWhat version of windows are you using with wine?\n\n".
       "4 - Windows NT 3.5x\n".
       "5 - Windows NT4.x\n".
       "6 - Windows 2000\n".
-      "7 - Other\n\n";
+      "7 - Windows XP\n".
+      "8 - Other\n\n";
 do
 	{
 	print "Enter the number that corresponds to your windows version: ";
@@ -237,8 +238,10 @@ if ($winver =~ 0) {
 } elsif ($winver =~ 5) {
 	$winver="Windows NT 4.x";
 } elsif ($winver =~ 6) {
-	$winver="Windows NT 5.x";
+	$winver="Windows 2000";
 } elsif ($winver =~ 7) {
+	$winver="Windows XP";
+} elsif ($winver =~ 8) {
 	print "What version of Windows are you using? ";
 	$winver=<STDIN>;
 	chomp $winver;
@@ -325,24 +328,24 @@ if ($debuglevel > 1) {
 		$var13 = qq{
 		How many trailing lines of debugging info do you want to include in the report
 		you're going to submit (First file)? If a developer asks you to include
-		the last 1000 lines, enter 1000 here. Default is 200, which is reached by
+		the last 15000 lines, enter 15000 here. Default is 3000, which is reached by
 		pressing enter. (If you're not sure, just hit enter):
 		};
 		print do_var($var13);
 	} elsif ($debuglevel =~ 3) {
 		$var14 = qq{
 		Enter how many lines of trailing debugging output you want in your nice
-		formatted report. Default is 200:
+		formatted report. Default is 3000:
 		};
 		print do_var($var14);
 	}
 	$lastnlines=<STDIN>;
 	chomp $lastnlines;
 	if ($lastnlines =~ /^\s*$/) {
-	$lastnlines=200;
+	$lastnlines=3000;
 	}
 } elsif ($debuglevel =~ 1) {
-	$lastnlines=200;
+	$lastnlines=3000;
 }
 if ($debuglevel > 1) {
 	$var15 = qq{
