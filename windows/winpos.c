@@ -2244,6 +2244,7 @@ static UINT SWP_CopyValidBits( WND* Wnd, HRGN* pVisRgn,
  RECT r;
  HRGN newVisRgn, dirtyRgn;
  INT  my = COMPLEXREGION;
+ DWORD dflags;
 
  TRACE("\tnew wnd=(%i %i-%i %i) old wnd=(%i %i-%i %i), %04x\n",
 	      Wnd->rectWindow.left, Wnd->rectWindow.top,
@@ -2259,7 +2260,11 @@ static UINT SWP_CopyValidBits( WND* Wnd, HRGN* pVisRgn,
  if( Wnd->hrgnUpdate == 1 )
      uFlags |= SWP_EX_NOCOPY; /* whole window is invalid, nothing to copy */
 
- newVisRgn = DCE_GetVisRgn( Wnd->hwndSelf, DCX_WINDOW | DCX_CLIPSIBLINGS, 0, 0);
+ dflags = DCX_WINDOW;
+ if(Wnd->dwStyle & WS_CLIPSIBLINGS)
+     dflags |= DCX_CLIPSIBLINGS;
+ newVisRgn = DCE_GetVisRgn( Wnd->hwndSelf, dflags, 0, 0);
+
  dirtyRgn = CreateRectRgn( 0, 0, 0, 0 );
 
  if( !(uFlags & SWP_EX_NOCOPY) ) /* make sure dst region covers only valid bits */
@@ -2898,13 +2903,8 @@ Pos:  /* -----------------------------------------------------------------------
 		else
 		{
 		    if( (winpos.flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE )
-		    {
-			/* if window was not resized and not moved try to repaint itself */
-			if((winpos.flags & SWP_AGG_NOGEOMETRYCHANGE) == SWP_AGG_NOGEOMETRYCHANGE)
-			    uFlags |= SWP_EX_PAINTSELF;
 		         uFlags = SWP_CopyValidBits(wndPtr, &visRgn, &oldWindowRect, 
 							    &oldClientRect, uFlags);
-		    }
 	            else
 		    {
 			/* nothing moved, redraw frame if needed */
