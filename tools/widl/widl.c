@@ -211,6 +211,8 @@ int main(int argc,char *argv[])
     strcat(proxy_name, "_p.c");
   }
 
+  wpp_add_cmdline_define("__WIDL__");
+
   atexit(rm_tempfile);
   if (!no_preprocess)
   {

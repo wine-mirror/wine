@@ -46,6 +46,33 @@ static void indent(int delta)
   if (delta > 0) indentation += delta;
 }
 
+int is_attr(attr_t *a, enum attr_type t)
+{
+  while (a) {
+    if (a->type == t) return 1;
+    a = NEXT_LINK(a);
+  }
+  return 0;
+}
+
+void *get_attrp(attr_t *a, enum attr_type t)
+{
+  while (a) {
+    if (a->type == t) return a->u.pval;
+    a = NEXT_LINK(a);
+  }
+  return NULL;
+}
+
+DWORD get_attrv(attr_t *a, enum attr_type t)
+{
+  while (a) {
+    if (a->type == t) return a->u.ival;
+    a = NEXT_LINK(a);
+  }
+  return 0;
+}
+
 int is_void(type_t *t, var_t *v)
 {
   if (v && v->ptr_level) return 0;
@@ -260,7 +287,9 @@ void write_type(FILE *h, type_t *t, var_t *v, char *n)
 void write_typedef(type_t *type, var_t *names)
 {
   char *tname = names->tname;
+  var_t *lname;
   while (NEXT_LINK(names)) names = NEXT_LINK(names);
+  lname = names;
   fprintf(header, "typedef ");
   write_type(header, type, NULL, tname);
   fprintf(header, " ");
@@ -270,7 +299,23 @@ void write_typedef(type_t *type, var_t *names)
       fprintf(header, ", ");
     names = PREV_LINK(names);
   }
-  fprintf(header, ";\n\n");
+  fprintf(header, ";\n");
+
+  if (get_attrp(type->attrs, ATTR_WIREMARSHAL)) {
+    names = lname;
+    while (names) {
+      char *name = get_name(names);
+      fprintf(header, "unsigned long   __RPC_USER %s_UserSize     (unsigned long *, unsigned long,   %s *);\n", name, name);
+      fprintf(header, "unsigned char * __RPC_USER %s_UserMarshal  (unsigned long *, unsigned char *, %s *);\n", name, name);
+      fprintf(header, "unsigned char * __RPC_USER %s_UserUnmarshal(unsigned long *, unsigned char *, %s *);\n", name, name);
+      fprintf(header, "void            __RPC_USER %s_UserFree     (unsigned long *, %s *);\n", name, name);
+      if (PREV_LINK(names))
+        fprintf(header, ", ");
+      names = PREV_LINK(names);
+    }
+  }
+
+  fprintf(header, "\n");
 }
 
 static void do_write_expr(FILE *h, expr_t *e, int p)
@@ -361,33 +406,6 @@ void write_externdef(var_t *v)
 }
 
 /********** INTERFACES **********/
-
-int is_attr(attr_t *a, enum attr_type t)
-{
-  while (a) {
-    if (a->type == t) return 1;
-    a = NEXT_LINK(a);
-  }
-  return 0;
-}
-
-void *get_attrp(attr_t *a, enum attr_type t)
-{
-  while (a) {
-    if (a->type == t) return a->u.pval;
-    a = NEXT_LINK(a);
-  }
-  return NULL;
-}
-
-DWORD get_attrv(attr_t *a, enum attr_type t)
-{
-  while (a) {
-    if (a->type == t) return a->u.ival;
-    a = NEXT_LINK(a);
-  }
-  return 0;
-}
 
 int is_object(attr_t *a)
 {
@@ -525,10 +543,10 @@ void write_args(FILE *h, var_t *arg, char *name, int method)
       else fprintf(h, "    ");
     }
     write_type(h, arg->type, arg, arg->tname);
-    if (method && use_icom && arg->array) fprintf(header, "*"); /* as write_icom_method_def */
+    if (method && use_icom && arg->array) fprintf(h, "*"); /* as write_icom_method_def */
     fprintf(h, " ");
     write_name(h, arg);
-    if (!(method && use_icom)) write_array(header, arg->array, 0);
+    if (!(method && use_icom)) write_array(h, arg->array, 0);
     arg = PREV_LINK(arg);
     count++;
   }
@@ -556,12 +574,12 @@ static void write_cpp_method_def(type_t *iface)
   }
 }
 
-static void write_c_method_def(type_t *iface,char *name)
+static void do_write_c_method_def(type_t *iface, char *name)
 {
   func_t *cur = iface->funcs;
   while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
 
-  if (iface->ref) write_c_method_def(iface->ref,name);
+  if (iface->ref) do_write_c_method_def(iface->ref, name);
   indent(0);
   fprintf(header, "/*** %s methods ***/\n", iface->name);
   while (cur) {
@@ -578,6 +596,11 @@ static void write_c_method_def(type_t *iface,char *name)
     }
     cur = PREV_LINK(cur);
   }
+}
+
+static void write_c_method_def(type_t *iface)
+{
+  do_write_c_method_def(iface, iface->name);
 }
 
 static void write_method_proto(type_t *iface)
@@ -724,7 +747,7 @@ void write_com_interface(type_t *iface)
     indentation++;
     fprintf(header, "    ICOM_MSVTABLE_COMPAT_FIELDS\n");
     fprintf(header, "\n");
-    write_c_method_def(iface,iface->name);
+    write_c_method_def(iface);
     indentation--;
     fprintf(header, "};\n");
     fprintf(header, "\n");
