@@ -1169,7 +1169,8 @@ static HMODULE16 NE_LoadBuiltinModule( LPCSTR name )
     {
         if ((descr = find_dll_descr( dllname )))
             return NE_DoLoadBuiltinModule( descr );
-
+        if (GetModuleHandleA( dllname ))
+            return 21;  /* Win32 module */
         ERR( "loaded .so but dll %s still not found\n", dllname );
     }
     else
