@@ -1,5 +1,5 @@
 /*
- * Emulation of priviledged instructions
+ * Emulation of privileged instructions
  *
  * Copyright 1995 Alexandre Julliard
  */
@@ -380,7 +380,7 @@ static void INSTR_outport( WORD port, int size, DWORD val, CONTEXT86 *context )
 /***********************************************************************
  *           INSTR_EmulateInstruction
  *
- * Emulate a priviledged instruction. Returns TRUE if emulation successful.
+ * Emulate a privileged instruction. Returns TRUE if emulation successful.
  */
 BOOL INSTR_EmulateInstruction( CONTEXT86 *context )
 {

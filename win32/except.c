@@ -92,7 +92,7 @@ static int format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, in
         len = snprintf( buffer, size, "Unhandled stack overflow" );
         break;
     case EXCEPTION_PRIV_INSTRUCTION:
-        len = snprintf( buffer, size, "Unhandled priviledged instruction" );
+        len = snprintf( buffer, size, "Unhandled privileged instruction" );
         break;
     case EXCEPTION_ACCESS_VIOLATION:
         if (rec->NumberParameters == 2)
@@ -199,6 +199,8 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     STARTUPINFOA	startup;
     char		buffer[256];
     char 		format[256];
+
+    MESSAGE("wine: Unhandled exception, starting debugger...\n");
 
     if (!RegOpenKeyA(HKEY_LOCAL_MACHINE, 
 		     "Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug", &hDbgConf)) {

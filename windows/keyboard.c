@@ -126,7 +126,7 @@ VOID WINAPI ScreenSwitchEnable16(WORD unused)
  */
 DWORD WINAPI OemKeyScan(WORD wOemChar)
 {
-  TRACE("*OemKeyScan (%d)\n", wOemChar);
+  TRACE("(%d)\n", wOemChar);
 
   return wOemChar;
 }

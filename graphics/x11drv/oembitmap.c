@@ -296,7 +296,7 @@ static BOOL OBM_CreateBitmaps( char **data, BOOL color,
 #else /* defined(HAVE_LIBXXPM) */
     FIXME_(x11drv)(
         "Xpm support not in the binary, "
-	"please install the Xpm and Xpm-devel packages and recompile\n"
+	"please install the Xpm and Xpm-devel packages and recompile wine\n"
     );
     return FALSE;
 #endif /* defined(HAVE_LIBXXPM) */

@@ -323,9 +323,9 @@ void WIN_ReleaseWndPtr(WND *wndPtr)
 {
     if(!wndPtr) return;
 
-    /*Decrement destruction monitoring value*/
+    /* Decrement destruction monitoring value */
      wndPtr->irefCount--;
-     /* Check if it's time to release the memory*/
+     /* Check if it's time to release the memory */
      if(wndPtr->irefCount == 0 && !wndPtr->dwMagic)
      {
          /* Release memory */
@@ -336,7 +336,7 @@ void WIN_ReleaseWndPtr(WND *wndPtr)
          /* This else if is useful to monitor the WIN_ReleaseWndPtr function */
          ERR("forgot a Lock on %p somewhere\n",wndPtr);
      }
-     /*unlock all WND structures for thread safeness*/
+     /* unlock all WND structures for thread safeness */
      USER_Unlock();
 }
 

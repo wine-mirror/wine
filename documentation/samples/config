@@ -67,6 +67,8 @@ WINE REGISTRY Version 2
 
 # <wineconf>
 
+; Be careful here, wrong DllOverrides settings have the potential
+; to pretty much kill your setup.
 [DllOverrides]
 "commdlg"      = "builtin, native"
 "comdlg32"     = "builtin, native"

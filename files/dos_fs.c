@@ -734,7 +734,7 @@ static HANDLE DOSFS_CreateCommPort(LPCSTR name, DWORD access, DWORD attributes, 
     SERVER_END_VAR_REQ;
 
     if(!ret)
-        ERR("Couldn't open %s ! (check permissions)\n",devname);
+        ERR("Couldn't open device '%s' ! (check permissions)\n",devname);
     else
         TRACE("return %08X\n", ret );
     return ret;

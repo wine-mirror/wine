@@ -1116,7 +1116,7 @@ void PROFILE_UsageWineIni(void)
 {
     MESSAGE("Perhaps you have not properly edited or created "
 	"your Wine configuration file.\n");
-    MESSAGE("This is '%s/config'\n", get_config_dir());
+    MESSAGE("This is (supposed to be) '%s/config'\n", get_config_dir());
     /* RTFM, so to say */
 }
 

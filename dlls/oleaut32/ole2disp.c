@@ -63,7 +63,7 @@ BSTR16 WINAPI SysAllocString16(LPCOLESTR16 in)
 	if (!in) return 0;
     
 	out = BSTR_AllocBytes(strlen(in)+1);
-	if(!out)return 0;
+	if (!out) return 0;
 	strcpy(BSTR_GetAddr(out),in);
 	return out;
 }
@@ -270,7 +270,7 @@ void WINAPI SysFreeString(BSTR in)
     bufferPointer--;
 
     /*
-     * Free the memory from it's "real" origin.
+     * Free the memory from its "real" origin.
      */
     HeapFree(GetProcessHeap(), 0, bufferPointer);
 }
@@ -485,7 +485,7 @@ BSTR WINAPI SysAllocStringByteLen(LPCSTR in, UINT len)
 
     /*
      * Allocate a new buffer to hold the string.
-     * dont't forget to keep an empty spot at the begining of the
+     * dont't forget to keep an empty spot at the beginning of the
      * buffer for the character count and an extra character at the
      * end for the NULL.
      */

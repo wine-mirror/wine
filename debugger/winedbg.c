@@ -450,7 +450,7 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
             DEBUG_Printf(DBG_CHN_MESG, "stack overflow");
             break;
         case EXCEPTION_PRIV_INSTRUCTION:
-            DEBUG_Printf(DBG_CHN_MESG, "priviledged instruction");
+            DEBUG_Printf(DBG_CHN_MESG, "privileged instruction");
             break;
         case EXCEPTION_ACCESS_VIOLATION:
             if (rec->NumberParameters == 2)
