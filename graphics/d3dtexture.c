@@ -32,7 +32,7 @@ DEFAULT_DEBUG_CHANNEL(ddraw)
 	char buf[32];										\
 	int x, y;										\
 												\
-	sprintf(buf, "%d.pnm", This->tex_name);							\
+	sprintf(buf, "%ld.pnm", This->tex_name);							\
 	f = fopen(buf, "wb");									\
 	fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);			\
 	for (y = 0; y < src_d->dwHeight; y++) {							\
@@ -52,7 +52,7 @@ DEFAULT_DEBUG_CHANNEL(ddraw)
 	    char buf[32];										\
 	    int x, y;											\
 	    												\
-	    sprintf(buf, "%d.pnm", This->tex_name);							\
+	    sprintf(buf, "%ld.pnm", This->tex_name);							\
 	    f = fopen(buf, "wb");									\
 	    fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);				\
 	    for (y = 0; y < src_d->dwHeight; y++) {							\
@@ -72,7 +72,7 @@ DEFAULT_DEBUG_CHANNEL(ddraw)
 	    char buf[32];										\
 	    int x, y;											\
 	    												\
-	    sprintf(buf, "%d.pnm", This->tex_name);							\
+	    sprintf(buf, "%ld.pnm", This->tex_name);							\
 	    f = fopen(buf, "wb");									\
 	    fprintf(f, "P6\n%ld %ld\n255\n", src_d->dwWidth, src_d->dwHeight);				\
 	    for (y = 0; y < src_d->dwHeight; y++) {							\
@@ -282,7 +282,7 @@ static HRESULT WINAPI IDirect3DTextureImpl_GetHandle(LPDIRECT3DTEXTURE iface,
     glGenTextures(1, &(This->tex_name));
   LEAVE_GL();
 
-  TRACE("OpenGL texture handle is : %d\n", This->tex_name);
+  TRACE("OpenGL texture handle is : %ld\n", This->tex_name);
   
   return D3D_OK;
 }
@@ -325,7 +325,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_GetHandle(LPDIRECT3DTEXTURE2 iface,
   glGenTextures(1, &(This->tex_name));
   LEAVE_GL();
 
-  TRACE("OpenGL texture handle is : %d\n", This->tex_name);
+  TRACE("OpenGL texture handle is : %ld\n", This->tex_name);
   
   return D3D_OK;
 }
@@ -420,8 +420,9 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
       
       /* Texture snooping */
       SNOOP_PALETTED();
-	
-      /* Use Paletted Texture Extension */
+
+#if defined(HAVE_GL_COLOR_TABLE) && defined(HAVE_GL_PALETTED_TEXTURE)
+      /* use Paletted Texture Extension */
       glColorTableEXT(GL_TEXTURE_2D,    /* target */
 		      GL_RGBA,          /* internal format */
 		      256,              /* table size */
@@ -437,6 +438,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 		   GL_COLOR_INDEX,      /* texture format */
 		   GL_UNSIGNED_BYTE,    /* texture type */
 		   src_d->u1.lpSurface); /* the texture */
+#endif
     } else if (src_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
       /* ************
 	 RGB Textures

@@ -497,7 +497,8 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 #endif
-  
+
+#if defined(HAVE_GL_COLOR_TABLE) && defined(HAVE_GL_PALETTED_TEXTURE)
   TRACE("Enumerating Paletted (8)\n");
   pformat->dwFlags = DDPF_PALETTEINDEXED8;
   pformat->u.dwRGBBitCount = 8;
@@ -507,6 +508,7 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
   pformat->u4.dwRGBAlphaBitMask = 0x00000000;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
+#endif
   
   TRACE("End of enumeration\n");
   
