@@ -1798,12 +1798,7 @@ ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
 /*****************************************************************************
  * IDirectDrawSurface4 interface
  */
-/* Cannot inherit from IDirectDrawSurface2 because the LPDIRECTDRAWSURFACE2 parameters 
- * have been converted to LPDIRECTDRAWSURFACE3.
- */
-/* FIXME: I assumed IDirectDrawSurface4 does not inherit from IDirectDrawSurface3 but I 
- * have actually not proof of that. Can someone check and remove this comment or patch 
- * accordingly ?
+/* Cannot inherit from IDirectDrawSurface2 because DDSCAPS changed to DDSCAPS2.
  */
 #define ICOM_INTERFACE IDirectDrawSurface4
 #define IDirectDrawSurface4_METHODS \
@@ -1816,9 +1811,9 @@ ICOM_DEFINE(IDirectDrawSurface3,IUnknown)
     ICOM_METHOD2(HRESULT,EnumAttachedSurfaces,  LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpEnumSurfacesCallback) \
     ICOM_METHOD3(HRESULT,EnumOverlayZOrders,    DWORD,dwFlags, LPVOID,lpContext, LPDDENUMSURFACESCALLBACK,lpfnCallback) \
     ICOM_METHOD2(HRESULT,Flip,                  LPDIRECTDRAWSURFACE4,lpDDSurfaceTargetOverride, DWORD,dwFlags) \
-    ICOM_METHOD2(HRESULT,GetAttachedSurface,    LPDDSCAPS,lpDDSCaps, LPDIRECTDRAWSURFACE4*,lplpDDAttachedSurface) \
+    ICOM_METHOD2(HRESULT,GetAttachedSurface,    LPDDSCAPS2,lpDDSCaps, LPDIRECTDRAWSURFACE4*,lplpDDAttachedSurface) \
     ICOM_METHOD1(HRESULT,GetBltStatus,          DWORD,dwFlags) \
-    ICOM_METHOD1(HRESULT,GetCaps,               LPDDSCAPS,lpDDSCaps) \
+    ICOM_METHOD1(HRESULT,GetCaps,               LPDDSCAPS2,lpDDSCaps) \
     ICOM_METHOD1(HRESULT,GetClipper,            LPDIRECTDRAWCLIPPER*,lplpDDClipper) \
     ICOM_METHOD2(HRESULT,GetColorKey,           DWORD,dwFlags, LPDDCOLORKEY,lpDDColorKey) \
     ICOM_METHOD1(HRESULT,GetDC,                 HDC*,lphDC) \
