@@ -26,7 +26,6 @@
 #include "wine/winbase16.h"
 #include "heap.h"
 #include "selectors.h"
-#include "file.h"
 #include "mmsystem.h"
 #include "debugtools.h"
 #include "winemm.h"
@@ -63,7 +62,7 @@ static LRESULT CALLBACK mmioDosIOProc(LPMMIOINFO lpmmioinfo, UINT uMessage,
 	    /* if filename NULL, assume open file handle in adwInfo[0] */
 	    if (!szFileName) {
 		if (lParam2) 
-		    lpmmioinfo->adwInfo[0] = FILE_GetHandle(lpmmioinfo->adwInfo[0]);
+		    lpmmioinfo->adwInfo[0] = DosFileHandleToWin32Handle(lpmmioinfo->adwInfo[0]);
 		break;
 	    }
 	    
@@ -340,11 +339,9 @@ static LRESULT	MMIO_Map32To16(DWORD wMsg, LPARAM* lp1, LPARAM* lp2)
     switch (wMsg) {
     case MMIOM_OPEN:
 	{
-	    void*	lp = SEGPTR_ALLOC(strlen((LPSTR)*lp1) + 1);
+	    char *lp = SEGPTR_STRDUP( (LPSTR)*lp1 );
 	    if (!lp) return MMSYSERR_NOMEM;
-	   
-	    strcpy((void*)SEGPTR_GET(lp), (LPSTR)*lp1);
-	    *lp1 = (LPARAM)lp;
+	    *lp1 = SEGPTR_GET(lp);
 	}
 	break;
     case MMIOM_CLOSE:
@@ -359,8 +356,8 @@ static LRESULT	MMIO_Map32To16(DWORD wMsg, LPARAM* lp1, LPARAM* lp2)
 	    if (!lp) return MMSYSERR_NOMEM;
 	   
 	    if (wMsg != MMIOM_READ)
-		memcpy((void*)SEGPTR_GET(lp), (void*)*lp1, *lp2);
-	    *lp1 = (LPARAM)lp;
+		memcpy(lp, (void*)*lp1, *lp2);
+	    *lp1 = SEGPTR_GET(lp);
 	}
 	break;
     default:
@@ -386,11 +383,11 @@ static LRESULT	MMIO_UnMap32To16(DWORD wMsg, LPARAM lParam1, LPARAM lParam2,
 	/* nothing to do */
 	break;
     case MMIOM_READ:
-	memcpy((void*)lParam1, (void*)SEGPTR_GET((void*)lp1), lp2);
+	memcpy((void*)lParam1, PTR_SEG_TO_LIN(lp1), lp2);
 	/* fall thru */
     case MMIOM_WRITE:
     case MMIOM_WRITEFLUSH:
-	if (!SEGPTR_FREE((void*)lp1)) {
+	if (!SEGPTR_FREE(PTR_SEG_TO_LIN(lp1))) {
 	    FIXME("bad free line=%d\n", __LINE__);
 	} 
 	break;
@@ -405,18 +402,17 @@ static LRESULT	MMIO_UnMap32To16(DWORD wMsg, LPARAM lParam1, LPARAM lParam2,
  */
 static	SEGPTR	MMIO_GenerateInfoForIOProc(const WINE_MMIO* wm)
 {
-    SEGPTR		lp = (SEGPTR)SEGPTR_ALLOC(sizeof(MMIOINFO16));
-    LPMMIOINFO16	mmioInfo16 = (LPMMIOINFO16)SEGPTR_GET((void*)lp);
+    LPMMIOINFO16 mmioInfo16 = SEGPTR_ALLOC(sizeof(MMIOINFO16));
 
     memset(mmioInfo16, 0, sizeof(MMIOINFO16));
 
-    mmioInfo16->lDiskOffset = wm->info.lDiskOffset;    
+    mmioInfo16->lDiskOffset = wm->info.lDiskOffset;
     mmioInfo16->adwInfo[0]  = wm->info.adwInfo[0];
     mmioInfo16->adwInfo[1]  = wm->info.adwInfo[1];
     mmioInfo16->adwInfo[2]  = wm->info.adwInfo[2];
     mmioInfo16->adwInfo[3]  = wm->info.adwInfo[3];
 
-    return lp;
+    return SEGPTR_GET(mmioInfo16);
 }
 
 /****************************************************************
@@ -424,9 +420,7 @@ static	SEGPTR	MMIO_GenerateInfoForIOProc(const WINE_MMIO* wm)
  */
 static	LRESULT MMIO_UpdateInfoForIOProc(WINE_MMIO* wm, SEGPTR segmmioInfo16)
 {
-    const MMIOINFO16*	mmioInfo16;
-
-    mmioInfo16 = (const MMIOINFO16*)SEGPTR_GET((void*)segmmioInfo16);
+    MMIOINFO16* mmioInfo16 = PTR_SEG_TO_LIN(segmmioInfo16);
 
     wm->info.lDiskOffset = mmioInfo16->lDiskOffset;
     wm->info.adwInfo[0]  = mmioInfo16->adwInfo[0];
@@ -434,9 +428,7 @@ static	LRESULT MMIO_UpdateInfoForIOProc(WINE_MMIO* wm, SEGPTR segmmioInfo16)
     wm->info.adwInfo[2]  = mmioInfo16->adwInfo[2];
     wm->info.adwInfo[3]  = mmioInfo16->adwInfo[3];
 
-    if (!SEGPTR_FREE((void*)segmmioInfo16)) {
-	FIXME("bad free line=%d\n", __LINE__);
-    } 
+    if (!SEGPTR_FREE(mmioInfo16)) FIXME("bad free\n");
 
     return MMSYSERR_NOERROR;
 }

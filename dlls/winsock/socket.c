@@ -1339,7 +1339,7 @@ char* WINAPI WSOCK32_inet_ntoa(struct in_addr in)
 SEGPTR WINAPI WINSOCK_inet_ntoa16(struct in_addr in)
 {
   char* retVal = WSOCK32_inet_ntoa(in);
-  return retVal ? SEGPTR_GET(retVal) : (SEGPTR)NULL;
+  return SEGPTR_GET(retVal);
 }
 
 
@@ -2373,7 +2373,7 @@ SEGPTR WINAPI WINSOCK_gethostbyaddr16(const char *addr, INT16 len, INT16 type)
     TRACE("ptr %08x, len %d, type %d\n",
                             (unsigned) addr, len, type);
     retval = __ws_gethostbyaddr( addr, len, type, WS_DUP_SEGPTR );
-    return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
+    return SEGPTR_GET(retval);
 }
 
 WIN_hostent* WINAPI WSOCK32_gethostbyaddr(const char *addr, INT len,
@@ -2434,7 +2434,7 @@ SEGPTR WINAPI WINSOCK_gethostbyname16(const char *name)
     WIN_hostent* retval;
     TRACE("%s\n", (name)?name:NULL_STRING);
     retval = __ws_gethostbyname( name, WS_DUP_SEGPTR );
-    return (retval)? SEGPTR_GET(retval) : ((SEGPTR)NULL) ;
+    return SEGPTR_GET(retval);
 }
 
 WIN_hostent* WINAPI WSOCK32_gethostbyname(const char* name)
@@ -2477,7 +2477,7 @@ SEGPTR WINAPI WINSOCK_getprotobyname16(const char *name)
     WIN_protoent* retval;
     TRACE("%s\n", (name)?name:NULL_STRING);
     retval = __ws_getprotobyname(name, WS_DUP_SEGPTR);
-    return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
+    return SEGPTR_GET(retval);
 }
 
 WIN_protoent* WINAPI WSOCK32_getprotobyname(const char* name)
@@ -2520,7 +2520,7 @@ SEGPTR WINAPI WINSOCK_getprotobynumber16(INT16 number)
     WIN_protoent* retval;
     TRACE("%i\n", number);
     retval = __ws_getprotobynumber(number, WS_DUP_SEGPTR);
-    return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
+    return SEGPTR_GET(retval);
 }
 
 WIN_protoent* WINAPI WSOCK32_getprotobynumber(INT number)
@@ -2572,7 +2572,7 @@ SEGPTR WINAPI WINSOCK_getservbyname16(const char *name, const char *proto)
     TRACE("'%s', '%s'\n",
                             (name)?name:NULL_STRING, (proto)?proto:NULL_STRING);
     retval = __ws_getservbyname(name, proto, WS_DUP_SEGPTR);
-    return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
+    return SEGPTR_GET(retval);
 }
 
 WIN_servent* WINAPI WSOCK32_getservbyname(const char *name, const char *proto)
@@ -2620,7 +2620,7 @@ SEGPTR WINAPI WINSOCK_getservbyport16(INT16 port, const char *proto)
     TRACE("%d (i.e. port %d), '%s'\n",
                             (int)port, (int)ntohl(port), (proto)?proto:NULL_STRING);
     retval = __ws_getservbyport(port, proto, WS_DUP_SEGPTR);
-    return retval ? SEGPTR_GET(retval) : ((SEGPTR)NULL);
+    return SEGPTR_GET(retval);
 }
 
 WIN_servent* WINAPI WSOCK32_getservbyport(INT port, const char *proto)
