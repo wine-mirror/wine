@@ -747,7 +747,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 	nqtail = This->queue_tail + len;
 	while (nqtail >= This->queue_len) nqtail -= This->queue_len;
     } else {
-	if (dodsize < sizeof(DIDEVICEOBJECTDATA)) {
+	if (dodsize < sizeof(DIDEVICEOBJECTDATA_DX3)) {
 	    ERR("Wrong structure size !\n");
 	    LeaveCriticalSection(&(This->crit));
 	    return DIERR_INVALIDPARAM;
