@@ -326,6 +326,13 @@ static HRESULT _Blt_ColorFill(
     switch(bpp) {
     case 1: COLORFILL_ROW(BYTE)
     case 2: COLORFILL_ROW(WORD)
+    case 3: { BYTE *d = (BYTE *) buf;
+              for (x = 0; x < width; x++,d+=3) {
+                d[0] = (color    ) & 0xFF;
+                d[1] = (color>> 8) & 0xFF;
+                d[2] = (color>>16) & 0xFF;
+              }
+              break;}
     case 4: COLORFILL_ROW(DWORD)
     default:
 	FIXME("Color fill not implemented for bpp %d!\n", bpp*8);
@@ -623,10 +630,10 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 			    DWORD pixel;
 
 			    s = sbuf+3*(sx>>16);
-			    pixel = (s[0]<<16)|(s[1]<<8)|s[2];
-			    d[0] = (pixel>>16)&0xff;
+			    pixel = s[0]|(s[1]<<8)|(s[2]<<16);
+			    d[0] = (pixel    )&0xff;
 			    d[1] = (pixel>> 8)&0xff;
-			    d[2] = (pixel    )&0xff;
+			    d[2] = (pixel>>16)&0xff;
 			    d+=3;
 			}
 			break;
@@ -762,11 +769,11 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 		    for (x = sx = 0; x < dstwidth; x++, sx+= xinc) {
 			DWORD pixel;
 			s = sbuf+3*(sx>>16);
-			pixel = (s[0]<<16)|(s[1]<<8)|s[2];
+			pixel = s[0]|(s[1]<<8)|(s[2]<<16);
                         if (pixel < keylow || pixel > keyhigh){
-		            dx[0] = (pixel>>16)&0xff;
+		            dx[0] = (pixel    )&0xff;
 			    dx[1] = (pixel>> 8)&0xff;
-			    dx[2] = (pixel    )&0xff;
+			    dx[2] = (pixel>>16)&0xff;
                         }
 		        dx+= dstxinc;
 		    }
