@@ -71,10 +71,14 @@ foreach my $i (split(/\s/,$makefiles))
             }
             next;
         }
-        if (/^ALTNAMES\s*=\s*(.*)/)
+        if (/^SPEC_SRCS16\s*=\s*(.*)/)
         {
-            my @list = split(/\s/,$1);
+            my $specs = $1;
+            while ($specs =~ /\s*(.*)\\$/) { $specs = $1 . <MAKE>; }
+            my @list = split(/\s+/,$specs);
+            @list = map { $_ =~ s/\.spec$//; $_ .= ".dll" unless $_ =~ /\./; $_; } @list;
             $altnames{$module} = \@list;
+            printf "\"$specs\" -> %s\n", join(',',@list);
             next;
         }
     }
