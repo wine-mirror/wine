@@ -61,9 +61,9 @@
         In most cases on a Debian system, you can install Wine with a
         single command, as root:
       </para>
-      <screen>
-# apt-get install wine
-      </screen>
+<screen>
+<prompt># </><userinput>apt-get install wine</>
+</screen>
       <para>
         <command>apt-get</command> will connect to a Debian archive
         across the Internet (thus, you must be online), then download
@@ -94,12 +94,12 @@
         For example, if you saved the file to your home directory, you
         might perform the following actions to install it:
       </para>
-      <screen>
-$ su -
-<emphasis>&lt;Type in root password&gt;</emphasis>
-# cd /home/user
-# dpkg -i wine_0.0.20021031-1.deb
-    </screen>
+<screen>
+<prompt>$ </><userinput>su -</>
+Password:
+<prompt># </><userinput>cd /home/user</>
+<prompt># </><userinput>dpkg -i wine_<replaceable>0.0.20021031-1</>.deb</>
+</screen>
       <para>
         You may also want to install the
         <systemitem>wine-doc</systemitem> package, and if you are
@@ -130,9 +130,9 @@ $ su -
         and then switch to the directory you downloaded the rpm file to.
         Once there, type this one command as root:
       </para>
-      <screen>
-# rpm -ivh wine-20020605-2.i386.rpm
-      </screen>
+<screen>
+<prompt># </><userinput>rpm -ivh wine-<replaceable>20020605-2.i386</>.rpm</>
+</screen>
       <para>
         You may also want to install the
         <systemitem>wine-devel</systemitem> package.
@@ -218,23 +218,24 @@ $ su -
       </itemizedlist>
       <para>
         The official releases are tagged by date with the format
-        "Wine-YYYYMMDD.tar.gz".  Your best bet is to grab the latest
-        one.
+        "Wine-<replaceable>YYYYMMDD</>.tar.gz".  Your best bet is to grab
+        the latest one.
       </para>
       <para>
-        Once you have downloaded this, you must first compile wine, and then install it.
-        To do this is not very hard.  First switch to the directory containing the file
-        you just downloaded.  Then extract the source with (e.g.):
+        Once you have downloaded this, you must first compile wine, and then
+        install it.  This is not very hard to do.  First switch to the
+        directory containing the file you just downloaded.  Then extract the
+        source with (e.g.):
+<screen>
+<prompt># </><userinput>tar xzvf wine-<replaceable>20021031</>.tar.gz</>
+</screen>
       </para>
-      <screen>
-# tar xzvf wine-20021031.tar.gz
-      </screen>
       <para>
         Then, switch to the directory that was created and compile it by typing (e.g.):
+<screen>
+<prompt># </><userinput>./tools/wineinstall</>
+</screen>
       </para>
-      <screen>
-# ./tools/wineinstall
-      </screen>
       <para>
         NOTE: You must make sure that you are not the superuser (root) when doing this,
         and that you have write permission to the directory that was created by the tar
@@ -248,21 +249,21 @@ $ su -
       <para>
         The official web page for Wine CVS is
         <ulink url="http://www.winehq.com/development/">
-          http://www.winehq.com/development/</ulink>.
+          http://www.winehq.com/development/</>.
       </para>
       <para>
         First, you need to get a copy of the latest Wine sources
         using CVS. You can tell it where to find the source tree by
         setting the <envar>CVSROOT</envar> environment variable. You
         also have to log in anonymously to the wine CVS server.  In
-        <command>bash</command>, it might look something like this:
+        <command>bash</>, it might look something like this:
+<screen>
+<prompt>$ </><userinput>export CVSROOT=:pserver:cvs@cvs.winehq.com:/home/wine</>
+<prompt>$ </><userinput>cvs login</>
+Password:
+<prompt>$ </><userinput>cvs checkout wine</>
+</screen>
       </para>
-      <screen>
-$ export CVSROOT=:pserver:cvs@cvs.winehq.com:/home/wine
-$ cvs login
-Password: cvs
-$ cvs checkout wine
-    </screen>
       <para>
         That'll pull down the entire Wine source tree from
         winehq.com and place it in the current directory (actually
@@ -270,37 +271,37 @@ $ cvs checkout wine
         parameters, so there are many ways to pull down files, from
         anywhere in the revision history.  Later, you can grab just
         the updates:
+<screen>
+<prompt>$ </><userinput>cvs -PAd update</>
+</screen>
       </para>
-      <screen>
-$ cvs -PAd update
-      </screen>
       <para>
-        <command>cvs update</command> works from inside the source tree.
-        You don't need the <envar>CVSROOT</envar> environment variable
+        <command>cvs update</> works from inside the source tree.
+        You don't need the <envar>CVSROOT</> environment variable
         to run it either.  You just have to be inside the source tree.
-        The <parameter>-P</parameter>, <parameter>-A</parameter> and <parameter>-d</parameter>
+        The <parameter>-P</>, <parameter>-A</> and <parameter>-d</>
         options make sure your local Wine tree directory structure stays
         in sync with the remote repository.
       </para>
       <para>
         After you've made changes, you can create a patch with
-        <command>cvs diff -u</command>, which sends output to stdout
-        (the <parameter>-u</parameter> controls the format of the
-        patch). So, to create an <filename>my_patch.diff</filename>
+        <command>cvs diff -u</>, which sends output to stdout
+        (the <parameter>-u</> controls the format of the
+        patch). So, to create an <filename>my_patch.diff</>
         file, you would do this:
+<screen>
+<prompt>$ </><userinput>cvs diff -u &gt;<replaceable>my_patch.diff</></>
+</screen>
       </para>
-      <screen>
-$ cvs diff -u > my_patch.diff
-      </screen>
       <para>
         You can call <command>cvs diff</command> from anywhere in the
         tree (just like <command>cvs update</command>), and it will
         always grab recursively from that point.  You can also specify
         single files or subdirectories:
+<screen>
+<prompt>$ </><userinput>cvs diff -u dlls/winaspi &gt;<replaceable>my_aspi_patch.diff</></>
+</screen>
       </para>
-      <screen>
-$ cvs diff -u dlls/winaspi > my_aspi_patch.diff
-      </screen>
       <para>
         Experiment around a little.  It's fairly intuitive.
       </para>
@@ -313,55 +314,54 @@ $ cvs diff -u dlls/winaspi > my_aspi_patch.diff
         distribution, you have the option of applying patches to the
         source tree to fix bugs and add experimental features.
         Perhaps you've found a bug, reported it to the <ulink
-        url="mailto:wine-devel@winehq.com">Wine mailing list</ulink>,
+        url="mailto:wine-devel@winehq.com">Wine mailing list</>,
         and received a patch file to fix the bug.  You can apply the
-        patch with the <command>patch</command> command, which takes a
-        streamed patch from <filename>stdin</filename>:
+        patch with the <command>patch</> command, which takes a
+        streamed patch from <filename>stdin</>:
+<screen>
+<prompt>$ </><userinput>cd wine</>
+<prompt>$ </><userinput>patch -p0 &lt;<replaceable>../patch_to_apply.diff</></>
+</screen>
       </para>
-      <screen>
-$ cd wine
-$ patch -p0 < ../patch_to_apply.diff
-      </screen>
       <para>
-        To remove the patch, use the <parameter>-R</parameter> option:
+        To remove the patch, use the <parameter>-R</> option:
+<screen>
+<prompt>$ </><userinput>patch -p0 -R &lt;<replaceable>../patch_to_apply.diff</></>
+</screen>
       </para>
-      <screen>
-$ patch -p0 -R < ../patch_to_apply.diff
-      </screen>
       <para>
         If you want to do a test run to see if the patch will apply
         successfully (e.g., if the patch was created from an older or
         newer version of the tree), you can use the
-        <parameter>--dry-run</parameter> parameter to run the patch
+        <parameter>--dry-run</> parameter to run the patch
         without writing to any files:
+<screen>
+<prompt>$ </><userinput>patch -p0 --dry-run &lt;<replaceable>../patch_to_apply.diff</></>
+</screen>
       </para>
-      <screen>
-$ patch -p0 --dry-run < ../patch_to_apply.diff
-      </screen>
       <para>
-        <command>patch</command> is pretty smart about extracting
+        <command>patch</> is pretty smart about extracting
         patches from the middle of a file, so if you save an email with
         an inlined patch to a file on your hard drive, you can invoke
         patch on it without stripping out the email headers and other
-        text.  <command>patch</command> ignores everything that doesn't
+        text.  <command>patch</> ignores everything that doesn't
         look like a patch.
       </para>
       <para>
-        The <parameter>-p0</parameter> option to <command>patch</command>
+        The <parameter>-p0</> option to <command>patch</>
 	tells it to keep the full file name from the patch file. For example,
 	if the file name in the patch file was
-	 <filename>wine/programs/clock/main.c</filename>.
-	Setting the <parameter>-p0</parameter> option would apply the patch
+	 <filename>wine/programs/clock/main.c</>.
+	Setting the <parameter>-p0</> option would apply the patch
 	to the file of the same name i.e.
-	<filename>wine/programs/clock/main.c </filename>.
-	Setting the <parameter>-p1</parameter> option would strip off the
+	<filename>wine/programs/clock/main.c </>.
+	Setting the <parameter>-p1</> option would strip off the
 	first part of the file name and apply
-	the patch instead to <filename>programs/clock/main.c </filename>.
-	The <parameter>-p1</parameter> option would be useful if you named
+	the patch instead to <filename>programs/clock/main.c </>.
+	The <parameter>-p1</> option would be useful if you named
 	your top level wine directory differently to the person who sent you
-	the patch. For the <parameter>-p1</parameter> option
-	<command>patch</command> should be run from the top level wine directory.
-
+	the patch. For the <parameter>-p1</> option
+	<command>patch</> should be run from the top level wine directory.
       </para>
     </sect1>
 
