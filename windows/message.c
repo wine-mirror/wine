@@ -113,7 +113,7 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
     UINT message = msg->message;
     POINT16 screen_pt, pt;
     HANDLE16 hQ = GetFastQueue16();
-    MESSAGEQUEUE *queue = (MESSAGEQUEUE *)QUEUE_Lock(hQ);
+    MESSAGEQUEUE *queue = QUEUE_Lock(hQ);
     BOOL mouseClick = ((message == WM_LBUTTONDOWN) ||
 		         (message == WM_RBUTTONDOWN) ||
 		         (message == WM_MBUTTONDOWN))?1:0;
@@ -153,7 +153,7 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
         if (queue) QUEUE_ClearWakeBit( queue, QS_MOUSE );
         /* Wake up the other task */
         QUEUE_Unlock( queue );
-        queue = (MESSAGEQUEUE *)QUEUE_Lock( pWnd->hmemTaskQ );
+        queue = QUEUE_Lock( pWnd->hmemTaskQ );
         if (queue) QUEUE_SetWakeBit( queue, QS_MOUSE );
 
         QUEUE_Unlock( queue );
@@ -387,12 +387,12 @@ static DWORD MSG_TranslateKbdMsg( HWND hTopWnd, DWORD first, DWORD last,
     if (pWnd && (pWnd->hmemTaskQ != GetFastQueue16()))
     {
         /* Not for the current task */
-        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() );
+        MESSAGEQUEUE *queue = QUEUE_Lock( GetFastQueue16() );
         if (queue) QUEUE_ClearWakeBit( queue, QS_KEY );
         QUEUE_Unlock( queue );
         
         /* Wake up the other task */
-        queue = (MESSAGEQUEUE *)QUEUE_Lock( pWnd->hmemTaskQ );
+        queue = QUEUE_Lock( pWnd->hmemTaskQ );
         if (queue) QUEUE_SetWakeBit( queue, QS_KEY );
         QUEUE_Unlock( queue );
         WIN_ReleaseWndPtr(pWnd);
@@ -810,9 +810,9 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
     /* create a SMSG structure to hold SendMessage() parameters */
     if (! (smsg = (SMSG *) HeapAlloc( SystemHeap, 0, sizeof(SMSG) )) )
         return 0;
-    if (!(queue = (MESSAGEQUEUE*)QUEUE_Lock( GetFastQueue16() ))) return 0;
+    if (!(queue = QUEUE_Lock( GetFastQueue16() ))) return 0;
 
-    if (!(destQ = (MESSAGEQUEUE*)QUEUE_Lock( hDestQueue )))
+    if (!(destQ = QUEUE_Lock( hDestQueue )))
     {
         QUEUE_Unlock( queue );
         return 0;
@@ -942,7 +942,7 @@ BOOL WINAPI ReplyMessage( LRESULT result )
     SMSG         *smsg;
     BOOL       ret = FALSE;
 
-    if (!(queue = (MESSAGEQUEUE*)QUEUE_Lock( GetFastQueue16() )))
+    if (!(queue = QUEUE_Lock( GetFastQueue16() )))
         return FALSE;
 
     TRACE_(sendmsg)("ReplyMessage, queue %04x\n", queue->self);
@@ -1126,7 +1126,7 @@ static BOOL MSG_ConvertMsg( MSG *msg, int srcType, int dstType )
 static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd, 
                              DWORD first, DWORD last, WORD flags, BOOL peek )
 {
-    int mask;
+    int changeBits, mask;
     MESSAGEQUEUE *msgQueue;
     HQUEUE16 hQueue;
     int iWndsLocks;
@@ -1155,21 +1155,25 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
         QMSG *qmsg;
         
 	hQueue   = GetFastQueue16();
-        msgQueue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
+        msgQueue = QUEUE_Lock( hQueue );
         if (!msgQueue)
         {
             WIN_RestoreWndsLock(iWndsLocks);
             return FALSE;
         }
+
+        EnterCriticalSection( &msgQueue->cSection );
         msgQueue->changeBits = 0;
+        LeaveCriticalSection( &msgQueue->cSection );
 
         /* First handle a message put by SendMessage() */
 
-	while (msgQueue->wakeBits & QS_SENDMESSAGE)
-            QUEUE_ReceiveMessage( msgQueue );
+        while ( QUEUE_ReceiveMessage( msgQueue ) )
+            ;
 
         /* Now handle a WM_QUIT message */
 
+        EnterCriticalSection( &msgQueue->cSection );
         if (msgQueue->wPostQMsg &&
 	   (!first || WM_QUIT >= first) && 
 	   (!last || WM_QUIT <= last) )
@@ -1179,13 +1183,15 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
             msg->wParam  = msgQueue->wExitCode;
             msg->lParam  = 0;
             if (flags & PM_REMOVE) msgQueue->wPostQMsg = 0;
+            LeaveCriticalSection( &msgQueue->cSection );
             break;
         }
+        LeaveCriticalSection( &msgQueue->cSection );
     
         /* Now find a normal message */
 
   retry:
-        if (((msgQueue->wakeBits & mask) & QS_POSTMESSAGE) &&
+        if ((QUEUE_TestWakeBit(msgQueue, mask & QS_POSTMESSAGE)) &&
             ((qmsg = QUEUE_FindMsg( msgQueue, hwnd, first, last )) != 0))
         {
             /* Try to convert message to requested type */
@@ -1207,7 +1213,10 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
             break;
         }
 
-        msgQueue->changeBits |= MSG_JournalPlayBackMsg();
+        changeBits = MSG_JournalPlayBackMsg();
+        EnterCriticalSection( &msgQueue->cSection );
+        msgQueue->changeBits |= changeBits;
+        LeaveCriticalSection( &msgQueue->cSection );
 
         /* Now find a hardware event */
 
@@ -1222,12 +1231,12 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
 
         /* Check again for SendMessage */
 
- 	while (msgQueue->wakeBits & QS_SENDMESSAGE)
-            QUEUE_ReceiveMessage( msgQueue );
+        while ( QUEUE_ReceiveMessage( msgQueue ) )
+            ;
 
         /* Now find a WM_PAINT message */
 
-	if ((msgQueue->wakeBits & mask) & QS_PAINT)
+	if (QUEUE_TestWakeBit(msgQueue, mask & QS_PAINT))
 	{
 	    WND* wndPtr;
 	    msg->hwnd = WIN_FindWinToRepaint( hwnd , hQueue );
@@ -1263,10 +1272,11 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
         if (!(flags & PM_NOYIELD))
         {
             UserYield16();
-            while (msgQueue->wakeBits & QS_SENDMESSAGE)
-                QUEUE_ReceiveMessage( msgQueue );
+            while ( QUEUE_ReceiveMessage( msgQueue ) )
+                ;
         }
-	if ((msgQueue->wakeBits & mask) & QS_TIMER)
+
+	if (QUEUE_TestWakeBit(msgQueue, mask & QS_TIMER))
 	{
 	    if (TIMER_GetTimerMsg(msg, hwnd, hQueue, flags & PM_REMOVE)) break;
 	}
@@ -1279,7 +1289,7 @@ static BOOL MSG_PeekMessage( int type, LPMSG msg, HWND hwnd,
             WIN_RestoreWndsLock(iWndsLocks);
             return FALSE;
         }
-        msgQueue->wakeMask = mask;
+
         QUEUE_WaitBits( mask, INFINITE );
         QUEUE_Unlock( msgQueue );
     }
@@ -1977,7 +1987,7 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
     DWORD ret;
 
     HQUEUE16 hQueue = GetFastQueue16();
-    MESSAGEQUEUE *msgQueue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
+    MESSAGEQUEUE *msgQueue = QUEUE_Lock( hQueue );
     if (!msgQueue) return WAIT_FAILED;
 
     if (nCount > MAXIMUM_WAIT_OBJECTS-1)
@@ -1987,8 +1997,10 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
         return WAIT_FAILED;
     }
 
+    EnterCriticalSection( &msgQueue->cSection );
     msgQueue->changeBits = 0;
     msgQueue->wakeMask = dwWakeMask;
+    LeaveCriticalSection( &msgQueue->cSection );
 
     if (THREAD_IsWin16(NtCurrentTeb()))
     {
@@ -2026,11 +2038,14 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
 	/*
 	 * If a message matching the wait mask has arrived, return.
 	 */
+        EnterCriticalSection( &msgQueue->cSection );
 	if (msgQueue->changeBits & dwWakeMask)
 	{
+          LeaveCriticalSection( &msgQueue->cSection );
 	  ret = nCount;
 	  break;
 	}
+        LeaveCriticalSection( &msgQueue->cSection );
 
 	/*
 	 * And continue doing this until we hit the timeout.
@@ -2565,7 +2580,7 @@ BOOL WINAPI InSendMessage(void)
     MESSAGEQUEUE *queue;
     BOOL ret;
 
-    if (!(queue = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
+    if (!(queue = QUEUE_Lock( GetFastQueue16() )))
         return 0;
     ret = (BOOL)queue->smWaiting;
 
