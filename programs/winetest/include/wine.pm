@@ -26,6 +26,7 @@ package wine;
 use strict;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $AUTOLOAD $todo_level
             $successes $failures $todo_successes $todo_failures
+            $winetest_report_success
             %return_types %prototypes %loaded_modules);
 
 require Exporter;
@@ -63,6 +64,8 @@ $failures = 0;
 $todo_successes = 0;
 $todo_failures = 0;
 %loaded_modules = ();
+$winetest_report_success = defined($ENV{WINETEST_REPORT_SUCCESS}) ? $ENV{WINETEST_REPORT_SUCCESS} : 0;
+
 
 # --------------------------------------------------------------
 # | Return-type constants                                      |
@@ -466,7 +469,11 @@ sub ok($;$)
                           ($description ? ": $description" : "") . "\n");
             $failures++;
         }
-        else { $successes++; }
+        else 
+        {
+            print STDERR ("$filename:$line: Test succeeded\n") if ($winetest_report_success);
+            $successes++;
+        }
     }
 }
 

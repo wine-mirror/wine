@@ -32,6 +32,9 @@ int winetest_debug = 1;
 /* current platform */
 const char *winetest_platform = "windows";
 
+/* report successful tests (BOOL) */
+int winetest_report_success = 0;
+
 struct test
 {
     const char  *name;
@@ -123,7 +126,13 @@ int winetest_ok( int condition, const char *msg, ... )
             InterlockedIncrement(&failures);
             return 0;
         }
-        else InterlockedIncrement(&successes);
+        else
+        {
+            if( winetest_report_success)
+                fprintf( stderr, "%s:%d: Test succeeded\n",
+                         data->current_file, data->current_line);
+            InterlockedIncrement(&successes);
+        }
     }
     return 1;
 }
@@ -238,6 +247,8 @@ int main( int argc, char **argv )
 
     if ((p = getenv( "WINETEST_PLATFORM" ))) winetest_platform = p;
     if ((p = getenv( "WINETEST_DEBUG" ))) winetest_debug = atoi(p);
+    if ((p = getenv( "WINETEST_REPORT_SUCCESS"))) winetest_report_success = \
+                atoi(p);
     if (!argv[1])
     {
         fprintf( stderr, "Usage: %s test_name\n", argv[0] );
