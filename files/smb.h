@@ -19,8 +19,8 @@
 #ifndef __INC_SMB__
 #define __INC_SMB__
 
-extern inline int SMB_isSepW (WCHAR c) {return (c == '\\' || c == '/');}
-extern inline int SMB_isUNCW (LPCWSTR filename) {return (filename && SMB_isSepW (filename[0]) && SMB_isSepW (filename[1]));}
+static inline int SMB_isSepW (WCHAR c) {return (c == '\\' || c == '/');}
+static inline int SMB_isUNCW (LPCWSTR filename) {return (filename && SMB_isSepW (filename[0]) && SMB_isSepW (filename[1]));}
 
 NTSTATUS WINAPI SMB_ReadFile(HANDLE hFile, LPVOID buffer, DWORD bytesToRead, 
                              PIO_STATUS_BLOCK io_status);

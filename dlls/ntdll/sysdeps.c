@@ -105,7 +105,7 @@ void SYSDEPS_SetCurThread( TEB *teb )
  */
 inline static char *get_temp_stack(void)
 {
-    unsigned int next = InterlockedExchangeAdd( &next_temp_stack, 1 );
+    unsigned int next = interlocked_xchg_add( &next_temp_stack, 1 );
     return temp_stacks[next % NB_TEMP_STACKS];
 }
 
