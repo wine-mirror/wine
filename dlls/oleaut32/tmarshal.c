@@ -466,8 +466,9 @@ serialize_param(
 		    return hres;
 	    }
 	}
+
 	if (dealloc && arg)
-	    SysFreeString((BSTR)arg);
+	    SysFreeString((BSTR)*arg);
 	return S_OK;
     }
     case VT_PTR: {
