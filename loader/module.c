@@ -984,47 +984,32 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size 
 
 /******************************************************************
  *		load_library_as_datafile
- *
- *
  */
-static BOOL load_library_as_datafile(const void* name, BOOL unicode, HMODULE* hmod)
+static BOOL load_library_as_datafile( LPCWSTR name, HMODULE* hmod)
 {
+    static const WCHAR dotDLL[] = {'.','d','l','l',0};
+
+    WCHAR filenameW[MAX_PATH];
     HANDLE hFile = INVALID_HANDLE_VALUE;
     HANDLE mapping;
-    
+
     *hmod = 0;
 
-    if (unicode)
+    if (SearchPathW( NULL, (LPCWSTR)name, dotDLL, sizeof(filenameW) / sizeof(filenameW[0]),
+                     filenameW, NULL ))
     {
-        WCHAR filenameW[MAX_PATH];
-static  WCHAR dotDLL[] = {'.','d','l','l',0};
-
-        if (SearchPathW( NULL, (LPCWSTR)name, dotDLL, sizeof(filenameW) / sizeof(filenameW[0]), filenameW, NULL ))
-        {
-            hFile = CreateFileW( filenameW, GENERIC_READ, FILE_SHARE_READ,
-                                 NULL, OPEN_EXISTING, 0, 0 );
-        }
+        hFile = CreateFileW( filenameW, GENERIC_READ, FILE_SHARE_READ,
+                             NULL, OPEN_EXISTING, 0, 0 );
     }
-    else
-    {
-        char filenameA[MAX_PATH];
-
-        if (SearchPathA( NULL, (const char*)name, ".dll", sizeof(filenameA), filenameA, NULL ))
-        {
-            hFile = CreateFileA( filenameA, GENERIC_READ, FILE_SHARE_READ,
-                                 NULL, OPEN_EXISTING, 0, 0 );
-        }
-    }
-
     if (hFile == INVALID_HANDLE_VALUE) return FALSE;
     switch (MODULE_GetBinaryType( hFile ))
     {
     case BINARY_PE_EXE:
     case BINARY_PE_DLL:
-        mapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
+        mapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
         if (mapping)
         {
-            *hmod = (HMODULE)MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
+            *hmod = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 0 );
             CloseHandle( mapping );
         }
         break;
@@ -1056,19 +1041,22 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
         SetLastError(ERROR_INVALID_PARAMETER);
         return 0;
     }
+    RtlCreateUnicodeStringFromAsciiz( &wstr, libname );
 
     if (flags & LOAD_LIBRARY_AS_DATAFILE)
     {
-        /* The method in load_library_as_datafile allows searching for the 
-         * 'native' libraries only 
+        /* The method in load_library_as_datafile allows searching for the
+         * 'native' libraries only
          */
-        if (load_library_as_datafile(libname, FALSE, &hModule))
+        if (load_library_as_datafile( wstr.Buffer, &hModule))
+        {
+            RtlFreeUnicodeString( &wstr );
             return (HMODULE)((ULONG_PTR)hModule + 1);
+        }
         flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
         /* Fallback to normal behaviour */
     }
 
-    RtlCreateUnicodeStringFromAsciiz( &wstr, libname );
     nts = LdrLoadDll(NULL, flags, &wstr, &hModule);
     if (nts != STATUS_SUCCESS)
     {
@@ -1097,10 +1085,10 @@ HMODULE WINAPI LoadLibraryExW(LPCWSTR libnameW, HANDLE hfile, DWORD flags)
 
     if (flags & LOAD_LIBRARY_AS_DATAFILE)
     {
-        /* The method in load_library_as_datafile allows searching for the 
-         * 'native' libraries only 
+        /* The method in load_library_as_datafile allows searching for the
+         * 'native' libraries only
          */
-        if (load_library_as_datafile(libnameW, TRUE, &hModule))
+        if (load_library_as_datafile(libnameW, &hModule))
             return (HMODULE)((ULONG_PTR)hModule + 1);
         flags |= DONT_RESOLVE_DLL_REFERENCES; /* Just in case */
         /* Fallback to normal behaviour */
