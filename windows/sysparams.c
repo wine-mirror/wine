@@ -30,10 +30,12 @@ DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETBORDER_IDX                       2
 #define SPI_SETKEYBOARDSPEED_IDX                3
 #define SPI_ICONHORIZONTALSPACING_IDX           4
-#define SPI_SETKEYBOARDDELAY_IDX                5
-#define SPI_ICONVERTICALSPACING_IDX             6
-#define SPI_SETSHOWSOUNDS_IDX                   7
-#define SPI_WINE_IDX                            SPI_SETSHOWSOUNDS_IDX
+#define SPI_SETSCREENSAVETIMEOUT_IDX            5
+#define SPI_SETKEYBOARDDELAY_IDX                6
+#define SPI_ICONVERTICALSPACING_IDX             7
+#define SPI_SETSHOWSOUNDS_IDX                   8
+#define SPI_SETSCREENSAVERRUNNING_IDX           9
+#define SPI_WINE_IDX                            SPI_SETSCREENSAVERRUNNING_IDX
 
 /**
  * Names of the registry subkeys of HKEY_CURRENT_USER key and value names
@@ -54,12 +56,16 @@ DEFAULT_DEBUG_CHANNEL(system);
 #define SPI_SETKEYBOARDSPEED_VALNAME            "KeyboardSpeed"
 #define SPI_ICONHORIZONTALSPACING_REGKEY        "Control Panel\\Desktop"
 #define SPI_ICONHORIZONTALSPACING_VALNAME       "IconSpacing"
+#define SPI_SETSCREENSAVETIMEOUT_REGKEY         "Control Panel\\Desktop"
+#define SPI_SETSCREENSAVETIMEOUT_VALNAME        "ScreenSaveTimeOut"
 #define SPI_SETKEYBOARDDELAY_REGKEY             "Control Panel\\Keyboard"
 #define SPI_SETKEYBOARDDELAY_VALNAME            "KeyboardDelay"
 #define SPI_ICONVERTICALSPACING_REGKEY          "Control Panel\\Desktop"
 #define SPI_ICONVERTICALSPACING_VALNAME         "IconVerticalSpacing"
 #define SPI_SETSHOWSOUNDS_REGKEY        "Control Panel\\Accessibility\\ShowSounds"
 #define SPI_SETSHOWSOUNDS_VALNAME       "On"
+#define SPI_SETSCREENSAVERRUNNING_REGKEY        "Control Panel\\Desktop"
+#define SPI_SETSCREENSAVERRUNNING_VALNAME       "WINE_ScreenSaverRunning"
 
 /* volatile registry branch under CURRENT_USER_REGKEY for temporary values storage */
 #define WINE_CURRENT_USER_REGKEY     "Wine"
@@ -76,7 +82,9 @@ static int mouse_threshold2 = 10;
 static int mouse_speed = 1;
 static int border = 1;
 static int keyboard_speed = 31;
+static int screensave_timeout = 300;
 static int keyboard_delay = 1;
+static BOOL screensaver_running = FALSE;
 
 /***********************************************************************
  *		GetTimerResolution (USER.14)
@@ -190,6 +198,11 @@ void SYSPARAMS_Reset( UINT uiAction )
         if (uiAction) \
             break
 
+#define WINE_IGNORE_SPI(x) \
+    case x: \
+        if (uiAction) \
+            break
+
 #define WINE_INVALIDATE_SPI(x) \
     case x: \
         spi_loaded[x##_IDX] = FALSE; \
@@ -207,6 +220,7 @@ void SYSPARAMS_Reset( UINT uiAction )
     WINE_RELOAD_SPI(SPI_SETBORDER);
     WINE_RELOAD_SPI(SPI_ICONHORIZONTALSPACING);
     WINE_RELOAD_SPI(SPI_ICONVERTICALSPACING);
+    WINE_IGNORE_SPI(SPI_SETSCREENSAVEACTIVE);
     WINE_RELOAD_SPI(SPI_SETSHOWSOUNDS);
 
     default:
@@ -218,7 +232,9 @@ void SYSPARAMS_Reset( UINT uiAction )
             WINE_INVALIDATE_SPI(SPI_SETBEEP);
             WINE_INVALIDATE_SPI(SPI_SETMOUSE);
             WINE_INVALIDATE_SPI(SPI_SETKEYBOARDSPEED);
+            WINE_INVALIDATE_SPI(SPI_SETSCREENSAVETIMEOUT);
             WINE_INVALIDATE_SPI(SPI_SETKEYBOARDDELAY);
+            WINE_INVALIDATE_SPI(SPI_SETSCREENSAVERRUNNING);
             default:
                 FIXME( "Unknown action reset: %u\n", uiAction );
                 break;
@@ -233,6 +249,7 @@ void SYSPARAMS_Reset( UINT uiAction )
         ERR( "Incorrect implementation of SYSPARAMS_Reset. "
              "Not all params are reloaded.\n" );
 #undef WINE_INVALIDATE_SPI
+#undef WINE_IGNORE_SPI
 #undef WINE_RELOAD_SPI
 }
 
@@ -248,17 +265,6 @@ static HKEY get_volatile_regkey(void)
 
     if (!volatile_key)
     {
-        /* FIXME - check whether the key exists
-          notify_change = FALSE;
-          if (WINE_CURRENT_USER_REGKEY does not exist)
-          {
-            initialize system parameters info which take values from X settings,
-            if(current settings differ from X)
-              change current setting and save it;
-          }
-          notify_change = TRUE;
-        */
-
         if (RegCreateKeyExA( HKEY_CURRENT_USER, WINE_CURRENT_USER_REGKEY,
                              0, 0, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, 0,
                              &volatile_key, 0 ) != ERROR_SUCCESS)
@@ -352,18 +358,21 @@ BOOL SYSPARAMS_Save( LPSTR lpRegKey, LPSTR lpValName, LPSTR lpValue,
 /***********************************************************************
  *		SystemParametersInfoA (USER32.@)
  *
- * Each system parameter has flag which shows whether the parameter
+ *     Each system parameter has flag which shows whether the parameter
  * is loaded or not. Parameters, stored directly in SysParametersInfo are
  * loaded from registry only when they are requested and the flag is
  * "false", after the loading the flag is set to "true". On interprocess
  * notification of the parameter change the corresponding parameter flag is
  * set to "false". The parameter value will be reloaded when it is requested
  * the next time.
- * Parameters, backed by or depend on GetSystemMetrics are processed
+ *     Parameters, backed by or depend on GetSystemMetrics are processed
  * differently. These parameters are always loaded. They are reloaded right
  * away on interprocess change notification. We can't do lazy loading because
  * we don't want to complicate GetSystemMetrics.
- * When parameter value is updated the changed value is stored in permanent
+ *     Parameters, backed by X settings are read from corresponding setting.
+ * On the parameter change request the setting is changed. Interprocess change
+ * notifications are ignored.
+ *     When parameter value is updated the changed value is stored in permanent
  * registry branch if saving is requested. Otherwise it is stored
  * in temporary branch
  *
@@ -462,7 +471,6 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         }
         else
             ret = FALSE;
-    
         break;
     }
 
@@ -550,9 +558,10 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
         break;
     }
 
-    WINE_SPI_WARN(SPI_LANGDRIVER);		/*     12 */
+    /* not implemented in Windows */
+    WINE_SPI_WARN(SPI_LANGDRIVER);              /*     12 */
 
-    case SPI_ICONHORIZONTALSPACING:		/*     13 */
+    case SPI_ICONHORIZONTALSPACING:             /*     13 */
         spi_idx = SPI_ICONHORIZONTALSPACING_IDX;
 	if (pvParam != NULL)
         {
@@ -587,33 +596,56 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
             else
                 ret = FALSE;
         }
-        
 	break;
 
-    case SPI_GETSCREENSAVETIMEOUT:		/*     14 */
+    case SPI_GETSCREENSAVETIMEOUT:              /*     14 */
+        spi_idx = SPI_SETSCREENSAVETIMEOUT_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[10];
+
+            if (SYSPARAMS_Load( SPI_SETSCREENSAVETIMEOUT_REGKEY,
+                                SPI_SETSCREENSAVETIMEOUT_VALNAME,
+                                buf ))
+                screensave_timeout = atoi( buf );
+
+            spi_loaded[spi_idx] = TRUE;
+        }
+	*(INT *)pvParam = screensave_timeout;
+	break;
+
+    case SPI_SETSCREENSAVETIMEOUT:              /*     15 */
     {
-	int	timeout;
-	timeout = USER_Driver.pGetScreenSaveTimeout();
-	if (!timeout)
-	    timeout = GetProfileIntA( "windows", "ScreenSaveTimeout", 300 );
-	*(INT *)pvParam = timeout;
-	break;
+        char buf[10];
+
+        spi_idx = SPI_SETSCREENSAVETIMEOUT_IDX;
+        sprintf(buf, "%u", uiParam);
+
+        if (SYSPARAMS_Save( SPI_SETSCREENSAVETIMEOUT_REGKEY,
+                            SPI_SETSCREENSAVETIMEOUT_VALNAME,
+                            buf, fWinIni ))
+        {
+            screensave_timeout = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
     }
-    case SPI_SETSCREENSAVETIMEOUT:		/*     15 */
-	USER_Driver.pSetScreenSaveTimeout( uiParam );
-	break;
-	
-    case SPI_GETSCREENSAVEACTIVE:		/*     16 */
-	if (USER_Driver.pGetScreenSaveActive() ||
-	    GetProfileIntA( "windows", "ScreenSaveActive", 1 ) == 1)
-	    *(BOOL *)pvParam = TRUE;
-	else
-	    *(BOOL *)pvParam = FALSE;
-	break;
-    case SPI_SETSCREENSAVEACTIVE:		/*     17 */
-	USER_Driver.pSetScreenSaveActive( uiParam );
-	break;
-	
+        
+    case SPI_GETSCREENSAVEACTIVE:               /*     16 */
+	*(BOOL *)pvParam = USER_Driver.pGetScreenSaveActive();
+        break;
+
+    case SPI_SETSCREENSAVEACTIVE:               /*     17 */
+    {
+        char buf[5];
+
+        sprintf(buf, "%u", uiParam);
+        USER_Driver.pSetScreenSaveActive( uiParam );
+        break;
+    }
+        
     case SPI_GETGRIDGRANULARITY:		/*     18 */
 	*(INT *)pvParam = GetProfileIntA( "desktop", "GridGranularity", 1 );
 	break;
@@ -1012,8 +1044,26 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     WINE_SPI_FIXME(SPI_SETMOUSETRAILS);		/*     93  WINVER >= 0x400 */
     WINE_SPI_FIXME(SPI_GETMOUSETRAILS);		/*     94  WINVER >= 0x400 */
 	
-    WINE_SPI_FIXME(SPI_SETSCREENSAVERRUNNING);	/*     97  WINVER >= 0x400 */
-    /* SPI_SCREENSAVERRUNNING is an alias for SPI_SETSCREENSAVERRUNNING */
+    case SPI_SETSCREENSAVERRUNNING:             /*     97  WINVER >= 0x400 */
+        {
+        /* SPI_SCREENSAVERRUNNING is an alias for SPI_SETSCREENSAVERRUNNING */
+        char buf[5];
+
+        spi_idx = SPI_SETSCREENSAVERRUNNING_IDX;
+        sprintf(buf, "%u", uiParam);
+
+        /* save only temporarily */
+        if (SYSPARAMS_Save( SPI_SETSCREENSAVERRUNNING_REGKEY,
+                            SPI_SETSCREENSAVERRUNNING_VALNAME,
+                            buf, 0 ))
+        {
+            screensaver_running = uiParam;
+            spi_loaded[spi_idx] = TRUE;
+        }
+        else
+            ret = FALSE;
+        break;
+    }
 
     case SPI_GETMOUSEHOVERWIDTH:		/*     98  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
 	*(UINT *)pvParam = 4;
@@ -1042,6 +1092,21 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
 
     WINE_SPI_FIXME(SPI_GETSHOWIMEUI);		/*    110  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
     WINE_SPI_FIXME(SPI_SETSHOWIMEUI);		/*    111  _WIN32_WINNT >= 0x400 || _WIN32_WINDOW > 0x400 */
+
+    case SPI_GETSCREENSAVERRUNNING:             /*    114  _WIN32_WINNT >= 0x500 || _WIN32_WINDOW > 0x400 */
+        spi_idx = SPI_SETSCREENSAVERRUNNING_IDX;
+        if (!spi_loaded[spi_idx])
+        {
+            char buf[5];
+            
+            if (SYSPARAMS_Load( SPI_SETSCREENSAVERRUNNING_REGKEY,
+                                SPI_SETSCREENSAVERRUNNING_VALNAME, buf ))
+                screensaver_running  = atoi( buf );
+            spi_loaded[spi_idx] = TRUE;
+        }
+        
+	*(BOOL *)pvParam = screensaver_running;
+        break;
 
     default:
 	FIXME( "Unknown action: %u\n", uiAction );

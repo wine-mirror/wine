@@ -490,10 +490,16 @@ BOOL X11DRV_GetScreenSaveActive(void)
  */
 void X11DRV_SetScreenSaveActive(BOOL bActivate)
 {
-    if(bActivate)
-        TSXActivateScreenSaver(gdi_display);
-    else
-        TSXResetScreenSaver(gdi_display);
+    int timeout, interval, prefer_blanking, allow_exposures;
+    static int last_timeout = 15 * 60;
+
+    TSXGetScreenSaver(gdi_display, &timeout, &interval, &prefer_blanking,
+                      &allow_exposures);
+    if (timeout) last_timeout = timeout;
+
+    timeout = bActivate ? last_timeout : 0;
+    TSXSetScreenSaver(gdi_display, timeout, interval, prefer_blanking,
+                      allow_exposures);
 }
 
 /***********************************************************************
@@ -515,8 +521,14 @@ int X11DRV_GetScreenSaveTimeout(void)
  */
 void X11DRV_SetScreenSaveTimeout(int nTimeout)
 {
+    int timeout, interval, prefer_blanking, allow_exposures;
+
+    TSXGetScreenSaver(gdi_display, &timeout, &interval, &prefer_blanking,
+                      &allow_exposures);
+
     /* timeout is a 16bit entity (CARD16) in the protocol, so it should
      * not get over 32767 or it will get negative. */
     if (nTimeout>32767) nTimeout = 32767;
-    TSXSetScreenSaver(gdi_display, nTimeout, 60, DefaultBlanking, DefaultExposures);
+    TSXSetScreenSaver(gdi_display, nTimeout, interval, prefer_blanking,
+                      allow_exposures);
 }
