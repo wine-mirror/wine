@@ -140,7 +140,7 @@ struct tagVARIANT
             WORD wReserved3;
             union /* DUMMYUNIONNAME */
             {
-                /* B    y value. */
+                /* By value. */
                 CHAR cVal;
                 USHORT uiVal;
                 ULONG ulVal;
