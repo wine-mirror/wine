@@ -1,10 +1,6 @@
 /*
  * Win32 ODBC functions
  *
- * Proxy ODBC driver manager.  This manager delegates all ODBC calls to a real ODBC driver manager which is either:
- *  	1) its name is defined in the environment variable LIB_ODBC_DRIVER_MANAGER
- *	2) if LIB_ODBC_DRIVER_MANAGER is not defined, a default library libodbc.so will be used.
- *
  * Copyright 1999 Xiang Li, Corel Corporation
  *
  * This library is free software; you can redistribute it and/or
@@ -20,6 +16,13 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * NOTES:
+ *   Proxy ODBC driver manager.  This manager delegates all ODBC 
+ *   calls to a real ODBC driver manager named by the environment 
+ *   variable LIB_ODBC_DRIVER_MANAGER, or to libodbc.so if the
+ *   variable is not set.
+ *
  */
 
 #include "config.h"
