@@ -49,6 +49,27 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/msifo
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
+
+LPWSTR build_default_format(MSIRECORD* record)
+{
+    int i;  
+    int count;
+    LPWSTR rc;
+    static const WCHAR fmt[] = {'%','i',':',' ','[','%','i',']',' ',0};
+    WCHAR buf[11];
+
+    count = MSI_RecordGetFieldCount(record);
+
+    rc = HeapAlloc(GetProcessHeap(),0,(11*count)*sizeof(WCHAR));
+    rc[0] = 0;
+    for (i = 1; i <= count; i++)
+    {
+        sprintfW(buf,fmt,i,i); 
+        strcatW(rc,buf);
+    }
+    return rc;
+}
+
 static const WCHAR* scanW(LPCWSTR buf, WCHAR token, DWORD len)
 {
     DWORD i;
@@ -58,11 +79,140 @@ static const WCHAR* scanW(LPCWSTR buf, WCHAR token, DWORD len)
     return NULL;
 }
 
+
+/* break out helper functions for deformating */
+static LPWSTR deformat_component(MSIPACKAGE* package, LPCWSTR key, DWORD* sz)
+{
+    LPWSTR value = NULL;
+    INT index;
+
+    *sz = 0;
+    if (!package)
+        return NULL;
+
+    ERR("POORLY HANDLED DEFORMAT.. [$componentkey] \n");
+    index = get_loaded_component(package,key);
+    if (index >= 0)
+    {
+        value = resolve_folder(package, package->components[index].Directory, 
+                                       FALSE, FALSE, NULL);
+        *sz = (strlenW(value)) * sizeof(WCHAR);
+    }
+
+    return value;
+}
+
+static LPWSTR deformat_file(MSIPACKAGE* package, LPCWSTR key, DWORD* sz)
+{
+    LPWSTR value = NULL;
+    INT index;
+
+    *sz = 0;
+
+    if (!package)
+        return NULL;
+
+    index = get_loaded_file(package,key);
+    if (index >=0)
+    {
+        value = dupstrW(package->files[index].TargetPath);
+        *sz = (strlenW(value)) * sizeof(WCHAR);
+    }
+
+    return value;
+}
+
+static LPWSTR deformat_environment(MSIPACKAGE* package, LPCWSTR key, 
+                                   DWORD* chunk)
+{
+    LPWSTR value = NULL;
+    DWORD sz;
+
+    sz  = GetEnvironmentVariableW(key,NULL,0);
+    if (sz > 0)
+    {
+        sz++;
+        value = HeapAlloc(GetProcessHeap(),0,sz * sizeof(WCHAR));
+        GetEnvironmentVariableW(&key[1],value,sz);
+        *chunk = (strlenW(value)) * sizeof(WCHAR);
+    }
+    else
+    {
+        ERR("Unknown environment variable\n");
+        *chunk = 0;
+        value = NULL;
+    }
+    return value;
+}
+
+ 
+static LPWSTR deformat_NULL(DWORD* chunk)
+{
+    LPWSTR value;
+
+    value = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*2);
+    value[0] =  0;
+    *chunk = sizeof(WCHAR);
+    return value;
+}
+
+static LPWSTR deformat_escape(LPCWSTR key, DWORD* chunk)
+{
+    LPWSTR value;
+
+    value = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*2);
+    value[0] =  key[0];
+    *chunk = sizeof(WCHAR);
+
+    return value;
+}
+
+
+static BOOL is_key_number(LPCWSTR key)
+{
+    INT index = 0;
+    while (isdigitW(key[index])) index++;
+    if (key[index] == 0)
+        return TRUE;
+    else
+        return FALSE;
+}
+
+static LPWSTR deformat_index(MSIRECORD* record, LPCWSTR key, DWORD* chunk )
+{
+    INT index;
+    LPWSTR value; 
+
+    index = atoiW(key);
+    TRACE("record index %i\n",index);
+    value = load_dynamic_stringW(record,index);
+    if (value)
+        *chunk = strlenW(value) * sizeof(WCHAR);
+    else
+    {
+        value = NULL;
+        *chunk = 0;
+    }
+    return value;
+}
+
+static LPWSTR deformat_property(MSIPACKAGE* package, LPCWSTR key, DWORD* chunk)
+{
+    UINT rc;
+    LPWSTR value;
+
+    if (!package)
+        return NULL;
+
+    value = load_dynamic_property(package,key, &rc);
+
+    if (rc == ERROR_SUCCESS)
+        *chunk = (strlenW(value)) * sizeof(WCHAR);
+
+    return value;
+}
+
 /*
- * This helper function should probably go a lot of places
- *
- * Thinking about this, maybe this should become yet another Bison file
- *
  * len is in WCHARs
  * return is also in WCHARs
  */
@@ -76,9 +226,8 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
     WCHAR key[0x100];
     LPWSTR value = NULL;
     DWORD sz;
-    UINT rc;
-    INT index;
-    LPWSTR newdata = NULL;
+    LPBYTE newdata = NULL;
+    const WCHAR* progress = NULL;
 
     if (ptr==NULL)
     {
@@ -89,7 +238,7 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
 
     TRACE("Starting with %s\n",debugstr_w(ptr));
 
-    /* scan for special characters */
+    /* scan for special characters... fast exit */
     if (!scanW(ptr,'[',len) || (scanW(ptr,'[',len) && !scanW(ptr,']',len)))
     {
         /* not formatted */
@@ -98,154 +247,126 @@ static DWORD deformat_string_internal(MSIPACKAGE *package, LPCWSTR ptr,
         TRACE("Returning %s\n",debugstr_w(*data));
         return len;
     }
-   
-    /* formatted string located */ 
-    mark = scanW(ptr,'[',len);
-    if (mark != ptr)
-    {
-        INT cnt = (mark - ptr);
-        TRACE("%i  (%i) characters before marker\n",cnt,(mark-ptr));
-        size = cnt * sizeof(WCHAR);
-        newdata = HeapAlloc(GetProcessHeap(),0,size);
-        memcpy(newdata,ptr,(cnt * sizeof(WCHAR)));
-    }
-    else
-    {
-        size = 0;
-        newdata = HeapAlloc(GetProcessHeap(),0,size);
-        newdata[0]=0;
-    }
-    mark++;
-    /* there should be no null characters in a key so strchrW is ok */
-    mark2 = strchrW(mark,']');
-    strncpyW(key,mark,mark2-mark);
-    key[mark2-mark] = 0;
-    mark = strchrW(mark,']');
-    mark++;
-    TRACE("Current %s .. %s\n",debugstr_w(newdata),debugstr_w(key));
-    sz = 0;
-    /* expand what we can deformat... Again, this should become a bison file */
-    switch (key[0])
-    {
-        case '~':
-            value = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*2);
-            value[0] =  0;
-            chunk = sizeof(WCHAR);
-            rc = ERROR_SUCCESS;
-            break;
-        case '$':
-            ERR("POORLY HANDLED DEFORMAT.. [$componentkey] \n");
-            index = get_loaded_component(package,&key[1]);
-            if (index >= 0)
-            {
-                value = resolve_folder(package, 
-                                       package->components[index].Directory, 
-                                       FALSE, FALSE, NULL);
-                chunk = (strlenW(value)) * sizeof(WCHAR);
-                rc = 0;
-            }
-            else
-                rc = ERROR_FUNCTION_FAILED;
-            break;
-        case '#':
-        case '!': /* should be short path */
-            index = get_loaded_file(package,&key[1]);
-            if (index >=0)
-            {
-                sz = strlenW(package->files[index].TargetPath);
-                value = dupstrW(package->files[index].TargetPath);
-                chunk = (strlenW(value)) * sizeof(WCHAR);
-                rc= ERROR_SUCCESS;
-            }
-            else
-                rc = ERROR_FUNCTION_FAILED;
-            break;
-        case '\\':
-            value = HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*2);
-            value[0] =  key[1];
-            chunk = sizeof(WCHAR);
-            rc = ERROR_SUCCESS;
-            break;
-        case '%':
-            sz  = GetEnvironmentVariableW(&key[1],NULL,0);
-            if (sz > 0)
-            {
-                sz++;
-                value = HeapAlloc(GetProcessHeap(),0,sz * sizeof(WCHAR));
-                GetEnvironmentVariableW(&key[1],value,sz);
-                chunk = (strlenW(value)) * sizeof(WCHAR);
-                rc = ERROR_SUCCESS;
-            }
-            else
-            {
-                ERR("Unknown environment variable\n");
-                chunk = 0;
-                value = NULL;
-                rc = ERROR_FUNCTION_FAILED;
-            }
-            break;
-        default:
-            /* check for numeric values */
-            index = 0;
-            while (isdigitW(key[index])) index++;
-            if (key[index] == 0)
-            {
-                index = atoiW(key);
-                TRACE("record index %i\n",index);
-                value = load_dynamic_stringW(record,index);
-                if (value)
-                {
-                    chunk = strlenW(value) * sizeof(WCHAR);
-                    rc = ERROR_SUCCESS;
-                }
-                else
-                {
-                    value = NULL;
-                    rc = ERROR_FUNCTION_FAILED;
-                }
-            }
-            else
-            {
-                value = load_dynamic_property(package,key, &rc);
-                if (rc == ERROR_SUCCESS)
-                    chunk = (strlenW(value)) * sizeof(WCHAR);
-            }
-            break;      
-    }
-    if (((rc == ERROR_SUCCESS) || (rc == ERROR_MORE_DATA)) && value!=NULL)
-    {
-        LPWSTR nd2;
-        TRACE("value %s, chunk %li size %li\n",debugstr_w(value),chunk,size);
+  
+    progress = ptr;
 
-        nd2= HeapReAlloc(GetProcessHeap(),0,newdata,(size + chunk));
-        newdata = nd2;
-        memcpy(&newdata[(size/sizeof(WCHAR))],value,chunk);
-        size+=chunk;   
-        HeapFree(GetProcessHeap(),0,value);
-    }
-    TRACE("after value %s .. %s\n",debugstr_w(newdata),debugstr_w(mark));
-    if (mark - ptr < len)
-    {
-        LPWSTR nd2;
-        chunk = (len - (mark - ptr)) * sizeof(WCHAR);
-        TRACE("after chunk is %li\n",chunk);
-        nd2 = HeapReAlloc(GetProcessHeap(),0,newdata,(size+chunk));
-        newdata = nd2;
-        memcpy(&newdata[(size/sizeof(WCHAR))],mark,chunk);
-        size+=chunk;
-    }
-    TRACE("after trailing %s .. %s\n",debugstr_w(newdata),debugstr_w(mark));
+    while (progress - ptr < len)
+    { 
+        /* formatted string located */ 
+        mark = scanW(progress,'[',len - (progress-ptr));
+        if (!mark)
+        {
+            LPBYTE nd2;
 
-    /* recursively do this to clean up */
-    size = deformat_string_internal(package,newdata,data,(size/sizeof(WCHAR)),
-                                    record);
-    HeapFree(GetProcessHeap(),0,newdata);
-    return size;
+            TRACE("after value %s .. %s\n",debugstr_w((LPWSTR)newdata),
+                                       debugstr_w(mark));
+            chunk = (len - (progress - ptr)) * sizeof(WCHAR);
+            TRACE("after chunk is %li\n",chunk);
+            if (size)
+                nd2 = HeapReAlloc(GetProcessHeap(),0,newdata,(size+chunk));
+            else
+                nd2 = HeapAlloc(GetProcessHeap(),0,size);
+
+            newdata = nd2;
+            memcpy(&newdata[size],progress,chunk);
+            size+=chunk;
+            break;
+        }
+
+        if (mark != progress)
+        {
+            LPBYTE tgt;
+            DWORD old_size = size;
+            INT cnt = (mark - progress);
+            TRACE("%i  (%i) characters before marker\n",cnt,(mark-progress));
+            size += cnt * sizeof(WCHAR);
+            if (!old_size)
+                tgt = HeapAlloc(GetProcessHeap(),0,size);
+            else
+                tgt = HeapReAlloc(GetProcessHeap(),0,newdata,size);
+            newdata  = tgt;
+            memcpy(&newdata[old_size],progress,(cnt * sizeof(WCHAR)));  
+        }
+
+        progress = mark;
+
+        mark++;
+        /* there should be no null characters in a key so strchrW is ok */
+        mark2 = strchrW(mark,']');
+        strncpyW(key,mark,mark2-mark);
+        key[mark2-mark] = 0;
+        mark = strchrW(mark,']');
+        mark++;
+        TRACE("Current %s .. %s\n",debugstr_w((LPWSTR)newdata),debugstr_w(key));
+
+        if (!package)
+        {
+            /* only deformat number indexs */
+            if (is_key_number(key))
+                value = deformat_index(record,key,&chunk);  
+            else
+            {
+                chunk = (strlenW(key) + 2)*sizeof(WCHAR);
+                value = HeapAlloc(GetProcessHeap(),0,chunk);
+                memcpy(value,progress,chunk);
+            }
+        }
+        else
+        {
+            sz = 0;
+            switch (key[0])
+            {
+                case '~':
+                    value = deformat_NULL(&chunk);
+                break;
+                case '$':
+                    value = deformat_component(package,&key[1],&chunk);
+                break;
+                case '#':
+                case '!': /* should be short path */
+                    value = deformat_file(package,&key[1], &chunk);
+                break;
+                case '\\':
+                    value = deformat_escape(&key[1],&chunk);
+                break;
+                case '%':
+                    value = deformat_environment(package,&key[1],&chunk);
+                break;
+                default:
+                    if (is_key_number(key))
+                        value = deformat_index(record,key,&chunk);
+                    else
+                        value = deformat_property(package,key,&chunk);
+                break;      
+            }
+        }
+        if (value!=NULL)
+        {
+            LPBYTE nd2;
+            TRACE("value %s, chunk %li size %li\n",debugstr_w((LPWSTR)value),
+                    chunk, size);
+            if (size)
+                nd2= HeapReAlloc(GetProcessHeap(),0,newdata,(size + chunk));
+            else
+                nd2= HeapAlloc(GetProcessHeap(),0,chunk);
+            newdata = nd2;
+            memcpy(&newdata[size],value,chunk);
+            size+=chunk;   
+            HeapFree(GetProcessHeap(),0,value);
+        }
+
+        progress = mark2+1;
+    }
+
+    TRACE("after everything %s\n",debugstr_w((LPWSTR)newdata));
+
+    *data = (LPWSTR)newdata;
+    return size / sizeof(WCHAR);
 }
 
 
-UINT MSI_FormatRecordW(MSIPACKAGE* package, MSIRECORD* record, LPWSTR buffer,
-                        DWORD *size)
+UINT MSI_FormatRecordW( MSIPACKAGE* package, MSIRECORD* record, LPWSTR buffer,
+                        DWORD *size )
 {
     LPWSTR deformated;
     LPWSTR rec;
@@ -256,77 +377,147 @@ UINT MSI_FormatRecordW(MSIPACKAGE* package, MSIRECORD* record, LPWSTR buffer,
 
     rec = load_dynamic_stringW(record,0);
     if (!rec)
-        return rc;
+        rec = build_default_format(record);
 
     TRACE("(%s)\n",debugstr_w(rec));
 
-    len = deformat_string_internal(package,rec,&deformated,(strlenW(rec)+1),
+    len = deformat_string_internal(package,rec,&deformated,strlenW(rec),
                                    record);
-    if (len <= *size)
+
+    if (buffer)
     {
-        *size = len;
-        memcpy(buffer,deformated,len*sizeof(WCHAR));
-        rc = ERROR_SUCCESS;
+        if (*size>len)
+        {
+            memcpy(buffer,deformated,len*sizeof(WCHAR));
+            rc = ERROR_SUCCESS;
+            buffer[len] = 0;
+        }
+        else
+        {
+            memcpy(buffer,deformated,(*size)*sizeof(WCHAR));
+            rc = ERROR_MORE_DATA;
+            buffer[(*size)-1] = 0;    
+        }
     }
     else
-    {
-        *size = len;
-        rc = ERROR_MORE_DATA;
-    }
+        rc = ERROR_SUCCESS;
+
+    *size = len;
 
     HeapFree(GetProcessHeap(),0,rec);
     HeapFree(GetProcessHeap(),0,deformated);
     return rc;
 }
 
-UINT WINAPI MsiFormatRecordA(MSIHANDLE hInstall, MSIHANDLE hRecord, LPSTR
-szResult, DWORD *sz)
+UINT MSI_FormatRecordA( MSIPACKAGE* package, MSIRECORD* record, LPSTR buffer,
+                        DWORD *size )
 {
-    UINT rc;
-    MSIPACKAGE* package;
-    MSIRECORD* record;
-    LPWSTR szwResult;
-    DWORD original_len;
+    LPWSTR deformated;
+    LPWSTR rec;
+    DWORD len,lenA;
+    UINT rc = ERROR_INVALID_PARAMETER;
 
-    TRACE("%ld %ld %p %p\n", hInstall, hRecord, szResult, sz);
+    TRACE("%p %p %p %li\n",package, record ,buffer, *size);
 
-    package = msihandle2msiinfo(hInstall,MSIHANDLETYPE_PACKAGE);
-    record = msihandle2msiinfo(hRecord,MSIHANDLETYPE_RECORD);
+    rec = load_dynamic_stringW(record,0);
+    if (!rec)
+        rec = build_default_format(record);
 
-    if (!package || !record)
-        return ERROR_INVALID_HANDLE;
+    TRACE("(%s)\n",debugstr_w(rec));
 
-    original_len = *sz;
-    /* +1 just to make sure we have a buffer in case the len is 0 */
-    szwResult = HeapAlloc(GetProcessHeap(),0,(original_len+1) * sizeof(WCHAR));
+    len = deformat_string_internal(package,rec,&deformated,strlenW(rec),
+                                   record);
+    lenA = WideCharToMultiByte(CP_ACP,0,deformated,len,NULL,0,NULL,NULL);
 
-    rc = MSI_FormatRecordW(package, record, szwResult, sz);
-    
-    WideCharToMultiByte(CP_ACP,0,szwResult,original_len, szResult, original_len,
-                        NULL,NULL);
+    if (buffer)
+    {
+        WideCharToMultiByte(CP_ACP,0,deformated,len,buffer,*size,NULL, NULL);
+        if (*size>lenA)
+        {
+            rc = ERROR_SUCCESS;
+            buffer[lenA] = 0;
+        }
+        else
+        {
+            rc = ERROR_MORE_DATA;
+            buffer[(*size)-1] = 0;    
+        }
+    }
+    else
+        rc = ERROR_SUCCESS;
 
-    HeapFree(GetProcessHeap(),0,szwResult);
+    *size = lenA;
 
+    HeapFree(GetProcessHeap(),0,rec);
+    HeapFree(GetProcessHeap(),0,deformated);
     return rc;
-
 }
 
-UINT WINAPI MsiFormatRecordW(MSIHANDLE hInstall, MSIHANDLE hRecord, 
-                             LPWSTR szResult, DWORD *sz)
+
+UINT WINAPI MsiFormatRecordW( MSIHANDLE hInstall, MSIHANDLE hRecord, 
+                              LPWSTR szResult, DWORD *sz )
 {
-    UINT rc;
-    MSIPACKAGE* package;
-    MSIRECORD* record;
+    UINT r = ERROR_INVALID_HANDLE;
+    MSIPACKAGE *package;
+    MSIRECORD *record;
 
     TRACE("%ld %ld %p %p\n", hInstall, hRecord, szResult, sz);
 
-    package = msihandle2msiinfo(hInstall,MSIHANDLETYPE_PACKAGE);
-    record = msihandle2msiinfo(hRecord,MSIHANDLETYPE_RECORD);
+    record = msihandle2msiinfo( hRecord, MSIHANDLETYPE_RECORD );
 
-    if (!package || !record)
+    if (!record)
         return ERROR_INVALID_HANDLE;
+    if (!sz)
+    {
+        msiobj_release( &record->hdr );
+        if (szResult)
+            return ERROR_INVALID_PARAMETER;
+        else
+            return ERROR_SUCCESS;
+    }
 
-    rc = MSI_FormatRecordW(package, record, szResult, sz);
+    package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
 
-    return rc;
+    if( record )
+    {
+        r = MSI_FormatRecordW( package, record, szResult, sz );
+        msiobj_release( &record->hdr );
+    }
+    if (package)
+        msiobj_release( &package->hdr );
+    return r;
+}
+
+UINT WINAPI MsiFormatRecordA( MSIHANDLE hInstall, MSIHANDLE hRecord,
+                              LPSTR szResult, DWORD *sz )
+{
+    UINT r = ERROR_INVALID_HANDLE;
+    MSIPACKAGE *package = NULL;
+    MSIRECORD *record = NULL;
+
+    TRACE("%ld %ld %p %p\n", hInstall, hRecord, szResult, sz);
+
+    record = msihandle2msiinfo( hRecord, MSIHANDLETYPE_RECORD );
+
+    if (!record)
+        return ERROR_INVALID_HANDLE;
+    if (!sz)
+    {
+        msiobj_release( &record->hdr );
+        if (szResult)
+            return ERROR_INVALID_PARAMETER;
+        else
+            return ERROR_SUCCESS;
+    }
+
+    package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE );
+
+    if( record )
+    {
+        r = MSI_FormatRecordA( package, record, szResult, sz );
+        msiobj_release( &record->hdr );
+    }
+    if (package)
+        msiobj_release( &package->hdr );
+    return r;
 }
