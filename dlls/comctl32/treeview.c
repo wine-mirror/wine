@@ -160,8 +160,7 @@ DEFAULT_DEBUG_CHANNEL(treeview);
 typedef VOID (*TREEVIEW_ItemEnumFunc)(TREEVIEW_INFO *, TREEVIEW_ITEM *,LPVOID);
 
 
-static VOID TREEVIEW_QueueRefresh(TREEVIEW_INFO *);
-static VOID TREEVIEW_QueueItemRefresh(TREEVIEW_INFO *, TREEVIEW_ITEM *);
+static VOID TREEVIEW_Invalidate(TREEVIEW_INFO *, TREEVIEW_ITEM *);
 
 static LRESULT TREEVIEW_DoSelectItem(TREEVIEW_INFO *, INT, HTREEITEM, INT);
 static VOID TREEVIEW_SetFirstVisible(TREEVIEW_INFO *, TREEVIEW_ITEM *, BOOL);
@@ -174,7 +173,7 @@ static LRESULT TREEVIEW_HScroll(TREEVIEW_INFO *, WPARAM);
 
 /* Random Utilities *****************************************************/
 
-#ifdef NDEBUG
+#ifndef NDEBUG
 static inline void
 TREEVIEW_VerifyTree(TREEVIEW_INFO *infoPtr)
 {
@@ -1150,6 +1149,7 @@ TREEVIEW_InsertItemA(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     if (parentItem == infoPtr->root ||
         (ISVISIBLE(parentItem) && parentItem->state & TVIS_EXPANDED))
     {
+       TREEVIEW_ITEM *item;
        TREEVIEW_ITEM *prev = TREEVIEW_GetPrevListItem(infoPtr, newItem);
 
        TREEVIEW_RecalculateVisibleOrder(infoPtr, prev);
@@ -1160,7 +1160,14 @@ TREEVIEW_InsertItemA(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 
        TREEVIEW_ComputeTextWidth(infoPtr, newItem, 0);
        TREEVIEW_UpdateScrollBars(infoPtr);
-       TREEVIEW_QueueRefresh(infoPtr);
+    /*
+     * if the item was inserted in a visible part of the tree, 
+     * invalidate it, as well as those after it
+     */
+       for (item = newItem;
+            item != NULL;
+	    item = TREEVIEW_GetNextListItem(infoPtr, item))
+          TREEVIEW_Invalidate(infoPtr, item);
     }
     else
     {
@@ -1170,7 +1177,7 @@ TREEVIEW_InsertItemA(TREEVIEW_INFO *infoPtr, LPARAM lParam)
        if (ISVISIBLE(parentItem) && newItem->prevSibling == newItem->nextSibling)
        {
           /* parent got '+' - update it */
-          TREEVIEW_QueueItemRefresh(infoPtr, parentItem);
+          TREEVIEW_Invalidate(infoPtr, parentItem);
        }
     }
 
@@ -1396,12 +1403,12 @@ TREEVIEW_DeleteItem(TREEVIEW_INFO *infoPtr, HTREEITEM wineItem)
        TREEVIEW_RecalculateVisibleOrder(infoPtr, prev);
        TREEVIEW_SetFirstVisible(infoPtr, newFirstVisible, TRUE);
        TREEVIEW_UpdateScrollBars(infoPtr);
-       TREEVIEW_QueueRefresh(infoPtr);
+       TREEVIEW_Invalidate(infoPtr, NULL);
     }
     else if (ISVISIBLE(parent) && !TREEVIEW_HasChildren(infoPtr, parent))
     {
        /* parent lost '+/-' - update it */
-       TREEVIEW_QueueItemRefresh(infoPtr, parent);
+       TREEVIEW_Invalidate(infoPtr, parent);
     }
 
     return TRUE;
@@ -1440,7 +1447,7 @@ TREEVIEW_SetIndent(TREEVIEW_INFO *infoPtr, UINT newIndent)
 	infoPtr->uIndent = newIndent;
 	TREEVIEW_UpdateSubTree(infoPtr, infoPtr->root);
 	TREEVIEW_UpdateScrollBars(infoPtr);
-	TREEVIEW_QueueRefresh(infoPtr);
+	TREEVIEW_Invalidate(infoPtr, NULL);
     }
 
     return 0;
@@ -1552,7 +1559,7 @@ TREEVIEW_SetImageList(TREEVIEW_INFO *infoPtr, WPARAM wParam, HIMAGELIST himlNew)
        TREEVIEW_UpdateScrollBars(infoPtr);
     }
 
-    TREEVIEW_QueueRefresh(infoPtr);
+    TREEVIEW_Invalidate(infoPtr, NULL);
 
     return (LRESULT)himlOld;
 }
@@ -1600,7 +1607,7 @@ TREEVIEW_SetItemHeight(TREEVIEW_INFO *infoPtr, INT newHeight)
     {
 	TREEVIEW_RecalculateVisibleOrder(infoPtr, NULL);
 	TREEVIEW_UpdateScrollBars(infoPtr);
-	TREEVIEW_QueueRefresh(infoPtr);
+	TREEVIEW_Invalidate(infoPtr, NULL);
     }
 
     return prevHeight;
@@ -1656,7 +1663,7 @@ TREEVIEW_SetFont(TREEVIEW_INFO *infoPtr, HFONT hFont, BOOL bRedraw)
     TREEVIEW_UpdateScrollBars(infoPtr);
 
     if (bRedraw)
-	TREEVIEW_QueueRefresh(infoPtr);
+	TREEVIEW_Invalidate(infoPtr, NULL);
 
     return 0;
 }
@@ -1696,7 +1703,7 @@ TREEVIEW_SetTextColor(TREEVIEW_INFO *infoPtr, COLORREF color)
     infoPtr->clrText = color;
 
     if (infoPtr->clrText != prevColor)
-	TREEVIEW_QueueRefresh(infoPtr);
+	TREEVIEW_Invalidate(infoPtr, NULL);
 
     return (LRESULT)prevColor;
 }
@@ -1718,7 +1725,7 @@ TREEVIEW_SetBkColor(TREEVIEW_INFO *infoPtr, COLORREF newColor)
     infoPtr->clrBk = newColor;
 
     if (newColor != prevColor)
-	TREEVIEW_QueueRefresh(infoPtr);
+	TREEVIEW_Invalidate(infoPtr, NULL);
 
     return (LRESULT)prevColor;
 }
@@ -1754,7 +1761,7 @@ TREEVIEW_SetInsertMark(TREEVIEW_INFO *infoPtr, BOOL wParam, HTREEITEM item)
     infoPtr->insertBeforeorAfter = wParam;
     infoPtr->insertMarkItem = item;
 
-    TREEVIEW_QueueRefresh(infoPtr);
+    TREEVIEW_Invalidate(infoPtr, NULL);
 
     return 1;
 }
@@ -1901,12 +1908,12 @@ TREEVIEW_SetItemA(TREEVIEW_INFO *infoPtr, LPTVITEMEXA tvItem)
 	        TREEVIEW_RecalculateVisibleOrder(infoPtr, wineItem);
 	        TREEVIEW_UpdateScrollBars(infoPtr);
 
-	        TREEVIEW_QueueRefresh(infoPtr);
+	        TREEVIEW_Invalidate(infoPtr, NULL);
 	    }
 	    else
 	    {
 	        TREEVIEW_UpdateScrollBars(infoPtr);
-	        TREEVIEW_QueueItemRefresh(infoPtr, wineItem);
+	        TREEVIEW_Invalidate(infoPtr, wineItem);
 	    }
         }
     }
@@ -2079,7 +2086,7 @@ TREEVIEW_ToggleItemState(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
 	item->state |= INDEXTOSTATEIMAGEMASK(state);
 
 	TRACE("state:%x\n", state);
-	TREEVIEW_QueueItemRefresh(infoPtr, item);
+	TREEVIEW_Invalidate(infoPtr, item);
     }
 }
 
@@ -2598,19 +2605,12 @@ TREEVIEW_Refresh(TREEVIEW_INFO *infoPtr, HDC hdc, RECT *rc)
 }
 
 static void
-TREEVIEW_QueueRefresh(TREEVIEW_INFO *infoPtr)
-{
-    InvalidateRect(infoPtr->hwnd, NULL, TRUE);
-}
-
-/* It be that item->rect is out of date. If so, we invalidate the wrong area,
- * but then whoever updates item->rect knows that they must invalidate after
- * correcting it. */
-static void
-TREEVIEW_QueueItemRefresh(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
+TREEVIEW_Invalidate(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
 {
     if (item != NULL)
 	InvalidateRect(infoPtr->hwnd, &item->rect, TRUE);
+    else
+        InvalidateRect(infoPtr->hwnd, NULL, TRUE);
 }
 
 static LRESULT
@@ -2820,7 +2820,7 @@ TREEVIEW_Sort(TREEVIEW_INFO *infoPtr, BOOL fRecurse, HTREEITEM parent,
                 TREEVIEW_SetFirstVisible(infoPtr, item, FALSE);
 	    }
 
-	    TREEVIEW_QueueRefresh(infoPtr);
+	    TREEVIEW_Invalidate(infoPtr, NULL);
 	}
 
 	return TRUE;
@@ -2938,7 +2938,7 @@ TREEVIEW_Collapse(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
     }
 
     TREEVIEW_UpdateScrollBars(infoPtr);
-    TREEVIEW_QueueRefresh(infoPtr);
+    TREEVIEW_Invalidate(infoPtr, NULL);
 
     return TRUE;
 }
@@ -3012,7 +3012,7 @@ TREEVIEW_Expand(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 	}
     }
 
-    TREEVIEW_QueueRefresh(infoPtr);
+    TREEVIEW_Invalidate(infoPtr, NULL);
 
     return TRUE;
 }
@@ -3942,8 +3942,8 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
 				    TVIF_HANDLE | TVIF_STATE | TVIF_PARAM,
 				    prevSelect,
 				    newSelect);
-	TREEVIEW_QueueItemRefresh(infoPtr, prevSelect);
-	TREEVIEW_QueueItemRefresh(infoPtr, newSelect);
+	TREEVIEW_Invalidate(infoPtr, prevSelect);
+	TREEVIEW_Invalidate(infoPtr, newSelect);
 	break;
 
     case TVGN_DROPHILITE:
@@ -3957,14 +3957,14 @@ TREEVIEW_DoSelectItem(TREEVIEW_INFO *infoPtr, INT action, HTREEITEM newSelect,
 	if (newSelect)
 	    newSelect->state |= TVIS_DROPHILITED;
 
-	TREEVIEW_QueueItemRefresh(infoPtr, prevSelect);
-	TREEVIEW_QueueItemRefresh(infoPtr, newSelect);
+	TREEVIEW_Invalidate(infoPtr, prevSelect);
+	TREEVIEW_Invalidate(infoPtr, newSelect);
 	break;
 
     case TVGN_FIRSTVISIBLE:
 	TREEVIEW_EnsureVisible(infoPtr, newSelect, FALSE);
 	TREEVIEW_SetFirstVisible(infoPtr, newSelect, TRUE);
-	TREEVIEW_QueueRefresh(infoPtr);
+	TREEVIEW_Invalidate(infoPtr, NULL);
 	break;
     }
 
@@ -4112,7 +4112,7 @@ TREEVIEW_SetFirstVisible(TREEVIEW_INFO *infoPtr,
 	if (infoPtr->firstVisible == NULL || newFirstVisible == NULL)
 	{
 	    infoPtr->firstVisible = newFirstVisible;
-	    TREEVIEW_QueueRefresh(infoPtr);
+	    TREEVIEW_Invalidate(infoPtr, NULL);
 	}
 	else
 	{
@@ -4661,7 +4661,7 @@ TREEVIEW_Size(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	FIXME("WM_SIZE flag %x %lx not handled\n", wParam, lParam);
     }
 
-    TREEVIEW_QueueRefresh(infoPtr);
+    TREEVIEW_Invalidate(infoPtr, NULL);
     return 0;
 }
 
@@ -4694,7 +4694,7 @@ TREEVIEW_StyleChanged(TREEVIEW_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     TREEVIEW_UpdateSubTree(infoPtr, infoPtr->root);
     TREEVIEW_UpdateScrollBars(infoPtr);
-    TREEVIEW_QueueRefresh(infoPtr);
+    TREEVIEW_Invalidate(infoPtr, NULL);
 
     return 0;
 }
@@ -4711,7 +4711,7 @@ TREEVIEW_SetFocus(TREEVIEW_INFO *infoPtr)
     }
 
     TREEVIEW_SendSimpleNotify(infoPtr, NM_SETFOCUS);
-    TREEVIEW_QueueItemRefresh(infoPtr, infoPtr->selectedItem);
+    TREEVIEW_Invalidate(infoPtr, infoPtr->selectedItem);
     return 0;
 }
 
@@ -4721,7 +4721,7 @@ TREEVIEW_KillFocus(TREEVIEW_INFO *infoPtr)
     TRACE("\n");
 
     TREEVIEW_SendSimpleNotify(infoPtr, NM_KILLFOCUS);
-    TREEVIEW_QueueItemRefresh(infoPtr, infoPtr->selectedItem);
+    TREEVIEW_Invalidate(infoPtr, infoPtr->selectedItem);
     return 0;
 }
 
@@ -5014,7 +5014,7 @@ TREEVIEW_Unregister(void)
 
 /* Tree Verification ****************************************************/
 
-#ifndef NDEBUG
+#ifdef NDEBUG
 static inline void
 TREEVIEW_VerifyChildren(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item);
 
