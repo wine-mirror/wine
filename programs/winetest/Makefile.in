@@ -19,6 +19,7 @@ RC_BINSRC = winetest.rc
 RC_BINARIES = wine.ico 
 
 TESTBINS = \
+	advpack_test.exe$(DLLEXT) \
 	advapi32_test.exe$(DLLEXT) \
 	comctl32_test.exe$(DLLEXT) \
 	ddraw_test.exe$(DLLEXT) \
@@ -86,6 +87,8 @@ dist.res: winetest.rc tests.rc build.id build.nfo tests.url $(TESTBINS) $(RC_BIN
 
 # Rules for stripping the test executables
 
+advpack_test.exe$(DLLEXT): $(DLLDIR)/advpack/tests/advpack_test.exe$(DLLEXT)
+	cp $(DLLDIR)/advpack/tests/advpack_test.exe$(DLLEXT) $@ && $(STRIP) $@
 advapi32_test.exe$(DLLEXT): $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 comctl32_test.exe$(DLLEXT): $(DLLDIR)/comctl32/tests/comctl32_test.exe$(DLLEXT)
