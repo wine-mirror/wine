@@ -1475,7 +1475,6 @@ static void WIN_SendDestroyMsg( HWND hwnd )
 BOOL WINAPI DestroyWindow( HWND hwnd )
 {
     BOOL is_child;
-    HWND h;
 
     if (!(hwnd = WIN_IsCurrentThread( hwnd )) || (hwnd == GetDesktopWindow()))
     {
@@ -1484,17 +1483,6 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
     }
 
     TRACE("(%p)\n", hwnd);
-
-    /* Look whether the focus is within the tree of windows we will
-     * be destroying.
-     */
-    h = GetFocus();
-    if (h == hwnd || IsChild( hwnd, h ))
-    {
-        HWND parent = GetAncestor( hwnd, GA_PARENT );
-        if (parent == GetDesktopWindow()) parent = 0;
-        SetFocus( parent );
-    }
 
     if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
         SendMessageW(GetAncestor(hwnd, GA_PARENT), WM_MDIREFRESHMENU, 0, 0);

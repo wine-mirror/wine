@@ -133,6 +133,9 @@ static const struct message WmDestroyChildSeq[] = {
     { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
     { WM_ERASEBKGND, sent|parent|optional },
     { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { HCBT_SETFOCUS, hook }, /* set focus to a parent */
+    { WM_KILLFOCUS, sent },
+    { WM_IME_SETCONTEXT, sent|optional },
     { WM_DESTROY, sent },
     { WM_DESTROY, sent|optional }, /* a bug in win2k sp4 ? */
     { WM_NCDESTROY, sent },
@@ -166,7 +169,7 @@ static const struct message WmDragTitleBarSeq[] = { /* FIXME: add */
     { 0 }
 };
 /* Sizing by dragging the thick borders (after WM_NCHITTEST and WM_SETCURSOR) (outline move) */
-static const struct message WmDragThinkBordersBarSeq[] = { /* FIXME: add */
+static const struct message WmDragThickBordersBarSeq[] = { /* FIXME: add */
     { WM_NCLBUTTONDOWN, sent|wparam, 0xd },
     { WM_SYSCOMMAND, sent|defwinproc|wparam, 0xf004 },
     { WM_GETMINMAXINFO, sent|defwinproc },
@@ -479,6 +482,9 @@ static void test_messages(void)
 
     ShowWindow(hchild, TRUE);
     ok_sequence(WmShowChildSeq, "ShowWindow:child");
+
+    SetFocus(hchild);
+    flush_sequence();
 
     MoveWindow(hchild, 10, 10, 20, 20, TRUE);
     ok_sequence(WmResizingChildWithMoveWindowSeq, "MoveWindow:child");
