@@ -4052,6 +4052,7 @@ static void LISTVIEW_ScrollColumns(LISTVIEW_INFO *infoPtr, INT nColumn, INT dx)
     RECT rcOld, rcCol;
     INT nCol;
    
+    if (nColumn < 0 || infoPtr->hdpaColumns->nItemCount < 1) return;
     lpColumnInfo = LISTVIEW_GetColumnInfo(infoPtr, min(nColumn, infoPtr->hdpaColumns->nItemCount - 1));
     rcCol = lpColumnInfo->rcHeader;
     if (nColumn >= infoPtr->hdpaColumns->nItemCount)
