@@ -807,7 +807,7 @@ BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfun
     }
     else if (PathIsURLW((LPWSTR)lpFile))    /* File not found, check for URL */
     {
-	static const WCHAR wShell[] = {'\\','s','h','e','l','l',0};
+	static const WCHAR wShell[] = {'\\','s','h','e','l','l','\\',0};
 	static const WCHAR wCommand[] = {'\\','c','o','m','m','a','n','d',0};
         LPWSTR lpstrRes;
         INT iSize;
