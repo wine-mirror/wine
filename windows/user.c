@@ -145,6 +145,8 @@ void USER_QueueCleanup( HQUEUE16 hQueue )
 
         /* Free the message queue */
         QUEUE_DeleteMsgQueue( hQueue );
+
+        WIN_ReleaseDesktop();
     }
 }
 
@@ -170,6 +172,8 @@ static void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue 
     hInstance = GetExePtr( hInstance );
     if( GetModuleUsage16( hInstance ) <= 1 ) 
 	USER_ModuleUnload( hInstance );
+
+    WIN_ReleaseDesktop();
 }
 
 
@@ -249,7 +253,11 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
         
     /* We have to build a list of all windows first, as in EnumWindows */
 
-    if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL ))) return FALSE;
+    if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
+    {
+        WIN_ReleaseDesktop();
+        return FALSE;
+    }
 
     /* Send a WM_QUERYENDSESSION message to every window */
 
@@ -269,9 +277,10 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
         if (!IsWindow( (*ppWnd)->hwndSelf )) continue;
 	SendMessage16( (*ppWnd)->hwndSelf, WM_ENDSESSION, result, 0 );
     }
-    HeapFree( SystemHeap, 0, list );
+    WIN_ReleaseWinArray(list);
 
     if (result) USER_ExitWindows();
+    WIN_ReleaseDesktop();
     return FALSE;
 }
 

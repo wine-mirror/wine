@@ -410,13 +410,9 @@ static BOOL DCE_AddClipRects( WND *pWndStart, WND *pWndEnd,
     if( pWndStart->pDriver->pIsSelfClipping( pWndStart ) )
         return TRUE; /* The driver itself will do the clipping */
 
-    for (; pWndStart != pWndEnd; pWndStart = WIN_LockWndPtr(pWndStart->next))
+    for (WIN_LockWndPtr(pWndStart); pWndStart != pWndEnd; WIN_UpdateWndPtr(&pWndStart,pWndStart->next))
     {
-        if( !(pWndStart->dwStyle & WS_VISIBLE) )
-        {
-            WIN_ReleaseWndPtr(pWndStart);
-            continue;
-        }
+        if( !(pWndStart->dwStyle & WS_VISIBLE) ) continue;
 	    
 	rect.left = pWndStart->rectWindow.left + x;
 	rect.top = pWndStart->rectWindow.top + y;
@@ -424,13 +420,11 @@ static BOOL DCE_AddClipRects( WND *pWndStart, WND *pWndEnd,
 	rect.bottom = pWndStart->rectWindow.bottom + y;
 
 	if( IntersectRect( &rect, &rect, lpRect ))
-	    if(!REGION_UnionRectWithRgn( hrgnClip, &rect ))
-            {
-                WIN_ReleaseWndPtr(pWndStart);
-		break;
+        {
+	    if(!REGION_UnionRectWithRgn( hrgnClip, &rect )) break;
+        }
     }
-        WIN_ReleaseWndPtr(pWndStart);
-    }
+    WIN_ReleaseWndPtr(pWndStart);
     return (pWndStart == pWndEnd);
 }
 

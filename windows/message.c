@@ -64,17 +64,23 @@ static void MSG_SendParentNotify(WND* wndPtr, WORD event, WORD idChild, LPARAM l
 #define lppt ((LPPOINT16)&lValue)
 
     /* pt has to be in the client coordinates of the parent window */
+    WND *tmpWnd = WIN_LockWndPtr(wndPtr);
 
-    MapWindowPoints16( 0, wndPtr->hwndSelf, lppt, 1 );
-    while (wndPtr)
+    MapWindowPoints16( 0, tmpWnd->hwndSelf, lppt, 1 );
+    while (tmpWnd)
     {
-	if (!(wndPtr->dwStyle & WS_CHILD) || (wndPtr->dwExStyle & WS_EX_NOPARENTNOTIFY)) break;
-	lppt->x += wndPtr->rectClient.left;
-	lppt->y += wndPtr->rectClient.top;
-	wndPtr = wndPtr->parent;
-	SendMessageA( wndPtr->hwndSelf, WM_PARENTNOTIFY,
+        if (!(tmpWnd->dwStyle & WS_CHILD) || (tmpWnd->dwExStyle & WS_EX_NOPARENTNOTIFY))
+    {
+            WIN_ReleaseWndPtr(tmpWnd);
+            break;
+        }
+	lppt->x += tmpWnd->rectClient.left;
+	lppt->y += tmpWnd->rectClient.top;
+	WIN_UpdateWndPtr(&tmpWnd,tmpWnd->parent);
+	SendMessageA( tmpWnd->hwndSelf, WM_PARENTNOTIFY,
 			MAKEWPARAM( event, idChild ), lValue );
     }
+
 #undef lppt
 }
 
@@ -107,6 +113,7 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
 		         (message == WM_RBUTTONDOWN) ||
 		         (message == WM_MBUTTONDOWN))?1:0;
     SYSQ_STATUS ret = 0;
+    DWORD retvalue;
 
       /* Find the window */
 
@@ -118,6 +125,7 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
     {
 	ht = hittest = WINPOS_WindowFromPoint( pWndScope, pt, &pWnd );
 	if( !pWnd ) pWnd = WIN_GetDesktop();
+        else WIN_LockWndPtr(pWnd);
 	hWnd = pWnd->hwndSelf;
 	sendSC = 1;
     } 
@@ -140,7 +148,8 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
         if (queue) QUEUE_SetWakeBit( queue, QS_MOUSE );
 
         QUEUE_Unlock( queue );
-        return SYSQ_MSG_ABANDON;
+        retvalue = SYSQ_MSG_ABANDON;
+        goto END;
     }
 
 	/* check if hWnd is within hWndScope */
@@ -149,7 +158,8 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
         if( !IsChild(hTopWnd, hWnd) )
         {
             QUEUE_Unlock( queue );
-            return SYSQ_MSG_CONTINUE;
+            retvalue = SYSQ_MSG_CONTINUE;
+            goto END;
         }
 
     if( mouseClick )
@@ -184,11 +194,13 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
     if (!MSG_CheckFilter(message, first, last))
     {
         QUEUE_Unlock(queue);
-        return SYSQ_MSG_CONTINUE;
+        retvalue = SYSQ_MSG_CONTINUE;
+        goto END;
     }
 
     hCursorQueue = queue->self;
     QUEUE_Unlock(queue);
+
 
 	/* call WH_MOUSE */
 
@@ -205,8 +217,14 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
 	                            message, (LPARAM)SEGPTR_GET(hook) );
 	    SEGPTR_FREE(hook);
 	}
-	if( ret ) return MAKELONG((INT16)SYSQ_MSG_SKIP, hittest);
+        if( ret )
+        {
+            retvalue = MAKELONG((INT16)SYSQ_MSG_SKIP, hittest);
+            goto END;
     }
+
+    }
+
 
     if ((hittest == HTERROR) || (hittest == HTNOWHERE)) 
 	eatMsg = sendSC = 1;
@@ -257,12 +275,20 @@ static DWORD MSG_TranslateMouseMsg( HWND hTopWnd, DWORD first, DWORD last,
     if (sendSC)
         SendMessageA( hWnd, WM_SETCURSOR, hWnd,
                        MAKELONG( hittest, message ));
-    if (eatMsg) return MAKELONG( (UINT16)SYSQ_MSG_SKIP, hittest);
+    if (eatMsg)
+    {
+        retvalue = MAKELONG( (UINT16)SYSQ_MSG_SKIP, hittest);
+        goto END;
+    }
 
     msg->hwnd    = hWnd;
     msg->message = message;
     msg->lParam  = MAKELONG( pt.x, pt.y );
-    return SYSQ_MSG_ACCEPT;
+    retvalue = SYSQ_MSG_ACCEPT;
+END:
+    WIN_ReleaseWndPtr(pWnd);
+
+    return retvalue;
 }
 
 
@@ -302,8 +328,10 @@ static DWORD MSG_TranslateKbdMsg( HWND hTopWnd, DWORD first, DWORD last,
         queue = (MESSAGEQUEUE *)QUEUE_Lock( pWnd->hmemTaskQ );
         if (queue) QUEUE_SetWakeBit( queue, QS_KEY );
         QUEUE_Unlock( queue );
+        WIN_ReleaseWndPtr(pWnd);
         return SYSQ_MSG_ABANDON;
     }
+    WIN_ReleaseWndPtr(pWnd);
 
     if (hTopWnd && hWnd != hTopWnd)
 	if (!IsChild(hTopWnd, hWnd)) return SYSQ_MSG_CONTINUE;
@@ -490,12 +518,16 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, DWORD first, DWORD last,
 
         if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
         {
-            HWND hWndScope = (HWND)qmsg->extraInfo;
 
-	    status = MSG_TranslateMouseMsg(hwnd, first, last, msg, remove,
-					  (Options.managed && IsWindow(hWndScope) ) 
-					   ? WIN_FindWndPtr(hWndScope) : WIN_GetDesktop() );
+            HWND hWndScope = (HWND)qmsg->extraInfo;
+            WND *tmpWnd = (Options.managed && IsWindow(hWndScope) ) 
+                           ? WIN_FindWndPtr(hWndScope) : WIN_GetDesktop();
+
+	    status = MSG_TranslateMouseMsg(hwnd, first, last, msg, remove,tmpWnd );
 	    kbd_msg = 0;
+            
+            WIN_ReleaseWndPtr(tmpWnd);
+
         }
         else if ((msg->message >= WM_KEYFIRST) && (msg->message <= WM_KEYLAST))
         {
@@ -631,6 +663,7 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
     MESSAGEQUEUE *queue, *destQ;
     SMSG         *smsg;
     LRESULT      retVal = 1;
+    int          iWndsLocks;
     
     *pRes = 0;
 
@@ -668,6 +701,8 @@ static LRESULT MSG_SendMessageInterThread( HQUEUE16 hDestQueue,
     /* add smsg struct in the pending list of the destination queue */
     if (QUEUE_AddSMSG(destQ, SM_PENDING_LIST, smsg) == FALSE)
         return 0;
+
+    iWndsLocks = WIN_SuspendWndsLock();
 
     /* force destination task to run next, if 16 bit threads */
     if ( THREAD_IsWin16(THREAD_Current()) && THREAD_IsWin16(destQ->thdb) )
@@ -710,6 +745,7 @@ got:
              break;
         }
     }
+    WIN_RestoreWndsLock(iWndsLocks);
 
     /* remove the smsg from the processingg list of the source queue */
     QUEUE_RemoveSMSG( queue, SM_PROCESSING_LIST, smsg );
@@ -758,9 +794,11 @@ BOOL WINAPI ReplyMessage( LRESULT result )
     SMSG         *smsg;
     BOOL       ret = FALSE;
 
-    if (!(queue = (MESSAGEQUEUE*)QUEUE_Lock( GetFastQueue16() ))) return FALSE;
+    if (!(queue = (MESSAGEQUEUE*)QUEUE_Lock( GetFastQueue16() )))
+        return FALSE;
 
     TRACE(sendmsg,"ReplyMessage, queue %04x\n", queue->self);
+
 
     if (    !(smsg = queue->smWaiting)
          || !(senderQ = QUEUE_Lock( smsg->hSrcQueue )) )
@@ -838,6 +876,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, DWORD first, DWORD last,
     MESSAGEQUEUE *msgQueue;
     HQUEUE16 hQueue;
     POINT16 pt16;
+    int iWndsLocks;
 
 #ifdef CONFIG_IPC
     DDE_TestDDE(hwnd);	/* do we have dde handling in the window ?*/
@@ -861,13 +900,19 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, DWORD first, DWORD last,
     /* Never yield on Win32 threads */
     if (!THREAD_IsWin16(THREAD_Current())) flags |= PM_NOYIELD;
 
+    iWndsLocks = WIN_SuspendWndsLock();
+
     while(1)
     {    
         QMSG *qmsg;
         
 	hQueue   = GetFastQueue16();
         msgQueue = (MESSAGEQUEUE *)QUEUE_Lock( hQueue );
-        if (!msgQueue) return FALSE;
+        if (!msgQueue)
+        {
+            WIN_RestoreWndsLock(iWndsLocks);
+            return FALSE;
+        }
         msgQueue->changeBits = 0;
 
         /* First handle a message put by SendMessage() */
@@ -951,8 +996,10 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, DWORD first, DWORD last,
                         wndPtr->flags &= ~WIN_INTERNAL_PAINT;
                         QUEUE_DecPaintCount( hQueue );
                     }
+                    WIN_ReleaseWndPtr(wndPtr);
                     break;
                 }
+                WIN_ReleaseWndPtr(wndPtr);
 	    }
 	}
 
@@ -974,6 +1021,7 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, DWORD first, DWORD last,
             if (!(flags & PM_NOYIELD)) UserYield16();
             
             QUEUE_Unlock( msgQueue );
+            WIN_RestoreWndsLock(iWndsLocks);
             return FALSE;
         }
         msgQueue->wakeMask = mask;
@@ -981,6 +1029,8 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, DWORD first, DWORD last,
         QUEUE_Unlock( msgQueue );
     }
 
+    WIN_RestoreWndsLock(iWndsLocks);
+    
     /* instead of unlocking queue for every break condition, all break
        condition will fall here */
     QUEUE_Unlock( msgQueue );
@@ -1001,8 +1051,12 @@ static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, DWORD first, DWORD last,
 	else if (message == WM_KEYUP || message == WM_SYSKEYUP)
 	    QueueKeyStateTable[msg->wParam & 0xff] &= ~0x80;
     }
-    if (peek) return TRUE;
-    else return (msg->message != WM_QUIT);
+
+    if (peek)
+        return TRUE;
+
+    else
+        return (msg->message != WM_QUIT);
 }
 
 /***********************************************************************
@@ -1277,6 +1331,7 @@ BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
 {
     MSG       msg;
     WND 	*wndPtr;
+    BOOL      retvalue;
 
     msg.hwnd    = hwnd;
     msg.message = message;
@@ -1293,8 +1348,10 @@ BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
     
     if (hwnd == HWND_BROADCAST)
     {
+        WND *pDesktop = WIN_GetDesktop();
         TRACE(msg,"HWND_BROADCAST !\n");
-        for (wndPtr = WIN_GetDesktop()->child; wndPtr; wndPtr = wndPtr->next)
+        
+        for (wndPtr=WIN_LockWndPtr(pDesktop->child); wndPtr; WIN_UpdateWndPtr(&wndPtr,wndPtr->next))
         {
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
             {
@@ -1303,14 +1360,22 @@ BOOL WINAPI PostMessageA( HWND hwnd, UINT message, WPARAM wParam,
                 PostMessageA( wndPtr->hwndSelf, message, wParam, lParam );
             }
         }
+        WIN_ReleaseDesktop();
         TRACE(msg,"End of HWND_BROADCAST !\n");
         return TRUE;
     }
 
     wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr || !wndPtr->hmemTaskQ) return FALSE;
+    if (!wndPtr || !wndPtr->hmemTaskQ)
+    {
+        retvalue = FALSE;
+        goto END;
+    }
 
-    return QUEUE_AddMsg( wndPtr->hmemTaskQ, &msg, 0 );
+    retvalue = QUEUE_AddMsg( wndPtr->hmemTaskQ, &msg, 0 );
+END:
+    WIN_ReleaseWndPtr(wndPtr);
+    return retvalue;
 }
 
 
@@ -1377,7 +1442,7 @@ LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
                          LPARAM lParam, DWORD timeout, WORD flags,
                          LRESULT *pRes)
 {
-    WND * wndPtr;
+    WND * wndPtr = 0;
     WND **list, **ppWnd;
     LRESULT ret = 1;
 
@@ -1388,11 +1453,16 @@ LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
         *pRes = 1;
         
         if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
+        {
+            WIN_ReleaseDesktop();
             return 1;
+        }
+        WIN_ReleaseDesktop();
+
         TRACE(msg,"HWND_BROADCAST !\n");
         for (ppWnd = list; *ppWnd; ppWnd++)
         {
-            wndPtr = *ppWnd;
+            WIN_UpdateWndPtr(&wndPtr,*ppWnd);
             if (!IsWindow(wndPtr->hwndSelf)) continue;
             if (wndPtr->dwStyle & WS_POPUP || wndPtr->dwStyle & WS_CAPTION)
             {
@@ -1402,7 +1472,8 @@ LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
                                timeout, flags, pRes);
             }
         }
-        HeapFree( SystemHeap, 0, list );
+        WIN_ReleaseWndPtr(wndPtr);
+        WIN_ReleaseWinArray(list);
         TRACE(msg,"End of HWND_BROADCAST !\n");
         return 1;
     }
@@ -1440,8 +1511,10 @@ LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
         return 0;
     }
     if (QUEUE_IsExitingQueue(wndPtr->hmemTaskQ))
-        return 0;  /* Don't send anything if the task is dying */
-
+    {
+        ret = 0;  /* Don't send anything if the task is dying */
+        goto END;
+    }
     if (flags & SMSG_WIN32)
         SPY_EnterMessage( SPY_SENDMESSAGE, hwnd, msg, wParam, lParam );
     else
@@ -1469,7 +1542,8 @@ LRESULT MSG_SendMessage( HWND hwnd, UINT msg, WPARAM wParam,
         SPY_ExitMessage( SPY_RESULT_OK, hwnd, msg, ret );
     else
     SPY_ExitMessage( SPY_RESULT_OK16, hwnd, msg, ret );
-    
+END:
+    WIN_ReleaseWndPtr(wndPtr);
     return ret;
 }
 
@@ -2005,7 +2079,11 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
 
     if (!msg->hwnd) return 0;
     if (!(wndPtr = WIN_FindWndPtr( msg->hwnd ))) return 0;
-    if (!wndPtr->winproc) return 0;
+    if (!wndPtr->winproc)
+    {
+        retval = 0;
+        goto END;
+    }
     painting = (msg->message == WM_PAINT);
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
 
@@ -2016,7 +2094,9 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
                                msg->wParam, msg->lParam );
     SPY_ExitMessage( SPY_RESULT_OK16, msg->hwnd, msg->message, retval );
 
-    if (painting && (wndPtr = WIN_FindWndPtr( msg->hwnd )) &&
+    WIN_ReleaseWndPtr(wndPtr);
+    wndPtr = WIN_FindWndPtr(msg->hwnd);
+    if (painting && wndPtr &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {
 	ERR(msg, "BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
@@ -2025,6 +2105,8 @@ LONG WINAPI DispatchMessage16( const MSG16* msg )
         /* Validate the update region to avoid infinite WM_PAINT loop */
         ValidateRect( msg->hwnd, NULL );
     }
+END:
+    WIN_ReleaseWndPtr(wndPtr);
     return retval;
 }
 
@@ -2073,7 +2155,11 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
 
     if (!msg->hwnd) return 0;
     if (!(wndPtr = WIN_FindWndPtr( msg->hwnd ))) return 0;
-    if (!wndPtr->winproc) return 0;
+    if (!wndPtr->winproc)
+    {
+        retval = 0;
+        goto END;
+    }
     painting = (msg->message == WM_PAINT);
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
 /*    HOOK_CallHooks32A( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
@@ -2085,7 +2171,10 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
                                 msg->wParam, msg->lParam );
     SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval );
 
-    if (painting && (wndPtr = WIN_FindWndPtr( msg->hwnd )) &&
+    WIN_ReleaseWndPtr(wndPtr);
+    wndPtr = WIN_FindWndPtr(msg->hwnd);
+
+    if (painting && wndPtr &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {
 	ERR(msg, "BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
@@ -2094,6 +2183,8 @@ LONG WINAPI DispatchMessageA( const MSG* msg )
         /* Validate the update region to avoid infinite WM_PAINT loop */
         ValidateRect( msg->hwnd, NULL );
     }
+END:
+    WIN_ReleaseWndPtr(wndPtr);
     return retval;
 }
 
@@ -2138,7 +2229,11 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
 
     if (!msg->hwnd) return 0;
     if (!(wndPtr = WIN_FindWndPtr( msg->hwnd ))) return 0;
-    if (!wndPtr->winproc) return 0;
+    if (!wndPtr->winproc)
+    {
+        retval = 0;
+        goto END;
+    }
     painting = (msg->message == WM_PAINT);
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
 /*    HOOK_CallHooks32W( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
@@ -2150,7 +2245,10 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
                                 msg->wParam, msg->lParam );
     SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval );
 
-    if (painting && (wndPtr = WIN_FindWndPtr( msg->hwnd )) &&
+    WIN_ReleaseWndPtr(wndPtr);
+    wndPtr = WIN_FindWndPtr(msg->hwnd);
+
+    if (painting && wndPtr &&
         (wndPtr->flags & WIN_NEEDS_BEGINPAINT) && wndPtr->hrgnUpdate)
     {
 	ERR(msg, "BeginPaint not called on WM_PAINT for hwnd %04x!\n", 
@@ -2159,6 +2257,8 @@ LONG WINAPI DispatchMessageW( const MSG* msg )
         /* Validate the update region to avoid infinite WM_PAINT loop */
         ValidateRect( msg->hwnd, NULL );
     }
+END:
+    WIN_ReleaseWndPtr(wndPtr);
     return retval;
 }
 

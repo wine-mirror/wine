@@ -2552,6 +2552,7 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM16 wParam, POINT16 pt )
 	break;
 
     case SC_CLOSE:
+        WIN_ReleaseWndPtr(wndPtr);
 	return SendMessage16( hwnd, WM_CLOSE, 0, 0 );
 
     case SC_VSCROLL:

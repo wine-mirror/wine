@@ -3544,8 +3544,6 @@ BOOL WINAPI DestroyMenu( HMENU hMenu )
 	        (!pTPWnd || (lppop->hWnd != pTPWnd->hwndSelf)))
 	        DestroyWindow( lppop->hWnd );
 
-            MENU_ReleaseTopPopupWnd();
-            
 	    if (lppop->items)	/* recursively destroy submenus */
 	    {
 	        int i;
@@ -3558,8 +3556,13 @@ BOOL WINAPI DestroyMenu( HMENU hMenu )
 	        HeapFree( SystemHeap, 0, lppop->items );
 	    }
 	    USER_HEAP_FREE( hMenu );
+            MENU_ReleaseTopPopupWnd();
 	}
-	else return FALSE;
+        else
+        {
+            MENU_ReleaseTopPopupWnd();
+            return FALSE;
+        }
     }
     return (hMenu != MENU_DefSysPopup);
 }

@@ -416,6 +416,7 @@ static void EVENT_ProcessEvent( XEvent *event )
       pWnd = NULL;  /* Not for a registered window */
     }
   }
+  WIN_LockWndPtr(pWnd);
   
   if ( !pWnd && event->xany.window != X11DRV_GetXRootWindow() )
       ERR( event, "Got event %s for unknown Window %08lx\n",
@@ -515,6 +516,7 @@ static void EVENT_ProcessEvent( XEvent *event )
 	   event_names[event->type], pWnd? pWnd->hwndSelf : 0 );
       break;
     }
+  WIN_ReleaseWndPtr(pWnd);
 }
 
 /***********************************************************************
@@ -586,11 +588,21 @@ static BOOL EVENT_QueryZOrder( WND* pWndCheck )
 {
   BOOL      bRet = FALSE;
   HWND      hwndInsertAfter = HWND_TOP;
-  WND*        pWnd, *pWndZ = WIN_GetDesktop()->child;
+  WND      *pDesktop = WIN_GetDesktop();
+  WND      *pWnd, *pWndZ = WIN_LockWndPtr(pDesktop->child);
   Window      w, parent, *children = NULL;
   unsigned    total, check, pos, best;
   
-  if( !__check_query_condition(&pWndZ, &pWnd) ) return TRUE;
+  if( !__check_query_condition(&pWndZ, &pWnd) )
+  {
+      WIN_ReleaseWndPtr(pDesktop->child);
+      WIN_ReleaseDesktop();
+      return TRUE;
+  }
+  WIN_LockWndPtr(pWndZ);
+  WIN_LockWndPtr(pWnd);
+  WIN_ReleaseWndPtr(pDesktop->child);
+  WIN_ReleaseDesktop();
   
   parent = __get_common_ancestor( X11DRV_WND_GetXWindow(pWndZ), 
 				  X11DRV_WND_GetXWindow(pWnd),
@@ -607,7 +619,7 @@ static BOOL EVENT_QueryZOrder( WND* pWndCheck )
 	  check = __td_lookup( w, children, total );
 	  best = total;
 
-	  for( pWnd = pWndZ; pWnd; pWnd = pWnd->next )
+          for( WIN_UpdateWndPtr(&pWnd,pWndZ); pWnd;WIN_UpdateWndPtr(&pWnd,pWnd->next))
           {
 	      /* go through all windows in Wine z-order... */
 
@@ -633,6 +645,8 @@ static BOOL EVENT_QueryZOrder( WND* pWndCheck )
       WIN_LinkWindow( pWndCheck->hwndSelf, hwndInsertAfter);
   }
   if( children ) TSXFree( children );
+  WIN_ReleaseWndPtr(pWnd);
+  WIN_ReleaseWndPtr(pWndZ);
   return bRet;
 }
 

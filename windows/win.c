@@ -54,7 +54,6 @@ static WORD wDragHeight= 3;
 
 /* thread safeness */
 static CRITICAL_SECTION WIN_CritSection;
-static int ilockCounter = 0;
 
 /***********************************************************************
  *           WIN_LockWnds
@@ -64,6 +63,9 @@ static int ilockCounter = 0;
 void WIN_LockWnds()
 {
 /*
+     This code will be released in the future
+     info : francois@macadamian.com
+     
     EnterCriticalSection(&WIN_CritSection);
 */
 }
@@ -76,6 +78,9 @@ void WIN_LockWnds()
 void WIN_UnlockWnds()
     {
 /*
+     This code will be released in the future
+     info : francois@macadamian.com
+     
         LeaveCriticalSection(&WIN_CritSection);
 */
 }
@@ -87,12 +92,24 @@ void WIN_UnlockWnds()
  */
 int WIN_SuspendWndsLock()
 {
-/*
-    int isuspendedLocks = WIN_CritSection.RecursionCount;
-    WIN_CritSection.RecursionCount = 0;
-    LeaveCriticalSection(&WIN_CritSection);
+    int isuspendedLocks = 0;
+
+    /* make sure that the lock is not suspended by different thread than
+     the owning thread */
+    if(WIN_CritSection.OwningThread != GetCurrentThreadId())
+    {
+        return 0;
+    }
+    /* set the value of isuspendedlock to the actual recursion count
+     of the critical section */
+    isuspendedLocks = WIN_CritSection.RecursionCount;
+    /* set the recursion count of the critical section to 1
+     so the owning thread will be able to leave it */
+    WIN_CritSection.RecursionCount = 1;
+    /* leave critical section*/
+    WIN_UnlockWnds();
+
     return isuspendedLocks;
-*/
 }
 
 /***********************************************************************
@@ -100,13 +117,20 @@ int WIN_SuspendWndsLock()
  *
  *  Restore the suspended locks on WND structures
  */
-void WIN_RestoreWndslock(int ipreviousLocks)
+void WIN_RestoreWndsLock(int ipreviousLocks)
 {
-/*
-    EnterCriticalSection(&WIN_CritSection);
+    if(!ipreviousLocks)
+    {
+        return;
+    }
+    /* restore the lock */
+    WIN_LockWnds();
+    /* set the recursion count of the critical section to the
+     value of suspended locks (given by WIN_SuspendWndsLock())*/
     WIN_CritSection.RecursionCount = ipreviousLocks;
-*/
+
 }
+
 /***********************************************************************
  *           WIN_FindWndPtr
  *
@@ -118,25 +142,25 @@ WND * WIN_FindWndPtr( HWND hwnd )
     
     if (!hwnd || HIWORD(hwnd)) goto error2;
     ptr = (WND *) USER_HEAP_LIN_ADDR( hwnd );
-    /* Lock all WND structures for thread safeness
-    WIN_LockWnds(ptr);
-    and increment destruction monitoring
+    /* Lock all WND structures for thread safeness*/
+    WIN_LockWnds();
+    /*and increment destruction monitoring*/
      ptr->irefCount++;
-     */
+
     if (ptr->dwMagic != WND_MAGIC) goto error;
     if (ptr->hwndSelf != hwnd)
     {
-        ERR( win, "Can't happen: hwnd %04x self pointer is %04x\n",
-             hwnd, ptr->hwndSelf );
+        ERR( win, "Can't happen: hwnd %04x self pointer is %04x\n",hwnd, ptr->hwndSelf );
         goto error;
     }
+    /* returns a locked pointer */
     return ptr;
  error:
-    /* Unlock all WND structures for thread safeness
-    WIN_UnlockWnds(ptr);
-     and decrement destruction monitoring value
+    /* Unlock all WND structures for thread safeness*/
+    WIN_UnlockWnds();
+    /* and decrement destruction monitoring value */
      ptr->irefCount--;
-     */
+
 error2:
     if ( hwnd!=0 )
       SetLastError( ERROR_INVALID_WINDOW_HANDLE );
@@ -152,12 +176,13 @@ error2:
  */
 WND *WIN_LockWndPtr(WND *initWndPtr)
 {
-
     if(!initWndPtr) return 0;
-    /*
+
+    /* Lock all WND structures for thread safeness*/
     WIN_LockWnds();
+    /*and increment destruction monitoring*/
     initWndPtr->irefCount++;
-    */
+    
     return initWndPtr;
 
 }
@@ -169,22 +194,26 @@ WND *WIN_LockWndPtr(WND *initWndPtr)
  */
 void WIN_ReleaseWndPtr(WND *wndPtr)
 {
-
     if(!wndPtr) return;
-    /*Decrement destruction monitoring value
+
+    /*Decrement destruction monitoring value*/
      wndPtr->irefCount--;
-     Check if it's time to release the memory
+    /* Check if it's time to release the memory*/
      if(wndPtr->irefCount == 0)
      {
-         Add memory releasing code here
+         /*Add memory releasing code here*/
      }
-     unlock all WND structures for thread safeness
+     else if(wndPtr->irefCount < 0)
+     {
+         /* This else if is useful to monitor the WIN_ReleaseWndPtr function */
+         TRACE(win,"forgot a Lock on %p somewhere\n",wndPtr);
+     }
+     /*unlock all WND structures for thread safeness*/
      WIN_UnlockWnds();
-     */    
 }
 
 /***********************************************************************
- *           WIN_ReleaseWndPtr
+ *           WIN_UpdateWndPtr
  *
  * Updates the value of oldPtr to newPtr.
  */
@@ -376,17 +405,21 @@ HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE16 hQueue )
                          pWnd->hwndSelf );
         }
         else if ((pWnd->hmemTaskQ == hQueue) &&
-            (pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT))) break;
+                 (pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT)))
+            break;
         
         else if (pWnd->child )
             if ((hwndRet = WIN_FindWinToRepaint( pWnd->child->hwndSelf, hQueue )) )
-                goto end;
+            {
+                WIN_ReleaseWndPtr(pWnd);
+                return hwndRet;
+    }
+    
     }
     
     if(!pWnd)
     {
-        hwndRet = 0;
-        goto end;
+        return 0;
     }
     
     hwndRet = pWnd->hwndSelf;
@@ -397,10 +430,12 @@ HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE16 hQueue )
     {
         WIN_UpdateWndPtr(&pWnd,pWnd->next);
     }
-    if (pWnd) hwndRet = pWnd->hwndSelf;
-    TRACE(win,"found %04x\n",hwndRet);
-  end:
+    if (pWnd)
+    {
+        hwndRet = pWnd->hwndSelf;
     WIN_ReleaseWndPtr(pWnd);
+    }
+    TRACE(win,"found %04x\n",hwndRet);
     return hwndRet;
 }
 
@@ -574,6 +609,11 @@ BOOL WIN_CreateDesktopWindow(void)
 
     TRACE(win,"Creating desktop window\n");
 
+    
+    /* Initialisation of the critical section for thread safeness */
+    InitializeCriticalSection(&WIN_CritSection);
+    MakeCriticalSectionGlobal(&WIN_CritSection);
+
     if (!ICONTITLE_Init() ||
 	!WINPOS_CreateInternalPosAtom() ||
 	!(class = CLASS_FindClassByAtom( DESKTOP_CLASS_ATOM, 0 )))
@@ -632,11 +672,6 @@ BOOL WIN_CreateDesktopWindow(void)
       return FALSE;
     
     SendMessageA( hwndDesktop, WM_NCCREATE, 0, 0 );
-
-    /* Initialisation of the critical section for thread safeness
-     InitializeCriticalSection(&WIN_CritSection);
-     MakeCriticalSectionGlobal(&WIN_CritSection);
-     */
     pWndDesktop->flags |= WIN_NEEDS_ERASEBKGND;
     return TRUE;
 }
@@ -748,8 +783,10 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
             wndPtr->owner = NULL;
         else
         {
-            wndPtr->owner = WIN_GetTopParentPtr(WIN_FindWndPtr(cs->hwndParent));
+            WND *tmpWnd = WIN_FindWndPtr(cs->hwndParent);
+            wndPtr->owner = WIN_GetTopParentPtr(tmpWnd);
             WIN_ReleaseWndPtr(wndPtr->owner);
+            WIN_ReleaseWndPtr(tmpWnd);
     }
     }
 
@@ -776,6 +813,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->userdata       = 0;
     wndPtr->hSysMenu       = (wndPtr->dwStyle & WS_SYSMENU)
 			     ? MENU_GetSysMenu( hwnd, 0 ) : 0;
+    wndPtr->irefCount      = 1;
 
     if (classPtr->cbWndExtra) memset( wndPtr->wExtra, 0, classPtr->cbWndExtra);
 
@@ -967,10 +1005,11 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     /* Abort window creation */
 
     WARN(win, "aborted by WM_xxCREATE!\n");
-    WIN_DestroyWindow( wndPtr );
+    WIN_ReleaseWndPtr(WIN_DestroyWindow( wndPtr ));
     retvalue = 0;
 end:
     WIN_ReleaseWndPtr(wndPtr);
+
     return retvalue;
 }
 
@@ -1318,7 +1357,11 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 	    }
             WIN_UpdateWndPtr(&siblingPtr,siblingPtr->next);
         }
-        if (siblingPtr) DestroyWindow( siblingPtr->hwndSelf );
+        if (siblingPtr)
+        {
+            DestroyWindow( siblingPtr->hwndSelf );
+            WIN_ReleaseWndPtr(siblingPtr);
+        }
         else break;
       }
 
@@ -1345,7 +1388,7 @@ BOOL WINAPI DestroyWindow( HWND hwnd )
 
       /* Destroy the window storage */
 
-    WIN_DestroyWindow( wndPtr );
+    WIN_ReleaseWndPtr(WIN_DestroyWindow( wndPtr ));
     retvalue = TRUE;
 end:
     WIN_ReleaseWndPtr(wndPtr);
@@ -2312,11 +2355,13 @@ HWND WINAPI GetParent( HWND hwnd )
  */
 WND* WIN_GetTopParentPtr( WND* pWnd )
 {
-    while( pWnd && (pWnd->dwStyle & WS_CHILD))
+    WND *tmpWnd = WIN_LockWndPtr(pWnd);
+    
+    while( tmpWnd && (tmpWnd->dwStyle & WS_CHILD))
     {
-        WIN_UpdateWndPtr(&pWnd,pWnd->parent);
+        WIN_UpdateWndPtr(&tmpWnd,tmpWnd->parent);
     }
-    return pWnd;
+    return tmpWnd;
 }
 
 /*****************************************************************

@@ -1598,14 +1598,15 @@ BOOL WINAPI CheckRadioButton( HWND hwndDlg, UINT firstID,
                                   UINT lastID, UINT checkID )
 {
     WND *pWnd = WIN_FindWndPtr( hwndDlg );
+
     if (!pWnd) return FALSE;
 
     for (WIN_UpdateWndPtr(&pWnd,pWnd->child); pWnd;WIN_UpdateWndPtr(&pWnd,pWnd->next))
         if ((pWnd->wIDmenu == firstID) || (pWnd->wIDmenu == lastID))
         {
-            WIN_ReleaseWndPtr(pWnd);
             break;
         }
+
     if (!pWnd) return FALSE;
 
     if (pWnd->wIDmenu == lastID)

@@ -120,23 +120,25 @@ static BOOL MDI_MenuDeleteItem(WND* clientWnd, HWND hWndChild )
     for( index = id+1; index <= clientInfo->nActiveChildren + 
 				clientInfo->idFirstChild; index++ )
     {
-	wndPtr = WIN_FindWndPtr(MDI_GetChildByID(clientWnd,index));
-	if( !wndPtr )
+        WND *tmpWnd = WIN_FindWndPtr(MDI_GetChildByID(clientWnd,index));
+	if( !tmpWnd )
 	{
 	      TRACE(mdi,"no window for id=%i\n",index);
+            WIN_ReleaseWndPtr(tmpWnd);
 	      continue;
 	}
     
 	/* set correct id */
-	wndPtr->wIDmenu--;
+	tmpWnd->wIDmenu--;
 
 	n = sprintf(buffer, "%d ",index - clientInfo->idFirstChild);
-	if (wndPtr->text)
-            lstrcpynA(buffer + n, wndPtr->text, sizeof(buffer) - n );	
+	if (tmpWnd->text)
+            lstrcpynA(buffer + n, tmpWnd->text, sizeof(buffer) - n );	
 
 	/* change menu */
 	ModifyMenuA(clientInfo->hWindowMenu ,index ,MF_BYCOMMAND | MF_STRING,
                       index - 1 , buffer ); 
+        WIN_ReleaseWndPtr(tmpWnd);
     }
     retvalue = TRUE;
 END:
@@ -711,7 +713,7 @@ static LONG MDICascade(WND* clientWnd, MDICLIENTINFO *ci)
                                 SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
 	    }
 	}
-	HeapFree( SystemHeap, 0, heapPtr );
+	WIN_ReleaseWinArray(heapPtr);
     }
 
     if( total < ci->nActiveChildren )
@@ -787,7 +789,7 @@ static void MDITile( WND* wndClient, MDICLIENTINFO *ci, WPARAM wParam )
 		x += xsize;
 	    }
 	}
-	HeapFree( SystemHeap, 0, heapPtr );
+	WIN_ReleaseWinArray(heapPtr);
     }
   
     if( total < ci->nActiveChildren ) ArrangeIconicWindows( wndClient->hwndSelf );
@@ -902,10 +904,12 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND hClient,
 
     if (!clientWnd)
            return;
-    WIN_ReleaseWndPtr(clientWnd);
 
     if (!ci)
+    {
+       WIN_ReleaseWndPtr(clientWnd);
            return;
+    }
 
     /* store new "default" title if lpTitle is not NULL */
     if (lpTitle) 
@@ -944,13 +948,14 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND hClient,
 		    strcat( lpBuffer, "]" );
 		}
 	    }
-            WIN_ReleaseWndPtr(childWnd);
 	}
 	else
 	{
             strncpy(lpBuffer, ci->frameTitle, MDI_MAXTITLELENGTH );
 	    lpBuffer[MDI_MAXTITLELENGTH]='\0';
 	}
+        WIN_ReleaseWndPtr(childWnd);
+
     }
     else
 	lpBuffer[0] = '\0';
@@ -959,6 +964,9 @@ static void MDI_UpdateFrameText( WND *frameWnd, HWND hClient,
     if( repaint == MDI_REPAINTFRAME)
 	SetWindowPos( frameWnd->hwndSelf, 0,0,0,0,0, SWP_FRAMECHANGED |
 			SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );
+
+    WIN_ReleaseWndPtr(clientWnd);
+
 }
 
 

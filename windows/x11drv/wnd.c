@@ -378,7 +378,10 @@ void X11DRV_WND_ForceWindowRaise(WND *wndPtr)
   WND *wndPrev,*pDesktop = WIN_GetDesktop();
   
   if( !wndPtr || !X11DRV_WND_GetXWindow(wndPtr) || (wndPtr->flags & WIN_MANAGED) )
+  {
+      WIN_ReleaseDesktop();
     return;
+  }
   
   /* Raise all windows up to wndPtr according to their Z order.
    * (it would be easier with sibling-related Below but it doesn't

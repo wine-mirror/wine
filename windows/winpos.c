@@ -660,6 +660,7 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo,
             offset->y += wndPtr->rectClient.top;
             WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
         }
+        WIN_ReleaseWndPtr(wndPtr);
     }
 
       /* Translate origin to destination window coords */
@@ -676,8 +677,8 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo,
             offset->y -= wndPtr->rectClient.top;
             WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
         }    
+        WIN_ReleaseWndPtr(wndPtr);
     }
-    WIN_ReleaseWndPtr(wndPtr);
 }
 
 
@@ -1632,10 +1633,13 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     hOldActiveQueue = hActiveQueue;
 
     if( (wndTemp = WIN_FindWndPtr(hwndActive)) )
+    {
 	wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
+        WIN_ReleaseWndPtr(wndTemp);
+    }
     else
 	TRACE(win,"no current active window.\n");
-    WIN_ReleaseWndPtr(wndTemp);
+
     /* call CBT hook chain */
     if ((cbtStruct = SEGPTR_NEW(CBTACTIVATESTRUCT16)))
     {
@@ -1650,6 +1654,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
             /* Unlock the active queue before returning */
             if ( pOldActiveQueue )
                 QUEUE_Unlock( pOldActiveQueue );
+            WIN_ReleaseWndPtr(wndPtr);
             return wRet;
         }
     }
@@ -1775,6 +1780,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
         wndTemp->hwndLastActive = hWnd;
 
         wIconized = HIWORD(wndTemp->dwStyle & WS_MINIMIZE);
+        WIN_ReleaseWndPtr(wndTemp);
         SendMessageA( hWnd, WM_NCACTIVATE, TRUE, 0 );
 #if 1
         SendMessageA( hWnd, WM_ACTIVATE,
@@ -1855,10 +1861,8 @@ BOOL WINPOS_ActivateOtherWindow(WND* pWnd)
       while( !WINPOS_CanActivate(pWndTo) ) 
       {
 	 /* by now owned windows should've been taken care of */
-          WIN_ReleaseWndPtr(pWndTo);
-          pWndTo = WIN_LockWndPtr(pWndPtr->next);
-          WIN_ReleaseWndPtr(pWndPtr);
-	  pWndPtr = WIN_LockWndPtr(pWndTo);
+          WIN_UpdateWndPtr(&pWndTo,pWndPtr->next);
+          WIN_UpdateWndPtr(&pWndPtr,pWndTo);
 	  if( !pWndTo ) break;
       }
       WIN_ReleaseWndPtr(pWndPtr);

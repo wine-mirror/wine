@@ -87,7 +87,8 @@ HWND WINAPI SetFocus( HWND hwnd )
 	{
 	    if ( wndPtr->dwStyle & ( WS_MINIMIZE | WS_DISABLED) )
 		 goto CLEANUP;
-            if (!(wndPtr = wndPtr->parent)) goto CLEANUP;
+            WIN_UpdateWndPtr(&wndPtr,wndPtr->parent);
+            if (!wndPtr) goto CLEANUP;
 	    hwndTop = wndPtr->hwndSelf;
 	}
 
