@@ -26,6 +26,7 @@
 #ifdef WIDE_SCANF
 #define _CHAR_ MSVCRT_wchar_t
 #define _EOF_ MSVCRT_WEOF
+#define _EOF_RET MSVCRT_WEOF
 #define _ISSPACE_(c) MSVCRT_iswspace(c)
 #define _ISDIGIT_(c) MSVCRT_iswdigit(c)
 #define _CONVERT_(c) c /*** FIXME ***/
@@ -33,6 +34,7 @@
 #else /* WIDE_SCANF */
 #define _CHAR_ char
 #define _EOF_ MSVCRT_EOF
+#define _EOF_RET MSVCRT_EOF
 #define _ISSPACE_(c) isspace(c)
 #define _ISDIGIT_(c) isdigit(c)
 #define _CONVERT_(c) c /*** FIXME ***/
@@ -90,8 +92,8 @@ int _FUNCTION_ {
 #endif /* CONSOLE */
 #endif /* WIDE_SCANF */
     nch = _GETC_(file);
-    if (nch == _EOF_) return _EOF_;
-    
+    if (nch == _EOF_) return _EOF_RET;
+
     va_start(ap, format);
     while (*format) {
 	/* a whitespace character in the format string causes scanf to read,
