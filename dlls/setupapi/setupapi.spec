@@ -1,15 +1,193 @@
+@ stub AcquireSCMLock
+@ stub AddMiniIconToList
+@ stub AddTagToGroupOrderListEntry
+@ stub AppendStringToMultiSz
+@ stub AssertFail
+@ stub CMP_Init_Detection
+@ stub CMP_RegisterNotification
+@ stub CMP_Report_LogOn
+@ stub CMP_UnregisterNotification
+@ stub CMP_WaitNoPendingInstallEvents
+@ stub CMP_WaitServices
+@ stub CM_Add_Empty_Log_Conf
+@ stub CM_Add_Empty_Log_Conf_Ex
+@ stub CM_Add_IDA
+@ stub CM_Add_IDW
+@ stub CM_Add_ID_ExA
+@ stub CM_Add_ID_ExW
+@ stub CM_Add_Range
+@ stub CM_Add_Res_Des
+@ stub CM_Add_Res_Des_Ex
+@ stub CM_Connect_MachineA
 @ stdcall CM_Connect_MachineW(wstr ptr)
+@ stub CM_Create_DevNodeA
+@ stub CM_Create_DevNodeW
+@ stub CM_Create_DevNode_ExA
+@ stub CM_Create_DevNode_ExW
+@ stub CM_Create_Range_List
+@ stub CM_Delete_Class_Key
+@ stub CM_Delete_Class_Key_Ex
+@ stub CM_Delete_DevNode_Key
+@ stub CM_Delete_DevNode_Key_Ex
+@ stub CM_Delete_Range
+@ stub CM_Detect_Resource_Conflict
+@ stub CM_Detect_Resource_Conflict_Ex
+@ stub CM_Disable_DevNode
+@ stub CM_Disable_DevNode_Ex
 @ stdcall CM_Disconnect_Machine(long)
+@ stub CM_Dup_Range_List
+@ stub CM_Enable_DevNode
+@ stub CM_Enable_DevNode_Ex
+@ stub CM_Enumerate_Classes
+@ stub CM_Enumerate_Classes_Ex
+@ stub CM_Enumerate_EnumeratorsA
+@ stub CM_Enumerate_EnumeratorsW
+@ stub CM_Enumerate_Enumerators_ExA
+@ stub CM_Enumerate_Enumerators_ExW
+@ stub CM_Find_Range
+@ stub CM_First_Range
+@ stub CM_Free_Log_Conf
+@ stub CM_Free_Log_Conf_Ex
 @ stub CM_Free_Log_Conf_Handle
+@ stub CM_Free_Range_List
+@ stub CM_Free_Res_Des
+@ stub CM_Free_Res_Des_Ex
 @ stub CM_Free_Res_Des_Handle
+@ stub CM_Get_Child
+@ stub CM_Get_Child_Ex
+@ stub CM_Get_Class_Key_NameA
+@ stub CM_Get_Class_Key_NameW
+@ stub CM_Get_Class_Key_Name_ExA
+@ stub CM_Get_Class_Key_Name_ExW
+@ stub CM_Get_Class_NameA
+@ stub CM_Get_Class_NameW
+@ stub CM_Get_Class_Name_ExA
+@ stub CM_Get_Class_Name_ExW
+@ stub CM_Get_Depth
+@ stub CM_Get_Depth_Ex
+@ stub CM_Get_DevNode_Registry_PropertyA
+@ stub CM_Get_DevNode_Registry_PropertyW
+@ stub CM_Get_DevNode_Registry_Property_ExA
+@ stub CM_Get_DevNode_Registry_Property_ExW
+@ stub CM_Get_DevNode_Status
 @ stub CM_Get_DevNode_Status_Ex
+@ stub CM_Get_Device_IDA
+@ stub CM_Get_Device_IDW
+@ stub CM_Get_Device_ID_ExA
 @ stub CM_Get_Device_ID_ExW
+@ stdcall CM_Get_Device_ID_ListA(ptr ptr long long)
+@ stub CM_Get_Device_ID_ListW
+@ stub CM_Get_Device_ID_List_ExA
+@ stub CM_Get_Device_ID_List_ExW
+@ stub CM_Get_Device_ID_List_SizeA
+@ stub CM_Get_Device_ID_List_SizeW
+@ stub CM_Get_Device_ID_List_Size_ExA
+@ stub CM_Get_Device_ID_List_Size_ExW
+@ stub CM_Get_Device_ID_Size
+@ stub CM_Get_Device_ID_Size_Ex
+@ stub CM_Get_Device_Interface_AliasA
+@ stub CM_Get_Device_Interface_AliasW
+@ stub CM_Get_Device_Interface_Alias_ExA
+@ stub CM_Get_Device_Interface_Alias_ExW
+@ stub CM_Get_Device_Interface_ListA
+@ stub CM_Get_Device_Interface_ListW
+@ stub CM_Get_Device_Interface_List_ExA
+@ stub CM_Get_Device_Interface_List_ExW
+@ stub CM_Get_Device_Interface_List_SizeA
+@ stub CM_Get_Device_Interface_List_SizeW
+@ stub CM_Get_Device_Interface_List_Size_ExA
+@ stub CM_Get_Device_Interface_List_Size_ExW
+@ stub CM_Get_First_Log_Conf
 @ stub CM_Get_First_Log_Conf_Ex
+@ stub CM_Get_Global_State
+@ stub CM_Get_Global_State_Ex
+@ stub CM_Get_HW_Prof_FlagsA
+@ stub CM_Get_HW_Prof_FlagsW
+@ stub CM_Get_HW_Prof_Flags_ExA
+@ stub CM_Get_HW_Prof_Flags_ExW
+@ stub CM_Get_Hardware_Profile_InfoA
+@ stub CM_Get_Hardware_Profile_InfoW
+@ stub CM_Get_Hardware_Profile_Info_ExA
+@ stub CM_Get_Hardware_Profile_Info_ExW
+@ stub CM_Get_Log_Conf_Priority
+@ stub CM_Get_Log_Conf_Priority_Ex
+@ stub CM_Get_Next_Log_Conf
+@ stub CM_Get_Next_Log_Conf_Ex
+@ stub CM_Get_Next_Res_Des
 @ stub CM_Get_Next_Res_Des_Ex
+@ stub CM_Get_Parent
+@ stub CM_Get_Parent_Ex
+@ stub CM_Get_Res_Des_Data
 @ stub CM_Get_Res_Des_Data_Ex
+@ stub CM_Get_Res_Des_Data_Size
 @ stub CM_Get_Res_Des_Data_Size_Ex
+@ stub CM_Get_Sibling
+@ stub CM_Get_Sibling_Ex
+@ stub CM_Get_Version
+@ stub CM_Get_Version_Ex
+@ stub CM_Intersect_Range_List
+@ stub CM_Invert_Range_List
+@ stub CM_Is_Dock_Station_Present
+@ stub CM_Locate_DevNodeA
+@ stub CM_Locate_DevNodeW
+@ stub CM_Locate_DevNode_ExA
 @ stub CM_Locate_DevNode_ExW
+@ stub CM_Merge_Range_List
+@ stub CM_Modify_Res_Des
+@ stub CM_Modify_Res_Des_Ex
+@ stub CM_Move_DevNode
+@ stub CM_Move_DevNode_Ex
+@ stub CM_Next_Range
+@ stub CM_Open_Class_KeyA
+@ stub CM_Open_Class_KeyW
+@ stub CM_Open_Class_Key_ExA
+@ stub CM_Open_Class_Key_ExW
+@ stub CM_Open_DevNode_Key
+@ stub CM_Open_DevNode_Key_Ex
+@ stub CM_Query_Arbitrator_Free_Data
+@ stub CM_Query_Arbitrator_Free_Data_Ex
+@ stub CM_Query_Arbitrator_Free_Size
+@ stub CM_Query_Arbitrator_Free_Size_Ex
+@ stub CM_Query_Remove_SubTree
+@ stub CM_Query_Remove_SubTree_Ex
+@ stub CM_Reenumerate_DevNode
 @ stub CM_Reenumerate_DevNode_Ex
+@ stub CM_Register_Device_Driver
+@ stub CM_Register_Device_Driver_Ex
+@ stub CM_Register_Device_InterfaceA
+@ stub CM_Register_Device_InterfaceW
+@ stub CM_Register_Device_Interface_ExA
+@ stub CM_Register_Device_Interface_ExW
+@ stub CM_Remove_SubTree
+@ stub CM_Remove_SubTree_Ex
+@ stub CM_Remove_Unmarked_Children
+@ stub CM_Remove_Unmarked_Children_Ex
+@ stub CM_Request_Eject_PC
+@ stub CM_Reset_Children_Marks
+@ stub CM_Reset_Children_Marks_Ex
+@ stub CM_Run_Detection
+@ stub CM_Run_Detection_Ex
+@ stub CM_Set_DevNode_Problem
+@ stub CM_Set_DevNode_Problem_Ex
+@ stub CM_Set_DevNode_Registry_PropertyA
+@ stub CM_Set_DevNode_Registry_PropertyW
+@ stub CM_Set_DevNode_Registry_Property_ExA
+@ stub CM_Set_DevNode_Registry_Property_ExW
+@ stub CM_Set_HW_Prof
+@ stub CM_Set_HW_Prof_Ex
+@ stub CM_Set_HW_Prof_FlagsA
+@ stub CM_Set_HW_Prof_FlagsW
+@ stub CM_Set_HW_Prof_Flags_ExA
+@ stub CM_Set_HW_Prof_Flags_ExW
+@ stub CM_Setup_DevNode
+@ stub CM_Setup_DevNode_Ex
+@ stub CM_Test_Range_Available
+@ stub CM_Uninstall_DevNode
+@ stub CM_Uninstall_DevNode_Ex
+@ stub CM_Unregister_Device_InterfaceA
+@ stub CM_Unregister_Device_InterfaceW
+@ stub CM_Unregister_Device_Interface_ExA
+@ stub CM_Unregister_Device_Interface_ExW
 @ stub CaptureAndConvertAnsiArg
 @ stub CaptureStringArg
 @ stub CenterWindowRelativeToParent
@@ -23,14 +201,17 @@
 @ stub ExtensionPropSheetPageProc
 @ stub FileExists
 @ stub FreeStringArray
+@ stub GetCurrentDriverSigningPolicy
 @ stub GetNewInfName
 @ stub GetSetFileTimestamp
 @ stub GetVersionInfoFromImage
 @ stub InfIsFromOemLocation
+@ stub InstallCatalog
 @ stdcall InstallHinfSection(long long str long) InstallHinfSectionA
 @ stdcall InstallHinfSectionA(long long str long)
 @ stdcall InstallHinfSectionW(long long wstr long)
 @ stub InstallStop
+@ stub InstallStopEx
 @ stub IsUserAdmin
 @ stub LookUpStringInTable
 @ stub MemoryInitialize
@@ -63,6 +244,7 @@
 @ stub SetupCancelTemporarySourceList
 @ stdcall SetupCloseFileQueue(ptr)
 @ stdcall SetupCloseInfFile(long)
+@ stub SetupCloseLog
 @ stub SetupCommitFileQueue
 @ stdcall SetupCommitFileQueueA(long long ptr ptr)
 @ stdcall SetupCommitFileQueueW(long long ptr ptr)
@@ -82,25 +264,31 @@
 @ stdcall SetupDestroyDiskSpaceList(long)
 @ stub SetupDiAskForOEMDisk
 @ stub SetupDiBuildClassInfoList
+@ stub SetupDiBuildClassInfoListExA
 @ stdcall SetupDiBuildClassInfoListExW(long ptr long ptr wstr ptr)
 @ stub SetupDiBuildDriverInfoList
 @ stub SetupDiCallClassInstaller
 @ stub SetupDiCancelDriverInfoSearch
 @ stub SetupDiChangeState
 @ stub SetupDiClassGuidsFromNameA
+@ stub SetupDiClassGuidsFromNameExA
 @ stdcall SetupDiClassGuidsFromNameExW(wstr ptr long ptr wstr ptr)
 @ stub SetupDiClassGuidsFromNameW
 @ stub SetupDiClassNameFromGuidA
+@ stub SetupDiClassNameFromGuidExA
 @ stdcall SetupDiClassNameFromGuidExW(ptr ptr long ptr wstr ptr)
 @ stub SetupDiClassNameFromGuidW
 @ stub SetupDiCreateDevRegKeyA
 @ stub SetupDiCreateDevRegKeyW
 @ stub SetupDiCreateDeviceInfoA
 @ stdcall SetupDiCreateDeviceInfoList(ptr ptr)
+@ stub SetupDiCreateDeviceInfoListExA
 @ stdcall SetupDiCreateDeviceInfoListExW(ptr long str ptr)
 @ stub SetupDiCreateDeviceInfoW
 @ stub SetupDiDeleteDevRegKey
 @ stub SetupDiDeleteDeviceInfo
+@ stub SetupDiDeleteDeviceInterfaceData
+@ stub SetupDiDeleteDeviceRegKey
 @ stub SetupDiDestroyClassImageList
 @ stdcall SetupDiDestroyDeviceInfoList(long)
 @ stub SetupDiDestroyDriverInfoList
@@ -113,6 +301,7 @@
 @ stub SetupDiGetActualSectionToInstallW
 @ stub SetupDiGetClassBitmapIndex
 @ stub SetupDiGetClassDescriptionA
+@ stub SetupDiGetClassDescriptionExA
 @ stdcall SetupDiGetClassDescriptionExW(ptr ptr long ptr wstr ptr)
 @ stub SetupDiGetClassDescriptionW
 @ stub SetupDiGetClassDevPropertySheetsA
@@ -123,6 +312,7 @@
 @ stdcall SetupDiGetClassDevsW(ptr ptr long long)
 @ stub SetupDiGetClassImageIndex
 @ stub SetupDiGetClassImageList
+@ stub SetupDiGetClassImageListExA
 @ stub SetupDiGetClassImageListExW
 @ stub SetupDiGetClassInstallParamsA
 @ stub SetupDiGetClassInstallParamsW
@@ -143,8 +333,12 @@
 @ stdcall SetupDiGetDeviceInterfaceDetailA(long ptr ptr long ptr ptr)
 @ stdcall SetupDiGetDeviceInterfaceDetailW(long ptr ptr long ptr ptr)
 @ stub SetupDiGetHwProfileFriendlyNameA
+@ stub SetupDiGetHwProfileFriendlyNameExA
+@ stub SetupDiGetHwProfileFriendlyNameExW
 @ stub SetupDiGetHwProfileFriendlyNameW
 @ stub SetupDiGetHwProfileList
+@ stub SetupDiGetHwProfileListExA
+@ stub SetupDiGetHwProfileListExW
 @ stub SetupDiGetINFClassA
 @ stub SetupDiGetINFClassW
 @ stub SetupDiGetSelectedDevice
@@ -152,19 +346,25 @@
 @ stub SetupDiGetSelectedDriverW
 @ stub SetupDiGetWizardPage
 @ stub SetupDiInstallClassA
+@ stub SetupDiInstallClassExA
+@ stub SetupDiInstallClassExW
 @ stub SetupDiInstallClassW
 @ stub SetupDiInstallDevice
 @ stub SetupDiInstallDriverFiles
 @ stub SetupDiLoadClassIcon
 @ stub SetupDiMoveDuplicateDevice
 @ stub SetupDiOpenClassRegKey
+@ stub SetupDiOpenClassRegKeyExA
 @ stdcall SetupDiOpenClassRegKeyExW(ptr long long wstr ptr)
 @ stub SetupDiOpenDevRegKey
 @ stub SetupDiOpenDeviceInfoA
 @ stub SetupDiOpenDeviceInfoW
+@ stub SetupDiOpenDeviceInterfaceA
 @ stub SetupDiOpenDeviceInterfaceRegKey
+@ stub SetupDiOpenDeviceInterfaceW
 @ stub SetupDiRegisterDeviceInfo
 @ stub SetupDiRemoveDevice
+@ stub SetupDiRemoveDeviceInterface
 @ stub SetupDiSelectDevice
 @ stub SetupDiSelectOEMDrv
 @ stub SetupDiSetClassInstallParamsA
@@ -178,6 +378,7 @@
 @ stub SetupDiSetSelectedDevice
 @ stub SetupDiSetSelectedDriverA
 @ stub SetupDiSetSelectedDriverW
+@ stub SetupDiUnremoveDevice
 @ stub SetupDuplicateDiskSpaceListA
 @ stub SetupDuplicateDiskSpaceListW
 @ stdcall SetupFindFirstLineA(long str str ptr)
@@ -187,6 +388,8 @@
 @ stdcall SetupFindNextMatchLineW(ptr wstr ptr)
 @ stub SetupFreeSourceListA
 @ stub SetupFreeSourceListW
+@ stub SetupGetBackupInformationA
+@ stub SetupGetBackupInformationW
 @ stdcall SetupGetBinaryField(ptr long ptr long ptr)
 @ stdcall SetupGetFieldCount(ptr)
 @ stub SetupGetFileCompressionInfoA
@@ -197,6 +400,7 @@
 @ stub SetupGetInfFileListW
 @ stdcall SetupGetInfInformationA(ptr long ptr long ptr)
 @ stub SetupGetInfInformationW
+@ stub SetupGetInfSections
 @ stdcall SetupGetIntField(ptr long ptr)
 @ stdcall SetupGetLineByIndexA(long str long ptr)
 @ stdcall SetupGetLineByIndexW(long wstr long ptr)
@@ -229,9 +433,13 @@
 @ stdcall SetupInstallFromInfSectionA(long long str long long str long ptr ptr long ptr)
 @ stdcall SetupInstallFromInfSectionW(long long wstr long long wstr long ptr ptr long ptr)
 @ stub SetupInstallServicesFromInfSectionA
+@ stub SetupInstallServicesFromInfSectionExA
+@ stub SetupInstallServicesFromInfSectionExW
 @ stub SetupInstallServicesFromInfSectionW
 @ stdcall SetupIterateCabinetA(str long ptr ptr)
 @ stdcall SetupIterateCabinetW(wstr long ptr ptr)
+@ stub SetupLogErrorA
+@ stub SetupLogErrorW
 @ stub SetupLogFileA
 @ stub SetupLogFileW
 @ stdcall SetupOpenAppendInfFileA(str long ptr)
@@ -249,9 +457,10 @@
 @ stub SetupQueryFileLogW
 @ stub SetupQueryInfFileInformationA
 @ stub SetupQueryInfFileInformationW
+@ stub SetupQueryInfOriginalFileInformationA
+@ stub SetupQueryInfOriginalFileInformationW
 @ stub SetupQueryInfVersionInformationA
 @ stub SetupQueryInfVersionInformationW
-@ stub SetupQueryInfOriginalFileInformationW
 @ stub SetupQuerySourceListA
 @ stub SetupQuerySourceListW
 @ stdcall SetupQuerySpaceRequiredOnDriveA(long str ptr ptr long)
@@ -291,6 +500,8 @@
 @ stub SetupSetDirectoryIdExA
 @ stub SetupSetDirectoryIdExW
 @ stdcall SetupSetDirectoryIdW(long long wstr)
+@ stub SetupFileQueueAlternatePlatformA
+@ stub SetupFileQueueAlternatePlatformW
 @ stdcall SetupSetFileQueueFlags(long long long)
 @ stub SetupSetPlatformPathOverrideA
 @ stub SetupSetPlatformPathOverrideW
@@ -316,14 +527,24 @@
 @ stub TakeOwnershipOfFile
 @ stub UnicodeToMultiByte
 @ stub UnmapAndCloseFile
+@ stub VerifyCatalogFile
+@ stub VerifyFile
+@ stub pSetupAccessRunOnceNodeList
 @ stub pSetupAddMiniIconToList
 @ stub pSetupAddTagToGroupOrderListEntry
 @ stub pSetupAppendStringToMultiSz
+@ stub pSetupDestroyRunOnceNodeList
 @ stub pSetupDirectoryIdToPath
 @ stub pSetupGetField
+@ stub pSetupGetGlobalFlags
 @ stub pSetupGetOsLoaderDriveAndPath
+@ stub pSetupGetQueueFlags
 @ stub pSetupGetVersionDatum
 @ stub pSetupGuidFromString
 @ stub pSetupIsGuidNull
 @ stub pSetupMakeSurePathExists
+@ stub pSetupSetGlobalFlags
+@ stub pSetupSetQueueFlags
+@ stub pSetupSetSystemSourceFlags
 @ stub pSetupStringFromGuid
+@ stub pSetupVerifyQueuedCatalogs
