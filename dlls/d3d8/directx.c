@@ -513,6 +513,14 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 			whichHWND, object->glCtx, object->win, object->visInfo);
     }
 
+    /* If not windowed, need to go fullscreen, and resize the HWND to the appropriate  */
+    /*        dimensions                                                               */
+    if (!pPresentationParameters->Windowed) {
+        FIXME("Requested full screen support not implemented, expect windowed operation\n");
+        SetWindowPos(whichHWND, HWND_TOP, 0, 0, pPresentationParameters->BackBufferWidth,
+            pPresentationParameters->BackBufferHeight, SWP_SHOWWINDOW);
+    }
+
     TRACE("Creating back buffer\n");
     /* MSDN: If Windowed is TRUE and either of the BackBufferWidth/Height values is zero,
        then the corresponding dimension of the client area of the hDeviceWindow
