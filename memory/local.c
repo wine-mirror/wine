@@ -909,6 +909,8 @@ notify_done:
 	    if ((pInfo->notify) && (LOCAL_CallTo16_word_www(pInfo->notify, LN_OUTOFMEM, ds - 20, size))) /* FIXME: "size" correct ? (should indicate bytes needed) */
 		goto notify_done;
 #endif
+            ERR( "not enough space in %s heap %04x for %d bytes\n",
+                 get_heap_name(ds), ds, size );
 	    return 0;
 	}
 	ptr = MapSL( MAKESEGPTR( ds, 0 ) );
