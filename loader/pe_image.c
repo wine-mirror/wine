@@ -615,12 +615,14 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename )
     if (load_addr == 0) 
     {
         /* We need to perform base relocations */
-        WARN("We need to perform base relocations for %s\n", filename);
+        WARN("Info: base relocations needed for %s\n", filename);
 	dir = nt->OptionalHeader.DataDirectory+IMAGE_DIRECTORY_ENTRY_BASERELOC;
         if (dir->Size)
             reloc = dir->VirtualAddress;
         else 
         {
+            if (nt->OptionalHeader.ImageBase == 0x400000)
+                ERR("Standard load address for a Win32 program not available - patched kernel ?\n");
             FIXME( "FATAL: Need to relocate %s, but no relocation records present (%s). Try to run that file directly !\n",
                    filename,
                    (nt->FileHeader.Characteristics&IMAGE_FILE_RELOCS_STRIPPED)?
