@@ -130,14 +130,7 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         TRACE("Drawing with FVF = %x, (n?%d, rhw?%d, ptSize(%d), diffuse?%d, specular?%d, numTextures=%d)\n",
               fvf, normal, isRHW, isPtSize, isDiffuse, isSpecular, numTextures);
 
-        /* Only add lighting for unlit vertices */
-        if (normal && !isRHW) {
-            glEnable(GL_LIGHTING);
-            checkGLcall("enable lighting");
-        } else {
-            glDisable(GL_LIGHTING);
-            checkGLcall("disable lighting");
-        }
+        /* Note: Dont touch lighing anymore - it is set by the appropriate render state */
 
         if (isRHW) {
 
@@ -469,7 +462,6 @@ int OPERANDx_ALPHA_EXT(DWORD arg) {
         return GL_OPERAND0_ALPHA_EXT;
     }
 }
-
 
 /* IDirect3D IUnknown parts follow: */
 HRESULT WINAPI IDirect3DDevice8Impl_QueryInterface(LPDIRECT3DDEVICE8 iface,REFIID riid,LPVOID *ppobj)
@@ -1628,7 +1620,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             default:
                 FIXME("Unrecognized/Unhandled D3DCMPFUNC value %ld\n", Value);
             }
-            break;
+            TRACE("glAlphaFunc with Parm=%x, ref=%f\n", glParm, ref);
             glAlphaFunc(glParm, ref);
             checkGLcall("glAlphaFunc");
         }
@@ -1643,29 +1635,46 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             checkGLcall("glGetFloatv(GL_ALPHA_TEST_FUNC, &glParm);");
 
             ref = ((float) Value) / 255.0;
+            TRACE("glAlphaFunc with Parm=%x, ref=%f\n", glParm, ref);
             glAlphaFunc(glParm, ref);
             checkGLcall("glAlphaFunc");
         }
         break;
 
     case D3DRS_CLIPPLANEENABLE           :
+    case D3DRS_CLIPPING                  :
         {
             /* Ensure we only do the changed clip planes */
-			DWORD enable =   Value & ~OldValue;
-			DWORD disable = ~Value &  OldValue;
-			if (enable & D3DCLIPPLANE0)  { glEnable(GL_CLIP_PLANE0);  checkGLcall("glEnable(clip plane 0)"); }
-			if (enable & D3DCLIPPLANE1)  { glEnable(GL_CLIP_PLANE1);  checkGLcall("glEnable(clip plane 1)"); }
-			if (enable & D3DCLIPPLANE2)  { glEnable(GL_CLIP_PLANE2);  checkGLcall("glEnable(clip plane 2)"); }
-			if (enable & D3DCLIPPLANE3)  { glEnable(GL_CLIP_PLANE3);  checkGLcall("glEnable(clip plane 3)"); }
-			if (enable & D3DCLIPPLANE4)  { glEnable(GL_CLIP_PLANE4);  checkGLcall("glEnable(clip plane 4)"); }
-			if (enable & D3DCLIPPLANE5)  { glEnable(GL_CLIP_PLANE5);  checkGLcall("glEnable(clip plane 5)"); }
-
-			if (disable & D3DCLIPPLANE0) { glDisable(GL_CLIP_PLANE0); checkGLcall("glDisable(clip plane 0)"); }
-			if (disable & D3DCLIPPLANE1) { glDisable(GL_CLIP_PLANE1); checkGLcall("glDisable(clip plane 1)"); }
-			if (disable & D3DCLIPPLANE2) { glDisable(GL_CLIP_PLANE2); checkGLcall("glDisable(clip plane 2)"); }
-			if (disable & D3DCLIPPLANE3) { glDisable(GL_CLIP_PLANE3); checkGLcall("glDisable(clip plane 3)"); }
-			if (disable & D3DCLIPPLANE4) { glDisable(GL_CLIP_PLANE4); checkGLcall("glDisable(clip plane 4)"); }
-			if (disable & D3DCLIPPLANE5) { glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)"); }
+            DWORD enable  = 0xFFFFFFFF;
+            DWORD disable = 0x00000000;
+            
+            /* If enabling / disabling all */
+            if (State == D3DRS_CLIPPING) {
+                if (Value) {
+                    enable  = This->StateBlock.renderstate[D3DRS_CLIPPLANEENABLE];
+                    disable = 0x00;
+                } else {
+                    disable = This->StateBlock.renderstate[D3DRS_CLIPPLANEENABLE];
+                    enable  = 0x00;
+                }
+            } else {
+                enable =   Value & ~OldValue;
+                disable = ~Value &  OldValue;
+            }
+            
+            if (enable & D3DCLIPPLANE0)  { glEnable(GL_CLIP_PLANE0);  checkGLcall("glEnable(clip plane 0)"); }
+            if (enable & D3DCLIPPLANE1)  { glEnable(GL_CLIP_PLANE1);  checkGLcall("glEnable(clip plane 1)"); }
+            if (enable & D3DCLIPPLANE2)  { glEnable(GL_CLIP_PLANE2);  checkGLcall("glEnable(clip plane 2)"); }
+            if (enable & D3DCLIPPLANE3)  { glEnable(GL_CLIP_PLANE3);  checkGLcall("glEnable(clip plane 3)"); }
+            if (enable & D3DCLIPPLANE4)  { glEnable(GL_CLIP_PLANE4);  checkGLcall("glEnable(clip plane 4)"); }
+            if (enable & D3DCLIPPLANE5)  { glEnable(GL_CLIP_PLANE5);  checkGLcall("glEnable(clip plane 5)"); }
+            
+            if (disable & D3DCLIPPLANE0) { glDisable(GL_CLIP_PLANE0); checkGLcall("glDisable(clip plane 0)"); }
+            if (disable & D3DCLIPPLANE1) { glDisable(GL_CLIP_PLANE1); checkGLcall("glDisable(clip plane 1)"); }
+            if (disable & D3DCLIPPLANE2) { glDisable(GL_CLIP_PLANE2); checkGLcall("glDisable(clip plane 2)"); }
+            if (disable & D3DCLIPPLANE3) { glDisable(GL_CLIP_PLANE3); checkGLcall("glDisable(clip plane 3)"); }
+            if (disable & D3DCLIPPLANE4) { glDisable(GL_CLIP_PLANE4); checkGLcall("glDisable(clip plane 4)"); }
+            if (disable & D3DCLIPPLANE5) { glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)"); }
         }
         break;
 
@@ -1689,12 +1698,31 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
 
     case D3DRS_TEXTUREFACTOR             :
         {
-            /* noop - Just save away the texture color for now as it applies
-              to all textures whereas GL_TEXTURE_ENV_COLOR applies to active only */
+            int i;
+
+            /* Note the texture color applies to all textures whereas 
+               GL_TEXTURE_ENV_COLOR applies to active only */
+            for (i=0; i<8; i++) {
+                float col[4];
+
+                if (This->StateBlock.textures[i]) {
+                   glActiveTextureARB(GL_TEXTURE0_ARB + i);
+                   checkGLcall("Activate texture.. to update const color");
+
+                   /* Note the D3DRS value applies to all textures, but GL has one
+                      per texture, so apply it now ready to be used!               */
+                   col[0] = ((Value >> 16) & 0xFF) / 255.0;
+                   col[1] = ((Value >> 8 ) & 0xFF) / 255.0;
+                   col[2] = ((Value >> 0 ) & 0xFF) / 255.0;
+                   col[3] = ((Value >> 24 ) & 0xFF) / 255.0;
+                   glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
+                   checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
+                }
+            }
         }
         break;
 
-    case D3DRS_SPECULARENABLE            : /* Can opengl do this? */
+    case D3DRS_SPECULARENABLE            : 
         {
             if (Value) {
                 glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR);
@@ -1705,6 +1733,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             }
         }
         break;
+
 
         /* Unhandled yet...! */
     case D3DRS_LINEPATTERN               :
@@ -1735,7 +1764,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
     case D3DRS_WRAP5                     :
     case D3DRS_WRAP6                     :
     case D3DRS_WRAP7                     :
-    case D3DRS_CLIPPING                  :
     case D3DRS_FOGVERTEXMODE             :
     case D3DRS_COLORVERTEX               :
     case D3DRS_LOCALVIEWER               :
@@ -2200,6 +2228,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
         if (textureType == D3DRTYPE_TEXTURE) {
             IDirect3DTexture8Impl *pTexture2 = (IDirect3DTexture8Impl *) pTexture;
             int i;
+            float col[4];
 
             /* Standard 2D texture */
             TRACE("Standard 2d texture\n");
@@ -2245,12 +2274,23 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
                     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
                     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
                     glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
-                    /*glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);*/
+
+
                     glEnable(GL_TEXTURE_2D);
                     checkGLcall("glEnable");
 
                     pTexture2->Dirty = FALSE;
                 }
+
+                /* Note the D3DRS value applies to all textures, but GL has one
+                   per texture, so apply it now ready to be used!               */
+                col[0] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR]>> 16) & 0xFF) / 255.0;
+                col[1] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 8 ) & 0xFF) / 255.0;
+                col[2] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 0 ) & 0xFF) / 255.0;
+                col[3] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 24 ) & 0xFF) / 255.0;
+                glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
+                checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
+
             }
         } else {
             FIXME("(%p) : stub\n", This);
@@ -2326,8 +2366,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
             int  operand= GL_SRC_COLOR;
             int  source = GL_TEXTURE;
 
-            TRACE("Type %d : %ld\n", Type, Value);
-
             /* Catch alpha replicate */
             if (Value & D3DTA_ALPHAREPLICATE) {
                 Value = Value & ~D3DTA_ALPHAREPLICATE;
@@ -2367,20 +2405,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                                   break;
             case D3DTA_TEXTURE:   source  = GL_TEXTURE;
                                   break;
-            case D3DTA_TFACTOR:   {
-                                     float col[4];
-
-                                     source  = GL_CONSTANT_EXT;
-
-                                     /* Note the D3DRS value applies to all textures, but GL has one
-                                        per texture, so apply it now ready to be used!               */
-                                     col[0] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 16) & 0xFF) / 255.0;
-                                     col[1] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 8 ) & 0xFF) / 255.0;
-                                     col[2] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 0 ) & 0xFF) / 255.0;
-                                     col[3] = ((This->StateBlock.renderstate[D3DRS_TEXTUREFACTOR] >> 24 ) & 0xFF) / 255.0;
-                                     glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
-                                     checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
-                                  }
+            case D3DTA_TFACTOR:   source  = GL_CONSTANT_EXT;
                                   break;
 
             /* According to the GL_ARB_texture_env_combine specs, SPECULAR is 'Secondary color' and
@@ -2392,11 +2417,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
             }
 
             if (isAlphaArg) {
+                TRACE("Source %x = %x, Operand %x = %x\n", SOURCEx_ALPHA_EXT(Type), source, OPERANDx_ALPHA_EXT(Type), operand);
                 glTexEnvi(GL_TEXTURE_ENV, SOURCEx_ALPHA_EXT(Type), source);
                 checkGLcall("glTexEnvi(GL_TEXTURE_ENV, SOURCEx_ALPHA_EXT, source);");
                 glTexEnvi(GL_TEXTURE_ENV, OPERANDx_ALPHA_EXT(Type), operand);
                 checkGLcall("glTexEnvi(GL_TEXTURE_ENV, OPERANDx_ALPHA_EXT, operand);");
             } else {
+                TRACE("Source %x = %x, Operand %x = %x\n", SOURCEx_RGB_EXT(Type), source, OPERANDx_RGB_EXT(Type), operand);
                 glTexEnvi(GL_TEXTURE_ENV, SOURCEx_RGB_EXT(Type), source);
                 checkGLcall("glTexEnvi(GL_TEXTURE_ENV, SOURCEx_RGB_EXT, source);");
                 glTexEnvi(GL_TEXTURE_ENV, OPERANDx_RGB_EXT(Type), operand);
@@ -2413,6 +2440,12 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
             int Parm = (Type == D3DTSS_ALPHAOP)? GL_COMBINE_ALPHA_EXT : GL_COMBINE_RGB_EXT;
 
             switch (Value) {
+            case D3DTOP_DISABLE                   :
+                /* TODO: Disable by making this and all later levels disabled */
+                glDisable(GL_TEXTURE_2D);
+                checkGLcall("Disable GL_TEXTURE_2D");
+                break;
+
             case D3DTOP_SELECTARG1                :
                 glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
                 break;
@@ -2441,7 +2474,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
 
             case D3DTOP_SUBTRACT                  :
                 /* glTexEnvi(GL_TEXTURE_ENV, Parm, GL_SUBTRACT); Missing? */
-            case D3DTOP_DISABLE                   :
             case D3DTOP_SELECTARG2                :
                 /* GL_REPLACE, swap args 0 and 1? */
             case D3DTOP_ADDSMOOTH                 :
