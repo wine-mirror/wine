@@ -819,22 +819,24 @@ TOOLBAR_MeasureString(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
     {
         LPWSTR lpText = TOOLBAR_GetText(infoPtr, btnPtr);
 
-	/* first get size of all the text */
-        GetTextExtentPoint32W (hdc, lpText, strlenW (lpText), lpSize);
+	if(lpText != NULL) {
+	    /* first get size of all the text */
+	    GetTextExtentPoint32W (hdc, lpText, strlenW (lpText), lpSize);
 
-	/* feed above size into the rectangle for DrawText */
-	myrect.left = myrect.top = 0;
-	myrect.right = lpSize->cx;
-	myrect.bottom = lpSize->cy;
+	    /* feed above size into the rectangle for DrawText */
+	    myrect.left = myrect.top = 0;
+	    myrect.right = lpSize->cx;
+	    myrect.bottom = lpSize->cy;
 
-	/* Use DrawText to get true size as drawn (less pesky "&") */
-	DrawTextW (hdc, lpText, -1, &myrect, DT_VCENTER | DT_SINGLELINE |
-		   DT_CALCRECT | ((btnPtr->fsStyle & TBSTYLE_NOPREFIX) ?
+	    /* Use DrawText to get true size as drawn (less pesky "&") */
+	    DrawTextW (hdc, lpText, -1, &myrect, DT_VCENTER | DT_SINGLELINE |
+	    	   DT_CALCRECT | ((btnPtr->fsStyle & TBSTYLE_NOPREFIX) ?
 				  DT_NOPREFIX : 0));
 
-	/* feed back to caller  */
-	lpSize->cx = myrect.right;
-	lpSize->cy = myrect.bottom;
+	    /* feed back to caller  */
+	    lpSize->cx = myrect.right;
+	    lpSize->cy = myrect.bottom;
+	}
     }
 
     TRACE("string size %ld x %ld!\n", lpSize->cx, lpSize->cy);
