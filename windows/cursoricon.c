@@ -1130,25 +1130,99 @@ HICON16 WINAPI CreateIcon16( HINSTANCE16 hInstance, INT16 nWidth,
 
 /***********************************************************************
  *		CreateIcon (USER32.@)
+ *
+ *  Creates an icon based on the specified bitmaps. The bitmaps must be 
+ *  provided in a device dependent format and will be resized to 
+ *  (SM_CXICON,SM_CYICON) and depth converted to match the screen's color 
+ *  depth. The provided bitmaps must be top-down bitmaps.
+ *  Although Windows does not support 15bpp(*) this API must support it 
+ *  for Winelib applications.
+ *
+ *  (*) Windows does not support 15bpp but it supports the 555 RGB 16bpp 
+ *      format!
+ *
+ * BUGS
+ *
+ *  - The provided bitmaps are not resized!
+ *  - The documentation says the lpXORbits bitmap must be in a device 
+ *    dependent format. But we must still resize it and perform depth 
+ *    conversions if necessary.
+ *  - I'm a bit unsure about the how the 'device dependent format' thing works.
+ *    I did some tests on windows and found that if you provide a 16bpp bitmap 
+ *    in lpXORbits, then its format but be 565 RGB if the screen's bit depth 
+ *    is 16bpp but it must be 555 RGB if the screen's bit depth is anything
+ *    else. I don't know if this is part of the GDI specs or if this is a 
+ *    quirk of the graphics card driver.
+ *  - You may think that we check whether the bit depths match or not 
+ *    as an optimization. But the truth is that the conversion using 
+ *    CreateDIBitmap does not work for some bit depth (e.g. 8bpp) and I have 
+ *    no idea why.
+ *  - I'm pretty sure that all the things we do in CreateIcon should 
+ *    also be done in CreateIconIndirect...
  */
-HICON WINAPI CreateIcon( HINSTANCE hInstance, INT nWidth,
-                             INT nHeight, BYTE bPlanes, BYTE bBitsPixel,
-                             LPCVOID lpANDbits, LPCVOID lpXORbits )
+HICON WINAPI CreateIcon(
+    HINSTANCE hInstance, /* the application's hInstance, currently unused */
+    INT nWidth, /* the width of the provided bitmaps */
+    INT nHeight, /* the height of the provided bitmaps */
+    BYTE bPlanes, /* the number of planes in the provided bitmaps */
+    BYTE bBitsPixel, /* the number of bits per pixel of the lpXORbits bitmap */
+    LPCVOID lpANDbits, /* a monochrome bitmap representing the icon's mask */
+    LPCVOID lpXORbits /* the icon's 'color' bitmap */
+    )
 {
-    CURSORICONINFO info;
+    HICON hIcon;
+    HDC hdc;
 
     TRACE_(icon)("%dx%dx%d, xor=%p, and=%p\n",
-                  nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
+                 nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
 
-    info.ptHotSpot.x = ICON_HOTSPOT;
-    info.ptHotSpot.y = ICON_HOTSPOT;
-    info.nWidth = nWidth;
-    info.nHeight = nHeight;
-    info.nWidthBytes = 0;
-    info.bPlanes = bPlanes;
-    info.bBitsPerPixel = bBitsPixel;
+    hdc=GetDC(0);
+    if (!hdc)
+        return 0;
 
-    return CreateCursorIconIndirect16( 0, &info, lpANDbits, lpXORbits );
+    if (GetDeviceCaps(hdc,BITSPIXEL)==bBitsPixel) {
+        CURSORICONINFO info;
+
+        info.ptHotSpot.x = ICON_HOTSPOT;
+        info.ptHotSpot.y = ICON_HOTSPOT;
+        info.nWidth = nWidth;
+        info.nHeight = nHeight;
+        info.nWidthBytes = 0;
+        info.bPlanes = bPlanes;
+        info.bBitsPerPixel = bBitsPixel;
+
+        hIcon=CreateCursorIconIndirect16( 0, &info, lpANDbits, lpXORbits );
+    } else {
+        ICONINFO iinfo;
+        BITMAPINFO bmi;
+
+        iinfo.fIcon=TRUE;
+        iinfo.xHotspot=ICON_HOTSPOT;
+        iinfo.yHotspot=ICON_HOTSPOT;
+        iinfo.hbmMask=CreateBitmap(nWidth,nHeight,1,1,lpANDbits);
+
+        bmi.bmiHeader.biSize=sizeof(bmi.bmiHeader);
+        bmi.bmiHeader.biWidth=nWidth;
+        bmi.bmiHeader.biHeight=-nHeight;
+        bmi.bmiHeader.biPlanes=bPlanes;
+        bmi.bmiHeader.biBitCount=bBitsPixel;
+        bmi.bmiHeader.biCompression=BI_RGB;
+        bmi.bmiHeader.biSizeImage=0;
+        bmi.bmiHeader.biXPelsPerMeter=0;
+        bmi.bmiHeader.biYPelsPerMeter=0;
+        bmi.bmiHeader.biClrUsed=0;
+        bmi.bmiHeader.biClrImportant=0;
+
+        iinfo.hbmColor = CreateDIBitmap( hdc, &bmi.bmiHeader,
+                                         CBM_INIT, lpXORbits,
+                                         &bmi, DIB_RGB_COLORS );
+
+        hIcon=CreateIconIndirect(&iinfo);
+        DeleteObject(iinfo.hbmMask);
+        DeleteObject(iinfo.hbmColor);
+    }
+    ReleaseDC(0,hdc);
+    return hIcon;
 }
 
 
