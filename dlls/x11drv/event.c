@@ -584,7 +584,7 @@ static Atom EVENT_SelectionRequest_STRING( Display *display, Window requestor,
      */
     itemFmtName = TSXGetAtomName(display, target);
     TRACE("Request for %s (wFormat=%x %s)\n",
-	itemFmtName, CF_UNICODETEXT, CLIPBOARD_GetFormatName(CF_UNICODETEXT));
+	itemFmtName, CF_UNICODETEXT, CLIPBOARD_GetFormatName(CF_UNICODETEXT, NULL, 0));
     TSXFree(itemFmtName);
 
     hUnicodeText = GetClipboardData(CF_UNICODETEXT);
@@ -650,7 +650,7 @@ static Atom EVENT_SelectionRequest_PIXMAP( Display *display, Window requestor,
     itemFmtName = TSXGetAtomName(display, target);
     wFormat = X11DRV_CLIPBOARD_MapPropertyToFormat(itemFmtName);
     TRACE("Request for %s (wFormat=%x %s)\n",
-                  itemFmtName, wFormat, CLIPBOARD_GetFormatName( wFormat));
+                  itemFmtName, wFormat, CLIPBOARD_GetFormatName( wFormat, NULL, 0 ));
     TSXFree(itemFmtName);
 
     hClipData = GetClipboardData(wFormat);
@@ -683,7 +683,7 @@ static Atom EVENT_SelectionRequest_PIXMAP( Display *display, Window requestor,
     else
     {
         FIXME("%s to PIXMAP conversion not yet implemented!\n",
-                      CLIPBOARD_GetFormatName(wFormat));
+                      CLIPBOARD_GetFormatName(wFormat, NULL, 0));
         rprop = None;
         goto END;
     }
@@ -739,6 +739,7 @@ static Atom EVENT_SelectionRequest_WCF( Display *display, Window requestor,
     char * itemFmtName;
     int cBytes;
     int xRc;
+    int bemf;
 
     /*
      * Map the requested X selection property type atom name to a
@@ -747,10 +748,14 @@ static Atom EVENT_SelectionRequest_WCF( Display *display, Window requestor,
     itemFmtName = TSXGetAtomName(display, target);
     wFormat = X11DRV_CLIPBOARD_MapPropertyToFormat(itemFmtName);
     TRACE("Request for %s (wFormat=%x %s)\n",
-          itemFmtName, wFormat, CLIPBOARD_GetFormatName( wFormat));
+          itemFmtName, wFormat, CLIPBOARD_GetFormatName( wFormat, NULL, 0));
     TSXFree(itemFmtName);
 
     hClipData = GetClipboardData(wFormat);
+
+    bemf = wFormat == CF_METAFILEPICT || wFormat == CF_ENHMETAFILE;
+    if (bemf)
+        hClipData = X11DRV_CLIPBOARD_SerializeMetafile(wFormat, hClipData, sizeof(hClipData), TRUE);
 
     if( hClipData && (lpClipData = GlobalLock(hClipData)) )
     {
@@ -771,6 +776,9 @@ static Atom EVENT_SelectionRequest_WCF( Display *display, Window requestor,
         TRACE("\tCould not retrieve native format!\n");
         rprop = None; /* Fail the request */
     }
+
+    if (bemf) /* We must free serialized metafile data */
+        GlobalFree(hClipData);
 
     return rprop;
 }

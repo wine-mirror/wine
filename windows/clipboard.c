@@ -66,8 +66,6 @@ static HWND hWndClipOwner;         /* current clipboard owner */
 static HANDLE16 hTaskClipOwner;    /* clipboard owner's task  */
 static HWND hWndViewer;            /* start of viewers chain */
 
-static WORD LastRegFormat = CF_REGFORMATBASE;
-
 /* Clipboard cache initial data.
  * WARNING: This data ordering is dependent on the WINE_CLIPFORMAT structure
  * declared in clipboard.h
@@ -90,7 +88,8 @@ WINE_CLIPFORMAT ClipFormats[]  = {
     { CF_DSPTEXT, 1, 0, "DSPText", 0, 0, 0, 0, &ClipFormats[13], &ClipFormats[15]},
     { CF_DSPMETAFILEPICT, 1, 0, "DSPMetaFile Picture", 0, 0, 0, 0, &ClipFormats[14], &ClipFormats[16]},
     { CF_DSPBITMAP, 1, 0, "DSPBitmap", 0, 0, 0, 0, &ClipFormats[15], &ClipFormats[17]},
-    { CF_HDROP, 1, 0, "HDROP", 0, 0, 0, 0, &ClipFormats[16], NULL}
+    { CF_HDROP, 1, 0, "HDROP", 0, 0, 0, 0, &ClipFormats[16], &ClipFormats[18]},
+    { CF_ENHMETAFILE, 1, 0, "Enhmetafile", 0, 0, 0, 0, &ClipFormats[17], NULL}
 };
 
 
@@ -391,10 +390,22 @@ HGLOBAL CLIPBOARD_GlobalDupMem( HGLOBAL hGlobalSrc )
  *			CLIPBOARD_GetFormatName
  *  Gets the format name associated with an ID
  */
-char * CLIPBOARD_GetFormatName(UINT wFormat)
+char * CLIPBOARD_GetFormatName(UINT wFormat, LPSTR buf, INT size)
 {
     LPWINE_CLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
-    return (lpFormat) ? lpFormat->Name : NULL;
+
+    if (lpFormat)
+    {
+        if (buf)
+        {
+            strncpy(buf, lpFormat->Name, size);
+            CharLowerA(buf);
+        }
+
+        return lpFormat->Name;
+    }
+    else
+        return NULL;
 }
 
 
@@ -1126,7 +1137,7 @@ INT WINAPI CountClipboardFormats(void)
                  && USER_Driver.pIsClipboardFormatAvailable( lpFormat->wFormatID ) ) )
           {
               TRACE("\tdata found for format 0x%04x(%s)\n",
-                    lpFormat->wFormatID, CLIPBOARD_GetFormatName(lpFormat->wFormatID));
+                    lpFormat->wFormatID, CLIPBOARD_GetFormatName(lpFormat->wFormatID, NULL, 0));
               FormatCount++;
           }
         }
@@ -1185,7 +1196,7 @@ UINT WINAPI RegisterClipboardFormatA( LPCSTR FormatName )
 
     while(TRUE)
     {
-	if ( !strcmp(lpFormat->Name,FormatName) )
+	if ( !strcasecmp(lpFormat->Name,FormatName) )
 	{
 	     lpFormat->wRefCount++;
 	     return lpFormat->wFormatID;
@@ -1204,7 +1215,6 @@ UINT WINAPI RegisterClipboardFormatA( LPCSTR FormatName )
         return 0;
     }
     lpFormat->NextFormat = lpNewFormat;
-    lpNewFormat->wFormatID = LastRegFormat;
     lpNewFormat->wRefCount = 1;
 
     if (!(lpNewFormat->Name = HeapAlloc(GetProcessHeap(), 0, strlen(FormatName)+1 )))
@@ -1214,6 +1224,7 @@ UINT WINAPI RegisterClipboardFormatA( LPCSTR FormatName )
         return 0;
     }
     strcpy( lpNewFormat->Name, FormatName );
+    CharLowerA(lpNewFormat->Name);
 
     lpNewFormat->wDataPresent = 0;
     lpNewFormat->hData16 = 0;
@@ -1224,9 +1235,10 @@ UINT WINAPI RegisterClipboardFormatA( LPCSTR FormatName )
     lpNewFormat->NextFormat = NULL;
 
     /* Pass on the registration request to the driver */
-    USER_Driver.pRegisterClipboardFormat( FormatName );
+    lpNewFormat->wFormatID = USER_Driver.pRegisterClipboardFormat(lpNewFormat->Name);
 
-    return LastRegFormat++;
+    TRACE("Registering format(%d): %s\n", lpNewFormat->wFormatID, FormatName);
+    return lpNewFormat->wFormatID;
 }
 
 
@@ -1269,8 +1281,20 @@ INT WINAPI GetClipboardFormatNameA( UINT wFormat, LPSTR retStr, INT maxlen )
 
     TRACE("(%04X, %p, %d) !\n", wFormat, retStr, maxlen);
 
-    if (lpFormat == NULL || lpFormat->Name == NULL ||
-	lpFormat->wFormatID < CF_REGFORMATBASE) return 0;
+    if (lpFormat == NULL || lpFormat->Name == NULL)
+    {
+        /* Check if another wine process already registered the format */
+        if (wFormat && !USER_Driver.pGetClipboardFormatName(wFormat, retStr, maxlen))
+        {
+            RegisterClipboardFormatA(retStr); /* Make a cache entry */
+            return strlen(retStr);
+        }
+        else
+        {
+            TRACE("wFormat=%d not found\n", wFormat);
+            return 0;
+        }
+    }
 
     TRACE("Name='%s' !\n", lpFormat->Name);
 

@@ -96,5 +96,6 @@ init	X11DRV_Init
 @ cdecl GetClipboardData(long) X11DRV_GetClipboardData
 @ cdecl IsClipboardFormatAvailable(long) X11DRV_IsClipboardFormatAvailable
 @ cdecl RegisterClipboardFormat(str) X11DRV_RegisterClipboardFormat
+@ cdecl GetClipboardFormatName(long str long) X11DRV_GetClipboardFormatName
 @ cdecl IsSelectionOwner() X11DRV_IsSelectionOwner
 @ cdecl ResetSelectionOwner(ptr long) X11DRV_ResetSelectionOwner

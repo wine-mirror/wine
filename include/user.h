@@ -86,7 +86,8 @@ typedef struct tagUSER_DRIVER {
     void   (*pSetClipboardData)(UINT);            /* Set specified selection data */
     BOOL   (*pGetClipboardData)(UINT);            /* Get specified selection data */
     BOOL   (*pIsClipboardFormatAvailable)(UINT);  /* Check if specified format is available */
-    BOOL   (*pRegisterClipboardFormat)(LPCSTR);   /* Register a clipboard format */
+    INT    (*pRegisterClipboardFormat)(LPCSTR);   /* Register a clipboard format */
+    BOOL   (*pGetClipboardFormatName)(UINT, LPSTR, UINT); /* Get a clipboard format name */
     BOOL   (*pIsSelectionOwner)(void);            /* Check if we own the selection */
     void   (*pResetSelectionOwner)(HWND, BOOL);
 

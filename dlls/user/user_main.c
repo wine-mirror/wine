@@ -95,6 +95,7 @@ static BOOL load_driver(void)
     GET_USER_FUNC(GetClipboardData);
     GET_USER_FUNC(IsClipboardFormatAvailable);
     GET_USER_FUNC(RegisterClipboardFormat);
+    GET_USER_FUNC(GetClipboardFormatName);
     GET_USER_FUNC(IsSelectionOwner);
     GET_USER_FUNC(ResetSelectionOwner);
     GET_USER_FUNC(CreateWindow);

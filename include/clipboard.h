@@ -44,7 +44,7 @@ extern BOOL CLIPBOARD_IsCacheRendered();
 extern void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange);
 extern void CLIPBOARD_EmptyCache( BOOL bChange );
 extern BOOL CLIPBOARD_IsPresent(WORD wFormat);
-extern char * CLIPBOARD_GetFormatName(UINT wFormat);
+extern char * CLIPBOARD_GetFormatName(UINT wFormat, LPSTR buf, INT size);
 extern void CLIPBOARD_ReleaseOwner();
 
 #endif /* __WINE_CLIPBOARD_H */

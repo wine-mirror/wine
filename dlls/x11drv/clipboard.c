@@ -68,6 +68,7 @@
 # include <unistd.h>
 #endif
 #include <fcntl.h>
+#include <time.h>
 
 #include "ts_xlib.h"
 #include "winreg.h"
@@ -77,6 +78,9 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
+
+/* Maximum wait time for slection notify */
+#define MAXSELECTIONNOTIFYWAIT 5
 
 /* Selection masks */
 
@@ -187,21 +191,20 @@ Atom X11DRV_CLIPBOARD_MapFormatToProperty(UINT wFormat)
              * Otherwise register a new atom.
              */
             char str[256];
-            char *fmtName = CLIPBOARD_GetFormatName(wFormat);
+            int plen = strlen(FMT_PREFIX);
+
             strcpy(str, FMT_PREFIX);
 
-            if (fmtName)
-            {
-                strncat(str, fmtName, sizeof(str) - strlen(FMT_PREFIX));
+            if (CLIPBOARD_GetFormatName(wFormat, str + plen, sizeof(str) - plen))
                 prop = TSXInternAtom(thread_display(), str, False);
-            }
+
             break;
         }
     }
 
     if (prop == None)
         TRACE("\tNo mapping to X property for Windows clipboard format %d(%s)\n",
-              wFormat, CLIPBOARD_GetFormatName(wFormat));
+              wFormat, CLIPBOARD_GetFormatName(wFormat, NULL, 0));
 
     return prop;
 }
@@ -377,6 +380,7 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
     Atom*	   targetList=NULL;
     Window         w;
     Window         ownerSelection = 0;
+    time_t         maxtm;
 
     TRACE("enter\n");
     /*
@@ -410,7 +414,8 @@ int X11DRV_CLIPBOARD_CacheDataFormats( Atom SelectionName )
     /*
      * Wait until SelectionNotify is received
      */
-    while( TRUE )
+    maxtm = time(NULL) + MAXSELECTIONNOTIFYWAIT; /* Timeout after a maximum wait */
+    while( maxtm - time(NULL) > 0 )
     {
        if( XCheckTypedWindowEvent(display, w, SelectionNotify, &xe) )
            if( xe.xselection.selection == selectionCacheSrc )
@@ -624,9 +629,9 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
 	      GlobalUnlock(hUnicodeText);
 	      if (!SetClipboardData(CF_UNICODETEXT, hUnicodeText))
 	      {
-            ERR("Not SET! Need to free our own block\n");
-		    GlobalFree(hUnicodeText);
-          }
+                  ERR("Not SET! Need to free our own block\n");
+                  GlobalFree(hUnicodeText);
+              }
 	      bRet = TRUE;
 	  }
 	  HeapFree(GetProcessHeap(), 0, lpstr);
@@ -689,15 +694,22 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
 
       if( cBytes )
       {
-        /* Turn on the DDESHARE flag to enable shared 32 bit memory */
-        hClipData = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cBytes );
-        if( (lpClipData = GlobalLock(hClipData)) )
-        {
-            memcpy(lpClipData, val, cBytes);
-            GlobalUnlock(hClipData);
-        }
-        else
-            hClipData = 0;
+          if (wFormat == CF_METAFILEPICT || wFormat == CF_ENHMETAFILE)
+          {
+              hClipData = X11DRV_CLIPBOARD_SerializeMetafile(wFormat, (HANDLE)val, cBytes, FALSE);
+          }
+          else
+          {
+              /* Turn on the DDESHARE flag to enable shared 32 bit memory */
+              hClipData = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, cBytes );
+              if( (lpClipData = GlobalLock(hClipData)) )
+              {
+                  memcpy(lpClipData, val, cBytes);
+                  GlobalUnlock(hClipData);
+              }
+              else
+                  hClipData = 0;
+          }
       }
 
       if( hClipData )
@@ -1022,9 +1034,9 @@ BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
  *		RegisterClipboardFormat (X11DRV.@)
  *
  * Registers a custom X clipboard format
- * Returns: TRUE - success,  FALSE - failure
+ * Returns: Format id or 0 on failure
  */
-BOOL X11DRV_RegisterClipboardFormat( LPCSTR FormatName )
+INT X11DRV_RegisterClipboardFormat( LPCSTR FormatName )
 {
     Display *display = thread_display();
     Atom prop = None;
@@ -1042,7 +1054,7 @@ BOOL X11DRV_RegisterClipboardFormat( LPCSTR FormatName )
         prop = TSXInternAtom(display, str, False);
     }
 
-    return (prop) ? TRUE : FALSE;
+    return prop;
 }
 
 /**************************************************************************
@@ -1141,7 +1153,7 @@ BOOL X11DRV_GetClipboardData(UINT wFormat)
         else
             bRet = FALSE;
 
-        TRACE("\tpresent %s = %i\n", CLIPBOARD_GetFormatName(wFormat), bRet );
+        TRACE("\tpresent %s = %i\n", CLIPBOARD_GetFormatName(wFormat, NULL, 0), bRet );
     }
 
     TRACE("Returning %d\n", bRet);
@@ -1312,4 +1324,90 @@ void X11DRV_CLIPBOARD_FreeResources( Atom property )
         }
         else prop = &(*prop)->next;
     }
+}
+
+/**************************************************************************
+ *		X11DRV_GetClipboardFormatName
+ */
+BOOL X11DRV_GetClipboardFormatName( UINT wFormat, LPSTR retStr, UINT maxlen )
+{
+    BOOL bRet = FALSE;
+    char *itemFmtName = TSXGetAtomName(thread_display(), wFormat);
+    INT prefixlen = strlen(FMT_PREFIX);
+
+    if ( 0 == strncmp(itemFmtName, FMT_PREFIX, prefixlen ) )
+    {
+        strncpy(retStr, itemFmtName + prefixlen, maxlen);
+        bRet = TRUE;
+    }
+
+    TSXFree(itemFmtName);
+
+    return bRet;
+}
+
+
+/**************************************************************************
+ *		CLIPBOARD_SerializeMetafile
+ */
+HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, INT cbytes, BOOL out)
+{
+    HANDLE h = 0;
+
+    if (out) /* Serialize out, caller should free memory */
+    {
+        if (wformat == CF_METAFILEPICT)
+        {
+            LPMETAFILEPICT lpmfp = (LPMETAFILEPICT) GlobalLock(hdata);
+            int size = GetMetaFileBitsEx(lpmfp->hMF, 0, NULL);
+
+            h = GlobalAlloc(0, size + sizeof(METAFILEPICT));
+            if (h)
+            {
+                LPVOID pdata = GlobalLock(h);
+
+                memcpy(pdata, lpmfp, sizeof(METAFILEPICT));
+                GetMetaFileBitsEx(lpmfp->hMF, size, pdata + sizeof(METAFILEPICT));
+
+                GlobalUnlock(h);
+            }
+
+            GlobalUnlock(hdata);
+        }
+        else if (wformat == CF_ENHMETAFILE)
+        {
+            int size = GetEnhMetaFileBits(hdata, 0, NULL);
+
+            h = GlobalAlloc(0, size);
+            if (h)
+            {
+                LPVOID pdata = GlobalLock(h);
+                GetEnhMetaFileBits(hdata, size, pdata);
+                GlobalUnlock(h);
+            }
+        }
+    }
+    else
+    {
+        if (wformat == CF_METAFILEPICT)
+        {
+            h = GlobalAlloc(0, sizeof(METAFILEPICT));
+            if (h)
+            {
+                LPMETAFILEPICT pmfp = (LPMETAFILEPICT) GlobalLock(h);
+
+                memcpy(pmfp, (LPVOID)hdata, sizeof(METAFILEPICT));
+                pmfp->hMF = SetMetaFileBitsEx(cbytes - sizeof(METAFILEPICT),
+                                              (LPVOID)hdata + sizeof(METAFILEPICT));
+
+                GlobalUnlock(h);
+            }
+        }
+        else if (wformat == CF_ENHMETAFILE)
+        {
+            h = SetEnhMetaFileBits(cbytes, (LPVOID)hdata);
+        }
+    }
+
+    return h;
 }

@@ -366,6 +366,7 @@ extern Atom X11DRV_CLIPBOARD_MapFormatToProperty(UINT id);
 extern void X11DRV_CLIPBOARD_ReleaseSelection(Atom selType, Window w, HWND hwnd);
 extern BOOL X11DRV_IsSelectionOwner(void);
 extern BOOL X11DRV_GetClipboardData(UINT wFormat);
+extern HANDLE X11DRV_CLIPBOARD_SerializeMetafile(INT wformat, HANDLE hdata, INT cbytes, BOOL out);
 
 /* X11 event driver */
 
