@@ -240,6 +240,9 @@ UINT WINAPI MsiOpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIHANDLE *phD
         goto end;
     }
 
+    if( TRACE_ON( msi ) )
+        enum_stream_names( stg );
+
     db->storage = stg;
     db->mode = szMode;
     /* db->strings = NULL;

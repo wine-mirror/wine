@@ -126,7 +126,6 @@ static BOOL encode_streamname(BOOL bTable, LPCWSTR in, LPWSTR out)
     return FALSE;
 }
 
-#if 0
 static int mime2utf(int x)
 {
     if( x<10 )
@@ -193,8 +192,6 @@ void enum_stream_names( IStorage *stg )
 
     IEnumSTATSTG_Release( stgenum );
 }
-
-#endif
 
 static UINT read_stream_data( IStorage *stg, LPCWSTR stname,
                               USHORT **pdata, UINT *psz )
