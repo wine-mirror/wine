@@ -2030,6 +2030,8 @@ system.ini, mci,,"waveaudio=mciwave.drv"
 
 system.ini, drivers32,,"MSACM.imaadpcm=imaadp32.acm" 
 system.ini, drivers32,,"MSACM.msadpcm=msadp32.acm" 
+system.ini, drivers32,,"MSACM.msg711=msg711.acm"
+system.ini, drivers32,,"MSACM.winemp3=winemp3.acm"
 system.ini, drivers32,,"VIDC.MRLE=msrle32.dll" 
 system.ini, drivers32,,"; VIDC.IV50=ir50_32.dll" 
 system.ini, drivers32,,"; VIDC.CVID=iccvid.dll" 
