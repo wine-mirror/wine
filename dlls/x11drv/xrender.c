@@ -1296,8 +1296,10 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
                 XSetLineAttributes( gdi_display, physDev->gc, lineWidth,
                                     LineSolid, CapProjecting, JoinBevel );
                 XDrawLine( gdi_display, physDev->drawable, physDev->gc,
-                           physDev->org.x + x, physDev->org.y + y - linePos,
-                           physDev->org.x + x + width, physDev->org.y + y - linePos );
+                           physDev->org.x + x - linePos * sinEsc,
+                           physDev->org.y + y - linePos * cosEsc,
+                           physDev->org.x + x + width * cosEsc - linePos * sinEsc,
+                           physDev->org.y + y - width * sinEsc - linePos * cosEsc );
 	    }
 
 	    if (lf.lfStrikeOut) { 
