@@ -67,8 +67,6 @@ typedef struct {
 static struct ICOM_VTABLE (IShellFolder2) vt_ShellFolder2;
 static struct ICOM_VTABLE (IPersistFolder2) vt_PersistFolder2;
 
-HRESULT WINAPI ISF_MyComputer_Constructor (IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv);
-
 #define _IPersistFolder2_Offset ((int)(&(((IGenericSFImpl*)0)->lpVtblPersistFolder2)))
 #define _ICOM_THIS_From_IPersistFolder2(class, name) class* This = (class*)(((char*)name)-_IPersistFolder2_Offset);
 
@@ -195,7 +193,7 @@ ISF_MyComputer_fnParseDisplayName (IShellFolder2 * iface,
 {
     ICOM_THIS (IGenericSFImpl, iface);
 
-    HRESULT hr = E_OUTOFMEMORY;
+    HRESULT hr = E_INVALIDARG;
     LPCWSTR szNext = NULL;
     WCHAR szElement[MAX_PATH];
     CHAR szTempA[MAX_PATH];
@@ -418,7 +416,7 @@ ISF_MyComputer_fnGetUIObjectOf (IShellFolder2 * iface,
 	    hr = E_NOINTERFACE;
 	}
 
-	if (!pObj)
+	if (SUCCEEDED(hr) && !pObj)
 	    hr = E_OUTOFMEMORY;
 
 	*ppvOut = pObj;
@@ -429,10 +427,6 @@ ISF_MyComputer_fnGetUIObjectOf (IShellFolder2 * iface,
 
 /**************************************************************************
 *	ISF_MyComputer_fnGetDisplayNameOf
-*
-* NOTES
-*	The desktopfolder creates only complete paths (SHGDN_FORPARSING).
-*	SHGDN_INFOLDER makes no sense.
 */
 static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf (IShellFolder2 * iface, LPCITEMIDLIST pidl, DWORD dwFlags, LPSTRRET strRet)
 {
