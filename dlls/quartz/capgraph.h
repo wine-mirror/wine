@@ -28,26 +28,18 @@ typedef struct CapGraph_ICaptureGraphBuilderImpl
 	ICOM_VFIELD(ICaptureGraphBuilder);
 } CapGraph_ICaptureGraphBuilderImpl;
 
-typedef struct CapGraph_ICaptureGraphBuilder2Impl
-{
-	ICOM_VFIELD(ICaptureGraphBuilder2);
-} CapGraph_ICaptureGraphBuilder2Impl;
-
 typedef struct CCaptureGraph
 {
 	QUARTZ_IUnkImpl	unk;
 	CapGraph_ICaptureGraphBuilderImpl	capgraph1;
-	CapGraph_ICaptureGraphBuilder2Impl	capgraph2;
 
 	/* ICaptureGraphBuilder fields. */
-	/* ICaptureGraphBuilder2 fields. */
 	IGraphBuilder*	m_pfg;
 } CCaptureGraph;
 
 #define	CCaptureGraph_THIS(iface,member)	CCaptureGraph*	This = ((CCaptureGraph*)(((char*)iface)-offsetof(CCaptureGraph,member)))
 
 #define CCaptureGraph_ICaptureGraphBuilder(th)	((ICaptureGraphBuilder*)&((th)->capgraph1))
-#define CCaptureGraph_ICaptureGraphBuilder2(th)	((ICaptureGraphBuilder2*)&((th)->capgraph2))
 
 HRESULT QUARTZ_CreateCaptureGraph(IUnknown* punkOuter,void** ppobj);
 

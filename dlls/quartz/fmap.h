@@ -58,22 +58,20 @@ void CFilterMapper_UninitIFilterMapper( CFilterMapper* pfm );
 	- At least, the following interfaces should be implemented:
 
 	IUnknown
-		+ IFilterMapper2 - IFilterMapper3
+		+ IFilterMapper2
  */
 
-#include "iunk.h"
 
-
-typedef struct FM2_IFilterMapper3Impl
+typedef struct FM2_IFilterMapper2Impl
 {
-	ICOM_VFIELD(IFilterMapper3);
-} FM2_IFilterMapper3Impl;
+	ICOM_VFIELD(IFilterMapper2);
+} FM2_IFilterMapper2Impl;
 
 typedef struct CFilterMapper2
 {
 	QUARTZ_IUnkImpl	unk;
-	FM2_IFilterMapper3Impl	fmap3;
-	/* IFilterMapper3 fields */
+	FM2_IFilterMapper2Impl	fmap2;
+	/* IFilterMapper2 fields */
 } CFilterMapper2;
 
 #define	CFilterMapper2_THIS(iface,member)		CFilterMapper2*	This = ((CFilterMapper2*)(((char*)iface)-offsetof(CFilterMapper2,member)))
@@ -81,7 +79,7 @@ typedef struct CFilterMapper2
 HRESULT QUARTZ_CreateFilterMapper2(IUnknown* punkOuter,void** ppobj);
 
 
-HRESULT CFilterMapper2_InitIFilterMapper3( CFilterMapper2* psde );
-void CFilterMapper2_UninitIFilterMapper3( CFilterMapper2* psde );
+HRESULT CFilterMapper2_InitIFilterMapper2( CFilterMapper2* psde );
+void CFilterMapper2_UninitIFilterMapper2( CFilterMapper2* psde );
 
 #endif	/* WINE_DSHOW_FMAP_H */

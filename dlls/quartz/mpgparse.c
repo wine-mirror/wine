@@ -702,14 +702,4 @@ HRESULT QUARTZ_CreateMPEG1Splitter(IUnknown* punkOuter,void** ppobj)
 		&CMPGParseImpl_Handlers );
 }
 
-HRESULT QUARTZ_CreateMPEG2Splitter(IUnknown* punkOuter,void** ppobj)
-{
-	return QUARTZ_CreateParser(
-		punkOuter,ppobj,
-		&CLSID_MMSPLITTER,
-		QUARTZ_MPEG2Parser_Name,
-		QUARTZ_MPGParserInPin_Name,
-		&CMPGParseImpl_Handlers );
-}
-
 

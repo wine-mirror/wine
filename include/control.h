@@ -22,10 +22,8 @@
 /* forward decls. */
 
 typedef struct IAMCollection IAMCollection;
-typedef struct IAMStats IAMStats;
 typedef struct IBasicAudio IBasicAudio;
 typedef struct IBasicVideo IBasicVideo;
-typedef struct IBasicVideo2 IBasicVideo2;
 typedef struct IDeferredCommand IDeferredCommand;
 typedef struct IFilterInfo IFilterInfo;
 typedef struct IMediaControl IMediaControl;
@@ -41,10 +39,8 @@ typedef struct IVideoWindow IVideoWindow;
 /* GUIDs */
 
 DEFINE_GUID(IID_IAMCollection,0x56A868B9,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
-DEFINE_GUID(IID_IAMStats,0xBC9BCF80,0xDCD2,0x11D2,0xAB,0xF6,0x00,0xA0,0xC9,0x05,0xF3,0x75);
 DEFINE_GUID(IID_IBasicAudio,0x56A868B3,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IBasicVideo,0x56A868B5,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
-DEFINE_GUID(IID_IBasicVideo2,0x329BB360,0xF6EA,0x11D1,0x90,0x38,0x00,0xA0,0xC9,0x69,0x72,0x98);
 DEFINE_GUID(IID_IDeferredCommand,0x56A868B8,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IFilterInfo,0x56A868BA,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IMediaControl,0x56A868B1,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
@@ -100,45 +96,6 @@ ICOM_DEFINE(IAMCollection,IDispatch)
 #define IAMCollection_get_Count(p,a1) ICOM_CALL1(get_Count,p,a1)
 #define IAMCollection_Item(p,a1,a2) ICOM_CALL2(Item,p,a1,a2)
 #define IAMCollection_get__NewEnum(p,a1) ICOM_CALL1(get__NewEnum,p,a1)
-
-/**************************************************************************
- *
- * IAMStats interface
- *
- */
-
-#define ICOM_INTERFACE IAMStats
-#define IAMStats_METHODS \
-    ICOM_METHOD (HRESULT,Reset) \
-    ICOM_METHOD1(HRESULT,get_Count,LONG*,a1) \
-    ICOM_METHOD8(HRESULT,GetValueByIndex,long,a1,BSTR*,a2,long*,a3,double*,a4,double*,a5,double*,a6,double*,a7,double*,a8) \
-    ICOM_METHOD8(HRESULT,GetValueByName,BSTR,a1,long*,a2,long*,a3,double*,a4,double*,a5,double*,a6,double*,a7,double*,a8) \
-    ICOM_METHOD3(HRESULT,GetIndex,BSTR,a1,long,a2,long*,a3) \
-    ICOM_METHOD2(HRESULT,AddValue,long,a1,double,a2)
-
-#define IAMStats_IMETHODS \
-    IDispatch_IMETHODS \
-    IAMStats_METHODS
-
-ICOM_DEFINE(IAMStats,IDispatch)
-#undef ICOM_INTERFACE
-
-    /*** IUnknown methods ***/
-#define IAMStats_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
-#define IAMStats_AddRef(p) ICOM_CALL (AddRef,p)
-#define IAMStats_Release(p) ICOM_CALL (Release,p)
-    /*** IDispatch methods ***/
-#define IAMStats_GetTypeInfoCount(p,a1) ICOM_CALL1(GetTypeInfoCount,p,a1)
-#define IAMStats_GetTypeInfo(p,a1,a2,a3) ICOM_CALL3(GetTypeInfo,p,a1,a2,a3)
-#define IAMStats_GetIDsOfNames(p,a1,a2,a3,a4,a5) ICOM_CALL5(GetIDsOfNames,p,a1,a2,a3,a4,a5)
-#define IAMStats_Invoke(p,a1,a2,a3,a4,a5,a6,a7,a8) ICOM_CALL8(Invoke,p,a1,a2,a3,a4,a5,a6,a7,a8)
-    /*** IAMStats methods ***/
-#define IAMStats_Reset(p) ICOM_CALL (Reset,p)
-#define IAMStats_get_Count(p,a1) ICOM_CALL1(get_Count,p,a1)
-#define IAMStats_GetValueByIndex(p,a1,a2,a3,a4,a5,a6,a7,a8) ICOM_CALL8(GetValueByIndex,p,a1,a2,a3,a4,a5,a6,a7,a8)
-#define IAMStats_GetValueByName(p,a1,a2,a3,a4,a5,a6,a7,a8) ICOM_CALL8(GetValueByName,p,a1,a2,a3,a4,a5,a6,a7,a8)
-#define IAMStats_GetIndex(p,a1,a2,a3) ICOM_CALL3(GetIndex,p,a1,a2,a3)
-#define IAMStats_AddValue(p,a1,a2) ICOM_CALL2(AddValue,p,a1,a2)
 
 /**************************************************************************
  *
@@ -265,68 +222,6 @@ ICOM_DEFINE(IBasicVideo,IDispatch)
 #define IBasicVideo_GetCurrentImage(p,a1,a2) ICOM_CALL2(GetCurrentImage,p,a1,a2)
 #define IBasicVideo_IsUsingDefaultSource(p) ICOM_CALL (IsUsingDefaultSource,p)
 #define IBasicVideo_IsUsingDefaultDestination(p) ICOM_CALL (IsUsingDefaultDestination,p)
-
-/**************************************************************************
- *
- * IBasicVideo2 interface
- *
- */
-
-#define ICOM_INTERFACE IBasicVideo2
-#define IBasicVideo2_METHODS \
-    ICOM_METHOD2(HRESULT,GetPreferredAspectRatio,long*,a1,long*,a2)
-
-#define IBasicVideo2_IMETHODS \
-    IBasicVideo_IMETHODS \
-    IBasicVideo2_METHODS
-
-ICOM_DEFINE(IBasicVideo2,IBasicVideo)
-#undef ICOM_INTERFACE
-
-    /*** IUnknown methods ***/
-#define IBasicVideo2_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
-#define IBasicVideo2_AddRef(p) ICOM_CALL (AddRef,p)
-#define IBasicVideo2_Release(p) ICOM_CALL (Release,p)
-    /*** IDispatch methods ***/
-#define IBasicVideo2_GetTypeInfoCount(p,a1) ICOM_CALL1(GetTypeInfoCount,p,a1)
-#define IBasicVideo2_GetTypeInfo(p,a1,a2,a3) ICOM_CALL3(GetTypeInfo,p,a1,a2,a3)
-#define IBasicVideo2_GetIDsOfNames(p,a1,a2,a3,a4,a5) ICOM_CALL5(GetIDsOfNames,p,a1,a2,a3,a4,a5)
-#define IBasicVideo2_Invoke(p,a1,a2,a3,a4,a5,a6,a7,a8) ICOM_CALL8(Invoke,p,a1,a2,a3,a4,a5,a6,a7,a8)
-    /*** IBasicVideo methods ***/
-#define IBasicVideo2_get_AvgTimePerFrame(p,a1) ICOM_CALL1(get_AvgTimePerFrame,p,a1)
-#define IBasicVideo2_get_BitRate(p,a1) ICOM_CALL1(get_BitRate,p,a1)
-#define IBasicVideo2_get_BitErrorRate(p,a1) ICOM_CALL1(get_BitErrorRate,p,a1)
-#define IBasicVideo2_get_VideoWidth(p,a1) ICOM_CALL1(get_VideoWidth,p,a1)
-#define IBasicVideo2_get_VideoHeight(p,a1) ICOM_CALL1(get_VideoHeight,p,a1)
-#define IBasicVideo2_put_SourceLeft(p,a1) ICOM_CALL1(put_SourceLeft,p,a1)
-#define IBasicVideo2_get_SourceLeft(p,a1) ICOM_CALL1(get_SourceLeft,p,a1)
-#define IBasicVideo2_put_SourceWidth(p,a1) ICOM_CALL1(put_SourceWidth,p,a1)
-#define IBasicVideo2_get_SourceWidth(p,a1) ICOM_CALL1(get_SourceWidth,p,a1)
-#define IBasicVideo2_put_SourceTop(p,a1) ICOM_CALL1(put_SourceTop,p,a1)
-#define IBasicVideo2_get_SourceTop(p,a1) ICOM_CALL1(get_SourceTop,p,a1)
-#define IBasicVideo2_put_SourceHeight(p,a1) ICOM_CALL1(put_SourceHeight,p,a1)
-#define IBasicVideo2_get_SourceHeight(p,a1) ICOM_CALL1(get_SourceHeight,p,a1)
-#define IBasicVideo2_put_DestinationLeft(p,a1) ICOM_CALL1(put_DestinationLeft,p,a1)
-#define IBasicVideo2_get_DestinationLeft(p,a1) ICOM_CALL1(get_DestinationLeft,p,a1)
-#define IBasicVideo2_put_DestinationWidth(p,a1) ICOM_CALL1(put_DestinationWidth,p,a1)
-#define IBasicVideo2_get_DestinationWidth(p,a1) ICOM_CALL1(get_DestinationWidth,p,a1)
-#define IBasicVideo2_put_DestinationTop(p,a1) ICOM_CALL1(put_DestinationTop,p,a1)
-#define IBasicVideo2_get_DestinationTop(p,a1) ICOM_CALL1(get_DestinationTop,p,a1)
-#define IBasicVideo2_put_DestinationHeight(p,a1) ICOM_CALL1(put_DestinationHeight,p,a1)
-#define IBasicVideo2_get_DestinationHeight(p,a1) ICOM_CALL1(get_DestinationHeight,p,a1)
-#define IBasicVideo2_SetSourcePosition(p,a1,a2,a3,a4) ICOM_CALL4(SetSourcePosition,p,a1,a2,a3,a4)
-#define IBasicVideo2_GetSourcePosition(p,a1,a2,a3,a4) ICOM_CALL4(GetSourcePosition,p,a1,a2,a3,a4)
-#define IBasicVideo2_SetDefaultSourcePosition(p,a1) ICOM_CALL1(SetDefaultSourcePosition,p,a1)
-#define IBasicVideo2_SetDestinationPosition(p,a1,a2,a3,a4) ICOM_CALL4(SetDestinationPosition,p,a1,a2,a3,a4)
-#define IBasicVideo2_GetDestinationPosition(p,a1,a2,a3,a4) ICOM_CALL4(GetDestinationPosition,p,a1,a2,a3,a4)
-#define IBasicVideo2_SetDefaultDestinationPosition(p,a1) ICOM_CALL1(SetDefaultDestinationPosition,p,a1)
-#define IBasicVideo2_GetVideoSize(p,a1,a2) ICOM_CALL2(GetVideoSize,p,a1,a2)
-#define IBasicVideo2_GetVideoPaletteEntries(p,a1,a2,a3,a4) ICOM_CALL4(GetVideoPaletteEntries,p,a1,a2,a3,a4)
-#define IBasicVideo2_GetCurrentImage(p,a1,a2) ICOM_CALL2(GetCurrentImage,p,a1,a2)
-#define IBasicVideo2_IsUsingDefaultSource(p,a1) ICOM_CALL1(IsUsingDefaultSource,p,a1)
-#define IBasicVideo2_IsUsingDefaultDestination(p,a1) ICOM_CALL1(IsUsingDefaultDestination,p,a1)
-    /*** IBasicVideo2 methods ***/
-#define IBasicVideo2_GetPreferredAspectRatio(p,a1,a2) ICOM_CALL2(GetPreferredAspectRatio,p,a1,a2)
 
 /**************************************************************************
  *

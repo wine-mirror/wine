@@ -81,9 +81,9 @@ ICaptureGraphBuilder_fnSetFiltergraph(ICaptureGraphBuilder* iface,IGraphBuilder*
 {
 	CCaptureGraph_THIS(iface,capgraph1);
 
-	TRACE("(%p)->()\n",This);
+	FIXME("(%p)->()\n",This);
 
-	return ICaptureGraphBuilder2_SetFiltergraph(CCaptureGraph_ICaptureGraphBuilder2(This),pgb);
+	return E_NOTIMPL;
 }
 
 static HRESULT WINAPI
@@ -91,9 +91,9 @@ ICaptureGraphBuilder_fnGetFiltergraph(ICaptureGraphBuilder* iface,IGraphBuilder*
 {
 	CCaptureGraph_THIS(iface,capgraph1);
 
-	TRACE("(%p)->()\n",This);
+	FIXME("(%p)->()\n",This);
 
-	return ICaptureGraphBuilder2_GetFiltergraph(CCaptureGraph_ICaptureGraphBuilder2(This),ppgb);
+	return E_NOTIMPL;
 }
 
 static HRESULT WINAPI
@@ -141,9 +141,9 @@ ICaptureGraphBuilder_fnAllocCapFile(ICaptureGraphBuilder* iface,LPCOLESTR pName,
 {
 	CCaptureGraph_THIS(iface,capgraph1);
 
-	TRACE("(%p)->()\n",This);
+	FIXME("(%p)->()\n",This);
 
-	return ICaptureGraphBuilder2_AllocCapFile(CCaptureGraph_ICaptureGraphBuilder2(This),pName,llSize);
+	return E_NOTIMPL;
 }
 
 static HRESULT WINAPI
@@ -151,9 +151,9 @@ ICaptureGraphBuilder_fnCopyCaptureFile(ICaptureGraphBuilder* iface,LPOLESTR pOrg
 {
 	CCaptureGraph_THIS(iface,capgraph1);
 
-	TRACE("(%p)->()\n",This);
+	FIXME("(%p)->()\n",This);
 
-	return ICaptureGraphBuilder2_CopyCaptureFile(CCaptureGraph_ICaptureGraphBuilder2(This),pOrgName,pNewName,fAllowEscAbort,pCallback);
+	return E_NOTIMPL;
 }
 
 static ICOM_VTABLE(ICaptureGraphBuilder) icapgraph1 =
@@ -191,166 +191,6 @@ static void CCaptureGraph_UninitICaptureGraphBuilder( CCaptureGraph* This )
 
 /***************************************************************************
  *
- *	CCaptureGraph::ICaptureGraphBuilder2
- *
- */
-
-static HRESULT WINAPI
-ICaptureGraphBuilder2_fnQueryInterface(ICaptureGraphBuilder2* iface,REFIID riid,void** ppobj)
-{
-	CCaptureGraph_THIS(iface,capgraph2);
-
-	TRACE("(%p)->()\n",This);
-
-	return IUnknown_QueryInterface(This->unk.punkControl,riid,ppobj);
-}
-
-static ULONG WINAPI
-ICaptureGraphBuilder2_fnAddRef(ICaptureGraphBuilder2* iface)
-{
-	CCaptureGraph_THIS(iface,capgraph2);
-
-	TRACE("(%p)->()\n",This);
-
-	return IUnknown_AddRef(This->unk.punkControl);
-}
-
-static ULONG WINAPI
-ICaptureGraphBuilder2_fnRelease(ICaptureGraphBuilder2* iface)
-{
-	CCaptureGraph_THIS(iface,capgraph2);
-
-	TRACE("(%p)->()\n",This);
-
-	return IUnknown_Release(This->unk.punkControl);
-}
-
-static HRESULT WINAPI
-ICaptureGraphBuilder2_fnSetFiltergraph(ICaptureGraphBuilder2* iface,IGraphBuilder* pgb)
-{
-	CCaptureGraph_THIS(iface,capgraph2);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-ICaptureGraphBuilder2_fnGetFiltergraph(ICaptureGraphBuilder2* iface,IGraphBuilder** ppgb)
-{
-	CCaptureGraph_THIS(iface,capgraph2);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-ICaptureGraphBuilder2_fnSetOutputFileName(ICaptureGraphBuilder2* iface,const GUID* pguid,LPCOLESTR pName,IBaseFilter** ppFilter,IFileSinkFilter** ppSink)
-{
-	CCaptureGraph_THIS(iface,capgraph2);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-ICaptureGraphBuilder2_fnFindInterface(ICaptureGraphBuilder2* iface,const GUID* pguidCat,const GUID* pguidType,IBaseFilter* pFilter,REFIID riid,void** ppvobj)
-{
-	CCaptureGraph_THIS(iface,capgraph2);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-ICaptureGraphBuilder2_fnRenderStream(ICaptureGraphBuilder2* iface,const GUID* pguidCat,const GUID* pguidType,IUnknown* pSource,IBaseFilter* pCompressor,IBaseFilter* pRenderer)
-{
-	CCaptureGraph_THIS(iface,capgraph2);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-ICaptureGraphBuilder2_fnControlStream(ICaptureGraphBuilder2* iface,const GUID* pguidCat,const GUID* pguidType,IBaseFilter* pFilter,REFERENCE_TIME* prtStart,REFERENCE_TIME* prtStop,WORD wStartCookie,WORD wStopCookie)
-{
-	CCaptureGraph_THIS(iface,capgraph2);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-ICaptureGraphBuilder2_fnAllocCapFile(ICaptureGraphBuilder2* iface,LPCOLESTR pName,DWORDLONG llSize)
-{
-	CCaptureGraph_THIS(iface,capgraph2);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-ICaptureGraphBuilder2_fnCopyCaptureFile(ICaptureGraphBuilder2* iface,LPOLESTR pOrgName,LPOLESTR pNewName,int fAllowEscAbort,IAMCopyCaptureFileProgress* pCallback)
-{
-	CCaptureGraph_THIS(iface,capgraph2);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-ICaptureGraphBuilder2_fnFindPin(ICaptureGraphBuilder2* iface,IUnknown* pSource,PIN_DIRECTION pindir,const GUID* pguidCat,const GUID* pguidType,BOOL bUnconnected,int num,IPin** ppPin)
-{
-	CCaptureGraph_THIS(iface,capgraph2);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-
-static ICOM_VTABLE(ICaptureGraphBuilder2) icapgraph2 =
-{
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	/* IUnknown fields */
-	ICaptureGraphBuilder2_fnQueryInterface,
-	ICaptureGraphBuilder2_fnAddRef,
-	ICaptureGraphBuilder2_fnRelease,
-	/* ICaptureGraphBuilder2 fields */
-	ICaptureGraphBuilder2_fnSetFiltergraph,
-	ICaptureGraphBuilder2_fnGetFiltergraph,
-	ICaptureGraphBuilder2_fnSetOutputFileName,
-	ICaptureGraphBuilder2_fnFindInterface,
-	ICaptureGraphBuilder2_fnRenderStream,
-	ICaptureGraphBuilder2_fnControlStream,
-	ICaptureGraphBuilder2_fnAllocCapFile,
-	ICaptureGraphBuilder2_fnCopyCaptureFile,
-	ICaptureGraphBuilder2_fnFindPin,
-};
-
-static HRESULT CCaptureGraph_InitICaptureGraphBuilder2( CCaptureGraph* This )
-{
-	TRACE("(%p)\n",This);
-	ICOM_VTBL(&This->capgraph2) = &icapgraph2;
-
-	return NOERROR;
-}
-
-static void CCaptureGraph_UninitICaptureGraphBuilder2( CCaptureGraph* This )
-{
-	TRACE("(%p)\n",This);
-}
-
-
-/***************************************************************************
- *
  *	new/delete for CCaptureGraph
  *
  */
@@ -359,7 +199,6 @@ static void CCaptureGraph_UninitICaptureGraphBuilder2( CCaptureGraph* This )
 static QUARTZ_IFEntry IFEntries[] =
 {
   { &IID_ICaptureGraphBuilder, offsetof(CCaptureGraph,capgraph1)-offsetof(CCaptureGraph,unk) },
-  { &IID_ICaptureGraphBuilder2, offsetof(CCaptureGraph,capgraph2)-offsetof(CCaptureGraph,unk) },
 };
 
 static void QUARTZ_DestroyCaptureGraph(IUnknown* punk)
@@ -369,7 +208,6 @@ static void QUARTZ_DestroyCaptureGraph(IUnknown* punk)
 	TRACE( "(%p)\n", This );
 
 	CCaptureGraph_UninitICaptureGraphBuilder(This);
-	CCaptureGraph_UninitICaptureGraphBuilder2(This);
 }
 
 HRESULT QUARTZ_CreateCaptureGraph(IUnknown* punkOuter,void** ppobj)
@@ -387,14 +225,6 @@ HRESULT QUARTZ_CreateCaptureGraph(IUnknown* punkOuter,void** ppobj)
 	pcg->m_pfg = NULL;
 
 	hr = CCaptureGraph_InitICaptureGraphBuilder(pcg);
-	if ( SUCCEEDED(hr) )
-	{
-		hr = CCaptureGraph_InitICaptureGraphBuilder2(pcg);
-		if ( FAILED(hr) )
-		{
-			CCaptureGraph_UninitICaptureGraphBuilder(pcg);
-		}
-	}
 
 	if ( FAILED(hr) )
 	{

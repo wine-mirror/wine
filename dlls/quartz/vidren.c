@@ -598,7 +598,6 @@ static QUARTZ_IFEntry FilterIFEntries[] =
   { &IID_IMediaFilter, offsetof(CVideoRendererImpl,basefilter)-offsetof(CVideoRendererImpl,unk) },
   { &IID_IBaseFilter, offsetof(CVideoRendererImpl,basefilter)-offsetof(CVideoRendererImpl,unk) },
   { &IID_IBasicVideo, offsetof(CVideoRendererImpl,basvid)-offsetof(CVideoRendererImpl,unk) },
-  { &IID_IBasicVideo2, offsetof(CVideoRendererImpl,basvid)-offsetof(CVideoRendererImpl,unk) },
   { &IID_IVideoWindow, offsetof(CVideoRendererImpl,vidwin)-offsetof(CVideoRendererImpl,unk) },
 };
 
@@ -639,7 +638,7 @@ static void QUARTZ_DestroyVideoRenderer(IUnknown* punk)
 		This->pSeekPass = NULL;
 	}
 
-	CVideoRendererImpl_UninitIBasicVideo2(This);
+	CVideoRendererImpl_UninitIBasicVideo(This);
 	CVideoRendererImpl_UninitIVideoWindow(This);
 	CBaseFilterImpl_UninitIBaseFilter(&This->basefilter);
 
@@ -681,13 +680,13 @@ HRESULT QUARTZ_CreateVideoRenderer(IUnknown* punkOuter,void** ppobj)
 		&filterhandlers );
 	if ( SUCCEEDED(hr) )
 	{
-		hr = CVideoRendererImpl_InitIBasicVideo2(This);
+		hr = CVideoRendererImpl_InitIBasicVideo(This);
 		if ( SUCCEEDED(hr) )
 		{
 			hr = CVideoRendererImpl_InitIVideoWindow(This);
 			if ( FAILED(hr) )
 			{
-				CVideoRendererImpl_UninitIBasicVideo2(This);
+				CVideoRendererImpl_UninitIBasicVideo(This);
 			}
 		}
 		if ( FAILED(hr) )
@@ -816,13 +815,13 @@ HRESULT QUARTZ_CreateVideoRendererPin(
 
 /***************************************************************************
  *
- *	CVideoRendererImpl::IBasicVideo2
+ *	CVideoRendererImpl::IBasicVideo
  *
  */
 
 
 static HRESULT WINAPI
-IBasicVideo2_fnQueryInterface(IBasicVideo2* iface,REFIID riid,void** ppobj)
+IBasicVideo_fnQueryInterface(IBasicVideo* iface,REFIID riid,void** ppobj)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -832,7 +831,7 @@ IBasicVideo2_fnQueryInterface(IBasicVideo2* iface,REFIID riid,void** ppobj)
 }
 
 static ULONG WINAPI
-IBasicVideo2_fnAddRef(IBasicVideo2* iface)
+IBasicVideo_fnAddRef(IBasicVideo* iface)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -842,7 +841,7 @@ IBasicVideo2_fnAddRef(IBasicVideo2* iface)
 }
 
 static ULONG WINAPI
-IBasicVideo2_fnRelease(IBasicVideo2* iface)
+IBasicVideo_fnRelease(IBasicVideo* iface)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -852,7 +851,7 @@ IBasicVideo2_fnRelease(IBasicVideo2* iface)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetTypeInfoCount(IBasicVideo2* iface,UINT* pcTypeInfo)
+IBasicVideo_fnGetTypeInfoCount(IBasicVideo* iface,UINT* pcTypeInfo)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -862,7 +861,7 @@ IBasicVideo2_fnGetTypeInfoCount(IBasicVideo2* iface,UINT* pcTypeInfo)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetTypeInfo(IBasicVideo2* iface,UINT iTypeInfo, LCID lcid, ITypeInfo** ppobj)
+IBasicVideo_fnGetTypeInfo(IBasicVideo* iface,UINT iTypeInfo, LCID lcid, ITypeInfo** ppobj)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -872,7 +871,7 @@ IBasicVideo2_fnGetTypeInfo(IBasicVideo2* iface,UINT iTypeInfo, LCID lcid, ITypeI
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetIDsOfNames(IBasicVideo2* iface,REFIID riid, LPOLESTR* ppwszName, UINT cNames, LCID lcid, DISPID* pDispId)
+IBasicVideo_fnGetIDsOfNames(IBasicVideo* iface,REFIID riid, LPOLESTR* ppwszName, UINT cNames, LCID lcid, DISPID* pDispId)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -882,7 +881,7 @@ IBasicVideo2_fnGetIDsOfNames(IBasicVideo2* iface,REFIID riid, LPOLESTR* ppwszNam
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnInvoke(IBasicVideo2* iface,DISPID DispId, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarRes, EXCEPINFO* pExcepInfo, UINT* puArgErr)
+IBasicVideo_fnInvoke(IBasicVideo* iface,DISPID DispId, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarRes, EXCEPINFO* pExcepInfo, UINT* puArgErr)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -893,7 +892,7 @@ IBasicVideo2_fnInvoke(IBasicVideo2* iface,DISPID DispId, REFIID riid, LCID lcid,
 
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_AvgTimePerFrame(IBasicVideo2* iface,REFTIME* prefTime)
+IBasicVideo_fnget_AvgTimePerFrame(IBasicVideo* iface,REFTIME* prefTime)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -903,7 +902,7 @@ IBasicVideo2_fnget_AvgTimePerFrame(IBasicVideo2* iface,REFTIME* prefTime)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_BitRate(IBasicVideo2* iface,long* plRate)
+IBasicVideo_fnget_BitRate(IBasicVideo* iface,long* plRate)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -913,7 +912,7 @@ IBasicVideo2_fnget_BitRate(IBasicVideo2* iface,long* plRate)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_BitErrorRate(IBasicVideo2* iface,long* plRate)
+IBasicVideo_fnget_BitErrorRate(IBasicVideo* iface,long* plRate)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -923,7 +922,7 @@ IBasicVideo2_fnget_BitErrorRate(IBasicVideo2* iface,long* plRate)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_VideoWidth(IBasicVideo2* iface,long* plWidth)
+IBasicVideo_fnget_VideoWidth(IBasicVideo* iface,long* plWidth)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -933,7 +932,7 @@ IBasicVideo2_fnget_VideoWidth(IBasicVideo2* iface,long* plWidth)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_VideoHeight(IBasicVideo2* iface,long* plHeight)
+IBasicVideo_fnget_VideoHeight(IBasicVideo* iface,long* plHeight)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -943,7 +942,7 @@ IBasicVideo2_fnget_VideoHeight(IBasicVideo2* iface,long* plHeight)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_SourceLeft(IBasicVideo2* iface,long lLeft)
+IBasicVideo_fnput_SourceLeft(IBasicVideo* iface,long lLeft)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -953,7 +952,7 @@ IBasicVideo2_fnput_SourceLeft(IBasicVideo2* iface,long lLeft)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_SourceLeft(IBasicVideo2* iface,long* plLeft)
+IBasicVideo_fnget_SourceLeft(IBasicVideo* iface,long* plLeft)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -963,7 +962,7 @@ IBasicVideo2_fnget_SourceLeft(IBasicVideo2* iface,long* plLeft)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_SourceWidth(IBasicVideo2* iface,long lWidth)
+IBasicVideo_fnput_SourceWidth(IBasicVideo* iface,long lWidth)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -973,7 +972,7 @@ IBasicVideo2_fnput_SourceWidth(IBasicVideo2* iface,long lWidth)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_SourceWidth(IBasicVideo2* iface,long* plWidth)
+IBasicVideo_fnget_SourceWidth(IBasicVideo* iface,long* plWidth)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -983,7 +982,7 @@ IBasicVideo2_fnget_SourceWidth(IBasicVideo2* iface,long* plWidth)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_SourceTop(IBasicVideo2* iface,long lTop)
+IBasicVideo_fnput_SourceTop(IBasicVideo* iface,long lTop)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -993,7 +992,7 @@ IBasicVideo2_fnput_SourceTop(IBasicVideo2* iface,long lTop)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_SourceTop(IBasicVideo2* iface,long* plTop)
+IBasicVideo_fnget_SourceTop(IBasicVideo* iface,long* plTop)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1003,7 +1002,7 @@ IBasicVideo2_fnget_SourceTop(IBasicVideo2* iface,long* plTop)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_SourceHeight(IBasicVideo2* iface,long lHeight)
+IBasicVideo_fnput_SourceHeight(IBasicVideo* iface,long lHeight)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1013,7 +1012,7 @@ IBasicVideo2_fnput_SourceHeight(IBasicVideo2* iface,long lHeight)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_SourceHeight(IBasicVideo2* iface,long* plHeight)
+IBasicVideo_fnget_SourceHeight(IBasicVideo* iface,long* plHeight)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1023,7 +1022,7 @@ IBasicVideo2_fnget_SourceHeight(IBasicVideo2* iface,long* plHeight)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_DestinationLeft(IBasicVideo2* iface,long lLeft)
+IBasicVideo_fnput_DestinationLeft(IBasicVideo* iface,long lLeft)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1033,7 +1032,7 @@ IBasicVideo2_fnput_DestinationLeft(IBasicVideo2* iface,long lLeft)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_DestinationLeft(IBasicVideo2* iface,long* plLeft)
+IBasicVideo_fnget_DestinationLeft(IBasicVideo* iface,long* plLeft)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1043,7 +1042,7 @@ IBasicVideo2_fnget_DestinationLeft(IBasicVideo2* iface,long* plLeft)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_DestinationWidth(IBasicVideo2* iface,long lWidth)
+IBasicVideo_fnput_DestinationWidth(IBasicVideo* iface,long lWidth)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1053,7 +1052,7 @@ IBasicVideo2_fnput_DestinationWidth(IBasicVideo2* iface,long lWidth)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_DestinationWidth(IBasicVideo2* iface,long* plWidth)
+IBasicVideo_fnget_DestinationWidth(IBasicVideo* iface,long* plWidth)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1063,7 +1062,7 @@ IBasicVideo2_fnget_DestinationWidth(IBasicVideo2* iface,long* plWidth)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_DestinationTop(IBasicVideo2* iface,long lTop)
+IBasicVideo_fnput_DestinationTop(IBasicVideo* iface,long lTop)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1073,7 +1072,7 @@ IBasicVideo2_fnput_DestinationTop(IBasicVideo2* iface,long lTop)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_DestinationTop(IBasicVideo2* iface,long* plTop)
+IBasicVideo_fnget_DestinationTop(IBasicVideo* iface,long* plTop)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1083,7 +1082,7 @@ IBasicVideo2_fnget_DestinationTop(IBasicVideo2* iface,long* plTop)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_DestinationHeight(IBasicVideo2* iface,long lHeight)
+IBasicVideo_fnput_DestinationHeight(IBasicVideo* iface,long lHeight)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1093,7 +1092,7 @@ IBasicVideo2_fnput_DestinationHeight(IBasicVideo2* iface,long lHeight)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_DestinationHeight(IBasicVideo2* iface,long* plHeight)
+IBasicVideo_fnget_DestinationHeight(IBasicVideo* iface,long* plHeight)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1103,7 +1102,7 @@ IBasicVideo2_fnget_DestinationHeight(IBasicVideo2* iface,long* plHeight)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnSetSourcePosition(IBasicVideo2* iface,long lLeft,long lTop,long lWidth,long lHeight)
+IBasicVideo_fnSetSourcePosition(IBasicVideo* iface,long lLeft,long lTop,long lWidth,long lHeight)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1113,7 +1112,7 @@ IBasicVideo2_fnSetSourcePosition(IBasicVideo2* iface,long lLeft,long lTop,long l
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetSourcePosition(IBasicVideo2* iface,long* plLeft,long* plTop,long* plWidth,long* plHeight)
+IBasicVideo_fnGetSourcePosition(IBasicVideo* iface,long* plLeft,long* plTop,long* plWidth,long* plHeight)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1123,7 +1122,7 @@ IBasicVideo2_fnGetSourcePosition(IBasicVideo2* iface,long* plLeft,long* plTop,lo
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnSetDefaultSourcePosition(IBasicVideo2* iface)
+IBasicVideo_fnSetDefaultSourcePosition(IBasicVideo* iface)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1133,7 +1132,7 @@ IBasicVideo2_fnSetDefaultSourcePosition(IBasicVideo2* iface)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnSetDestinationPosition(IBasicVideo2* iface,long lLeft,long lTop,long lWidth,long lHeight)
+IBasicVideo_fnSetDestinationPosition(IBasicVideo* iface,long lLeft,long lTop,long lWidth,long lHeight)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1143,7 +1142,7 @@ IBasicVideo2_fnSetDestinationPosition(IBasicVideo2* iface,long lLeft,long lTop,l
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetDestinationPosition(IBasicVideo2* iface,long* plLeft,long* plTop,long* plWidth,long* plHeight)
+IBasicVideo_fnGetDestinationPosition(IBasicVideo* iface,long* plLeft,long* plTop,long* plWidth,long* plHeight)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1153,7 +1152,7 @@ IBasicVideo2_fnGetDestinationPosition(IBasicVideo2* iface,long* plLeft,long* plT
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnSetDefaultDestinationPosition(IBasicVideo2* iface)
+IBasicVideo_fnSetDefaultDestinationPosition(IBasicVideo* iface)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1163,7 +1162,7 @@ IBasicVideo2_fnSetDefaultDestinationPosition(IBasicVideo2* iface)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetVideoSize(IBasicVideo2* iface,long* plWidth,long* plHeight)
+IBasicVideo_fnGetVideoSize(IBasicVideo* iface,long* plWidth,long* plHeight)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1173,7 +1172,7 @@ IBasicVideo2_fnGetVideoSize(IBasicVideo2* iface,long* plWidth,long* plHeight)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetVideoPaletteEntries(IBasicVideo2* iface,long lStart,long lCount,long* plRet,long* plPaletteEntry)
+IBasicVideo_fnGetVideoPaletteEntries(IBasicVideo* iface,long lStart,long lCount,long* plRet,long* plPaletteEntry)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1183,7 +1182,7 @@ IBasicVideo2_fnGetVideoPaletteEntries(IBasicVideo2* iface,long lStart,long lCoun
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetCurrentImage(IBasicVideo2* iface,long* plBufferSize,long* plDIBBuffer)
+IBasicVideo_fnGetCurrentImage(IBasicVideo* iface,long* plBufferSize,long* plDIBBuffer)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1193,7 +1192,7 @@ IBasicVideo2_fnGetCurrentImage(IBasicVideo2* iface,long* plBufferSize,long* plDI
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnIsUsingDefaultSource(IBasicVideo2* iface)
+IBasicVideo_fnIsUsingDefaultSource(IBasicVideo* iface)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1203,17 +1202,7 @@ IBasicVideo2_fnIsUsingDefaultSource(IBasicVideo2* iface)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnIsUsingDefaultDestination(IBasicVideo2* iface)
-{
-	CVideoRendererImpl_THIS(iface,basvid);
-
-	FIXME("(%p)->()\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-IBasicVideo2_fnGetPreferredAspectRatio(IBasicVideo2* iface,long* plRateX,long* plRateY)
+IBasicVideo_fnIsUsingDefaultDestination(IBasicVideo* iface)
 {
 	CVideoRendererImpl_THIS(iface,basvid);
 
@@ -1225,57 +1214,55 @@ IBasicVideo2_fnGetPreferredAspectRatio(IBasicVideo2* iface,long* plRateX,long* p
 
 
 
-static ICOM_VTABLE(IBasicVideo2) ibasicvideo =
+static ICOM_VTABLE(IBasicVideo) ibasicvideo =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	/* IUnknown fields */
-	IBasicVideo2_fnQueryInterface,
-	IBasicVideo2_fnAddRef,
-	IBasicVideo2_fnRelease,
+	IBasicVideo_fnQueryInterface,
+	IBasicVideo_fnAddRef,
+	IBasicVideo_fnRelease,
 	/* IDispatch fields */
-	IBasicVideo2_fnGetTypeInfoCount,
-	IBasicVideo2_fnGetTypeInfo,
-	IBasicVideo2_fnGetIDsOfNames,
-	IBasicVideo2_fnInvoke,
+	IBasicVideo_fnGetTypeInfoCount,
+	IBasicVideo_fnGetTypeInfo,
+	IBasicVideo_fnGetIDsOfNames,
+	IBasicVideo_fnInvoke,
 	/* IBasicVideo fields */
-	IBasicVideo2_fnget_AvgTimePerFrame,
-	IBasicVideo2_fnget_BitRate,
-	IBasicVideo2_fnget_BitErrorRate,
-	IBasicVideo2_fnget_VideoWidth,
-	IBasicVideo2_fnget_VideoHeight,
-	IBasicVideo2_fnput_SourceLeft,
-	IBasicVideo2_fnget_SourceLeft,
-	IBasicVideo2_fnput_SourceWidth,
-	IBasicVideo2_fnget_SourceWidth,
-	IBasicVideo2_fnput_SourceTop,
-	IBasicVideo2_fnget_SourceTop,
-	IBasicVideo2_fnput_SourceHeight,
-	IBasicVideo2_fnget_SourceHeight,
-	IBasicVideo2_fnput_DestinationLeft,
-	IBasicVideo2_fnget_DestinationLeft,
-	IBasicVideo2_fnput_DestinationWidth,
-	IBasicVideo2_fnget_DestinationWidth,
-	IBasicVideo2_fnput_DestinationTop,
-	IBasicVideo2_fnget_DestinationTop,
-	IBasicVideo2_fnput_DestinationHeight,
-	IBasicVideo2_fnget_DestinationHeight,
-	IBasicVideo2_fnSetSourcePosition,
-	IBasicVideo2_fnGetSourcePosition,
-	IBasicVideo2_fnSetDefaultSourcePosition,
-	IBasicVideo2_fnSetDestinationPosition,
-	IBasicVideo2_fnGetDestinationPosition,
-	IBasicVideo2_fnSetDefaultDestinationPosition,
-	IBasicVideo2_fnGetVideoSize,
-	IBasicVideo2_fnGetVideoPaletteEntries,
-	IBasicVideo2_fnGetCurrentImage,
-	IBasicVideo2_fnIsUsingDefaultSource,
-	IBasicVideo2_fnIsUsingDefaultDestination,
-	/* IBasicVideo2 fields */
-	IBasicVideo2_fnGetPreferredAspectRatio,
+	IBasicVideo_fnget_AvgTimePerFrame,
+	IBasicVideo_fnget_BitRate,
+	IBasicVideo_fnget_BitErrorRate,
+	IBasicVideo_fnget_VideoWidth,
+	IBasicVideo_fnget_VideoHeight,
+	IBasicVideo_fnput_SourceLeft,
+	IBasicVideo_fnget_SourceLeft,
+	IBasicVideo_fnput_SourceWidth,
+	IBasicVideo_fnget_SourceWidth,
+	IBasicVideo_fnput_SourceTop,
+	IBasicVideo_fnget_SourceTop,
+	IBasicVideo_fnput_SourceHeight,
+	IBasicVideo_fnget_SourceHeight,
+	IBasicVideo_fnput_DestinationLeft,
+	IBasicVideo_fnget_DestinationLeft,
+	IBasicVideo_fnput_DestinationWidth,
+	IBasicVideo_fnget_DestinationWidth,
+	IBasicVideo_fnput_DestinationTop,
+	IBasicVideo_fnget_DestinationTop,
+	IBasicVideo_fnput_DestinationHeight,
+	IBasicVideo_fnget_DestinationHeight,
+	IBasicVideo_fnSetSourcePosition,
+	IBasicVideo_fnGetSourcePosition,
+	IBasicVideo_fnSetDefaultSourcePosition,
+	IBasicVideo_fnSetDestinationPosition,
+	IBasicVideo_fnGetDestinationPosition,
+	IBasicVideo_fnSetDefaultDestinationPosition,
+	IBasicVideo_fnGetVideoSize,
+	IBasicVideo_fnGetVideoPaletteEntries,
+	IBasicVideo_fnGetCurrentImage,
+	IBasicVideo_fnIsUsingDefaultSource,
+	IBasicVideo_fnIsUsingDefaultDestination,
 };
 
 
-HRESULT CVideoRendererImpl_InitIBasicVideo2( CVideoRendererImpl* This )
+HRESULT CVideoRendererImpl_InitIBasicVideo( CVideoRendererImpl* This )
 {
 	TRACE("(%p)\n",This);
 	ICOM_VTBL(&This->basvid) = &ibasicvideo;
@@ -1283,7 +1270,7 @@ HRESULT CVideoRendererImpl_InitIBasicVideo2( CVideoRendererImpl* This )
 	return NOERROR;
 }
 
-void CVideoRendererImpl_UninitIBasicVideo2( CVideoRendererImpl* This )
+void CVideoRendererImpl_UninitIBasicVideo( CVideoRendererImpl* This )
 {
 	TRACE("(%p)\n",This);
 }

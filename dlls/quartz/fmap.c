@@ -658,8 +658,7 @@ void CFilterMapper_UninitIFilterMapper( CFilterMapper* pfm )
 /* can I use offsetof safely? - FIXME? */
 static QUARTZ_IFEntry FMap2IFEntries[] =
 {
-  { &IID_IFilterMapper2, offsetof(CFilterMapper2,fmap3)-offsetof(CFilterMapper2,unk) },
-  { &IID_IFilterMapper3, offsetof(CFilterMapper2,fmap3)-offsetof(CFilterMapper2,unk) },
+  { &IID_IFilterMapper2, offsetof(CFilterMapper2,fmap2)-offsetof(CFilterMapper2,unk) },
 };
 
 
@@ -667,7 +666,7 @@ static void QUARTZ_DestroyFilterMapper2(IUnknown* punk)
 {
 	CFilterMapper2_THIS(punk,unk);
 
-	CFilterMapper2_UninitIFilterMapper3( This );
+	CFilterMapper2_UninitIFilterMapper2( This );
 }
 
 HRESULT QUARTZ_CreateFilterMapper2(IUnknown* punkOuter,void** ppobj)
@@ -682,7 +681,7 @@ HRESULT QUARTZ_CreateFilterMapper2(IUnknown* punkOuter,void** ppobj)
 		return E_OUTOFMEMORY;
 
 	QUARTZ_IUnkInit( &pfm->unk, punkOuter );
-	hr = CFilterMapper2_InitIFilterMapper3( pfm );
+	hr = CFilterMapper2_InitIFilterMapper2( pfm );
 	if ( FAILED(hr) )
 	{
 		QUARTZ_FreeObj( pfm );
@@ -700,15 +699,15 @@ HRESULT QUARTZ_CreateFilterMapper2(IUnknown* punkOuter,void** ppobj)
 
 /***************************************************************************
  *
- *	CLSID_FilterMapper2::IFilterMapper3
+ *	CLSID_FilterMapper2::IFilterMapper2
  *
  */
 
 
 static HRESULT WINAPI
-IFilterMapper3_fnQueryInterface(IFilterMapper3* iface,REFIID riid,void** ppobj)
+IFilterMapper2_fnQueryInterface(IFilterMapper2* iface,REFIID riid,void** ppobj)
 {
-	CFilterMapper2_THIS(iface,fmap3);
+	CFilterMapper2_THIS(iface,fmap2);
 
 	TRACE("(%p)->()\n",This);
 
@@ -716,9 +715,9 @@ IFilterMapper3_fnQueryInterface(IFilterMapper3* iface,REFIID riid,void** ppobj)
 }
 
 static ULONG WINAPI
-IFilterMapper3_fnAddRef(IFilterMapper3* iface)
+IFilterMapper2_fnAddRef(IFilterMapper2* iface)
 {
-	CFilterMapper2_THIS(iface,fmap3);
+	CFilterMapper2_THIS(iface,fmap2);
 
 	TRACE("(%p)->()\n",This);
 
@@ -726,9 +725,9 @@ IFilterMapper3_fnAddRef(IFilterMapper3* iface)
 }
 
 static ULONG WINAPI
-IFilterMapper3_fnRelease(IFilterMapper3* iface)
+IFilterMapper2_fnRelease(IFilterMapper2* iface)
 {
-	CFilterMapper2_THIS(iface,fmap3);
+	CFilterMapper2_THIS(iface,fmap2);
 
 	TRACE("(%p)->()\n",This);
 
@@ -736,9 +735,9 @@ IFilterMapper3_fnRelease(IFilterMapper3* iface)
 }
 
 static HRESULT WINAPI
-IFilterMapper3_fnCreateCategory(IFilterMapper3* iface,REFCLSID rclsidCategory,DWORD dwMerit,LPCWSTR lpwszDesc)
+IFilterMapper2_fnCreateCategory(IFilterMapper2* iface,REFCLSID rclsidCategory,DWORD dwMerit,LPCWSTR lpwszDesc)
 {
-	CFilterMapper2_THIS(iface,fmap3);
+	CFilterMapper2_THIS(iface,fmap2);
 
 	FIXME("(%p)->(%s,%lu,%s) stub!\n",This,
 		debugstr_guid(rclsidCategory),
@@ -749,9 +748,9 @@ IFilterMapper3_fnCreateCategory(IFilterMapper3* iface,REFCLSID rclsidCategory,DW
 
 
 static HRESULT WINAPI
-IFilterMapper3_fnUnregisterFilter(IFilterMapper3* iface,const CLSID* pclsidCategory,const OLECHAR* lpwszInst,REFCLSID rclsidFilter)
+IFilterMapper2_fnUnregisterFilter(IFilterMapper2* iface,const CLSID* pclsidCategory,const OLECHAR* lpwszInst,REFCLSID rclsidFilter)
 {
-	CFilterMapper2_THIS(iface,fmap3);
+	CFilterMapper2_THIS(iface,fmap2);
 	WCHAR*	pwszPath = NULL;
 	HRESULT hr;
 
@@ -776,9 +775,9 @@ IFilterMapper3_fnUnregisterFilter(IFilterMapper3* iface,const CLSID* pclsidCateg
 
 
 static HRESULT WINAPI
-IFilterMapper3_fnRegisterFilter(IFilterMapper3* iface,REFCLSID rclsidFilter,LPCWSTR lpName,IMoniker** ppMoniker,const CLSID* pclsidCategory,const OLECHAR* lpwszInst,const REGFILTER2* pRF2)
+IFilterMapper2_fnRegisterFilter(IFilterMapper2* iface,REFCLSID rclsidFilter,LPCWSTR lpName,IMoniker** ppMoniker,const CLSID* pclsidCategory,const OLECHAR* lpwszInst,const REGFILTER2* pRF2)
 {
-	CFilterMapper2_THIS(iface,fmap3);
+	CFilterMapper2_THIS(iface,fmap2);
 	WCHAR*  pwszPath = NULL;
 	IMoniker*	pMoniker = NULL;
 	BYTE*	pFilterData = NULL;
@@ -843,12 +842,12 @@ err:
 
 
 static HRESULT WINAPI
-IFilterMapper3_fnEnumMatchingFilters(IFilterMapper3* iface,
+IFilterMapper2_fnEnumMatchingFilters(IFilterMapper2* iface,
 	IEnumMoniker** ppEnumMoniker,DWORD dwFlags,BOOL bExactMatch,DWORD dwMerit,
 	BOOL bInputNeeded,DWORD cInputTypes,const GUID* pguidInputTypes,const REGPINMEDIUM* pPinMediumIn,const CLSID* pPinCategoryIn,BOOL bRender,
 	BOOL bOutputNeeded,DWORD cOutputTypes,const GUID* pguidOutputTypes,const REGPINMEDIUM* pPinMediumOut,const CLSID* pPinCategoryOut)
 {
-	CFilterMapper2_THIS(iface,fmap3);
+	CFilterMapper2_THIS(iface,fmap2);
 	ICreateDevEnum*	pEnum = NULL;
 	IEnumMoniker*	pCategories = NULL;
 	IMoniker*	pCat = NULL;
@@ -1049,46 +1048,33 @@ err:
 	return hr;
 }
 
-static HRESULT WINAPI
-IFilterMapper3_fnGetICreateDevEnum(IFilterMapper3* iface,ICreateDevEnum** ppDevEnum)
-{
-	CFilterMapper2_THIS(iface,fmap3);
-
-	/* undocumented */
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
 
 
 
-
-static ICOM_VTABLE(IFilterMapper3) ifmap3 =
+static ICOM_VTABLE(IFilterMapper2) ifmap2 =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	/* IUnknown fields */
-	IFilterMapper3_fnQueryInterface,
-	IFilterMapper3_fnAddRef,
-	IFilterMapper3_fnRelease,
+	IFilterMapper2_fnQueryInterface,
+	IFilterMapper2_fnAddRef,
+	IFilterMapper2_fnRelease,
 	/* IFilterMapper2 fields */
-	IFilterMapper3_fnCreateCategory,
-	IFilterMapper3_fnUnregisterFilter,
-	IFilterMapper3_fnRegisterFilter,
-	IFilterMapper3_fnEnumMatchingFilters,
-	/* IFilterMapper3 fields */
-	IFilterMapper3_fnGetICreateDevEnum,
+	IFilterMapper2_fnCreateCategory,
+	IFilterMapper2_fnUnregisterFilter,
+	IFilterMapper2_fnRegisterFilter,
+	IFilterMapper2_fnEnumMatchingFilters,
 };
 
 
-HRESULT CFilterMapper2_InitIFilterMapper3( CFilterMapper2* pfm )
+HRESULT CFilterMapper2_InitIFilterMapper2( CFilterMapper2* pfm )
 {
 	TRACE("(%p)\n",pfm);
-	ICOM_VTBL(&pfm->fmap3) = &ifmap3;
+	ICOM_VTBL(&pfm->fmap2) = &ifmap2;
 
 	return NOERROR;
 }
 
-void CFilterMapper2_UninitIFilterMapper3( CFilterMapper2* pfm )
+void CFilterMapper2_UninitIFilterMapper2( CFilterMapper2* pfm )
 {
 	TRACE("(%p)\n",pfm);
 }

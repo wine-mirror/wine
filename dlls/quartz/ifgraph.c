@@ -1,6 +1,6 @@
 /*
  * Implementation of IFilterGraph and related interfaces
- *	+ IGraphVersion, IGraphConfig
+ *	+ IGraphVersion
  *
  * FIXME - create a thread to process some methods correctly.
  *
@@ -102,8 +102,6 @@ static HRESULT CFilterGraph_GraphChanged( CFilterGraph* This )
 {
 	/* IDistributorNotify_NotifyGraphChange() */
 
-	IMediaEventSink_Notify(CFilterGraph_IMediaEventSink(This),
-			EC_GRAPH_CHANGED, 0, 0);
 	This->m_lGraphVersion ++;
 
 	return NOERROR;
@@ -1516,192 +1514,6 @@ HRESULT CFilterGraph_InitIGraphVersion( CFilterGraph* pfg )
 }
 
 void CFilterGraph_UninitIGraphVersion( CFilterGraph* pfg )
-{
-	TRACE("(%p)\n",pfg);
-}
-
-/***************************************************************************
- *
- *	CFilterGraph::IGraphConfig methods
- *
- */
-
-static HRESULT WINAPI
-IGraphConfig_fnQueryInterface(IGraphConfig* iface,REFIID riid,void** ppobj)
-{
-	CFilterGraph_THIS(iface,grphconf);
-
-	TRACE("(%p)->()\n",This);
-
-	return IUnknown_QueryInterface(This->unk.punkControl,riid,ppobj);
-}
-
-static ULONG WINAPI
-IGraphConfig_fnAddRef(IGraphConfig* iface)
-{
-	CFilterGraph_THIS(iface,grphconf);
-
-	TRACE("(%p)->()\n",This);
-
-	return IUnknown_AddRef(This->unk.punkControl);
-}
-
-static ULONG WINAPI
-IGraphConfig_fnRelease(IGraphConfig* iface)
-{
-	CFilterGraph_THIS(iface,grphconf);
-
-	TRACE("(%p)->()\n",This);
-
-	return IUnknown_Release(This->unk.punkControl);
-}
-
-
-
-static HRESULT WINAPI
-IGraphConfig_fnReconnect(IGraphConfig* iface,IPin* pOut,IPin* pIn,const AM_MEDIA_TYPE* pmt,IBaseFilter* pFilter,HANDLE hAbort,DWORD dwFlags)
-{
-	CFilterGraph_THIS(iface,grphconf);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-IGraphConfig_fnReconfigure(IGraphConfig* iface,IGraphConfigCallback* pCallback,PVOID pvParam,DWORD dwFlags,HANDLE hAbort)
-{
-	CFilterGraph_THIS(iface,grphconf);
-	HRESULT hr;
-
-	FIXME("(%p)->(%p,%p,%08lx,%08x) stub!\n",This,pCallback,pvParam,dwFlags,hAbort);
-
-	EnterCriticalSection( &This->m_csFilters );
-	EnterCriticalSection( &This->m_csGraphState );
-
-	hr = IGraphConfigCallback_Reconfigure(pCallback,pvParam,dwFlags);
-
-	LeaveCriticalSection( &This->m_csGraphState );
-	LeaveCriticalSection( &This->m_csFilters );
-
-	return hr;
-}
-
-static HRESULT WINAPI
-IGraphConfig_fnAddFilterToCache(IGraphConfig* iface,IBaseFilter* pFilter)
-{
-	CFilterGraph_THIS(iface,grphconf);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-IGraphConfig_fnEnumCacheFilter(IGraphConfig* iface,IEnumFilters** ppenum)
-{
-	CFilterGraph_THIS(iface,grphconf);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-IGraphConfig_fnRemoveFilterFromCache(IGraphConfig* iface,IBaseFilter* pFilter)
-{
-	CFilterGraph_THIS(iface,grphconf);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-IGraphConfig_fnGetStartTime(IGraphConfig* iface,REFERENCE_TIME* prt)
-{
-	CFilterGraph_THIS(iface,grphconf);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-IGraphConfig_fnPushThroughData(IGraphConfig* iface,IPin* pOut,IPinConnection* pConn,HANDLE hAbort)
-{
-	CFilterGraph_THIS(iface,grphconf);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-IGraphConfig_fnSetFilterFlags(IGraphConfig* iface,IBaseFilter* pFilter,DWORD dwFlags)
-{
-	CFilterGraph_THIS(iface,grphconf);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-IGraphConfig_fnGetFilterFlags(IGraphConfig* iface,IBaseFilter* pFilter,DWORD* pdwFlags)
-{
-	CFilterGraph_THIS(iface,grphconf);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI
-IGraphConfig_fnRemoveFilterEx(IGraphConfig* iface,IBaseFilter* pFilter,DWORD dwFlags)
-{
-	CFilterGraph_THIS(iface,grphconf);
-
-	FIXME("(%p)->() stub!\n",This);
-
-	return E_NOTIMPL;
-}
-
-
-
-
-
-static ICOM_VTABLE(IGraphConfig) igraphconfig =
-{
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	/* IUnknown fields */
-	IGraphConfig_fnQueryInterface,
-	IGraphConfig_fnAddRef,
-	IGraphConfig_fnRelease,
-	/* IGraphConfig fields */
-	IGraphConfig_fnReconnect,
-	IGraphConfig_fnReconfigure,
-	IGraphConfig_fnAddFilterToCache,
-	IGraphConfig_fnEnumCacheFilter,
-	IGraphConfig_fnRemoveFilterFromCache,
-	IGraphConfig_fnGetStartTime,
-	IGraphConfig_fnPushThroughData,
-	IGraphConfig_fnSetFilterFlags,
-	IGraphConfig_fnGetFilterFlags,
-	IGraphConfig_fnRemoveFilterEx,
-};
-
-
-
-HRESULT CFilterGraph_InitIGraphConfig( CFilterGraph* pfg )
-{
-	TRACE("(%p)\n",pfg);
-	ICOM_VTBL(&pfg->grphconf) = &igraphconfig;
-
-	return NOERROR;
-}
-
-void CFilterGraph_UninitIGraphConfig( CFilterGraph* pfg )
 {
 	TRACE("(%p)\n",pfg);
 }

@@ -31,7 +31,7 @@ typedef struct CVideoRendererPinImpl CVideoRendererPinImpl;
 
 typedef struct VidRen_IBasicVideo
 {
-	ICOM_VFIELD(IBasicVideo2);
+	ICOM_VFIELD(IBasicVideo);
 } VidRen_IBasicVideo;
 
 typedef struct VidRen_IVideoWindow
@@ -76,8 +76,8 @@ struct CVideoRendererPinImpl
 #define	CVideoRendererImpl_THIS(iface,member)	CVideoRendererImpl*	This = ((CVideoRendererImpl*)(((char*)iface)-offsetof(CVideoRendererImpl,member)))
 #define	CVideoRendererPinImpl_THIS(iface,member)	CVideoRendererPinImpl*	This = ((CVideoRendererPinImpl*)(((char*)iface)-offsetof(CVideoRendererPinImpl,member)))
 
-HRESULT CVideoRendererImpl_InitIBasicVideo2( CVideoRendererImpl* This );
-void CVideoRendererImpl_UninitIBasicVideo2( CVideoRendererImpl* This );
+HRESULT CVideoRendererImpl_InitIBasicVideo( CVideoRendererImpl* This );
+void CVideoRendererImpl_UninitIBasicVideo( CVideoRendererImpl* This );
 HRESULT CVideoRendererImpl_InitIVideoWindow( CVideoRendererImpl* This );
 void CVideoRendererImpl_UninitIVideoWindow( CVideoRendererImpl* This );
 

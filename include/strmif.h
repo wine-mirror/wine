@@ -46,28 +46,18 @@
 typedef struct IAMAnalogVideoDecoder IAMAnalogVideoDecoder;
 typedef struct IAMAnalogVideoEncoder IAMAnalogVideoEncoder;
 typedef struct IAMAudioInputMixer IAMAudioInputMixer;
-typedef struct IAMAudioRendererStats IAMAudioRendererStats;
 typedef struct IAMBufferNegotiation IAMBufferNegotiation;
 typedef struct IAMCameraControl IAMCameraControl;
-typedef struct IAMClockAdjust IAMClockAdjust;
 typedef struct IAMCopyCaptureFileProgress IAMCopyCaptureFileProgress;
 typedef struct IAMCrossbar IAMCrossbar;
-typedef struct IAMDeviceRemoval IAMDeviceRemoval;
 typedef struct IAMDevMemoryAllocator IAMDevMemoryAllocator;
 typedef struct IAMDevMemoryControl IAMDevMemoryControl;
 typedef struct IAMDroppedFrames IAMDroppedFrames;
 typedef struct IAMExtDevice IAMExtDevice;
 typedef struct IAMExtTransport IAMExtTransport;
-typedef struct IAMFilterMiscFlags IAMFilterMiscFlags;
-typedef struct IAMGraphStreams IAMGraphStreams;
-typedef struct IAMLatency IAMLatency;
-typedef struct IAMOpenProgress IAMOpenProgress;
-typedef struct IAMOverlayFX IAMOverlayFX;
 typedef struct IAMovie IAMovie;
 typedef struct IAMovieSetup IAMovieSetup;
 typedef struct IAMPhysicalPinInfo IAMPhysicalPinInfo;
-typedef struct IAMPushSource IAMPushSource;
-typedef struct IAMResourceControl IAMResourceControl;
 typedef struct IAMStreamConfig IAMStreamConfig;
 typedef struct IAMStreamControl IAMStreamControl;
 typedef struct IAMStreamSelect IAMStreamSelect;
@@ -82,69 +72,43 @@ typedef struct IAMTVTuner IAMTVTuner;
 typedef struct IAMVfwCaptureDialogs IAMVfwCaptureDialogs;
 typedef struct IAMVfwCompressDialogs IAMVfwCompressDialogs;
 typedef struct IAMVideoCompression IAMVideoCompression;
-typedef struct IAMVideoControl IAMVideoControl;
-typedef struct IAMVideoDecimationProperties IAMVideoDecimationProperties;
 typedef struct IAMVideoProcAmp IAMVideoProcAmp;
 typedef struct IAsyncReader IAsyncReader;
 typedef struct IMediaFilter IMediaFilter;
 typedef struct IBaseFilter IBaseFilter;
 typedef struct IBPCSatelliteTuner IBPCSatelliteTuner;
 typedef struct ICaptureGraphBuilder ICaptureGraphBuilder;
-typedef struct ICaptureGraphBuilder2 ICaptureGraphBuilder2;
 typedef struct IConfigAviMux IConfigAviMux;
 typedef struct IConfigInterleaving IConfigInterleaving;
 typedef struct ICreateDevEnum ICreateDevEnum;
-typedef struct IDDrawExclModeVideo IDDrawExclModeVideo;
-typedef struct IDDrawExclModeVideoCallback IDDrawExclModeVideoCallback;
-typedef struct IDecimateVideoImage IDecimateVideoImage;
 typedef struct IDistributorNotify IDistributorNotify;
-typedef struct IDrawVideoImage IDrawVideoImage;
-typedef struct IDvdCmd IDvdCmd;
 typedef struct IDvdControl IDvdControl;
-typedef struct IDvdControl2 IDvdControl2;
 typedef struct IDvdGraphBuilder IDvdGraphBuilder;
 typedef struct IDvdInfo IDvdInfo;
-typedef struct IDvdInfo2 IDvdInfo2;
-typedef struct IDvdState IDvdState;
-typedef struct IDVEnc IDVEnc;
-typedef struct IDVSplitter IDVSplitter;
 typedef struct IEnumFilters IEnumFilters;
 typedef struct IEnumMediaTypes IEnumMediaTypes;
 typedef struct IEnumPins IEnumPins;
 typedef struct IEnumRegFilters IEnumRegFilters;
-typedef struct IEnumStreamIdMap IEnumStreamIdMap;
 typedef struct IFileSinkFilter IFileSinkFilter;
 typedef struct IFileSinkFilter2 IFileSinkFilter2;
 typedef struct IFileSourceFilter IFileSourceFilter;
-typedef struct IFilterChain IFilterChain;
 typedef struct IFilterGraph IFilterGraph;
 typedef struct IFilterGraph2 IFilterGraph2;
 typedef struct IFilterMapper IFilterMapper;
 typedef struct IFilterMapper2 IFilterMapper2;
-typedef struct IFilterMapper3 IFilterMapper3;
 typedef struct IGraphBuilder IGraphBuilder;
-typedef struct IGraphConfig IGraphConfig;
-typedef struct IGraphConfigCallback IGraphConfigCallback;
 typedef struct IGraphVersion IGraphVersion;
-typedef struct IIPDVDec IIPDVDec;
 typedef struct IMediaEventSink IMediaEventSink;
 typedef struct IMediaPropertyBag IMediaPropertyBag;
 typedef struct IMediaSample IMediaSample;
 typedef struct IMediaSample2 IMediaSample2;
 typedef struct IMediaSeeking IMediaSeeking;
 typedef struct IMemAllocator IMemAllocator;
-typedef struct IMemAllocatorCallbackTemp IMemAllocatorCallbackTemp;
-typedef struct IMemAllocatorNotifyCallbackTemp IMemAllocatorNotifyCallbackTemp;
 typedef struct IMemInputPin IMemInputPin;
-typedef struct IMpeg2Demultiplexer IMpeg2Demultiplexer;
-typedef struct IMPEG2StreamIdMap IMPEG2StreamIdMap;
 typedef struct IOverlay IOverlay;
 typedef struct IOverlayNotify IOverlayNotify;
-typedef struct IOverlayNotify2 IOverlayNotify2;
 typedef struct IPersistMediaPropertyBag IPersistMediaPropertyBag;
 typedef struct IPin IPin;
-typedef struct IPinConnection IPinConnection;
-typedef struct IPinFlowControl IPinFlowControl;
 typedef struct IQualityControl IQualityControl;
 typedef struct IReferenceClock IReferenceClock;
 typedef struct IReferenceClock2 IReferenceClock2;
@@ -152,35 +116,24 @@ typedef struct IResourceConsumer IResourceConsumer;
 typedef struct IResourceManager IResourceManager;
 typedef struct ISeekingPassThru ISeekingPassThru;
 typedef struct IStreamBuilder IStreamBuilder;
-typedef struct IVideoFrameStep IVideoFrameStep;
 
 /* GUIDs. */
 
 DEFINE_GUID(IID_IAMAnalogVideoDecoder,0xC6E13350,0x30AC,0x11D0,0xA1,0x8C,0x00,0xA0,0xC9,0x11,0x89,0x56);
 DEFINE_GUID(IID_IAMAnalogVideoEncoder,0xC6E133B0,0x30AC,0x11D0,0xA1,0x8C,0x00,0xA0,0xC9,0x11,0x89,0x56);
 DEFINE_GUID(IID_IAMAudioInputMixer,0x54C39221,0x8380,0x11D0,0xB3,0xF0,0x00,0xAA,0x00,0x37,0x61,0xC5);
-DEFINE_GUID(IID_IAMAudioRendererStats,0x22320CB2,0xD41A,0x11D2,0xBF,0x7C,0xD7,0xCB,0x9D,0xF0,0xBF,0x93);
 DEFINE_GUID(IID_IAMBufferNegotiation,0x56ED71A0,0xAF5F,0x11D0,0xB3,0xF0,0x00,0xAA,0x00,0x37,0x61,0xC5);
 DEFINE_GUID(IID_IAMCameraControl,0xC6E13370,0x30AC,0x11D0,0xA1,0x8C,0x00,0xA0,0xC9,0x11,0x89,0x56);
-DEFINE_GUID(IID_IAMClockAdjust,0x4D5466B0,0xA49C,0x11D1,0xAB,0xE8,0x00,0xA0,0xC9,0x05,0xF3,0x75);
 DEFINE_GUID(IID_IAMCopyCaptureFileProgress,0x670D1D20,0xA068,0x11D0,0xB3,0xF0,0x00,0xAA,0x00,0x37,0x61,0xC5);
 DEFINE_GUID(IID_IAMCrossbar,0xC6E13380,0x30AC,0x11D0,0xA1,0x8C,0x00,0xA0,0xC9,0x11,0x89,0x56);
-DEFINE_GUID(IID_IAMDeviceRemoval,0xF90A6130,0xB658,0x11D2,0xAE,0x49,0x00,0x00,0xF8,0x75,0x4B,0x99);
 DEFINE_GUID(IID_IAMDevMemoryAllocator,0xC6545BF0,0xE76B,0x11D0,0xBD,0x52,0x00,0xA0,0xC9,0x11,0xCE,0x86);
 DEFINE_GUID(IID_IAMDevMemoryControl,0xC6545BF1,0xE76B,0x11D0,0xBD,0x52,0x00,0xA0,0xC9,0x11,0xCE,0x86);
 DEFINE_GUID(IID_IAMDroppedFrames,0xC6E13344,0x30AC,0x11D0,0xA1,0x8C,0x00,0xA0,0xC9,0x11,0x89,0x56);
 DEFINE_GUID(IID_IAMExtDevice,0xB5730A90,0x1A2C,0x11CF,0x8C,0x23,0x00,0xAA,0x00,0x6B,0x68,0x14);
 DEFINE_GUID(IID_IAMExtTransport,0xA03CD5F0,0x3045,0x11CF,0x8C,0x44,0x00,0xAA,0x00,0x6B,0x68,0x14);
-DEFINE_GUID(IID_IAMFilterMiscFlags,0x2DD74950,0xA890,0x11D1,0xAB,0xE8,0x00,0xA0,0xC9,0x05,0xF3,0x75);
-DEFINE_GUID(IID_IAMGraphStreams,0x632105FA,0x072E,0x11D3,0x8A,0xF9,0x00,0xC0,0x4F,0xB6,0xBD,0x3D);
-DEFINE_GUID(IID_IAMLatency,0x62EA93BA,0xEC62,0x11D2,0xB7,0x70,0x00,0xC0,0x4F,0xB6,0xBD,0x3D);
-DEFINE_GUID(IID_IAMOpenProgress,0x8E1C39A1,0xDE53,0x11CF,0xAA,0x63,0x00,0x80,0xC7,0x44,0x52,0x8D);
-DEFINE_GUID(IID_IAMOverlayFX,0x62FAE250,0x7E65,0x4460,0xBF,0xC9,0x63,0x98,0xB3,0x22,0x07,0x3C);
 DEFINE_GUID(IID_IAMovie,0x359ACE10,0x7688,0x11CF,0x8B,0x23,0x00,0x80,0x5F,0x6C,0xEF,0x60);
 DEFINE_GUID(IID_IAMovieSetup,0xA3D8CEC0,0x7E5A,0x11CF,0xBB,0xC5,0x00,0x80,0x5F,0x6C,0xEF,0x20);
 DEFINE_GUID(IID_IAMPhysicalPinInfo,0xF938C991,0x3029,0x11CF,0x8C,0x44,0x00,0xAA,0x00,0x6B,0x68,0x14);
-DEFINE_GUID(IID_IAMPushSource,0xF185FE76,0xE64E,0x11D2,0xB7,0x6E,0x00,0xC0,0x4F,0xB6,0xBD,0x3D);
-DEFINE_GUID(IID_IAMResourceControl,0x8389D2D0,0x77D7,0x11D1,0xAB,0xE6,0x00,0xA0,0xC9,0x05,0xF3,0x75);
 DEFINE_GUID(IID_IAMStreamConfig,0xC6E13340,0x30AC,0x11D0,0xA1,0x8C,0x00,0xA0,0xC9,0x11,0x89,0x56);
 DEFINE_GUID(IID_IAMStreamControl,0x36B73881,0xC2C8,0x11CF,0x8B,0x46,0x00,0x80,0x5F,0x6C,0xEF,0x60);
 DEFINE_GUID(IID_IAMStreamSelect,0xC1960960,0x17F5,0x11D1,0xAB,0xE1,0x00,0xA0,0xC9,0x05,0xF3,0x75);
@@ -195,69 +148,43 @@ DEFINE_GUID(IID_IAMTVTuner,0x211A8766,0x03AC,0x11D1,0x8D,0x13,0x00,0xAA,0x00,0xB
 DEFINE_GUID(IID_IAMVfwCaptureDialogs,0xD8D715A0,0x6E5E,0x11D0,0xB3,0xF0,0x00,0xAA,0x00,0x37,0x61,0xC5);
 DEFINE_GUID(IID_IAMVfwCompressDialogs,0xD8D715A3,0x6E5E,0x11D0,0xB3,0xF0,0x00,0xAA,0x00,0x37,0x61,0xC5);
 DEFINE_GUID(IID_IAMVideoCompression,0xC6E13343,0x30AC,0x11D0,0xA1,0x8C,0x00,0xA0,0xC9,0x11,0x89,0x56);
-DEFINE_GUID(IID_IAMVideoControl,0x6A2E0670,0x28E4,0x11D0,0xA1,0x8C,0x00,0xA0,0xC9,0x11,0x89,0x56);
-DEFINE_GUID(IID_IAMVideoDecimationProperties,0x60D32930,0x13DA,0x11D3,0x9E,0xC6,0xC4,0xFC,0xAE,0xF5,0xC7,0xBE);
 DEFINE_GUID(IID_IAMVideoProcAmp,0xC6E13360,0x30AC,0x11D0,0xA1,0x8C,0x00,0xA0,0xC9,0x11,0x89,0x56);
 DEFINE_GUID(IID_IAsyncReader,0x56A868AA,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IMediaFilter,0x56A86899,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IBaseFilter,0x56A86895,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IBPCSatelliteTuner,0x211A8765,0x03AC,0x11D1,0x8D,0x13,0x00,0xAA,0x00,0xBD,0x83,0x39);
 DEFINE_GUID(IID_ICaptureGraphBuilder,0xBF87B6E0,0x8C27,0x11D0,0xB3,0xF0,0x00,0xAA,0x00,0x37,0x61,0xC5);
-DEFINE_GUID(IID_ICaptureGraphBuilder2,0x93E5A4E0,0x2D50,0x11D2,0xAB,0xFA,0x00,0xA0,0xC9,0xC6,0xE3,0x8D);
 DEFINE_GUID(IID_IConfigAviMux,0x5ACD6AA0,0xF482,0x11CE,0x8B,0x67,0x00,0xAA,0x00,0xA3,0xF1,0xA6);
 DEFINE_GUID(IID_IConfigInterleaving,0xBEE3D220,0x157B,0x11D0,0xBD,0x23,0x00,0xA0,0xC9,0x11,0xCE,0x86);
 DEFINE_GUID(IID_ICreateDevEnum,0x29840822,0x5B84,0x11D0,0xBD,0x3B,0x00,0xA0,0xC9,0x11,0xCE,0x86);
-DEFINE_GUID(IID_IDDrawExclModeVideo,0x153ACC21,0xD83B,0x11D1,0x82,0xBF,0x00,0xA0,0xC9,0x69,0x6C,0x8F);
-DEFINE_GUID(IID_IDDrawExclModeVideoCallback,0x913C24A0,0x20AB,0x11D2,0x90,0x38,0x00,0xA0,0xC9,0x69,0x72,0x98);
-DEFINE_GUID(IID_IDecimateVideoImage,0x2E5EA3E0,0xE924,0x11D2,0xB6,0xDA,0x00,0xA0,0xC9,0x95,0xE8,0xDF);
 DEFINE_GUID(IID_IDistributorNotify,0x56A868AF,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
-DEFINE_GUID(IID_IDrawVideoImage,0x48EFB120,0xAB49,0x11D2,0xAE,0xD2,0x00,0xA0,0xC9,0x95,0xE8,0xD5);
-DEFINE_GUID(IID_IDvdCmd,0x5A4A97E4,0x94EE,0x4A55,0x97,0x51,0x74,0xB5,0x64,0x3A,0xA2,0x7D);
 DEFINE_GUID(IID_IDvdControl,0xA70EFE61,0xE2A3,0x11D0,0xA9,0xBE,0x00,0xAA,0x00,0x61,0xBE,0x93);
-DEFINE_GUID(IID_IDvdControl2,0x33BC7430,0xEEC0,0x11D2,0x82,0x01,0x00,0xA0,0xC9,0xD7,0x48,0x42);
 DEFINE_GUID(IID_IDvdGraphBuilder,0xFCC152B6,0xF372,0x11D0,0x8E,0x00,0x00,0xC0,0x4F,0xD7,0xC0,0x8B);
 DEFINE_GUID(IID_IDvdInfo,0xA70EFE60,0xE2A3,0x11D0,0xA9,0xBE,0x00,0xAA,0x00,0x61,0xBE,0x93);
-DEFINE_GUID(IID_IDvdInfo2,0x34151510,0xEEC0,0x11D2,0x82,0x01,0x00,0xA0,0xC9,0xD7,0x48,0x42);
-DEFINE_GUID(IID_IDvdState,0x86303D6D,0x1C4A,0x4087,0xAB,0x42,0xF7,0x11,0x16,0x70,0x48,0xEF);
-DEFINE_GUID(IID_IDVEnc,0xD18E17A0,0xAACB,0x11D0,0xAF,0xB0,0x00,0xAA,0x00,0xB6,0x7A,0x42);
-DEFINE_GUID(IID_IDVSplitter,0x92A3A302,0xDA7C,0x4A1F,0xBA,0x7E,0x18,0x02,0xBB,0x5D,0x2D,0x02);
 DEFINE_GUID(IID_IEnumFilters,0x56A86893,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IEnumMediaTypes,0x89C31040,0x846B,0x11CE,0x97,0xD3,0x00,0xAA,0x00,0x55,0x59,0x5A);
 DEFINE_GUID(IID_IEnumPins,0x56A86892,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IEnumRegFilters,0x56A868A4,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
-DEFINE_GUID(IID_IEnumStreamIdMap,0x945C1566,0x6202,0x46FC,0x96,0xC7,0xD8,0x7F,0x28,0x9C,0x65,0x34);
 DEFINE_GUID(IID_IFileSinkFilter,0xA2104830,0x7C70,0x11CF,0x8B,0xCE,0x00,0xAA,0x00,0xA3,0xF1,0xA6);
 DEFINE_GUID(IID_IFileSinkFilter2,0x00855B90,0xCE1B,0x11D0,0xBD,0x4F,0x00,0xA0,0xC9,0x11,0xCE,0x86);
 DEFINE_GUID(IID_IFileSourceFilter,0x56A868A6,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
-DEFINE_GUID(IID_IFilterChain,0xDCFBDCF6,0x0DC2,0x45F5,0x9A,0xB2,0x7C,0x33,0x0E,0xA0,0x9C,0x29);
 DEFINE_GUID(IID_IFilterGraph,0x56A8689F,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IFilterGraph2,0x36B73882,0xC2C8,0x11CF,0x8B,0x46,0x00,0x80,0x5F,0x6C,0xEF,0x60);
 DEFINE_GUID(IID_IFilterMapper,0x56A868A3,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IFilterMapper2,0xB79BB0B0,0x33C1,0x11D1,0xAB,0xE1,0x00,0xA0,0xC9,0x05,0xF3,0x75);
-DEFINE_GUID(IID_IFilterMapper3,0xB79BB0B1,0x33C1,0x11D1,0xAB,0xE1,0x00,0xA0,0xC9,0x05,0xF3,0x75);
 DEFINE_GUID(IID_IGraphBuilder,0x56A868A9,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
-DEFINE_GUID(IID_IGraphConfig,0x03A1EB8E,0x32BF,0x4245,0x85,0x02,0x11,0x4D,0x08,0xA9,0xCB,0x88);
-DEFINE_GUID(IID_IGraphConfigCallback,0xADE0FD60,0xD19D,0x11D2,0xAB,0xF6,0x00,0xA0,0xC9,0x05,0xF3,0x75);
 DEFINE_GUID(IID_IGraphVersion,0x56A868AB,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
-DEFINE_GUID(IID_IIPDVDec,0xB8E8BD60,0x0BFE,0x11D0,0xAF,0x91,0x00,0xAA,0x00,0xB6,0x7A,0x42);
 DEFINE_GUID(IID_IMediaEventSink,0x56A868A2,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IMediaPropertyBag,0x6025A880,0xC0D5,0x11D0,0xBD,0x4E,0x00,0xA0,0xC9,0x11,0xCE,0x86);
 DEFINE_GUID(IID_IMediaSample,0x56A8689A,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IMediaSample2,0x36B73884,0xC2C8,0x11CF,0x8B,0x46,0x00,0x80,0x5F,0x6C,0xEF,0x60);
 DEFINE_GUID(IID_IMediaSeeking,0x36B73880,0xC2C8,0x11CF,0x8B,0x46,0x00,0x80,0x5F,0x6C,0xEF,0x60);
 DEFINE_GUID(IID_IMemAllocator,0x56A8689C,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
-DEFINE_GUID(IID_IMemAllocatorCallbackTemp,0x379A0CF0,0xC1DE,0x11D2,0xAB,0xF5,0x00,0xA0,0xC9,0x05,0xF3,0x75);
-DEFINE_GUID(IID_IMemAllocatorNotifyCallbackTemp,0x92980B30,0xC1DE,0x11D2,0xAB,0xF5,0x00,0xA0,0xC9,0x05,0xF3,0x75);
 DEFINE_GUID(IID_IMemInputPin,0x56A8689D,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
-DEFINE_GUID(IID_IMpeg2Demultiplexer,0x436EEE9C,0x264F,0x4242,0x90,0xE1,0x4E,0x33,0x0C,0x10,0x75,0x12);
-DEFINE_GUID(IID_IMPEG2StreamIdMap,0xD0E04C47,0x25B8,0x4369,0x92,0x5A,0x36,0x2A,0x01,0xD9,0x54,0x44);
 DEFINE_GUID(IID_IOverlay,0x56A868A1,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IOverlayNotify,0x56A868A0,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
-DEFINE_GUID(IID_IOverlayNotify2,0x680EFA10,0xD535,0x11D1,0x87,0xC8,0x00,0xA0,0xC9,0x22,0x31,0x96);
 DEFINE_GUID(IID_IPersistMediaPropertyBag,0x5738E040,0xB67F,0x11D0,0xBD,0x4D,0x00,0xA0,0xC9,0x11,0xCE,0x86);
 DEFINE_GUID(IID_IPin,0x56A86891,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
-DEFINE_GUID(IID_IPinConnection,0x4A9A62D3,0x27D4,0x403D,0x91,0xE9,0x89,0xF5,0x40,0xE5,0x55,0x34);
-DEFINE_GUID(IID_IPinFlowControl,0xC56E9858,0xDBF3,0x4F6B,0x81,0x19,0x38,0x4A,0xF2,0x06,0x0D,0xEB);
 DEFINE_GUID(IID_IQualityControl,0x56A868A5,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IReferenceClock,0x56A86897,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_IReferenceClock2,0x36B73885,0xC2C8,0x11CF,0x8B,0x46,0x00,0x80,0x5F,0x6C,0xEF,0x60);
@@ -265,7 +192,6 @@ DEFINE_GUID(IID_IResourceConsumer,0x56A868AD,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0
 DEFINE_GUID(IID_IResourceManager,0x56A868AC,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
 DEFINE_GUID(IID_ISeekingPassThru,0x36B73883,0xC2C8,0x11CF,0x8B,0x46,0x00,0x80,0x5F,0x6C,0xEF,0x60);
 DEFINE_GUID(IID_IStreamBuilder,0x56A868BF,0x0AD4,0x11CE,0xB0,0x3A,0x00,0x20,0xAF,0x0B,0xA7,0x70);
-DEFINE_GUID(IID_IVideoFrameStep,0xE46A9787,0x2B71,0x444D,0xA4,0xB5,0x1F,0xAB,0x7B,0x70,0x8D,0x6A);
 
 
 #ifndef __WINE_REFTIME_DEFINED_
@@ -669,46 +595,6 @@ ICOM_DEFINE(ICaptureGraphBuilder,IUnknown)
 
 /**************************************************************************
  *
- * ICaptureGraphBuilder2 interface
- *
- */
-
-#define ICOM_INTERFACE ICaptureGraphBuilder2
-#define ICaptureGraphBuilder2_METHODS \
-    ICOM_METHOD1(HRESULT,SetFiltergraph,IGraphBuilder*,a1) \
-    ICOM_METHOD1(HRESULT,GetFiltergraph,IGraphBuilder**,a1) \
-    ICOM_METHOD4(HRESULT,SetOutputFileName,const GUID*,a1,LPCOLESTR,a2,IBaseFilter**,a3,IFileSinkFilter**,a4) \
-    ICOM_METHOD5(HRESULT,FindInterface,const GUID*,a1,const GUID*,a2,IBaseFilter*,a3,REFIID,a4,void**,a5) \
-    ICOM_METHOD5(HRESULT,RenderStream,const GUID*,a1,const GUID*,a2,IUnknown*,a3,IBaseFilter*,a4,IBaseFilter*,a5) \
-    ICOM_METHOD7(HRESULT,ControlStream,const GUID*,a1,const GUID*,a2,IBaseFilter*,a3,REFERENCE_TIME*,a4,REFERENCE_TIME*,a5,WORD,a6,WORD,a7) \
-    ICOM_METHOD2(HRESULT,AllocCapFile,LPCOLESTR,a1,DWORDLONG,a2) \
-    ICOM_METHOD4(HRESULT,CopyCaptureFile,LPOLESTR,a1,LPOLESTR,a2,int,a3,IAMCopyCaptureFileProgress*,a4) \
-    ICOM_METHOD7(HRESULT,FindPin,IUnknown*,a1,PIN_DIRECTION,a2,const GUID*,a3,const GUID*,a4,BOOL,a5,int,a6,IPin**,a7)
-
-#define ICaptureGraphBuilder2_IMETHODS \
-    IUnknown_IMETHODS \
-    ICaptureGraphBuilder2_METHODS
-
-ICOM_DEFINE(ICaptureGraphBuilder2,IUnknown)
-#undef ICOM_INTERFACE
-
-    /*** IUnknown methods ***/
-#define ICaptureGraphBuilder2_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
-#define ICaptureGraphBuilder2_AddRef(p) ICOM_CALL (AddRef,p)
-#define ICaptureGraphBuilder2_Release(p) ICOM_CALL (Release,p)
-    /*** ICaptureGraphBuilder2 methods ***/
-#define ICaptureGraphBuilder2_SetFiltergraph(p,a1) ICOM_CALL1(SetFiltergraph,p,a1)
-#define ICaptureGraphBuilder2_GetFiltergraph(p,a1) ICOM_CALL1(GetFiltergraph,p,a1)
-#define ICaptureGraphBuilder2_SetOutputFileName(p,a1,a2,a3,a4) ICOM_CALL4(SetOutputFileName,p,a1,a2,a3,a4)
-#define ICaptureGraphBuilder2_FindInterface(p,a1,a2,a3,a4,a5) ICOM_CALL5(FindInterface,p,a1,a2,a3,a4,a5)
-#define ICaptureGraphBuilder2_RenderStream(p,a1,a2,a3,a4,a5) ICOM_CALL5(RenderStream,p,a1,a2,a3,a4,a5)
-#define ICaptureGraphBuilder2_ControlStream(p,a1,a2,a3,a4,a5,a6,a7) ICOM_CALL7(ControlStream,p,a1,a2,a3,a4,a5,a6,a7)
-#define ICaptureGraphBuilder2_AllocCapFile(p,a1,a2) ICOM_CALL2(AllocCapFile,p,a1,a2)
-#define ICaptureGraphBuilder2_CopyCaptureFile(p,a1,a2,a3,a4) ICOM_CALL4(CopyCaptureFile,p,a1,a2,a3,a4)
-#define ICaptureGraphBuilder2_FindPin(p,a1,a2,a3,a4,a5,a6,a7) ICOM_CALL7(FindPin,p,a1,a2,a3,a4,a5,a6,a7)
-
-/**************************************************************************
- *
  * ICreateDevEnum interface
  *
  */
@@ -762,30 +648,6 @@ ICOM_DEFINE(IDistributorNotify,IUnknown)
 #define IDistributorNotify_Run(p,a1) ICOM_CALL1(Run,p,a1)
 #define IDistributorNotify_SetSyncSource(p,a1) ICOM_CALL1(SetSyncSource,p,a1)
 #define IDistributorNotify_NotifyGraphChange(p) ICOM_CALL (NotifyGraphChange,p)
-
-/**************************************************************************
- *
- * IDVSplitter interface
- *
- */
-
-#define ICOM_INTERFACE IDVSplitter
-#define IDVSplitter_METHODS \
-    ICOM_METHOD1(HRESULT,DiscardAlternateVideoFrames,int,a1)
-
-#define IDVSplitter_IMETHODS \
-    IUnknown_IMETHODS \
-    IDVSplitter_METHODS
-
-ICOM_DEFINE(IDVSplitter,IUnknown)
-#undef ICOM_INTERFACE
-
-    /*** IUnknown methods ***/
-#define IDVSplitter_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
-#define IDVSplitter_AddRef(p) ICOM_CALL (AddRef,p)
-#define IDVSplitter_Release(p) ICOM_CALL (Release,p)
-    /*** IDVSplitter methods ***/
-#define IDVSplitter_DiscardAlternateVideoFrames(p,a1) ICOM_CALL1(DiscardAlternateVideoFrames,p,a1)
 
 /**************************************************************************
  *
@@ -960,36 +822,6 @@ ICOM_DEFINE(IFileSourceFilter,IUnknown)
 
 /**************************************************************************
  *
- * IFilterChain interface
- *
- */
-
-#define ICOM_INTERFACE IFilterChain
-#define IFilterChain_METHODS \
-    ICOM_METHOD2(HRESULT,StartChain,IBaseFilter*,a1,IBaseFilter*,a2) \
-    ICOM_METHOD2(HRESULT,PauseChain,IBaseFilter*,a1,IBaseFilter*,a2) \
-    ICOM_METHOD2(HRESULT,StopChain,IBaseFilter*,a1,IBaseFilter*,a2) \
-    ICOM_METHOD2(HRESULT,RemoveChain,IBaseFilter*,a1,IBaseFilter*,a2)
-
-#define IFilterChain_IMETHODS \
-    IUnknown_IMETHODS \
-    IFilterChain_METHODS
-
-ICOM_DEFINE(IFilterChain,IUnknown)
-#undef ICOM_INTERFACE
-
-    /*** IUnknown methods ***/
-#define IFilterChain_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
-#define IFilterChain_AddRef(p) ICOM_CALL (AddRef,p)
-#define IFilterChain_Release(p) ICOM_CALL (Release,p)
-    /*** IFilterChain methods ***/
-#define IFilterChain_StartChain(p,a1,a2) ICOM_CALL2(StartChain,p,a1,a2)
-#define IFilterChain_PauseChain(p,a1,a2) ICOM_CALL2(PauseChain,p,a1,a2)
-#define IFilterChain_StopChain(p,a1,a2) ICOM_CALL2(StopChain,p,a1,a2)
-#define IFilterChain_RemoveChain(p,a1,a2) ICOM_CALL2(RemoveChain,p,a1,a2)
-
-/**************************************************************************
- *
  * IFilterMapper interface
  *
  */
@@ -1055,35 +887,6 @@ ICOM_DEFINE(IFilterMapper2,IUnknown)
 #define IFilterMapper2_UnregisterFilter(p,a1,a2,a3) ICOM_CALL3(UnregisterFilter,p,a1,a2,a3)
 #define IFilterMapper2_RegisterFilter(p,a1,a2,a3,a4,a5,a6) ICOM_CALL6(RegisterFilter,p,a1,a2,a3,a4,a5,a6)
 #define IFilterMapper2_EnumMatchingFilters(p,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15) ICOM_CALL15(EnumMatchingFilters,p,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15)
-
-/**************************************************************************
- *
- * IFilterMapper3 interface
- *
- */
-
-#define ICOM_INTERFACE IFilterMapper3
-#define IFilterMapper3_METHODS \
-    ICOM_METHOD1(HRESULT,GetICreateDevEnum,ICreateDevEnum**,a1)
-
-#define IFilterMapper3_IMETHODS \
-    IFilterMapper2_IMETHODS \
-    IFilterMapper3_METHODS
-
-ICOM_DEFINE(IFilterMapper3,IFilterMapper2)
-#undef ICOM_INTERFACE
-
-    /*** IUnknown methods ***/
-#define IFilterMapper3_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
-#define IFilterMapper3_AddRef(p) ICOM_CALL (AddRef,p)
-#define IFilterMapper3_Release(p) ICOM_CALL (Release,p)
-    /*** IFilterMapper2 methods ***/
-#define IFilterMapper3_CreateCategory(p,a1,a2,a3) ICOM_CALL3(CreateCategory,p,a1,a2,a3)
-#define IFilterMapper3_UnregisterFilter(p,a1,a2,a3) ICOM_CALL3(UnregisterFilter,p,a1,a2,a3)
-#define IFilterMapper3_RegisterFilter(p,a1,a2,a3,a4,a5,a6) ICOM_CALL6(RegisterFilter,p,a1,a2,a3,a4,a5,a6)
-#define IFilterMapper3_EnumMatchingFilters(p,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15) ICOM_CALL15(EnumMatchingFilters,p,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15)
-    /*** IFilterMapper3 methods ***/
-#define IFilterMapper3_GetICreateDevEnum(p,a1) ICOM_CALL1(GetICreateDevEnum,p,a1)
 
 /**************************************************************************
  *
@@ -1212,72 +1015,6 @@ ICOM_DEFINE(IFilterGraph2,IGraphBuilder)
 #define IFilterGraph2_AddSourceFilterForMoniker(p,a1,a2,a3,a4) ICOM_CALL4(AddSourceFilterForMoniker,p,a1,a2,a3,a4)
 #define IFilterGraph2_ReconnectEx(p,a1,a2) ICOM_CALL2(ReconnectEx,p,a1,a2)
 #define IFilterGraph2_RenderEx(p,a1,a2,a3) ICOM_CALL3(RenderEx,p,a1,a2,a3)
-
-/**************************************************************************
- *
- * IGraphConfig interface
- *
- */
-
-#define ICOM_INTERFACE IGraphConfig
-#define IGraphConfig_METHODS \
-    ICOM_METHOD6(HRESULT,Reconnect,IPin*,a1,IPin*,a2,const AM_MEDIA_TYPE*,a3,IBaseFilter*,a4,HANDLE,a5,DWORD,a6) \
-    ICOM_METHOD4(HRESULT,Reconfigure,IGraphConfigCallback*,a1,PVOID,a2,DWORD,a3,HANDLE,a4) \
-    ICOM_METHOD1(HRESULT,AddFilterToCache,IBaseFilter*,a1) \
-    ICOM_METHOD1(HRESULT,EnumCacheFilter,IEnumFilters**,a1) \
-    ICOM_METHOD1(HRESULT,RemoveFilterFromCache,IBaseFilter*,a1) \
-    ICOM_METHOD1(HRESULT,GetStartTime,REFERENCE_TIME*,a1) \
-    ICOM_METHOD3(HRESULT,PushThroughData,IPin*,a1,IPinConnection*,a2,HANDLE,a3) \
-    ICOM_METHOD2(HRESULT,SetFilterFlags,IBaseFilter*,a1,DWORD,a2) \
-    ICOM_METHOD2(HRESULT,GetFilterFlags,IBaseFilter*,a1,DWORD*,a2) \
-    ICOM_METHOD2(HRESULT,RemoveFilterEx,IBaseFilter*,a1,DWORD,a2)
-
-#define IGraphConfig_IMETHODS \
-    IUnknown_IMETHODS \
-    IGraphConfig_METHODS
-
-ICOM_DEFINE(IGraphConfig,IUnknown)
-#undef ICOM_INTERFACE
-
-    /*** IUnknown methods ***/
-#define IGraphConfig_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
-#define IGraphConfig_AddRef(p) ICOM_CALL (AddRef,p)
-#define IGraphConfig_Release(p) ICOM_CALL (Release,p)
-    /*** IGraphConfig methods ***/
-#define IGraphConfig_Reconnect(p,a1,a2,a3,a4,a5,a6) ICOM_CALL6(Reconnect,p,a1,a2,a3,a4,a5,a6)
-#define IGraphConfig_Reconfigure(p,a1,a2,a3,a4) ICOM_CALL4(Reconfigure,p,a1,a2,a3,a4)
-#define IGraphConfig_AddFilterToCache(p,a1) ICOM_CALL1(AddFilterToCache,p,a1)
-#define IGraphConfig_EnumCacheFilter(p,a1) ICOM_CALL1(EnumCacheFilter,p,a1)
-#define IGraphConfig_RemoveFilterFromCache(p,a1) ICOM_CALL1(RemoveFilterFromCache,p,a1)
-#define IGraphConfig_GetStartTime(p,a1) ICOM_CALL1(GetStartTime,p,a1)
-#define IGraphConfig_PushThroughData(p,a1,a2,a3) ICOM_CALL3(PushThroughData,p,a1,a2,a3)
-#define IGraphConfig_SetFilterFlags(p,a1,a2) ICOM_CALL2(SetFilterFlags,p,a1,a2)
-#define IGraphConfig_GetFilterFlags(p,a1,a2) ICOM_CALL2(GetFilterFlags,p,a1,a2)
-#define IGraphConfig_RemoveFilterEx(p,a1,a2) ICOM_CALL2(RemoveFilterEx,p,a1,a2)
-
-/**************************************************************************
- *
- * IGraphConfigCallback interface
- *
- */
-
-#define ICOM_INTERFACE IGraphConfigCallback
-#define IGraphConfigCallback_METHODS \
-    ICOM_METHOD2(HRESULT,Reconfigure,PVOID,a1,DWORD,a2)
-
-#define IGraphConfigCallback_IMETHODS \
-    IUnknown_IMETHODS \
-    IGraphConfigCallback_METHODS
-
-ICOM_DEFINE(IGraphConfigCallback,IUnknown)
-#undef ICOM_INTERFACE
-
-    /*** IUnknown methods ***/
-#define IGraphConfigCallback_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
-#define IGraphConfigCallback_AddRef(p) ICOM_CALL (AddRef,p)
-#define IGraphConfigCallback_Release(p) ICOM_CALL (Release,p)
-    /*** IGraphConfigCallback methods ***/
-#define IGraphConfigCallback_Reconfigure(p,a1,a2) ICOM_CALL2(Reconfigure,p,a1,a2)
 
 /**************************************************************************
  *
@@ -1542,62 +1279,6 @@ ICOM_DEFINE(IMemAllocator,IUnknown)
 #define IMemAllocator_GetBuffer(p,a1,a2,a3,a4) ICOM_CALL4(GetBuffer,p,a1,a2,a3,a4)
 #define IMemAllocator_ReleaseBuffer(p,a1) ICOM_CALL1(ReleaseBuffer,p,a1)
 
-/**************************************************************************
- *
- * IMemAllocatorCallbackTemp interface
- *
- */
-
-#define ICOM_INTERFACE IMemAllocatorCallbackTemp
-#define IMemAllocatorCallbackTemp_METHODS \
-    ICOM_METHOD1(HRESULT,SetNotify,IMemAllocatorNotifyCallbackTemp*,a1) \
-    ICOM_METHOD1(HRESULT,GetFreeCount,LONG*,a1)
-
-#define IMemAllocatorCallbackTemp_IMETHODS \
-    IMemAllocator_IMETHODS \
-    IMemAllocatorCallbackTemp_METHODS
-
-ICOM_DEFINE(IMemAllocatorCallbackTemp,IMemAllocator)
-#undef ICOM_INTERFACE
-
-    /*** IUnknown methods ***/
-#define IMemAllocatorCallbackTemp_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
-#define IMemAllocatorCallbackTemp_AddRef(p) ICOM_CALL (AddRef,p)
-#define IMemAllocatorCallbackTemp_Release(p) ICOM_CALL (Release,p)
-    /*** IMemAllocator methods ***/
-#define IMemAllocatorCallbackTemp_SetProperties(p,a1,a2) ICOM_CALL2(SetProperties,p,a1,a2)
-#define IMemAllocatorCallbackTemp_GetProperties(p,a1) ICOM_CALL1(GetProperties,p,a1)
-#define IMemAllocatorCallbackTemp_Commit(p,a1) ICOM_CALL1(Commit,p,a1)
-#define IMemAllocatorCallbackTemp_Decommit(p,a1) ICOM_CALL1(Decommit,p,a1)
-#define IMemAllocatorCallbackTemp_GetBuffer(p,a1,a2,a3,a4) ICOM_CALL4(GetBuffer,p,a1,a2,a3,a4)
-#define IMemAllocatorCallbackTemp_ReleaseBuffer(p,a1) ICOM_CALL1(ReleaseBuffer,p,a1)
-    /*** IMemAllocatorCallbackTemp methods ***/
-#define IMemAllocatorCallbackTemp_SetNotify(p,a1) ICOM_CALL1(SetNotify,p,a1)
-#define IMemAllocatorCallbackTemp_GetFreeCount(p,a1) ICOM_CALL1(GetFreeCount,p,a1)
-
-/**************************************************************************
- *
- * IMemAllocatorNotifyCallbackTemp interface
- *
- */
-
-#define ICOM_INTERFACE IMemAllocatorNotifyCallbackTemp
-#define IMemAllocatorNotifyCallbackTemp_METHODS \
-    ICOM_METHOD (HRESULT,NotifyRelease)
-
-#define IMemAllocatorNotifyCallbackTemp_IMETHODS \
-    IUnknown_IMETHODS \
-    IMemAllocatorNotifyCallbackTemp_METHODS
-
-ICOM_DEFINE(IMemAllocatorNotifyCallbackTemp,IUnknown)
-#undef ICOM_INTERFACE
-
-    /*** IUnknown methods ***/
-#define IMemAllocatorNotifyCallbackTemp_QueryInterface(p,a1,a2) ICOM_CALL2(QueryInterface,p,a1,a2)
-#define IMemAllocatorNotifyCallbackTemp_AddRef(p) ICOM_CALL (AddRef,p)
-#define IMemAllocatorNotifyCallbackTemp_Release(p) ICOM_CALL (Release,p)
-    /*** IMemAllocatorNotifyCallbackTemp methods ***/
-#define IMemAllocatorNotifyCallbackTemp_NotifyRelease(p) ICOM_CALL (NotifyRelease,p)
 
 /**************************************************************************
  *

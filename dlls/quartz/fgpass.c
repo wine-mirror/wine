@@ -1,5 +1,5 @@
 /*
- * Implementation of IBasicAudio, IBasicVideo2, IVideoWindow for FilterGraph.
+ * Implementation of IBasicAudio, IBasicVideo, IVideoWindow for FilterGraph.
  *
  * Copyright (C) Hidenori TAKESHIMA <hidenori@a2.ctktv.ne.jp>
  *
@@ -71,12 +71,6 @@ static HRESULT CFilterGraph_QueryBasicVideo(
 	CFilterGraph* This, IBasicVideo** ppVideo )
 {
 	return CFilterGraph_QIFilters(This,&IID_IBasicVideo,(void**)ppVideo);
-}
-
-static HRESULT CFilterGraph_QueryBasicVideo2(
-	CFilterGraph* This, IBasicVideo2** ppVideo )
-{
-	return CFilterGraph_QIFilters(This,&IID_IBasicVideo2,(void**)ppVideo);
 }
 
 static HRESULT CFilterGraph_QueryVideoWindow(
@@ -262,7 +256,7 @@ void CFilterGraph_UninitIBasicAudio( CFilterGraph* pfg )
 
 /***************************************************************************
  *
- *	CFilterGraph::IBasicVideo2
+ *	CFilterGraph::IBasicVideo
  *
  */
 
@@ -273,15 +267,9 @@ void CFilterGraph_UninitIBasicAudio( CFilterGraph* pfg )
 	hr = CFilterGraph_QueryBasicVideo( This, &pVideo ); \
 	if ( FAILED(hr) ) return hr;
 
-#define QUERYBASICVIDEO2	\
-	IBasicVideo2* pVideo = NULL; \
-	HRESULT hr; \
-	hr = CFilterGraph_QueryBasicVideo2( This, &pVideo ); \
-	if ( FAILED(hr) ) return hr;
-
 
 static HRESULT WINAPI
-IBasicVideo2_fnQueryInterface(IBasicVideo2* iface,REFIID riid,void** ppobj)
+IBasicVideo_fnQueryInterface(IBasicVideo* iface,REFIID riid,void** ppobj)
 {
 	CFilterGraph_THIS(iface,basvid);
 
@@ -291,7 +279,7 @@ IBasicVideo2_fnQueryInterface(IBasicVideo2* iface,REFIID riid,void** ppobj)
 }
 
 static ULONG WINAPI
-IBasicVideo2_fnAddRef(IBasicVideo2* iface)
+IBasicVideo_fnAddRef(IBasicVideo* iface)
 {
 	CFilterGraph_THIS(iface,basvid);
 
@@ -301,7 +289,7 @@ IBasicVideo2_fnAddRef(IBasicVideo2* iface)
 }
 
 static ULONG WINAPI
-IBasicVideo2_fnRelease(IBasicVideo2* iface)
+IBasicVideo_fnRelease(IBasicVideo* iface)
 {
 	CFilterGraph_THIS(iface,basvid);
 
@@ -311,7 +299,7 @@ IBasicVideo2_fnRelease(IBasicVideo2* iface)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetTypeInfoCount(IBasicVideo2* iface,UINT* pcTypeInfo)
+IBasicVideo_fnGetTypeInfoCount(IBasicVideo* iface,UINT* pcTypeInfo)
 {
 	CFilterGraph_THIS(iface,basvid);
 
@@ -321,7 +309,7 @@ IBasicVideo2_fnGetTypeInfoCount(IBasicVideo2* iface,UINT* pcTypeInfo)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetTypeInfo(IBasicVideo2* iface,UINT iTypeInfo, LCID lcid, ITypeInfo** ppobj)
+IBasicVideo_fnGetTypeInfo(IBasicVideo* iface,UINT iTypeInfo, LCID lcid, ITypeInfo** ppobj)
 {
 	CFilterGraph_THIS(iface,basvid);
 
@@ -331,7 +319,7 @@ IBasicVideo2_fnGetTypeInfo(IBasicVideo2* iface,UINT iTypeInfo, LCID lcid, ITypeI
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetIDsOfNames(IBasicVideo2* iface,REFIID riid, LPOLESTR* ppwszName, UINT cNames, LCID lcid, DISPID* pDispId)
+IBasicVideo_fnGetIDsOfNames(IBasicVideo* iface,REFIID riid, LPOLESTR* ppwszName, UINT cNames, LCID lcid, DISPID* pDispId)
 {
 	CFilterGraph_THIS(iface,basvid);
 
@@ -341,7 +329,7 @@ IBasicVideo2_fnGetIDsOfNames(IBasicVideo2* iface,REFIID riid, LPOLESTR* ppwszNam
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnInvoke(IBasicVideo2* iface,DISPID DispId, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarRes, EXCEPINFO* pExcepInfo, UINT* puArgErr)
+IBasicVideo_fnInvoke(IBasicVideo* iface,DISPID DispId, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS* pDispParams, VARIANT* pVarRes, EXCEPINFO* pExcepInfo, UINT* puArgErr)
 {
 	CFilterGraph_THIS(iface,basvid);
 
@@ -352,7 +340,7 @@ IBasicVideo2_fnInvoke(IBasicVideo2* iface,DISPID DispId, REFIID riid, LCID lcid,
 
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_AvgTimePerFrame(IBasicVideo2* iface,REFTIME* prefTime)
+IBasicVideo_fnget_AvgTimePerFrame(IBasicVideo* iface,REFTIME* prefTime)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -365,7 +353,7 @@ IBasicVideo2_fnget_AvgTimePerFrame(IBasicVideo2* iface,REFTIME* prefTime)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_BitRate(IBasicVideo2* iface,long* plRate)
+IBasicVideo_fnget_BitRate(IBasicVideo* iface,long* plRate)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -378,7 +366,7 @@ IBasicVideo2_fnget_BitRate(IBasicVideo2* iface,long* plRate)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_BitErrorRate(IBasicVideo2* iface,long* plRate)
+IBasicVideo_fnget_BitErrorRate(IBasicVideo* iface,long* plRate)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -391,7 +379,7 @@ IBasicVideo2_fnget_BitErrorRate(IBasicVideo2* iface,long* plRate)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_VideoWidth(IBasicVideo2* iface,long* plWidth)
+IBasicVideo_fnget_VideoWidth(IBasicVideo* iface,long* plWidth)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -404,7 +392,7 @@ IBasicVideo2_fnget_VideoWidth(IBasicVideo2* iface,long* plWidth)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_VideoHeight(IBasicVideo2* iface,long* plHeight)
+IBasicVideo_fnget_VideoHeight(IBasicVideo* iface,long* plHeight)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -417,7 +405,7 @@ IBasicVideo2_fnget_VideoHeight(IBasicVideo2* iface,long* plHeight)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_SourceLeft(IBasicVideo2* iface,long lLeft)
+IBasicVideo_fnput_SourceLeft(IBasicVideo* iface,long lLeft)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -430,7 +418,7 @@ IBasicVideo2_fnput_SourceLeft(IBasicVideo2* iface,long lLeft)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_SourceLeft(IBasicVideo2* iface,long* plLeft)
+IBasicVideo_fnget_SourceLeft(IBasicVideo* iface,long* plLeft)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -443,7 +431,7 @@ IBasicVideo2_fnget_SourceLeft(IBasicVideo2* iface,long* plLeft)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_SourceWidth(IBasicVideo2* iface,long lWidth)
+IBasicVideo_fnput_SourceWidth(IBasicVideo* iface,long lWidth)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -456,7 +444,7 @@ IBasicVideo2_fnput_SourceWidth(IBasicVideo2* iface,long lWidth)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_SourceWidth(IBasicVideo2* iface,long* plWidth)
+IBasicVideo_fnget_SourceWidth(IBasicVideo* iface,long* plWidth)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -469,7 +457,7 @@ IBasicVideo2_fnget_SourceWidth(IBasicVideo2* iface,long* plWidth)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_SourceTop(IBasicVideo2* iface,long lTop)
+IBasicVideo_fnput_SourceTop(IBasicVideo* iface,long lTop)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -482,7 +470,7 @@ IBasicVideo2_fnput_SourceTop(IBasicVideo2* iface,long lTop)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_SourceTop(IBasicVideo2* iface,long* plTop)
+IBasicVideo_fnget_SourceTop(IBasicVideo* iface,long* plTop)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -495,7 +483,7 @@ IBasicVideo2_fnget_SourceTop(IBasicVideo2* iface,long* plTop)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_SourceHeight(IBasicVideo2* iface,long lHeight)
+IBasicVideo_fnput_SourceHeight(IBasicVideo* iface,long lHeight)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -508,7 +496,7 @@ IBasicVideo2_fnput_SourceHeight(IBasicVideo2* iface,long lHeight)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_SourceHeight(IBasicVideo2* iface,long* plHeight)
+IBasicVideo_fnget_SourceHeight(IBasicVideo* iface,long* plHeight)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -521,7 +509,7 @@ IBasicVideo2_fnget_SourceHeight(IBasicVideo2* iface,long* plHeight)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_DestinationLeft(IBasicVideo2* iface,long lLeft)
+IBasicVideo_fnput_DestinationLeft(IBasicVideo* iface,long lLeft)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -534,7 +522,7 @@ IBasicVideo2_fnput_DestinationLeft(IBasicVideo2* iface,long lLeft)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_DestinationLeft(IBasicVideo2* iface,long* plLeft)
+IBasicVideo_fnget_DestinationLeft(IBasicVideo* iface,long* plLeft)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -547,7 +535,7 @@ IBasicVideo2_fnget_DestinationLeft(IBasicVideo2* iface,long* plLeft)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_DestinationWidth(IBasicVideo2* iface,long lWidth)
+IBasicVideo_fnput_DestinationWidth(IBasicVideo* iface,long lWidth)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -560,7 +548,7 @@ IBasicVideo2_fnput_DestinationWidth(IBasicVideo2* iface,long lWidth)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_DestinationWidth(IBasicVideo2* iface,long* plWidth)
+IBasicVideo_fnget_DestinationWidth(IBasicVideo* iface,long* plWidth)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -573,7 +561,7 @@ IBasicVideo2_fnget_DestinationWidth(IBasicVideo2* iface,long* plWidth)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_DestinationTop(IBasicVideo2* iface,long lTop)
+IBasicVideo_fnput_DestinationTop(IBasicVideo* iface,long lTop)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -586,7 +574,7 @@ IBasicVideo2_fnput_DestinationTop(IBasicVideo2* iface,long lTop)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_DestinationTop(IBasicVideo2* iface,long* plTop)
+IBasicVideo_fnget_DestinationTop(IBasicVideo* iface,long* plTop)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -599,7 +587,7 @@ IBasicVideo2_fnget_DestinationTop(IBasicVideo2* iface,long* plTop)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnput_DestinationHeight(IBasicVideo2* iface,long lHeight)
+IBasicVideo_fnput_DestinationHeight(IBasicVideo* iface,long lHeight)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -612,7 +600,7 @@ IBasicVideo2_fnput_DestinationHeight(IBasicVideo2* iface,long lHeight)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnget_DestinationHeight(IBasicVideo2* iface,long* plHeight)
+IBasicVideo_fnget_DestinationHeight(IBasicVideo* iface,long* plHeight)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -625,7 +613,7 @@ IBasicVideo2_fnget_DestinationHeight(IBasicVideo2* iface,long* plHeight)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnSetSourcePosition(IBasicVideo2* iface,long lLeft,long lTop,long lWidth,long lHeight)
+IBasicVideo_fnSetSourcePosition(IBasicVideo* iface,long lLeft,long lTop,long lWidth,long lHeight)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -638,7 +626,7 @@ IBasicVideo2_fnSetSourcePosition(IBasicVideo2* iface,long lLeft,long lTop,long l
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetSourcePosition(IBasicVideo2* iface,long* plLeft,long* plTop,long* plWidth,long* plHeight)
+IBasicVideo_fnGetSourcePosition(IBasicVideo* iface,long* plLeft,long* plTop,long* plWidth,long* plHeight)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -651,7 +639,7 @@ IBasicVideo2_fnGetSourcePosition(IBasicVideo2* iface,long* plLeft,long* plTop,lo
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnSetDefaultSourcePosition(IBasicVideo2* iface)
+IBasicVideo_fnSetDefaultSourcePosition(IBasicVideo* iface)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -664,7 +652,7 @@ IBasicVideo2_fnSetDefaultSourcePosition(IBasicVideo2* iface)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnSetDestinationPosition(IBasicVideo2* iface,long lLeft,long lTop,long lWidth,long lHeight)
+IBasicVideo_fnSetDestinationPosition(IBasicVideo* iface,long lLeft,long lTop,long lWidth,long lHeight)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -677,7 +665,7 @@ IBasicVideo2_fnSetDestinationPosition(IBasicVideo2* iface,long lLeft,long lTop,l
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetDestinationPosition(IBasicVideo2* iface,long* plLeft,long* plTop,long* plWidth,long* plHeight)
+IBasicVideo_fnGetDestinationPosition(IBasicVideo* iface,long* plLeft,long* plTop,long* plWidth,long* plHeight)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -690,7 +678,7 @@ IBasicVideo2_fnGetDestinationPosition(IBasicVideo2* iface,long* plLeft,long* plT
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnSetDefaultDestinationPosition(IBasicVideo2* iface)
+IBasicVideo_fnSetDefaultDestinationPosition(IBasicVideo* iface)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -703,7 +691,7 @@ IBasicVideo2_fnSetDefaultDestinationPosition(IBasicVideo2* iface)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetVideoSize(IBasicVideo2* iface,long* plWidth,long* plHeight)
+IBasicVideo_fnGetVideoSize(IBasicVideo* iface,long* plWidth,long* plHeight)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -716,7 +704,7 @@ IBasicVideo2_fnGetVideoSize(IBasicVideo2* iface,long* plWidth,long* plHeight)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetVideoPaletteEntries(IBasicVideo2* iface,long lStart,long lCount,long* plRet,long* plPaletteEntry)
+IBasicVideo_fnGetVideoPaletteEntries(IBasicVideo* iface,long lStart,long lCount,long* plRet,long* plPaletteEntry)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -729,7 +717,7 @@ IBasicVideo2_fnGetVideoPaletteEntries(IBasicVideo2* iface,long lStart,long lCoun
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnGetCurrentImage(IBasicVideo2* iface,long* plBufferSize,long* plDIBBuffer)
+IBasicVideo_fnGetCurrentImage(IBasicVideo* iface,long* plBufferSize,long* plDIBBuffer)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -742,7 +730,7 @@ IBasicVideo2_fnGetCurrentImage(IBasicVideo2* iface,long* plBufferSize,long* plDI
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnIsUsingDefaultSource(IBasicVideo2* iface)
+IBasicVideo_fnIsUsingDefaultSource(IBasicVideo* iface)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -755,7 +743,7 @@ IBasicVideo2_fnIsUsingDefaultSource(IBasicVideo2* iface)
 }
 
 static HRESULT WINAPI
-IBasicVideo2_fnIsUsingDefaultDestination(IBasicVideo2* iface)
+IBasicVideo_fnIsUsingDefaultDestination(IBasicVideo* iface)
 {
 	CFilterGraph_THIS(iface,basvid);
 	QUERYBASICVIDEO
@@ -767,73 +755,57 @@ IBasicVideo2_fnIsUsingDefaultDestination(IBasicVideo2* iface)
 	return hr;
 }
 
-static HRESULT WINAPI
-IBasicVideo2_fnGetPreferredAspectRatio(IBasicVideo2* iface,long* plRateX,long* plRateY)
-{
-	CFilterGraph_THIS(iface,basvid);
-	QUERYBASICVIDEO2
-
-	TRACE("(%p)->()\n",This);
-
-	hr = IBasicVideo2_GetPreferredAspectRatio(pVideo,plRateX,plRateY);
-	IBasicVideo2_Release(pVideo);
-	return hr;
-}
 
 
-
-
-static ICOM_VTABLE(IBasicVideo2) ibasicvideo =
+static ICOM_VTABLE(IBasicVideo) ibasicvideo =
 {
 	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 	/* IUnknown fields */
-	IBasicVideo2_fnQueryInterface,
-	IBasicVideo2_fnAddRef,
-	IBasicVideo2_fnRelease,
+	IBasicVideo_fnQueryInterface,
+	IBasicVideo_fnAddRef,
+	IBasicVideo_fnRelease,
 	/* IDispatch fields */
-	IBasicVideo2_fnGetTypeInfoCount,
-	IBasicVideo2_fnGetTypeInfo,
-	IBasicVideo2_fnGetIDsOfNames,
-	IBasicVideo2_fnInvoke,
+	IBasicVideo_fnGetTypeInfoCount,
+	IBasicVideo_fnGetTypeInfo,
+	IBasicVideo_fnGetIDsOfNames,
+	IBasicVideo_fnInvoke,
 	/* IBasicVideo fields */
-	IBasicVideo2_fnget_AvgTimePerFrame,
-	IBasicVideo2_fnget_BitRate,
-	IBasicVideo2_fnget_BitErrorRate,
-	IBasicVideo2_fnget_VideoWidth,
-	IBasicVideo2_fnget_VideoHeight,
-	IBasicVideo2_fnput_SourceLeft,
-	IBasicVideo2_fnget_SourceLeft,
-	IBasicVideo2_fnput_SourceWidth,
-	IBasicVideo2_fnget_SourceWidth,
-	IBasicVideo2_fnput_SourceTop,
-	IBasicVideo2_fnget_SourceTop,
-	IBasicVideo2_fnput_SourceHeight,
-	IBasicVideo2_fnget_SourceHeight,
-	IBasicVideo2_fnput_DestinationLeft,
-	IBasicVideo2_fnget_DestinationLeft,
-	IBasicVideo2_fnput_DestinationWidth,
-	IBasicVideo2_fnget_DestinationWidth,
-	IBasicVideo2_fnput_DestinationTop,
-	IBasicVideo2_fnget_DestinationTop,
-	IBasicVideo2_fnput_DestinationHeight,
-	IBasicVideo2_fnget_DestinationHeight,
-	IBasicVideo2_fnSetSourcePosition,
-	IBasicVideo2_fnGetSourcePosition,
-	IBasicVideo2_fnSetDefaultSourcePosition,
-	IBasicVideo2_fnSetDestinationPosition,
-	IBasicVideo2_fnGetDestinationPosition,
-	IBasicVideo2_fnSetDefaultDestinationPosition,
-	IBasicVideo2_fnGetVideoSize,
-	IBasicVideo2_fnGetVideoPaletteEntries,
-	IBasicVideo2_fnGetCurrentImage,
-	IBasicVideo2_fnIsUsingDefaultSource,
-	IBasicVideo2_fnIsUsingDefaultDestination,
-	/* IBasicVideo2 fields */
-	IBasicVideo2_fnGetPreferredAspectRatio,
+	IBasicVideo_fnget_AvgTimePerFrame,
+	IBasicVideo_fnget_BitRate,
+	IBasicVideo_fnget_BitErrorRate,
+	IBasicVideo_fnget_VideoWidth,
+	IBasicVideo_fnget_VideoHeight,
+	IBasicVideo_fnput_SourceLeft,
+	IBasicVideo_fnget_SourceLeft,
+	IBasicVideo_fnput_SourceWidth,
+	IBasicVideo_fnget_SourceWidth,
+	IBasicVideo_fnput_SourceTop,
+	IBasicVideo_fnget_SourceTop,
+	IBasicVideo_fnput_SourceHeight,
+	IBasicVideo_fnget_SourceHeight,
+	IBasicVideo_fnput_DestinationLeft,
+	IBasicVideo_fnget_DestinationLeft,
+	IBasicVideo_fnput_DestinationWidth,
+	IBasicVideo_fnget_DestinationWidth,
+	IBasicVideo_fnput_DestinationTop,
+	IBasicVideo_fnget_DestinationTop,
+	IBasicVideo_fnput_DestinationHeight,
+	IBasicVideo_fnget_DestinationHeight,
+	IBasicVideo_fnSetSourcePosition,
+	IBasicVideo_fnGetSourcePosition,
+	IBasicVideo_fnSetDefaultSourcePosition,
+	IBasicVideo_fnSetDestinationPosition,
+	IBasicVideo_fnGetDestinationPosition,
+	IBasicVideo_fnSetDefaultDestinationPosition,
+	IBasicVideo_fnGetVideoSize,
+	IBasicVideo_fnGetVideoPaletteEntries,
+	IBasicVideo_fnGetCurrentImage,
+	IBasicVideo_fnIsUsingDefaultSource,
+	IBasicVideo_fnIsUsingDefaultDestination,
 };
 
 
-HRESULT CFilterGraph_InitIBasicVideo2( CFilterGraph* pfg )
+HRESULT CFilterGraph_InitIBasicVideo( CFilterGraph* pfg )
 {
 	TRACE("(%p)\n",pfg);
 	ICOM_VTBL(&pfg->basvid) = &ibasicvideo;
@@ -841,12 +813,11 @@ HRESULT CFilterGraph_InitIBasicVideo2( CFilterGraph* pfg )
 	return NOERROR;
 }
 
-void CFilterGraph_UninitIBasicVideo2( CFilterGraph* pfg )
+void CFilterGraph_UninitIBasicVideo( CFilterGraph* pfg )
 {
 	TRACE("(%p)\n",pfg);
 }
 
-#undef QUERYBASICVIDEO2
 #undef QUERYBASICVIDEO
 
 /***************************************************************************

@@ -77,8 +77,6 @@ static HRESULT FGEVENT_KeepEvent(
 	/*case EC_SHUTTING_DOWN:*/
 	case EC_CLOCK_CHANGED:
 		break;
-	case EC_PAUSED:
-		break;
 
 	case EC_OPENING_FILE:
 		break;
@@ -108,31 +106,6 @@ static HRESULT FGEVENT_KeepEvent(
 	/*case EC_END_OF_SEGMENT:*/
 	/*case EC_SEGMENT_STARTED:*/
 	case EC_LENGTH_CHANGED:
-		break;
-	case EC_DEVICE_LOST:
-		if ( bKeep )
-		{
-			if ( ((IUnknown*)lParam1) != NULL )
-				IUnknown_AddRef( (IUnknown*)lParam1 );
-		}
-		else
-		{
-			if ( ((IUnknown*)lParam1) != NULL )
-				IUnknown_Release( (IUnknown*)lParam1 );
-		}
-		break;
-
-	case EC_STEP_COMPLETE:
-		break;
-	case EC_SKIP_FRAMES:
-		break;
-
-	/*case EC_TIMECODE_AVAILABLE:*/
-	/*case EC_EXTDEVICE_MODE_CHANGE:*/
-
-	case EC_GRAPH_CHANGED:
-		break;
-	case EC_CLOCK_UNSET:
 		break;
 
 	default:

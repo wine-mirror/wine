@@ -181,7 +181,6 @@ HRESULT QUARTZ_CreateParserOutPin(
 HRESULT QUARTZ_CreateWaveParser(IUnknown* punkOuter,void** ppobj);
 HRESULT QUARTZ_CreateAVISplitter(IUnknown* punkOuter,void** ppobj);
 HRESULT QUARTZ_CreateMPEG1Splitter(IUnknown* punkOuter,void** ppobj);
-HRESULT QUARTZ_CreateMPEG2Splitter(IUnknown* punkOuter,void** ppobj);
 
 
 HRESULT RIFF_GetNext(
