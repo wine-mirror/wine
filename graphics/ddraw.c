@@ -181,7 +181,7 @@ HRESULT WINAPI DirectDrawEnumerateExA(
  *		DirectDrawEnumerateExW (DDRAW.*)
  */
 
-static BOOL DirectDrawEnumerateExProcW(
+static BOOL CALLBACK DirectDrawEnumerateExProcW(
 	GUID *lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName, 
 	LPVOID lpContext, HMONITOR hm)
 {
@@ -210,7 +210,7 @@ HRESULT WINAPI DirectDrawEnumerateExW(
   epd.lpCallback = lpCallback;
   epd.lpContext = lpContext;
 
-  return DirectDrawEnumerateExA(&DirectDrawEnumerateExProcW, 
+  return DirectDrawEnumerateExA(DirectDrawEnumerateExProcW, 
 				  (LPVOID) &epd, 0);
 }
 
@@ -218,14 +218,14 @@ HRESULT WINAPI DirectDrawEnumerateExW(
  *		DirectDrawEnumerateA (DDRAW.*)
  */
 
-static BOOL DirectDrawEnumerateProcA(
+static BOOL CALLBACK DirectDrawEnumerateProcA(
 	GUID *lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName, 
 	LPVOID lpContext, HMONITOR hm)
 {
   DirectDrawEnumerateProcData *pEPD = 
     (DirectDrawEnumerateProcData *) lpContext;
   
-  return (*(LPDDENUMCALLBACKA *) pEPD->lpCallback)(
+  return ((LPDDENUMCALLBACKA) pEPD->lpCallback)(
     lpGUID, lpDriverDescription, lpDriverName, pEPD->lpContext);
 }
 
@@ -238,7 +238,7 @@ HRESULT WINAPI DirectDrawEnumerateA(
   epd.lpCallback = lpCallback;
   epd.lpContext = lpContext;
 
-  return DirectDrawEnumerateExA(&DirectDrawEnumerateProcA, 
+  return DirectDrawEnumerateExA(DirectDrawEnumerateProcA, 
 				(LPVOID) &epd, 0);
 }
 
@@ -253,7 +253,7 @@ static BOOL DirectDrawEnumerateProcW(
   DirectDrawEnumerateProcData *pEPD = 
     (DirectDrawEnumerateProcData *) lpContext;
   
-  return (*(LPDDENUMCALLBACKW *) pEPD->lpCallback)(
+  return ((LPDDENUMCALLBACKW) pEPD->lpCallback)(
     lpGUID, lpDriverDescription, lpDriverName, 
     pEPD->lpContext);
 }
@@ -267,7 +267,7 @@ HRESULT WINAPI DirectDrawEnumerateW(
   epd.lpCallback = lpCallback;
   epd.lpContext = lpContext;
 
-  return DirectDrawEnumerateExW(&DirectDrawEnumerateProcW, 
+  return DirectDrawEnumerateExW(DirectDrawEnumerateProcW, 
 				(LPVOID) &epd, 0);
 }
 
@@ -4210,7 +4210,7 @@ HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter)
 HRESULT WINAPI DirectDrawCreate( LPGUID lpGUID, LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter ) {
 	char	xclsid[50];
 	WNDCLASSA	wc;
-        WND*            pParentWindow; 
+        /* WND*            pParentWindow; */
 	HRESULT ret;
 
 	if (HIWORD(lpGUID))
