@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = capi2032.dll
+IMPORTS   = kernel32
+EXTRALIBS = @CAPI4LINUXLIBS@
+
+C_SRCS = cap20wxx.c
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

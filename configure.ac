@@ -624,6 +624,17 @@ AC_CHECK_HEADERS(libaudioio.h,
                   [AUDIOIOLIBS="-laudioio"
                    AC_DEFINE(HAVE_LIBAUDIOIO, 1, [Define if you have libaudioIO])])])
 
+dnl **** Check for capi4linux ****
+
+AC_CHECK_HEADERS(capi20.h,[
+	AC_CHECK_HEADERS(linux/capi.h,[
+		AC_CHECK_LIB(capi20,capi20_register,[
+			AC_DEFINE(HAVE_CAPI4LINUX,1,[Define if you have capi4linux libs and headers])
+			AC_SUBST(CAPI4LINUXLIBS,"-lcapi20")
+		])
+	])
+])
+
 dnl **** Check for broken glibc mmap64 ****
 
 AC_CACHE_CHECK( [whether mmap64 works defined as mmap], ac_cv_mmap64_works,
@@ -1414,6 +1425,7 @@ dlls/advapi32/tests/Makefile
 dlls/avicap32/Makefile
 dlls/avifil32/Makefile
 dlls/cabinet/Makefile
+dlls/capi2032/Makefile
 dlls/cfgmgr32/Makefile
 dlls/comcat/Makefile
 dlls/comctl32/Makefile

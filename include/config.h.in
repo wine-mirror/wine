@@ -38,6 +38,12 @@
 /* Define to 1 if you have the <audio/soundlib.h> header file. */
 #undef HAVE_AUDIO_SOUNDLIB_H
 
+/* Define to 1 if you have the <capi20.h> header file. */
+#undef HAVE_CAPI20_H
+
+/* Define if you have capi4linux libs and headers */
+#undef HAVE_CAPI4LINUX
+
 /* Define to 1 if you have the `chsize' function. */
 #undef HAVE_CHSIZE
 
@@ -274,6 +280,9 @@
 
 /* Define if <linux/joystick.h> defines the Linux 2.2 joystick API */
 #undef HAVE_LINUX_22_JOYSTICK_API
+
+/* Define to 1 if you have the <linux/capi.h> header file. */
+#undef HAVE_LINUX_CAPI_H
 
 /* Define to 1 if you have the <linux/cdrom.h> header file. */
 #undef HAVE_LINUX_CDROM_H
