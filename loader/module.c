@@ -29,6 +29,8 @@ static WINE_MODREF *exe_modref;
 static int free_lib_count;   /* recursion depth of FreeLibrary calls */
 static int process_detaching;  /* set on process detach to avoid deadlocks with thread detach */
 
+static CRITICAL_SECTION loader_section = CRITICAL_SECTION_INIT( "loader_section" );
+
 /***********************************************************************
  *           wait_input_idle
  *
@@ -176,9 +178,13 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
     BOOL retv = TRUE;
     int i;
 
-    RtlAcquirePebLock();
+    RtlEnterCriticalSection( &loader_section );
 
-    if (!wm) wm = exe_modref;
+    if (!wm)
+    {
+        wm = exe_modref;
+        PE_InitTls();
+    }
     assert( wm );
 
     /* prevent infinite recursion in case of cyclical dependencies */
@@ -221,7 +227,7 @@ BOOL MODULE_DllProcessAttach( WINE_MODREF *wm, LPVOID lpReserved )
     TRACE("(%s,%p) - END\n", wm->modname, lpReserved );
 
  done:
-    RtlReleasePebLock();
+    RtlLeaveCriticalSection( &loader_section );
     return retv;
 }
 
@@ -236,7 +242,7 @@ void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
 {
     WINE_MODREF *wm;
 
-    RtlAcquirePebLock();
+    RtlEnterCriticalSection( &loader_section );
     if (bForceDetach) process_detaching = 1;
     do
     {
@@ -258,7 +264,7 @@ void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
         }
     } while ( wm );
 
-    RtlReleasePebLock();
+    RtlLeaveCriticalSection( &loader_section );
 }
 
 /*************************************************************************
@@ -276,7 +282,9 @@ void MODULE_DllThreadAttach( LPVOID lpReserved )
     if (process_detaching) return;
     /* FIXME: there is still a race here */
 
-    RtlAcquirePebLock();
+    RtlEnterCriticalSection( &loader_section );
+
+    PE_InitTls();
 
     for ( wm = MODULE_modref_list; wm; wm = wm->next )
         if ( !wm->next )
@@ -292,7 +300,7 @@ void MODULE_DllThreadAttach( LPVOID lpReserved )
         MODULE_InitDLL( wm, DLL_THREAD_ATTACH, lpReserved );
     }
 
-    RtlReleasePebLock();
+    RtlLeaveCriticalSection( &loader_section );
 }
 
 /*************************************************************************
@@ -310,7 +318,7 @@ void MODULE_DllThreadDetach( LPVOID lpReserved )
     if (process_detaching) return;
     /* FIXME: there is still a race here */
 
-    RtlAcquirePebLock();
+    RtlEnterCriticalSection( &loader_section );
 
     for ( wm = MODULE_modref_list; wm; wm = wm->next )
     {
@@ -322,7 +330,7 @@ void MODULE_DllThreadDetach( LPVOID lpReserved )
         MODULE_InitDLL( wm, DLL_THREAD_DETACH, lpReserved );
     }
 
-    RtlReleasePebLock();
+    RtlLeaveCriticalSection( &loader_section );
 }
 
 /****************************************************************************
@@ -335,7 +343,7 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
     WINE_MODREF *wm;
     BOOL retval = TRUE;
 
-    RtlAcquirePebLock();
+    RtlEnterCriticalSection( &loader_section );
 
     wm = MODULE32_LookupHMODULE( hModule );
     if ( !wm )
@@ -343,7 +351,7 @@ BOOL WINAPI DisableThreadLibraryCalls( HMODULE hModule )
     else
         wm->flags |= WINE_MODREF_NO_DLL_CALLS;
 
-    RtlReleasePebLock();
+    RtlLeaveCriticalSection( &loader_section );
 
     return retval;
 }
@@ -1231,13 +1239,13 @@ DWORD WINAPI GetModuleFileNameA(
 {
     WINE_MODREF *wm;
 
-    RtlAcquirePebLock();
+    RtlEnterCriticalSection( &loader_section );
 
     lpFileName[0] = 0;
     if ((wm = MODULE32_LookupHMODULE( hModule )))
         lstrcpynA( lpFileName, wm->filename, size );
 
-    RtlReleasePebLock();
+    RtlLeaveCriticalSection( &loader_section );
     TRACE("%s\n", lpFileName );
     return strlen(lpFileName);
 }                   
@@ -1304,7 +1312,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
             /* Fallback to normal behaviour */
         }
 
-        RtlAcquirePebLock();
+        RtlEnterCriticalSection( &loader_section );
 
 	wm = MODULE_LoadLibraryExA( libname, hfile, flags );
 	if ( wm )
@@ -1318,7 +1326,7 @@ HMODULE WINAPI LoadLibraryExA(LPCSTR libname, HANDLE hfile, DWORD flags)
 		}
 	}
 
-        RtlReleasePebLock();
+        RtlLeaveCriticalSection( &loader_section );
 	return wm ? wm->module : 0;
 }
 
@@ -1392,7 +1400,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
 	if ( !filename ) return NULL;
         *filename = 0; /* Just in case we don't set it before goto error */
 
-        RtlAcquirePebLock();
+        RtlEnterCriticalSection( &loader_section );
 
         if ((flags & LOAD_WITH_ALTERED_SEARCH_PATH) && FILE_contains_path(libname))
         {
@@ -1470,7 +1478,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
                     HeapFree ( GetProcessHeap(), 0, (LPSTR)libdir );
                     libdir = NULL;
                 }
-                RtlReleasePebLock();
+                RtlLeaveCriticalSection( &loader_section );
 		HeapFree ( GetProcessHeap(), 0, filename );
 		return pwm;
 	}
@@ -1522,7 +1530,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
                             HeapFree ( GetProcessHeap(), 0, (LPSTR)libdir );
                             libdir = NULL;
                         }
-                        RtlReleasePebLock();
+                        RtlLeaveCriticalSection( &loader_section );
                         SetLastError( err );  /* restore last error */
 			HeapFree ( GetProcessHeap(), 0, filename );
 			return pwm;
@@ -1538,7 +1546,7 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HFILE hfile, DWORD flags )
             HeapFree ( GetProcessHeap(), 0, (LPSTR)libdir );
             libdir = NULL;
         }
-        RtlReleasePebLock();
+        RtlLeaveCriticalSection( &loader_section );
 	WARN("Failed to load module '%s'; error=0x%08lx\n", filename, GetLastError());
 	HeapFree ( GetProcessHeap(), 0, filename );
 	return NULL;
@@ -1645,13 +1653,13 @@ BOOL WINAPI FreeLibrary(HINSTANCE hLibModule)
         return TRUE;
     }
 
-    RtlAcquirePebLock();
+    RtlEnterCriticalSection( &loader_section );
     free_lib_count++;
 
     if ((wm = MODULE32_LookupHMODULE( hLibModule ))) retv = MODULE_FreeLibrary( wm );
 
     free_lib_count--;
-    RtlReleasePebLock();
+    RtlLeaveCriticalSection( &loader_section );
 
     return retv;
 }
@@ -1829,13 +1837,13 @@ FARPROC MODULE_GetProcAddress(
     else
 	TRACE_(win32)("(%08lx,%p)\n",(DWORD)hModule,function);
 
-    RtlAcquirePebLock();
+    RtlEnterCriticalSection( &loader_section );
     if ((wm = MODULE32_LookupHMODULE( hModule )))
     {
         retproc = wm->find_export( wm, function, snoop );
         if (!retproc) SetLastError(ERROR_PROC_NOT_FOUND);
     }
-    RtlReleasePebLock();
+    RtlLeaveCriticalSection( &loader_section );
     return retproc;
 }
 

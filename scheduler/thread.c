@@ -247,7 +247,6 @@ static void THREAD_Start(void)
         DPRINTF("%08lx:Starting thread (entryproc=%p)\n", GetCurrentThreadId(), func );
 
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0 );
-    PE_InitTls();
     MODULE_DllThreadAttach( NULL );
     ExitThread( func( NtCurrentTeb()->entry_arg ) );
 }

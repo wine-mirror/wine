@@ -27,7 +27,7 @@ struct graphics_driver
 static struct graphics_driver *first_driver;
 static struct graphics_driver *display_driver;
 static const DC_FUNCTIONS *win16_driver;
-
+static CRITICAL_SECTION driver_section = CRITICAL_SECTION_INIT( "driver_section" );
 
 /**********************************************************************
  *	     create_driver
@@ -207,13 +207,13 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCSTR name )
     HMODULE module;
     struct graphics_driver *driver;
 
-    RtlAcquirePebLock();
+    RtlEnterCriticalSection( &driver_section );
 
     /* display driver is a special case */
     if (!strcasecmp( name, "display" ))
     {
         driver = load_display_driver();
-        RtlReleasePebLock();
+        RtlLeaveCriticalSection( &driver_section );
         return &driver->funcs;
     }
 
@@ -224,7 +224,7 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCSTR name )
             if (driver->module == module)
             {
                 driver->count++;
-                RtlReleasePebLock();
+                RtlLeaveCriticalSection( &driver_section );
                 return &driver->funcs;
             }
         }
@@ -233,19 +233,19 @@ const DC_FUNCTIONS *DRIVER_load_driver( LPCSTR name )
     if (!(module = LoadLibraryA( name )))
     {
         if (!win16_driver) win16_driver = WIN16DRV_Init();
-        RtlReleasePebLock();
+        RtlLeaveCriticalSection( &driver_section );
         return win16_driver;
     }
 
     if (!(driver = create_driver( module )))
     {
         FreeLibrary( module );
-        RtlReleasePebLock();
+        RtlLeaveCriticalSection( &driver_section );
         return NULL;
     }
 
     TRACE( "loaded driver %p for %s\n", driver, name );
-    RtlReleasePebLock();
+    RtlLeaveCriticalSection( &driver_section );
     return &driver->funcs;
 }
 
@@ -259,7 +259,7 @@ const DC_FUNCTIONS *DRIVER_get_driver( const DC_FUNCTIONS *funcs )
 {
     struct graphics_driver *driver;
 
-    RtlAcquirePebLock();
+    RtlEnterCriticalSection( &driver_section );
     if (funcs != win16_driver)
     {
         for (driver = first_driver; driver; driver = driver->next)
@@ -267,7 +267,7 @@ const DC_FUNCTIONS *DRIVER_get_driver( const DC_FUNCTIONS *funcs )
         if (!driver) ERR( "driver not found, trouble ahead\n" );
         driver->count++;
     }
-    RtlReleasePebLock();
+    RtlLeaveCriticalSection( &driver_section );
     return funcs;
 }
 
@@ -281,7 +281,7 @@ void DRIVER_release_driver( const DC_FUNCTIONS *funcs )
 {
     struct graphics_driver *driver;
 
-    RtlAcquirePebLock();
+    RtlEnterCriticalSection( &driver_section );
 
     if (funcs == win16_driver) goto done;
 
@@ -300,7 +300,7 @@ void DRIVER_release_driver( const DC_FUNCTIONS *funcs )
     FreeLibrary( driver->module );
     HeapFree( GetProcessHeap(), 0, driver );
  done:
-    RtlReleasePebLock();
+    RtlLeaveCriticalSection( &driver_section );
 }
 
 

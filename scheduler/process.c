@@ -111,7 +111,7 @@ extern void PTHREAD_init_done(void);
 
 extern BOOL MAIN_MainInit(void);
 
-typedef WORD WINAPI (*pUserSignalProc)( UINT, DWORD, DWORD, HMODULE16 );
+typedef WORD (WINAPI *pUserSignalProc)( UINT, DWORD, DWORD, HMODULE16 );
 
 /***********************************************************************
  *           PROCESS_CallUserSignalProc
@@ -367,10 +367,7 @@ static void start_process(void)
 
     if (main_exe_file) CloseHandle( main_exe_file ); /* we no longer need it */
 
-    RtlAcquirePebLock();
-    PE_InitTls();
     MODULE_DllProcessAttach( NULL, (LPVOID)1 );
-    RtlReleasePebLock();
 
     /* Note: The USIG_PROCESS_CREATE signal is supposed to be sent in the
      *       context of the parent process.  Actually, the USER signal proc
