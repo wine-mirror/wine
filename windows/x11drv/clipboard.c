@@ -460,9 +460,10 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
 {
     Atom	      atype=AnyPropertyType;
     int		      aformat;
-    unsigned long     nitems,remain,itemSize;
-    long              lRequestLength;
-    unsigned char*    val=NULL;
+    unsigned long     total,nitems,remain,itemSize,val_cnt;
+    long              lRequestLength,bwc;
+    unsigned char*    val;
+    unsigned char*    buffer;
     LPWINE_CLIPFORMAT lpFormat;
     BOOL              bRet = FALSE;
     HWND              hWndClipWindow = GetOpenClipboardWindow();
@@ -495,26 +496,40 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
     
     TRACE("\tretrieving %ld bytes...\n", itemSize * aformat/8);
     lRequestLength = (itemSize * aformat/8)/4  + 1;
-    
-    /*
-     * Retrieve the actual property in the required X format.
-     */
-    if(TSXGetWindowProperty(display,w,prop,0,lRequestLength,False,AnyPropertyType/*reqType*/,
-                            &atype, &aformat, &nitems, &remain, &val) != Success)
+
+   bwc = aformat/8; 
+   /* we want to read the property, but not it too large of chunks or 
+      we could hang the cause problems. Lets go for 4k blocks */
+
+    if(TSXGetWindowProperty(display,w,prop,0,4096,False,
+                            AnyPropertyType/*reqType*/,
+                            &atype, &aformat, &nitems, &remain, &buffer) 
+        != Success)
     {
         WARN("\tcouldn't read property\n");
         return bRet;
     }
+   val = (char*)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
+                          nitems*bwc);
+   memcpy(val,buffer,nitems*bwc);
+   TSXFree(buffer);
 
-    TRACE("\tType %s,Format %d,nitems %ld,remain %ld,value %s\n",
-          atype ? TSXGetAtomName(display,atype) : NULL, aformat,nitems,remain,val);
-    
-    if (remain)
-    {
-        WARN("\tCouldn't read entire property- selection may be too large! Remain=%ld\n", remain);
-        goto END;
-    }
-    
+   for (total = nitems*bwc,val_cnt=0; remain;)
+   {
+       val_cnt +=nitems*bwc;
+       TSXGetWindowProperty(display, w, prop,
+                          (total / 4), 4096, False,
+                          AnyPropertyType, &atype,
+                          &aformat, &nitems, &remain,
+                          &buffer);
+
+       total += nitems*bwc;
+       HeapReAlloc(GetProcessHeap(),0,val, total);
+       memcpy(&val[val_cnt], buffer, nitems*(aformat/8));
+       TSXFree(buffer);
+   }
+   nitems = total;
+
     /*
      * Translate the X property into the appropriate Windows clipboard
      * format, if possible.
@@ -525,8 +540,6 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
     {
       int 	   i,inlcount = 0;
       char*      lpstr;
- 
-      TRACE("\tselection is '%s'\n",val);
  
       for(i=0; i <= nitems; i++)
           if( val[i] == '\n' ) inlcount++;
@@ -553,7 +566,11 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
 	      WCHAR *textW = GlobalLock(hUnicodeText);
 	      MultiByteToWideChar(text_cp, 0, lpstr, -1, textW, count);
 	      GlobalUnlock(hUnicodeText);
-	      SetClipboardData(CF_UNICODETEXT, hUnicodeText);
+	      if (!SetClipboardData(CF_UNICODETEXT, hUnicodeText))
+	      {
+            ERR("Not SET! Need to free our own block\n");
+		    GlobalFree(hUnicodeText);
+          }
 	      bRet = TRUE;
 	  }
 	  HeapFree(GetProcessHeap(), 0, lpstr);
@@ -654,9 +671,7 @@ END:
     TSXDeleteProperty(display,w,prop);
     
     /* Free the retrieved property data */
-    if (val)
-       TSXFree(val);
-    
+    HeapFree(GetProcessHeap(),0,val);
     return bRet;
 }
 
