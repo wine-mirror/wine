@@ -940,6 +940,41 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
     return retval;
 }
 
+/***********************************************************************
+ *           InternetReadFileExA (WININET.@)
+ *
+ * Read data from an open internet file
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffer,
+	DWORD dwFlags, DWORD dwContext)
+{
+  FIXME("stub\n");
+  return FALSE;
+}
+
+/***********************************************************************
+ *           InternetReadFileExW (WININET.@)
+ *
+ * Read data from an open internet file
+ *
+ * RETURNS
+ *    TRUE  on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI InternetReadFileExW(HINTERNET hFile, LPINTERNET_BUFFERSW lpBuffer,
+	DWORD dwFlags, DWORD dwContext)
+{
+  FIXME("stub\n");
+
+  INTERNET_SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
 
 /***********************************************************************
  *           InternetQueryOptionA (WININET.@)

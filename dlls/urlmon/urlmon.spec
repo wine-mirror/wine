@@ -32,7 +32,7 @@ init URLMON_DllEntryPoint
 @ stub FaultInIEFeature
 @ stub FindMediaType
 @ stub FindMediaTypeClass
-@ stub FindMimeFromData
+@ stdcall FindMimeFromData(long ptr ptr long ptr long ptr long) FindMimeFromData 
 @ stub GetClassFileOrMime
 @ stub GetClassURL
 @ stub GetComponentIDFromCLSSPEC
@@ -55,7 +55,7 @@ init URLMON_DllEntryPoint
 @ stub RegisterFormatEnumerator
 @ stub RegisterMediaTypeClass
 @ stub RegisterMediaTypes
-@ stub ReleaseBindInfo
+@ stdcall ReleaseBindInfo(ptr) ReleaseBindInfo
 @ stdcall RevokeBindStatusCallback(ptr ptr) RevokeBindStatusCallback
 @ stub RevokeFormatEnumerator
 @ stub SetSoftwareUpdateAdvertisementState

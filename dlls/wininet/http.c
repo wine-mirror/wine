@@ -147,6 +147,39 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
     return bSuccess;
 }
 
+/***********************************************************************
+ *           HttpEndRequestA (WININET.@)
+ *
+ * Ends an HTTP request that was started by HttpSendRequestEx
+ *
+ * RETURNS
+ *    TRUE	if successful
+ *    FALSE	on failure
+ *
+ */
+BOOL WINAPI HttpEndRequestA(HINTERNET hRequest, LPINTERNET_BUFFERSA lpBuffersOut, 
+          DWORD dwFlags, DWORD dwContext)
+{
+  FIXME("stub\n");
+  return FALSE;
+}
+
+/***********************************************************************
+ *           HttpEndRequestW (WININET.@)
+ *
+ * Ends an HTTP request that was started by HttpSendRequestEx
+ *
+ * RETURNS
+ *    TRUE	if successful
+ *    FALSE	on failure
+ *
+ */
+BOOL WINAPI HttpEndRequestW(HINTERNET hRequest, LPINTERNET_BUFFERSW lpBuffersOut, 
+          DWORD dwFlags, DWORD dwContext)
+{
+  FIXME("stub\n");
+  return FALSE;
+}
 
 /***********************************************************************
  *           HttpOpenRequestA (WININET.@)

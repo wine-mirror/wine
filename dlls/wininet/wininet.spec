@@ -8,12 +8,12 @@ init    WININET_LibMain
 @ stub CreateUrlCacheContainerW
 @ stub CreateUrlCacheEntryA
 @ stub CreateUrlCacheEntryW
-@ stub CreateUrlCacheGroup
+@ stdcall CreateUrlCacheGroup(long ptr) CreateUrlCacheGroup
 @ stub DeleteIE3Cache
 @ stub DeleteUrlCacheContainerA
 @ stub DeleteUrlCacheContainerW
 @ stdcall DeleteUrlCacheEntry(str) DeleteUrlCacheEntry
-@ stub DeleteUrlCacheGroup
+@ stdcall DeleteUrlCacheGroup(long long ptr) DeleteUrlCacheGroup
 @ stdcall DllInstall(long ptr) WININET_DllInstall
 @ stub FindCloseUrlCache
 @ stub FindFirstUrlCacheContainerA
@@ -69,8 +69,8 @@ init    WININET_LibMain
 @ stub GopherOpenFileW
 @ stdcall HttpAddRequestHeadersA(ptr str long long) HttpAddRequestHeadersA
 @ stub HttpAddRequestHeadersW
-@ stub HttpEndRequestA
-@ stub HttpEndRequestW
+@ stdcall HttpEndRequestA(ptr ptr long long) HttpEndRequestA
+@ stdcall HttpEndRequestW(ptr ptr long long) HttpEndRequestW
 @ stdcall HttpOpenRequestA(ptr str str str str ptr long long) HttpOpenRequestA
 @ stub HttpOpenRequestW
 @ stdcall HttpQueryInfoA(ptr long ptr ptr ptr) HttpQueryInfoA
@@ -121,8 +121,8 @@ init    WININET_LibMain
 @ stdcall InternetQueryOptionA(ptr long ptr ptr) InternetQueryOptionA
 @ stub InternetQueryOptionW
 @ stdcall InternetReadFile(ptr ptr long ptr) InternetReadFile
-@ stub InternetReadFileExA
-@ stub InternetReadFileExW
+@ stdcall InternetReadFileExA(ptr ptr long long) InternetReadFileExA
+@ stdcall InternetReadFileExW(ptr ptr long long) InternetReadFileExW
 @ stub InternetServerPushParse
 @ stdcall InternetSetCookieA(str str str) InternetSetCookieA
 @ stub InternetSetCookieW
@@ -151,7 +151,7 @@ init    WININET_LibMain
 @ stub RunOnceUrlCache
 @ stub SetUrlCacheConfigInfoA
 @ stub SetUrlCacheConfigInfoW
-@ stub SetUrlCacheEntryGroup
+@ stdcall SetUrlCacheEntryGroup(str long long ptr long ptr) SetUrlCacheEntryGroup
 @ stub SetUrlCacheEntryInfoA
 @ stub SetUrlCacheEntryInfoW
 @ stub SetUrlCacheHeaderData

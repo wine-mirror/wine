@@ -876,6 +876,19 @@ HRESULT WINAPI CoInternetGetSession(DWORD dwSessionMode, /*IInternetSession*/voi
     return E_OUTOFMEMORY;
 }
 
+/***********************************************************************
+ *           FindMimeFromData (URLMON.@)
+ *
+ * Determines the Multipurpose Internet Mail Extensions (MIME) type from the data provided.
+ *
+ */
+HRESULT FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer, 
+   DWORD cbSize, LPCWSTR pwzMimeProposed, DWORD dwMimeFlags,
+   LPWSTR* ppwzMimeOut, DWORD dwReserved)
+{
+  FIXME("stub\n");
+  return E_OUTOFMEMORY;
+}
 
 /***********************************************************************
  *           RegisterBindStatusCallback (URLMON.@)
@@ -947,6 +960,17 @@ HRESULT WINAPI RevokeBindStatusCallback(
     }
 
     return hr;
+}
+
+/***********************************************************************
+ *           ReleaseBindInfo (URLMON.@)
+ *
+ * Releases the resources used by the specified BINDINFO structure   
+ *
+ */
+void ReleaseBindInfo(BINDINFO* pbindinfo)
+{
+    FIXME("stub\n");
 }
 
 /***********************************************************************
