@@ -133,6 +133,8 @@ struct IDirectMusicImpl
   DWORD          ref;
 
   /* IDirectMusicImpl fields */
+  IDirectMusicPortImpl** ports;
+  int nrofports;
 };
 
 /* IUnknown: */
@@ -324,6 +326,9 @@ struct IDirectMusicPortImpl
   DWORD          ref;
 
   /* IDirectMusicPortImpl fields */
+  BOOL active;
+  LPDMUS_PORTCAPS caps;
+  LPDMUS_PORTPARAMS params;
 };
 
 /* IUnknown: */
@@ -704,6 +709,8 @@ extern HRESULT WINAPI IDirectMusicLoader8Impl_EnumObject (LPDIRECTMUSICLOADER8 i
 extern void WINAPI IDirectMusicLoader8Impl_CollectGarbage (LPDIRECTMUSICLOADER8 iface);
 extern HRESULT WINAPI IDirectMusicLoader8Impl_ReleaseObjectByUnknown (LPDIRECTMUSICLOADER8 iface, IUnknown* pObject);
 extern HRESULT WINAPI IDirectMusicLoader8Impl_LoadObjectFromFile (LPDIRECTMUSICLOADER8 iface, REFGUID rguidClassID, REFIID iidInterfaceID, WCHAR* pwzFilePath, void** ppObject);
+/* ClassFactory */
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoader8 (LPCGUID lpcGUID, LPDIRECTMUSICLOADER8 *ppDMLoad8, LPUNKNOWN pUnkOuter);
 
 /*****************************************************************************
  * IDirectMusicGetLoaderImpl implementation structure
@@ -893,7 +900,7 @@ struct IDirectMusicPerformanceImpl
   DWORD          ref;
 
   /* IDirectMusicPerformanceImpl fields */
-  IDirectMusic *dmusic;
+  IDirectMusicImpl *dmusic;
   IDirectSound *dsound;
 };
 
@@ -943,7 +950,6 @@ extern HRESULT WINAPI IDirectMusicPerformanceImpl_MIDIToMusic (LPDIRECTMUSICPERF
 extern HRESULT WINAPI IDirectMusicPerformanceImpl_MusicToMIDI (LPDIRECTMUSICPERFORMANCE iface, WORD wMusicValue, DMUS_CHORD_KEY* pChord, BYTE bPlayMode, BYTE bChordLevel, BYTE* pbMIDIValue);
 extern HRESULT WINAPI IDirectMusicPerformanceImpl_TimeToRhythm (LPDIRECTMUSICPERFORMANCE iface, MUSIC_TIME mtTime, DMUS_TIMESIGNATURE* pTimeSig, WORD* pwMeasure, BYTE* pbBeat, BYTE* pbGrid, short* pnOffset);
 extern HRESULT WINAPI IDirectMusicPerformanceImpl_RhythmToTime (LPDIRECTMUSICPERFORMANCE iface, WORD wMeasure, BYTE bBeat, BYTE bGrid, short nOffset, DMUS_TIMESIGNATURE* pTimeSig, MUSIC_TIME* pmtTime);
-
 /* ClassFactory */
 extern HRESULT WINAPI DMUSIC_CreateDirectMusicPerformance (LPCGUID lpcGUID, LPDIRECTMUSICPERFORMANCE *ppDMPerf, LPUNKNOWN pUnkOuter);
 
@@ -1015,6 +1021,8 @@ extern HRESULT WINAPI IDirectMusicPerformance8ImplCreateStandardAudioPath (LPDIR
 extern HRESULT WINAPI IDirectMusicPerformance8ImplSetDefaultAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicAudioPath* pAudioPath);
 extern HRESULT WINAPI IDirectMusicPerformance8ImplGetDefaultAudioPath (LPDIRECTMUSICPERFORMANCE8 iface, IDirectMusicAudioPath** ppAudioPath);
 extern HRESULT WINAPI IDirectMusicPerformance8ImplGetParamEx (LPDIRECTMUSICPERFORMANCE8 iface, REFGUID rguidType, DWORD dwTrackID, DWORD dwGroupBits, DWORD dwIndex, MUSIC_TIME mtTime, MUSIC_TIME* pmtNext, void* pParam);
+/* ClassFactory */
+extern HRESULT WINAPI DMUSIC_CreateDirectMusicPerformance8 (LPCGUID lpcGUID, LPDIRECTMUSICPERFORMANCE8 *ppDMPerf8, LPUNKNOWN pUnkOuter);
 
 /*****************************************************************************
  * IDirectMusicGraphImpl implementation structure

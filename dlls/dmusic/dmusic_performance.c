@@ -73,8 +73,8 @@ HRESULT WINAPI IDirectMusicPerformanceImpl_Init (LPDIRECTMUSICPERFORMANCE iface,
 	{
 		TRACE("App provides DirectMusic\n");
 		/* FIXME: is this correct? */
-		memcpy(This->dmusic, *ppDirectMusic, sizeof(*ppDirectMusic));
-		IDirectMusic_AddRef(This->dmusic);
+		memcpy((LPDIRECTMUSIC)This->dmusic, *ppDirectMusic, sizeof(*ppDirectMusic));
+		IDirectMusicImpl_AddRef((LPDIRECTMUSIC)This->dmusic);
 		/* app is supposed to be in charge of everything else */
 		return S_OK;
 	}
@@ -83,10 +83,10 @@ HRESULT WINAPI IDirectMusicPerformanceImpl_Init (LPDIRECTMUSICPERFORMANCE iface,
 	{
 		TRACE("DirectMusic to be created; needed\n");
 		if (!This->dmusic)
-			DMUSIC_CreateDirectMusic(&IID_IDirectMusic, &This->dmusic, NULL);
-		*ppDirectMusic = This->dmusic;
+			DMUSIC_CreateDirectMusic(&IID_IDirectMusic, (LPDIRECTMUSIC*)&This->dmusic, NULL);
+		*ppDirectMusic = (LPDIRECTMUSIC)This->dmusic;
 		if (*ppDirectMusic)
-			IDirectMusic_AddRef(*ppDirectMusic);
+			IDirectMusicImpl_AddRef(*ppDirectMusic);
 	}
 	/* app allows the performance to initialise itself and does not need a pointer to object*/
 	if (!ppDirectMusic)
@@ -100,7 +100,7 @@ HRESULT WINAPI IDirectMusicPerformanceImpl_Init (LPDIRECTMUSICPERFORMANCE iface,
 HRESULT WINAPI IDirectMusicPerformanceImpl_PlaySegment (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicSegment* pSegment, DWORD dwFlags, __int64 i64StartTime, IDirectMusicSegmentState** ppSegmentState)
 {
 	FIXME("stub\n");
-	return DS_OK;
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_Stop (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicSegment* pSegment, IDirectMusicSegmentState* pSegmentState, MUSIC_TIME mtTime, DWORD dwFlags)
@@ -219,8 +219,11 @@ HRESULT WINAPI IDirectMusicPerformanceImpl_RemoveNotificationType (LPDIRECTMUSIC
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_AddPort (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicPort* pPort)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);
+	
+	FIXME("(%p, %p): stub\n", This, pPort);
+	
+	return DMUS_E_CANNOT_OPEN_PORT;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_RemovePort (LPDIRECTMUSICPERFORMANCE iface, IDirectMusicPort* pPort)
@@ -231,8 +234,11 @@ HRESULT WINAPI IDirectMusicPerformanceImpl_RemovePort (LPDIRECTMUSICPERFORMANCE 
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_AssignPChannelBlock (LPDIRECTMUSICPERFORMANCE iface, DWORD dwBlockNum, IDirectMusicPort* pPort, DWORD dwGroup)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	ICOM_THIS(IDirectMusicPerformanceImpl,iface);	
+
+	FIXME("(%p, %ld, %p, %ld): stub\n", This, dwBlockNum, pPort, dwGroup);
+
+	return E_INVALIDARG;
 }
 
 HRESULT WINAPI IDirectMusicPerformanceImpl_AssignPChannel (LPDIRECTMUSICPERFORMANCE iface, DWORD dwPChannel, IDirectMusicPort* pPort, DWORD dwGroup, DWORD dwMChannel)
