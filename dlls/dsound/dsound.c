@@ -787,7 +787,7 @@ HRESULT WINAPI IDirectSoundImpl_Create(
 
     /* Allocate memory */
     pDS = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectSoundImpl));
-    if (ppDS == NULL) {
+    if (pDS == NULL) {
         WARN("out of memory\n");
         *ppDS = NULL;
         return DSERR_OUTOFMEMORY;
