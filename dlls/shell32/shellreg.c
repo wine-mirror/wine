@@ -7,7 +7,6 @@
 #include "winreg.h"
 #include "debugtools.h"
 #include "winnls.h"
-#include "heap.h"
 
 #include "shellapi.h"
 #include "shlobj.h"
@@ -125,4 +124,87 @@ HRESULT WINAPI SHRegCloseKey (HKEY hkey)
 {
 	TRACE("0x%04x\n",hkey);
 	return RegCloseKey( hkey );
+}
+
+
+/* 16-bit functions */
+
+/* 0 and 1 are valid rootkeys in win16 shell.dll and are used by
+ * some programs. Do not remove those cases. -MM
+ */
+static inline void fix_win16_hkey( HKEY *hkey )
+{
+    if (*hkey == 0 || *hkey == 1) *hkey = HKEY_CLASSES_ROOT;
+}
+
+/******************************************************************************
+ *           RegOpenKey16   [SHELL.1]
+ */
+DWORD WINAPI RegOpenKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
+{
+    fix_win16_hkey( &hkey );
+    return RegOpenKeyA( hkey, name, retkey );
+}
+
+/******************************************************************************
+ *           RegCreateKey16   [SHELL.2]
+ */
+DWORD WINAPI RegCreateKey16( HKEY hkey, LPCSTR name, LPHKEY retkey )
+{
+    fix_win16_hkey( &hkey );
+    return RegCreateKeyA( hkey, name, retkey );
+}
+
+/******************************************************************************
+ *           RegCloseKey16   [SHELL.3]
+ */
+DWORD WINAPI RegCloseKey16( HKEY hkey )
+{
+    fix_win16_hkey( &hkey );
+    return RegCloseKey( hkey );
+}
+
+/******************************************************************************
+ *           RegDeleteKey16   [SHELL.4]
+ */
+DWORD WINAPI RegDeleteKey16( HKEY hkey, LPCSTR name )
+{
+    fix_win16_hkey( &hkey );
+    return RegDeleteKeyA( hkey, name );
+}
+
+/******************************************************************************
+ *           RegSetValue16   [SHELL.5]
+ */
+DWORD WINAPI RegSetValue16( HKEY hkey, LPCSTR name, DWORD type, LPCSTR data, DWORD count )
+{
+    fix_win16_hkey( &hkey );
+    return RegSetValueA( hkey, name, type, data, count );
+}
+
+/******************************************************************************
+ *           RegQueryValue16   [SHELL.6]
+ *
+ * NOTES
+ *    Is this HACK still applicable?
+ *
+ * HACK
+ *    The 16bit RegQueryValue doesn't handle selectorblocks anyway, so we just
+ *    mask out the high 16 bit.  This (not so much incidently) hopefully fixes
+ *    Aldus FH4)
+ */
+DWORD WINAPI RegQueryValue16( HKEY hkey, LPCSTR name, LPSTR data, LPDWORD count )
+{
+    fix_win16_hkey( &hkey );
+    if (count) *count &= 0xffff;
+    return RegQueryValueA( hkey, name, data, count );
+}
+
+/******************************************************************************
+ *           RegEnumKey16   [SHELL.7]
+ */
+DWORD WINAPI RegEnumKey16( HKEY hkey, DWORD index, LPSTR name, DWORD name_len )
+{
+    fix_win16_hkey( &hkey );
+    return RegEnumKeyA( hkey, index, name, name_len );
 }

@@ -1,7 +1,7 @@
 name	wsock32
 type	win32
+init	WSOCK_LibMain
 
-import	ws2_32.dll
 import	kernel32.dll
 import	ntdll.dll
 

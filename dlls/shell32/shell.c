@@ -785,7 +785,7 @@ LRESULT WINAPI ShellHookProc16(INT16 code, WPARAM16 wParam, LPARAM lParam)
 	    case HSHELL_WINDOWDESTROYED:	uMsg = uMsgWndDestroyed; break;
 	    case HSHELL_ACTIVATESHELLWINDOW: 	uMsg = uMsgShellActivate;
         }
-	PostMessage16( SHELL_hWnd, uMsg, wParam, 0 );
+	PostMessageA( SHELL_hWnd, uMsg, wParam, 0 );
     }
     return CallNextHookEx16( WH_SHELL, code, wParam, lParam );
 }
@@ -824,4 +824,26 @@ BOOL WINAPI RegisterShellHook16(HWND16 hWnd, UINT16 uAction)
         SHELL_hWnd = 0; /* just in case */
     }
     return FALSE;
+}
+
+
+/***********************************************************************
+ *           DriveType16   (SHELL.262)
+ */
+UINT16 WINAPI DriveType16( UINT16 drive )
+{
+    UINT ret;
+    char path[] = "A:\\";
+    path[0] += drive;
+    ret = GetDriveTypeA(path);
+    switch(ret)  /* some values are not supported in Win16 */
+    {
+    case DRIVE_CDROM:
+        ret = DRIVE_REMOTE;
+        break;
+    case DRIVE_DOESNOTEXIST:
+        ret = DRIVE_CANNOTDETERMINE;
+        break;
+    }
+    return ret;
 }

@@ -945,9 +945,12 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall FindResource16(long str str) FindResource16
 @ stdcall FreeResource16(long) FreeResource16
 @ stdcall GetCurrentTask() GetCurrentTask
+@ stdcall GetDOSEnvironment16() GetDOSEnvironment16
+@ stdcall GetModuleFileName16(long ptr long) GetModuleFileName16
 @ stdcall GetModuleHandle16(str) GetModuleHandle16
 @ stdcall LoadResource16(long long) LoadResource16
 @ stdcall LockResource16(long) LockResource16
+@ stdcall WinExec16(str long) WinExec16
 
 ################################################################
 # Wine internal extensions
@@ -965,3 +968,6 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall wine_call_to_16_long(ptr long) wine_call_to_16_long
 @ stdcall wine_call_to_16_regs_short(ptr long) wine_call_to_16_regs_short
 @ stdcall wine_call_to_16_regs_long (ptr long) wine_call_to_16_regs_long
+
+# Unix files
+@ stdcall wine_get_unix_file_name(str ptr long) wine_get_unix_file_name

@@ -8,6 +8,7 @@
 
 #include <sys/types.h>
 #include "windef.h"
+#include "winbase.h"
 #include "debugtools.h"
 #include "winsock2.h"
 #include "winnt.h"
@@ -26,6 +27,7 @@
 
 DEFAULT_DEBUG_CHANNEL(winsock);
 
+static INT (WINAPI *WS2_recv)(SOCKET s, char *buf, INT len, INT flags);
 
 /***********************************************************************
  *      WsControl()
@@ -682,6 +684,21 @@ int WSCNTL_GetTransRecvStat(int intNumber, unsigned long *transBytes, unsigned l
 }
 
 
+/***********************************************************************
+ *		WSARecvEx()			(WSOCK32.1107)
+ *
+ * WSARecvEx is a Microsoft specific extension to winsock that is identical to recv
+ * except that has an in/out argument call flags that has the value MSG_PARTIAL ored
+ * into the flags parameter when a partial packet is read. This only applies to
+ * sockets using the datagram protocol. This method does not seem to be implemented
+ * correctly by microsoft as the winsock implementation does not set the MSG_PARTIAL
+ * flag when a fragmented packet arrives.
+ */
+INT WINAPI WSARecvEx(SOCKET s, char *buf, INT len, INT *flags)
+{
+    FIXME("(WSARecvEx) partial packet return value not set \n");
+    return WS2_recv(s, buf, len, *flags);
+}
 
 
 /***********************************************************************
@@ -691,4 +708,32 @@ void WINAPI WS_s_perror(LPCSTR message)
 {
     FIXME("(%s): stub\n",message);
     return;
+}
+
+
+/***********************************************************************
+ *		WSOCK_LibMain
+ */
+BOOL WINAPI WSOCK_LibMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+{
+    static HMODULE ws2_32;
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        /* we import ws2_32 by hand, because we don't want to implicitly */
+        /* link to it; otherwise Unix calls like socket() get redirected */
+        /* to ws2_32.dll and this is not what we want. */
+
+        if (!(ws2_32 = LoadLibraryA( "ws2_32.dll" )))
+        {
+            ERR("could not load ws2_32\n" );
+            return FALSE;
+        }
+        WS2_recv = (void *)GetProcAddress( ws2_32, "recv" );
+        break;
+    case DLL_PROCESS_DETACH:
+        FreeLibrary( ws2_32 );
+        break;
+    }
+    return TRUE;
 }

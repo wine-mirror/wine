@@ -61,5 +61,3 @@ owner	ws2_32
 116 pascal   WSACleanup() WSACleanup
 151 pascal16 __WSAFDIsSet(word ptr) __WSAFDIsSet16
 1107 pascal16 WSARecvEx(word ptr word ptr) WSARecvEx16
-
-1999 pascal DllEntryPoint(long word word word long word) WINSOCK_LibMain

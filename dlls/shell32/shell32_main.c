@@ -646,6 +646,7 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 	}
 	break;
 
+#if 0  /* FIXME: should use DoDragDrop */
     case WM_LBTRACKPOINT:
 	hWndCtl = GetDlgItem(hWnd, IDC_LISTBOX);
 	if( (INT16)GetKeyState( VK_CONTROL ) < 0 )
@@ -670,6 +671,7 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 	    }
 	}
 	break;
+#endif
 
     case WM_QUERYDROPOBJECT:
 	if( wParam == 0 )

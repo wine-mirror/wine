@@ -19,6 +19,7 @@
 #include "winerror.h"
 #include "winbase.h"
 #include "winnls.h"
+#include "winreg.h"
 
 #include "shlobj.h"
 #include "wine/undocshell.h"
@@ -28,8 +29,6 @@
 #include "pidl.h"
 #include "shell32_main.h"
 #include "shlguid.h"
-#include "file.h"
-#include "options.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -450,10 +449,10 @@ static int ExtractFromICO(const char *szFileName, const char *szXPMFileName)
 /* get the Unix file name for a given path, allocating the string */
 inline static char *get_unix_file_name( const char *dos )
 {
-    DOS_FULL_NAME path;
+    char buffer[MAX_PATH];
 
-    if (!DOSFS_GetFullName( dos, FALSE, &path )) return NULL;
-    return HEAP_strdupA( GetProcessHeap(), 0, path.long_name );
+    if (!wine_get_unix_file_name( dos, buffer, sizeof(buffer) )) return NULL;
+    return HEAP_strdupA( GetProcessHeap(), 0, buffer );
 }
 
 static BOOL create_default_icon( const char *filename )
@@ -493,6 +492,7 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
     char *path_name = NULL;
     char *work_dir = NULL;
     BOOL bDesktop;
+    HKEY hkey;
 
     _ICOM_THIS_From_IPersistFile(IShellLinkImpl, iface);
 
@@ -507,7 +507,14 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
     if (strcasecmp( p, ".exe" )) return NOERROR;
 
     /* check if ShellLinker configured */
-    PROFILE_GetWineIniString( "wine", "ShellLinker", "", buffer, sizeof(buffer) );
+    buffer[0] = 0;
+    if (!RegOpenKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Wine",
+                        0, KEY_ALL_ACCESS, &hkey ))
+    {
+        DWORD type, count = sizeof(buffer);
+        if (RegQueryValueExA( hkey, "ShellLinker", 0, &type, buffer, &count )) buffer[0] = 0;
+        RegCloseKey( hkey );
+    }
     if (!*buffer) return NOERROR;
     shell_link_app = HEAP_strdupA( GetProcessHeap(), 0, buffer );
 

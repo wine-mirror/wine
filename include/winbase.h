@@ -1894,6 +1894,12 @@ DWORD       WINAPI _ConfirmSysLevel(SYSLEVEL*);
 VOID        WINAPI _EnterSysLevel(SYSLEVEL*);
 VOID        WINAPI _LeaveSysLevel(SYSLEVEL*);
 
+
+/* Wine internal functions */
+
+BOOL        WINAPI wine_get_unix_file_name( LPCSTR dos, LPSTR buffer, DWORD len );
+
+
 /* a few optimizations for i386/gcc */
 
 #if defined(__i386__) && defined(__GNUC__)

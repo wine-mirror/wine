@@ -1366,6 +1366,21 @@ DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
     return ret;
 }
 
+
+/***********************************************************************
+ *           wine_get_unix_file_name   (Not a Windows API, but exported from KERNEL32)
+ *
+ * Return the full Unix file name for a given path.
+ */
+BOOL WINAPI wine_get_unix_file_name( LPCSTR dos, LPSTR buffer, DWORD len )
+{
+    BOOL ret;
+    DOS_FULL_NAME path;
+    if ((ret = DOSFS_GetFullName( dos, FALSE, &path ))) lstrcpynA( buffer, dos, len );
+    return ret;
+}
+
+
 /***********************************************************************
  *           DOSFS_FindNextEx
  */

@@ -146,9 +146,6 @@ typedef struct          /* WSAAsyncSelect() control struct */
 
 typedef struct _WSINFO
 {
-  DWORD			dwThisProcess;
-  struct _WSINFO       *lpNextIData;
-
   unsigned		flags;
   INT16			num_startup;		/* reference counter */
   INT16			num_async_rq;
@@ -326,44 +323,16 @@ static int _get_sock_error(SOCKET s, unsigned int bit)
     return ret;
 }
 
-static LPWSINFO lpFirstIData = NULL;
+static WSINFO wsinfo;
 
-static LPWSINFO WINSOCK_GetIData(void)
+inline static LPWSINFO WINSOCK_GetIData(void)
 {
-    DWORD pid = GetCurrentProcessId();
-    LPWSINFO iData;
-
-    for (iData = lpFirstIData; iData; iData = iData->lpNextIData) {
-	if (iData->dwThisProcess == pid)
-	    break;
-    }
-    return iData;
-}
-
-static BOOL WINSOCK_CreateIData(void)
-{
-    LPWSINFO iData;
-    
-    iData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WSINFO));
-    if (!iData)
-	return FALSE;
-    iData->dwThisProcess = GetCurrentProcessId();
-    iData->lpNextIData = lpFirstIData;
-    lpFirstIData = iData;
-    return TRUE;
+    return &wsinfo;
 }
 
 static void WINSOCK_DeleteIData(void)
 {
     LPWSINFO iData = WINSOCK_GetIData();
-    LPWSINFO* ppid;
-    if (iData) {
-	for (ppid = &lpFirstIData; *ppid; ppid = &(*ppid)->lpNextIData) {
-	    if (*ppid == iData) {
-	        *ppid = iData->lpNextIData;
-	        break;
-	    }
-	}
 
 	if( iData->flags & WSI_BLOCKINGCALL )
 	    TRACE("\tinside blocking call!\n");
@@ -374,7 +343,6 @@ static void WINSOCK_DeleteIData(void)
 	if( iData->dbuffer ) SEGPTR_FREE(iData->dbuffer);
 
 	HeapFree(GetProcessHeap(), 0, iData);
-    }
 }
 
 /***********************************************************************
@@ -391,21 +359,6 @@ BOOL WINAPI WSOCK32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad
     return TRUE;
 }
 
-/***********************************************************************
- *		WINSOCK_LibMain (WINSOCK.init)
- */
-BOOL WINAPI WINSOCK_LibMain(DWORD fdwReason, HINSTANCE hInstDLL, WORD ds,
-                            WORD wHeapSize, DWORD dwReserved1, WORD wReserved2)
-{
-    TRACE("0x%x 0x%lx\n", hInstDLL, fdwReason);
-    switch (fdwReason) {
-    case DLL_PROCESS_DETACH:
-	WINSOCK_DeleteIData();
-	break;
-    }
-    return TRUE;
-}
-                                                                          
 /***********************************************************************
  *          convert_sockopt()
  *
@@ -650,12 +603,6 @@ INT16 WINAPI WSAStartup16(UINT16 wVersionRequested, LPWSADATA lpWSAData)
     if( _WSHeap == 0 ) return WSASYSNOTREADY;
 
     pwsi = WINSOCK_GetIData();
-    if( pwsi == NULL )
-    {
-        WINSOCK_CreateIData();
-        pwsi = WINSOCK_GetIData();
-	if (!pwsi) return WSASYSNOTREADY;
-    }
     pwsi->num_startup++;
 
     /* return winsock information */
@@ -711,12 +658,6 @@ INT WINAPI WSAStartup(UINT wVersionRequested, LPWSADATA lpWSAData)
     if( _WSHeap == 0 ) return WSASYSNOTREADY;
 
     pwsi = WINSOCK_GetIData();
-    if( pwsi == NULL )
-    {
-        WINSOCK_CreateIData();
-        pwsi = WINSOCK_GetIData();
-	if (!pwsi) return WSASYSNOTREADY;
-    }
     pwsi->num_startup++;
 
     /* return winsock information */
@@ -2831,23 +2772,6 @@ INT16 WINAPI WSAAsyncSelect16(SOCKET16 s, HWND16 hWnd, UINT16 wMsg, LONG lEvent)
 {
     return (INT16)WSAAsyncSelect( s, hWnd, wMsg, lEvent );
 }
-
-/***********************************************************************
- *		WSARecvEx()			(WSOCK32.1107)
- *
- * WSARecvEx is a Microsoft specific extension to winsock that is identical to recv
- * except that has an in/out argument call flags that has the value MSG_PARTIAL ored
- * into the flags parameter when a partial packet is read. This only applies to
- * sockets using the datagram protocol. This method does not seem to be implemented
- * correctly by microsoft as the winsock implementation does not set the MSG_PARTIAL
- * flag when a fragmented packet arrives.
- */
-INT     WINAPI   WSARecvEx(SOCKET s, char *buf, INT len, INT *flags) {
-  FIXME("(WSARecvEx) partial packet return value not set \n");
-
-  return WSOCK32_recv(s, buf, len, *flags);
-}
-
 
 /***********************************************************************
  *              WSARecvEx16()			(WINSOCK.1107)

@@ -36,7 +36,7 @@ owner	shell32
 157 stub RESTARTDIALOG
 #  166 PICKICONDLG
 
-262 pascal16 DriveType(long) GetDriveType16
+262 pascal16 DriveType(long) DriveType16
 
 #  263 SH16TO32DRIVEIOCTL
 #  264 SH16TO32INT2526

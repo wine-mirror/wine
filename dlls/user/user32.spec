@@ -656,9 +656,11 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 ################################################################
 # Wine extensions: Win16 functions that are needed by other dlls
 #
+@ stdcall CallNextHookEx16(long long long long) CallNextHookEx16
 @ stdcall CallWindowProc16(long long long long long) CallWindowProc16
 @ stdcall CreateDialogIndirectParam16(long ptr long long long) CreateDialogIndirectParam16
 @ stdcall DialogBoxIndirectParam16(long long long long long) DialogBoxIndirectParam16
+@ stdcall SetWindowsHookEx16(long long long long) SetWindowsHookEx16
 
 ################################################################
 # Wine extensions: extra useful functions not exported under Windows
