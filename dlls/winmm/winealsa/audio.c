@@ -374,12 +374,12 @@ static int ALSA_XRUNRecovery(WINE_WAVEOUT * wwo, int err)
     } else if (err == -ESTRPIPE) {
         while ((err = snd_pcm_resume(wwo->p_handle)) == -EAGAIN)
             sleep(1);       /* wait until the suspend flag is released */
-            if (err < 0) {
-                err = snd_pcm_prepare(wwo->p_handle);
-                if (err < 0)
-                    ERR("recovery from suspend failed, prepare failed: %s\n", snd_strerror(err));
-            }
-            return 0;
+        if (err < 0) {
+            err = snd_pcm_prepare(wwo->p_handle);
+            if (err < 0)
+                ERR("recovery from suspend failed, prepare failed: %s\n", snd_strerror(err));
+        }
+        return 0;
     }
     return err;
 }
@@ -610,6 +610,8 @@ LONG ALSA_WaveInit(void)
        X(11025,1);
        X(22050,2);
        X(44100,4);
+       X(48000,48);
+       X(96000,96);
 #undef X
     }
 
@@ -714,6 +716,8 @@ LONG ALSA_WaveInit(void)
        X(11025,1);
        X(22050,2);
        X(44100,4);
+       X(48000,48);
+       X(96000,96);
 #undef X
     }
 
@@ -1457,7 +1461,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if ( dwFlags & WAVE_DIRECTSOUND )
     	flags |= SND_PCM_ASYNC;
 
-    if ( (err = snd_pcm_open(&pcm, wwo->device, SND_PCM_STREAM_PLAYBACK, dwFlags)) < 0)
+    if ( (err = snd_pcm_open(&pcm, wwo->device, SND_PCM_STREAM_PLAYBACK, flags)) < 0)
     {
         ERR("Error open: %s\n", snd_strerror(err));
 	return MMSYSERR_NOTENABLED;
