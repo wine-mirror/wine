@@ -1112,6 +1112,7 @@ DIB_DirectDrawSurface_SetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
 
 static ICOM_VTABLE(IDirectDrawSurface7) DIB_IDirectDrawSurface7_VTable =
 {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDrawSurface_QueryInterface,
     Main_DirectDrawSurface_AddRef,
     Main_DirectDrawSurface_Release,

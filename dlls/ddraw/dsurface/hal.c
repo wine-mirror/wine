@@ -362,6 +362,7 @@ HWND HAL_DirectDrawSurface_get_display_window(IDirectDrawSurfaceImpl* This)
 
 static ICOM_VTABLE(IDirectDrawSurface7) HAL_IDirectDrawSurface7_VTable =
 {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDrawSurface_QueryInterface,
     Main_DirectDrawSurface_AddRef,
     Main_DirectDrawSurface_Release,

@@ -549,6 +549,7 @@ HAL_DirectDraw_GetFourCCCodes(LPDIRECTDRAW7 iface, LPDWORD pNumCodes,
 
 static ICOM_VTABLE(IDirectDraw7) HAL_DirectDraw_VTable =
 {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
     Main_DirectDraw_QueryInterface,
     Main_DirectDraw_AddRef,
     Main_DirectDraw_Release,
