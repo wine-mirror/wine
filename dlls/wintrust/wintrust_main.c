@@ -30,6 +30,17 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wintrust);
 
 /***********************************************************************
+ *		CryptCATAdminAcquireContext (WINTRUST.@)
+ */
+BOOL WINAPI CryptCATAdminAcquireContext(/* HCATADMIN */ void *catAdmin,
+					GUID *sysSystem, DWORD dwFlags )
+{
+    FIXME("%p %s %lx\n", catAdmin, debugstr_guid(sysSystem), dwFlags);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *		WinVerifyTrust (WINTRUST.@)
  */
 LONG WINAPI WinVerifyTrust( HWND hwnd, GUID *ActionID,  LPVOID ActionData )

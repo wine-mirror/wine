@@ -1,4 +1,4 @@
-@ stub CryptCATAdminAcquireContext
+@ stdcall CryptCATAdminAcquireContext(long ptr long)
 @ stub CryptCATAdminCalcHashFromFileHandle
 @ stub CryptCATAdminEnumCatalogFromHash
 @ stub CryptCATAdminPauseServiceForBackup
