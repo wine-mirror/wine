@@ -501,8 +501,8 @@ HICON InternalExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, UINT nIco
 
 		  for( i = nIconIndex; i < nIconIndex + n; i++ ) 
 		     {
-		       hIcon = SHELL_LoadResource( hInstance, hFile, pIconDir + (i - nIconIndex), 
-										 *(WORD*)pData );
+		       hIcon = SHELL_LoadResource( hInstance, hFile, pIconDir + i, 
+								  *(WORD*)pData );
 		       RetPtr[i-nIconIndex] = GetIconID( hIcon, 3 );
 		       GlobalFree16(hIcon); 
 		     }
@@ -547,18 +547,40 @@ HICON ExtractIcon(HINSTANCE hInstance, LPCSTR lpszExeFileName, WORD nIconIndex)
 
 /*************************************************************************
  *				ExtractAssociatedIcon	[SHELL.36]
+ * 
+ * Return icon for given file (either from file itself or from associated
+ * executable) and patch parameters if needed.
  */
 HICON ExtractAssociatedIcon(HINSTANCE hInst,LPSTR lpIconPath, LPWORD lpiIcon)
 {
     HICON hIcon = ExtractIcon(hInst, lpIconPath, *lpiIcon);
 
-    /* MAKEINTRESOURCE(2) seems to be "default" icon according to Progman 
-     *
-     * For data files it probably should call FindExecutable and load
-     * icon from there. As of now FindExecutable is empty stub.
-     */
+    if( hIcon < 2 )
+      {
 
-    if( hIcon < 2 ) hIcon = LoadIcon( hInst, MAKEINTRESOURCE(2));
+	if( hIcon == 1 ) /* no icons found in given file */
+	  {
+	    char  tempPath[0x80];
+	    UINT  uRet = FindExecutable(lpIconPath,NULL,tempPath);
+
+	    if( uRet > 32 && tempPath[0] )
+	      {
+		strcpy(lpIconPath,tempPath);
+	        hIcon = ExtractIcon(hInst, lpIconPath, *lpiIcon);
+
+		if( hIcon > 2 ) return hIcon;
+	      }
+	    else hIcon = 0;
+	  }
+	
+	if( hIcon == 1 ) 
+	  *lpiIcon = 2;   /* MSDOS icon - we found .exe but no icons in it */
+	else
+	  *lpiIcon = 6;   /* generic icon - found nothing */
+
+        GetModuleFileName(hInst, lpIconPath, 0x80);
+	hIcon = LoadIcon( hInst, MAKEINTRESOURCE(*lpiIcon));
+      }
 
     return hIcon;
 }

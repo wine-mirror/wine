@@ -469,6 +469,7 @@ DECL_WINELIB_TYPE(LPNCCALCSIZE_PARAMS);
 
   /* CallMsgFilter() values */
 #define MSGF_DIALOGBOX      0
+#define MSGF_MESSAGEBOX     1
 #define MSGF_MENU           2
 #define MSGF_MOVE           3
 #define MSGF_SIZE           4

@@ -84,7 +84,7 @@ WNDPROC MODULE_GetWndProcEntry16( char *name )
   MAP_STR_TO_PROC("ColorDlgProc",ColorDlgProc);
   MAP_STR_TO_PROC("ComboBoxWndProc",ComboBoxWndProc);
   MAP_STR_TO_PROC("ComboLBoxWndProc",ComboLBoxWndProc);
-  MAP_STR_TO_PROC("DefDlgProc",DefDlgProc);
+  MAP_STR_TO_PROC("DefDlgProc",DefDlgProc16);
   MAP_STR_TO_PROC("EditWndProc",EditWndProc);
   MAP_STR_TO_PROC("FileOpenDlgProc",FileOpenDlgProc);
   MAP_STR_TO_PROC("FileSaveDlgProc",FileSaveDlgProc);

@@ -32,7 +32,7 @@ typedef struct tagMESSAGEQUEUE
   WORD      queueSize;              /* 0c Size of the queue */
   DWORD     GetMessageTimeVal WINE_PACKED;  /* 0e Value for GetMessageTime */
   DWORD     GetMessagePosVal WINE_PACKED;   /* 12 Value for GetMessagePos */
-  WORD      reserved1;              /* 16 Unknown */
+  HQUEUE    self;                   /* 16 Handle to self (was: reserved) */
   DWORD     GetMessageExtraInfoVal; /* 18 Value for GetMessageExtraInfo */
   WORD      reserved2;              /* 1c Unknown */
   LPARAM    lParam WINE_PACKED;     /* 1e Next 4 values set by SendMessage */
@@ -75,6 +75,7 @@ extern void QUEUE_DumpQueue( HQUEUE hQueue );
 extern void QUEUE_WalkQueues(void);
 extern MESSAGEQUEUE *QUEUE_GetSysQueue(void);
 extern void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit );
+extern void QUEUE_ClearWakeBit( MESSAGEQUEUE *queue, WORD bit );
 extern void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue );
 extern void QUEUE_WaitBits( WORD bits );
 extern void QUEUE_IncPaintCount( HQUEUE hQueue );

@@ -129,7 +129,7 @@ BOOL CLIPBOARD_RequestXSelection()
                     WIN_GetXWindow(hWnd),CurrentTime);
 
   /* TODO: need time-out for broken clients */
-  while(wait_for_selection) EVENT_WaitXEvent(-1);
+  while(wait_for_selection) EVENT_WaitXEvent( TRUE );
 
   return (BOOL)ClipFormats[0].wDataPresent;
 }

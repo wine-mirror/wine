@@ -200,7 +200,7 @@ static BOOL CLASS_FreeClass( CLASS *classPtr )
     if (classPtr->hbrBackground) DeleteObject( classPtr->hbrBackground );
     GlobalDeleteAtom( classPtr->atomName );
     CLASS_SetMenuNameA( classPtr, NULL );
-    CLASS_SetWndProc( classPtr, (WNDPROC16)0, WIN_PROC_16 );
+    CLASS_SetWndProc( classPtr, (HANDLE32)0, WIN_PROC_16 );
     HeapFree( SystemHeap, 0, classPtr );
     return TRUE;
 }

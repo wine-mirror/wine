@@ -159,9 +159,8 @@ BOOL DCE_InvalidateDCE(WND* wndScope, RECT16* pRectUpdate)
 
 	        dprintf_dc(stddeb,"\tgot hwnd %04x\n", wndCurrent->hwndSelf);
   
-	        if( wndCurrent->parent != wndScope )
-	            MapWindowPoints16(wndCurrent->parent->hwndSelf, wndScope->hwndSelf,
-			 				         (LPPOINT16)&wndRect, 2);
+	        MapWindowPoints16(wndCurrent->parent->hwndSelf, wndScope->hwndSelf,
+			 				       (LPPOINT16)&wndRect, 2);
 	        if( IntersectRect16(&wndRect,&wndRect,pRectUpdate) )
 	            SetHookFlags(dce->hDC, DCHF_INVALIDATEVISRGN);
 	        break;

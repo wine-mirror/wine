@@ -1005,6 +1005,7 @@ LPVOID HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
                 SetLastError( ERROR_OUTOFMEMORY );
                 return NULL;
             }
+            HEAP_ShrinkBlock( subheap, pArena, size );
         }
         else  /* Do it the hard way */
         {
@@ -1029,6 +1030,7 @@ LPVOID HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
                                + sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
             pInUse->threadId = GetCurrentTask();
             pInUse->magic    = ARENA_INUSE_MAGIC;
+            HEAP_ShrinkBlock( subheap, pInUse, size );
             memcpy( pInUse + 1, pArena + 1, oldSize );
 
             /* Free the previous block */
@@ -1038,11 +1040,7 @@ LPVOID HeapReAlloc( HANDLE32 heap, DWORD flags, LPVOID ptr, DWORD size )
             pArena  = pInUse;
         }
     }
-
-
-    /* Shrink the block */
-
-    HEAP_ShrinkBlock( subheap, pArena, size );
+    else HEAP_ShrinkBlock( subheap, pArena, size );  /* Shrink the block */
 
     /* Clear the extra bytes if needed */
 

@@ -48,6 +48,7 @@ BOOL16 DPtoLP16( HDC16 hdc, LPPOINT16 points, INT16 count )
     {
 	points->x = XDPTOLP( dc, points->x );
 	points->y = YDPTOLP( dc, points->y );
+        points++;
     }
     return TRUE;
 }
@@ -65,6 +66,7 @@ BOOL32 DPtoLP32( HDC32 hdc, LPPOINT32 points, INT32 count )
     {
 	points->x = XDPTOLP( dc, points->x );
 	points->y = YDPTOLP( dc, points->y );
+        points++;
     }
     return TRUE;
 }
@@ -82,6 +84,7 @@ BOOL16 LPtoDP16( HDC16 hdc, LPPOINT16 points, INT16 count )
     {
 	points->x = XLPTODP( dc, points->x );
 	points->y = YLPTODP( dc, points->y );
+        points++;
     }
     return TRUE;
 }
@@ -99,6 +102,7 @@ BOOL32 LPtoDP32( HDC32 hdc, LPPOINT32 points, INT32 count )
     {
 	points->x = XLPTODP( dc, points->x );
 	points->y = YLPTODP( dc, points->y );
+        points++;
     }
     return TRUE;
 }

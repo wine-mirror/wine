@@ -248,7 +248,7 @@ INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec, LPCVOID args )
         {
         case WPR_CHAR:
             cur_arg = (DWORD)*(CHAR *)args;
-            args = (CHAR *)args + 1;
+            args = (WORD *)args + 1;
             break;
         case WPR_STRING:
             cur_arg = (DWORD)PTR_SEG_TO_LIN( *(SEGPTR *)args );

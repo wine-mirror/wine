@@ -16,6 +16,7 @@
 #include "menu.h"
 #include "winpos.h"
 #include "scroll.h"
+#include "stackframe.h"
 #include "nonclient.h"
 #include "graphics.h"
 #include "queue.h"
@@ -907,7 +908,8 @@ static LONG NC_StartSizeMove( HWND hwnd, WPARAM wParam, POINT16 *capturePoint )
 	SetCapture(hwnd);
 	while(!hittest)
 	{
-	    MSG_GetHardwareMessage( &msg );
+            MSG_InternalGetMessage( MAKE_SEGPTR(&msg), 0, 0, MSGF_SIZE,
+                                    PM_REMOVE, FALSE );
 	    switch(msg.message)
 	    {
 	    case WM_MOUSEMOVE:
@@ -1046,7 +1048,8 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
     {
         int dx = 0, dy = 0;
 
-	MSG_GetHardwareMessage( &msg );
+        MSG_InternalGetMessage( MAKE_SEGPTR(&msg), 0, 0, MSGF_SIZE,
+                                PM_REMOVE, FALSE );
 
 	  /* Exit on button-up, Return, or Esc */
 	if ((msg.message == WM_LBUTTONUP) ||
@@ -1148,7 +1151,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
     do
     {
 	BOOL oldstate = pressed;
-	MSG_GetHardwareMessage( &msg );
+        MSG_InternalGetMessage( MAKE_SEGPTR(&msg), 0, 0, 0, PM_REMOVE, FALSE );
 
 	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
 	if (pressed != oldstate)

@@ -29,10 +29,7 @@
 extern BYTE* 	KeyStateTable;				 /* event.c */
 extern WPARAM	lastEventChar;				 /* event.c */
 
-extern BOOL TIMER_CheckTimer( LONG *next, MSG16 *msg,
-			      HWND hwnd, BOOL remove );  /* timer.c */
-
-DWORD MSG_WineStartTicks;  				 /* Ticks at Wine startup */
+DWORD MSG_WineStartTicks; /* Ticks at Wine startup */
 
 static WORD doubleClickSpeed = 452;
 
@@ -68,9 +65,8 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
 
       /* Find the window */
 
-    if (GetCapture())
+    if ((msg->hwnd = GetCapture()) != 0)
     {
-	msg->hwnd = GetCapture();
 	ScreenToClient16( msg->hwnd, &pt );
 	msg->lParam = MAKELONG( pt.x, pt.y );
         /* No need to further process the message */
@@ -80,6 +76,16 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
     }
    
     hittest = WINPOS_WindowFromPoint( msg->pt, &pWnd );
+    if (pWnd->hmemTaskQ != GetTaskQueue(0))
+    {
+        /* Not for the current task */
+        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) );
+        if (queue) QUEUE_ClearWakeBit( queue, QS_MOUSE );
+        /* Wake up the other task */
+        queue = (MESSAGEQUEUE *)GlobalLock16( pWnd->hmemTaskQ );
+        if (queue) QUEUE_SetWakeBit( queue, QS_MOUSE );
+        return FALSE;
+    }
     msg->hwnd = pWnd->hwndSelf;
     if ((hittest != HTERROR) && mouseClick)
     {
@@ -172,6 +178,8 @@ static BOOL MSG_TranslateMouseMsg( MSG16 *msg, BOOL remove )
  */
 static BOOL MSG_TranslateKeyboardMsg( MSG16 *msg, BOOL remove )
 {
+    WND *pWnd;
+
       /* Should check Ctrl-Esc and PrintScreen here */
 
     msg->hwnd = GetFocus();
@@ -184,6 +192,17 @@ static BOOL MSG_TranslateKeyboardMsg( MSG16 *msg, BOOL remove )
 
 	if( msg->message < WM_SYSKEYDOWN )
 	    msg->message += WM_SYSKEYDOWN - WM_KEYDOWN;
+    }
+    pWnd = WIN_FindWndPtr( msg->hwnd );
+    if (pWnd && (pWnd->hmemTaskQ != GetTaskQueue(0)))
+    {
+        /* Not for the current task */
+        MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) );
+        if (queue) QUEUE_ClearWakeBit( queue, QS_KEY );
+        /* Wake up the other task */
+        queue = (MESSAGEQUEUE *)GlobalLock16( pWnd->hmemTaskQ );
+        if (queue) QUEUE_SetWakeBit( queue, QS_KEY );
+        return FALSE;
     }
     return !HOOK_CallHooks( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
                             msg->wParam, msg->lParam );
@@ -202,7 +221,7 @@ static BOOL MSG_PeekHardwareMsg( MSG16 *msg, HWND hwnd, WORD first, WORD last,
     int i, pos = sysMsgQueue->nextMessage;
 
     /* If the queue is empty, attempt to fill it */
-    if (!sysMsgQueue->msgCount && XPending(display)) EVENT_WaitXEvent( 0 );
+    if (!sysMsgQueue->msgCount && XPending(display)) EVENT_WaitXEvent( FALSE );
 
     for (i = 0; i < sysMsgQueue->msgCount; i++, pos++)
     {
@@ -264,38 +283,6 @@ WORD GetDoubleClickTime()
 {
     return doubleClickSpeed;
 }		
-
-
-/***********************************************************************
- *           MSG_GetHardwareMessage
- *
- * Like GetMessage(), but only return mouse and keyboard events.
- * Used internally for window moving and resizing. Mouse messages
- * are not translated.
- * Warning: msg->hwnd is always 0.
- */
-BOOL MSG_GetHardwareMessage( LPMSG16 msg )
-{
-#if 0
-    int pos;
-    XEvent event;
-    MESSAGEQUEUE *sysMsgQueue = QUEUE_GetSysQueue();
-
-    while(1)
-    {    
-	if ((pos = QUEUE_FindMsg( sysMsgQueue, 0, 0, 0 )) != -1)
-	{
-	    *msg = sysMsgQueue->messages[pos].msg;
-	    QUEUE_RemoveMsg( sysMsgQueue, pos );
-	    break;
-	}
-	XNextEvent( display, &event );
-	EVENT_ProcessEvent( &event );
-    }
-#endif
-    MSG_PeekMessage( msg, 0, WM_KEYFIRST, WM_MOUSELAST, PM_REMOVE, 0 );
-    return TRUE;
-}
 
 
 /***********************************************************************
@@ -381,7 +368,6 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
     int pos, mask;
     MESSAGEQUEUE *msgQueue;
     HQUEUE	  hQueue;
-    LONG nextExp;  /* Next timer expiration time */
 
 #ifdef CONFIG_IPC
     DDE_TestDDE(hwnd);	/* do we have dde handling in the window ?*/
@@ -490,10 +476,8 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
         }
 	if ((msgQueue->wakeBits & mask) & QS_TIMER)
 	{
-	    if (TIMER_CheckTimer( &nextExp, msg, hwnd, flags & PM_REMOVE ))
-		break;  /* Got a timer msg */
+	    if (TIMER_GetTimerMsg(msg, hwnd, hQueue, flags & PM_REMOVE)) break;
 	}
-	else nextExp = -1;  /* No timeout needed */
 
         if (peek)
         {
@@ -792,24 +776,7 @@ LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
  */
 void WaitMessage( void )
 {
-    MSG16 msg;
-    MESSAGEQUEUE *queue;
-    LONG nextExp = -1;  /* Next timer expiration time */
-
-#ifdef CONFIG_IPC
-    DDE_GetRemoteMessage();
-#endif  /* CONFIG_IPC */
-    
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return;
-    if ((queue->wPostQMsg) || 
-        (queue->wakeBits & (QS_SENDMESSAGE | QS_PAINT)) ||
-        (queue->msgCount) || (QUEUE_GetSysQueue()->msgCount) )
-        return;
-    if ((queue->wakeBits & QS_TIMER) && 
-        TIMER_CheckTimer( &nextExp, &msg, 0, FALSE))
-        return;
-    /* FIXME: (dde) must check DDE & X-events simultaneously */
-    EVENT_WaitXEvent( nextExp );
+    QUEUE_WaitBits( QS_ALLINPUT );
 }
 
 

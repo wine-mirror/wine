@@ -1,4 +1,44 @@
 ----------------------------------------------------------------------
+Sun Jun 16 16:51:31 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [memory/heap.c]
+	Fixed bug in HeapRealloc (thanks to Bruce Milner).
+
+	* [misc/wsprintf.c]
+	Fixed argument size for %c format in wsprintf16().
+
+	* [objects/dc.c]
+	Don't free hFirstBitmap for saved DCs.
+
+	* [windows/event.c]
+	Added timer handling in EVENT_WaitXEvent().
+
+	* [windows/message.c]
+	In MSG_TranslateMouseMsg and MSG_TranslateKbdMsg, check if the
+	event is for the current task; if not, wake the other task.
+
+	* [windows/queue.c] [include/queue.h]
+	Added 'self' handle in queue structure.
+
+	* [windows/timer.c]
+	Added TIMER_ExpireTimers() function to mark expired timers and
+	wake up the corresponding tasks.
+
+Thu Jun 13 01:46:33 EDT 1996  William Magro <wmagro@tc.cornell.edu>
+
+	* [windows/mapping.c]
+	First point in list was mapped multiple times in DPtoLP and
+ 	LPtoDP.  Other points were not mapped.
+
+Wed Jun 12 18:08:45 1996  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [misc/shell.c]
+	Some fixes for ExtractIcon function family.
+
+	* [documentation/user_module]
+	Chapter about windowing and messaging subsystems.
+
+----------------------------------------------------------------------
 Tue Jun 11 15:20:43 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [debugger/break.c] [loader/signal.c]

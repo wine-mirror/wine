@@ -16,6 +16,8 @@
 
 static HQUEUE hFirstQueue = 0;
 static HQUEUE hmemSysMsgQueue = 0;
+static MESSAGEQUEUE *pMouseQueue = NULL;  /* Queue for last mouse message */
+static MESSAGEQUEUE *pKbdQueue = NULL;    /* Queue for last kbd message */
 static HQUEUE hDoomedQueue = 0;
 static MESSAGEQUEUE *sysMsgQueue = NULL;
 
@@ -111,6 +113,7 @@ static HQUEUE QUEUE_CreateMsgQueue( int size )
     if (!(hQueue = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, queueSize )))
         return 0;
     msgQueue = (MESSAGEQUEUE *) GlobalLock16( hQueue );
+    msgQueue->self = hQueue;
     msgQueue->msgSize = sizeof(QMSG);
     msgQueue->queueSize = size;
     msgQueue->wWinVersion = pTask ? pTask->version : 0;
@@ -144,6 +147,7 @@ BOOL QUEUE_DeleteMsgQueue( HQUEUE hQueue )
         pPrev = &msgQ->next;
     }
     if (*pPrev) *pPrev = msgQueue->next;
+    msgQueue->self = 0;
     GlobalFree16( hQueue );
     return 1;
 }
@@ -181,6 +185,8 @@ MESSAGEQUEUE *QUEUE_GetSysQueue(void)
  */
 void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
 {
+    if (bit & QS_MOUSE) pMouseQueue = queue;
+    if (bit & QS_KEY) pKbdQueue = queue;
     queue->changeBits |= bit;
     queue->wakeBits   |= bit;
     if (queue->wakeMask & bit)
@@ -188,6 +194,16 @@ void QUEUE_SetWakeBit( MESSAGEQUEUE *queue, WORD bit )
         queue->wakeMask = 0;
         PostEvent( queue->hTask );
     }
+}
+
+
+/***********************************************************************
+ *           QUEUE_ClearWakeBit
+ */
+void QUEUE_ClearWakeBit( MESSAGEQUEUE *queue, WORD bit )
+{
+    queue->changeBits &= ~bit;
+    queue->wakeBits   &= ~bit;
 }
 
 
@@ -233,16 +249,22 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
     WPARAM wParam;
     LPARAM lParam;
     LRESULT result = 0;
+    HQUEUE oldSender;
 
     printf( "ReceiveMessage\n" );
     if (!(queue->wakeBits & QS_SENDMESSAGE)) return;
     if (!(senderQ = (MESSAGEQUEUE*)GlobalLock16( queue->hSendingTask))) return;
 
     /* Remove sending queue from the list */
+    oldSender                  = queue->InSendMessageHandle;
     queue->InSendMessageHandle = queue->hSendingTask;
     queue->hSendingTask        = senderQ->hPrevSendingTask;
     senderQ->hPrevSendingTask  = 0;
-    if (!queue->hSendingTask) queue->wakeBits &= ~QS_SENDMESSAGE;
+    if (!queue->hSendingTask)
+    {
+        queue->wakeBits &= ~QS_SENDMESSAGE;
+        queue->changeBits &= ~QS_SENDMESSAGE;
+    }
 
     /* Get the parameters from the sending task */
     hwnd   = senderQ->hWnd;
@@ -257,13 +279,21 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
 
     /* Call the window procedure */
     /* FIXME: should we use CallWindowProc here? */
-    if (IsWindow( hwnd )) result = SendMessage16( hwnd, msg, wParam, lParam );
+    if (IsWindow( hwnd ))
+    {
+        DWORD extraInfo = queue->GetMessageExtraInfoVal;
+        queue->GetMessageExtraInfoVal = senderQ->GetMessageExtraInfoVal;
+        result = SendMessage16( hwnd, msg, wParam, lParam );
+        queue->GetMessageExtraInfoVal = extraInfo;  /* Restore extra info */
+    }
 
     printf( "ReceiveMessage: wnd proc %04x %04x %04x %08x ret = %08x\n",
             hwnd, msg, wParam, lParam, result );
 
     /* Return the result to the sender task */
     ReplyMessage( result );
+
+    queue->InSendMessageHandle = oldSender;
 }
 
 
@@ -373,15 +403,18 @@ static void QUEUE_WakeSomeone( UINT message )
 
     if (!(hwnd = GetSysModalWindow()))
     {
-        hwnd = (wakeBit == QS_KEY) ? GetFocus() : GetCapture();
-        if (!hwnd) hwnd = GetActiveWindow();
+        if (wakeBit == QS_KEY)
+        {
+            if (!(hwnd = GetFocus())) hwnd = GetActiveWindow();
+        }
+        else hwnd = GetCapture();
     }
     if (hwnd)
     {
         WND *wndPtr = WIN_FindWndPtr( hwnd );
         if (wndPtr) queue = (MESSAGEQUEUE *)GlobalLock16( wndPtr->hmemTaskQ );
     }
-    else
+    else if (!(queue = pMouseQueue))
     {
         hQueue = hFirstQueue;
         while (hQueue)

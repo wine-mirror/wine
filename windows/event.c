@@ -25,6 +25,7 @@
 #include "class.h"
 #include "clipboard.h"
 #include "debugger.h"
+#include "message.h"
 #include "module.h"
 #include "options.h"
 #include "queue.h"
@@ -34,19 +35,6 @@
 #include "debug.h"
 #include "dde_proc.h"
 
-
-#ifdef ndef
-#ifndef FamilyAmoeba
-typedef char *XPointer;
-#endif
-#endif
-
-#ifdef WHO_NEEDS_DIRTY_HACKS
-#ifdef sparc
-/* Dirty hack to compile with Sun's OpenWindows */
-typedef char *XPointer;
-#endif
-#endif
 
 #define NB_BUTTONS      3     /* Windows can handle 3 buttons */
 
@@ -152,13 +140,13 @@ static void EVENT_ButtonRelease( XButtonEvent *event );
 static void EVENT_MotionNotify( XMotionEvent *event );
 static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event );
 static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event );
-static void EVENT_Expose( HWND hwnd, XExposeEvent *event );
-static void EVENT_GraphicsExpose( HWND hwnd, XGraphicsExposeEvent *event );
+static void EVENT_Expose( WND *pWnd, XExposeEvent *event );
+static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event );
 static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event );
-static void EVENT_SelectionRequest( HWND hwnd, XSelectionRequestEvent *event);
-static void EVENT_SelectionNotify( HWND hwnd, XSelectionEvent *event);
-static void EVENT_SelectionClear( HWND hwnd, XSelectionClearEvent *event);
-static void EVENT_ClientMessage( HWND hwnd, XClientMessageEvent *event );
+static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event);
+static void EVENT_SelectionNotify( XSelectionEvent *event);
+static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event);
+static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event );
 
 
 /***********************************************************************
@@ -168,14 +156,14 @@ static void EVENT_ClientMessage( HWND hwnd, XClientMessageEvent *event );
  */
 void EVENT_ProcessEvent( XEvent *event )
 {
-    HWND hwnd;
-    XPointer ptr;
+    WND *pWnd;
     
-    XFindContext( display, ((XAnyEvent *)event)->window, winContext, &ptr );
-    hwnd = (HWND) (int)ptr;
+    if (XFindContext( display, ((XAnyEvent *)event)->window, winContext,
+                      (char **)&pWnd ) != 0)
+        return;  /* Not for a registered window */
 
-    dprintf_event(stddeb, "Got event %s for hwnd %04x\n",
-                  event_names[event->type], hwnd );
+    dprintf_event( stddeb, "Got event %s for hwnd %04x\n",
+                   event_names[event->type], pWnd->hwndSelf );
 
     switch(event->type)
     {
@@ -207,46 +195,47 @@ void EVENT_ProcessEvent( XEvent *event )
 	break;
 
     case FocusIn:
-        EVENT_FocusIn( hwnd, (XFocusChangeEvent*)event );
+        EVENT_FocusIn( pWnd->hwndSelf, (XFocusChangeEvent*)event );
 	break;
 
     case FocusOut:
-	EVENT_FocusOut( hwnd, (XFocusChangeEvent*)event );
+	EVENT_FocusOut( pWnd->hwndSelf, (XFocusChangeEvent*)event );
 	break;
 
     case Expose:
-	EVENT_Expose( hwnd, (XExposeEvent*)event );
-	break;
-
-    case ConfigureNotify:
-	EVENT_ConfigureNotify( hwnd, (XConfigureEvent*)event );
-	break;
-
-    case SelectionRequest:
-	EVENT_SelectionRequest( hwnd, (XSelectionRequestEvent*)event );
-	break;
-
-    case SelectionNotify:
-	EVENT_SelectionNotify( hwnd, (XSelectionEvent*)event );
-	break;
-
-    case SelectionClear:
-	EVENT_SelectionClear( hwnd, (XSelectionClearEvent*) event );
-	break;
-
-    case ClientMessage:
-	EVENT_ClientMessage( hwnd, (XClientMessageEvent *) event );
+	EVENT_Expose( pWnd, (XExposeEvent *)event );
 	break;
 
     case GraphicsExpose:
-	EVENT_GraphicsExpose( hwnd, (XGraphicsExposeEvent *) event );
+	EVENT_GraphicsExpose( pWnd, (XGraphicsExposeEvent *)event );
+        break;
+
+    case ConfigureNotify:
+	EVENT_ConfigureNotify( pWnd->hwndSelf, (XConfigureEvent*)event );
+	break;
+
+    case SelectionRequest:
+	EVENT_SelectionRequest( pWnd, (XSelectionRequestEvent *)event );
+	break;
+
+    case SelectionNotify:
+	EVENT_SelectionNotify( (XSelectionEvent *)event );
+	break;
+
+    case SelectionClear:
+	EVENT_SelectionClear( pWnd, (XSelectionClearEvent*) event );
+	break;
+
+    case ClientMessage:
+	EVENT_ClientMessage( pWnd, (XClientMessageEvent *) event );
+	break;
 
     case NoExpose:
 	break;   
 
     default:    
 	dprintf_event(stddeb, "Unprocessed event %s for hwnd %04x\n",
-	        event_names[event->type], hwnd );
+	        event_names[event->type], pWnd->hwndSelf );
 	break;
     }
 }
@@ -257,29 +246,31 @@ void EVENT_ProcessEvent( XEvent *event )
  *
  * Associate an X window to a HWND.
  */
-void EVENT_RegisterWindow( Window w, HWND hwnd )
+void EVENT_RegisterWindow( WND *pWnd )
 {
     if (!winContext) winContext = XUniqueContext();
-    XSaveContext( display, w, winContext, (XPointer)(int)hwnd );
+    XSaveContext( display, pWnd->window, winContext, (char *)pWnd );
 }
 
 
 /***********************************************************************
  *           EVENT_WaitXEvent
  *
- * Wait for an X event, but at most maxWait milliseconds (-1 for no timeout).
+ * Wait for an X event, optionally sleeping until one arrives.
  * Return TRUE if an event is pending, FALSE on timeout or error
  * (for instance lost connection with the server).
  */
-BOOL EVENT_WaitXEvent( LONG maxWait )
+BOOL EVENT_WaitXEvent( BOOL sleep )
 {
     fd_set read_set;
     struct timeval timeout;
     XEvent event;
     int fd = ConnectionNumber(display);
 
-    if (!XPending(display) && (maxWait != -1))
+    if (!XPending(display))
     {
+        LONG maxWait = sleep ? TIMER_GetNextExpiration() : 0;
+
         FD_ZERO( &read_set );
         FD_SET( fd, &read_set );
 
@@ -295,18 +286,23 @@ BOOL EVENT_WaitXEvent( LONG maxWait )
 		;
 	    return TRUE;
 	}
-	stop_wait_op= STOP_WAIT_X;
-	/* The code up to the next "stop_wait_op= CONT" must be reentrant  */
+	stop_wait_op = STOP_WAIT_X;
+	/* The code up to the next "stop_wait_op = CONT" must be reentrant */
 	if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1 &&
-	    !XPending(display)) {
-	    stop_wait_op= CONT;
+	    !XPending(display))
+        {
+	    stop_wait_op = CONT;
+            TIMER_ExpireTimers();
 	    return FALSE;
-	} else {
-	    stop_wait_op= CONT;
 	}
+        else stop_wait_op = CONT;
 #else  /* CONFIG_IPC */
 	if (select( fd+1, &read_set, NULL, NULL, &timeout ) != 1)
-            return FALSE;  /* Timeout or error */
+        {
+            /* Timeout or error */
+            TIMER_ExpireTimers();
+            return FALSE;
+        }
 #endif  /* CONFIG_IPC */
 
     }
@@ -371,19 +367,17 @@ static WORD EVENT_XStateToKeyState( int state )
 /***********************************************************************
  *           EVENT_Expose
  */
-static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
+static void EVENT_Expose( WND *pWnd, XExposeEvent *event )
 {
     RECT32 rect;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return;
 
-      /* Make position relative to client area instead of window */
-    rect.left = event->x - (wndPtr->rectClient.left - wndPtr->rectWindow.left);
-    rect.top  = event->y - (wndPtr->rectClient.top - wndPtr->rectWindow.top);
+    /* Make position relative to client area instead of window */
+    rect.left   = event->x - (pWnd->rectClient.left - pWnd->rectWindow.left);
+    rect.top    = event->y - (pWnd->rectClient.top - pWnd->rectWindow.top);
     rect.right  = rect.left + event->width;
     rect.bottom = rect.top + event->height;
 
-    RedrawWindow32( hwnd, &rect, 0,
+    RedrawWindow32( pWnd->hwndSelf, &rect, 0,
                     RDW_INVALIDATE | RDW_FRAME | RDW_ALLCHILDREN | RDW_ERASE |
                     (event->count ? 0 : RDW_ERASENOW) );
 }
@@ -391,22 +385,21 @@ static void EVENT_Expose( HWND hwnd, XExposeEvent *event )
 
 /***********************************************************************
  *           EVENT_GraphicsExpose
+ *
  * This is needed when scrolling area is partially obscured
  * by non-Wine X window.
  */
-static void EVENT_GraphicsExpose( HWND hwnd, XGraphicsExposeEvent *event )
+static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event )
 {
-    RECT16 rect;
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return;
+    RECT32 rect;
 
-      /* Make position relative to client area instead of window */
-    rect.left = event->x - (wndPtr->rectClient.left - wndPtr->rectWindow.left);
-    rect.top  = event->y - (wndPtr->rectClient.top - wndPtr->rectWindow.top);
+    /* Make position relative to client area instead of window */
+    rect.left   = event->x - (pWnd->rectClient.left - pWnd->rectWindow.left);
+    rect.top    = event->y - (pWnd->rectClient.top - pWnd->rectWindow.top);
     rect.right  = rect.left + event->width;
     rect.bottom = rect.top + event->height;
 
-    RedrawWindow16( hwnd, &rect, 0,
+    RedrawWindow32( pWnd->hwndSelf, &rect, 0,
                     RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_ERASE |
                     (event->count ? 0 : RDW_ERASENOW) );
 }
@@ -712,7 +705,7 @@ static void EVENT_ConfigureNotify( HWND hwnd, XConfigureEvent *event )
 /***********************************************************************
  *           EVENT_SelectionRequest
  */
-static void EVENT_SelectionRequest( HWND hwnd, XSelectionRequestEvent *event )
+static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 {
     XSelectionEvent result;
     Atom 	    rprop = None;
@@ -731,7 +724,7 @@ static void EVENT_SelectionRequest( HWND hwnd, XSelectionRequestEvent *event )
         else if(!CLIPBOARD_IsPresent(CF_TEXT)) rprop = None;
 	else{
             /* Don't worry if we can't open */
-	    BOOL couldOpen=OpenClipboard(hwnd);
+	    BOOL couldOpen=OpenClipboard( pWnd->hwndSelf );
 	    hText=GetClipboardData(CF_TEXT);
 	    text=GlobalLock16(hText);
 	    XChangeProperty(display,request,rprop,XA_STRING,
@@ -759,28 +752,28 @@ static void EVENT_SelectionRequest( HWND hwnd, XSelectionRequestEvent *event )
 /***********************************************************************
  *           EVENT_SelectionNotify
  */
-static void EVENT_SelectionNotify(HWND hwnd, XSelectionEvent *event)
+static void EVENT_SelectionNotify( XSelectionEvent *event )
 {
-    if(event->selection!=XA_PRIMARY)return;
-    if(event->target!=XA_STRING)CLIPBOARD_ReadSelection(0,None);
-    CLIPBOARD_ReadSelection(event->requestor,event->property);
+    if (event->selection != XA_PRIMARY) return;
+    if (event->target != XA_STRING) CLIPBOARD_ReadSelection( 0, None );
+    CLIPBOARD_ReadSelection( event->requestor, event->property );
 }
 
 
 /***********************************************************************
  *           EVENT_SelectionClear
  */
-static void EVENT_SelectionClear(HWND hwnd, XSelectionClearEvent *event)
+static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event )
 {
-    if(event->selection!=XA_PRIMARY)return;
-    CLIPBOARD_ReleaseSelection(hwnd); 
+    if (event->selection != XA_PRIMARY) return;
+    CLIPBOARD_ReleaseSelection( pWnd->hwndSelf ); 
 }
 
 
 /**********************************************************************
  *           EVENT_ClientMessage
  */
-static void EVENT_ClientMessage (HWND hwnd, XClientMessageEvent *event )
+static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
 {
     static Atom wmProtocols = None;
     static Atom wmDeleteWindow = None;
@@ -796,7 +789,7 @@ static void EVENT_ClientMessage (HWND hwnd, XClientMessageEvent *event )
 	dprintf_event( stddeb, "unrecognized ClientMessage\n" );
 	return;
     }
-    SendMessage16( hwnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
+    SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, 0 );
 }
 
 

@@ -1,0 +1,217 @@
+USER MODULE
+===========
+
+USER implements windowing and messaging subsystems. It also 
+contains code for common controls and for other miscellaneous 
+stuff (rectangles, clipboard, WNet, etc). Wine USER code is 
+located in windows/, controls/, and misc/ directories.
+
+1. Windowing subsystem
+
+   Windows are arranged into parent/child hierarchy with one
+   common ancestor for all windows (desktop window). Each window
+   structure contains a pointer to the immediate ancestor (parent 
+   window if WS_CHILD style bit is set), a pointer to the sibling 
+   (returned by GetWindow(..., GW_NEXT)), a pointer to the owner 
+   window (set only for popup window if it was created with valid 
+   hwndParent parameter), and a pointer to the first child
+   window (GetWindow(.., GW_CHILD)). All popup and non-child windows
+   are therefore placed in the first level of this hierarchy and their
+   ancestor link (wnd->parent) points to the desktop window.
+
+   Desktop window			- root window
+    |     \      '-.
+    |      \        '-.
+   popup -> wnd1  ->  wnd2		- top level windows    
+    |       \   '-.      '-.
+    |        \     '-.      '-.
+   child1  child2 -> child3  child4     - child windows
+  
+   Horizontal arrows denote sibling relationship, vertical lines
+   - ancestor/child. To summarize, all windows with the same immediate 
+   ancestor are sibling windows, all windows which do not have desktop 
+   as their immediate ancestor are child windows. Popup windows behave
+   as topmost top-level windows unless they are owned. In this case the
+   only requirement is that they must precede their owners in the top-level 
+   sibling list (they are not topmost). Child windows are confined to the
+   client area of their parent windows (client area is where window gets
+   to do its own drawing, non-client area consists of caption, menu, borders,
+   intrinsic scrollbars, and minimize/maximize/close buttons). 
+  
+   Another fairly important concept is "z-order". It is derived from
+   the ancestor/child hierarchy and is used to determine "above/below"
+   relationship. For instance, in the example above, z-order is
+   child1->popup->child2->child3->wnd1->child4->wnd2->desktop. Current 
+   active window ("foreground window" in Win32) is moved to the front
+   of z-order unless its top-level ancestor owns popup windows.
+
+   All these issues are dealt with (or supposed to be) in 
+   windows/winpos.c
+
+   Wine specifics: in default and managed mode each top-level window
+   gets its own X counterpart with desktop window being basically a 
+   fake stub. In desktop mode, however, only desktop window has X
+   window associated with it.
+
+2. Messaging subsystem
+
+   Each Windows task/thread has its own message queue - this is where
+   it gets messages from. Messages can be generated on the fly
+   (WM_PAINT, WM_NCPAINT, WM_TIMER), they can be created by the system
+   (hardware messages), they can be posted by other tasks/threads
+   (PostMessage), or they can be sent by other tasks/threads (SendMessage).
+   
+   Message priority:
+
+   First the system looks for sent messages, then for posted messages,
+   then for hardware messages, then it checks if the queue has the
+   "dirty window" bit set, and, finally, it checks for expired
+   timers. See windows/message.c.
+
+   From all these different types of messages, only posted messages go
+   directly into the private message queue. System messages (even in
+   Win95) are first collected in the system message queue and then
+   they either sit there until Get/PeekMessage gets to process them
+   or, as in Win95, if system queue is getting clobbered, a special
+   thread ("raw input thread") assigns them to the private
+   queues. Sent messages are queued separately and the sender sleeps
+   until it gets a reply. Special messages are generated on the fly
+   depending on the window/queue state. If the window update region is
+   not empty, the system sets the QS_PAINT bit in the owning queue and
+   eventually this window receives a WM_PAINT message (WM_NCPAINT too
+   if the update region intersects with the non-client area). A timer
+   event is raised when one of the queue timers expire. Depending on
+   the timer parameters DispatchMessage either calls the callback
+   function or the window procedure. If there are no messages pending
+   the task/thread sleeps until messages appear.
+
+   There are several tricky moments (open for discussion) - 
+
+    a) System message order has to be honored and messages should be
+       processed within correct task/thread context. Therefore when
+       Get/PeekMessage encounters unassigned system message and this
+       message appears not to be for the current task/thread it should
+       either skip it (or get rid of it by moving it into the private
+       message queue of the target task/thread - Win95, AFAIK) and
+       look further or roll back and then yield until this message
+       gets processed when system switches to the correct context
+       (Win16). In the first case we lose correct message ordering, in
+       the second case we have the infamous synchronous system message
+       queue. Here is a post to one of the OS/2 newsgroup I found to
+       be relevant:
+
+	" Here's the problem in a nutshell, and there is no good solution.
+	Every possible solution creates a different problem.
+
+	With a windowing system, events can go to many different windows.
+	Most are sent by applications or by the OS when things relating to
+	that window happen (like repainting, timers, etc.)
+
+	Mouse input events go to the window you click on (unless some window
+	captures the mouse).
+
+	So far, no problem.  Whenever an event happens, you put a message on
+	the target window's message queue.  Every process has a message
+	queue.  If the process queue fills up, the messages back up onto the
+	system queue.
+
+	This is the first cause of apps hanging the GUI.  If an app doesn't
+	handle messages and they back up into the system queue, other apps
+	can't get any more messages.  The reason is that the next message in
+	line can't go anywhere, and the system won't skip over it.
+	
+	This can be fixed by making apps have bigger private message queues.
+	The SIQ fix does this.  PMQSIZE does this for systems without the SIQ
+	fix.  Applications can also request large queues on their own.
+
+	Another source of the problem, however, happens when you include
+	keyboard events.  When you press a key, there's no easy way to know
+	what window the keystroke message should be delivered to.
+
+	Most windowing systems use a concept known as "focus".  The window
+	with focus gets all incoming keyboard messages.  Focus can be changed
+	from window to window by apps or by users clicking on winodws.
+
+	This is the second source of the problem.  Suppose window A has focus.
+	You click on window B and start typing before the window gets focus.
+	Where should the keystrokes go?  On the one hand, they should go to A
+	until the focus actually changes to B.  On the other hand, you
+	probably want the keystrokes to go to B, since you clicked there
+	first.
+
+	OS/2's solution is that when a focus-changing event happens (like
+	clicking on a window), OS/2 holds all messages in the system queue
+	until the focus change actually happens.  This way, subsequent
+	keystrokes go to the window you clicked on, even if it takes a while
+	for that window to get focus.
+
+	The downside is that if the window takes a real long time to get focus
+	(maybe it's not handling events, or maybe the window losing focus
+	isn't handling events), everything backs up in the system queue and
+	the system appears hung.
+
+	There are a few solutions to this problem.
+
+	One is to make focus policy asynchronous.  That is, focus changing has
+	absolutely nothing to do with the keyboard.  If you click on a window
+	and start typing before the focus actually changes, the keystrokes go
+	to the first window until focus changes, then they go to the second.
+	This is what X-windows does.
+
+	Another is what NT does.  When focus changes, keyboard events are held
+	in the system message queue, but other events are allowed through.
+	This is "asynchronous" because the messages in the system queue are
+	delivered to the application queues in a different order from that
+	with which they were posted.  If a bad app won't handle the "lose
+	focus" message, it's of no consequence - the app receiving focus will
+	get its "gain focus" message, and the keystrokes will go to it.
+
+	The NT solution also takes care of the application queue filling up
+	problem.  Since the system delivers messages asynchronously, messages
+	waiting in the system queue will just sit there and the rest of the
+	messages will be delivered to their apps.
+
+	The OS/2 SIQ solution is this:  When a focus-changing event happens,
+	in addition to blocking further messages from the application queues,
+	a timer is started.  When the timer goes off, if the focus change has
+	not yet happened, the bad app has its focus taken away and all
+	messages targetted at that window are skipped.  When the bad app
+	finally handles the focus change message, OS/2 will detect this and
+	stop skipping its messages.
+
+
+	As for the pros and cons:
+
+	The X-windows solution is probably the easiest.  The problem is that
+	users generally don't like having to wait for the focus to change
+	before they start typing.  On many occasions, you can type and the
+	characters end up in the wrong window because something (usually heavy
+	system load) is preventing the focus change from happening in a timely
+	manner.
+	
+	The NT solution seems pretty nice, but making the system message queue
+	asynchronous can cause similar problems to the X-windows problem.
+	Since messages can be delivered out of order, programs must not assume
+	that two messages posted in a particular order will be delivered in
+	that same order.  This can break legacy apps, but since Win32 always
+	had an asynchronous queue, it is fair to simply tell app designers
+	"don't do that".  It's harder to tell app designers something like
+	that on OS/2 - they'll complain "you changed the rules and our apps
+	are breaking."
+	
+	The OS/2 solution's problem is that nothing happens until you try to
+	change window focus, and then wait for the timeout.  Until then, the
+	bad app is not detected and nothing is done." (by David Charlap)
+	
+
+    b) Intertask/interthread SendMessage. The system has to inform the
+       target queue about the forthcoming message, then it has to
+       carry out the context switch and wait until the result is
+       available.  In Win16 it is done by putting necessary parameters
+       into the queue structure and do a DirectedYield() call.
+       However, in Win32 there could be several messages pending sent
+       by preemptively executing threads, and in this case SendMessage
+       has to build some sort of message queue for sent
+       messages. Another issue is what to do with messages sent to the
+       sender when it is blocked inside its own SendMessage. At this
+       point Wine does not address any of these problems.

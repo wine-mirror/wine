@@ -19,7 +19,7 @@ typedef struct tagTIMER
     WORD             id;
     WORD             timeout;
     struct tagTIMER *next;
-    DWORD            expires;
+    DWORD            expires;  /* Next expiration, or 0 if already expired */
     FARPROC          proc;
 } TIMER;
 
@@ -70,6 +70,7 @@ static void TIMER_RemoveTimer( TIMER * pTimer )
     while (*ppTimer && (*ppTimer != pTimer)) ppTimer = &(*ppTimer)->next;
     if (*ppTimer) *ppTimer = pTimer->next;
     pTimer->next = NULL;
+    if (!pTimer->expires) QUEUE_DecTimerCount( pTimer->hq );
 }
 
 
@@ -81,7 +82,6 @@ static void TIMER_RemoveTimer( TIMER * pTimer )
 static void TIMER_ClearTimer( TIMER * pTimer )
 {
     TIMER_RemoveTimer( pTimer );
-    QUEUE_DecTimerCount( pTimer->hq );
     pTimer->hwnd    = 0;
     pTimer->msg     = 0;
     pTimer->id      = 0;
@@ -151,44 +151,58 @@ static void TIMER_RestartTimer( TIMER * pTimer, DWORD curTime )
 
 			       
 /***********************************************************************
- *           TIMER_GetNextExp
+ *           TIMER_GetNextExpiration
  *
  * Return next timer expiration time, or -1 if none.
  */
-LONG TIMER_GetNextExp(void)
+LONG TIMER_GetNextExpiration(void)
 {
     return pNextTimer ? EXPIRE_TIME( pNextTimer, GetTickCount() ) : -1;
 }
 
 
 /***********************************************************************
- *           TIMER_CheckTimer
+ *           TIMER_ExpireTimers
  *
- * Check whether a timer has expired, and create a message if necessary.
- * Otherwise, return time until next timer expiration in 'next'.
- * If 'hwnd' is not NULL, only consider timers for this window.
- * If 'remove' is TRUE, remove all expired timers up to the returned one.
+ * Mark expired timers and wake the appropriate queues.
  */
-BOOL TIMER_CheckTimer( LONG *next, MSG16 *msg, HWND hwnd, BOOL remove )
+void TIMER_ExpireTimers(void)
 {
-    TIMER * pTimer = pNextTimer;
+    TIMER *pTimer = pNextTimer;
+    DWORD curTime = GetTickCount();
+
+    while (pTimer && !pTimer->expires)  /* Skip already expired timers */
+        pTimer = pTimer->next;
+    while (pTimer && (pTimer->expires <= curTime))
+    {
+        pTimer->expires = 0;
+        QUEUE_IncTimerCount( pTimer->hq );
+        pTimer = pTimer->next;
+    }
+}
+
+
+/***********************************************************************
+ *           TIMER_GetTimerMsg
+ *
+ * Build a message for an expired timer.
+ */
+BOOL TIMER_GetTimerMsg( MSG16 *msg, HWND hwnd, HQUEUE hQueue, BOOL remove )
+{
+    TIMER *pTimer = pNextTimer;
     DWORD curTime = GetTickCount();
 
     if (hwnd)  /* Find first timer for this window */
 	while (pTimer && (pTimer->hwnd != hwnd)) pTimer = pTimer->next;
+    else   /* Find first timer for this queue */
+	while (pTimer && (pTimer->hq != hQueue)) pTimer = pTimer->next;
 
-    if (!pTimer) *next = -1;
-    else *next = EXPIRE_TIME( pTimer, curTime );
-    if (*next != 0) return FALSE;  /* No timer expired */
+    if (!pTimer || (pTimer->expires > curTime)) return FALSE; /* No timer */
+    if (remove)	TIMER_RestartTimer( pTimer, curTime );  /* Restart it */
 
-    if (remove)	/* Restart all timers before pTimer, and then pTimer itself */
-    {
-	while (pNextTimer != pTimer) TIMER_RestartTimer( pNextTimer, curTime );
-	TIMER_RestartTimer( pTimer, curTime );
-    }
+    dprintf_timer( stddeb, "Timer expired: %04x, %04x, %04x, %08lx\n", 
+		   pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
 
-    dprintf_timer(stddeb, "Timer expired: %p, %04x, %04x, %04x, %08lx\n", 
-		  pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
       /* Build the message */
     msg->hwnd    = pTimer->hwnd;
     msg->message = pTimer->msg;
@@ -218,10 +232,10 @@ static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
             (pTimer->timeout != 0))
         {
               /* Got one: set new values and return */
-            pTimer->timeout = timeout;
-            pTimer->expires = GetTickCount() + timeout;
-            pTimer->proc    = proc;
             TIMER_RemoveTimer( pTimer );
+            pTimer->timeout = timeout;
+            pTimer->proc    = proc;
+            pTimer->expires = GetTickCount() + timeout;
             TIMER_InsertTimer( pTimer );
             return id;
         }
@@ -248,7 +262,6 @@ static WORD TIMER_SetTimer( HWND hwnd, WORD id, WORD timeout,
     dprintf_timer(stddeb, "Timer added: %p, %04x, %04x, %04x, %08lx\n", 
 		  pTimer, pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
     TIMER_InsertTimer( pTimer );
-    QUEUE_IncTimerCount( pTimer->hq );
     if (!id)
 	return TRUE;
     else

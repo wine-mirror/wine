@@ -621,9 +621,9 @@ BOOL DeleteDC( HDC hdc )
 	SelectObject( hdc, STOCK_WHITE_BRUSH );
 	SelectObject( hdc, STOCK_SYSTEM_FONT );
 	XFreeGC( display, dc->u.x.gc );
+        if (dc->w.flags & DC_MEMORY) DeleteObject( dc->w.hFirstBitmap );
     }
 
-    if (dc->w.flags & DC_MEMORY) DeleteObject( dc->w.hFirstBitmap );
     if (dc->w.hClipRgn) DeleteObject( dc->w.hClipRgn );
     if (dc->w.hVisRgn) DeleteObject( dc->w.hVisRgn );
     if (dc->w.hGCClipRgn) DeleteObject( dc->w.hGCClipRgn );

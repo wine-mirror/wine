@@ -347,7 +347,7 @@ static void WIN_DestroyWindow( HWND hwnd )
     if (wndPtr->hSysMenu) DestroyMenu( wndPtr->hSysMenu );
     if (wndPtr->window) XDestroyWindow( display, wndPtr->window );
     if (wndPtr->class->style & CS_OWNDC) DCE_FreeDCE( wndPtr->hdce );
-    WIN_SetWndProc( wndPtr, (WNDPROC16)0, WIN_PROC_16 );
+    WIN_SetWndProc( wndPtr, (HANDLE32)0, WIN_PROC_16 );
     wndPtr->class->cWindows--;
     USER_HEAP_FREE( hwnd );
 }
@@ -426,7 +426,7 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->hProp             = 0;
     pWndDesktop->userdata          = 0;
 
-    EVENT_RegisterWindow( pWndDesktop->window, hwndDesktop );
+    EVENT_RegisterWindow( pWndDesktop );
     SendMessage32A( hwndDesktop, WM_NCCREATE, 0, 0 );
     if ((hdc = GetDC( hwndDesktop )) != 0)
     {
@@ -628,7 +628,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
             Window win = WIN_GetXWindow( cs->hwndParent );
             if (win) XSetTransientForHint( display, wndPtr->window, win );
 	}
-        EVENT_RegisterWindow( wndPtr->window, hwnd );
+        EVENT_RegisterWindow( wndPtr );
     }
 
     /* Set the window menu */

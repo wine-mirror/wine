@@ -677,7 +677,7 @@ void TASK_Reschedule(void)
 
     /* Flush any X events that happened in the meantime */
 
-    EVENT_WaitXEvent( 0 );
+    EVENT_WaitXEvent( FALSE );
 
     /* Find a task to yield to */
 
@@ -707,7 +707,7 @@ void TASK_Reschedule(void)
 
         /* No task found, wait for some events to come in */
 
-        EVENT_WaitXEvent( TIMER_GetNextExp() );
+        EVENT_WaitXEvent( TRUE );
     }
 
     if (hTask == hCurrentTask) return;  /* Nothing to do */
