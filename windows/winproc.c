@@ -2008,11 +2008,12 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
         return 1;
     case LB_GETSELITEMS:
         {
-            LPINT16 items;
+            LPARAM *items; /* old LPARAM first, then *pwparam16 x INT16 entries */
+
             *pwparam16 = (WPARAM16)min( wParam32, 0x7f80 ); /* Must be < 64K */
             if (!(items = HeapAlloc( GetProcessHeap(), 0,
                                      *pwparam16 * sizeof(INT16) + sizeof(LPARAM)))) return -1;
-            *((LPARAM *)items)++ = *plparam;  /* Store the previous lParam */
+            *items++ = *plparam;  /* Store the previous lParam */
             *plparam = MapLS( items );
         }
 	*pmsg16 = LB_GETSELITEMS16;
@@ -2152,10 +2153,10 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_GETTEXT:
     case WM_ASKCBFORMATNAME:
         {
-            LPSTR str;
+            LPARAM *str; /* store LPARAM, then *pwparam16 char space */
             *pwparam16 = (WPARAM16)min( wParam32, 0xff80 ); /* Must be < 64K */
             if (!(str = HeapAlloc( GetProcessHeap(), 0, *pwparam16 + sizeof(LPARAM)))) return -1;
-            *((LPARAM *)str)++ = *plparam;  /* Store the previous lParam */
+            *str++ = *plparam;  /* Store the previous lParam */
             *plparam = MapLS( str );
         }
         return 1;
