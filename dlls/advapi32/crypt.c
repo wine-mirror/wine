@@ -1179,7 +1179,7 @@ BOOL WINAPI CryptExportKey (HCRYPTKEY hKey, HCRYPTKEY hExpKey, DWORD dwBlobType,
 
 	TRACE("(0x%lx, 0x%lx, %ld, %08ld, %p, %p)\n", hKey, hExpKey, dwBlobType, dwFlags, pbData, pdwDataLen);
 
-	if (!key || pdwDataLen)
+	if (!key || !pdwDataLen)
 		CRYPT_ReturnLastError(ERROR_INVALID_PARAMETER);
 
 	prov = key->pProvider;
