@@ -1360,6 +1360,14 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_IsLost(LPDIRECTDRAWSURFACE4 iface)
 static HRESULT WINAPI IDirectDrawSurface4Impl_EnumAttachedSurfaces(LPDIRECTDRAWSURFACE4 iface,LPVOID context,LPDDENUMSURFACESCALLBACK esfcb) {
         ICOM_THIS(IDirectDrawSurface4Impl,iface);
 	FIXME(ddraw,"(%p)->(%p,%p),stub!\n",This,context,esfcb);
+
+	/* For the moment, only enumerating the back buffer */
+	if (This->s.backbuffer != NULL) {
+	  TRACE(ddraw, "Enumerating back-buffer (%p)\n", This->s.backbuffer);
+	  if (esfcb((LPDIRECTDRAWSURFACE) This->s.backbuffer, &(This->s.backbuffer->s.surface_desc), context) == DDENUMRET_CANCEL)
+	    return DD_OK;
+	}
+	
 	return DD_OK;
 }
 
