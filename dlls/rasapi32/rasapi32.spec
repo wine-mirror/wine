@@ -39,7 +39,7 @@
 @ stub RasGetCredentialsW
 @ stdcall RasGetEntryDialParamsA(str ptr ptr)
 @ stub RasGetEntryDialParamsW
-@ stub RasGetEntryPropertiesA
+@ stdcall RasGetEntryPropertiesA(str str ptr ptr ptr ptr)
 @ stub RasGetEntryPropertiesW
 @ stub RasGetErrorStringA
 @ stub RasGetErrorStringW

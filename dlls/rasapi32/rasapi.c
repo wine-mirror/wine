@@ -324,3 +324,14 @@ DWORD WINAPI RasValidateEntryNameW(LPCWSTR lpszPhonebook, LPCWSTR lpszEntry) {
 	FIXME("(%s,%s), stub!\n",debugstr_w(lpszPhonebook),debugstr_w(lpszEntry));
 	return 0;
 }
+
+/**************************************************************************
+ *                 RasGetEntryPropertiesA	[RASAPI32.@]
+ */
+DWORD WINAPI RasGetEntryPropertiesA(LPCSTR lpszPhonebook, LPCSTR lpszEntry, LPRASENTRYA lpRasEntry,
+	LPDWORD lpdwEntryInfoSize, LPBYTE lpbDeviceInfo, LPDWORD lpdwDeviceInfoSize
+) {
+	FIXME("(%s,%s,%p,%p,%p,%p), stub!\n", lpszPhonebook, lpszEntry, lpRasEntry, lpdwEntryInfoSize,
+		lpbDeviceInfo, lpdwDeviceInfoSize);
+	return 0;
+}
