@@ -299,7 +299,7 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
           hdd, hdc, xDst, yDst, dxDst, dyDst, lpbi, lpBits, xSrc, ySrc, dxSrc, dySrc, (DWORD)wFlags);
 
     whdd = MSVIDEO_GetHddPtr(hdd);
-    if (whdd) return FALSE;
+    if (!whdd) return FALSE;
 
     if (wFlags & ~(DDF_SAME_HDC | DDF_SAME_DRAW | DDF_NOTKEYFRAME | DDF_UPDATE | DDF_DONTDRAW))
         FIXME("wFlags == 0x%08lx not handled\n", (DWORD)wFlags);
