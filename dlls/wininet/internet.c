@@ -1710,14 +1710,22 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
     TRACE("(%p, 0x%08lx, %p, %p)\n", hInternet, dwOption, lpBuffer, lpdwBufferLength);
 
     lpwhh = (LPWININETHANDLEHEADER) WININET_GetObject( hInternet );
-    if( !lpwhh )
-        return FALSE;
 
     switch (dwOption)
     {
         case INTERNET_OPTION_HANDLE_TYPE:
         {
-            ULONG type = lpwhh->htype;
+            ULONG type;
+
+            if (!lpwhh)
+            {
+                WARN("Invalid hInternet handle\n");
+                SetLastError(ERROR_INVALID_HANDLE);
+                return FALSE;
+            }
+
+            type = lpwhh->htype;
+
             TRACE("INTERNET_OPTION_HANDLE_TYPE: %ld\n", type);
 
             if (*lpdwBufferLength < sizeof(ULONG))
@@ -1749,8 +1757,13 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
         case INTERNET_OPTION_URL:
         case INTERNET_OPTION_DATAFILE_NAME:
         {
-            ULONG type = lpwhh->htype;
-            if (type == WH_HHTTPREQ)
+            if (!lpwhh)
+            {
+                WARN("Invalid hInternet handle\n");
+                SetLastError(ERROR_INVALID_HANDLE);
+                return FALSE;
+            }
+            if (lpwhh->htype == WH_HHTTPREQ)
             {
                 LPWININETHTTPREQW lpreq = (LPWININETHTTPREQW) lpwhh;
                 WCHAR url[1023];
@@ -1784,7 +1797,16 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             ((HTTP_VERSION_INFO*)lpBuffer)->dwMajorVersion = 1;
             ((HTTP_VERSION_INFO*)lpBuffer)->dwMinorVersion = 1;
             bSuccess = TRUE;
-        break;
+            break;
+       }
+       case INTERNET_OPTION_CONNECTED_STATE:
+       {
+           INTERNET_CONNECTED_INFO * pCi = (INTERNET_CONNECTED_INFO *)lpBuffer;
+           FIXME("INTERNET_OPTION_CONNECTED_STATE: semi-stub\n");
+           pCi->dwConnectedState = INTERNET_STATE_CONNECTED;
+           pCi->dwFlags = 0;
+           bSuccess = TRUE;
+           break;
        }
        case INTERNET_OPTION_SECURITY_FLAGS:
          FIXME("INTERNET_OPTION_SECURITY_FLAGS: Stub\n");
@@ -1794,7 +1816,8 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
          FIXME("Stub! %ld \n",dwOption);
          break;
     }
-    WININET_Release( lpwhh );
+    if (lpwhh)
+        WININET_Release( lpwhh );
 
     return bSuccess;
 }
