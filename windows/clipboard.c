@@ -58,7 +58,7 @@ static WORD LastRegFormat = CF_REGFORMATBASE;
  * WARNING: This data ordering is dependendent on the WINE_CLIPFORMAT structure
  * declared in clipboard.h
  */
-WINE_CLIPFORMAT ClipFormats[16]  = {
+WINE_CLIPFORMAT ClipFormats[17]  = {
     { CF_TEXT, 1, 0, "Text",  (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, NULL, &ClipFormats[1]},
     { CF_BITMAP, 1, 0, "Bitmap", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[0], &ClipFormats[2]},
     { CF_METAFILEPICT, 1, 0, "MetaFile Picture", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[1], &ClipFormats[3]},
@@ -74,7 +74,8 @@ WINE_CLIPFORMAT ClipFormats[16]  = {
     { CF_OWNERDISPLAY, 1, 0, "Owner Display", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[11], &ClipFormats[13]},
     { CF_DSPTEXT, 1, 0, "DSPText", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[12], &ClipFormats[14]},
     { CF_DSPMETAFILEPICT, 1, 0, "DSPMetaFile Picture", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[13], &ClipFormats[15]},
-    { CF_DSPBITMAP, 1, 0, "DSPBitmap", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[14], NULL}
+    { CF_DSPBITMAP, 1, 0, "DSPBitmap", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[14], &ClipFormats[16]},
+    { CF_HDROP, 1, 0, "HDROP", (HANDLE16)NULL, (HANDLE)NULL, (HANDLE)NULL, 0, &ClipFormats[15], NULL}
     };
 
 
@@ -666,7 +667,7 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
     if( CLIPBOARD_IsLocked() || !lpFormat ||
         (!hData && (!hWndClipOwner || (hWndClipOwner != hWndClipWindow))) )
     {
-        WARN("Invalid hData or clipboard not opened by calling task!");
+        WARN("Invalid hData or clipboard not opened by calling task!\n");
         return 0;
     }
 
@@ -719,7 +720,7 @@ HANDLE WINAPI SetClipboardData( UINT wFormat, HANDLE hData )
     if( CLIPBOARD_IsLocked() || !lpFormat ||
         (!hData && (!hWndClipOwner || (hWndClipOwner != hWndClipWindow))) )
     {
-        WARN("Invalid hData or clipboard not opened by calling task!");
+        WARN("Invalid hData or clipboard not opened by calling task!\n");
         return 0;
     }
 
@@ -775,7 +776,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
 
     if (CLIPBOARD_IsLocked())
     {
-        WARN("Clipboard not opened by calling task!");
+        WARN("Clipboard not opened by calling task!\n");
         return 0;
     }
 
@@ -928,7 +929,7 @@ INT WINAPI CountClipboardFormats(void)
                ( !CLIPBOARD_Driver->pIsSelectionOwner()
                  && CLIPBOARD_Driver->pIsFormatAvailable( lpFormat->wFormatID ) ) )
           {
-              TRACE("\tdata found for format %i(%s)\n",
+              TRACE("\tdata found for format 0x%04x(%s)\n",
                     lpFormat->wFormatID, CLIPBOARD_GetFormatName(lpFormat->wFormatID));
               FormatCount++;
           }
