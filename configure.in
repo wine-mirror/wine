@@ -100,6 +100,12 @@ dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,setrunelocale)
 dnl Check for -lmmap for OS/2
 AC_CHECK_LIB(mmap,mmap)
+dnl Check for openpty
+AC_CHECK_FUNCS(openpty,,
+	AC_CHECK_LIB(util,openpty,
+		AC_DEFINE(HAVE_OPENPTY)
+		LIBS="$LIBS -lutil"
+	))
 
 AC_CHECK_HEADERS(dlfcn.h,
 	AC_CHECK_FUNCS(dlopen,
@@ -562,6 +568,7 @@ AC_CHECK_HEADERS(\
 	net/if.h \
 	netinet/in.h \
 	netinet/tcp.h \
+	pty.h \
 	resolv.h \
 	sched.h \
 	socket.h \

@@ -29,6 +29,9 @@
 #ifdef HAVE_SYSCALL_H
 # include <syscall.h>
 #endif
+#ifdef HAVE_PTY_H
+# include <pty.h>
+#endif
 
 /***********************************************************************
  *		usleep
@@ -166,6 +169,9 @@ int strncasecmp( const char *str1, const char *str2, size_t n )
 int wine_openpty(int *master, int *slave, char *name, 
 			struct termios *term, struct winsize *winsize)
 {
+#ifdef HAVE_OPENPTY
+    return openpty(master,slave,name,term,winsize);
+#else
     char *ptr1, *ptr2;
     char pts_name[512];
 
@@ -198,6 +204,7 @@ int wine_openpty(int *master, int *slave, char *name,
         }
     }
     return -1;
+#endif
 }
 
 /***********************************************************************

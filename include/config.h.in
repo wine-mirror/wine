@@ -182,6 +182,9 @@
 /* Define if you have the memmove function.  */
 #undef HAVE_MEMMOVE
 
+/* Define if you have the openpty function.  */
+#undef HAVE_OPENPTY
+
 /* Define if you have the rfork function.  */
 #undef HAVE_RFORK
 
@@ -304,6 +307,9 @@
 
 /* Define if you have the <netinet/tcp.h> header file.  */
 #undef HAVE_NETINET_TCP_H
+
+/* Define if you have the <pty.h> header file.  */
+#undef HAVE_PTY_H
 
 /* Define if you have the <resolv.h> header file.  */
 #undef HAVE_RESOLV_H
