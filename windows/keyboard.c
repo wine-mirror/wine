@@ -34,9 +34,9 @@ BYTE InputKeyStateTable[256];
 BYTE QueueKeyStateTable[256];
 BYTE AsyncKeyStateTable[256];
 
-static int NumLockMask;
-static int AltGrMask;
-static int min_keycode, max_keycode;
+static int NumLockMask, AltGrMask; /* mask in the XKeyEvent state */
+static int kcControl, kcAlt, kcShift, kcNumLock, kcCapsLock; /* keycodes */
+static int min_keycode, max_keycode, keysyms_per_keycode;
 static int keyc2vkey[256];
 
 typedef union
@@ -162,7 +162,7 @@ static WORD EVENT_event_to_vkey( XKeyEvent *e)
  */
 BOOL32 KEYBOARD_Init(void)
 {
-    int i, keysyms_per_keycode;
+    int i;
     KeySym *ksp;
     XModifierKeymap *mmp;
     KeySym keysym;
@@ -326,6 +326,16 @@ BOOL32 KEYBOARD_Init(void)
         }
         keyc2vkey[e2.keycode] = vkey;
     } /* for */
+    /* Now store one keycode for each modifier. Used to simulate keypresses. */
+    kcControl = TSXKeysymToKeycode(display, XK_Control_L);
+    kcAlt = TSXKeysymToKeycode(display, XK_Alt_L);
+    kcShift = TSXKeysymToKeycode(display, XK_Shift_L);
+    kcNumLock = TSXKeysymToKeycode(display, XK_Num_Lock);
+    kcCapsLock = TSXKeysymToKeycode(display, XK_Caps_Lock);
+
+    /* all states to false */
+    memset( InputKeyStateTable, 0, sizeof(InputKeyStateTable) );
+
     return TRUE;
 }
 
@@ -333,6 +343,11 @@ static BOOL32 NumState=FALSE, CapsState=FALSE;
 
 /**********************************************************************
  *		KEYBOARD_GenerateMsg
+ *
+ * Generate Down+Up messages when NumLock or CapsLock is pressed.
+ *
+ * Convention : called with vkey only VK_NUMLOCK or VK_CAPITAL
+ *
  */
 void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, INT32 event_x, INT32 event_y,
                            DWORD event_time, KEYLP localkeylp )
@@ -379,6 +394,80 @@ void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, INT32 event_x, INT32 event_y,
 }
 
 /***********************************************************************
+ *           KEYBOARD_UpdateOneState
+ *
+ * Updates internal state for <vkey>, depending on key <state> under X
+ *
+ */
+void KEYBOARD_UpdateOneState ( int vkey, int state, KEYLP keylp)
+{
+    WORD message;
+    /* Do something if internal table state != X state for keycode */
+    if (((InputKeyStateTable[vkey] & 0x80)!=0) != state)
+    {
+        TRACE(keyboard,"Adjusting state for vkey %#.2x. State before %#.2x \n",
+              vkey, InputKeyStateTable[vkey]);
+        keylp.lp1.previous = !state; /* 1 if state = 0, 0 if state = 1 */
+        keylp.lp1.transition = !state;
+        if (state) { /* Fake key being pressed inside wine */
+            InputKeyStateTable[vkey] ^= 0x01;
+	    InputKeyStateTable[vkey] |= 0x80;
+            message = (InputKeyStateTable[VK_MENU] & 0x80)
+                && !(InputKeyStateTable[VK_CONTROL] & 0x80)
+                ? WM_SYSKEYDOWN : WM_KEYDOWN;
+        } else {
+	    InputKeyStateTable[vkey] &= ~0x80; 
+            message = (InputKeyStateTable[VK_MENU] & 0x80)
+                && !(InputKeyStateTable[VK_CONTROL] & 0x80)
+                ? WM_SYSKEYUP : WM_KEYUP;
+        }
+        
+	hardware_event( message, vkey, keylp.lp2, 0, 0,
+                        GetTickCount() + MSG_WineStartTicks, 0 );
+
+        TRACE(keyboard,"State after %#.2x \n",InputKeyStateTable[vkey]);
+    }
+}
+
+/***********************************************************************
+ *           KEYBOARD_UpdateState
+ *
+ * Update modifiers state (Ctrl, Alt, Shift)
+ * when window is activated (called by EVENT_FocusIn in event.c)
+ *
+ * This handles the case where one uses Ctrl+... Alt+... or Shift+.. to switch
+ * from wine to another application and back.
+ * Toggle keys are handled in HandleEvent. (because XQueryKeymap says nothing
+ *  about them)
+ */
+void KEYBOARD_UpdateState ( void )
+{
+/* extract a bit from the char[32] bit suite */
+#define KeyState(keycode) ((keys_return[keycode/8] & (1<<(keycode%8)))!=0)
+
+    char keys_return[32];
+    KEYLP keylp;
+
+    TRACE(keyboard,"called\n");
+    if (!XQueryKeymap(display, keys_return)) {
+        ERR(keyboard,"Error getting keymap !");
+        return;
+    }
+
+    keylp.lp1.count = 1;
+    keylp.lp1.extended = 0; /* (vkey & 0x100 ? 1 : 0); */
+    keylp.lp1.win_internal = 0;
+    keylp.lp1.context = KeyState(kcAlt);/*(event->state & Mod1Mask)?1:0*/
+
+    /* Adjust the ALT and CONTROL state if any has been changed outside wine */
+    KEYBOARD_UpdateOneState(VK_MENU, KeyState(kcAlt), keylp);
+    KEYBOARD_UpdateOneState(VK_CONTROL, KeyState(kcControl), keylp);
+    KEYBOARD_UpdateOneState(VK_SHIFT, KeyState(kcShift), keylp);
+#undef KeyState
+}
+
+
+/***********************************************************************
  *           KEYBOARD_HandleEvent
  *
  * Handle a X key event
@@ -408,11 +497,10 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
     if (keysym == XK_Mode_switch)
 	{
 	TRACE(key, "Alt Gr key event received\n");
-	event->keycode = TSXKeysymToKeycode(event->display, XK_Control_L);
-	TRACE(key, "Control_L is keycode 0x%x\n", event->keycode);
+	event->keycode = kcControl; /* Simulate Control */
 	KEYBOARD_HandleEvent( pWnd, event );
-	event->keycode = TSXKeysymToKeycode(event->display, XK_Alt_L);
-	TRACE(key, "Alt_L is keycode 0x%x\n", event->keycode);
+
+	event->keycode = kcAlt; /* Simulate Alt */
 	force_extended = TRUE;
 	KEYBOARD_HandleEvent( pWnd, event );
 	force_extended = FALSE;
@@ -463,6 +551,8 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
     default:
       {
 	WORD message;
+
+	keylp.lp1.context = ( event->state & Mod1Mask ) ? 1 : 0; /* 1 if alt */
 	if (event->type == KeyPress)
 	  {
 	    keylp.lp1.previous = (InputKeyStateTable[vkey] & 0x80) != 0;
@@ -485,8 +575,7 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	    keylp.lp1.transition = 1;
 	    message = sysKey ? WM_SYSKEYUP : WM_KEYUP;
 	  }
-	keylp.lp1.context = ( (event->state & Mod1Mask)  || 
-			      (InputKeyStateTable[VK_MENU] & 0x80)) ? 1 : 0;
+        /* Adjust the NUMLOCK state if it has been changed outside wine */
 	if (!(InputKeyStateTable[VK_NUMLOCK] & 0x01) != !(event->state & NumLockMask))
 	  { 
 	    TRACE(keyboard,"Adjusting NumLock state. \n");
@@ -495,16 +584,16 @@ void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 	    KEYBOARD_GenerateMsg( VK_NUMLOCK, KeyRelease, event_x, event_y,
                                   event_time, keylp );
 	  }
+        /* Adjust the CAPSLOCK state if it has been changed outside wine */
 	if (!(InputKeyStateTable[VK_CAPITAL] & 0x01) != !(event->state & LockMask))
 	  {
-	    TRACE(keyboard,"Adjusting Caps Lock state. State before %#.2x \n",InputKeyStateTable[VK_CAPITAL]);
+              TRACE(keyboard,"Adjusting Caps Lock state.\n");
 	    KEYBOARD_GenerateMsg( VK_CAPITAL, KeyPress, event_x, event_y,
                                   event_time, keylp );
 	    KEYBOARD_GenerateMsg( VK_CAPITAL, KeyRelease, event_x, event_y,
                                   event_time, keylp );
-	    TRACE(keyboard,"State after %#.2x \n",InputKeyStateTable[VK_CAPITAL]);
 	  }
-	/* End of intermediary states. */
+	/* Not Num nor Caps : end of intermediary states for both. */
 	NumState = FALSE;
 	CapsState = FALSE;
 
@@ -1149,36 +1238,17 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
     INT32 ret;
     int keyc;
 
+    if (scanCode==0) {
+        /* This happens when doing Alt+letter : a fake 'down arrow' key press
+           event is generated by windows. Just ignore it. */
+        TRACE(keyboard,"scanCode=0, doing nothing\n");
+        return 0;
+    }
     e.display = display;
     e.keycode = 0;
-    for (keyc=min_keycode; keyc<=max_keycode; keyc++)
-      { /* this could be speeded up by making another table, an array of struct vkey,keycode
-	 * (vkey -> keycode) with vkeys sorted .... but it takes memory (512*3 bytes)!  DF */
-	if ((keyc2vkey[keyc] & 0xFF)== virtKey) /* no need to make a more precise test (with the extended bit correctly set above virtKey ... VK* are different enough... */
-	  {
-	    if ((e.keycode) && ((virtKey<0x10) || (virtKey>0x12))) 
-		/* it's normal to have 2 shift, control, and alt ! */
-		TRACE(keyboard,"ToAscii : The keycodes %d and %d are matching the same vkey %#X\n",
-				 e.keycode,keyc,virtKey);
-	    e.keycode = keyc;
-	  }
-      }
-    if ((!e.keycode) && (lpKeyState[VK_NUMLOCK] & 0x01)) 
-      {
-	if ((virtKey>=VK_NUMPAD0) && (virtKey<=VK_NUMPAD9))
-	  e.keycode = TSXKeysymToKeycode(e.display, virtKey-VK_NUMPAD0+XK_KP_0);
-	if (virtKey==VK_DECIMAL)
-	  e.keycode = TSXKeysymToKeycode(e.display, XK_KP_Decimal);
-      }
-    if (!e.keycode)
-      {
-	WARN(keyboard,"Unknown virtual key %X !!! \n",virtKey);
-	return virtKey; /* whatever */
-      }
     e.state = 0;
     if (lpKeyState[VK_SHIFT] & 0x80)
 	e.state |= ShiftMask;
-    TRACE(keyboard,"ToAscii : lpKeyState[0x14(VK_CAPITAL)]=%#x\n",lpKeyState[VK_CAPITAL]);
     if (lpKeyState[VK_CAPITAL] & 0x01)
 	e.state |= LockMask;
     if (lpKeyState[VK_CONTROL] & 0x80)
@@ -1190,6 +1260,29 @@ INT32 WINAPI ToAscii32( UINT32 virtKey,UINT32 scanCode,LPBYTE lpKeyState,
 	e.state |= NumLockMask;
     TRACE(key, "(%04X, %04X) : faked state = %X\n",
 		virtKey, scanCode, e.state);
+    /* We exit on the first keycode found, to speed up the thing. */
+    for (keyc=min_keycode; (keyc<=max_keycode) && (!e.keycode) ; keyc++)
+      { /* Find a keycode that could have generated this virtual key */
+          if  ((keyc2vkey[keyc] & 0xFF) == virtKey)
+          { /* we can filter the extended bit, VK* are different enough... */
+              e.keycode = keyc; /* Store it temporarily */
+              if (EVENT_event_to_vkey(&e) != virtKey)
+                  e.keycode = 0; /* Wrong one (ex: because of the NumLock
+                         state), so set it to 0, we'll find another one */
+	  }
+      }
+    if ((!e.keycode) && (lpKeyState[VK_NUMLOCK] & 0x01)) 
+    {
+	if ((virtKey>=VK_NUMPAD0) && (virtKey<=VK_NUMPAD9))
+	  e.keycode = TSXKeysymToKeycode(e.display, virtKey-VK_NUMPAD0+XK_KP_0);
+	if (virtKey==VK_DECIMAL)
+	  e.keycode = TSXKeysymToKeycode(e.display, XK_KP_Decimal);
+      }
+    if (!e.keycode)
+      {
+	WARN(keyboard,"Unknown virtual key %X !!! \n",virtKey);
+	return virtKey; /* whatever */
+      }
     ret = TSXLookupString(&e, (LPVOID)lpChar, 2, &keysym, &cs);
     if (ret == 0)
 	{

@@ -728,7 +728,10 @@ static void EVENT_FocusIn( WND *pWnd, XFocusChangeEvent *event )
 	HWND32	hwnd = pWnd->hwndSelf;
 
 	if (hwnd != GetActiveWindow32()) 
+        {
 	    WINPOS_ChangeActiveWindow( hwnd, FALSE );
+	    KEYBOARD_UpdateState();
+        }
 	if ((hwnd != GetFocus32()) && !IsChild32( hwnd, GetFocus32()))
             SetFocus32( hwnd );
     }
@@ -1134,12 +1137,11 @@ void EVENT_MapNotify( HWND32 hWnd, XMapEvent *event )
  */
 HWND32 EVENT_Capture(HWND32 hwnd, INT16 ht)
 {
-    Window win;
     HWND32 capturePrev = captureWnd;
 
     if (!hwnd)
     {
-        captureWnd = NULL;
+        captureWnd = 0L;
         captureHT = 0; 
     }
     else

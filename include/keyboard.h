@@ -15,5 +15,6 @@ extern BYTE AsyncKeyStateTable[256];
 
 extern BOOL32 KEYBOARD_Init(void);
 extern void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event );
+extern void KEYBOARD_UpdateState( void );
 
 #endif  /* __WINE_KEYBOARD_H */
