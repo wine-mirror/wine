@@ -1139,17 +1139,66 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
  */
 static void LISTVIEW_ShowFocusRect(LISTVIEW_INFO *infoPtr, INT nItem, BOOL fShow)
 {
+    RECT rcItem;
+
     TRACE("fShow=%d, nItem=%d\n", fShow, nItem);
 
-    /* Here we are inneficient. We could, in theory, simply DrawFocusRect
-     * to erase/show the focus, without all this heavy duty redraw. However,
-     * note that there are cases where we can not do that: when the list is
-     * in ICON mode, and the item is large, we must to invalidate it.
-     * Moreover, in the vast majority of cases, the selection status of
-     * the item changes anyway, and so the item is invalidated already,
-     * so not too much harm is done. If we do notice any flicker, we should
-     * refine this method. */
-    LISTVIEW_InvalidateItem(infoPtr, nItem);
+    if (nItem < 0 || nItem >= infoPtr->nItemCount) return;
+
+    rcItem.left = LVIR_BOUNDS;
+    rcItem.top = 0;
+    if ( (infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT &&
+	 !(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) &&
+	 !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED))
+    {
+	/* this little optimization eliminates some nasty flicker */
+	if (!LISTVIEW_GetSubItemRect(infoPtr, nItem, &rcItem)) return;
+    }
+    else
+    {
+	if (!LISTVIEW_GetItemRect(infoPtr, nItem, &rcItem)) return;
+    }
+    
+    if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
+    {
+	DRAWITEMSTRUCT dis;
+	LVITEMW item;
+	HDC hdc;
+
+        item.iItem = nItem;
+	item.iSubItem = 0;
+        item.mask = LVIF_PARAM;
+	if (!LISTVIEW_GetItemW(infoPtr, &item)) goto invalidate;
+	   
+	if (!(hdc = GetDC(infoPtr->hwndSelf))) goto invalidate;
+	ZeroMemory(&dis, sizeof(dis)); 
+	dis.CtlType = ODT_LISTVIEW;
+	dis.CtlID = GetWindowLongW(infoPtr->hwndSelf, GWL_ID);
+	dis.itemID = nItem;
+	dis.itemAction = ODA_FOCUS;
+	if (fShow) dis.itemState |= ODS_FOCUS;
+	dis.hwndItem = infoPtr->hwndSelf;
+	dis.hDC = hdc;
+	dis.rcItem = rcItem;
+	dis.itemData = item.lParam;
+
+	SendMessageW(GetParent(infoPtr->hwndSelf), WM_DRAWITEM, dis.CtlID, (LPARAM)&dis);
+	ReleaseDC(infoPtr->hwndSelf, hdc);
+	return;
+    }
+    else
+    {
+        /* Here we are inneficient. We could, in theory, simply DrawFocusRect
+         * to erase/show the focus, without all this heavy duty redraw.
+         * Note that there are cases where we can not do that: when the list
+         * is in ICON mode, and the item is large, we must to invalidate it.
+         * Moreover, in the vast majority of cases, the selection status of
+         * the item changes anyway, and so the item is invalidated already,
+         * so not too much harm is done. If we do notice any flicker, we should
+         * refine this method. */
+invalidate:
+	LISTVIEW_InvalidateRect(infoPtr, &rcItem);
+    }
 }
 
 /***
@@ -2729,8 +2778,8 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
     {
 	RECT rect;
 	
-	rect.top = lpLVItem->iSubItem;
 	rect.left = LVIR_BOUNDS;
+	rect.top = lpLVItem->iSubItem;
 	/* GetSubItemRect will fail in non-report mode, so there's
 	 * gonna be no invalidation then, yay! */
 	if (LISTVIEW_GetSubItemRect(infoPtr, lpLVItem->iItem, &rect))
@@ -2790,7 +2839,21 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     {
 	if (oldFocus != infoPtr->nFocusedItem && infoPtr->bFocus)
 	    LISTVIEW_ShowFocusRect(infoPtr, oldFocus, FALSE);
-	LISTVIEW_InvalidateItem(infoPtr, lpLVItem->iItem);
+	
+	/* this little optimization eliminates some nasty flicker */
+	if ( (infoPtr->dwStyle & LVS_TYPEMASK) == LVS_REPORT &&
+	     !(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) &&
+	     !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED))
+	{
+	    RECT rect;
+	    
+	    rect.left = LVIR_BOUNDS;
+	    rect.top = 0;
+	    if (LISTVIEW_GetSubItemRect(infoPtr, lpLVItem->iItem, &rect))
+		LISTVIEW_InvalidateRect(infoPtr, &rect);
+	}
+	else
+	    LISTVIEW_InvalidateItem(infoPtr, lpLVItem->iItem);
     }
     /* restore text */
     if (pszText)
@@ -3935,6 +3998,9 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
     /* we need to worry about display issues in report mode only */
     if (uView != LVS_REPORT) return TRUE;
 
+    /* if we have a focus, must first erase the focus rect */
+    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, FALSE);
+    
     /* Need to reset the item width when deleting a column */
     infoPtr->nItemWidth -= rcCol.right - rcCol.left;
 
@@ -3946,6 +4012,9 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
     rcOld.left = rcCol.left;
     ScrollWindowEx(infoPtr->hwndSelf, -(rcCol.right - rcCol.left), 0,
 		   &rcOld, &rcOld, 0, 0, SW_ERASE | SW_INVALIDATE);
+
+    /* we can restore focus now */
+    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, TRUE);
 
     return TRUE;
 }
@@ -5179,17 +5248,21 @@ static BOOL LISTVIEW_GetItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
 static BOOL LISTVIEW_GetSubItemRect(LISTVIEW_INFO *infoPtr, INT nItem, LPRECT lprc)
 {
     POINT ptPosition;
+    INT nSubItem, flags;
     
     if (!lprc || LISTVIEW_GetType(infoPtr) != LVS_REPORT) return FALSE;
     
-    TRACE("(nItem=%d, nSubItem=%d)\n", nItem, lprc->top);
+    nSubItem = lprc->top;
+    flags = lprc->left;
+    
+    TRACE("(nItem=%d, nSubItem=%d)\n", nItem, nSubItem);
 
-    if (!Header_GetItemRect(infoPtr->hwndHeader, lprc->top, lprc)) return FALSE;
+    if (!Header_GetItemRect(infoPtr->hwndHeader, nSubItem, lprc)) return FALSE;
     if (!LISTVIEW_GetItemPosition(infoPtr, nItem, &ptPosition)) return FALSE;
     lprc->top = ptPosition.y;
     lprc->bottom = lprc->top + infoPtr->nItemHeight;
 
-    switch(lprc->left)
+    switch(flags)
     {
     case LVIR_ICON:
         FIXME("Unimplemented LVIR_ICON\n");
@@ -5876,6 +5949,9 @@ static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
 
     /* we don't have to worry abiut display issues in non-report mode */
     if ((infoPtr->dwStyle & LVS_TYPEMASK) != LVS_REPORT) return nNewColumn;
+
+    /* if we have a focus, must first erase the focus rect */
+    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, FALSE);
     
     /* Need to reset the item width when inserting a new column */
     infoPtr->nItemWidth += rcCol.right - rcCol.left;
@@ -5888,6 +5964,9 @@ static LRESULT LISTVIEW_InsertColumnT(LISTVIEW_INFO *infoPtr, INT nColumn,
     ScrollWindowEx(infoPtr->hwndSelf, rcCol.right - rcCol.left, 0,
 		   &rcOld, &rcOld, 0, 0, SW_ERASE | SW_INVALIDATE);
     
+    /* we can restore focus now */
+    if (infoPtr->bFocus) LISTVIEW_ShowFocusRect(infoPtr, infoPtr->nFocusedItem, TRUE);
+
     return nNewColumn;
 }
 
@@ -6666,18 +6745,14 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
       topvisible = LISTVIEW_GetTopIndex(infoPtr) +
                    LISTVIEW_GetCountPerColumn(infoPtr) + 1;
 
-      /* Grow the hdpaItems array if necessary */
-      if (nItems > infoPtr->hdpaItems->nMaxCount)
-          if (!DPA_SetPtr(infoPtr->hdpaItems, nItems - 1, NULL))
-              return FALSE;
-
+      infoPtr->nItemCount = nItems;
       infoPtr->nItemWidth = max(LISTVIEW_CalculateMaxWidth(infoPtr),
                                 DEFAULT_COLUMN_WIDTH);
 
       LISTVIEW_UpdateSize(infoPtr);
       LISTVIEW_UpdateScroll(infoPtr);
 
-      if (min(precount,infoPtr->nItemCount)<topvisible)
+      if (min(precount,infoPtr->nItemCount) < topvisible)
         LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
   }
   else
