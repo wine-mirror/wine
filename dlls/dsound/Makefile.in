@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = dsound
 SOVERSION = 1.0
-IMPORTS   = winmm kernel32
+IMPORTS   = winmm kernel32 ntdll
 
 C_SRCS = \
 	dsound_main.c

@@ -5,6 +5,9 @@ import ole32.dll
 import user32.dll
 import gdi32.dll
 import kernel32.dll
+import ntdll.dll
+
+debug_channels (ole typelib)
 
 1 stub DllGetClassObject
 2 stdcall SysAllocString(wstr) SysAllocString

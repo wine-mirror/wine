@@ -1,7 +1,11 @@
 name dsound
 type win32
-import winmm
-import kernel32
+
+import winmm.dll
+import kernel32.dll
+import ntdll.dll
+
+debug_channels (dsound)
 
 0 stub DirectSoundUnknown
 1 stdcall DirectSoundCreate(ptr ptr ptr) DirectSoundCreate

@@ -2,6 +2,9 @@ name    urlmon
 type    win32
 
 import	ole32.dll
+import	ntdll.dll
+
+debug_channels (win32)
 
 1 stub CDLGetLongPathNameA
 2 stub CDLGetLongPathNameW

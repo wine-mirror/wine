@@ -4,6 +4,8 @@ type	win32
 import	kernel32.dll
 import	ntdll.dll
 
+debug_channels (advapi)
+
 @ stub AbortSystemShutdownA
 @ stub AbortSystemShutdownW
 @ stdcall AccessCheck(ptr long long ptr ptr ptr ptr ptr) AccessCheck

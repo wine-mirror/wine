@@ -5,6 +5,8 @@ init OpenGL32_Init
 import x11drv
 import kernel32
 
+debug_channels (opengl)
+
 @  stdcall wglCreateContext(long) wglCreateContext
 @  stdcall wglCreateLayerContext(long long) wglCreateLayerContext
 @  stdcall wglCopyContext(long long long) wglCopyContext

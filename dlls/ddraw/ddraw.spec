@@ -7,6 +7,8 @@ import x11drv.dll
 import gdi32.dll
 import kernel32.dll
 
+debug_channels (ddraw)
+
 @ stub DDHAL32_VidMemAlloc
 @ stub DDHAL32_VidMemFree
 @ stub DDInternalLock

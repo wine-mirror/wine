@@ -2,6 +2,9 @@ name	imm32
 type	win32
 
 import	kernel32.dll
+import	ntdll.dll
+
+debug_channels (imm)
 
 @ stdcall ImmAssociateContext(long long) ImmAssociateContext
 @ stdcall ImmConfigureIMEA(long long long ptr) ImmConfigureIMEA

@@ -44,6 +44,11 @@ $(ALTNAMES:%=lib%.a): lib$(MODULE).a
 checklink:: lib$(MODULE).$(LIBEXT)
 	$(CC) -o checklink $(TOPSRCDIR)/library/checklink.c -L. -l$(MODULE) -L$(TOPOBJDIR) -lwine -lwine_unicode $(EXTRALIBS) $(LIBS) && $(RM) checklink
 
+# Rules for debug channels
+
+debug_channels: dummy
+	$(TOPSRCDIR)/tools/make_debug $(MODULE).spec $(C_SRCS) $(SUBDIRS:%=%/*.c)
+
 # Rules for installation
 
 .PHONY: install_so install_a

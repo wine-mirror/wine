@@ -2,6 +2,9 @@ name	lz32
 type	win32
 
 import	kernel32.dll
+import	ntdll.dll
+
+debug_channels (file)
 
 @ stdcall CopyLZFile(long long) CopyLZFile
 @ stdcall GetExpandedNameA(str ptr) GetExpandedNameA

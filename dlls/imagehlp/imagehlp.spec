@@ -3,6 +3,9 @@ type	win32
 init	IMAGEHLP_LibMain
 
 import	kernel32.dll
+import	ntdll.dll
+
+debug_channels (imagehlp)
 
 @ stdcall BindImage(str str str) BindImage
 @ stdcall BindImageEx(long str str str ptr) BindImageEx

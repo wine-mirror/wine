@@ -3,6 +3,8 @@ type	win32
 
 import	kernel32.dll
 
+debug_channels (tapi)
+
 @ stdcall lineAccept(long str long) lineAccept
 @ stdcall lineAddProvider(str long ptr) lineAddProvider
 @ stdcall lineAddToConference(long long) lineAddToConference

@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = comctl32
 SOVERSION = 1.0
-IMPORTS   = user32 gdi32 advapi32 kernel32
+IMPORTS   = user32 gdi32 advapi32 kernel32 ntdll
 
 C_SRCS = \
 	animate.c \

@@ -12,6 +12,9 @@ import advapi32.dll
 import user32.dll
 import gdi32.dll
 import kernel32.dll
+import ntdll.dll
+
+debug_channels (exec pidl shell)
 
 # Functions exported by the Win95 shell32.dll 
 # (these need to have these exact ordinals, for some 

@@ -4,6 +4,9 @@ init	WNASPI32_LibMain
 
 import	advapi32.dll
 import	kernel32.dll
+import	ntdll.dll
+
+debug_channels (aspi)
 
 # we have several ordinal clashes here, it seems...
 

@@ -3,6 +3,9 @@ type win32
 
 import advapi32.dll
 import kernel32.dll
+import ntdll.dll
+
+debug_channels (setupapi setupx)
 
 # almost all functions are commented out for now. Ordinals are from setupapi.dll 4.0
 

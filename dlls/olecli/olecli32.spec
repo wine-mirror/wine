@@ -4,6 +4,9 @@ type win32
 import ole32.dll
 import olesvr32.dll
 import gdi32.dll
+import ntdll.dll
+
+debug_channels (ole)
 
    1 stub WEP
    2 stub OleDelete

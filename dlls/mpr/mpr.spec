@@ -2,6 +2,9 @@ name mpr
 type win32
 
 import kernel32.dll
+import ntdll.dll
+
+debug_channels (mpr)
 
 # ordinal exports
  1 stub @

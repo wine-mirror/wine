@@ -8,6 +8,11 @@ import	advapi32.dll
 import	kernel32.dll
 import	ntdll.dll
 
+debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
+                edit event graphics hook icon key keyboard listbox local mdi
+                menu message msg nonclient prop relay resource scroll sendmsg
+                shell static syscolor system text timer win win32 wnet)
+
 @ stdcall ActivateKeyboardLayout(long long) ActivateKeyboardLayout
 @ stdcall AdjustWindowRect(ptr long long) AdjustWindowRect
 @ stdcall AdjustWindowRectEx(ptr long long long) AdjustWindowRectEx

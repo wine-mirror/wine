@@ -6,6 +6,8 @@ init    CRTDLL_Init
 import kernel32.dll
 import ntdll.dll
 
+debug_channels (crtdll)
+
 @ cdecl ??2@YAPAXI@Z(long) CRTDLL_new
 @ cdecl ??3@YAXPAX@Z(long) CRTDLL_delete
 @ cdecl ?_set_new_handler@@YAP6AHI@ZP6AHI@Z@Z(ptr) CRTDLL_set_new_handler

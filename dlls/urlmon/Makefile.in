@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = urlmon
 SOVERSION = 1.0
-IMPORTS   = ole32
+IMPORTS   = ole32 ntdll
 
 C_SRCS = \
 	umon.c \

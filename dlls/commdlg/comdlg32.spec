@@ -12,6 +12,8 @@ import gdi32.dll
 import kernel32.dll
 import ntdll.dll
 
+debug_channels (commdlg)
+
  0 stub ArrowBtnWndProc
  1 stdcall ChooseColorA(ptr) ChooseColorA
  2 stdcall ChooseColorW(ptr) ChooseColorW

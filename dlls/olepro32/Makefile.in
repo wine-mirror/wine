@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = olepro32
 SOVERSION = 1.0
-IMPORTS   = oleaut32
+IMPORTS   = oleaut32 ntdll
 
 C_SRCS = olepro32stubs.c
 

@@ -4,6 +4,8 @@ init    MAIN_OdbcInit
 
 import	ntdll.dll
 
+debug_channels (odbc)
+
 001 stdcall SQLAllocConnect(long ptr) SQLAllocConnect
 002 stdcall SQLAllocEnv(ptr)  SQLAllocEnv
 003 stdcall SQLAllocStmt(long ptr) SQLAllocStmt

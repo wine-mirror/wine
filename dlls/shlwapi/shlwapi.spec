@@ -2,10 +2,13 @@ name shlwapi
 type win32
 init SHLWAPI_LibMain
 
-import advapi32
-import user32
-import gdi32
-import kernel32
+import advapi32.dll
+import user32.dll
+import gdi32.dll
+import kernel32.dll
+import ntdll.dll
+
+debug_channels (shell)
 
 1   stdcall @(ptr ptr) SHLWAPI_1
 2   stub @

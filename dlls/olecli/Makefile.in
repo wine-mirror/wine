@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = olecli32
 SOVERSION = 1.0
 ALTNAMES  = olecli
-IMPORTS   = ole32 olesvr32 gdi32
+IMPORTS   = ole32 olesvr32 gdi32 ntdll
 
 C_SRCS = \
 	olecli_main.c

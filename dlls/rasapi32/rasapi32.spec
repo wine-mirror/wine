@@ -3,6 +3,8 @@ type	win32
 
 import	ntdll.dll
 
+debug_channels (ras)
+
 500 stub	RnaEngineRequest
 501 stub	DialEngineRequest
 502 stub	SuprvRequest

@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = setupapi
 SOVERSION = 1.0
 ALTNAMES  = setupx
-IMPORTS   = advapi32 kernel32
+IMPORTS   = advapi32 kernel32 ntdll
 
 C_SRCS = \
 	infparse.c \

@@ -4,6 +4,9 @@ init    WININET_LibMain
 
 import	user32.dll
 import	kernel32.dll
+import	ntdll.dll
+
+debug_channels (wininet)
 
 @ stub InternetInitializeAutoProxyDll
 @ stub ShowCertificate

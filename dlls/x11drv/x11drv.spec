@@ -6,6 +6,9 @@ import	user32.dll
 import	gdi32.dll
 import	kernel32.dll
 
+debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
+                key keyboard opengl palette text win x11 x11drv)
+
 # USER driver
 
 @ cdecl Synchronize() X11DRV_Synchronize

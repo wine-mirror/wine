@@ -7,6 +7,11 @@ import	user32.dll
 import	gdi32.dll
 import	advapi32.dll
 import	kernel32.dll
+import	ntdll.dll
+
+debug_channels (animate comboex commctrl datetime header hotkey imagelist ipaddress
+                listview message monthcal nativefont pager progress propsheet
+                rebar statusbar tab toolbar tooltips trackbar treeview updown)
 
 # Functions exported by the Win95 comctl32.dll 
 # (these need to have these exact ordinals, because some win95 dlls 
