@@ -613,9 +613,9 @@ then {
   fi
   echo "Preparing to install default Wine registry entries..."
 
-  # edit config files so we don't have to run regedit under X
+  # Make sure we are on a Windows drive
   mv $LCONF $LCONF.orig
-  sed "s/\"GraphicsDriver\" = .*/\"GraphicsDriver\" = \"ttydrv\"/" $LCONF.orig > $LCONF
+  sed "s/\"Path\" = \"\${HOME}\"$/\"Path\" = \"\${PWD}\"/" $LCONF.orig> $LCONF
 
   echo "Installing default Wine registry entries..."
   echo
