@@ -199,3 +199,21 @@ BOOL WINAPI SetupGetInfInformationA( LPCVOID InfSpec, DWORD SearchControl,
           InfSpec, SearchControl, ReturnBuffer, ReturnBufferSize, RequiredSize );
     return TRUE;
 }
+
+/***********************************************************************
+ *		SetupCreateDiskSpaceListA  (SETUPAPI.@)
+ */
+HDSKSPC SetupCreateDiskSpaceListA( PVOID Reserved1, DWORD Reserved2, UINT Flags )
+{
+    FIXME("%08x\n", Flags);
+    return NULL;
+}
+
+/***********************************************************************
+ *		SetupCreateDiskSpaceListA  (SETUPAPI.@)
+ */
+HDSKSPC SetupCreateDiskSpaceListW( PVOID Reserved1, DWORD Reserved2, UINT Flags )
+{
+    FIXME("%08x\n", Flags);
+    return NULL;
+}

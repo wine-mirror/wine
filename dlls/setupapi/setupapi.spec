@@ -70,8 +70,8 @@
 @ stub SetupCopyErrorW
 @ stdcall SetupCopyOEMInfA(str str long long ptr long ptr ptr)
 @ stub SetupCopyOEMInfW
-@ stub SetupCreateDiskSpaceListA
-@ stub SetupCreateDiskSpaceListW
+@ stdcall SetupCreateDiskSpaceListA(ptr long long)
+@ stdcall SetupCreateDiskSpaceListW(ptr long long)
 @ stub SetupDecompressOrCopyFileA
 @ stub SetupDecompressOrCopyFileW
 @ stub SetupDefaultQueueCallback

@@ -37,6 +37,8 @@ typedef PVOID HDEVINFO;
 /* Define type for setup file queue */
 typedef PVOID HSPFILEQ;
 
+typedef PVOID HDSKSPC;
+
 /* inf structure. */
 typedef struct _INFCONTEXT
 {
