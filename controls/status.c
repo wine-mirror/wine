@@ -85,7 +85,7 @@ static BOOL32 SW_Refresh( HWND32 hwnd, HDC32 hdc, STATUSWINDOWINFO *self )
 {
 	int	i;
 
-	if (!IsWindowVisible(hwnd)) {
+	if (!IsWindowVisible32(hwnd)) {
 	    return (TRUE);
 	}
 
@@ -284,7 +284,7 @@ SW_Create(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
     GetClientRect32(parent, &rect);
     width = rect.right - rect.left;
     height = (self->textHeight * 3)/2;
-    MoveWindow(hwnd, lpCreate->x, lpCreate->y-1, width, height, FALSE);
+    MoveWindow32(hwnd, lpCreate->x, lpCreate->y-1, width, height, FALSE);
     SW_SetPartBounds(hwnd, self);
     return 0;
 }
@@ -400,8 +400,8 @@ SW_Size(STATUSWINDOWINFO *self, HWND32 hwnd, WPARAM32 wParam, LPARAM lParam)
 	width = parent_rect.right - parent_rect.left;
 	x = parent_rect.left;
 	y = parent_rect.bottom - height;
-	MoveWindow(hwnd, parent_rect.left, parent_rect.bottom - height - 1,
-		   width, height, TRUE);
+	MoveWindow32(hwnd, parent_rect.left, parent_rect.bottom - height - 1,
+		     width, height, TRUE);
 	SW_SetPartBounds(hwnd, self);
     }
     return 0;

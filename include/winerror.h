@@ -20,6 +20,7 @@ extern int WIN32_LastError;
 #define ERROR_BAD_FORMAT            11
 #define ERROR_OUTOFMEMORY           14
 #define ERROR_NO_MORE_FILES         18
+#define ERROR_SHARING_VIOLATION     32
 #define ERROR_FILE_EXISTS           80
 #define ERROR_INVALID_PARAMETER     87
 #define ERROR_BROKEN_PIPE           109

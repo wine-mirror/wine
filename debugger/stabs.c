@@ -75,6 +75,44 @@ struct stab_nlist {
   unsigned long n_value;
 };
 
+/*
+ * This is used to keep track of known datatypes so that we don't redefine
+ * them over and over again.  It sucks up lots of memory otherwise.
+ */
+struct known_typedef
+{
+  struct known_typedef * next;
+  char		       * name;
+  int			 ndefs;
+  struct datatype      * types[0];
+};
+
+#define NR_STAB_HASH 521
+
+struct known_typedef * ktd_head[NR_STAB_HASH];
+
+static unsigned int stab_hash( const char * name )
+{
+    unsigned int hash = 0;
+    unsigned int tmp;
+    const char * p;
+
+    p = name;
+
+    while (*p) 
+      {
+	hash = (hash << 4) + *p++;
+
+	if( (tmp = (hash & 0xf0000000)) )
+	  {
+	    hash ^= tmp >> 24;
+	  }
+	hash &= ~tmp;
+      }
+    return hash % NR_STAB_HASH;
+}
+
+
 static void stab_strcpy(char * dest, const char * source)
 {
   /*
@@ -89,6 +127,179 @@ static void stab_strcpy(char * dest, const char * source)
   *dest++ = '\0';
 }
 
+#define MAX_TD_NESTING	128
+
+static
+int
+DEBUG_RegisterTypedef(const char * name, struct datatype ** types, int ndef)
+{
+  int			 hash;
+  struct known_typedef * ktd;
+
+  if( ndef == 1 )
+    {
+      return TRUE;
+    }
+
+  ktd = (struct known_typedef *) malloc(sizeof(struct known_typedef) 
+					+ ndef * sizeof(struct datatype *));
+  
+  hash = stab_hash(name);
+
+  ktd->name = xstrdup(name);
+  ktd->ndefs = ndef;
+  memcpy(&ktd->types[0], types, ndef * sizeof(struct datatype *));
+  ktd->next = ktd_head[hash];
+  ktd_head[hash] = ktd;
+
+  return TRUE;
+}
+
+static
+int
+DEBUG_HandlePreviousTypedef(const char * name, const char * stab)
+{
+  int			 count;
+  enum debug_type	 expect;
+  int			 hash;
+  struct known_typedef * ktd;
+  char		       * ptr;
+  char		       * tc;
+  int			 typenum;
+
+  hash = stab_hash(name);
+
+  for(ktd = ktd_head[hash]; ktd; ktd = ktd->next)
+    {
+      if(    (ktd->name[0] == name[0])
+	  && (strcmp(name, ktd->name) == 0) )
+	{
+	  break;
+	}
+    }
+
+  /*
+   * Didn't find it.  This must be a new one.
+   */
+  if( ktd == NULL )
+    {
+      return FALSE;
+    }
+
+  /*
+   * Examine the stab to make sure it has the same number of definitions.
+   */
+  count = 0;
+  for(ptr = strchr(stab, '='); ptr; ptr = strchr(ptr+1, '='))
+    {
+      if( count >= ktd->ndefs )
+	{
+	  return FALSE;
+	}
+
+      /*
+       * Make sure the types of all of the objects is consistent with
+       * what we have already parsed.
+       */
+      switch(ptr[1])
+	{
+	case '*':
+	  expect = POINTER;
+	  break;
+	case 's':
+	case 'u':
+	  expect = STRUCT;
+	  break;
+	case 'a':
+	  expect = ARRAY;
+	  break;
+	case '1':
+	case 'r':
+	  expect = BASIC;
+	  break;
+	case 'x':
+	  expect = STRUCT;
+	  break;
+	case 'e':
+	  expect = ENUM;
+	  break;
+	case 'f':
+	  expect = FUNC;
+	  break;
+	default:
+	  fprintf(stderr, "Unknown type.\n");
+          return FALSE;
+	}
+      if( expect != DEBUG_GetType(ktd->types[count]) )
+	{
+	  return FALSE;
+	}
+      count++;
+    }
+
+  if( ktd->ndefs != count )
+    {
+      return FALSE;
+    }
+
+  /*
+   * OK, this one is safe.  Go through, dig out all of the type numbers,
+   * and substitute the appropriate things.
+   */
+  count = 0;
+  for(ptr = strchr(stab, '='); ptr; ptr = strchr(ptr+1, '='))
+    {
+      /*
+       * Back up until we get to a non-numeric character.  This is the type
+       * number.
+       */
+      tc = ptr - 1;
+      while( *tc >= '0' && *tc <= '9' )
+	{
+	  tc--;
+	}
+      
+      typenum = atol(tc + 1);
+      if( num_stab_types <= typenum )
+	{
+	  num_stab_types = typenum + 32;
+	  stab_types = (struct datatype **) xrealloc(stab_types, 
+						     num_stab_types * sizeof(struct datatype *));
+	  if( stab_types == NULL )
+	    {
+	      return FALSE;
+	    }
+	}
+
+      stab_types[typenum] = ktd->types[count++];
+    }
+
+  return TRUE;
+}
+
+static int DEBUG_FreeRegisteredTypedefs()
+{
+  int			 count;
+  int			 j;
+  struct known_typedef * ktd;
+  struct known_typedef * next;
+
+  count = 0;
+  for(j=0; j < NR_STAB_HASH; j++ )
+    {
+      for(ktd = ktd_head[j]; ktd; ktd = next)
+	{
+	  count++;
+	  next = ktd->next;
+	  free(ktd->name);
+	  free(ktd);
+	}  
+      ktd_head[j] = NULL;
+    }
+
+  return TRUE;
+
+}
 
 static 
 int
@@ -96,21 +307,33 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 {
   int		    arrmax;
   int		    arrmin;
-  char * c;
+  char		  * c;
   struct datatype * curr_type;
   struct datatype * datatype;
+  struct datatype * curr_types[MAX_TD_NESTING];
   char	            element_name[1024];
+  int		    ntypes = 0;
   int		    offset;
+  const char	  * orig_typename;
   int		    rtn = FALSE;
   int		    size;
   char		  * tc;
   char		  * tc2;
   int		    typenum;
 
-  /*
-   * Go from back to front.  First we go through and figure out what type numbers
-   * we need, and register those types.  Then we go in and fill the details.
+  orig_typename = typename;
+
+  if( DEBUG_HandlePreviousTypedef(typename, ptr) == TRUE )
+    {
+      return TRUE;
+    }
+
+  /* 
+   * Go from back to front.  First we go through and figure out what
+   * type numbers we need, and register those types.  Then we go in
+   * and fill the details.  
    */
+
   for( c = strchr(ptr, '='); c != NULL; c = strchr(c + 1, '=') )
     {
       /*
@@ -134,31 +357,47 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
 	    }
 	}
 
+      if( ntypes >= MAX_TD_NESTING )
+	{
+	  /*
+	   * If this ever happens, just bump the counter.
+	   */
+	  fprintf(stderr, "Typedef nesting overflow\n");
+	  return FALSE;
+	}
+
       switch(c[1])
 	{
 	case '*':
 	  stab_types[typenum] = DEBUG_NewDataType(POINTER, NULL);
+	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	case 's':
 	case 'u':
 	  stab_types[typenum] = DEBUG_NewDataType(STRUCT, typename);
+	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	case 'a':
 	  stab_types[typenum] = DEBUG_NewDataType(ARRAY, NULL);
+	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	case '1':
 	case 'r':
 	  stab_types[typenum] = DEBUG_NewDataType(BASIC, typename);
+	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	case 'x':
 	  stab_strcpy(element_name, c + 3);
 	  stab_types[typenum] = DEBUG_NewDataType(STRUCT, element_name);
+	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	case 'e':
 	  stab_types[typenum] = DEBUG_NewDataType(ENUM, NULL);
+	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	case 'f':
 	  stab_types[typenum] = DEBUG_NewDataType(FUNC, NULL);
+	  curr_types[ntypes++] = stab_types[typenum];
 	  break;
 	default:
 	  fprintf(stderr, "Unknown type.\n");
@@ -166,154 +405,184 @@ DEBUG_ParseTypedefStab(char * ptr, const char * typename)
       typename = NULL;
     }
 
-     /*
-      * OK, now take a second sweep through.  Now we will be digging out the definitions
-      * of the various components, and storing them in the skeletons that we have already
-      * allocated.  We take a right-to left search as this is much easier to parse.
-      */
-  for( c = strrchr(ptr, '='); c != NULL; c = strrchr(ptr, '=') )
-    {
       /*
-       * Back up until we get to a non-numeric character.  This is the type
-       * number.
-       */
-      tc = c - 1;
-      while( *tc >= '0' && *tc <= '9' )
-	{
-	  tc--;
-	}
-      typenum = atol(tc + 1);
-      curr_type = stab_types[typenum];
+      * Now register the type so that if we encounter it again, we will know
+      * what to do.
+      */
+     DEBUG_RegisterTypedef(orig_typename, curr_types, ntypes);
 
-      switch(c[1])
-	{
-	case 'x':
-	  tc = c + 3;
-	  while( *tc != ':' )
-	    {
-	      tc ++;
-	    }
-	  tc++;
-	  if( *tc == '\0' )
-	    {
-	      *c = '\0';
-	    }
-	  else
-	    {
-	      strcpy(c, tc);
-	    }
+     /* 
+      * OK, now take a second sweep through.  Now we will be digging
+      * out the definitions of the various components, and storing
+      * them in the skeletons that we have already allocated.  We take
+      * a right-to left search as this is much easier to parse.  
+      */
+     for( c = strrchr(ptr, '='); c != NULL; c = strrchr(ptr, '=') )
+       {
+	 /*
+	  * Back up until we get to a non-numeric character.  This is the type
+	  * number.
+	  */
+	 tc = c - 1;
+	 while( *tc >= '0' && *tc <= '9' )
+	   {
+	     tc--;
+	   }
+	 typenum = atol(tc + 1);
+	 curr_type = stab_types[typenum];
+	 
+	 switch(c[1])
+	   {
+	   case 'x':
+	     tc = c + 3;
+	     while( *tc != ':' )
+	       {
+		 tc ++;
+	       }
+	     tc++;
+	     if( *tc == '\0' )
+	       {
+		 *c = '\0';
+	       }
+	     else
+	       {
+		 strcpy(c, tc);
+	       }
+	     
+	     break;
+	   case '*':
+	   case 'f':
+	     tc = c + 2;
+	     datatype = stab_types[strtol(tc, &tc, 10)];
+	     DEBUG_SetPointerType(curr_type, datatype);
+	     if( *tc == '\0' )
+	       {
+		 *c = '\0';
+	       }
+	     else
+	       {
+		 strcpy(c, tc);
+	       }
+	     break;
+	   case '1':
+	   case 'r':
+	     /*
+	      * We have already handled these above.
+	      */
+	     *c = '\0';
+	     break;
+	   case 'a':
+	     tc  = c + 5;
+	     arrmin = strtol(tc, &tc, 10);
+	     tc++;
+	     arrmax = strtol(tc, &tc, 10);
+	     tc++;
+	     datatype = stab_types[strtol(tc, &tc, 10)];
+	     if( *tc == '\0' )
+	       {
+		 *c = '\0';
+	       }
+	     else
+	       {
+		 strcpy(c, tc);
+	       }
+	     
+	     DEBUG_SetArrayParams(curr_type, arrmin, arrmax, datatype);
+	     break;
+	   case 's':
+	   case 'u':
+	     tc = c + 2;
+	     if( DEBUG_SetStructSize(curr_type, strtol(tc, &tc, 10)) == FALSE )
+	       {
+		 /*
+		  * We have already filled out this structure.  Nothing to do,
+		  * so just skip forward to the end of the definition.
+		  */
+		 while( tc[0] != ';' && tc[1] != ';' )
+		   {
+		     tc++;
+		   }
+		 
+		 tc += 2;
+		 
+		 if( *tc == '\0' )
+		   {
+		     *c = '\0';
+		   }
+		 else
+		   {
+		     strcpy(c, tc + 1);
+		   }
+		 continue;
+	       }
 
-	  break;
-	case '*':
-	case 'f':
-	  tc = c + 2;
-	  datatype = stab_types[strtol(tc, &tc, 10)];
-	  DEBUG_SetPointerType(curr_type, datatype);
-	  if( *tc == '\0' )
-	    {
-	      *c = '\0';
-	    }
-	  else
-	    {
-	      strcpy(c, tc);
-	    }
-	  break;
-	case '1':
-	case 'r':
-	  /*
-	   * We have already handled these above.
-	   */
-	  *c = '\0';
-	  break;
-	case 'a':
-	  tc  = c + 5;
- 	  arrmin = strtol(tc, &tc, 10);
-	  tc++;
- 	  arrmax = strtol(tc, &tc, 10);
-	  tc++;
-	  datatype = stab_types[strtol(tc, &tc, 10)];
-	  if( *tc == '\0' )
-	    {
-	      *c = '\0';
-	    }
-	  else
-	    {
-	      strcpy(c, tc);
-	    }
-	  
-	  DEBUG_SetArrayParams(curr_type, arrmin, arrmax, datatype);
-	  break;
-	case 's':
-	case 'u':
-	  tc = c + 2;
-	  DEBUG_SetStructSize(curr_type, strtol(tc, &tc, 10));
-	  /*
-	   * Now parse the individual elements of the structure/union.
-	   */
-	  while(*tc != ';')
-	    {
-	      tc2 = element_name;
-	      while(*tc != ':')
-		{
-		  *tc2++ = *tc++;
-		}
-	      tc++;
-	      *tc2++ = '\0';
-	      datatype = stab_types[strtol(tc, &tc, 10)];
-	      tc++;
-	      offset  = strtol(tc, &tc, 10);
-	      tc++;
-	      size  = strtol(tc, &tc, 10);
-	      tc++;
-	      DEBUG_AddStructElement(curr_type, element_name, datatype, offset, size);
-	    }
-	  if( *tc == '\0' )
-	    {
-	      *c = '\0';
-	    }
-	  else
-	    {
-	      strcpy(c, tc + 1);
-	    }
-	  break;
-	case 'e':
-	  tc = c + 2;
-	  /*
-	   * Now parse the individual elements of the structure/union.
-	   */
-	  while(*tc != ';')
-	    {
-	      tc2 = element_name;
-	      while(*tc != ':')
-		{
-		  *tc2++ = *tc++;
-		}
-	      tc++;
-	      *tc2++ = '\0';
-	      offset  = strtol(tc, &tc, 10);
-	      tc++;
-	      DEBUG_AddStructElement(curr_type, element_name, NULL, offset, 0);
-	    }
-	  if( *tc == '\0' )
-	    {
-	      *c = '\0';
-	    }
-	  else
-	    {
-	      strcpy(c, tc + 1);
-	    }
-	  break;
-	default:
-	  fprintf(stderr, "Unknown type.\n");
-	  break;
-	}
-    }
-
-  rtn = TRUE;
-
+	     /*
+	      * Now parse the individual elements of the structure/union.
+	      */
+	     while(*tc != ';')
+	       {
+		 tc2 = element_name;
+		 while(*tc != ':')
+		   {
+		     *tc2++ = *tc++;
+		   }
+		 tc++;
+		 *tc2++ = '\0';
+		 datatype = stab_types[strtol(tc, &tc, 10)];
+		 tc++;
+		 offset  = strtol(tc, &tc, 10);
+		 tc++;
+		 size  = strtol(tc, &tc, 10);
+		 tc++;
+		 DEBUG_AddStructElement(curr_type, element_name, datatype, offset, size);
+	       }
+	     if( *tc == '\0' )
+	       {
+		 *c = '\0';
+	       }
+	     else
+	       {
+		 strcpy(c, tc + 1);
+	       }
+	     break;
+	   case 'e':
+	     tc = c + 2;
+	     /*
+	      * Now parse the individual elements of the structure/union.
+	      */
+	     while(*tc != ';')
+	       {
+		 tc2 = element_name;
+		 while(*tc != ':')
+		   {
+		     *tc2++ = *tc++;
+		   }
+		 tc++;
+		 *tc2++ = '\0';
+		 offset  = strtol(tc, &tc, 10);
+		 tc++;
+		 DEBUG_AddStructElement(curr_type, element_name, NULL, offset, 0);
+	       }
+	     if( *tc == '\0' )
+	       {
+		 *c = '\0';
+	       }
+	     else
+	       {
+		 strcpy(c, tc + 1);
+	       }
+	     break;
+	   default:
+	     fprintf(stderr, "Unknown type.\n");
+	     break;
+	   }
+       }
+     
+     rtn = TRUE;
+     
 leave:
-
-  return rtn;
+     
+     return rtn;
 
 }
 
@@ -675,6 +944,9 @@ leave:
       stab_types = NULL;
       num_stab_types = 0;
     }
+
+
+  DEBUG_FreeRegisteredTypedefs();
 
   return TRUE;
 }

@@ -1027,77 +1027,9 @@ BOOL32 GetTextExtentExPoint32W( HDC32 hdc, LPCWSTR str, INT32 count,
  */
 BOOL16 GetTextMetrics16( HDC16 hdc, TEXTMETRIC16 *metrics )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) return FALSE;
-    memcpy( metrics, &dc->u.x.font.metrics, sizeof(*metrics) );
-
-    metrics->tmAscent  = abs( metrics->tmAscent
-			      * dc->wndExtY / dc->vportExtY );
-    metrics->tmDescent = abs( metrics->tmDescent
-			      * dc->wndExtY / dc->vportExtY );
-    metrics->tmHeight  = metrics->tmAscent + metrics->tmDescent;
-    metrics->tmInternalLeading = abs( metrics->tmInternalLeading
-				      * dc->wndExtY / dc->vportExtY );
-    metrics->tmExternalLeading = abs( metrics->tmExternalLeading
-				      * dc->wndExtY / dc->vportExtY );
-    metrics->tmMaxCharWidth    = abs( metrics->tmMaxCharWidth 
-				      * dc->wndExtX / dc->vportExtX );
-    metrics->tmAveCharWidth    = abs( metrics->tmAveCharWidth
-				      * dc->wndExtX / dc->vportExtX );
-
-    dprintf_font(stdnimp,"text metrics:\n
-	InternalLeading = %i
-	ExternalLeading = %i
-	MaxCharWidth = %i
-	Weight = %i
-	Italic = %i
-	Underlined = %i
-	StruckOut = %i
-	FirstChar = %i
-	LastChar = %i
-	DefaultChar = %i
-	BreakChar = %i
-	CharSet = %i
-	Overhang = %i
-	DigitizedAspectX = %i
-	DigitizedAspectY = %i
-	AveCharWidth = %i
-	MaxCharWidth = %i
-	Ascent = %i
-	Descent = %i
-	Height = %i\n",
-    metrics->tmInternalLeading,
-    metrics->tmExternalLeading,
-    metrics->tmMaxCharWidth,
-    metrics->tmWeight,
-    metrics->tmItalic,
-    metrics->tmUnderlined,
-    metrics->tmStruckOut,
-    metrics->tmFirstChar,
-    metrics->tmLastChar,
-    metrics->tmDefaultChar,
-    metrics->tmBreakChar,
-    metrics->tmCharSet,
-    metrics->tmOverhang,
-    metrics->tmDigitizedAspectX,
-    metrics->tmDigitizedAspectY,
-    metrics->tmAveCharWidth,
-    metrics->tmMaxCharWidth,
-    metrics->tmAscent,
-    metrics->tmDescent,
-    metrics->tmHeight);
-
-    return TRUE;
-}
-
-
-/***********************************************************************
- *           GetTextMetrics32A    (GDI32.236)
- */
-BOOL32 GetTextMetrics32A( HDC32 hdc, TEXTMETRIC32A *metrics )
-{
-    TEXTMETRIC16 tm;
-    if (!GetTextMetrics16( (HDC16)hdc, &tm )) return FALSE;
+    TEXTMETRIC32A tm;
+    
+    if (!GetTextMetrics32A( (HDC32)hdc, &tm )) return FALSE;
     metrics->tmHeight           = tm.tmHeight;
     metrics->tmAscent           = tm.tmAscent;
     metrics->tmDescent          = tm.tmDescent;
@@ -1123,12 +1055,72 @@ BOOL32 GetTextMetrics32A( HDC32 hdc, TEXTMETRIC32A *metrics )
 
 
 /***********************************************************************
+ *           GetTextMetrics32A    (GDI32.236)
+ */
+BOOL32 GetTextMetrics32A( HDC32 hdc, TEXTMETRIC32A *metrics )
+{
+DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc)
+    {
+	if (!(dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC )))
+            return FALSE;
+    }
+
+    if (!dc->funcs->pGetTextMetrics ||
+        !dc->funcs->pGetTextMetrics( dc,metrics ))
+        return FALSE;
+    dprintf_font(stdnimp,"text metrics:\n
+	InternalLeading = %i
+	ExternalLeading = %i
+	MaxCharWidth = %i
+	Weight = %i
+	Italic = %i
+	Underlined = %i
+	StruckOut = %i
+	FirstChar = %i
+	LastChar = %i
+	DefaultChar = %i
+	BreakChar = %i
+	CharSet = %i
+	Overhang = %i
+	DigitizedAspectX = %i
+	DigitizedAspectY = %i
+	AveCharWidth = %i
+	MaxCharWidth = %i
+	Ascent = %i
+	Descent = %i
+	Height = %i\n",
+                 metrics->tmInternalLeading,
+                 metrics->tmExternalLeading,
+                 metrics->tmMaxCharWidth,
+                 metrics->tmWeight,
+                 metrics->tmItalic,
+                 metrics->tmUnderlined,
+                 metrics->tmStruckOut,
+                 metrics->tmFirstChar,
+                 metrics->tmLastChar,
+                 metrics->tmDefaultChar,
+                 metrics->tmBreakChar,
+                 metrics->tmCharSet,
+                 metrics->tmOverhang,
+                 metrics->tmDigitizedAspectX,
+                 metrics->tmDigitizedAspectY,
+                 metrics->tmAveCharWidth,
+                 metrics->tmMaxCharWidth,
+                 metrics->tmAscent,
+                 metrics->tmDescent,
+                 metrics->tmHeight);
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           GetTextMetrics32W    (GDI32.237)
  */
 BOOL32 GetTextMetrics32W( HDC32 hdc, TEXTMETRIC32W *metrics )
 {
-    TEXTMETRIC16 tm;
-    if (!GetTextMetrics16( (HDC16)hdc, &tm )) return FALSE;
+    TEXTMETRIC32A tm;
+    if (!GetTextMetrics32A( (HDC16)hdc, &tm )) return FALSE;
     metrics->tmHeight           = tm.tmHeight;
     metrics->tmAscent           = tm.tmAscent;
     metrics->tmDescent          = tm.tmDescent;

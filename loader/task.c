@@ -368,7 +368,7 @@ static void TASK_CallToStart(void)
         __asm__ __volatile__("movw %w0,%%fs"::"r" (pCurrentThread->teb_sel));
         PE_InitializeDLLs( pTask->hModule );
         exit_code = CallTaskStart32((FARPROC32)(pModule->pe_module->load_addr + 
-                pModule->pe_module->pe_header->opt_coff.AddressOfEntryPoint) );
+                pModule->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint) );
         TASK_KillCurrentTask( exit_code );
     }
     else
@@ -593,7 +593,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
         if (pModule->flags & NE_FFLAGS_WIN32)
         {
             DBG_ADDR addr = { NULL, 0, pModule->pe_module->load_addr + 
-                              pModule->pe_module->pe_header->opt_coff.AddressOfEntryPoint };
+                              pModule->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint };
             fprintf( stderr, "Win32 task '%s': ", name );
             DEBUG_AddBreakpoint( &addr );
         }

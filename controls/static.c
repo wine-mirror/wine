@@ -56,8 +56,8 @@ static HICON16 STATIC_SetIcon( WND *wndPtr, HICON16 hicon )
     if (hicon)
     {
         CURSORICONINFO *info = (CURSORICONINFO *) GlobalLock16( hicon );
-        SetWindowPos( wndPtr->hwndSelf, 0, 0, 0, info->nWidth, info->nHeight,
-                     SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
+        SetWindowPos32( wndPtr->hwndSelf, 0, 0, 0, info->nWidth, info->nHeight,
+                        SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
         GlobalUnlock16( hicon );
     }
     return prevIcon;

@@ -252,6 +252,13 @@ void DEBUG_DelBreakpoint( int num )
         fprintf( stderr, "Invalid breakpoint number %d\n", num );
         return;
     }
+
+    if( breakpoints[num].condition != NULL )
+      {
+	DEBUG_FreeExpr(breakpoints[num].condition);
+	breakpoints[num].condition = NULL;
+      }
+
     breakpoints[num].enabled = FALSE;
     breakpoints[num].in_use  = FALSE;
     breakpoints[num].skipcount = 0;

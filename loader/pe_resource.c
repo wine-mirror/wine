@@ -20,7 +20,6 @@
 #include "heap.h"
 #include "handle32.h"
 #include "libres.h"
-#include "resource32.h"
 #include "stackframe.h"
 #include "neexe.h"
 #include "accel.h"
@@ -42,48 +41,47 @@
  *	Helper function - goes down one level of PE resource tree
  *
  */
-PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
-					 LPCWSTR name,
-					 DWORD root)
+LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(LPIMAGE_RESOURCE_DIRECTORY resdirptr,
+					   LPCWSTR name,DWORD root)
 {
     int entrynum;
-    PIMAGE_RESOURCE_DIRECTORY_ENTRY entryTable;
-	int namelen;
+    LPIMAGE_RESOURCE_DIRECTORY_ENTRY entryTable;
+    int namelen;
 
     if (HIWORD(name)) {
     /* FIXME: what about #xxx names? */
-	entryTable = (PIMAGE_RESOURCE_DIRECTORY_ENTRY) (
+	entryTable = (LPIMAGE_RESOURCE_DIRECTORY_ENTRY) (
 			(BYTE *) resdirptr + 
                         sizeof(IMAGE_RESOURCE_DIRECTORY));
 	namelen = lstrlen32W(name);
 	for (entrynum = 0; entrynum < resdirptr->NumberOfNamedEntries; entrynum++)
 	{
-		PIMAGE_RESOURCE_DIR_STRING_U str =
-		(PIMAGE_RESOURCE_DIR_STRING_U) (root + 
-			(entryTable[entrynum].Name & 0x7fffffff));
+		LPIMAGE_RESOURCE_DIR_STRING_U str =
+		(LPIMAGE_RESOURCE_DIR_STRING_U) (root + 
+			entryTable[entrynum].u1.s.NameOffset);
 		if(namelen != str->Length)
 			continue;
 		if(lstrncmpi32W(name,str->NameString,str->Length)==0)
-			return (PIMAGE_RESOURCE_DIRECTORY) (
+			return (LPIMAGE_RESOURCE_DIRECTORY) (
 				root +
-				(entryTable[entrynum].OffsetToData & 0x7fffffff));
+				entryTable[entrynum].u2.s.OffsetToDirectory);
 	}
 	return NULL;
     } else {
-	entryTable = (PIMAGE_RESOURCE_DIRECTORY_ENTRY) (
+	entryTable = (LPIMAGE_RESOURCE_DIRECTORY_ENTRY) (
 			(BYTE *) resdirptr + 
                         sizeof(IMAGE_RESOURCE_DIRECTORY) +
 			resdirptr->NumberOfNamedEntries * sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY));
 	for (entrynum = 0; entrynum < resdirptr->NumberOfIdEntries; entrynum++)
-	    if ((DWORD)entryTable[entrynum].Name == (DWORD)name)
-		return (PIMAGE_RESOURCE_DIRECTORY) (
+	    if ((DWORD)entryTable[entrynum].u1.Name == (DWORD)name)
+		return (LPIMAGE_RESOURCE_DIRECTORY) (
 			root +
-			(entryTable[entrynum].OffsetToData & 0x7fffffff));
+			entryTable[entrynum].u2.s.OffsetToDirectory);
 	/* just use first entry if no default can be found */
 	if (!name && resdirptr->NumberOfIdEntries)
-		return (PIMAGE_RESOURCE_DIRECTORY) (
+		return (LPIMAGE_RESOURCE_DIRECTORY) (
 			root +
-			(entryTable[0].OffsetToData & 0x7fffffff));
+			entryTable[0].u2.s.OffsetToDirectory);
 	return NULL;
     }
 }
@@ -94,12 +92,12 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
  *	Helper function - goes down one level of PE resource tree
  *
  */
-PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(PIMAGE_RESOURCE_DIRECTORY resdirptr,
-					 LPCSTR name,
-					 DWORD root)
+LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(LPIMAGE_RESOURCE_DIRECTORY resdirptr,
+					   LPCSTR name,
+					   DWORD root)
 {
 	LPWSTR				xname;
-	PIMAGE_RESOURCE_DIRECTORY	ret;
+	LPIMAGE_RESOURCE_DIRECTORY	ret;
 
 	if (HIWORD((DWORD)name))
 		xname	= HEAP_strdupAtoW( GetProcessHeap(), 0, name );
@@ -115,13 +113,12 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 /**********************************************************************
  *	    PE_FindResourceEx32W
  */
-HANDLE32 PE_FindResourceEx32W( 
-	HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type, WORD lang
-)
-{
+HANDLE32 PE_FindResourceEx32W(
+	HINSTANCE32 hModule,LPCWSTR name,LPCWSTR type,WORD lang
+) {
     PE_MODULE *pe;
     NE_MODULE *pModule;
-    PIMAGE_RESOURCE_DIRECTORY resdirptr;
+    LPIMAGE_RESOURCE_DIRECTORY resdirptr;
     DWORD root;
     HANDLE32 result;
 
@@ -135,7 +132,7 @@ HANDLE32 PE_FindResourceEx32W(
     if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;  /* FIXME? */
     if (!(pe = pModule->pe_module) || !pe->pe_resource) return 0;
 
-    resdirptr = (PIMAGE_RESOURCE_DIRECTORY) pe->pe_resource;
+    resdirptr = pe->pe_resource;
     root = (DWORD) resdirptr;
     if ((resdirptr = GetResDirEntryW(resdirptr, type, root)) == NULL)
 	return 0;
@@ -166,6 +163,6 @@ HANDLE32 PE_LoadResource32( HINSTANCE32 hModule, HANDLE32 hRsrc )
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;  /* FIXME? */
     if (!(pe = pModule->pe_module) || !pe->pe_resource) return 0;
-    return (HANDLE32) (pe->load_addr+((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
+    return (HANDLE32) (pe->load_addr+((LPIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
 }
 #endif

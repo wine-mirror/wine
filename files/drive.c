@@ -19,7 +19,7 @@
 #include <sys/mount.h>
 #include <sys/errno.h>
 #endif
-#if defined(__svr4__) || defined(_SCO_DS)
+#if defined(__svr4__) || defined(_SCO_DS) || defined(__EMX__)
 #include <sys/statfs.h>
 #endif
 
@@ -505,7 +505,7 @@ static int DRIVE_GetFreeSpace( int drive, DWORD *size, DWORD *available )
     }
 
     *size = info.f_bsize * info.f_blocks;
-#if defined(__svr4__) || defined(_SCO_DS)
+#if defined(__svr4__) || defined(_SCO_DS) || defined(__EMX__)
     *available = info.f_bfree * info.f_bsize;
 #else
     *available = info.f_bavail * info.f_bsize;

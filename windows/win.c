@@ -29,6 +29,7 @@
 #include "dde_proc.h"
 #include "clipboard.h"
 #include "winproc.h"
+#include "thread.h"
 #include "stddebug.h"
 /* #define DEBUG_WIN  */ 
 /* #define DEBUG_MENU */
@@ -385,7 +386,7 @@ void WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew )
         next = wnd->next;
         if (wnd->hmemTaskQ == hQueue)
 	   if( hNew ) wnd->hmemTaskQ = hNew;
-	   else DestroyWindow( wnd->hwndSelf );
+	   else DestroyWindow32( wnd->hwndSelf );
         else WIN_ResetQueueWindows( wnd->child, hQueue, hNew );
         wnd = next;
     }
@@ -782,20 +783,20 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
         wndPtr->dwStyle &= ~WS_MAXIMIZE;
         WINPOS_FindIconPos( hwnd );
-        SetWindowPos( hwnd, 0, wndPtr->ptIconPos.x, wndPtr->ptIconPos.y,
-                      SYSMETRICS_CXICON, SYSMETRICS_CYICON, 
-                      SWP_FRAMECHANGED | ((GetActiveWindow())? SWP_NOACTIVATE : 0)  );
+        SetWindowPos32( hwnd, 0, wndPtr->ptIconPos.x, wndPtr->ptIconPos.y,
+                        SYSMETRICS_CXICON, SYSMETRICS_CYICON, 
+                        SWP_FRAMECHANGED | ((GetActiveWindow32())? SWP_NOACTIVATE : 0)  );
     }
     else if (wndPtr->dwStyle & WS_MAXIMIZE)
     {
 	/* MinMaximize(hwnd, SW_SHOWMAXIMIZED, 1) */
 
         NC_GetMinMaxInfo( wndPtr, &maxSize, &maxPos, &minTrack, &maxTrack );
-        SetWindowPos( hwnd, 0, maxPos.x, maxPos.y, maxSize.x, maxSize.y,
-            ((GetActiveWindow())? SWP_NOACTIVATE : 0) | SWP_FRAMECHANGED );
+        SetWindowPos32( hwnd, 0, maxPos.x, maxPos.y, maxSize.x, maxSize.y,
+            ((GetActiveWindow32())? SWP_NOACTIVATE : 0) | SWP_FRAMECHANGED );
     }
     
-    if (cs->style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
+    if (cs->style & WS_VISIBLE) ShowWindow32( hwnd, SW_SHOW );
 
     /* Call WH_SHELL hook */
 
@@ -989,7 +990,14 @@ static void WIN_SendDestroyMsg( WND* pWnd )
 /***********************************************************************
  *           DestroyWindow   (USER.53)
  */
-BOOL DestroyWindow( HWND hwnd )
+BOOL16 DestroyWindow16( HWND16 hwnd )
+{
+    return DestroyWindow32(hwnd);
+}
+/***********************************************************************
+ *           DestroyWindow   (USER32.134)
+ */
+BOOL32 DestroyWindow32( HWND32 hwnd )
 {
     WND * wndPtr;
 
@@ -1021,9 +1029,9 @@ BOOL DestroyWindow( HWND hwnd )
 
     if (wndPtr->dwStyle & WS_VISIBLE)
     {
-        SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_HIDEWINDOW |
-		      SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE |
-		    ((QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ))?SWP_DEFERERASE:0) );
+        SetWindowPos32( hwnd, 0, 0, 0, 0, 0, SWP_HIDEWINDOW |
+		        SWP_NOACTIVATE|SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|
+		        ((QUEUE_IsDoomedQueue(wndPtr->hmemTaskQ))?SWP_DEFERERASE:0) );
 	if( !IsWindow(hwnd) ) return TRUE;
     }
 
@@ -1043,7 +1051,7 @@ BOOL DestroyWindow( HWND hwnd )
                    siblingPtr->owner = NULL;
             siblingPtr = siblingPtr->next;
         }
-        if (siblingPtr) DestroyWindow( siblingPtr->hwndSelf );
+        if (siblingPtr) DestroyWindow32( siblingPtr->hwndSelf );
         else break;
       }
 
@@ -1077,7 +1085,7 @@ BOOL CloseWindow(HWND hWnd)
 {
     WND * wndPtr = WIN_FindWndPtr(hWnd);
     if (!wndPtr || (wndPtr->dwStyle & WS_CHILD)) return TRUE;
-    ShowWindow(hWnd, SW_MINIMIZE);
+    ShowWindow32(hWnd, SW_MINIMIZE);
     return TRUE;
 }
 
@@ -1087,8 +1095,8 @@ BOOL CloseWindow(HWND hWnd)
  */
 BOOL OpenIcon(HWND hWnd)
 {
-    if (!IsIconic(hWnd)) return FALSE;
-    ShowWindow(hWnd, SW_SHOWNORMAL);
+    if (!IsIconic16(hWnd)) return FALSE;
+    ShowWindow32(hWnd, SW_SHOWNORMAL);
     return(TRUE);
 }
 
@@ -1276,9 +1284,18 @@ HWND16 GetDesktopHwnd(void)
 
 
 /*******************************************************************
- *           EnableWindow   (USER.34)
+ *           EnableWindow16   (USER.34)
  */
-BOOL EnableWindow( HWND hwnd, BOOL enable )
+BOOL16 EnableWindow16( HWND16 hwnd, BOOL16 enable )
+{
+    return EnableWindow32( hwnd, enable );
+}
+
+
+/*******************************************************************
+ *           EnableWindow32   (USER32.171)
+ */
+BOOL32 EnableWindow32( HWND32 hwnd, BOOL32 enable )
 {
     WND *wndPtr;
 
@@ -1287,18 +1304,18 @@ BOOL EnableWindow( HWND hwnd, BOOL enable )
     {
 	  /* Enable window */
 	wndPtr->dwStyle &= ~WS_DISABLED;
-	SendMessage16( hwnd, WM_ENABLE, TRUE, 0 );
+	SendMessage32A( hwnd, WM_ENABLE, TRUE, 0 );
 	return TRUE;
     }
     else if (!enable && !(wndPtr->dwStyle & WS_DISABLED))
     {
 	  /* Disable window */
 	wndPtr->dwStyle |= WS_DISABLED;
-	if ((hwnd == GetFocus32()) || IsChild( hwnd, GetFocus32() ))
+	if ((hwnd == GetFocus32()) || IsChild32( hwnd, GetFocus32() ))
 	    SetFocus32( 0 );  /* A disabled window can't have the focus */
-	if ((hwnd == GetCapture32()) || IsChild( hwnd, GetCapture32() ))
+	if ((hwnd == GetCapture32()) || IsChild32( hwnd, GetCapture32() ))
 	    ReleaseCapture();  /* A disabled window can't capture the mouse */
-	SendMessage16( hwnd, WM_ENABLE, FALSE, 0 );
+	SendMessage32A( hwnd, WM_ENABLE, FALSE, 0 );
 	return FALSE;
     }
     return ((wndPtr->dwStyle & WS_DISABLED) != 0);
@@ -1306,9 +1323,18 @@ BOOL EnableWindow( HWND hwnd, BOOL enable )
 
 
 /***********************************************************************
- *           IsWindowEnabled   (USER.35) (USER32.348)
+ *           IsWindowEnabled16   (USER.35)
  */ 
-BOOL IsWindowEnabled(HWND hWnd)
+BOOL16 IsWindowEnabled16(HWND16 hWnd)
+{
+    return IsWindowEnabled32(hWnd);
+}
+
+
+/***********************************************************************
+ *           IsWindowEnabled32   (USER32.348)
+ */ 
+BOOL32 IsWindowEnabled32(HWND32 hWnd)
 {
     WND * wndPtr; 
 
@@ -1691,7 +1717,7 @@ HWND SetParent(HWND hwndChild, HWND hwndNewParent)
     if (hwndNewParent) wndPtr->parent = pWndParent;
     WIN_LinkWindow(hwndChild, HWND_BOTTOM);
     
-    if (IsWindowVisible(hwndChild)) UpdateWindow(hwndChild);
+    if (IsWindowVisible32(hwndChild)) UpdateWindow(hwndChild);
     
     return oldParent;
 }
@@ -1701,7 +1727,14 @@ HWND SetParent(HWND hwndChild, HWND hwndNewParent)
 /*******************************************************************
  *         IsChild    (USER.48)
  */
-BOOL IsChild( HWND parent, HWND child )
+BOOL16 IsChild16( HWND16 parent, HWND16 child )
+{
+    return IsChild32(parent,child);
+}
+/*******************************************************************
+ *         IsChild    (USER32.338)
+ */
+BOOL32 IsChild32( HWND32 parent, HWND32 child )
 {
     WND * wndPtr = WIN_FindWndPtr( child );
     while (wndPtr && (wndPtr->dwStyle & WS_CHILD))
@@ -1714,9 +1747,16 @@ BOOL IsChild( HWND parent, HWND child )
 
 
 /***********************************************************************
- *           IsWindowVisible   (USER.49) (USER32.350)
+ *           IsWindowVisible   (USER.49)
  */
-BOOL IsWindowVisible( HWND hwnd )
+BOOL16 IsWindowVisible16( HWND16 hwnd )
+{
+    return IsWindowVisible32(hwnd);
+}
+/***********************************************************************
+ *           IsWindowVisible   (USER32.350)
+ */
+BOOL32 IsWindowVisible32( HWND32 hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     while (wndPtr && (wndPtr->dwStyle & WS_CHILD))
@@ -1753,7 +1793,14 @@ BOOL32 WIN_IsWindowDrawable( WND* wnd , BOOL32 icon )
 /*******************************************************************
  *         GetTopWindow    (USER.229)
  */
-HWND GetTopWindow( HWND hwnd )
+HWND16 GetTopWindow16( HWND16 hwnd )
+{
+    return GetTopWindow32(hwnd);
+}
+/*******************************************************************
+ *         GetTopWindow    (USER.229)
+ */
+HWND32 GetTopWindow32( HWND32 hwnd )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (wndPtr && wndPtr->child) return wndPtr->child->hwndSelf;
@@ -1764,7 +1811,14 @@ HWND GetTopWindow( HWND hwnd )
 /*******************************************************************
  *         GetWindow    (USER.262)
  */
-HWND GetWindow( HWND hwnd, WORD rel )
+HWND16 GetWindow16( HWND16 hwnd, WORD rel )
+{
+    return GetWindow32( hwnd,rel );
+}
+/*******************************************************************
+ *         GetWindow    (USER32.301)
+ */
+HWND32 GetWindow32( HWND32 hwnd, WORD rel )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
@@ -1807,10 +1861,10 @@ HWND GetWindow( HWND hwnd, WORD rel )
 /*******************************************************************
  *         GetNextWindow    (USER.230)
  */
-HWND GetNextWindow( HWND hwnd, WORD flag )
+HWND16 GetNextWindow16( HWND16 hwnd, WORD flag )
 {
     if ((flag != GW_HWNDNEXT) && (flag != GW_HWNDPREV)) return 0;
-    return GetWindow( hwnd, flag );
+    return GetWindow16( hwnd, flag );
 }
 
 /*******************************************************************
@@ -1823,7 +1877,7 @@ void ShowOwnedPopups( HWND owner, BOOL fShow )
     {
         if (pWnd->owner && (pWnd->owner->hwndSelf == owner) &&
             (pWnd->dwStyle & WS_POPUP))
-            ShowWindow( pWnd->hwndSelf, fShow ? SW_SHOW : SW_HIDE );
+            ShowWindow32( pWnd->hwndSelf, fShow ? SW_SHOW : SW_HIDE );
         pWnd = pWnd->next;
     }
 }
@@ -1937,7 +1991,9 @@ BOOL16 EnumTaskWindows16( HTASK16 hTask, WNDENUMPROC16 func, LPARAM lParam )
  */
 BOOL32 EnumThreadWindows( DWORD id, WNDENUMPROC32 func, LPARAM lParam )
 {
-    return (BOOL16)EnumTaskWindows16((HTASK16)id, (WNDENUMPROC16)func, lParam);
+    THDB	*tdb = (THDB*)id;
+
+    return (BOOL16)EnumTaskWindows16(tdb->teb.htask16, (WNDENUMPROC16)func, lParam);
 }
 
 
@@ -2039,7 +2095,7 @@ BOOL FlashWindow(HWND hWnd, BOOL bInvert)
     {
         WPARAM16 wparam;
         if (bInvert) wparam = !(wndPtr->flags & WIN_NCACTIVATED);
-        else wparam = (hWnd == GetActiveWindow());
+        else wparam = (hWnd == GetActiveWindow32());
 
         SendMessage16( hWnd, WM_NCACTIVATE, wparam, (LPARAM)0 );
         return wparam;

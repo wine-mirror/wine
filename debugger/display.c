@@ -20,10 +20,18 @@
 #include <stdarg.h>
 
 #define MAX_DISPLAY 25
-static struct expr * displaypoints[MAX_DISPLAY];
+
+struct display
+{
+  struct expr *	exp;
+  int		count;
+  char		format;
+};
+
+static struct display displaypoints[MAX_DISPLAY];
 
 int
-DEBUG_AddDisplay(struct expr * exp)
+DEBUG_AddDisplay(struct expr * exp, int count, char format)
 {
   int i;
 
@@ -32,9 +40,11 @@ DEBUG_AddDisplay(struct expr * exp)
    */
   for(i=0; i < MAX_DISPLAY; i++ )
     {
-      if( displaypoints[i] == NULL )
+      if( displaypoints[i].exp == NULL )
 	{
-	  displaypoints[i] = DEBUG_CloneExpr(exp);
+	  displaypoints[i].exp = DEBUG_CloneExpr(exp);
+	  displaypoints[i].count  = count;
+	  displaypoints[i].format = format;
 	  break;
 	}
     }
@@ -52,10 +62,10 @@ DEBUG_InfoDisplay()
    */
   for(i=0; i < MAX_DISPLAY; i++ )
     {
-      if( displaypoints[i] != NULL )
+      if( displaypoints[i].exp != NULL )
 	{
 	  fprintf(stderr, "%d : ", i+1);
-	  DEBUG_DisplayExpr(displaypoints[i]);
+	  DEBUG_DisplayExpr(displaypoints[i].exp);
 	  fprintf(stderr, "\n");
 	}
     }
@@ -74,22 +84,33 @@ DEBUG_DoDisplay()
    */
   for(i=0; i < MAX_DISPLAY; i++ )
     {
-      if( displaypoints[i] != NULL )
+      if( displaypoints[i].exp != NULL )
 	{
-	  addr = DEBUG_EvalExpr(displaypoints[i]);
+	  addr = DEBUG_EvalExpr(displaypoints[i].exp);
 	  if( addr.type == NULL )
 	    {
 	      fprintf(stderr, "Unable to evaluate expression ");
-	      DEBUG_DisplayExpr(displaypoints[i]);
+	      DEBUG_DisplayExpr(displaypoints[i].exp);
 	      fprintf(stderr, "\nDisabling...\n");
 	      DEBUG_DelDisplay(i);
 	    }
 	  else
 	    {
 	      fprintf(stderr, "%d  : ", i + 1);
-	      DEBUG_DisplayExpr(displaypoints[i]);
+	      DEBUG_DisplayExpr(displaypoints[i].exp);
 	      fprintf(stderr, " = ");
-	      DEBUG_Print( &addr, 1, 0, 0);
+	      if( displaypoints[i].format == 'i' )
+		{
+		  DEBUG_ExamineMemory( &addr, 
+			       displaypoints[i].count, 
+			       displaypoints[i].format);
+		}
+	      else
+		{
+		  DEBUG_Print( &addr, 
+			       displaypoints[i].count, 
+			       displaypoints[i].format, 0);
+		}
 	    }
 	}
     }
@@ -111,17 +132,17 @@ DEBUG_DelDisplay(int displaynum)
     {
       for(i=0; i < MAX_DISPLAY; i++ )
 	{
-	  if( displaypoints[i] != NULL )
+	  if( displaypoints[i].exp != NULL )
 	    {
-	      DEBUG_FreeExpr(displaypoints[i]);
-	      displaypoints[i] = NULL;
+	      DEBUG_FreeExpr(displaypoints[i].exp);
+	      displaypoints[i].exp = NULL;
 	    }
 	}
     }
-  else if( displaypoints[displaynum - 1] != NULL )
+  else if( displaypoints[displaynum - 1].exp != NULL )
     {
-      DEBUG_FreeExpr(displaypoints[displaynum - 1]);
-      displaypoints[displaynum - 1] = NULL;
+      DEBUG_FreeExpr(displaypoints[displaynum - 1].exp);
+      displaypoints[displaynum - 1].exp = NULL;
     }
   return TRUE;
 }

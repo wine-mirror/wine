@@ -64,7 +64,7 @@ BOOL32 ScrollWindow32( HWND32 hwnd, INT32 dx, INT32 dy, const RECT32 *rect,
 	  GetClientRect32(hwnd, &rc);
 	  hrgnClip = CreateRectRgnIndirect32( &rc );
 
-          if ((hCaretWnd == hwnd) || IsChild(hwnd,hCaretWnd))
+          if ((hCaretWnd == hwnd) || IsChild32(hwnd,hCaretWnd))
               HideCaret(hCaretWnd);
           else hCaretWnd = 0;
  
@@ -98,10 +98,10 @@ BOOL32 ScrollWindow32( HWND32 hwnd, INT32 dx, INT32 dy, const RECT32 *rect,
 	OffsetRgn32( wndScroll->hrgnUpdate, dx, dy );
 
       for (wndPtr = wndScroll->child; wndPtr; wndPtr = wndPtr->next)
-        SetWindowPos(wndPtr->hwndSelf, 0, wndPtr->rectWindow.left + dx,
-                     wndPtr->rectWindow.top  + dy, 0,0, SWP_NOZORDER |
-                     SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
-                     SWP_DEFERERASE );
+        SetWindowPos32(wndPtr->hwndSelf, 0, wndPtr->rectWindow.left + dx,
+                       wndPtr->rectWindow.top  + dy, 0,0, SWP_NOZORDER |
+                       SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
+                       SWP_DEFERERASE );
     }
 
     PAINT_RedrawWindow( hwnd, NULL, hrgnUpdate, RDW_ALLCHILDREN |
@@ -323,7 +323,7 @@ BOOL32 SCROLL_FixCaret(HWND32 hWnd, LPRECT32 lprc, UINT32 flags)
        RECT32	rc;
        CARET_GetRect( &rc );
        if( hCaret == hWnd ||
-          (flags & SW_SCROLLCHILDREN && IsChild(hWnd, hCaret)) )
+          (flags & SW_SCROLLCHILDREN && IsChild32(hWnd, hCaret)) )
        {
            POINT32     pt;
 
@@ -436,10 +436,10 @@ rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, 
 	    {
 		 CONV_RECT16TO32( &w->rectWindow, &r );
 	         if( IntersectRect32(&r, &r, &cliprc) )
-		     SetWindowPos(w->hwndSelf, 0, w->rectWindow.left + dx,
-				  w->rectWindow.top  + dy, 0,0, SWP_NOZORDER |
-				  SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
-				  SWP_DEFERERASE );
+		     SetWindowPos32(w->hwndSelf, 0, w->rectWindow.left + dx,
+				    w->rectWindow.top  + dy, 0,0, SWP_NOZORDER |
+				    SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOREDRAW |
+				    SWP_DEFERERASE );
 	    }
 	}
 

@@ -176,7 +176,7 @@ static XrmOptionDescRec optionsTable[] =
  *           MAIN_Usage
  */
 #ifndef WINELIB32
-static void MAIN_Usage( char *name )
+void MAIN_Usage( char *name )
 {
     fprintf( stderr, USAGE, name );
     exit(1);
@@ -642,7 +642,9 @@ BOOL32 MAIN_WineInit( int *argc, char *argv[] )
     MSG_WineStartTicks = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
 
     XrmInitialize();
-    
+
+    putenv("XKB_DISABLE="); /* Disable XKB extension if present. */
+
     MAIN_ParseOptions( argc, argv );
 
     if (Options.desktopGeometry && Options.managed)

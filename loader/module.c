@@ -1008,9 +1008,11 @@ static void MODULE_FreeModule( HMODULE16 hModule )
 
 
 /**********************************************************************
- *	    LoadModule    (KERNEL.45)
+ *	    MODULE_Load
+ *
+ * Implementation of LoadModule()
  */
-HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
+HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, BOOL32 first )
 {
     HMODULE16 hModule;
     HINSTANCE16 hInstance, hPrevInstance;
@@ -1021,7 +1023,7 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
     WORD *pModRef, *pDLLs;
     HFILE32 hFile;
     int i;
-    extern char * DEBUG_curr_module;
+    extern const char * DEBUG_curr_module;
 
     hModule = MODULE_FindModule( name );
 
@@ -1089,8 +1091,9 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
                 /* its handle in the list of DLLs to initialize.   */
                 HMODULE16 hDLL;
 
-                if ((hDLL = LoadModule( buffer, (LPVOID)-1 )) == 2)  /* file not found */
+                if ((hDLL = MODULE_Load( buffer, (LPVOID)-1, FALSE )) == 2)
                 {
+                    /* file not found */
                     char *p;
 
                     /* Try with prepending the path of the current module */
@@ -1098,7 +1101,7 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
                     if (!(p = strrchr( buffer, '\\' ))) p = buffer;
                     memcpy( p + 1, pstr + 1, *pstr );
                     strcpy( p + 1 + *pstr, ".dll" );
-                    hDLL = LoadModule( buffer, (LPVOID)-1 );
+                    hDLL = MODULE_Load( buffer, (LPVOID)-1, FALSE );
                 }
                 if (hDLL < 32)
                 {
@@ -1212,6 +1215,9 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
           /* the module, even if it contains circular DLL references */
 
         pModule->count = 1;
+
+        if (first && (pModule->flags & NE_FFLAGS_LIBMODULE))
+            NE_InitializeDLLs( hModule );
     }
     else
     {
@@ -1252,6 +1258,15 @@ HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
     }
 
     return hInstance;
+}
+
+
+/**********************************************************************
+ *	    LoadModule    (KERNEL.45)
+ */
+HINSTANCE16 LoadModule( LPCSTR name, LPVOID paramBlock )
+{
+    return MODULE_Load( name, paramBlock, TRUE );
 }
 
 
@@ -1382,17 +1397,14 @@ HINSTANCE16 LoadLibrary16( LPCSTR libname )
      * therefore cause crashes on FreeLibrary calls.
     if ((handle = MODULE_FindModule( libname )) != 0) return handle;
      */
-    handle = LoadModule( libname, (LPVOID)-1 );
+    handle = MODULE_Load( libname, (LPVOID)-1, TRUE );
     if (handle == (HINSTANCE16)2)  /* file not found */
     {
         char buffer[256];
         lstrcpyn32A( buffer, libname, 252 );
         strcat( buffer, ".dll" );
-        handle = LoadModule( buffer, (LPVOID)-1 );
+        handle = MODULE_Load( buffer, (LPVOID)-1, TRUE );
     }
-#ifndef WINELIB
-    if (handle >= (HINSTANCE16)32) NE_InitializeDLLs( GetExePtr(handle) );
-#endif
     return handle;
 }
 

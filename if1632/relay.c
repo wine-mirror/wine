@@ -232,7 +232,7 @@ void RELAY_DebugCallFrom32( int *stack, int nb_args )
     printf( ") ret=%08x\n", stack[1] );
     if (nb_args == -1)  /* Register function */
     {
-        CONTEXT *context = (CONTEXT *)((BYTE *)stack - sizeof(CONTEXT) - 12);
+        CONTEXT *context = (CONTEXT *)((BYTE *)stack - sizeof(CONTEXT) - 8);
         printf( " EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
                 context->Eax, context->Ebx, context->Ecx, context->Edx,
                 context->Esi, context->Edi );
@@ -263,7 +263,7 @@ void RELAY_DebugCallFrom32Ret( int *stack, int nb_args, int ret_val )
             BUILTIN_GetEntryPoint32( (void *)stack[-2] ), ret_val, stack[1] );
     if (nb_args == -1)  /* Register function */
     {
-        CONTEXT *context = (CONTEXT *)((BYTE *)stack - sizeof(CONTEXT) - 12);
+        CONTEXT *context = (CONTEXT *)((BYTE *)stack - sizeof(CONTEXT) - 8);
         printf( " EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx ESI=%08lx EDI=%08lx\n",
                 context->Eax, context->Ebx, context->Ecx, context->Edx,
                 context->Esi, context->Edi );

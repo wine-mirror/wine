@@ -9,7 +9,7 @@
 
 #include "win.h"
 
-#define DWP_MAGIC  0x5057  /* 'WP' */
+#define DWP_MAGIC  ((INT32)('W' | ('P' << 8) | ('O' << 16) | ('S' << 24)))
 
 /* undocumented SWP flags - from SDK 3.1 */
 #define SWP_NOCLIENTSIZE	0x0800
@@ -17,12 +17,12 @@
 
 typedef struct
 {
-    WORD        actualCount;
-    WORD        suggestedCount;
-    WORD        valid;
-    WORD        wMagic;
+    INT32       actualCount;
+    INT32       suggestedCount;
+    BOOL32      valid;
+    INT32       wMagic;
     HWND32      hwndParent;
-    WINDOWPOS16 winPos[1];
+    WINDOWPOS32 winPos[1];
 } DWP;
 
 extern void WINPOS_FindIconPos( HWND32 hwnd );

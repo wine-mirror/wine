@@ -15,7 +15,7 @@ C_SRCS = \
 	driver.c \
 	exec.c \
 	escape.c \
-	keyboard.c \
+	fontengine.c \
 	lstr.c \
 	lzexpand.c \
 	main.c \

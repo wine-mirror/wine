@@ -71,7 +71,7 @@ void WIN_UpdateNCArea(WND* wnd, BOOL bUpdate)
 
     wnd->flags &= ~WIN_NEEDS_NCPAINT;
 
-    if ((wnd->hwndSelf == GetActiveWindow()) &&
+    if ((wnd->hwndSelf == GetActiveWindow32()) &&
         !(wnd->flags & WIN_NCACTIVATED))
     {
         wnd->flags |= WIN_NCACTIVATED;
@@ -256,7 +256,7 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
 
     if (!hwnd) hwnd = GetDesktopWindow32();
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    if (!IsWindowVisible(hwnd) || (wndPtr->flags & WIN_NO_REDRAW))
+    if (!IsWindowVisible32(hwnd) || (wndPtr->flags & WIN_NO_REDRAW))
         return TRUE;  /* No redraw needed */
 
     bIcon = (wndPtr->dwStyle & WS_MINIMIZE && wndPtr->class->hIcon);

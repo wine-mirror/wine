@@ -465,7 +465,7 @@ static void NC_DrawMaxButton( HWND hwnd, HDC16 hdc, BOOL down )
     if( !(wndPtr->flags & WIN_MANAGED) )
     {
       NC_GetInsideRect( hwnd, &rect );
-      GRAPH_DrawBitmap( hdc, (IsZoomed(hwnd) ?
+      GRAPH_DrawBitmap( hdc, (IsZoomed32(hwnd) ?
 			     (down ? hbitmapRestoreD : hbitmapRestore) :
 			     (down ? hbitmapMaximizeD : hbitmapMaximize)),
 		        rect.right - SYSMETRICS_CXSIZE - 1, rect.top,
@@ -1024,7 +1024,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
     BOOL32    iconic = wndPtr->dwStyle & WS_MINIMIZE;
     int       moved = 0;
 
-    if (IsZoomed(hwnd) || !IsWindowVisible(hwnd) ||
+    if (IsZoomed32(hwnd) || !IsWindowVisible32(hwnd) ||
         (wndPtr->flags & WIN_MANAGED)) return;
 
     if ((wParam & 0xfff0) == SC_MOVE)
@@ -1197,7 +1197,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
        }
     }
     SendMessage16( hwnd, WM_EXITSIZEMOVE, 0, 0 );
-    SendMessage16( hwnd, WM_SETVISIBLE, !IsIconic(hwnd), 0L);
+    SendMessage16( hwnd, WM_SETVISIBLE, !IsIconic16(hwnd), 0L);
 
     /* Single click brings up the system menu when iconized */
 
@@ -1211,12 +1211,12 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam, POINT16 pt )
     if ((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) return;
 
     if (hittest != HTCAPTION)
-	SetWindowPos( hwnd, 0, sizingRect.left, sizingRect.top,
-		     sizingRect.right - sizingRect.left,
-		     sizingRect.bottom - sizingRect.top,
-		     SWP_NOACTIVATE | SWP_NOZORDER );
-    else SetWindowPos( hwnd, 0, sizingRect.left, sizingRect.top, 0, 0,
-		      SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER );
+	SetWindowPos32( hwnd, 0, sizingRect.left, sizingRect.top,
+		        sizingRect.right - sizingRect.left,
+		        sizingRect.bottom - sizingRect.top,
+		        SWP_NOACTIVATE | SWP_NOZORDER );
+    else SetWindowPos32( hwnd, 0, sizingRect.left, sizingRect.top, 0, 0,
+		         SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER );
 }
 
 
@@ -1259,7 +1259,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
 	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MINIMIZE, *(LONG*)&msg.pt );
     else
 	SendMessage16( hwnd, WM_SYSCOMMAND, 
-		  IsZoomed(hwnd) ? SC_RESTORE : SC_MAXIMIZE, *(LONG*)&msg.pt );
+		  IsZoomed32(hwnd) ? SC_RESTORE:SC_MAXIMIZE, *(LONG*)&msg.pt );
 }
 
 
@@ -1431,15 +1431,15 @@ LONG NC_HandleSysCommand( HWND32 hwnd, WPARAM16 wParam, POINT16 pt )
 	break;
 
     case SC_MINIMIZE:
-	ShowWindow( hwnd, SW_MINIMIZE ); 
+	ShowWindow32( hwnd, SW_MINIMIZE ); 
 	break;
 
     case SC_MAXIMIZE:
-	ShowWindow( hwnd, SW_MAXIMIZE );
+	ShowWindow32( hwnd, SW_MAXIMIZE );
 	break;
 
     case SC_RESTORE:
-	ShowWindow( hwnd, SW_RESTORE );
+	ShowWindow32( hwnd, SW_RESTORE );
 	break;
 
     case SC_CLOSE:

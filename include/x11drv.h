@@ -55,6 +55,7 @@ extern BOOL32 X11DRV_BitBlt( struct tagDC *dcDst, INT32 xDst, INT32 yDst,
                              INT32 xSrc, INT32 ySrc, DWORD rop );
 extern BOOL32 X11DRV_GetTextExtentPoint( struct tagDC *dc, LPCSTR str,
                                          INT32 count, LPSIZE32 size );
+extern BOOL32 X11DRV_GetTextMetrics(struct tagDC *dc, TEXTMETRIC32A *metrics);
 extern BOOL32 X11DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
                              INT32 width, INT32 height, DWORD rop );
 extern VOID X11DRV_SetDeviceClipping(struct tagDC *dc);

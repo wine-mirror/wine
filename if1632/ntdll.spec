@@ -270,7 +270,7 @@ base	0
 266 stdcall RtlAllocateHeap(long long long) HeapAlloc
 267 stub RtlAnsiCharToUnicodeChar
 268 stub RtlAnsiStringToUnicodeSize
-269 stub RtlAnsiStringToUnicodeString
+269 stdcall RtlAnsiStringToUnicodeString(ptr ptr long) RtlAnsiStringToUnicodeString
 270 stub RtlAppendAsciizToString
 271 stub RtlAppendStringToString
 272 stub RtlAppendUnicodeStringToString
@@ -345,7 +345,7 @@ base	0
 341 stub RtlEnlargedIntegerMultiply
 342 stub RtlEnlargedUnsignedDivide
 343 stub RtlEnlargedUnsignedMultiply
-344 stub RtlEnterCriticalSection
+344 stdcall RtlEnterCriticalSection(ptr) EnterCriticalSection
 345 stub RtlEnumProcessHeaps
 346 stub RtlEnumerateGenericTable
 347 stub RtlEnumerateGenericTableWithoutSplaying
@@ -391,7 +391,7 @@ base	0
 387 stub RtlGetGroupSecurityDescriptor
 388 stub RtlGetLongestNtPathLength
 389 stub RtlGetNtGlobalFlags
-390 stub RtlGetNtProductType
+390 stdcall RtlGetNtProductType(ptr) RtlGetNtProductType
 391 stub RtlGetOwnerSecurityDescriptor
 392 stub RtlGetProcessHeaps
 393 stub RtlGetSaclSecurityDescriptor
@@ -403,11 +403,11 @@ base	0
 399 stub RtlInitAnsiString
 400 stub RtlInitCodePageTable
 401 stub RtlInitNlsTables
-402 stub RtlInitString
-403 stub RtlInitUnicodeString
+402 stdcall RtlInitString(ptr ptr) RtlInitString
+403 stdcall RtlInitUnicodeString(ptr ptr) RtlInitUnicodeString
 404 stub RtlInitializeBitMap
 405 stub RtlInitializeContext
-406 stub RtlInitializeCriticalSection
+406 stdcall RtlInitializeCriticalSection(ptr) InitializeCriticalSection
 407 stub RtlInitializeGenericTable
 408 stub RtlInitializeRXact
 409 stub RtlInitializeResource
@@ -427,7 +427,7 @@ base	0
 423 stub RtlLargeIntegerShiftRight
 424 stub RtlLargeIntegerSubtract
 425 stub RtlLargeIntegerToChar
-426 stub RtlLeaveCriticalSection
+426 stdcall RtlLeaveCriticalSection(ptr) LeaveCriticalSection
 427 stdcall RtlLengthRequiredSid(long) RtlLengthRequiredSid
 428 stub RtlLengthSecurityDescriptor
 429 stub RtlLengthSid
@@ -443,12 +443,12 @@ base	0
 439 stub RtlNewSecurityGrantedAccess
 440 stub RtlNewSecurityObject
 441 stdcall RtlNormalizeProcessParams(ptr) RtlNormalizeProcessParams
-442 stub RtlNtStatusToDosError
+442 stdcall RtlNtStatusToDosError(long) RtlNtStatusToDosError
 443 stub RtlNumberGenericTableElements
 444 stub RtlNumberOfClearBits
 445 stub RtlNumberOfSetBits
 446 stub RtlOemStringToUnicodeSize
-447 stub RtlOemStringToUnicodeString
+447 stdcall RtlOemStringToUnicodeString(ptr ptr long) RtlOemStringToUnicodeString
 448 stdcall RtlOemToUnicodeN(ptr long ptr ptr long) RtlOemToUnicodeN
 449 stub RtlOpenCurrentUser
 450 stub RtlPcToFileHeader
@@ -521,7 +521,7 @@ base	0
 517 stub RtlUnlockHeap
 518 stub RtlUnwind
 519 stub RtlUpcaseUnicodeChar
-520 stub RtlUpcaseUnicodeString
+520 stdcall RtlUpcaseUnicodeString(ptr ptr long) RtlUpcaseUnicodeString
 521 stub RtlUpcaseUnicodeStringToAnsiString
 522 stub RtlUpcaseUnicodeStringToCountedOemString
 523 stub RtlUpcaseUnicodeStringToOemString
@@ -549,8 +549,8 @@ base	0
 545 stub RtlpNtSetValueKey
 546 stub RtlpUnWaitCriticalSection
 547 stub RtlpWaitForCriticalSection
-548 stub RtlxAnsiStringToUnicodeSize
-549 stub RtlxOemStringToUnicodeSize
+548 stdcall RtlxAnsiStringToUnicodeSize(ptr) RtlxAnsiStringToUnicodeSize
+549 stdcall RtlxOemStringToUnicodeSize(ptr) RtlxOemStringToUnicodeSize
 550 stub RtlxUnicodeStringToAnsiSize
 551 stub RtlxUnicodeStringToOemSize
 552 stub SaveEm87Context
@@ -928,27 +928,27 @@ base	0
 924 stdcall strrchr(ptr long) strrchr
 925 stub strspn
 926 stub strstr
-927 stub swprintf
+927 stdcall swprintf() CRTDLL_swprintf
 928 stub tan
 929 stub tolower
 930 stub toupper
 931 stub towlower
 932 stub towupper
 933 stub vsprintf
-934 stub wcscat
-935 stub wcschr
+934 stdcall wcscat(ptr ptr) lstrcat32W
+935 stdcall wcschr(ptr long) CRTDLL_wcschr
 936 stub wcscmp
-937 stub wcscpy
+937 stdcall wcscpy(ptr ptr) lstrcpy32W
 938 stub wcscspn
-939 stub wcslen
+939 stdcall wcslen(ptr) lstrlen32W
 940 stub wcsncat
 941 stub wcsncmp
-942 stub wcsncpy
+942 stdcall wcsncpy(ptr ptr long) lstrcpyn32W
 943 stub wcspbrk
-944 stub wcsrchr
+944 stdcall wcsrchr(ptr long) CRTDLL_wcsrchr
 945 stub wcsspn
-946 stub wcsstr
+946 stdcall wcsstr(ptr ptr) CRTDLL_wcsstr
 947 stub wcstok
 948 stub wcstol
-949 stub wcstombs
+949 stdcall wcstombs(ptr ptr) lstrcpyWtoA
 950 stub wcstoul

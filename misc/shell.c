@@ -370,7 +370,7 @@ LRESULT AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
                 GetWindowText32A( hWnd, Template, sizeof(Template) );
                 sprintf( AppTitle, Template, info->szApp );
                 SetWindowText32A( hWnd, AppTitle );
-                SetWindowText32A( GetDlgItem(hWnd,100), info->szOtherStuff );
+                SetWindowText32A( GetDlgItem32(hWnd,100), info->szOtherStuff );
             }
         }
         return 1;

@@ -310,11 +310,11 @@ static void LISTBOX_UpdateSize( WND *wnd, LB_DESCR *descr )
             dprintf_listbox(stddeb, "Listbox %04x: changing height %d -> %d\n",
                             wnd->hwndSelf, descr->height,
                             descr->height - descr->height%descr->item_height );
-            SetWindowPos( wnd->hwndSelf, 0, 0, 0,
-                          wnd->rectWindow.right - wnd->rectWindow.left,
-                          wnd->rectWindow.bottom - wnd->rectWindow.top -
-                              (descr->height % descr->item_height),
-                          SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE );
+            SetWindowPos32( wnd->hwndSelf, 0, 0, 0,
+                            wnd->rectWindow.right - wnd->rectWindow.left,
+                            wnd->rectWindow.bottom - wnd->rectWindow.top -
+                                (descr->height % descr->item_height),
+                            SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOMOVE );
             return;
         }
     }

@@ -44,6 +44,11 @@ typedef struct
 typedef struct sigcontext SIGCONTEXT;
 #endif  /* NetBSD */
 
+#ifdef __FreeBSD__
+#include <signal.h>
+typedef struct sigcontext SIGCONTEXT;
+#endif  /* FreeBSD */
+
 #if defined(__svr4__) || defined(_SCO_DS)
 #include <signal.h>
 #ifdef _SCO_DS
@@ -53,12 +58,12 @@ typedef struct sigcontext SIGCONTEXT;
 typedef struct ucontext SIGCONTEXT;
 #endif  /* svr4 || SCO_DS */
 
-#ifdef __FreeBSD__
-#include <signal.h>
-typedef struct sigcontext SIGCONTEXT;
-#endif  /* FreeBSD */
+#ifdef __EMX__
+typedef struct CONTEXTRECORD SIGCONTEXT;
+#endif  /* __EMX__ */
 
-#if !defined(__svr4__) && !defined(_SCO_DS)
+
+#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__)
 
 #define EAX_sig(context)     ((context)->sc_eax)
 #define EBX_sig(context)     ((context)->sc_ebx)
@@ -88,7 +93,9 @@ typedef struct sigcontext SIGCONTEXT;
 #define EIP_sig(context)     ((context)->sc_eip)
 #define ESP_sig(context)     ((context)->sc_esp)
 
-#else  /* __svr4__ || _SCO_DS */
+#endif  /* linux || __NetBSD__ || __FreeBSD__ */
+
+#if defined(__svr4__) || defined(_SCO_DS)
 
 #ifdef _SCO_DS
 #define gregs regs
@@ -118,8 +125,31 @@ typedef struct sigcontext SIGCONTEXT;
 #else
 #define ESP_sig(context)     ((context)->uc_mcontext.gregs[ESP])
 #endif
+
+#endif  /* svr4 || SCO_DS */
                             
-#endif  /* __svr4__ || _SCO_DS */
+#ifdef __EMX__
+
+#define EAX_sig(context)     ((context)->ctx_RegEax)
+#define EBX_sig(context)     ((context)->ctx_RegEbx)
+#define ECX_sig(context)     ((context)->ctx_RegEcx)
+#define EDX_sig(context)     ((context)->ctx_RegEdx)
+#define ESI_sig(context)     ((context)->ctx_RegEsi)
+#define EDI_sig(context)     ((context)->ctx_RegEdi)
+#define EBP_sig(context)     ((context)->ctx_RegEbp)
+#define ESP_sig(context)     ((context)->ctx_RegEsp)
+#define CS_sig(context)      ((context)->ctx_SegCS)
+#define DS_sig(context)      ((context)->ctx_SegDS)
+#define ES_sig(context)      ((context)->ctx_SegES)
+#define SS_sig(context)      ((context)->ctx_SegSS)
+#define FS_sig(context)      ((context)->ctx_SegFS)
+#define GS_sig(context)      ((context)->ctx_SegGS)
+#define EFL_sig(context)     ((context)->ctx_EFlags)
+#define EIP_sig(context)     ((context)->ctx_RegEip)
+
+#endif  /* __EMX__ */
+
+/* Generic definitions */
 
 #define AX_sig(context)      (*(WORD*)&EAX_sig(context))
 #define BX_sig(context)      (*(WORD*)&EBX_sig(context))

@@ -5,6 +5,7 @@
  */
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -226,7 +227,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info )
  * Create the control windows for a dialog.
  */
 static BOOL32 DIALOG_CreateControls( WND *pWnd, LPCSTR template, INT32 items,
-                                     HINSTANCE32 hInst, BOOL win32 )
+                                     HINSTANCE32 hInst, BOOL32 win32 )
 {
     DIALOGINFO *dlgInfo = (DIALOGINFO *)pWnd->wExtra;
     DLG_CONTROL_INFO info;
@@ -465,8 +466,8 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
 {
     HMENU16 hMenu = 0;
     HFONT16 hFont = 0;
-    HWND hwnd;
-    RECT16 rect;
+    HWND32 hwnd;
+    RECT32 rect;
     WND * wndPtr;
     DLG_TEMPLATE template;
     DIALOGINFO * dlgInfo;
@@ -524,7 +525,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     rect.bottom = template.cy * yUnit / 8;
     if (template.style & DS_MODALFRAME)
         template.exStyle |= WS_EX_DLGMODALFRAME;
-    AdjustWindowRectEx16( &rect, template.style, 
+    AdjustWindowRectEx32( &rect, template.style, 
                           hMenu ? TRUE : FALSE , template.exStyle );
     rect.right -= rect.left;
     rect.bottom -= rect.top;
@@ -543,7 +544,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
             INT16 dX, dY;
 
             if( !(template.style & DS_ABSALIGN) )
-                ClientToScreen16( owner, (POINT16 *)&rect );
+                ClientToScreen32( owner, (POINT32 *)&rect );
 	    
             /* try to fit it into the desktop */
 
@@ -596,7 +597,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     if (!DIALOG_CreateControls( wndPtr, dlgTemplate, template.nbItems,
                                 hInst, win32Template ))
     {
-        DestroyWindow( hwnd );
+        DestroyWindow32( hwnd );
         return 0;
     }
 
@@ -606,7 +607,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     if (SendMessage32A( hwnd, WM_INITDIALOG,
                         (WPARAM32)dlgInfo->hwndFocus, param ))
 	SetFocus32( dlgInfo->hwndFocus );
-    if (template.style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
+    if (template.style & WS_VISIBLE) ShowWindow32( hwnd, SW_SHOW );
     return hwnd;
 }
 
@@ -736,8 +737,8 @@ INT32 DIALOG_DoDialogBox( HWND32 hwnd, HWND32 owner )
     owner = WIN_GetTopParent( owner );
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return -1;
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
-    EnableWindow( owner, FALSE );
-    ShowWindow( hwnd, SW_SHOW );
+    EnableWindow32( owner, FALSE );
+    ShowWindow32( hwnd, SW_SHOW );
 
     while (MSG_InternalGetMessage(&msg, hwnd, owner, MSGF_DIALOGBOX, PM_REMOVE,
                                   !(wndPtr->dwStyle & DS_NOIDLEMSG) ))
@@ -750,8 +751,8 @@ INT32 DIALOG_DoDialogBox( HWND32 hwnd, HWND32 owner )
 	if (dlgInfo->fEnd) break;
     }
     retval = dlgInfo->idResult;
-    EnableWindow( owner, TRUE );
-    DestroyWindow( hwnd );
+    EnableWindow32( owner, TRUE );
+    DestroyWindow32( hwnd );
     return retval;
 }
 
@@ -872,13 +873,13 @@ BOOL16 EndDialog( HWND32 hwnd, INT32 retval )
 /***********************************************************************
  *           IsDialogMessage   (USER.90)
  */
-BOOL IsDialogMessage( HWND hwndDlg, LPMSG16 msg )
+BOOL16 IsDialogMessage( HWND16 hwndDlg, LPMSG16 msg )
 {
     WND * wndPtr;
     int dlgCode;
 
     if (!(wndPtr = WIN_FindWndPtr( hwndDlg ))) return FALSE;
-    if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd )) return FALSE;
+    if ((hwndDlg != msg->hwnd) && !IsChild16( hwndDlg, msg->hwnd )) return FALSE;
 
       /* Only the key messages get special processing */
     if ((msg->message != WM_KEYDOWN) &&
@@ -930,7 +931,7 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG16 msg )
 
         case VK_ESCAPE:
             SendMessage32A( hwndDlg, WM_COMMAND, IDCANCEL,
-                            (LPARAM)GetDlgItem( hwndDlg, IDCANCEL ) );
+                            (LPARAM)GetDlgItem32( hwndDlg, IDCANCEL ) );
             break;
 
         case VK_RETURN:
@@ -939,10 +940,10 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG16 msg )
                 if (HIWORD(dw) == DC_HASDEFID)
                     SendMessage32A( hwndDlg, WM_COMMAND, 
                                     MAKEWPARAM( LOWORD(dw), BN_CLICKED ),
-                                    (LPARAM)GetDlgItem( hwndDlg, LOWORD(dw) ));
+                                    (LPARAM)GetDlgItem32(hwndDlg, LOWORD(dw)));
                 else
                     SendMessage32A( hwndDlg, WM_COMMAND, IDOK,
-                                    (LPARAM)GetDlgItem( hwndDlg, IDOK ) );
+                                    (LPARAM)GetDlgItem32( hwndDlg, IDOK ) );
             }
             break;
 
@@ -969,9 +970,20 @@ BOOL IsDialogMessage( HWND hwndDlg, LPMSG16 msg )
 
 
 /****************************************************************
- *         GetDlgCtrlID   (USER.277) (USER32.233)
+ *         GetDlgCtrlID16   (USER.277)
  */
-INT16 GetDlgCtrlID( HWND32 hwnd )
+INT16 GetDlgCtrlID16( HWND16 hwnd )
+{
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
+    if (wndPtr) return wndPtr->wIDmenu;
+    else return 0;
+}
+ 
+
+/****************************************************************
+ *         GetDlgCtrlID32   (USER32.233)
+ */
+INT32 GetDlgCtrlID32( HWND32 hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr(hwnd);
     if (wndPtr) return wndPtr->wIDmenu;
@@ -980,15 +992,29 @@ INT16 GetDlgCtrlID( HWND32 hwnd )
  
 
 /***********************************************************************
- *           GetDlgItem   (USER.91)
+ *           GetDlgItem16   (USER.91)
  */
-HWND GetDlgItem( HWND hwndDlg, WORD id )
+HWND16 GetDlgItem16( HWND16 hwndDlg, INT16 id )
 {
     WND *pWnd;
 
     if (!(pWnd = WIN_FindWndPtr( hwndDlg ))) return 0;
     for (pWnd = pWnd->child; pWnd; pWnd = pWnd->next)
-        if (pWnd->wIDmenu == id) return pWnd->hwndSelf;
+        if (pWnd->wIDmenu == (UINT16)id) return pWnd->hwndSelf;
+    return 0;
+}
+
+
+/***********************************************************************
+ *           GetDlgItem32   (USER32.234)
+ */
+HWND32 GetDlgItem32( HWND32 hwndDlg, INT32 id )
+{
+    WND *pWnd;
+
+    if (!(pWnd = WIN_FindWndPtr( hwndDlg ))) return 0;
+    for (pWnd = pWnd->child; pWnd; pWnd = pWnd->next)
+        if (pWnd->wIDmenu == (UINT16)id) return pWnd->hwndSelf;
     return 0;
 }
 
@@ -999,7 +1025,7 @@ HWND GetDlgItem( HWND hwndDlg, WORD id )
 LRESULT SendDlgItemMessage16( HWND16 hwnd, INT16 id, UINT16 msg,
                               WPARAM16 wParam, LPARAM lParam )
 {
-    HWND16 hwndCtrl = GetDlgItem( hwnd, id );
+    HWND16 hwndCtrl = GetDlgItem16( hwnd, id );
     if (hwndCtrl) return SendMessage16( hwndCtrl, msg, wParam, lParam );
     else return 0;
 }
@@ -1011,7 +1037,7 @@ LRESULT SendDlgItemMessage16( HWND16 hwnd, INT16 id, UINT16 msg,
 LRESULT SendDlgItemMessage32A( HWND32 hwnd, INT32 id, UINT32 msg,
                                WPARAM32 wParam, LPARAM lParam )
 {
-    HWND hwndCtrl = GetDlgItem( (HWND16)hwnd, (INT16)id );
+    HWND32 hwndCtrl = GetDlgItem32( hwnd, id );
     if (hwndCtrl) return SendMessage32A( hwndCtrl, msg, wParam, lParam );
     else return 0;
 }
@@ -1023,7 +1049,7 @@ LRESULT SendDlgItemMessage32A( HWND32 hwnd, INT32 id, UINT32 msg,
 LRESULT SendDlgItemMessage32W( HWND32 hwnd, INT32 id, UINT32 msg,
                                WPARAM32 wParam, LPARAM lParam )
 {
-    HWND hwndCtrl = GetDlgItem( (HWND16)hwnd, (INT16)id );
+    HWND32 hwndCtrl = GetDlgItem32( hwnd, id );
     if (hwndCtrl) return SendMessage32W( hwndCtrl, msg, wParam, lParam );
     else return 0;
 }
@@ -1091,13 +1117,7 @@ INT32 GetDlgItemText32W( HWND32 hwnd, INT32 id, LPWSTR str, UINT32 len )
  */
 void SetDlgItemInt16( HWND16 hwnd, INT16 id, UINT16 value, BOOL16 fSigned )
 {
-    char *str = (char *)SEGPTR_ALLOC( 20 * sizeof(char) );
-
-    if (!str) return;
-    if (fSigned) sprintf( str, "%d", (INT32)(INT16)value );
-    else sprintf( str, "%u", value );
-    SendDlgItemMessage16( hwnd, id, WM_SETTEXT, 0, (LPARAM)SEGPTR_GET(str) );
-    SEGPTR_FREE(str);
+    return SetDlgItemInt32( hwnd, (UINT32)(UINT16)id, value, fSigned );
 }
 
 
@@ -1115,42 +1135,67 @@ void SetDlgItemInt32( HWND32 hwnd, INT32 id, UINT32 value, BOOL32 fSigned )
 
 
 /***********************************************************************
- *           GetDlgItemInt   (USER.95)
+ *           GetDlgItemInt16   (USER.95)
  */
-WORD GetDlgItemInt( HWND hwnd, WORD id, BOOL * translated, BOOL fSigned )
+UINT16 GetDlgItemInt16( HWND16 hwnd, INT16 id, BOOL16 *translated,
+                        BOOL16 fSigned )
 {
-    char *str;
-    long result = 0;
-    
+    UINT32 result;
+    BOOL32 ok;
+
     if (translated) *translated = FALSE;
-    if (!(str = (char *)SEGPTR_ALLOC( 30 * sizeof(char) ))) return 0;
-    if (SendDlgItemMessage16( hwnd, id, WM_GETTEXT, 30, (LPARAM)SEGPTR_GET(str)))
+    result = GetDlgItemInt32( hwnd, (UINT32)(UINT16)id, &ok, fSigned );
+    if (!ok) return 0;
+    if (fSigned)
     {
-	char * endptr;
-	result = strtol( str, &endptr, 10 );
-	if (endptr && (endptr != str))  /* Conversion was successful */
-	{
-	    if (fSigned)
-	    {
-		if ((result < -32767) || (result > 32767)) result = 0;
-		else if (translated) *translated = TRUE;
-	    }
-	    else
-	    {
-		if ((result < 0) || (result > 65535)) result = 0;
-		else if (translated) *translated = TRUE;
-	    }
-	}
+        if (((INT32)result < -32767) || ((INT32)result > 32767)) return 0;
     }
-    SEGPTR_FREE(str);
-    return (WORD)result;
+    else
+    {
+        if (result > 65535) return 0;
+    }
+    if (translated) *translated = TRUE;
+    return (UINT16)result;
 }
 
 
 /***********************************************************************
- *           CheckDlgButton   (USER.97) (USER32.44)
+ *           GetDlgItemInt32   (USER32.235)
  */
-BOOL16 CheckDlgButton( HWND32 hwnd, INT32 id, UINT32 check )
+UINT32 GetDlgItemInt32( HWND32 hwnd, INT32 id, BOOL32 *translated,
+                        BOOL32 fSigned )
+{
+    char str[30];
+    char * endptr;
+    long result = 0;
+    
+    if (translated) *translated = FALSE;
+    if (!SendDlgItemMessage32A(hwnd, id, WM_GETTEXT, sizeof(str), (LPARAM)str))
+        return 0;
+    if (fSigned)
+    {
+        result = strtol( str, &endptr, 10 );
+        if (!endptr || (endptr == str))  /* Conversion was unsuccessful */
+            return 0;
+        if (((result == LONG_MIN) || (result == LONG_MAX)) && (errno==ERANGE))
+            return 0;
+    }
+    else
+    {
+        result = strtoul( str, &endptr, 10 );
+        if (!endptr || (endptr == str))  /* Conversion was unsuccessful */
+            return 0;
+        if ((result == ULONG_MAX) && (errno == ERANGE)) return 0;
+    }
+    if (translated) *translated = TRUE;
+    return (UINT32)result;
+}
+
+
+/***********************************************************************
+ *           CheckDlgButton16   (USER.97)
+ */
+BOOL16 CheckDlgButton16( HWND16 hwnd, INT16 id, UINT16 check )
 {
     SendDlgItemMessage32A( hwnd, id, BM_SETCHECK32, check, 0 );
     return TRUE;
@@ -1158,19 +1203,48 @@ BOOL16 CheckDlgButton( HWND32 hwnd, INT32 id, UINT32 check )
 
 
 /***********************************************************************
- *           IsDlgButtonChecked   (USER.98)
+ *           CheckDlgButton32   (USER32.44)
  */
-WORD IsDlgButtonChecked( HWND hwnd, WORD id )
+BOOL32 CheckDlgButton32( HWND32 hwnd, INT32 id, UINT32 check )
 {
-    return (WORD)SendDlgItemMessage32A( hwnd, id, BM_GETCHECK32, 0, 0 );
+    SendDlgItemMessage32A( hwnd, id, BM_SETCHECK32, check, 0 );
+    return TRUE;
 }
 
 
 /***********************************************************************
- *           CheckRadioButton   (USER.96) (USER32.47)
+ *           IsDlgButtonChecked16   (USER.98)
  */
-BOOL16 CheckRadioButton( HWND32 hwndDlg, UINT32 firstID, UINT32 lastID,
-                         UINT32 checkID )
+UINT16 IsDlgButtonChecked16( HWND16 hwnd, UINT16 id )
+{
+    return (UINT16)SendDlgItemMessage32A( hwnd, id, BM_GETCHECK32, 0, 0 );
+}
+
+
+/***********************************************************************
+ *           IsDlgButtonChecked32   (USER32.343)
+ */
+UINT32 IsDlgButtonChecked32( HWND32 hwnd, UINT32 id )
+{
+    return (UINT32)SendDlgItemMessage32A( hwnd, id, BM_GETCHECK32, 0, 0 );
+}
+
+
+/***********************************************************************
+ *           CheckRadioButton16   (USER.96)
+ */
+BOOL16 CheckRadioButton16( HWND16 hwndDlg, UINT16 firstID, UINT16 lastID,
+                           UINT16 checkID )
+{
+    return CheckRadioButton32( hwndDlg, firstID, lastID, checkID );
+}
+
+
+/***********************************************************************
+ *           CheckRadioButton32   (USER32.47)
+ */
+BOOL32 CheckRadioButton32( HWND32 hwndDlg, UINT32 firstID, UINT32 lastID,
+                           UINT32 checkID )
 {
     WND *pWnd = WIN_FindWndPtr( hwndDlg );
     if (!pWnd) return FALSE;
@@ -1354,7 +1428,7 @@ static BOOL32 DIALOG_DlgDirSelect( HWND32 hwnd, LPSTR str, INT32 len,
     char *buffer, *ptr;
     INT32 item, size;
     BOOL32 ret;
-    HWND32 listbox = GetDlgItem( hwnd, id );
+    HWND32 listbox = GetDlgItem32( hwnd, id );
 
     dprintf_dialog( stddeb, "DlgDirSelect: %04x '%s' %d\n", hwnd, str, id );
     if (!listbox) return FALSE;
@@ -1436,7 +1510,7 @@ static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPCSTR spec, INT32 idLBox,
     }
     else drive = DRIVE_GetCurrentDrive();
 
-    if (idLBox && ((hwnd = GetDlgItem( hDlg, idLBox )) != 0))
+    if (idLBox && ((hwnd = GetDlgItem32( hDlg, idLBox )) != 0))
     {
         /* If the path exists and is a directory, chdir to it */
         if (!spec || !spec[0] || DRIVE_Chdir( drive, spec )) spec = "*.*";
@@ -1484,7 +1558,7 @@ static INT32 DIALOG_DlgDirList( HWND32 hDlg, LPCSTR spec, INT32 idLBox,
         }
     }
 
-    if (idStatic && ((hwnd = GetDlgItem( hDlg, idStatic )) != 0))
+    if (idStatic && ((hwnd = GetDlgItem32( hDlg, idStatic )) != 0))
     {
         char temp[512];
         int drive = DRIVE_GetCurrentDrive();

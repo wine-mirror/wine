@@ -12,8 +12,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__svr4__) || defined(_SCO_DS)
-#ifndef _SCO_DS
+#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__svr4__) || defined(_SCO_DS) || defined(__EMX__)
+#if !defined(_SCO_DS) && !defined(__EMX__)
 #include <sys/syscall.h>
 #endif
 #include <sys/param.h>
@@ -143,6 +143,7 @@ static void SIGNAL_fault(int signal, void *siginfo, SIGCONTEXT *context)
 static void SIGNAL_fault(int signal, int code, SIGCONTEXT *context)
 {
 #endif
+#ifndef __EMX__ /* FIXME: XX_sig(constext)=pointer to incomplete type (EMX) */
     if (CS_sig(context) == WINE_CODE_SELECTOR)
     {
         fprintf( stderr, "Segmentation fault in Wine program (%x:%lx)."
@@ -156,6 +157,7 @@ static void SIGNAL_fault(int signal, int code, SIGCONTEXT *context)
                  CS_sig(context), EIP_sig(context) );
     }
     wine_debug( signal, context );
+#endif
 }
 
 
@@ -257,7 +259,9 @@ BOOL32 SIGNAL_Init(void)
 #ifdef CONFIG_IPC
     SIGNAL_SetHandler( SIGUSR2, (void (*)())stop_wait, 1); 	/* For IPC */
 #endif
+#ifndef __EMX__ /* FIXME */
     SIGNAL_SetHandler( SIGIO,   (void (*)())WINSOCK_sigio, 0); 
+#endif
     return TRUE;
 }
 
@@ -269,6 +273,7 @@ BOOL32 SIGNAL_Init(void)
  */
 void SIGNAL_StartBIOSTimer(void)
 {
+#ifndef __EMX__ /* FIXME: Time don't work... Use BIOS directly instead */
     struct itimerval vt_timer;
     static int timer_started = 0;
 
@@ -279,6 +284,7 @@ void SIGNAL_StartBIOSTimer(void)
     vt_timer.it_value = vt_timer.it_interval;
 
     setitimer(ITIMER_REAL, &vt_timer, NULL);
+#endif
 }
 
 /**********************************************************************
@@ -288,7 +294,9 @@ void SIGNAL_MaskAsyncEvents( BOOL32 flag )
 {
   sigset_t 	set;
   sigemptyset(&set);
+#ifndef __EMX__ /* FIXME */
   sigaddset(&set, SIGIO);
+#endif
   sigaddset(&set, SIGUSR1);
 #ifdef CONFIG_IPC
   sigaddset(&set, SIGUSR2);

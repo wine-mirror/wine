@@ -842,12 +842,12 @@ static BOOL CURSORICON_SetCursor( HCURSOR16 hCursor )
     else
     {
         /* Set the same cursor for all top-level windows */
-        HWND hwnd = GetWindow( GetDesktopWindow32(), GW_CHILD );
+        HWND hwnd = GetWindow32( GetDesktopWindow32(), GW_CHILD );
         while(hwnd)
         {
             Window win = WIN_GetXWindow( hwnd );
             if (win) XDefineCursor( display, win, cursor );
-            hwnd = GetWindow( hwnd, GW_HWNDNEXT );
+            hwnd = GetWindow32( hwnd, GW_HWNDNEXT );
         }
     }
     return TRUE;

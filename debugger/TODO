@@ -3,10 +3,9 @@ way or another.  No commitment to actually do these, but these sound
 possible to me right now.   In no particular order.  If someone else
 wants to dig in, feel free.
 
-1) Some kind of watchpoint capability.  Pretty easy once we have a
-	single step capability, but we end up running the program
-	really slowly one instruction at a time.  Use hardware debug
-	registers for this???
+1) Some kind of watchpoint capability.  Pretty easy, but we end up
+        running the program really slowly one instruction at a time.  
+	Use hardware debug registers for this (much harder)???
 
 2) Some kind of .wdbinit file.
 
@@ -31,14 +30,6 @@ wants to dig in, feel free.
 8) Some of the newer displays are still a little bit sparse on information.
 	Make these more like gdb.
 
-9) Don't bother to disassemble an instruction when we stop at a breakpoint
-	and if we have a valid source line we are displaying.
-
-10) Add support for '/i', etc in display command.  Make sure 'display/i $eip'
-	does the correct thing, and then skip automatic disassembly completely.
-
-11)	Limit amount of information displayed with print command.
-
-12)	Make sure operator precedence works OK.
+9) Make sure operator precedence works OK.
 
 ****************

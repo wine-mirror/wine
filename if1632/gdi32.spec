@@ -96,7 +96,7 @@ base	1
 0088 stub EnumMetaFile
 0089 stdcall EnumObjects(long long ptr long) THUNK_EnumObjects32
 0090 stdcall EqualRgn(long long) EqualRgn32
-0091 stdcall Escape(long long long ptr ptr) Escape
+0091 stdcall Escape(long long long ptr ptr) Escape32
 0092 stdcall ExcludeClipRect(long long long long long) ExcludeClipRect32
 0093 stub ExtCreatePen
 0094 stub ExtCreateRegion

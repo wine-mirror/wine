@@ -512,9 +512,9 @@ struct deferred_debug_info
 	char				* module_name;
 	char				* dbg_info;
 	int				  dbg_size;
-	struct PE_Debug_dir		* dbgdir;
+	LPIMAGE_DEBUG_DIRECTORY           dbgdir;
 	struct pe_data			* pe;
-        struct pe_segment_table         * sectp;
+        LPIMAGE_SECTION_HEADER	          sectp;
 	int				  nsect;
 	short int			  dbg_index;			
 	char				  loaded;
@@ -747,17 +747,24 @@ DEBUG_ParseTypeTable(char * table, int len)
 	    }
 	  memset(symname, 0, sizeof(symname));
 	  memcpy(symname, type->structure.name, type->structure.namelen);
-	  typeptr = DEBUG_NewDataType(STRUCT, symname);
+	  if( strcmp(symname, "__unnamed") == 0 )
+	    {
+	      typeptr = DEBUG_NewDataType(STRUCT, NULL);
+	    }
+	  else
+	    {
+	      typeptr = DEBUG_NewDataType(STRUCT, symname);
+	    }
 	  cv_defined_types[curr_type - 0x1000] = typeptr;
 
 	  /*
 	   * Now copy the relevant bits from the fieldlist that we specified.
 	   */
 	  subtype = DEBUG_GetCVType(type->structure.fieldlist);
-	  DEBUG_SetStructSize(typeptr, type->structure.structlen);
 
 	  if( subtype != NULL )
 	    {
+	      DEBUG_SetStructSize(typeptr, type->structure.structlen);
 	      DEBUG_CopyFieldlist(typeptr, subtype);
 	    }
 	  break;
@@ -773,17 +780,26 @@ DEBUG_ParseTypeTable(char * table, int len)
 	    }
 	  memset(symname, 0, sizeof(symname));
 	  memcpy(symname, type->t_union.name, type->t_union.namelen);
-	  typeptr = DEBUG_NewDataType(STRUCT, symname);
+
+	  if( strcmp(symname, "__unnamed") == 0 )
+	    {
+	      typeptr = DEBUG_NewDataType(STRUCT, NULL);
+	    }
+	  else
+	    {
+	      typeptr = DEBUG_NewDataType(STRUCT, symname);
+	    }
+
 	  cv_defined_types[curr_type - 0x1000] = typeptr;
 
 	  /*
 	   * Now copy the relevant bits from the fieldlist that we specified.
 	   */
 	  subtype = DEBUG_GetCVType(type->t_union.field);
-	  DEBUG_SetStructSize(typeptr, type->t_union.un_len);
 
 	  if( subtype != NULL )
 	    {
+	      DEBUG_SetStructSize(typeptr, type->t_union.un_len);
 	      DEBUG_CopyFieldlist(typeptr, subtype);
 	    }
 	  break;
@@ -874,14 +890,14 @@ DEBUG_RegisterDebugInfo(int fd, struct pe_data * pe,
   int			  has_codeview = FALSE;
   int			  rtn = FALSE;
   int			  orig_size;
-  struct PE_Debug_dir	* dbgptr;
+  LPIMAGE_DEBUG_DIRECTORY dbgptr;
   struct deferred_debug_info * deefer;
 
   orig_size = size;
-  dbgptr = (struct PE_Debug_dir *) (load_addr + v_addr);
+  dbgptr = (LPIMAGE_DEBUG_DIRECTORY) (load_addr + v_addr);
   for(; size > 0; size -= sizeof(*dbgptr), dbgptr++ )
     {
-      switch(dbgptr->type)
+      switch(dbgptr->Type)
 	{
 	case IMAGE_DEBUG_TYPE_CODEVIEW:
 	case IMAGE_DEBUG_TYPE_MISC:
@@ -891,10 +907,10 @@ DEBUG_RegisterDebugInfo(int fd, struct pe_data * pe,
     }
 
   size = orig_size;
-  dbgptr = (struct PE_Debug_dir *) (load_addr + v_addr);
+  dbgptr = (LPIMAGE_DEBUG_DIRECTORY) (load_addr + v_addr);
   for(; size > 0; size -= sizeof(*dbgptr), dbgptr++ )
     {
-      switch(dbgptr->type)
+      switch(dbgptr->Type)
 	{
 	case IMAGE_DEBUG_TYPE_COFF:
 	  /*
@@ -921,8 +937,8 @@ DEBUG_RegisterDebugInfo(int fd, struct pe_data * pe,
 	   * means that this entry points to a .DBG file.  Otherwise,
 	   * it just points to itself, and we can ignore this.
 	   */
-	  if(    (dbgptr->type == IMAGE_DEBUG_TYPE_MISC)
-	      && (pe->pe_header->coff.Characteristics & IMAGE_FILE_DEBUG_STRIPPED) == 0 )
+	  if(    (dbgptr->Type == IMAGE_DEBUG_TYPE_MISC)
+	      && (pe->pe_header->FileHeader.Characteristics & IMAGE_FILE_DEBUG_STRIPPED) == 0 )
 	    {
 	      break;
 	    }
@@ -938,9 +954,9 @@ DEBUG_RegisterDebugInfo(int fd, struct pe_data * pe,
 	   * upon the type, but this is always enough so we are able
 	   * to proceed if we know what we need to do next.
 	   */
-	  deefer->dbg_size = dbgptr->dbgsize;
-	  deefer->dbg_info = (char *) xmalloc(dbgptr->dbgsize);
-	  lseek(fd, dbgptr->dbgoff, SEEK_SET);
+	  deefer->dbg_size = dbgptr->SizeOfData;
+	  deefer->dbg_info = (char *) xmalloc(dbgptr->SizeOfData);
+	  lseek(fd, dbgptr->PointerToRawData, SEEK_SET);
 	  read(fd, deefer->dbg_info, deefer->dbg_size);
 
 	  deefer->load_addr = (char *) load_addr;
@@ -951,7 +967,7 @@ DEBUG_RegisterDebugInfo(int fd, struct pe_data * pe,
 	  deefer->module_name = xstrdup(DEBUG_curr_module);
 
 	  deefer->sectp = pe->pe_seg;
-	  deefer->nsect = pe->pe_header->coff.NumberOfSections;
+	  deefer->nsect = pe->pe_header->FileHeader.NumberOfSections;
 
 	  dbglist = deefer;
 	  break;
@@ -1538,7 +1554,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
   DBG_ADDR		  new_addr;
   int			  nsect;
   union any_size	  ptr;
-  struct pe_segment_table * sectp;
+  IMAGE_SECTION_HEADER  * sectp;
   union	codeview_symbol	* sym;
   char			  symname[PATH_MAX];
   struct name_hash	* thunk_sym = NULL;
@@ -1601,7 +1617,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	  new_addr.seg = 0;
 	  new_addr.type = DEBUG_GetCVType(sym->data.symtype);
 	  new_addr.off = (unsigned int) deefer->load_addr + 
-	    sectp[sym->data.seg - 1].Virtual_Address + 
+	    sectp[sym->data.seg - 1].VirtualAddress + 
 	    sym->data.offset;
 	  DEBUG_AddSymbol( symname, &new_addr, NULL, SYM_WIN32 | SYM_DATA );
 	  break;
@@ -1615,7 +1631,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	  new_addr.seg = 0;
 	  new_addr.type = NULL;
 	  new_addr.off = (unsigned int) deefer->load_addr + 
-	    sectp[sym->thunk.segment - 1].Virtual_Address + 
+	    sectp[sym->thunk.segment - 1].VirtualAddress + 
 	    sym->thunk.offset;
 	  thunk_sym = DEBUG_AddSymbol( symname, &new_addr, NULL, 
 				       SYM_WIN32 | SYM_FUNC);
@@ -1630,7 +1646,7 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	  new_addr.seg = 0;
 	  new_addr.type = DEBUG_GetCVType(sym->proc.proctype);
 	  new_addr.off = (unsigned int) deefer->load_addr + 
-	    sectp[sym->proc.segment - 1].Virtual_Address + 
+	    sectp[sym->proc.segment - 1].VirtualAddress + 
 	    sym->proc.offset;
 	  /*
 	   * See if we can find a segment that this goes with.  If so,
@@ -1640,10 +1656,10 @@ DEBUG_SnarfCodeView(      struct deferred_debug_info * deefer,
 	  for(i=0; linetab[i].linetab != NULL; i++)
 	    {
 	      if(     ((unsigned int) deefer->load_addr 
-		       + sectp[linetab[i].segno - 1].Virtual_Address 
+		       + sectp[linetab[i].segno - 1].VirtualAddress 
 		       + linetab[i].start <= new_addr.off)
 		  &&  ((unsigned int) deefer->load_addr 
-		       + sectp[linetab[i].segno - 1].Virtual_Address 
+		       + sectp[linetab[i].segno - 1].VirtualAddress 
 		       + linetab[i].end > new_addr.off) )
 		{
 		  break;
@@ -2119,8 +2135,8 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
   int				j;
   struct codeview_linetab_hdr * linetab;
   int				nsect;
-  struct PE_DBG_FileHeader    * pdbg = NULL;
-  struct pe_segment_table     * sectp;
+  LPIMAGE_SEPARATE_DEBUG_HEADER pdbg = NULL;
+  IMAGE_SECTION_HEADER        * sectp;
   struct stat			statbuf;
   int				status;
   
@@ -2148,9 +2164,9 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
   addr = mmap(0, statbuf.st_size, PROT_READ, 
 	      MAP_PRIVATE, fd, 0);
 
-  pdbg = (struct PE_DBG_FileHeader *) addr;
+  pdbg = (LPIMAGE_SEPARATE_DEBUG_HEADER) addr;
 
-  if( pdbg->TimeDateStamp != deefer->dbgdir->timestamp )
+  if( pdbg->TimeDateStamp != deefer->dbgdir->TimeDateStamp )
     {
       fprintf(stderr, "Warning - %s has incorrect internal timestamp\n",
 	      filename);
@@ -2160,10 +2176,10 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
   fprintf(stderr, "Processing symbols from %s...\n", filename);
 
   dbghdr = (struct PE_Debug_dir *) (  addr + sizeof(*pdbg) 
-		 + pdbg->NumberOfSections * sizeof(struct pe_segment_table) 
+		 + pdbg->NumberOfSections * sizeof(IMAGE_SECTION_HEADER) 
 		 + pdbg->ExportedNamesSize);
 
-  sectp = (struct pe_segment_table *) ((char *) pdbg + sizeof(*pdbg));
+  sectp = (LPIMAGE_SECTION_HEADER) ((char *) pdbg + sizeof(*pdbg));
   nsect = pdbg->NumberOfSections;
 
   for( i=0; i < pdbg->DebugDirectorySize / sizeof(*pdbg); i++, dbghdr++ )
@@ -2300,7 +2316,7 @@ DEBUG_ProcessDeferredDebug()
 	  last_proc = deefer->dbg_index;
 	}
 
-      switch(deefer->dbgdir->type)
+      switch(deefer->dbgdir->Type)
 	{
 	case IMAGE_DEBUG_TYPE_COFF:
 	  /*

@@ -3,14 +3,16 @@
 
 #include <sys/types.h>
 #include "windows.h"
+#include "winnt.h"
+#include "peexe.h"
 
 struct pe_data {
-	struct pe_header_s *pe_header;
-	struct pe_segment_table *pe_seg;
-	struct PE_Import_Directory *pe_import;
-	struct PE_Export_Directory *pe_export;
-	struct PE_Resource_Directory *pe_resource;
-	struct PE_Reloc_Block *pe_reloc;
+	LPIMAGE_NT_HEADERS			pe_header;
+	LPIMAGE_SECTION_HEADER			pe_seg;
+	LPIMAGE_IMPORT_DESCRIPTOR		pe_import;
+	LPIMAGE_EXPORT_DIRECTORY		pe_export;
+	LPIMAGE_RESOURCE_DIRECTORY		pe_resource;
+	LPIMAGE_BASE_RELOCATION			pe_reloc;
 	int base_addr;
 	int load_addr;
 	int vma_size;

@@ -42,33 +42,33 @@ static LRESULT MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
    case WM_INITDIALOG:
     lpmb = (LPMSGBOX)lParam;
     if (lpmb->title) SetWindowText32A(hwnd, lpmb->title);
-    SetWindowText32A(GetDlgItem(hwnd, 100), lpmb->text);
+    SetWindowText32A(GetDlgItem32(hwnd, 100), lpmb->text);
     /* Hide not selected buttons */
     switch(lpmb->type & MB_TYPEMASK) {
      case MB_OK:
-      ShowWindow(GetDlgItem(hwnd, 2), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 2), SW_HIDE);
       /* fall through */
      case MB_OKCANCEL:
-      ShowWindow(GetDlgItem(hwnd, 3), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 4), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 5), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 6), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 7), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 3), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 4), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 5), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 6), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 7), SW_HIDE);
       break;
      case MB_ABORTRETRYIGNORE:
-      ShowWindow(GetDlgItem(hwnd, 1), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 2), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 6), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 7), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 1), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 2), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 6), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 7), SW_HIDE);
       break;
      case MB_YESNO:
-      ShowWindow(GetDlgItem(hwnd, 2), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 2), SW_HIDE);
       /* fall through */
      case MB_YESNOCANCEL:
-      ShowWindow(GetDlgItem(hwnd, 1), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 3), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 4), SW_HIDE);
-      ShowWindow(GetDlgItem(hwnd, 5), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 1), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 3), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 4), SW_HIDE);
+      ShowWindow32(GetDlgItem32(hwnd, 5), SW_HIDE);
       break;
     }
     /* Set the icon */
@@ -100,23 +100,23 @@ static LRESULT MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
     borheight -= rect.bottom - rect.top;
 
     /* Get the icon height */
-    GetWindowRect32(GetDlgItem(hwnd, 1088), &rect);
+    GetWindowRect32(GetDlgItem32(hwnd, 1088), &rect);
     iheight = rect.bottom - rect.top;
     
     /* Get the number of visible buttons and their width */
-    GetWindowRect32(GetDlgItem(hwnd, 2), &rect);
+    GetWindowRect32(GetDlgItem32(hwnd, 2), &rect);
     bheight = rect.bottom - rect.top;
     bwidth = rect.left;
-    GetWindowRect32(GetDlgItem(hwnd, 1), &rect);
+    GetWindowRect32(GetDlgItem32(hwnd, 1), &rect);
     bwidth -= rect.left;
     for (buttons = 0, i = 1; i < 8; i++)
     {
-      hItem = GetDlgItem(hwnd, i);
+      hItem = GetDlgItem32(hwnd, i);
       if (GetWindowLong32A(hItem, GWL_STYLE) & WS_VISIBLE) buttons++;
     }
     
     /* Get the text size */
-    hItem = GetDlgItem(hwnd, 100);
+    hItem = GetDlgItem32(hwnd, 100);
     GetWindowRect32(hItem, &textrect);
     MapWindowPoints32(0, hwnd, (LPPOINT32)&textrect, 2);
     
@@ -129,34 +129,34 @@ static LRESULT MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
     ReleaseDC32(hItem, hdc);
     
     /* Position the text */
-    SetWindowPos(hItem, 0, textrect.left, (tiheight - theight) / 2, 
-		 rect.right - rect.left, theight,
-		 SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
+    SetWindowPos32(hItem, 0, textrect.left, (tiheight - theight) / 2, 
+		   rect.right - rect.left, theight,
+		   SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
     
     /* Position the icon */
-    hItem = GetDlgItem(hwnd, 1088);
+    hItem = GetDlgItem32(hwnd, 1088);
     GetWindowRect32(hItem, &rect);
     MapWindowPoints32(0, hwnd, (LPPOINT32)&rect, 2);
-    SetWindowPos(hItem, 0, rect.left, (tiheight - iheight) / 2, 0, 0,
-		 SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
+    SetWindowPos32(hItem, 0, rect.left, (tiheight - iheight) / 2, 0, 0,
+		   SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
     
     /* Resize the window */
-    SetWindowPos(hwnd, 0, 0, 0, wwidth, 8 + tiheight + bheight + borheight,
-		 SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
+    SetWindowPos32(hwnd, 0, 0, 0, wwidth, 8 + tiheight + bheight + borheight,
+		   SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
     
     /* Position the buttons */
     bpos = (wwidth - bwidth * buttons) / 2;
-    GetWindowRect32(GetDlgItem(hwnd, 1), &rect);
+    GetWindowRect32(GetDlgItem32(hwnd, 1), &rect);
     for (buttons = i = 0; i < 7; i++) {
       /* some arithmetic to get the right order for YesNoCancel windows */
-      hItem = GetDlgItem(hwnd, (i + 5) % 7 + 1);
+      hItem = GetDlgItem32(hwnd, (i + 5) % 7 + 1);
       if (GetWindowLong32A(hItem, GWL_STYLE) & WS_VISIBLE) {
 	if (buttons++ == ((lpmb->type & MB_DEFMASK) >> 8)) {
 	  SetFocus32(hItem);
 	  SendMessage32A( hItem, BM_SETSTYLE32, BS_DEFPUSHBUTTON, TRUE );
 	}
-	SetWindowPos(hItem, 0, bpos, tiheight, 0, 0,
-		     SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW);
+	SetWindowPos32(hItem, 0, bpos, tiheight, 0, 0,
+		       SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOREDRAW);
 	bpos += bwidth;
       }
     }

@@ -70,6 +70,12 @@ struct expr
 
     struct
     {
+      struct datatype * cast;
+      struct expr     * expr;
+    } cast;
+
+    struct
+    {
       struct expr * exp1;
       const char * element_name;
       int result;
@@ -103,6 +109,7 @@ struct expr
 #define EXPR_TYPE_ARRAY		8
 #define EXPR_TYPE_CALL		9
 #define EXPR_TYPE_STRING	10
+#define EXPR_TYPE_CAST		11
 
 static char expr_list[4096];
 static int next_expr_free = 0;
@@ -132,6 +139,18 @@ DEBUG_FreeExprMem()
   next_expr_free = 0;
 }
 
+struct expr *
+DEBUG_TypeCastExpr(struct datatype * dt, struct expr * exp)
+{
+  struct expr * ex;
+
+  ex = DEBUG_GetFreeExpr();
+
+  ex->type        = EXPR_TYPE_CAST;
+  ex->un.cast.cast = dt;
+  ex->un.cast.expr = exp;
+  return ex;
+}
 
 struct expr *
 DEBUG_RegisterExpr(enum debug_regs regno)
@@ -294,6 +313,10 @@ DEBUG_EvalExpr(struct expr * exp)
 
   switch(exp->type)
     {
+    case EXPR_TYPE_CAST:
+      rtn = DEBUG_EvalExpr(exp->un.cast.expr);
+      rtn.type = exp->un.cast.cast;
+      break;
     case EXPR_TYPE_STRING:
       rtn.type = DEBUG_TypeString;
       rtn.off = (unsigned int) &exp->un.string.str;
@@ -620,6 +643,13 @@ DEBUG_DisplayExpr(struct expr * exp)
 
   switch(exp->type)
     {
+    case EXPR_TYPE_CAST:
+      fprintf(stderr, "((");
+      DEBUG_PrintTypeCast(exp->un.cast.cast);
+      fprintf(stderr, ")");
+      DEBUG_DisplayExpr(exp->un.cast.expr);
+      fprintf(stderr, ")");
+      break;
     case EXPR_TYPE_REGISTER:
       DEBUG_PrintRegister(exp->un.rgister.reg);
       break;
@@ -780,6 +810,9 @@ DEBUG_CloneExpr(struct expr * exp)
 
   switch(exp->type)
     {
+    case EXPR_TYPE_CAST:
+      rtn->un.cast.expr = DEBUG_CloneExpr(exp->un.cast.expr);
+      break;
     case EXPR_TYPE_REGISTER:
     case EXPR_TYPE_US_CONST:
     case EXPR_TYPE_CONST:
@@ -834,6 +867,9 @@ DEBUG_FreeExpr(struct expr * exp)
 
   switch(exp->type)
     {
+    case EXPR_TYPE_CAST:
+      DEBUG_FreeExpr(exp->un.cast.expr);
+      break;
     case EXPR_TYPE_REGISTER:
     case EXPR_TYPE_US_CONST:
     case EXPR_TYPE_CONST:

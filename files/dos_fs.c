@@ -1333,8 +1333,7 @@ QueryDosDevice32A(LPCSTR devname,LPSTR target,DWORD bufsize)
     }
     lstrcpy32A(buffer,"\\DEV\\");
     lstrcat32A(buffer,devname);
-    if (s=strchr(buffer,':'))
-    	*s='\0';
+    if ((s=strchr(buffer,':'))) *s='\0';
     lstrcpyn32A(target,buffer,bufsize);
     return strlen(buffer);
 }

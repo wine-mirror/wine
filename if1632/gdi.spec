@@ -44,7 +44,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
                         s_word s_word long) StretchBlt16
 36  pascal16 Polygon (word ptr word) Polygon16
 37  pascal16 Polyline (word ptr word) Polyline16
-38  pascal Escape(word word word segptr segptr) Escape
+38  pascal Escape(word word word segptr segptr) Escape16
 39  pascal16 RestoreDC(word s_word) RestoreDC16
 40  pascal16 FillRgn(word word word) FillRgn16
 41  pascal16 FrameRgn(word word word word word) FrameRgn16
@@ -209,9 +209,9 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 281 pascal DrvSetPrinterData(ptr ptr ptr ptr long) DrvSetPrinterData
 282 pascal DrvGetPrinterData(ptr ptr ptr ptr long ptr) DrvGetPrinterData
 299 stub ENGINEGETCHARWIDTHEX
-300 stub ENGINEENUMERATEFONT
+300 pascal EnginEnumerateFont(ptr segptr long) EngineEnumerateFont
 301 stub ENGINEDELETEFONT
-302 stub ENGINEREALIZEFONT
+302 pascal EnginRealizeFont(ptr ptr ptr) EngineRealizeFont
 303 stub ENGINEGETCHARWIDTH
 304 stub ENGINESETFONTCONTEXT
 305 stub ENGINEGETGLYPHBMP

@@ -3015,3 +3015,10 @@ DWORD RegQueryInfoKey32A(
 		free(lpszClassW);
 	return ret;
 }
+/* RegConnectRegistryA		[ADVAPI32.127] */
+DWORD RegConnectRegistry32A(LPCSTR machine,HKEY hkey,LPHKEY reskey) {
+	fprintf(stderr,"RegConnectRegistry32A(%s,%08lx,%p), STUB.\n",
+		machine,hkey,reskey
+	);
+	return ERROR_FILE_NOT_FOUND; /* FIXME */
+}

@@ -110,23 +110,6 @@ typedef struct PDEVICE_HEADER
 typedef short SHORT; 
 
 #pragma pack(1)
-
-typedef struct TEXTXFORM 
-{
-    SHORT  txfHeight;
-    SHORT  txfWidth;
-    SHORT  txfEscapement;
-    SHORT  txfOrientation;
-    SHORT  txfWeight;
-    CHAR   txfItalic;
-    CHAR   txfUnderline;
-    CHAR   txfStrikeOut;
-    CHAR   txfOutPrecision;
-    CHAR   txfClipPrecision;
-    SHORT  txfAccelerator WINE_PACKED;
-    SHORT  txfOverhang WINE_PACKED;
-} TEXTXFORM, *LPTEXTXFORM;
-
 #define PCOLOR DWORD
 typedef struct DRAWMODE 
 {
@@ -144,42 +127,6 @@ typedef struct DRAWMODE
     COLORREF LTextColor; 
 } DRAWMODE, *LPDRAWMODE;
 
-typedef struct FONTINFO 
-{
-    SHORT dfType;
-    SHORT dfPoints;
-    SHORT dfVertRes;
-    SHORT dfHorizRes;
-    SHORT dfAscent;
-    SHORT dfInternalLeading;
-    SHORT dfExternalLeading;
-    CHAR  dfItalic;
-    CHAR  dfUnderline;
-    CHAR  dfStrikeOut;
-    SHORT dfWeight;
-    CHAR  dfCHARSet;
-    SHORT dfPixWidth;
-    SHORT dfPixHeight;
-    CHAR  dfPitchAndFamily;
-    SHORT dfAvgWidth;
-    SHORT dfMaxWidth;
-    CHAR  dfFirstCHAR;
-    CHAR  dfLastCHAR;
-    CHAR  dfDefaultCHAR;
-    CHAR  dfBreakCHAR;
-    SHORT dfWidthBytes;
-    LONG  dfDevice;
-    LONG  dfFace;
-    LONG  dfBitsPointer;
-    LONG  dfBitsOffset;
-    CHAR  dfReserved;
-    LONG  dfFlags;
-    SHORT dfAspace;
-    SHORT dfBspace;
-    SHORT dfCspace;
-    LONG  dfColorPointer;
-    LONG  dfReserved1[4];
-} FONTINFO, *LPFONTINFO;
 
 #pragma pack(4)
 
@@ -211,4 +158,7 @@ extern BOOL32 WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
                                            LPSIZE32 size );
 extern BOOL32 WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRIC32A *metrics );
 
+extern BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
+                                  const RECT32 *lprect, LPCSTR str, UINT32 count,
+                                  const INT32 *lpDx );
 #endif  /* __WINE_WIN16DRV_H */

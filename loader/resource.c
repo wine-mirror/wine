@@ -731,3 +731,16 @@ INT32 LoadMessage32W( HINSTANCE32 instance, UINT32 id, WORD lang,
     return retval;
 }
 
+
+/**********************************************************************
+ *	SetResourceHandler	(KERNEL.43)
+ */
+FARPROC16
+SetResourceHandler(HINSTANCE16 instance,LPSTR s,FARPROC16 farproc)
+{
+    if (HIWORD(s))
+	fprintf(stderr,"SetResourceHandler(%04x,%s,%p), empty STUB!\n",instance,s,farproc);
+    else
+	fprintf(stderr,"SetResourceHandler(%04x,0x%04x,%p), empty STUB!\n",instance,LOWORD(s),farproc);
+    return NULL;
+}

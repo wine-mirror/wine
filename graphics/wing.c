@@ -8,7 +8,9 @@
 #include <X11/extensions/XShm.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
+#ifndef __EMX__
 #include <sys/shm.h>
+#endif
 
 #include "windows.h"
 #include "bitmap.h"

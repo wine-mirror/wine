@@ -113,7 +113,7 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 <INITIAL>list|lis|li|l			{ BEGIN(PATH_EXPECTED); return tLIST; }
 <INITIAL>enable|enabl|enab|ena		{ BEGIN(NOCMD); return tENABLE;}
 <INITIAL>disable|disabl|disab|disa|dis	{ BEGIN(NOCMD); return tDISABLE; }
-<INITIAL,INFO_CMD,DEL_CMD>display|displa|displ|disp	{ BEGIN(NOCMD); return tDISPLAY; }
+<INITIAL,INFO_CMD,DEL_CMD>display|displa|displ|disp	{ BEGIN(FORMAT_EXPECTED); return tDISPLAY; }
 <INITIAL>undisplay|undispla|undispl|undisp|undis|undi|und	{ BEGIN(NOCMD); return tUNDISPLAY; }
 <INITIAL>delete|delet|dele|del		{ BEGIN(DEL_CMD); return tDELETE; }
 <INITIAL>quit|qui|qu|q			{ BEGIN(NOCMD); return tQUIT; }
@@ -155,10 +155,21 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 <INITIAL,SHOW_CMD>directories|directorie|directori|director|directo|direct|direc|direc|dir { 
 			BEGIN(PATH_EXPECTED); return tDIR; }
 
+char					{ return tCHAR; }
+short					{ return tSHORT; }
+int					{ return tINT; }
+long					{ return tLONG; }
+float					{ return tFLOAT; }
+double					{ return tDOUBLE; }
+unsigned				{ return tUNSIGNED; }
+signed					{ return tSIGNED; }
+struct					{ return tSTRUCT; }
+union					{ return tUNION; }
+enum					{ return tENUM; }
+
 {IDENTIFIER}	{ yylval.string = make_symbol(yytext); return tIDENTIFIER; }
 
 <PATH_EXPECTED>{PATHNAME}	{ yylval.string = make_symbol(yytext); return tPATH; }
-
 
 [ \t]+        /* Eat up whitespace */
 

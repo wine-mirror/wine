@@ -848,3 +848,23 @@ LPWSTR CRTDLL_wcsrchr(LPWSTR str,WCHAR xchar)
 	return NULL;
 }
 
+/*********************************************************************
+ *                  _setmode           (CRTDLL.265)
+ * FIXME: dunno what this is.
+ */
+DWORD
+CRTDLL__setmode(LPVOID x,INT32 y) {
+	/* FIXME */
+	fprintf(stdnimp,"CRTDLL._setmode(%p,%d), STUB.\n",x,y);
+	return 0;
+}
+
+/*********************************************************************
+ *                  atexit           (CRTDLL.345)
+ */
+INT32
+CRTDLL_atexit(LPVOID x) {
+	/* FIXME */
+	fprintf(stdnimp,"CRTDLL.atexit(%p), STUB.\n",x);
+	return 0; /* successful */
+}

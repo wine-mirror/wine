@@ -17,10 +17,10 @@
  */
 void DEBUG_PrintBasic( const DBG_ADDR *addr, int count, char format )
 {
-  char * default_format;
+  char        * default_format;
   long long int value;
 
-    if( addr->type == NULL )
+  if( addr->type == NULL )
     {
       fprintf(stderr, "Unable to evaluate expression\n");
       return;
@@ -32,16 +32,22 @@ void DEBUG_PrintBasic( const DBG_ADDR *addr, int count, char format )
   switch(format)
     {
     case 'x':
-      if (addr->seg) fprintf( stderr, "0x%04lx", (long unsigned int) value );
-      else fprintf( stderr, "0x%08lx", (long unsigned int) value );
+      if (addr->seg) 
+	{
+	  DEBUG_nchar += fprintf( stderr, "0x%04lx", (long unsigned int) value );
+	}
+      else 
+	{
+	  DEBUG_nchar += fprintf( stderr, "0x%08lx", (long unsigned int) value );
+	}
       break;
       
     case 'd':
-      fprintf( stderr, "%ld\n", (long int) value );
+      DEBUG_nchar += fprintf( stderr, "%ld\n", (long int) value );
       break;
       
     case 'c':
-      fprintf( stderr, "%d = '%c'",
+      DEBUG_nchar += fprintf( stderr, "%d = '%c'",
 	       (char)(value & 0xff), (char)(value & 0xff) );
       break;
       
@@ -53,11 +59,10 @@ void DEBUG_PrintBasic( const DBG_ADDR *addr, int count, char format )
     case 0:
       if( default_format != NULL )
 	{
-	  fprintf( stderr, default_format, value );
+	  DEBUG_nchar += fprintf( stderr, default_format, value );
 	}
       break;
     }
-
 }
 
 

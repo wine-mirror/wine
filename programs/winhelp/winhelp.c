@@ -306,7 +306,9 @@ VOID WINHELP_CreateHelpWindow(LPCSTR lpszFile, LONG lHash, LPCSTR lpszWindow,
 
 	  WINHELP_InitFonts(win->hMainWnd);
 
-	  SetWindowText(win->hMainWnd, page->file->lpszTitle);
+	  if (page) {
+	    SetWindowText(win->hMainWnd, page->file->lpszTitle);
+          }
 
 	  WINHELP_SetupText(win->hTextWnd);
 	  InvalidateRect(win->hTextWnd, NULL, TRUE);

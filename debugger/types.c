@@ -11,8 +11,11 @@
 #include <stdlib.h>
 
 #include <assert.h>
+#ifndef __EMX__
 #include <sys/mman.h>
+#endif
 #include <fcntl.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <limits.h>
 #include <strings.h>
@@ -27,6 +30,9 @@
 #include "xmalloc.h"
 
 #define NR_TYPE_HASH 521
+
+int		  DEBUG_nchar;
+static int	  DEBUG_maxchar = 1024;
 
 struct en_values
 {
@@ -177,6 +183,32 @@ DEBUG_InitBasic(int type, char * name, int size, int b_signed,
   return dt;
 }
 
+static
+struct datatype *
+DEBUG_LookupDataType(enum debug_type xtype, int hash, const char * typename)
+{
+  struct datatype * dt = NULL;
+
+  if( typename != NULL )
+    {
+      for( dt = type_hash_table[hash]; dt; dt = dt->next )
+	{
+	  if( xtype != dt->type || dt->name == NULL 
+	      || dt->name[0] != typename[0])
+	    {
+	      continue;
+	    }
+	  	  
+	  if( strcmp(dt->name, typename) == 0 )
+	    {
+	      return dt;
+	    }
+	}
+    }
+
+  return dt;
+}
+
 struct datatype *
 DEBUG_NewDataType(enum debug_type xtype, const char * typename)
 {
@@ -195,22 +227,7 @@ DEBUG_NewDataType(enum debug_type xtype, const char * typename)
       hash = type_hash(typename);
     }
 
-  if( typename != NULL )
-    {
-      for( dt = type_hash_table[hash]; dt; dt = dt->next )
-	{
-	  if( xtype != dt->type || dt->name == NULL 
-	      || dt->name[0] != typename[0])
-	    {
-	      continue;
-	    }
-	  	  
-	  if( strcmp(dt->name, typename) == 0 )
-	    {
-	      return dt;
-	    }
-	}
-    }
+  dt = DEBUG_LookupDataType(xtype, hash, typename);
 
   if( dt == NULL )
     {
@@ -347,6 +364,11 @@ DEBUG_GetExprValue(DBG_ADDR * addr, char ** format)
   switch(addr->type->type)
     {
     case BASIC:
+      if (!DBG_CHECK_READ_PTR( addr,  addr->type->un.basic.basic_size)) 
+	{
+	  return 0;
+	}
+
       memcpy(&rtn, (char *) addr->off, addr->type->un.basic.basic_size);
       if(    (addr->type->un.basic.b_signed)
 	  && ((addr->type->un.basic.basic_size & 3) != 0)
@@ -495,6 +517,12 @@ int
 DEBUG_SetStructSize(struct datatype * dt, int size)
 {
   assert(dt->type == STRUCT);
+
+  if( dt->un.structure.members != NULL )
+    {
+      return FALSE;
+    }
+
   dt->un.structure.size = size;
   dt->un.structure.members = NULL;
 
@@ -710,7 +738,8 @@ DEBUG_ArrayIndex(DBG_ADDR * addr, DBG_ADDR * result, int index)
  *
  * Implementation of the 'print' command.
  */
-void DEBUG_Print( const DBG_ADDR *addr, int count, char format, int level )
+void
+DEBUG_Print( const DBG_ADDR *addr, int count, char format, int level )
 {
   DBG_ADDR	  addr1;
   int		  i;
@@ -728,9 +757,20 @@ void DEBUG_Print( const DBG_ADDR *addr, int count, char format, int level )
   if( addr->type == NULL )
     {
       fprintf(stderr, "Unable to evaluate expression\n");
-      return;
+      goto leave;
     }
   
+  if( level == 0 )
+    {
+      DEBUG_nchar = 0;
+    }
+
+  if( DEBUG_nchar > DEBUG_maxchar )
+    {
+      fprintf(stderr, "...");
+      goto leave;
+    }
+
   if( format == 'i' || format == 's' || format == 'w' || format == 'b' )
     {
       fprintf( stderr, "Format specifier '%c' is meaningless in 'print' command\n", format );
@@ -746,20 +786,25 @@ void DEBUG_Print( const DBG_ADDR *addr, int count, char format, int level )
       DEBUG_PrintBasic(addr, 1, format);
       break;
     case STRUCT:
-      fprintf(stderr, "{");
+      DEBUG_nchar += fprintf(stderr, "{");
       for(m = addr->type->un.structure.members; m; m = m->next)
 	{
 	  addr1 = *addr;
 	  DEBUG_FindStructElement(&addr1, m->name,
 				  (int *) &value);
-	  fprintf(stderr, "%s=", m->name);
+	  DEBUG_nchar += fprintf(stderr, "%s=", m->name);
 	  DEBUG_Print(&addr1, 1, format, level + 1);
 	  if( m->next != NULL )
 	    {
-	      fprintf(stderr, ", ");
+	      DEBUG_nchar += fprintf(stderr, ", ");
+	    }
+	  if( DEBUG_nchar > DEBUG_maxchar )
+	    {
+	      fprintf(stderr, "...}");
+	      goto leave;
 	    }
 	}
-      fprintf(stderr, "}");
+      DEBUG_nchar += fprintf(stderr, "}");
       break;
     case ARRAY:
       /*
@@ -772,28 +817,39 @@ void DEBUG_Print( const DBG_ADDR *addr, int count, char format, int level )
 	   * Special handling for character arrays.
 	   */
 	  pnt = (char *) addr->off;
-	  fprintf(stderr, "\"");
+	  DEBUG_nchar += fprintf(stderr, "\"");
 	  for( i=addr->type->un.array.start; i < addr->type->un.array.end; i++ )
 	    {
 	      fputc(*pnt++, stderr);
+	      DEBUG_nchar++;
+	      if( DEBUG_nchar > DEBUG_maxchar )
+		{
+		  fprintf(stderr, "...\"");
+		  goto leave;
+		}
 	    }
-	  fprintf(stderr, "\"");
+	  DEBUG_nchar += fprintf(stderr, "\"");
 	  break;
 	}
       addr1 = *addr;
       addr1.type = addr->type->un.array.basictype;
-      fprintf(stderr, "{");
+      DEBUG_nchar += fprintf(stderr, "{");
       for( i=addr->type->un.array.start; i <= addr->type->un.array.end; i++ )
 	{
 	  DEBUG_Print(&addr1, 1, format, level + 1);
 	  addr1.off += size;
 	  if( i == addr->type->un.array.end )
 	    {
-	      fprintf(stderr, "}");
+	      DEBUG_nchar += fprintf(stderr, "}");
 	    }
 	  else
 	    {
-	      fprintf(stderr, ", ");
+	      DEBUG_nchar += fprintf(stderr, ", ");
+	    }
+	  if( DEBUG_nchar > DEBUG_maxchar )
+	    {
+	      fprintf(stderr, "...}");
+	      goto leave;
 	    }
 	}
       break;
@@ -802,8 +858,157 @@ void DEBUG_Print( const DBG_ADDR *addr, int count, char format, int level )
       break;
     }
 
+leave:
+
   if( level == 0 )
     {
-      fprintf(stderr, "\n");
+      DEBUG_nchar += fprintf(stderr, "\n");
     }
+  return;
 }
+
+int
+DEBUG_DumpTypes()
+{
+  struct datatype * dt = NULL;
+  struct member * m;
+  int hash;
+  int nm;
+  char * name;
+  char * member_name;
+
+  for(hash = 0; hash < NR_TYPE_HASH + 1; hash++)
+    {
+      for( dt = type_hash_table[hash]; dt; dt = dt->next )
+	{
+	  name =  "none";
+	  if( dt->name != NULL )
+	    {
+	      name = dt->name;
+	    }
+	  switch(dt->type)
+	    {
+	    case BASIC:
+	      fprintf(stderr, "0x%p - BASIC(%s)\n",
+		      dt, name);
+	      break;
+	    case POINTER:
+	      fprintf(stderr, "0x%p - POINTER(%s)(%p)\n",
+		      dt, name, dt->un.pointer.pointsto);
+	      break;
+	    case STRUCT:
+	      member_name = "none";
+	      nm = 0;
+	      if( dt->un.structure.members != NULL
+		  && dt->un.structure.members->name != NULL )
+		{
+		  member_name = dt->un.structure.members->name;
+		  for( m = dt->un.structure.members; m; m = m->next)
+		    {
+		      nm++;
+		    }
+		}
+	      fprintf(stderr, "0x%p - STRUCT(%s) %d %d %s\n", dt, name,
+		      dt->un.structure.size, nm, member_name);
+	      break;
+	    case ARRAY:
+	      fprintf(stderr, "0x%p - ARRAY(%s)(%p)\n",
+		      dt, name, dt->un.array.basictype);
+	      break;
+	    case ENUM:
+	      fprintf(stderr, "0x%p - ENUM(%s)\n",
+		      dt, name);
+	      break;
+	    case BITFIELD:
+	      fprintf(stderr, "0x%p - BITFIELD(%s)\n", dt, name);
+	      break;
+	    case FUNC:
+	      fprintf(stderr, "0x%p - FUNC(%s)(%p)\n",
+		      dt, name, dt->un.funct.rettype);
+	      break;
+	    case CONST:
+	    case TYPEDEF:
+	      fprintf(stderr, "What???\n");
+	      break;
+	    }
+	}
+    }
+  return TRUE;
+}
+
+
+enum debug_type DEBUG_GetType(struct datatype * dt)
+{
+  return dt->type;
+}
+
+struct datatype *
+DEBUG_TypeCast(enum debug_type type, const char * name)
+{
+  int			  hash;
+  struct datatype	* rtn;
+
+  /*
+   * The last bucket is special, and is used to hold typeless names.
+   */
+  if( name == NULL )
+    {
+      hash = NR_TYPE_HASH;
+    }
+  else
+    {
+      hash = type_hash(name);
+    }
+
+  rtn = DEBUG_LookupDataType(type, hash, name);
+
+  return rtn;
+
+}
+
+int
+DEBUG_PrintTypeCast(struct datatype * dt)
+{
+  char		* name;
+
+  name =  "none";
+  if( dt->name != NULL )
+    {
+      name = dt->name;
+    }
+
+  switch(dt->type)
+    {
+    case BASIC:
+      fprintf(stderr, "%s", name);
+      break;
+    case POINTER:
+      DEBUG_PrintTypeCast(dt->un.pointer.pointsto);
+      fprintf(stderr, "*");
+      break;
+    case STRUCT:
+      fprintf(stderr, "struct %s", name);
+      break;
+    case ARRAY:
+      fprintf(stderr, "%s[]", name);
+      break;
+    case ENUM:
+      fprintf(stderr, "enum %s", name);
+      break;
+    case BITFIELD:
+      fprintf(stderr, "unsigned %s", name);
+      break;
+    case FUNC:
+      DEBUG_PrintTypeCast(dt->un.funct.rettype);
+      fprintf(stderr, "(*%s)()", name);
+      break;
+    case CONST:
+    case TYPEDEF:
+      fprintf(stderr, "What???\n");
+      break;
+    }
+
+  return TRUE;
+}
+
+

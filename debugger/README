@@ -1,8 +1,7 @@
-	This is the core of the Wine debugger.  Many pieces have been
-shamelessly stolen - the reverse assember was stolen from Mach more or
-less intact.  It turns out that there are two variables that are set
-differently if you are reverse assembling 16 bit code, and on the
-whole it seems to work.
+	This is the core of the Wine debugger.  The reverse assember
+was stolen from Mach more or less intact.  It turns out that there are
+two variables that are set differently if you are reverse assembling
+16 bit code, and on the whole it seems to work.
 
 NEWS:
 
@@ -63,6 +62,16 @@ will be slightly different, but the content should be fundamentally the same.
 automatic display expressions.  An example is at the end of this file.  The
 syntax and usage should be identical to that of gdb.
 
+	8) Type casts can be made from within the debugger, but they currently
+don't work with typedef'ed types.  They only work with builtin types and
+named structures unions, etc.  The problem is that internally we don't always
+record the typedefed names of structures, so we have no guarantee that we
+would know what each type is.  This can be fixed, of course -  it just takes
+more memory.  Note that in some cases, typedefed structures could be cast
+using '(struct typedfname)' instead of '(typedfname)'.   Technically this
+isn't quite correct, but if and when the rest of this stuff gets fixed,
+this would need to get corrected too.
+
 NOTES:
 
 	If it weren't for the fact that gdb doesn't grok the Win32 debug
@@ -72,16 +81,6 @@ Wine executable, making it possible to debug the combination of the two
 together as if it were one large (very large) entity.
 
 LIMITATIONS AND DIFFERENCES FROM GDB:
-
-	You cannot use type casts in expressions that you give to the
-debugger.  The hardest part about adding support for this is fixing
-the parser/lexer to know when it is handling a type cast, and when it
-is handling any other type of parenthesized expression.  With lexer
-states, it may be possible to keep track of what we would expect at
-any given moment, but it would be tedious to go through and make sure
-that the state is set up correctly for all of the different operators
-and characters that we accept, and I am not yet convinced that this would
-even work.
 
 	You cannot set a breakpoint by file and line number as you can
 with gdb.  Adding support for this wouldn't be all that tough, I guess, but
@@ -347,11 +346,6 @@ are displayed in the expected manner.
 
 	You can use the set command to set more or less anything.  Note
 however that you cannot use enumerated types on the RHS of the expression.
-
-	Finally, type casts are not yet supported in the expression
-handling.  There is sufficient information stored internally to be
-able to handle this - the main challenge is that the parser would
-need to be fixed to correctly parse the type cast.
 
 *******************************************************************
 

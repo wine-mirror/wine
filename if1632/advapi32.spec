@@ -111,7 +111,7 @@ base	1
 0106 stub OpenBackupEventLogW
 0107 stub OpenEventLogA
 0108 stub OpenEventLogW
-0109 stub OpenProcessToken
+0109 stdcall OpenProcessToken(long long ptr) OpenProcessToken
 0110 stub OpenSCManagerA
 0111 stub OpenSCManagerW
 0112 stub OpenServiceA
@@ -129,7 +129,7 @@ base	1
 0124 stub ReadEventLogA
 0125 stub ReadEventLogW
 0126 stdcall RegCloseKey(long) RegCloseKey
-0127 stub RegConnectRegistryA
+0127 stdcall RegConnectRegistryA(ptr long ptr) RegConnectRegistry32A
 0128 stub RegConnectRegistryW
 0129 stdcall RegCreateKeyA(long ptr ptr) RegCreateKey32A
 0130 stdcall RegCreateKeyExA(long ptr long ptr long long ptr ptr ptr) RegCreateKeyEx32A

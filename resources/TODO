@@ -72,3 +72,26 @@ Thank you.
 Albrecht Kleine
 kleine@ak.sax.de
 
+**************************************************************
+1997, January
+
+Subject: EDITMENU
+
+There now is a resource EDITMENU.  It is the menu that is displayed when you
+click the right mouse button within an edit control.  I included an English
+version in all sysres_??.rc files, which needs translation in your language.
+This has now been done for:
+
+* English
+.....
+
+Note: I picked the IDs of the menuitems "at random".  When someone wants to
+find out the "real" (win95) values, feel free to change them.  However, you
+should change _all_ sysres_??.rc files and subsequently the function
+EDIT_WM_Command() in controls/edit.c.  This is a matter of minutes (i.e. no
+programming skills required).
+
+Bye,
+
+Frans van Dorsselaer
+dorssel@rulhm1.LeidenUniv.nl

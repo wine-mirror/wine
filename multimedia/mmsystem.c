@@ -827,11 +827,10 @@ DWORD mciSendCommand(UINT wDevID, UINT wMsg, DWORD dwParam1, DWORD dwParam2)
 */
 UINT mciGetDeviceID (LPCSTR lpstrName)
 {
-	char	str[128];
-	dprintf_mci(stddeb, "mciGetDeviceID(%s)\n", lpstrName);
-	if (lpstrName && !lstrcmpi32A(lpstrName, "ALL"))
-            return MCI_ALL_DEVICE_ID;
-	return 0;
+    dprintf_mci(stddeb, "mciGetDeviceID(%s)\n", lpstrName);
+    if (lpstrName && !lstrcmpi32A(lpstrName, "ALL"))
+        return MCI_ALL_DEVICE_ID;
+    return 0;
 }
 
 /**************************************************************************

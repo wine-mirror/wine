@@ -127,7 +127,7 @@ BOOL32 DOSMEM_Init(void)
      * this feels more like a hack to me than this current implementation is.
      * If you find another, better, method, just change it. -Marcus Meissner
      */
-    DOSMEM_dosmem = VirtualAlloc(NULL,0x1000000,MEM_COMMIT,PAGE_EXECUTE_READWRITE);
+    DOSMEM_dosmem = VirtualAlloc(NULL,0x100000,MEM_COMMIT,PAGE_EXECUTE_READWRITE);
     if (!DOSMEM_dosmem)
     {
         fprintf( stderr, "Could not allocate DOS memory.\n" );

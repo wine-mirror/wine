@@ -188,7 +188,7 @@ extern void DEBUG_GetSigContext( SIGCONTEXT *sigcontext )
 #ifdef GS_sig
     GS_sig(sigcontext)  = GS_reg(&DEBUG_context);
 #else
-    __asm__("movw %w0,%%gs"::"r" (FS_reg(&DEBUG_context)));
+    __asm__("movw %w0,%%gs"::"r" (GS_reg(&DEBUG_context)));
 #endif
 }
 

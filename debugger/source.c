@@ -93,7 +93,7 @@ DEBUG_NukePath()
 }
 
 static
-void
+int
 DEBUG_DisplaySource(char * sourcefile, int start, int end)
 {
   char			      * addr;
@@ -103,6 +103,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
   struct open_filelist	      * ol;
   int				nlines;
   char			      * pnt;
+  int				rtn;
   struct searchlist	      * sl;
   struct stat			statbuf;
   int				status;
@@ -217,7 +218,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 		  ol->linelist = NULL;
 		  ofiles = ol;
 		  fprintf(stderr,"Unable to open file %s\n", tmppath);
-		  return;
+		  return FALSE;
 		}
 	    }
 	}
@@ -239,13 +240,13 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
       fd = open(tmppath, O_RDONLY);
       if( fd == -1 )
 	{
-	  return;
+	  return FALSE;
 	}
 
       addr = mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
       if( addr == (char *) -1 )
 	{
-	  return;
+	  return FALSE;
 	}
 
       /*
@@ -285,19 +286,20 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
       fd = open(ol->real_path, O_RDONLY);
       if( fd == -1 )
 	{
-	  return;
+	  return FALSE;
 	}
       
       addr = mmap(0, ol->size, PROT_READ, MAP_PRIVATE, fd, 0);
       if( addr == (char *) -1 )
 	{
-	  return;
+	  return FALSE;
 	}
     }
   
   /*
    * All we need to do is to display the source lines here.
    */
+  rtn = FALSE;
   for(i=start - 1; i <= end - 1; i++)
     {
       if( i < 0 || i >= ol->nlines - 1)
@@ -305,6 +307,7 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	  continue;
 	}
 
+      rtn = TRUE;
       memset(&buffer, 0, sizeof(buffer));
       if( ol->linelist[i+1] != ol->linelist[i] )
 	{
@@ -317,6 +320,8 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
   munmap(addr, ol->size);
   close(fd);
 
+  return rtn;
+
 }
 
 void
@@ -324,6 +329,7 @@ DEBUG_List(struct list_id * source1, struct list_id * source2,
 			 int delta)
 {
   int    end;
+  int    rtn;
   int    start;
   char * sourcefile;
 
@@ -406,7 +412,7 @@ DEBUG_List(struct list_id * source1, struct list_id * source2,
   /*
    * Now call this function to do the dirty work.
    */
-  DEBUG_DisplaySource(sourcefile, start, end);
+  rtn = DEBUG_DisplaySource(sourcefile, start, end);
 
   if( sourcefile != (char *) &DEBUG_current_sourcefile )
     {

@@ -427,9 +427,9 @@ static LONG FILEDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
   n = DRIVE_GetCurrentDrive();
   SendDlgItemMessage16(hWnd, cmb2, CB_SETCURSEL16, n, 0);
   if (!(lpofn->Flags & OFN_SHOWHELP))
-    ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);
+    ShowWindow32(GetDlgItem32(hWnd, pshHelp), SW_HIDE);
   if (lpofn->Flags & OFN_HIDEREADONLY)
-    ShowWindow(GetDlgItem(hWnd, chx1), SW_HIDE); 
+    ShowWindow32(GetDlgItem32(hWnd, chx1), SW_HIDE); 
   if (FILEDLG_HookCallChk(lpofn))
      return (BOOL)CallWindowProc16(lpofn->lpfnHook, 
                                    hWnd,  WM_INITDIALOG, wParam, lParam );
@@ -579,7 +579,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 	}
       else SetDlgItemText32A( hWnd, edt1, tmpstr );
 #if 0
-      ShowWindow(hWnd, SW_HIDE);   /* this should not be necessary ?! (%%%) */
+      ShowWindow16(hWnd, SW_HIDE);   /* this should not be necessary ?! (%%%) */
 #endif
       {
 	int drive = DRIVE_GetCurrentDrive();
@@ -614,7 +614,7 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
        {
          *lpofn=ofn2; /* restore old state */
 #if 0
-         ShowWindow(hWnd, SW_SHOW);               /* only if above (%%%) SW_HIDE used */
+         ShowWindow16(hWnd, SW_SHOW);               /* only if above (%%%) SW_HIDE used */
 #endif         
          break;
        }
@@ -785,31 +785,31 @@ static LRESULT FINDDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
      * enabled.
      */
     SetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat);
-    CheckRadioButton(hWnd, rad1, rad2, (lpfr->Flags & FR_DOWN) ? rad2 : rad1);
+    CheckRadioButton32(hWnd, rad1, rad2, (lpfr->Flags & FR_DOWN) ? rad2 : rad1);
     if (lpfr->Flags & (FR_HIDEUPDOWN | FR_NOUPDOWN)) {
-	EnableWindow(GetDlgItem(hWnd, rad1), FALSE);
-	EnableWindow(GetDlgItem(hWnd, rad2), FALSE);
+	EnableWindow32(GetDlgItem32(hWnd, rad1), FALSE);
+	EnableWindow32(GetDlgItem32(hWnd, rad2), FALSE);
     }
     if (lpfr->Flags & FR_HIDEUPDOWN) {
-	ShowWindow(GetDlgItem(hWnd, rad1), SW_HIDE);
-	ShowWindow(GetDlgItem(hWnd, rad2), SW_HIDE);
-	ShowWindow(GetDlgItem(hWnd, grp1), SW_HIDE);
+	ShowWindow32(GetDlgItem32(hWnd, rad1), SW_HIDE);
+	ShowWindow32(GetDlgItem32(hWnd, rad2), SW_HIDE);
+	ShowWindow32(GetDlgItem32(hWnd, grp1), SW_HIDE);
     }
-    CheckDlgButton(hWnd, chx1, (lpfr->Flags & FR_WHOLEWORD) ? 1 : 0);
+    CheckDlgButton32(hWnd, chx1, (lpfr->Flags & FR_WHOLEWORD) ? 1 : 0);
     if (lpfr->Flags & (FR_HIDEWHOLEWORD | FR_NOWHOLEWORD))
-	EnableWindow(GetDlgItem(hWnd, chx1), FALSE);
+	EnableWindow32(GetDlgItem32(hWnd, chx1), FALSE);
     if (lpfr->Flags & FR_HIDEWHOLEWORD)
-	ShowWindow(GetDlgItem(hWnd, chx1), SW_HIDE);
-    CheckDlgButton(hWnd, chx2, (lpfr->Flags & FR_MATCHCASE) ? 1 : 0);
+	ShowWindow32(GetDlgItem32(hWnd, chx1), SW_HIDE);
+    CheckDlgButton32(hWnd, chx2, (lpfr->Flags & FR_MATCHCASE) ? 1 : 0);
     if (lpfr->Flags & (FR_HIDEMATCHCASE | FR_NOMATCHCASE))
-	EnableWindow(GetDlgItem(hWnd, chx2), FALSE);
+	EnableWindow32(GetDlgItem32(hWnd, chx2), FALSE);
     if (lpfr->Flags & FR_HIDEMATCHCASE)
-	ShowWindow(GetDlgItem(hWnd, chx2), SW_HIDE);
+	ShowWindow32(GetDlgItem32(hWnd, chx2), SW_HIDE);
     if (!(lpfr->Flags & FR_SHOWHELP)) {
-	EnableWindow(GetDlgItem(hWnd, pshHelp), FALSE);
-	ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);
+	EnableWindow32(GetDlgItem32(hWnd, pshHelp), FALSE);
+	ShowWindow32(GetDlgItem32(hWnd, pshHelp), SW_HIDE);
     }
-    ShowWindow(hWnd, SW_SHOWNORMAL);
+    ShowWindow32(hWnd, SW_SHOWNORMAL);
     return TRUE;
 }    
 
@@ -827,13 +827,13 @@ static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
     switch (wParam) {
 	case IDOK:
 	    GetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
-	    if (IsDlgButtonChecked(hWnd, rad2))
+	    if (IsDlgButtonChecked32(hWnd, rad2))
 		lpfr->Flags |= FR_DOWN;
 		else lpfr->Flags &= ~FR_DOWN;
-	    if (IsDlgButtonChecked(hWnd, chx1))
+	    if (IsDlgButtonChecked32(hWnd, chx1))
 		lpfr->Flags |= FR_WHOLEWORD; 
 		else lpfr->Flags &= ~FR_WHOLEWORD;
-	    if (IsDlgButtonChecked(hWnd, chx2))
+	    if (IsDlgButtonChecked32(hWnd, chx2))
 		lpfr->Flags |= FR_MATCHCASE; 
 		else lpfr->Flags &= ~FR_MATCHCASE;
             lpfr->Flags &= ~(FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
@@ -846,7 +846,7 @@ static LRESULT FINDDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 	    lpfr->Flags |= FR_DIALOGTERM;
 	    SendMessage16(lpfr->hwndOwner, uFindReplaceMessage, 0,
                           GetWindowLong32A(hWnd, DWL_USER) );
-	    DestroyWindow(hWnd);
+	    DestroyWindow16(hWnd);
 	    return TRUE;
 	case pshHelp:
 	    /* FIXME : should lpfr structure be passed as an argument ??? */
@@ -889,21 +889,21 @@ static LRESULT REPLACEDLG_WMInitDialog(HWND hWnd, WPARAM16 wParam, LPARAM lParam
      */
     SetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat);
     SetDlgItemText16(hWnd, edt2, lpfr->lpstrReplaceWith);
-    CheckDlgButton(hWnd, chx1, (lpfr->Flags & FR_WHOLEWORD) ? 1 : 0);
+    CheckDlgButton32(hWnd, chx1, (lpfr->Flags & FR_WHOLEWORD) ? 1 : 0);
     if (lpfr->Flags & (FR_HIDEWHOLEWORD | FR_NOWHOLEWORD))
-	EnableWindow(GetDlgItem(hWnd, chx1), FALSE);
+	EnableWindow32(GetDlgItem32(hWnd, chx1), FALSE);
     if (lpfr->Flags & FR_HIDEWHOLEWORD)
-	ShowWindow(GetDlgItem(hWnd, chx1), SW_HIDE);
-    CheckDlgButton(hWnd, chx2, (lpfr->Flags & FR_MATCHCASE) ? 1 : 0);
+	ShowWindow32(GetDlgItem32(hWnd, chx1), SW_HIDE);
+    CheckDlgButton32(hWnd, chx2, (lpfr->Flags & FR_MATCHCASE) ? 1 : 0);
     if (lpfr->Flags & (FR_HIDEMATCHCASE | FR_NOMATCHCASE))
-	EnableWindow(GetDlgItem(hWnd, chx2), FALSE);
+	EnableWindow32(GetDlgItem32(hWnd, chx2), FALSE);
     if (lpfr->Flags & FR_HIDEMATCHCASE)
-	ShowWindow(GetDlgItem(hWnd, chx2), SW_HIDE);
+	ShowWindow32(GetDlgItem32(hWnd, chx2), SW_HIDE);
     if (!(lpfr->Flags & FR_SHOWHELP)) {
-	EnableWindow(GetDlgItem(hWnd, pshHelp), FALSE);
-	ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);
+	EnableWindow32(GetDlgItem32(hWnd, pshHelp), FALSE);
+	ShowWindow32(GetDlgItem32(hWnd, pshHelp), SW_HIDE);
     }
-    ShowWindow(hWnd, SW_SHOWNORMAL);
+    ShowWindow32(hWnd, SW_SHOWNORMAL);
     return TRUE;
 }    
 
@@ -922,10 +922,10 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 	case IDOK:
 	    GetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
 	    GetDlgItemText16(hWnd, edt2, lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen);
-	    if (IsDlgButtonChecked(hWnd, chx1))
+	    if (IsDlgButtonChecked32(hWnd, chx1))
 		lpfr->Flags |= FR_WHOLEWORD; 
 		else lpfr->Flags &= ~FR_WHOLEWORD;
-	    if (IsDlgButtonChecked(hWnd, chx2))
+	    if (IsDlgButtonChecked32(hWnd, chx2))
 		lpfr->Flags |= FR_MATCHCASE; 
 		else lpfr->Flags &= ~FR_MATCHCASE;
             lpfr->Flags &= ~(FR_REPLACE | FR_REPLACEALL | FR_DIALOGTERM);
@@ -938,15 +938,15 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 	    lpfr->Flags |= FR_DIALOGTERM;
 	    SendMessage16(lpfr->hwndOwner, uFindReplaceMessage, 0,
                           GetWindowLong32A(hWnd, DWL_USER) );
-	    DestroyWindow(hWnd);
+	    DestroyWindow16(hWnd);
 	    return TRUE;
 	case psh1:
 	    GetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
 	    GetDlgItemText16(hWnd, edt2, lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen);
-	    if (IsDlgButtonChecked(hWnd, chx1))
+	    if (IsDlgButtonChecked32(hWnd, chx1))
 		lpfr->Flags |= FR_WHOLEWORD; 
 		else lpfr->Flags &= ~FR_WHOLEWORD;
-	    if (IsDlgButtonChecked(hWnd, chx2))
+	    if (IsDlgButtonChecked32(hWnd, chx2))
 		lpfr->Flags |= FR_MATCHCASE; 
 		else lpfr->Flags &= ~FR_MATCHCASE;
             lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACEALL | FR_DIALOGTERM);
@@ -957,10 +957,10 @@ static LRESULT REPLACEDLG_WMCommand(HWND hWnd, WPARAM16 wParam, LPARAM lParam)
 	case psh2:
 	    GetDlgItemText16(hWnd, edt1, lpfr->lpstrFindWhat, lpfr->wFindWhatLen);
 	    GetDlgItemText16(hWnd, edt2, lpfr->lpstrReplaceWith, lpfr->wReplaceWithLen);
-	    if (IsDlgButtonChecked(hWnd, chx1))
+	    if (IsDlgButtonChecked32(hWnd, chx1))
 		lpfr->Flags |= FR_WHOLEWORD; 
 		else lpfr->Flags &= ~FR_WHOLEWORD;
-	    if (IsDlgButtonChecked(hWnd, chx2))
+	    if (IsDlgButtonChecked32(hWnd, chx2))
 		lpfr->Flags |= FR_MATCHCASE; 
 		else lpfr->Flags &= ~FR_MATCHCASE;
             lpfr->Flags &= ~(FR_FINDNEXT | FR_REPLACE | FR_DIALOGTERM);
@@ -1035,7 +1035,7 @@ LRESULT PrintDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
     {
     case WM_INITDIALOG:
       dprintf_commdlg(stddeb,"PrintDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
-      ShowWindow(hWnd, SW_SHOWNORMAL);
+      ShowWindow16(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:
       switch (wParam)
@@ -1062,7 +1062,7 @@ LRESULT PrintSetupDlgProc(HWND hWnd, UINT wMsg, WPARAM16 wParam, LPARAM lParam)
     {
     case WM_INITDIALOG:
       dprintf_commdlg(stddeb,"PrintSetupDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
-      ShowWindow(hWnd, SW_SHOWNORMAL);
+      ShowWindow16(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:
       switch (wParam) {
@@ -1339,7 +1339,7 @@ static int CC_MouseCheckPredefColorArray(HWND hDlg,int dlgitem,int rows,int cols
  int dx,dy,x,y;
 
  ClientToScreen16(hDlg,&point);
- hwnd=GetDlgItem(hDlg,dlgitem);
+ hwnd=GetDlgItem32(hDlg,dlgitem);
  GetWindowRect16(hwnd,&rect);
  if (PtInRect16(&rect,point))
  {
@@ -1371,7 +1371,7 @@ static int CC_MouseCheckUserColorArray(HWND hDlg,int dlgitem,int rows,int cols,
  int dx,dy,x,y;
 
  ClientToScreen16(hDlg,&point);
- hwnd=GetDlgItem(hDlg,dlgitem);
+ hwnd=GetDlgItem32(hDlg,dlgitem);
  GetWindowRect16(hwnd,&rect);
  if (PtInRect16(&rect,point))
  {
@@ -1406,13 +1406,13 @@ static int CC_MouseCheckUserColorArray(HWND hDlg,int dlgitem,int rows,int cols,
  */
 static int CC_MouseCheckColorGraph(HWND hDlg,int dlgitem,int *hori,int *vert,LPARAM lParam)
 {
- HWND hwnd;
+ HWND32 hwnd;
  POINT16 point = MAKEPOINT16(lParam);
  RECT16 rect;
  long x,y;
 
  ClientToScreen16(hDlg,&point);
- hwnd=GetDlgItem(hDlg,dlgitem);
+ hwnd=GetDlgItem32(hDlg,dlgitem);
  GetWindowRect16(hwnd,&rect);
  if (PtInRect16(&rect,point))
  {
@@ -1443,7 +1443,7 @@ static int CC_MouseCheckResultWindow(HWND hDlg,LPARAM lParam)
  RECT16 rect;
 
  ClientToScreen16(hDlg,&point);
- hwnd=GetDlgItem(hDlg,0x2c5);
+ hwnd=GetDlgItem32(hDlg,0x2c5);
  GetWindowRect16(hwnd,&rect);
  if (PtInRect16(&rect,point))
  {
@@ -1502,8 +1502,8 @@ static void CC_PaintSelectedColor(HWND hDlg,COLORREF cr)
  RECT16 rect;
  HDC32  hdc;
  HBRUSH32 hBrush;
- HWND hwnd=GetDlgItem(hDlg,0x2c5);
- if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
+ HWND32 hwnd=GetDlgItem32(hDlg,0x2c5);
+ if (IsWindowVisible32(GetDlgItem32(hDlg,0x2c6)))   /* if full size */
  {
   hdc=GetDC32(hwnd);
   GetClientRect16 (hwnd, &rect) ;
@@ -1537,10 +1537,10 @@ static void CC_PaintTriangle(HWND hDlg,int y)
  int height;
  int oben;
  RECT16 rect;
- HWND hwnd=GetDlgItem(hDlg,0x2be);
+ HWND hwnd=GetDlgItem32(hDlg,0x2be);
  struct CCPRIVATE *lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
 
- if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
+ if (IsWindowVisible32(GetDlgItem32(hDlg,0x2c6)))   /* if full size */
  {
    GetClientRect16(hwnd,&rect);
    height=rect.bottom;
@@ -1577,13 +1577,13 @@ static void CC_PaintCross(HWND hDlg,int x,int y)
 {
  HDC32 hDC;
  int w=GetDialogBaseUnits();
- HWND hwnd=GetDlgItem(hDlg,0x2c6);
+ HWND hwnd=GetDlgItem32(hDlg,0x2c6);
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
  RECT16 rect;
  POINT16 point;
  HPEN32 hPen;
 
- if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
+ if (IsWindowVisible32(GetDlgItem32(hDlg,0x2c6)))   /* if full size */
  {
    GetClientRect16(hwnd,&rect);
    hDC=GetDC32(hwnd);
@@ -1622,7 +1622,7 @@ static void CC_PaintCross(HWND hDlg,int x,int y)
 static void CC_PrepareColorGraph(HWND hDlg)    
 {
  int sdif,hdif,xdif,ydif,r,g,b,hue,sat;
- HWND hwnd=GetDlgItem(hDlg,0x2c6);
+ HWND32 hwnd=GetDlgItem32(hDlg,0x2c6);
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER);  
  HBRUSH32 hbrush;
  HDC32 hdc ;
@@ -1665,11 +1665,11 @@ static void CC_PrepareColorGraph(HWND hDlg)
  */
 static void CC_PaintColorGraph(HWND hDlg)
 {
- HWND hwnd=GetDlgItem(hDlg,0x2c6);
+ HWND32 hwnd=GetDlgItem32(hDlg,0x2c6);
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
  HDC32  hDC;
  RECT16 rect;
- if (IsWindowVisible(hwnd))   /* if full size */
+ if (IsWindowVisible32(hwnd))   /* if full size */
  {
   if (!lpp->hdcMem)
    CC_PrepareColorGraph(hDlg);   /* should not be necessary */
@@ -1688,13 +1688,13 @@ static void CC_PaintColorGraph(HWND hDlg)
  */
 static void CC_PaintLumBar(HWND hDlg,int hue,int sat)
 {
- HWND hwnd=GetDlgItem(hDlg,0x2be);
+ HWND32 hwnd=GetDlgItem32(hDlg,0x2be);
  RECT16 rect,client;
  int lum,ldif,ydif,r,g,b;
  HBRUSH32 hbrush;
  HDC32 hDC;
 
- if (IsWindowVisible(hwnd))
+ if (IsWindowVisible32(hwnd))
  {
   hDC=GetDC32(hwnd);
   GetClientRect16(hwnd,&client);
@@ -1729,15 +1729,15 @@ static void CC_EditSetRGB(HWND hDlg,COLORREF cr)
  int r=GetRValue(cr);
  int g=GetGValue(cr);
  int b=GetBValue(cr);
- if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
+ if (IsWindowVisible32(GetDlgItem32(hDlg,0x2c6)))   /* if full size */
  {
    lpp->updating=TRUE;
    sprintf(buffer,"%d",r);
-   SetWindowText32A(GetDlgItem(hDlg,0x2c2),buffer);
+   SetWindowText32A(GetDlgItem32(hDlg,0x2c2),buffer);
    sprintf(buffer,"%d",g);
-   SetWindowText32A(GetDlgItem(hDlg,0x2c3),buffer);
+   SetWindowText32A(GetDlgItem32(hDlg,0x2c3),buffer);
    sprintf(buffer,"%d",b);
-   SetWindowText32A(GetDlgItem(hDlg,0x2c4),buffer);
+   SetWindowText32A(GetDlgItem32(hDlg,0x2c4),buffer);
    lpp->updating=FALSE;
  }
 }
@@ -1750,15 +1750,15 @@ static void CC_EditSetHSL(HWND hDlg,int h,int s,int l)
  char buffer[10];
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
  lpp->updating=TRUE;
- if (IsWindowVisible(GetDlgItem(hDlg,0x2c6)))   /* if full size */
+ if (IsWindowVisible32(GetDlgItem32(hDlg,0x2c6)))   /* if full size */
  {
    lpp->updating=TRUE;
    sprintf(buffer,"%d",h);
-   SetWindowText32A(GetDlgItem(hDlg,0x2bf),buffer);
+   SetWindowText32A(GetDlgItem32(hDlg,0x2bf),buffer);
    sprintf(buffer,"%d",s);
-   SetWindowText32A(GetDlgItem(hDlg,0x2c0),buffer);
+   SetWindowText32A(GetDlgItem32(hDlg,0x2c0),buffer);
    sprintf(buffer,"%d",l);
-   SetWindowText32A(GetDlgItem(hDlg,0x2c1),buffer);
+   SetWindowText32A(GetDlgItem32(hDlg,0x2c1),buffer);
    lpp->updating=FALSE;
  }
  CC_PaintLumBar(hDlg,h,s);
@@ -1772,22 +1772,22 @@ static void CC_SwitchToFullSize(HWND hDlg,COLORREF result,LPRECT16 lprect)
  int i;
  struct CCPRIVATE * lpp=(struct CCPRIVATE *)GetWindowLong32A(hDlg, DWL_USER); 
  
- EnableWindow(GetDlgItem(hDlg,0x2cf),FALSE);
+ EnableWindow32(GetDlgItem32(hDlg,0x2cf),FALSE);
  CC_PrepareColorGraph(hDlg);
  for (i=0x2bf;i<0x2c5;i++)
-   EnableWindow(GetDlgItem(hDlg,i),TRUE);
+   EnableWindow32(GetDlgItem32(hDlg,i),TRUE);
  for (i=0x2d3;i<0x2d9;i++)
-   EnableWindow(GetDlgItem(hDlg,i),TRUE);
- EnableWindow(GetDlgItem(hDlg,0x2c9),TRUE);
- EnableWindow(GetDlgItem(hDlg,0x2c8),TRUE);
+   EnableWindow32(GetDlgItem32(hDlg,i),TRUE);
+ EnableWindow32(GetDlgItem32(hDlg,0x2c9),TRUE);
+ EnableWindow32(GetDlgItem32(hDlg,0x2c8),TRUE);
 
  if (lprect)
-  SetWindowPos(hDlg,NULL,0,0,lprect->right-lprect->left,
+  SetWindowPos32(hDlg,NULL,0,0,lprect->right-lprect->left,
    lprect->bottom-lprect->top, SWP_NOMOVE|SWP_NOZORDER);
 
- ShowWindow(GetDlgItem(hDlg,0x2c6),SW_SHOW);
- ShowWindow(GetDlgItem(hDlg,0x2be),SW_SHOW);
- ShowWindow(GetDlgItem(hDlg,0x2c5),SW_SHOW);
+ ShowWindow32(GetDlgItem32(hDlg,0x2c6),SW_SHOW);
+ ShowWindow32(GetDlgItem32(hDlg,0x2be),SW_SHOW);
+ ShowWindow32(GetDlgItem32(hDlg,0x2c5),SW_SHOW);
 
  CC_EditSetRGB(hDlg,result);
  CC_EditSetHSL(hDlg,lpp->h,lpp->s,lpp->l);
@@ -1798,7 +1798,7 @@ static void CC_SwitchToFullSize(HWND hDlg,COLORREF result,LPRECT16 lprect)
  */
 static void CC_PaintPredefColorArray(HWND hDlg,int rows,int cols)
 {
- HWND hwnd=GetDlgItem(hDlg,0x2d0);
+ HWND32 hwnd=GetDlgItem32(hDlg,0x2d0);
  RECT16 rect;
  HDC32  hdc;
  HBRUSH32 hBrush;
@@ -1837,7 +1837,7 @@ static void CC_PaintPredefColorArray(HWND hDlg,int rows,int cols)
  */
 static void CC_PaintUserColorArray(HWND hDlg,int rows,int cols,COLORREF* lpcr)
 {
- HWND hwnd=GetDlgItem(hDlg,0x2d1);
+ HWND32 hwnd=GetDlgItem32(hDlg,0x2d1);
  RECT16 rect;
  HDC32  hdc;
  HBRUSH32 hBrush;
@@ -1910,7 +1910,7 @@ static LONG CC_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
    SetWindowLong32A(hDlg, DWL_USER, (LONG)lpp); 
 
    if (!(lpp->lpcc->Flags & CC_SHOWHELP))
-      ShowWindow(GetDlgItem(hDlg,0x40e),SW_HIDE);
+      ShowWindow32(GetDlgItem32(hDlg,0x40e),SW_HIDE);
    lpp->msetrgb=RegisterWindowMessage32A( SETRGBSTRING );
 #if 0
    cpos=MAKELONG(5,7); /* init */
@@ -1930,29 +1930,29 @@ static LONG CC_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
    GetWindowRect16(hDlg,&lpp->fullsize);
    if (lpp->lpcc->Flags & CC_FULLOPEN || lpp->lpcc->Flags & CC_PREVENTFULLOPEN)
    {
-      hwnd=GetDlgItem(hDlg,0x2cf);
-      EnableWindow(hwnd,FALSE);
+      hwnd=GetDlgItem32(hDlg,0x2cf);
+      EnableWindow32(hwnd,FALSE);
    }
    if (!(lpp->lpcc->Flags & CC_FULLOPEN) || lpp->lpcc->Flags & CC_PREVENTFULLOPEN)
    {
       rect=lpp->fullsize;
       res=rect.bottom-rect.top;
-      hwnd=GetDlgItem(hDlg,0x2c6); /* cut at left border */
+      hwnd=GetDlgItem32(hDlg,0x2c6); /* cut at left border */
       point.x=point.y=0;
       ClientToScreen16(hwnd,&point);
       ScreenToClient16(hDlg,&point);
       GetClientRect16(hDlg,&rect);
       point.x+=GetSystemMetrics(SM_CXDLGFRAME);
-      SetWindowPos(hDlg,NULL,0,0,point.x,res,SWP_NOMOVE|SWP_NOZORDER);
+      SetWindowPos32(hDlg,NULL,0,0,point.x,res,SWP_NOMOVE|SWP_NOZORDER);
 
-      ShowWindow(GetDlgItem(hDlg,0x2c6),SW_HIDE);
-      ShowWindow(GetDlgItem(hDlg,0x2c5),SW_HIDE);
+      ShowWindow32(GetDlgItem32(hDlg,0x2c6),SW_HIDE);
+      ShowWindow32(GetDlgItem32(hDlg,0x2c5),SW_HIDE);
    }
    else
       CC_SwitchToFullSize(hDlg,lpp->lpcc->rgbResult,NULL);
    res=TRUE;
    for (i=0x2bf;i<0x2c5;i++)
-     SendMessage16(GetDlgItem(hDlg,i),EM_LIMITTEXT16,3,0);      /* max 3 digits:  xyz  */
+     SendMessage16(GetDlgItem32(hDlg,i),EM_LIMITTEXT16,3,0);      /* max 3 digits:  xyz  */
    if (CC_HookCallChk(lpp->lpcc))
       res=CallWindowProc16(lpp->lpcc->lpfnHook,hDlg,WM_INITDIALOG,wParam,lParam);
    return res;
@@ -2031,7 +2031,7 @@ static LRESULT CC_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
           case 0x2cf:
                CC_SwitchToFullSize(hDlg,lpp->lpcc->rgbResult,&lpp->fullsize);
 	       InvalidateRect32( hDlg, NULL, TRUE );
-	       SetFocus32(GetDlgItem(hDlg,0x2bf));
+	       SetFocus32(GetDlgItem32(hDlg,0x2bf));
 	       break;
 
           case 0x2c8:    /* add colors ... column by column */
@@ -2102,11 +2102,11 @@ static LRESULT CC_WMPaint(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
     CC_PaintSelectedColor(hDlg,lpp->lpcc->rgbResult);
 
     /* special necessary for Wine */
-    ValidateRect32(GetDlgItem(hDlg,0x2d0),NULL);
-    ValidateRect32(GetDlgItem(hDlg,0x2d1),NULL);
-    ValidateRect32(GetDlgItem(hDlg,0x2c6),NULL);
-    ValidateRect32(GetDlgItem(hDlg,0x2be),NULL);
-    ValidateRect32(GetDlgItem(hDlg,0x2c5),NULL);
+    ValidateRect32(GetDlgItem32(hDlg,0x2d0),NULL);
+    ValidateRect32(GetDlgItem32(hDlg,0x2d1),NULL);
+    ValidateRect32(GetDlgItem32(hDlg,0x2c6),NULL);
+    ValidateRect32(GetDlgItem32(hDlg,0x2be),NULL);
+    ValidateRect32(GetDlgItem32(hDlg,0x2c5),NULL);
     /* hope we can remove it later -->FIXME */
  return 0;
 }
@@ -2480,9 +2480,9 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
     hBitmapTT = LoadBitmap16(0, MAKEINTRESOURCE(OBM_TRTYPE));
 			 
   if (!(lpcf->Flags & CF_SHOWHELP) || !IsWindow(lpcf->hwndOwner))
-    ShowWindow(GetDlgItem(hDlg,pshHelp),SW_HIDE);
+    ShowWindow32(GetDlgItem32(hDlg,pshHelp),SW_HIDE);
   if (!(lpcf->Flags & CF_APPLY))
-    ShowWindow(GetDlgItem(hDlg,psh3),SW_HIDE);
+    ShowWindow32(GetDlgItem32(hDlg,psh3),SW_HIDE);
   if (lpcf->Flags & CF_EFFECTS)
   {
     for (res=1,i=0;res && i<TEXT_COLORS;i++)
@@ -2500,16 +2500,17 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
   }
   else
   {
-    ShowWindow(GetDlgItem(hDlg,cmb4),SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg,chx1),SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg,chx2),SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg,grp1),SW_HIDE);
-    ShowWindow(GetDlgItem(hDlg,stc4),SW_HIDE);
+    ShowWindow32(GetDlgItem32(hDlg,cmb4),SW_HIDE);
+    ShowWindow32(GetDlgItem32(hDlg,chx1),SW_HIDE);
+    ShowWindow32(GetDlgItem32(hDlg,chx2),SW_HIDE);
+    ShowWindow32(GetDlgItem32(hDlg,grp1),SW_HIDE);
+    ShowWindow32(GetDlgItem32(hDlg,stc4),SW_HIDE);
   }
   hdc= (lpcf->Flags & CF_PRINTERFONTS && lpcf->hDC) ? lpcf->hDC : GetDC32(hDlg);
   if (hdc)
   {
-    if (!EnumFontFamilies16(hdc, NULL,FontFamilyEnumProc,(LPARAM)GetDlgItem(hDlg,cmb1)))
+    if (!EnumFontFamilies16(hdc, NULL,FontFamilyEnumProc,
+                            (LPARAM)GetDlgItem32(hDlg,cmb1)))
       dprintf_commdlg(stddeb,"WM_INITDIALOG: EnumFontFamilies returns 0\n");
     if (lpcf->Flags & CF_INITTOLOGFONTSTRUCT)
     {
@@ -2518,7 +2519,8 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
       if (j!=CB_ERR)
       {
         SendDlgItemMessage16(hDlg,cmb1,CB_SETCURSEL16,j,0);
-	SendMessage16(hDlg,WM_COMMAND,cmb1,MAKELONG(GetDlgItem(hDlg,cmb1),CBN_SELCHANGE));
+	SendMessage16(hDlg,WM_COMMAND,cmb1,
+                      MAKELONG(GetDlgItem32(hDlg,cmb1),CBN_SELCHANGE));
         init=1;
         /* look for fitting font style in combobox2 */
         l=MAKELONG(lpxx->lfWeight > FW_MEDIUM ? FW_BOLD:FW_NORMAL,lpxx->lfItalic !=0);
@@ -2539,7 +2541,8 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
       if (!init)
       {
         SendDlgItemMessage16(hDlg,cmb1,CB_SETCURSEL16,0,0);
-	SendMessage16(hDlg,WM_COMMAND,cmb1,MAKELONG(GetDlgItem(hDlg,cmb1),CBN_SELCHANGE));      
+	SendMessage16(hDlg,WM_COMMAND,cmb1,
+                      MAKELONG(GetDlgItem32(hDlg,cmb1),CBN_SELCHANGE));      
       }
     }
     if (lpcf->Flags & CF_USESTYLE && lpcf->lpszStyle)
@@ -2548,7 +2551,8 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
       if (j!=CB_ERR)
       {
         j=SendDlgItemMessage16(hDlg,cmb2,CB_SETCURSEL16,j,0);
-        SendMessage16(hDlg,WM_COMMAND,cmb2,MAKELONG(GetDlgItem(hDlg,cmb2),CBN_SELCHANGE));
+        SendMessage16(hDlg,WM_COMMAND,cmb2,
+                      MAKELONG(GetDlgItem32(hDlg,cmb2),CBN_SELCHANGE));
       }
     }
   }
@@ -2686,7 +2690,7 @@ LRESULT CFn_WMCtlColor(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
   LPCHOOSEFONT lpcf=(LPCHOOSEFONT)GetWindowLong32A(hDlg, DWL_USER); 
 
   if (lpcf->Flags & CF_EFFECTS)
-   if (HIWORD(lParam)==CTLCOLOR_STATIC && GetDlgCtrlID(LOWORD(lParam))==stc6)
+   if (HIWORD(lParam)==CTLCOLOR_STATIC && GetDlgCtrlID32(LOWORD(lParam))==stc6)
    {
      SetTextColor(wParam,lpcf->rgbColors);
      return GetStockObject32(WHITE_BRUSH);
@@ -2725,7 +2729,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
                                              (LPARAM)SEGPTR_GET(str));
 	                dprintf_commdlg(stddeb,"WM_COMMAND/cmb1 =>%s\n",str);
        		        EnumFontFamilies16(hdc,str,FontStyleEnumProc,
-		             MAKELONG(GetDlgItem(hDlg,cmb2),GetDlgItem(hDlg,cmb3)));
+		             MAKELONG(GetDlgItem32(hDlg,cmb2),GetDlgItem32(hDlg,cmb3)));
 		        SetCursor(hcursor);     
                         SEGPTR_FREE(str);
 		      }
@@ -2778,8 +2782,8 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 		      lpxx->lfHeight=-LOWORD(SendDlgItemMessage16(hDlg,cmb3,CB_GETITEMDATA16,i,0));
 		    else
 		      lpxx->lfHeight=0;
-		    lpxx->lfStrikeOut=IsDlgButtonChecked(hDlg,chx1);
-		    lpxx->lfUnderline=IsDlgButtonChecked(hDlg,chx2);
+		    lpxx->lfStrikeOut=IsDlgButtonChecked32(hDlg,chx1);
+		    lpxx->lfUnderline=IsDlgButtonChecked32(hDlg,chx2);
 		    lpxx->lfWidth=lpxx->lfOrientation=lpxx->lfEscapement=0;
 		    lpxx->lfOutPrecision=OUT_DEFAULT_PRECIS;
 		    lpxx->lfClipPrecision=CLIP_DEFAULT_PRECIS;
@@ -2797,7 +2801,7 @@ LRESULT CFn_WMCommand(HWND hDlg, WPARAM16 wParam, LPARAM lParam)
 		  if (i!=CB_ERR)
 		  {
 		   lpcf->rgbColors=textcolors[i];
-		   InvalidateRect32( GetDlgItem(hDlg,stc6), NULL, 0 );
+		   InvalidateRect32( GetDlgItem32(hDlg,stc6), NULL, 0 );
 		  }
 		  break;
 	

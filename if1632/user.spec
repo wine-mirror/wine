@@ -30,11 +30,11 @@ heap	65520
 28  pascal16 ClientToScreen(word ptr) ClientToScreen16
 29  pascal16 ScreenToClient(word ptr) ScreenToClient16
 30  pascal16 WindowFromPoint(long) WindowFromPoint16
-31  pascal16 IsIconic(word) IsIconic
+31  pascal16 IsIconic(word) IsIconic16
 32  pascal16 GetWindowRect(word ptr) GetWindowRect16
 33  pascal16 GetClientRect(word ptr) GetClientRect16
-34  pascal16 EnableWindow(word word) EnableWindow
-35  pascal16 IsWindowEnabled(word) IsWindowEnabled
+34  pascal16 EnableWindow(word word) EnableWindow16
+35  pascal16 IsWindowEnabled(word) IsWindowEnabled16
 36  pascal16 GetWindowText(word segptr word) GetWindowText16
 37  pascal16 SetWindowText(word segptr) SetWindowText16
 38  pascal16 GetWindowTextLength(word) GetWindowTextLength16
@@ -42,25 +42,25 @@ heap	65520
 40  pascal16 EndPaint(word ptr) EndPaint16
 41  pascal16 CreateWindow(ptr ptr long s_word s_word s_word s_word
 	                  word word word segptr) CreateWindow16
-42  pascal16 ShowWindow(word word) ShowWindow
+42  pascal16 ShowWindow(word word) ShowWindow16
 43  pascal16 CloseWindow(word) CloseWindow
 44  pascal16 OpenIcon(word) OpenIcon
-45  pascal16 BringWindowToTop(word) BringWindowToTop
+45  pascal16 BringWindowToTop(word) BringWindowToTop16
 46  pascal16 GetParent(word) GetParent16
 47  pascal16 IsWindow(word) IsWindow
-48  pascal16 IsChild(word word) IsChild
-49  pascal16 IsWindowVisible(word) IsWindowVisible
+48  pascal16 IsChild(word word) IsChild16
+49  pascal16 IsWindowVisible(word) IsWindowVisible16
 50  pascal16 FindWindow(segptr ptr) FindWindow16
 #51 BEAR51
 52  pascal16 AnyPopup() AnyPopup
-53  pascal16 DestroyWindow(word) DestroyWindow
+53  pascal16 DestroyWindow(word) DestroyWindow16
 54  pascal16 EnumWindows(segptr long) THUNK_EnumWindows16
 55  pascal16 EnumChildWindows(word segptr long) THUNK_EnumChildWindows16
-56  pascal16 MoveWindow(word word word word word word) MoveWindow
+56  pascal16 MoveWindow(word word word word word word) MoveWindow16
 57  pascal16 RegisterClass(ptr) RegisterClass16
 58  pascal16 GetClassName(word ptr word) GetClassName16
-59  pascal16 SetActiveWindow(word) SetActiveWindow
-60  pascal16 GetActiveWindow() GetActiveWindow
+59  pascal16 SetActiveWindow(word) SetActiveWindow16
+60  pascal16 GetActiveWindow() GetActiveWindow16
 61  pascal16 ScrollWindow(word s_word s_word ptr ptr) ScrollWindow16
 62  pascal16 SetScrollPos(word word s_word word) SetScrollPos16
 63  pascal16 GetScrollPos(word word) GetScrollPos16
@@ -90,14 +90,14 @@ heap	65520
 88  pascal16 EndDialog(word s_word) EndDialog
 89  pascal16 CreateDialog(word segptr word segptr) CreateDialog16
 90  pascal16 IsDialogMessage(word ptr) IsDialogMessage
-91  pascal16 GetDlgItem(word word) GetDlgItem
+91  pascal16 GetDlgItem(word word) GetDlgItem16
 92  pascal16 SetDlgItemText(word word segptr) SetDlgItemText16
 93  pascal16 GetDlgItemText(word word segptr word) GetDlgItemText16
 94  pascal16 SetDlgItemInt(word word word word) SetDlgItemInt16
-95  pascal16 GetDlgItemInt(word word ptr word) GetDlgItemInt
-96  pascal16 CheckRadioButton(word word word word) CheckRadioButton
-97  pascal16 CheckDlgButton(word word word) CheckDlgButton
-98  pascal16 IsDlgButtonChecked(word word) IsDlgButtonChecked
+95  pascal16 GetDlgItemInt(word s_word ptr word) GetDlgItemInt16
+96  pascal16 CheckRadioButton(word word word word) CheckRadioButton16
+97  pascal16 CheckDlgButton(word word word) CheckDlgButton16
+98  pascal16 IsDlgButtonChecked(word word) IsDlgButtonChecked16
 99  pascal16 DlgDirSelect(word ptr word) DlgDirSelect
 100 pascal16 DlgDirList(word ptr word word word) DlgDirList16
 101 pascal   SendDlgItemMessage(word word word word long) SendDlgItemMessage16
@@ -169,7 +169,7 @@ heap	65520
 167 pascal16 ShowCaret(word) ShowCaret
 168 pascal16 SetCaretBlinkTime(word) SetCaretBlinkTime
 169 pascal16 GetCaretBlinkTime() GetCaretBlinkTime16
-170 pascal16 ArrangeIconicWindows(word) ArrangeIconicWindows
+170 pascal16 ArrangeIconicWindows(word) ArrangeIconicWindows16
 171 pascal16 WinHelp(word ptr word long) WinHelp16
 172 stub SwitchToThisWindow
 173 pascal16 LoadCursor(word segptr) LoadCursor16
@@ -229,10 +229,10 @@ heap	65520
 226 stub LockInput
 227 pascal16 GetNextDlgGroupItem(word word word) GetNextDlgGroupItem16
 228 pascal16 GetNextDlgTabItem(word word word) GetNextDlgTabItem16
-229 pascal16 GetTopWindow(word) GetTopWindow
-230 pascal16 GetNextWindow(word word) GetNextWindow
+229 pascal16 GetTopWindow(word) GetTopWindow16
+230 pascal16 GetNextWindow(word word) GetNextWindow16
 231 stub GetSystemDebugState
-232 pascal16 SetWindowPos(word word word word word word word) SetWindowPos
+232 pascal16 SetWindowPos(word word word word word word word) SetWindowPos16
 233 pascal16 SetParent(word word) SetParent
 234 pascal16 UnhookWindowsHook(s_word segptr) THUNK_UnhookWindowsHook16
 235 pascal   DefHookProc(s_word word long ptr) DefHookProc16
@@ -261,11 +261,11 @@ heap	65520
 256 pascal16 GetDriverInfo(word ptr) GetDriverInfo
 257 pascal16 GetNextDriver(word long) GetNextDriver
 258 pascal16 MapWindowPoints(word word ptr word) MapWindowPoints16
-259 pascal16 BeginDeferWindowPos(s_word) BeginDeferWindowPos
+259 pascal16 BeginDeferWindowPos(s_word) BeginDeferWindowPos16
 260 pascal16 DeferWindowPos(word word word s_word s_word s_word s_word word)
-             DeferWindowPos
-261 pascal16 EndDeferWindowPos(word) EndDeferWindowPos
-262 pascal16 GetWindow(word word) GetWindow
+             DeferWindowPos16
+261 pascal16 EndDeferWindowPos(word) EndDeferWindowPos16
+262 pascal16 GetWindow(word word) GetWindow16
 263 pascal16 GetMenuItemCount(word) GetMenuItemCount16
 264 pascal16 GetMenuItemID(word word) GetMenuItemID16
 265 pascal16 ShowOwnedPopups(word word) ShowOwnedPopups
@@ -275,12 +275,12 @@ heap	65520
 269 pascal16 GlobalDeleteAtom(word) GlobalDeleteAtom
 270 pascal16 GlobalFindAtom(segptr) GlobalFindAtom16
 271 pascal16 GlobalGetAtomName(word ptr s_word) GlobalGetAtomName16
-272 pascal16 IsZoomed(word) IsZoomed
+272 pascal16 IsZoomed(word) IsZoomed16
 273 stub ControlPanelInfo
 274 stub GetNextQueueWindow
 275 stub RepaintScreen
 276 stub LockMyTask
-277 pascal16 GetDlgCtrlID(word) GetDlgCtrlID
+277 pascal16 GetDlgCtrlID(word) GetDlgCtrlID16
 278 pascal16 GetDesktopHwnd() GetDesktopHwnd
 279 stub OldSetDeskPattern
 280 pascal16 SetSystemMenu(word word) SetSystemMenu16

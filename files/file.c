@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/errno.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
@@ -316,6 +317,8 @@ static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
     info->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
     if (S_ISDIR(st->st_mode))
         info->dwFileAttributes |= FILE_ATTRIBUTE_DIRECTORY;
+    if (!(st->st_mode & S_IWUSR))
+        info->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
 
     DOSFS_UnixTimeToFileTime( st->st_mtime, &info->ftCreationTime, 0 );
     DOSFS_UnixTimeToFileTime( st->st_mtime, &info->ftLastWriteTime, 0 );
@@ -510,6 +513,8 @@ UINT32 GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
     if (!path) return 0;
     strcpy( buffer, path );
     p = buffer + strlen(buffer);
+    /* add a \, if there isn't one ... */
+    if ((p == buffer) || (p[-1] != '\\')) *p++ = '\\';
     *p++ = '~';
     for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
     sprintf( p, "%04x.tmp", num );
@@ -538,6 +543,8 @@ UINT32 GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
 
     if (DOSFS_GetFullName( buffer, FALSE, &full_name ))
     {
+        /* Check if we have write access in the directory */
+        if ((p = strrchr( full_name.long_name, '/' ))) *p = '\0';
         if (access( full_name.long_name, W_OK ) == -1)
             fprintf( stderr,
                      "Warning: GetTempFileName returns '%s', which doesn't seem to be writeable.\n"

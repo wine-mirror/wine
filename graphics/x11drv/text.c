@@ -41,8 +41,8 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     if (!DC_SetupGCForText( dc )) return TRUE;
     font = dc->u.x.font.fstruct;
 
-    dprintf_text(stddeb,"ExtTextOut: hdc=%04x %d,%d '%*.*s', %d  flags=%d\n",
-                 dc->hSelf, x, y, count, count, str, count, flags);
+    dprintf_text(stddeb,"ExtTextOut: hdc=%04x %d,%d '%.*s', %d  flags=%d\n",
+                 dc->hSelf, x, y, (int)count, str, count, flags);
     if (lprect != NULL) dprintf_text(stddeb, "\trect=(%d,%d- %d,%d)\n",
                                      lprect->left, lprect->top,
                                      lprect->right, lprect->bottom );

@@ -267,7 +267,7 @@ base	1
 262 stub _searchenv
 263 stub _seterrormode
 264 stub _setjmp
-265 stub _setmode
+265 cdecl _setmode(long long) CRTDLL__setmode
 266 stub _setsystime
 267 stub _sleep
 268 stub _snprintf
@@ -295,7 +295,7 @@ base	1
 290 stub _strlwr
 291 stub _strncnt
 292 stub _strnextc
-293 stub _strnicmp
+293 cdecl _strnicmp(ptr ptr long) lstrncmpi32A
 294 stub _strninc
 295 stub _strnset
 296 stub _strrev
@@ -347,7 +347,7 @@ base	1
 342 cdecl asin(long) CRTDLL_asin
 343 cdecl atan(long) CRTDLL_atan
 344 cdecl atan2(long long) CRTDLL_atan2
-345 stub atexit
+345 cdecl atexit(ptr) CRTDLL_atexit
 346 cdecl atof(ptr) CRTDLL_atof
 347 cdecl atoi(ptr) CRTDLL_atoi
 348 cdecl atol(ptr) CRTDLL_atol
@@ -446,7 +446,7 @@ base	1
 441 stub putc
 442 cdecl putchar(long) CRTDLL_putchar
 443 stub puts
-444 stub qsort
+444 cdecl qsort(ptr long long ptr) qsort
 445 stub raise
 446 cdecl rand() CRTDLL_rand
 447 cdecl realloc(ptr long) CRTDLL_realloc

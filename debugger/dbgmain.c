@@ -6,15 +6,16 @@
 #include <signal.h>
 
 #include <ldt.h>
-#include <windows.h>
-#include <toolhelp.h>
-#include <module.h>
-#include <debugger.h>
-#include <class.h>
+#include "windows.h"
+#include "toolhelp.h"
+#include "module.h"
+#include "debugger.h"
+#include "class.h"
 #include <X11/Xlib.h>
 
 #include "debugger.h"
 #include "peexe.h"
+#include "pe_image.h"
 
 ldt_copy_entry ldt_copy[LDT_SIZE];
 unsigned char ldt_flags_copy[LDT_SIZE];
@@ -171,7 +172,7 @@ struct deferred_debug_info
 	int				  dbg_size;
 	struct PE_Debug_dir		* dbgdir;
 	struct pe_data			* pe;
-        struct pe_segment_table         * sectp;
+        LPIMAGE_SECTION_HEADER            sectp;
 	int				  nsect;
 	short int			  dbg_index;			
 	char				  loaded;
@@ -190,7 +191,7 @@ test_pdbstuff()
   struct deferred_debug_info deefer;
   struct PE_Debug_dir	dinfo;
   struct CodeViewDebug cdebug;
-  struct pe_segment_table sects[10];
+  IMAGE_SECTION_HEADER  sects[10];
 
   memset(&deefer, 0, sizeof(deefer));
   memset(&dinfo, 0, sizeof(dinfo));
@@ -201,7 +202,7 @@ test_pdbstuff()
   dinfo.timestamp = 812932395;
   cdebug.cv_timestamp = 833392137  /* 841951397 */;
   deefer.dbgdir = &dinfo;
-  deefer.sectp = &sects;
+  deefer.sectp = sects;
   deefer.nsect = 10;
 
   DEBUG_InitTypes();

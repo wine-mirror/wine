@@ -271,6 +271,7 @@ static void output_dependencies(void)
         while (fgets( buffer, sizeof(buffer), file ))
             if (!strncmp( buffer, Separator, strlen(Separator) )) break;
         ftruncate( fileno(file), ftell(file) );
+        fseek( file, 0L, SEEK_END );
     }
     if (!file)
     {

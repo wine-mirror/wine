@@ -18,6 +18,9 @@
 #include "xmalloc.h"
 
 #define NR_NAME_HASH 16384
+#ifndef PATH_MAX
+#define PATH_MAX _MAX_PATH
+#endif
 
 static char * reg_name[] =
 {

@@ -160,7 +160,7 @@ void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat)
  */
 BOOL CLIPBOARD_RequestXSelection()
 {
-  HWND hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow();
+  HWND hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow16();
 
   if( !hWnd ) return FALSE;
 

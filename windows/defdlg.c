@@ -21,7 +21,7 @@ static void DEFDLG_SetFocus( HWND32 hwndDlg, HWND32 hwndCtrl )
 {
     HWND32 hwndPrev = GetFocus32();
 
-    if (IsChild( hwndDlg, hwndPrev ))
+    if (IsChild32( hwndDlg, hwndPrev ))
     {
         if (SendMessage16( hwndPrev, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
             SendMessage16( hwndPrev, EM_SETSEL16, TRUE, MAKELONG( -1, 0 ) );
@@ -39,7 +39,7 @@ static BOOL32 DEFDLG_SaveFocus( HWND32 hwnd, DIALOGINFO *infoPtr )
 {
     HWND32 hwndFocus = GetFocus32();
 
-    if (!hwndFocus || !IsChild( hwnd, hwndFocus )) return FALSE;
+    if (!hwndFocus || !IsChild32( hwnd, hwndFocus )) return FALSE;
     infoPtr->hwndFocus = hwndFocus;
       /* Remove default button */
     return TRUE;
@@ -51,7 +51,7 @@ static BOOL32 DEFDLG_SaveFocus( HWND32 hwnd, DIALOGINFO *infoPtr )
  */
 static BOOL32 DEFDLG_RestoreFocus( HWND32 hwnd, DIALOGINFO *infoPtr )
 {
-    if (!infoPtr->hwndFocus || IsIconic(hwnd)) return FALSE;
+    if (!infoPtr->hwndFocus || IsIconic32(hwnd)) return FALSE;
     if (!IsWindow( infoPtr->hwndFocus )) return FALSE;
     DEFDLG_SetFocus( hwnd, infoPtr->hwndFocus );
     infoPtr->hwndFocus = 0;
@@ -66,12 +66,12 @@ static BOOL32 DEFDLG_RestoreFocus( HWND32 hwnd, DIALOGINFO *infoPtr )
  */
 static HWND32 DEFDLG_FindDefButton( HWND32 hwndDlg )
 {
-    HWND32 hwndChild = GetWindow( hwndDlg, GW_CHILD );
+    HWND32 hwndChild = GetWindow32( hwndDlg, GW_CHILD );
     while (hwndChild)
     {
         if (SendMessage16( hwndChild, WM_GETDLGCODE, 0, 0 ) & DLGC_DEFPUSHBUTTON)
             break;
-        hwndChild = GetWindow( hwndChild, GW_HWNDNEXT );
+        hwndChild = GetWindow32( hwndChild, GW_HWNDNEXT );
     }
     return hwndChild;
 }
@@ -91,14 +91,14 @@ static BOOL32 DEFDLG_SetDefButton( HWND32 hwndDlg, DIALOGINFO *dlgInfo,
     
     if (dlgInfo->idResult)  /* There's already a default pushbutton */
     {
-        HWND32 hwndOld = GetDlgItem( hwndDlg, dlgInfo->idResult );
+        HWND32 hwndOld = GetDlgItem32( hwndDlg, dlgInfo->idResult );
         if (SendMessage32A( hwndOld, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON)
             SendMessage32A( hwndOld, BM_SETSTYLE32, BS_PUSHBUTTON, TRUE );
     }
     if (hwndNew)
     {
         SendMessage32A( hwndNew, BM_SETSTYLE32, BS_DEFPUSHBUTTON, TRUE );
-        dlgInfo->idResult = GetDlgCtrlID( hwndNew );
+        dlgInfo->idResult = GetDlgCtrlID32( hwndNew );
     }
     else dlgInfo->idResult = 0;
     return TRUE;
@@ -170,7 +170,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
         case DM_SETDEFID:
             if (dlgInfo->fEnd) return 1;
             DEFDLG_SetDefButton( hwnd, dlgInfo,
-                                 wParam ? GetDlgItem( hwnd, wParam ) : 0 );
+                                 wParam ? GetDlgItem32( hwnd, wParam ) : 0 );
             return 1;
 
         case DM_GETDEFID:
@@ -179,7 +179,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 	      return MAKELONG( dlgInfo->idResult, DC_HASDEFID );
 	    hwndDefId = DEFDLG_FindDefButton( hwnd );
 	    if (hwndDefId)
-	      return MAKELONG( GetDlgCtrlID( hwndDefId ), DC_HASDEFID);
+	      return MAKELONG( GetDlgCtrlID32( hwndDefId ), DC_HASDEFID);
 	    return 0;
 
 	case WM_NEXTDLGCTL:
@@ -197,7 +197,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 
         case WM_CLOSE:
             EndDialog( hwnd, TRUE );
-            DestroyWindow( hwnd );
+            DestroyWindow32( hwnd );
             return 0;
     }
     return 0;

@@ -3,7 +3,6 @@
  * 
  * Copyright 1996 Marcus Meissner
  */
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -40,6 +39,7 @@ read_ne_header(HFILE32 lzfd,struct ne_header_s *nehd) {
 		LZSeek32(lzfd,mzh.ne_offset,SEEK_SET);
 		return 1;
 	}
+	fprintf(stderr,"misc/ver.c:read_ne_header:can't handle PE files yet.\n");
 	/* must handle PE files too. Later. */
 	return 0;
 }
@@ -442,37 +442,222 @@ VerFindFile32W(
 DWORD
 VerInstallFile16(
 	UINT16 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
-	LPCSTR destdir,LPSTR tmpfile,UINT16 *tmpfilelen
-) {
-	dprintf_ver(stddeb,"VerInstallFile(%x,%s,%s,%s,%s,%p,%d)\n",
-		flags,srcfilename,destfilename,srcdir,destdir,tmpfile,*tmpfilelen
-	);
-
-	/* FIXME: Implementation still missing .... */
-
-	return VIF_SRCOLD;
-}
-
-/* VerFindFileA					[VERSION.5] */
-DWORD
-VerInstallFile32A(
-	UINT32 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
-	LPCSTR destdir,LPSTR tmpfile,UINT32 *tmpfilelen )
+ 	LPCSTR destdir,LPCSTR curdir,LPSTR tmpfile,UINT16 *tmpfilelen )
 {
-    UINT16 filelen;
-    DWORD ret= VerInstallFile16(flags,srcfilename,destfilename,srcdir,
-                                destdir,tmpfile,&filelen);
+    UINT32	filelen;
+    DWORD ret= VerInstallFile32A(flags,srcfilename,destfilename,srcdir,
+                                 destdir,curdir,tmpfile,&filelen);
+
     *tmpfilelen = filelen;
     return ret;
 }
 
-/* VerFindFileW					[VERSION.6] */
+/* VerInstallFileA				[VERSION.7] */
+static LPBYTE
+_fetch_versioninfo(LPSTR fn) {
+    DWORD	alloclen;
+    LPBYTE	buf;
+    DWORD	ret;
+
+    alloclen = 1000;
+    buf= xmalloc(alloclen);
+    while (1) {
+    	ret = GetFileVersionInfo32A(fn,0,alloclen,buf);
+	if (!ret) {
+	    free(buf);
+	    return 0;
+	}
+	if (alloclen<*(WORD*)buf) {
+	    free(buf);
+	    alloclen = *(WORD*)buf;
+	    buf = xmalloc(alloclen);
+	} else
+	    return buf;
+    }
+}
+
+static DWORD
+_error2vif(DWORD error) {
+    switch (error) {
+    case ERROR_ACCESS_DENIED:
+    	return VIF_ACCESSVIOLATION;
+    case ERROR_SHARING_VIOLATION:
+    	return VIF_SHARINGVIOLATION;
+    default:
+    	return 0;
+    }
+}
+
+DWORD
+VerInstallFile32A(
+	UINT32 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
+ 	LPCSTR destdir,LPCSTR curdir,LPSTR tmpfile,UINT32 *tmpfilelen )
+{
+    char	destfn[260],tmpfn[260],srcfn[260];
+    HFILE32	hfsrc,hfdst;
+    DWORD	attr,ret,xret,tmplast;
+    LPBYTE	buf1,buf2;
+    OFSTRUCT	ofs;
+
+    fprintf(stddeb,"VerInstallFile(%x,%s,%s,%s,%s,%s,%p,%d)\n",
+	    flags,srcfilename,destfilename,srcdir,destdir,curdir,tmpfile,*tmpfilelen
+    );
+    xret = 0;
+    sprintf(srcfn,"%s\\%s",srcdir,srcfilename);
+    sprintf(destfn,"%s\\%s",destdir,destfilename);
+    hfsrc=LZOpenFile32A(srcfn,&ofs,OF_READ);
+    if (hfsrc==HFILE_ERROR32)
+    	return VIF_CANNOTREADSRC;
+    sprintf(tmpfn,"%s\\%s",destdir,destfilename);
+    tmplast=strlen(destdir)+1;
+    attr = GetFileAttributes32A(tmpfn);
+    if (attr!=-1) {
+	if (attr & FILE_ATTRIBUTE_READONLY) {
+	    LZClose32(hfsrc);
+	    return VIF_WRITEPROT;
+	}
+	/* FIXME: check if file currently in use and return VIF_FILEINUSE */
+    }
+    attr = -1;
+    if (flags & VIFF_FORCEINSTALL) {
+    	if (tmpfile[0]) {
+	    sprintf(tmpfn,"%s\\%s",destdir,tmpfile);
+	    tmplast = strlen(destdir)+1;
+	    attr = GetFileAttributes32A(tmpfn);
+	    /* if it exists, it has been copied by the call before.
+	     * we jump over the copy part... 
+	     */
+	}
+    }
+    if (attr == -1) {
+    	char	*s;
+
+	GetTempFileName32A(destdir,"ver",0,tmpfn); /* should not fail ... */
+	s=strrchr(tmpfn,'\\');
+	if (s)
+	    tmplast = s-tmpfn;
+	else
+	    tmplast = 0;
+	hfdst = OpenFile32(tmpfn,&ofs,OF_CREATE);
+	if (hfdst == HFILE_ERROR32) {
+	    LZClose32(hfsrc);
+	    return VIF_CANNOTCREATE; /* | translated dos error */
+	}
+	ret = LZCopy32(hfsrc,hfdst);
+	_lclose32(hfdst);
+	if (ret<0) {
+	    /* translate LZ errors into VIF_xxx */
+	    switch (ret) {
+	    case LZERROR_BADINHANDLE:
+	    case LZERROR_READ:
+	    case LZERROR_BADVALUE:
+	    case LZERROR_UNKNOWNALG:
+		ret = VIF_CANNOTREADSRC;
+		break;
+	    case LZERROR_BADOUTHANDLE:
+	    case LZERROR_WRITE:
+		ret = VIF_OUTOFMEMORY; /* FIXME: correct? */
+		break;
+	    case LZERROR_GLOBALLOC:
+	    case LZERROR_GLOBLOCK:
+		ret = VIF_OUTOFSPACE;
+		break;
+	    default: /* unknown error, should not happen */
+		ret = 0;
+		break;
+	    }
+	    if (ret) {
+		LZClose32(hfsrc);
+		return ret;
+	    }
+	}
+    }
+    xret = 0;
+    if (!(flags & VIFF_FORCEINSTALL)) {
+    	buf1 = _fetch_versioninfo(destfn);
+	if (buf1) {
+	    buf2 = _fetch_versioninfo(tmpfn);
+	    if (!buf2) {
+	    	char	*tbuf1,*tbuf2;
+		VS_FIXEDFILEINFO *destvffi,*tmpvffi;
+		UINT32	len1,len2;
+
+		destvffi= (VS_FIXEDFILEINFO*)(buf1+0x14);
+		tmpvffi = (VS_FIXEDFILEINFO*)(buf2+0x14);
+		len1=len2=40;
+
+		/* compare file versions */
+		if ((destvffi->dwFileVersionMS > tmpvffi->dwFileVersionMS)||
+		    ((destvffi->dwFileVersionMS==tmpvffi->dwFileVersionMS)&&
+		     (destvffi->dwFileVersionLS > tmpvffi->dwFileVersionLS)
+		    )
+		)
+		    xret |= VIF_MISMATCH|VIF_SRCOLD;
+		/* compare filetypes and filesubtypes */
+		if ((destvffi->dwFileType!=tmpvffi->dwFileType) ||
+		    (destvffi->dwFileSubtype!=tmpvffi->dwFileSubtype)
+		)
+		    xret |= VIF_MISMATCH|VIF_DIFFTYPE;
+		if (VerQueryValue32A(buf1,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf1,&len1) &&
+		    VerQueryValue32A(buf2,"\\VarFileInfo\\Translation",(LPVOID*)&tbuf2,&len2)
+		) {
+		    /* irgendwas mit tbuf1 und tbuf2 machen 
+		     * generiert DIFFLANG|MISMATCH
+		     */
+		}
+		free(buf2);
+	    } else
+		xret=VIF_MISMATCH|VIF_SRCOLD;
+	    free(buf1);
+	}
+    }
+    if (xret) {
+	if (*tmpfilelen<strlen(tmpfn+tmplast)) {
+	    xret|=VIF_BUFTOSMALL;
+	    DeleteFile32A(tmpfn);
+	} else {
+	    strcpy(tmpfile,tmpfn+tmplast);
+	    *tmpfilelen = strlen(tmpfn+tmplast)+1;
+	    xret|=VIF_TEMPFILE;
+	}
+    } else {
+    	if (-1!=GetFileAttributes32A(destfn))
+	    if (!DeleteFile32A(destfn)) {
+		xret|=_error2vif(GetLastError())|VIF_CANNOTDELETE;
+		DeleteFile32A(tmpfn);
+		LZClose32(hfsrc);
+		return xret;
+	    }
+	if ((!(flags & VIFF_DONTDELETEOLD))	&& 
+	    curdir				&& 
+	    *curdir				&&
+	    lstrcmpi32A(curdir,destdir)
+	) {
+	    char curfn[260];
+
+	    sprintf(curfn,"%s\\%s",curdir,destfilename);
+	    if (-1!=GetFileAttributes32A(curfn)) {
+		/* FIXME: check if in use ... if it is, VIF_CANNOTDELETECUR */
+		if (!DeleteFile32A(curfn))
+	    	    xret|=_error2vif(GetLastError())|VIF_CANNOTDELETECUR;
+	    }
+	}
+	if (!MoveFile32A(tmpfn,destfn)) {
+	    xret|=_error2vif(GetLastError())|VIF_CANNOTRENAME;
+	    DeleteFile32A(tmpfn);
+	}
+    }
+    LZClose32(hfsrc);
+    return xret;
+}
+
+/* VerInstallFileW				[VERSION.8] */
 DWORD
 VerInstallFile32W(
 	UINT32 flags,LPCWSTR srcfilename,LPCWSTR destfilename,LPCWSTR srcdir,
-	LPCWSTR destdir,LPWSTR tmpfile,UINT32 *tmpfilelen )
+	LPCWSTR destdir,LPCWSTR curdir,LPWSTR tmpfile,UINT32 *tmpfilelen )
 {
-    LPSTR wsrcf,wsrcd,wdestf,wdestd,wtmpf;
+    LPSTR wsrcf,wsrcd,wdestf,wdestd,wtmpf,wcurd;
     DWORD ret;
 
     wsrcf  = HEAP_strdupWtoA( GetProcessHeap(), 0, srcfilename );
@@ -480,18 +665,23 @@ VerInstallFile32W(
     wdestf = HEAP_strdupWtoA( GetProcessHeap(), 0, destfilename );
     wdestd = HEAP_strdupWtoA( GetProcessHeap(), 0, destdir );
     wtmpf  = HEAP_strdupWtoA( GetProcessHeap(), 0, tmpfile );
-    ret = VerInstallFile32A(flags,wsrcf,wdestf,wsrcd,wdestd,wtmpf,tmpfilelen);
+    wcurd  = HEAP_strdupWtoA( GetProcessHeap(), 0, curdir );
+    ret = VerInstallFile32A(flags,wsrcf,wdestf,wsrcd,wdestd,wcurd,wtmpf,tmpfilelen);
+    if (!ret)
+    	lstrcpynAtoW(tmpfile,wtmpf,*tmpfilelen);
     HeapFree( GetProcessHeap(), 0, wsrcf );
     HeapFree( GetProcessHeap(), 0, wsrcd );
     HeapFree( GetProcessHeap(), 0, wdestf );
     HeapFree( GetProcessHeap(), 0, wdestd );
     HeapFree( GetProcessHeap(), 0, wtmpf );
+    if (wcurd) 
+    	HeapFree( GetProcessHeap(), 0, wcurd );
     return ret;
 }
 
 /* FIXME: This table should, of course, be language dependend */
 static const struct map_id2str {
-	UINT	langid;
+	UINT16	langid;
 	const char *langname;
 } languages[]={
 	{0x0401,"Arabisch"},

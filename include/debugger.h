@@ -167,9 +167,9 @@ struct expr * DEBUG_StructPExpr(struct expr *, const char * element);
 struct expr * DEBUG_StructExpr(struct expr *, const char * element);
 struct expr * DEBUG_ArrayExpr(struct expr *, struct expr * index);
 struct expr * DEBUG_CallExpr(const char *, int nargs, ...);
+struct expr * DEBUG_TypeCastExpr(struct datatype *, struct expr *);
 extern   int  DEBUG_ExprValue(DBG_ADDR *, unsigned int *);
 DBG_ADDR DEBUG_EvalExpr(struct expr *);
-extern int DEBUG_AddDisplay(struct expr * exp);
 extern int DEBUG_DelDisplay(int displaynum);
 extern struct expr * DEBUG_CloneExpr(struct expr * exp);
 extern int DEBUG_FreeExpr(struct expr * exp);
@@ -180,7 +180,7 @@ extern int DEBUG_AddBPCondition(int bpnum, struct expr * exp);
 
   /* debugger/display.c */
 extern int DEBUG_DoDisplay(void);
-extern int DEBUG_AddDisplay(struct expr * exp);
+extern int DEBUG_AddDisplay(struct expr * exp, int count, char format);
 extern int DEBUG_DoDisplay(void);
 extern int DEBUG_DelDisplay(int displaynum);
 extern int DEBUG_InfoDisplay(void);
@@ -273,6 +273,7 @@ extern void DEBUG_InfoShare(void);
 extern void DEBUG_InitCVDataTypes(void);
 
   /* debugger/types.c */
+extern int DEBUG_nchar;
 extern void DEBUG_InitTypes(void);
 extern struct datatype * DEBUG_NewDataType(enum debug_type xtype, 
 					   const char * typename);
@@ -296,7 +297,9 @@ extern long long int DEBUG_GetExprValue(DBG_ADDR * addr, char ** format);
 extern int DEBUG_SetBitfieldParams(struct datatype * dt, int offset, 
 				   int nbits, struct datatype * dt2);
 extern int DEBUG_CopyFieldlist(struct datatype * dt, struct datatype * dt2);
-
+extern enum debug_type DEBUG_GetType(struct datatype * dt);
+extern struct datatype * DEBUG_TypeCast(enum debug_type, const char *);
+extern int DEBUG_PrintTypeCast(struct datatype *);
 
   /* debugger/source.c */
 extern void DEBUG_ShowDir(void);

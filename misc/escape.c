@@ -4,21 +4,25 @@
  * Copyright 1994  Bob Amstadt
  */
 
-#include <stdlib.h>
+#define NO_TRANSITION_TYPES
 #include <stdio.h>
 #include "windows.h"
 #include "gdi.h"
+#include "dc.h"
 
-INT Escape( HDC16 hdc, INT nEscape, INT cbInput,
-            SEGPTR lpszInData, SEGPTR lpvOutData )
+INT16 Escape16( HDC16 hdc, INT16 nEscape, INT16 cbInput,
+                SEGPTR lpszInData, SEGPTR lpvOutData )
 {
-    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
-    if (!dc) 
-    {
-	dc = (DC *)GDI_GetObjPtr(hdc, METAFILE_DC_MAGIC);
-	if (!dc) return 0;
-    }
-
-    if (!dc->funcs->pEscape) return 0;
+    DC * dc = DC_GetDCPtr( hdc );
+    if (!dc || !dc->funcs->pEscape) return 0;
     return dc->funcs->pEscape( dc, nEscape, cbInput, lpszInData, lpvOutData );
+}
+
+INT32 Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
+                LPVOID lpszInData, LPVOID lpvOutData )
+{
+    DC * dc = DC_GetDCPtr( hdc );
+    if (!dc || !dc->funcs->pEscape) return 0;
+    return dc->funcs->pEscape( dc, nEscape, cbInput,
+                               (SEGPTR)lpszInData, (SEGPTR)lpvOutData );
 }

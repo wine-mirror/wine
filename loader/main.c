@@ -25,6 +25,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "file.h"
 #include "gdi.h"
 #include "heap.h"
+#include "keyboard.h"
 #include "miscemu.h"
 #include "neexe.h"
 #include "options.h"
@@ -32,7 +33,6 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "task.h"
 #include "user.h"
 #include "dce.h"
-#include "pe_image.h"
 #include "shell.h"
 #include "winproc.h"
 #include "stddebug.h"
@@ -123,6 +123,9 @@ int MAIN_Init(void)
       /* Create the DCEs */
     DCE_Init();
 
+    /* Initialize keyboard */
+    if (!KEYBOARD_Init()) return 0;
+
     /* Initialize window procedures */
     if (!WINPROC_Init()) return 0;
 
@@ -164,7 +167,7 @@ int main(int argc, char *argv[] )
     extern BOOL32 MAIN_WineInit( int *argc, char *argv[] );
     extern char * DEBUG_argv0;
 
-    int i;
+    int i,loaded;
     HINSTANCE16 handle;
 
     /*
@@ -176,6 +179,7 @@ int main(int argc, char *argv[] )
     if (!MAIN_WineInit( &argc, argv )) return 1;
     if (!MAIN_Init()) return 1;
 
+    loaded=0;
     for (i = 1; i < argc; i++)
     {
         if ((handle = WinExec32( argv[i], SW_SHOWNORMAL )) < 32)
@@ -190,6 +194,13 @@ int main(int argc, char *argv[] )
             }
             return 1;
         }
+	loaded++;
+    }
+
+    if (!loaded) { /* nothing loaded */
+    	extern void MAIN_Usage(char*);
+    	MAIN_Usage(argv[0]);
+	return 1;
     }
 
     if (Options.debug) DEBUG_SetBreakpoints( TRUE );  /* Setup breakpoints */

@@ -5,6 +5,9 @@
  */
 
 #include <math.h>
+#if defined(__EMX__)
+#include <float.h>
+#endif
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>

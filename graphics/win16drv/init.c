@@ -31,6 +31,7 @@ static BOOL16 windrvExtTextOut16( DC *dc, INT16 x, INT16 y, UINT16 flags, const 
                                  LPCSTR str, UINT16 count, const INT16 *lpDx);
 #endif
 
+DRAWMODE DrawMode;
 static BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                  LPCSTR output, const DEVMODE16* initData );
 static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput, 
@@ -49,7 +50,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pExcludeClipRect */
     NULL,                            /* pExcludeVisRect */
     NULL,                            /* pExtFloodFill */
-    NULL,                            /* pExtTextOut */
+    WIN16DRV_ExtTextOut,             /* pExtTextOut */
     NULL,                            /* pGetPixel */
     WIN16DRV_GetTextExtentPoint,     /* pGetTextExtentPoint */
     WIN16DRV_GetTextMetrics,         /* pGetTextMetrics */
@@ -58,8 +59,8 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pLineTo */
     NULL,                            /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
-    NULL,                            /* pOffsetViewportOrg (optional) */
-    NULL,                            /* pOffsetWindowOrg (optional) */
+    NULL,                            /* pOffsetViewportOrgEx */
+    NULL,                            /* pOffsetWindowOrgEx */
     NULL,                            /* pPaintRgn */
     NULL,                            /* pPatBlt */
     NULL,                            /* pPie */
@@ -71,8 +72,8 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pRestoreDC */
     NULL,                            /* pRoundRect */
     NULL,                            /* pSaveDC */
-    NULL,                            /* pScaleViewportExt (optional) */
-    NULL,                            /* pScaleWindowExt (optional) */
+    NULL,                            /* pScaleViewportExtEx */
+    NULL,                            /* pScaleWindowExtEx */
     NULL,                            /* pSelectClipRgn */
     NULL,                            /* pSelectObject */
     NULL,                            /* pSelectPalette */
@@ -80,7 +81,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pSetBkMode */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDIBitsToDevice */
-    NULL,                            /* pSetMapMode (optional) */
+    NULL,                            /* pSetMapMode */
     NULL,                            /* pSetMapperFlags */
     NULL,                            /* pSetPixel */
     NULL,                            /* pSetPolyFillMode */
@@ -91,10 +92,10 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pSetTextCharacterExtra */
     NULL,                            /* pSetTextColor */
     NULL,                            /* pSetTextJustification */
-    NULL,                            /* pSetViewportExt (optional) */
-    NULL,                            /* pSetViewportOrg (optional) */
-    NULL,                            /* pSetWindowExt (optional) */
-    NULL,                            /* pSetWindowOrg (optional) */
+    NULL,                            /* pSetViewportExtEx */
+    NULL,                            /* pSetViewportOrgEx */
+    NULL,                            /* pSetWindowExtEx */
+    NULL,                            /* pSetWindowOrgEx */
     NULL,                            /* pStretchBlt */
     NULL                             /* pStretchDIBits */
 };
@@ -116,7 +117,7 @@ BOOL32 WIN16DRV_Init(void)
 
 /* Tempory functions, for initialising structures */
 /* These values should be calculated, not hardcoded */
-void InitTextXForm(LPTEXTXFORM lpTextXForm)
+void InitTextXForm(LPTEXTXFORM16 lpTextXForm)
 {
     lpTextXForm->txfHeight 	= 0x0001;
     lpTextXForm->txfWidth 	= 0x000c;
@@ -549,7 +550,7 @@ WORD PRTDRV_EnumDFonts(LPPDEVICE lpDestDev, LPSTR lpFaceName,
  */
 DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle, 
 		    LPVOID lpInObj, LPVOID lpOutObj,
-                    LPTEXTXFORM lpTextXForm)
+                    LPTEXTXFORM16 lpTextXForm)
 {
     WORD dwRet = 0;
     LOADED_PRINTER_DRIVER *pLPD = NULL;
@@ -591,7 +592,7 @@ DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
 	if (lpTextXForm != NULL)
 	{
 	    lP5 = SegPtr;
-	    nSize = sizeof(TEXTXFORM);
+	    nSize = sizeof(TEXTXFORM16);
 	    AddData(&SegPtr, lpTextXForm, nSize, Limit);	
 	}
 	else
@@ -616,9 +617,10 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     int nPDEVICEsize;
     PDEVICE_HEADER *pPDH;
     WIN16DRV_PDEVICE *physDev;
+    LPDRAWMODE lpDrawMode = &DrawMode;
 
     /* Realizing fonts */
-    TEXTXFORM TextXForm;
+    TEXTXFORM16 TextXForm;
     int nSize;
     char printerEnabled[20];
     PROFILE_GetWineIniString( "wine", "printer", "off",
@@ -751,7 +753,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     /* Quick look at structure */
     if (physDev->segptrFontInfo)
     {  
-	FONTINFO *p = (FONTINFO *)PTR_SEG_TO_LIN(physDev->segptrFontInfo);
+	FONTINFO16 *p = (FONTINFO16 *)PTR_SEG_TO_LIN(physDev->segptrFontInfo);
 
 	dprintf_win16drv(stddeb, "T:%d VR:%d HR:%d, F:%d L:%d\n",
 	       p->dfType,
@@ -762,6 +764,7 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 
 #endif
     /* TTD Lots more to do here */
+    InitDrawMode(lpDrawMode);
 
     return TRUE;
 }
@@ -799,7 +802,7 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
 DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
                         RECT16 *lpClipRect, LPCSTR lpString, WORD wCount, 
                         SEGPTR lpFontInfo, LPDRAWMODE lpDrawMode, 
-                        LPTEXTXFORM lpTextXForm, SHORT *lpCharWidths,
+                        LPTEXTXFORM16 lpTextXForm, SHORT *lpCharWidths,
                         RECT16 *     lpOpaqueRect, WORD wOptions)
 {
     DWORD dwRet = 0;
@@ -811,6 +814,8 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
     {
 	LONG lP1, lP4, lP5, lP7, lP8, lP9, lP10, lP11;  
 	WORD wP2, wP3, wP6, wP12;
+        INT16 iP6;
+
 	SEGPTR SegPtr = pLPD->ThunkBufSegPtr;
 	SEGPTR Limit = pLPD->ThunkBufLimit;
 	int   nSize;
@@ -841,6 +846,7 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 	    /* TTD WARNING THIS STRING ISNT NULL TERMINATED */
 	    lP5 = SegPtr;
 	    nSize = strlen(lpString);
+            nSize = abs(wCount);
             dprintf_win16drv(stddeb, "Adding string size %d\n",nSize);
             
 	    AddData(&SegPtr, lpString, nSize, Limit);	
@@ -848,7 +854,7 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 	else
 	  lP5 = 0L;
 	
-	wP6 = wCount;
+	iP6 = wCount;
 	
 	/* This should be realized by the driver, so in 16bit data area */
 	lP7 = lpFontInfo;
@@ -867,7 +873,7 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 	if (lpTextXForm != NULL)
 	{
 	    lP9 = SegPtr;
-	    nSize = sizeof(TEXTXFORM);
+	    nSize = sizeof(TEXTXFORM16);
             dprintf_win16drv(stddeb, "Adding TextXForm\n");
 	    AddData(&SegPtr, lpTextXForm, nSize, Limit);	
 	}
@@ -891,96 +897,20 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 	wP12 = wOptions;
 	dprintf_win16drv(stddeb, "Calling exttextout 0x%lx 0x%x 0x%x 0x%lx\n0x%lx 0x%x 0x%lx 0x%lx\n"
                "0x%lx 0x%lx 0x%lx 0x%x\n",lP1, wP2, wP3, lP4, 
-					   lP5, wP6, lP7, lP8, lP9, lP10,
+					   lP5, iP6, lP7, lP8, lP9, lP10,
 					   lP11, wP12);
 	dwRet = CallTo16_long_lwwllwlllllw(pLPD->fn[FUNC_EXTTEXTOUT], 
                                            lP1, wP2, wP3, lP4, 
-					   lP5, wP6, lP7, lP8, lP9, lP10,
+					   lP5, iP6, lP7, lP8, lP9, lP10,
 					   lP11, wP12);
+        if (lpDrawMode)
+            GetParamData(lP8, lpDrawMode, sizeof(DRAWMODE));
     }
     dprintf_win16drv(stddeb, "PRTDRV_ExtTextOut: return %lx\n", dwRet);
     return dwRet;
 }
 
 
-/*
- * ExtTextOut (GDI.351)
- */
-static BOOL16 windrvExtTextOut16( DC *dc, INT16 x, INT16 y, UINT16 flags, const RECT16 * lprect,
-                                 LPCSTR str, UINT16 count, const INT16 *lpDx)
-{
-    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    BOOL32 bRet = 1;
-    DRAWMODE DrawMode;
-    LPDRAWMODE lpDrawMode = &DrawMode;
-    TEXTXFORM TextXForm;
-    LPTEXTXFORM lpTextXForm = &TextXForm;
-    RECT16 rcClipRect;
-    RECT16 * lpClipRect = &rcClipRect;
-    RECT16 rcOpaqueRect;
-    RECT16 *lpOpaqueRect = &rcOpaqueRect;
-    WORD wOptions = 0;
-    WORD wCount = count;
-
-    static BOOL32 bInit = FALSE;
-    
-
-
-    if (count == 0)
-      return FALSE;
-
-    dprintf_win16drv(stddeb, "LPGDI_ExtTextOut: %04x %d %d %x %p %*s %p\n", dc->hSelf, x, y, 
-	   flags,  lprect, count > 0 ? count : 8, str, lpDx);
-
-    InitTextXForm(lpTextXForm);
-    InitDrawMode(lpDrawMode);
-
-    if (bInit == FALSE)
-    {
-	DWORD dwRet;
-
-	dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0, 
-				  NULL, " ", 
-				  -1,  physDev->segptrFontInfo, lpDrawMode, 
-				  lpTextXForm, NULL, NULL, 0);
-	bInit = TRUE;
-    }
-
-    if (dc != NULL)   
-    {
-	DWORD dwRet;
-/*
-	dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0, 
-				  NULL, "0", 
-				  -1,  physDev->segptrFontInfo, lpDrawMode, 
-				  lpTextXForm, NULL, NULL, 0);
-
-	dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0, 
-				  NULL, str, -wCount,
-				  physDev->segptrFontInfo, lpDrawMode, 
-				  lpTextXForm, NULL, NULL, 0);
-*/
-	lpClipRect->left = 0;
-	lpClipRect->top = 0;
-	lpClipRect->right = 0x3fc;
-	lpClipRect->bottom = 0x42;
-	lpOpaqueRect->left = x;
-	lpOpaqueRect->top = y;
-	lpOpaqueRect->right = 0x3a1;
-	lpOpaqueRect->bottom = 0x01;
-/*
-	dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, x, y, 
-				  lpClipRect, str, 
-				  wCount,  physDev->segptrFontInfo, lpDrawMode, 
-				  lpTextXForm, lpDx, lpOpaqueRect, wOptions);
-*/
-	dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, x, y, 
-				  NULL, str, 
-				  wCount,  physDev->segptrFontInfo, lpDrawMode, 
-				  lpTextXForm, NULL, NULL, wOptions);
-    }
-    return bRet;
-}
 
 /****************** misc. printer releated functions */
 
@@ -990,14 +920,90 @@ static BOOL16 windrvExtTextOut16( DC *dc, INT16 x, INT16 y, UINT16 flags, const 
 #ifndef HPQ 
 #define HPQ WORD
 #endif
-HPQ CreatePQ(int size) { printf("CreatePQ: %d\n",size); return 1; }
-int DeletePQ(HPQ hPQ) { printf("DeletePQ: %x\n", hPQ); return 0; }
-int ExtractPQ(HPQ hPQ) { printf("ExtractPQ: %x\n", hPQ); return 0; }
-int InsertPQ(HPQ hPQ, int tag, int key) 
-{ printf("ExtractPQ: %x %d %d\n", hPQ, tag, key);  return 0; }
-int MinPQ(HPQ hPQ) { printf("MinPQ: %x\n", hPQ); return 0; }
-int SizePQ(HPQ hPQ, int sizechange) 
-{  printf("SizePQ: %x %d\n", hPQ, sizechange); return -1; }
+struct hpq 
+{
+    struct hpq 	*next;
+    int		 tag;
+    int		 key;
+};
+
+static struct hpq *hpqueue;
+
+HPQ 
+CreatePQ(int size) 
+{
+    printf("CreatePQ: %d\n",size);
+    return 1;
+}
+int 
+DeletePQ(HPQ hPQ) 
+{
+    printf("DeletePQ: %x\n", hPQ);
+    return 0;
+}
+int 
+ExtractPQ(HPQ hPQ) 
+{ 
+    struct hpq *queue, *prev, *current, *currentPrev;
+    int key, tag = -1;
+    currentPrev = prev = NULL;
+    queue = current = hpqueue;
+    if (current)
+        key = current->key;
+    
+    while (current)
+    {
+        currentPrev = current;
+        current = current->next;
+        if (current)
+        {
+            if (current->key < key)
+            {
+                queue = current;
+                prev = currentPrev;
+            }
+        }
+    }
+    if (queue)
+    {
+        tag = queue->tag;
+        
+        if (prev)
+            prev->next = queue->next;
+        else
+            hpqueue = queue->next;
+        free(queue);
+    }
+    
+    printf("ExtractPQ: %x got tag %d key %d\n", hPQ, tag, key); 
+
+    return tag;
+}
+
+int 
+InsertPQ(HPQ hPQ, int tag, int key) 
+{
+    struct hpq *queueItem = malloc(sizeof(struct hpq));
+    queueItem->next = hpqueue;
+    hpqueue = queueItem;
+    queueItem->key = key;
+    queueItem->tag = tag;
+    
+    printf("InsertPQ: %x %d %d\n", hPQ, tag, key);
+    return TRUE;
+}
+int
+MinPQ(HPQ hPQ) 
+{
+    printf("MinPQ: %x\n", hPQ); 
+    return 0;
+}
+int
+SizePQ(HPQ hPQ, int sizechange) 
+{  
+    printf("SizePQ: %x %d\n", hPQ, sizechange); 
+    return -1; 
+}
 
 /* 
  * The following functions implement part of the spooling process to 
@@ -1016,8 +1022,6 @@ typedef struct PRINTJOB
 } PRINTJOB, *PPRINTJOB;
 
 #define MAX_PRINT_JOBS 1
-#define SP_ERROR -1
-#define SP_OUTOFDISK -4
 #define SP_OK 1
 
 PPRINTJOB gPrintJobsTable[MAX_PRINT_JOBS];
@@ -1142,7 +1146,7 @@ int WriteDialog(HANDLE16 hJob, LPSTR lpMsg, WORD cchMsg)
 
     dprintf_win16drv(stddeb, "WriteDialog: %04x %04x \"%s\"\n", hJob,  cchMsg, lpMsg);
 
-    nRet = MessageBox16(0, lpMsg, "Printing Error", MB_OKCANCEL);
+    nRet = MessageBox16(NULL, lpMsg, "Printing Error", MB_OKCANCEL);
     return nRet;
 }
 

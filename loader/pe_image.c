@@ -17,7 +17,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#ifndef __EMX__
 #include <sys/mman.h>
+#endif
 #include "windows.h"
 #include "winbase.h"
 #include "callback.h"
@@ -33,50 +35,10 @@
 #include "debugger.h"
 #include "xmalloc.h"
 
-void my_wcstombs(char * result, u_short * source, int len)
-{
-  while(len--) {
-    /* this used to be isascii, but see isascii implementation in Linux'
-	   ctype.h */
-    if(*source<255) *result++ = *source++;
-    else {
-      printf("Unable to handle unicode right now\n");
-      exit(0);
-    }
-  };
-}
+/* convert PE image VirtualAddress to Real Address */
+#define RVA(x) ((unsigned int)load_addr+(unsigned int)(x))
 
-#if 0
-char * xmmap(char * vaddr, unsigned int v_size, unsigned int r_size,
-	int prot, int flags, int fd, unsigned int file_offset)
-{
-  char * result;
-  /* .bss has no associated storage in the PE file */
-  if(r_size)
-    v_size=r_size;
-  else
-#if defined(__svr4__) || defined(_SCO_DS)
-    fprintf(stderr,"xmmap: %s line %d doesn't support MAP_ANON\n",__FILE__, __LINE__);
-#else
-    flags |= MAP_ANON;
-#endif
-  result = mmap(vaddr, v_size, prot, flags, fd, file_offset);
-  if((unsigned int) result != 0xffffffff) return result;
-
-  /* Sigh.  Alignment must be wrong for mmap.  Do this the hard way. */
-  if(!(flags & MAP_FIXED)) {
-    vaddr = (char *)0x40000000;
-    flags |= MAP_FIXED;
-  };
-
-  mmap(vaddr, v_size, prot, MAP_ANONYMOUS | flags, 0, 0);
-  lseek(fd, file_offset, SEEK_SET);
-  read(fd, vaddr, v_size);
-  return vaddr;
-};
-#endif
-
-void dump_exports(struct PE_Export_Directory * pe_exports, unsigned int load_addr)
+void dump_exports(IMAGE_EXPORT_DIRECTORY * pe_exports, unsigned int load_addr)
 { 
   char		*Module;
   int		i;
@@ -88,30 +50,30 @@ void dump_exports(struct PE_Export_Directory * pe_exports, unsigned int load_add
 
   daddr.seg = 0;
   daddr.type = NULL;
-  Module = ((char*)load_addr)+pe_exports->Name;
+  Module = (char*)RVA(pe_exports->Name);
   dprintf_win32(stddeb,"\n*******EXPORT DATA*******\nModule name is %s, %ld functions, %ld names\n", 
 	 Module,
-	 pe_exports->Number_Of_Functions,
-	 pe_exports->Number_Of_Names);
+	 pe_exports->NumberOfFunctions,
+	 pe_exports->NumberOfNames);
 
-  ordinal=(u_short*)(((char*)load_addr)+(int)pe_exports->Address_Of_Name_Ordinals);
-  functions=function=(u_long*)(((char*)load_addr)+(int)pe_exports->AddressOfFunctions);
-  name=(u_char**)(((char*)load_addr)+(int)pe_exports->AddressOfNames);
+  ordinal=(u_short*) RVA(pe_exports->AddressOfNameOrdinals);
+  functions=function=(u_long*) RVA(pe_exports->AddressOfFunctions);
+  name=(u_char**) RVA(pe_exports->AddressOfNames);
 
   dprintf_win32(stddeb,"%-32s Ordinal Virt Addr\n", "Function Name");
-  for (i=0;i<pe_exports->Number_Of_Functions;i++) {
-      if (i<pe_exports->Number_Of_Names) {
-	  ename=(char*)(((char*)load_addr)+(int)*name++);
+  for (i=0;i<pe_exports->NumberOfFunctions;i++) {
+      if (i<pe_exports->NumberOfNames) {
+	  ename=(char*)RVA(*name++);
 	  dprintf_win32(stddeb,"%-32s %4d    %8.8lx (%8.8lx)\n",ename,*ordinal,functions[*ordinal],*function);
 	  sprintf(buffer,"%s.%s",Module,ename);
-	  daddr.off=load_addr+functions[*ordinal];
+	  daddr.off=RVA(functions[*ordinal]);
 	  ordinal++;
 	  function++;
       } else {
       	  /* ordinals/names no longer valid, but we still got functions */
 	  dprintf_win32(stddeb,"%-32s %4s    %8s %8.8lx\n","","","",*function);
 	  sprintf(buffer,"%s.%d",Module,i);
-	  daddr.off=load_addr+*functions;
+	  daddr.off=RVA(*functions);
 	  function++;
       }
       DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
@@ -128,7 +90,7 @@ void dump_exports(struct PE_Export_Directory * pe_exports, unsigned int load_add
  */
 FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName)
 {
-	struct PE_Export_Directory * exports = pe->pe_export;
+	IMAGE_EXPORT_DIRECTORY * exports = pe->pe_export;
 	unsigned load_addr = pe->load_addr;
 	u_short * ordinal;
 	u_long * function;
@@ -141,24 +103,24 @@ FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName)
 		dprintf_win32(stddeb,"PE_FindExportedFunction(%d)\n",(int)funcName);
 	if (!exports)
 		return NULL;
-	ordinal=(u_short*)(((char*)load_addr)+(int)exports->Address_Of_Name_Ordinals);
-	function=(u_long*)(((char*)load_addr)+(int)exports->AddressOfFunctions);
-	name=(u_char **)(((char*)load_addr)+(int)exports->AddressOfNames);
+	ordinal=(u_short*) RVA(exports->AddressOfNameOrdinals);
+	function=(u_long*) RVA(exports->AddressOfFunctions);
+	name=(u_char **) RVA(exports->AddressOfNames);
 	if (HIWORD(funcName)) {
-		for(i=0; i<exports->Number_Of_Names; i++) {
-			ename=(char*)(((char*)load_addr)+(int)*name);
+		for(i=0; i<exports->NumberOfNames; i++) {
+			ename=(char*) RVA(*name);
 			if(!strcmp(ename,funcName))
-				return (FARPROC32)(load_addr+function[*ordinal]);
+				return (FARPROC32) RVA(function[*ordinal]);
 			ordinal++;
 			name++;
 		}
 	} else {
-		if (LOWORD(funcName)-exports->Base > exports->Number_Of_Functions) {
+		if (LOWORD(funcName)-exports->Base > exports->NumberOfFunctions) {
 			dprintf_win32(stddeb,"	ordinal %d out of range!\n",
                                       LOWORD(funcName));
 			return NULL;
 		}
-		return (FARPROC32)(load_addr+function[(int)funcName-exports->Base]);
+		return (FARPROC32) RVA(function[(int)funcName-exports->Base]);
 	}
 	return NULL;
 }
@@ -166,19 +128,27 @@ FARPROC32 PE_FindExportedFunction(struct pe_data *pe, LPCSTR funcName)
 void 
 fixup_imports (struct pe_data *pe, HMODULE16 hModule)
 {
-    struct PE_Import_Directory *pe_imp;
+    IMAGE_IMPORT_DESCRIPTOR *pe_imp;
     int	fixup_failed = 0;
     unsigned int load_addr = pe->load_addr;
     int i;
     NE_MODULE *ne_mod;
     HMODULE16 *mod_ptr;
+    char *modname;
+    
+    if (pe->pe_export)
+    	modname = (char*) RVA(pe->pe_export->Name);
+    else
+        modname = "<unknown>";
 
     /* OK, now dump the import list */
     dprintf_win32 (stddeb, "\nDumping imports list\n");
 
     /* first, count the number of imported non-internal modules */
     pe_imp = pe->pe_import;
-    for (i = 0; pe_imp->ModuleName; pe_imp++)
+
+    /* FIXME: should terminate on 0 Characteristics */
+    for (i = 0; pe_imp->Name; pe_imp++)
 	i++;
 
     /* Now, allocate memory for dlls_to_init */
@@ -187,9 +157,11 @@ fixup_imports (struct pe_data *pe, HMODULE16 hModule)
                                         hModule, FALSE, FALSE, FALSE);
     mod_ptr = GlobalLock16 (ne_mod->dlls_to_init);
     /* load the modules and put their handles into the list */
-    for (i = 0, pe_imp = pe->pe_import; pe_imp->ModuleName; pe_imp++) {
-	char *name = (char *) load_addr + pe_imp->ModuleName;
-	mod_ptr[i] = LoadModule (name, (LPVOID) - 1);
+ 
+     /* FIXME: should terminate on 0 Characteristics */
+     for (i = 0, pe_imp = pe->pe_import; pe_imp->Name; pe_imp++) {
+ 	char *name = (char *) RVA(pe_imp->Name);
+	mod_ptr[i] = MODULE_Load( name, (LPVOID)-1, FALSE );
 	if (mod_ptr[i] <= (HMODULE16) 32) {
 	    char *p, buffer[256];
 
@@ -198,7 +170,7 @@ fixup_imports (struct pe_data *pe, HMODULE16 hModule)
 	    if (!(p = strrchr (buffer, '\\')))
 		p = buffer;
 	    strcpy (p + 1, name);
-	    mod_ptr[i] = LoadModule (buffer, (LPVOID) - 1);
+	    mod_ptr[i] = MODULE_Load( buffer, (LPVOID)-1, FALSE );
 	}
 	if (mod_ptr[i] <= (HMODULE16) 32) {
 	    fprintf (stderr, "Module %s not found\n", name);
@@ -207,66 +179,80 @@ fixup_imports (struct pe_data *pe, HMODULE16 hModule)
 	i++;
     }
     pe_imp = pe->pe_import;
-    while (pe_imp->ModuleName) {
-	char *Module;
-	struct pe_import_name *pe_name;
-	unsigned int *import_list, *thunk_list;
+    while (pe_imp->Name) {
+	char			*Module;
+	IMAGE_IMPORT_BY_NAME	*pe_name;
+	LPIMAGE_THUNK_DATA	import_list,thunk_list;
+	int			ordimportwarned;
 
-	Module = ((char *) load_addr) + pe_imp->ModuleName;
+        ordimportwarned = 0;
+	Module = (char *) RVA(pe_imp->Name);
 	dprintf_win32 (stddeb, "%s\n", Module);
 
-	if (pe_imp->Import_List != 0) {	/* original microsoft style */
+	if (pe_imp->u.OriginalFirstThunk != 0) { /* original MS style */
 	    dprintf_win32 (stddeb, "Microsoft style imports used\n");
-	    import_list = (unsigned int *)(((unsigned int)load_addr)+pe_imp->Import_List);
-	    thunk_list = (unsigned int *)(((unsigned int)load_addr)+pe_imp->Thunk_List);
+	    import_list =(LPIMAGE_THUNK_DATA) RVA(pe_imp->u.OriginalFirstThunk);
+	    thunk_list = (LPIMAGE_THUNK_DATA) RVA(pe_imp->FirstThunk);
 
-	    while (*import_list) {
-		pe_name = (struct pe_import_name *) ((int) load_addr + ((unsigned) *import_list & ~0x80000000));
-		if ((unsigned) *import_list & 0x80000000) {
-		    int ordinal = *import_list & (0x80000000 - 1);
+	    while (import_list->u1.Ordinal) {
+		if (IMAGE_SNAP_BY_ORDINAL(import_list->u1.Ordinal)) {
+		    int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
+
+		    if(!lstrncmpi32A(Module,"kernel32",8) && !ordimportwarned){
+		       fprintf(stderr,"%s imports kernel32.dll by ordinal. May crash.\n",modname);
+		       ordimportwarned = 1;
+		    }
 		    dprintf_win32 (stddeb, "--- Ordinal %s,%d\n", Module, ordinal);
-		    *thunk_list = (unsigned)GetProcAddress32(MODULE_FindModule (Module),
-		    				   (LPCSTR) ordinal);
-		    if (!*thunk_list) {
+		    thunk_list->u1.Function=(LPDWORD)GetProcAddress32(MODULE_FindModule(Module),(LPCSTR)ordinal);
+		    if (!thunk_list->u1.Function) {
 			fprintf(stderr,"No implementation for %s.%d, setting to NULL\n",
 				Module, ordinal);
 			/* fixup_failed=1; */
 		    }
 		} else {		/* import by name */
+		    pe_name = (LPIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
 		    dprintf_win32 (stddeb, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
-		    *thunk_list = (unsigned)GetProcAddress32(MODULE_FindModule (Module),
-						   pe_name->Name);
-		    if (!*thunk_list) {
-			fprintf(stderr, "No implementation for %s.%d(%s), setting to NULL\n",
-				Module, pe_name->Hint, pe_name->Name);
+		    thunk_list->u1.Function=(LPDWORD)GetProcAddress32(
+						MODULE_FindModule (Module),
+						pe_name->Name);
+		    if (!thunk_list->u1.Function) {
+			fprintf(stderr,"No implementation for %s.%d(%s), setting to NULL\n",
+				Module,pe_name->Hint,pe_name->Name);
 			/* fixup_failed=1; */
 		    }
 		}
 		import_list++;
 		thunk_list++;
 	    }
-	} else {			/* Borland style */
+	} else {	/* Borland style */
 	    dprintf_win32 (stddeb, "Borland style imports used\n");
-	    thunk_list = (unsigned int *)(((unsigned int)load_addr)+pe_imp->Thunk_List);
-	    while (*thunk_list) {
-		pe_name=(struct pe_import_name *)((int)load_addr+*thunk_list);
-		if ((unsigned) pe_name & 0x80000000) {
+	    thunk_list = (LPIMAGE_THUNK_DATA) RVA(pe_imp->FirstThunk);
+	    while (thunk_list->u1.Ordinal) {
+		if (IMAGE_SNAP_BY_ORDINAL(thunk_list->u1.Ordinal)) {
 		    /* not sure about this branch, but it seems to work */
-		    int ordinal = *thunk_list & ~0x80000000;
+		    int ordinal = IMAGE_ORDINAL(thunk_list->u1.Ordinal);
+
+
+		    if (!lstrncmpi32A(Module,"kernel32",8) && 
+		    	!ordimportwarned
+		    ) {
+		       fprintf(stderr,"%s imports kernel32.dll by ordinal. May crash.\n",modname);
+		       ordimportwarned = 1;
+		    }
 		    dprintf_win32(stddeb,"--- Ordinal %s.%d\n",Module,ordinal);
-		    *thunk_list = (unsigned)GetProcAddress32(MODULE_FindModule (Module),
-						   (LPCSTR) ordinal);
-		    if (!*thunk_list) {
+		    thunk_list->u1.Function=(LPDWORD)GetProcAddress32(MODULE_FindModule(Module),
+						     (LPCSTR) ordinal);
+		    if (!thunk_list->u1.Function) {
 			fprintf(stderr, "No implementation for %s.%d, setting to NULL\n",
 				Module,ordinal);
 			/* fixup_failed=1; */
 		    }
 		} else {
+		    pe_name=(LPIMAGE_IMPORT_BY_NAME) RVA(thunk_list->u1.AddressOfData);
 		    dprintf_win32(stddeb,"--- %s %s.%d\n",
-		   		  pe_name->Name, Module, pe_name->Hint);
-		    *thunk_list = (unsigned)GetProcAddress32(MODULE_FindModule(Module),
-						   pe_name->Name);
-		    if (!*thunk_list) {
+		   		  pe_name->Name,Module,pe_name->Hint);
+		    thunk_list->u1.Function=(LPDWORD)GetProcAddress32(MODULE_FindModule(Module),pe_name->Name);
+		    if (!thunk_list->u1.Function) {
 		    	fprintf(stderr, "No implementation for %s.%d, setting to NULL\n",
 				Module, pe_name->Hint);
 		    	/* fixup_failed=1; */
@@ -286,13 +272,13 @@ static void calc_vma_size(struct pe_data *pe)
 
   dprintf_win32(stddeb, "Dump of segment table\n");
   dprintf_win32(stddeb, "   Name    VSz  Vaddr     SzRaw   Fileadr  *Reloc *Lineum #Reloc #Linum Char\n");
-  for(i=0; i< pe->pe_header->coff.NumberOfSections; i++)
+  for(i=0; i< pe->pe_header->FileHeader.NumberOfSections; i++)
     {
       dprintf_win32(stddeb, "%8s: %4.4lx %8.8lx %8.8lx %8.8lx %8.8lx %8.8lx %4.4x %4.4x %8.8lx\n", 
 	     pe->pe_seg[i].Name, 
-	     pe->pe_seg[i].Virtual_Size,
-	     pe->pe_seg[i].Virtual_Address,
-	     pe->pe_seg[i].Size_Of_Raw_Data,
+	     pe->pe_seg[i].Misc.VirtualSize,
+	     pe->pe_seg[i].VirtualAddress,
+	     pe->pe_seg[i].SizeOfRawData,
 	     pe->pe_seg[i].PointerToRawData,
 	     pe->pe_seg[i].PointerToRelocations,
 	     pe->pe_seg[i].PointerToLinenumbers,
@@ -300,33 +286,36 @@ static void calc_vma_size(struct pe_data *pe)
 	     pe->pe_seg[i].NumberOfLinenumbers,
 	     pe->pe_seg[i].Characteristics);
 	  pe->vma_size = MAX(pe->vma_size,
-	  		pe->pe_seg[i].Virtual_Address + 
-			pe->pe_seg[i].Size_Of_Raw_Data);
+	  		pe->pe_seg[i].VirtualAddress + 
+			pe->pe_seg[i].SizeOfRawData);
     }
 }
 
 static void do_relocations(struct pe_data *pe)
 {
 	int delta = pe->load_addr - pe->base_addr;
-	struct PE_Reloc_Block *r = pe->pe_reloc;
+	unsigned int load_addr = pe->load_addr;
+	IMAGE_BASE_RELOCATION	*r = pe->pe_reloc;
 	int hdelta = (delta >> 16) & 0xFFFF;
 	int ldelta = delta & 0xFFFF;
+
 	/* int reloc_size = */
+
 	if(delta == 0)
 		/* Nothing to do */
 		return;
-	while(r->PageRVA)
+	while(r->VirtualAddress)
 	{
-		char *page = (char*)pe->load_addr + r->PageRVA;
-		int count = (r->BlockSize - 8)/2;
+		char *page = (char*) RVA(r->VirtualAddress);
+		int count = (r->SizeOfBlock - 8)/2;
 		int i;
 		dprintf_fixup(stddeb, "%x relocations for page %lx\n",
-			count, r->PageRVA);
+			count, r->VirtualAddress);
 		/* patching in reverse order */
 		for(i=0;i<count;i++)
 		{
-			int offset = r->Relocations[i] & 0xFFF;
-			int type = r->Relocations[i] >> 12;
+			int offset = r->TypeOffset[i] & 0xFFF;
+			int type = r->TypeOffset[i] >> 12;
 			dprintf_fixup(stddeb,"patching %x type %x\n", offset, type);
 			switch(type)
 			{
@@ -342,7 +331,7 @@ static void do_relocations(struct pe_data *pe)
 				*(int*)(page+offset) += delta;
 #else
 				{ int h=*(unsigned short*)(page+offset);
-				  int l=r->Relocations[++i];
+				  int l=r->TypeOffset[++i];
 				  *(unsigned int*)(page + offset) = (h<<16) + l + delta;
 				}
 #endif
@@ -358,7 +347,7 @@ static void do_relocations(struct pe_data *pe)
 				break;
 			}
 		}
-		r = (struct PE_Reloc_Block*)((char*)r + r->BlockSize);
+		r = (IMAGE_BASE_RELOCATION*)((char*)r + r->SizeOfBlock);
 	}
 }
 		
@@ -372,40 +361,39 @@ static void do_relocations(struct pe_data *pe)
  */
 static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
 {
-    struct pe_data *pe;
-    int i, result;
-    int load_addr;
-    struct Directory dir;
-    char	buffer[200];
-    DBG_ADDR	daddr;
+	struct pe_data		*pe;
+	int			i, result;
+	int			load_addr;
+	IMAGE_DATA_DIRECTORY	dir;
+	char			buffer[200];
+	DBG_ADDR		daddr;
 
 	daddr.seg=0;
 	daddr.type = NULL;
 	pe = xmalloc(sizeof(struct pe_data));
 	memset(pe,0,sizeof(struct pe_data));
-	pe->pe_header = xmalloc(sizeof(struct pe_header_s));
+	pe->pe_header = xmalloc(sizeof(IMAGE_NT_HEADERS));
 
 	/* read PE header */
 	lseek( fd, offset, SEEK_SET);
-	read( fd, pe->pe_header, sizeof(struct pe_header_s));
+	read( fd, pe->pe_header, sizeof(IMAGE_NT_HEADERS));
 
 /* FIXME: this is a *horrible* hack to make COMDLG32.DLL load OK. The
 problem needs to be fixed properly at some stage */
 
-	if (pe->pe_header->opt_coff.NumberOfRvaAndSizes != 16) {
+	if (pe->pe_header->OptionalHeader.NumberOfRvaAndSizes != 16) {
 		printf("Short PE Header!!!\n");
-		lseek( fd, -(16 - pe->pe_header->opt_coff.NumberOfRvaAndSizes) * sizeof (struct Directory), SEEK_CUR);
+		lseek( fd, -(16 - pe->pe_header->OptionalHeader.NumberOfRvaAndSizes) * sizeof(IMAGE_DATA_DIRECTORY), SEEK_CUR);
 	}
 
 /* horrible hack ends !!! */
-
 	/* read sections */
-	pe->pe_seg = xmalloc(sizeof(struct pe_segment_table) * 
-				   pe->pe_header->coff.NumberOfSections);
-	read( fd, pe->pe_seg, sizeof(struct pe_segment_table) * 
-			pe->pe_header->coff.NumberOfSections);
+	pe->pe_seg = xmalloc(sizeof(IMAGE_SECTION_HEADER) * 
+				   pe->pe_header->FileHeader.NumberOfSections);
+	read( fd, pe->pe_seg, sizeof(IMAGE_SECTION_HEADER) * 
+			pe->pe_header->FileHeader.NumberOfSections);
 
-	load_addr = pe->pe_header->opt_coff.BaseOfImage;
+	load_addr = pe->pe_header->OptionalHeader.ImageBase;
 	pe->base_addr=load_addr;
 	pe->vma_size=0;
 	dprintf_win32(stddeb, "Load addr is %x\n",load_addr);
@@ -429,135 +417,122 @@ problem needs to be fixed properly at some stage */
 		pe->load_addr, pe->vma_size);
 	
 
-	for(i=0; i < pe->pe_header->coff.NumberOfSections; i++)
+	for(i=0; i < pe->pe_header->FileHeader.NumberOfSections; i++)
 	{
 		/* load only non-BSS segments */
 		if(pe->pe_seg[i].Characteristics & 
-			~ IMAGE_SCN_TYPE_CNT_UNINITIALIZED_DATA)
+			~ IMAGE_SCN_CNT_UNINITIALIZED_DATA)
 		if(lseek(fd,pe->pe_seg[i].PointerToRawData,SEEK_SET) == -1
-		|| read(fd,(char *)load_addr + pe->pe_seg[i].Virtual_Address,
-				pe->pe_seg[i].Size_Of_Raw_Data) 
-				!= pe->pe_seg[i].Size_Of_Raw_Data)
+		|| read(fd,(char*)RVA(pe->pe_seg[i].VirtualAddress),
+			   pe->pe_seg[i].SizeOfRawData) != pe->pe_seg[i].SizeOfRawData)
 		{
 			fprintf(stderr,"Failed to load section %x\n", i);
 			exit(0);
 		}
-		result = load_addr + pe->pe_seg[i].Virtual_Address;
-#if 0
-	if(!load_addr) {
-		
-		result = (int)xmmap((char *)0, pe->pe_seg[i].Virtual_Size,
-			pe->pe_seg[i].Size_Of_Raw_Data, 7,
-			MAP_PRIVATE, fd, pe->pe_seg[i].PointerToRawData);
-		load_addr = (unsigned int) result -  pe->pe_seg[i].Virtual_Address;
-	} else {
-		result = (int)xmmap((char *) load_addr + pe->pe_seg[i].Virtual_Address, 
-			  pe->pe_seg[i].Virtual_Size,
-		      pe->pe_seg[i].Size_Of_Raw_Data, 7, MAP_PRIVATE | MAP_FIXED, 
-		      fd, pe->pe_seg[i].PointerToRawData);
-	}
-	if(result==-1){
-		fprintf(stderr,"Could not load section %x to desired address %lx\n",
-			i, load_addr+pe->pe_seg[i].Virtual_Address);
-		fprintf(stderr,"Need to implement relocations now\n");
-		exit(0);
-	}
+		result = RVA (pe->pe_seg[i].VirtualAddress);
+#if 1
+		/* not needed, memory is zero */
+		if(strcmp(pe->pe_seg[i].Name, ".bss") == 0)
+		    memset((void *)result, 0, 
+			   pe->pe_seg[i].Misc.VirtualSize ?
+			   pe->pe_seg[i].Misc.VirtualSize :
+			   pe->pe_seg[i].SizeOfRawData);
 #endif
 
-#if 0
-	/* not needed, memory is zero */
-        if(strcmp(pe->pe_seg[i].Name, ".bss") == 0)
-            memset((void *)result, 0, 
-                   pe->pe_seg[i].Virtual_Size ?
-                   pe->pe_seg[i].Virtual_Size :
-                   pe->pe_seg[i].Size_Of_Raw_Data);
-#endif
+		if(strcmp(pe->pe_seg[i].Name, ".idata") == 0)
+			pe->pe_import = (LPIMAGE_IMPORT_DESCRIPTOR) result;
 
-	if(strcmp(pe->pe_seg[i].Name, ".idata") == 0)
-		pe->pe_import = (struct PE_Import_Directory *) result;
+		if(strcmp(pe->pe_seg[i].Name, ".edata") == 0)
+			pe->pe_export = (LPIMAGE_EXPORT_DIRECTORY) result;
 
-	if(strcmp(pe->pe_seg[i].Name, ".edata") == 0)
-		pe->pe_export = (struct PE_Export_Directory *) result;
+		if(strcmp(pe->pe_seg[i].Name, ".rsrc") == 0)
+			pe->pe_resource = (LPIMAGE_RESOURCE_DIRECTORY) result;
 
-	if(strcmp(pe->pe_seg[i].Name, ".rsrc") == 0)
-	    pe->pe_resource = (struct PE_Resource_Directory *) result;
-
-	if(strcmp(pe->pe_seg[i].Name, ".reloc") == 0)
-		pe->pe_reloc = (struct PE_Reloc_Block *) result;
+		if(strcmp(pe->pe_seg[i].Name, ".reloc") == 0)
+			pe->pe_reloc = (LPIMAGE_BASE_RELOCATION) result;
 
 	}
 
 	/* There is word that the actual loader does not care about the
 	   section names, and only goes for the DataDirectory */
-	dir=pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_EXPORT_DIRECTORY];
+	dir=pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT];
 	if(dir.Size)
 	{
-		if(pe->pe_export && 
-			(int)pe->pe_export!=load_addr+dir.Virtual_address)
+		if(pe->pe_export && (int)pe->pe_export!=RVA(dir.VirtualAddress))
 			fprintf(stderr,"wrong export directory??\n");
 		/* always trust the directory */
-		pe->pe_export = (void *)(load_addr+dir.Virtual_address);
+		pe->pe_export = (LPIMAGE_EXPORT_DIRECTORY) RVA(dir.VirtualAddress);
 	}
 
-	dir=pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_IMPORT_DIRECTORY];
+	dir=pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
 	if(dir.Size)
 	{
-		if(pe->pe_import && 
-			(int)pe->pe_import!=load_addr+dir.Virtual_address)
+		if(pe->pe_import && (int)pe->pe_import!=RVA(dir.VirtualAddress))
 			fprintf(stderr,"wrong import directory??\n");
-		pe->pe_import = (void *)(load_addr+dir.Virtual_address);
+		pe->pe_import = (LPIMAGE_IMPORT_DESCRIPTOR) RVA(dir.VirtualAddress);
 	}
 
-	dir=pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_RESOURCE_DIRECTORY];
+	dir=pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE];
 	if(dir.Size)
 	{
-		if(pe->pe_resource && 
-			(int)pe->pe_resource!=load_addr+dir.Virtual_address)
+		if(pe->pe_resource && (int)pe->pe_resource!=RVA(dir.VirtualAddress))
 			fprintf(stderr,"wrong resource directory??\n");
-		pe->pe_resource = (void *)(load_addr+dir.Virtual_address);
+		pe->pe_resource = (LPIMAGE_RESOURCE_DIRECTORY) RVA(dir.VirtualAddress);
 	}
 
-	dir=pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_BASE_RELOCATION_TABLE];
-	if(dir.Size)
-	{
-		if(pe->pe_reloc && 
-			(int)pe->pe_reloc!=load_addr+dir.Virtual_address)
-			fprintf(stderr,"wrong relocation list??\n");
-		pe->pe_reloc = (void *)(load_addr+dir.Virtual_address);
-	}
-
-	if(pe->pe_header->opt_coff.DataDirectory
-		[IMAGE_FILE_EXCEPTION_DIRECTORY].Size)
+	if(pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXCEPTION].Size)
 		dprintf_win32(stdnimp,"Exception directory ignored\n");
 
-	if(pe->pe_header->opt_coff.DataDirectory
-		[IMAGE_FILE_SECURITY_DIRECTORY].Size)
+	if(pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_SECURITY].Size)
 		dprintf_win32(stdnimp,"Security directory ignored\n");
 
-	if(pe->pe_header->opt_coff.DataDirectory
-		[IMAGE_FILE_DEBUG_DIRECTORY].Size)
+
+
+	dir=pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+	if(dir.Size)
+	{
+		if(pe->pe_reloc && (int)pe->pe_reloc!= RVA(dir.VirtualAddress))
+			fprintf(stderr,"wrong relocation list??\n");
+		pe->pe_reloc = (void *) RVA(dir.VirtualAddress);
+	}
+
+	if(pe->pe_header->OptionalHeader.DataDirectory
+		[IMAGE_DIRECTORY_ENTRY_DEBUG].Size)
 	  {
 	    DEBUG_RegisterDebugInfo(fd, pe, load_addr, 
-			pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_DEBUG_DIRECTORY].Virtual_address,
-			pe->pe_header->opt_coff.DataDirectory[IMAGE_FILE_DEBUG_DIRECTORY].Size);
+			pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress,
+			pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].Size);
 	  }
 
-	if(pe->pe_header->opt_coff.DataDirectory
-		[IMAGE_FILE_DESCRIPTION_STRING].Size)
-		dprintf_win32(stdnimp,"Description string ignored\n");
+	if(pe->pe_header->OptionalHeader.DataDirectory
+		[IMAGE_DIRECTORY_ENTRY_COPYRIGHT].Size)
+		dprintf_win32(stdnimp,"Copyright string ignored\n");
 
-	if(pe->pe_header->opt_coff.DataDirectory
-		[IMAGE_FILE_MACHINE_VALUE].Size)
-		dprintf_win32(stdnimp,"Machine Value ignored\n");
+	if(pe->pe_header->OptionalHeader.DataDirectory
+		[IMAGE_DIRECTORY_ENTRY_GLOBALPTR].Size)
+		dprintf_win32(stdnimp,"Global Pointer (MIPS) ignored\n");
 
-	if(pe->pe_header->opt_coff.DataDirectory
-		[IMAGE_FILE_THREAD_LOCAL_STORAGE].Size)
+	if(pe->pe_header->OptionalHeader.DataDirectory
+		[IMAGE_DIRECTORY_ENTRY_TLS].Size)
 		 dprintf_win32(stdnimp,"Thread local storage ignored\n");
 
-	if(pe->pe_header->opt_coff.DataDirectory
-		[IMAGE_FILE_CALLBACK_DIRECTORY].Size)
-		dprintf_win32(stdnimp,"Callback directory ignored\n");
+	if(pe->pe_header->OptionalHeader.DataDirectory
+		[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].Size)
+		dprintf_win32(stdnimp,"Load Configuration directory ignored\n");
 
+	if(pe->pe_header->OptionalHeader.DataDirectory
+		[IMAGE_DIRECTORY_ENTRY_BOUND_IMPORT].Size)
+		dprintf_win32(stdnimp,"Bound Import directory ignored\n");
+
+	if(pe->pe_header->OptionalHeader.DataDirectory
+		[IMAGE_DIRECTORY_ENTRY_IAT].Size)
+		dprintf_win32(stdnimp,"Import Address Table directory ignored\n");
+	if(pe->pe_header->OptionalHeader.DataDirectory[13].Size)
+		dprintf_win32(stdnimp,"Unknown directory 13 ignored\n");
+	if(pe->pe_header->OptionalHeader.DataDirectory[14].Size)
+		dprintf_win32(stdnimp,"Unknown directory 14 ignored\n");
+	if(pe->pe_header->OptionalHeader.DataDirectory[15].Size)
+		dprintf_win32(stdnimp,"Unknown directory 15 ignored\n");
 
 	if(pe->pe_reloc) do_relocations(pe);
 	if(pe->pe_import) fixup_imports(pe, hModule);
@@ -565,21 +540,21 @@ problem needs to be fixed properly at some stage */
   		
 	if (pe->pe_export) {
 		/* add start of sections as debugsymbols */
-		for(i=0;i<pe->pe_header->coff.NumberOfSections;i++) {
+		for(i=0;i<pe->pe_header->FileHeader.NumberOfSections;i++) {
 			sprintf(buffer,"%s.%s",
-				((char*)load_addr)+pe->pe_export->Name,
+				(char*)RVA(pe->pe_export->Name),
 				pe->pe_seg[i].Name
 			);
-			daddr.off=load_addr+pe->pe_seg[i].Virtual_Address;
+			daddr.off= RVA(pe->pe_seg[i].VirtualAddress);
 			DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
 		}
 		/* add entry point */
-		sprintf(buffer,"%s.EntryPoint",((char*)load_addr)+pe->pe_export->Name);
-		daddr.off=load_addr+pe->pe_header->opt_coff.AddressOfEntryPoint;
+		sprintf(buffer,"%s.EntryPoint",(char*)RVA(pe->pe_export->Name));
+		daddr.off=RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint);
 		DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
 		/* add start of DLL */
 		daddr.off=load_addr;
-		DEBUG_AddSymbol(((char*)load_addr)+pe->pe_export->Name,&daddr,
+		DEBUG_AddSymbol((char*) RVA(pe->pe_export->Name),&daddr,
 				NULL, SYM_WIN32 | SYM_FUNC);
 	}
         return pe;
@@ -605,7 +580,7 @@ HINSTANCE16 PE_LoadModule( int fd, OFSTRUCT *ofs, LOADPARAMS* params )
 
     hInstance = MODULE_CreateInstance( hModule, params );
 
-    if (!(pModule->pe_module->pe_header->coff.Characteristics & IMAGE_FILE_DLL))
+    if (!(pModule->pe_module->pe_header->FileHeader.Characteristics & IMAGE_FILE_DLL))
     {
         TASK_CreateTask( hModule, hInstance, 0,
                          params->hEnvironment,
@@ -626,6 +601,7 @@ static void PE_InitDLL(HMODULE16 hModule)
 {
     NE_MODULE *pModule;
     PE_MODULE *pe;
+    unsigned int load_addr;
 
     hModule = GetExePtr(hModule);
     if (!(pModule = MODULE_GetPtr(hModule))) return;
@@ -636,13 +612,18 @@ static void PE_InitDLL(HMODULE16 hModule)
      *	      (the MSDN library JAN96 says 'reserved for future use')
      */
         
-    /* Is this a library? */
-    if (pe->pe_header->coff.Characteristics & IMAGE_FILE_DLL)
-    {
-        printf("InitPEDLL() called!\n");
-        CallDLLEntryProc32( (FARPROC32)(pe->load_addr + 
-                                  pe->pe_header->opt_coff.AddressOfEntryPoint),
-                            hModule, DLL_PROCESS_ATTACH, -1 );
+    /* Is this a library? And has it got an entrypoint? */
+    if (	(pe->pe_header->FileHeader.Characteristics & IMAGE_FILE_DLL) &&
+		(pe->pe_header->OptionalHeader.AddressOfEntryPoint)
+    ) {
+        load_addr = pe->load_addr;
+	printf("InitPEDLL() called!\n");
+	CallDLLEntryProc32( 
+	    (FARPROC32)RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint),
+	    hModule,
+	    DLL_PROCESS_ATTACH,
+	    -1
+	);
     }
 }
 

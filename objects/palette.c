@@ -416,11 +416,11 @@ HPALETTE16 SelectPalette( HDC16 hDC, HPALETTE16 hPal, BOOL bForceBackground )
     if( hPal != STOCK_DEFAULT_PALETTE )
     {
 	HWND32 hWnd = WindowFromDC32( hDC );
-	HWND32 hActive = GetActiveWindow();
+	HWND32 hActive = GetActiveWindow32();
 	
 	/* set primary palette if it's related to current active */
 
-	if((!hWnd || (hActive == hWnd || IsChild(hActive,hWnd))) &&
+	if((!hWnd || (hActive == hWnd || IsChild16(hActive,hWnd))) &&
             !bForceBackground )
 	    wBkgPalette = 0;
     }

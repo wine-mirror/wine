@@ -1,4 +1,110 @@
 ----------------------------------------------------------------------
+Sun Jan 19 11:46:48 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [loader/module.c]
+	Fixed LoadModule() to always call the DLL initialization code.
+
+	* [windows/event.c]
+	Moved all the keyboard stuff to windows/keyboard.c
+
+	* [tools/build.c]
+	Fixed Win32 register functions.
+
+Sat Jan 18 22:24:41 1997  David Makepeace  <D.Makepeace@mailbox.uq.oz.au>
+
+        * [tools/makedep.c]
+        Fixed bug which causes SEGV on Solaris x86.
+
+Fri Jan 17 18:32:27 1997  Frans van Dorsselaer <dorssel@rulhmpc49.LeidenUniv.nl>
+
+	* [controls/edit.c]
+	Implemented WM_UNDO, WM_CONTEXTMENU (temporary using WM_RBUTTONUP),
+	WM_COMMAND, WM_INITPOPUPMENU, WM_SYSKEYDOWN.
+	Fixed EM_SETSEL and some minor bugs (features).
+	Hence: fully functional undo and a win95 menu with the right mouse
+		button.
+
+	* [include/resources.h] [resources/TODO] [resources/sysres_??.rc]
+	Added a context menu for the edit control.
+	Translations, please ...
+
+Fri Jan	17 08:29:52 1997  David Faure <david.faure@ifhamy.insa-lyon.fr>
+
+	* [windows/event.c]
+	Move EVENT_ToAscii to windows/keyboard.c (where name ToAscii)
+	Fixed Keypad keys 0-9 and . in EVENT_event_to_vkey.
+	Added 3-state handling of toggle keys (CapsLock, NumLock) in order
+	to make them work with any X server.
+	Toggle keys now generate WM_KEYDOWN and WM_KEYUP on each pressing.
+
+	* [include/keyboard.h]
+	Totally replaced the file (formerly containing the vkcase definitions)
+	by the declaration of 'extern' variables contained by event.c and used
+	by keyboard.c
+	
+	* [windows/keyboard.c]
+	Started to rewrite VkKeyScan and MapVirtualKey, to make them use the 
+	table keyc2vkey or X functions only.
+	ToAscii : added keypad 0-9 and . special case.
+	Changed toggle keys active mask from 0x80 to 0x1.
+
+	* [misc/keyboard.c]
+	File deleted. Contents moved to windows/keyboard.c.
+
+	* [misc/main.c]
+	Added putenv XKB_DISABLE to disable XKB extension (which, when
+	present, causes AltGr to change keyboard group instead of being a
+	modifier).
+
+Tue Jan 14 22:56:43 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* [windows/event.c]
+	Do not assume NumLockMask is Mod2Mask, but compute it by scanning
+	output of XGetModifierMapping for XK_Num_Lock.
+
+Tue Jan 14 15:49:49 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [loader/pe_*.c] [include/peexe.h] [include/resource32.h]
+	  [debugger/*.c]
+	General clean up.
+	Changed defines/structures to match Windows NT SDK.
+
+	* [loader/main.c]
+	Don't crash on empty command-line.
+
+	* [windows/winpos.c]
+	winpos.c made win32 clean.
+
+	* [misc/ntdll.c]
+	Some string conversion additions.
+
+	* [files/file.c]
+	GetFileAttributes/GetTempFileName fixed.
+
+	* [misc/ver.c]
+	VerInstallFile implemented.
+
+Mon Jan 13 15:03:11 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* [tools/build.c]: Use PREFIX also in stabs messages.
+
+Mon Jan 13 10:40:33 1997  John Harvey <john@division.co.uk>
+
+	* [graphics/win16drv/*] [include/win16drv.h]
+	Many fixes and some new features.
+
+	* [graphics/x11drv/font.c] [graphics/x11drv/init.c]
+	  [include/x11drv.h] [objects/font.c]
+	GetTextMetrics() moved to graphics driver.
+
+	* [if1632/gdi.spec] [misc/fontengine.c] [misc/Makefile.in]
+	New dummy EngineEnumerateFont, EngineRealizeFont functions.
+
+	* [include/windows.h]
+	TEXTFORM16 and FONTINFO16 structure definitions moved here from
+	include/win16drv.h
+
+----------------------------------------------------------------------
 Sat Jan 11 18:17:59 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [controls/menu.c]

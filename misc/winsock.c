@@ -16,6 +16,9 @@
 #include <sys/ioccom.h>
 #include <sys/sockio.h>
 #endif
+#if defined(__EMX__)
+#include <sys/so_ioctl.h>
+#endif
 #include <sys/msg.h>
 #include <sys/wait.h>
 #include <sys/socket.h>

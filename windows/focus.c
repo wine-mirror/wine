@@ -106,7 +106,7 @@ HWND32 SetFocus32( HWND32 hwnd )
 	    return 0;
 
         /* activate hwndTop if needed. */
-	if (hwndTop != GetActiveWindow())
+	if (hwndTop != GetActiveWindow32())
 	{
 	    if (!WINPOS_SetActiveWindow(hwndTop, 0, 0)) return 0;
 

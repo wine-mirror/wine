@@ -21,6 +21,7 @@
 #include "windows.h"
 #include "win.h"
 #include "local.h"
+#include "resource.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -88,7 +89,11 @@ typedef struct
 	INT32 BufLimit;
 	INT32 BufSize;
 	BOOL32 TextChanged;
-	BOOL32 CanUndo;
+	INT32 UndoInsertLen;
+	INT32 UndoPos;
+	INT32 UndoBufSize;
+	HLOCAL32 hUndoBuf;
+	LPSTR UndoText;
 	BOOL32 Redraw;
 	INT32 SelStart;		/* offset of selection start, == SelEnd if no selection */
 	INT32 SelEnd;		/* offset of selection end == current caret position */
@@ -135,7 +140,7 @@ typedef struct
 		    (LPARAM)(wndPtr)->hwndSelf ))
 #define DPRINTF_EDIT_MSG16(str) \
     dprintf_edit(stddeb, \
-		 "edit: 16 bit : " str ": hwnd=%08x, wParam=%08x, lParam=%08x\n  ", \
+		 "edit: 16 bit : " str ": hwnd=%08x, wParam=%08x, lParam=%08x\n", \
 		 (UINT32)hwnd, (UINT32)wParam, (UINT32)lParam)
 #define DPRINTF_EDIT_MSG32(str) \
     dprintf_edit(stddeb, \
@@ -166,12 +171,14 @@ static LPSTR   EDIT_GetPasswordPointer(WND *wndPtr);
 static BOOL32  EDIT_GetRedraw(WND *wndPtr);
 static void    EDIT_GetSel(WND *wndPtr, LPINT32 s, LPINT32 e);
 static INT32   EDIT_GetTextWidth(WND *wndPtr);
+static LPSTR   EDIT_GetUndoPointer(WND *wndPtr);
 static INT32   EDIT_GetVisibleLineCount(WND *wndPtr);
 static INT32   EDIT_GetWndWidth(WND *wndPtr);
 static INT32   EDIT_GetXOffset(WND *wndPtr);
 static void    EDIT_InvalidateText(WND *wndPtr, INT32 start, INT32 end);
 static INT32   EDIT_LineFromWndY(WND *wndPtr, INT32 y);
 static BOOL32  EDIT_MakeFit(WND *wndPtr, INT32 size);
+static BOOL32  EDIT_MakeUndoFit(WND *wndPtr, INT32 size);
 static void    EDIT_MoveBackward(WND *wndPtr, BOOL32 extend);
 static void    EDIT_MoveDownward(WND *wndPtr, BOOL32 extend);
 static void    EDIT_MoveEnd(WND *wndPtr, BOOL32 extend);
@@ -185,6 +192,8 @@ static void    EDIT_MoveWordForward(WND *wndPtr, BOOL32 extend);
 static void    EDIT_PaintLine(WND *wndPtr, HDC32 hdc, INT32 line, BOOL32 rev);
 static INT32   EDIT_PaintText(WND *wndPtr, HDC32 hdc, INT32 x, INT32 y, INT32 line, INT32 col, INT32 count, BOOL32 rev);
 static void    EDIT_ReleasePointer(WND *wndPtr);
+static void    EDIT_ReleaseUndoPointer(WND *wndPtr);
+static void    EDIT_SetSel(WND *wndPtr, INT32 ns, INT32 ne);
 static INT32   EDIT_WndXFromCol(WND *wndPtr, INT32 line, INT32 col);
 static INT32   EDIT_WndYFromLine(WND *wndPtr, INT32 line);
 static INT32   EDIT_WordBreakProc(LPSTR s, INT32 index, INT32 count, INT32 action);
@@ -233,6 +242,8 @@ static LRESULT EDIT_EM_Undo(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 
 static LRESULT EDIT_WM_Char(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_Clear(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
+static LRESULT EDIT_WM_Command(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
+static LRESULT EDIT_WM_ContextMenu(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_Copy(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_Cut(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_Create(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
@@ -244,6 +255,7 @@ static LRESULT EDIT_WM_GetFont(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_GetText(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_GetTextLength(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_HScroll(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
+static LRESULT EDIT_WM_InitMenuPopup(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_KeyDown(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_KillFocus(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_LButtonDblClk(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
@@ -258,6 +270,8 @@ static LRESULT EDIT_WM_SetFont(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_SetRedraw(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_SetText(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_Size(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
+static LRESULT EDIT_WM_SysKeyDown(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
+static LRESULT EDIT_WM_Timer(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 static LRESULT EDIT_WM_VScroll(WND *wndPtr, WPARAM32 wParam, LPARAM lParam);
 
 
@@ -648,6 +662,23 @@ LRESULT EditWndProc(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 		lResult = EDIT_WM_Clear(wndPtr, wParam, lParam);
 		break;
 
+	case WM_COMMAND:
+		DPRINTF_EDIT_MSG32("WM_COMMAND");
+		lResult = EDIT_WM_Command(wndPtr, wParam, lParam);
+		break;
+
+/*
+ *	FIXME: when this one is added to WINE, change RBUTTONUP to CONTEXTMENU
+ *	Furthermore, coordinate conversion should no longer be required
+ *
+ *	case WM_CONTEXTMENU:
+ */
+ 	case WM_RBUTTONUP:
+		DPRINTF_EDIT_MSG32("WM_RBUTTONUP");
+		ClientToScreen16(wndPtr->hwndSelf, (LPPOINT16)&lParam);
+		lResult = EDIT_WM_ContextMenu(wndPtr, wParam, lParam);
+		break;
+
 	case WM_COPY:
 		DPRINTF_EDIT_MSG32("WM_COPY");
 		lResult = EDIT_WM_Copy(wndPtr, wParam, lParam);
@@ -696,6 +727,11 @@ LRESULT EditWndProc(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 	case WM_HSCROLL:
 		DPRINTF_EDIT_MSG32("WM_HSCROLL");
 		lResult = EDIT_WM_HScroll(wndPtr, wParam, lParam);
+		break;
+
+	case WM_INITMENUPOPUP:
+		DPRINTF_EDIT_MSG32("WM_INITMENUPOPUP");
+		lResult = EDIT_WM_InitMenuPopup(wndPtr, wParam, lParam);
 		break;
 
 	case WM_KEYDOWN:
@@ -770,6 +806,16 @@ LRESULT EditWndProc(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 	case WM_SIZE:
 		DPRINTF_EDIT_MSG32("WM_SIZE");
 		lResult = EDIT_WM_Size(wndPtr, wParam, lParam);
+		break;
+
+	case WM_SYSKEYDOWN:
+		DPRINTF_EDIT_MSG32("WM_SYSKEYDOWN");
+		lResult = EDIT_WM_SysKeyDown(wndPtr, wParam, lParam);
+		break;
+
+	case WM_TIMER:
+		DPRINTF_EDIT_MSG32("WM_TIMER");
+		lResult = EDIT_WM_Timer(wndPtr, wParam, lParam);
 		break;
 
 	case WM_VSCROLL:
@@ -1105,7 +1151,8 @@ static BOOL32 EDIT_GetRedraw(WND *wndPtr)
  *	EDIT_GetSel
  *
  *	Beware: This is not the function called on EM_GETSEL.
- *	(because s can be greater than e).
+ *		This is the unordered version used internally
+ *		(s can be > e).  No return value either.
  *
  */
 static void EDIT_GetSel(WND *wndPtr, LPINT32 s, LPINT32 e)
@@ -1129,6 +1176,24 @@ static INT32 EDIT_GetTextWidth(WND *wndPtr)
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 
 	return es->TextWidth;
+}
+
+
+/*********************************************************************
+ *
+ *	EDIT_GetUndoPointer
+ *
+ *	This acts as a LocalLock32(), but it locks only once.  This way
+ *	you can call it whenever you like, without unlocking.
+ *
+ */
+static LPSTR EDIT_GetUndoPointer(WND *wndPtr)
+{
+	EDITSTATE *es = EDITSTATEPTR(wndPtr);
+
+	if (!es->UndoText && es->hUndoBuf)
+		es->UndoText = (LPSTR)LocalLock32(es->hUndoBuf);
+	return es->UndoText;
 }
 
 
@@ -1197,7 +1262,7 @@ static void EDIT_InvalidateText(WND *wndPtr, INT32 start, INT32 end)
 	RECT32 rcUpdate;
 	INT32 l;
 
-	if (end == start )
+	if (end == start)
 		return;
 
 	if (end == -1)
@@ -1278,8 +1343,11 @@ static BOOL32 EDIT_MakeFit(WND *wndPtr, INT32 size)
 
 	if (size <= es->BufSize)
 		return TRUE;
-	if (size > es->BufLimit)
+	if (size > es->BufLimit) {
+		dprintf_edit(stddeb, "edit: notification EN_MAXTEXT sent\n");
+		EDIT_NOTIFY_PARENT(wndPtr, EN_MAXTEXT);
 		return FALSE;
+	}
 	size = ((size / GROWLENGTH) + 1) * GROWLENGTH;
 	if (size > es->BufLimit)
 		size = es->BufLimit;
@@ -1294,6 +1362,8 @@ static BOOL32 EDIT_MakeFit(WND *wndPtr, INT32 size)
 			es->BufSize = MIN(LocalSize32(es->hBuf32) - 1, es->BufLimit);
 			if (es->BufSize < size) {
 				dprintf_edit(stddeb, "edit: EDIT_MakeFit: FAILED !  We now have %d+1\n", es->BufSize);
+				dprintf_edit(stddeb, "edit: notification EN_ERRSPACE sent\n");
+				EDIT_NOTIFY_PARENT(wndPtr, EN_ERRSPACE);
 				return FALSE;
 			}
 			dprintf_edit(stddeb, "edit: EDIT_MakeFit: We now have %d+1\n", es->BufSize);
@@ -1306,11 +1376,50 @@ static BOOL32 EDIT_MakeFit(WND *wndPtr, INT32 size)
 			es->BufSize = MIN(LOCAL_Size(wndPtr->hInstance, es->hBuf16) - 1, es->BufLimit);
 			if (es->BufSize < size) {
 				dprintf_edit(stddeb, "edit: EDIT_MakeFit: FAILED !  We now have %d+1\n", es->BufSize);
+				dprintf_edit(stddeb, "edit: notification EN_ERRSPACE sent\n");
+				EDIT_NOTIFY_PARENT(wndPtr, EN_ERRSPACE);
 				return FALSE;
 			}
 			dprintf_edit(stddeb, "edit: EDIT_MakeFit: We now have %d+1\n", es->BufSize);
 			return TRUE;
 		}
+	}
+	dprintf_edit(stddeb, "edit: EDIT_MakeFit: Reallocation failed\n");
+	dprintf_edit(stddeb, "edit: notification EN_ERRSPACE sent\n");
+	EDIT_NOTIFY_PARENT(wndPtr, EN_ERRSPACE);
+	return FALSE;
+}
+
+
+/*********************************************************************
+ *
+ *	EDIT_MakeUndoFit
+ *
+ *	Try to fit size + 1 bytes in the undo buffer.
+ *
+ */
+static BOOL32 EDIT_MakeUndoFit(WND *wndPtr, INT32 size)
+{
+	EDITSTATE *es = EDITSTATEPTR(wndPtr);
+	HLOCAL32 hNew;
+
+	if (size <= es->UndoBufSize)
+		return TRUE;
+	size = ((size / GROWLENGTH) + 1) * GROWLENGTH;
+
+	dprintf_edit(stddeb, "edit: EDIT_MakeUndoFit: trying to ReAlloc to %d+1\n", size);
+
+	EDIT_ReleaseUndoPointer(wndPtr);
+	if ((hNew = LocalReAlloc32(es->hUndoBuf, size + 1, 0))) {
+		dprintf_edit(stddeb, "edit: EDIT_MakeUndoFit: Old handle %08x, new handle %08x\n", es->hUndoBuf, hNew);
+		es->hUndoBuf = hNew;
+		es->UndoBufSize = LocalSize32(es->hUndoBuf) - 1;
+		if (es->UndoBufSize < size) {
+			dprintf_edit(stddeb, "edit: EDIT_MakeUndoFit: FAILED !  We now have %d+1\n", es->UndoBufSize);
+			return FALSE;
+		}
+		dprintf_edit(stddeb, "edit: EDIT_MakeUndoFit: We now have %d+1\n", es->UndoBufSize);
+		return TRUE;
 	}
 	return FALSE;
 }
@@ -1340,7 +1449,7 @@ static void EDIT_MoveBackward(WND *wndPtr, BOOL32 extend)
 		e--;
 	if (!extend)
 		s = e;
-	EDIT_EM_SetSel(wndPtr, s, e);
+	EDIT_SetSel(wndPtr, s, e);
 	EDIT_EM_ScrollCaret(wndPtr, 0, 0);
 }
 
@@ -1371,7 +1480,7 @@ static void EDIT_MoveDownward(WND *wndPtr, BOOL32 extend)
 	}
 	if (!extend)
 		s = e;
-	EDIT_EM_SetSel(wndPtr, s, e);
+	EDIT_SetSel(wndPtr, s, e);
 	EDIT_EM_ScrollCaret(wndPtr, 0, 0);
 }
 
@@ -1396,7 +1505,7 @@ static void EDIT_MoveEnd(WND *wndPtr, BOOL32 extend)
 	e = li + ll;
 	if (!extend)
 		s = e;
-	EDIT_EM_SetSel(wndPtr, s, e);
+	EDIT_SetSel(wndPtr, s, e);
 	EDIT_EM_ScrollCaret(wndPtr, 0, 0);
 }
 
@@ -1427,7 +1536,7 @@ static void EDIT_MoveForward(WND *wndPtr, BOOL32 extend)
 		e++;
 	if (!extend)
 		s = e;
-	EDIT_EM_SetSel(wndPtr, s, e);
+	EDIT_SetSel(wndPtr, s, e);
 	EDIT_EM_ScrollCaret(wndPtr, 0, 0);
 }
 
@@ -1452,7 +1561,7 @@ static void EDIT_MoveHome(WND *wndPtr, BOOL32 extend)
 	e = li;
 	if (!extend)
 		s = e;
-	EDIT_EM_SetSel(wndPtr, s, e);
+	EDIT_SetSel(wndPtr, s, e);
 	EDIT_EM_ScrollCaret(wndPtr, 0, 0);
 }
 
@@ -1483,7 +1592,7 @@ static void EDIT_MovePageDown(WND *wndPtr, BOOL32 extend)
 	}
 	if (!extend)
 		s = e;
-	EDIT_EM_SetSel(wndPtr, s, e);
+	EDIT_SetSel(wndPtr, s, e);
 	EDIT_EM_ScrollCaret(wndPtr, 0, 0);
 }
 
@@ -1512,7 +1621,7 @@ static void EDIT_MovePageUp(WND *wndPtr, BOOL32 extend)
 	}
 	if (!extend)
 		s = e;
-	EDIT_EM_SetSel(wndPtr, s, e);
+	EDIT_SetSel(wndPtr, s, e);
 	EDIT_EM_ScrollCaret(wndPtr, 0, 0);
 }
 
@@ -1541,7 +1650,7 @@ static void EDIT_MoveUpward(WND *wndPtr, BOOL32 extend)
 	}
 	if (!extend)
 		s = e;
-	EDIT_EM_SetSel(wndPtr, s, e);
+	EDIT_SetSel(wndPtr, s, e);
 	EDIT_EM_ScrollCaret(wndPtr, 0, 0);
 }
 
@@ -1576,7 +1685,7 @@ static void EDIT_MoveWordBackward(WND *wndPtr, BOOL32 extend)
 	}
 	if (!extend)
 		s = e;
-	EDIT_EM_SetSel(wndPtr, s, e);
+	EDIT_SetSel(wndPtr, s, e);
 	EDIT_EM_ScrollCaret(wndPtr, 0, 0);
 }
 
@@ -1611,7 +1720,7 @@ static void EDIT_MoveWordForward(WND *wndPtr, BOOL32 extend)
 	}
 	if (!extend)
 		s = e;
-	EDIT_EM_SetSel(wndPtr, s, e);
+	EDIT_SetSel(wndPtr, s, e);
 	EDIT_EM_ScrollCaret(wndPtr, 0, 0);
 }
 
@@ -1708,14 +1817,72 @@ static void EDIT_ReleasePointer(WND *wndPtr)
 
 	if (!es)
 		return;
-	if (es->text && (es->hBuf32 || es->hBuf16))
-        {
+	if (es->text && (es->hBuf32 || es->hBuf16)) {
 		if (es->hBuf32)
 			LocalUnlock32(es->hBuf32);
 		else
 			LOCAL_Unlock(wndPtr->hInstance, es->hBuf16);
-        }
+	}
 	es->text = NULL;
+}
+
+
+/*********************************************************************
+ *
+ *	EDIT_ReleaseUndoPointer
+ *
+ *	This is the only helper function that can be called with es = NULL.
+ *	It is called at the end of EditWndProc() to unlock the buffer.
+ *
+ */
+static void EDIT_ReleaseUndoPointer(WND *wndPtr)
+{
+	EDITSTATE *es = EDITSTATEPTR(wndPtr);
+
+	if (!es)
+		return;
+	if (es->UndoText && es->hUndoBuf)
+		LocalUnlock32(es->hUndoBuf);
+	es->UndoText = NULL;
+}
+
+
+/*********************************************************************
+ *
+ *	EDIT_SetSel
+ *
+ *	Beware: This is not the function called on EM_SETSEL.
+ *		This is the unordered version used internally
+ *		(s can be > e).  Doesn't accept -1 parameters either.
+ *		No range checking.
+ *
+ */
+static void EDIT_SetSel(WND *wndPtr, INT32 ns, INT32 ne)
+{
+	EDITSTATE *es = EDITSTATEPTR(wndPtr);
+	LRESULT pos;
+	INT32 s;
+	INT32 e;
+
+	EDIT_EM_GetSel(wndPtr, (WPARAM32)&s, (LPARAM)&e);
+	es->SelStart = ns;
+	es->SelEnd = ne;
+	if (EDIT_GetRedraw(wndPtr)) {
+		if (wndPtr->hwndSelf == GetFocus32()) {
+			pos = EDIT_EM_PosFromChar(wndPtr, ne, 0);
+			SetCaretPos((INT16)LOWORD(pos), (INT16)HIWORD(pos));
+		}
+		ORDER_INT32(s, ns);
+		ORDER_INT32(s, ne);
+		ORDER_INT32(e, ns);
+		ORDER_INT32(e, ne);
+		ORDER_INT32(ns, ne);
+		if (e != ns) {
+			EDIT_InvalidateText(wndPtr, s, e);
+			EDIT_InvalidateText(wndPtr, ns, ne);
+		} else
+			EDIT_InvalidateText(wndPtr, s, ne);
+	}
 }
 
 
@@ -1845,7 +2012,7 @@ static LRESULT EDIT_EM_CanUndo(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 
-	return (LRESULT)es->CanUndo;
+	return (LRESULT)(es->UndoInsertLen || lstrlen32A(EDIT_GetUndoPointer(wndPtr)));
 }
 
 
@@ -1887,7 +2054,8 @@ static LRESULT EDIT_EM_EmptyUndoBuffer(WND *wndPtr, WPARAM32 wParam, LPARAM lPar
 {
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 
-	es->CanUndo = FALSE;
+	es->UndoInsertLen = 0;
+	*EDIT_GetUndoPointer(wndPtr) = '\0';
 	return 0;
 }
 
@@ -2277,7 +2445,6 @@ static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	INT32 tw = EDIT_GetTextWidth(wndPtr);
 	INT32 dx;
 	INT32 dy;
-	POINT32 pos;
 
 	if (nfv >= lc)
 		nfv = lc - 1;
@@ -2287,8 +2454,6 @@ static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	dx = xoff - nxoff;
 	dy = EDIT_WndYFromLine(wndPtr, fv) - EDIT_WndYFromLine(wndPtr, nfv);
 	if (dx || dy) {
-		if (wndPtr->hwndSelf == GetFocus32())
-			HideCaret(wndPtr->hwndSelf);
 		if (EDIT_GetRedraw(wndPtr))
 			ScrollWindow32(wndPtr->hwndSelf, dx, dy, NULL, NULL);
 		es->FirstVisibleLine = nfv;
@@ -2299,11 +2464,6 @@ static LRESULT EDIT_EM_LineScroll(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		if (IsHScrollBar(wndPtr))
 			SetScrollPos32(wndPtr->hwndSelf, SB_HORZ,
 				EDIT_WM_HScroll(wndPtr, EM_GETTHUMB16, 0), TRUE);
-		if (wndPtr->hwndSelf == GetFocus32()) {
-			GetCaretPos32(&pos);
-			SetCaretPos(pos.x + dx, pos.y + dy);
-			ShowCaret(wndPtr->hwndSelf);
-		}
 	}
 	if (IsMultiLine(wndPtr))
 		return TRUE;
@@ -2335,46 +2495,101 @@ static LRESULT EDIT_EM_PosFromChar(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  *
  *	EM_REPLACESEL
  *
- *	FIXME: wParam indicates whether we should maintain an undo buffer
- *	for this operation.
- *
  */
 static LRESULT EDIT_EM_ReplaceSel(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
+	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 	LPCSTR str = (LPCSTR)lParam;
 	INT32 strl = lstrlen32A(str);
 	INT32 tl = (INT32)EDIT_WM_GetTextLength(wndPtr, 0, 0);
+	INT32 utl;
 	INT32 s;
 	INT32 e;
 	INT32 i;
 	LPSTR p;
 	LPSTR text;
+	LPSTR utext;
 	BOOL32 redraw;
 
-	EDIT_GetSel(wndPtr, &s, &e);
-	ORDER_INT32(s,e);
-	if (!EDIT_MakeFit(wndPtr, tl - (e - s) + strl)) {
-		dprintf_edit(stddeb, "edit: notification EN_MAXTEXT sent\n");
-		EDIT_NOTIFY_PARENT(wndPtr, EN_MAXTEXT);
+	EDIT_EM_GetSel(wndPtr, (WPARAM32)&s, (LPARAM)&e);
+
+	if ((s == e) && !strl)
 		return 0;
+
+	if (!EDIT_MakeFit(wndPtr, tl - (e - s) + strl))
+		return 0;
+
+	text = EDIT_GetPointer(wndPtr);
+	utext = EDIT_GetUndoPointer(wndPtr);
+	if (e != s) {
+		/* there is something to be deleted */
+		if ((BOOL32)wParam) {
+			/* we have to be able to undo */
+			utl = lstrlen32A(utext);
+			if (!es->UndoInsertLen && (*utext && (s == es->UndoPos))) {
+				/* undo-buffer is extended to the right */
+				EDIT_MakeUndoFit(wndPtr, utl + e - s);
+				lstrcpyn32A(utext + utl, text + s, e - s + 1);
+			} else if (!es->UndoInsertLen && (*utext && (e == es->UndoPos))) {
+				/* undo-buffer is extended to the left */
+				EDIT_MakeUndoFit(wndPtr, utl + e - s);
+				for (p = utext + utl ; p >= utext ; p--)
+					p[e - s] = p[0];
+				for (i = 0 , p = utext ; i < e - s ; i++)
+					p[i] = (text + s)[i];
+				es->UndoPos = s;
+			} else {
+				/* new undo-buffer */
+				EDIT_MakeUndoFit(wndPtr, e - s);
+				lstrcpyn32A(utext, text + s, e - s + 1);
+				es->UndoPos = s;
+			}
+			/* any deletion makes the old insertion-undo invalid */
+			es->UndoInsertLen = 0;
+		} else
+			EDIT_EM_EmptyUndoBuffer(wndPtr, 0, 0);
+
+		/* now delete */
+		lstrcpy32A(text + s, text + e);
+	}
+	if (strl) {
+		/* there is an insertion */
+		if ((BOOL32)wParam) {
+			/* we have to be able to undo */
+			if ((s == es->UndoPos) ||
+					((es->UndoInsertLen) &&
+					(s == es->UndoPos + es->UndoInsertLen)))
+				/*
+				 * insertion is new and at delete position or
+				 * an extension to either left or right
+				 */
+				es->UndoInsertLen += strl;
+			else {
+				/* new insertion undo */
+				es->UndoPos = s;
+				es->UndoInsertLen = strl;
+				/* new insertion makes old delete-buffer invalid */
+				*utext = '\0';
+			}
+		} else
+			EDIT_EM_EmptyUndoBuffer(wndPtr, 0, 0);
+
+		/* now insert */
+		tl = lstrlen32A(text);
+		for (p = text + tl ; p >= text + s ; p--)
+			p[strl] = p[0];
+		for (i = 0 , p = text + s ; i < strl ; i++)
+			p[i] = str[i];
+		if(IsUpper(wndPtr))
+			CharUpperBuff32A(p, strl);
+		else if(IsLower(wndPtr))
+			CharLowerBuff32A(p, strl);
+		s += strl;
 	}
 	redraw = EDIT_GetRedraw(wndPtr);
 	EDIT_WM_SetRedraw(wndPtr, FALSE, 0);
-	EDIT_WM_Clear(wndPtr, 0, 0);
-	tl = EDIT_WM_GetTextLength(wndPtr, 0, 0);
-	EDIT_GetSel(wndPtr, NULL, &e);
-	text = EDIT_GetPointer(wndPtr);
-	for (p = text + tl ; p >= text + e ; p--)
-		p[strl] = p[0];
-	for (i = 0 , p = text + e ; i < strl ; i++)
-		p[i] = str[i];
-	if(IsUpper(wndPtr))
-		CharUpperBuff32A(p, strl);
-	else if(IsLower(wndPtr))
-		CharLowerBuff32A(p, strl);
 	EDIT_BuildLineDefs(wndPtr);
-	e += strl;
-	EDIT_EM_SetSel(wndPtr, e, e);
+	EDIT_EM_SetSel(wndPtr, s, s);
 	EDIT_EM_ScrollCaret(wndPtr, 0, 0);
 	EDIT_EM_SetModify(wndPtr, TRUE, 0);
 	dprintf_edit(stddeb, "edit: notification EN_UPDATE sent\n");
@@ -2518,6 +2733,9 @@ static LRESULT EDIT_EM_SetHandle16(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  *
  *	EM_SETLIMITTEXT
  *
+ *	FIXME: in WinNT maxsize is 0x7FFFFFFF / 0xFFFFFFFF
+ *	However, the windows version is not complied to yet in all of edit.c
+ *
  */
 static LRESULT EDIT_EM_SetLimitText(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
@@ -2641,54 +2859,24 @@ static LRESULT EDIT_EM_SetRectNP(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  *
  *	EM_SETSEL
  *
- *	FIXME: specs state that we should order start and end.
- *		However, we use internally that this is not the case.
- *
  */
 static LRESULT EDIT_EM_SetSel(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-	EDITSTATE *es = EDITSTATEPTR(wndPtr);
 	INT32 ns = (INT32)wParam;
 	INT32 ne = (INT32)lParam;
-	INT32 s;
-	INT32 e;
-	INT32 el;
-	INT32 eli;
 	INT32 tl = (INT32)EDIT_WM_GetTextLength(wndPtr, 0, 0);
 
-	EDIT_GetSel(wndPtr, &s, &e);
 	if (ns == -1) {
-		ns = e;
-		ne = e;
-	}
-	if (ne == -1)
-		ne = e;
-/*
-	ORDER_INT32(ns, ne);
-*/
-	ns = MIN(ns, tl);
-	ne = MIN(ne, tl);
-	es->SelStart = ns;
-	es->SelEnd = ne;
-	if (wndPtr->hwndSelf == GetFocus32()) {
-		el = (INT32)EDIT_EM_LineFromChar(wndPtr, ne, 0);
-		eli = (INT32)EDIT_EM_LineIndex(wndPtr, el, 0);
-		SetCaretPos(EDIT_WndXFromCol(wndPtr, el, ne - eli),
-				EDIT_WndYFromLine(wndPtr, el));
-	}
-	if (EDIT_GetRedraw(wndPtr)) {
-		ORDER_INT32(s, e);
-		ORDER_INT32(s, ns);
-		ORDER_INT32(s, ne);
-		ORDER_INT32(e, ns);
-		ORDER_INT32(e, ne);
+		EDIT_GetSel(wndPtr, NULL, &ne);
+		ns = ne;
+	} else if ((!ns) && (ne == -1))
+		ne = tl;
+	else {
+		ns = MAX(0, MIN(ns, tl));
+		ne = MAX(0, MIN(ne, tl));
 		ORDER_INT32(ns, ne);
-		if (e != ns) {
-			EDIT_InvalidateText(wndPtr, s, e);
-			EDIT_InvalidateText(wndPtr, ns, ne);
-		} else
-			EDIT_InvalidateText(wndPtr, s, ne);
 	}
+	EDIT_SetSel(wndPtr, ns, ne);
 	return -1;
 }
 
@@ -2705,7 +2893,7 @@ static LRESULT EDIT_EM_SetSel16(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 	if ((INT16)LOWORD(lParam) == -1)
 		ns = -1;
-	if ((INT16)HIWORD(lParam) == -1)
+	if ((!ns) && ((INT16)HIWORD(lParam) == -1))
 		ne = -1;
 	EDIT_EM_SetSel(wndPtr, ns, ne);
 	if (!wParam)
@@ -2783,16 +2971,27 @@ static LRESULT EDIT_EM_SetWordBreakProc(WND *wndPtr, WPARAM32 wParam, LPARAM lPa
 
 /*********************************************************************
  *
- *	EM_UNDO
+ *	EM_UNDO / WM_UNDO
  *
  */
 static LRESULT EDIT_EM_Undo(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-	fprintf(stdnimp,"edit: EM_UNDO: message not implemented\n");
-	if (IsMultiLine(wndPtr))
-		return FALSE;
-	else
-		return TRUE;
+	EDITSTATE *es = EDITSTATEPTR(wndPtr);
+	LPSTR utext = xstrdup(EDIT_GetUndoPointer(wndPtr));
+
+	dprintf_edit(stddeb, "edit: before UNDO:insertion length = %d, deletion buffer = %s\n",
+			es->UndoInsertLen, utext);
+
+	EDIT_EM_SetSel(wndPtr, es->UndoPos, es->UndoPos + es->UndoInsertLen);
+	EDIT_EM_EmptyUndoBuffer(wndPtr, 0, 0);
+	EDIT_EM_ReplaceSel(wndPtr, TRUE, (LPARAM)utext);
+	EDIT_EM_SetSel(wndPtr, es->UndoPos, es->UndoPos + es->UndoInsertLen);
+	free(utext);
+
+	dprintf_edit(stddeb, "edit: after UNDO: insertion length = %d, deletion buffer = %s\n",
+			es->UndoInsertLen, EDIT_GetUndoPointer(wndPtr));
+
+	return TRUE;
 }
 
 
@@ -2814,18 +3013,18 @@ static LRESULT EDIT_WM_Char(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 				EDIT_MoveHome(wndPtr, FALSE);
 				EDIT_MoveDownward(wndPtr, FALSE);
 			} else
-				EDIT_EM_ReplaceSel(wndPtr, 0, (LPARAM)"\r\n");
+				EDIT_EM_ReplaceSel(wndPtr, (WPARAM32)TRUE, (LPARAM)"\r\n");
 		}
 		break;
 	case '\t':
 		if (IsMultiLine(wndPtr) && !IsReadOnly(wndPtr))
-			EDIT_EM_ReplaceSel(wndPtr, 0, (LPARAM)"\t");
+			EDIT_EM_ReplaceSel(wndPtr, (WPARAM32)TRUE, (LPARAM)"\t");
 		break;
 	default:
 		if (!IsReadOnly(wndPtr) && (c >= ' ') && (c != 127)) {
  			str[0] = c;
  			str[1] = '\0';
- 			EDIT_EM_ReplaceSel(wndPtr, 0, (LPARAM)str);
+ 			EDIT_EM_ReplaceSel(wndPtr, (WPARAM32)TRUE, (LPARAM)str);
  		}
 		break;
 	}
@@ -2840,32 +3039,68 @@ static LRESULT EDIT_WM_Char(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_Clear(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-	INT32 s;
-	INT32 e;
-	LPSTR text;
-	BOOL32 redraw;
+	EDIT_EM_ReplaceSel(wndPtr, TRUE, (LPARAM)"");
 
-	EDIT_GetSel(wndPtr, &s, &e);
-	if (s != e) {
-		redraw = EDIT_GetRedraw(wndPtr);
-		EDIT_WM_SetRedraw(wndPtr, FALSE, 0);
-		ORDER_INT32(s, e);
-		text = EDIT_GetPointer(wndPtr);
-		lstrcpy32A(text + s, text + e);
-		EDIT_BuildLineDefs(wndPtr);
-		EDIT_EM_SetSel(wndPtr, s, s);
-		EDIT_EM_ScrollCaret(wndPtr, 0, 0);
-		EDIT_EM_SetModify(wndPtr, TRUE, 0);
-		dprintf_edit(stddeb, "edit: notification EN_UPDATE sent\n");
-		EDIT_NOTIFY_PARENT(wndPtr, EN_UPDATE);
-		EDIT_WM_SetRedraw(wndPtr, redraw, 0);
-		if (redraw) {
-			InvalidateRect32( wndPtr->hwndSelf, NULL, TRUE );
-			dprintf_edit(stddeb, "edit: notification EN_CHANGE sent\n");
-			EDIT_NOTIFY_PARENT(wndPtr, EN_CHANGE);
-		}
+	return -1;
+}
+
+
+/*********************************************************************
+ *
+ *	WM_COMMAND
+ *
+ */
+static LRESULT EDIT_WM_Command(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+	if (HIWORD(wParam))
+		return 0;
+
+	switch (LOWORD(wParam)) {
+		case EM_UNDO32:	
+			EDIT_EM_Undo(wndPtr, 0, 0);
+			break;
+		case WM_CUT:
+			EDIT_WM_Cut(wndPtr, 0, 0);
+			break;
+		case WM_COPY:
+			EDIT_WM_Copy(wndPtr, 0, 0);
+			break;
+		case WM_PASTE:
+			EDIT_WM_Paste(wndPtr, 0, 0);
+			break;
+		case WM_CLEAR:
+			EDIT_WM_Clear(wndPtr, 0, 0);
+			break;
+		case EM_SETSEL32:
+			EDIT_EM_SetSel(wndPtr, 0, -1);
+			EDIT_EM_ScrollCaret(wndPtr, 0, 0);
+			break;
+		default:
+			dprintf_edit(stddeb, "edit: unknown menu item, please report\n");
+			break;
 	}
 	return -1;
+}
+
+
+/*********************************************************************
+ *
+ *	WM_CONTEXTMENU
+ *
+ *	Note: the resource files resource/sysres_??.rc cannot define a
+ *		single popup menu.  Hence we use a (dummy) menubar
+ *		containing the single popup menu as its first item.
+ *
+ */
+static LRESULT EDIT_WM_ContextMenu(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+	HMENU32 hMenu = LoadMenuIndirect32A(SYSRES_GetResPtr(SYSRES_MENU_EDITMENU));
+	HMENU32 hPopup = GetSubMenu32(hMenu, 0);
+
+	TrackPopupMenu32(hPopup, TPM_LEFTALIGN | TPM_RIGHTBUTTON, LOWORD(lParam),
+			HIWORD(lParam), 0, wndPtr->hwndSelf, NULL);
+	DestroyMenu32(hMenu);
+	return 0;
 }
 
 
@@ -2881,8 +3116,6 @@ static LRESULT EDIT_WM_Copy(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	HGLOBAL16 hdst;
 	LPSTR text;
 	LPSTR dst;
-	LPSTR src;
-	INT32 i;
 
 	EDIT_GetSel(wndPtr, &s, &e);
 	if (e == s)
@@ -2891,10 +3124,7 @@ static LRESULT EDIT_WM_Copy(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	hdst = GlobalAlloc16(GMEM_MOVEABLE, (DWORD)(e - s + 1));
 	dst = GlobalLock16(hdst);
 	text = EDIT_GetPointer(wndPtr);
-	src = text + s;
-	for (i = 0 ; i < e - s ; i++)
-		*dst++ = *src++;
-	*dst = '\0';
+	lstrcpyn32A(dst, text + s, e - s + 1);
 	GlobalUnlock16(hdst);
 	OpenClipboard(wndPtr->hwndSelf);
 	EmptyClipboard();
@@ -2942,13 +3172,21 @@ static LRESULT EDIT_WM_Create(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		fprintf(stderr, "edit: WM_CREATE: unable to allocate buffer\n");
 		return -1;
 	}
+	if (!(es->hUndoBuf = LocalAlloc32(LMEM_MOVEABLE, es->BufSize + 1))) {
+		fprintf(stderr, "edit: WM_CREATE: unable to allocate undo buffer\n");
+		LocalFree32(es->hBuf32);
+		es->hBuf32 = (HLOCAL32)NULL;
+		return -1;
+	}
 	es->BufSize = LocalSize32(es->hBuf32) - 1;
+	es->UndoBufSize = LocalSize32(es->hUndoBuf) - 1;
+	EDIT_EM_EmptyUndoBuffer(wndPtr, 0, 0);
 	text = EDIT_GetPointer(wndPtr);
 	*text = '\0';
 	EDIT_BuildLineDefs(wndPtr);
 	EDIT_WM_SetFont(wndPtr, 0, 0);
 	if (cs->lpszName && *(cs->lpszName) != '\0')
-		EDIT_EM_ReplaceSel(wndPtr, FALSE, (LPARAM)cs->lpszName);
+		EDIT_EM_ReplaceSel(wndPtr, (WPARAM32)FALSE, (LPARAM)cs->lpszName);
 	EDIT_WM_SetRedraw(wndPtr, TRUE, 0);
 	return 0;
 }
@@ -2979,6 +3217,8 @@ static LRESULT EDIT_WM_Destroy(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	free(es->LineDefs);
 	if (es->TabStops)
 		free(es->TabStops);
+	EDIT_ReleaseUndoPointer(wndPtr);
+	LocalFree32(es->hUndoBuf);
 	EDIT_ReleasePointer(wndPtr);
 	if (es->hBuf32)
 		LocalFree32(es->hBuf32);
@@ -3154,6 +3394,49 @@ static LRESULT EDIT_WM_HScroll(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 /*********************************************************************
  *
+ *	WM_INITMENUPOPUP
+ *
+ *	FIXME: the message identifiers have been chosen arbitrarily,
+ *		hence we use MF_BYPOSITION.
+ *		We might as well use the "real" values (anybody knows ?)
+ *		The menu definition is in resources/sysres_??.rc.
+ *		Once these are OK, we better use MF_BYCOMMAND here
+ *		(as we do in EDIT_WM_Command()).
+ *
+ */
+static LRESULT EDIT_WM_InitMenuPopup(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+	HMENU32 hPopup = (HMENU32)wParam;
+	INT32 s;
+	INT32 e;
+
+	EDIT_EM_GetSel(wndPtr, (WPARAM32)&s, (LPARAM)&e);
+
+	/* undo */
+	EnableMenuItem32(hPopup, 0, MF_BYPOSITION |
+		(EDIT_EM_CanUndo(wndPtr, 0, 0) ? MF_ENABLED : MF_GRAYED));
+	/* cut */
+	EnableMenuItem32(hPopup, 2, MF_BYPOSITION |
+		((e - s) && !IsPassword(wndPtr) ? MF_ENABLED : MF_GRAYED));
+	/* copy */
+	EnableMenuItem32(hPopup, 3, MF_BYPOSITION |
+		((e - s) && !IsPassword(wndPtr) ? MF_ENABLED : MF_GRAYED));
+	/* paste */
+	EnableMenuItem32(hPopup, 4, MF_BYPOSITION |
+		(IsClipboardFormatAvailable(CF_TEXT) ? MF_ENABLED : MF_GRAYED));
+	/* delete */
+	EnableMenuItem32(hPopup, 5, MF_BYPOSITION |
+		((e - s) ? MF_ENABLED : MF_GRAYED));
+	/* select all */
+	EnableMenuItem32(hPopup, 7, MF_BYPOSITION |
+		(s || (e != EDIT_WM_GetTextLength(wndPtr, 0, 0)) ? MF_ENABLED : MF_GRAYED));
+
+	return 0;
+}
+
+
+/*********************************************************************
+ *
  *	WM_KEYDOWN
  *
  *	Handling of special keys that don't produce a WM_CHAR
@@ -3255,7 +3538,7 @@ static LRESULT EDIT_WM_KillFocus(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 	DestroyCaret();
 	if(!(wndPtr->dwStyle & ES_NOHIDESEL)) {
-		EDIT_GetSel(wndPtr, &s, &e);
+		EDIT_EM_GetSel(wndPtr, (WPARAM32)&s, (LPARAM)&e);
 		EDIT_InvalidateText(wndPtr, s, e);
 	}
 	dprintf_edit(stddeb, "edit: notification EN_KILLFOCUS sent\n");
@@ -3320,8 +3603,9 @@ static LRESULT EDIT_WM_LButtonDown(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		EDIT_GetSel(wndPtr, &s, NULL);
 	else
 		s = e;
-	EDIT_EM_SetSel(wndPtr, s, e);
+	EDIT_SetSel(wndPtr, s, e);
 	EDIT_EM_ScrollCaret(wndPtr, 0, 0);
+	SetTimer32(wndPtr->hwndSelf, 0, 100, NULL);
 	return 0;
 }
 
@@ -3333,8 +3617,10 @@ static LRESULT EDIT_WM_LButtonDown(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
  */
 static LRESULT EDIT_WM_LButtonUp(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-	if (GetCapture32() == wndPtr->hwndSelf)
+	if (GetCapture32() == wndPtr->hwndSelf) {
+		KillTimer32(wndPtr->hwndSelf, 0);
 		ReleaseCapture();
+	}
 	return 0;
 }
 
@@ -3366,8 +3652,12 @@ static LRESULT EDIT_WM_MouseMove(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		c = EDIT_ColFromWndX(wndPtr, l, x);
 		EDIT_GetSel(wndPtr, &s, NULL);
 		li = (INT32)EDIT_EM_LineIndex(wndPtr, l, 0);
-		EDIT_EM_SetSel(wndPtr, s, li + c);
+		EDIT_SetSel(wndPtr, s, li + c);
 	}
+	/*
+	 *	FIXME: gotta do some scrolling if outside client (format ?)
+	 *		area.  Maybe reset the timer ?
+	 */
 	return 0;
 }
 
@@ -3390,7 +3680,9 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	RECT32 rc;
 	RECT32 rcLine;
 	RECT32 rcRgn;
-	BOOL32 rev = IsWindowEnabled(wndPtr->hwndSelf) &&
+ 	LRESULT pos;
+ 	INT32 e;
+	BOOL32 rev = IsWindowEnabled32(wndPtr->hwndSelf) &&
 				((GetFocus32() == wndPtr->hwndSelf) ||
 					(wndPtr->dwStyle & ES_NOHIDESEL));
 
@@ -3401,7 +3693,7 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	if (hFont)
 		oldFont = (HFONT32)SelectObject32(hdc, hFont);
 	EDIT_SEND_CTLCOLOR(wndPtr, hdc);
-	if (!IsWindowEnabled(wndPtr->hwndSelf))
+	if (!IsWindowEnabled32(wndPtr->hwndSelf))
 		SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
 	GetClipBox32(hdc, &rcRgn);
 	for (i = fv ; i <= MIN(fv + vlc, fv + lc - 1) ; i++ ) {
@@ -3410,6 +3702,11 @@ static LRESULT EDIT_WM_Paint(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 			EDIT_PaintLine(wndPtr, hdc, i, rev);
 	}
 	if (hFont) SelectObject32(hdc, oldFont);
+	if (wndPtr->hwndSelf == GetFocus32()) {
+		EDIT_GetSel(wndPtr, NULL, &e);
+		pos = EDIT_EM_PosFromChar(wndPtr, e, 0);
+		SetCaretPos((INT16)LOWORD(pos), (INT16)HIWORD(pos));
+	}
 	EndPaint32(wndPtr->hwndSelf, &ps);
 	return 0;
 }
@@ -3428,7 +3725,7 @@ static LRESULT EDIT_WM_Paste(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	OpenClipboard(wndPtr->hwndSelf);
 	if ((hsrc = GetClipboardData(CF_TEXT))) {
 		src = (LPSTR)GlobalLock16(hsrc);
-		EDIT_EM_ReplaceSel(wndPtr, 0, (LPARAM)src);
+		EDIT_EM_ReplaceSel(wndPtr, (WPARAM32)TRUE, (LPARAM)src);
 		GlobalUnlock16(hsrc);
 	}
 	CloseClipboard();
@@ -3463,7 +3760,7 @@ static LRESULT EDIT_WM_SetFocus(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 	EDIT_GetSel(wndPtr, &s, &e);
 	CreateCaret(wndPtr->hwndSelf, 0, 2, EDIT_GetLineHeight(wndPtr));
-	EDIT_EM_SetSel(wndPtr, s, e);
+	EDIT_SetSel(wndPtr, s, e);
 	if(!(wndPtr->dwStyle & ES_NOHIDESEL))
 		EDIT_InvalidateText(wndPtr, s, e);
 	ShowCaret(wndPtr->hwndSelf);
@@ -3502,7 +3799,7 @@ static LRESULT EDIT_WM_SetFont(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	if (wndPtr->hwndSelf == GetFocus32()) {
 		DestroyCaret();
 		CreateCaret(wndPtr->hwndSelf, 0, 2, EDIT_GetLineHeight(wndPtr));
-		EDIT_EM_SetSel16(wndPtr, s, e);
+		EDIT_SetSel(wndPtr, s, e);
 		ShowCaret(wndPtr->hwndSelf);
 	}
 	return 0;
@@ -3532,10 +3829,7 @@ static LRESULT EDIT_WM_SetText(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
 	EDIT_EM_SetSel(wndPtr, 0, -1);
 	if (lParam)
-		EDIT_EM_ReplaceSel(wndPtr, 0, lParam);
-	else
-            EDIT_WM_Clear(wndPtr, 0, 0);
-	EDIT_EM_EmptyUndoBuffer(wndPtr, 0, 0);
+		EDIT_EM_ReplaceSel(wndPtr, (WPARAM32)FALSE, lParam);
 	EDIT_EM_SetModify(wndPtr, TRUE, 0);
 	EDIT_EM_ScrollCaret(wndPtr, 0, 0);
 	return 1;
@@ -3552,7 +3846,9 @@ static LRESULT EDIT_WM_SetText(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT EDIT_WM_Size(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
 	EDITSTATE *es = EDITSTATEPTR(wndPtr);
-
+	INT32 e;
+	
+	EDIT_GetSel(wndPtr, 0, &e);
 	GetClientRect32(wndPtr->hwndSelf, &es->FormatRect);
 	if (EDIT_GetRedraw(wndPtr) &&
 			((wParam == SIZE_MAXIMIZED) ||
@@ -3561,6 +3857,35 @@ static LRESULT EDIT_WM_Size(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 			EDIT_BuildLineDefs(wndPtr);
 		InvalidateRect32( wndPtr->hwndSelf, NULL, TRUE );
 	}
+	return 0;
+}
+
+
+/*********************************************************************
+ *
+ *	WM_SYSKEYDOWN
+ *
+ */
+static LRESULT EDIT_WM_SysKeyDown(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+	if ((wParam == VK_BACK) && (lParam & 0x2000) &&
+			(BOOL32)EDIT_EM_CanUndo(wndPtr, 0, 0))
+		EDIT_EM_Undo(wndPtr, 0, 0);
+	return 0;
+}
+
+
+/*********************************************************************
+ *
+ *	WM_TIMER
+ *
+ */
+static LRESULT EDIT_WM_Timer(WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+/*
+ *	FIXME: gotta do some scrolling here, like
+ *		EDIT_EM_LineScroll(wndPtr, 0, 1);
+ */
 	return 0;
 }
 

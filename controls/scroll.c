@@ -778,24 +778,24 @@ LRESULT ScrollBarWndProc( HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 	    if (lpCreat->style & SBS_VERT)
             {
                 if (lpCreat->style & SBS_LEFTALIGN)
-                    MoveWindow( hwnd, lpCreat->x, lpCreat->y,
-                                SYSMETRICS_CXVSCROLL+1, lpCreat->cy, FALSE );
+                    MoveWindow32( hwnd, lpCreat->x, lpCreat->y,
+                                  SYSMETRICS_CXVSCROLL+1, lpCreat->cy, FALSE );
                 else if (lpCreat->style & SBS_RIGHTALIGN)
-                    MoveWindow( hwnd, 
-                                lpCreat->x+lpCreat->cx-SYSMETRICS_CXVSCROLL-1,
-                                lpCreat->y,
-                                SYSMETRICS_CXVSCROLL + 1, lpCreat->cy, FALSE );
+                    MoveWindow32( hwnd, 
+                                  lpCreat->x+lpCreat->cx-SYSMETRICS_CXVSCROLL-1,
+                                  lpCreat->y,
+                                  SYSMETRICS_CXVSCROLL+1, lpCreat->cy, FALSE );
             }
             else  /* SBS_HORZ */
             {
                 if (lpCreat->style & SBS_TOPALIGN)
-                    MoveWindow( hwnd, lpCreat->x, lpCreat->y,
-                                lpCreat->cx, SYSMETRICS_CYHSCROLL+1, FALSE );
+                    MoveWindow32( hwnd, lpCreat->x, lpCreat->y,
+                                  lpCreat->cx, SYSMETRICS_CYHSCROLL+1, FALSE );
                 else if (lpCreat->style & SBS_BOTTOMALIGN)
-                    MoveWindow( hwnd, 
-                                lpCreat->x,
-                                lpCreat->y+lpCreat->cy-SYSMETRICS_CYHSCROLL-1,
-                                lpCreat->cx, SYSMETRICS_CYHSCROLL+1, FALSE );
+                    MoveWindow32( hwnd, 
+                                  lpCreat->x,
+                                  lpCreat->y+lpCreat->cy-SYSMETRICS_CYHSCROLL-1,
+                                  lpCreat->cx, SYSMETRICS_CYHSCROLL+1, FALSE );
             }
         }
         if (!hUpArrow) SCROLL_LoadBitmaps();
@@ -1210,7 +1210,7 @@ BOOL32 ShowScrollBar32( HWND32 hwnd, INT32 nBar, BOOL32 fShow )
     switch(nBar)
     {
     case SB_CTL:
-        ShowWindow( hwnd, fShow ? SW_SHOW : SW_HIDE );
+        ShowWindow32( hwnd, fShow ? SW_SHOW : SW_HIDE );
         return TRUE;
 
     case SB_HORZ:
@@ -1257,8 +1257,8 @@ BOOL32 ShowScrollBar32( HWND32 hwnd, INT32 nBar, BOOL32 fShow )
     default:
         return TRUE;  /* Nothing to do! */
     }
-    SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
-                 | SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+    SetWindowPos32( hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE
+                    | SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
     return TRUE;
 }
 

@@ -41,6 +41,7 @@ int yyerror(char *);
     int              integer;
     struct list_id   listing;
     struct expr *    expression;
+    struct datatype * type;
 }
 
 %token tCONT tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
@@ -48,11 +49,14 @@ int yyerror(char *);
 %token tCLASS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
 %token tEOL tSTRING
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY
-%token tSTEPI tNEXTI tFINISH tSHOW tDIR 
+%token tSTEPI tNEXTI tFINISH tSHOW tDIR
 %token <string> tPATH
 %token <string> tIDENTIFIER tSTRING
 %token <integer> tNUM tFORMAT
 %token <reg> tREG
+
+%token tCHAR tSHORT tINT tLONG tFLOAT tDOUBLE tUNSIGNED tSIGNED 
+%token tSTRUCT tUNION tENUM
 
 /* %left ',' */
 /* %left '=' OP_OR_EQUAL OP_XOR_EQUAL OP_AND_EQUAL OP_SHL_EQUAL \
@@ -66,14 +70,15 @@ int yyerror(char *);
 %left '&'
 %left OP_EQ OP_NE
 %left '<' '>' OP_LE OP_GE
-%left OP_SHL OP_SHR OP_DRF
+%left OP_SHL OP_SHR
 %left '+' '-'
 %left '*' '/' '%'
 %left OP_SIGN '!' '~' OP_DEREF /* OP_INC OP_DEC OP_ADDR */
-%left '.' '['
+%left '.' '[' OP_DRF
 %nonassoc ':'
 
-%type <expression> expr lval lvalue
+%type <expression> expr lval lvalue 
+%type <type> type_cast type_expr
 %type <address> expr_addr lval_addr
 %type <integer> expr_value
 %type <string> pathname
@@ -129,7 +134,9 @@ command:
     | tSHOW tDIR tEOL	       { DEBUG_ShowDir(); }
     | tDIR pathname tEOL       { DEBUG_AddPath( $2 ); }
     | tDIR tEOL		       { DEBUG_NukePath(); }
-    | tDISPLAY expr tEOL       { DEBUG_AddDisplay($2); }
+    | tDISPLAY tEOL	       { DEBUG_InfoDisplay(); }
+    | tDISPLAY expr tEOL       { DEBUG_AddDisplay($2, 1, 0); }
+    | tDISPLAY tFORMAT expr tEOL { DEBUG_AddDisplay($3, $2 >> 8, $2 & 0xff); }
     | tDELETE tDISPLAY tNUM tEOL { DEBUG_DelDisplay( $3 ); }
     | tDELETE tDISPLAY tEOL    { DEBUG_DelDisplay( -1 ); }
     | tUNDISPLAY tNUM tEOL     { DEBUG_DelDisplay( $2 ); }
@@ -257,6 +264,30 @@ walk_command:
     | tWALK tWND tEOL           { WIN_WalkWindows( 0, 0 ); }
     | tWALK tWND tNUM tEOL      { WIN_WalkWindows( $3, 0 ); }
 
+
+type_cast: 
+      '(' type_expr ')'		{ $$ = $2; }
+
+type_expr:
+      type_expr '*'		{ $$ = DEBUG_FindOrMakePointerType($1); }
+    |  tINT			{ $$ = DEBUG_TypeCast(BASIC, "int"); }
+    | tCHAR			{ $$ = DEBUG_TypeCast(BASIC, "char"); }
+    | tLONG tINT		{ $$ = DEBUG_TypeCast(BASIC, "long int"); }
+    | tUNSIGNED tINT		{ $$ = DEBUG_TypeCast(BASIC, "unsigned int"); }
+    | tLONG tUNSIGNED tINT	{ $$ = DEBUG_TypeCast(BASIC, "long unsigned int"); }
+    | tLONG tLONG tINT		{ $$ = DEBUG_TypeCast(BASIC, "long long int"); }
+    | tLONG tLONG tUNSIGNED tINT { $$ = DEBUG_TypeCast(BASIC, "long long unsigned int"); }
+    | tSHORT tINT		{ $$ = DEBUG_TypeCast(BASIC, "short int"); }
+    | tSHORT tUNSIGNED tINT	{ $$ = DEBUG_TypeCast(BASIC, "short unsigned int"); }
+    | tSIGNED tCHAR		{ $$ = DEBUG_TypeCast(BASIC, "signed char"); }
+    | tUNSIGNED tCHAR		{ $$ = DEBUG_TypeCast(BASIC, "unsigned char"); }
+    | tFLOAT			{ $$ = DEBUG_TypeCast(BASIC, "float"); }
+    | tDOUBLE			{ $$ = DEBUG_TypeCast(BASIC, "double"); }
+    | tLONG tDOUBLE		{ $$ = DEBUG_TypeCast(BASIC, "long double"); }
+    | tSTRUCT tIDENTIFIER	{ $$ = DEBUG_TypeCast(STRUCT, $2); }
+    | tUNION tIDENTIFIER	{ $$ = DEBUG_TypeCast(STRUCT, $2); }
+    | tENUM tIDENTIFIER		{ $$ = DEBUG_TypeCast(ENUM, $2); }
+
 expr_addr:
     expr			 { $$ = DEBUG_EvalExpr($1) }
 
@@ -310,6 +341,7 @@ expr:
     | '(' expr ')'               { $$ = $2; }
     | '*' expr %prec OP_DEREF    { $$ = DEBUG_UnopExpr(EXP_OP_DEREF, $2); }
     | '&' expr %prec OP_DEREF    { $$ = DEBUG_UnopExpr(EXP_OP_ADDR, $2); }
+    | type_cast expr %prec OP_DEREF { $$ = DEBUG_TypeCastExpr($1, $2); } 
 	
 /*
  * The lvalue rule builds an expression tree.  This is a limited form
@@ -460,15 +492,18 @@ static void DEBUG_Main( int signal )
 	    DEBUG_SilentBackTrace();
 	}
 
-        /* Show where we crashed */
-        curr_frame = 0;
-        DEBUG_PrintAddress( &addr, dbg_mode, TRUE );
-        fprintf(stderr,":  ");
-        if (DBG_CHECK_READ_PTR( &addr, 1 ))
-        {
-            DEBUG_Disasm( &addr, TRUE );
-            fprintf(stderr,"\n");
-        }
+	if( signal != SIGTRAP )
+	  {
+	    /* Show where we crashed */
+	    curr_frame = 0;
+	    DEBUG_PrintAddress( &addr, dbg_mode, TRUE );
+	    fprintf(stderr,":  ");
+	    if (DBG_CHECK_READ_PTR( &addr, 1 ))
+	      {
+		DEBUG_Disasm( &addr, TRUE );
+		fprintf(stderr,"\n");
+	      }
+	  }
 
         ret_ok = 0;
         do

@@ -7,7 +7,8 @@ MODULE    = win16drv
 
 C_SRCS = \
 	font.c \
-	init.c
+	init.c \
+	text.c
 
 all: $(MODULE).o
 

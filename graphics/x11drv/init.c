@@ -30,7 +30,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     X11DRV_ExtTextOut,               /* pExtTextOut */
     X11DRV_GetPixel,                 /* pGetPixel */
     X11DRV_GetTextExtentPoint,       /* pGetTextExtentPoint */
-    NULL,                            /* pGetTextMetrics */
+    X11DRV_GetTextMetrics,           /* pGetTextMetrics */
     NULL,                            /* pIntersectClipRect */
     NULL,                            /* pIntersectVisRect */
     X11DRV_LineTo,                   /* pLineTo */

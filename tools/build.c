@@ -1325,7 +1325,7 @@ static void BuildCall32LargeStack( FILE *outfile )
 
     fprintf( outfile, "\n\t.align 4\n" );
 #ifdef __GNUC__
-    fprintf( outfile, ".stabs \"CallTo32_LargeStack:F1\",36,0,0,CallTo32_LargeStack\n");
+    fprintf( outfile, ".stabs \"CallTo32_LargeStack:F1\",36,0,0," PREFIX "CallTo32_LargeStack\n");
 #endif
     fprintf( outfile, "\t.globl " PREFIX "CallTo32_LargeStack\n" );
     fprintf( outfile, PREFIX "CallTo32_LargeStack:\n" );
@@ -1604,7 +1604,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
 
     fprintf( outfile, "\n\t.align 4\n" );
 #ifdef __GNUC__
-    fprintf( outfile, ".stabs \"CallFrom16_%s:F1\",36,0,0,CallFrom16_%s\n", 
+    fprintf( outfile, ".stabs \"CallFrom16_%s:F1\",36,0,0," PREFIX "CallFrom16_%s\n", 
 	     profile, profile);
 #endif
     fprintf( outfile, "\t.globl " PREFIX "CallFrom16_%s\n", profile );
@@ -1823,7 +1823,7 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
 
     fprintf( outfile, "\n\t.align 4\n" );
 #ifdef __GNUC__
-    fprintf( outfile, ".stabs \"CallTo16_%s:F1\",36,0,0,CallTo16_%s\n", 
+    fprintf( outfile, ".stabs \"CallTo16_%s:F1\",36,0,0," PREFIX "CallTo16_%s\n", 
 	     profile, profile);
 #endif
     fprintf( outfile, "\t.globl " PREFIX "CallTo16_%s\n", profile );
@@ -2073,13 +2073,15 @@ static void RestoreContext32( FILE *outfile )
 {
     /* Restore the context structure */
 
-    fprintf( outfile, "\tleal %d(%%ebp),%%esp\n", -sizeof(CONTEXT)-12 );
+    fprintf( outfile, "\tleal %d(%%ebp),%%esp\n", -sizeof(CONTEXT)-8 );
     fprintf( outfile, "\tfrstor %d(%%esp)\n", CONTEXTOFFSET(FloatSave) );
 
     fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Eip) );
     fprintf( outfile, "\tmovl %%eax,4(%%ebp)\n" ); /* %eip at time of call */
     fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(Ebp) );
     fprintf( outfile, "\tmovl %%eax,0(%%ebp)\n" ); /* %ebp at time of call */
+
+    /* Store flags over the relay addr */
     fprintf( outfile, "\tmovl %d(%%esp),%%eax\n", CONTEXTOFFSET(EFlags) );
     fprintf( outfile, "\tmovl %%eax,%d(%%esp)\n", sizeof(CONTEXT) );
 
@@ -2152,7 +2154,7 @@ static void BuildCallFrom32Func( FILE *outfile, const char *profile )
 
     fprintf( outfile, "\n\t.align 4\n" );
 #ifdef __GNUC__
-    fprintf( outfile, ".stabs \"CallFrom32_%s:F1\",36,0,0,CallFrom32_%s\n", 
+    fprintf( outfile, ".stabs \"CallFrom32_%s:F1\",36,0,0," PREFIX "CallFrom32_%s\n", 
 	     profile, profile);
 #endif
     fprintf( outfile, "\t.globl " PREFIX "CallFrom32_%s\n", profile );
@@ -2243,7 +2245,7 @@ static void BuildCallTo32Func( FILE *outfile, int args )
 
     fprintf( outfile, "\n\t.align 4\n" );
 #ifdef __GNUC__
-    fprintf( outfile, ".stabs \"CallTo32_%d:F1\",36,0,0,CallTo32_%d\n", 
+    fprintf( outfile, ".stabs \"CallTo32_%d:F1\",36,0,0," PREFIX "CallTo32_%d\n", 
 	     args, args);
 #endif
     fprintf( outfile, "\t.globl " PREFIX "CallTo32_%d\n", args );

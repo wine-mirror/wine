@@ -132,11 +132,15 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
             ValidateRect32( wndPtr->hwndSelf, NULL );
             wndPtr->flags |= WIN_NO_REDRAW;
         }
-        else wndPtr->flags &= ~WIN_NO_REDRAW;
+        else
+        {
+            wndPtr->flags &= ~WIN_NO_REDRAW;
+            ShowWindow32( wndPtr->hwndSelf, SW_SHOW );
+        }
         return 0;
 
     case WM_CLOSE:
-	DestroyWindow( wndPtr->hwndSelf );
+	DestroyWindow32( wndPtr->hwndSelf );
 	return 0;
 
     case WM_MOUSEACTIVATE:
@@ -297,7 +301,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
         if (!(wndPtr->dwStyle & WS_POPUP) || !wndPtr->owner) return 0;
         if ((wndPtr->dwStyle & WS_VISIBLE) && wParam) return 0;
 	else if (!(wndPtr->dwStyle & WS_VISIBLE) && !wParam) return 0;
-        ShowWindow( wndPtr->hwndSelf, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
+        ShowWindow32( wndPtr->hwndSelf, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
 	break; 
 
     case WM_CANCELMODE:

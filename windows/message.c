@@ -16,6 +16,7 @@
 #include "sysmetrics.h"
 #include "heap.h"
 #include "hook.h"
+#include "keyboard.h"
 #include "spy.h"
 #include "winpos.h"
 #include "atom.h"
@@ -34,13 +35,6 @@
 
 typedef enum { SYSQ_MSG_ABANDON, SYSQ_MSG_SKIP, 
                SYSQ_MSG_ACCEPT, SYSQ_MSG_CONTINUE } SYSQ_STATUS;
-
-extern BOOL MouseButtonsStates[3];
-extern BOOL AsyncMouseButtonsStates[3];
-extern BYTE InputKeyStateTable[256];
-extern BYTE AsyncKeyStateTable[256];
-
-BYTE QueueKeyStateTable[256];
 
 extern MESSAGEQUEUE *pCursorQueue;			 /* queue.c */
 extern MESSAGEQUEUE *pActiveQueue;
@@ -121,7 +115,7 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hWndScope, DWORD filter,
 	/* check if hWnd is within hWndScope */
 
     if( hWndScope && hWnd != hWndScope )
-	if( !IsChild(hWndScope, hWnd) ) return SYSQ_MSG_CONTINUE;
+	if( !IsChild16(hWndScope, hWnd) ) return SYSQ_MSG_CONTINUE;
 
     if( mouseClick )
     {
@@ -203,7 +197,7 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hWndScope, DWORD filter,
 
             /* Activate the window if needed */
 
-            if (hWnd != GetActiveWindow() && hWnd != GetDesktopWindow16())
+            if (hWnd != GetActiveWindow16() && hWnd != GetDesktopWindow16())
             {
                 LONG ret = SendMessage16( hWnd, WM_MOUSEACTIVATE, hwndTop,
                                           MAKELONG( hittest, message ) );
@@ -212,7 +206,7 @@ static DWORD MSG_TranslateMouseMsg( HWND16 hWndScope, DWORD filter,
                          eatMsg = TRUE;
 
                 if (((ret == MA_ACTIVATE) || (ret == MA_ACTIVATEANDEAT)) 
-                      && hwndTop != GetActiveWindow() )
+                      && hwndTop != GetActiveWindow16() )
                       if (!WINPOS_SetActiveWindow( hwndTop, TRUE , TRUE ))
 			 eatMsg = TRUE;
             }
@@ -252,7 +246,7 @@ static DWORD MSG_TranslateKbdMsg( HWND16 hWndScope, DWORD filter,
 	  /* Send the message to the active window instead,  */
 	  /* translating messages to their WM_SYS equivalent */
 
-	hWnd = GetActiveWindow();
+	hWnd = GetActiveWindow16();
 
 	if( message < WM_SYSKEYDOWN )
 	    message += WM_SYSKEYDOWN - WM_KEYDOWN;
@@ -270,7 +264,7 @@ static DWORD MSG_TranslateKbdMsg( HWND16 hWndScope, DWORD filter,
     }
 
     if (hWndScope && hWnd != hWndScope)
-	if (!IsChild(hWndScope, hWnd)) return SYSQ_MSG_CONTINUE;
+	if (!IsChild16(hWndScope, hWnd)) return SYSQ_MSG_CONTINUE;
     if (!MSG_CheckFilter(message, filter)) return SYSQ_MSG_CONTINUE;
 
     msg->hwnd = hWnd;
@@ -760,7 +754,7 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
                     msg->wParam = 1;
                 }
 
-                if( !hwnd || msg->hwnd == hwnd || IsChild(hwnd,msg->hwnd) )
+                if( !hwnd || msg->hwnd == hwnd || IsChild16(hwnd,msg->hwnd) )
                 {
                     if( wndPtr->flags & WIN_INTERNAL_PAINT && !wndPtr->hrgnUpdate)
                     {

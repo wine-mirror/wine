@@ -650,7 +650,7 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 
     if (lpitem->item_flags & MF_BITMAP)
     {
-	GRAPH_DrawBitmap( hdc, (HBITMAP16)(UINT32)lpitem->text,
+	GRAPH_DrawBitmap( hdc, (HBITMAP32)lpitem->text,
                           rect.left, rect.top, 0, 0,
                           rect.right-rect.left, rect.bottom-rect.top );
 	return;
@@ -864,12 +864,12 @@ static BOOL32 MENU_ShowPopup( HWND32 hwndOwner, HMENU32 hmenu, UINT32 id,
 
     wndPtr = WIN_FindWndPtr( menu->hWnd );
 
-    SetWindowPos(menu->hWnd, 0, x, y, width, height,
+    SetWindowPos32(menu->hWnd, 0, x, y, width, height,
 		  		      SWP_NOACTIVATE | SWP_NOZORDER | SWP_NOREDRAW);
       /* Display the window */
 
-    SetWindowPos( menu->hWnd, HWND_TOP, 0, 0, 0, 0,
-		  SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
+    SetWindowPos32( menu->hWnd, HWND_TOP, 0, 0, 0, 0,
+		    SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
     UpdateWindow( menu->hWnd );
     return TRUE;
 }
@@ -1015,8 +1015,8 @@ static BOOL32 MENU_SetItemData( MENUITEM *item, UINT32 flags, UINT32 id,
             item->text = text;
         }
     }
-    else if ((flags & MF_BITMAP) || (flags & MF_OWNERDRAW))
-        item->text = (LPSTR)str;
+    else if (flags & MF_BITMAP) item->text = (LPSTR)(HBITMAP32)LOWORD(str);
+    else if (flags & MF_OWNERDRAW) item->text = (LPSTR)str;
     else item->text = NULL;
 
     item->item_flags = flags & ~(MF_HILITE | MF_MOUSESELECT);
@@ -1191,12 +1191,12 @@ static void MENU_HideSubPopups( HWND32 hwndOwner, HMENU32 hmenu,
     MENU_SelectItem( hwndOwner, hsubmenu, NO_SELECTED_ITEM, sendMenuSelect );
     if (submenu->hWnd == pTopPWnd->hwndSelf ) 
     {
-	ShowWindow( submenu->hWnd, SW_HIDE );
+	ShowWindow32( submenu->hWnd, SW_HIDE );
 	uSubPWndLevel = 0;
     }
     else
     {
-	DestroyWindow( submenu->hWnd );
+	DestroyWindow32( submenu->hWnd );
 	submenu->hWnd = 0;
     }
 }
@@ -1485,10 +1485,10 @@ static LRESULT MENU_DoNextMenu( HWND32* hwndOwner, HMENU32* hmenu,
 
     if( (menu->wFlags & (MF_POPUP | MF_SYSMENU)) == (MF_POPUP | MF_SYSMENU) )
 	{
-	  ShowWindow( menu->hWnd, SW_HIDE );
+	  ShowWindow32( menu->hWnd, SW_HIDE );
 	  uSubPWndLevel = 0;
 
-	  if( !IsIconic( *hwndOwner ) )
+	  if( !IsIconic32( *hwndOwner ) )
 	  { 
 	    HDC32 hdc = GetDCEx32( *hwndOwner, 0, DCX_CACHE | DCX_WINDOW);
 	    NC_DrawSysButton( *hwndOwner, hdc, FALSE );
@@ -1523,7 +1523,7 @@ static LRESULT MENU_DoNextMenu( HWND32* hwndOwner, HMENU32* hmenu,
                 MENU_ShowPopup( *hwndOwner, *hmenu, 0, rect.left, rect.bottom,
                                 SYSMETRICS_CXSIZE, SYSMETRICS_CYSIZE );
             
-            if( !IsIconic( *hwndOwner ) )
+            if( !IsIconic32( *hwndOwner ) )
             {
                 HDC32 hdc =  GetDCEx32( *hwndOwner, 0, DCX_CACHE | DCX_WINDOW);
                 NC_DrawSysButton( *hwndOwner, hdc, TRUE );
@@ -1818,7 +1818,7 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
     menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu );
     if (menu && menu->wFlags & MF_POPUP) 
     {
-         ShowWindow( menu->hWnd, SW_HIDE );
+         ShowWindow32( menu->hWnd, SW_HIDE );
 	 uSubPWndLevel = 0;
     }
     MENU_SelectItem( hwnd, hmenu, NO_SELECTED_ITEM, FALSE );
@@ -2702,7 +2702,7 @@ BOOL32 DestroyMenu32( HMENU32 hMenu )
     if ((lppop->wFlags & MF_POPUP) &&
         lppop->hWnd &&
         (!pTopPWnd || (lppop->hWnd != pTopPWnd->hwndSelf)))
-        DestroyWindow( lppop->hWnd );
+        DestroyWindow32( lppop->hWnd );
 
     if (lppop->items)
     {
@@ -2824,9 +2824,9 @@ BOOL32 SetMenu32( HWND32 hWnd, HMENU32 hMenu )
         lpmenu->wFlags &= ~MF_POPUP;  /* Can't be a popup */
         lpmenu->Height = 0;  /* Make sure we recalculate the size */
     }
-    if (IsWindowVisible(hWnd))
-        SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-                      SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+    if (IsWindowVisible32(hWnd))
+        SetWindowPos32( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                        SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
     return TRUE;
 }
 
@@ -2877,8 +2877,8 @@ BOOL32 DrawMenuBar32( HWND32 hWnd )
         if (lppop == NULL) return FALSE;
 
         lppop->Height = 0; /* Make sure we call MENU_MenuBarCalcSize */
-        SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-                      SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+        SetWindowPos32( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                        SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
         return TRUE;
     }
     return FALSE;
