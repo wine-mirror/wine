@@ -821,12 +821,24 @@ static void EVENT_ConfigureNotify( HWND hWnd, XConfigureEvent *event )
 
     /* Get geometry and Z-order according to Wine */
 
-    GetWindowRect( hWnd, &rectWindow );
-    oldInsertAfter = GetWindow( hWnd, GW_HWNDPREV );
-    if ( !oldInsertAfter ) oldInsertAfter = HWND_TOP;
+    /*
+     *  Needs to find the first Visible Window above the current one
+     */
+    oldInsertAfter = hWnd;
+    for (;;)
+    {
+        oldInsertAfter = GetWindow( oldInsertAfter, GW_HWNDPREV );
+        if (!oldInsertAfter)
+        {
+            oldInsertAfter = HWND_TOP;
+            break;
+        }
+        if (GetWindowLongA( oldInsertAfter, GWL_STYLE ) & WS_VISIBLE) break;
+    }
 
     /* Compare what has changed */
 
+    GetWindowRect( hWnd, &rectWindow );
     if ( rectWindow.left == x && rectWindow.top == y )
         flags |= SWP_NOMOVE;
     else
