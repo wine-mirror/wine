@@ -24,10 +24,12 @@ DEFAULT_DEBUG_CHANNEL(listbox);
 DECLARE_DEBUG_CHANNEL(combo);
 
 /* Unimplemented yet:
- * - LBS_NOSEL
  * - LBS_USETABSTOPS
  * - Unicode
  * - Locale handling
+ *
+ * Probably needs improvement:
+ * - LBS_NOSEL
  */
 
 /* Items array granularity */
@@ -1288,6 +1290,7 @@ static LRESULT LISTBOX_SetCaretIndex( WND *wnd, LB_DESCR *descr, INT index,
 {
     INT oldfocus = descr->focus_item;          
 
+    if (descr->style & LBS_NOSEL) return LB_ERR;
     if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
     if (index == oldfocus) return LB_OKAY;
     descr->focus_item = index;
@@ -1314,6 +1317,7 @@ static LRESULT LISTBOX_SelectItemRange( WND *wnd, LB_DESCR *descr, INT first,
 
     /* A few sanity checks */
 
+    if (descr->style & LBS_NOSEL) return LB_ERR;
     if ((last == -1) && (descr->nb_items == 0)) return LB_OKAY;
     if (!(descr->style & LBS_MULTIPLESEL)) return LB_ERR;
     if (last == -1) last = descr->nb_items - 1;
@@ -1352,6 +1356,7 @@ static LRESULT LISTBOX_SetSelection( WND *wnd, LB_DESCR *descr, INT index,
 {
     TRACE( "index=%d notify=%s\n", index, send_notify ? "YES" : "NO" );
 
+    if (descr->style & LBS_NOSEL) return LB_ERR;
     if ((index < -1) || (index >= descr->nb_items)) return LB_ERR;
     if (descr->style & LBS_MULTIPLESEL)
     {
@@ -2376,6 +2381,7 @@ static BOOL LISTBOX_Create( WND *wnd, LPHEADCOMBO lphc )
     descr->nb_tabs       = 0;
     descr->tabs          = NULL;
     descr->caret_on      = lphc ? FALSE : TRUE;
+    if (descr->style & LBS_NOSEL) descr->caret_on = FALSE;
     descr->in_focus 	 = FALSE;
     descr->captured      = FALSE;
     descr->font          = 0;
@@ -2429,6 +2435,7 @@ static BOOL LISTBOX_Create( WND *wnd, LPHEADCOMBO lphc )
 	}
     }
 
+    TRACE("owner: %04x, style: %08x, width: %d, height: %d\n", descr->owner, descr->style, descr->width, descr->height);
     return TRUE;
 }
 
