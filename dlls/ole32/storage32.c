@@ -6209,7 +6209,7 @@ HRESULT OLECONVERT_LoadOLE10(LPOLESTREAM pOleStream, OLECONVERT_OLESTREAM_DATA *
 			{
 					if(pData->dwOleObjFileNameLength < 1) /* there is no file name exist */
 						pData->dwOleObjFileNameLength = sizeof(pData->dwOleObjFileNameLength);
-					pData->pstrOleObjFileName = (CHAR *)malloc(pData->dwOleObjFileNameLength);
+					pData->pstrOleObjFileName = (CHAR *)HeapAlloc(GetProcessHeap(), 0, pData->dwOleObjFileNameLength);
 					if(pData->pstrOleObjFileName)
 					{
 						dwSize = pOleStream->lpstbl->Get(pOleStream, (void *)(pData->pstrOleObjFileName),pData->dwOleObjFileNameLength);
