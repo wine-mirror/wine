@@ -333,6 +333,11 @@ my %warnings;
 my %templates;
 
 ##
+# This maps a directory name to a reference to an array listing
+# its contents (files and directories)
+my %directories;
+
+##
 # Contains the list of all projects. This list tells us what are
 # the subprojects of the main Makefile and where we have to generate
 # Makefiles.
@@ -1056,11 +1061,6 @@ sub fix_file_and_directory_names($)
 # Source fixup
 #
 #####
-
-##
-# This maps a directory name to a reference to an array listing
-# its contents (files and directories)
-my %directories;
 
 ##
 # Try to find a file for the specified filename. The attempt is
