@@ -230,7 +230,7 @@ HWND WINAPI SetActiveWindow( HWND hwnd )
     {
         LONG style = GetWindowLongW( hwnd, GWL_STYLE );
 
-        if (!(style & WS_VISIBLE) || (style & (WS_POPUP|WS_CHILD)) == WS_CHILD)
+        if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD)
             return GetActiveWindow();  /* Windows doesn't seem to return an error here */
 
         hwnd = WIN_GetFullHandle( hwnd );

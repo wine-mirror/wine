@@ -1864,6 +1864,12 @@ static void test_SetActiveWindow(HWND hwnd)
     SetWindowPos(hwnd,0,0,0,0,0,SWP_NOZORDER|SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE|SWP_SHOWWINDOW);
     ShowWindow(hwnd, SW_HIDE);
     ok( GetActiveWindow() != hwnd, "Window %p is still active\n", hwnd );
+
+    /* trace("**testing an invisible window now\n"); */
+    SetActiveWindow(hwnd);
+    ok( GetActiveWindow() == hwnd, "Window %p not active\n", hwnd );
+    ok( !(GetWindowLong(hwnd,GWL_STYLE) & WS_VISIBLE), "Window %p is visible\n", hwnd );
+    
     ShowWindow(hwnd, SW_SHOW);
 
     hwnd2 = CreateWindowExA(0, "static", NULL, WS_POPUP|WS_VISIBLE, 0, 0, 0, 0, hwnd, 0, 0, NULL);
