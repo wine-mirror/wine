@@ -205,7 +205,7 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
                  CS_reg(context), IP_reg(context), args );
 
 #ifdef MZ_SUPPORTED
-    FIXME(int31,"DPMI real-mode call using DOS VM task system, untested!\n");
+    FIXME(int31,"DPMI real-mode call using DOS VM task system, not fully tested\n");
     if (!pModule->lpDosTask) {
         TRACE(int31,"creating VM86 task\n");
         if (MZ_InitTask( MZ_AllocDPMITask( pModule->self ) ) < 32) {
@@ -217,7 +217,8 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
         alloc = 1; /* allocate default stack */
         stack16 = addr = DOSMEM_GetBlock( pModule->self, 64, &(SS_reg(context)) );
         SP_reg(context) = 64-2;
-        if (!stack16) {
+        stack16 += 32-1;
+        if (!addr) {
             ERR(int31,"could not allocate default stack\n");
             return 1;
         }
@@ -225,7 +226,7 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
         stack16 = CTX_SEG_OFF_TO_LIN(context, SS_reg(context), ESP_reg(context));
         addr = NULL; /* avoid gcc warning */
     }
-    SP_reg(context) -= args*sizeof(WORD) + (iret?1:0);
+    SP_reg(context) -= (args + (iret?1:0)) * sizeof(WORD);
 #else
     stack16 = THREAD_STACK16(thdb);
 #endif

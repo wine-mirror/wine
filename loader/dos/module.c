@@ -66,6 +66,33 @@ static void MZ_InitPSP( LPVOID lpPSP, LPCSTR cmdline, WORD env )
  /* FIXME: integrate the PDB stuff from Wine (loader/task.c) */
 }
 
+static char int08[]={
+ 0xCD,0x1C,           /* int $0x1c */
+ 0x50,                /* pushw %ax */
+ 0x1E,                /* pushw %ds */
+ 0xB8,0x40,0x00,      /* movw $0x40,%ax */
+ 0x8E,0xD8,           /* movw %ax,%ds */
+#if 0
+ 0x83,0x06,0x6C,0x00,0x01, /* addw $1,(0x6c) */
+ 0x83,0x16,0x6E,0x00,0x00, /* adcw $0,(0x6e) */
+#else
+ 0x66,0xFF,0x06,0x6C,0x00, /* incl (0x6c) */
+#endif
+ 0xB0,0x20,           /* movb $0x20,%al */
+ 0xE6,0x20,           /* outb %al,$0x20 */
+ 0x1F,                /* popw %ax */
+ 0x58,                /* popw %ax */
+ 0xCF                 /* iret */
+};
+
+static void MZ_InitHandlers( LPDOSTASK lpDosTask )
+{
+ WORD seg;
+ LPBYTE start=DOSMEM_GetBlock(lpDosTask->hModule,sizeof(int08),&seg);
+ memcpy(start,int08,sizeof(int08));
+ ((SEGPTR*)(lpDosTask->img))[0x08]=PTR_SEG_OFF_TO_SEGPTR(seg,0);
+}
+
 static char enter_xms[]={
 /* XMS hookable entry point */
  0xEB,0x03,           /* jmp entry */
@@ -121,6 +148,7 @@ static void MZ_InitDPMI( LPDOSTASK lpDosTask )
  lpDosTask->call_ofs = size-1;
 
  memcpy(start,enter_pm,sizeof(enter_pm));
+ memcpy(start+sizeof(enter_pm),wrap_rm,sizeof(wrap_rm));
 }
 
 static WORD MZ_InitEnvironment( LPDOSTASK lpDosTask, LPCSTR env, LPCSTR name )
