@@ -165,24 +165,26 @@ static HRESULT WINAPI IDsDriverPropertySetImpl_QueryInterface(
 static ULONG WINAPI IDsDriverPropertySetImpl_AddRef(PIDSDRIVERPROPERTYSET iface)
 {
     IDsDriverPropertySetImpl *This = (IDsDriverPropertySetImpl *)iface;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    return InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI IDsDriverPropertySetImpl_Release(PIDSDRIVERPROPERTYSET iface)
 {
     IDsDriverPropertySetImpl *This = (IDsDriverPropertySetImpl *)iface;
-    DWORD ref;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
-    ref = InterlockedDecrement(&(This->ref));
-    if (ref == 0) {
+    TRACE("(%p) ref was %ld\n", This, refCount + 1);
+
+    if (!refCount) {
         IDsDriverBuffer_Release((PIDSDRIVERBUFFER)This->buffer);
         HeapFree(GetProcessHeap(),0,This);
         TRACE("(%p) released\n",This);
     }
-    return ref;
+    return refCount;
 }
 
 static HRESULT WINAPI IDsDriverPropertySetImpl_Get(
@@ -261,25 +263,27 @@ static HRESULT WINAPI IDsDriverNotifyImpl_QueryInterface(
 static ULONG WINAPI IDsDriverNotifyImpl_AddRef(PIDSDRIVERNOTIFY iface)
 {
     IDsDriverNotifyImpl *This = (IDsDriverNotifyImpl *)iface;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    return InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI IDsDriverNotifyImpl_Release(PIDSDRIVERNOTIFY iface)
 {
     IDsDriverNotifyImpl *This = (IDsDriverNotifyImpl *)iface;
-    DWORD ref;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
-    ref = InterlockedDecrement(&(This->ref));
-    if (ref == 0) {
+    TRACE("(%p) ref was %ld\n", This, refCount + 1);
+
+    if (!refCount) {
         IDsDriverBuffer_Release((PIDSDRIVERBUFFER)This->buffer);
         HeapFree(GetProcessHeap(), 0, This->notifies);
         HeapFree(GetProcessHeap(),0,This);
         TRACE("(%p) released\n",This);
     }
-    return ref;
+    return refCount;
 }
 
 static HRESULT WINAPI IDsDriverNotifyImpl_SetNotificationPositions(
@@ -435,20 +439,22 @@ static HRESULT WINAPI IDsDriverBufferImpl_QueryInterface(PIDSDRIVERBUFFER iface,
 static ULONG WINAPI IDsDriverBufferImpl_AddRef(PIDSDRIVERBUFFER iface)
 {
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    return InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI IDsDriverBufferImpl_Release(PIDSDRIVERBUFFER iface)
 {
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
-    DWORD ref;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
-    ref = InterlockedDecrement(&(This->ref));
-    if (ref)
-        return ref;
+    TRACE("(%p) ref was %ld\n", This, refCount + 1);
+
+    if (refCount)
+        return refCount;
 
     if (This == This->drv->primary)
 	This->drv->primary = NULL;
@@ -674,23 +680,25 @@ static HRESULT WINAPI IDsDriverImpl_QueryInterface(PIDSDRIVER iface, REFIID riid
 static ULONG WINAPI IDsDriverImpl_AddRef(PIDSDRIVER iface)
 {
     IDsDriverImpl *This = (IDsDriverImpl *)iface;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    return InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI IDsDriverImpl_Release(PIDSDRIVER iface)
 {
     IDsDriverImpl *This = (IDsDriverImpl *)iface;
-    DWORD ref;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
-    ref = InterlockedDecrement(&(This->ref));
-    if (ref == 0) {
+    TRACE("(%p) ref was %ld\n", This, refCount + 1);
+
+    if (!refCount) {
         HeapFree(GetProcessHeap(),0,This);
         TRACE("(%p) released\n",This);
     }
-    return ref;
+    return refCount;
 }
 
 static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface,

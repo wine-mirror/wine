@@ -172,26 +172,28 @@ static ULONG WINAPI IDsCaptureDriverPropertySetImpl_AddRef(
     PIDSDRIVERPROPERTYSET iface)
 {
     IDsCaptureDriverPropertySetImpl *This = (IDsCaptureDriverPropertySetImpl *)iface;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    return InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI IDsCaptureDriverPropertySetImpl_Release(
     PIDSDRIVERPROPERTYSET iface)
 {
     IDsCaptureDriverPropertySetImpl *This = (IDsCaptureDriverPropertySetImpl *)iface;
-    DWORD ref;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
-    ref = InterlockedDecrement(&(This->ref));
-    if (ref == 0) {
+    TRACE("(%p) ref was %ld\n", This, refCount + 1);
+
+    if (!refCount) {
         IDsCaptureDriverBuffer_Release((PIDSCDRIVERBUFFER)This->capture_buffer);
         This->capture_buffer->property_set = NULL;
         HeapFree(GetProcessHeap(),0,This);
         TRACE("(%p) released\n",This);
     }
-    return ref;
+    return refCount;
 }
 
 static HRESULT WINAPI IDsCaptureDriverPropertySetImpl_Get(
@@ -274,26 +276,28 @@ static ULONG WINAPI IDsCaptureDriverNotifyImpl_AddRef(
     PIDSDRIVERNOTIFY iface)
 {
     IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    return InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI IDsCaptureDriverNotifyImpl_Release(
     PIDSDRIVERNOTIFY iface)
 {
     IDsCaptureDriverNotifyImpl *This = (IDsCaptureDriverNotifyImpl *)iface;
-    DWORD ref;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
-    ref = InterlockedDecrement(&(This->ref));
-    if (ref == 0) {
+    TRACE("(%p) ref was %ld\n", This, refCount + 1);
+
+    if (!refCount) {
         IDsCaptureDriverBuffer_Release((PIDSCDRIVERBUFFER)This->capture_buffer);
         This->capture_buffer->notify = NULL;
         HeapFree(GetProcessHeap(),0,This);
         TRACE("(%p) released\n",This);
     }
-    return ref;
+    return refCount;
 }
 
 static HRESULT WINAPI IDsCaptureDriverNotifyImpl_SetNotificationPositions(
@@ -421,19 +425,20 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_QueryInterface(
 static ULONG WINAPI IDsCaptureDriverBufferImpl_AddRef(PIDSCDRIVERBUFFER iface)
 {
     IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    return InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI IDsCaptureDriverBufferImpl_Release(PIDSCDRIVERBUFFER iface)
 {
     IDsCaptureDriverBufferImpl *This = (IDsCaptureDriverBufferImpl *)iface;
-    DWORD ref;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedDecrement(&This->ref);
+    TRACE("(%p) ref was %ld\n", This, refCount + 1);
 
-    ref = InterlockedDecrement(&(This->ref));
-    if (ref == 0) {
+    if (!refCount) {
         WINE_WAVEIN*        wwi;
 
         wwi = &WInDev[This->drv->wDevID];
@@ -463,7 +468,7 @@ static ULONG WINAPI IDsCaptureDriverBufferImpl_Release(PIDSCDRIVERBUFFER iface)
         HeapFree(GetProcessHeap(),0,This);
         TRACE("(%p) released\n",This);
     }
-    return ref;
+    return refCount;
 }
 
 static HRESULT WINAPI IDsCaptureDriverBufferImpl_Lock(
@@ -727,23 +732,25 @@ static HRESULT WINAPI IDsCaptureDriverImpl_QueryInterface(
 static ULONG WINAPI IDsCaptureDriverImpl_AddRef(PIDSCDRIVER iface)
 {
     IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedIncrement(&This->ref);
 
-    return InterlockedIncrement(&(This->ref));
+    TRACE("(%p) ref was %ld\n", This, refCount - 1);
+
+    return refCount;
 }
 
 static ULONG WINAPI IDsCaptureDriverImpl_Release(PIDSCDRIVER iface)
 {
     IDsCaptureDriverImpl *This = (IDsCaptureDriverImpl *)iface;
-    DWORD ref;
-    TRACE("(%p) ref was %ld\n", This, This->ref);
+    ULONG refCount = InterlockedDecrement(&This->ref);
 
-    ref = InterlockedDecrement(&(This->ref));
-    if (ref == 0) {
+    TRACE("(%p) ref was %ld\n", This, refCount + 1);
+
+    if (!refCount) {
         HeapFree(GetProcessHeap(),0,This);
         TRACE("(%p) released\n",This);
     }
-    return ref;
+    return refCount;
 }
 
 static HRESULT WINAPI IDsCaptureDriverImpl_GetDriverDesc(

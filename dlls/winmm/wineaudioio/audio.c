@@ -1320,15 +1320,16 @@ static HRESULT WINAPI IDsDriverBufferImpl_QueryInterface(PIDSDRIVERBUFFER iface,
 static ULONG WINAPI IDsDriverBufferImpl_AddRef(PIDSDRIVERBUFFER iface)
 {
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
-    This->ref++;
-    return This->ref;
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IDsDriverBufferImpl_Release(PIDSDRIVERBUFFER iface)
 {
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
-    if (--This->ref)
-	return This->ref;
+    ULONG refCount = InterlockedDecrement(&This->ref);
+
+    if (refCount)
+	return refCount;
     if (This == This->drv->primary)
 	This->drv->primary = NULL;
     DSDB_UnmapPrimary(This);
@@ -1479,15 +1480,16 @@ static HRESULT WINAPI IDsDriverImpl_QueryInterface(PIDSDRIVER iface, REFIID riid
 static ULONG WINAPI IDsDriverImpl_AddRef(PIDSDRIVER iface)
 {
     IDsDriverImpl *This = (IDsDriverImpl *)iface;
-    This->ref++;
-    return This->ref;
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI IDsDriverImpl_Release(PIDSDRIVER iface)
 {
     IDsDriverImpl *This = (IDsDriverImpl *)iface;
-    if (--This->ref)
-	return This->ref;
+    ULONG refCount = InterlockedDecrement(&This->ref);
+
+    if (refCount)
+	return refCount;
     HeapFree(GetProcessHeap(),0,This);
     return 0;
 }
