@@ -1279,7 +1279,8 @@ static char **build_envp( const WCHAR *envW, char *extra_env )
         char **envptr = envp;
 
         /* first the extra strings */
-        for (p = extra_env; *p; p += strlen(p) + 1) *envptr++ = alloc_env_string( "", p );
+        if (extra_env)
+            for (p = extra_env; *p; p += strlen(p) + 1) *envptr++ = alloc_env_string( "", p );
         /* then put PATH, TEMP, TMP, HOME and WINEPREFIX from the unix env */
         if ((p = getenv("PATH"))) *envptr++ = alloc_env_string( "PATH=", p );
         if ((p = getenv("TEMP"))) *envptr++ = alloc_env_string( "TEMP=", p );
