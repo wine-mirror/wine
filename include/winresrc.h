@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2000 Hidenori Takeshima
+ * Copyright (C) 2002 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,7 +19,22 @@
 #ifndef _WINRESRC_
 #define _WINRESRC_
 
-#include "windef.h"
+#ifndef WINVER
+#define WINVER 0x0500
+#endif
+
+#ifndef _WIN32_IE
+#define _WIN32_IE 0x0501
+#endif
+
+#ifndef _WIN32_WINDOWS
+#define _WIN32_WINDOWS 0x0410
+#endif
+
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0500
+#endif
+
 #include "winuser.h"
 #include "commctrl.h"
 #include "dde.h"
