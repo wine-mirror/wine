@@ -29,13 +29,47 @@
 DEFAULT_DEBUG_CHANNEL(header)
 
 
-#define __HDM_LAYOUT_HACK__
-
-
 #define VERT_BORDER     4
 #define DIVIDER_WIDTH  10
 
 #define HEADER_GetInfoPtr(hwnd) ((HEADER_INFO *)GetWindowLongA(hwnd,0))
+
+
+static void
+HEADER_SetItemBounds (HWND hwnd)
+{
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
+    HEADER_ITEM *phdi;
+    RECT rect;
+    int i, x;
+
+    infoPtr->bRectsValid = TRUE;
+
+    if (infoPtr->uNumItem == 0)
+        return;
+
+    GetClientRect (hwnd, &rect);
+
+    x = rect.left;
+    for (i = 0; i < infoPtr->uNumItem; i++) {
+        phdi = &infoPtr->items[i];
+        phdi->rect.top = rect.top;
+        phdi->rect.bottom = rect.bottom;
+        phdi->rect.left = x;
+        phdi->rect.right = phdi->rect.left + phdi->cxy;
+        x = phdi->rect.right;
+    }
+}
+
+static LRESULT
+HEADER_Size (HWND hwnd, WPARAM wParam)
+{
+    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
+
+    infoPtr->bRectsValid = FALSE;
+
+    return 0;
+}
 
 
 static INT
@@ -46,6 +80,9 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
     RECT r;
     INT  oldBkMode;
 
+    if (!infoPtr->bRectsValid)
+    	HEADER_SetItemBounds(hwnd);
+    
     r = phdi->rect;
     if (r.right - r.left == 0)
 	return phdi->rect.right;
@@ -180,7 +217,10 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 /*	    ImageList_Draw (infoPtr->himl, phdi->iImage,...); */
 	}
 
-        if ((phdi->fmt & HDF_STRING) && (phdi->pszText)) {
+        if (((phdi->fmt & HDF_STRING)
+		|| (!(phdi->fmt & (HDF_OWNERDRAW|HDF_STRING|HDF_BITMAP|
+				   HDF_BITMAP_ON_RIGHT|HDF_IMAGE)))) /* no explicit format specified? */
+	    && (phdi->pszText)) {
             oldBkMode = SetBkMode(hdc, TRANSPARENT);
             r.left += 3;
 	    r.right -= 3;
@@ -242,53 +282,6 @@ HEADER_RefreshItem (HWND hwnd, HDC hdc, INT iItem)
     hOldFont = SelectObject (hdc, hFont);
     HEADER_DrawItem (hwnd, hdc, iItem, FALSE);
     SelectObject (hdc, hOldFont);
-}
-
-
-static void
-HEADER_SetItemBounds (HWND hwnd)
-{
-    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
-    HEADER_ITEM *phdi;
-    RECT rect;
-    int i, x;
-
-    if (infoPtr->uNumItem == 0)
-        return;
-
-    GetClientRect (hwnd, &rect);
-
-    x = rect.left;
-    for (i = 0; i < infoPtr->uNumItem; i++) {
-        phdi = &infoPtr->items[i];
-        phdi->rect.top = rect.top;
-        phdi->rect.bottom = rect.bottom;
-        phdi->rect.left = x;
-        phdi->rect.right = phdi->rect.left + phdi->cxy;
-        x = phdi->rect.right;
-    }
-}
-
-
-static void
-HEADER_ForceItemBounds (HWND hwnd, INT cy)
-{
-    HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
-    HEADER_ITEM *phdi;
-    int i, x;
-
-    if (infoPtr->uNumItem == 0)
-	return;
-
-    x = 0;
-    for (i = 0; i < infoPtr->uNumItem; i++) {
-	phdi = &infoPtr->items[i];
-	phdi->rect.top = 0;
-	phdi->rect.bottom = cy;
-	phdi->rect.left = x;
-	phdi->rect.right = phdi->rect.left + phdi->cxy;
-	x = phdi->rect.right;
-    }
 }
 
 
@@ -901,21 +894,17 @@ HEADER_Layout (HWND hwnd, WPARAM wParam, LPARAM lParam)
     lpLayout->pwpos->cx = lpLayout->prc->right - lpLayout->prc->left;
     if (GetWindowLongA (hwnd, GWL_STYLE) & HDS_HIDDEN)
         lpLayout->pwpos->cy = 0;
-    else
+    else {
         lpLayout->pwpos->cy = infoPtr->nHeight;
+        lpLayout->prc->top += infoPtr->nHeight;
+    }
     lpLayout->pwpos->flags = SWP_NOZORDER;
 
     TRACE("Layout x=%d y=%d cx=%d cy=%d\n",
            lpLayout->pwpos->x, lpLayout->pwpos->y,
            lpLayout->pwpos->cx, lpLayout->pwpos->cy);
 
-    HEADER_ForceItemBounds (hwnd, lpLayout->pwpos->cy);
-
-    /* hack */
-#ifdef __HDM_LAYOUT_HACK__
-    MoveWindow (lpLayout->pwpos->hwnd, lpLayout->pwpos->x, lpLayout->pwpos->y,
-                  lpLayout->pwpos->cx, lpLayout->pwpos->cy, TRUE);
-#endif
+    infoPtr->bRectsValid = FALSE;
 
     return TRUE;
 }
@@ -1096,6 +1085,7 @@ HEADER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nHeight = 20;
     infoPtr->hFont = 0;
     infoPtr->items = 0;
+    infoPtr->bRectsValid = FALSE;
     infoPtr->hcurArrow = LoadCursorA (0, IDC_ARROWA);
     infoPtr->hcurDivider = LoadCursorA (0, IDC_SIZEWEA);
     infoPtr->hcurDivopen = LoadCursorA (0, IDC_SIZENSA);
@@ -1446,8 +1436,9 @@ HEADER_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
     SelectObject (hdc, hOldFont);
     ReleaseDC (0, hdc);
 
+    infoPtr->bRectsValid = FALSE;
+	
     if (lParam) {
-        HEADER_ForceItemBounds (hwnd, infoPtr->nHeight);
         hdc = GetDC (hwnd);
         HEADER_Refresh (hwnd, hdc);
         ReleaseDC (hwnd, hdc);
@@ -1513,7 +1504,6 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case HDM_SETUNICODEFORMAT:
 	    return HEADER_SetUnicodeFormat (hwnd, wParam);
 
-
         case WM_CREATE:
             return HEADER_Create (hwnd, wParam, lParam);
 
@@ -1543,6 +1533,9 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 /*	case WM_NOTIFYFORMAT: */
 
+	case WM_SIZE:
+	    return HEADER_Size (hwnd, wParam);
+	
         case WM_PAINT:
             return HEADER_Paint (hwnd, wParam);
 

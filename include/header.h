@@ -46,6 +46,7 @@ typedef struct
 
     HIMAGELIST  himl;		/* handle to a image list (may be 0) */
     HEADER_ITEM *items;		/* pointer to array of HEADER_ITEM's */
+    BOOL	bRectsValid;	/* validity flag for bounding rectangles */
     LPINT     pOrder;         /* pointer to order array */
 } HEADER_INFO;
 
