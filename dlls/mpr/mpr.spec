@@ -53,7 +53,7 @@ type win32
 0050 stdcall WNetAddConnection3W(long ptr wstr wstr long) WNetAddConnection3W
 0051 stdcall WNetAddConnectionA(str str str) WNetAddConnectionA
 0052 stdcall WNetAddConnectionW(wstr wstr wstr) WNetAddConnectionW
-0053 stdcall WNetCachePassword(str long str long long) WNetCachePassword
+0053 stdcall WNetCachePassword(str long str long long long) WNetCachePassword
 0054 stdcall WNetCancelConnection2A(str long long) WNetCancelConnection2A
 0055 stdcall WNetCancelConnection2W(wstr long long) WNetCancelConnection2W
 0056 stdcall WNetCancelConnectionA(str long) WNetCancelConnectionA
@@ -65,7 +65,7 @@ type win32
 0062 stdcall WNetDisconnectDialog1A(ptr) WNetDisconnectDialog1A
 0063 stdcall WNetDisconnectDialog1W(ptr) WNetDisconnectDialog1W
 0064 stdcall WNetDisconnectDialog(long long) WNetDisconnectDialog
-0065 stdcall WNetEnumCachedPasswords(str long long ptr) WNetEnumCachedPasswords
+0065 stdcall WNetEnumCachedPasswords(str long long ptr long) WNetEnumCachedPasswords
 0066 stdcall WNetEnumResourceA(long ptr ptr ptr) WNetEnumResourceA
 0067 stdcall WNetEnumResourceW(long ptr ptr ptr) WNetEnumResourceW
 0068 stub WNetFormatNetworkNameA

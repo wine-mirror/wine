@@ -8,10 +8,13 @@
 
 DEFAULT_DEBUG_CHANNEL(mpr)
 
-
 /**************************************************************************
  * WNetCachePassword [MPR.52]  Saves password in cache
  *
+ * NOTES
+ *	only the parameter count is verifyed  
+ *
+ *	---- everything below this line might be wrong (js) -----
  * RETURNS
  *    Success: WN_SUCCESS
  *    Failure: WN_ACCESS_DENIED, WN_BAD_PASSWORD, WN_BADVALUE, WN_NET_ERROR,
@@ -22,10 +25,14 @@ DWORD WINAPI WNetCachePassword(
     WORD cbResource,  /* [in] Size of name */
     LPSTR pbPassword, /* [in] Buffer containing password */
     WORD cbPassword,  /* [in] Size of password */
-    BYTE nType)       /* [in] Type of password to cache */
+    BYTE nType,       /* [in] Type of password to cache */
+    WORD x)
+    
 {
-    FIXME( "(%s, %d, %p, %d, %d): stub\n", 
-           debugstr_a(pbResource), cbResource, pbPassword, cbPassword, nType );
+    FIXME( "(%p(%s), %d, %p(%s), %d, %d, 0x%08x): stub\n", 
+           pbResource, debugstr_a(pbResource), cbResource,
+	   pbPassword, debugstr_a(pbPassword), cbPassword,
+	   nType, x );
 
     return WN_SUCCESS;
 }
@@ -36,8 +43,8 @@ DWORD WINAPI WNetCachePassword(
 UINT WINAPI WNetRemoveCachedPassword( LPSTR pbResource, WORD cbResource, 
                                       BYTE nType )
 {
-    FIXME( "(%s, %d, %d): stub\n", 
-           debugstr_a(pbResource), cbResource, nType );
+    FIXME( "(%p(%s), %d, %d): stub\n", 
+           pbResource, debugstr_a(pbResource), cbResource, nType );
 
     return WN_SUCCESS;
 }
@@ -45,6 +52,15 @@ UINT WINAPI WNetRemoveCachedPassword( LPSTR pbResource, WORD cbResource,
 /*****************************************************************
  * WNetGetCachedPassword [MPR.69]  Retrieves password from cache
  *
+ * NOTES
+ *  the stub seems to be wrong:
+ *	arg1:	ptr	0x40xxxxxx -> (no string)
+ *	arg2:	len	36
+ *	arg3:	ptr	0x40xxxxxx -> (no string)
+ *	arg4:	ptr	0x40xxxxxx -> 0xc8
+ *	arg5:	type?	4
+ *  
+ *	---- everything below this line might be wrong (js) -----
  * RETURNS
  *    Success: WN_SUCCESS
  *    Failure: WN_ACCESS_DENIED, WN_BAD_PASSWORD, WN_BAD_VALUE, 
@@ -57,8 +73,9 @@ DWORD WINAPI WNetGetCachedPassword(
     LPWORD pcbPassword, /* [out] Receives size of password */
     BYTE nType)         /* [in]  Type of password to retrieve */
 {
-    FIXME( "(%s, %d, %p, %p, %d): stub\n",
-           debugstr_a(pbResource), cbResource, pbPassword, pcbPassword, nType );
+    FIXME( "(%p(%s), %d, %p, %p, %d): stub\n",
+           pbResource, debugstr_a(pbResource), cbResource,
+	   pbPassword, pcbPassword, nType );
 
     SetLastError(WN_NO_NETWORK);
     return WN_NO_NETWORK;
@@ -66,12 +83,26 @@ DWORD WINAPI WNetGetCachedPassword(
 
 /*******************************************************************
  * WNetEnumCachedPasswords [MPR.61]
+ *
+ * NOTES
+ *	the parameter count is verifyed  
+ *
+ *  observed values:
+ *	arg1	ptr	0x40xxxxxx -> (no string)
+ *	arg2	int	32
+ *	arg3	type?	4
+ *	arg4	enumPasswordProc (verifyed)
+ *	arg5	ptr	0x40xxxxxx -> 0x0
+ *
+ *	---- everything below this line might be wrong (js) -----
  */
+
 UINT WINAPI WNetEnumCachedPasswords( LPSTR pbPrefix, WORD cbPrefix,
-                                     BYTE nType, FARPROC enumPasswordProc )
+                                     BYTE nType, ENUMPASSWORDPROC enumPasswordProc, DWORD x)
 {
-    FIXME( "(%p, %d, %d, %p): stub\n",
-           pbPrefix, cbPrefix, nType, enumPasswordProc );
+    FIXME( "(%p(%s), %d, %d, %p, 0x%08lx): stub\n",
+           pbPrefix, debugstr_a(pbPrefix), cbPrefix,
+	   nType, enumPasswordProc, x );
 
     SetLastError(WN_NO_NETWORK);
     return WN_NO_NETWORK;

@@ -353,5 +353,22 @@ DWORD WINAPI MultinetGetErrorTextA(DWORD,DWORD,DWORD);
 DWORD WINAPI MultinetGetErrorTextW(DWORD,DWORD,DWORD);
 #define      MultinetGetErrorText WINELIB_NAME_AW(MultinetGetErrorText)
 
+/*
+ * Password cache
+ */
+
+/* WNetEnumCachedPasswords */
+typedef struct tagPASSWORD_CACHE_ENTRY
+{
+	WORD cbEntry;
+	WORD cbResource;
+	WORD cbPassword;
+	BYTE iEntry;
+	BYTE nType;
+	BYTE abResource[1];
+} PASSWORD_CACHE_ENTRY;
+
+typedef BOOL (CALLBACK * ENUMPASSWORDPROC)(PASSWORD_CACHE_ENTRY *, DWORD);
+UINT WINAPI WNetEnumCachedPasswords( LPSTR, WORD, BYTE, ENUMPASSWORDPROC, DWORD);
 
 #endif /* _WINNETWK_H_ */
