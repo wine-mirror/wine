@@ -673,7 +673,7 @@ BOOL WINAPI PathRelativePathToA(
           </para></listitem>
 
           <listItem><para>
-          View <filename>wine-user.html</filename>, <filename>wine-devel.html</filename>, etc in your favorite browser
+          View <filename>wine-user.html</filename>, <filename>wine-devel.html</filename>, etc. in your favorite browser
           </para></listitem>
 
           </orderedlist>

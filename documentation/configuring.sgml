@@ -610,9 +610,7 @@
             them. It must scale them using the number defined in the
             "Resolution" setting. 60-120 are reasonable values, 96 is
             a nice in the middle one. If you have the real windows
-            fonts available (<filename>&lt;dirs to
-              wine>/documentation/ttfserver</filename> and
-            <filename>fonts</filename>), this parameter will not be as
+            fonts available , this parameter will not be as
             important. Of course, it's always good to get your X fonts
             working acceptably in wine.
           </para>
