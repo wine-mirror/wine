@@ -1227,6 +1227,40 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
     return RetVal;
 }
  
+/***********************************************************************
+ *           DIALOG_FindMsgDestination
+ *
+ * The messages that IsDialogMessage send may not go to the dialog
+ * calling IsDialogMessage if that dialog is a child, and it has the
+ * DS_CONTROL style set.
+ * We propagate up until we hit a that does not have DS_CONTROL, or
+ * whose parent is not a dialog.
+ *
+ * This is undocumented behaviour.
+ */
+static HWND DIALOG_FindMsgDestination( HWND hwndDlg )
+{
+    while (GetWindowLongA(hwndDlg, GWL_STYLE) & DS_CONTROL)
+    {
+	WND *pParent;
+	HWND hParent = GetParent(hwndDlg);
+	if (!hParent) break;
+
+	pParent = WIN_FindWndPtr(hParent);
+	if (!pParent) break;
+
+	if (!(pParent->flags & WIN_ISDIALOG))
+	{
+	    WIN_ReleaseWndPtr(pParent);
+	    break;
+	}
+	WIN_ReleaseWndPtr(pParent);
+
+	hwndDlg = hParent;
+    }
+
+    return hwndDlg;
+}
 
 /***********************************************************************
  *           DIALOG_IsDialogMessage
@@ -1256,6 +1290,8 @@ static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
         *translate = *dispatch = TRUE;
         return TRUE;
     }
+
+    hwndDlg = DIALOG_FindMsgDestination(hwndDlg);
 
     switch(message)
     {
