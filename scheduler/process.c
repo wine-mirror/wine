@@ -586,7 +586,7 @@ void __wine_process_init( int argc, char *argv[] )
     if (!THREAD_InitStack( NtCurrentTeb(), stack_size )) goto error;
 
     /* switch to the new stack */
-    SYSDEPS_SwitchToThreadStack( start_process, NULL );
+    wine_switch_to_stack( start_process, NULL, NtCurrentTeb()->Tib.StackBase );
 
  error:
     ExitProcess( GetLastError() );

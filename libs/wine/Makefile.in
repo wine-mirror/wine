@@ -11,7 +11,8 @@ C_SRCS = \
 	config.c \
 	debug.c \
 	ldt.c \
-	loader.c
+	loader.c \
+	port.c
 
 @MAKE_LIB_RULES@
 

@@ -61,11 +61,8 @@ extern int wine_dbg_parse_options( const char *str );
 
 /* portability */
 
+extern void DECLSPEC_NORETURN wine_switch_to_stack( void (*func)(void *), void *arg, void *stack );
 extern void *wine_anon_mmap( void *start, size_t size, int prot, int flags );
-
-/* errno support */
-extern int* (*wine_errno_location)(void);
-extern int* (*wine_h_errno_location)(void);
 
 /* LDT management */
 

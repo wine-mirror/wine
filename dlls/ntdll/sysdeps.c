@@ -115,7 +115,7 @@ void SYSDEPS_SetCurThread( TEB *teb )
 inline static char *get_temp_stack(void)
 {
     unsigned int next = interlocked_xchg_add( &next_temp_stack, 1 );
-    return temp_stacks[next % NB_TEMP_STACKS];
+    return temp_stacks[next % NB_TEMP_STACKS] + TEMP_STACK_SIZE;
 }
 
 
@@ -193,73 +193,6 @@ int SYSDEPS_SpawnThread( void (*func)(TEB *), TEB *teb )
 
 
 /***********************************************************************
- *           SYSDEPS_SwitchToThreadStack
- *
- * Switch to the stack specified in the current thread TEB
- * and call the specified function.
- */
-void DECLSPEC_NORETURN SYSDEPS_SwitchToThreadStack( void (*func)(void *), void *arg );
-#ifdef __i386__
-#  ifdef __GNUC__
-__ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
-                   "movl 4(%esp),%ecx\n\t"  /* func */
-                   "movl 8(%esp),%edx\n\t"  /* arg */
-                   ".byte 0x64\n\tmovl 0x04,%esp\n\t"  /* teb->Tib.StackBase */
-                   "pushl %edx\n\t"
-                   "xorl %ebp,%ebp\n\t"
-                   "call *%ecx\n\t"
-                   "int $3" /* we never return here */ );
-#  elif defined(_MSC_VER)
-__declspec(naked) void SYSDEPS_SwitchToThreadStack( void (*func)(void *), void *arg )
-{
-  __asm mov ecx, 4[esp];
-  __asm mov edx, 8[esp];
-  __asm mov fs:[0x04], esp;
-  __asm push edx;
-  __asm xor ebp, ebp;
-  __asm call [ecx];
-  __asm int 3;
-}
-#  endif /* defined(__GNUC__) || defined(_MSC_VER) */
-#elif defined(__sparc__) && defined(__GNUC__)
-__ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
-                   "mov %o0, %l0\n\t" /* store first argument */
-                   "call " __ASM_NAME("NtCurrentTeb") ", 0\n\t"
-                   "mov %o1, %l1\n\t" /* delay slot: store second argument */
-                   "ld [%o0+4], %sp\n\t" /* teb->Tib.StackBase */
-                   "call %l0, 0\n\t" /* call func */
-                   "mov %l1, %o0\n\t" /* delay slot:  arg for func */
-                   "ta 0x01\n\t"); /* breakpoint - we never get here */
-#elif defined(__powerpc__) && defined(__APPLE__)
-/* Darwin SYSDEPS_SwitchToThreadStack
- Function Pointer to call is on r3, Args to pass on r4 and stack on r1 */
-__ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
-                   "stw r1, 0x4(r13)\n\t" /* teb->Tib.StackBase */
-                   "mr r12,r3\n\t"
-                   "mtctr r12\n\t" /* func->ctr */
-                   "mr r3,r4\n\t" /* args->function param 1 (r3) */
-                   "bctr\n\t" /* call ctr */
-                   "b _SYSDEPS_SwitchToThreadStack+24\n\t"); /* loop */
-#elif defined(__powerpc__) && defined(__GNUC__)
-/* Linux SYSDEPS_SwitchToThreadStack
- Function Pointer to call is on r3, Args to pass on r4 and stack on r1 */
-__ASM_GLOBAL_FUNC( SYSDEPS_SwitchToThreadStack,
-                   "stw 1, 0x4(13)\n\t" /* teb->Tib.StackBase */
-                   "mr 12,3\n\t"
-                   "mtctr 12\n\t" /* func->ctr */
-                   "mr 3,4\n\t" /* args->function param 1 (r3) */
-                   "bctr\n\t" /* call ctr */
-                   "b _SYSDEPS_SwitchToThreadStack+24\n\t"); /* loop */
-#else  /* !powerpc, !sparc, !i386 */
-void SYSDEPS_SwitchToThreadStack( void (*func)(void *), void *arg )
-{
-    func( arg );
-    while(1); /* avoid warning */
-}
-#endif /* !defined(__i386__) && !defined(__sparc__) */
-
-
-/***********************************************************************
  *           SYSDEPS_ExitThread
  *
  * Exit a running thread; must not return.
@@ -285,7 +218,6 @@ void SYSDEPS_ExitThread( int status )
         ptr = free_teb->DeallocationStack;
         NtFreeVirtualMemory( GetCurrentProcess(), &ptr, &size, MEM_RELEASE );
     }
-    SIGNAL_Block();
     SYSDEPS_AbortThread( status );
 #else
     struct thread_cleanup_info info;
@@ -305,9 +237,7 @@ void SYSDEPS_ExitThread( int status )
     close( teb->reply_fd );
     close( teb->request_fd );
     SIGNAL_Reset();
-    teb->Tib.StackLimit = get_temp_stack();
-    teb->Tib.StackBase = (char *)teb->Tib.StackLimit + TEMP_STACK_SIZE;
-    SYSDEPS_SwitchToThreadStack( cleanup_thread, &info );
+    wine_switch_to_stack( cleanup_thread, &info, get_temp_stack() );
 #endif
 }
 

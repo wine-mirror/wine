@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wine/exception.h"
+#include "wine/library.h"
 #include "thread.h"
 
 struct fiber_data
@@ -190,7 +191,7 @@ void WINAPI SwitchToFiber( LPVOID fiber )
         NtCurrentTeb()->Tib.StackLimit    = new_fiber->stack_limit;
         NtCurrentTeb()->DeallocationStack = new_fiber->stack_allocation;
         if (new_fiber->start)  /* first time */
-            SYSDEPS_SwitchToThreadStack( start_fiber, new_fiber );
+            wine_switch_to_stack( start_fiber, new_fiber, new_fiber->stack_base );
         else
             longjmp( new_fiber->jmpbuf, 1 );
     }
