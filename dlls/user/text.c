@@ -49,7 +49,7 @@ static int prefix_offset;
  * str - string to parse into lines.
  * count - length of str.
  * dest - destination in which to return line.
- * len - length of resultant line in dest in chars.
+ * len - dest buffer size in chars on input, copied length into dest on output.
  * width - maximum width of line in pixels.
  * format - format type passed to DrawText.
  *
@@ -70,8 +70,9 @@ static const WCHAR *TEXT_NextLineW( HDC hdc, const WCHAR *str, int *count,
     SIZE size;
     int lasttab = 0;
     int wb_i = 0, wb_j = 0, wb_count = 0;
+    int maxl = *len;
 
-    while (*count)
+    while (*count && j < maxl)
     {
 	switch (str[i])
 	{
@@ -223,12 +224,13 @@ INT16 WINAPI DrawText16( HDC16 hdc, LPCSTR str, INT16 count, LPRECT16 rect, UINT
 /***********************************************************************
  *           DrawTextExW    (USER32.166)
  */
+#define MAX_STATIC_BUFFER 1024
 INT WINAPI DrawTextExW( HDC hdc, LPCWSTR str, INT i_count, 
                      LPRECT rect, UINT flags, LPDRAWTEXTPARAMS dtp )
 {
     SIZE size;
     const WCHAR *strPtr;
-    static WCHAR line[1024];
+    static WCHAR line[MAX_STATIC_BUFFER];
     int len, lh, count=i_count;
     int prefix_x = 0;
     int prefix_end = 0;
@@ -272,6 +274,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPCWSTR str, INT i_count,
     do
     {
 	prefix_offset = -1;
+	len = MAX_STATIC_BUFFER;
 	strPtr = TEXT_NextLineW(hdc, strPtr, &count, line, &len, width, flags);
 
 	if (prefix_offset != -1)
@@ -339,6 +342,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPCWSTR str, INT i_count,
 	                strncpyW(swapStr+strlenW(swapStr), str, totalLen);
 	            }
 
+                    len = MAX_STATIC_BUFFER;
 	            TEXT_NextLineW(hdc, swapStr, &count, line, &len, width, flags); 
 
 	            /* if only the ELLIPSIS will fit, just let it be clipped */
