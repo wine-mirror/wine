@@ -4480,7 +4480,34 @@ static HRESULT WINAPI ITypeInfo_fnGetDllEntry( ITypeInfo2 *iface, MEMBERID memid
         WORD  *pwOrdinal)
 {
     ICOM_THIS( ITypeInfoImpl, iface);
-    FIXME("(%p) stub!\n", This);
+    TLBFuncDesc *pFDesc;
+
+    FIXME("(%p, memid %lx, %d, %p, %p, %p), partial stub!\n", This, memid, invKind, pBstrDllName, pBstrName, pwOrdinal);
+
+    for(pFDesc=This->funclist; pFDesc; pFDesc=pFDesc->next)
+        if(pFDesc->funcdesc.memid==memid){
+	    dump_TypeInfo(This);
+	    dump_TLBFuncDescOne(pFDesc);
+
+	    /* FIXME: This is wrong, but how do you find that out? */
+	    if (pBstrDllName) {
+		const WCHAR oleaut32W[] = {'O','L','E','A','U','T','3','2','.','D','L','L',0};
+		*pBstrDllName = SysAllocString(oleaut32W);
+	    }
+
+	    if (HIWORD(pFDesc->Entry) && (pFDesc->Entry != (void*)-1)) {
+		if (pBstrName)
+		    *pBstrName = SysAllocString(pFDesc->Entry);
+		if (pwOrdinal)
+		    *pwOrdinal = -1;
+		return S_OK;
+	    }
+	    if (pBstrName)
+		*pBstrName = NULL;
+	    if (pwOrdinal)
+		*pwOrdinal = (DWORD)pFDesc->Entry;
+	    return S_OK;
+        }
     return E_FAIL;
 }
 
