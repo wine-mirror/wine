@@ -75,8 +75,19 @@ static void test_sscanf( void )
     ok(number_so_far == 1,"Read wrong arg for \"%%n\" %d instead of 2",number_so_far);
 }
 
+static void test_sprintf( void )
+{
+    char buffer[100];
+    double pnumber=789456123;
+    sprintf(buffer,"%+#23.15e",pnumber);
+    todo_wine
+      {
+	ok(strstr(buffer,"e+008") != 0,"Sprintf different \"%s\"\n",buffer);
+      }
+}
 
 START_TEST(scanf)
 {
     test_sscanf();
+    test_sprintf();
 }
