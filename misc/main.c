@@ -35,6 +35,7 @@
 #include "version.h"
 #include "winnls.h"
 #include "x11drv.h"
+#include "console.h"
 
 /* when adding new languages look at ole/ole2nls.c 
  * for proper iso name and Windows code (add 0x0400 
@@ -987,6 +988,7 @@ static void called_at_exit(void)
     WINSOCK_Shutdown();
     /* FIXME: should check for other processes or threads */
     DeleteCriticalSection( HEAP_SystemLock );
+    CONSOLE_Close();
 }
 
 static int WINE_X11_ErrorHandler(Display *display,XErrorEvent *error_evt)

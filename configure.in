@@ -43,8 +43,12 @@ AC_ARG_ENABLE(trace,
 [  --disable-trace         compile out TRACE messages],
 [if test "$enableval" = "no"; then TRACE_MSGS="no"; fi])
 
+AC_ARG_WITH(ncurses,
+[  --with-ncurses          compile in the ncurses terminal],
+[if test "$withval" = "yes"; then LIBS="$LIBS -lncurses"; AC_DEFINE(WINE_NCURSES) fi])
+
 AC_ARG_WITH(reentrant-x,
-[  --without-reentrant-x   Compile for use with non-reentrant X libraries])
+[  --without-reentrant-x   compile for use with non-reentrant X libraries])
 
 AC_SUBST(MAIN_TARGET)
 AC_SUBST(LIB_TARGET)
@@ -501,6 +505,7 @@ AC_SUBST_FILE(MAKE_RULES)
 AC_OUTPUT([
 Make.rules
 Makefile
+console/Makefile
 controls/Makefile
 debugger/Makefile
 dlls/Makefile

@@ -53,3 +53,6 @@
 
 /* Define if the struct statfs is defined by <sys/mount.h> */
 #undef STATFS_DEFINED_BY_SYS_MOUNT
+
+/* Define if we want to use ncurses instead of the TTY terminal */
+#undef WINE_NCURSES

@@ -1,0 +1,18 @@
+DEFS      = @DLLFLAGS@ -D__WINE__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = console
+
+C_SRCS = \
+	generic.c \
+	interface.c \
+	ncurses.c \
+	tty.c
+
+all: $(MODULE).o
+
+@MAKE_RULES@
+
+### Dependencies:

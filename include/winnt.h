@@ -170,7 +170,9 @@ typedef HANDLE32 *PHANDLE;
 #define FL_reg(context)      (*(WORD*)&EFL_reg(context))
 
 #define SET_CFLAG(context)   (EFL_reg(context) |= 0x0001)
-#define RESET_CFLAG(context) (EFL_reg(context) &= 0xfffffffe)
+#define RESET_CFLAG(context) (EFL_reg(context) &= ~0x0001)
+#define SET_ZFLAG(context)   (EFL_reg(context) |= 0x0040)
+#define RESET_ZFLAG(context) (EFL_reg(context) &= ~0x0040)
 
 #define ISV86(context)       (EFL_reg(context) & 0x00020000)
 #define V86BASE(context)     ((context)->Dr7) /* ugly */

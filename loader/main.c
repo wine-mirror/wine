@@ -42,6 +42,7 @@
 #include "task.h"
 #include "debug.h"
 #include "psdrv.h"
+#include "console.h"
 
 int __winelib = 1;  /* Winelib run-time flag */
 
@@ -80,6 +81,9 @@ BOOL32 MAIN_MainInit(void)
     /* registry initialisation */
     SHELL_LoadRegistry();
     
+    /* Set up text-mode stuff */
+    CONSOLE_Init();
+
     return TRUE;
 }
 
