@@ -12,7 +12,7 @@ static void pixel_convert_16_to_8(void *src, void *dst, DWORD width, DWORD heigh
     int y;
 
     if (palette != NULL) {
-	const unsigned short * pal = (unsigned short *) palette->screen_palents;
+	const unsigned int * pal = (unsigned int *) palette->screen_palents;
 
 	for (y = height; y--; ) {
 #if defined(__i386__) && defined(__GNUC__)
@@ -27,7 +27,7 @@ static void pixel_convert_16_to_8(void *src, void *dst, DWORD width, DWORD heigh
 	    "xor %%eax,%%eax\n"
 	    "1:\n"
 	    "    lodsb\n"
-	    "    movw (%%edx,%%eax,2),%%ax\n"
+	    "    movw (%%edx,%%eax,4),%%ax\n"
 	    "    stosw\n"
 	    "	   xor %%eax,%%eax\n"
 	    "    loop 1b\n"
@@ -52,7 +52,7 @@ static void palette_convert_16_to_8(
 	LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count
 ) {
     int i;
-    unsigned short *pal = (unsigned short *) screen_palette;
+    unsigned int *pal = (unsigned int *) screen_palette;
 
     for (i = 0; i < count; i++)
 	pal[start + i] = (((((unsigned short) palent[i].peRed) & 0xF8) << 8) |
@@ -64,7 +64,7 @@ static void palette_convert_15_to_8(
 	LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count
 ) {
     int i;
-    unsigned short *pal = (unsigned short *) screen_palette;
+    unsigned int *pal = (unsigned int *) screen_palette;
 
     for (i = 0; i < count; i++)
 	pal[start + i] = (((((unsigned short) palent[i].peRed) & 0xF8) << 7) |
