@@ -90,8 +90,27 @@ ULONG WINAPI   IDirectMusicImpl_Release (LPDIRECTMUSIC iface)
 /* IDirectMusic Interface follow: */
 HRESULT WINAPI IDirectMusicImpl_EnumPort (LPDIRECTMUSIC iface, DWORD dwIndex, LPDMUS_PORTCAPS pPortCaps)
 {
-	FIXME("stub\n");
-	return DS_OK;
+	/* FIXME: this is only for making DXCapsViewer display something */
+	static const WCHAR name_WINE_SYNTHESIZER[] = {'W','i','n','e',' ','S','y','n','t','h','e','s','i','z','e','r',0};
+
+	if (dwIndex == 0)
+	{
+		pPortCaps->dwSize = sizeof(DMUS_PORTCAPS);
+		pPortCaps->dwFlags = DMUS_PC_DLS | DMUS_PC_SOFTWARESYNTH | DMUS_PC_DIRECTSOUND | DMUS_PC_DLS2 | DMUS_PC_AUDIOPATH | DMUS_PC_WAVE;
+		/*pPortCaps->guidPort;*/ /* FIXME */
+		pPortCaps->dwClass = DMUS_PC_OUTPUTCLASS;
+		pPortCaps->dwType = DMUS_PORT_WINMM_DRIVER;
+		pPortCaps->dwMemorySize = DMUS_PC_SYSTEMMEMORY;
+		pPortCaps->dwMaxChannelGroups = 1000;
+		pPortCaps->dwMaxVoices = 1000;
+		pPortCaps->dwMaxAudioChannels = -1;
+		pPortCaps->dwEffectFlags = DMUS_EFFECT_REVERB | DMUS_EFFECT_CHORUS | DMUS_EFFECT_DELAY;
+		wsprintfW(pPortCaps->wszDescription, name_WINE_SYNTHESIZER);
+		return S_OK;
+	}
+
+	FIXME("partial-stub (only first port supported)\n");
+	return S_FALSE;
 }
 
 HRESULT WINAPI IDirectMusicImpl_CreateMusicBuffer (LPDIRECTMUSIC iface, LPDMUS_BUFFERDESC pBufferDesc, LPDIRECTMUSICBUFFER** ppBuffer, LPUNKNOWN pUnkOuter)
