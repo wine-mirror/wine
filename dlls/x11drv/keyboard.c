@@ -524,6 +524,26 @@ static const char main_key_SK[MAIN_LEN][4] =
  "<>"
 };
 
+/*** Czech keyboard layout (setxkbmap cz) */
+static const char main_key_CZ[MAIN_LEN][4] =
+{
+ ";","+1","ì2","¹3","è4","ø5","¾6","ý7","á8","í9","é0","=%","´·",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","ú/",")(",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","ù\"","§!","¨'",
+ "yY","xX","cC","vV","bB","nN","mM",",?",".:","-_",
+ "\\"
+};
+
+/*** Czech keyboard layout (setxkbmap cz_qwerty) */
+static const char main_key_CZ_qwerty[MAIN_LEN][4] =
+{
+ ";","+1","ì2","¹3","è4","ø5","¾6","ý7","á8","í9","é0","=%","´·",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","ú/",")(",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","ù\"","§!","¨'",
+ "zZ","xX","cC","vV","bB","nN","mM",",?",".:","-_",
+ "\\"
+};
+
 /*** Slovak and Czech (programmer's) keyboard layout (see cssk_dual(cs_sk_ucw)) */
 static const char main_key_SK_prog[MAIN_LEN][4] =
 {
@@ -663,6 +683,8 @@ static const struct {
  {"Slovak keyboard layout", 28592, &main_key_SK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Slovak and Czech keyboard layout without dead keys", 28592, &main_key_SK_prog, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Czech keyboard layout", 28592, &main_key_CS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Czech keyboard layout cz", 28592, &main_key_CZ, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Czech keyboard layout cz_qwerty", 28592, &main_key_CZ_qwerty, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Latin American keyboard layout", 28591, &main_key_LA, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Lithuanian (Baltic) keyboard layout", 28603, &main_key_LT_B, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Turkish keyboard layout", 28599, &main_key_TK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
@@ -1094,8 +1116,7 @@ X11DRV_KEYBOARD_DetectLayout (void)
 	  if (key > pkey) seq++;
 	  pkey = key;
 	} else {
-	  TRACE_(key)("mismatch for keycode %d, character %c\n", keyc,
-		 ckey[0]);
+	  TRACE_(key)("mismatch for keycode %d, character %c (%02x, %02x, %02x, %02x)\n", keyc, ckey[0], ckey[0], ckey[1], ckey[2], ckey[3]);
 	  mismatch++;
 	  score -= syms;
 	}
