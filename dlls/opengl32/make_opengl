@@ -510,33 +510,33 @@ close(REGISTRY);
 #
 open(SPEC, ">" . $spec_file);
 
-print SPEC "@  stdcall wglCreateContext(long) wglCreateContext
-@  stdcall wglCreateLayerContext(long long) wglCreateLayerContext
-@  stdcall wglCopyContext(long long long) wglCopyContext
-@  stdcall wglDeleteContext(long) wglDeleteContext
-@  stdcall wglDescribeLayerPlane(long long long long ptr) wglDescribeLayerPlane
-@  stdcall wglGetCurrentContext() wglGetCurrentContext
-@  stdcall wglGetCurrentDC() wglGetCurrentDC
-@  stdcall wglGetExtensionsStringEXT() wglGetExtensionsStringEXT
-@  stdcall wglGetLayerPaletteEntries(long long long long ptr) wglGetLayerPaletteEntries
-@  stdcall wglGetProcAddress(str) wglGetProcAddress
-@  stdcall wglMakeCurrent(long long) wglMakeCurrent
-@  stdcall wglRealizeLayerPalette(long long long) wglRealizeLayerPalette
-@  stdcall wglSetLayerPaletteEntries(long long long long ptr) wglSetLayerPaletteEntries
-@  stdcall wglShareLists(long long) wglShareLists
-@  stdcall wglSwapLayerBuffers(long long) wglSwapLayerBuffers
-@  stdcall wglUseFontBitmapsA(long long long long) wglUseFontBitmapsA
-@  stdcall wglUseFontOutlinesA(long long long long long long long ptr) wglUseFontOutlinesA
+print SPEC "@  stdcall wglCreateContext(long)
+@  stdcall wglCreateLayerContext(long long)
+@  stdcall wglCopyContext(long long long)
+@  stdcall wglDeleteContext(long)
+@  stdcall wglDescribeLayerPlane(long long long long ptr)
+@  stdcall wglGetCurrentContext()
+@  stdcall wglGetCurrentDC()
+@  stdcall wglGetExtensionsStringEXT()
+@  stdcall wglGetLayerPaletteEntries(long long long long ptr)
+@  stdcall wglGetProcAddress(str)
+@  stdcall wglMakeCurrent(long long)
+@  stdcall wglRealizeLayerPalette(long long long)
+@  stdcall wglSetLayerPaletteEntries(long long long long ptr)
+@  stdcall wglShareLists(long long)
+@  stdcall wglSwapLayerBuffers(long long)
+@  stdcall wglUseFontBitmapsA(long long long long)
+@  stdcall wglUseFontOutlinesA(long long long long long long long ptr)
 @  stub    glGetLevelParameterfv
 @  stub    glGetLevelParameteriv
 @  stub    wglUseFontBitmapsW
 @  stub    wglUseFontOutlinesW
 @  stub    wglGetDefaultProcAddress
-@  forward wglChoosePixelFormat GDI32.ChoosePixelFormat
-@  forward wglDescribePixelFormat GDI32.DescribePixelFormat
-@  forward wglGetPixelFormat GDI32.GetPixelFormat
-@  forward wglSetPixelFormat GDI32.SetPixelFormat
-@  forward wglSwapBuffers GDI32.SwapBuffers
+@  stdcall wglChoosePixelFormat(long ptr) gdi32.ChoosePixelFormat
+@  stdcall wglDescribePixelFormat(long long long ptr) gdi32.DescribePixelFormat
+@  stdcall wglGetPixelFormat(long) gdi32.GetPixelFormat
+@  stdcall wglSetPixelFormat(long long ptr) gdi32.SetPixelFormat
+@  stdcall wglSwapBuffers(long) gdi32.SwapBuffers
 ";
 
 foreach (sort keys %norm_functions) {
