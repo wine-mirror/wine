@@ -19,6 +19,9 @@ typedef unsigned int MSVCRT(size_t);
 /* Best to leave this one alone: wchar_t */
 
 
+#define offsetof(s,m)       (size_t)&(((s*)NULL)->m)
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
