@@ -27,6 +27,17 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <time.h>
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_SYSCTL_H
+#include <sys/sysctl.h>
+#endif
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -956,4 +967,178 @@ void WINAPI FreeMappedBuffer( CONTEXT86 *context )
         GlobalUnlock((HGLOBAL)buffer[0]);
         GlobalFree((HGLOBAL)buffer[0]);
     }
+}
+
+/***********************************************************************
+ *           GlobalMemoryStatus   (KERNEL32.@)
+ * Provides information about the status of the memory, so apps can tell
+ * roughly how much they are able to allocate
+ *
+ * RETURNS
+ *	None
+ */
+VOID WINAPI GlobalMemoryStatus(
+            LPMEMORYSTATUS lpmem
+) {
+    static MEMORYSTATUS	cached_memstatus;
+    static int cache_lastchecked = 0;
+    SYSTEM_INFO si;
+#ifdef linux
+    FILE *f;
+#endif
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+    int *tmp;
+    int size_sys;
+    int mib[2] = { CTL_HW };
+#endif
+    if (time(NULL)==cache_lastchecked) {
+	memcpy(lpmem,&cached_memstatus,sizeof(MEMORYSTATUS));
+	return;
+    }
+    cache_lastchecked = time(NULL);
+
+    lpmem->dwMemoryLoad    = 0;
+    lpmem->dwTotalPhys     = 16*1024*1024;
+    lpmem->dwAvailPhys     = 16*1024*1024;
+    lpmem->dwTotalPageFile = 16*1024*1024;
+    lpmem->dwAvailPageFile = 16*1024*1024;
+
+#ifdef linux
+    f = fopen( "/proc/meminfo", "r" );
+    if (f)
+    {
+        char buffer[256];
+        int total, used, free, shared, buffers, cached;
+
+        lpmem->dwLength = sizeof(MEMORYSTATUS);
+        lpmem->dwTotalPhys = lpmem->dwAvailPhys = 0;
+        lpmem->dwTotalPageFile = lpmem->dwAvailPageFile = 0;
+        while (fgets( buffer, sizeof(buffer), f ))
+        {
+	    /* old style /proc/meminfo ... */
+            if (sscanf( buffer, "Mem: %d %d %d %d %d %d", &total, &used, &free, &shared, &buffers, &cached ))
+            {
+                lpmem->dwTotalPhys += total;
+                lpmem->dwAvailPhys += free + buffers + cached;
+            }
+            if (sscanf( buffer, "Swap: %d %d %d", &total, &used, &free ))
+            {
+                lpmem->dwTotalPageFile += total;
+                lpmem->dwAvailPageFile += free;
+            }
+
+            /* new style /proc/meminfo ... */
+            if (sscanf(buffer, "MemTotal: %d", &total))
+                lpmem->dwTotalPhys = total*1024;
+            if (sscanf(buffer, "MemFree: %d", &free))
+                lpmem->dwAvailPhys = free*1024;
+            if (sscanf(buffer, "SwapTotal: %d", &total))
+                lpmem->dwTotalPageFile = total*1024;
+            if (sscanf(buffer, "SwapFree: %d", &free))
+                lpmem->dwAvailPageFile = free*1024;
+            if (sscanf(buffer, "Buffers: %d", &buffers))
+                lpmem->dwAvailPhys += buffers*1024;
+            if (sscanf(buffer, "Cached: %d", &cached))
+                lpmem->dwAvailPhys += cached*1024;
+        }
+        fclose( f );
+
+        if (lpmem->dwTotalPhys)
+        {
+            DWORD TotalPhysical = lpmem->dwTotalPhys+lpmem->dwTotalPageFile;
+            DWORD AvailPhysical = lpmem->dwAvailPhys+lpmem->dwAvailPageFile;
+            lpmem->dwMemoryLoad = (TotalPhysical-AvailPhysical)
+                                      / (TotalPhysical / 100);
+        }
+    }
+#elif defined(__FreeBSD__) || defined(__NetBSD__)
+    mib[1] = HW_PHYSMEM;
+    sysctl(mib, 2, NULL, &size_sys, NULL, 0);
+    tmp = malloc(size_sys * sizeof(int));
+    sysctl(mib, 2, tmp, &size_sys, NULL, 0);
+    if (tmp && *tmp)
+    {
+        lpmem->dwTotalPhys = *tmp;
+	free(tmp);
+	mib[1] = HW_USERMEM;
+	sysctl(mib, 2, NULL, &size_sys, NULL, 0);
+	tmp = malloc(size_sys * sizeof(int));
+	sysctl(mib, 2, tmp, &size_sys, NULL, 0);
+	if (tmp && *tmp)
+	{
+	    lpmem->dwAvailPhys = *tmp;
+            lpmem->dwTotalPageFile = *tmp;
+	    lpmem->dwAvailPageFile = *tmp;
+	    lpmem->dwMemoryLoad = lpmem->dwTotalPhys - lpmem->dwAvailPhys;
+	} else
+	{
+	    lpmem->dwAvailPhys = lpmem->dwTotalPhys;
+	    lpmem->dwTotalPageFile = lpmem->dwTotalPhys;
+	    lpmem->dwAvailPageFile = lpmem->dwTotalPhys;
+	    lpmem->dwMemoryLoad = 0;
+	}
+	free(tmp);
+
+    }
+#endif
+    /* Some applications (e.g. QuickTime 6) crash if we tell them there
+     * is more than 2GB of physical memory.
+     */
+    if (lpmem->dwTotalPhys>2U*1024*1024*1024)
+    {
+        lpmem->dwTotalPhys=2U*1024*1024*1024;
+        lpmem->dwAvailPhys=2U*1024*1024*1024;
+    }
+
+    /* FIXME: should do something for other systems */
+    GetSystemInfo(&si);
+    lpmem->dwTotalVirtual  = (char*)si.lpMaximumApplicationAddress-(char*)si.lpMinimumApplicationAddress;
+    /* FIXME: we should track down all the already allocated VM pages and substract them, for now arbitrarily remove 64KB so that it matches NT */
+    lpmem->dwAvailVirtual  = lpmem->dwTotalVirtual-64*1024;
+    memcpy(&cached_memstatus,lpmem,sizeof(MEMORYSTATUS));
+
+    /* it appears some memory display programs want to divide by these values */
+    if(lpmem->dwTotalPageFile==0)
+        lpmem->dwTotalPageFile++;
+
+    if(lpmem->dwAvailPageFile==0)
+        lpmem->dwAvailPageFile++;
+
+    TRACE("<-- LPMEMORYSTATUS: dwLength %ld, dwMemoryLoad %ld, dwTotalPhys %ld, dwAvailPhys %ld,"
+          " dwTotalPageFile %ld, dwAvailPageFile %ld, dwTotalVirtual %ld, dwAvailVirtual %ld\n",
+          lpmem->dwLength, lpmem->dwMemoryLoad, lpmem->dwTotalPhys, lpmem->dwAvailPhys,
+          lpmem->dwTotalPageFile, lpmem->dwAvailPageFile, lpmem->dwTotalVirtual,
+          lpmem->dwAvailVirtual);
+}
+
+/***********************************************************************
+ *           GlobalMemoryStatusEx   (KERNEL32.@)
+ * A version of GlobalMemoryStatus that can deal with memory over 4GB
+ *
+ * RETURNS
+ *	None
+ */
+BOOL WINAPI GlobalMemoryStatusEx( LPMEMORYSTATUSEX lpBuffer )
+{
+  MEMORYSTATUS memstatus;
+
+  /* Because GlobalMemoryStatusEx is identical to GlobalMemoryStatus save
+     for one extra field in the struct, and the lack of a bug, we simply
+     call GlobalMemoryStatus and copy the values across. */
+  FIXME("we should emulate the 4GB bug here, as per MSDN\n");
+  GlobalMemoryStatus(&memstatus);
+  lpBuffer->dwMemoryLoad = memstatus.dwMemoryLoad;
+  lpBuffer->ullTotalPhys = memstatus.dwTotalPhys;
+  lpBuffer->ullAvailPhys = memstatus.dwAvailPhys;
+  lpBuffer->ullTotalPageFile = memstatus.dwTotalPageFile;
+  lpBuffer->ullAvailPageFile = memstatus.dwAvailPageFile;
+  lpBuffer->ullTotalVirtual = memstatus.dwTotalVirtual;
+  lpBuffer->ullAvailVirtual = memstatus.dwAvailVirtual;
+  /* MSDN says about AvailExtendedVirtual: Size of unreserved and uncommitted
+     memory in the extended portion of the virtual address space of the calling
+     process, in bytes.
+     However, I don't know what this means, so set it to zero :(
+  */
+  lpBuffer->ullAvailExtendedVirtual = 0;
+  return 1;
 }

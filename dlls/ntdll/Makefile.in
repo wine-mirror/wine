@@ -21,14 +21,12 @@ C_SRCS = \
 	$(TOPOBJDIR)/memory/environ.c \
 	$(TOPOBJDIR)/memory/global.c \
 	$(TOPOBJDIR)/memory/heap.c \
-	$(TOPOBJDIR)/memory/selector.c \
 	$(TOPOBJDIR)/memory/string.c \
 	$(TOPOBJDIR)/memory/virtual.c \
 	$(TOPOBJDIR)/misc/cpu.c \
 	$(TOPOBJDIR)/misc/options.c \
 	$(TOPOBJDIR)/misc/registry.c \
 	$(TOPOBJDIR)/misc/version.c \
-	$(TOPOBJDIR)/msdos/dosmem.c \
 	$(TOPOBJDIR)/msdos/dpmi.c \
 	$(TOPOBJDIR)/relay32/builtin32.c \
 	$(TOPOBJDIR)/relay32/relay386.c \

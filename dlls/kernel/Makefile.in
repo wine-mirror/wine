@@ -27,12 +27,14 @@ C_SRCS = \
 	computername.c \
 	console.c \
 	debugger.c \
+	dosmem.c \
 	editline.c \
 	except.c \
 	fiber.c \
 	file.c \
 	file16.c \
 	format_msg.c \
+	global16.c \
 	heap.c \
 	instr.c \
 	kernel_main.c \
@@ -48,6 +50,7 @@ C_SRCS = \
 	relay16.c \
 	resource.c \
 	resource16.c \
+	selector.c \
 	snoop16.c \
 	stress.c \
 	string.c \
