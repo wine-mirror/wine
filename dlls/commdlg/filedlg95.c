@@ -1124,7 +1124,14 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
          if (result) {
             strcpy(fodInfos->ofnInfos->lpstrFile, nameBit);
             *nameBit = 0x00;
-            strcpy((LPSTR) fodInfos->ofnInfos->lpstrInitialDir, tmpBuf);
+            if (fodInfos->ofnInfos->lpstrInitialDir == NULL) {
+                initDir = MemAlloc(strlen(tmpBuf) + 1);
+                fodInfos->ofnInfos->lpstrInitialDir = initDir;
+                strcpy(initDir, tmpBuf);
+                handledPath = TRUE;
+            } else {
+               strcpy((LPSTR)fodInfos->ofnInfos->lpstrInitialDir, tmpBuf);
+            }
             handledPath = TRUE;
             TRACE("Value in lpstrFile includes path, overriding lpstrInitialDir: %s, %s\n", 
                  fodInfos->ofnInfos->lpstrFile, fodInfos->ofnInfos->lpstrInitialDir);
