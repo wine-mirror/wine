@@ -316,7 +316,7 @@ static DWORD MSG_ProcessMouseMsg( MSG *msg, BOOL remove, INT16 hittest,
 
             /* Activate the window if needed */
 
-            if (hWnd != GetActiveWindow() && hWnd != GetDesktopWindow())
+            if (hwndTop != GetForegroundWindow() && hwndTop != GetDesktopWindow())
             {
                 LONG ret = SendMessageA( hWnd, WM_MOUSEACTIVATE, hwndTop,
                                           MAKELONG( hittest, message ) );
@@ -324,10 +324,11 @@ static DWORD MSG_ProcessMouseMsg( MSG *msg, BOOL remove, INT16 hittest,
                 if ((ret == MA_ACTIVATEANDEAT) || (ret == MA_NOACTIVATEANDEAT))
                          eatMsg = TRUE;
 
-                if (((ret == MA_ACTIVATE) || (ret == MA_ACTIVATEANDEAT)) 
-                      && hwndTop != GetActiveWindow() )
+                if (((ret == MA_ACTIVATE) || (ret == MA_ACTIVATEANDEAT)))
+                {
                       if (!WINPOS_SetActiveWindow( hwndTop, TRUE , TRUE ))
 			 eatMsg = TRUE;
+                }
             }
 	}
     } else sendSC = (remove && sendSC);
