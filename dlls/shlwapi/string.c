@@ -2560,6 +2560,7 @@ INT WINAPI SHUnicodeToAnsiCP(UINT CodePage, LPCWSTR lpSrcStr, LPSTR lpDstStr,
         {
           SHTruncateString(mem, *lpiLen);
           lstrcpynA(lpDstStr, mem, *lpiLen + 1);
+          HeapFree(GetProcessHeap(), 0, mem);
           return *lpiLen + 1;
         }
         HeapFree(GetProcessHeap(), 0, mem);

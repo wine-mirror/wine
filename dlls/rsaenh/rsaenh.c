@@ -1788,7 +1788,11 @@ BOOL WINAPI RSAENH_CPImportKey(HCRYPTPROV hProv, CONST BYTE *pbData, DWORD dwDat
 
             dwKeyLen = pPubKey->dwBlockLen-i-1;
             *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, dwKeyLen<<19, &pCryptKey);
-            if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE) return FALSE;
+            if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE)
+            {
+                HeapFree(GetProcessHeap(), 0, pbDecrypted);
+                return FALSE;
+            }
             memcpy(pCryptKey->abKeyValue, pbDecrypted+i+1, dwKeyLen);
             HeapFree(GetProcessHeap(), 0, pbDecrypted);
             setup_key(pCryptKey);

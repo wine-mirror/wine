@@ -444,6 +444,7 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 		break;
 	    default:
 		FIXME("how did we get here - state=%d\n", state);
+                HeapFree(GetProcessHeap(), 0, lpszUrlCpy);
 		return E_INVALIDARG;
 	    }
 	}

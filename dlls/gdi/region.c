@@ -2803,6 +2803,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
                     tmpPtBlock = HeapAlloc( GetProcessHeap(), 0, sizeof(POINTBLOCK));
 		    if(!tmpPtBlock) {
 		        WARN("Can't alloc tPB\n");
+                        HeapFree( GetProcessHeap(), 0, pETEs );
 			return 0;
 		    }
                     curPtBlock->next = tmpPtBlock;
@@ -2855,6 +2856,7 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
 			if(!tmpPtBlock) {
 			    WARN("Can't alloc tPB\n");
 			    REGION_DeleteObject( hrgn, obj );
+                            HeapFree( GetProcessHeap(), 0, pETEs );
 			    return 0;
 			}
                         curPtBlock->next = tmpPtBlock;

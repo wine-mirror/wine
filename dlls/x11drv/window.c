@@ -894,6 +894,7 @@ BOOL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
         if (!(utf8_buffer = HeapAlloc( GetProcessHeap(), 0, count )))
         {
             ERR("Not enough memory for window text in UTF-8\n");
+            HeapFree( GetProcessHeap(), 0, buffer );
             return FALSE;
         }
         WideCharToMultiByte(CP_UTF8, 0, text, strlenW(text), utf8_buffer, count, NULL, NULL);

@@ -579,6 +579,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
    COLOR_sysPal = (PALETTEENTRY*)HeapAlloc(GetProcessHeap(),0,sizeof(PALETTEENTRY)*256);
    if(COLOR_sysPal == NULL) {
        ERR("Can not allocate system palette!\n");
+       HeapFree(GetProcessHeap(), 0, pixDynMapping);
        return FALSE;
    }
 
@@ -589,6 +590,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
        X11DRV_PALETTE_XPixelToPalette = HeapAlloc( GetProcessHeap(), 0, 256 * sizeof(int) );
        if(X11DRV_PALETTE_XPixelToPalette == NULL) {
            ERR("Out of memory: XPixelToPalette!\n");
+           HeapFree(GetProcessHeap(), 0, pixDynMapping);
            return FALSE;
        }
        for( i = 0; i < 256; i++ )
@@ -602,6 +604,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
    X11DRV_PALETTE_PaletteToXPixel = (int*)HeapAlloc(GetProcessHeap(),0,sizeof(int)*256);
    if(X11DRV_PALETTE_PaletteToXPixel == NULL) {
        ERR("Out of memory: PaletteToXPixel!\n");
+       HeapFree(GetProcessHeap(), 0, pixDynMapping);
        return FALSE;
    }
 
