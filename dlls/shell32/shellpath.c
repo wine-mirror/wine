@@ -1020,6 +1020,8 @@ static const CSIDL_DATA CSIDL_Data[] =
 #undef HKCU
 #undef HKLM
 
+/**********************************************************************/
+
 HRESULT WINAPI SHGetFolderPathW(
 	HWND hwndOwner,
 	int csidl,

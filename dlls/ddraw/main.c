@@ -581,6 +581,9 @@ static int DDRAW_ChooseDefaultDriver(void)
     return best;
 }
 
+/***********************************************************************
+ *		DllMain (DDRAW.0)
+ */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     /* If we were sufficiently cool, DDraw drivers would just be COM

@@ -300,6 +300,8 @@ void WINAPI EXC_RtlRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context )
     EXC_DefaultHandling( rec, context );
 }
 
+/**********************************************************************/
+
 #ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( RtlRaiseException, EXC_RtlRaiseException, 4, 4 );
 #else
@@ -384,6 +386,8 @@ void WINAPI EXC_RtlUnwind( PEXCEPTION_REGISTRATION_RECORD pEndFrame, PVOID unuse
         frame = __wine_pop_frame( frame );
     }
 }
+
+/**********************************************************************/
 
 #ifdef DEFINE_REGS_ENTRYPOINT
 DEFINE_REGS_ENTRYPOINT( RtlUnwind, EXC_RtlUnwind, 16, 16 );

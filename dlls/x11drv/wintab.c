@@ -1153,20 +1153,32 @@ int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event)
     return 0;
 }
 
+/***********************************************************************
+ *		AttachEventQueueToTablet (X11DRV.@)
+ */
 int X11DRV_AttachEventQueueToTablet(HWND hOwner)
 {
     return 0;
 }
 
+/***********************************************************************
+ *		GetCurrentPacket (X11DRV.@)
+ */
 int X11DRV_GetCurrentPacket(LPWTPACKET *packet)
 {
     return 0;
 }
 
+/***********************************************************************
+ *		LoadTabletInfo (X11DRV.@)
+ */
 void X11DRV_LoadTabletInfo(HWND hwnddefault)
 {
 }
 
+/***********************************************************************
+ *		WTInfoA (X11DRV.@)
+ */
 UINT X11DRV_WTInfoA(UINT wCategory, UINT nIndex, LPVOID lpOutput)
 {
     return 0;

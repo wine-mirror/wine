@@ -53,7 +53,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(task);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 WINE_DECLARE_DEBUG_CHANNEL(toolhelp);
 
-#include <pshpack1.h>
+#include "pshpack1.h"
 
 /* Segment containing MakeProcInstance() thunks */
 typedef struct
@@ -65,7 +65,7 @@ typedef struct
     WORD  thunks[4];  /* Each thunk is 4 words long */
 } THUNKS;
 
-#include <poppack.h>
+#include "poppack.h"
 
 #define THUNK_MAGIC  ('P' | ('T' << 8))
 

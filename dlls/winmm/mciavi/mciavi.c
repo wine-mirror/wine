@@ -118,6 +118,9 @@ static	DWORD MCI_SendCommandAsync(UINT wDevID, UINT wMsg, DWORD dwParam1,
 
 HINSTANCE MCIAVI_hInstance = 0;
 
+/***********************************************************************
+ *		DllMain (MCIAVI.0)
+ */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
     switch (fdwReason) {

@@ -1026,7 +1026,7 @@ VOID WINAPI ThunkInitSL(
  * RETURNS
  *	TRUE for success.
  */
-BOOL WINAPI SSInit16()
+BOOL WINAPI SSInit16(void)
 {
     return TRUE;
 }

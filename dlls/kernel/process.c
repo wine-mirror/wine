@@ -2581,6 +2581,7 @@ BOOL WINAPI AreFileApisANSI(void)
 
 
 /***********************************************************************
+ *           GetSystemMSecCount (SYSTEM.6)
  *           GetTickCount       (KERNEL32.@)
  *
  * Returns the number of milliseconds, modulo 2^32, since the start

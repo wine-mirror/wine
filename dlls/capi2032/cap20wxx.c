@@ -25,7 +25,9 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <unistd.h>
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
 
 #ifdef HAVE_LINUX_CAPI_H
 # include <linux/capi.h>
@@ -41,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(capi);
 /*===========================================================================*\
 \*===========================================================================*/
 
-DWORD APIENTRY wrapCAPI_REGISTER (DWORD MessageBufferSize, DWORD maxLogicalConnection, DWORD maxBDataBlocks, DWORD maxBDataLen, DWORD *pApplID) {
+DWORD WINAPI wrapCAPI_REGISTER (DWORD MessageBufferSize, DWORD maxLogicalConnection, DWORD maxBDataBlocks, DWORD maxBDataLen, DWORD *pApplID) {
 #ifdef HAVE_CAPI4LINUX
     unsigned aid = 0;
     DWORD fret = capi20_register (maxLogicalConnection, maxBDataBlocks, maxBDataLen, &aid);
@@ -56,7 +58,7 @@ DWORD APIENTRY wrapCAPI_REGISTER (DWORD MessageBufferSize, DWORD maxLogicalConne
 
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
-DWORD APIENTRY wrapCAPI_RELEASE (DWORD ApplID) {
+DWORD WINAPI wrapCAPI_RELEASE (DWORD ApplID) {
 #ifdef HAVE_CAPI4LINUX
     DWORD fret = capi20_release (ApplID);
     TRACE ("(%lx) -> %lx\n", ApplID, fret);
@@ -68,7 +70,7 @@ DWORD APIENTRY wrapCAPI_RELEASE (DWORD ApplID) {
 
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
-DWORD APIENTRY wrapCAPI_PUT_MESSAGE (DWORD ApplID, PVOID pCAPIMessage) {
+DWORD WINAPI wrapCAPI_PUT_MESSAGE (DWORD ApplID, PVOID pCAPIMessage) {
 #ifdef HAVE_CAPI4LINUX
     DWORD fret = capi20_put_message (ApplID, pCAPIMessage);
     TRACE ("(%lx) -> %lx\n", ApplID, fret);
@@ -80,7 +82,7 @@ DWORD APIENTRY wrapCAPI_PUT_MESSAGE (DWORD ApplID, PVOID pCAPIMessage) {
 
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
-DWORD APIENTRY wrapCAPI_GET_MESSAGE (DWORD ApplID, PVOID *ppCAPIMessage) {
+DWORD WINAPI wrapCAPI_GET_MESSAGE (DWORD ApplID, PVOID *ppCAPIMessage) {
 #ifdef HAVE_CAPI4LINUX
     DWORD fret = capi20_get_message (ApplID, (unsigned char **)ppCAPIMessage);
     TRACE ("(%lx) -> %lx\n", ApplID, fret);
@@ -92,7 +94,7 @@ DWORD APIENTRY wrapCAPI_GET_MESSAGE (DWORD ApplID, PVOID *ppCAPIMessage) {
 
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
-DWORD APIENTRY wrapCAPI_WAIT_FOR_SIGNAL (DWORD ApplID) {
+DWORD WINAPI wrapCAPI_WAIT_FOR_SIGNAL (DWORD ApplID) {
 #ifdef HAVE_CAPI4LINUX
     TRACE ("(%lx)\n", ApplID);
     return capi20_waitformessage (ApplID, NULL);
@@ -103,7 +105,7 @@ DWORD APIENTRY wrapCAPI_WAIT_FOR_SIGNAL (DWORD ApplID) {
 
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
-DWORD APIENTRY wrapCAPI_GET_MANUFACTURER (char *SzBuffer) {
+DWORD WINAPI wrapCAPI_GET_MANUFACTURER (char *SzBuffer) {
 #ifdef HAVE_CAPI4LINUX
     DWORD fret = (capi20_get_manufacturer (0, SzBuffer) != 0) ? 0 : 0x1108;
     if (!strncmp (SzBuffer, "AVM", 3)) {
@@ -118,7 +120,7 @@ DWORD APIENTRY wrapCAPI_GET_MANUFACTURER (char *SzBuffer) {
 
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
-DWORD APIENTRY wrapCAPI_GET_VERSION (DWORD *pCAPIMajor, DWORD *pCAPIMinor, DWORD *pManufacturerMajor, DWORD *pManufacturerMinor) {
+DWORD WINAPI wrapCAPI_GET_VERSION (DWORD *pCAPIMajor, DWORD *pCAPIMinor, DWORD *pManufacturerMajor, DWORD *pManufacturerMinor) {
 #ifdef HAVE_CAPI4LINUX
     unsigned char version[4 * sizeof (unsigned)];
     DWORD fret = (capi20_get_version (0, version) != 0) ? 0 : 0x1108;
@@ -136,7 +138,7 @@ DWORD APIENTRY wrapCAPI_GET_VERSION (DWORD *pCAPIMajor, DWORD *pCAPIMinor, DWORD
 
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
-DWORD APIENTRY wrapCAPI_GET_SERIAL_NUMBER (char *SzBuffer) {
+DWORD WINAPI wrapCAPI_GET_SERIAL_NUMBER (char *SzBuffer) {
 #ifdef HAVE_CAPI4LINUX
     DWORD fret = (capi20_get_serial_number (0, SzBuffer) != 0) ? 0 : 0x1108;
     TRACE ("(%s) -> %lx\n", SzBuffer, fret);
@@ -148,7 +150,7 @@ DWORD APIENTRY wrapCAPI_GET_SERIAL_NUMBER (char *SzBuffer) {
 
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
-DWORD APIENTRY wrapCAPI_GET_PROFILE (PVOID SzBuffer, DWORD CtlrNr) {
+DWORD WINAPI wrapCAPI_GET_PROFILE (PVOID SzBuffer, DWORD CtlrNr) {
 #ifdef HAVE_CAPI4LINUX
     DWORD fret = capi20_get_profile (CtlrNr, SzBuffer);
     TRACE ("(%lx,%x) -> %lx\n", CtlrNr, *(unsigned short *)SzBuffer, fret);
@@ -160,7 +162,7 @@ DWORD APIENTRY wrapCAPI_GET_PROFILE (PVOID SzBuffer, DWORD CtlrNr) {
 
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
-DWORD APIENTRY wrapCAPI_INSTALLED (void) {
+DWORD WINAPI wrapCAPI_INSTALLED (void) {
 #ifdef HAVE_CAPI4LINUX
     DWORD fret = capi20_isinstalled();
     TRACE ("() -> %lx\n", fret);
@@ -172,7 +174,7 @@ DWORD APIENTRY wrapCAPI_INSTALLED (void) {
 
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
-DWORD APIENTRY wrapCAPI_MANUFACTURER (DWORD Class, DWORD Function, DWORD Ctlr, PVOID pParams, DWORD ParamsLen) {
+DWORD WINAPI wrapCAPI_MANUFACTURER (DWORD Class, DWORD Function, DWORD Ctlr, PVOID pParams, DWORD ParamsLen) {
     FIXME ("(), not supported!\n");
     return 0x1109;
 }

@@ -711,7 +711,7 @@ BIOSDATA *DOSVM_BiosData( void )
 
 
 /**********************************************************************
- *	    DllMain  (DOSVM.Init)
+ *	    DllMain  (DOSVM.0)
  */
 BOOL WINAPI DllMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {

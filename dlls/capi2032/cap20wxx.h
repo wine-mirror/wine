@@ -33,17 +33,17 @@ extern "C" {
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/
 
-DWORD APIENTRY wrapCAPI_REGISTER          (DWORD MessageBufferSize, DWORD maxLogicalConnection, DWORD maxBDataBlocks, DWORD maxBDataLen, DWORD *pApplID);
-DWORD APIENTRY wrapCAPI_RELEASE           (DWORD ApplID);
-DWORD APIENTRY wrapCAPI_PUT_MESSAGE       (DWORD ApplID, PVOID pCAPIMessage);
-DWORD APIENTRY wrapCAPI_GET_MESSAGE       (DWORD ApplID, PVOID *ppCAPIMessage);
-DWORD APIENTRY wrapCAPI_WAIT_FOR_SIGNAL   (DWORD ApplID);
-DWORD APIENTRY wrapCAPI_GET_MANUFACTURER  (char *SzBuffer);
-DWORD APIENTRY wrapCAPI_GET_VERSION       (DWORD *pCAPIMajor, DWORD *pCAPIMinor, DWORD *pManufacturerMajor, DWORD *pManufacturerMinor);
-DWORD APIENTRY wrapCAPI_GET_SERIAL_NUMBER (char *SzBuffer);
-DWORD APIENTRY wrapCAPI_GET_PROFILE       (PVOID SzBuffer, DWORD CtrlNr);
-DWORD APIENTRY wrapCAPI_INSTALLED         (void);
-DWORD APIENTRY wrapCAPI_MANUFACTURER      (DWORD Class, DWORD Function, DWORD Ctlr, PVOID pParams, DWORD ParamsLen);
+DWORD WINAPI wrapCAPI_REGISTER          (DWORD MessageBufferSize, DWORD maxLogicalConnection, DWORD maxBDataBlocks, DWORD maxBDataLen, DWORD *pApplID);
+DWORD WINAPI wrapCAPI_RELEASE           (DWORD ApplID);
+DWORD WINAPI wrapCAPI_PUT_MESSAGE       (DWORD ApplID, PVOID pCAPIMessage);
+DWORD WINAPI wrapCAPI_GET_MESSAGE       (DWORD ApplID, PVOID *ppCAPIMessage);
+DWORD WINAPI wrapCAPI_WAIT_FOR_SIGNAL   (DWORD ApplID);
+DWORD WINAPI wrapCAPI_GET_MANUFACTURER  (char *SzBuffer);
+DWORD WINAPI wrapCAPI_GET_VERSION       (DWORD *pCAPIMajor, DWORD *pCAPIMinor, DWORD *pManufacturerMajor, DWORD *pManufacturerMinor);
+DWORD WINAPI wrapCAPI_GET_SERIAL_NUMBER (char *SzBuffer);
+DWORD WINAPI wrapCAPI_GET_PROFILE       (PVOID SzBuffer, DWORD CtrlNr);
+DWORD WINAPI wrapCAPI_INSTALLED         (void);
+DWORD WINAPI wrapCAPI_MANUFACTURER      (DWORD Class, DWORD Function, DWORD Ctlr, PVOID pParams, DWORD ParamsLen);
 
 /*---------------------------------------------------------------------------*\
 \*---------------------------------------------------------------------------*/

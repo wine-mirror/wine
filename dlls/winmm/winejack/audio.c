@@ -2433,6 +2433,9 @@ DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 
 #else /* !HAVE_JACK_JACK_H */
 
+/**************************************************************************
+ * 				widMessage (WINEJACK.6)
+ */
 DWORD WINAPI JACK_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser, 
 			    DWORD dwParam1, DWORD dwParam2)
 {

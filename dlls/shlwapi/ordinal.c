@@ -3829,18 +3829,27 @@ BOOL WINAPI SHSkipJunction(IBindCtx *pbc, const CLSID *pclsid)
   return bRet;
 }
 
+/***********************************************************************
+ *		SHGetShellKey (SHLWAPI.@)
+ */
 DWORD WINAPI SHGetShellKey(DWORD a, DWORD b, DWORD c)
 {
     FIXME("(%lx, %lx, %lx): stub\n", a, b, c);
     return 0x50;
 }
 
+/***********************************************************************
+ *		SHQueueUserWorkItem (SHLWAPI.@)
+ */
 HRESULT WINAPI SHQueueUserWorkItem(DWORD a, DWORD b, DWORD c, DWORD d, DWORD e, DWORD f, DWORD g)
 {
     FIXME("(%lx, %lx, %lx, %lx, %lx, %lx, %lx): stub\n", a, b, c, d, e, f, g);
     return E_FAIL;
 }
 
+/***********************************************************************
+ *		IUnknown_OnFocusChangeIS (SHLWAPI.@)
+ */
 DWORD WINAPI IUnknown_OnFocusChangeIS(IUnknown * pUnk, IUnknown * pFocusObject, BOOL bChange)
 {
     FIXME("(%p, %p, %s)\n", pUnk, pFocusObject, bChange ? "TRUE" : "FALSE");
@@ -3854,6 +3863,9 @@ DWORD WINAPI IUnknown_OnFocusChangeIS(IUnknown * pUnk, IUnknown * pFocusObject, 
     return 0;
 }
 
+/***********************************************************************
+ *		SHGetValueW (SHLWAPI.@)
+ */
 HRESULT WINAPI SKGetValueW(DWORD a, LPWSTR b, LPWSTR c, DWORD d, DWORD e, DWORD f)
 {
     FIXME("(%lx, %s, %s, %lx, %lx, %lx): stub\n", a, debugstr_w(b), debugstr_w(c), d, e, f);

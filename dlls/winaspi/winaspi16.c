@@ -481,7 +481,7 @@ WORD WINAPI InsertInASPIChain16(BOOL16 remove, FARPROC16 pASPIChainFunc)
  *             GETASPIDLLVERSION   (WINASPI.4)
  */
 
-DWORD WINAPI GetASPIDLLVersion16()
+DWORD WINAPI GetASPIDLLVersion16(void)
 {
 #ifdef linux
 	return 2;

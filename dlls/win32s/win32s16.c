@@ -32,7 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dll);
 /***********************************************************************
  *		BootTask (WIN32S16.2)
  */
-void WINAPI BootTask16()
+void WINAPI BootTask16(void)
 {
 	MESSAGE("BootTask(): should only be used by WIN32S.EXE.\n");
 }

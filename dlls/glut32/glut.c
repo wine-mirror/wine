@@ -771,7 +771,7 @@ void WINAPI wine_glutShowWindow(void)
 }
 
 /*********************************************
- * glutSolidCone (glut.dll)
+ * glutSolidCone (glut32.@)
  */
 extern void glutSolidCone(double arg1, double arg2, int arg3, int arg4);
 void WINAPI wine_glutSolidCone(double arg1, double arg2, int arg3, int arg4)

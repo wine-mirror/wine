@@ -34,6 +34,8 @@
  * The DomainName field of FIXED_INFO isn't NULL-terminated on Win98.
  */
 
+#include "config.h"
+
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"

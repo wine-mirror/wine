@@ -454,6 +454,9 @@ LRESULT CRAM_DecompressEx( Msvideo1Context *info, ICDECOMPRESSEX *icd, DWORD siz
     return ICERR_OK;
 }
 
+/***********************************************************************
+ *		DriverProc (MSVIDC32.@)
+ */
 LRESULT WINAPI CRAM_DriverProc( DWORD dwDriverId, HDRVR hdrvr, UINT msg,
                                   LONG lParam1, LONG lParam2)
 {
