@@ -14,6 +14,10 @@ SUBDIRS = \
 	wmc \
 	wrc
 
+INSTALLSUBDIRS = \
+	wmc \
+	wrc
+
 EXTRASUBDIRS = \
 	winapi_check \
 	winapi_check/win16 \
@@ -36,12 +40,12 @@ fnt2bdf: fnt2bdf.o
 bin2res: bin2res.o
 	$(CC) $(CFLAGS) -o bin2res bin2res.o
 
-install:: $(PROGRAMS) $(SUBDIRS:%=%/__install__)
+install:: $(PROGRAMS) $(INSTALLSUBDIRS:%=%/__install__)
 	[ -d $(bindir) ] || $(MKDIR) $(bindir)
 	$(INSTALL_PROGRAM) build $(bindir)/winebuild
 	$(INSTALL_PROGRAM) fnt2bdf $(bindir)/fnt2bdf
 
-uninstall:: $(PROGRAMS) $(SUBDIRS:%=%/__uninstall__)
+uninstall:: $(PROGRAMS) $(INSTALLSUBDIRS:%=%/__uninstall__)
 	$(RM) $(bindir)/winebuild $(bindir)/fnt2bdf
 
 ### Dependencies:
