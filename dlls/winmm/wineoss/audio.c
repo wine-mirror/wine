@@ -1754,7 +1754,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
             {
                 info.fragments --;
 
-                if (lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded > wwi->dwFragmentSize)
+                if (lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded >= wwi->dwFragmentSize)
                 {
                     /* directly read fragment in wavehdr */
                     bytesRead = read(wwi->unixdev, 
