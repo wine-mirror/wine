@@ -459,11 +459,11 @@ void PROCESS_Start(void)
 
     PROCESS_CallUserSignalProc( USIG_THREAD_INIT, 0, 0 );  /* for initial thread */
 
-#if 0
     /* Initialize the critical section */
 
     InitializeCriticalSection( &pdb->crit_section );
 
+#if 0
     /* Create the heap */
 
     size  = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfHeapReserve;
@@ -567,10 +567,6 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
     pdb->server_pid   = reply.pid;
     info->hProcess    = reply.handle;
     info->dwProcessId = (DWORD)pdb->server_pid;
-
-    /* Initialize the critical section */
-
-    InitializeCriticalSection( &pdb->crit_section );
 
     /* Setup process flags */
 
