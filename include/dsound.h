@@ -554,7 +554,7 @@ ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
     STDMETHOD(GetPan)(THIS_ LPLONG lplpan) PURE; \
     STDMETHOD(GetFrequency)(THIS_ LPDWORD lpdwFrequency) PURE; \
     STDMETHOD(GetStatus)(THIS_ LPDWORD lpdwStatus) PURE; \
-    STDMETHOD(Initialize)(THIS_ LPDIRECTSOUND8 lpDirectSound, LPCDSBUFFERDESC lpcDSBufferDesc) PURE; \
+    STDMETHOD(Initialize)(THIS_ LPDIRECTSOUND lpDirectSound, LPCDSBUFFERDESC lpcDSBufferDesc) PURE; \
     STDMETHOD(Lock)(THIS_ DWORD dwWriteCursor, DWORD dwWriteBytes, LPVOID lplpvAudioPtr1, LPDWORD lpdwAudioBytes1, LPVOID lplpvAudioPtr2, LPDWORD lpdwAudioBytes2, DWORD dwFlags) PURE; \
     STDMETHOD(Play)(THIS_ DWORD dwReserved1, DWORD dwReserved2, DWORD dwFlags) PURE; \
     STDMETHOD(SetCurrentPosition)(THIS_ DWORD dwNewPosition) PURE; \

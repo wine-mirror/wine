@@ -932,7 +932,7 @@ static HRESULT WINAPI PrimaryBufferImpl_GetObjectInPath(
 }
 
 static HRESULT WINAPI PrimaryBufferImpl_Initialize(
-	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND8 dsound,LPCDSBUFFERDESC dbsd
+	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND dsound,LPCDSBUFFERDESC dbsd
 ) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	FIXME("(%p,%p,%p):stub\n",This,dsound,dbsd);

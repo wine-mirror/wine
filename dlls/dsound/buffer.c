@@ -886,7 +886,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_GetObjectInPath(
 }
 
 static HRESULT WINAPI IDirectSoundBufferImpl_Initialize(
-	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND8 dsound,LPCDSBUFFERDESC dbsd
+	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND dsound,LPCDSBUFFERDESC dbsd
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
 	FIXME("(%p,%p,%p):stub\n",This,dsound,dbsd);
@@ -1325,7 +1325,7 @@ static HRESULT WINAPI SecondaryBufferImpl_GetStatus(
 }
 
 static HRESULT WINAPI SecondaryBufferImpl_Initialize(
-	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND8 dsound,LPCDSBUFFERDESC dbsd)
+	LPDIRECTSOUNDBUFFER8 iface,LPDIRECTSOUND dsound,LPCDSBUFFERDESC dbsd)
 {
 	ICOM_THIS(SecondaryBufferImpl,iface);
 	TRACE("(%p,%p,%p)\n",This,dsound,dbsd);
