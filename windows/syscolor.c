@@ -74,7 +74,7 @@ static const char * const DefSysColors95[] =
     "HilightText", "255 255 255",    /* COLOR_HIGHLIGHTTEXT       */
     "ButtonFace", "192 192 192",     /* COLOR_BTNFACE             */
     "ButtonShadow", "128 128 128",   /* COLOR_BTNSHADOW           */
-    "GrayText", "192 192 192",       /* COLOR_GRAYTEXT            */
+    "GrayText", "128 128 128",       /* COLOR_GRAYTEXT            */
     "ButtonText", "0 0 0",           /* COLOR_BTNTEXT             */
     "InactiveTitleText", "0 0 0",    /* COLOR_INACTIVECAPTIONTEXT */
     "ButtonHilight", "255 255 255",  /* COLOR_BTNHIGHLIGHT        */
