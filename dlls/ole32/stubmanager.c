@@ -41,7 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-/* this refs the apartment on success, otherwise there is no ref */
 struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object)
 {
     struct stub_manager *sm;
@@ -72,7 +71,6 @@ struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object)
     list_add_head(&apt->stubmgrs, &sm->entry);
     LeaveCriticalSection(&apt->cs);
 
-    COM_ApartmentAddRef(apt);
     TRACE("Created new stub manager (oid=%s) at %p for object with IUnknown %p\n", wine_dbgstr_longlong(sm->oid), sm, object);
     
     return sm;
