@@ -1,5 +1,5 @@
 /*
- * Unit tests for winmm functions
+ * Test winmm sound playback in each sound format
  *
  * Copyright (c) 2002 Francois Gouget
  *
@@ -30,28 +30,9 @@
 #include "mmsystem.h"
 #include "mmddk.h"
 
-/*
- * Note that in most of this test we may get MMSYSERR_BADDEVICEID errors
- * at about any time if the user starts another application that uses the
- * sound device. So we should not report these as test failures.
- *
- * This test can play a test tone. But this only makes sense if someone
- * is going to carefully listen to it, and would only bother everyone else.
- * So this is only done if the test is being run in interactive mode.
- */
+#include "winmm_test.h"
 
-#ifndef WAVE_FORMAT_48M08
-#define WAVE_FORMAT_48M08      0x00001000    /* 48     kHz, Mono,   8-bit  */
-#define WAVE_FORMAT_48S08      0x00002000    /* 48     kHz, Stereo, 8-bit  */
-#define WAVE_FORMAT_48M16      0x00004000    /* 48     kHz, Mono,   16-bit */
-#define WAVE_FORMAT_48S16      0x00008000    /* 48     kHz, Stereo, 16-bit */
-#define WAVE_FORMAT_96M08      0x00010000    /* 96     kHz, Mono,   8-bit  */
-#define WAVE_FORMAT_96S08      0x00020000    /* 96     kHz, Stereo, 8-bit  */
-#define WAVE_FORMAT_96M16      0x00040000    /* 96     kHz, Mono,   16-bit */
-#define WAVE_FORMAT_96S16      0x00080000    /* 96     kHz, Stereo, 16-bit */
-#endif
-
-static const unsigned int win_formats[][4]={
+const unsigned int win_formats[NB_WIN_FORMATS][4]={
     {WAVE_FORMAT_1M08,  11025,  8, 1},
     {WAVE_FORMAT_1S08,  11025,  8, 2},
     {WAVE_FORMAT_1M16,  11025, 16, 1},
@@ -73,7 +54,16 @@ static const unsigned int win_formats[][4]={
     {WAVE_FORMAT_96M16, 96000, 16, 1},
     {WAVE_FORMAT_96S16, 96000, 16, 2}
 };
-#define NB_WIN_FORMATS (sizeof(win_formats)/sizeof(*win_formats))
+
+/*
+ * Note that in most of this test we may get MMSYSERR_BADDEVICEID errors
+ * at about any time if the user starts another application that uses the
+ * sound device. So we should not report these as test failures.
+ *
+ * This test can play a test tone. But this only makes sense if someone
+ * is going to carefully listen to it, and would only bother everyone else.
+ * So this is only done if the test is being run in interactive mode.
+ */
 
 #define PI 3.14159265358979323846
 static char* wave_generate_la(WAVEFORMATEX* wfx, double duration, DWORD* size)
@@ -119,7 +109,7 @@ static const char * wave_out_error(MMRESULT error)
     return msg;
 }
 
-static const char * mmsys_error(DWORD error)
+const char* mmsys_error(DWORD error)
 {
     static char	unknown[32];
     switch (error) {
@@ -140,7 +130,7 @@ static const char * mmsys_error(DWORD error)
     return unknown;
 }
 
-static const char * wave_open_flags(DWORD flags)
+const char * wave_open_flags(DWORD flags)
 {
     static char msg[1024];
     int first = TRUE;
@@ -418,233 +408,7 @@ static void wave_out_tests()
     }
 }
 
-static const char * wave_in_error(MMRESULT error)
-{
-    static char msg[1024];
-    MMRESULT rc;
-
-    rc = waveInGetErrorText(error, msg, sizeof(msg));
-    if (rc != MMSYSERR_NOERROR)
-        sprintf(msg, "waveInGetErrorText(%x) failed with error %x", error, rc);
-    return msg;
-}
-
-static void wave_in_test_deviceIn(int device, int format, DWORD flags, LPWAVEINCAPS pcaps)
-{
-    WAVEFORMATEX wfx;
-    HWAVEIN win;
-    HANDLE hevent;
-    WAVEHDR frag;
-    MMRESULT rc;
-    DWORD res;
-
-    hevent=CreateEvent(NULL,FALSE,FALSE,NULL);
-    ok(hevent!=NULL,"CreateEvent: error=%ld\n",GetLastError());
-    if (hevent==NULL)
-        return;
-
-    wfx.wFormatTag=WAVE_FORMAT_PCM;
-    wfx.nChannels=win_formats[format][3];
-    wfx.wBitsPerSample=win_formats[format][2];
-    wfx.nSamplesPerSec=win_formats[format][1];
-    wfx.nBlockAlign=wfx.nChannels*wfx.wBitsPerSample/8;
-    wfx.nAvgBytesPerSec=wfx.nSamplesPerSec*wfx.nBlockAlign;
-    wfx.cbSize=0;
-
-    win=NULL;
-    rc=waveInOpen(&win,device,&wfx,(DWORD)hevent,0,CALLBACK_EVENT|flags);
-    /* Note: Win9x doesn't know WAVE_FORMAT_DIRECT */
-    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
-       (rc==WAVERR_BADFORMAT && (flags & WAVE_FORMAT_DIRECT) && (pcaps->dwFormats & win_formats[format][0])) ||
-       (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
-       "waveInOpen: device=%d format=%ldx%2dx%d flags=%lx(%s) rc=%d(%s)\n",device,
-       wfx.nSamplesPerSec,wfx.wBitsPerSample,wfx.nChannels,CALLBACK_EVENT|flags,
-       wave_open_flags(CALLBACK_EVENT|flags),rc,wave_in_error(rc));
-    if (rc!=MMSYSERR_NOERROR) {
-        CloseHandle(hevent);
-        return;
-    }
-    res=WaitForSingleObject(hevent,1000);
-    ok(res==WAIT_OBJECT_0,"WaitForSingleObject failed for open\n");
-
-    ok(wfx.nChannels==win_formats[format][3] &&
-       wfx.wBitsPerSample==win_formats[format][2] &&
-       wfx.nSamplesPerSec==win_formats[format][1],
-       "got the wrong format: %ldx%2dx%d instead of %dx%2dx%d\n",
-       wfx.nSamplesPerSec, wfx.wBitsPerSample,
-       wfx.nChannels, win_formats[format][1], win_formats[format][2],
-       win_formats[format][3]);
-
-    frag.lpData=malloc(wfx.nAvgBytesPerSec);
-    frag.dwBufferLength=wfx.nAvgBytesPerSec;
-    frag.dwBytesRecorded=0;
-    frag.dwUser=0;
-    frag.dwFlags=0;
-    frag.dwLoops=0;
-    frag.lpNext=0;
-
-    rc=waveInPrepareHeader(win, &frag, sizeof(frag));
-    ok(rc==MMSYSERR_NOERROR, "waveInPrepareHeader: device=%d rc=%s(%s)\n",device,mmsys_error(rc),wave_in_error(rc));
-    ok(frag.dwFlags&WHDR_PREPARED,"waveInPrepareHeader: prepared flag not set\n");
-
-    if (winetest_interactive && rc==MMSYSERR_NOERROR) {
-        trace("Recording at %ldx%2dx%d %04lx\n",
-              wfx.nSamplesPerSec, wfx.wBitsPerSample,wfx.nChannels,flags);
-
-        rc=waveInAddBuffer(win, &frag, sizeof(frag));
-        ok(rc==MMSYSERR_NOERROR,"waveInAddBuffer: device=%d rc=%s(%s)\n",device,mmsys_error(rc),wave_in_error(rc));
-
-        rc=waveInStart(win);
-        ok(rc==MMSYSERR_NOERROR,"waveInStart: device=%d rc=%s(%s)\n",device,mmsys_error(rc),wave_in_error(rc));
-
-        res = WaitForSingleObject(hevent,1200);
-        ok(res==WAIT_OBJECT_0,"WaitForSingleObject failed for header\n");
-        ok(frag.dwFlags&WHDR_DONE,"WHDR_DONE not set in frag.dwFlags\n");
-        ok(frag.dwBytesRecorded==wfx.nAvgBytesPerSec,"frag.dwBytesRecorded=%ld, should=%ld\n",
-           frag.dwBytesRecorded,wfx.nAvgBytesPerSec);
-        /* stop playing on error */
-        if (res!=WAIT_OBJECT_0) {
-            rc=waveInStop(win);
-            ok(rc==MMSYSERR_NOERROR,
-               "waveInStop: device=%d rc=%s(%s)\n",device,mmsys_error(rc),wave_in_error(rc));
-        }
-    }
-
-    rc=waveInUnprepareHeader(win, &frag, sizeof(frag));
-    ok(rc==MMSYSERR_NOERROR,
-       "waveInUnprepareHeader: device=%d rc=%s(%s)\n",device,mmsys_error(rc),wave_in_error(rc));
-
-    waveInClose(win);
-    res=WaitForSingleObject(hevent,1000);
-    ok(res==WAIT_OBJECT_0,"WaitForSingleObject failed for close\n");
-    free(frag.lpData);
-    CloseHandle(hevent);
-}
-
-static void wave_in_tests()
-{
-    WAVEINCAPS caps;
-    WAVEFORMATEX format,oformat;
-    HWAVEIN win;
-    MMRESULT rc;
-    UINT ndev,d,f;
-    WCHAR * wname;
-    CHAR * name;
-    DWORD size;
-
-    ndev=waveInGetNumDevs();
-    trace("found %d WaveIn devices\n",ndev);
-
-    rc=waveInGetDevCapsA(ndev+1,&caps,sizeof(caps));
-    ok(rc==MMSYSERR_BADDEVICEID,
-       "waveInGetDevCapsA: MMSYSERR_BADDEVICEID expected, got %s(%s)\n",mmsys_error(rc),wave_in_error(rc));
-
-    rc=waveInGetDevCapsA(WAVE_MAPPER,&caps,sizeof(caps));
-    if (ndev>0)
-        ok(rc==MMSYSERR_NOERROR,
-           "waveInGetDevCapsA: MMSYSERR_NOERROR expected, got %s\n",mmsys_error(rc));
-    else
-        ok(rc==MMSYSERR_BADDEVICEID || MMSYSERR_NODRIVER,
-           "waveInGetDevCapsA: MMSYSERR_BADDEVICEID or MMSYSERR_NODRIVER expected, got %s\n",mmsys_error(rc));
-
-    format.wFormatTag=WAVE_FORMAT_PCM;
-    format.nChannels=2;
-    format.wBitsPerSample=16;
-    format.nSamplesPerSec=44100;
-    format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
-    format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
-    format.cbSize=0;
-    rc=waveInOpen(&win,ndev+1,&format,0,0,CALLBACK_NULL);
-    ok(rc==MMSYSERR_BADDEVICEID,
-       "waveInOpen: MMSYSERR_BADDEVICEID expected, got %s(%s)\n",mmsys_error(rc),wave_in_error(rc));
-
-    for (d=0;d<ndev;d++) {
-        rc=waveInGetDevCapsA(d,&caps,sizeof(caps));
-        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID,
-           "waveInGetDevCapsA: failed to get capabilities of device %d: rc=%s(%s)\n",d,mmsys_error(rc),wave_in_error(rc));
-        if (rc==MMSYSERR_BADDEVICEID)
-            continue;
-
-        name=NULL;
-        rc=waveInMessage((HWAVEIN)d, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0);
-        ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
-           "waveInMessage: failed to get interface size for device: %d rc=%s(%s)\n",d,mmsys_error(rc),wave_in_error(rc));
-        if (rc==MMSYSERR_NOERROR) {
-            wname = (WCHAR *)malloc(size);
-            rc=waveInMessage((HWAVEIN)d, DRV_QUERYDEVICEINTERFACE, (DWORD_PTR)wname, size);
-            ok(rc==MMSYSERR_NOERROR,"waveInMessage: failed to get interface name for device: %d rc=%s(%s)\n",d,mmsys_error(rc),wave_in_error(rc));
-            ok(lstrlenW(wname)+1==size/sizeof(WCHAR),"got an incorrect size: %ld instead of %d\n",size,(lstrlenW(wname)+1)*sizeof(WCHAR));
-            if (rc==MMSYSERR_NOERROR) {
-                name = malloc(size/sizeof(WCHAR));
-                WideCharToMultiByte(CP_ACP, 0, wname, size/sizeof(WCHAR), name, size/sizeof(WCHAR), NULL, NULL);
-            }
-            free(wname);
-        }
-        else if (rc==MMSYSERR_NOTSUPPORTED) {
-            name=strdup("not supported");
-        }
-
-        trace("  %d: \"%s\" (%s) %d.%d (%d:%d): channels=%d formats=%05lx\n",
-              d,caps.szPname,(name?name:"failed"),caps.vDriverVersion >> 8,
-              caps.vDriverVersion & 0xff,
-              caps.wMid,caps.wPid,
-              caps.wChannels,caps.dwFormats);
-        free(name);
-
-        for (f=0;f<NB_WIN_FORMATS;f++) {
-            if (caps.dwFormats & win_formats[f][0]) {
-                wave_in_test_deviceIn(d,f,0, &caps);
-                wave_in_test_deviceIn(d,f,WAVE_FORMAT_DIRECT, &caps);
-            }
-        }
-
-        /* Try invalid formats to test error handling */
-        trace("Testing invalid format: 11 bits per sample\n");
-        format.wFormatTag=WAVE_FORMAT_PCM;
-        format.nChannels=2;
-        format.wBitsPerSample=11;
-        format.nSamplesPerSec=22050;
-        format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
-        format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
-        format.cbSize=0;
-        oformat=format;
-        rc=waveInOpen(&win,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
-           "waveInOpen: opening the device in 11 bit mode should fail %d: rc=%s\n",d,mmsys_error(rc));
-        if (rc==MMSYSERR_NOERROR) {
-            trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
-                  format.nSamplesPerSec, format.wBitsPerSample,
-                  format.nChannels,
-                  oformat.nSamplesPerSec, oformat.wBitsPerSample,
-                  oformat.nChannels);
-            waveInClose(win);
-        }
-
-        trace("Testing invalid format: 2 MHz sample rate\n");
-        format.wFormatTag=WAVE_FORMAT_PCM;
-        format.nChannels=2;
-        format.wBitsPerSample=16;
-        format.nSamplesPerSec=2000000;
-        format.nBlockAlign=format.nChannels*format.wBitsPerSample/8;
-        format.nAvgBytesPerSec=format.nSamplesPerSec*format.nBlockAlign;
-        format.cbSize=0;
-        oformat=format;
-        rc=waveInOpen(&win,d,&format,0,0,CALLBACK_NULL|WAVE_FORMAT_DIRECT);
-        ok(rc==WAVERR_BADFORMAT || rc==MMSYSERR_INVALFLAG || rc==MMSYSERR_INVALPARAM,
-           "waveInOpen: opening the device with 2 MHz sample rate should fail %d: rc=%s\n",d,mmsys_error(rc));
-        if (rc==MMSYSERR_NOERROR) {
-            trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
-                  format.nSamplesPerSec, format.wBitsPerSample,
-                  format.nChannels,
-                  oformat.nSamplesPerSec, oformat.wBitsPerSample,
-                  oformat.nChannels);
-            waveInClose(win);
-        }
-    }
-}
-
 START_TEST(wave)
 {
     wave_out_tests();
-    wave_in_tests();
 }

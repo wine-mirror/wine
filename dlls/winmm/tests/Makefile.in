@@ -6,6 +6,7 @@ TESTDLL   = winmm.dll
 IMPORTS   = winmm kernel32
 
 CTESTS = \
+	capture.c \
 	wave.c
 
 @MAKE_TEST_RULES@

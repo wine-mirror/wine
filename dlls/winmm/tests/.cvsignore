@@ -1,3 +1,4 @@
 Makefile
+capture.ok
 testlist.c
 wave.ok
