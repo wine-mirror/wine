@@ -5209,6 +5209,16 @@ TOOLBAR_Notify (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	return 0;
     }
 
+    if (lpnmh->code == PGN_SCROLL) {
+	LPNMPGSCROLL lppgs = (LPNMPGSCROLL)lParam;
+
+	lppgs->iScroll = (lppgs->iDir & (PGF_SCROLLLEFT | PGF_SCROLLRIGHT)) ?
+	                  infoPtr->nButtonWidth : infoPtr->nButtonHeight;
+	TRACE("processed PGN_SCROLL, returning scroll=%d, dir=%d\n",
+	      lppgs->iScroll, lppgs->iDir);
+	return 0;
+    }
+
 
     TRACE("passing WM_NOTIFY!\n");
 
