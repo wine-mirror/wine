@@ -697,7 +697,7 @@ FIXME(xxx, "(fd=%d, file=%s): stub\n", fd, name);
             <para>
               try to avoid the style:
               <programlisting>
-FIXME(xxx, "(fd=%d, file=%s): stub\n", fd, name);
+FIXME(xxx, "(fd=%d, file=%s)\n", fd, name);
               </programlisting>
               but use:
               <programlisting>
