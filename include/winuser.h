@@ -2306,6 +2306,10 @@ typedef struct
 #define MFS_TOPGAPDROP      0x80000000L
 #define MFS_GAPDROP         0xC0000000L
 
+/* for GetMenuDefaultItem */
+#define GMDI_USEDISABLED    0x0001L
+#define GMDI_GOINTOPOPUPS   0x0002L
+
 #define DT_TOP 0
 #define DT_LEFT 0
 #define DT_CENTER 1
