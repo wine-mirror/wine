@@ -120,7 +120,6 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPST
 RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
 {
   TRACE("connection: %p\n", Connection);
-  if (Connection->Used) ERR("connection is still in use\n");
 
   RPCRT4_CloseConnection(Connection);
   RPCRT4_strfree(Connection->Endpoint);

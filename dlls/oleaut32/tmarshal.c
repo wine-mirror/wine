@@ -1151,7 +1151,7 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
     }
 
     if (relaydeb) {
-	TRACE_(olerelay)("\n->");
+       TRACE_(olerelay)("->");
 	if (iname)
 	    TRACE_(olerelay)("%s:",relaystr(iname));
 	if (fname)
@@ -1339,7 +1339,7 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */) {
 	    xargs += _argsize(elem->tdesc.vt);
 	}
     }
-    if (relaydeb) TRACE_(olerelay)(")\n\n");
+    if (relaydeb) TRACE_(olerelay)(")\n");
     HeapFree(GetProcessHeap(),0,buf.base);
     return status;
 }
