@@ -1344,7 +1344,7 @@ HRESULT WINAPI DMUSIC_FillStyleFromFileHandle (IDirectMusicStyle8Impl *style, HA
 					case DMUS_FOURCC_STYLE_CHUNK: {
 						TRACE("'styh': style header\n");
 						ReadFile (fd, &header, chunk.size, &BytesRead, NULL);
-						TRACE_(dmfiledat)("=> timeSig.bBeatsPerMeasure = %i; timeSig.bBeat = %i; timeSig.wGridsPerBeat = %d; dblTempo = %lf\n", \
+						TRACE_(dmfiledat)("=> timeSig.bBeatsPerMeasure = %i; timeSig.bBeat = %i; timeSig.wGridsPerBeat = %d; dblTempo = %f\n", \
 							header.timeSig.bBeatsPerMeasure, header.timeSig.bBeat, header.timeSig.wGridsPerBeat, header.dblTempo);
 						break;
 					} case DMUS_FOURCC_GUID_CHUNK: {
