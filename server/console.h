@@ -41,6 +41,7 @@ struct console_input
     int                          history_size;  /* number of entries in history array */
     int                          history_index; /* number of used entries in history array */
     int                          history_mode;  /* mode of history (non zero means remove doubled strings */
+    int                          edition_mode;  /* index to edition mode flavors */
 };
 
 /* console functions */

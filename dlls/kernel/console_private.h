@@ -28,8 +28,9 @@ extern int      CONSOLE_GetHistory(int idx, WCHAR* buf, int buf_len);
 extern BOOL     CONSOLE_AppendHistory(const WCHAR *p);
 extern unsigned CONSOLE_GetNumHistoryEntries(void);
 extern void     CONSOLE_FillLineUniform(HANDLE hConsoleOutput, int i, int j, int len, LPCHAR_INFO lpFill);
+extern BOOL     CONSOLE_GetEditionMode(HANDLE, int*);
 
 /* editline.c */
-extern WCHAR*   CONSOLE_Readline(HANDLE, int);
+extern WCHAR*   CONSOLE_Readline(HANDLE);
 
 #endif  /* __WINE_CONSOLE_PRIVATE_H */

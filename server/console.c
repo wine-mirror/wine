@@ -241,6 +241,7 @@ static struct object *create_console_input( struct thread* renderer )
     console_input->history       = calloc( console_input->history_size, sizeof(WCHAR*) );
     console_input->history_index = 0;
     console_input->history_mode  = 0;
+    console_input->edition_mode  = 0;
 
     if (!console_input->history || !console_input->evt)
     {
@@ -665,6 +666,10 @@ static int set_console_input_info( const struct set_console_input_info_request *
 	free( console->history );
 	console->history = mem;
 	console->history_size = req->history_size;
+    }
+    if (req->mask & SET_CONSOLE_INPUT_INFO_EDITION_MODE)
+    {
+        console->edition_mode = req->edition_mode;
     }
     release_object( console );
     return 1;
@@ -1363,6 +1368,8 @@ DECL_HANDLER(get_console_input_info)
     reply->history_mode  = console->history_mode;
     reply->history_size  = console->history_size;
     reply->history_index = console->history_index;
+    reply->edition_mode  = console->edition_mode;
+
     release_object( console );
 }
 

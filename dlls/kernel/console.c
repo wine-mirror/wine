@@ -1053,7 +1053,7 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
 	if (!S_EditString || S_EditString[S_EditStrPos] == 0)
 	{
 	    if (S_EditString) HeapFree(GetProcessHeap(), 0, S_EditString);
-	    if (!(S_EditString = CONSOLE_Readline(hConsoleInput, mode & WINE_ENABLE_LINE_INPUT_EMACS)))
+	    if (!(S_EditString = CONSOLE_Readline(hConsoleInput)))
 		return FALSE;
 	    S_EditStrPos = 0;
 	}
@@ -2238,6 +2238,24 @@ unsigned CONSOLE_GetNumHistoryEntries(void)
     {
         req->handle = 0;
         if (!wine_server_call_err( req )) ret = reply->history_index;
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/******************************************************************
+ *		CONSOLE_GetEditionMode
+ *
+ *
+ */
+BOOL CONSOLE_GetEditionMode(HANDLE hConIn, int* mode)
+{
+    unsigned ret = FALSE;
+    SERVER_START_REQ(get_console_input_info)
+    {
+        req->handle = hConIn;
+        if ((ret = !wine_server_call_err( req )))
+            *mode = reply->edition_mode;
     }
     SERVER_END_REQ;
     return ret;

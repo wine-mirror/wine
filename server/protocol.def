@@ -864,12 +864,14 @@ struct console_renderer_event
     obj_handle_t active_sb;     /* active screen buffer */
     int          history_mode;  /* whether we duplicate lines in history */
     int          history_size;  /* number of lines in history */
+    int          edition_mode;  /* index to the edition mode flavors */
     VARARG(title,unicode_str);  /* console title */
 @END
 #define SET_CONSOLE_INPUT_INFO_ACTIVE_SB        0x01
 #define SET_CONSOLE_INPUT_INFO_TITLE            0x02
 #define SET_CONSOLE_INPUT_INFO_HISTORY_MODE     0x04
 #define SET_CONSOLE_INPUT_INFO_HISTORY_SIZE     0x08
+#define SET_CONSOLE_INPUT_INFO_EDITION_MODE     0x10
 
 
 /* Get info about a console (input only) */
@@ -879,6 +881,7 @@ struct console_renderer_event
     int          history_mode;  /* whether we duplicate lines in history */
     int          history_size;  /* number of lines in history */
     int          history_index; /* number of used lines in history */
+    int          edition_mode;  /* index to the edition mode flavors */
     VARARG(title,unicode_str);  /* console title */
 @END
 

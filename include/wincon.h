@@ -35,8 +35,6 @@ extern "C" {
 #define ENABLE_ECHO_INPUT      0x04
 #define ENABLE_WINDOW_INPUT    0x08
 #define ENABLE_MOUSE_INPUT     0x10
-/* Wine only code (extension) */
-#define WINE_ENABLE_LINE_INPUT_EMACS 0x80
 
 #define ENABLE_PROCESSED_OUTPUT   0x01
 #define ENABLE_WRAP_AT_EOL_OUTPUT 0x02

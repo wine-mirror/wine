@@ -785,7 +785,7 @@ KeyMap	Win32KeyMap[] =
  *
  * ====================================================================*/
 
-WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, int use_emacs)
+WCHAR* CONSOLE_Readline(HANDLE hConsoleIn)
 {
     WCEL_Context	ctx;
     INPUT_RECORD	ir;
@@ -794,10 +794,15 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, int use_emacs)
     unsigned		ofs;
     void		(*func)(struct WCEL_Context* ctx);
     DWORD               ks;
+    int                 use_emacs;
 
     memset(&ctx, 0, sizeof(ctx));
     ctx.hConIn = hConsoleIn;
     WCEL_HistoryInit(&ctx);
+
+    if (!CONSOLE_GetEditionMode(hConsoleIn, &use_emacs))
+        use_emacs = 0;
+
     if ((ctx.hConOut = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL,
 				    OPEN_EXISTING, 0, 0 )) == INVALID_HANDLE_VALUE ||
 	!GetConsoleScreenBufferInfo(ctx.hConOut, &ctx.csbi))

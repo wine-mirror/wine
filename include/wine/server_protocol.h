@@ -1164,6 +1164,7 @@ struct set_console_input_info_request
     obj_handle_t active_sb;
     int          history_mode;
     int          history_size;
+    int          edition_mode;
     /* VARARG(title,unicode_str); */
 };
 struct set_console_input_info_reply
@@ -1174,6 +1175,7 @@ struct set_console_input_info_reply
 #define SET_CONSOLE_INPUT_INFO_TITLE            0x02
 #define SET_CONSOLE_INPUT_INFO_HISTORY_MODE     0x04
 #define SET_CONSOLE_INPUT_INFO_HISTORY_SIZE     0x08
+#define SET_CONSOLE_INPUT_INFO_EDITION_MODE     0x10
 
 
 
@@ -1188,6 +1190,7 @@ struct get_console_input_info_reply
     int          history_mode;
     int          history_size;
     int          history_index;
+    int          edition_mode;
     /* VARARG(title,unicode_str); */
 };
 
@@ -3532,6 +3535,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 95
+#define SERVER_PROTOCOL_VERSION 96
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
