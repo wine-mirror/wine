@@ -300,7 +300,7 @@ type	win32
 @ stub RtlConvertExclusiveToShared
 @ stub RtlConvertLongToLargeInteger
 @ stub RtlConvertSharedToExclusive
-@ stub RtlConvertSidToUnicodeString
+@ stdcall RtlConvertSidToUnicodeString(ptr ptr)RtlConvertSidToUnicodeString
 @ stub RtlConvertUiListToApiList
 @ stub RtlConvertUlongToLargeInteger
 @ stub RtlCopyLuid

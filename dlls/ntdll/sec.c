@@ -23,6 +23,7 @@
 
 #include "ntddk.h"
 #include "winreg.h"
+#include "ntdll_misc.h"
 
 DEFAULT_DEBUG_CHANNEL(ntdll);
 
@@ -693,3 +694,24 @@ NTSTATUS WINAPI RtlGetControlSecurityDescriptor(
 	FIXME("(%p,%p,%p),stub!\n",pSecurityDescriptor,pControl,lpdwRevision);
 	return STATUS_SUCCESS;
 }		
+
+/******************************************************************************
+ * RtlConvertSidToUnicodeString
+ */
+NTSTATUS WINAPI RtlConvertSidToUnicodeString(
+       PUNICODE_STRING UnicodeSID,
+       PSID *pSid)
+{
+/*	LPSTR GenSID = "S-1-5-21-0000000000-000000000-0000000000-500"; */
+
+	LPSTR GenSID = ".Default";	/* usually the returned SID is used to */
+					/* access  "\\REGISTRY\\USER\\.DEFAULT" */
+
+        ANSI_STRING AnsiStr;
+
+	FIXME("(%p %p)\n", UnicodeSID, pSid);
+	dump_UnicodeString(UnicodeSID, FALSE);
+
+        RtlInitAnsiString(&AnsiStr, GenSID);
+        return RtlAnsiStringToUnicodeString(UnicodeSID, &AnsiStr, TRUE);
+}
