@@ -626,32 +626,13 @@ static VS_VERSION_INFO_STRUCT32 *VersionInfo32_FindChild( VS_VERSION_INFO_STRUCT
 }
 
 /***********************************************************************
- *           VerQueryValueA              [VERSION.@]
+ *           VersionInfo16_QueryValue              [internal]
+ *
+ *    Gets a value from a 16-bit NE resource
  */
-DWORD WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
+DWORD WINAPI VersionInfo16_QueryValue( VS_VERSION_INFO_STRUCT16 *info, LPCSTR lpSubBlock,
                                LPVOID *lplpBuffer, UINT *puLen )
 {
-    VS_VERSION_INFO_STRUCT16 *info = (VS_VERSION_INFO_STRUCT16 *)pBlock;
-    if ( !VersionInfoIs16( info ) )
-    {
-        INT len;
-        LPWSTR wide_str;
-        DWORD give;
-
-        /* <lawson_whitney@juno.com> Feb 2001 */
-        /* AOL 5.0 does this, expecting to get this: */
-        len = MultiByteToWideChar(CP_ACP, 0, lpSubBlock, -1, NULL, 0);
-        wide_str = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, lpSubBlock, -1, wide_str, len);
-
-        give = VerQueryValueW(pBlock, wide_str, lplpBuffer, puLen);
-        HeapFree(GetProcessHeap(), 0, wide_str);
-        return give;
-    }
-
-    TRACE("(%p,%s,%p,%p)\n",
-                pBlock, debugstr_a(lpSubBlock), lplpBuffer, puLen );
-
     while ( *lpSubBlock )
     {
         /* Find next path component */
@@ -683,20 +664,59 @@ DWORD WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
 }
 
 /***********************************************************************
+ *           VerQueryValueA              [VERSION.@]
+ */
+DWORD WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
+                               LPVOID *lplpBuffer, UINT *puLen )
+{
+    VS_VERSION_INFO_STRUCT16 *info = (VS_VERSION_INFO_STRUCT16 *)pBlock;
+
+    TRACE("(%p,%s,%p,%p)\n",
+                pBlock, debugstr_a(lpSubBlock), lplpBuffer, puLen );
+
+    if ( !VersionInfoIs16( info ) )
+    {
+        INT len;
+        LPWSTR wide_str;
+        DWORD give;
+
+        /* <lawson_whitney@juno.com> Feb 2001 */
+        /* AOL 5.0 does this, expecting to get this: */
+        len = MultiByteToWideChar(CP_ACP, 0, lpSubBlock, -1, NULL, 0);
+        wide_str = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpSubBlock, -1, wide_str, len);
+
+        give = VerQueryValueW(pBlock, wide_str, lplpBuffer, puLen);
+        HeapFree(GetProcessHeap(), 0, wide_str);
+        return give;
+    }
+
+    return VersionInfo16_QueryValue(info, lpSubBlock, lplpBuffer, puLen);
+}
+
+/***********************************************************************
  *           VerQueryValueW              [VERSION.@]
  */
 DWORD WINAPI VerQueryValueW( LPVOID pBlock, LPCWSTR lpSubBlock,
                                LPVOID *lplpBuffer, UINT *puLen )
 {
     VS_VERSION_INFO_STRUCT32 *info = (VS_VERSION_INFO_STRUCT32 *)pBlock;
-    if ( VersionInfoIs16( info ) )
-    {
-        ERR("called on NE resource!\n" );
-        return FALSE;
-    }
 
     TRACE("(%p,%s,%p,%p)\n",
                 pBlock, debugstr_w(lpSubBlock), lplpBuffer, puLen );
+
+    if ( VersionInfoIs16( info ) )
+    {
+        DWORD ret;
+        int len = WideCharToMultiByte(CP_ACP, 0, lpSubBlock, -1, NULL, 0, NULL, NULL);
+        LPSTR lpSubBlockA = HeapAlloc(GetProcessHeap(), 0, len * sizeof(char));
+        if (!lpSubBlockA)
+            return FALSE;
+        WideCharToMultiByte(CP_ACP, 0, lpSubBlock, -1, lpSubBlockA, len, NULL, NULL);
+        ret = VersionInfo16_QueryValue(pBlock, lpSubBlockA, lplpBuffer, puLen);
+        HeapFree(GetProcessHeap(), 0, lpSubBlockA);
+        return ret;
+    }
 
     while ( *lpSubBlock )
     {
