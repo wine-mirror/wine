@@ -4,6 +4,7 @@
 #include "callback.h"
 #include "wine.h"
 #include "arch.h"
+#include "neexe.h"
 
 LONG CallWindowProc (WNDPROC func, HWND hwnd, WORD message,
 		     WORD wParam, LONG lParam)
@@ -24,9 +25,8 @@ LONG CallWindowProc (WNDPROC func, HWND hwnd, WORD message,
 void load_mz_header (int fd, struct mz_header_s *mz_header)
 {
 #define TAB mz_header
-    LOAD (dont_care1);
-    LOAD (must_be_0x40);
-    LOAD (dont_care2);
+	LOAD (mz_magic);
+    LOAD (dont_care);
     LOADSHORT (ne_offset);
 }
 
@@ -34,7 +34,7 @@ void load_ne_header (int fd, struct ne_header_s *ne_header)
 {
 #undef TAB
 #define TAB ne_header
-    LOAD (header_type);
+    LOAD (ne_magic);
     LOADSHORT (linker_version);
     LOADSHORT (linker_revision);
     LOADSHORT (entry_tab_offset);

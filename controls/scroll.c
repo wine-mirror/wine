@@ -340,9 +340,6 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, int nBar, RECT *rect,
                                  BOOL bottom_selected )
 {
     RECT r;
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-    if (((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL))
-        || ((nBar == SB_HORZ) && (!wndPtr->dwStyle & WS_HSCROLL))) return;
 
       /* Select the correct brush and pen */
 
@@ -440,9 +437,13 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, int nBar )
     WORD arrowSize, thumbPos;
     RECT rect;
     BOOL vertical;
-
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
     SCROLLINFO *infoPtr = SCROLL_GetScrollInfo( hwnd, nBar );
-    if (!infoPtr) return;
+
+    if (!wndPtr || !infoPtr ||
+        ((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL)) ||
+        ((nBar == SB_HORZ) && !(wndPtr->dwStyle & WS_HSCROLL))) return;
+
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                         &arrowSize, &thumbPos );
       /* Draw the arrows */
@@ -467,9 +468,13 @@ static void SCROLL_RefreshScrollBar( HWND hwnd, int nBar )
     RECT rect;
     BOOL vertical;
     HDC hdc;
-
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
     SCROLLINFO *infoPtr = SCROLL_GetScrollInfo( hwnd, nBar );
-    if (!infoPtr) return;
+
+    if (!wndPtr || !infoPtr ||
+        ((nBar == SB_VERT) && !(wndPtr->dwStyle & WS_VSCROLL)) ||
+        ((nBar == SB_HORZ) && !(wndPtr->dwStyle & WS_HSCROLL))) return;
+
     vertical = SCROLL_GetScrollBarRect( hwnd, nBar, &rect,
                                         &arrowSize, &thumbPos );
     hdc = (nBar == SB_CTL) ? GetDC(hwnd) : GetWindowDC(hwnd);

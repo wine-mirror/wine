@@ -1,3 +1,9 @@
+/*
+ * Debugger break-points handling
+ *
+ * Copyright 1994 Martin von Loewis
+ * Copyright 1995 Alexandre Julliard
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,100 +11,42 @@
 #ifdef linux
 #include <sys/utsname.h>
 #endif
-#include <windows.h>
-#include "db_disasm.h"
+#include "windows.h"
+#include "debugger.h"
 
-#define N_BP 25
+#define INT3          0xcc   /* int 3 opcode */
+#define STEP_FLAG     0x100  /* single-step flag */
 
-extern int dbg_mode;
+#define MAX_BREAKPOINTS 25
 
-struct wine_bp{
-  unsigned long addr;
-  unsigned long next_addr;
-  char in_use;
-  char enabled;
-  unsigned char databyte;
-};
-
-static struct wine_bp wbp[N_BP] = {{0,},};
-
-static int current_bp = -1;
-static int cont_mode=0;	/* 0 - continuous execution
-			   1 - advancing after breakpoint
-			   2 - single step - not implemented
-			*/
-
-void info_break(void)
+typedef struct
 {
-  int j;
-  fprintf(stderr,"Breakpoint status\n");
-  for(j=0; j<N_BP; j++)
-    if(wbp[j].in_use)
-      fprintf(stderr,"%d: %c %8lx\n", j, (wbp[j].enabled ? 'y' : 'n'),
-	      wbp[j].addr);
-}
+    unsigned int  segment;
+    unsigned int  addr;
+    BYTE          addrlen;
+    BYTE          opcode;
+    BOOL          enabled;
+    BOOL          in_use;
+} BREAKPOINT;
 
-void disable_break(int bpnum)
+static BREAKPOINT breakpoints[MAX_BREAKPOINTS] = { { 0, }, };
+
+static int next_bp = 1;  /* breakpoint 0 is reserved for step-over */
+
+
+/***********************************************************************
+ *           DEBUG_ChangeOpcode
+ *
+ * Change the opcode at segment:addr.
+ */
+static void DEBUG_SetOpcode( unsigned int segment, unsigned int addr, BYTE op )
 {
-  if(bpnum >= N_BP || bpnum < 0)
-    fprintf(stderr,"Breakpoint number out of range\n");
-
-  wbp[bpnum].enabled = 0;
-}
-
-void enable_break(int bpnum)
-{
-  if(bpnum >= N_BP || bpnum < 0)
-    fprintf(stderr,"Breakpoint number out of range\n");
-
-  wbp[bpnum].enabled = 1;
-}
-
-void add_break(unsigned long addr)
-{
-  int j;
-  for(j=0; j<N_BP; j++)
-    if(!wbp[j].in_use)
-      {
-	wbp[j].in_use = 1;
-	wbp[j].enabled = 1;
-	wbp[j].addr = addr;
-	wbp[j].next_addr = 0;
-	return;
-      }
-  fprintf(stderr,"No more breakpoints\n");
-}
-
-static void bark()
-{
-  static int barked=0;
-  if(barked)return;
-  barked=1;
-  perror("Sorry, can't set break point");
-#ifdef linux
-  {struct utsname buf;
-  uname(&buf);
-  if(strcmp(buf.sysname,"Linux")==0)
-  {	if(strcmp(buf.release,"1.1.62")<0)
-	  fprintf(stderr,"Your current Linux release is %s. "
-		"You should upgrade to 1.1.62 or higher\n"
-		"Alternatively, in /usr/src/linux/fs/exec.c,"
-		" change MAP_SHARED to MAP_PRIVATE.\n", buf.release);
-  } else
-  fprintf(stderr,"Why did you compile for Linux, while your system is"
-   " actually %s?\n",buf.sysname);
-  }
-#endif
-}
-  
-void insert_break(int flag)
-{
-  unsigned char * pnt;
-  int j;
-
-  for(j=0; j<N_BP; j++)
-    if(wbp[j].enabled)
-      {
+    if (segment)
+    {
+        *(BYTE *)PTR_SEG_OFF_TO_LIN( segment, addr ) = op;
+    }
+    else  /* 32-bit code, so we have to change the protection first */
+    {
         /* There are a couple of problems with this. On Linux prior to
            1.1.62, this call fails (ENOACCESS) due to a bug in fs/exec.c.
            This code is currently not tested at all on BSD.
@@ -108,54 +56,221 @@ void insert_break(int flag)
            Not that portability matters, this code is i386 only anyways...
            How do I get the old protection in order to restore it later on?
         */
-	if(mprotect((caddr_t)(wbp[j].addr & (~4095)), 4096, 
-	  PROT_READ|PROT_WRITE|PROT_EXEC) == -1){
-	    bark();
+        if (mprotect((caddr_t)(addr & (~4095)), 4096,
+                     PROT_READ|PROT_WRITE|PROT_EXEC) == -1)
+        {
+            perror( "Can't set break point" );
             return;
 	}
-	pnt = (unsigned char *) wbp[j].addr;
-	if(flag) {
-	  wbp[j].databyte = *pnt;
-	  *pnt = 0xcc;  /* Change to an int 3 instruction */
-	} else {
-	  *pnt = wbp[j].databyte;
-	}
-	mprotect((caddr_t)(wbp[j].addr & ~4095), 4096, PROT_READ|PROT_EXEC);
-      }
-}
-
-/* Get the breakpoint number that we broke upon */
-int get_bpnum(unsigned int addr)
-{
-  int j;
-
-  for(j=0; j<N_BP; j++)
-    if(wbp[j].enabled)
-      if(wbp[j].addr == addr) return j;
-
-  return -1;
-}
-
-void toggle_next(int num)
-{
-   unsigned int addr;
-   addr=wbp[num].addr;
-   if(wbp[num].next_addr == 0)
-	wbp[num].next_addr = db_disasm( 0, addr, (dbg_mode == 16) );
-   wbp[num].addr=wbp[num].next_addr;
-   wbp[num].next_addr=addr;
-}
-
-int should_continue(int bpnum)
-{
-    if(bpnum<0)return 0;
-    toggle_next(bpnum);
-    if(bpnum==current_bp){
-        current_bp=-1;
-	cont_mode=0;
-	return 1;
+        *(BYTE *)addr = op;
+	mprotect((caddr_t)(addr & ~4095), 4096, PROT_READ|PROT_EXEC);
     }
-    cont_mode=1;
-    current_bp=bpnum;
-    return 0;
+}
+
+
+/***********************************************************************
+ *           DEBUG_SetBreakpoints
+ *
+ * Set or remove all the breakpoints.
+ */
+void DEBUG_SetBreakpoints( BOOL set )
+{
+    int i;
+
+    for (i = 0; i < MAX_BREAKPOINTS; i++)
+    {
+        if (breakpoints[i].in_use && breakpoints[i].enabled)
+            DEBUG_SetOpcode( breakpoints[i].segment, breakpoints[i].addr,
+                             set ? INT3 : breakpoints[i].opcode );
+    }
+}
+
+
+/***********************************************************************
+ *           DEBUG_FindBreakpoint
+ *
+ * Find the breakpoint for a given address. Return the breakpoint
+ * number or -1 if none.
+ */
+int DEBUG_FindBreakpoint( unsigned int segment, unsigned int addr )
+{
+    int i;
+
+    for (i = 0; i < MAX_BREAKPOINTS; i++)
+    {
+        if (breakpoints[i].in_use && breakpoints[i].enabled &&
+            breakpoints[i].segment == segment && breakpoints[i].addr == addr)
+            return i;
+    }
+    return -1;
+}
+
+
+/***********************************************************************
+ *           DEBUG_AddBreakpoint
+ *
+ * Add a breakpoint.
+ */
+void DEBUG_AddBreakpoint( unsigned int segment, unsigned int addr )
+{
+    int num;
+    BYTE *p;
+
+    if (segment == 0xffffffff) segment = CS;
+    if (segment == WINE_CODE_SELECTOR) segment = 0;
+
+    if (next_bp < MAX_BREAKPOINTS)
+        num = next_bp++;
+    else  /* try to find an empty slot */  
+    {
+        for (num = 1; num < MAX_BREAKPOINTS; num++)
+            if (!breakpoints[num].in_use) break;
+        if (num >= MAX_BREAKPOINTS)
+        {
+            fprintf( stderr, "Too many breakpoints. Please delete some.\n" );
+            return;
+        }
+    }
+    p = segment ? (BYTE *)PTR_SEG_OFF_TO_LIN( segment, addr ) : (BYTE *)addr;
+    breakpoints[num].segment = segment;
+    breakpoints[num].addr    = addr;
+    breakpoints[num].addrlen = !segment ? 32 :
+                          (GET_SEL_FLAGS(segment) & LDT_FLAGS_32BIT) ? 32 : 16;
+    breakpoints[num].opcode  = *p;
+    breakpoints[num].enabled = TRUE;
+    breakpoints[num].in_use  = TRUE;
+    fprintf( stderr, "Breakpoint %d at ", num );
+    print_address( segment, addr, breakpoints[num].addrlen );
+    fprintf( stderr, "\n" );
+}
+
+
+/***********************************************************************
+ *           DEBUG_DelBreakpoint
+ *
+ * Delete a breakpoint.
+ */
+void DEBUG_DelBreakpoint( int num )
+{
+    if ((num <= 0) || (num >= next_bp) || !breakpoints[num].in_use)
+    {
+        fprintf( stderr, "Invalid breakpoint number %d\n", num );
+        return;
+    }
+    breakpoints[num].enabled = FALSE;
+    breakpoints[num].in_use  = FALSE;
+}
+
+
+/***********************************************************************
+ *           DEBUG_EnableBreakpoint
+ *
+ * Enable or disable a break point.
+ */
+void DEBUG_EnableBreakpoint( int num, BOOL enable )
+{
+    if ((num <= 0) || (num >= next_bp) || !breakpoints[num].in_use)
+    {
+        fprintf( stderr, "Invalid breakpoint number %d\n", num );
+        return;
+    }
+    breakpoints[num].enabled = enable;
+}
+
+
+/***********************************************************************
+ *           DEBUG_InfoBreakpoints
+ *
+ * Display break points information.
+ */
+void DEBUG_InfoBreakpoints(void)
+{
+    int i;
+
+    fprintf( stderr, "Breakpoints:\n" );
+    for (i = 1; i < next_bp; i++)
+    {
+        if (breakpoints[i].in_use)
+        {
+            fprintf( stderr, "%d: %c ", i, breakpoints[i].enabled ? 'y' : 'n');
+            print_address( breakpoints[i].segment, breakpoints[i].addr,
+                           breakpoints[i].addrlen );
+            fprintf( stderr, "\n" );
+        }
+    }
+}
+
+
+/***********************************************************************
+ *           DEBUG_ShouldContinue
+ *
+ * Determine if we should continue execution after a SIGTRAP signal when
+ * executing in the given mode.
+ */
+BOOL DEBUG_ShouldContinue( struct sigcontext_struct *context,
+                           enum exec_mode mode )
+{
+    unsigned int segment, addr;
+    int bpnum;
+
+      /* If not single-stepping, back up over the int3 instruction */
+    if (!(EFL & STEP_FLAG)) EIP--;
+
+    segment = (CS == WINE_CODE_SELECTOR) ? 0 : CS;
+    addr    = EIP;
+    bpnum  = DEBUG_FindBreakpoint( segment, addr );
+    breakpoints[0].enabled = 0;  /* disable the step-over breakpoint */
+
+    if ((bpnum != 0) && (bpnum != -1))
+    {
+        fprintf( stderr, "Stopped on breakpoint %d at ", bpnum );
+        print_address( breakpoints[bpnum].segment, breakpoints[bpnum].addr,
+                       breakpoints[bpnum].addrlen );
+        fprintf( stderr, "\n" );
+        return FALSE;
+    }
+      /* no breakpoint, continue if in continuous mode */
+    return (mode == EXEC_CONT);
+}
+
+
+/***********************************************************************
+ *           DEBUG_RestartExecution
+ *
+ * Set the breakpoints to the correct state to restart execution
+ * in the given mode.
+ */
+void DEBUG_RestartExecution( struct sigcontext_struct *context,
+                             enum exec_mode mode, int instr_len )
+{
+    unsigned int segment, addr;
+
+    segment = (CS == WINE_CODE_SELECTOR) ? 0 : CS;
+    addr    = EIP;
+
+    if (DEBUG_FindBreakpoint( segment, addr ) != -1)
+        mode = EXEC_STEP_INSTR;  /* If there's a breakpoint, skip it */
+
+    switch(mode)
+    {
+    case EXEC_CONT: /* Continuous execution */
+        EFL &= ~STEP_FLAG;
+        DEBUG_SetBreakpoints( TRUE );
+        break;
+
+    case EXEC_STEP_OVER:  /* Stepping over a call */
+        EFL &= ~STEP_FLAG;
+        breakpoints[0].segment = segment;
+        breakpoints[0].addr    = addr + instr_len;
+        breakpoints[0].enabled = TRUE;
+        breakpoints[0].in_use  = TRUE;
+        breakpoints[0].opcode  = segment ?
+           *(BYTE *)PTR_SEG_OFF_TO_LIN(segment,addr+instr_len) : *(BYTE *)addr;
+        DEBUG_SetBreakpoints( TRUE );
+        break;
+
+    case EXEC_STEP_INSTR: /* Single-stepping an instruction */
+        EFL |= STEP_FLAG;
+        break;
+    }
 }

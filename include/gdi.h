@@ -245,7 +245,7 @@ typedef struct tagDC
 
 #ifdef WINELIB
 
-#define GDI_HEAP_ALLOC(f,size)     LocalAlloc (f,size)
+#define GDI_HEAP_ALLOC(size)     LocalAlloc (LMEM_FIXED,size)
 #define GDI_HEAP_LIN_ADDR(handle)  LocalLock (handle)
 #define GDI_HEAP_SEG_ADDR(handle)  LocalLock (handle)
 #define GDI_HEAP_FREE(handle)      LocalFree (handle)

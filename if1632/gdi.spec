@@ -205,8 +205,8 @@ id	3
 306 stub ENGINEMAKEFONTDIR
 307 stub GetCharABCWidths
 308 stub GetOutLineTextMetrics
-309 stub GetGlyphOutLine
-310 stub CreateScalableFontResource
+309 pascal   GetGlyphOutLine(word word word ptr long ptr ptr) GetGlyphOutLine
+310 pascal16 CreateScalableFontResource(word ptr ptr ptr) CreateScalableFontResource
 311 stub GetFontData
 312 stub ConvertOutLineFontFile
 313 pascal16 GetRasterizerCaps(ptr word) GetRasterizerCaps

@@ -39,8 +39,8 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
 
     if (wndPtr->flags & WIN_NEEDS_NCPAINT)
     {
-        SendMessage( hwnd, WM_NCPAINT, 0, 0 );
         wndPtr->flags &= ~WIN_NEEDS_NCPAINT;
+        SendMessage( hwnd, WM_NCPAINT, 0, 0 );
     }
 
     lps->hdc = GetDCEx( hwnd, hrgnUpdate, DCX_INTERSECTRGN | DCX_USESTYLE );
@@ -56,8 +56,8 @@ HDC BeginPaint( HWND hwnd, LPPAINTSTRUCT lps )
 
     if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
     {
-        lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, lps->hdc, 0 );
         wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
+        lps->fErase = !SendMessage( hwnd, WM_ERASEBKGND, lps->hdc, 0 );
     }
     else lps->fErase = TRUE;
 
@@ -225,8 +225,8 @@ BOOL RedrawWindow( HWND hwnd, LPRECT rectUpdate, HRGN hrgnUpdate, UINT flags )
     {
         if (wndPtr->flags & WIN_NEEDS_NCPAINT)
         {
-            SendMessage( hwnd, WM_NCPAINT, 0, 0 );
             wndPtr->flags &= ~WIN_NEEDS_NCPAINT;
+            SendMessage( hwnd, WM_NCPAINT, 0, 0 );
         }
         if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
         {

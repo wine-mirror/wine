@@ -1034,6 +1034,16 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
     yDst      = dcDst->w.DCOrgY + YLPTODP( dcDst, yDst );
     widthDst  = widthDst * dcDst->w.VportExtX / dcDst->w.WndExtX;
     heightDst = heightDst * dcDst->w.VportExtY / dcDst->w.WndExtY;
+
+    dprintf_bitblt( stddeb, "    vportdst=%d,%d-%d,%d wnddst=%d,%d-%d,%d\n",
+                   dcDst->w.VportOrgX, dcDst->w.VportOrgY,
+                   dcDst->w.VportExtX, dcDst->w.VportExtY,
+                   dcDst->w.WndOrgX, dcDst->w.WndOrgY,
+                   dcDst->w.WndExtX, dcDst->w.WndExtY );
+    dprintf_bitblt( stddeb, "    rectdst=%d,%d-%d,%d orgdst=%d,%d\n",
+                    xDst, yDst, widthDst, heightDst,
+                    dcDst->w.DCOrgX, dcDst->w.DCOrgY );
+
     if (useSrc)
     {
         xSrc      = dcSrc->w.DCOrgX + XLPTODP( dcSrc, xSrc );
@@ -1041,10 +1051,23 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
         widthSrc  = widthSrc * dcSrc->w.VportExtX / dcSrc->w.WndExtX;
         heightSrc = heightSrc * dcSrc->w.VportExtY / dcSrc->w.WndExtY;
         fStretch  = (widthSrc != widthDst) || (heightSrc != heightDst);
+        dprintf_bitblt( stddeb,"    vportsrc=%d,%d-%d,%d wndsrc=%d,%d-%d,%d\n",
+                        dcSrc->w.VportOrgX, dcSrc->w.VportOrgY,
+                        dcSrc->w.VportExtX, dcSrc->w.VportExtY,
+                        dcSrc->w.WndOrgX, dcSrc->w.WndOrgY,
+                        dcSrc->w.WndExtX, dcSrc->w.WndExtY );
+        dprintf_bitblt( stddeb, "    rectsrc=%d,%d-%d,%d orgsrc=%d,%d\n",
+                        xSrc, ySrc, widthSrc, heightSrc,
+                        dcSrc->w.DCOrgX, dcSrc->w.DCOrgY );
         if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, widthDst, heightDst,
                                       dcSrc, xSrc, ySrc, widthSrc, heightSrc,
                                       &visRectSrc, &visRectDst ))
             return TRUE;
+        dprintf_bitblt( stddeb, "    vissrc=%d,%d-%d,%d visdst=%d,%d-%d,%d\n",
+                        visRectSrc.left, visRectSrc.top,
+                        visRectSrc.right, visRectSrc.bottom,
+                        visRectDst.left, visRectDst.top,
+                        visRectDst.right, visRectDst.bottom );
     }
     else
     {
@@ -1052,6 +1075,9 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
         if (!BITBLT_GetVisRectangles( dcDst, xDst, yDst, widthDst, heightDst,
                                       NULL, 0, 0, 0, 0, NULL, &visRectDst ))
             return TRUE;
+        dprintf_bitblt( stddeb, "    vissrc=none visdst=%d,%d-%d,%d\n",
+                        visRectDst.left, visRectDst.top,
+                        visRectDst.right, visRectDst.bottom );
     }
 
     width  = visRectDst.right - visRectDst.left;
@@ -1240,12 +1266,7 @@ BOOL BitBlt( HDC hdcDst, short xDst, short yDst, short width, short height,
                 "BitBlt: %04x %d,%d %d bpp -> %04x %d,%d %dx%dx%d rop=%06lx\n",
                 hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->w.bitsPerPixel : 0,
                 hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
-    if (dcSrc != NULL) {
-	dprintf_bitblt(stddeb,"        src org=%d,%d",
-		       dcSrc->w.DCOrgX, dcSrc->w.DCOrgY);
-    }
-    dprintf_bitblt(stddeb,"  dst org=%d,%d\n", dcDst->w.DCOrgX, 
-		   dcDst->w.DCOrgY);
+
     return CallTo32_LargeStack( (int(*)())BITBLT_InternalStretchBlt, 11,
                                 dcDst, xDst, yDst, width, height,
                                 dcSrc, xSrc, ySrc, width, height, rop );

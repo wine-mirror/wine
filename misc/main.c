@@ -224,6 +224,7 @@ BOOL ParseDebugOptions(char *options)
 
 #endif
 
+#ifndef WINELIB
 /***********************************************************************
  *           MAIN_ParseDLLOptions
  *
@@ -258,6 +259,7 @@ static BOOL MAIN_ParseDLLOptions(char *options)
   else
     return TRUE;
 }
+#endif
 
 
 
@@ -347,6 +349,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
       }
 
       if(MAIN_GetResource( db, ".dll", &value))
+#ifndef WINELIB
        if(MAIN_ParseDLLOptions((char*)value.addr)==FALSE)
        {
          int i;
@@ -359,6 +362,9 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
          fprintf(stderr,"\n\n");
          exit(1);
        }
+#else
+		fprintf(stderr,"-dll not supported in libwine\n");
+#endif
 }
 
 
@@ -559,7 +565,7 @@ LONG GetVersion(void)
 LONG GetWinFlags(void)
 {
   if (Options.enhanced)
-    return (WF_STANDARD | WF_ENHANCED | WF_CPU286 | WF_PMODE | WF_80x87);
+    return (WF_STANDARD | WF_ENHANCED | WF_CPU386 | WF_PMODE | WF_80x87);
   else
     return (WF_STANDARD | WF_CPU286 | WF_PMODE | WF_80x87);
 }

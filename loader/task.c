@@ -10,14 +10,15 @@
 #include "windows.h"
 #include "task.h"
 #include "callback.h"
+#include "debugger.h"
 #include "global.h"
 #include "instance.h"
 #include "miscemu.h"
 #include "module.h"
 #include "neexe.h"
+#include "options.h"
 #include "selectors.h"
 #include "toolhelp.h"
-#include "wine.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -220,6 +221,7 @@ static void TASK_CallToStart(void)
     dprintf_task( stddeb, "Starting main program: cs:ip=%04x:%04x ds=%04x ss:sp=%04x:%04x\n",
                  cs_reg, ip_reg, ds_reg,
                  IF1632_Saved16_ss, IF1632_Saved16_sp);
+
     CallTo16_regs_( (FARPROC)(cs_reg << 16 | ip_reg), ds_reg,
                    pTask->hPDB /*es*/, 0 /*bp*/, 0 /*ax*/,
                    pModule->stack_size /*bx*/, pModule->heap_size /*cx*/,
@@ -363,6 +365,14 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     {
         IF1632_Saved16_ss = pTask->ss;
         IF1632_Saved16_sp = pTask->sp;
+    }
+
+      /* Add a breakpoint at the start of the task */
+
+    if (Options.debug)
+    {
+        fprintf( stderr, "Task '%s': ", name );
+        DEBUG_AddBreakpoint( pSegTable[pModule->cs-1].selector, pModule->ip );
     }
 
       /* Add the task to the linked list */
@@ -891,6 +901,7 @@ HMODULE GetExePtr( HANDLE handle )
             (pTask->hInstance == owner) ||
             (pTask->hQueue == owner) ||
             (pTask->hPDB == owner)) return pTask->hModule;
+        hTask = pTask->hNext;
     }
     return 0;
 }

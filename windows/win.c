@@ -892,11 +892,15 @@ BOOL IsChild( HWND parent, HWND child )
 /***********************************************************************
  *           IsWindowVisible   (USER.49)
  */
-BOOL IsWindowVisible(HWND hWnd)
+BOOL IsWindowVisible( HWND hwnd )
 {
-    WND * wndPtr = WIN_FindWndPtr(hWnd);
-    if (wndPtr == 0) return(FALSE);
-    else return ((wndPtr->dwStyle & WS_VISIBLE) != 0);
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    while (wndPtr && (wndPtr->dwStyle & WS_CHILD))
+    {
+        if (!(wndPtr->dwStyle & WS_VISIBLE)) return FALSE;
+        wndPtr = WIN_FindWndPtr( wndPtr->hwndParent );
+    }
+    return (wndPtr && (wndPtr->dwStyle & WS_VISIBLE));
 }
 
  

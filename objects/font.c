@@ -259,6 +259,34 @@ void FONT_GetMetrics( LOGFONT * logfont, XFontStruct * xfont,
     metrics->tmAveCharWidth = average;
 }
 
+/***********************************************************************
+ *           GetGlyphOutLine    (GDI.309)
+ */
+DWORD GetGlyphOutLine(
+	HDC hdc, UINT uChar, UINT fuFormat, LPGLYPHMETRICS lpgm, 
+	DWORD cbBuffer, LPSTR lpBuffer, LPMAT2 lpmat2
+) {
+	dprintf_font(stdnimp,"GetGlyphOutLine(0x%x, '%c', 0x%x, %p, %d, %p, %p) // - empty stub!\n",
+		hdc,uChar,fuFormat,lpgm,cbBuffer,lpBuffer,lpmat2
+	);
+	return (DWORD)-1; /* failure */
+}
+/***********************************************************************
+ *           CreateScalableFontResource    (GDI.310)
+ */
+BOOL CreateScalableFontResource(
+	UINT fHidden,LPSTR lpszResourceFile,
+	LPSTR lpszFontFile,LPSTR lpszCurrentPath
+) {
+	/* fHidden=1 - only visible for the calling app, read-only, not
+	 * enumbered with EnumFonts/EnumFontFamilies
+	 * lpszCurrentPath can be NULL
+	 */
+	dprintf_font(stdnimp,"CreateScalableFontResource(%d,%s,%s,%x(%s)) // empty stub!\n",
+		fHidden,lpszResourceFile,lpszFontFile,lpszCurrentPath
+	);
+	return FALSE; /* create failed */
+}
 
 /***********************************************************************
  *           CreateFontIndirect    (GDI.57)

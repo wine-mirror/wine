@@ -88,7 +88,7 @@ extern WORD CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD bp, WORD ax,
     (*func)( code, wParam, lParam )
 #define CallTimeFuncProc( func, id, msg, dwUser, dw1, dw2 ) \
     (*func)( id, msg, dwUser, dw1, dw2 )
-#define CallWndProc( func, hwnd, msg, wParam, lParam ) \
+#define CallWndProc( func, ds, hwnd, msg, wParam, lParam ) \
     (*func)( hwnd, msg, wParam, lParam )
 
 #endif  /* WINELIB */

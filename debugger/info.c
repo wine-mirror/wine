@@ -6,15 +6,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "ldt.h"
-#include "db_disasm.h"
-#include "regpos.h"
+#include "debugger.h"
 
 extern char * find_nearest_symbol( unsigned int seg, unsigned int addr );
-
-extern int * regval;
-extern unsigned int dbg_mask;
-extern unsigned int dbg_mode;
 
 void application_not_running()
 {
@@ -32,54 +26,6 @@ void print_address( unsigned int segment, unsigned int addr, int addrlen )
 }
 
 
-void info_reg(){
-
-	  if(!regval) {
-	    application_not_running();
-	    return;
-	  }
-
-	fprintf(stderr,"Register dump:\n");
-	/* First get the segment registers out of the way */
-	fprintf(stderr," CS:%4.4x SS:%4.4x DS:%4.4x ES:%4.4x GS:%4.4x FS:%4.4x\n", 
-		SC_CS, SC_SS, SC_DS, SC_ES, SC_GS, SC_FS);
-
-	/* Now dump the main registers */
-	fprintf(stderr," EIP:%8.8x ESP:%8.8x EBP:%8.8x EFLAGS:%8.8x\n", 
-		SC_EIP(dbg_mask), SC_ESP(dbg_mask), SC_EBP(dbg_mask), SC_EFLAGS);
-
-	/* And dump the regular registers */
-
-	fprintf(stderr," EAX:%8.8x EBX:%8.8x ECX:%8.8x EDX:%8.8x\n", 
-		SC_EAX(dbg_mask), SC_EBX(dbg_mask), SC_ECX(dbg_mask), SC_EDX(dbg_mask));
-
-	/* Finally dump these main registers */
-	fprintf(stderr," EDI:%8.8x ESI:%8.8x\n", 
-		SC_EDI(dbg_mask), SC_ESI(dbg_mask));
-
-}
-
-void info_stack(){
-	unsigned int * dump;
-	int i;
-
-	if(!regval) {
-	  application_not_running();
-	  return;
-	}
-
-	fprintf(stderr,"Stack dump:\n");
-	dump = (int*) SC_ESP(dbg_mask);
-	for(i=0; i<22; i++) 
-	{
-	    fprintf(stderr," %8.8x", *dump++);
-	    if ((i % 8) == 7)
-		fprintf(stderr,"\n");
-	}
-	fprintf(stderr,"\n");
-}
-
-
 void examine_memory( unsigned int segment, unsigned int addr,
                      int count, char format )
 {
@@ -88,9 +34,10 @@ void examine_memory( unsigned int segment, unsigned int addr,
     unsigned short int * wdump;
     int i;
 
-    if (segment == 0xffffffff)
-        segment = (dbg_mode == 32) ? 0 : (format == 'i' ? SC_CS : SC_DS);
-    
+    if (segment == 0xffffffff) segment = (format == 'i' ? CS : DS);
+    if ((segment == WINE_CODE_SELECTOR) || (segment == WINE_DATA_SELECTOR))
+        segment = 0;
+
     if (format != 'i' && count > 1)
     {
         print_address( segment, addr, dbg_mode );
@@ -114,7 +61,7 @@ void examine_memory( unsigned int segment, unsigned int addr,
 		for(i=0; i<count; i++) {
 			print_address( segment, addr, dbg_mode );
 			fprintf(stderr,":  ");
-			addr = db_disasm( segment, addr, (dbg_mode == 16) );
+			addr = db_disasm( segment, addr );
 			fprintf(stderr,"\n");
 		};
 		return;
@@ -152,7 +99,7 @@ void examine_memory( unsigned int segment, unsigned int addr,
 		wdump = (unsigned short *)pnt;
 		for(i=0; i<count; i++) 
 		{
-			fprintf(stderr," %x", *wdump++);
+			fprintf(stderr," %04x", *wdump++);
                         addr += 2;
 			if ((i % 10) == 7) {
 				fprintf(stderr,"\n");
@@ -205,14 +152,15 @@ char * helptext[] = {
 "The commands accepted by the Wine debugger are a small subset",
 "of the commands that gdb would accept.  The commands currently",
 "are:\n",
-"  break *<addr>                        bt",
+"  break [*<addr>]                      delete break bpnum",
 "  disable bpnum                        enable bpnum",
 "  help                                 quit",
 "  x <expr>                             cont",
+"  step                                 next",
 "  mode [16,32]                         print <expr>",
 "  set <reg> = <expr>                   set *<expr> = <expr>",
-"  info [reg,stack,break,segments]      symbolfile <filename>",
-"  define <identifier> <expr>",
+"  info [reg,stack,break,segments]      bt",
+"  symbolfile <filename>                define <identifier> <expr>",
 "",
 "The 'x' command accepts repeat counts and formats (including 'i') in the",
 "same way that gdb does.",
@@ -230,57 +178,3 @@ void dbg_help(){
 	i = 0;
 	while(helptext[i]) fprintf(stderr,"%s\n", helptext[i++]);
 }
-
-
-struct frame{
-  union{
-    struct {
-      unsigned short saved_bp;
-      unsigned short saved_ip;
-      unsigned short saved_cs;
-    } win16;
-    struct {
-      unsigned long saved_bp;
-      unsigned long saved_ip;
-      unsigned short saved_cs;
-    } win32;
-  } u;
-};
-
-
-void dbg_bt(){
-  struct frame * frame;
-  unsigned short cs;
-  int frameno = 0;
-
-  if(!regval) {
-    application_not_running();
-    return;
-  }
-
-  if (dbg_mode == 16)
-      frame = (struct frame *)PTR_SEG_OFF_TO_LIN( SC_SS, SC_BP & ~1 );
-  else
-      frame = (struct frame *)SC_EBP(dbg_mask);
-
-  fprintf(stderr,"Backtrace:\n");
-  cs = SC_CS;
-  while((cs & 3) == 3) {
-    /* See if in 32 bit mode or not.  Assume GDT means 32 bit. */
-    if ((cs & 7) != 7) {
-      fprintf(stderr,"%d ",frameno++);
-      print_address( 0, frame->u.win32.saved_ip, 32 );
-      fprintf( stderr, "\n" );
-      if (!frame->u.win32.saved_ip) break;
-      frame = (struct frame *) frame->u.win32.saved_bp;
-    } else {
-      if (frame->u.win16.saved_bp & 1) cs = frame->u.win16.saved_cs;
-      fprintf(stderr,"%d %4.4x:%4.4x\n", frameno++, cs, 
-	      frame->u.win16.saved_ip);
-      if (!frame->u.win16.saved_bp) break;
-      frame = (struct frame *) PTR_SEG_OFF_TO_LIN( SC_SS, frame->u.win16.saved_bp & ~1);
-    }
-  }
-  putchar('\n');
-}
-

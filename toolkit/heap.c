@@ -115,7 +115,7 @@ BOOL LocalInit (WORD segment, WORD start, WORD end)
     return 1;
 }
 
-char *LocalLock (HANDLE hMem)
+WORD LocalLock (HANDLE hMem)
 {
     void **m = HEAP_FindSlot (hMem);
 #ifdef DEBUG_HEAP

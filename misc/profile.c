@@ -184,6 +184,9 @@ static TSecHeader *load (char *filename, char **pfullname)
 		state = IgnoreToEOL;
 		break;
 	    }
+
+	    if (c == '\n')
+	      break;
 	    
 	    if (c == '=' || overflow){
 		TKeys *temp;
@@ -197,8 +200,9 @@ static TSecHeader *load (char *filename, char **pfullname)
 		state = KeyValue;
 		next = CharBuffer;
 		dprintf_profile(stddeb,"%s:   key %s\n", file, CharBuffer);
-	    } else
+	    } else {
 		*next++ = c;
+	    }
 	    break;
 
 	case KeyValue:
@@ -293,6 +297,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
 	    }
 	    ReturnedString [Size-1] = 0;
 	    strncpy (ReturnedString, key->Value, Size-1);
+	    dprintf_profile(stddeb,"GetSetProfile // Return ``%s''\n", ReturnedString);
 	    return 1; 
 	}
 	/* If Getting the information, then don't write the information
@@ -303,6 +308,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
         else {
             ReturnedString [Size-1] = 0;
             strncpy (ReturnedString, Default, Size-1);
+	    dprintf_profile(stddeb,"GetSetProfile // Key not found\n");
 	}
 	return 1;
     }
@@ -318,6 +324,7 @@ static short GetSetProfile (int set, LPSTR AppName, LPSTR KeyName,
     } else {
 	ReturnedString [Size-1] = 0;
 	strncpy (ReturnedString, Default, Size-1);
+	dprintf_profile(stddeb,"GetSetProfile // Section not found\n");
     }
     return 1;
 }

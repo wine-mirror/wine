@@ -183,6 +183,82 @@ static void MSG_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos )
 
 
 /***********************************************************************
+ *           MSG_GetWindowForEvent
+ *
+ * Find the window and hittest for a mouse event.
+ */
+static INT MSG_GetWindowForEvent( POINT pt, HWND *phwnd )
+{
+    WND *wndPtr;
+    HWND hwnd;
+    INT hittest, x, y;
+
+    *phwnd = hwnd = GetDesktopWindow();
+    x = pt.x;
+    y = pt.y;
+    while (hwnd)
+    {
+	  /* If point is in window, and window is visible, and it  */
+          /* is enabled (or it's a top-level window), then explore */
+	  /* its children. Otherwise, go to the next window.       */
+
+	wndPtr = WIN_FindWndPtr( hwnd );
+	if ((wndPtr->dwStyle & WS_VISIBLE) &&
+            (!(wndPtr->dwStyle & WS_DISABLED) ||
+             !(wndPtr->dwStyle & WS_CHILD)) &&
+            (x >= wndPtr->rectWindow.left) &&
+            (x < wndPtr->rectWindow.right) &&
+	    (y >= wndPtr->rectWindow.top) &&
+            (y < wndPtr->rectWindow.bottom))
+	{
+	    *phwnd = hwnd;
+              /* If window is minimized or disabled, ignore its children */
+            if ((wndPtr->dwStyle & WS_MINIMIZE) ||
+                (wndPtr->dwStyle & WS_DISABLED)) break;
+	    x -= wndPtr->rectClient.left;
+	    y -= wndPtr->rectClient.top;
+	    hwnd = wndPtr->hwndChild;
+	}
+	else hwnd = wndPtr->hwndNext;
+    }
+
+
+    /* Send the WM_NCHITTEST message */
+
+    while (*phwnd)
+    {
+        wndPtr = WIN_FindWndPtr( *phwnd );
+        if (wndPtr->dwStyle & WS_DISABLED) hittest = HTERROR;
+        else hittest = (INT)SendMessage( *phwnd, WM_NCHITTEST, 0,
+                                         MAKELONG( pt.x, pt.y ) );
+        if (hittest != HTTRANSPARENT) break;  /* Found the window */
+        hwnd = wndPtr->hwndNext;
+        while (hwnd)
+        {
+            wndPtr = WIN_FindWndPtr( hwnd );
+            if ((wndPtr->dwStyle & WS_VISIBLE) &&
+                (x >= wndPtr->rectWindow.left) &&
+                (x < wndPtr->rectWindow.right) &&
+                (y >= wndPtr->rectWindow.top) &&
+                (y < wndPtr->rectWindow.bottom)) break;
+            hwnd = wndPtr->hwndNext;
+        }
+        if (hwnd) *phwnd = hwnd; /* Found a suitable sibling */
+        else  /* Go back to the parent */
+        {
+            *phwnd = WIN_FindWndPtr( *phwnd )->hwndParent;
+            wndPtr = WIN_FindWndPtr( *phwnd );
+            x += wndPtr->rectClient.left;
+            y += wndPtr->rectClient.top;
+        }
+    }
+
+    if (!*phwnd) *phwnd = GetDesktopWindow();
+    return hittest;
+}
+
+
+/***********************************************************************
  *           MSG_TranslateMouseMsg
  *
  * Translate an mouse hardware event into a real mouse message.
@@ -218,20 +294,7 @@ static BOOL MSG_TranslateMouseMsg( MSG *msg, BOOL remove )
 	ScreenToClient( msg->hwnd, (LPPOINT)&msg->lParam );
 	return TRUE;  /* No need to further process the message */
     }
-    else msg->hwnd = WindowFromPoint( msg->pt );
-
-      /* Send the WM_NCHITTEST message */
-
-    hittest_result = (INT)SendMessage( msg->hwnd, WM_NCHITTEST, 0,
-                                       MAKELONG( msg->pt.x, msg->pt.y ) );
-    while ((hittest_result == HTTRANSPARENT) && (msg->hwnd))
-    {
-	msg->hwnd = WINPOS_NextWindowFromPoint( msg->hwnd, msg->pt );
-	if (msg->hwnd)
-	    hittest_result = (INT)SendMessage( msg->hwnd, WM_NCHITTEST, 0,
-                                             MAKELONG( msg->pt.x, msg->pt.y ));
-    }
-    if (!msg->hwnd) msg->hwnd = GetDesktopWindow();
+    else hittest_result = MSG_GetWindowForEvent( msg->pt, &msg->hwnd );
 
       /* Send the WM_PARENTNOTIFY message */
 

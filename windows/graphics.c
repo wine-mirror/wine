@@ -332,9 +332,8 @@ BOOL Rectangle( HDC hdc, int left, int top, int right, int bottom )
  *           RoundRect    (GDI.28)
  */
 BOOL RoundRect( HDC hDC, short left, short top, short right, short bottom,
-					short ell_width, short ell_height)
+                short ell_width, short ell_height )
 {
-    int		x1, y1, x2, y2;
     DC * dc = (DC *) GDI_GetObjPtr(hDC, DC_MAGIC);
     if (!dc) 
     {
@@ -346,59 +345,103 @@ BOOL RoundRect( HDC hDC, short left, short top, short right, short bottom,
     }
     dprintf_graphics(stddeb, "RoundRect(%d %d %d %d  %d %d\n", 
     	left, top, right, bottom, ell_width, ell_height);
-    x1 = XLPTODP(dc, left);
-    y1 = YLPTODP(dc, top);
-    x2 = XLPTODP(dc, right - ell_width);
-    y2 = YLPTODP(dc, bottom - ell_height);
+
+    left   = XLPTODP( dc, left );
+    top    = YLPTODP( dc, top );
+    right  = XLPTODP( dc, right );
+    bottom = YLPTODP( dc, bottom );
+    ell_width  = abs( ell_width * dc->w.VportExtX / dc->w.WndExtX );
+    ell_height = abs( ell_height * dc->w.VportExtY / dc->w.WndExtY );
+
+    /* Fix the coordinates */
+
+    if (left > right) { short t = left; left = right; right = t; }
+    if (top > bottom) { short t = top; top = bottom; bottom = t; }
+    if (ell_width > right - left) ell_width = right - left;
+    if (ell_height > bottom - top) ell_height = bottom - top;
+
     if (DC_SetupGCForBrush( dc ))
     {
-	XFillArc(display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + x1, dc->w.DCOrgY + y1,
-		        ell_width, ell_height, 90 * 64, 90 * 64);
-	XFillArc(display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + x1, dc->w.DCOrgY + y2,
-		        ell_width, ell_height, 180 * 64, 90 * 64);
-	XFillArc(display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + x2, dc->w.DCOrgY + y2,
-		        ell_width, ell_height, 270 * 64, 90 * 64);
-	XFillArc(display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + x2, dc->w.DCOrgY + y1,
-		        ell_width, ell_height, 0, 90 * 64);
-	ell_width /= 2;  ell_height /= 2;
-	XFillRectangle(display, dc->u.x.drawable, dc->u.x.gc,
-		dc->w.DCOrgX + left + ell_width, dc->w.DCOrgY + top,
-		right - left - 2 * ell_width, bottom - top);
-	XFillRectangle(display, dc->u.x.drawable, dc->u.x.gc,
-		dc->w.DCOrgX + left, dc->w.DCOrgY + top + ell_height,
-		ell_width, bottom - top - 2 * ell_height);
-	XFillRectangle(display, dc->u.x.drawable, dc->u.x.gc,
-		dc->w.DCOrgX + right - ell_width, dc->w.DCOrgY + top + ell_height,
-		ell_width, bottom - top - 2 * ell_height);
-	ell_width *= 2;  ell_height *= 2;
-	}    	
-    if (DC_SetupGCForPen(dc)) {
-	XDrawArc(display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + x1, dc->w.DCOrgY + y1,
-		        ell_width, ell_height, 90 * 64, 90 * 64);
-	XDrawArc(display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + x1, dc->w.DCOrgY + y2,
-		        ell_width, ell_height, 180 * 64, 90 * 64);
-	XDrawArc(display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + x2, dc->w.DCOrgY + y2,
-		        ell_width, ell_height, 270 * 64, 90 * 64);
-	XDrawArc(display, dc->u.x.drawable, dc->u.x.gc,
-		        dc->w.DCOrgX + x2, dc->w.DCOrgY + y1,
-		        ell_width, ell_height, 0, 90 * 64);
+        if (ell_width && ell_height)
+        {
+            XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+                      ell_width, ell_height, 90 * 64, 90 * 64 );
+            XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + left, dc->w.DCOrgY + bottom - ell_height,
+                      ell_width, ell_height, 180 * 64, 90 * 64 );
+            XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + right - ell_width,
+                      dc->w.DCOrgY + bottom - ell_height,
+                      ell_width, ell_height, 270 * 64, 90 * 64 );
+            XFillArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + right - ell_width, dc->w.DCOrgY + top,
+                      ell_width, ell_height, 0, 90 * 64 );
+        }
+        if (ell_width < right - left)
+        {
+            XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+                            dc->w.DCOrgX + left + ell_width / 2,
+                            dc->w.DCOrgY + top,
+                            right - left - ell_width, ell_height / 2 );
+            XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+                            dc->w.DCOrgX + left + ell_width / 2,
+                            dc->w.DCOrgY + bottom - (ell_height+1) / 2,
+                            right - left - ell_width, (ell_height+1) / 2 );
+        }
+        if  (ell_height < bottom - top)
+        {
+            XFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
+                            dc->w.DCOrgX + left,
+                            dc->w.DCOrgY + top + ell_height / 2,
+                            right - left, bottom - top - ell_height );
+        }
+    }
+    if (DC_SetupGCForPen(dc))
+    {
+        if (ell_width && ell_height)
+        {
+            XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
+                      ell_width, ell_height, 90 * 64, 90 * 64 );
+            XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + left, dc->w.DCOrgY + bottom - ell_height,
+                      ell_width, ell_height, 180 * 64, 90 * 64 );
+            XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + right - ell_width,
+                      dc->w.DCOrgY + bottom - ell_height,
+                      ell_width, ell_height, 270 * 64, 90 * 64 );
+            XDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
+                      dc->w.DCOrgX + right - ell_width, dc->w.DCOrgY + top,
+                      ell_width, ell_height, 0, 90 * 64 );
 	}
-    ell_width /= 2;  ell_height /= 2;
-    MoveTo(hDC, left, top + ell_height);
-    LineTo(hDC, left, bottom - ell_height);
-    MoveTo(hDC, left + ell_width, bottom);
-    LineTo(hDC, right - ell_width, bottom);
-    MoveTo(hDC, right, bottom - ell_height);
-    LineTo(hDC, right, top + ell_height);
-    MoveTo(hDC, right - ell_width, top);
-    LineTo(hDC, left + ell_width, top);
+        if (ell_width < right - left)
+        {
+            XDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+                       dc->w.DCOrgX + left + ell_width / 2,
+                       dc->w.DCOrgY + top,
+                       dc->w.DCOrgX + right - ell_width / 2,
+                       dc->w.DCOrgY + top );
+            XDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+                       dc->w.DCOrgX + left + ell_width / 2,
+                       dc->w.DCOrgY + bottom,
+                       dc->w.DCOrgX + right - ell_width / 2,
+                       dc->w.DCOrgY + bottom );
+        }
+        if (ell_height < bottom - top)
+        {
+            XDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+                       dc->w.DCOrgX + right,
+                       dc->w.DCOrgY + top + ell_height / 2,
+                       dc->w.DCOrgX + right,
+                       dc->w.DCOrgY + bottom - ell_height / 2 );
+            XDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
+                       dc->w.DCOrgX + left,
+                       dc->w.DCOrgY + top + ell_height / 2,
+                       dc->w.DCOrgX + left,
+                       dc->w.DCOrgY + bottom - ell_height / 2 );
+        }
+    }
     return TRUE;
 }
 

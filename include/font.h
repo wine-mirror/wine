@@ -20,6 +20,25 @@ typedef struct
     LOGFONT     logfont WINE_PACKED;
 } FONTOBJ;
 
+/* may be switched... */
+#define GGO_BITMAP	0x4F4D
+#define GGO_NATIVE	0x4F50
+typedef struct
+{
+	UINT	gmBlackBoxX;
+	UINT	gmBlackBoxY;
+	POINT	gmptGlyphOrigin;
+	int	gmCellIncX;
+	int	gmCellIncY;
+} GLYPHMETRICS,*LPGLYPHMETRICS;
+typedef struct
+{
+	DWORD	eM11; /* all type FIXED in Borlands Handbook */
+	DWORD	eM12; 
+	DWORD	eM21;
+	DWORD	eM22;
+} MAT2,*LPMAT2;
+
 #ifndef WINELIB
 #pragma pack(4)
 #endif

@@ -194,7 +194,7 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
 
       /* Discard the block if requested */
 
-    if ((size == 0) && (flags & GMEM_MOVEABLE))
+    if ((size == 0) && (flags & GMEM_MOVEABLE) && !(flags & GMEM_MODIFY))
     {
         if (!(pArena->flags & GA_MOVEABLE) ||
             !(pArena->flags & GA_DISCARDABLE) ||

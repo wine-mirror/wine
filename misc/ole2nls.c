@@ -237,7 +237,7 @@ LOCVAL(LOCALE_INEGCURR,"8")
 LOCVAL(LOCALE_SDATE,".")
 LOCVAL(LOCALE_STIME,":")
 LOCVAL(LOCALE_SSHORTDATE,"dd.MM.yyyy")
-LOCVAL(LOCALE_SLONGDATEi,"ddd, d. MMMM yyyy")
+LOCVAL(LOCALE_SLONGDATE,"ddd, d. MMMM yyyy")
 /*
 LOCVAL(LOCALE_STIMEFORMAT)
 */
@@ -329,3 +329,35 @@ LOCVAL(LOCALE_INEGSEPBYSPACE)
 	strncpy(buf,retString,len);
 	return retLen;
 }
+
+
+/***********************************************************************
+ *           CompareStringA       (OLE2NLS.8)
+ * This implementation ignores the locale, and trusts in libc
+ */
+int CompareStringA(DWORD lcid, DWORD fdwStyle, 
+	char *s1, int l1, char *s2,int l2)
+{
+	int len,ret;
+	if(fdwStyle & NORM_IGNORENONSPACE)
+	{
+		fprintf(stdnimp, "CompareStringA: IGNORENONSPACE not supprted\n");
+	}
+	if(fdwStyle & NORM_IGNORESYMBOLS)
+		fprintf(stdnimp, "CompareStringA: IGNORESYMBOLS not supported\n");
+	/* Is strcmp defaulting to string sort or to word sort?? */
+	/* FIXME: Handle NORM_STRINGSORT */
+	l1 = (l1==-1)?strlen(s1):l1;
+	l2 = (l2==-1)?strlen(s2):l2;
+	len = l1<l2 ? l1:l2;
+	ret = (fdwStyle & NORM_IGNORECASE) ?
+		strncasecmp(s1,s2,len)	:
+		strncmp(s1,s2,len);
+	/* not equal, return 1 or 3 */
+	if(ret!=0)return ret+2;
+	/* same len, return 2 */
+	if(l1==l2)return 2;
+	/* the longer one is lexically greater */
+	return (l1<l2)? 1 : 3;
+}
+

@@ -343,14 +343,14 @@ HICON LoadIcon( HANDLE instance, SEGPTR icon_name )
     if (rsc_mem == (HANDLE)NULL) {
 	printf("LoadIcon / Icon %08x not Found !\n", (int) icon_name);
 	return 0;
-	}
+    }
     lp = (WORD *)LockResource(rsc_mem);
     lpicodesc = (ICONDESCRIP *)(lp + 3);
     hIcon = GlobalAlloc(GMEM_MOVEABLE, sizeof(ICONALLOC) + 1024);
     if (hIcon == (HICON)NULL) {
         FreeResource( rsc_mem );
 	return 0;
-	}
+    }
     lpico = (ICONALLOC *)GlobalLock(hIcon);
     lpico->descriptor = *lpicodesc;
     width = lpicodesc->Width;
@@ -373,20 +373,15 @@ HICON LoadIcon( HANDLE instance, SEGPTR icon_name )
     lpico->hBitmap = CreateDIBitmap( hdc, &pInfo->bmiHeader, CBM_INIT,
                                     (char*)bmi + size, pInfo, DIB_RGB_COLORS );
 
-    if (bih->biSizeImage == 0)
+    if (bih->biCompression != BI_RGB)
     {
-	if (bih->biCompression != BI_RGB)
-        {
-	    fprintf(stderr,"Unknown size for compressed Icon bitmap.\n");
-            FreeResource( rsc_mem );
-	    ReleaseDC( 0, hdc); 
-	    return 0;
-        }
-	bih->biSizeImage = (DIB_GetImageWidthBytes(bih->biWidth,bih->biBitCount) +
-                     DIB_GetImageWidthBytes(bih->biWidth,1)) * bih->biHeight/2;
+	fprintf(stderr,"Unknown size for compressed Icon bitmap.\n");
+	FreeResource( rsc_mem );
+	ReleaseDC( 0, hdc); 
+	return 0;
     }
     bits = (char *)bmi + size +
-             bih->biSizeImage * bih->biBitCount / (bih->biBitCount+1);
+      DIB_GetImageWidthBytes(bih->biWidth,bih->biBitCount) * bih->biHeight;
     bih->biBitCount = 1;
     bih->biClrUsed = bih->biClrImportant = 2;
     rgbq = &pInfo->bmiColors[0];

@@ -8,7 +8,7 @@ id	18
 5 pascal GetLocaleInfoA(long long ptr word) GetLocaleInfoA
 6 stub LCMAPSTRINGA
 7 stub GETSTRINGTYPEA
-8 stub COMPARESTRINGA
+8 pascal16 CompareStringA(long long ptr word ptr word) CompareStringA
 #9 WEP
 10 stub LIBMAIN
 11 stub NOTIFYWINDOWPROC

@@ -20,7 +20,6 @@ extern HBITMAP ConvertInfoBitmap( HDC hdc, BITMAPINFO * image );
 /* loader/signal.c */
 
 extern void init_wine_signals(void);
-extern void wine_debug(int signal, int * regs);
 
 /* loader/wine.c */
 

@@ -26,8 +26,8 @@ id	12
 72 pascal16 MemManInfo(ptr) MemManInfo
 73 stub NOTIFYREGISTER
 74 stub NOTIFYUNREGISTER
-75 stub INTERRUPTREGISTER
-76 stub INTERRUPTUNREGISTER
+75 return INTERRUPTREGISTER 6 0
+76 return INTERRUPTUNREGISTER 2 0
 77 stub TERMINATEAPP
 78 pascal   MemoryRead(word long ptr long) MemoryRead
 79 pascal   MemoryWrite(word long ptr long) MemoryWrite

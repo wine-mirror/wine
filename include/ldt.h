@@ -47,19 +47,33 @@ extern ldt_copy_entry ldt_copy[LDT_SIZE];
 #define __AHSHIFT  3
 #define __AHINCR   (1 << __AHSHIFT)
 
+#ifndef WINELIB
 #define SELECTOR_TO_ENTRY(sel)  (((int)(sel) & 0xffff) >> __AHSHIFT)
 #define ENTRY_TO_SELECTOR(i)    ((i) ? (((int)(i) << __AHSHIFT) | 7) : 0)
 #define IS_LDT_ENTRY_FREE(i)    (!(ldt_copy[(i)].base || ldt_copy[(i)].limit))
 #define IS_SELECTOR_FREE(sel)   (IS_LDT_ENTRY_FREE(SELECTOR_TO_ENTRY(sel)))
 #define GET_SEL_BASE(sel)       (ldt_copy[SELECTOR_TO_ENTRY(sel)].base)
 #define GET_SEL_LIMIT(sel)      (ldt_copy[SELECTOR_TO_ENTRY(sel)].limit)
+#else
+/* Complain if these are used in WineLib */
+#define SELECTOR_TO_ENTRY(sel)  error.error
+#define ENTRY_TO_SELECTOR(i)    error.error
+#define IS_LDT_ENTRY_FREE(i)    error.error
+#define GET_SEL_BASE(sel)       error.error
+#define GET_SEL_LIMIT(sel)      error.error
+#endif
 
+#ifndef WINELIB
   /* Convert a segmented ptr (16:16) to a linear (32) pointer */
 #define PTR_SEG_TO_LIN(ptr) \
            ((void*)(GET_SEL_BASE((int)(ptr) >> 16) + ((int)(ptr) & 0xffff)))
 
 #define PTR_SEG_OFF_TO_LIN(seg,off) \
            ((void*)(GET_SEL_BASE(seg) + (unsigned int)(off)))
+#else
+#define PTR_SEG_TO_LIN(ptr)	((void*)(ptr))
+#define PTR_SEG_OFF_TO_LIN(seg,off)	((void*)(off))
+#endif
 
 
 extern unsigned char ldt_flags_copy[LDT_SIZE];

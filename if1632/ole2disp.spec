@@ -2,12 +2,12 @@ name	ole2disp
 id	17
 
 1 stub DLLGETCLASSOBJECT
-2 stub SYSALLOCSTRING
-3 stub SYSREALLOCSTRING
-4 stub SYSALLOCSTRINGLEN
-5 stub SYSREALLOCSTRINGLEN
-6 stub SYSFREESTRING
-7 stub SYSSTRINGLEN
+2 pascal SysAllocString(ptr)	SysAllocString
+3 pascal SysReallocString(ptr ptr)	SysReAllocString
+4 pascal SysAllocStringLen(ptr word)	SysAllocStringLen
+5 pascal SysReAllocStringLen(ptr ptr word) SysReAllocStringLen
+6 pascal SysFreeString(long)	SysFreeString
+7 pascal SysStringLen(long)	SysStringLen
 8 stub VARIANTINIT
 9 stub VARIANTCLEAR
 10 stub VARIANTCOPY

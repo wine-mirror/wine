@@ -57,6 +57,7 @@ extern DWORD IF1632_Saved32_esp;
 extern SEGPTR IF1632_Stack32_base;
 extern DWORD IF1632_Original32_esp;
 
+#ifndef WINELIB
 #define CURRENT_STACK16 \
     ((STACK16FRAME *)PTR_SEG_OFF_TO_LIN(IF1632_Saved16_ss,IF1632_Saved16_sp))
 
@@ -67,5 +68,10 @@ extern DWORD IF1632_Original32_esp;
 #define MAKE_SEGPTR(ptr) \
      ((SEGPTR)IF1632_Stack32_base + \
       ((DWORD)(ptr) - (DWORD)PTR_SEG_TO_LIN(IF1632_Stack32_base)))
+#else
+#define CURRENT_STACK16	error.error
+#define CURRENT_DS		0
+#define MAKE_SEGPTR(ptr)	(ptr)
+#endif
 
 #endif /* WINE_STACKFRAME_H */

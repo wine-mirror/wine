@@ -16,7 +16,13 @@
 #include "parser.h"
 #include "y.tab.h"
 
-char usage[]="winerc -dvc -p prefix -o outfile < infile \n";
+char usage[]="winerc -bdvc -p prefix -o outfile < infile \n"
+	"   -b            Create a C array from a binary .res file\n"
+	"   -d            Output debugging information\n"
+	"   -p prefix     Give a prefix for the generated names\n"
+	"   -v            Show each resource as it is processed\n"
+	"   -o file       Output to file.c and file.h\n";
+
 
 /*might be overwritten by command line*/
 char *prefix="_Resource";
@@ -29,16 +35,18 @@ int main(int argc,char *argv[])
 {  
 	extern int yydebug;
 	extern char* optarg;
-	int optc,lose,ret;
-	lose=0;
+	int optc,lose,ret,binary;
+	lose=binary=0;
 #if defined(__NetBSD__) || defined(__FreeBSD__)
-	while((optc=getopt(argc,argv,"dp:vo:"))!=EOF)
+	while((optc=getopt(argc,argv,"bdp:vo:"))!=EOF)
 #else
-	while((optc=getopt(argc,argv,"dp:vo:",0))!=EOF)
+	while((optc=getopt(argc,argv,"bdp:vo:",0))!=EOF)
 #endif
 		switch(optc)
 		{
 			/* bison will print state transitions on stderr */
+			case 'b':binary=1;
+					 break;
 			case 'd':yydebug=1;
 					 setbuf(stdout,0);
 					 setbuf(stderr,0);
@@ -54,7 +62,10 @@ int main(int argc,char *argv[])
 	if(lose)return fprintf(stderr,usage),1;
 	if(!header)header=stdout;
 	if(!code)code=stdout;
-	ret=yyparse();
+	if(binary)
+		ret=transform_binary_file();
+	else
+		ret=yyparse();
 	fclose(header);
 	fclose(code);
 	return ret;
@@ -68,6 +79,20 @@ void set_out_file(char *prefix)
 	header=fopen(hname,"w");
 }
 
+int transform_binary_file()
+{
+	int i,c;
+	fprintf(header,"#define APPLICATION_HAS_RESOURCES 1\n");
+	fprintf(code,"char _Application_resources[]={");
+	for(i=0;;i++)
+	{
+		c=getchar();
+		if(c==-1)break;
+		if(i%16==0)fputc('\n',code);
+		fprintf(code,"%3d,",c);
+	}
+	fprintf(code,"\n0}\nint _Aplication_resources_size=%d;\n",i);
+}
 
 /* SunOS' memcpy is wrong for overlapping arrays */
 char *save_memcpy(char *d,char* s,int l)

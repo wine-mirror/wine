@@ -437,7 +437,8 @@ static void ioctlGenericBlkDevReq(struct sigcontext_struct *context)
 		drive = BL - 1;
 
 	if (!DOS_ValidDrive(drive)) {
-		AX = 0x02;				
+                Error( FileNotFound, EC_NotFound, EL_Disk );
+                AX = FileNotFound;
 		SetCflag;
 		return;
 	}
@@ -502,7 +503,7 @@ static void GetExtendedErrorInfo(struct sigcontext_struct *context)
 {
 	AX = ExtendedError;
 	BX = (ErrorClass << 8) | Action;
-	CH = ErrorLocus << 8;
+	CH = ErrorLocus;
 }
 
 static void CreateFile(struct sigcontext_struct *context)
@@ -656,15 +657,17 @@ static void MakeDir(struct sigcontext_struct *context)
 	dprintf_int(stddeb,"int21: makedir %s\n", (char *)PTR_SEG_OFF_TO_LIN(DS,DX) );
 	
 	if ((dirname = DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS,DX) ))== NULL) {
-		AX = CanNotMakeDir;
-		SetCflag;
-		return;
+            Error( CanNotMakeDir, EC_AccessDenied, EL_Disk );
+            AX = CanNotMakeDir;
+            SetCflag;
+            return;
 	}
 
 	if (mkdir(dirname,0) == -1) {
-		AX = CanNotMakeDir;
-		SetCflag;
-		return;
+            Error( CanNotMakeDir, EC_AccessDenied, EL_Disk );
+            AX = CanNotMakeDir;
+            SetCflag;
+            return;
 	}
 	ResetCflag;
 }
@@ -693,9 +696,10 @@ static void RemoveDir(struct sigcontext_struct *context)
 	dprintf_int(stddeb,"int21: removedir %s\n", (char *)PTR_SEG_OFF_TO_LIN(DS,DX) );
 
 	if ((dirname = DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS,DX) ))== NULL) {
-		AX = PathNotFound;
-		SetCflag;
-		return;
+            Error( PathNotFound, EC_NotFound, EL_Disk );
+            AX = PathNotFound;
+            SetCflag;
+            return;
 	}
 
 /*
@@ -705,9 +709,10 @@ static void RemoveDir(struct sigcontext_struct *context)
 	}
 */	
 	if (rmdir(dirname) == -1) {
-		AX = AccessDenied;
-		SetCflag;
-                return;
+            Error( AccessDenied, EC_AccessDenied, EL_Disk );
+            AX = AccessDenied;
+            SetCflag;
+            return;
 	} 
 	ResetCflag;
 }
@@ -839,9 +844,10 @@ static void CreateTempFile(struct sigcontext_struct *context)
 	handle = open(DOS_GetUnixFileName(temp), O_CREAT | O_TRUNC | O_RDWR);
 
 	if (handle == -1) {
-		AX = WriteProtected;
-		SetCflag;
-		return;
+            Error( WriteProtected, EC_AccessDenied, EL_Disk );
+            AX = WriteProtected;
+            SetCflag;
+            return;
 	}
 
 	strcpy(PTR_SEG_OFF_TO_LIN(DS,DX), temp);
@@ -855,9 +861,10 @@ static void CreateNewFile(struct sigcontext_struct *context)
 	int handle;
 	
 	if ((handle = open(DOS_GetUnixFileName( PTR_SEG_OFF_TO_LIN(DS,DX) ), O_CREAT | O_EXCL | O_RDWR)) == -1) {
-		AX = WriteProtected;
-		SetCflag;
-		return;
+            Error( WriteProtected, EC_AccessDenied, EL_Disk );
+            AX = WriteProtected;
+            SetCflag;
+            return;
 	}
 
 	AX = handle;
@@ -874,9 +881,10 @@ static void GetCurrentDirectory(struct sigcontext_struct *context)
 		drive = DL - 1;
 
 	if (!DOS_ValidDrive(drive)) {
-		AX = InvalidDrive;
-		SetCflag;
-		return;
+            Error( InvalidDrive, EC_NotFound, EL_Disk );
+            AX = InvalidDrive;
+            SetCflag;
+            return;
 	}
 
 	strcpy(PTR_SEG_OFF_TO_LIN(DS,SI), DOS_GetCurrentDir(drive) );
@@ -895,9 +903,10 @@ static void GetDiskSerialNumber(struct sigcontext_struct *context)
 		drive = BL - 1;
 
 	if (!DOS_ValidDrive(drive)) {
-		AX =InvalidDrive;
-		SetCflag;
-		return;
+            Error( InvalidDrive, EC_NotFound, EL_Disk );
+            AX = InvalidDrive;
+            SetCflag;
+            return;
 	}
 
 	DOS_GetSerialNumber(drive, &serialnumber);
@@ -923,9 +932,10 @@ static void SetDiskSerialNumber(struct sigcontext_struct *context)
 		drive = BL - 1;
 
 	if (!DOS_ValidDrive(drive)) {
-		AX = InvalidDrive;
-		SetCflag;
-		return;
+            Error( InvalidDrive, EC_NotFound, EL_Disk );
+            AX = InvalidDrive;
+            SetCflag;
+            return;
 	}
 
 	serialnumber = dataptr[1] + (dataptr[2] << 8) + (dataptr[3] << 16) + 
@@ -1477,8 +1487,9 @@ int do_int21(struct sigcontext_struct * context)
                 drive = BL ? (BL - 1) : DOS_GetDefaultDrive();
                 if(!DOS_ValidDrive(drive))
                 {
+                    Error( InvalidDrive, EC_NotFound, EL_Disk );
+                    AX = InvalidDrive;
                     SetCflag;
-                    AX = 0x000F;        /* Bad drive number */
                 }
                 else
                 {
@@ -1494,8 +1505,9 @@ int do_int21(struct sigcontext_struct * context)
                 drive = BL ? (BL - 1) : DOS_GetDefaultDrive();
                 if(!DOS_ValidDrive(drive))
                 {
+                    Error( InvalidDrive, EC_NotFound, EL_Disk );
+                    AX = InvalidDrive;
                     SetCflag;
-                    AX = 0x000F;        /* Bad drive number */
                 }
                 else
                 {

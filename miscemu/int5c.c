@@ -4,12 +4,12 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#include "miscemu.h"
-#include "registers.h"
 #include "wine.h"
+#include "miscemu.h"
 #include "stddebug.h"
 /* #define DEBUG_INT */
 #include "debug.h"
+#include "registers.h"
 
 
 /***********************************************************************

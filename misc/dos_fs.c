@@ -35,13 +35,13 @@
 #include "debug.h"
 
 #define WINE_INI_USER "~/.winerc"
-#define MAX_OPEN_DIRS 16
 #define MAX_DOS_DRIVES	26
 
 extern char WindowsDirectory[256], SystemDirectory[256],TempDirectory[256];
 
 char WindowsPath[256];
 
+static int max_open_dirs = 0;
 static int CurrentDrive = 2;
 
 struct DosDriveStruct {			/*  eg: */
@@ -53,7 +53,7 @@ struct DosDriveStruct {			/*  eg: */
 };
 
 static struct DosDriveStruct DosDrives[MAX_DOS_DRIVES];
-static struct dosdirent DosDirs[MAX_OPEN_DIRS];
+static struct dosdirent *DosDirs=NULL;
 
 static void ExpandTildeString(char *s)
 {
@@ -221,7 +221,7 @@ void DOS_InitFS(void)
 		}
 	}
 
-	for (x=0; x!=MAX_OPEN_DIRS ; x++)
+	for (x=0; x!=max_open_dirs ; x++)
 		DosDirs[x].inuse = 0;
 
     dprintf_dosfs(stddeb,"wine.ini = %s\n",WINE_INI);
@@ -869,6 +869,7 @@ struct dosdirent *DOS_opendir(char *dosdirname)
 	int x,y;
 	char *unixdirname;
 	char temp[256];
+	DIR  *ds;
 	
 	if ((unixdirname = DOS_GetUnixFileName(dosdirname)) == NULL)
 		return NULL;
@@ -885,10 +886,15 @@ struct dosdirent *DOS_opendir(char *dosdirname)
 		}
 	}
 
-        for (x=0; x <= MAX_OPEN_DIRS; x++) {
-	  if (x == MAX_OPEN_DIRS) {
-	    fprintf( stderr, "DOS_opendir(): Too many open directories\n");
-	    return NULL;
+        for (x=0; x <= max_open_dirs; x++) {
+	  if (x == max_open_dirs) {
+	    if (DosDirs) {
+	      DosDirs=(struct dosdirent*)realloc(DosDirs,(++max_open_dirs)*sizeof(DosDirs[0]));
+	    } else {
+	      DosDirs=(struct dosdirent*)malloc(sizeof(DosDirs[0]));
+	      max_open_dirs=1;
+	    }
+	    break; /* this one is definitely not in use */
 	  }
 	  if (!DosDirs[x].inuse) break;
 	  if (strcmp(DosDirs[x].unixpath,temp) == 0) break;
@@ -903,7 +909,13 @@ struct dosdirent *DOS_opendir(char *dosdirname)
 	strcpy(DosDirs[x].unixpath, temp);
         DosDirs[x].entnum = 0;
 
-	if ((DosDirs[x].ds = opendir(temp)) == NULL)
+	if ((ds = opendir(temp)) == NULL)
+		return NULL;
+	if (-1==(DosDirs[x].telldirnum=telldir(ds))) {
+		closedir(ds);
+		return NULL;
+	}
+	if (-1==closedir(ds))
 		return NULL;
 
 	return &DosDirs[x];
@@ -915,13 +927,19 @@ struct dosdirent *DOS_readdir(struct dosdirent *de)
 	char temp[256];
 	struct dirent *d;
 	struct stat st;
+	DIR	*ds;
 
 	if (!de->inuse)
 		return NULL;
-	
+	if (-1==(ds=opendir(de->unixpath)))
+		return NULL;
+	seekdir(ds,de->telldirnum); /* returns no error value. strange */
 	do {
-		if ((d = readdir(de->ds)) == NULL) 
+		if ((d = readdir(ds)) == NULL)  {
+			de->telldirnum=telldir(ds);
+			closedir(ds);
 			return NULL;
+		}
 
                 de->entnum++;   /* Increment the directory entry number */
 		strcpy(de->filename, d->d_name);
@@ -944,16 +962,15 @@ struct dosdirent *DOS_readdir(struct dosdirent *de)
 	de->filesize = st.st_size;
 	de->filetime = st.st_mtime;
 
+	de->telldirnum = telldir(ds);
+	closedir(ds);
 	return de;
 }
 
 void DOS_closedir(struct dosdirent *de)
 {
 	if (de && de->inuse)
-	{
-		closedir(de->ds);
 		de->inuse = 0;
-	}
 }
 
 char *DOS_GetRedirectedDir(int drive)

@@ -10,17 +10,16 @@
 
 #include <stdio.h>
 #include <signal.h>
-#include "ldt.h"
+#include <unistd.h>
 #include "windows.h"
-#include "wine.h"
+#include "debugger.h"
 
 #define YYSTYPE int
 
-#include "regpos.h"
 extern FILE * yyin;
-unsigned int * regval = NULL;
-unsigned int dbg_mask = 0;
 unsigned int dbg_mode = 0;
+
+static enum exec_mode dbg_exec_mode = EXEC_CONT;
 
 void issue_prompt(void);
 void mode_command(int);
@@ -28,6 +27,8 @@ void mode_command(int);
 
 
 %token CONT
+%token STEP
+%token NEXT
 %token QUIT
 %token HELP
 %token BACKTRACE
@@ -40,10 +41,13 @@ void mode_command(int);
 %token ENABLE
 %token DISABLE
 %token BREAK
+%token DELETE
 %token SET
 %token MODE
 %token PRINT
+%token EXAM
 %token IDENTIFIER
+%token FORMAT
 %token NO_SYMBOL
 %token SYMBOLFILE
 %token DEFINE
@@ -58,68 +62,59 @@ void mode_command(int);
 	| infocmd '\n'
 	| error '\n'       { yyerrok; }
 	| QUIT  '\n'       { exit(0); }
-	| 'q' '\n'         { exit(0); }
 	| HELP  '\n'       { dbg_help(); }
-	| CONT '\n'        { return 0; }
-	| 'c' '\n'         { return 0; }
+	| CONT '\n'        { dbg_exec_mode = EXEC_CONT; return 0; }
+	| STEP '\n'        { dbg_exec_mode = EXEC_STEP_INSTR; return 0; }
+	| NEXT '\n'        { dbg_exec_mode = EXEC_STEP_OVER; return 0; }
 	| ABORT '\n'       { kill(getpid(), SIGABRT); }
- 	| SYMBOLFILE IDENTIFIER '\n' { read_symboltable($2); }
+ 	| SYMBOLFILE IDENTIFIER '\n'   { read_symboltable($2); }
 	| DEFINE IDENTIFIER expr '\n'  { add_hash($2, 0, $3); }
-	| MODE NUM	   { mode_command($2); }
-	| ENABLE NUM	   { enable_break($2); }
-	| DISABLE NUM	   { disable_break($2); }
-	| BREAK '*' expr   { add_break($3); }
+	| MODE NUM '\n'         { mode_command($2); }
+	| ENABLE NUM '\n'       { DEBUG_EnableBreakpoint( $2, TRUE ); }
+	| DISABLE NUM '\n'      { DEBUG_EnableBreakpoint( $2, FALSE ); }
+	| BREAK '*' expr        { DEBUG_AddBreakpoint( 0xffffffff, $3 ); }
+        | BREAK '\n'            { DEBUG_AddBreakpoint( 0xffffffff, EIP ); }
+        | DELETE BREAK NUM '\n' { DEBUG_DelBreakpoint( $3 ); }
+	| BACKTRACE '\n'        { DEBUG_BackTrace(); }
 	| x_command
-	| BACKTRACE '\n'   { dbg_bt(); }
 	| print_command
 	| deposit_command
 
 deposit_command:
-	SET REG '=' expr '\n' { if(regval) regval[$2] = $4; else application_not_running();}
+	SET REG '=' expr '\n'        { DEBUG_SetRegister( $2, $4 ); }
 	| SET '*' expr '=' expr '\n' { *((unsigned int *) $3) = $5; }
-	| SET symbol '=' expr '\n' { *((unsigned int *) $2) = $4; }
+	| SET symbol '=' expr '\n'   { *((unsigned int *) $2) = $4; }
 
 
 x_command:
-	  'x' expr  '\n' { examine_memory( 0xffffffff, $2, 1, 'x'); }
-	| 'x' '/' fmt expr  '\n' { examine_memory( 0xffffffff, $4, 1, $3); }
-	| 'x' '/' NUM fmt expr  '\n' { examine_memory( 0xffffffff, $5, $3, $4); }
+	  EXAM expr  '\n' { examine_memory( 0xffffffff, $2, 1, 'x'); }
+	| EXAM FORMAT expr  '\n' { examine_memory( 0xffffffff, $3,
+                                                  $2 >> 8, $2 & 0xff ); }
 
-print:
-	  'p'
-	| PRINT
-	
  print_command:
-	  print expr '\n' { examine_memory( 0, ((unsigned int) &$2 ), 1, 'x'); }
-	| print '/' fmt expr '\n' { examine_memory( 0, (unsigned int) &$4, 1, $3); }
+	  PRINT expr '\n' { examine_memory( 0, ((unsigned int) &$2 ), 1,'x'); }
+	| PRINT FORMAT expr '\n' { examine_memory( 0, (unsigned int)&$3,
+                                                   $2 >> 8, $2 & 0xff ); }
 
- fmt:  'x'     { $$ = 'x'; }
-	| 'd'  { $$ = 'd'; }
-	| 'i'  { $$ = 'i'; }
-	| 'w'  { $$ = 'w'; }
-	| 's'  { $$ = 's'; }
-	| 'c'  { $$ = 'c'; }
-	| 'b' { $$ = 'b'; }
-
- symbol: IDENTIFIER             { $$ = find_hash($1);
-			           if($$ == 0xffffffff) {
-					   fprintf(stderr,"Symbol %s not found\n", $1);
-					   YYERROR;
-				   }
-			        } 
+ symbol: IDENTIFIER   { if (($$ = find_hash($1)) == 0xffffffff)
+                        {
+                           fprintf(stderr,"Symbol %s not found\n", (char *)$1);
+                           YYERROR;
+                        }
+                      } 
 
  expr:  NUM			{ $$ = $1;	}
-	| REG			{ if(regval) $$ = regval[$1]; else application_not_running();}
+	| REG			{ $$ = DEBUG_GetRegister($1); }
 	| symbol   		{ $$ = $1; }
 	| expr '+' NUM		{ $$ = $1 + $3; }
 	| expr '-' NUM		{ $$ = $1 - $3; }
 	| '(' expr ')'		{ $$ = $2; }
 	| '*' expr		{ $$ = *((unsigned int *) $2); }
 	
- infocmd: INFO REGS     { info_reg(); }
-	| INFO STACK    { info_stack(); }
+ infocmd: INFO REGS     { DEBUG_InfoRegisters(); }
+	| INFO STACK    { DEBUG_InfoStack(); }
+	| INFO BREAK    { DEBUG_InfoBreakpoints(); }
 	| INFO SEGMENTS { LDT_Print(); }
-	| INFO BREAK    { info_break(); }
 
 
 %%
@@ -133,78 +128,55 @@ issue_prompt(){
 
 void mode_command(int newmode)
 {
-  if(newmode == 16){
-    dbg_mask = 0xffff;
-    dbg_mode = 16;
-    return;
-  }
-  if(newmode == 32){ 
-    dbg_mask = 0xffffffff;
-    dbg_mode = 32;
-    return;
-  }
-  fprintf(stderr,"Invalid mode (use 16 or 32)\n");
+    if ((newmode == 16) || (newmode == 32)) dbg_mode = newmode;
+    else fprintf(stderr,"Invalid mode (use 16 or 32)\n");
 }
 
-static int loaded_symbols = 0;
 
-void
-wine_debug(int signal, int * regs)
+void wine_debug( int signal, struct sigcontext_struct *regs )
 {
-	static int dummy_regs[32];
-	char SymbolTableFile[256];
+    static int loaded_symbols = 0;
+    char SymbolTableFile[256];
+    int instr_len = 0, newmode;
 #ifdef YYDEBUG
-	yydebug = 0;
+    yydebug = 1;
 #endif
 
-	yyin = stdin;
-	regval = regs ? regs : dummy_regs;
+    yyin = stdin;
+    context = (struct sigcontext_struct *)regs;
 
-	if (SC_CS == WINE_CODE_SELECTOR) dbg_mode = 32;
-        else dbg_mode = (GET_SEL_FLAGS(SC_CS) & LDT_FLAGS_32BIT) ? 32 : 16;
-        dbg_mask = (dbg_mode == 32) ? 0xffffffff : 0xffff;
+    if (CS == WINE_CODE_SELECTOR) newmode = 32;
+    else newmode = (GET_SEL_FLAGS(CS) & LDT_FLAGS_32BIT) ? 32 : 16;
 
-	fprintf(stderr,"In %d bit mode.\n", dbg_mode);
+    if (newmode != dbg_mode)
+        fprintf(stderr,"In %d bit mode.\n", dbg_mode = newmode);
 
-	if(dbg_mode == 32 && !loaded_symbols)
-        {
-		loaded_symbols++;
-		GetPrivateProfileString("wine", "SymbolTableFile", "wine.sym",
-			SymbolTableFile, sizeof(SymbolTableFile), WINE_INI);
-		read_symboltable(SymbolTableFile);
-	}
+    if(dbg_mode == 32 && !loaded_symbols)
+    {
+        loaded_symbols++;
+        GetPrivateProfileString("wine", "SymbolTableFile", "wine.sym",
+                          SymbolTableFile, sizeof(SymbolTableFile), WINE_INI);
+        read_symboltable(SymbolTableFile);
+    }
 
-	/* Remove the breakpoints from memory... */
-	insert_break(0);
+    DEBUG_SetBreakpoints( FALSE );
 
-	/* If we stopped on a breakpoint, report this fact */
-	if(signal == SIGTRAP)
-	  {
-	    unsigned int addr;
-	    int bpnum;
-	    addr = SC_EIP(dbg_mask);
-	    if (dbg_mode == 16) addr = PTR_SEG_OFF_TO_LIN( SC_CS, addr );
-	    if(should_continue(bpnum=get_bpnum(addr))){
-		insert_break(1);
-		return;
-	    }
-	    fprintf(stderr,"Stopped on breakpoint %d\n", bpnum);
-	  }
+    if ((signal != SIGTRAP) || !DEBUG_ShouldContinue( regs, dbg_exec_mode ))
+    {
+        unsigned int segment = (CS == WINE_CODE_SELECTOR) ? 0 : CS;
 
-	/* Show where we crashed */
-	if(regs)
-	  examine_memory(0xffffffff, SC_EIP(dbg_mask), 1, 'i');
+        /* Show where we crashed */
+        print_address( segment, EIP, dbg_mode );
+        fprintf(stderr,":  ");
+        instr_len = db_disasm( segment, EIP ) - EIP;
+        fprintf(stderr,"\n");
+        
+        issue_prompt();
+        yyparse();
+        flush_symbols();
+    }
 
-	issue_prompt();
-
-	yyparse();
-	flush_symbols();
-
-	/* Re-insert the breakpoints from memory... */
-	insert_break(1);
-
-	fprintf(stderr,"Returning to Wine...\n");
-
+    DEBUG_RestartExecution( regs, dbg_exec_mode, instr_len );
 }
 
 

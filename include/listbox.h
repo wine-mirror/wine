@@ -28,6 +28,8 @@ typedef struct {
 	HWND    hParent;
 	HFONT   hFont;
 	BOOL    bRedrawFlag;
+        BOOL    HasStrings;
+        BOOL    OwnerDrawn;
 	WORD    iNumStops;
 	LPINT   TabStops;
 	HANDLE  hDrawItemStruct;
@@ -40,9 +42,6 @@ extern void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND paren
 extern void DestroyListBoxStruct(LPHEADLIST lphl);
 
 extern void ListBoxSendNotification(LPHEADLIST lphl,HWND hwnd, WORD code);
-
-extern BOOL OWNER_DRAWN(LPHEADLIST lphl);
-extern BOOL HasStrings(LPHEADLIST lphl);
 
 extern LPLISTSTRUCT ListBoxGetItem(LPHEADLIST lphl, UINT uIndex);
 extern int ListMaxFirstVisible(LPHEADLIST lphl);

@@ -10,6 +10,8 @@ _WinMain (int argc, char *argv [])
     char filename [4096], *module_name, *resource_file;
     HANDLE hTaskMain, hInstance;
     
+	/* The libwine resource DLL is temporarily disabled */
+#if 0
     if ((module_name = strchr (argv [0], '/')) == NULL){
 	printf ("Error: Can't determine base name for resource loading\n");
 	return 0;
@@ -20,9 +22,12 @@ _WinMain (int argc, char *argv [])
     strcat (resource_file, ".dll");
 
     hInstance = LoadImage (resource_file, 0, 0);
+#endif
     
     USER_InitApp( hInstance );
+#if 0
     hTaskMain = CreateNewTask (1); /* This is not correct */
+#endif
     ret_val = WinMain (hInstance,	/* hInstance */
 		       0,		/* hPrevInstance */
 		       "",		/* lpszCmdParam */

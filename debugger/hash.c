@@ -155,10 +155,6 @@ read_symboltable(char * filename){
 }
 
 
-/* Load the entry points from the dynamic linking into the hash tables. 
- * This does not work yet - something needs to be added before it scans the
- * tables correctly 
- */
 
 void load_entrypoints( HMODULE hModule )
 {

@@ -61,25 +61,15 @@
 /*
  * Instruction disassembler.
  */
-#if 0
-#include <mach/boolean.h>
-#include "db_machdep.h"
 
-#include "db_access.h"
-#include "db_sym.h"
-
-#include <kern/task.h>
-#endif
 #include <stdio.h>
-#include "db_disasm.h"
+#include "windows.h"
 #include "ldt.h"
-
-extern void print_address( unsigned int seg, unsigned int addr, int addrlen );
 
 /*
  * Switch to disassemble 16-bit code.
  */
-static boolean_t	db_disasm_16 = FALSE;
+static BOOL db_disasm_16 = FALSE;
 
 /*
  * Size attributes
@@ -932,13 +922,9 @@ static unsigned int db_get_task_value( unsigned int segment, unsigned int loc,
 /*
  * Read address at location and return updated location.
  */
-db_addr_t
-db_read_address(segment, loc, short_addr, regmodrm, addrp)
-        unsigned int segment;
-	db_addr_t	loc;
-	int		short_addr;
-	int		regmodrm;
-	struct i_addr	*addrp;		/* out */
+unsigned int db_read_address( unsigned int segment, unsigned int loc,
+                              int short_addr, int regmodrm,
+                              struct i_addr *addrp )
 {
 	int		mod, rm, sib, index, disp;
 
@@ -1058,21 +1044,15 @@ db_print_address(seg, size, addrp)
 		fprintf(stderr,",%s,%d", addrp->index, 1<<addrp->ss);
 	    fprintf(stderr,")");
 	} else
-	    db_task_printsym((db_addr_t)addrp->disp, size);
+	    db_task_printsym(addrp->disp, size);
 }
 
 /*
  * Disassemble floating-point ("escape") instruction
  * and return updated location.
  */
-db_addr_t
-db_disasm_esc(segment, loc, inst, short_addr, size, seg)
-        unsigned int segment;
-	db_addr_t	loc;
-	int		inst;
-	int		short_addr;
-	int		size;
-	char *		seg;
+unsigned int db_disasm_esc( unsigned int segment, unsigned int loc,
+                            int inst, int short_addr, int size, char *seg )
 {
 	int		regmodrm;
 	struct finst	*fp;
@@ -1151,11 +1131,7 @@ db_disasm_esc(segment, loc, inst, short_addr, size, seg)
  * Disassemble instruction at 'loc'.  Return address of start of
  * next instruction.
  */
-db_addr_t
-db_disasm(segment, loc, flag16)
-        unsigned int segment;
-	db_addr_t	loc;
-        boolean_t       flag16;
+unsigned int db_disasm( unsigned int segment, unsigned int loc )
 {
 	int	inst;
 	int	size;
@@ -1166,7 +1142,7 @@ db_disasm(segment, loc, flag16)
 	int	i_size;
 	int	i_mode;
 	int	regmodrm = 0;
-	boolean_t	first;
+	BOOL    first;
 	int	displ;
 	int	prefix;
 	int	imm;
@@ -1174,7 +1150,8 @@ db_disasm(segment, loc, flag16)
 	int	len;
 	struct i_addr	address;
 
-	db_disasm_16 = flag16;
+        if (!segment) db_disasm_16 = FALSE;
+        else db_disasm_16 = !(GET_SEL_FLAGS(segment) & LDT_FLAGS_32BIT);
 
 	get_value_inc(inst, segment, loc, 1, FALSE);
 
@@ -1240,7 +1217,7 @@ db_disasm(segment, loc, flag16)
 	} while (prefix);
 
 	if (inst >= 0xd8 && inst <= 0xdf) {
-	    loc = db_disasm_esc(loc, inst, short_addr, size, seg);
+	    loc = db_disasm_esc(segment, loc, inst, short_addr, size, seg);
 	    fprintf(stderr,"\n");
 	    return (loc);
 	}
@@ -1441,8 +1418,7 @@ db_disasm(segment, loc, flag16)
 		    if (seg)
 			fprintf(stderr,"%s:%d",seg, displ);
 		    else
-			db_task_printsym((db_addr_t)displ,
-                                         short_addr ? WORD : LONG);
+			db_task_printsym(displ, short_addr ? WORD : LONG);
 		    break;
 
 		case Db:
@@ -1454,8 +1430,7 @@ db_disasm(segment, loc, flag16)
 		    }
 		    else
 			displ = displ + loc;
-		    db_task_printsym((db_addr_t)displ,
-                                     short_addr ? WORD : LONG);
+		    db_task_printsym(displ, short_addr ? WORD : LONG);
 		    break;
 
 		case Dl:
@@ -1469,8 +1444,7 @@ db_disasm(segment, loc, flag16)
 			get_value_inc(displ, segment, loc, 4, TRUE);
 			displ = displ + loc;
 		    }
-		    db_task_printsym((db_addr_t)displ,
-                                     short_addr ? WORD : LONG);
+		    db_task_printsym( displ, short_addr ? WORD : LONG);
 		    break;
 
 		case o1:

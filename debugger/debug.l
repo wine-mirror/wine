@@ -7,9 +7,10 @@
 
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "dbg.tab.h"
-#include "regpos.h"
+#include "debugger.h"
 
 #ifdef USE_READLINE
 #undef YY_INPUT
@@ -19,101 +20,88 @@
 #endif
 
 extern char * readline(char *);
+extern void add_history(char *);
+static int dbg_read(char * buf, int size);
 static char * make_symbol(char *);
 void flush_symbols();
 static int syntax_error;
 extern int yylval;
 %}
 
-DIGIT	[0-9]
-HEXDIGIT [0-9a-fA-F]
-
+DIGIT	   [0-9]
+HEXDIGIT   [0-9a-fA-F]
+FORMAT     [bcdiswx]
 IDENTIFIER [_a-zA-Z\.~][_a-zA-Z0-9\.~]*
 
 %%
 
-\n		{ syntax_error = 0; return '\n'; } /* Indicate end of command */
+\n		{ syntax_error = 0; return '\n'; } /*Indicate end of command*/
 
-"+"		{ return '+'; } 
+[-+=()*]        { return *yytext; }
 
-"-"		{ return '-'; } 
+"0x"{HEXDIGIT}+      { sscanf(yytext, "%x", &yylval); return NUM; }
+{DIGIT}+             { sscanf(yytext, "%d", &yylval); return NUM; }
 
-"/"		{ return '/'; } 
+"/"{DIGIT}+{FORMAT}  { char *last; yylval = strtol( yytext+1, &last, NULL );
+                       yylval = (yylval << 8) | *last; return FORMAT; }
+"/"{FORMAT}          { yylval = (1 << 8) | yytext[1]; return FORMAT; }
 
-"="		{ return '='; } 
+$pc     { yylval = REG_EIP; return REG; }
+$flags  { yylval = REG_EFL; return REG; }
+$eip    { yylval = REG_EIP; return REG; }
+$ip     { yylval = REG_IP;  return REG; }
+$esp    { yylval = REG_ESP; return REG; }
+$sp     { yylval = REG_SP;  return REG; }
+$eax    { yylval = REG_EAX; return REG; }
+$ebx    { yylval = REG_EBX; return REG; }
+$ecx    { yylval = REG_ECX; return REG; }
+$edx    { yylval = REG_EDX; return REG; }
+$esi    { yylval = REG_ESI; return REG; }
+$edi    { yylval = REG_EDI; return REG; }
+$ebp    { yylval = REG_EBP; return REG; }
+$ax     { yylval = REG_AX;  return REG; }
+$bx     { yylval = REG_BX;  return REG; }
+$cx     { yylval = REG_CX;  return REG; }
+$dx     { yylval = REG_DX;  return REG; }
+$si     { yylval = REG_SI;  return REG; }
+$di     { yylval = REG_DI;  return REG; }
+$bp     { yylval = REG_BP;  return REG; }
+$es     { yylval = REG_ES;  return REG; }
+$ds     { yylval = REG_DS;  return REG; }
+$cs     { yylval = REG_CS;  return REG; }
+$ss     { yylval = REG_SS;  return REG; }
 
-"("		{ return '('; } 
-
-")"		{ return ')'; } 
-
-"*"		{ return '*'; } 
-
-"?"		{ return HELP; }
-
-"0x"+{HEXDIGIT}+   {
-		sscanf(yytext, "%x", &yylval);
-		return NUM;
-		}
-
-{DIGIT}+   {
-		sscanf(yytext, "%d", &yylval);
-		return NUM;
-		}
-
-$pc		{ yylval = RN_EIP; return REG;}
-$sp		{ yylval = RN_ESP_AT_SIGNAL; return REG;}
-$eip		{ yylval = RN_EIP; return REG;}
-$esp		{ yylval = RN_ESP_AT_SIGNAL; return REG;}
-$ebp		{ yylval = RN_EBP; return REG;}
-$eax		{ yylval = RN_EAX; return REG;}
-$ebx		{ yylval = RN_EBX; return REG;}
-$ecx		{ yylval = RN_ECX; return REG;}
-$edx		{ yylval = RN_EDX; return REG;}
-$esi		{ yylval = RN_ESI; return REG;}
-$edi		{ yylval = RN_EDI; return REG;}
-
-$es		{ yylval = RN_ES;  return REG;}
-$ds		{ yylval = RN_DS;  return REG;}
-$cs		{ yylval = RN_CS;  return REG;}
-$ss		{ yylval = RN_SS;  return REG;}
-
-info|inf|in		{ return INFO; }
-segments|segm           { return SEGMENTS; }
-break|brea|bre          { return BREAK; }
-enable|enabl|enab|ena   { return ENABLE;}
+info|inf|in		      { return INFO; }
+segments|segm                 { return SEGMENTS; }
+break|brea|bre|br|b           { return BREAK; }
+enable|enabl|enab|ena         { return ENABLE;}
 disable|disabl|disab|disa|dis { return DISABLE; }
-
-quit|qui|qu 	{ return QUIT; }
+delete|delet|dele|del         { return DELETE; }
+quit|qui|qu|q                 { return QUIT; }
+x                             { return EXAM; }
 
 help|hel|he	{ return HELP; }
+"?"		{ return HELP; }
 
 set|se		{ return SET; }
 
 bt		{ return BACKTRACE; }
 
-cont|con|co		{ return CONT; }
+cont|con|co|c   { return CONT; }
+step|ste|st|s   { return STEP; }
+next|nex|ne|n   { return NEXT; }
 
 symbolfile|symbolfil|symbolfi|symbolf|symbol|symbo|symb { return SYMBOLFILE; }
 
 define|defin|defi|def|de        { return DEFINE; }
 abort|abor|abo         	        { return ABORT; }
-print|prin|pri|pr		{ return PRINT; }
+print|prin|pri|pr|p		{ return PRINT; }
 
 mode				{ return MODE; }
 
-regs|reg|re	{ return REGS; }
+registers|regs|reg|re	{ return REGS; }
 
 stack|stac|sta|st     	{ return STACK; }
-
-p  		{ return 'p'; }
-x  		{ return 'x'; }
-d		{ return 'd'; }
-i		{ return 'i'; }
-w		{ return 'w'; }
-b		{ return 'b'; }
-s		{ return 's'; }
-c		{ return 'c'; }
-q		{ return 'q'; }
 
 {IDENTIFIER}	{yylval = (int) make_symbol(yytext); 
 	          return IDENTIFIER;
@@ -161,35 +149,45 @@ static void stripwhite (char *string)
   string[++i] = '\0';
 }
 
-dbg_read(char * buf, int size){
-	char * line;
-	int len;
+static int dbg_read(char * buf, int size)
+{
+    static char last_line[256] = "";
+    char * line;
+    int len;
+    
+    for (;;)
+    {
+        flush_symbols();
+        line = readline ("Wine-dbg>");
+        if (!line) exit(0);
 
-	do{
-		flush_symbols();
-		line = readline ("Wine-dbg>");
-                if (!line) return 0;
-		len = strlen(line);
+        /* Remove leading and trailing whitespace from the line.
+           Then, if there is anything left, add it to the history list
+           and execute it. */
+        stripwhite (line);
 
-                /* Remove leading and trailing whitespace from the line.
-                   Then, if there is anything left, add it to the history list
-                   and execute it. */
-                stripwhite (line);
-			
-                if (*line)
-                {
-                    add_history (line);
-                    if(size < len + 1){
-                        fprintf(stderr,"Fatal readline goof.\n");
-                        exit(0);
-                    }
-                    strcpy(buf, line);
-                    buf[len] = '\n';
-                    buf[len+1] = 0;
-                    free(line);
-                    return len + 1;
-                }
-	} while (1==1);
+        if (*line)
+        {
+            add_history( line );
+            strncpy( last_line, line, 255 );
+            last_line[255] = '\0'; 
+       }
+        else line = last_line;  /* Repeat previous command */
+
+        if ((len = strlen(line)) > 0)
+        {
+            if (size < len + 1)
+            {
+                fprintf(stderr,"Fatal readline goof.\n");
+                exit(0);
+            }
+            strcpy(buf, line);
+            buf[len] = '\n';
+            buf[len+1] = 0;
+            free(line);
+            return len + 1;
+        }
+    }
 }
 
 static char *local_symbols[10];

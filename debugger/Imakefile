@@ -16,7 +16,9 @@ SRCS = \
 	dbg.tab.c \
 	hash.c \
 	info.c \
-	lex.yy.c
+	lex.yy.c \
+	registers.c \
+	stack.c
 
 SUBDIRS_OBJS = readline/readline.o
 

@@ -45,7 +45,10 @@
 
 #define GET_ATOM_TABLE(sel)  ((ATOMTABLE*)PTR_SEG_OFF_TO_LIN(sel, \
           ((INSTANCEDATA*)PTR_SEG_OFF_TO_LIN(sel,0))->atomtable))
-
+		
+#ifdef WINELIB
+#define USER_HeapSel	0
+#endif
 
 /***********************************************************************
  *           ATOM_InitTable

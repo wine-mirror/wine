@@ -152,6 +152,6 @@ BOOL UnhookWindowsHookEx( HHOOK hhook )
 DWORD CallNextHookEx( HHOOK hhook, short code, WPARAM wParam, LPARAM lParam )
 {
     HOOKDATA *data = (HOOKDATA *)PTR_SEG_TO_LIN(hhook);
-    if (!data->next) return 0;
+    if (data == NULL || !data->next) return 0;
     else return INTERNAL_CALL_HOOK( data->next, code, wParam, lParam );
 }

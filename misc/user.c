@@ -24,6 +24,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 
 #define USER_HEAP_SIZE          0x10000
 
+#ifndef WINELIB
 LPSTR USER_Heap = NULL;
 WORD USER_HeapSel = 0;
 
@@ -73,7 +74,6 @@ BOOL SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
 }
 
 
-#ifndef WINELIB
 /***********************************************************************
  *           USER_HeapInit
  */

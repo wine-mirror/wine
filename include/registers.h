@@ -13,6 +13,7 @@
 #define EDX (context->sc_edx)
 #define ESI (context->sc_esi)
 #define EDI (context->sc_edi)
+#define EBP (context->sc_ebp)
 
 #define AX (*(WORD*)&context->sc_eax)
 #define BX (*(WORD*)&context->sc_ebx)
@@ -20,6 +21,7 @@
 #define DX (*(WORD*)&context->sc_edx)
 #define SI (*(WORD*)&context->sc_esi)
 #define DI (*(WORD*)&context->sc_edi)
+#define BP (*(WORD*)&context->sc_ebp)
 
 #define AL (*(BYTE*)&context->sc_eax)
 #define AH (*(((BYTE*)&context->sc_eax)+1))
@@ -37,8 +39,10 @@
 
 #ifndef __FreeBSD__
 #define EFL (context->sc_eflags)
+#define FL (*(WORD*)&context->sc_eflags)
 #else
 #define EFL (context->sc_efl)
+#define FL (*(WORD*)&context->sc_efl)
 #endif
 
 #define EIP (context->sc_eip)

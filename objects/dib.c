@@ -541,9 +541,19 @@ int StretchDIBits( HDC hdc,
 	WORD xSrc, WORD ySrc, WORD wSrcWidth, WORD wSrcHeight,
 	LPSTR bits, LPBITMAPINFO info, WORD wUsage, DWORD dwRop )
 {
-	printf("StretchDIBits // call SetDIBitsToDevice for now !!!!\n");
-	return SetDIBitsToDevice(hdc, xDest, yDest, wDestWidth, wDestHeight,
-		xSrc, ySrc, 1, 1, bits, info, wUsage);
+    HBITMAP hBitmap, hOldBitmap;
+    HDC hdcMem;
+
+    hBitmap = CreateDIBitmap( hdc, &info->bmiHeader, CBM_INIT,
+                              bits, info, wUsage );
+    hdcMem = CreateCompatibleDC( hdc );
+    hOldBitmap = SelectObject( hdcMem, hBitmap );
+    StretchBlt( hdc, xDest, yDest, wDestWidth, wDestHeight,
+                hdcMem, xSrc, ySrc, wSrcWidth, wSrcHeight, dwRop );
+    SelectObject( hdcMem, hOldBitmap );
+    DeleteDC( hdcMem );
+    DeleteObject( hBitmap );
+    return wSrcHeight;
 }
 
 /***********************************************************************

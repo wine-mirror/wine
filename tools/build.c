@@ -1544,7 +1544,9 @@ static void BuildCall16Func( char *profile )
     {
         /* Set ax equal to ds for window procedures */
         printf( "\tmovw 16(%%ebx),%%ax\n" );
-/*        printf( "\tmovw %%ax,%%ds\n" ); */
+
+        /* This seems to be needed, although I still don't see why... */
+        printf( "\tmovw %%ax,%%ds\n" );
     }
 
     /* Jump to the called routine */

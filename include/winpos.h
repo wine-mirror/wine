@@ -20,7 +20,6 @@ typedef struct
 } DWP;
 
 
-extern HWND WINPOS_NextWindowFromPoint( HWND hwnd, POINT pt );
 extern HWND WINPOS_ChangeActiveWindow( HWND hwnd, BOOL mouseMsg );
 extern LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
 				   RECT *newWindowRect, RECT *oldWindowRect,

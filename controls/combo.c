@@ -29,100 +29,6 @@
   * I hope no programs rely on the implementation of combos.
   */
 
-static LONG CBNCCreate( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBCreate( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBGetDlgCode( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBDestroy( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBPaint( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBKeyDown( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBChar( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBSetFont( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBSetRedraw( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBLButtonDown( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBSetFocus( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBKillFocus( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBResetContent( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBDir( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBAddString( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBGetLBText( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBInsertString( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBDeleteString( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBFindString( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBGetCount( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBGetCurSel( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBGetItemData( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBGetItemHeight( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBGetLBTextLen( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBSelectString( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBSetItemData( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBSetCurSel( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBSetItemHeight( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBShowDropDown( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-
-static LONG CBLCreate( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBLGetDlgCode( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBLKeyDown( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBLChar( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBLPaint( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBLKillFocus( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBLActivate( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBLLButtonDown( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBLLButtonUp( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBLMouseMove( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG CBLVScroll( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-
-typedef struct {
-  WORD   message;
-  LONG  (*handler)(HWND, WORD, WPARAM, LPARAM);
-} msg_tbl;
-
-static msg_tbl combo_tbl[] = {
-  {WM_NCCREATE, CBNCCreate},
-  {WM_CREATE, CBCreate},
-  {WM_DESTROY, CBDestroy},
-  {WM_GETDLGCODE, CBGetDlgCode},
-  {WM_KEYDOWN, CBKeyDown},
-  {WM_CHAR, CBChar},
-  {WM_SETFONT, CBSetFont},
-  {WM_SETREDRAW, CBSetRedraw},
-  {WM_PAINT, CBPaint},
-  {WM_LBUTTONDOWN, CBLButtonDown},
-  {WM_SETFOCUS, CBSetFocus},
-  {WM_KILLFOCUS, CBKillFocus},
-  {CB_RESETCONTENT, CBResetContent},
-  {CB_DIR, CBDir},
-  {CB_ADDSTRING, CBAddString},
-  {CB_INSERTSTRING, CBInsertString},
-  {CB_DELETESTRING, CBDeleteString},
-  {CB_FINDSTRING, CBFindString},
-  {CB_GETCOUNT, CBGetCount},
-  {CB_GETCURSEL, CBGetCurSel},
-  {CB_GETITEMDATA, CBGetItemData},
-  {CB_GETITEMHEIGHT, CBGetItemHeight},
-  {CB_GETLBTEXT, CBGetLBText},
-  {CB_GETLBTEXTLEN, CBGetLBTextLen},
-  {CB_SELECTSTRING, CBSelectString},
-  {CB_SETITEMDATA, CBSetItemData},
-  {CB_SETCURSEL, CBSetCurSel},
-  {CB_SETITEMHEIGHT, CBSetItemHeight},
-  {CB_SHOWDROPDOWN, CBShowDropDown}
-    
-};
-
-static msg_tbl clbox_tbl[] = {
-  {WM_CREATE, CBLCreate},
-  {WM_GETDLGCODE, CBLGetDlgCode},
-  {WM_KEYDOWN, CBLKeyDown},
-  {WM_CHAR, CBLChar},
-  {WM_PAINT, CBLPaint},
-  {WM_KILLFOCUS, CBLKillFocus},
-  {WM_ACTIVATE, CBLActivate},
-  {WM_LBUTTONDOWN, CBLLButtonDown},
-  {WM_LBUTTONUP, CBLLButtonUp},
-  {WM_MOUSEMOVE, CBLMouseMove},
-  {WM_VSCROLL, CBLVScroll}
-};
-
 static HBITMAP hComboBit = 0;
 static WORD CBitHeight, CBitWidth;
 
@@ -174,7 +80,7 @@ void ComboUpdateWindow(HWND hwnd, LPHEADLIST lphl, LPHEADCOMBO lphc, BOOL repain
 /***********************************************************************
  *           CBNCCreate
  */
-static LONG CBNCCreate(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBNCCreate(HWND hwnd, WORD wParam, LONG lParam)
 {
   CREATESTRUCT *createStruct;
 
@@ -185,14 +91,14 @@ static LONG CBNCCreate(HWND hwnd, WORD message, WORD wParam, LONG lParam)
   SetWindowLong(hwnd, GWL_STYLE, createStruct->style);
 
   dprintf_combo(stddeb,"ComboBox WM_NCCREATE!\n");
-  return DefWindowProc(hwnd, message, wParam, lParam);
+  return DefWindowProc(hwnd, WM_NCCREATE, wParam, lParam);
 
 }
 
 /***********************************************************************
  *           CBCreate
  */
-static LONG CBCreate(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBCreate(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST   lphl;
   LPHEADCOMBO  lphc;
@@ -268,7 +174,7 @@ static LONG CBCreate(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBDestroy
  */
-static LONG CBDestroy(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBDestroy(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
 
@@ -281,7 +187,7 @@ static LONG CBDestroy(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBPaint
  */
-static LONG CBPaint(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBPaint(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
@@ -324,7 +230,7 @@ static LONG CBPaint(HWND hwnd, WORD message, WORD wParam, LONG lParam)
     height = lpls->mis.itemHeight;
     rect.bottom = rect.top + height;
 
-    if (OWNER_DRAWN(lphl)) {
+    if (lphl->OwnerDrawn) {
       ListBoxDrawItem (hwnd, lphl, hdc, lpls, &rect, ODA_DRAWENTIRE, 0);
     } else {
       ListBoxDrawItem (hwnd, lphl, hdc, lpls, &rect, ODA_DRAWENTIRE, 0);
@@ -340,7 +246,7 @@ static LONG CBPaint(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBGetDlgCode
  */
-static LONG CBGetDlgCode(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBGetDlgCode(HWND hwnd, WORD wParam, LONG lParam)
 {
   return DLGC_WANTARROWS | DLGC_WANTCHARS;
 }
@@ -348,7 +254,7 @@ static LONG CBGetDlgCode(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBLButtonDown
  */
-static LONG CBLButtonDown(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
   SendMessage(hwnd,CB_SHOWDROPDOWN,!lphc->DropDownVisible,0);
@@ -358,7 +264,7 @@ static LONG CBLButtonDown(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBKeyDown
  */
-static LONG CBKeyDown(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   WORD       newFocused = lphl->ItemFocused;
@@ -397,7 +303,7 @@ static LONG CBKeyDown(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBChar
  */
-static LONG CBChar(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBChar(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   WORD       newFocused;
@@ -422,7 +328,7 @@ static LONG CBChar(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBKillFocus
  */
-static LONG CBKillFocus(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBKillFocus(HWND hwnd, WORD wParam, LONG lParam)
 {
   return 0;
 }
@@ -430,7 +336,7 @@ static LONG CBKillFocus(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBSetFocus
  */
-static LONG CBSetFocus(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBSetFocus(HWND hwnd, WORD wParam, LONG lParam)
 {
   return 0;
 }
@@ -438,7 +344,7 @@ static LONG CBSetFocus(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBResetContent
  */
-static LONG CBResetContent(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBResetContent(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
@@ -451,7 +357,7 @@ static LONG CBResetContent(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBDir
  */
-static LONG CBDir(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBDir(HWND hwnd, WORD wParam, LONG lParam)
 {
   WORD wRet;
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
@@ -465,13 +371,13 @@ static LONG CBDir(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBInsertString
  */
-static LONG CBInsertString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBInsertString(HWND hwnd, WORD wParam, LONG lParam)
 {
   WORD  wRet;
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
 
-  if (HasStrings(lphl))
+  if (lphl->HasStrings)
     wRet = ListBoxInsertString(lphl, wParam, (LPSTR)PTR_SEG_TO_LIN(lParam));
   else
     wRet = ListBoxInsertString(lphl, wParam, (LPSTR)lParam);
@@ -483,13 +389,13 @@ static LONG CBInsertString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBAddString
  */
-static LONG CBAddString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBAddString(HWND hwnd, WORD wParam, LONG lParam)
 {
   WORD  wRet;
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
 
-  if (HasStrings(lphl))
+  if (lphl->HasStrings)
     wRet = ListBoxAddString(lphl, (LPSTR)PTR_SEG_TO_LIN(lParam));
   else
     wRet = ListBoxAddString(lphl, (LPSTR)lParam);
@@ -501,7 +407,7 @@ static LONG CBAddString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBDeleteString
  */
-static LONG CBDeleteString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBDeleteString(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
@@ -514,7 +420,7 @@ static LONG CBDeleteString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBSelectString
  */
-static LONG CBSelectString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBSelectString(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   WORD  wRet;
@@ -529,7 +435,7 @@ static LONG CBSelectString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBFindString
  */
-static LONG CBFindString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBFindString(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   return ListBoxFindString(lphl, wParam, lParam);
@@ -538,7 +444,7 @@ static LONG CBFindString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBGetCount
  */
-static LONG CBGetCount(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBGetCount(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   return lphl->ItemsCount;
@@ -547,7 +453,7 @@ static LONG CBGetCount(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBSetCurSel
  */
-static LONG CBSetCurSel(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBSetCurSel(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   WORD  wRet;
@@ -563,7 +469,7 @@ static LONG CBSetCurSel(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBGetCurSel
  */
-static LONG CBGetCurSel(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBGetCurSel(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   return lphl->ItemFocused;
@@ -572,7 +478,7 @@ static LONG CBGetCurSel(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBGetItemHeight
  */
-static LONG CBGetItemHeight(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBGetItemHeight(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   LPLISTSTRUCT lpls = ListBoxGetItem (lphl, wParam);
@@ -584,7 +490,7 @@ static LONG CBGetItemHeight(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBSetItemHeight
  */
-static LONG CBSetItemHeight(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBSetItemHeight(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   return ListBoxSetItemHeight(lphl, wParam, lParam);
@@ -593,7 +499,7 @@ static LONG CBSetItemHeight(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBSetRedraw
  */
-static LONG CBSetRedraw(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBSetRedraw(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   lphl->bRedrawFlag = wParam;
@@ -603,7 +509,7 @@ static LONG CBSetRedraw(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBSetFont
  */
-static LONG CBSetFont(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBSetFont(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST  lphl = ComboGetListHeader(hwnd);
 
@@ -618,19 +524,19 @@ static LONG CBSetFont(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBGetLBTextLen
  */
-static LONG CBGetLBTextLen(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBGetLBTextLen(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST   lphl = ComboGetListHeader(hwnd);
   LPLISTSTRUCT lpls = ListBoxGetItem(lphl,wParam);
 
-  if (lpls == NULL || !HasStrings(lphl)) return LB_ERR;
+  if (lpls == NULL || !lphl->HasStrings) return LB_ERR;
   return strlen(lpls->itemText);
 }
 
 /***********************************************************************
  *           CBGetLBText
  */
-static LONG CBGetLBText(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBGetLBText(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   return ListBoxGetText(lphl, wParam, (LPSTR)PTR_SEG_TO_LIN(lParam));
@@ -639,7 +545,7 @@ static LONG CBGetLBText(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBGetItemData
  */
-static LONG CBGetItemData(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBGetItemData(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   return ListBoxGetItemData(lphl, wParam);
@@ -648,7 +554,7 @@ static LONG CBGetItemData(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBSetItemData
  */
-static LONG CBSetItemData(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBSetItemData(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   return ListBoxSetItemData(lphl, wParam, lParam);
@@ -657,7 +563,7 @@ static LONG CBSetItemData(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           CBShowDropDown
  */
-static LONG CBShowDropDown(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG CBShowDropDown(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
   RECT rect;
@@ -681,16 +587,38 @@ static LONG CBShowDropDown(HWND hwnd, WORD message, WORD wParam, LONG lParam)
  */
 LONG ComboBoxWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 {
-  int idx = 0;
-  int table_size = sizeof (combo_tbl) / sizeof (msg_tbl);
-
-  while (idx < table_size) {
-    if (message == combo_tbl[idx].message) {
-      return (*(combo_tbl[idx].handler))(hwnd, message, wParam, lParam);
+    switch(message) {	
+     case WM_NCCREATE: return CBNCCreate(hwnd, wParam, lParam);
+     case WM_CREATE: return CBCreate(hwnd, wParam, lParam);
+     case WM_DESTROY: return CBDestroy(hwnd, wParam, lParam);
+     case WM_GETDLGCODE: return CBGetDlgCode(hwnd, wParam, lParam);
+     case WM_KEYDOWN: return CBKeyDown(hwnd, wParam, lParam);
+     case WM_CHAR: return CBChar(hwnd, wParam, lParam);
+     case WM_SETFONT: return CBSetFont(hwnd, wParam, lParam);
+     case WM_SETREDRAW: return CBSetRedraw(hwnd, wParam, lParam);
+     case WM_PAINT: return CBPaint(hwnd, wParam, lParam);
+     case WM_LBUTTONDOWN: return CBLButtonDown(hwnd, wParam, lParam);
+     case WM_SETFOCUS: return CBSetFocus(hwnd, wParam, lParam);
+     case WM_KILLFOCUS: return CBKillFocus(hwnd, wParam, lParam);
+     case CB_RESETCONTENT: return CBResetContent(hwnd, wParam, lParam);
+     case CB_DIR: return CBDir(hwnd, wParam, lParam);
+     case CB_ADDSTRING: return CBAddString(hwnd, wParam, lParam);
+     case CB_INSERTSTRING: return CBInsertString(hwnd, wParam, lParam);
+     case CB_DELETESTRING: return CBDeleteString(hwnd, wParam, lParam);
+     case CB_FINDSTRING: return CBFindString(hwnd, wParam, lParam);
+     case CB_GETCOUNT: return CBGetCount(hwnd, wParam, lParam);
+     case CB_GETCURSEL: return CBGetCurSel(hwnd, wParam, lParam);
+     case CB_GETITEMDATA: return CBGetItemData(hwnd, wParam, lParam);
+     case CB_GETITEMHEIGHT: return CBGetItemHeight(hwnd, wParam, lParam);
+     case CB_GETLBTEXT: return CBGetLBText(hwnd, wParam, lParam);
+     case CB_GETLBTEXTLEN: return CBGetLBTextLen(hwnd, wParam, lParam);
+     case CB_SELECTSTRING: return CBSelectString(hwnd, wParam, lParam);
+     case CB_SETITEMDATA: return CBSetItemData(hwnd, wParam, lParam);
+     case CB_SETCURSEL: return CBSetCurSel(hwnd, wParam, lParam);
+     case CB_SETITEMHEIGHT: return CBSetItemHeight(hwnd, wParam, lParam);
+     case CB_SHOWDROPDOWN: return CBShowDropDown(hwnd, wParam, lParam);
     }
-    idx++;
-  }
-  return DefWindowProc (hwnd, message, wParam, lParam);
+    return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
 /*--------------------------------------------------------------------*/
@@ -709,7 +637,7 @@ LPHEADLIST CLBoxGetListHeader(HWND hwnd)
 /***********************************************************************
  *           CBLCreate
  */
-static LONG CBLCreate( HWND hwnd, WORD message, WORD wParam, LONG lParam )
+static LONG CBLCreate( HWND hwnd, WORD wParam, LONG lParam )
 {
   CREATESTRUCT *createStruct = (CREATESTRUCT *)PTR_SEG_TO_LIN(lParam);
   SetWindowWord(hwnd,0,LOWORD(createStruct->lpCreateParams));
@@ -719,7 +647,7 @@ static LONG CBLCreate( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 /***********************************************************************
  *           CBLGetDlgCode
  */
-static LONG CBLGetDlgCode( HWND hwnd, WORD message, WORD wParam, LONG lParam )
+static LONG CBLGetDlgCode( HWND hwnd, WORD wParam, LONG lParam )
 {
   return DLGC_WANTARROWS | DLGC_WANTCHARS;
 }
@@ -727,7 +655,7 @@ static LONG CBLGetDlgCode( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 /***********************************************************************
  *           CBLKeyDown
  */
-static LONG CBLKeyDown( HWND hwnd, WORD message, WORD wParam, LONG lParam ) 
+static LONG CBLKeyDown( HWND hwnd, WORD wParam, LONG lParam ) 
 {
   LPHEADLIST lphl = CLBoxGetListHeader(hwnd);
   WORD newFocused = lphl->ItemFocused;
@@ -775,7 +703,7 @@ static LONG CBLKeyDown( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 /***********************************************************************
  *           CBLChar
  */
-static LONG CBLChar( HWND hwnd, WORD message, WORD wParam, LONG lParam )
+static LONG CBLChar( HWND hwnd, WORD wParam, LONG lParam )
 {
   return 0;
 }
@@ -783,7 +711,7 @@ static LONG CBLChar( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 /***********************************************************************
  *           CBLPaint
  */
-static LONG CBLPaint( HWND hwnd, WORD message, WORD wParam, LONG lParam )
+static LONG CBLPaint( HWND hwnd, WORD wParam, LONG lParam )
 {
   LPHEADLIST   lphl = CLBoxGetListHeader(hwnd);
   LPLISTSTRUCT lpls;
@@ -828,7 +756,7 @@ static LONG CBLPaint( HWND hwnd, WORD message, WORD wParam, LONG lParam )
       lpls->itemRect.right  = rect.right;
 
       dprintf_listbox(stddeb,"drawing item: %d %d %d %d %d\n",rect.left,top,rect.right,top+height,lpls->itemState);
-      if (OWNER_DRAWN(lphl)) {
+      if (lphl->OwnerDrawn) {
 	ListBoxDrawItem (combohwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_DRAWENTIRE, 0);
 	if (lpls->itemState)
 	  ListBoxDrawItem (combohwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_SELECT, ODS_SELECTED);
@@ -854,7 +782,7 @@ static LONG CBLPaint( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 /***********************************************************************
  *           CBLKillFocus
  */
-static LONG CBLKillFocus( HWND hwnd, WORD message, WORD wParam, LONG lParam )
+static LONG CBLKillFocus( HWND hwnd, WORD wParam, LONG lParam )
 {
 /*  SendMessage(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN,0,0);*/
   return 0;
@@ -863,7 +791,7 @@ static LONG CBLKillFocus( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 /***********************************************************************
  *           CBLActivate
  */
-static LONG CBLActivate( HWND hwnd, WORD message, WORD wParam, LONG lParam )
+static LONG CBLActivate( HWND hwnd, WORD wParam, LONG lParam )
 {
   if (wParam == WA_INACTIVE)
     SendMessage(CLBoxGetCombo(hwnd),CB_SHOWDROPDOWN,0,0);
@@ -873,7 +801,7 @@ static LONG CBLActivate( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 /***********************************************************************
  *           CBLLButtonDown
  */
-static LONG CBLLButtonDown( HWND hwnd, WORD message, WORD wParam, LONG lParam )
+static LONG CBLLButtonDown( HWND hwnd, WORD wParam, LONG lParam )
 {
   LPHEADLIST lphl = CLBoxGetListHeader(hwnd);
   int        y;
@@ -898,7 +826,7 @@ static LONG CBLLButtonDown( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 /***********************************************************************
  *           CBLLButtonUp
  */
-static LONG CBLLButtonUp( HWND hwnd, WORD message, WORD wParam, LONG lParam )
+static LONG CBLLButtonUp( HWND hwnd, WORD wParam, LONG lParam )
 {
   LPHEADLIST lphl = CLBoxGetListHeader(hwnd);
 
@@ -916,7 +844,7 @@ static LONG CBLLButtonUp( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 /***********************************************************************
  *           CBLMouseMove
  */
-static LONG CBLMouseMove( HWND hwnd, WORD message, WORD wParam, LONG lParam )
+static LONG CBLMouseMove( HWND hwnd, WORD wParam, LONG lParam )
 {
   LPHEADLIST lphl = CLBoxGetListHeader(hwnd);
   int  y;
@@ -959,7 +887,7 @@ static LONG CBLMouseMove( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 /***********************************************************************
  *           CBLVScroll
  */
-static LONG CBLVScroll( HWND hwnd, WORD message, WORD wParam, LONG lParam )
+static LONG CBLVScroll( HWND hwnd, WORD wParam, LONG lParam )
 {
   LPHEADLIST lphl = CLBoxGetListHeader(hwnd);
   int  y;
@@ -1009,16 +937,20 @@ static LONG CBLVScroll( HWND hwnd, WORD message, WORD wParam, LONG lParam )
  */
 LONG ComboLBoxWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 {
-  int idx = 0;
-  int table_size = sizeof (clbox_tbl) / sizeof (msg_tbl);
-
-  while (idx < table_size) {
-    if (message == clbox_tbl[idx].message) {
-      return (*(clbox_tbl[idx].handler))(hwnd, message, wParam, lParam);
+    switch(message) {	
+     case WM_CREATE: return CBLCreate(hwnd, wParam, lParam);
+     case WM_GETDLGCODE: return CBLGetDlgCode(hwnd, wParam, lParam);
+     case WM_KEYDOWN: return CBLKeyDown(hwnd, wParam, lParam);
+     case WM_CHAR: return CBLChar(hwnd, wParam, lParam);
+     case WM_PAINT: return CBLPaint(hwnd, wParam, lParam);
+     case WM_KILLFOCUS: return CBLKillFocus(hwnd, wParam, lParam);
+     case WM_ACTIVATE: return CBLActivate(hwnd, wParam, lParam);
+     case WM_LBUTTONDOWN: return CBLLButtonDown(hwnd, wParam, lParam);
+     case WM_LBUTTONUP: return CBLLButtonUp(hwnd, wParam, lParam);
+     case WM_MOUSEMOVE: return CBLMouseMove(hwnd, wParam, lParam);
+     case WM_VSCROLL: return CBLVScroll(hwnd, wParam, lParam);
     }
-    idx++;
-  }
-  return DefWindowProc (hwnd, message, wParam, lParam);
+    return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
 /************************************************************************

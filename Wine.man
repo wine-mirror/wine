@@ -1,0 +1,328 @@
+.\" -*- nroff -*-
+.TH WINE 1 "June 29, 1995" "Version 6/20/95" "Windows Emulation"
+.SH NAME
+wine \- run Windows 3.x programs under Linux
+.SH SYNOPSIS
+.B wine
+[
+.I options
+]
+.I program_name
+[
+.I arguments
+]
+.SH DESCRIPTION
+.B wine
+invokes the Linux Windows emulator.
+.PP
+.B wine 
+currently runs a number of games and small applications (approximately
+half of the applets and common games actually run), although the entire API
+has not been implemented.
+.PP
+See the files 
+.B README,
+.B ChangeLog, 
+.B Configure, 
+and the
+.B Makefile
+contained in the source distribution
+to compile
+.B wine.
+.SH REQUIREMENTS
+At present, 
+.B wine
+will run under any Linux kernel more recent than 0.99.13, or
+under recent releases of NetBSD and FreeBSD.
+.PP
+.B X
+must be installed.
+.PP
+.B libXpm
+must be installed.  (It is probably available from the same site 
+.B wine
+was, or the sources may be FTP'd from ftp.x.org).
+.SH INSTALLATION
+To install 
+.B wine,
+run "./Configure", which will ask for configuration information and
+create the Makefiles, then run "make".
+.SH OPTIONS
+.TP
+.I -depth n
+Change the depth to use for multiple-depth screens
+.TP
+.I -desktop geom
+Use a desktop window of the given geometry
+.TP
+.I -display name
+Use the specified display
+.TP
+.I -iconic
+Start as an icon
+.TP
+.I -debug
+Enter the debugger before starting application
+.TP
+.I -name name
+Set the application name
+.TP
+.I -privatemap
+Use a private color map
+.TP
+.I -synchronous
+Turn on synchronous display mode
+.TP
+.I -backingstore
+Turn on backing store
+.TP
+.I -spy file
+Turn on message spying to the specified file
+.TP
+.I -debugmsg name[,name]
+Turn debugging messages on or off - for instance, 
+.I -debugmsg +dll,+heap
+will turn on DLL and heap debugging messages.  The full list is:
+all, accel, bitblt, bitmap, caret, catch, cdaudio, class, clipboard, clipping,
+combo, comm, cursor, dc, dialog, dll, dosfs, driver, edit, enum, event, exec,
+file, fixup, font, gdi, global, graphics, icon, int, key, keyboard, ldt,
+listbox, local, malloc, mci, mcianim, mciwave, mdi, menu, menucalc, message,
+metafile, midi, mmio, mmsys, mmtime, module, msg, nonclient, ole, palette, 
+profile, prop, reg, region, relay, resource, scroll, selector, selectors, 
+stress, syscolor, task, text, timer, toolhelp, utility, win, winsock.
+.TP
+.I -dll name
+Enables/disables built-in DLL's - starting wine with
+.I -dll -commdlg
+is probably a good idea.
+The full list of DLLs modifiable by this is:
+KERNEL, USER, GDI, WIN87EM, SHELL, SOUND, KEYBOARD, WINSOCK, STRESS, MMSYSTEM,
+SYSTEM, TOOLHELP, MOUSE, COMMDLG, OLE2, OLE2CONV, OLE2DISP, OLE2NLS, OLE2PROX,
+OLECLI, OLESVR, COMPOBJ, STORAGE, WINPROCS, DDEML
+.TP
+.I -allowreadonly
+Read only files may be opened in write mode
+.TP
+.I -enhanced
+Starts wine in Enhanced mode (not guaranteed to work yet)
+.PD 1
+.SH PROGRAM/ARGUMENTS
+The program name may be specified in DOS format (C:\\WINDOWS\\SOL.EXE) or in 
+Linux format (/msdos/windows/sol.exe).  The program being executed may be 
+passed arguments by adding them on to the end of the command line invoking
+.B wine
+(such as: wine "notepad C:\\TEMP\\README.TXT").  Note that
+the program name and its arguments 
+.I must
+be passed as a single parameter, which is usually accomplished by placing
+them together in quotation marks.  Multiple applications may be started
+by placing all of them on the command line (such as: wine notepad clock).
+.SH CONFIGURATION FILE
+.B wine
+expects a configuration file (/usr/local/etc/wine.conf), 
+which should conform to the following rules.  The actual file name may
+be specified during the execution of the
+.B Configure
+script.  Alternatively, you may have a 
+.I .winerc
+file of this format in your home directory.
+.SH CONFIGURATION FILE FORMAT
+.B [drives]
+.br
+.I format: <driveletter> = <rootdirectory>
+.br
+default: none
+.br
+This section is used to specify the root directory of each 
+.B DOS
+drive, since most Windows applications require a DOS/MS-Windows based 
+disk drive & directory scheme.
+.br
+If you mounted your dos partition as 
+.I /dos
+and installed Microsoft Windows in 
+C:\\WINDOWS then you should specify 
+.I c=/dos
+in the drives section.
+.PP
+.B [wine]
+.br
+.I format: windows = <directory>
+.br
+default: C:\\WINDOWS
+.br
+Used to specify a different Windows directory
+.PP
+.I format: system = <directory>
+.br
+default: C:\\WINDOWS\\SYSTEM
+.br
+Used to specify a different system directory
+.PP
+.I format: temp = <directory>
+.br
+default: C:\\TEMP
+.br
+Used to specify a directory where Windows applications can store 
+temporary files.
+.PP
+.I format: path = <directories separated by semi-colons>
+.br
+default: C:\\WINDOWS;C:\\WINDOWS\\SYSTEM
+.br
+Used to specify the path which will be used to find executables and .DLL's.
+.PP
+.I format: symboltablefile = <filename>
+.br
+default: wine.sym
+.br
+Used to specify the path and file name of the symbol table used by the built-in
+debugger.
+.PP
+.B [serialports]
+.br
+.I format: com[12345678] = <devicename>
+.br
+default: none
+.br
+Used to specify the devices which are used as com1 - com8.
+.PP
+.B [parallelports]
+.br
+.I format: lpt[12345678] = <devicename>
+.br
+default: none
+.br
+Used to specify the devices which are used as lpt1 - lpt8.
+.PP
+.B [spy]
+.br
+.I format: file = <filename or CON when logging to stdout>
+.br
+default: none
+.br
+Used to specify the file which will be used as
+.B logfile.
+.PP
+.I format: exclude = <message names separated by semicolons>
+.br
+default: none
+.br
+Used to specify which messages will be excluded from the logfile.
+.PP
+.I format: include = <message names separated by semicolons>
+.br
+default: none
+.br Used to specify which messages will be included in the logfile.
+.SH SAMPLE wine.conf
+[drives]
+.br
+a=/mnt/fd0
+.br
+c=/dos
+.br
+d=~/Wine
+.PP
+[wine]
+.br
+windows=c:\\windows
+.br
+system=c:\\windows\\system
+.br
+temp=c:\\temp
+.br
+path=c:\\windows;c:\\windows\\system;c:\\winapps\\word
+.br
+symboltablefile=/usr/local/lib/wine.sym
+.PP
+[serialports]
+.br
+com1=/dev/cua1
+.br
+com2=/dev/cua1
+.PP
+[parallelports]
+.br
+lpt1=/dev/lp0
+.PP
+[spy]
+.br
+;File=CON
+.br
+;File=spy.log
+.br
+Exclude=WM_TIMER;WM_SETCURSOR;WM_MOUSEMOVE;WM_NCHITTEST;
+.br
+Include=WM_COMMAND;
+.SH AUTHORS
+.B Wine
+is available thanks to the work of Bob Amstadt, Dag Asheim,
+Martin Ayotte, Ross Biro, Erik Bos, Fons Botman, John Brezak,
+Andrew Bulhak, John Burton, Paul Falstad, Olaf Flebbe, Peter Galbavy,
+Cameron Heide, Jeffrey Hsu, Miguel de Icaza, Alexandre Julliard,
+Jon Konrath, Scott A. Laird, Martin von Loewis, Kenneth MacDonald,
+Peter MacDonald, William Magro, David Metcalfe, Michael Patra,
+John Richardson, Johannes Ruscheinski, Thomas Sandford,
+Constantine Sapuntzakis, Bernd Schmidt, Yngvi Sigurjonsson, Rick Sladkey,
+William Smith, Erik Svendsen, Goran Thyni, Jimmy Tirtawangsa, Jon Tombs,
+Linus Torvalds, Michael Veksler, Carl Williams, Karl Guenter Wuensch,
+Eric Youngdale, and James Youngman.
+.PP
+This man page is maintained by Mike Phillips (msphil@mail.wm.edu), so please
+send all corrections, comments, flames, etc., to him.
+.SH BUGS
+There are too many to count, much less list.  Some are of note, however:
+Any Windows program using Visual Basic (VBRUNxxx.DLL) will not run yet,
+nor will any program depending on undocumented functions or on the
+COMMDLG (any standard file open/save interface) unless you disable the 
+internal COMMDLG with the 
+.I -dll -commdlg
+option.  In addition, 16-color support is imperfect at best, and 
+icons sometimes display improperly on some systems.  Certain 
+multi-language modules will not load properly.  Progress is being made 
+regularly, however.
+.PP
+Currently, no directories in the path can have upper-case letters in them
+(ex. /msdos/driveC), as the conversions necessary to handle the msdos 
+filename conventions currently cause them to be lost.
+.PP
+A partial list of applications known to work with 
+.B wine
+include: sol, cruel, golf.exe, clock, notepad, charmap, and calc.
+The following URLs point to different success/testing lists:
+.br
+.I http://www.ifi.uio.no/~dash/wine/working-apps.html
+.br
+.I http://dutifp.twi.tudelft.nl:8000/wine/
+.PP
+We would like to hear about what software does run under 
+.B Wine,
+and such reports may be posted to 
+.I comp.emulators.ms-windows.wine.
+.SH AVAILABILITY
+The most recent public version of 
+.B wine
+can be ftp'ed from tsx-11.mit.edu in the /pub/linux/ALPHA/Wine/development 
+directory.  The releases are in the format 'Wine-yymmdd.tar.gz', 
+or 'Wine-yymmdd.diff.gz' for the diff's from the previous release.
+.SH FILES
+.PD 0
+.TP
+.I /usr/local/bin/wine
+The invoker program.
+.TP
+.I /usr/local/etc/wine.conf
+Main configuration file for wine.
+.TP
+.I ChangeLog
+Changes in Wine, since the beginning (most recent changes first)
+.TP
+.I Configure
+Shell script to automate compilation.  Usually followed by make (or gmake 
+on *BSD systems) to compile wine; it can even build a sample 
+.B wine.conf
+file
+
+.TP
+.I Wine newsgroup
+Subscribe to comp.emulators.ms-windows.wine

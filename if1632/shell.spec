@@ -6,13 +6,13 @@ id	5
 # 			proper parameters. It's just to have stub for PROGMAN.EXE ...
 #
 
-  1 pascal   RegOpenKey(word ptr ptr) RegOpenKey
-  2 pascal   RegCreateKey(word ptr ptr) RegCreateKey
-  3 pascal   RegCloseKey(word) RegCloseKey
-  4 pascal   RegDeleteKey(word ptr) RegDeleteKey
-  5 pascal   RegSetValue(word ptr long ptr long) RegSetValue
-  6 pascal   RegQueryValue(word ptr ptr ptr) RegQueryValue
-  7 pascal   RegEnumKey(word long ptr long) RegEnumKey
+  1 pascal   RegOpenKey(long ptr ptr) RegOpenKey
+  2 pascal   RegCreateKey(long ptr ptr) RegCreateKey
+  3 pascal   RegCloseKey(long) RegCloseKey
+  4 pascal   RegDeleteKey(long ptr) RegDeleteKey
+  5 pascal   RegSetValue(long ptr long ptr long) RegSetValue
+  6 pascal   RegQueryValue(long ptr ptr ptr) RegQueryValue
+  7 pascal   RegEnumKey(long long ptr long) RegEnumKey
   9 pascal16 DragAcceptFiles(word word) DragAcceptFiles
  11 pascal16 DragQueryFile(word s_word ptr s_word) DragQueryFile
  12 pascal16 DragFinish(word) DragFinish

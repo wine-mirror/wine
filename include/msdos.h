@@ -15,6 +15,7 @@ struct dosdirent {
 	char search_attribute;
 	long filesize;
 	long filetime;
+        int telldirnum;
         short entnum;           /* Directory entry number */
 };
 

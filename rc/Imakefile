@@ -49,6 +49,8 @@ LOCAL_LIBRARIES = -ll
 
 NormalProgramTarget(winerc,$(OBJS),$(DEPLIBS),$(LOCAL_LIBRARIES),)
 
+depend:: y.tab.c y.tab.h lex.yy.c
+
 DependTarget()
 
 clean::

@@ -13,7 +13,6 @@
 #include "dlgs.h"
 #include "dialog.h"
 #include "stddebug.h"
-/* #define DEBUG_REG */
 #include "debug.h"
 
 LPKEYSTRUCT	lphRootKey = NULL,lphTopKey = NULL;
@@ -185,7 +184,7 @@ LONG RegCreateKey(HKEY hKey, LPCSTR lpSubKey, HKEY FAR *lphKey)
 LONG RegCloseKey(HKEY hKey)
 {
 	dprintf_reg(stdnimp, "EMPTY STUB !!! RegCloseKey(%08lX);\n", hKey);
-	return ERROR_INVALID_PARAMETER;
+	return ERROR_SUCCESS;
 }
 
 
@@ -196,7 +195,7 @@ LONG RegDeleteKey(HKEY hKey, LPCSTR lpSubKey)
 {
 	dprintf_reg(stdnimp, "EMPTY STUB !!! RegDeleteKey(%08lX, '%s');\n", 
 												hKey, lpSubKey);
-	return ERROR_INVALID_PARAMETER;
+	return ERROR_SUCCESS;
 }
 
 
@@ -204,29 +203,29 @@ LONG RegDeleteKey(HKEY hKey, LPCSTR lpSubKey)
  *				RegSetValue		[SHELL.5]
  */
 LONG RegSetValue(HKEY hKey, LPCSTR lpSubKey, DWORD dwType, 
-					LPCSTR lpVal, DWORD dwIgnored)
+		 LPCSTR lpVal, DWORD dwIgnored)
 {
-	HKEY		hRetKey;
-	LPKEYSTRUCT	lpKey;
-	LONG		dwRet;
-	dprintf_reg(stddeb, "RegSetValue(%08lX, '%s', %08lX, '%s', %08lX);\n",
-						hKey, lpSubKey, dwType, lpVal, dwIgnored);
-	if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
-	if (lpVal == NULL) return ERROR_INVALID_PARAMETER;
-	if ((dwRet = RegOpenKey(hKey, lpSubKey, &hRetKey)) != ERROR_SUCCESS) {
-	        dprintf_reg(stddeb, "RegSetValue // key not found ... so create it !\n");
-		if ((dwRet = RegCreateKey(hKey, lpSubKey, &hRetKey)) != ERROR_SUCCESS) {
-			fprintf(stderr, "RegSetValue // key creation error %08lX !\n", dwRet);
-			return dwRet;
-			}
-		}
-	lpKey = (LPKEYSTRUCT)GlobalLock(hRetKey);
-	if (lpKey == NULL) return ERROR_BADKEY;
-	if (lpKey->lpValue != NULL) free(lpKey->lpValue);
-	lpKey->lpValue = malloc(strlen(lpVal) + 1);
-	strcpy(lpKey->lpValue, lpVal);
-	dprintf_reg(stddeb,"RegSetValue // successful key='%s' val='%s' !\n", lpSubKey, lpKey->lpValue);
-	return ERROR_SUCCESS;
+    HKEY       	hRetKey;
+    LPKEYSTRUCT	lpKey;
+    LONG       	dwRet;
+    dprintf_reg(stddeb, "RegSetValue(%08lX, '%s', %08lX, '%s', %08lX);\n",
+		hKey, lpSubKey, dwType, lpVal, dwIgnored);
+    if (lpSubKey == NULL) return ERROR_INVALID_PARAMETER;
+    if (lpVal == NULL) return ERROR_INVALID_PARAMETER;
+    if ((dwRet = RegOpenKey(hKey, lpSubKey, &hRetKey)) != ERROR_SUCCESS) {
+	dprintf_reg(stddeb, "RegSetValue // key not found ... so create it !\n");
+	if ((dwRet = RegCreateKey(hKey, lpSubKey, &hRetKey)) != ERROR_SUCCESS) {
+	    fprintf(stderr, "RegSetValue // key creation error %08lX !\n", dwRet);
+	    return dwRet;
+	}
+    }
+    lpKey = (LPKEYSTRUCT)GlobalLock(hRetKey);
+    if (lpKey == NULL) return ERROR_BADKEY;
+    if (lpKey->lpValue != NULL) free(lpKey->lpValue);
+    lpKey->lpValue = malloc(strlen(lpVal) + 1);
+    strcpy(lpKey->lpValue, lpVal);
+    dprintf_reg(stddeb,"RegSetValue // successful key='%s' val='%s' !\n", lpSubKey, lpKey->lpValue);
+    return ERROR_SUCCESS;
 }
 
 
@@ -249,7 +248,7 @@ LONG RegQueryValue(HKEY hKey, LPCSTR lpSubKey, LPSTR lpVal, LONG FAR *lpcb)
 	if ((dwRet = RegOpenKey(hKey, lpSubKey, &hRetKey)) != ERROR_SUCCESS) {
 		fprintf(stderr, "RegQueryValue // key not found !\n");
 		return dwRet;
-		}
+	}
 	lpKey = (LPKEYSTRUCT)GlobalLock(hRetKey);
 	if (lpKey == NULL) return ERROR_BADKEY;
 	if (lpKey->lpValue != NULL) {

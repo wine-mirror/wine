@@ -1,7 +1,7 @@
 name	OLE2
 id	15
 
-1 stub OleBuildVersion
+1 pascal OleBuildVersion() OleBuildVersion
 2 pascal OleInitialize(ptr) OleInitialize
 3 pascal OleUninitialize() OleUninitialize
 4 stub DLLGETCLASSOBJECT

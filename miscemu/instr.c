@@ -98,6 +98,10 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
         case 0x67:
             long_addr = !long_addr;  /* addr size prefix */
             break;
+        case 0xf0:  /* lock */
+        case 0xf2:  /* repne */
+        case 0xf3:  /* repe */
+            break;
         default:
             prefix = 0;  /* no more prefixes */
             break;
@@ -115,6 +119,7 @@ BOOL INSTR_EmulateInstruction( struct sigcontext_struct *context )
     {
       case 0xcd: /* int <XX> */
             instr++;
+            /* FIXME: should check if handler has been changed */
 	    if (!do_int(*instr, context))
             {
 		fprintf(stderr,"Unexpected Windows interrupt %x\n", *instr);

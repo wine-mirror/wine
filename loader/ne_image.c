@@ -50,6 +50,18 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
     pModuleTable = NE_MODULE_TABLE( pModule );
 
     if (!pSeg->filepos) return TRUE;  /* No file image, just return */
+	
+	if (pSeg->flags & NE_SEGFLAGS_ITERATED)
+	{
+		fprintf(stderr, "Sorry, iterated segments are not supported\n"
+			"Please report that %*.*s, segment %d is such a segment\n",
+			*((BYTE*)pModule + pModule->name_table), 
+			*((BYTE*)pModule + pModule->name_table), 
+			(char *)pModule + pModule->name_table + 1,
+			segnum
+		);
+		exit(1);
+	}
 
     fd = MODULE_OpenFile( hModule );
     dprintf_module( stddeb, "Loading segment %d, selector=%04x\n",
@@ -277,6 +289,9 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
  */
 void NE_FixupPrologs( HMODULE hModule )
 {
+#ifdef WINELIB
+	fprintf(stderr,"NE_FixupPrologs should not be called for libwine\n");
+#else
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
     WORD dgroup = 0;
@@ -357,6 +372,7 @@ void NE_FixupPrologs( HMODULE hModule )
             p += (sel == 0xff) ? 6 : 3;  
         }
     }
+#endif
 }
 
 

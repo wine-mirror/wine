@@ -14,7 +14,7 @@
 #include <syscall.h>
 #endif
 
-#include "wine.h"
+#include "debugger.h"
 #include "prototypes.h"
 #include "miscemu.h"
 #include "registers.h"
@@ -53,37 +53,20 @@ static void win_fault(int signal, struct sigcontext_struct context_struct)
 static void win_fault(int signal, int code, struct sigcontext *context)
 {
 #endif
-
-#if !(defined (linux) || defined (__NetBSD__))
-    int i, *dump;
-#endif
-
-    if(signal == SIGTRAP) EIP--;   /* Back up over the int3 instruction. */
-    else if (CS == WINE_CODE_SELECTOR)
+    if (signal != SIGTRAP)
     {
-	fprintf(stderr, "Segmentation fault in Wine program (%x:%lx)."
-		        "  Please debug\n", CS, EIP );
+        if (CS == WINE_CODE_SELECTOR)
+        {
+            fprintf(stderr, "Segmentation fault in Wine program (%x:%lx)."
+                            "  Please debug\n", CS, EIP );
+        }
+        else if (INSTR_EmulateInstruction( context )) return;
+        fprintf(stderr,"In win_fault %x:%lx\n", CS, EIP );
     }
-    else if (INSTR_EmulateInstruction( context )) return;
-
     XUngrabPointer(display, CurrentTime);
     XUngrabServer(display);
     XFlush(display);
-    fprintf(stderr,"In win_fault %x:%lx\n", CS, EIP );
-#if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__)
-    wine_debug(signal, (int *)context);  /* Enter our debugger */
-#else
-    fprintf(stderr,"Stack: %x:%x\n", SS, ESP );
-    dump = (int*) context;
-    for(i=0; i<22; i++) 
-    {
-	fprintf(stderr," %8.8x", *dump++);
-	if ((i % 8) == 7)
-	    fprintf(stderr,"\n");
-    }
-    fprintf(stderr,"\n");
-    exit(1);
-#endif
+    wine_debug( signal, context );  /* Enter our debugger */
 }
 
 void init_wine_signals(void)

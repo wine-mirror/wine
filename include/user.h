@@ -14,8 +14,8 @@
 
 #ifdef WINELIB
 
-#define USER_HEAP_ALLOC(f,size) LocalAlloc (f, size)
-#define USER_HEAP_REALLOC(handle,size,f) LocalReAlloc (handle,size,f)
+#define USER_HEAP_ALLOC(size) LocalAlloc (LMEM_FIXED, size)
+#define USER_HEAP_REALLOC(handle,size) LocalReAlloc (handle,size,LMEM_FIXED)
 #define USER_HEAP_LIN_ADDR(handle) LocalLock (handle)
 #define USER_HEAP_SEG_ADDR(handle) LocalLock (handle)
 #define USER_HEAP_FREE(handle) LocalFree (handle)

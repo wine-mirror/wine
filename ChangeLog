@@ -1,4 +1,169 @@
 ----------------------------------------------------------------------
+Wed Jul  5 19:06:35 1995  Alexandre Julliard  <alex@numenor>
+
+	* [controls/scroll.c]
+	Fixed drawing bug that caused part of a non-client scroll bar
+	to be painted even when the scroll-bar was hidden.
+
+	* [debugger/break.c] [debugger/dbg.y]
+	Rewrote breakpoint handling to work in 16-bit mode.
+	Implemented single-stepping ('step' and 'next' instructions).
+
+	* [debugger/debug.l]
+	Format specifier is now a separate token.
+	Entering an empty line at the debugger prompt causes the previous
+	command to be repeated, like under gdb.
+	
+	* [debugger/debug.l] [debugger/registers.c]
+	Differentiate 16-bit and 32-bit registers without taking current
+	mode into account ($eax is always 32-bit, $ax always 16-bit).
+
+	* [debugger/stack.c]
+	Fixed stack information routines to differentiate between 16-bit
+	and 32-bit stacks.
+
+	* [loader/task.c]
+	Option -debug now sets a breakpoint at the first instruction of
+	every loaded task.
+
+	* [miscemu/instr.c]
+	Added handling of lock, repe and repne prefixes.
+
+	* [objects/dib.c]
+	Changed StretchDIBits() to do the correct thing, even if it's still
+	not really optimal.
+
+	* [windows/graphics.c]
+	Fixes in RoundRect(), thanks to Babak Masalehdan.
+
+	* [windows/message.c]
+	Tried to fix mouse event handling with respect to disabled
+	windows.
+
+	* [windows/painting.c]
+	Clear WIN_NEEDS_NCPAINT flag before sending WM_NCPAINT to avoid
+	infinite loops.
+
+	* [windows/win.c]
+	Fixed IsWindowVisible() to return FALSE when one of the parent
+	windows is hidden.
+
+Sat Jul  1 22:08:21 1995   Martin von Loewis <loewis@informatik.hu-berlin.de>
+
+	* [if1632/compobj.spec][misc/compobj.c]
+	CoGetMalloc: New function
+	Added relay entries for COMPOBJ ordinals above 100
+	CoInitialize: Changed parameter to DWORD
+
+	* [if1632/ole2.spec]
+	Exported implementation of OleBuildVersion
+
+	* [if1632/ole2disp.spec][misc/ole2disp.c][misc/Imakefile]
+	ole2disp.c: New file
+	SysAllocString, SysReallocString, SysAllocStringLen,
+	SysReAllocStringLen, SysFreeString, SysStringLen: new functions
+
+	* [if1632/ole2nls.spec][include/winnls.h][misc/ole2nls.c]
+	CompareStringA: New function
+
+Thu Jun 29 19:42:02 1995  Marcus Meissner  <msmeissn@faui01.informatik.uni-erlangen.de>
+	* [objects/font.c] [if1632/gdi.spec]
+	New stubs for CreateScalableFontResource, GetGlyphOutline.
+
+Thu Jun 29 13:47:08 GMT 1995  Göran Thyni  (goran@norrsken.bildbasen.se)
+
+	* [misc/commdlg.c]
+	Extensive changes and bug fixes to FileDialog handling,
+        behaves more like native Windows.
+
+Wed Jun 28 13:04:44 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+
+        * [controls/listbox.c] [controls/combo.c]
+	Some minor optimizations.
+	
+	* [memory/local.c]
+	LOCAL_FindFreeBlock(): Never use the last one.
+	
+	* [memory/global.c]
+	GlobalReAlloc(): GMEM_MODIFY must not be ignored when size==0.
+	
+	* [misc/file.c]
+	read() returns an error when length==0. This is not what Windows
+	programs expect, so pay attention to this in _lread(). Changed this
+	in _lwrite(), _hread(), _hwrite(), too.
+
+	* [loader/resource.c]
+	LoadIcon(): Ignore bih->biSizeImage, some icons have wrong values in
+	there.
+	
+	* [if1632/shell.spec] [misc/shell.c]
+	Wrong spec file entries caused havoc: HKEY has 32 bit, not 16.
+	Accept some more combinations of parameters in the Reg..() functions.
+	
+	* [if1632/toolhelp.spec]
+	Make InterruptRegister() and InterruptUnregister() return false.
+
+	* [windows/hook.c]
+	CallNextHookEx() used to crash when called with a null hhook. Fixed.
+
+Wed Jun 28 10:14:34 1995  Martin von Loewis  <martin@informatik.hu-berlin.de>
+
+	* [include/neexe.h][loader/ne_image.c]
+	NE_LoadSegment: Detect iterated segments
+
+	* [misc/ole2nls.c]
+	LOCALE_SLONGDATE: fixed typo
+
+	* [miscemu/int5c.c]
+	Reordered include files to avoid conflicts with Linux libc.5.1
+
+	* [rc/winerc.c]
+	Added -b option to process binary resource files into C arrays
+
+	* [include/callback.h]
+	CallWndProc: Added dummy ds parameter for libwine
+
+	* [include/gdi.h][include/user.h]
+	USER_HEAP_ALLOC, GDI_HEAP_ALLOC: dropped flags parameter
+
+	* [include/ldt.h][include/stackframe.h]
+	defined segment conversion macros for libwine
+
+	* [misc/atom.c]
+	Defined USER_HeapSel for libwine
+
+	* [misc/main.c]
+	Disable -dll option for libwine
+
+	* [misc/user.c]
+	removed GetFreeSystemResources, SystemHeapInfo from libwine for now
+
+	* [toolkit/heap.c]
+	fixed LocalLock prototype
+
+	* [toolkit/sup.c]
+	sync'ed load_mz_header, load_ne_header with structures
+
+	* [toolkit/winmain.c]
+	Disabled resource DLLs for libwine for now
+
+Mon Jun 26 19:30:24 1995  Hans de Graaff  (graaff@twi72.twi.tudelft.nl)
+
+	* [misc/main.c]
+	Fixed -enhanced option to report a 386 CPU instead of a 286.
+
+Fri Jun 23 23:18:25 1995  Marcus Meissner  <msmeissn@faui01.informatik.uni-erlangen.de>
+
+	* [misc/dos_fs.c]
+	Remove maximum open dosdirent limit (fixing the winfile.exe
+ 	problem) by using telldir()/seekdir().
+	
+Fri Jun 23 13:42:25 1995  Hans de Graaff  (graaff@twi72.twi.tudelft.nl)
+
+	* [misc/profile.c]
+	Fixed problem parsing empty lines within sections in .ini files.
+
+----------------------------------------------------------------------
 Mon Jun 19 20:29:50 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
 
 	* [debugger/*.c]

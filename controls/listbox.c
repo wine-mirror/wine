@@ -40,120 +40,6 @@
 
 #define LIST_HEAP_SIZE 0x10000
 
-/* Design notes go here */
-
-static LONG LBCreate( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetDlgCode( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBDestroy( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBVScroll( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBHScroll( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBLButtonDown( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBLButtonUp( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBRButtonUp( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBMouseMove( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBKeyDown( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBChar( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSetFont( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSetRedraw( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBPaint( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSetFocus( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBKillFocus( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBResetContent( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBDir( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBAddString( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetText( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBInsertString( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBDeleteString( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBFindString( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetCaretIndex( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetCount( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetCurSel( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetHorizontalExtent(HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetItemData( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetItemHeight( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetItemRect( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetSel( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetSelCount( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetSelItems( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetTextLen( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBGetTopIndex( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSelectString( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSelItemRange( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSetCaretIndex( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSetColumnWidth( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSetHorizontalExtent(HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSetItemData( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSetTabStops( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSetCurSel( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSetSel( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSetTopIndex( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-static LONG LBSetItemHeight( HWND hwnd, WORD message, WORD wParam, LONG lParam );
-
-typedef struct {
-  WORD   message;
-  LONG  (*handler)(HWND, WORD, WPARAM, LPARAM);
-} msg_tbl;
-
-static msg_tbl methods[] = {
-  {WM_CREATE, LBCreate},
-  {WM_DESTROY, LBDestroy},
-  {WM_GETDLGCODE, LBGetDlgCode},
-  {WM_VSCROLL, LBVScroll},
-  {WM_HSCROLL, LBHScroll},
-  {WM_LBUTTONDOWN, LBLButtonDown},
-  {WM_LBUTTONUP, LBLButtonUp},
-  {WM_RBUTTONUP, LBRButtonUp},
-  {WM_LBUTTONDBLCLK, LBRButtonUp},
-  {WM_MOUSEMOVE, LBMouseMove},
-  {WM_KEYDOWN, LBKeyDown},
-  {WM_CHAR, LBChar},
-  {WM_SETFONT, LBSetFont},
-  {WM_SETREDRAW, LBSetRedraw},
-  {WM_PAINT, LBPaint},
-  {WM_SETFOCUS, LBSetFocus},
-  {WM_KILLFOCUS, LBKillFocus},
-  {LB_RESETCONTENT, LBResetContent},
-  {LB_DIR, LBDir},
-  {LB_ADDSTRING, LBAddString},
-  {LB_INSERTSTRING, LBInsertString},
-  {LB_DELETESTRING, LBDeleteString},
-  {LB_FINDSTRING, LBFindString},
-  {LB_GETCARETINDEX, LBGetCaretIndex},
-  {LB_GETCOUNT, LBGetCount},
-  {LB_GETCURSEL, LBGetCurSel},
-  {LB_GETHORIZONTALEXTENT, LBGetHorizontalExtent},
-  {LB_GETITEMDATA, LBGetItemData},
-  {LB_GETITEMHEIGHT, LBGetItemHeight},
-  {LB_GETITEMRECT, LBGetItemRect},
-  {LB_GETSEL, LBGetSel},
-  {LB_GETSELCOUNT, LBGetSelCount},
-  {LB_GETSELITEMS, LBGetSelItems},
-  {LB_GETTEXT, LBGetText},
-  {LB_GETTEXTLEN, LBGetTextLen},
-  {LB_GETTOPINDEX, LBGetTopIndex},
-  {LB_SELECTSTRING, LBSelectString},
-  {LB_SELITEMRANGE, LBSelItemRange},
-  {LB_SETCARETINDEX, LBSetCaretIndex},
-  {LB_SETCOLUMNWIDTH, LBSetColumnWidth},
-  {LB_SETHORIZONTALEXTENT, LBSetHorizontalExtent},
-  {LB_SETITEMDATA, LBSetItemData},
-  {LB_SETTABSTOPS, LBSetTabStops},
-  {LB_SETCURSEL, LBSetCurSel},
-  {LB_SETSEL, LBSetSel},
-  {LB_SETTOPINDEX, LBSetTopIndex},
-  {LB_SETITEMHEIGHT, LBSetItemHeight}
-};
-
-BOOL OWNER_DRAWN(LPHEADLIST lphl)
-{
-  return lphl->dwStyle & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE);
-}
-
-BOOL HasStrings(LPHEADLIST lphl)
-{
-  return (lphl->dwStyle & LBS_HASSTRINGS) || !OWNER_DRAWN(lphl);
-}
-
 static void ListBoxInitialize(LPHEADLIST lphl)
 {
   lphl->lpFirst        = NULL;
@@ -187,8 +73,10 @@ void CreateListBoxStruct(HWND hwnd, WORD CtlType, LONG styles, HWND parent)
   lphl->hParent        = parent;
   lphl->StdItemHeight  = 15; /* FIXME: should get the font height */
   lphl->dwStyle        = styles;
+  lphl->OwnerDrawn     = styles & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE);
+  lphl->HasStrings     = (styles & LBS_HASSTRINGS) || !lphl->OwnerDrawn;
 
-  if (OWNER_DRAWN(lphl)) {
+  if (lphl->OwnerDrawn) {
     LISTSTRUCT dummyls;
     
     lphl->hDrawItemStruct = USER_HEAP_ALLOC(sizeof(DRAWITEMSTRUCT));
@@ -302,7 +190,7 @@ LPLISTSTRUCT ListBoxGetItem(LPHEADLIST lphl, UINT uIndex)
 void ListBoxDrawItem (HWND hwnd, LPHEADLIST lphl, HDC hdc, LPLISTSTRUCT lpls, 
 		      RECT *rect, WORD itemAction, WORD itemState)
 {
-  if (OWNER_DRAWN(lphl)) {
+  if (lphl->OwnerDrawn) {
     DRAWITEMSTRUCT   *dis = USER_HEAP_LIN_ADDR(lphl->hDrawItemStruct);
 
     dis->CtlID    = lpls->mis.CtlID;
@@ -446,7 +334,8 @@ int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPSTR newstr)
   lphl->ItemsCount++;
   
   hStr = 0;
-  if (HasStrings(lphl)) {
+  if (lphl->HasStrings) {
+    dprintf_listbox(stddeb,"  string: %s\n", newstr);
     hStr = LIST_HEAP_ALLOC(lphl, LMEM_MOVEABLE, strlen(newstr) + 1);
     str = (LPSTR)LIST_HEAP_ADDR(lphl, hStr);
     if (str == NULL) return LB_ERRSPACE;
@@ -480,7 +369,7 @@ int ListBoxAddString(LPHEADLIST lphl, LPSTR newstr)
 {
     UINT pos = (UINT) -1;
     
-    if (HasStrings(lphl) && (lphl->dwStyle & LBS_SORT)) {
+    if (lphl->HasStrings && (lphl->dwStyle & LBS_SORT)) {
 	LPLISTSTRUCT lpls = lphl->lpFirst;
 	for (pos = 0; lpls != NULL; lpls = lpls->lpNext, pos++)
 	    if (strcmp(lpls->itemText, newstr) >= 0)
@@ -502,7 +391,7 @@ int ListBoxGetText(LPHEADLIST lphl, UINT uIndex, LPSTR OutStr)
   lpls = ListBoxGetItem (lphl, uIndex);
   if (lpls == NULL) return LB_ERR;
 
-  if (!HasStrings(lphl)) {
+  if (!lphl->HasStrings) {
     *((long *)OutStr) = lpls->mis.itemData;
     return 4;
   }
@@ -578,12 +467,12 @@ int ListBoxFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr)
 
   if (First > lphl->ItemsCount) return LB_ERR;
 
-  if (HasStrings(lphl)) lpMatchStr = PTR_SEG_TO_LIN(MatchStr);
+  if (lphl->HasStrings) lpMatchStr = PTR_SEG_TO_LIN(MatchStr);
   
   lpls = ListBoxGetItem(lphl, First);
   Count = 0;
   while(lpls != NULL) {
-    if (HasStrings(lphl)) {
+    if (lphl->HasStrings) {
       if (strstr(lpls->itemText, lpMatchStr) == lpls->itemText) return Count;
     } else if (lphl->dwStyle & LBS_SORT) {
       /* XXX Do a compare item */
@@ -600,7 +489,7 @@ int ListBoxFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr)
   lpls = lphl->lpFirst;
 
   while (Count < First) {
-    if (HasStrings(lphl)) {
+    if (lphl->HasStrings) {
       if (strstr(lpls->itemText, lpMatchStr) == lpls->itemText) return Count;
     } else if (lphl->dwStyle & LBS_SORT) {
       /* XXX Do a compare item */
@@ -794,7 +683,7 @@ int ListBoxFindNextMatch(LPHEADLIST lphl, WORD wChar)
   UINT	       count,first;
 
   if ((char)wChar < ' ') return LB_ERR;
-  if (!HasStrings(lphl)) return LB_ERR;
+  if (!lphl->HasStrings) return LB_ERR;
 
   lpls = lphl->lpFirst;
   
@@ -815,7 +704,7 @@ int ListBoxFindNextMatch(LPHEADLIST lphl, WORD wChar)
 /***********************************************************************
  *           LBCreate
  */
-static LONG LBCreate(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBCreate(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST   lphl;
   RECT rect;
@@ -836,7 +725,7 @@ static LONG LBCreate(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBDestroy
  */
-static LONG LBDestroy(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBDestroy(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
@@ -850,7 +739,7 @@ static LONG LBDestroy(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBVScroll
  */
-static LONG LBVScroll(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBVScroll(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   int  y;
@@ -899,7 +788,7 @@ static LONG LBVScroll(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBHScroll
  */
-static LONG LBHScroll(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBHScroll(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl;
   int        y;
@@ -956,7 +845,7 @@ static LONG LBHScroll(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBLButtonDown
  */
-static LONG LBLButtonDown(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBLButtonDown(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   WORD       wRet;
@@ -992,7 +881,7 @@ static LONG LBLButtonDown(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBLButtonUp
  */
-static LONG LBLButtonUp(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBLButtonUp(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
@@ -1007,7 +896,7 @@ static LONG LBLButtonUp(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBRButtonUp
  */
-static LONG LBRButtonUp(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBRButtonUp(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
@@ -1020,7 +909,7 @@ static LONG LBRButtonUp(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBMouseMove
  */
-static LONG LBMouseMove(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBMouseMove(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   int  y;
@@ -1071,7 +960,7 @@ static LONG LBMouseMove(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBKeyDown
  */
-static LONG LBKeyDown(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBKeyDown(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   WORD       newFocused = lphl->ItemFocused;
@@ -1143,7 +1032,7 @@ static LONG LBKeyDown(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBChar
  */
-static LONG LBChar(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBChar(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   WORD       newFocused;
@@ -1169,7 +1058,7 @@ static LONG LBChar(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetRedraw
  */
-static LONG LBSetRedraw(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSetRedraw(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST  lphl = ListBoxGetStorageHeader(hwnd);
 
@@ -1182,7 +1071,7 @@ static LONG LBSetRedraw(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetFont
  */
-static LONG LBSetFont(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSetFont(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST  lphl = ListBoxGetStorageHeader(hwnd);
 
@@ -1197,7 +1086,7 @@ static LONG LBSetFont(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBPaint
  */
-static LONG LBPaint(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBPaint(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST   lphl = ListBoxGetStorageHeader(hwnd);
   LPLISTSTRUCT lpls;
@@ -1260,7 +1149,7 @@ static LONG LBPaint(HWND hwnd, WORD message, WORD wParam, LONG lParam)
       lpls->itemRect.right  = rect.right;
 
       dprintf_listbox(stddeb,"drawing item: %d %d %d %d %d\n",rect.left,top,rect.right,top+height,lpls->itemState);
-      if (OWNER_DRAWN(lphl)) {
+      if (lphl->OwnerDrawn) {
 	ListBoxDrawItem (hwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_DRAWENTIRE, 0);
 	if (lpls->itemState)
 	  ListBoxDrawItem (hwnd, lphl, hdc, lpls, &lpls->itemRect, ODA_SELECT, ODS_SELECTED);
@@ -1286,7 +1175,7 @@ static LONG LBPaint(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetFocus
  */
-static LONG LBSetFocus(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSetFocus(HWND hwnd, WORD wParam, LONG lParam)
 {
   dprintf_listbox(stddeb,"ListBox WM_SETFOCUS !\n");
 
@@ -1296,7 +1185,7 @@ static LONG LBSetFocus(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBKillFocus
  */
-static LONG LBKillFocus(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBKillFocus(HWND hwnd, WORD wParam, LONG lParam)
 {
   dprintf_listbox(stddeb,"ListBox WM_KILLFOCUS !\n");
 
@@ -1308,7 +1197,7 @@ static LONG LBKillFocus(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBResetContent
  */
-static LONG LBResetContent(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBResetContent(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
@@ -1321,7 +1210,7 @@ static LONG LBResetContent(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBDir
  */
-static LONG LBDir(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBDir(HWND hwnd, WORD wParam, LONG lParam)
 {
   WORD   wRet;
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
@@ -1335,12 +1224,12 @@ static LONG LBDir(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBAddString
  */
-static LONG LBAddString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBAddString(HWND hwnd, WORD wParam, LONG lParam)
 {
   WORD  wRet;
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
-  if (HasStrings(lphl))
+  if (lphl->HasStrings)
     wRet = ListBoxAddString(lphl, (LPSTR)PTR_SEG_TO_LIN(lParam));
   else
     wRet = ListBoxAddString(lphl, (LPSTR)lParam);
@@ -1352,7 +1241,7 @@ static LONG LBAddString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBGetText
  */
-static LONG LBGetText(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetText(HWND hwnd, WORD wParam, LONG lParam)
 {
   LONG   wRet;
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
@@ -1366,12 +1255,12 @@ static LONG LBGetText(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBInsertString
  */
-static LONG LBInsertString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBInsertString(HWND hwnd, WORD wParam, LONG lParam)
 {
   WORD  wRet;
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
-  if (HasStrings(lphl))
+  if (lphl->HasStrings)
     wRet = ListBoxInsertString(lphl, wParam, (LPSTR)PTR_SEG_TO_LIN(lParam));
   else
     wRet = ListBoxInsertString(lphl, wParam, (LPSTR)lParam);
@@ -1383,7 +1272,7 @@ static LONG LBInsertString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBDeleteString
  */
-static LONG LBDeleteString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBDeleteString(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   LONG lRet = ListBoxDeleteString(lphl,wParam);
@@ -1395,7 +1284,7 @@ static LONG LBDeleteString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBFindString
  */
-static LONG LBFindString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBFindString(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   return ListBoxFindString(lphl, wParam, lParam);
@@ -1404,7 +1293,7 @@ static LONG LBFindString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBGetCaretIndex
  */
-static LONG LBGetCaretIndex(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetCaretIndex(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   return lphl->ItemFocused;
@@ -1413,7 +1302,7 @@ static LONG LBGetCaretIndex(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBGetCount
  */
-static LONG LBGetCount(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetCount(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST  lphl;
 
@@ -1424,7 +1313,7 @@ static LONG LBGetCount(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBGetCurSel
  */
-static LONG LBGetCurSel(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetCurSel(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST  lphl;
 
@@ -1437,7 +1326,7 @@ static LONG LBGetCurSel(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBGetHorizontalExtent
  */
-static LONG LBGetHorizontalExtent(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetHorizontalExtent(HWND hwnd, WORD wParam, LONG lParam)
 {    
   return 0;
 }
@@ -1445,7 +1334,7 @@ static LONG LBGetHorizontalExtent(HWND hwnd, WORD message, WORD wParam, LONG lPa
 /***********************************************************************
  *           LBGetItemHeight
  */
-static LONG LBGetItemHeight(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetItemHeight(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   LPLISTSTRUCT lpls = ListBoxGetItem (lphl, wParam);
@@ -1457,7 +1346,7 @@ static LONG LBGetItemHeight(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBGetItemRect
  */
-static LONG LBGetItemRect(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetItemRect(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   return ListBoxGetItemRect(lphl, wParam, PTR_SEG_TO_LIN(lParam));
@@ -1466,7 +1355,7 @@ static LONG LBGetItemRect(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBGetSel
  */
-static LONG LBGetSel(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetSel(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   return ListBoxGetSel(lphl, wParam);
@@ -1475,7 +1364,7 @@ static LONG LBGetSel(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBGetSelCount
  */
-static LONG LBGetSelCount(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetSelCount(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   LPLISTSTRUCT lpls;
@@ -1497,7 +1386,7 @@ static LONG LBGetSelCount(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBGetSelItems
  */
-static LONG LBGetSelItems(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetSelItems(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST  lphl = ListBoxGetStorageHeader(hwnd);
   LPLISTSTRUCT lpls;
@@ -1525,19 +1414,19 @@ static LONG LBGetSelItems(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBGetTextLen
  */
-static LONG LBGetTextLen(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetTextLen(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST   lphl = ListBoxGetStorageHeader(hwnd);
   LPLISTSTRUCT lpls = ListBoxGetItem(lphl,wParam);
 
-  if (lpls == NULL || !HasStrings(lphl)) return LB_ERR;
+  if (lpls == NULL || !lphl->HasStrings) return LB_ERR;
   return strlen(lpls->itemText);
 }
 
 /***********************************************************************
  *           LBGetDlgCode
  */
-static LONG LBGetDlgCode(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetDlgCode(HWND hwnd, WORD wParam, LONG lParam)
 {
   return DLGC_WANTARROWS | DLGC_WANTCHARS;
 }
@@ -1545,7 +1434,7 @@ static LONG LBGetDlgCode(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBGetTopIndex
  */
-static LONG LBGetTopIndex(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetTopIndex(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
@@ -1556,7 +1445,7 @@ static LONG LBGetTopIndex(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSelectString
  */
-static LONG LBSelectString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSelectString(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   WORD  wRet;
@@ -1571,7 +1460,7 @@ static LONG LBSelectString(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSelItemRange
  */
-static LONG LBSelItemRange(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSelItemRange(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST   lphl = ListBoxGetStorageHeader(hwnd);
   LPLISTSTRUCT lpls;
@@ -1604,7 +1493,7 @@ static LONG LBSelItemRange(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetCaretIndex
  */
-static LONG LBSetCaretIndex(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSetCaretIndex(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
@@ -1622,7 +1511,7 @@ static LONG LBSetCaretIndex(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetColumnWidth
  */
-static LONG LBSetColumnWidth(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSetColumnWidth(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   lphl->ColumnsWidth = wParam;
@@ -1633,7 +1522,7 @@ static LONG LBSetColumnWidth(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetHorizontalExtent
  */
-static LONG LBSetHorizontalExtent(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSetHorizontalExtent(HWND hwnd, WORD wParam, LONG lParam)
 {
   return 0;
 }
@@ -1641,7 +1530,7 @@ static LONG LBSetHorizontalExtent(HWND hwnd, WORD message, WORD wParam, LONG lPa
 /***********************************************************************
  *           LBGetItemData
  */
-static LONG LBGetItemData(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBGetItemData(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   dprintf_listbox(stddeb, "LB_GETITEMDATA wParam=%x\n", wParam);
@@ -1651,7 +1540,7 @@ static LONG LBGetItemData(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetItemData
  */
-static LONG LBSetItemData(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSetItemData(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   dprintf_listbox(stddeb, "LB_SETITEMDATA  wParam=%x  lParam=%lx\n", wParam, lParam);
@@ -1661,7 +1550,7 @@ static LONG LBSetItemData(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetTabStops
  */
-static LONG LBSetTabStops(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSetTabStops(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST  lphl;
 
@@ -1685,7 +1574,7 @@ static LONG LBSetTabStops(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetCurSel
  */
-static LONG LBSetCurSel(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSetCurSel(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   WORD  wRet;
@@ -1704,7 +1593,7 @@ static LONG LBSetCurSel(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetSel
  */
-static LONG LBSetSel(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSetSel(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   WORD wRet;
@@ -1720,7 +1609,7 @@ static LONG LBSetSel(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetTopIndex
  */
-static LONG LBSetTopIndex(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSetTopIndex(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
@@ -1737,7 +1626,7 @@ static LONG LBSetTopIndex(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 /***********************************************************************
  *           LBSetItemHeight
  */
-static LONG LBSetItemHeight(HWND hwnd, WORD message, WORD wParam, LONG lParam)
+static LONG LBSetItemHeight(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   WORD wRet;
@@ -1753,16 +1642,57 @@ static LONG LBSetItemHeight(HWND hwnd, WORD message, WORD wParam, LONG lParam)
  */
 LONG ListBoxWndProc(HWND hwnd, WORD message, WORD wParam, LONG lParam)
 { 
-  int idx = 0;
-  int table_size = sizeof (methods) / sizeof (msg_tbl);
-
-  while (idx < table_size) {
-    if (message == methods[idx].message) {
-      return (*(methods[idx].handler))(hwnd, message, wParam, lParam);
+    switch (message) {
+     case WM_CREATE: return LBCreate(hwnd, wParam, lParam);
+     case WM_DESTROY: return LBDestroy(hwnd, wParam, lParam);
+     case WM_GETDLGCODE: return LBGetDlgCode(hwnd, wParam, lParam);
+     case WM_VSCROLL: return LBVScroll(hwnd, wParam, lParam);
+     case WM_HSCROLL: return LBHScroll(hwnd, wParam, lParam);
+     case WM_LBUTTONDOWN: return LBLButtonDown(hwnd, wParam, lParam);
+     case WM_LBUTTONUP: return LBLButtonUp(hwnd, wParam, lParam);
+     case WM_RBUTTONUP: return LBRButtonUp(hwnd, wParam, lParam);
+     case WM_LBUTTONDBLCLK: return LBRButtonUp(hwnd, wParam, lParam);
+     case WM_MOUSEMOVE: return LBMouseMove(hwnd, wParam, lParam);
+     case WM_KEYDOWN: return LBKeyDown(hwnd, wParam, lParam);
+     case WM_CHAR: return LBChar(hwnd, wParam, lParam);
+     case WM_SETFONT: return LBSetFont(hwnd, wParam, lParam);
+     case WM_SETREDRAW: return LBSetRedraw(hwnd, wParam, lParam);
+     case WM_PAINT: return LBPaint(hwnd, wParam, lParam);
+     case WM_SETFOCUS: return LBSetFocus(hwnd, wParam, lParam);
+     case WM_KILLFOCUS: return LBKillFocus(hwnd, wParam, lParam);
+     case LB_RESETCONTENT: return LBResetContent(hwnd, wParam, lParam);
+     case LB_DIR: return LBDir(hwnd, wParam, lParam);
+     case LB_ADDSTRING: return LBAddString(hwnd, wParam, lParam);
+     case LB_INSERTSTRING: return LBInsertString(hwnd, wParam, lParam);
+     case LB_DELETESTRING: return LBDeleteString(hwnd, wParam, lParam);
+     case LB_FINDSTRING: return LBFindString(hwnd, wParam, lParam);
+     case LB_GETCARETINDEX: return LBGetCaretIndex(hwnd, wParam, lParam);
+     case LB_GETCOUNT: return LBGetCount(hwnd, wParam, lParam);
+     case LB_GETCURSEL: return LBGetCurSel(hwnd, wParam, lParam);
+     case LB_GETHORIZONTALEXTENT: return LBGetHorizontalExtent(hwnd, wParam, lParam);
+     case LB_GETITEMDATA: return LBGetItemData(hwnd, wParam, lParam);
+     case LB_GETITEMHEIGHT: return LBGetItemHeight(hwnd, wParam, lParam);
+     case LB_GETITEMRECT: return LBGetItemRect(hwnd, wParam, lParam);
+     case LB_GETSEL: return LBGetSel(hwnd, wParam, lParam);
+     case LB_GETSELCOUNT: return LBGetSelCount(hwnd, wParam, lParam);
+     case LB_GETSELITEMS: return LBGetSelItems(hwnd, wParam, lParam);
+     case LB_GETTEXT: return LBGetText(hwnd, wParam, lParam);
+     case LB_GETTEXTLEN: return LBGetTextLen(hwnd, wParam, lParam);
+     case LB_GETTOPINDEX: return LBGetTopIndex(hwnd, wParam, lParam);
+     case LB_SELECTSTRING: return LBSelectString(hwnd, wParam, lParam);
+     case LB_SELITEMRANGE: return LBSelItemRange(hwnd, wParam, lParam);
+     case LB_SETCARETINDEX: return LBSetCaretIndex(hwnd, wParam, lParam);
+     case LB_SETCOLUMNWIDTH: return LBSetColumnWidth(hwnd, wParam, lParam);
+     case LB_SETHORIZONTALEXTENT: return LBSetHorizontalExtent(hwnd, wParam, lParam);
+     case LB_SETITEMDATA: return LBSetItemData(hwnd, wParam, lParam);
+     case LB_SETTABSTOPS: return LBSetTabStops(hwnd, wParam, lParam);
+     case LB_SETCURSEL: return LBSetCurSel(hwnd, wParam, lParam);
+     case LB_SETSEL: return LBSetSel(hwnd, wParam, lParam);
+     case LB_SETTOPINDEX: return LBSetTopIndex(hwnd, wParam, lParam);
+     case LB_SETITEMHEIGHT: return LBSetItemHeight(hwnd, wParam, lParam);
     }
-    idx++;
-  }
-  return DefWindowProc (hwnd, message, wParam, lParam);
+    
+    return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
 /************************************************************************

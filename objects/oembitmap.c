@@ -11,6 +11,7 @@
 #include <X11/xpm.h>
 #include "gdi.h"
 #include "bitmap.h"
+#include "callback.h"
 #include "color.h"
 #include "icon.h"
 #include "stddebug.h"
@@ -280,9 +281,10 @@ HBITMAP OBM_LoadBitmap( WORD id )
 
     if (!OBM_InitColorSymbols()) return 0;
     
-    if (!OBM_CreateBitmaps( OBM_Pixmaps_Data[id].data,
-                            OBM_Pixmaps_Data[id].color,
-                            FALSE, &hbitmap, &hbitmask ))
+    if (!CallTo32_LargeStack( (int(*)())OBM_CreateBitmaps, 5,
+                              OBM_Pixmaps_Data[id].data,
+                              OBM_Pixmaps_Data[id].color,
+                              FALSE, &hbitmap, &hbitmask ))
     {
         fprintf( stderr, "Error creating OEM bitmap %d\n", OBM_FIRST+id );
         return 0;
@@ -308,8 +310,9 @@ HICON OBM_LoadIcon( WORD id )
     if (!(hicon = GlobalAlloc( GMEM_MOVEABLE, sizeof(ICONALLOC) ))) return 0;
     pIcon = (ICONALLOC *)GlobalLock( hicon );
 
-    if (!OBM_CreateBitmaps( OBM_Icons_Data[id], TRUE, TRUE,
-                            &pIcon->hBitmap, &pIcon->hBitMask ))
+    if (!CallTo32_LargeStack( (int(*)())OBM_CreateBitmaps, 5,
+                              OBM_Icons_Data[id], TRUE, TRUE,
+                              &pIcon->hBitmap, &pIcon->hBitMask ))
     {
         fprintf( stderr, "Error creating OEM icon %d\n", OIC_FIRST+id );
         GlobalFree( hicon );

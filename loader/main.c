@@ -11,13 +11,13 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <string.h>
 #include <errno.h>
 #include "windows.h"
+#include "debugger.h"
 #include "dos_fs.h"
 #include "dlls.h"
 #include "miscemu.h"
 #include "neexe.h"
-#include "wineopts.h"
-#include "task.h"
 #include "options.h"
+#include "task.h"
 #include "pe_image.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -115,7 +115,7 @@ int _WinMain(int argc, char **argv)
         }
     }
 
-    if (Options.debug) wine_debug(0, NULL);
+    if (Options.debug) DEBUG_SetBreakpoints( TRUE );  /* Setup breakpoints */
 
     Yield();  /* Start the first task */
     fprintf( stderr, "WinMain: Should never happen: returned from Yield()\n" );
