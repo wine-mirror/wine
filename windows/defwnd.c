@@ -301,18 +301,28 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
 	{
+	    RECT16 rect;
+
 	    if (!wndPtr->class->hbrBackground) return 0;
+
+	    /*  Since WM_ERASEBKGND may receive either a window dc or a    */ 
+	    /*  client dc, the area to be erased has to be retrieved from  */
+	    /*  the device context.      				   */
+	    GetClipBox16( (HDC16)wParam, &rect );
 
 	    if (wndPtr->class->hbrBackground <= (HBRUSH16)(COLOR_MAX+1))
             {
                 HBRUSH hbrush = CreateSolidBrush( 
                        GetSysColor(((DWORD)wndPtr->class->hbrBackground)-1));
-                 FillWindow16( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
-                             (HDC16)wParam, hbrush);
+		PaintRect16( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
+				(HDC16)wParam, hbrush, &rect);
                  DeleteObject( hbrush );
+	    }
+	    else
+	    {
+		PaintRect16( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
+			(HDC16)wParam, wndPtr->class->hbrBackground, &rect );
             }
-            else FillWindow16( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
-                             (HDC16)wParam, wndPtr->class->hbrBackground );
 	    return 1;
 	}
 
