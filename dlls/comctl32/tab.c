@@ -7,7 +7,7 @@
  *
  * TODO:
  *  Image list support
- *  Unicode support
+ *  Unicode support (under construction)
  *
  * FIXME:
  *  UpDown control not displayed until after a tab is clicked on
@@ -17,6 +17,7 @@
 
 #include "winbase.h"
 #include "commctrl.h"
+#include "comctl32.h"
 #include "debugtools.h"
 #include "cache.h"
 #include <math.h>
@@ -27,8 +28,7 @@ typedef struct
 {
   UINT   mask;
   DWORD  dwState;
-  LPSTR  pszText;
-  INT    cchTextMax;
+  LPWSTR pszText;
   INT    iImage;
   LPARAM lParam;
   RECT   rect;    /* bounding rectangle of the item relative to the
@@ -49,7 +49,6 @@ typedef struct
   HCURSOR    hcurArrow;       /* handle to the current cursor */
   HIMAGELIST himl;            /* handle to a image list (may be 0) */
   HWND       hwndToolTip;     /* handle to tab's tooltip */
-  UINT       cchTextMax;
   INT        leftmostVisible; /* Used for scrolling, this member contains
 			       * the index of the first visible item */
   INT        iSelected;       /* the currently selected item */
@@ -1067,8 +1066,8 @@ static void TAB_SetItemBounds (HWND hwnd)
       int num = 2;
 
       /* Calculate how wide the tab is depending on the text it contains */
-      GetTextExtentPoint32A(hdc, infoPtr->items[curItem].pszText, 
-                            strlen(infoPtr->items[curItem].pszText), &size);
+      GetTextExtentPoint32W(hdc, infoPtr->items[curItem].pszText,
+                            lstrlenW(infoPtr->items[curItem].pszText), &size);
 
       /* under Windows, there seems to be a minimum width of 2x the height
        * for button style tabs */
@@ -1430,7 +1429,7 @@ TAB_DrawItemInterior
     SetTextColor(hdc, GetSysColor((iItem == infoPtr->iHotTracked) ? COLOR_HIGHLIGHT : COLOR_BTNTEXT));
 
     /* get the rectangle that the text fits in */
-    DrawTextA(hdc, infoPtr->items[iItem].pszText, -1, 
+    DrawTextW(hdc, infoPtr->items[iItem].pszText, -1,
               &rcText, DT_CALCRECT);
 
     /*
@@ -1537,13 +1536,13 @@ TAB_DrawItemInterior
       hOldFont = SelectObject(hdc, hFont);
     }
 
-    ExtTextOutA(hdc,
+    ExtTextOutW(hdc,
        ((lStyle & TCS_VERTICAL) && (lStyle & TCS_BOTTOM)) ? drawRect->right : drawRect->left,
        ((lStyle & TCS_VERTICAL) && !(lStyle & TCS_BOTTOM)) ? drawRect->bottom : drawRect->top,
        0,
        0,
        infoPtr->items[iItem].pszText,
-       strlen(infoPtr->items[iItem].pszText),
+       lstrlenW(infoPtr->items[iItem].pszText),
        0);
 
 
@@ -2168,11 +2167,11 @@ TAB_Paint (HWND hwnd, WPARAM wParam)
 }
 
 static LRESULT
-TAB_InsertItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
+TAB_InsertItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {    
   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
   TCITEMA *pti;
-  INT iItem, len;
+  INT iItem;
   RECT rect;
   
   GetClientRect (hwnd, &rect);
@@ -2217,13 +2216,9 @@ TAB_InsertItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
   }
   
   infoPtr->items[iItem].mask = pti->mask;
-  if (pti->mask & TCIF_TEXT) {
-    len = strlen (pti->pszText);
-    infoPtr->items[iItem].pszText = COMCTL32_Alloc (len+1);
-    strcpy (infoPtr->items[iItem].pszText, pti->pszText);
-    infoPtr->items[iItem].cchTextMax = pti->cchTextMax;
-  }
-  
+  if (pti->mask & TCIF_TEXT)
+    Str_SetPtrAtoW (&infoPtr->items[iItem].pszText, pti->pszText);
+
   if (pti->mask & TCIF_IMAGE)
     infoPtr->items[iItem].iImage = pti->iImage;
   
@@ -2234,10 +2229,80 @@ TAB_InsertItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TAB_InvalidateTabArea(hwnd, infoPtr);
   
   TRACE("[%04x]: added item %d '%s'\n",
-	hwnd, iItem, infoPtr->items[iItem].pszText);
+	hwnd, iItem, debugstr_w(infoPtr->items[iItem].pszText));
 
   return iItem;
 }
+
+
+static LRESULT
+TAB_InsertItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+  TCITEMW *pti;
+  INT iItem;
+  RECT rect;
+
+  GetClientRect (hwnd, &rect);
+  TRACE("Rect: %x T %i, L %i, B %i, R %i\n", hwnd,
+        rect.top, rect.left, rect.bottom, rect.right);
+
+  pti = (TCITEMW *)lParam;
+  iItem = (INT)wParam;
+
+  if (iItem < 0) return -1;
+  if (iItem > infoPtr->uNumItem)
+    iItem = infoPtr->uNumItem;
+
+  if (infoPtr->uNumItem == 0) {
+    infoPtr->items = COMCTL32_Alloc (sizeof (TAB_ITEM));
+    infoPtr->uNumItem++;
+    infoPtr->iSelected = 0;
+  }
+  else {
+    TAB_ITEM *oldItems = infoPtr->items;
+
+    infoPtr->uNumItem++;
+    infoPtr->items = COMCTL32_Alloc (sizeof (TAB_ITEM) * infoPtr->uNumItem);
+
+    /* pre insert copy */
+    if (iItem > 0) {
+      memcpy (&infoPtr->items[0], &oldItems[0],
+	      iItem * sizeof(TAB_ITEM));
+    }
+
+    /* post insert copy */
+    if (iItem < infoPtr->uNumItem - 1) {
+      memcpy (&infoPtr->items[iItem+1], &oldItems[iItem],
+	      (infoPtr->uNumItem - iItem - 1) * sizeof(TAB_ITEM));
+
+  }
+  
+    if (iItem <= infoPtr->iSelected)
+      infoPtr->iSelected++;
+
+    COMCTL32_Free (oldItems);
+  }
+
+  infoPtr->items[iItem].mask = pti->mask;
+  if (pti->mask & TCIF_TEXT)
+    Str_SetPtrW (&infoPtr->items[iItem].pszText, pti->pszText);
+
+  if (pti->mask & TCIF_IMAGE)
+    infoPtr->items[iItem].iImage = pti->iImage;
+  
+  if (pti->mask & TCIF_PARAM)
+    infoPtr->items[iItem].lParam = pti->lParam;
+  
+  TAB_SetItemBounds(hwnd);
+  TAB_InvalidateTabArea(hwnd, infoPtr);
+  
+  TRACE("[%04x]: added item %d '%s'\n",
+	hwnd, iItem, debugstr_w(infoPtr->items[iItem].pszText));
+
+  return iItem;
+}
+
 
 static LRESULT 
 TAB_SetItemSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -2263,7 +2328,7 @@ TAB_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
   TCITEMA *tabItem; 
   TAB_ITEM *wineItem;
-  INT    iItem, len;
+  INT    iItem;
 
   iItem = (INT)wParam;
   tabItem = (LPTCITEMA)lParam;
@@ -2285,14 +2350,47 @@ TAB_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (tabItem->mask & TCIF_STATE) 
     wineItem->dwState = tabItem->dwState;
 
-  if (tabItem->mask & TCIF_TEXT) {
-   len = strlen (tabItem->pszText);
+  if (tabItem->mask & TCIF_TEXT)
+   Str_SetPtrAtoW(&wineItem->pszText, tabItem->pszText);
 
-   if (len>wineItem->cchTextMax)
-     wineItem->pszText = COMCTL32_ReAlloc (wineItem->pszText, len+1);
+  /* Update and repaint tabs */
+  TAB_SetItemBounds(hwnd);
+  TAB_InvalidateTabArea(hwnd,infoPtr);
 
-   strcpy (wineItem->pszText, tabItem->pszText);
+  return TRUE;
   }
+
+
+static LRESULT
+TAB_SetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+  TCITEMW *tabItem;
+  TAB_ITEM *wineItem;
+  INT    iItem;
+
+  iItem = (INT)wParam;
+  tabItem = (LPTCITEMW)lParam;
+
+  TRACE("%d %p\n", iItem, tabItem);
+  if ((iItem<0) || (iItem>=infoPtr->uNumItem)) return FALSE;
+
+  wineItem = &infoPtr->items[iItem];
+
+  if (tabItem->mask & TCIF_IMAGE)
+    wineItem->iImage = tabItem->iImage;
+
+  if (tabItem->mask & TCIF_PARAM)
+    wineItem->lParam = tabItem->lParam;
+
+  if (tabItem->mask & TCIF_RTLREADING)
+    FIXME("TCIF_RTLREADING\n");
+
+  if (tabItem->mask & TCIF_STATE)
+    wineItem->dwState = tabItem->dwState;
+
+  if (tabItem->mask & TCIF_TEXT)
+   Str_SetPtrW(&wineItem->pszText, tabItem->pszText);
 
   /* Update and repaint tabs */
   TAB_SetItemBounds(hwnd);
@@ -2300,6 +2398,7 @@ TAB_SetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   return TRUE;
 }
+
 
 static LRESULT 
 TAB_GetItemCount (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -2321,7 +2420,8 @@ TAB_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
   iItem = (INT)wParam;
   tabItem = (LPTCITEMA)lParam;
   TRACE("\n");
-  if ((iItem<0) || (iItem>=infoPtr->uNumItem)) return FALSE;
+  if ((iItem<0) || (iItem>=infoPtr->uNumItem))
+    return FALSE;
 
   wineItem=& infoPtr->items[iItem];
 
@@ -2338,10 +2438,46 @@ TAB_GetItemA (HWND hwnd, WPARAM wParam, LPARAM lParam)
     tabItem->dwState = wineItem->dwState;
 
   if (tabItem->mask & TCIF_TEXT) 
-   lstrcpynA (tabItem->pszText, wineItem->pszText, tabItem->cchTextMax);
+   Str_GetPtrWtoA (wineItem->pszText, tabItem->pszText, tabItem->cchTextMax);
 
   return TRUE;
 }
+
+
+static LRESULT 
+TAB_GetItemW (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  TAB_INFO *infoPtr = TAB_GetInfoPtr(hwnd);
+  TCITEMW *tabItem;
+  TAB_ITEM *wineItem;
+  INT    iItem;
+
+  iItem = (INT)wParam;
+  tabItem = (LPTCITEMW)lParam;
+  TRACE("\n");
+  if ((iItem<0) || (iItem>=infoPtr->uNumItem))
+    return FALSE;
+
+  wineItem=& infoPtr->items[iItem];
+
+  if (tabItem->mask & TCIF_IMAGE)
+    tabItem->iImage = wineItem->iImage;
+
+  if (tabItem->mask & TCIF_PARAM)
+    tabItem->lParam = wineItem->lParam;
+
+  if (tabItem->mask & TCIF_RTLREADING)
+    FIXME("TCIF_RTLREADING\n");
+
+  if (tabItem->mask & TCIF_STATE)
+    tabItem->dwState = wineItem->dwState;
+
+  if (tabItem->mask & TCIF_TEXT)
+   Str_GetPtrW (wineItem->pszText, tabItem->pszText, tabItem->cchTextMax);
+
+  return TRUE;
+}
+
 
 static LRESULT 
 TAB_DeleteItem (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -2629,15 +2765,13 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_GetItemA (hwnd, wParam, lParam);
       
     case TCM_GETITEMW:
-      FIXME("Unimplemented msg TCM_GETITEMW\n");
-      return 0;
+      return TAB_GetItemW (hwnd, wParam, lParam);
       
     case TCM_SETITEMA:
       return TAB_SetItemA (hwnd, wParam, lParam);
       
     case TCM_SETITEMW:
-      FIXME("Unimplemented msg TCM_SETITEMW\n");
-      return 0;
+      return TAB_SetItemW (hwnd, wParam, lParam);
       
     case TCM_DELETEITEM:
       return TAB_DeleteItem (hwnd, wParam, lParam);
@@ -2658,11 +2792,10 @@ TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       return TAB_SetCurSel (hwnd, wParam);
       
     case TCM_INSERTITEMA:
-      return TAB_InsertItem (hwnd, wParam, lParam);
+      return TAB_InsertItemA (hwnd, wParam, lParam);
       
     case TCM_INSERTITEMW:
-      FIXME("Unimplemented msg TCM_INSERTITEMW\n");
-      return 0;
+      return TAB_InsertItemW (hwnd, wParam, lParam);
       
     case TCM_SETITEMEXTRA:
       FIXME("Unimplemented msg TCM_SETITEMEXTRA\n");
