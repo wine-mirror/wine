@@ -421,3 +421,47 @@ DWORD WINAPI UserSeeUserDo(WORD wReqType, WORD wParam1, WORD wParam2, WORD wPara
     }
 }
 
+DWORD WINAPI RegisterLogonProcess(HANDLE32 hprocess,BOOL32 x) {
+	FIXME(win32,"(%d,%d),stub!\n",hprocess,x);
+	return 1;
+}
+
+HANDLE32 /* HWINSTA */ WINAPI CreateWindowStation32W(
+	LPWSTR winstation,DWORD res1,DWORD desiredaccess,
+	LPSECURITY_ATTRIBUTES lpsa
+) {
+	FIXME(win32,"(%s,0x%08lx,0x%08lx,%p),stub!\n",debugstr_w(winstation),
+		res1,desiredaccess,lpsa
+	);
+	return 0xdeadcafe;
+}
+
+BOOL32 WINAPI SetProcessWindowStation(/*HWINSTA*/ HANDLE32 hWinSta) {
+	FIXME(win32,"(%d),stub!\n",hWinSta);
+	return TRUE;
+}
+
+BOOL32 WINAPI SetUserObjectSecurity(
+	HANDLE32 hObj,
+	/*LPSECURITY_INFORMATION*/LPVOID pSIRequested,
+	/*LPSECURITY_DESCRIPTOR*/LPVOID pSID
+) {
+	FIXME(win32,"(%d,%p,%p),stub!\n",hObj,pSIRequested,pSID);
+	return TRUE;
+}
+
+/*HDESK*/HANDLE32 WINAPI CreateDesktop32W(
+	LPWSTR lpszDesktop,LPWSTR lpszDevice,LPDEVMODE32W pDevmode,
+	DWORD dwFlags,DWORD dwDesiredAccess,LPSECURITY_ATTRIBUTES lpsa
+) {
+	FIXME(win32,"(%s,%s,%p,0x%08lx,0x%08lx,%p),stub!\n",
+		debugstr_w(lpszDesktop),debugstr_w(lpszDevice),pDevmode,
+		dwFlags,dwDesiredAccess,lpsa
+	);
+	return 0xcafedead;
+}
+
+DWORD WINAPI SetWindowStationUser(DWORD x1,DWORD x2) {
+	FIXME(win32,"(%d,%d),stub!\n",x1,x2);
+	return 1;
+}

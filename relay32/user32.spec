@@ -69,7 +69,7 @@ type	win32
  66 stdcall CreateCaret(long long long long) CreateCaret32
  67 stdcall CreateCursor(long long long long long ptr ptr) CreateCursor32
  68 stub CreateDesktopA
- 69 stub CreateDesktopW
+ 69 stdcall CreateDesktopW(wstr wstr ptr long long ptr) CreateDesktop32W
  70 stdcall CreateDialogIndirectParamA(long ptr long ptr long) CreateDialogIndirectParam32A
  71 stdcall CreateDialogIndirectParamAorW (long ptr long ptr long) CreateDialogIndirectParam32AorW
  72 stdcall CreateDialogIndirectParamW(long ptr long ptr long) CreateDialogIndirectParam32W
@@ -86,7 +86,7 @@ type	win32
  83 stdcall CreateWindowExA(long str str long long long long long long long long ptr) CreateWindowEx32A
  84 stdcall CreateWindowExW(long wstr wstr long long long long long long long long ptr) CreateWindowEx32W
  85 stub CreateWindowStationA
- 86 stub CreateWindowStationW
+ 86 stdcall CreateWindowStationW(wstr long long ptr) CreateWindowStation32W
  87 stub DdeAbandonTransaction
  88 stub DdeAccessData
  89 stub DdeAddData
@@ -434,7 +434,7 @@ type	win32
 431 stdcall RegisterClipboardFormatA(str) RegisterClipboardFormat32A
 432 stdcall RegisterClipboardFormatW(wstr) RegisterClipboardFormat32W
 433 stdcall RegisterHotKey(long long long long) RegisterHotKey
-434 stub RegisterLogonProcess
+434 stdcall RegisterLogonProcess(long long) RegisterLogonProcess
 435 stub RegisterSystemThread
 436 stdcall RegisterTasklist (long) RegisterTaskList32
 437 stdcall RegisterWindowMessageA(ptr) RegisterWindowMessage32A
@@ -496,7 +496,7 @@ type	win32
 493 stub SetMessageExtraInfo
 494 stdcall SetMessageQueue(long) SetMessageQueue32
 495 stdcall SetParent(long long) SetParent32
-496 stub SetProcessWindowStation
+496 stdcall SetProcessWindowStation(long) SetProcessWindowStation
 497 stdcall SetPropA(long str long) SetProp32A
 498 stdcall SetPropW(long wstr long) SetProp32W
 499 stdcall SetRect(ptr long long long long) SetRect32
@@ -514,14 +514,14 @@ type	win32
 511 stdcall SetTimer(long long long ptr) SetTimer32
 512 stdcall SetUserObjectInformationA(long long long long) SetUserObjectInformation32A
 513 stub SetUserObjectInformationW
-514 stub SetUserObjectSecurity
+514 stdcall SetUserObjectSecurity(long ptr ptr) SetUserObjectSecurity
 515 stdcall SetWindowContextHelpId(long long) SetWindowContextHelpId
 516 stub SetWindowFullScreenState
 517 stdcall SetWindowLongA(long long long) SetWindowLong32A
 518 stdcall SetWindowLongW(long long long) SetWindowLong32W
 519 stdcall SetWindowPlacement(long ptr) SetWindowPlacement32
 520 stdcall SetWindowPos(long long long long long long long) SetWindowPos32
-521 stub SetWindowStationUser
+521 stdcall SetWindowStationUser(long long) SetWindowStationUser
 522 stdcall SetWindowTextA(long str) SetWindowText32A
 523 stdcall SetWindowTextW(long wstr) SetWindowText32W
 524 stdcall SetWindowWord(long long long) SetWindowWord32

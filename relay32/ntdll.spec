@@ -55,7 +55,7 @@ type	win32
 052 stub NtAccessCheck
 053 stub NtAccessCheckAndAuditAlarm
 054 stub NtAdjustGroupsToken
-055 stub NtAdjustPrivilegesToken
+055 stdcall NtAdjustPrivilegesToken(long long long long long long) NtAdjustPrivilegesToken
 056 stub NtAlertResumeThread
 057 stub NtAlertThread
 058 stub NtAllocateLocallyUniqueId
@@ -79,8 +79,8 @@ type	win32
 076 stub NtCreateMailslotFile
 077 stub NtCreateMutant
 078 stub NtCreateNamedPipeFile
-079 stub NtCreatePagingFile
-080 stub NtCreatePort
+079 stdcall NtCreatePagingFile(long long long long) NtCreatePagingFile
+080 stdcall NtCreatePort(long long long long long) NtCreatePort
 081 stub NtCreateProcess
 082 stub NtCreateProfile
 083 stub NtCreateSection
@@ -96,8 +96,8 @@ type	win32
 093 stub NtDeleteValueKey
 094 stdcall NtDeviceIoControlFile(long long long long long long long long long long) NtDeviceIoControlFile
 095 stub NtDisplayString
-096 stub NtDuplicateObject
-097 stub NtDuplicateToken
+096 stdcall NtDuplicateObject(long long long long long long long) NtDuplicateObject
+097 stdcall NtDuplicateToken(long long long long long long) NtDuplicateToken
 098 stub NtEnumerateBus
 099 stub NtEnumerateKey
 100 stub NtEnumerateValueKey
@@ -133,12 +133,12 @@ type	win32
 130 stub NtOpenMutant
 131 stub NtOpenObjectAuditAlarm
 132 stub NtOpenProcess
-133 stub NtOpenProcessToken
+133 stdcall NtOpenProcessToken(long long long) NtOpenProcessToken
 134 stub NtOpenSection
 135 stub NtOpenSemaphore
 136 stub NtOpenSymbolicLinkObject
 137 stub NtOpenThread
-138 stub NtOpenThreadToken
+138 stdcall NtOpenThreadToken(long long long long) NtOpenThreadToken
 139 stub NtOpenTimer
 140 stub NtPlugPlayControl
 141 stub NtPrivilegeCheck
@@ -169,7 +169,7 @@ type	win32
 166 stub NtQuerySymbolicLinkObject
 167 stub NtQuerySystemEnvironmentValue
 168 stdcall NtQuerySystemInformation(long long long long) NtQuerySystemInformation
-169 stub NtQuerySystemTime
+169 stdcall NtQuerySystemTime(ptr) GetSystemTimeAsFileTime
 170 stub NtQueryTimer
 171 stdcall NtQueryTimerResolution(long long long) NtQueryTimerResolution
 172 stdcall NtQueryValueKey(long long long long long long) NtQueryValueKey
@@ -208,7 +208,7 @@ type	win32
 205 stub NtSetInformationKey
 206 stub NtSetInformationObject
 207 stdcall NtSetInformationProcess(long long long long) NtSetInformationProcess
-208 stub NtSetInformationThread
+208 stdcall NtSetInformationThread(long long long long) NtSetInformationThread
 209 stub NtSetInformationToken
 210 stub NtSetIntervalProfile
 211 stub NtSetIoCompletion
@@ -224,7 +224,7 @@ type	win32
 221 stdcall NtSetTimer(long long long long long long) NtSetTimer
 222 stub NtSetTimerResolution
 223 stub NtSetValueKey
-224 stub NtSetVolumeInformationFile
+224 stdcall NtSetVolumeInformationFile(long long long long long) NtSetVolumeInformationFile
 225 stub NtShutdownSystem
 226 stub NtStartProfile
 227 stub NtStopProfile
@@ -308,7 +308,7 @@ type	win32
 305 stub RtlCopyUnicodeString
 306 stdcall RtlCreateAcl(ptr long long) RtlCreateAcl
 307 stub RtlCreateAndSetSD
-308 stub RtlCreateEnvironment
+308 stdcall RtlCreateEnvironment(long long) RtlCreateEnvironment
 309 stdcall RtlCreateHeap(long long long) HeapCreate
 310 stub RtlCreateProcessParameters
 311 stub RtlCreateQueryDebugBuffer
@@ -331,8 +331,8 @@ type	win32
 328 stub RtlDeleteElementGenericTable
 329 stub RtlDeleteRegistryValue
 330 stub RtlDeleteResource
-331 stub RtlDeleteSecurityObject
-332 stub RtlDestroyEnvironment
+331 stdcall RtlDeleteSecurityObject(long) RtlDeleteSecurityObject
+332 stdcall RtlDestroyEnvironment(long) RtlDestroyEnvironment
 333 stub RtlDestroyHeap
 334 stub RtlDestroyProcessParameters
 335 stub RtlDestroyQueryDebugBuffer
@@ -384,7 +384,7 @@ type	win32
 381 stub RtlGetCompressionWorkSpaceSize
 382 stub RtlGetControlSecurityDescriptor
 383 stub RtlGetCurrentDirectory_U
-384 stub RtlGetDaclSecurityDescriptor
+384 stdcall RtlGetDaclSecurityDescriptor(long long long long) RtlGetDaclSecurityDescriptor
 385 stub RtlGetElementGenericTable
 386 stub RtlGetFullPathName_U
 387 stub RtlGetGroupSecurityDescriptor
@@ -440,7 +440,7 @@ type	win32
 437 stub RtlMultiByteToUnicodeSize
 438 stub RtlNewInstanceSecurityObject
 439 stub RtlNewSecurityGrantedAccess
-440 stub RtlNewSecurityObject
+440 stdcall RtlNewSecurityObject(long long long long long long) RtlNewSecurityObject
 441 stdcall RtlNormalizeProcessParams(ptr) RtlNormalizeProcessParams
 442 stdcall RtlNtStatusToDosError(long) RtlNtStatusToDosError
 443 stub RtlNumberGenericTableElements
@@ -454,7 +454,7 @@ type	win32
 451 stub RtlPrefixString
 452 stub RtlPrefixUnicodeString
 453 stub RtlProtectHeap
-454 stub RtlQueryEnvironmentVariable_U
+454 stdcall RtlQueryEnvironmentVariable_U(long long long) RtlQueryEnvironmentVariable_U
 455 stub RtlQueryInformationAcl
 456 stub RtlQueryProcessBackTraceInformation
 457 stub RtlQueryProcessDebugInformation
@@ -484,7 +484,7 @@ type	win32
 481 stub RtlSetCurrentDirectory_U
 482 stub RtlSetCurrentEnvironment
 483 stdcall RtlSetDaclSecurityDescriptor(ptr long ptr long) RtlSetDaclSecurityDescriptor
-484 stub RtlSetEnvironmentVariable
+484 stdcall RtlSetEnvironmentVariable(long long long) RtlSetEnvironmentVariable
 485 stdcall RtlSetGroupSecurityDescriptor(ptr ptr long) RtlSetGroupSecurityDescriptor
 486 stub RtlSetInformationAcl
 487 stdcall RtlSetOwnerSecurityDescriptor(ptr ptr long) RtlSetOwnerSecurityDescriptor
