@@ -85,6 +85,7 @@ WORD WINAPI GetFreeSystemResources16( WORD resType )
         break;
     }
     FreeLibrary16( gdi_inst );
+    TRACE_(local)("<- userPercent %d, gdiPercent %d\n", userPercent, gdiPercent);
     return (WORD)min( userPercent, gdiPercent );
 }
 
