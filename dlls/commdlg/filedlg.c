@@ -3456,7 +3456,7 @@ static BOOL CALLBACK FD32_Init(LPARAM lParam, PFD31_DATA lfs, DWORD data)
         if (priv->ofnA->Flags & OFN_ENABLEHOOK)
             if (priv->ofnA->lpfnHook)
                 lfs->hook = TRUE;
-        lfs->ofnW = HeapAlloc(GetProcessHeap(), 0, sizeof(*lfs->ofnW));
+        lfs->ofnW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*lfs->ofnW));
         FD31_MapOfnStructA(priv->ofnA, lfs->ofnW, lfs->open);
     }
 

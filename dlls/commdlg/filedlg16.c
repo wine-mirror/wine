@@ -170,6 +170,7 @@ static BOOL CALLBACK FD16_Init(LPARAM lParam, PFD31_DATA lfs, DWORD data)
         if (priv->ofn16->lpfnHook)
             lfs->hook = TRUE;
 
+    lfs->ofnW = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*lfs->ofnW));
     FD16_MapOfnStruct16(priv->ofn16, lfs->ofnW, lfs->open);
 
     if (! FD16_GetTemplate(lfs)) return FALSE;
@@ -280,6 +281,7 @@ static void CALLBACK FD16_Destroy(PFD31_DATA lfs)
             GlobalFree16(priv->hGlobal16);
         }
         FD31_FreeOfnW(lfs->ofnW);
+        HeapFree(GetProcessHeap(), 0, lfs->ofnW);
     }
 }
 
