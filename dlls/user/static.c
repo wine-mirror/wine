@@ -16,6 +16,35 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * NOTES
+ *
+ * This code was audited for completeness against the documented features
+ * of Comctl32.dll version 6.0 on Oct. 4, 2004, by Dimitrie O. Paun.
+ * 
+ * Unless otherwise noted, we believe this code to be complete, as per
+ * the specification mentioned above.
+ * If you discover missing features, or bugs, please note them below.
+ * 
+ * TODO:
+ *
+ *   Styles
+ *   - SS_CENTERIMAGE
+ *   - SS_EDITCONTROL
+ *   - SS_ENDELLIPSIS
+ *   - SS_ENHMETAFILE
+ *   - SS_PATHELLIPSIS
+ *   - SS_REALSIZECONTROL
+ *   - SS_REALSIZEIMAGE
+ *   - SS_RIGHTJUST
+ *   - SS_WORDELLIPSIS
+ *
+ *   Notifications
+ *   - STN_DISABLE
+ *   - STN_ENABLE
+ *
+ *   Messages
+ *   - STM_SETIMAGE: IMAGE_CURSOR, IMAGE_ENHMETAFILE
  */
 
 #include <stdarg.h>
@@ -68,7 +97,7 @@ static pfPaint staticPaintFunc[SS_TYPEMASK+1] =
     STATIC_PaintOwnerDrawfn, /* SS_OWNERDRAW */
     STATIC_PaintBitmapfn,    /* SS_BITMAP */
     NULL,                    /* SS_ENHMETAFILE */
-    STATIC_PaintEtchedfn,    /* SS_ETCHEDHORIZ */
+    STATIC_PaintEtchedfn,    /* SS_ETCHEDHORZ */
     STATIC_PaintEtchedfn,    /* SS_ETCHEDVERT */
     STATIC_PaintEtchedfn,    /* SS_ETCHEDFRAME */
 };
@@ -128,7 +157,7 @@ static HBITMAP STATIC_SetBitmap( HWND hwnd, HBITMAP hBitmap, DWORD style )
 	ERR("huh? hBitmap!=0, but not bitmap\n");
     	return 0;
     }
-    hOldBitmap = (HBITMAP)SetWindowLongPtrA( hwnd, HICON_GWL_OFFSET, (LONG_PTR)hBitmap );
+    hOldBitmap = (HBITMAP)SetWindowLongPtrW( hwnd, HICON_GWL_OFFSET, (LONG_PTR)hBitmap );
     if (hBitmap)
     {
         BITMAP bm;
@@ -220,7 +249,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
                                      LPARAM lParam, BOOL unicode )
 {
     LRESULT lResult = 0;
-    LONG full_style = GetWindowLongA( hwnd, GWL_STYLE );
+    LONG full_style = GetWindowLongW( hwnd, GWL_STYLE );
     LONG style = full_style & SS_TYPEMASK;
 
     switch (uMsg)
@@ -275,8 +304,8 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
 
     case WM_NCCREATE:
 	if (full_style & SS_SUNKEN)
-            SetWindowLongA( hwnd, GWL_EXSTYLE,
-                            GetWindowLongA( hwnd, GWL_EXSTYLE ) | WS_EX_STATICEDGE );
+            SetWindowLongW( hwnd, GWL_EXSTYLE,
+                            GetWindowLongW( hwnd, GWL_EXSTYLE ) | WS_EX_STATICEDGE );
 
 	if(unicode)
 	    lParam = (LPARAM)(((LPCREATESTRUCTW)lParam)->lpszName);
@@ -378,6 +407,12 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
         switch(wParam) {
 	case IMAGE_BITMAP:
 	    lResult = (LRESULT)STATIC_SetBitmap( hwnd, (HBITMAP)lParam, style );
+	    break;
+	case IMAGE_CURSOR:
+	    FIXME("STM_SETIMAGE: Unhandled type IMAGE_CURSOR\n");
+	    break;
+	case IMAGE_ENHMETAFILE:
+	    FIXME("STM_SETIMAGE: Unhandled type IMAGE_ENHMETAFILE\n");
 	    break;
 	case IMAGE_ICON:
 	    lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)lParam, style );
