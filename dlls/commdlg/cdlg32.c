@@ -52,8 +52,6 @@ HRESULT (WINAPI *COMDLG32_SHGetSpecialFolderLocation)(HWND,INT,LPITEMIDLIST *);
 DWORD (WINAPI *COMDLG32_SHGetDesktopFolder)(IShellFolder **);
 DWORD	(WINAPI *COMDLG32_SHGetFileInfoA)(LPCSTR,DWORD,SHFILEINFOA*,UINT,UINT);
 DWORD (WINAPI *COMDLG32_SHFree)(LPVOID);
-HRESULT (WINAPI *COMDLG32_StrRetToBufW)(LPSTRRET,LPITEMIDLIST,LPVOID,DWORD);
-HRESULT (WINAPI *COMDLG32_StrRetToBufA)(LPSTRRET,LPITEMIDLIST,LPVOID,DWORD);
 
 /* PATH */
 BOOL (WINAPI *COMDLG32_PathIsRootA)(LPCSTR x);
@@ -147,10 +145,13 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		COMDLG32_SHGetDesktopFolder = (void*)GetProcAddress(SHELL32_hInstance,"SHGetDesktopFolder");
 		COMDLG32_SHGetFileInfoA = (void*)GetProcAddress(SHELL32_hInstance,"SHGetFileInfoA");
 
-		/* FIXME - change the followings to call GetProcAddress
-		   when shlwapi.dll will work */
-		COMDLG32_StrRetToBufW = (void*)GetProcAddress(SHLWAPI_hInstance,"StrRetToBufW"); 
-		COMDLG32_StrRetToBufA = (void*)GetProcAddress(SHLWAPI_hInstance,"StrRetToBufA");
+		/* ### WARINIG ### 
+		We can't do a GetProcAddress to link to  StrRetToBuf[A|W] sine not all 
+		versions of the shlwapi are exporting these functions. When we are 
+		seperating the dlls then we have to dublicate code from shell32 into comdlg32. 
+		Till then just call these functions. These functions don't have any side effects 
+		so it won't break the use of any combination of native and buildin dll's (jsch) */
+
 		/* PATH */
 		COMDLG32_PathMatchSpecW = (void*)GetProcAddress(SHLWAPI_hInstance,"PathMatchSpecW");
 		COMDLG32_PathIsRootA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathIsRootA");

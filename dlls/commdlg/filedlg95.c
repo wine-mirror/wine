@@ -1908,7 +1908,7 @@ HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPSTR lpstrF
                                                      dwFlags, 
                                                      &str)))
   {
-      return COMDLG32_StrRetToBufA(&str, pidl,lpstrFileName, MAX_PATH);
+      return StrRetToBufA(&str, pidl,lpstrFileName, MAX_PATH);
   }
   return E_FAIL;
 }

@@ -717,7 +717,7 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBrowser *
         return S_OK;
 
     if (SUCCEEDED(IShellFolder_GetDisplayNameOf(fodInfos->Shell.FOIShellFolder, pidl, SHGDN_FORPARSING, &str)))
-    { if (SUCCEEDED(COMDLG32_StrRetToBufW(&str, pidl,szPathW, MAX_PATH)))
+    { if (SUCCEEDED(StrRetToBufW(&str, pidl,szPathW, MAX_PATH)))
       {
 	  if (COMDLG32_PathMatchSpecW(szPathW, fodInfos->ShellInfos.lpstrCurrentFilter))
           return S_OK;
