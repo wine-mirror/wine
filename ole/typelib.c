@@ -108,6 +108,10 @@ HRESULT WINAPI LoadTypeLib16(
     void * *pptLib) /* [out] Pointer to pointer to loaded type library */
 {
     FIXME(ole, "('%s',%p): stub\n",debugstr_w((LPWSTR)szFile),pptLib);
+
+    if (pptLib!=0)
+      *pptLib=0;
+
     return E_FAIL;
 }
 
@@ -127,8 +131,11 @@ HRESULT WINAPI LoadTypeLib32(
     void * *pptLib) /* [out] Pointer to pointer to loaded type library */
 {
     FIXME(ole, "('%s',%p): stub\n",debugstr_w(szFile),pptLib);
-    (long *)pptLib=0x123;
-    return S_OK;           /* fixme: pretend everything is OK*/
+
+    if (pptLib!=0)
+      *pptLib=0;
+
+    return E_FAIL;
 }
 
 /******************************************************************************
