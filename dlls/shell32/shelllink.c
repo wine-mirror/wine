@@ -343,21 +343,39 @@ static int ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *szX
     int i;
 
     if (!(hModule = LoadLibraryExA(szFileName, 0, LOAD_LIBRARY_AS_DATAFILE)))
+    {
+        TRACE("LoadLibraryExA (%s) failed, error %ld\n", szFileName, GetLastError());
         goto error1;
+    }
 
     if (nIndex)
+    {
         hResInfo = FindResourceA(hModule, MAKEINTRESOURCEA(nIndex), RT_GROUP_ICONA);
+        TRACE("FindResourceA (%s) called, return 0x%x, error %ld\n", szFileName, hResInfo, GetLastError());
+    }
     else
         if (EnumResourceNamesA(hModule, RT_GROUP_ICONA, &EnumResNameProc, (LONG) &hResInfo))
+        {
+            TRACE("EnumResourceNamesA failed, error %ld\n", GetLastError());
             goto error2;
+        }
 
     if (!hResInfo)
+    {
+        TRACE("ExtractFromEXEDLL failed, error %ld\n", GetLastError());
         goto error2;
+    }
 
     if (!(hResData = LoadResource(hModule, hResInfo)))
+    {
+        TRACE("LoadResource failed, error %ld\n", GetLastError());
         goto error2;
+    }
     if (!(pIconDir = LockResource(hResData)))
+    {
+        TRACE("LockResource failed, error %ld\n", GetLastError());
         goto error3;
+    }
 
     for (i = 0; i < pIconDir->idCount; i++)
         if ((pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth) > nMax)
@@ -369,14 +387,26 @@ static int ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *szX
     FreeResource(hResData);
 
     if (!(hResInfo = FindResourceA(hModule, lpName, RT_ICONA)))
+    {
+        TRACE("Second FindResourceA failed, error %ld\n", GetLastError());
         goto error2;
+    }
     if (!(hResData = LoadResource(hModule, hResInfo)))
+    {
+        TRACE("Second LoadResource failed, error %ld\n", GetLastError());
         goto error2;
+    }
     if (!(pIcon = LockResource(hResData)))
+    {
+        TRACE("Second LockResource failed, error %ld\n", GetLastError());
         goto error3;
+    }
 
     if(!SaveIconResAsXPM(pIcon, szXPMFileName))
+    {
+        TRACE("Failed saving icon as XPM, error %ld\n", GetLastError());
         goto error3;
+    }
 
     FreeResource(hResData);
     FreeLibrary(hModule);
@@ -563,8 +593,10 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
     if (This->sWorkDir) work_dir = get_unix_file_name( This->sWorkDir );
 
     /* extract the icon */
-    if (!(icon_name = extract_icon( This->sIcoPath ? This->sIcoPath : This->sPath,
-                                    This->iIcoNdx ))) goto done;
+    if (!(icon_name = extract_icon( This->sIcoPath && strlen(This->sIcoPath) ? 
+                                      This->sIcoPath : This->sPath,
+                                      This->iIcoNdx ))) goto done;
+
 
     TRACE("linker app='%s' link='%s' mode=%s path='%s' args='%s' icon='%s' workdir='%s' descr='%s'\n",
         shell_link_app, link_name, bDesktop ? "desktop" : "menu", path_name,
@@ -582,7 +614,7 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
         argv[pos++] = "--path";
         argv[pos++] = path_name;
         argv[pos++] = bDesktop ? "--desktop" : "--menu";
-        if (This->sArgs)
+        if (This->sArgs && strlen(This->sArgs))
         {
             argv[pos++] = "--args";
             argv[pos++] = This->sArgs;
@@ -592,12 +624,12 @@ static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFile
             argv[pos++] = "--icon";
             argv[pos++] = icon_name;
         }
-        if (This->sWorkDir)
+        if (This->sWorkDir && strlen(This->sWorkDir))
         {
             argv[pos++] = "--workdir";
             argv[pos++] = This->sWorkDir;
         }
-        if (This->sDescription)
+        if (This->sDescription && strlen(This->sDescription))
         {
             argv[pos++] = "--descr";
             argv[pos++] = This->sDescription;
