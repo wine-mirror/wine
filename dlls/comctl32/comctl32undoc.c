@@ -659,7 +659,7 @@ DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 	/* within the old array */
 	if (hdsa->nMaxCount > nIndex) {
 	    /* within the allocated space, set a new boundary */
-	    hdsa->nItemCount = nIndex;
+	    hdsa->nItemCount = nIndex + 1;
 	}
 	else {
 	    /* resize the block of memory */
@@ -672,6 +672,7 @@ DSA_SetItem (const HDSA hdsa, INT nIndex, LPVOID pSrc)
 		return FALSE;
 
 	    hdsa->nMaxCount = nNewItems;
+	    hdsa->nItemCount = nIndex + 1;
 	    hdsa->pData = lpTemp;
 	}    
     }
