@@ -1095,9 +1095,8 @@
         </itemizedlist>
         <para>
           It should also be available from any other site that mirrors 
-          ibiblio.org. For more download locations, see 
-          <ulink url="http://www.compucan.com/Lycos.htm">lycos</ulink> Some of
-          these ftp sites may archive previous versions of Wine as well as the
+          ibiblio.org, see <ulink url="http://www.ibiblio.org/pub/Linux/MIRRORS.html">http://www.ibiblio.org/pub/Linux/MIRRORS.html</>. Some of
+          these sites may archive previous versions of Wine as well as the
           current one. To determine which is the latest one, look at the 
           distribution file name, which will take the form 
           Wine-YYYYMMDD.tar.gz. Simply replace YYYYMMDD in the distribution
