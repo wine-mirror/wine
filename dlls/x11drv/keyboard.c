@@ -1569,7 +1569,7 @@ HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
      */
     langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
     if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
-        layout = 0xe001 << 16; /* FIXME */
+        layout |= 0xe001 << 16; /* FIXME */
 
     return (HKL)layout;
 }
