@@ -58,6 +58,25 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION TIME_GetBias_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+/* TimeZone registry key values */
+static const WCHAR TZInformationKeyW[] = { 'M','a','c','h','i','n','e','\\',
+ 'S','Y','S','T','E','M','\\','C','u','r','r','e','n','t','C','o','n','t','r',
+ 'o','l','S','e','t','\\','C','o','n','t','r','o','l','\\','T','i','m','e','z',
+ 'o','n','e','I','n','f','o','r','m','a','t','i','o','n', 0};
+static const WCHAR TZStandardStartW[] = {
+  'S','t','a','n','d','a','r','d','s','t','a','r','t', 0};
+static const WCHAR TZDaylightStartW[] = {
+  'D','a','y','l','i','g','h','t','s','t','a','r','t', 0};
+static const WCHAR TZDaylightBiasW[] = {
+    'D','a','y','l','i','g','h','t','B','i','a','s', 0};
+static const WCHAR TZStandardBiasW[] = {
+    'S','t','a','n','d','a','r','d','B','i','a','s', 0};
+static const WCHAR TZBiasW[] = {'B','i','a','s', 0};
+static const WCHAR TZDaylightNameW[] = {
+    'D','a','y','l','i','g','h','t','N','a','m','e', 0};
+static const WCHAR TZStandardNameW[] = {
+    'S','t','a','n','d','a','r','d','N','a','m','e', 0};
+
 
 #define SETTIME_MAX_ADJUST 120
 
@@ -780,6 +799,62 @@ static const WCHAR* TIME_GetTZAsStr (time_t utc, int bias, int dst)
    return NULL;
 }
 
+/***  TIME_GetTimeZoneInfoFromReg: helper for GetTimeZoneInformation ***/
+
+
+static int TIME_GetTimeZoneInfoFromReg(LPTIME_ZONE_INFORMATION tzinfo)
+{
+    BYTE buf[90];
+    KEY_VALUE_PARTIAL_INFORMATION * KpInfo =
+        (KEY_VALUE_PARTIAL_INFORMATION *) buf;
+    HKEY hkey;
+    DWORD size;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, TZInformationKeyW);
+    if (!NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) {
+
+#define GTZIFR_N( valkey, tofield) \
+        RtlInitUnicodeString( &nameW, valkey );\
+        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, KpInfo,\
+                    sizeof(buf), &size )) { \
+            if( size >= (sizeof((tofield)) + \
+                    offsetof(KEY_VALUE_PARTIAL_INFORMATION,Data))); { \
+                memcpy(&(tofield), \
+                        KpInfo->Data, sizeof(tofield)); \
+            } \
+        }
+#define GTZIFR_S( valkey, tofield) \
+        RtlInitUnicodeString( &nameW, valkey );\
+        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, KpInfo,\
+                    sizeof(buf), &size )) { \
+            strncpyW( tofield, (WCHAR*) KpInfo->Data, \
+                    sizeof( tofield) / sizeof(WCHAR) ); \
+        }
+        
+        GTZIFR_N( TZStandardStartW,  tzinfo->StandardDate)
+        GTZIFR_N( TZDaylightStartW,  tzinfo->DaylightDate)
+        GTZIFR_N( TZBiasW,          tzinfo->Bias)
+        GTZIFR_N( TZStandardBiasW,  tzinfo->StandardBias)
+        GTZIFR_N( TZDaylightBiasW,  tzinfo->DaylightBias)
+        GTZIFR_S( TZStandardNameW, tzinfo->StandardName)
+        GTZIFR_S( TZDaylightNameW, tzinfo->DaylightName)
+
+#undef GTZIFR_N
+#undef GTZIFR_S
+        NtClose( hkey );
+        return 1;
+    }
+    return 0;
+}
+
 /***********************************************************************
  *      RtlQueryTimeZoneInformation [NTDLL.@]
  *
@@ -800,14 +875,19 @@ NTSTATUS WINAPI RtlQueryTimeZoneInformation(LPTIME_ZONE_INFORMATION tzinfo)
 
     memset(tzinfo, 0, sizeof(TIME_ZONE_INFORMATION));
 
-    gmt = time(NULL);
-    bias = TIME_GetBias(gmt, &daylight);
+    if( !TIME_GetTimeZoneInfoFromReg(tzinfo)) {
 
-    tzinfo->Bias = -bias / 60;
-    tzinfo->StandardBias = 0;
-    tzinfo->DaylightBias = -60;
-    psTZ = TIME_GetTZAsStr (gmt, (-bias/60), daylight);
-    if (psTZ) strcpyW( tzinfo->StandardName, psTZ );
+        gmt = time(NULL);
+        bias = TIME_GetBias(gmt, &daylight);
+
+        tzinfo->Bias = -bias / 60;
+        tzinfo->StandardBias = 0;
+        tzinfo->DaylightBias = -60;
+        tzinfo->StandardName[0]='\0';
+        tzinfo->DaylightName[0]='\0';
+        psTZ = TIME_GetTZAsStr (gmt, (-bias/60), daylight);
+        if (psTZ) strcpyW( tzinfo->StandardName, psTZ );
+        }
     return STATUS_SUCCESS;
 }
 
