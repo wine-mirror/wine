@@ -256,7 +256,17 @@ PAGER_EraseBackground (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
-// << PAGER_MouseMove >>
+static LRESULT
+PAGER_MouseMove (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    PAGER_INFO *infoPtr = PAGER_GetInfoPtr(wndPtr);
+
+    TRACE (pager, "stub!\n");
+
+    return 0;
+}
+
+
 // << PAGER_Paint >>
 
 
@@ -336,8 +346,8 @@ PAGER_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case WM_ERASEBKGND:
 	    return PAGER_EraseBackground (wndPtr, wParam, lParam);
 
-//	case WM_MOUSEMOVE:
-//	    return PAGER_MouseMove (wndPtr, wParam, lParam);
+	case WM_MOUSEMOVE:
+	    return PAGER_MouseMove (wndPtr, wParam, lParam);
 
 //	case WM_PAINT:
 //	    return PAGER_Paint (wndPtr, wParam);
