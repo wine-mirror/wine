@@ -109,7 +109,9 @@ static DWORD CDROM_GetStatusCode(int io)
     if (io == 0) return 0;
     switch (errno)
     {
-    case EIO:   return STATUS_NO_MEDIA_IN_DEVICE;
+    case EIO:
+    case ENOMEDIUM:
+	    return STATUS_NO_MEDIA_IN_DEVICE;
     }
     FIXME("Unmapped error code %d: %s\n", errno, strerror(errno));
     return STATUS_IO_DEVICE_ERROR;
