@@ -45,7 +45,7 @@ sigjmp_buf env_wait_x;
 #define DDE_SEND 1
 #define DDE_POST 2
 #define DDE_ACK	 3
-#define DDE_MSG_SIZE   sizeof(MSG)
+#define DDE_MSG_SIZE   sizeof(MSG16)
 #define FREE_WND (WORD)(-2)
 #define DELETED_WND (WORD)(-3)
 #if defined(DEBUG_MSG) || defined(DEBUG_RUNTIME)
@@ -106,7 +106,7 @@ int dde_proc_shift_fifo()
   return val;
 }
 
-static void print_dde_message(char *desc, MSG *msg);
+static void print_dde_message(char *desc, MSG16 *msg);
 
 /* This should be run only when main_block is first allocated.	*/
 void dde_proc_init(dde_proc proc)
@@ -201,7 +201,7 @@ static BOOL DDE_DoOneMessage (int proc_idx, int size, struct msgbuf *msgbuf)
   }
 
   if (debugging_dde) {
-     MSG *msg=(MSG*) &msgbuf->mtext;
+     MSG16 *msg=(MSG16*) &msgbuf->mtext;
      char *title;
      if (msgbuf->mtype==DDE_SEND)
 	title="sending dde:";
@@ -290,11 +290,11 @@ static HWND HWND_Local2Remote(HWND orig)
   return 0;			
 }
 
-static BOOL DDE_DoMessage( MSG *msg, int type )
+static BOOL DDE_DoMessage( MSG16 *msg, int type )
 {
   int proc_idx;
 
-  MSG *remote_message;
+  MSG16 *remote_message;
   struct msg_dat msg_dat;
   BOOL success;
   
@@ -346,12 +346,12 @@ static BOOL DDE_DoMessage( MSG *msg, int type )
   }
 }
 
-BOOL DDE_SendMessage( MSG *msg)
+BOOL DDE_SendMessage( MSG16 *msg)
 {
   return DDE_DoMessage(msg, DDE_SEND);
 }
 
-BOOL DDE_PostMessage( MSG *msg)
+BOOL DDE_PostMessage( MSG16 *msg)
 {
   return DDE_DoMessage(msg, DDE_POST);
 }
@@ -381,7 +381,7 @@ int DDE_GetRemoteMessage()
 {
   static int nesting=0;		   /* to avoid infinite recursion */
 
-  MSG *remote_message;
+  MSG16 *remote_message;
   int size;
   struct msg_dat msg_dat;
   BOOL was_sent;		   /* sent/received */
@@ -551,7 +551,7 @@ void stop_wait(int a)
   }
 }
 
-static void print_dde_message(char *desc, MSG *msg)
+static void print_dde_message(char *desc, MSG16 *msg)
 {
 /*    extern const char *MessageTypeNames[];*/
     extern int debug_last_handle_size;

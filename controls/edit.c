@@ -2253,7 +2253,7 @@ static LRESULT EDIT_WM_Create(WND *wndPtr, WPARAM wParam, LPARAM lParam)
 	*text = '\0';
 	EDIT_BuildLineDefs(wndPtr);
 	EDIT_WM_SetFont(wndPtr, 0, 0L);
-	if (cs->lpszName)
+	if (cs->lpszName && *(char *)PTR_SEG_TO_LIN(cs->lpszName) != '\0')
 		EDIT_EM_ReplaceSel(wndPtr, FALSE, (LPARAM)cs->lpszName);
 	EDIT_WM_SetRedraw(wndPtr, TRUE, 0L);
 	return 0L;

@@ -22,25 +22,26 @@ unsigned int usleep (unsigned int useconds)
 #endif /* HAVE_USLEEP */
 
 #ifndef HAVE_MEMMOVE
-void *memmove( void *dst, const void *src, unsigned int len )
+void *memmove( void *dest, const void *src, unsigned int len )
 {
+    register char *dst = dest;
+
     /* Use memcpy if not overlapping */
-    if (((char *)dst + len <= (char *)src) ||
-        ((char *)src + len <= (char *)dst))
+    if ((dst + len <= (char *)src) || ((char *)src + len <= dst))
     {
         memcpy( dst, src, len );
     }
     /* Otherwise do it the hard way (FIXME: could do better than this) */
     else if (dst < src)
     {
-        while (len--) *((char *)dst)++ = *((char *)src)++;
+        while (len--) *dst++ = *((char *)src)++;
     }
     else
     {
-        dst = (char *)dst + len - 1;
+        dst += len - 1;
         src = (char *)src + len - 1;
-        while (len--) *((char *)dst)-- = *((char *)src)--;
+        while (len--) *dst-- = *((char *)src)--;
     }
-    return dst;
+    return dest;
 }
 #endif  /* HAVE_MEMMOVE */

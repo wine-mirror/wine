@@ -112,7 +112,7 @@ void DC_FillDevCaps( DeviceCaps * caps )
     caps->numPens       = 16;    /* 16 solid pens */
     caps->numMarkers    = 0;
     caps->numFonts      = 0;
-    caps->numColors     = 1 << caps->bitsPixel;
+    caps->numColors     = 100;
     caps->pdeviceSize   = 0;
     caps->curveCaps     = CC_CIRCLES | CC_PIE | CC_CHORD | CC_ELLIPSES |
 	                  CC_WIDE | CC_STYLED | CC_WIDESTYLED | 
@@ -126,14 +126,20 @@ void DC_FillDevCaps( DeviceCaps * caps )
 	                  TC_IA_ABLE | TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE;
     caps->clipCaps      = CP_REGION;
     caps->rasterCaps    = RC_BITBLT | RC_BANDING | RC_SCALING | RC_BITMAP64 |
-	                  RC_DI_BITMAP | RC_PALETTE | RC_DIBTODEV | RC_BIGFONT|
-			  RC_STRETCHBLT | RC_STRETCHDIB | RC_DEVBITS;
+                          RC_DI_BITMAP | RC_DIBTODEV | RC_BIGFONT|
+                          RC_STRETCHBLT | RC_STRETCHDIB | RC_DEVBITS;
+
+    if( !(COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL) )
+        caps->rasterCaps |= RC_PALETTE;
+
     caps->aspectX       = 36;  /* ?? */
     caps->aspectY       = 36;  /* ?? */
     caps->aspectXY      = 51;
     caps->logPixelsX    = (int)(caps->horzRes * 25.4 / caps->horzSize);
     caps->logPixelsY    = (int)(caps->vertRes * 25.4 / caps->vertSize);
-    caps->sizePalette   = DefaultVisual(display,DefaultScreen(display))->map_entries;
+    caps->sizePalette   = (caps->rasterCaps & RC_PALETTE)
+                          ? DefaultVisual(display,DefaultScreen(display))->map_entries
+                          : 0;
     caps->numReserved   = 0;
     caps->colorRes      = 0;
 }

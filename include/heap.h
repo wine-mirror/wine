@@ -16,6 +16,7 @@ extern HANDLE32 SegptrHeap;
 extern int HEAP_IsInsideHeap( HANDLE32 heap, DWORD flags, LPCVOID ptr );
 extern SEGPTR HEAP_GetSegptr( HANDLE32 heap, DWORD flags, LPCVOID ptr );
 extern LPSTR HEAP_strdupA( HANDLE32 heap, DWORD flags, LPCSTR str );
+extern LPWSTR HEAP_strdupW( HANDLE32 heap, DWORD flags, LPCWSTR str );
 
 /* SEGPTR helper macros */
 

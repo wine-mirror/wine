@@ -1060,6 +1060,68 @@ HQUEUE16 GetTaskQueue( HTASK16 hTask )
 
 
 /***********************************************************************
+ *           SwitchStackTo   (KERNEL.108)
+ */
+void SwitchStackTo( WORD seg, WORD ptr, WORD top )
+{
+    TDB *pTask;
+    STACK16FRAME *oldFrame, *newFrame;
+
+    if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
+    dprintf_task( stddeb, "SwitchStackTo: old=%04x:%04x new=%04x:%04x\n",
+                  IF1632_Saved16_ss, IF1632_Saved16_sp, seg, ptr );
+    /* Save the old stack */
+    oldFrame = CURRENT_STACK16;
+    pTask->switchStackSS = IF1632_Saved16_ss;
+    pTask->switchStackSP = IF1632_Saved16_sp;
+    /* Switch to the new stack */
+    IF1632_Saved16_ss = seg;
+    IF1632_Saved16_sp = ptr - sizeof(STACK16FRAME);
+    newFrame = CURRENT_STACK16;
+    /* Build the stack frame on the new stack */
+    *newFrame = *oldFrame;
+}
+
+
+/***********************************************************************
+ *           SwitchStackBack   (KERNEL.109)
+ *
+ * Note: the function is declared as 'register' in the spec file in order
+ * to make sure all registers are preserved, but we don't use them in any
+ * way, so we don't need a SIGCONTEXT* argument.
+ */
+void SwitchStackBack(void)
+{
+    TDB *pTask;
+    STACK16FRAME *oldFrame, *newFrame;
+
+    if (!(pTask = (TDB *)GlobalLock16( hCurrentTask ))) return;
+    if (!pTask->switchStackSS)
+    {
+        fprintf( stderr, "SwitchStackBack: no previous SwitchStackTo\n" );
+        return;
+    }
+    dprintf_task( stddeb, "SwitchStackBack: restoring stack %04x:%04x\n",
+                  pTask->switchStackSS, pTask->switchStackSP );
+
+    oldFrame = CURRENT_STACK16;
+    /* Switch back to the old stack */
+    IF1632_Saved16_ss = pTask->switchStackSS;
+    IF1632_Saved16_sp = pTask->switchStackSP;
+    pTask->switchStackSS = 0;
+    /* Build a stack frame for the return */
+    newFrame = CURRENT_STACK16;
+    newFrame->saved_ss = oldFrame->saved_ss;
+    newFrame->saved_sp = oldFrame->saved_sp;
+    newFrame->entry_ip = oldFrame->entry_ip;
+    newFrame->entry_cs = oldFrame->entry_cs;
+    newFrame->bp       = oldFrame->bp;
+    newFrame->ip       = oldFrame->ip;
+    newFrame->cs       = oldFrame->cs;
+}
+
+
+/***********************************************************************
  *           GetTaskQueueDS  (KERNEL.118)
  */
 #ifndef WINELIB
@@ -1286,4 +1348,16 @@ DWORD GetAppCompatFlags( HTASK32 hTask )
     if (!(pTask=(TDB *)GlobalLock16( (HTASK16)hTask ))) return 0;
     if (GlobalSize16(hTask) < sizeof(TDB)) return 0;
     return pTask->compat_flags;
+}
+
+
+/***********************************************************************
+ *           SetSigHandler   (KERNEL.140)
+ */
+WORD SetSigHandler( SEGPTR newhandler,SEGPTR* oldhandler,
+                    LPUINT16 *oldmode,UINT16 newmode,UINT16 flag )
+{
+    fprintf(stdnimp,"SetSigHandler(%lx,%p,%p,%d,%d), unimplemented.\n",
+            newhandler,oldhandler,oldmode,newmode,flag );
+    return 0;
 }

@@ -1212,6 +1212,18 @@ LPSTR HEAP_strdupA( HANDLE32 heap, DWORD flags, LPCSTR str )
 {
     INT32 len = lstrlen32A(str) + 1;
     LPSTR p = HeapAlloc( heap, flags, len );
-    if (p) strcpy( p, str );
+    lstrcpy32A( p, str );
+    return p;
+}
+
+
+/***********************************************************************
+ *           HEAP_strdupW
+ */
+LPWSTR HEAP_strdupW( HANDLE32 heap, DWORD flags, LPCWSTR str )
+{
+    INT32 len = lstrlen32W(str) + 1;
+    LPWSTR p = HeapAlloc( heap, flags, len * sizeof(WCHAR) );
+    lstrcpy32W( p, str );
     return p;
 }

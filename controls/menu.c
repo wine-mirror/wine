@@ -1533,6 +1533,8 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, int x, int y,
                                      hwnd, MSGF_MENU, 0, TRUE ))
 	    break;
 
+        TranslateMessage( msg );
+
         fRemove = FALSE;
 	if ((msg->message >= WM_MOUSEFIRST) && (msg->message <= WM_MOUSELAST))
 	{

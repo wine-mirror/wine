@@ -41,6 +41,13 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "debug.h"
 
 
+/* Winelib run-time flag */
+#ifdef WINELIB
+int __winelib = 1;
+#else
+int __winelib = 0;
+#endif
+
 HANDLE32 SystemHeap = 0;
 HANDLE32 SegptrHeap = 0;
 

@@ -802,6 +802,121 @@ error:  /* We get here if there was an error opening the file */
     return HFILE_ERROR;
 }
 
+/***********************************************************************
+ *           SearchPath32A   (KERNEL32.447)
+ * Code borrowed from OpenFile above.
+ */
+DWORD SearchPath32A(
+	LPCSTR path,LPCSTR fn,LPCSTR ext,DWORD buflen,LPSTR buf,LPSTR *lastpart
+) {
+    LPCSTR	unixName;
+    INT32	len;
+    char	testpath[1000]; /* should be enough for now */
+    char	*name,*p;
+    int		i;
+
+    if (ext==NULL)
+    	ext = "";
+    name=(char*)xmalloc(strlen(fn)+strlen(ext)+1);
+    strcpy(name,fn);
+    strcat(name,ext);
+
+    dprintf_file(stddeb,"SearchPath32A(%s,%s,%s,%ld,%p,%p)\n",
+    	path,fn,ext,buflen,buf,lastpart
+    );
+    if (path) {
+	strcpy(testpath,path);
+	strcat(testpath,"\\");
+	strcat(testpath,name);
+	if ((unixName=DOSFS_GetUnixFileName((LPCSTR)testpath,TRUE))!=NULL) {
+	    goto found;
+	} else
+	    return 0;
+    }
+    if ((len=sizeof(testpath)-strlen(name)-1)<0)
+    	return 0;
+
+    /* Try the path of the current executable */
+    if (GetCurrentTask()) {
+	GetModuleFileName(GetCurrentTask(),testpath,len);
+	if ((p=strrchr(testpath,'\\'))) {
+            strcpy(p+1,name);
+            if ((unixName=DOSFS_GetUnixFileName((LPCSTR)testpath,TRUE)))
+                goto found;
+        }
+    }
+
+    /* Try the current directory */
+    lstrcpyn32A(testpath,name,sizeof(testpath) );
+    if ((unixName=DOSFS_GetUnixFileName((LPCSTR)testpath,TRUE))!=NULL)
+        goto found;
+
+    /* Try the Windows directory */
+    GetWindowsDirectory(testpath,len);
+    strcat(testpath,"\\");
+    strcat(testpath,name);
+    if ((unixName = DOSFS_GetUnixFileName((LPCSTR)testpath,TRUE))!=NULL)
+        goto found;
+
+    /* Try the Windows system directory */
+    GetSystemDirectory32A(testpath,len);
+    strcat(testpath,"\\");
+    strcat(testpath,name);
+    if ((unixName=DOSFS_GetUnixFileName((LPCSTR)testpath,TRUE))!=NULL)
+        goto found;
+
+    /* Try all directories in path */
+
+    for (i=0;;i++)
+    {
+        if (!DIR_GetDosPath(i,testpath,len)) 
+		return 0;
+        strcat(testpath,"\\");
+        strcat(testpath,name);
+        if ((unixName=DOSFS_GetUnixFileName((LPCSTR)testpath,TRUE))!=NULL)
+            break;
+    }
+
+found:
+    strncpy(buf,testpath,buflen);
+    if (NULL!=(p=strrchr(testpath,'\\')))
+    	p=p+1;
+    else
+        p=testpath;
+    if (p-testpath<buflen)
+	*lastpart=(p-testpath)+buf;
+    else
+    	*lastpart=NULL;
+    dprintf_file(stddeb,"	-> found %s,last part is %s\n",testpath,p);
+    return strlen(testpath);
+}
+
+/***********************************************************************
+ *           SearchPath32W   (KERNEL32.448)
+ */
+DWORD SearchPath32W(
+	LPCWSTR path,LPCWSTR fn,LPCWSTR ext,DWORD buflen,LPWSTR buf,
+	LPWSTR *lastpart
+) {
+	LPSTR	pathA = path?STRING32_DupUniToAnsi(path):NULL;
+	LPSTR	fnA = STRING32_DupUniToAnsi(fn);
+	LPSTR	extA = ext?STRING32_DupUniToAnsi(fn):NULL;
+	LPSTR	lastpartA;
+	LPSTR	bufA = (char*)xmalloc(buflen+1);
+	DWORD	ret;
+
+	ret=SearchPath32A(pathA,fnA,extA,buflen,bufA,&lastpartA);
+	lstrcpynAtoW(buf,bufA,buflen);
+	if (lastpartA)
+		*lastpart = buf+(lastpartA-bufA);
+	else
+		*lastpart = NULL;
+	free(bufA);
+	free(fnA);
+	if (pathA) free(pathA);
+	if (extA) free(extA);
+	return ret;
+}
 
 /***********************************************************************
  *           _lclose   (KERNEL.81) (KERNEL32.592)

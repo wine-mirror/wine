@@ -60,8 +60,8 @@ extern WORD CallTo16_regs_( FARPROC16 func, WORD ds, WORD es, WORD bp, WORD ax,
     CallTo16_word_wllwl(func, CURRENT_DS, hdc, lptable, lprecord, objs, lParam)
 #define CallEnumObjectsProc( func, lpobj, lParam ) \
     CallTo16_word_ll( func, CURRENT_DS, lpobj, lParam )
-#define CallEnumPropProc( func, hwnd, lpstr, data ) \
-    CallTo16_word_wlw( func, CURRENT_DS, hwnd, lpstr, data )
+#define CallEnumPropProc16( func, hwnd, lpstr, handle ) \
+    CallTo16_word_wlw( (FARPROC16)(func), CURRENT_DS, hwnd, lpstr, handle )
 #define CallEnumTaskWndProc( func, hwnd, lParam ) \
     CallTo16_word_wl( func, CURRENT_DS, hwnd, lParam )
 #define CallEnumWindowsProc16( func, hwnd, lParam ) \
@@ -100,6 +100,10 @@ extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
     CallTo32_0( func )
 #define CallDLLEntryProc32( func, hmodule, a, b ) \
     CallTo32_3( func, hmodule, a, b )
+#define CallEnumPropProc32( func, hwnd, lpstr, handle ) \
+    CallTo32_3( (FARPROC32)(func), hwnd, (DWORD)(lpstr), handle )
+#define CallEnumPropProcEx32( func, hwnd, lpstr, handle, data ) \
+    CallTo32_4( (FARPROC32)(func), hwnd, (DWORD)(lpstr), handle, data )
 #define CallEnumWindowsProc32( func, hwnd, lParam ) \
     CallTo32_2( func, hwnd, lParam )
 #define CallWndProc32( func, hwnd, msg, wParam, lParam ) \
@@ -122,8 +126,12 @@ extern LONG CallTo32_4( FARPROC32, DWORD, DWORD, DWORD, DWORD );
     (*func)( hdc, lptable, lprecord, objs, lParam)
 #define CallEnumObjectsProc( func, lpobj, lParam ) \
     (*func)( lpobj, lParam )
-#define CallEnumPropProc( func, hwnd, lpstr, data ) \
-    (*func)( hwnd, lpstr, data )
+#define CallEnumPropProc16( func, hwnd, lpstr, handle ) \
+    (*func)( hwnd, lpstr, handle )
+#define CallEnumPropProc32( func, hwnd, lpstr, handle ) \
+    (*func)( hwnd, lpstr, handle )
+#define CallEnumPropProcEx32( func, hwnd, lpstr, handle, data ) \
+    (*func)( hwnd, lpstr, handle, data )
 #define CallEnumTaskWndProc( func, hwnd, lParam ) \
     (*func)( hwnd, lParam )
 #define CallEnumWindowsProc16( func, hwnd, lParam ) \

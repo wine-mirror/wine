@@ -373,8 +373,14 @@ HWND MDICreateChild(WND *w, MDICLIENTINFO *ci, HWND parent, LPARAM lParam )
 	else
 	  {
 	    SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE );
-	    if( wnd->dwStyle & WS_MAXIMIZE )
-	      {
+
+	    /* Set maximized state here in case hwnd didn't receive WM_SIZE
+	     * during CreateWindow - bad!
+	     */
+
+            if( wnd->dwStyle & WS_MAXIMIZE && !ci->hwndChildMaximized )
+              {
+                ci->hwndChildMaximized = wnd->hwndSelf;
                 MDI_AugmentFrameMenu( ci, w->parent, hwnd );
                 MDI_UpdateFrameText( w->parent, ci->self, MDI_REPAINTFRAME, NULL ); 
 	      }
@@ -409,6 +415,10 @@ void MDI_ChildGetMinMaxInfo(WND* clientWnd, HWND hwnd, MINMAXINFO16* lpMinMax )
 
  lpMinMax->ptMaxPosition.x = rect.left;
  lpMinMax->ptMaxPosition.y = rect.top; 
+
+ dprintf_mdi(stddeb,"\tChildMinMaxInfo: max rect (%i,%i - %i, %i)\n", 
+                        rect.left,rect.top,rect.right,rect.bottom);
+
 }
 
 /**********************************************************************

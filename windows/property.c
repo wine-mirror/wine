@@ -1,145 +1,367 @@
 /*
  * Window properties
  *
- * Copyright 1995 Alexandre Julliard
+ * Copyright 1995, 1996 Alexandre Julliard
  */
 
+#define NO_TRANSITION_TYPES  /* This file is Win32-clean */
 #include <string.h>
 #include "win.h"
-#include "user.h"
+#include "heap.h"
 #include "callback.h"
+#include "string32.h"
 #include "stddebug.h"
-/* #define DEBUG_PROP */
 #include "debug.h"
 
 
-typedef struct
+typedef struct tagPROPERTY
 {
-    HANDLE next;       /* Next property in window list */
-    ATOM   atom;       /* Atom (or 0 if string) */
-    HANDLE hData;      /* User's data */
-    char   string[1];  /* Property string */
+    struct tagPROPERTY *next;     /* Next property in window list */
+    HANDLE32            handle;   /* User's data */
+    LPSTR               string;   /* Property string (or atom) */
 } PROPERTY;
 
 
 /***********************************************************************
- *           SetProp   (USER.26)
+ *           PROP_FindProp
  */
-BOOL SetProp( HWND hwnd, SEGPTR str, HANDLE hData )
+static PROPERTY *PROP_FindProp( HWND32 hwnd, LPCSTR str )
 {
-    HANDLE hProp;
     PROPERTY *prop;
-    WND *wndPtr;
+    WND *pWnd = WIN_FindWndPtr( hwnd );
 
-    dprintf_prop( stddeb, "SetProp: %04x %08lx %04x\n",
-                  hwnd, (DWORD)str, hData );
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    hProp = USER_HEAP_ALLOC( sizeof(PROPERTY) + 
-                             (HIWORD(str) ? strlen(PTR_SEG_TO_LIN(str)) : 0 ));
-    if (!hProp) return FALSE;
-    prop = (PROPERTY *) USER_HEAP_LIN_ADDR( hProp );
-    if (HIWORD(str))  /* string */
+    if (!pWnd) return NULL;
+    if (HIWORD(str))
     {
-        prop->atom = 0;
-        strcpy( prop->string, PTR_SEG_TO_LIN(str) );
+        for (prop = pWnd->pProp; prop; prop = prop->next)
+            if (HIWORD(prop->string) && !lstrcmpi32A( prop->string, str ))
+                return prop;
     }
     else  /* atom */
     {
-        prop->atom = LOWORD(str);
-        prop->string[0] = '\0';
+        for (prop = pWnd->pProp; (prop); prop = prop->next)
+            if (!HIWORD(prop->string) && (LOWORD(prop->string) == LOWORD(str)))
+                return prop;
     }
-    prop->hData = hData;
-    prop->next = wndPtr->hProp;
-    wndPtr->hProp = hProp;
+    return NULL;
+}
+
+
+/***********************************************************************
+ *           GetProp16   (USER.25)
+ */
+HANDLE16 GetProp16( HWND16 hwnd, LPCSTR str )
+{
+    return (HANDLE16)GetProp32A( hwnd, str );
+}
+
+
+/***********************************************************************
+ *           GetProp32A   (USER32.280)
+ */
+HANDLE32 GetProp32A( HWND32 hwnd, LPCSTR str )
+{
+    PROPERTY *prop = PROP_FindProp( hwnd, str );
+
+    dprintf_prop( stddeb, "GetProp(%08x,'%s'): returning %08x\n",
+                  hwnd, str, prop ? prop->handle : 0 );
+    return prop ? prop->handle : 0;
+}
+
+
+/***********************************************************************
+ *           GetProp32W   (USER32.281)
+ */
+HANDLE32 GetProp32W( HWND32 hwnd, LPCWSTR str )
+{
+    LPSTR strA;
+    HANDLE32 ret;
+
+    if (!HIWORD(str)) return GetProp32A( hwnd, (LPCSTR)(UINT32)LOWORD(str) );
+    strA = STRING32_DupUniToAnsi( str );
+    ret = GetProp32A( hwnd, strA );
+    free( strA );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           SetProp16   (USER.26)
+ */
+BOOL16 SetProp16( HWND16 hwnd, LPCSTR str, HANDLE16 handle )
+{
+    return (BOOL16)SetProp32A( hwnd, str, handle );
+}
+
+
+/***********************************************************************
+ *           SetProp32A   (USER32.496)
+ */
+BOOL32 SetProp32A( HWND32 hwnd, LPCSTR str, HANDLE32 handle )
+{
+    PROPERTY *prop;
+
+    dprintf_prop( stddeb, "SetProp: %04x '%s' %08x\n", hwnd, str, handle );
+    if (!(prop = PROP_FindProp( hwnd, str )))
+    {
+        /* We need to create it */
+        WND *pWnd = WIN_FindWndPtr( hwnd );
+        if (!pWnd) return FALSE;
+        if (!(prop = HeapAlloc( SystemHeap, 0, sizeof(*prop) ))) return FALSE;
+        if (!(prop->string = SEGPTR_STRDUP(str)))
+        {
+            HeapFree( SystemHeap, 0, prop );
+            return FALSE;
+        }
+        prop->next  = pWnd->pProp;
+        pWnd->pProp = prop;
+    }
+    prop->handle = handle;
     return TRUE;
 }
 
 
 /***********************************************************************
- *           GetProp   (USER.25)
+ *           SetProp32W   (USER32.497)
  */
-HANDLE GetProp( HWND hwnd, SEGPTR str )
+BOOL32 SetProp32W( HWND32 hwnd, LPCWSTR str, HANDLE32 handle )
 {
-    HANDLE hProp;
-    WND *wndPtr;
+    BOOL32 ret;
+    LPSTR strA;
 
-    dprintf_prop( stddeb, "GetProp: %04x %08lx\n", hwnd, (DWORD)str );
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    hProp = wndPtr->hProp;
-    while (hProp)
-    {
-        PROPERTY *prop = (PROPERTY *)USER_HEAP_LIN_ADDR(hProp);
-        if (HIWORD(str))
-        {
-            if (!prop->atom && !lstrcmpi32A(prop->string, PTR_SEG_TO_LIN(str)))
-                return prop->hData;
-        }
-        else if (prop->atom && (prop->atom == LOWORD(str))) return prop->hData;
-        hProp = prop->next;
-    }
-    return 0;
+    if (!HIWORD(str))
+        return SetProp32A( hwnd, (LPCSTR)(UINT32)LOWORD(str), handle );
+    strA = STRING32_DupUniToAnsi( str );
+    ret = SetProp32A( hwnd, strA, handle );
+    free( strA );
+    return ret;
 }
 
 
 /***********************************************************************
- *           RemoveProp   (USER.24)
+ *           RemoveProp16   (USER.24)
  */
-HANDLE RemoveProp( HWND hwnd, SEGPTR str )
+HANDLE16 RemoveProp16( HWND16 hwnd, LPCSTR str )
 {
-    HANDLE *hProp;
-    WND *wndPtr;
-
-    dprintf_prop( stddeb, "RemoveProp: %04x %08lx\n", hwnd, (DWORD)str );
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    hProp = &wndPtr->hProp;
-    while (*hProp)
-    {
-        PROPERTY *prop = (PROPERTY *)USER_HEAP_LIN_ADDR( *hProp );
-        if ((HIWORD(str) && !prop->atom &&
-             !lstrcmpi32A( prop->string, PTR_SEG_TO_LIN(str))) ||
-            (!HIWORD(str) && prop->atom && (prop->atom == LOWORD(str))))
-        {
-            HANDLE hNext = prop->next;
-            HANDLE hData = prop->hData;
-            USER_HEAP_FREE( *hProp );
-            *hProp = hNext;
-            return hData;
-        }
-        hProp = &prop->next;
-    }
-    return 0;
+    return (HANDLE16)RemoveProp32A( hwnd, str );
 }
 
 
 /***********************************************************************
- *           EnumProps   (USER.27)
+ *           RemoveProp32A   (USER32.441)
  */
-INT EnumProps( HWND hwnd, PROPENUMPROC func )
+HANDLE32 RemoveProp32A( HWND32 hwnd, LPCSTR str )
 {
-    int ret = -1;
-    HANDLE hProp;
-    WND *wndPtr;
+    HANDLE32 handle;
+    PROPERTY **pprop, *prop;
+    WND *pWnd = WIN_FindWndPtr( hwnd );
 
-    dprintf_prop( stddeb, "EnumProps: %04x %08lx\n", hwnd, (LONG)func );
-    if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
-    hProp = wndPtr->hProp;
-    while (hProp)
+    dprintf_prop( stddeb, "RemoveProp: %04x '%s'\n", hwnd, str );
+    if (!pWnd) return NULL;
+    if (HIWORD(str))
     {
-        PROPERTY *prop = (PROPERTY *)USER_HEAP_LIN_ADDR(hProp);
-        
-        dprintf_prop( stddeb, "  Callback: atom=%04x data=%04x str='%s'\n",
-                      prop->atom, prop->hData, prop->string );
+        for (pprop=(PROPERTY**)&pWnd->pProp; (*pprop); pprop = &(*pprop)->next)
+            if (HIWORD((*pprop)->string) &&
+                !lstrcmpi32A( (*pprop)->string, str )) break;
+    }
+    else  /* atom */
+    {
+        for (pprop=(PROPERTY**)&pWnd->pProp; (*pprop); pprop = &(*pprop)->next)
+            if (!HIWORD((*pprop)->string) &&
+                (LOWORD((*pprop)->string) == LOWORD(str))) break;
+    }
+    if (!*pprop) return 0;
+    prop   = *pprop;
+    handle = prop->handle;
+    *pprop = prop->next;
+    SEGPTR_FREE(prop->string);
+    HeapFree( SystemHeap, 0, prop );
+    return handle;
+}
 
-          /* Already get the next in case the callback */
-          /* function removes the current property.    */
-        hProp = prop->next;
-        ret = CallEnumPropProc( (FARPROC16)func, hwnd,
-                                prop->atom ? 
-                                  (LONG)MAKELONG( prop->atom, 0 )
-				:
-                                  (LONG)(USER_HEAP_SEG_ADDR(hProp) +
-                                         ((int)prop->string - (int)prop)),
-                                prop->hData );
+
+/***********************************************************************
+ *           RemoveProp32W   (USER32.442)
+ */
+HANDLE32 RemoveProp32W( HWND32 hwnd, LPCWSTR str )
+{
+    LPSTR strA;
+    HANDLE32 ret;
+
+    if (!HIWORD(str))
+        return RemoveProp32A( hwnd, (LPCSTR)(UINT32)LOWORD(str) );
+    strA = STRING32_DupUniToAnsi( str );
+    ret = RemoveProp32A( hwnd, strA );
+    free( strA );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           PROPERTY_RemoveWindowProps
+ *
+ * Remove all properties of a window.
+ */
+void PROPERTY_RemoveWindowProps( WND *pWnd )
+{
+    PROPERTY *prop, *next;
+
+    for (prop = pWnd->pProp; (prop); prop = next)
+    {
+        next = prop->next;
+        SEGPTR_FREE( prop->string );
+        HeapFree( SystemHeap, 0, prop );
+    }
+    pWnd->pProp = NULL;
+}
+
+
+/***********************************************************************
+ *           EnumProps16   (USER.27)
+ */
+INT16 EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
+{
+    PROPERTY *prop, *next;
+    WND *pWnd;
+    INT16 ret = -1;
+
+    dprintf_prop( stddeb, "EnumProps: %04x %08x\n", hwnd, (UINT32)func );
+    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
+    for (prop = pWnd->pProp; (prop); prop = next)
+    {
+        /* Already get the next in case the callback */
+        /* function removes the current property.    */
+        next = prop->next;
+
+        dprintf_prop( stddeb, "  Callback: handle=%08x str='%s'\n",
+                      prop->handle, prop->string );
+        ret = CallEnumPropProc16( (FARPROC16)func, hwnd,
+                                  SEGPTR_GET(prop->string), prop->handle );
+        if (!ret) break;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           EnumProps32A   (USER32.185)
+ */
+INT32 EnumProps32A( HWND32 hwnd, PROPENUMPROC32A func )
+{
+    PROPERTY *prop, *next;
+    WND *pWnd;
+    INT32 ret = -1;
+
+    dprintf_prop( stddeb, "EnumProps32A: %04x %08x\n", hwnd, (UINT32)func );
+    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
+    for (prop = pWnd->pProp; (prop); prop = next)
+    {
+        /* Already get the next in case the callback */
+        /* function removes the current property.    */
+        next = prop->next;
+
+        dprintf_prop( stddeb, "  Callback: handle=%08x str='%s'\n",
+                      prop->handle, prop->string );
+        ret = CallEnumPropProc32( func, hwnd, prop->string, prop->handle );
+        if (!ret) break;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           EnumProps32W   (USER32.188)
+ */
+INT32 EnumProps32W( HWND32 hwnd, PROPENUMPROC32W func )
+{
+    PROPERTY *prop, *next;
+    WND *pWnd;
+    INT32 ret = -1;
+
+    dprintf_prop( stddeb, "EnumProps32W: %04x %08x\n", hwnd, (UINT32)func );
+    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
+    for (prop = pWnd->pProp; (prop); prop = next)
+    {
+        /* Already get the next in case the callback */
+        /* function removes the current property.    */
+        next = prop->next;
+
+        dprintf_prop( stddeb, "  Callback: handle=%08x str='%s'\n",
+                      prop->handle, prop->string );
+        if (HIWORD(prop->string))
+        {
+            LPWSTR str = STRING32_DupAnsiToUni( prop->string );
+            ret = CallEnumPropProc32( func, hwnd, str, prop->handle );
+            free( str );
+        }
+        else
+            ret = CallEnumPropProc32( func, hwnd,
+                                      (LPCWSTR)(UINT32)LOWORD(prop->string),
+                                      prop->handle );
+        if (!ret) break;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           EnumPropsEx32A   (USER32.186)
+ */
+INT32 EnumPropsEx32A( HWND32 hwnd, PROPENUMPROCEX32A func, LPARAM lParam )
+{
+    PROPERTY *prop, *next;
+    WND *pWnd;
+    INT32 ret = -1;
+
+    dprintf_prop( stddeb, "EnumPropsEx32A: %04x %08x %08lx\n",
+                  hwnd, (UINT32)func, lParam );
+    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
+    for (prop = pWnd->pProp; (prop); prop = next)
+    {
+        /* Already get the next in case the callback */
+        /* function removes the current property.    */
+        next = prop->next;
+
+        dprintf_prop( stddeb, "  Callback: handle=%08x str='%s'\n",
+                      prop->handle, prop->string );
+        ret = CallEnumPropProcEx32( func, hwnd, prop->string,
+                                    prop->handle, lParam );
+        if (!ret) break;
+    }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           EnumPropsEx32W   (USER32.187)
+ */
+INT32 EnumPropsEx32W( HWND32 hwnd, PROPENUMPROCEX32W func, LPARAM lParam )
+{
+    PROPERTY *prop, *next;
+    WND *pWnd;
+    INT32 ret = -1;
+
+    dprintf_prop( stddeb, "EnumPropsEx32W: %04x %08x %08lx\n",
+                  hwnd, (UINT32)func, lParam );
+    if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
+    for (prop = pWnd->pProp; (prop); prop = next)
+    {
+        /* Already get the next in case the callback */
+        /* function removes the current property.    */
+        next = prop->next;
+
+        dprintf_prop( stddeb, "  Callback: handle=%08x str='%s'\n",
+                      prop->handle, prop->string );
+        if (HIWORD(prop->string))
+        {
+            LPWSTR str = STRING32_DupAnsiToUni( prop->string );
+            ret = CallEnumPropProcEx32( func, hwnd, str, prop->handle, lParam);
+            free( str );
+        }
+        else
+            ret = CallEnumPropProcEx32( func, hwnd,
+                                        (LPCWSTR)(UINT32)LOWORD(prop->string),
+                                        prop->handle, lParam );
         if (!ret) break;
     }
     return ret;

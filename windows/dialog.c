@@ -577,6 +577,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
       /* Initialise dialog extra data */
 
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
+    WINPROC_SetProc( &dlgInfo->dlgProc, dlgProc, procType );
     dlgInfo->hUserFont = hFont;
     dlgInfo->hMenu     = hMenu;
     dlgInfo->xBaseUnit = xUnit;
@@ -595,7 +596,6 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 
     /* Send initialisation messages and set focus */
 
-    WINPROC_SetProc( &dlgInfo->dlgProc, dlgProc, procType );
     dlgInfo->hwndFocus = DIALOG_GetFirstTabItem( hwnd );
     if (dlgInfo->hUserFont)
 	SendMessage32A( hwnd, WM_SETFONT, (WPARAM)dlgInfo->hUserFont, 0 );

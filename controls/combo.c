@@ -425,10 +425,7 @@ static LRESULT CBAddString(HWND hwnd, WPARAM wParam, LPARAM lParam)
   LPHEADLIST lphl = ComboGetListHeader(hwnd);
   LPHEADCOMBO lphc = ComboGetStorageHeader(hwnd);
 
-  if (lphl->HasStrings)
-    wRet = ListBoxAddString(lphl, (LPSTR)PTR_SEG_TO_LIN(lParam));
-  else
-    wRet = ListBoxAddString(lphl, (LPSTR)lParam);
+  wRet = ListBoxAddString(lphl, (SEGPTR)lParam);
 
   ComboUpdateWindow(hwnd, lphl, lphc, TRUE);
   return wRet;

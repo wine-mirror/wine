@@ -82,6 +82,11 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
 		return (PIMAGE_RESOURCE_DIRECTORY) (
 			root +
 			(entryTable[entrynum].OffsetToData & 0x7fffffff));
+	/* just use first entry if no default can be found */
+	if (!name && resdirptr->NumberOfIdEntries)
+		return (PIMAGE_RESOURCE_DIRECTORY) (
+			root +
+			(entryTable[0].OffsetToData & 0x7fffffff));
 	return NULL;
     }
 }

@@ -542,13 +542,14 @@ static void DIB_SetImageBits_24( WORD lines, BYTE *bits, WORD width,
     WORD x;
     BYTE pad = (4 - ((width*3) & 3)) & 3;
 
+    /* "bits" order is reversed for some reason */
+
     while (lines--)
     {
 	for (x = 0; x < width; x++, bits += 3)
-	{
-	    XPutPixel( bmpImage, x, lines,
-		       COLOR_ToPhysical( dc, RGB(bits[0],bits[1],bits[2]) ));
-	}
+	    XPutPixel( bmpImage, x, lines, 
+		       COLOR_ToPhysical(dc, RGB(bits[2],bits[1],bits[0])) );
+
 	bits += pad;
     }
 }

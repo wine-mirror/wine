@@ -33,9 +33,8 @@ static int RgnType;
  * dcx can have DCX_WINDOW, DCX_CLIPCHILDREN, DCX_CLIPSIBLINGS set
  */
 
-HRGN	SCROLL_TraceChildren( HWND hScroll, short dx, short dy, WORD dcx)
+HRGN	SCROLL_TraceChildren( WND* wndScroll, short dx, short dy, WORD dcx)
 {
- WND	       *wndScroll = WIN_FindWndPtr( hScroll ); 
  HRGN		hRgnWnd;
  HRGN		hUpdateRgn,hCombineRgn;
 
@@ -45,13 +44,13 @@ HRGN	SCROLL_TraceChildren( HWND hScroll, short dx, short dy, WORD dcx)
 	 hRgnWnd   = CreateRectRgnIndirect16(&wndScroll->rectWindow);
  else
 	{
-	 RECT32 rect;
+	 RECT32 rect = { 0, 0, wndScroll->rectClient.right - wndScroll->rectClient.left,
+			       wndScroll->rectClient.bottom - wndScroll->rectClient.top };
 
-	 GetClientRect32(hScroll,&rect);
  	 hRgnWnd   = CreateRectRgnIndirect32(&rect);
 	}
 
- hUpdateRgn  = DCE_GetVisRgn( hScroll, dcx );
+ hUpdateRgn  = DCE_GetVisRgn( wndScroll->hwndSelf, dcx );
  hCombineRgn = CreateRectRgn(0,0,0,0);
 
  if( !hUpdateRgn || !hCombineRgn )
@@ -74,21 +73,21 @@ HRGN	SCROLL_TraceChildren( HWND hScroll, short dx, short dy, WORD dcx)
 /* ----------------------------------------------------------------------
  *	       SCROLL_ScrollChildren
  */
-BOOL	SCROLL_ScrollChildren( HWND hScroll, short dx, short dy)
+BOOL	SCROLL_ScrollChildren( WND* wndScroll, short dx, short dy)
 {
- WND           *wndPtr = WIN_FindWndPtr(hScroll);
+ WND           *wndPtr = NULL;
  HRGN		hUpdateRgn;
  BOOL		b = 0;
 
- if( !wndPtr || ( !dx && !dy )) return 0;
+ if( !wndScroll || ( !dx && !dy )) return 0;
 
- dprintf_scroll(stddeb,"SCROLL_ScrollChildren: hwnd %04x dx=%i dy=%i\n",hScroll,dx,dy);
+ dprintf_scroll(stddeb,"SCROLL_ScrollChildren: hwnd %04x dx=%i dy=%i\n",wndScroll->hwndSelf,dx,dy);
 
  /* get a region in client rect invalidated by siblings and ansectors */
- hUpdateRgn = SCROLL_TraceChildren(hScroll, dx , dy, DCX_CLIPSIBLINGS);
+ hUpdateRgn = SCROLL_TraceChildren(wndScroll, dx , dy, DCX_CLIPSIBLINGS);
 
    /* update children coordinates */
-   for (wndPtr = wndPtr->child; wndPtr; wndPtr = wndPtr->next)
+   for (wndPtr = wndScroll->child; wndPtr; wndPtr = wndPtr->next)
    {
 	/* we can check if window intersects with clipRect parameter
 	 * and do not move it if not - just a thought.     - AK
@@ -100,8 +99,8 @@ BOOL	SCROLL_ScrollChildren( HWND hScroll, short dx, short dy)
   } 
 
  /* invalidate uncovered region and paint frames */
- b = RedrawWindow32( hScroll, NULL, hUpdateRgn, RDW_INVALIDATE | RDW_FRAME | RDW_ERASE |
-				              RDW_ERASENOW | RDW_ALLCHILDREN ); 
+ b = RedrawWindow32( wndScroll->hwndSelf, NULL, hUpdateRgn, 
+		     RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW | RDW_ALLCHILDREN ); 
 
  DeleteObject( hUpdateRgn);
  return b;
@@ -114,10 +113,11 @@ BOOL	SCROLL_ScrollChildren( HWND hScroll, short dx, short dy)
  */
 void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRect)
 {
-    HDC  hdc;
-    HRGN hrgnUpdate,hrgnClip;
-    RECT16 rc, cliprc;
-    HWND hCaretWnd = CARET_GetHwnd();
+    HDC  	hdc;
+    HRGN 	hrgnUpdate,hrgnClip;
+    RECT16 	rc, cliprc;
+    HWND 	hCaretWnd = CARET_GetHwnd();
+    WND*	wndScroll = WIN_FindWndPtr( hwnd );
 
     dprintf_scroll(stddeb,"ScrollWindow: dx=%d, dy=%d, lpRect =%08lx clipRect=%i,%i,%i,%i\n", 
 	    dx, dy, (LONG)rect, (int)((clipRect)?clipRect->left:0),
@@ -158,6 +158,11 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
     else
 	CopyRect16(&cliprc, clipRect);
 
+    /* move window update region (if any) */
+
+    if( wndScroll->hrgnUpdate > 1 )
+	OffsetRgn( wndScroll->hrgnUpdate, dx, dy );
+
     hrgnUpdate = CreateRectRgn(0, 0, 0, 0);
     ScrollDC(hdc, dx, dy, &rc, &cliprc, hrgnUpdate, NULL);
     ReleaseDC(hwnd, hdc);
@@ -165,13 +170,14 @@ void ScrollWindow(HWND hwnd, short dx, short dy, LPRECT16 rect, LPRECT16 clipRec
     if( !rect )
       {
          /* FIXME: this doesn't take into account hrgnUpdate */
-         if( !SCROLL_ScrollChildren(hwnd,dx,dy) )
+
+         if( !SCROLL_ScrollChildren( wndScroll, dx,dy) )
 	     InvalidateRgn(hwnd, hrgnUpdate, TRUE);
       }
     else
       {
-        HRGN hrgnInv = SCROLL_TraceChildren(hwnd,dx,dy,DCX_CLIPCHILDREN |
-						       DCX_CLIPSIBLINGS );
+        HRGN hrgnInv = SCROLL_TraceChildren( wndScroll ,dx,dy,DCX_CLIPCHILDREN |
+						              DCX_CLIPSIBLINGS );
         if( hrgnInv )
         {
 	    CombineRgn(hrgnUpdate,hrgnInv,hrgnUpdate,RGN_OR);

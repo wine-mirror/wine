@@ -10,6 +10,8 @@
 #include <X11/Xlib.h>
 #include "windows.h"
 
+#pragma pack(1)
+
 typedef struct
 {
     BYTE   bWidth;
@@ -37,8 +39,6 @@ typedef union
     ICONDIRENTRY    icon;
     CURSORDIRENTRY  cursor;
 } CURSORICONDIRENTRY;
-
-#pragma pack(1)
 
 typedef struct
 {

@@ -557,7 +557,7 @@ UINT32 GetDriveType32A( LPCSTR root )
     {
     case TYPE_FLOPPY:  return DRIVE_REMOVABLE;
     case TYPE_HD:      return DRIVE_FIXED;
-    case TYPE_CDROM:   return DRIVE_REMOVABLE;
+    case TYPE_CDROM:   return DRIVE_CDROM;
     case TYPE_NETWORK: return DRIVE_REMOTE;
     case TYPE_INVALID:
     default:           return DRIVE_CANNOTDETERMINE;

@@ -16,14 +16,14 @@ base	1
 0011 stdcall Beep(long long) Beep
 0012 stub BeginUpdateResourceA
 0013 stub BeginUpdateResourceW
-0014 stub BuildCommDCBA
-0015 stub BuildCommDCBAndTimeoutsA
-0016 stub BuildCommDCBAndTimeoutsW
-0017 stub BuildCommDCBW
+0014 stdcall BuildCommDCBA(ptr ptr) BuildCommDCB32A
+0015 stdcall BuildCommDCBAndTimeoutsA(ptr ptr ptr) BuildCommDCBAndTimeouts32A
+0016 stdcall BuildCommDCBAndTimeoutsW(ptr ptr ptr) BuildCommDCBAndTimeouts32W
+0017 stdcall BuildCommDCBW(ptr ptr) BuildCommDCB32W
 0018 stub CallNamedPipeA
 0019 stub CallNamedPipeW
-0020 stub ClearCommBreak
-0021 stub ClearCommError
+0020 stdcall ClearCommBreak(long) ClearCommBreak32
+0021 stdcall ClearCommError(long ptr ptr) ClearCommError
 0022 stub CloseConsoleHandle
 0023    stdcall CloseHandle(long) CloseHandle
 0024 stub CloseProfileUserMapping
@@ -101,8 +101,8 @@ base	1
 0096 stub EnumTimeFormatsA
 0097 stub EnumTimeFormatsW
 0098 stub EraseTape
-0099 stub EscapeCommFunction
-0100   stdcall ExitProcess(long) ExitProcess
+0099 stdcall EscapeCommFunction(long long) EscapeCommFunction32
+0100 stdcall ExitProcess(long) ExitProcess
 0101 stub ExitThread
 0102 stub ExitVDM
 0103 stub ExpandEnvironmentStringsA
@@ -140,7 +140,7 @@ base	1
 0135 stub FlushViewOfFile
 0136 stub FoldStringA
 0137 stub FoldStringW
-0138 stub FormatMessageA
+0138 stdcall FormatMessageA(long ptr long long ptr long ptr) FormatMessage32A
 0139 stub FormatMessageW
 0140 stub FreeConsole
 0141 stdcall FreeEnvironmentStringsA(ptr)	FreeEnvironmentStringsA
@@ -156,14 +156,14 @@ base	1
 0151 stub GetBinaryType
 0152 stub GetBinaryTypeA
 0153 stub GetBinaryTypeW
-0154    stdcall GetCPInfo(long ptr) GetCPInfo
+0154 stdcall GetCPInfo(long ptr) GetCPInfo
 0155 stub GetCommConfig
-0156 stub GetCommMask
+0156 stdcall GetCommMask(long ptr) GetCommMask
 0157 stub GetCommModemStatus
 0158 stub GetCommProperties
-0159 stub GetCommState
-0160 stub GetCommTimeouts
-0161	stdcall GetCommandLineA()	GetCommandLineA
+0159 stdcall GetCommState(long ptr) GetCommState32
+0160 stdcall GetCommTimeouts(long ptr) GetCommTimeouts
+0161 stdcall GetCommandLineA()	GetCommandLineA
 0162 stub GetCommandLineW
 0163 stub GetCompressedFileSizeA
 0164 stub GetCompressedFileSizeW
@@ -449,13 +449,13 @@ base	1
 0444 stdcall RtlZeroMemory(ptr long) RtlZeroMemory
 0445 stub ScrollConsoleScreenBufferA
 0446 stub ScrollConsoleScreenBufferW
-0447 stub SearchPathA
-0448 stub SearchPathW
-0449 stub SetCommBreak
+0447 stdcall SearchPathA(ptr ptr ptr long ptr ptr) SearchPath32A
+0448 stdcall SearchPathW(ptr ptr ptr long ptr ptr) SearchPath32W
+0449 stdcall SetCommBreak(long) SetCommBreak32
 0450 stub SetCommConfig
-0451 stub SetCommMask
-0452 stub SetCommState
-0453 stub SetCommTimeouts
+0451 stdcall SetCommMask(long ptr) SetCommMask
+0452 stdcall SetCommState(long ptr) SetCommState32
+0453 stdcall SetCommTimeouts(long ptr) SetCommTimeouts
 0454 stub SetComputerNameA
 0455 stub SetComputerNameW
 0456 stub SetConsoleActiveScreenBuffer
@@ -537,7 +537,7 @@ base	1
 0532 stdcall TlsGetValue(long)	TlsGetValue
 0533 stdcall TlsSetValue(long ptr)	TlsSetValue
 0534 stub TransactNamedPipe
-0535 stub TransmitCommChar
+0535 stdcall TransmitCommChar(long long) TransmitCommChar32
 0536 stub TrimVirtualBuffer
 0537    stdcall UnhandledExceptionFilter(ptr) UnhandledExceptionFilter
 0538 stub UnlockFile

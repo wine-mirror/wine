@@ -35,6 +35,7 @@
 #include "xmalloc.h"
 #include "task.h"
 
+extern UINT16 COLOR_GetSystemPaletteSize();
 
 Cursor CURSORICON_XCursor = None;  /* Current X cursor */
 static HCURSOR hActiveCursor = 0;  /* Active cursor */
@@ -491,7 +492,7 @@ HICON16 LoadIcon16(HINSTANCE16 hInstance,SEGPTR name)
 
     return CURSORICON_Load( hInstance, name,
                             SYSMETRICS_CXICON, SYSMETRICS_CYICON,
-                            MIN( 16, 1 << screenDepth ), FALSE );
+                            MIN( 16, COLOR_GetSystemPaletteSize() ), FALSE );
 }
 
 
@@ -935,7 +936,8 @@ void GetClipCursor32( RECT32 *rect )
  */
 WORD GetIconID( HANDLE hResource, DWORD resType )
 {
-    CURSORICONDIR *lpDir = LockResource16(hResource);
+    CURSORICONDIR *lpDir = (CURSORICONDIR *)GlobalLock16(hResource);
+/* LockResource16(hResource); */
 
     if (!lpDir || lpDir->idReserved ||
         ((lpDir->idType != 1) && (lpDir->idType != 2)))
@@ -957,9 +959,9 @@ WORD GetIconID( HANDLE hResource, DWORD resType )
         }
     case 3:  /* icon */
         {
-            ICONDIRENTRY *entry = CURSORICON_FindBestIcon( lpDir,
-                                          SYSMETRICS_CXICON, SYSMETRICS_CYICON,
-                                          MIN( 16, 1 << screenDepth ) );
+            ICONDIRENTRY * entry =  CURSORICON_FindBestIcon( lpDir,
+                                    SYSMETRICS_CXICON, SYSMETRICS_CYICON,
+                                    MIN( 16, COLOR_GetSystemPaletteSize() ) );
             return entry ? entry->wResId : 0;
         }
     }

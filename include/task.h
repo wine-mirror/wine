@@ -81,7 +81,9 @@ typedef struct
     DWORD     int3e WINE_PACKED;          /* 46 int 3e (80x87 emu) handler */
     DWORD     int75 WINE_PACKED;          /* 4a int 75 (80x87 error) handler */
     DWORD     compat_flags WINE_PACKED;   /* 4e Compatibility flags */
-    BYTE      unused4[14];                /* 52 */
+    BYTE      unused4[10];                /* 52 */
+    WORD      switchStackSS;              /* 5c Saved %ss for SwitchStackTo */
+    WORD      switchStackSP;              /* 5e Saved %sp for SwitchStackTo */
     HANDLE16  hPDB;                       /* 60 Selector of PDB (i.e. PSP) */
     SEGPTR    dta WINE_PACKED;            /* 62 Current DTA */
     BYTE      curdrive;                   /* 66 Current drive */

@@ -416,13 +416,8 @@ static LRESULT FILEDLG_WMCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
   UINT control,notification;
 
   /* Notifications are packaged differently in Win32 */
-#ifdef WINELIB32
-  control = LOWORD(wParam);
-  notification = HIWORD(wParam);
-#else
   control = wParam;
   notification = HIWORD(lParam);
-#endif
     
   lpofn = (LPOPENFILENAME)GetWindowLong32A(hWnd, DWL_USER);
   switch (control)

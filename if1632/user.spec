@@ -23,10 +23,10 @@ heap	65520
 21  pascal16 GetDoubleClickTime() GetDoubleClickTime
 22  pascal16 SetFocus(word) SetFocus
 23  pascal16 GetFocus() GetFocus
-24  pascal16 RemoveProp(word segptr) RemoveProp
-25  pascal16 GetProp(word segptr) GetProp
-26  pascal16 SetProp(word segptr word) SetProp
-27  pascal16 EnumProps(word segptr) EnumProps
+24  pascal16 RemoveProp(word ptr) RemoveProp16
+25  pascal16 GetProp(word ptr) GetProp16
+26  pascal16 SetProp(word ptr word) SetProp16
+27  pascal16 EnumProps(word segptr) EnumProps16
 28  pascal16 ClientToScreen(word ptr) ClientToScreen16
 29  pascal16 ScreenToClient(word ptr) ScreenToClient16
 30  pascal16 WindowFromPoint(long) WindowFromPoint16
@@ -201,20 +201,20 @@ heap	65520
 198 pascal16 CascadeChildWindows(word word) CascadeChildWindows
 199 pascal16 TileChildWindows(word word) TileChildWindows
 200 pascal16 OpenComm(ptr word word) OpenComm
-201 pascal16 SetCommState(ptr) SetCommState
-202 pascal16 GetCommState(word ptr) GetCommState
+201 pascal16 SetCommState(ptr) SetCommState16
+202 pascal16 GetCommState(word ptr) GetCommState16
 203 pascal16 GetCommError(word ptr) GetCommError
 204 pascal16 ReadComm(word ptr word) ReadComm
 205 pascal16 WriteComm(word ptr word) WriteComm
-206 pascal16 TransmitCommChar(word byte) TransmitCommChar 
+206 pascal16 TransmitCommChar(word byte) TransmitCommChar16
 207 pascal16 CloseComm(word) CloseComm
 208 pascal   SetCommEventMask(word word) SetCommEventMask
 209 pascal16 GetCommEventMask(word word) GetCommEventMask
-210 pascal16 SetCommBreak(word) SetCommBreak
-211 pascal16 ClearCommBreak(word) ClearCommBreak
+210 pascal16 SetCommBreak(word) SetCommBreak16
+211 pascal16 ClearCommBreak(word) ClearCommBreak16
 212 pascal16 UngetCommChar(word byte) UngetCommChar
-213 pascal16 BuildCommDCB(ptr ptr) BuildCommDCB
-214 pascal   EscapeCommFunction(word word) EscapeCommFunction
+213 pascal16 BuildCommDCB(ptr ptr) BuildCommDCB16
+214 pascal   EscapeCommFunction(word word) EscapeCommFunction16
 215 pascal16 FlushComm(word word) FlushComm
 #216 USERSEEUSERDO
 217 pascal16 LookupMenuHandle(word s_word) LookupMenuHandle

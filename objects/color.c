@@ -62,7 +62,8 @@ static int COLOR_Graymax    = 0;
  * currently inactive window it changes only DC palette mappings.
  */
 
-#define NB_RESERVED_COLORS  20 /* number of fixed colors in system palette */
+#define NB_RESERVED_COLORS  		20 /* number of fixed colors in system palette */
+#define NB_COLORCUBE_START_INDEX	63
 
 Visual* 		visual = NULL;
 
@@ -71,7 +72,8 @@ static int COLOR_gapStart = 256;
 static int COLOR_gapEnd = -1;
 
   /* First free dynamic color cell, 0 = full palette, -1 = fixed palette */
-static int COLOR_firstFree = 0; 
+static int            COLOR_firstFree = 0; 
+static unsigned char  COLOR_freeList[256];
 
   /* Maps entry in the system palette to X pixel value */
 int* COLOR_PaletteToPixel = NULL;
@@ -134,21 +136,97 @@ UINT16 COLOR_GetSystemPaletteFlags(void)
     return cSpace.flags;
 }
 
-void COLOR_FormatSystemPalette(void)
+COLORREF COLOR_GetSystemPaletteEntry(BYTE i)
 {
-    int i, j = COLOR_firstFree = NB_RESERVED_COLORS/2;
-
-    COLOR_sysPal[j].peFlags = 0;
-    for( i = NB_RESERVED_COLORS/2 + 1 ; i < 256 - NB_RESERVED_COLORS/2 ; i++ )
-        if( i < COLOR_gapStart || i > COLOR_gapEnd )
-        {
-            COLOR_sysPal[i].peFlags = 0;       /* unused tag */
-            COLOR_sysPal[j].peRed = i;         /* next */
-            j = i;
-        }
-    COLOR_sysPal[j].peRed = 0;		 /* terminal */
+ return *(COLORREF*)(COLOR_sysPal + i) & 0x00ffffff;
 }
 
+void COLOR_FormatSystemPalette(void)
+{
+ /* Build free list so we'd have an easy way to find
+  * out if there are any available colorcells. 
+  */
+
+  int i, j = COLOR_firstFree = NB_RESERVED_COLORS/2;
+
+  COLOR_sysPal[j].peFlags = 0;
+  for( i = NB_RESERVED_COLORS/2 + 1 ; i < 256 - NB_RESERVED_COLORS/2 ; i++ )
+    if( i < COLOR_gapStart || i > COLOR_gapEnd )
+      {
+	COLOR_sysPal[i].peFlags = 0;  /* unused tag */
+	COLOR_freeList[j] = i;	  /* next */
+        j = i;
+      }
+  COLOR_freeList[j] = 0;
+}
+
+void COLOR_FillDefaultColors(void)
+{
+ /* initialize unused entries to what Windows uses as a color 
+  * cube - based on Greg Kreider's code. 
+  */
+
+  int i = 0, idx = 0;
+  int red, no_r, inc_r;
+  int green, no_g, inc_g; 
+  int blue, no_b, inc_b;
+
+  while (i*i*i < (cSpace.size - NB_RESERVED_COLORS)) i++;
+  no_r = no_g = no_b = --i;
+  if ((no_r * (no_g+1) * no_b) < (cSpace.size - NB_RESERVED_COLORS)) no_g++;
+  if ((no_r * no_g * (no_b+1)) < (cSpace.size - NB_RESERVED_COLORS)) no_b++;
+  inc_r = (255 - NB_COLORCUBE_START_INDEX)/no_r;
+  inc_g = (255 - NB_COLORCUBE_START_INDEX)/no_g;
+  inc_b = (255 - NB_COLORCUBE_START_INDEX)/no_b;
+
+  idx = COLOR_firstFree;
+
+  for (blue = NB_COLORCUBE_START_INDEX; blue < 256 && idx; blue += inc_b )
+    for (green = NB_COLORCUBE_START_INDEX; green < 256 && idx; green += inc_g )
+      for (red = NB_COLORCUBE_START_INDEX; red < 256 && idx; red += inc_r )
+      {
+	 /* weird but true */
+
+	 if( red == NB_COLORCUBE_START_INDEX && green == red && blue == green ) continue;
+
+         COLOR_sysPal[idx].peRed = red;
+         COLOR_sysPal[idx].peGreen = green;
+         COLOR_sysPal[idx].peBlue = blue;
+         
+	 /* set X color */
+
+	 if( cSpace.flags & COLOR_VIRTUAL )
+	 {
+            if (COLOR_Redmax != 255) no_r = (red * COLOR_Redmax) / 255;
+            if (COLOR_Greenmax != 255) no_g = (green * COLOR_Greenmax) / 255;
+            if (COLOR_Bluemax != 255) no_b = (blue * COLOR_Bluemax) / 255;
+
+            COLOR_PaletteToPixel[idx] = (no_r << COLOR_Redshift) | (no_g << COLOR_Greenshift) | (no_b << COLOR_Blueshift);
+	 }
+	 else if( !(cSpace.flags & COLOR_FIXED) )
+	 {
+	   XColor color = { color.pixel = (COLOR_PaletteToPixel)? COLOR_PaletteToPixel[idx] : idx ,
+	                    COLOR_sysPal[idx].peRed << 8,
+			    COLOR_sysPal[idx].peGreen << 8,
+			    COLOR_sysPal[idx].peGreen << 8,
+			    (DoRed | DoGreen | DoBlue) };
+	   XStoreColor(display, cSpace.colorMap, &color);
+	 }
+
+	 idx = COLOR_freeList[idx];
+      }
+
+  /* fill the rest with gray for now - only needed for
+   * sparse palette (in seamless mode)
+   */
+
+  for ( i = COLOR_gapStart; i <= COLOR_gapEnd; i++ )
+  {
+     *(COLORREF*)(COLOR_sysPal + i) = 0x00c0c0c0;
+      if( COLOR_PaletteToPixel )
+	  COLOR_PaletteToPixel[i] = COLOR_PaletteToPixel[7];
+  }
+}
 
 /***********************************************************************
  *           COLOR_BuildPrivateMap/COLOR_BuildSharedMap
@@ -310,6 +388,7 @@ static BOOL COLOR_BuildSharedMap(CSPACE* cs)
            * color translations but we have to allocate full palette 
 	   * to maintain compatibility
 	   */
+	  cs->size = 256;
 	  dprintf_palette(stddeb,"\tvirtual colorspace - screendepth %i\n", screenDepth);
 	}
    else cs->size = NB_RESERVED_COLORS;	/* system palette only - however we can alloc a bunch
@@ -338,40 +417,47 @@ static BOOL COLOR_BuildSharedMap(CSPACE* cs)
    /* Setup system palette entry <-> pixel mappings and fill in 20 fixed entries */
 
    if( screenDepth <= 8 )
-   {
+     {
        COLOR_PixelToPalette = (int*)xmalloc(sizeof(int)*256);
-       COLOR_PaletteToPixel = (int*)xmalloc(sizeof(int)*256);
+       memset( COLOR_PixelToPalette, 0, 256*sizeof(int) );
+     }
 
-       for( i = j = 0; i < 256; i++ )
-       {
-           if( i >= COLOR_gapStart && i <= COLOR_gapEnd ) 
-           {
-               COLOR_PaletteToPixel[i] = 0;
-               COLOR_sysPal[i].peFlags = 0;	/* mark as unused */
-               continue;
-           }
+   /* for hicolor visuals PaletteToPixel mapping is used to skip
+    * RGB->pixel calculation in COLOR_ToPhysical(). 
+    */
 
-           if( i < NB_RESERVED_COLORS/2 )
-           {
-               COLOR_PaletteToPixel[i] = sysPixel[i];
-               COLOR_sysPal[i] = __sysPalTemplate[i];
-           }
-           else if( i >= 256 - NB_RESERVED_COLORS/2 )
-           {
-               COLOR_PaletteToPixel[i] = sysPixel[(i + NB_RESERVED_COLORS) - 256]; 
-               COLOR_sysPal[i] = __sysPalTemplate[(i + NB_RESERVED_COLORS) - 256];
-           }
-           else if( pixDynMapping )
-               COLOR_PaletteToPixel[i] = pixDynMapping[j++];
+   COLOR_PaletteToPixel = (int*)xmalloc(sizeof(int)*256);
+
+   for( i = j = 0; i < 256; i++ )
+   {
+      if( i >= COLOR_gapStart && i <= COLOR_gapEnd ) 
+      {
+         COLOR_PaletteToPixel[i] = 0;
+         COLOR_sysPal[i].peFlags = 0;	/* mark as unused */
+         continue;
+      }
+
+      if( i < NB_RESERVED_COLORS/2 )
+      {
+        COLOR_PaletteToPixel[i] = sysPixel[i];
+        COLOR_sysPal[i] = __sysPalTemplate[i];
+      }
+      else if( i >= 256 - NB_RESERVED_COLORS/2 )
+      {
+        COLOR_PaletteToPixel[i] = sysPixel[(i + NB_RESERVED_COLORS) - 256]; 
+        COLOR_sysPal[i] = __sysPalTemplate[(i + NB_RESERVED_COLORS) - 256];
+      }
+      else if( pixDynMapping )
+             COLOR_PaletteToPixel[i] = pixDynMapping[j++];
            else
-               COLOR_PaletteToPixel[i] = i;
+             COLOR_PaletteToPixel[i] = i;
 
-           dprintf_palette(stddeb,"\tindex %i -> pixel %i\n", i, COLOR_PaletteToPixel[i]);
+      dprintf_palette(stddeb,"\tindex %i -> pixel %i\n", i, COLOR_PaletteToPixel[i]);
 
-           memset( COLOR_PixelToPalette, 0, 256*sizeof(int) );
-           COLOR_PixelToPalette[COLOR_PaletteToPixel[i]] = i;
-       }
+      if( COLOR_PixelToPalette )
+        COLOR_PixelToPalette[COLOR_PaletteToPixel[i]] = i;
    }
+
    if( pixDynMapping ) free(pixDynMapping);
    return TRUE;
 }
@@ -387,6 +473,9 @@ static HPALETTE16 COLOR_InitPalette(void)
     int 		i;
     HPALETTE16 		hpalette;
     LOGPALETTE * 	palPtr;
+    PALETTEOBJ*         palObj;
+
+    memset(COLOR_freeList, 0, 256*sizeof(unsigned char));
 
     /* calculate max palette size */
 
@@ -397,10 +486,12 @@ static HPALETTE16 COLOR_InitPalette(void)
     else
 	COLOR_BuildSharedMap( &cSpace );
 
-    /* Build free list ( use peRed as "next" ) */
+    /* Build free list */
 
     if( COLOR_firstFree != -1 )
 	COLOR_FormatSystemPalette();
+
+    COLOR_FillDefaultColors();
 
     /* create default palette (20 system colors) */
 
@@ -417,6 +508,11 @@ static HPALETTE16 COLOR_InitPalette(void)
         palPtr->palPalEntry[i].peFlags = 0;  
     }
     hpalette = CreatePalette( palPtr );
+
+    palObj = (PALETTEOBJ*) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
+
+    palObj->mapping = xmalloc( sizeof(int) * 20 );
+
     free( palPtr );
     return hpalette;
 }
@@ -534,8 +630,7 @@ BOOL COLOR_IsSolid( COLORREF color )
 
 
 /***********************************************************************
- *	     COLOR_PaletteLookup
- *
+ *	     COLOR_PaletteLookupPixel
  */
 int COLOR_PaletteLookupPixel( PALETTEENTRY* palPalEntry, int size,
                               int* mapping, COLORREF col, BOOL skipReserved )
@@ -543,7 +638,7 @@ int COLOR_PaletteLookupPixel( PALETTEENTRY* palPalEntry, int size,
     int i, best = 0, diff = 0x7fffffff;
     int r,g,b;
 
-    for( i = 0; i < size; i++ )
+    for( i = 0; i < size && diff ; i++ )
     {
         if( !(palPalEntry[i].peFlags & PC_SYS_USED) ||
             (skipReserved && palPalEntry[i].peFlags  & PC_SYS_RESERVED) )
@@ -560,10 +655,33 @@ int COLOR_PaletteLookupPixel( PALETTEENTRY* palPalEntry, int size,
     return (mapping) ? mapping[best] : best;
 }
 
+/***********************************************************************
+ *           COLOR_LookupSystemPixel
+ */
+int COLOR_LookupSystemPixel(COLORREF col)
+{
+ int            i, best = 0, diff = 0x7fffffff;
+ int            size = COLOR_GetSystemPaletteSize();
+ int            r,g,b;
+
+ for( i = 0; i < size && diff ; i++ )
+    {
+      if( i == NB_RESERVED_COLORS/2 ) i = size - NB_RESERVED_COLORS/2;
+
+      r = COLOR_sysPal[i].peRed - GetRValue(col);
+      g = COLOR_sysPal[i].peGreen - GetGValue(col);
+      b = COLOR_sysPal[i].peBlue - GetBValue(col);
+
+      r = r*r + g*g + b*b;
+
+      if( r < diff ) { best = i; diff = r; }
+    }
+ 
+ return (COLOR_PaletteToPixel)? COLOR_PaletteToPixel[best] : best;
+}
 
 /***********************************************************************
  *	     COLOR_PaletteLookupExactIndex
- *
  */
 int COLOR_PaletteLookupExactIndex( PALETTEENTRY* palPalEntry, int size,
                                    COLORREF col )
@@ -581,6 +699,32 @@ int COLOR_PaletteLookupExactIndex( PALETTEENTRY* palPalEntry, int size,
     return -1;
 }
 
+/***********************************************************************
+ *           COLOR_LookupNearestColor
+ */
+COLORREF COLOR_LookupNearestColor( PALETTEENTRY* palPalEntry, int size, COLORREF color )
+{
+  unsigned char		spec_type = color >> 24;
+  int			i;
+
+  /* we need logical palette for PALETTERGB and PALETTEINDEX colorrefs */
+
+  if( spec_type == 2 ) /* PALETTERGB */
+    color = *(COLORREF*)
+	     (palPalEntry + COLOR_PaletteLookupPixel(palPalEntry,size,NULL,color,FALSE));
+
+  else if( spec_type == 1 ) /* PALETTEINDEX */
+    if( (i = color & 0x0000ffff) >= size ) 
+      {
+	fprintf(stderr, "\tRGB(%lx) : idx %d is out of bounds, assuming NULL\n", color, i);
+	color = *(COLORREF*)palPalEntry;
+      }
+    else color = *(COLORREF*)(palPalEntry + i);
+
+  color &= 0x00ffffff;
+  return (0x00ffffff & *(COLORREF*)
+         (COLOR_sysPal + COLOR_PaletteLookupPixel(COLOR_sysPal, 256, NULL, color, FALSE)));
+}
 
 /***********************************************************************
  *           COLOR_ToLogical
@@ -590,13 +734,29 @@ int COLOR_PaletteLookupExactIndex( PALETTEENTRY* palPalEntry, int size,
 COLORREF COLOR_ToLogical(int pixel)
 {
     XColor color;
-  
-    if (screenDepth > 8) return pixel;
-    if ((screenDepth <= 8) && (pixel < 256) && !(cSpace.flags & COLOR_VIRTUAL))
-        return  ( *(COLORREF*)(COLOR_sysPal + ((COLOR_PixelToPalette)?COLOR_PixelToPalette[pixel]:pixel)) ) & 0x00ffffff;
 
-    color.pixel = pixel;
-    XQueryColor(display, cSpace.colorMap, &color);
+    /* truecolor visual */
+
+    if (screenDepth >= 24) return pixel;
+
+    /* check for hicolor visuals first */
+
+    if ( cSpace.flags & COLOR_FIXED && !COLOR_Graymax )
+       {
+         color.red = pixel >> COLOR_Redshift;
+         color.green = pixel >> COLOR_Greenshift;
+         color.blue = pixel >> COLOR_Blueshift;
+       }
+    else if ((screenDepth <= 8) && (pixel < 256) && 
+	    !(cSpace.flags & (COLOR_VIRTUAL | COLOR_FIXED)) )
+        return  ( *(COLORREF*)(COLOR_sysPal + 
+		  ((COLOR_PixelToPalette)?COLOR_PixelToPalette[pixel]:pixel)) ) & 0x00ffffff;
+    else
+       {
+         color.pixel = pixel;
+         XQueryColor(display, cSpace.colorMap, &color);
+         return RGB(color.red >> 8, color.green >> 8, color.blue >> 8);
+       }
 
     return RGB((color.red * 255)/COLOR_Redmax,
                (color.green * 255)/COLOR_Greenmax,
@@ -650,37 +810,36 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 
 	switch(spec_type)
         {
-	  default: 
-          case 0: /* RGB */
-
-            red = GetRValue(color);
-            green = GetGValue(color);
-            blue = GetBValue(color);
-            break;
-
           case 2: /* PALETTERGB - not sure if we really need to search palette */
 	
 	    idx = COLOR_PaletteLookupPixel( palPtr->logpalette.palPalEntry,
 					    palPtr->logpalette.palNumEntries,
 					    NULL, color, FALSE);
+
+            if( palPtr->mapping ) return palPtr->mapping[idx];
+
+	    color = *(COLORREF*)(palPtr->logpalette.palPalEntry + idx);
+	    break;
+
           case 1: /* PALETTEINDEX */
 
-            idx = ((spec_type == 1)?color:idx) & 0xffff;
-
-            if (idx >= palPtr->logpalette.palNumEntries)
+            if ( (idx = color & 0xffff) >= palPtr->logpalette.palNumEntries)
             {
                 fprintf(stderr, "\tRGB(%lx) : idx %d is out of bounds, assuming black\n", color, idx);
-                /* out of bounds */
-                red = green = blue = 0;
+                return 0;
             }
-            else if( palPtr->mapping ) return palPtr->mapping[idx];
-	    else
-            {
-                red = palPtr->logpalette.palPalEntry[idx].peRed;
-                green = palPtr->logpalette.palPalEntry[idx].peGreen;
-                blue = palPtr->logpalette.palPalEntry[idx].peBlue;
-            }
+
+            if( palPtr->mapping ) return palPtr->mapping[idx];
+
+	    color = *(COLORREF*)(palPtr->logpalette.palPalEntry + idx);
+
+	    /* fall through and out */
+
+	  case 0: /* RGB */
+	  default:
 	}
+
+        red = GetRValue(color); green = GetGValue(color); blue = GetBValue(color);
 
 	if (COLOR_Graymax)
         {
@@ -740,7 +899,6 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
     return index;
 }
 
-
 /***********************************************************************
  *           COLOR_SetMapping
  *
@@ -754,11 +912,10 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL mapOnly )
     int  prevMapping = (palPtr->mapping) ? 1 : 0;
     int  iRemapped = 0;
 
-    /* free dynamic colors in system palette - 
-     * certain optimization is to free them only when they are needed */
+    /* reset dynamic system palette entries */
 
     if( !mapOnly && COLOR_firstFree != -1)
-        COLOR_FormatSystemPalette();
+         COLOR_FormatSystemPalette();
 
     /* initialize palette mapping table */
  
@@ -783,6 +940,7 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL mapOnly )
 
 	case PC_RESERVED:   /* forbid future mappings to this entry */
             flag |= PC_SYS_RESERVED;
+
             /* fall through */
 	default:	    /* try to collapse identical colors */
             index = COLOR_PaletteLookupExactIndex(COLOR_sysPal, 256,  
@@ -791,26 +949,32 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL mapOnly )
 	case PC_NOCOLLAPSE: 
             if( index < 0 )
             {
-                if( COLOR_firstFree > 0 && !(cSpace.flags & COLOR_FIXED) && !mapOnly )
+                if( COLOR_firstFree > 0 && !(cSpace.flags & COLOR_FIXED) )
                 {
                     XColor color;
                     index = COLOR_firstFree;  /* ought to be available */
-                    COLOR_firstFree = COLOR_sysPal[index].peRed;
+                    COLOR_firstFree = COLOR_freeList[index];
+
                     color.pixel = (COLOR_PaletteToPixel) ? COLOR_PaletteToPixel[index] : index;
-                    color.red = palPtr->logpalette.palPalEntry[i].peRed * 65535 / 255;
-                    color.green = palPtr->logpalette.palPalEntry[i].peGreen * 65535 / 255;
-                    color.blue = palPtr->logpalette.palPalEntry[i].peBlue * 65535 / 255;
+                    color.red = palPtr->logpalette.palPalEntry[i].peRed << 8;
+                    color.green = palPtr->logpalette.palPalEntry[i].peGreen << 8;
+                    color.blue = palPtr->logpalette.palPalEntry[i].peBlue << 8;
                     color.flags = DoRed | DoGreen | DoBlue;
                     XStoreColor(display, cSpace.colorMap, &color);
+
                     COLOR_sysPal[index] = palPtr->logpalette.palPalEntry[i];
                     COLOR_sysPal[index].peFlags = flag;
                     if( COLOR_PaletteToPixel ) index = COLOR_PaletteToPixel[index];
+
+		    COLOR_freeList[index] = 0;
+		    palPtr->logpalette.palPalEntry[i].peFlags = PC_SYS_USED | PC_SYS_MAPPED;
                     break;
                 }
                 else if ( cSpace.flags & COLOR_VIRTUAL ) 
                 {
                     index = COLOR_ToPhysical( NULL, 0x00ffffff &
                              *(COLORREF*)(palPtr->logpalette.palPalEntry + i));
+		    palPtr->logpalette.palPalEntry[i].peFlags = PC_SYS_USED;
                     break;     
                 }
 
@@ -819,6 +983,7 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL mapOnly )
                 index = COLOR_PaletteLookupPixel(COLOR_sysPal, 256, NULL, 
                        *(COLORREF*)(palPtr->logpalette.palPalEntry + i), TRUE);
             }
+	    palPtr->logpalette.palPalEntry[i].peFlags = PC_SYS_USED;
 
             if( COLOR_PaletteToPixel ) index = COLOR_PaletteToPixel[index];
             break;
@@ -827,9 +992,9 @@ int COLOR_SetMapping( PALETTEOBJ* palPtr, BOOL mapOnly )
         if( !prevMapping || palPtr->mapping[i] != index ) iRemapped++;
         palPtr->mapping[i] = index;
 
-        /* dprintf_palette(stddeb,"\tentry %i (%lx) -> pixel %i\n", i, 
+        dprintf_palette(stddeb,"\tentry %i (%lx) -> pixel %i\n", i, 
 				*(COLORREF*)(palPtr->logpalette.palPalEntry + i), index);
-	*/
+	
     }
     return iRemapped;
 }

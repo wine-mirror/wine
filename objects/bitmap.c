@@ -227,6 +227,35 @@ LONG SetBitmapBits( HBITMAP32 hbitmap, LONG count, LPCVOID buffer )
     return height * bmp->bitmap.bmWidthBytes;
 }
 
+/**********************************************************************
+ *	    LoadImageA    (USER32.364)
+ * FIXME: implementation still lacks nearly all features, see LR_*
+ * defines in windows.h
+ */
+
+HANDLE32 LoadImage32A(
+	HINSTANCE32 hinst,LPCSTR name,UINT32 type,INT32 desiredx,
+	INT32 desiredy,UINT32 loadflags
+) {
+	if (HIWORD(name)) {
+		dprintf_resource(stddeb,"LoadImage32A(0x%04x,%s,%d,%d,%d,0x%08x)\n",
+			hinst,name,type,desiredx,desiredy,loadflags
+		);
+	} else {
+		dprintf_resource(stddeb,"LoadImage32A(0x%04x,%p,%d,%d,%d,0x%08x)\n",
+			hinst,name,type,desiredx,desiredy,loadflags
+		);
+	}
+	switch (type) {
+	case IMAGE_BITMAP:
+		return LoadBitmap32A(hinst,name);
+	case IMAGE_ICON:
+		return LoadIcon32A(hinst,name);
+	case IMAGE_CURSOR:
+		return LoadCursor32A(hinst,name);
+	}
+	return 0;
+}
 
 /**********************************************************************
  *	    LoadBitmap16    (USER.175)

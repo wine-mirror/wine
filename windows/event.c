@@ -149,6 +149,9 @@ static void EVENT_SelectionNotify( XSelectionEvent *event);
 static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event);
 static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event );
 
+/* Usable only with OLVWM - compile option perhaps?
+static void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event );
+*/
 
 /***********************************************************************
  *           EVENT_ProcessEvent
@@ -230,7 +233,10 @@ void EVENT_ProcessEvent( XEvent *event )
     case ClientMessage:
 	EVENT_ClientMessage( pWnd, (XClientMessageEvent *) event );
 	break;
-
+/*  case EnterNotify:
+ *       EVENT_EnterNotify( pWnd, (XCrossingEvent *) event );
+ *       break;
+ */
     case NoExpose:
 	break;   
 
@@ -822,6 +828,20 @@ static void EVENT_ClientMessage( WND *pWnd, XClientMessageEvent *event )
     SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_CLOSE, 0 );
 }
 
+/**********************************************************************
+ *           EVENT_EnterNotify
+ *
+ * Install colormap when Wine window is focused in
+ * self-managed mode with private colormap
+ */
+/*
+  void EVENT_EnterNotify( WND *pWnd, XCrossingEvent *event )
+  {
+   if( !Options.managed && rootWindow == DefaultRootWindow(display) &&
+     (COLOR_GetSystemPaletteFlags() & COLOR_PRIVATE) && GetFocus() )
+      XInstallColormap( display, COLOR_GetColormap() );
+  }
+ */ 
 
 /**********************************************************************
  *		SetCapture 	(USER.18)

@@ -174,6 +174,8 @@ WORD timeKillEvent(WORD wID)
 	    if (lpTimer->Next != NULL)
 		lpTimer->Next->Prev = lpTimer->Prev;
 	    free(lpTimer);
+	    if (lpTimer==lpTimerList)
+	    	lpTimerList=NULL;
 	    return TRUE;
 	}
 	lpTimer = lpTimer->Next;

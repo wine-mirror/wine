@@ -631,3 +631,148 @@ BOOL32 OemToChar32W(LPCSTR s,LPWSTR d)
     STRING32_AnsiToUni(d,x);
     return TRUE;
 }
+
+/***********************************************************************
+ *           FormatMessageA   (KERNEL32.138)
+ * FIXME: missing wrap, function has no clue about varargs handling
+ */
+DWORD
+FormatMessage32A(
+	DWORD	dwFlags,
+	LPCVOID	lpSource,
+	DWORD	dwMessageId,
+	DWORD	dwLanguageId,
+	LPSTR	lpBuffer,
+	DWORD	nSize,
+	LPDWORD	*Arguments /* va_list *Arguments */
+) {
+	LPSTR	target,t;
+	DWORD	talloced;
+	LPSTR	from,f;
+	DWORD	width = dwFlags & FORMAT_MESSAGE_MAX_WIDTH_MASK;
+
+	fprintf(stddeb,"FormatMessage32A(0x%lx,%p,%ld,0x%lx,%p,%ld,%p)\n",
+		dwFlags,lpSource,dwMessageId,dwLanguageId,lpBuffer,
+		nSize,Arguments
+	);
+	if (width) 
+		fprintf(stdnimp,"	- line wrapping not supported.\n");
+	from = NULL;
+	if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
+		from = (LPSTR)lpSource;
+	if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) {
+		/* gather information from system message tables ... */
+		fprintf(stdnimp,"	- FORMAT_MESSAGE_FROM_SYSTEM not implemented.\n");
+	}
+	if (dwFlags & FORMAT_MESSAGE_FROM_HMODULE) {
+		/* gather information from module's message tables ... */
+		fprintf(stdnimp,"	- FORMAT_MESSAGE_FROM_HMODULE not implemented.\n");
+	}
+	target	= (char*)xmalloc(100);
+	t	= target;
+	talloced= 100;
+	*t	= 0;
+
+#define ADD_TO_T(c) \
+	*t++=c;\
+	if (t-target == talloced) {\
+		target	= (char*)xrealloc(target,talloced*2);\
+		t	= target+talloced;\
+		talloced*=2;\
+	}
+
+	if (from) {
+		f=from;
+		fprintf(stddeb,"	from is %s\n",from);
+		while (*f) {
+			if (*f=='%') {
+				int	insertnr;
+				char	*fmtstr,*sprintfbuf,*x;
+				DWORD	arg1,arg2,arg3;
+
+				f++;
+				if (!*f) {
+					ADD_TO_T('%');
+					continue;
+				}
+				switch (*f) {
+				case '1':case '2':case '3':case '4':case '5':
+				case '6':case '7':case '8':case '9':
+					insertnr=*f-'0';
+					switch (f[1]) {
+					case '0':case '1':case '2':case '3':
+					case '4':case '5':case '6':case '7':
+					case '8':case '9':
+						f++;
+						insertnr=insertnr*10+*f-'0';
+						break;
+					default:break;
+					}
+					if (f[1]=='!') {
+						f+=2;
+						if (NULL!=(x=strchr(f,'!'))) {
+							*x='\0';
+							fmtstr=strdup(f);
+							f=x+1;
+						}
+					} else {
+						fmtstr=strdup("%s");
+					}
+
+					if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY) {
+						DWORD	*args = (DWORD*)Arguments;
+						arg1 = args[insertnr-1];
+						arg2 = args[insertnr+0];
+						arg3 = args[insertnr+1];
+					} else {
+						/* 
+						int	i;
+						va_list	vl;
+
+						vl=va_start(Arguments,7);
+						for (i=insertnr;i--;)
+							va_arg(vl,DWORD);
+						arg1 = va_arg(vl,DWORD);
+						arg2 = va_arg(vl,DWORD);
+						arg3 = va_arg(vl,DWORD);
+						va_end(vl);
+						*/
+						fprintf(stdnimp,"	- varargs not supported yet.\n");
+					}
+
+					if (fmtstr[strlen(fmtstr)]=='s') {
+						sprintfbuf=(char*)xmalloc(strlen((LPSTR)arg1)+1);
+					} else {
+						sprintfbuf=(char*)xmalloc(100);
+					}
+					sprintf(sprintfbuf,fmtstr,arg1,arg2,arg3);
+					x=sprintfbuf;
+					while (*x) {
+						ADD_TO_T(*x++);
+					}
+					free(sprintfbuf);
+					free(fmtstr);
+					break;
+				default:ADD_TO_T(*f++)
+					break;
+
+				}
+			} else {
+				ADD_TO_T(*f++)
+			}
+		}
+		*t='\0';
+	}
+	talloced = strlen(target)+1;
+	if (nSize && talloced<nSize) {
+		target = (char*)xrealloc(target,nSize);
+	}
+	if (dwFlags & FORMAT_MESSAGE_ALLOCATE_BUFFER) {
+		/* nSize is the MINIMUM size */
+		*((LPVOID*)lpBuffer) = (LPVOID)LocalAlloc32(GMEM_ZEROINIT,talloced);
+		memcpy(*(LPSTR*)lpBuffer,target,talloced);
+	} else
+		strncpy(lpBuffer,target,nSize);
+	free(target);
+	return strlen(lpBuffer);
+}

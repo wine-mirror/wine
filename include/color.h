@@ -9,8 +9,9 @@
 
 #define COLOR_PRIVATE   0x1000          /* private colormap, identity mapping */
 
-#define PC_SYS_USED     0x80		/* system peFlags */
-#define PC_SYS_RESERVED 0x40
+#define PC_SYS_USED     0x80		/* palentry is used (both system and logical) */
+#define PC_SYS_RESERVED 0x40		/* system palentry is not to be mapped to */
+#define PC_SYS_MAPPED   0x10		/* logical palentry is a direct alias for system palentry */
 
 extern HPALETTE16 	COLOR_Init(void);
 extern COLORREF		COLOR_ToLogical(int pixel);
@@ -20,6 +21,9 @@ extern BOOL 		COLOR_IsSolid( COLORREF color );
 extern Colormap		COLOR_GetColormap();
 extern UINT16		COLOR_GetSystemPaletteSize();
 extern UINT16		COLOR_GetSystemPaletteFlags();
+
+extern COLORREF		COLOR_LookupNearestColor( PALETTEENTRY*, int, COLORREF );
+extern int		COLOR_PaletteLookupPixel( PALETTEENTRY*, int, int* , COLORREF, BOOL );
 
 extern int 	COLOR_mapEGAPixel[16];
 extern int* 	COLOR_PaletteToPixel;

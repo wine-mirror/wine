@@ -891,7 +891,8 @@ static void BITBLT_GetDstArea(DC *dc, Pixmap pixmap, GC gc, RECT16 *visRectDst)
     short width  = visRectDst->right - visRectDst->left;
     short height = visRectDst->bottom - visRectDst->top;
 
-    if (!COLOR_PixelToPalette || (dc->w.bitsPerPixel == 1))
+    if (!COLOR_PixelToPalette || (dc->w.bitsPerPixel == 1) ||
+	(COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL) )
     {
         XCopyArea( display, dc->u.x.drawable, pixmap, gc,
                    visRectDst->left, visRectDst->top, width, height, 0, 0 );
@@ -922,7 +923,10 @@ static void BITBLT_PutDstArea(DC *dc, Pixmap pixmap, GC gc, RECT16 *visRectDst)
     short width  = visRectDst->right - visRectDst->left;
     short height = visRectDst->bottom - visRectDst->top;
 
-    if (!COLOR_PaletteToPixel)
+    /* !COLOR_PaletteToPixel is _NOT_ enough */
+
+    if (!COLOR_PaletteToPixel || (dc->w.bitsPerPixel == 1) || 
+        (COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL) )
     {
         XCopyArea( display, pixmap, dc->u.x.drawable, gc, 0, 0,
                    width, height, visRectDst->left, visRectDst->top );
@@ -1111,6 +1115,20 @@ BOOL BITBLT_InternalStretchBlt( DC *dcDst, short xDst, short yDst,
             !Options.perfectGraphics)
         {
             XSetFunction( display, dcDst->u.x.gc, GXinvert );
+
+            if( COLOR_GetSystemPaletteFlags() & (COLOR_PRIVATE | COLOR_VIRTUAL) )
+                XSetFunction( display, dcDst->u.x.gc, GXinvert);
+            else
+            {
+                /* Xor is much better when we do not have full colormap.   */
+                /* Using white^black ensures that we invert at least black */
+                /* and white. */
+                Pixel xor_pix = (WhitePixelOfScreen(screen) ^
+                                 BlackPixelOfScreen(screen));
+                XSetFunction( display, dcDst->u.x.gc, GXxor );
+                XSetForeground( display, dcDst->u.x.gc, xor_pix);
+                XSetFillStyle( display, dcDst->u.x.gc, FillSolid ); 
+            }
             XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
                             visRectDst.left, visRectDst.top, width, height ); 
             return TRUE;

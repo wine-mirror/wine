@@ -672,10 +672,21 @@ BOOL ShowWindow( HWND hwnd, int cmd )
         if (!IsWindow( hwnd )) return wasVisible;
     }
 
-    /* We can't activate a child window */
-    if (wndPtr->dwStyle & WS_CHILD) swpflags |= SWP_NOACTIVATE | SWP_NOZORDER;
-    SetWindowPos( hwnd, HWND_TOP, x, y, cx, cy, swpflags );
-    if (!IsWindow( hwnd )) return wasVisible;
+    if ((wndPtr->dwStyle & WS_CHILD) &&
+        !IsWindowVisible( wndPtr->parent->hwndSelf ) &&
+        (swpflags & SWP_NOSIZE) && (swpflags & SWP_NOMOVE))
+    {
+        /* Don't call SetWindowPos() on invisible child windows */
+        if (cmd == SW_HIDE) wndPtr->dwStyle &= ~WS_VISIBLE;
+        else wndPtr->dwStyle |= WS_VISIBLE;
+    }
+    else
+    {
+        /* We can't activate a child window */
+        if (wndPtr->dwStyle & WS_CHILD) swpflags |= SWP_NOACTIVATE;
+        SetWindowPos( hwnd, HWND_TOP, x, y, cx, cy, swpflags );
+        if (!IsWindow( hwnd )) return wasVisible;
+    }
 
     if (wndPtr->flags & WIN_NEED_SIZE)
     {

@@ -55,7 +55,7 @@ base	1
 0050 stub ClientThreadConnect
 0051 stdcall ClientToScreen(long ptr) ClientToScreen32
 0052 stdcall ClipCursor(ptr) ClipCursor32
-0053 stub CloseClipboard
+0053 stdcall CloseClipboard() CloseClipboard
 0054 stub CloseDesktop
 0055 stub CloseWindow
 0056 stub CloseWindowStation
@@ -189,10 +189,10 @@ base	1
 0182 stub EnumDisplayDeviceModesW
 0183 stub EnumDisplayDevicesA
 0184 stub EnumDisplayDevicesW
-0185 stub EnumPropsA
-0186 stub EnumPropsExA
-0187 stub EnumPropsExW
-0188 stub EnumPropsW
+0185 stdcall EnumPropsA(long ptr) EnumProps32A
+0186 stdcall EnumPropsExA(long ptr long) EnumPropsEx32A
+0187 stdcall EnumPropsExW(long ptr long) EnumPropsEx32W
+0188 stdcall EnumPropsW(long ptr) EnumProps32W
 0189 stdcall EnumThreadWindows(long ptr long) EnumThreadWindows
 0190 stub EnumWindowStationsA
 0191 stub EnumWindowStationsW
@@ -243,7 +243,7 @@ base	1
 0236 stdcall GetDlgItemTextA(long long ptr long) GetDlgItemText32A
 0237 stdcall GetDlgItemTextW(long long ptr long) GetDlgItemText32W
 0238 stub GetDoubleClickTime
-0239 stub GetFocus
+0239 stdcall GetFocus() GetFocus
 0240 stub GetForegroundWindow
 0241 stub GetIconInfo
 0242 stub GetInputDesktop
@@ -265,7 +265,7 @@ base	1
 0258 stub GetMenuContextHelpId
 0259 stub GetMenuDefaultItem
 0260 stub GetMenuIndex
-0261 stub GetMenuItemCount
+0261 stdcall GetMenuItemCount(long) GetMenuItemCount
 0262 stub GetMenuItemID
 0263 stub GetMenuItemInfoA
 0264 stub GetMenuItemInfoW
@@ -284,8 +284,8 @@ base	1
 0277 stub GetParent
 0278 stub GetPriorityClipboardFormat
 0279 stub GetProcessWindowStation
-0280 stub GetPropA
-0281 stub GetPropW
+0280 stdcall GetPropA(long ptr) GetProp32A
+0281 stdcall GetPropW(long ptr) GetProp32W
 0282 stub GetQueueStatus
 0283 stub GetScrollInfo
 0284 stub GetScrollPos
@@ -343,7 +343,7 @@ base	1
 0336 stdcall IsCharUpperA(long) IsCharUpper32A
 0337 stdcall IsCharUpperW(long) IsCharUpper32W
 0338 stub IsChild
-0339 stub IsClipboardFormatAvailable
+0339 stdcall IsClipboardFormatAvailable(long) IsClipboardFormatAvailable
 0340 stub IsDialogMessage
 0341 stub IsDialogMessageA
 0342 stub IsDialogMessageW
@@ -368,7 +368,7 @@ base	1
 0361 stdcall LoadCursorW(long ptr) LoadCursor32W
 0362 stdcall LoadIconA(long ptr) LoadIcon32A
 0363 stdcall LoadIconW(long ptr) LoadIcon32W
-0364 stub LoadImageA
+0364 stdcall LoadImageA(long ptr long long long long) LoadImage32A
 0365 stub LoadImageW
 0366 stub LoadKeyboardLayoutA
 0367 stub LoadKeyboardLayoutW
@@ -410,7 +410,7 @@ base	1
 0403 stdcall OemToCharBuffW(ptr ptr long) OemToCharBuff32W
 0404 stdcall OemToCharW(ptr ptr) OemToChar32W
 0405 stdcall OffsetRect(ptr long long) OffsetRect32
-0406 stub OpenClipboard
+0406 stdcall OpenClipboard(long) OpenClipboard
 0407 stub OpenDesktopA
 0408 stub OpenDesktopW
 0409 stub OpenIcon
@@ -445,8 +445,8 @@ base	1
 0438 stdcall ReleaseCapture() ReleaseCapture
 0439 stdcall ReleaseDC(long long) ReleaseDC
 0440 stub RemoveMenu
-0441 stub RemovePropA
-0442 stub RemovePropW
+0441 stdcall RemovePropA(long ptr) RemoveProp32A
+0442 stdcall RemovePropW(long ptr) RemoveProp32W
 0443 stub ReplyMessage
 0444 stub ResetDisplay
 0445 stub ReuseDDElParam
@@ -490,7 +490,7 @@ base	1
 0483 stub SetKeyboardState
 0484 stub SetLastErrorEx
 0485 stub SetLogonNotifyWindow
-0486 stub SetMenu
+0486 stdcall SetMenu(long long) SetMenu
 0487 stub SetMenuContextHelpId
 0488 stub SetMenuDefaultItem
 0489 stub SetMenuItemBitmaps
@@ -500,8 +500,8 @@ base	1
 0493 stdcall  SetMessageQueue(long) SetMessageQueue
 0494 stub SetParent
 0495 stub SetProcessWindowStation
-0496 stub SetPropA
-0497 stub SetPropW
+0496 stdcall SetPropA(long ptr long) SetProp32A
+0497 stdcall SetPropW(long ptr long) SetProp32W
 0498 stdcall SetRect(ptr long long long long) SetRect32
 0499 stdcall SetRectEmpty(ptr) SetRectEmpty32
 0500 stub SetScrollInfo
@@ -535,7 +535,7 @@ base	1
 0528 stdcall ShowCaret(long) ShowCaret
 0529 stdcall ShowCursor(long) ShowCursor
 0530 stub ShowOwnedPopups
-0531 stub ShowScrollBar
+0531 stdcall ShowScrollBar(long long long) ShowScrollBar
 0532 stub ShowStartGlass
 0533 stdcall ShowWindow(long long) ShowWindow
 0534 stub ShowWindowAsync

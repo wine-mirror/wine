@@ -16,6 +16,11 @@ extern BOOL32 DOSMEM_Init(void);
 extern void DOSMEM_Tick(void);
 extern void DOSMEM_FillBiosSegment(void);
 extern HANDLE16 DOSMEM_BiosSeg;
+extern void DOSMEM_InitMemoryHandling();
+extern LPVOID DOSMEM_RealMode2Linear(DWORD);
+extern WORD DOSMEM_AllocSelector(WORD);
+extern DWORD DOSMEM_CollateTable;
+extern void DOSMEM_InitCollateTable();
 
   /* miscemu/instr.c */
 extern BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context );

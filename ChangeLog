@@ -1,4 +1,121 @@
 ----------------------------------------------------------------------
+Sun Jul 28 17:57:19 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [loader/task.c] [include/task.h]
+	Implemented SwitchStackTo()/SwitchStackBack().
+
+	* [include/wintypes.h] [loader/main.c]
+	Added __winelib variable to distinguish between emulator and
+ 	library at run-time. Later on, this should avoid some
+ 	recompilations when building Winelib.
+
+	* [windows/property.c]
+	Implemented Win32 functions for window properties.
+
+Fri Jul 26 18:00:00 1996  Alex Korobka <alex@phm30.pharm.sunysb.edu>
+
+	* [controls/listbox.c]
+	Implemented LBS_SORT style, WM_COMPAREITEM, and WM_DELETEITEM
+	messages.
+
+	* [controls/menu.c]
+	Call TranslateMessage() to enable shortcuts (on WM_CHAR).
+
+	* [include/cursoricon.h]
+	Moved #pragma pack(1) back to where it belongs.
+
+	* [objects/palette.c]
+	RealizeDefaultPalette() maps to system colors only.
+	Do not broadcast palette notifications when in TrueColor.
+
+	* [objects/color.c] [include/palette.h]
+	Miscellaneous optimizations. Had to fix several
+	"improvements" made to my patch for previous release.
+
+	* [objects/dib.c]
+	Reverse dib bits order for 24-bit SetDIBits().
+
+	* [objects/dc.c]
+	GetDeviceCaps() does not return RC_PALETTE when in TrueColor.
+
+	* [windows/scroll.c]
+	Scroll update region too.
+
+	* [windows/message.c]
+	Include QS_MOUSE into the event mask for nonclient mouse
+	message filter. Fixes problems with Word 6 freezing when
+	mouse hits nonclient area.
+
+	* [windows/win.c] 
+	Allow top-level windows to be linked as HWND_TOP in CreateWindow().
+
+	* [windows/winpos.c] [windows/mdi.c]
+	Attempt to fix control menu duplication.
+
+Fri Jul 26 09:49:35 1996  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [files/drive.c]
+	GetDriveType32A(): return value for CDROM fixed.
+
+	* [files/file.c]
+	SearchPath* added.
+
+	* [if1632/gdi32.spec] [objects/brush.c]
+	SetBrushOrgEx() added.
+
+	* [loader/pe_resource.c]
+	If even loading the default entry fails, we just use the first
+	entry from the resource directory.
+
+	[loader/task.c]
+	SetSigHandler() stub added, Paradox 4.5 now starts up.
+
+	* [misc/comm.c] [include/windows.h] [if1632/kernel32.spec]
+	COMM functions updated to win32, not complete.
+
+	* [misc/lstr.c]
+	FormatMessageA partially implemented.
+
+	* [include/miscemu.h] [memory/selector.c]
+	  [memory/global.c] [miscemu/dosmem.c]
+	DOS memory handling changed: 1MB preallocated block, real-mode
+	segment handling possible, SetSelectorBase into lower physical 1MB
+	possible.
+
+	* [miscemu/dpmi.c]
+	Real-mode segments changed, real-mode int 21,ax=6506 added.
+	AX=0x0303 added.
+
+	* [multimedia/time.c]
+	Fixed bug in killTimer.
+
+	* [objects/bitmap.c]
+	LoadImageA partially implemented.
+
+Wed Jul 24 18:20:24 1996  Albrecht Kleine  <kleine@ak.sax.de>
+
+	* [include/dde_mem.h][include/dde_proc.h]
+	  [ipc/dde_atom.c][ipc/dde_proc.c][windows/message.c]
+	  [ipc/generic_hash.h][library/miscstubs.c]
+	Changes for error free compilation using "--with-ipc":
+	replaced some names with *16-equivalent (e.g. MSG to MSG16),
+	modified prototype of function DDE_GlobalFree() .
+
+	* [objects/palette.c]
+	Added check for metafile-DC in GDISelectPalette(),
+	GDIRealizePalette(),RealizeDefaultPalette() and
+	IsDCCurrentPalette().
+
+Tue Jul 23 22:46:53 1996  Andrew Lewycky <plewycky@oise.utoronto.ca>
+
+	* [controls/edit.c]
+	EDIT_WM_Create: Don't EDIT_EM_ReplaceSel if created with lParam = "",
+	fixes Winhelp.
+
+	* [windows/dialog.c]
+	DIALOG_CreateIndirect: Initialise dlgProc before creating children.
+
+----------------------------------------------------------------------
 Wed Jul 17 16:10:16 1996  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [configure.in]
@@ -270,7 +387,7 @@ Fri Jul  5 11:56:22 1996  Andreas Kirschbaum <ank@rbg.informatik.th-darmstadt.de
 	* [windows/winproc.c]
 	Allows creating dialog windows with NULL as dialog function.
 
-Wed Jul  3 09:26:41 1996  Peter Lewycky <plewycky@oise.utoronto.ca>
+Wed Jul  3 09:26:41 1996  Andrew Lewycky <plewycky@oise.utoronto.ca>
 
 	* [windows/event.c]
 	EVENT_key: Fixes to VK_ code generation for space bar and

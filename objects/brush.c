@@ -236,7 +236,7 @@ HBRUSH CreateSolidBrush( COLORREF color )
 /***********************************************************************
  *           SetBrushOrg    (GDI.148)
  */
-DWORD SetBrushOrg( HDC hdc, short x, short y )
+DWORD SetBrushOrg( HDC16 hdc, INT16 x, INT16 y )
 {
     DWORD retval;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
@@ -247,13 +247,35 @@ DWORD SetBrushOrg( HDC hdc, short x, short y )
     return retval;
 }
 
+
+/***********************************************************************
+ *           SetBrushOrgEx    (GDI32.308)
+ */
+BOOL32 SetBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
+{
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+
+    if (!dc) return FALSE;
+    if (oldorg)
+    {
+        oldorg->x = dc->w.brushOrgX;
+        oldorg->y = dc->w.brushOrgY;
+    }
+    dc->w.brushOrgX = x;
+    dc->w.brushOrgY = y;
+    return TRUE;
+}
+
+
 /***********************************************************************
  *           GetSysColorBrush    (USER.281)
  */
 HBRUSH GetSysColorBrush(WORD x)
 {
-	return GetStockObject(GRAY_BRUSH);
+    fprintf( stderr, "Unimplemented stub: GetSysColorBrush(%d)\n", x );
+    return GetStockObject(LTGRAY_BRUSH);
 }
+
 
 /***********************************************************************
  *           BRUSH_DeleteObject

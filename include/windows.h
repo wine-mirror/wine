@@ -1486,6 +1486,9 @@ typedef struct
 #define DRIVE_REMOVABLE            2
 #define DRIVE_FIXED                3
 #define DRIVE_REMOTE               4
+/* Win32 additions */
+#define DRIVE_CDROM                5
+#define DRIVE_RAMDISK              6
 
 #define HFILE_ERROR	-1
 
@@ -1592,15 +1595,20 @@ typedef struct
 #define SETDTR		5
 #define CLRDTR		6
 #define RESETDEV	7
+/* win16 only */
 #define GETMAXLPT	8
 #define GETMAXCOM	9
+/* win32 only */
+#define SETBREAK	8
+#define CLRBREAK	9
+
 #define GETBASEIRQ	10
 
 #define CN_RECEIVE	0x0001
 #define CN_TRANSMIT	0x0002
 #define CN_EVENT	0x0004
 
-typedef struct tagDCB
+typedef struct tagDCB16
 {
     BYTE   Id;
     UINT16 BaudRate WINE_PACKED;
@@ -1636,14 +1644,65 @@ typedef struct tagDCB
     CHAR   EofChar;
     CHAR   EvtChar;
     UINT16 TxDelay WINE_PACKED;
-} DCB, *LPDCB;
+} DCB16, *LPDCB16;
+
+typedef struct tagDCB32
+{
+    DWORD DCBlength;
+    DWORD BaudRate;
+    DWORD fBinary		:1;
+    DWORD fParity		:1;
+    DWORD fOutxCtsFlow		:1;
+    DWORD fOutxDsrFlow		:1;
+    DWORD fDtrControl		:2;
+    DWORD fDsrSensitivity	:1;
+    DWORD fTXContinueOnXoff	:1;
+    DWORD fOutX			:1;
+    DWORD fInX			:1;
+    DWORD fErrorChar		:1;
+    DWORD fNull			:1;
+    DWORD fRtsControl		:2;
+    DWORD fAbortOnError		:1;
+    DWORD fDummy2		:17;
+    WORD wReserved;
+    WORD XonLim;
+    WORD XoffLim;
+    BYTE ByteSize;
+    BYTE Parity;
+    BYTE StopBits;
+    char XonChar;
+    char XoffChar;
+    char ErrorChar;
+    char EofChar;
+    char EvtChar;
+} DCB32, *LPDCB32;
+
+DECL_WINELIB_TYPE(DCB);
+DECL_WINELIB_TYPE(LPDCB);
+
+#define	RTS_CONTROL_DISABLE	0
+#define	RTS_CONTROL_ENABLE	1
+#define	RTS_CONTROL_HANDSHAKE	2
+#define	RTS_CONTROL_TOGGLE	3
+
+#define	DTR_CONTROL_DISABLE	0
+#define	DTR_CONTROL_ENABLE	1
+#define	DTR_CONTROL_HANDSHAKE	2
+
+typedef struct tagCOMMTIMEOUTS {
+	DWORD	ReadIntervalTimeout;
+	DWORD	ReadTotalTimeoutMultiplier;
+	DWORD	ReadTotalTimeoutConstant;
+	DWORD	WriteTotalTimeoutMultiplier;
+	DWORD	WriteTotalTimeoutConstant;
+} COMMTIMEOUTS,*LPCOMMTIMEOUTS;
 
 typedef struct tagCOMSTAT
 {
     BYTE   status;
     UINT16 cbInQue WINE_PACKED;
     UINT16 cbOutQue WINE_PACKED;
-} COMSTAT;
+} COMSTAT,*LPCOMSTAT;
 
 #define CSTF_CTSHOLD	0x01
 #define CSTF_DSRHOLD	0x02
@@ -3179,6 +3238,31 @@ typedef struct _SYSTEM_POWER_STATUS
   DWORD   BatteryFullLifeTime;
 } SYSTEM_POWER_STATUS, *LPSYSTEM_POWER_STATUS;
 
+/* flags to FormatMessage */
+#define	FORMAT_MESSAGE_ALLOCATE_BUFFER	0x00000100
+#define	FORMAT_MESSAGE_IGNORE_INSERTS	0x00000200
+#define	FORMAT_MESSAGE_FROM_STRING	0x00000400
+#define	FORMAT_MESSAGE_FROM_HMODULE	0x00000800
+#define	FORMAT_MESSAGE_FROM_SYSTEM	0x00001000
+#define	FORMAT_MESSAGE_ARGUMENT_ARRAY	0x00002000
+#define	FORMAT_MESSAGE_MAX_WIDTH_MASK	0x000000FF
+
+/* types of LoadImage */
+#define IMAGE_BITMAP	0
+#define IMAGE_ICON	1
+#define IMAGE_CURSOR	2
+#define IMAGE_ENHMETA	3
+
+/* loadflags to LoadImage */
+#define LR_DEFAULTCOLOR		0x0000
+#define LR_MONOCHROME		0x0001
+#define LR_COPYRETURNONORG	0x0002
+#define LR_COPYDELETEORC	0x0004
+#define LR_COPYFROMRESOURCE	0x0008
+#define LR_LOADFROMFILE		0x0010
+#define LR_LOADREALSIZE		0x0020
+#define LR_LOADMAP3DCOLORS	0x1000
+
 #pragma pack(4)
 
 /* Declarations for functions that exist only in Win16 */
@@ -3186,11 +3270,15 @@ typedef struct _SYSTEM_POWER_STATUS
 WORD       AllocSelector(WORD);
 WORD       AllocSelectorArray(WORD);
 INT16      Catch(LPCATCHBUF);
+INT16      CloseComm(INT16);
 HANDLE16   FarGetOwner(HGLOBAL16);
 VOID       FarSetOwner(HGLOBAL16,HANDLE16);
 VOID       FillWindow(HWND16,HWND16,HDC16,HBRUSH16);
+INT16      FlushComm(INT16,INT16);
 WORD       FreeSelector(WORD);
 DWORD      GetBitmapDimension(HBITMAP16);
+INT16      GetCommError(INT16,LPCOMSTAT);
+UINT16     GetCommEventMask(INT16,UINT16);
 HTASK16    GetCurrentTask(void);
 HMODULE16  GetExePtr(HANDLE16);
 HINSTANCE16 GetTaskDS(void);
@@ -3198,22 +3286,33 @@ HQUEUE16   GetTaskQueue(HTASK16);
 BOOL16     LocalInit(HANDLE16,WORD,WORD);
 DWORD      OffsetViewportOrg(HDC16,INT16,INT16);
 DWORD      OffsetWindowOrg(HDC16,INT16,INT16);
+INT16      OpenComm(LPCSTR,UINT16,UINT16);
 VOID       PaintRect(HWND16,HWND16,HDC16,HBRUSH16,const RECT16*);
+INT16      ReadComm(INT16,LPSTR,INT16);
 DWORD      ScaleViewportExt(HDC16,INT16,INT16,INT16,INT16);
 DWORD      ScaleWindowExt(HDC16,INT16,INT16,INT16,INT16);
 DWORD      SetBitmapDimension(HBITMAP16,INT16,INT16);
+DWORD      SetBrushOrg(HDC16,INT16,INT16);
+UINT16*    SetCommEventMask(INT16,UINT16);
 DWORD      SetViewportExt(HDC16,INT16,INT16);
 DWORD      SetViewportOrg(HDC16,INT16,INT16);
 DWORD      SetWindowExt(HDC16,INT16,INT16);
 DWORD      SetWindowOrg(HDC16,INT16,INT16);
 INT16      Throw(LPCATCHBUF,INT16);
+INT16      UngetCommChar(INT16,CHAR);
+INT16      WriteComm(INT16,LPSTR,INT16);
 VOID       hmemcpy(LPVOID,LPCVOID,LONG);
 
 /* Declarations for functions that exist only in Win32 */
 
 BOOL32     Beep(DWORD,DWORD);
+BOOL32     ClearCommError(HANDLE32,LPDWORD,LPCOMSTAT);
+INT32      EnumPropsEx32A(HWND32,PROPENUMPROCEX32A,LPARAM);
+INT32      EnumPropsEx32W(HWND32,PROPENUMPROCEX32W,LPARAM);
+#define    EnumPropsEx WINELIB_NAME_AW(EnumPropsEx)
 BOOL32     EnumThreadWindows(DWORD,WNDENUMPROC32,LPARAM);
 BOOL32     FlushFileBuffers(HFILE);
+BOOL32     GetCommTimeouts(HANDLE32,LPCOMMTIMEOUTS);
 DWORD      GetLogicalDrives(void);
 HANDLE32   GetProcessHeap(void);
 LPVOID     HeapAlloc(HANDLE32,DWORD,DWORD);
@@ -3227,9 +3326,31 @@ DWORD      HeapSize(HANDLE32,DWORD,LPVOID);
 BOOL32     HeapUnlock(HANDLE32);
 BOOL32     HeapValidate(HANDLE32,DWORD,LPVOID);
 BOOL32     IsWindowUnicode(HWND32);
+DWORD      RegCreateKeyEx32A(HKEY,LPCSTR,DWORD,LPSTR,DWORD,REGSAM,
+                             LPSECURITY_ATTRIBUTES,LPHKEY,LPDWORD);
+DWORD      RegCreateKeyEx32W(HKEY,LPCWSTR,DWORD,LPWSTR,DWORD,REGSAM,
+                             LPSECURITY_ATTRIBUTES,LPHKEY,LPDWORD);
+#define    RegCreateKeyEx WINELIB_NAME_AW(RegCreateKeyEx)
+DWORD      RegEnumKeyEx32A(HKEY,DWORD,LPSTR,LPDWORD,LPDWORD,LPSTR,LPDWORD,FILETIME*);
+DWORD      RegEnumKeyEx32W(HKEY,DWORD,LPWSTR,LPDWORD,LPDWORD,LPWSTR,LPDWORD,FILETIME*);
+#define    RegEnumKeyEx WINELIB_NAME_AW(RegEnumKeyEx)
+DWORD      RegOpenKeyEx32W(HKEY,LPCWSTR,DWORD,REGSAM,LPHKEY);
+DWORD      RegOpenKeyEx32A(HKEY,LPCSTR,DWORD,REGSAM,LPHKEY);
+#define    RegOpenKeyEx WINELIB_NAME_AW(RegOpenKeyEx)
+DWORD      RegQueryInfoKey32W(HKEY,LPWSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD,
+                            LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPDWORD,FILETIME*);
+DWORD      RegQueryInfoKey32A(HKEY,LPSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD,
+                            LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPDWORD,FILETIME*);
+#define    RegQueryInfoKey WINELIB_NAME_AW(RegQueryInfoKey)
 VOID       RtlFillMemory(LPVOID,UINT32,UINT32);
 VOID       RtlMoveMemory(LPVOID,LPCVOID,UINT32);
 VOID       RtlZeroMemory(LPVOID,UINT32);
+DWORD      SearchPath32A(LPCSTR,LPCSTR,LPCSTR,DWORD,LPSTR,LPSTR*);
+DWORD      SearchPath32W(LPCWSTR,LPCWSTR,LPCWSTR,DWORD,LPWSTR,LPWSTR*);
+#define    SearchPath WINELIB_NAME(SearchPath)
+BOOL32     SetCommMask(HANDLE32,DWORD);
+BOOL32     SetCommTimeouts(HANDLE32,LPCOMMTIMEOUTS);
+BOOL32     SetBrushOrgEx(HDC32,INT32,INT32,LPPOINT32);
 LPVOID     VirtualAlloc(LPVOID,DWORD,DWORD,DWORD);
 BOOL32     VirtualFree(LPVOID,DWORD,DWORD);
 
@@ -3307,6 +3428,13 @@ BOOL32     AppendMenu32W(HMENU32,UINT32,UINT32,LPCWSTR);
 HDC16      BeginPaint16(HWND16,LPPAINTSTRUCT16);
 HDC32      BeginPaint32(HWND32,LPPAINTSTRUCT32);
 #define    BeginPaint WINELIB_NAME(BeginPaint)
+BOOL16     BuildCommDCB16(LPCSTR,LPDCB16);
+BOOL32     BuildCommDCB32A(LPCSTR,LPDCB32);
+BOOL32     BuildCommDCB32W(LPCWSTR,LPDCB32);
+#define    BuildCommDCB WINELIB_NAME_AW(BuildCommDCB)
+BOOL32     BuildCommDCBAndTimeouts32A(LPCSTR,LPDCB32,LPCOMMTIMEOUTS);
+BOOL32     BuildCommDCBAndTimeouts32W(LPCWSTR,LPDCB32,LPCOMMTIMEOUTS);
+#define    BuildCommDCBAndTimeouts WINELIB_NAME_AW(BuildCommDCBAndTimeouts)
 LRESULT    CallWindowProc16(WNDPROC16,HWND16,UINT16,WPARAM16,LPARAM);
 LRESULT    CallWindowProc32A(WNDPROC32,HWND32,UINT32,WPARAM32,LPARAM);
 LRESULT    CallWindowProc32W(WNDPROC32,HWND32,UINT32,WPARAM32,LPARAM);
@@ -3348,6 +3476,9 @@ BOOL32     CharToOemBuff32W(LPCWSTR,LPSTR,DWORD);
 HWND16     ChildWindowFromPoint16(HWND16,POINT16);
 HWND32     ChildWindowFromPoint32(HWND32,POINT32);
 #define    ChildWindowFromPoint WINELIB_NAME(ChildWindowFromPoint)
+INT16      ClearCommBreak16(INT16);
+BOOL32     ClearCommBreak32(HANDLE32);
+#define    ClearCommBreak WINELIB_NAME(ClearCommBreak)
 BOOL16     ClientToScreen16(HWND16,LPPOINT16);
 BOOL32     ClientToScreen32(HWND32,LPPOINT32);
 #define    ClientToScreen WINELIB_NAME(ClientToScreen)
@@ -3494,6 +3625,10 @@ BOOL32     EndPaint32(HWND32,const PAINTSTRUCT32*);
 BOOL16     EnumChildWindows16(HWND16,WNDENUMPROC16,LPARAM);
 BOOL32     EnumChildWindows32(HWND32,WNDENUMPROC32,LPARAM);
 #define    EnumChildWindows WINELIB_NAME(EnumChildWindows)
+INT16      EnumProps16(HWND16,PROPENUMPROC16);
+INT32      EnumProps32A(HWND32,PROPENUMPROC32A);
+INT32      EnumProps32W(HWND32,PROPENUMPROC32W);
+#define    EnumProps WINELIB_NAME_AW(EnumProps)
 BOOL16     EnumTaskWindows16(HTASK16,WNDENUMPROC16,LPARAM);
 #define    EnumTaskWindows32(handle,proc,lparam) \
            EnumThreadWindows(handle,proc,lparam)
@@ -3504,6 +3639,9 @@ BOOL32     EnumWindows32(WNDENUMPROC32,LPARAM);
 BOOL16     EqualRect16(const RECT16*,const RECT16*);
 BOOL32     EqualRect32(const RECT32*,const RECT32*);
 #define    EqualRect WINELIB_NAME(EqualRect)
+LONG       EscapeCommFunction16(UINT16,UINT16);
+BOOL32     EscapeCommFunction32(HANDLE32,UINT32);
+#define    EscapeCommFunction WINELIB_NAME(EscapeCommFunction)
 BOOL16     ExtTextOut16(HDC16,INT16,INT16,UINT16,const RECT16*,LPCSTR,UINT16,const INT16*);
 BOOL32     ExtTextOut32A(HDC32,INT32,INT32,UINT32,const RECT32*,LPCSTR,UINT32,const INT32*);
 BOOL32     ExtTextOut32W(HDC32,INT32,INT32,UINT32,const RECT32*,LPCWSTR,UINT32,const INT32*);
@@ -3572,6 +3710,9 @@ INT32      GetClipBox32(HDC32,LPRECT32);
 void       GetClipCursor16(LPRECT16);
 void       GetClipCursor32(LPRECT32);
 #define    GetClipCursor WINELIB_NAME(GetClipCursor)
+INT16      GetCommState16(INT16,LPDCB16);
+BOOL32     GetCommState32(HANDLE32,LPDCB32);
+#define    GetCommState WINELIB_NAME(GetCommState)
 UINT16     GetCurrentDirectory16(UINT16,LPSTR);
 UINT32     GetCurrentDirectory32A(UINT32,LPSTR);
 UINT32     GetCurrentDirectory32W(UINT32,LPWSTR);
@@ -3619,6 +3760,10 @@ INT32      GetObject32W(HANDLE32,INT32,LPVOID);
 FARPROC16  GetProcAddress16(HMODULE16,SEGPTR);
 FARPROC32  GetProcAddress32(HMODULE32,LPCSTR);
 #define    GetProcAddress WINELIB_NAME(GetProcAddress)
+HANDLE16   GetProp16(HWND16,LPCSTR);
+HANDLE32   GetProp32A(HWND32,LPCSTR);
+HANDLE32   GetProp32W(HWND32,LPCWSTR);
+#define    GetProp WINELIB_NAME_AW(GetProp)
 INT16      GetRgnBox16(HRGN16,LPRECT16);
 INT32      GetRgnBox32(HRGN32,LPRECT32);
 #define    GetRgnBox WINELIB_NAME(GetRgnBox)
@@ -3902,12 +4047,6 @@ DWORD      RegCreateKey16(HKEY,LPCSTR,LPHKEY);
 DWORD      RegCreateKey32A(HKEY,LPCSTR,LPHKEY);
 DWORD      RegCreateKey32W(HKEY,LPCWSTR,LPHKEY);
 #define    RegCreateKey WINELIB_NAME_AW(RegCreateKey)
-DWORD      RegCreateKeyEx32A(HKEY,LPCSTR,DWORD,LPSTR,DWORD,REGSAM,
-                             LPSECURITY_ATTRIBUTES,LPHKEY,LPDWORD);
-DWORD      RegCreateKeyEx32W(HKEY,LPCWSTR,DWORD,LPWSTR,DWORD,REGSAM,
-                             LPSECURITY_ATTRIBUTES,LPHKEY,LPDWORD);
-/* there is no RegCreateKeyEx16 */
-#define    RegCreateKeyEx WINELIB_NAME_AW(RegCreateKeyEx)
 DWORD      RegDeleteKey16(HKEY,LPCSTR);
 DWORD      RegDeleteKey32A(HKEY,LPCSTR);
 DWORD      RegDeleteKey32W(HKEY,LPWSTR);
@@ -3920,10 +4059,6 @@ DWORD      RegEnumKey16(HKEY,DWORD,LPSTR,DWORD);
 DWORD      RegEnumKey32A(HKEY,DWORD,LPSTR,DWORD);
 DWORD      RegEnumKey32W(HKEY,DWORD,LPWSTR,DWORD);
 #define    RegEnumKey WINELIB_NAME_AW(RegEnumKey)
-DWORD      RegEnumKeyEx32A(HKEY,DWORD,LPSTR,LPDWORD,LPDWORD,LPSTR,LPDWORD,FILETIME*);
-DWORD      RegEnumKeyEx32W(HKEY,DWORD,LPWSTR,LPDWORD,LPDWORD,LPWSTR,LPDWORD,FILETIME*);
-/* there is no RegEnumKeyEx16 */
-#define    RegEnumKeyEx WINELIB_NAME_AW(RegEnumKeyEx)
 DWORD      RegEnumValue16(HKEY,DWORD,LPSTR,LPDWORD,LPDWORD,LPDWORD,LPBYTE,LPDWORD);
 DWORD      RegEnumValue32A(HKEY,DWORD,LPSTR,LPDWORD,LPDWORD,LPDWORD,LPBYTE,LPDWORD);
 DWORD      RegEnumValue32W(HKEY,DWORD,LPWSTR,LPDWORD,LPDWORD,LPDWORD,LPBYTE,LPDWORD);
@@ -3944,16 +4079,6 @@ DWORD      RegOpenKey16(HKEY,LPCSTR,LPHKEY);
 DWORD      RegOpenKey32A(HKEY,LPCSTR,LPHKEY);
 DWORD      RegOpenKey32W(HKEY,LPCWSTR,LPHKEY);
 #define    RegOpenKey WINELIB_NAME_AW(RegOpenKey)
-DWORD      RegOpenKeyEx32W(HKEY,LPCWSTR,DWORD,REGSAM,LPHKEY);
-DWORD      RegOpenKeyEx32A(HKEY,LPCSTR,DWORD,REGSAM,LPHKEY);
-/* there is no RegOpenKeyEx16 */
-#define    RegOpenKeyEx WINELIB_NAME_AW(RegOpenKeyEx)
-DWORD      RegQueryInfoKey32W(HKEY,LPWSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD,
-                            LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPDWORD,FILETIME*);
-DWORD      RegQueryInfoKey32A(HKEY,LPSTR,LPDWORD,LPDWORD,LPDWORD,LPDWORD,
-                            LPDWORD,LPDWORD,LPDWORD,LPDWORD,LPDWORD,FILETIME*);
-/* there is no RegQueryInfoKey16 */
-#define    RegQueryInfoKey WINELIB_NAME_AW(RegQueryInfoKey)
 DWORD      RegQueryValue16(HKEY,LPSTR,LPSTR,LPDWORD);
 DWORD      RegQueryValue32A(HKEY,LPSTR,LPSTR,LPDWORD);
 DWORD      RegQueryValue32W(HKEY,LPWSTR,LPWSTR,LPDWORD);
@@ -3970,6 +4095,10 @@ DWORD      RegSetValueEx16(HKEY,LPSTR,DWORD,DWORD,LPBYTE,DWORD);
 DWORD      RegSetValueEx32A(HKEY,LPSTR,DWORD,DWORD,LPBYTE,DWORD);
 DWORD      RegSetValueEx32W(HKEY,LPWSTR,DWORD,DWORD,LPBYTE,DWORD);
 #define    RegSetValueEx WINELIB_NAME_AW(RegSetValueEx)
+HANDLE16   RemoveProp16(HWND16,LPCSTR);
+HANDLE32   RemoveProp32A(HWND32,LPCSTR);
+HANDLE32   RemoveProp32W(HWND32,LPCWSTR);
+#define    RemoveProp WINELIB_NAME_AW(RemoveProp)
 BOOL16     RemoveDirectory16(LPCSTR);
 BOOL32     RemoveDirectory32A(LPCSTR);
 BOOL32     RemoveDirectory32W(LPCWSTR);
@@ -3998,6 +4127,12 @@ LONG       SetClassLong16(HWND16,INT16,LONG);
 LONG       SetClassLong32A(HWND32,INT32,LONG);
 LONG       SetClassLong32W(HWND32,INT32,LONG);
 #define    SetClassLong WINELIB_NAME_AW(SetClassLong)
+INT16      SetCommBreak16(INT16);
+BOOL32     SetCommBreak32(HANDLE32);
+#define    SetCommBreak WINELIB_NAME(SetCommBreak)
+INT16      SetCommState16(LPDCB16);
+BOOL32     SetCommState32(HANDLE32,LPDCB32);
+#define    SetCommState WINELIB_NAME(SetCommState)
 void       SetDlgItemInt16(HWND16,INT16,UINT16,BOOL16);
 void       SetDlgItemInt32(HWND32,INT32,UINT32,BOOL32);
 #define    SetDlgItemInt WINELIB_NAME(SetDlgItemInt)
@@ -4011,6 +4146,10 @@ BOOL32     SetEnvironmentVariable32W(LPCWSTR,LPCWSTR);
 void       SetInternalWindowPos16(HWND16,UINT16,LPRECT16,LPPOINT16);
 void       SetInternalWindowPos32(HWND32,UINT32,LPRECT32,LPPOINT32);
 #define    SetInternalWindowPos WINELIB_NAME(SetInternalWindowPos)
+BOOL16     SetProp16(HWND16,LPCSTR,HANDLE16);
+BOOL32     SetProp32A(HWND32,LPCSTR,HANDLE32);
+BOOL32     SetProp32W(HWND32,LPCWSTR,HANDLE32);
+#define    SetProp WINELIB_NAME_AW(SetProp)
 void       SetRect16(LPRECT16,INT16,INT16,INT16,INT16);
 void       SetRect32(LPRECT32,INT32,INT32,INT32,INT32);
 #define    SetRect WINELIB_NAME(SetRect)
@@ -4059,6 +4198,9 @@ BOOL32     TextOut32W(HDC32,INT32,INT32,LPCWSTR,INT32);
 BOOL16     TrackPopupMenu16(HMENU16,UINT16,INT16,INT16,INT16,HWND16,const RECT16*);
 BOOL32     TrackPopupMenu32(HMENU32,UINT32,INT32,INT32,INT32,HWND32,const RECT32*);
 #define    TrackPopupMenu WINELIB_NAME(TrackPopupMenu)
+INT16      TransmitCommChar16(INT16,CHAR);
+BOOL32     TransmitCommChar32(HANDLE32,CHAR);
+#define    TransmitCommChar WINELIB_NAME(TransmitCommChar)
 BOOL16     UnionRect16(LPRECT16,const RECT16*,const RECT16*);
 BOOL32     UnionRect32(LPRECT32,const RECT32*,const RECT32*);
 #define    UnionRect WINELIB_NAME(UnionRect)
@@ -4222,14 +4364,12 @@ typedef int (*FONTENUMPROC)(const void*,const void*,DWORD,LPARAM);
 typedef int (*GOBJENUMPROC)(LPVOID,LPARAM);
 /*typedef int (*MFENUMPROC)(HDC,HANDLETABLE*,METARECORD*,int,LPARAM);*/
 typedef int (*MFENUMPROC)(HDC,void*,void*,int,LPARAM);
-typedef BOOL (*PROPENUMPROC)(HWND,LPCSTR,HANDLE);
 #else
 typedef SEGPTR DRIVERPROC;
 typedef SEGPTR EDITWORDBREAKPROC;
 typedef SEGPTR FONTENUMPROC;
 typedef SEGPTR GOBJENUMPROC;
 typedef SEGPTR MFENUMPROC;
-typedef SEGPTR PROPENUMPROC;
 #endif
 
 ATOM       AddAtom(SEGPTR);
@@ -4251,7 +4391,6 @@ UINT       ArrangeIconicWindows(HWND);
 HDWP16     BeginDeferWindowPos(INT);
 BOOL       BitBlt(HDC,INT,INT,INT,INT,HDC,INT,INT,DWORD);
 BOOL       BringWindowToTop(HWND);
-BOOL       BuildCommDCB(LPCSTR,DCB*);
 void       CalcChildScroll(HWND,WORD);
 BOOL       CallMsgFilter(SEGPTR,INT);
 LRESULT    CallNextHookEx(HHOOK,INT,WPARAM,LPARAM);
@@ -4259,9 +4398,7 @@ BOOL       ChangeClipboardChain(HWND,HWND);
 WORD       ChangeSelector(WORD,WORD);
 INT        CheckMenuItem(HMENU,UINT,UINT);
 BOOL       Chord(HDC,INT,INT,INT,INT,INT,INT,INT,INT);
-int        ClearCommBreak(int);
 BOOL       CloseClipboard(void);
-int        CloseComm(int);
 HMETAFILE  CloseMetaFile(HDC);
 void       CloseSound(void);
 BOOL       CloseWindow(HWND);
@@ -4322,9 +4459,7 @@ INT        EnumFontFamilies(HDC,LPCSTR,FONTENUMPROC,LPARAM);
 INT        EnumFonts(HDC,LPCSTR,FONTENUMPROC,LPARAM);
 BOOL       EnumMetaFile(HDC,HMETAFILE,MFENUMPROC,LPARAM);
 INT        EnumObjects(HDC,INT,GOBJENUMPROC,LPARAM);
-INT        EnumProps(HWND,PROPENUMPROC);
 INT        Escape(HDC,INT,INT,LPCSTR,LPVOID);
-LONG       EscapeCommFunction(int,int);
 int        ExcludeClipRect(HDC,short,short,short,short);
 int        ExcludeVisRect(HDC,short,short,short,short);
 BOOL       ExitWindows(DWORD,WORD);
@@ -4335,7 +4470,6 @@ BOOL       FillRgn(HDC,HRGN,HBRUSH);
 ATOM       FindAtom(SEGPTR);
 HINSTANCE  FindExecutable(LPCSTR,LPCSTR,LPSTR);
 BOOL       FlashWindow(HWND,BOOL);
-int        FlushComm(int,int);
 BOOL       FrameRgn(HDC,HRGN,HBRUSH,int,int);
 void       FreeLibrary(HANDLE);
 UINT       GDIRealizePalette(HDC);
@@ -4358,9 +4492,6 @@ HWND       GetClipboardOwner(void);
 HWND       GetClipboardViewer(void);
 HANDLE     GetCodeHandle(FARPROC16);
 void       GetCodeInfo(FARPROC16,LPVOID);
-int        GetCommError(int,COMSTAT*);
-UINT       GetCommEventMask(int,int);
-int        GetCommState(int,DCB*);
 HBRUSH     GetControlBrush(HWND,HDC,WORD);
 HANDLE     GetCurrentPDB(void);
 DWORD      GetCurrentPosition(HDC);
@@ -4427,7 +4558,6 @@ UINT       GetPrivateProfileInt(LPCSTR,LPCSTR,INT,LPCSTR);
 INT        GetPrivateProfileString(LPCSTR,LPCSTR,LPCSTR,LPSTR,INT,LPCSTR);
 UINT       GetProfileInt(LPCSTR,LPCSTR,INT);
 INT        GetProfileString(LPCSTR,LPCSTR,LPCSTR,LPSTR,INT);
-HANDLE     GetProp(HWND,SEGPTR);
 DWORD      GetQueueStatus(UINT);
 BOOL       GetRasterizerCaps(LPRASTERIZER_STATUS,UINT);
 WORD       GetROP2(HDC);
@@ -4524,7 +4654,6 @@ BOOL       OemToAnsi(LPCSTR,LPSTR);
 void       OemToAnsiBuff(LPCSTR,LPSTR,INT);
 int        OffsetClipRgn(HDC,short,short);
 BOOL       OpenClipboard(HWND);
-int        OpenComm(LPCSTR,UINT,UINT);
 BOOL       OpenIcon(HWND);
 int        OpenSound(void);
 void       OutputDebugString(LPCSTR);
@@ -4547,7 +4676,6 @@ void       ProfSetup(int,int);
 void       ProfStart(void);
 void       ProfStop(void);
 BOOL       PtVisible(HDC,short,short);
-int        ReadComm(int,LPSTR,int);
 WORD       RealizeDefaultPalette(HDC);
 BOOL       Rectangle(HDC,INT,INT,INT,INT);
 WORD       RegisterClipboardFormat(LPCSTR);
@@ -4555,7 +4683,6 @@ void       ReleaseCapture(void);
 int        ReleaseDC(HWND,HDC);
 BOOL       RemoveFontResource(LPSTR);
 BOOL       RemoveMenu(HMENU,UINT,UINT);
-HANDLE     RemoveProp(HWND,SEGPTR);
 void       ReplyMessage(LRESULT);
 HDC        ResetDC(HDC,LPVOID);
 BOOL       ResizePalette(HPALETTE16,UINT);
@@ -4576,13 +4703,9 @@ WORD       SelectorAccessRights(WORD,WORD,WORD);
 HWND       SetActiveWindow(HWND);
 DWORD      SetBkColor(HDC,COLORREF);
 WORD       SetBkMode(HDC,WORD);
-DWORD      SetBrushOrg(HDC,short,short);
 HWND       SetCapture(HWND);
 HANDLE     SetClipboardData(WORD,HANDLE);
 HWND       SetClipboardViewer(HWND);
-int        SetCommBreak(int);
-UINT*      SetCommEventMask(int,UINT);
-int        SetCommState(DCB*);
 void       SetConvertHook(BOOL);
 BOOL       SetConvertParams(int,int);
 BOOL32     SetCurrentDirectory(LPCSTR);
@@ -4609,7 +4732,6 @@ WORD       SetPaletteEntries(HPALETTE16,WORD,WORD,LPPALETTEENTRY);
 HWND       SetParent(HWND,HWND);
 COLORREF   SetPixel(HDC,short,short,COLORREF);
 WORD       SetPolyFillMode(HDC,WORD);
-BOOL       SetProp(HWND,SEGPTR,HANDLE);
 WORD       SetROP2(HDC,WORD);
 WORD       SetRelAbs(HDC,WORD);
 FARPROC16  SetResourceHandler(HANDLE,LPSTR,FARPROC16);
@@ -4661,8 +4783,6 @@ int        ToAscii(WORD,WORD,LPSTR,LPVOID,WORD);
 int        TranslateAccelerator(HWND,HANDLE,LPMSG16);
 BOOL       TranslateMDISysAccel(HWND,LPMSG16);
 BOOL       TranslateMessage(LPMSG16);
-int        TransmitCommChar(int,char);
-int        UngetCommChar(int,char);
 BOOL       UnhookWindowsHook(short,HOOKPROC16);
 BOOL       UnhookWindowsHookEx(HHOOK);
 BOOL       UnrealizeObject(HBRUSH);
@@ -4680,7 +4800,6 @@ void       WaitMessage(void);
 int        WaitSoundState(int);
 HANDLE     WinExec(LPSTR,WORD);
 BOOL       WinHelp(HWND,LPSTR,WORD,DWORD);
-int        WriteComm(int,LPSTR,int);
 void       WriteOutProfiles(void);
 BOOL       WritePrivateProfileString(LPCSTR,LPCSTR,LPCSTR,LPCSTR);
 BOOL       WriteProfileString(LPCSTR,LPCSTR,LPCSTR);

@@ -276,11 +276,7 @@ void HOOK_FreeQueueHooks( HQUEUE16 hQueue )
  */
 FARPROC16 SetWindowsHook( INT16 id, HOOKPROC16 proc )
 {
-#ifdef WINELIB
-    HINSTANCE16 hInst = 0;
-#else
-    HINSTANCE16 hInst = FarGetOwner( HIWORD(proc) );
-#endif
+    HINSTANCE16 hInst = __winelib ? 0 : FarGetOwner( HIWORD(proc) );
     /* WH_MSGFILTER is the only task-specific hook for SetWindowsHook() */
     HTASK16 hTask = (id == WH_MSGFILTER) ? GetCurrentTask() : 0;
 

@@ -26,7 +26,7 @@ typedef struct {
 WORD DDE_SyncHandle(HGLOBAL handle, WORD sel);
 void *DDE_malloc(unsigned int flags,unsigned long size, SHMDATA *shmdata);
 HANDLE DDE_GlobalReAlloc(WORD,long,WORD);
-HANDLE DDE_GlobalFree(WORD block);
+HGLOBAL DDE_GlobalFree(HGLOBAL block);
 void *DDE_AttachHandle(HGLOBAL handle, SEGPTR *segptr);
 WORD DDE_GlobalHandleToSel( HGLOBAL handle );
 int DDE_GlobalUnlock(int);

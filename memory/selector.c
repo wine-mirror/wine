@@ -262,7 +262,20 @@ void LongPtrAdd( DWORD ptr, DWORD add )
  */
 DWORD GetSelectorBase( WORD sel )
 {
-    return GET_SEL_BASE(sel);
+    extern char* DOSMEM_dosmem;
+    DWORD base;
+
+    base = GET_SEL_BASE(sel);
+
+#ifndef WINELIB
+    /* if base points into DOSMEM, assume we have to
+     * return pointer into physical lower 1MB
+     */
+    if ((base >=  (DWORD)DOSMEM_dosmem)  &&
+        (base <  ((DWORD)DOSMEM_dosmem+0x100000))) 
+    	base = base - (DWORD)DOSMEM_dosmem;
+#endif
+    return base;
 }
 
 
@@ -271,9 +284,23 @@ DWORD GetSelectorBase( WORD sel )
  */
 WORD SetSelectorBase( WORD sel, DWORD base )
 {
+    extern char* DOSMEM_dosmem;
     ldt_entry entry;
+
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
-    entry.base = base;
+#ifndef WINELIB
+    if (base < 0x100000)
+    {
+    	/* Assume pointers in the lower 1MB range are
+	 * in fact physical addresses into DOS memory.
+	 * Translate the base to our internal representation
+	 *
+	 * (NETAPI.DLL of Win95 does use SetSelectorBase this way)
+	 */
+	entry.base = (DWORD)(DOSMEM_dosmem+base);
+    }
+    else entry.base = base;
+#endif
     LDT_SetEntry( SELECTOR_TO_ENTRY(sel), &entry );
     return sel;
 }

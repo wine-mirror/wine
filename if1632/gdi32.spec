@@ -312,7 +312,7 @@ base	1
 0305 stdcall SetBkColor(long long) SetBkColor
 0306 stdcall SetBkMode(long long) SetBkMode
 0307 stub SetBoundsRect
-0308 stub SetBrushOrgEx
+0308 stdcall SetBrushOrgEx(long long long ptr) SetBrushOrgEx
 0309 stub SetColorAdjustment
 0310 stub SetColorSpace
 0311 stub SetDIBColorTable

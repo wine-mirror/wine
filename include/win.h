@@ -47,17 +47,17 @@ typedef struct tagWND
     LPSTR          text;          /* Window text */
     void          *pVScroll;      /* Vertical scroll-bar info */
     void          *pHScroll;      /* Horizontal scroll-bar info */
-    HGLOBAL        hmemTaskQ;     /* Task queue global memory handle */
-    HRGN           hrgnUpdate;    /* Update region */
-    HWND           hwndLastActive;/* Last active popup hwnd */
+    void          *pProp;         /* Pointer to properties list */
+    HGLOBAL16      hmemTaskQ;     /* Task queue global memory handle */
+    HRGN16         hrgnUpdate;    /* Update region */
+    HWND16         hwndLastActive;/* Last active popup hwnd */
     DWORD          dwStyle;       /* Window style (from CreateWindow) */
     DWORD          dwExStyle;     /* Extended style (from CreateWindowEx) */
-    HANDLE         hdce;          /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
-    UINT           wIDmenu;       /* ID or hmenu (from CreateWindow) */
+    HANDLE16       hdce;          /* Window DCE (if CS_OWNDC or CS_CLASSDC) */
+    UINT16         wIDmenu;       /* ID or hmenu (from CreateWindow) */
     WORD           flags;         /* Misc. flags (see below) */
     Window         window;        /* X window (only for top-level windows) */
-    HMENU          hSysMenu;      /* window's copy of System Menu */
-    HANDLE         hProp;         /* Handle of Properties List */
+    HMENU16        hSysMenu;      /* window's copy of System Menu */
     DWORD          userdata;      /* User private data */
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
@@ -75,22 +75,24 @@ typedef struct tagWND
 #define WIN_ISDIALOG           0x0200 /* Window is a dialog */
 
   /* Window functions */
-extern WND *WIN_FindWndPtr( HWND hwnd );
+extern WND *WIN_FindWndPtr( HWND32 hwnd );
 extern WND *WIN_GetDesktop(void);
-extern void WIN_DumpWindow( HWND hwnd );
-extern void WIN_WalkWindows( HWND hwnd, int indent );
-extern Window WIN_GetXWindow( HWND hwnd );
-extern BOOL WIN_UnlinkWindow( HWND hwnd );
-extern BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter );
-extern HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE hQueue );
-extern void WIN_SendParentNotify( HWND hwnd, WORD event,
+extern void WIN_DumpWindow( HWND32 hwnd );
+extern void WIN_WalkWindows( HWND32 hwnd, int indent );
+extern Window WIN_GetXWindow( HWND32 hwnd );
+extern BOOL32 WIN_UnlinkWindow( HWND32 hwnd );
+extern BOOL32 WIN_LinkWindow( HWND32 hwnd, HWND32 hwndInsertAfter );
+extern HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue );
+extern void WIN_SendParentNotify( HWND32 hwnd, WORD event,
                                   WORD idChild, LONG lValue );
-extern BOOL WIN_CreateDesktopWindow(void);
-extern HWND WIN_GetTopParent( HWND hwnd );
-extern HINSTANCE WIN_GetWindowInstance( HWND hwnd );
+extern BOOL32 WIN_CreateDesktopWindow(void);
+extern HWND32 WIN_GetTopParent( HWND32 hwnd );
+extern HINSTANCE16 WIN_GetWindowInstance( HWND32 hwnd );
 extern WND **WIN_BuildWinArray( WND *wndPtr );
 
 extern void DEFWND_SetText( WND *wndPtr, LPCSTR text );  /* windows/defwnd.c */
+
+extern void PROPERTY_RemoveWindowProps( WND *pWnd );   /* windows/property.c */
 
 extern Display * display;
 extern Screen * screen;

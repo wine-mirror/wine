@@ -47,7 +47,7 @@ extern void ListBoxSendNotification(LPHEADLIST lphl, WORD code);
 extern LPLISTSTRUCT ListBoxGetItem(LPHEADLIST lphl, UINT uIndex);
 extern int ListMaxFirstVisible(LPHEADLIST lphl);
 extern int ListBoxScrollToFocus(LPHEADLIST lphl);
-extern int ListBoxAddString(LPHEADLIST lphl, LPCSTR newstr);
+extern int ListBoxAddString(LPHEADLIST lphl, SEGPTR itemData);
 extern int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPCSTR newstr);
 extern int ListBoxGetText(LPHEADLIST lphl, UINT uIndex, LPSTR OutStr);
 extern DWORD ListBoxGetItemData(LPHEADLIST lphl, UINT uIndex);

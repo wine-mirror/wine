@@ -15,8 +15,8 @@
 typedef struct
 {
     GDIOBJHDR   header;
-    LOGPALETTE  logpalette WINE_PACKED;
-    int        *mapping;
+    int        *mapping    WINE_PACKED; 
+    LOGPALETTE  logpalette WINE_PACKED; /* _MUST_ be the last field */
 } PALETTEOBJ;
 
 #pragma pack(4)

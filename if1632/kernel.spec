@@ -104,8 +104,8 @@ type	win16
 105 stub GetExeVersion
 106 pascal SetSwapAreaSize(word) SetSwapAreaSize
 107 pascal16 SetErrorMode(word) SetErrorMode
-108 stub SwitchStackTo
-109 stub SwitchStackBack
+108 pascal16 SwitchStackTo(word word word) SwitchStackTo
+109 register SwitchStackBack() SwitchStackBack
 110 pascal16 PatchCodeHandle(word) PatchCodeHandle
 111 pascal GlobalWire(word) GlobalWire
 112 pascal16 GlobalUnWire(word) GlobalUnWire
@@ -138,7 +138,7 @@ type	win16
 137 pascal FatalAppExit(word ptr) FatalAppExit
 138 pascal GetHeapSpaces(word) GetHeapSpaces
 139 stub DoSignal
-140 stub SetSigHandler
+140 pascal16 SetSigHandler(segptr ptr ptr word word) SetSigHandler
 141 stub InitTask1
 142 stub GetProfileSectionNames
 143 stub GetPrivateProfileSectionNames

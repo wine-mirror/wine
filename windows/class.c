@@ -240,20 +240,6 @@ CLASS *CLASS_FindClassByAtom( ATOM atom, HINSTANCE16 hinstance )
 
 
 /***********************************************************************
- *           CLASS_FindClassByName
- *
- * Return a pointer to the class.
- */
-CLASS *CLASS_FindClassByName( SEGPTR name, HINSTANCE hinstance )
-{
-    ATOM atom;
-
-    if (!(atom = GlobalFindAtom16( name ))) return 0;
-    return CLASS_FindClassByAtom( atom, hinstance );
-}
-
-
-/***********************************************************************
  *           CLASS_RegisterClass
  *
  * The real RegisterClass() functionality.

@@ -1,0 +1,206 @@
+This file describes where to start debugging Wine and how to write
+useful bug reports.
+
+Crashes
+=======
+
+  These usually show up like this:
+
+|Unexpected Windows program segfault - opcode = 8b
+|Segmentation fault in Windows program 1b7:c41.
+|Reading symbols from file /root/wine/wine.sym
+|In 16 bit mode.
+|Register dump:
+| CS:01b7 SS:016f DS:0287 ES:0000
+| IP:0c41 SP:878a BP:8796 FLAGS:0246
+| AX:811e BX:0000 CX:0000 DX:0000 SI:0001 DI:ffff
+|Stack dump:
+|0x016f:0x878a:  0001 016f ffed 0000 0000 0287 890b 1e5b
+|0x016f:0x879a:  01b7 0001 000d 1050 08b7 016f 0001 000d
+|0x016f:0x87aa:  000a 0003 0004 0000 0007 0007 0190 0000
+|0x016f:0x87ba:
+|
+|0050: sel=0287 base=40211d30 limit=0b93f (bytes) 16-bit rw-
+|Backtrace:
+|0 0x01b7:0x0c41 (PXSRV.FONGETFACENAME+0x7c)
+|1 0x01b7:0x1e5b (PXSRV.FONPUTCATFONT+0x2cd)
+|2 0x01a7:0x05aa
+|3 0x01b7:0x0768 (PXSRV.FONINITFONTS+0x81)
+|4 0x014f:0x03ed (PDOXWIN.@SQLCURCB$Q6CBTYPEULN8CBSCTYPE+0x1b1)
+|5 0x013f:0x00ac
+|
+|0x01b7:0x0c41 (PXSRV.FONGETFACENAME+0x7c):  movw        %es:0x38(%bx),%dx
+
+Steps to debug a crash. You may stop at any step, but please report the bug
+and provide as much of the information gathered to the newsgroup or the
+relevant developer as feasonable.
+  
+ 1. Get the reason for the crash. This is usually an access to an invalid
+    selector, an access to an out of range address in a valid selector,
+    popping a segmentregister from the stack or the like. When reporting a
+    crash, report this WHOLE crashdump even if it doesn't make sense to you.
+
+    (In this case it is access to an invalid selector, for %es is 0000, as
+    seen in the register dump).
+    
+ 2. Determine where the reason came from.
+    Since this is usually a primary/secondary reaction to a failed or
+    misbehaving Wine function, rerun Wine with "-debugmsg +relay" (without ")
+    added to the commandline. This will get rather much output, but usually
+    the reason is located in the last call(s).  Those lines usually look like
+    this:
+
+|Call KERNEL.90: LSTRLEN(0227:0692) ret=01e7:2ce7 ds=0227
+      ^^^^^^^^^  ^       ^^^^^^^^^      ^^^^^^^^^    ^^^^
+      |          |       |              |            |Datasegment on entry
+      |          |       |              |Return address.
+      |          |       |
+      |          |       |Argument(s). This one is a win16 segmented pointer.
+      |          |Function called.
+      |The module, the function is called in. In this case it is KERNEL.
+		        
+|Ret  KERNEL.90: LSTRLEN() retval=0x0007 ret=01e7:2ce7 ds=0227
+                                  ^^^^^^
+				  |Returnvalue is 16 bit and has the value 7.
+
+ 3. If you have found a misbehaving function, try to find out why it
+    misbehaves. Find the function in the source code. Try to make sense of
+    the arguments passed. Usually there is a
+    "dprintf_xyz(stddeb,"Fnction(...)"...);" at the beginning of the
+    function. Rerun wine with "-debugmsg +xyz,+relay" added to the
+    commandline.
+
+
+ 4. If those information isn't clear enough or if you want to know more about
+    what's happening in the function itself, try running wine with "-debugmsg
+    +all", which dumps ALL included debug information in wine.
+
+ 5. If that isn't enough add more debug output for yourself into the
+    functions you find relevant.
+  
+ 6. You can also set a breakpoint for that function. Start wine with the
+    "-debug" option added to the commandline. After loading the executable
+    wine will enter the internal debugger. Use "break KERNEL.LSTRLEN"
+    (replace by function you want to debug, CASE IS RELEVANT.) to set a
+    breakpoint.  Then use "continue" to start normal program-execution. Wine
+    will stop if it reaches the breakpoint. If the program isn't yet at the
+    crashing call of that function, use "continue" again until you are about
+    to enter that function. You may now proceed with single-stepping the
+    function until you reach the point of crash. Use the other debugger
+    commands to print registers and the like.
+
+
+Program hangs, nothing happens
+==============================
+
+  Switch to UNIX shell, get the process-ID using "ps -a|grep wine", and do a
+  "kill -HUP <pid>" (without " and <>). Wine will then enter its internal
+  debugger and you can procede as explained above.
+
+Program reports an error with a Messagebox
+==========================================
+
+  Sometimes programs are reporting failure using a more or less nondescript
+  messageboxes. We can debug this using the same method as Crashes, but there
+  is one problem... For setting up a message box the program also calls Wine
+  producing huge chunks of debug code.
+
+  Since the failure happens usually directly before setting up the Messagebox
+  you can start wine with "-debug" added to the commandline, set a breakpoint
+  at "USER.MESSAGEBOX" (win16 programs) "USER32.MessageBox" (win32 Programs)
+  and proceed with "continue". With "-debugmsg +all" Wine will now stop
+  directly directly before setting up the Messagebox.  Proceed as explained
+  above.
+
+
+Sample debugging session:
+=========================
+
+  Let's debug the infamous Word SHARE.EXE messagebox: 
+
+|marcus@jet $ wine winword.exe
+|            +---------------------------------------------+
+|            | !  You must leave Windows and load SHARE.EXE|
+|            |    before starting Word.                    |
+|            +---------------------------------------------+
+
+
+|marcus@jet $ wine winword.exe -debugmsg +relay -debug
+|CallTo32(func=08007e00,000001c4,00000081,00000000,00000000)
+|CallTo32(func=08007e00,000001c4,00000014,000006d0,00000000)
+|Win16 task 'winword': Breakpoint 1 at 0x0157:0x001a
+|CallTo16(func=0097:0130,ds=0000)
+|Call WPROCS.24: TASK_RESCHEDULE() ret=003f:0759 ds=0000
+|Ret  WPROCS.24: TASK_RESCHEDULE() retval=0x0000 ret=003f:0759 ds=08a7
+|CallTo16(func=0157:001a,ds=08a7,0x11d7,0x0000,0x0000,0x3cb4,0x1f40,0x0000,0x0000,0x08a7)
+|Reading symbols from file /root/wine/wine.sym
+|Stopped on breakpoint 1 at 0x0157:0x001a
+|In 16 bit mode.
+|0x0157:0x001a:  xorw	%bp,%bp
+|Wine-dbg> break USER.MESSAGEBOX                       <---- Set Breakpoint
+|Breakpoint 2 at 0x0067:0x00000000 (USER.MESSAGEBOX)
+|Wine-dbg>c                                            <---- Continue
+|Call KERNEL.91: INITTASK() ret=0157:0022 ds=08a7
+|     AX=0000 BX=3cb4 CX=1f40 DX=0000 SI=0000 DI=08a7 ES=11d7 EFL=00000286
+|CallTo16(func=090f:085c,ds=0dcf,0x0000,0x0000,0x0000,0x0000,0x0800,0x0000,0x0000,0x0dcf)
+|...                                                   <----- Much debugoutput
+|Call KERNEL.97: GETTEMPFILENAME(0x00c3,08a7:8350,0x0000,08a7:8234) ret=058f:09b1 ds=08a7
+                                 ^      ^         ^      ^
+				 |      |         |      |LPSTR buffer
+				 |      |         |UINT16 unique
+				 |      |LPCSTR prefix
+				 |BYTE drive
+
+|Ret  KERNEL.97: GETTEMPFILENAME() retval=0xce3f ret=058f:09b1 ds=08a7
+                                          ^
+                                          |new unique number
+
+|Call KERNEL.74: OPENFILE(08a7:8234,08a7:82c6,0x1012) ret=058f:09d8 ds=08a7
+                          ^         ^         ^
+                          |         |         |UINT32 mode
+                          |         |OFSTRUCT *ofs
+                          |LPCSTR name
+
+|Ret  KERNEL.74: OPENFILE() retval=0xffff ret=058f:09d8 ds=08a7
+                                   ^
+				   | -1 aka. HFILE_ERROR
+
+|Stopped on breakpoint 2 at 0x0067:0x00000000 (USER.MESSAGEBOX)
+|In 32 bit mode.
+|0x0067:0x00000000 (USER.MESSAGEBOX):  pushw	%bp
+
+    Now, we see that OPENFILE seem to have returned 0xFFFF (or -1). Checking
+    the implementation of OpenFile in files/file.c, this signals an error.
+    The mode flags (OF_READWRITE|OF_SHARE_EXCLUSIVE|OF_CREATE) seems to
+    indicate, that WinWord wants to open the file for writing, so we check
+    the filename. Since we don't see the filename in this debugoutput, we use
+    the dprintf_file() in OpenFile to print out more information by adding
+    "-debugmsg +relay" to the commandline.
+
+    (In fact, we see that the filename has been returned by the GetTempFileName
+     function above, but we check it anyway.)
+
+|marcus@jet $ wine winword.exe -debugmsg +relay,+file -debug
+|.....much more debugoutput .....
+|
+|Call KERNEL.97: GETTEMPFILENAME(0x00c3,08a7:8350,0x0000,08a7:8234) ret=058f:09b1 ds=08a7
+|FILE_Create: 'C:~docd03d.tmp' 01b6 1
+|FILE_SetDosError: errno = 13
+|GetTempFileName: returning C:\~DOCD03D.TMP
+|Ret  KERNEL.97: GETTEMPFILENAME() retval=0xd03d ret=058f:09b1 ds=08a7
+|Call KERNEL.74: OPENFILE(08a7:8234,08a7:82c6,0x1012) ret=058f:09d8 ds=08a7
+|OpenFile: C:\~DOCD03D.TMP 1012
+|FILE_AllocTaskHandle: returning task handle 1, dos_file 0, file 1 of 254
+|FILE_Create: 'C:\~DOCD03D.TMP' 01b6 0
+|FILE_SetDosError: errno = 13
+|OpenFile(C:\~DOCD03D.TMP): return = HFILE_ERROR
+|FILE_FreeTaskHandle: dos=1 file=0
+|Ret  KERNEL.74: OPENFILE() retval=0xffff ret=058f:09d8 ds=08a7
+
+    The filename is "C:\~DOCD03D.TMP". Of course, C:\ is writeable for the
+    superuser only, so the open fails for a normal user and OpenFile returns
+    -1, which in turn generates this messagebox.
+
+
+Written by Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>,
+additions welcome.

@@ -4,8 +4,10 @@
  * Copyright 1995 Alexandre Julliard
  */
 
-#ifndef _WINE_LDT_H
-#define _WINE_LDT_H
+#ifndef __WINE_LDT_H
+#define __WINE_LDT_H
+
+#include "wintypes.h"
 
 enum seg_type
 {
@@ -54,17 +56,14 @@ extern ldt_copy_entry ldt_copy[LDT_SIZE];
 #define GET_SEL_BASE(sel)       (ldt_copy[SELECTOR_TO_ENTRY(sel)].base)
 #define GET_SEL_LIMIT(sel)      (ldt_copy[SELECTOR_TO_ENTRY(sel)].limit)
 
-#define PTR_SEG_OFF_TO_LIN(seg,off) \
-           ((void*)(GET_SEL_BASE(seg) + (unsigned int)(off)))
+/* Convert a segmented ptr (16:16) to a linear (32) pointer */
 
-#ifndef WINELIB
-  /* Convert a segmented ptr (16:16) to a linear (32) pointer */
-#define PTR_SEG_TO_LIN(ptr) PTR_SEG_OFF_TO_LIN(SELECTOROF(ptr),OFFSETOF(ptr))
-#define PTR_SEG_OFF_TO_SEGPTR(seg,off) ((SEGPTR)MAKELONG(off,seg))
-#else
-#define PTR_SEG_TO_LIN(ptr)	((void*)(ptr))
-#define PTR_SEG_OFF_TO_SEGPTR(seg,off) ((SEGPTR)PTR_SEG_OFF_TO_LIN(seg,off))
-#endif
+#define PTR_SEG_OFF_TO_LIN(seg,off) \
+ ((void*)(GET_SEL_BASE(seg) + (unsigned int)(off)))
+#define PTR_SEG_TO_LIN(ptr) \
+ (__winelib ? (void*)(ptr) : PTR_SEG_OFF_TO_LIN(SELECTOROF(ptr),OFFSETOF(ptr)))
+#define PTR_SEG_OFF_TO_SEGPTR(seg,off) \
+ (__winelib ? (SEGPTR)PTR_SEG_OFF_TO_LIN(seg,off) : (SEGPTR)MAKELONG(off,seg))
 
 extern unsigned char ldt_flags_copy[LDT_SIZE];
 
@@ -77,4 +76,4 @@ extern unsigned char ldt_flags_copy[LDT_SIZE];
 
 #define GET_SEL_FLAGS(sel)   (ldt_flags_copy[SELECTOR_TO_ENTRY(sel)])
 
-#endif  /* _WINE_LDT_H */
+#endif  /* __WINE_LDT_H */

@@ -4,7 +4,7 @@
  */
 
 #include <stdio.h>
-
+#include "windows.h"
 #include "global.h"
 #include "module.h"
 #include "registers.h"
@@ -268,6 +268,19 @@ INT16 Catch( LPCATCHBUF lpbuf )
     /* only 9 words long. Hopefully no one will have the silly    */
     /* idea to change the current stack before calling Throw()... */
 
+    /* Windows uses:
+     * lpbuf[0] = ip
+     * lpbuf[1] = cs
+     * lpbuf[2] = sp
+     * lpbuf[3] = bp
+     * lpbuf[4] = si
+     * lpbuf[5] = di
+     * lpbuf[6] = ds
+     * lpbuf[7] = unused
+     * lpbuf[8] = ss
+     */
+    /* FIXME: we need to save %si and %di */
+
     lpbuf[0] = IF1632_Saved16_sp;
     lpbuf[1] = LOWORD(IF1632_Saved32_esp);
     lpbuf[2] = HIWORD(IF1632_Saved32_esp);
@@ -287,6 +300,7 @@ INT16 Catch( LPCATCHBUF lpbuf )
 INT16 Throw( LPCATCHBUF lpbuf, INT16 retval )
 {
     STACK16FRAME *pFrame;
+    WORD es = CURRENT_STACK16->es;
 
     IF1632_Saved16_sp  = lpbuf[0] - sizeof(WORD);
     IF1632_Saved32_esp = MAKELONG( lpbuf[1], lpbuf[2] );
@@ -297,6 +311,15 @@ INT16 Throw( LPCATCHBUF lpbuf, INT16 retval )
     pFrame->bp         = lpbuf[6];
     pFrame->ip         = lpbuf[7];
     pFrame->cs         = lpbuf[8];
-    pFrame->es         = 0;
+    pFrame->es         = es;
+    if (debugging_relay)  /* Make sure we have a valid entry point address */
+    {
+        static FARPROC16 entryPoint = NULL;
+
+        if (!entryPoint)  /* Get entry point for Throw() */
+            entryPoint = MODULE_GetEntryPoint( GetModuleHandle("KERNEL"), 56 );
+        pFrame->entry_cs = SELECTOROF(entryPoint);
+        pFrame->entry_ip = OFFSETOF(entryPoint);
+    }
     return retval;
 }

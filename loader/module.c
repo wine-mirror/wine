@@ -273,13 +273,8 @@ static WORD MODULE_Ne2MemFlags(WORD flags)
 DWORD MODULE_AllocateSegment(WORD wFlags, WORD wSize, WORD wElem)
 {
     WORD size = wSize << wElem;
-    HANDLE hMem = GlobalAlloc16( MODULE_Ne2MemFlags(wFlags), size);
-#ifdef WINELIB
-    return (DWORD)GlobalLock16(hMem);
-#else
-    WORD selector = HIWORD(WIN16_GlobalLock16(hMem));
-    return MAKELONG(hMem, selector);
-#endif
+    HANDLE16 hMem = GlobalAlloc16( MODULE_Ne2MemFlags(wFlags), size);
+    return MAKELONG( hMem, GlobalHandleToSel(hMem) );
 }
 
 /***********************************************************************
@@ -318,7 +313,6 @@ static BOOL MODULE_CreateSegments( HMODULE16 hModule )
 /***********************************************************************
  *           MODULE_GetInstance
  */
-#ifndef WINELIB32
 HINSTANCE16 MODULE_GetInstance( HMODULE16 hModule )
 {
     SEGTABLEENTRY *pSegment;
@@ -331,7 +325,6 @@ HINSTANCE16 MODULE_GetInstance( HMODULE16 hModule )
     
     return pSegment->selector;
 }
-#endif
 
 
 /***********************************************************************
@@ -1299,13 +1292,13 @@ int GetModuleFileName( HANDLE hModule, LPSTR lpFileName, short nSize )
  */
 HANDLE LoadLibrary( LPCSTR libname )
 {
-#ifdef WINELIB
-    dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
-    WINELIB_UNIMP("LoadLibrary()");
-    return (HANDLE)0;
-#else
     HANDLE handle;
 
+    if (__winelib)
+    {
+        fprintf( stderr, "LoadLibrary not supported in Winelib\n" );
+        return (HANDLE)0;
+    }
     dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
 
     /* This does not increment the module reference count, and will
@@ -1320,9 +1313,10 @@ HANDLE LoadLibrary( LPCSTR libname )
         strcat( buffer, ".dll" );
         handle = LoadModule( buffer, (LPVOID)-1 );
     }
+#ifndef WINELIB
     if (handle >= (HANDLE)32) NE_InitializeDLLs( GetExePtr(handle) );
-    return handle;
 #endif
+    return handle;
 }
 
 
@@ -1440,20 +1434,22 @@ HANDLE WinExec( LPSTR lpCmdLine, WORD nCmdShow )
             }
 
 	    /* Failed ! */
-#ifdef WINELIB
-	    /* build argv */
-	    argptr = argv;
-	    *argptr++ = "wine";
-	    if (iconic) *argptr++ = "-iconic";
-	    *argptr++ = lpCmdLine;
-	    *argptr++ = 0;
 
-	    /* Execute */
-	    execvp(argv[0] , (char**)argv);
+            if (__winelib)
+            {
+                /* build argv */
+                argptr = argv;
+                *argptr++ = "wine";
+                if (iconic) *argptr++ = "-iconic";
+                *argptr++ = lpCmdLine;
+                *argptr++ = 0;
 
-	    /* Failed ! */
-	    fprintf(stderr, "WinExec: can't exec 'wine %s'\n", lpCmdLine);
-#endif
+                /* Execute */
+                execvp(argv[0] , (char**)argv);
+
+                /* Failed ! */
+                fprintf(stderr, "WinExec: can't exec 'wine %s'\n", lpCmdLine);
+            }
 	    exit(1);
 	}
     }

@@ -24,6 +24,9 @@
 /* #define DEBUG_MSG */
 #include "debug.h"
 
+#define WM_NCMOUSEFIRST         WM_NCMOUSEMOVE
+#define WM_NCMOUSELAST          WM_NCMBUTTONDBLCLK
+
 #define HWND_BROADCAST16  ((HWND16)0xffff)
 #define HWND_BROADCAST32  ((HWND32)0xffffffff)
 
@@ -378,11 +381,14 @@ static BOOL MSG_PeekMessage( LPMSG16 msg, HWND hwnd, WORD first, WORD last,
     mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
     if (first || last)
     {
-	if ((first <= WM_KEYLAST) && (last >= WM_KEYFIRST)) mask |= QS_KEY;
-	if ((first <= WM_MOUSELAST) && (last >= WM_MOUSEFIRST)) mask |= QS_MOUSE;
-	if ((first <= WM_TIMER) && (last >= WM_TIMER)) mask |= QS_TIMER;
-	if ((first <= WM_SYSTIMER) && (last >= WM_SYSTIMER)) mask |= QS_TIMER;
-	if ((first <= WM_PAINT) && (last >= WM_PAINT)) mask |= QS_PAINT;
+        /* MSWord gets stuck if we do not check for nonclient mouse messages */
+
+        if ((first <= WM_KEYLAST) && (last >= WM_KEYFIRST)) mask |= QS_KEY;
+        if ( ((first <= WM_MOUSELAST) && (last >= WM_MOUSEFIRST)) ||
+             ((first <= WM_NCMOUSELAST) && (last >= WM_NCMOUSEFIRST)) ) mask |= QS_MOUSE;
+        if ((first <= WM_TIMER) && (last >= WM_TIMER)) mask |= QS_TIMER;
+        if ((first <= WM_SYSTIMER) && (last >= WM_SYSTIMER)) mask |= QS_TIMER;
+        if ((first <= WM_PAINT) && (last >= WM_PAINT)) mask |= QS_PAINT;
     }
     else mask |= QS_MOUSE | QS_KEY | QS_TIMER | QS_PAINT;
 
@@ -642,7 +648,7 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
     } msgstruct = { lParam, wParam, msg, hwnd };
 
 #ifdef CONFIG_IPC
-    MSG DDE_msg = { hwnd, msg, wParam, lParam };
+    MSG16 DDE_msg = { hwnd, msg, wParam, lParam };
     if (DDE_SendMessage(&DDE_msg)) return TRUE;
 #endif  /* CONFIG_IPC */
 

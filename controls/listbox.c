@@ -3,15 +3,17 @@
  * 
  * Copyright  Martin Ayotte, 1993
  *            Constantine Sapuntzakis, 1995
- * 	      Alex Korobka, 1995 
+ * 	      Alex Korobka, 1995, 1996 
  * 
  */
 
  /*
   * FIXME: 
-  * - check if multi-column listboxes work
-  * - implement more messages and styles 
-  * - implement caret for LBS_EXTENDEDSEL
+  * - proper scrolling for multicolumn style
+  * - anchor and caret for LBS_EXTENDEDSEL
+  * - proper selection with keyboard
+  * - how to handle (LBS_EXTENDEDSEL | LBS_MULTIPLESEL) style
+  * - support for LBS_NOINTEGRALHEIGHT and LBS_OWNERDRAWVARIABLE styles
   */
 
 #include <stdio.h>
@@ -27,6 +29,7 @@
 #include "drive.h"
 #include "file.h"
 #include "heap.h"
+#include "stackframe.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
@@ -42,6 +45,10 @@
 
 #define LBMM_EDGE   4    /* distance inside box which is same as moving mouse
 			    outside box, to trigger scrolling of LB */
+
+#define MATCH_SUBSTR            2
+#define MATCH_EXACT             1
+#define MATCH_NEAREST           0
 
 static void ListBoxInitialize(LPHEADLIST lphl)
 {
@@ -267,6 +274,21 @@ int ListBoxFindMouse(LPHEADLIST lphl, int X, int Y)
   return LB_ERR;
 }
 
+BOOL lbDeleteItemNotify(LPHEADLIST lphl, LPLISTSTRUCT lpls)
+{
+  /* called only for owner drawn listboxes */
+
+  DELETEITEMSTRUCT16   delItem;
+
+  delItem.CtlType = lphl->DrawCtlType;
+  delItem.CtlID   = lphl->CtlID;
+  delItem.itemID  = lpls->mis.itemID;
+  delItem.hwndItem= lphl->hSelf;
+  delItem.itemData= lpls->mis.itemData;
+
+  return (BOOL) SendMessage16(lphl->hParent, WM_DELETEITEM, (WPARAM)lphl->CtlID,
+                                          (LPARAM)MAKE_SEGPTR(&delItem));
+}
 
 void ListBoxAskMeasure(LPHEADLIST lphl, LPLISTSTRUCT lpls)  
 {
@@ -306,7 +328,97 @@ LPLISTSTRUCT ListBoxCreateItem(LPHEADLIST lphl, int id)
   return lplsnew;
 }
 
+int ListBoxAskCompare(LPHEADLIST lphl, int startItem, SEGPTR matchData, BOOL exactMatch )
+{
+ /*  Do binary search for sorted listboxes. Linked list item storage sort of 
+  *  defeats the purpose ( forces to traverse item list all the time ) but M$ does it this way...
+  *
+  *  MATCH_NEAREST (0) - return position for insertion - for all styles
+  *  MATCH_EXACT   (1) - search for an item, return index or LB_ERR 
+  *  MATCH_SUBSTR  (2) - same as exact match but with strncmp for string comparision
+  */
 
+ COMPAREITEMSTRUCT16    itemCmp;
+ LPLISTSTRUCT		currentItem = NULL;
+ LPCSTR			matchStr = (lphl->HasStrings)?(LPCSTR)PTR_SEG_TO_LIN(matchData):NULL;
+ int                    head, pos = -1, tail, loop = 1;
+ short                  b = 0, s_length = 0;
+
+ /* check if empty */
+
+ if( !lphl->ItemsCount )
+    return (exactMatch)? LB_ERR: 0;
+
+ /* set up variables */
+
+ if( exactMatch == MATCH_NEAREST )
+     startItem = 0;
+ else if( ++startItem ) 
+   {
+     loop = 2;
+     if( startItem >= lphl->ItemsCount ) startItem = lphl->ItemsCount - 1;
+   }
+
+ if( exactMatch == MATCH_SUBSTR && lphl->HasStrings )
+   {
+     s_length = strlen( matchStr );
+     if( !s_length ) return 0; 		        /* head of the list - empty string */
+   }
+
+ head = startItem; tail = lphl->ItemsCount - 1;
+
+ dprintf_listbox(stddeb,"AskCompare: head = %i, tail = %i, data = %08x\n", head, tail, (unsigned)matchData );
+
+ itemCmp.CtlType        = lphl->DrawCtlType;
+ itemCmp.CtlID          = lphl->CtlID;
+ itemCmp.hwndItem       = lphl->hSelf;
+
+ /* search from startItem */
+
+ while ( loop-- )
+  {
+    while( head <= tail )
+     {
+       pos = (tail + head)/2;
+       currentItem = ListBoxGetItem( lphl, pos );
+
+       if( lphl->HasStrings )
+	 {
+           b = ( s_length )? strncasecmp( currentItem->itemText, matchStr, s_length)
+                           : strcasecmp( currentItem->itemText, matchStr);
+	 }
+       else
+         {
+           itemCmp.itemID1      = pos;
+           itemCmp.itemData1    = currentItem->mis.itemData;
+           itemCmp.itemID2      = -1;
+           itemCmp.itemData2    = matchData;
+
+           b = SendMessage16( lphl->hParent, WM_COMPAREITEM, (WPARAM)lphl->CtlID, 
+                                                             (LPARAM)MAKE_SEGPTR(&itemCmp) );
+         }
+
+       if( b == 0 ) 
+           return pos;  /* found exact match */
+       else
+         if( b < 0 ) head = ++pos;
+         else
+           if( b > 0 ) tail = pos - 1;
+     }
+
+    /* reset to search from the first item */
+    head = 0; tail = startItem - 1;
+  }
+
+ dprintf_listbox(stddeb,"\t-> pos = %i\n", pos );
+
+ /* if we got here match is not exact */
+
+ if( pos < 0 ) pos = 0;
+ else if( pos > lphl->ItemsCount ) pos = lphl->ItemsCount;
+
+ return (exactMatch)? LB_ERR: pos;
+}
 
 int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPCSTR newstr)
 {
@@ -371,16 +483,14 @@ int ListBoxInsertString(LPHEADLIST lphl, UINT uIndex, LPCSTR newstr)
 }
 
 
-int ListBoxAddString(LPHEADLIST lphl, LPCSTR newstr)
+int ListBoxAddString(LPHEADLIST lphl, SEGPTR itemData)
 {
-    UINT pos = (UINT) -1;
-    
-    if (lphl->HasStrings && (lphl->dwStyle & LBS_SORT)) {
-	LPLISTSTRUCT lpls = lphl->lpFirst;
-	for (pos = 0; lpls != NULL; lpls = lpls->lpNext, pos++)
-	    if (strcmp(lpls->itemText, newstr) >= 0)
-		break;
-    }
+    UINT 	pos = (UINT) -1;
+    LPCSTR	newstr = (lphl->HasStrings)?(LPCSTR)PTR_SEG_TO_LIN(itemData):(LPCSTR)itemData;
+
+    if ( lphl->dwStyle & LBS_SORT ) 
+	 pos = ListBoxAskCompare( lphl, -1, itemData, MATCH_NEAREST );
+
     return ListBoxInsertString(lphl, pos, newstr);
 }
 
@@ -438,8 +548,13 @@ int ListBoxDeleteString(LPHEADLIST lphl, UINT uIndex)
   if (lpls == NULL) return LB_ERR;
 
   if (uIndex == 0)
+  {
+    if( lphl->OwnerDrawn )
+        lbDeleteItemNotify( lphl, lpls);
     lphl->lpFirst = lpls->lpNext;
-  else {
+  }
+  else 
+  {
     LPLISTSTRUCT lpls2 = NULL;
     for(Count = 0; Count < uIndex; Count++) {
       if (lpls->lpNext == NULL) return LB_ERR;
@@ -447,6 +562,8 @@ int ListBoxDeleteString(LPHEADLIST lphl, UINT uIndex)
       lpls2 = lpls;
       lpls = (LPLISTSTRUCT)lpls->lpNext;
     }
+    if( lphl->OwnerDrawn )
+	lbDeleteItemNotify( lphl, lpls);
     lpls2->lpNext = lpls->lpNext;
   }
 
@@ -463,28 +580,43 @@ int ListBoxDeleteString(LPHEADLIST lphl, UINT uIndex)
   return lphl->ItemsCount;
 }
 
-
-int ListBoxFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr)
+int lbFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr, BOOL match)
 {
+  /*  match is either MATCH_SUBSTR or MATCH_EXACT */
+
   LPLISTSTRUCT lpls;
   UINT	       Count;
-  UINT         First = nFirst + 1;
+  UINT         First      = nFirst + 1;
+  int	       s_length   = 0;
   LPSTR        lpMatchStr = (LPSTR)MatchStr;
 
   if (First > lphl->ItemsCount) return LB_ERR;
 
-  if (lphl->HasStrings) lpMatchStr = PTR_SEG_TO_LIN(MatchStr);
-  
+  if (lphl->dwStyle & LBS_SORT )
+      return ListBoxAskCompare( lphl, nFirst, MatchStr, match );
+
+  if (lphl->HasStrings ) 
+  {
+    lpMatchStr = PTR_SEG_TO_LIN(MatchStr);
+
+    if( match == MATCH_SUBSTR )
+    {
+      s_length = strlen(lpMatchStr);
+      if( !s_length ) return (lphl->ItemsCount)?0:LB_ERR;
+    }
+  }
+
   lpls = ListBoxGetItem(lphl, First);
   Count = 0;
-  while(lpls != NULL) {
-    if (lphl->HasStrings) {
-      if (strstr(lpls->itemText, lpMatchStr) == lpls->itemText) return Count;
-    } else if (lphl->dwStyle & LBS_SORT) {
-      /* XXX Do a compare item */
+  while(lpls != NULL) 
+  {
+    if (lphl->HasStrings) 
+    {
+      if ( ( s_length )? !strncasecmp(lpls->itemText, lpMatchStr, s_length)
+                       : !strcasecmp(lpls->itemText, lpMatchStr)  ) return Count;
     }
     else
-      if (lpls->mis.itemData == (DWORD)lpMatchStr) return Count;
+      if ( lpls->mis.itemData == (DWORD)lpMatchStr ) return Count;
 
     lpls = lpls->lpNext;
     Count++;
@@ -494,14 +626,16 @@ int ListBoxFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr)
   Count = 0;
   lpls = lphl->lpFirst;
 
-  while (Count < First) {
-    if (lphl->HasStrings) {
-      if (strstr(lpls->itemText, lpMatchStr) == lpls->itemText) return Count;
-    } else if (lphl->dwStyle & LBS_SORT) {
-      /* XXX Do a compare item */
-    } else {
-      if (lpls->mis.itemData == (DWORD)lpMatchStr) return Count;
+  while (Count < First) 
+  {
+    if (lphl->HasStrings) 
+    {
+      if ( ( s_length )? !strncasecmp(lpls->itemText, lpMatchStr, s_length)
+                       : !strcasecmp(lpls->itemText, lpMatchStr)  ) return Count;
     }
+    else
+      if ( lpls->mis.itemData == (DWORD)lpMatchStr ) return Count;
+    
     lpls = lpls->lpNext;
     Count++;
   }
@@ -509,6 +643,15 @@ int ListBoxFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr)
   return LB_ERR;
 }
 
+int ListBoxFindString(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr)
+{
+  return lbFindString(lphl, nFirst, MatchStr, MATCH_SUBSTR );
+}
+
+int ListBoxFindStringExact(LPHEADLIST lphl, UINT nFirst, SEGPTR MatchStr)
+{
+  return lbFindString(lphl, nFirst, MatchStr, MATCH_EXACT );
+}
 
 int ListBoxResetContent(LPHEADLIST lphl)
 {
@@ -523,7 +666,9 @@ int ListBoxResetContent(LPHEADLIST lphl)
     for(i = 0; i < lphl->ItemsCount; i++) {
       lpls = lphl->lpFirst;
       if (lpls == NULL) return LB_ERR;
-      
+
+      if (lphl->OwnerDrawn) lbDeleteItemNotify(lphl, lpls);
+
       lphl->lpFirst = lpls->lpNext;
       if (lpls->hData != 0) LIST_HEAP_FREE(lphl, lpls->hData);
       free(lpls);
@@ -603,12 +748,13 @@ int ListBoxGetSel(LPHEADLIST lphl, WORD wIndex)
 
 LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec)
 {
-    char temp[16], mask[13];
+    char 	mask[13];
+    char*	temp = NULL;
+    const char*	ptr;
+    int 	skip, count;
+    LONG 	ret;
+    DOS_DIRENT 	entry;
     char *path, *p;
-    const char *ptr;
-    int skip, count;
-    LONG ret;
-    DOS_DIRENT entry;
 
     dprintf_listbox(stddeb, "ListBoxDirectory: '%s' %04x\n", filespec, attrib);
     if (!filespec) return LB_ERR;
@@ -616,11 +762,13 @@ LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec)
     path = xstrdup(ptr);
     p = strrchr( path, '/' );
     *p++ = '\0';
-    if (!(ptr = DOSFS_ToDosFCBFormat( p )))
+    if (!(ptr = DOSFS_ToDosFCBFormat( p )) || 
+        !(temp = SEGPTR_ALLOC( sizeof(char) * 16 )) )
     {
         free( path );
         return LB_ERR;
     }
+
     strcpy( mask, ptr );
 
     dprintf_listbox(stddeb, "ListBoxDirectory: path=%s mask=%s\n", path, mask);
@@ -636,7 +784,7 @@ LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec)
             {
                 sprintf(temp, "[%s]", DOSFS_ToDosDTAFormat( entry.name ) );
                 AnsiLower( temp );
-                if ((ret = ListBoxAddString(lphl, temp)) == LB_ERR) break;
+                if ((ret = ListBoxAddString(lphl, SEGPTR_GET(temp))) == LB_ERR) break;
             }
         }
         else  /* not a directory */
@@ -647,9 +795,11 @@ LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec)
             {
                 strcpy( temp, DOSFS_ToDosDTAFormat( entry.name ) );
                 AnsiLower( temp );
-                if ((ret = ListBoxAddString(lphl, temp)) == LB_ERR) break;
+                if ((ret = ListBoxAddString(lphl, SEGPTR_GET(temp))) == LB_ERR) break;
             }
         }
+
+        dprintf_listbox(stddeb,"\tn - %i, file '%s'\n", count, temp); 
     }
     if (attrib & DDL_DRIVES)
     {
@@ -658,10 +808,13 @@ LONG ListBoxDirectory(LPHEADLIST lphl, UINT attrib, LPCSTR filespec)
         for (x = 0; x < MAX_DOS_DRIVES; x++, temp[2]++)
         {
             if (DRIVE_IsValid(x))
-                if ((ret = ListBoxAddString(lphl, temp)) == LB_ERR) break;
+                if ((ret = ListBoxAddString(lphl, SEGPTR_GET(temp))) == LB_ERR) break;
         }
     }
+
     free( path );
+    SEGPTR_FREE( temp );
+
     return ret;
 }
 
@@ -1432,10 +1585,7 @@ static LONG LBAddString(HWND hwnd, WORD wParam, LONG lParam)
   WORD  wRet;
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
 
-  if (lphl->HasStrings)
-    wRet = ListBoxAddString(lphl, (LPCSTR)PTR_SEG_TO_LIN(lParam));
-  else
-    wRet = ListBoxAddString(lphl, (LPCSTR)lParam);
+  wRet = ListBoxAddString(lphl, (SEGPTR)lParam);
 
   ListBoxUpdateWindow(hwnd,lphl,TRUE);
   return wRet;
@@ -1490,7 +1640,16 @@ static LONG LBDeleteString(HWND hwnd, WORD wParam, LONG lParam)
 static LONG LBFindString(HWND hwnd, WORD wParam, LONG lParam)
 {
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
-  return ListBoxFindString(lphl, wParam, (SEGPTR)lParam);
+  return lbFindString(lphl, wParam, (SEGPTR)lParam, MATCH_SUBSTR);
+}
+
+/***********************************************************************
+ *           LBFindStringExact
+ */
+static LONG LBFindStringExact(HWND hwnd, WORD wParam, LONG lParam)
+{
+  LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
+  return lbFindString(lphl, wParam, (SEGPTR)lParam, MATCH_EXACT);
 }
 
 /***********************************************************************
@@ -1661,7 +1820,7 @@ static LONG LBSelectString(HWND hwnd, WORD wParam, LONG lParam)
   LPHEADLIST lphl = ListBoxGetStorageHeader(hwnd);
   INT  iRet;
 
-  iRet = ListBoxFindString(lphl, wParam, (SEGPTR)lParam);
+  iRet = lbFindString(lphl, wParam, (SEGPTR)lParam, MATCH_SUBSTR);
 
   if( iRet != LB_ERR)
     {
@@ -1920,6 +2079,7 @@ LRESULT ListBoxWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
      case LB_INSERTSTRING: return LBInsertString(hwnd, wParam, lParam);
      case LB_DELETESTRING: return LBDeleteString(hwnd, wParam, lParam);
      case LB_FINDSTRING: return LBFindString(hwnd, wParam, lParam);
+     case LB_FINDSTRINGEXACT: return LBFindStringExact(hwnd, wParam, lParam);
      case LB_GETCARETINDEX: return LBGetCaretIndex(hwnd, wParam, lParam);
      case LB_GETCOUNT: return LBGetCount(hwnd, wParam, lParam);
      case LB_GETCURSEL: return LBGetCurSel(hwnd, wParam, lParam);

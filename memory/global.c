@@ -46,8 +46,6 @@ typedef struct
 static GLOBALARENA *pGlobalArena = NULL;
 static int globalArenaSize = 0;
 
-static DWORD globalDOSfree = 655350;
-
 #define GLOBAL_MAX_ALLOC_SIZE 0x00ff0000  /* Largest allocation is 16M - 64K */
 
 #define GET_ARENA_PTR(handle)  (pGlobalArena + ((handle) >> __AHSHIFT))
@@ -547,41 +545,6 @@ SEGPTR GlobalWire( HGLOBAL16 handle )
 BOOL16 GlobalUnWire( HGLOBAL16 handle )
 {
     return GlobalUnlock16( handle );
-}
-
-
-/***********************************************************************
- *           GlobalDOSAlloc   (KERNEL.184)
- *
- * Some programs rely on failure to allocate > 640K total with this function
- */
-DWORD GlobalDOSAlloc( DWORD size )
-{
-    WORD sel;
-
-    if (size > globalDOSfree) return 0;
-    sel = GlobalAlloc16( GMEM_FIXED, size );
-
-    dprintf_global( stddeb, "GlobalDOSAlloc: %08lx -> returning %04x\n",
-                    size, sel );
-    if (!sel) return 0;
-
-    globalDOSfree -= size;
-    return MAKELONG( sel, sel /* this one ought to be a real-mode segment */ );
-}
-
-
-/***********************************************************************
- *           GlobalDOSFree   (KERNEL.185)
- */
-WORD GlobalDOSFree( WORD sel )
-{
-    GLOBALARENA *pArena = GET_ARENA_PTR(sel);
-
-    if (!pArena) return sel;
-    globalDOSfree += pArena->size;
-    GlobalFree16( pArena->handle );
-    return 0;
 }
 
 

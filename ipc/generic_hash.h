@@ -10,6 +10,7 @@
 
 #include "wintypes.h"
 #include "shm_block.h"
+#include "win.h"
 /* default hash values */
 #define HASH_LOAD           70
 #define HASH_MEM_ALLOC      (HASH_PTR (*)(int size)) malloc

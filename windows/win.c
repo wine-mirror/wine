@@ -52,11 +52,11 @@ extern HQUEUE  QUEUE_GetDoomedQueue();
  *
  * Return a pointer to the WND structure corresponding to a HWND.
  */
-WND * WIN_FindWndPtr( HWND hwnd )
+WND * WIN_FindWndPtr( HWND32 hwnd )
 {
     WND * ptr;
     
-    if (!hwnd) return NULL;
+    if (!hwnd || HIWORD(hwnd)) return NULL;
     ptr = (WND *) USER_HEAP_LIN_ADDR( hwnd );
     if (ptr->dwMagic != WND_MAGIC) return NULL;
     if (ptr->hwndSelf != hwnd)
@@ -74,7 +74,7 @@ WND * WIN_FindWndPtr( HWND hwnd )
  *
  * Dump the content of a window structure to stderr.
  */
-void WIN_DumpWindow( HWND hwnd )
+void WIN_DumpWindow( HWND32 hwnd )
 {
     WND *ptr;
     char className[80];
@@ -95,7 +95,7 @@ void WIN_DumpWindow( HWND hwnd )
              "inst=%04x  taskQ=%04x  updRgn=%04x  active=%04x hdce=%04x  idmenu=%04x\n"
              "style=%08lx  exstyle=%08lx  wndproc=%08x  text='%s'\n"
              "client=%d,%d-%d,%d  window=%d,%d-%d,%d  iconpos=%d,%d  maxpos=%d,%d\n"
-             "sysmenu=%04x  flags=%04x  props=%04x  vscroll=%p  hscroll=%p\n",
+             "sysmenu=%04x  flags=%04x  props=%p  vscroll=%p  hscroll=%p\n",
              ptr->next, ptr->child, ptr->parent, ptr->owner,
              ptr->class, className, ptr->hInstance, ptr->hmemTaskQ,
              ptr->hrgnUpdate, ptr->hwndLastActive, ptr->hdce, ptr->wIDmenu,
@@ -105,7 +105,7 @@ void WIN_DumpWindow( HWND hwnd )
              ptr->rectClient.bottom, ptr->rectWindow.left, ptr->rectWindow.top,
              ptr->rectWindow.right, ptr->rectWindow.bottom, ptr->ptIconPos.x,
              ptr->ptIconPos.y, ptr->ptMaxPos.x, ptr->ptMaxPos.y, ptr->hSysMenu,
-             ptr->flags, ptr->hProp, ptr->pVScroll, ptr->pHScroll );
+             ptr->flags, ptr->pProp, ptr->pVScroll, ptr->pHScroll );
 
     if (ptr->class->cbWndExtra)
     {
@@ -123,7 +123,7 @@ void WIN_DumpWindow( HWND hwnd )
  *
  * Walk the windows tree and print each window on stderr.
  */
-void WIN_WalkWindows( HWND hwnd, int indent )
+void WIN_WalkWindows( HWND32 hwnd, int indent )
 {
     WND *ptr;
     char className[80];
@@ -160,7 +160,7 @@ void WIN_WalkWindows( HWND hwnd, int indent )
  *
  * Return the X window associated to a window.
  */
-Window WIN_GetXWindow( HWND hwnd )
+Window WIN_GetXWindow( HWND32 hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     while (wndPtr && !wndPtr->window) wndPtr = wndPtr->parent;
@@ -173,7 +173,7 @@ Window WIN_GetXWindow( HWND hwnd )
  *
  * Remove a window from the siblings linked list.
  */
-BOOL WIN_UnlinkWindow( HWND hwnd )
+BOOL32 WIN_UnlinkWindow( HWND32 hwnd )
 {    
     WND *wndPtr, **ppWnd;
 
@@ -192,7 +192,7 @@ BOOL WIN_UnlinkWindow( HWND hwnd )
  * The window is inserted after the specified window, which can also
  * be specified as HWND_TOP or HWND_BOTTOM.
  */
-BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter )
+BOOL32 WIN_LinkWindow( HWND32 hwnd, HWND32 hwndInsertAfter )
 {    
     WND *wndPtr, **ppWnd;
 
@@ -221,7 +221,7 @@ BOOL WIN_LinkWindow( HWND hwnd, HWND hwndInsertAfter )
  *
  * Find a window that needs repaint.
  */
-HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE hQueue )
+HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue )
 {
     HWND hwndRet;
     WND *pWnd = pWndDesktop;
@@ -267,7 +267,7 @@ HWND WIN_FindWinToRepaint( HWND hwnd, HQUEUE hQueue )
  * Send a WM_PARENTNOTIFY to all ancestors of the given window, unless
  * the window has the WS_EX_NOPARENTNOTIFY style.
  */
-void WIN_SendParentNotify( HWND hwnd, WORD event, WORD idChild, LONG lValue )
+void WIN_SendParentNotify( HWND32 hwnd, WORD event, WORD idChild, LONG lValue )
 {
     LPPOINT16 lppt = (LPPOINT16)&lValue;
     WND     *wndPtr = WIN_FindWndPtr( hwnd );
@@ -320,6 +320,7 @@ static void WIN_DestroyWindow( HWND hwnd )
     if (!wndPtr) return;
     WIN_UnlinkWindow( hwnd ); /* Remove the window from the linked list */
     TIMER_RemoveWindowTimers( hwnd );
+    PROPERTY_RemoveWindowProps( wndPtr );
     wndPtr->dwMagic = 0;  /* Mark it as invalid */
     wndPtr->hwndSelf = 0;
     if ((wndPtr->hrgnUpdate) || (wndPtr->flags & WIN_INTERNAL_PAINT))
@@ -362,7 +363,7 @@ void WIN_DestroyQueueWindows( WND* wnd, HQUEUE hQueue )
  *
  * Create the desktop window.
  */
-BOOL WIN_CreateDesktopWindow(void)
+BOOL32 WIN_CreateDesktopWindow(void)
 {
     CLASS *class;
     HDC hdc;
@@ -406,11 +407,11 @@ BOOL WIN_CreateDesktopWindow(void)
     pWndDesktop->hdce              = 0;
     pWndDesktop->pVScroll          = NULL;
     pWndDesktop->pHScroll          = NULL;
+    pWndDesktop->pProp             = NULL;
     pWndDesktop->wIDmenu           = 0;
     pWndDesktop->flags             = 0;
     pWndDesktop->window            = rootWindow;
     pWndDesktop->hSysMenu          = 0;
-    pWndDesktop->hProp             = 0;
     pWndDesktop->userdata          = 0;
 
     WINPROC_SetProc( &pWndDesktop->winproc, (WNDPROC16)class->winproc, 0 );
@@ -528,8 +529,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     wndPtr->flags          = 0;
     wndPtr->pVScroll       = NULL;
     wndPtr->pHScroll       = NULL;
+    wndPtr->pProp          = NULL;
     wndPtr->hSysMenu       = MENU_GetDefSysMenu();
-    wndPtr->hProp          = 0;
     wndPtr->userdata       = 0;
 
     if (classPtr->cbWndExtra) memset( wndPtr->wExtra, 0, classPtr->cbWndExtra);
@@ -556,7 +557,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     /* Insert the window in the linked list */
 
-    WIN_LinkWindow( hwnd, HWND_BOTTOM );
+    WIN_LinkWindow( hwnd, (cs->style & WS_CHILD) ? HWND_BOTTOM : HWND_TOP );
 
     /* Send the WM_GETMINMAXINFO message and fix the size if needed */
 
@@ -565,6 +566,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
         NC_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack );
         if (maxSize.x < cs->cx) cs->cx = maxSize.x;
         if (maxSize.y < cs->cy) cs->cy = maxSize.y;
+        if (cs->cx < minTrack.x ) cs->cx = minTrack.x;
+        if (cs->cy < minTrack.y ) cs->cy = minTrack.y;
     }
     if (cs->cx <= 0) cs->cx = 1;
     if (cs->cy <= 0) cs->cy = 1;
@@ -711,20 +714,25 @@ static HWND WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     if (wndPtr->dwStyle & WS_MINIMIZE)
     {
+	/* MinMaximize(hwnd, SW_SHOWMINNOACTIVE, 1) in "Internals" */
+
         wndPtr->dwStyle &= ~WS_MAXIMIZE;
         WINPOS_FindIconPos( hwnd );
         SetWindowPos( hwnd, 0, wndPtr->ptIconPos.x, wndPtr->ptIconPos.y,
-                      SYSMETRICS_CXICON, SYSMETRICS_CYICON, SWP_FRAMECHANGED |
-                      ((cs->style & WS_VISIBLE) ? SWP_SHOWWINDOW : 0 ));
+                      SYSMETRICS_CXICON, SYSMETRICS_CYICON, 
+                      SWP_FRAMECHANGED | ((GetActiveWindow())? SWP_NOACTIVATE : 0)  );
     }
     else if (wndPtr->dwStyle & WS_MAXIMIZE)
     {
+	/* MinMaximize(hwnd, SW_SHOWMAXIMIZED, 1) */
+
         POINT16 maxSize, maxPos, minTrack, maxTrack;
         NC_GetMinMaxInfo( hwnd, &maxSize, &maxPos, &minTrack, &maxTrack );
         SetWindowPos( hwnd, 0, maxPos.x, maxPos.y, maxSize.x, maxSize.y,
-            SWP_FRAMECHANGED | ((cs->style & WS_VISIBLE) ? SWP_SHOWWINDOW : 0) );
+            ((GetActiveWindow())? SWP_NOACTIVATE : 0) | SWP_FRAMECHANGED );
     }
-    else if (cs->style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
+    
+    if (cs->style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
 
     /* Call WH_SHELL hook */
 
@@ -898,8 +906,10 @@ BOOL DestroyWindow( HWND hwnd )
 		      SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE );
     if ((hwnd == GetCapture()) || IsChild( hwnd, GetCapture() ))
 	ReleaseCapture();
-   if (!QUEUE_GetDoomedQueue())
-       WIN_SendParentNotify( hwnd, WM_DESTROY, wndPtr->wIDmenu, (LONG)hwnd );
+    if (!QUEUE_GetDoomedQueue())
+        WIN_SendParentNotify( hwnd, WM_DESTROY, wndPtr->wIDmenu, (LONG)hwnd );
+
+    CLIPBOARD_DisOwn( hwnd );
 
       /* Recursively destroy owned windows */
 
@@ -914,8 +924,6 @@ BOOL DestroyWindow( HWND hwnd )
         if (siblingPtr) DestroyWindow( siblingPtr->hwndSelf );
         else break;
     }
-
-    CLIPBOARD_DisOwn( hwnd );
 
       /* Send destroy messages and destroy children */
 
@@ -1197,10 +1205,10 @@ WORD GetWindowWord( HWND32 hwnd, INT32 offset )
 /**********************************************************************
  *	     WIN_GetWindowInstance
  */
-HINSTANCE WIN_GetWindowInstance(HWND hwnd)
+HINSTANCE16 WIN_GetWindowInstance( HWND32 hwnd )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
-    if (!wndPtr) return (HINSTANCE)0;
+    if (!wndPtr) return (HINSTANCE16)0;
     return wndPtr->hInstance;
 }
 
@@ -1477,7 +1485,7 @@ HWND GetParent(HWND hwnd)
  *
  * Get the top-level parent for a child window.
  */
-HWND WIN_GetTopParent( HWND hwnd )
+HWND32 WIN_GetTopParent( HWND32 hwnd )
 {
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     while (wndPtr && (wndPtr->dwStyle & WS_CHILD)) wndPtr = wndPtr->parent;

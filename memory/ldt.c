@@ -13,8 +13,6 @@
 #include "stddebug.h"
 #include "debug.h"
 
-#ifndef WINELIB
-
 #ifdef linux
 #include <linux/unistd.h>
 #include <linux/head.h>
@@ -22,6 +20,7 @@
 
 _syscall3(int, modify_ldt, int, func, void *, ptr, unsigned long, bytecount)
 #endif  /* linux */
+
 #if defined(__svr4__) || defined(_SCO_DS)
 #include <sys/sysi86.h>
 #include <sys/seg.h>
@@ -33,8 +32,6 @@ _syscall3(int, modify_ldt, int, func, void *, ptr, unsigned long, bytecount)
 extern int i386_get_ldt(int, union descriptor *, int);
 extern int i386_set_ldt(int, union descriptor *, int);
 #endif  /* __NetBSD__ || __FreeBSD__ */
-
-#endif  /* ifndef WINELIB */
 
 
 ldt_copy_entry ldt_copy[LDT_SIZE];
@@ -121,8 +118,8 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
     /* Entry 0 must not be modified; its base and limit are always 0 */
     if (!entry) return 0;
 
-#ifndef WINELIB
 #ifdef linux
+    if (!__winelib)
     {
         struct modify_ldt_ldt_s ldt_info;
 
@@ -167,6 +164,7 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
 #endif  /* linux */
 
 #if defined(__NetBSD__) || defined(__FreeBSD__)
+    if (!__winelib)
     {
         long d[2];
 
@@ -182,35 +180,32 @@ int LDT_SetEntry( int entry, const ldt_entry *content )
     }
 #endif  /* __NetBSD__ || __FreeBSD__ */
 #if defined(__svr4__) || defined(_SCO_DS)
-{
-    struct ssd ldt_mod;
-    int i;
-    ldt_mod.sel = ENTRY_TO_SELECTOR(entry) | 4;
-    ldt_mod.bo = content->base;
-    ldt_mod.ls = content->limit;
-    i =   (content->limit & 0xf0000) |
-        (content->type << 10) |
-            (((content->read_only != 0) ^ 1) << 9) |
-                ((content->seg_32bit != 0) << 22) |
-                    ((content->limit_in_pages != 0)<< 23) |
-                        (1<<15) |
-                            0x7000;
-
-    ldt_mod.acc1 = (i & 0xff00) >> 8;
-    ldt_mod.acc2 = (i & 0xf00000) >> 20;
-    
-    
-    if (content->base == 0)
+    if (!__winelib)
     {
-        ldt_mod.acc1 =  0;
-        ldt_mod.acc2 = 0;
+        struct ssd ldt_mod;
+        int i;
+        ldt_mod.sel = ENTRY_TO_SELECTOR(entry) | 4;
+        ldt_mod.bo = content->base;
+        ldt_mod.ls = content->limit;
+        i = ((content->limit & 0xf0000) |
+             (content->type << 10) |
+             (((content->read_only != 0) ^ 1) << 9) |
+             ((content->seg_32bit != 0) << 22) |
+             ((content->limit_in_pages != 0)<< 23) |
+             (1<<15) |
+             0x7000);
+
+        ldt_mod.acc1 = (i & 0xff00) >> 8;
+        ldt_mod.acc2 = (i & 0xf00000) >> 20;
+
+        if (content->base == 0)
+        {
+            ldt_mod.acc1 =  0;
+            ldt_mod.acc2 = 0;
+        }
+        if ((ret = sysi86(SI86DSCR, &ldt_mod)) == -1) perror("sysi86");
     }    
-    if ((i = sysi86(SI86DSCR, &ldt_mod)) == -1)
-        perror("sysi86");
-    
-}    
 #endif
-#endif  /* ifndef WINELIB */
 
     if (ret < 0) return ret;
     ldt_copy[entry].base = content->base;

@@ -1308,6 +1308,9 @@ void DOS3Call( SIGCONTEXT *context )
         case 0x0d:
             ioctlGenericBlkDevReq(context);
             break;
+	case 0x0e: /* get logical drive mapping */
+	    AL_reg(context) = 0; /* drive has no mapping */
+	    break;
 
         case 0x0F:   /* Set logical drive mapping */
             /* FIXME: Not implemented at the moment, always returns error

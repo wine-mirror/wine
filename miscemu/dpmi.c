@@ -98,10 +98,7 @@ void INT_Int31Handler( SIGCONTEXT *context )
             case 0xe000: entryPoint = 190; break;  /* __E000H */
             case 0xf000: entryPoint = 194; break;  /* __F000H */
             default:
-                fprintf( stderr, "DPMI: real-mode seg to descriptor %04x not possible\n",
-                         BX_reg(context) );
-                AX_reg(context) = 0x8011;
-                SET_CFLAG(context);
+	    	AX_reg(context) = DOSMEM_AllocSelector(BX_reg(context));
                 break;
             }
             if (entryPoint) 
@@ -215,6 +212,35 @@ void INT_Int31Handler( SIGCONTEXT *context )
                 do_mscdex( context );
 		break;
             }
+	    /* NETAPI.DLL of Win95 does AX=6506 to fetch a realmode ptr
+	     * to the COLLATE table.
+	     */
+	    if (BL_reg(context) == 0x21) {
+	    	switch ((p->eax & 0xFF00)>>8) {
+		case 0x65:
+		    switch (p->eax & 0xFF) {
+		    case 06:{/* get collate table */
+		    	extern  DWORD	DOSMEM_CollateTable;
+		        char	*table;
+		        /* ES:DI is a REALMODE pointer to 5 byte dosmem 
+			 * we fill that with 0x6, realmode pointer to collateTB
+			 */
+			table = DOSMEM_RealMode2Linear(MAKELONG(p->edi,p->es));
+			*(BYTE*)table		= 0x06;
+			*(DWORD*)(table+1)	= DOSMEM_CollateTable;
+
+			CX_reg(context)		= 258;/*FIXME: size of table?*/
+			break;
+		    }
+		    default:
+            		SET_CFLAG(context);
+		    }
+		default:
+            	    SET_CFLAG(context);
+		    break;
+		}
+		break;
+	    }
             SET_CFLAG(context);
         }
         break;
@@ -237,6 +263,18 @@ void INT_Int31Handler( SIGCONTEXT *context )
             fprintf(stdnimp,
                     "RealModeCallIret: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n"
                     "                  ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n",
+                    p->eax, p->ebx, p->ecx, p->edx,
+                    p->esi, p->edi, p->es, p->ds, p->cs, p->ip );
+            SET_CFLAG(context);
+        }
+        break;
+
+    case 0x0303:  /* Allocate Real Mode Callback Address */
+        {
+            REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
+            fprintf(stdnimp,
+                    "AllocRMCB: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n"
+                    "           ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n",
                     p->eax, p->ebx, p->ecx, p->edx,
                     p->esi, p->edi, p->es, p->ds, p->cs, p->ip );
             SET_CFLAG(context);

@@ -7,8 +7,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "dde_mem.h"
 #include "windows.h"
+#include "dde_mem.h"
 #include "global.h"
 #include "debug.h"
 #include "xmalloc.h"
