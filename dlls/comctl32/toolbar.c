@@ -3794,10 +3794,11 @@ TOOLBAR_Paint (HWND hwnd, WPARAM wParam)
 
     TRACE("\n");
 
+    TOOLBAR_CalcToolbar( hwnd );
+
     /* fill ps.rcPaint with a default rect */
     memcpy(&(ps.rcPaint), &(infoPtr->rcBound), sizeof(infoPtr->rcBound)); 
 
-    TOOLBAR_CalcToolbar( hwnd );
     hdc = wParam==0 ? BeginPaint(hwnd, &ps) : (HDC)wParam;
     TOOLBAR_Refresh (hwnd, hdc, &ps);
     if (!wParam) EndPaint (hwnd, &ps);
