@@ -512,7 +512,7 @@ static	DWORD	MCI_LoadMciDriver(LPCSTR _strDevTyp, LPWINE_MCIDRIVER* lpwmd)
 	/* silence warning if all is used... some bogus program use commands like
 	 * 'open all'...
 	 */
-	if (strcasecmp(strDevTyp, "all") != 0) {
+	if (strcasecmp(strDevTyp, "all") == 0) {
 	    dwRet = MCIERR_CANNOT_USE_ALL;
 	} else {
 	    FIXME("Couldn't load driver for type %s.\n"
