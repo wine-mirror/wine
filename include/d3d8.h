@@ -725,4 +725,7 @@ ICOM_DEFINE(IDirect3DVolumeTexture8,IDirect3DBaseTexture8)
 #define IDirect3DVolumeTexture8_UnlockBox(p,a)               ICOM_CALL1(UnlockBox,p,a)
 #define IDirect3DVolumeTexture8_AddDirtyBox(p,a)             ICOM_CALL1(AddDirtyBox,p,a)
 
+/* Define the main entrypoint as well */
+IDirect3D8* WINAPI Direct3DCreate8(UINT SDKVersion);
+
 #endif /* __WINE_D3D8_H */

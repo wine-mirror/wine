@@ -53,7 +53,7 @@ HRESULT WINAPI DebugSetMute(void)
     return 0;
 }
 
-LPVOID WINAPI Direct3DCreate8(UINT SDKVersion)
+IDirect3D8* WINAPI Direct3DCreate8(UINT SDKVersion)
 {
 
     IDirect3D8Impl *object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3D8Impl));
@@ -66,7 +66,7 @@ LPVOID WINAPI Direct3DCreate8(UINT SDKVersion)
     /* Dump out the gl supported features
     TRACE("GL_Extensions reported: %s\n", glGetString(GL_EXTENSIONS)); */
 
-    return object;
+    return (IDirect3D8 *)object;
 }
 
 /* At process attach */
