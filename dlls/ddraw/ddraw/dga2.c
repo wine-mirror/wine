@@ -35,8 +35,8 @@ static ICOM_VTABLE(IDirectDraw7) XF86DGA2_DirectDraw_VTable;
 
 static const DDDEVICEIDENTIFIER2 xf86dga2_device = 
 {
+    "display",
     "XF86DGA2 Driver",
-    "WINE DirectDraw on XF86DGA2",
     { { 0x00010001, 0x00010001 } },
     0, 0, 0, 0,
     /* e2dcb020-dc60-11d1-8407-9714f5d50803 */

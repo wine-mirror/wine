@@ -19,6 +19,13 @@
 		(x)->dwSize = sizeof(*x);	\
 	} while (0)
 
+#define DD_STRUCT_COPY_BYSIZE(to,from)			\
+	do {						\
+	    	DWORD __size = to->dwSize;		\
+		memcpy(to,from,__size);			\
+		to->dwSize = __size;/*restore size*/	\
+	} while (0)
+
 /*****************************************************************************
  * IDirectDraw implementation structure
  */

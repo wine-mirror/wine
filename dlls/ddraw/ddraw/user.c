@@ -25,8 +25,8 @@ static ICOM_VTABLE(IDirectDraw7) User_DirectDraw_VTable;
 
 static const DDDEVICEIDENTIFIER2 user_device = 
 {
-    "User Driver",
-    "WINE DirectDraw on User (and GDI)",
+    "display",
+    "User (and GDI)",
     { { 0x00010001, 0x00010001 } },
     0, 0, 0, 0,
     /* fe38440c-8969-4283-bc73-749e7bc3c2eb */

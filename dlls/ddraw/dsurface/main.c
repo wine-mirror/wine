@@ -739,7 +739,13 @@ Main_DirectDrawSurface_GetSurfaceDesc(LPDIRECTDRAWSURFACE7 iface,
     ICOM_THIS(IDirectDrawSurfaceImpl, iface);
 
     TRACE("(%p)->(%p)\n",This,pDDSD);
-    *pDDSD = This->surface_desc;
+    if ((pDDSD->dwSize < sizeof(DDSURFACEDESC)) || 
+    	(pDDSD->dwSize > sizeof(DDSURFACEDESC2))) {
+	ERR("Impossible/Strange struct size %ld.\n",pDDSD->dwSize);
+	return DDERR_GENERIC;
+    }
+	
+    DD_STRUCT_COPY_BYSIZE(pDDSD,&This->surface_desc);
     return DD_OK;
 }
 

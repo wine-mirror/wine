@@ -36,8 +36,8 @@ static ICOM_VTABLE(IDirectDraw7) XVidMode_DirectDraw_VTable;
 
 static const DDDEVICEIDENTIFIER2 xvidmode_device = 
 {
-    "User/XF86VidMode Driver",
-    "WINE DirectDraw on User with XF86VidMode",
+    "display",
+    "XF86VidMode",
     { { 0x00010001, 0x00010001 } },
     0, 0, 0, 0,
     /* 40c1b248-9d7d-4a29-b7d7-4cd8109f3d5d */
