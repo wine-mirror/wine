@@ -27,6 +27,9 @@ struct msg_queue;
 struct atom_table;
 struct startup_info;
 
+/* process startup state */
+enum startup_state { STARTUP_IN_PROGRESS, STARTUP_DONE, STARTUP_ABORTED };
+
 /* process structures */
 
 struct process_dll
@@ -61,6 +64,7 @@ struct process
     int                  suspend;         /* global process suspend count */
     int                  create_flags;    /* process creation flags */
     struct console_input*console;         /* console input */
+    enum startup_state   startup_state;   /* startup state */
     struct startup_info *startup_info;    /* startup info while init is in progress */
     struct event        *idle_event;      /* event for input idle */
     struct msg_queue    *queue;           /* main message queue */
@@ -108,6 +112,9 @@ extern struct process_snapshot *process_snap( int *count );
 extern struct module_snapshot *module_snap( struct process *process, int *count );
 
 inline static void *get_process_id( struct process *process ) { return process; }
-inline static int is_process_init_done( struct process *process ) { return process->exe.base != 0; }
+inline static int is_process_init_done( struct process *process )
+{
+    return process->startup_state == STARTUP_DONE;
+}
 
 #endif  /* __WINE_SERVER_PROCESS_H */

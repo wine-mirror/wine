@@ -74,12 +74,9 @@ static const struct object_ops process_ops =
 
 /* process startup info */
 
-enum startup_state { STARTUP_IN_PROGRESS, STARTUP_DONE, STARTUP_ABORTED };
-
 struct startup_info
 {
     struct object       obj;          /* object header */
-    enum startup_state  state;        /* child process startup state */
     int                 inherit_all;  /* inherit all handles from parent */
     int                 use_handles;  /* use stdio handles */
     int                 create_flags; /* creation flags */
@@ -119,11 +116,13 @@ static const struct object_ops startup_info_ops =
 /* set the state of the process startup info */
 static void set_process_startup_state( struct process *process, enum startup_state state )
 {
-    if (!process->startup_info) return;
-    process->startup_info->state = state;
-    wake_up( &process->startup_info->obj, 0 );
-    release_object( process->startup_info );
-    process->startup_info = NULL;
+    if (process->startup_state == STARTUP_IN_PROGRESS) process->startup_state = state;
+    if (process->startup_info)
+    {
+        wake_up( &process->startup_info->obj, 0 );
+        release_object( process->startup_info );
+        process->startup_info = NULL;
+    }
 }
 
 /* set the console and stdio handles for a newly created process */
@@ -206,6 +205,7 @@ struct thread *create_process( int fd )
     process->suspend         = 0;
     process->create_flags    = 0;
     process->console         = NULL;
+    process->startup_state   = STARTUP_IN_PROGRESS;
     process->startup_info    = NULL;
     process->idle_event      = NULL;
     process->queue           = NULL;
@@ -214,7 +214,6 @@ struct thread *create_process( int fd )
     process->exe.next        = NULL;
     process->exe.prev        = NULL;
     process->exe.file        = NULL;
-    process->exe.base        = NULL;
     process->exe.dbg_offset  = 0;
     process->exe.dbg_size    = 0;
     process->exe.namelen     = 0;
@@ -377,14 +376,14 @@ static void startup_info_dump( struct object *obj, int verbose )
     struct startup_info *info = (struct startup_info *)obj;
     assert( obj->ops == &startup_info_ops );
 
-    fprintf( stderr, "Startup info flags=%x in=%d out=%d err=%d state=%d\n",
-             info->create_flags, info->hstdin, info->hstdout, info->hstderr, info->state );
+    fprintf( stderr, "Startup info flags=%x in=%d out=%d err=%d\n",
+             info->create_flags, info->hstdin, info->hstdout, info->hstderr );
 }
 
 static int startup_info_signaled( struct object *obj, struct thread *thread )
 {
     struct startup_info *info = (struct startup_info *)obj;
-    return info->state != STARTUP_IN_PROGRESS;
+    return info->process && is_process_init_done(info->process);
 }
 
 /* get a process from an id (and increment the refcount) */
@@ -782,7 +781,6 @@ DECL_HANDLER(new_process)
 
     /* build the startup info for a new process */
     if (!(info = alloc_object( &startup_info_ops, -1 ))) return;
-    info->state        = STARTUP_IN_PROGRESS;
     info->inherit_all  = req->inherit_all;
     info->use_handles  = req->use_handles;
     info->create_flags = req->create_flags;
@@ -823,7 +821,7 @@ DECL_HANDLER(get_new_process_info)
                                        PROCESS_ALL_ACCESS, req->pinherit );
         reply->thandle = alloc_handle( current->process, info->thread,
                                        THREAD_ALL_ACCESS, req->tinherit );
-        reply->success = (info->state == STARTUP_DONE);
+        reply->success = is_process_init_done( info->process );
         release_object( info );
     }
     else
@@ -892,7 +890,7 @@ DECL_HANDLER(init_process_done)
     process->exe.size = req->module_size;
     process->exe.name = req->name;
 
-    if (req->exe_file) file = get_file_obj( current->process, req->exe_file, GENERIC_READ );
+    if (req->exe_file) file = get_file_obj( process, req->exe_file, GENERIC_READ );
     if (process->exe.file) release_object( process->exe.file );
     process->exe.file = file;
 
@@ -903,8 +901,8 @@ DECL_HANDLER(init_process_done)
     set_process_startup_state( process, STARTUP_DONE );
 
     if (req->gui) process->idle_event = create_event( NULL, 0, 1, 0 );
-    if (current->suspend + current->process->suspend > 0) stop_thread( current );
-    reply->debugged = (current->process->debugger != 0);
+    if (current->suspend + process->suspend > 0) stop_thread( current );
+    reply->debugged = (process->debugger != 0);
 }
 
 /* open a handle to a process */
