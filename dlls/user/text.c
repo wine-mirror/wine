@@ -846,7 +846,7 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     const WCHAR *strPtr;
     WCHAR *retstr, *p_retstr;
     size_t size_retstr;
-    static WCHAR line[MAX_STATIC_BUFFER];
+    WCHAR line[MAX_STATIC_BUFFER];
     int len, lh, count=i_count;
     TEXTMETRICW tm;
     int lmargin = 0, rmargin = 0;
@@ -858,8 +858,8 @@ INT WINAPI DrawTextExW( HDC hdc, LPWSTR str, INT i_count,
     int prefix_offset;
     ellipsis_data ellip;
 
-    TRACE("%s, %d, [(%ld,%ld),(%ld,%ld)]\n", debugstr_wn (str, count), count,
-	  rect->left, rect->top, rect->right, rect->bottom);
+    TRACE("%s, %d, [%s] %08x\n", debugstr_wn (str, count), count,
+        wine_dbgstr_rect(rect), flags);
 
    if (dtp) TRACE("Params: iTabLength=%d, iLeftMargin=%d, iRightMargin=%d\n",
           dtp->iTabLength, dtp->iLeftMargin, dtp->iRightMargin);
