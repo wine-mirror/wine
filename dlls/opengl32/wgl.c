@@ -435,9 +435,18 @@ BOOL WINAPI wglShareLists(HGLRC hglrc1,
  */
 BOOL WINAPI wglSwapLayerBuffers(HDC hdc,
 				UINT fuPlanes) {
-  FIXME("(): stub !\n");
+  TRACE("(%08x, %08x)\n", hdc, fuPlanes);
 
-  return FALSE;
+  if (fuPlanes & WGL_SWAP_MAIN_PLANE) {
+    if (!SwapBuffers(hdc)) return FALSE;
+    fuPlanes &= ~WGL_SWAP_MAIN_PLANE;
+  }
+
+  if (fuPlanes) {
+    WARN("Following layers unhandled : %08x\n", fuPlanes);
+  }
+  
+  return TRUE;
 }
 
 /***********************************************************************
