@@ -2009,6 +2009,8 @@ static HRESULT WINAPI IDsDriverImpl_GetCaps(PIDSDRIVER iface, PDSDRIVERCAPS pCap
 
     pCaps->dwPrimaryBuffers = 1;
     TRACE("caps=0x%X\n",(unsigned int)pCaps->dwFlags);
+    pCaps->dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
+    pCaps->dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
 
     /* the other fields only apply to secondary buffers, which we don't support
      * (unless we want to mess with wavetable synthesizers and MIDI) */

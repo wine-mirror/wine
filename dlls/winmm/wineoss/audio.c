@@ -553,7 +553,9 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
     /* direct sound caps */
     ossdev->ds_caps.dwFlags = 0;
     ossdev->ds_caps.dwPrimaryBuffers = 1;
-
+    ossdev->ds_caps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
+    ossdev->ds_caps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
+                                                                                
     if (WINE_TRACE_ON(wave)) {
         /* Note that this only reports the formats supported by the hardware.
          * The driver may support other formats and do the conversions in

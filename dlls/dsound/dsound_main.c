@@ -671,37 +671,37 @@ static HRESULT WINAPI IDirectSoundImpl_GetCaps(LPDIRECTSOUND8 iface,LPDSCAPS lpD
 		return DSERR_INVALIDPARAM;
 	}
 
-	lpDSCaps->dwFlags = This->drvcaps.dwFlags;
+	lpDSCaps->dwFlags                               = This->drvcaps.dwFlags;
 	TRACE("(flags=0x%08lx)\n",lpDSCaps->dwFlags);
 
-	/* FIXME: copy caps from This->drv */
-	lpDSCaps->dwMinSecondarySampleRate		= DSBFREQUENCY_MIN;
-	lpDSCaps->dwMaxSecondarySampleRate		= DSBFREQUENCY_MAX;
+	lpDSCaps->dwMinSecondarySampleRate		= This->drvcaps.dwMinSecondarySampleRate;
+	lpDSCaps->dwMaxSecondarySampleRate		= This->drvcaps.dwMaxSecondarySampleRate;
 
-	lpDSCaps->dwPrimaryBuffers			= 1;
+	lpDSCaps->dwPrimaryBuffers			= This->drvcaps.dwPrimaryBuffers;
 
-	lpDSCaps->dwMaxHwMixingAllBuffers		= 0;
-	lpDSCaps->dwMaxHwMixingStaticBuffers		= 0;
-	lpDSCaps->dwMaxHwMixingStreamingBuffers		= 0;
+	lpDSCaps->dwMaxHwMixingAllBuffers		= This->drvcaps.dwMaxHwMixingAllBuffers;
+	lpDSCaps->dwMaxHwMixingStaticBuffers		= This->drvcaps.dwMaxHwMixingStaticBuffers;
+	lpDSCaps->dwMaxHwMixingStreamingBuffers		= This->drvcaps.dwMaxHwMixingStreamingBuffers;
 
-	lpDSCaps->dwFreeHwMixingAllBuffers		= 0;
-	lpDSCaps->dwFreeHwMixingStaticBuffers		= 0;
-	lpDSCaps->dwFreeHwMixingStreamingBuffers	= 0;
+	lpDSCaps->dwFreeHwMixingAllBuffers		= This->drvcaps.dwFreeHwMixingAllBuffers;
+	lpDSCaps->dwFreeHwMixingStaticBuffers		= This->drvcaps.dwFreeHwMixingStaticBuffers;
+	lpDSCaps->dwFreeHwMixingStreamingBuffers	= This->drvcaps.dwFreeHwMixingStreamingBuffers;
 
-	lpDSCaps->dwMaxHw3DAllBuffers			= 0;
-	lpDSCaps->dwMaxHw3DStaticBuffers		= 0;
-	lpDSCaps->dwMaxHw3DStreamingBuffers		= 0;
+	lpDSCaps->dwMaxHw3DAllBuffers			= This->drvcaps.dwMaxHw3DAllBuffers;
+	lpDSCaps->dwMaxHw3DStaticBuffers		= This->drvcaps.dwMaxHw3DStaticBuffers;
+	lpDSCaps->dwMaxHw3DStreamingBuffers		= This->drvcaps.dwMaxHw3DStreamingBuffers;
 
-	lpDSCaps->dwFreeHw3DAllBuffers			= 0;
-	lpDSCaps->dwFreeHw3DStaticBuffers		= 0;
-	lpDSCaps->dwFreeHw3DStreamingBuffers		= 0;
+	lpDSCaps->dwFreeHw3DAllBuffers			= This->drvcaps.dwFreeHw3DAllBuffers;
+	lpDSCaps->dwFreeHw3DStaticBuffers		= This->drvcaps.dwFreeHw3DStaticBuffers;
+	lpDSCaps->dwFreeHw3DStreamingBuffers		= This->drvcaps.dwFreeHw3DStreamingBuffers;
 
-	lpDSCaps->dwTotalHwMemBytes			= 0;
+	lpDSCaps->dwTotalHwMemBytes			= This->drvcaps.dwTotalHwMemBytes;
 
-	lpDSCaps->dwFreeHwMemBytes			= 0;
+	lpDSCaps->dwFreeHwMemBytes			= This->drvcaps.dwFreeHwMemBytes;
 
-	lpDSCaps->dwMaxContigFreeHwMemBytes		= 0;
+	lpDSCaps->dwMaxContigFreeHwMemBytes		= This->drvcaps.dwMaxContigFreeHwMemBytes;
 
+	/* driver doesn't have these */
 	lpDSCaps->dwUnlockTransferRateHwBuffers		= 4096;	/* But we have none... */
 
 	lpDSCaps->dwPlayCpuOverheadSwBuffers		= 1;	/* 1% */
@@ -1099,7 +1099,7 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 			*ippDS = NULL;
 			return err;
 		}
-		(*ippDS)->drvcaps.dwFlags = 0;
+		ZeroMemory(&(*ippDS)->drvcaps, sizeof((*ippDS)->drvcaps));
 		if ((woc.dwFormats & WAVE_FORMAT_1M08) ||
 		    (woc.dwFormats & WAVE_FORMAT_2M08) ||
 		    (woc.dwFormats & WAVE_FORMAT_4M08) ||
@@ -1134,6 +1134,9 @@ HRESULT WINAPI DirectSoundCreate8(LPCGUID lpcGUID,LPDIRECTSOUND8 *ppDS,IUnknown 
 		}
 		if (ds_emuldriver)
 		    (*ippDS)->drvcaps.dwFlags |= DSCAPS_EMULDRIVER;
+		(*ippDS)->drvcaps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
+		(*ippDS)->drvcaps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
+		(*ippDS)->drvcaps.dwPrimaryBuffers = 1;
 	}
 
 	DSOUND_RecalcVolPan(&((*ippDS)->volpan));

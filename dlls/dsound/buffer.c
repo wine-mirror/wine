@@ -1044,6 +1044,7 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	dsb->dsb = 0;
 	dsb->dsound = ds;
 	dsb->lpVtbl = &dsbvt;
+	dsb->iks = NULL;
 
 	memcpy(&dsb->dsbd, dsbd, sizeof(*dsbd));
 	if (wfex)
@@ -1064,7 +1065,9 @@ HRESULT WINAPI IDirectSoundBufferImpl_Create(
 	else capf |= DSCAPS_SECONDARYMONO;
 	if (wfex->wBitsPerSample==16) capf |= DSCAPS_SECONDARY16BIT;
 	else capf |= DSCAPS_SECONDARY8BIT;
+
 	use_hw = (ds->drvcaps.dwFlags & capf) == capf;
+	TRACE("use_hw = 0x%08x, capf = 0x%08lx, ds->drvcaps.dwFlags = 0x%08lx\n", use_hw, capf, ds->drvcaps.dwFlags);
 
 	/* FIXME: check hardware sample rate mixing capabilities */
 	/* FIXME: check app hints for software/hardware buffer (STATIC, LOCHARDWARE, etc) */
