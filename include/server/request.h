@@ -18,6 +18,8 @@ enum request
     REQ_RESUME_THREAD,
     REQ_QUEUE_APC,
     REQ_CLOSE_HANDLE,
+    REQ_GET_HANDLE_INFO,
+    REQ_SET_HANDLE_INFO,
     REQ_DUP_HANDLE,
     REQ_OPEN_PROCESS,
     REQ_SELECT,
@@ -76,6 +78,8 @@ DECL_HANDLER(suspend_thread);
 DECL_HANDLER(resume_thread);
 DECL_HANDLER(queue_apc);
 DECL_HANDLER(close_handle);
+DECL_HANDLER(get_handle_info);
+DECL_HANDLER(set_handle_info);
 DECL_HANDLER(dup_handle);
 DECL_HANDLER(open_process);
 DECL_HANDLER(select);
@@ -131,6 +135,8 @@ static const struct handler {
     { (void(*)())req_resume_thread, sizeof(struct resume_thread_request) },
     { (void(*)())req_queue_apc, sizeof(struct queue_apc_request) },
     { (void(*)())req_close_handle, sizeof(struct close_handle_request) },
+    { (void(*)())req_get_handle_info, sizeof(struct get_handle_info_request) },
+    { (void(*)())req_set_handle_info, sizeof(struct set_handle_info_request) },
     { (void(*)())req_dup_handle, sizeof(struct dup_handle_request) },
     { (void(*)())req_open_process, sizeof(struct open_process_request) },
     { (void(*)())req_select, sizeof(struct select_request) },

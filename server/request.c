@@ -198,6 +198,21 @@ DECL_HANDLER(close_handle)
     send_reply( current, -1, 0 );
 }
 
+/* get information about a handle */
+DECL_HANDLER(get_handle_info)
+{
+    struct get_handle_info_reply reply;
+    reply.flags = set_handle_info( current->process, req->handle, 0, 0 );
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* set a handle information */
+DECL_HANDLER(set_handle_info)
+{
+    set_handle_info( current->process, req->handle, req->mask, req->flags );
+    send_reply( current, -1, 0 );
+}
+
 /* duplicate a handle */
 DECL_HANDLER(dup_handle)
 {

@@ -134,6 +134,26 @@ static int dump_close_handle_request( struct close_handle_request *req, int len 
     return (int)sizeof(*req);
 }
 
+static int dump_get_handle_info_request( struct get_handle_info_request *req, int len )
+{
+    fprintf( stderr, " handle=%d", req->handle );
+    return (int)sizeof(*req);
+}
+
+static int dump_get_handle_info_reply( struct get_handle_info_reply *req, int len )
+{
+    fprintf( stderr, " flags=%d", req->flags );
+    return (int)sizeof(*req);
+}
+
+static int dump_set_handle_info_request( struct set_handle_info_request *req, int len )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " flags=%d,", req->flags );
+    fprintf( stderr, " mask=%d", req->mask );
+    return (int)sizeof(*req);
+}
+
 static int dump_dup_handle_request( struct dup_handle_request *req, int len )
 {
     fprintf( stderr, " src_process=%d,", req->src_process );
@@ -603,6 +623,10 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
       (void(*)())0 },
     { (int(*)(void *,int))dump_close_handle_request,
       (void(*)())0 },
+    { (int(*)(void *,int))dump_get_handle_info_request,
+      (void(*)())dump_get_handle_info_reply },
+    { (int(*)(void *,int))dump_set_handle_info_request,
+      (void(*)())0 },
     { (int(*)(void *,int))dump_dup_handle_request,
       (void(*)())dump_dup_handle_reply },
     { (int(*)(void *,int))dump_open_process_request,
@@ -694,6 +718,8 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "resume_thread",
     "queue_apc",
     "close_handle",
+    "get_handle_info",
+    "set_handle_info",
     "dup_handle",
     "open_process",
     "select",

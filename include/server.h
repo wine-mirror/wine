@@ -175,6 +175,26 @@ struct close_handle_request
 };
 
 
+/* Get information about a handle */
+struct get_handle_info_request
+{
+    int          handle;       /* handle we are interested in */
+};
+struct get_handle_info_reply
+{
+    int          flags;        /* handle flags */
+};
+
+
+/* Set a handle information */
+struct set_handle_info_request
+{
+    int          handle;       /* handle we are interested in */
+    int          flags;        /* new handle flags */
+    int          mask;         /* mask for flags to set */
+};
+
+
 /* Duplicate a handle */
 struct dup_handle_request
 {
@@ -639,10 +659,6 @@ struct _THDB;
 extern int CLIENT_NewThread( struct _THDB *thdb, int *thandle, int *phandle );
 extern int CLIENT_SetDebug( int level );
 extern int CLIENT_InitThread(void);
-extern int CLIENT_CloseHandle( int handle );
-extern int CLIENT_DuplicateHandle( int src_process, int src_handle, int dst_process,
-                                   int dst_handle, DWORD access, BOOL32 inherit, DWORD options );
-extern int CLIENT_OpenProcess( void *pid, DWORD access, BOOL32 inherit );
 #endif  /* __WINE_SERVER__ */
 
 #endif  /* __WINE_SERVER_H */
