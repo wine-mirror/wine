@@ -142,6 +142,8 @@ static UINT CREATE_execute( struct tagMSIVIEW *view, MSIHANDLE record )
         r = tv->ops->set_int( tv, row, 4, 0x8000|col->type );
         if( r )
             break;
+
+        nField++;
     }
     if( !col )
         r = ERROR_SUCCESS;
