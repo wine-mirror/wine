@@ -694,6 +694,7 @@ ImageList_Destroy (HIMAGELIST himl)
     if (himl->hbrBlend50)
         DeleteObject (himl->hbrBlend50);
 
+    ZeroMemory(himl, sizeof(*himl));
     COMCTL32_Free (himl);
 
     return TRUE;
@@ -1223,9 +1224,9 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 cleanup:
     DeleteObject(hBlendMaskBmp);
     DeleteObject(hImageBmp);
-    DeleteObject(hImageDC);
-    DeleteObject(hImageListDC);
-    DeleteObject(hMaskListDC);
+    DeleteDC(hImageDC);
+    DeleteDC(hImageListDC);
+    DeleteDC(hMaskListDC);
 
     return bResult;
 }
