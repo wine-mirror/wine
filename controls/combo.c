@@ -1603,6 +1603,15 @@ static LRESULT COMBO_GetText( LPHEADCOMBO lphc, INT N, LPARAM lParam, BOOL unico
 	   return (LRESULT)n;
        }
    }
+   /* LB_GETCURSEL returned LB_ERR - truncate string, return zero */
+   if (unicode)
+   {
+	   LPWSTR lpText = (LPWSTR)lParam;
+	   lpText[0] = '\0';
+   } else {
+	   LPSTR lpText = (LPSTR)lParam;
+	   lpText[0] = '\0';
+   }
    return 0;
 }
 
