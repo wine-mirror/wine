@@ -1878,6 +1878,14 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
         WideCharToMultiByte(CP_ACP, 0, entryW.cAlternateFileName, -1,
                             entry->cAlternateFileName, sizeof(entry->cAlternateFileName), NULL, NULL);
         count = info.cur_pos - skip;
+
+        entry->dwFileAttributes = entryW.dwFileAttributes;
+        entry->nFileSizeHigh    = entryW.nFileSizeHigh;
+        entry->nFileSizeLow     = entryW.nFileSizeLow;
+        entry->ftCreationTime   = entryW.ftCreationTime;
+        entry->ftLastAccessTime = entryW.ftLastAccessTime;
+        entry->ftLastWriteTime  = entryW.ftLastWriteTime;
+
     }
     else
         count = 0;
