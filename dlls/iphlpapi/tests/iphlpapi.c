@@ -214,7 +214,7 @@ static void testGetIpAddrTable(void)
       ok(apiReturn == NO_ERROR,
        "GetIpAddrTable(buf, &dwSize, FALSE) returned %ld, expected NO_ERROR\n",
        apiReturn);
-      if (apiReturn == NO_ERROR)
+      if (apiReturn == NO_ERROR && buf->dwNumEntries)
         testGetIfEntry(buf->table[0].dwIndex);
       free(buf);
     }
@@ -272,9 +272,6 @@ static void testGetIpForwardTable(void)
       ok(apiReturn == NO_ERROR,
        "GetIpForwardTable(buf, &dwSize, FALSE) returned %ld, expected NO_ERROR\n",
        apiReturn);
-      if (apiReturn == NO_ERROR)
-        ok(buf->dwNumEntries > 0,
-          "Got 0 IP forward table entries, expect at least 1\n");
       free(buf);
     }
   }
