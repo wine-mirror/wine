@@ -109,7 +109,7 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 		if (newbuf == NULL) {
 			ERR("failed to allocate primary buffer\n");
 			merr = DSERR_OUTOFMEMORY;
-			/* but the old buffer might still exists and must be re-prepared */
+			/* but the old buffer might still exist and must be re-prepared */
 		} else {
 			This->buffer = newbuf;
 			This->buflen = buflen;
@@ -281,13 +281,21 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 	}
 
 	/* Let's be pedantic! */
-	if ((wfex == NULL) ||
-	    (wfex->wFormatTag != WAVE_FORMAT_PCM) ||
+	if (wfex == NULL) {
+		TRACE("wfex==NULL!\n");
+		return DSERR_INVALIDPARAM;
+	}
+	TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
+	      "bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
+	      wfex->wFormatTag, wfex->nChannels, wfex->nSamplesPerSec,
+	      wfex->nAvgBytesPerSec, wfex->nBlockAlign,
+	      wfex->wBitsPerSample, wfex->cbSize);
+
+	if ((wfex->wFormatTag != WAVE_FORMAT_PCM) ||
 	    (wfex->nChannels < 1) || (wfex->nChannels > 2) ||
 	    (wfex->nSamplesPerSec < 1) ||
-	    (wfex->nBlockAlign < 1) || (wfex->nChannels > 4) ||
 	    ((wfex->wBitsPerSample != 8) && (wfex->wBitsPerSample != 16))) {
-		TRACE("failed pedantic check!\n");
+		TRACE("unsupported format!\n");
 		return DSERR_INVALIDPARAM;
 	}
 
@@ -308,14 +316,10 @@ static HRESULT WINAPI PrimaryBufferImpl_SetFormat(
 		}
 	}
 
-	memcpy(&(dsound->wfx), wfex, sizeof(dsound->wfx));
-
-	TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
-		   "bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
-		   wfex->wFormatTag, wfex->nChannels, wfex->nSamplesPerSec,
-		   wfex->nAvgBytesPerSec, wfex->nBlockAlign,
-		   wfex->wBitsPerSample, wfex->cbSize);
-
+	dsound->wfx.nSamplesPerSec = wfex->nSamplesPerSec;
+	dsound->wfx.nChannels = wfex->nChannels;
+	dsound->wfx.wBitsPerSample = wfex->wBitsPerSample;
+	dsound->wfx.nBlockAlign = dsound->wfx.wBitsPerSample / 8 * dsound->wfx.nChannels;
 	dsound->wfx.nAvgBytesPerSec =
 		dsound->wfx.nSamplesPerSec * dsound->wfx.nBlockAlign;
 

@@ -644,6 +644,7 @@ HRESULT WINAPI DirectSoundCreate8(REFGUID lpGUID,LPDIRECTSOUND8 *ppDS,IUnknown *
         (*ippDS)->wfx.nChannels = 2;
         (*ippDS)->wfx.nBlockAlign = (*ippDS)->wfx.wBitsPerSample * (*ippDS)->wfx.nChannels / 8;
         (*ippDS)->wfx.nAvgBytesPerSec = (*ippDS)->wfx.nSamplesPerSec * (*ippDS)->wfx.nBlockAlign;
+        (*ippDS)->wfx.cbSize = 0;
 
 	/* If the driver requests being opened through MMSYSTEM
 	 * (which is recommended by the DDK), it is supposed to happen
