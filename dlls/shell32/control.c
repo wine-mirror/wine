@@ -36,27 +36,11 @@
 #define NO_SHLWAPI_REG
 #include "shlwapi.h"
 
+#include "cpanel.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(shlctrl);
 
-typedef struct CPlApplet {
-    struct CPlApplet*   next;		/* linked list */
-    HWND		hWnd;
-    unsigned		count;		/* number of subprograms */
-    HMODULE     	hModule;	/* module of loaded applet */
-    APPLET_PROC		proc;		/* entry point address */
-    NEWCPLINFOW		info[1];	/* array of count information.
-					 * dwSize field is 0 if entry is invalid */
-} CPlApplet;
-
-typedef struct CPanel {
-    CPlApplet*		first;		/* linked list */
-    HWND		hWnd;
-    unsigned            status;
-    CPlApplet*		clkApplet;
-    unsigned            clkSP;
-} CPanel;
-
-static	CPlApplet*	Control_UnloadApplet(CPlApplet* applet)
+CPlApplet*	Control_UnloadApplet(CPlApplet* applet)
 {
     unsigned	i;
     CPlApplet*	next;
@@ -72,7 +56,7 @@ static	CPlApplet*	Control_UnloadApplet(CPlApplet* applet)
     return next;
 }
 
-static CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
+CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
 {
     CPlApplet*	applet;
     unsigned 	i;

@@ -231,33 +231,47 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	  }
 	  *piIndex = (uFlags & GIL_OPENICON) ? dwNr + 1 : dwNr;
 	}
-	else	/* object is file */
+
+	else
 	{
-	  if (_ILGetExtension(pSimplePidl, sTemp, MAX_PATH)
-	      && HCR_MapTypeToValueA(sTemp, sTemp, MAX_PATH, TRUE)
-	      && HCR_GetDefaultIconA(sTemp, sTemp, MAX_PATH, &dwNr))
+	  BOOL found = FALSE;
+
+	  if (_ILIsCPanelStruct(pSimplePidl))
 	  {
-	    if (!lstrcmpA("%1", sTemp))		/* icon is in the file */
+	    if (SUCCEEDED(CPanel_GetIconLocationW(pSimplePidl, szIconFile, cchMax, piIndex)))
+		found = TRUE;
+	  }
+	  else if (_ILGetExtension(pSimplePidl, sTemp, MAX_PATH))
+	  {
+	    if (HCR_MapTypeToValueA(sTemp, sTemp, MAX_PATH, TRUE)
+		&& HCR_GetDefaultIconA(sTemp, sTemp, MAX_PATH, &dwNr))
 	    {
-	      SHGetPathFromIDListW(This->pidl, szIconFile);
+	      if (!lstrcmpA("%1", sTemp))		/* icon is in the file */
+	      {
+		SHGetPathFromIDListW(This->pidl, szIconFile);
+		*piIndex = 0;
+	      }
+	      else
+	      {
+		MultiByteToWideChar(CP_ACP, 0, sTemp, -1, szIconFile, cchMax);
+		*piIndex = dwNr;
+	      }
+
+	      found = TRUE;
+	    }
+
+	    if (!found)					/* default icon */
+	    {
+	      lstrcpynW(szIconFile, swShell32Name, cchMax);
 	      *piIndex = 0;
 	    }
-	    else
-	    {
-	      MultiByteToWideChar(CP_ACP, 0, sTemp, -1, szIconFile, cchMax);
-	      *piIndex = dwNr;
-	    }
-	  }
-	  else					/* default icon */
-	  {
-	    lstrcpynW(szIconFile, swShell32Name, cchMax);
-	    *piIndex = 0;
 	  }
 	}
 
 	TRACE("-- %s %x\n", debugstr_w(szIconFile), *piIndex);
 	return NOERROR;
 }
+
 /**************************************************************************
 *  IExtractIconW_Extract
 */

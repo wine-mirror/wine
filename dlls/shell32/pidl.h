@@ -107,6 +107,15 @@
 #include "pshpack1.h"
 typedef BYTE PIDLTYPE;
 
+typedef struct tagPIDLCPanelStruct
+{ 
+    BYTE dummy;			/*01 is 0x00 */
+    DWORD iconIdx;		/*02 negative icon ID */
+    WORD offsDispName;		/*06*/
+    WORD offsComment;		/*08*/
+    CHAR szName[1];		/*10*/ /* terminated by 0x00, followed by display name and comment string */
+} PIDLCPanelStruct;
+
 typedef struct tagPIDLDATA
 {	PIDLTYPE type;			/*00*/
 	union
@@ -137,8 +146,9 @@ typedef struct tagPIDLDATA
 	  struct
 	  { WORD dummy;		/*01*/
 	    DWORD dummy1;	/*02*/
-	    CHAR szName[1];	/*06*/ /* teminated by 0x00 0x00 */
+	    CHAR szName[1];	/*06*/ /* terminated by 0x00 0x00 */
 	  } htmlhelp;
+	  struct tagPIDLCPanelStruct cpanel;
 	}u;
 } PIDLDATA, *LPPIDLDATA;
 #include "poppack.h"
@@ -167,6 +177,7 @@ BOOL	_ILIsFolder		(LPCITEMIDLIST pidl);
 BOOL	_ILIsValue		(LPCITEMIDLIST pidl);
 BOOL	_ILIsSpecialFolder	(LPCITEMIDLIST pidl);
 BOOL	_ILIsPidlSimple		(LPCITEMIDLIST pidl);
+BOOL	_ILIsCPanelStruct	(LPCITEMIDLIST pidl);
 
 /*
  * simple pidls from strings
@@ -185,6 +196,7 @@ LPITEMIDLIST	_ILCreateFolder		(WIN32_FIND_DATAA * stffile);
 LPITEMIDLIST	_ILCreateValue		(WIN32_FIND_DATAA * stffile);
 LPITEMIDLIST	_ILCreateSpecial	(LPCSTR szGUID);
 LPITEMIDLIST	_ILCreateFromPathA	(LPCSTR szPath);
+LPITEMIDLIST	_ILCreateCPanel		(LPCSTR name, LPCSTR displayName, LPCSTR comment, int iconIdx);
 
 /*
  * helper functions (getting struct-pointer)
@@ -193,6 +205,7 @@ LPPIDLDATA	_ILGetDataPointer	(LPCITEMIDLIST);
 LPSTR		_ILGetTextPointer	(LPCITEMIDLIST);
 LPSTR		_ILGetSTextPointer	(LPCITEMIDLIST);
 REFIID		_ILGetGUIDPointer	(LPCITEMIDLIST pidl);
+PIDLCPanelStruct* _ILGetCPanelPointer	(LPCITEMIDLIST pidl);
 
 /*
  * debug helper
