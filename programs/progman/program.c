@@ -95,7 +95,7 @@ VOID PROGRAM_NewProgram(HLOCAL hGroup)
 				&nCmdShow, MAX_PATHNAME_LEN))
     return;
 
-  if (!hIcon) hIcon = LoadIcon(0, MAKEINTRESOURCE(OIC_WINEICON));
+  if (!hIcon) hIcon = LoadIcon(0, IDI_WINLOGO);
 
 
   if (!PROGRAM_AddProgram(hGroup, hIcon, szName, 0, 0, szCmdLine, szIconFile,

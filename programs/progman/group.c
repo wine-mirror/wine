@@ -51,7 +51,7 @@ ATOM GROUP_RegisterGroupWinClass()
   class.cbClsExtra    = 0;
   class.cbWndExtra    = sizeof(LONG);
   class.hInstance     = Globals.hInstance;
-  class.hIcon         = LoadIcon (0, MAKEINTRESOURCE(OIC_WINEICON));
+  class.hIcon         = LoadIcon (0, IDI_WINLOGO);
   class.hCursor       = LoadCursor (0, IDC_ARROW);
   class.hbrBackground = GetStockObject (WHITE_BRUSH);
   class.lpszMenuName  = 0;

@@ -9,7 +9,7 @@
 #define MAX_LANGUAGE_NUMBER (CL_LAST_LANGUAGE - CL_FIRST_LANGUAGE)
 
 #define HELPFILE    "clock.hlp"
-#define DEFAULTICON OIC_WINEICON
+#define DEFAULTICON OIC_WINLOGO
 
 /* hide the following from winerc */
 #ifndef RC_INVOKED

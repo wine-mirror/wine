@@ -16,7 +16,7 @@
    #define INVALID_HANDLE_VALUE INVALID_HANDLE_VALUE
 
    #define WINE_RELEASE_INFO "Compiled using LCC"
-   #define OIC_WINEICON 0
+   #define OIC_WINLOGO 0
 
    #ifndef LCC_HASASSERT
     /* prevent multiple inclusion of assert methods */

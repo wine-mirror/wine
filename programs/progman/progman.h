@@ -16,11 +16,7 @@
 #include "windows.h"
 
 /* Fallback icon */
-#ifdef WINELIB
-#define DEFAULTICON OIC_WINEICON
-#else
-#define DEFAULTICON OIC_LANDSCAPE
-#endif
+#define DEFAULTICON OIC_WINLOGO
 
 /* Icon index in M$ Window's progman.exe  */
 #define PROGMAN_ICON_INDEX 0

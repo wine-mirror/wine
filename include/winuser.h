@@ -373,26 +373,20 @@ typedef struct
 #define OCR_NO              32648
 #define OCR_HAND            32649
 #define OCR_APPSTARTING     32650
-#ifdef __WINE__
-#define OCR_HELP            32651  /* only defined in wine */
-#define OCR_BUMMER          32652
+#define OCR_HELP            32651
+
+/* only defined in wine (FIXME) */
 #define OCR_DRAGOBJECT      32653
-#endif
 
 #define OIC_SAMPLE          32512
 #define OIC_HAND            32513
 #define OIC_QUES            32514
 #define OIC_BANG            32515
 #define OIC_NOTE            32516
-#define OIC_PORTRAIT        32517
-#define OIC_LANDSCAPE       32518
-#define OIC_WINEICON        32519
-#define OIC_FOLDER          32520
-#define OIC_FOLDER2         32521
-#define OIC_FLOPPY          32522
-#define OIC_CDROM           32523
-#define OIC_HDISK           32524
-#define OIC_NETWORK         32525
+#define OIC_WINLOGO         32517
+#define OIC_WARNING         OIC_BANG
+#define OIC_ERROR           OIC_HAND
+#define OIC_INFORMATION     OIC_NOTE
 
 #define COLOR_SCROLLBAR		    0
 #define COLOR_BACKGROUND	    1
@@ -2158,9 +2152,6 @@ typedef struct
 #define IDI_ERROR          IDI_HAND
 #define IDI_INFORMATION    IDI_ASTERISK
 
-#define IDC_BUMMERA      MAKEINTRESOURCEA(100)
-#define IDC_BUMMERW      MAKEINTRESOURCEW(100)
-#define IDC_BUMMER         WINELIB_NAME_AW(IDC_BUMMER)
 #define IDC_ARROWA       MAKEINTRESOURCEA(32512)
 #define IDC_ARROWW       MAKEINTRESOURCEW(32512)
 #define IDC_ARROW          WINELIB_NAME_AW(IDC_ARROW)

@@ -11,7 +11,7 @@
 
 #define HELPFILE  "notepad.hlp"
 #define LOGPREFIX ".LOG"
-#define DEFAULTICON OIC_WINEICON
+#define DEFAULTICON OIC_WINLOGO
 
 /* hide the following from winerc */
 #ifndef RC_INVOKED

@@ -2907,7 +2907,7 @@ HICON16 NC_IconForWindow(WND *wndPtr)
 	/* If there is no hIcon specified and this is a modal dialog, */ 
         /* get the default one.                                       */
 	if (!hIcon && (wndPtr->dwStyle & DS_MODALFRAME))
-		hIcon = LoadImageA(0, MAKEINTRESOURCEA(OIC_WINEICON), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+		hIcon = LoadImageA(0, IDI_WINLOGOA, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
 
 	return hIcon;
 }

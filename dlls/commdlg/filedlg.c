@@ -93,12 +93,18 @@ static BOOL FileDlg_Init(void)
     CURSORICONINFO *fldrInfo;
     
     if (!initialized) {
-	if (!hFolder) hFolder = LoadIconA(0, MAKEINTRESOURCEA(OIC_FOLDER));
-	if (!hFolder2) hFolder2 = LoadIconA(0, MAKEINTRESOURCEA(OIC_FOLDER2));
-	if (!hFloppy) hFloppy = LoadIconA(0, MAKEINTRESOURCEA(OIC_FLOPPY));
-	if (!hHDisk) hHDisk = LoadIconA(0, MAKEINTRESOURCEA(OIC_HDISK));
-	if (!hCDRom) hCDRom = LoadIconA(0, MAKEINTRESOURCEA(OIC_CDROM));
-	if (!hNet) hNet = LoadIconA(0, MAKEINTRESOURCEA(OIC_NETWORK));
+        HINSTANCE inst = GetModuleHandleA( "comdlg32.dll" );
+        if (!inst)
+        {
+            ERR( "cannot get comdlg32.dll instance\n" );
+            return FALSE;
+        }
+	if (!hFolder) hFolder = LoadIconA( inst, "FOLDER" );
+	if (!hFolder2) hFolder2 = LoadIconA( inst, "FOLDER2" );
+	if (!hFloppy) hFloppy = LoadIconA( inst, "FLOPPY" );
+	if (!hHDisk) hHDisk = LoadIconA( inst, "HDISK" );
+	if (!hCDRom) hCDRom = LoadIconA( inst, "CDROM" );
+	if (!hNet) hNet = LoadIconA( inst, "NETWORK" );
 	if (hFolder == 0 || hFolder2 == 0 || hFloppy == 0 || 
 	    hHDisk == 0 || hCDRom == 0 || hNet == 0)
 	{

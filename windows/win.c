@@ -3287,7 +3287,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
         return 0L;
     }
 
-    hBummer = LoadCursorA(0, IDC_BUMMERA);
+    hBummer = LoadCursorA(0, MAKEINTRESOURCEA(OCR_NO));
 
     if( !hBummer || !wndPtr )
     {
