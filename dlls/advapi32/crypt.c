@@ -1012,7 +1012,7 @@ BOOL WINAPI CryptEnumProvidersW (DWORD dwIndex, DWORD *pdwReserved,
 			pdwProvType, pszProvName, pcbProvName);
 
 	strlen = *pcbProvName / sizeof(WCHAR);
-	if ( pszProvName && (str = CRYPT_Alloc(strlen)) )
+	if ( pszProvName && !(str = CRYPT_Alloc(strlen)) )
 		CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
 	ret = CryptEnumProvidersA(dwIndex, pdwReserved, dwFlags, pdwProvType, str, &strlen);
 	if (str)
