@@ -127,7 +127,7 @@ static UINT ACTION_AppSearchGetSignature(MSIPACKAGE *package, MSISIGNATURE *sig,
         maxVersion = load_dynamic_stringW(row,4);
         if (maxVersion)
         {
-            ACTION_VerStrToInteger(minVersion, &sig->MaxVersionMS,
+            ACTION_VerStrToInteger(maxVersion, &sig->MaxVersionMS,
              &sig->MaxVersionLS);
             HeapFree(GetProcessHeap(), 0, maxVersion);
         }
@@ -610,6 +610,9 @@ static UINT ACTION_RecurseSearchDirectory(MSIPACKAGE *package, BOOL *appFound,
     }
     else
         rc = ERROR_OUTOFMEMORY;
+
+    if (rc != ERROR_OUTOFMEMORY )
+        rc = ERROR_SUCCESS;
     return rc;
 }
 
@@ -689,7 +692,10 @@ static UINT ACTION_AppSearchDr(MSIPACKAGE *package, BOOL *appFound,
             ERR("Error is %x\n",rc);
             goto end;
         }
-        depth = MSI_RecordGetInteger(row,4);
+        if (MSI_RecordIsNull(row,4))
+            depth = 0;
+        else
+            depth = MSI_RecordGetInteger(row,4);
         ACTION_ExpandAnyPath(package, buffer, expanded,
          sizeof(expanded) / sizeof(expanded[0]));
         if (sig->File)
