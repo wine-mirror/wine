@@ -224,7 +224,7 @@
 
 	<para>
 	  MMSYSTEM and WINMM call the low level driver functions using the
-	  mixMessage function.
+	  mxdMessage function.
 	</para>
 
 	<sect3>

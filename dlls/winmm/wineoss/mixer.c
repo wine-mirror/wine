@@ -1048,9 +1048,9 @@ static	DWORD	MIX_GetNumDevs(void)
 #endif /* HAVE_OSS */
 
 /**************************************************************************
- * 				mixMessage (WINEOSS.3)
+ * 				mxdMessage (WINEOSS.3)
  */
-DWORD WINAPI OSS_mixMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
+DWORD WINAPI OSS_mxdMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
 /* TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n", wDevID, wMsg, dwUser, dwParam1, dwParam2); */
@@ -1090,5 +1090,3 @@ DWORD WINAPI OSS_mixMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
     return MMSYSERR_NOTENABLED;
 #endif
 }
-
-

@@ -622,7 +622,7 @@ static	BOOL	MMDRV_Install(LPCSTR drvRegName, LPCSTR drvFileName, BOOL bIsMapper)
 	if (d->d.d32.hModule) {
 #define A(_x,_y)	AA(d->d.d32.hModule,_x,_y,32,GetProcAddress)
 	    A(MMDRV_AUX,	auxMessage);
-	    A(MMDRV_MIXER,	mixMessage);
+	    A(MMDRV_MIXER,	mxdMessage);
 	    A(MMDRV_MIDIIN,	midMessage);
 	    A(MMDRV_MIDIOUT, 	modMessage);
 	    A(MMDRV_WAVEIN,	widMessage);

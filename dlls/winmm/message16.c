@@ -1805,7 +1805,7 @@ unsigned   MMDRV_LoadMMDrvFunc16(LPCSTR drvName, LPWINE_DRIVER d,
 
 #define A(_x,_y)	AA(hMod16,_x,_y,16,GetProcAddress16)
         A(MMDRV_AUX,	auxMessage);
-        A(MMDRV_MIXER,	mixMessage);
+        A(MMDRV_MIXER,	mxdMessage);
         A(MMDRV_MIDIIN,	midMessage);
         A(MMDRV_MIDIOUT,modMessage);
         A(MMDRV_WAVEIN,	widMessage);
