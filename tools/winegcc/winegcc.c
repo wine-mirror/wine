@@ -430,6 +430,12 @@ static void build(struct options* opts)
 		case file_obj:
 		    strarray_add(files, strmake("-o%s", file));
 		    break;
+		case file_arh:
+		    strarray_add(files, strmake("-a%s", file));
+		    break;
+		case file_so:
+		    strarray_add(files, strmake("-s%s", file));
+		    break;
 	    	case file_na:
 		    error("File does not exist: %s", file);
 		    break;
