@@ -1030,9 +1030,9 @@ BOOL X11DRV_SetWindowPos( WINDOWPOS *winpos )
 
     TRACE("\tstatus flags = %04x\n", winpos->flags & SWP_AGG_STATUSFLAGS);
 
-    if (((winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE) &&
-          !(winpos->flags & SWP_NOSENDCHANGING))
+    if (((winpos->flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE))
         SendMessageA( winpos->hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)winpos );
+        /* WM_WINDOWPOSCHANGED is send even if SWP_NOSENDCHANGING is set */
 
     return TRUE;
 }
