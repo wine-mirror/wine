@@ -896,15 +896,19 @@ ImageList_Create (INT cx, INT cy, UINT flags,
 
     TRACE("Image: %d Bits per Pixel\n", himl->uBitsPixel);
 
-    himl->hbmImage =
-        CreateBitmap (himl->cx * himl->cMaxImage, himl->cy,
+    if (himl->cMaxImage > 0) {
+        himl->hbmImage =
+	  CreateBitmap (himl->cx * himl->cMaxImage, himl->cy,
                         1, himl->uBitsPixel, NULL);
-    if (himl->hbmImage == 0) {
-        ERR("Error creating image bitmap!\n");
-        return NULL;
+	if (himl->hbmImage == 0) {
+	    ERR("Error creating image bitmap!\n");
+	    return NULL;
+	}
     }
-
-    if (himl->flags & ILC_MASK) {
+    else
+        himl->hbmImage = 0;
+    
+    if ( (himl->cMaxImage > 0) && (himl->flags & ILC_MASK)) {
         himl->hbmMask = CreateBitmap (himl->cx * himl->cMaxImage, himl->cy,
 					1, 1, NULL);
         if (himl->hbmMask == 0) {
