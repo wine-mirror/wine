@@ -502,6 +502,16 @@ BOOL16 WINAPI IsBadWritePtr16( SEGPTR ptr, UINT16 size )
 
 
 /***********************************************************************
+ *           IsBadFlatReadWritePtr16   (KERNEL.627)
+ */
+BOOL16 WINAPI IsBadFlatReadWritePtr16( SEGPTR ptr, DWORD size, BOOL16 bWrite )
+{
+    return bWrite? IsBadHugeWritePtr16( ptr, size )
+                 : IsBadHugeReadPtr16( ptr, size );
+}
+
+
+/***********************************************************************
  *           MemoryRead   (TOOLHELP.78)
  */
 DWORD WINAPI MemoryRead16( WORD sel, DWORD offset, void *buffer, DWORD count )

@@ -496,7 +496,7 @@ file	krnl386.exe
 624 pascal SetFastQueue(long long) SetFastQueue16
 625 pascal GetFastQueue() GetFastQueue16
 626 stub SmashEnvironment
-627 stub IsBadFlatReadWritePtr
+627 pascal16 IsBadFlatReadWritePtr(segptr long word) IsBadFlatReadWritePtr16
 630 register C16ThkSL() C16ThkSL
 631 register C16ThkSL01() C16ThkSL01
 651 pascal ThunkConnect16(str str word long ptr str word) ThunkConnect16
