@@ -31,7 +31,6 @@
 typedef struct
 {
     K32OBJ        header;
-    K32OBJ       *file;
 } FILE_MAPPING;
 
 /* File view */
@@ -93,13 +92,6 @@ static UINT32 granularity_mask;  /* Allocation granularity (usually 64k) */
 
 #define ROUND_SIZE(addr,size) \
    (((UINT32)(size) + ((UINT32)(addr) & page_mask) + page_mask) & ~page_mask)
-
-static void VIRTUAL_DestroyMapping( K32OBJ *obj );
-
-const K32OBJ_OPS MEM_MAPPED_FILE_Ops =
-{
-    VIRTUAL_DestroyMapping     /* destroy */
-};
 
 #define VIRTUAL_DEBUG_DUMP_VIEW(view) \
    if (!TRACE_ON(virtual)); else VIRTUAL_DumpView(view)
@@ -1064,7 +1056,6 @@ HANDLE32 WINAPI CreateFileMapping32A(
                 LPCSTR name      /* [in] Name of file-mapping object */ )
 {
     FILE_MAPPING *mapping = NULL;
-    K32OBJ *file;
     struct create_mapping_request req;
     struct create_mapping_reply reply = { -1 };
     HANDLE32 handle;
@@ -1125,7 +1116,6 @@ HANDLE32 WINAPI CreateFileMapping32A(
 	    SetLastError( ERROR_INVALID_PARAMETER );
 	    return 0;
 	}
-	file = NULL;
         if (name)
 	{
 	    CHAR	buf[260];
@@ -1158,8 +1148,8 @@ HANDLE32 WINAPI CreateFileMapping32A(
             ((protect & 0xff) == PAGE_EXECUTE_WRITECOPY))
                 access |= GENERIC_WRITE;
 
-        if (!(file = HANDLE_GetObjPtr( PROCESS_Current(), hFile, K32OBJ_FILE,
-                                       access, &req.handle ))) goto error;
+        if ((req.handle = HANDLE_GetServerHandle( PROCESS_Current(), hFile,
+                                                  K32OBJ_FILE, access )) == -1) goto error;
         if (!GetFileInformationByHandle( hFile, &info )) goto error;
         if (!size_high && !size_low)
         {
@@ -1194,7 +1184,6 @@ HANDLE32 WINAPI CreateFileMapping32A(
     if (!(mapping = HeapAlloc( SystemHeap, 0, sizeof(*mapping) ))) goto error;
     mapping->header.type     = K32OBJ_MEM_MAPPED_FILE;
     mapping->header.refcount = 1;
-    mapping->file            = file;
 
     if (!K32OBJ_AddName( &mapping->header, name )) handle = 0;
     else handle = HANDLE_Alloc( PROCESS_Current(), &mapping->header,
@@ -1205,7 +1194,6 @@ HANDLE32 WINAPI CreateFileMapping32A(
 
 error:
     if (reply.handle != -1) CLIENT_CloseHandle( reply.handle );
-    if (file) K32OBJ_DecCount( file );
     if (mapping) HeapFree( SystemHeap, 0, mapping );
     return 0;
 }
@@ -1279,22 +1267,6 @@ HANDLE32 WINAPI OpenFileMapping32W( DWORD access, BOOL32 inherit, LPCWSTR name)
     HANDLE32 ret = OpenFileMapping32A( access, inherit, nameA );
     HeapFree( GetProcessHeap(), 0, nameA );
     return ret;
-}
-
-
-/***********************************************************************
- *           VIRTUAL_DestroyMapping
- *
- * Destroy a FILE_MAPPING object.
- */
-static void VIRTUAL_DestroyMapping( K32OBJ *ptr )
-{
-    FILE_MAPPING *mapping = (FILE_MAPPING *)ptr;
-    assert( ptr->type == K32OBJ_MEM_MAPPED_FILE );
-
-    if (mapping->file) K32OBJ_DecCount( mapping->file );
-    ptr->type = K32OBJ_UNKNOWN;
-    HeapFree( SystemHeap, 0, mapping );
 }
 
 

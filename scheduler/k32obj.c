@@ -15,7 +15,6 @@
 /* The declarations are here to avoid including a lot of unnecessary files */
 extern const K32OBJ_OPS PROCESS_Ops;
 extern const K32OBJ_OPS THREAD_Ops;
-extern const K32OBJ_OPS MEM_MAPPED_FILE_Ops;
 
 static const K32OBJ_OPS K32OBJ_NullOps =
 {
@@ -43,7 +42,7 @@ const K32OBJ_OPS * const K32OBJ_Ops[K32OBJ_NBOBJECTS] =
     &K32OBJ_DefaultOps,     /* K32OBJ_CHANGE */
     &K32OBJ_DefaultOps,     /* K32OBJ_CONSOLE */
     &K32OBJ_NullOps,        /* K32OBJ_SCREEN_BUFFER */
-    &MEM_MAPPED_FILE_Ops,   /* K32OBJ_MEM_MAPPED_FILE */
+    &K32OBJ_DefaultOps,     /* K32OBJ_MEM_MAPPED_FILE */
     &K32OBJ_NullOps,        /* K32OBJ_SERIAL */
     &K32OBJ_NullOps,        /* K32OBJ_DEVICE_IOCTL */
     &K32OBJ_DefaultOps,     /* K32OBJ_PIPE */
