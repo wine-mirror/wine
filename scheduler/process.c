@@ -229,6 +229,9 @@ static BOOL process_init( char *argv[] )
  */
 static int load_system_dlls(void)
 {
+    /* Load KERNEL */
+    if (!LoadLibraryA( "KERNEL32" )) return 0;
+
     /* Get pointers to USER routines called by KERNEL */
     THUNK_InitCallout();
 
@@ -297,7 +300,6 @@ static void start_process(void)
 {
     struct init_process_done_request *req = get_req_buffer();
     int debugged, console_app;
-    UINT cmdShow = SW_SHOWNORMAL;
     LPTHREAD_START_ROUTINE entry;
     HMODULE module = current_process.exe_modref->module;
 
@@ -326,16 +328,6 @@ static void start_process(void)
      * is sent by REQ_INIT_PROCESS_DONE */
     if (!SIGNAL_Init()) goto error;
 
-    /* Load KERNEL (necessary for TASK_Create) */
-    if (!LoadLibraryA( "KERNEL32" )) goto error;
-
-    /* Create 16-bit task */
-    if (current_startupinfo.dwFlags & STARTF_USESHOWWINDOW)
-        cmdShow = current_startupinfo.wShowWindow;
-    if (!TASK_Create( (NE_MODULE *)GlobalLock16( MapHModuleLS(module) ), cmdShow,
-                      NtCurrentTeb(), NULL, 0 ))
-        goto error;
-
     /* Load the system dlls */
     if (!load_system_dlls()) goto error;
 
@@ -351,6 +343,7 @@ static void start_process(void)
     if (debugged) DbgBreakPoint();
     /* FIXME: should use _PEB as parameter for NT 3.5 programs !
      * Dunno about other OSs */
+    SetLastError(0);  /* clear error code */
     ExitThread( entry(NULL) );
 
  error:
