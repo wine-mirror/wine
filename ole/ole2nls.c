@@ -2551,27 +2551,57 @@ GetTimeFormat32A(LCID locale,        /* in  */
 		 LPCSTR format,      /* in  */
 		 LPSTR timestr,      /* out */
 		 INT32 timelen       /* in  */) 
-{
-   LPCSTR realformat;
-   char fmt_buf[40];
-   
-   TRACE(ole,"GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",
-	 locale,flags,xtime,format,timestr,timelen);
-   
-   if (format) {
-      realformat = format;
-   } else if (locale) {
-      GetLocaleInfo32A(locale, LOCALE_STIMEFORMAT,
-		       fmt_buf,  sizeof(fmt_buf));
-      realformat = fmt_buf;
-   } else {
-      WARN(ole, "Caller gave no locale and no format\n");
-      realformat = "hh:mm:ss";
-   };
-   if (!locale) {
-      locale = GetSystemDefaultLCID();
-   }
-   return OLE_GetFormatA(locale, flags, xtime, realformat, timestr, timelen);
+{ char format_buf[40];
+  LPCSTR thisformat;
+  SYSTEMTIME t;
+  LPSYSTEMTIME thistime;
+  LCID thislocale=0;
+  DWORD thisflags=LOCALE_STIMEFORMAT; /* standart timeformat */;
+  
+  TRACE(ole,"GetTimeFormat(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",locale,flags,xtime,format,timestr,timelen);
+  if (!locale) 
+  { locale = LOCALE_SYSTEM_DEFAULT;
+  }
+  
+  if (locale == LOCALE_SYSTEM_DEFAULT) 
+  { thislocale = GetSystemDefaultLCID();
+  } 
+  else if (locale == LOCALE_USER_DEFAULT) 
+  { thislocale = GetUserDefaultLCID();
+	}
+  else
+  { thislocale = locale;
+  }
+  if (format == NULL) 
+  { if (flags&LOCALE_NOUSEROVERRIDE)  /*use system default*/
+    { thislocale = GetSystemDefaultLCID();
+    }
+    switch (flags)
+    { case TIME_NOSECONDS:
+        FIXME(ole,"TIME_NOSECONDS not yet implemented");
+        break;
+      case TIME_NOMINUTESORSECONDS:
+        FIXME(ole,"TIME_NOMINUTESORSECONDS not yet implemented");
+       break;
+    }   
+    GetLocaleInfo32A(thislocale, thisflags, format_buf,sizeof(format_buf));
+    thisformat = format_buf;
+  }
+  else 
+  { thisformat = format;
+  }
+  
+  if (!locale) 
+  {  locale = GetSystemDefaultLCID();
+  }
+  if (xtime == NULL) /* NULL means use the current local time*/
+  { GetSystemTime(&t);
+    thistime = &t;
+  } 
+  else
+  { thistime = xtime;
+  }
+  return OLE_GetFormatA(thislocale, thisflags, thistime, thisformat,timestr, timelen);
 }
 
 

@@ -18,6 +18,8 @@
 #include "stackframe.h"
 #include "user.h"
 #include "process.h"
+#include "snoop.h"
+#include "task.h"
 #include "debug.h"
 
 /* Built-in modules descriptors */
@@ -114,8 +116,8 @@ static BUILTIN16_DLL BuiltinDLLs[] =
     { &TOOLHELP_Descriptor, 0 },
     { &TYPELIB_Descriptor,  DLL_FLAG_NOT_USED },
     { &VER_Descriptor,      0 },
-    { &W32SYS_Descriptor,   0 },
-    { &WIN32S16_Descriptor, 0 },
+    { &W32SYS_Descriptor,   DLL_FLAG_NOT_USED },
+    { &WIN32S16_Descriptor, DLL_FLAG_NOT_USED },
     { &WIN87EM_Descriptor,  DLL_FLAG_NOT_USED },
     { &WINASPI_Descriptor,  0 },
     { &WINEPS_Descriptor,   DLL_FLAG_ALWAYS_USED },
@@ -217,6 +219,11 @@ BOOL32 BUILTIN_Init(void)
     GET_CS(cs); GET_DS(ds);
     NE_SetEntryPoint( hModule, 454, cs );
     NE_SetEntryPoint( hModule, 455, ds );
+
+    /* Initialize KERNEL.THHOOK */
+
+    TASK_InstallTHHook((THHOOK *)PTR_SEG_TO_LIN( 
+                                  (SEGPTR)NE_GetEntryPoint( hModule, 332 )));
   
     /* Initialize the real-mode selector entry points */
 
@@ -247,6 +254,8 @@ BOOL32 BUILTIN_Init(void)
         assert(proc);
         INT_SetHandler( vector, proc );
     }
+
+    SNOOP16_Init();
 
     return TRUE;
 }

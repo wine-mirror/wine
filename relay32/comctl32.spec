@@ -7,7 +7,7 @@ type	win32
 #   This list was created from a comctl32.dll v4.72 (IE4.01).
 
   2 stdcall MenuHelp(long long long long long long ptr) MenuHelp
-  3 stub ShowHideMenuCtl
+  3 stdcall ShowHideMenuCtl(long long ptr) ShowHideMenuCtl
   4 stdcall GetEffectiveClientRect(long long long) GetEffectiveClientRect
   5 stdcall DrawStatusTextA(long ptr str long) DrawStatusText32A
   6 stdcall CreateStatusWindowA(long str long long) CreateStatusWindow32A
@@ -80,7 +80,7 @@ type	win32
  73 stdcall Free(long) COMCTL32_Free
  74 stdcall GetSize(long) COMCTL32_GetSize
  75 stdcall ImageList_SetDragCursorImage(ptr long long long) ImageList_SetDragCursorImage
- 76 stub ImageList_SetFilter
+ 76 stdcall ImageList_SetFilter(ptr long long) ImageList_SetFilter
  77 stdcall ImageList_SetIconSize(ptr long long) ImageList_SetIconSize
  78 stdcall ImageList_SetImageCount(ptr long) ImageList_SetImageCount
  79 stdcall ImageList_SetOverlayImage(ptr long long) ImageList_SetOverlayImage
@@ -133,18 +133,18 @@ type	win32
 337 stub DPA_DeleteAllPtrs
 338 stub DPA_Sort
 339 stub DPA_Search
-340 stub DPA_CreateEx
-341 stub SendNotify
+340 stdcall DPA_CreateEx(long long) DPA_CreateEx
+341 stdcall SendNotify(long long long long) COMCTL32_SendNotify
 342 stub SendNotifyEx
 
-350 stdcall StrChrA(long long) COMCTL32_StrChrA
-351 stub StrRChr
+350 stdcall StrChrA(str str) COMCTL32_StrChrA
+351 stub StrRChrA
 352 stub StrCmpNA
 353 stub StrCmpNIA
 354 stub StrStrA
-355 stub StrStrIA
+355 stdcall StrStrIA(str str) COMCTL32_StrStrIA
 356 stub StrCSpnA
-357 stub StrToIntA
+357 stdcall StrToIntA(str) COMCTL32_StrToIntA
 358 stub StrChrW
 359 stub StrRChrW
 360 stub StrCmpNW

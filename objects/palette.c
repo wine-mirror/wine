@@ -594,6 +594,11 @@ UINT16 WINAPI GDIRealizePalette( HDC16 hdc )
             return RealizeDefaultPalette( hdc );
 
         palPtr = (PALETTEOBJ *) GDI_GetObjPtr( dc->w.hPalette, PALETTE_MAGIC );
+
+	if (!palPtr) {
+		FIXME(palette,"invalid selected palette %04x\n",dc->w.hPalette);
+		return 0;
+	}
         
         realized = COLOR_SetMapping(palPtr,0,palPtr->logpalette.palNumEntries,
                                     (dc->w.hPalette != hPrimaryPalette) ||

@@ -21,7 +21,11 @@
 #include "snoop.h"
 #include "debug.h"
 
-static HMODULE16 hFirstModule = 0;
+FARPROC16 (*fnSNOOP16_GetProcAddress16)(HMODULE16,DWORD,FARPROC16) = NULL;
+void (*fnSNOOP16_RegisterDLL)(NE_MODULE*,LPCSTR) = NULL;
+
+#define hFirstModule (pThhook->hExeHead)
+
 static NE_MODULE *pCachedModule = 0;  /* Module cached by NE_OpenFile */
 
 static HMODULE16 NE_LoadBuiltin(LPCSTR name,BOOL32 force) { return 0; }
@@ -330,8 +334,10 @@ FARPROC16 NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
     else sel = (WORD)(DWORD)NE_SEG_TABLE(pModule)[sel-1].selector;
     if (sel==0xffff)
 	return (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset );
+    if (!fnSNOOP16_GetProcAddress16)
+	return (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset );
     else
-	return (FARPROC16)SNOOP16_GetProcAddress16(hModule,ordinal,(FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset ));
+	return (FARPROC16)fnSNOOP16_GetProcAddress16(hModule,ordinal,(FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset ));
 }
 
 
@@ -654,7 +660,8 @@ static HMODULE16 NE_LoadExeHeader( HFILE16 hFile, OFSTRUCT *ofs )
     else pModule->dlls_to_init = 0;
 
     NE_RegisterModule( pModule );
-    SNOOP16_RegisterDLL(pModule,ofs->szPathName);
+    if (fnSNOOP16_RegisterDLL)
+    	fnSNOOP16_RegisterDLL(pModule,ofs->szPathName);
     return hModule;
 }
 

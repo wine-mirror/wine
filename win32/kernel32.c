@@ -77,14 +77,53 @@ static void _write_qtthunk(
 }
 
 /***********************************************************************
+ *           _loadthunk
+ */
+static LPVOID _loadthunk(LPSTR module, LPSTR func, LPSTR module32, 
+                         struct ThunkDataCommon *TD32)
+{
+    struct ThunkDataCommon *TD16;
+    HMODULE32 hmod;
+
+    if ((hmod = LoadLibrary16(module)) <= 32) 
+    {
+        ERR(thunk, "(%s, %s, %s, %p): Unable to load '%s', error %d\n",
+                   module, func, module32, TD32, module, hmod);
+        return 0;
+    }
+
+    if (!(TD16 = PTR_SEG_TO_LIN(WIN32_GetProcAddress16(hmod, func))))
+    {
+        ERR(thunk, "(%s, %s, %s, %p): Unable to find '%s'\n",
+                   module, func, module32, TD32, func);
+        return 0;
+    }
+
+    if (TD32 && memcmp(TD16->magic, TD32->magic, 4))
+    {
+        ERR(thunk, "(%s, %s, %s, %p): Bad magic %c%c%c%c (should be %c%c%c%c)\n",
+                   module, func, module32, TD32, 
+                   TD16->magic[0], TD16->magic[1], TD16->magic[2], TD16->magic[3],
+                   TD32->magic[0], TD32->magic[1], TD32->magic[2], TD32->magic[3]);
+        return 0;
+    }
+
+    if (TD32 && TD16->checksum != TD32->checksum)
+    {
+        ERR(thunk, "(%s, %s, %s, %p): Wrong checksum %08lx (should be %08lx)\n",
+                   module, func, module32, TD32, TD16->checksum, TD32->checksum);
+        return 0;
+    }
+
+    return TD16;
+}
+
+/***********************************************************************
  *           GetThunkStuff    (KERNEL32.53)
  */
 LPVOID WINAPI GetThunkStuff(LPSTR module, LPSTR func)
 {
-    HMODULE32 hmod = LoadLibrary16(module);
-    if (hmod <= 32) return 0;
-
-    return PTR_SEG_TO_LIN(WIN32_GetProcAddress16(hmod, func));
+    return _loadthunk(module, func, "<kernel>", NULL);
 }
 
 /***********************************************************************
@@ -135,13 +174,9 @@ UINT32 WINAPI ThunkConnect32(
     {
         case DLL_PROCESS_ATTACH:
         {
-            struct ThunkDataCommon *TD16 = GetThunkStuff(module16, thunkfun16);
-            if (!TD16 || TD16->checksum != TD->checksum
-                      || memcmp(TD16->magic, TD->magic, 4))
-            {
-                ERR(thunk, "Problem loading 16-bit thunk buffer!\n");
+            struct ThunkDataCommon *TD16;
+            if (!(TD16 = _loadthunk(module16, thunkfun16, module32, TD)))
                 return 0;
-            }
 
             if (directionSL)
             {
@@ -1006,6 +1041,15 @@ _KERNEL_472(CONTEXT *context) {
 	if (!HIWORD(EAX_reg(context)))
 		return; /* returns the passed value */
 	/* hmm ... fixme */
+}
+
+/**********************************************************************
+ * 		KERNEL_475		(KERNEL.475)
+ * 	Set the 16-bit %fs to the 32-bit %fs (current TEB selector)
+ */
+VOID WINAPI _KERNEL_475(CONTEXT *context) 
+{
+    GET_FS( THREAD_Current()->saved_fs );
 }
 
 /**********************************************************************

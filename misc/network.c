@@ -14,6 +14,7 @@
 #include "wnet.h"
 #include "debug.h"
 #include "win.h"
+#include "heap.h"
 
 /********************************************************************
  *  WNetAddConnection16 [USER.517]  Directs a local device to net
@@ -27,7 +28,9 @@ UINT16 WINAPI WNetAddConnection16(LPCSTR lpNetPath, LPCSTR lpPassWord,
    return WNetAddConnection32A(lpNetPath, lpPassWord, lpLocalName);
 }
 
-/* [MPR.50] */
+/*********************************************************************
+ *  WNetAddConnection32 [MPR.50] 
+ */
 
 UINT32 WINAPI WNetAddConnection32A(LPCSTR NetPath, LPCSTR PassWord,
 			    LPCSTR LocalName)
@@ -44,6 +47,7 @@ UINT32 WINAPI WNetAddConnection32W(LPCWSTR NetPath,
 			    LPCWSTR LocalName)
 {
    FIXME(wnet, " stub!\n");
+   SetLastError(WN_NO_NETWORK);
    return WN_NO_NETWORK;
 }
 
@@ -108,7 +112,32 @@ UINT32 WINAPI WNetAddConnection3_32W(HWND32 owner,
 				 flags); 
 } 
 
+/*******************************************************************
+ * WNetConnectionDialog1_32A [MPR.59]
+ */
+UINT32 WNetConnectionDialog1_32A (LPCONNECTDLGSTRUCT32A lpConnDlgStruct)
+{ FIXME(wnet,"%p stub\n", lpConnDlgStruct);   
+  SetLastError(WN_NO_NETWORK);
+  return ERROR_NO_NETWORK;
+}
+/*******************************************************************
+ * WNetConnectionDialog1_32W [MPR.60]
+ */ 
+UINT32 WNetConnectionDialog1_32W (LPCONNECTDLGSTRUCT32W lpConnDlgStruct)
+{ FIXME(wnet,"%p stub\n", lpConnDlgStruct);
+  SetLastError(WN_NO_NETWORK);
+  return ERROR_NO_NETWORK;
+}
+ 
+/*******************************************************************
+ * WNetConnectionDialog1_32 [MPR.61]
+ */ 
+UINT32 WNetConnectionDialog1_32(HWND32 owner, DWORD flags  )
+{ FIXME(wnet,"owner = 0x%x, flags=0x%lx stub\n", owner,flags);
+  SetLastError(WN_NO_NETWORK);
+  return ERROR_NO_NETWORK;
 
+}
 /********************************************************************
  *   WNetCancelConnection	[USER.518]  undirects a local device
  */
@@ -285,15 +314,15 @@ WNetGetConnection32A(LPCSTR localname,LPSTR remotename,LPDWORD buflen)
  *				WNetGetConnectionW	[MPR.72]
  */
 DWORD WINAPI
-WNetGetConnection32W(LPCWSTR localnameW,LPSTR remotenameW,LPDWORD buflen)
+WNetGetConnection32W(LPCWSTR localnameW,LPWSTR remotenameW,LPDWORD buflen)
 {
 	UINT16	x;
 	CHAR	buf[200];	
 	LPSTR	lnA = HEAP_strdupWtoA(GetProcessHeap(),0,localnameW);
 	DWORD	ret = WNetGetConnection16(lnA,buf,&x);
 
-	*buflen = x; /* FIXME: *2 ? */
 	lstrcpyAtoW(remotenameW,buf);
+	*buflen=lstrlen32W(remotenameW);
 	HeapFree(GetProcessHeap(),0,lnA);
 	return ret;
 }
@@ -572,6 +601,7 @@ UINT32 WINAPI WNetOpenEnum32A(DWORD dwScope, DWORD dwType, DWORD dwUsage,
 {
 	FIXME(wnet, "(%08lX, %08lX, %08lX, %p, %p): stub\n",
 	      dwScope, dwType, dwUsage, lpNet, lphEnum);
+	SetLastError(WN_NO_NETWORK);
 	return WN_NO_NETWORK;
 }
 
@@ -584,6 +614,7 @@ WNetGetResourceInformation32A(
 	LPNETRESOURCE32A netres,LPVOID buf,LPDWORD buflen,LPSTR systemstr
 ) {
 	FIXME(wnet,"(%p,%p,%p,%p): stub!\n",netres,buf,buflen,systemstr);
+  SetLastError(WN_NO_NETWORK);
 	return WN_NO_NETWORK;
 }
 
@@ -667,4 +698,19 @@ DWORD WINAPI _MPR_25(DWORD x, DWORD y)
 	FIXME(mpr,"(%lx,%lx): stub\n",x,y);
 	return 1;
 }
+/*****************************************************************
+ *  MultinetGetErrorTextA [MPR.28]
+ */
 
+UINT32 WINAPI MultinetGetErrorText32A (DWORD x, DWORD y, DWORD z)
+{	FIXME(mpr,"(%lx,%lx,%lx): stub\n",x,y,z);
+  return 0;
+}
+/*****************************************************************
+ *  MultinetGetErrorTextW [MPR.29]
+ */
+
+UINT32 WINAPI MultinetGetErrorText32W (DWORD x, DWORD y, DWORD z)
+{	FIXME(mpr,"(%lx,%lx,%lx): stub\n",x,y,z);
+  return 0;
+}

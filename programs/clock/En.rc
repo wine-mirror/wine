@@ -7,27 +7,32 @@
 
 #define LANGUAGE_ID                  En
 #define LANGUAGE_NUMBER              0
-#define LANGUAGE_MENU_ITEM           "&English"
 
-/* Menu */
+
+/* System Menu */
+
+#define MENU_ON_TOP                  "&Always on Top"
+
+/* Window Menu */
 
 #define MENU_PROPERTIES              "&Properties"
 #define MENU_ANALOG                  "Ana&log"
 #define MENU_DIGITAL                 "Digi&tal"
 #define MENU_FONT                    "&Font..."
 #define MENU_WITHOUT_TITLE           "&Without Titlebar"
-#define MENU_ON_TOP                  "&Always on Top"
+
 #define MENU_SECONDS                 "&Seconds"
 #define MENU_DATE                    "&Date"
 
 #define MENU_LANGUAGE                "&Language"
+#define LANGUAGE_MENU_ITEM           "&English"
 
 #define MENU_INFO                    "Inf&o..."
 #define MENU_INFO_LICENSE            "&License"
 #define MENU_INFO_NO_WARRANTY        "&NO WARRANTY"
 #define MENU_INFO_ABOUT_WINE         "&About Clock..."
 
-/* Strings */
+/* Window Caption */
 #define STRING_CLOCK                 "Clock"
 
 

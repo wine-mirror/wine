@@ -217,7 +217,6 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
     IMAGE_IMPORT_DESCRIPTOR	*pe_imp;
     WINE_MODREF			*xwm;
     PE_MODREF			*pem;
-    int	fixup_failed		= 0;
     unsigned int load_addr	= wm->module;
     int				i;
     char			*modname;
@@ -247,13 +246,15 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
  
     /* FIXME: should terminate on 0 Characteristics */
     for (i = 0, pe_imp = pem->pe_import; pe_imp->Name; pe_imp++) {
-    	HMODULE32	res;
-	WINE_MODREF	**ywm;
- 	char		*name = (char *) RVA(pe_imp->Name);
+    	HMODULE32		hImpModule;
+	WINE_MODREF		**ywm;
+	IMAGE_IMPORT_BY_NAME	*pe_name;
+	LPIMAGE_THUNK_DATA	import_list,thunk_list;
+ 	char			*name = (char *) RVA(pe_imp->Name);
 
 	/* don't use MODULE_Load, Win32 creates new task differently */
-	res = PE_LoadLibraryEx32A( name, process, 0, 0 );
-	if (res <= (HMODULE32) 32) {
+	hImpModule = PE_LoadLibraryEx32A( name, process, 0, 0 );
+	if (!hImpModule) {
 	    char *p,buffer[2000];
 	    
 	    /* GetModuleFileName would use the wrong process, so don't use it */
@@ -261,15 +262,15 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 	    if (!(p = strrchr (buffer, '\\')))
 		p = buffer;
 	    strcpy (p + 1, name);
-	    res = PE_LoadLibraryEx32A( buffer, process, 0, 0 );
+	    hImpModule = PE_LoadLibraryEx32A( buffer, process, 0, 0 );
 	}
-	if (res <= (HMODULE32) 32) {
+	if (!hImpModule) {
 	    ERR (module, "Module %s not found\n", name);
-	    return res;
+	    return 1;
 	}
 	xwm = wm->next;
 	while (xwm) {
-		if (xwm->module == res)
+		if (xwm->module == hImpModule)
 			break;
 		xwm = xwm->next;
 	}
@@ -296,18 +297,6 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 		
 	}
 	i++;
-    }
-    pe_imp = pem->pe_import;
-    while (pe_imp->Name) {
-	char			*Module;
-	IMAGE_IMPORT_BY_NAME	*pe_name;
-	LPIMAGE_THUNK_DATA	import_list,thunk_list;
-        HMODULE32 hImpModule;
-
-	Module = (char *) RVA(pe_imp->Name);
-        hImpModule = MODULE_FindModule32(process,Module);
-	assert(hImpModule); /* we have imported it, so it MUST be there */
-	TRACE(win32, "%s\n", Module);
 
 	/* FIXME: forwarder entries ... */
 
@@ -320,25 +309,23 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 		if (IMAGE_SNAP_BY_ORDINAL(import_list->u1.Ordinal)) {
 		    int ordinal = IMAGE_ORDINAL(import_list->u1.Ordinal);
 
-		    TRACE(win32, "--- Ordinal %s,%d\n", Module, ordinal);
+		    TRACE(win32, "--- Ordinal %s,%d\n", name, ordinal);
 		    thunk_list->u1.Function=(LPDWORD)MODULE_GetProcAddress32(
                         process, hImpModule, (LPCSTR)ordinal
 		    );
 		    if (!thunk_list->u1.Function) {
-			WARN(win32,"No implementation for %s.%d, setting to NULL\n",
-				Module, ordinal);
-			/* fixup_failed=1; */
+			ERR(win32,"No implementation for %s.%d, setting to NULL\n",
+				name, ordinal);
 		    }
 		} else {		/* import by name */
 		    pe_name = (LPIMAGE_IMPORT_BY_NAME)RVA(import_list->u1.AddressOfData);
-		    TRACE(win32, "--- %s %s.%d\n", pe_name->Name, Module, pe_name->Hint);
+		    TRACE(win32, "--- %s %s.%d\n", pe_name->Name, name, pe_name->Hint);
 		    thunk_list->u1.Function=(LPDWORD)MODULE_GetProcAddress32(
                         process, hImpModule, pe_name->Name
 		    );
 		    if (!thunk_list->u1.Function) {
-			WARN(win32,"No implementation for %s.%d(%s), setting to NULL\n",
-				Module,pe_name->Hint,pe_name->Name);
-			/* fixup_failed=1; */
+			ERR(win32,"No implementation for %s.%d(%s), setting to NULL\n",
+				name,pe_name->Hint,pe_name->Name);
 		    }
 		}
 		import_list++;
@@ -352,34 +339,30 @@ DWORD fixup_imports (PDB32 *process,WINE_MODREF *wm)
 		    /* not sure about this branch, but it seems to work */
 		    int ordinal = IMAGE_ORDINAL(thunk_list->u1.Ordinal);
 
-		    TRACE(win32,"--- Ordinal %s.%d\n",Module,ordinal);
+		    TRACE(win32,"--- Ordinal %s.%d\n",name,ordinal);
 		    thunk_list->u1.Function=(LPDWORD)MODULE_GetProcAddress32(
                         process, hImpModule, (LPCSTR) ordinal
 		    );
 		    if (!thunk_list->u1.Function) {
-			WARN(win32, "No implementation for %s.%d, setting to NULL\n",
-				Module,ordinal);
-			/* fixup_failed=1; */
+			ERR(win32, "No implementation for %s.%d, setting to NULL\n",
+				name,ordinal);
 		    }
 		} else {
 		    pe_name=(LPIMAGE_IMPORT_BY_NAME) RVA(thunk_list->u1.AddressOfData);
 		    TRACE(win32,"--- %s %s.%d\n",
-		   		  pe_name->Name,Module,pe_name->Hint);
+		   		  pe_name->Name,name,pe_name->Hint);
 		    thunk_list->u1.Function=(LPDWORD)MODULE_GetProcAddress32(
                         process, hImpModule, pe_name->Name
 		    );
 		    if (!thunk_list->u1.Function) {
-		    	WARN(win32, "No implementation for %s.%d, setting to NULL\n",
-				Module, pe_name->Hint);
-		    	/* fixup_failed=1; */
+		    	ERR(win32, "No implementation for %s.%d, setting to NULL\n",
+				name, pe_name->Hint);
 		    }
 		}
 		thunk_list++;
 	    }
 	}
-	pe_imp++;
     }
-    if (fixup_failed) return 22;
     return 0;
 }
 

@@ -629,7 +629,10 @@ void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
     top    = YLPTODP( dc, rc->top );
     right  = XLPTODP( dc, rc->right );
     bottom = YLPTODP( dc, rc->bottom );
-    
+
+    if(left == right || top == bottom)
+        return;
+
     hnewPen = CreatePen32(PS_DOT, 1, GetSysColor32(COLOR_WINDOWTEXT) );
     hOldPen = SelectObject32( hdc, hnewPen );
     oldDrawMode = SetROP232(hdc, R2_XORPEN);
@@ -1057,8 +1060,31 @@ BOOL16 WINAPI DrawState16(HDC16 hdc, HBRUSH16 hbr,
  */
 BOOL16 WINAPI PolyBezier16( HDC16 hDc, LPPOINT16 lppt, INT16 cPoints )
 {
-    FIXME(gdi, "(%x,%p,%d): stub\n",hDc,lppt,cPoints);
-    return TRUE;
+    int i;
+    BOOL16 ret;
+    LPPOINT32 pt32 = (LPPOINT32)HeapAlloc( GetProcessHeap(), 0,
+                                           cPoints*sizeof(POINT32) );
+    if(!pt32) return FALSE;
+    for (i=cPoints;i--;) CONV_POINT16TO32(&(lppt[i]),&(pt32[i]));
+    ret= PolyBezier32(hDc, pt32, cPoints);
+    HeapFree( GetProcessHeap(), 0, pt32 );
+    return ret;
+}
+
+/******************************************************************************
+ * PolyBezierTo16 [GDI.503]
+ */
+BOOL16 WINAPI PolyBezierTo16( HDC16 hDc, LPPOINT16 lppt, INT16 cPoints )
+{
+    int i;
+    BOOL16 ret;
+    LPPOINT32 pt32 = (LPPOINT32)HeapAlloc( GetProcessHeap(), 0,
+                                           cPoints*sizeof(POINT32) );
+    if(!pt32) return FALSE;
+    for (i=cPoints;i--;) CONV_POINT16TO32(&(lppt[i]),&(pt32[i]));
+    ret= PolyBezierTo32(hDc, pt32, cPoints);
+    HeapFree( GetProcessHeap(), 0, pt32 );
+    return ret;
 }
 
 /******************************************************************************
@@ -1072,9 +1098,44 @@ BOOL16 WINAPI PolyBezier16( HDC16 hDc, LPPOINT16 lppt, INT16 cPoints )
  *
  * RETURNS STD
  */
-BOOL32 WINAPI PolyBezier32( HDC32 hDc, LPPOINT32 lppt, DWORD cPoints )
+BOOL32 WINAPI PolyBezier32( HDC32 hdc, LPPOINT32 lppt, DWORD cPoints )
 {
-    FIXME(gdi, "(%x,%p,%ld): stub\n",hDc,lppt,cPoints);
-    return TRUE;
+    DC * dc = DC_GetDCPtr( hdc );
+    if(!dc) return FALSE;
+    if(dc && PATH_IsPathOpen(dc->w.path))
+        FIXME(gdi, "PATH_PolyBezier is not implemented!\n");
+//        if(!PATH_PolyBezier(hdc, x, y))
+//	   return FALSE;
+    return dc->funcs->pPolyBezier&&
+    	   dc->funcs->pPolyBezier(dc, lppt[0], lppt+1, cPoints-1);
 }
 
+/******************************************************************************
+ * PolyBezierTo32 [GDI32.269]
+ * Draws one or more Bezier curves
+ *
+ * PARAMS
+ *    hDc     [I] Handle to device context
+ *    lppt    [I] Pointer to endpoints and control points
+ *    cPoints [I] Count of endpoints and control points
+ *
+ * RETURNS STD
+ */
+BOOL32 WINAPI PolyBezierTo32( HDC32 hdc, LPPOINT32 lppt, DWORD cPoints )
+{
+    DC * dc = DC_GetDCPtr( hdc );
+    POINT32 pt;
+    BOOL32 ret;
+    if(!dc) return FALSE;
+    pt.x=dc->w.CursPosX;
+    pt.y=dc->w.CursPosY;
+    if(dc && PATH_IsPathOpen(dc->w.path))
+        FIXME(gdi, "PATH_PolyBezierTo is not implemented!\n");
+//        if(!PATH_PolyBezier(hdc, x, y))
+//	   return FALSE;
+    ret= dc->funcs->pPolyBezier &&
+    	   dc->funcs->pPolyBezier(dc, pt, lppt, cPoints);
+    if( dc->funcs->pMoveToEx)
+    	   dc->funcs->pMoveToEx(dc,lppt[cPoints].x,lppt[cPoints].y,&pt);
+    return ret;
+}

@@ -7,17 +7,16 @@
 
 #include "windows.h"
 
+BOOL32 WINAPI ShowHideMenuCtl (HWND32, UINT32, LPINT32);
 VOID WINAPI GetEffectiveClientRect (HWND32, LPRECT32, LPINT32);
-
-
-void WINAPI InitCommonControls(void);
+VOID WINAPI InitCommonControls (VOID);
 
 typedef struct tagINITCOMMONCONTROLSEX {
     DWORD dwSize;
     DWORD dwICC;
 } INITCOMMONCONTROLSEX, *LPINITCOMMONCONTROLSEX;
 
-BOOL32 WINAPI InitCommonControlsEx(LPINITCOMMONCONTROLSEX);
+BOOL32 WINAPI InitCommonControlsEx (LPINITCOMMONCONTROLSEX);
 
 #define ICC_LISTVIEW_CLASSES   0x00000001  /* listview, header */
 #define ICC_TREEVIEW_CLASSES   0x00000002  /* treeview, tooltips */
@@ -52,9 +51,12 @@ BOOL32 WINAPI InitCommonControlsEx(LPINITCOMMONCONTROLSEX);
 
 
 /* common control shared messages */
-#define CCM_FIRST           0x2000
+#define CCM_FIRST            0x2000
 
-#define CCM_SETBKCOLOR      (CCM_FIRST+1)     /* lParam = bkColor */
+#define CCM_SETBKCOLOR       (CCM_FIRST+1)     /* lParam = bkColor */
+
+#define CCM_SETUNICODEFORMAT (CCM_FIRST+5)
+#define CCM_GETUNICODEFORMAT (CCM_FIRST+6)
 
 
 /* common notification codes */
@@ -702,6 +704,186 @@ CreateToolbarEx(HWND32, DWORD, UINT32, INT32,
 
 HBITMAP32 WINAPI
 CreateMappedBitmap (HINSTANCE32, INT32, UINT32, LPCOLORMAP, INT32); 
+
+
+/* Tool tips */
+
+#define TOOLTIPS_CLASS16         "tooltips_class"
+#define TOOLTIPS_CLASS32W       L"tooltips_class32"
+#define TOOLTIPS_CLASS32A        "tooltips_class32"
+#define TOOLTIPS_CLASS          WINELIB_NAME_AW(TOOLTIPS_CLASS)
+ 
+#define TTS_ALWAYSTIP           0x01
+#define TTS_NOPREFIX            0x02
+ 
+#define TTF_IDISHWND            0x0001
+#define TTF_CENTERTIP           0x0002
+#define TTF_RTLREADING          0x0004
+#define TTF_SUBCLASS            0x0010
+#define TTF_TRACK               0x0020
+#define TTF_ABSOLUTE            0x0080
+#define TTF_TRANSPARENT         0x0100
+#define TTF_DI_SETITEM          0x8000  /* valid only on the TTN_NEEDTEXT callback */
+
+
+#define TTDT_AUTOMATIC          0
+#define TTDT_RESHOW             1
+#define TTDT_AUTOPOP            2
+#define TTDT_INITIAL            3
+
+
+#define TTM_ACTIVATE            (WM_USER+1)
+#define TTM_SETDELAYTIME        (WM_USER+3)
+#define TTM_ADDTOOL32A          (WM_USER+4)
+#define TTM_ADDTOOL32W          (WM_USER+50)
+#define TTM_ADDTOOL WINELIB_NAME_AW(TTM_ADDTOOL)
+#define TTM_DELTOOL32A          (WM_USER+5)
+#define TTM_DELTOOL32W          (WM_USER+51)
+#define TTM_DELTOOL WINELIB_NAME_AW(TTM_DELTOOL)
+#define TTM_NEWTOOLRECT32A      (WM_USER+6)
+#define TTM_NEWTOOLRECT32W      (WM_USER+52)
+#define TTM_NEWTOOLRECT WINELIB_NAME_AW(TTM_NEWTOOLRECT)
+#define TTM_RELAYEVENT          (WM_USER+7)
+#define TTM_GETTOOLINFO32A      (WM_USER+8)
+#define TTM_GETTOOLINFO32W      (WM_USER+53)
+#define TTM_GETTOOLINFO WINELIB_NAME_AW(TTM_GETTOOLINFO)
+#define TTM_SETTOOLINFO32A      (WM_USER+9)
+#define TTM_SETTOOLINFO32W      (WM_USER+54)
+#define TTM_SETTOOLINFO WINELIB_NAME_AW(TTM_SETTOOLINFO)
+#define TTM_HITTEST32A          (WM_USER+10)
+#define TTM_HITTEST32W          (WM_USER+55)
+#define TTM_HITTEST WINELIB_NAME_AW(TTM_HITTEST)
+#define TTM_GETTEXT32A          (WM_USER+11)
+#define TTM_GETTEXT32W          (WM_USER+56)
+#define TTM_GETTEXT WINELIB_NAME_AW(TTM_GETTEXT)
+#define TTM_UPDATETIPTEXT32A    (WM_USER+12)
+#define TTM_UPDATETIPTEXT32W    (WM_USER+57)
+#define TTM_UPDATETIPTEXT WINELIB_NAME_AW(TTM_UPDATETIPTEXT)
+#define TTM_GETTOOLCOUNT        (WM_USER+13)
+#define TTM_ENUMTOOLS32A        (WM_USER+14)
+#define TTM_ENUMTOOLS32W        (WM_USER+58)
+#define TTM_ENUMTOOLS WINELIB_NAME_AW(TTM_ENUMTOOLS)
+#define TTM_GETCURRENTTOOL32A   (WM_USER+15)
+#define TTM_GETCURRENTTOOL32W   (WM_USER+59)
+#define TTM_GETCURRENTTOOL WINELIB_NAME_AW(TTM_GETCURRENTTOOL)
+#define TTM_WINDOWFROMPOINT     (WM_USER+16)
+#define TTM_TRACKACTIVATE       (WM_USER+17)
+#define TTM_TRACKPOSITION       (WM_USER+18)
+#define TTM_SETTIPBKCOLOR       (WM_USER+19)
+#define TTM_SETTIPTEXTCOLOR     (WM_USER+20)
+#define TTM_GETDELAYTIME        (WM_USER+21)
+#define TTM_GETTIPBKCOLOR       (WM_USER+22)
+#define TTM_GETTIPTEXTCOLOR     (WM_USER+23)
+#define TTM_SETMAXTIPWIDTH      (WM_USER+24)
+#define TTM_GETMAXTIPWIDTH      (WM_USER+25)
+#define TTM_SETMARGIN           (WM_USER+26)
+#define TTM_GETMARGIN           (WM_USER+27)
+#define TTM_POP                 (WM_USER+28)
+#define TTM_UPDATE              (WM_USER+29)
+
+typedef struct tagTOOLINFOA {
+    UINT32 cbSize;
+    UINT32 uFlags;
+    HWND32 hwnd;
+    UINT32 uId;
+    RECT32 rect;
+    HINSTANCE32 hinst;
+    LPSTR lpszText;
+    LPARAM lParam;
+} TOOLINFOA, *PTOOLINFOA, *LPTOOLINFOA;
+
+typedef struct tagTOOLINFOW {
+    UINT32 cbSize;
+    UINT32 uFlags;
+    HWND32 hwnd;
+    UINT32 uId;
+    RECT32 rect;
+    HINSTANCE32 hinst;
+    LPWSTR lpszText;
+    LPARAM lParam;
+} TOOLINFOW, *PTOOLINFOW, *LPTOOLINFOW;
+
+
+
+
+
+/* Rebar control */
+
+#define REBARCLASSNAME16        "ReBarWindow"
+#define REBARCLASSNAME32A       "ReBarWindow32"
+#define REBARCLASSNAME32W       L"ReBarWindow32"
+#define REBARCLASSNAME  WINELIB_NAME_AW(REBARCLASSNAME)
+
+
+/* Trackbar control */
+
+#define TRACKBAR_CLASS16        "msctls_trackbar"
+#define TRACKBAR_CLASS32A       "msctls_trackbar32"
+#define TRACKBAR_CLASS32W       L"msctls_trackbar32"
+#define TRACKBAR_CLASS  WINELIB_NAME_AW(TRACKBAR_CLASS)
+
+#define TBS_AUTOTICKS           0x0001
+#define TBS_VERT                0x0002
+#define TBS_HORZ                0x0000
+#define TBS_TOP                 0x0004
+#define TBS_BOTTOM              0x0000
+#define TBS_LEFT                0x0004
+#define TBS_RIGHT               0x0000
+#define TBS_BOTH                0x0008
+#define TBS_NOTICKS             0x0010
+#define TBS_ENABLESELRANGE      0x0020
+#define TBS_FIXEDLENGTH         0x0040
+#define TBS_NOTHUMB             0x0080
+#define TBS_TOOLTIPS            0x0100
+
+#define TBM_GETPOS              (WM_USER)
+#define TBM_GETRANGEMIN         (WM_USER+1)
+#define TBM_GETRANGEMAX         (WM_USER+2)
+#define TBM_GETTIC              (WM_USER+3)
+#define TBM_SETTIC              (WM_USER+4)
+#define TBM_SETPOS              (WM_USER+5)
+
+#define TBM_GETSELSTART         (WM_USER+17)
+#define TBM_GETSELEND           (WM_USER+18)
+#define TBM_CLEARSEL            (WM_USER+19)
+#define TBM_SETTICFREQ          (WM_USER+20)
+#define TBM_SETPAGESIZE         (WM_USER+21)
+#define TBM_GETPAGESIZE         (WM_USER+22)
+#define TBM_SETLINESIZE         (WM_USER+23)
+#define TBM_GETLINESIZE         (WM_USER+24)
+#define TBM_GETTHUMBRECT        (WM_USER+25)
+#define TBM_GETCHANNELRECT      (WM_USER+26)
+#define TBM_SETTHUMBLENGTH      (WM_USER+27)
+#define TBM_GETTHUMBLENGTH      (WM_USER+28)
+
+
+/* Pager control */
+
+#define WC_PAGESCROLLER32A      "SysPager"
+#define WC_PAGESCROLLER32W      L"SysPager"
+#define WC_PAGESCROLLER  WINELIB_NAME_AW(WC_PAGESCROLLER)
+
+
+/* Treeview control */
+
+#define WC_TREEVIEW32A          "SysTreeView32"
+#define WC_TREEVIEW32W          L"SysTreeView32"
+#define WC_TREEVIEW  WINELIB_NAME_AW(WC_TREEVIEW)
+
+#define TV_FIRST      0x1100
+
+
+/* Listview control */
+
+#define WC_LISTVIEW32A          "SysListView32"
+#define WC_LISTVIEW32W          L"SysListView32"
+#define WC_LISTVIEW  WINELIB_NAME_AW(WC_LISTVIEW)
+
+#define LVM_FIRST               0x1000
+
+#define LVM_SETBKCOLOR          (LVM_FIRST+1)
+#define LVM_SETIMAGELIST        (LVM_FIRST+3)
+
 
 
 #endif  /* __WINE_COMMCTRL_H */

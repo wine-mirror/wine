@@ -48,6 +48,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pPolyPolyline */
     NULL,                            /* pPolygon */
     NULL,                            /* pPolyline */
+    NULL,                            /* pPolyBezier */
     NULL,                            /* pRealizePalette */
     PSDRV_Rectangle,                 /* pRectangle */
     NULL,                            /* pRestoreDC */

@@ -1,8 +1,13 @@
+Sun Jul  5 20:10:53 1998  Marcel Baur <mbaur@g26.ethz.ch>
+       * Moved "Always on top" menu into system menu (as in Windows)
+         This required minor changes in 
+         [main.h] [clock.rc] [language.c] [??.rc]
+
 Fri Jun 12 22:47:56 1998  Marcel Baur <mbaur@g26.ethz.ch>
        * Fixed resource bug in UpdateWindowCaption() that caused wrong (old)
          locale for the displayed date
        * The digital clock now shows up (WINE-NLS-UNKNOWN means that there
-         is no locale rule for time string format in /ole/winnls.c)
+         is no locale rule for time string format in /ole/ole2nls.c)
 
 Thu May 28 20:42:13 1998  Marcel Baur <mbaur@g26.ethz.ch>
        * [language.c]
@@ -36,5 +41,3 @@ Mon Feb 23 19:59:27 1998  Marcel Baur <mbaur@g26.ethz.ch>
          [main.c] [main.h] [winclock.c] [winclock.h]
 
          Originals by Marcel Baur
-
-

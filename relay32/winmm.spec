@@ -51,7 +51,7 @@ type win32
  48 stub mciLoadCommandResource
  49 stdcall mciSendCommandA(long long long long) mciSendCommand32A
  50 stub mciSendCommandW
- 51 stdcall mciSendStringA(ptr ptr long long) mciSendString
+ 51 stdcall mciSendStringA(str ptr long long) mciSendString
  52 stub mciSendStringW
  53 stub mciSetDriverData
  54 stub mciSetYieldProc

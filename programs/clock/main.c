@@ -112,10 +112,10 @@ VOID MAIN_FileChooseFont(VOID) {
         font.lpfnHook        = 0;
         font.lpTemplateName  = 0;
         font.hInstance       = Globals.hInstance;
-        font.lpszStyle       = LF_FACESIZE;
+//        font.lpszStyle       = LF_FACESIZE;
         font.nFontType       = 0;
         font.nSizeMin        = 0;
-        font.nSizeMax        = 0;
+        font.nSizeMax        = 144;
 
         if (ChooseFont(&font)) {
             /* do nothing yet */
@@ -203,8 +203,8 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
     MSG      msg;
     WNDCLASS class;
     
-    char className[] = "CLClass";  /* To make sure className >= 0x10000 */
-    char winName[]   = "Clock";
+    char szClassName[] = "CLClass";  /* To make sure className >= 0x10000 */
+    char szWinName[]   = "Clock";
 
     #if defined(WINELIB) && !defined(HAVE_WINE_CONSTRUCTOR)
       /* Register resources */
@@ -239,28 +239,17 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
 	class.hCursor       = LoadCursor (0, IDC_ARROW);
 	class.hbrBackground = GetStockObject (GRAY_BRUSH);
 	class.lpszMenuName  = 0;
-	class.lpszClassName = className;
+	class.lpszClassName = szClassName;
     }
 
     if (!RegisterClass (&class)) return FALSE;
 
-    Globals.hMainWnd = CreateWindow (className, winName, WS_OVERLAPPEDWINDOW,
-			CW_USEDEFAULT, 0, CW_USEDEFAULT, Globals.MaxX, Globals.MaxY, 
-			LoadMenu(Globals.hInstance, STRING_MENU_Xx),
-			Globals.hInstance, 0);
+    Globals.hMainWnd = CreateWindow (szClassName, szWinName, WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, 0, CW_USEDEFAULT, Globals.MaxX, Globals.MaxY, 
+        LoadMenu(Globals.hInstance, STRING_MENU_Xx), Globals.hInstance, 0);
 			
     LANGUAGE_SelectByName(Globals.lpszLanguage);
     SetMenu(Globals.hMainWnd, Globals.hMainMenu);
-
-    Globals.hSystemMenu = GetSystemMenu(Globals.hMainWnd, TRUE);
-
-    /*
-        FIXME: The next few lines are an attempt to add a menu item to the 
-               window system menu. 
-    */
-    
-    AppendMenu(Globals.hSystemMenu, MF_STRING | MF_BYCOMMAND, 1000, "item");
-    SetSystemMenu(Globals.hMainWnd, Globals.hSystemMenu);
 
     LANGUAGE_UpdateMenuCheckmarks();
 

@@ -220,16 +220,14 @@ HMODULE32 MODULE_FindModule32(
     LPSTR	dotptr;
     WINE_MODREF	*wm;
 
+    if (!process)
+    	return 0;
     if (!(filename = strrchr( path, '\\' )))
     	filename = HEAP_strdupA(process->heap,0,path);
     else 
     	filename = HEAP_strdupA(process->heap,0,filename+1);
     dotptr=strrchr(filename,'.');
 
-    if (!process) {
-    	HeapFree(process->heap,0,filename);
-    	return 0;
-    }
     for (wm=process->modref_list;wm;wm=wm->next) {
     	LPSTR	xmodname,xdotptr;
 
@@ -250,6 +248,33 @@ HMODULE32 MODULE_FindModule32(
 	if (dotptr) *dotptr='.';
 	/* FIXME: add paths, shortname */
 	HeapFree(process->heap,0,xmodname);
+    }
+    /* if that fails, try looking for the filename... */
+    for (wm=process->modref_list;wm;wm=wm->next) {
+    	LPSTR	xlname,xdotptr;
+
+	assert (wm->longname);
+	xlname = strrchr(wm->longname,'/');
+	if (!xlname) 
+	    xlname = wm->longname;
+	else
+	    xlname++;
+	xlname = HEAP_strdupA(process->heap,0,xlname);
+	xdotptr=strrchr(xlname,'.');
+	if (	(xdotptr && !dotptr) ||
+		(!xdotptr && dotptr)
+	) {
+	    if (dotptr)	*dotptr		= '\0';
+	    if (xdotptr) *xdotptr	= '\0';
+	}
+	if (!strcasecmp( filename, xlname)) {
+	    HeapFree(process->heap,0,filename);
+	    HeapFree(process->heap,0,xlname);
+	    return wm->module;
+	}
+	if (dotptr) *dotptr='.';
+	/* FIXME: add paths, shortname */
+	HeapFree(process->heap,0,xlname);
     }
     HeapFree(process->heap,0,filename);
     return 0;

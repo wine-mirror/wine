@@ -234,10 +234,10 @@ BOOL32 WINAPI GetMailslotInfo( HANDLE32 hMailslot, LPDWORD lpMaxMessageSize,
                                LPDWORD lpReadTimeout )
 {
     FIXME(win32, "(%d): stub\n",hMailslot);
-    *lpMaxMessageSize = NULL;
-    *lpNextSize = NULL;
-    *lpMessageCount = NULL;
-    *lpReadTimeout = NULL;
+    *lpMaxMessageSize = (DWORD)NULL;
+    *lpNextSize = (DWORD)NULL;
+    *lpMessageCount = (DWORD)NULL;
+    *lpReadTimeout = (DWORD)NULL;
     return TRUE;
 }
 
@@ -382,6 +382,31 @@ BOOL32 WINAPI IsDebuggerPresent() {
 	return FALSE; 
 }
 
+/******************************************************************************
+ * SleepEx [KERNEL32.680]
+ *
+ * BUGS
+ *   Unimplemented
+ */
+DWORD WINAPI SleepEx(DWORD x1,BOOL32 x2)
+{
+  FIXME(win32,":(%d,%ld): stub\n",x1,x2);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+/******************************************************************************
+ * TerminateProcess [KERNEL32.684]
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+int WINAPI TerminateProcess(HANDLE32 h, int ret)
+{
+  FIXME(win32,":(%p,%d): stub\n",h,ret);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+	return FALSE;
+}
 
 /******************************************************************************
  * OpenDesktop32A [USER32.408]

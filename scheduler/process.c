@@ -19,6 +19,7 @@
 #include "winerror.h"
 #include "pe_image.h"
 #include "task.h"
+#include "server.h"
 #include "debug.h"
 
 /* Process self-handle */
@@ -111,6 +112,10 @@ static BOOL32 PROCESS_BuildEnvDB( PDB32 *pdb )
     FILE_SetFileType( pdb->env_db->hStdin,  FILE_TYPE_CHAR );
     FILE_SetFileType( pdb->env_db->hStdout, FILE_TYPE_CHAR );
     FILE_SetFileType( pdb->env_db->hStderr, FILE_TYPE_CHAR );
+
+    /* Build the command-line */
+
+    pdb->env_db->cmd_line = HEAP_strdupA( SystemHeap, 0, "kernel32" );
 
     /* Build the environment strings */
 
@@ -210,7 +215,6 @@ error:
  */
 BOOL32 PROCESS_Init(void)
 {
-    extern BOOL32 THREAD_InitDone;
     PDB32 *pdb;
     THDB *thdb;
 
@@ -225,11 +229,12 @@ BOOL32 PROCESS_Init(void)
     if (!(pdb = PROCESS_CreatePDB( NULL ))) return FALSE;
     if (!(thdb = THREAD_Create( pdb, 0, FALSE, NULL, NULL ))) return FALSE;
     thdb->unix_pid = getpid();
-    SET_CUR_THREAD( thdb );
-    THREAD_InitDone = TRUE;
 
     /* Create the environment DB of the first process */
     if (!PROCESS_BuildEnvDB( pdb )) return FALSE;
+
+    /* Initialize the first thread */
+    if (CLIENT_InitThread()) return FALSE;
 
     return TRUE;
 }

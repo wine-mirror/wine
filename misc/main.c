@@ -1149,7 +1149,7 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 
     case SPI_GETHIGHCONTRAST:
     {
-       LPHIGHCONTRASTA lpHighContrastW = (LPHIGHCONTRASTW)lpvParam;
+       LPHIGHCONTRASTW lpHighContrastW = (LPHIGHCONTRASTW)lpvParam;
 
        FIXME(system,"SPI_GETHIGHCONTRAST not fully implemented\n");
 
@@ -1178,7 +1178,8 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 /***********************************************************************
 *	FileCDR (KERNEL.130)
 */
-void WINAPI FileCDR(FARPROC16 x)
+FARPROC16 WINAPI FileCDR(FARPROC16 x)
 {
 	FIXME(file,"(%8x): stub\n", (int) x);
+	return (FARPROC16)TRUE;
 }

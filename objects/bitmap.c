@@ -175,10 +175,7 @@ HBITMAP32 WINAPI CreateBitmap32( INT32 width, INT32 height, UINT32 planes,
     bmpObjPtr->bitmap.bmWidthBytes = (INT16)BITMAP_WIDTH_BYTES( width, bpp );
     bmpObjPtr->bitmap.bmBits = NULL;
 
-    bmpObjPtr->dibSection = NULL;
-    bmpObjPtr->colorMap = NULL;
-    bmpObjPtr->nColorMap = 0;
-    bmpObjPtr->status = DIB_NoHandler;
+    bmpObjPtr->dib = NULL;
 
       /* Create the pixmap */
     bmpObjPtr->pixmap = TSXCreatePixmap(display, rootWindow, width, height, bpp);
@@ -829,20 +826,7 @@ BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
     }
 #endif
 
-    if (bmp->dibSection)
-    {
-	DIBSECTION *dib = bmp->dibSection;
-
-	if (dib->dsBm.bmBits)
-            if (dib->dshSection)
-                UnmapViewOfFile(dib->dsBm.bmBits);
-            else
-                VirtualFree(dib->dsBm.bmBits, MEM_RELEASE, 0L);
-
-	HeapFree(GetProcessHeap(), 0, dib);
-    }
-    if (bmp->colorMap)
-	HeapFree(GetProcessHeap(), 0, bmp->colorMap);
+    DIB_DeleteDIBSection( bmp );
 
     return GDI_FreeObject( hbitmap );
 }
@@ -853,7 +837,7 @@ BOOL32 BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
  */
 INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer )
 {
-    if (bmp->dibSection)
+    if (bmp->dib)
     {
 	FIXME(bitmap, "not implemented for DIBs\n");
 	return 0;
@@ -872,7 +856,7 @@ INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer )
  */
 INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer )
 {
-    if (bmp->dibSection)
+    if (bmp->dib)
     {
 	if (count < sizeof(DIBSECTION))
 	{
@@ -883,7 +867,7 @@ INT32 BITMAP_GetObject32( BITMAPOBJ * bmp, INT32 count, LPVOID buffer )
 	    if (count > sizeof(DIBSECTION)) count = sizeof(DIBSECTION);
 	}
 
-	memcpy( buffer, bmp->dibSection, count );
+	memcpy( buffer, &bmp->dib->dibSection, count );
 	return count;
     }
     else

@@ -9,7 +9,7 @@ Primary applications are the resources of sysres.dll and a future
 commdlg.dll, but the use in the library version is possible as well.
 The expected advantage of using winerc over sysres.dll is a speed
 improvement, however, actual data to support that claim are not
-available. The use of winerc might also simplifies the source code. For
+available. The use of winerc might also simplify the source code. For
 example, the system menu is managed in the function CopySysMenu
 (controls/menu.c). A winerc-based implementation would just call
 	return LoadMenuIndirect(_Sysres_SYSMENU);

@@ -4,7 +4,7 @@
 #include "debugtools.h"
 #endif
 
-#define DEBUG_CHANNEL_COUNT 119
+#define DEBUG_CHANNEL_COUNT 132
 #ifdef DEBUG_RUNTIME
 short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
 {1, 1, 0, 0},
@@ -126,8 +126,27 @@ short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
+{1, 1, 0, 0},
 };
 const char* debug_ch_name[] = {
+"1",
+"2",
+"3",
+"4",
+"5",
+"6",
 "accel",
 "advapi",
 "aspi",
@@ -181,6 +200,7 @@ const char* debug_ch_name[] = {
 "keyboard",
 "ldt",
 "listbox",
+"listview",
 "local",
 "mci",
 "mcianim",
@@ -200,6 +220,7 @@ const char* debug_ch_name[] = {
 "nonclient",
 "ntdll",
 "ole",
+"pager",
 "palette",
 "print",
 "process",
@@ -207,10 +228,12 @@ const char* debug_ch_name[] = {
 "progress",
 "prop",
 "psdrv",
+"rebar",
 "reg",
 "region",
 "relay",
 "resource",
+"s",
 "scroll",
 "security",
 "segment",
@@ -233,6 +256,9 @@ const char* debug_ch_name[] = {
 "timer",
 "toolbar",
 "toolhelp",
+"tooltips",
+"trackbar",
+"treeview",
 "tweak",
 "uitools",
 "updown",

@@ -10,3 +10,6 @@
 
  Code is currently under heavy construction. Please direct patches and
  additions to my personal email address <mbaur@g26.ethz.ch>
+
+ If you think that the compiled binary is too big, you can reduce its size
+ with the command 'strip clock' (please don't try this on libraries).

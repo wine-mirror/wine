@@ -712,3 +712,9 @@ DWORD WINAPI NtQueryInformationProcess(DWORD x1,DWORD x2,DWORD x3,DWORD x4,DWORD
 	);
 	return 0;
 }
+
+DWORD WINAPI RtlFormatCurrentUserKeyPath()
+{
+    FIXME(ntdll,"(): stub\n");
+    return 1;
+}

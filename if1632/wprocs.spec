@@ -286,3 +286,4 @@ type	win16
 #415 register VXD_Printer() VXD_Printer
 423 register VXD_Shell() VXD_Shell
 433 register VXD_PageFile() VXD_PageFile
+445 register VXD_Win32s() VXD_Win32s

@@ -44,12 +44,10 @@ type	win32
  40 stdcall CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect32
  41 stdcall CreateEnhMetaFileA(long ptr ptr ptr) CreateEnhMetaFile32A
  42 stub CreateEnhMetaFileW
- 43 stdcall CreateFontA(long long long long long long long long
-                        long long long long long str) CreateFont32A
+ 43 stdcall CreateFontA(long long long long long long long long long long long long long str) CreateFont32A
  44 stdcall CreateFontIndirectA(ptr) CreateFontIndirect32A
  45 stdcall CreateFontIndirectW(ptr) CreateFontIndirect32W
- 46 stdcall CreateFontW(long long long long long long long long
-                        long long long long long wstr) CreateFont32W
+ 46 stdcall CreateFontW(long long long long long long long long long long long long long wstr) CreateFont32W
  47 stdcall CreateHalftonePalette(long) CreateHalftonePalette
  48 stdcall CreateHatchBrush(long long) CreateHatchBrush32
  49 stdcall CreateICA(str str str ptr) CreateIC32A
@@ -64,8 +62,7 @@ type	win32
  58 stdcall CreatePolygonRgn(ptr long long) CreatePolygonRgn32
  59 stdcall CreateRectRgn(long long long long) CreateRectRgn32
  60 stdcall CreateRectRgnIndirect(ptr) CreateRectRgnIndirect32
- 61 stdcall CreateRoundRectRgn(long long long long long long)
-             CreateRoundRectRgn32
+ 61 stdcall CreateRoundRectRgn(long long long long long long) CreateRoundRectRgn32
  62 stdcall CreateScalableFontResourceA(long str str str) CreateScalableFontResource32A
  63 stdcall CreateScalableFontResourceW(long wstr wstr wstr) CreateScalableFontResource32W
  64 stdcall CreateSolidBrush(long) CreateSolidBrush32
@@ -164,8 +161,8 @@ type	win32
 157 stub GetCharWidthFloatW
 158 stdcall GetCharWidthW(long long long long) GetCharWidth32W
 159 stub GetCharWidthWOW
-160 stub GetCharacterPlacementA
-161 stub GetCharacterPlacementW
+160 stdcall GetCharacterPlacementA(long str long long ptr long) GetCharacterPlacement32A
+161 stdcall GetCharacterPlacementW(long wstr long long ptr long) GetCharacterPlacement32W
 162 stdcall GetClipBox(long ptr) GetClipBox32
 163 stdcall GetClipRgn(long long) GetClipRgn32
 164 stub GetColorAdjustment
@@ -181,7 +178,7 @@ type	win32
 174 stdcall GetEnhMetaFileA(ptr) GetEnhMetaFile32A
 175 stdcall GetEnhMetaFileBits(long long ptr) GetEnhMetaFileBits
 176 stdcall GetEnhMetaFileDescriptionA(long long ptr) GetEnhMetaFileDescription32A
-177 stub GetEnhMetaFileDescriptionW
+177 stdcall GetEnhMetaFileDescriptionW(long long ptr) GetEnhMetaFileDescription32W
 178 stdcall GetEnhMetaFileHeader(long long ptr) GetEnhMetaFileHeader
 179 stub GetEnhMetaFilePaletteEntries
 180 stub GetEnhMetaFileW
@@ -219,7 +216,7 @@ type	win32
 212 stdcall GetPixelFormat(long) GetPixelFormat
 213 stdcall GetPolyFillMode(long) GetPolyFillMode32
 214 stdcall GetROP2(long) GetROP232
-215 stub GetRandomRgn
+215 stdcall GetRandomRgn(long long long) GetRandomRgn
 216 stdcall GetRasterizerCaps(ptr long) GetRasterizerCaps32
 217 stdcall GetRegionData(long long ptr) GetRegionData
 218 stdcall GetRelAbs(long) GetRelAbs32
@@ -273,7 +270,7 @@ type	win32
 266 stdcall PlayMetaFileRecord(long ptr ptr long) PlayMetaFileRecord32
 267 stub PlgBlt
 268 stdcall PolyBezier(long ptr long) PolyBezier32
-269 stub PolyBezierTo
+269 stdcall PolyBezierTo(long ptr long) PolyBezierTo32
 270 stub PolyDraw
 271 stdcall PolyPolygon(long ptr ptr long) PolyPolygon32
 272 stdcall PolyPolyline(long ptr ptr long) PolyPolyline32
@@ -317,8 +314,7 @@ type	win32
 310 stub SetColorSpace
 311 stdcall SetDIBColorTable(long long long ptr) SetDIBColorTable32
 312 stdcall SetDIBits(long long long long ptr ptr long) SetDIBits32
-313 stdcall SetDIBitsToDevice(long long long long long long long long long
-                               ptr ptr long) SetDIBitsToDevice32
+313 stdcall SetDIBitsToDevice(long long long long long long long long long ptr ptr long) SetDIBitsToDevice32
 314 stub SetDeviceGammaRamp
 315 stdcall SetEnhMetaFileBits(long ptr) SetEnhMetaFileBits
 316 stub SetFontEnumeration
@@ -355,10 +351,8 @@ type	win32
 347 stub StartDocA
 348 stub StartDocW
 349 stub StartPage
-350 stdcall StretchBlt(long long long long long long long long long long long)
-            StretchBlt32
-351 stdcall StretchDIBits(long long long long long long long long long
-                          ptr ptr long long) StretchDIBits32
+350 stdcall StretchBlt(long long long long long long long long long long long) StretchBlt32
+351 stdcall StretchDIBits(long long long long long long long long long ptr ptr long long) StretchDIBits32
 352 stub StrokeAndFillPath
 353 stub StrokePath
 354 stdcall SwapBuffers(long) SwapBuffers

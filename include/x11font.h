@@ -76,7 +76,6 @@ typedef struct tagFontInfo
     UINT16			lfd_width;
     UINT16			lfd_decipoints;
     UINT16			lfd_resolution;
-
     IFONTINFO16			df;
 } fontInfo;
 
@@ -96,6 +95,15 @@ typedef struct tagFontResource
   char*                         resource;
   CHAR				lfFaceName[LF_FACESIZE];
 } fontResource;
+
+typedef struct {
+  float		a,b,c,d;	/* pixelsize matrix */
+  unsigned long	RAW_ASCENT;
+  unsigned long	RAW_DESCENT;
+  float		pixelsize;
+  float		ascent;
+  float		descent;
+} XFONTTRANS;
 
 #define FO_RESOURCE_MASK	0x000F
 #define FO_SYSTEM		0x0001		/* resident in cache */
@@ -127,8 +135,10 @@ typedef struct
   LPMAT2*		lpXForm;		/* optional transformation matrix */
   Pixmap*               lpPixmap;		/* optional character bitmasks for synth fonts */
 
+  XFONTTRANS		*lpX11Trans;		/* Info for X11R6 transform */
   INT16			foInternalLeading;
   INT16			foAvgCharWidth;
+  INT16			foMaxCharWidth;
   UINT16		fo_flags;
 
   /* font cache housekeeping */
@@ -176,4 +186,3 @@ extern XFontStruct* XFONT_GetFontStruct( X_PHYSFONT pFont );
 extern LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont );
 
 #endif __WINE_X11FONT_H 
-

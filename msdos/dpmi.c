@@ -18,6 +18,7 @@
 #include "debug.h"
 #include "selectors.h"
 #include "thread.h"
+#include "process.h"
 #include "stackframe.h"
 #include "callback.h"
 
@@ -110,19 +111,24 @@ DPMI_xrealloc(LPVOID ptr,int newsize) {
 	MEMORY_BASIC_INFORMATION	mbi;
 	LPVOID				newptr;
 
-	if (!VirtualQuery(ptr,&mbi,sizeof(mbi))) {
-		FIXME(int31,"reallocing non DPMI_xalloced region?\n");
-		return NULL;
-	}
-	/* We do not shrink allocated memory. most reallocs only do grows
-	 * anyway
-	 */
-	if (newsize<=mbi.RegionSize)
-		return ptr;
-
 	newptr = DPMI_xalloc(newsize);
-	memcpy(newptr,ptr,newsize);
-	DPMI_xfree(ptr);
+	if (ptr) {
+		if (!VirtualQuery(ptr,&mbi,sizeof(mbi))) {
+			FIXME(int31,"realloc of DPMI_xallocd region %p?\n",ptr);
+			return NULL;
+		}
+		if (mbi.State == MEM_FREE) {
+			FIXME(int31,"realloc of DPMI_xallocd region %p?\n",ptr);
+			return NULL;
+		}
+		/* We do not shrink allocated memory. most reallocs
+		 * only do grows anyway
+		 */
+		if (newsize<=mbi.RegionSize)
+			return ptr;
+		memcpy(newptr,ptr,newsize);
+		DPMI_xfree(ptr);
+	}
 	return newptr;
 }
 /**********************************************************************
@@ -293,6 +299,23 @@ static void INT_DoRealModeInt( CONTEXT *context )
                 break;
             }
             break;
+        case 0x58: /* GET OR SET MEMORY/UMB ALLOCATION STRATEGY */
+            TRACE(int31,"GET OR SET MEMORY/UMB ALLOCATION STRATEGY subfunction %d\n",
+                  AL_reg(context));
+            switch (AL_reg(context))
+            {
+            case 0x00:
+                AX_reg(context) = 1;
+                break;
+            case 0x02:
+                AX_reg(context) = 0;
+                break;
+            case 0x01:
+            case 0x03:
+                break;
+            }
+            RESET_CFLAG(context);
+            break;
 	case 0x60: {/* CANONICALIZE PATH */
 		LPCSTR path = (LPCSTR)DOSMEM_MapRealToLinear((DS_reg(&realmode_ctx)<<16)+SI_reg(&realmode_ctx));
 
@@ -460,8 +483,18 @@ static void FreeRMCB( CONTEXT *context )
  *
  * Handler for int 31h (DPMI).
  */
+
 void WINAPI INT_Int31Handler( CONTEXT *context )
 {
+    /*
+     * Note: For Win32s processes, the whole linear address space is
+     *       shifted by 0x10000 relative to the OS linear address space.
+     *       See the comment in msdos/vxd.c.
+     */
+    DWORD offset = PROCESS_Current()->flags & PDB32_WIN32S_PROC ? 0x10000 : 0;
+    #define AppToWine(addr) ((addr)? ((DWORD)(addr)) + offset : 0)
+    #define WineToApp(addr) ((addr)? ((DWORD)(addr)) - offset : 0)
+
     DWORD dw;
     BYTE *ptr;
 
@@ -547,15 +580,17 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         }
         else
         {
-            CX_reg(context) = HIWORD(dw);
-            DX_reg(context) = LOWORD(dw);
+            CX_reg(context) = HIWORD(WineToApp(dw));
+            DX_reg(context) = LOWORD(WineToApp(dw));
         }
         break;
 
     case 0x0007:  /* Set selector base address */
-    	TRACE(int31,"set selector base address (0x%04x,0x%08lx)\n",BX_reg(context),MAKELONG(DX_reg(context),CX_reg(context)));
-        SetSelectorBase( BX_reg(context),
-                         MAKELONG( DX_reg(context), CX_reg(context) ) );
+    	TRACE(int31, "set selector base address (0x%04x,0x%08lx)\n",
+                     BX_reg(context),
+                     AppToWine(MAKELONG(DX_reg(context),CX_reg(context))));
+        SetSelectorBase(BX_reg(context),
+                        AppToWine(MAKELONG(DX_reg(context), CX_reg(context))));
         break;
 
     case 0x0008:  /* Set selector limit */
@@ -583,6 +618,8 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         {
             ldt_entry entry;
             LDT_GetEntry( SELECTOR_TO_ENTRY( BX_reg(context) ), &entry );
+            entry.base = WineToApp(entry.base);
+
             /* FIXME: should use ES:EDI for 32-bit clients */
             LDT_EntryToBytes( PTR_SEG_OFF_TO_LIN( ES_reg(context),
                                                   DI_reg(context) ), &entry );
@@ -595,6 +632,8 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             ldt_entry entry;
             LDT_BytesToEntry( PTR_SEG_OFF_TO_LIN( ES_reg(context),
                                                   DI_reg(context) ), &entry );
+            entry.base = AppToWine(entry.base);
+
             LDT_SetEntry( SELECTOR_TO_ENTRY( BX_reg(context) ), &entry );
         }
         break;
@@ -621,7 +660,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
 	break;
 
     case 0x0205:  /* Set protected mode interrupt vector */
-    	TRACE(int31,"set protected mode interrupt handler (0x%02x,0x%08lx), stub!\n",
+    	TRACE(int31,"set protected mode interrupt handler (0x%02x,%p), stub!\n",
             BL_reg(context),PTR_SEG_OFF_TO_LIN(CX_reg(context),DX_reg(context)));
 	INT_SetHandler( BL_reg(context),
                         (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( CX_reg(context),
@@ -686,27 +725,31 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             AX_reg(context) = 0x8012;  /* linear memory not available */
             SET_CFLAG(context);
         } else {
-            BX_reg(context) = SI_reg(context) = HIWORD(ptr);
-            CX_reg(context) = DI_reg(context) = LOWORD(ptr);
+            BX_reg(context) = SI_reg(context) = HIWORD(WineToApp(ptr));
+            CX_reg(context) = DI_reg(context) = LOWORD(WineToApp(ptr));
         }
         break;
 
     case 0x0502:  /* Free memory block */
-        TRACE(int31,"free memory block (0x%08lx)\n",MAKELONG(DI_reg(context),SI_reg(context)));
-	DPMI_xfree((void *)MAKELONG(DI_reg(context), SI_reg(context)));
+        TRACE(int31, "free memory block (0x%08lx)\n",
+                     AppToWine(MAKELONG(DI_reg(context),SI_reg(context))));
+	DPMI_xfree( (void *)AppToWine(MAKELONG(DI_reg(context), 
+                                               SI_reg(context))) );
         break;
 
     case 0x0503:  /* Resize memory block */
-        TRACE(int31,"resize memory block (0x%08lx,%ld)\n",MAKELONG(DI_reg(context),SI_reg(context)),MAKELONG(CX_reg(context),BX_reg(context)));
+        TRACE(int31, "resize memory block (0x%08lx,%ld)\n",
+                     AppToWine(MAKELONG(DI_reg(context),SI_reg(context))),
+                     MAKELONG(CX_reg(context),BX_reg(context)));
         if (!(ptr = (BYTE *)DPMI_xrealloc(
-                           (void *)MAKELONG(DI_reg(context),SI_reg(context)),
-                                   MAKELONG(CX_reg(context),BX_reg(context)))))
+                (void *)AppToWine(MAKELONG(DI_reg(context),SI_reg(context))),
+                MAKELONG(CX_reg(context),BX_reg(context)))))
         {
             AX_reg(context) = 0x8012;  /* linear memory not available */
             SET_CFLAG(context);
         } else {
-            BX_reg(context) = SI_reg(context) = HIWORD(ptr);
-            CX_reg(context) = DI_reg(context) = LOWORD(ptr);
+            BX_reg(context) = SI_reg(context) = HIWORD(WineToApp(ptr));
+            CX_reg(context) = DI_reg(context) = LOWORD(WineToApp(ptr));
         }
         break;
 
@@ -749,8 +792,8 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
          }
          else
          {
-             BX_reg(context) = HIWORD(ptr);
-             CX_reg(context) = LOWORD(ptr);
+             BX_reg(context) = HIWORD(WineToApp(ptr));
+             CX_reg(context) = LOWORD(WineToApp(ptr));
              RESET_CFLAG(context);
          }
          break;
@@ -761,4 +804,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         SET_CFLAG(context);
         break;
     }
+
+    #undef AppToWine
+    #undef WineToApp
 }

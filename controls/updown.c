@@ -8,7 +8,7 @@
  *     arrow keys
  *   - I am not sure about the default values for the Min, Max, Pos
  *     (in the UPDOWN_INFO the fields: MinVal, MaxVal, CurVal)
- *   - I think I don not handle correctly the WS_BORDER style.
+ *   - I think I do not handle correctly the WS_BORDER style.
  *     (Should be fixed. <ekohl@abo.rhein-zeitung.de>)
  *
  * Testing:

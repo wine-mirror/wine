@@ -1542,7 +1542,10 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
     if( fChangeFocus && GetFocus32() )
 	if( WIN_GetTopParent(GetFocus32()) != hwndActive )
 	    FOCUS_SwitchFocus( GetFocus32(),
-			       (wndPtr->dwStyle & WS_MINIMIZE)? 0: hwndActive);
+			       (wndPtr && (wndPtr->dwStyle & WS_MINIMIZE))?
+			       0:
+			       hwndActive
+	    );
 
     if( !hwndPrevActive && wndPtr && 
 	 wndPtr->window && !(wndPtr->flags & WIN_MANAGED) )
@@ -2155,8 +2158,11 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
     if ((hwndInsertAfter != HWND_TOP) && (hwndInsertAfter != HWND_BOTTOM))
        {
 	 WND* wnd = WIN_FindWndPtr(hwndInsertAfter);
-	 if( wnd->parent != wndPtr->parent ) return FALSE;
-	 if( wnd->next == wndPtr ) flags |= SWP_NOZORDER;
+
+	 if( wndPtr ) {
+	   if( wnd->parent != wndPtr->parent ) return FALSE;
+	   if( wnd->next == wndPtr ) flags |= SWP_NOZORDER;
+	 }
        }
     else if (!(wndPtr->window))
          /* FIXME: the following optimization is no good for "X-ed" windows */

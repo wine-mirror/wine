@@ -5,7 +5,7 @@
  *
  * NOTES
  *     All of these functions are UNDOCUMENTED!! And I mean UNDOCUMENTED!!!!
- *     Do NOT rely on names of undocumented structures and types!!!
+ *     Do NOT rely on names or contents of undocumented structures and types!!!
  *     These functions are used by EXPLORER.EXE, IEXPLORE.EXE and
  *     COMCTL32.DLL (internally).
  *
@@ -16,6 +16,7 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
 #include "windows.h"
 #include "heap.h"
 #include "debug.h"
@@ -50,64 +51,91 @@ DWORD WINAPI DPA_InsertPtr (DWORD, DWORD, DWORD);
 
 
 
+/**************************************************************************
+ * Alloc [COMCTL32.71]
+ *
+ */
 
-DWORD WINAPI
+LPVOID WINAPI
 COMCTL32_Alloc (DWORD dwParam)
 {
-    DWORD dwPtr;
+    LPVOID lpPtr;
 
-    dwPtr = (DWORD)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, dwParam);
+    lpPtr = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, dwParam);
 
-    TRACE (commctrl, "(0x%08lx) ret=0x%08lx\n", dwParam, dwPtr);
+    TRACE (commctrl, "(0x%08lx) ret=0x%08lx\n", dwParam, (DWORD)lpPtr);
 
-    return dwPtr;
+    return lpPtr;
 }
 
 
-DWORD WINAPI
-COMCTL32_ReAlloc (DWORD dwParam1, DWORD dwParam2)
+/**************************************************************************
+ * ReAlloc [COMCTL32.72]
+ *
+ */
+
+LPVOID WINAPI
+COMCTL32_ReAlloc (LPVOID dwParam1, DWORD dwParam2)
 {
-    DWORD dwPtr;
+    LPVOID dwPtr;
 
     if (dwParam1 == 0)
-	dwPtr = (DWORD)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-				  dwParam2);
+	dwPtr = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
+			   dwParam2);
     else
-	dwPtr = (DWORD)HeapReAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-				    (LPVOID)dwParam1, dwParam2);
+	dwPtr = HeapReAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
+			     dwParam1, dwParam2);
 
     TRACE (commctrl, "(0x%08lx 0x%08lx) ret=0x%08lx\n",
-	   dwParam1, dwParam2, dwPtr);
+	   (DWORD)dwParam1, dwParam2, (DWORD)dwPtr);
 
     return dwPtr;
 }
 
 
+/**************************************************************************
+ * Free [COMCTL32.73]
+ *
+ */
+
 DWORD WINAPI
-COMCTL32_Free (DWORD dwParam)
+COMCTL32_Free (LPVOID dwParam)
 {
-    TRACE (commctrl, "(0x%08lx)\n", dwParam);
-    HeapFree (GetProcessHeap (), 0, (LPVOID)dwParam);
+    TRACE (commctrl, "(0x%08lx)\n", (DWORD)dwParam);
+    HeapFree (GetProcessHeap (), 0, dwParam);
 
     return 0;
 }
 
 
+/**************************************************************************
+ * GetSize [COMCTL32.74]
+ *
+ */
+
 DWORD WINAPI
-COMCTL32_GetSize (DWORD dwParam)
+COMCTL32_GetSize (LPVOID dwParam)
 {
-    TRACE (commctrl, "(0x%08lx)\n", dwParam);
-    return (HeapSize (GetProcessHeap (), 0, (LPVOID)dwParam));
+    TRACE (commctrl, "(0x%08lx)\n", (DWORD)dwParam);
+    return (HeapSize (GetProcessHeap (), 0, dwParam));
 }
 
 
+/**************************************************************************
+ * DSA_Create [COMCTL32.320] Creates a dynamic string array
+ *
+ * PARAMS
+ *     dwParam1 [I]
+ *     dwParam2 [I]
+ */
 
 DWORD WINAPI
 DSA_Create (DWORD dwParam1, DWORD dwParam2)
 {
     LPDSA_DATA dsaPtr;
 
-    dsaPtr = (LPDSA_DATA)HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY, sizeof(DSA_DATA));
+    dsaPtr = (LPDSA_DATA)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
+				    sizeof(DSA_DATA));
     dsaPtr->dwInitial = dwParam1;
     dsaPtr->dwGrow = dwParam2;
 
@@ -129,11 +157,11 @@ DSA_Destroy (DWORD dwParam1)
     if (dsaPtr->ptrs) {
 	for (i = 0; i < dsaPtr->dwEntryCount; i++) {
 	    if (dsaPtr->ptrs[i])
-		HeapFree (SystemHeap, 0, (LPSTR)dsaPtr->ptrs[i]);
+		HeapFree (GetProcessHeap (), 0, (LPSTR)dsaPtr->ptrs[i]);
 	}
     }
 
-    HeapFree (SystemHeap, 0, dsaPtr);
+    HeapFree (GetProcessHeap (), 0, dsaPtr);
 
     return 0;
 }
@@ -142,10 +170,23 @@ DSA_Destroy (DWORD dwParam1)
 DWORD WINAPI
 DSA_GetItem (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
 {
+    LPDSA_DATA dsaPtr = (LPDSA_DATA)dwParam1;
+
     FIXME (commctrl, "(0x%08lx 0x%08lx 0x%08lx): stub!\n",
 	   dwParam1, dwParam2, dwParam3);
 
-    return 0;
+    if (dsaPtr == NULL)
+	return 0;
+    if (dsaPtr->ptrs == NULL)
+	return 0;
+    if ((dwParam2 < 0) || (dwParam2 >= dsaPtr->dwEntryCount))
+	return 0;
+
+//    FIXME (commctrl, "\"%s\"\n", (LPSTR)dsaPtr->ptrs[dwParam2]);
+
+    return lstrcpy32A ((LPSTR)dwParam3, (LPSTR)dsaPtr->ptrs[dwParam2]);
+
+//    return 0;
 }
 
 
@@ -180,13 +221,13 @@ DSA_InsertItem (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
 	   dwParam1, dwParam2, (LPSTR)dwParam3);
 
     if (dsaPtr->ptrs == NULL) {
-	dsaPtr->ptrs = (LPSTR*)HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY,
+	dsaPtr->ptrs = (LPSTR*)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
 					  dsaPtr->dwInitial * sizeof(LPVOID));
 	dsaPtr->dwMaxCount = dsaPtr->dwInitial;
         dwIndex = 0;
 	len = lstrlen32A ((LPSTR)dwParam3);
 	dsaPtr->ptrs[dwIndex] =
-	    (LPSTR)HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY, len+1);
+	    (LPSTR)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len+1);
 	lstrcpy32A (dsaPtr->ptrs[dwIndex], (LPSTR)dwParam3);
     }
     else {
@@ -197,14 +238,26 @@ DSA_InsertItem (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
 		dwIndex = dsaPtr->dwEntryCount;
 		len = lstrlen32A ((LPSTR)dwParam3);
 		dsaPtr->ptrs[dwIndex] =
-		    (LPSTR)HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY, len+1);
+		    (LPSTR)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len+1);
 		lstrcpy32A (dsaPtr->ptrs[dwIndex], (LPSTR)dwParam3);
 	    }
 	    else {
-		FIXME (commctrl, "resizing array! stub!\n");
+		/* allocate new pointer list and copy all pointers */
+		LPSTR *lpOldPtrs = dsaPtr->ptrs;
+		dsaPtr->ptrs = (LPSTR*)HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY,
+				(dsaPtr->dwInitial + dsaPtr->dwGrow) *
+				sizeof(LPVOID));
+		memcpy (dsaPtr->ptrs, lpOldPtrs,
+			dsaPtr->dwMaxCount * sizeof(LPVOID));
+		dsaPtr->dwMaxCount += dsaPtr->dwGrow;
+		HeapFree (GetProcessHeap (), 0, lpOldPtrs);
 
-		dwIndex = dwParam2;
-
+		/* add new string */
+		dwIndex = dsaPtr->dwEntryCount;
+		len = lstrlen32A ((LPSTR)dwParam3);
+		dsaPtr->ptrs[dwIndex] =
+		    (LPSTR)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len+1);
+		lstrcpy32A (dsaPtr->ptrs[dwIndex], (LPSTR)dwParam3);
 	    }
 	}
 	else {
@@ -235,7 +288,7 @@ DSA_DeleteItem (DWORD dwParam1, DWORD dwParam2)
     if (dsaPtr->ptrs) {
 	if (dsaPtr->dwEntryCount == 1) {
 	    if (dsaPtr->ptrs[dwParam2])
-		HeapFree (SystemHeap, 0, dsaPtr->ptrs[dwParam2]);
+		HeapFree (GetProcessHeap (), 0, dsaPtr->ptrs[dwParam2]);
 	    dsaPtr->dwEntryCount--;
 	}
 	else {
@@ -243,11 +296,11 @@ DSA_DeleteItem (DWORD dwParam1, DWORD dwParam2)
 	    TRACE (commctrl, "complex delete!\n");
 
 	    if (dsaPtr->ptrs[dwParam2])
-		HeapFree (SystemHeap, 0, dsaPtr->ptrs[dwParam2]);
+		HeapFree (GetProcessHeap (), 0, dsaPtr->ptrs[dwParam2]);
 
 	    dsaPtr->dwEntryCount--;
 	    dsaPtr->ptrs = 
-		(LPSTR*)HeapAlloc (SystemHeap, HEAP_ZERO_MEMORY,
+		(LPSTR*)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
 				   dsaPtr->dwEntryCount * sizeof(LPVOID));
 	    if (dwParam2 > 0) {
 		memcpy (&dsaPtr->ptrs[0], &oldPtrs[0],
@@ -258,11 +311,11 @@ DSA_DeleteItem (DWORD dwParam1, DWORD dwParam2)
 		memcpy (&dsaPtr->ptrs[dwParam2], &oldPtrs[dwParam2+1],
 			(dsaPtr->dwEntryCount - dwParam2) * sizeof(LPSTR));
 	    }
-	    HeapFree (SystemHeap, 0, oldPtrs);
+	    HeapFree (GetProcessHeap (), 0, oldPtrs);
 	}
 
 	if (dsaPtr->dwEntryCount == 0) {
-	    HeapFree (SystemHeap, 0, dsaPtr->ptrs);
+	    HeapFree (GetProcessHeap (), 0, dsaPtr->ptrs);
 	    dsaPtr->ptrs = NULL;
 	}
     }
@@ -341,9 +394,70 @@ DPA_InsertPtr (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
 }
 
 
+/**************************************************************************
+ * DPA_CreateEx [COMCTL32.340]
+ *
+ */
+
+DWORD WINAPI
+DPA_CreateEx (DWORD dwParam1, DWORD dwParam2)
+{
+    FIXME (commctrl, "(0x%08lx 0x%08lx)\n",
+	   dwParam1, dwParam2);
+
+    return 0;
+}
+
+
+/**************************************************************************
+ * SendNotify [COMCTL32.341]
+ *
+ */
+
+DWORD WINAPI
+COMCTL32_SendNotify (DWORD dw1, DWORD dw2, DWORD dw3, DWORD dw4)
+{
+    FIXME (commctrl, "(0x%08lx 0x%08lx 0x%08lx 0x%08lx)\n",
+	   dw1, dw2, dw3, dw4);
+
+    return 0;
+}
+
+
+
+/**************************************************************************
+ * StrChrA [COMCTL32.350]
+ *
+ */
+
 LPSTR WINAPI
 COMCTL32_StrChrA (LPSTR lpString, CHAR cChar)
 {
     return strchr (lpString, cChar);
+}
+
+
+/**************************************************************************
+ * StrStrIA [COMCTL32.350]
+ *
+ * BUGS
+ *     This implementation is case sensitive, but it mustn't.
+ */
+
+LPSTR WINAPI
+COMCTL32_StrStrIA (LPSTR lpStr1, LPSTR lpStr2)
+{
+    return strstr (lpStr1, lpStr2);
+}
+
+
+/**************************************************************************
+ * StrToIntA [COMCTL32.357]
+ */
+
+INT32 WINAPI
+COMCTL32_StrToIntA (LPSTR lpString)
+{
+    return atoi(lpString);
 }
 

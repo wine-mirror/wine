@@ -189,10 +189,7 @@ INT16 WINAPI lstrcmpi16( LPCSTR str1, LPCSTR str2 )
  *           lstrcmpi32A   (KERNEL32.605)
  */
 INT32 WINAPI lstrcmpi32A( LPCSTR str1, LPCSTR str2 )
-{
-    INT32 res;
-
-    TRACE(string,"strcmpi %s and %s\n",
+{    TRACE(string,"strcmpi %s and %s\n",
 		   debugstr_a (str1), debugstr_a (str2));
     return CompareString32A(LOCALE_SYSTEM_DEFAULT,NORM_IGNORECASE,str1,-1,str2,-1)-2;
 }
@@ -615,4 +612,38 @@ BOOL32 WINAPI OemToChar32W( LPCSTR s, LPWSTR d )
 {
     while ((*d++ = (WCHAR)OEM_TO_ANSI(*s++)));
     return TRUE;
+}
+
+/***********************************************************************
+ *  WideCharToLocal (Not a Windows API)
+ *  similar lstrcpyWtoA, should handle codepages properly
+ *
+ *  RETURNS
+ *    strlen of the destination string
+ */
+ 
+INT32 WINAPI WideCharToLocal32(
+    LPSTR pLocal, 
+		LPWSTR pWide, 
+		INT32 dwChars)
+{ *pLocal = 0;
+  TRACE(string,"(%p, %s, %li)\n",	pLocal, debugstr_w(pWide),dwChars);
+  WideCharToMultiByte(CP_ACP,0,pWide,-1,pLocal,dwChars,NULL,NULL);
+  return strlen(pLocal);
+}
+/***********************************************************************
+ *  LocalToWideChar (Not a Windows API)
+ *  similar lstrcpyAtoW, should handle codepages properly
+ *
+ *  RETURNS
+ *    strlen of the destination string
+ */
+INT32 WINAPI LocalToWideChar32(
+    LPWSTR pWide, 
+		LPSTR pLocal, 
+		INT32 dwChars)
+{ *pWide = 0;
+  TRACE(string,"(%p, %s, %li)\n",pWide,	pLocal, dwChars);
+	MultiByteToWideChar(CP_ACP,0,pLocal,-1,pWide,dwChars); 
+  return lstrlen32W(pWide);
 }

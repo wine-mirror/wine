@@ -92,6 +92,9 @@ typedef struct _THDB
     /* The following are Wine-specific fields */
     CONTEXT        context;        /* 200 Thread context */
     WAIT_STRUCT    wait_struct;    /*     Event wait structure */
+    int            socket;         /*     Socket for server communication */
+    unsigned int   seq;            /*     Server sequence number */
+    void          *server_tid;     /*     Server id for this thread */
 } THDB;
 
 /* Thread queue entry */

@@ -21,6 +21,7 @@ XCheckWindowEvent
 XClipBox
 XConvertSelection
 XCopyArea
+XCopyColormapAndFree
 XCopyPlane
 XCreateBitmapFromData
 XCreateColormap
@@ -133,6 +134,7 @@ XSetWMSizeHints
 XShmAttach
 XShmDetach
 XShmPixmapFormat
+XShmPutImage
 XShmQueryExtension
 XShrinkRegion
 XStoreColor

@@ -231,6 +231,12 @@ OLESTATUS WINAPI WINE_StringFromCLSID(
   char *s;
   int	i;
 
+  if (!id)
+	{ ERR(ole,"called with id=Null\n");
+	  *idstr = 0x00;
+	  return E_FAIL;
+	}
+	
   sprintf(idstr, "{%08lx-%04x-%04x-%02x%02x-",
 	  id->Data1, id->Data2, id->Data3,
 	  id->Data4[0], id->Data4[1]);

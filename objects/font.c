@@ -1230,11 +1230,13 @@ DWORD WINAPI GetKerningPairs32W( HDC32 hDC, DWORD cPairs,
     return GetKerningPairs32A( hDC, cPairs, lpKerningPairs );
 }
 
+/*************************************************************************
+ * TranslateCharSetInfo [GDI32.382]
+ */
 BOOL32 WINAPI TranslateCharSetInfo(LPDWORD lpSrc,LPCHARSETINFO lpCs,DWORD dwFlags) {
     FIXME(font,"(%p,%p,0x%08lx), stub.\n",lpSrc,lpCs,dwFlags);
     return TRUE;
 }
-
 
 /*************************************************************************
  *             GetFontLanguageInfo   (GDI32.182)
@@ -1253,3 +1255,31 @@ DWORD WINAPI GetFontLanguageInfo16(HDC16 hdc) {
 	FIXME(font,"(%x):stub!\n",hdc);
 	return 0;
 }
+
+
+/*************************************************************************
+ * GetCharacterPlacement32A [GDI32.160]
+ */
+DWORD WINAPI
+GetCharacterPlacement32A(HDC32 hdc, LPCSTR lpString, UINT32 uCount,
+			 INT32 nMaxExtent, GCP_RESULTS32A lpResults,
+			 DWORD dwFlags)
+{
+    /* return value 0 is correct for most cases anyway */
+    FIXME(font,":stub!\n");
+    return 0;
+}
+
+/*************************************************************************
+ * GetCharacterPlacement32W [GDI32.161]
+ */
+DWORD WINAPI
+GetCharacterPlacement32W(HDC32 hdc, LPCWSTR lpString, UINT32 uCount,
+			 INT32 nMaxExtent, GCP_RESULTS32W lpResults,
+			 DWORD dwFlags)
+{
+    /* return value 0 is correct for most cases anyway */
+    FIXME(font,":stub!\n");
+    return 0;
+}
+

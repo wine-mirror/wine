@@ -46,6 +46,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pPolyPolyline */
     MFDRV_Polygon,                   /* pPolygon */
     MFDRV_Polyline,                  /* pPolyline */
+    NULL,                            /* pPolyBezier */
     NULL,                            /* pRealizePalette */
     MFDRV_Rectangle,                 /* pRectangle */
     NULL,                            /* pRestoreDC */

@@ -43,12 +43,16 @@ typedef struct tagTOOLBAR_INFO
     INT32      nOldHit;
     INT32      nHotItem;        /* index of the "hot" item */
 
+    HFONT32    hFont;           /* text font */
     HIMAGELIST himlDef;         /* default image list */
     HIMAGELIST himlHot;         /* hot image list */
     HIMAGELIST himlDis;         /* disabled image list */
     HWND32     hwndToolTip;     /* handle to tool tip control */
     HWND32     hwndNotify;      /* handle to the window that gets notifications */
     BOOL32     bTransparent;    /* background transparency flag */
+    BOOL32     bAutoSize;
+
+    COLORREF   clrInsertMark;   /* insert mark color */
 
     TBUTTON_INFO *buttons;
     CHAR         **strings;

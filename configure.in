@@ -26,6 +26,10 @@ AC_ARG_ENABLE(dll,
 [  --enable-dll            build the Wine library as a DLL],
 [if test "$enableval" = "no"; then : ; else LIB_TARGET="libwine.so.1.0"; fi])
 
+AC_ARG_ENABLE(lib,
+[  --disable-lib           build the Wine without building libwine.a],
+[if test "$enableval" = "no"; then LIB_TARGET="\$LIBOBJS"; fi])
+
 dnl AC_ARG_WITH(ipc,
 dnl [  --enable-ipc            use inter-process communication for DDE],
 dnl [if test "$enableval" = "no"; then : ; else OPTIONS="-DCONFIG_IPC"; fi])
@@ -470,6 +474,7 @@ rc/Makefile
 relay32/Makefile
 resources/Makefile
 scheduler/Makefile
+server/Makefile
 tools/Makefile
 tools/wrc/Makefile
 tsx11/Makefile

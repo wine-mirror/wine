@@ -29,6 +29,7 @@
 -----------
   This paragraph describes the development status of the common controls.
 
+  
 
 
 3.1 Animation Control
@@ -98,11 +99,14 @@
 
 3.10 List View Control
 ----------------------
+  Author:
+      Dummy written by Eric Kohl.
+
   Status:
-      - Nothing done at all.
+      - Dummy control. No functionality.
 
   Notes:
-      This control id NEEDED in many places. Any volunteers??
+      This control is NEEDED in many places. Any volunteers??
 
 
 3.11 Month Calendar Control
@@ -113,12 +117,14 @@
 
 3.12 Pager Control
 ------------------
+  Author:
+      Dummy written by Eric Kohl.
+
   Status:
-      - Dummy control. No functionality.
-      - Not yet published.
+      Dummy control. No functionality.
 
   Notes:
-      The dummy source code is available from the author.
+      Author needed!! Any volunteers??
 
 
 3.13 Progress Bar Control
@@ -139,23 +145,27 @@
 
 3.14 Property Sheet
 -------------------
+  Author:
+      Anders Carlsson <anders.carlsson@linux.nu>
+
   Status:
-      - Nothing done at all.
+      - Development in progress.
+      - Not yet published.
 
   Notes:
-      - This control id NEEDED in many places.
-      - Tab control has to be implemented first.
-      Any volunteers??
+      Tab control must be implemented first.
 
 
 3.15 Rebar Control (Cool Bar)
 -----------------------------
+  Author:
+      Dummy written by Eric Kohl.
+
   Status:
       - Dummy control. No functionality.
-      - Not yet published.
 
   Notes:
-      The dummy source code is available from the author.
+      Author needed!! Any volunteers??
 
 
 3.16 Status Bar Control
@@ -176,9 +186,12 @@
 
 3.17 Tab Control
 ----------------
+  Author:
+      Anders Carlsson <anders.carlsson@linux.nu>
+
   Status:
-      - Nothing done at all.
-      - needed.
+      - Development in progress.
+      - Not yet published.
 
 
 3.18 Toolbar Control
@@ -190,6 +203,9 @@
       - Development in progress.
       - Basic functionality is almost done. (dll version 4.0)
 
+  Notes
+      Bitmaps are not correctly displayed.
+
 
 3.19 Tooltip Control
 --------------------
@@ -198,17 +214,21 @@
 
   Status:
       - Development in progress.
-      - Not yet published, but will be published soon.
+
+  Notes
+      The control does not show.
 
 
 3.20 Trackbar Control
 ---------------------
   Author:
-      Eric Kohl <ekohl@abo.rhein-zeitung.de>
+      Dummy written by Eric Kohl.
 
   Status:
-      - Development in progress.
-      - Not yet published, but will be published soon.
+      - Dummy control. No functionality.
+
+  Notes:
+      Author needed!! Any volunteers??
 
 
 3.21 Tree View Control

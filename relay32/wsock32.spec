@@ -10,7 +10,7 @@ type	win32
 007 stdcall getsockopt(long long long ptr ptr) WINSOCK_getsockopt32
 008 stdcall htonl(long) WINSOCK_htonl
 009 stdcall htons(long) WINSOCK_htons
-010 stdcall inet_addr(ptr) WINSOCK_inet_addr
+010 stdcall inet_addr(str) WINSOCK_inet_addr
 011 stdcall inet_ntoa(ptr) WINSOCK_inet_ntoa32
 012 stdcall ioctlsocket(long long ptr) WINSOCK_ioctlsocket32
 013 stdcall listen(long long) WINSOCK_listen32

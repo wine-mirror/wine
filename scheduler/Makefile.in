@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 MODULE    = scheduler
 
 C_SRCS = \
+	client.c \
 	critsection.c \
 	event.c \
 	handle.c \

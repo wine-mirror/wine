@@ -32,6 +32,7 @@
 #include "thread.h"
 #include "debug.h"
 #include "dde_proc.h"
+#include "server.h"
 
   /* Min. number of thunks allocated when creating a new segment */
 #define MIN_THUNKS  32
@@ -39,14 +40,30 @@
   /* Pointer to function to switch to a larger stack */
 int (*IF1632_CallLargeStack)( int (*func)(), void *arg ) = NULL;
 
-static HTASK16 hFirstTask = 0;
-static HTASK16 hCurrentTask = 0;
+
+static THHOOK DefaultThhook = { 0 };
+THHOOK *pThhook = &DefaultThhook;
+
+#define hCurrentTask (pThhook->CurTDB)
+#define hFirstTask   (pThhook->HeadTDB)
+#define hLockedTask  (pThhook->LockTDB)
+
 static HTASK16 hTaskToKill = 0;
-static HTASK16 hLockedTask = 0;
 static UINT16 nTaskCount = 0;
 
 static void TASK_YieldToSystem(TDB*);
 
+/***********************************************************************
+ *	     TASK_InstallTHHook
+ */
+void TASK_InstallTHHook( THHOOK *pNewThhook )
+{
+     THHOOK *pOldThhook = pThhook;
+
+     pThhook = pNewThhook? pNewThhook : &DefaultThhook;
+
+     *pThhook = *pOldThhook;
+}
 
 /***********************************************************************
  *	     TASK_GetNextTask
@@ -209,6 +226,7 @@ static void TASK_CallToStart(void)
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
     SET_CUR_THREAD( pTask->thdb );
+    CLIENT_InitThread();
     /* Terminate the stack frame */
     THREAD_STACK16(pTask->thdb)->frame32 = NULL;
     if (pModule->flags & NE_FFLAGS_WIN32)

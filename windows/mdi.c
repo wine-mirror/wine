@@ -1383,7 +1383,7 @@ LRESULT WINAPI DefMDIChildProc32A( HWND32 hwnd, UINT32 message,
     MDICLIENTINFO       *ci;
     WND                 *clientWnd;
 
-    clientWnd  = WIN_FindWndPtr(GetParent16(hwnd));
+    clientWnd  = WIN_FindWndPtr(WIN_FindWndPtr(hwnd)->parent->hwndSelf);
     ci         = (MDICLIENTINFO *) clientWnd->wExtra;
 
     switch (message)

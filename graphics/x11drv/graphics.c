@@ -38,7 +38,7 @@
 #include "debug.h"
 #include "xmalloc.h"
 
-
+#define ABS(x)    ((x)<0?(-(x)):(x))
 /**********************************************************************
  *	     X11DRV_MoveToEx
  */
@@ -79,17 +79,16 @@ X11DRV_LineTo( DC *dc, INT32 x, INT32 y )
  * Helper functions for Arc(), Chord() and Pie().
  * 'lines' is the number of lines to draw: 0 for Arc, 1 for Chord, 2 for Pie.
  *
- * FIXME: incorrect with thick pen and/or PS_INSIDEFRAME style
- *        see ellipse and rectangle functions
  */
 static BOOL32
 X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
                 INT32 bottom, INT32 xstart, INT32 ystart,
                 INT32 xend, INT32 yend, INT32 lines )
 {
-    INT32 xcenter, ycenter, istart_angle, idiff_angle, tmp;
+    INT32 xcenter, ycenter, istart_angle, idiff_angle;
+    INT32 width, oldwidth, oldendcap;
     double start_angle, end_angle;
-    XPoint points[3];
+    XPoint points[4];
 
     left   = XLPTODP( dc, left );
     top    = YLPTODP( dc, top );
@@ -100,10 +99,29 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
     xend   = XLPTODP( dc, xend );
     yend   = YLPTODP( dc, yend );
 
-    if ((left == right) || (top == bottom)) return TRUE;
+    if (right < left) { INT32 tmp = right; right = left; left = tmp; }
+    if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
+    if ((left == right) || (top == bottom)
+            ||(lines && ((right-left==1)||(bottom-top==1)))) return TRUE;
 
-    if (left > right) { tmp=left; left=right; right=tmp; }
-    if (top > bottom) { tmp=top; top=bottom; bottom=tmp; } 
+    oldwidth = width = dc->u.x.pen.width;
+    oldendcap= dc->u.x.pen.endcap;
+    if (!width) width = 1;
+    if(dc->u.x.pen.style == PS_NULL) width = 0;
+
+    if ((dc->u.x.pen.style == PS_INSIDEFRAME))
+    {
+        if (2*width > (right-left)) width=(right-left + 1)/2;
+        if (2*width > (bottom-top)) width=(bottom-top + 1)/2;
+        left   += width / 2;
+        right  -= (width - 1) / 2;
+        top    += width / 2;
+        bottom -= (width - 1) / 2;
+    }
+    if(width == 0) width=1; /* more accurate */
+    dc->u.x.pen.width=width;
+    dc->u.x.pen.endcap=PS_ENDCAP_SQUARE;
+
     xcenter = (right + left) / 2;
     ycenter = (bottom + top) / 2;
     start_angle = atan2( (double)(ycenter-ystart)*(right-left),
@@ -121,14 +139,13 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
     else
       if ((end_angle == PI)&&( start_angle <0))
 	end_angle = - PI;
-    istart_angle = (INT32)(start_angle * 180 * 64 / PI);
-    idiff_angle  = (INT32)((end_angle - start_angle) * 180 * 64 / PI );
+    istart_angle = (INT32)(start_angle * 180 * 64 / PI + 0.5);
+    idiff_angle  = (INT32)((end_angle - start_angle) * 180 * 64 / PI + 0.5);
     if (idiff_angle <= 0) idiff_angle += 360 * 64;
 
       /* Fill arc with brush if Chord() or Pie() */
 
-    if ((lines > 0) && DC_SetupGCForBrush( dc ))
-    {
+    if ((lines > 0) && DC_SetupGCForBrush( dc )) {
         TSXSetArcMode( display, dc->u.x.gc, (lines==1) ? ArcChord : ArcPieSlice);
         TSXFillArc( display, dc->u.x.drawable, dc->u.x.gc,
                  dc->w.DCOrgX + left, dc->w.DCOrgY + top,
@@ -137,24 +154,69 @@ X11DRV_DrawArc( DC *dc, INT32 left, INT32 top, INT32 right,
 
       /* Draw arc and lines */
 
-    if (!DC_SetupGCForPen( dc )) return TRUE;
+    if (DC_SetupGCForPen( dc )){
     TSXDrawArc( display, dc->u.x.drawable, dc->u.x.gc,
 	      dc->w.DCOrgX + left, dc->w.DCOrgY + top,
 	      right-left-1, bottom-top-1, istart_angle, idiff_angle );
-    if (!lines) return TRUE;
-
-    points[0].x = dc->w.DCOrgX + xcenter + (int)(cos(start_angle) * (right-left) / 2);
-    points[0].y = dc->w.DCOrgY + ycenter - (int)(sin(start_angle) * (bottom-top) / 2);
-    points[1].x = dc->w.DCOrgX + xcenter + (int)(cos(end_angle) * (right-left) / 2);
-    points[1].y = dc->w.DCOrgY + ycenter - (int)(sin(end_angle) * (bottom-top) / 2);
-    if (lines == 2)
-    {
-	points[2] = points[1];
+        if (lines) {
+            /* use the truncated values */
+            start_angle=(double)istart_angle*PI/64./180.;
+            end_angle=(double)(istart_angle+idiff_angle)*PI/64./180.;
+            /* calculate the endpoints and round correctly */
+            points[0].x = (int) floor(dc->w.DCOrgX + (right+left)/2.0 +
+                    cos(start_angle) * (right-left-width*2+2) / 2. + 0.5);
+            points[0].y = (int) floor(dc->w.DCOrgY + (top+bottom)/2.0 -
+                    sin(start_angle) * (bottom-top-width*2+2) / 2. + 0.5);
+            points[1].x = (int) floor(dc->w.DCOrgX + (right+left)/2.0 +
+                    cos(end_angle) * (right-left-width*2+2) / 2. + 0.5);
+            points[1].y = (int) floor(dc->w.DCOrgY + (top+bottom)/2.0 -
+                    sin(end_angle) * (bottom-top-width*2+2) / 2. + 0.5);
+                    
+            /* OK this stuff is optimized for Xfree86 
+             * which is probably the most used server by
+             * wine users. Other X servers will not 
+             * display correctly. (eXceed for instance)
+             * so if you feel you must change make sure that
+             * you either use Xfree86 or seperate your changes 
+             * from these (compile switch or whatever)
+             */
+            if (lines == 2) {
+                INT32 dx1,dy1;
+                points[3] = points[1];
 	points[1].x = dc->w.DCOrgX + xcenter;
 	points[1].y = dc->w.DCOrgY + ycenter;
+                points[2] = points[1];
+                dx1=points[1].x-points[0].x;
+                dy1=points[1].y-points[0].y;
+                if(((top-bottom) | -2) == -2)
+                    if(dy1>0) points[1].y--;
+                if(dx1<0) {
+                    if (((-dx1)*64)<=ABS(dy1)*37) points[0].x--;
+                    if(((-dx1*9))<(dy1*16)) points[0].y--;
+                    if( dy1<0 && ((dx1*9)) < (dy1*16)) points[0].y--;
+                } else {
+                    if(dy1 < 0)  points[0].y--;
+                    if(((right-left) | -2) == -2) points[1].x--;
+                }
+                dx1=points[3].x-points[2].x;
+                dy1=points[3].y-points[2].y;
+                if(((top-bottom) | -2 ) == -2)
+                    if(dy1 < 0) points[2].y--;
+                if( dx1<0){ 
+                    if( dy1>0) points[3].y--;
+                    if(((right-left) | -2) == -2 ) points[2].x--;
+                }else {
+                    points[3].y--;
+                    if( dx1 * 64 < dy1 * -37 ) points[3].x--;
+                }
+                lines++;
     }
     TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
 	        points, lines+1, CoordModeOrigin );
+        }
+    }
+    dc->u.x.pen.width=oldwidth;
+    dc->u.x.pen.endcap=oldendcap;
     return TRUE;
 }
 
@@ -201,7 +263,6 @@ BOOL32
 X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
 {
     INT32 width, oldwidth;
-
     left   = XLPTODP( dc, left );
     top    = YLPTODP( dc, top );
     right  = XLPTODP( dc, right );
@@ -224,7 +285,7 @@ X11DRV_Ellipse( DC *dc, INT32 left, INT32 top, INT32 right, INT32 bottom )
         top    += width / 2;
         bottom -= (width - 1) / 2;
     }
-    if(width == 1) width=0;
+    if(width == 0) width=1; /* more accurate */
     dc->u.x.pen.width=width;
 
     if (DC_SetupGCForBrush( dc ))
@@ -305,7 +366,7 @@ BOOL32
 X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
                   INT32 bottom, INT32 ell_width, INT32 ell_height )
 {
-    INT32 width, oldwidth;
+    INT32 width, oldwidth, oldendcap;
 
     TRACE(graphics, "(%d %d %d %d  %d %d\n", 
     	left, top, right, bottom, ell_width, ell_height);
@@ -327,6 +388,7 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
     if (bottom < top) { INT32 tmp = bottom; bottom = top; top = tmp; }
 
     oldwidth=width = dc->u.x.pen.width;
+    oldendcap = dc->u.x.pen.endcap;
     if (!width) width = 1;
     if(dc->u.x.pen.style == PS_NULL) width = 0;
 
@@ -339,8 +401,9 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
         top    += width / 2;
         bottom -= (width - 1) / 2;
     }
-    if(width == 1) width=0;
+    if(width == 0) width=1;
     dc->u.x.pen.width=width;
+    dc->u.x.pen.endcap=PS_ENDCAP_SQUARE;
 
     if (DC_SetupGCForBrush( dc ))
     {
@@ -386,23 +449,34 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
         if (ell_width < right - left)
         {
             TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
-                            dc->w.DCOrgX + left + ell_width / 2,
-                            dc->w.DCOrgY + top,
-                            right - left - ell_width, ell_height / 2 );
+                            dc->w.DCOrgX + left + (ell_width + 1) / 2,
+                            dc->w.DCOrgY + top + 1,
+                            right - left - ell_width - 1,
+                            (ell_height + 1) / 2 - 1);
             TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
-                            dc->w.DCOrgX + left + ell_width / 2,
-                            dc->w.DCOrgY + bottom - (ell_height+1) / 2,
-                            right - left - ell_width,
-                            (ell_height+1) / 2 - 1 );
+                            dc->w.DCOrgX + left + (ell_width + 1) / 2,
+                            dc->w.DCOrgY + bottom - (ell_height) / 2 - 1,
+                            right - left - ell_width - 1,
+                            (ell_height) / 2 );
         }
         if  (ell_height < bottom - top)
         {
             TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
-                            dc->w.DCOrgX + left,
-                            dc->w.DCOrgY + top + ell_height / 2,
-                            right - left - 1, bottom - top - ell_height );
+                            dc->w.DCOrgX + left + 1,
+                            dc->w.DCOrgY + top + (ell_height + 1) / 2,
+                            right - left - 2,
+                            bottom - top - ell_height - 1);
         }
     }
+    /* FIXME: this could be done with on X call
+     * more efficient and probably more correct
+     * on any X server: XDrawArcs will draw
+     * straight horizontal and vertical lines
+     * if width or height are zero.
+     *
+     * BTW this stuff is optimized for an Xfree86 server
+     * read the comments inside the X11DRV_DrawArc function
+     */
     if (DC_SetupGCForPen(dc)) {
         if (ell_width > (right-left) )
             if (ell_height > (bottom-top) )
@@ -444,31 +518,32 @@ X11DRV_RoundRect( DC *dc, INT32 left, INT32 top, INT32 right,
 	if (ell_width < right - left)
 	{
 	    TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
-		       dc->w.DCOrgX + left + ell_width / 2 - 2,
+               dc->w.DCOrgX + left + ell_width / 2,
 		       dc->w.DCOrgY + top,
-		       dc->w.DCOrgX + right - ell_width / 2,
+               dc->w.DCOrgX + right - (ell_width+1) / 2,
 		       dc->w.DCOrgY + top);
 	    TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
-		       dc->w.DCOrgX + left + ell_width / 2 - 2,
+               dc->w.DCOrgX + left + ell_width / 2 ,
 		       dc->w.DCOrgY + bottom - 1,
-		       dc->w.DCOrgX + right - ell_width / 2,
+               dc->w.DCOrgX + right - (ell_width+1)/ 2,
 		       dc->w.DCOrgY + bottom - 1);
 	}
 	if (ell_height < bottom - top)
 	{
 	    TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
 		       dc->w.DCOrgX + right - 1,
-		       dc->w.DCOrgY + top + ell_height / 2 - 1,
+               dc->w.DCOrgY + top + ell_height / 2,
 		       dc->w.DCOrgX + right - 1,
-		       dc->w.DCOrgY + bottom - ell_height / 2);
+               dc->w.DCOrgY + bottom - (ell_height+1) / 2);
 	    TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc, 
 		       dc->w.DCOrgX + left,
-		       dc->w.DCOrgY + top + ell_height / 2 - 1,
+               dc->w.DCOrgY + top + ell_height / 2,
 		       dc->w.DCOrgX + left,
-		       dc->w.DCOrgY + bottom - ell_height / 2);
+               dc->w.DCOrgY + bottom - (ell_height+1) / 2);
 	}
     }
     dc->u.x.pen.width=oldwidth;
+    dc->u.x.pen.endcap=oldendcap;
     return TRUE;
 }
 
@@ -576,17 +651,26 @@ X11DRV_PaintRgn( DC *dc, HRGN32 hrgn )
  *          X11DRV_Polyline
  */
 BOOL32
-X11DRV_Polyline( DC *dc, const LPPOINT32 pt, INT32 count )
+X11DRV_Polyline( DC *dc, LPPOINT32 pt, INT32 count )
 {
+    INT32 oldwidth;
     register int i;
+    XPoint *points;
+    if((oldwidth=dc->u.x.pen.width)==0) dc->u.x.pen.width=1;
 
-    if (DC_SetupGCForPen( dc ))
-	for (i = 0; i < count-1; i ++)
-	    TSXDrawLine (display, dc->u.x.drawable, dc->u.x.gc,  
-		       dc->w.DCOrgX + XLPTODP(dc, pt [i].x),
-		       dc->w.DCOrgY + YLPTODP(dc, pt [i].y),
-		       dc->w.DCOrgX + XLPTODP(dc, pt [i+1].x),
-		       dc->w.DCOrgY + YLPTODP(dc, pt [i+1].y));
+    points = (XPoint *) xmalloc (sizeof (XPoint) * (count));
+    for (i = 0; i < count; i++)
+    {
+    points[i].x = dc->w.DCOrgX + XLPTODP( dc, pt[i].x );
+    points[i].y = dc->w.DCOrgY + YLPTODP( dc, pt[i].y );
+    }
+
+    if (DC_SetupGCForPen ( dc ))
+    TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+           points, count, CoordModeOrigin );
+
+    free( points );
+    dc->u.x.pen.width=oldwidth;
     return TRUE;
 }
 
@@ -835,3 +919,189 @@ X11DRV_ExtFloodFill( DC *dc, INT32 x, INT32 y, COLORREF color,
     LeaveCriticalSection( &X11DRV_CritSection );
     return result;
 }
+
+/****************** WARNING: WORK IN PROGRESS AHEAD !!!! ****************
+ * 
+ *   *Very* simple bezier drawing code, 
+ *
+ *   It uses a recursive algorithm to divide the curve in a series
+ *   of straight line segements. Not ideal but for me sufficient.
+ *   If you are in need for something better look for some incremental
+ *   algorithm.
+ *
+ *   7 July 1998 Rein Klazes
+ */
+
+ /* 
+  * some macro definitions for bezier drawing
+  *
+  * to avoid trucation errors the coordinates are
+  * shifted upwards. When used in drawing they are
+  * shifted down again, including correct rounding
+  * and avoiding floating points
+  */
+
+#define BEZIERSHIFTBITS 4
+#define BEZIERSHIFTUP(x)    ((x)<<BEZIERSHIFTBITS)
+#define BEZIERFACTOR        BEZIERSHIFTUP(1)    
+#define BEZIERSHIFTDOWN(x)  (((x)+(1<<(BEZIERSHIFTBITS-1)))>>BEZIERSHIFTBITS)
+/* maximum depth of recursion */
+#define BEZIERMAXDEPTH  6
+
+/* size of array to store points on */
+/* enough for one curve */
+#define BEZMAXPOINTS    ((1<<BEZIERMAXDEPTH)+1)
+
+/* calculate Bezier average, in this case the middle */
+
+#define BEZIERMIDDLE(Mid, P1, P2) \
+    (Mid).x=((P1).x+(P2).x)/2;\
+    (Mid).y=((P1).y+(P2).y)/2;
+    
+/* check to terminate recursion */
+static int BezierCheck( int level, POINT32 *Points)
+{ 
+#if 0
+/* this code works, it just is too much work for
+ * the savings that are created. This should be done
+ * with integer arithmetic and simpler.
+ */
+    double hyp, r1, r2;
+    /* first check that the control points are "near" */
+    if(Points[3].x>Points[0].x)
+        if(Points[1].x > Points[3].x+BEZIERFACTOR || 
+                Points[1].x < Points[0].x-BEZIERFACTOR ||
+                Points[2].x > Points[3].x+BEZIERFACTOR || 
+                Points[2].x < Points[0].x-BEZIERFACTOR)
+        return FALSE;
+    else
+        if(Points[1].x < Points[3].x-BEZIERFACTOR || 
+                Points[1].x > Points[0].x+BEZIERFACTOR ||
+                Points[2].x < Points[3].x-BEZIERFACTOR || 
+                Points[2].x > Points[0].x+BEZIERFACTOR)
+        return FALSE;
+    if(Points[3].y>Points[0].y)
+        if(Points[1].y > Points[3].y+BEZIERFACTOR || 
+                Points[1].y < Points[0].y-BEZIERFACTOR ||
+                Points[2].y > Points[3].y+BEZIERFACTOR || 
+                Points[2].y < Points[0].y-BEZIERFACTOR)
+        return FALSE;
+    else
+        if(Points[1].x < Points[3].x-BEZIERFACTOR || 
+                Points[1].x > Points[0].x+BEZIERFACTOR ||
+                Points[2].x < Points[3].x-BEZIERFACTOR || 
+                Points[2].x > Points[0].x+BEZIERFACTOR)
+        return FALSE;o
+        
+    /* calculate the distance squared of the control point from
+     * the line from begin and endpoint
+     */
+        
+    hyp=((double)(Points[3].x-Points[0].x)*(double)(Points[3].x-Points[0].x)+
+           (double) (Points[3].y-Points[0].y)*(double)(Points[3].y-Points[0].y));
+    r1=((double)(Points[2].y-Points[0].y)*(double)(Points[3].x-Points[0].x)-
+           (double) (Points[3].y-Points[0].y)*(double)(Points[2].x-Points[0].x))
+           /BEZIERFACTOR;
+    r2=((double)(Points[1].y-Points[0].y)*(double)(Points[3].x-Points[0].x)-
+            (double)(Points[3].y-Points[0].y)*(double)(Points[1].x-Points[0].x))
+            /BEZIERFACTOR;
+    r1=r1*r1/hyp;
+    r1=r2*r2/hyp;
+    if( r1<1 && r2 <1){ /* distance less then a pixel */
+//        fprintf(stderr,"level is %d\n", level);
+        return TRUE;
+    }
+#endif
+    return FALSE;
+    
+}
+    
+/***********************************************************************
+ *           X11DRV_Bezier
+ *   Draw a -what microsoft calls- bezier curve
+ *   The routine recursively devides the curve
+ *   in two parts until a straight line can be drawn
+ */
+static void X11DRV_Bezier(int level, DC * dc, POINT32 *Points, 
+                          XPoint* xpoints, unsigned int* pix)
+{
+    if(*pix == BEZMAXPOINTS){
+        TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+                    xpoints, *pix, CoordModeOrigin );
+        *pix=0;
+    }
+    if(!level || BezierCheck(level, Points)) {
+        if(*pix == 0){
+            xpoints[*pix].x= dc->w.DCOrgX + BEZIERSHIFTDOWN(Points[0].x);
+            xpoints[*pix].y= dc->w.DCOrgY + BEZIERSHIFTDOWN(Points[0].y);
+            *pix=1;
+        }
+        xpoints[*pix].x= dc->w.DCOrgX + BEZIERSHIFTDOWN(Points[3].x);
+        xpoints[*pix].y= dc->w.DCOrgY + BEZIERSHIFTDOWN(Points[3].y);
+        (*pix) ++;
+    } else {
+        POINT32 Points2[4]; /* for the second recursive call */
+        Points2[3]=Points[3];
+        BEZIERMIDDLE(Points2[2], Points[2], Points[3]);
+        BEZIERMIDDLE(Points2[0], Points[1], Points[2]);
+        BEZIERMIDDLE(Points2[1],Points2[0],Points2[2]);
+
+        BEZIERMIDDLE(Points[1], Points[0],  Points[1]);
+        BEZIERMIDDLE(Points[2], Points[1], Points2[0]);
+        BEZIERMIDDLE(Points[3], Points[2], Points2[1]);
+
+        Points2[0]=Points[3];
+
+        /* do the two halves */
+        X11DRV_Bezier(level-1, dc, Points, xpoints, pix);
+        X11DRV_Bezier(level-1, dc, Points2, xpoints, pix);
+    }
+}
+
+/***********************************************************************
+ *           X11DRV_PolyBezier
+ *      Implement functionality for PolyBezier and PolyBezierTo
+ *      calls. 
+ *      [i] dc pointer to device context
+ *      [i] start, first point in curve
+ *      [i] BezierPoints , array of point filled with rest of the points
+ *      [i] count, number of points in BezierPoints, must be a 
+ *          multiple of 3.
+ */
+BOOL32
+X11DRV_PolyBezier(DC *dc, POINT32 start, POINT32 *BezierPoints, DWORD count)
+{
+    POINT32 Points[4]; 
+    int i;
+    unsigned int ix=0;
+    XPoint* xpoints;
+    TRACE(graphics, "dc=%04x count=%ld %d,%d - %d,%d - %d,%d -%d,%d \n", 
+            (int)dc, count,
+            start.x, start.y,
+            (Points+0)->x, (Points+0)->y, 
+            (Points+1)->x, (Points+1)->y, 
+            (Points+2)->x, (Points+2)->y); 
+    if(!count || count % 3){
+        WARN(graphics," bad value for count : %ld\n", count);
+        return FALSE; /* paranoid */
+    }
+    xpoints=(XPoint*) xmalloc( sizeof(XPoint)*BEZMAXPOINTS);
+    Points[3].x=BEZIERSHIFTUP(XLPTODP(dc,start.x));
+    Points[3].y=BEZIERSHIFTUP(YLPTODP(dc,start.y));
+    while(count){
+        Points[0]=Points[3];
+        for(i=1;i<4;i++) {
+            Points[i].x= BEZIERSHIFTUP(XLPTODP(dc,BezierPoints->x));
+            Points[i].y= BEZIERSHIFTUP(YLPTODP(dc,BezierPoints->y));
+            BezierPoints++;
+        }
+        X11DRV_Bezier(BEZIERMAXDEPTH , dc, Points, xpoints, &ix );
+        count -=3;
+    }
+    if( ix) TSXDrawLines( display, dc->u.x.drawable, dc->u.x.gc,
+                xpoints, ix, CoordModeOrigin );
+//    fprintf(stderr," ix is %d\n",ix);
+    free(xpoints);
+    return TRUE;
+}
+/***************************END OF WORK IN PROGRESS ********************/

@@ -108,9 +108,10 @@ BOOL32 WINAPI CreateProcess32W(
 	DWORD creationflags,LPVOID env,LPCWSTR curdir,
 	LPSTARTUPINFO32W startupinfo,LPPROCESS_INFORMATION processinfo)
 {
-    FIXME(win32,"(%p,%p,%p,%p,%d,%08lx,%p,%p,%p,%p): stub\n",
-            appname,cmdline,processattributes,threadattributes,
-            inherithandles,creationflags,env,curdir,startupinfo,processinfo );
+    FIXME(win32,"(%p,%s,%p,%p,%d,%08lx,%p,%s,%p,%p): stub\n",
+            appname,debugstr_w(cmdline),processattributes,threadattributes,
+            inherithandles,creationflags,env,debugstr_w(curdir),startupinfo,
+	    processinfo );
     /* make from lcc uses system as fallback if CreateProcess returns
        FALSE, so return false */
     return FALSE;

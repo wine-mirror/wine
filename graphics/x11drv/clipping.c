@@ -25,7 +25,8 @@ void X11DRV_SetDeviceClipping( DC * dc )
     if (!obj)
     {
         ERR(x11drv, "Rgn is 0. Please report this.\n");
-        exit(1);
+	return;
+        /*exit(1);*/
     }
     
     if (obj->rgn->numRects > 0)

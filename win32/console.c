@@ -1139,3 +1139,20 @@ BOOL32 WINAPI ReadConsoleOutputCharacter32A(HANDLE32 hConsoleOutput,
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+
+/******************************************************************************
+ * ScrollConsoleScreenBuffer [KERNEL32.612]
+ * 
+ * BUGS
+ *   Unimplemented
+ */
+BOOL32 WINAPI ScrollConsoleScreenBuffer( HANDLE32 hConsoleOutput, 
+	      LPSMALL_RECT lpScrollRect, LPSMALL_RECT lpClipRect,
+              COORD dwDestOrigin, LPCHAR_INFO lpFill)
+{
+    FIXME(console, "(%d,%p,%p,%dx%d,%p): stub\n", hConsoleOutput,lpScrollRect,
+	  lpClipRect,dwDestOrigin.x,dwDestOrigin.y,lpFill);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}

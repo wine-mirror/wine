@@ -253,7 +253,7 @@ file	krnl386.exe
 327 stub KERNEL_327
 328 stub _DebugOutput
 329 pascal16 K329(str word) DebugFillBuffer
-#332 stub THHOOK
+332 long THHOOK(0 0 0 0 0 0 0 0)
 334 pascal16 IsBadReadPtr(segptr word) IsBadReadPtr16
 335 pascal16 IsBadWritePtr(segptr word) IsBadWritePtr16
 336 pascal16 IsBadCodePtr(segptr) IsBadCodePtr16
@@ -318,7 +318,7 @@ file	krnl386.exe
 471 pascal KERNEL_471() _KERNEL_471
 472 register KERNEL_472() _KERNEL_472
 473 stub KERNEL_473
-475 return KERNEL_475 0 0
+475 register KERNEL_475() _KERNEL_475
 480 stub KERNEL_480
 481 stub KERNEL_481
 482 pascal LoadLibrary32(str) LoadLibrary32A

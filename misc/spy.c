@@ -492,10 +492,34 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "WM_QUERYAFXWNDPROC",   /*  0x0360 */
+    "WM_SIZEPARENT",        /*  0x0361 */
+    "WM_SETMESSAGESTRING",  /*  0x0362 */
+    "WM_IDLEUPDATECMDUI",   /*  0x0363 */
+    "WM_INITIALUPDATE",     /*  0x0364 */
+    "WM_COMMANDHELP",       /*  0x0365 */
+    "WM_HELPHITTEST",       /*  0x0366 */
+    "WM_EXITHELPMODE",      /*  0x0367 */
+    "WM_RECALCPARENT",      /*  0x0368 */
+    "WM_SIZECHILD",         /*  0x0369 */
+    "WM_KICKIDLE",          /*  0x036A */
+    "WM_QUERYCENTERWND",    /*  0x036B */
+    "WM_DISABLEMODAL",      /*  0x036C */
+    "WM_FLOATSTATUS",       /*  0x036D */
+    "WM_ACTIVATETOPLEVEL",  /*  0x036E */
+    "WM_QUERY3DCONTROLS",   /*  0x036F */
+    NULL,NULL,NULL,
+    "WM_SOCKET_NOTIFY",     /*  0x0373 */
+    "WM_SOCKET_DEAD",       /*  0x0374 */
+    "WM_POPMESSAGESTRING",  /*  0x0375 */
+    "WM_OCC_LOADFROMSTREAM",     /* 0x0376 */
+    "WM_OCC_LOADFROMSTORAGE",    /* 0x0377 */
+    "WM_OCC_INITNEW",            /* 0x0378 */
+    "WM_QUEUE_SENTINEL",         /* 0x0379 */
+    "WM_OCC_LOADFROMSTREAM_EX",  /* 0x037A */
+    "WM_OCC_LOADFROMSTORAGE_EX", /* 0x037B */
+
+    NULL,NULL,NULL,NULL,
 
     /* 0x0380 */
     "WM_PENWINFIRST", 

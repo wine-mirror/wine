@@ -170,21 +170,20 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
     char *p, *p2;
     int line = 0;
     PROFILESECTION *section, *first_section;
-    PROFILESECTION **prev_section;
-    PROFILEKEY *key, **prev_key;
+    PROFILESECTION **next_section;
+    PROFILEKEY *key, *prev_key, **next_key;
 
     first_section = HEAP_xalloc( SystemHeap, 0, sizeof(*section) );
     first_section->name = NULL;
     first_section->key  = NULL;
     first_section->next = NULL;
-    prev_section = &first_section->next;
-    prev_key     = &first_section->key;
+    next_section = &first_section->next;
+    next_key     = &first_section->key;
+    prev_key     = NULL;
 
     while (fgets( buffer, PROFILE_MAX_LINE_LEN, file ))
     {
         line++;
-        p = buffer + strlen(buffer) - 1;
-        while ((p > buffer) && ((*p == '\n') || PROFILE_isspace(*p))) *p--='\0';
         p = buffer;
         while (*p && PROFILE_isspace(*p)) p++;
         if (*p == '[')  /* section start */
@@ -202,9 +201,10 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
                 section->name = HEAP_strdupA( SystemHeap, 0, p );
                 section->key  = NULL;
                 section->next = NULL;
-                *prev_section = section;
-                prev_section  = &section->next;
-                prev_key      = &section->key;
+                *next_section = section;
+                next_section  = &section->next;
+                next_key      = &section->key;
+                prev_key      = NULL;
                 continue;
             }
         }
@@ -214,20 +214,22 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
             while ((p3 > p) && PROFILE_isspace(*p3)) *p3-- = '\0';
             *p2++ = '\0';
             while (*p2 && PROFILE_isspace(*p2)) p2++;
+            p3 = p2 + strlen(p2) - 1;
+            while ((p3 > p2) && ((*p3 == '\n') || PROFILE_isspace(*p3))) *p3--='\0';
         }
-        key = HEAP_xalloc( SystemHeap, 0, sizeof(*key) );
-        key->name  = HEAP_strdupA( SystemHeap, 0, p );
-        key->value = p2 ? HEAP_strdupA( SystemHeap, 0, p2 ) : NULL;
-        key->next  = NULL;
-        *prev_key  = key;
-        prev_key = &key->next;
-    }
-    if (TRACE_ON(profile))
-    {
-        TRACE(profile, "dump:\n" );
-	/* FIXME: improper use of stddeb! */
-        PROFILE_Save(stddeb, first_section );
-        TRACE(profile, "finished.\n" );
+
+        if(*p || !prev_key || *prev_key->name)
+          {
+           key = HEAP_xalloc( SystemHeap, 0, sizeof(*key) );
+           key->name  = HEAP_strdupA( SystemHeap, 0, p );
+           key->value = p2 ? HEAP_strdupA( SystemHeap, 0, p2 ) : NULL;
+           key->next  = NULL;
+           *next_key  = key;
+           next_key   = &key->next;
+           prev_key   = key;
+
+           TRACE(profile, "New key: name='%s', value='%s'\n",key->name,key->value?key->value:"(none)");
+          }
     }
     return first_section;
 }
@@ -467,10 +469,10 @@ static BOOL32 PROFILE_Open( LPCSTR filename )
  *           PROFILE_GetSection
  *
  * Returns all keys of a section.
- * If return_values is TRUE, also include the corrseponding values.
+ * If return_values is TRUE, also include the corresponding values.
  */
 static INT32 PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
-                                 LPSTR buffer, INT32 len, BOOL32 handle_env,
+                                 LPSTR buffer, UINT32 len, BOOL32 handle_env,
 				 BOOL32 return_values )
 {
     PROFILEKEY *key;
@@ -478,7 +480,7 @@ static INT32 PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
     {
         if (section->name && !strcasecmp( section->name, section_name ))
         {
-            INT32 oldlen = len;
+            UINT32 oldlen = len;
             for (key = section->key; key; key = key->next)
             {
                 if (len <= 2) break;
@@ -520,7 +522,7 @@ static INT32 PROFILE_GetSection( PROFILESECTION *section, LPCSTR section_name,
  * Get a profile string.
  */
 static INT32 PROFILE_GetString( LPCSTR section, LPCSTR key_name,
-                                LPCSTR def_val, LPSTR buffer, INT32 len )
+                                LPCSTR def_val, LPSTR buffer, UINT32 len )
 {
     PROFILEKEY *key = NULL;
 
@@ -843,7 +845,7 @@ UINT32 WINAPI GetProfileInt32W( LPCWSTR section, LPCWSTR entry, INT32 def_val )
  *           GetProfileString16   (KERNEL.58)
  */
 INT16 WINAPI GetProfileString16( LPCSTR section, LPCSTR entry, LPCSTR def_val,
-                                 LPSTR buffer, INT16 len )
+                                 LPSTR buffer, UINT16 len )
 {
     return GetPrivateProfileString16( section, entry, def_val,
                                       buffer, len, "win.ini" );
@@ -853,7 +855,7 @@ INT16 WINAPI GetProfileString16( LPCSTR section, LPCSTR entry, LPCSTR def_val,
  *           GetProfileString32A   (KERNEL32.268)
  */
 INT32 WINAPI GetProfileString32A( LPCSTR section, LPCSTR entry, LPCSTR def_val,
-                                  LPSTR buffer, INT32 len )
+                                  LPSTR buffer, UINT32 len )
 {
     return GetPrivateProfileString32A( section, entry, def_val,
                                        buffer, len, "win.ini" );
@@ -863,7 +865,7 @@ INT32 WINAPI GetProfileString32A( LPCSTR section, LPCSTR entry, LPCSTR def_val,
  *           GetProfileString32W   (KERNEL32.269)
  */
 INT32 WINAPI GetProfileString32W( LPCWSTR section, LPCWSTR entry,
-                                  LPCWSTR def_val, LPWSTR buffer, INT32 len )
+                                  LPCWSTR def_val, LPWSTR buffer, UINT32 len )
 {
     if (!wininiW) wininiW = HEAP_strdupAtoW( SystemHeap, 0, "win.ini" );
     return GetPrivateProfileString32W( section, entry, def_val,
@@ -873,7 +875,7 @@ INT32 WINAPI GetProfileString32W( LPCWSTR section, LPCWSTR entry,
 /***********************************************************************
  *           GetProfileSection32A   (KERNEL32.268)
  */
-INT32 WINAPI GetProfileSection32A( LPCSTR section, LPSTR buffer, INT32 len )
+INT32 WINAPI GetProfileSection32A( LPCSTR section, LPSTR buffer, UINT32 len )
 {
     return GetPrivateProfileSection32A( section, buffer, len, "win.ini" );
 }
@@ -961,7 +963,7 @@ UINT32 WINAPI GetPrivateProfileInt32W( LPCWSTR section, LPCWSTR entry,
  */
 INT16 WINAPI GetPrivateProfileString16( LPCSTR section, LPCSTR entry,
                                         LPCSTR def_val, LPSTR buffer,
-                                        INT16 len, LPCSTR filename )
+                                        UINT16 len, LPCSTR filename )
 {
     return GetPrivateProfileString32A(section,entry,def_val,buffer,len,filename);
 }
@@ -971,7 +973,7 @@ INT16 WINAPI GetPrivateProfileString16( LPCSTR section, LPCSTR entry,
  */
 INT32 WINAPI GetPrivateProfileString32A( LPCSTR section, LPCSTR entry,
                                          LPCSTR def_val, LPSTR buffer,
-                                         INT32 len, LPCSTR filename )
+                                         UINT32 len, LPCSTR filename )
 {
     if (!filename) 
 	filename = "win.ini";
@@ -986,7 +988,7 @@ INT32 WINAPI GetPrivateProfileString32A( LPCSTR section, LPCSTR entry,
  */
 INT32 WINAPI GetPrivateProfileString32W( LPCWSTR section, LPCWSTR entry,
                                          LPCWSTR def_val, LPWSTR buffer,
-                                         INT32 len, LPCWSTR filename )
+                                         UINT32 len, LPCWSTR filename )
 {
     LPSTR sectionA  = HEAP_strdupWtoA( GetProcessHeap(), 0, section );
     LPSTR entryA    = HEAP_strdupWtoA( GetProcessHeap(), 0, entry );
@@ -1008,7 +1010,7 @@ INT32 WINAPI GetPrivateProfileString32W( LPCWSTR section, LPCWSTR entry,
  *           GetPrivateProfileSection32A   (KERNEL32.255)
  */
 INT32 WINAPI GetPrivateProfileSection32A( LPCSTR section, LPSTR buffer,
-                                          INT32 len, LPCSTR filename )
+                                          UINT32 len, LPCSTR filename )
 {
     if (PROFILE_Open( filename ))
         return PROFILE_GetSection(CurProfile.section, section, buffer, len,
@@ -1091,7 +1093,8 @@ WORD WINAPI GetPrivateProfileSectionNames16( LPSTR buffer, WORD size,
 	buf=buffer;
 	cursize=0;
 	section=CurProfile.section;
-	for ( ; section; section = section->next) {
+	for ( ; section; section = section->next) 
+            if (section->name) {
 		l=strlen (section->name);
 		cursize+=l+1;
         	if (cursize > size+1)

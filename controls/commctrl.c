@@ -2,6 +2,7 @@
  * Common controls functions
  *
  * Copyright 1997 Dimitrie O. Paun
+ * Copyright 1998 Eric Kohl
  *
  */
 
@@ -9,43 +10,58 @@
 #include "heap.h"
 #include "commctrl.h"
 #include "header.h"
+#include "listview.h"
+#include "pager.h"
 #include "progress.h"
+#include "rebar.h"
 #include "status.h"
 #include "toolbar.h"
+#include "tooltips.h"
+#include "trackbar.h"
+#include "treeview.h"
 #include "updown.h"
 #include "debug.h"
 
 
 /***********************************************************************
  * DrawStatusText32A [COMCTL32.5][COMCTL32.27]
+ *
+ * Draws text with borders, like in a status bar.
+ *
+ * PARAMS
+ *     hdc   [I] handle to the window's display context
+ *     lprc  [I] pointer to a rectangle
+ *     text  [I] pointer to the text
+ *     style [I] 
  */
-void WINAPI DrawStatusText32A( HDC32 hdc, LPRECT32 lprc, LPCSTR text,
-                               UINT32 style )
+
+VOID WINAPI
+DrawStatusText32A (HDC32 hdc, LPRECT32 lprc, LPCSTR text, UINT32 style)
 {
     RECT32 r = *lprc;
     UINT32 border = BDR_SUNKENOUTER;
 
-    if(style==SBT_POPOUT)
+    if (style == SBT_POPOUT)
       border = BDR_RAISEDOUTER;
-    else if(style==SBT_NOBORDERS)
+    else if (style == SBT_NOBORDERS)
       border = 0;
 
-    DrawEdge32(hdc, &r, border, BF_RECT|BF_ADJUST|BF_MIDDLE);
+    DrawEdge32 (hdc, &r, border, BF_RECT|BF_ADJUST|BF_MIDDLE);
 
     /* now draw text */
     if (text) {
-      int oldbkmode = SetBkMode32(hdc, TRANSPARENT);
+      int oldbkmode = SetBkMode32 (hdc, TRANSPARENT);
       r.left += 3;
-      DrawText32A(hdc, text, lstrlen32A(text),
-		  &r, DT_LEFT|DT_VCENTER|DT_SINGLELINE);  
+      DrawText32A (hdc, text, lstrlen32A(text),
+		   &r, DT_LEFT|DT_VCENTER|DT_SINGLELINE);  
       if (oldbkmode != TRANSPARENT)
 	SetBkMode32(hdc, oldbkmode);
     }
-    
 }
 
+
 /***********************************************************************
- *           DrawStatusText32W   (COMCTL32.28)
+ * DrawStatusText32W [COMCTL32.28]
  */
 void WINAPI DrawStatusText32W( HDC32 hdc, LPRECT32 lprc, LPCWSTR text,
                                UINT32 style )
@@ -54,6 +70,7 @@ void WINAPI DrawStatusText32W( HDC32 hdc, LPRECT32 lprc, LPCWSTR text,
   DrawStatusText32A(hdc, lprc, p, style);
   HeapFree( GetProcessHeap(), 0, p );         
 }
+
 
 /***********************************************************************
  * CreateStatusWindow32A [COMCTL32.6][COMCTL32.21]
@@ -66,6 +83,7 @@ HWND32 WINAPI CreateStatusWindow32A( INT32 style, LPCSTR text, HWND32 parent,
 			   CW_USEDEFAULT32, CW_USEDEFAULT32, 
 			   parent, wid, 0, 0);
 }
+
 
 /***********************************************************************
  *           CreateStatusWindow32W   (COMCTL32.22)
@@ -102,8 +120,14 @@ HWND32 WINAPI CreateUpDownControl( DWORD style, INT32 x, INT32 y,
 /***********************************************************************
  * InitCommonControls [COMCTL32.17]
  *
+ * Registers the common controls.
  *
+ * PARAMS
+ *     None.
  *
+ * NOTES
+ *     Calls InitCommonControlsEx.
+ *     InitCommonControlsEx should be used instead.
  */
 
 VOID WINAPI
@@ -121,8 +145,10 @@ InitCommonControls (VOID)
 /***********************************************************************
  * InitCommonControlsEx [COMCTL32.81]
  *
+ * Registers the common controls.
  *
- *
+ * PARAMS
+ *     lpInitCtrls [I] pointer to a INITCOMMONCONTROLS structure.
  */
 
 BOOL32 WINAPI
@@ -141,25 +167,25 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
 
     switch (lpInitCtrls->dwICC & dwMask) {
       case ICC_LISTVIEW_CLASSES:
-        TRACE (commctrl, "No listview class implemented!\n");
-        HEADER_Register();
+        LISTVIEW_Register ();
+        HEADER_Register ();
         break;
 
       case ICC_TREEVIEW_CLASSES:
-        TRACE (commctrl, "No treeview class implemented!\n");
-        TRACE (commctrl, "No tooltip class implemented!\n");
+        TREEVIEW_Register ();
+	TOOLTIPS_Register ();
         break;
 
       case ICC_BAR_CLASSES:
 	TOOLBAR_Register ();
 	STATUS_Register ();
-        TRACE (commctrl, "No trackbar class implemented!\n");
-        TRACE (commctrl, "No tooltip class implemented!\n");
+	TRACKBAR_Register ();
+	TOOLTIPS_Register ();
         break;
 
       case ICC_TAB_CLASSES:
         TRACE (commctrl, "No tab class implemented!\n");
-        TRACE (commctrl, "No tooltip class implemented!\n");
+	TOOLTIPS_Register ();
         UPDOWN_Register ();
         break;
 
@@ -192,7 +218,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
         break;
 
       case ICC_COOL_CLASSES:
-        TRACE (commctrl, "No rebar class implemented!\n");
+	REBAR_Register ();
         break;
 
       case ICC_INTERNET_CLASSES:
@@ -200,7 +226,7 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
         break;
 
       case ICC_PAGESCROLLER_CLASS:
-        TRACE (commctrl, "No page scroller class implemented!\n");
+	PAGER_Register ();
         break;
 
       case ICC_NATIVEFNTCTL_CLASS:
@@ -220,9 +246,14 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
 /***********************************************************************
  * MenuHelp [COMCTL32.2]
  *
- *
- *
- *
+ * PARAMS
+ *     uMsg
+ *     wParam
+ *     lParam
+ *     hMainMenu
+ *     hInst
+ *     hwndStatus
+ *     lpwIDs
  */
 
 VOID WINAPI
@@ -244,7 +275,7 @@ MenuHelp (UINT32 uMsg, WPARAM32 wParam, LPARAM lParam, HMENU32 hMainMenu,
             }
             else {
                 if (HIWORD(wParam) & MF_POPUP) {
-                    TRACE (commctrl, "popup menu selected!\n");
+		    FIXME (commctrl, "popup 0x%08x 0x%08lx\n", wParam, lParam);
 
                     szStatusText[0] = 0;
                 }
@@ -289,16 +320,25 @@ CreateToolbarEx (HWND32 hwnd, DWORD style, UINT32 wID, INT32 nBitmaps,
 			(WPARAM32)uStructSize, 0);
 
 	/* set bitmap and button size */
+	SendMessage32A (hwndTB, TB_SETBITMAPSIZE, 0,
+			MAKELPARAM((WORD)dyBitmap, (WORD)dxBitmap));
+#if 0
+	SendMessage32A (hwndTB, TB_SETBUTTONSIZE, 0,
+			MAKELONG((WORD)dyButton, (WORD)dxButton));
+#endif
 
 	/* add bitmaps */
-	tbab.hInst = hBMInst;
-	tbab.nID   = wBMID;
-	SendMessage32A (hwndTB, TB_ADDBITMAP,
-			(WPARAM32)nBitmaps, (LPARAM)&tbab);
+	if (nBitmaps > 0) {
+	    tbab.hInst = hBMInst;
+	    tbab.nID   = wBMID;
+	    SendMessage32A (hwndTB, TB_ADDBITMAP,
+			    (WPARAM32)nBitmaps, (LPARAM)&tbab);
+	}
 
 	/* add buttons */
-	SendMessage32A (hwndTB, TB_ADDBUTTONS32A,
-			(WPARAM32)iNumButtons, (LPARAM)lpButtons);
+	if (iNumButtons > 0)
+	    SendMessage32A (hwndTB, TB_ADDBUTTONS32A,
+			    (WPARAM32)iNumButtons, (LPARAM)lpButtons);
     }
 
     return hwndTB;
@@ -308,22 +348,100 @@ CreateToolbarEx (HWND32 hwnd, DWORD style, UINT32 wID, INT32 nBitmaps,
 /***********************************************************************
  * CreateMappedBitmap [COMCTL32.8]
  *
- *
- *
+ * PARAMS
+ *     hInstance
+ *     idBitmap
+ *     wFlags
+ *     lpColorMap
+ *     iNumMaps
  */
 
 HBITMAP32 WINAPI
 CreateMappedBitmap (HINSTANCE32 hInstance, INT32 idBitmap, UINT32 wFlags,
 		    LPCOLORMAP lpColorMap, INT32 iNumMaps)
 {
+    HGLOBAL32 hglb;
+    HRSRC32 hRsrc;
+    LPBITMAPINFOHEADER lpBitmap, lpBitmapInfo;
+    UINT32 nSize, nColorTableSize;
+    DWORD *pColorTable;
+    INT32 iColor, i, iMaps, nWidth, nHeight;
+    HDC32 hdcScreen;
     HBITMAP32 hbm;
+    LPCOLORMAP sysColorMap;
+    COLORMAP internalColorMap[4] =
+	{{0x000000, 0}, {0x808080, 0}, {0xC0C0C0, 0}, {0xFFFFFF, 0}};
 
-    FIXME (commctrl, "semi-stub!\n");
+    /* initialize pointer to colortable and default color table */
+    if (lpColorMap) {
+	iMaps = iNumMaps;
+	sysColorMap = lpColorMap;
+    }
+    else {
+	internalColorMap[0].to = GetSysColor32 (COLOR_BTNTEXT);
+	internalColorMap[1].to = GetSysColor32 (COLOR_BTNSHADOW);
+	internalColorMap[2].to = GetSysColor32 (COLOR_BTNFACE);
+	internalColorMap[3].to = GetSysColor32 (COLOR_BTNHIGHLIGHT);
+	iMaps = 4;
+	sysColorMap = (LPCOLORMAP)internalColorMap;
+    }
 
-    hbm = LoadBitmap32A (hInstance, MAKEINTRESOURCE32A(idBitmap));
+    hRsrc = FindResource32A (hInstance, (LPSTR)idBitmap, RT_BITMAP32A);
+    if (hRsrc == NULL)
+	return NULL;
+    hglb = LoadResource32 (hInstance, hRsrc);
+    if (hglb == NULL)
+	return NULL;
+    lpBitmap = (LPBITMAPINFOHEADER)LockResource32 (hglb);
+    if (lpBitmap == NULL)
+	return NULL;
+
+    nColorTableSize = (1 << lpBitmap->biBitCount);
+    nSize = lpBitmap->biSize + nColorTableSize * sizeof(RGBQUAD);
+    lpBitmapInfo = (LPBITMAPINFOHEADER)GlobalAlloc32 (GMEM_FIXED, nSize);
+    if (lpBitmapInfo == NULL)
+	return NULL;
+    RtlMoveMemory (lpBitmapInfo, lpBitmap, nSize);
+
+    pColorTable = (DWORD*)(((LPBYTE)lpBitmapInfo)+(UINT32)lpBitmapInfo->biSize);
+
+    for (iColor = 0; iColor < nColorTableSize; iColor++) {
+	for (i = 0; i < iMaps; i++) {
+	    if (pColorTable[iColor] == sysColorMap[i].from) {
+#if 0
+		if (wFlags & CBS_MASKED) {
+		    if (sysColorMap[i].to != COLOR_BTNTEXT)
+			pColorTable[iColor] = RGB(255, 255, 255);
+		}
+		else
+#endif
+		    pColorTable[iColor] = sysColorMap[i].to;
+		break;
+	    }
+	}
+    }
+
+    nWidth  = (INT32)lpBitmapInfo->biWidth;
+    nHeight = (INT32)lpBitmapInfo->biHeight;
+    hdcScreen = GetDC32 (NULL);
+    hbm = CreateCompatibleBitmap32 (hdcScreen, nWidth, nHeight);
+    if (hbm) {
+	HDC32 hdcDst = CreateCompatibleDC32 (hdcScreen);
+	HBITMAP32 hbmOld = SelectObject32 (hdcDst, hbm);
+	LPBYTE lpBits = (LPBYTE)(lpBitmap + 1);
+	lpBits += (1 << (lpBitmapInfo->biBitCount)) * sizeof(RGBQUAD);
+	StretchDIBits32 (hdcDst, 0, 0, nWidth, nHeight, 0, 0, nWidth, nHeight,
+		         lpBits, (LPBITMAPINFO)lpBitmapInfo, DIB_RGB_COLORS,
+		         SRCCOPY);
+	SelectObject32 (hdcDst, hbmOld);
+	DeleteDC32 (hdcDst);
+    }
+    ReleaseDC32 (NULL, hdcScreen);
+    GlobalFree32 ((HGLOBAL32)lpBitmapInfo);
+    FreeResource32 (hglb);
 
     return hbm;
- }
+}
 
 
 /***********************************************************************
@@ -358,28 +476,61 @@ CreateToolbar (HWND32 hwnd, DWORD style, UINT32 wID, INT32 nBitmaps,
 VOID WINAPI
 GetEffectiveClientRect (HWND32 hwnd, LPRECT32 lpRect, LPINT32 lpInfo)
 {
-    RECT32 rcClient, rcCtrl;
-    INT32  idCtrl, *lpRun;
+    RECT32 rcCtrl;
+    INT32  *lpRun;
+    HWND32 hwndCtrl;
 
-    TRACE (commctrl, "hwnd=0x%08lx lpRect=0x%08lx lpInfo=0x%08lx\n",
+    TRACE (commctrl, "(0x%08lx 0x%08lx 0x%08lx)\n",
 	   (DWORD)hwnd, (DWORD)lpRect, (DWORD)lpInfo);
 
-    GetClientRect32 (hwnd, &rcClient);
-#if 0
+    GetClientRect32 (hwnd, lpRect);
     lpRun = lpInfo;
 
     do {
-	lpRun += 3;
-	idCtrl = *lpRun;
-	if (idCtrl) {
-	    TRACE (commctrl, "control id 0x%x\n", idCtrl);
-	    GetWindowRect32 (GetDlgItem32 (hwnd, idCtrl), &rcCtrl);
+	lpRun += 2;
+	if (*lpRun == 0)
+	    return;
+	lpRun++;
+	hwndCtrl = GetDlgItem32 (hwnd, *lpRun);
+	if (GetWindowLong32A (hwndCtrl, GWL_STYLE) & WS_VISIBLE) {
+	    TRACE (commctrl, "control id 0x%x\n", *lpRun);
+	    GetWindowRect32 (hwndCtrl, &rcCtrl);
 	    MapWindowPoints32 (NULL, hwnd, (LPPOINT32)&rcCtrl, 2);
-	    SubtractRect32 (&rcClient, &rcClient, &rcCtrl);
-	    lpRun++;
+	    SubtractRect32 (lpRect, lpRect, &rcCtrl);
 	}
-    } while (idCtrl);
+	lpRun++;
+    } while (*lpRun);
+}
+
+
+/***********************************************************************
+ * ShowHideMenuCtl [COMCTL32.3]
+ *
+ * PARAMS
+ *     hwnd   [I] handle to the client window.
+ *     uFlags [I] menu command id
+ *     lpInfo [I] pointer to an array of integers
+ *
+ * NOTES
+ */
+
+BOOL32 WINAPI
+ShowHideMenuCtl (HWND32 hwnd, UINT32 uFlags, LPINT32 lpInfo)
+{
+    FIXME (commctrl, "(0x%08x 0x%08x %p): empty stub!\n",
+	   hwnd, uFlags, lpInfo);
+#if 0
+    if (GetMenuState (lpInfo[1], uFlags, MF_BYCOMMAND) & MFS_CHECKED) {
+	/* checked -> hide control */
+
+    }
+    else {
+	/* not checked -> show control */
+
+    }
+
 #endif
-    CopyRect32 (lpRect, &rcClient);
+
+    return FALSE;
 }
 

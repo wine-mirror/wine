@@ -10,7 +10,7 @@
  *      ILD_TRANSPARENT error in ImageList_DrawIndirect).
  *    - Fix drag functions.
  *    - Fix ImageList_Read and ImageList_Write.
- *    - Add ImageList_SetFilter (undocumented).
+ *    - Fix ImageList_SetFilter (undocumented).
  *      BTW does anybody know anything about this function???
  *        - It removes 12 Bytes from the stack (3 Parameters).
  *        - First parameter SHOULD be a HIMAGELIST.
@@ -31,10 +31,7 @@
  */
 #define __WINE_IMAGELIST_C
  
-/* This must be defined until "GetIconInfo" is implemented completely.
- * To do that the cursor and icon code in objects/cursoricon.c must
- * be rewritten.
- */
+/* This must be defined until "GetIconInfo" is not fully implemented. */
 #define __GET_ICON_INFO_HACK__ 
  
 #include "windows.h"
@@ -1446,21 +1443,23 @@ ImageList_LoadImage32A (HINSTANCE32 hi, LPCSTR lpbmp, INT32 cx,	INT32 cGrow,
                                    ptr->bBitsPerPixel,
                                    (char *)(ptr + 1) + ptr->nHeight * 
                                    BITMAP_WIDTH_BYTES(ptr->nWidth, 1));
+        GlobalUnlock16 (handle);
         himl = ImageList_Create (ptr->nWidth, ptr->nHeight,
                                  ILC_MASK | ILC_COLOR, 1, cGrow);
         ImageList_Add (himl, hbmImage, hbmMask);
         DeleteObject32 (hbmImage);
         DeleteObject32 (hbmMask);
-        GlobalUnlock16 (handle);
 #else
         ICONINFO32 ii;
         BITMAP32 bmp;
 
         GetIconInfo (hIcon, &ii);
-        GetObject32A (ii->hbmMask, sizeof(BITMAP32), (LPVOID)&bmp);
+        GetObject32A (ii->hbmColor, sizeof(BITMAP32), (LPVOID)&bmp);
         himl = ImageList_Create (bmp.bmWidth, bmp.bmHeight, 
                                  ILC_MASK | ILC_COLOR, 1, cGrow);
         ImageList_Add (himl, ii->hbmColor, ii->hbmMask);
+        DeleteObject32 (ii->hbmColor);
+        DeleteObject32 (ii->hbmMask);
 #endif
     }
 
@@ -1543,6 +1542,8 @@ ImageList_LoadImage32W (HINSTANCE32 hi, LPCWSTR lpbmp, INT32 cx, INT32 cGrow,
         himl = ImageList_Create (bmp.bmWidth, bmp.bmHeight, 
                                  ILC_MASK | ILC_COLOR, 1, cGrow);
         ImageList_Add (himl, ii->hbmColor, ii->hbmMask);
+        DeleteObject32 (ii->hbmColor);
+        DeleteObject32 (ii->hbmMask);
 #endif
     }
 
@@ -1915,6 +1916,8 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT32 i, HICON32 hIcon)
     BITMAP32 bmp;
 #endif
 
+    TRACE (imagelist, "(0x%x 0x%x 0x%x)\n", himl, i, hIcon);
+
     if (himl == NULL) return (-1);
     if ((i >= himl->cCurImage) || (i < -1)) return (-1);
 
@@ -1922,10 +1925,14 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT32 i, HICON32 hIcon)
     if (!(ptr = (CURSORICONINFO *)GlobalLock16(hIcon))) return (-1);
     hbmMask  = CreateBitmap32 (ptr->nWidth, ptr->nHeight, 1, 1, 
                                (char *)(ptr + 1));
+    if (!(hbmMask))
+	ERR (imagelist, " no mask!\n");
     hbmImage = CreateBitmap32 (ptr->nWidth, ptr->nHeight, ptr->bPlanes,
                                ptr->bBitsPerPixel,
                                (char *)(ptr + 1) + ptr->nHeight * 
                                BITMAP_WIDTH_BYTES(ptr->nWidth, 1));
+    if (!(hbmMask))
+	ERR (imagelist, " no image!\n");
 #else
     GetIconInfo (hIcon, &ii);
     GetObject32A (ii->hbmMask, sizeof(BITMAP32), (LPVOID)&bmp);
@@ -1970,10 +1977,13 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT32 i, HICON32 hIcon)
 
     DeleteDC32 (hdcImageList);
     DeleteDC32 (hdcImage);
-#ifdef __GET_ICON_INFO_HACK        
+#ifdef __GET_ICON_INFO_HACK__
     DeleteObject32 (hbmImage);
     DeleteObject32 (hbmMask);
     GlobalUnlock16 (hIcon);
+#else
+    DeleteObject32 (ii->hbmColor);
+    DeleteObject32 (ii->hbmMask);
 #endif
     return (nIndex);
 }
@@ -2071,15 +2081,14 @@ ImageList_SetDragCursorImage (HIMAGELIST himlDrag, INT32 iDrag,
  *     empty stub.
  */
 
-#if 0
 BOOL32 WINAPI
 ImageList_SetFilter (HIMAGELIST himl, INT32 i, DWORD dwFilter)
 {
-    FIXME (imagelist, "empty stub!\n");
+    FIXME (imagelist, "(%p 0x%08x 0x%08x):empty stub!\n",
+	   himl, i, dwFilter);
 
-
+    return FALSE;
 }
-#endif /* 0 */
 
 
 /*************************************************************************

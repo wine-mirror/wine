@@ -2,7 +2,7 @@
  * Program Manager
  *
  * Copyright 1996 Ulrich Schmid
- * French Fr.rc by Pablo Saratxaga <srtxg@linux.chanae.stben.be>
+ * French Fr.rc by Pablo Saratxaga <srtxg@chanae.alphanet.ch>
  */
 
 #define LANGUAGE_ID                  Fr

@@ -2,6 +2,9 @@
 #define __WINE_DDRAW_H
 
 #include "ts_xlib.h"
+#ifdef HAVE_LIBXXSHM
+#include "ts_xshm.h"
+#endif
 
 #ifndef	DIRECTDRAW_VERSION
 #define	DIRECTDRAW_VERSION	0x0500
@@ -869,21 +872,34 @@ FAR * ) PURE;
     STDMETHOD(WaitForVerticalBlank)(THIS_ DWORD, HANDLE32 ) PURE;
 } *LPDIRECTDRAW_VTABLE,IDirectDraw_VTable;
 
-struct _directdrawdata {
+struct _common_directdrawdata {
     DWORD			depth;
-    DWORD			vp_width,vp_height; /* viewport dimension */
     DWORD			height,width;	/* SetDisplayMode */
-    DWORD			fb_width,fb_height,fb_banksize,fb_memsize;
     HWND32			mainwindow;
+};
+
+struct _dga_directdrawdata {
+    DWORD			fb_width,fb_height,fb_banksize,fb_memsize;
     void			*fb_addr;
     unsigned int		vpmask;
 };
 
+struct _xlib_directdrawdata {
+    Window		drawable;
+    /* are these needed for anything? (draw_surf is the active surface)
+       IDirectDrawSurface	*surfs;
+       DWORD		num_surfs, alloc_surfs, draw_surf; */
+};
 
 struct IDirectDraw {
 	LPDIRECTDRAW_VTABLE	lpvtbl;
 	DWORD			ref;
-	struct _directdrawdata	d;
+	struct _common_directdrawdata d;
+	union {
+		struct _xlib_directdrawdata xlib;
+		struct _xlib_directdrawdata xshm;
+		struct _dga_directdrawdata  dga;
+	} e;
 };
 #undef THIS
 
@@ -932,19 +948,41 @@ FAR * ) PURE;
 /* MUST HAVE THE SAME LAYOUT AS struct IDirectDraw */
 
 struct IDirectDraw2 {
-    LPDIRECTDRAW2_VTABLE	lpvtbl;
-    DWORD			ref;
-    struct _directdrawdata	d;
+	LPDIRECTDRAW2_VTABLE	lpvtbl;
+	DWORD			ref;
+	struct _common_directdrawdata	d;
+	union {
+		struct _xlib_directdrawdata xlib;
+		/* only different in image create&put */
+		struct _xlib_directdrawdata xshm;
+		struct _dga_directdrawdata dga;
+	} e;
 };
 #undef THIS
 
 #define THIS LPDIRECTDRAWSURFACE this
-struct _directdrawsurface {
-    LPVOID		surface;
+struct _common_directdrawsurface {
     LPDIRECTDRAWPALETTE	palette;
-    DWORD		fb_height,lpitch,width,height;
     LPDIRECTDRAW	ddraw;
     LPDIRECTDRAWSURFACE	backbuffer;
+    LPVOID		surface;
+    DWORD		lpitch,width,height;
+};
+
+struct _dga_directdrawsurface {
+    DWORD		fb_height;
+};
+
+struct _xshm_directdrawsurface {
+    XImage		*image;
+    BOOL32		surface_is_image_data;
+#ifdef HAVE_LIBXXSHM
+    XShmSegmentInfo	shminfo;
+#endif
+};
+struct _xlib_directdrawsurface {
+    XImage		*image;
+    BOOL32		surface_is_image_data;
 };
 
 typedef struct IDirectDrawSurface_VTable {
@@ -990,7 +1028,12 @@ typedef struct IDirectDrawSurface_VTable {
 struct IDirectDrawSurface {
     LPDIRECTDRAWSURFACE_VTABLE	lpvtbl;
     DWORD			ref;
-    struct _directdrawsurface	s;
+    struct _common_directdrawsurface	s;
+    union {
+	struct _dga_directdrawsurface	dga;
+	struct _xshm_directdrawsurface	xshm;
+	struct _xlib_directdrawsurface	xlib;
+    } t;
 };
 #undef THIS
 #define THIS LPDIRECTDRAWSURFACE2 this
@@ -1007,7 +1050,8 @@ typedef struct IDirectDrawSurface2_VTable {
     STDMETHOD(BltBatch)(THIS_ LPDDBLTBATCH, DWORD, DWORD ) PURE;
     STDMETHOD(BltFast)(THIS_ DWORD,DWORD,LPDIRECTDRAWSURFACE2, LPRECT32,DWORD) PURE;
     STDMETHOD(DeleteAttachedSurface)(THIS_ DWORD,LPDIRECTDRAWSURFACE2) PURE;
-    STDMETHOD(EnumAttachedSurfaces)(THIS_ LPVOID,LPDDENUMSURFACESCALLBACK) PURE;    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD,LPVOID,LPDDENUMSURFACESCALLBACK) PURE;
+    STDMETHOD(EnumAttachedSurfaces)(THIS_ LPVOID,LPDDENUMSURFACESCALLBACK) PURE;
+    STDMETHOD(EnumOverlayZOrders)(THIS_ DWORD,LPVOID,LPDDENUMSURFACESCALLBACK) PURE;
     STDMETHOD(Flip)(THIS_ LPDIRECTDRAWSURFACE2, DWORD) PURE;
     STDMETHOD(GetAttachedSurface)(THIS_ LPDDSCAPS, LPDIRECTDRAWSURFACE2 FAR *) PURE;
     STDMETHOD(GetBltStatus)(THIS_ DWORD) PURE;
@@ -1042,7 +1086,12 @@ typedef struct IDirectDrawSurface2_VTable {
 struct IDirectDrawSurface2 {
     LPDIRECTDRAWSURFACE2_VTABLE	lpvtbl;
     DWORD			ref;
-    struct _directdrawsurface	s;
+    struct _common_directdrawsurface	s;
+    union {
+	struct _dga_directdrawsurface	dga;
+	struct _xlib_directdrawsurface	xshm;
+	struct _xlib_directdrawsurface	xlib;
+    } t;
 };
 #undef THIS
 #define THIS LPDIRECTDRAWSURFACE3 this
@@ -1097,7 +1146,12 @@ typedef struct IDirectDrawSurface3_VTable {
 struct IDirectDrawSurface3 {
     LPDIRECTDRAWSURFACE3_VTABLE	lpvtbl;
     DWORD			ref;
-    struct _directdrawsurface	s;
+    struct _common_directdrawsurface	s;
+    union {
+	struct _dga_directdrawsurface	dga;
+	struct _xlib_directdrawsurface	xshm;
+	struct _xlib_directdrawsurface	xlib;
+    } t;
 };
 #undef THIS
 

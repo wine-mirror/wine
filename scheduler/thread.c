@@ -14,6 +14,7 @@
 #include "selectors.h"
 #include "miscemu.h"
 #include "winnt.h"
+#include "server.h"
 #include "debug.h"
 
 #ifndef __i386__
@@ -152,6 +153,7 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
     thdb->exit_code       = 0x103; /* STILL_ACTIVE */
     thdb->entry_point     = start_addr;
     thdb->entry_arg       = param;
+    thdb->socket          = -1;
 
     /* Allocate the stack */
 
@@ -199,6 +201,10 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
 
     if (!(thdb->event = EVENT_Create( TRUE, FALSE ))) goto error;
 
+    /* Create the thread socket */
+
+    if (CLIENT_NewThread( thdb )) goto error;
+
     /* Initialize the thread context */
 
     GET_CS(cs);
@@ -216,6 +222,7 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size, BOOL32 alloc_stack16,
     return thdb;
 
 error:
+    if (thdb->socket != -1) close( thdb->socket );
     if (thdb->event) K32OBJ_DecCount( thdb->event );
     if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
     if (thdb->teb_sel) SELECTOR_FreeBlock( thdb->teb_sel, 1 );
@@ -299,6 +306,7 @@ static void THREAD_Destroy( K32OBJ *ptr )
         }
     }
 #endif
+    close( thdb->socket );
     K32OBJ_DecCount( thdb->event );
     SELECTOR_FreeBlock( thdb->teb_sel, 1 );
     if (thdb->teb.stack_sel) SELECTOR_FreeBlock( thdb->teb.stack_sel, 1 );
@@ -314,7 +322,7 @@ HANDLE32 WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                               LPTHREAD_START_ROUTINE start, LPVOID param,
                               DWORD flags, LPDWORD id )
 {
-    HANDLE32 handle;
+    HANDLE32 handle = INVALID_HANDLE_VALUE32;
     BOOL32 inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
 
     THDB *thread = THREAD_Create( PROCESS_Current(), stack,
@@ -328,6 +336,7 @@ HANDLE32 WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
     return handle;
 
 error:
+    if (handle != INVALID_HANDLE_VALUE32) CloseHandle( handle );
     K32OBJ_DecCount( &thread->header );
     return INVALID_HANDLE_VALUE32;
 }

@@ -82,7 +82,7 @@ UINT32 WINAPI GetEnhMetaFileDescription32A(
 }
 
 /*****************************************************************************
- *          GetEnhMetaFileDescription32W  (GDI32.xxx)
+ *          GetEnhMetaFileDescription32W  (GDI32.177)
  *
  *  Copies the description string of an enhanced metafile into a buffer 
  *  _buf_.
@@ -142,10 +142,8 @@ UINT32 WINAPI GetEnhMetaFileBits(
  *    Many unimplemented records.
  */
 BOOL32 WINAPI PlayEnhMetaFileRecord( 
-     HDC32 hdc, 
-     /* device context in which to render EMF record */
-     LPHANDLETABLE32 handletable, 
-     /* array of handles to be used in rendering record */
+     HDC32 hdc, /* device context in which to render EMF record */
+     LPHANDLETABLE32 handletable, /* array of handles to be used in rendering record */
      const ENHMETARECORD *mr, /* EMF record to render */
      UINT32 handles  /* size of handle array */
      ) 

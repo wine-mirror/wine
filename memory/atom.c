@@ -144,6 +144,11 @@ static WORD ATOM_Hash(
 /***********************************************************************
  *           ATOM_AddAtom
  *
+ * Windows DWORD aligns the atom entry size.
+ * The remaining unused string space created by the alignment
+ * gets padded with '\0's in a certain way to ensure
+ * that at least one trailing '\0' remains.
+ *
  * RETURNS
  *	Atom: Success
  *	0: Failure
@@ -156,7 +161,7 @@ static ATOM ATOM_AddAtom(
     HANDLE16 entry;
     ATOMENTRY * entryPtr;
     ATOMTABLE * table;
-    int len;
+    int len, ae_len;
 
     if (str[0] == '#') return atoi( &str[1] );  /* Check for integer atom */
     if ((len = strlen( str )) > MAX_ATOM_LEN) len = MAX_ATOM_LEN;
@@ -175,7 +180,8 @@ static ATOM ATOM_AddAtom(
 	entry = entryPtr->next;
     }
 
-    entry = LOCAL_Alloc( selector, LMEM_FIXED, sizeof(ATOMENTRY)+len-1 );
+    ae_len = (sizeof(ATOMENTRY)+len+3) & ~3;
+    entry = LOCAL_Alloc( selector, LMEM_FIXED, ae_len);
     if (!entry) return 0;
     /* Reload the table ptr in case it moved in linear memory */
     table = ATOM_GetTable( selector, FALSE );
@@ -183,7 +189,7 @@ static ATOM ATOM_AddAtom(
     entryPtr->next = table->entries[hash];
     entryPtr->refCount = 1;
     entryPtr->length = len;
-    memcpy( entryPtr->str, str, len );
+    strncpy( entryPtr->str, str, ae_len - sizeof(ATOMENTRY) + 1); /* always use strncpy ('\0's padding) */
     table->entries[hash] = entry;
     return HANDLETOATOM( entry );
 }

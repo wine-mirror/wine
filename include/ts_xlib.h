@@ -20,6 +20,7 @@ extern void  TSXrmInitialize(void);
 extern char * TSXGetAtomName(Display*, Atom);
 extern char * TSXKeysymToString(KeySym);
 extern Atom  TSXInternAtom(Display*, const  char*, int);
+extern Colormap  TSXCopyColormapAndFree(Display*, Colormap);
 extern Colormap  TSXCreateColormap(Display*, Window, Visual*, int);
 extern Cursor  TSXCreatePixmapCursor(Display*, Pixmap, Pixmap, XColor*, XColor*, unsigned int, unsigned int);
 extern Cursor  TSXCreateFontCursor(Display*, unsigned int);

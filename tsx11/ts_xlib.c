@@ -105,6 +105,17 @@ Atom  TSXInternAtom(Display* a0, const  char* a1, int a2)
   return r;
 }
 
+Colormap  TSXCopyColormapAndFree(Display* a0, Colormap a1)
+{
+  Colormap  r;
+  TRACE(x11, "Call XCopyColormapAndFree\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XCopyColormapAndFree(a0, a1);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE(x11, "Ret XCopyColormapAndFree\n");
+  return r;
+}
+
 Colormap  TSXCreateColormap(Display* a0, Window a1, Visual* a2, int a3)
 {
   Colormap  r;

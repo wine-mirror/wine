@@ -22,8 +22,8 @@ type	win16
  38 pascal   FindEnvironmentString(ptr) FindEnvironmentString
  39 pascal16 InternalExtractIcon(word ptr s_word word) InternalExtractIcon
  40 stub ExtractIconEx
- 98 stub SHL3216_THUNKDATA16
- 99 stub SHL1632_THUNKDATA16
+# 98 stub SHL3216_THUNKDATA16
+# 99 stub SHL1632_THUNKDATA16
 
 #100   4  0550  HERETHARBETYGARS exported, shared data
 #101   8  010e  FINDEXEDLGPROC exported, shared data

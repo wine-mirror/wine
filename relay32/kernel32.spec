@@ -626,7 +626,7 @@ type	win32
 609 register SUnMapLS_IP_EBP_36() SUnMapLS_IP_EBP_36
 610 register SUnMapLS_IP_EBP_40() SUnMapLS_IP_EBP_40
 611 register SUnMapLS_IP_EBP_8() SUnMapLS_IP_EBP_8
-612 stub ScrollConsoleScreenBufferA
+612 stdcall ScrollConsoleScreenBufferA(long ptr ptr ptr ptr) ScrollConsoleScreenBuffer
 613 stub ScrollConsoleScreenBufferW
 614 stdcall SearchPathA(str str str long ptr ptr) SearchPath32A
 615 stdcall SearchPathW(wstr wstr wstr long ptr ptr) SearchPath32W
@@ -694,11 +694,11 @@ type	win32
 677 stdcall SetupComm(long long long) SetupComm
 678 stdcall SizeofResource(long long) SizeofResource32
 679 stdcall Sleep(long) Sleep
-680 stub SleepEx
+680 stdcall SleepEx(long long) SleepEx
 681 stdcall SuspendThread(long) SuspendThread
 682 stdcall SystemTimeToFileTime(ptr ptr) SystemTimeToFileTime
 683 stub SystemTimeToTzSpecificLocalTime
-684 stub TerminateProcess
+684 stdcall TerminateProcess(ptr long) TerminateProcess
 685 stdcall TerminateThread(long long) TerminateThread
 686 stub Thread32First
 687 stub Thread32Next

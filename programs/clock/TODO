@@ -5,9 +5,6 @@ Some ideas for improvements:
 - Make "Without Titlebar", Double-clicking the clock should reveal the caption
   again.
 
-- Move the "Without Titlebar" into the System Menu (as in Windows)
-  (Does not work probably due to Winelib)
-
 - Font Handling of Digital Clock.
   (Does not work probably due to Winelib)
 
@@ -17,6 +14,8 @@ Some ideas for improvements:
 - Fix English translation by comparing strings from an original English
   Windows Clock application (I only have a German version).
 
-- Add new .rc resources for all languages you know.
+- Add new .rc resources for all languages you know. That's in fact very easy. 
+  Just clone the file En.rc, change the strings and submit it. You can find
+  my email address in the README file.
 
 Please don't forget a ChangeLog entry.

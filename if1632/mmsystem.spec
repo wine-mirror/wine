@@ -134,7 +134,7 @@ type	win16
 900    pascal  mmTaskCreate(ptr long long) mmTaskCreate16
 902    stub    MMTASKBLOCK
 903    pascal  mmTaskSignal(word) mmTaskSignal16
-904    stub    MMGETCURRENTTASK
+904    pascal  mmGetCurrentTask() WIN16_GetCurrentTask #just the same
 905    stub    MMTASKYIELD
 1100   pascal  DRVOPEN(str str long) DrvOpen
 1101   pascal  DRVCLOSE(word long long) DrvClose

@@ -123,7 +123,26 @@ typedef struct _TDB
 #define USIG_DLL_UNLOAD		0x0080
 #define USIG_GPF		0x0666
 
+
+  /* THHOOK Kernel Data Structure */
+typedef struct _THHOOK
+{
+    HANDLE16   hGlobalHeap;         /* 00 (handle BURGERMASTER) */
+    WORD       pGlobalHeap;         /* 02 (selector BURGERMASTER) */
+    HMODULE16  hExeHead;            /* 04 hFirstModule */
+    HMODULE16  hExeSweep;           /* 06 (unused) */
+    HANDLE16   TopPDB;              /* 08 (handle of KERNEL PDB) */
+    HANDLE16   HeadPDB;             /* 0A (first PDB in list) */
+    HANDLE16   TopSizePDB;          /* 0C (unused) */
+    HTASK16    HeadTDB;             /* 0E hFirstTask */
+    HTASK16    CurTDB;              /* 10 hCurrentTask */
+    HTASK16    LoadTDB;             /* 12 (unused) */
+    HTASK16    LockTDB;             /* 14 hLockedTask */
+} THHOOK;
+
 #pragma pack(4)
+
+extern THHOOK *pThhook;
 
 extern HTASK16 TASK_Create( struct _THDB *thdb, struct _NE_MODULE *pModule,
                             HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
@@ -131,5 +150,6 @@ extern HTASK16 TASK_Create( struct _THDB *thdb, struct _NE_MODULE *pModule,
 extern void TASK_KillCurrentTask( INT16 exitCode );
 extern HTASK16 TASK_GetNextTask( HTASK16 hTask );
 extern void TASK_Reschedule(void);
+extern void TASK_InstallTHHook( THHOOK *pNewThook );
 
 #endif /* __WINE_TASK_H */

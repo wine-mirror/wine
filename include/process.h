@@ -101,6 +101,8 @@ typedef struct _PDB32
     DWORD            unknown7;         /* bc Unknown */
     DWORD            unknown8;         /* c0 Unknown (NT) */
     LCID             locale;           /* c4 Locale to be queried by GetThreadLocale (NT) */
+    /* The following are Wine-specific fields */
+    void            *server_pid;       /*    Server id for this process */
 } PDB32;
 
 /* Process flags */
@@ -108,6 +110,7 @@ typedef struct _PDB32
 #define PDB32_DOS_PROC      0x0010  /* Dos process */
 #define PDB32_CONSOLE_PROC  0x0020  /* Console process */
 #define PDB32_FILE_APIS_OEM 0x0040  /* File APIs are OEM */
+#define PDB32_WIN32S_PROC   0x8000  /* Win32s process */
 
 /* PDB <-> Process id conversion macros */
 #define PROCESS_OBFUSCATOR     ((DWORD)0xdeadbeef)

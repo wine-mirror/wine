@@ -146,7 +146,8 @@ BOOL32 K32OBJ_AddName( K32OBJ *obj, LPCSTR name )
         return FALSE;
     }
     entry->next = K32OBJ_FirstEntry;
-    entry->obj = obj;
+    entry->obj  = obj;
+    entry->len  = len;
     lstrcpy32A( entry->name, name );
     K32OBJ_FirstEntry = entry;
     SYSTEM_UNLOCK();

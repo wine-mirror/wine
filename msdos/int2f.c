@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "ldt.h"
 #include "drive.h"
 #include "msdos.h"
@@ -227,6 +228,13 @@ void do_mscdex( CONTEXT *context, int dorealmode )
                 if (DRIVE_GetType(drive) == TYPE_CDROM) *p++ = drive;
             }
             break;
+
+#ifdef linux
+	case 0x10: /* direct driver acces */
+	    do_mscdex_dd(context,dorealmode);
+	    break;
+
+#endif
 
         default:
             FIXME(int, "Unimplemented MSCDEX function 0x%02X.\n", AL_reg(context));

@@ -15,6 +15,7 @@ static int *ph_errno = &h_errno;
 #include <stdio.h>
 #include <unistd.h>
 #include "thread.h"
+#include "server.h"
 #include "winbase.h"
 #include "debug.h"
 
@@ -82,6 +83,7 @@ static void SYSDEPS_StartThread( THDB *thdb )
     LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)thdb->entry_point;
     thdb->unix_pid = getpid();
     SET_FS( thdb->teb_sel );
+    CLIENT_InitThread();
     ExitThread( func( thdb->entry_arg ) );
 }
 #endif  /* __linux__ */
@@ -99,6 +101,8 @@ int SYSDEPS_SpawnThread( THDB *thread )
     if (clone( (int (*)(void *))SYSDEPS_StartThread, thread->teb.stack_top,
                CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, thread ) < 0)
         return -1;
+    /* FIXME: close the child socket in the parent process */
+/*    close( thread->socket );*/
 #else
     FIXME(thread, "CreateThread: stub\n" );
 #endif  /* __linux__ */

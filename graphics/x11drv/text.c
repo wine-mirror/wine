@@ -29,25 +29,28 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
                    const INT32 *lpDx )
 {
     HRGN32		hRgnClip = 0;
-    int 		dir, ascent, descent, i;
+    int 	        i;
     fontObject*		pfo;
-    XCharStruct 	info;
+    INT32	 	width, ascent, descent, xwidth, ywidth;
     XFontStruct*	font;
     RECT32 		rect;
     char		dfBreakChar, lfUnderline, lfStrikeOut;
+    BOOL32		rotated = FALSE;
 
     if (!DC_SetupGCForText( dc )) return TRUE;
 
     pfo = XFONT_GetFontObject( dc->u.x.font );
     font = pfo->fs;
-
+     
+    if (pfo->lf.lfEscapement && pfo->lpX11Trans)
+        rotated = TRUE;
     dfBreakChar = (char)pfo->fi->df.dfBreakChar;
     lfUnderline = (pfo->fo_flags & FO_SYNTH_UNDERLINE) ? 1 : 0;
     lfStrikeOut = (pfo->fo_flags & FO_SYNTH_STRIKEOUT) ? 1 : 0;
 
-    TRACE(text,"hdc=%04x df=%04x %d,%d %s, %d  flags=%d\n",
+    TRACE(text,"hdc=%04x df=%04x %d,%d %s, %d  flags=%d lpDx=%p\n",
 	  dc->hSelf, (UINT16)(dc->u.x.font), x, y,
-	  debugstr_an (str, count), count, flags);
+	  debugstr_an (str, count), count, flags, lpDx);
 
     /* some strings sent here end in a newline for whatever reason.  I have no
        clue what the right treatment should be in general, but ignoring
@@ -112,37 +115,58 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     if (lpDx) /* have explicit character cell x offsets in logical coordinates */
     {
 	int extra = dc->wndExtX / 2;
-        for (i = info.width = 0; i < count; i++) info.width += lpDx[i];
-	info.width = (info.width * dc->vportExtX + extra ) / dc->wndExtX;
+        for (i = width = 0; i < count; i++) width += lpDx[i];
+	width = (width * dc->vportExtX + extra ) / dc->wndExtX;
     }
     else
     {
-	TSXTextExtents( font, str, count, &dir, &ascent, &descent, &info );
-        info.width += count*dc->w.charExtra + dc->w.breakExtra*dc->w.breakCount;
+        SIZE32 sz;
+        if (!X11DRV_GetTextExtentPoint( dc, str, count, &sz ))
+	    return FALSE;
+	width = XLSTODS(dc, sz.cx);
     }
+    ascent = pfo->lpX11Trans ? pfo->lpX11Trans->ascent : font->ascent;
+    descent = pfo->lpX11Trans ? pfo->lpX11Trans->descent : font->descent;
+    xwidth = pfo->lpX11Trans ? width * pfo->lpX11Trans->a /
+      pfo->lpX11Trans->pixelsize : width;
+    ywidth = pfo->lpX11Trans ? width * pfo->lpX11Trans->b /
+      pfo->lpX11Trans->pixelsize : 0;
 
     switch( dc->w.textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) )
     {
       case TA_LEFT:
- 	  if (dc->w.textAlign & TA_UPDATECP)
-	      dc->w.CursPosX = XDPTOLP( dc, x + info.width );
+	  if (dc->w.textAlign & TA_UPDATECP) {
+	      dc->w.CursPosX = XDPTOLP( dc, x + xwidth );
+	      dc->w.CursPosY = YDPTOLP( dc, y - ywidth );
+	  }
 	  break;
       case TA_RIGHT:
-	  x -= info.width;
-	  if (dc->w.textAlign & TA_UPDATECP) dc->w.CursPosX = XDPTOLP( dc, x );
+	  x -= xwidth;
+	  y += ywidth;
+	  if (dc->w.textAlign & TA_UPDATECP) {
+	      dc->w.CursPosX = XDPTOLP( dc, x );
+	      dc->w.CursPosY = YDPTOLP( dc, y );
+	  }
 	  break;
       case TA_CENTER:
-	  x -= info.width / 2;
+	  x -= xwidth / 2;
+	  y += ywidth / 2;
 	  break;
     }
 
     switch( dc->w.textAlign & (TA_TOP | TA_BOTTOM | TA_BASELINE) )
     {
       case TA_TOP:
-	  y += font->ascent;
+	  x -= pfo->lpX11Trans ? ascent * pfo->lpX11Trans->c /
+	    pfo->lpX11Trans->pixelsize : 0;
+	  y += pfo->lpX11Trans ? ascent * pfo->lpX11Trans->d /
+	    pfo->lpX11Trans->pixelsize : ascent;
 	  break;
       case TA_BOTTOM:
-	  y -= font->descent;
+	  x += pfo->lpX11Trans ? descent * pfo->lpX11Trans->c /
+	    pfo->lpX11Trans->pixelsize : 0;
+	  y -= pfo->lpX11Trans ? descent * pfo->lpX11Trans->d /
+	    pfo->lpX11Trans->pixelsize : descent;
 	  break;
       case TA_BASELINE:
 	  break;
@@ -168,16 +192,16 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
               /* text is outside the rectangle */
             if (!(flags & ETO_OPAQUE) ||
                 (x < rect.left) ||
-                (x + info.width >= rect.right) ||
-                (y-font->ascent < rect.top) ||
-                (y+font->descent >= rect.bottom))
+                (x + width >= rect.right) ||
+                (y - ascent < rect.top) ||
+                (y + descent >= rect.bottom))
             {
                 TSXSetForeground( display, dc->u.x.gc, dc->w.backgroundPixel );
                 TSXFillRectangle( display, dc->u.x.drawable, dc->u.x.gc,
                                 dc->w.DCOrgX + x,
-                                dc->w.DCOrgY + y - font->ascent,
-                                info.width,
-                                font->ascent + font->descent );
+                                dc->w.DCOrgY + y - ascent,
+                                width,
+                                ascent + descent );
             }
         }
     }
@@ -187,7 +211,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     TSXSetForeground( display, dc->u.x.gc, dc->w.textPixel );
     if (!dc->w.charExtra && !dc->w.breakExtra && !lpDx)
     {
-      if (!pfo->lf.lfOrientation)  /* angled baseline? */
+      if(!rotated)
       {
         TSXDrawString( display, dc->u.x.drawable, dc->u.x.gc, 
                      dc->w.DCOrgX + x, dc->w.DCOrgY + y, str, count );
@@ -197,18 +221,15 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 	/* have to render character by character. */
 	double offset = 0.0;
 	int i;
-	/* tenths of degrees to radians */
-	double theta = M_PI*pfo->lf.lfOrientation/1800.;
-	/* components of pointsize matrix */
-	double xc = pfo->fi->lfd_decipoints*cos(theta)/10.;
-	double yc = pfo->fi->lfd_decipoints*sin(theta)/10.;
-	
+
 	for(i=0; i<count; i++) {
 	  int char_metric_offset = (unsigned char) str[i] 
 	    - font->min_char_or_byte2;
-	  int x_i = IROUND((double) (dc->w.DCOrgX + x) + offset*xc/1000. );
-	  int y_i = IROUND((double) (dc->w.DCOrgY + y) - offset*yc/1000. );
-	   
+	  int x_i = IROUND((double) (dc->w.DCOrgX + x) + offset *
+			   pfo->lpX11Trans->a / 1000.0 );
+	  int y_i = IROUND((double) (dc->w.DCOrgY + y) - offset *
+			   pfo->lpX11Trans->b / 1000.0 );
+
 	  TSXDrawString( display, dc->u.x.drawable, dc->u.x.gc,
 			 x_i, y_i, &str[i], 1);
 	  offset += (double) (font->per_char ?
@@ -285,7 +306,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 	long linePos, lineWidth;       
 
 	if (!TSXGetFontProperty( font, XA_UNDERLINE_POSITION, &linePos ))
-	    linePos = font->descent-1;
+	    linePos = descent - 1;
 	if (!TSXGetFontProperty( font, XA_UNDERLINE_THICKNESS, &lineWidth ))
 	    lineWidth = 0;
 	else if (lineWidth == 1) lineWidth = 0;
@@ -293,20 +314,20 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 			    LineSolid, CapRound, JoinBevel ); 
         TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc,
 		   dc->w.DCOrgX + x, dc->w.DCOrgY + y + linePos,
-		   dc->w.DCOrgX + x + info.width, dc->w.DCOrgY + y + linePos );
+		   dc->w.DCOrgX + x + width, dc->w.DCOrgY + y + linePos );
     }
     if (lfStrikeOut)
     {
 	long lineAscent, lineDescent;
 	if (!TSXGetFontProperty( font, XA_STRIKEOUT_ASCENT, &lineAscent ))
-	    lineAscent = font->ascent / 2;
+	    lineAscent = ascent / 2;
 	if (!TSXGetFontProperty( font, XA_STRIKEOUT_DESCENT, &lineDescent ))
 	    lineDescent = -lineAscent * 2 / 3;
 	TSXSetLineAttributes( display, dc->u.x.gc, lineAscent + lineDescent,
 			    LineSolid, CapRound, JoinBevel ); 
 	TSXDrawLine( display, dc->u.x.drawable, dc->u.x.gc,
 		   dc->w.DCOrgX + x, dc->w.DCOrgY + y - lineAscent,
-		   dc->w.DCOrgX + x + info.width, dc->w.DCOrgY + y - lineAscent );
+		   dc->w.DCOrgX + x + width, dc->w.DCOrgY + y - lineAscent );
     }
 
     if (flags & ETO_CLIPPED) 
@@ -316,3 +337,4 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     }
     return TRUE;
 }
+

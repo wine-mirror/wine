@@ -80,6 +80,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pPolyPolyline */
     WIN16DRV_Polygon,                /* pPolygon */
     WIN16DRV_Polyline,               /* pPolyline */
+    NULL,                            /* pPolyBezier */
     NULL,                            /* pRealizePalette */
     WIN16DRV_Rectangle,              /* pRectangle */
     NULL,                            /* pRestoreDC */
@@ -175,8 +176,8 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
                              printerEnabled, sizeof(printerEnabled) );
     if (lstrcmpi32A(printerEnabled,"on"))
     {
-        MSG("WIN16DRV_CreateDC disabled in wine.conf file\n");
-	MSG("Enable printing with \"printer=on\"");
+        MSG("Printing disabled in wine.conf or .winerc file\n");
+        MSG("Use \"printer=on\" in the \"[wine]\" section to enable it.");
         return FALSE;
     }
 
@@ -398,14 +399,33 @@ static struct hpq *hpqueue;
 
 HPQ WINAPI CreatePQ(int size) 
 {
+#if 0
+    HGLOBAL16 hpq = 0;
+    WORD tmp_size;
+    LPWORD pPQ;
+
+    tmp_size = size << 2;
+    if (!(hpq = GlobalAlloc16(GMEM_SHARE|GMEM_MOVEABLE, tmp_size + 8)))
+       return 0xffff;
+    pPQ = GlobalLock16(hpq);
+    *pPQ++ = 0;
+    *pPQ++ = tmp_size;
+    *pPQ++ = 0;
+    *pPQ++ = 0;
+    GlobalUnlock16(hpq);
+
+    return (HPQ)hpq;
+#else
     FIXME(win16drv, "(%d): stub\n",size);
     return 1;
+#endif
 }
+
 int WINAPI DeletePQ(HPQ hPQ) 
 {
-    FIXME(win16drv, "(%x): stub\n", hPQ);
-    return 0;
+    return GlobalFree16((HGLOBAL16)hPQ);
 }
+
 int WINAPI ExtractPQ(HPQ hPQ) 
 { 
     struct hpq *queue, *prev, *current, *currentPrev;

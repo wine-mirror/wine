@@ -118,10 +118,10 @@ BOOL32 WINAPI AdjustTokenPrivileges(HANDLE32 TokenHandle,BOOL32 DisableAllPrivil
  *           GetTokenInformation	[ADVAPI32.66]
  */
 BOOL32 WINAPI GetTokenInformation(
-	HANDLE32 token,/*TOKEN_INFORMATION_CLASS*/ DWORD tokeninfoclass,LPVOID tokeninfo,
+	HANDLE32 token,TOKEN_INFORMATION_CLASS tokeninfoclass,LPVOID tokeninfo,
 	DWORD tokeninfolength,LPDWORD retlen
 ) {
-	FIXME(advapi,"(%08x,%ld,%p,%ld,%p): stub\n",
+        FIXME(advapi,"(%08x,%d,%p,%ld,%p): stub\n",
 	      token,tokeninfoclass,tokeninfo,tokeninfolength,retlen);
 	return TRUE;
 }

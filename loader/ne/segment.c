@@ -105,8 +105,12 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         stack16Top->bp = 0;
         stack16Top->ip = 0;
         stack16Top->cs = 0;
+	TRACE(dll,"CallLoadAppSegProc(hmodule=0x%04x,hf=0x%04x,segnum=%d\n",
+		pModule->self,hf,segnum
+	);
  	newselector = Callbacks->CallLoadAppSegProc(selfloadheader->LoadAppSeg,
                                                    pModule->self, hf, segnum );
+	TRACE(dll,"Ret CallLoadAppSegProc: selector = 0x%04x\n",newselector);
         _lclose32( hf );
  	if (newselector != oldselector) {
  	  /* Self loaders like creating their own selectors; 
@@ -410,7 +414,9 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         stack16Top->cs = 0;
 
         hf = FILE_DupUnixHandle( NE_OpenFile( pModule ) );
+	TRACE(dll,"CallBootAppProc(hModule=0x%04x,hf=0x%04x)\n",pModule->self,hf);
         Callbacks->CallBootAppProc(selfloadheader->BootApp, pModule->self, hf);
+	TRACE(dll,"Return from CallBootAppProc\n");
         _lclose32(hf);
         /* some BootApp procs overwrite the selector of dgroup */
         pSegTable[pModule->dgroup - 1].selector = saved_dgroup;

@@ -26,10 +26,10 @@ type win32
 0023 stub MPR_23
 0024 stub MPR_24
 0025 stdcall MPR_25(str long) _MPR_25
-0026 stdcall MultinetGetConnectionPerformanceA(ptr ptr) MultinetGetConnectionPerformance32A
+	0026 stdcall MultinetGetConnectionPerformanceA(ptr ptr) MultinetGetConnectionPerformance32A
 0027 stub MultinetGetConnectionPerformanceW
-0028 stub MultinetGetErrorTextA
-0029 stub MultinetGetErrorTextW
+0028 stdcall MultinetGetErrorTextA(long ptr long)MultinetGetErrorText32A
+0029 stdcall MultinetGetErrorTextW(long ptr long)MultinetGetErrorText32W
 0030 stub NPSAuthenticationDialogA
 0031 stub NPSCopyStringA
 0032 stub NPSDeviceGetNumberA
@@ -59,9 +59,9 @@ type win32
 0056 stub WNetCancelConnectionA
 0057 stub WNetCancelConnectionW
 0058 stub WNetCloseEnum
-0059 stub WNetConnectionDialog1A
-0060 stub WNetConnectionDialog1W
-0061 stub WNetConnectionDialog
+0059 stdcall WNetConnectionDialog1A(ptr) WNetConnectionDialog1_32A
+0060 stdcall WNetConnectionDialog1W(ptr) WNetConnectionDialog1_32W
+0061 stdcall WNetConnectionDialog1(long long) WNetConnectionDialog1_32
 0062 stub WNetDisconnectDialog1A
 0063 stub WNetDisconnectDialog1W
 0064 stub WNetDisconnectDialog

@@ -1,4 +1,210 @@
 ----------------------------------------------------------------------
+Sun Jul 12 16:23:36 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [server/*] [scheduler/client.c] (new files)
+	  [scheduler/sysdeps.c] [scheduler/thread.c] [scheduler/process.c]
+	Beginnings of client/server communication for inter-process
+	synchronisation.
+
+Sat Jul 11 19:45:45 1998  Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+
+	* [include/bitmap.h] [objects/bitmap.c] [objects/dib.c] 
+	  [objects/oembitmap.c]
+	Speed up DIB section handling by using pre-allocated colormap and 
+	XImage. Moved DIB section data out of general BITMAPOBJ structure.
+	Bugfix: GetDIBits32 would overwrite one byte beyond bitmap data.
+
+	* [if1632/shell.spec] [if1632/kernel.spec] [win32/kernel32.c]
+	More verbose error message if ThunkConnect fails.
+	Implemented KERNEL_475.
+
+	* [files/profile.c] [ole/ole2nls.c]
+	Minor bugfixes.
+
+	* [if1632/builtin.c] [if1632/kernel.spec] [include/task.h]
+	  [loader/ne/module.c] [loader/task.c]
+	Implemented KERNEL.THHOOK.
+
+	* [if1632/wprocs.spec] [include/process.h] [msdos/dpmi.c] [msdos/vxd.c]
+	Implemented Win32s VxD services (W32S.386).
+
+Sat Jul 11 17:52:23 1998  Huw D M Davies <daviesh@abacus.physics.ox.ac.uk>
+
+	* [graphics/x11drv/xfont.c] [graphics/x11drv/text.c] 
+	  [include/x11font.h]
+	Improve handling of rotated X11 fonts. Metrics/extents should now be
+	correct. ExtTextOut should behave better (still doesn't handle lpDx).
+
+	* [graphics/painting.c]
+	DrawFocusRect32: Don't do anything if width or height are zero.
+
+Sat Jul 11 15:21:35 1998  Andreas Mohr <100.30936@germany.net>
+
+	* [files/profile.c] [include/windows.h]
+	The length arguments of *Profile*() need to be treated
+	as UINTxx instead of INTxx.
+
+	* [graphics/env.c] [graphics/win16drv/init.c] [include/print.h]
+	  [misc/printdrv.c]
+	Many printer driver fixes/changes (many thanks go to Huw !).
+	Most printers should work again ;)
+
+	* [memory/atom.c]
+	Fixed ATOM_AddAtom to store atoms exactly like Windows.
+
+	* [*/*]
+	Fixed misc compiler warnings.
+
+Fri Jul 10 15:58:36 1998  Marcus Meissner <marcus@jet.franken.de>
+
+	* [files/drive.c]
+	Fixed GetDriveType16 to return DRIVE_REMOTE again.
+
+	* [loader/pe_image.c][loader/module.c]
+	Look for modules that have the same modulename or the same
+	filename (they sometimes differ).
+	Fixed up fixup_imports, removed one of the loops.
+
+	* [windows/winpos.c]
+	Added some NULL ptr checks. Needs more.
+
+	* [graphics/ddraw.c]
+	Some stubs added.
+
+	* [if1632/snoop.c]
+	Updated, made WINELIB compatible.
+
+Fri Jul 10 04:39:56 1998  Douglas Ridgway  <ridgway@winehq.com>
+
+	* [objects/enhmetafile.c] [relay32/gdi32.spec]
+	Small tweaks for documentation system.
+
+Thu Jul  9 22:00:18 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+	* [controls/commctrl.c][include/commctrl.h][relay32/comctl32.spec]
+	Fixed GetEffectiveClientRect, CreateToolbarEx and CreateMappedBitmap.
+	Added stub for ShowHideMenuCtl. Added some documentation.
+
+	* [documentation/common_controls]
+	Added and updated some information.
+
+	* [controls/toolbar.c][include/toolbar.h]
+	Added string support.
+
+	* [misc/shell.c][misc/shellord.c][relay32/shell.spec]
+	Changed names of undocumented functions to their real names and
+	fixed the export table.
+
+	* [controls/imagelist.c][relay32/comctl32.spec]
+	Added stub for ImageList_SetFilter.
+	Fixed some minor bugs and typos.
+
+	* [objects/font.c][include/windows.h][relay32/gdi32.spec]
+	Added stubs for GetCharacterPlacement32[A/W].
+
+	* [objects/region.c][relay32/gdi32.spec]
+	Added stub for UNDOCUMENTED GetRandomRgn.
+
+	* [controls/commctrl.c][controls/*.c][include/*.h]
+	Added dummy listview, pager, rebar, tooltips, trackbar and
+	treeview control. This keeps some programs from complaining.
+
+Thu Jul  9 11:23:58 1998  Rein Klazes <rklazes@casema.net>
+
+	* [graphics/painting.c] [graphics/*/init.c]
+	  [graphics/x11drv/graphics.c] [relay32/gdi32.spec]
+	  [if1632/gdi.spec] [include/gdi.h] [include/x11drv.h]
+	Implemented drawing bezier curves: PolyBezier16/32 and
+	PolyBezierTo16/32.
+
+	* [graphics/x11drv/graphics.c]
+	Improved accuracy of several graphic routines, especially the
+	drawing of pie's.
+
+	* [include/windows.h] [misc/spy.c]
+	Added 25 window messages related to programs based on MFC and/or OLE.
+
+Wed Jul  8 22:00:00 1998  James Juran  <jrj120@psu.edu>
+
+	* [documentation/wine.man]
+	Updated manpage.
+
+	* [wine.ini]
+	Added section for Win95Look=true (commented out by default).
+
+Wed Jul  8 06:23:19 1998  Matthew Becker <mbecker@glasscity.net>
+
+	* [misc/registry.c]
+	Fixed a crash in RegEnumValue32A when the dwType parameter is
+	NULL.
+
+	* [programs/regtest/regtest.c]
+	Improved the printing of errors.
+
+	* [misc/ntdll.c]
+	Added stub for RtlFormatCurrentUserKeyPath.
+
+	* [win32/console.c]
+	Added stub for ScrollConsoleScreenBuffer.
+
+Mon Jul  6 16:41:47 1998  Per Lindström <pelinstr@algonet.se>
+
+	* [include/windows.h] [relay32/kernel.spec] [win32/newfns.c]
+	Added stubs for SleepEx and TerminateProcess.
+
+	* [rc/README]
+	Corrected a grammatical error.
+
+Mon Jul  3 12:00:00 1998  Juergen Schmied <juergen.schmied@metronet.de>
+
+	* [misc/shellord.c]
+	Put some TRACE in.
+
+	* [memory/string.c]
+	Deleted unused variable in lstrcmpi32A.
+
+	* [include/windows.h][memory/string.c]
+	Added functions WideCharToLocal32 LocalToWideChar32 for
+	OLE-strings
+
+	* [include/shlobj.h][include/winerror.h][misc/shell.c]
+	  [ole/folders.c]
+	Added definition of internal class pidlmgr.
+	Changed definitions of EnumIDList, IShellFolder.
+	Added some OLE error constants.
+	Implemented EnumIDList, IShellFolder, IClassFactory,
+	PidlMgr, SHELL32_DllGetClassObject, SHGetDesktopFolder,
+	SHGetSpecialFolderLocation (half), SHGetPathFromIDList
+	(!!This stuff is not finished yet!!)
+
+	* [include/windows.h][misc/network][reley32/mpr.spec]
+	Added stubs for WNetConnectionDialog32[A|W|API].
+	Added struct LPCONNECTDLGSTRUCT32[A|W] and some constants.
+	Added some SetLastError(WN_NO_NETWORK) to the stubs.
+	Fixed bufferhandling in WNetCancelConnection
+	Added stub for MultinetGetErrorText[A|W]
+
+	* [ole/ole2nls.c]
+	Rewrote GetTimeFormat32A.
+
+Fri Jul  3 10:27:30 1998  Michael Poole <poole+@andrew.cmu.edu>
+
+	* [graphics/ddraw.c] [tsx11/X11_calls]
+	Implement IDirectDrawPalette_GetEntries.
+	Use CopyColormapAndFree to avoid erasing previously-set
+	palette entries.
+
+	* [graphics/ddraw.c] [include/ddraw.h]
+	  [tools/make_X11wrappers] [tsx11/X11_calls]
+	Provide a preliminary, not-yet-working framework for doing
+	DirectDraw via Xlib or XShm as well as DGA.
+
+Tue Jun 30 00:16:09 1998  Marcel Baur <mbaur@g26.ethz.ch>
+
+	* [ole/nls/*.nls]
+	Added remaining 22 locales (including arabic locales).
+
+----------------------------------------------------------------------
 Sun Jun 28 18:37:02 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [if1632/signal.c] [miscemu/instr.c] [memory/virtual.c]
@@ -4102,7 +4308,7 @@ Sun May 25 14:59:33 1997  Jimen Ching  <jching@flex.com>
 	Fixed pointer copy of args keywords array.
 
 ----------------------------------------------------------------------
-Tue May 20 19:20:23 1997  Pablo Saratxaga <srtxg@linux.chanae.stben.be>
+Tue May 20 19:20:23 1997  Pablo Saratxaga <srtxg@chanae.alphanet.ch>
 
 	* [resources/sysres_Es.rc]
 	Updated CHOOSE_FONT, CHOOSE_COLOR, EDITMENU for Spanish.
@@ -4544,7 +4750,7 @@ Sat Feb 22 23:05:47 1997  Morten Welinder  <terra@diku.dk>
 	* [files/*]
 	Fix function names in error messages.
 
-Sat Feb 22 06:15:13 1997  Pablo Saratxaga <srtxg@chanae.stben.be>
+Sat Feb 22 06:15:13 1997  Pablo Saratxaga <srtxg@chanae.alphanet.ch>
 
 	* [windows/keyboard.c] [windows/message.c]
 	Support for more latin alphabet dead keys for iso-8859-{1,2,3,4,9}

@@ -50,6 +50,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     X11DRV_PolyPolyline,             /* pPolyPolyline */
     X11DRV_Polygon,                  /* pPolygon */
     X11DRV_Polyline,                 /* pPolyline */
+    X11DRV_PolyBezier,               /* pPolyBezier */
     NULL,                            /* pRealizePalette */
     X11DRV_Rectangle,                /* pRectangle */
     NULL,                            /* pRestoreDC */

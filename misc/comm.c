@@ -14,6 +14,24 @@
  *
  * August 12, 1997.  Take a bash at SetCommEventMask - Lawson Whitney
  *                                     <lawson_whitney@juno.com>
+ * July 6, 1998. Fixes and comments by Valentijn Sessink
+ *                                     <vsessink@ic.uva.nl> [V]
+ *  I only quick-fixed an error for the output buffers. The thing is this: if a
+ * WinApp starts using serial ports, it calls OpenComm, asking it to open two
+ * buffers, cbInQueue and cbOutQueue size, to hold data to/from the serial
+ * ports. Wine OpenComm only returns "OK". Now the kernel buffer size for
+ * serial communication is only 4096 bytes large. Error: (App asks for
+ * a 104,000 bytes size buffer, Wine returns "OK", App asks "How many char's
+ * are in the buffer", Wine returns "4000" and App thinks "OK, another
+ * 100,000 chars left, good!")
+ * The solution below is a bad but working quickfix for the transmit buffer:
+ * the cbInQueue is saved in a variable; when the program asks how many chars
+ * there are in the buffer, GetCommError returns # in buffer PLUS
+ * the additional (cbOutQeueu - 4096), which leaves the application thinking
+ * "wow, almost full".
+ * Sorry for the rather chatty explanation - but I think comm.c needs to be
+ * redefined with real working buffers make it work; maybe these comments are
+ * of help.
  */
 
 #include "config.h"
@@ -55,6 +73,14 @@
  * on a per port basis.
  */
 int commerror = 0, eventmask = 0;
+
+/*
+ * [V] If above globals are wrong, the one below will be wrong as well. It
+ * should probably be in the DosDeviceStruct on per port basis too.
+*/
+int iGlobalOutQueueFiller;
+
+#define SERIAL_XMIT_SIZE 4096
 
 struct DosDeviceStruct COM[MAX_PORTS];
 struct DosDeviceStruct LPT[MAX_PORTS];
@@ -439,6 +465,10 @@ INT16 WINAPI OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
 			ERR(comm, "BUG ! COM0 doesn't exist !\n");
 			commerror = IE_BADID;
 		}
+		
+		/* to help GetCommError return left buffsize [V] */
+		iGlobalOutQueueFiller = (cbOutQueue - SERIAL_XMIT_SIZE);
+		if (iGlobalOutQueueFiller < 0) iGlobalOutQueueFiller = 0;
 
                 TRACE(comm, "%s = %s\n", device, COM[port].devicename);
 
@@ -780,7 +810,7 @@ INT16 WINAPI GetCommError(INT16 fd,LPCOMSTAT lpStat)
 
 		rc = ioctl(fd, TIOCOUTQ, &cnt);
 		if (rc) WARN(comm, "Error !\n");
-		lpStat->cbOutQue = cnt;
+		lpStat->cbOutQue = cnt + iGlobalOutQueueFiller;
 
 		rc = ioctl(fd, TIOCINQ, &cnt);
                 if (rc) WARN(comm, "Error !\n");

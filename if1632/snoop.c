@@ -186,6 +186,16 @@ SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfun) {
 		fun->name = HEAP_strdupA(SystemHeap,0,name);
 	else
 		fun->name = HEAP_strdupA(SystemHeap,0,"");
+	/* more magic. do not try to snoop thunk data entries (MMSYSTEM) */
+	if (strchr(fun->name,'_')) {
+		char *s=strchr(fun->name,'_');
+
+		if (!strncasecmp(s,"_thunkdata",10)) {
+			HeapFree(SystemHeap,0,fun->name);
+			fun->name = NULL;
+			return origfun;
+		}
+	}
 	fun->lcall 	= 0x9a;
 	fun->snr	= MAKELONG(0,xsnr);
 	fun->origfun	= origfun;
@@ -314,3 +324,9 @@ FARPROC16 SNOOP16_GetProcAddress16(HMODULE16 hmod,DWORD ordinal,FARPROC16 origfu
 	return origfun;
 }
 #endif	/* !__i386__ */
+
+void
+SNOOP16_Init() {
+	fnSNOOP16_GetProcAddress16=SNOOP16_GetProcAddress16;
+	fnSNOOP16_RegisterDLL=SNOOP16_RegisterDLL;
+}

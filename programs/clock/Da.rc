@@ -6,27 +6,35 @@
 
 #define LANGUAGE_ID                  Da
 #define LANGUAGE_NUMBER              6
-#define LANGUAGE_MENU_ITEM           "&Dansk"
 
-/* Menu */
+
+/* System Menu */
+
+#define MENU_ON_TOP                  "&Altid øverst"
+
+
+/* Window Menu */
 
 #define MENU_PROPERTIES              "&Instillinger"
 #define MENU_ANALOG                  "&Analog"
 #define MENU_DIGITAL                 "&Digital"
 #define MENU_FONT                    "&Skrifttype..."
 #define MENU_WITHOUT_TITLE           "Skjul Titel&linje"
-#define MENU_ON_TOP                  "&Altid øverst"
+
 #define MENU_SECONDS                 "Se&kunder"
 #define MENU_DATE                    "Da&to"
 
 #define MENU_LANGUAGE                "S&prog"
+#define LANGUAGE_MENU_ITEM           "&Dansk"
 
 #define MENU_INFO                    "Inf&o..."
 #define MENU_INFO_LICENSE            "&Licens"
 #define MENU_INFO_NO_WARRANTY        "&NO WARRANTY"
 #define MENU_INFO_ABOUT_WINE         "&Om Ur..."
 
-/* Strings */
+
+/* Window Caption */
+
 #define STRING_CLOCK                 "Ur"
 
 

@@ -742,15 +742,24 @@ BOOL32 WINAPI GetDiskFreeSpaceEx32W( LPCWSTR root, LPULARGE_INTEGER avail,
 
 /***********************************************************************
  *           GetDriveType16   (KERNEL.136)
+ * This functions returns the drivetype of a drive in Win16. 
+ * Note that it returns DRIVE_REMOTE for CD-ROMs, since MSCDEX uses the
+ * remote drive API. The returnvalue DRIVE_REMOTE for CD-ROMs has been
+ * verified on Win3.11 and Windows 95. Some programs rely on it, so don't
+ * do any pseudo-clever changes.
+ *
+ * RETURNS
+ *	drivetype DRIVE_xxx
  */
-UINT16 WINAPI GetDriveType16( UINT16 drive )
-{
+UINT16 WINAPI GetDriveType16(
+	UINT16 drive	/* [in] number (NOT letter) of drive */
+) {
     TRACE(dosfs, "(%c:)\n", 'A' + drive );
     switch(DRIVE_GetType(drive))
     {
     case TYPE_FLOPPY:  return DRIVE_REMOVABLE;
     case TYPE_HD:      return DRIVE_FIXED;
-    case TYPE_CDROM:   return DRIVE_REMOVABLE;
+    case TYPE_CDROM:   return DRIVE_REMOTE;
     case TYPE_NETWORK: return DRIVE_REMOTE;
     case TYPE_INVALID:
     default:           return DRIVE_CANNOTDETERMINE;

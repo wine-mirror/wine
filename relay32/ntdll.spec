@@ -371,7 +371,7 @@ type	win32
 368 stub RtlFindSetBits
 369 stub RtlFindSetBitsAndClear
 370 stdcall RtlFirstFreeAce(ptr ptr) RtlFirstFreeAce
-371 stub RtlFormatCurrentUserKeyPath
+371 stdcall RtlFormatCurrentUserKeyPath() RtlFormatCurrentUserKeyPath
 372 stub RtlFormatMessage
 373 stdcall RtlFreeAnsiString(long) RtlFreeAnsiString
 374 stdcall RtlFreeHeap(long long long) HeapFree

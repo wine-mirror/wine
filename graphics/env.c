@@ -6,12 +6,13 @@
  * Copyright 1997 Marcus Meissner
  * Copyright 1998 Andreas Mohr
  */
-#include <windows.h>
 #include <stdio.h>
 #include <string.h>
-#include <config.h>
-#include <gdi.h>
-#include <debug.h>
+#include "windows.h"
+#include "config.h"
+#include "gdi.h"
+#include "debug.h"
+#include "heap.h"
 
 typedef struct {
         ATOM atom;
@@ -24,8 +25,9 @@ static ENVTABLE *SearchEnvTable(ATOM atom)
 {
     INT16 i;
     
-    for (i = 20; i; i--) {
-      if (EnvTable[i].atom == atom) return &EnvTable[i];
+    for (i = 19; i >= 0; i--) {
+      if (EnvTable[i].atom == atom)
+	return &EnvTable[i];
     }
     return NULL;
 }
@@ -46,20 +48,26 @@ static ATOM GDI_GetNullPortAtom(void)
 
 static ATOM PortNameToAtom(LPCSTR lpPortName, BOOL16 add)
 {
-    char PortName[256];
-    LPCSTR p;
+    char *p;
+    BOOL32 needfree = FALSE;
+    ATOM ret;
 
     if (lpPortName[strlen(lpPortName) - 1] == ':') {
-        strncpy(PortName, lpPortName, strlen(lpPortName) - 1);
-        p = PortName;
+        p = HEAP_strdupA(GetProcessHeap(), 0, lpPortName);
+        p[strlen(lpPortName) - 1] = '\0';
+        needfree = TRUE;
     }
     else
-        p = lpPortName;
+        p = (char *)lpPortName;
 
     if (add)
-        return AddAtom32A(p);
+        ret = AddAtom32A(p);
     else
-        return FindAtom32A(p);
+        ret =  FindAtom32A(p);
+
+    if(needfree) HeapFree(GetProcessHeap(), 0, p);
+
+    return ret;
 }
 
 

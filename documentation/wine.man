@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE 1 "June 22, 1998" "Version 980614" "Windows Emulator"
+.TH WINE 1 "July 8, 1998" "Version 980628" "Windows Emulator"
 .SH NAME
 wine \- run Windows programs under Unix
 .SH SYNOPSIS
@@ -38,11 +38,15 @@ compiled the libraries yourself, they were probably compiled with the
 reetrant option enabled.  
 .PP
 .B libXpm
-must be installed.  It is probably available from the same site 
-.B wine
-was, or the sources may be FTP'd from ftp.x.org.  Usually it's in a
-package named something like XFree86-devel.
-
+must be installed.  If you're using Red Hat, the name of the package is
+XFree86-devel.  The sources may be FTP'd from ftp.Xfree86.org or its 
+mirrors.
+.PP
+.B gcc
+2.7.x or later is required to build
+.B wine.
+Versions earlier than 2.7.2.3 may have problems when certain files are
+compiled with optimization.
 .SH INSTALLATION
 To install 
 .B Wine,
@@ -59,7 +63,7 @@ the --prefix option when running
 .PP
 For more information, see the 
 .B README
-file contained in the source distribution
+file contained in the source distribution.
 .SH OPTIONS
 .TP
 .I -backingstore
@@ -72,13 +76,20 @@ Enter the debugger before starting application
 Turn debugging messages on or off.  
 .RS +7
 .PP
-xxx can be one of the following: err, warn, fixme, or trace, and # can be
-either + or -.  Note that there is not a space between names.
+xxx is optional and can be one of the following: 
+.I err, 
+.I warn, 
+.I fixme, 
+or 
+.I trace. 
+If xxx is not specified, all debugging messages for the specified
+channel are turned on.  # is required and can be either + or -.  Note that 
+there is not a space after the comma between names.
 .PP
 For instance:
 .PP
 .I -debugmsg warn+dll,+heap
-will turn on DLL and heap warning messages.  
+will turn on DLL warning messages and all heap messages.  
 .br
 .I -debugmsg fixme-all,warn+cursor,+relay
 will turn off all FIXME messages, turn on cursor warning messages, and turn
@@ -165,7 +176,7 @@ Possible arguments are: win31, win95, nt351, and nt40.
 .PD 1
 .SH PROGRAM/ARGUMENTS
 The program name may be specified in DOS format (C:\\WINDOWS\\SOL.EXE) or in 
-Linux format (/msdos/windows/sol.exe).  The program being executed may be 
+Unix format (/msdos/windows/sol.exe).  The program being executed may be 
 passed arguments by adding them on to the end of the command line invoking
 .B wine
 (such as: wine "notepad C:\\TEMP\\README.TXT").  Note that
@@ -183,7 +194,7 @@ the
 .B configure
 script.  Alternatively, you may have a 
 .I .winerc
-file of this format in your home directory or the environment variable
+file of this format in your home directory or have the environment variable
 .B WINE_INI
 pointing to a configuration file.
 .SH CONFIGURATION FILE FORMAT
@@ -327,7 +338,7 @@ default: none
 .br
 default: false
 .br 
-Use Win95 look (true) or Win3.1 look (false).
+Use Win95-like window displays or Win3.1-like window displays.
 .SH SAMPLE CONFIGURATION FILE
 [Drive A]
 .br
@@ -380,26 +391,14 @@ Exclude=WM_TIMER;WM_SETCURSOR;WM_MOUSEMOVE;WM_NCHITTEST;
 Include=WM_COMMAND;
 .PP
 [Tweak.Layout]
-.br Win95Look=[true|false]
-.br Win95Look=true enables Win95-like windows layouts; Win95Look=false 
-uses Win3.1-like displays. If this section is not included, it defaults
-to false.
+.br 
+Win95Look=true
 .SH AUTHORS
 .B Wine
-is available thanks to the work of Bob Amstadt, Dag Asheim,
-Martin Ayotte, Ross Biro, Erik Bos, Fons Botman, John Brezak,
-Andrew Bulhak, John Burton, Paul Falstad, Olaf Flebbe, Peter Galbavy,
-Ramon Garcia, Hans de Graaf, Charles M. Hannum, Cameron Heide,
-Jochen Hoenicke, Jeffrey Hsu, Miguel de Icaza, Alexandre Julliard,
-Jon Konrath, Scott A. Laird, Martin von Loewis, Kenneth MacDonald,
-Peter MacDonald, William Magro, Marcus Meissner, Graham Menhennitt,
-David Metcalfe, Michael Patra, John Richardson, Johannes Ruscheinski,
-Thomas Sandford, Constantine Sapuntzakis, Daniel Schepler,
-Bernd Schmidt, Yngvi Sigurjonsson, Rick Sladkey, William Smith,
-Erik Svendsen, Goran Thyni, Jimmy Tirtawangsa, Jon Tombs,
-Linus Torvalds, Gregory Trubetskoy, Michael Veksler, Morten Welinder,
-Jan Willamowius, Carl Williams, Karl Guenter Wuensch, Eric Youngdale,
-and James Youngman.
+is available thanks to the work of many developers. For a listing
+of the authors, please see the file 
+.B AUTHORS
+in the top-level directory of the source distribution.
 .SH BUGS
 There are too many to count, much less list.  Some bugs of note, however,
 are that programs requiring VBRUNxxx.DLL are unreliable (with reports of
@@ -416,7 +415,7 @@ Bug reports and successes may be posted to
 .SH AVAILABILITY
 The most recent public version of 
 .B wine
-can be ftp'ed from tsx-11.mit.edu in the /pub/linux/ALPHA/Wine/development 
+can be ftp'ed from sunsite.unc.edu or tsx-11.mit.edu in the /pub/linux/ALPHA/Wine/development 
 directory.  The releases are in the format 'Wine-yymmdd.tar.gz', 
 or 'Wine-yymmdd.diff.gz' for the diff's from the previous release.
 .PP

@@ -13,7 +13,6 @@
 # Main target to build
 
 MAIN_TARGET = @MAIN_TARGET@
-LIB_TARGET  = @LIB_TARGET@
 
 # Directories
 
@@ -44,6 +43,7 @@ LIBSUBDIRS = \
 	relay32 \
 	resources \
 	scheduler \
+	server \
 	tsx11 \
 	win32 \
 	windows
@@ -90,6 +90,7 @@ LIBOBJS = \
 	relay32/relay32.o \
 	resources/resources.o \
 	scheduler/scheduler.o \
+	server/server.o \
 	tsx11/tsx11.o \
 	win32/win32.o \
 	windows/windows.o
@@ -100,6 +101,8 @@ EMUOBJS = \
 	graphics/win16drv/win16drv.o \
 	if1632/if1632.o \
 	miscemu/miscemu.o
+
+LIB_TARGET  = @LIB_TARGET@
 
 all: $(MAIN_TARGET)
 

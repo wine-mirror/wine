@@ -40,14 +40,12 @@ DEFINE_SHLGUID(IID_IFileViewerSite,     0x000214F3L, 0, 0);
 #define	STRRET_CSTR	0x0002
 
 typedef struct _STRRET
-{
-    UINT32 uType;		/* STRRET_xxx */
-    union
-    {
-        LPWSTR	pOleStr;	/* OLESTR that will be freed */
-        UINT32	uOffset;	/* Offset into SHITEMID (ANSI) */
-        char	cStr[MAX_PATH];	/* Buffer to fill in */
-    } DUMMYUNIONNAME;
+{ UINT32 uType;		/* STRRET_xxx */
+  union
+  { LPWSTR	pOleStr;	/* OLESTR that will be freed */
+    UINT32	uOffset;	/* Offset into SHITEMID (ANSI) */
+    char	cStr[MAX_PATH];	/* Buffer to fill in */
+  }u;
 } STRRET,*LPSTRRET;
 
 typedef struct {
@@ -59,16 +57,87 @@ typedef struct {
 	SHITEMID	mkid; /* first itemid in list */
 } ITEMIDLIST,*LPITEMIDLIST,*LPCITEMIDLIST;
 
+
+/****************************************************************************
+ * INTERNAL CLASS: PIDL-Manager
+ * Source: HOWTO extend the explorer namespace
+ * ftp.microsoft.com/ ... softlib ... regview.exe
+ */
+#define THIS LPPIDLMGR this
+typedef enum tagPIDLTYPE
+{ PT_DESKTOP = 0x00000000,
+  PT_DRIVE =   0x00000001,
+  PT_FOLDER =  0x00000002,
+	PT_VALUE =   0x00000004,
+  PT_TEXT = PT_FOLDER | PT_VALUE
+} PIDLTYPE;
+
+typedef struct tagPIDLDATA
+{ PIDLTYPE type;
+  CHAR    szText[1];
+}PIDLDATA, FAR *LPPIDLDATA;
+
+typedef struct pidlmgr pidlmgr,*LPPIDLMGR;
+typedef struct PidlMgr_VTable {
+   STDMETHOD_(LPITEMIDLIST, CreateDesktop) (THIS);
+   STDMETHOD_(LPITEMIDLIST, CreateDrive) (THIS_ LPCSTR);
+   STDMETHOD_(LPITEMIDLIST, CreateFolder) (THIS_ LPCSTR);
+   STDMETHOD_(LPITEMIDLIST, CreateValue) (THIS_ LPCSTR);
+   STDMETHOD_(void, Delete) (THIS_ LPITEMIDLIST);
+   STDMETHOD_(LPITEMIDLIST, GetNextItem) (THIS_ LPCITEMIDLIST);
+   STDMETHOD_(LPITEMIDLIST, Copy) (THIS_ LPCITEMIDLIST);
+   STDMETHOD_(UINT16, GetSize) (THIS_ LPCITEMIDLIST);
+   STDMETHOD_(BOOL32, GetDesktop) (THIS_ LPCITEMIDLIST, LPSTR);
+   STDMETHOD_(BOOL32, GetDrive) (THIS_ LPCITEMIDLIST, LPSTR, UINT16);
+	 STDMETHOD_(LPITEMIDLIST, GetLastItem) (THIS_ LPCITEMIDLIST);
+   STDMETHOD_(DWORD, GetItemText) (THIS_ LPCITEMIDLIST, LPSTR, UINT16);
+   STDMETHOD_(BOOL32, IsDesktop) (THIS_ LPCITEMIDLIST);
+   STDMETHOD_(BOOL32, IsDrive) (THIS_ LPCITEMIDLIST);
+   STDMETHOD_(BOOL32, IsFolder) (THIS_ LPCITEMIDLIST);
+   STDMETHOD_(BOOL32, IsValue) (THIS_ LPCITEMIDLIST);
+   STDMETHOD_(BOOL32, HasFolders) (THIS_ LPSTR, LPCITEMIDLIST);
+   STDMETHOD_(DWORD, GetFolderText) (THIS_ LPCITEMIDLIST, LPSTR, DWORD);
+   STDMETHOD_(DWORD, GetValueText) (THIS_ LPCITEMIDLIST, LPSTR, DWORD);
+   
+/*   STDMETHOD_(BOOL32, GetValueType) (THIS_ LPCITEMIDLIST, LPDWORD);*/
+   STDMETHOD_(BOOL32, GetValueType) (THIS_ LPCITEMIDLIST, LPCITEMIDLIST, LPDWORD);
+   
+/*   STDMETHOD_(DWORD, GetDataText) (THIS_ LPCITEMIDLIST, LPSTR, DWORD);*/
+   STDMETHOD_(DWORD, GetDataText) (THIS_ LPCITEMIDLIST, LPCITEMIDLIST, LPSTR, DWORD);
+   
+   STDMETHOD_(DWORD, GetPidlPath) (THIS_ LPCITEMIDLIST, LPSTR, DWORD);
+   STDMETHOD_(LPITEMIDLIST, Concatenate) (THIS_ LPCITEMIDLIST, LPCITEMIDLIST);
+   STDMETHOD_(LPITEMIDLIST, Create) (THIS_ PIDLTYPE, LPVOID, UINT16);
+   STDMETHOD_(DWORD, GetData) (THIS_ PIDLTYPE, LPCITEMIDLIST, LPVOID, UINT16);
+   STDMETHOD_(LPPIDLDATA, GetDataPointer) (THIS_ LPCITEMIDLIST);
+   STDMETHOD_(BOOL32, SeparatePathAndValue) (THIS_ LPCITEMIDLIST, LPITEMIDLIST*, LPITEMIDLIST*);
+
+} *LPPIDLMGR_VTABLE,PidlMgr_VTable;
+
+struct pidlmgr {
+	LPPIDLMGR_VTABLE	lpvtbl;
+};
+#ifdef __WINE__
+extern LPPIDLMGR PidlMgr_Constructor();
+extern void PidlMgr_Destructor(THIS);
+#endif
+
+#undef THIS
+
 /*****************************************************************************
  * IEnumIDList interface
  */
 #define THIS LPENUMIDLIST this
+typedef struct tagENUMLIST
+{ struct tagENUMLIST	*pNext;
+  LPITEMIDLIST pidl;
+} ENUMLIST, *LPENUMLIST;
 
 typedef struct IEnumIDList IEnumIDList,*LPENUMIDLIST;
 typedef struct IEnumIDList_VTable {
     /* *** IUnknown methods *** */
     STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+		STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
     STDMETHOD_(ULONG,Release) (THIS) PURE;
 
     /* *** IEnumIDList methods *** */
@@ -78,12 +147,24 @@ typedef struct IEnumIDList_VTable {
     STDMETHOD(Skip)  (THIS_ ULONG celt) PURE;
     STDMETHOD(Reset) (THIS) PURE;
     STDMETHOD(Clone) (THIS_ IEnumIDList **ppenum) PURE;
+		/* *** private methods *** */
+		STDMETHOD_(BOOL32,CreateEnumList)(THIS_ LPCSTR, DWORD) PURE;
+    STDMETHOD_(BOOL32,AddToEnumList)(THIS_ LPITEMIDLIST) PURE;
+    STDMETHOD_(BOOL32,DeleteList)(THIS) PURE;
+
+		
 } IEnumIDList_VTable,*LPENUMIDLIST_VTABLE;
 
 struct IEnumIDList {
 	LPENUMIDLIST_VTABLE	lpvtbl;
-	DWORD			ref;
+	DWORD			 ref;
+	LPPIDLMGR  mpPidlMgr;
+	LPENUMLIST mpFirst;
+	LPENUMLIST mpLast;
+	LPENUMLIST mpCurrent;
+
 };
+
 #undef THIS
 /************************************************************************
  * The IShellFolder interface ... the basic interface for a lot of stuff
@@ -143,7 +224,8 @@ typedef struct IShellFolder_VTable {
     STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
     STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
     STDMETHOD_(ULONG,Release) (THIS) PURE;
-
+    /* *** IPersist Folder methods *** */
+		STDMETHOD(Initialize)(THIS_ LPCITEMIDLIST pidl) PURE;
     /* *** IShellFolder methods *** */
     STDMETHOD(ParseDisplayName) (THIS_ HWND32 hwndOwner,
         LPBC pbcReserved, LPOLESTR32 lpszDisplayName,
@@ -169,7 +251,12 @@ typedef struct IShellFolder_VTable {
 
 struct tagSHELLFOLDER {
 	LPSHELLFOLDER_VTABLE	lpvtbl;
-	DWORD			ref;
+	DWORD			   ref;
+	LPSTR        mlpszFolder;
+  LPPIDLMGR	   pPidlMgr;
+	LPITEMIDLIST mpidl;
+	LPITEMIDLIST mpidlNSRoot;
+	LPSHELLFOLDER mpSFParent;
 };
 
 #undef THIS
@@ -240,9 +327,10 @@ struct IShellLink {
 #undef THIS
 
 #ifdef __WINE__
-extern LPSHELLFOLDER IShellFolder_Constructor();
+extern LPCLASSFACTORY IClassFactory_Constructor();
+extern LPSHELLFOLDER IShellFolder_Constructor(LPSHELLFOLDER,LPITEMIDLIST);
 extern LPSHELLLINK IShellLink_Constructor();
-extern LPENUMIDLIST IEnumIDList_Constructor();
+extern LPENUMIDLIST IEnumIDList_Constructor(LPCSTR,DWORD,HRESULT*);
 #endif
 
 DWORD WINAPI SHELL32_DllGetClassObject(LPCLSID,REFIID,LPVOID*);
@@ -323,7 +411,6 @@ LPITEMIDLIST WINAPI SHBrowseForFolder32W(LPBROWSEINFO32W lpbi);
 #define BFFM_VALIDATEFAILED BFFM_VALIDATEFAILEDA 
 #endif 
 */
-
 
 #undef PURE
 #undef FAR

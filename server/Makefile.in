@@ -1,0 +1,26 @@
+DEFS      = @DLLFLAGS@ -D__WINE__ -D__WINE_SERVER__
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = server
+
+C_SRCS = \
+	object.c \
+	process.c \
+	socket.c \
+	thread.c
+
+EXTRA_SRCS = main.c
+MAIN_OBJS = main.o
+
+PROGRAMS = wineserver
+
+all: $(MODULE).o $(PROGRAMS)
+
+@MAKE_RULES@
+
+wineserver: $(OBJS) $(MAIN_OBJS)
+	gcc -o $(PROGRAMS) $(OBJS) $(MAIN_OBJS)
+
+### Dependencies:

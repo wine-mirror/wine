@@ -15,12 +15,18 @@ C_SRCS = \
 	header.c \
 	icontitle.c \
 	listbox.c \
+	listview.c \
 	menu.c \
+	pager.c \
 	progress.c \
+	rebar.c \
 	scroll.c \
 	static.c \
 	status.c \
 	toolbar.c \
+	tooltips.c \
+	trackbar.c \
+	treeview.c \
 	uitools.c \
 	updown.c \
 	widgets.c

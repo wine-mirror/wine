@@ -45,7 +45,7 @@ VOID LANGUAGE_UpdateMenuCheckmarks(VOID) {
     
     CheckMenuItem(Globals.hPropertiesMenu, CL_WITHOUT_TITLE, MF_BYCOMMAND | \
                  (Globals.bWithoutTitle ? MF_CHECKED : MF_UNCHECKED));
-    CheckMenuItem(Globals.hPropertiesMenu, CL_ON_TOP, MF_BYCOMMAND | \
+    CheckMenuItem(Globals.hSystemMenu, CL_ON_TOP, MF_BYCOMMAND | \
                  (Globals.bAlwaysOnTop ? MF_CHECKED : MF_UNCHECKED));
     CheckMenuItem(Globals.hPropertiesMenu, CL_SECONDS, MF_BYCOMMAND | \
                  (Globals.bSeconds ? MF_CHECKED : MF_UNCHECKED));
@@ -89,11 +89,11 @@ static BOOL LANGUAGE_LoadStringOther(UINT num, UINT ids, LPSTR str, UINT len)
 VOID LANGUAGE_SelectByName(LPCSTR lang)
 {
   INT i;
-  CHAR newlang[3];
+  CHAR szNewLang[3];
 
   for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
-    if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_ID, newlang, sizeof(newlang)) &&
-        !lstrcmp(lang, newlang))
+    if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_ID, szNewLang, 
+                sizeof(szNewLang)) && !lstrcmp(lang, szNewLang))
       {
         LANGUAGE_SelectByNumber(i);
         return;
@@ -101,33 +101,33 @@ VOID LANGUAGE_SelectByName(LPCSTR lang)
 
   /* Fallback */
     for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
-    if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_ID, newlang, sizeof(newlang)))
+    if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_ID, szNewLang, sizeof(szNewLang)))
       {
         LANGUAGE_SelectByNumber(i);
         return;
       }
 
-  MessageBox(Globals.hMainWnd, "No language found", "FATAL ERROR", MB_OK);
-  PostQuitMessage(1);
+    MessageBox(Globals.hMainWnd, "No language found", "FATAL ERROR", MB_OK);
+    PostQuitMessage(1);
 }
 
 VOID LANGUAGE_SelectByNumber(UINT num)
 {
   INT    i;
-  CHAR   lang[3];
+  CHAR   szLanguage[3];
 
-  CHAR   item[MAX_STRING_LEN];
+  CHAR   szItem[MAX_STRING_LEN];
   HMENU  hMainMenu;
 
   /* Select string table */
   Globals.wStringTableOffset = num * 0x100;
 
   /* Get Language id */
-  LoadString(Globals.hInstance, IDS_LANGUAGE_ID, lang, sizeof(lang));
-  Globals.lpszLanguage = lang;
+  LoadString(Globals.hInstance, IDS_LANGUAGE_ID, szLanguage, sizeof(szLanguage));
+  Globals.lpszLanguage = szLanguage;
 
   /* Change Resource names */
-  lstrcpyn(STRING_MENU_Xx + sizeof(STRING_MENU_Xx) - 3, lang, 3);
+  lstrcpyn(STRING_MENU_Xx + sizeof(STRING_MENU_Xx) - 3, szLanguage, 3);
 
   /* Create menu */
   hMainMenu = LoadMenu(Globals.hInstance, STRING_MENU_Xx);
@@ -139,9 +139,10 @@ VOID LANGUAGE_SelectByNumber(UINT num)
   RemoveMenu(Globals.hLanguageMenu, 0, MF_BYPOSITION);
   /* Add language items */
   for (i = 0; i <= MAX_LANGUAGE_NUMBER; i++)
-    if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_MENU_ITEM, item, sizeof(item)))
-      AppendMenu(Globals.hLanguageMenu, MF_STRING | MF_BYCOMMAND,
-                 CL_FIRST_LANGUAGE + i, item);
+    if (LANGUAGE_LoadStringOther(i, IDS_LANGUAGE_MENU_ITEM, szItem, sizeof(szItem)))
+             AppendMenu(Globals.hLanguageMenu, MF_STRING | MF_BYCOMMAND,
+                        CL_FIRST_LANGUAGE + i, szItem);
+  EnableMenuItem(Globals.hLanguageMenu, CL_FIRST_LANGUAGE + num, MF_BYCOMMAND | MF_CHECKED);
 
   SetMenu(Globals.hMainWnd, hMainMenu);
 
@@ -151,14 +152,21 @@ VOID LANGUAGE_SelectByNumber(UINT num)
 
 #ifdef WINELIB
   /* Update system menus */
-  for (i = 0; Languages[i].name && lstrcmp(lang, Languages[i].name);) i++;
+  for (i = 0; Languages[i].name && lstrcmp(szLanguage, Languages[i].name);) i++;
   if (Languages[i].name) Options.language = i;
 #endif
 
-   /* specific for Clock: */
+  /* specific for Clock: */
 
-   LANGUAGE_UpdateMenuCheckmarks();
-   LANGUAGE_UpdateWindowCaption();   
+  LANGUAGE_UpdateMenuCheckmarks();
+  LANGUAGE_UpdateWindowCaption();   
+
+  Globals.hSystemMenu = GetSystemMenu(Globals.hMainWnd, TRUE);
+
+  /* FIXME: Append a SEPARATOR to Globals.hSystemMenu here */
+
+  LoadString(Globals.hInstance, IDS_MENU_ON_TOP, szItem, sizeof(szItem));
+  AppendMenu(Globals.hSystemMenu, MF_STRING | MF_BYCOMMAND, 1000, szItem);
 }
 
 VOID LANGUAGE_DefaultHandle(WPARAM wParam)
@@ -181,7 +189,8 @@ VOID LANGUAGE_Init(VOID)
                                   sizeof(szBuffer));       
         Globals.lpszLanguage = LocalLock(LocalAlloc(LMEM_FIXED, lstrlen(szBuffer)));
 
-        hmemcpy(Globals.lpszLanguage, szBuffer, 1+lstrlen(szBuffer)); 
+//        hmemcpy(Globals.lpszLanguage, szBuffer, 1+lstrlen(szBuffer)); 
+        lstrcpyn(Globals.lpszLanguage, szBuffer, strlen(szBuffer)+1); 
   }
 }
 

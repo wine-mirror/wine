@@ -1649,7 +1649,7 @@ void WINAPI DOS3Call( CONTEXT *context )
 	    *(WORD*)(dataptr+1) = 41;
 	    *(WORD*)(dataptr+3) = WINE_LanguageId;
 	    *(WORD*)(dataptr+5) = CodePage;
-	    *(DWORD*)(dataptr+0x19) = NULL; /* FIXME: ptr to case map routine */
+	    *(DWORD*)(dataptr+0x19) = 0; /* FIXME: ptr to case map routine */
 	    break;
 	case 0x06:
 	    TRACE(int21,"\tget pointer to collating sequence table\n");

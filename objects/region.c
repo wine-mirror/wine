@@ -2506,3 +2506,20 @@ HRGN32 WINAPI CreatePolygonRgn32( const POINT32 *points, INT32 count,
 {
     return CreatePolyPolygonRgn32( points, &count, 1, mode );
 }
+
+
+/***********************************************************************
+ * GetRandomRgn [GDI32.215]
+ *
+ * NOTES
+ *     This function is UNDOCUMENTED, it isn't even in the header file.
+ *     I assume that it will return a HRGN32!??
+ */
+HRGN32 WINAPI GetRandomRgn(DWORD dwArg1, DWORD dwArg2, DWORD dwArg3)
+{
+    FIXME (region, "(0x%08x 0x%08x 0x%08x): empty stub!\n",
+	   dwArg1, dwArg2, dwArg3);
+
+    return NULL;
+}
+

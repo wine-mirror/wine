@@ -22,6 +22,24 @@ typedef struct
 
 #endif
 
+  /* Additional info for DIB section objects */
+typedef struct
+{
+    /* Windows DIB section */
+    DIBSECTION  dibSection;
+
+    /* Mapping status */
+    enum { DIB_NoHandler, DIB_InSync, DIB_AppMod, DIB_GdiMod } status;
+
+    /* Color map info */
+    int         nColorMap;
+    int        *colorMap;
+
+    /* Cached XImage */
+    XImage     *image;
+
+} DIBSECTIONOBJ;
+
   /* GDI logical bitmap object */
 typedef struct
 {
@@ -31,11 +49,7 @@ typedef struct
     SIZE16      size;   /* For SetBitmapDimension() */
 
     /* For device-independent bitmaps: */
-    DIBSECTION *dibSection;
-    RGBQUAD    *colorMap;
-    int         nColorMap;
-    /* DIBSECTION mapping status */
-    enum { DIB_NoHandler, DIB_InSync, DIB_AppMod, DIB_GdiMod } status;
+    DIBSECTIONOBJ *dib;
 
 } BITMAPOBJ;
 
@@ -71,7 +85,8 @@ extern int DIB_GetDIBWidthBytes( int width, int depth );
 extern int DIB_GetXImageWidthBytes( int width, int depth );
 extern int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse );
 extern void DIB_UpdateDIBSection( DC *dc, BOOL32 toDIB );
-
+extern void DIB_DeleteDIBSection( BITMAPOBJ *bmp );
+extern void DIB_SelectDIBSection( DC *dc, BITMAPOBJ *bmp );
 
   /* objects/oembitmap.c */
 extern BOOL32 OBM_Init(void);

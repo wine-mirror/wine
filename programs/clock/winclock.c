@@ -36,6 +36,8 @@ COLORREF EtchColor = RGB(0,0,0);
 
 float Pi=3.1415926;
 
+int nLastSecond = 60;
+
 HandData OldSecond,OldHour,OldMinute;
 
 int MiddleX(void) {
@@ -199,9 +201,12 @@ void AnalogClock(HDC dc) {
   BOOL Redraw;
 
   GetLocalTime(&st);
+
+  S = st.wSecond;
+  if (nLastSecond==S) { exit; }
+  nLastSecond = S;
   H = st.wHour;
   M = st.wMinute;
-  S = st.wSecond;
   F = st.wMilliseconds / 10;
   F = F + S*100;
   M = M*1000+F/6;

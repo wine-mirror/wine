@@ -1684,6 +1684,35 @@ typedef struct
 DECL_WINELIB_TYPE(ABC)
 DECL_WINELIB_TYPE(LPABC)
 
+  /* for GetCharacterPlacement () */
+typedef struct tagGCP_RESULTS32A
+{
+    DWORD  lStructSize;
+    LPSTR  lpOutString;
+    UINT32 *lpOrder;
+    INT32  *lpDx;
+    INT32  *lpCaretPos;
+    LPSTR  lpClass;
+    UINT32 *lpGlyphs;
+    UINT32 nGlyphs;
+    UINT32 nMaxFit;
+} GCP_RESULTS32A;
+
+typedef struct tagGCP_RESULTS32W
+{
+    DWORD  lStructSize;
+    LPWSTR lpOutString;
+    UINT32 *lpOrder;
+    INT32  *lpDx;
+    INT32  *lpCaretPos;
+    LPWSTR lpClass;
+    UINT32 *lpGlyphs;
+    UINT32 nGlyphs;
+    UINT32 nMaxFit;
+} GCP_RESULTS32W;
+
+DECL_WINELIB_TYPE_AW(GCP_RESULTS)
+
   /* Rasterizer status */
 typedef struct
 {
@@ -3185,6 +3214,36 @@ typedef struct
 
 #define WM_PRINT             0x0317
 #define WM_PRINTCLIENT       0x0318
+
+  /* MFC messages [370-37f] */
+
+#define WM_QUERYAFXWNDPROC  0x0360
+#define WM_SIZEPARENT       0x0361
+#define WM_SETMESSAGESTRING 0x0362
+#define WM_IDLEUPDATECMDUI  0x0363 
+#define WM_INITIALUPDATE    0x0364
+#define WM_COMMANDHELP      0x0365
+#define WM_HELPHITTEST      0x0366
+#define WM_EXITHELPMODE     0x0367
+#define WM_RECALCPARENT     0x0368
+#define WM_SIZECHILD        0x0369
+#define WM_KICKIDLE         0x036A 
+#define WM_QUERYCENTERWND   0x036B
+#define WM_DISABLEMODAL     0x036C
+#define WM_FLOATSTATUS      0x036D 
+#define WM_ACTIVATETOPLEVEL 0x036E 
+#define WM_QUERY3DCONTROLS  0x036F 
+#define WM_SOCKET_NOTIFY    0x0373
+#define WM_SOCKET_DEAD      0x0374
+#define WM_POPMESSAGESTRING 0x0375
+#define WM_OCC_LOADFROMSTREAM           0x0376
+#define WM_OCC_LOADFROMSTORAGE          0x0377
+#define WM_OCC_INITNEW                  0x0378
+#define WM_OCC_LOADFROMSTREAM_EX        0x037A
+#define WM_OCC_LOADFROMSTORAGE_EX       0x037B
+#define WM_QUEUE_SENTINEL   0x0379
+
+/* end of MFC messages */
 
 #define WM_COALESCE_FIRST    0x0390
 #define WM_COALESCE_LAST     0x039F
@@ -5877,6 +5936,33 @@ DECL_WINELIB_TYPE_AW(NETRESOURCE)
 DECL_WINELIB_TYPE_AW(LPNETRESOURCE)
 
 typedef struct {
+    DWORD cbStructure;       /* size of this structure in bytes */
+    HWND32 hwndOwner;          /* owner window for the dialog */
+    LPNETRESOURCE32A lpConnRes;/* Requested Resource info    */
+    DWORD dwFlags;           /* flags (see below) */
+    DWORD dwDevNum;          /* number of devices connected to */
+} CONNECTDLGSTRUCT32A, *LPCONNECTDLGSTRUCT32A;
+typedef struct {
+    DWORD cbStructure;       /* size of this structure in bytes */
+    HWND32 hwndOwner;          /* owner window for the dialog */
+    LPNETRESOURCE32W lpConnRes;/* Requested Resource info    */
+    DWORD dwFlags;           /* flags (see below) */
+    DWORD dwDevNum;          /* number of devices connected to */
+} CONNECTDLGSTRUCT32W, *LPCONNECTDLGSTRUCT32W;
+
+DECL_WINELIB_TYPE_AW(CONNECTDLGSTRUCT)
+DECL_WINELIB_TYPE_AW(LPCONNECTDLGSTRUCT)
+
+/**/
+#define CONNDLG_RO_PATH     0x00000001 /* Resource path should be read-only    */
+#define CONNDLG_CONN_POINT  0x00000002 /* Netware -style movable connection point enabled */
+#define CONNDLG_USE_MRU     0x00000004 /* Use MRU combobox  */
+#define CONNDLG_HIDE_BOX    0x00000008 /* Hide persistent connect checkbox  */
+#define CONNDLG_PERSIST     0x00000010 /* Force persistent connection */
+#define CONNDLG_NOT_PERSIST 0x00000020 /* Force connection NOT persistent */
+
+
+typedef struct {
 	DWORD	cbStructure;
 	DWORD	dwFlags;
 	DWORD	dwSpeed;
@@ -6159,7 +6245,7 @@ INT16       WINAPI ExcludeVisRect(HDC16,INT16,INT16,INT16,INT16);
 HANDLE16    WINAPI FarGetOwner(HGLOBAL16);
 VOID        WINAPI FarSetOwner(HGLOBAL16,HANDLE16);
 BOOL16      WINAPI FastWindowFrame(HDC16,const RECT16*,INT16,INT16,DWORD);
-VOID        WINAPI FileCDR(FARPROC16);
+FARPROC16   WINAPI FileCDR(FARPROC16);
 VOID        WINAPI FillWindow(HWND16,HWND16,HDC16,HBRUSH16);
 INT16       WINAPI FlushComm(INT16,INT16);
 WORD        WINAPI FreeSelector(WORD);
@@ -6449,8 +6535,8 @@ BOOL32      WINAPI GetNumberOfConsoleMouseButtons(LPDWORD);
 DWORD       WINAPI GetObjectType(HANDLE32);
 UINT32      WINAPI GetOEMCP(void);
 DWORD       WINAPI GetPriorityClass(HANDLE32);
-INT32       WINAPI GetPrivateProfileSection32A(LPCSTR,LPSTR,INT32,LPCSTR);
-INT32       WINAPI GetPrivateProfileSection32W(LPCWSTR,LPWSTR,INT32,LPCWSTR);
+INT32       WINAPI GetPrivateProfileSection32A(LPCSTR,LPSTR,UINT32,LPCSTR);
+INT32       WINAPI GetPrivateProfileSection32W(LPCWSTR,LPWSTR,UINT32,LPCWSTR);
 #define     GetPrivateProfileSection WINELIB_NAME_AW(GetPrivateProfileSection)
 HANDLE32    WINAPI GetProcessHeap(void);
 DWORD       WINAPI GetRegionData(HRGN32,DWORD,LPRGNDATA);
@@ -6647,6 +6733,7 @@ BOOL32      WINAPI SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION);
 BOOL32      WINAPI SetWindowContextHelpId(HWND32,DWORD);
 BOOL32      WINAPI SetWorldTransform(HDC32,const XFORM*);
 VOID        WINAPI Sleep(DWORD);
+DWORD       WINAPI SleepEx(DWORD,BOOL32);
 BOOL32      WINAPI StartService32A(HANDLE32,DWORD,LPCSTR*);
 BOOL32      WINAPI StartService32W(HANDLE32,DWORD,LPCWSTR*);
 #define     StartService WINELIB_NAME_AW(StartService)
@@ -6682,6 +6769,13 @@ UINT32      WINAPI WNetAddConnection2_32W(LPNETRESOURCE32W,LPCWSTR,LPCWSTR,DWORD
 UINT32      WINAPI WNetAddConnection3_32A(HWND32,LPNETRESOURCE32A,LPCSTR,LPCSTR,DWORD);
 UINT32      WINAPI WNetAddConnection3_32W(HWND32,LPNETRESOURCE32W,LPCWSTR,LPCWSTR,DWORD);
 #define     WNetAddConnection3 WINELIB_NAME_AW(WNetAddConnection3_)
+UINT32      WINAPI WNetConnectionDialog1_32(HWND32,DWORD);
+UINT32      WINAPI WNetConnectionDialog1_32A(LPCONNECTDLGSTRUCT32A);
+UINT32      WINAPI WNetConnectionDialog1_32W(LPCONNECTDLGSTRUCT32W);
+#define     WNetConnectionDialog1 WINELIB_NAME_AW(WNetConnectionDialog1_)
+UINT32      WINAPI MultinetGetErrorText32A(DWORD,DWORD,DWORD);
+UINT32      WINAPI MultinetGetErrorText32W(DWORD,DWORD,DWORD);
+#define     MultinetGetErrorText WINELIB_NAME_AW(MultinetGetErrorText_)
 SEGPTR      WINAPI WOWGlobalAllocLock16(DWORD,DWORD,HGLOBAL16*);
 DWORD       WINAPI WOWCallback16(FARPROC16,DWORD);
 BOOL32      WINAPI WOWCallback16Ex(FARPROC16,DWORD,DWORD,LPVOID,LPDWORD);
@@ -7704,9 +7798,9 @@ UINT16      WINAPI GetPrivateProfileInt16(LPCSTR,LPCSTR,INT16,LPCSTR);
 UINT32      WINAPI GetPrivateProfileInt32A(LPCSTR,LPCSTR,INT32,LPCSTR);
 UINT32      WINAPI GetPrivateProfileInt32W(LPCWSTR,LPCWSTR,INT32,LPCWSTR);
 #define     GetPrivateProfileInt WINELIB_NAME_AW(GetPrivateProfileInt)
-INT16       WINAPI GetPrivateProfileString16(LPCSTR,LPCSTR,LPCSTR,LPSTR,INT16,LPCSTR);
-INT32       WINAPI GetPrivateProfileString32A(LPCSTR,LPCSTR,LPCSTR,LPSTR,INT32,LPCSTR);
-INT32       WINAPI GetPrivateProfileString32W(LPCWSTR,LPCWSTR,LPCWSTR,LPWSTR,INT32,LPCWSTR);
+INT16       WINAPI GetPrivateProfileString16(LPCSTR,LPCSTR,LPCSTR,LPSTR,UINT16,LPCSTR);
+INT32       WINAPI GetPrivateProfileString32A(LPCSTR,LPCSTR,LPCSTR,LPSTR,UINT32,LPCSTR);
+INT32       WINAPI GetPrivateProfileString32W(LPCWSTR,LPCWSTR,LPCWSTR,LPWSTR,UINT32,LPCWSTR);
 #define     GetPrivateProfileString WINELIB_NAME_AW(GetPrivateProfileString)
 FARPROC16   WINAPI GetProcAddress16(HMODULE16,SEGPTR);
 FARPROC32   WINAPI GetProcAddress32(HMODULE32,LPCSTR);
@@ -7715,9 +7809,9 @@ UINT16      WINAPI GetProfileInt16(LPCSTR,LPCSTR,INT16);
 UINT32      WINAPI GetProfileInt32A(LPCSTR,LPCSTR,INT32);
 UINT32      WINAPI GetProfileInt32W(LPCWSTR,LPCWSTR,INT32);
 #define     GetProfileInt WINELIB_NAME_AW(GetProfileInt)
-INT16       WINAPI GetProfileString16(LPCSTR,LPCSTR,LPCSTR,LPSTR,INT16);
-INT32       WINAPI GetProfileString32A(LPCSTR,LPCSTR,LPCSTR,LPSTR,INT32);
-INT32       WINAPI GetProfileString32W(LPCWSTR,LPCWSTR,LPCWSTR,LPWSTR,INT32);
+INT16       WINAPI GetProfileString16(LPCSTR,LPCSTR,LPCSTR,LPSTR,UINT16);
+INT32       WINAPI GetProfileString32A(LPCSTR,LPCSTR,LPCSTR,LPSTR,UINT32);
+INT32       WINAPI GetProfileString32W(LPCWSTR,LPCWSTR,LPCWSTR,LPWSTR,UINT32);
 #define     GetProfileString WINELIB_NAME_AW(GetProfileString)
 HANDLE16    WINAPI GetProp16(HWND16,LPCSTR);
 HANDLE32    WINAPI GetProp32A(HWND32,LPCSTR);
@@ -8253,6 +8347,12 @@ BOOL32      WINAPI OemToChar32W(LPCSTR,LPWSTR);
 BOOL32      WINAPI OemToCharBuff32A(LPCSTR,LPSTR,DWORD);
 BOOL32      WINAPI OemToCharBuff32W(LPCSTR,LPWSTR,DWORD);
 #define     OemToCharBuff WINELIB_NAME_AW(OemToCharBuff)
+INT16       WINAPI WideCharToLocal16(LPSTR,LPWSTR,INT16);
+INT32       WINAPI WideCharToLocal32(LPSTR,LPWSTR,INT32);
+#define			WideCharToLocal WINELIB_NAME(WideCharToLocal)
+INT16       WINAPI LocalToWideChar16(LPWSTR,LPSTR,INT16);
+INT32       WINAPI LocalToWideChar32(LPWSTR,LPSTR,INT32);
+#define			LocalToWideChar WINELIB_NAME(LocalToWideChar)
 INT16       WINAPI OffsetClipRgn16(HDC16,INT16,INT16);
 INT32       WINAPI OffsetClipRgn32(HDC32,INT32,INT32);
 #define     OffsetClipRgn WINELIB_NAME(OffsetClipRgn)

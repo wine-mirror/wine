@@ -16,5 +16,6 @@ extern Bool TSXShmQueryExtension(Display *);
 extern int TSXShmPixmapFormat(Display *);
 extern Status TSXShmDetach(Display *, XShmSegmentInfo *);
 extern Status TSXShmAttach(Display *, XShmSegmentInfo *);
+extern Status TSXShmPutImage(Display *, Drawable, GC, XImage *, int, int, int, int, unsigned int, unsigned int, Bool);
 
 #endif /* __WINE_TSXSHM_H */

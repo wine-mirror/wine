@@ -2,32 +2,40 @@
  * Clock (Swedish resources)
  *
  * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
- * Translated into swedish by Karl Backström <karl_b@geocities.com> 
+ * Translated into Swedish by Karl Backström <karl_b@geocities.com> 
  */
 
 #define LANGUAGE_ID                  Sw
 #define LANGUAGE_NUMBER              1d
-#define LANGUAGE_MENU_ITEM           "&Svenska"
 
-/* Menu */
+
+/* System Menu */
+
+#define MENU_ON_TOP                  "&Alltid överst"
+
+
+/* Window Menu */
 
 #define MENU_PROPERTIES              "&Egenskaper"
 #define MENU_ANALOG                  "Ana&log"
 #define MENU_DIGITAL                 "Digi&tal"
 #define MENU_FONT                    "&Font..."
 #define MENU_WITHOUT_TITLE           "&Utan Titlebar"
-#define MENU_ON_TOP                  "&Alltid överst"
+
 #define MENU_SECONDS                 "&Sekunder"
 #define MENU_DATE                    "&Datum"
 
 #define MENU_LANGUAGE                "&Språk"
+#define LANGUAGE_MENU_ITEM           "&Svenska"
 
 #define MENU_INFO                    "Inf&o..."
 #define MENU_INFO_LICENSE            "&Licens"
 #define MENU_INFO_NO_WARRANTY        "&INGEN GARANTI"
 #define MENU_INFO_ABOUT_WINE         "&Om Klockan..."
 
-/* Strings */
+
+/* Window Caption */
+
 #define STRING_CLOCK                 "Klockan"
 
 #include "clock.rc"

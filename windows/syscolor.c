@@ -46,19 +46,19 @@ static const char * const DefSysColors95[] =
 {
     "Scrollbar", "223 223 223",      /* COLOR_SCROLLBAR           */
     "Background", "192 192 192",     /* COLOR_BACKGROUND          */
-    "ActiveTitle", "0 64 128",       /* COLOR_ACTIVECAPTION       */
-    "InactiveTitle", "255 255 255",  /* COLOR_INACTIVECAPTION     */
+    "ActiveTitle", "0 0 128",        /* COLOR_ACTIVECAPTION       */
+    "InactiveTitle", "128 128 128",  /* COLOR_INACTIVECAPTION     */
     "Menu", "192 192 192",           /* COLOR_MENU                */
     "Window", "255 255 255",         /* COLOR_WINDOW              */
     "WindowFrame", "0 0 0",          /* COLOR_WINDOWFRAME         */
     "MenuText", "0 0 0",             /* COLOR_MENUTEXT            */
     "WindowText", "0 0 0",           /* COLOR_WINDOWTEXT          */
     "TitleText", "255 255 255",      /* COLOR_CAPTIONTEXT         */
-    "ActiveBorder", "128 128 128",   /* COLOR_ACTIVEBORDER        */
-    "InactiveBorder", "255 255 255", /* COLOR_INACTIVEBORDER      */
+    "ActiveBorder", "192 192 192",   /* COLOR_ACTIVEBORDER        */
+    "InactiveBorder", "192 192 192", /* COLOR_INACTIVEBORDER      */
     "AppWorkspace", "128 128 128",   /* COLOR_APPWORKSPACE        */
-    "Hilight", "223 223 223",        /* COLOR_HIGHLIGHT           */
-    "HilightText", "0 0 0",          /* COLOR_HIGHLIGHTTEXT       */
+    "Hilight", "0 0 128",            /* COLOR_HIGHLIGHT           */
+    "HilightText", "255 255 255",    /* COLOR_HIGHLIGHTTEXT       */
     "ButtonFace", "192 192 192",     /* COLOR_BTNFACE             */
     "ButtonShadow", "128 128 128",   /* COLOR_BTNSHADOW           */
     "GrayText", "192 192 192",       /* COLOR_GRAYTEXT            */

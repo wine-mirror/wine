@@ -87,7 +87,8 @@ static BYTE	 CPTranslation[] = { EE_CHARSET,	/* cp125-0 */
 				     BALTIC_CHARSET	/* cp125-7 */
 				   }; 
 
-UINT16			XTextCaps = TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE |
+UINT16			XTextCaps = TC_OP_CHARACTER | TC_OP_STROKE |
+TC_CP_STROKE | TC_CR_ANY |
 				    TC_SA_DOUBLE | TC_SA_INTEGER | TC_SA_CONTIN |
 			 	    TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE;
 
@@ -121,6 +122,10 @@ static int		fontLF = -1, fontMRU = -1;	/* last free, most recently used */
 static INT32 XFONT_IsSubset(fontInfo*, fontInfo*);
 static void  XFONT_CheckFIList(fontResource*, fontInfo*, int subset_action);
 static void  XFONT_GrowFreeList(int start, int end);
+
+
+static Atom RAW_ASCENT;
+static Atom RAW_DESCENT;
 
 /***********************************************************************
  *           Helper macros from X distribution
@@ -556,7 +561,8 @@ static BOOL32  LFD_ComposeLFD( fontObject* fo,
  * font info		- http://www.microsoft.com/kb/articles/q65/1/23.htm
  * Windows font metrics	- http://www.microsoft.com/kb/articles/q32/6/67.htm
  */
-static BOOL32 XFONT_GetLeading( LPIFONTINFO16 pFI, XFontStruct* x_fs, INT32* pIL, INT32* pEL )
+static BOOL32 XFONT_GetLeading( LPIFONTINFO16 pFI, XFontStruct* x_fs, INT32*
+       pIL, INT32* pEL, XFONTTRANS *XFT )
 {
     unsigned long height;
     unsigned min = (unsigned char)pFI->dfFirstChar;
@@ -564,11 +570,22 @@ static BOOL32 XFONT_GetLeading( LPIFONTINFO16 pFI, XFontStruct* x_fs, INT32* pIL
     BOOL32 bHaveCapHeight = (pFI->dfCharSet == ANSI_CHARSET && 'X' >= min && 'X' <= max );
 
     if( pEL ) *pEL = 0;
-    if( TSXGetFontProperty(x_fs, XA_CAP_HEIGHT, &height) == False )
+
+    if(XFT) {
+        Atom RAW_CAP_HEIGHT = TSXInternAtom(display, "RAW_CAP_HEIGHT", TRUE);
+	if(TSXGetFontProperty(x_fs, RAW_CAP_HEIGHT, &height))
+	    *pIL = XFT->ascent - 
+                            (INT32)(hypotf(XFT->a, XFT->b) / 1000.0 * height);
+	else
+	    *pIL = 0;
+	return bHaveCapHeight && x_fs->per_char;
+    }
+       
+    if( TSXGetFontProperty(x_fs, XA_CAP_HEIGHT, &height) == FALSE )
     {
-	if( x_fs->per_char )
+        if( x_fs->per_char )
 	    if( bHaveCapHeight )
-		height = x_fs->per_char['X' - min].ascent;
+		    height = x_fs->per_char['X' - min].ascent;
 	    else
 		if (x_fs->ascent >= x_fs->max_bounds.ascent)
 		    height = x_fs->max_bounds.ascent;
@@ -586,7 +603,8 @@ static BOOL32 XFONT_GetLeading( LPIFONTINFO16 pFI, XFontStruct* x_fs, INT32* pIL
     return (bHaveCapHeight && x_fs->per_char);
 }
 
-static INT32 XFONT_GetAvgCharWidth( LPIFONTINFO16 pFI, XFontStruct* x_fs)
+static INT32 XFONT_GetAvgCharWidth( LPIFONTINFO16 pFI, XFontStruct* x_fs,
+				    XFONTTRANS *XFT)
 {
     unsigned min = (unsigned char)pFI->dfFirstChar;
     unsigned max = (unsigned char)pFI->dfLastChar;
@@ -597,13 +615,39 @@ static INT32 XFONT_GetAvgCharWidth( LPIFONTINFO16 pFI, XFontStruct* x_fs)
 	for( j = 0, width = 0, chars = 0, max -= min; j <= max; j++ )
             if( !CI_NONEXISTCHAR(x_fs->per_char + j) )
             {
-                width += x_fs->per_char[j].width;
+	        if(!XFT)
+		    width += x_fs->per_char[j].width;
+		else
+		    width += x_fs->per_char[j].attributes * 
+		      XFT->pixelsize / 1000.0;
                 chars++;
             }
 	return (width / chars);
     }
     /* uniform width */
     return x_fs->min_bounds.width;
+}
+
+static INT32 XFONT_GetMaxCharWidth(fontObject *pfo)
+{
+    unsigned min = (unsigned char)pfo->fs->min_char_or_byte2;
+    unsigned max = (unsigned char)pfo->fs->max_char_or_byte2;
+
+    if(!pfo->lpX11Trans)
+        return abs(pfo->fs->max_bounds.width);
+
+    if( pfo->fs->per_char )
+    {
+	int  maxwidth, j;
+	for( j = 0, maxwidth = 0, max -= min; j <= max; j++ )
+            if( !CI_NONEXISTCHAR(pfo->fs->per_char + j) )
+	        if(maxwidth < pfo->fs->per_char[j].attributes)
+		    maxwidth = pfo->fs->per_char[j].attributes;
+
+	maxwidth *= pfo->lpX11Trans->pixelsize / 1000.0;
+	return maxwidth;
+    }
+    return pfo->foAvgCharWidth;
 }
 
 /***********************************************************************
@@ -626,10 +670,10 @@ static void XFONT_SetFontMetric(fontInfo* fi, fontResource* fr, XFontStruct* xfs
     fi->df.dfPixWidth = (xfs->per_char) ? 0 : xfs->min_bounds.width;
     fi->df.dfMaxWidth = (INT16)abs(xfs->max_bounds.width);
 
-    if( XFONT_GetLeading( &fi->df, xfs, &il, &el ) )
+    if( XFONT_GetLeading( &fi->df, xfs, &il, &el, NULL ) )
         fi->df.dfAvgWidth = (INT16)xfs->per_char['X' - min].width;
     else
-        fi->df.dfAvgWidth = (INT16)XFONT_GetAvgCharWidth( &fi->df, xfs);
+        fi->df.dfAvgWidth = (INT16)XFONT_GetAvgCharWidth( &fi->df, xfs, NULL);
 
     fi->df.dfInternalLeading = (INT16)il;
     fi->df.dfExternalLeading = (INT16)el;
@@ -659,12 +703,17 @@ static void XFONT_GetTextMetric( fontObject* pfo, LPTEXTMETRIC32A pTM )
 {
     LPIFONTINFO16 pdf = &pfo->fi->df;
 
-    pTM->tmAscent = pfo->fs->ascent;
-    pTM->tmDescent = pfo->fs->descent;
+    if( ! pfo->lpX11Trans ) {
+      pTM->tmAscent = pfo->fs->ascent;
+      pTM->tmDescent = pfo->fs->descent;
+    } else {
+      pTM->tmAscent = pfo->lpX11Trans->ascent;
+      pTM->tmDescent = pfo->lpX11Trans->descent;
+    }
     pTM->tmHeight = pTM->tmAscent + pTM->tmDescent;
 
     pTM->tmAveCharWidth = pfo->foAvgCharWidth;
-    pTM->tmMaxCharWidth = abs(pfo->fs->max_bounds.width);
+    pTM->tmMaxCharWidth = pfo->foMaxCharWidth;
 
     pTM->tmInternalLeading = pfo->foInternalLeading;
     pTM->tmExternalLeading = pdf->dfExternalLeading;
@@ -1504,6 +1553,10 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
   /* update text caps parameter */
 
   pDevCaps->textCaps = XTextCaps;
+
+  RAW_ASCENT = TSXInternAtom(display, "RAW_ASCENT", TRUE);
+  RAW_DESCENT = TSXInternAtom(display, "RAW_DESCENT", TRUE);
+  
   return TRUE;
 }
 
@@ -1886,6 +1939,9 @@ static fontObject* XFONT_GetCacheEntry()
 	    else fontMRU = (INT16)fontCache[j].lru;
 
 	    /* FIXME: lpXForm, lpPixmap */
+	    if(fontCache[j].lpX11Trans)
+	        HeapFree( SystemHeap, 0, fontCache[j].lpX11Trans );
+
 	    TSXFreeFont( display, fontCache[j].fs );
 
 	    memset( fontCache + j, 0, sizeof(fontObject) );
@@ -1925,6 +1981,50 @@ static int XFONT_ReleaseCacheEntry(fontObject* pfo)
 
     if( u < fontCacheSize ) return (--fontCache[u].count);
     return -1;
+}
+
+/**********************************************************************
+ *	XFONT_SetX11Trans
+ */
+static BOOL32 XFONT_SetX11Trans( fontObject *pfo )
+{
+  char *fontName;
+  Atom nameAtom;
+  int i;
+  char *cp, *start;
+
+  XGetFontProperty( pfo->fs, XA_FONT, &nameAtom );
+  fontName = XGetAtomName( display, nameAtom );
+  for(i = 0, cp = fontName; i < 7; i++) {
+    cp = strchr(cp, '-');
+    cp++;
+  }
+  if(*cp != '[') {
+    XFree(fontName);
+    return FALSE;
+  }
+  start = cp;
+  while((cp = strchr(cp, '~')))
+    *cp = '-';
+
+#define PX pfo->lpX11Trans
+
+  sscanf(start, "[%f%f%f%f]", &PX->a, &PX->b, &PX->c, &PX->d);
+  XFree(fontName);
+
+  XGetFontProperty( pfo->fs, RAW_ASCENT, &PX->RAW_ASCENT );
+  XGetFontProperty( pfo->fs, RAW_DESCENT, &PX->RAW_DESCENT );
+
+  PX->pixelsize = hypotf(PX->a, PX->b);
+  PX->ascent = PX->pixelsize / 1000.0 * PX->RAW_ASCENT;
+  PX->descent = PX->pixelsize / 1000.0 * PX->RAW_DESCENT;
+
+  TRACE(font, "[%f %f %f %f] RA = %ld RD = %ld\n", pfo->lpX11Trans->a, 
+	pfo->lpX11Trans->b, pfo->lpX11Trans->c, pfo->lpX11Trans->d,
+	pfo->lpX11Trans->RAW_ASCENT, pfo->lpX11Trans->RAW_DESCENT);
+
+#undef PX
+  return TRUE;
 }
 
 /***********************************************************************
@@ -1971,10 +2071,30 @@ static X_PHYSFONT XFONT_RealizeFont( LPLOGFONT16 plf )
 		    if( (pfo->fs = TSXLoadQueryFont( display, lpLFD )) ) break;
 		} while( uRelaxLevel );
 
-		if( XFONT_GetLeading( &pfo->fi->df, pfo->fs, &i, NULL ) )
-		    pfo->foAvgCharWidth = (INT16)pfo->fs->per_char['X' - pfo->fs->min_char_or_byte2].width;
+
+		if(pfo->lf.lfEscapement != 0) {
+		    pfo->lpX11Trans = HeapAlloc(SystemHeap, 0,
+						sizeof(XFONTTRANS));
+		    if(!XFONT_SetX11Trans( pfo )) {
+		        HeapFree(SystemHeap, 0, pfo->lpX11Trans);
+			pfo->lpX11Trans = NULL;
+		    }
+		}
+
+		if( XFONT_GetLeading( &pfo->fi->df, pfo->fs, &i, NULL, 
+				      pfo->lpX11Trans ) )
+
+		    if(!pfo->lpX11Trans)
+		        pfo->foAvgCharWidth =
+	      (INT16)pfo->fs->per_char['X' - pfo->fs->min_char_or_byte2].width;
+		    else
+		        pfo->foAvgCharWidth = 
+	 (INT16)pfo->fs->per_char['X' - pfo->fs->min_char_or_byte2].attributes
+			  * pfo->lpX11Trans->pixelsize / 1000.0;
 		else
-		    pfo->foAvgCharWidth = (INT16)XFONT_GetAvgCharWidth( &pfo->fi->df, pfo->fs );
+		    pfo->foAvgCharWidth = (INT16)XFONT_GetAvgCharWidth(
+			             &pfo->fi->df, pfo->fs, pfo->lpX11Trans );
+		pfo->foMaxCharWidth = (INT16)XFONT_GetMaxCharWidth(pfo);
 		pfo->foInternalLeading = (INT16)i;
 
 		/* FIXME: If we've got a soft font or
@@ -2135,17 +2255,34 @@ BOOL32	X11DRV_EnumDeviceFonts( DC* dc, LPLOGFONT16 plf,
 BOOL32 X11DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
                                   LPSIZE32 size )
 {
-    XFontStruct* pfs = XFONT_GetFontStruct( dc->u.x.font );
-    if( pfs )
-    {
-	int dir, ascent, descent;
-	XCharStruct info;
+    fontObject* pfo = XFONT_GetFontObject( dc->u.x.font );
+    if( pfo ) {
+        if( !pfo->lpX11Trans ) {
+	    int dir, ascent, descent;
+	    XCharStruct info;
 
-	TSXTextExtents( pfs, str, count, &dir, &ascent, &descent, &info );
-	size->cx = abs((info.width + dc->w.breakRem + count * dc->w.charExtra)
-						* dc->wndExtX / dc->vportExtX);
-	size->cy = abs((pfs->ascent + pfs->descent) * dc->wndExtY / dc->vportExtY);
+	    TSXTextExtents( pfo->fs, str, count, &dir, &ascent, &descent, &info );
+	    size->cx = abs((info.width + dc->w.breakRem + count * 
+			    dc->w.charExtra) * dc->wndExtX / dc->vportExtX);
+	    size->cy = abs((pfo->fs->ascent + pfo->fs->descent) * 
+			   dc->wndExtY / dc->vportExtY);
+	} else {
 
+	    INT32 i;
+	    float x = 0.0, y = 0.0;
+	    for(i = 0; i < count; i++) {
+	        x += pfo->fs->per_char ? 
+	   pfo->fs->per_char[str[i] - pfo->fs->min_char_or_byte2].attributes : 
+	   pfo->fs->min_bounds.attributes;
+	    }
+	    y = pfo->lpX11Trans->RAW_ASCENT + pfo->lpX11Trans->RAW_DESCENT;
+	    TRACE(font, "x = %f y = %f\n", x, y);
+	    x *= pfo->lpX11Trans->pixelsize / 1000.0;
+	    y *= pfo->lpX11Trans->pixelsize / 1000.0; 
+	    size->cx = fabsf((x + dc->w.breakRem + count * dc->w.charExtra) *
+			     dc->wndExtX / dc->vportExtX);
+	    size->cy = fabsf(y * dc->wndExtY / dc->vportExtY);
+	}
 	return TRUE;
     }
     return FALSE;
@@ -2174,30 +2311,40 @@ BOOL32 X11DRV_GetTextMetrics(DC *dc, TEXTMETRIC32A *metrics)
 BOOL32 X11DRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
                             LPINT32 buffer )
 {
-    XFontStruct* xfs = XFONT_GetFontStruct( dc->u.x.font );
+    fontObject* pfo = XFONT_GetFontObject( dc->u.x.font );
 
-    if( xfs )
+    if( pfo )
     {
 	int i;
 
-	if (xfs->per_char == NULL)
+	if (pfo->fs->per_char == NULL)
 	    for (i = firstChar; i <= lastChar; i++)
-		*buffer++ = xfs->min_bounds.width;
+  	        if(pfo->lpX11Trans)
+		    *buffer++ = pfo->fs->min_bounds.attributes *
+		      pfo->lpX11Trans->pixelsize / 1000.0;
+		else
+		    *buffer++ = pfo->fs->min_bounds.width;
 	else
 	{
 	    XCharStruct *cs, *def;
 	    static XCharStruct	__null_char = { 0, 0, 0, 0, 0, 0 };
 
-	    CI_GET_CHAR_INFO(xfs, xfs->default_char, &__null_char, def);
+	    CI_GET_CHAR_INFO(pfo->fs, pfo->fs->default_char, &__null_char,
+			     def);
 
 	    for (i = firstChar; i <= lastChar; i++)
 	    {
-		if (i >= xfs->min_char_or_byte2 && i <= xfs->max_char_or_byte2)
+		if (i >= pfo->fs->min_char_or_byte2 && 
+		    i <= pfo->fs->max_char_or_byte2)
 		{
-		    cs = &xfs->per_char[(i - xfs->min_char_or_byte2)]; 
+		    cs = &pfo->fs->per_char[(i - pfo->fs->min_char_or_byte2)]; 
 		    if (CI_NONEXISTCHAR(cs)) cs = def; 
   		} else cs = def;
-		*buffer++ = MAX(cs->width, 0 );
+		if(pfo->lpX11Trans)
+		    *buffer++ = MAX(cs->attributes, 0) *
+		      pfo->lpX11Trans->pixelsize / 1000.0;
+		else
+		    *buffer++ = MAX(cs->width, 0 );
 	    }
 	}
 
