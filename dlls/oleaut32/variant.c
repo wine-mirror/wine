@@ -5406,6 +5406,65 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     TRACE("Right Var:\n");
     dump_Variant(right);
 
+    if ((V_VT(left)&VT_TYPEMASK) == VT_EMPTY)
+    	return VariantCopy(result,right);
+
+    if ((V_VT(right)&VT_TYPEMASK) == VT_EMPTY)
+    	return VariantCopy(result,left);
+
+    if (((V_VT(left)&VT_TYPEMASK) == VT_R8) || ((V_VT(right)&VT_TYPEMASK) == VT_R8)) {
+        BOOL         lOk        = TRUE;
+        BOOL         rOk        = TRUE;
+        double       lVal = -1;
+        double       rVal = -1;
+        double       res  = -1;
+
+        lOk = TRUE;
+        switch (V_VT(left)&VT_TYPEMASK) {
+        case VT_I1   : lVal = V_UNION(left,cVal);   break;
+        case VT_I2   : lVal = V_UNION(left,iVal);   break;
+        case VT_I4   : lVal = V_UNION(left,lVal);   break;
+        case VT_INT  : lVal = V_UNION(left,lVal);   break;
+        case VT_UI1  : lVal = V_UNION(left,bVal);   break;
+        case VT_UI2  : lVal = V_UNION(left,uiVal);  break;
+        case VT_UI4  : lVal = V_UNION(left,ulVal);  break;
+        case VT_UINT : lVal = V_UNION(left,ulVal);  break;
+        case VT_R4   : lVal = V_UNION(left,fltVal);  break;
+        case VT_R8   : lVal = V_UNION(left,dblVal);  break;
+	case VT_NULL : lVal = 0.0;  break;
+        default: lOk = FALSE;
+        }
+
+        rOk = TRUE;
+        switch (V_VT(right)&VT_TYPEMASK) {
+        case VT_I1   : rVal = V_UNION(right,cVal);  break;
+        case VT_I2   : rVal = V_UNION(right,iVal);  break;
+        case VT_I4   : rVal = V_UNION(right,lVal);  break;
+        case VT_INT  : rVal = V_UNION(right,lVal);  break;
+        case VT_UI1  : rVal = V_UNION(right,bVal);  break;
+        case VT_UI2  : rVal = V_UNION(right,uiVal); break;
+        case VT_UI4  : rVal = V_UNION(right,ulVal); break;
+        case VT_UINT : rVal = V_UNION(right,ulVal); break;
+        case VT_R4   : rVal = V_UNION(right,fltVal);break;
+        case VT_R8   : rVal = V_UNION(right,dblVal);break;
+	case VT_NULL : rVal = 0.0; break;
+        default: rOk = FALSE;
+        }
+
+        if (lOk && rOk) {
+            res = (lVal + rVal);
+            V_VT(result) = VT_R8;
+            V_UNION(result,dblVal)  = res;
+            rc = S_OK;
+        } else {
+	    FIXME("Unhandled type pair %d / %d in double addition.\n", 
+        	(V_VT(left)&VT_TYPEMASK),
+        	(V_VT(right)&VT_TYPEMASK)
+	    );
+	}
+	return rc;
+    }
+
     /* Handle strings as concat */
     if ((V_VT(left)&VT_TYPEMASK) == VT_BSTR &&
         (V_VT(right)&VT_TYPEMASK) == VT_BSTR) {
@@ -5432,6 +5491,7 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         case VT_UI2  : lVal = V_UNION(left,uiVal); resT=VT_I4; break;
         case VT_UI4  : lVal = V_UNION(left,ulVal); resT=VT_I4; break;
         case VT_UINT : lVal = V_UNION(left,ulVal); resT=VT_I4; break;
+	case VT_NULL : lVal = 0; resT = VT_I4; break;
         default: lOk = FALSE;
         }
 
@@ -5445,6 +5505,7 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         case VT_UI2  : rVal = V_UNION(right,uiVal); resT=VT_I4; break;
         case VT_UI4  : rVal = V_UNION(right,ulVal); resT=VT_I4; break;
         case VT_UINT : rVal = V_UNION(right,ulVal); resT=VT_I4; break;
+	case VT_NULL : rVal = 0; resT=VT_I4; break;
         default: rOk = FALSE;
         }
 
@@ -5461,7 +5522,7 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
             rc = S_OK;
 
         } else {
-            FIXME("unimplemented part\n");
+            FIXME("unimplemented part (0x%x + 0x%x)\n",V_VT(left), V_VT(right));
         }
     }
 
