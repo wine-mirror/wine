@@ -136,7 +136,7 @@ HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
       /* Fill the arena block */
 
     pArena->base = (DWORD)ptr;
-    pArena->size = GET_SEL_LIMIT(sel) + 1;
+    pArena->size = GetSelectorLimit16(sel) + 1;
     pArena->handle = (flags & GMEM_MOVEABLE) ? sel - 1 : sel;
     pArena->hOwner = hOwner;
     pArena->lockCount = 0;
@@ -360,7 +360,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
 
     if (pNewArena != pArena) memcpy( pNewArena, pArena, sizeof(GLOBALARENA) );
     pNewArena->base = (DWORD)ptr;
-    pNewArena->size = GET_SEL_LIMIT(sel) + 1;
+    pNewArena->size = GetSelectorLimit16(sel) + 1;
     pNewArena->selCount = selcount;
     pNewArena->handle = (pNewArena->flags & GA_MOVEABLE) ? sel - 1 : sel;
 

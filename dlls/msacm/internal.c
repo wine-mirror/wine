@@ -14,14 +14,13 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
-#include "heap.h"
 #include "mmsystem.h"
 #include "msacm.h"
 #include "msacmdrv.h"
 #include "wineacm.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(msacm)	
+DEFAULT_DEBUG_CHANNEL(msacm);
 
 /**********************************************************************/
 
@@ -42,8 +41,18 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
     padid = (PWINE_ACMDRIVERID) HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMDRIVERID));
     padid->obj.dwType = WINE_ACMOBJ_DRIVERID;
     padid->obj.pACMDriverID = padid;
-    padid->pszDriverAlias = pszDriverAlias ? HEAP_strdupA(MSACM_hHeap, 0, pszDriverAlias) : NULL;
-    padid->pszFileName = pszFileName ? HEAP_strdupA(MSACM_hHeap, 0, pszFileName) : NULL;
+    padid->pszDriverAlias = NULL;
+    if (pszDriverAlias)
+    {
+        padid->pszDriverAlias = HeapAlloc( MSACM_hHeap, 0, strlen(pszDriverAlias)+1 );
+        strcpy( padid->pszDriverAlias, pszDriverAlias );
+    }
+    padid->pszFileName = NULL;
+    if (pszFileName)
+    {
+        padid->pszFileName = HeapAlloc( MSACM_hHeap, 0, strlen(pszFileName)+1 );
+        strcpy( padid->pszFileName, pszFileName );
+    }
     padid->hInstModule = hinstModule;
     padid->bEnabled = TRUE;
     padid->pACMDriverList = NULL;

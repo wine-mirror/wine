@@ -21,7 +21,6 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "mmddk.h"
-#include "heap.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(mcimidi);
@@ -49,9 +48,9 @@ typedef struct tagWINE_MCIMIDI {
     WORD		wNotifyDeviceID;    	/* MCI device ID with a pending notification */
     HANDLE 		hCallback;         	/* Callback handle for pending notification  */
     HMMIO		hFile;	            	/* mmio file handle open as Element          */
-    LPCSTR		lpstrElementName;	/* Name of file */
-    LPCSTR		lpstrCopyright;
-    LPCSTR		lpstrName;	       	
+    LPSTR		lpstrElementName;	/* Name of file */
+    LPSTR		lpstrCopyright;
+    LPSTR		lpstrName;	       	
     WORD		dwStatus;		/* one from MCI_MODE_xxxx */
     DWORD		dwMciTimeFormat;	/* One of the supported MCI_FORMAT_xxxx */	       
     WORD		wFormat;		/* Format of MIDI hFile (0, 1 or 2) */
@@ -396,14 +395,16 @@ static DWORD MIDI_mciReadMTrk(WINE_MCIMIDI* wmm, MCI_MIDITRACK* mmt)
 		    if (wmm->lpstrCopyright) {
 			WARN("Two copyright notices (%s|%s)\n", wmm->lpstrCopyright, buf);
 		    } else {
-			wmm->lpstrCopyright = HEAP_strdupA(GetProcessHeap(), 0, buf);
+                        wmm->lpstrCopyright = HeapAlloc( GetProcessHeap(), 0, strlen(buf)+1 );
+                        strcpy( wmm->lpstrCopyright, buf );
 		    }
 		    break;
 		case 0x03:
 		    if (wmm->lpstrCopyright) {
 			WARN("Two names (%s|%s)\n", wmm->lpstrName, buf);
 		    } else {
-			wmm->lpstrName = HEAP_strdupA(GetProcessHeap(), 0, buf);
+			wmm->lpstrName = HeapAlloc( GetProcessHeap(), 0, strlen(buf)+1 );
+                        strcpy( wmm->lpstrName, buf );
 		    }
 		    break;
 		}
@@ -733,7 +734,8 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParms)
     TRACE("hFile=%u\n", wmm->hFile);
     
     /* FIXME: should I get a strdup() of it instead? */
-    wmm->lpstrElementName = HEAP_strdupA(GetProcessHeap(), 0, lpParms->lpstrElementName);
+    wmm->lpstrElementName = HeapAlloc( GetProcessHeap(), 0, strlen(lpParms->lpstrElementName)+1 );
+    strcpy( wmm->lpstrElementName, lpParms->lpstrElementName );
     wmm->lpstrCopyright = NULL;
     wmm->lpstrName = NULL;
 

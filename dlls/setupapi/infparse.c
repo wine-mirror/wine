@@ -33,7 +33,9 @@ RETERR16 IP_OpenInf(LPCSTR lpInfFileName, HINF16 *lphInf)
 	InfList = HeapReAlloc(GetProcessHeap(), 0, InfList, InfNumEntries+1);
 	InfList[InfNumEntries].hInf = IP_curr_handle++;
 	InfList[InfNumEntries].hInfFile = hFile;
-	InfList[InfNumEntries].lpInfFileName = HEAP_strdupA(GetProcessHeap(), 0, lpInfFileName);
+	InfList[InfNumEntries].lpInfFileName = HeapAlloc( GetProcessHeap(), 0,
+                                                          strlen(lpInfFileName)+1);
+        strcpy( InfList[InfNumEntries].lpInfFileName, lpInfFileName );
         *lphInf = InfList[InfNumEntries].hInf;
 	InfNumEntries++;
 	TRACE("ret handle %d.\n", *lphInf);
@@ -110,6 +112,6 @@ RETERR16 WINAPI IpClose16(HINF16 hInf)
 RETERR16 WINAPI IpGetProfileString16(HINF16 hInf, LPCSTR section, LPCSTR entry, LPSTR buffer, WORD buflen) 
 {
     TRACE("'%s': section '%s' entry '%s'\n", IP_GetFileName(hInf), section, entry);
-    GetPrivateProfileString16(section, entry, "", buffer, buflen, IP_GetFileName(hInf));
+    GetPrivateProfileStringA(section, entry, "", buffer, buflen, IP_GetFileName(hInf));
     return 0;
 }

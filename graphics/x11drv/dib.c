@@ -3603,7 +3603,7 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
   
   if (dib->selector)
     {
-      WORD count = (GET_SEL_LIMIT( dib->selector ) >> 16) + 1;
+      WORD count = (GetSelectorLimit16( dib->selector ) >> 16) + 1;
       SELECTOR_FreeBlock( dib->selector, count );
     }
 }

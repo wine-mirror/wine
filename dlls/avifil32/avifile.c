@@ -6,7 +6,7 @@
 #include <assert.h>
 
 #include "winbase.h"
-#include "wine/winestring.h"
+#include "winnls.h"
 #include "mmsystem.h"
 #include "winerror.h"
 #include "debugtools.h"
@@ -372,7 +372,8 @@ HRESULT WINAPI AVIFileCreateStreamA(PAVIFILE iface,PAVISTREAM *ppavi,AVISTREAMIN
 	
 	/* Only the szName at the end is different */
 	memcpy(&psiw,psi,sizeof(*psi)-sizeof(psi->szName));
-	lstrcpynAtoW(psiw.szName,psi->szName,sizeof(psi->szName));
+        MultiByteToWideChar( CP_ACP, 0, psi->szName, -1,
+                             psiw.szName, sizeof(psiw.szName) / sizeof(WCHAR) );
 	return IAVIFile_CreateStream(iface,ppavi,&psiw);
 }
 
@@ -402,7 +403,9 @@ HRESULT WINAPI AVIFileInfoA(PAVIFILE iface,LPAVIFILEINFOA afi,LONG size) {
 		return AVIERR_BADSIZE;
 	hres = IAVIFile_Info(iface,&afiw,sizeof(afiw));
 	memcpy(afi,&afiw,sizeof(*afi)-sizeof(afi->szFileType));
-	lstrcpynWtoA(afi->szFileType,afiw.szFileType,sizeof(afi->szFileType));
+        WideCharToMultiByte( CP_ACP, 0, afiw.szFileType, -1,
+                             afi->szFileType, sizeof(afi->szFileType), NULL, NULL );
+        afi->szFileType[sizeof(afi->szFileType)-1] = 0;
 	return hres;
 }
 
@@ -426,7 +429,9 @@ HRESULT WINAPI AVIStreamInfoA(PAVISTREAM iface,AVISTREAMINFOA *asi,LONG
 		return AVIERR_BADSIZE;
  	hres = IAVIFile_Info(iface,&asiw,sizeof(asiw));
 	memcpy(asi,&asiw,sizeof(asiw)-sizeof(asiw.szName));
-	lstrcpynWtoA(asi->szName,asiw.szName,sizeof(asi->szName));
+        WideCharToMultiByte( CP_ACP, 0, asiw.szName, -1,
+                             asi->szName, sizeof(asi->szName), NULL, NULL );
+        asi->szName[sizeof(asi->szName)-1] = 0;
 	return hres;
 }
 

@@ -8,7 +8,6 @@
 #include "winnt.h"
 #include "winerror.h"
 #include "windef.h"
-#include "heap.h"
 #include "debugtools.h"
 #include "imagehlp.h"
 
@@ -240,8 +239,8 @@ BOOL WINAPI MapAndLoad(
 
   pNtHeader = ImageNtHeader((PVOID) hModule);
 
-  pLoadedImage->ModuleName =
-    HEAP_strdupA(IMAGEHLP_hHeap, 0, pszDllPath); /* FIXME: Correct? */
+  pLoadedImage->ModuleName = HeapAlloc(IMAGEHLP_hHeap, 0, strlen(pszDllPath)+1); /* FIXME: Correct? */
+  strcpy( pLoadedImage->ModuleName, pszDllPath );
   pLoadedImage->hFile = hFile;
   pLoadedImage->MappedAddress = (PUCHAR) hModule;
   pLoadedImage->FileHeader = pNtHeader;

@@ -498,8 +498,9 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
     }
 
     /* Get the name of the printer */
-    lpOpenedPrinter->lpsPrinterName = 
-      HEAP_strdupW( GetProcessHeap(), 0, lpPrinterName );
+    lpOpenedPrinter->lpsPrinterName = HeapAlloc( GetProcessHeap(), 0,
+                                                 (strlenW(lpPrinterName)+1)*sizeof(WCHAR) );
+    strcpyW( lpOpenedPrinter->lpsPrinterName, lpPrinterName );
 
     /* Get the unique handle of the printer*/
     *phPrinter = lpOpenedPrinter->hPrinter;

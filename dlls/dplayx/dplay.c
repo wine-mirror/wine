@@ -10,8 +10,9 @@
 #include "winbase.h"
 #include "winnt.h"
 #include "winreg.h"
-#include "dplay.h"
+#include "wine/unicode.h"
 #include "heap.h"
+#include "dplay.h"
 #include "debugtools.h"
 
 #include "dpinit.h"
@@ -21,7 +22,7 @@
 #include "dplaysp.h"
 #include "dplay_global.h"
 
-DEFAULT_DEBUG_CHANNEL(dplay)
+DEFAULT_DEBUG_CHANNEL(dplay);
 
 /* FIXME: Should this be externed? */
 extern HRESULT DPL_CreateCompoundAddress 
@@ -1224,30 +1225,30 @@ static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, LPDPNAME lpSrc, BOOL bAnsi )
   {
     if( lpSrc->psn.lpszShortNameA )
     {
-      lpDst->psn.lpszShortNameA = 
-        HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                        lpSrc->psn.lpszShortNameA );
+        lpDst->psn.lpszShortNameA = HeapAlloc( GetProcessHeap(), 0,
+                                             strlen(lpSrc->psn.lpszShortNameA)+1 );
+        strcpy( lpDst->psn.lpszShortNameA, lpSrc->psn.lpszShortNameA );
     }
     if( lpSrc->pln.lpszLongNameA )
     {
-      lpDst->pln.lpszLongNameA =
-        HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                        lpSrc->pln.lpszLongNameA );
+        lpDst->pln.lpszLongNameA = HeapAlloc( GetProcessHeap(), 0,
+                                              strlen(lpSrc->pln.lpszLongNameA)+1 );
+        strcpy( lpDst->pln.lpszLongNameA, lpSrc->pln.lpszLongNameA );
     }
   }
   else
   {
     if( lpSrc->psn.lpszShortNameA )
     {
-      lpDst->psn.lpszShortName = 
-        HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                        lpSrc->psn.lpszShortName );
+        lpDst->psn.lpszShortName = HeapAlloc( GetProcessHeap(), 0,
+                                              (strlenW(lpSrc->psn.lpszShortName)+1)*sizeof(WCHAR) );
+        strcpyW( lpDst->psn.lpszShortName, lpSrc->psn.lpszShortName );
     }
     if( lpSrc->pln.lpszLongNameA )
     {
-      lpDst->pln.lpszLongName =
-        HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                        lpSrc->pln.lpszLongName );
+        lpDst->pln.lpszLongName = HeapAlloc( GetProcessHeap(), 0,
+                                             (strlenW(lpSrc->pln.lpszLongName)+1)*sizeof(WCHAR) );
+        strcpyW( lpDst->pln.lpszLongName, lpSrc->pln.lpszLongName );
     }
   }
 
