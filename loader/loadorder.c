@@ -409,7 +409,7 @@ BOOL MODULE_InitLoadOrder(void)
 		);
 	}
 
-	/* Read the explicitely defined orders for specific modules as an entire section */
+	/* Read the explicitly defined orders for specific modules as an entire section */
         idx = 0;
         while (PROFILE_EnumWineIniString( "DllOverrides", idx++, key, sizeof(key),
                                           buffer, sizeof(buffer)))
@@ -419,15 +419,15 @@ BOOL MODULE_InitLoadOrder(void)
                 return FALSE;
         }
 
-	/* Add the commandline overrides to the pool */
+	/* Add the command line overrides to the pool */
 	if(!ParseCommandlineOverrides())
 	{
 		MESSAGE(	"Syntax: -dll name[,name[,...]]={native|so|builtin}[,{n|s|b}[,...]][+...]\n"
 			"    - 'name' is the name of any dll without extension\n"
 			"    - the order of loading (native, so and builtin) can be abbreviated\n"
 			"      with the first letter\n"
-			"    - different loadorders for different dlls can be specified by seperating the\n"
-			"      commandline entries with a '+'\n"
+			"    - different loadorders for different dlls can be specified by separating the\n"
+			"      command line entries with a '+'\n"
 			"    Example:\n"
 			"    -dll comdlg32,commdlg=n+shell,shell32=b\n"
 		   );

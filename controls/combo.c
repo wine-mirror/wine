@@ -174,7 +174,7 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
  * This method will calculate the height of the text area of the 
  * combobox.
  * The height of the text area is set in two ways. 
- * It can be set explicitely through a combobox message or through a
+ * It can be set explicitly through a combobox message or through a
  * WM_MEASUREITEM callback.
  * If this is not the case, the height is set to 13 dialog units.
  * This height was determined through experimentation.

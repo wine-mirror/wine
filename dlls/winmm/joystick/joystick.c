@@ -161,7 +161,7 @@ static	LONG	JSTCK_GetDevCaps(DWORD dwDevID, LPJOYCAPSA lpCaps, DWORD dwSize)
     lpCaps->wZmax = (nrOfAxes >= 3) ? 0xFFFF : 0;
     lpCaps->wNumButtons = nrOfButtons;
     if (dwSize == sizeof(JOYCAPSA)) {
-	/* since we supose ntOfAxes <= 6 in the following code, do it explicitely */
+	/* since we suppose ntOfAxes <= 6 in the following code, do it explicitly */
 	if (nrOfAxes > 6) nrOfAxes = 6;
 	/* complete 95 structure */
 	lpCaps->wRmin = 0;

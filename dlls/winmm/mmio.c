@@ -530,7 +530,7 @@ static FOURCC MMIO_ParseExt(LPCSTR szFileName)
 		WARN("Extension length > 4\n");
 	    lstrcpynA(ext,extStart + 1,min(extEnd-extStart,5));
 	    TRACE("Got extension: %s\n", debugstr_a(ext));
-	    /* FOURCC codes identifying file-extentions must be uppercase */
+	    /* FOURCC codes identifying file-extensions must be uppercase */
 	    ret = mmioStringToFOURCCA(ext, MMIO_TOUPPER);
 	}
     }
