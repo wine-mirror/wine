@@ -108,6 +108,8 @@ HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
 
     MCIWndRegisterClass();
 
+    if (!hInstance) hInstance = GetModuleHandleW(0);
+
     if (hwndParent)
         dwStyle |= WS_VISIBLE | WS_BORDER /*| WS_CHILD*/;
     else
@@ -255,6 +257,10 @@ static LRESULT MCIWND_Create(HWND hWnd, LPCREATESTRUCTW cs)
     SetWindowLongW(hWnd, 0, (LPARAM)mwi);
 
     mwi->dwStyle = cs->style;
+    /* There is no need to show stats if there is no caption */
+    if ((mwi->dwStyle & WS_CAPTION) != WS_CAPTION)
+        mwi->dwStyle &= ~MCIWNDF_SHOWALL;
+
     mwi->hWnd = hWnd;
     mwi->hwndOwner = cs->hwndParent;
     mwi->active_timer = 500;
@@ -306,8 +312,18 @@ static LRESULT MCIWND_Create(HWND hWnd, LPCREATESTRUCTW cs)
         }
         else
             lParam = (LPARAM)cs->lpCreateParams;
-        /* yes, A variant of the message */
-        SendMessageW(hWnd, MCIWNDM_OPENA, 0, lParam);
+
+        /* If it's our internal caption, file name is a unicode string */
+        if (cs->lpszClass == mciWndClassW)
+            SendMessageW(hWnd, MCIWNDM_OPENW, 0, lParam);
+        else
+        {
+            /* Otherwise let's try to figure out what string format is used */
+            HWND parent = cs->hwndParent;
+            if (!parent) parent = GetWindow(hWnd, GW_OWNER);
+
+            SendMessageW(hWnd, IsWindowUnicode(parent) ? MCIWNDM_OPENW : MCIWNDM_OPENA, 0, lParam);
+        }
     }
 
     return 0;
