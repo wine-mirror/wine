@@ -1064,7 +1064,6 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
             struct stat st;
             const FILE_BASIC_INFORMATION *info = ptr;
 
-#ifdef HAVE_FUTIMES
             if (info->LastAccessTime.QuadPart || info->LastWriteTime.QuadPart)
             {
                 ULONGLONG sec, nsec;
@@ -1095,7 +1094,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
                 }
                 if (futimes( fd, tv ) == -1) io->u.Status = FILE_GetNtStatus();
             }
-#endif  /* HAVE_FUTIMES */
+
             if (io->u.Status == STATUS_SUCCESS && info->FileAttributes)
             {
                 if (fstat( fd, &st ) == -1) io->u.Status = FILE_GetNtStatus();
