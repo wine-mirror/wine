@@ -752,14 +752,12 @@ static void get_executable_name( LPCSTR line, LPSTR name, int namelen,
     int len = 0;
     LPCSTR p = NULL, pcmd = NULL;
 
-    if ((p = strchr(line, '"')))
+    while ( *line == ' ' ) line++;
+    if ( *line == '"' )
     {
-        p++;      /* skip '"' */
-        line = p;
-        if ((pcmd = strchr(p, '"'))) { /* closing '"' available, too ? */
-            pcmd++;
-            len = (int)pcmd - (int)p;
-        } 
+        line++;      /* skip '"' */
+        if ((pcmd = strchr(line, '"'))) /* closing '"' available, too ? */
+            len = ++pcmd - line;
     }
 
     if (!len)
