@@ -1451,8 +1451,8 @@ MONTHCAL_LButtonDown(HWND hwnd, WPARAM wParam, LPARAM lParam)
 			 infoPtr->titleyear.right-infoPtr->titleyear.left,
 			 infoPtr->textHeight,
 			 hwnd,
-			 (HMENU)NULL,
-			 (HINSTANCE)NULL,
+			 NULL,
+			 NULL,
 			 NULL);
     infoPtr->hWndYearUpDown=CreateWindowExA(0,
 			 UPDOWN_CLASSA,
@@ -1462,8 +1462,8 @@ MONTHCAL_LButtonDown(HWND hwnd, WPARAM wParam, LPARAM lParam)
 			 20,
 			 infoPtr->textHeight,
 			 hwnd,
-			 (HMENU)NULL,
-			 (HINSTANCE)NULL,
+			 NULL,
+			 NULL,
 			 NULL);
     SendMessageA( infoPtr->hWndYearUpDown, UDM_SETRANGE, (WPARAM) 0, MAKELONG (9999, 1753));
     SendMessageA( infoPtr->hWndYearUpDown, UDM_SETBUDDY, (WPARAM) infoPtr->hWndYearEdit, (LPARAM)0 );
@@ -2062,5 +2062,5 @@ MONTHCAL_Register(void)
 void
 MONTHCAL_Unregister(void)
 {
-    UnregisterClassA(MONTHCAL_CLASSA, (HINSTANCE)NULL);
+    UnregisterClassA(MONTHCAL_CLASSA, NULL);
 }

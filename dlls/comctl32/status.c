@@ -1280,5 +1280,5 @@ STATUS_Register (void)
 void
 STATUS_Unregister (void)
 {
-    UnregisterClassW (STATUSCLASSNAMEW, (HINSTANCE)NULL);
+    UnregisterClassW (STATUSCLASSNAMEW, NULL);
 }

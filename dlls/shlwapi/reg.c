@@ -142,7 +142,7 @@ LONG WINAPI SHRegOpenUSKeyA(
     if ((ret1 != ERROR_SUCCESS) && (ret2 != ERROR_SUCCESS)) {
 	HeapFree(GetProcessHeap(), 0, ihky);
 	if (phNewUSKey)
-	    *phNewUSKey = (HUSKEY)0;
+	    *phNewUSKey = NULL;
 	return ret2;
     }
 
@@ -208,7 +208,7 @@ LONG WINAPI SHRegOpenUSKeyW(
     if ((ret1 != ERROR_SUCCESS) && (ret2 != ERROR_SUCCESS)) {
 	HeapFree(GetProcessHeap(), 0, ihky);
 	if (phNewUSKey)
-	    *phNewUSKey = (HUSKEY)0;
+	    *phNewUSKey = NULL;
 	return ret2;
     }
 

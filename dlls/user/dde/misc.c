@@ -715,7 +715,7 @@ HDDEDATA 	WDML_InvokeCallback(WDML_INSTANCE* pInstance, UINT uType, UINT uFmt, H
     HDDEDATA	ret;
 
     if (pInstance == NULL)
-	return (HDDEDATA)0;
+	return NULL;
     TRACE("invoking CB%d[%p] (%u %u %p %p %p %p %lu %lu)\n",
 	  pInstance->win16 ? 16 : 32, pInstance->callback, uType, uFmt,
 	  hConv, hsz1, hsz2, hdata, dwData1, dwData2);
@@ -857,7 +857,7 @@ HSZ	WDML_MakeHszFromAtom(WDML_INSTANCE* pInstance, ATOM atom)
 {
     WCHAR nameBuffer[MAX_BUFFER_LEN];
 
-    if (!atom) return (HSZ)0;
+    if (!atom) return NULL;
 
     if (GlobalGetAtomNameW(atom, nameBuffer, MAX_BUFFER_LEN))
     {

@@ -101,7 +101,7 @@ HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
    if (CreateWindowExA(0, "MCIWndClass", NULL, wndStyle,
 		       CW_USEDEFAULT, CW_USEDEFAULT,
 		       CW_USEDEFAULT, CW_USEDEFAULT,
-		       hwndParent, (HMENU)0, hInstance, mwi))
+		       hwndParent, NULL, hInstance, mwi))
       return mwi->hWnd;
 
    if(mwi->lpName) HeapFree(GetProcessHeap(), 0, mwi->lpName);

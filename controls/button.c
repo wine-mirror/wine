@@ -1094,7 +1094,7 @@ static void OB_Paint( HWND hwnd, HDC hDC, UINT action )
     if (GetClipRgn(hDC, clipRegion) != 1)
     {
 	DeleteObject(clipRegion);
-	clipRegion=(HRGN)NULL;
+	clipRegion=NULL;
     }
     clipRect = dis.rcItem;
     DPtoLP(hDC, (LPPOINT) &clipRect, 2);

@@ -137,7 +137,7 @@ HRESULT WINAPI AssocQueryKeyW(ASSOCF flags, ASSOCKEY key, LPCWSTR pszAssoc,
     return E_OUTOFMEMORY;
 
   flags &= SHLWAPI_DEF_ASSOCF;
-  hRet = IQueryAssociations_Init(lpAssoc, flags, pszAssoc, (HKEY)0, (HWND)0);
+  hRet = IQueryAssociations_Init(lpAssoc, flags, pszAssoc, NULL, NULL);
 
   if (SUCCEEDED(hRet))
     hRet = IQueryAssociations_GetKey(lpAssoc, flags, key, pszExtra, phkeyOut);
@@ -204,7 +204,7 @@ HRESULT WINAPI AssocQueryStringW(ASSOCF flags, ASSOCSTR str, LPCWSTR pszAssoc,
     return E_OUTOFMEMORY;
 
   hRet = IQueryAssociations_Init(lpAssoc, flags & SHLWAPI_DEF_ASSOCF,
-                                 pszAssoc, (HKEY)0, (HWND)0);
+                                 pszAssoc, NULL, NULL);
 
   if (SUCCEEDED(hRet))
     hRet = IQueryAssociations_GetString(lpAssoc, flags, str, pszExtra,
@@ -291,7 +291,7 @@ HRESULT WINAPI AssocQueryStringByKeyW(ASSOCF flags, ASSOCSTR str, HKEY hkAssoc,
     return E_OUTOFMEMORY;
 
   flags &= SHLWAPI_DEF_ASSOCF;
-  hRet = IQueryAssociations_Init(lpAssoc, flags, 0, hkAssoc, (HWND)0);
+  hRet = IQueryAssociations_Init(lpAssoc, flags, 0, hkAssoc, NULL);
 
   if (SUCCEEDED(hRet))
     hRet = IQueryAssociations_GetString(lpAssoc, flags, str, pszExtra,

@@ -836,7 +836,7 @@ PAGER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     SetWindowLongA (hwnd, 0, (DWORD)infoPtr);
 
     /* set default settings */
-    infoPtr->hwndChild = (HWND)NULL;
+    infoPtr->hwndChild = NULL;
     infoPtr->bNoResize = dwStyle & CCS_NORESIZE;
     infoPtr->clrBk = GetSysColor(COLOR_BTNFACE);
     infoPtr->nBorder = 0;
@@ -1603,5 +1603,5 @@ PAGER_Register (void)
 VOID
 PAGER_Unregister (void)
 {
-    UnregisterClassA (WC_PAGESCROLLERA, (HINSTANCE)NULL);
+    UnregisterClassA (WC_PAGESCROLLERA, NULL);
 }

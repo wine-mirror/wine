@@ -143,7 +143,7 @@ static BOOL MSACM_FillFormatTags(HWND hWnd)
     affd.hWnd = hWnd;
     affd.mode = WINE_ACMFF_TAG;
 
-    acmFormatTagEnumA((HACMDRIVER)0, &aftd, MSACM_FillFormatTagsCB, (DWORD)&affd, 0);
+    acmFormatTagEnumA(NULL, &aftd, MSACM_FillFormatTagsCB, (DWORD)&affd, 0);
     SendDlgItemMessageA(hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMATTAG, CB_SETCURSEL, 0, 0);
     return TRUE;
 }
@@ -166,7 +166,7 @@ static BOOL MSACM_FillFormat(HWND hWnd)
 					    CB_GETCURSEL, 0, 0),
 			(DWORD)affd.szFormatTag);
 
-    acmFormatTagEnumA((HACMDRIVER)0, &aftd, MSACM_FillFormatTagsCB, (DWORD)&affd, 0);
+    acmFormatTagEnumA(NULL, &aftd, MSACM_FillFormatTagsCB, (DWORD)&affd, 0);
     SendDlgItemMessageA(hWnd, IDD_ACMFORMATCHOOSE_CMB_FORMAT, CB_SETCURSEL, 0, 0);
     return TRUE;
 }
@@ -189,7 +189,7 @@ static MMRESULT MSACM_GetWFX(HWND hWnd, PACMFORMATCHOOSEA afc)
 					    CB_GETCURSEL, 0, 0),
 			(DWORD)affd.szFormatTag);
 
-    acmFormatTagEnumA((HACMDRIVER)0, &aftd, MSACM_FillFormatTagsCB, (DWORD)&affd, 0);
+    acmFormatTagEnumA(NULL, &aftd, MSACM_FillFormatTagsCB, (DWORD)&affd, 0);
     return affd.ret;
 }
 
@@ -332,7 +332,7 @@ MMRESULT WINAPI acmFormatDetailsW(HACMDRIVER had, PACMFORMATDETAILSW pafd, DWORD
 	    mmr = MMSYSERR_INVALPARAM;
 	    break;
 	}
-	if (had == (HACMDRIVER)NULL) {
+	if (had == NULL) {
 	    PWINE_ACMDRIVERID		padid;
 
 	    mmr = ACMERR_NOTPOSSIBLE;
@@ -552,7 +552,7 @@ MMRESULT WINAPI acmFormatSuggest(HACMDRIVER had, PWAVEFORMATEX pwfxSrc,
     adfg.pwfxDst = pwfxDst;
     adfg.cbwfxDst = cbwfxDst;
 
-    if (had == (HACMDRIVER)NULL) {
+    if (had == NULL) {
 	PWINE_ACMDRIVERID	padid;
 
 	/* MS doc says: ACM finds the best suggestion.
@@ -621,7 +621,7 @@ MMRESULT WINAPI acmFormatTagDetailsW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd
 
     switch (fdwDetails) {
     case ACM_FORMATTAGDETAILSF_FORMATTAG:
-	if (had == (HACMDRIVER)NULL) {
+	if (had == NULL) {
 	    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 		/* should check for codec only */
 		if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED) &&
@@ -641,7 +641,7 @@ MMRESULT WINAPI acmFormatTagDetailsW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd
 	break;
 
     case ACM_FORMATTAGDETAILSF_INDEX:
-	if (had != (HACMDRIVER)NULL) {
+	if (had != NULL) {
 	    PWINE_ACMDRIVER	pad = MSACM_GetDriver(had);
 
 	    if (pad && paftd->dwFormatTagIndex < pad->obj.pACMDriverID->cFormatTags)
@@ -650,7 +650,7 @@ MMRESULT WINAPI acmFormatTagDetailsW(HACMDRIVER had, PACMFORMATTAGDETAILSW paftd
 	break;
 
     case ACM_FORMATTAGDETAILSF_LARGESTSIZE:
-	if (had == (HACMDRIVER)NULL) {
+	if (had == NULL) {
 	    ACMFORMATTAGDETAILSW	tmp;
 	    DWORD			ft = paftd->dwFormatTag;
 

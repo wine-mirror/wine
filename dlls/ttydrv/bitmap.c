@@ -59,7 +59,7 @@ HBITMAP TTYDRV_BITMAP_CreateDIBSection(
   FIXME("(%p, %p, %u, %p, %p, %ld): stub\n",
 	physDev->hdc, bmi, usage, bits, section, offset);
 
-  return (HBITMAP) NULL;
+  return NULL;
 }
 
 /***********************************************************************

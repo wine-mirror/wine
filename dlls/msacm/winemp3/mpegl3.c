@@ -177,7 +177,7 @@ static	LRESULT MPEG3_DriverDetails(PACMDRIVERDETAILSW add)
     add->fdwSupport = ACMDRIVERDETAILS_SUPPORTF_CODEC;
     add->cFormatTags = 2; /* PCM, MPEG3 */
     add->cFilterTags = 0;
-    add->hicon = (HICON)0;
+    add->hicon = NULL;
     MultiByteToWideChar( CP_ACP, 0, "WINE-MPEG3", -1,
                          add->szShortName, sizeof(add->szShortName)/sizeof(WCHAR) );
     MultiByteToWideChar( CP_ACP, 0, "Wine MPEG3 decoder", -1,

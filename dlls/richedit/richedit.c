@@ -796,7 +796,7 @@ VOID RICHED32_Unregister(void)
 {
     TRACE("\n");
 
-    UnregisterClassA(RICHEDIT_CLASS10A, (HINSTANCE)NULL);
+    UnregisterClassA(RICHEDIT_CLASS10A, NULL);
 }
 
 INT RICHEDIT_GetTextRange(HWND hwnd,TEXTRANGEA *tr)

@@ -396,7 +396,7 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
 
   /* Initialize the dialog property */
   fodInfos.DlgInfos.dwDlgProp = 0;
-  fodInfos.DlgInfos.hwndCustomDlg = (HWND)NULL;
+  fodInfos.DlgInfos.hwndCustomDlg = NULL;
 
   switch(iDlgType)
   {
@@ -551,7 +551,7 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
     }
     else
     {
-      if( (GetWindow(hwndChildDlg,GW_CHILD)) == (HWND) NULL) return;
+      if( (GetWindow(hwndChildDlg,GW_CHILD)) == NULL) return;
 
       SetRectEmpty(&rectTemp);
       ptParentClient.x = max((rectParent.right-rectParent.left),(rectChild.right-rectChild.left));
@@ -608,7 +608,7 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
 				rectCtrl.right-rectCtrl.left,rectCtrl.bottom-rectCtrl.top,
 				SWP_NOSIZE | SWP_NOZORDER );
         }
-      } while ((hwndChild=GetWindow( hwndChild, GW_HWNDNEXT )) != (HWND)NULL);
+      } while ((hwndChild=GetWindow( hwndChild, GW_HWNDNEXT )) != NULL);
     }
     hwndChild = GetWindow(hwndParentDlg,GW_CHILD);
 
@@ -636,7 +636,7 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
                 rectCtrl.right-rectCtrl.left,rectCtrl.bottom-rectCtrl.top,
                 SWP_NOSIZE |SWP_NOZORDER );
           }
-        } while ((hwndChild=GetWindow( hwndChild, GW_HWNDNEXT )) != (HWND)NULL);
+        } while ((hwndChild=GetWindow( hwndChild, GW_HWNDNEXT )) != NULL);
       }
     }
 }
@@ -699,7 +699,7 @@ HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
         if( !(template = LockResource( fodInfos->ofnInfos->hInstance)))
         {
           COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-          return (HWND)NULL;
+          return NULL;
         }
       }
       else
@@ -718,13 +718,13 @@ HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
         if (!hRes)
         {
           COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
-          return (HWND)NULL;
+          return NULL;
         }
         if (!(hDlgTmpl = LoadResource( hinst, hRes )) ||
             !(template = LockResource( hDlgTmpl )))
         {
           COMDLG32_SetCommDlgExtendedError(CDERR_LOADRESFAILURE);
-          return (HWND)NULL;
+          return NULL;
     	}
       }
 
@@ -756,7 +756,7 @@ HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
                   hwnd, FileOpenDlgProcUserTemplate, (LPARAM)fodInfos);
       return hChildDlg;
     }
-    return (HWND)NULL;
+    return NULL;
 }
 
 /***********************************************************************

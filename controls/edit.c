@@ -2169,7 +2169,7 @@ static void EDIT_SetRectNP(EDITSTATE *es, LPRECT rc)
 		es->format_rect.bottom = es->format_rect.top + es->line_height;
 
 	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL))
-		EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, (HRGN)0);
+		EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, NULL);
 }
 
 
@@ -2779,7 +2779,7 @@ static BOOL EDIT_EM_LineScroll_internal(EDITSTATE *es, INT dx, INT dy)
 		GetClientRect(es->hwndSelf, &rc1);
 		IntersectRect(&rc, &rc1, &es->format_rect);
 		ScrollWindowEx(es->hwndSelf, -dx, dy,
-				NULL, &rc, (HRGN)NULL, NULL, SW_INVALIDATE);
+				NULL, &rc, NULL, NULL, SW_INVALIDATE);
 		/* force scroll info update */
 		EDIT_UpdateScrollInfo(es);
 	}
@@ -3143,7 +3143,7 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
 	    if(es->hloc32A)
 	    {
 		LocalFree(es->hloc32A);
-		es->hloc32A = (HLOCAL)NULL;
+		es->hloc32A = NULL;
 	    }
 	    es->hloc32W = hloc;
 	}
@@ -3183,7 +3183,7 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
 	EDIT_EM_EmptyUndoBuffer(es);
 	es->flags &= ~EF_MODIFIED;
 	es->flags &= ~EF_UPDATE;
-	EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, (HRGN)0);
+	EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, NULL);
 	EDIT_UpdateText(es, NULL, TRUE);
 	EDIT_EM_ScrollCaret(es);
 	/* force scroll info update */
@@ -3219,7 +3219,7 @@ static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc)
 	if(es->hloc32A)
 	{
 	    LocalFree(es->hloc32A);
-	    es->hloc32A = (HLOCAL)NULL;
+	    es->hloc32A = NULL;
 	}
 
 	countA = LOCAL_Size(hInstance, hloc);
@@ -3250,7 +3250,7 @@ static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc)
 	EDIT_EM_EmptyUndoBuffer(es);
 	es->flags &= ~EF_MODIFIED;
 	es->flags &= ~EF_UPDATE;
-	EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, (HRGN)0);
+	EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, NULL);
 	EDIT_UpdateText(es, NULL, TRUE);
 	EDIT_EM_ScrollCaret(es);
 	/* force scroll info update */
@@ -3460,7 +3460,7 @@ static void EDIT_EM_SetWordBreakProc(EDITSTATE *es, LPARAM lParam)
 	es->word_break_proc16 = NULL;
 
 	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL)) {
-		EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, (HRGN)0);
+		EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, NULL);
 		EDIT_UpdateText(es, NULL, TRUE);
 	}
 }
@@ -3479,7 +3479,7 @@ static void EDIT_EM_SetWordBreakProc16(EDITSTATE *es, EDITWORDBREAKPROC16 wbp)
 	es->word_break_proc = NULL;
 	es->word_break_proc16 = wbp;
 	if ((es->style & ES_MULTILINE) && !(es->style & ES_AUTOHSCROLL)) {
-		EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, (HRGN)0);
+		EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, NULL);
 		EDIT_UpdateText(es, NULL, TRUE);
 	}
 }
@@ -4527,7 +4527,7 @@ static void EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw)
 	EDIT_SetRectNP(es, &r);
 
 	if (es->style & ES_MULTILINE)
-		EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, (HRGN)0);
+		EDIT_BuildLineDefs_ML(es, 0, strlenW(es->text), 0, NULL);
 	else
 	    EDIT_CalcLineWidth_SL(es);
 

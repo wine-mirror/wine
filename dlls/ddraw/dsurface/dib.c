@@ -218,7 +218,7 @@ HRESULT DIB_DirectDrawSurface_Construct(IDirectDrawSurfaceImpl *This,
 
     This->get_dc     = DIB_DirectDrawSurface_get_dc;
     This->release_dc = DIB_DirectDrawSurface_release_dc;
-    This->hDC = (HDC)NULL;
+    This->hDC = NULL;
 
     This->set_palette    = DIB_DirectDrawSurface_set_palette;
     This->update_palette = DIB_DirectDrawSurface_update_palette;

@@ -1737,5 +1737,5 @@ void TRACKBAR_Register (void)
 
 void TRACKBAR_Unregister (void)
 {
-    UnregisterClassW (TRACKBAR_CLASSW, (HINSTANCE)NULL);
+    UnregisterClassW (TRACKBAR_CLASSW, NULL);
 }

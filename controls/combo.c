@@ -312,7 +312,7 @@ static void CBForceDummyResize(
    * message.
    */
   SetWindowPos( lphc->self,
-		(HWND)NULL,
+		NULL,
 		0, 0,
 		windowRect.right  - windowRect.left,
 		newComboHeight,
@@ -822,7 +822,7 @@ static void CBPaintText(
        if (GetClipRgn(hdc, clipRegion)!=1)
        {
 	 DeleteObject(clipRegion);
-	 clipRegion=(HRGN)NULL;
+	 clipRegion=NULL;
        }
 
        if (!IsWindowEnabled(lphc->self) & WS_DISABLED) itemState |= ODS_DISABLED;

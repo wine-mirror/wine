@@ -7011,7 +7011,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   /* create header */
   infoPtr->hwndHeader =	CreateWindowW(WC_HEADERW, (LPCWSTR)NULL,
     WS_CHILD | HDS_HORZ | (DWORD)((LVS_NOSORTHEADER & lpcs->style)?0:HDS_BUTTONS),
-    0, 0, 0, 0, hwnd, (HMENU)0,
+    0, 0, 0, 0, hwnd, NULL,
     lpcs->hInstance, NULL);
 
   /* set header unicode format */
@@ -8783,7 +8783,7 @@ void LISTVIEW_Register(void)
  */
 void LISTVIEW_Unregister(void)
 {
-    UnregisterClassW(WC_LISTVIEWW, (HINSTANCE)NULL);
+    UnregisterClassW(WC_LISTVIEWW, NULL);
 }
 
 /***

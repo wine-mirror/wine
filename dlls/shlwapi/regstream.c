@@ -325,7 +325,7 @@ static ISHRegStream rsDummyRegStream =
 {
  &DummyRegStreamVTable,
  1,
- (HKEY)0,
+ NULL,
  NULL,
  0,
  0
@@ -373,7 +373,7 @@ static IStream *IStream_Create(HKEY hKey, LPBYTE pbBuffer, DWORD dwLength)
 IStream * WINAPI SHOpenRegStream2A(HKEY hKey, LPCSTR pszSubkey,
                                    LPCSTR pszValue,DWORD dwMode)
 {
-  HKEY hStrKey = (HKEY)0;
+  HKEY hStrKey = NULL;
   LPBYTE lpBuff = NULL;
   DWORD dwLength, dwType;
 
@@ -402,7 +402,7 @@ IStream * WINAPI SHOpenRegStream2A(HKEY hKey, LPCSTR pszSubkey,
 IStream * WINAPI SHOpenRegStream2W(HKEY hKey, LPCWSTR pszSubkey,
                                    LPCWSTR pszValue, DWORD dwMode)
 {
-  HKEY hStrKey = (HKEY)0;
+  HKEY hStrKey = NULL;
   LPBYTE lpBuff = NULL;
   DWORD dwLength, dwType;
 
@@ -497,7 +497,7 @@ IStream * WINAPI SHLWAPI_12(LPBYTE lpbData, DWORD dwDataLen)
     if (lpbDup)
     {
       memcpy(lpbDup, lpbData, dwDataLen);
-      iStrmRet = IStream_Create((HKEY)0, lpbDup, dwDataLen);
+      iStrmRet = IStream_Create(NULL, lpbDup, dwDataLen);
 
       if (!iStrmRet)
         HeapFree(GetProcessHeap(), 0, lpbDup);
@@ -536,7 +536,7 @@ HRESULT WINAPI SHCreateStreamWrapper(LPBYTE lpbData, DWORD dwDataLen,
   if(dwReserved || !lppStream)
     return E_INVALIDARG;
 
-  lpStream = IStream_Create((HKEY)0, lpbData, dwDataLen);
+  lpStream = IStream_Create(NULL, lpbData, dwDataLen);
 
   if(!lpStream)
     return E_OUTOFMEMORY;

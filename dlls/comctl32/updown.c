@@ -966,5 +966,5 @@ void UPDOWN_Register(void)
  */
 void UPDOWN_Unregister (void)
 {
-    UnregisterClassW (UPDOWN_CLASSW, (HINSTANCE)NULL);
+    UnregisterClassW (UPDOWN_CLASSW, NULL);
 }

@@ -174,7 +174,7 @@ HDDEDATA WINAPI DdeNameService(DWORD idInst, HSZ hsz1, HSZ hsz2, UINT afCmd)
     HWND 		hwndServer;
     WNDCLASSEXA  	wndclass;
 
-    hDdeData = (HDDEDATA)NULL;
+    hDdeData = NULL;
 
     TRACE("(%ld,%p,%p,%d)\n", idInst, hsz1, hsz2, afCmd);
 
@@ -706,7 +706,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleUnadvise(WDML_CONV* pConv, WDML_XACT* p
 {
     WDML_LINK*	pLink;
 
-    if (pXAct->hszItem == (HSZ)0 || pXAct->wFmt == 0)
+    if (pXAct->hszItem == NULL || pXAct->wFmt == 0)
     {
 	ERR("Unsupported yet options (null item or clipboard format)\n");
 	return WDML_QS_ERROR;

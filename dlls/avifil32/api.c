@@ -1224,7 +1224,7 @@ static void AVISaveOptionsUpdate(HWND hWnd)
 
 	    hic = ICLocate(ICTYPE_VIDEO, sInfo.fccHandler, lpFormat,
 			   NULL, ICMODE_DECOMPRESS);
-	    if (hic != (HIC)NULL) {
+	    if (hic != NULL) {
 	      if (ICGetInfo(hic, &icinfo, sizeof(icinfo)) == S_OK)
 		lstrcatW(szFormat, icinfo.szDescription);
 	      ICClose(hic);
@@ -1249,7 +1249,7 @@ static void AVISaveOptionsUpdate(HWND hWnd)
 	  afd.cbStruct      = sizeof(afd);
 	  afd.pwfx          = lpFormat;
 
-	  if (acmFormatTagDetailsW((HACMDRIVER)NULL, &aftd,
+	  if (acmFormatTagDetailsW(NULL, &aftd,
 				   ACM_FORMATTAGDETAILSF_FORMATTAG) == S_OK) {
 	    if (acmFormatDetailsW(NULL,&afd,ACM_FORMATDETAILSF_FORMAT) == S_OK)
 	      wsprintfW(szFormat, szAudioFmt, afd.szFormat, aftd.szFormatTag);

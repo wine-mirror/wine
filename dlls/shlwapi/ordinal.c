@@ -2220,7 +2220,7 @@ HICON WINAPI SHLWAPI_336(LPSHFILEOPSTRUCTW lpFileOp)
 HICON WINAPI SHLWAPI_337(LPCWSTR lpszFile, INT nIconIndex, HICON *phiconLarge,
                          HICON *phiconSmall, UINT nIcons)
 {
-  GET_FUNC(pExtractIconExW, shell32, "ExtractIconExW", (HICON)0);
+  GET_FUNC(pExtractIconExW, shell32, "ExtractIconExW", NULL);
   return pExtractIconExW(lpszFile, nIconIndex, phiconLarge, phiconSmall, nIcons);
 }
 
@@ -2336,7 +2336,7 @@ DWORD WINAPI SHLWAPI_364(LPCSTR src, LPSTR dst, INT n)
 HICON WINAPI SHLWAPI_370(HINSTANCE hInstance, LPCWSTR lpszExeFileName,
                          UINT nIconIndex)
 {
-  GET_FUNC(pExtractIconW, shell32, "ExtractIconW", (HICON)0);
+  GET_FUNC(pExtractIconW, shell32, "ExtractIconW", NULL);
   return pExtractIconW(hInstance, lpszExeFileName, nIconIndex);
 }
 

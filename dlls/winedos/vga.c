@@ -122,7 +122,7 @@ static DirectDrawCreateProc pDirectDrawCreate;
 
 static void CALLBACK VGA_Poll( LPVOID arg, DWORD low, DWORD high );
 
-static HWND vga_hwnd = (HWND) NULL;
+static HWND vga_hwnd = NULL;
 
 /*
  * For simplicity, I'm creating a second palette.

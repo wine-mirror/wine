@@ -150,7 +150,7 @@ static void	WCUSER_ShapeCursor(struct inner_data* data, int size, int vis, BOOL 
     {
 	if (data->curcfg.cursor_visible && PRIVATE(data)->hWnd == GetFocus()) DestroyCaret();
 	if (PRIVATE(data)->cursor_bitmap) DeleteObject(PRIVATE(data)->cursor_bitmap);
-	PRIVATE(data)->cursor_bitmap = (HBITMAP)0;
+	PRIVATE(data)->cursor_bitmap = NULL;
 	if (size != 100)
 	{
 	    int		w16b; /* number of bytes per row, aligned on word size */
@@ -417,7 +417,7 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf)
     HFONT       hFont, hOldFont;
     int         w, i, buf[256];
 
-    if (!(hDC = GetDC(hWnd))) return (HFONT)0;
+    if (!(hDC = GetDC(hWnd))) return NULL;
     if (!(hFont = CreateFontIndirect(lf))) goto err1;
 
     hOldFont = SelectObject(hDC, hFont);
@@ -469,7 +469,7 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONT* lf)
  err1:
     if (hDC) ReleaseDC(hWnd, hDC);
 
-    return (HFONT)0;
+    return NULL;
 }
 
 /******************************************************************

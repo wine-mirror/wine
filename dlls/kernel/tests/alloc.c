@@ -195,14 +195,14 @@ static void test_Global(void)
     SetLastError(NO_ERROR);
 /* Check that a normal alloc works */
     mem1=GlobalAlloc((UINT)NULL,memchunk);
-    ok(mem1!=(HGLOBAL)NULL,"GlobalAlloc failed");
+    ok(mem1!=NULL,"GlobalAlloc failed");
     if(mem1) {
       ok(GlobalSize(mem1)>=memchunk, "GlobalAlloc should return a big enough memory block");
     }
 
 /* Check that a 'zeroing' alloc works */
     mem2=GlobalAlloc(GMEM_ZEROINIT,memchunk);
-    ok(mem2!=(HGLOBAL)NULL,"GlobalAlloc failed");
+    ok(mem2!=NULL,"GlobalAlloc failed");
     if(mem2) {
       ok(GlobalSize(mem2)>=memchunk,"GlobalAlloc should return a big enough memory block");
       mem2ptr=(UCHAR *)GlobalLock(mem2);
@@ -220,8 +220,8 @@ static void test_Global(void)
 /* Check that GlobalReAlloc works */
 /* Check that we can change GMEM_FIXED to GMEM_MOVEABLE */
     mem2a=GlobalReAlloc(mem2,0,GMEM_MODIFY | GMEM_MOVEABLE);
-    ok(mem2a!=(HGLOBAL)NULL,"GlobalReAlloc failed to convert FIXED to MOVEABLE");
-    if(mem2a!=(HGLOBAL)NULL) {
+    ok(mem2a!=NULL,"GlobalReAlloc failed to convert FIXED to MOVEABLE");
+    if(mem2a!=NULL) {
       mem2=mem2a;
     }
     mem2ptr=GlobalLock(mem2a);
@@ -230,7 +230,7 @@ static void test_Global(void)
 
 /* Check that ReAllocing memory works as expected */
     mem2a=GlobalReAlloc(mem2,2*memchunk,GMEM_MOVEABLE | GMEM_ZEROINIT);
-    ok(mem2a!=(HGLOBAL)NULL,"GlobalReAlloc failed");
+    ok(mem2a!=NULL,"GlobalReAlloc failed");
     if(mem2a) {
       ok(GlobalSize(mem2a)>=2*memchunk,"GlobalReAlloc failed");
       mem2ptr=(UCHAR *)GlobalLock(mem2a);
@@ -252,22 +252,22 @@ static void test_Global(void)
 #if DISCARD_DEFINED
         /* Wine doesn't include the GlobalDiscard function */
         mem2b=GlobalDiscard(mem2a);
-        ok(mem2b==(HGLOBAL)NULL,"Discarded memory we shouldn't have");
+        ok(mem2b==NULL,"Discarded memory we shouldn't have");
 #else
         /* This is functionally equivalent to the above */
         mem2b=GlobalReAlloc(mem2a,0,GMEM_MOVEABLE);
-        ok(mem2b==(HGLOBAL)NULL,"Discarded memory we shouldn't have");
+        ok(mem2b==NULL,"Discarded memory we shouldn't have");
 #endif
         ok(!GlobalUnlock(mem2a) && GetLastError()==NO_ERROR,"GlobalUnlock Failed.");
       }
     }
     if(mem1) {
-      ok(GlobalFree(mem1)==(HGLOBAL)NULL,"GlobalFree failed");
+      ok(GlobalFree(mem1)==NULL,"GlobalFree failed");
     }
     if(mem2a) {
-      ok(GlobalFree(mem2a)==(HGLOBAL)NULL,"GlobalFree failed");
+      ok(GlobalFree(mem2a)==NULL,"GlobalFree failed");
     } else {
-      ok(GlobalFree(mem2)==(HGLOBAL)NULL,"GlobalFree failed");
+      ok(GlobalFree(mem2)==NULL,"GlobalFree failed");
     }
 }
 
@@ -293,14 +293,14 @@ static void test_Local(void)
 
 /* Check that a normal alloc works */
     mem1=LocalAlloc((UINT)NULL,memchunk);
-    ok(mem1!=(HLOCAL)NULL,"LocalAlloc failed");
+    ok(mem1!=NULL,"LocalAlloc failed");
     if(mem1) {
       ok(LocalSize(mem1)>=memchunk, "LocalAlloc should return a big enough memory block");
     }
 
 /* Check that a 'zeroing' alloc works */
     mem2=LocalAlloc(LMEM_ZEROINIT,memchunk);
-    ok(mem2!=(HLOCAL)NULL,"LocalAlloc failed");
+    ok(mem2!=NULL,"LocalAlloc failed");
     if(mem2) {
       ok(LocalSize(mem2)>=memchunk,"LocalAlloc should return a big enough memory block");
       mem2ptr=(UCHAR *)LocalLock(mem2);
@@ -322,11 +322,11 @@ static void test_Local(void)
 /* Reallocate mem2 as moveable memory */
    mem2a=LocalFree(mem2);
    mem2=LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT,memchunk);
-   ok(mem2a==(HLOCAL)NULL && mem2!=(HLOCAL)NULL, "LocalAlloc failed to create moveable memory");
+   ok(mem2a==NULL && mem2!=NULL, "LocalAlloc failed to create moveable memory");
 
 /* Check that ReAllocing memory works as expected */
     mem2a=LocalReAlloc(mem2,2*memchunk,LMEM_MOVEABLE | LMEM_ZEROINIT);
-    ok(mem2a!=(HLOCAL)NULL,"LocalReAlloc failed");
+    ok(mem2a!=NULL,"LocalReAlloc failed");
     if(mem2a) {
       ok(LocalSize(mem2a)>=2*memchunk,"LocalReAlloc failed");
       mem2ptr=(UCHAR *)LocalLock(mem2a);
@@ -346,23 +346,23 @@ static void test_Local(void)
 #if DISCARD_DEFINED
         /* Wine doesn't include the LocalDiscard function */
         mem2b=LocalDiscard(mem2a);
-        ok(mem2b==(HLOCAL)NULL,"Discarded memory we shouldn't have");
+        ok(mem2b==NULL,"Discarded memory we shouldn't have");
 #else
         /* This is functionally equivalent to the above */
         mem2b=LocalReAlloc(mem2a,0,GMEM_MOVEABLE);
-        ok(mem2b==(HLOCAL)NULL,"Discarded memory we shouldn't have");
+        ok(mem2b==NULL,"Discarded memory we shouldn't have");
 #endif
         SetLastError(NO_ERROR);
         ok(!LocalUnlock(mem2a) && GetLastError()==NO_ERROR, "LocalUnlock Failed.");
       }
     }
     if(mem1) {
-      ok(LocalFree(mem1)==(HLOCAL)NULL,"LocalFree failed");
+      ok(LocalFree(mem1)==NULL,"LocalFree failed");
     }
     if(mem2a) {
-      ok(LocalFree(mem2a)==(HLOCAL)NULL,"LocalFree failed");
+      ok(LocalFree(mem2a)==NULL,"LocalFree failed");
     } else {
-      ok(LocalFree(mem2)==(HLOCAL)NULL,"LocalFree failed");
+      ok(LocalFree(mem2)==NULL,"LocalFree failed");
     }
 }
 

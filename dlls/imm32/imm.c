@@ -35,7 +35,7 @@ HIMC WINAPI ImmAssociateContext(HWND hWnd, HIMC hIMC)
 {
   FIXME("(%p, %p): stub\n",hWnd,hIMC);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HIMC)NULL;
+  return NULL;
 }
 
 /***********************************************************************
@@ -71,7 +71,7 @@ HIMC WINAPI ImmCreateContext()
 {
   FIXME("(): stub\n");
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HIMC)NULL;
+  return NULL;
 }
 
 /***********************************************************************
@@ -291,7 +291,7 @@ HIMC WINAPI ImmGetContext(HWND hWnd)
 {
   FIXME("(%p): stub\n", hWnd);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HIMC)NULL;
+  return NULL;
 }
 
 /***********************************************************************
@@ -344,7 +344,7 @@ HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
 {
   FIXME("(%p): stub\n", hWnd);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HWND)NULL;
+  return NULL;
 }
 
 /***********************************************************************
@@ -506,7 +506,7 @@ HKL WINAPI ImmInstallIMEA(
     debugstr_a(lpszIMEFileName), debugstr_a(lpszLayoutText)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HKL)NULL;
+  return NULL;
 }
 
 /***********************************************************************
@@ -519,7 +519,7 @@ HKL WINAPI ImmInstallIMEW(
     debugstr_w(lpszIMEFileName), debugstr_w(lpszLayoutText)
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return (HKL)NULL;
+  return NULL;
 }
 
 /***********************************************************************

@@ -162,11 +162,11 @@ static ULONG WINAPI ACMStream_fnRelease(IAVIStream* iface)
 
   if (This->ref == 0) {
     /* destruct */
-    if (This->has != (HACMSTREAM)NULL) {
+    if (This->has != NULL) {
       if (This->acmStreamHdr.fdwStatus & ACMSTREAMHEADER_STATUSF_PREPARED)
 	acmStreamUnprepareHeader(This->has, &This->acmStreamHdr, 0);
       acmStreamClose(This->has, 0);
-      This->has = (HACMSTREAM)NULL;
+      This->has = NULL;
     }
     if (This->acmStreamHdr.pbSrc != NULL) {
       GlobalFreePtr(This->acmStreamHdr.pbSrc);
@@ -271,7 +271,7 @@ static HRESULT WINAPI ACMStream_fnInfo(IAVIStream *iface,LPAVISTREAMINFOW psi,
     return AVIERR_BADSIZE;
 
   /* Need codec to correct some values in structure */
-  if (This->has == (HACMSTREAM)NULL) {
+  if (This->has == NULL) {
     HRESULT hr = AVIFILE_OpenCompressor(This);
 
     if (FAILED(hr))
@@ -323,7 +323,7 @@ static HRESULT WINAPI ACMStream_fnReadFormat(IAVIStream *iface, LONG pos,
   if (formatsize == NULL)
     return AVIERR_BADPARAM;
 
-  if (This->has == (HACMSTREAM)NULL) {
+  if (This->has == NULL) {
     HRESULT hr = AVIFILE_OpenCompressor(This);
 
     if (FAILED(hr))
@@ -413,7 +413,7 @@ static HRESULT WINAPI ACMStream_fnRead(IAVIStream *iface, LONG start,
     *samplesread = 0;
 
   /* Do we have our compressor? */
-  if (This->has == (HACMSTREAM)NULL) {
+  if (This->has == NULL) {
     hr = AVIFILE_OpenCompressor(This);
 
     if (FAILED(hr))
@@ -540,7 +540,7 @@ static HRESULT WINAPI ACMStream_fnWrite(IAVIStream *iface, LONG start,
     return AVIERR_READONLY;
 
   /* also need a compressor */
-  if (This->has == (HACMSTREAM)NULL)
+  if (This->has == NULL)
     return AVIERR_NOCOMPRESSOR;
 
   /* map our sizes to pStream sizes */
@@ -629,7 +629,7 @@ static HRESULT WINAPI ACMStream_fnDelete(IAVIStream *iface, LONG start,
     return AVIERR_READONLY;
 
   /* A compressor is also neccessary */
-  if (This->has == (HACMSTREAM)NULL)
+  if (This->has == NULL)
     return AVIERR_NOCOMPRESSOR;
 
   /* map our positions to pStream positions */
@@ -681,7 +681,7 @@ static HRESULT AVIFILE_OpenCompressor(IAVIStreamImpl *This)
   assert(This != NULL);
   assert(This->pStream != NULL);
 
-  if (This->has != (HACMSTREAM)NULL)
+  if (This->has != NULL)
     return AVIERR_OK;
 
   if (This->lpInFormat == NULL) {

@@ -131,6 +131,5 @@ NATIVEFONT_Register (void)
 VOID
 NATIVEFONT_Unregister (void)
 {
-    UnregisterClassA (WC_NATIVEFONTCTLA, (HINSTANCE)NULL);
+    UnregisterClassA (WC_NATIVEFONTCTLA, NULL);
 }
-

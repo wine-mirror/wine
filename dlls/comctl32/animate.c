@@ -950,5 +950,5 @@ void ANIMATE_Register(void)
 
 void ANIMATE_Unregister(void)
 {
-    UnregisterClassA(ANIMATE_CLASSA, (HINSTANCE)NULL);
+    UnregisterClassA(ANIMATE_CLASSA, NULL);
 }

@@ -186,7 +186,7 @@ static ULONG WINAPI ICMStream_fnRelease(IAVIStream* iface)
       IAVIStream_Release(This->pStream);
       This->pStream = NULL;
     }
-    if (This->hic != (HIC)NULL) {
+    if (This->hic != NULL) {
       if (This->lpbiPrev != NULL) {
 	ICDecompressEnd(This->hic);
 	GlobalFreePtr(This->lpbiPrev);
@@ -194,7 +194,7 @@ static ULONG WINAPI ICMStream_fnRelease(IAVIStream* iface)
 	This->lpPrev   = NULL;
       }
       ICCompressEnd(This->hic);
-      This->hic = (HIC)NULL;
+      This->hic = NULL;
     }
     if (This->lpbiCur != NULL) {
       GlobalFreePtr(This->lpbiCur);
@@ -258,7 +258,7 @@ static HRESULT WINAPI ICMStream_fnCreate(IAVIStream *iface, LPARAM lParam1,
     This->sInfo.fccHandler = pco->fccHandler;
 
     This->hic = ICOpen(ICTYPE_VIDEO, pco->fccHandler, ICMODE_COMPRESS);
-    if (This->hic == (HIC)NULL)
+    if (This->hic == NULL)
       return AVIERR_NOCOMPRESSOR;
 
     /* restore saved state of codec */
@@ -352,7 +352,7 @@ static LONG WINAPI ICMStream_fnFindSample(IAVIStream *iface, LONG pos,
     WARN(": FIND_RET flags will be ignored!\n");
 
   if (flags & FIND_KEY) {
-    if (This->hic == (HIC)NULL)
+    if (This->hic == NULL)
       return pos; /* we decompress so every frame is a keyframe */
 
     if (flags & FIND_PREV) {
@@ -396,7 +396,7 @@ static HRESULT WINAPI ICMStream_fnReadFormat(IAVIStream *iface, LONG pos,
   if (lpbi == NULL)
     return AVIERR_MEMORY;
 
-  if (This->hic == (HIC)NULL) {
+  if (This->hic == NULL) {
     LONG size = lpbi->biSize + lpbi->biClrUsed * sizeof(RGBQUAD);
 
     if (size > 0) {
@@ -471,7 +471,7 @@ static HRESULT WINAPI ICMStream_fnSetFormat(IAVIStream *iface, LONG pos,
   if (This->lpbiInput == NULL) {
     LONG size;
 
-    assert(This->hic != (HIC)NULL);
+    assert(This->hic != NULL);
 
     /* get memory for input format */
     This->lpbiInput = (LPBITMAPINFOHEADER)GlobalAllocPtr(GHND, formatsize);
@@ -610,7 +610,7 @@ static HRESULT WINAPI ICMStream_fnRead(IAVIStream *iface, LONG start,
   }
 
   /* compress or decompress? */
-  if (This->hic == (HIC)NULL) {
+  if (This->hic == NULL) {
     /* decompress */
     lpbi = (LPBITMAPINFOHEADER)AVIStreamGetFrame(This->pg, start);
     if (lpbi == NULL)
@@ -899,7 +899,7 @@ static HRESULT AVIFILE_OpenGetFrame(IAVIStreamImpl *This)
   if (This->sInfo.fccHandler == comptypeDIB)
     return AVIERR_OK;
 
-  assert(This->hic != (HIC)NULL);
+  assert(This->hic != NULL);
   assert(This->lpbiOutput == NULL);
 
   /* get input format */

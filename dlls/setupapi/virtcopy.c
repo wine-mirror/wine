@@ -637,7 +637,7 @@ void VCP_UI_RegisterProgressClass(void)
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = 0;
     wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
-    wndClass.hbrBackground = (HBRUSH)NULL;
+    wndClass.hbrBackground = NULL;
     wndClass.lpszClassName = "setupx_progress";
 
     RegisterClassA (&wndClass);

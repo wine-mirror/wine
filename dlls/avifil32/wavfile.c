@@ -259,9 +259,9 @@ static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
       LocalFree((HLOCAL)This->szFileName);
       This->szFileName = NULL;
     }
-    if (This->hmmio != (HMMIO)NULL) {
+    if (This->hmmio != NULL) {
       mmioClose(This->hmmio, 0);
-      This->hmmio = (HMMIO)NULL;
+      This->hmmio = NULL;
     }
 
     LocalFree((HLOCAL)This);
@@ -532,7 +532,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
     return AVIERR_BADPARAM;
 
   assert(This != NULL);
-  if (This->hmmio != (HMMIO)NULL)
+  if (This->hmmio != NULL)
     return AVIERR_ERROR; /* No reuse of this object for another file! */
 
   /* remeber mode and name */
@@ -546,7 +546,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
 
   /* try to open the file */
   This->hmmio = mmioOpenW(This->szFileName, NULL, MMIO_ALLOCBUF | dwMode);
-  if (This->hmmio == (HMMIO)NULL)
+  if (This->hmmio == NULL)
     return AVIERR_FILEOPEN;
 
   memset(& This->fInfo, 0, sizeof(This->fInfo));
@@ -1107,9 +1107,9 @@ static HRESULT AVIFILE_SaveFile(IAVIFileImpl *This)
     /* try to open an appropriate audio codec to figure out
      * data for fact-chunk */
     wfx.wFormatTag = WAVE_FORMAT_PCM;
-    if (acmFormatSuggest((HACMDRIVER)NULL, This->lpFormat, &wfx,
+    if (acmFormatSuggest(NULL, This->lpFormat, &wfx,
 			 sizeof(wfx), ACM_FORMATSUGGESTF_WFORMATTAG)) {
-      acmStreamOpen(&has, (HACMDRIVER)NULL, This->lpFormat, &wfx, NULL,
+      acmStreamOpen(&has, NULL, This->lpFormat, &wfx, NULL,
 		    0, 0, ACM_STREAMOPENF_NONREALTIME);
       acmStreamSize(has, This->ckData.cksize, &dwFactLength,
 		    ACM_STREAMSIZEF_SOURCE);

@@ -237,7 +237,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
     }
 errCleanUp:
     if (phas)
-	*phas = (HACMSTREAM)0;
+	*phas = NULL;
     HeapFree(MSACM_hHeap, 0, was);
     TRACE("=> (%d)\n", ret);
     return ret;

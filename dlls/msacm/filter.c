@@ -100,7 +100,7 @@ MMRESULT WINAPI acmFilterDetailsW(HACMDRIVER had, PACMFILTERDETAILSW pafd,
 	    mmr = MMSYSERR_INVALPARAM;
 	    break;
 	}
-	if (had == (HACMDRIVER)NULL) {
+	if (had == NULL) {
 	    PWINE_ACMDRIVERID		padid;
 
 	    mmr = ACMERR_NOTPOSSIBLE;
@@ -298,7 +298,7 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
 
     switch (fdwDetails) {
     case ACM_FILTERTAGDETAILSF_FILTERTAG:
-	if (had == (HACMDRIVER)NULL) {
+	if (had == NULL) {
 	    mmr = ACMERR_NOTPOSSIBLE;
 	    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 		/* should check for codec only */
@@ -320,7 +320,7 @@ MMRESULT WINAPI acmFilterTagDetailsW(HACMDRIVER had, PACMFILTERTAGDETAILSW paftd
 	break;
 
     case ACM_FILTERTAGDETAILSF_LARGESTSIZE:
-	if (had == (HACMDRIVER)NULL) {
+	if (had == NULL) {
 	    ACMFILTERTAGDETAILSW	tmp;
 	    DWORD			ft = paftd->dwFilterTag;
 

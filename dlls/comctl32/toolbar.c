@@ -2225,7 +2225,7 @@ TOOLBAR_AddBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     nCount = ImageList_GetImageCount(himlDef);
 
     /* Add bitmaps to the default image list */
-    if (lpAddBmp->hInst == (HINSTANCE)0)
+    if (lpAddBmp->hInst == NULL)
     {
 	nIndex =
 	    ImageList_AddMasked (himlDef, (HBITMAP)lpAddBmp->nID,
@@ -5959,7 +5959,7 @@ TOOLBAR_Register (void)
 VOID
 TOOLBAR_Unregister (void)
 {
-    UnregisterClassA (TOOLBARCLASSNAMEA, (HINSTANCE)NULL);
+    UnregisterClassA (TOOLBARCLASSNAMEA, NULL);
 }
 
 static HIMAGELIST TOOLBAR_InsertImageList(PIMLENTRY **pies, INT *cies, HIMAGELIST himl, INT id)

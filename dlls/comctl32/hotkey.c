@@ -365,7 +365,7 @@ HOTKEY_SetFocus (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     infoPtr->bFocus = TRUE;
 
 
-    CreateCaret (infoPtr->hwndSelf, (HBITMAP)0, 1, infoPtr->nHeight - 2);
+    CreateCaret (infoPtr->hwndSelf, NULL, 1, infoPtr->nHeight - 2);
 
     SetCaretPos (infoPtr->CaretPos, 3);
 
@@ -497,5 +497,5 @@ HOTKEY_Register (void)
 void
 HOTKEY_Unregister (void)
 {
-    UnregisterClassW (HOTKEY_CLASSW, (HINSTANCE)NULL);
+    UnregisterClassW (HOTKEY_CLASSW, NULL);
 }

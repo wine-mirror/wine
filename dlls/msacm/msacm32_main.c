@@ -52,7 +52,7 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReserved)
         MSACM_UnregisterAllDrivers();
         HeapDestroy(MSACM_hHeap);
         MSACM_hHeap = (HANDLE)NULL;
-        MSACM_hInstance32 = (HINSTANCE)NULL;
+        MSACM_hInstance32 = NULL;
 	break;
     case DLL_THREAD_ATTACH:
 	break;
@@ -176,7 +176,7 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
 	break;
 
     case ACM_METRIC_MAX_SIZE_FORMAT:
-	if (hao == (HACMOBJ)NULL) {
+	if (hao == NULL) {
 	    for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID) {
 		if (!(padid->fdwSupport & ACMDRIVERDETAILS_SUPPORTF_DISABLED)) {
 		    for (i = 0; i < padid->cFormatTags; i++) {

@@ -430,5 +430,5 @@ VOID PROGRESS_Register (void)
  */
 VOID PROGRESS_Unregister (void)
 {
-    UnregisterClassW (PROGRESS_CLASSW, (HINSTANCE)NULL);
+    UnregisterClassW (PROGRESS_CLASSW, NULL);
 }

@@ -318,9 +318,9 @@ static ULONG WINAPI IAVIFile_fnRelease(IAVIFile *iface)
       LocalFree((HLOCAL)This->szFileName);
       This->szFileName = NULL;
     }
-    if (This->hmmio != (HMMIO)NULL) {
+    if (This->hmmio != NULL) {
       mmioClose(This->hmmio, 0);
-      This->hmmio = (HMMIO)NULL;
+      This->hmmio = NULL;
     }
 
     LocalFree((HLOCAL)This);
@@ -586,7 +586,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
     return AVIERR_BADPARAM;
 
   assert(This->paf != NULL);
-  if (This->paf->hmmio != (HMMIO)NULL)
+  if (This->paf->hmmio != NULL)
     return AVIERR_ERROR; /* No reuse of this object for another file! */
 
   /* remeber mode and name */
@@ -601,7 +601,7 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile *iface,
   /* try to open the file */
   This->paf->hmmio = mmioOpenW(This->paf->szFileName, NULL,
 			       MMIO_ALLOCBUF | dwMode);
-  if (This->paf->hmmio == (HMMIO)NULL)
+  if (This->paf->hmmio == NULL)
     return AVIERR_FILEOPEN;
 
   /* should we create a new file? */
@@ -1509,7 +1509,7 @@ static HRESULT AVIFILE_LoadFile(IAVIFileImpl *This)
   DWORD           nStream;
   HRESULT         hr;
 
-  if (This->hmmio == (HMMIO)NULL)
+  if (This->hmmio == NULL)
     return AVIERR_FILEOPEN;
 
   /* initialize stream ptr's */
@@ -1904,7 +1904,7 @@ static HRESULT AVIFILE_ReadBlock(IAVIStreamImpl *This, DWORD pos,
   /* pre-conditions */
   assert(This != NULL);
   assert(This->paf != NULL);
-  assert(This->paf->hmmio != (HMMIO)NULL);
+  assert(This->paf->hmmio != NULL);
   assert(This->sInfo.dwStart <= pos && pos < This->sInfo.dwLength);
   assert(pos <= This->lLastFrame);
 

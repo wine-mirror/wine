@@ -102,13 +102,13 @@ static void AVIFILE_CloseCompressor(IGetFrameImpl *This)
     GlobalFreePtr(This->lpInFormat);
     This->lpInFormat = NULL;
   }
-  if (This->hic != (HIC)NULL) {
+  if (This->hic != NULL) {
     if (This->bResize)
       ICDecompressExEnd(This->hic);
     else
       ICDecompressEnd(This->hic);
     ICClose(This->hic);
-    This->hic = (HIC)NULL;
+    This->hic = NULL;
   }
 }
 
@@ -260,7 +260,7 @@ static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)
 	This->lpInFormat->biSizeImage = readBytes;
 
 	/* nothing to decompress? */
-	if (This->hic == (HIC)NULL) {
+	if (This->hic == NULL) {
 	  This->lCurrentFrame = lPos;
 	  return This->lpInFormat;
 	}
@@ -278,7 +278,7 @@ static LPVOID  WINAPI IGetFrame_fnGetFrame(IGetFrame *iface, LONG lPos)
     } /* for (lNext < lPos) */
   } /* if (This->lCurrentFrame != lPos) */
 
-  return (This->hic == (HIC)NULL ? This->lpInFormat : This->lpOutFormat);
+  return (This->hic == NULL ? This->lpInFormat : This->lpOutFormat);
 }
 
 static HRESULT WINAPI IGetFrame_fnBegin(IGetFrame *iface, LONG lStart,
@@ -396,7 +396,7 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
   }
 
   /* need handle to video compressor */
-  if (This->hic == (HIC)NULL) {
+  if (This->hic == NULL) {
     FOURCC fccHandler;
 
     if (This->lpInFormat->biCompression == BI_RGB)
@@ -414,7 +414,7 @@ static HRESULT WINAPI IGetFrame_fnSetFormat(IGetFrame *iface,
     }
 
     This->hic = ICLocate(ICTYPE_VIDEO, fccHandler, This->lpInFormat, lpbi, ICMODE_DECOMPRESS);
-    if (This->hic == (HIC)NULL) {
+    if (This->hic == NULL) {
       AVIFILE_CloseCompressor(This);
       return AVIERR_NOCOMPRESSOR;
     }

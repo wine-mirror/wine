@@ -23,7 +23,7 @@
 
 int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 {
-   return ShellAbout((HWND)0, PACKAGE_NAME, PACKAGE_STRING, 0);
+   return ShellAbout(NULL, PACKAGE_NAME, PACKAGE_STRING, 0);
 }
 
 /* Local Variables:     */

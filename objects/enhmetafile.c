@@ -1609,9 +1609,9 @@ BOOL WINAPI EnumEnhMetaFile(
     INT savedMode = 0;
     FLOAT xSrcPixSize, ySrcPixSize, xscale, yscale;
     XFORM savedXform, xform;
-    HPEN hPen = (HPEN)NULL;
-    HBRUSH hBrush = (HBRUSH)NULL;
-    HFONT hFont = (HFONT)NULL;
+    HPEN hPen = NULL;
+    HBRUSH hBrush = NULL;
+    HFONT hFont = NULL;
     POINT pt[2];
 
     if(!lpRect)

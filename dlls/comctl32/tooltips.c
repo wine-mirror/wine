@@ -324,7 +324,7 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 	    GetWindowRect ((HWND)toolPtr->uId, &rc);
 	else {
 	    rc = toolPtr->rect;
-	    MapWindowPoints (toolPtr->hwnd, (HWND)0, (LPPOINT)&rc, 2);
+	    MapWindowPoints (toolPtr->hwnd, NULL, (LPPOINT)&rc, 2);
 	}
 	rect.left = (rc.left + rc.right - size.cx) / 2;
 	rect.top  = rc.bottom + 2;
@@ -353,7 +353,7 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 	    GetWindowRect ((HWND)toolPtr->uId, &rc);
 	else {
 	    rc = toolPtr->rect;
-	    MapWindowPoints (toolPtr->hwnd, (HWND)0, (LPPOINT)&rc, 2);
+	    MapWindowPoints (toolPtr->hwnd, NULL, (LPPOINT)&rc, 2);
 	}
 	rect.bottom = rc.top - 2;
     	rect.top = rect.bottom - size.cy;
@@ -456,7 +456,7 @@ TOOLTIPS_TrackShow (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 	    GetWindowRect ((HWND)toolPtr->uId, &rcTool);
 	else {
 	    rcTool = toolPtr->rect;
-	    MapWindowPoints (toolPtr->hwnd, (HWND)0, (LPPOINT)&rcTool, 2);
+	    MapWindowPoints (toolPtr->hwnd, NULL, (LPPOINT)&rcTool, 2);
 	}
 
 	GetCursorPos ((LPPOINT)&rect);
@@ -2444,5 +2444,5 @@ TOOLTIPS_Register (void)
 VOID
 TOOLTIPS_Unregister (void)
 {
-    UnregisterClassA (TOOLTIPS_CLASSA, (HINSTANCE)NULL);
+    UnregisterClassA (TOOLTIPS_CLASSA, NULL);
 }

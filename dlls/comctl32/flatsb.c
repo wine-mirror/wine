@@ -251,5 +251,5 @@ FLATSB_Register (void)
 VOID
 FLATSB_Unregister (void)
 {
-    UnregisterClassA (FLATSB_CLASSA, (HINSTANCE)NULL);
+    UnregisterClassA (FLATSB_CLASSA, NULL);
 }

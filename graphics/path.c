@@ -1182,7 +1182,7 @@ static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
    /* Free memory for number-of-points-in-stroke array */
    HeapFree( GetProcessHeap(), 0, pNumPointsInStroke );
 
-   if(hrgn==(HRGN)0)
+   if(hrgn==NULL)
    {
       SetLastError(ERROR_NOT_ENOUGH_MEMORY);
       return FALSE;

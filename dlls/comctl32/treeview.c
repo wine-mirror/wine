@@ -3541,7 +3541,7 @@ TREEVIEW_EditLabelA(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
 
     TRACE("%x %p\n", (unsigned)hwnd, hItem);
     if (!TREEVIEW_ValidItem(infoPtr, editItem))
-	return (HWND)NULL;
+	return NULL;
 
     if (infoPtr->hwndEdit)
 	return infoPtr->hwndEdit;
@@ -3608,7 +3608,7 @@ TREEVIEW_EditLabelA(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
     {
 	DestroyWindow(hwndEdit);
 	infoPtr->hwndEdit = 0;
-	return (HWND)NULL;
+	return NULL;
     }
 
     infoPtr->selectedItem = hItem;
@@ -5412,7 +5412,7 @@ TREEVIEW_Register(void)
 VOID
 TREEVIEW_Unregister(void)
 {
-    UnregisterClassA(WC_TREEVIEWA, (HINSTANCE) NULL);
+    UnregisterClassA(WC_TREEVIEWA, NULL);
 }
 
 

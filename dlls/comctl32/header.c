@@ -1799,5 +1799,5 @@ HEADER_Register (void)
 VOID
 HEADER_Unregister (void)
 {
-    UnregisterClassA (WC_HEADERA, (HINSTANCE)NULL);
+    UnregisterClassA (WC_HEADERA, NULL);
 }

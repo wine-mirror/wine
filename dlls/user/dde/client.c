@@ -394,7 +394,7 @@ static WDML_QUEUE_STATE WDML_HandleAdviseReply(WDML_CONV* pConv, MSG* msg, WDML_
     {
 	TRACE("Returning FALSE on XTYP_ADVSTART - fAck was FALSE\n");
 	GlobalFree(pXAct->hMem);
-        pXAct->hDdeData = (HDDEDATA)0;
+        pXAct->hDdeData = NULL;
     }
 
     return WDML_QS_HANDLED;
@@ -461,7 +461,7 @@ static WDML_QUEUE_STATE WDML_HandleUnadviseReply(WDML_CONV* pConv, MSG* msg, WDM
     if (!ddeAck.fAck)
     {
 	TRACE("Returning FALSE on XTYP_ADVSTOP - fAck was FALSE\n");
-        pXAct->hDdeData = (HDDEDATA)0;
+        pXAct->hDdeData = NULL;
     }
     else
     {

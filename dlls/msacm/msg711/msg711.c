@@ -659,7 +659,7 @@ static	LRESULT G711_DriverDetails(PACMDRIVERDETAILSW add)
     add->fdwSupport = ACMDRIVERDETAILS_SUPPORTF_CODEC;
     add->cFormatTags = 3; /* PCM, G711 A-LAW & MU-LAW */
     add->cFilterTags = 0;
-    add->hicon = (HICON)0;
+    add->hicon = NULL;
     MultiByteToWideChar( CP_ACP, 0, "WINE-G711", -1,
                          add->szShortName, sizeof(add->szShortName)/sizeof(WCHAR) );
     MultiByteToWideChar( CP_ACP, 0, "Wine G711 converter", -1,

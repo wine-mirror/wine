@@ -106,7 +106,7 @@ HRESULT ReadChunkIntoExtra(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck)
 
   /* pre-conditions */
   assert(extra != NULL);
-  assert(hmmio != (HMMIO)NULL);
+  assert(hmmio != NULL);
   assert(lpck  != NULL);
 
   cb  = lpck->cksize + 2 * sizeof(DWORD);
@@ -149,7 +149,7 @@ HRESULT FindChunkAndKeepExtras(LPEXTRACHUNKS extra,HMMIO hmmio,MMCKINFO *lpck,
 
   /* pre-conditions */
   assert(extra != NULL);
-  assert(hmmio != (HMMIO)NULL);
+  assert(hmmio != NULL);
   assert(lpck  != NULL);
 
   TRACE("({%p,%lu},%p,%p,%p,0x%X)\n", extra->lp, extra->cb, hmmio, lpck,

@@ -1264,7 +1264,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
     /* Don't have to send a ShowWindow(SW_HIDE), just do
        SetWindowPos with SWP_HIDEWINDOW as done in Windows */
 
-    SetWindowPos(hwnd, (HWND)0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE
+    SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE
                  | SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW);
 
     /* unblock dialog loop */
@@ -1811,7 +1811,7 @@ static HWND DIALOG_GetNextTabItem( HWND hwndMain, HWND hwndDlg, HWND hwndCtrl, B
         if(hChildFirst)
         {
             if(bCtrl)
-                retWnd = DIALOG_GetNextTabItem(hwndMain,hChildFirst,(HWND)NULL,fPrevious );
+                retWnd = DIALOG_GetNextTabItem(hwndMain,hChildFirst,NULL,fPrevious );
             else
                 retWnd = hChildFirst;
         }
@@ -1829,7 +1829,7 @@ static HWND DIALOG_GetNextTabItem( HWND hwndMain, HWND hwndDlg, HWND hwndCtrl, B
             hParent = GetParent(hParent);
 	}
         if(!retWnd)
-            retWnd = DIALOG_GetNextTabItem(hwndMain,hwndMain,(HWND)NULL,fPrevious );
+            retWnd = DIALOG_GetNextTabItem(hwndMain,hwndMain,NULL,fPrevious );
     }
     return retWnd;
 }

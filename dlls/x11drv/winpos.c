@@ -1265,7 +1265,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 	     * window is already the topmost window, it will not
 	     * activate it.
 	     */
-	    if (GetTopWindow((HWND)0)==hwnd && (wasVisible || GetActiveWindow() == hwnd))
+	    if (GetTopWindow(NULL)==hwnd && (wasVisible || GetActiveWindow() == hwnd))
 	      swp |= SWP_NOACTIVATE;
 
 	    break;

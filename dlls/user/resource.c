@@ -152,7 +152,7 @@ INT WINAPI CopyAcceleratorTableW(HACCEL src, LPACCEL dst,
 
   /* Do parameter checking to avoid the explosions and the screaming
      as far as possible. */
-  if((dst && (entries < 1)) || (src == (HACCEL)NULL) || !accel) {
+  if((dst && (entries < 1)) || (src == NULL) || !accel) {
     WARN_(accel)("Application sent invalid parameters (%p %p %d).\n",
 	 (LPVOID)src, (LPVOID)dst, entries);
     return 0;
@@ -209,7 +209,7 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
     WARN_(accel)("Application sent invalid parameters (%p %d).\n",
 	 lpaccel, cEntries);
     SetLastError(ERROR_INVALID_PARAMETER);
-    return (HACCEL)NULL;
+    return NULL;
   }
   FIXME_(accel)("should check that the accelerator descriptions are valid,"
 	" return NULL and SetLastError() if not.\n");
@@ -222,7 +222,7 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
   if(!hAccel) {
     ERR_(accel)("Out of memory.\n");
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    return (HACCEL)NULL;
+    return NULL;
   }
   accel = GlobalLock16(HACCEL_16(hAccel));
   for (i=0;i<cEntries;i++) {
@@ -255,7 +255,7 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
     WARN_(accel)("Application sent invalid parameters (%p %d).\n",
 	 lpaccel, cEntries);
     SetLastError(ERROR_INVALID_PARAMETER);
-    return (HACCEL)NULL;
+    return NULL;
   }
   FIXME_(accel)("should check that the accelerator descriptions are valid,"
 	" return NULL and SetLastError() if not.\n");
@@ -268,7 +268,7 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
   if(!hAccel) {
     ERR_(accel)("Out of memory.\n");
     SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-    return (HACCEL)NULL;
+    return NULL;
   }
   accel = GlobalLock16(HACCEL_16(hAccel));
 

@@ -228,21 +228,21 @@ static void test_SHCopyKey(void)
 	HKEY hKeySrc, hKeyDst;
 
 	/* Delete existing destination sub keys */
-	hKeyDst = (HKEY)0;
+	hKeyDst = NULL;
 	if (!RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination", &hKeyDst) && hKeyDst)
 	{
 		SHDeleteKeyA(hKeyDst, NULL);
 		RegCloseKey(hKeyDst);
 	}
 
-	hKeyDst = (HKEY)0;
+	hKeyDst = NULL;
 	if (RegCreateKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination", &hKeyDst) || !hKeyDst)
 	{
 		ok(0, "didn't open dest");
 		return;
 	}
 
-	hKeySrc = (HKEY)0;
+	hKeySrc = NULL;
 	if (RegOpenKeyA(HKEY_LOCAL_MACHINE, REG_CURRENT_VERSION, &hKeySrc) || !hKeySrc)
 	{
 		ok(0, "didn't open source");
@@ -257,7 +257,7 @@ static void test_SHCopyKey(void)
 	RegCloseKey(hKeyDst);
 
 	/* Check we copied the sub keys, i.e. AeDebug from the default wine registry */
-	hKeyDst = (HKEY)0;
+	hKeyDst = NULL;
 	if (RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY "\\CopyDestination\\AeDebug", &hKeyDst) || !hKeyDst)
 	{
 		ok(0, "didn't open copy");

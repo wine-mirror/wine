@@ -122,7 +122,7 @@ INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             prfdp = (RUNFILEDLGPARAMS *)lParam ;
             SetWindowTextA (hwnd, prfdp->lpstrTitle) ;
             SetClassLongA (hwnd, GCL_HICON, (LPARAM)prfdp->hIcon) ;
-            SendMessageA (GetDlgItem (hwnd, 12297), STM_SETICON, (WPARAM)LoadIconA ((HINSTANCE)NULL, IDI_WINLOGOA), 0) ;
+            SendMessageA (GetDlgItem (hwnd, 12297), STM_SETICON, (WPARAM)LoadIconA (NULL, IDI_WINLOGOA), 0) ;
             FillList (GetDlgItem (hwnd, 12298), NULL) ;
             SetFocus (GetDlgItem (hwnd, 12298)) ;
             return TRUE ;
@@ -151,7 +151,7 @@ INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 {
                 case IDOK :
                     {
-                    HWND htxt = (HWND)NULL ;
+                    HWND htxt = NULL ;
                     if ((ic = GetWindowTextLengthA (htxt = GetDlgItem (hwnd, 12298))))
                         {
                         psz = malloc (ic + 2) ;
@@ -195,8 +195,8 @@ INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                     static OPENFILENAMEA ofn =
                         {
                         sizeof (OPENFILENAMEA),
-                        (HWND)NULL,
-                        (HINSTANCE)NULL,
+                        NULL,
+                        NULL,
                         "Executable Files\0*.exe\0All Files\0*.*\0\0\0\0",
                         (LPSTR)NULL,
                         0,

@@ -1305,8 +1305,8 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM l
     /* before it is displayed */
     fg = SetTextColor(hdc, RGB(0, 0, 0));
     bg = SetBkColor(hdc, RGB(255, 255, 255));
-    hbm = (HBITMAP)NULL; hbmsave = (HBITMAP)NULL;
-    memdc = (HDC)NULL; hbsave = (HBRUSH)NULL;
+    hbm = NULL; hbmsave = NULL;
+    memdc = NULL; hbsave = NULL;
     retval = FALSE; /* assume failure */
 
     /* From here on we must use "goto cleanup" when something goes wrong */

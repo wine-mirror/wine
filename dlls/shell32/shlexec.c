@@ -329,7 +329,7 @@ static HDDEDATA CALLBACK dde_cb(UINT uType, UINT uFmt, HCONV hConv,
                                 HSZ hsz1, HSZ hsz2,
                                 HDDEDATA hData, DWORD dwData1, DWORD dwData2)
 {
-    return (HDDEDATA)0;
+    return NULL;
 }
 
 /******************************************************************

@@ -569,5 +569,5 @@ void IPADDRESS_Register (void)
 
 void IPADDRESS_Unregister (void)
 {
-    UnregisterClassW (WC_IPADDRESSW, (HINSTANCE)NULL);
+    UnregisterClassW (WC_IPADDRESSW, NULL);
 }

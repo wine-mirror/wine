@@ -986,14 +986,14 @@ static void TAB_SetupScrolling(
 					  controlPos.right - controlPos.left,
 					  controlPos.bottom - controlPos.top,
 					  hwnd,
-					  (HMENU)NULL,
-					  (HINSTANCE)NULL,
+					  NULL,
+					  NULL,
 					  NULL);
     }
     else
     {
       SetWindowPos(infoPtr->hwndUpDown,
-		   (HWND)NULL,
+		   NULL,
 		   controlPos.left, controlPos.top,
 		   controlPos.right - controlPos.left,
 		   controlPos.bottom - controlPos.top,
@@ -3196,7 +3196,7 @@ TAB_Register (void)
   wndClass.cbClsExtra    = 0;
   wndClass.cbWndExtra    = sizeof(TAB_INFO *);
   wndClass.hCursor       = LoadCursorA (0, IDC_ARROWA);
-  wndClass.hbrBackground = (HBRUSH)NULL;
+  wndClass.hbrBackground = NULL;
   wndClass.lpszClassName = WC_TABCONTROLA;
 
   RegisterClassA (&wndClass);
@@ -3206,5 +3206,5 @@ TAB_Register (void)
 VOID
 TAB_Unregister (void)
 {
-    UnregisterClassA (WC_TABCONTROLA, (HINSTANCE)NULL);
+    UnregisterClassA (WC_TABCONTROLA, NULL);
 }

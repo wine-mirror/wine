@@ -698,7 +698,7 @@ HANDLE VFWAPI ICImageDecompress(
 	HIC hic, UINT uiFlags, LPBITMAPINFO lpbiIn,
 	LPVOID lpBits, LPBITMAPINFO lpbiOut)
 {
-	HGLOBAL	hMem = (HGLOBAL)NULL;
+	HGLOBAL	hMem = NULL;
 	BYTE*	pMem = NULL;
 	BOOL	bReleaseIC = FALSE;
 	BYTE*	pHdr = NULL;
@@ -710,10 +710,10 @@ HANDLE VFWAPI ICImageDecompress(
 	TRACE("(%p,%08x,%p,%p,%p)\n",
 		hic, uiFlags, lpbiIn, lpBits, lpbiOut);
 
-	if ( hic == (HIC)NULL )
+	if ( hic == NULL )
 	{
 		hic = ICDecompressOpen( mmioFOURCC('V','I','D','C'), 0, &lpbiIn->bmiHeader, (lpbiOut != NULL) ? &lpbiOut->bmiHeader : NULL );
-		if ( hic == (HIC)NULL )
+		if ( hic == NULL )
 		{
 			WARN("no handler\n" );
 			goto err;
@@ -791,7 +791,7 @@ HANDLE VFWAPI ICImageDecompress(
 	TRACE( "cbHdr %ld, biSizeImage %ld\n", cbHdr, biSizeImage );
 
 	hMem = GlobalAlloc( GMEM_MOVEABLE|GMEM_ZEROINIT, cbHdr + biSizeImage );
-	if ( hMem == (HGLOBAL)NULL )
+	if ( hMem == NULL )
 	{
 		WARN( "out of memory\n" );
 		goto err;
@@ -815,9 +815,9 @@ err:
 		HeapFree(GetProcessHeap(),0,pHdr);
 	if ( pMem != NULL )
 		GlobalUnlock( hMem );
-	if ( !bSucceeded && hMem != (HGLOBAL)NULL )
+	if ( !bSucceeded && hMem != NULL )
 	{
-		GlobalFree(hMem); hMem = (HGLOBAL)NULL;
+		GlobalFree(hMem); hMem = NULL;
 	}
 
 	return (HANDLE)hMem;
