@@ -150,8 +150,115 @@ void test_create_storage_modes(void)
    ok(DeleteFileW(filename), "failed to delete file\n");
 }
 
+void test_storage_stream(void)
+{
+    static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    static const WCHAR szPrefix[] = { 's','t','g',0 };
+    static const WCHAR szDot[] = { '.',0 };
+    static const WCHAR longname[] = {
+        'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',
+        'a','a','a','a','a','a','a','a','a','a','a','a','a','a','a','a',0
+    };
+    WCHAR filename[MAX_PATH];
+    IStorage *stg = NULL;
+    HRESULT r;
+    IStream *stm = NULL;
+    ULONG count = 0;
+    LARGE_INTEGER pos;
+    ULARGE_INTEGER p;
+    unsigned char buffer[0x100];
+
+    if(!GetTempFileNameW(szDot, szPrefix, 0, filename))
+        return;
+
+    DeleteFileW(filename);
+
+    r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE |STGM_TRANSACTED, 0, &stg);
+    ok(r==S_OK, "StgCreateDocfile failed\n");
+
+    /* try create some invalid streams */
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 1, 0, &stm );
+    ok(r==STG_E_INVALIDPARAMETER, "IStorage->CreateStream wrong error\n");
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 1, &stm );
+    ok(r==STG_E_INVALIDPARAMETER, "IStorage->CreateStream wrong error\n");
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, NULL );
+    ok(r==STG_E_INVALIDPOINTER, "IStorage->CreateStream wrong error\n");
+    r = IStorage_CreateStream(stg, NULL, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+    ok(r==STG_E_INVALIDNAME, "IStorage->CreateStream wrong error\n");
+    r = IStorage_CreateStream(stg, longname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+    ok(r==STG_E_INVALIDNAME, "IStorage->CreateStream wrong error\n");
+    r = IStorage_CreateStream(stg, stmname, STGM_READWRITE, 0, 0, &stm );
+    ok(r==STG_E_INVALIDFLAG, "IStorage->CreateStream wrong error\n");
+    r = IStorage_CreateStream(stg, stmname, STGM_READ, 0, 0, &stm );
+    ok(r==STG_E_INVALIDFLAG, "IStorage->CreateStream wrong error\n");
+    r = IStorage_CreateStream(stg, stmname, STGM_WRITE, 0, 0, &stm );
+    ok(r==STG_E_INVALIDFLAG, "IStorage->CreateStream wrong error\n");
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_DENY_NONE | STGM_READWRITE, 0, 0, &stm );
+    ok(r==STG_E_INVALIDFLAG, "IStorage->CreateStream wrong error\n");
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_DENY_NONE | STGM_READ, 0, 0, &stm );
+    ok(r==STG_E_INVALIDFLAG, "IStorage->CreateStream wrong error\n");
+
+    /* now really create a stream and delete it */
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+    ok(r==S_OK, "IStorage->CreateStream failed\n");
+    r = IStream_Release(stm);
+    ok(r == 0, "wrong ref count\n");
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+    ok(r==STG_E_FILEALREADYEXISTS, "IStorage->CreateStream failed\n");
+    r = IStorage_DestroyElement(stg,stmname);
+    ok(r==S_OK, "IStorage->DestroyElement failed\n");
+
+    /* create a stream and write to it */
+    r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+    ok(r==S_OK, "IStorage->CreateStream failed\n");
+
+    r = IStream_Write(stm, NULL, 0, NULL );
+    ok(r==STG_E_INVALIDPOINTER, "IStream->Write wrong error\n");
+    r = IStream_Write(stm, "Hello\n", 0, NULL );
+    ok(r==S_OK, "failed to write stream\n");
+    r = IStream_Write(stm, "Hello\n", 0, &count );
+    ok(r==S_OK, "failed to write stream\n");
+    r = IStream_Write(stm, "Hello\n", 6, &count );
+    ok(r==S_OK, "failed to write stream\n");
+    r = IStream_Commit(stm, STGC_DEFAULT );
+    ok(r==S_OK, "failed to commit stream\n");
+    r = IStream_Commit(stm, STGC_DEFAULT );
+    ok(r==S_OK, "failed to commit stream\n");
+
+    /* seek round a bit, reset the stream size */
+    pos.QuadPart = 0;
+    r = IStream_Seek(stm, pos, 3, &p );
+    ok(r==STG_E_INVALIDFUNCTION, "IStream->Seek returned wrong error\n");
+    r = IStream_Seek(stm, pos, STREAM_SEEK_SET, NULL);
+    ok(r==S_OK, "failed to seek stream\n");
+    r = IStream_Seek(stm, pos, STREAM_SEEK_SET, &p );
+    ok(r==S_OK, "failed to seek stream\n");
+    r = IStream_SetSize(stm,p);
+    ok(r==S_OK, "failed to set pos\n");
+    pos.QuadPart = 10;
+    r = IStream_Seek(stm, pos, STREAM_SEEK_SET, &p );
+    ok(r==S_OK, "failed to seek stream\n");
+    ok(p.QuadPart == 10, "at wrong place\n");
+    pos.QuadPart = 0;
+    r = IStream_Seek(stm, pos, STREAM_SEEK_END, &p );
+    ok(r==S_OK, "failed to seek stream\n");
+    ok(p.QuadPart == 0, "at wrong place\n");
+    r = IStream_Read(stm, buffer, sizeof buffer, &count );
+    ok(r==S_OK, "failed to set pos\n");
+    ok(count == 0, "read bytes from empty stream\n");
+
+    /* wrap up */
+    r = IStream_Release(stm);
+    ok(r == 0, "wrong ref count\n");
+    r = IStorage_Release(stg);
+    ok(r == 0, "wrong ref count\n");
+    r = DeleteFileW(filename);
+    ok(r == TRUE, "file should exist\n");
+}
+
 START_TEST(storage32)
 {
     test_hglobal_storage_stat();
     test_create_storage_modes();
+    test_storage_stream();
 }

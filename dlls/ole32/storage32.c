@@ -872,18 +872,23 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
   if (pwcsName == 0)
     return STG_E_INVALIDNAME;
 
+  if (reserved1 || reserved2)
+    return STG_E_INVALIDPARAMETER;
+
   /*
    * Validate the STGM flags
    */
   if ( FAILED( validateSTGM(grfMode) ))
     return STG_E_INVALIDFLAG;
 
+  if ( !(grfMode & STGM_SHARE_EXCLUSIVE) )
+    return STG_E_INVALIDFLAG;
+
   /*
    * As documented.
    */
-  if ( !(grfMode & STGM_SHARE_EXCLUSIVE) ||
-        (grfMode & STGM_DELETEONRELEASE) ||
-        (grfMode & STGM_TRANSACTED) )
+  if ((grfMode & STGM_DELETEONRELEASE) ||
+      (grfMode & STGM_TRANSACTED))
     return STG_E_INVALIDFUNCTION;
 
   /*
