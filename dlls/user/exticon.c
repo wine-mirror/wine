@@ -178,7 +178,7 @@ static BYTE * ICO_GetIconDirectory( LPBYTE peimage, LPicoICONDIR* lplpiID, ULONG
  * returns
  *  failure:0; success: icon handle or nr of icons (nIconIndex-1)
  */
-static HRESULT WINAPI ICO_ExtractIconExW(
+static HRESULT ICO_ExtractIconExW(
 	LPCWSTR lpszExeFileName,
 	HICON * RetPtr,
 	INT nIconIndex,
@@ -202,18 +202,20 @@ static HRESULT WINAPI ICO_ExtractIconExW(
 
 	/* Map the file */
 	fmapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL );
+        CloseHandle( hFile );
 	if (!fmapping)
 	{
 	  WARN("CreateFileMapping error %ld\n", GetLastError() );
-	  goto end_1;
+	  return hRet;
 	}
 
 	if ( !(peimage = MapViewOfFile(fmapping,FILE_MAP_READ,0,0,0))) 
 	{
 	  WARN("MapViewOfFile error %ld\n", GetLastError() );
-	  goto end_2;
+          CloseHandle( fmapping );
+	  return hRet;
 	}
-
+        CloseHandle( fmapping );
 
 	sig = USER32_GetResourceTable(peimage,&pData);
 
@@ -303,9 +305,9 @@ static HRESULT WINAPI ICO_ExtractIconExW(
 	  PIMAGE_DOS_HEADER	dheader;
 	  PIMAGE_NT_HEADERS	pe_header;
 	  PIMAGE_SECTION_HEADER	pe_sections;
-	  PIMAGE_RESOURCE_DIRECTORY	rootresdir,iconresdir,icongroupresdir;
-	  PIMAGE_RESOURCE_DATA_ENTRY	idataent,igdataent;
-	  PIMAGE_RESOURCE_DIRECTORY_ENTRY	xresent;
+	  const IMAGE_RESOURCE_DIRECTORY *rootresdir,*iconresdir,*icongroupresdir;
+	  const IMAGE_RESOURCE_DATA_ENTRY *idataent,*igdataent;
+	  const IMAGE_RESOURCE_DIRECTORY_ENTRY *xresent;
 	  int			i,j;
 		  
 	  dheader = (PIMAGE_DOS_HEADER)peimage;
@@ -329,14 +331,14 @@ static HRESULT WINAPI ICO_ExtractIconExW(
 	  if (!rootresdir) 
 	  {
 	    WARN("haven't found section for resource directory.\n");
-	    goto end_3;		/* failure */
+	    goto end;		/* failure */
 	  }
 
 	  /* search for the group icon directory */
-	  if (!(icongroupresdir = GetResDirEntryW(rootresdir, RT_GROUP_ICONW, (DWORD)rootresdir, FALSE))) 
+	  if (!(icongroupresdir = GetResDirEntryW(rootresdir, RT_GROUP_ICONW, rootresdir, FALSE))) 
 	  {
 	    WARN("No Icongroupresourcedirectory!\n");
-	    goto end_3;		/* failure */
+	    goto end;		/* failure */
 	  }
 	  iconDirCount = icongroupresdir->NumberOfNamedEntries + icongroupresdir->NumberOfIdEntries;
 
@@ -344,7 +346,7 @@ static HRESULT WINAPI ICO_ExtractIconExW(
 	  if( nIcons == 0 )
 	  {
 	    hRet = iconDirCount;
-	    goto end_3;		/* success */
+	    goto end;		/* success */
 	  }
 
 	  if( nIconIndex < 0 )
@@ -367,7 +369,7 @@ static HRESULT WINAPI ICO_ExtractIconExW(
 	    if (nIconIndex < 0)
 	    {
 	      WARN("resource id %d not found\n", iId);
-	      goto end_3;		/* failure */
+	      goto end;		/* failure */
 	    }
 	  }
 	  else
@@ -376,7 +378,7 @@ static HRESULT WINAPI ICO_ExtractIconExW(
 	    if (nIconIndex >= iconDirCount) 
 	    {
 	      WARN("nIconIndex %d is larger than iconDirCount %d\n",nIconIndex,iconDirCount);
-	      goto end_3;		/* failure */
+	      goto end;		/* failure */
 	    }
 	  }
 
@@ -389,13 +391,13 @@ static HRESULT WINAPI ICO_ExtractIconExW(
 
 	  for (i=0; i < nIcons; i++,xresent++) 
 	  {
-	    PIMAGE_RESOURCE_DIRECTORY	resdir;
+              const IMAGE_RESOURCE_DIRECTORY *resdir;
 
 	    /* go down this resource entry, name */
 	    resdir = (PIMAGE_RESOURCE_DIRECTORY)((DWORD)rootresdir+(xresent->u2.s.OffsetToDirectory));
 
 	    /* default language (0) */
-	    resdir = GetResDirEntryW(resdir,(LPWSTR)0,(DWORD)rootresdir,TRUE);
+	    resdir = GetResDirEntryW(resdir,(LPWSTR)0,rootresdir,TRUE);
 	    igdataent = (PIMAGE_RESOURCE_DATA_ENTRY)resdir;
 
 	    /* lookup address in mapped image for virtual address */
@@ -413,22 +415,22 @@ static HRESULT WINAPI ICO_ExtractIconExW(
 	    if (!igdata) 
 	    {
 	      WARN("no matching real address for icongroup!\n");
-	      goto end_3;	/* failure */
+	      goto end;	/* failure */
 	    }
 	    RetPtr[i] = (HICON)LookupIconIdFromDirectoryEx(igdata, TRUE, cxDesired, cyDesired, LR_DEFAULTCOLOR);
 	  }
 
-	  if (!(iconresdir=GetResDirEntryW(rootresdir,RT_ICONW,(DWORD)rootresdir,FALSE))) 
+	  if (!(iconresdir=GetResDirEntryW(rootresdir,RT_ICONW,rootresdir,FALSE))) 
 	  {
 	    WARN("No Iconresourcedirectory!\n");
-	    goto end_3;		/* failure */
+	    goto end;		/* failure */
 	  }
 
 	  for (i=0; i<nIcons; i++) 
 	  {
-	    PIMAGE_RESOURCE_DIRECTORY	xresdir;
-	    xresdir = GetResDirEntryW(iconresdir,(LPWSTR)(DWORD)RetPtr[i],(DWORD)rootresdir,FALSE);
-	    xresdir = GetResDirEntryW(xresdir,(LPWSTR)0,(DWORD)rootresdir,TRUE);
+              const IMAGE_RESOURCE_DIRECTORY *xresdir;
+	    xresdir = GetResDirEntryW(iconresdir,(LPWSTR)(DWORD)RetPtr[i],rootresdir,FALSE);
+	    xresdir = GetResDirEntryW(xresdir,(LPWSTR)0,rootresdir,TRUE);
 	    idataent = (PIMAGE_RESOURCE_DATA_ENTRY)xresdir;
 	    idata = NULL;
 
@@ -450,12 +452,9 @@ static HRESULT WINAPI ICO_ExtractIconExW(
 	    RetPtr[i] = (HICON) CreateIconFromResourceEx(idata,idataent->Size,TRUE,0x00030000, cxDesired, cyDesired, LR_DEFAULTCOLOR);
 	  }
 	  hRet = S_OK;	/* return first icon */
-	  goto end_3;		/* sucess */
 	}			/* if(sig == IMAGE_NT_SIGNATURE) */
 
-end_3:	UnmapViewOfFile(peimage);	/* success */
-end_2:	CloseHandle(fmapping);
-end_1:	_lclose( hFile);
+end:	UnmapViewOfFile(peimage);	/* success */
 	return hRet;
 }
 
@@ -509,7 +508,7 @@ HRESULT WINAPI PrivateExtractIconsW (
 
 HRESULT WINAPI PrivateExtractIconsA ( 
 	LPCSTR lpstrFile,
-	DWORD nIndex,
+	INT nIndex,
 	DWORD sizeX,
 	DWORD sizeY,
 	HICON * phicon,
@@ -520,7 +519,7 @@ HRESULT WINAPI PrivateExtractIconsA (
 	DWORD ret;
 	LPWSTR lpwstrFile = HEAP_strdupAtoW(GetProcessHeap(), 0, lpstrFile);
 	
-	FIXME_(icon)("%s 0x%08lx 0x%08lx 0x%08lx %p 0x%08lx 0x%08x 0x%08lx stub\n",
+	FIXME_(icon)("%s 0x%08x 0x%08lx 0x%08lx %p 0x%08lx 0x%08x 0x%08lx stub\n",
 	lpstrFile, nIndex, sizeX, sizeY, phicon, w, nIcons, y );
 
 	ret = PrivateExtractIconsW(lpwstrFile, nIndex, sizeX, sizeY, phicon, w, nIcons, y);

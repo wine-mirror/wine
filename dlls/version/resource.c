@@ -122,9 +122,9 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     PIMAGE_SECTION_HEADER sections;
     LPBYTE resSection;
     DWORD resSectionSize;
-    DWORD resDir;
-    PIMAGE_RESOURCE_DIRECTORY resPtr;
-    PIMAGE_RESOURCE_DATA_ENTRY resData;
+    const void *resDir;
+    const IMAGE_RESOURCE_DIRECTORY *resPtr;
+    const IMAGE_RESOURCE_DATA_ENTRY *resData;
     int i, nSections;
 
 
@@ -189,8 +189,7 @@ static BOOL find_pe_resource( HFILE lzfd, LPCSTR typeid, LPCSTR resid,
     }
 
     /* Find resource */
-    resDir = (DWORD)resSection + 
-             (resDataDir->VirtualAddress - sections[i].VirtualAddress);
+    resDir = resSection + (resDataDir->VirtualAddress - sections[i].VirtualAddress);
 
     resPtr = (PIMAGE_RESOURCE_DIRECTORY)resDir;
     resPtr = GetResDirEntryA( resPtr, typeid, resDir, FALSE );

@@ -791,10 +791,10 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	  PIMAGE_DOS_HEADER	dheader;
 	  PIMAGE_NT_HEADERS	pe_header;
 	  PIMAGE_SECTION_HEADER	pe_sections;
-	  PIMAGE_RESOURCE_DIRECTORY	rootresdir,iconresdir,icongroupresdir;
-	  PIMAGE_RESOURCE_DATA_ENTRY	idataent,igdataent;
+	  const IMAGE_RESOURCE_DIRECTORY *rootresdir,*iconresdir,*icongroupresdir;
+	  const IMAGE_RESOURCE_DATA_ENTRY *idataent,*igdataent;
 	  int			i,j;
-	  PIMAGE_RESOURCE_DIRECTORY_ENTRY	xresent;
+	  const IMAGE_RESOURCE_DIRECTORY_ENTRY *xresent;
 	  CURSORICONDIR		**cids;
 	
 	  fmapping = CreateFileMappingA(hFile,NULL,PAGE_READONLY|SEC_COMMIT,0,0,NULL);
@@ -836,7 +836,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	    goto end_4;	/* failure */
 	  }
 
-	  icongroupresdir = GetResDirEntryW(rootresdir,RT_GROUP_ICONW, (DWORD)rootresdir,FALSE);
+	  icongroupresdir = GetResDirEntryW(rootresdir,RT_GROUP_ICONW, rootresdir,FALSE);
 
 	  if (!icongroupresdir) 
 	  { WARN("No Icongroupresourcedirectory!\n");
@@ -870,14 +870,15 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	  xresent = xresent+nIconIndex;
 
 	  for (i=0;i<n;i++,xresent++) 
-	  { CURSORICONDIR	*cid;
-	    PIMAGE_RESOURCE_DIRECTORY	resdir;
+	  {
+              CURSORICONDIR	*cid;
+              const IMAGE_RESOURCE_DIRECTORY *resdir;
 
 	    /* go down this resource entry, name */
 	    resdir = (PIMAGE_RESOURCE_DIRECTORY)((DWORD)rootresdir+(xresent->u2.s.OffsetToDirectory));
 
 	    /* default language (0) */
-	    resdir = GetResDirEntryW(resdir,(LPWSTR)0,(DWORD)rootresdir,TRUE);
+	    resdir = GetResDirEntryW(resdir,(LPWSTR)0,rootresdir,TRUE);
 	    igdataent = (PIMAGE_RESOURCE_DATA_ENTRY)resdir;
 
 	    /* lookup address in mapped image for virtual address */
@@ -901,7 +902,7 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	    RetPtr[i] = LookupIconIdFromDirectoryEx(igdata,TRUE,GetSystemMetrics(SM_CXICON),GetSystemMetrics(SM_CYICON),0);
 	  }
 
-	  iconresdir=GetResDirEntryW(rootresdir,RT_ICONW,(DWORD)rootresdir,FALSE);
+	  iconresdir=GetResDirEntryW(rootresdir,RT_ICONW,rootresdir,FALSE);
 
 	  if (!iconresdir) 
 	  { WARN("No Iconresourcedirectory!\n");
@@ -909,9 +910,10 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
 	  }
 
 	  for (i=0;i<n;i++) 
-	  { PIMAGE_RESOURCE_DIRECTORY	xresdir;
-	    xresdir = GetResDirEntryW(iconresdir,(LPWSTR)(DWORD)RetPtr[i],(DWORD)rootresdir,FALSE);
-	    xresdir = GetResDirEntryW(xresdir,(LPWSTR)0,(DWORD)rootresdir,TRUE);
+	  {
+              const IMAGE_RESOURCE_DIRECTORY *xresdir;
+	    xresdir = GetResDirEntryW(iconresdir,(LPWSTR)(DWORD)RetPtr[i],rootresdir,FALSE);
+	    xresdir = GetResDirEntryW(xresdir,(LPWSTR)0,rootresdir,TRUE);
 	    idataent = (PIMAGE_RESOURCE_DATA_ENTRY)xresdir;
 	    idata = NULL;
 

@@ -33,10 +33,10 @@ DEFAULT_DEBUG_CHANNEL(resource);
  *
  * Get the resource directory of a PE module
  */
-static IMAGE_RESOURCE_DIRECTORY* get_resdir( HMODULE hmod )
+static const IMAGE_RESOURCE_DIRECTORY* get_resdir( HMODULE hmod )
 {
-    IMAGE_DATA_DIRECTORY *dir;
-    IMAGE_RESOURCE_DIRECTORY *ret = NULL;
+    const IMAGE_DATA_DIRECTORY *dir;
+    const IMAGE_RESOURCE_DIRECTORY *ret = NULL;
 
     if (!hmod) hmod = GetModuleHandleA( NULL );
     else if (!HIWORD(hmod))
@@ -53,68 +53,140 @@ static IMAGE_RESOURCE_DIRECTORY* get_resdir( HMODULE hmod )
 
 
 /**********************************************************************
+ *  find_entry_by_name
+ *
+ * Find an entry by name in a resource directory
+ */
+static IMAGE_RESOURCE_DIRECTORY *find_entry_by_name( const IMAGE_RESOURCE_DIRECTORY *dir,
+                                                     LPCWSTR name, const char *root )
+{
+
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
+    const IMAGE_RESOURCE_DIR_STRING_U *str;
+    int min, max, res, pos, namelen = strlenW(name);
+
+    entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    min = 0;
+    max = dir->NumberOfNamedEntries - 1;
+    while (min <= max)
+    {
+        pos = (min + max) / 2;
+        str = (IMAGE_RESOURCE_DIR_STRING_U *)(root + entry[pos].u1.s.NameOffset);
+        res = strncmpiW( name, str->NameString, str->Length );
+        if (!res && namelen == str->Length)
+            return (IMAGE_RESOURCE_DIRECTORY *)(root + entry[pos].u2.s.OffsetToDirectory);
+        if (res < 0) max = pos - 1;
+        else min = pos + 1;
+    }
+
+    /* now do a linear search just in case */
+    for (pos = 0; pos < dir->NumberOfNamedEntries; pos++)
+    {
+        str = (IMAGE_RESOURCE_DIR_STRING_U *)(root + entry[pos].u1.s.NameOffset);
+        if (namelen != str->Length) continue;
+        if (!strncmpiW( name, str->NameString, str->Length ))
+        {
+            ERR( "entry '%s' required linear search, please report\n", debugstr_w(name) );
+            return (IMAGE_RESOURCE_DIRECTORY *)(root + entry[pos].u2.s.OffsetToDirectory);
+        }
+    }
+    return NULL;
+}
+
+
+/**********************************************************************
+ *  find_entry_by_id
+ *
+ * Find an entry by id in a resource directory
+ */
+static IMAGE_RESOURCE_DIRECTORY *find_entry_by_id( const IMAGE_RESOURCE_DIRECTORY *dir,
+                                                   WORD id, const char *root )
+{
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
+    int min, max, pos;
+
+    entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    min = dir->NumberOfNamedEntries;
+    max = min + dir->NumberOfIdEntries - 1;
+    while (min <= max)
+    {
+        pos = (min + max) / 2;
+        if (entry[pos].u1.Id == id)
+            return (IMAGE_RESOURCE_DIRECTORY *)(root + entry[pos].u2.s.OffsetToDirectory);
+        if (entry[pos].u1.Id > id) max = pos - 1;
+        else min = pos + 1;
+    }
+
+    /* now do a linear search just in case */
+    min = dir->NumberOfNamedEntries;
+    max = min + dir->NumberOfIdEntries - 1;
+    for (pos = min; pos <= max; pos++)
+    {
+        if (entry[pos].u1.Id == id)
+        {
+            ERR( "entry %04x required linear search, please report\n", id );
+            return (IMAGE_RESOURCE_DIRECTORY *)(root + entry[pos].u2.s.OffsetToDirectory);
+        }
+    }
+    return NULL;
+}
+
+
+/**********************************************************************
+ *  find_entry_default
+ *
+ * Find a default entry in a resource directory
+ */
+static IMAGE_RESOURCE_DIRECTORY *find_entry_default( const IMAGE_RESOURCE_DIRECTORY *dir,
+                                                     const char *root )
+{
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry;
+
+    entry = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(dir + 1);
+    if (dir->NumberOfNamedEntries || dir->NumberOfIdEntries)
+        return (IMAGE_RESOURCE_DIRECTORY *)(root + entry->u2.s.OffsetToDirectory);
+    return NULL;
+}
+
+
+/**********************************************************************
  *	    GetResDirEntryW
  *
  *	Helper function - goes down one level of PE resource tree
  *
  */
-PIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(PIMAGE_RESOURCE_DIRECTORY resdirptr,
-					   LPCWSTR name,DWORD root,
-					   BOOL allowdefault)
+const IMAGE_RESOURCE_DIRECTORY *GetResDirEntryW(const IMAGE_RESOURCE_DIRECTORY *resdirptr,
+                                                LPCWSTR name, LPCVOID root,
+                                                BOOL allowdefault)
 {
-    int entrynum;
-    PIMAGE_RESOURCE_DIRECTORY_ENTRY entryTable;
-    int namelen;
-
-    if (HIWORD(name)) {
-    	if (name[0]=='#') {
-		char	buf[10];
-                if (!WideCharToMultiByte( CP_ACP, 0, name+1, -1, buf, sizeof(buf), NULL, NULL ))
-                    return NULL;
-		return GetResDirEntryW(resdirptr,(LPCWSTR)atoi(buf),root,allowdefault);
-	}
-	entryTable = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdirptr + 1);
-	namelen = strlenW(name);
-	for (entrynum = 0; entrynum < resdirptr->NumberOfNamedEntries; entrynum++)
-	{
-		PIMAGE_RESOURCE_DIR_STRING_U str =
-		(PIMAGE_RESOURCE_DIR_STRING_U) (root + 
-			entryTable[entrynum].u1.s.NameOffset);
-		if(namelen != str->Length)
-			continue;
-		if(strncmpiW(name,str->NameString,str->Length)==0)
-			return (PIMAGE_RESOURCE_DIRECTORY) (
-				root +
-				entryTable[entrynum].u2.s.OffsetToDirectory);
-	}
-	return NULL;
-    } else {
-	entryTable = (PIMAGE_RESOURCE_DIRECTORY_ENTRY) (
-			(BYTE *) resdirptr + 
-                        sizeof(IMAGE_RESOURCE_DIRECTORY) +
-			resdirptr->NumberOfNamedEntries * sizeof(IMAGE_RESOURCE_DIRECTORY_ENTRY));
-	for (entrynum = 0; entrynum < resdirptr->NumberOfIdEntries; entrynum++)
-	    if ((DWORD)entryTable[entrynum].u1.Name == (DWORD)name)
-		return (PIMAGE_RESOURCE_DIRECTORY) (
-			root +
-			entryTable[entrynum].u2.s.OffsetToDirectory);
-	/* just use first entry if no default can be found */
-	if (allowdefault && !name && resdirptr->NumberOfIdEntries)
-		return (PIMAGE_RESOURCE_DIRECTORY) (
-			root +
-			entryTable[0].u2.s.OffsetToDirectory);
-	return NULL;
+    if (HIWORD(name))
+    {
+        if (name[0]=='#')
+        {
+            char buf[10];
+            if (!WideCharToMultiByte( CP_ACP, 0, name+1, -1, buf, sizeof(buf), NULL, NULL ))
+                return NULL;
+            return find_entry_by_id( resdirptr, atoi(buf), root );
+        }
+        return find_entry_by_name( resdirptr, name, root );
+    }
+    else
+    {
+        const IMAGE_RESOURCE_DIRECTORY *ret;
+        ret = find_entry_by_id( resdirptr, LOWORD(name), root );
+        if (!ret && !name && allowdefault) ret = find_entry_default( resdirptr, root );
+        return ret;
     }
 }
 
 /**********************************************************************
  *	    GetResDirEntryA
  */
-PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA( PIMAGE_RESOURCE_DIRECTORY resdirptr,
-					   LPCSTR name, DWORD root,
-					   BOOL allowdefault )
+const IMAGE_RESOURCE_DIRECTORY *GetResDirEntryA( const IMAGE_RESOURCE_DIRECTORY *resdirptr,
+                                                 LPCSTR name, LPCVOID root,
+                                                 BOOL allowdefault )
 {
-    PIMAGE_RESOURCE_DIRECTORY retv;
+    const IMAGE_RESOURCE_DIRECTORY *retv;
     LPWSTR nameW = HIWORD(name)? HEAP_strdupAtoW( GetProcessHeap(), 0, name ) 
                                : (LPWSTR)name;
 
@@ -136,42 +208,34 @@ PIMAGE_RESOURCE_DIRECTORY GetResDirEntryA( PIMAGE_RESOURCE_DIRECTORY resdirptr,
  */
 HRSRC PE_FindResourceExW( HMODULE hmod, LPCWSTR name, LPCWSTR type, WORD lang )
 {
-    PIMAGE_RESOURCE_DIRECTORY resdirptr = get_resdir(hmod);
-    DWORD root;
+    const IMAGE_RESOURCE_DIRECTORY *resdirptr = get_resdir(hmod);
+    const void *root;
     HRSRC result;
 
     if (!resdirptr) return 0;
 
-    root = (DWORD) resdirptr;
+    root = resdirptr;
     if ((resdirptr = GetResDirEntryW(resdirptr, type, root, FALSE)) == NULL)
 	return 0;
     if ((resdirptr = GetResDirEntryW(resdirptr, name, root, FALSE)) == NULL)
 	return 0;
 
     /* 1. Exact specified language */
-    result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
+    if ((result = (HRSRC)find_entry_by_id( resdirptr, lang, root ))) goto found;
 
-    if (!result)
-    {
-	/* 2. Language with neutral sublanguage */
-        lang = MAKELANGID(PRIMARYLANGID(lang), SUBLANG_NEUTRAL);
-        result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
-    }
+    /* 2. Language with neutral sublanguage */
+    lang = MAKELANGID(PRIMARYLANGID(lang), SUBLANG_NEUTRAL);
+    if ((result = (HRSRC)find_entry_by_id( resdirptr, lang, root ))) goto found;
 
-    if (!result)
-    {
-	/* 3. Neutral language with neutral sublanguage */
-        lang = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
-        result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
-    }
+    /* 3. Neutral language with neutral sublanguage */
+    lang = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
+    if ((result = (HRSRC)find_entry_by_id( resdirptr, lang, root ))) goto found;
 
-    if (!result)
-    {
-	/* 4. Neutral language with default sublanguage */
-        lang = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
-        result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
-    }
+    /* 4. Neutral language with default sublanguage */
+    lang = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
+    result = (HRSRC)find_entry_by_id( resdirptr, lang, root );
 
+ found:
     return result;
 }
 
@@ -189,14 +253,14 @@ HRSRC PE_FindResourceExW( HMODULE hmod, LPCWSTR name, LPCWSTR type, WORD lang )
  */
 HRSRC PE_FindResourceW( HMODULE hmod, LPCWSTR name, LPCWSTR type )
 {
-    PIMAGE_RESOURCE_DIRECTORY resdirptr = get_resdir(hmod);
-    DWORD root;
+    const IMAGE_RESOURCE_DIRECTORY *resdirptr = get_resdir(hmod);
+    const void *root;
     HRSRC result;
     WORD lang;
 
     if (!resdirptr) return 0;
 
-    root = (DWORD) resdirptr;
+    root = resdirptr;
     if ((resdirptr = GetResDirEntryW(resdirptr, type, root, FALSE)) == NULL)
 	return 0;
     if ((resdirptr = GetResDirEntryW(resdirptr, name, root, FALSE)) == NULL)
@@ -204,42 +268,28 @@ HRSRC PE_FindResourceW( HMODULE hmod, LPCWSTR name, LPCWSTR type )
 
     /* 1. Neutral language with neutral sublanguage */
     lang = MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL);
-    result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
+    if ((result = (HRSRC)find_entry_by_id( resdirptr, lang, root ))) goto found;
 
-    if (!result)
-    {
-	/* 2. Neutral language with default sublanguage */
-	lang = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
-	result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
-    }
+    /* 2. Neutral language with default sublanguage */
+    lang = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
+    if ((result = (HRSRC)find_entry_by_id( resdirptr, lang, root ))) goto found;
 
-    if (!result)
-    {
-	/* 3. Current locale lang id */
-	lang = LANGIDFROMLCID(GetUserDefaultLCID());
-	result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
-    }
+    /* 3. Current locale lang id */
+    lang = LANGIDFROMLCID(GetUserDefaultLCID());
+    if ((result = (HRSRC)find_entry_by_id( resdirptr, lang, root ))) goto found;
 
-    if (!result)
-    {
-	/* 4. Current locale lang id with neutral sublanguage */
-	lang = MAKELANGID(PRIMARYLANGID(lang), SUBLANG_NEUTRAL);
-	result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
-    }
+    /* 4. Current locale lang id with neutral sublanguage */
+    lang = MAKELANGID(PRIMARYLANGID(lang), SUBLANG_NEUTRAL);
+    if ((result = (HRSRC)find_entry_by_id( resdirptr, lang, root ))) goto found;
 
-    if (!result)
-    {
-	/* 5. (!) LANG_ENGLISH, SUBLANG_DEFAULT */
-	lang = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
-	result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)lang, root, FALSE);
-    }
+    /* 5. (!) LANG_ENGLISH, SUBLANG_DEFAULT */
+    lang = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
+    if ((result = (HRSRC)find_entry_by_id( resdirptr, lang, root ))) goto found;
 
-    if (!result)
-    {
-	/* 6. Return first in the list */
-	result = (HANDLE)GetResDirEntryW(resdirptr, (LPCWSTR)(UINT)0, root, TRUE);
-    }
+    /* 6. Return first in the list */
+    result = (HRSRC)find_entry_default( resdirptr, root );
 
+ found:
     return result;
 }
 
@@ -270,8 +320,8 @@ DWORD PE_SizeofResource( HANDLE hRsrc )
 BOOL WINAPI EnumResourceTypesA( HMODULE hmod, ENUMRESTYPEPROCA lpfun, LONG lparam)
 {
     int		i;
-    PIMAGE_RESOURCE_DIRECTORY resdir = get_resdir(hmod);
-    PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
+    const IMAGE_RESOURCE_DIRECTORY *resdir = get_resdir(hmod);
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
     BOOL	ret;
 
     if (!resdir) return FALSE;
@@ -312,8 +362,8 @@ BOOL WINAPI EnumResourceTypesA( HMODULE hmod, ENUMRESTYPEPROCA lpfun, LONG lpara
 BOOL WINAPI EnumResourceTypesW( HMODULE hmod, ENUMRESTYPEPROCW lpfun, LONG lparam)
 {
     int		i;
-    PIMAGE_RESOURCE_DIRECTORY		resdir = get_resdir(hmod);
-    PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
+    const IMAGE_RESOURCE_DIRECTORY *resdir = get_resdir(hmod);
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
     BOOL	ret;
 
     if (!resdir) return FALSE;
@@ -351,14 +401,14 @@ BOOL WINAPI EnumResourceTypesW( HMODULE hmod, ENUMRESTYPEPROCW lpfun, LONG lpara
 BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfun, LONG lparam )
 {
     int		i;
-    PIMAGE_RESOURCE_DIRECTORY		basedir = get_resdir(hmod);
-    PIMAGE_RESOURCE_DIRECTORY		resdir;
-    PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
+    const IMAGE_RESOURCE_DIRECTORY *basedir = get_resdir(hmod);
+    const IMAGE_RESOURCE_DIRECTORY *resdir;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
     BOOL	ret;
 
     if (!basedir) return FALSE;
 
-    if (!(resdir = GetResDirEntryA(basedir,type,(DWORD)basedir,FALSE))) return FALSE;
+    if (!(resdir = GetResDirEntryA(basedir,type,basedir,FALSE))) return FALSE;
 
     et =(PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
     ret = FALSE;
@@ -396,14 +446,14 @@ BOOL WINAPI EnumResourceNamesA( HMODULE hmod, LPCSTR type, ENUMRESNAMEPROCA lpfu
 BOOL WINAPI EnumResourceNamesW( HMODULE hmod, LPCWSTR type, ENUMRESNAMEPROCW lpfun, LONG lparam )
 {
     int		i;
-    PIMAGE_RESOURCE_DIRECTORY		basedir = get_resdir(hmod);
-    PIMAGE_RESOURCE_DIRECTORY		resdir;
-    PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
+    const IMAGE_RESOURCE_DIRECTORY *basedir = get_resdir(hmod);
+    const IMAGE_RESOURCE_DIRECTORY *resdir;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
     BOOL	ret;
 
     if (!basedir) return FALSE;
 
-    resdir = GetResDirEntryW(basedir,type,(DWORD)basedir,FALSE);
+    resdir = GetResDirEntryW(basedir,type,basedir,FALSE);
     if (!resdir)
     	return FALSE;
     et = (PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
@@ -440,14 +490,14 @@ BOOL WINAPI EnumResourceLanguagesA( HMODULE hmod, LPCSTR type, LPCSTR name,
                                     ENUMRESLANGPROCA lpfun, LONG lparam )
 {
     int		i;
-    PIMAGE_RESOURCE_DIRECTORY		basedir = get_resdir(hmod);
-    PIMAGE_RESOURCE_DIRECTORY		resdir;
-    PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
+    const IMAGE_RESOURCE_DIRECTORY *basedir = get_resdir(hmod);
+    const IMAGE_RESOURCE_DIRECTORY *resdir;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
     BOOL	ret;
 
     if (!basedir) return FALSE;
-    if (!(resdir = GetResDirEntryA(basedir,type,(DWORD)basedir,FALSE))) return FALSE;
-    if (!(resdir = GetResDirEntryA(resdir,name,(DWORD)basedir,FALSE))) return FALSE;
+    if (!(resdir = GetResDirEntryA(basedir,type,basedir,FALSE))) return FALSE;
+    if (!(resdir = GetResDirEntryA(resdir,name,basedir,FALSE))) return FALSE;
 
     et =(PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
     ret = FALSE;
@@ -468,17 +518,17 @@ BOOL WINAPI EnumResourceLanguagesW( HMODULE hmod, LPCWSTR type, LPCWSTR name,
                                     ENUMRESLANGPROCW lpfun, LONG lparam )
 {
     int		i;
-    PIMAGE_RESOURCE_DIRECTORY		basedir = get_resdir(hmod);
-    PIMAGE_RESOURCE_DIRECTORY		resdir;
-    PIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
+    const IMAGE_RESOURCE_DIRECTORY *basedir = get_resdir(hmod);
+    const IMAGE_RESOURCE_DIRECTORY *resdir;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
     BOOL	ret;
 
     if (!basedir) return FALSE;
 
-    resdir = GetResDirEntryW(basedir,type,(DWORD)basedir,FALSE);
+    resdir = GetResDirEntryW(basedir,type,basedir,FALSE);
     if (!resdir)
     	return FALSE;
-    resdir = GetResDirEntryW(resdir,name,(DWORD)basedir,FALSE);
+    resdir = GetResDirEntryW(resdir,name,basedir,FALSE);
     if (!resdir)
     	return FALSE;
     et =(PIMAGE_RESOURCE_DIRECTORY_ENTRY)(resdir + 1);
