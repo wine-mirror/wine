@@ -457,6 +457,7 @@ static void wave_out_test_deviceOut(int device, double duration,
     WORD nChannels = pwfx->nChannels;
     WORD wBitsPerSample = pwfx->wBitsPerSample;
     DWORD nSamplesPerSec = pwfx->nSamplesPerSec;
+    BOOL has_volume = pcaps->dwSupport & WAVECAPS_VOLUME;
 
     hevent=CreateEvent(NULL,FALSE,FALSE,NULL);
     ok(hevent!=NULL,"CreateEvent(): error=%ld\n",GetLastError());
@@ -512,8 +513,8 @@ static void wave_out_test_deviceOut(int device, double duration,
     frag.dwLoops=0;
 
     rc=waveOutGetVolume(wout,&volume);
-    ok(rc==MMSYSERR_NOERROR,"waveOutGetVolume(%s): rc=%s\n",
-       dev_name(device),wave_out_error(rc));
+    ok(has_volume ? rc==MMSYSERR_NOERROR : rc==MMSYSERR_NOTSUPPORTED,
+       "waveOutGetVolume(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
 
     rc=waveOutPrepareHeader(wout, &frag, sizeof(frag));
     ok(rc==MMSYSERR_NOERROR,
@@ -534,13 +535,13 @@ static void wave_out_test_deviceOut(int device, double duration,
         check_position(device, wout, 0, pwfx);
 
         rc=waveOutSetVolume(wout,0x20002000);
-        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume(%s): rc=%s\n",
-           dev_name(device),wave_out_error(rc));
+        ok(has_volume ? rc==MMSYSERR_NOERROR : rc==MMSYSERR_NOTSUPPORTED,
+           "waveOutSetVolume(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
         WaitForSingleObject(hevent,INFINITE);
 
         rc=waveOutSetVolume(wout,volume);
-        ok(rc==MMSYSERR_NOERROR,"waveOutSetVolume(%s): rc=%s\n",
-           dev_name(device),wave_out_error(rc));
+        ok(has_volume ? rc==MMSYSERR_NOERROR : rc==MMSYSERR_NOTSUPPORTED,
+           "waveOutSetVolume(%s): rc=%s\n",dev_name(device),wave_out_error(rc));
 
         start=GetTickCount();
         rc=waveOutWrite(wout, &frag, sizeof(frag));
