@@ -2114,6 +2114,61 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 }
 
 /******************************************************************************
+ * Coerces a full safearray. Not optimal code.
+ */
+static HRESULT
+coerce_array(
+	VARIANTARG* src, SAFEARRAY **narr, LCID lcid, USHORT wFlags, VARTYPE vt
+) {
+	int		elems,i,j;
+	SAFEARRAY	*darr, *sarr = V_ARRAY(src);
+	long		*addr;
+	HRESULT		hres;
+
+	hres = SafeArrayAllocDescriptor( sarr->cDims, &darr);
+	if (FAILED(hres)) return hres;
+	memcpy(
+		darr->rgsabound,
+		sarr->rgsabound,
+		sizeof(sarr->rgsabound[0])*sarr->cDims
+	);
+	hres = SafeArrayAllocData(darr);
+	if (FAILED(hres)) {
+		SafeArrayDestroyDescriptor(darr);
+		return hres;
+	}
+	elems = 1;
+	for (i=0;i<sarr->cDims;i++)
+		elems *= sarr->rgsabound[i].cElements;
+	addr = HeapAlloc(GetProcessHeap(),0,sizeof(long)*sarr->cDims);
+	for (i=0;i<elems;i++) {
+		VARIANT 	tmpvar,newvar;
+		int 		tmpi = i;
+		/* convert absolute value in array address */
+		for (j=0;j<sarr->cDims;j++) {
+			addr[j] = (tmpi % sarr->rgsabound[j].cElements) + sarr->rgsabound[j].lLbound;
+			tmpi /= sarr->rgsabound[j].cElements;
+		}
+		V_VT(&tmpvar) = V_VT(src) & VT_TYPEMASK;
+		hres = SafeArrayGetElement(sarr, addr, &V_UNION(&tmpvar,lVal));
+		if (FAILED(hres)) {
+			FIXME("Did not get element %d\n",i);
+			return E_FAIL;
+		}
+		hres = Coerce( &newvar, lcid, wFlags, &tmpvar, vt );
+		if (FAILED(hres)) return E_FAIL;
+		hres = SafeArrayPutElement( darr, addr, &V_UNION(&newvar,lVal));
+		if (FAILED(hres)) {
+			FIXME("SAPE failed for element %d, %lx\n",i,hres);
+			return E_FAIL;
+		}
+	}
+	HeapFree(GetProcessHeap(),0,addr);
+	*narr = darr;
+	return S_OK;
+}
+
+/******************************************************************************
  *		VariantChangeType	[OLEAUT32.12]
  */
 HRESULT WINAPI VariantChangeType(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
@@ -2169,6 +2224,12 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 			/* Convert the source variant to a "byvalue" variant.
 			 */
 			VARIANTARG Variant;
+			
+			if ((V_VT(pvargSrc) & 0xf000) != VT_BYREF) {
+				FIXME("VT_TYPEMASK %x is unhandled.\n",V_VT(pvargSrc) & VT_TYPEMASK);
+				return E_FAIL;
+			}
+
 			VariantInit( &Variant );
 			res = VariantCopyInd( &Variant, pvargSrc );
 			if( res == S_OK )
@@ -2179,12 +2240,23 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 				VariantClear( &Variant );
 			}
 
-		}
-		else
-		{
-			/* Use the current "byvalue" source variant.
-			 */
-			res = Coerce( pvargDest, lcid, wFlags, pvargSrc, vt );
+		} else {
+			if (V_VT(pvargSrc) & VT_ARRAY) {
+				if ((V_VT(pvargSrc) & 0xf000) != VT_ARRAY) {
+					FIXME("VT_TYPEMASK %x is unhandled in VT_ARRAY.\n",V_VT(pvargSrc) & VT_TYPEMASK);
+					return E_FAIL;
+				}
+				V_VT(pvargDest) = VT_ARRAY | vt;
+				res = coerce_array(pvargSrc, &V_ARRAY(pvargDest), lcid, wFlags, vt);
+			} else {
+				if ((V_VT(pvargSrc) & 0xf000)) {
+					FIXME("VT_TYPEMASK %x is unhandled in normal case.\n",V_VT(pvargSrc) & VT_TYPEMASK);
+					return E_FAIL;
+				}
+				/* Use the current "byvalue" source variant.
+				 */
+				res = Coerce( pvargDest, lcid, wFlags, pvargSrc, vt );
+			}
 		}
 	}
 	/* this should not fail.
