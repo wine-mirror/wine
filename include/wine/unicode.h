@@ -53,6 +53,8 @@ extern int cp_mbstowcs( const union cptable *table, int flags,
 extern int cp_wcstombs( const union cptable *table, int flags,
                         const WCHAR *src, int srclen,
                         char *dst, int dstlen, const char *defchar, int *used );
+extern int utf8_wcstombs( const WCHAR *src, int srclen, char *dst, int dstlen );
+extern int utf8_mbstowcs( int flags, const char *src, int srclen, WCHAR *dst, int dstlen );
 
 static inline int is_dbcs_leadbyte( const union cptable *table, unsigned char ch )
 {

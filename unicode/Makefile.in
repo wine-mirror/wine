@@ -70,6 +70,7 @@ C_SRCS = \
 	cptable.c \
 	mbtowc.c \
 	string.c \
+	utf8.c \
 	wctomb.c \
 	$(CODEPAGES:%=c_%.c)
 

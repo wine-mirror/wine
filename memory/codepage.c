@@ -254,23 +254,27 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
 
     if (srclen == -1) srclen = strlen(src) + 1;
 
-    if (page >= CP_UTF7)
-    {
-        FIXME("UTF not supported\n");
-        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-        return 0;
-    }
-
-    if (!(table = get_codepage_table( page )))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
     if (flags & MB_COMPOSITE) FIXME("MB_COMPOSITE not supported\n");
     if (flags & MB_USEGLYPHCHARS) FIXME("MB_USEGLYPHCHARS not supported\n");
 
-    ret = cp_mbstowcs( table, flags, src, srclen, dst, dstlen );
+    switch(page)
+    {
+    case CP_UTF7:
+        FIXME("UTF not supported\n");
+        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+        return 0;
+    case CP_UTF8:
+        ret = utf8_mbstowcs( flags, src, srclen, dst, dstlen );
+        break;
+    default:
+        if (!(table = get_codepage_table( page )))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        ret = cp_mbstowcs( table, flags, src, srclen, dst, dstlen );
+        break;
+    }
 
     if (ret < 0)
     {
@@ -326,23 +330,28 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
 
     if (srclen == -1) srclen = strlenW(src) + 1;
 
-    if (page >= CP_UTF7)
-    {
-        FIXME("UTF not supported\n");
-        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-        return 0;
-    }
-
-    if (!(table = get_codepage_table( page )))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
 /*    if (flags & WC_COMPOSITECHECK) FIXME( "WC_COMPOSITECHECK (%lx) not supported\n", flags );*/
 
-    ret = cp_wcstombs( table, flags, src, srclen, dst, dstlen, defchar, used ? &used_tmp : NULL );
-    if (used) *used = used_tmp;
+    switch(page)
+    {
+    case CP_UTF7:
+        FIXME("UTF-7 not supported\n");
+        SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+        return 0;
+    case CP_UTF8:
+        ret = utf8_wcstombs( src, srclen, dst, dstlen );
+        break;
+    default:
+        if (!(table = get_codepage_table( page )))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        ret = cp_wcstombs( table, flags, src, srclen, dst, dstlen,
+                           defchar, used ? &used_tmp : NULL );
+        if (used) *used = used_tmp;
+        break;
+    }
 
     if (ret == -1)
     {
