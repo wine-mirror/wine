@@ -28,6 +28,7 @@ WINE_MODREF *MODULE_modref_list = NULL;
 
 static WINE_MODREF *exe_modref;
 static int free_lib_count;   /* recursion depth of FreeLibrary calls */
+static int process_detaching;  /* set on process detach to avoid deadlocks with thread detach */
 
 /*************************************************************************
  *		MODULE32_LookupHMODULE
@@ -215,7 +216,7 @@ void MODULE_DllProcessDetach( BOOL bForceDetach, LPVOID lpReserved )
     WINE_MODREF *wm;
 
     RtlAcquirePebLock();
-
+    if (bForceDetach) process_detaching = 1;
     do
     {
         for ( wm = MODULE_modref_list; wm; wm = wm->next )
@@ -250,6 +251,10 @@ void MODULE_DllThreadAttach( LPVOID lpReserved )
 {
     WINE_MODREF *wm;
 
+    /* don't do any attach calls if process is exiting */
+    if (process_detaching) return;
+    /* FIXME: there is still a race here */
+
     RtlAcquirePebLock();
 
     for ( wm = MODULE_modref_list; wm; wm = wm->next )
@@ -279,6 +284,10 @@ void MODULE_DllThreadAttach( LPVOID lpReserved )
 void MODULE_DllThreadDetach( LPVOID lpReserved )
 {
     WINE_MODREF *wm;
+
+    /* don't do any detach calls if process is exiting */
+    if (process_detaching) return;
+    /* FIXME: there is still a race here */
 
     RtlAcquirePebLock();
 
