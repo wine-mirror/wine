@@ -813,7 +813,8 @@ static LISTVIEW_SUBITEM* LISTVIEW_GetSubItemPtr(HDPA hdpaSubItems,
 static INT LISTVIEW_GetItemWidth(HWND hwnd)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
-  UINT uView = GetWindowLongA(hwnd, GWL_STYLE) & LVS_TYPEMASK;
+  LONG style = GetWindowLongA(hwnd, GWL_STYLE); 
+  UINT uView = style & LVS_TYPEMASK; 
   INT nHeaderItemCount;
   RECT rcHeaderItem;
   INT nItemWidth = 0;
@@ -826,7 +827,7 @@ static INT LISTVIEW_GetItemWidth(HWND hwnd)
   {
     nItemWidth = infoPtr->iconSpacing.cx;
   }
-  else if (uView == LVS_REPORT)
+  else if (uView == LVS_REPORT && (!(LVS_NOCOLUMNHEADER & style)) )
   {
     /* calculate width of header */
     nHeaderItemCount = Header_GetItemCount(infoPtr->hwndHeader);
