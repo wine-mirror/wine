@@ -63,7 +63,16 @@ void *BUILTIN32_dlopen( const char *name )
     strcat( buffer, ".so" );
 
     if (!(handle = ELFDLL_dlopen( buffer, RTLD_NOW )))
-        WARN( "failed to load %s: %s\n", buffer, dlerror() );
+    {
+	LPSTR pErr, p;
+	pErr = dlerror();
+	p = strchr(pErr, ':');
+	if ((p) && 
+	   (!strncmp(p, ": undefined symbol", 18))) /* undef symbol -> ERR() */
+	    ERR("failed to load %s: %s\n", buffer, pErr);
+	else /* WARN() for libraries that are supposed to be native */
+            WARN("failed to load %s: %s\n", buffer, pErr );
+    }
     return handle;
 #else
     return NULL;
