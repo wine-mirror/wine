@@ -127,6 +127,10 @@ inline static BOOL is_window_managed( WND *win )
     if (win->dwExStyle & WS_EX_TOOLWINDOW) return FALSE;
     /* windows with thick frame are managed */
     if (win->dwStyle & WS_THICKFRAME) return TRUE;
+    /* application windows are managed */
+    if (win->dwExStyle & WS_EX_APPWINDOW) return TRUE;
+    /* popup windows that aren't owned are managed */
+    if ((win->dwStyle & WS_POPUP) && !win->owner) return TRUE;
     /* default: not managed */
     return FALSE;
 }
