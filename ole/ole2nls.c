@@ -1910,7 +1910,7 @@ INT WINAPI LCMapStringA(
                                         SORT_STRINGSORT     | \
                                         NORM_IGNOREWIDTH    | \
                                         NORM_IGNOREKANATYPE)
-  /* FIXME: as long as we don't support Kanakana nor Hirigana 
+  /* FIXME: as long as we don't support Katakana nor Hiragana 
    * characters, we can support NORM_IGNOREKANATYPE
    */
   if (mapflags & ~LCMAPSTRINGA_SUPPORTED_FLAGS)
