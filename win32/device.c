@@ -33,6 +33,7 @@
 #include "winnt.h"
 #include "msdos.h"
 #include "miscemu.h"
+#include "stackframe.h"
 #include "server.h"
 #include "debugtools.h"
 
@@ -55,7 +56,7 @@ static BOOL DeviceIo_MMDEVLDR(DWORD dwIoControlCode,
 			      LPDWORD lpcbBytesReturned,
 			      LPOVERLAPPED lpOverlapped);
 
-static DWORD VxDCall_VMM( DWORD service, va_list args );
+static DWORD VxDCall_VMM( DWORD service, CONTEXT *context );
 
 static BOOL DeviceIo_IFSMgr(DWORD dwIoControlCode, 
 			      LPVOID lpvInBuffer, DWORD cbInBuffer,
@@ -82,7 +83,7 @@ struct VxDInfo
 {
     LPCSTR  name;
     WORD    id;
-    DWORD (*vxdcall)(DWORD, va_list);
+    DWORD (*vxdcall)(DWORD, PCONTEXT);
     BOOL  (*deviceio)(DWORD, LPVOID, DWORD, 
                         LPVOID, DWORD, LPDWORD, LPOVERLAPPED);
 };
@@ -434,7 +435,7 @@ static BOOL DeviceIo_VTDAPI(DWORD dwIoControlCode, LPVOID lpvInBuffer, DWORD cbI
 /***********************************************************************
  *           VxDCall                   (KERNEL32.[1-9])
  */
-static DWORD VxDCall( DWORD service, ... )
+static void VxDCall( DWORD service, CONTEXT *context )
 {
     DWORD ret = 0xffffffff; /* FIXME */
     int i;
@@ -450,176 +451,136 @@ static DWORD VxDCall( DWORD service, ... )
     else if (!VxDList[i].vxdcall)
         FIXME( "Unimplemented VxD (%08lx)\n", service);
     else
-    {
-        va_list args;
-        va_start( args, service );
-        ret = VxDList[i].vxdcall( service, args );
-        va_end( args );
-    }
-    return ret;
+        ret = VxDList[i].vxdcall( service, context );
+
+#ifdef __i386__
+    EAX_reg( context ) = ret;
+#endif
 }
 
-DWORD WINAPI VxDCall0( DWORD service )
-{
-    return VxDCall( service );
-}
+void WINAPI REGS_FUNC(VxDCall0)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
+void WINAPI REGS_FUNC(VxDCall1)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
+void WINAPI REGS_FUNC(VxDCall2)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
+void WINAPI REGS_FUNC(VxDCall3)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
+void WINAPI REGS_FUNC(VxDCall4)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
+void WINAPI REGS_FUNC(VxDCall5)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
+void WINAPI REGS_FUNC(VxDCall6)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
+void WINAPI REGS_FUNC(VxDCall7)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
+void WINAPI REGS_FUNC(VxDCall8)( DWORD service, CONTEXT *context ) { VxDCall( service, context ); }
 
-DWORD WINAPI VxDCall1( DWORD service, DWORD arg1 )
-{
-    return VxDCall( service, arg1 );
-}
-
-DWORD WINAPI VxDCall2( DWORD service, DWORD arg1, DWORD arg2 )
-{
-    return VxDCall( service, arg1, arg2 );
-}
-
-DWORD WINAPI VxDCall3( DWORD service, DWORD arg1, DWORD arg2, DWORD arg3 )
-{
-    return VxDCall( service, arg1, arg2, arg3 );
-}
-
-DWORD WINAPI VxDCall4( DWORD service, DWORD arg1, DWORD arg2, DWORD arg3, DWORD arg4 )
-{
-    return VxDCall( service, arg1, arg2, arg3, arg4 );
-}
-
-DWORD WINAPI VxDCall5( DWORD service, DWORD arg1, DWORD arg2, DWORD arg3,
-                       DWORD arg4, DWORD arg5 )
-{
-    return VxDCall( service, arg1, arg2, arg3, arg4, arg5 );
-}
-
-DWORD WINAPI VxDCall6( DWORD service, DWORD arg1, DWORD arg2, DWORD arg3,
-                       DWORD arg4, DWORD arg5, DWORD arg6 )
-{
-    return VxDCall( service, arg1, arg2, arg3, arg4, arg5, arg6 );
-}
-
-DWORD WINAPI VxDCall7( DWORD service, DWORD arg1, DWORD arg2, DWORD arg3,
-                       DWORD arg4, DWORD arg5, DWORD arg6, DWORD arg7 )
-{
-    return VxDCall( service, arg1, arg2, arg3, arg4, arg5, arg6, arg7 );
-}
-
-DWORD WINAPI VxDCall8( DWORD service, DWORD arg1, DWORD arg2, DWORD arg3,
-                       DWORD arg4, DWORD arg5, DWORD arg6, DWORD arg7, DWORD arg8 )
-{
-    return VxDCall( service, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 );
-}
 
 /***********************************************************************
  *           VxDCall_VMM
  */
-static DWORD VxDCall_VMM( DWORD service, va_list args )
+static DWORD VxDCall_VMM( DWORD service, CONTEXT *context )
 {
     switch ( LOWORD(service) )
     {
     case 0x0011:  /* RegOpenKey */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        LPCSTR  lpszSubKey = va_arg( args, LPCSTR );
-        LPHKEY  retkey     = va_arg( args, LPHKEY );
+        HKEY    hkey       = (HKEY)  stack32_pop( context );
+        LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
+        LPHKEY  retkey     = (LPHKEY)stack32_pop( context );
         return RegOpenKeyA( hkey, lpszSubKey, retkey );
     }
 
     case 0x0012:  /* RegCreateKey */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        LPCSTR  lpszSubKey = va_arg( args, LPCSTR );
-        LPHKEY  retkey     = va_arg( args, LPHKEY );
+        HKEY    hkey       = (HKEY)  stack32_pop( context );
+        LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
+        LPHKEY  retkey     = (LPHKEY)stack32_pop( context );
         return RegCreateKeyA( hkey, lpszSubKey, retkey );
     }
 
     case 0x0013:  /* RegCloseKey */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
+        HKEY    hkey       = (HKEY)stack32_pop( context );
         return RegCloseKey( hkey );
     }
 
     case 0x0014:  /* RegDeleteKey */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        LPCSTR  lpszSubKey = va_arg( args, LPCSTR );
+        HKEY    hkey       = (HKEY)  stack32_pop( context );
+        LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
         return RegDeleteKeyA( hkey, lpszSubKey );
     }
 
     case 0x0015:  /* RegSetValue */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        LPCSTR  lpszSubKey = va_arg( args, LPCSTR );
-        DWORD   dwType     = va_arg( args, DWORD );
-        LPCSTR  lpszData   = va_arg( args, LPCSTR );
-        DWORD   cbData     = va_arg( args, DWORD );
+        HKEY    hkey       = (HKEY)  stack32_pop( context );
+        LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
+        DWORD   dwType     = (DWORD) stack32_pop( context );
+        LPCSTR  lpszData   = (LPCSTR)stack32_pop( context );
+        DWORD   cbData     = (DWORD) stack32_pop( context );
         return RegSetValueA( hkey, lpszSubKey, dwType, lpszData, cbData );
     }
 
     case 0x0016:  /* RegDeleteValue */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        LPSTR   lpszValue  = va_arg( args, LPSTR );
+        HKEY    hkey       = (HKEY) stack32_pop( context );
+        LPSTR   lpszValue  = (LPSTR)stack32_pop( context );
         return RegDeleteValueA( hkey, lpszValue );
     }
 
     case 0x0017:  /* RegQueryValue */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        LPSTR   lpszSubKey = va_arg( args, LPSTR );
-        LPSTR   lpszData   = va_arg( args, LPSTR );
-        LPDWORD lpcbData   = va_arg( args, LPDWORD );
+        HKEY    hkey       = (HKEY)   stack32_pop( context );
+        LPSTR   lpszSubKey = (LPSTR)  stack32_pop( context );
+        LPSTR   lpszData   = (LPSTR)  stack32_pop( context );
+        LPDWORD lpcbData   = (LPDWORD)stack32_pop( context );
         return RegQueryValueA( hkey, lpszSubKey, lpszData, lpcbData );
     }
 
     case 0x0018:  /* RegEnumKey */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        DWORD   iSubkey    = va_arg( args, DWORD );
-        LPSTR   lpszName   = va_arg( args, LPSTR );
-        DWORD   lpcchName  = va_arg( args, DWORD );
+        HKEY    hkey       = (HKEY) stack32_pop( context );
+        DWORD   iSubkey    = (DWORD)stack32_pop( context );
+        LPSTR   lpszName   = (LPSTR)stack32_pop( context );
+        DWORD   lpcchName  = (DWORD)stack32_pop( context );
         return RegEnumKeyA( hkey, iSubkey, lpszName, lpcchName );
     }
 
     case 0x0019:  /* RegEnumValue */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        DWORD   iValue     = va_arg( args, DWORD );
-        LPSTR   lpszValue  = va_arg( args, LPSTR );
-        LPDWORD lpcchValue = va_arg( args, LPDWORD );
-        LPDWORD lpReserved = va_arg( args, LPDWORD );
-        LPDWORD lpdwType   = va_arg( args, LPDWORD );
-        LPBYTE  lpbData    = va_arg( args, LPBYTE );
-        LPDWORD lpcbData   = va_arg( args, LPDWORD );
+        HKEY    hkey       = (HKEY)   stack32_pop( context );
+        DWORD   iValue     = (DWORD)  stack32_pop( context );
+        LPSTR   lpszValue  = (LPSTR)  stack32_pop( context );
+        LPDWORD lpcchValue = (LPDWORD)stack32_pop( context );
+        LPDWORD lpReserved = (LPDWORD)stack32_pop( context );
+        LPDWORD lpdwType   = (LPDWORD)stack32_pop( context );
+        LPBYTE  lpbData    = (LPBYTE) stack32_pop( context );
+        LPDWORD lpcbData   = (LPDWORD)stack32_pop( context );
         return RegEnumValueA( hkey, iValue, lpszValue, lpcchValue, 
                               lpReserved, lpdwType, lpbData, lpcbData );
     }
 
     case 0x001A:  /* RegQueryValueEx */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        LPSTR   lpszValue  = va_arg( args, LPSTR );
-        LPDWORD lpReserved = va_arg( args, LPDWORD );
-        LPDWORD lpdwType   = va_arg( args, LPDWORD );
-        LPBYTE  lpbData    = va_arg( args, LPBYTE );
-        LPDWORD lpcbData   = va_arg( args, LPDWORD );
+        HKEY    hkey       = (HKEY)   stack32_pop( context );
+        LPSTR   lpszValue  = (LPSTR)  stack32_pop( context );
+        LPDWORD lpReserved = (LPDWORD)stack32_pop( context );
+        LPDWORD lpdwType   = (LPDWORD)stack32_pop( context );
+        LPBYTE  lpbData    = (LPBYTE) stack32_pop( context );
+        LPDWORD lpcbData   = (LPDWORD)stack32_pop( context );
         return RegQueryValueExA( hkey, lpszValue, lpReserved, 
                                  lpdwType, lpbData, lpcbData );
     }
 
     case 0x001B:  /* RegSetValueEx */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        LPSTR   lpszValue  = va_arg( args, LPSTR );
-        DWORD   dwReserved = va_arg( args, DWORD );
-        DWORD   dwType     = va_arg( args, DWORD );
-        LPBYTE  lpbData    = va_arg( args, LPBYTE );
-        DWORD   cbData     = va_arg( args, DWORD );
+        HKEY    hkey       = (HKEY)  stack32_pop( context );
+        LPSTR   lpszValue  = (LPSTR) stack32_pop( context );
+        DWORD   dwReserved = (DWORD) stack32_pop( context );
+        DWORD   dwType     = (DWORD) stack32_pop( context );
+        LPBYTE  lpbData    = (LPBYTE)stack32_pop( context );
+        DWORD   cbData     = (DWORD) stack32_pop( context );
         return RegSetValueExA( hkey, lpszValue, dwReserved, 
                                dwType, lpbData, cbData );
     }
 
     case 0x001C:  /* RegFlushKey */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
+        HKEY    hkey       = (HKEY)stack32_pop( context );
         return RegFlushKey( hkey );
     }
 
@@ -629,12 +590,12 @@ static DWORD VxDCall_VMM( DWORD service, va_list args )
                  corresponding Win32 API call does. The implementation in Win95
                  ADVAPI32 sets all output parameters not mentioned here to zero. */
 
-        HKEY    hkey              = va_arg( args, HKEY );
-        LPDWORD lpcSubKeys        = va_arg( args, LPDWORD );
-        LPDWORD lpcchMaxSubKey    = va_arg( args, LPDWORD );
-        LPDWORD lpcValues         = va_arg( args, LPDWORD );
-        LPDWORD lpcchMaxValueName = va_arg( args, LPDWORD );
-        LPDWORD lpcchMaxValueData = va_arg( args, LPDWORD );
+        HKEY    hkey              = (HKEY)   stack32_pop( context );
+        LPDWORD lpcSubKeys        = (LPDWORD)stack32_pop( context );
+        LPDWORD lpcchMaxSubKey    = (LPDWORD)stack32_pop( context );
+        LPDWORD lpcValues         = (LPDWORD)stack32_pop( context );
+        LPDWORD lpcchMaxValueName = (LPDWORD)stack32_pop( context );
+        LPDWORD lpcchMaxValueData = (LPDWORD)stack32_pop( context );
         return RegQueryInfoKeyA( hkey, NULL, NULL, NULL, lpcSubKeys, lpcchMaxSubKey,
                                  NULL, lpcValues, lpcchMaxValueName, lpcchMaxValueData,
                                  NULL, NULL );
@@ -642,24 +603,24 @@ static DWORD VxDCall_VMM( DWORD service, va_list args )
 
     case 0x0021:  /* RegLoadKey */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        LPCSTR  lpszSubKey = va_arg( args, LPCSTR );
-        LPCSTR  lpszFile   = va_arg( args, LPCSTR );
+        HKEY    hkey       = (HKEY)  stack32_pop( context );
+        LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
+        LPCSTR  lpszFile   = (LPCSTR)stack32_pop( context );
         return RegLoadKeyA( hkey, lpszSubKey, lpszFile );
     }
 
     case 0x0022:  /* RegUnLoadKey */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        LPCSTR  lpszSubKey = va_arg( args, LPCSTR );
+        HKEY    hkey       = (HKEY)  stack32_pop( context );
+        LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
         return RegUnLoadKeyA( hkey, lpszSubKey );
     }
 
     case 0x0023:  /* RegSaveKey */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        LPCSTR  lpszFile   = va_arg( args, LPCSTR );
-        LPSECURITY_ATTRIBUTES sa = va_arg( args, LPSECURITY_ATTRIBUTES );
+        HKEY    hkey       = (HKEY)  stack32_pop( context );
+        LPCSTR  lpszFile   = (LPCSTR)stack32_pop( context );
+        LPSECURITY_ATTRIBUTES sa = (LPSECURITY_ATTRIBUTES)stack32_pop( context );
         return RegSaveKeyA( hkey, lpszFile, sa );
     }
 
@@ -670,10 +631,10 @@ static DWORD VxDCall_VMM( DWORD service, va_list args )
 
     case 0x0027:  /* RegReplaceKey */
     {
-        HKEY    hkey       = va_arg( args, HKEY );
-        LPCSTR  lpszSubKey = va_arg( args, LPCSTR );
-        LPCSTR  lpszNewFile= va_arg( args, LPCSTR );
-        LPCSTR  lpszOldFile= va_arg( args, LPCSTR );
+        HKEY    hkey       = (HKEY)  stack32_pop( context );
+        LPCSTR  lpszSubKey = (LPCSTR)stack32_pop( context );
+        LPCSTR  lpszNewFile= (LPCSTR)stack32_pop( context );
+        LPCSTR  lpszOldFile= (LPCSTR)stack32_pop( context );
         return RegReplaceKeyA( hkey, lpszSubKey, lpszNewFile, lpszOldFile );
     }
 
