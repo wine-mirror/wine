@@ -1069,6 +1069,7 @@ void WINAPI DOS3Call( CONTEXT *context )
             LPSTR data = CTX_SEG_OFF_TO_LIN(context,DS_reg(context),DX_reg(context));
             LONG length = strchr(data,'$')-data;
             _hwrite16( 1, data, length);
+            AL_reg(context) = '$'; /* yes, '$' (0x24) gets returned in AL */
         }
         break;
 
