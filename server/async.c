@@ -71,7 +71,7 @@ void destroy_async_queue( struct async_queue *q )
 {
     while(q->head)
     {
-        async_notify(q->head, STATUS_HANDLES_CLOSED);
+        async_notify(q->head, STATUS_CANCELLED);
         destroy_async(q->head);
     }
 }
