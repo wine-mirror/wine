@@ -161,6 +161,7 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     IMAGE_EXPORT_DIRECTORY *exp;
     LPVOID *funcs;
     LPSTR *names;
+    LPSTR pfwd;
     DEBUG_ENTRY_POINT *debug;
     INT i, size;
     BYTE *addr;
@@ -172,7 +173,8 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
             + 2 * sizeof(IMAGE_SECTION_HEADER)
             + sizeof(IMAGE_EXPORT_DIRECTORY)
             + dll->descr->nb_funcs * sizeof(LPVOID)
-            + dll->descr->nb_names * sizeof(LPSTR));
+            + dll->descr->nb_names * sizeof(LPSTR)
+            + dll->descr->fwd_size);
 #ifdef __i386__
     if (WARN_ON(relay) || TRACE_ON(relay))
         size += dll->descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
@@ -185,7 +187,8 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     exp   = (IMAGE_EXPORT_DIRECTORY *)(sec + 2);
     funcs = (LPVOID *)(exp + 1);
     names = (LPSTR *)(funcs + dll->descr->nb_funcs);
-    debug = (DEBUG_ENTRY_POINT *)(names + dll->descr->nb_names);
+    pfwd  = (LPSTR)(names + dll->descr->nb_names);
+    debug = (DEBUG_ENTRY_POINT *)(pfwd + dll->descr->fwd_size);
 
     /* Build the DOS and NT headers */
 
@@ -221,7 +224,8 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     dir->VirtualAddress = (BYTE *)exp - addr;
     dir->Size = sizeof(*exp)
                 + dll->descr->nb_funcs * sizeof(LPVOID)
-                + dll->descr->nb_names * sizeof(LPSTR);
+                + dll->descr->nb_names * sizeof(LPSTR)
+                + dll->descr->fwd_size;
 
     /* Build the exports section */
 
@@ -298,7 +302,15 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
 	int j;
 
         if (!dll->descr->functions[i]) continue;
-        *funcs = (LPVOID)((BYTE *)dll->descr->functions[i] - addr);
+
+        if (args == 0xfd)  /* forward func */
+        {
+            strcpy( pfwd, (LPSTR)dll->descr->functions[i] );
+            *funcs = (LPVOID)((BYTE *)pfwd - addr);
+            pfwd += strlen(pfwd) + 1;
+        }
+        else *funcs = (LPVOID)((BYTE *)dll->descr->functions[i] - addr);
+
 #ifdef __i386__
 	if (!(WARN_ON(relay) || TRACE_ON(relay))) continue;
 	for (j=0;j<dll->descr->nb_names;j++)
@@ -322,6 +334,7 @@ static HMODULE BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
             debug->args       = 0;
             *funcs = (LPVOID)((BYTE *)debug - addr);
             break;
+        case 0xfd:  /* forward */
         case 0xff:  /* stub or extern */
             break;
         default:  /* normal function (stdcall or cdecl) */

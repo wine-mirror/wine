@@ -54,6 +54,7 @@ typedef enum
     TYPE_CDECL,        /* cdecl function (Win32) */
     TYPE_VARARGS,      /* varargs function (Win32) */
     TYPE_EXTERN,       /* external symbol (Win32) */
+    TYPE_FORWARD,      /* forwarded function (Win32) */
     TYPE_NBTYPES
 } ORD_TYPE;
 
@@ -72,7 +73,8 @@ static const char * const TypeNames[TYPE_NBTYPES] =
     "stdcall",      /* TYPE_STDCALL */
     "cdecl",        /* TYPE_CDECL */
     "varargs",      /* TYPE_VARARGS */
-    "extern"        /* TYPE_EXTERN */
+    "extern",       /* TYPE_EXTERN */
+    "forward"       /* TYPE_FORWARD */
 };
 
 #define MAX_ORDINALS	2048
@@ -124,6 +126,11 @@ typedef struct
 
 typedef struct
 {
+    char link_name[80];
+} ORD_FORWARD;
+
+typedef struct
+{
     ORD_TYPE    type;
     int         offset;
     int		lineno;
@@ -136,6 +143,7 @@ typedef struct
         ORD_ABS        abs;
         ORD_VARARGS    vargs;
         ORD_EXTERN     ext;
+        ORD_FORWARD    fwd;
     } u;
 } ORDDEF;
 
@@ -585,6 +593,24 @@ static int ParseExtern( ORDDEF *odp )
 
 
 /*******************************************************************
+ *         ParseForward
+ *
+ * Parse a 'forward' definition.
+ */
+static int ParseForward( ORDDEF *odp )
+{
+    if (SpecType == SPEC_WIN16)
+    {
+        fprintf( stderr, "%s:%d: 'forward' not supported for Win16\n",
+                 SpecName, Line );
+        return -1;
+    }
+    strcpy( odp->u.fwd.link_name, GetToken() );
+    return 0;
+}
+
+
+/*******************************************************************
  *         ParseOrdinal
  *
  * Parse an ordinal definition.
@@ -651,6 +677,8 @@ static int ParseOrdinal(int ordinal)
 	return ParseVarargs( odp );
     case TYPE_EXTERN:
 	return ParseExtern( odp );
+    case TYPE_FORWARD:
+	return ParseForward( odp );
     default:
         fprintf( stderr, "Should not happen\n" );
         return -1;
@@ -987,7 +1015,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
 static int BuildSpec32File( char * specfile, FILE *outfile )
 {
     ORDDEF *odp;
-    int i, nb_names;
+    int i, nb_names, fwd_size = 0;
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
              specfile );
@@ -1046,6 +1074,9 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
         case TYPE_CDECL:
             fprintf( outfile, "extern void %s();\n", odp->u.func.link_name );
             break;
+        case TYPE_FORWARD:
+            fwd_size += strlen(odp->u.fwd.link_name) + 1;
+            break;
         case TYPE_INVALID:
         case TYPE_STUB:
             break;
@@ -1084,6 +1115,9 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
             break;
         case TYPE_STUB:
             fprintf( outfile, "    __stub_%d", i );
+            break;
+        case TYPE_FORWARD:
+            fprintf( outfile, "    (ENTRYPOINT32)\"%s\"", odp->u.fwd.link_name );
             break;
         default:
             return -1;
@@ -1149,6 +1183,9 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
         case TYPE_CDECL:
             args = 0x80 | (unsigned char)strlen(odp->u.func.arg_types);
             break;
+        case TYPE_FORWARD:
+            args = 0xfd;
+            break;
         case TYPE_REGISTER:
             args = 0xfe;
             break;
@@ -1169,6 +1206,7 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
     fprintf( outfile, "    %d,\n", Base );
     fprintf( outfile, "    %d,\n", Limit - Base + 1 );
     fprintf( outfile, "    %d,\n", nb_names );
+    fprintf( outfile, "    %d,\n", (fwd_size + 3) & ~3 );
     fprintf( outfile,
              "    Functions,\n"
              "    FuncNames,\n"

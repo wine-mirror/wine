@@ -15,6 +15,7 @@ typedef struct
     int                   base;         /* Ordinal base */
     int                   nb_funcs;     /* Number of functions */
     int                   nb_names;     /* Number of function names */
+    int                   fwd_size;     /* Total size of forward names */
     const ENTRYPOINT32   *functions;    /* Pointer to function table */
     const char * const   *names;        /* Pointer to names table */
     const unsigned short *ordinals;     /* Pointer to ordinals table */

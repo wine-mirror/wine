@@ -16,6 +16,8 @@ ORDINAL return EXPORTNAME ARGLENGTH RETVALUE
 
 ORDINAL extern EXPORTNAME SYMBOLNAME
 
+ORDINAL forward EXPORTNAME SYMBOLNAME
+
 # COMMENT_TEXT
 
 --------------------
@@ -127,3 +129,12 @@ Extern ordinals:
 (variable or function); "EXPORTNAME" will point to the symbol
 "SYMBOLNAME" that must be defined in C code. This type only works with
 Win32.
+
+Forwarded ordinals:
+===================
+
+    This type defines an entry that is forwarded to another entry
+point (kind of a symbolic link). "EXPORTNAME" will forward to the
+entry point "SYMBOLNAME" that must be of the form "DLL.Function". This 
+type only works with Win32.
+
