@@ -289,6 +289,7 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
     char    *pacKey;
     char    acBuffer[128];
     DWORD   dwBufferSize=128;
+    BOOL NoUserOverride;
 
   TRACE("(lcid=0x%lx,lctype=0x%lx,%p,%x)\n",lcid,LCType,buf,len);
 
@@ -297,7 +298,7 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 		return 0;
 	}
 
-	if (lcid == LOCALE_NEUTRAL || lcid == LANG_SYSTEM_DEFAULT || (LCType & LOCALE_NOUSEROVERRIDE) )
+	if (lcid == LOCALE_NEUTRAL || lcid == LANG_SYSTEM_DEFAULT)
 	{
             lcid = GetSystemDefaultLCID();
 	} 
@@ -305,12 +306,16 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 	{
             lcid = GetUserDefaultLCID();
 	}
+
+    /* LOCALE_NOUSEROVERRIDE means: do not get user redefined settings
+       from the registry. Instead, use system default values. */
+    NoUserOverride = (LCType & LOCALE_NOUSEROVERRIDE) != 0;
+
 	LCType &= ~(LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP);
 
     /* First, check if it's in the registry. */
     /* All user customized values are stored in the registry by SetLocaleInfo */
-
-    if ( (pacKey = GetLocaleSubkeyName(LCType)) )
+    if ( !NoUserOverride && (pacKey = GetLocaleSubkeyName(LCType)) )
     {
         char    acRealKey[128];
         HKEY    hKey;
@@ -336,7 +341,7 @@ INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
 	int res_size;
 
 	/* check if language is registered in the kernel32 resources */
-	if((res_size = NLS_LoadStringExW(GetModuleHandleA("KERNEL32"), LOWORD(lcid),
+	if((res_size = NLS_LoadStringExW(GetModuleHandleA("KERNEL32"), LANGIDFROMLCID(lcid),
 		LCType, wcBuffer, sizeof(wcBuffer)/sizeof(wcBuffer[0])))) {
 	    WideCharToMultiByte(CP_ACP, 0, wcBuffer, res_size, acBuffer, dwBufferSize, NULL, NULL);
 	    retString = acBuffer;
@@ -1278,7 +1283,7 @@ DWORD WINAPI VerLanguageNameA( UINT wLang, LPSTR szLang, UINT nSize )
     if(!szLang)
 	return 0;
 
-    return GetLocaleInfoA(MAKELCID(wLang, SORT_DEFAULT), LOCALE_SENGLANGUAGE, szLang, nSize);
+    return GetLocaleInfoA(MAKELCID(wLang, SORT_DEFAULT), LOCALE_SENGLANGUAGE, szLang, nSize);
 }
 
 /***********************************************************************
@@ -1289,7 +1294,7 @@ DWORD WINAPI VerLanguageNameW( UINT wLang, LPWSTR szLang, UINT nSize )
     if(!szLang)
 	return 0;
 
-    return GetLocaleInfoW(MAKELCID(wLang, SORT_DEFAULT), LOCALE_SENGLANGUAGE, szLang, nSize);
+    return GetLocaleInfoW(MAKELCID(wLang, SORT_DEFAULT), LOCALE_SENGLANGUAGE, szLang, nSize);
 }
 
  
