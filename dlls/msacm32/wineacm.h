@@ -4,6 +4,7 @@
  * Wine specific - Win32
  */
 typedef struct _WINE_ACMDRIVERID *PWINE_ACMDRIVERID;
+typedef struct _WINE_ACMDRIVER   *PWINE_ACMDRIVER;
 
 typedef struct _WINE_ACMOBJ
 {
@@ -15,7 +16,8 @@ typedef struct _WINE_ACMDRIVER
     WINE_ACMOBJ		obj;
     HDRVR      		hDrvr;
     DRIVERPROC		pfnDriverProc;
-} WINE_ACMDRIVER, *PWINE_ACMDRIVER;
+    PWINE_ACMDRIVER	pNextACMDriver;
+} WINE_ACMDRIVER;
 
 typedef struct _WINE_ACMSTREAM
 {
@@ -32,9 +34,9 @@ typedef struct _WINE_ACMDRIVERID
     HINSTANCE		hInstModule;          /* NULL if global */
     DWORD		dwProcessID;	      /* ID of process which installed a local driver */
     BOOL                bEnabled;
-    PWINE_ACMDRIVER     pACMDriver;           /* NULL if not open; shouldn't this be a list ? */
+    PWINE_ACMDRIVER     pACMDriverList;
     PWINE_ACMDRIVERID   pNextACMDriverID;
-    PWINE_ACMDRIVERID	pPreviousACMDriverID;
+    PWINE_ACMDRIVERID	pPrevACMDriverID;
 } WINE_ACMDRIVERID;
 
 /* From internal.c */

@@ -87,36 +87,73 @@ DWORD WINAPI acmGetVersion(void)
  */
 MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID  pMetric)
 {
-    PWINE_ACMOBJ pao = MSACM_GetObj(hao);
-    BOOL bLocal = TRUE;
-    
+    PWINE_ACMOBJ 	pao = MSACM_GetObj(hao);
+    BOOL 		bLocal = TRUE;
+    PWINE_ACMDRIVERID	padid;
+    DWORD		val = 0;
+
     FIXME("(0x%08x, %d, %p): stub\n", hao, uMetric, pMetric);
     
     switch (uMetric) {
     case ACM_METRIC_COUNT_DRIVERS:
 	bLocal = FALSE;
+	/* fall thru */
     case ACM_METRIC_COUNT_LOCAL_DRIVERS:
 	if (!pao)
-	    return MMSYSERR_INVALHANDLE;  
-	return MMSYSERR_NOTSUPPORTED;
+	    return MMSYSERR_INVALHANDLE;
+	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID)
+	    if (padid->bEnabled /* && (local(padid) || !bLocal) */)
+		val++;
+	*(LPDWORD)pMetric = val;
+	return 0;
+
     case ACM_METRIC_COUNT_CODECS:
+	if (!pao)
+	    return MMSYSERR_INVALHANDLE;
 	bLocal = FALSE;
+	/* fall thru */
     case ACM_METRIC_COUNT_LOCAL_CODECS:
-	return MMSYSERR_NOTSUPPORTED;
+	/* FIXME: don't know how to differentiate codec, converters & filters yet */
+	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID)
+	    if (padid->bEnabled /* && (local(padid) || !bLocal) */)
+		val++;
+	*(LPDWORD)pMetric = val;
+	return 0;
+
     case ACM_METRIC_COUNT_CONVERTERS:
 	bLocal = FALSE;
+	/* fall thru */
     case ACM_METRIC_COUNT_LOCAL_CONVERTERS:
-	return MMSYSERR_NOTSUPPORTED;
+	/* FIXME: don't know how to differentiate codec, converters & filters yet */
+	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID)
+	    if (padid->bEnabled /* && (local(padid) || !bLocal) */)
+		val++;
+	*(LPDWORD)pMetric = val;
+	return 0;
+
     case ACM_METRIC_COUNT_FILTERS:
 	bLocal = FALSE;
+	/* fall thru */
     case ACM_METRIC_COUNT_LOCAL_FILTERS:
-	return MMSYSERR_NOTSUPPORTED;
+	/* FIXME: don't know how to differentiate codec, converters & filters yet */
+	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID)
+	    if (padid->bEnabled /* && (local(padid) || !bLocal) */)
+		val++;
+	*(LPDWORD)pMetric = val;
+	return 0;
+
     case ACM_METRIC_COUNT_DISABLED:
 	bLocal = FALSE;
+	/* fall thru */
     case ACM_METRIC_COUNT_LOCAL_DISABLED:
 	if (!pao)
 	    return MMSYSERR_INVALHANDLE;  
-	return MMSYSERR_NOTSUPPORTED;
+	for (padid = MSACM_pFirstACMDriverID; padid; padid = padid->pNextACMDriverID)
+	    if (!padid->bEnabled /* && (local(padid) || !bLocal) */)
+		val++;
+	*(LPDWORD)pMetric = val;
+	return 0;
+
     case ACM_METRIC_COUNT_HARDWARE:
     case ACM_METRIC_HARDWARE_WAVE_INPUT:
     case ACM_METRIC_HARDWARE_WAVE_OUTPUT:

@@ -43,9 +43,9 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
     padid->pszFileName = HEAP_strdupA(MSACM_hHeap, 0, pszFileName);
     padid->hInstModule = hinstModule;
     padid->bEnabled = TRUE;
-    padid->pACMDriver = NULL;
+    padid->pACMDriverList = NULL;
     padid->pNextACMDriverID = NULL;
-    padid->pPreviousACMDriverID = MSACM_pLastACMDriverID;
+    padid->pPrevACMDriverID = MSACM_pLastACMDriverID;
     if (MSACM_pLastACMDriverID)
 	MSACM_pLastACMDriverID->pNextACMDriverID = padid;
     MSACM_pLastACMDriverID = padid;
@@ -100,8 +100,8 @@ PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
 {
     PWINE_ACMDRIVERID pNextACMDriverID;
     
-    if (p->pACMDriver)
-	acmDriverClose((HACMDRIVER) p->pACMDriver, 0);
+    while (p->pACMDriverList)
+	acmDriverClose((HACMDRIVER) p->pACMDriverList, 0);
     
     if (p->pszDriverAlias)
 	HeapFree(MSACM_hHeap, 0, p->pszDriverAlias);
@@ -111,12 +111,12 @@ PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
     if (p == MSACM_pFirstACMDriverID)
 	MSACM_pFirstACMDriverID = p->pNextACMDriverID;
     if (p == MSACM_pLastACMDriverID)
-	MSACM_pLastACMDriverID = p->pPreviousACMDriverID;
+	MSACM_pLastACMDriverID = p->pPrevACMDriverID;
 
-    if (p->pPreviousACMDriverID)
-	p->pPreviousACMDriverID->pNextACMDriverID = p->pNextACMDriverID;
+    if (p->pPrevACMDriverID)
+	p->pPrevACMDriverID->pNextACMDriverID = p->pNextACMDriverID;
     if (p->pNextACMDriverID)
-	p->pNextACMDriverID->pPreviousACMDriverID = p->pPreviousACMDriverID;
+	p->pNextACMDriverID->pPrevACMDriverID = p->pPrevACMDriverID;
     
     pNextACMDriverID = p->pNextACMDriverID;
     
