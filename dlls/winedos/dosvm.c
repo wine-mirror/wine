@@ -31,7 +31,7 @@
 #include "file.h"
 #include "miscemu.h"
 #include "dosexe.h"
-#include "../../loader/dos/dosmod.h"
+#include "dosvm.h"
 #include "stackframe.h"
 #include "debugtools.h"
 
@@ -67,67 +67,10 @@ typedef struct _DOSEVENT {
   struct _DOSEVENT *next;
 } DOSEVENT, *LPDOSEVENT;
 
+static CRITICAL_SECTION qcrit = CRITICAL_SECTION_INIT("DOSVM");
 static struct _DOSEVENT *pending_event, *current_event;
-static int sig_sent, entered;
+static int sig_sent;
 static CONTEXT86 *current_context;
-
-/* from module.c */
-extern int read_pipe, write_pipe;
-extern HANDLE hReadPipe;
-extern pid_t dosmod_pid;
-
-static void do_exception( int signal, CONTEXT86 *context )
-{
-    EXCEPTION_RECORD rec;
-    if ((signal == SIGTRAP) || (signal == SIGHUP))
-    {
-        rec.ExceptionCode  = EXCEPTION_BREAKPOINT;
-        rec.ExceptionFlags = EXCEPTION_CONTINUABLE;
-    }
-    else
-    {
-        rec.ExceptionCode  = EXCEPTION_ILLEGAL_INSTRUCTION;  /* generic error */
-        rec.ExceptionFlags = EH_NONCONTINUABLE;
-    }
-    rec.ExceptionRecord  = NULL;
-    rec.ExceptionAddress = (LPVOID)context->Eip;
-    rec.NumberParameters = 0;
-    EXC_RtlRaiseException( &rec, context );
-}
-
-static void DOSVM_Dump( int fn, int sig, struct vm86plus_struct*VM86 )
-{
- BYTE*inst;
- int x;
-
- switch (VM86_TYPE(fn)) {
-  case VM86_SIGNAL:
-   printf("Trapped signal %d\n",sig); break;
-  case VM86_UNKNOWN:
-   printf("Trapped unhandled GPF\n"); break;
-  case VM86_INTx:
-   printf("Trapped INT %02x\n",VM86_ARG(fn)); break;
-  case VM86_STI:
-   printf("Trapped STI\n"); break;
-  case VM86_PICRETURN:
-   printf("Trapped due to pending PIC request\n"); break;
-  case VM86_TRAP:
-   printf("Trapped debug request\n"); break;
-  default:
-   printf("Trapped unknown VM86 type %d arg %d\n",VM86_TYPE(fn),VM86_ARG(fn)); break;
- }
-#define REGS VM86->regs
- fprintf(stderr,"AX=%04lX CX=%04lX DX=%04lX BX=%04lX\n",REGS.eax,REGS.ecx,REGS.edx,REGS.ebx);
- fprintf(stderr,"SI=%04lX DI=%04lX SP=%04lX BP=%04lX\n",REGS.esi,REGS.edi,REGS.esp,REGS.ebp);
- fprintf(stderr,"CS=%04X DS=%04X ES=%04X SS=%04X\n",REGS.cs,REGS.ds,REGS.es,REGS.ss);
- fprintf(stderr,"IP=%04lX EFLAGS=%08lX\n",REGS.eip,REGS.eflags);
-
- inst = PTR_REAL_TO_LIN( REGS.cs, REGS.eip );
-#undef REGS
- printf("Opcodes:");
- for (x=0; x<8; x++) printf(" %02x",inst[x]);
- printf("\n");
-}
 
 static int DOSVM_SimulateInt( int vect, CONTEXT86 *context, BOOL inwine )
 {
@@ -160,6 +103,8 @@ static int DOSVM_SimulateInt( int vect, CONTEXT86 *context, BOOL inwine )
     WORD*stack= PTR_REAL_TO_LIN( context->SegSs, context->Esp );
     WORD flag=LOWORD(context->EFlags);
 
+    TRACE_(int)("invoking hooked interrupt %02x at %04x:%04x\n", vect,
+		SELECTOROF(handler), OFFSETOF(handler));
     if (IF_ENABLED(context)) flag|=IF_MASK;
     else flag&=~IF_MASK;
 
@@ -221,7 +166,8 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
 {
   LPDOSEVENT event, cur, prev;
 
-  if (entered) {
+  if (current_context) {
+    EnterCriticalSection(&qcrit);
     event = malloc(sizeof(DOSEVENT));
     if (!event) {
       ERR("out of memory allocating event entry\n");
@@ -240,15 +186,16 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
     event->next = cur;
     if (prev) prev->next = event;
     else pending_event = event;
-    
-    /* get dosmod's attention to the new event, if necessary */
+
+    /* alert the vm86 about the new event */
     if (!sig_sent) {
-      TRACE("new event queued, signalling dosmod\n");
-      kill(dosmod_pid,SIGUSR2);
+      TRACE("new event queued, signalling (time=%ld)\n", GetTickCount());
+      kill(dosvm_pid,SIGUSR2);
       sig_sent++;
     } else {
-      TRACE("new event queued\n");
+      TRACE("new event queued (time=%ld)\n", GetTickCount());
     }
+    LeaveCriticalSection(&qcrit);
   } else {
     /* DOS subsystem not running */
     /* (this probably means that we're running a win16 app
@@ -262,105 +209,6 @@ void WINAPI DOSVM_QueueEvent( INT irq, INT priority, DOSRELAY relay, LPVOID data
       ERR("IRQ without DOS task: should not happen");
     }
   }
-}
-
-#define CV do { CP(eax,Eax); CP(ecx,Ecx); CP(edx,Edx); CP(ebx,Ebx); \
-           CP(esi,Esi); CP(edi,Edi); CP(esp,Esp); CP(ebp,Ebp); \
-           CP(cs,SegCs); CP(ds,SegDs); CP(es,SegEs); \
-           CP(ss,SegSs); CP(fs,SegFs); CP(gs,SegGs); \
-           CP(eip,Eip); CP(eflags,EFlags); } while(0)
-
-static int DOSVM_Process( int fn, int sig, struct vm86plus_struct*VM86 )
-{
- CONTEXT86 context, *old_context;
- int ret=0;
-
-#define CP(x,y) context.y = VM86->regs.x
-  CV;
-#undef CP
- if (VM86_TYPE(fn)==VM86_UNKNOWN) {
-  ret=INSTR_EmulateInstruction(&context);
-#define CP(x,y) VM86->regs.x = context.y
-  CV;
-#undef CP
-  if (ret) return 0;
-  ret=0;
- }
-#ifdef TRY_PICRETURN
- if (VM86->vm86plus.force_return_for_pic) {
-   SET_PEND(&context);
- }
-#else
- /* linux doesn't preserve pending flag on return */
- if (SHOULD_PEND(pending_event)) {
-   SET_PEND(&context);
- }
-#endif
-
- old_context = current_context;
- current_context = &context;
-
- switch (VM86_TYPE(fn)) {
-  case VM86_SIGNAL:
-   TRACE("DOS module caught signal %d\n",sig);
-   if ((sig==SIGALRM) || (sig==SIGUSR2)) {
-     if (sig==SIGALRM) {
-       sig_sent++;
-       DOSVM_QueueEvent(0,DOS_PRIORITY_REALTIME,NULL,NULL);
-     }
-     if (pending_event) {
-       TRACE("setting Pending flag, interrupts are currently %s\n",
-                 IF_ENABLED(&context) ? "enabled" : "disabled");
-       SET_PEND(&context);
-       DOSVM_SendQueuedEvents(&context);
-     } else {
-       TRACE("no events are pending, clearing Pending flag\n");
-       CLR_PEND(&context);
-     }
-     sig_sent--;
-   }
-   else if ((sig==SIGHUP) || (sig==SIGILL) || (sig==SIGSEGV)) {
-       do_exception( sig, &context );
-   } else {
-    DOSVM_Dump(fn,sig,VM86);
-    ret=-1;
-   }
-   break;
-  case VM86_UNKNOWN: /* unhandled GPF */
-   DOSVM_Dump(fn,sig,VM86);
-   do_exception( SIGSEGV, &context );
-   break;
-  case VM86_INTx:
-   if (TRACE_ON(relay))
-    DPRINTF("Call DOS int 0x%02x (EAX=%08lx) ret=%04lx:%04lx\n",VM86_ARG(fn),context.Eax,context.SegCs,context.Eip);
-   ret=DOSVM_SimulateInt(VM86_ARG(fn),&context,FALSE);
-   if (TRACE_ON(relay))
-    DPRINTF("Ret  DOS int 0x%02x (EAX=%08lx) ret=%04lx:%04lx\n",VM86_ARG(fn),context.Eax,context.SegCs,context.Eip);
-   break;
-  case VM86_STI:
-    IF_SET(&context);
-  /* case VM86_PICRETURN: */
-    TRACE("DOS task enabled interrupts %s events pending, sending events\n", IS_PEND(&context)?"with":"without");
-    DOSVM_SendQueuedEvents(&context);
-    break;
-  case VM86_TRAP:
-   do_exception( SIGTRAP, &context );
-   break;
-  default:
-   DOSVM_Dump(fn,sig,VM86);
-   ret=-1;
- }
-
- current_context = old_context;
-
-#define CP(x,y) VM86->regs.x = context.y
- CV;
-#undef CP
-#ifdef TRY_PICRETURN
- VM86->vm86plus.force_return_for_pic = IS_PEND(&context) ? 1 : 0;
- CLR_PEND(&context);
-#endif
- return ret;
 }
 
 static void DOSVM_ProcessConsole(void)
@@ -488,80 +336,123 @@ chk_console_input:
   } while (TRUE);
 }
 
-/***********************************************************************
- *		Enter (WINEDOS.@)
- */
-INT WINAPI DOSVM_Enter( CONTEXT86 *context )
+DWORD WINAPI DOSVM_Loop( LPVOID lpExtra )
 {
- struct vm86plus_struct VM86;
- int stat,len,sig;
+  HANDLE obj = GetStdHandle(STD_INPUT_HANDLE);
+  MSG msg;
+  DWORD waitret;
 
- memset(&VM86, 0, sizeof(VM86));
-#define CP(x,y) VM86.regs.x = context->y
-  CV;
-#undef CP
-  if (VM86.regs.eflags & IF_MASK)
-    VM86.regs.eflags |= VIF_MASK;
-
- /* main exchange loop */
- entered++;
- do {
-  TRACE_(module)("thread is: %lx\n",GetCurrentThreadId());
-  stat = VM86_ENTER;
-  errno = 0;
-  /* transmit VM86 structure to dosmod task */
-  if (write(write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
-   ERR_(module)("dosmod sync lost, errno=%d, fd=%d, pid=%d\n",errno,write_pipe,getpid());
-   return -1;
-  }
-  if (write(write_pipe,&VM86,sizeof(VM86))!=sizeof(VM86)) {
-   ERR_(module)("dosmod sync lost, errno=%d\n",errno);
-   return -1;
-  }
-  /* wait for response, doing other things in the meantime */
-  DOSVM_Wait(read_pipe, hReadPipe);
-  /* read response */
-  while (1) {
-    if ((len=read(read_pipe,&stat,sizeof(stat)))==sizeof(stat)) break;
-    if (((errno==EINTR)||(errno==EAGAIN))&&(len<=0)) {
-     WARN_(module)("rereading dosmod return code due to errno=%d, result=%d\n",errno,len);
-     continue;
+  for(;;) {
+    TRACE_(int)("waiting for action\n");
+    waitret = MsgWaitForMultipleObjects(1, &obj, FALSE, INFINITE, QS_ALLINPUT);
+    if (waitret == WAIT_OBJECT_0) {
+      DOSVM_ProcessConsole();
     }
-    ERR_(module)("dosmod sync lost reading return code, errno=%d, result=%d\n",errno,len);
-    return -1;
-  }
-  TRACE_(module)("dosmod return code=%d\n",stat);
-  if (stat==DOSMOD_LEFTIDLE) {
-    continue;
-  }
-  while (1) {
-    if ((len=read(read_pipe,&VM86,sizeof(VM86)))==sizeof(VM86)) break;
-    if (((errno==EINTR)||(errno==EAGAIN))&&(len<=0)) {
-     WARN_(module)("rereading dosmod VM86 structure due to errno=%d, result=%d\n",errno,len);
-     continue;
-    }
-    ERR_(module)("dosmod sync lost reading VM86 structure, errno=%d, result=%d\n",errno,len);
-    return -1;
-  }
-  if ((stat&0xff)==DOSMOD_SIGNAL) {
-    while (1) {
-      if ((len=read(read_pipe,&sig,sizeof(sig)))==sizeof(sig)) break;
-      if (((errno==EINTR)||(errno==EAGAIN))&&(len<=0)) {
-	WARN_(module)("rereading dosmod signal due to errno=%d, result=%d\n",errno,len);
-	continue;
+    else if (waitret == WAIT_OBJECT_0 + 1) {
+      GetMessageA(&msg, 0, 0, 0);
+      if (msg.hwnd) {
+	/* it's a window message */
+	DOSVM_ProcessMessage(&msg);
+	DispatchMessageA(&msg);
+      } else {
+	/* it's a thread message */
+	switch (msg.message) {
+	case WM_QUIT:
+	  /* stop this madness!! */
+	  return 0;
+	case WM_USER:
+	  /* run passed procedure in this thread */
+	  /* (sort of like APC, but we signal the completion) */
+	  {
+	    DOS_SPC *spc = (DOS_SPC *)msg.lParam;
+	    TRACE_(int)("calling %p with arg %08x\n", spc->proc, spc->arg);
+	    (spc->proc)(spc->arg);
+	    TRACE_(int)("done, signalling event %d\n", msg.wParam);
+	    SetEvent(msg.wParam);
+	  }
+	  break;
+	}
       }
-      ERR_(module)("dosmod sync lost reading signal, errno=%d, result=%d\n",errno,len);
-      return -1;
-    } while (0);
-  } else sig=0;
-  /* got response */
- } while (DOSVM_Process(stat,sig,&VM86)>=0);
- entered--;
+    }
+    else break;
+  }
+  return 0;
+}
 
-#define CP(x,y) context->y = VM86.regs.x
-  CV;
-#undef CP
- return 0;
+static WINE_EXCEPTION_FILTER(exception_handler)
+{
+  EXCEPTION_RECORD *rec = GetExceptionInformation()->ExceptionRecord;
+  CONTEXT *context = GetExceptionInformation()->ContextRecord;
+  int ret, arg = rec->ExceptionInformation[0];
+
+  switch(rec->ExceptionCode) {
+  case EXCEPTION_VM86_INTx:
+    if (TRACE_ON(relay)) {
+      DPRINTF("Call DOS int 0x%02x ret=%04lx:%04lx\n",
+	      arg, context->SegCs, context->Eip );
+      DPRINTF(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
+	      context->Eax, context->Ebx, context->Ecx, context->Edx,
+	      context->Esi, context->Edi );
+      DPRINTF(" ebp=%08lx esp=%08lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
+	      context->Ebp, context->Esp, context->SegDs, context->SegEs,
+	      context->SegFs, context->SegGs, context->EFlags );
+      }
+    ret = DOSVM_SimulateInt(arg, context, FALSE);
+    if (TRACE_ON(relay)) {
+      DPRINTF("Ret  DOS int 0x%02x ret=%04lx:%04lx\n",
+	      arg, context->SegCs, context->Eip );
+      DPRINTF(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
+	      context->Eax, context->Ebx, context->Ecx, context->Edx,
+	      context->Esi, context->Edi );
+      DPRINTF(" ebp=%08lx esp=%08lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
+	      context->Ebp, context->Esp, context->SegDs, context->SegEs,
+	      context->SegFs, context->SegGs, context->EFlags );
+    }
+    return ret ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_EXECUTION;
+
+  case EXCEPTION_VM86_STI:
+  /* case EXCEPTION_VM86_PICRETURN: */
+    IF_SET(context);
+    EnterCriticalSection(&qcrit);
+    sig_sent++;
+    while (NtCurrentTeb()->alarms) {
+      DOSVM_QueueEvent(0,DOS_PRIORITY_REALTIME,NULL,NULL);
+      /* hmm, instead of relying on this signal counter, we should
+       * probably check how many ticks have *really* passed, probably using
+       * QueryPerformanceCounter() or something like that */
+      InterlockedDecrement(&(NtCurrentTeb()->alarms));
+    }
+    TRACE_(int)("context=%p, current=%p\n", context, current_context);
+    TRACE_(int)("cs:ip=%04lx:%04lx, ss:sp=%04lx:%04lx\n", context->SegCs, context->Eip, context->SegSs, context->Esp);
+    if (!ISV86(context)) {
+      ERR_(int)("@#&*%%, winedos signal handling is *still* messed up\n");
+    }
+    TRACE_(int)("DOS task enabled interrupts %s events pending, sending events (time=%ld)\n", IS_PEND(context)?"with":"without", GetTickCount());
+    DOSVM_SendQueuedEvents(context);
+    sig_sent=0;
+    LeaveCriticalSection(&qcrit);
+    return EXCEPTION_CONTINUE_EXECUTION;
+  }
+  return EXCEPTION_CONTINUE_SEARCH;
+}
+
+int WINAPI DOSVM_Enter( CONTEXT86 *context )
+{
+  CONTEXT86 *old_context = current_context;
+
+  current_context = context;
+  __TRY
+  {
+    __wine_enter_vm86( context );
+    TRACE_(module)( "vm86 returned: %s\n", strerror(errno) );
+  }
+  __EXCEPT(exception_handler)
+  {
+    TRACE_(module)( "leaving vm86 mode\n" );
+  }
+  __ENDTRY
+  current_context = old_context;
+  return 0;
 }
 
 /***********************************************************************
@@ -572,6 +463,7 @@ void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
     LPDOSEVENT event;
 
     if ((port==0x20) && (val==0x20)) {
+      EnterCriticalSection(&qcrit);
       if (current_event) {
 	/* EOI (End Of Interrupt) */
 	TRACE("received EOI for current IRQ, clearing\n");
@@ -581,17 +473,16 @@ void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
 	(*event->relay)(NULL,event->data);
 	free(event);
 
-	if (pending_event &&
-	    !sig_sent) {
+	if (pending_event) {
 	  /* another event is pending, which we should probably
-	   * be able to process now, so tell dosmod about it */
-	  TRACE("another event pending, signalling dosmod\n");
-	  kill(dosmod_pid,SIGUSR2);
-	  sig_sent++;
+	   * be able to process now */
+	  TRACE("another event pending, setting flag\n");
+	  current_context->EFlags |= VIP_MASK;
 	}
       } else {
 	WARN("EOI without active IRQ\n");
       }
+      LeaveCriticalSection(&qcrit);
     } else {
       FIXME("unrecognized PIC command %02x\n",val);
     }
@@ -602,25 +493,18 @@ void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val)
  */
 void WINAPI DOSVM_SetTimer( UINT ticks )
 {
-  int stat=DOSMOD_SET_TIMER;
-  struct timeval tim;
+  struct itimerval tim;
 
-  if (write_pipe != -1) {
+  if (dosvm_pid) {
     /* the PC clocks ticks at 1193180 Hz */
-    tim.tv_sec=0;
-    tim.tv_usec=MulDiv(ticks,1000000,1193180);
+    tim.it_interval.tv_sec=0;
+    tim.it_interval.tv_usec=MulDiv(ticks,1000000,1193180);
     /* sanity check */
-    if (!tim.tv_usec) tim.tv_usec=1;
-
-    if (write(write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
-      ERR_(module)("dosmod sync lost, errno=%d\n",errno);
-      return;
-    }
-    if (write(write_pipe,&tim,sizeof(tim))!=sizeof(tim)) {
-      ERR_(module)("dosmod sync lost, errno=%d\n",errno);
-      return;
-    }
-    /* there's no return */
+    if (!tim.it_interval.tv_usec) tim.it_interval.tv_usec=1;
+    /* first tick value */
+    tim.it_value = tim.it_interval;
+    TRACE_(int)("setting timer tick delay to %ld us\n", tim.it_interval.tv_usec);
+    setitimer(ITIMER_REAL, &tim, NULL);
   }
 }
 
@@ -629,22 +513,11 @@ void WINAPI DOSVM_SetTimer( UINT ticks )
  */
 UINT WINAPI DOSVM_GetTimer( void )
 {
-  int stat=DOSMOD_GET_TIMER;
-  struct timeval tim;
+  struct itimerval tim;
 
-  if (write_pipe != -1) {
-    if (write(write_pipe,&stat,sizeof(stat))!=sizeof(stat)) {
-      ERR_(module)("dosmod sync lost, errno=%d\n",errno);
-      return 0;
-    }
-    /* read response */
-    while (1) {
-      if (read(read_pipe,&tim,sizeof(tim))==sizeof(tim)) break;
-      if ((errno==EINTR)||(errno==EAGAIN)) continue;
-      ERR_(module)("dosmod sync lost, errno=%d\n",errno);
-      return 0;
-    }
-    return MulDiv(tim.tv_usec,1193180,1000000);
+  if (dosvm_pid) {
+    getitimer(ITIMER_REAL, &tim);
+    return MulDiv(tim.it_value.tv_usec,1193180,1000000);
   }
   return 0;
 }

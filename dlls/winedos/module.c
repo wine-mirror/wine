@@ -20,6 +20,8 @@
 #include <sys/time.h>
 #include "windef.h"
 #include "wine/winbase16.h"
+#include "wingdi.h"
+#include "winuser.h"
 #include "winerror.h"
 #include "module.h"
 #include "task.h"
@@ -27,7 +29,7 @@
 #include "miscemu.h"
 #include "debugtools.h"
 #include "dosexe.h"
-#include "../../loader/dos/dosmod.h"
+#include "dosvm.h"
 #include "options.h"
 #include "vga.h"
 
@@ -69,12 +71,11 @@ typedef struct {
 
 /* global variables */
 
-static WORD init_cs,init_ip,init_ss,init_sp;
-static char mm_name[128];
+pid_t dosvm_pid;
 
-int read_pipe = -1, write_pipe = -1;
-HANDLE hReadPipe, hWritePipe;
-pid_t dosmod_pid;
+static WORD init_cs,init_ip,init_ss,init_sp;
+static HANDLE dosvm_thread, loop_thread;
+static DWORD dosvm_tid, loop_tid;
 
 static void MZ_Launch(void);
 static BOOL MZ_InitTask(void);
@@ -170,25 +171,10 @@ static WORD MZ_InitEnvironment( LPCSTR env, LPCSTR name )
 
 static BOOL MZ_InitMemory(void)
 {
-    int mm_fd;
-    void *img_base;
+    /* initialize the memory */
+    TRACE("Initializing DOS memory structures\n");
+    DOSMEM_Init(TRUE);
 
-    /* allocate 1MB+64K shared memory */
-    tmpnam(mm_name);
-    /* strcpy(mm_name,"/tmp/mydosimage"); */
-    mm_fd = open(mm_name,O_RDWR|O_CREAT /* |O_TRUNC */,S_IRUSR|S_IWUSR);
-    if (mm_fd < 0) ERR("file %s could not be opened\n",mm_name);
-    /* fill the file with the DOS memory */
-    if (write( mm_fd, NULL, 0x110000 ) != 0x110000) ERR("cannot write DOS mem\n");
-    /* map it in */
-    img_base = mmap(NULL,0x110000,PROT_READ|PROT_WRITE|PROT_EXEC,MAP_SHARED|MAP_FIXED,mm_fd,0);
-    close( mm_fd );
-
-    if (img_base)
-    {
-        ERR("could not map shared memory, error=%s\n",strerror(errno));
-        return FALSE;
-    }
     MZ_InitHandlers();
     return TRUE;
 }
@@ -307,7 +293,6 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
   }
 
   if (alloc && !MZ_InitTask()) {
-    MZ_KillTask();
     SetLastError(ERROR_GEN_FAILURE);
     return FALSE;
   }
@@ -316,9 +301,6 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk )
 
 load_error:
   DOSVM_psp = oldpsp_seg;
-  if (alloc) {
-    if (mm_name[0]!=0) unlink(mm_name);
-  }
 
   return FALSE;
 }
@@ -328,7 +310,7 @@ load_error:
  */
 void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile )
 {
-    if (MZ_DoLoadImage( hFile, filename, NULL )) MZ_Launch();
+  if (MZ_DoLoadImage( hFile, filename, NULL )) MZ_Launch();
 }
 
 /***********************************************************************
@@ -400,8 +382,8 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
  */
 void WINAPI MZ_AllocDPMITask( void )
 {
-    MZ_InitMemory();
-    MZ_InitTask();
+  MZ_InitMemory();
+  MZ_InitTask();
 }
 
 /***********************************************************************
@@ -409,122 +391,26 @@ void WINAPI MZ_AllocDPMITask( void )
  */
 void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg )
 {
-  proc(arg);
+  if (loop_thread) {
+    DOS_SPC spc;
+    HANDLE event;
+
+    spc.proc = proc;
+    spc.arg = arg;
+    event = CreateEventA(NULL, TRUE, FALSE, NULL);
+    PostThreadMessageA(loop_tid, WM_USER, event, (LPARAM)&spc);
+    WaitForSingleObject(event, INFINITE);
+    CloseHandle(event);
+  } else
+    proc(arg);
 }
 
-static void MZ_InitTimer( int ver )
-{
- if (ver<1) {
-  /* can't make timer ticks */
- } else {
-  int func;
-  struct timeval tim;
-
-  /* start dosmod timer at 55ms (18.2Hz) */
-  func=DOSMOD_SET_TIMER;
-  tim.tv_sec=0; tim.tv_usec=54925;
-  write(write_pipe,&func,sizeof(func));
-  write(write_pipe,&tim,sizeof(tim));
- }
-}
-
-static BOOL MZ_InitTask(void)
-{
-  int write_fd[2],x_fd;
-  pid_t child;
-  char path[256],*fpath;
-
-  /* create pipes */
-  if (!CreatePipe(&hReadPipe,&hWritePipe,NULL,0)) return FALSE;
-  if (pipe(write_fd)<0) {
-    CloseHandle(hReadPipe);
-    CloseHandle(hWritePipe);
-    return FALSE;
-  }
-
-  read_pipe = FILE_GetUnixHandle( hReadPipe, GENERIC_READ );
-  x_fd = FILE_GetUnixHandle( hWritePipe, GENERIC_WRITE );
-
-  TRACE("win32 pipe: read=%d, write=%d, unix pipe: read=%d, write=%d\n",
-        hReadPipe,hWritePipe,read_pipe,x_fd);
-  TRACE("outbound unix pipe: read=%d, write=%d, pid=%d\n",write_fd[0],write_fd[1],getpid());
-
-  write_pipe=write_fd[1];
-
-  TRACE("Loading DOS VM support module\n");
-  if ((child=fork())<0) {
-    close(write_fd[0]);
-    close(read_pipe);
-    close(write_pipe);
-    close(x_fd);
-    CloseHandle(hReadPipe);
-    CloseHandle(hWritePipe);
-    return FALSE;
-  }
- if (child!=0) {
-  /* parent process */
-  int ret;
-
-  close(write_fd[0]);
-  close(x_fd);
-  dosmod_pid = child;
-  /* wait for child process to signal readiness */
-  while (1) {
-    if (read(read_pipe,&ret,sizeof(ret))==sizeof(ret)) break;
-    if ((errno==EINTR)||(errno==EAGAIN)) continue;
-    /* failure */
-    ERR("dosmod has failed to initialize\n");
-    if (mm_name[0]!=0) unlink(mm_name);
-    return FALSE;
-  }
-  /* the child has now mmaped the temp file, it's now safe to unlink.
-   * do it here to avoid leaving a mess in /tmp if/when Wine crashes... */
-  if (mm_name[0]!=0) unlink(mm_name);
-  /* start simulated system timer */
-  MZ_InitTimer(ret);
-  if (ret<2) {
-    ERR("dosmod version too old! Please install newer dosmod properly\n");
-    ERR("If you don't, the new dosmod event handling system will not work\n");
-  }
-  /* all systems are now go */
- } else {
-  /* child process */
-  close(read_pipe);
-  close(write_pipe);
-  /* put our pipes somewhere dosmod can find them */
-  dup2(write_fd[0],0); /* stdin */
-  dup2(x_fd,1);        /* stdout */
-  /* now load dosmod */
-  /* check argv[0]-derived paths first, since the newest dosmod is most likely there
-   * (at least it was once for Andreas Mohr, so I decided to make it easier for him) */
-  fpath=strrchr(strcpy(path,full_argv0),'/');
-  if (fpath) {
-   strcpy(fpath,"/dosmod");
-   execl(path,mm_name,NULL);
-   strcpy(fpath,"/loader/dos/dosmod");
-   execl(path,mm_name,NULL);
-  }
-  /* okay, it wasn't there, try in the path */
-  execlp("dosmod",mm_name,NULL);
-  /* last desperate attempts: current directory */
-  execl("dosmod",mm_name,NULL);
-  /* and, just for completeness... */
-  execl("loader/dos/dosmod",mm_name,NULL);
-  /* if failure, exit */
-  ERR("Failed to spawn dosmod, error=%s\n",strerror(errno));
-  exit(1);
- }
- return TRUE;
-}
-
-static void MZ_Launch(void)
+static DWORD WINAPI MZ_DOSVM( LPVOID lpExtra )
 {
   CONTEXT context;
-  TDB *pTask = GlobalLock16( GetCurrentTask() );
-  BYTE *psp_start = PTR_REAL_TO_LIN( DOSVM_psp, 0 );
+  DWORD ret;
 
-  MZ_FillPSP(psp_start, GetCommandLineA());
-  pTask->flags |= TDBF_WINOLDAP;
+  dosvm_pid = getpid();
 
   memset( &context, 0, sizeof(context) );
   context.SegCs  = init_cs;
@@ -534,15 +420,54 @@ static void MZ_Launch(void)
   context.SegDs  = DOSVM_psp;
   context.SegEs  = DOSVM_psp;
   context.EFlags = 0x00080000;  /* virtual interrupt flag */
+  DOSVM_SetTimer(0x10000);
+  ret = DOSVM_Enter( &context );
+
+  dosvm_pid = 0;
+  return ret;
+}
+
+static BOOL MZ_InitTask(void)
+{
+  if (!DuplicateHandle(GetCurrentProcess(), GetCurrentThread(),
+                       GetCurrentProcess(), &loop_thread,
+                       0, FALSE, DUPLICATE_SAME_ACCESS))
+    return FALSE;
+  dosvm_thread = CreateThread(NULL, 0, MZ_DOSVM, NULL, CREATE_SUSPENDED, &dosvm_tid);
+  if (!dosvm_thread) {
+    CloseHandle(loop_thread);
+    loop_thread = 0;
+    return FALSE;
+  }
+  loop_tid = GetCurrentThreadId();
+  return TRUE;
+}
+
+static void MZ_Launch(void)
+{
+  TDB *pTask = TASK_GetCurrent();
+  BYTE *psp_start = PTR_REAL_TO_LIN( DOSVM_psp, 0 );
+
+  MZ_FillPSP(psp_start, GetCommandLineA());
+  pTask->flags |= TDBF_WINOLDAP;
+
   _LeaveWin16Lock();
-  DOSVM_Enter( &context );
+  
+  ResumeThread(dosvm_thread);
+  DOSVM_Loop(NULL);
+  ExitThread(0);
 }
 
 static void MZ_KillTask(void)
 {
   TRACE("killing DOS task\n");
   VGA_Clean();
-  kill(dosmod_pid,SIGTERM);
+  PostThreadMessageA(loop_tid, WM_QUIT, 0, 0);
+  WaitForSingleObject(loop_thread, INFINITE); /* ? */
+  CloseHandle(dosvm_thread);
+  dosvm_thread = 0; dosvm_tid = 0;
+  CloseHandle(loop_thread);
+  loop_thread = 0; loop_tid = 0;
 }
 
 /***********************************************************************
@@ -590,7 +515,7 @@ void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval )
  */
 BOOL WINAPI MZ_Current( void )
 {
-    return (write_pipe != -1); /* FIXME: do a better check */
+  return (dosvm_pid != 0); /* FIXME: do a better check */
 }
 
 #else /* !MZ_SUPPORTED */
