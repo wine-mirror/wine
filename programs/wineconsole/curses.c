@@ -37,6 +37,7 @@
 #ifdef HAVE_NCURSES_H
 #include <ncurses.h>
 #endif
+#undef KEY_EVENT  /* avoid redefinition warning */
 #include <unistd.h>
 #include <winnls.h>
 #include "winecon_private.h"
