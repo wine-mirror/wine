@@ -321,6 +321,7 @@ HRESULT WINAPI LoadTypeLibEx(
 		    	MESSAGE("You must copy a 'stdole32.tlb' file to your Windows\\System directory!\n");
 		    	MESSAGE("You can get one from a Windows installation, or look for the DCOM95 package\n");
 		    	MESSAGE("on the Microsoft Download Pages.\n");
+		    	MESSAGE("A free download link is on http://sourceforge.net/projects/wine/, look for dcom95.exe.\n");
 		    	MESSAGE("**************************************************************************\n");
 			break;
 		    }
