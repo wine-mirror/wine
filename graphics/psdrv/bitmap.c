@@ -93,8 +93,8 @@ static BOOL PSDRV_WriteImageHeader(DC *dc, const BITMAPINFO *info, INT xDst,
  *	PSDRV_StretchDIBits
  *
  * BUGS
- *  Doesn't work correctly if the DIB bits aren't byte aligned at the start of
- *  a line - this affects 1 and 4 bit depths.
+ *  Doesn't work correctly if xSrc isn't byte aligned - this affects 1 and 4
+ *  bit depths.
  *  Compression not implemented.
  */
 INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
@@ -138,10 +138,10 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 			       widthSrc, heightSrc);
 	ptr = bits;
 	ptr += (ySrc * widthbytes);
-	if(xSrc & 7 || widthSrc & 7)
+	if(xSrc & 7)
 	    FIXME("This won't work...\n");
         for(line = 0; line < heightSrc; line++, ptr += widthbytes)
-	    PSDRV_WriteBytes(dc, ptr + xSrc/8, widthSrc/8);
+	    PSDRV_WriteBytes(dc, ptr + xSrc/8, (widthSrc+7)/8);
 	break;
 
     case 4:
@@ -150,10 +150,10 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 			       widthSrc, heightSrc);
 	ptr = bits;
 	ptr += (ySrc * widthbytes);
-	if(xSrc & 1 || widthSrc & 1)
+	if(xSrc & 1)
 	    FIXME("This won't work...\n");
         for(line = 0; line < heightSrc; line++, ptr += widthbytes)
-	    PSDRV_WriteBytes(dc, ptr + xSrc/2, widthSrc/2);
+	    PSDRV_WriteBytes(dc, ptr + xSrc/2, (widthSrc+1)/2);
 	break;
 
     case 8:
