@@ -554,6 +554,7 @@ sub source_scan_directory
     push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@sources_cxx;
     push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@sources_rc;
     push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@sources_misc;
+    push @{@$parent_settings[$T_SOURCES_MISC]},map "$dirname$_",@{@$project_settings[$T_SOURCES_MISC]};
     return;
   }
 
@@ -1174,12 +1175,14 @@ sub get_real_include_name
     }
   } else {
     # Here's how we proceed:
+    # - compute the 'renamed' filename (see renaming phase)
     # - split the filename we look for into its components
     # - then for each directory in the include path
     #   - trace the directory components starting from that directory
     #   - if we fail to find a match at any point then continue with 
     #     the next directory in the include path
     #   - otherwise, rejoice, our quest is over.
+    $filename =~ s/[ \$]/_/g;
     my @file_components=split /[\/\\]+/, $filename;
     #print "  Searching for $filename from @$project[$P_PATH]\n";
 
@@ -1199,7 +1202,8 @@ sub get_real_include_name
       if (!is_absolute($dirname)) {
 	$dirname="@$project[$P_PATH]$dirname";
       } else {
-	$dirname=~ s+^\$\(TOPSRCDIR\)/++;
+        $dirname=~ s+^\$\(TOPSRCDIR\)/++;
+        $dirname=~ s+^\$\(SRCDIR\)/+@$project[$P_PATH]+;
       }
       #print "    in $dirname\n";
       $real_filename=search_from("$dirname",\@file_components);
@@ -1213,6 +1217,7 @@ sub get_real_include_name
       my $dirname=$include;
       $dirname=~ s+^-I++;
       $dirname=~ s+^\$\(TOPSRCDIR\)\/++;
+      $dirname=~ s+^\$\(SRCDIR\)\/+@$project[$P_PATH]+;
       #print "    in $dirname  (global setting)\n";
       $real_filename=search_from("$dirname",\@file_components);
       if (defined $real_filename) {
@@ -1352,7 +1357,7 @@ sub fix_file
         # Issues a warning if the pack is of the form pack(push,label)
         print FILEO "$pack_indent/* winemaker: $pack_header$1 */\n";
         my $pack_comment=$';
-	$pack_comment =~ s/^\s*//;
+        $pack_comment =~ s/^\s*//;
         if ($pack_comment ne "") {
           print FILEO "$pack_indent$pack_comment";
         }
@@ -1381,7 +1386,7 @@ sub fix_file
         my $label=$2;
         print FILEO "$pack_indent/* winemaker: $pack_header$1 */\n";
         my $pack_comment=$';
-	$pack_comment =~ s/^\s*//;
+        $pack_comment =~ s/^\s*//;
         if ($pack_comment ne "") {
           print FILEO "$pack_indent$pack_comment";
         }
@@ -1458,7 +1463,7 @@ sub fix_file
       $modified=1;
 
     } elsif ($is_rc) {
-      if ($rc_block_depth == 0 and /^(\w+\s+(BITMAP|CURSOR|FONT|FONTDIR|ICON|MESSAGETABLE|TEXT)\s+((DISCARDABLE|FIXED|IMPURE|LOADONCALL|MOVEABLE|PRELOAD|PURE|RTF)\s+)*)([\"<]?)([^\">\r\n]+)([\">]?)/) {
+      if ($rc_block_depth == 0 and /^(\w+\s+(BITMAP|CURSOR|FONT|FONTDIR|ICON|MESSAGETABLE|TEXT|RTF)\s+((DISCARDABLE|FIXED|IMPURE|LOADONCALL|MOVEABLE|PRELOAD|PURE)\s+)*)([\"<]?)([^\">\r\n]+)([\">]?)/) {
 	my $from_file=($5 eq "<"?"":$dirname);
 	my $real_include_name=get_real_include_name($line,$6,$from_file,$project,$target);
 	print FILEO "$1$5$real_include_name$7$'";
@@ -1578,6 +1583,7 @@ sub generate_spec_file
     }
     my $rcname=@{@$target[$T_SOURCES_RC]}[0];
     $rcname =~ s+\.rc$++i;
+    $rcname =~ s+([^/\w])+\\\1+g;
     print FILEO "rsrc    $rcname.res\n";
   }
   print FILEO "\n";
