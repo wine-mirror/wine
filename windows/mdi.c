@@ -730,7 +730,7 @@ static LONG MDI_ChildActivate( HWND client, HWND child )
     HWND prevActiveWnd = clientInfo->hwndActiveChild;
     BOOL isActiveFrameWnd;
 
-    if (!IsWindowEnabled( child )) return 0;
+    if (child && (!IsWindowEnabled( child ))) return 0;
 
     /* Don't activate if it is already active. Might happen 
        since ShowWindow DOES activate MDI children */
