@@ -482,17 +482,11 @@ CoMarshalInterface( IStream *pStm, REFIID riid, IUnknown *pUnk,
   }
   hres = IMarshal_MarshalInterface(pMarshal,pStm,riid,pUnk,dwDestContext,pvDestContext,mshlflags);
   if (hres) {
-    if (IsEqualGUID(riid,&IID_IClassFactory)) {
-	MESSAGE("\nERROR: You need to merge the 'winedefault.reg' file into your\n");
-	MESSAGE("       Wine registry by running: `regedit winedefault.reg'\n\n");
+    if (IsEqualGUID(riid,&IID_IOleObject)) {
+      ERR("WINE currently cannot marshal IOleObject interfaces. This means you cannot embed/link OLE objects between applications.\n");
     } else {
-    	if (IsEqualGUID(riid,&IID_IOleObject)) {
-	    ERR("WINE currently cannot marshal IOleObject interfaces. This means you cannot embed/link OLE objects between applications.\n");
-	} else {
-	    FIXME("Failed to marshal the interface %s, %lx?\n",debugstr_guid(riid),hres);
-	}
+      FIXME("Failed to marshal the interface %s, %lx?\n",debugstr_guid(riid),hres);
     }
-    goto release_marshal;
   }
 release_marshal:
   IMarshal_Release(pMarshal);
