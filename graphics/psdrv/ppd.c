@@ -160,6 +160,7 @@ static struct {
   char *PSName;
   WORD WinBin;
 } BinTrans[] = {
+  {"Cassette",          DMBIN_CASSETTE},
   {"Envelope",		DMBIN_ENVELOPE},
   {"LargeCapacity",	DMBIN_LARGECAPACITY},
   {"Lower",		DMBIN_LOWER},
