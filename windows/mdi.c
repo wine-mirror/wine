@@ -1200,6 +1200,7 @@ LRESULT WINAPI DefFrameProc32A( HWND32 hwnd, HWND32 hwndMDIClient,
 		return ret;
 	  }
 	
+	  case WM_NEXTMENU:
 	  case WM_SETFOCUS:
 	  case WM_SIZE:
               return DefFrameProc16( hwnd, hwndMDIClient, message,
@@ -1238,6 +1239,7 @@ LRESULT WINAPI DefFrameProc32W( HWND32 hwnd, HWND32 hwndMDIClient,
 	      HeapFree(GetProcessHeap(),0,txt);
 	      return ret;
 	  }
+	  case WM_NEXTMENU:
 	  case WM_SETFOCUS:
 	  case WM_SIZE:
               return DefFrameProc32A( hwnd, hwndMDIClient, message,
@@ -1389,6 +1391,14 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 			   clientWnd->parent->hwndSelf );
 
 	break;	
+
+      case WM_SYSCHAR:
+      	   if (wParam == '-')
+	   {
+	   	SendMessage16(hwnd,WM_SYSCOMMAND,
+			(WPARAM16)SC_KEYMENU, (LPARAM)(DWORD)VK_SPACE);
+		return 0;
+	   }
     }
 	
     return DefWindowProc16(hwnd, message, wParam, lParam);
@@ -1442,6 +1452,14 @@ LRESULT WINAPI DefMDIChildProc32A( HWND32 hwnd, UINT32 message,
       case WM_SIZE:
       case WM_NEXTMENU:
           return DefMDIChildProc16( hwnd, message, (WPARAM16)wParam, lParam );
+
+      case WM_SYSCHAR:
+      	   if (wParam == '-')
+	   {
+	   	SendMessage32A(hwnd,WM_SYSCOMMAND,
+			(WPARAM32)SC_KEYMENU, (LPARAM)(DWORD)VK_SPACE);
+		return 0;
+	   }
     }
     return DefWindowProc32A(hwnd, message, wParam, lParam);
 }
@@ -1480,6 +1498,14 @@ LRESULT WINAPI DefMDIChildProc32W( HWND32 hwnd, UINT32 message,
       case WM_SIZE:
       case WM_NEXTMENU:
           return DefMDIChildProc32A( hwnd, message, (WPARAM16)wParam, lParam );
+
+      case WM_SYSCHAR:
+      	   if (wParam == '-')
+	   {
+	   	SendMessage32W(hwnd,WM_SYSCOMMAND,
+			(WPARAM32)SC_KEYMENU, (LPARAM)(DWORD)VK_SPACE);
+		return 0;
+	   }
     }
     return DefWindowProc32W(hwnd, message, wParam, lParam);
 }
