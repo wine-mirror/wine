@@ -896,9 +896,13 @@ static HRESULT WINAPI  IShellFolder_fnCompareIDs(
 	        }
 	        ILFree(pidlTemp);
 	      }
-	      else
+	      else                                      /* no deeper on #1  */
 	      {
-	        hr = ResultFromShort(nReturn);		/* two equal simple pidls */
+	        pidl2 = ILGetNext(pidl2);
+		if (pidl2 && pidl2->mkid.cb)		/* go deeper on #2 ? */
+		    hr = ResultFromShort(-1);           /* two different */
+		else
+		    hr = ResultFromShort(nReturn);      /* two equal simple pidls */
 	      }
 	    }
 	    else
