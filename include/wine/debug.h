@@ -87,13 +87,6 @@ enum __WINE_DEBUG_CLASS {
 
 #endif  /* __GNUC__ */
 
-extern const char * (*__wine_dbgstr_an)( const char * s, int n );
-extern const char * (*__wine_dbgstr_wn)( const WCHAR *s, int n );
-extern const char * (*__wine_dbgstr_guid)( const struct _GUID *id );
-extern int (*__wine_dbg_vprintf)( const char *format, va_list args );
-extern int (*__wine_dbg_vlog)( int cls, const char *channel,
-                               const char *function, const char *format, va_list args );
-
 
 /*
  * Exported definitions and macros
@@ -102,11 +95,11 @@ extern int (*__wine_dbg_vlog)( int cls, const char *channel,
 /* These function return a printable version of a string, including
    quotes.  The string will be valid for some time, but not indefinitely
    as strings are re-used.  */
-inline static const char *wine_dbgstr_guid( const struct _GUID *id ) { return __wine_dbgstr_guid(id); }
-inline static const char *wine_dbgstr_an( const char * s, int n ) { return __wine_dbgstr_an(s, n); }
-inline static const char *wine_dbgstr_wn( const WCHAR *s, int n ) { return __wine_dbgstr_wn(s, n); }
-inline static const char *wine_dbgstr_a( const char *s )  { return __wine_dbgstr_an( s, -1 ); }
-inline static const char *wine_dbgstr_w( const WCHAR *s ) { return __wine_dbgstr_wn( s, -1 ); }
+extern const char *wine_dbgstr_guid( const struct _GUID *id );
+extern const char *wine_dbgstr_an( const char * s, int n );
+extern const char *wine_dbgstr_wn( const WCHAR *s, int n );
+extern const char *wine_dbgstr_a( const char *s );
+extern const char *wine_dbgstr_w( const WCHAR *s );
 
 extern int wine_dbg_printf( const char *format, ... ) __WINE_PRINTF_ATTR(1,2);
 extern int wine_dbg_log( int cls, const char *ch, const char *func,
@@ -140,11 +133,11 @@ extern int wine_dbg_log( int cls, const char *ch, const char *func,
 #ifdef __WINE__
 /* Wine uses shorter names that are very likely to conflict with other software */
 
-inline static const char *debugstr_an( const char * s, int n ) { return __wine_dbgstr_an( s, n ); }
-inline static const char *debugstr_wn( const WCHAR *s, int n ) { return __wine_dbgstr_wn( s, n ); }
-inline static const char *debugstr_guid( const struct _GUID *id ) { return __wine_dbgstr_guid(id); }
-inline static const char *debugstr_a( const char *s )  { return __wine_dbgstr_an( s, -1 ); }
-inline static const char *debugstr_w( const WCHAR *s ) { return __wine_dbgstr_wn( s, -1 ); }
+inline static const char *debugstr_an( const char * s, int n ) { return wine_dbgstr_an( s, n ); }
+inline static const char *debugstr_wn( const WCHAR *s, int n ) { return wine_dbgstr_wn( s, n ); }
+inline static const char *debugstr_guid( const struct _GUID *id ) { return wine_dbgstr_guid(id); }
+inline static const char *debugstr_a( const char *s )  { return wine_dbgstr_an( s, -1 ); }
+inline static const char *debugstr_w( const WCHAR *s ) { return wine_dbgstr_wn( s, -1 ); }
 
 #define TRACE                      WINE_TRACE
 #define TRACE_(ch)                 WINE_TRACE_(ch)

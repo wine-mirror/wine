@@ -27,6 +27,7 @@
 
 #include "wine/debug.h"
 #include "wine/exception.h"
+#include "wine/library.h"
 #include "wine/unicode.h"
 #include "thread.h"
 #include "winbase.h"

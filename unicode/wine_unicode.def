@@ -1,10 +1,15 @@
 EXPORTS
+	casemap_lower
+	casemap_upper
+	cp_enum_table
+	cp_get_table
 	cp_mbstowcs
 	cp_wcstombs
-	utf8_wcstombs
-	utf8_mbstowcs
-	cp_get_table
-	cp_enum_table
 	strcmpiW
 	strncmpiW
 	strstrW
+	strtolW
+	strtoulW
+	utf8_mbstowcs
+	utf8_wcstombs
+	wctype_table

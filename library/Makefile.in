@@ -32,7 +32,7 @@ libwine.a: $(OBJS)
 	$(RANLIB) $@
 
 libwine.dll: $(OBJS)
-	$(DLLWRAP) $(DLLWRAPFLAGS) --export-all --implib libwine.a -o libwine.dll $(OBJS)
+	$(DLLWRAP) $(DLLWRAPFLAGS) --export-all --implib libwine.a -o libwine.dll $(OBJS) -lmsvcrt
 
 install_so: libwine.so.$(SOVERSION)
 	$(MKINSTALLDIRS) $(libdir)

@@ -337,3 +337,30 @@ const char * (*__wine_dbgstr_guid)( const struct _GUID *id ) = default_dbgstr_gu
 int (*__wine_dbg_vprintf)( const char *format, va_list args ) = default_dbg_vprintf;
 int (*__wine_dbg_vlog)( int cls, const char *channel, const char *function,
                         const char *format, va_list args ) = default_dbg_vlog;
+
+/* wrappers to use the function pointers */
+
+const char *wine_dbgstr_guid( const struct _GUID *id )
+{
+    return __wine_dbgstr_guid(id);
+}
+
+const char *wine_dbgstr_an( const char * s, int n )
+{
+    return __wine_dbgstr_an(s, n);
+}
+
+const char *wine_dbgstr_wn( const WCHAR *s, int n )
+{
+    return __wine_dbgstr_wn(s, n);
+}
+
+const char *wine_dbgstr_a( const char *s )
+{
+    return __wine_dbgstr_an( s, -1 );
+}
+
+const char *wine_dbgstr_w( const WCHAR *s )
+{
+    return __wine_dbgstr_wn( s, -1 );
+}
