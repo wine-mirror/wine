@@ -2259,6 +2259,45 @@ HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
 }
 
 /******************************************************************************
+ * OleDraw (OLE32.101)
+ *
+ * The operation of this function is documented literally in the WinAPI
+ * documentation to involve a QueryInterface for the IViewObject interface,
+ * followed by a call to IViewObject::Draw.
+ */
+HRESULT WINAPI OleDraw(
+	IUnknown *pUnk,
+	DWORD dwAspect,
+	HDC hdcDraw,
+	LPCRECT lprcBounds)
+{
+  HRESULT hres;
+  IViewObject *viewobject;
+
+  hres = IUnknown_QueryInterface(pUnk,
+				 &IID_IViewObject,
+				 (void**)&viewobject);
+
+  if (SUCCEEDED(hres))
+  {
+    RECTL rectl;
+
+    rectl.left = lprcBounds->left;
+    rectl.right = lprcBounds->right;
+    rectl.top = lprcBounds->top;
+    rectl.bottom = lprcBounds->bottom;
+    hres = IViewObject_Draw(viewobject, dwAspect, -1, 0, 0, 0, hdcDraw, &rectl, 0, 0, 0);
+
+    IViewObject_Release(viewobject);
+    return hres;
+  }
+  else
+  {
+    return DV_E_NOIVIEWOBJECT;
+  }
+}
+
+/******************************************************************************
  * DllDebugObjectRPCHook (OLE32.62)
  * turns on and off internal debugging,  pointer is only used on macintosh
  */

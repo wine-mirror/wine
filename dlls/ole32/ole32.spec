@@ -98,7 +98,7 @@
  98 stdcall OleCreateStaticFromData(ptr ptr long ptr ptr ptr ptr)
  99 stdcall OleDestroyMenuDescriptor(long)
 100 stdcall OleDoAutoConvert(ptr ptr)
-101 stub OleDraw
+101 stdcall OleDraw(ptr long long ptr)
 102 stdcall OleDuplicateData(long long long)
 103 stdcall OleFlushClipboard()
 104 stdcall OleGetAutoConvert(ptr ptr)
