@@ -1120,7 +1120,7 @@ Main_DirectDraw_GetAvailableVidMem(LPDIRECTDRAW7 iface, LPDDSCAPS2 ddscaps,
     TRACE("(%p)->(%p,%p,%p)\n", This,ddscaps,total,free);
 
     if (TRACE_ON(ddraw)) {
-        TRACE(" Asking for memory of type : \n");
+        TRACE(" Asking for memory of type : ");
         DDRAW_dump_DDSCAPS2(ddscaps); DPRINTF("\n");
     }
 
@@ -1128,7 +1128,9 @@ Main_DirectDraw_GetAvailableVidMem(LPDIRECTDRAW7 iface, LPDDSCAPS2 ddscaps,
     if (total)	*total= This->total_vidmem;
     if (free)	*free = This->available_vidmem;
 
-    TRACE(" returning (total) %ld / (free) %ld\n", *total, *free);
+    TRACE(" returning (total) %ld / (free) %ld\n", 
+	  total != NULL ? *total : 0, 
+	  free  != NULL ? *free  : 0);
     
     return DD_OK;
 }
