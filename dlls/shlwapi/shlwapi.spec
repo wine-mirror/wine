@@ -826,7 +826,7 @@
 @ stdcall SHRegDuplicateHKey (long)
 @ stdcall SHRegSetPathA(long str str str long)
 @ stdcall SHRegSetPathW(long wstr wstr wstr long)
-@ stub    SHRegisterValidateTemplate
+@ stdcall SHRegisterValidateTemplate(wstr long)
 @ stdcall SHSetThreadRef (ptr)
 @ stdcall SHReleaseThreadRef()
 @ stdcall SHSkipJunction(ptr ptr)
