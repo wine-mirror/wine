@@ -21,8 +21,7 @@
 #include "config.h"
 #include "windef.h"
 #include "winbase.h"
-#define USE_MSVCRT_PREFIX
-#include "msvcrt/sys/stat.h"
+#include "sys/stat.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crtdll);
@@ -53,10 +52,10 @@ struct crtdll_stat
   short          st_uid;
   short          st_gid;
   crtdll_dev_t   st_rdev;
-  MSVCRT(_off_t) st_size;
-  MSVCRT(time_t) st_atime;
-  MSVCRT(time_t) st_mtime;
-  MSVCRT(time_t) st_ctime;
+  _off_t         st_size;
+  time_t         st_atime;
+  time_t         st_mtime;
+  time_t         st_ctime;
 };
 
 /* convert struct _stat from crtdll format to msvcrt format */

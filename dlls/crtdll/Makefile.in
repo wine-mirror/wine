@@ -5,6 +5,7 @@ VPATH     = @srcdir@
 MODULE    = crtdll.dll
 IMPORTS   = msvcrt kernel32
 EXTRALIBS = $(LIBUNICODE)
+EXTRAINCL = -I$(TOPSRCDIR)/include/msvcrt
 
 LDDLLFLAGS = @LDDLLFLAGS@
 SYMBOLFILE = $(MODULE).tmp.o
