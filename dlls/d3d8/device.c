@@ -483,6 +483,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface, CONST REC
 
     ENTER_GL();
 
+    if (pSourceRect || pDestRect) FIXME("Unhandled present options %p/%p\n", pSourceRect, pDestRect);
+
+
     glXSwapBuffers(This->display, This->drawable);
     /* Dont call checkGLcall, as glGetError is not applicable here */
     TRACE("glXSwapBuffers called, Starting new frame\n");
@@ -541,6 +544,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface, CONST REC
 #endif
 
     LEAVE_GL();
+    /* Although this is not strictly required, a simple demo showed this does occur
+       on (at least non-debug) d3d                                                  */
+    if (This->PresentParms.SwapEffect == D3DSWAPEFFECT_DISCARD) {
+       IDirect3DDevice8Impl_Clear(iface, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0);
+    }
 
     return D3D_OK;
 }
