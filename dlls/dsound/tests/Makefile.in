@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = dsound.dll
 IMPORTS   = dsound ole32 user32 kernel32
-EXTRALIBS = -ldxguid -luuid -ldxerr9
+EXTRALIBS = -ldxguid -luuid -ldxerr8
 
 CTESTS = \
 	capture.c \
