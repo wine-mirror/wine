@@ -387,10 +387,10 @@ STORAGE_dump_pps_entry(struct storage_pps_entry *stde) {
 	if (stde->pps_type !=2) {
 		time_t	t;
                 DWORD dw;
-		RtlTimeToSecondsSince1970(&(stde->pps_ft1),&dw);
+		RtlTimeToSecondsSince1970((LARGE_INTEGER *)&(stde->pps_ft1),&dw);
                 t = dw;
 		DPRINTF("ts1: %s\n",ctime(&t));
-		RtlTimeToSecondsSince1970(&(stde->pps_ft2),&dw);
+		RtlTimeToSecondsSince1970((LARGE_INTEGER *)&(stde->pps_ft2),&dw);
                 t = dw;
 		DPRINTF("ts2: %s\n",ctime(&t));
 	}

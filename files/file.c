@@ -711,9 +711,9 @@ static void FILE_FillInfo( struct stat *st, BY_HANDLE_FILE_INFORMATION *info )
     if (!(st->st_mode & S_IWUSR))
         info->dwFileAttributes |= FILE_ATTRIBUTE_READONLY;
 
-    RtlSecondsSince1970ToTime( st->st_mtime, &info->ftCreationTime );
-    RtlSecondsSince1970ToTime( st->st_mtime, &info->ftLastWriteTime );
-    RtlSecondsSince1970ToTime( st->st_atime, &info->ftLastAccessTime );
+    RtlSecondsSince1970ToTime( st->st_mtime, (LARGE_INTEGER *)&info->ftCreationTime );
+    RtlSecondsSince1970ToTime( st->st_mtime, (LARGE_INTEGER *)&info->ftLastWriteTime );
+    RtlSecondsSince1970ToTime( st->st_atime, (LARGE_INTEGER *)&info->ftLastAccessTime );
 
     info->dwVolumeSerialNumber = 0;  /* FIXME */
     info->nFileSizeHigh = 0;
@@ -782,9 +782,9 @@ DWORD WINAPI GetFileInformationByHandle( HANDLE hFile,
              * MSDN q234741.txt */
             if ((reply->type == FILE_TYPE_DISK) ||  (reply->type == FILE_TYPE_REMOTE))
             {
-                RtlSecondsSince1970ToTime( reply->write_time, &info->ftCreationTime );
-                RtlSecondsSince1970ToTime( reply->write_time, &info->ftLastWriteTime );
-                RtlSecondsSince1970ToTime( reply->access_time, &info->ftLastAccessTime );
+                RtlSecondsSince1970ToTime( reply->write_time, (LARGE_INTEGER *)&info->ftCreationTime );
+                RtlSecondsSince1970ToTime( reply->write_time, (LARGE_INTEGER *)&info->ftLastWriteTime );
+                RtlSecondsSince1970ToTime( reply->access_time, (LARGE_INTEGER *)&info->ftLastAccessTime );
                 info->dwFileAttributes     = reply->attr;
                 info->dwVolumeSerialNumber = reply->serial;
                 info->nFileSizeHigh        = reply->size_high;

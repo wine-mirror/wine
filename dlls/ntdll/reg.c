@@ -189,7 +189,7 @@ static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS i
         {
             LARGE_INTEGER modif;
 
-            RtlSecondsSince1970ToTime( reply->modif, (FILETIME *)&modif );
+            RtlSecondsSince1970ToTime( reply->modif, &modif );
 
             switch(info_class)
             {

@@ -1702,9 +1702,9 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAW *entry )
     {
         if (info->cur_pos) return 0;
         entry->dwFileAttributes  = FILE_ATTRIBUTE_LABEL;
-        RtlSecondsSince1970ToTime( (time_t)0, &entry->ftCreationTime );
-        RtlSecondsSince1970ToTime( (time_t)0, &entry->ftLastAccessTime );
-        RtlSecondsSince1970ToTime( (time_t)0, &entry->ftLastWriteTime );
+        RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftCreationTime );
+        RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftLastAccessTime );
+        RtlSecondsSince1970ToTime( (time_t)0, (LARGE_INTEGER *)&entry->ftLastWriteTime );
         entry->nFileSizeHigh     = 0;
         entry->nFileSizeLow      = 0;
         entry->dwReserved0       = 0;
@@ -2435,12 +2435,12 @@ BOOL WINAPI DosDateTimeToFileTime( WORD fatdate, WORD fattime, LPFILETIME ft)
     newtm.tm_mon  = ((fatdate >> 5) & 0x0f) - 1;
     newtm.tm_year = (fatdate >> 9) + 80;
 #ifdef HAVE_TIMEGM
-    RtlSecondsSince1970ToTime( timegm(&newtm), ft );
+    RtlSecondsSince1970ToTime( timegm(&newtm), (LARGE_INTEGER *)ft );
 #else
     time1 = mktime(&newtm);
     gtm = gmtime(&time1);
     time2 = mktime(gtm);
-    RtlSecondsSince1970ToTime( 2*time1-time2, ft );
+    RtlSecondsSince1970ToTime( 2*time1-time2, (LARGE_INTEGER *)ft );
 #endif
     return TRUE;
 }

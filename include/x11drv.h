@@ -34,6 +34,9 @@
 # include <X11/extensions/XShm.h>
 #endif /* defined(HAVE_LIBXXSHM) */
 
+#undef Status  /* avoid conflict with wintrnl.h */
+typedef int Status;
+
 #include "windef.h"
 #include "winbase.h"
 #include "gdi.h"

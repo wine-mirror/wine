@@ -700,9 +700,9 @@ int MSVCRT__fstat(int fd, struct _stat* buf)
   FIXME(":dwFileAttributes = %ld, mode set to 0\n",hfi.dwFileAttributes);
   buf->st_nlink = hfi.nNumberOfLinks;
   buf->st_size  = hfi.nFileSizeLow;
-  RtlTimeToSecondsSince1970(&hfi.ftLastAccessTime, &dw);
+  RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastAccessTime, &dw);
   buf->st_atime = dw;
-  RtlTimeToSecondsSince1970(&hfi.ftLastWriteTime, &dw);
+  RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastWriteTime, &dw);
   buf->st_mtime = buf->st_ctime = dw;
   return 0;
 }
@@ -719,16 +719,16 @@ int _futime(int fd, struct _utimbuf *t)
   {
     MSVCRT_time_t currTime;
     MSVCRT_time(&currTime);
-    RtlSecondsSince1970ToTime(currTime, &at);
+    RtlSecondsSince1970ToTime(currTime, (LARGE_INTEGER *)&at);
     memcpy(&wt, &at, sizeof(wt));
   }
   else
   {
-    RtlSecondsSince1970ToTime(t->actime, &at);
+    RtlSecondsSince1970ToTime(t->actime, (LARGE_INTEGER *)&at);
     if (t->actime == t->modtime)
       memcpy(&wt, &at, sizeof(wt));
     else
-      RtlSecondsSince1970ToTime(t->modtime, &wt);
+      RtlSecondsSince1970ToTime(t->modtime, (LARGE_INTEGER *)&wt);
   }
 
   if (!SetFileTime(hand, NULL, &at, &wt))
@@ -1190,9 +1190,9 @@ int MSVCRT__stat(const char* path, struct _stat * buf)
   buf->st_mode  = mode;
   buf->st_nlink = 1;
   buf->st_size  = hfi.nFileSizeLow;
-  RtlTimeToSecondsSince1970(&hfi.ftLastAccessTime, &dw);
+  RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastAccessTime, &dw);
   buf->st_atime = dw;
-  RtlTimeToSecondsSince1970(&hfi.ftLastWriteTime, &dw);
+  RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastWriteTime, &dw);
   buf->st_mtime = buf->st_ctime = dw;
   TRACE("\n%d %d %d %ld %ld %ld\n", buf->st_mode,buf->st_nlink,buf->st_size,
     buf->st_atime,buf->st_mtime, buf->st_ctime);
@@ -1251,9 +1251,9 @@ int _wstat(const WCHAR* path, struct _stat * buf)
   buf->st_mode  = mode;
   buf->st_nlink = 1;
   buf->st_size  = hfi.nFileSizeLow;
-  RtlTimeToSecondsSince1970(&hfi.ftLastAccessTime, &dw);
+  RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastAccessTime, &dw);
   buf->st_atime = dw;
-  RtlTimeToSecondsSince1970(&hfi.ftLastWriteTime, &dw);
+  RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastWriteTime, &dw);
   buf->st_mtime = buf->st_ctime = dw;
   TRACE("\n%d %d %d %ld %ld %ld\n", buf->st_mode,buf->st_nlink,buf->st_size,
         buf->st_atime,buf->st_mtime, buf->st_ctime);

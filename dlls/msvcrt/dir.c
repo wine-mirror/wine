@@ -51,11 +51,11 @@ static void msvcrt_fttofd(LPWIN32_FIND_DATAA fd, struct _finddata_t* ft)
   else
     ft->attrib = fd->dwFileAttributes;
 
-  RtlTimeToSecondsSince1970( &fd->ftCreationTime, &dw );
+  RtlTimeToSecondsSince1970( (LARGE_INTEGER *)&fd->ftCreationTime, &dw );
   ft->time_create = dw;
-  RtlTimeToSecondsSince1970( &fd->ftLastAccessTime, &dw );
+  RtlTimeToSecondsSince1970( (LARGE_INTEGER *)&fd->ftLastAccessTime, &dw );
   ft->time_access = dw;
-  RtlTimeToSecondsSince1970( &fd->ftLastWriteTime, &dw );
+  RtlTimeToSecondsSince1970( (LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
   ft->time_write = dw;
   ft->size = fd->nFileSizeLow;
   strcpy(ft->name, fd->cFileName);
@@ -71,11 +71,11 @@ static void msvcrt_wfttofd(LPWIN32_FIND_DATAW fd, struct _wfinddata_t* ft)
   else
     ft->attrib = fd->dwFileAttributes;
 
-  RtlTimeToSecondsSince1970( &fd->ftCreationTime, &dw );
+  RtlTimeToSecondsSince1970( (LARGE_INTEGER *)&fd->ftCreationTime, &dw );
   ft->time_create = dw;
-  RtlTimeToSecondsSince1970( &fd->ftLastAccessTime, &dw );
+  RtlTimeToSecondsSince1970( (LARGE_INTEGER *)&fd->ftLastAccessTime, &dw );
   ft->time_access = dw;
-  RtlTimeToSecondsSince1970( &fd->ftLastWriteTime, &dw );
+  RtlTimeToSecondsSince1970( (LARGE_INTEGER *)&fd->ftLastWriteTime, &dw );
   ft->time_write = dw;
   ft->size = fd->nFileSizeLow;
   strcpyW(ft->name, fd->cFileName);
