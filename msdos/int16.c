@@ -11,6 +11,7 @@
 #include "console.h"
 #include "wincon.h"
 #include "debug.h"
+#include "winuser.h"
 
 /**********************************************************************
  *	    INT_Int16Handler
@@ -50,7 +51,25 @@ void WINAPI INT_Int16Handler( CONTEXT *context )
       break;
 
    case 0x02: /* Get Shift Flags */      
-      FIXME(int16, "Get Shift Flags - Not Supported\n");
+      AL_reg(context) = 0;
+
+      if (GetAsyncKeyState(VK_RSHIFT))
+          AL_reg(context) |= 0x01;
+      if (GetAsyncKeyState(VK_LSHIFT))
+          AL_reg(context) |= 0x02;
+      if (GetAsyncKeyState(VK_LCONTROL) || GetAsyncKeyState(VK_RCONTROL))
+          AL_reg(context) |= 0x04;
+      if (GetAsyncKeyState(VK_LMENU) || GetAsyncKeyState(VK_RMENU))
+          AL_reg(context) |= 0x08;
+      if (GetAsyncKeyState(VK_SCROLL))
+          AL_reg(context) |= 0x10;
+      if (GetAsyncKeyState(VK_NUMLOCK))
+          AL_reg(context) |= 0x20;
+      if (GetAsyncKeyState(VK_CAPITAL))
+          AL_reg(context) |= 0x40;
+      if (GetAsyncKeyState(VK_INSERT))
+          AL_reg(context) |= 0x80;
+      TRACE(int16, "Get Shift Flags: returning 0x%02x\n", AL_reg(context));
       break;
 
    case 0x03: /* Set Typematic Rate and Delay */
