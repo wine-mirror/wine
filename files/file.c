@@ -184,10 +184,16 @@ void FILE_SetDosError(void)
  */
 HANDLE FILE_DupUnixHandle( int fd, DWORD access )
 {
-    struct alloc_file_handle_request *req = get_req_buffer();
-    req->access  = access;
-    server_call_fd( REQ_ALLOC_FILE_HANDLE, fd );
-    return req->handle;
+    HANDLE ret;
+    SERVER_START_REQ
+    {
+        struct alloc_file_handle_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->access  = access;
+        server_call_fd( REQ_ALLOC_FILE_HANDLE, fd );
+        ret = req->handle;
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
@@ -1163,7 +1169,7 @@ BOOL WINAPI GetOverlappedResult(
     } while (r==STATUS_USER_APC);
 
     if(lpTransferred)
-        *lpTransferred = lpOverlapped->Offset;
+        *lpTransferred = lpOverlapped->InternalHigh;
 
     SetLastError(lpOverlapped->Internal);
  
@@ -1212,17 +1218,17 @@ static void FILE_AsyncReadService(void **args)
         goto async_end;
     }
 
-    fd = FILE_GetUnixHandle(lpOverlapped->InternalHigh, GENERIC_READ);
+    fd = FILE_GetUnixHandle(lpOverlapped->Offset, GENERIC_READ);
     if(fd<0)
     {
-        TRACE("FILE_GetUnixHandle(%ld) failed \n",lpOverlapped->InternalHigh);
+        TRACE("FILE_GetUnixHandle(%ld) failed \n",lpOverlapped->Offset);
         r = STATUS_UNSUCCESSFUL;
         goto async_end;
     }
 
     /* check to see if the data is ready (non-blocking) */
-    result = read(fd, &buffer[lpOverlapped->Offset],
-                  lpOverlapped->OffsetHigh - lpOverlapped->Offset);
+    result = read(fd, &buffer[lpOverlapped->InternalHigh],
+                  lpOverlapped->OffsetHigh - lpOverlapped->InternalHigh);
     close(fd);
 
     if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
@@ -1240,10 +1246,10 @@ static void FILE_AsyncReadService(void **args)
         goto async_end;
     }
 
-    lpOverlapped->Offset += result;
-    TRACE("read %d more bytes %ld/%ld so far\n",result,lpOverlapped->Offset,lpOverlapped->OffsetHigh);
+    lpOverlapped->InternalHigh += result;
+    TRACE("read %d more bytes %ld/%ld so far\n",result,lpOverlapped->InternalHigh,lpOverlapped->OffsetHigh);
 
-    if(lpOverlapped->Offset < lpOverlapped->OffsetHigh)
+    if(lpOverlapped->InternalHigh < lpOverlapped->OffsetHigh)
         r = STATUS_PENDING;
     else
         r = STATUS_SUCCESS;
@@ -1254,9 +1260,9 @@ async_end:
         || (!FILE_AsyncResult( lpOverlapped->InternalHigh, r)))
     {
         /* close the handle to the async operation */
-        if(lpOverlapped->InternalHigh)
-            CloseHandle(lpOverlapped->InternalHigh);
-        lpOverlapped->InternalHigh = 0;
+        if(lpOverlapped->Offset)
+            CloseHandle(lpOverlapped->Offset);
+        lpOverlapped->Offset = 0;
 
         NtSetEvent( lpOverlapped->hEvent, NULL );
         TRACE("set event flag\n");
@@ -1283,13 +1289,13 @@ static BOOL FILE_StartAsyncRead( HANDLE hFile, LPOVERLAPPED overlapped, LPVOID b
 
         r=server_call( REQ_CREATE_ASYNC );
 
-        overlapped->InternalHigh = req->ov_handle;
+        overlapped->Offset = req->ov_handle;
     }
     SERVER_END_REQ
 
     if(!r)
     {
-        TRACE("ov=%ld IO is pending!!!\n",overlapped->InternalHigh);
+        TRACE("ov=%ld IO is pending!!!\n",overlapped->Offset);
         SetLastError(ERROR_IO_PENDING);
     }
 
@@ -1373,17 +1379,17 @@ static void FILE_AsyncWriteService(void **args)
         goto async_end;
     }
 
-    fd = FILE_GetUnixHandle(lpOverlapped->InternalHigh, GENERIC_WRITE);
+    fd = FILE_GetUnixHandle(lpOverlapped->Offset, GENERIC_WRITE);
     if(fd<0)
     {
-        ERR("FILE_GetUnixHandle(%ld) failed \n",lpOverlapped->InternalHigh);
+        ERR("FILE_GetUnixHandle(%ld) failed \n",lpOverlapped->Offset);
         r = STATUS_UNSUCCESSFUL;
         goto async_end;
     }
 
     /* write some data (non-blocking) */
-    result = write(fd, &buffer[lpOverlapped->Offset],
-                  lpOverlapped->OffsetHigh-lpOverlapped->Offset);
+    result = write(fd, &buffer[lpOverlapped->InternalHigh],
+                  lpOverlapped->OffsetHigh-lpOverlapped->InternalHigh);
     close(fd);
 
     if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
@@ -1399,9 +1405,9 @@ static void FILE_AsyncWriteService(void **args)
         goto async_end;
     }
 
-    lpOverlapped->Offset += result;
+    lpOverlapped->InternalHigh += result;
 
-    if(lpOverlapped->Offset < lpOverlapped->OffsetHigh)
+    if(lpOverlapped->InternalHigh < lpOverlapped->OffsetHigh)
         r = STATUS_PENDING;
     else
         r = STATUS_SUCCESS;
@@ -1409,11 +1415,11 @@ static void FILE_AsyncWriteService(void **args)
 async_end:
     lpOverlapped->Internal = r;
     if ( (r!=STATUS_PENDING)
-        || (!FILE_AsyncResult( lpOverlapped->InternalHigh, r)))
+        || (!FILE_AsyncResult( lpOverlapped->Offset, r)))
     {
         /* close the handle to the async operation */
-        CloseHandle(lpOverlapped->InternalHigh);
-        lpOverlapped->InternalHigh = 0;
+        CloseHandle(lpOverlapped->Offset);
+        lpOverlapped->Offset = 0;
 
         NtSetEvent( lpOverlapped->hEvent, NULL );
     }
@@ -1428,7 +1434,7 @@ static BOOL FILE_StartAsyncWrite(HANDLE hFile, LPOVERLAPPED overlapped, LPCVOID 
 
     SERVER_START_REQ
     {
-        struct create_async_request *req = get_req_buffer();
+        struct create_async_request *req = server_alloc_req( sizeof(*req), 0 );
 
         req->file_handle = hFile;
         req->buffer = (LPVOID)buffer;
@@ -1439,7 +1445,7 @@ static BOOL FILE_StartAsyncWrite(HANDLE hFile, LPOVERLAPPED overlapped, LPCVOID 
 
         r = server_call( REQ_CREATE_ASYNC );
 
-        overlapped->InternalHigh = req->ov_handle;
+        overlapped->Offset = req->ov_handle;
     }
     SERVER_END_REQ
 
