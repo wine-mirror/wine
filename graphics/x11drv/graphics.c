@@ -1332,8 +1332,9 @@ static void X11DRV_Bezier(int level, DC * dc, POINT *Points,
     X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     if(*pIx == BEZMAXPOINTS){
-        TSXDrawLines( display, physDev->drawable, physDev->gc,
-                    xpoints, *pIx, CoordModeOrigin );
+        if (X11DRV_SetupGCForPen( dc )) 
+            TSXDrawLines( display, physDev->drawable, physDev->gc,
+                          xpoints, *pIx, CoordModeOrigin );
         *pIx=0;
     }
     if(!level || BezierCheck(level, Points)) {
@@ -1406,7 +1407,8 @@ X11DRV_PolyBezier(DC *dc, POINT start, const POINT* BezierPoints, DWORD count)
         X11DRV_Bezier(BEZIERMAXDEPTH , dc, Points, xpoints, &ix );
         count -=3;
     }
-    if( ix) TSXDrawLines( display, physDev->drawable, physDev->gc,
+    if (ix && X11DRV_SetupGCForPen( dc ))
+         TSXDrawLines( display, physDev->drawable, physDev->gc,
 			  xpoints, ix, CoordModeOrigin );
     free(xpoints);
     return TRUE;
