@@ -11,7 +11,7 @@
 @ stub    DrawDibGetBuffer
 @ stdcall DrawDibGetPalette(long)
 @ stdcall DrawDibOpen()
-@ stub    DrawDibProfileDisplay
+@ stdcall DrawDibProfileDisplay(ptr)
 @ stdcall DrawDibRealize(long long long)
 @ stdcall DrawDibSetPalette(long long)
 @ stdcall DrawDibStart(long long)

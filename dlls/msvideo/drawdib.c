@@ -454,3 +454,10 @@ UINT VFWAPI DrawDibRealize(HDRAWDIB hdd, HDC hdc, BOOL fBackground)
     TRACE("=> %u\n", ret);
     return ret;
 }
+
+DWORD VFWAPI DrawDibProfileDisplay(LPBITMAPINFOHEADER lpbi)
+{
+    FIXME("(%p) stub\n", lpbi);
+
+    return PD_CAN_DRAW_DIB;
+}
