@@ -281,7 +281,7 @@ typedef struct render_state {
 } RenderState;
 
 typedef struct OpenGL_IDirect3DDevice2 {
-  IDirect3DDevice2 common;
+  IDirect3DDevice2Impl common;
   
   /* These are the OpenGL-specific variables */
   OSMesaContext ctx;
@@ -299,7 +299,7 @@ typedef struct OpenGL_IDirect3DDevice2 {
 } OpenGL_IDirect3DDevice2;
 
 typedef struct OpenGL_IDirect3DDevice {
-  IDirect3DDevice common;
+  IDirect3DDeviceImpl common;
   
   /* These are the OpenGL-specific variables */
   OSMesaContext ctx;
