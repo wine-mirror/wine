@@ -17,7 +17,7 @@
  *  -drag&drop.
  *  -scrollbars.
  *  -Unicode messages
- *  -TVITEMEX 
+ *  -TV_ITEMEX 
  *
  * FIXMEs:  
    -GetNextItem: add flags for traversing child lists.
@@ -512,7 +512,7 @@ TREEVIEW_SetItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
   TV_ITEM *tvItem;
   INT32 iItem,len;
 
-  tvItem=(LPTVITEM) lParam;
+  tvItem=(LPTV_ITEM) lParam;
   iItem=tvItem->hItem;
   TRACE (treeview,"item %d,mask %x\n",iItem,tvItem->mask);
 
@@ -715,12 +715,12 @@ static LRESULT
 TREEVIEW_GetItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(wndPtr);
-  LPTVITEM      tvItem;
+  LPTV_ITEM      tvItem;
   TREEVIEW_ITEM *wineItem;
   INT32         iItem;
 
   TRACE (treeview,"\n");
-  tvItem=(LPTVITEM) lParam;
+  tvItem=(LPTV_ITEM) lParam;
   iItem=tvItem->hItem;
 
   wineItem = TREEVIEW_ValidItem (infoPtr, iItem);
@@ -850,13 +850,13 @@ TREEVIEW_InsertItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 {
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(wndPtr);
-  TVINSERTSTRUCT  *ptdi;
+  TVINSERTSTRUCTA  *ptdi;
   TV_ITEM 	*tvItem;
   TREEVIEW_ITEM *wineItem, *parentItem, *prevsib, *sibItem;
   INT32		iItem,listItems,i,len;
   
   TRACE (treeview,"\n");
-  ptdi = (TVINSERTSTRUCT *) lParam;
+  ptdi = (TVINSERTSTRUCTA *) lParam;
 
 	/* check if memory is available */
 
@@ -1261,7 +1261,7 @@ TREEVIEW_SendTreeviewNotify (WND *wndPtr, UINT32 code, UINT32 action,
 			INT32 oldItem, INT32 newItem, POINT32 pt)
 {
   TREEVIEW_INFO *infoPtr = TREEVIEW_GetInfoPtr(wndPtr);
-  NMTREEVIEW nmhdr;
+  NM_TREEVIEW nmhdr;
   TREEVIEW_ITEM  *wineItem;
 
   TRACE (treeview,"code:%x action:%x olditem:%x newitem:%x\n",

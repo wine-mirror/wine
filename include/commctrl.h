@@ -1755,7 +1755,23 @@ typedef struct {
       INT32  iSelectedImage;
       INT32  cChildren;
       LPARAM lParam;
-} TV_ITEM, *LPTVITEM;
+} TVITEMA, *LPTVITEMA;
+
+typedef struct {
+      UINT32 mask;
+      HTREEITEM hItem;
+      UINT32 state;
+      UINT32 stateMask;
+      LPWSTR pszText;
+      int cchTextMax;
+      int iImage;
+      int iSelectedImage;
+      int cChildren;
+      LPARAM lParam;
+} TVITEMW, *LPTVITEMW;
+
+#define LPTV_ITEM LPTVITEMA
+#define TV_ITEM TVITEMA
 
 typedef struct {
       UINT32 mask;
@@ -1768,34 +1784,72 @@ typedef struct {
       INT32  iSelectedImage;
       INT32  cChildren;
       LPARAM lParam;
-      INT32  iIntegral;
-} TV_ITEMEX, *LPTVITEMEX;
+      int iIntegral;
+} TVITEMEXA, *LPTVITEMEXA;
 
-#define TVITEM TV_ITEM
+typedef struct {
+      UINT32 mask;
+      HTREEITEM hItem;
+      UINT32 state;
+      UINT32 stateMask;
+      LPWSTR pszText;
+      int cchTextMax;
+      int iImage;
+      int iSelectedImage;
+      int cChildren;
+      LPARAM lParam;
+      int iIntegral;
+} TVITEMEXW, *LPTV_ITEMEXW;
 
+#define TV_ITEMEX TVITEMEXA
+#define LPTV_ITEMEXA LPTVITEMEXA
 
-
-typedef struct tagTVINSERTSTRUCT {
+typedef struct tagTVINSERTSTRUCTA {
         HTREEITEM hParent;
         HTREEITEM hInsertAfter;
-        TV_ITEM item;
-} TVINSERTSTRUCT, *LPTVINSERTSTRUCT;
+        TVITEMA item;
+} TVINSERTSTRUCTA, *LPTVINSERTSTRUCTA;
 
-#define TV_INSERTSTRUCT TVINSERTSTRUCT
-#define LPTV_INSERTSTRUCT LPTVINSERTSTRUCT
+typedef struct tagTVINSERTSTRUCTW {
+        HTREEITEM hParent;
+        HTREEITEM hInsertAfter;
+        TVITEMW item;
+} TVINSERTSTRUCTW, *LPTVINSERTSTRUCTW;
 
-typedef struct tagNMTREEVIEW {
+#define TV_INSERTSTRUCT TVINSERTSTRUCTA
+#define LPTV_INSERTSTRUCT LPTVINSERTSTRUCTA
+
+typedef struct tagNMTREEVIEWA {
 	NMHDR	hdr;
 	UINT32	action;
-	TVITEM	itemOld;
-	TVITEM	itemNew;
+	TVITEMA	itemOld;
+	TVITEMA	itemNew;
 	POINT32	ptDrag;
-} NMTREEVIEW, *LPNMTREEVIEW;
+} NMTREEVIEWA, *LPNMTREEVIEWA;
 
-typedef struct tagTVDISPINFO {
+typedef struct tagNMTREEVIEWW {
 	NMHDR	hdr;
-	TVITEM	item;
-} NMTVDISPINFO, *LPNMTVDISPINFO;
+	UINT32	action;
+	TVITEMW	itemOld;
+	TVITEMW	itemNew;
+	POINT32	ptDrag;
+} NMTREEVIEWW, *LPNMTREEVIEWW;
+
+#define NM_TREEVIEW NMTREEVIEWA
+#define LPNM_TREEVIEW LPNMTREEVIEWA
+
+typedef struct tagTVDISPINFOA {
+	NMHDR	hdr;
+	TVITEMA	item;
+} NMTVDISPINFOA, *LPNMTVDISPINFOA;
+
+typedef struct tagTVDISPINFOW {
+	NMHDR	hdr;
+	TVITEMW	item;
+} NMTVDISPINFOW, *LPNMTVDISPINFOW;
+
+#define NMTVDISPINFO            NMTVDISPINFOA
+#define LPNMTVDISPINFO          LPNMTVDISPINFOA
 
 typedef INT32 (CALLBACK *PFNTVCOMPARE)(LPARAM, LPARAM, LPARAM);
 
@@ -1817,9 +1871,9 @@ typedef struct tagTVHITTESTINFO {
 
 #define TV_HITTESTINFO TVHITTESTINFO
 
-#define TreeView_InsertItem(hwndHD, phdi) \
-  (INT32)SendMessage32A((hwnd), TVM_INSERTITEM, 0, \
-                            (LPARAM)(LPTV_INSERTSTRUCT)(phdi))
+#define TreeView_InsertItem32A(hwnd, phdi) \
+  (INT32)SendMessage32A((hwnd), TVM_INSERTITEM32A, 0, \
+                            (LPARAM)(LPTVINSERTSTRUCTA)(phdi))
 #define TreeView_DeleteItem(hwnd, hItem) \
   (BOOL32)SendMessage32A((hwnd), TVM_DELETEITEM, 0, (LPARAM)(HTREEITEM)(hItem))
 #define TreeView_DeleteAllItems(hwnd) \
@@ -1877,7 +1931,7 @@ typedef struct tagTVHITTESTINFO {
 
 
 #define TreeView_Select(hwnd, hitem, code) \
- (UINT32)SendMessage32A((hwnd), TVM_SELECTITEM, (WPARAM)code, \
+ (UINT32)SendMessage32A((hwnd), TVM_SELECTITEM, (WPARAM32)code, \
 (LPARAM)(UINT32)(hitem))
 
 
@@ -1890,11 +1944,11 @@ typedef struct tagTVHITTESTINFO {
 		TreeView_Select(hwnd, hitem, TVGN_FIRSTVISIBLE)
 */
 
-#define TreeView_GetItem(hwnd, pitem) \
- (BOOL32)SendMessage32A((hwnd), TVM_GETITEM, 0, (LPARAM) (TV_ITEM *)(pitem))
+#define TreeView_GetItem32A(hwnd, pitem) \
+ (BOOL32)SendMessage32A((hwnd), TVM_GETITEM32A, 0, (LPARAM) (TVITEMA *)(pitem))
 
-#define TreeView_SetItem(hwnd, pitem) \
- (BOOL32)SendMessage32A((hwnd), TVM_SETITEM, 0, (LPARAM)(const TV_ITEM *)(pitem)) 
+#define TreeView_SetItem32A(hwnd, pitem) \
+ (BOOL32)SendMessage32A((hwnd), TVM_SETITEM32A, 0, (LPARAM)(const TVITEMA *)(pitem)) 
 
 #define TreeView_EditLabel(hwnd, hitem) \
     (HWND)SendMessage32A((hwnd), TVM_EDITLABEL, 0, (LPARAM)(HTREEITEM)(hitem))
@@ -1908,32 +1962,32 @@ typedef struct tagTVHITTESTINFO {
 
 #define TreeView_HitTest(hwnd, lpht) \
     (HTREEITEM)SendMessage32A((hwnd), TVM_HITTEST, 0,\
-(LPARAM)(LPTV_HITTESTINFO)(lpht))
+(LPARAM)(LPTVHITTESTINFO)(lpht))
 
 #define TreeView_CreateDragImage(hwnd, hitem) \
     (HIMAGELIST)SendMessage32A((hwnd), TVM_CREATEDRAGIMAGE, 0,\
 (LPARAM)(HTREEITEM)(hitem))
 
 #define TreeView_SortChildren(hwnd, hitem, recurse) \
-    (BOOL)SendMessage32A((hwnd), TVM_SORTCHILDREN, (WPARAM)recurse,\
+    (BOOL32)SendMessage32A((hwnd), TVM_SORTCHILDREN, (WPARAM32)recurse,\
 (LPARAM)(HTREEITEM)(hitem))
 
 #define TreeView_EnsureVisible(hwnd, hitem) \
-    (BOOL)SendMessage32A((hwnd), TVM_ENSUREVISIBLE, 0, (LPARAM)(UINT32)(hitem))
+    (BOOL32)SendMessage32A((hwnd), TVM_ENSUREVISIBLE, 0, (LPARAM)(UINT32)(hitem))
 
 #define TreeView_SortChildrenCB(hwnd, psort, recurse) \
-    (BOOL)SendMessage32A((hwnd), TVM_SORTCHILDRENCB, (WPARAM)recurse, \
+    (BOOL32)SendMessage32A((hwnd), TVM_SORTCHILDRENCB, (WPARAM32)recurse, \
     (LPARAM)(LPTV_SORTCB)(psort))
 
 #define TreeView_EndEditLabelNow(hwnd, fCancel) \
-    (BOOL)SendMessage32A((hwnd), TVM_ENDEDITLABELNOW, (WPARAM)fCancel, 0)
+    (BOOL32)SendMessage32A((hwnd), TVM_ENDEDITLABELNOW, (WPARAM32)fCancel, 0)
 
 #define TreeView_GetISearchString(hwndTV, lpsz) \
-    (BOOL)SendMessage32A((hwndTV), TVM_GETISEARCHSTRING, 0, \
+    (BOOL32)SendMessage32A((hwndTV), TVM_GETISEARCHSTRING, 0, \
 							(LPARAM)(LPTSTR)lpsz)
 
 #define TreeView_SetItemHeight(hwnd,  iHeight) \
-    (INT32)SendMessage32A((hwnd), TVM_SETITEMHEIGHT, (WPARAM)iHeight, 0)
+    (INT32)SendMessage32A((hwnd), TVM_SETITEMHEIGHT, (WPARAM32)iHeight, 0)
 #define TreeView_GetItemHeight(hwnd) \
     (INT32)SendMessage32A((hwnd), TVM_GETITEMHEIGHT, 0, 0)
 
@@ -2678,6 +2732,7 @@ typedef struct tagNMIPADDRESS
 /*
  * Property sheet support (callback procs)
  */
+
 
 #define WC_PROPSHEET32A      "SysPropertySheet"
 #define WC_PROPSHEET32W      L"SysPropertySheet"
