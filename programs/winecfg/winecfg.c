@@ -191,6 +191,15 @@ HRESULT removeConfigValue(char *subkey, char *valueName) {
     return S_OK;
 }
 
+/* removes the requested configuration section (subkey) from the registry, assuming it exists */
+/* this function might be slightly pointless, but in future we may wish to treat recursion specially etc, so we'll keep it for now */
+HRESULT removeConfigSection(char *section) {
+    HRESULT hr;
+    WINE_TRACE("section=%s\n", section);
+
+    return hr = RegDeleteKey(configKey, section);
+}
+
 
 /* ========================================================================= */
 /* Transaction management code */
@@ -204,7 +213,7 @@ void destroyTransaction(struct transaction *trans) {
     WINE_TRACE("destroying %p\n", trans);
     
     free(trans->section);
-    free(trans->key);
+    if (trans->key) free(trans->key);
     if (trans->newValue) free(trans->newValue);
     
     if (trans->next) trans->next->prev = trans->prev;
@@ -216,18 +225,16 @@ void destroyTransaction(struct transaction *trans) {
 }
 
 void addTransaction(char *section, char *key, enum transaction_action action, char *newValue) {
-    struct transaction *trans = malloc(sizeof(struct transaction));
+    struct transaction *trans = calloc(sizeof(struct transaction),1);
     
     assert( section != NULL );
-    assert( key != NULL );
     if (action == ACTION_SET) assert( newValue != NULL );
-
+    if (action == ACTION_SET) assert( key != NULL );
+				     
     trans->section = strdup(section);
-    trans->key = strdup(key);
-    trans->newValue = strdup(newValue);
+    if (key) trans->key = strdup(key);
+    if (newValue) trans->newValue = strdup(newValue);
     trans->action = action;
-    trans->next = NULL;
-    trans->prev = NULL;
     
     if (tqtail == NULL) {
 	tqtail = trans;
@@ -249,8 +256,14 @@ void processTransaction(struct transaction *trans) {
 	WINE_TRACE("Setting %s\\%s to '%s'\n", trans->section, trans->key, trans->newValue);
 	setConfigValue(trans->section, trans->key, trans->newValue);
     } else if (trans->action == ACTION_REMOVE) {
-	WINE_TRACE("Removing %s\\%s", trans->section, trans->key);
-	removeConfigValue(trans->section, trans->key);
+	if (trans->key) {
+	    WINE_TRACE("Removing %s\\%s\n", trans->section, trans->key);
+	    removeConfigValue(trans->section, trans->key);
+	} else {
+	    /* NULL key means remove that section entirely */
+	    WINE_TRACE("Removing section %s\n", trans->section);
+	    removeConfigSection(trans->section);
+	}
     }
     /* TODO: implement notifications here */
 }
@@ -265,7 +278,6 @@ void processTransQueue(void)
 	tqtail = next;	
     }
 }
-
 
 /* ================================== utility functions ============================ */
 

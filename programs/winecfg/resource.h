@@ -34,8 +34,7 @@
 #define IDD_DLLCFG                      110
 #define IDD_DRIVECFG                    111
 #define IDD_SYSTEMCFG                   112
-#define IDD_DRIVE_EDIT                  113
-#define IDD_DRIVE_EDIT2                 114
+#define IDD_DRIVE_EDIT                  114
 #define IDB_WINE_LOGO                   200
 #define IDC_TABABOUT                    1001
 #define IDC_APPLYBTN                    1002
@@ -102,3 +101,4 @@
 #define IDC_STATIC_SERIAL               1072
 #define IDC_STATIC_LABEL                1073
 #define IDC_ENABLE_DESKTOP              1074
+#define IDS_DRIVE_NO_C                  1075

@@ -43,6 +43,9 @@
 	return ret; \
     }
 
+#define WRITEME(owner) MessageBox(owner, "Write me!", "", MB_OK | MB_ICONEXCLAMATION);
+  
+
 /* Transaction management */
 enum transaction_action {
     ACTION_SET,
