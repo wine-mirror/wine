@@ -1,0 +1,168 @@
+#!/bin/bash
+# WINE Installation script
+
+# Mar 31 1999 - Ove Kåven
+#  First version
+
+# defaults
+
+sysconfdir=/usr/local/etc
+DOCONF=auto
+DOREG=yes
+
+# startup...
+
+echo "WINE Installer v0.1"
+echo
+if ! [ -f configure ]
+then {
+  echo "You're running this from the wrong directory."
+  echo "Change to the Wine directory and try again."
+  exit 1
+}
+fi
+
+# run the configure script, if necessary
+
+if [ -f Makefile ] && [ Makefile -nt configure ]
+then {
+  echo "I see that WINE has already been configured, so I'll skip that."
+}
+else {
+  # we'll run with defaults (we need libwine.a later)
+  echo "Running configure..."
+  echo
+  if ! ./configure
+  then {
+    echo
+    echo "Configure failed, aborting install."
+    rm -f config.cache
+    exit 1
+  }
+  fi
+  # make sure X was found
+  if ! grep -qs "have_x=yes" config.cache
+  then {
+    echo "Install the X development headers and try again."
+    rm -f config.cache
+    exit 1
+  }
+  fi
+}
+fi
+
+# now do the compilation
+
+if [ -f wine ] && [ wine -nt Makefile ]
+then {
+  echo "Hmm, looks like WINE is already compiled. I'll skip that too, I guess."
+}
+else {
+  echo "Compiling WINE. Grab a lunch or two, rent a video, or whatever, in the meantime..."
+  echo
+  if ! { make depend && make; }
+  then {
+    echo
+    echo "Compilation failed, aborting install."
+    exit 1
+  }
+  fi
+  echo
+}
+fi
+
+# and installation, if root
+
+if [ `whoami` != 'root' ]
+then {
+  echo "You aren't root, so I'll skip the make install."
+}
+else {
+  echo "Now installing binaries onto the system..."
+  echo
+  if ! make install
+  then {
+    echo
+    echo "Installation failed, aborting."
+    exit 1
+  }
+  fi
+}
+fi
+echo
+
+# now check whether we should generate wine.conf
+if [ -z "$DOCONF" ]
+then DOCONF=auto
+fi
+
+if [ "$DOCONF" = 'auto' ]
+then {
+  # see if we already have a system wine.conf
+  if [ -f $sysconfdir/wine.conf ] || [ -f /etc/wine.conf ]
+  then DOCONF=no
+  fi
+}
+fi
+
+if [ "$DOCONF" != 'no' ]
+then {
+  if [ `whoami` != 'root' ]
+  then {
+    CONF=~/.winerc
+    if ! [ -f $CONF ]
+    then {
+      if [ "$DOCONF" != 'yes' ]
+      then {
+        echo "Since you aren't root, and there's no system wine.conf, I assume"
+        echo "you want a user-specific .winerc. Am I correct? (yes/no)"
+        while [ "$DOCONF" != 'yes' ] && [ "$DOCONF" != 'no' ]
+        do read DOCONF
+        done
+      }
+      fi
+      if [ "$DOCONF" = 'no' ]
+      then echo "Skipping generation of .winerc."
+      fi
+    }
+    fi
+  }
+  else {
+    CONF=$sysconfdir/wine.conf
+    DOCONF=yes
+  }
+  fi
+}
+fi
+
+if [ "$DOCONF" = 'yes' ]
+then {
+  echo "Now automatically generating $CONF for you..."
+  echo
+  tools/wineconf > $CONF
+  echo
+  echo "Done. You probably want to review the file, though."
+}
+fi
+echo
+
+# install default registry entries
+if [ "$DOREG" = 'yes' ]
+then {
+  echo "Compiling regapi..."
+  echo
+  (cd programs/regapi; make)
+  echo
+  echo "Installing default registry entries, please wait..."
+  echo
+  if ! programs/regapi/regapi setValue < winedefault.reg
+  then {
+    echo
+    echo "Registry install failed. Perhaps you weren't running X."
+  }
+  fi
+}
+fi
+echo
+echo "Installation complete for now. Good luck (this is still alpha software)."
+echo "If you have problems with WINE, please read the documentation first."
