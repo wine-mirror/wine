@@ -25,10 +25,6 @@
 #define WRC_VERSION		WRC_VERSIONIZE(WRC_MAJOR_VERSION, WRC_MINOR_VERSION, WRC_MICRO_VERSION)
 #define WRC_FULLVERSION 	WRC_VERSION " " WRC_RELEASEDATE
 
-#ifndef MAX
-#define MAX(a,b)	((a) > (b) ? (a) : (b))
-#endif
-
 /* From wrc.c */
 extern int debuglevel;
 #define DEBUGLEVEL_NONE		0x0000

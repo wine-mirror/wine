@@ -1333,7 +1333,7 @@ static void add_text_to_macro(char *text, int len)
 
 	if(mep->curargalloc - mep->curargsize <= len+1)	/* +1 for '\0' */
 	{
-		mep->curargalloc += MAX(ALLOCBLOCKSIZE, len+1);
+		mep->curargalloc += max(ALLOCBLOCKSIZE, len+1);
 		mep->curarg = xrealloc(mep->curarg, mep->curargalloc * sizeof(mep->curarg[0]));
 	}
 	memcpy(mep->curarg + mep->curargsize, text, len);
