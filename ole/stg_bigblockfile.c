@@ -621,6 +621,7 @@ static void * BIGBLOCKFILE_GetMappedView(
   MappedPage * current;
   MappedPage * newMappedPage;
   DWORD hioffset, lowoffset;
+  DWORD numBytesToMap;
 
   /* use correct list
    */
@@ -660,22 +661,16 @@ static void * BIGBLOCKFILE_GetMappedView(
 
       /* actually map the page
        */
-      if (This->filesize.LowPart <= PAGE_SIZE)
-      {
-        newMappedPage->lpBytes = MapViewOfFile(This->hfilemap,
-					       desired_access,
-					       hioffset, lowoffset,
-					       This->filesize.LowPart);
-      }
+      if (((pagenum + 1) * PAGE_SIZE) > This->filesize.LowPart)
+        numBytesToMap = This->filesize.LowPart - (pagenum * PAGE_SIZE);
       else
-      {
-        DWORD numBytesToMap = This->filesize.LowPart - (pagenum*PAGE_SIZE);
-        newMappedPage->lpBytes = MapViewOfFile(This->hfilemap,
-					       desired_access,
-					       hioffset,
-					       lowoffset,
-					       numBytesToMap);
-      }
+        numBytesToMap = PAGE_SIZE;
+
+      newMappedPage->lpBytes = MapViewOfFile(This->hfilemap,
+                                             desired_access,
+                                             hioffset,
+                                             lowoffset,
+                                             numBytesToMap);
 
       return newMappedPage->lpBytes;
     }
@@ -704,23 +699,16 @@ static void * BIGBLOCKFILE_GetMappedView(
 
     /* actually map the page
      */
-    if (This->filesize.LowPart <= PAGE_SIZE)
-    {
-      newMappedPage->lpBytes = MapViewOfFile(This->hfilemap,
-					     desired_access,
-					     hioffset,
-					     lowoffset, 
-					     This->filesize.LowPart);
-    }
+    if (((pagenum + 1) * PAGE_SIZE) > This->filesize.LowPart)
+      numBytesToMap = This->filesize.LowPart - (pagenum * PAGE_SIZE);
     else
-    {
-      DWORD numBytesToMap = This->filesize.LowPart - (pagenum*PAGE_SIZE);
-      newMappedPage->lpBytes = MapViewOfFile(This->hfilemap,
-					     desired_access,
-					     hioffset, 
-					     lowoffset,
-					     numBytesToMap);
-    }
+      numBytesToMap = PAGE_SIZE;
+
+    newMappedPage->lpBytes = MapViewOfFile(This->hfilemap,
+                                           desired_access,
+                                           hioffset,
+                                           lowoffset,
+                                           numBytesToMap);
 
     return newMappedPage->lpBytes;
   }
