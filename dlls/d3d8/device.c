@@ -994,15 +994,81 @@ GLenum StencilOp(DWORD op) {
     case D3DSTENCILOP_INCRSAT : return GL_INCR;
     case D3DSTENCILOP_DECRSAT : return GL_DECR;
     case D3DSTENCILOP_INVERT  : return GL_INVERT;
-    case D3DSTENCILOP_INCR    : FIXME("Unsupported stencil op %ld\n", op);
+    case D3DSTENCILOP_INCR    : FIXME("Unsupported stencil op D3DSTENCILOP_INCR\n");
                                 return GL_INCR; /* Fixme - needs to support wrap */
-    case D3DSTENCILOP_DECR    : FIXME("Unsupported stencil op %ld\n", op);
+    case D3DSTENCILOP_DECR    : FIXME("Unsupported stencil op D3DSTENCILOP_DECR\n");
                                 return GL_DECR; /* Fixme - needs to support wrap */
     default:
         FIXME("Invalid stencil op %ld\n", op);
         return GL_ALWAYS;
     }
 }
+
+/**
+ * @nodoc: todo
+ */
+void GetSrcAndOpFromValue(DWORD iValue, BOOL isAlphaArg, GLenum* source, GLenum* operand) 
+{
+  BOOL isAlphaReplicate = FALSE;
+  BOOL isComplement     = FALSE;
+  
+  *operand = GL_SRC_COLOR;
+  *source = GL_TEXTURE;
+  
+  /* Catch alpha replicate */
+  if (iValue & D3DTA_ALPHAREPLICATE) {
+    iValue = iValue & ~D3DTA_ALPHAREPLICATE;
+    isAlphaReplicate = TRUE;
+  }
+  
+  /* Catch Complement */
+  if (iValue & D3DTA_COMPLEMENT) {
+    iValue = iValue & ~D3DTA_COMPLEMENT;
+    isComplement = TRUE;
+  }
+  
+  /* Calculate the operand */
+  if (isAlphaReplicate && !isComplement) {
+    *operand = GL_SRC_ALPHA;
+  } else if (isAlphaReplicate && isComplement) {
+    *operand = GL_ONE_MINUS_SRC_ALPHA;
+  } else if (isComplement) {
+    if (isAlphaArg) {
+      *operand = GL_ONE_MINUS_SRC_ALPHA;
+    } else {
+      *operand = GL_ONE_MINUS_SRC_COLOR;
+    }
+  } else {
+    if (isAlphaArg) {
+      *operand = GL_SRC_ALPHA;
+    } else {
+      *operand = GL_SRC_COLOR;
+    }
+  }
+  
+  /* Calculate the source */
+  switch (iValue & D3DTA_SELECTMASK) {
+  case D3DTA_CURRENT:   *source  = GL_PREVIOUS_EXT;
+    break;
+  case D3DTA_DIFFUSE:   *source  = GL_PRIMARY_COLOR_EXT;
+    break;
+  case D3DTA_TEXTURE:   *source  = GL_TEXTURE;
+    break;
+  case D3DTA_TFACTOR:   *source  = GL_CONSTANT_EXT;
+    break;
+  case D3DTA_SPECULAR:
+    /**
+     * According to the GL_ARB_texture_env_combine specs, SPECULAR is 'Secondary color' and
+     * isnt supported until base GL supports it
+     * There is no concept of temp registers as far as I can tell
+     */
+
+  default:
+    FIXME("Unrecognized or unhandled texture arg %ld\n", iValue);
+    *source = GL_TEXTURE;
+  }
+}
+
 
 /* Apply the current values to the specified texture stage */
 void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage) {
@@ -1154,7 +1220,9 @@ BOOL     WINAPI  IDirect3DDevice8Impl_ShowCursor(LPDIRECT3DDEVICE8 iface, BOOL b
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PARAMETERS* pPresentationParameters, IDirect3DSwapChain8** pSwapChain) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    *pSwapChain = NULL;
+    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_Reset(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PARAMETERS* pPresentationParameters) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -1173,10 +1241,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Present(LPDIRECT3DDEVICE8 iface, CONST REC
 
     return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_GetBackBuffer(LPDIRECT3DDEVICE8 iface, UINT BackBuffer,D3DBACKBUFFER_TYPE Type,IDirect3DSurface8** ppBackBuffer) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_GetBackBuffer(LPDIRECT3DDEVICE8 iface, UINT BackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8** ppBackBuffer) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     *ppBackBuffer = (LPDIRECT3DSURFACE8) This->backBuffer;
     TRACE("(%p) : BackBuf %d Type %d returning %p\n", This, BackBuffer, Type, *ppBackBuffer);
+
+    if (BackBuffer > This->PresentParms.BackBufferCount - 1) {
+      FIXME("Only one backBuffer currently supported\n");
+      return D3DERR_INVALIDCALL;
+    }
 
     /* Note inc ref on returned surface */
     IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) *ppBackBuffer);
@@ -1185,7 +1258,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetBackBuffer(LPDIRECT3DDEVICE8 iface, UIN
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetRasterStatus(LPDIRECT3DDEVICE8 iface, D3DRASTER_STATUS* pRasterStatus) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+    FIXME("(%p) : stub\n", This);    
+    return D3D_OK;
 }
 void     WINAPI  IDirect3DDevice8Impl_SetGammaRamp(LPDIRECT3DDEVICE8 iface, DWORD Flags,CONST D3DGAMMARAMP* pRamp) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -1217,6 +1291,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
     object->usage = Usage;
     object->format = Format;
     object->device = This;
+    /*IDirect3DDevice8Impl_AddRef((LPDIRECT3DDEVICE8) object->device);*/
 
     /* Calculate levels for mip mapping */
     if (Levels == 0) {
@@ -1237,7 +1312,8 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
     for (i=0; i<object->levels; i++) 
     {
         IDirect3DDevice8Impl_CreateImageSurface(iface, tmpW, tmpH, Format, (LPDIRECT3DSURFACE8*) &object->surfaces[i]);
-        object->surfaces[i]->Container = (IUnknown*) object; /* FIXME: AddRef(object) */
+        object->surfaces[i]->Container = (IUnknown*) object;
+	/*IUnknown_AddRef(object->surfaces[i]->Container);*/
         object->surfaces[i]->myDesc.Usage = Usage;
         object->surfaces[i]->myDesc.Pool = Pool ;
 
@@ -1264,8 +1340,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVolumeTexture8Impl));
     object->lpVtbl = &Direct3DVolumeTexture8_Vtbl;
     object->ResourceType = D3DRTYPE_VOLUMETEXTURE;
+    object->Device = This;
+    /*IDirect3DDevice8Impl_AddRef((LPDIRECT3DDEVICE8) object->Device);*/
     object->ref = 1;
-
 
     object->width = Width;
     object->height = Height;
@@ -1273,7 +1350,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
     object->levels = Levels;
     object->usage = Usage;
     object->format = Format;
-    object->device = This;
 
     /* Calculate levels for mip mapping */
     if (Levels == 0) {
@@ -1282,7 +1358,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
         tmpH = Height;
         tmpD = Depth;
         while (tmpW > 1 && tmpH > 1 && tmpD > 1) {
-            tmpW = max(1,tmpW / 2);
+            tmpW = max(1, tmpW / 2);
             tmpH = max(1, tmpH / 2);
             tmpD = max(1, tmpD / 2);
             object->levels++;
@@ -1295,7 +1371,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
     tmpH = Height;
     tmpD = Depth;
 
-    for (i=0; i<object->levels; i++) 
+    for (i = 0; i< object->levels; i++) 
     {
         IDirect3DVolume8Impl *volume;
 
@@ -1304,9 +1380,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
         object->volumes[i] = (IDirect3DVolume8Impl *) volume;
 
         volume->lpVtbl = &Direct3DVolume8_Vtbl;
-        volume->Device = This; /* FIXME: AddRef(This) */
+        volume->Device = This;
+	/*IDirect3DDevice8Impl_AddRef((LPDIRECT3DDEVICE8) volume->Device);*/
         volume->ResourceType = D3DRTYPE_VOLUME;
-        volume->Container = object;
+        volume->Container = (IUnknown*) object;
+	/*IUnknown_AddRef(volume->Container);*/	
         volume->ref = 1;
 
         volume->myDesc.Width = Width;
@@ -1343,14 +1421,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DCubeTexture8Impl));
     object->lpVtbl = &Direct3DCubeTexture8_Vtbl;
     object->ref = 1;
-    object->Device = This; /* FIXME: AddRef(This) */
+    object->Device = This;
+    /*IDirect3DDevice8Impl_AddRef((LPDIRECT3DDEVICE8) object->Device);*/
     object->ResourceType = D3DRTYPE_CUBETEXTURE;
 
     object->edgeLength = EdgeLength;
     object->levels = Levels;
     object->usage = Usage;
     object->format = Format;
-    object->device = This;
 
     /* Calculate levels for mip mapping */
     if (Levels == 0) {
@@ -1365,17 +1443,18 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
 
     /* Generate all the surfaces */
     tmpW = EdgeLength;
-    for (i=0; i<object->levels; i++) 
+    for (i = 0; i < object->levels; i++) 
     {
         /* Create the 6 faces */
-        for (j=0;j<6;j++) {
+        for (j = 0;j < 6; j++) {
            IDirect3DDevice8Impl_CreateImageSurface(iface, tmpW, tmpW, Format, (LPDIRECT3DSURFACE8*) &object->surfaces[j][i]);
            object->surfaces[j][i]->Container = (IUnknown*) object;
+	   /*IUnknown_AddRef(object->surfaces[j][i]->Container);*/
            object->surfaces[j][i]->myDesc.Usage = Usage;
            object->surfaces[j][i]->myDesc.Pool = Pool ;
 
            TRACE("Created surface level %d @ %p, memory at %p\n", i, object->surfaces[j][i], object->surfaces[j][i]->allocatedMemory);
-           tmpW = max(1,tmpW / 2);
+           tmpW = max(1, tmpW / 2);
         }
     }
 
@@ -1383,8 +1462,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface,
     *ppCubeTexture = (LPDIRECT3DCUBETEXTURE8)object;
     return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface, UINT Size, DWORD Usage,
-                                                         DWORD FVF,D3DPOOL Pool, IDirect3DVertexBuffer8** ppVertexBuffer) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface, UINT Size, DWORD Usage, DWORD FVF, D3DPOOL Pool, IDirect3DVertexBuffer8** ppVertexBuffer) {
     IDirect3DVertexBuffer8Impl *object;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -1393,6 +1471,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexBuffer8Impl));
     object->lpVtbl = &Direct3DVertexBuffer8_Vtbl;
     object->Device = This;
+    /*IDirect3DDevice8Impl_AddRef((LPDIRECT3DDEVICE8) object->Device);*/
     object->ResourceType = D3DRTYPE_VERTEXBUFFER;
     object->ref = 1;
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Size);
@@ -1407,8 +1486,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexBuffer(LPDIRECT3DDEVICE8 iface
 
     return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface, UINT Length,DWORD Usage,D3DFORMAT Format,D3DPOOL Pool,IDirect3DIndexBuffer8** ppIndexBuffer) {
-
+HRESULT  WINAPI  IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface, UINT Length, DWORD Usage, D3DFORMAT Format, D3DPOOL Pool, IDirect3DIndexBuffer8** ppIndexBuffer) {
     IDirect3DIndexBuffer8Impl *object;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -1417,8 +1495,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface,
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DIndexBuffer8Impl));
     object->lpVtbl = &Direct3DIndexBuffer8_Vtbl;
-    object->ref = 1;
     object->Device = This;
+    /*IDirect3DDevice8Impl_AddRef((LPDIRECT3DDEVICE8) object->Device);*/
+    object->ref = 1;
     object->ResourceType = D3DRTYPE_INDEXBUFFER;
 
     object->currentDesc.Type = D3DRTYPE_INDEXBUFFER;
@@ -1435,17 +1514,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateIndexBuffer(LPDIRECT3DDEVICE8 iface,
 
     return D3D_OK;
 }
-HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface, UINT Width,UINT Height,D3DFORMAT Format,D3DMULTISAMPLE_TYPE MultiSample,BOOL Lockable,IDirect3DSurface8** ppSurface) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
-    /* up ref count on surface, surface->container = This */
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
-}
-HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE8 iface, UINT Width,UINT Height,D3DFORMAT Format,D3DMULTISAMPLE_TYPE MultiSample,IDirect3DSurface8** ppSurface) {
-    ICOM_THIS(IDirect3DDevice8Impl,iface);
-    /* surface->container = This */
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
-}
-HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface, UINT Width,UINT Height,D3DFORMAT Format,IDirect3DSurface8** ppSurface) {
+HRESULT  WINAPI  IDirect3DDevice8Impl_CreateRenderTarget(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, BOOL Lockable, IDirect3DSurface8** ppSurface) {
     IDirect3DSurface8Impl *object;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -1454,19 +1523,85 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface
     *ppSurface = (LPDIRECT3DSURFACE8) object;
     object->lpVtbl = &Direct3DSurface8_Vtbl;
     object->Device = This;
+    /*IDirect3DDevice8Impl_AddRef((LPDIRECT3DDEVICE8) object->Device);*/
     object->ResourceType = D3DRTYPE_SURFACE;
     object->Container = (IUnknown*) This;
+    /*IUnknown_AddRef(object->Container);*/
 
     object->ref = 1;
-    object->myDesc.Width = Width;
-    object->myDesc.Height= Height;
-    object->myDesc.Format= Format;
+    object->myDesc.Width  = Width;
+    object->myDesc.Height = Height;
+    object->myDesc.Format = Format;
     object->myDesc.Type = D3DRTYPE_SURFACE;
-    /*object->myDesc.Usage */
-    object->myDesc.Pool = D3DPOOL_SYSTEMMEM ;
+    object->myDesc.Usage = D3DUSAGE_RENDERTARGET;
+    object->myDesc.Pool = D3DPOOL_MANAGED;
+    object->myDesc.MultiSampleType = MultiSample;
     object->bytesPerPixel = bytesPerPixel(Format);
     object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
     object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
+    object->lockable = Lockable;
+    object->locked = FALSE;
+
+    TRACE("(%p) : w(%d) h(%d) fmt(%d) lockable(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, Lockable, *ppSurface, object->allocatedMemory, object->myDesc.Size);
+    return D3D_OK;
+}
+HRESULT  WINAPI  IDirect3DDevice8Impl_CreateDepthStencilSurface(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, IDirect3DSurface8** ppSurface) {
+    IDirect3DSurface8Impl *object;
+
+    ICOM_THIS(IDirect3DDevice8Impl,iface);
+
+    object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
+    *ppSurface = (LPDIRECT3DSURFACE8) object;
+    object->lpVtbl = &Direct3DSurface8_Vtbl;
+    object->Device = This;
+    /*IDirect3DDevice8Impl_AddRef((LPDIRECT3DDEVICE8) object->Device);*/
+    object->ResourceType = D3DRTYPE_SURFACE;
+    object->Container = (IUnknown*) This;
+    /*IUnknown_AddRef(object->Container);*/
+
+    object->ref = 1;
+    object->myDesc.Width  = Width;
+    object->myDesc.Height = Height;
+    object->myDesc.Format = Format;
+    object->myDesc.Type = D3DRTYPE_SURFACE;
+    object->myDesc.Usage = D3DUSAGE_DEPTHSTENCIL;
+    object->myDesc.Pool = D3DPOOL_MANAGED;
+    object->myDesc.MultiSampleType = MultiSample;
+    object->bytesPerPixel = bytesPerPixel(Format);
+    object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
+    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
+    object->lockable = TRUE;
+    object->locked = FALSE;
+
+    TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, *ppSurface, object->allocatedMemory, object->myDesc.Size);
+    return D3D_OK;
+}
+HRESULT  WINAPI  IDirect3DDevice8Impl_CreateImageSurface(LPDIRECT3DDEVICE8 iface, UINT Width, UINT Height, D3DFORMAT Format, IDirect3DSurface8** ppSurface) {
+    IDirect3DSurface8Impl *object;
+
+    ICOM_THIS(IDirect3DDevice8Impl,iface);
+
+    object  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DSurface8Impl));
+    *ppSurface = (LPDIRECT3DSURFACE8) object;
+    object->lpVtbl = &Direct3DSurface8_Vtbl;
+    object->Device = This;
+    /*IDirect3DDevice8Impl_AddRef((LPDIRECT3DDEVICE8) object->Device);*/
+    object->ResourceType = D3DRTYPE_SURFACE;
+    object->Container = (IUnknown*) This;
+    /*IUnknown_AddRef(object->Container);*/
+
+    object->ref = 1;
+    object->myDesc.Width  = Width;
+    object->myDesc.Height = Height;
+    object->myDesc.Format = Format;
+    object->myDesc.Type = D3DRTYPE_SURFACE;
+    object->myDesc.Usage = 0;
+    object->myDesc.Pool = D3DPOOL_SYSTEMMEM;
+    object->bytesPerPixel = bytesPerPixel(Format);
+    object->myDesc.Size = (Width * object->bytesPerPixel) * Height;
+    object->allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->myDesc.Size);
+    object->lockable = TRUE;
+    object->locked = FALSE;
 
     TRACE("(%p) : w(%d) h(%d) fmt(%d) surf@%p, surfmem@%p, %d bytes\n", This, Width, Height, Format, *ppSurface, object->allocatedMemory, object->myDesc.Size);
     return D3D_OK;
@@ -1597,29 +1732,66 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_UpdateTexture(LPDIRECT3DDEVICE8 iface, IDi
     FIXME("(%p) : stub\n", This);    return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetFrontBuffer(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pDestSurface) {
+    HRESULT hr;
+    D3DLOCKED_RECT lockedRect;
+    GLint  prev_store;
+    GLenum prev_read;
+
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);    return D3D_OK;
+
+    FIXME("(%p) : stub\n", This);
+
+    if (D3DFMT_A8R8G8B8 != ((IDirect3DSurface8Impl*) pDestSurface)->myDesc.Format) {
+      return D3DERR_INVALIDCALL;
+    }
+
+    hr = IDirect3DSurface8Impl_LockRect(pDestSurface, &lockedRect, NULL, 0);
+    if (FAILED(hr)) {
+      return D3DERR_INVALIDCALL;
+    }
+
+    ENTER_GL();
+
+    glFlush();
+    vcheckGLcall("glFlush");
+    glGetIntegerv(GL_READ_BUFFER, &prev_read);
+    vcheckGLcall("glIntegerv");
+    glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
+    vcheckGLcall("glIntegerv");
+ 
+    glReadBuffer(GL_FRONT);
+    vcheckGLcall("glReadBuffer");
+    glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
+    vcheckGLcall("glPixelStorei");
+    glReadPixels(0, 0, This->PresentParms.BackBufferWidth, This->PresentParms.BackBufferHeight,
+		 GL_BGRA, GL_UNSIGNED_BYTE, lockedRect.pBits);
+    vcheckGLcall("glReadPixels");
+    glPixelStorei(GL_PACK_SWAP_BYTES, prev_store);
+    vcheckGLcall("glPixelStorei");
+    glReadBuffer(prev_read);
+    vcheckGLcall("glReadBuffer");
+    LEAVE_GL();
+
+    hr = IDirect3DSurface8Impl_UnlockRect(pDestSurface);
+    return hr;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderTarget(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8* pRenderTarget,IDirect3DSurface8* pNewZStencil) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    FIXME("(%p) : stub\n", This);
+    FIXME("(%p) : invalid stub expect crash\n", This);
 
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetRenderTarget(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8** ppRenderTarget) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
-    /*TRACE("(%p) : returning %p\n", This, This->renderTarget); */
-    FIXME("(%p) : stub\n", This);
 
-    /*
-     **ppRenderTarget = (LPDIRECT3DSURFACE8) This->renderTarget;
-     *IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) *ppRenderTarget);
-     */
-
+    TRACE("(%p)->(%p)\n", This, This->frontBuffer);
+    
+    *ppRenderTarget = (LPDIRECT3DSURFACE8) This->frontBuffer;
+    IDirect3DSurface8Impl_AddRef((LPDIRECT3DSURFACE8) *ppRenderTarget);
+    
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_GetDepthStencilSurface(LPDIRECT3DDEVICE8 iface, IDirect3DSurface8** ppZStencilSurface) {
-
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
     TRACE("(%p)->(%p)\n", This, ppZStencilSurface);
@@ -1674,7 +1846,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_Clear(LPDIRECT3DDEVICE8 iface, DWORD Count
         curRect = NULL;
     }
 
-    for (i=0;i<Count || i==0; i++) {
+    for (i = 0; i < Count || i == 0; i++) {
 
         if (curRect) {
             /* Note gl uses lower left, width/height */
@@ -1852,14 +2024,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
            }
 
            /* Reapply texture transforms as based off modelview when applied */
-           for (Stage=0; Stage<This->TextureUnits; Stage++) {
+           for (Stage = 0; Stage < This->TextureUnits; Stage++) {
 
                /* Now apply texture transforms if not applying to the dummy textures */
-   #if defined(GL_VERSION_1_3)
+#if defined(GL_VERSION_1_3)
                glActiveTexture(GL_TEXTURE0 + Stage);
-   #else 
+#else 
                glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
-   #endif
+#endif
                checkGLcall("glActiveTexture(GL_TEXTURE0 + Stage);");
 
                glMatrixMode(GL_TEXTURE);
@@ -1966,7 +2138,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTransform(LPDIRECT3DDEVICE8 iface, D3DT
           m.u.s._21 = 1.0f; m.u.s._22 = 1.0f; m.u.s._23 = 1.0f; m.u.s._24 = 1.0f;
           m.u.s._31 = 1.0f; m.u.s._32 = 1.0f; m.u.s._33 = 1.0f; m.u.s._34 = 1.0f;
           m.u.s._41 = 1.0f; m.u.s._42 = 1.0f; m.u.s._43 = 1.0f; m.u.s._44 = 1.0f;
-          if (viewChanged==FALSE) {
+          if (viewChanged == FALSE) {
               glLoadMatrixf((float *) &This->StateBlock->transforms[D3DTS_VIEW].u.m[0][0]);
               checkGLcall("glLoadMatrixf");
           }
@@ -3039,7 +3211,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_BeginStateBlock(LPDIRECT3DDEVICE8 iface) {
   
   TRACE("(%p)\n", This);
   
-  return  IDirect3DDeviceImpl_BeginStateBlock(This);
+  return IDirect3DDeviceImpl_BeginStateBlock(This);
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_EndStateBlock(LPDIRECT3DDEVICE8 iface, DWORD* pToken) {
   IDirect3DStateBlockImpl* pSB;
@@ -3357,69 +3529,19 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     case D3DTSS_COLORARG0             :
     case D3DTSS_ALPHAARG0             :
         /* FIXME: Mesa seems to struggle setting these at the moment */
-        break;
+        /*FIXME("COLORARG0/ALPHAARG0 support still a stub, Stage=%ld, Type=%d, Value =%ld\n", Stage, Type, Value);*/
+        /*break;*/
 
     case D3DTSS_COLORARG1             :
     case D3DTSS_COLORARG2             :
     case D3DTSS_ALPHAARG1             :
     case D3DTSS_ALPHAARG2             :
         {
-            BOOL isAlphaReplicate = FALSE;
-            BOOL isComplement     = FALSE;
-            BOOL isAlphaArg       = (Type == D3DTSS_ALPHAARG1 || Type == D3DTSS_ALPHAARG2 || Type == D3DTSS_ALPHAARG0);
-            int  operand= GL_SRC_COLOR;
+            BOOL isAlphaArg = (Type == D3DTSS_ALPHAARG1 || Type == D3DTSS_ALPHAARG2 || Type == D3DTSS_ALPHAARG0);
+            int  operand = GL_SRC_COLOR;
             int  source = GL_TEXTURE;
 
-            /* Catch alpha replicate */
-            if (Value & D3DTA_ALPHAREPLICATE) {
-                Value = Value & ~D3DTA_ALPHAREPLICATE;
-                isAlphaReplicate = TRUE;
-            }
-
-            /* Catch Complement */
-            if (Value & D3DTA_COMPLEMENT) {
-                Value = Value & ~D3DTA_COMPLEMENT;
-                isComplement = TRUE;
-            }
-
-            /* Calculate the operand */
-            if (isAlphaReplicate && !isComplement) {
-                operand = GL_SRC_ALPHA;
-            } else if (isAlphaReplicate && isComplement) {
-                operand = GL_ONE_MINUS_SRC_ALPHA;
-            } else if (isComplement) {
-                if (isAlphaArg) {
-                    operand = GL_ONE_MINUS_SRC_ALPHA;
-                } else {
-                    operand = GL_ONE_MINUS_SRC_COLOR;
-                }
-            } else {
-                if (isAlphaArg) {
-                    operand = GL_SRC_ALPHA;
-                } else {
-                    operand = GL_SRC_COLOR;
-                }
-            }
-
-            /* Calculate the source */
-            switch (Value) {
-            case D3DTA_CURRENT:   source  = GL_PREVIOUS_EXT;
-                                  break;
-            case D3DTA_DIFFUSE:   source  = GL_PRIMARY_COLOR_EXT;
-                                  break;
-            case D3DTA_TEXTURE:   source  = GL_TEXTURE;
-                                  break;
-            case D3DTA_TFACTOR:   source  = GL_CONSTANT_EXT;
-                                  break;
-
-            /* According to the GL_ARB_texture_env_combine specs, SPECULAR is 'Secondary color' and
-               isnt supported until base GL supports it
-               There is no concept of temp registers as far as I can tell                          */
-
-            default:
-                FIXME("Unrecognized or unhandled texture arg %ld\n", Value);
-            }
-
+	    GetSrcAndOpFromValue(Value, isAlphaArg, &source, &operand);
             if (isAlphaArg) {
                 TRACE("Source %x = %x, Operand %x = %x\n", SOURCEx_ALPHA_EXT(Type), source, OPERANDx_ALPHA_EXT(Type), operand);
                 glTexEnvi(GL_TEXTURE_ENV, SOURCEx_ALPHA_EXT(Type), source);
@@ -3492,9 +3614,91 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                     break;
 
                 case D3DTOP_SELECTARG1                :
-                    glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
-                    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE)");
+		    {
+                        FIXME("see if D3DTOP_SELECTARG1 behavior is correct now!\n");
+                        glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
+			checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE)");
+#if 0 /* don't seem to do anything */			
+		        BOOL  isAlphaOp = (Type == D3DTSS_ALPHAOP);
+		        DWORD dwValue = 0;
+			GLenum source;
+			GLenum operand;
+			dwValue = This->StateBlock->texture_state[Stage][(isAlphaOp) ? D3DTSS_ALPHAARG1 : D3DTSS_COLORARG1];
+			GetSrcAndOpFromValue(dwValue, isAlphaOp, &source, &operand);
+			if (isAlphaOp) {
+			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE0_ALPHA_EXT, source, GL_OPERAND0_ALPHA_EXT, operand);
+			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, source);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, 'source')");
+			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, operand);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, 'operand')");
+			} else {
+			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE0_RGB_EXT, source, GL_OPERAND0_RGB_EXT, operand);
+			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, source);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, 'source')");
+			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, operand);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, 'operand')");
+			}
+			dwValue = This->StateBlock->texture_state[Stage][(isAlphaOp) ? D3DTSS_ALPHAARG2 : D3DTSS_COLORARG2];
+			GetSrcAndOpFromValue(dwValue, isAlphaOp, &source, &operand);
+			if (isAlphaOp) {
+			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE1_ALPHA_EXT, source, GL_OPERAND1_ALPHA_EXT, operand);
+			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, source);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, 'source')");
+			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, operand);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, 'operand')");
+			} else {
+			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE1_RGB_EXT, source, GL_OPERAND1_RGB_EXT, operand);
+			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, source);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, 'source')");
+			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, operand);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, 'operand')");
+			}
+#endif			
+		    }
                     break;
+
+                case D3DTOP_SELECTARG2                :
+		    { 
+		        BOOL  isAlphaOp = (Type == D3DTSS_ALPHAOP);
+		        DWORD dwValue = 0;
+			GLenum source;
+			GLenum operand;
+		        FIXME("see if D3DTOP_SELECTARG2 behavior is correct now!\n");
+                        glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE);
+			checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_REPLACE)");
+			/* GL_REPLACE, swap args 0 and 1? */
+			dwValue = This->StateBlock->texture_state[Stage][(isAlphaOp) ? D3DTSS_ALPHAARG2 : D3DTSS_COLORARG2];
+			GetSrcAndOpFromValue(dwValue, isAlphaOp, &source, &operand);
+			if (isAlphaOp) {
+			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE0_ALPHA_EXT, source, GL_OPERAND0_ALPHA_EXT, operand);
+			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, source);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_EXT, 'source')");
+			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, operand);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA_EXT, 'operand')");
+			} else {
+			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE0_RGB_EXT, source, GL_OPERAND0_RGB_EXT, operand);
+			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, source);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, 'source')");
+			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, operand);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB_EXT, 'operand')");
+			}
+		        dwValue = This->StateBlock->texture_state[Stage][(isAlphaOp) ? D3DTSS_ALPHAARG1 : D3DTSS_COLORARG1];
+			GetSrcAndOpFromValue(dwValue, isAlphaOp, &source, &operand);
+			if (isAlphaOp) {
+			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE1_ALPHA_EXT, source, GL_OPERAND1_ALPHA_EXT, operand);
+			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, source);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA_EXT, 'source')");
+			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, operand);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA_EXT, 'operand')");
+			} else {
+			  TRACE("Source %x = %x, Operand %x = %x\n", GL_SOURCE1_RGB_EXT, source, GL_OPERAND1_RGB_EXT, operand);
+			  glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, source);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, 'source')");
+			  glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, operand);
+			  checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB_EXT, 'operand')");
+			}
+		    }
+		    break;
 
                 case D3DTOP_MODULATE4X                : Scale = Scale * 2;  /* Drop through */
                 case D3DTOP_MODULATE2X                : Scale = Scale * 2;  /* Drop through */
@@ -3535,9 +3739,17 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                     break;
 
                 case D3DTOP_SUBTRACT                  :
-                    /* glTexEnvi(GL_TEXTURE_ENV, Parm, GL_SUBTRACT); Missing? */
-                case D3DTOP_SELECTARG2                :
-                    /* GL_REPLACE, swap args 0 and 1? */
+#if defined(GL_VERSION_1_3)
+                    glTexEnvi(GL_TEXTURE_ENV, Parm, GL_SUBTRACT);
+		    checkGLcall("glTexEnvi(GL_TEXTURE_ENV, Parm, GL_SUBTRACT)");
+		    break;
+#else
+		    /**
+		     * @TODO: to check:
+		     *  if ARB_texture_env_combine is supported
+		     *   we can use GL_SUBTRACT_ARB here
+		     */
+#endif
                 case D3DTOP_ADDSMOOTH                 :
                 case D3DTOP_BLENDDIFFUSEALPHA         :
                 case D3DTOP_BLENDTEXTUREALPHA         :
@@ -3619,52 +3831,77 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
         break;
 
     case D3DTSS_TEXCOORDINDEX         :
-        /* CameraSpacePosition means use the vertex position, transformed to camera space, 
-           as the input texture coordinates for this stage's texture transformation. This 
-           equates roughly to EYE_LINEAR                                                  */
-        if (Value & D3DTSS_TCI_CAMERASPACEPOSITION) {
-            float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
-            float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
-            float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
-            float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
-            TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
+        {
+            /* CameraSpacePosition means use the vertex position, transformed to camera space, 
+	       as the input texture coordinates for this stage's texture transformation. This 
+	       equates roughly to EYE_LINEAR                                                  */
+	  
+	    /**
+	     * To Jason: i don't understand what to do with the (Value & 0x00FF) index
+	     * it seems a texture coordinate index (0 <= x <= 7) seeing msdn and logs 
+	     * have you any idea ?
+	     */
 
-            glMatrixMode(GL_MODELVIEW);
-            glPushMatrix();
-            glLoadIdentity();
-            glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
-            glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
-            glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
-            glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
-            glPopMatrix();
+	    /** 
+	     * Be carefull the value of the mask 0xF0000 come from d3d8types.h infos 
+	     */
+	    switch (Value & 0xFFFFFF00) {
+	    case D3DTSS_TCI_PASSTHRU:
+	      /*Use the specified texture coordinates contained within the vertex format. This value resolves to zero.*/
+	      break;
 
-            TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set GL_TEXTURE_GEN_x and GL_x, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR\n");
-            glEnable(GL_TEXTURE_GEN_S);
-            checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
-            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-            checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
-            glEnable(GL_TEXTURE_GEN_T);
-            checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
-            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-            checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
-            glEnable(GL_TEXTURE_GEN_R);
-            checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
-            glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-            checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
-        }
+            case D3DTSS_TCI_CAMERASPACEPOSITION:
+	      {
+                float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+                float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+                float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+                float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+                TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
 
-        /* Todo: */
-        if (Value && Value != D3DTSS_TCI_CAMERASPACEPOSITION) {
-            /* ? disable GL_TEXTURE_GEN_n ? */
-            FIXME("Unhandled D3DTSS_TEXCOORDINDEX %lx\n", Value);
+		glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+		glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+		glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+		glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+		glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+		glPopMatrix();
+		
+		TRACE("D3DTSS_TCI_CAMERASPACEPOSITION - Set GL_TEXTURE_GEN_x and GL_x, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR\n");
+		glEnable(GL_TEXTURE_GEN_S);
+		checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+		glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+		checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+		glEnable(GL_TEXTURE_GEN_T);
+		checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+		glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+		checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+		glEnable(GL_TEXTURE_GEN_R);
+		checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+		glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+		checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+	      }
+	      break;
+
+	    default:
+	        /* Todo: */
+	        /* ? disable GL_TEXTURE_GEN_n ? */
+	        FIXME("Unhandled D3DTSS_TEXCOORDINDEX %lx\n", Value);
+	        break;
+	    }
         }
         break;
 
         /* Unhandled */
     case D3DTSS_BUMPENVMAT00          :
     case D3DTSS_BUMPENVMAT01          :
+      TRACE("BUMPENVMAT0%u Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Type - D3DTSS_BUMPENVMAT00, Stage, Type, Value);
+      break;
     case D3DTSS_BUMPENVMAT10          :
     case D3DTSS_BUMPENVMAT11          :
+      TRACE("BUMPENVMAT1%u Still a stub, Stage=%ld, Type=%d, Value =%ld\n", Type - D3DTSS_BUMPENVMAT10, Stage, Type, Value);
+      break;
+
     case D3DTSS_MIPMAPLODBIAS         :
     case D3DTSS_MAXMIPLEVEL           :
     case D3DTSS_MAXANISOTROPY         :

@@ -62,7 +62,7 @@ ULONG WINAPI IDirect3DVolumeTexture8Impl_Release(LPDIRECT3DVOLUMETEXTURE8 iface)
 
     TRACE("(%p) : ReleaseRef to %ld\n", This, This->ref);
     if (ref == 0) {
-        for (i=0; i<This->levels; i++) {
+        for (i = 0; i < This->levels; i++) {
             if (This->volumes[i] != NULL) {
                 TRACE("(%p) : Releasing volume %p\n", This, This->volumes[i]);
                 IDirect3DVolume8Impl_Release((LPDIRECT3DVOLUME8) This->volumes[i]);

@@ -69,6 +69,7 @@ HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_GetDevice(LPDIRECT3DVERTEXBUFF
     ICOM_THIS(IDirect3DVertexBuffer8Impl,iface);
     TRACE("(%p) : returning %p\n", This, This->Device);
     *ppDevice = (LPDIRECT3DDEVICE8) This->Device;
+    IDirect3DDevice8Impl_AddRef(*ppDevice);
     return D3D_OK;
 }
 HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_SetPrivateData(LPDIRECT3DVERTEXBUFFER8 iface, REFGUID refguid, CONST void* pData, DWORD SizeOfData, DWORD Flags) {
@@ -118,12 +119,12 @@ HRESULT  WINAPI        IDirect3DVertexBuffer8Impl_GetDesc(LPDIRECT3DVERTEXBUFFER
     ICOM_THIS(IDirect3DVertexBuffer8Impl,iface);
 
     TRACE("(%p)\n", This);
-    pDesc->Format= This->currentDesc.Format;
-    pDesc->Type=   This->currentDesc.Type;
-    pDesc->Usage=  This->currentDesc.Usage;
-    pDesc->Pool=   This->currentDesc.Pool;
-    pDesc->Size=   This->currentDesc.Size;
-    pDesc->FVF=    This->currentDesc.FVF;
+    pDesc->Format = This->currentDesc.Format;
+    pDesc->Type   = This->currentDesc.Type;
+    pDesc->Usage  = This->currentDesc.Usage;
+    pDesc->Pool   = This->currentDesc.Pool;
+    pDesc->Size   = This->currentDesc.Size;
+    pDesc->FVF    = This->currentDesc.FVF;
     return D3D_OK;
 }
 

@@ -247,6 +247,7 @@ struct IDirect3DDevice8Impl
 
     /* IDirect3DDevice8 fields */
     IDirect3D8Impl               *direct3d8;
+    IDirect3DSurface8Impl        *frontBuffer;
     IDirect3DSurface8Impl        *backBuffer;
     IDirect3DSurface8Impl        *depthStencilBuffer;
     D3DPRESENT_PARAMETERS         PresentParms;
@@ -413,7 +414,7 @@ struct IDirect3DVolume8Impl
     IDirect3DDevice8Impl   *Device;
     D3DRESOURCETYPE         ResourceType;
 
-    void                   *Container;
+    IUnknown               *Container;
     D3DVOLUME_DESC          myDesc;
     BYTE                   *allocatedMemory;
     UINT                    textureName;
@@ -493,6 +494,9 @@ struct IDirect3DSurface8Impl
     BYTE                   *allocatedMemory;
     UINT                    textureName;
     UINT                    bytesPerPixel;
+    BOOL                    lockable;
+    BOOL                    locked;
+    RECT                    lockedRect;
 };
 
 /* IUnknown: */
@@ -721,7 +725,6 @@ struct IDirect3DCubeTexture8Impl
     UINT                    levels;
     D3DFORMAT               format;
 
-    IDirect3DDevice8Impl   *device;
     IDirect3DSurface8Impl  *surfaces[6][MAX_LEVELS];
     BOOL                    Dirty;
 };
@@ -848,7 +851,6 @@ struct IDirect3DVolumeTexture8Impl
     DWORD                   usage;
     D3DFORMAT               format;
 
-    IDirect3DDevice8Impl   *device;
     IDirect3DVolume8Impl   *volumes[MAX_LEVELS];
     BOOL                    Dirty;
 };

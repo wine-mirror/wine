@@ -92,6 +92,7 @@ HRESULT WINAPI IDirect3DVolume8Impl_GetContainer(LPDIRECT3DVOLUME8 iface, REFIID
     ICOM_THIS(IDirect3DVolume8Impl,iface);
     TRACE("(%p) : returning %p\n", This, This->Container);
     *ppContainer = This->Container;
+    IUnknown_AddRef(This->Container);
     return D3D_OK;
 }
 HRESULT WINAPI IDirect3DVolume8Impl_GetDesc(LPDIRECT3DVOLUME8 iface, D3DVOLUME_DESC* pDesc) {
@@ -113,8 +114,7 @@ HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_B
         TRACE("No box supplied - all is ok\n");
         pLockedVolume->pBits = This->allocatedMemory;
     } else {
-        TRACE("Lock Box (%p) = l %d, t %d, r %d, b %d, fr %d, ba %d\n", pBox, pBox->Left, pBox->Top, 
-                  pBox->Right, pBox->Bottom, pBox->Front, pBox->Back);
+        TRACE("Lock Box (%p) = l %d, t %d, r %d, b %d, fr %d, ba %d\n", pBox, pBox->Left, pBox->Top, pBox->Right, pBox->Bottom, pBox->Front, pBox->Back);
         pLockedVolume->pBits = This->allocatedMemory + 
             (pLockedVolume->SlicePitch * pBox->Front) + /* FIXME: is front < back or vica versa? */
             (pLockedVolume->RowPitch * pBox->Top) + 
@@ -122,16 +122,12 @@ HRESULT WINAPI IDirect3DVolume8Impl_LockBox(LPDIRECT3DVOLUME8 iface, D3DLOCKED_B
     }
     TRACE("returning pBits=%p, rpitch=%d, spitch=%d\n", pLockedVolume->pBits, pLockedVolume->RowPitch, pLockedVolume->SlicePitch);
     return D3D_OK;
-
-
-
-    return D3D_OK;
 }
 HRESULT WINAPI IDirect3DVolume8Impl_UnlockBox(LPDIRECT3DVOLUME8 iface) {
     ICOM_THIS(IDirect3DVolume8Impl,iface);
     TRACE("(%p) : stub\n", This);
     if (This->Container) {
-        IDirect3DVolumeTexture8 *cont = This->Container;
+        IDirect3DVolumeTexture8* cont = (IDirect3DVolumeTexture8*) This->Container;
 
         int containerType = IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) cont);
         if (containerType == D3DRTYPE_VOLUMETEXTURE) {

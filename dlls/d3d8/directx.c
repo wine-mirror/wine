@@ -378,15 +378,14 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
 
     {
         GLint gl_max;
-
 #if defined(GL_VERSION_1_3)
         glGetIntegerv(GL_MAX_TEXTURE_UNITS, &gl_max);
 #else
         glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max);
 #endif
+        TRACE("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max);
         pCaps->MaxTextureBlendStages = min(8, gl_max);
         pCaps->MaxSimultaneousTextures = min(8, gl_max);
-        TRACE("GLCaps: GL_MAX_TEXTURE_UNITS_ARB=%ld\n", pCaps->MaxTextureBlendStages);
 
         glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
         pCaps->MaxUserClipPlanes = min(MAX_CLIPPLANES, gl_max);
@@ -563,18 +562,27 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
         }
     }
 
-    IDirect3DDevice8Impl_CreateImageSurface((LPDIRECT3DDEVICE8) object,
+    IDirect3DDevice8Impl_CreateRenderTarget((LPDIRECT3DDEVICE8) object,
                                             pPresentationParameters->BackBufferWidth,
                                             pPresentationParameters->BackBufferHeight,
                                             pPresentationParameters->BackBufferFormat,
+					    D3DMULTISAMPLE_NONE, TRUE,
+                                            (LPDIRECT3DSURFACE8*) &object->frontBuffer);
+
+    IDirect3DDevice8Impl_CreateRenderTarget((LPDIRECT3DDEVICE8) object,
+                                            pPresentationParameters->BackBufferWidth,
+                                            pPresentationParameters->BackBufferHeight,
+                                            pPresentationParameters->BackBufferFormat,
+					    D3DMULTISAMPLE_NONE, TRUE,
                                             (LPDIRECT3DSURFACE8*) &object->backBuffer);
 
     if (pPresentationParameters->EnableAutoDepthStencil)
-        IDirect3DDevice8Impl_CreateImageSurface((LPDIRECT3DDEVICE8) object,
-                                                pPresentationParameters->BackBufferWidth,
-                                                pPresentationParameters->BackBufferHeight,
-                                                pPresentationParameters->AutoDepthStencilFormat,
-                                                (LPDIRECT3DSURFACE8*) &object->depthStencilBuffer);
+        IDirect3DDevice8Impl_CreateDepthStencilSurface((LPDIRECT3DDEVICE8) object,
+						       pPresentationParameters->BackBufferWidth,
+						       pPresentationParameters->BackBufferHeight,
+						       pPresentationParameters->AutoDepthStencilFormat,
+						       D3DMULTISAMPLE_NONE,
+						       (LPDIRECT3DSURFACE8*) &object->depthStencilBuffer);
     
     /* Now override the surface's Flip method (if in double buffering) ?COPIED from DDRAW!?
     ((x11_ds_private *) surface->private)->opengl_flip = TRUE;

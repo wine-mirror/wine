@@ -200,9 +200,13 @@ HRESULT WINAPI IDirect3DDeviceImpl_InitStartupStateBlock(IDirect3DDevice8Impl* T
 
         /* Make appropriate texture active */
         if (This->isMultiTexture) {
+#if defined(GL_VERSION_1_3)
+            glActiveTexture(GL_TEXTURE0 + i);
+#else
             glActiveTextureARB(GL_TEXTURE0_ARB + i);
+#endif
             checkGLcall("glActiveTextureARB");
-        } else if (i>0) {
+        } else if (i > 0) {
             FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
         }
 
@@ -241,7 +245,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateStateBlock(IDirect3DDevice8Impl* This, 
   if (object) {
     if (NULL == This->StateBlock) { /** if it the main stateblock only do init and returns */
       /*object->lpVtbl = &Direct3DStateBlock9_Vtbl;*/
-      object->device = This; /* FIXME: AddRef(This) */
+      object->device = This;
       object->ref = 1;
       object->blockType = Type;
       This->StateBlock = object;
@@ -254,7 +258,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CreateStateBlock(IDirect3DDevice8Impl* This, 
     return E_OUTOFMEMORY;
   }
   /*object->lpVtbl = &Direct3DStateBlock9_Vtbl;*/
-  object->device = This; /* FIXME: AddRef(This) */
+  object->device = This;
   object->ref = 1;
   object->blockType = Type;
 
@@ -331,7 +335,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_BeginStateBlock(IDirect3DDevice8Impl* This) {
     return E_OUTOFMEMORY;
   }
   /*object->lpVtbl = &Direct3DVextexShaderDeclaration8_Vtbl;*/
-  object->device = This; /* FIXME: AddRef(This) */
+  object->device = This;
   object->ref = 1;
   
   This->isRecordingState = TRUE;
@@ -350,7 +354,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_EndStateBlock(IDirect3DDevice8Impl* This, IDi
   }
 
   This->UpdateStateBlock->blockType = D3DSBT_RECORDED;
-  *ppStateBlock = This->UpdateStateBlock;
+  *ppStateBlock = This->UpdateStateBlock;  /* FIXME: AddRef() */
   This->isRecordingState = FALSE;
   This->UpdateStateBlock = This->StateBlock;
   
@@ -369,7 +373,7 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
 
     if (pSB->blockType == D3DSBT_RECORDED || pSB->blockType == D3DSBT_ALL || pSB->blockType == D3DSBT_VERTEXSTATE) {
 
-        for (i=0; i<This->maxLights; i++) {
+        for (i = 0; i < This->maxLights; i++) {
 
             if (pSB->Set.lightEnable[i] && pSB->Changed.lightEnable[i])
                 IDirect3DDevice8Impl_LightEnable(iface, i, pSB->lightEnable[i]);
@@ -393,7 +397,7 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
 
     /* Others + Render & Texture */
     if (pSB->blockType == D3DSBT_RECORDED || pSB->blockType == D3DSBT_ALL) {
-        for (i=0; i<HIGHEST_TRANSFORMSTATE; i++) {
+        for (i = 0; i < HIGHEST_TRANSFORMSTATE; i++) {
             if (pSB->Set.transform[i] && pSB->Changed.transform[i])
                 IDirect3DDevice8Impl_SetTransform(iface, i, &pSB->transforms[i]);
         }
@@ -412,7 +416,7 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
                 IDirect3DDevice8Impl_SetStreamSource(iface, i, pSB->stream_source[i], pSB->stream_stride[i]);
         }
 
-        for (i=0; i<This->clipPlanes; i++) {
+        for (i = 0; i < This->clipPlanes; i++) {
             if (pSB->Set.clipplane[i] && pSB->Changed.clipplane[i]) {
                 float clip[4];
 
@@ -425,11 +429,9 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
         }
 
         /* Render */
-        for (i=0; i<HIGHEST_RENDER_STATE; i++) {
-
+        for (i = 0; i < HIGHEST_RENDER_STATE; i++) {
             if (pSB->Set.renderstate[i] && pSB->Changed.renderstate[i])
                 IDirect3DDevice8Impl_SetRenderState(iface, i, pSB->renderstate[i]);
-
         }
 
         /* Texture */
@@ -447,15 +449,14 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
 
     } else if (pSB->blockType == D3DSBT_PIXELSTATE) {
 
-        for (i=0; i<NUM_SAVEDPIXELSTATES_R; i++) {
+        for (i = 0; i < NUM_SAVEDPIXELSTATES_R; i++) {
             if (pSB->Set.renderstate[SavedPixelStates_R[i]] && pSB->Changed.renderstate[SavedPixelStates_R[i]])
                 IDirect3DDevice8Impl_SetRenderState(iface, SavedPixelStates_R[i], pSB->renderstate[SavedPixelStates_R[i]]);
 
         }
 
-        for (j=0; j<This->TextureUnits; i++) {
-            for (i=0; i<NUM_SAVEDPIXELSTATES_T; i++) {
-
+        for (j = 0; j < This->TextureUnits; i++) {
+            for (i = 0; i < NUM_SAVEDPIXELSTATES_T; i++) {
                 if (pSB->Set.texture_state[j][SavedPixelStates_T[i]] &&
                     pSB->Changed.texture_state[j][SavedPixelStates_T[i]])
                     IDirect3DDevice8Impl_SetTextureStageState(iface, j, SavedPixelStates_T[i], pSB->texture_state[j][SavedPixelStates_T[i]]);
@@ -464,15 +465,13 @@ HRESULT  WINAPI  IDirect3DDeviceImpl_ApplyStateBlock(IDirect3DDevice8Impl* This,
 
     } else if (pSB->blockType == D3DSBT_VERTEXSTATE) {
 
-        for (i=0; i<NUM_SAVEDVERTEXSTATES_R; i++) {
+        for (i = 0; i < NUM_SAVEDVERTEXSTATES_R; i++) {
             if (pSB->Set.renderstate[SavedVertexStates_R[i]] && pSB->Changed.renderstate[SavedVertexStates_R[i]])
                 IDirect3DDevice8Impl_SetRenderState(iface, SavedVertexStates_R[i], pSB->renderstate[SavedVertexStates_R[i]]);
-
         }
 
-        for (j=0; j<This->TextureUnits; i++) {
-            for (i=0; i<NUM_SAVEDVERTEXSTATES_T; i++) {
-
+        for (j = 0; j < This->TextureUnits; i++) {
+            for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; i++) {
                 if (pSB->Set.texture_state[j][SavedVertexStates_T[i]] &&
                     pSB->Changed.texture_state[j][SavedVertexStates_T[i]])
                     IDirect3DDevice8Impl_SetTextureStageState(iface, j, SavedVertexStates_T[i], pSB->texture_state[j][SavedVertexStates_T[i]]);
@@ -505,7 +504,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
            across this action */
 
     } else {
-        int i,j;
+        int i, j;
 
         /* Recorded => Only update 'changed' values */
         if (updateBlock->Set.vertexShader && updateBlock->VertexShader != This->StateBlock->VertexShader) {
@@ -515,7 +514,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
 
         /* TODO: Vertex Shader Constants */
 
-        for (i=0; i<This->maxLights; i++) {
+        for (i = 0; i < This->maxLights; i++) {
           if (updateBlock->Set.lightEnable[i] && This->StateBlock->lightEnable[i] != updateBlock->lightEnable[i]) {
               TRACE("Updating light enable for light %d to %d\n", i, This->StateBlock->lightEnable[i]);
               updateBlock->lightEnable[i] = This->StateBlock->lightEnable[i];
@@ -538,7 +537,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
         /* TODO: Pixel Shader Constants */
 
         /* Others + Render & Texture */
-	for (i=0; i<HIGHEST_TRANSFORMSTATE; i++) {
+	for (i = 0; i < HIGHEST_TRANSFORMSTATE; i++) {
 	  if (updateBlock->Set.transform[i] && memcmp(&This->StateBlock->transforms[i], 
 						      &updateBlock->transforms[i], 
 						      sizeof(D3DMATRIX)) != 0) {
@@ -569,7 +568,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
                 memcpy(&updateBlock->viewport, &This->StateBlock->viewport, sizeof(D3DVIEWPORT8));
        }
 
-       for (i=0; i<MAX_STREAMS; i++) {
+       for (i = 0; i < MAX_STREAMS; i++) {
            if (updateBlock->Set.stream_source[i] && 
                            ((updateBlock->stream_stride[i] != This->StateBlock->stream_stride[i]) ||
                            (updateBlock->stream_source[i] != This->StateBlock->stream_source[i]))) {
@@ -580,7 +579,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
            }
        }
 
-       for (i=0; i<This->clipPlanes; i++) {
+       for (i = 0; i < This->clipPlanes; i++) {
            if (updateBlock->Set.clipplane[i] && memcmp(&This->StateBlock->clipplane[i], 
                                                        &updateBlock->clipplane[i], 
                                                        sizeof(updateBlock->clipplane)) != 0) {
@@ -592,7 +591,7 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
        }
 
        /* Render */
-       for (i=0; i<HIGHEST_RENDER_STATE; i++) {
+       for (i = 0; i < HIGHEST_RENDER_STATE; i++) {
 
            if (updateBlock->Set.renderstate[i] && (updateBlock->renderstate[i] != 
                                                        This->StateBlock->renderstate[i])) {
@@ -602,8 +601,8 @@ HRESULT WINAPI IDirect3DDeviceImpl_CaptureStateBlock(IDirect3DDevice8Impl* This,
        }
 
        /* Texture */
-       for (j=0; j<This->TextureUnits; j++) {
-           for (i=0; i<HIGHEST_TEXTURE_STATE; i++) {
+       for (j = 0; j < This->TextureUnits; j++) {
+           for (i = 0; i < HIGHEST_TEXTURE_STATE; i++) {
 
                if (updateBlock->Set.texture_state[j][i] && (updateBlock->texture_state[j][i] != 
                                                                 This->StateBlock->texture_state[j][i])) {
