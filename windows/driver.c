@@ -1,5 +1,3 @@
-/* -*- tab-width: 8; c-basic-offset: 4 -*- */
-
 /*
  * WINE Drivers functions
  *
@@ -20,6 +18,10 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ * TODO:
+ *	- LoadModule count and clean up is not handled correctly (it's not a
+ *	  problem as long as FreeLibrary is not working correctly)
  */
 
 #include <stdarg.h>
@@ -50,11 +52,6 @@ typedef struct tagWINE_DRIVER
 } WINE_DRIVER, *LPWINE_DRIVER;
 
 static LPWINE_DRIVER	lpDrvItemList = NULL;
-
-/* TODO list :
- *	- LoadModule count and clean up is not handled correctly (it's not a
- *	  problem as long as FreeLibrary is not working correctly)
- */
 
 
 /**************************************************************************
