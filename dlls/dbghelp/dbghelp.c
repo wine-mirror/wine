@@ -139,7 +139,14 @@ BOOL WINAPI SymGetSearchPath(HANDLE hProcess, LPSTR szSearchPath,
  */
 static BOOL WINAPI process_invade_cb(char* name, DWORD base, DWORD size, void* user)
 {
-    SymLoadModule((HANDLE)user, 0, name, NULL, base, size);
+    char        tmp[MAX_PATH];
+    HANDLE      hProcess = (HANDLE)user;
+
+    if (!GetModuleFileNameExA(hProcess, (HMODULE)base, 
+                              tmp, sizeof(tmp)))
+        lstrcpynA(tmp, name, sizeof(tmp));
+
+    SymLoadModule(hProcess, 0, tmp, name, base, size);
     return TRUE;
 }
 
