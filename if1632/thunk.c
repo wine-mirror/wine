@@ -535,7 +535,9 @@ BOOL16 WINAPI THUNK_SetDCHook( HDC16 hdc, FARPROC16 proc, DWORD dwHookData )
             defDCHookProc = (FARPROC16)-1;
     }
 
-    if (proc != defDCHookProc)
+    if (!proc)
+        thunk = NULL;
+    else if (proc != defDCHookProc)
     {
         thunk = THUNK_Alloc( proc, (RELAY)CallTo16_word_wwll );
         if (!thunk) return FALSE;
