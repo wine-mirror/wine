@@ -3,7 +3,7 @@
 # Copyright 2000 Francois Gouget for CodeWeavers
 # fgouget@codeweavers.com
 #
-my $version="0.5.4";
+my $version="0.5.5";
 
 use Cwd;
 use File::Basename;
@@ -294,7 +294,6 @@ sub project_init
 #
 #####
 
-my $usage;
 my %warnings;
 
 my %templates;
@@ -881,16 +880,20 @@ sub source_scan_directory
 # Scan the source directories in search of things to build
 sub source_scan
 {
-  my $main_target=@{$main_project[$P_TARGETS]}[0];
-
   # If there's a single target then this is going to be the default target
   if (defined $opt_single_target) {
+    # Create the main target
+    my $main_target=[];
+    target_init($main_target);
     if ($opt_target_type == $TT_DLL) {
       @$main_target[$T_NAME]="lib$opt_single_target.so";
     } else {
       @$main_target[$T_NAME]="$opt_single_target";
     }
     @$main_target[$T_TYPE]=$opt_target_type;
+
+    # Add it to the list
+    push @{$main_project[$P_TARGETS]},$main_target;
   }
 
   # The main directory is always going to be there
@@ -1887,7 +1890,7 @@ sub generate_global_files
   }
   # Add execute permission to configure for whoever has the right to read it
   my @st=stat("configure");
-  if (defined @st) {
+  if (@st) {
     my $mode=$st[2];
     $mode|=($mode & 0444) >>2;
     chmod($mode,"configure");
@@ -1969,6 +1972,32 @@ $opt_no_banner=0;
 #
 #####
 
+sub print_banner
+{
+  print "Winemaker $version\n";
+  print "Copyright 2000 Francois Gouget <fgouget\@codeweavers.com> for CodeWeavers\n";
+}
+
+sub usage
+{
+  print_banner();
+  print STDERR "Usage: winemaker [--nobanner] [--backup|--nobackup]\n";
+  print STDERR "                 [--lower-none|--lower-all|--lower-uppercase]\n";
+  print STDERR "                 [--lower-include|--nolower-include]\n";
+  print STDERR "                 [--guiexe|--windows|--cuiexe|--console|--dll]\n";
+  print STDERR "                 [--wrap|--nowrap] [--mfc|--nomfc]\n";
+  print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Ldir] [-idll] [-llibrary]\n";
+  print STDERR "                 [--interactive] [--single-target name]\n";
+  print STDERR "                 [--generated-files|--nogenerated-files]\n";
+  print STDERR "                 work_directory\n";
+  print STDERR "\nWinemaker is designed to recursively convert all the Windows sources found in\n";
+  print STDERR "the specified directory so that they can be compiled with Winelib. During this\n";
+  print STDERR "process it will modify and rename some of the files in that directory.\n";
+  print STDERR "\tPlease read the manual page before use.\n";
+  exit (2);
+}
+
+
 project_init(\@main_project,"");
 
 while (@ARGV>0) {
@@ -2039,41 +2068,25 @@ while (@ARGV>0) {
         $opt_work_dir=$arg;
       } else {
         print STDERR "error: the work directory, \"$arg\", has already been specified (was \"$opt_work_dir\")\n";
-        $usage=1;
-        last;
+        usage();
       }
     } else {
-      $usage=1;
-      last;
+      usage();
     }
   }
 }
 
-if ($opt_no_banner == 0 or defined $usage) {
-   print "Winemaker $version\n";
-   print "Copyright 2000 Francois Gouget <fgouget\@codeweavers.com> for CodeWeavers\n";
-}
-
 if (!defined $opt_work_dir) {
   print STDERR "error: you must specify the directory containing the sources to be converted\n";
-  $usage=1;
+  usage();
 } elsif (!chdir $opt_work_dir) {
   print STDERR "error: could not chdir to the work directory\n";
   print STDERR "       $!\n";
-  $usage=1;
+  usage();
 }
 
-if (defined $usage) {
-  print STDERR "Usage: winemaker [--nobanner] [--backup|--nobackup]\n";
-  print STDERR "                 [--lower-none|--lower-all|--lower-uppercase]\n";
-  print STDERR "                 [--lower-include|--nolower-include]\n";
-  print STDERR "                 [--guiexe|--windows|--cuiexe|--console|--dll]\n";
-  print STDERR "                 [--wrap|--nowrap] [--mfc|--nomfc]\n";
-  print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Ldir] [-idll] [-llibrary]\n";
-  print STDERR "                 [--interactive] [--single-target name]\n";
-  print STDERR "                 [--generated-files|--nogenerated-files]\n";
-  print STDERR "                 work_directory\n";
-  exit (2);
+if ($opt_no_banner == 0) {
+  print_banner();
 }
 
 # Fix the file and directory names
