@@ -25,7 +25,7 @@ type win32
 0022 stdcall MPR_Alloc(long) MPR_Alloc
 0023 stdcall MPR_ReAlloc(ptr long) MPR_ReAlloc
 0024 stdcall MPR_Free(ptr) MPR_Free
-0025 stub MPR_25
+0025 stdcall MPR_25(ptr long) _MPR_25
 0026 stdcall MultinetGetConnectionPerformanceA(ptr ptr) MultinetGetConnectionPerformanceA
 0027 stub MultinetGetConnectionPerformanceW
 0028 stdcall MultinetGetErrorTextA(long ptr long)MultinetGetErrorTextA
@@ -79,8 +79,8 @@ type win32
 0076 stub WNetGetLastErrorW
 0077 stub WNetGetNetworkInformationA
 0078 stub WNetGetNetworkInformationW
-0079 stub WNetGetProviderNameA
-0080 stub WNetGetProviderNameW
+0079 stdcall WNetGetProviderNameA(long ptr ptr) WNetGetProviderNameA
+0080 stdcall WNetGetProviderNameW(long ptr ptr) WNetGetProviderNameW
 0081 stdcall WNetGetResourceInformationA(ptr ptr ptr ptr) WNetGetResourceInformationA
 0082 stub WNetGetResourceInformationW
 0083 stub WNetGetResourceParentA
@@ -100,8 +100,8 @@ type win32
 0097 stub WNetRestoreConnectionW
 0098 stub WNetSetConnectionA
 0099 stub WNetSetConnectionW
-0100 stub WNetUseConnectionA
-0101 stub WNetUseConnectionW
+0100 stdcall WNetUseConnectionA(long ptr str str long str ptr ptr) WNetUseConnectionA 
+0101 stdcall WNetUseConnectionW(long ptr wstr wstr long wstr ptr ptr) WNetUseConnectionW
 0102 stub WNetVerifyPasswordA
 0103 stub WNetVerifyPasswordW 
 

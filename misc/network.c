@@ -828,6 +828,68 @@ DWORD WINAPI WNetGetUserW(
   return WN_NO_NETWORK;
 }
 
+/*****************************************************************
+ *  WNetGetProviderNameA [MPR.79]
+ */
+DWORD WINAPI WNetGetProviderNameA(
+  DWORD dwNetType,
+  LPSTR lpProvider,
+  LPDWORD lpBufferSize) 
+{
+    FIXME_(wnet)(": stub\n");
+    SetLastError(WN_NO_NETWORK);
+    return WN_NO_NETWORK;
+}
+
+/*****************************************************************
+ *  WNetGetProviderNameW [MPR.80]
+ */
+DWORD WINAPI WNetGetProviderNameW(
+  DWORD dwNetType,
+  LPWSTR lpProvider,
+  LPDWORD lpBufferSize) 
+{
+    FIXME_(wnet)(": stub\n");
+    SetLastError(WN_NO_NETWORK);
+    return WN_NO_NETWORK;
+}
+
+/*****************************************************************
+ *  WNetUseConnectionA [MPR.100]
+ */
+DWORD WINAPI WNetUseConnectionA(
+  HWND hwndOwner,
+  LPNETRESOURCEA lpNetResource,
+  LPSTR lpPassword,
+  LPSTR lpUserID,
+  DWORD dwFlags,
+  LPSTR lpAccessName,
+  LPDWORD lpBufferSize,
+  LPDWORD lpResult)
+{
+    FIXME_(wnet)(": stub\n");
+    SetLastError(WN_NO_NETWORK);
+    return WN_NO_NETWORK;
+}
+
+/*****************************************************************
+ *  WNetUseConnectionW [MPR.101]
+ */
+DWORD WINAPI WNetUseConnectionW(
+  HWND hwndOwner,
+  LPNETRESOURCEW lpNetResource,
+  LPWSTR lpPassword,
+  LPWSTR lpUserID,
+  DWORD dwFlags,
+  LPWSTR lpAccessName,
+  LPDWORD lpBufferSize,
+  LPDWORD lpResult)
+{
+    FIXME_(wnet)(": stub\n");
+    SetLastError(WN_NO_NETWORK);
+    return WN_NO_NETWORK;
+}
+
 
  /* 
   * FIXME: The following routines should use a private heap ...
@@ -861,5 +923,15 @@ BOOL WINAPI MPR_Free( LPVOID lpMem )
         return HeapFree( SystemHeap, 0, lpMem );
     else
         return FALSE;
+}
+
+/*****************************************************************
+ *  [MPR.25]
+ */
+BOOL WINAPI _MPR_25( LPBYTE lpMem, INT len )
+{
+    FIXME_(mpr)( "(%p, %d): stub\n", lpMem, len );
+
+    return FALSE;
 }
 
