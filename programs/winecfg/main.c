@@ -21,6 +21,8 @@
  *
  */
 
+#include "config.h"
+
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
