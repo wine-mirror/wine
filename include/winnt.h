@@ -410,7 +410,7 @@ typedef struct _CONTEXT
 #endif  /* _MIPS_ */
 
 /* PowerPC context definitions */
-#ifdef __ppc__
+#ifdef __PPC__
 
 #define CONTEXT_CONTROL         0x0001
 #define CONTEXT_FLOATING_POINT  0x0002
@@ -531,7 +531,7 @@ typedef struct _STACK_FRAME_HEADER
     DWORD Parameter7;
 } STACK_FRAME_HEADER,*PSTACK_FRAME_HEADER;
 
-#endif  /* __ppc__ */
+#endif  /* __PPC__ */
 
 #if !defined(CONTEXT_FULL) && !defined(RC_INVOKED)
 #error You need to define a CONTEXT for your CPU
