@@ -169,9 +169,14 @@ BOOL WINAPI DOSVM_outport( int port, int size, DWORD value )
     case 0x3dd:
     case 0x3de:
     case 0x3df:
-        if(size > 1)
-           FIXME("Trying to write more than one byte to VGA!\n");
-        VGA_ioport_out( port, (BYTE)value );
+        VGA_ioport_out( port, LOBYTE(value) );
+        if(size > 1) {
+            VGA_ioport_out( port+1, HIBYTE(value) );
+            if(size > 2) {
+                VGA_ioport_out( port+2, LOBYTE(HIWORD(value)) );
+                VGA_ioport_out( port+3, HIBYTE(HIWORD(value)) );
+            }
+        }
         break;
     case 0x00:
     case 0x01:
