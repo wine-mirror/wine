@@ -38,6 +38,8 @@ extern void MZ_KillModule( LPDOSTASK lpDosTask );
 
 #endif /* linux */
 
+extern void (*ctx_debug_call)( int sig, CONTEXT* );
+
 extern HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env,
                                      LPSTARTUPINFO32A startup, LPPROCESS_INFORMATION info );
 extern int DOSVM_Enter( PCONTEXT context );

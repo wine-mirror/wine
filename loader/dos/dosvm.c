@@ -27,6 +27,8 @@
 #include "ldt.h"
 #include "dosexe.h"
 
+void (*ctx_debug_call)(int sig,CONTEXT*ctx)=NULL;
+
 #ifdef MZ_SUPPORTED
 
 #include <sys/mman.h>
@@ -99,7 +101,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn,
    ret=-1; break;
   case VM86_UNKNOWN: /* unhandled GPF */
    DOSVM_Dump(lpDosTask,fn,VM86);
-   ctx_debug(SIGSEGV,&context);
+   if (ctx_debug_call) ctx_debug_call(SIGSEGV,&context); else ret=-1;
    break;
   case VM86_INTx:
    TRACE(int,"DOS EXE calls INT %02x with AX=%04lx\n",VM86_ARG(fn),context.Eax);
@@ -109,7 +111,7 @@ static int DOSVM_Process( LPDOSTASK lpDosTask, int fn,
   case VM86_PICRETURN:
    printf("Trapped due to pending PIC request\n"); break;
   case VM86_TRAP:
-   ctx_debug(SIGTRAP,&context);
+   if (ctx_debug_call) ctx_debug_call(SIGTRAP,&context);
    break;
   default:
    DOSVM_Dump(lpDosTask,fn,VM86);

@@ -130,6 +130,7 @@ int main( int argc, char *argv[] )
 
     if (Options.debug) DEBUG_AddModuleBreakpoints();
 
+    ctx_debug_call = ctx_debug;
     IF1632_CallLargeStack = (int (*)(int (*func)(), void *arg))CALL32_Init();
     Yield16();  /* Start the first task */
     MSG("WinMain: Should never happen: returned from Yield16()\n" );
