@@ -4,23 +4,10 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
-LIBMODULE = library
 
-LIB_SRCS = \
-	libres.c \
-	miscstubs.c
+C_SRCS = winestub.c
 
-STUB_SRCS = winestub.c
-
-LIB_OBJS  = $(LIB_SRCS:.c=.o)
-STUB_OBJS = $(STUB_SRCS:.c=.o)
-
-C_SRCS = $(LIB_SRCS) $(STUB_SRCS)
-
-all: $(LIBMODULE).o $(STUB_OBJS)
-
-$(LIBMODULE).o: $(LIB_OBJS)
-	$(LDCOMBINE) $(LIB_OBJS) -o $(LIBMODULE).o
+all: $(C_SRCS:.c=.o)
 
 @MAKE_RULES@
 

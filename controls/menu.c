@@ -3,6 +3,7 @@
  *
  * Copyright 1993 Martin Ayotte
  * Copyright 1994 Alexandre Julliard
+ * Copyright 1997 Morten Welinder
  */
 
 /*
@@ -142,6 +143,7 @@ typedef struct
 static WORD check_bitmap_width = 0, check_bitmap_height = 0;
 static WORD arrow_bitmap_width = 0, arrow_bitmap_height = 0;
 
+static HBITMAP32 hStdRadioCheck = 0;
 static HBITMAP32 hStdCheck = 0;
 static HBITMAP32 hStdMnArrow = 0;
 static HBRUSH32 hShadeBrush = 0;
@@ -316,38 +318,50 @@ HMENU32 MENU_GetSysMenu( HWND32 hWnd, HMENU32 hPopupMenu )
  */
 BOOL32 MENU_Init()
 {
-    /* Load menu bitmaps */
+    HBITMAP32 hBitmap;
+    static unsigned char shade_bits[16] = { 0x55, 0, 0xAA, 0,
+					    0x55, 0, 0xAA, 0,
+					    0x55, 0, 0xAA, 0,
+					    0x55, 0, 0xAA, 0 };
 
-    if ((hStdCheck = LoadBitmap32A( 0, (LPSTR)MAKEINTRESOURCE(OBM_CHECK) )))
+    /* Load menu bitmaps */
+    hStdCheck = LoadBitmap32A(0, (LPSTR)MAKEINTRESOURCE(OBM_CHECK));
+    hStdRadioCheck = LoadBitmap32A(0, (LPSTR)MAKEINTRESOURCE(OBM_RADIOCHECK));
+    hStdMnArrow = LoadBitmap32A(0, (LPSTR)MAKEINTRESOURCE(OBM_MNARROW));
+
+    if (hStdCheck)
     {
 	BITMAP32 bm;
-
 	GetObject32A( hStdCheck, sizeof(bm), &bm );
 	check_bitmap_width = bm.bmWidth;
 	check_bitmap_height = bm.bmHeight;
+    } else
+	 return FALSE;
 
-	if ((hStdMnArrow = LoadBitmap32A(0,(LPSTR)MAKEINTRESOURCE(OBM_MNARROW))))
+    /* Assume that radio checks have the same size as regular check.  */
+    if (!hStdRadioCheck)
+	 return FALSE;
+
+    if (hStdMnArrow)
 	{
-	    HBITMAP32 hBitmap;
-	    static unsigned char shade_bits[16] = { 0x55, 0, 0xAA, 0,
-						    0x55, 0, 0xAA, 0,
-						    0x55, 0, 0xAA, 0,
-						    0x55, 0, 0xAA, 0 };
+	 BITMAP32 bm;
 	    GetObject32A( hStdMnArrow, sizeof(bm), &bm );
 	    arrow_bitmap_width = bm.bmWidth;
 	    arrow_bitmap_height = bm.bmHeight;
+    } else
+	 return FALSE;
 
-	    if((hBitmap = CreateBitmap32( 8, 8, 1, 1, shade_bits)))
+    if ((hBitmap = CreateBitmap32( 8, 8, 1, 1, shade_bits)))
 	    {
 		if((hShadeBrush = CreatePatternBrush32( hBitmap )))
 		{
 		    DeleteObject32( hBitmap );
-		    if((MENU_DefSysPopup = MENU_CopySysPopup())) return TRUE;
-		}
-	    }
+	      if ((MENU_DefSysPopup = MENU_CopySysPopup()))
+		   return TRUE;
 	}
     }
-    return FALSE;	/* failure */
+
+    return FALSE;
 }
 
 /***********************************************************************
@@ -720,7 +734,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND32 hwndOwner )
 /***********************************************************************
  *           MENU_MenuBarCalcSize
  *
- * FIXME: Word 6 implements it's own MDI and it's 'close window' bitmap
+ * FIXME: Word 6 implements its own MDI and its own 'close window' bitmap
  * height is off by 1 pixel which causes lengthy window relocations when
  * active document window is maximized/restored.
  *
@@ -936,10 +950,16 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 	   */
 
 	if (lpitem->fState & MF_CHECKED)
-            GRAPH_DrawBitmap( hdc, lpitem->hCheckBit ? lpitem->hCheckBit
-			      : hStdCheck, rect.left, (y - check_bitmap_height) / 2, 
-			      0, 0, check_bitmap_width, check_bitmap_height, TRUE );
-        else if (lpitem->hUnCheckBit)
+	{
+	    HBITMAP32 bm =
+		 lpitem->hCheckBit ? lpitem->hCheckBit :
+		 ((lpitem->fType & MFT_RADIOCHECK)
+		  ? hStdRadioCheck : hStdCheck);
+            GRAPH_DrawBitmap( hdc, bm, rect.left,
+			      (y - check_bitmap_height) / 2,
+			      0, 0, check_bitmap_width,
+			      check_bitmap_height, TRUE );
+        } else if (lpitem->hUnCheckBit)
             GRAPH_DrawBitmap( hdc, lpitem->hUnCheckBit, rect.left,
 			      (y - check_bitmap_height) / 2, 0, 0,
 			      check_bitmap_width, check_bitmap_height, TRUE );
@@ -3871,4 +3891,106 @@ BOOL32 WINAPI InsertMenuItem32W(HMENU32 hMenu, UINT32 uItem, BOOL32 bypos,
 {
     MENUITEM *item = MENU_InsertItem(hMenu, uItem, bypos);
     return SetMenuItemInfo32_common(item, (const MENUITEMINFO32A*)lpmii, TRUE);
+}
+
+/**********************************************************************
+ *		CheckMenuRadioItem32    (USER32.47)
+ */
+
+BOOL32 WINAPI CheckMenuRadioItem32(HMENU32 hMenu,
+				   UINT32 first, UINT32 last, UINT32 check,
+				   BOOL32 bypos)
+{
+     MENUITEM *mifirst, *milast, *micheck;
+     HMENU32 mfirst = hMenu, mlast = hMenu, mcheck = hMenu;
+
+     dprintf_menu (stddeb,
+		   "CheckMenuRadioItem32: ox%x: %d-%d, check %d, bypos=%d\n",
+		   hMenu, first, last, check, bypos);
+
+     mifirst = MENU_FindItem (&mfirst, &first, bypos);
+     milast = MENU_FindItem (&mlast, &last, bypos);
+     micheck = MENU_FindItem (&mcheck, &check, bypos);
+
+     if (mifirst == NULL || milast == NULL || micheck == NULL ||
+	 mifirst > milast || mfirst != mlast || mfirst != mcheck ||
+	 micheck > milast || micheck < mifirst)
+	  return FALSE;
+
+     while (mifirst <= milast)
+     {
+	  if (mifirst == micheck)
+	  {
+	       mifirst->fType |= MFT_RADIOCHECK;
+	       mifirst->fState |= MFS_CHECKED;
+	  } else {
+	       mifirst->fType &= ~MFT_RADIOCHECK;
+	       mifirst->fState &= ~MFS_CHECKED;
+	  }
+	  mifirst++;
+     }
+
+     return TRUE;
+}
+
+/**********************************************************************
+ *		CheckMenuRadioItem16    (not a Windows API)
+ */
+
+BOOL16 WINAPI CheckMenuRadioItem16(HMENU16 hMenu,
+				   UINT16 first, UINT16 last, UINT16 check,
+				   BOOL16 bypos)
+{
+     return CheckMenuRadioItem32 (hMenu, first, last, check, bypos);
+}
+
+/**********************************************************************
+ *		GetMenuItemRect32    (USER32.266)
+ */
+
+BOOL32 WINAPI GetMenuItemRect32 (HWND32 hwnd, HMENU32 hMenu, UINT32 uItem,
+				 LPRECT32 rect)
+{
+     RECT32 saverect, clientrect;
+     BOOL32 barp;
+     HDC32 hdc;
+     WND *wndPtr;
+     MENUITEM *item;
+     HMENU32 orghMenu = hMenu;
+
+     dprintf_menu (stddeb, "GetMenuItemRect32 (0x%x,0x%x,%d,%p)\n",
+		   hwnd, hMenu, uItem, rect);
+
+     item = MENU_FindItem (&hMenu, &uItem, MF_BYPOSITION);
+     wndPtr = WIN_FindWndPtr (hwnd);
+     if (!rect || !item || !wndPtr) return FALSE;
+
+     GetClientRect32( hwnd, &clientrect );
+     hdc = GetDCEx32( hwnd, 0, DCX_CACHE | DCX_WINDOW );
+     barp = (hMenu == orghMenu);
+
+     saverect = item->rect;
+     MENU_CalcItemSize (hdc, item, hwnd,
+			clientrect.left, clientrect.top, barp);
+     *rect = item->rect;
+     item->rect = saverect;
+
+     ReleaseDC32( hwnd, hdc );
+     return TRUE;
+}
+
+/**********************************************************************
+ *		GetMenuItemRect16    (USER.665)
+ */
+
+BOOL16 WINAPI GetMenuItemRect16 (HWND16 hwnd, HMENU16 hMenu, UINT16 uItem,
+				 LPRECT16 rect)
+{
+     RECT32 r32;
+     BOOL32 res;
+
+     if (!rect) return FALSE;
+     res = GetMenuItemRect32 (hwnd, hMenu, uItem, &r32);
+     CONV_RECT32TO16 (&r32, rect);
+     return res;
 }

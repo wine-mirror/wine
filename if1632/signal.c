@@ -32,18 +32,6 @@
 #include "miscemu.h"
 #include "thread.h"
 
-/* Signal handler declaration */
-
-#ifdef linux
-# define HANDLER_DEF(name) void name (int signal, SIGCONTEXT context)
-# define HANDLER_CONTEXT (&context)
-#elif defined(__svr4__) || defined(_SCO_DS)
-# define HANDLER_DEF(name) void name(int signal, void *siginfo, SIGCONTEXT *context)
-# define HANDLER_CONTEXT context
-#else
-# define HANDLER_DEF(name) void name(int signal, int code, SIGCONTEXT *context)
-# define HANDLER_CONTEXT context
-#endif
 
 extern void SIGNAL_SetHandler( int sig, void (*func)(), int flags );
 extern BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context );
@@ -80,7 +68,9 @@ static HANDLER_DEF(SIGNAL_trap)
  */
 static HANDLER_DEF(SIGNAL_fault)
 {
-    if (CS_sig(HANDLER_CONTEXT) == WINE_CODE_SELECTOR)
+    WORD cs;
+    GET_CS(cs);
+    if (CS_sig(HANDLER_CONTEXT) == cs)
     {
         fprintf( stderr, "Segmentation fault in 32-bit code (0x%08lx).\n",
                  EIP_sig(HANDLER_CONTEXT) );
@@ -120,13 +110,13 @@ static void SIGNAL_SetSigContext( const SIGCONTEXT *sigcontext,
 #ifdef FS_sig
     FS_reg(context)  = LOWORD(FS_sig(sigcontext));
 #else
-    __asm__("movw %%fs,%w0":"=r" (FS_reg(&DEBUG_context)));
+    GET_FS( FS_reg(&DEBUG_context) );
     FS_reg(context) &= 0xffff;
 #endif
 #ifdef GS_sig
     GS_reg(context)  = LOWORD(GS_sig(sigcontext));
 #else
-    __asm__("movw %%gs,%w0":"=r" (GS_reg(&DEBUG_context)));
+    GET_GS( GS_reg(&DEBUG_context) );
     GS_reg(context) &= 0xffff;
 #endif
 }
@@ -157,12 +147,12 @@ static void SIGNAL_GetSigContext( SIGCONTEXT *sigcontext,
 #ifdef FS_sig
     FS_sig(sigcontext)  = FS_reg(context);
 #else
-    __asm__("movw %w0,%%fs"::"r" (FS_reg(context)));
+    SET_FS( FS_reg(&DEBUG_context) );
 #endif
 #ifdef GS_sig
     GS_sig(sigcontext)  = GS_reg(context);
 #else
-    __asm__("movw %w0,%%gs"::"r" (GS_reg(context)));
+    SET_GS( GS_reg(&DEBUG_context) );
 #endif
 }
 

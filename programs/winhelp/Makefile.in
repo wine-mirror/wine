@@ -1,3 +1,4 @@
+DEFS      = -DWINELIB
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@

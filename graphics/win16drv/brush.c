@@ -21,12 +21,12 @@ HBRUSH32 WIN16DRV_BRUSH_SelectObject( DC * dc, HBRUSH32 hbrush,
     lBrush16.lbStyle = brush->logbrush.lbStyle;
     lBrush16.lbColor = brush->logbrush.lbColor;
     lBrush16.lbHatch = brush->logbrush.lbHatch;
-    nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, OBJ_BRUSH,
+    nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, DRVOBJ_BRUSH,
                                   &lBrush16, NULL, 
                                   0); 
     /*  may need to realloc segptrFOntInfo*/
     physDev->segptrBrushInfo = WIN16_GlobalLock16(GlobalAlloc16(GHND, nSize));
-    nSize = PRTDRV_RealizeObject(physDev->segptrPDEVICE, OBJ_BRUSH,
+    nSize = PRTDRV_RealizeObject(physDev->segptrPDEVICE, DRVOBJ_BRUSH,
                                  &lBrush16, 
                                  (LPVOID)physDev->segptrBrushInfo, 
                                  win16drv_SegPtr_TextXForm); 

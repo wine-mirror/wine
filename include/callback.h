@@ -21,6 +21,7 @@ typedef struct
 {
     VOID (CALLBACK *CallRegisterProc)( CONTEXT *, INT32 );
     VOID (CALLBACK *CallTaskRescheduleProc)(void);
+    VOID (CALLBACK *CallFrom16WndProc)(void);
     LRESULT (CALLBACK *CallWndProc)( WNDPROC16, HWND16, UINT16,
                                      WPARAM16, LPARAM );
     LRESULT (CALLBACK *CallDriverProc)( DRIVERPROC16, DWORD, HDRVR16,

@@ -101,7 +101,9 @@ Program hangs, nothing happens
 
   Switch to UNIX shell, get the process-ID using "ps -a|grep wine", and do a
   "kill -HUP <pid>" (without " and <>). Wine will then enter its internal
-  debugger and you can proceed as explained above.
+  debugger and you can proceed as explained above. Also, you can use -debug
+  switch and then you can get into internal debugger by pressing Ctrl-C in 
+  the terminal where you run Wine.
 
 Program reports an error with a Messagebox
 ==========================================

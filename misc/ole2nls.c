@@ -2112,7 +2112,7 @@ INT32 WINAPI LCMapString32W(
 INT32 WINAPI GetDateFormat32A(LCID locale,DWORD flags,LPSYSTEMTIME xtime,
 			      LPCSTR format, LPSTR date,INT32 datelen
 ) {
-	fprintf(stderr,"GetDateFormat(0x%04x,0x%08lx,%p,%s,%p,%d), stub\n",
+	fprintf(stderr,"GetDateFormat(0x%04lx,0x%08lx,%p,%s,%p,%d), stub\n",
 		locale,flags,xtime,format,date,datelen
 	);
 	lstrcpyn32A(date,"1.4.1997",datelen);
@@ -2122,7 +2122,7 @@ INT32 WINAPI GetDateFormat32A(LCID locale,DWORD flags,LPSYSTEMTIME xtime,
 INT32 WINAPI GetTimeFormat32A(LCID locale,DWORD flags,LPSYSTEMTIME xtime,
 			      LPCSTR format, LPSTR timestr,INT32 timelen
 ) {
-	fprintf(stderr,"GetDateFormat(0x%04x,0x%08lx,%p,%s,%p,%d), stub\n",
+	fprintf(stderr,"GetDateFormat(0x%04lx,0x%08lx,%p,%s,%p,%d), stub\n",
 		locale,flags,xtime,format,timestr,timelen
 	);
 	lstrcpyn32A(timestr,"00:00:42",timelen);

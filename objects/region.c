@@ -39,16 +39,22 @@ INT16 WINAPI OffsetRgn16( HRGN16 hrgn, INT16 x, INT16 y )
 INT32 WINAPI OffsetRgn32( HRGN32 hrgn, INT32 x, INT32 y )
 {
     RGNOBJ * obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
-    if (!obj) return ERROR;
-    dprintf_region(stddeb, "OffsetRgn: %04x %d,%d\n", hrgn, x, y );
-    if (!obj->xrgn) 
+
+    if (obj)
     {
-      GDI_HEAP_UNLOCK( hrgn );
-      return NULLREGION;
+	INT32 ret;
+	dprintf_region(stddeb, "OffsetRgn: %04x %d,%d\n", hrgn, x, y );
+	if (obj->xrgn) 
+	{
+	    XOffsetRegion( obj->xrgn, x, y );
+	    ret = COMPLEXREGION;
+	}
+	else
+	    ret = NULLREGION;
+	GDI_HEAP_UNLOCK( hrgn );
+	return ret;
     }
-    XOffsetRegion( obj->xrgn, x, y );
-    GDI_HEAP_UNLOCK( hrgn );
-    return COMPLEXREGION;
+    return ERROR;
 }
 
 
@@ -58,23 +64,27 @@ INT32 WINAPI OffsetRgn32( HRGN32 hrgn, INT32 x, INT32 y )
 INT16 WINAPI GetRgnBox16( HRGN16 hrgn, LPRECT16 rect )
 {
     RGNOBJ * obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
-    if (!obj) return ERROR;
-    dprintf_region(stddeb, "GetRgnBox: %04x\n", hrgn );
-    if (!obj->xrgn)
+    if (obj)
     {
-        SetRectEmpty16( rect );
-	GDI_HEAP_UNLOCK( hrgn );
-        return NULLREGION;
-    }
-    else
-    {
-        XRectangle xrect;
-        XClipBox( obj->xrgn, &xrect );
+	INT16 ret;
+	dprintf_region(stddeb, "GetRgnBox: %04x\n", hrgn );
+	if (obj->xrgn)
+	{
+	    XRectangle xrect;
+	    XClipBox( obj->xrgn, &xrect );
+	    SetRect16( rect, xrect.x, xrect.y,
+		       xrect.x + xrect.width, xrect.y + xrect.height);
+	    ret = COMPLEXREGION;
+	}
+	else
+	{
+	    SetRectEmpty16( rect );
+	    ret = NULLREGION;
+	}
 	GDI_HEAP_UNLOCK(hrgn);
-        SetRect16( rect, xrect.x, xrect.y,
-                   xrect.x + xrect.width, xrect.y + xrect.height);
-        return COMPLEXREGION;
+        return ret;
     }
+    return ERROR;
 }
 
 
@@ -469,13 +479,18 @@ BOOL16 WINAPI PtInRegion16( HRGN16 hrgn, INT16 x, INT16 y )
 BOOL32 WINAPI PtInRegion32( HRGN32 hrgn, INT32 x, INT32 y )
 {
     RGNOBJ * obj;
-    BOOL32 result;
     
-    if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
-    if (!obj->xrgn) result = FALSE;
-    else result = XPointInRegion( obj->xrgn, x, y );
-    GDI_HEAP_UNLOCK( hrgn );
-    return result;
+    if ((obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC )))
+    {
+	BOOL32 ret;
+	if (obj->xrgn)
+	    ret = XPointInRegion( obj->xrgn, x, y );
+	else
+	    ret = FALSE;
+	GDI_HEAP_UNLOCK( hrgn );
+	return ret;
+    }
+    return FALSE;
 }
 
 
@@ -485,15 +500,19 @@ BOOL32 WINAPI PtInRegion32( HRGN32 hrgn, INT32 x, INT32 y )
 BOOL16 WINAPI RectInRegion16( HRGN16 hrgn, const RECT16 *rect )
 {
     RGNOBJ * obj;
-    BOOL16 result;
 
-    if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
-    if (!obj->xrgn) result = FALSE;
-    else result = (XRectInRegion( obj->xrgn, rect->left, rect->top,
-                           rect->right-rect->left,
-                           rect->bottom-rect->top ) != RectangleOut);
-    GDI_HEAP_UNLOCK( hrgn );
-    return result;
+    if ((obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC )))
+    {
+	BOOL16 ret;
+	if (obj->xrgn)
+	    ret = (XRectInRegion( obj->xrgn, rect->left, rect->top,
+                   rect->right-rect->left, rect->bottom-rect->top ) != RectangleOut);
+	else
+	    ret = FALSE;
+	GDI_HEAP_UNLOCK( hrgn );
+	return ret;
+    }
+    return FALSE;
 }
 
 
@@ -503,15 +522,19 @@ BOOL16 WINAPI RectInRegion16( HRGN16 hrgn, const RECT16 *rect )
 BOOL32 WINAPI RectInRegion32( HRGN32 hrgn, const RECT32 *rect )
 {
     RGNOBJ * obj;
-    BOOL32 result;
     
-    if (!(obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC ))) return FALSE;
-    if (!obj->xrgn) result = FALSE;
-    else result = (XRectInRegion( obj->xrgn, rect->left, rect->top,
-                           rect->right-rect->left,
-                           rect->bottom-rect->top ) != RectangleOut);
-    GDI_HEAP_UNLOCK( hrgn );
-    return result;
+    if ((obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC )))
+    {
+	BOOL32 ret;
+	if (obj->xrgn)
+	    ret = (XRectInRegion( obj->xrgn, rect->left, rect->top,
+                   rect->right-rect->left, rect->bottom-rect->top ) != RectangleOut);
+	else
+	    ret = FALSE;
+	GDI_HEAP_UNLOCK( hrgn );
+	return ret;
+    }
+    return FALSE;
 }
 
 
@@ -530,19 +553,21 @@ BOOL16 WINAPI EqualRgn16( HRGN16 rgn1, HRGN16 rgn2 )
 BOOL32 WINAPI EqualRgn32( HRGN32 rgn1, HRGN32 rgn2 )
 {
     RGNOBJ *obj1, *obj2;
-    BOOL32 result;
+    BOOL32 ret = FALSE;
 
-    if (!(obj1 = (RGNOBJ *) GDI_GetObjPtr( rgn1, REGION_MAGIC ))) return FALSE;
-    if (!(obj2 = (RGNOBJ *) GDI_GetObjPtr( rgn2, REGION_MAGIC ))) 
+    if ((obj1 = (RGNOBJ *) GDI_GetObjPtr( rgn1, REGION_MAGIC ))) 
     {
-      GDI_HEAP_UNLOCK( rgn1 );
-      return FALSE;
+	if ((obj2 = (RGNOBJ *) GDI_GetObjPtr( rgn2, REGION_MAGIC ))) 
+	{
+	    if (!obj1->xrgn || !obj2->xrgn) 
+		ret = (!obj1->xrgn && !obj2->xrgn);
+	    else 
+		ret = XEqualRegion( obj1->xrgn, obj2->xrgn );
+	    GDI_HEAP_UNLOCK( rgn2 );
+	}
+	GDI_HEAP_UNLOCK( rgn1 );
     }
-    if (!obj1->xrgn || !obj2->xrgn) result = (!obj1->xrgn && !obj2->xrgn);
-    else result = XEqualRegion( obj1->xrgn, obj2->xrgn );
-    GDI_HEAP_UNLOCK( rgn1 );
-    GDI_HEAP_UNLOCK( rgn2 );
-    return result;
+    return ret;
 }
 
 

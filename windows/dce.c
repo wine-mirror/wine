@@ -40,7 +40,7 @@ static INT32 DCE_ReleaseDC( DCE* );
 /***********************************************************************
  *           DCE_DumpCache
  */
-static void DCE_DumpCache()
+static void DCE_DumpCache(void)
 {
     DCE* dce = firstDCE;
     
@@ -206,7 +206,7 @@ static INT32 DCE_ReleaseDC( DCE* dce )
  * rectangle. wndScope is the immediate parent of the window(s) that 
  * was(were) moved and(or) resized.
  */
-BOOL32 DCE_InvalidateDCE(WND* wndScope, RECT32* pRectUpdate)
+BOOL32 DCE_InvalidateDCE(WND* wndScope, const RECT32* pRectUpdate)
 {
     BOOL32 bRet = FALSE;
 
@@ -218,8 +218,6 @@ BOOL32 DCE_InvalidateDCE(WND* wndScope, RECT32* pRectUpdate)
                          wndScope->hwndSelf, pRectUpdate->left,pRectUpdate->top,
 				        pRectUpdate->right,pRectUpdate->bottom);
 	if( debugging_dc ) DCE_DumpCache();
-
-	if( !Options.desktopGeometry && wndScope == WIN_GetDesktop() ) return TRUE;
 
  	/* walk all DCEs and fixup non-empty entries */
 
@@ -234,8 +232,7 @@ BOOL32 DCE_InvalidateDCE(WND* wndScope, RECT32* pRectUpdate)
 		    WND* wnd = wndCurrent;
 		    INT32 xoffset = 0, yoffset = 0;
 
-		    if( (wndCurrent == wndScope) && !(dce->DCXflags & DCX_CLIPCHILDREN) )
-			continue;
+		    if( (wndCurrent == wndScope) && !(dce->DCXflags & DCX_CLIPCHILDREN) ) continue;
 
 		    /* check if DCE window is within the z-order scope */
 
@@ -288,7 +285,7 @@ BOOL32 DCE_InvalidateDCE(WND* wndScope, RECT32* pRectUpdate)
 /***********************************************************************
  *           DCE_Init
  */
-void DCE_Init()
+void DCE_Init(void)
 {
     int i;
     DCE * dce;
@@ -448,13 +445,20 @@ HRGN32 DCE_GetVisRgn( HWND32 hwnd, WORD flags )
 		    DCE_AddClipRects( wndPtr->parent->child,
 				      wndPtr, hrgnClip, &rect, xoffset, yoffset );
 
+		/* Clip siblings of all ancestors that have the
+                 * WS_CLIPSIBLINGS style
+		 */
+
 		while (wndPtr->dwStyle & WS_CHILD)
 		{
 		    wndPtr = wndPtr->parent;
 		    xoffset -= wndPtr->rectClient.left;
 		    yoffset -= wndPtr->rectClient.top;
-		    DCE_AddClipRects( wndPtr->parent->child, wndPtr,
-					hrgnClip, &rect, xoffset, yoffset );
+		    if(wndPtr->dwStyle & WS_CLIPSIBLINGS && wndPtr->parent)
+		    {
+			DCE_AddClipRects( wndPtr->parent->child, wndPtr,
+					  hrgnClip, &rect, xoffset, yoffset );
+		    }
 		}
 
 		/* Now once we've got a jumbo clip region we have
@@ -665,13 +669,9 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 		   ((dce->DCXflags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
 				      DCX_CACHE | DCX_WINDOW | DCX_PARENTCLIP)) == dcxFlags))
 		{
-		    dprintf_dc(stddeb,"\tfound valid %08x dce [%04x]\n", (unsigned)dce, hwnd );
-
-/* Eventually, this won't be commented out but at this time
- * there are still some problems with DC reuse.
- * 
-		    bUpdateVisRgn = TRUE; 
- */
+		    dprintf_dc(stddeb,"\tfound valid %08x dce [%04x], flags %08x\n", 
+					(unsigned)dce, hwnd, (unsigned)dcxFlags );
+		    bUpdateVisRgn = FALSE; 
 		    bUpdateClipOrigin = TRUE;
 		    break;
 		}
@@ -718,7 +718,7 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
     DCE_SetDrawable( wndPtr, dc, flags, bUpdateClipOrigin );
     if( bUpdateVisRgn )
     {
-	dprintf_dc(stddeb,"updating %08x dce, visrgn [%04x]\n", (unsigned)dce, hwnd);
+	dprintf_dc(stddeb,"updating visrgn for %08x dce, hwnd [%04x]\n", (unsigned)dce, hwnd);
 
 	if (flags & DCX_PARENTCLIP)
         {
@@ -772,6 +772,8 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
 	dc->w.flags &= ~DC_DIRTY;
 	SelectVisRgn( hdc, hrgnVisible );
     }
+    else
+	dprintf_dc(stddeb,"no visrgn update %08x dce, hwnd [%04x]\n", (unsigned)dce, hwnd);
 
     /* apply additional region operation (if any) */
 

@@ -357,14 +357,9 @@ static VOID MAIN_MenuCommand(HWND hWnd, WPARAM wParam, LPARAM lParam)
       WineWarranty(Globals.hMainWnd, Globals.lpszLanguage);
       break;
 
-#ifdef WINELIB
     case PM_ABOUT_WINE:
-      {
-	extern const char people[];
-	ShellAbout(hWnd, "WINE", people, 0);
-      }
+      ShellAbout(hWnd, "WINE", "Program Manager", 0);
       break;
-#endif
 
     default:
       if (wParam >= PM_FIRST_LANGUAGE && wParam <= PM_LAST_LANGUAGE)

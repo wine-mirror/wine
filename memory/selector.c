@@ -144,16 +144,14 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
         /* Check if we are freeing current %fs or %gs selector */
 
         WORD fs, gs;
-
-        __asm__("movw %%fs,%w0":"=r" (fs));
+        GET_FS(fs);
         if ((fs >= sel) && (fs < nextsel))
         {
             fprintf( stderr, "SELECTOR_FreeBlock: freeing %%fs selector (%04x), not good.\n", fs );
-            __asm__("movw %w0,%%fs"::"r" (0));
+            SET_FS( 0 );
         }
-        __asm__("movw %%gs,%w0":"=r" (gs));
-        if ((gs >= sel) && (gs < nextsel))
-            __asm__("movw %w0,%%gs"::"r" (0));
+        GET_GS(gs);
+        if ((gs >= sel) && (gs < nextsel)) SET_GS( 0 );
     }
 #endif  /* __i386__ */
 

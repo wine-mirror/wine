@@ -492,9 +492,14 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC32 hdc,
 			   ETO_OPAQUE | ETO_CLIPPED, rect, item->str,
 			   strlen(item->str), NULL );
         else
+	{
+	    /* Output empty string to paint background in the full width. */
+	    ExtTextOut32A( hdc, rect->left + 1, rect->top + 1,
+                           ETO_OPAQUE | ETO_CLIPPED, rect, NULL, 0, NULL );
 	    TabbedTextOut32A( hdc, rect->left + 1 , rect->top + 1,
 			      item->str, strlen(item->str), 
 			      descr->nb_tabs, descr->tabs, 0);
+	}
         if (item && item->selected)
         {
             SetBkColor32( hdc, oldBk );

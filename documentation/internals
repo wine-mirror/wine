@@ -17,6 +17,7 @@ stuff (rectangles, clipboard, WNet, etc). Wine USER code is
 located in windows/, controls/, and misc/ directories.
 
 1. Windowing subsystem
+----------------------
 
    windows/win.c
    windows/winpos.c
@@ -58,15 +59,17 @@ located in windows/, controls/, and misc/ directories.
    active window ("foreground window" in Win32) is moved to the front
    of z-order unless its top-level ancestor owns popup windows.
 
-   All these issues are dealt with (or supposed to be) in 
-   windows/winpos.c
+   All these issues are dealt with (or supposed to be) in windows/winpos.c 
+   with SetWindowPos() being the primary interface to the window manager.
 
    Wine specifics: in default and managed mode each top-level window
    gets its own X counterpart with desktop window being basically a 
    fake stub. In desktop mode, however, only desktop window has an X
-   window associated with it.
+   window associated with it. Also, SetWindowPos() should eventually be
+   implemented via Begin/End/DeferWindowPos() calls and not the other way
+   around.
 
-2. Visible region, clipping region and update region
+   1.1 Visible region, clipping region and update region
 
    windows/dce.c
    windows/winpos.c
@@ -143,9 +146,12 @@ located in windows/, controls/, and misc/ directories.
    the DC cache to recalculate visible regions for entries whose windows 
    were involved in the operation. DC entries (DCE) can be either private
    to the window, or private to the window class, or shared between all 
-   windows. Windows 3.1 limits the number of shared DCEs to 5. 
+   windows (Windows 3.1 limits the number of shared DCEs to 5).
 
-3. Messaging subsystem
+   1.2
+
+2. Messaging subsystem
+----------------------
 
    windows/queue.c
    windows/message.c

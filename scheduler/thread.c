@@ -58,6 +58,7 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
                      LPTHREAD_START_ROUTINE start_addr )
 {
     DWORD old_prot;
+    WORD cs, ds;
     THDB *thdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(THDB) );
     if (!thdb) return NULL;
     thdb->header.type     = K32OBJ_THREAD;
@@ -92,13 +93,15 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
 
     /* Initialize the thread context */
 
+    GET_CS(cs);
+    GET_DS(ds);
     thdb->pcontext        = &thdb->context;
-    thdb->context.SegCs   = WINE_CODE_SELECTOR;
-    thdb->context.SegDs   = WINE_DATA_SELECTOR;
-    thdb->context.SegEs   = WINE_DATA_SELECTOR;
+    thdb->context.SegCs   = cs;
+    thdb->context.SegDs   = ds;
+    thdb->context.SegEs   = ds;
+    thdb->context.SegGs   = ds;
+    thdb->context.SegSs   = ds;
     thdb->context.SegFs   = thdb->teb_sel;
-    thdb->context.SegGs   = WINE_DATA_SELECTOR;
-    thdb->context.SegSs   = WINE_DATA_SELECTOR;
     thdb->context.Eip     = (DWORD)start_addr;
     thdb->context.Esp     = (DWORD)thdb->teb.stack_top;
 
@@ -135,8 +138,12 @@ void THREAD_Destroy( K32OBJ *ptr )
     {
         /* Check if we are deleting the current thread */
         WORD fs;
-        __asm__("movw %%fs,%w0":"=r" (fs));
-        if (fs == thdb->teb_sel) __asm__ __volatile__("pushw %ds\n\tpopw %fs");
+        GET_FS( fs );
+        if (fs == thdb->teb_sel)
+        {
+            GET_DS( fs );
+            SET_FS( fs );
+        }
     }
 #endif
     SELECTOR_FreeBlock( thdb->teb_sel, 1 );

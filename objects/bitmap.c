@@ -542,6 +542,23 @@ HANDLE32 WINAPI LoadImage32W( HINSTANCE32 hinst, LPCWSTR name, UINT32 type,
 }
 
 /**********************************************************************
+ *          CopyBitmap32 (not an API)
+ *
+ */
+HBITMAP32 WINAPI CopyBitmap32 (HBITMAP32 hnd)
+{
+    HBITMAP32 res = 0;
+    BITMAP32 bmp;
+
+    if (GetObject32A (hnd, sizeof (bmp), &bmp))
+    {
+	res = CreateBitmapIndirect32 (&bmp);
+	SetBitmapBits32 (res, bmp.bmWidthBytes * bmp.bmHeight, bmp.bmBits);
+    }
+    return res;
+}
+
+/**********************************************************************
  *	    CopyImage32    (USER32.60)
  *
  * FIXME: implementation still lacks nearly all features, see LR_*
@@ -553,7 +570,7 @@ HANDLE32 WINAPI CopyImage32( HANDLE32 hnd, UINT32 type, INT32 desiredx,
     switch (type)
     {
 	case IMAGE_BITMAP:
-		return hnd;	/* FIXME ... need to copy here */
+		return CopyBitmap32(hnd);
 	case IMAGE_ICON:
 		return CopyIcon32(hnd);
 	case IMAGE_CURSOR:

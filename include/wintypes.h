@@ -8,32 +8,21 @@
 #define __WINE_WINTYPES_H
 
 #ifdef __WINE__
-#include "config.h"
-#endif
-
-#if !defined(__WINE__) && !defined(WINELIB)
-/* If we are not compiling Wine, then we should be using Winelib */
-#error You must use 'configure --with-library' to build Winelib programs
-#define WINELIB
-#endif
-
-#ifdef WINELIB
+# include "config.h"
+# undef WINELIB
+# undef WINELIB16
+# undef WINELIB32
+# undef UNICODE
+#else  /* __WINE__ */
+# ifndef WINELIB
+#  define WINELIB
+# endif
 # ifdef WINELIB16
 #  undef WINELIB32
 # else
-#  ifndef WINELIB32
-#   define WINELIB32
-#  endif
+#  define WINELIB32
 # endif
-#else
-# ifdef WINELIB32
-#  undef WINELIB16
-#  define WINELIB
-# endif
-# ifdef WINELIB16
-#  define WINELIB
-# endif
-#endif
+#endif  /* __WINE__ */
 
 /* Macros to map Winelib names to the correct implementation name */
 /* depending on WINELIB16, WINELIB32 and UNICODE macros.          */

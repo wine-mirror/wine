@@ -1,0 +1,127 @@
+#include "debugstr.h"
+#include "xmalloc.h"
+#include <stdlib.h>
+
+/* ---------------------------------------------------------------------- */
+
+#define SAVE_STRING_COUNT 50
+static void *strings[SAVE_STRING_COUNT];
+static int nextstring;
+
+/* ---------------------------------------------------------------------- */
+
+static void *
+gimme1 (int n)
+{
+  void *res;
+  if (strings[nextstring]) free (strings[nextstring]);
+  res = strings[nextstring] = xmalloc (n);
+  if (++nextstring == SAVE_STRING_COUNT) nextstring = 0;
+  return res;
+}
+
+/* ---------------------------------------------------------------------- */
+
+LPSTR
+debugstr_an (LPCSTR src, int n)
+{
+  LPSTR dst, res;
+
+  if (!src) return "(null)";
+  if (n < 0) n = 0;
+  dst = res = gimme1 (n * 4 + 10);
+  *dst++ = '"';
+  while (n-- > 0 && *src)
+    {
+      BYTE c = *src++;
+      switch (c)
+	{
+	case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
+	case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
+	case '\t': *dst++ = '\\'; *dst++ = 't'; break;
+	case '"': *dst++ = '\\'; *dst++ = '"'; break;
+	case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
+	default:
+	  if (c >= ' ' && c <= 126)
+	    *dst++ = c;
+	  else
+	    {
+	      *dst++ = '\\';
+	      *dst++ = '0' + ((c >> 6) & 7);
+	      *dst++ = '0' + ((c >> 3) & 7);
+	      *dst++ = '0' + ((c >> 0) & 7);
+	    }
+	}
+    }
+  if (*src)
+    {
+      *dst++ = '.';
+      *dst++ = '.';
+      *dst++ = '.';
+    }
+  *dst++ = '"';
+  *dst = 0;
+  return res;
+}
+
+/* ---------------------------------------------------------------------- */
+
+LPSTR
+debugstr_a (LPCSTR s)
+{
+  return debugstr_an (s, 80);
+}
+
+/* ---------------------------------------------------------------------- */
+
+LPSTR
+debugstr_wn (LPCWSTR src, int n)
+{
+  LPSTR dst, res;
+
+  if (!src) return "(null)";
+  if (n < 0) n = 0;
+  dst = res = gimme1 (n * 4 + 10);
+  *dst++ = '"';
+  while (n-- > 0 && *src)
+    {
+      WORD c = *src++;
+      switch (c)
+	{
+	case '\n': *dst++ = '\\'; *dst++ = 'n'; break;
+	case '\r': *dst++ = '\\'; *dst++ = 'r'; break;
+	case '\t': *dst++ = '\\'; *dst++ = 't'; break;
+	case '"': *dst++ = '\\'; *dst++ = '"'; break;
+	case '\\': *dst++ = '\\'; *dst++ = '\\'; break;
+	default:
+	  if (c >= ' ' && c <= 126)
+	    *dst++ = c;
+	  else
+	    {
+	      *dst++ = '\\';
+	      *dst++ = '0' + ((c >> 6) & 7);
+	      *dst++ = '0' + ((c >> 3) & 7);
+	      *dst++ = '0' + ((c >> 0) & 7);
+	    }
+	}
+    }
+  if (*src)
+    {
+      *dst++ = '.';
+      *dst++ = '.';
+      *dst++ = '.';
+    }
+  *dst++ = '"';
+  *dst = 0;
+  return res;
+}
+
+/* ---------------------------------------------------------------------- */
+
+LPSTR
+debugstr_w (LPCWSTR s)
+{
+  return debugstr_wn (s, 80);
+}
+
+/* ---------------------------------------------------------------------- */

@@ -5,6 +5,7 @@
  *
  */
 
+#include "version.h"
 #include "win.h"
 #include "message.h"
 #include "sysmetrics.h"
@@ -1332,22 +1333,6 @@ BOOL32 NC_GetSysPopupPos( WND* wndPtr, RECT32* rect )
 }
 
 /***********************************************************************
- *           NC_TrackSysMenu
- *
- * Track a mouse button press on the system menu.
- * TODO: Unify with NC_TrackMinMaxBox() (and without InternalGetMessage() calls).
- */
-static void NC_TrackSysMenu( HWND32 hwnd, POINT16 pt )
-{
-    WND*	wndPtr = WIN_FindWndPtr( hwnd );
-    
-    if (wndPtr->dwStyle & WS_SYSMENU)
-	SendMessage16( hwnd, WM_SYSCOMMAND, 
-		SC_MOUSEMENU + HTSYSMENU, *((LPARAM*)&pt));
-}
-
-
-/***********************************************************************
  *           NC_StartSizeMove
  *
  * Initialisation of a move or resize, when initiatied from a menu choice.
@@ -1450,7 +1435,7 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
     WND *     wndPtr = WIN_FindWndPtr( hwnd );
     BOOL32    thickframe = HAS_THICKFRAME( wndPtr->dwStyle );
     BOOL32    iconic = wndPtr->dwStyle & WS_MINIMIZE;
-    int       moved = 0;
+    BOOL32    moved = FALSE;
 
     if (IsZoomed32(hwnd) || !IsWindowVisible32(hwnd) ||
         (wndPtr->flags & WIN_MANAGED)) return;
@@ -1521,19 +1506,12 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
 	if (rootWindow == DefaultRootWindow(display)) XGrabServer( display );
     }
 
-    if( iconic )
+    if( iconic ) /* create a cursor for dragging */
     {
-	HICON16 hIcon = (wndPtr->class->hIcon)
-                      ? wndPtr->class->hIcon
+	HICON16 hIcon = (wndPtr->class->hIcon) ? wndPtr->class->hIcon
                       : (HICON16)SendMessage16( hwnd, WM_QUERYDRAGICON, 0, 0L);
-	if( hIcon )
-	{
-	    hDragCursor =  CURSORICON_IconToCursor( hIcon, TRUE );
-	    hOldCursor = SetCursor32(hDragCursor);
-	    ShowCursor32( TRUE );
-	} 
-	else iconic = FALSE;
-	WINPOS_ShowIconTitle( wndPtr, FALSE );
+	if( hIcon ) hDragCursor =  CURSORICON_IconToCursor( hIcon, TRUE );
+	if( !hDragCursor ) iconic = FALSE;
     }
 
     if( !iconic ) NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
@@ -1574,7 +1552,17 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
 
 	if (dx || dy)
 	{
-            moved = 1;
+	    if( !moved )
+	    {
+		moved = TRUE;
+        	if( iconic ) /* ok, no system popup tracking */
+		{
+		    hOldCursor = SetCursor32(hDragCursor);
+		    ShowCursor32( TRUE );
+		    WINPOS_ShowIconTitle( wndPtr, FALSE );
+		}
+	    }
+
 	    if (msg.message == WM_KEYDOWN) SetCursorPos32( pt.x, pt.y );
 	    else
 	    {
@@ -1599,9 +1587,12 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
     ReleaseCapture();
     if( iconic )
     {
-	ShowCursor32( FALSE );
-	SetCursor32(hOldCursor);
-	if( hDragCursor ) DestroyCursor32( hDragCursor );
+	if( moved ) /* restore cursors, show icon title later on */
+	{
+	    ShowCursor32( FALSE );
+	    SetCursor32( hOldCursor );
+	}
+        DestroyCursor32( hDragCursor );
     }
     else
 	NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
@@ -1616,40 +1607,43 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
 
     if (HOOK_IsHooked( WH_CBT ))
     {
-       RECT16* pr = SEGPTR_NEW(RECT16);
-       if( pr )
-       {
-           CONV_RECT32TO16( &sizingRect, pr );
-	  if( HOOK_CallHooks16( WH_CBT, HCBT_MOVESIZE, hwnd,
+	RECT16* pr = SEGPTR_NEW(RECT16);
+	if( pr )
+	{
+            CONV_RECT32TO16( &sizingRect, pr );
+	    if( HOOK_CallHooks16( WH_CBT, HCBT_MOVESIZE, hwnd,
 			        (LPARAM)SEGPTR_GET(pr)) )
-	      sizingRect = wndPtr->rectWindow;
-	  else
-	      CONV_RECT16TO32( pr, &sizingRect );
-	  SEGPTR_FREE(pr);
-       }
+		sizingRect = wndPtr->rectWindow;
+	    else
+		CONV_RECT16TO32( pr, &sizingRect );
+	    SEGPTR_FREE(pr);
+	}
     }
     SendMessage16( hwnd, WM_EXITSIZEMOVE, 0, 0 );
     SendMessage16( hwnd, WM_SETVISIBLE, !IsIconic16(hwnd), 0L);
 
-    /* Single click brings up the system menu when iconized */
-
-    if( moved )
+    if( moved && !((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) )
     {
-	if ((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) return;
-
 	/* NOTE: SWP_NOACTIVATE prevents document window activation in Word 6 */
 	SetWindowPos32( hwnd, 0, sizingRect.left, sizingRect.top,
 			sizingRect.right - sizingRect.left,
 			sizingRect.bottom - sizingRect.top,
 		      ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
     }
-    if( wndPtr->dwStyle & WS_MINIMIZE )
-    {
-	WINPOS_ShowIconTitle( wndPtr, TRUE );
-	if (!moved && (wndPtr->dwStyle & WS_SYSMENU))
-            SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU,
-                           MAKELPARAM( pt.x, pt.y ) );
-    }
+
+    if( IsWindow32(hwnd) )
+	if( wndPtr->dwStyle & WS_MINIMIZE )
+	{
+	    /* Single click brings up the system menu when iconized */
+
+	    if( !moved ) 
+	    {
+		 if( wndPtr->dwStyle & WS_SYSMENU ) 
+		     SendMessage16( hwnd, WM_SYSCOMMAND,
+				    SC_MOUSEMENU + HTSYSMENU, *((LPARAM*)&pt));
+	    }
+	    else WINPOS_ShowIconTitle( wndPtr, TRUE );
+	}
 }
 
 
@@ -1663,18 +1657,15 @@ static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
     MSG16 msg;
     HDC32 hdc = GetWindowDC32( hwnd );
     BOOL32 pressed = TRUE;
+    void  (*paintButton)(HWND32, HDC16, BOOL32);
 
     SetCapture32( hwnd );
     if (wParam == HTMINBUTTON)
-	if(TWEAK_Win95Look)
-	    NC_DrawMinButton95( hwnd, hdc, TRUE );
-	else
-	    NC_DrawMinButton( hwnd, hdc, TRUE );
+	paintButton = (TWEAK_Win95Look) ? &NC_DrawMinButton95 : &NC_DrawMinButton;
     else
-	if(TWEAK_Win95Look)
-	    NC_DrawMaxButton95( hwnd, hdc, TRUE );
-	else
-	    NC_DrawMaxButton( hwnd, hdc, TRUE );
+	paintButton = (TWEAK_Win95Look) ? &NC_DrawMaxButton95 : &NC_DrawMaxButton;
+
+    (*paintButton)( hwnd, hdc, TRUE );
 
     do
     {
@@ -1683,30 +1674,10 @@ static void NC_TrackMinMaxBox( HWND32 hwnd, WORD wParam )
 
 	pressed = (NC_HandleNCHitTest( hwnd, msg.pt ) == wParam);
 	if (pressed != oldstate)
-	{
-	    if (wParam == HTMINBUTTON)
-		if(TWEAK_Win95Look)
-		    NC_DrawMinButton95( hwnd, hdc, pressed );
-		else
-		    NC_DrawMinButton( hwnd, hdc, pressed );
-	    else
-		if(TWEAK_Win95Look)
-		    NC_DrawMaxButton95( hwnd, hdc, pressed );
-		else
-		    NC_DrawMaxButton( hwnd, hdc, pressed );
-	}
+	   (*paintButton)( hwnd, hdc, pressed );
     } while (msg.message != WM_LBUTTONUP);
 
-    if (wParam == HTMINBUTTON)
-	if(TWEAK_Win95Look)
-	    NC_DrawMinButton95( hwnd, hdc, FALSE );
-	else
-	    NC_DrawMinButton( hwnd, hdc, FALSE );
-    else
-	if(TWEAK_Win95Look)
-	    NC_DrawMaxButton95( hwnd, hdc, FALSE );
-	else
-	    NC_DrawMaxButton( hwnd, hdc, FALSE );
+    (*paintButton)( hwnd, hdc, FALSE );
 
     ReleaseCapture();
     ReleaseDC32( hwnd, hdc );
@@ -1781,20 +1752,34 @@ static void NC_TrackScrollBar( HWND32 hwnd, WPARAM32 wParam, POINT32 pt )
  *
  * Handle a WM_NCLBUTTONDOWN message. Called from DefWindowProc().
  */
-LONG NC_HandleNCLButtonDown( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
+LONG NC_HandleNCLButtonDown( WND* pWnd, WPARAM16 wParam, LPARAM lParam )
 {
+    HWND32 hwnd = pWnd->hwndSelf;
+
     switch(wParam)  /* Hit test */
     {
     case HTCAPTION:
+	 hwnd = WIN_GetTopParent(hwnd);
 
-	if( WINPOS_SetActiveWindow(WIN_GetTopParent(hwnd), TRUE, TRUE)
-	    || (GetActiveWindow32() == WIN_GetTopParent(hwnd)) )
-		SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );
-	break;
+	 if( WINPOS_SetActiveWindow(hwnd, TRUE, TRUE) || (GetActiveWindow32() == hwnd) )
+		SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );
+	 break;
 
     case HTSYSMENU:
-	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, lParam );
-	break;
+	 if( pWnd->dwStyle & WS_SYSMENU )
+	 {
+	     if( !(pWnd->dwStyle & WS_MINIMIZE) )
+	     {
+		HDC32 hDC = GetWindowDC32(hwnd);
+		if( TWEAK_Win95Look)
+		    NC_DrawSysButton95( hwnd, hDC, TRUE );
+		else
+		    NC_DrawSysButton( hwnd, hDC, TRUE );
+		ReleaseDC32( hwnd, hDC );
+	     }
+	     SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, lParam );
+	 }
+	 break;
 
     case HTMENU:
 	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU, lParam );
@@ -1866,12 +1851,12 @@ LONG NC_HandleNCLButtonDblClk( WND *pWnd, WPARAM16 wParam, LPARAM lParam )
 
     case HTHSCROLL:
 	SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL,
-            lParam );
+		       lParam );
 	break;
 
     case HTVSCROLL:
 	SendMessage16( pWnd->hwndSelf, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL,
-            lParam );
+		       lParam );
 	break;
     }
     return 0;
@@ -1938,10 +1923,7 @@ LONG NC_HandleSysCommand( HWND32 hwnd, WPARAM16 wParam, POINT16 pt )
 
     case SC_SCREENSAVE:
 	if (wParam == SC_ABOUTWINE)
-	{   
-            extern const char people[];
-            ShellAbout32A(hwnd,"Wine",people,0);
-        }
+            ShellAbout32A(hwnd,"Wine", WINE_RELEASE_INFO, 0);
 	break;
   
     case SC_HOTKEY:

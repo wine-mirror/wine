@@ -37,7 +37,7 @@ type	win32
  33 stdcall CreateDCW(wstr wstr wstr ptr) CreateDC32W
  34 stdcall CreateDIBPatternBrush(long long) CreateDIBPatternBrush32
  35 stub CreateDIBPatternBrushPt
- 36 stdcall CreateDIBSection(long ptr long ptr long long) CreateDIBSection
+ 36 stdcall CreateDIBSection(long ptr long ptr long long) CreateDIBSection32
  37 stdcall CreateDIBitmap(long ptr long ptr ptr long) CreateDIBitmap32
  38 stdcall CreateDiscardableBitmap(long long long) CreateDiscardableBitmap32
  39 stdcall CreateEllipticRgn(long long long long) CreateEllipticRgn32
@@ -234,10 +234,10 @@ type	win32
 227 stdcall GetTextColor(long) GetTextColor32
 228 stdcall GetTextExtentExPointA(long str long long ptr ptr ptr) GetTextExtentExPoint32A
 229 stdcall GetTextExtentExPointW(long wstr long long ptr ptr ptr) GetTextExtentExPoint32W
-230 stdcall GetTextExtentPoint32A(long str long ptr) GetTextExtentPoint32A
-231 stdcall GetTextExtentPoint32W(long wstr long ptr) GetTextExtentPoint32W
-232 stdcall GetTextExtentPointA(long str long ptr) GetTextExtentPoint32ABuggy
-233 stdcall GetTextExtentPointW(long wstr long ptr) GetTextExtentPoint32WBuggy
+230 stdcall GetTextExtentPoint32A(long ptr long ptr) GetTextExtentPoint32A
+231 stdcall GetTextExtentPoint32W(long ptr long ptr) GetTextExtentPoint32W
+232 stdcall GetTextExtentPointA(long ptr long ptr) GetTextExtentPoint32ABuggy
+233 stdcall GetTextExtentPointW(long ptr long ptr) GetTextExtentPoint32WBuggy
 234 stdcall GetTextFaceA(long long ptr) GetTextFace32A
 235 stdcall GetTextFaceW(long long ptr) GetTextFace32W
 236 stdcall GetTextMetricsA(long ptr) GetTextMetrics32A

@@ -47,7 +47,7 @@ typedef struct
 /***********************************************************************
  *           DIB_Init
  */
-BOOL32 DIB_Init()
+BOOL32 DIB_Init(void)
 {
     int		i;
     XImage*	testimage;
@@ -1127,14 +1127,44 @@ HBITMAP32 WINAPI CreateDIBitmap32( HDC32 hdc, const BITMAPINFOHEADER *header,
     return handle;
 }
 
-HBITMAP32 CreateDIBSection(
-	HDC32 hdc,BITMAPINFO *bmi,UINT32 usage, LPVOID **bits,HANDLE32 section,
-	DWORD offset
-) {
-	fprintf(stderr,"CreateDIBSection(%d,[w=%ld,h=%ld],%d,%p,0x%08x,%ld),stub\n",
-		hdc,bmi->bmiHeader.biWidth,bmi->bmiHeader.biHeight,usage,bits,section,offset
-	);
-	*bits = 0xCafeBabe;
-	return 0;
+/***********************************************************************
+ *           CreateDIBSection16    (GDI.489)
+ */
+HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
+				     LPVOID **bits, HANDLE16 section,
+				     DWORD offset)
+{
+  return CreateDIBSection32 (hdc, bmi, usage, bits, section, offset);
 }
 
+/***********************************************************************
+ *           CreateDIBSection32    (GDI32.36)
+ */
+HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
+				     LPVOID **bits,HANDLE32 section,
+				     DWORD offset)
+{
+  HBITMAP32 res = 0;
+
+  fprintf(stderr,
+	  "CreateDIBSection(%d,[w=%ld,h=%ld],%d,%p,0x%08x,%ld),semistub\n",
+	  hdc,bmi->bmiHeader.biWidth,bmi->bmiHeader.biHeight,
+	  usage,bits,section,offset
+	);
+  /* FIXME.  The following line isn't quite right.  */
+  res = CreateDIBitmap32 (hdc, &bmi->bmiHeader, 0, NULL, bmi, 0);
+  if (res)
+    {
+      BITMAP32 bmp;
+      if (GetObject32A (res, sizeof (bmp), &bmp))
+	{
+	  *bits = bmp.bmBits;
+	  return res;
+	}
+    }
+
+  /* Error.  */
+  if (res) DeleteObject32 (res);
+  *bits = NULL;
+	return 0;
+}

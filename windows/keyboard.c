@@ -26,7 +26,6 @@
 #include "stddebug.h"
 /* #define DEBUG_KEYBOARD */
 #include "debug.h"
-#include "accel.h"
 #include "struct32.h"
 
 BOOL32 MouseButtonsStates[3];
@@ -309,7 +308,8 @@ BOOL32 KEYBOARD_Init(void)
 
 static BOOL32 NumState=FALSE, CapsState=FALSE;
 
-void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, XKeyEvent * event, KEYLP localkeylp )
+void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, INT32 event_x, INT32 event_y,
+                           DWORD event_time, KEYLP localkeylp )
 {
   BOOL32 * State = (vkey==VK_NUMLOCK? &NumState : &CapsState);
 
@@ -328,10 +328,10 @@ void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, XKeyEvent * event, KEYLP local
 		dprintf_keyboard(stddeb,"ON + KeyRelease => generating DOWN and UP messages.\n");
 		localkeylp.lp1.previous = 0; /* ? */
 		localkeylp.lp1.transition = 0;
-		hardware_event( WM_KEYDOWN, vkey, localkeylp.lp2, event->x_root - desktopX,
-				event->y_root - desktopY, event->time - MSG_WineStartTicks, 0);
-		hardware_event( WM_KEYUP, vkey, localkeylp.lp2, event->x_root - desktopX,
-				event->y_root - desktopY, event->time - MSG_WineStartTicks, 0);
+		hardware_event( WM_KEYDOWN, vkey, localkeylp.lp2,
+                                event_x, event_y, event_time, 0 );
+		hardware_event( WM_KEYUP, vkey, localkeylp.lp2,
+                                event_x, event_y, event_time, 0 );
 		*State=FALSE;
 		InputKeyStateTable[vkey] &= ~0x01; /* Toggle state to off. */ 
 	      } 
@@ -340,12 +340,12 @@ void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, XKeyEvent * event, KEYLP local
 	  if (Evtype==KeyPress)
 	    {
 	      dprintf_keyboard(stddeb,"OFF + Keypress => generating DOWN and UP messages.\n");
-	      hardware_event( WM_KEYDOWN, vkey, localkeylp.lp2, event->x_root - desktopX,
-			      event->y_root - desktopY, event->time - MSG_WineStartTicks, 0);
+	      hardware_event( WM_KEYDOWN, vkey, localkeylp.lp2,
+                              event_x, event_y, event_time, 0 );
 	      localkeylp.lp1.previous = 1;
 	      localkeylp.lp1.transition = 1;
-	      hardware_event( WM_KEYUP, vkey, localkeylp.lp2, event->x_root - desktopX,
-			      event->y_root - desktopY, event->time - MSG_WineStartTicks, 0);
+	      hardware_event( WM_KEYUP, vkey, localkeylp.lp2,
+                              event_x, event_y, event_time, 0 );
 	      *State=TRUE; /* Goes to intermediary state before going to ON */
 	      InputKeyStateTable[vkey] |= 0x01; /* Toggle state to on. */
 	    }
@@ -357,7 +357,7 @@ void KEYBOARD_GenerateMsg( WORD vkey, int Evtype, XKeyEvent * event, KEYLP local
  *
  * Handle a X key event
  */
-void KEYBOARD_HandleEvent( XKeyEvent *event )
+void KEYBOARD_HandleEvent( WND *pWnd, XKeyEvent *event )
 {
     char Str[24]; 
     XComposeStatus cs; 
@@ -368,17 +368,21 @@ void KEYBOARD_HandleEvent( XKeyEvent *event )
 
     int ascii_chars = XLookupString(event, Str, 1, &keysym, &cs);
 
+    INT32 event_x = pWnd->rectWindow.left + event->x;
+    INT32 event_y = pWnd->rectWindow.top + event->y;
+    DWORD event_time = event->time - MSG_WineStartTicks;
+
     dprintf_key(stddeb, "EVENT_key : state = %X\n", event->state);
     if (keysym == XK_Mode_switch)
 	{
 	dprintf_key(stddeb, "Alt Gr key event received\n");
 	event->keycode = XKeysymToKeycode(event->display, XK_Control_L);
 	dprintf_key(stddeb, "Control_L is keycode 0x%x\n", event->keycode);
-	KEYBOARD_HandleEvent(event);
+	KEYBOARD_HandleEvent( pWnd, event );
 	event->keycode = XKeysymToKeycode(event->display, XK_Alt_L);
 	dprintf_key(stddeb, "Alt_L is keycode 0x%x\n", event->keycode);
 	force_extended = TRUE;
-	KEYBOARD_HandleEvent(event);
+	KEYBOARD_HandleEvent( pWnd, event );
 	force_extended = FALSE;
 	return;
 	}
@@ -416,10 +420,13 @@ void KEYBOARD_HandleEvent( XKeyEvent *event )
     switch(vkey)
     {
     case VK_NUMLOCK:    
-      KEYBOARD_GenerateMsg(VK_NUMLOCK,event->type,event,keylp); break;
+      KEYBOARD_GenerateMsg( VK_NUMLOCK, event->type, event_x, event_y,
+                            event_time, keylp);
+      break;
     case VK_CAPITAL:
       dprintf_keyboard(stddeb,"Caps Lock event. (type %d). State before : %#.2x\n",event->type,InputKeyStateTable[vkey]);
-      KEYBOARD_GenerateMsg(VK_CAPITAL,event->type,event,keylp); 
+      KEYBOARD_GenerateMsg( VK_CAPITAL, event->type, event_x, event_y,
+                            event_time, keylp ); 
       dprintf_keyboard(stddeb,"State after : %#.2x\n",InputKeyStateTable[vkey]);
       break;
     default:
@@ -452,14 +459,18 @@ void KEYBOARD_HandleEvent( XKeyEvent *event )
 	if (!(InputKeyStateTable[VK_NUMLOCK] & 0x01) != !(event->state & NumLockMask))
 	  { 
 	    dprintf_keyboard(stddeb,"Adjusting NumLock state. \n");
-	    KEYBOARD_GenerateMsg(VK_NUMLOCK,KeyPress,event,keylp);
-	    KEYBOARD_GenerateMsg(VK_NUMLOCK,KeyRelease,event,keylp);
+	    KEYBOARD_GenerateMsg( VK_NUMLOCK, KeyPress, event_x, event_y,
+                                  event_time, keylp );
+	    KEYBOARD_GenerateMsg( VK_NUMLOCK, KeyRelease, event_x, event_y,
+                                  event_time, keylp );
 	  }
 	if (!(InputKeyStateTable[VK_CAPITAL] & 0x01) != !(event->state & LockMask))
 	  {
 	    dprintf_keyboard(stddeb,"Adjusting Caps Lock state. State before %#.2x \n",InputKeyStateTable[VK_CAPITAL]);
-	    KEYBOARD_GenerateMsg(VK_CAPITAL,KeyPress,event,keylp);
-	    KEYBOARD_GenerateMsg(VK_CAPITAL,KeyRelease,event,keylp);
+	    KEYBOARD_GenerateMsg( VK_CAPITAL, KeyPress, event_x, event_y,
+                                  event_time, keylp );
+	    KEYBOARD_GenerateMsg( VK_CAPITAL, KeyRelease, event_x, event_y,
+                                  event_time, keylp );
 	    dprintf_keyboard(stddeb,"State after %#.2x \n",InputKeyStateTable[VK_CAPITAL]);
 	  }
 	/* End of intermediary states. */
@@ -471,8 +482,8 @@ void KEYBOARD_HandleEvent( XKeyEvent *event )
 	dprintf_key(stddeb,"            InputKeyState=%X\n",
 		    InputKeyStateTable[vkey]);
 
-	hardware_event( message, vkey, keylp.lp2, event->x_root - desktopX,
-			event->y_root - desktopY, event->time - MSG_WineStartTicks, 0 );
+	hardware_event( message, vkey, keylp.lp2,
+                        event_x, event_y, event_time, 0 );
       }
     }
    }
@@ -831,7 +842,7 @@ WORD WINAPI VkKeyScan32A(CHAR cChar)
 	      index : 1     adds 0x0100 (shift)
 	      index : ?     adds 0x0200 (ctrl)
 	      index : 2     adds 0x0600 (ctrl+alt)
-	      index : ?     adds 0x0700 (ctrl+alt+shit (used?))
+	      index : ?     adds 0x0700 (ctrl+alt+shift (used?))
 	     */
 	  }
 	dprintf_keyboard(stddeb," ... returning %#.2x\n", keyc2vkey[keycode]+highbyte);

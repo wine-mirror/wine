@@ -601,6 +601,8 @@ void BUILTIN_PrintDLLs(void)
     int i;
     BUILTIN_DLL *dll;
 
+    fprintf(stderr,"Example: -dll -ole2    Do not use emulated OLE2.DLL\n");
+    fprintf(stderr,"Available DLLs:\n");
     for (i = 0, dll = BuiltinDLLs; dll->descr; dll++)
     {
         if (!(dll->flags & DLL_FLAG_ALWAYS_USED))
@@ -608,5 +610,4 @@ void BUILTIN_PrintDLLs(void)
                      ((++i) % 8) ? ' ' : '\n' );
     }
     fprintf(stderr,"\n");
-    exit(1);
 }

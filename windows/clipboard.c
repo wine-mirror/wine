@@ -1,5 +1,5 @@
 /*
- * 'Wine' Clipboard function handling
+ * WINE clipboard function handling
  *
  * Copyright 1994 Martin Ayotte
  *	     1996 Alex Korobka
@@ -41,11 +41,13 @@ typedef struct tagCLIPFORMAT {
  *			internal variables
  */
 
+static HQUEUE16 hqClipLock   = 0;
+static BOOL32 bCBHasChanged  = FALSE;
+
 static HWND32 hWndClipOwner  = 0;   /* current clipboard owner */
 static HWND32 hWndClipWindow = 0;   /* window that opened clipboard */
 static HWND32 hWndViewer     = 0;   /* start of viewers chain */
 
-static BOOL32 bClipChanged  = FALSE;
 static WORD LastRegFormat = CF_REGFORMATBASE;
 
 static Bool   selectionWait = False;
@@ -72,70 +74,104 @@ static CLIPFORMAT ClipFormats[16]  = {
     { CF_DSPBITMAP, 1, 0, "DSPBitmap", (HANDLE16)NULL, 0, &ClipFormats[14], NULL }
     };
 
-/**************************************************************************
- *                      CLIPBOARD_CheckSelection
- */
-static void CLIPBOARD_CheckSelection(WND* pWnd)
+static LPCLIPFORMAT __lookup_format( LPCLIPFORMAT lpFormat, WORD wID )
 {
-  dprintf_clipboard(stddeb,"\tchecking %08x\n", (unsigned)pWnd->window);
-
-  if( selectionAcquired && selectionWindow != None &&
-      pWnd->window == selectionWindow )
-  {
-    selectionPrevWindow = selectionWindow;
-    selectionWindow = None;
-
-    if( pWnd->next ) 
-         selectionWindow = pWnd->next->window;
-    else if( pWnd->parent )
-             if( pWnd->parent->child != pWnd ) 
-                 selectionWindow = pWnd->parent->child->window;
-
-    dprintf_clipboard(stddeb,"\tswitching selection from %08x to %08x\n", 
-                    (unsigned)selectionPrevWindow, (unsigned)selectionWindow);
-
-    if( selectionWindow != None )
+    while(TRUE)
     {
-        XSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
-        if( XGetSelectionOwner(display, XA_PRIMARY) != selectionWindow )
-            selectionWindow = None;
+	if (lpFormat == NULL ||
+	    lpFormat->wFormatID == wID) break;
+	lpFormat = lpFormat->NextFormat;
     }
-  }
+    return lpFormat;
 }
 
 /**************************************************************************
- *			CLIPBOARD_DisOwn
+ *                      CLIPBOARD_CheckSelection
+ *
+ * Prevent X selection from being lost when a top level window is
+ * destroyed.
+ */
+static void CLIPBOARD_CheckSelection(WND* pWnd)
+{
+    dprintf_clipboard(stddeb,"\tchecking %08x\n", (unsigned)pWnd->window);
+
+    if( selectionAcquired && selectionWindow != None &&
+        pWnd->window == selectionWindow )
+    {
+	selectionPrevWindow = selectionWindow;
+	selectionWindow = None;
+
+	if( pWnd->next ) 
+	    selectionWindow = pWnd->next->window;
+	else if( pWnd->parent )
+             if( pWnd->parent->child != pWnd ) 
+                 selectionWindow = pWnd->parent->child->window;
+
+	dprintf_clipboard(stddeb,"\tswitching selection from %08x to %08x\n", 
+                    (unsigned)selectionPrevWindow, (unsigned)selectionWindow);
+
+	if( selectionWindow != None )
+	{
+	    XSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
+	    if( XGetSelectionOwner(display, XA_PRIMARY) != selectionWindow )
+		selectionWindow = None;
+	}
+    }
+}
+
+/**************************************************************************
+ *                      CLIPBOARD_ResetLock
+ */
+void CLIPBOARD_ResetLock( HQUEUE16 hqCurrent, HQUEUE16 hqNew )
+{
+    if( hqClipLock == hqCurrent )
+    {
+	if( hqNew )
+	    hqClipLock = hqNew;
+	else
+	{
+ 	    hWndClipOwner = 0;
+	    hWndClipWindow = 0;
+	    EmptyClipboard32();
+	    hqClipLock = 0;
+	}
+    }
+}
+
+/**************************************************************************
+ *			CLIPBOARD_ResetOwner
  *
  * Called from DestroyWindow().
  */
-void CLIPBOARD_DisOwn(WND* pWnd)
+void CLIPBOARD_ResetOwner(WND* pWnd)
 {
-  LPCLIPFORMAT lpFormat = ClipFormats;
+    LPCLIPFORMAT lpFormat = ClipFormats;
 
-  dprintf_clipboard(stddeb,"DisOwn: clipboard owner = %04x, selection = %08x\n", 
+    dprintf_clipboard(stddeb,"DisOwn: clipboard owner = %04x, selection = %08x\n", 
 				hWndClipOwner, (unsigned)selectionWindow);
 
-  if( pWnd->hwndSelf == hWndClipOwner)
-  {
-      SendMessage16(hWndClipOwner,WM_RENDERALLFORMATS,0,0L);
+    if( pWnd->hwndSelf == hWndClipOwner)
+    {
+	SendMessage16(hWndClipOwner,WM_RENDERALLFORMATS,0,0L);
 
-      /* check if all formats were rendered */
+	/* check if all formats were rendered */
 
-      while(lpFormat)
-      { 
-         if( lpFormat->wDataPresent && !lpFormat->hData )
-	 {
-	   dprintf_clipboard(stddeb,"\tdata missing for clipboard format %i\n", lpFormat->wFormatID); 
-	   lpFormat->wDataPresent = 0;
-	 }
-         lpFormat = lpFormat->NextFormat;
-      }
-      hWndClipOwner = 0;
-  }
+	while(lpFormat)
+	{
+	    if( lpFormat->wDataPresent && !lpFormat->hData )
+	    {
+		dprintf_clipboard( stddeb,"\tdata missing for clipboard format %i\n", 
+				   lpFormat->wFormatID); 
+		lpFormat->wDataPresent = 0;
+	    }
+	    lpFormat = lpFormat->NextFormat;
+	}
+	hWndClipOwner = 0;
+    }
 
-  /* now try to salvage current selection from being destroyed by X */
+    /* now try to salvage current selection from being destroyed by X */
 
-  if( pWnd->window ) CLIPBOARD_CheckSelection(pWnd);
+    if( pWnd->window ) CLIPBOARD_CheckSelection(pWnd);
 }
 
 /**************************************************************************
@@ -143,16 +179,16 @@ void CLIPBOARD_DisOwn(WND* pWnd)
  */
 static void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat, BOOL32 bChange)
 {
-  if( lpFormat->wFormatID >= CF_GDIOBJFIRST &&
-      lpFormat->wFormatID <= CF_GDIOBJLAST )
-      DeleteObject32(lpFormat->hData);
-  else if( lpFormat->hData )
-           GlobalFree16(lpFormat->hData);
+    if( lpFormat->wFormatID >= CF_GDIOBJFIRST &&
+	lpFormat->wFormatID <= CF_GDIOBJLAST )
+	DeleteObject32(lpFormat->hData);
+    else if( lpFormat->hData )
+	GlobalFree16(lpFormat->hData);
 
-  lpFormat->wDataPresent = 0; 
-  lpFormat->hData = 0;
+    lpFormat->wDataPresent = 0; 
+    lpFormat->hData = 0;
 
-  if( bChange ) bClipChanged = TRUE;
+    if( bChange ) bCBHasChanged = TRUE;
 }
 
 /**************************************************************************
@@ -160,31 +196,34 @@ static void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat, BOOL32 bChange)
  */
 static BOOL32 CLIPBOARD_RequestXSelection()
 {
-  HWND32 hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow32();
+    HWND32 hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow32();
 
-  if( !hWnd ) return FALSE;
+    if( !hWnd ) return FALSE;
 
-  dprintf_clipboard(stddeb,"Requesting selection...\n");
+    dprintf_clipboard(stddeb,"Requesting selection...\n");
 
   /* request data type XA_STRING, later
    * CLIPBOARD_ReadSelection() will be invoked 
    * from the SelectionNotify event handler */
 
-  XConvertSelection(display,XA_PRIMARY,XA_STRING,
-                    XInternAtom(display,"PRIMARY_TEXT",False),
-                    WIN_GetXWindow(hWnd),CurrentTime);
+    XConvertSelection(display,XA_PRIMARY,XA_STRING,
+                      XInternAtom(display,"PRIMARY_TEXT",False),
+                      WIN_GetXWindow(hWnd),CurrentTime);
 
-  /* wait until SelectionNotify is processed */
+  /* wait until SelectionNotify is processed 
+   *
+   * FIXME: Use XCheckTypedWindowEvent() instead ( same in the 
+   *	    CLIPBOARD_CheckSelection() ). 
+   */
 
-  selectionWait=True;
-  while(selectionWait) 
-        EVENT_WaitNetEvent( TRUE, FALSE );
+    selectionWait=True;
+    while(selectionWait) EVENT_WaitNetEvent( TRUE, FALSE );
 
   /* we treat Unix text as CF_OEMTEXT */
-  dprintf_clipboard(stddeb,"\tgot CF_OEMTEXT = %i\n", 
-		    ClipFormats[CF_OEMTEXT-1].wDataPresent);
+    dprintf_clipboard(stddeb,"\tgot CF_OEMTEXT = %i\n", 
+		      ClipFormats[CF_OEMTEXT-1].wDataPresent);
 
-  return (BOOL32)ClipFormats[CF_OEMTEXT-1].wDataPresent;
+    return (BOOL32)ClipFormats[CF_OEMTEXT-1].wDataPresent;
 }
 
 /**************************************************************************
@@ -192,21 +231,17 @@ static BOOL32 CLIPBOARD_RequestXSelection()
  */
 BOOL32 CLIPBOARD_IsPresent(WORD wFormat)
 {
-    LPCLIPFORMAT lpFormat = ClipFormats; 
-
     /* special case */
 
     if( wFormat == CF_TEXT || wFormat == CF_OEMTEXT )
-        return lpFormat[CF_TEXT-1].wDataPresent ||
-               lpFormat[CF_OEMTEXT-1].wDataPresent;
-
-    while(TRUE) {
-        if (lpFormat == NULL) return FALSE;
-        if (lpFormat->wFormatID == wFormat) break;
-        lpFormat = lpFormat->NextFormat;
-        }
-
-    return (lpFormat->wDataPresent);
+        return ClipFormats[CF_TEXT-1].wDataPresent ||
+               ClipFormats[CF_OEMTEXT-1].wDataPresent;
+    else
+    {
+	LPCLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
+	if( lpFormat ) return (lpFormat->wDataPresent);
+    }
+    return FALSE;
 }
 
 /**************************************************************************
@@ -220,18 +255,23 @@ BOOL16 WINAPI OpenClipboard16( HWND16 hWnd )
 
 /**************************************************************************
  *            OpenClipboard32   (USER32.406)
+ *
+ * Note: Netscape uses NULL hWnd to open the clipboard.
  */
 BOOL32 WINAPI OpenClipboard32( HWND32 hWnd )
 {
-    BOOL32 bRet = FALSE;
+    BOOL32 bRet;
+
     dprintf_clipboard(stddeb,"OpenClipboard(%04x) = ", hWnd);
 
-    if (!hWndClipWindow)
-       {
+    if (!hqClipLock)
+    {
+	 hqClipLock = GetTaskQueue(0);
     	 hWndClipWindow = hWnd;
+	 bCBHasChanged = FALSE;
 	 bRet = TRUE;
-       }
-    bClipChanged = FALSE;
+    }
+    else bRet = FALSE;
 
     dprintf_clipboard(stddeb,"%i\n", bRet);
     return bRet;
@@ -254,11 +294,14 @@ BOOL32 WINAPI CloseClipboard32(void)
 {
     dprintf_clipboard(stddeb,"CloseClipboard(); !\n");
 
-    if (hWndClipWindow == 0) return FALSE;
-    hWndClipWindow = 0;
+    if (hqClipLock == GetTaskQueue(0))
+    {
+	hWndClipWindow = 0;
 
-    if (bClipChanged && hWndViewer) SendMessage16(hWndViewer,WM_DRAWCLIPBOARD,0,0L);
-
+        if (bCBHasChanged && hWndViewer) 
+	    SendMessage16(hWndViewer, WM_DRAWCLIPBOARD, 0, 0L);
+	hqClipLock = 0;
+    }
     return TRUE;
 }
 
@@ -281,20 +324,20 @@ BOOL32 WINAPI EmptyClipboard32(void)
 
     dprintf_clipboard(stddeb,"EmptyClipboard()\n");
 
-    if (hWndClipWindow == 0) return FALSE;
+    if (hqClipLock != GetTaskQueue(0)) return FALSE;
 
     /* destroy private objects */
 
     if (hWndClipOwner)
-	SendMessage16(hWndClipOwner,WM_DESTROYCLIPBOARD,0,0L);
+	SendMessage16(hWndClipOwner, WM_DESTROYCLIPBOARD, 0, 0L);
   
     while(lpFormat) 
-      {
+    {
 	if ( lpFormat->wDataPresent || lpFormat->hData )
 	     CLIPBOARD_DeleteRecord( lpFormat, TRUE );
 
 	lpFormat = lpFormat->NextFormat;
-      }
+    }
 
     hWndClipOwner = hWndClipWindow;
 
@@ -307,7 +350,7 @@ BOOL32 WINAPI EmptyClipboard32(void)
 	dprintf_clipboard(stddeb, "\tgiving up selection (spw = %08x)\n", 
 				 	(unsigned)selectionPrevWindow);
 
-	XSetSelectionOwner(display,XA_PRIMARY,None,CurrentTime);
+	XSetSelectionOwner(display, XA_PRIMARY, None, CurrentTime);
     }
     return TRUE;
 }
@@ -336,34 +379,37 @@ HWND32 WINAPI GetClipboardOwner32(void)
  */
 HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
 {
-    LPCLIPFORMAT lpFormat = ClipFormats; 
+    LPCLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
     Window       owner;
 
     dprintf_clipboard(stddeb,
 		"SetClipboardData(%04X, %04x) !\n", wFormat, hData);
 
-    while(TRUE) 
-      {
-	if (lpFormat == NULL) return 0;
-	if (lpFormat->wFormatID == wFormat) break;
-	lpFormat = lpFormat->NextFormat;
-      }
+    /* NOTE: If the hData is zero and current owner doesn't match
+     * the window that opened the clipboard then this application
+     * is screwed because WM_RENDERFORMAT will go to the owner
+     * (to become the owner it must call EmptyClipboard() before
+     *  adding new data).
+     */
+
+    if( (hqClipLock != GetTaskQueue(0)) || !lpFormat ||
+	(!hData && (!hWndClipOwner || (hWndClipOwner != hWndClipWindow))) ) return 0; 
 
     /* Acquire X selection if text format */
 
     if( !selectionAcquired && 
 	(wFormat == CF_TEXT || wFormat == CF_OEMTEXT) )
     {
-      owner = WIN_GetXWindow(hWndClipWindow);
-      XSetSelectionOwner(display,XA_PRIMARY,owner,CurrentTime);
-      if( XGetSelectionOwner(display,XA_PRIMARY) == owner )
-      {
-        selectionAcquired = True;
-	selectionWindow = owner;
+	owner = WIN_GetXWindow( hWndClipWindow ? hWndClipWindow : AnyPopup32() );
+	XSetSelectionOwner(display,XA_PRIMARY,owner,CurrentTime);
+	if( XGetSelectionOwner(display,XA_PRIMARY) == owner )
+	{
+	    selectionAcquired = True;
+	    selectionWindow = owner;
 
-        dprintf_clipboard(stddeb,"Grabbed X selection, owner=(%08x)\n", 
+	    dprintf_clipboard(stddeb,"Grabbed X selection, owner=(%08x)\n", 
 						(unsigned) owner);
-      }
+	}
     }
 
     if ( lpFormat->wDataPresent || lpFormat->hData ) 
@@ -380,7 +426,7 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
 	    CLIPBOARD_DeleteRecord(&ClipFormats[CF_TEXT-1], TRUE);
     }
 
-    bClipChanged = TRUE;
+    bCBHasChanged = TRUE;
     lpFormat->wDataPresent = 1;
     lpFormat->hData = hData;          /* 0 is legal, see WM_RENDERFORMAT */
 
@@ -403,7 +449,7 @@ HANDLE32 WINAPI SetClipboardData32( UINT32 wFormat, HANDLE32 hData )
  */
 static BOOL32 CLIPBOARD_RenderFormat(LPCLIPFORMAT lpFormat)
 {
- if( lpFormat->wDataPresent && !lpFormat->hData )
+   if( lpFormat->wDataPresent && !lpFormat->hData )
    if( IsWindow32(hWndClipOwner) )
        SendMessage16(hWndClipOwner,WM_RENDERFORMAT,
                      (WPARAM16)lpFormat->wFormatID,0L);
@@ -414,37 +460,39 @@ static BOOL32 CLIPBOARD_RenderFormat(LPCLIPFORMAT lpFormat)
        hWndClipOwner = 0; lpFormat->wDataPresent = 0;
        return FALSE;
    }
- return (lpFormat->hData) ? TRUE : FALSE;
+   return (lpFormat->hData) ? TRUE : FALSE;
 }
 
 /**************************************************************************
  *                      CLIPBOARD_RenderText
+ *
+ * Convert text between UNIX and DOS formats.
  */
 static BOOL32 CLIPBOARD_RenderText(LPCLIPFORMAT lpTarget, LPCLIPFORMAT lpSource)
 {
-  UINT16 size = GlobalSize16( lpSource->hData );
-  LPCSTR	lpstrS = (LPSTR)GlobalLock16(lpSource->hData);
-  LPSTR		lpstrT;
+    UINT16 size = GlobalSize16( lpSource->hData );
+    LPCSTR lpstrS = (LPSTR)GlobalLock16(lpSource->hData);
+    LPSTR  lpstrT;
 
-  if( !lpstrS ) return FALSE;
-  dprintf_clipboard(stddeb,"\tconverting from '%s' to '%s', %i chars\n",
+    if( !lpstrS ) return FALSE;
+    dprintf_clipboard(stddeb,"\tconverting from '%s' to '%s', %i chars\n",
 			   	      lpSource->Name, lpTarget->Name, size);
 
-  lpTarget->hData = GlobalAlloc16(GMEM_ZEROINIT, size); 
-  lpstrT = (LPSTR)GlobalLock16(lpTarget->hData);
+    lpTarget->hData = GlobalAlloc16(GMEM_ZEROINIT, size); 
+    lpstrT = (LPSTR)GlobalLock16(lpTarget->hData);
 
-  if( lpstrT )
-  {
-    if( lpSource->wFormatID == CF_TEXT )
-	CharToOemBuff32A(lpstrS, lpstrT, size);
-    else
-	OemToCharBuff32A(lpstrS, lpstrT, size);
-    dprintf_clipboard(stddeb,"\tgot %s\n", lpstrT);
-    return TRUE;
-  }
+    if( lpstrT )
+    {
+	if( lpSource->wFormatID == CF_TEXT )
+	    CharToOemBuff32A(lpstrS, lpstrT, size);
+	else
+	    OemToCharBuff32A(lpstrS, lpstrT, size);
+	dprintf_clipboard(stddeb,"\tgot %s\n", lpstrT);
+	return TRUE;
+    }
 
-  lpTarget->hData = 0;
-  return FALSE;
+    lpTarget->hData = 0;
+    return FALSE;
 }
 
 /**************************************************************************
@@ -455,7 +503,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
     LPCLIPFORMAT lpRender = ClipFormats; 
     LPCLIPFORMAT lpUpdate = NULL;
 
-    if (!hWndClipWindow) return 0;
+    if (hqClipLock != GetTaskQueue(0)) return 0;
 
     dprintf_clipboard(stddeb,"GetClipboardData(%04X)\n", wFormat);
 
@@ -477,18 +525,13 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
     }
     else
     {
-      while(TRUE) 
-      {
-	if (lpRender == NULL) return 0;
-	if (lpRender->wFormatID == wFormat) break;
-	lpRender = lpRender->NextFormat;
-      }
-      lpUpdate = lpRender;
+	lpRender = __lookup_format( ClipFormats, wFormat );
+	lpUpdate = lpRender;
     }
    
-    if( !CLIPBOARD_RenderFormat(lpRender) ) return 0; 
-    if( lpUpdate != lpRender &&
-	!lpUpdate->hData ) CLIPBOARD_RenderText(lpUpdate, lpRender);
+    if( !lpRender || !CLIPBOARD_RenderFormat(lpRender) ) return 0; 
+    if( lpUpdate != lpRender && !lpUpdate->hData ) 
+	CLIPBOARD_RenderText(lpUpdate, lpRender);
 
     dprintf_clipboard(stddeb,"\treturning %04x (type %i)\n", 
 			      lpUpdate->hData, lpUpdate->wFormatID);
@@ -529,16 +572,16 @@ INT32 WINAPI CountClipboardFormats32(void)
     FormatCount += abs(lpFormat[CF_TEXT-1].wDataPresent -
 		       lpFormat[CF_OEMTEXT-1].wDataPresent); 
 
-    while(TRUE) {
+    while(TRUE) 
+    {
 	if (lpFormat == NULL) break;
 	if (lpFormat->wDataPresent) 
-	    {
-               dprintf_clipboard(stddeb, "\tdata found for format %i\n", lpFormat->wFormatID);
-
-	       FormatCount++;
-	    }
-	lpFormat = lpFormat->NextFormat;
+	{
+            dprintf_clipboard(stddeb, "\tdata found for format %i\n", lpFormat->wFormatID);
+	    FormatCount++;
 	}
+	lpFormat = lpFormat->NextFormat;
+    }
 
     dprintf_clipboard(stddeb,"\ttotal %d\n", FormatCount);
     return FormatCount;
@@ -563,7 +606,7 @@ UINT32 WINAPI EnumClipboardFormats32( UINT32 wFormat )
 
     dprintf_clipboard(stddeb,"EnumClipboardFormats(%04X)\n", wFormat);
 
-    if( !hWndClipWindow ) return 0;
+    if( hqClipLock != GetTaskQueue(0) ) return 0;
 
     if( (!wFormat || wFormat == CF_TEXT || wFormat == CF_OEMTEXT) 
 	 && !selectionAcquired) CLIPBOARD_RequestXSelection();
@@ -576,22 +619,19 @@ UINT32 WINAPI EnumClipboardFormats32( UINT32 wFormat )
 
     /* walk up to the specified format record */
 
-    while(TRUE) {
-	if (lpFormat == NULL) return 0;
-	if (lpFormat->wFormatID == wFormat) break;
-	lpFormat = lpFormat->NextFormat;
-	}
+    if( !(lpFormat = __lookup_format( lpFormat, wFormat )) ) return 0;
 
     /* find next format with available data */
 
     lpFormat = lpFormat->NextFormat;
-    while(TRUE) {
+    while(TRUE) 
+    {
 	if (lpFormat == NULL) return 0;
-	if (lpFormat->wDataPresent ||
-	       (lpFormat->wFormatID == CF_OEMTEXT &&
-		ClipFormats[CF_TEXT-1].wDataPresent)) break;
+	if (lpFormat->wDataPresent || (lpFormat->wFormatID == CF_OEMTEXT && 
+				       ClipFormats[CF_TEXT-1].wDataPresent)) 
+	    break;
 	lpFormat = lpFormat->NextFormat;
-	}
+    }
 
     return lpFormat->wFormatID;
 }
@@ -611,17 +651,18 @@ UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
 
     /* walk format chain to see if it's already registered */
 
-    while(TRUE) {
+    while(TRUE) 
+    {
 	if ( !strcmp(lpFormat->Name,FormatName) )
-	   {
+	{
 	     lpFormat->wRefCount++;
 	     return lpFormat->wFormatID;
-	   }
+	}
  
 	if ( lpFormat->NextFormat == NULL ) break;
 
 	lpFormat = lpFormat->NextFormat;
-	}
+    }
 
     /* allocate storage for new format entry */
 
@@ -677,18 +718,12 @@ INT16 WINAPI GetClipboardFormatName16( UINT16 wFormat, LPSTR retStr, INT16 maxle
  */
 INT32 WINAPI GetClipboardFormatName32A( UINT32 wFormat, LPSTR retStr, INT32 maxlen )
 {
-    LPCLIPFORMAT lpFormat = ClipFormats; 
+    LPCLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
 
     dprintf_clipboard(stddeb,
 	"GetClipboardFormatName(%04X, %p, %d) !\n", wFormat, retStr, maxlen);
 
-    while(TRUE) {
-	if (lpFormat == NULL) return 0;
-	if (lpFormat->wFormatID == wFormat) break;
-	lpFormat = lpFormat->NextFormat;
-	}
-
-    if (lpFormat->Name == NULL || 
+    if (lpFormat == NULL || lpFormat->Name == NULL || 
 	lpFormat->wFormatID < CF_REGFORMATBASE) return 0;
 
     dprintf_clipboard(stddeb,
@@ -758,7 +793,7 @@ HWND32 WINAPI GetClipboardViewer32(void)
  */
 BOOL16 WINAPI ChangeClipboardChain16(HWND16 hWnd, HWND16 hWndNext)
 {
-    return ChangeClipboardChain32(hWnd,hWndNext);
+    return ChangeClipboardChain32(hWnd, hWndNext);
 }
 
 /**************************************************************************
@@ -771,10 +806,10 @@ BOOL32 WINAPI ChangeClipboardChain32(HWND32 hWnd, HWND32 hWndNext)
     dprintf_clipboard(stdnimp, "ChangeClipboardChain(%04x, %04x)\n", hWnd, hWndNext);
 
     if( hWndViewer )
-      bRet = !SendMessage16( hWndViewer, WM_CHANGECBCHAIN,
+	bRet = !SendMessage16( hWndViewer, WM_CHANGECBCHAIN,
                              (WPARAM16)hWnd, (LPARAM)hWndNext);   
     else
-      dprintf_clipboard(stddeb,"ChangeClipboardChain: hWndViewer is lost\n");
+	dprintf_clipboard(stddeb,"ChangeClipboardChain: hWndViewer is lost\n");
 
     if( hWnd == hWndViewer ) hWndViewer = hWndNext;
 
@@ -929,32 +964,31 @@ void CLIPBOARD_ReadSelection(Window w,Atom prop)
  */
 void CLIPBOARD_ReleaseSelection(Window w, HWND32 hwnd)
 {
-  /* w is the window that lost selection,
-   * 
-   * selectionPrevWindow is nonzero if CheckSelection() was called. 
-   */
+    /* w is the window that lost selection,
+     * 
+     * selectionPrevWindow is nonzero if CheckSelection() was called. 
+     */
 
-  dprintf_clipboard(stddeb,"\tevent->window = %08x (sw = %08x, spw=%08x)\n", 
+    dprintf_clipboard(stddeb,"\tevent->window = %08x (sw = %08x, spw=%08x)\n", 
 	  (unsigned)w, (unsigned)selectionWindow, (unsigned)selectionPrevWindow );
 
-  if( selectionAcquired )
-    if( w == selectionWindow || selectionPrevWindow == None)
-    {
-      /* alright, we really lost it */
+    if( selectionAcquired )
+	if( w == selectionWindow || selectionPrevWindow == None)
+	{
+	    /* alright, we really lost it */
 
-      selectionAcquired = False;
-      selectionWindow = None; 
+	    selectionAcquired = False;
+	    selectionWindow = None; 
 
-      /* but we'll keep existing data for internal use */
-    }
-    else if( w == selectionPrevWindow )
-    {
-      w =  XGetSelectionOwner(display, XA_PRIMARY);
+	    /* but we'll keep existing data for internal use */
+	}
+	else if( w == selectionPrevWindow )
+	{
+	    w = XGetSelectionOwner(display, XA_PRIMARY);
+	    if( w == None )
+		XSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
+	}
 
-      if( w == None )
-        XSetSelectionOwner(display, XA_PRIMARY, selectionWindow, CurrentTime);
-    }
-
-  selectionPrevWindow = None;
+    selectionPrevWindow = None;
 }
 

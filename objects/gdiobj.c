@@ -738,13 +738,18 @@ INT32 WINAPI EnumObjects32( HDC32 hdc, INT32 nObjType,
  */
 BOOL16 WINAPI IsGDIObject( HGDIOBJ16 handle )
 {
-    GDIOBJHDR *object = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
-    if (object)
+    if (handle >= FIRST_STOCK_HANDLE ) 
+	return TRUE;
+    else
     {
-        UINT16 magic = object->wMagic;
-        GDI_HEAP_UNLOCK( handle );
-        if (magic >= PEN_MAGIC && magic <= METAFILE_DC_MAGIC)
-            return magic - PEN_MAGIC + 1;
+	GDIOBJHDR *object = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
+	if (object)
+	{
+	    UINT16 magic = object->wMagic;
+	    GDI_HEAP_UNLOCK( handle );
+	    if (magic >= PEN_MAGIC && magic <= METAFILE_DC_MAGIC)
+		return magic - PEN_MAGIC + 1;
+	}
     }
     return FALSE;
 }

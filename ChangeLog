@@ -1,4 +1,169 @@
 ----------------------------------------------------------------------
+Sun Nov 16 07:42:44 1997  Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [windows/dce.c] [windows/clipboard.c] [windows/nonclient.c]
+	Bug fixes.
+
+	* [misc/shell.c] [resources/*]
+	New "About" dialog.
+
+Sat Nov 15 17:30:18 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [configure.in] [Makefile.in]
+	Replaced --with-library option by --disable-emulator. The default
+ 	is now to build both the library and the emulator.
+	Renamed --with options to --enable to follow autoconf guidelines.
+
+	* [loader/main.c] [miscemu/main.c] (New file)
+	Split initialization in WinelibInit/EmulatorInit.
+
+	* [loader/*.c]
+	Removed all remaining #ifdef's WINELIB.
+
+	* [controls/widgets.c] [windows/mdi.c]
+	Converted MDIClientWndProc to 32-bit.
+
+	* [debugger/break.c] [if1632/signal.c] [include/selectors.h]
+	  [scheduler/thread.c]
+	Code and data selector values are now computed at run-time.
+
+	* [library/libres.c]
+	Moved to loader/ directory.
+
+	* [misc/main.c] [misc/version.c] (New file)
+	Moved all version stuff to version.c. Cleaned up a bit.
+
+	* [msdos/dpmi.c]
+	Update the REALMODECALL structure on return from real-mode
+	interrupt.
+
+	* [windows/event.c] [windows/keyboard.c]
+	Changed the way event coordinates are determined. Don't rely on
+	the ConfigureNotify event values. This should fix all problems
+	with cursor position in -desktop and -managed modes.
+
+Sat Nov 15 16:09:36 1997  Slaven Rezic  <eserte@cs.tu-berlin.de>
+
+	* [controls/button.c]
+	(BUTTON_CheckAutoRadioButton): Prevent possible endless loop.
+
+Wed Nov 12 03:42:45 1997  Chris Faherty <chrisf@america.com>
+
+	* [misc/ver.c]
+	Changed VerInstall32A to assume srcdir as destination if destdir
+	is blank.  This was causing alot of DLL installation into SYSTEM
+	directory to fail.
+
+	* [loader/ne_image.c]
+	NE_LoadSegment buffer[100] was too small and getting overruns.
+	Changed it to buffer[200].
+
+Sat Nov  8 06:09:57 1997  Len White <phreak@cgocable.net>
+
+	* [misc/ddeml.c] [include/ddeml.h] [if1632/ddeml.spec]
+	Added stub functions DdeConnectList(), DdeQueryNextServer(),
+	DdeDisconnectList(), DdeSetUserHandle(), DdeAbandonTransaction(),
+	DdePostAdvise(), DdeCreateDataHandle(), DdeAddData(), DdeGetData(),
+	DdeAccessData(), DdeUnaccessData(), DdeEnableCallback(),
+	DdeCmpStringHandles().
+
+Fri Nov  7 19:44:26 1997  Olaf Flebbe  <o.flebbe@science-computing.de>
+
+	* [files/directory.c]
+	Fix typo in directory.c [broke loading of cdplayer on nt40]
+
+	* [misc/main.c]
+	Implemented -winver nt40.
+
+	* [loader/resource.c] [user32.spec]
+	Stubs for CopyAcceleratorTable, Destroy AcceleratorTable.
+
+Thu Nov  6 22:37:04 1997  Morten Welinder  <welinder@rentec.com>
+
+	* [files/drive.c]
+	(GetDiskFreeSpace32A): Cap at 2GB.
+
+	* [include/windows.h]
+	Prototype DrawIconEx and CreateDIBSection32.
+	Define OBM_RADIOCHECK.
+	Add DI_* macros.
+
+	* [objects/dib.c] [if1632/gdi.spec]
+	CreateDIBSection is a WINAPI.  Renamed to CreateDIBSection32.
+	Implement CreateDIBSection16.
+
+	* [if1632/user.spec] [if1632/user32.spec]
+	Add DrawIconEx.
+
+	* [objects/cursoricon.c]
+	(CopyIcon32): Fix bogus implementation.
+
+	* [objects/bitmap.c]
+	(CopyBitmap32): New function.
+	(CopyImage32): Do bitmaps.
+
+	* [graphics/x11drv/text.c]
+	(X11DRV_ExtTextOut): Change ascent and descent default to avoid
+	zero-thinkness overstrike line.
+
+	* [include/debugstr.h] [misc/debugstr.c]
+	New files.
+
+	* [msdos/dpmi.c]
+	Don't prototype do_mscdex. In INT_Int31Handler, handle real-mode
+	int 0x21, ah=0x52.
+
+	* [msdos/int2f.c]
+	Add dummys for 0x1681 and 0x1682.
+
+	* [misc/registry.c]
+	Fix memory leaks in RegDeleteKey32W.
+
+	* [objects/text.c]
+	In TEXT_NextLine, fix another off-by-one bug.
+
+	* [include/bitmaps/obm_radiocheck]
+	New file.  (It a small circle used to radio-button menu items
+	when selected.)
+	
+	* [objects/oembitmap.c]
+	Add obm_radiocheck.
+
+	* [include/windows.h] [if1632/user32.spec] [controls/menu.c]
+	  [if1632/user.spec]
+	Define CheckMenuRadioItem{16,32}.  Define GetMenuItemRect{16,32}.
+
+Wed Nov  5 11:30:14 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+	* [misc/main.c]
+	Auto adjust versions depending on binary.
+
+Tue Nov  4 15:21:00 1997  Kristian Nielsen  <kristian.nielsen@risoe.dk>
+
+	* [controls/listbox.c]
+	Paint full background in listbox items with tab stops enabled.
+
+	* [if1632/thunk.c]
+	Copy some more message parameter structures (DRAWITEMSTRUCT16,
+	COMPAREITEMSTRUCT16) to the stack segment to fix broken programs
+	that need this.
+
+	* [windows/dce.c]
+	Only clip sibling windows when the parent has the WS_CLIPSIBLINGS
+	style set.
+
+	* [windows/focus.c]
+	Make order of events in FOCUS_SwitchFocus() reflect API docs.
+
+	* [windows/defdlg.c]
+	Fix problem with loss of focus in some dialogs.
+
+	* [win32/code_page.c]
+	Fix return value for MultiByteToWideChar().
+
+	* [BUGS]
+	BCW now works.
+
+----------------------------------------------------------------------
 Thu Oct 30 21:52:23 1997  Martin Boehme <boehme@informatik.mu-luebeck.de>
 
 	* [windows/nonclient.c]
@@ -108,7 +273,7 @@ Sun Oct 26 14:25:00 1997  Nikita V. Youshchenko <yoush@cs.msu.su>
 	* [include/drive.h] [files/drive.c] [msdos/int21.c]
 	Partially implemented DOS drive mapping (int21 AX=440F).
 
-Sat Oct 25 13:03:29 1997  Alexandre Julliard  <Alexandre.Julliard@urbanet.ch>
+Sat Oct 25 13:03:29 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [debugger/debug.l]
 	Support '.' in identifiers. Use "x . y" to access structure

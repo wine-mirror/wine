@@ -318,6 +318,5 @@ extern Display * display;
 extern Screen * screen;
 extern Window rootWindow;
 extern int screenWidth, screenHeight, screenDepth;
-extern int desktopX, desktopY;   /* misc/main.c */
 
 #endif  /* __WINE_GDI_H */

@@ -314,6 +314,7 @@ int DRIVE_FindDriveRoot( const char **path )
         while (!IS_END_OF_NAME(*p)) *next++ = *p++;
         *next = 0;
     }
+    *next = 0;
 
     if (rootdrive != -1)
         dprintf_dosfs( stddeb, "DRIVE_FindDriveRoot: %s -> drive %c:, root='%s', name='%s'\n",
@@ -617,6 +618,10 @@ BOOL32 WINAPI GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
         drive = toupper(root[0]) - 'A';
     }
     if (!DRIVE_GetFreeSpace(drive, &size, &available)) return FALSE;
+
+    /* Cap the size and available at 2GB as per specs.  */
+    if (size > 0x7fffffff) size = 0x7fffffff;
+    if (available > 0x7fffffff) available = 0x7fffffff;
 
     *sector_bytes    = 512;
     size            /= 512;

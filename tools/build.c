@@ -137,11 +137,12 @@ static ORDDEF OrdinalDefinitions[MAX_ORDINALS];
 static SPEC_TYPE SpecType = SPEC_INVALID;
 static char DLLName[80];
 static char DLLFileName[80];
-int Limit = 0;
-int Base = MAX_ORDINALS;
-int DLLHeapSize = 0;
-char *SpecName;
-FILE *SpecFp;
+static int Limit = 0;
+static int Base = MAX_ORDINALS;
+static int DLLHeapSize = 0;
+static char *SpecName;
+static FILE *SpecFp;
+static WORD Code_Selector, Data_Selector;
 
 char *ParseBuffer = NULL;
 char *ParseNext;
@@ -1084,7 +1085,7 @@ static int BuildSpec32File( char * specfile, FILE *outfile )
                 if (odp->u.func.arg_types[j] == 't') mask |= 1<< (j*2);
                 if (odp->u.func.arg_types[j] == 'W') mask |= 2<< (j*2);
 	    }
-	fprintf( outfile, "\t.long %ld\n",mask);
+	fprintf( outfile, "\t.long %d\n",mask);
     }
 
     /* Output the DLL ordinals table */
@@ -1233,10 +1234,8 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
                      (odp->type == TYPE_REGISTER) ? "regs" :
                      (odp->type == TYPE_PASCAL) ? "long" : "word",
                      odp->u.func.arg_types );
-            fprintf( outfile,"\t.byte 0x%02x,0x%02x\n", /* Some asms don't have .word */
-                     LOBYTE(WINE_CODE_SELECTOR), HIBYTE(WINE_CODE_SELECTOR) );
-            fprintf( outfile, "\tnop\n" );
-            fprintf( outfile, "\tnop\n\n" );
+            fprintf( outfile, "\t.long 0x%08lx\n",
+                     MAKELONG( Code_Selector, 0x9090 /* nop ; nop */ ) );
             odp->offset = code_offset;
             code_offset += 16;  /* Assembly code is 16 bytes long */
             break;
@@ -1571,8 +1570,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
 
     /* Restore 32-bit ds and es */
 
-    fprintf( outfile, "\tpushl $0x%04x%04x\n",
-             WINE_DATA_SELECTOR, WINE_DATA_SELECTOR );
+    fprintf( outfile, "\tpushl $0x%04x%04x\n", Data_Selector, Data_Selector );
     fprintf( outfile, "\tpopw %%ds\n" );
     fprintf( outfile, "\tpopw %%es\n" );
 
@@ -1966,10 +1964,10 @@ static void BuildRet16Func( FILE *outfile )
     fprintf( outfile, "\tmovw %%ax,%%dx\n" );
     fprintf( outfile, "\tmovl %%edx,%%eax\n" );
 
-    /* Restore 32-bit segment registers and stack*/
+    /* Restore 32-bit segment registers */
 
     fprintf( outfile, "\tpopl %%ecx\n" );  /* Get the saved %%esp */
-    fprintf( outfile, "\tmovw $0x%04x,%%bx\n", WINE_DATA_SELECTOR );
+    fprintf( outfile, "\tmovw $0x%04x,%%bx\n", Data_Selector );
 #ifdef __svr4__
     fprintf( outfile, "\tdata16\n");
 #endif
@@ -2421,6 +2419,13 @@ int main(int argc, char **argv)
             exit(1);
         }
     }
+
+    /* Retrieve the selector values; this assumes that we are building
+     * the asm files on the platform that will also run them. Probably
+     * a safe assumption to make.
+     */
+    GET_CS( Code_Selector );
+    GET_DS( Data_Selector );
 
     if (!strcmp( argv[1], "-spec" ))
         res = BuildSpec( outfile, argc, argv );

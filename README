@@ -23,13 +23,12 @@ it are probably available on the ftp site where you got Wine. They can
 also be found on ftp.x.org and all its mirror sites.
 
 To build Wine, first do a "./configure" and then a "make depend; make".
-The executable "wine" will be built.  "wine" will load and run 16-bit
-Windows executables.
+This will build the library "libwine.a" and the program "wine".
 
-To build Winelib, do a "./configure --with-library", and then a "make
-depend; make". The library "winelib.a" will be built, allowing to
-compile Windows source code under Unix. If you have an ELF compiler,
-you can use "./configure --with-dll" instead to build a shared library.
+The program "wine" will load and run Windows executables.
+The library "libwine.a" can be used to compile and link Windows source
+code under Unix.  If you have an ELF compiler, you can use
+"./configure --enable-dll" to build a shared library instead.
 
 To upgrade to a new release by using a patch file, first cd to the
 top-level directory of the release (the one containing this README

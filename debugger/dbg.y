@@ -441,13 +441,8 @@ static void DEBUG_Main( int signal )
 	    DEBUG_ReadSymbolTable( SymbolTableFile );
         }
 
-	/*
-	 * Read COFF, MSC, etc debug information that we noted when we
-	 * started up the executable.
-	 */
-	DEBUG_ProcessDeferredDebug();
-
         DEBUG_LoadEntryPoints();
+	DEBUG_ProcessDeferredDebug();
 	fprintf(stderr,"\n");
     }
 

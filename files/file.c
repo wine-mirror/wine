@@ -1286,8 +1286,8 @@ LPVOID FILE_dommap( FILE_OBJECT *file, LPVOID start,
     }
 /*    printf( "FILE_mmap: mmap failed (%d), faking it\n", errno );*/
     /* Reserve the memory with an anonymous mmap */
-    ret = FILE_mmap( NULL, start, size_high, size_low, 0, 0,
-                     PROT_READ | PROT_WRITE, flags );
+    ret = FILE_dommap( NULL, start, size_high, size_low, 0, 0,
+                       PROT_READ | PROT_WRITE, flags );
     if (ret == (LPVOID)-1) return ret;
     /* Now read in the file */
     if ((pos = lseek( fd, offset_low, SEEK_SET )) == -1)

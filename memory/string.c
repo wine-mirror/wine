@@ -12,6 +12,7 @@
 #include "ldt.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "debugstr.h"
 
 static const BYTE STRING_Oem2Ansi[256] =
 "\000\001\002\003\004\005\006\007\010\011\012\013\014\015\016\244"
@@ -77,8 +78,8 @@ SEGPTR WINAPI lstrcat16( SEGPTR dst, LPCSTR src )
  */
 LPSTR WINAPI lstrcat32A( LPSTR dst, LPCSTR src )
 {
-    dprintf_string(stddeb,"strcat: Append '%s' to '%s'\n",
-		 (src)?src:"NULL",(dst)?dst:"NULL");
+    dprintf_string(stddeb,"strcat: Append %s to %s\n",
+		   debugstr_a (src), debugstr_a (dst));
     strcat( dst, src );
     return dst;
 }
@@ -90,6 +91,8 @@ LPSTR WINAPI lstrcat32A( LPSTR dst, LPCSTR src )
 LPWSTR WINAPI lstrcat32W( LPWSTR dst, LPCWSTR src )
 {
     register LPWSTR p = dst;
+    dprintf_string(stddeb,"strcat: Append L%s to L%s\n",
+		   debugstr_w (src), debugstr_w (dst));
     while (*p) p++;
     while ((*p++ = *src++));
     return dst;
@@ -112,8 +115,8 @@ SEGPTR WINAPI lstrcatn16( SEGPTR dst, LPCSTR src, INT16 n )
 LPSTR WINAPI lstrcatn32A( LPSTR dst, LPCSTR src, INT32 n )
 {
     register LPSTR p = dst;
-    dprintf_string(stddeb,"strcatn add %d chars from '%s' to '%s'\n",
-		 n,(src)?src:"NULL",(dst)?dst:"NULL");
+    dprintf_string(stddeb,"strcatn add %d chars from %s to %s\n",
+		   n, debugstr_an (src, n), debugstr_a (dst));
     while (*p) p++;
     if ((n -= (INT32)(p - dst)) <= 0) return dst;
     lstrcpyn32A( p, src, n );
@@ -127,6 +130,8 @@ LPSTR WINAPI lstrcatn32A( LPSTR dst, LPCSTR src, INT32 n )
 LPWSTR WINAPI lstrcatn32W( LPWSTR dst, LPCWSTR src, INT32 n )
 {
     register LPWSTR p = dst;
+    dprintf_string(stddeb,"strcatn add %d chars from L%s to L%s\n",
+		   n, debugstr_wn (src, n), debugstr_w (dst));
     while (*p) p++;
     if ((n -= (INT32)(p - dst)) <= 0) return dst;
     lstrcpyn32W( p, src, n );
@@ -148,14 +153,13 @@ INT16 WINAPI lstrcmp16( LPCSTR str1, LPCSTR str2 )
  */
 INT32 WINAPI lstrcmp32A( LPCSTR str1, LPCSTR str2 )
 {
+    dprintf_string(stddeb,"strcmp: %s and %s\n",
+		   debugstr_a (str1), debugstr_a (str2));
     /* Win95 KERNEL32.DLL does it that way. Hands off! */
     if (!str1 || !str2) {
     	SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
     }
-
-    dprintf_string(stddeb,"strcmp: '%s' and '%s'\n",
-		 (str1)?str1:"NULL",(str2)?str2:"NULL");
     return (INT32)strcmp( str1, str2 );
 }
 
@@ -165,6 +169,8 @@ INT32 WINAPI lstrcmp32A( LPCSTR str1, LPCSTR str2 )
  */
 INT32 WINAPI lstrcmp32W( LPCWSTR str1, LPCWSTR str2 )
 {
+    dprintf_string(stddeb,"strcmp: L%s and L%s\n",
+		   debugstr_w (str1), debugstr_w (str2));
     if (!str1 || !str2) {
     	SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
@@ -190,12 +196,12 @@ INT32 WINAPI lstrcmpi32A( LPCSTR str1, LPCSTR str2 )
 {
     INT32 res;
 
+    dprintf_string(stddeb,"strcmpi %s and %s\n",
+		   debugstr_a (str1), debugstr_a (str2));
     if (!str1 || !str2) {
     	SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
     }
-    dprintf_string(stddeb,"strcmpi '%s' and '%s'\n",
-		 (str1)?str1:"NULL",(str2)?str2:"NULL");
     while (*str1)
     {
         if ((res = toupper(*str1) - toupper(*str2)) != 0) return res;
@@ -213,6 +219,11 @@ INT32 WINAPI lstrcmpi32W( LPCWSTR str1, LPCWSTR str2 )
 {
     INT32 res;
 
+#if 0
+    /* Too much!  (From registry loading.)  */
+    dprintf_string(stddeb,"strcmpi L%s and L%s\n",
+		   debugstr_w (str1), debugstr_w (str2));
+#endif
     if (!str1 || !str2) {
     	SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
@@ -243,8 +254,7 @@ SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
  */
 LPSTR WINAPI lstrcpy32A( LPSTR dst, LPCSTR src )
 {
-    dprintf_string(stddeb,"strcpy '%s'\n",
-		 (src)?src:"NULL");
+    dprintf_string(stddeb,"strcpy %s\n", debugstr_a (src));
     if (!src || !dst) return NULL;
     strcpy( dst, src );
     return dst;
@@ -257,6 +267,7 @@ LPSTR WINAPI lstrcpy32A( LPSTR dst, LPCSTR src )
 LPWSTR WINAPI lstrcpy32W( LPWSTR dst, LPCWSTR src )
 {
     register LPWSTR p = dst;
+    dprintf_string(stddeb,"strcpy L%s\n", debugstr_w (src));
     while ((*p++ = *src++));
     return dst;
 }
@@ -278,8 +289,8 @@ SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 LPSTR WINAPI lstrcpyn32A( LPSTR dst, LPCSTR src, INT32 n )
 {
     LPSTR p = dst;
-    dprintf_string(stddeb,"strcpyn '%s' for %d chars\n",
-		 (src)?src:"NULL",n);
+    dprintf_string(stddeb,"strcpyn %s for %d chars\n",
+		   debugstr_an (src,n), n);
     while ((n-- > 1) && *src) *p++ = *src++;
     if (n >= 0) *p = 0;
     return dst;
@@ -292,6 +303,8 @@ LPSTR WINAPI lstrcpyn32A( LPSTR dst, LPCSTR src, INT32 n )
 LPWSTR WINAPI lstrcpyn32W( LPWSTR dst, LPCWSTR src, INT32 n )
 {
     LPWSTR p = dst;
+    dprintf_string(stddeb,"strcpyn L%s for %d chars\n",
+		   debugstr_wn (src,n), n);
     while ((n-- > 1) && *src) *p++ = *src++;
     if (n >= 0) *p = 0;
     return dst;
@@ -316,7 +329,7 @@ INT32 WINAPI lstrlen32A( LPCSTR str )
      * in lstrlen() ... we check only for NULL pointer reference.
      * - Marcus Meissner
      */
-    dprintf_string(stddeb,"strlen '%s'\n", (str)?str:"NULL");
+    dprintf_string(stddeb,"strlen %s\n", debugstr_a (str));
     if (!str) return 0;
     return (INT32)strlen(str);
 }
@@ -328,6 +341,7 @@ INT32 WINAPI lstrlen32A( LPCSTR str )
 INT32 WINAPI lstrlen32W( LPCWSTR str )
 {
     INT32 len = 0;
+    dprintf_string(stddeb,"strlen L%s\n", debugstr_w (str));
     if (!str) return 0;
     while (*str++) len++;
     return len;
@@ -339,8 +353,8 @@ INT32 WINAPI lstrlen32W( LPCWSTR str )
  */
 INT32 WINAPI lstrncmp32A( LPCSTR str1, LPCSTR str2, INT32 n )
 {
-    dprintf_string(stddeb,"strncmp '%s' and '%s' for %d chars\n",
-		 (str1)?str1:"NULL",(str2)?str2:"NULL",n);
+    dprintf_string(stddeb,"strncmp %s and %s for %d chars\n",
+		   debugstr_an (str1, n), debugstr_an (str2, n), n);
     return (INT32)strncmp( str1, str2, n );
 }
 
@@ -350,6 +364,8 @@ INT32 WINAPI lstrncmp32A( LPCSTR str1, LPCSTR str2, INT32 n )
  */
 INT32 WINAPI lstrncmp32W( LPCWSTR str1, LPCWSTR str2, INT32 n )
 {
+    dprintf_string(stddeb,"strncmp L%s and L%s for %d chars\n",
+		   debugstr_wn (str1, n), debugstr_wn (str2, n), n);
     if (!n) return 0;
     while ((--n > 0) && *str1 && (*str1 == *str2)) { str1++; str2++; }
     return (INT32)(*str1 - *str2);
@@ -363,8 +379,8 @@ INT32 WINAPI lstrncmpi32A( LPCSTR str1, LPCSTR str2, INT32 n )
 {
     INT32 res;
 
-    dprintf_string(stddeb,"strncmpi '%s' and '%s' for %d chars\n",
-		 (str1)?str1:"NULL",(str2)?str2:"NULL",n);
+    dprintf_string(stddeb,"strncmpi %s and %s for %d chars\n",
+		   debugstr_an (str1, n), debugstr_an (str2, n), n);
     if (!n) return 0;
     while ((--n > 0) && *str1)
       if ( (res = toupper(*str1++) - toupper(*str2++)) ) return res;
@@ -380,6 +396,8 @@ INT32 WINAPI lstrncmpi32W( LPCWSTR str1, LPCWSTR str2, INT32 n )
 {
     INT32 res;
 
+    dprintf_string(stddeb,"strncmpi L%s and L%s for %d chars\n",
+		   debugstr_wn (str1, n), debugstr_wn (str2, n), n);
     if (!n) return 0;
     while ((--n > 0) && *str1)
     {
@@ -517,10 +535,11 @@ void WINAPI OemToAnsiBuff16( LPCSTR s, LPSTR d, UINT16 len )
  */
 BOOL32 WINAPI CharToOem32A( LPCSTR s, LPSTR d )
 {
+    LPSTR oldd = d;
     if (!s || !d) return TRUE;
-    dprintf_string(stddeb,"CharToOem '%s'\n", (s)?s:"NULL");
+    dprintf_string (stddeb,"CharToOem %s\n", debugstr_a (s));
     while ((*d++ = ANSI_TO_OEM(*s++)));
-    dprintf_string(stddeb," to '%s'\n", (d)?d:"NULL");
+    dprintf_string (stddeb,"       to %s\n", debugstr_a (oldd));
     return TRUE;
 }
 
@@ -550,7 +569,11 @@ BOOL32 WINAPI CharToOemBuff32W( LPCWSTR s, LPSTR d, DWORD len )
  */
 BOOL32 WINAPI CharToOem32W( LPCWSTR s, LPSTR d )
 {
+    LPSTR oldd = d;
+    if (!s || !d) return TRUE;
+    dprintf_string (stddeb,"CharToOem L%s\n", debugstr_w (s));
     while ((*d++ = ANSI_TO_OEM(*s++)));
+    dprintf_string (stddeb,"       to %s\n", debugstr_a (oldd));
     return TRUE;
 }
 
@@ -561,9 +584,9 @@ BOOL32 WINAPI CharToOem32W( LPCWSTR s, LPSTR d )
 BOOL32 WINAPI OemToChar32A( LPCSTR s, LPSTR d )
 {
     LPSTR oldd = d;
-    dprintf_string(stddeb,"OemToChar '%s'\n", (s)?s:"NULL");
+    dprintf_string(stddeb,"OemToChar %s\n", debugstr_a (s));
     while ((*d++ = OEM_TO_ANSI(*s++)));
-    dprintf_string(stddeb," to '%s'\n", oldd);
+    dprintf_string(stddeb,"       to %s\n", debugstr_a (oldd));
     return TRUE;
 }
 
@@ -573,7 +596,7 @@ BOOL32 WINAPI OemToChar32A( LPCSTR s, LPSTR d )
  */
 BOOL32 WINAPI OemToCharBuff32A( LPCSTR s, LPSTR d, DWORD len )
 {
-    dprintf_string(stddeb,"OemToCharBuff '%s' for %ld chars\n", (s)?s:"NULL",len);
+    dprintf_string(stddeb,"OemToCharBuff %s\n", debugstr_an (s, len));
     while (len--) *d++ = OEM_TO_ANSI(*s++);
     return TRUE;
 }
@@ -584,6 +607,7 @@ BOOL32 WINAPI OemToCharBuff32A( LPCSTR s, LPSTR d, DWORD len )
  */
 BOOL32 WINAPI OemToCharBuff32W( LPCSTR s, LPWSTR d, DWORD len )
 {
+    dprintf_string(stddeb,"OemToCharBuff %s\n", debugstr_an (s, len));
     while (len--) *d++ = (WCHAR)OEM_TO_ANSI(*s++);
     return TRUE;
 }

@@ -1,3 +1,4 @@
+DEFS      = -DWINELIB
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
@@ -5,7 +6,6 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = progman
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
-DEFS      = -I$(SRCDIR)
 RCFLAGS   = -w32 -h
 
 LANGUAGES   = En Da De Fr Fi Ko Hu It Va

@@ -110,15 +110,16 @@ LRESULT WINAPI ButtonWndProc( HWND32 hWnd, UINT32 uMsg,
         return 0;
 
     case WM_ERASEBKGND:
-        break;
+        return 1;
 
     case WM_PAINT:
         if (btnPaintFunc[style])
         {
             PAINTSTRUCT32 ps;
-            HDC32 hdc = BeginPaint32( hWnd, &ps );
+            HDC32 hdc = wParam ? (HDC32)wParam : BeginPaint32( hWnd, &ps );
+	    SetBkMode32( hdc, OPAQUE );
             (btnPaintFunc[style])( wndPtr, hdc, ODA_DRAWENTIRE );
-            EndPaint32( hWnd, &ps );
+            if( !wParam ) EndPaint32( hWnd, &ps );
         }
         break;
 
@@ -384,7 +385,15 @@ static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
     rbox = rtext = client;
 
     if (infoPtr->hFont) SelectObject32( hDC, infoPtr->hFont );
-    hBrush = BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
+
+    /* Something is still not right, checkboxes (and edit controls)
+     * in wsping32 have white backgrounds instead of dark grey.
+     * BUTTON_SEND_CTLCOLOR() is even worse since it returns 0 in this
+     * particular case and the background is not painted at all.
+     */
+
+    hBrush = GetControlBrush( wndPtr->hwndSelf, hDC, CTLCOLOR_BTN );
+
     if (wndPtr->dwStyle & BS_LEFTTEXT) 
     {
 	/* magic +4 is what CTL3D expects */
@@ -423,6 +432,7 @@ static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
                 SetTextColor32( hDC, GetSysColor32(COLOR_GRAYTEXT) );
             DrawText16( hDC, wndPtr->text, textlen, &rtext,
                         DT_SINGLELINE | DT_VCENTER );
+	    textlen = 0; /* skip DrawText() below */
         }
     }
 
@@ -453,14 +463,19 @@ static void CB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
  */
 static void BUTTON_CheckAutoRadioButton( WND *wndPtr )
 {
-    HWND32 parent, sibling;
+    HWND32 parent, sibling, start;
     if (!(wndPtr->dwStyle & WS_CHILD)) return;
     parent = wndPtr->parent->hwndSelf;
-    for(sibling = GetNextDlgGroupItem32( parent, wndPtr->hwndSelf, FALSE );
-        sibling != wndPtr->hwndSelf && sibling != 0;
-        sibling = GetNextDlgGroupItem32( parent, sibling, FALSE ))
-	    if((WIN_FindWndPtr(sibling)->dwStyle & 0x0f) == BS_AUTORADIOBUTTON)
-		SendMessage32A( sibling, BM_SETCHECK32, BUTTON_UNCHECKED, 0 );
+    /* assure that starting control is not disabled or invisible */
+    start = sibling = GetNextDlgGroupItem32( parent, wndPtr->hwndSelf, TRUE );
+    do
+    {
+        if (!sibling) break;
+        if ((wndPtr->hwndSelf != sibling) &&
+            ((WIN_FindWndPtr(sibling)->dwStyle & 0x0f) == BS_AUTORADIOBUTTON))
+            SendMessage32A( sibling, BM_SETCHECK32, BUTTON_UNCHECKED, 0 );
+        sibling = GetNextDlgGroupItem32( parent, sibling, FALSE );
+    } while (sibling != start);
 }
 
 
@@ -506,9 +521,9 @@ static void UB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
     GetClientRect16( wndPtr->hwndSelf, &rc);
 
     if (infoPtr->hFont) SelectObject32( hDC, infoPtr->hFont );
-    hBrush = BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
-    FillRect16( hDC, &rc, hBrush );
+    hBrush = GetControlBrush( wndPtr->hwndSelf, hDC, CTLCOLOR_BTN );
 
+    FillRect16( hDC, &rc, hBrush );
     if ((action == ODA_FOCUS) ||
         ((action == ODA_DRAWENTIRE) && (infoPtr->state & BUTTON_HASFOCUS)))
         DrawFocusRect16( hDC, &rc );

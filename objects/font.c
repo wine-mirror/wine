@@ -14,6 +14,7 @@
 #include "options.h"
 #include "stddebug.h"
 #include "debug.h"
+#include "debugstr.h"
 
 #define ENUM_UNICODE	0x00000001
 
@@ -715,8 +716,9 @@ BOOL32 WINAPI GetTextExtentPoint32A( HDC32 hdc, LPCSTR str, INT32 count,
         !dc->funcs->pGetTextExtentPoint( dc, str, count, size ))
         return FALSE;
 
-    dprintf_font(stddeb,"GetTextExtentPoint(%08x '%.*s' %d %p): returning %d,%d\n",
-                 hdc, count, str, count, size, size->cx, size->cy );
+    dprintf_font(stddeb,"GetTextExtentPoint(%08x %s %d %p): returning %d,%d\n",
+                 hdc, debugstr_an (str, count), count,
+		 size, size->cx, size->cy );
     return TRUE;
 }
 

@@ -354,13 +354,13 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     /* TTD should calculate this */
     
     /* First get the size of the realized font */
-    nSize = PRTDRV_RealizeObject(physDev->segptrPDEVICE, OBJ_FONT,
+    nSize = PRTDRV_RealizeObject(physDev->segptrPDEVICE, DRVOBJ_FONT,
 				 &pLPD->paPrinterFonts[0], NULL, 
 				 0);
     
     physDev->segptrFontInfo = WIN16_GlobalLock16(GlobalAlloc16(GHND, nSize));
     /* Realize the font */
-    PRTDRV_RealizeObject(physDev->segptrPDEVICE, OBJ_FONT,
+    PRTDRV_RealizeObject(physDev->segptrPDEVICE, DRVOBJ_FONT,
 			 &pLPD->paPrinterFonts[0], 
 			 (LPVOID)physDev->segptrFontInfo, 
 			 win16drv_SegPtr_TextXForm);

@@ -11,6 +11,7 @@
 #include "queue.h"
 #include "task.h"
 #include "win.h"
+#include "clipboard.h"
 #include "hook.h"
 #include "thread.h"
 #include "process.h"
@@ -762,6 +763,7 @@ BOOL32 WINAPI SetMessageQueue32( INT32 size )
        if( WIN_GetDesktop()->hmemTaskQ == hQueue )
 	   WIN_GetDesktop()->hmemTaskQ = hNewQueue;
        WIN_ResetQueueWindows( WIN_GetDesktop(), hQueue, hNewQueue );
+       CLIPBOARD_ResetLock( hQueue, hNewQueue );
        QUEUE_DeleteMsgQueue( hQueue );
     }
 

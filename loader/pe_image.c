@@ -34,9 +34,6 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
-#ifndef WINELIB
-#include "debugger.h"
-#endif
 
 static void PE_InitDLL(PE_MODREF* modref, DWORD type, LPVOID lpReserved);
 
@@ -49,7 +46,7 @@ void dump_exports(IMAGE_EXPORT_DIRECTORY * pe_exports, unsigned int load_addr)
   int		i, j;
   u_short	*ordinal;
   u_long	*function,*functions;
-  u_char	**name,*ename;
+  u_char	**name;
 
   Module = (char*)RVA(pe_exports->Name);
   dprintf_win32(stddeb,"\n*******EXPORT DATA*******\nModule name is %s, %ld functions, %ld names\n", 
@@ -65,7 +62,7 @@ void dump_exports(IMAGE_EXPORT_DIRECTORY * pe_exports, unsigned int load_addr)
   for (i=0;i<pe_exports->NumberOfFunctions;i++, function++)
   {
       if (!*function) continue;  /* No such function */
-      dprintf_win32( stddeb,"%4d  %08lx", i + pe_exports->Base, *function );
+      dprintf_win32( stddeb,"%4ld  %08lx", i + pe_exports->Base, *function );
       /* Check if we have a name for it */
       for (j = 0; j < pe_exports->NumberOfNames; j++)
           if (ordinal[j] == i)
@@ -584,16 +581,6 @@ PE_MapImage(PE_MODULE *pe,PDB32 *process, OFSTRUCT *ofs, DWORD flags) {
 		pem->pe_reloc = (void *) RVA(dir.VirtualAddress);
 	}
 
-#ifndef WINELIB
-	if(pe->pe_header->OptionalHeader.DataDirectory
-		[IMAGE_DIRECTORY_ENTRY_DEBUG].Size)
-	  {
-	    DEBUG_RegisterDebugInfo(pe, load_addr, 
-			pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress,
-			pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].Size);
-	  }
-#endif
-
 	if(pe->pe_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_COPYRIGHT].Size)
 		dprintf_win32(stdnimp,"Copyright string ignored\n");
@@ -667,20 +654,17 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
 		pModule = MODULE_GetPtr(hModule);
 	} else {
 
-#ifndef WINELIB
 		/* try to load builtin, enabled modules first */
 		if ((hModule = BUILTIN_LoadModule( name, FALSE )))
 			return hModule;
-#endif
+
 		/* try to open the specified file */
 		if (HFILE_ERROR32==(hFile=OpenFile32(name,&ofs,OF_READ))) {
-#ifndef WINELIB
 			/* Now try the built-in even if disabled */
 			if ((hModule = BUILTIN_LoadModule( name, TRUE ))) {
 				fprintf( stderr, "Warning: could not load Windows DLL '%s', using built-in module.\n", name );
 				return hModule;
 			}
-#endif
 			return 1;
 		}
 		if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) {

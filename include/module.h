@@ -142,7 +142,9 @@ extern BOOL32 BUILTIN_ParseDLLOptions( const char *str );
 extern void BUILTIN_PrintDLLs(void);
 
 /* ne_image.c */
-extern BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum );
+extern BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum );
+extern BOOL32 NE_LoadAllSegments( NE_MODULE *pModule );
+extern BOOL32 NE_LoadDLLs( NE_MODULE *pModule );
 extern void NE_FixupPrologs( NE_MODULE *pModule );
 extern void NE_InitializeDLLs( HMODULE16 hModule );
 

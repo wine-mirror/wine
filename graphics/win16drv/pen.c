@@ -25,12 +25,12 @@ HPEN32 WIN16DRV_PEN_SelectObject( DC * dc, HPEN32 hpen, PENOBJ * pen )
     lPen16.lopnWidth.x = pen->logpen.lopnWidth.x;
     lPen16.lopnWidth.y = pen->logpen.lopnWidth.y;
     lPen16.lopnColor   = pen->logpen.lopnColor;
-    nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, OBJ_PEN,
+    nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, DRVOBJ_PEN,
                                   &lPen16, NULL, 
                                   0); 
     /*  may need to realloc segptrFOntInfo*/
     physDev->segptrPenInfo = WIN16_GlobalLock16(GlobalAlloc16(GHND, nSize));
-    nSize = PRTDRV_RealizeObject(physDev->segptrPDEVICE, OBJ_PEN,
+    nSize = PRTDRV_RealizeObject(physDev->segptrPDEVICE, DRVOBJ_PEN,
                                  &lPen16, 
                                  (LPVOID)physDev->segptrPenInfo, 
                                  0); 

@@ -16,6 +16,7 @@
 #include <errno.h>
 #include "neexe.h"
 #include "windows.h"
+#include "global.h"
 #include "task.h"
 #include "selectors.h"
 #include "callback.h"
@@ -30,9 +31,8 @@
 /***********************************************************************
  *           NE_LoadSegment
  */
-BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
+BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 {
-    NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable, *pSeg;
     WORD *pModuleTable;
     WORD count, i, offset;
@@ -44,18 +44,17 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
     int size;
     char* mem;
 
-    char buffer[100];
+    char buffer[256];
     int ordinal, additive;
     unsigned short *sp;
 
-    if (!(pModule = MODULE_GetPtr( hModule ))) return FALSE;
     pSegTable = NE_SEG_TABLE( pModule );
     pSeg = pSegTable + segnum - 1;
     pModuleTable = NE_MODULE_TABLE( pModule );
 
     if (!pSeg->filepos) return TRUE;  /* No file image, just return */
 	
-    fd = MODULE_OpenFile( hModule );
+    fd = MODULE_OpenFile( pModule->self );
     dprintf_module( stddeb, "Loading segment %d, selector=%04x\n",
                     segnum, pSeg->selector );
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
@@ -88,7 +87,7 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
         stack16Top->ip = 0;
         stack16Top->cs = 0;
  	newselector = Callbacks->CallLoadAppSegProc(selfloadheader->LoadAppSeg,
-                                                    hModule, hf, segnum );
+                                                   pModule->self, hf, segnum );
         _lclose32( hf );
  	if (newselector != oldselector) {
  	  /* Self loaders like creating their own selectors; 
@@ -218,16 +217,14 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
             if (!address)
             {
                 NE_MODULE *pTarget = MODULE_GetPtr( module );
-                fprintf( stderr, "Warning: no handler for %*.*s.%s, setting to 0:0\n",
-                        *((BYTE *)pTarget + pTarget->name_table),
+                fprintf( stderr, "Warning: no handler for %.*s.%s, setting to 0:0\n",
                         *((BYTE *)pTarget + pTarget->name_table),
                         (char *)pTarget + pTarget->name_table + 1, func_name );
             }
             if (debugging_fixup)
             {
                 NE_MODULE *pTarget = MODULE_GetPtr( module );
-                fprintf( stddeb,"%d: %*.*s.%s=%04x:%04x\n", i + 1, 
-                         *((BYTE *)pTarget + pTarget->name_table),
+                fprintf( stddeb,"%d: %.*s.%s=%04x:%04x\n", i + 1, 
                          *((BYTE *)pTarget + pTarget->name_table),
                          (char *)pTarget + pTarget->name_table + 1,
                          func_name, HIWORD(address), LOWORD(address) );
@@ -237,7 +234,7 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
 	  case NE_RELTYPE_INTERNAL:
 	    if ((rep->target1 & 0xff) == 0xff)
 	    {
-		address  = MODULE_GetEntryPoint( hModule, rep->target2 );
+		address  = MODULE_GetEntryPoint( pModule->self, rep->target2 );
 	    }
 	    else
 	    {
@@ -282,7 +279,7 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
         /* we ignore it for now */
 	if (rep->address_type > NE_RADDR_OFFSET32)
             fprintf( stderr, "WARNING: module %s: unknown reloc addr type = 0x%02x. Please report.\n",
-                     MODULE_GetModuleName(hModule), rep->address_type );
+                     MODULE_GetModuleName(pModule->self), rep->address_type );
 
 	switch (rep->address_type & 0x7f)
 	{
@@ -353,6 +350,122 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
     }
 
     free(reloc_entries);
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           NE_LoadAllSegments
+ */
+BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
+{
+    int i;
+
+    if (pModule->flags & NE_FFLAGS_SELFLOAD)
+    {
+        HFILE32 hf;
+        /* Handle self loading modules */
+        SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
+        SELFLOADHEADER *selfloadheader;
+        STACK16FRAME *stack16Top;
+        HMODULE16 hselfload = GetModuleHandle16("WPROCS");
+        DWORD oldstack;
+        WORD saved_dgroup = pSegTable[pModule->dgroup - 1].selector;
+
+        dprintf_module(stddeb, "MODULE_Load: %.*s is a self-loading module!\n",
+                       *((BYTE*)pModule + pModule->name_table),
+                       (char *)pModule + pModule->name_table + 1);
+        if (!NE_LoadSegment( pModule, 1 )) return FALSE;
+        selfloadheader = (SELFLOADHEADER *)
+                          PTR_SEG_OFF_TO_LIN(pSegTable->selector, 0);
+        selfloadheader->EntryAddrProc = MODULE_GetEntryPoint(hselfload,27);
+        selfloadheader->MyAlloc  = MODULE_GetEntryPoint(hselfload,28);
+        selfloadheader->SetOwner = MODULE_GetEntryPoint(GetModuleHandle16("KERNEL"),403);
+        pModule->self_loading_sel = GlobalHandleToSel(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, FALSE, FALSE, FALSE));
+        oldstack = IF1632_Saved16_ss_sp;
+        IF1632_Saved16_ss_sp = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
+                                                0xff00 - sizeof(*stack16Top) );
+        stack16Top = CURRENT_STACK16;
+        stack16Top->saved_ss_sp = 0;
+        stack16Top->ebp = 0;
+        stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
+        stack16Top->entry_point = 0;
+        stack16Top->entry_ip = 0;
+        stack16Top->entry_cs = 0;
+        stack16Top->bp = 0;
+        stack16Top->ip = 0;
+        stack16Top->cs = 0;
+
+        hf = FILE_DupUnixHandle( MODULE_OpenFile( pModule->self ) );
+        Callbacks->CallBootAppProc(selfloadheader->BootApp, pModule->self, hf);
+        _lclose32(hf);
+        /* some BootApp procs overwrite the selector of dgroup */
+        pSegTable[pModule->dgroup - 1].selector = saved_dgroup;
+        IF1632_Saved16_ss_sp = oldstack;
+        for (i = 2; i <= pModule->seg_count; i++)
+            if (!NE_LoadSegment( pModule, i )) return FALSE;
+    }
+    else
+    {
+        for (i = 1; i <= pModule->seg_count; i++)
+            if (!NE_LoadSegment( pModule, i )) return FALSE;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           NE_LoadDLLs
+ */
+BOOL32 NE_LoadDLLs( NE_MODULE *pModule )
+{
+    int i;
+    WORD *pModRef = (WORD *)((char *)pModule + pModule->modref_table);
+    WORD *pDLLs = (WORD *)GlobalLock16( pModule->dlls_to_init );
+
+    for (i = 0; i < pModule->modref_count; i++, pModRef++)
+    {
+        char buffer[256];
+        BYTE *pstr = (BYTE *)pModule + pModule->import_table + *pModRef;
+        memcpy( buffer, pstr + 1, *pstr );
+        strcpy( buffer + *pstr, ".dll" );
+        dprintf_module( stddeb, "Loading '%s'\n", buffer );
+        if (!(*pModRef = MODULE_FindModule( buffer )))
+        {
+            /* If the DLL is not loaded yet, load it and store */
+            /* its handle in the list of DLLs to initialize.   */
+            HMODULE16 hDLL;
+
+            if ((hDLL = MODULE_Load( buffer, (LPVOID)-1, NE_FFLAGS_IMPLICIT )) == 2)
+            {
+                /* file not found */
+                char *p;
+
+                /* Try with prepending the path of the current module */
+                GetModuleFileName16( pModule->self, buffer, sizeof(buffer) );
+                if (!(p = strrchr( buffer, '\\' ))) p = buffer;
+                memcpy( p + 1, pstr + 1, *pstr );
+                strcpy( p + 1 + *pstr, ".dll" );
+                hDLL = MODULE_Load( buffer, (LPVOID)-1, NE_FFLAGS_IMPLICIT );
+            }
+            if (hDLL < 32)
+            {
+                /* FIXME: cleanup what was done */
+
+                fprintf( stderr, "Could not load '%s' required by '%.*s', error = %d\n",
+                         buffer, *((BYTE*)pModule + pModule->name_table),
+                         (char *)pModule + pModule->name_table + 1, hDLL );
+                return FALSE;
+            }
+            *pModRef = MODULE_HANDLEtoHMODULE16( hDLL );
+            *pDLLs++ = *pModRef;
+        }
+        else  /* Increment the reference count of the DLL */
+        {
+            NE_MODULE *pOldDLL = MODULE_GetPtr( *pModRef );
+            if (pOldDLL) pOldDLL->count++;
+        }
+    }
     return TRUE;
 }
 

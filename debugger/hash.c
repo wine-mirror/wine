@@ -633,21 +633,19 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 	 * Try and find the nearest line number to the current offset.
 	 */
 	if( nearest->linetab != NULL )
-	  {
-	    /*
-	     * FIXME - this is an inefficient linear search.  A binary
-	     * search would be better if this gets to be a performance
-	     * bottleneck.
-	     */
-	    for(i=0; i < nearest->n_lines; i++)
-	      {
-		if( addr->off < nearest->linetab[i].pc_offset.off )
-		{
-		  break;
-		}
-		lineno = nearest->linetab[i].line_number;
-	      }
-	  }
+        {
+            low = 0;
+            high = nearest->n_lines;
+            while ((high - low) > 1)
+            {
+                mid = (high + low) / 2;
+                if (addr->off < nearest->linetab[mid].pc_offset.off)
+                    high = mid;
+                else
+                    low = mid;
+            }
+            lineno = nearest->linetab[low].line_number;
+        }
 
 	if( lineno != -1 )
 	  {
@@ -799,6 +797,7 @@ static void DEBUG_LoadEntryPoints32( PE_MODULE *pe, const char *name )
     char buffer[256];
     int i, j;
     IMAGE_EXPORT_DIRECTORY *exports;
+    IMAGE_DATA_DIRECTORY *debug_dir;
     DWORD load_addr;
     WORD *ordinals;
     void **functions;
@@ -859,6 +858,11 @@ static void DEBUG_LoadEntryPoints32( PE_MODULE *pe, const char *name )
         addr.off = (DWORD)RVA( functions[i] );
         DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
     }
+
+    debug_dir = &pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG];
+    if (debug_dir->Size)
+        DEBUG_RegisterDebugInfo( pe, load_addr, name,
+                                 debug_dir->VirtualAddress, debug_dir->Size );
 #undef RVA
 }
 
@@ -976,7 +980,6 @@ int DEBUG_CheckLinenoStatus( const DBG_ADDR *addr)
 {
     struct name_hash * nearest = NULL;
     int mid, high, low;
-    int i;
 
     if( sortlist_valid == FALSE )
       {
@@ -1100,24 +1103,18 @@ int DEBUG_CheckLinenoStatus( const DBG_ADDR *addr)
     if( (nearest->sourcefile != NULL)
 	&& (addr->off - nearest->addr.off < 0x100000) )
       {
-	/*
-	 * FIXME - this is an inefficient linear search.  A binary
-	 * search would be better if this gets to be a performance
-	 * bottleneck.
-	 */
-	for(i=0; i < nearest->n_lines; i++)
-	  {
-	    if( addr->off == nearest->linetab[i].pc_offset.off )
-	      {
-		return AT_LINENUMBER;
-	      }
-	    if( addr->off < nearest->linetab[i].pc_offset.off )
-	      {
-		break;
-	      }
-	  }
-
-	return NOT_ON_LINENUMBER;
+          low = 0;
+          high = nearest->n_lines;
+          while ((high - low) > 1)
+          {
+              mid = (high + low) / 2;
+              if (addr->off < nearest->linetab[mid].pc_offset.off) high = mid;
+              else low = mid;
+          }
+          if (addr->off == nearest->linetab[low].pc_offset.off)
+              return AT_LINENUMBER;
+          else
+              return NOT_ON_LINENUMBER;
       }
 
     return FUNC_HAS_NO_LINES;

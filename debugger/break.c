@@ -388,12 +388,13 @@ BOOL32 DEBUG_ShouldContinue( enum exec_mode mode, int * count )
     DBG_ADDR cond_addr;
     int bpnum;
     struct list_id list;
+    WORD cs;
 
       /* If not single-stepping, back up over the int3 instruction */
     if (!(EFL_reg(&DEBUG_context) & STEP_FLAG)) EIP_reg(&DEBUG_context)--;
 
-    addr.seg = (CS_reg(&DEBUG_context) == WINE_CODE_SELECTOR) ? 
-                0 : CS_reg(&DEBUG_context);
+    GET_CS(cs);
+    addr.seg = (CS_reg(&DEBUG_context) == cs) ? 0 : CS_reg(&DEBUG_context);
     addr.off = EIP_reg(&DEBUG_context);
         
     bpnum = DEBUG_FindBreakpoint( &addr );
@@ -512,9 +513,10 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
     unsigned int * value;
     enum exec_mode ret_mode;
     BYTE *instr;
+    WORD cs;
 
-    addr.seg = (CS_reg(&DEBUG_context) == WINE_CODE_SELECTOR) ?
-                0 : CS_reg(&DEBUG_context);
+    GET_CS(cs);
+    addr.seg = (CS_reg(&DEBUG_context) == cs) ? 0 : CS_reg(&DEBUG_context);
     addr.off = EIP_reg(&DEBUG_context);
 
     /*

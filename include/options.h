@@ -48,6 +48,7 @@ struct options
     char * desktopGeometry; /* NULL when no desktop */
     char * programName;     /* To use when loading resources */
     char * argv0;           /* argv[0] of Wine process */
+    char  *dllFlags;        /* -dll flags (hack for Winelib support) */
     int    usePrivateMap;
     int    useFixedMap;
     int    synchronous;     /* X synchronous mode */
@@ -80,5 +81,8 @@ extern int PROFILE_EnumerateWineIniSection(
 extern int PROFILE_GetWineIniBool( char const *section, char const *key_name,
 				   int def );
 extern char* PROFILE_GetStringItem( char* );
+
+/* Version functions */
+extern void VERSION_ParseVersion( char *arg );
 
 #endif  /* __WINE_OPTIONS_H */

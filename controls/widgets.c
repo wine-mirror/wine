@@ -32,31 +32,9 @@ extern LRESULT WINAPI PopupMenuWndProc( HWND32 hwnd, UINT32 msg,
 extern LRESULT WINAPI IconTitleWndProc( HWND32 hwnd, UINT32 msg,
                                         WPARAM32 wParam, LPARAM lParam );
 
-/* Win16 class info */
+/* Built-in classes */
 
-typedef struct
-{
-    UINT16     style;
-    INT16      wndExtra;
-    HBRUSH16   background;
-    LPCSTR     procName;
-    LPCSTR     className;
-} BUILTIN_CLASS_INFO16;
-
-/* Win16 built-in classes */
-
-static const BUILTIN_CLASS_INFO16 WIDGETS_BuiltinClasses16[] =
-{
-    { CS_GLOBALCLASS, sizeof(MDICLIENTINFO),
-      STOCK_LTGRAY_BRUSH, "MDIClientWndProc", "MDIClient" }
-};
-
-#define NB_BUILTIN_CLASSES16 \
-         (sizeof(WIDGETS_BuiltinClasses16)/sizeof(WIDGETS_BuiltinClasses16[0]))
-
-/* Win32 built-in classes */
-
-static WNDCLASS32A WIDGETS_BuiltinClasses32[BIC32_NB_CLASSES] =
+static WNDCLASS32A WIDGETS_BuiltinClasses[BIC32_NB_CLASSES] =
 {
     /* BIC32_BUTTON */
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
@@ -82,6 +60,9 @@ static WNDCLASS32A WIDGETS_BuiltinClasses32[BIC32_NB_CLASSES] =
     /* BIC32_SCROLL */
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
       ScrollBarWndProc, 0, sizeof(SCROLLBAR_INFO), 0, 0, IDC_ARROW, 0, 0, "ScrollBar"},
+    /* BIC32_MDICLIENT */
+    { CS_GLOBALCLASS, MDIClientWndProc,
+      0, sizeof(MDICLIENTINFO), 0, 0, 0, STOCK_LTGRAY_BRUSH, 0, "MDIClient" },
     /* BIC32_DESKTOP */
     { CS_GLOBALCLASS, DesktopWndProc, 0, sizeof(DESKTOPINFO),
       0, 0, IDC_ARROW, 0, 0, DESKTOP_CLASS_NAME },
@@ -103,45 +84,22 @@ static ATOM bicAtomTable[BIC32_NB_CLASSES];
 BOOL32 WIDGETS_Init(void)
 {
     int i;
-    char *name;
-    const BUILTIN_CLASS_INFO16 *info16 = WIDGETS_BuiltinClasses16;
-    WNDCLASS16 class16;
-    WNDCLASS32A *class32 = WIDGETS_BuiltinClasses32;
+    WNDCLASS32A *cls = WIDGETS_BuiltinClasses;
 
-    if (!(name = SEGPTR_ALLOC( 20 * sizeof(char) ))) return FALSE;
+    /* Create builtin classes */
 
-    /* Create 16-bit classes */
-
-    class16.cbClsExtra    = 0;
-    class16.hInstance     = 0;
-    class16.hIcon         = 0;
-    class16.hCursor       = LoadCursor16( 0, IDC_ARROW );
-    class16.lpszMenuName  = (SEGPTR)0;
-    class16.lpszClassName = SEGPTR_GET(name);
-    for (i = 0; i < NB_BUILTIN_CLASSES16; i++, info16++)
+    for (i = 0; i < BIC32_NB_CLASSES; i++, cls++)
     {
-        class16.style         = info16->style;
-        class16.lpfnWndProc   = (WNDPROC16)MODULE_GetWndProcEntry16( info16->procName );
-        class16.cbWndExtra    = info16->wndExtra;
-        class16.hbrBackground = info16->background;
-        strcpy( name, info16->className );
-        if (!RegisterClass16( &class16 )) return FALSE;
-    }
-
-    /* Create 32-bit classes */
-
-    for (i = 0; i < BIC32_NB_CLASSES; i++, class32++)
-    {
+        char name[20];
         /* Just to make sure the string is > 0x10000 */
-        strcpy( name, (char *)class32->lpszClassName );
-        class32->lpszClassName = name;
-        class32->hCursor = LoadCursor16( 0, class32->hCursor );
-        if (!(bicAtomTable[i] = RegisterClass32A( class32 ))) return FALSE;
+        strcpy( name, (char *)cls->lpszClassName );
+        cls->lpszClassName = name;
+        cls->hCursor = LoadCursor16( 0, cls->hCursor );
+        if (!(bicAtomTable[i] = RegisterClass32A( cls ))) return FALSE;
     }
 
     /* FIXME: hack to enable using built-in controls with Windows COMCTL32 */
     InitCommonControls();
-    SEGPTR_FREE(name);
     return TRUE;
 }
 

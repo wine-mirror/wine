@@ -20,138 +20,21 @@
 #include <X11/cursorfont.h>
 #include "heap.h"
 #include "message.h"
-#include "module.h"
 #include "msdos.h"
 #include "windows.h"
 #include "color.h"
 #include "winsock.h"
 #include "options.h"
 #include "desktop.h"
+#include "process.h"
 #include "shell.h"
 #include "winbase.h"
 #define DEBUG_DEFINE_VARIABLES
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
+#include "version.h"
 
-const char people[] = "Wine is available thanks to the work of "
-"Bob Amstadt, "
-"Dag Asheim, "
-"Martin Ayotte, "
-"Peter Bajusz, "
-"Georg Beyerle, "
-"Ross Biro, "
-"Uwe Bonnes, "
-"Erik Bos, "
-"Fons Botman, "
-"John Brezak, "
-"Andrew Bulhak, "
-"John Burton, "
-"Niels de Carpentier, "
-"Jimen Ching, "
-"David A. Cuthbert, "
-"Huw D. M. Davies, "
-"Roman Dolejsi, "
-"Frans van Dorsselaer, "
-"Chris Faherty, "
-"Paul Falstad, "
-"David Faure, "
-"Claus Fischer, "
-"Olaf Flebbe, "
-"Chad Fraleigh, "
-"Peter Galbavy, "
-"Ramon Garcia, "
-"Matthew Ghio, "
-"Jody Goldberg, "
-"Hans de Graaff, "
-"Charles M. Hannum, "
-"Adrian Harvey, "
-"John Harvey, "
-"Cameron Heide, "
-"Jochen Hoenicke, "
-"Onno Hovers, "
-"Jeffrey Hsu, "
-"Miguel de Icaza, "
-"Jukka Iivonen, "
-"Lee Jaekil, "
-"Alexandre Julliard, "
-"Bang Jun-Young, "
-"Pavel Kankovsky, "
-"Jochen Karrer, "
-"Andreas Kirschbaum, "
-"Albrecht Kleine, "
-"Jon Konrath, "
-"Alex Korobka, "
-"Greg Kreider, "
-"Anand Kumria, "
-"Scott A. Laird, "
-"Andrew Lewycky, "
-"Martin von Loewis, "
-"Michiel van Loon, "
-"Kenneth MacDonald, "
-"Peter MacDonald, "
-"William Magro, "
-"Juergen Marquardt, "
-"Ricardo Massaro, "
-"Marcus Meissner, "
-"Graham Menhennitt, "
-"David Metcalfe, "
-"Bruce Milner, "
-"Steffen Moeller, "
-"Andreas Mohr, "
-"Philippe De Muyter, "
-"Itai Nahshon, "
-"Henrik Olsen, "
-"Michael Patra, "
-"Dimitrie O. Paun, "
-"Jim Peterson, "
-"Robert Pouliot, "
-"Keith Reynolds, "
-"Slaven Rezic, "
-"John Richardson, "
-"Rick Richardson, "
-"Doug Ridgway, "
-"Bernhard Rosenkraenzer, "
-"Johannes Ruscheinski, "
-"Thomas Sandford, "
-"Constantine Sapuntzakis, "
-"Pablo Saratxaga, "
-"Daniel Schepler, "
-"Peter Schlaile, "
-"Ulrich Schmid, "
-"Bernd Schmidt, "
-"Ingo Schneider, "
-"Victor Schneider, "
-"Yngvi Sigurjonsson, "
-"Stephen Simmons, "
-"Rick Sladkey, "
-"William Smith, "
-"Dominik Strasser, "
-"Vadim Strizhevsky, "
-"Erik Svendsen, "
-"Tristan Tarrant, "
-"Andrew Taylor, "
-"Duncan C Thomson, "
-"Goran Thyni, "
-"Jimmy Tirtawangsa, "
-"Jon Tombs, "
-"Linus Torvalds, "
-"Gregory Trubetskoy, "
-"Petri Tuomola, "
-"Michael Veksler, "
-"Sven Verdoolaege, "
-"Ronan Waide, "
-"Eric Warnke, "
-"Manfred Weichel, "
-"Morten Welinder, "
-"Lawson Whitney, "
-"Jan Willamowius, "
-"Carl Williams, "
-"Karl Guenter Wuensch, "
-"Eric Youngdale, "
-"James Youngman, "
-"Mikolaj Zalewski, "
-"and John Zero.";
 
 const WINE_LANGUAGE_DEF Languages[] =
 {
@@ -183,19 +66,13 @@ Screen *screen;
 Window rootWindow;
 int screenWidth = 0, screenHeight = 0;  /* Desktop window dimensions */
 int screenDepth = 0;  /* Screen depth to use */
-int desktopX = 0, desktopY = 0;  /* Desktop window position (if any) */
-
-/* Default version is the same as -winver win31 */
-static LONG getVersion16 = MAKELONG( WINVERSION, 0x0616 ); /* DOS 6.22 */
-static LONG getVersion32 = MAKELONG( WINVERSION, 0x8000 );
-static OSVERSIONINFO32A getVersionEx = { sizeof(OSVERSIONINFO32A), 3, 10, 0,
-                                         VER_PLATFORM_WIN32s, "Win32s 1.3" };
 
 struct options Options =
 {  /* default options */
     NULL,           /* desktopGeometry */
     NULL,           /* programName */
     NULL,           /* argv0 */
+    NULL,           /* dllFlags */
     FALSE,          /* usePrivateMap */
     FALSE,          /* useFixedMap */
     FALSE,          /* synchronous */
@@ -262,20 +139,19 @@ static XrmOptionDescRec optionsTable[] =
   "    -perfect        Favor correctness over speed for graphical operations\n" \
   "    -privatemap     Use a private color map\n" \
   "    -synchronous    Turn on synchronous display mode\n" \
-  "    -winver         Version to imitate (one of win31,win95,nt351)\n"
+  "    -version        Display the Wine version\n" \
+  "    -winver         Version to imitate (one of win31,win95,nt351,nt40)\n"
 
 
 
 /***********************************************************************
  *           MAIN_Usage
  */
-#ifndef WINELIB32
 void MAIN_Usage( char *name )
 {
     fprintf( stderr, USAGE, name );
     exit(1);
 }
-#endif
 
 
 /***********************************************************************
@@ -375,7 +251,6 @@ BOOL32 ParseDebugOptions(char *options)
 
 #endif
 
-
 /***********************************************************************
  *           MAIN_ParseLanguageOption
  *
@@ -419,48 +294,6 @@ static void MAIN_ParseModeOption( char *arg )
     }
 }
 
-/**********************************************************************
- *           MAIN_ParseVersion
- */
-static void MAIN_ParseVersion( char *arg )
-{
-    /* If you add any other options, 
-       verify the values you return on the real thing */
-    if(strcmp(arg,"win31")==0) 
-    {
-        getVersion16 = 0x06160A03;
-        /* FIXME: My Win32s installation failed to execute the
-           MSVC 4 test program. So check these values */
-        getVersion32 = 0x80000A03;
-        getVersionEx.dwMajorVersion=3;
-        getVersionEx.dwMinorVersion=10;
-        getVersionEx.dwBuildNumber=0;
-        getVersionEx.dwPlatformId=VER_PLATFORM_WIN32s;
-        strcpy(getVersionEx.szCSDVersion,"Win32s 1.3");
-    }
-    else if(strcmp(arg, "win95")==0)
-    {
-        getVersion16 = 0x07005F03;
-        getVersion32 = 0xC0000004;
-        getVersionEx.dwMajorVersion=4;
-        getVersionEx.dwMinorVersion=0;
-        getVersionEx.dwBuildNumber=0x40003B6;
-        getVersionEx.dwPlatformId=VER_PLATFORM_WIN32_WINDOWS;
-        strcpy(getVersionEx.szCSDVersion,"");
-    }
-    else if(strcmp(arg, "nt351")==0)
-    {
-        getVersion16 = 0x05000A03;
-        getVersion32 = 0x04213303;
-        getVersionEx.dwMajorVersion=3;
-        getVersionEx.dwMinorVersion=51;
-        getVersionEx.dwBuildNumber=0x421;
-        getVersionEx.dwPlatformId=VER_PLATFORM_WIN32_NT;
-        strcpy(getVersionEx.szCSDVersion,"Service Pack 2");
-    }
-    else fprintf(stderr, "Unknown winver system code - ignored\n");
-}
-
 /***********************************************************************
  *           MAIN_ParseOptions
  *
@@ -478,19 +311,15 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
     Options.argv0 = argv[0];
 
       /* Get display name from command line */
-    for (i = 1; i < *argc - 1; i++)
-        if (!strcmp( argv[i], "-display" ))
-	{
-	    display_name = argv[i+1];
-	    break;
+    for (i = 1; i < *argc; i++)
+    {
+        if (!strcmp( argv[i], "-display" )) display_name = argv[i+1];
+        if (!strcmp( argv[i], "-v" ) || !strcmp( argv[i], "-version" ))
+        {
+            printf( "%s\n", WINE_RELEASE_INFO );
+            exit(0);
         }
-
-#ifdef WINELIB
-    /* Need to assemble command line and pass it to WinMain */
-#else
-    if (*argc < 2 || lstrcmpi32A(argv[1], "-h") == 0) 
-    	MAIN_Usage( argv[0] );
-#endif
+    }
 
       /* Open display */
 
@@ -574,24 +403,20 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 #endif
       }
 
-      if(MAIN_GetResource( db, ".dll", &value))
+      if (MAIN_GetResource( db, ".dll", &value))
       {
-#ifndef WINELIB
-          if (!BUILTIN_ParseDLLOptions( (char*)value.addr ))
+          /* Hack: store option value in Options to be retrieved */
+          /* later on inside the emulator code. */
+          if (!__winelib) Options.dllFlags = xstrdup((char *)value.addr);
+          else
           {
-              fprintf(stderr,"%s: Syntax: -dll +xxx,... or -dll -xxx,...\n",argv[0]);
-              fprintf(stderr,"Example: -dll -ole2    Do not use emulated OLE2.DLL\n");
-              fprintf(stderr,"Available DLLs:\n");
-              BUILTIN_PrintDLLs();
+              fprintf( stderr, "-dll not supported in Winelib\n" );
               exit(1);
           }
-#else
-          fprintf(stderr,"-dll not supported in libwine\n");
-#endif
       }
 
-      if(MAIN_GetResource( db, ".winver", &value))
-          MAIN_ParseVersion( (char*)value.addr );
+      if (MAIN_GetResource( db, ".winver", &value))
+          VERSION_ParseVersion( (char*)value.addr );
 }
 
 
@@ -600,7 +425,7 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
  */
 static void MAIN_CreateDesktop( int argc, char *argv[] )
 {
-    int flags;
+    int x, y, flags;
     unsigned int width = 640, height = 480;  /* Default size = 640x480 */
     char *name = "Wine desktop";
     XSizeHints *size_hints;
@@ -610,8 +435,7 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
     XTextProperty window_name;
     Atom XA_WM_DELETE_WINDOW;
 
-    flags = XParseGeometry( Options.desktopGeometry,
-			    &desktopX, &desktopY, &width, &height );
+    flags = XParseGeometry( Options.desktopGeometry, &x, &y, &width, &height );
     screenWidth  = width;
     screenHeight = height;
 
@@ -619,12 +443,11 @@ static void MAIN_CreateDesktop( int argc, char *argv[] )
 
     win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask |
 	                 PointerMotionMask | ButtonPressMask |
-			 ButtonReleaseMask | EnterWindowMask | 
-			 StructureNotifyMask;
+			 ButtonReleaseMask | EnterWindowMask;
     win_attr.cursor = XCreateFontCursor( display, XC_top_left_arrow );
 
     rootWindow = XCreateWindow( display, DefaultRootWindow(display),
-			        desktopX, desktopY, width, height, 0,
+			        x, y, width, height, 0,
 			        CopyFromParent, InputOutput, CopyFromParent,
 			        CWEventMask | CWCursor, &win_attr );
 
@@ -805,99 +628,6 @@ BOOL32 WINAPI Beep( DWORD dwFreq, DWORD dwDur )
     return TRUE;
 }
 
-
-/***********************************************************************
- *      GetVersion16   (KERNEL.3)
- */
-LONG WINAPI GetVersion16(void)
-{
-    return getVersion16;
-}
-
-
-/***********************************************************************
- *      GetVersion32   (KERNEL32.427)
- */
-LONG WINAPI GetVersion32(void)
-{
-    return getVersion32;
-}
-
-
-/***********************************************************************
- *      GetVersionExA
- */
-BOOL32 WINAPI GetVersionEx32A(OSVERSIONINFO32A *v)
-{
-    if(v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFO32A))
-    {
-        fprintf(stddeb,"wrong OSVERSIONINFO size from app");
-        return FALSE;
-    }
-    v->dwMajorVersion = getVersionEx.dwMajorVersion;
-    v->dwMinorVersion = getVersionEx.dwMinorVersion;
-    v->dwBuildNumber = getVersionEx.dwBuildNumber;
-    v->dwPlatformId = getVersionEx.dwPlatformId;
-    strcpy(v->szCSDVersion, getVersionEx.szCSDVersion);
-    return TRUE;
-}
-
-
-/***********************************************************************
- *     GetVersionExW
- */
-BOOL32 WINAPI GetVersionEx32W(OSVERSIONINFO32W *v)
-{
-	OSVERSIONINFO32A v1;
-	if(v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFO32W))
-	{
-		fprintf(stddeb,"wrong OSVERSIONINFO size from app");
-		return FALSE;
-	}
-	v1.dwOSVersionInfoSize=sizeof(v1);
-	GetVersionEx32A(&v1);
-	v->dwMajorVersion = v1.dwMajorVersion;
-	v->dwMinorVersion = v1.dwMinorVersion;
-	v->dwBuildNumber = v1.dwBuildNumber;
-	v->dwPlatformId = v1.dwPlatformId;
-        lstrcpyAtoW( v->szCSDVersion, v1.szCSDVersion );
-	return TRUE;
-}
-
-/***********************************************************************
- *	GetWinFlags (KERNEL.132)
- */
-DWORD WINAPI GetWinFlags(void)
-{
-  static const long cpuflags[5] =
-    { WF_CPU086, WF_CPU186, WF_CPU286, WF_CPU386, WF_CPU486 };
-  SYSTEM_INFO	si;
-  long result = 0,cpuflag;
-
-  GetSystemInfo(&si);
-
-  /* There doesn't seem to be any Pentium flag.  */
-  cpuflag = cpuflags[MIN (si.wProcessorLevel, 4)];
-
-  switch(Options.mode) {
-  case MODE_STANDARD:
-    result = (WF_STANDARD | cpuflag | WF_PMODE | WF_80x87);
-    break;
-
-  case MODE_ENHANCED:
-    result = (WF_ENHANCED | cpuflag | WF_PMODE | WF_80x87 | WF_PAGING);
-    break;
-
-  default:
-    fprintf(stderr, "Unknown mode set? This shouldn't happen. Check GetWinFlags()!\n");
-    break;
-  }
-  if (si.wProcessorLevel>=4)
-      result |= WF_HASCPUID;
-  if( getVersionEx.dwPlatformId == VER_PLATFORM_WIN32_NT )
-      result |= WF_WIN32WOW; /* undocumented WF_WINNT */
-  return result;
-}
 
 /***********************************************************************
  *	GetTimerResolution (USER.14)
@@ -1301,28 +1031,4 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 void WINAPI FileCDR(FARPROC16 x)
 {
 	printf("FileCDR(%8x)\n", (int) x);
-}
-
-/***********************************************************************
-*	GetWinDebugInfo (KERNEL.355)
-*/
-BOOL16 WINAPI GetWinDebugInfo(WINDEBUGINFO *lpwdi, UINT16 flags)
-{
-	printf("GetWinDebugInfo(%8lx,%d) stub returning 0\n", (unsigned long)lpwdi, flags);
-	/* 0 means not in debugging mode/version */
-	/* Can this type of debugging be used in wine ? */
-	/* Constants: WDI_OPTIONS WDI_FILTER WDI_ALLOCBREAK */
-	return 0;
-}
-
-/***********************************************************************
-*	GetWinDebugInfo (KERNEL.355)
-*/
-BOOL16 WINAPI SetWinDebugInfo(WINDEBUGINFO *lpwdi)
-{
-	printf("SetWinDebugInfo(%8lx) stub returning 0\n", (unsigned long)lpwdi);
-	/* 0 means not in debugging mode/version */
-	/* Can this type of debugging be used in wine ? */
-	/* Constants: WDI_OPTIONS WDI_FILTER WDI_ALLOCBREAK */
-	return 0;
 }

@@ -39,6 +39,7 @@ typedef enum
     BIC32_POPUPMENU,
     BIC32_STATIC,
     BIC32_SCROLL,
+    BIC32_MDICLIENT,
     BIC32_DESKTOP,
     BIC32_DIALOG,
     BIC32_ICONTITLE,
@@ -127,7 +128,8 @@ extern BOOL32 WIN_IsWindowDrawable(WND*, BOOL32 );
 extern HINSTANCE32 WIN_GetWindowInstance( HWND32 hwnd );
 extern WND**  WIN_BuildWinArray( WND *wndPtr, UINT32 bwa, UINT32* pnum );
 
-extern void DEFWND_SetText( WND *wndPtr, LPCSTR text );		      /* windows/defwnd.c */
+extern void DEFWND_SetText( WND *wndPtr, LPCSTR text );
+extern HBRUSH32 DEFWND_ControlColor( HDC32 hDC, UINT16 ctlType );     /* windows/defwnd.c */
 
 extern void PROPERTY_RemoveWindowProps( WND *pWnd );  		      /* windows/property.c */
 

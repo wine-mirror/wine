@@ -56,6 +56,7 @@
 #include "bitmaps/obm_size"
 #include "bitmaps/obm_old_close"
 #include "bitmaps/obm_trtype"
+#include "bitmaps/obm_radiocheck"
 
 #include "bitmaps/obm_zoomd"
 #include "bitmaps/obm_reduced"
@@ -70,7 +71,7 @@
 #include "bitmaps/obm_closed_95"
 
 
-#define OBM_FIRST  OBM_TRTYPE	   /* First OEM bitmap */
+#define OBM_FIRST  OBM_RADIOCHECK  /* First OEM bitmap */
 #define OBM_LAST   OBM_OLD_CLOSE   /* Last OEM bitmap */
 
 static struct
@@ -78,6 +79,7 @@ static struct
     char** data;   /* Pointer to bitmap data */
     BOOL32 color;  /* Is it a color bitmap?  */
 } OBM_Pixmaps_Data[OBM_LAST-OBM_FIRST+1] = {
+    { obm_radiocheck, FALSE },	/* OBM_RADIOCHECK */
     { obm_trtype, TRUE },	/* OBM_TRTYPE */    
     { obm_cdrom, TRUE },        /* OBM_CDROM    */
     { obm_harddisk, TRUE },     /* OBM_HARDDISK */

@@ -93,11 +93,14 @@ static void WINAPI THUNK_CallTaskReschedule(void);
 /* TASK_Reschedule() 16-bit entry point */
 static FARPROC16 TASK_RescheduleProc;
 
+extern void CallFrom16_long_wwwll(void);
+
 /* Callbacks function table for the emulator */
 static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
 {
     (void *)CallTo16_regs_short,           /* CallRegisterProc */
     THUNK_CallTaskReschedule,              /* CallTaskRescheduleProc */
+    CallFrom16_long_wwwll,                 /* CallFrom16WndProc */
     THUNK_CallWndProc16,                   /* CallWndProc */
     (void *)CallTo16_long_lwwll,           /* CallDriverProc */
     (void *)CallTo16_word_wwlll,           /* CallDriverCallback */
@@ -209,16 +212,32 @@ static LRESULT WINAPI THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd,
     EBP_reg(&context) = OFFSETOF(IF1632_Saved16_ss_sp)
                         + (WORD)&((STACK16FRAME*)0)->bp;
 
-    if (((msg == WM_CREATE) || (msg == WM_NCCREATE)) && lParam)
+    if (lParam)
     {
-        /* Build the CREATESTRUCT on the 16-bit stack. */
-        /* This is really ugly, but some programs (notably the */
-        /* "Undocumented Windows" examples) want it that way.  */
-        CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
-        offset = sizeof(*cs);
-        lParam = STACK16_PUSH( offset );
-        memcpy( PTR_SEG_TO_LIN(lParam), cs, offset );
+	/* Some programs (eg. the "Undocumented Windows" examples, JWP) only
+           work if structures passed in lParam are placed in the stack/data
+           segment. Programmers easily make the mistake of converting lParam
+           to a near rather than a far pointer, since Windows apparently
+           allows this. We copy the structures to the 16 bit stack; this is
+           ugly but makes these programs work. */
+	switch (msg)
+	{
+	  case WM_CREATE:
+	  case WM_NCCREATE:
+	    offset = sizeof(CREATESTRUCT16); break;
+	  case WM_DRAWITEM:
+	    offset = sizeof(DRAWITEMSTRUCT16); break;
+	  case WM_COMPAREITEM:
+	    offset = sizeof(COMPAREITEMSTRUCT16); break;
+	}
+	if (offset)
+	{
+	    void *s = PTR_SEG_TO_LIN(lParam);
+	    lParam = STACK16_PUSH( offset );
+	    memcpy( PTR_SEG_TO_LIN(lParam), s, offset );
+	}
     }
+
     args = (WORD *)CURRENT_STACK16 - 7;
     args[0] = LOWORD(lParam);
     args[1] = HIWORD(lParam);

@@ -266,9 +266,9 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
     {
 	long lineAscent, lineDescent;
 	if (!XGetFontProperty( font, XA_STRIKEOUT_ASCENT, &lineAscent ))
-	    lineAscent = font->ascent / 3;
+	    lineAscent = font->ascent / 2;
 	if (!XGetFontProperty( font, XA_STRIKEOUT_DESCENT, &lineDescent ))
-	    lineDescent = -lineAscent;
+	    lineDescent = -lineAscent * 2 / 3;
 	XSetLineAttributes( display, dc->u.x.gc, lineAscent + lineDescent,
 			    LineSolid, CapRound, JoinBevel ); 
 	XDrawLine( display, dc->u.x.drawable, dc->u.x.gc,

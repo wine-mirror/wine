@@ -330,6 +330,7 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
 	    }
 	    QUEUE_RemoveMsg(msgQ, pos);
 	}
+	/* repost WM_QUIT to make sure this app exits its message loop */
 	if( bPostQuit ) PostQuitMessage32(wQuitParam);
 	wndPtr->hmemTaskQ = 0;
     }
@@ -653,7 +654,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 	    win_attr.event_mask = ExposureMask | KeyPressMask |
 	                          KeyReleaseMask | PointerMotionMask |
 	                          ButtonPressMask | ButtonReleaseMask |
-	                          FocusChangeMask | StructureNotifyMask;
+	                          FocusChangeMask;
             win_attr.override_redirect = TRUE;
 	}
         win_attr.colormap      = COLOR_GetColormap();
@@ -936,8 +937,8 @@ HWND32 WINAPI CreateWindowEx32W( DWORD exStyle, LPCWSTR className,
  */
 static void WIN_CheckFocus( WND* pWnd )
 {
-  if( GetFocus16() == pWnd->hwndSelf )
-      SetFocus16( (pWnd->dwStyle & WS_CHILD) ? pWnd->parent->hwndSelf : 0 ); 
+    if( GetFocus16() == pWnd->hwndSelf )
+	SetFocus16( (pWnd->dwStyle & WS_CHILD) ? pWnd->parent->hwndSelf : 0 ); 
 }
 
 /***********************************************************************
@@ -945,28 +946,25 @@ static void WIN_CheckFocus( WND* pWnd )
  */
 static void WIN_SendDestroyMsg( WND* pWnd )
 {
-  WND*	pChild;
+    WIN_CheckFocus(pWnd);
 
-  WIN_CheckFocus(pWnd);
-
-  if( CARET_GetHwnd() == pWnd->hwndSelf ) DestroyCaret32();
-  if( !pWnd->window ) CLIPBOARD_DisOwn( pWnd ); 
+    if( CARET_GetHwnd() == pWnd->hwndSelf ) DestroyCaret32();
+    if( !pWnd->window ) CLIPBOARD_ResetOwner( pWnd ); 
   
-  SendMessage32A( pWnd->hwndSelf, WM_DESTROY, 0, 0);
+    SendMessage32A( pWnd->hwndSelf, WM_DESTROY, 0, 0);
 
-  if( !IsWindow32(pWnd->hwndSelf) )
-  {
-    dprintf_win(stddeb,"\tdestroyed itself while in WM_DESTROY!\n");
-    return;
-  }
-
-  pChild = pWnd->child;
-  while( pChild )
-  { 
-    WIN_SendDestroyMsg( pChild );
-    pChild = pChild->next;
-  }
-  WIN_CheckFocus(pWnd);
+    if( IsWindow32(pWnd->hwndSelf) )
+    {
+	WND* pChild = pWnd->child;
+	while( pChild )
+	{
+	    WIN_SendDestroyMsg( pChild );
+	    pChild = pChild->next;
+	}
+	WIN_CheckFocus(pWnd);
+    }
+    else
+	dprintf_win(stddeb,"\tdestroyed itself while in WM_DESTROY!\n");
 }
 
 
@@ -1013,7 +1011,7 @@ BOOL32 WINAPI DestroyWindow32( HWND32 hwnd )
 	    if( !IsWindow32(hwnd) ) return TRUE;
 	}
 
-    if( wndPtr->window ) CLIPBOARD_DisOwn( wndPtr ); /* before window is unmapped */
+    if( wndPtr->window ) CLIPBOARD_ResetOwner( wndPtr ); /* before the window is unmapped */
 
       /* Hide the window */
 

@@ -1,0 +1,61 @@
+#!/usr/bin/perl -w
+# -----------------------------------------------------------------------------
+
+my $srcfile = $ARGV[0];
+my @callstack = ();
+
+open (IN, "<$srcfile") || die "Cannot open $srcfile for reading: $!\n";
+LINE:
+while (<IN>) {
+    if (/^Call ([A-Za-z0-9]+\.[0-9]+): .*\)/) {
+	my $func = $1;
+	if (/ ret=(........)$/ ||
+	    / ret=(....:....) ds=....$/) {
+	    my $retaddr = $1;
+	    push @callstack, [$func,$retaddr];
+	    next;
+	} else {
+	    # Assume a line got cut by a line feed in a string.
+	    $_ .= scalar (<IN>);
+	    print "[$_]";
+	    redo;
+	}
+    }
+
+
+    if (/^Ret  ([A-Za-z0-9]+\.[0-9]+): .* ret=(........)$/ ||
+	/^Ret  ([A-Za-z0-9]+\.[0-9]+): .* ret=(....:....) ds=....$/) {
+	my $func = $1;
+	my $retaddr = $2;
+	my ($topfunc,$topaddr);
+
+      POP:
+	while (1) {
+	    if ($#callstack == -1) {
+		print "Error: Return from $func to $retaddr with empty stack.\n";
+		next LINE;
+	    }
+
+	    ($topfunc,$topaddr) = @{pop @callstack};
+
+	    if ($topfunc ne $func) {
+		print "Error: Return from $topfunc, but call from $func.\n";
+		next POP 
+	    }
+	    last POP;
+	}
+
+	if ($topaddr eq $retaddr) {
+	    print "OK: $func from $retaddr.\n";
+	} else {
+	    print "Error: Return from $func is to $retaddr, not $topaddr.\n";
+	}    
+    }
+}
+
+while ($#callstack != -1) {
+    my ($topfunc,$topaddr) = @{pop @callstack};
+    print "Error: leftover call to $topfunc from $topaddr.\n";
+}
+
+close (IN);

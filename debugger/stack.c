@@ -52,9 +52,11 @@ typedef struct
 void DEBUG_InfoStack(void)
 {
     DBG_ADDR addr;
+    WORD ss;
 
     fprintf(stderr,"Stack dump:\n");
-    if ((SS_reg(&DEBUG_context) == WINE_DATA_SELECTOR) ||
+    GET_SS(ss);
+    if ((SS_reg(&DEBUG_context) == ss) ||
         (GET_SEL_FLAGS(SS_reg(&DEBUG_context)) & LDT_FLAGS_32BIT))
     {  /* 32-bit mode */
         addr.seg = 0;
@@ -82,9 +84,11 @@ void DEBUG_BackTrace(void)
 {
     DBG_ADDR addr;
     int frameno = 0;
+    WORD ss;
 
     fprintf(stderr,"Backtrace:\n");
-    if (SS_reg(&DEBUG_context) == WINE_DATA_SELECTOR)  /* 32-bit mode */
+    GET_SS(ss);
+    if (SS_reg(&DEBUG_context) == ss)  /* 32-bit mode */
     {
         nframe = 1;
         if (frames) free( frames );
@@ -158,14 +162,15 @@ void DEBUG_BackTrace(void)
  */
 void DEBUG_SilentBackTrace(void)
 {
+    WORD ss;
     DBG_ADDR addr;
     int frameno = 0;
 
     nframe = 1;
     if (frames) free( frames );
     frames = (struct bt_info *) xmalloc( sizeof(struct bt_info) );
-
-    if (SS_reg(&DEBUG_context) == WINE_DATA_SELECTOR)  /* 32-bit mode */
+    GET_SS(ss);
+    if (SS_reg(&DEBUG_context) == ss)  /* 32-bit mode */
     {
         addr.seg = 0;
         addr.off = EIP_reg(&DEBUG_context);

@@ -147,13 +147,13 @@ void DEBUG_SetSigContext( const SIGCONTEXT *sigcontext )
 #ifdef FS_sig
     FS_reg(&DEBUG_context)  = LOWORD(FS_sig(sigcontext));
 #else
-    __asm__("movw %%fs,%w0":"=r" (FS_reg(&DEBUG_context)));
+    GET_FS( FS_reg(&DEBUG_context) );
     FS_reg(&DEBUG_context) &= 0xffff;
 #endif
 #ifdef GS_sig
     GS_reg(&DEBUG_context)  = LOWORD(GS_sig(sigcontext));
 #else
-    __asm__("movw %%gs,%w0":"=r" (GS_reg(&DEBUG_context)));
+    GET_GS( GS_reg(&DEBUG_context) );
     GS_reg(&DEBUG_context) &= 0xffff;
 #endif
 }
@@ -183,12 +183,12 @@ void DEBUG_GetSigContext( SIGCONTEXT *sigcontext )
 #ifdef FS_sig
     FS_sig(sigcontext)  = FS_reg(&DEBUG_context);
 #else
-    __asm__("movw %w0,%%fs"::"r" (FS_reg(&DEBUG_context)));
+    SET_FS( FS_reg(&DEBUG_context) );
 #endif
 #ifdef GS_sig
     GS_sig(sigcontext)  = GS_reg(&DEBUG_context);
 #else
-    __asm__("movw %w0,%%gs"::"r" (GS_reg(&DEBUG_context)));
+    SET_GS( GS_reg(&DEBUG_context) );
 #endif
 }
 
@@ -239,6 +239,8 @@ void DEBUG_InfoRegisters(void)
  */
 BOOL32 DEBUG_ValidateRegisters(void)
 {
+    WORD cs, ds;
+
 /* Check that a selector is a valid ring-3 LDT selector, or a NULL selector */
 #define CHECK_SEG(seg,name) \
     if (((seg) & ~3) && \
@@ -249,18 +251,14 @@ BOOL32 DEBUG_ValidateRegisters(void)
         return FALSE; \
     }
 
-    if (CS_reg(&DEBUG_context) != WINE_CODE_SELECTOR)
-        CHECK_SEG( CS_reg(&DEBUG_context), "CS" );
-    if (SS_reg(&DEBUG_context) != WINE_DATA_SELECTOR)
-        CHECK_SEG( SS_reg(&DEBUG_context), "SS" );
-    if (DS_reg(&DEBUG_context) != WINE_DATA_SELECTOR)
-        CHECK_SEG( DS_reg(&DEBUG_context), "DS" );
-    if (ES_reg(&DEBUG_context) != WINE_DATA_SELECTOR)
-        CHECK_SEG( ES_reg(&DEBUG_context), "ES" );
-    if (FS_reg(&DEBUG_context) != WINE_DATA_SELECTOR)
-        CHECK_SEG( FS_reg(&DEBUG_context), "FS" );
-    if (GS_reg(&DEBUG_context) != WINE_DATA_SELECTOR)
-        CHECK_SEG( GS_reg(&DEBUG_context), "GS" );
+    GET_CS(cs);
+    GET_DS(ds);
+    if (CS_reg(&DEBUG_context) != cs) CHECK_SEG(CS_reg(&DEBUG_context), "CS");
+    if (SS_reg(&DEBUG_context) != ds) CHECK_SEG(SS_reg(&DEBUG_context), "SS");
+    if (DS_reg(&DEBUG_context) != ds) CHECK_SEG(DS_reg(&DEBUG_context), "DS");
+    if (ES_reg(&DEBUG_context) != ds) CHECK_SEG(ES_reg(&DEBUG_context), "ES");
+    if (FS_reg(&DEBUG_context) != ds) CHECK_SEG(FS_reg(&DEBUG_context), "FS");
+    if (GS_reg(&DEBUG_context) != ds) CHECK_SEG(GS_reg(&DEBUG_context), "GS");
 
     /* Check that CS and SS are not NULL */
 

@@ -208,31 +208,50 @@ void WINAPI FillWindow( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc, HBRUSH16 hbru
 
 
 /***********************************************************************
+ *	     PAINT_GetControlBrush
+ */
+static HBRUSH16 PAINT_GetControlBrush( HWND32 hParent, HWND32 hWnd, HDC16 hDC, UINT16 ctlType )
+{
+    HBRUSH16 bkgBrush = (HBRUSH16)SendMessage32A( hParent, WM_CTLCOLORMSGBOX + ctlType, 
+							     (WPARAM32)hDC, (LPARAM)hWnd );
+    if( !IsGDIObject(bkgBrush) )
+	bkgBrush = DEFWND_ControlColor( hDC, ctlType );
+    return bkgBrush;
+}
+
+
+/***********************************************************************
  *           PaintRect    (USER.325)
  */
 void WINAPI PaintRect( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc,
                        HBRUSH16 hbrush, const RECT16 *rect)
 {
-      /* Send WM_CTLCOLOR message if needed */
-
-    if ((UINT32)hbrush <= CTLCOLOR_MAX)
-    {
-	if (!hwndParent) return;
-	hbrush = (HBRUSH16)SendMessage32A( hwndParent, 
-                                           WM_CTLCOLORMSGBOX + (UINT32)hbrush,
-                                           (WPARAM32)hdc, (LPARAM)hwnd );
-    }
-    if (hbrush) FillRect16( hdc, rect, hbrush );
+    if( hbrush <= CTLCOLOR_MAX ) 
+	if( hwndParent )
+	    hbrush = PAINT_GetControlBrush( hwndParent, hwnd, hdc, (UINT16)hbrush );
+	else 
+	    return;
+    if( hbrush ) 
+	FillRect16( hdc, rect, hbrush );
 }
 
 
 /***********************************************************************
  *           GetControlBrush    (USER.326)
  */
-HBRUSH16 WINAPI GetControlBrush( HWND16 hwnd, HDC16 hdc, UINT16 control )
+HBRUSH16 WINAPI GetControlBrush( HWND16 hwnd, HDC16 hdc, UINT16 ctlType )
 {
-    return (HBRUSH16)SendMessage32A( GetParent32(hwnd), WM_CTLCOLOR+control,
-                                     (WPARAM32)hdc, (LPARAM)hwnd );
+    WND* wndPtr = WIN_FindWndPtr( hwnd );
+
+    if((ctlType <= CTLCOLOR_MAX) && wndPtr )
+    {
+	WND* parent;
+	if( wndPtr->dwStyle & WS_POPUP ) parent = wndPtr->owner;
+	else parent = wndPtr->parent;
+	if( !parent ) parent = wndPtr;
+	return (HBRUSH16)PAINT_GetControlBrush( parent->hwndSelf, hwnd, hdc, ctlType );
+    }
+    return (HBRUSH16)0;
 }
 
 
@@ -240,7 +259,9 @@ HBRUSH16 WINAPI GetControlBrush( HWND16 hwnd, HDC16 hdc, UINT16 control )
  *           PAINT_RedrawWindow
  *
  * FIXME: Windows uses WM_SYNCPAINT to cut down the number of intertask
- * SendMessage() calls. From SDK:
+ * SendMessage() calls. This is a comment inside DefWindowProc() source 
+ * from 16-bit SDK:
+ *
  *   This message avoids lots of inter-app message traffic
  *   by switching to the other task and continuing the
  *   recursion there.

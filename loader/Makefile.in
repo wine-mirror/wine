@@ -1,4 +1,4 @@
-DEFS      = -D__WINE__
+DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
@@ -6,6 +6,7 @@ VPATH     = @srcdir@
 MODULE    = loader
 
 C_SRCS = \
+	libres.c \
 	main.c \
 	module.c \
 	ne_image.c \

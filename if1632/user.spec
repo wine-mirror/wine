@@ -348,7 +348,7 @@ file	user.exe
 389 stub LoadImage
 390 stub CopyImage
 391 stub SignalProc32
-394 stub DrawIconEx
+394 pascal16 DrawIconEx(word word word word word word word word word) DrawIconEx16
 395 stub GetIconInfo
 397 pascal16 RegisterClassEx(ptr) RegisterClassEx16
 398 pascal16 GetClassInfoEx(word segstr ptr) GetClassInfoEx16
@@ -491,7 +491,7 @@ file	user.exe
 662 stub DrawMenubarTemp
 663 stub GetMenuDefaultItem
 664 stub SetMenuDefaultItem
-665 stub GetMenuItemRect
+665 pascal16 GetMenuItemRect(word word word ptr) GetMenuItemRect16
 666 stub CheckMenuRadioItem
 667 stub TrackPopupMenuEx
 668 stub SetWindowRgn

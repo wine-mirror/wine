@@ -15,6 +15,7 @@
 #include "task.h"
 #include "queue.h"
 #include "win.h"
+#include "clipboard.h"
 #include "hook.h"
 #include "debug.h"
 #include "toolhelp.h"
@@ -181,6 +182,7 @@ static void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue 
 
     QUEUE_SetExitingQueue( hQueue );
     WIN_ResetQueueWindows( desktop, hQueue, (HQUEUE16)0);
+    CLIPBOARD_ResetLock( hQueue, 0 );
     QUEUE_SetExitingQueue( 0 );
 
     /* Free the message queue */

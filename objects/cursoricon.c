@@ -818,8 +818,10 @@ HICON16 WINAPI CopyIcon16( HINSTANCE16 hInstance, HICON16 hIcon )
  */
 HICON32 WINAPI CopyIcon32( HICON32 hIcon )
 {
+  HTASK16 hTask = GetCurrentTask ();
+  TDB* pTask = (TDB *) GlobalLock16 (hTask);
     dprintf_icon( stddeb, "CopyIcon32: %04x\n", hIcon );
-    return CURSORICON_Copy( 0, hIcon );
+  return CURSORICON_Copy( pTask->hInstance, hIcon );
 }
 
 
@@ -1496,4 +1498,81 @@ HICON32 WINAPI CreateIconIndirect(LPICONINFO iconinfo) {
 	GlobalUnlock16( hObj );
     }
     return hObj;
+}
+
+/**********************************************************************
+ *          DrawIconEx16		(USER.394)
+ */
+
+BOOL16 WINAPI DrawIconEx16 (HDC16 hdc, INT16 xLeft, INT16 yTop, HICON16 hIcon,
+			    INT16 cxWidth, INT16 cyWidth, UINT16 istep,
+			    HBRUSH16 hbr, UINT16 flags)
+{
+  return DrawIconEx32 (hdc, xLeft, yTop, hIcon, cxWidth, cyWidth,
+		       istep, hbr, flags);
+}
+
+/**********************************************************************
+ *          DrawIconEx32		(USER32.160)
+ */
+
+BOOL32 WINAPI DrawIconEx32 (HDC32 hdc, INT32 x0, INT32 y0, HICON32 hIcon,
+			    INT32 cxWidth, INT32 cyWidth, UINT32 istep,
+			    HBRUSH32 hbr, UINT32 flags)
+{
+    CURSORICONINFO *ptr = (CURSORICONINFO *)GlobalLock16 (hIcon);
+    HDC32 hMemDC = CreateCompatibleDC32 (hdc);
+    BOOL32 result = FALSE;
+
+    dprintf_icon (stddeb, "DrawIconEx32: part stub.\n");
+
+    if (hMemDC && ptr)
+    {
+	HBITMAP32 hXorBits, hAndBits;
+	COLORREF oldFg, oldBg;
+
+	/* Calculate the size of the destination image.  */
+	if (cxWidth == 0)
+	    if (flags & DI_DEFAULTSIZE)
+		cxWidth = GetSystemMetrics32 (SM_CXICON);
+	    else
+		cxWidth = ptr->nWidth;
+	if (cyWidth == 0)
+	    if (flags & DI_DEFAULTSIZE)
+		cyWidth = GetSystemMetrics32 (SM_CYICON);
+	    else
+		cyWidth = ptr->nHeight;
+
+	hXorBits = CreateBitmap32 ( ptr->nWidth, ptr->nHeight,
+				    ptr->bPlanes, ptr->bBitsPerPixel,
+				    (char *)(ptr + 1)
+				    + ptr->nHeight *
+				    BITMAP_WIDTH_BYTES(ptr->nWidth,1) );
+	hAndBits = CreateBitmap32 ( cxWidth, cyWidth,
+				    1, 1, (char *)(ptr+1) );
+	oldFg = SetTextColor32( hdc, RGB(0,0,0) );
+	oldBg = SetBkColor32( hdc, RGB(255,255,255) );
+
+	if (hXorBits && hAndBits)
+	{
+	    HBITMAP32 hBitTemp = SelectObject32( hMemDC, hAndBits );
+	    if (flags & DI_MASK)
+		BitBlt32 (hdc, x0, y0, cxWidth, cyWidth,
+			  hMemDC, 0, 0, SRCAND);
+	    SelectObject32( hMemDC, hXorBits );
+	    if (flags & DI_IMAGE)
+		BitBlt32 (hdc, x0, y0, cxWidth, cyWidth,
+			  hMemDC, 0, 0, SRCPAINT);
+	    SelectObject32( hMemDC, hBitTemp );
+	    result = TRUE;
+	}
+
+	SetTextColor32( hdc, oldFg );
+	SetBkColor32( hdc, oldBg );
+	if (hXorBits) DeleteObject32( hXorBits );
+	if (hAndBits) DeleteObject32( hAndBits );
+    }
+    if (hMemDC) DeleteDC32( hMemDC );
+    GlobalUnlock16( hIcon );
+    return result;
 }

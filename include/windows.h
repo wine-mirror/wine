@@ -1947,6 +1947,40 @@ typedef struct {
 	HBITMAP32	hbmColor;
 } ICONINFO,*LPICONINFO;
 
+
+#define	FVIRTKEY	TRUE          /* Assumed to be == TRUE */
+#define	FNOINVERT	0x02
+#define	FSHIFT		0x04
+#define	FCONTROL	0x08
+#define	FALT		0x10
+
+typedef struct
+{
+    BYTE   fVirt;
+    WORD   key;
+    WORD   cmd;
+} ACCEL16, *LPACCEL16;
+
+typedef struct
+{
+    BYTE   fVirt;
+    BYTE   pad0;
+    WORD   key;
+    WORD   cmd;
+    WORD   pad1;
+} ACCEL32, *LPACCEL32;
+
+DECL_WINELIB_TYPE(ACCEL);
+DECL_WINELIB_TYPE(LPACCEL);
+
+
+/* Flags for DrawIconEx.  */
+#define DI_MASK                 1
+#define DI_IMAGE                2
+#define DI_NORMAL               (DI_MASK | DI_IMAGE)
+#define DI_COMPAT               4
+#define DI_DEFAULTSIZE          8
+
 typedef struct {
 	BYTE i;  /* much more .... */
 } KANJISTRUCT;
@@ -2451,6 +2485,9 @@ typedef struct tagCOMSTAT
 #define OBM_HDISK           32730
 #define OBM_CDROM           32729
 #define OBM_TRTYPE          32728
+
+/* Wine extension, I think.  */
+#define OBM_RADIOCHECK      32727
 
 #define OBM_OLD_CLOSE       32767
 #define OBM_SIZE            32766
@@ -5450,6 +5487,9 @@ BOOL32      WINAPI AreFileApisANSI(void);
 BOOL32      WINAPI Beep(DWORD,DWORD);
 BOOL32      WINAPI ClearCommError(INT32,LPDWORD,LPCOMSTAT);
 BOOL32      WINAPI CloseHandle(HANDLE32);
+INT32       WINAPI CopyAcceleratorTable32A(HACCEL32,LPACCEL32,INT32);
+INT32       WINAPI CopyAcceleratorTable32W(HACCEL32,LPACCEL32,INT32);
+#define     CopyAcceleratorTable WINELIB_NAME_AW(CopyAcceleratorTable)
 BOOL32      WINAPI CopyFile32A(LPCSTR,LPCSTR,BOOL32);
 BOOL32      WINAPI CopyFile32W(LPCWSTR,LPCWSTR,BOOL32);
 #define     CopyFile WINELIB_NAME_AW(CopyFile)
@@ -5474,6 +5514,7 @@ HANDLE32    WINAPI CreateMutex32W(LPSECURITY_ATTRIBUTES,BOOL32,LPCWSTR);
 HANDLE32    WINAPI CreateSemaphore32A(LPSECURITY_ATTRIBUTES,LONG,LONG,LPCSTR);
 HANDLE32    WINAPI CreateSemaphore32W(LPSECURITY_ATTRIBUTES,LONG,LONG,LPCWSTR);
 #define     CreateSemaphore WINELIB_NAME_AW(CreateSemaphore)
+BOOL32      WINAPI DestroyAcceleratorTable(HACCEL32);
 BOOL32      WINAPI DisableThreadLibraryCalls(HMODULE32);
 BOOL32      WINAPI DosDateTimeToFileTime(WORD,WORD,LPFILETIME);
 INT32       WINAPI EnumPropsEx32A(HWND32,PROPENUMPROCEX32A,LPARAM);
@@ -5874,6 +5915,9 @@ BOOL32      WINAPI CheckDlgButton32(HWND32,INT32,UINT32);
 BOOL16      WINAPI CheckMenuItem16(HMENU16,UINT16,UINT16);
 DWORD       WINAPI CheckMenuItem32(HMENU32,UINT32,UINT32);
 #define     CheckMenuItem WINELIB_NAME(CheckMenuItem)
+BOOL16      WINAPI CheckMenuRadioButton16(HMENU16,UINT16,UINT16,UINT16,BOOL16);
+BOOL32      WINAPI CheckMenuRadioButton32(HMENU32,UINT32,UINT32,UINT32,BOOL32);
+#define     CheckMenuRadioButton WINELIB_NAME(CheckMenuRadioButton)
 BOOL16      WINAPI CheckRadioButton16(HWND16,UINT16,UINT16,UINT16);
 BOOL32      WINAPI CheckRadioButton32(HWND32,UINT32,UINT32,UINT32);
 #define     CheckRadioButton WINELIB_NAME(CheckRadioButton)
@@ -5986,6 +6030,11 @@ HBITMAP32   WINAPI CreateDIBitmap32(HDC32,const BITMAPINFOHEADER*,DWORD,
 HBRUSH16    WINAPI CreateDIBPatternBrush16(HGLOBAL16,UINT16);
 HBRUSH32    WINAPI CreateDIBPatternBrush32(HGLOBAL32,UINT32);
 #define     CreateDIBPatternBrush WINELIB_NAME(CreateDIBPatternBrush)
+HBITMAP16   WINAPI CreateDIBSection16 (HDC16, BITMAPINFO *, UINT16,
+				       LPVOID **, HANDLE16, DWORD offset);
+HBITMAP32   WINAPI CreateDIBSection32 (HDC32, BITMAPINFO *, UINT32,
+				       LPVOID **, HANDLE32, DWORD offset);
+#define     CreateDIBSection WINELIB_NAME(CreateDIBSection)
 BOOL16      WINAPI CreateDirectory16(LPCSTR,LPVOID);
 BOOL32      WINAPI CreateDirectory32A(LPCSTR,LPSECURITY_ATTRIBUTES);
 BOOL32      WINAPI CreateDirectory32W(LPCWSTR,LPSECURITY_ATTRIBUTES);
@@ -6206,6 +6255,11 @@ BOOL32      WINAPI DrawFrameControl32(HDC32,LPRECT32,UINT32,UINT32);
 BOOL16      WINAPI DrawIcon16(HDC16,INT16,INT16,HICON16);
 BOOL32      WINAPI DrawIcon32(HDC32,INT32,INT32,HICON32);
 #define     DrawIcon WINELIB_NAME(DrawIcon)
+BOOL16      WINAPI DrawIconEx16(HDC16,INT16,INT16,HICON16,INT16,INT16,
+				UINT16,HBRUSH16,UINT16);
+BOOL32      WINAPI DrawIconEx32(HDC32,INT32,INT32,HICON32,INT32,INT32,
+				UINT32,HBRUSH32,UINT32);
+#define     DrawIconEx WINELIB_NAME(DrawIconEx)
 VOID        WINAPI DrawMenuBar16(HWND16);
 BOOL32      WINAPI DrawMenuBar32(HWND32);
 #define     DrawMenuBar WINELIB_NAME(DrawMenuBar)
@@ -6596,6 +6650,9 @@ INT32       WINAPI GetMenuItemCount32(HMENU32);
 UINT16      WINAPI GetMenuItemID16(HMENU16,INT16);
 UINT32      WINAPI GetMenuItemID32(HMENU32,INT32);
 #define     GetMenuItemID WINELIB_NAME(GetMenuItemID)
+BOOL16      WINAPI GetMenuItemRect16(HWND16,HMENU16,UINT16,LPRECT16);
+BOOL32      WINAPI GetMenuItemRect32(HWND32,HMENU32,UINT32,LPRECT32);
+#define     GetMenuItemRect WINELIB_NAME(GetMenuItemRect)
 UINT16      WINAPI GetMenuState16(HMENU16,UINT16,UINT16);
 UINT32      WINAPI GetMenuState32(HMENU32,UINT32,UINT32);
 #define     GetMenuState WINELIB_NAME(GetMenuState)

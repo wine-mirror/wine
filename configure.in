@@ -12,20 +12,24 @@ test -z "$PROGEXT" && PROGEXT="" AC_SUBST(PROGEXT)
 
 dnl **** Command-line arguments ****
 
-AC_ARG_WITH(library,
-[  --with-library          build Wine as a library instead of an emulator],
-[OPTIONS="-DWINELIB" MAIN_TARGET="libwine.a"],
-[OPTIONS="" MAIN_TARGET="wine"])
+dnl Default values
+MAIN_TARGET=emu
+LIB_TARGET=libwine.a
 
-AC_ARG_WITH(dll,
-[  --with-dll              build Wine as a DLL instead of an emulator],
-[OPTIONS="-DWINELIB" MAIN_TARGET="libwine.so.1.0"])
+AC_ARG_ENABLE(emulator,
+[  --disable-emulator      build only the Wine library, not the emulator],
+[if test "$enableval" = "no"; then MAIN_TARGET="lib"; fi])
+
+AC_ARG_ENABLE(dll,
+[  --enable-dll            build the Wine library as a DLL],
+[if test "$enableval" = "no"; then : ; else LIB_TARGET="libwine.so.1.0"; fi])
 
 AC_ARG_WITH(ipc,
-[  --with-ipc              use inter-process communication for DDE],
-[OPTIONS="$OPTIONS -DCONFIG_IPC"])
+[  --enable-ipc            use inter-process communication for DDE],
+[if test "$enableval" = "no"; then : ; else OPTIONS="-DCONFIG_IPC"; fi])
 
 AC_SUBST(MAIN_TARGET)
+AC_SUBST(LIB_TARGET)
 AC_SUBST(OPTIONS)
 
 dnl **** Check for some programs and libraries ****
@@ -89,7 +93,8 @@ fi
 
 dnl **** Check for working dll ****
 
-if test "$MAIN_TARGET" = "libwine.so.1.0"
+DLLFLAGS=""
+if test "$LIB_TARGET" = "libwine.so.1.0"
 then
   AC_CACHE_CHECK("whether we can build a dll",
                  ac_cv_c_dll,
@@ -100,11 +105,12 @@ then
   ])
   if test "$ac_cv_c_dll" = "yes"
   then
-    CFLAGS="$CFLAGS -fPIC"
+    DLLFLAGS="-fPIC"
   else
-    MAIN_TARGET="libwine.a"
+    LIB_TARGET="libwine.a"
   fi
 fi
+AC_SUBST(DLLFLAGS)
 
 dnl **** Check for functions and header files ****
 

@@ -166,8 +166,7 @@ static int  testFileExclusiveExistence(
 }
 
 
-int
-read_xx_header(HFILE32 lzfd) {
+static int read_xx_header(HFILE32 lzfd) {
 	IMAGE_DOS_HEADER	mzh;
 	char			magic[2];
 
@@ -189,8 +188,7 @@ read_xx_header(HFILE32 lzfd) {
 }
 
 
-int
-find_ne_resource(
+static int find_ne_resource(
 	HFILE32 lzfd,SEGPTR typeid,SEGPTR resid,
 	BYTE **resdata,int *reslen,DWORD *off
 ) {
@@ -319,7 +317,7 @@ extern LPIMAGE_RESOURCE_DIRECTORY GetResDirEntryW(
 /* Loads the specified PE resource.
  * FIXME: shouldn't load the whole image
  */
-int
+static int
 find_pe_resource(
 	HFILE32 lzfd,LPWSTR typeid,LPWSTR resid,
 	BYTE **resdata,int *reslen,DWORD *off
@@ -471,7 +469,7 @@ DWORD WINAPI GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 			res= find_ne_resource(lzfd,restype,resid,&resdata,&reslen,&off);
 			break;
 		case IMAGE_NT_SIGNATURE:
-			res= find_pe_resource(lzfd,restype,resid,&resdata,&reslen,&off);
+			res= find_pe_resource(lzfd,(LPWSTR)restype,(LPWSTR)resid,&resdata,&reslen,&off);
 			break;
 		}
 		LZClose32(lzfd);
@@ -938,10 +936,14 @@ _error2vif(DWORD error) {
     }
 }
 
+/* VerInstallFile32A
+ */
+
 DWORD WINAPI VerInstallFile32A(
 	UINT32 flags,LPCSTR srcfilename,LPCSTR destfilename,LPCSTR srcdir,
  	LPCSTR destdir,LPCSTR curdir,LPSTR tmpfile,UINT32 *tmpfilelen )
 {
+    LPCSTR pdest;
     char	destfn[260],tmpfn[260],srcfn[260];
     HFILE32	hfsrc,hfdst;
     DWORD	attr,ret,xret,tmplast;
@@ -953,12 +955,14 @@ DWORD WINAPI VerInstallFile32A(
     );
     xret = 0;
     sprintf(srcfn,"%s\\%s",srcdir,srcfilename);
-    sprintf(destfn,"%s\\%s",destdir,destfilename);
+    if (!destdir || !*destdir) pdest = srcdir;
+    else pdest = destdir;
+    sprintf(destfn,"%s\\%s",pdest,destfilename);
     hfsrc=LZOpenFile32A(srcfn,&ofs,OF_READ);
     if (hfsrc==HFILE_ERROR32)
     	return VIF_CANNOTREADSRC;
-    sprintf(tmpfn,"%s\\%s",destdir,destfilename);
-    tmplast=strlen(destdir)+1;
+    sprintf(tmpfn,"%s\\%s",pdest,destfilename);
+    tmplast=strlen(pdest)+1;
     attr = GetFileAttributes32A(tmpfn);
     if (attr!=-1) {
 	if (attr & FILE_ATTRIBUTE_READONLY) {
@@ -970,8 +974,8 @@ DWORD WINAPI VerInstallFile32A(
     attr = -1;
     if (flags & VIFF_FORCEINSTALL) {
     	if (tmpfile[0]) {
-	    sprintf(tmpfn,"%s\\%s",destdir,tmpfile);
-	    tmplast = strlen(destdir)+1;
+	    sprintf(tmpfn,"%s\\%s",pdest,tmpfile);
+	    tmplast = strlen(pdest)+1;
 	    attr = GetFileAttributes32A(tmpfn);
 	    /* if it exists, it has been copied by the call before.
 	     * we jump over the copy part... 
@@ -981,7 +985,7 @@ DWORD WINAPI VerInstallFile32A(
     if (attr == -1) {
     	char	*s;
 
-	GetTempFileName32A(destdir,"ver",0,tmpfn); /* should not fail ... */
+	GetTempFileName32A(pdest,"ver",0,tmpfn); /* should not fail ... */
 	s=strrchr(tmpfn,'\\');
 	if (s)
 	    tmplast = s-tmpfn;
@@ -1078,7 +1082,7 @@ DWORD WINAPI VerInstallFile32A(
 	if ((!(flags & VIFF_DONTDELETEOLD))	&& 
 	    curdir				&& 
 	    *curdir				&&
-	    lstrcmpi32A(curdir,destdir)
+	    lstrcmpi32A(curdir,pdest)
 	) {
 	    char curfn[260];
 

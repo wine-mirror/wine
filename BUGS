@@ -5,7 +5,7 @@ done something for one of the problems. You are encouraged to
 add new entries and, more importantly, remove those for the 
 bugs you fixed ;-)
 ------------------------------------------------------------
-As of Oct 1997 -
+As of Nov 1997 -
 
 General:
 
@@ -36,9 +36,7 @@ General:
 
 Miscellaneous:
 
- * Missing menu separators in BCW, other programs.
-
- * BCW fails with "bad class 'MessageWindow'" message.
+ * Invisible controls in BCW dialogs.
 
  * MIRC is unable to show 'Options' dialog.
 

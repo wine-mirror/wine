@@ -2,6 +2,7 @@
  * DDEML library
  *
  * Copyright 1997 Alexandre Julliard
+ * Copyright 1997 Len White
  */
 
 /* Only empty stubs for now */
@@ -63,6 +64,33 @@ BOOL32 WINAPI DdeUninitialize32( DWORD idInst )
     return TRUE;
 }
 
+/*****************************************************************
+ *            DdeConnectList (DDEML.4)
+ */
+HCONVLIST WINAPI DdeConnectList( DWORD idInst, HSZ hszService, HSZ hszTopic,
+        HCONVLIST hConvList, LPCONVCONTEXT16 pCC )
+{
+    fprintf( stdnimp, "DdeConnectList: empty stub\n" );
+    return 0;
+}
+
+/*****************************************************************
+ *            DdeQueryNextServer (DDEML.5)
+ */
+HCONV WINAPI DdeQueryNextServer( HCONVLIST hConvList, HCONV hConvPrev )
+{
+    fprintf( stdnimp, "DdeQueryNextServer: empty stub\n" );
+    return 0;
+}
+
+/*****************************************************************
+ *            DdeDisconnectList (DDEML.6)
+ */
+BOOL16 WINAPI DdeDisconnectList( HCONVLIST hConvList )
+{
+    fprintf( stdnimp, "DdeDisconnectList: empty stub\n" );
+    return 0;
+}
 
 /*****************************************************************
  *            DdeConnect16   (DDEML.7)
@@ -94,6 +122,23 @@ BOOL16 WINAPI DdeDisconnect16( HCONV hConv )
     return (BOOL16)DdeDisconnect32( hConv );
 }
 
+/*****************************************************************
+ *            DdeSetUserHandle (DDEML.10)
+ */
+BOOL16 WINAPI DdeSetUserHandle( HCONV hConv, DWORD id, DWORD hUser )
+{
+    fprintf( stdnimp, "DdeSetUserHandle: empty stub\n" );
+    return 0;
+}
+
+/*****************************************************************
+ *            DdeCreateDataHandle (DDEML.14)
+ */
+HDDEDATA WINAPI DdeCreateDataHandle( DWORD idInst, LPBYTE pSrc, DWORD cb, DWORD cbOff, HSZ hszItem, UINT16 wFmt, UINT16 afCmd )
+{
+    fprintf( stdnimp, "DdeCreateDataHandle: empty stub\n" );
+    return 0;
+}
 
 /*****************************************************************
  *            DdeDisconnect32   (USER32.97)
@@ -226,6 +271,71 @@ HDDEDATA WINAPI DdeClientTransaction32( LPBYTE pData, DWORD cbData,
     return 0;
 }
 
+/*****************************************************************
+ *            DdeAbandonTransaction (DDEML.12)
+ */
+BOOL16 WINAPI DdeAbandonTransaction( DWORD idInst, HCONV hConv, 
+                                     DWORD idTransaction )
+{
+    fprintf( stdnimp, "DdeAbandonTransaction: empty stub\n" );
+    return 0;
+}
+
+/*****************************************************************
+ *            DdePostAdvise (DDEML.13)
+ */
+BOOL16 WINAPI DdePostAdvise( DWORD idInst, HSZ hszTopic, HSZ hszItem )
+{
+    fprintf( stdnimp, "DdePostAdvise: empty stub\n" );
+    return 0;
+}
+
+/*****************************************************************
+ *            DdeAddData (DDEML.15)
+ */
+HDDEDATA WINAPI DdeAddData( HDDEDATA hData, LPBYTE pSrc, DWORD cb,
+                            DWORD cbOff )
+{
+    fprintf( stdnimp, "DdeAddData: empty stub\n" );
+    return 0;
+}
+
+/*****************************************************************
+ *            DdeGetData (DDEML.16)
+ */
+DWORD WINAPI DdeGetData( HDDEDATA hData, LPBYTE pDst, DWORD cbMax, 
+                         DWORD cbOff )
+{
+    fprintf( stdnimp, "DdeGetData: empty stub\n" );
+    return 0;
+}
+
+/*****************************************************************
+ *            DdeAccessData (DDEML.17)
+ */
+LPBYTE WINAPI DdeAccessData( HDDEDATA hData, LPDWORD pcbDataSize )
+{
+     fprintf( stdnimp, "DdeAccessData: empty stub\n" );
+     return 0;
+}
+
+/*****************************************************************
+ *            DdeUnaccessData (DDEML.18)
+ */
+BOOL16 WINAPI DdeUnaccessData( HDDEDATA hData )
+{
+     fprintf( stdnimp, "DdeUnaccessData: empty stub\n" );
+     return 0;
+}
+
+/*****************************************************************
+ *            DdeEnableCallback (DDEML.26)
+ */
+BOOL16 WINAPI DdeEnableCallback( DWORD idInst, HCONV hConv, UINT16 wCmd )
+{
+     fprintf( stdnimp, "DdeEnableCallback: empty stub\n" );
+     return 0;
+}
 
 /*****************************************************************
  *            DdeNameService16  (DDEML.27)
@@ -265,4 +375,15 @@ UINT32 WINAPI DdeGetLastError32( DWORD idInst )
     fprintf( stdnimp, "DdeGetLastError: empty stub\n" );
     return 0;
 }
+
+/*****************************************************************
+ *            DdeCmpStringHandles (DDEML.36)
+ */
+int WINAPI DdeCmpStringHandles( HSZ hsz1, HSZ hsz2 )
+{
+     fprintf( stdnimp, "DdeCmpStringHandles: empty stub\n" );
+     return 0;
+}
+
+
 

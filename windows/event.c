@@ -5,6 +5,7 @@
  * 
  */
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -27,6 +28,7 @@
 #include "win.h"
 #include "class.h"
 #include "clipboard.h"
+#include "dce.h"
 #include "message.h"
 #include "module.h"
 #include "options.h"
@@ -86,7 +88,7 @@ static const char * const event_names[] =
 };
 
   /* Event handlers */
-static void EVENT_Key( XKeyEvent *event );
+static void EVENT_Key( WND *pWnd, XKeyEvent *event );
 static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event );
 static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event );
 static void EVENT_MotionNotify( WND *pWnd, XMotionEvent *event );
@@ -94,7 +96,7 @@ static void EVENT_FocusIn( WND *pWnd, XFocusChangeEvent *event );
 static void EVENT_FocusOut( WND *pWnd, XFocusChangeEvent *event );
 static void EVENT_Expose( WND *pWnd, XExposeEvent *event );
 static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event );
-static void EVENT_ConfigureNotify( HWND32 hwnd, XConfigureEvent *event );
+static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event );
 static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event);
 static void EVENT_SelectionNotify( XSelectionEvent *event);
 static void EVENT_SelectionClear( WND *pWnd, XSelectionClearEvent *event);
@@ -160,8 +162,7 @@ void EVENT_ProcessEvent( XEvent *event )
     {
     case KeyPress:
     case KeyRelease:
-        if (InputEnabled)
-            EVENT_Key( (XKeyEvent*)event );
+        if (InputEnabled) EVENT_Key( pWnd, (XKeyEvent*)event );
 	break;
 	
     case ButtonPress:
@@ -208,7 +209,7 @@ void EVENT_ProcessEvent( XEvent *event )
         break;
 
     case ConfigureNotify:
-	EVENT_ConfigureNotify( pWnd->hwndSelf, (XConfigureEvent*)event );
+	EVENT_ConfigureNotify( pWnd, (XConfigureEvent*)event );
 	break;
 
     case SelectionRequest:
@@ -414,6 +415,7 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 	  }
 
 	  if( pWnd )
+          {
             if( (pQ = (MESSAGEQUEUE*)GlobalLock16(pWnd->hmemTaskQ)) )
             {
               pQ->flags |= QUEUE_FLAG_XEVENT;
@@ -421,9 +423,9 @@ BOOL32 EVENT_WaitNetEvent( BOOL32 sleep, BOOL32 peek )
 	      XPutBackEvent(display, &event);
               break;
 	    }
+          }
         }
-        else
-          EVENT_ProcessEvent( &event );
+        else EVENT_ProcessEvent( &event );
     }
     while (XPending( display ));
     return TRUE;
@@ -615,9 +617,9 @@ static void EVENT_GraphicsExpose( WND *pWnd, XGraphicsExposeEvent *event )
  *
  * Handle a X key event
  */
-static void EVENT_Key( XKeyEvent *event )
+static void EVENT_Key( WND *pWnd, XKeyEvent *event )
 {
-    KEYBOARD_HandleEvent( event );
+    KEYBOARD_HandleEvent( pWnd, event );
 }
 
 
@@ -627,8 +629,9 @@ static void EVENT_Key( XKeyEvent *event )
 static void EVENT_MotionNotify( WND *pWnd, XMotionEvent *event )
 {
     hardware_event( WM_MOUSEMOVE, EVENT_XStateToKeyState( event->state ), 0L,
-		    event->x_root - desktopX, event->y_root - desktopY,
-		    event->time - MSG_WineStartTicks, (DWORD)pWnd->hwndSelf );
+                    pWnd->rectWindow.left + event->x,
+                    pWnd->rectWindow.top + event->y,
+                    event->time - MSG_WineStartTicks, pWnd->hwndSelf );
 }
 
 
@@ -640,14 +643,14 @@ static void EVENT_MotionNotify( WND *pWnd, XMotionEvent *event )
 void EVENT_DummyMotionNotify(void)
 {
     Window root, child;
-    int rootX, rootY, childX, childY;
+    int rootX, rootY, winX, winY;
     unsigned int state;
 
     if (XQueryPointer( display, rootWindow, &root, &child,
-                       &rootX, &rootY, &childX, &childY, &state ))
+                       &rootX, &rootY, &winX, &winY, &state ))
     {
-        hardware_event(WM_MOUSEMOVE, EVENT_XStateToKeyState( state ), 0L,
-                       rootX - desktopX, rootY - desktopY, GetTickCount(), 0 );
+        hardware_event( WM_MOUSEMOVE, EVENT_XStateToKeyState( state ), 0L,
+                        winX, winY, GetTickCount(), 0 );
     }
 }
 
@@ -667,8 +670,9 @@ static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event )
     AsyncMouseButtonsStates[buttonNum] = 0x8000;
     hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
-		    event->x_root - desktopX, event->y_root - desktopY,
-		    event->time - MSG_WineStartTicks, (DWORD)pWnd->hwndSelf );
+                    pWnd->rectWindow.left + event->x,
+                    pWnd->rectWindow.top + event->y,
+		    event->time - MSG_WineStartTicks, pWnd->hwndSelf );
 }
 
 
@@ -683,11 +687,12 @@ static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event )
 
     if (buttonNum >= NB_BUTTONS) return;    
     if (SwappedButtons) buttonNum = NB_BUTTONS - 1 - buttonNum;
-    MouseButtonsStates[buttonNum] = FALSE;
+    MouseButtonsStates[buttonNum] = 0;
     hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
-		    event->x_root - desktopX, event->y_root - desktopY,
-		    event->time - MSG_WineStartTicks, (DWORD)pWnd->hwndSelf );
+                    pWnd->rectWindow.left + event->x,
+                    pWnd->rectWindow.top + event->y,
+		    event->time - MSG_WineStartTicks, pWnd->hwndSelf );
 }
 
 
@@ -744,83 +749,118 @@ BOOL32 EVENT_CheckFocus(void)
     return TRUE;
 }
 
+
+/**********************************************************************
+ *              EVENT_GetGeometry
+ *
+ * Helper function for ConfigureNotify handling.
+ * Get the new geometry of a window relative to the root window.
+ */
+static void EVENT_GetGeometry( Window win, int *px, int *py,
+                               unsigned int *pwidth, unsigned int *pheight )
+{
+    Window root, parent, *children;
+    int xpos, ypos;
+    unsigned int width, height, border, depth, nb_children;
+
+    if (!XGetGeometry( display, win, &root, px, py, pwidth, pheight,
+                       &border, &depth )) return;
+    if (win == rootWindow)
+    {
+        *px = *py = 0;
+        return;
+    }
+
+    for (;;)
+    {
+        if (!XQueryTree(display, win, &root, &parent, &children, &nb_children))
+            return;
+        XFree( children );
+        if (parent == rootWindow) break;
+        win = parent;
+        if (!XGetGeometry( display, win, &root, &xpos, &ypos,
+                           &width, &height, &border, &depth )) return;
+        *px += xpos;
+        *py += ypos;
+    }
+}
+
+
 /**********************************************************************
  *              EVENT_ConfigureNotify
  *
- * The ConfigureNotify event is only selected on the desktop window
- * and on top-level windows when the -managed flag is used.
+ * The ConfigureNotify event is only selected on top-level windows
+ * when the -managed flag is used.
  */
-static void EVENT_ConfigureNotify( HWND32 hwnd, XConfigureEvent *event )
+static void EVENT_ConfigureNotify( WND *pWnd, XConfigureEvent *event )
 {
-    /* FIXME: with -desktop xxx we get this event _before_ desktop 
-     * window structure is created. WIN_GetDesktop() check is a hack.
-     */
+    WINDOWPOS32 winpos;
+    RECT32 newWindowRect, newClientRect;
+    HRGN32 hrgnOldPos, hrgnNewPos;
+    Window above = event->above;
+    int x, y;
+    unsigned int width, height;
 
-    if ( !WIN_GetDesktop() || hwnd == GetDesktopWindow32())
-    {
-        desktopX = event->x;
-	desktopY = event->y;
-    }
+    assert (pWnd->flags & WIN_MANAGED);
+
+    /* We don't rely on the event geometry info, because it is relative
+     * to parent and not to root, and it may be wrong (XFree sets x,y to 0,0
+     * if the window hasn't moved).
+     */
+    EVENT_GetGeometry( event->window, &x, &y, &width, &height );
+
+    /* Fill WINDOWPOS struct */
+    winpos.flags = SWP_NOACTIVATE | SWP_NOZORDER;
+    winpos.hwnd = pWnd->hwndSelf;
+    winpos.x = x;
+    winpos.y = y;
+    winpos.cx = width;
+    winpos.cy = height;
+
+    /* Check for unchanged attributes */
+    if (winpos.x == pWnd->rectWindow.left && winpos.y == pWnd->rectWindow.top)
+        winpos.flags |= SWP_NOMOVE;
+    if ((winpos.cx == pWnd->rectWindow.right - pWnd->rectWindow.left) &&
+        (winpos.cy == pWnd->rectWindow.bottom - pWnd->rectWindow.top))
+        winpos.flags |= SWP_NOSIZE;
     else
     {
-        WND *wndPtr = WIN_FindWndPtr( hwnd );
-	WINDOWPOS32 winpos;
-	RECT32 newWindowRect, newClientRect;
-	HRGN32 hrgnOldPos, hrgnNewPos;
-	Window above = event->above;
-
-	if (!wndPtr || !(wndPtr->flags & WIN_MANAGED)) return;
-
-	/* Fill WINDOWPOS struct */
-	winpos.flags = SWP_NOACTIVATE | SWP_NOZORDER;
-	winpos.hwnd = hwnd;
-        /* FIXME: position should be relative to root window */
-	winpos.x = event->x;
-	winpos.y = event->y;
-	winpos.cx = event->width;
-	winpos.cy = event->height;
-
-	/* Check for unchanged attributes */
-	if(winpos.x == wndPtr->rectWindow.left &&
-	   winpos.y == wndPtr->rectWindow.top)
-	    winpos.flags |= SWP_NOMOVE;
-	if(winpos.cx == wndPtr->rectWindow.right - wndPtr->rectWindow.left &&
-	   winpos.cy == wndPtr->rectWindow.bottom - wndPtr->rectWindow.top)
-	    winpos.flags |= SWP_NOSIZE;
-
-	/* Send WM_WINDOWPOSCHANGING */
-	SendMessage32A( hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)&winpos );
-
-	/* Calculate new position and size */
-	newWindowRect.left = event->x;
-	newWindowRect.right = event->x + event->width;
-	newWindowRect.top = event->y;
-	newWindowRect.bottom = event->y + event->height;
-
-	WINPOS_SendNCCalcSize( winpos.hwnd, TRUE, &newWindowRect,
-                               &wndPtr->rectWindow, &wndPtr->rectClient,
-                               &winpos, &newClientRect );
-
-        hrgnOldPos = CreateRectRgnIndirect32( &wndPtr->rectWindow );
-        hrgnNewPos = CreateRectRgnIndirect32( &newWindowRect );
-        CombineRgn32( hrgnOldPos, hrgnOldPos, hrgnNewPos, RGN_DIFF );
- 
-	/* Set new size and position */
-	wndPtr->rectWindow = newWindowRect;
-	wndPtr->rectClient = newClientRect;
-	SendMessage32A( hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)&winpos );
-
-	if( IsWindow32( hwnd ) )
-	    if( above == None )			/* absolute bottom */
-	    {
-        	WIN_UnlinkWindow( hwnd );
-        	WIN_LinkWindow( hwnd, HWND_BOTTOM);
-	    }
-	    else EVENT_QueryZOrder( wndPtr );	/* try to outsmart window manager */
-
-        DeleteObject32(hrgnOldPos);
-        DeleteObject32(hrgnNewPos);
+        RECT32 rect = { 0, 0, pWnd->rectWindow.right - pWnd->rectWindow.left,
+                        pWnd->rectWindow.bottom - pWnd->rectWindow.top };
+        DCE_InvalidateDCE( pWnd, &rect );
     }
+
+    /* Send WM_WINDOWPOSCHANGING */
+    SendMessage32A( winpos.hwnd, WM_WINDOWPOSCHANGING, 0, (LPARAM)&winpos );
+
+    /* Calculate new position and size */
+    newWindowRect.left = x;
+    newWindowRect.right = x + width;
+    newWindowRect.top = y;
+    newWindowRect.bottom = y + height;
+
+    WINPOS_SendNCCalcSize( winpos.hwnd, TRUE, &newWindowRect,
+                           &pWnd->rectWindow, &pWnd->rectClient,
+                           &winpos, &newClientRect );
+
+    hrgnOldPos = CreateRectRgnIndirect32( &pWnd->rectWindow );
+    hrgnNewPos = CreateRectRgnIndirect32( &newWindowRect );
+    CombineRgn32( hrgnOldPos, hrgnOldPos, hrgnNewPos, RGN_DIFF );
+    DeleteObject32(hrgnOldPos);
+    DeleteObject32(hrgnNewPos);
+ 
+    /* Set new size and position */
+    pWnd->rectWindow = newWindowRect;
+    pWnd->rectClient = newClientRect;
+    SendMessage32A( winpos.hwnd, WM_WINDOWPOSCHANGED, 0, (LPARAM)&winpos );
+
+    if (!IsWindow32( winpos.hwnd )) return;
+    if( above == None )			/* absolute bottom */
+    {
+        WIN_UnlinkWindow( winpos.hwnd );
+        WIN_LinkWindow( winpos.hwnd, HWND_BOTTOM);
+    }
+    else EVENT_QueryZOrder( pWnd );	/* try to outsmart window manager */
 }
 
 
@@ -1185,7 +1225,7 @@ void WINAPI Mouse_Event( CONTEXT *context )
      * SI = mouse event flags (?)
      */
     Window root, child;
-    int rootX, rootY, childX, childY;
+    int rootX, rootY, winX, winY;
     unsigned int state;
 
     if (AX_reg(context) & ME_MOVE)
@@ -1196,19 +1236,19 @@ void WINAPI Mouse_Event( CONTEXT *context )
         return;
     }
     if (!XQueryPointer( display, rootWindow, &root, &child,
-                        &rootX, &rootY, &childX, &childY, &state )) return;
+                        &rootX, &rootY, &winX, &winY, &state )) return;
     if (AX_reg(context) & ME_LDOWN)
-        hardware_event( WM_LBUTTONDOWN, EVENT_XStateToKeyState( state ), 0L,
-                        rootX - desktopX, rootY - desktopY, GetTickCount(), 0);
+        hardware_event( WM_LBUTTONDOWN, EVENT_XStateToKeyState( state ),
+                        0L, winX, winY, GetTickCount(), 0 );
     if (AX_reg(context) & ME_LUP)
-        hardware_event( WM_LBUTTONUP, EVENT_XStateToKeyState( state ), 0L,
-                        rootX - desktopX, rootY - desktopY, GetTickCount(), 0);
+        hardware_event( WM_LBUTTONUP, EVENT_XStateToKeyState( state ),
+                        0L, winX, winY, GetTickCount(), 0 );
     if (AX_reg(context) & ME_RDOWN)
-        hardware_event( WM_RBUTTONDOWN, EVENT_XStateToKeyState( state ), 0L,
-                        rootX - desktopX, rootY - desktopY, GetTickCount(), 0);
+        hardware_event( WM_RBUTTONDOWN, EVENT_XStateToKeyState( state ),
+                        0L, winX, winY, GetTickCount(), 0 );
     if (AX_reg(context) & ME_RUP)
-        hardware_event( WM_RBUTTONUP, EVENT_XStateToKeyState( state ), 0L,
-                        rootX - desktopX, rootY - desktopY, GetTickCount(), 0);
+        hardware_event( WM_RBUTTONUP, EVENT_XStateToKeyState( state ),
+                        0L, winX, winY, GetTickCount(), 0 );
 }
 
 

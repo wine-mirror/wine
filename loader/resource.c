@@ -18,7 +18,6 @@
 #include "heap.h"
 #include "neexe.h"
 #include "task.h"
-#include "accel.h"
 #include "module.h"
 #include "resource.h"
 #include "stddebug.h"
@@ -63,14 +62,16 @@ HRSRC16 WINAPI FindResource16( HMODULE16 hModule, SEGPTR name, SEGPTR type )
 
     if ((pModule = MODULE_GetPtr( hModule )))
     {
-#ifndef WINELIB
-	if (pModule->flags & NE_FFLAGS_WIN32)
-	    fprintf(stderr,"FindResource16: %s", NEWin32FailureString);
-	else
-	    return NE_FindResource( hModule, type, name );
-#else
-	return LIBRES_FindResource16( hModule, name, type );
-#endif
+        if (!__winelib)
+        {
+            if (pModule->flags & NE_FFLAGS_WIN32)
+                fprintf(stderr,"FindResource16: %s", NEWin32FailureString);
+            else
+                return NE_FindResource( hModule, type, name );
+        }
+        else return LIBRES_FindResource16( hModule,
+                                           (LPCSTR)PTR_SEG_TO_LIN(name),
+                                           (LPCSTR)PTR_SEG_TO_LIN(type) );
     }
     return 0;
 }
@@ -114,28 +115,29 @@ HANDLE32 WINAPI FindResourceEx32A( HINSTANCE32 hModule, LPCSTR name,
 HRSRC32 WINAPI FindResourceEx32W( HINSTANCE32 hModule, LPCWSTR name,
                                   LPCWSTR type, WORD lang )
 {
-#ifndef WINELIB
-    NE_MODULE *pModule;
+    if (!__winelib)
+    {
+        NE_MODULE *pModule;
 
-    if (!hModule) hModule = GetTaskDS();
-    hModule = MODULE_HANDLEtoHMODULE32( hModule );
-    dprintf_resource(stddeb, "FindResource32W: module=%08x type=", hModule );
-    if (HIWORD(type))
-    	dprintf_resource(stddeb,"%p",type);
-    else
-	dprintf_resource(stddeb,"#%p",type);
-    dprintf_resource( stddeb, " name=" );
-    if (HIWORD(name))
-    	dprintf_resource(stddeb,"%p",name);
-    else
-	dprintf_resource(stddeb,"#%p",name);
-    dprintf_resource( stddeb, "\n" );
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;
-    return PE_FindResourceEx32W(hModule,name,type,lang);
-#else
-    return LIBRES_FindResource32( hModule, name, type );
-#endif
+        if (!hModule) hModule = GetTaskDS();
+        hModule = MODULE_HANDLEtoHMODULE32( hModule );
+        dprintf_resource(stddeb, "FindResource32W: module=%08x type=",
+                         hModule );
+        if (HIWORD(type))
+            dprintf_resource(stddeb,"%p",type);
+        else
+            dprintf_resource(stddeb,"#%p",type);
+        dprintf_resource( stddeb, " name=" );
+        if (HIWORD(name))
+            dprintf_resource(stddeb,"%p",name);
+        else
+            dprintf_resource(stddeb,"#%p",name);
+        dprintf_resource( stddeb, "\n" );
+        if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
+        if (!(pModule->flags & NE_FFLAGS_WIN32)) return 0;
+        return PE_FindResourceEx32W(hModule,name,type,lang);
+    }
+    else return LIBRES_FindResource32( hModule, name, type );
 }
 
 /**********************************************************************
@@ -160,14 +162,14 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
     if (!hRsrc) return 0;
     if ((pModule = MODULE_GetPtr( hModule )))
     {
-#ifndef WINELIB
-	if (pModule->flags & NE_FFLAGS_WIN32)
-	    fprintf(stderr,"LoadResource16: %s", NEWin32FailureString);
-	else
-	    return NE_LoadResource( hModule, hRsrc );
-#else
-	return LIBRES_LoadResource( hModule, hRsrc );
-#endif
+        if (!__winelib)
+        {
+            if (pModule->flags & NE_FFLAGS_WIN32)
+                fprintf(stderr,"LoadResource16: %s", NEWin32FailureString);
+            else
+                return NE_LoadResource( hModule, hRsrc );
+        }
+        else return LIBRES_LoadResource( hModule, hRsrc );
     }
     return 0;
 }
@@ -177,25 +179,25 @@ HGLOBAL16 WINAPI LoadResource16( HMODULE16 hModule, HRSRC16 hRsrc )
  */
 HGLOBAL32 WINAPI LoadResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
 {
-#ifndef WINELIB
-    NE_MODULE *pModule;
-
-    if (!hModule) hModule = GetTaskDS(); /* FIXME: see FindResource32W */
-    hModule = MODULE_HANDLEtoHMODULE32( hModule );
-    dprintf_resource(stddeb, "LoadResource32: module=%04x res=%04x\n",
-                     hModule, hRsrc );
-    if (!hRsrc) return 0;
-
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    if (!(pModule->flags & NE_FFLAGS_WIN32))
+    if (!__winelib)
     {
-    	fprintf(stderr,"LoadResource32: %s", PEWin16FailureString );
-   	return 0;  /* FIXME? */
+        NE_MODULE *pModule;
+
+        if (!hModule) hModule = GetTaskDS(); /* FIXME: see FindResource32W */
+        hModule = MODULE_HANDLEtoHMODULE32( hModule );
+        dprintf_resource(stddeb, "LoadResource32: module=%04x res=%04x\n",
+                         hModule, hRsrc );
+        if (!hRsrc) return 0;
+
+        if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
+        if (!(pModule->flags & NE_FFLAGS_WIN32))
+        {
+            fprintf(stderr,"LoadResource32: %s", PEWin16FailureString );
+            return 0;  /* FIXME? */
+        }
+        return PE_LoadResource32(hModule,hRsrc);
     }
-    return PE_LoadResource32(hModule,hRsrc);
-#else
-    return LIBRES_LoadResource( hModule, hRsrc );
-#endif
+    else return LIBRES_LoadResource( hModule, hRsrc );
 }
 
 
@@ -205,7 +207,6 @@ HGLOBAL32 WINAPI LoadResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
 /* 16-bit version */
 SEGPTR WINAPI WIN16_LockResource16(HGLOBAL16 handle)
 {
-#ifndef WINELIB
     HMODULE16 hModule;
     NE_MODULE *pModule;
 
@@ -219,31 +220,28 @@ SEGPTR WINAPI WIN16_LockResource16(HGLOBAL16 handle)
         return 0;
     }
     return NE_LockResource( hModule, handle );
-#else
-    return LIBRES_LockResource( handle );
-#endif
 }
 
-/* WINELIB 16-bit version */
+/* Winelib 16-bit version */
 LPVOID WINAPI LockResource16( HGLOBAL16 handle )
 {
-#ifndef WINELIB
-    HMODULE16 hModule;
-    NE_MODULE *pModule;
-
-    dprintf_resource(stddeb, "LockResource: handle=%04x\n", handle );
-    if (!handle) return NULL;
-    hModule = MODULE_HANDLEtoHMODULE16( handle );
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    if (pModule->flags & NE_FFLAGS_WIN32)
+    if (!__winelib)
     {
-        fprintf(stderr,"LockResource16: %s", NEWin32FailureString);
-        return 0;
+        HMODULE16 hModule;
+        NE_MODULE *pModule;
+
+        dprintf_resource(stddeb, "LockResource: handle=%04x\n", handle );
+        if (!handle) return NULL;
+        hModule = MODULE_HANDLEtoHMODULE16( handle );
+        if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
+        if (pModule->flags & NE_FFLAGS_WIN32)
+        {
+            fprintf(stderr,"LockResource16: %s", NEWin32FailureString);
+            return 0;
+        }
+        return (LPSTR)PTR_SEG_TO_LIN( NE_LockResource( hModule, handle ) );
     }
-    return (LPSTR)PTR_SEG_TO_LIN( NE_LockResource( hModule, handle ) );
-#else
-    return LIBRES_LockResource( handle );
-#endif
+    else return LIBRES_LockResource( handle );
 }
 
 
@@ -261,23 +259,23 @@ LPVOID WINAPI LockResource32( HGLOBAL32 handle )
  */
 BOOL16 WINAPI FreeResource16( HGLOBAL16 handle )
 {
-#ifndef WINELIB
-    HMODULE16 hModule;
-    NE_MODULE *pModule;
-
-    dprintf_resource(stddeb, "FreeResource16: handle=%04x\n", handle );
-    if (!handle) return FALSE;
-    hModule = MODULE_HANDLEtoHMODULE16( handle );
-    if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-    if (pModule->flags & NE_FFLAGS_WIN32)
+    if (!__winelib)
     {
-        fprintf(stderr,"FreeResource16: %s", NEWin32FailureString);
-        return 0;
+        HMODULE16 hModule;
+        NE_MODULE *pModule;
+
+        dprintf_resource(stddeb, "FreeResource16: handle=%04x\n", handle );
+        if (!handle) return FALSE;
+        hModule = MODULE_HANDLEtoHMODULE16( handle );
+        if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
+        if (pModule->flags & NE_FFLAGS_WIN32)
+        {
+            fprintf(stderr,"FreeResource16: %s", NEWin32FailureString);
+            return 0;
+        }
+        return NE_FreeResource( hModule, handle );
     }
-    return NE_FreeResource( hModule, handle );
-#else
-    return LIBRES_FreeResource( handle );
-#endif
+    else return LIBRES_FreeResource( handle );
 }
 
 /**********************************************************************
@@ -302,16 +300,16 @@ INT16 WINAPI AccessResource16( HINSTANCE16 hModule, HRSRC16 hRsrc )
                      hModule, hRsrc );
     if (!hRsrc) return 0;
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-#ifndef WINELIB
-    if (pModule->flags & NE_FFLAGS_WIN32)
+    if (!__winelib)
     {
-        fprintf(stderr,"AccessResource16: %s", NEWin32FailureString);
-        return 0;
+        if (pModule->flags & NE_FFLAGS_WIN32)
+        {
+            fprintf(stderr,"AccessResource16: %s", NEWin32FailureString);
+            return 0;
+        }
+        return NE_AccessResource( hModule, hRsrc );
     }
-    return NE_AccessResource( hModule, hRsrc );
-#else
-    return LIBRES_AccessResource( hModule, hRsrc );
-#endif
+    else return LIBRES_AccessResource( hModule, hRsrc );
 }
 
 
@@ -340,16 +338,16 @@ DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
     dprintf_resource(stddeb, "SizeofResource16: module=%04x res=%04x\n",
                      hModule, hRsrc );
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-#ifndef WINELIB
-    if (pModule->flags & NE_FFLAGS_WIN32)
+    if (!__winelib)
     {
-        fprintf(stderr,"SizeOfResource16: %s", NEWin32FailureString);
-        return 0;
+        if (pModule->flags & NE_FFLAGS_WIN32)
+        {
+            fprintf(stderr,"SizeOfResource16: %s", NEWin32FailureString);
+            return 0;
+        }
+        return NE_SizeofResource( hModule, hRsrc );
     }
-    return NE_SizeofResource( hModule, hRsrc );
-#else
-    return LIBRES_SizeofResource( hModule, hRsrc );
-#endif
+    else return LIBRES_SizeofResource( hModule, hRsrc );
 }
 
 
@@ -361,12 +359,12 @@ DWORD WINAPI SizeofResource32( HINSTANCE32 hModule, HRSRC32 hRsrc )
     hModule = MODULE_HANDLEtoHMODULE32( hModule );
     dprintf_resource(stddeb, "SizeofResource32: module=%04x res=%04x\n",
                      hModule, hRsrc );
-#ifndef WINELIB
-    return PE_SizeofResource32(hModule,hRsrc);
-#else
-    fprintf(stderr,"SizeofResource32: not implemented\n");
-    return 0;
-#endif
+    if (!__winelib) return PE_SizeofResource32(hModule,hRsrc);
+    else
+    {
+        fprintf(stderr,"SizeofResource32: not implemented\n");
+        return 0;
+    }
 }
 
 
@@ -382,16 +380,16 @@ HGLOBAL16 WINAPI AllocResource16( HMODULE16 hModule, HRSRC16 hRsrc, DWORD size)
                      hModule, hRsrc, size );
     if (!hRsrc) return 0;
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
-#ifndef WINELIB
-    if (pModule->flags & NE_FFLAGS_WIN32)
+    if (!__winelib)
     {
-        fprintf(stderr,"AllocResource16: %s", NEWin32FailureString);
-        return 0;
+        if (pModule->flags & NE_FFLAGS_WIN32)
+        {
+            fprintf(stderr,"AllocResource16: %s", NEWin32FailureString);
+            return 0;
+        }
+        return NE_AllocResource( hModule, hRsrc, size );
     }
-    return NE_AllocResource( hModule, hRsrc, size );
-#else
-    return LIBRES_AllocResource( hModule, hRsrc, size );
-#endif
+    else return LIBRES_AllocResource( hModule, hRsrc, size );
 }
 
 /**********************************************************************
@@ -471,7 +469,33 @@ HACCEL32 WINAPI LoadAccelerators32A(HINSTANCE32 instance,LPCSTR lpTableName)
 	return result;
 }
 
+/**********************************************************************
+ *             CopyAcceleratorTable32A   (USER32.58)
+ */
+INT32 WINAPI CopyAcceleratorTable32A(HACCEL32 src, LPACCEL32 dst, INT32 entries)
+{
+  fprintf(stderr,"CopyAcceleratorTable32A: not implemented: %d\n", entries);
+  return 0;
+}
 
+/**********************************************************************
+ *             CopyAcceleratorTable32W   (USER32.59)
+ */
+INT32 WINAPI CopyAcceleratorTable32W(HACCEL32 src, LPACCEL32 dst, INT32 entries)
+{
+  fprintf(stderr,"CopyAcceleratorTable32W: not implemented: %d\n", entries);
+  return 0;
+}
+
+/**********************************************************************
+ *             DestroyAcceleratorTable   (USER32.130)
+ */
+BOOL32 WINAPI DestroyAcceleratorTable( HACCEL32 handle )
+{
+  fprintf(stderr,"DestroyAcceleratorTable: not implemented\n");
+  return TRUE;
+}
+  
 /**********************************************************************
  *					LoadString16
  */

@@ -1054,17 +1054,27 @@ _w95dkecomp(struct _w95nr2da *a,struct _w95nr2da *b){return a->dkeaddr-b->dkeadd
 
 static struct _w95key*
 _w95dkelookup(unsigned long dkeaddr,int n,struct _w95nr2da *nr2da,struct _w95key *keys) {
-	int	i,off;
+	int	i;
+        int     left, right;
 
 	if (dkeaddr == 0xFFFFFFFF)
 		return NULL;
 	if (dkeaddr<0x20)
 		return NULL;
 	dkeaddr=_w95_adj_da(dkeaddr+0x1c);
-	off = (dkeaddr-0x3c)/0x1c;
-	for (i=0;i<n;i++)
-		if (nr2da[(i+off)%n].dkeaddr == dkeaddr)
-			return keys+nr2da[(i+off)%n].nr;
+        left=0;
+        right=n-1;
+        while(left<=right)
+        {
+           i=(left+right)/2;
+           
+           if(nr2da[i].dkeaddr == dkeaddr)
+              return keys+nr2da[i].nr;
+           else if(nr2da[i].dkeaddr < dkeaddr)
+              left=i+1;
+           else
+              right=i-1;
+        }
 	/* 0x3C happens often, just report unusual values */
 	if (dkeaddr!=0x3c)
 		dprintf_reg(stddeb,"search hasn't found dkeaddr %lx?\n",dkeaddr);
@@ -2759,23 +2769,30 @@ DWORD WINAPI RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
 		hkey,W2C(lpszSubKey,0)
 	);
 	lpNextKey	= lookup_hkey(hkey);
-	if (!lpNextKey)
+	if (!lpNextKey) {
+		dprintf_reg (stddeb, "  Badkey[1].\n");
 		return SHELL_ERROR_BADKEY;
+	}
 	/* we need to know the previous key in the hier. */
-	if (!lpszSubKey || !*lpszSubKey)
+	if (!lpszSubKey || !*lpszSubKey) {
+		dprintf_reg (stddeb, "  Badkey[2].\n");
 		return SHELL_ERROR_BADKEY;
+	}
 	split_keypath(lpszSubKey,&wps,&wpc);
 	i 	= 0;
 	lpxkey	= lpNextKey;
 	while (i<wpc-1) {
 		lpxkey=lpNextKey->nextsub;
 		while (lpxkey) {
+			dprintf_reg (stddeb, "  Scanning [%s]\n",
+				     W2C (lpxkey->keyname, 0));
 			if (!lstrcmpi32W(wps[i],lpxkey->keyname))
 				break;
 			lpxkey=lpxkey->next;
 		}
 		if (!lpxkey) {
 			FREE_KEY_PATH;
+			dprintf_reg (stddeb, "  Not found.\n");
 			/* not found is success */
 			return SHELL_ERROR_SUCCESS;
 		}
@@ -2785,15 +2802,24 @@ DWORD WINAPI RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
 	lpxkey	= lpNextKey->nextsub;
 	lplpPrevKey = &(lpNextKey->nextsub);
 	while (lpxkey) {
+		dprintf_reg (stddeb, "  Scanning [%s]\n",
+			     W2C (lpxkey->keyname, 0));
 		if (!lstrcmpi32W(wps[i],lpxkey->keyname))
 			break;
 		lplpPrevKey	= &(lpxkey->next);
 		lpxkey		= lpxkey->next;
 	}
-	if (!lpxkey)
+	if (!lpxkey) {
+		FREE_KEY_PATH;
+		dprintf_reg (stddeb, "  Not found.\n");
+		return SHELL_ERROR_BADKEY;
 		return SHELL_ERROR_SUCCESS;
-	if (lpxkey->nextsub)
+	}
+	if (lpxkey->nextsub) {
+		FREE_KEY_PATH;
+		dprintf_reg (stddeb, "  Not empty.\n");
 		return SHELL_ERROR_CANTWRITE;
+	}
 	*lplpPrevKey	= lpxkey->next;
 	free(lpxkey->keyname);
 	if (lpxkey->class)
@@ -2802,6 +2828,7 @@ DWORD WINAPI RegDeleteKey32W(HKEY hkey,LPWSTR lpszSubKey) {
 		free(lpxkey->values);
 	free(lpxkey);
 	FREE_KEY_PATH;
+	dprintf_reg (stddeb, "  Done.\n");
 	return	SHELL_ERROR_SUCCESS;
 }
 

@@ -4,6 +4,7 @@
  * Copyright 1995 Alexandre Julliard
  */
 
+#include <assert.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -918,20 +919,54 @@ BOOL16 MODULE_SetEntryPoint( HMODULE32 hModule, WORD ordinal, WORD offset )
  *
  * Return an entry point from the WPROCS dll.
  */
-#ifndef WINELIB
-FARPROC16 MODULE_GetWndProcEntry16( const char *name )
+FARPROC16 MODULE_GetWndProcEntry16( LPCSTR name )
 {
-    WORD ordinal;
-    FARPROC16 ret;
-    static HMODULE32 hModule = 0;
+    FARPROC16 ret = NULL;
 
-    if (!hModule) hModule = GetModuleHandle16( "WPROCS" );
-    ordinal = MODULE_GetOrdinal( hModule, name );
-    if (!(ret = MODULE_GetEntryPoint( hModule, ordinal )))
-        fprintf( stderr, "GetWndProc16: %s not found, please report\n", name );
+    if (__winelib)
+    {
+        /* FIXME: hack for Winelib */
+        extern LRESULT ColorDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
+        extern LRESULT FileOpenDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
+        extern LRESULT FileSaveDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
+        extern LRESULT FindTextDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
+        extern LRESULT PrintDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
+        extern LRESULT PrintSetupDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
+        extern LRESULT ReplaceTextDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
+
+        if (!strcmp(name,"ColorDlgProc"))
+            return (FARPROC16)ColorDlgProc;
+        if (!strcmp(name,"FileOpenDlgProc"))
+            return (FARPROC16)FileOpenDlgProc;
+        if (!strcmp(name,"FileSaveDlgProc"))
+            return (FARPROC16)FileSaveDlgProc;
+        if (!strcmp(name,"FindTextDlgProc"))
+            return (FARPROC16)FindTextDlgProc;
+        if (!strcmp(name,"PrintDlgProc"))
+            return (FARPROC16)PrintDlgProc;
+        if (!strcmp(name,"PrintSetupDlgProc"))
+            return (FARPROC16)PrintSetupDlgProc;
+        if (!strcmp(name,"ReplaceTextDlgProc"))
+            return (FARPROC16)ReplaceTextDlgProc;
+        fprintf(stderr,"warning: No mapping for %s(), add one in library/miscstubs.c\n",name);
+        assert( FALSE );
+        return NULL;
+    }
+    else
+    {
+        WORD ordinal;
+        static HMODULE32 hModule = 0;
+
+        if (!hModule) hModule = GetModuleHandle16( "WPROCS" );
+        ordinal = MODULE_GetOrdinal( hModule, name );
+        if (!(ret = MODULE_GetEntryPoint( hModule, ordinal )))
+        {            
+            fprintf( stderr, "GetWndProc16: %s not found\n", name );
+            assert( FALSE );
+        }
+    }
     return ret;
 }
-#endif
 
 
 /***********************************************************************
@@ -1109,203 +1144,97 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 uFlags)
     NE_MODULE *pModule;
     LOADPARAMS *params = (LOADPARAMS *)paramBlock;
     OFSTRUCT ofs;
-#ifndef WINELIB
-    WORD *pModRef, *pDLLs;
     HFILE32 hFile;
-    int i;
-    extern const char * DEBUG_curr_module;
 
-    hModule = MODULE_FindModule( name );
-
-    if (!hModule)  /* We have to load the module */
+    if (__winelib)
     {
-        /* Try to load the built-in first if not disabled */
-        if ((hModule = BUILTIN_LoadModule( name, FALSE ))) return hModule;
+        lstrcpyn32A( ofs.szPathName, name, sizeof(ofs.szPathName) );
+        if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) return hModule;
+        pModule = (NE_MODULE *)GlobalLock16( hModule );
+        hPrevInstance = 0;
+        hInstance = MODULE_CreateInstance( hModule, params );
+    }
+    else
+    {
+        hModule = MODULE_FindModule( name );
 
-        if ((hFile = OpenFile32( name, &ofs, OF_READ )) == HFILE_ERROR32)
+        if (!hModule)  /* We have to load the module */
         {
-            /* Now try the built-in even if disabled */
-            if ((hModule = BUILTIN_LoadModule( name, TRUE )))
+            /* Try to load the built-in first if not disabled */
+            if ((hModule = BUILTIN_LoadModule( name, FALSE ))) return hModule;
+            
+            if ((hFile = OpenFile32( name, &ofs, OF_READ )) == HFILE_ERROR32)
             {
-                fprintf( stderr, "Warning: could not load Windows DLL '%s', using built-in module.\n", name );
+                /* Now try the built-in even if disabled */
+                if ((hModule = BUILTIN_LoadModule( name, TRUE )))
+                {
+                    fprintf( stderr, "Warning: could not load Windows DLL '%s', using built-in module.\n", name );
+                    return hModule;
+                }
+                return 2;  /* File not found */
+            }
+
+            /* Create the module structure */
+
+            hModule = MODULE_LoadExeHeader( hFile, &ofs );
+            if (hModule < 32)
+            {
+                if (hModule == 21)
+                    hModule = PE_LoadModule( hFile, &ofs, paramBlock );
+                else _lclose32( hFile );
+
+                if (hModule < 32)
+                    fprintf( stderr, "LoadModule: can't load '%s', error=%d\n",
+                             name, hModule );
                 return hModule;
             }
-            return 2;  /* File not found */
+            _lclose32( hFile );
+            pModule = MODULE_GetPtr( hModule );
+            pModule->flags |= uFlags; /* stamp implicitly loaded modules */
+
+            /* Allocate the segments for this module */
+
+            MODULE_CreateSegments( hModule );
+            hPrevInstance = 0;
+            hInstance = MODULE_CreateInstance(hModule,(LOADPARAMS*)paramBlock);
+
+            /* Load the referenced DLLs */
+
+            if (!NE_LoadDLLs( pModule )) return 2;  /* File not found */
+
+            /* Load the segments */
+
+            NE_LoadAllSegments( pModule );
+
+            /* Fixup the functions prologs */
+
+            NE_FixupPrologs( pModule );
+
+            /* Make sure the usage count is 1 on the first loading of  */
+            /* the module, even if it contains circular DLL references */
+
+            pModule->count = 1;
+
+            /* Call initialization rountines for all loaded DLLs. Note that
+             * when we load implicitly linked DLLs this will be done by InitTask().
+             */
+
+            if ((pModule->flags & (NE_FFLAGS_LIBMODULE | NE_FFLAGS_IMPLICIT)) ==
+                                       NE_FFLAGS_LIBMODULE )
+                NE_InitializeDLLs( hModule );
         }
-
-	/*
-	 * Record this so that the internal debugger gets some
-	 * record of what it is that we are working with.
-	 */
-	DEBUG_curr_module = name;
-
-          /* Create the module structure */
-
-        hModule = MODULE_LoadExeHeader( hFile, &ofs );
-        if (hModule < 32)
+        else /* module is already loaded, just create a new data segment if it's a task */
         {
-            if (hModule == 21)
-                hModule = PE_LoadModule( hFile, &ofs, paramBlock );
-	    else _lclose32( hFile );
-
-            if (hModule < 32)
-                fprintf( stderr, "LoadModule: can't load '%s', error=%d\n",
-                         name, hModule );
-            return hModule;
+            pModule = MODULE_GetPtr( hModule );
+            hPrevInstance = MODULE_GetInstance( hModule );
+            hInstance = MODULE_CreateInstance( hModule, params );
+            if (hInstance != hPrevInstance)  /* not a library */
+                NE_LoadSegment( pModule, pModule->dgroup );
+            pModule->count++;
         }
-        _lclose32( hFile );
-        pModule = MODULE_GetPtr( hModule );
-	pModule->flags |= uFlags; /* stamp implicitly loaded modules */
+    } /* !winelib */
 
-          /* Allocate the segments for this module */
-
-        MODULE_CreateSegments( hModule );
-
-        hPrevInstance = 0;
-        hInstance = MODULE_CreateInstance( hModule, (LOADPARAMS*)paramBlock );
-
-          /* Load the referenced DLLs */
-
-        pModRef = (WORD *)((char *)pModule + pModule->modref_table);
-        pDLLs = (WORD *)GlobalLock16( pModule->dlls_to_init );
-        for (i = 0; i < pModule->modref_count; i++, pModRef++)
-        {
-            char buffer[256];
-            BYTE *pstr = (BYTE *)pModule + pModule->import_table + *pModRef;
-            memcpy( buffer, pstr + 1, *pstr );
-            strcpy( buffer + *pstr, ".dll" );
-            dprintf_module( stddeb, "Loading '%s'\n", buffer );
-            if (!(*pModRef = MODULE_FindModule( buffer )))
-            {
-                /* If the DLL is not loaded yet, load it and store */
-                /* its handle in the list of DLLs to initialize.   */
-                HMODULE16 hDLL;
-
-                if ((hDLL = MODULE_Load( buffer, (LPVOID)-1, NE_FFLAGS_IMPLICIT )) == 2)
-                {
-                    /* file not found */
-                    char *p;
-
-                    /* Try with prepending the path of the current module */
-                    GetModuleFileName16( hModule, buffer, sizeof(buffer) );
-                    if (!(p = strrchr( buffer, '\\' ))) p = buffer;
-                    memcpy( p + 1, pstr + 1, *pstr );
-                    strcpy( p + 1 + *pstr, ".dll" );
-                    hDLL = MODULE_Load( buffer, (LPVOID)-1, NE_FFLAGS_IMPLICIT );
-                }
-                if (hDLL < 32)
-                {
-		    /* FIXME: cleanup what was done */
-
-                    fprintf( stderr, "Could not load '%s' required by '%s', error = %d\n",
-                             buffer, name, hDLL );
-                    return 2;  /* file not found */
-                }
-                *pModRef = MODULE_HANDLEtoHMODULE16( hDLL );
-                *pDLLs++ = *pModRef;
-            }
-            else  /* Increment the reference count of the DLL */
-            {
-                NE_MODULE *pOldDLL = MODULE_GetPtr( *pModRef );
-                if (pOldDLL) pOldDLL->count++;
-            }
-        }
-
-          /* Load the segments */
-
-	if (pModule->flags & NE_FFLAGS_SELFLOAD)
-	{
-                HFILE32 hf;
-		/* Handle self loading modules */
-		SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
-		SELFLOADHEADER *selfloadheader;
-                STACK16FRAME *stack16Top;
-		HMODULE16 hselfload = GetModuleHandle16("WPROCS");
-                DWORD oldstack;
-		WORD saved_dgroup = pSegTable[pModule->dgroup - 1].selector;
-
-		dprintf_module(stddeb, "MODULE_Load: %*.*s is a self-loading module!\n",
-					*((BYTE*)pModule + pModule->name_table),
-					*((BYTE*)pModule + pModule->name_table),
-					 (char *)pModule + pModule->name_table + 1);
-
-		NE_LoadSegment( hModule, 1 );
-		selfloadheader = (SELFLOADHEADER *)
-			PTR_SEG_OFF_TO_LIN(pSegTable->selector, 0);
-		selfloadheader->EntryAddrProc = 
-                                           MODULE_GetEntryPoint(hselfload,27);
-		selfloadheader->MyAlloc  = MODULE_GetEntryPoint(hselfload,28);
-		selfloadheader->SetOwner = MODULE_GetEntryPoint(GetModuleHandle16("KERNEL"),403);
-		pModule->self_loading_sel = GlobalHandleToSel(
-					GLOBAL_Alloc (GMEM_ZEROINIT,
-					0xFF00, hModule, FALSE, FALSE, FALSE)
-					);
-		oldstack = IF1632_Saved16_ss_sp;
-		IF1632_Saved16_ss_sp =
-                    PTR_SEG_OFF_TO_SEGPTR( pModule->self_loading_sel,
-                                           0xff00 - sizeof(*stack16Top) );
-                stack16Top = CURRENT_STACK16;
-                stack16Top->saved_ss_sp = 0;
-                stack16Top->ebp = 0;
-                stack16Top->ds = stack16Top->es = pModule->self_loading_sel;
-                stack16Top->entry_point = 0;
-                stack16Top->entry_ip = 0;
-                stack16Top->entry_cs = 0;
-                stack16Top->bp = 0;
-                stack16Top->ip = 0;
-                stack16Top->cs = 0;
-
-                hf = FILE_DupUnixHandle( MODULE_OpenFile( hModule ) );
-                Callbacks->CallBootAppProc( selfloadheader->BootApp,
-                                            hModule, hf );
-                _lclose32(hf);
-		/* some BootApp procs overwrite the selector of dgroup */
-		pSegTable[pModule->dgroup - 1].selector = saved_dgroup;
-		IF1632_Saved16_ss_sp = oldstack;
-		for (i = 2; i <= pModule->seg_count; i++)
-                    NE_LoadSegment( hModule, i );
-	} 
-	else
-        {
-            for (i = 1; i <= pModule->seg_count; i++)
-                NE_LoadSegment( hModule, i );
-        }
-
-          /* Fixup the functions prologs */
-
-        NE_FixupPrologs( pModule );
-
-          /* Make sure the usage count is 1 on the first loading of  */
-          /* the module, even if it contains circular DLL references */
-
-        pModule->count = 1;
-
-	  /* Call initialization rountines for all loaded DLLs. Note that
-	   * when we load implicitly linked DLLs this will be done by the InitTask().
-	   */
-
-        if ((pModule->flags & (NE_FFLAGS_LIBMODULE | NE_FFLAGS_IMPLICIT)) ==
-			       NE_FFLAGS_LIBMODULE ) NE_InitializeDLLs( hModule );
-    }
-    else /* module is already loaded, just create a new data segment if it's a task */
-    {
-        pModule = MODULE_GetPtr( hModule );
-        hPrevInstance = MODULE_GetInstance( hModule );
-        hInstance = MODULE_CreateInstance( hModule, params );
-        if (hInstance != hPrevInstance)  /* not a library */
-            NE_LoadSegment( hModule, pModule->dgroup );
-        pModule->count++;
-    }
-
-#else
-    lstrcpyn32A( ofs.szPathName, name, sizeof(ofs.szPathName) );
-    if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) return hModule;
-    pModule = (NE_MODULE *)GlobalLock16( hModule );
-    hPrevInstance = 0;
-    hInstance = MODULE_CreateInstance( hModule, params );
-#endif /* WINELIB */
-
-      /* Create a task for this instance */
+    /* Create a task for this instance */
 
     if (!(pModule->flags & NE_FFLAGS_LIBMODULE) && (paramBlock != (LPVOID)-1))
     {
@@ -1675,13 +1604,9 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 
 	if (use_load_module)
 	{
-#ifdef WINELIB
-	    /* WINELIB: Use LoadModule() only for the program itself */
-	    use_load_module = 0;
-	    params.hEnvironment = (HGLOBAL16)GetDOSEnvironment();
-#else
+	    /* Winelib: Use LoadModule() only for the program itself */
+	    if (__winelib) use_load_module = 0;
 	    params.hEnvironment = (HGLOBAL16)SELECTOROF( GetDOSEnvironment() );
-#endif  /* WINELIB */
 	    params.cmdLine  = (SEGPTR)WIN16_GlobalLock16( cmdLineHandle );
 	    params.showCmd  = (SEGPTR)WIN16_GlobalLock16( cmdShowHandle );
 	    params.reserved = 0;
@@ -1840,7 +1765,6 @@ FARPROC16 WINAPI GetProcAddress16( HMODULE16 hModule, SEGPTR name )
  */
 FARPROC32 WINAPI GetProcAddress32( HMODULE32 hModule, LPCSTR function )
 {
-#ifndef WINELIB
     NE_MODULE *pModule;
 
     if (HIWORD(function))
@@ -1858,9 +1782,6 @@ FARPROC32 WINAPI GetProcAddress32( HMODULE32 hModule, LPCSTR function )
 	return (FARPROC32)0;
     }
     return PE_FindExportedFunction( pModule->pe_module, function );
-#else
-    return NULL;
-#endif
 }
 
 /***********************************************************************

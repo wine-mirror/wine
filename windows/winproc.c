@@ -89,8 +89,6 @@ static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND32 hwnd,
                                                UINT32 msg, WPARAM32 wParam,
                                                LPARAM lParam );
 
-extern void CallFrom16_long_wwwll(void);
-
 static HANDLE32 WinProcHeap;
 
 
@@ -211,8 +209,8 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
                                            (void(*)())WINPROC_CallProc16To32A :
                                            (void(*)())WINPROC_CallProc16To32W;
             proc->thunk.t_from16.lcall       = 0x9a;   /* lcall cs:relay */
-            proc->thunk.t_from16.relay       = CallFrom16_long_wwwll;
-            proc->thunk.t_from16.cs          = WINE_CODE_SELECTOR;
+            proc->thunk.t_from16.relay       = Callbacks->CallFrom16WndProc;
+            GET_CS(proc->thunk.t_from16.cs);
             proc->jmp.jmp  = 0xe9;
             /* Fixup relative jump */
             proc->jmp.proc = (WNDPROC32)((DWORD)func -

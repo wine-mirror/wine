@@ -71,6 +71,25 @@ void DEFWND_SetText( WND *wndPtr, LPCSTR text )
     }
 }
 
+/***********************************************************************
+ *           DEFWND_ControlColor
+ *
+ * Default colors for control painting.
+ */
+HBRUSH32 DEFWND_ControlColor( HDC32 hDC, UINT16 ctlType )
+{
+    if( ctlType == CTLCOLOR_SCROLLBAR)
+    {
+	SetBkColor32( hDC, RGB(255, 255, 255) );
+	SetTextColor32( hDC, RGB(0, 0, 0) );
+	UnrealizeObject32( sysColorObjects.hbrushScrollbar );
+        return sysColorObjects.hbrushScrollbar;
+    }
+
+    SetBkColor32( hDC, GetSysColor32(COLOR_WINDOW) );
+    SetTextColor32( hDC, GetSysColor32(COLOR_WINDOWTEXT));
+    return sysColorObjects.hbrushWindow;
+}
 
 /***********************************************************************
  *           DEFWND_DefWinProc
@@ -89,7 +108,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
         return NC_HandleNCHitTest( wndPtr->hwndSelf, MAKEPOINT16(lParam) );
 
     case WM_NCLBUTTONDOWN:
-	return NC_HandleNCLButtonDown( wndPtr->hwndSelf, wParam, lParam );
+	return NC_HandleNCLButtonDown( wndPtr, wParam, lParam );
 
     case WM_LBUTTONDBLCLK:
     case WM_NCLBUTTONDBLCLK:
@@ -206,32 +225,11 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     case WM_CTLCOLORBTN:
     case WM_CTLCOLORDLG:
     case WM_CTLCOLORSTATIC:
-        SetBkColor32( (HDC32)wParam, GetSysColor32(COLOR_WINDOW) );
-        SetTextColor32( (HDC32)wParam, GetSysColor32(COLOR_WINDOWTEXT) );
-        return (LRESULT)sysColorObjects.hbrushWindow;
-
     case WM_CTLCOLORSCROLLBAR:
-        SetBkColor32( (HDC32)wParam, RGB(255, 255, 255) );
-        SetTextColor32( (HDC32)wParam, RGB(0, 0, 0) );
-        UnrealizeObject32( sysColorObjects.hbrushScrollbar );
-        return (LRESULT)sysColorObjects.hbrushScrollbar;
+	return (LRESULT)DEFWND_ControlColor( (HDC32)wParam, msg - WM_CTLCOLORMSGBOX );
 
     case WM_CTLCOLOR:
-	{
-	    if (HIWORD(lParam) == CTLCOLOR_SCROLLBAR)
-	    {
-		SetBkColor32( (HDC32)wParam, RGB(255, 255, 255) );
-		SetTextColor32( (HDC32)wParam, RGB(0, 0, 0) );
-		UnrealizeObject32( sysColorObjects.hbrushScrollbar );
-		return (LRESULT)sysColorObjects.hbrushScrollbar;
-	    }
-	    else
-	    {
-		SetBkColor32( (HDC32)wParam, GetSysColor32(COLOR_WINDOW) );
-		SetTextColor32((HDC32)wParam, GetSysColor32(COLOR_WINDOWTEXT));
-		return (LRESULT)sysColorObjects.hbrushWindow;
-	    }
-	}
+	return (LRESULT)DEFWND_ControlColor( (HDC32)wParam, HIWORD(lParam) );
 	
     case WM_GETTEXTLENGTH:
         if (wndPtr->text) return (LRESULT)strlen(wndPtr->text);

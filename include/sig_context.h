@@ -7,9 +7,7 @@
 #ifndef __WINE_SIG_CONTEXT_H
 #define __WINE_SIG_CONTEXT_H
 
-#ifdef WINELIB
-#error This file must not be used in Winelib
-#endif
+#ifdef __i386__
 
 #ifdef linux
 typedef struct
@@ -37,20 +35,34 @@ typedef struct
     unsigned long oldmask;
     unsigned long cr2;
 } SIGCONTEXT;
+
+#define HANDLER_DEF(name) void name (int signal, SIGCONTEXT context)
+#define HANDLER_CONTEXT (&context)
+
 #endif  /* linux */
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+
 #include <signal.h>
 typedef struct sigcontext SIGCONTEXT;
+
+#define HANDLER_DEF(name) void name(int signal, int code, SIGCONTEXT *context)
+#define HANDLER_CONTEXT context
+
 #endif  /* FreeBSD */
 
 #if defined(__svr4__) || defined(_SCO_DS)
+
 #include <signal.h>
 #ifdef _SCO_DS
 #include <sys/regset.h>
 #endif
 #include <sys/ucontext.h>
 typedef struct ucontext SIGCONTEXT;
+
+#define HANDLER_DEF(name) void name(int signal, void *siginfo, SIGCONTEXT *context)
+#define HANDLER_CONTEXT context
+
 #endif  /* svr4 || SCO_DS */
 
 #ifdef __EMX__
@@ -201,5 +213,7 @@ typedef struct _CONTEXT		/* Note 1 */
 #define SP_sig(context)      (*(WORD*)&ESP_sig(context))
                             
 #define FL_sig(context)      (*(WORD*)&EFL_sig(context))
+
+#endif /* __i386__ */
 
 #endif /* __WINE_SIG_CONTEXT_H */

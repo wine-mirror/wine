@@ -20,21 +20,21 @@
 
 #define WM_MDICALCCHILDSCROLL   0x10AC /* this is exactly what Windows uses */
 
-extern LRESULT WINAPI MDIClientWndProc(HWND16 hwnd, UINT16 message, 
-                                       WPARAM16 wParam, LPARAM lParam);
+extern LRESULT WINAPI MDIClientWndProc( HWND32 hwnd, UINT32 message, 
+                                        WPARAM32 wParam, LPARAM lParam );
 
 typedef struct 
 {
-    UINT16   	nActiveChildren;
-    HWND16   	hwndChildMaximized;
-    HWND16   	hwndActiveChild;
-    HMENU16  	hWindowMenu;
-    UINT32   	idFirstChild;
-    LPSTR 	frameTitle;
-    UINT16	nTotalCreated;
-    UINT16   	mdiFlags;
-    UINT16   	sbRecalc;		/* SB_xxx flags for scrollbar fixup */
-    HWND16   	self;
+    UINT32      nActiveChildren;
+    HWND32      hwndChildMaximized;
+    HWND32      hwndActiveChild;
+    HMENU32     hWindowMenu;
+    UINT32      idFirstChild;
+    LPSTR       frameTitle;
+    UINT32      nTotalCreated;
+    UINT32      mdiFlags;
+    UINT32      sbRecalc;   /* SB_xxx flags for scrollbar fixup */
+    HWND32      self;
 } MDICLIENTINFO;
 
 #endif /* __WINE_MDI_H */

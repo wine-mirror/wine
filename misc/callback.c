@@ -132,6 +132,7 @@ static const CALLBACKS_TABLE CALLBACK_WinelibTable =
 {
     CALLBACK_CallRegisterProc,     /* CallRegisterProc */
     TASK_Reschedule,               /* CallTaskRescheduleProc */
+    NULL,                          /* CallFrom16WndProc */
     CALLBACK_CallWndProc,          /* CallWndProc */
     CALLBACK_CallDriverProc,       /* CallDriverProc */
     CALLBACK_CallDriverCallback,   /* CallDriverCallback */

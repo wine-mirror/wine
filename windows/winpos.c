@@ -226,7 +226,7 @@ void WINAPI GetWindowRect16( HWND16 hwnd, LPRECT16 rect )
 
 
 /***********************************************************************
- *           GetWindowRect32   (USER.32)
+ *           GetWindowRect32   (USER32.308)
  */
 void WINAPI GetWindowRect32( HWND32 hwnd, LPRECT32 rect ) 
 {
@@ -2202,7 +2202,9 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
 				    newClientRect.top != wndPtr->rectClient.top) )
 	    winpos.flags &= ~SWP_NOCLIENTMOVE;
 
-    /* Update active DCEs */
+    /* Update active DCEs 
+     * TODO: Optimize conditions that trigger DCE update.
+     */
 
     if( (((winpos.flags & SWP_AGG_NOPOSCHANGE) != SWP_AGG_NOPOSCHANGE) && 
 					 wndPtr->dwStyle & WS_VISIBLE) || 
@@ -2211,7 +2213,7 @@ BOOL32 WINAPI SetWindowPos32( HWND32 hwnd, HWND32 hwndInsertAfter,
         RECT32 rect;
 
         UnionRect32(&rect, &newWindowRect, &wndPtr->rectWindow);
-        DCE_InvalidateDCE(wndPtr->parent, &rect);
+	DCE_InvalidateDCE(wndPtr->parent, &rect);
     }
 
     /* change geometry */

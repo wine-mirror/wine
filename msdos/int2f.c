@@ -19,7 +19,6 @@
 #define VXD_BASE 400
 
 static void do_int2f_16( CONTEXT *context );
-void do_mscdex( CONTEXT *context );
 
 /**********************************************************************
  *	    INT_Int2fHandler
@@ -91,6 +90,14 @@ static void do_int2f_16( CONTEXT *context )
 	/* FIXME: We need to do something that lets some other process run
 	   here.  */
 	sleep(0);
+        break;
+
+    case 0x81: /* Begin critical section.  */
+        /* FIXME? */
+        break;
+
+    case 0x82: /* End critical section.  */
+        /* FIXME? */
         break;
 
     case 0x83:  /* Return Current Virtual Machine ID */

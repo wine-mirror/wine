@@ -54,7 +54,8 @@ static BOOL32 DEFDLG_RestoreFocus( HWND32 hwnd, DIALOGINFO *infoPtr )
     if (!infoPtr->hwndFocus || IsIconic32(hwnd)) return FALSE;
     if (!IsWindow32( infoPtr->hwndFocus )) return FALSE;
     DEFDLG_SetFocus( hwnd, infoPtr->hwndFocus );
-    infoPtr->hwndFocus = 0;
+    /* This used to set infoPtr->hwndFocus to NULL for no apparent reason,
+       sometimes losing focus when receiving WM_SETFOCUS messages. */
     return TRUE;
 }
 

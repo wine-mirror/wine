@@ -15,10 +15,134 @@
 #include "resource.h"
 #include "dlgs.h"
 #include "win.h"
+#include "graphics.h"
 #include "cursoricon.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "winreg.h"
+
+static const char * const SHELL_People[] =
+{
+    "Bob Amstadt",
+    "Dag Asheim",
+    "Martin Ayotte",
+    "Peter Bajusz",
+    "Georg Beyerle",
+    "Ross Biro",
+    "Uwe Bonnes",
+    "Erik Bos",
+    "Fons Botman",
+    "John Brezak",
+    "Andrew Bulhak",
+    "John Burton",
+    "Niels de Carpentier",
+    "Jimen Ching",
+    "David A. Cuthbert",
+    "Huw D. M. Davies",
+    "Roman Dolejsi",
+    "Frans van Dorsselaer",
+    "Chris Faherty",
+    "Paul Falstad",
+    "David Faure",
+    "Claus Fischer",
+    "Olaf Flebbe",
+    "Chad Fraleigh",
+    "Peter Galbavy",
+    "Ramon Garcia",
+    "Matthew Ghio",
+    "Jody Goldberg",
+    "Hans de Graaff",
+    "Charles M. Hannum",
+    "Adrian Harvey",
+    "John Harvey",
+    "Cameron Heide",
+    "Jochen Hoenicke",
+    "Onno Hovers",
+    "Jeffrey Hsu",
+    "Miguel de Icaza",
+    "Jukka Iivonen",
+    "Lee Jaekil",
+    "Alexandre Julliard",
+    "Bang Jun-Young",
+    "Pavel Kankovsky",
+    "Jochen Karrer",
+    "Andreas Kirschbaum",
+    "Albrecht Kleine",
+    "Jon Konrath",
+    "Alex Korobka",
+    "Greg Kreider",
+    "Anand Kumria",
+    "Scott A. Laird",
+    "Andrew Lewycky",
+    "Martin von Loewis",
+    "Michiel van Loon",
+    "Kenneth MacDonald",
+    "Peter MacDonald",
+    "William Magro",
+    "Juergen Marquardt",
+    "Ricardo Massaro",
+    "Marcus Meissner",
+    "Graham Menhennitt",
+    "David Metcalfe",
+    "Bruce Milner",
+    "Steffen Moeller",
+    "Andreas Mohr",
+    "Philippe De Muyter",
+    "Itai Nahshon",
+    "Henrik Olsen",
+    "Michael Patra",
+    "Dimitrie O. Paun",
+    "Jim Peterson",
+    "Robert Pouliot",
+    "Keith Reynolds",
+    "Slaven Rezic",
+    "John Richardson",
+    "Rick Richardson",
+    "Doug Ridgway",
+    "Bernhard Rosenkraenzer",
+    "Johannes Ruscheinski",
+    "Thomas Sandford",
+    "Constantine Sapuntzakis",
+    "Pablo Saratxaga",
+    "Daniel Schepler",
+    "Peter Schlaile",
+    "Ulrich Schmid",
+    "Bernd Schmidt",
+    "Ingo Schneider",
+    "Victor Schneider",
+    "Yngvi Sigurjonsson",
+    "Stephen Simmons",
+    "Rick Sladkey",
+    "William Smith",
+    "Dominik Strasser",
+    "Vadim Strizhevsky",
+    "Erik Svendsen",
+    "Tristan Tarrant",
+    "Andrew Taylor",
+    "Duncan C Thomson",
+    "Goran Thyni",
+    "Jimmy Tirtawangsa",
+    "Jon Tombs",
+    "Linus Torvalds",
+    "Gregory Trubetskoy",
+    "Petri Tuomola",
+    "Michael Veksler",
+    "Sven Verdoolaege",
+    "Ronan Waide",
+    "Eric Warnke",
+    "Manfred Weichel",
+    "Morten Welinder",
+    "Lawson Whitney",
+    "Jan Willamowius",
+    "Carl Williams",
+    "Karl Guenter Wuensch",
+    "Eric Youngdale",
+    "James Youngman",
+    "Mikolaj Zalewski",
+    "John Zero",
+    NULL
+};
+
 
 /* .ICO file ICONDIR definitions */
 
@@ -395,6 +519,27 @@ typedef struct
     HICON32 hIcon;
 } ABOUT_INFO;
 
+#define		IDC_STATIC_TEXT		100
+#define		IDC_LISTBOX		99
+#define		IDC_WINE_TEXT		98
+
+#define		DROP_FIELD_TOP		(-15)
+#define		DROP_FIELD_HEIGHT	15
+
+extern HICON32 hIconTitleFont;
+
+static BOOL32 __get_dropline( HWND32 hWnd, LPRECT32 lprect )
+{
+    HWND32 hWndCtl = GetDlgItem32(hWnd, IDC_WINE_TEXT);
+    if( hWndCtl )
+    {
+	GetWindowRect32( hWndCtl, lprect );
+	MapWindowPoints32( 0, hWnd, (LPPOINT32)lprect, 2 );
+	lprect->bottom = (lprect->top += DROP_FIELD_TOP);
+	return TRUE;
+    }
+    return FALSE;
+}
 
 /*************************************************************************
  *             AboutDlgProc32  (not an exported API function)
@@ -402,6 +547,7 @@ typedef struct
 LRESULT WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
                                LPARAM lParam )
 {
+    HWND32 hWndCtl;
     char Template[512], AppTitle[512];
 
     switch(msg)
@@ -411,14 +557,122 @@ LRESULT WINAPI AboutDlgProc32( HWND32 hWnd, UINT32 msg, WPARAM32 wParam,
             ABOUT_INFO *info = (ABOUT_INFO *)lParam;
             if (info)
             {
+                const char* const *pstr = SHELL_People;
                 SendDlgItemMessage32A(hWnd, stc1, STM_SETICON32,info->hIcon, 0);
                 GetWindowText32A( hWnd, Template, sizeof(Template) );
                 sprintf( AppTitle, Template, info->szApp );
                 SetWindowText32A( hWnd, AppTitle );
-                SetWindowText32A( GetDlgItem32(hWnd,100), info->szOtherStuff );
+                SetWindowText32A( GetDlgItem32(hWnd, IDC_STATIC_TEXT),
+                                  info->szOtherStuff );
+                hWndCtl = GetDlgItem32(hWnd, IDC_LISTBOX);
+                SendMessage32A( hWndCtl, WM_SETREDRAW, 0, 0 );
+                SendMessage32A( hWndCtl, WM_SETFONT, hIconTitleFont, 0 );
+                while (*pstr)
+                {
+                    SendMessage32A( hWndCtl, LB_ADDSTRING32,
+                                    (WPARAM32)-1, (LPARAM)*pstr );
+                    pstr++;
+                }
+                SendMessage32A( hWndCtl, WM_SETREDRAW, 1, 0 );
             }
         }
         return 1;
+
+    case WM_PAINT:
+	{
+	    RECT32 rect;
+	    PAINTSTRUCT32 ps;
+	    HDC32 hDC = BeginPaint32( hWnd, &ps );
+
+	    if( __get_dropline( hWnd, &rect ) )
+		GRAPH_DrawLines( hDC, (LPPOINT32)&rect, 1, GetStockObject32( BLACK_PEN ) );
+	    EndPaint32( hWnd, &ps );
+	}
+	break;
+
+    case WM_LBTRACKPOINT:
+
+	hWndCtl = GetDlgItem32(hWnd, IDC_LISTBOX);
+	if( (INT16)GetKeyState16( VK_CONTROL ) < 0 )
+	{
+	    if( DragDetect32( hWndCtl, *((LPPOINT32)&lParam) ) )
+	    {
+		INT32 idx = SendMessage32A( hWndCtl, LB_GETCURSEL32, 0, 0 );
+		if( idx != -1 )
+		{
+		    INT32 length = SendMessage32A( hWndCtl, LB_GETTEXTLEN32, (WPARAM32)idx, 0 );
+		    HGLOBAL16 hMemObj = GlobalAlloc16( GMEM_MOVEABLE, length + 1 );
+		    char* pstr = (char*)GlobalLock16( hMemObj );
+
+		    if( pstr )
+		    {
+			HCURSOR16 hCursor = LoadCursor16( 0, MAKEINTRESOURCE(OCR_DRAGOBJECT) );
+			SendMessage32A( hWndCtl, LB_GETTEXT32, (WPARAM32)idx, (LPARAM)pstr );
+			SendMessage32A( hWndCtl, LB_DELETESTRING32, (WPARAM32)idx, 0 );
+			UpdateWindow32( hWndCtl );
+			if( !DragObject16((HWND16)hWnd, (HWND16)hWnd, DRAGOBJ_DATA, 0, (WORD)hMemObj, hCursor) )
+			    SendMessage32A( hWndCtl, LB_ADDSTRING32, (WPARAM32)-1, (LPARAM)pstr );
+		    }
+		    if( hMemObj ) GlobalFree16( hMemObj );
+		}
+	    }
+	}
+	break;
+
+    case WM_QUERYDROPOBJECT:
+	if( wParam == 0 )
+	{
+	    LPDRAGINFO lpDragInfo = (LPDRAGINFO)PTR_SEG_TO_LIN((SEGPTR)lParam);
+	    if( lpDragInfo && lpDragInfo->wFlags == DRAGOBJ_DATA )
+	    {
+		RECT32 rect;
+		if( __get_dropline( hWnd, &rect ) )
+		{
+		    POINT32 pt = { lpDragInfo->pt.x, lpDragInfo->pt.y };
+		    rect.bottom += DROP_FIELD_HEIGHT;
+		    if( PtInRect32( &rect, pt ) )
+		    {
+			SetWindowLong32A( hWnd, DWL_MSGRESULT, 1 );
+			return TRUE;
+		    }
+		}
+	    }
+	}
+	break;
+
+    case WM_DROPOBJECT:
+	if( wParam == hWnd )
+	{
+	    LPDRAGINFO lpDragInfo = (LPDRAGINFO)PTR_SEG_TO_LIN((SEGPTR)lParam);
+	    if( lpDragInfo && lpDragInfo->wFlags == DRAGOBJ_DATA && lpDragInfo->hList )
+	    {
+		char* pstr = (char*)GlobalLock16( (HGLOBAL16)(lpDragInfo->hList) );
+		if( pstr )
+		{
+		    static char __appendix_str[] = " with";
+
+		    hWndCtl = GetDlgItem32( hWnd, IDC_WINE_TEXT );
+		    SendMessage32A( hWndCtl, WM_GETTEXT, 512, (LPARAM)Template );
+		    if( !lstrncmp32A( Template, "WINE", 4 ) )
+			SetWindowText32A( GetDlgItem32(hWnd, IDC_STATIC_TEXT), Template );
+		    else
+		    {
+			char* pch = Template + strlen(Template) - strlen(__appendix_str);
+			*pch = '\0';
+			SendMessage32A( GetDlgItem32(hWnd, IDC_LISTBOX), LB_ADDSTRING32, 
+					(WPARAM32)-1, (LPARAM)Template );
+		    }
+
+		    lstrcpy32A( Template, pstr );
+		    lstrcat32A( Template, __appendix_str );
+		    SetWindowText32A( hWndCtl, Template );
+
+		    SetWindowLong32A( hWnd, DWL_MSGRESULT, 1 );
+		    return TRUE;
+		}
+	    }
+	}
+	break;
 
     case WM_COMMAND:
         if (wParam == IDOK)
@@ -1066,4 +1320,29 @@ void WINAPI Control_RunDLL (HWND32 hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4)
 void WINAPI FreeIconList( DWORD dw )
 {
     fprintf( stdnimp, "FreeIconList: empty stub\n" );
+}
+
+/*************************************************************************
+ *			 SHELL32_DllGetClassObject   [SHELL32.14]
+ *
+ * http://premium.microsoft.com/msdn/library/sdkdoc/api2_48fo.htm
+ */
+
+/* This is the wrong place, but where is the right one?  */
+typedef UINT32 REFCLSID32;
+typedef UINT32 REFIID32;
+typedef UINT32 HRESULT32;
+#define E_OUTOFMEMORY 0x8007000EL
+
+HRESULT32 WINAPI SHELL32_DllGetClassObject (REFCLSID32 clsid,
+					    REFIID32 riid,
+					    LPVOID *ppv)
+{
+  HRESULT32 hres = E_OUTOFMEMORY; 
+  *ppv = NULL; 
+
+  fprintf (stdnimp, "SHELL32_DllGetClassObject (0x%x,0x%x,%p) -- STUB\n",
+	   clsid, riid, ppv);
+
+  return hres;
 }

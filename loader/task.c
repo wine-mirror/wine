@@ -65,9 +65,7 @@ BOOL32 TASK_Init(void)
     if (!(hDOSEnvironment = TASK_CreateDOSEnvironment()))
         fprintf( stderr, "Not enough memory for DOS Environment\n" );
     TASK_SystemTHDB.teb_sel = SELECTOR_AllocBlock( &TASK_SystemTHDB, 0x1000, SEGMENT_DATA, TRUE, FALSE );
-#ifdef __i386__
-    __asm__ __volatile__("movw %w0,%%fs"::"r"(TASK_SystemTHDB.teb_sel));
-#endif
+    SET_FS( TASK_SystemTHDB.teb_sel );
     return (hDOSEnvironment != 0);
 }
 
@@ -334,7 +332,6 @@ static BOOL32 TASK_FreeThunk( HTASK16 hTask, SEGPTR thunk )
  * 32-bit entry point for a new task. This function is responsible for
  * setting up the registers and jumping to the 16-bit entry point.
  */
-#ifndef WINELIB
 static void TASK_CallToStart(void)
 {
     int exit_code = 1;
@@ -354,9 +351,7 @@ static void TASK_CallToStart(void)
 
         InitTask( NULL );
         InitApp( pTask->hModule );
-#ifdef __i386__
-        __asm__ __volatile__("movw %w0,%%fs"::"r" (pCurrentThread->teb_sel));
-#endif
+        SET_FS( pCurrentThread->teb_sel );
         PE_InitializeDLLs( pCurrentProcess, DLL_PROCESS_ATTACH, (LPVOID)-1 );
         dprintf_relay( stddeb, "CallTo32(entryproc=%p)\n", entry );
         exit_code = entry();
@@ -398,7 +393,6 @@ static void TASK_CallToStart(void)
         TASK_KillCurrentTask( 1 );
     }
 }
-#endif
 
 
 /***********************************************************************
@@ -415,13 +409,10 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegTable;
     LPSTR name;
+    WORD sp;
     char *stack32Top;
     STACK16FRAME *frame16;
     STACK32FRAME *frame32;
-#ifndef WINELIB
-    extern DWORD CALLTO16_RetAddr_regs;
-    extern void CALLTO16_Restore();
-#endif
     
     if (!(pModule = MODULE_GetPtr( hModule ))) return 0;
     pSegTable = NE_SEG_TABLE( pModule );
@@ -489,10 +480,8 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 
     pTask->pdb.int20 = 0x20cd;
     pTask->pdb.dispatcher[0] = 0x9a;  /* ljmp */
-#ifndef WINELIB
-    *(FARPROC16 *)&pTask->pdb.dispatcher[1] = MODULE_GetEntryPoint(
-            GetModuleHandle16("KERNEL"), 102 );  /* KERNEL.102 is DOS3Call() */
-#endif
+    PUT_DWORD(&pTask->pdb.dispatcher[1], (DWORD)MODULE_GetEntryPoint(
+           GetModuleHandle16("KERNEL"), 102 ));  /* KERNEL.102 is DOS3Call() */
     pTask->pdb.savedint22 = INT_GetHandler( 0x22 );
     pTask->pdb.savedint23 = INT_GetHandler( 0x23 );
     pTask->pdb.savedint24 = INT_GetHandler( 0x24 );
@@ -538,11 +527,9 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 		pCurrentProcess->exe_modref->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint);
      */
         pTask->thdb = THREAD_Create( pdb32, 0, 0 );
-#ifndef WINELIB
         /* FIXME: should not be done here */
         pCurrentThread = pTask->thdb;
         PE_InitTls( pdb32 );
-#endif
     }
     else
         pTask->thdb = THREAD_Create( pdb32, 0, NULL );
@@ -558,32 +545,26 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     frame32->edx = 0;
     frame32->ecx = 0;
     frame32->ebx = 0;
-    frame32->ebp = 0;
-#ifndef WINELIB
-    frame32->restore_addr = (DWORD)CALLTO16_Restore;
     frame32->retaddr = (DWORD)TASK_CallToStart;
-    frame32->codeselector = WINE_CODE_SELECTOR;
-#endif
+    /* The remaining fields will be initialized in TASK_Reschedule */
 
     /* Create the 16-bit stack frame */
 
-    pTask->ss_sp = PTR_SEG_OFF_TO_SEGPTR( hInstance,
-                        ((pModule->sp != 0) ? pModule->sp :
-                pSegTable[pModule->ss-1].minsize + pModule->stack_size) & ~1 );
-    pTask->ss_sp -= sizeof(STACK16FRAME) - sizeof(DWORD) /* for saved %esp */;
+    if (!(sp = pModule->sp))
+        sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
+    sp &= ~1;
+    pTask->ss_sp = PTR_SEG_OFF_TO_SEGPTR( hInstance, sp );
+    pTask->ss_sp -= sizeof(STACK16FRAME) + sizeof(DWORD) /* for saved %esp */;
     frame16 = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->ss_sp );
     frame16->saved_ss_sp = 0;
-    frame16->ebp = 0;
+    frame16->ebp = sp + (int)&((STACK16FRAME *)0)->bp;
+    frame16->bp = LOWORD(frame16->ebp);
     frame16->ds = frame16->es = pTask->hInstance;
     frame16->entry_point = 0;
-    frame16->entry_ip = 0;
     frame16->entry_cs = 0;
-    frame16->bp = 0;
+    /* The remaining fields will be initialized in TASK_Reschedule */
+
     *(STACK32FRAME **)(frame16 + 1) = frame32; /* Store the 32-bit %esp */
-#ifndef WINELIB
-    frame16->ip = LOWORD( CALLTO16_RetAddr_regs );
-    frame16->cs = HIWORD( CALLTO16_RetAddr_regs );
-#endif  /* WINELIB */
 
       /* If there's no 16-bit stack yet, use a part of the new task stack */
       /* This is only needed to have a stack to switch from on the first  */
@@ -717,6 +698,7 @@ void TASK_Reschedule(void)
 {
     TDB *pOldTask = NULL, *pNewTask;
     HTASK16 hTask = 0;
+    STACK16FRAME *newframe16;
 
 #ifdef CONFIG_IPC
     dde_reschedule();
@@ -788,6 +770,23 @@ void TASK_Reschedule(void)
     TASK_LinkTask( hTask );
     pNewTask->priority--;
 
+    /* Finish initializing the new task stack if necessary */
+
+    newframe16 = (STACK16FRAME *)PTR_SEG_TO_LIN( pNewTask->ss_sp );
+    if (!newframe16->entry_cs)
+    {
+        STACK16FRAME *oldframe16 = CURRENT_STACK16;
+        STACK32FRAME *oldframe32 = *(STACK32FRAME **)(oldframe16 + 1);
+        STACK32FRAME *newframe32 = *(STACK32FRAME **)(newframe16 + 1);
+        newframe16->entry_ip     = oldframe16->entry_ip;
+        newframe16->entry_cs     = oldframe16->entry_cs;
+        newframe16->ip           = oldframe16->ip;
+        newframe16->cs           = oldframe16->cs;
+        newframe32->ebp          = oldframe32->ebp;
+        newframe32->restore_addr = oldframe32->restore_addr;
+        newframe32->codeselector = oldframe32->codeselector;
+    }
+    
     /* Switch to the new stack */
 
     hCurrentTask = hTask;

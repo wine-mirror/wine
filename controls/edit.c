@@ -1055,24 +1055,33 @@ static INT32 EDIT_CharFromPos(WND *wnd, EDITSTATE *es, INT32 x, INT32 y, LPBOOL3
 		dc = GetDC32(wnd->hwndSelf);
 		if (es->font)
 			old_font = SelectObject32(dc, es->font);
-		if (x < 0) {
-			x = -x;
-			/* FIXME: inefficient algorithm */
-			for (index = es->x_offset ; index ; index--) {
-				GetTextExtentPoint32A(dc, text + index,
-						es->x_offset - index, &size);
-				if (size.cx > x)
-					break;
-			}
-		} else {
-			INT32 len = lstrlen32A(es->text);
-			/* FIXME: inefficient algorithm */
-			for (index = es->x_offset ; index < len ; index++) {
-				GetTextExtentPoint32A(dc, text + es->x_offset,
-						index - es->x_offset, &size);
-				if (size.cx >= x)
-					break;
-			}
+		if (x < 0)
+                {
+                    INT32 low = 0;
+                    INT32 high = es->x_offset;
+                    while (low < high - 1)
+                    {
+                        INT32 mid = (low + high) / 2;
+                        GetTextExtentPoint32A( dc, text + mid,
+                                               es->x_offset - mid, &size );
+                        if (size.cx > -x) low = mid;
+                        else high = mid;
+                    }
+                    index = low;
+		}
+                else
+                {
+                    INT32 low = es->x_offset;
+                    INT32 high = lstrlen32A(es->text) + 1;
+                    while (low < high - 1)
+                    {
+                        INT32 mid = (low + high) / 2;
+                        GetTextExtentPoint32A( dc, text + es->x_offset,
+                                               mid - es->x_offset, &size );
+                        if (size.cx > x) high = mid;
+                        else low = mid;
+                    }
+                    index = low;
 		}
 		if (es->style & ES_PASSWORD)
 			HeapFree(es->heap, 0 ,text);

@@ -1,6 +1,7 @@
 # This Makefile understands the following targets:
 #
 # all (default):	build wine
+# lib:                  build libwine
 # clean:		remove all intermediate files
 # distclean:		also remove all files created by configure
 # install:              install everything
@@ -11,6 +12,7 @@
 # Main target to build
 
 MAIN_TARGET = @MAIN_TARGET@
+LIB_TARGET  = @LIB_TARGET@
 
 # Directories
 
@@ -20,7 +22,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 
-COMMONSUBDIRS = \
+LIBSUBDIRS = \
 	rc \
 	controls \
 	files \
@@ -28,6 +30,7 @@ COMMONSUBDIRS = \
 	graphics/metafiledrv \
 	graphics/x11drv \
 	ipc \
+	library \
 	loader \
 	memory \
 	misc \
@@ -46,27 +49,24 @@ EMUSUBDIRS = \
 	if1632 \
 	miscemu
 
-LIBSUBDIRS = library
-
 PROGSUBDIRS = libtest programs
 
 DOCSUBDIRS = documentation
 
 # All sub-directories
 ALLSUBDIRS = \
-	$(COMMONSUBDIRS) \
-	$(EMUSUBDIRS) \
 	$(LIBSUBDIRS) \
+	$(EMUSUBDIRS) \
 	$(PROGSUBDIRS) \
 	$(DOCSUBDIRS)
 
 # Sub-directories to run make depend into
-DEPENDSUBDIRS = $(COMMONSUBDIRS) $(LIBSUBDIRS) $(EMUSUBDIRS) $(DOCSUBDIRS)
+DEPENDSUBDIRS = $(LIBSUBDIRS) $(EMUSUBDIRS) $(DOCSUBDIRS)
 
 # Sub-directories to run make install into
 INSTALLSUBDIRS = $(DOCSUBDIRS)
 
-COMMONOBJS = \
+LIBOBJS = \
 	controls/controls.o \
 	files/files.o \
 	graphics/graphics.o \
@@ -90,34 +90,33 @@ EMUOBJS = \
 	if1632/if1632.o \
 	miscemu/miscemu.o
 
-LIBOBJS = library/library.o
-
 all: $(MAIN_TARGET)
 
 @MAKE_RULES@
 
 install:: install_$(MAIN_TARGET)
 
-wine wine.sym: $(COMMONSUBDIRS) $(EMUSUBDIRS) dummy
-	$(CC) -o wine $(COMMONOBJS) $(EMUOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+emu: wine
+
+lib: $(LIB_TARGET)
+
+wine wine.sym: $(LIB_TARGET) $(EMUSUBDIRS) dummy
+	$(CC) -o wine $(EMUOBJS) $(LIB_TARGET) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 	nm -n wine | grep -v _compiled >wine.sym
 
-install_wine: dummy
-	$(INSTALL_PROGRAM) wine $(bindir)/wine
-
-libwine.a: $(COMMONSUBDIRS) $(LIBSUBDIRS) dummy
+libwine.a: $(LIBSUBDIRS) dummy
 	$(RM) $@
-	$(AR) $@ $(COMMONOBJS) $(LIBOBJS)
+	$(AR) $@ $(LIBOBJS)
 	$(RANLIB) $@
 
-install_libwine.a: install_includes
-	$(INSTALL_DATA) libwine.a $(libdir)
+libwine.so.1.0: $(LIBSUBDIRS) dummy
+	$(CC) -shared -Wl,-soname,libwine.so -o$@ $(LIBOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 
-libwine.so.1.0: $(COMMONSUBDIRS) $(LIBSUBDIRS) dummy
-	$(CC) -shared -Wl,-soname,libwine.so -o$@ $(COMMONOBJS) $(LIBOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+install_emu: dummy
+	$(INSTALL_PROGRAM) wine $(bindir)/wine
 
-install_libwine.so.1.0: install_includes
-	$(INSTALL_DATA) libwine.so.1.0 $(libdir)
+install_lib: install_includes
+	$(INSTALL_DATA) $(LIB_TARGET) $(libdir)
 
 install_includes: dummy
 	if [ -d $(includedir) ]; then : ; else $(MKDIR) $(includedir); fi 

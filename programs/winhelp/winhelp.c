@@ -10,7 +10,6 @@
 #include "resource.h"
 #include "options.h"
 #include "shell.h"
-extern const char people[];
 #endif
 #include "winhelp.h"
 
@@ -421,11 +420,10 @@ static LRESULT WINHELP_MainWndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 
 	  /* Menu Info */
 	case WH_ABOUT:           MACRO_About();          break;
-#ifdef WINELIB
+
 	case WH_ABOUT_WINE: 
-	  ShellAbout(hWnd, "WINE", people, 0);
+	  ShellAbout(hWnd, "WINE", "Help", 0);
 	  break;
-#endif
 
 	default:
 	  /* Buttons */

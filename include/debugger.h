@@ -86,9 +86,9 @@ typedef struct wine_locals WineLocals;
 
 
 #define DBG_FIX_ADDR_SEG(addr,default) \
-    { if ((addr)->seg == 0xffffffff) (addr)->seg = (default); \
-      if (((addr)->seg == WINE_CODE_SELECTOR) || \
-           (addr)->seg == WINE_DATA_SELECTOR) (addr)->seg = 0; }
+    { WORD cs, ds; GET_CS(cs); GET_DS(ds); \
+      if ((addr)->seg == 0xffffffff) (addr)->seg = (default); \
+      if (((addr)->seg == cs) || (addr)->seg == ds) (addr)->seg = 0; }
 
 #define DBG_ADDR_TO_LIN(addr) \
     ((addr)->seg ? (char *)PTR_SEG_OFF_TO_LIN((addr)->seg,(addr)->off) \
@@ -266,8 +266,8 @@ extern int  DEBUG_GetCurrentFrame(struct name_hash ** name,
 extern int DEBUG_ReadExecutableDbgInfo(void);
 
   /* debugger/msc.c */
-extern int DEBUG_RegisterDebugInfo(struct pe_data *pe,
-				   int, unsigned long, unsigned long);
+extern int DEBUG_RegisterDebugInfo(struct pe_data *pe, int, const char *,
+				   unsigned long, unsigned long);
 extern int DEBUG_ProcessDeferredDebug(void);
 extern int DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, char * name);
 extern void DEBUG_InfoShare(void);

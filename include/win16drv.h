@@ -149,10 +149,10 @@ typedef struct WINE_ENUM_PRINTER_FONT_CALLBACK
     LOADED_PRINTER_DRIVER *pLPD;    	/* Printer driver info */
 } WEPFC;
 
-#define OBJ_PEN 	1       
-#define OBJ_BRUSH 	2  
-#define OBJ_FONT 	3   
-#define OBJ_PBITMAP 	5
+#define DRVOBJ_PEN 	1       
+#define DRVOBJ_BRUSH 	2  
+#define DRVOBJ_FONT 	3   
+#define DRVOBJ_PBITMAP 	5
 
 /* Win16 printer driver physical DC */
 typedef struct

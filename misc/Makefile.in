@@ -1,4 +1,4 @@
-DEFS      = -D__WINE__
+DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
@@ -14,6 +14,7 @@ C_SRCS = \
 	crtdll.c \
 	cpu.c \
 	ddeml.c \
+	debugstr.c \
 	error.c \
 	lstr.c \
 	lzexpand.c \
@@ -37,6 +38,7 @@ C_SRCS = \
 	toolhelp.c \
 	tweak.c \
 	ver.c \
+	version.c \
 	w32sys.c \
 	winsock.c \
 	winsock_dns.c \

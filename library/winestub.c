@@ -4,8 +4,14 @@
 #include "windows.h"
 #include "xmalloc.h"
 
+/* Stubs needed for linking with Winelib */
+/* FIXME: this should not be necessary */
+FARPROC32 BUILTIN_GetProcAddress32( void *mod, LPCSTR func ) { return 0; }
+HMODULE32 BUILTIN_LoadModule( LPCSTR name, BOOL32 force ) { return 0; }
+
+
 extern int PASCAL WinMain(HINSTANCE32,HINSTANCE32,LPSTR,int);
-extern int MAIN_Init(void);
+extern int MAIN_WinelibInit(void);
 extern BOOL32 MAIN_WineInit( int *argc, char *argv[] );
 extern void TASK_Reschedule(void);
 
@@ -32,7 +38,7 @@ int main( int argc, char *argv [] )
   else lpszCmdParam[0] = '\0';
   for (i = 2; i < argc; i++) strcat(strcat(lpszCmdParam, " "), argv[i]);
 
-  if(!MAIN_Init()) return 0; /* JBP: Needed for DosDrives[] structure, etc. */
+  if(!MAIN_WinelibInit()) return 0;
   hInstance = WinExec32( *argv, SW_SHOWNORMAL );
   TASK_Reschedule();
   InitApp( hInstance );

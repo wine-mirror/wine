@@ -80,10 +80,11 @@ static const char *TEXT_NextLine( HDC16 hdc, const char *str, int *count,
 	    break;
 	    
 	case PREFIX:
-	    if (!(format & DT_NOPREFIX))
-	    {
-                if (str[++i] != PREFIX)
+	    if (!(format & DT_NOPREFIX) && *count > 1)
                 {
+                if (str[++i] == PREFIX)
+		    (*count)--;
+		else {
                     prefix_offset = j;
                     break;
                 }

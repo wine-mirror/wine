@@ -5,6 +5,7 @@
 #include <dirent.h>
 #include "windows.h"
 #include "comm.h"
+#include "winnt.h"
 
 struct fcb {
         BYTE drive;
@@ -54,8 +55,6 @@ typedef struct
     WORD   cluster;              /* 1a file first cluster */
     DWORD  filesize;             /* 1c file size */
 } DOS_DIRENTRY_LAYOUT;
-
-#define WINVERSION 0x0a03      /* Windows version 3.10 */
 
 #define MAX_DOS_DRIVES	26
 
@@ -156,5 +155,8 @@ extern BYTE DOS_ErrorClass, DOS_ErrorAction, DOS_ErrorLocus;
 #define EL_Network           0x03
 #define EL_Serial            0x04
 #define EL_Memory            0x05
+
+void WINAPI DOS3Call( CONTEXT *context );
+void do_mscdex( CONTEXT *context );
 
 #endif /* __WINE_MSDOS_H */

@@ -2,6 +2,7 @@
  * DDEML library definitions
  *
  * Copyright 1997 Alexandre Julliard
+ * Copyright 1997 Len White
  */
 
 #ifndef __WINE__DDEML_H
@@ -50,12 +51,17 @@ UINT32    WINAPI DdeInitialize32W(LPDWORD,PFNCALLBACK32,DWORD,DWORD);
 BOOL16    WINAPI DdeUninitialize16(DWORD);
 BOOL32    WINAPI DdeUninitialize32(DWORD);
 #define   DdeUninitialize WINELIB_NAME(DdeUninitialize)
+HCONVLIST WINAPI DdeConnectList(DWORD,HSZ,HSZ,HCONVLIST,LPCONVCONTEXT16);
+HCONV     WINAPI DdeQueryNextServer(HCONVLIST, HCONV);
+BOOL16    WINAPI DdeDisconnectList(HCONVLIST);
 HCONV     WINAPI DdeConnect16(DWORD,HSZ,HSZ,LPCONVCONTEXT16);
 HCONV     WINAPI DdeConnect32(DWORD,HSZ,HSZ,LPCONVCONTEXT32);
 #define   DdeConnect WINELIB_NAME(DdeConnect)
 BOOL16    WINAPI DdeDisconnect16(HCONV);
 BOOL32    WINAPI DdeDisconnect32(HCONV);
 #define   DdeDisconnect WINELIB_NAME(DdeDisconnect)
+BOOL16    WINAPI DdeSetUserHandle(HCONV,DWORD,DWORD);
+HDDEDATA  WINAPI DdeCreateHandleData(DWORD,LPBYTE,DWORD,DWORD,HSZ,UINT16,UINT16);
 HCONV     WINAPI DdeReconnect(HCONV);
 HSZ       WINAPI DdeCreateStringHandle16(DWORD,LPCSTR,INT16);
 HSZ       WINAPI DdeCreateStringHandle32A(DWORD,LPCSTR,INT32);
@@ -75,6 +81,16 @@ HDDEDATA  WINAPI DdeClientTransaction16(LPVOID,DWORD,HCONV,HSZ,UINT16,
 HDDEDATA  WINAPI DdeClientTransaction32(LPBYTE,DWORD,HCONV,HSZ,UINT32,
                                         UINT32,DWORD,LPDWORD);
 #define   DdeClientTransaction WINELIB_NAME(DdeClientTransaction)
+BOOL16    WINAPI DdeAbandonTransaction(DWORD,HCONV,DWORD);
+BOOL16    WINAPI DdePostAdvise(DWORD,HSZ,HSZ);
+HDDEDATA  WINAPI DdeAddData(HDDEDATA,LPBYTE,DWORD,DWORD);
+DWORD     WINAPI DdeGetData(HDDEDATA,LPBYTE,DWORD,DWORD);
+LPBYTE    WINAPI DdeAccessData(HDDEDATA,LPDWORD);
+BOOL16    WINAPI DdeUnaccessData(HDDEDATA);
+BOOL16    WINAPI DdeEnableCallback(DWORD,HCONV,UINT16);
+int       WINAPI DdeCmpStringHandles(HSZ,HSZ);
+
+
 HDDEDATA  WINAPI DdeNameService16(DWORD,HSZ,HSZ,UINT16);
 HDDEDATA  WINAPI DdeNameService32(DWORD,HSZ,HSZ,UINT32);
 #define   DdeNameService WINELIB_NAME(DdeNameService)

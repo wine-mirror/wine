@@ -99,6 +99,7 @@ static const char*	INIFontMetrics = "/.cachedmetrics";
 static const char*	INIFontSection = "fonts";
 static const char*	INISubSection = "Alias";
 static const char*	INIDefault = "Default";
+static const char*	INIDefaultFixed = "DefaultFixed";
 static const char*	INIResolution = "Resolution";
 static const char*	INIGlobalMetrics = "FontMetrics";
 
@@ -782,6 +783,7 @@ static void XFONT_WindowsNames( char* buffer )
     char* 	lpstr, *lpch;
     int		i, up;
     BYTE	bFamilyStyle;
+    const char*	relocTable[] = { INIDefaultFixed, INIDefault, NULL };
 
     for( fr = fontList; fr ; fr = fr->next )
     {
@@ -828,8 +830,9 @@ static void XFONT_WindowsNames( char* buffer )
 	fr->fr_flags |= FR_NAMESET;
     }
 
-    if( PROFILE_GetWineIniString( INIFontSection, INIDefault, "", buffer, 128 ) )
-    {
+    for( up = 0; relocTable[up]; up++ )
+      if( PROFILE_GetWineIniString( INIFontSection, relocTable[up], "", buffer, 128 ) )
+      {
 	while( *buffer && isspace(*buffer) ) buffer++;
 	for( fr = NULL, pfr = fontList; pfr; pfr = pfr->next )
 	{
@@ -846,7 +849,7 @@ static void XFONT_WindowsNames( char* buffer )
 	     }
 	     fr = pfr;
 	}
-    }
+      }
 }
 
 /***********************************************************************

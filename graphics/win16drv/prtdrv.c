@@ -428,16 +428,16 @@ DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
 	
 	switch (wStyle)
 	{
-        case OBJ_BRUSH:
+        case DRVOBJ_BRUSH:
             nSize = sizeof (LOGBRUSH16);
             break;
-        case OBJ_FONT: 
+        case DRVOBJ_FONT: 
             nSize = sizeof(LOGFONT16); 
             break;
-        case OBJ_PEN:
+        case DRVOBJ_PEN:
             nSize = sizeof(LOGPEN16); 
             break;
-        case OBJ_PBITMAP:
+        case DRVOBJ_PBITMAP:
         default:
 	    fprintf(stderr, "PRTDRV_RealizeObject: Object type %d not supported\n", wStyle);
             nSize = 0;

@@ -480,7 +480,6 @@ DEBUG_Disassemble(const DBG_ADDR *xstart,const DBG_ADDR *xend,int offset)
   DBG_ADDR	last;
   DBG_ADDR	end,start;
 
-
   if (xstart) {
     start=*xstart;
     _disassemble_fixaddr(&start);
@@ -491,9 +490,12 @@ DEBUG_Disassemble(const DBG_ADDR *xstart,const DBG_ADDR *xend,int offset)
   }
   if (!xstart && !xend) {
     last = DEBUG_LastDisassemble;
-    if (!last.seg && !last.off) {
-      last.seg = (CS_reg(&DEBUG_context)==WINE_CODE_SELECTOR)?0:CS_reg(&DEBUG_context);
-      last.off = EIP_reg(&DEBUG_context);
+    if (!last.seg && !last.off)
+    {
+        WORD cs;
+        GET_CS(cs);
+        last.seg = (CS_reg(&DEBUG_context) == cs) ? 0 : CS_reg(&DEBUG_context);
+        last.off = EIP_reg(&DEBUG_context);
     }
     for (i=0;i<offset;i++)
       if (!_disassemble(&last)) break;

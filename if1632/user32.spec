@@ -47,7 +47,7 @@ type	win32
  44 stdcall CharUpperW(wstr) CharUpper32W
  45 stdcall CheckDlgButton(long long long) CheckDlgButton32
  46 stdcall CheckMenuItem(long long long) CheckMenuItem32
- 47 stub CheckMenuRadioItem
+ 47 stdcall CheckMenuRadioItem(long long long long long) CheckMenuRadioItem32
  48 stdcall CheckRadioButton(long long long long) CheckRadioButton32
  49 stdcall ChildWindowFromPoint(long long long) ChildWindowFromPoint32
  50 stub ChildWindowFromPointEx
@@ -58,8 +58,8 @@ type	win32
  55 stub CloseDesktop
  56 stdcall CloseWindow(long) CloseWindow32
  57 stub CloseWindowStation
- 58 stub CopyAcceleratorTableA
- 59 stub CopyAcceleratorTableW
+ 58 stdcall CopyAcceleratorTableA(long ptr long) CopyAcceleratorTable32A
+ 59 stdcall CopyAcceleratorTableW(long ptr long) CopyAcceleratorTable32W
  60 stdcall CopyIcon(long) CopyIcon32
  61 stdcall CopyImage(long long long long long) CopyImage32
  62 stdcall CopyRect(ptr ptr) CopyRect32
@@ -132,7 +132,7 @@ type	win32
 127 stdcall DefWindowProcW(long long long long) DefWindowProc32W
 128 stdcall DeferWindowPos(long long long long long long long long) DeferWindowPos32
 129 stdcall DeleteMenu(long long long) DeleteMenu32
-130 stub DestroyAcceleratorTable
+130 stdcall DestroyAcceleratorTable(long) DestroyAcceleratorTable
 131 stdcall DestroyCaret() DestroyCaret32
 132 stdcall DestroyCursor(long) DestroyCursor32
 133 stdcall DestroyIcon(long) DestroyIcon32
@@ -162,7 +162,7 @@ type	win32
 157 stub DrawFrame
 158 stdcall DrawFrameControl(long ptr long long) DrawFrameControl32
 159 stdcall DrawIcon(long long long long) DrawIcon32
-160 stub DrawIconEx
+160 stdcall DrawIconEx(long long long long long long long long long) DrawIconEx32
 161 stdcall DrawMenuBar(long) DrawMenuBar32
 162 stdcall DrawStateA(long long ptr long long long long long long long) DrawState32A
 163 stub DrawStateW
@@ -268,7 +268,7 @@ type	win32
 263 stdcall GetMenuItemID(long long) GetMenuItemID32
 264 stdcall GetMenuItemInfoA(long long long ptr) GetMenuItemInfo32A
 265 stdcall GetMenuItemInfoW(long long long ptr) GetMenuItemInfo32W
-266 stub GetMenuItemRect
+266 stdcall GetMenuItemRect(long long long ptr) GetMenuItemRect32
 267 stdcall GetMenuState(long long long) GetMenuState32
 268 stdcall GetMenuStringA(long long ptr long long) GetMenuString32A
 269 stdcall GetMenuStringW(long long ptr long long) GetMenuString32W

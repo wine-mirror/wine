@@ -90,11 +90,11 @@ int WINAPI MultiByteToWideChar(UINT32 page, DWORD flags, char *src, int srclen,
 {
     if (srclen == -1)
    	 srclen = lstrlen32A(src)+1;
-    if (!dst)
-         return srclen*2;
+    if (!dstlen || !dst)
+         return srclen;
 
     lstrcpynAtoW(dst,src,srclen); /* FIXME */
-    return srclen*2-2;
+    return srclen-1;
 }
 
 int WINAPI WideCharToMultiByte(UINT32 page, DWORD flags, WCHAR *src, int srclen,

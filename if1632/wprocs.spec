@@ -1,7 +1,6 @@
 name	wprocs
 type	win16
 
-10 pascal MDIClientWndProc(word word word long) MDIClientWndProc
 14 pascal FileOpenDlgProc(word word word long) FileOpenDlgProc
 15 pascal FileSaveDlgProc(word word word long) FileSaveDlgProc
 16 pascal ColorDlgProc(word word word long) ColorDlgProc

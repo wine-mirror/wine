@@ -631,7 +631,7 @@ DWORD WINAPI SearchPath32W( LPCWSTR path, LPCWSTR name, LPCWSTR ext,
     while (*res == '/') res++;
     if (buflen)
     {
-        if (buflen > 3) lstrcpynAtoW( buffer + 3, res + 1, buflen - 3 );
+        if (buflen > 3) lstrcpynAtoW( buffer + 3, res, buflen - 3 ); 
         for (p = buffer; *p; p++) if (*p == '/') *p = '\\';
         if (lastpart)
         {

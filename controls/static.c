@@ -84,7 +84,7 @@ static HICON16 STATIC_SetBitmap( WND *wndPtr, HICON16 hicon )
 {
     HICON16 prevIcon;
     STATICINFO *infoPtr = (STATICINFO *)wndPtr->wExtra;
-    BITMAPOBJ *info = GDI_HEAP_LOCK(hicon);
+    BITMAPOBJ *info = (BITMAPOBJ *)GDI_HEAP_LOCK(hicon);
 
     if ((wndPtr->dwStyle & SS_TYPEMASK) != SS_BITMAP) return 0;
     if (hicon && !info) {

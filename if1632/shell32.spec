@@ -5,12 +5,13 @@ type	win32
 # (these need to have these exact ordinals, for some win95 dlls 
 #  import shell32.dll by ordinal)
 
+   2 stub SHELL32_2
    3 stub CheckEscapesA
    6 stub CheckEscapesW
    7 stdcall CommandLineToArgvW(ptr ptr) CommandLineToArgvW
    8 stub Control_FillCache_RunDLL
   12 stdcall Control_RunDLL(long long long long) Control_RunDLL
-  14 stub DllGetClassObject
+  14 stdcall DllGetClassObject(long long ptr) SHELL32_DllGetClassObject
   22 stub DoEnvironmentSubstA
   33 stub SHELL32_33
   34 stub SHELL32_34

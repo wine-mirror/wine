@@ -69,12 +69,15 @@ void FOCUS_SwitchFocus( HWND32 hFocusFrom, HWND32 hFocusTo )
     if( !hFocusTo || hFocusTo != hwndFocus )
 	return;
 
+    /* According to API docs, the WM_SETFOCUS message is sent AFTER the window
+       has received the keyboard focus. */
+    FOCUS_SetXFocus( hFocusTo );
+
 #if 0
     SendMessage32A( hFocusTo, WM_SETFOCUS, hFocusFrom, 0 );
 #else
     SendMessage16( hFocusTo, WM_SETFOCUS, hFocusFrom, 0 );
 #endif
-    FOCUS_SetXFocus( hFocusTo );
 }
 
 

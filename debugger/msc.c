@@ -34,11 +34,6 @@
 #include "peexe.h"
 #include "xmalloc.h"
 
-/*
- * This is used so that we have some idea of what we are in fact loading
- * at any given time.
- */
-char * DEBUG_curr_module = NULL;
 
 /*
  * This is an index we use to keep track of the debug information
@@ -886,7 +881,8 @@ DEBUG_InitCVDataTypes()
  * We don't fully process it here for performance reasons.
  */
 int
-DEBUG_RegisterDebugInfo(struct pe_data * pe,int load_addr, u_long v_addr, u_long size)
+DEBUG_RegisterDebugInfo(struct pe_data * pe,int load_addr,
+                        const char *module_name, u_long v_addr, u_long size)
 {
   int			  has_codeview = FALSE;
   int			  rtn = FALSE;
@@ -956,13 +952,13 @@ DEBUG_RegisterDebugInfo(struct pe_data * pe,int load_addr, u_long v_addr, u_long
 	   * to proceed if we know what we need to do next.
 	   */
 	  deefer->dbg_size = dbgptr->SizeOfData;
-	  deefer->dbg_info = pe->mappeddll+dbgptr->PointerToRawData;
+	  deefer->dbg_info = (char *)(pe->mappeddll+dbgptr->PointerToRawData);
 	  deefer->load_addr = (char *) load_addr;
 	  deefer->dbgdir = dbgptr;
 	  deefer->next = dbglist;
 	  deefer->loaded = FALSE;
 	  deefer->dbg_index = DEBUG_next_index;
-	  deefer->module_name = xstrdup(DEBUG_curr_module);
+	  deefer->module_name = xstrdup(module_name);
 
 	  deefer->sectp = pe->pe_seg;
 	  deefer->nsect = pe->pe_header->FileHeader.NumberOfSections;
