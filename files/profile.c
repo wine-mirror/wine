@@ -969,6 +969,7 @@ int PROFILE_GetWineIniInt( const char *section, const char *key_name, int def )
 
     PROFILE_GetWineIniString( section, key_name, "", buffer, sizeof(buffer) );
     if (!buffer[0]) return def;
+    /* FIXME: strtol wrong ?? see GetPrivateProfileIntA */
     result = strtol( buffer, &p, 0 );
     return (p == buffer) ? 0  /* No digits at all */ : (int)result;
 }
@@ -1349,12 +1350,10 @@ BOOL WINAPI WriteProfileStringW( LPCWSTR section, LPCWSTR entry,
 UINT16 WINAPI GetPrivateProfileInt16( LPCSTR section, LPCSTR entry,
                                       INT16 def_val, LPCSTR filename )
 {
-    long result=(long)GetPrivateProfileIntA(section,entry,def_val,filename);
-
-    if (result > 65535) return 65535;
-    if (result >= 0) return (UINT16)result;
-    if (result < -32768) return -32768;
-    return (UINT16)(INT16)result;
+    /* we used to have some elaborate return value limitation (<= -32768 etc.)
+     * here, but Win98SE doesn't care about this at all, so I deleted it.
+     * AFAIR versions prior to Win9x had these limits, though. */
+    return (INT16)GetPrivateProfileIntA(section,entry,def_val,filename);
 }
 
 /***********************************************************************
@@ -1364,14 +1363,22 @@ UINT WINAPI GetPrivateProfileIntA( LPCSTR section, LPCSTR entry,
 				   INT def_val, LPCSTR filename )
 {
     char buffer[20];
-    char *p;
     long result;
 
-    PROFILE_GetPrivateProfileString( section, entry, "",
-                                     buffer, sizeof(buffer), filename, FALSE );
+    if (!PROFILE_GetPrivateProfileString( section, entry, "",
+                                          buffer, sizeof(buffer), filename, FALSE ))
+        return def_val;
+    /* FIXME: if entry can be found but it's empty, then Win16 is
+     * supposed to return 0 instead of def_val ! Difficult/problematic
+     * to implement (every other failure also returns zero buffer),
+     * thus wait until testing framework avail for making sure nothing
+     * else gets broken that way. */
     if (!buffer[0]) return (UINT)def_val;
-    result = strtol( buffer, &p, 0 );
-    if (p == buffer) return 0;  /* No digits at all */
+
+    /* Don't use strtol() here !
+     * (returns LONG_MAX/MIN on overflow instead of "proper" overflow) 
+     YES, scan for unsigned format ! (otherwise compatibility error) */
+    if (!sscanf(buffer, "%lu", &result)) return 0;
     return (UINT)result;
 }
 
