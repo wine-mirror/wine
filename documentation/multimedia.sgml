@@ -1,0 +1,1302 @@
+  <chapter id="multimedia">
+    <title>Wine and Multimedia</title>
+    
+    <para>
+      This file contains information about the implementation of the
+      multimedia layer of WINE. 
+    </para>
+    
+    <para>
+      The implementation can be found in the dlls/winmm/ directory (and in 
+      many of its subdirectories), but also in dlls/msacm/ (for the
+      audio compression/decompression manager) and dlls/msvideo/ (for the
+      video compression/decompression manager).
+    </para>   
+    
+    <para>
+      Written by &name-eric-pouech; <email>&email-eric-pouech;</email>
+      (Last updated: 02/16/2001)
+    </para>
+    
+    <sect1 id="mm-overview">
+      <title>Overview</title>
+      
+      <para>
+	The multimedia stuff is split into 3 layers. The low level (device
+	drivers), mid level (MCI commands) and high level abstraction layers.
+        The low level layer has also some helper DLLs (like the MSACM/MSACM32
+        and MSVIDEO/MSVFW32 pairs).
+      </para>
+      
+      <para>
+	The low level layer may depend on current hardware and OS services 
+        (like OSS on Unix). Mid level (MCI) and high level layers must be 
+         written independently from the hardware and OS services.
+      </para>
+      
+      <para>
+	There are two specific low level drivers (one for wave input/output, 
+        another one for MIDI output only), whose role is:
+	<itemizedlist>
+	  <listitem>
+	    <para>help choosing one low level driver between many</para>
+	  </listitem>
+	  <listitem>
+	    <para>
+              add the possibility to convert streams (ie ADPCM =&gt; PCM)
+            </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      add the possibility to filter a stream (adding echo, equalizer...
+              to a wave stream), or modify the instruments that have to be 
+              played (MIDI).
+	    </para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+      
+      <para>
+	All of those components are defined as DLLs (one by one).
+      </para>
+      
+    </sect1>
+    
+    <sect1 id="mm-low">
+      <title>Low level layers</title>
+      
+      <para>
+	Please note that native low level drivers are not currently supported
+	in WINE, because they either access hardware components or require
+	VxDs to be loaded; WINE does not correctly supports those two so far.
+      </para>
+      
+      <para>
+	The following low level layers are implemented (as built-in DLLs):
+      </para>
+      
+      <sect2>
+	<title>(Wave form) Audio</title>
+	
+	<para>
+	  MMSYSTEM and WINMM call the real low level audio driver using the
+	  wodMessage/widMessage which handles the different requests.
+	</para>
+	
+	<sect3>
+	  <title>OSS implementation</title>
+	  
+	  <para>
+	    The low level audio driver is currently only implemented for the
+	    OpenSoundSystem (OSS) as supplied in the Linux and FreeBSD kernels by
+	    <ulink url="http://www.4front-tech.com/">4Front Technologies</ulink>. 
+	    The presence of this driver is checked by configure (depends on the 
+	    &lt;sys/soundcard.h&gt; file). Source code resides in 
+	    dlls/winmm/wineoss/audio.c.
+	  </para>
+	  
+	  <para>
+	    The implementation contains all features commonly used, but has
+	    several problems (see TODO list).
+	  </para>
+
+	  <para>
+	    Note that some Wine specific flag has been added to the wodOpen function, 
+	    so that the dsound DLL can share the /dev/dsp access. Currently, this 
+	    only provides mutual exclusion for both DLLs. Future extension could add
+	    a virtual mixer between the two output streams.
+	  </para>
+	  
+	  <para>TODO:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  verify all functions for correctness
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  Add virtual mixer between wave-out and dsound interfaces.
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	  
+	</sect3>
+	
+	<sect3>
+	  <title>Other sub systems</title>
+	  
+	  <para>
+	    No other is available. Could think of Sun Audio, remote audio systems
+	    (using X extensions, ...), ALSA, EsounD, ArTs...
+	  </para>
+	  
+	</sect3>
+	
+      </sect2>
+      
+      <sect2>
+	<title>MIDI</title>
+	
+	<para>
+	  MMSYSTEM and WINMM call the low level driver functions using the
+	  midMessage and the modMessage functions.
+	</para>
+	
+	<sect3>
+	  <title>OSS driver</title>
+	  
+	  <para>
+	    The low level audio driver is currently only implemented for the
+	    OpenSoundSystem (OSS) as supplied in the Linux and FreeBSD kernels by
+	    <ulink url="http://www.4front-tech.com/">4Front Technologies</ulink>.
+	    The presence of this driver is checked by configure (depends on the 
+	    &lt;sys/soundcard.h&gt; file, and also some specific defines because 
+	    MIDI is not supported on all OSes by OSS). Source code resides in 
+	    dlls/winmm/wineoss/midi.c
+	  </para>
+	  
+	  <para>
+	    Both Midi in and Midi out are provided. The type of MIDI devices
+	    supported is external MIDI port (requires an MIDI capable device -
+	    keyboard...) and OPL/2 synthesis (the OPL/2 patches for all
+	    instruments are in midiPatch.c).
+	  </para>
+	  
+	  <para>TODO:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  use better instrument definition for OPL/2 (midiPatch.c) or use
+		  existing instrument definition (from playmidi or kmid) with a
+		  .winerc option
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  have a look at OPL/3 ?
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  implement asynchronous playback of MidiHdr
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  implement STREAM'ed MidiHdr (question: how shall we share the code
+		  between the midiStream functions in MMSYSTEM/WINMM and the code
+		  for the low level driver)
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  use a more accurate read mechanism than the one of snooping on
+		  timers (like select on fd)
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	  
+	</sect3>
+	
+	<sect3>
+	  <title>Other sub systems</title>
+	  
+	  <para>
+	    Could support other MIDI implementation for other sub systems (any
+	    idea here ?)
+	  </para>
+	  
+	  <para>
+	    Could also implement a software synthesizer, either inside Wine or
+	    using using MIDI loop back devices in an external program (like
+	    timidity). The only trouble is that timidity is GPL'ed...
+	  </para>
+	  
+	</sect3>
+	
+      </sect2>
+      
+      <sect2>
+	<title>Mixer</title>
+	
+	<para>
+	  MMSYSTEM and WINMM call the low level driver functions using the
+	  mixMessage function.
+	</para>
+	
+	<sect3>
+	  <title>OSS implementation</title>
+	  
+	  <para>
+	    The current implementation uses the OpenSoundSystem mixer, and resides
+	    in dlls/winmm/wineoss/mixer.c
+	  </para>
+	  
+	  <para>TODO:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  implement notification mechanism when state of mixer's controls
+		  change
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	  
+	</sect3>
+	
+	<sect3>
+	  <title>Other sub systems</title>
+	  
+	  <para>TODO:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  implement mixing low level drivers for other mixers (ALSA...)
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	  
+	</sect3>
+	
+      </sect2>
+      
+      <sect2>
+	<title>Aux</title>
+	
+	<para>
+	  The AUX low level driver is the predecessor of the mixer driver
+	  (introduced in Win 95).
+	</para>
+	
+	<sect3>
+	  <title>OSS driver</title>
+	  
+	  <para>
+	    The implementation uses the OSS mixer API, and is incomplete.
+	  </para>
+	  
+	  <para>TODO:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  verify the implementation
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  check with what is done in mixer
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  open question: shall we implement it on top of the low level mixer
+		  functions ?
+		</para>
+	      </listitem>
+	    </itemizedlist>
+       
+	  </para>
+	  
+	</sect3>
+	
+      </sect2>
+      
+      <sect2>
+	<title>Wine OSS</title>
+	
+	<para>
+	   All the OSS dependent functions are stored into the WineOSS DLL. It still
+	   lack a correct installation scheme (as any multimedia device under Windows), 
+	   so that all the correct keys are created in the registry. This requires
+	   an advanced model since, for example, the number of wave out devices can
+	   only be known on the destination system (depends on the sound card driven
+	   by the OSS interface). A solution would be to install all the multimedia
+	   drivers through the SETUPX DLL; this is not doable yet (the multimedia 
+	   extension to SETUPX isn't written yet).
+	</para>
+	
+      </sect2>
+
+      <sect2>
+	<title>Joystick</title>
+	
+	<para>
+	  The API consists of the joy* functions found in dlls/winmm/joystick/joystick.c.
+	  The implementation currently uses the Linux joystick device driver
+	  API. It is lacking support for enhanced joysticks and has not been
+	  extensively tested.
+	</para>
+	
+	<para>TODO:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		better support of enhanced joysticks (Linux 2.2 interface is available)
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		support more joystick drivers (like the XInput extension)
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		should load joystick DLL as any other driver (instead of hardcoding)
+		the driver's name, and load it as any low lever driver.
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	
+      </sect2>
+      
+      <sect2>
+	<title>Wave mapper (msacm.drv)</title>
+	
+	<para>
+	  The Wave mapper device allows to load on-demand codecs in order to
+	  perform software conversion for the types the actual low level driver
+	  (hardware). Those codecs are provided through the standard ACM
+	  drivers.
+	</para>
+	
+	<sect3>
+	  <title>Built-in</title>
+	  
+	  <para>
+	    A first working implementation for wave out as been provided (wave in
+	    exists, but doesn't allow conversion).
+	  </para>
+	  
+	  <para>
+	    Wave mapper driver implementation can be found in dlls/winmm/wavemap/
+	    directory. This driver heavily relies on MSACM and MSACM32 DLLs which
+	    can be found in dlls/msacm and dlls/msacm32. Those DLLs load ACM
+	    drivers which provide the conversion to PCM format (which is normally
+	    supported by low level drivers). ADPCM, MP3... fit into the category
+	    of non PCM formats.
+	  </para>
+	  
+	  <para>
+	    There is currently no built-in ACM driver in Wine, so you must use
+	    native ones if you're looking for non PCM playback.
+   	  </para>
+	  
+	  <para>TODO:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  check for correctness and robustness
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	</sect3>
+	
+	<sect3>
+	  <title>Native</title>
+	  
+	  <para>
+	    Seems to work quite ok (using of course native MSACM/MSACM32 DLLs)
+	    Some other testings report some issues while reading back the registry
+	    settings.
+	  </para>
+	  
+	</sect3>
+	
+      </sect2>
+      
+      <sect2>
+	<title>MIDI mapper</title>
+	
+	<para>
+	  Midi mapper allows to map each one of 16 MIDI channels to a specific
+	  instrument on an installed sound card. This allows for example to
+	  support different MIDI instrument definition (XM, GM...). It also
+	  permits to output on a per channel basis to different MIDI renderers.
+	</para>
+	
+	<sect3>
+	  <title>Built-in</title>
+	  
+	  <para>
+	    A built-in MIDI mapper can be found in dlls/winmm/midimap/. It partly
+	    provides the same functionnality as the Windows' one. It allows to pick up
+	    destination channels (you can map a given channel to a specific playback 
+	    device channel (see the configuration bits for more details).
+	  </para>
+	  
+	  <para>TODO:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  implement the Midi mapper features (instrument on the fly modification)
+		  if it has to be done as under Windows, it required parsing the midi
+		  configuration files (didn't find yet the specs)
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	  
+	</sect3>
+	
+	<sect3>
+	  <title>Native</title>
+	  
+	  <para>
+	    The native midimapper from Win 98 works, but it requires a bunch of 
+	    keys in the registry which are not part of the Wine source yet.
+	  </para>
+	  
+	  <para>TODO:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  add native midimapper keys to the registry to let it run. This
+		  will require proper multimedia driver installation routines.
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	  
+	</sect3>
+	
+      </sect2>
+      
+    </sect1>
+    
+    <sect1 id="mm-mci">
+      <title>Mid level drivers (MCI)</title>
+      
+      <para>                                       
+	The mid level drivers are represented by some common API functions,
+	mostly mciSendCommand and mciSendString. See status in chapter 3 for
+	more information. WINE implements several MCI mid level drivers
+	(status is given for both built-in and native implementation):
+      </para>
+      
+      <para>TODO: (apply to all built-in MCI drivers)
+	<itemizedlist>
+	  <listitem>
+	    <para>
+	      use MMSYSTEM multitasking caps instead of the home grown
+	    </para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+      
+      
+      <sect2>
+	<title>CDAUDIO</title>
+	
+	<sect3>
+	  <title>Built-in</title>
+	  
+	  <para>
+	    The currently best implementation is the MCI CDAUDIO driver that can
+	    be found in dlls/winmm/mcicda/mcicda.c. The implementation is mostly
+	    complete, there have been no reports of errors. It makes use of
+	    misc/cdrom.c Wine internal cdrom interface.
+	    This interface has been ported on Linux, FreeBSD and NetBSD. (Sun
+	    should be similar, but are not implemented.)
+	  </para>
+	  
+	  <para>
+	    A very small example of a cdplayer consists just of the line
+	    mciSendString("play cdaudio",NULL,0,0);
+	  </para>
+	  
+	  <para>TODO:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  add support for other cdaudio drivers (Solaris...)
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  add support for multiple cdaudio devices (plus a decent 
+                  configuration scheme)
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  The DLL is not cleanly separated from the NTDLL DLL. The CDROM
+                  interface should be exported someway (or stored in a Wine only DLL)
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	  
+	</sect3>
+	
+	<sect3>
+	  <title>Native</title>
+	  
+	  <para>
+	    Native MCICDA works also correctly... It uses the MSCDEX traps (on int
+	    2f). However, some commands (like seeking) seem to be broken.
+	  </para>
+	  
+	</sect3>
+	
+      </sect2>
+      
+      <sect2>
+	<title>MCIWAVE</title>
+	
+	<sect3>
+	  <title>Built-in</title>
+	  
+	  <para>
+	    The implementation is rather complete and can be found in
+	    dlls/winmm/mciwave/audio.c. It uses the low level audio API (although
+	    not abstracted correctly).
+	  </para>
+	  
+	  <para>FIXME:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  The MCI_STATUS command is broken.
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	  
+	  <para>TODO:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  check for correctness
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  better use of asynchronous playback from low level
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  better implement non waiting command (without the MCI_WAIT flag).
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	  
+	</sect3>
+	
+	<sect3>
+	  <title>Native</title>
+	  
+	  <para>
+	    Native MCIWAVE works also correctly.
+	  </para>
+	  
+	</sect3>
+	
+      </sect2>
+      
+      <sect2>
+	<title>MCISEQ (MIDI sequencer)</title>
+	
+	<sect3>
+	  <title>Built-in</title>
+	  
+	  <para>
+	    The implementation can be found in dlls/winmm/mciseq/mcimidi.c. Except
+	    from the Record command, should be close to completion (except for non
+	    blocking commands, as many MCI drivers).
+	  </para>
+	  
+	  <para>TODO:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  implement it correctly
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  finish asynchronous commands (especially for reading/record)
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  better implement non waiting command (without the MCI_WAIT flag).
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  implement the recording features
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	  
+	</sect3>
+	
+	<sect3>
+	  <title>Native</title>
+	  
+	  <para>
+	    Native MCIMIDI has been working but is currently blocked by scheduling
+	    issues (mmTaskXXX no longer work).
+	  </para><para>FIXME:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  midiStreamPlay get from time to time an incorrect MidiHdr when
+		  using the native MCI sequencer
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	  
+	</sect3>
+	
+      </sect2>
+      
+      <sect2>
+	<title>MCIANIM</title>
+	
+	<sect3>
+	  <title>Built-in</title>
+	  
+	  <para>
+	    The implementation is in dlls/winmm/mcianim/.
+	  </para>
+	  
+  	  <para>TODO:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  implement it, probably using xanim or something similar.
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	  
+	</sect3>
+	
+	<sect3>
+	  <title>Native</title>
+	  
+	  <para>
+	    Native MCIANIM is reported to work (but requires native video DLLs
+	    also, even though the built-in video DLLs start to work correctly).
+	  </para>
+	  
+	</sect3>
+	
+      </sect2>
+      
+      <sect2>
+	<title>MCIAVI</title>
+	
+	<sect3>
+	  <title>Built-in</title>
+	  
+	  <para>
+	    The implementation is in dlls/winmm/mcianim/. Basic features are present, 
+            simple playing is available, even if lots remain to be done. It rather
+            heavily relies on MSVIDEO/MSVFW32 DLLs pair to work.
+	  </para>
+	  
+  	  <para>TODO:
+	    <itemizedlist>
+	      <listitem>
+		<para>
+		  finish the implementation
+		</para>
+	      </listitem>
+	      <listitem>
+		<para>
+		  fix the audio/video synchronisation issue
+		</para>
+	      </listitem>
+	    </itemizedlist>
+	  </para>
+	  
+	</sect3>
+	
+	<sect3>
+	  <title>Native</title>
+	  
+	  <para>
+	    Native MCIAVI is reported to work (but requires native video DLLs
+	    also). Some files exhibit some deadlock issues anyway.
+	  </para>
+	  
+	</sect3>
+	
+      </sect2>
+      
+    </sect1>
+    
+    <sect1 id="mm-high">
+      <title>High level layers</title>
+      
+      <para>                                       
+	The rest (basically the MMSYSTEM and WINMM DLLs entry points). It also
+	provides the skeleton for the core functionality for multimedia
+	rendering. Note that native MMSYSTEM and WINMM do not currently work
+	under WINE and there is no plan to support them (it would require to
+	also fully support VxD, which is not done yet).
+        Moreover, native DLLs require 16 bit MCI and low level drivers. Wine
+        implements them as 32 bit drivers.
+	MCI and low level drivers can either be 16 or 32 bit for Wine.
+      </para>
+      
+      <para>TODO:
+	<itemizedlist>
+	  <listitem>
+	    <para>
+	      it seems that some program check what's installed in registry
+	      against value returned by drivers. Wine is currently broken
+	      regarding this point.
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      add clean-up mechanisms when process detaches from MM DLLs
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      prepare for the 16/32 big split
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      check thread-safeness for MMSYSTEM and WINMM entry points
+	    </para>
+	  </listitem>
+	  <listitem>
+	    <para>
+	      unicode entry points are badly supported
+	    </para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+      
+      <sect2>
+	<title>MCI skeleton</title>
+	
+	<para>
+	  Implementation of what is needed to load/unload MCI drivers, and to
+	  pass correct information to them. This is implemented in
+	  dlls/winmm/mci.c. The mciSendString function uses command strings,
+	  which are translated into normal MCI commands as used by
+	  mciSendCommand with the help of command tables. The API can be found
+	  in dlls/winmm/mmsystem.c and dlls/winmm/mci.c. The functions there
+	  (mciOpen,mciSysInfo) handle mid level driver allocation and calls. The
+	  implementation is not complete.
+        </para>
+	
+        <para>
+	  MCI drivers are seen as regular WINE modules, and can be loaded (with
+	  a correct load order between built-in, native, elfdll, so), as any
+	  other DLL. Please note, that MCI drivers module names must bear the
+	  .drv extension to be correctly understood.
+        </para>
+	
+        <para>
+	  The list of available MCI drivers is obtained as follows:
+	  1. key 'mci' in [option] section from .winerc (or wineconf)
+	  mci=CDAUDIO:SEQUENCER gives the list of MCI drivers (names, in
+	  uppercase only) to be used in WINE.
+	  2. This list, when defined, supersedes the mci key in
+	  c:\windows\system.ini
+       </para>
+	
+	<para>
+	  Note that native VIDEODISC crashes when the module is loaded, which
+	  occurs when the MCI procedures are initialised. Make sure that this is
+	  not in the list from above. Try adding:
+	  mci=CDAUDIO:SEQUENCER:WAVEAUDIO:AVIVIDEO:MPEGVIDEO
+	  to the [options] section of wine.conf.
+	</para>
+	
+	<para>TODO:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		correctly handle the MCI_ALL_DEVICE_ID in functions.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		finish mapping 16 <=> 32 of MCI structures and commands
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		MCI_SOUND is not handled correctly (should not be sent to MCI
+		driver =&gt; same behavior as MCI_BREAK)
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		implement auto-open feature (ie, when a string command is issued
+		for a not yet opened device, MCI automatically opens it)
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	
+      </sect2>
+      
+      <sect2>
+	<title>MCI multi-tasking</title>
+	
+	<para>
+	  Multi-tasking capabilities used for the MCI drivers are provided in
+	  dlls/winmm/mmsystem.c.
+	</para>
+	
+	<para>TODO:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		mmTaskXXX functions are currently broken because the 16 loader does
+		not support binary command lines =&gt; provide Wine's own mmtask.tsk not
+		using binary command line.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		the Wine native MCI drivers should use the mmThreadXXX API (but since
+                all built-in MCI drivers are 32 bit, this would require a special
+                flag to mark 32 bit entry points)
+   	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	
+      </sect2>
+      
+      <sect2>
+	<title>Timers</title>
+	
+	<para>
+	  It currently uses a service thread, run in the context of the calling
+	  process, which should correctly mimic Windows behavior.
+	</para>
+	
+	<para>TODO:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		Check if minimal time is satisfactory for most programs.
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		current implementation may let a timer tick (once) after it has
+		been destroyed
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	
+      </sect2>
+      
+      <sect2>
+	<title>MMIO</title>
+	
+	<para>
+	  The API consists of the mmio* functions found in mdlls/winmm/mmio.c.
+	  Seems to work ok in most of the cases. There's some linear/segmented
+	  issues with 16 bit code. There are also some bugs when writting MMIO
+          files.
+	</para>
+	
+      </sect2>
+      
+      <sect2>
+	<title>sndPlayXXX functions</title>
+	
+	<para>
+	  Seem to work correctly.
+	</para>
+	
+      </sect2>
+      
+    </sect1>
+    
+    <sect1 id="mm-conf">
+      <title>Multimedia configuration</title>
+      
+      <para>
+	Currently, multimedia configuration heavily relies on Win 3.x
+	configuration model.
+      </para>
+      
+      <sect2>
+	<title>Drivers</title>
+	
+	<para>
+	  Since all multimedia drivers (MCI, low level ones, ACM drivers,
+	  mappers) are, at first, drivers they need to appear in the [mci] or
+	  [mci32] section of the system.ini file.
+	  Since all drivers are, at first, DLLs, you can choose to load their
+	  Wine's (built-in) or Windows (native) version.
+	</para>
+	
+      </sect2>
+      
+      <sect2>
+	<title>MCI</title>
+	
+	<para>
+	  A default [mci] section (in system.ini) looks like (see the note above
+	  on videodisc):
+	</para>
+	
+	<screen>
+   [mci]
+   cdaudio=mcicda.drv
+   sequencer=mciseq.drv
+   waveaudio=mciwave.drv
+   avivideo=mciavi.drv
+   videodisc=mcipionr.drv
+   vcr=mcivisca.drv
+   MPEGVideo=mciqtz.drv
+	</screen>
+	
+	<para>
+	  By default, the list of loadable MCI drivers will be made of those
+	  drivers (in the [mci] section).
+	</para>
+	
+	<para>
+	  The list of loadable (recognized) MCI drivers can be altered in the
+	  [option] section of wine.conf, like:
+	  mci=CDAUDIO:SEQUENCER:WAVEAUDIO:AVIVIDEO:MPEGVIDEO
+	</para>
+	
+	<para>TODO:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		use a default registry setting to bypass this (ugly) configuration
+		model
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	
+      </sect2>
+      
+      <sect2>
+	<title>Low level drivers</title>
+	
+	<para>
+           Configuration of low level drivers is done with the Wine configuration file. 
+	   Default keys are provided in winedefault.reg.
+	</para>
+
+	<para>
+	  The registry keys used here differ from the Windows' one. Using the Windows' one
+	  would require implementing something equivalent to a (real) driver installation. 
+	  Even if this would be necessary in a few cases (mainly using MS native multimedia)
+	  modules, there's no real need so far (or it hasn't been run into yet).
+	</para>
+
+	<para>
+	  See the configuration part of the User's Guide for more details.
+	</para>
+
+      </sect2>
+
+      <sect2>
+	<title>Midi mapper</title>
+
+	<para>
+          The Midi mapper configuration is the same as on Windows 9x. Under the key
+	  <screen>
+HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Multimedia\MIDIMap
+	  </screen>
+	  if the 'UseScheme' value is not set, or is set to a null value, the midi 
+	  mapper will always use the driver identified by the 'CurrentInstrument' 
+	  value. Note: Wine (for simplicity while installing) allows to define 
+	  'CurrentInstrument' as "#n" (where n is a number), whereas Windows only
+	  allows the real device name here. If UseScheme is set to a non null value, 
+	  'CurrentScheme' defines the name of the scheme to map the different channels. 
+	  All the schemes are available with keys like
+	  <screen>
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\MediaProperties\PrivateProperties\Midi\Schemes\%name_of_scheme%
+	  </screen>
+	  For every scheme, under this key, will be a sub-key (which name is usually 
+	  a two digit index, starting at 00). Its default value is the name of the 
+	  output driver, and the value 'Channels' lists all channels (of the 16 
+	  standard MIDI ones) which have to be copied to this driver.
+	</para>
+
+	<para>
+	  To provide enhanced configuration and mapping capabilities, each driver 
+	  can define under the key
+	  <screen>
+HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\MediaProperties\PrivateProperties\Midi\Ports\%driver_name%
+	  </screen>
+	  a link to and .IDF file which allows to remap channels internally (for 
+	  example 9 -&gt; 16), to change instruments identification, event 
+	  controlers values. See the source file dlls/winmm/midimap/midimap.c 
+	  for the details (this isn't implemented yet).
+	</para>
+      </sect2>
+      
+      <sect2>
+	<title>ACM</title>
+	
+	<para>
+	  To be done (use the same mechanism as MCI drivers configuration).
+	</para>
+	
+      </sect2>
+      
+      <sect2>
+	<title>VIDC</title>
+	
+	<para>
+	  To be done (use the same mechanism as MCI drivers configuration).
+	</para>
+	
+      </sect2>
+      
+    </sect1>
+    
+    <sect1 id="mm-arch">
+      <title>Multimedia architecture</title>
+      
+      <sect2>
+	<title>Windows 9x multimedia architecture</title>
+	
+	<screen>
+             |
+Kernel space |                    Client applications
+             |
+             |           | |         ^ ^       | |          | |
+             |        16>| |<32   16>| |<32 16>| |<32    16>| |<32
+             |           | v         | |       | v          | v
+             |      +----|-----------|---------|------------|-------+
+             |      |    |           |         |            |       |  WinMM.dll
+             |      |    |           |         |            |       |   32 bit
+             |      +----|-----------|---------|------------|-------+
+             |           | |         | ^       | |          |
+             |  +------+ | |<16      | |       | |<16       |
+             |  |   16>| | |         | |       | |          |
+             |  |      v v v         | |       v v          v
+             |  |   +---------------+---+-------------+-------------+
+             |  |   | waveInXXX     |   | mciXXX      | *playSound* |
+             |  |   | waveOutXXX    |   |             | mmioXXX     |
+             |  |   | midiInXXX     |   |             | timeXXX     |
+             |  |   | midiOutXXX    |   |             | driverXXX   |
+             |  |   | midiStreamXXX |   |             |             |  MMSystem.dll
+             |  |   | mixerXXX      |   |             |             |     16 bit
+ +--------+  |  |   | auxXXX    +---+   +---+ mmThread|             |
+ |MMDEVLDR|<------->| joyXXX    | Call back | mmTask  |             |
+ +--------+  |  |   +-----------+-----------+---------+-------------+
+     ^       |  |          |       ^    ^     | ^
+     |       |  |       16>|       |<16>|  16>| |<16
+     v       |  |          v       |    |     v |
+ +--------+  |  |   +-------------+    +----------+
+ |  VxD   |<------->|    *.drv    |    | mci*.drv |
+ +--------+  |  |   +--------------+   +-----------+
+             |  |    |  msacm.drv  |    | mciwave  |
+             |  |    +--------------+   +-----------+
+             |  |     | midimap.drv |    | mcimidi  |
+             |  |     +-------------+    +-----------+
+             |  |    Low-level drivers    |    ...   | MCI drivers
+             |  |                         +----------+
+             |  |                               |
+             |  |                               |<16
+             |  +-------------------------------+
+             |
+	</screen>
+	
+	<para>
+	  The important points to notice are:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		all drivers (and most of the core code) is 16 bit
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		all hardware (or most of it) dependant code reside in the kernel
+		space (which is not surprising)
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	
+      </sect2>
+      
+      <sect2>
+	<title>Wine multimedia architecture</title>
+	
+	<screen>
+             |
+Kernel space |                    Client applications
+             |
+             |           | |         ^ ^       | |          | |
+             |        16>| |<32   16>| |<32 16>| |<32    16>| |<32
+             |           | |         | |       | |          | |
+             |  +------+ | |         | |       | |          | |
+             |  |32/16>| | |         | |       | |          | |
+             |  |      v v v         | |       v v          v v
+             |  |   +---------------+---+-------------+-------------+
+             |  |   | waveInXXX     |   | mciXXX      | *playSound* |
+             |  |   | waveOutXXX    |   |             | mmioXXX     | WinMM.dll
+             |  |   | midiInXXX     |   |             | timeXXX     |   32 bit
+             |  |   | midiOutXXX    |   |             | driverXXX   |
+             |  |   | midiStreamXXX |   |             |             | MMSystem.dll
+             |  |   | mixerXXX      |   |             |             |   16 bit
+             |  |   | auxXXX    +---+   +---+ mmThread|             |
+             |  |   | joyXXX    | Call back | mmTask  |             |
+             |  |   +-----------+-----------+---------+-------------+
+             |  |         ||      ^    ^     ||    ^^
+             |  |      16>||<32   |<16>|  16>||<32>||<16
+             |  |         vv      |<32>|     vv    ||
++---------+  |  |   +-------------+    +----------+
+|HW driver|<------->|    *.drv    |    | mci*.drv |
++---------+  |  |   +--------------+   +-----------+
+             |  |    |  msacm.drv  |    | mciwave  |
+             |  |    +--------------+   +-----------+
+             |  |     | midimap.drv |    | mcimidi  |
+             |  |     +-------------+    +-----------+
+             |  |    Low-level drivers    |    ...   | MCI drivers
+             |  |                         +----------+
+             |  |                               |
+             |  |                               |<32/16
+             |  +-------------------------------+
+             |
+	</screen>
+	
+	<para>
+	  From the previous drawings, the most noticeable differences are:
+	  <itemizedlist>
+	    <listitem>
+	      <para>
+		low-level drivers can either be 16 or 32 bit
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		MCI drivers can either be 16 or 32 bit
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		MMSystem and WinMM will be hosted in a single elfglue library
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		no link between the MMSystem/WinMM pair on kernel space shall
+		exist. For example, there will be a low level driver to talk to a
+		UNIX OSS (Open Sound System) driver
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		all built-in drivers (low-level and MCI) will be written as 32 bit
+		drivers
+	      </para>
+	    </listitem>
+	    <listitem>
+	      <para>
+		all native drivers will be 16 bits drivers
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	</para>
+	
+      </sect2>
+      
+    </sect1>
+    
+	  <sect1 id="msacm">
+	    <title>MS ACM Dlls</title>
+	    
+	    <sect2>
+	      <title>Contents</title>
+
+	      <para>tbd</para>
+	    </sect2>
+
+	    <sect2>
+	      <title>Status</title>
+
+	      <para>tbd</para>
+	    </sect2>
+	    
+	    <sect2>
+	      <title>Caching</title>
+	      
+	      <para>
+		The MSACM/MSACM32 keeps some data cached for all known ACM
+		drivers. Under the key
+		<screen>
+		  Software\Microsoft\AudioCompressionManager\DriverCache\&lt;driver
+		  name&gt;
+		</screen>
+		are kept for values:
+		<itemizedlist>
+		  <listitem>
+		    <para>
+                      aFormatTagCache which contains an array of
+		      DWORD. There are two DWORDs per cFormatTags
+		      entry. The first DWORD contains a format tag
+		      value, and the second the associated maximum
+		      size for a WAVEFORMATEX structure.
+		      (Fields dwFormatTag and cbFormatSize from
+		      ACMFORMATDETAILS) 
+                    </para>
+		  </listitem>
+		  <listitem>
+		    <para>
+		      cFilterTags contains the number of tags supported by the driver
+		      for filtering.
+		    </para>
+		  </listitem>
+		  <listitem>
+		    <para>
+		      cFormatTags contains the number of tags support
+		      by the driver for conversions.
+		    </para>
+		  </listitem>
+		  <listitem>
+		    <para>
+		      fdwSupport (the same as the one returned from
+		      acmDriverDetails). 
+		    </para>
+		  </listitem>
+		</itemizedlist>
+	      </para>
+
+	      <para>
+		The cFilterTags, cFormatTags, fdwSupport are the same
+		values as the ones returned from acmDriverDetails
+		function.
+	      </para>
+	    </sect2>
+	  </sect1>
+
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "set" "book" "part" "chapter" "")
+End:
+-->

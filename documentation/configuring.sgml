@@ -41,6 +41,11 @@
                 Wine's DLL Usage
               </para>
             </listitem>
+            <listitem>
+              <para>
+                Wine's Multimedia drivers and DLL configuration
+              </para>
+            </listitem>
           </itemizedlist>
         </para>
       </sect2>
@@ -143,6 +148,11 @@
                 <entry>no</entry>
                 <entry>Console settings</entry>
               </row>
+              <row>
+                <entry>[WinMM]</entry>
+                <entry>yes</entry>
+                <entry>Multimedia settings</entry>
+              </row>
             </tbody>
           </tgroup>
         </informaltable>
@@ -167,7 +177,7 @@
           </para>
           <para>
             <programlisting>
-"Type" = "floppy|hd|cdrom|network" &lt;--- the |'s mean "Type = "&lt;one of the options>"
+"Type" = "floppy|hd|cdrom|network" &lt;--- the |'s mean "Type = '&lt;one of the options&gt;'"
             </programlisting>
           </para>
           <para>
@@ -777,6 +787,48 @@ OPTIONAL:
             Sets the program to automatically be run at startup every time.
           </para>
         </sect3>
+
+        <sect3>
+          <title>The [WinMM] Section</title>
+          <para>
+            [WinMM] is used to define which multimedia drivers have to be loaded. Since
+	    those drivers may depend on the multimedia interfaces available on your sustem
+	    (OSS, Alsa... to name a few), it's needed to be able to configure which driver
+	    has to be loaded.
+          </para>
+
+          <para>
+	    The content of the section looks like:
+	    <programlisting> 
+[WinMM]
+"Drivers" = "wineoss.drv"
+"WaveMapper" = "msacm.drv"
+"MidiMapper" = "midimap.drv"
+	    </programlisting> 
+	    All the keys must be defined:
+	    <itemizedlist>
+	      <listitem>
+	        <para>
+		  The "Drivers" key is a ';' separated list of modules name, each of 
+		  them containing a low level driver. All those drivers will be loaded 
+		  when MMSYSTEM/WINMM is started and will provide their inner features.
+	        </para>
+	      </listitem>
+	      <listitem>
+	        <para>
+		  The "WaveMapper" represents the name of the module containing the Wave
+		  Mapper driver. Only one wave mapper can be defined in the system.
+	        </para>
+	      </listitem>
+	      <listitem>
+	        <para>
+		  The "MidiMapper" represents the name of the module containing the Midi 
+		  Mapper driver. Only one Midi mapper can be defined in the system.
+	        </para>
+	      </listitem>
+	    </itemizedlist>
+          </para>
+	</sect3>
       </sect2>
 
       <sect2>
