@@ -277,6 +277,17 @@ int   TSXInitThreads(void)
   return r;
 }
 
+XPixmapFormatValues * TSXListPixmapFormats(Display* a0, int* a1)
+{
+  XPixmapFormatValues * r;
+  TRACE("Call XListPixmapFormats\n");
+  EnterCriticalSection( &X11DRV_CritSection );
+  r = XListPixmapFormats(a0, a1);
+  LeaveCriticalSection( &X11DRV_CritSection );
+  TRACE("Ret XListPixmapFormats\n");
+  return r;
+}
+
 int * TSXListDepths(Display* a0, int a1, int* a2)
 {
   int * r;

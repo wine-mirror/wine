@@ -38,6 +38,7 @@ extern KeySym  TSXLookupKeysym(XKeyEvent*, int);
 extern KeySym * TSXGetKeyboardMapping(Display*, unsigned int, int, int*);
 extern char * TSXResourceManagerString(Display*);
 extern int   TSXInitThreads(void);
+extern XPixmapFormatValues * TSXListPixmapFormats(Display*, int*);
 extern int * TSXListDepths(Display*, int, int*);
 extern int   TSXReconfigureWMWindow(Display*, Window, int, unsigned int, XWindowChanges*);
 extern int   TSXSetWMProtocols(Display*, Window, Atom*, int);

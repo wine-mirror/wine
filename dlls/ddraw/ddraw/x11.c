@@ -49,7 +49,7 @@ int _common_depth_to_pixelformat(
   int index = -2;
 
   vi = TSXGetVisualInfo(display, VisualNoMask, &vt, &nvisuals);
-  pf = XListPixmapFormats(display, &npixmap);
+  pf = TSXListPixmapFormats(display, &npixmap);
 
   for (i = 0; i < npixmap; i++) {
     if (pf[i].depth == depth) {
@@ -83,7 +83,7 @@ int _common_depth_to_pixelformat(
 	  goto clean_up_and_exit;
 	}
       }
-      ERR("No visual corresponding to pixmap format !\n");
+      WARN("No visual corresponding to pixmap format !\n");
     }
   }
 
@@ -694,7 +694,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
   maxHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
   
   vi = TSXGetVisualInfo(display, VisualNoMask, &vt, &nvisuals);
-  pf = XListPixmapFormats(display, &npixmap);
+  pf = TSXListPixmapFormats(display, &npixmap);
 
   i = 0;
   emu = 0;
@@ -734,8 +734,8 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 	  
 	  has_mode[mode_index] = 1;
 	} else {
-      /* All the 'true color' depths (15, 16 and 24)
-	 First, find the corresponding visual to extract the bit masks */
+	  /* All the 'true color' depths (15, 16 and 24)
+	     First, find the corresponding visual to extract the bit masks */
 	  for (j = 0; j < nvisuals; j++) {
 	    if (vi[j].depth == pf[i].depth) {
 	      ddsfd.ddsCaps.dwCaps = 0;
@@ -756,7 +756,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 	    }
 	  }
 	  if (j == nvisuals)
-	    ERR("Did not find visual corresponding the the pixmap format !\n");
+	    WARN("Did not find visual corresponding the the pixmap format !\n");
 	}
       }
       i++;
@@ -787,7 +787,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 		      ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0;
 		      ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0;
 		      ddsfd.ddpfPixelFormat.u3.dwBBitMask = 0;
-    } else {
+		    } else {
 		      ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB;
 		      ddsfd.ddpfPixelFormat.u.dwRGBBitCount = ModeEmulations[c].dest.bpp;
 		      ddsfd.ddpfPixelFormat.u1.dwRBitMask = ModeEmulations[c].dest.rmask;
@@ -799,7 +799,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 		  }
 		  
 		  if (send_mode == 0)
-		    ERR("No visual corresponding to pixmap format !\n");
+		    WARN("No visual corresponding to pixmap format !\n");
 		}
 	      }
 	    }

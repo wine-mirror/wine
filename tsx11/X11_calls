@@ -91,6 +91,7 @@ XKeysymToKeycode
 XKeysymToString
 XListDepths
 XListFonts
+XListPixmapFormats
 XLoadQueryFont
 XLookupKeysym
 XLookupString
