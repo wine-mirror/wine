@@ -81,6 +81,7 @@ WINE REGISTRY Version 2
 "shell32"      = "builtin, native"
 "shfolder"     = "builtin, native"
 "shlwapi"      = "builtin, native"
+"shdocvw"      = "builtin, native"
 "lzexpand"     = "builtin, native"
 "lz32"         = "builtin, native"
 "comctl32"     = "builtin, native"
@@ -239,5 +240,20 @@ WINE REGISTRY Version 2
 "Drivers" = "wineoss.drv"
 "WaveMapper" = "msacm.drv"
 "MidiMapper" = "midimap.drv"
+
+;; sample AppDefaults entries
+;[AppDefaults\\iexplore.exe\\DllOverrides]
+;"shlwapi" = "native"
+;"rpcrt4" = "native"
+;"ole32" = "native"
+;"shdocvw" = "native"
+;"wininet" = "native"
+;"shfolder" = "native"
+;"shell32" = "native"
+;"shell" = "native"
+;"comctl32" = "native"
+;
+;[AppDefaults\\setup.exe\\x11drv]
+;"Desktop" = "800x600"
 
 # </wineconf>

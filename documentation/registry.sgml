@@ -206,7 +206,7 @@ ln -sf /usr/local/etc/wine.userreg wine.userreg
       </screen>
       <para>
         Note that the <filename>tools/wineinstall</filename> script
-        already does all of this for you, if you install Wine as root.
+        already does all of this for you, if you install Wine source as root.
         If you then install Windows applications while logged in as
         root, all your users will automatically be able to use them.
         While the application setup will be taken from the global
@@ -235,12 +235,11 @@ ln -sf /usr/local/etc/wine.userreg wine.userreg
         install applications are distributed in a file called
         <filename>winedefault.reg</filename>. It is automatically
         installed for you if you use the
-        <filename>tools/wineinstall</filename> script, but if you want
-        to install it manually, you can do so by using the
-        <command>regapi</command> tool. You can find more information
-        about this in the
-        <filename>documentation/no-windows</filename> document in the
-        Wine distribution.
+        <filename>tools/wineinstall</filename> script in the Wine source,
+	but if you want to install it manually, you can do so by using the
+        <command>regapi</command> tool to be found in the
+	<filename>programs/regapi/</filename>
+	directory in Wine source.
       </para>
     </sect2>
 

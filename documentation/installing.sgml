@@ -52,7 +52,7 @@
 
         <para>
           While the users are of course free to set up everything
-          themselves, the Wine team will make the automated Wine
+          themselves, the Wine team will make the automated Wine source
           installation script, <filename>tools/wineinstall</filename>,
           do everything we find necessary to do; running the
           conventional <userinput>configure && make depend && make && make

@@ -145,6 +145,14 @@ default: "C:\\\\WINDOWS;C:\\\\WINDOWS\\\\SYSTEM"
 Used to specify the path which will be used to find executables and
 dlls. Make sure to double the backslashes.
 .PP
+.I format: """GraphicsDriver""=""<x11drv|ttydrv>"""
+.br
+default: "x11drv"
+.br
+Tells Wine which graphics driver to use. Normally you'd want to use
+x11drv (for X11). In case you want to run programs as text console/TTY only
+without having Wine rely on X11 support, then use ttydrv.
+.PP
 .B [DllOverrides]
 .br
 .I format: """modulename""=""native,so,builtin"""

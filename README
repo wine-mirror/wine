@@ -14,14 +14,14 @@ that you wrote it.
 2. QUICK START
 
 Whenever you compile from source, it is recommended to use the Wine
-Installer to build and install Wine.  From the top-level Wine
-directory (which contains this file), run:
+Installer to build and install Wine.  From the top-level directory
+of the Wine source (which contains this file), run:
 
 ./tools/wineinstall
 
 Run programs as "wine [options] program".  For more information and
 problem resolution, read the rest of this file, the Wine man page,
-the files in the documentation directory in the Wine source
+the files in the documentation directory of the Wine source
 (see "DOCUMENTATION"), and especially the wealth of information
 found at http://www.winehq.com.
 
@@ -38,7 +38,7 @@ Linux info:
   Although Linux version 2.0.x will mostly work, certain features
   (specifically LDT sharing) required for properly supporting Win32
   threads were not implemented until kernel version 2.2.  If you get
-  consistent thread-related crashes, you may want to upgrade to 2.2.
+  consistent thread-related crashes, you may want to upgrade to at least 2.2.
   Also, some bugs were fixed and additional features were added
   late in the Linux 2.0.x series, so if you have a very old Linux kernel,
   you may want to upgrade to at least the latest 2.0.x release.
@@ -63,7 +63,10 @@ NetBSD info:
 File systems info:
   Wine should run on most file systems. However, Wine will fail to start
   if umsdos is used for the /tmp directory. A few compatibility problems have
-  also been reported using files accessed through Samba.
+  also been reported using files accessed through Samba. Also, as NTFS
+  can only be used safely with readonly access for now, we recommend against
+  using NTFS, as Windows programs need write access almost everywhere.
+  In case of NTFS files, copy over to a writable location.
 
 Wine requires kernel-level threads to run. Currently, only Linux
 version 2.0 or later, FreeBSD-current or FreeBSD 3.0 or later,
@@ -128,7 +131,7 @@ first.  Try either "dpkg -r wine" or "rpm -e wine" or "make uninstall"
 before installing.
 
 If you want to read the documentation supplied with the Wine source,
-then see the "DOCUMENTATION" section.
+see the "DOCUMENTATION" section.
 
 Wine requires a configuration file named named "config" in your
 ~/.wine directory. The format of this file is explained in the config file
@@ -137,15 +140,21 @@ The file documentation/samples/config contains an example configuration file
 which has to be adapted and copied to the location mentioned above.
 
 Don't forget to add vital registry entries by applying winedefault.reg
-with programs/regapi/. See documentation/ for details.
+with programs/regapi/. See documentation/ directory for details.
 
 See http://www.winehq.com/support.shtml for further configuration hints.
 
+In case of library loading errors
+(e.g. "Error while loading shared libraries: libntdll.so"), make sure
+to add the library path to /etc/ld.so.conf and run ldconfig as root.
+
 In order to verify the correctness of the environment you need for
-Wine to run successfully, run "./tools/winecheck | less".  You'll get
-a percentage score indicating "Wine configuration correctness".
+Wine to run successfully, you may run "./tools/winecheck | less".
+You'll get a percentage score indicating "Wine configuration correctness".
 As this program is alpha, it doesn't run a truly thorough test yet, though,
 so it should be taken as a first verification step only.
+
+See wine.conf man page on how to switch to text mode only support if desired.
 
 6. RUNNING PROGRAMS
 
@@ -166,9 +175,10 @@ Note: the path of the file will also be added to the path when
 
 Wine is not yet complete, so several programs may crash. Provided you set up
 winedbg correctly according to documentation/debugger.sgml, you will be dropped
-into a debugger so that you can investigate and fix the problem. For more
-information on how to do this, please read the file documentation/debugging.
-If you post a bug report, please read the file documentation/bugreports to
+into a debugger so that you can investigate and fix the problem.
+For more information on how to do this, please read the file
+documentation/debugging.sgml.
+If you post a bug report, please read the file documentation/bugs.sgml to
 see what information is required.
 
 You should backup all your important files that you give Wine access
@@ -205,7 +215,7 @@ HOWTO:	The Wine HOWTO (outdated !) is available at
 
 Usenet:	The best place to get help or to report bugs is the Usenet newsgroup
 	comp.emulators.ms-windows.wine. Please read the file 
-	documentation/bugreports to see what information should be included 
+	documentation/bugs.sgml to see what information should be included 
 	in a bug report.
 
 	Please browse old messages on http://groups.google.com/ to check
