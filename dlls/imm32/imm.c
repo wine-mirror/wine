@@ -1050,6 +1050,9 @@ BOOL WINAPI ImmNotifyIME(
   FIXME("(%p, %ld, %ld, %ld): stub\n",
         hIMC, dwAction, dwIndex, dwValue);
 
+    if (!root_context)
+        return rc;
+
     switch(dwAction)
     {
         case NI_CHANGECANDIDATELIST:
