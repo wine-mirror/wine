@@ -30,6 +30,7 @@
 #include "wgl.h"
 #include "opengl_ext.h"
 #include "wine/debug.h"
+#include "wine/port.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
@@ -47,6 +48,8 @@ void (*wine_tsx11_unlock_ptr)(void) = NULL;
 
 static GLXContext default_cx = NULL;
 static Display *default_display;  /* display to use for default context */
+
+static void *(*p_glXGetProcAddressARB)(const GLubyte *);
 
 typedef struct wine_glcontext {
   HDC hdc;
@@ -315,6 +318,11 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
     return local_func;
   }
 
+  if (p_glXGetProcAddressARB == NULL) {
+    ERR("Warning : dynamic GL extension loading not supported by native GL library.");
+    return NULL;
+  }
+  
   /* After that, search in the thunks to find the real name of the extension */
   ext.name = (char *) lpszProc;
   ext_ret = (OpenGL_extension *) bsearch(&ext, extension_registry,
@@ -322,7 +330,10 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 
   if (ext_ret == NULL) {
     /* Some sanity checks :-) */
-    if (glXGetProcAddressARB(lpszProc) != NULL) {
+    ENTER_GL();
+    local_func = p_glXGetProcAddressARB(lpszProc);
+    LEAVE_GL();
+    if (local_func != NULL) {
       ERR("Extension %s defined in the OpenGL library but NOT in opengl_ext.c... Please report (lionel.ulmer@free.fr) !\n", lpszProc);
       return NULL;
     }
@@ -330,8 +341,12 @@ void* WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
     WARN("Did not find extension %s in either Wine or your OpenGL library.\n", lpszProc);
     return NULL;
   } else {
+    ENTER_GL();
+    local_func = p_glXGetProcAddressARB(ext_ret->glx_name);
+    LEAVE_GL();
+    
     /* After that, look at the extensions defined in the Linux OpenGL library */
-    if ((local_func = glXGetProcAddressARB(ext_ret->glx_name)) == NULL) {
+    if (local_func == NULL) {
       char buf[256];
       void *ret = NULL;
 
@@ -589,6 +604,12 @@ BOOL WINAPI wglUseFontOutlinesA(HDC hdc,
   return FALSE;
 }
 
+/* No need to load any other libraries as according to the ABI, libGL should be self-sufficient and
+   include all dependencies
+*/
+#ifndef SONAME_LIBGL
+#define SONAME_LIBGL "libGL.so"
+#endif
 
 /* This is for brain-dead applications that use OpenGL functions before even
    creating a rendering context.... */
@@ -602,6 +623,7 @@ static BOOL process_attach(void)
   XVisualInfo *vis = NULL;
   Window root = (Window)GetPropA( GetDesktopWindow(), "__wine_x11_whole_window" );
   HMODULE mod = GetModuleHandleA( "x11drv.dll" );
+  void *opengl_handle;
 
   if (!root || !mod)
   {
@@ -646,6 +668,12 @@ static BOOL process_attach(void)
   XFree(vis);
   LEAVE_GL();
 
+  opengl_handle = wine_dlopen(SONAME_LIBGL, RTLD_NOW|RTLD_GLOBAL, NULL, 0);
+  if (opengl_handle != NULL) {
+    p_glXGetProcAddressARB = wine_dlsym(opengl_handle, "glXGetProcAddressARB", NULL, 0);
+    wine_dlclose(opengl_handle, NULL, 0);
+  }
+  
   if (default_cx == NULL) {
     ERR("Could not create default context.\n");
   }
