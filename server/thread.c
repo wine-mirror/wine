@@ -511,7 +511,7 @@ int thread_queue_apc( struct thread *thread, void *func, void *param )
     thread->apc[thread->apc_count].func  = func;
     thread->apc[thread->apc_count].param = param;
     thread->apc_count++;
-    wake_thread( thread );
+    if (thread->wait) wake_thread( thread );
     return 1;
 }
 
