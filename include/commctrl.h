@@ -1238,6 +1238,12 @@ typedef struct
 #define NMTBDISPINFO WINELIB_NAME_AW(NMTBDISPINFO)
 #define LPNMTBDISPINFO WINELIB_NAME_AW(LPNMTBDISPINFO)
 
+/* contents of dwMask in the NMTBDISPINFO structure */
+#define TBNF_IMAGE     0x00000001
+#define TBNF_TEXT      0x00000002
+#define TBNF_DI_SETITEM  0x10000000
+
+
 typedef struct tagNMTOOLBARA
 {
     NMHDR    hdr;
