@@ -1294,9 +1294,8 @@ BOOL WINAPI CheckRadioButton( HWND hwndDlg, UINT firstID,
 {
     RADIOGROUP radioGroup;
 
-    /* perform bounds checking for a radio button group */
-    radioGroup.firstID = min(min(firstID, lastID), checkID);
-    radioGroup.lastID = max(max(firstID, lastID), checkID);
+    radioGroup.firstID = firstID;
+    radioGroup.lastID = lastID;
     radioGroup.checkID = checkID;
 
     return EnumChildWindows(hwndDlg, (WNDENUMPROC)CheckRB,
