@@ -158,6 +158,7 @@ typedef const void     *PCVOID;
 typedef CHAR           *PCHAR;
 typedef UCHAR          *PUCHAR;
 typedef BYTE           *PBYTE;
+typedef WORD           *PWORD;
 typedef ULONG          *PULONG;
 typedef LONG           *PLONG;
 typedef DWORD          *PDWORD;
