@@ -3277,10 +3277,10 @@ INT WINAPI GetMenuStringA(
     MENUITEM *item;
 
     TRACE("menu=%p item=%04x ptr=%p len=%d flags=%04x\n", hMenu, wItemID, str, nMaxSiz, wFlags );
+    if (str && nMaxSiz) str[0] = '\0';
     if (!(item = MENU_FindItem( &hMenu, &wItemID, wFlags ))) return 0;
     if (!IS_STRING_ITEM(item->fType)) return 0;
     if (!str || !nMaxSiz) return strlenW(item->text);
-    str[0] = '\0';
     if (!WideCharToMultiByte( CP_ACP, 0, item->text, -1, str, nMaxSiz, NULL, NULL ))
         str[nMaxSiz-1] = 0;
     TRACE("returning '%s'\n", str );
@@ -3297,10 +3297,10 @@ INT WINAPI GetMenuStringW( HMENU hMenu, UINT wItemID,
     MENUITEM *item;
 
     TRACE("menu=%p item=%04x ptr=%p len=%d flags=%04x\n", hMenu, wItemID, str, nMaxSiz, wFlags );
+    if (str && nMaxSiz) str[0] = '\0';
     if (!(item = MENU_FindItem( &hMenu, &wItemID, wFlags ))) return 0;
     if (!IS_STRING_ITEM(item->fType)) return 0;
     if (!str || !nMaxSiz) return strlenW(item->text);
-    str[0] = '\0';
     lstrcpynW( str, item->text, nMaxSiz );
     return strlenW(str);
 }
