@@ -2168,6 +2168,8 @@ TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONDOWN:
 	case WM_RBUTTONUP:
 	    infoPtr = TOOLTIPS_GetInfoPtr(lpttsi->hwndToolTip);
+		if (!infoPtr)
+			break;
 		nTool = TOOLTIPS_GetToolFromMessage (infoPtr, hwnd);
 
 		TRACE("subclassed mouse message %04x\n", uMsg);
@@ -2178,6 +2180,8 @@ TOOLTIPS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_MOUSEMOVE:
 	    infoPtr = TOOLTIPS_GetInfoPtr (lpttsi->hwndToolTip);
+		if (!infoPtr)
+			break;
 		nTool = TOOLTIPS_GetToolFromMessage (infoPtr, hwnd);
 
 		TRACE("subclassed WM_MOUSEMOVE\n");
