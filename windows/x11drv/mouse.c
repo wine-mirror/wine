@@ -21,7 +21,7 @@
 
 Cursor X11DRV_MOUSE_XCursor = None;    /* Current X cursor */
 
-static BOOL X11DRV_MOUSE_WarpPointer = FALSE;  /* hack; see DISPLAY_MoveCursor */
+static BOOL X11DRV_MOUSE_WarpPointer = TRUE;  /* hack; see DISPLAY_MoveCursor */
 
 /***********************************************************************
  *		X11DRV_MOUSE_DoSetCursor
