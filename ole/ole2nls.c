@@ -2659,10 +2659,10 @@ static INT OLE_GetFormatA(LCID locale,
 	 }
       } else if (  (count && (format[inpos] != type))
 		   || count == 4
-		   || (count == 2 && strchr("ghHmst", type)) )
-       {
-	    if         (type == 'd') {
-	       if        (count == 4) {
+		   || (count == 2 && strchr("ghHmst", type)) ) {
+	    if (type == 'h' && (tflags & TIME_FORCE24HOURFORMAT)) type= 'H';
+	    if (type == 'd') {
+	       if (count == 4) {
 		  GetLocaleInfoA(locale,
 				   LOCALE_SDAYNAME1
 				   + (xtime->wDayOfWeek+6)%7,
@@ -2717,15 +2717,17 @@ static INT OLE_GetFormatA(LCID locale,
 	    } else if ( type == 's') {
 	       sprintf(buf, dgfmt[count], xtime->wSecond);
 	    } else if (type == 't') {
-	       if        (count == 1) {
+               if ((tflags & TIME_NOTIMEMARKER))
+                  buf[0]='\0';
+               else if (count == 1) {
 		  sprintf(buf, "%c", (xtime->wHour < 12) ? 'A' : 'P');
-	       } else if (count == 2) {
-		  /* sprintf(buf, "%s", (xtime->wHour < 12) ? "AM" : "PM"); */
-		  GetLocaleInfoA(locale,
-				   (xtime->wHour<12) 
-				   ? LOCALE_S1159 : LOCALE_S2359,
-				   buf, sizeof(buf));
-	       }
+               } else if (count == 2) {
+                 /* sprintf(buf, "%s", (xtime->wHour < 12) ? "AM" : "PM"); */
+                  GetLocaleInfoA(locale,
+                           (xtime->wHour<12) 
+                           ? LOCALE_S1159 : LOCALE_S2359,
+                           buf, sizeof(buf));
+               }
 	    };
 
 	    /* we need to check the next char in the format string 
@@ -2787,8 +2789,7 @@ static INT OLE_GetFormatA(LCID locale,
    if (outpos > datelen-1) outpos = datelen-1;
    date[outpos] = '\0';
    
-   TRACE("OLE_GetFormatA returns string '%s', len %d\n",
-	       date, outpos);
+   TRACE("returns string '%s', len %d\n", date, outpos);
    return outpos;
 }
 
@@ -4173,12 +4174,6 @@ GetTimeFormatA(LCID locale,        /* [in]  */
 
   thislocale = OLE2NLS_CheckLocale ( locale );
 
-  if ( flags & (TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT ))
-  { FIXME("TIME_NOTIMEMARKER or TIME_FORCE24HOURFORMAT not implemented\n");
-  }
-  
-  flags &= (TIME_NOSECONDS | TIME_NOMINUTESORSECONDS); /* mask for OLE_GetFormatA*/
-
   if (format == NULL) 
   { if (flags & LOCALE_NOUSEROVERRIDE)  /*use system default*/
     { thislocale = GetSystemDefaultLCID();
@@ -4227,12 +4222,6 @@ GetTimeFormatW(LCID locale,        /* [in]  */
 	xtime,debugstr_w(format),timestr,timelen);
 
 	thislocale = OLE2NLS_CheckLocale ( locale );
-
-	if ( flags & (TIME_NOTIMEMARKER | TIME_FORCE24HOURFORMAT ))
-	{ FIXME("TIME_NOTIMEMARKER or TIME_FORCE24HOURFORMAT not implemented\n");
-	}
-  
-	flags &= (TIME_NOSECONDS | TIME_NOMINUTESORSECONDS); /* mask for OLE_GetFormatA*/
 
 	if (format == NULL) 
 	{ if (flags & LOCALE_NOUSEROVERRIDE)  /*use system default*/
