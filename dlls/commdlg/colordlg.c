@@ -18,7 +18,6 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"
 #include "dlgs.h"
@@ -835,7 +834,7 @@ static LONG CC_WMInitDialog( HWND hDlg, WPARAM wParam, LPARAM lParam, BOOL b16 )
        ch32->lStructSize = sizeof(CHOOSECOLORW);
        ch32->hwndOwner = ch16->hwndOwner; 
        ch32->hInstance = ch16->hInstance;
-       ch32->lpCustColors = PTR_SEG_TO_LIN(ch16->lpCustColors);
+       ch32->lpCustColors = MapSL(ch16->lpCustColors);
        ch32->lpfnHook = (LPCCHOOKPROC) ch16->lpfnHook; /* only used as flag */
        ch32->Flags = ch16->Flags;
    }
@@ -1071,7 +1070,7 @@ static LRESULT CC_WMCommand( HWND hDlg, WPARAM wParam, LPARAM lParam, WORD notif
                 }
                 if (lpp->lpcc16)
                 {
-                    BYTE *ptr = PTR_SEG_TO_LIN(lpp->lpcc16->lpCustColors);
+                    BYTE *ptr = MapSL(lpp->lpcc16->lpCustColors);
                     memcpy(ptr, lpp->lpcc->lpCustColors, sizeof(COLORREF)*16);
                     lpp->lpcc16->rgbResult = lpp->lpcc->rgbResult;
                 }
@@ -1370,7 +1369,7 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 lpChCol )
     {
         HANDLE16 hResInfo;
         if (!(hResInfo = FindResource16(lpChCol->hInstance,
-                                        PTR_SEG_TO_LIN(lpChCol->lpTemplateName),
+                                        MapSL(lpChCol->lpTemplateName),
                                         RT_DIALOGA)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);

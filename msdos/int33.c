@@ -64,7 +64,7 @@ void WINAPI INT_Int33Handler( CONTEXT86 *context )
   case 0x0C:
     TRACE("Define mouse interrupt subroutine\n");
     mouse_info.callmask = CX_reg(context);
-    mouse_info.callback = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR(context->SegEs, LOWORD(context->Edx));
+    mouse_info.callback = (FARPROC16)MAKESEGPTR(context->SegEs, LOWORD(context->Edx));
     break;
   case 0x10:
     FIXME("Define screen region for update\n");

@@ -21,7 +21,6 @@
 #include "wine/obj_base.h"
 #include "wine/obj_storage.h"
 #include "heap.h"
-#include "ldt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
@@ -1326,7 +1325,7 @@ HRESULT WINAPI IStorage16_fnCreateStorage(
 	if (grfMode & STGM_TRANSACTED)
 		FIXME("We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istorage16(ppstg);
-	lpstg = (IStorage16Impl*)PTR_SEG_TO_LIN(*ppstg);
+	lpstg = MapSL((SEGPTR)*ppstg);
 	lpstg->hf		= This->hf;
 
 	ppsent=STORAGE_get_free_pps_entry(lpstg->hf);
@@ -1383,7 +1382,7 @@ HRESULT WINAPI IStorage16_fnCreateStream(
 	if (grfMode & STGM_TRANSACTED)
 		FIXME("We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istream16(ppstm);
-	lpstr = (IStream16Impl*)PTR_SEG_TO_LIN(*ppstm);
+	lpstr = MapSL((SEGPTR)*ppstm);
         DuplicateHandle( GetCurrentProcess(), This->hf, GetCurrentProcess(),
                          &lpstr->hf, 0, TRUE, DUPLICATE_SAME_ACCESS );
 	lpstr->offset.s.LowPart	= 0;
@@ -1437,7 +1436,7 @@ HRESULT WINAPI IStorage16_fnOpenStorage(
 	if (grfMode & STGM_TRANSACTED)
 		FIXME("We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istorage16(ppstg);
-	lpstg = (IStream16Impl*)PTR_SEG_TO_LIN(*ppstg);
+	lpstg = MapSL((SEGPTR)*ppstg);
         DuplicateHandle( GetCurrentProcess(), This->hf, GetCurrentProcess(),
                          &lpstg->hf, 0, TRUE, DUPLICATE_SAME_ACCESS );
         MultiByteToWideChar( CP_ACP, 0, pwcsName, -1, name, sizeof(name)/sizeof(WCHAR));
@@ -1472,7 +1471,7 @@ HRESULT WINAPI IStorage16_fnOpenStream(
 	if (grfMode & STGM_TRANSACTED)
 		FIXME("We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istream16(ppstm);
-	lpstr = (IStream16Impl*)PTR_SEG_TO_LIN(*ppstm);
+	lpstr = MapSL((SEGPTR)*ppstm);
         DuplicateHandle( GetCurrentProcess(), This->hf, GetCurrentProcess(),
                          &lpstr->hf, 0, TRUE, DUPLICATE_SAME_ACCESS );
         MultiByteToWideChar( CP_ACP, 0, pwcsName, -1, name, sizeof(name)/sizeof(WCHAR));
@@ -1581,7 +1580,7 @@ HRESULT WINAPI StgCreateDocFile16(
 		WARN("couldn't open file for storage:%ld\n",GetLastError());
 		return E_FAIL;
 	}
-	lpstg = (IStorage16Impl*)PTR_SEG_TO_LIN(*ppstgOpen);
+	lpstg = MapSL((SEGPTR)*ppstgOpen);
 	lpstg->hf = hf;
 	/* FIXME: check for existance before overwriting? */
 	if (!STORAGE_init_storage(hf)) {
@@ -1678,7 +1677,7 @@ HRESULT WINAPI StgOpenStorage16(
 		WARN("Couldn't open file for storage\n");
 		return E_FAIL;
 	}
-	lpstg = (IStorage16Impl*)PTR_SEG_TO_LIN(*ppstgOpen);
+	lpstg = MapSL((SEGPTR)*ppstgOpen);
 	lpstg->hf = hf;
 
 	i=0;ret=0;

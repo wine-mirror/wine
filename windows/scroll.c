@@ -326,7 +326,7 @@ rc.left, rc.top, rc.right, rc.bottom, (UINT16)flags );
 	    WND* 	w;
 	    for( w =WIN_LockWndPtr(wnd->child); w; WIN_UpdateWndPtr(&w, w->next))
 	    {
-		 CONV_RECT16TO32( &w->rectWindow, &r );
+                r = w->rectWindow;
 	         if( !rect || IntersectRect(&r, &r, &rc) )
 		     SetWindowPos(w->hwndSelf, 0, w->rectWindow.left + dx,
 				    w->rectWindow.top  + dy, 0,0, SWP_NOZORDER |

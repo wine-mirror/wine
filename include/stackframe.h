@@ -9,9 +9,9 @@
 
 #include <string.h>
 
-#include "ldt.h"
 #include "thread.h"
 #include "winnt.h"
+#include "wine/winbase16.h"
 
 #include "pshpack1.h"
 
@@ -55,7 +55,7 @@ typedef struct _STACK16FRAME
 
 #include "poppack.h"
 
-#define THREAD_STACK16(teb)  ((STACK16FRAME*)PTR_SEG_TO_LIN((teb)->cur_stack))
+#define THREAD_STACK16(teb)  ((STACK16FRAME*)MapSL((teb)->cur_stack))
 #define CURRENT_STACK16      (THREAD_STACK16(NtCurrentTeb()))
 #define CURRENT_DS           (CURRENT_STACK16->ds)
 

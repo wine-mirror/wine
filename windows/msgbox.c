@@ -12,7 +12,6 @@
 #include "wine/winuser16.h"
 #include "dlgs.h"
 #include "heap.h"
-#include "ldt.h"
 #include "debugtools.h"
 #include "tweak.h"
 
@@ -349,10 +348,10 @@ INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
     msgbox32.cbSize		= msgbox->cbSize;
     msgbox32.hwndOwner		= msgbox->hwndOwner;
     msgbox32.hInstance		= msgbox->hInstance;
-    msgbox32.lpszText		= PTR_SEG_TO_LIN(msgbox->lpszText);
-    msgbox32.lpszCaption	= PTR_SEG_TO_LIN(msgbox->lpszCaption);
+    msgbox32.lpszText		= MapSL(msgbox->lpszText);
+    msgbox32.lpszCaption	= MapSL(msgbox->lpszCaption);
     msgbox32.dwStyle		= msgbox->dwStyle;
-    msgbox32.lpszIcon		= PTR_SEG_TO_LIN(msgbox->lpszIcon);
+    msgbox32.lpszIcon		= MapSL(msgbox->lpszIcon);
     msgbox32.dwContextHelpId	= msgbox->dwContextHelpId;
     msgbox32.lpfnMsgBoxCallback	= msgbox->lpfnMsgBoxCallback;
     msgbox32.dwLanguageId	= msgbox->dwLanguageId;

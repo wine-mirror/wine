@@ -16,7 +16,6 @@
 #include "heap.h"
 #include "file.h"
 #include "module.h"
-#include "selectors.h"
 #include "debugtools.h"
 #include "callback.h"
 #include "loadorder.h"
@@ -1748,15 +1747,14 @@ SEGPTR WINAPI HasGPHandler16( SEGPTR address )
          && (gpOrdinal = NE_GetOrdinal( hModule, "__GP" )) != 0
          && (gpPtr = (SEGPTR)NE_GetEntryPointEx( hModule, gpOrdinal, FALSE )) != 0
          && !IsBadReadPtr16( gpPtr, sizeof(GPHANDLERDEF) )
-         && (gpHandler = PTR_SEG_TO_LIN( gpPtr )) != NULL )
+         && (gpHandler = MapSL( gpPtr )) != NULL )
     {
         while (gpHandler->selector)
         {
             if (    SELECTOROF(address) == gpHandler->selector
                  && OFFSETOF(address)   >= gpHandler->rangeStart
                  && OFFSETOF(address)   <  gpHandler->rangeEnd  )
-                return PTR_SEG_OFF_TO_SEGPTR( gpHandler->selector,
-                                              gpHandler->handler );
+                return MAKESEGPTR( gpHandler->selector, gpHandler->handler );
             gpHandler++;
         }
     }

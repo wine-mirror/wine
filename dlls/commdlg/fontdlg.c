@@ -15,7 +15,6 @@
 #include "wingdi.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
-#include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"
 #include "dlgs.h"
@@ -64,13 +63,13 @@ static void CFn_CHOOSEFONT16to32A(LPCHOOSEFONT16 chf16, LPCHOOSEFONTA chf32a)
   chf32a->rgbColors=chf16->rgbColors;
   chf32a->lCustData=chf16->lCustData;
   chf32a->lpfnHook=NULL;
-  chf32a->lpTemplateName=PTR_SEG_TO_LIN(chf16->lpTemplateName);
+  chf32a->lpTemplateName=MapSL(chf16->lpTemplateName);
   chf32a->hInstance=chf16->hInstance;
-  chf32a->lpszStyle=PTR_SEG_TO_LIN(chf16->lpszStyle);
+  chf32a->lpszStyle=MapSL(chf16->lpszStyle);
   chf32a->nFontType=chf16->nFontType;
   chf32a->nSizeMax=chf16->nSizeMax;
   chf32a->nSizeMin=chf16->nSizeMin;
-  FONT_LogFont16To32A(PTR_SEG_TO_LIN(chf16->lpLogFont), chf32a->lpLogFont);
+  FONT_LogFont16To32A(MapSL(chf16->lpLogFont), chf32a->lpLogFont);
 }
 
 
@@ -108,7 +107,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     {
         HANDLE16 hResInfo;
         if (!(hResInfo = FindResource16( lpChFont->hInstance,
-                                         PTR_SEG_TO_LIN(lpChFont->lpTemplateName),
+                                         MapSL(lpChFont->lpTemplateName),
                                          RT_DIALOGA)))
         {
             COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
@@ -175,7 +174,7 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     lpChFont->lpTemplateName=lpTemplateName;
 
 
-    font16 = PTR_SEG_TO_LIN(lpChFont->lpLogFont);
+    font16 = MapSL(lpChFont->lpLogFont);
     font16->lfHeight = cf32a.lpLogFont->lfHeight;
     font16->lfWidth = cf32a.lpLogFont->lfWidth;
     font16->lfEscapement = cf32a.lpLogFont->lfEscapement;
@@ -361,7 +360,7 @@ INT16 WINAPI FontFamilyEnumProc16( SEGPTR logfont, SEGPTR metrics,
   HWND16 hwnd=LOWORD(lParam);
   HWND hDlg=GetParent(hwnd);
   LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLongA(hDlg, DWL_USER); 
-  LOGFONT16 *lplf = (LOGFONT16 *)PTR_SEG_TO_LIN( logfont );
+  LOGFONT16 *lplf = MapSL( logfont );
   LOGFONTA lf32a;
   FONT_LogFont16To32A(lplf, &lf32a);
   return AddFontFamily(&lf32a, nFontType, (LPCHOOSEFONTA)lpcf->lpTemplateName,
@@ -493,7 +492,7 @@ INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics,
   HWND16 hcmb3=HIWORD(lParam);
   HWND hDlg=GetParent(hcmb3);
   LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLongA(hDlg, DWL_USER); 
-  LOGFONT16 *lplf = (LOGFONT16 *)PTR_SEG_TO_LIN(logfont);
+  LOGFONT16 *lplf = MapSL(logfont);
   LOGFONTA lf32a;
   FONT_LogFont16To32A(lplf, &lf32a);
   return AddFontStyle(&lf32a, nFontType, (LPCHOOSEFONTA)lpcf->lpTemplateName,
@@ -952,7 +951,7 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
     {
     case WM_MEASUREITEM:
         {
-            MEASUREITEMSTRUCT16* mis16 = (MEASUREITEMSTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+            MEASUREITEMSTRUCT16* mis16 = MapSL(lParam);
             MEASUREITEMSTRUCT mis;
             mis.CtlType    = mis16->CtlType;
             mis.CtlID      = mis16->CtlID;
@@ -967,7 +966,7 @@ LRESULT WINAPI FormatCharDlgProc16(HWND16 hDlg, UINT16 message, WPARAM16 wParam,
         break;
     case WM_DRAWITEM:
         {
-            DRAWITEMSTRUCT16* dis16 = (DRAWITEMSTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+            DRAWITEMSTRUCT16* dis16 = MapSL(lParam);
             DRAWITEMSTRUCT dis;
             dis.CtlType    = dis16->CtlType;
             dis.CtlID      = dis16->CtlID;

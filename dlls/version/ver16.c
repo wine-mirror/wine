@@ -7,7 +7,6 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "winver.h"
-#include "ldt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ver);
@@ -82,7 +81,7 @@ DWORD WINAPI VerLanguageName16( UINT16 uLang, LPSTR lpszLang, UINT16 cbLang )
 DWORD WINAPI VerQueryValue16( SEGPTR spvBlock, LPCSTR lpszSubBlock, 
                               SEGPTR *lpspBuffer, UINT16 *lpcb )
 {
-    LPVOID lpvBlock = PTR_SEG_TO_LIN( spvBlock );
+    LPVOID lpvBlock = MapSL( spvBlock );
     LPVOID buffer = lpvBlock;
     UINT buflen;
     DWORD retv;

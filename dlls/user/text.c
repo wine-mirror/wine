@@ -15,7 +15,6 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "cache.h"
-#include "ldt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(text);
@@ -492,7 +491,7 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
     	else if(_32bit)
     	    slen = strlen((LPCSTR)lp);
     	else
-    	    slen = strlen((LPCSTR)PTR_SEG_TO_LIN(lp));
+    	    slen = strlen(MapSL(lp));
     }
 
     if((cx == 0 || cy == 0) && slen != -1)
@@ -503,7 +502,7 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
         else if(_32bit)
             GetTextExtentPoint32A(hdc, (LPCSTR)lp, slen, &s);
         else
-            GetTextExtentPoint32A(hdc, (LPCSTR)PTR_SEG_TO_LIN(lp), slen, &s);
+            GetTextExtentPoint32A(hdc, MapSL(lp), slen, &s);
         if(cx == 0) cx = s.cx;
         if(cy == 0) cy = s.cy;
     }
@@ -531,7 +530,7 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
         else if(_32bit)
             TextOutA(memdc, 0, 0, (LPCSTR)lp, slen);
         else
-            TextOutA(memdc, 0, 0, (LPCSTR)PTR_SEG_TO_LIN(lp), slen);
+            TextOutA(memdc, 0, 0, MapSL(lp), slen);
     }
 
     SelectObject(memdc, hfsave);

@@ -1983,12 +1983,12 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 	/* Combo messages */
 
 	case CB_ADDSTRING16:
-		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)MapSL(lParam);
 	case CB_ADDSTRING:
 		return  SendMessageA( lphc->hWndLBox, LB_ADDSTRING, 0, lParam);
 	case CB_INSERTSTRING16:
 		wParam = (INT)(INT16)wParam;
-		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)MapSL(lParam);
 	case CB_INSERTSTRING:
 		return  SendMessageA( lphc->hWndLBox, LB_INSERTSTRING, wParam, lParam);
 	case CB_DELETESTRING16:
@@ -1996,17 +1996,17 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 		return  SendMessageA( lphc->hWndLBox, LB_DELETESTRING, wParam, 0);
 	case CB_SELECTSTRING16:
 		wParam = (INT)(INT16)wParam;
-		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)MapSL(lParam);
 	case CB_SELECTSTRING:
 		return  COMBO_SelectString( lphc, (INT)wParam, (LPSTR)lParam );
 	case CB_FINDSTRING16:
 		wParam = (INT)(INT16)wParam;
-		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)MapSL(lParam);
 	case CB_FINDSTRING:
 		return  SendMessageA( lphc->hWndLBox, LB_FINDSTRING, wParam, lParam);
 	case CB_FINDSTRINGEXACT16:
 		wParam = (INT)(INT16)wParam;
-		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+		if( CB_HASSTRINGS(lphc) ) lParam = (LPARAM)MapSL(lParam);
 	case CB_FINDSTRINGEXACT:
 		return  SendMessageA( lphc->hWndLBox, LB_FINDSTRINGEXACT, 
 						       wParam, lParam );
@@ -2049,7 +2049,7 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 		    (INT)wParam < 32768 ) lphc->droppedWidth = (INT)wParam;
 		return  CB_ERR;
 	case CB_GETDROPPEDCONTROLRECT16:
-		lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+		lParam = (LPARAM)MapSL(lParam);
 		if( lParam ) 
 		{
 		    RECT	r;
@@ -2064,7 +2064,7 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 	case CB_GETDROPPEDSTATE:
 		return  (lphc->wState & CBF_DROPPED) ? TRUE : FALSE;
 	case CB_DIR16: 
-                lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+                lParam = (LPARAM)MapSL(lParam);
                 /* fall through */
 	case CB_DIR:
 		return  COMBO_Directory( lphc, (UINT)wParam, 
@@ -2107,7 +2107,7 @@ static inline LRESULT WINAPI ComboWndProc_locked( WND* pWnd, UINT message,
 	        return  lParam;
 	case CB_GETLBTEXT16: 
 		wParam = (INT)(INT16)wParam;
-		lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+		lParam = (LPARAM)MapSL(lParam);
 	case CB_GETLBTEXT:
 		return  SendMessageA( lphc->hWndLBox, LB_GETTEXT, wParam, lParam);
 	case CB_GETLBTEXTLEN16: 

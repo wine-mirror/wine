@@ -40,7 +40,6 @@
 #include "palette.h"
 #include "bitmap.h"
 #include "cursoricon.h"
-#include "global.h"
 #include "module.h"
 #include "debugtools.h"
 #include "task.h"
@@ -81,6 +80,35 @@ typedef struct tagICONCACHE
 static ICONCACHE *IconAnchor = NULL;
 static CRITICAL_SECTION IconCrst = CRITICAL_SECTION_INIT;
 static WORD ICON_HOTSPOT = 0x4242;
+
+
+/***********************************************************************
+ *             map_fileW
+ *
+ * Helper function to map a file to memory:
+ *  name			-	file name 
+ *  [RETURN] ptr		-	pointer to mapped file
+ */
+static void *map_fileW( LPCWSTR name )
+{
+    HANDLE hFile, hMapping;
+    LPVOID ptr = NULL;
+
+    hFile = CreateFileW( name, GENERIC_READ, FILE_SHARE_READ, NULL,
+                         OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, 0 );
+    if (hFile != INVALID_HANDLE_VALUE)
+    {
+        hMapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
+        CloseHandle( hFile );
+        if (hMapping)
+        {
+            ptr = MapViewOfFile( hMapping, FILE_MAP_READ, 0, 0, 0 );
+            CloseHandle( hMapping );
+        }
+    }
+    return ptr;
+}
+
 
 /**********************************************************************
  *	    CURSORICON_FindSharedIcon
@@ -342,7 +370,7 @@ BOOL CURSORICON_SimulateLoadingFromResourceW( LPWSTR filename, BOOL fCursor,
 
     *res = NULL;
     *ptr = NULL;
-    if (!(bits = (CURSORICONFILEDIR *)VIRTUAL_MapFileW( filename ))) return FALSE;
+    if (!(bits = map_fileW( filename ))) return FALSE;
 
     /* FIXME: test for inimated icons
      * hack to load the first icon from the *.ani file
@@ -1351,7 +1379,7 @@ DWORD WINAPI IconSize16( void )
 DWORD WINAPI DumpIcon16( SEGPTR pInfo, WORD *lpLen,
                        SEGPTR *lpXorBits, SEGPTR *lpAndBits )
 {
-    CURSORICONINFO *info = PTR_SEG_TO_LIN( pInfo );
+    CURSORICONINFO *info = MapSL( pInfo );
     int sizeAnd, sizeXor;
 
     if (!info) return 0;
@@ -2103,7 +2131,7 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
     }
     else
     {
-        if (!(ptr = (char *)VIRTUAL_MapFileW( name ))) return 0;
+        if (!(ptr = map_fileW( name ))) return 0;
         info = (BITMAPINFO *)(ptr + sizeof(BITMAPFILEHEADER));
     }
     size = DIB_BitmapInfoSize(info, DIB_RGB_COLORS);

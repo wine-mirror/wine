@@ -25,7 +25,6 @@
 #include "windef.h"
 #include "wine/winbase16.h"
 #include "heap.h"
-#include "selectors.h"
 #include "mmsystem.h"
 #include "debugtools.h"
 #include "winemm.h"
@@ -383,11 +382,11 @@ static LRESULT	MMIO_UnMap32To16(DWORD wMsg, LPARAM lParam1, LPARAM lParam2,
 	/* nothing to do */
 	break;
     case MMIOM_READ:
-	memcpy((void*)lParam1, PTR_SEG_TO_LIN(lp1), lp2);
+	memcpy((void*)lParam1, MapSL(lp1), lp2);
 	/* fall thru */
     case MMIOM_WRITE:
     case MMIOM_WRITEFLUSH:
-	if (!SEGPTR_FREE(PTR_SEG_TO_LIN(lp1))) {
+	if (!SEGPTR_FREE(MapSL(lp1))) {
 	    FIXME("bad free line=%d\n", __LINE__);
 	} 
 	break;
@@ -420,7 +419,7 @@ static	SEGPTR	MMIO_GenerateInfoForIOProc(const WINE_MMIO* wm)
  */
 static	LRESULT MMIO_UpdateInfoForIOProc(WINE_MMIO* wm, SEGPTR segmmioInfo16)
 {
-    MMIOINFO16* mmioInfo16 = PTR_SEG_TO_LIN(segmmioInfo16);
+    MMIOINFO16* mmioInfo16 = MapSL(segmmioInfo16);
 
     wm->info.lDiskOffset = mmioInfo16->lDiskOffset;
     wm->info.adwInfo[0]  = mmioInfo16->adwInfo[0];
@@ -672,7 +671,7 @@ static	UINT	MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
 	    wm->info.pchBuffer = pchBuffer;
 	    wm->buffer16 = 0;
 	} else {
-	    wm->info.pchBuffer = PTR_SEG_TO_LIN(pchBuffer);
+	    wm->info.pchBuffer = MapSL((SEGPTR)pchBuffer);
 	    wm->buffer16 = (SEGPTR)pchBuffer;
 	}
 	wm->hMem = 0;
@@ -698,7 +697,7 @@ static	UINT	MMIO_SetBuffer(WINE_MMIO* wm, void* pchBuffer, LONG cchBuffer,
 
     if (wm->hMem) {
 	wm->buffer16 = WIN16_GlobalLock16(wm->hMem);
-	wm->info.pchBuffer = (void*)PTR_SEG_TO_LIN((void*)wm->buffer16);
+	wm->info.pchBuffer = MapSL(wm->buffer16);
     }
 
     wm->info.cchBuffer = cchBuffer;
@@ -1181,7 +1180,7 @@ UINT16 WINAPI mmioSetInfo16(HMMIO16 hmmio, const MMIOINFO16* lpmmioinfo, UINT16 
 
     /* check if seg and lin buffers are the same */
     if (wm->info.cchBuffer != lpmmioinfo->cchBuffer ||
-	wm->info.pchBuffer != PTR_SEG_TO_LIN((void*)wm->buffer16))
+	wm->info.pchBuffer != MapSL(wm->buffer16))
 	return MMSYSERR_INVALPARAM;
 	
     /* check pointers coherence */

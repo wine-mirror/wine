@@ -26,7 +26,6 @@
 #include "wine/winuser16.h"
 #include "heap.h"
 #include "winemm.h"
-#include "selectors.h"
 #include "debugtools.h"
 #include "ntddk.h"
 
@@ -673,7 +672,7 @@ BOOL WINAPI DriverCallback(DWORD dwCallBack, UINT uFlags, HDRVR hDev,
 	 * which dwSignalCount has to be incremented
 	 */
 	{
-	    WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(LOWORD(dwCallBack), 0);
+	    WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(LOWORD(dwCallBack), 0) );
 
 	    TRACE("mmThread (%04x, %p) !\n", LOWORD(dwCallBack), lpMMThd);
 	    /* same as mmThreadSignal16 */
@@ -1016,7 +1015,7 @@ UINT16 WINAPI mixerGetControlDetails16(HMIXEROBJ16 hmix,
 	return MMSYSERR_INVALPARAM;
 
     sppaDetails = (SEGPTR)lpmcd->paDetails;
-    lpmcd->paDetails = PTR_SEG_TO_LIN(sppaDetails);
+    lpmcd->paDetails = MapSL(sppaDetails);
     ret = mixerGetControlDetailsA(hmix, (LPMIXERCONTROLDETAILS)lpmcd, fdwDetails);
     lpmcd->paDetails = (LPVOID)sppaDetails;
 
@@ -1139,7 +1138,7 @@ UINT16 WINAPI mixerGetLineControls16(HMIXEROBJ16 hmix,
 	lpmlc16->u.dwControlType = mlcA.u.dwControlType;
 	lpmlc16->cControls = mlcA.cControls;
 	
-	lpmc16 = PTR_SEG_TO_LIN(lpmlc16->pamxctrl);
+	lpmc16 = MapSL(lpmlc16->pamxctrl);
 	
 	for (i = 0; i < mlcA.cControls; i++) {
 	    lpmc16[i].cbStruct = sizeof(MIXERCONTROL16);
@@ -1507,9 +1506,9 @@ DWORD WINAPI auxOutMessage16(UINT16 uDeviceID, UINT16 uMessage, DWORD dw1, DWORD
 	/* no argument conversion needed */
 	break;
     case AUXDM_GETVOLUME:
-	return auxGetVolume16(uDeviceID, (LPDWORD)PTR_SEG_TO_LIN(dw1));
+	return auxGetVolume16(uDeviceID, MapSL(dw1));
     case AUXDM_GETDEVCAPS:
-	return auxGetDevCaps16(uDeviceID, (LPAUXCAPS16)PTR_SEG_TO_LIN(dw1), dw2);
+	return auxGetDevCaps16(uDeviceID, MapSL(dw1), dw2);
     default:
 	TRACE("(%04x, %04x, %08lx, %08lx): unhandled message\n",
 	      uDeviceID, uMessage, dw1, dw2);
@@ -2194,17 +2193,17 @@ UINT WINAPI midiOutPrepareHeader(HMIDIOUT hMidiOut,
  * 				midiOutPrepareHeader	[MMSYSTEM.206]
  */
 UINT16 WINAPI midiOutPrepareHeader16(HMIDIOUT16 hMidiOut,         /* [in] */
-                                     LPMIDIHDR16 lpsegMidiOutHdr, /* [???] NOTE: SEGPTR */
+                                     SEGPTR lpsegMidiOutHdr,      /* [???] */
 				     UINT16 uSize)                /* [in] */
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04X, %p, %d)\n", hMidiOut, lpsegMidiOutHdr, uSize);
+    TRACE("(%04X, %08lx, %d)\n", hMidiOut, lpsegMidiOutHdr, uSize);
 
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
 
-    return MMDRV_Message(wmld, MODM_PREPARE, (DWORD)lpsegMidiOutHdr, uSize, FALSE);
+    return MMDRV_Message(wmld, MODM_PREPARE, lpsegMidiOutHdr, uSize, FALSE);
 }
 
 /**************************************************************************
@@ -2231,13 +2230,13 @@ UINT WINAPI midiOutUnprepareHeader(HMIDIOUT hMidiOut,
  * 				midiOutUnprepareHeader	[MMSYSTEM.207]
  */
 UINT16 WINAPI midiOutUnprepareHeader16(HMIDIOUT16 hMidiOut,         /* [in] */
-				       LPMIDIHDR16 lpsegMidiOutHdr, /* [???] NOTE: SEGPTR */
+				       SEGPTR lpsegMidiOutHdr,      /* [???] */
 				       UINT16 uSize)                /* [in] */
 {
     LPWINE_MLD		wmld;
-    LPMIDIHDR16		lpMidiOutHdr = PTR_SEG_TO_LIN(lpsegMidiOutHdr);
+    LPMIDIHDR16		lpMidiOutHdr = MapSL(lpsegMidiOutHdr);
 
-    TRACE("(%04X, %p, %d)\n", hMidiOut, lpsegMidiOutHdr, uSize);
+    TRACE("(%04X, %08lx, %d)\n", hMidiOut, lpsegMidiOutHdr, uSize);
 
     if (!(lpMidiOutHdr->dwFlags & MHDR_PREPARED)) {
 	return MMSYSERR_NOERROR;
@@ -2489,14 +2488,14 @@ DWORD WINAPI midiOutMessage16(HMIDIOUT16 hMidiOut, UINT16 uMessage,
 	return MMSYSERR_NOTSUPPORTED;
 
     case MODM_GETVOLUME:
-        return midiOutGetVolume16(hMidiOut, (LPDWORD)PTR_SEG_TO_LIN(dwParam1));
+        return midiOutGetVolume16(hMidiOut, MapSL(dwParam1));
     case MODM_LONGDATA:
-        return midiOutLongMsg16(hMidiOut, (LPMIDIHDR16)PTR_SEG_TO_LIN(dwParam1), dwParam2);
+        return midiOutLongMsg16(hMidiOut, MapSL(dwParam1), dwParam2);
     case MODM_PREPARE:
         /* lpMidiOutHdr is still a segmented pointer for this function */
-        return midiOutPrepareHeader16(hMidiOut, (LPMIDIHDR16)dwParam1, dwParam2);
+        return midiOutPrepareHeader16(hMidiOut, dwParam1, dwParam2);
     case MODM_UNPREPARE:
-        return midiOutUnprepareHeader16(hMidiOut, (LPMIDIHDR16)PTR_SEG_TO_LIN(dwParam1), dwParam2);	
+        return midiOutUnprepareHeader16(hMidiOut, dwParam1, dwParam2);
     }
     return MMDRV_Message(wmld, uMessage, dwParam1, dwParam2, TRUE);
 }
@@ -2707,12 +2706,12 @@ UINT WINAPI midiInPrepareHeader(HMIDIIN hMidiIn,
  * 				midiInPrepareHeader	[MMSYSTEM.306]
  */
 UINT16 WINAPI midiInPrepareHeader16(HMIDIIN16 hMidiIn,         /* [in] */
-                                    MIDIHDR16* lpsegMidiInHdr, /* [???] NOTE: SEGPTR */
+                                    SEGPTR lpsegMidiInHdr,     /* [???] */
 				    UINT16 uSize)              /* [in] */
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04X, %p, %d)\n", hMidiIn, lpsegMidiInHdr, uSize);
+    TRACE("(%04X, %08lx, %d)\n", hMidiIn, lpsegMidiInHdr, uSize);
 
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL) 
 	return MMSYSERR_INVALHANDLE;
@@ -2744,13 +2743,13 @@ UINT WINAPI midiInUnprepareHeader(HMIDIIN hMidiIn,
  * 				midiInUnprepareHeader	[MMSYSTEM.307]
  */
 UINT16 WINAPI midiInUnprepareHeader16(HMIDIIN16 hMidiIn,         /* [in] */
-                                      MIDIHDR16* lpsegMidiInHdr, /* [???] NOTE: SEGPTR */
+                                      SEGPTR lpsegMidiInHdr,     /* [???] */
 				      UINT16 uSize)              /* [in] */
 {
     LPWINE_MLD		wmld;
-    LPMIDIHDR16		lpMidiInHdr = PTR_SEG_TO_LIN(lpsegMidiInHdr);
+    LPMIDIHDR16		lpMidiInHdr = MapSL(lpsegMidiInHdr);
 
-    TRACE("(%04X, %p, %d)\n", hMidiIn, lpsegMidiInHdr, uSize);
+    TRACE("(%04X, %08lx, %d)\n", hMidiIn, lpsegMidiInHdr, uSize);
 
     if (!(lpMidiInHdr->dwFlags & MHDR_PREPARED)) {
 	return MMSYSERR_NOERROR;
@@ -2941,13 +2940,13 @@ DWORD WINAPI midiInMessage16(HMIDIIN16 hMidiIn, UINT16 uMessage,
 	return MMSYSERR_NOTSUPPORTED;
 
     case MIDM_GETDEVCAPS:
-        return midiInGetDevCaps16(hMidiIn, (LPMIDIINCAPS16)PTR_SEG_TO_LIN(dwParam1), dwParam2);
+        return midiInGetDevCaps16(hMidiIn, MapSL(dwParam1), dwParam2);
     case MIDM_PREPARE:
-        return midiInPrepareHeader16(hMidiIn, (LPMIDIHDR16)PTR_SEG_TO_LIN(dwParam1), dwParam2);
+        return midiInPrepareHeader16(hMidiIn, dwParam1, dwParam2);
     case MIDM_UNPREPARE:
-        return midiInUnprepareHeader16(hMidiIn, (LPMIDIHDR16)PTR_SEG_TO_LIN(dwParam1), dwParam2);
+        return midiInUnprepareHeader16(hMidiIn, dwParam1, dwParam2);
     case MIDM_ADDBUFFER:
-        return midiInAddBuffer16(hMidiIn, (LPMIDIHDR16)PTR_SEG_TO_LIN(dwParam1), dwParam2);    
+        return midiInAddBuffer16(hMidiIn, MapSL(dwParam1), dwParam2);
     }
 
     if ((wmld = MMDRV_Get(hMidiIn, MMDRV_MIDIIN, FALSE)) == NULL) 
@@ -3908,13 +3907,13 @@ UINT WINAPI waveOutPrepareHeader(HWAVEOUT hWaveOut,
  * 				waveOutPrepareHeader	[MMSYSTEM.406]
  */
 UINT16 WINAPI waveOutPrepareHeader16(HWAVEOUT16 hWaveOut,      /* [in] */
-                                     WAVEHDR* lpsegWaveOutHdr, /* [???] NOTE: SEGPTR */
+                                     SEGPTR lpsegWaveOutHdr,   /* [???] */
 				     UINT16 uSize)             /* [in] */
 {
     LPWINE_MLD		wmld;
-    LPWAVEHDR		lpWaveOutHdr = (LPWAVEHDR)PTR_SEG_TO_LIN(lpsegWaveOutHdr);
+    LPWAVEHDR		lpWaveOutHdr = MapSL(lpsegWaveOutHdr);
     
-    TRACE("(%04X, %p, %u);\n", hWaveOut, lpsegWaveOutHdr, uSize);
+    TRACE("(%04X, %08lx, %u);\n", hWaveOut, lpsegWaveOutHdr, uSize);
 
     if (lpWaveOutHdr == NULL) return MMSYSERR_INVALPARAM;
 
@@ -3948,13 +3947,13 @@ UINT WINAPI waveOutUnprepareHeader(HWAVEOUT hWaveOut,
  * 				waveOutUnprepareHeader	[MMSYSTEM.407]
  */
 UINT16 WINAPI waveOutUnprepareHeader16(HWAVEOUT16 hWaveOut,       /* [in] */
-				       LPWAVEHDR lpsegWaveOutHdr, /* [???] NOTE: SEGPTR */
+				       SEGPTR lpsegWaveOutHdr,    /* [???] */
 				       UINT16 uSize)              /* [in] */
 {
     LPWINE_MLD		wmld;
-    LPWAVEHDR		lpWaveOutHdr = (LPWAVEHDR)PTR_SEG_TO_LIN(lpsegWaveOutHdr);
+    LPWAVEHDR		lpWaveOutHdr = MapSL(lpsegWaveOutHdr);
     
-    TRACE("(%04X, %p, %u);\n", hWaveOut, lpsegWaveOutHdr, uSize);
+    TRACE("(%04X, %08lx, %u);\n", hWaveOut, lpsegWaveOutHdr, uSize);
 
     if (!(lpWaveOutHdr->dwFlags & WHDR_PREPARED)) {
 	return MMSYSERR_NOERROR;
@@ -4549,11 +4548,11 @@ UINT WINAPI waveInPrepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
  * 				waveInPrepareHeader		[MMSYSTEM.506]
  */
 UINT16 WINAPI waveInPrepareHeader16(HWAVEIN16 hWaveIn,       /* [in] */
-				    WAVEHDR* lpsegWaveInHdr, /* [???] NOTE: SEGPTR */
+				    SEGPTR lpsegWaveInHdr,   /* [???] */
 				    UINT16 uSize)            /* [in] */
 {
     LPWINE_MLD		wmld;
-    LPWAVEHDR		lpWaveInHdr = (LPWAVEHDR)PTR_SEG_TO_LIN(lpsegWaveInHdr);
+    LPWAVEHDR		lpWaveInHdr = MapSL(lpsegWaveInHdr);
     UINT16		ret;
     
     TRACE("(%04X, %p, %u);\n", hWaveIn, lpWaveInHdr, uSize);
@@ -4593,13 +4592,13 @@ UINT WINAPI waveInUnprepareHeader(HWAVEIN hWaveIn, WAVEHDR* lpWaveInHdr,
  * 				waveInUnprepareHeader	[MMSYSTEM.507]
  */
 UINT16 WINAPI waveInUnprepareHeader16(HWAVEIN16 hWaveIn,       /* [in] */  
-				      WAVEHDR* lpsegWaveInHdr, /* [???] NOTE: SEGPTR */
+				      SEGPTR lpsegWaveInHdr,   /* [???] */
 				      UINT16 uSize)            /* [in] */
 {
     LPWINE_MLD		wmld;
-    LPWAVEHDR		lpWaveInHdr = (LPWAVEHDR)PTR_SEG_TO_LIN(lpsegWaveInHdr);
+    LPWAVEHDR		lpWaveInHdr = MapSL(lpsegWaveInHdr);
     
-    TRACE("(%04X, %p, %u);\n", hWaveIn, lpsegWaveInHdr, uSize);
+    TRACE("(%04X, %08lx, %u);\n", hWaveIn, lpsegWaveInHdr, uSize);
 
     if (lpWaveInHdr == NULL) return MMSYSERR_INVALPARAM;
 
@@ -4912,7 +4911,7 @@ void	mmTaskEntryPoint16(LPSTR cmdLine, WORD di, WORD si)
     int	len = cmdLine[0x80];
 
     if (len / 2 == 6) {
-	void	(*fpProc)(DWORD) = (void (*)(DWORD))PTR_SEG_TO_LIN(*((DWORD*)(cmdLine + 1)));
+	void	(*fpProc)(DWORD) = MapSL(*((DWORD*)(cmdLine + 1)));
 	DWORD	dwPmt  = *((DWORD*)(cmdLine + 5));
 
 #if 0
@@ -4995,7 +4994,7 @@ LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD d
     if (hndl == 0) {
 	ret = 2;
     } else {
-	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+	WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
 
 #if 0
 	/* force mmtask routines even if mmthread is required */
@@ -5048,7 +5047,7 @@ LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE lpHndl, DWORD d
 	     */
 	    FARPROC16	fp = GetProcAddress16(GetModuleHandle16("MMSYSTEM"), (LPCSTR)2047);
 
-	    TRACE("farproc seg=0x%08lx lin=%p\n", (DWORD)fp, PTR_SEG_TO_LIN(fp));
+	    TRACE("farproc seg=0x%08lx lin=%p\n", (DWORD)fp, MapSL((SEGPTR)fp));
 
 	    ret = (fp == 0) ? 2 : mmTaskCreate16((DWORD)fp, 0, hndl);
 	}
@@ -5083,7 +5082,7 @@ void WINAPI mmThreadSignal16(HANDLE16 hndl)
     TRACE("(%04x)!\n", hndl);
 
     if (hndl) {
-	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+	WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
 
 	lpMMThd->dwCounter++;
 	if (lpMMThd->hThread != 0) {
@@ -5142,7 +5141,7 @@ void	WINAPI mmThreadBlock16(HANDLE16 hndl)
     TRACE("(%04x)!\n", hndl);
 
     if (hndl) {
-	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+	WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
 	
 	if (lpMMThd->hThread != 0) {
 	    DWORD	lc;
@@ -5167,7 +5166,7 @@ BOOL16	WINAPI mmThreadIsCurrent16(HANDLE16 hndl)
     TRACE("(%04x)!\n", hndl);
 
     if (hndl && mmThreadIsValid16(hndl)) {
-	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+	WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
 	ret = (GetCurrentThreadId() == lpMMThd->dwThreadID);
     }
     TRACE("=> %d\n", ret);
@@ -5184,7 +5183,7 @@ BOOL16	WINAPI	mmThreadIsValid16(HANDLE16 hndl)
     TRACE("(%04x)!\n", hndl);
 
     if (hndl) {
-	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+	WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
 
 	if (!IsBadWritePtr(lpMMThd, sizeof(WINE_MMTHREAD)) &&
 	    lpMMThd->dwSignature == WINE_MMTHREAD_CREATED &&
@@ -5216,7 +5215,7 @@ HANDLE16 WINAPI mmThreadGetTask16(HANDLE16 hndl)
     TRACE("(%04x)\n", hndl);
 
     if (mmThreadIsValid16(hndl)) {
-	WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+	WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
 	ret = lpMMThd->hTask;
     }
     return ret;
@@ -5232,7 +5231,7 @@ extern LONG CALLBACK MMSYSTEM_CallTo16_long_l    (FARPROC16,LONG);
 void WINAPI WINE_mmThreadEntryPoint(DWORD _pmt)
 {
     HANDLE16		hndl = (HANDLE16)_pmt;
-    WINE_MMTHREAD*	lpMMThd = (WINE_MMTHREAD*)PTR_SEG_OFF_TO_LIN(hndl, 0);
+    WINE_MMTHREAD*	lpMMThd = MapSL( MAKESEGPTR(hndl, 0) );
 
     TRACE("(%04x %p)\n", hndl, lpMMThd);
 

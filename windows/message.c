@@ -23,7 +23,6 @@
 #include "queue.h"
 #include "winproc.h"
 #include "task.h"
-#include "selectors.h"
 #include "thread.h"
 #include "options.h"
 #include "controls.h"
@@ -1386,7 +1385,7 @@ BOOL16 WINAPI PeekMessage32_16( SEGPTR msg16_32, HWND16 hwnd,
                                 BOOL16 wHaveParamHigh )
 {
     BOOL ret;
-    MSG32_16 *lpmsg16_32 = (MSG32_16 *)PTR_SEG_TO_LIN(msg16_32);
+    MSG32_16 *lpmsg16_32 = MapSL(msg16_32);
     MSG msg;
 
     ret = MSG_PeekMessage( QMSG_WIN16, &msg, hwnd, first, last, flags, TRUE );
@@ -1479,7 +1478,7 @@ BOOL WINAPI PeekMessageW(
 BOOL16 WINAPI GetMessage32_16( SEGPTR msg16_32, HWND16 hWnd, UINT16 first,
                                UINT16 last, BOOL16 wHaveParamHigh )
 {
-    MSG32_16 *lpmsg16_32 = (MSG32_16 *)PTR_SEG_TO_LIN(msg16_32);
+    MSG32_16 *lpmsg16_32 = MapSL(msg16_32);
     MSG msg;
 
     MSG_PeekMessage( QMSG_WIN16, &msg, hWnd, first, last, PM_REMOVE, FALSE );

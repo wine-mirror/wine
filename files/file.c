@@ -38,10 +38,8 @@
 #include "wine/port.h"
 #include "drive.h"
 #include "file.h"
-#include "global.h"
 #include "heap.h"
 #include "msdos.h"
-#include "ldt.h"
 #include "task.h"
 #include "wincon.h"
 #include "debugtools.h"
@@ -1137,7 +1135,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     while ((result = read( unix_handle, buffer, bytesToRead )) == -1)
     {
         if ((errno == EAGAIN) || (errno == EINTR)) continue;
-        if ((errno == EFAULT) && !VIRTUAL_HandleFault( buffer )) continue;
+        if ((errno == EFAULT) && !IsBadWritePtr( buffer, bytesToRead )) continue;
         FILE_SetDosError();
         break;
     }
@@ -1171,7 +1169,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     while ((result = write( unix_handle, buffer, bytesToWrite )) == -1)
     {
         if ((errno == EAGAIN) || (errno == EINTR)) continue;
-        if ((errno == EFAULT) && !VIRTUAL_HandleFault( buffer )) continue;
+        if ((errno == EFAULT) && !IsBadReadPtr( buffer, bytesToWrite )) continue;
         if (errno == ENOSPC)
             SetLastError( ERROR_DISK_FULL );
         else
@@ -1198,7 +1196,7 @@ LONG WINAPI WIN16_hread( HFILE16 hFile, SEGPTR buffer, LONG count )
     /* Some programs pass a count larger than the allocated buffer */
     maxlen = GetSelectorLimit16( SELECTOROF(buffer) ) - OFFSETOF(buffer) + 1;
     if (count > maxlen) count = maxlen;
-    return _lread(DosFileHandleToWin32Handle(hFile), PTR_SEG_TO_LIN(buffer), count );
+    return _lread(DosFileHandleToWin32Handle(hFile), MapSL(buffer), count );
 }
 
 
@@ -1418,7 +1416,7 @@ UINT16 WINAPI SetHandleCount16( UINT16 count )
 {
     HGLOBAL16 hPDB = GetCurrentPDB16();
     PDB16 *pdb = (PDB16 *)GlobalLock16( hPDB );
-    BYTE *files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
+    BYTE *files = MapSL( pdb->fileHandlesPtr );
 
     TRACE("(%d)\n", count );
 

@@ -18,9 +18,7 @@
 #include "wine/winaspi.h"
 #include "heap.h"
 #include "debugtools.h"
-#include "selectors.h"
 #include "miscemu.h"
-#include "ldt.h"
 
 DEFAULT_DEBUG_CHANNEL(aspi);
 
@@ -121,7 +119,7 @@ ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb, UINT16 mode)
 	    lpBuf = PTR_REAL_TO_LIN( SELECTOROF(prb->SRB_BufPointer), OFFSETOF(prb->SRB_BufPointer));
 	break;
       case ASPI_WIN16:
-	lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
+	lpBuf = MapSL(prb->SRB_BufPointer);
 	break;
   }
 
@@ -210,7 +208,7 @@ ASPI_DebugPrintResult(SRB_ExecSCSICmd16 *prb, UINT16 mode)
 	    lpBuf = PTR_REAL_TO_LIN( SELECTOROF(prb->SRB_BufPointer), OFFSETOF(prb->SRB_BufPointer));
 	break;
       case ASPI_WIN16:
-	lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
+	lpBuf = MapSL(prb->SRB_BufPointer);
 	break;
   }
 
@@ -242,7 +240,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
 	    lpPRB = PTR_REAL_TO_LIN( SELECTOROF(ptrPRB), OFFSETOF(ptrPRB));
 	break;
       case ASPI_WIN16:
-	lpPRB = PTR_SEG_TO_LIN(ptrPRB);
+	lpPRB = MapSL(ptrPRB);
 	break;
   }
 
@@ -269,7 +267,7 @@ ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
                                      OFFSETOF(lpPRB->SRB_BufPointer));
 	break;
       case ASPI_WIN16:
-	lpBuf = PTR_SEG_TO_LIN(lpPRB->SRB_BufPointer);
+	lpBuf = MapSL(lpPRB->SRB_BufPointer);
 	break;
   }
 
@@ -428,7 +426,7 @@ DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
 	    lpSRB = PTR_REAL_TO_LIN( SELECTOROF(ptrSRB), OFFSETOF(ptrSRB));
 	break;
       case ASPI_WIN16:
-	lpSRB = PTR_SEG_TO_LIN(ptrSRB);
+	lpSRB = MapSL(ptrSRB);
 	if (ASPIChainFunc)
 	{
 	    /* This is not the post proc, it's the chain proc this time */

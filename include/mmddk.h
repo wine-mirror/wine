@@ -426,7 +426,7 @@ typedef struct tMIXEROPENDESC
 
 typedef struct {
 	UINT16			wDeviceID;		/* device ID */
-	LPSTR			lpstrParams;		/* parameter string for entry in SYSTEM.INI */
+	SEGPTR			lpstrParams;		/* parameter string for entry in SYSTEM.INI */
 	UINT16			wCustomCommandTable;	/* custom command table (0xFFFF if none)
 							 * filled in by the driver */
 	UINT16			wType;			/* driver type (filled in by the driver) */

@@ -14,7 +14,6 @@
 #include "winerror.h"
 #include "heap.h"
 #include "dlgs.h"
-#include "ldt.h"
 #include "debugtools.h"
 #include "winreg.h"
 #include "authors.h"
@@ -676,7 +675,7 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 
     case WM_QUERYDROPOBJECT:
 	if( wParam == 0 )
-      { LPDRAGINFO16 lpDragInfo = (LPDRAGINFO16)PTR_SEG_TO_LIN((SEGPTR)lParam);
+      { LPDRAGINFO16 lpDragInfo = MapSL((SEGPTR)lParam);
 	    if( lpDragInfo && lpDragInfo->wFlags == DRAGOBJ_DATA )
         { RECT rect;
 		if( __get_dropline( hWnd, &rect ) )
@@ -695,7 +694,7 @@ BOOL WINAPI AboutDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
 
     case WM_DROPOBJECT:
 	if( wParam == hWnd )
-      { LPDRAGINFO16 lpDragInfo = (LPDRAGINFO16)PTR_SEG_TO_LIN((SEGPTR)lParam);
+      { LPDRAGINFO16 lpDragInfo = MapSL((SEGPTR)lParam);
 	    if( lpDragInfo && lpDragInfo->wFlags == DRAGOBJ_DATA && lpDragInfo->hList )
         { char* pstr = (char*)GlobalLock16( (HGLOBAL16)(lpDragInfo->hList) );
 		if( pstr )

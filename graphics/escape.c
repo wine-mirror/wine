@@ -9,7 +9,6 @@
 #include "wingdi.h"
 #include "gdi.h"
 #include "heap.h"
-#include "ldt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(driver);
@@ -173,63 +172,63 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
     case QUERYESCSUPPORT:
     	if (ret)
 		TRACE("target DC implements Escape %d\n",nEscape);
-    	SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
+    	SEGPTR_FREE(MapSL(segin));
 	break;
 
     case SETLINECAP:
     case SETLINEJOIN:
     case SETMITERLIMIT:
-        *(LPINT)lpvOutData = *(LPINT16)PTR_SEG_TO_LIN(segout);
-        SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
-	SEGPTR_FREE(PTR_SEG_TO_LIN(segout));
+        *(LPINT)lpvOutData = *(LPINT16)MapSL(segout);
+        SEGPTR_FREE(MapSL(segin));
+	SEGPTR_FREE(MapSL(segout));
 	break;
     case GETSCALINGFACTOR:
     case GETPRINTINGOFFSET:
     case GETPHYSPAGESIZE: {
-    	LPPOINT16 x = (LPPOINT16)PTR_SEG_TO_LIN(segout);
+    	LPPOINT16 x = MapSL(segout);
 	CONV_POINT16TO32(x,(LPPOINT)lpvOutData);
 	SEGPTR_FREE(x);
 	break;
     }
     case EXT_DEVICE_CAPS:
-        *(LPDWORD)lpvOutData = *(LPDWORD)PTR_SEG_TO_LIN(segout);
-        SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
-        SEGPTR_FREE(PTR_SEG_TO_LIN(segout));
+        *(LPDWORD)lpvOutData = *(LPDWORD)MapSL(segout);
+        SEGPTR_FREE(MapSL(segin));
+        SEGPTR_FREE(MapSL(segout));
 	break;
 
     case GETTECHNOLOGY: {
-        LPSTR x=PTR_SEG_TO_LIN(segout);
+        LPSTR x=MapSL(segout);
         strcpy(lpvOutData,x);
         SEGPTR_FREE(x);
 	break;
     }
     case ENABLEPAIRKERNING: {
-        LPINT16 enab = (LPINT16)PTR_SEG_TO_LIN(segout);
+        LPINT16 enab = MapSL(segout);
 
         *(LPINT)lpvOutData = *enab;
         SEGPTR_FREE(enab);
-        SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
+        SEGPTR_FREE(MapSL(segin));
 	break;
     }
     case GETFACENAME: {
-        LPSTR x = (LPSTR)PTR_SEG_TO_LIN(segout);
+        LPSTR x = (LPSTR)MapSL(segout);
         strcpy(lpvOutData,x);
         SEGPTR_FREE(x);
         break;
     }
     case STARTDOC: {
-        DOCINFO16 *doc = PTR_SEG_TO_LIN(segout);
-	SEGPTR_FREE(PTR_SEG_TO_LIN(doc->lpszDocName));
-	SEGPTR_FREE(PTR_SEG_TO_LIN(doc->lpszOutput));
-	SEGPTR_FREE(PTR_SEG_TO_LIN(doc->lpszDatatype));
+        DOCINFO16 *doc = MapSL(segout);
+	SEGPTR_FREE(MapSL(doc->lpszDocName));
+	SEGPTR_FREE(MapSL(doc->lpszOutput));
+	SEGPTR_FREE(MapSL(doc->lpszDatatype));
 	SEGPTR_FREE(doc);
-	SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
+	SEGPTR_FREE(MapSL(segin));
 	break;
     }
 
     case CLIP_TO_PATH:
     case END_PATH:
-        SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
+        SEGPTR_FREE(MapSL(segin));
 	break;
 
     default:

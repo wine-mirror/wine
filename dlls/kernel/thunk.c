@@ -139,7 +139,7 @@ static LPVOID _loadthunk(LPCSTR module, LPCSTR func, LPCSTR module32,
     }
 
     if (   !(ordinal = NE_GetOrdinal(hmod, func))
-        || !(TD16 = PTR_SEG_TO_LIN(NE_GetEntryPointEx(hmod, ordinal, FALSE))))
+        || !(TD16 = MapSL((SEGPTR)NE_GetEntryPointEx(hmod, ordinal, FALSE))))
     {
         ERR("Unable to find thunk data '%s' in %s, required by %s (conflicting/incorrect DLL versions !?).\n",
                    func, module, module32);
@@ -261,7 +261,7 @@ UINT WINAPI ThunkConnect32(
                 struct ThunkDataLS32 *LS32 = (struct ThunkDataLS32 *)TD;
                 struct ThunkDataLS16 *LS16 = (struct ThunkDataLS16 *)TD16;
 
-                LS32->targetTable = PTR_SEG_TO_LIN(LS16->targetTable);
+                LS32->targetTable = MapSL(LS16->targetTable);
 
                 /* write QT_Thunk and FT_Prolog stubs */
                 _write_qtthunk ((LPBYTE)TD + LS32->offsetQTThunk,  LS32->targetTable);
@@ -425,9 +425,9 @@ void WINAPI FT_Thunk( CONTEXT86 *context )
 	if (mapESPrelative & (1 << i))
 	{
 	    SEGPTR *arg = (SEGPTR *)(newstack + 2*i);
-	    *arg = PTR_SEG_OFF_TO_SEGPTR(SELECTOROF(NtCurrentTeb()->cur_stack), 
-                                         OFFSETOF(NtCurrentTeb()->cur_stack) - argsize
-					 + (*(LPBYTE *)arg - oldstack));
+	    *arg = MAKESEGPTR(SELECTOROF(NtCurrentTeb()->cur_stack),
+                              OFFSETOF(NtCurrentTeb()->cur_stack) - argsize
+                              + (*(LPBYTE *)arg - oldstack));
 	}
 
     wine_call_to_16_regs_short( &context16, argsize );
@@ -757,7 +757,7 @@ LPVOID WINAPI ThunkInitLSF(
 	if (!(addr = _loadthunk( dll16, thkbuf, dll32, NULL, len )))
 		return 0;
 
-	addr2 = PTR_SEG_TO_LIN(addr[1]);
+	addr2 = MapSL(addr[1]);
 	if (HIWORD(addr2))
 		*(DWORD*)thunk = (DWORD)addr2;
 
@@ -849,7 +849,7 @@ VOID WINAPI ThunkInitSL(
 	if (!(addr = _loadthunk( dll16, thkbuf, dll32, NULL, len )))
 		return;
 
-	*(DWORD*)PTR_SEG_TO_LIN(addr[1]) = (DWORD)thunk;
+	*(DWORD*)MapSL(addr[1]) = (DWORD)thunk;
 }
 
 /**********************************************************************
@@ -1113,7 +1113,7 @@ void WINAPI K32Thk1632Prolog( CONTEXT86 *context )
       frame16->ebp = context->Ebp;
 
       memcpy(stack32, stack16, argSize);
-      NtCurrentTeb()->cur_stack = PTR_SEG_OFF_TO_SEGPTR(stackSel, (DWORD)frame16 - stackBase);
+      NtCurrentTeb()->cur_stack = MAKESEGPTR(stackSel, (DWORD)frame16 - stackBase);
 
       context->Esp = (DWORD)stack32 + 4;
       context->Ebp = context->Esp + argSize;
@@ -1141,7 +1141,7 @@ void WINAPI K32Thk1632Epilog( CONTEXT86 *context )
    if (   code[5] == 0xFF && code[6] == 0x55 && code[7] == 0xFC
        && code[13] == 0x66 && code[14] == 0xCB)
    {
-      STACK16FRAME *frame16 = (STACK16FRAME *)PTR_SEG_TO_LIN(NtCurrentTeb()->cur_stack);
+      STACK16FRAME *frame16 = MapSL(NtCurrentTeb()->cur_stack);
       char *stack16 = (char *)(frame16 + 1);
       DWORD argSize = frame16->ebp - (DWORD)stack16;
       char *stack32 = (char *)frame16->frame32 - argSize;
@@ -1237,7 +1237,7 @@ UINT WINAPI ThunkConnect16(
                     SL->flags1   = SL16->flags1;
                     SL->flags2   = SL16->flags2;
 
-                    SL->apiDB    = PTR_SEG_TO_LIN(SL16->apiDatabase);
+                    SL->apiDB    = MapSL(SL16->apiDatabase);
                     SL->targetDB = NULL;
 
                     lstrcpynA(SL->pszDll16, module16, 255);
@@ -1278,7 +1278,7 @@ UINT WINAPI ThunkConnect16(
 
 void WINAPI C16ThkSL(CONTEXT86 *context)
 {
-    LPBYTE stub = PTR_SEG_TO_LIN(context->Eax), x = stub;
+    LPBYTE stub = MapSL(context->Eax), x = stub;
     WORD cs = __get_cs();
     WORD ds = __get_ds();
 
@@ -1323,11 +1323,11 @@ void WINAPI C16ThkSL(CONTEXT86 *context)
 
 void WINAPI C16ThkSL01(CONTEXT86 *context)
 {
-    LPBYTE stub = PTR_SEG_TO_LIN(context->Eax), x = stub;
+    LPBYTE stub = MapSL(context->Eax), x = stub;
 
     if (stub)
     {
-        struct ThunkDataSL16 *SL16 = PTR_SEG_TO_LIN(context->Edx);
+        struct ThunkDataSL16 *SL16 = MapSL(context->Edx);
         struct ThunkDataSL *td = SL16->fpData;
 
         DWORD procAddress = (DWORD)GetProcAddress16(GetModuleHandle16("KERNEL"), (LPCSTR)631);
@@ -1404,7 +1404,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         }
         else
         {
-            WORD *stack = PTR_SEG_OFF_TO_LIN(context->SegSs, LOWORD(context->Esp));
+            WORD *stack = MapSL( MAKESEGPTR(context->SegSs, LOWORD(context->Esp)) );
             DX_reg(context) = HIWORD(td->apiDB[targetNr].errorReturnValue);
             AX_reg(context) = LOWORD(td->apiDB[targetNr].errorReturnValue);
             context->Eip = stack[2];
@@ -1623,7 +1623,7 @@ SEGPTR WINAPI AllocSLThunkletSysthunk16( FARPROC target,
 FARPROC WINAPI AllocLSThunkletCallbackEx16( SEGPTR target, 
                                             DWORD relay, HTASK16 task )
 {
-    THUNKLET *thunk = (THUNKLET *)PTR_SEG_TO_LIN( target );
+    THUNKLET *thunk = MapSL( target );
     if ( !thunk ) return NULL;
 
     if (   IsSLThunklet16( thunk ) && thunk->relay == relay 
@@ -1672,7 +1672,7 @@ SEGPTR WINAPI AllocSLThunkletCallback16( FARPROC target, DWORD relay )
  */
 FARPROC WINAPI FindLSThunkletCallback( SEGPTR target, DWORD relay )
 {
-    THUNKLET *thunk = (THUNKLET *)PTR_SEG_TO_LIN( target );
+    THUNKLET *thunk = MapSL( target );
     if (   thunk && IsSLThunklet16( thunk ) && thunk->relay == relay 
         && thunk->glue == (DWORD)ThunkletCallbackGlueSL )
         return (FARPROC)thunk->target;
@@ -1782,7 +1782,7 @@ void WINAPI CBClientGlueSL( CONTEXT86 *context )
 {
     /* Create stack frame */
     SEGPTR stackSeg = stack16_push( 12 );
-    LPWORD stackLin = PTR_SEG_TO_LIN( stackSeg );
+    LPWORD stackLin = MapSL( stackSeg );
     SEGPTR glue, *glueTab;
     
     stackLin[3] = BP_reg( context );
@@ -1795,7 +1795,7 @@ void WINAPI CBClientGlueSL( CONTEXT86 *context )
     context->SegGs = 0;
 
     /* Jump to 16-bit relay code */
-    glueTab = PTR_SEG_TO_LIN( CBClientRelay16[ stackLin[5] ] );
+    glueTab = MapSL( CBClientRelay16[ stackLin[5] ] );
     glue = glueTab[ stackLin[4] ];
     context->SegCs = SELECTOROF( glue );
     context->Eip   = OFFSETOF  ( glue );
@@ -1809,7 +1809,7 @@ void WINAPI CBClientThunkSL( CONTEXT86 *context )
 {
     /* Call 32-bit relay code */
 
-    LPWORD args = PTR_SEG_OFF_TO_LIN( context->SegSs, BP_reg( context ) );
+    LPWORD args = MapSL( MAKESEGPTR( context->SegSs, BP_reg( context ) ) );
     FARPROC proc = CBClientRelay32[ args[2] ][ args[1] ];
 
     context->Eax = CALL32_CBClient( proc, args, &context->Esi );
@@ -1823,7 +1823,7 @@ void WINAPI CBClientThunkSLEx( CONTEXT86 *context )
 {
     /* Call 32-bit relay code */
 
-    LPWORD args = PTR_SEG_OFF_TO_LIN( context->SegSs, BP_reg( context ) );
+    LPWORD args = MapSL( MAKESEGPTR( context->SegSs, BP_reg( context ) ) );
     FARPROC proc = CBClientRelay32[ args[2] ][ args[1] ];
     INT nArgs;
     LPWORD stackLin;
@@ -1861,7 +1861,7 @@ SEGPTR WINAPI Get16DLLAddress(HMODULE handle, LPSTR func_name) {
         if (!handle) handle=GetModuleHandle16("WIN32S16");
         proc_16 = (DWORD)GetProcAddress16(handle, func_name);
 
-        x=PTR_SEG_TO_LIN(thunk);
+        x=MapSL(thunk);
         *x++=0xba; *(DWORD*)x=proc_16;x+=4;             /* movl proc_16, $edx */
         *x++=0xea; *(DWORD*)x=(DWORD)GetProcAddress(GetModuleHandleA("KERNEL32"),"QT_Thunk");x+=4;     /* jmpl QT_Thunk */
 	*(WORD*)x=__get_cs();
@@ -2003,7 +2003,7 @@ void WINAPI Throw16( LPCATCHBUF lpbuf, INT16 retval, CONTEXT86 *context )
             pFrame->frame32 = frame32;
             break;
         }
-        frame32 = ((STACK16FRAME *)PTR_SEG_TO_LIN(frame32->frame16))->frame32;
+        frame32 = ((STACK16FRAME *)MapSL(frame32->frame16))->frame32;
     }
 
     context->Eip = lpbuf[0];

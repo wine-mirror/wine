@@ -9,7 +9,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "wtypes.h"
-#include "ldt.h"
 #include "ole.h"
 #include "debugtools.h"
 
@@ -98,14 +97,13 @@ OLESTATUS WINAPI OleEnumObjects16(LHCLIENTDOC hServerDoc, SEGPTR data)
 /******************************************************************************
  *	     OleCreateLinkFromClip16	[OLECLI.11]
  */
-OLESTATUS WINAPI OleCreateLinkFromClip16(
-	LPCSTR name, LPOLECLIENT olecli, LHCLIENTDOC hclientdoc, LPCSTR xname,
-	LPOLEOBJECT *lpoleob, UINT16 render, UINT16 clipformat
-) {
+OLESTATUS WINAPI OleCreateLinkFromClip16( LPCSTR name, SEGPTR olecli, LHCLIENTDOC hclientdoc,
+                                          LPCSTR xname, SEGPTR lpoleob, UINT16 render,
+                                          UINT16 clipformat )
+{
 	FIXME("(%s, %04x:%04x, %ld, %s, %04x:%04x, %d, %d): stub!\n",
-	    (char *)PTR_SEG_TO_LIN(name), HIWORD(olecli), LOWORD(olecli),
-	    hclientdoc, (char *)PTR_SEG_TO_LIN(xname), HIWORD(lpoleob),
-	    LOWORD(lpoleob), render, clipformat);
+              name, HIWORD(olecli), LOWORD(olecli), hclientdoc, xname, HIWORD(lpoleob),
+              LOWORD(lpoleob), render, clipformat);
 	return OLE_OK;
 }
 
@@ -124,9 +122,9 @@ OLESTATUS WINAPI OleCreateLinkFromClip(
 /******************************************************************************
  *           OleQueryLinkFromClip16	[OLECLI.9]
  */
-OLESTATUS WINAPI OleQueryLinkFromClip16(LPCSTR name, UINT16 render, UINT16 clipformat) {
-	FIXME("(%s, %d, %d): stub!\n", (char*)(PTR_SEG_TO_LIN(name)),
-		render, clipformat);
+OLESTATUS WINAPI OleQueryLinkFromClip16(LPCSTR name, UINT16 render, UINT16 clipformat)
+{
+	FIXME("(%s, %d, %d): stub!\n", name, render, clipformat);
 	return OLE_OK;
 }
 
@@ -141,9 +139,9 @@ OLESTATUS WINAPI OleQueryLinkFromClip(LPCSTR name,OLEOPT_RENDER render,OLECLIPFO
 /******************************************************************************
  *           OleQueryCreateFromClip16	[OLECLI.10]
  */
-OLESTATUS WINAPI OleQueryCreateFromClip16(LPCSTR name, UINT16 render, UINT16 clipformat) {
-	FIXME("(%s, %d, %d): stub!\n", (char*)(PTR_SEG_TO_LIN(name)),
-		render, clipformat);
+OLESTATUS WINAPI OleQueryCreateFromClip16(LPCSTR name, UINT16 render, UINT16 clipformat)
+{
+	FIXME("(%s, %d, %d): stub!\n", name, render, clipformat);
 	return OLE_OK;
 }
 
@@ -186,8 +184,7 @@ OLESTATUS WINAPI OleSetHostNames(LPOLEOBJECT oleob,LPCSTR name1,LPCSTR name2) {
  *		OleQueryType16	[OLECLI.14]
  */
 OLESTATUS WINAPI OleQueryType16(LPOLEOBJECT oleob,  SEGPTR xlong) {
-	FIXME("(%p, %p): stub!\n",
-		PTR_SEG_TO_LIN(oleob), PTR_SEG_TO_LIN(xlong));
+	FIXME("(%p, %p): stub!\n", oleob, MapSL(xlong));
 	return OLE_OK;
 }
 
@@ -206,14 +203,13 @@ OLESTATUS WINAPI OleQueryType(LPOLEOBJECT oleob,LONG*xlong) {
 /******************************************************************************
  *		OleCreateFromClip16	[OLECLI.12]
  */
-OLESTATUS WINAPI OleCreateFromClip16(
-	LPCSTR name, LPOLECLIENT olecli, LHCLIENTDOC hclientdoc, LPCSTR xname,
-	LPOLEOBJECT *lpoleob, UINT16 render, UINT16 clipformat
-) {
+OLESTATUS WINAPI OleCreateFromClip16( LPCSTR name, SEGPTR olecli, LHCLIENTDOC hclientdoc,
+                                      LPCSTR xname, SEGPTR lpoleob,
+                                      UINT16 render, UINT16 clipformat )
+{
 	FIXME("(%s, %04x:%04x, %ld, %s, %04x:%04x, %d, %d): stub!\n",
-	    (char *)PTR_SEG_TO_LIN(name), HIWORD(olecli), LOWORD(olecli),
-	    hclientdoc, (char *)PTR_SEG_TO_LIN(xname), HIWORD(lpoleob),
-	    LOWORD(lpoleob), render, clipformat);
+              name, HIWORD(olecli), LOWORD(olecli), hclientdoc, xname, HIWORD(lpoleob),
+              LOWORD(lpoleob), render, clipformat);
 	return OLE_OK;
 }
 

@@ -23,7 +23,6 @@
 #include "wine/winuser16.h"
 #include "controls.h"
 #include "local.h"
-#include "selectors.h"
 #include "debugtools.h"
 #include "tweak.h"
 
@@ -429,7 +428,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 	case EM_GETRECT16:
 		DPRINTF_EDIT_MSG16("EM_GETRECT");
 		if (lParam)
-			CONV_RECT32TO16(&es->format_rect, (LPRECT16)PTR_SEG_TO_LIN(lParam));
+			CONV_RECT32TO16(&es->format_rect, MapSL(lParam));
 		break;
 	case EM_GETRECT:
 		DPRINTF_EDIT_MSG32("EM_GETRECT");
@@ -441,7 +440,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 		DPRINTF_EDIT_MSG16("EM_SETRECT");
 		if ((es->style & ES_MULTILINE) && lParam) {
 			RECT rc;
-			CONV_RECT16TO32((LPRECT16)PTR_SEG_TO_LIN(lParam), &rc);
+			CONV_RECT16TO32(MapSL(lParam), &rc);
 			EDIT_SetRectNP(wnd, es, &rc);
 			EDIT_UpdateText(wnd, NULL, TRUE);
 		}
@@ -458,7 +457,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 		DPRINTF_EDIT_MSG16("EM_SETRECTNP");
 		if ((es->style & ES_MULTILINE) && lParam) {
 			RECT rc;
-			CONV_RECT16TO32((LPRECT16)PTR_SEG_TO_LIN(lParam), &rc);
+			CONV_RECT16TO32(MapSL(lParam), &rc);
 			EDIT_SetRectNP(wnd, es, &rc);
 		}
 		break;
@@ -586,7 +585,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 	case EM_REPLACESEL16:
 		DPRINTF_EDIT_MSG16("EM_REPLACESEL");
-		lParam = (LPARAM)PTR_SEG_TO_LIN((SEGPTR)lParam);
+		lParam = (LPARAM)MapSL(lParam);
 		/* fall through */
 	case EM_REPLACESEL:
 		DPRINTF_EDIT_MSG32("EM_REPLACESEL");
@@ -610,7 +609,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 	case EM_GETLINE16:
 		DPRINTF_EDIT_MSG16("EM_GETLINE");
-		lParam = (LPARAM)PTR_SEG_TO_LIN((SEGPTR)lParam);
+		lParam = (LPARAM)MapSL(lParam);
 		/* fall through */
 	case EM_GETLINE:
 		DPRINTF_EDIT_MSG32("EM_GETLINE");
@@ -671,7 +670,7 @@ LRESULT WINAPI EditWndProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 
 	case EM_SETTABSTOPS16:
 		DPRINTF_EDIT_MSG16("EM_SETTABSTOPS");
-		result = (LRESULT)EDIT_EM_SetTabStops16(es, (INT)wParam, (LPINT16)PTR_SEG_TO_LIN((SEGPTR)lParam));
+		result = (LRESULT)EDIT_EM_SetTabStops16(es, (INT)wParam, MapSL(lParam));
 		break;
 	case EM_SETTABSTOPS:
 		DPRINTF_EDIT_MSG32("EM_SETTABSTOPS");

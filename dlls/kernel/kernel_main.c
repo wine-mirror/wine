@@ -10,7 +10,6 @@
 
 #include "module.h"
 #include "task.h"
-#include "selectors.h"
 #include "miscemu.h"
 #include "global.h"
 
@@ -53,7 +52,7 @@ static BOOL process_attach(void)
     NE_SetEntryPoint( hModule, 455, __get_ds() );
 
     /* Initialize KERNEL.THHOOK */
-    TASK_InstallTHHook((THHOOK *)PTR_SEG_TO_LIN((SEGPTR)GetProcAddress16( hModule, (LPCSTR)332 )));
+    TASK_InstallTHHook(MapSL((SEGPTR)GetProcAddress16( hModule, (LPCSTR)332 )));
 
     /* Initialize the real-mode selector entry points */
 #define SET_ENTRY_POINT( num, addr ) \
@@ -128,7 +127,7 @@ LONG WINAPI KERNEL_nop(void) { return 0; }
  */
 SEGPTR WINAPI KERNEL_AnsiNext16(SEGPTR current)
 {
-    return (*(char *)PTR_SEG_TO_LIN(current)) ? current + 1 : current;
+    return (*(char *)MapSL(current)) ? current + 1 : current;
 }
 
 /***********************************************************************
@@ -147,7 +146,7 @@ SEGPTR WINAPI KERNEL_AnsiUpper16( SEGPTR strOrChar )
     /* uppercase only one char if strOrChar < 0x10000 */
     if (HIWORD(strOrChar))
     {
-	char *s = PTR_SEG_TO_LIN(strOrChar);
+        char *s = MapSL(strOrChar);
 	while (*s) {
 	    *s = toupper(*s);
 	    s++;
@@ -165,7 +164,7 @@ SEGPTR WINAPI KERNEL_AnsiLower16( SEGPTR strOrChar )
     /* lowercase only one char if strOrChar < 0x10000 */
     if (HIWORD(strOrChar))
     {
-        char *s = PTR_SEG_TO_LIN(strOrChar);
+        char *s = MapSL(strOrChar);
 	while (*s) {
 	    *s = tolower(*s);
 	    s++;

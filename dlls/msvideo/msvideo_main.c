@@ -19,7 +19,6 @@
 #include "vfw16.h"
 #include "wine/winbase16.h"
 #include "debugtools.h"
-#include "ldt.h"
 #include "heap.h"
 #include "stackframe.h"
 
@@ -95,7 +94,7 @@ BOOL16 VFWAPI ICInfo16(
 	BOOL16 ret;
 	LPVOID lpv;
 	DWORD lParam = (DWORD)lpicinfo;
-	DWORD size = ((ICINFO*)(PTR_SEG_TO_LIN(lpicinfo)))->dwSize;
+	DWORD size = ((ICINFO*)(MapSL((SEGPTR)lpicinfo)))->dwSize;
 
 	/* Use the mapping functions to map the ICINFO structure */
 	lpv = MSVIDEO_MapMsg16To32(ICM_GETINFO,&lParam,&size);
@@ -506,13 +505,13 @@ DWORD VFWAPIV ICDecompress16(HIC16 hic, DWORD dwFlags, LPBITMAPINFOHEADER lpbiFo
 }
 
 #define COPY(x,y) (x->y = x##16->y);
-#define COPYPTR(x,y) (x->y = PTR_SEG_TO_LIN(x##16->y));
+#define COPYPTR(x,y) (x->y = MapSL((SEGPTR)x##16->y));
 
 LPVOID MSVIDEO_MapICDEX16To32(LPDWORD lParam) {
 	LPVOID ret;
 
 	ICDECOMPRESSEX *icdx = HeapAlloc(GetProcessHeap(),0,sizeof(ICDECOMPRESSEX));
-	ICDECOMPRESSEX16 *icdx16 = (ICDECOMPRESSEX16*)PTR_SEG_TO_LIN(*lParam);
+	ICDECOMPRESSEX16 *icdx16 = MapSL(*lParam);
 	ret = icdx16;
 	
 	COPY(icdx,dwFlags);
@@ -554,14 +553,14 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 	case DRV_OPEN:
 	case ICM_GETDEFAULTQUALITY:
 	case ICM_GETQUALITY:
-		*lParam1 = (DWORD)PTR_SEG_TO_LIN(*lParam1);
+		*lParam1 = (DWORD)MapSL(*lParam1);
 		break;
 	case ICM_GETINFO:
 		{
 			ICINFO *ici = HeapAlloc(GetProcessHeap(),0,sizeof(ICINFO));
 			ICINFO16 *ici16;
 
-			ici16 = (ICINFO16*)PTR_SEG_TO_LIN(*lParam1);
+			ici16 = MapSL(*lParam1);
 			ret = ici16;
 
 			ici->dwSize = sizeof(ICINFO);
@@ -582,7 +581,7 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 			ICCOMPRESS *icc = HeapAlloc(GetProcessHeap(),0,sizeof(ICCOMPRESS));
 			ICCOMPRESS *icc16;
 
-			icc16 = (ICCOMPRESS*)PTR_SEG_TO_LIN(*lParam1);
+			icc16 = MapSL(*lParam1);
 			ret = icc16;
 
 			COPY(icc,dwFlags);
@@ -607,7 +606,7 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 			ICDECOMPRESS *icd = HeapAlloc(GetProcessHeap(),0,sizeof(ICDECOMPRESS));
 			ICDECOMPRESS *icd16; /* Same structure except for the pointers */
 			
-			icd16 = (ICDECOMPRESS*)PTR_SEG_TO_LIN(*lParam1);
+			icd16 = MapSL(*lParam1);
 			ret = icd16;
 			
 			COPY(icd,dwFlags);
@@ -630,8 +629,8 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 	case ICM_DECOMPRESS_BEGIN:
 	case ICM_DECOMPRESS_SET_PALETTE:
 	case ICM_DECOMPRESS_GET_PALETTE:
-		*lParam1 = (DWORD)PTR_SEG_TO_LIN(*lParam1);
-		*lParam2 = (DWORD)PTR_SEG_TO_LIN(*lParam2);
+		*lParam1 = (DWORD)MapSL(*lParam1);
+		*lParam2 = (DWORD)MapSL(*lParam2);
 		break;
 	case ICM_DECOMPRESSEX_QUERY:
 		if ((*lParam2 != sizeof(ICDECOMPRESSEX16)) && (*lParam2 != 0))
@@ -657,7 +656,7 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 	case ICM_DRAW_BEGIN:
 		{
 			ICDRAWBEGIN *icdb = HeapAlloc(GetProcessHeap(),0,sizeof(ICDRAWBEGIN));
-			ICDRAWBEGIN16 *icdb16 = (ICDRAWBEGIN16*)PTR_SEG_TO_LIN(*lParam1);
+			ICDRAWBEGIN16 *icdb16 = MapSL(*lParam1);
 			ret = icdb16;
 
 			COPY(icdb,dwFlags);
@@ -683,7 +682,7 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 	case ICM_DRAW_SUGGESTFORMAT:
 		{
 			ICDRAWSUGGEST *icds = HeapAlloc(GetProcessHeap(),0,sizeof(ICDRAWSUGGEST));
-			ICDRAWSUGGEST16 *icds16 = (ICDRAWSUGGEST16*)PTR_SEG_TO_LIN(*lParam1);
+			ICDRAWSUGGEST16 *icds16 = MapSL(*lParam1);
 			
 			ret = icds16;
 
@@ -703,7 +702,7 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 	case ICM_DRAW:
 		{
 			ICDRAW *icd = HeapAlloc(GetProcessHeap(),0,sizeof(ICDRAW));
-			ICDRAW *icd16 = (ICDRAW*)PTR_SEG_TO_LIN(*lParam1);
+			ICDRAW *icd16 = MapSL(*lParam1);
 			ret = icd16;
 
 			COPY(icd,dwFlags);

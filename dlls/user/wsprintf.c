@@ -11,9 +11,7 @@
 #include "windef.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "ldt.h"
 #include "stackframe.h"
-#include "global.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(string);
@@ -307,7 +305,7 @@ static INT16 wvsnprintf16( LPSTR buffer, UINT16 maxlen, LPCSTR spec,
         case WPR_STRING:
             seg_str = VA_ARG16( args, SEGPTR );
             if (IsBadReadPtr16(seg_str, 1 )) cur_arg.lpcstr_view = "";
-            else cur_arg.lpcstr_view = PTR_SEG_TO_LIN( seg_str );
+            else cur_arg.lpcstr_view = MapSL( seg_str );
             break;
         case WPR_SIGNED:
             if (!(format.flags & WPRINTF_LONG))
@@ -570,8 +568,7 @@ INT16 WINAPIV wsprintf16(void)
     VA_START16( valist );
     buffer = VA_ARG16( valist, SEGPTR );
     spec   = VA_ARG16( valist, SEGPTR );
-    res = wvsnprintf16( (LPSTR)PTR_SEG_TO_LIN(buffer), 1024,
-                        (LPCSTR)PTR_SEG_TO_LIN(spec), valist );
+    res = wvsnprintf16( MapSL(buffer), 1024, MapSL(spec), valist );
     VA_END16( valist );
     return ( res == -1 ) ? 1024 : res;
 }

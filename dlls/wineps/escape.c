@@ -22,7 +22,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
     switch(nEscape) {
 
     case NEXTBAND: {
-        RECT16 *r = (RECT16 *)PTR_SEG_TO_LIN(lpOutData);
+        RECT16 *r = MapSL(lpOutData);
 	if(!physDev->job.banding) {
 	    physDev->job.banding = TRUE;
             r->left   = 0;
@@ -58,7 +58,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    WARN("cbInput < 2 (=%d) for QUERYESCSUPPORT\n", cbInput);
 	    return 0;
 	} else {
-	    UINT16 num = *(UINT16 *)PTR_SEG_TO_LIN(lpInData);
+	    UINT16 num = *(UINT16 *)MapSL(lpInData);
 	    TRACE("QUERYESCSUPPORT for %d\n", num);	   
 
 	    switch(num) {
@@ -103,7 +103,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	/* lpInData may not be 0 terminated so we must copy it */
 	if(lpInData) {
 	    name = HeapAlloc( GetProcessHeap(), 0, cbInput+1 );
-	    memcpy(name, PTR_SEG_TO_LIN(lpInData), cbInput);
+	    memcpy(name, MapSL(lpInData), cbInput);
 	    name[cbInput] = '\0';
 	}
 	doc.cbSize = sizeof(doc);
@@ -125,7 +125,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 
     case GETPHYSPAGESIZE:
         {
-	    POINT16 *p  = (POINT16 *)PTR_SEG_TO_LIN(lpOutData);
+	    POINT16 *p  = MapSL(lpOutData);
 	    
 	    p->x = dc->devCaps->horzRes;
 	    p->y = dc->devCaps->vertRes;
@@ -135,7 +135,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 
     case GETPRINTINGOFFSET:
         {
-	    POINT16 *p = (POINT16 *)PTR_SEG_TO_LIN(lpOutData);
+	    POINT16 *p = MapSL(lpOutData);
         
 	    p->x = p->y = 0;
 	    TRACE("GETPRINTINGOFFSET: returning %dx%d\n", p->x, p->y);
@@ -144,7 +144,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
       
     case GETSCALINGFACTOR:
         {
-	    POINT16 *p = (POINT16 *)PTR_SEG_TO_LIN(lpOutData);
+	    POINT16 *p = MapSL(lpOutData);
         
 	    p->x = p->y = 0;
 	    TRACE("GETSCALINGFACTOR: returning %dx%d\n", p->x, p->y);
@@ -153,8 +153,8 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 
     case SETCOPYCOUNT:
         {
-	    INT16 *NumCopies = (INT16 *)PTR_SEG_TO_LIN(lpInData);
-	    INT16 *ActualCopies = (INT16 *)PTR_SEG_TO_LIN(lpOutData);
+	    INT16 *NumCopies = MapSL(lpInData);
+	    INT16 *ActualCopies = MapSL(lpOutData);
 	    if(cbInput != 2) {
 	        WARN("cbInput != 2 (=%d) for SETCOPYCOUNT\n", cbInput);
 		return 0;
@@ -166,7 +166,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 
     case GETTECHNOLOGY:
         {
-	    LPSTR p = (LPSTR)PTR_SEG_TO_LIN(lpOutData);
+	    LPSTR p = MapSL(lpOutData);
 	    strcpy(p, "PostScript");
 	    *(p + strlen(p) + 1) = '\0'; /* 2 '\0's at end of string */
 	    return 1;
@@ -174,7 +174,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 
     case SETLINECAP:
         {
-	    INT16 newCap = *(INT16 *)PTR_SEG_TO_LIN(lpInData);
+	    INT16 newCap = *(INT16 *)MapSL(lpInData);
 	    if(cbInput != 2) {
 	        WARN("cbInput != 2 (=%d) for SETLINECAP\n", cbInput);
 		return 0;
@@ -185,7 +185,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    
     case SETLINEJOIN:
         {
-	    INT16 newJoin = *(INT16 *)PTR_SEG_TO_LIN(lpInData);
+	    INT16 newJoin = *(INT16 *)MapSL(lpInData);
 	    if(cbInput != 2) {
 	        WARN("cbInput != 2 (=%d) for SETLINEJOIN\n", cbInput);
 		return 0;
@@ -196,7 +196,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 
     case SETMITERLIMIT:
         {
-	    INT16 newLimit = *(INT16 *)PTR_SEG_TO_LIN(lpInData);
+	    INT16 newLimit = *(INT16 *)MapSL(lpInData);
 	    if(cbInput != 2) {
 	        WARN("cbInput != 2 (=%d) for SETMITERLIMIT\n", cbInput);
 		return 0;
@@ -226,7 +226,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 
     case EXT_DEVICE_CAPS:
         {
-	    UINT16 cap = *(UINT16 *)PTR_SEG_TO_LIN(lpInData);
+	    UINT16 cap = *(UINT16 *)MapSL(lpInData);
 	    if(cbInput != 2) {
 	        WARN("cbInput != 2 (=%d) for EXT_DEVICE_CAPS\n",
 		     cbInput);
@@ -238,7 +238,7 @@ INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput,
 
     case SET_BOUNDS:
         {
-	    RECT16 *r = (RECT16 *)PTR_SEG_TO_LIN(lpInData);
+	    RECT16 *r = MapSL(lpInData);
 	    if(cbInput != 8) {
 	        WARN("cbInput != 8 (=%d) for SET_BOUNDS\n", cbInput);
 		return 0;

@@ -163,7 +163,7 @@ void WINAPI LogParamError16(UINT16 uErr, FARPROC16 lpfn, LPVOID lpvParam)
 void WINAPI HandleParamError( CONTEXT86 *context )
 {
 	UINT16 uErr = LOWORD(context->Ebx);
-        FARPROC16 lpfn = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( context->SegCs, context->Eip );
+        FARPROC16 lpfn = (FARPROC16)MAKESEGPTR( context->SegCs, context->Eip );
         LPVOID lpvParam = (LPVOID)MAKELONG( LOWORD(context->Eax), LOWORD(context->Ecx) );
 	
 	LogParamError16( uErr, lpfn, lpvParam );
@@ -173,7 +173,7 @@ void WINAPI HandleParamError( CONTEXT86 *context )
 		/* Abort current procedure: Unwind stack frame and jump
 		   to error handler (location at [bp-2]) */
 
-		WORD *stack = PTR_SEG_OFF_TO_LIN( context->SegSs, LOWORD(context->Ebp) );
+		WORD *stack = MapSL( MAKESEGPTR( context->SegSs, LOWORD(context->Ebp) ));
 		context->Esp = LOWORD(context->Ebp) - 2;
 		context->Ebp = stack[0] & 0xfffe;
 

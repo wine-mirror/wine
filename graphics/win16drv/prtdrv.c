@@ -123,10 +123,9 @@ static LOADED_PRINTER_DRIVER *FindPrinterDriverFromPDEVICE(SEGPTR segptrPDEVICE)
     /* Find the printer driver associated with this PDEVICE */
     /* Each of the PDEVICE structures has a PDEVICE_HEADER structure */
     /* just before it */
-    if (segptrPDEVICE != (SEGPTR)NULL)
+    if (segptrPDEVICE != 0)
     {
-	PDEVICE_HEADER *pPDH = (PDEVICE_HEADER *)
-	  ((char *) PTR_SEG_TO_LIN(segptrPDEVICE) - sizeof(PDEVICE_HEADER)); 
+	PDEVICE_HEADER *pPDH = ((PDEVICE_HEADER *)MapSL(segptrPDEVICE)) - 1;
         pLPD = pPDH->pLPD;
     }
     return pLPD;

@@ -489,7 +489,7 @@ DWORD WINAPI ExpandEnvironmentStringsW( LPCWSTR src, LPWSTR dst, DWORD len )
  */
 SEGPTR WINAPI GetDOSEnvironment16(void)
 {
-    return PTR_SEG_OFF_TO_SEGPTR( env_sel, 0 );
+    return MAKESEGPTR( env_sel, 0 );
 }
 
 

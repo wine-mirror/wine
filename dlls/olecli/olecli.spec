@@ -9,12 +9,12 @@ owner	olecli32
 6 stub OLECLONE
 7 stub OLECOPYFROMLINK
 8 stub OLEEQUAL
-9 pascal16 OleQueryLinkFromClip(segstr word word) OleQueryLinkFromClip16
-10 pascal16 OleQueryCreateFromClip(segstr word word) OleQueryCreateFromClip16
-11 pascal16 OleCreateLinkFromClip (segstr segptr long segstr long word word) OleCreateLinkFromClip16
-12 pascal16 OleCreateFromClip(segstr segptr long segstr long word word) OleCreateFromClip16
+9 pascal16 OleQueryLinkFromClip(str word word) OleQueryLinkFromClip16
+10 pascal16 OleQueryCreateFromClip(str word word) OleQueryCreateFromClip16
+11 pascal16 OleCreateLinkFromClip (str segptr long str segptr word word) OleCreateLinkFromClip16
+12 pascal16 OleCreateFromClip(str segptr long str long word word) OleCreateFromClip16
 13 stub OLECOPYTOCLIPBOARD
-14 pascal16 OleQueryType(segptr segptr) OleQueryType16
+14 pascal16 OleQueryType(ptr segptr) OleQueryType16
 15 stub OLESETHOSTNAMES
 16 stub OLESETTARGETDEVICE
 17 stub OLESETBOUNDS

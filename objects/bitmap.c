@@ -12,7 +12,6 @@
 #include "gdi.h"
 #include "bitmap.h"
 #include "heap.h"
-#include "global.h"
 #include "debugtools.h"
 #include "wine/winuser16.h"
 
@@ -200,7 +199,7 @@ HBITMAP WINAPI CreateCompatibleBitmap( HDC hdc, INT width, INT height)
 HBITMAP16 WINAPI CreateBitmapIndirect16( const BITMAP16 * bmp )
 {
     return CreateBitmap16( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
-                           bmp->bmBitsPixel, PTR_SEG_TO_LIN( bmp->bmBits ) );
+                           bmp->bmBitsPixel, MapSL( bmp->bmBits ) );
 }
 
 
@@ -521,7 +520,8 @@ BOOL16 WINAPI GetBitmapDimensionEx16( HBITMAP16 hbitmap, LPSIZE16 size )
 {
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
-    CONV_SIZE32TO16( &bmp->size, size );
+    size->cx = bmp->size.cx;
+    size->cy = bmp->size.cy;
     GDI_ReleaseObj( hbitmap );
     return TRUE;
 }
@@ -565,7 +565,11 @@ BOOL16 WINAPI SetBitmapDimensionEx16( HBITMAP16 hbitmap, INT16 x, INT16 y,
 {
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
-    if (prevSize) CONV_SIZE32TO16( &bmp->size, prevSize );
+    if (prevSize)
+    {
+        prevSize->cx = bmp->size.cx;
+        prevSize->cy = bmp->size.cy;
+    }
     bmp->size.cx = x;
     bmp->size.cy = y;
     GDI_ReleaseObj( hbitmap );

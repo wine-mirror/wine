@@ -143,6 +143,9 @@ typedef struct
 #define NE_RSCTYPE_GROUP_ICON     0x800e
 
 
+#define __AHSHIFT  3  /* don't change! */
+#define __AHINCR   (1 << __AHSHIFT)
+
 /* undocumented functions */
 WORD        WINAPI AllocCStoDSAlias16(WORD);
 WORD        WINAPI AllocDStoCSAlias16(WORD);
@@ -202,7 +205,7 @@ VOID        WINAPI PostEvent16(HTASK16);
 WORD        WINAPI PrestoChangoSelector16(WORD,WORD);
 WORD        WINAPI SelectorAccessRights16(WORD,WORD,WORD);
 VOID        WINAPI SetPriority16(HTASK16,INT16);
-FARPROC16   WINAPI SetResourceHandler16(HINSTANCE16,SEGPTR,FARPROC16);
+FARPROC16   WINAPI SetResourceHandler16(HINSTANCE16,LPCSTR,FARPROC16);
 WORD        WINAPI SetSelectorLimit16(WORD,DWORD);
 HQUEUE16    WINAPI SetTaskQueue16(HTASK16,HQUEUE16);
 VOID        WINAPI SwitchStackTo16(WORD,WORD,WORD);

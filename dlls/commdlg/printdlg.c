@@ -16,7 +16,6 @@
 #include "wine/wingdi16.h"
 #include "winuser.h"
 #include "wine/winuser16.h"
-#include "ldt.h"
 #include "commdlg.h"
 #include "dlgs.h"
 #include "debugtools.h"
@@ -1159,8 +1158,8 @@ BOOL16 WINAPI PrintDlg16( LPPRINTDLG16 lpPrint )
         FIXME("Need to allocate thunk\n");
 /*	Print32.lpfnSetupHook = lpPrint->lpfnSetupHook;*/
     }
-    Print32.lpPrintTemplateName = PTR_SEG_TO_LIN(lpPrint->lpPrintTemplateName);
-    Print32.lpSetupTemplateName = PTR_SEG_TO_LIN(lpPrint->lpSetupTemplateName);
+    Print32.lpPrintTemplateName = MapSL(lpPrint->lpPrintTemplateName);
+    Print32.lpSetupTemplateName = MapSL(lpPrint->lpSetupTemplateName);
     Print32.hPrintTemplate = lpPrint->hPrintTemplate;
     Print32.hSetupTemplate = lpPrint->hSetupTemplate;
 

@@ -608,7 +608,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf,
     {
 	mr = (METARECORD *)((char *)mh + offset);
         if (!lpEnumFunc( hdc, (HANDLETABLE16 *)spht,
-			 (METARECORD *) PTR_SEG_OFF_TO_HUGEPTR(seg, offset),
+                         (METARECORD *)MAKESEGPTR( seg + (HIWORD(offset) << __AHSHIFT), LOWORD(offset) ),
                          mh->mtNoObjects, (LONG)lpData ))
 	{
 	    result = FALSE;

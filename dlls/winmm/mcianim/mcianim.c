@@ -322,7 +322,7 @@ static DWORD MCIANIM_CalcFrame(WINE_MCIANIM* wma, DWORD dwFormatType, DWORD dwTi
 /**************************************************************************
  * 				MCIANIM_mciInfo			[internal]
  */
-static DWORD MCIANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS16 lpParms)
+static DWORD MCIANIM_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMSA lpParms)
 {
     WINE_MCIANIM*	wma = MCIANIM_mciGetOpenDrv(wDevID);
     LPSTR		str = 0;
@@ -649,7 +649,7 @@ LONG WINAPI MCIANIM_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
     case MCI_OPEN_DRIVER:	return MCIANIM_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMSA)dwParam2); 
     case MCI_CLOSE_DRIVER:	return MCIANIM_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
     case MCI_GETDEVCAPS:	return MCIANIM_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
-    case MCI_INFO:		return MCIANIM_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS16)dwParam2);
+    case MCI_INFO:		return MCIANIM_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMSA)dwParam2);
     case MCI_STATUS:		return MCIANIM_mciStatus(dwDevID, dwParam1, (LPMCI_STATUS_PARMS)dwParam2);
     case MCI_SET:		return MCIANIM_mciSet(dwDevID, dwParam1, (LPMCI_SET_PARMS)dwParam2);
     case MCI_PLAY:		return MCIANIM_mciPlay(dwDevID, dwParam1, (LPMCI_PLAY_PARMS)dwParam2);

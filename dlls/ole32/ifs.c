@@ -9,7 +9,6 @@
 #include <string.h>
 #include <assert.h>
 #include "winerror.h"
-#include "ldt.h"
 #include "heap.h"
 #include "wine/winbase16.h"
 #include "wine/obj_base.h"
@@ -148,7 +147,7 @@ SEGPTR WINAPI IMalloc16_fnAlloc(IMalloc16* iface,DWORD cb) {
 SEGPTR WINAPI IMalloc16_fnRealloc(IMalloc16* iface,SEGPTR pv,DWORD cb) {
         ICOM_THIS(IMalloc16Impl,iface);
         TRACE("(%p)->Realloc(%08lx,%ld)\n",This,pv,cb);
-        return MapLS( HeapReAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, PTR_SEG_TO_LIN(pv), cb ) );
+        return MapLS( HeapReAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, MapSL(pv), cb ) );
 }
 
 /******************************************************************************
@@ -157,16 +156,17 @@ SEGPTR WINAPI IMalloc16_fnRealloc(IMalloc16* iface,SEGPTR pv,DWORD cb) {
 VOID WINAPI IMalloc16_fnFree(IMalloc16* iface,SEGPTR pv) {
         ICOM_THIS(IMalloc16Impl,iface);
         TRACE("(%p)->Free(%08lx)\n",This,pv);
-        HeapFree( GetProcessHeap(), HEAP_WINE_SEGPTR, PTR_SEG_TO_LIN(pv) );
+        HeapFree( GetProcessHeap(), HEAP_WINE_SEGPTR, MapSL(pv) );
 }
 
 /******************************************************************************
  * IMalloc16_GetSize [COMPOBJ.506]
  */
-DWORD WINAPI IMalloc16_fnGetSize(const IMalloc16* iface,LPVOID pv) {
+DWORD WINAPI IMalloc16_fnGetSize(const IMalloc16* iface,SEGPTR pv)
+{
 	ICOM_CTHIS(IMalloc16Impl,iface);
-	TRACE("(%p)->GetSize(%p)\n",This,pv);
-        return HeapSize( GetProcessHeap(), HEAP_WINE_SEGPTR, PTR_SEG_TO_LIN(pv) );
+        TRACE("(%p)->GetSize(%08lx)\n",This,pv);
+        return HeapSize( GetProcessHeap(), HEAP_WINE_SEGPTR, MapSL(pv) );
 }
 
 /******************************************************************************

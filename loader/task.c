@@ -177,7 +177,7 @@ static SEGPTR TASK_AllocThunk( HTASK16 hTask )
     }
     base += pThunk->free;
     pThunk->free = *(WORD *)((BYTE *)pThunk + pThunk->free);
-    return PTR_SEG_OFF_TO_SEGPTR( sel, base );
+    return MAKESEGPTR( sel, base );
 }
 
 
@@ -278,8 +278,7 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
     pTask->pdb.savedint23 = INT_GetPMHandler( 0x23 );
     pTask->pdb.savedint24 = INT_GetPMHandler( 0x24 );
     pTask->pdb.fileHandlesPtr =
-        PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel16(pTask->hPDB),
-                               (int)&((PDB16 *)0)->fileHandles );
+        MAKESEGPTR( GlobalHandleToSel16(pTask->hPDB), (int)&((PDB16 *)0)->fileHandles );
     pTask->pdb.hFileHandles = 0;
     memset( pTask->pdb.fileHandles, 0xff, sizeof(pTask->pdb.fileHandles) );
     /* FIXME: should we make a copy of the environment? */
@@ -316,8 +315,7 @@ BOOL TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cmdline, 
 
       /* Default DTA overwrites command line */
 
-    pTask->dta = PTR_SEG_OFF_TO_SEGPTR( pTask->hPDB, 
-                                (int)&pTask->pdb.cmdLine - (int)&pTask->pdb );
+    pTask->dta = MAKESEGPTR( pTask->hPDB, (int)&pTask->pdb.cmdLine - (int)&pTask->pdb );
 
     /* Create scheduler event for 16-bit tasks */
 
@@ -617,7 +615,7 @@ void WINAPI InitTask16( CONTEXT86 *context )
        size of the instance data segment before calling InitTask() */
 
     /* Initialize the INSTANCEDATA structure */
-    pinstance = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN(CURRENT_DS, 0);
+    pinstance = MapSL( MAKESEGPTR(CURRENT_DS, 0) );
     pinstance->stackmin    = OFFSETOF( pTask->teb->cur_stack ) + sizeof( STACK16FRAME );
     pinstance->stackbottom = pinstance->stackmin; /* yup, that's right. Confused me too. */
     pinstance->stacktop    = ( pinstance->stackmin > LOWORD(context->Ebx) ?
@@ -642,7 +640,7 @@ void WINAPI InitTask16( CONTEXT86 *context )
      * 0 (=%bp) is pushed on the stack
      */
     ptr = stack16_push( sizeof(WORD) );
-    *(WORD *)PTR_SEG_TO_LIN(ptr) = 0;
+    *(WORD *)MapSL(ptr) = 0;
     context->Esp -= 2;
 
     context->Eax = 1;
@@ -882,8 +880,8 @@ FARPROC16 WINAPI MakeProcInstance16( FARPROC16 func, HANDLE16 hInstance )
 
     thunkaddr = TASK_AllocThunk( GetCurrentTask() );
     if (!thunkaddr) return (FARPROC16)0;
-    thunk = PTR_SEG_TO_LIN( thunkaddr );
-    lfunc = PTR_SEG_TO_LIN( func );
+    thunk = MapSL( thunkaddr );
+    lfunc = MapSL( (SEGPTR)func );
 
     TRACE("(%08lx,%04x): got thunk %08lx\n",
           (DWORD)func, hInstance, (DWORD)thunkaddr );
@@ -947,7 +945,7 @@ static BOOL TASK_GetCodeSegment( FARPROC16 proc, NE_MODULE **ppModule,
     /* Try thunk or function */
     else 
     {
-        BYTE *thunk = (BYTE *)PTR_SEG_TO_LIN( proc );
+        BYTE *thunk = MapSL( (SEGPTR)proc );
         WORD selector;
 
         if ((thunk[0] == 0xb8) && (thunk[3] == 0xea))
@@ -1156,7 +1154,7 @@ void WINAPI SwitchStackTo16( WORD seg, WORD ptr, WORD top )
     /* pop frame + args and push bp */
     pData->old_ss_sp   = pTask->teb->cur_stack + sizeof(STACK16FRAME)
                            + 2 * sizeof(WORD);
-    *(WORD *)PTR_SEG_TO_LIN(pData->old_ss_sp) = oldFrame->bp;
+    *(WORD *)MapSL(pData->old_ss_sp) = oldFrame->bp;
     pData->stacktop    = top;
     pData->stackmin    = ptr;
     pData->stackbottom = ptr;
@@ -1168,14 +1166,14 @@ void WINAPI SwitchStackTo16( WORD seg, WORD ptr, WORD top )
      */
     copySize = oldFrame->bp - OFFSETOF(pData->old_ss_sp);
     copySize += 3 * sizeof(WORD) + sizeof(STACK16FRAME);
-    pTask->teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( seg, ptr - copySize );
+    pTask->teb->cur_stack = MAKESEGPTR( seg, ptr - copySize );
     newFrame = THREAD_STACK16( pTask->teb );
 
     /* Copy the stack frame and the local variables to the new stack */
 
     memmove( newFrame, oldFrame, copySize );
     newFrame->bp = ptr;
-    *(WORD *)PTR_SEG_OFF_TO_LIN( seg, ptr ) = 0;  /* clear previous bp */
+    *(WORD *)MapSL( MAKESEGPTR( seg, ptr ) ) = 0;  /* clear previous bp */
 }
 
 
@@ -1201,7 +1199,7 @@ void WINAPI SwitchStackBack16( CONTEXT86 *context )
 
     /* Pop bp from the previous stack */
 
-    BP_reg(context) = *(WORD *)PTR_SEG_TO_LIN(pData->old_ss_sp);
+    BP_reg(context) = *(WORD *)MapSL(pData->old_ss_sp);
     pData->old_ss_sp += sizeof(WORD);
 
     /* Switch back to the old stack */
@@ -1544,7 +1542,7 @@ BOOL16 WINAPI TaskNext16( TASKENTRY *lpte )
             break;
         lpte->hNext = pTask->hNext;
     }
-    pInstData = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( GlobalHandleToSel16(pTask->hInstance), 0 );
+    pInstData = MapSL( MAKESEGPTR( GlobalHandleToSel16(pTask->hInstance), 0 ) );
     lpte->hTask         = lpte->hNext;
     lpte->hTaskParent   = pTask->hParent;
     lpte->hInst         = pTask->hInstance;

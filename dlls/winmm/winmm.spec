@@ -8,7 +8,7 @@ import advapi32.dll
 import kernel32.dll
 import ntdll.dll
 
-debug_channels (mci mmio mmsys mmtime sound)
+debug_channels (driver mci mmio mmsys mmtime sound)
 
 # ordinal exports
 1 stdcall @(ptr long long) PlaySoundA

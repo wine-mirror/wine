@@ -1275,8 +1275,7 @@ static LRESULT WINAPI MDIClientWndProcA( HWND hwnd, UINT message, WPARAM wParam,
 	}
         else    
 	{
-	    LPCLIENTCREATESTRUCT16 ccs = (LPCLIENTCREATESTRUCT16) 
-				   PTR_SEG_TO_LIN(cs->lpCreateParams);
+	    LPCLIENTCREATESTRUCT16 ccs = MapSL((SEGPTR)cs->lpCreateParams);
 	    ci->hWindowMenu	= ccs->hWindowMenu;
 	    ci->idFirstChild	= ccs->idFirstChild;
 	}
@@ -1539,8 +1538,7 @@ LRESULT WINAPI DefFrameProc16( HWND16 hwnd, HWND16 hwndMDIClient,
 
 	  case WM_SETTEXT:
             {
-                LPWSTR text = HEAP_strdupAtoW( GetProcessHeap(), 0, 
-                                               (LPCSTR)PTR_SEG_TO_LIN(lParam) );
+                LPWSTR text = HEAP_strdupAtoW( GetProcessHeap(), 0, MapSL(lParam) );
                 wndPtr = WIN_FindWndPtr(hwnd);
                 MDI_UpdateFrameText(wndPtr, hwndMDIClient,
                                     MDI_REPAINTFRAME, text );
@@ -1766,7 +1764,7 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 	break;
 	
       case WM_GETMINMAXINFO:
-	MDI_ChildGetMinMaxInfo(clientWnd, hwnd, (MINMAXINFO16*) PTR_SEG_TO_LIN(lParam));
+	MDI_ChildGetMinMaxInfo(clientWnd, hwnd, MapSL(lParam));
         retvalue = 0;
         goto END;
 

@@ -15,7 +15,6 @@
 #include "wine/unicode.h"
 #include "winerror.h"
 #include "winnls.h"
-#include "ldt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(string);
@@ -44,7 +43,7 @@ void WINAPI hmemcpy16( LPVOID dst, LPCVOID src, LONG count )
 SEGPTR WINAPI lstrcat16( SEGPTR dst, LPCSTR src )
 {
     /* Windows does not check for NULL pointers here, so we don't either */
-    strcat( (LPSTR)PTR_SEG_TO_LIN(dst), src );
+    strcat( MapSL(dst), src );
     return dst;
 }
 
@@ -92,10 +91,11 @@ LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
  */
 SEGPTR WINAPI lstrcatn16( SEGPTR dst, LPCSTR src, INT16 n )
 {
-    LPSTR p = (LPSTR)PTR_SEG_TO_LIN(dst);
+    LPSTR p = MapSL(dst);
+    LPSTR start = p;
 
     while (*p) p++;
-    if ((n -= (p - (LPSTR)PTR_SEG_TO_LIN(dst))) <= 0) return dst;
+    if ((n -= (p - start)) <= 0) return dst;
     lstrcpynA( p, src, n );
     return dst;
 }
@@ -156,7 +156,7 @@ INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
  */
 SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )
 {
-    if (!lstrcpyA( PTR_SEG_TO_LIN(dst), src )) dst = 0;
+    if (!lstrcpyA( MapSL(dst), src )) dst = 0;
     return dst;
 }
 
@@ -206,7 +206,7 @@ LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
  */
 SEGPTR WINAPI lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 {
-    lstrcpynA( (LPSTR)PTR_SEG_TO_LIN(dst), src, n );
+    lstrcpynA( MapSL(dst), src, n );
     return dst;
 }
 

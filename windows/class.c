@@ -24,7 +24,6 @@
 #include "win.h"
 #include "controls.h"
 #include "dce.h"
-#include "ldt.h"
 #include "toolhelp.h"
 #include "winproc.h"
 #include "debugtools.h"
@@ -424,7 +423,7 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
     int iSmIconWidth, iSmIconHeight;
     HINSTANCE16 hInstance=GetExePtr(wc->hInstance);
 
-    if (!(atom = GlobalAddAtomA( PTR_SEG_TO_LIN(wc->lpszClassName) ))) return 0;
+    if (!(atom = GlobalAddAtomA( MapSL(wc->lpszClassName) ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
                                           wc->cbClsExtra, wc->cbWndExtra )))
     {
@@ -438,7 +437,7 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
                    wc->hbrBackground, wc->style, wc->cbClsExtra,
                    wc->cbWndExtra, classPtr,
 		   HIWORD(wc->lpszClassName) ?
-                       (char *)PTR_SEG_TO_LIN(wc->lpszClassName) : "" );
+                       (char *)MapSL(wc->lpszClassName) : "" );
 
     iSmIconWidth  = GetSystemMetrics(SM_CXSMICON);
     iSmIconHeight = GetSystemMetrics(SM_CYSMICON);
@@ -452,7 +451,7 @@ ATOM WINAPI RegisterClass16( const WNDCLASS16 *wc )
 
     WINPROC_SetProc( &classPtr->winprocA, (HWINDOWPROC)wc->lpfnWndProc,
                      WIN_PROC_16, WIN_PROC_CLASS );
-    CLASS_SetMenuNameA( classPtr, PTR_SEG_TO_LIN(wc->lpszMenuName) );
+    CLASS_SetMenuNameA( classPtr, MapSL(wc->lpszMenuName) );
 
     return atom;
 }
@@ -551,7 +550,7 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
     CLASS *classPtr;
     HINSTANCE16 hInstance = GetExePtr( wc->hInstance );
 
-    if (!(atom = GlobalAddAtomA( PTR_SEG_TO_LIN(wc->lpszClassName) ))) return 0;
+    if (!(atom = GlobalAddAtomA( MapSL(wc->lpszClassName) ))) return 0;
     if (!(classPtr = CLASS_RegisterClass( atom, hInstance, wc->style,
                                           wc->cbClsExtra, wc->cbWndExtra )))
     {
@@ -571,7 +570,7 @@ ATOM WINAPI RegisterClassEx16( const WNDCLASSEX16 *wc )
 
     WINPROC_SetProc( &classPtr->winprocA, (HWINDOWPROC)wc->lpfnWndProc,
                      WIN_PROC_16, WIN_PROC_CLASS );
-    CLASS_SetMenuNameA( classPtr, PTR_SEG_TO_LIN(wc->lpszMenuName) );
+    CLASS_SetMenuNameA( classPtr, MapSL(wc->lpszMenuName) );
     return atom;
 }
 
@@ -936,7 +935,7 @@ LONG WINAPI SetClassLong16( HWND16 hwnd, INT16 offset, LONG newval )
         WIN_ReleaseWndPtr(wndPtr);
         return retval;
     case GCL_MENUNAME:
-        return SetClassLongA( hwnd, offset, (LONG)PTR_SEG_TO_LIN(newval) );
+        return SetClassLongA( hwnd, offset, (LONG)MapSL(newval) );
     default:
         return SetClassLongA( hwnd, offset, newval );
     }
@@ -1075,10 +1074,10 @@ BOOL16 WINAPI GetClassInfo16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASS16 *wc
     ATOM atom;
     CLASS *classPtr;
 
-    TRACE("%x %s %p\n",hInstance, debugres_a(PTR_SEG_TO_LIN(name)), wc);
+    TRACE("%x %s %p\n",hInstance, debugres_a(MapSL(name)), wc);
 
     hInstance = GetExePtr( hInstance );
-    if (!(atom = GlobalFindAtomA( PTR_SEG_TO_LIN(name) )) ||
+    if (!(atom = GlobalFindAtomA( MapSL(name) )) ||
         !(classPtr = CLASS_FindClassByAtom( atom, hInstance )))
         return FALSE;
     if ((hInstance != classPtr->hInstance) &&
@@ -1189,10 +1188,10 @@ BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInstance, SEGPTR name, WNDCLASSEX16
     ATOM atom;
     CLASS *classPtr;
 
-    TRACE("%x %s %p\n",hInstance,debugres_a( PTR_SEG_TO_LIN(name) ), wc);
+    TRACE("%x %s %p\n",hInstance,debugres_a( MapSL(name) ), wc);
 
     hInstance = GetExePtr( hInstance );
-    if (!(atom = GlobalFindAtomA( PTR_SEG_TO_LIN(name) )) ||
+    if (!(atom = GlobalFindAtomA( MapSL(name) )) ||
         !(classPtr = CLASS_FindClassByAtom( atom, hInstance )) ||
         (hInstance != classPtr->hInstance)) return FALSE;
     wc->style         = classPtr->style;

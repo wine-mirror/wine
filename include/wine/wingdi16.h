@@ -257,6 +257,35 @@ typedef struct
     HMETAFILE16  hMF;
 } METAFILEPICT16, *LPMETAFILEPICT16;
 
+typedef struct {
+    EMR    emr;
+    RECTL  rclBounds;
+    DWORD  cpts;
+    POINT16 apts[1];
+} EMRPOLYLINE16,     *PEMRPOLYLINE16,
+  EMRPOLYBEZIER16,   *PEMRPOLYBEZIER16,
+  EMRPOLYGON16,      *PEMRPOLYGON16,
+  EMRPOLYBEZIERTO16, *PEMRPOLYBEZIERTO16,
+  EMRPOLYLINETO16,   *PEMRPOLYLINETO16;
+
+typedef struct {
+    EMR    emr;
+    RECTL  rclBounds;
+    DWORD  cpts;
+    POINT16 apts[1];
+    BYTE   abTypes[1];
+} EMRPOLYDRAW16, *PEMRPOLYDRAW16;
+
+typedef struct {
+    EMR     emr;
+    RECTL   rclBounds;
+    DWORD   nPolys;
+    DWORD   cpts;
+    DWORD   aPolyCounts[1];
+    POINT16 apts[1];
+} EMRPOLYPOLYLINE16, *PEMRPOLYPOLYLINE16,
+  EMRPOLYPOLYGON16,  *PEMRPOLYPOLYGON16;
+
 typedef INT16 CALLBACK (*MFENUMPROC16)(HDC16,HANDLETABLE16*,METARECORD*,
                                        INT16,LPARAM);
 typedef struct 
@@ -455,12 +484,10 @@ BOOL16      WINAPI Polyline16(HDC16,const POINT16*,INT16);
 BOOL16      WINAPI PtInRegion16(HRGN16,INT16,INT16);
 BOOL16      WINAPI PtVisible16(HDC16,INT16,INT16);
 UINT16      WINAPI RealizeDefaultPalette16(HDC16);
-/* FIXME This is defined in user.spec !? */
-UINT16      WINAPI RealizePalette16(HDC16);
 BOOL16      WINAPI Rectangle16(HDC16,INT16,INT16,INT16,INT16);
 BOOL16      WINAPI RectInRegion16(HRGN16,const RECT16 *);
 BOOL16      WINAPI RectVisible16(HDC16,const RECT16*);
-BOOL16      WINAPI RemoveFontResource16(SEGPTR);
+BOOL16      WINAPI RemoveFontResource16(LPCSTR);
 HDC16       WINAPI ResetDC16(HDC16,const DEVMODEA *);
 BOOL16      WINAPI ResizePalette16(HPALETTE16,UINT16);
 BOOL16      WINAPI RestoreDC16(HDC16,INT16);
@@ -476,8 +503,6 @@ BOOL16      WINAPI ScaleWindowExtEx16(HDC16,INT16,INT16,INT16,INT16,LPSIZE16);
 BOOL16      WINAPI SelectClipPath16(HDC16,INT16);
 INT16       WINAPI SelectClipRgn16(HDC16,HRGN16);
 HGDIOBJ16   WINAPI SelectObject16(HDC16,HGDIOBJ16);
-/* FIXME This is defined in user.spec !? */
-HPALETTE16  WINAPI SelectPalette16(HDC16,HPALETTE16,BOOL16);
 INT16       WINAPI SelectVisRgn16(HDC16,HRGN16);
 INT16       WINAPI SetAbortProc16(HDC16,SEGPTR);
 INT16       WINAPI SetArcDirection16(HDC16,INT16);
@@ -536,5 +561,33 @@ BOOL16      WINAPI WidenPath16(HDC16);
 INT16       WINAPI WriteDialog16(HPJOB16,LPSTR,INT16);
 INT16       WINAPI WriteSpool16(HPJOB16,LPSTR,INT16);
 
+
+inline static void CONV_POINT16TO32( const POINT16 *p16, POINT *p32 )
+{
+    p32->x = p16->x;
+    p32->y = p16->y;
+}
+
+inline static void CONV_POINT32TO16( const POINT *p32, POINT16 *p16 )
+{
+    p16->x = (INT16)p32->x;
+    p16->y = (INT16)p32->y;
+}
+
+inline static void CONV_RECT16TO32( const RECT16 *r16, RECT *r32 )
+{
+    r32->left   = r16->left;
+    r32->top    = r16->top;
+    r32->right  = r16->right;
+    r32->bottom = r16->bottom;
+}
+
+inline static void CONV_RECT32TO16( const RECT *r32, RECT16 *r16 )
+{
+    r16->left   = (INT16)r32->left;
+    r16->top    = (INT16)r32->top;
+    r16->right  = (INT16)r32->right;
+    r16->bottom = (INT16)r32->bottom;
+}
 
 #endif /* __WINE_WINE_WINGDI16_H */

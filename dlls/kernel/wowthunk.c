@@ -55,7 +55,7 @@ LPVOID WINAPI K32WOWGetVDMPointer( DWORD vp, DWORD dwBytes, BOOL fProtectedMode 
     /* FIXME: add size check too */
 
     if ( fProtectedMode )
-        return PTR_SEG_TO_LIN( vp );
+        return MapSL( vp );
     else
         return DOSMEM_MapRealToLinear( vp );
 }
@@ -383,8 +383,8 @@ static DWORD WOW_CallProc32W16( BOOL Ex )
             if (argconvmask & (1<<i))
             {
                 SEGPTR ptr = VA_ARG16( valist, SEGPTR );
-                if (args) args[aix] = (DWORD)PTR_SEG_TO_LIN(ptr);
-                if (TRACE_ON(thunk)) DPRINTF("%08lx(%p),",ptr,PTR_SEG_TO_LIN(ptr));
+                if (args) args[aix] = (DWORD)MapSL(ptr);
+                if (TRACE_ON(thunk)) DPRINTF("%08lx(%p),",ptr,MapSL(ptr));
             }
             else
             {

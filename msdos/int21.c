@@ -29,7 +29,6 @@
 #include "file.h"
 #include "heap.h"
 #include "msdos.h"
-#include "ldt.h"
 #include "options.h"
 #include "miscemu.h"
 #include "task.h"
@@ -121,7 +120,7 @@ static BOOL INT21_CreateHeap(void)
         return FALSE;
     }
     heap = (struct DosHeap *) GlobalLock16(DosHeapHandle);
-    dpbsegptr = PTR_SEG_OFF_TO_SEGPTR(DosHeapHandle,(int)&heap->dpb-(int)heap);
+    dpbsegptr = MAKESEGPTR(DosHeapHandle,(int)&heap->dpb-(int)heap);
     heap->InDosFlag = 0;
     strcpy(heap->biosdate, "01/01/80");
     memset(heap->DummyDBCSLeadTable, 0, 6);
@@ -1300,7 +1299,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
     case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
         {
             TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
-            pTask->dta = PTR_SEG_OFF_TO_SEGPTR(context->SegDs,DX_reg(context));
+            pTask->dta = MAKESEGPTR(context->SegDs,DX_reg(context));
             TRACE("Set DTA: %08lx\n", pTask->dta);
         }
         break;
@@ -1320,8 +1319,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
 		
     case 0x25: /* SET INTERRUPT VECTOR */
         INT_CtxSetHandler( context, AL_reg(context),
-                        (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( context->SegDs,
-                                                          DX_reg(context)));
+                           (FARPROC16)MAKESEGPTR( context->SegDs, DX_reg(context)));
         break;
 
     case 0x29: /* PARSE FILENAME INTO FCB */
@@ -1544,8 +1542,7 @@ void WINAPI DOS3Call( CONTEXT86 *context )
                                    CX_reg(context) );
             else
                 result = WIN16_hread( BX_reg(context),
-                                      PTR_SEG_OFF_TO_SEGPTR( context->SegDs,
-                                                             context->Edx ),
+                                      MAKESEGPTR( context->SegDs, context->Edx ),
                                       CX_reg(context) );
             if (result == -1) bSetDOSExtendedError = TRUE;
             else AX_reg(context) = (WORD)result;

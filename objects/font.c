@@ -885,10 +885,10 @@ BOOL16 WINAPI GetTextExtentPoint16( HDC16 hdc, LPCSTR str, INT16 count,
 {
     SIZE size32;
     BOOL ret;
-    TRACE("%04x, %p (%s), %d, %p\n", hdc, str, debugstr_an(str, count), count,
-	  size);
+    TRACE("%04x, %p (%s), %d, %p\n", hdc, str, debugstr_an(str, count), count, size);
     ret = GetTextExtentPoint32A( hdc, str, count, &size32 );
-    CONV_SIZE32TO16( &size32, size );
+    size->cx = size32.cx;
+    size->cy = size32.cy;
     return (BOOL16)ret;
 }
 
@@ -1772,9 +1772,9 @@ INT WINAPI AddFontResourceW( LPCWSTR str )
 /***********************************************************************
  *           RemoveFontResource16    (GDI.136)
  */
-BOOL16 WINAPI RemoveFontResource16( SEGPTR str )
+BOOL16 WINAPI RemoveFontResource16( LPCSTR str )
 {
-    FIXME("(%s): stub\n",	debugres_a(PTR_SEG_TO_LIN(str)));
+    FIXME("(%s): stub\n",	debugres_a(str));
     return TRUE;
 }
 

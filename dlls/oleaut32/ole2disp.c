@@ -13,7 +13,6 @@
 #include "olectl.h"
 #include "oleauto.h"
 #include "heap.h"
-#include "ldt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
@@ -36,7 +35,7 @@ static BSTR16 BSTR_AllocBytes(int n)
  */
 static void BSTR_Free(BSTR16 in)
 {
-    SEGPTR_FREE( PTR_SEG_TO_LIN(in) );
+    SEGPTR_FREE( MapSL((SEGPTR)in) );
 }
 
 /******************************************************************************
@@ -44,7 +43,7 @@ static void BSTR_Free(BSTR16 in)
  */
 static void* BSTR_GetAddr(BSTR16 in)
 {
-    return in ? PTR_SEG_TO_LIN(in) : 0;
+    return in ? MapSL((SEGPTR)in) : 0;
 }
 
 /******************************************************************************

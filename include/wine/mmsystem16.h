@@ -38,8 +38,8 @@ typedef struct {
 
 typedef struct {
     DWORD   dwDCISize;
-    LPCSTR  lpszDCISectionName;
-    LPCSTR  lpszDCIAliasName;
+    SEGPTR  lpszDCISectionName;
+    SEGPTR  lpszDCIAliasName;
 } DRVCONFIGINFO16, *LPDRVCONFIGINFO16;
 
 /* GetDriverInfo16 references this structure, so this a struct defined
@@ -94,8 +94,8 @@ UINT16    WINAPI waveOutSetVolume16(UINT16,DWORD);
 UINT16    WINAPI waveOutGetErrorText16(UINT16,LPSTR,UINT16);
 UINT16    WINAPI waveOutOpen16(HWAVEOUT16*,UINT16,const LPWAVEFORMATEX,DWORD,DWORD,DWORD);
 UINT16    WINAPI waveOutClose16(HWAVEOUT16);
-UINT16    WINAPI waveOutPrepareHeader16(HWAVEOUT16,WAVEHDR*,UINT16);
-UINT16    WINAPI waveOutUnprepareHeader16(HWAVEOUT16,WAVEHDR*,UINT16);
+UINT16    WINAPI waveOutPrepareHeader16(HWAVEOUT16,SEGPTR,UINT16);
+UINT16    WINAPI waveOutUnprepareHeader16(HWAVEOUT16,SEGPTR,UINT16);
 UINT16    WINAPI waveOutWrite16(HWAVEOUT16,WAVEHDR*,UINT16);
 UINT16    WINAPI waveOutPause16(HWAVEOUT16);
 UINT16    WINAPI waveOutRestart16(HWAVEOUT16);
@@ -113,8 +113,8 @@ UINT16    WINAPI waveInGetDevCaps16(UINT16,LPWAVEINCAPS16,UINT16);
 UINT16    WINAPI waveInGetErrorText16(UINT16,LPSTR,UINT16);
 UINT16    WINAPI waveInOpen16(HWAVEIN16*,UINT16,const LPWAVEFORMATEX,DWORD,DWORD,DWORD);
 UINT16    WINAPI waveInClose16(HWAVEIN16);
-UINT16    WINAPI waveInPrepareHeader16(HWAVEIN16,WAVEHDR*,UINT16);
-UINT16    WINAPI waveInUnprepareHeader16(HWAVEIN16,WAVEHDR*,UINT16);
+UINT16    WINAPI waveInPrepareHeader16(HWAVEIN16,SEGPTR,UINT16);
+UINT16    WINAPI waveInUnprepareHeader16(HWAVEIN16,SEGPTR,UINT16);
 UINT16    WINAPI waveInAddBuffer16(HWAVEIN16,WAVEHDR*,UINT16);
 UINT16    WINAPI waveInStart16(HWAVEIN16);
 UINT16    WINAPI waveInStop16(HWAVEIN16);
@@ -162,8 +162,8 @@ UINT16     WINAPI midiOutSetVolume16(UINT16,DWORD);
 UINT16     WINAPI midiOutGetErrorText16(UINT16,LPSTR,UINT16);
 UINT16     WINAPI midiOutOpen16(HMIDIOUT16*,UINT16,DWORD,DWORD,DWORD);
 UINT16     WINAPI midiOutClose16(HMIDIOUT16);
-UINT16     WINAPI midiOutPrepareHeader16(HMIDIOUT16,MIDIHDR16*,UINT16);
-UINT16     WINAPI midiOutUnprepareHeader16(HMIDIOUT16,MIDIHDR16*,UINT16);
+UINT16     WINAPI midiOutPrepareHeader16(HMIDIOUT16,SEGPTR,UINT16);
+UINT16     WINAPI midiOutUnprepareHeader16(HMIDIOUT16,SEGPTR,UINT16);
 UINT16     WINAPI midiOutShortMsg16(HMIDIOUT16,DWORD);
 UINT16     WINAPI midiOutLongMsg16(HMIDIOUT16,MIDIHDR16*,UINT16);
 UINT16     WINAPI midiOutReset16(HMIDIOUT16);
@@ -176,8 +176,8 @@ UINT16     WINAPI midiInGetDevCaps16(UINT16,LPMIDIINCAPS16,UINT16);
 UINT16     WINAPI midiInGetErrorText16(UINT16,LPSTR,UINT16);
 UINT16     WINAPI midiInOpen16(HMIDIIN16*,UINT16,DWORD,DWORD,DWORD);
 UINT16     WINAPI midiInClose16(HMIDIIN16);
-UINT16     WINAPI midiInPrepareHeader16(HMIDIIN16,MIDIHDR16*,UINT16);
-UINT16     WINAPI midiInUnprepareHeader16(HMIDIIN16,MIDIHDR16*,UINT16);
+UINT16     WINAPI midiInPrepareHeader16(HMIDIIN16,SEGPTR,UINT16);
+UINT16     WINAPI midiInUnprepareHeader16(HMIDIIN16,SEGPTR,UINT16);
 UINT16     WINAPI midiInAddBuffer16(HMIDIIN16,MIDIHDR16*,UINT16);
 UINT16     WINAPI midiInStart16(HMIDIIN16);
 UINT16     WINAPI midiInStop16(HMIDIIN16);
@@ -311,7 +311,7 @@ typedef struct {
     } DUMMYUNIONNAME;
     DWORD	cControls;	/* count of controls pmxctrl points to */
     DWORD	cbmxctrl;	/* size in bytes of _one_ MIXERCONTROL */
-    LPMIXERCONTROL16	pamxctrl;/* pointer to first MIXERCONTROL array */
+    SEGPTR	pamxctrl;	/* pointer to first MIXERCONTROL array */
 } MIXERLINECONTROLS16, *LPMIXERLINECONTROLS16;
 
 typedef struct {
@@ -418,20 +418,20 @@ typedef struct {
     DWORD	dwCallback;
     WORD	wDeviceID;
     WORD	wReserved0;
-    LPSTR	lpstrDeviceType;
-    LPSTR	lpstrElementName;
-    LPSTR	lpstrAlias;
+    SEGPTR	lpstrDeviceType;
+    SEGPTR	lpstrElementName;
+    SEGPTR	lpstrAlias;
 } MCI_OPEN_PARMS16, *LPMCI_OPEN_PARMS16;
 
 typedef struct {
     DWORD   dwCallback;
-    LPSTR   lpstrReturn;
+    SEGPTR  lpstrReturn;
     DWORD   dwRetSize;
 } MCI_INFO_PARMS16, *LPMCI_INFO_PARMS16;
 
 typedef struct {
     DWORD	dwCallback;
-    LPSTR	lpstrReturn;
+    SEGPTR	lpstrReturn;
     DWORD	dwRetSize;
     DWORD	dwNumber;
     WORD	wDeviceType;
@@ -453,7 +453,7 @@ typedef struct {
 
 typedef struct {
     DWORD	dwCallback;
-    LPCSTR	lpstrCommand;
+    SEGPTR	lpstrCommand;
 } MCI_VD_ESCAPE_PARMS16, *LPMCI_VD_ESCAPE_PARMS16;
 
 typedef struct {

@@ -15,7 +15,6 @@
 #include "winuser.h"
 #include "mmddk.h"
 #include "winemm.h"
-#include "ldt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(driver);
@@ -133,7 +132,7 @@ static int DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 		
 		if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCISectionName)) != NULL &&
 		    (str2 = SEGPTR_STRDUP(str1)) != NULL) {
-		    dci16->lpszDCISectionName = (LPSTR)SEGPTR_GET(str2);
+		    dci16->lpszDCISectionName = SEGPTR_GET(str2);
 		    if (!HeapFree(GetProcessHeap(), 0, str1))
 			FIXME("bad free line=%d\n", __LINE__);
 		} else {
@@ -141,7 +140,7 @@ static int DRIVER_MapMsg32To16(WORD wMsg, DWORD* lParam1, DWORD* lParam2)
 		}
 		if ((str1 = HEAP_strdupWtoA(GetProcessHeap(), 0, dci32->lpszDCIAliasName)) != NULL &&
 		    (str2 = SEGPTR_STRDUP(str1)) != NULL) {
-		    dci16->lpszDCIAliasName = (LPSTR)SEGPTR_GET(str2);
+		    dci16->lpszDCIAliasName = SEGPTR_GET(str2);
 		    if (!HeapFree(GetProcessHeap(), 0, str1))
 			FIXME("bad free line=%d\n", __LINE__);
 		} else {
@@ -195,11 +194,11 @@ static int DRIVER_UnMapMsg32To16(WORD wMsg, DWORD lParam1, DWORD lParam2)
     case DRV_INSTALL:
 	/* lParam1 is a handle to a window (or not used), lParam2 is a pointer to DRVCONFIGINFO, lParam2 */
 	if (lParam2) {
-	    LPDRVCONFIGINFO16	dci16 = (LPDRVCONFIGINFO16)PTR_SEG_TO_LIN(lParam2);
+	    LPDRVCONFIGINFO16	dci16 = MapSL(lParam2);
 	    
-	    if (!SEGPTR_FREE(PTR_SEG_TO_LIN(dci16->lpszDCISectionName)))
+	    if (!SEGPTR_FREE(MapSL(dci16->lpszDCISectionName)))
 		FIXME("bad free line=%d\n", __LINE__);
-	    if (!SEGPTR_FREE(PTR_SEG_TO_LIN(dci16->lpszDCIAliasName)))
+	    if (!SEGPTR_FREE(MapSL(dci16->lpszDCIAliasName)))
 		FIXME("bad free line=%d\n", __LINE__);
 	    if (!SEGPTR_FREE(dci16))
 		FIXME("bad free line=%d\n", __LINE__);

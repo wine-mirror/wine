@@ -11,11 +11,11 @@
 #include <unistd.h>
 #include <ctype.h>
 #include "wine/winbase16.h"
+#include "wine/library.h"
 #include "winerror.h"
 #include "module.h"
 #include "toolhelp.h"
 #include "file.h"
-#include "ldt.h"
 #include "heap.h"
 #include "task.h"
 #include "global.h"
@@ -336,11 +336,11 @@ FARPROC16 NE_GetEntryPointEx( HMODULE16 hModule, WORD ordinal, BOOL16 snoop )
     if (sel == 0xfe) sel = 0xffff;  /* constant entry */
     else sel = GlobalHandleToSel16(NE_SEG_TABLE(pModule)[sel-1].hSeg);
     if (sel==0xffff)
-	return (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset );
+	return (FARPROC16)MAKESEGPTR( sel, offset );
     if (!snoop)
-	return (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset );
+	return (FARPROC16)MAKESEGPTR( sel, offset );
     else
-	return (FARPROC16)SNOOP16_GetProcAddress16(hModule,ordinal,(FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset ));
+	return (FARPROC16)SNOOP16_GetProcAddress16(hModule,ordinal,(FARPROC16)MAKESEGPTR( sel, offset ));
 }
 
 
@@ -1078,8 +1078,8 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
     /* Create a task for this process */
 
     params = (LOADPARAMS16 *)paramBlock;
-    cmdShow = ((WORD *)PTR_SEG_TO_LIN(params->showCmd))[1];
-    cmdline = PTR_SEG_TO_LIN( params->cmdLine );
+    cmdShow = ((WORD *)MapSL(params->showCmd))[1];
+    cmdline = MapSL( params->cmdLine );
     if (!TASK_Create( pModule, cmdShow, teb, cmdline + 1, *cmdline )) goto error;
 
     hTask = teb->htask16;
@@ -1169,7 +1169,7 @@ static void NE_InitProcess(void)
             sp = pSegTable[pModule->ss-1].minsize + pModule->stack_size;
         sp &= ~1;
         sp -= sizeof(STACK16FRAME);
-        pTask->teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel16(hInstance), sp );
+        pTask->teb->cur_stack = MAKESEGPTR( GlobalHandleToSel16(hInstance), sp );
 
         /* Registers at initialization must be:
          * ax   zero
@@ -1424,7 +1424,7 @@ DWORD WINAPI WIN16_GetModuleHandle( SEGPTR name )
 {
     if (HIWORD(name) == 0)
 	return MAKELONG(GetExePtr( (HINSTANCE16)name), hFirstModule );
-    return MAKELONG(GetModuleHandle16( PTR_SEG_TO_LIN(name)), hFirstModule );
+    return MAKELONG(GetModuleHandle16( MapSL(name)), hFirstModule );
 }
 
 /***********************************************************************

@@ -258,11 +258,11 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 
     /* TTD Shouldn't really do pointer arithmetic on segment points */
     physDev->segptrPDEVICE = WIN16_GlobalLock16(GlobalAlloc16(GHND, nPDEVICEsize))+sizeof(PDEVICE_HEADER);
-    *((BYTE *)PTR_SEG_TO_LIN(physDev->segptrPDEVICE)+0) = 'N'; 
-    *((BYTE *)PTR_SEG_TO_LIN(physDev->segptrPDEVICE)+1) = 'B'; 
+    *((BYTE *)MapSL(physDev->segptrPDEVICE)+0) = 'N'; 
+    *((BYTE *)MapSL(physDev->segptrPDEVICE)+1) = 'B'; 
 
     /* Set up the header */
-    pPDH = (PDEVICE_HEADER *)((BYTE*)PTR_SEG_TO_LIN(physDev->segptrPDEVICE) - sizeof(PDEVICE_HEADER)); 
+    pPDH = (PDEVICE_HEADER *)((BYTE*)MapSL(physDev->segptrPDEVICE) - sizeof(PDEVICE_HEADER)); 
     pPDH->pLPD = pLPD;
     
     TRACE("PDEVICE allocated %08lx\n",(DWORD)(physDev->segptrPDEVICE));
@@ -274,13 +274,13 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     physDev->BrushInfo = NULL;
     physDev->PenInfo = NULL;
     win16drv_SegPtr_TextXForm = WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(TEXTXFORM16)));
-    win16drv_TextXFormP = PTR_SEG_TO_LIN(win16drv_SegPtr_TextXForm);
+    win16drv_TextXFormP = MapSL(win16drv_SegPtr_TextXForm);
     
     InitTextXForm(win16drv_TextXFormP);
 
     /* TTD Lots more to do here */
     win16drv_SegPtr_DrawMode = WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(DRAWMODE)));
-    win16drv_DrawModeP = PTR_SEG_TO_LIN(win16drv_SegPtr_DrawMode);
+    win16drv_DrawModeP = MapSL(win16drv_SegPtr_DrawMode);
     
     InitDrawMode(win16drv_DrawModeP);
 
@@ -366,7 +366,7 @@ static INT WIN16DRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	    {
 	      /* lpInData is not necessarily \0 terminated so make it so */
 	      char *cp = SEGPTR_ALLOC(cbInput + 1);
-	      memcpy(cp, PTR_SEG_TO_LIN(lpInData), cbInput);
+	      memcpy(cp, MapSL(lpInData), cbInput);
 	      cp[cbInput] = '\0';
 	    
 	      nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,

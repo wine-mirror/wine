@@ -9,7 +9,6 @@
 #include "config.h"
 #include "winerror.h"
 #include "wine/winbase16.h"
-#include "ldt.h"
 #include "miscemu.h"
 #include "selectors.h"
 #include "stackframe.h"
@@ -410,7 +409,7 @@ BOOL16 WINAPI IsBadStringPtr16( SEGPTR ptr, UINT16 size )
     /* check for data or readable code segment */
     if (!(entry.HighWord.Bits.Type & 0x10)) return TRUE;  /* system descriptor */
     if ((entry.HighWord.Bits.Type & 0x0a) == 0x08) return TRUE;  /* non-readable code segment */
-    if (strlen(PTR_SEG_TO_LIN(ptr)) < size) size = strlen(PTR_SEG_TO_LIN(ptr)) + 1;
+    if (strlen(MapSL(ptr)) < size) size = strlen(MapSL(ptr)) + 1;
     if (size && (OFFSETOF(ptr) + size - 1 > wine_ldt_get_limit(&entry))) return TRUE;
     return FALSE;
 }
@@ -537,7 +536,7 @@ LPVOID WINAPI MapSL( SEGPTR sptr )
 
 LPVOID WINAPI MapSLFix( SEGPTR sptr )
 {
-    return (LPVOID)PTR_SEG_TO_LIN(sptr);
+    return MapSL(sptr);
 }
 
 /***********************************************************************

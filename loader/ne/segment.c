@@ -16,6 +16,7 @@
 #include <string.h>
 
 #include "wine/winbase16.h"
+#include "wine/library.h"
 #include "global.h"
 #include "task.h"
 #include "file.h"
@@ -141,11 +142,10 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         HFILE hFile32;
         HFILE16 hFile16;
 
- 	selfloadheader = (SELFLOADHEADER *)
- 		PTR_SEG_OFF_TO_LIN(SEL(pSegTable->hSeg),0);
+ 	selfloadheader = MapSL( MAKESEGPTR(SEL(pSegTable->hSeg),0) );
  	oldstack = NtCurrentTeb()->cur_stack;
- 	NtCurrentTeb()->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
-                                                          0xff00 - sizeof(STACK16FRAME));
+ 	NtCurrentTeb()->cur_stack = MAKESEGPTR(pModule->self_loading_sel,
+                                               0xff00 - sizeof(STACK16FRAME));
 
 	TRACE_(dll)("CallLoadAppSegProc(hmodule=0x%04x,hf=0x%04x,segnum=%d\n",
 		pModule->self,hf,segnum );
@@ -307,7 +307,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	    }
 	    else
 	    {
-                address = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( SEL(pSegTable[rep->target1-1].hSeg), rep->target2 );
+                address = (FARPROC16)MAKESEGPTR( SEL(pSegTable[rep->target1-1].hSeg), rep->target2 );
 	    }
 	    
 	    TRACE_(fixup)("%d: %04x:%04x %s\n", 
@@ -345,7 +345,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 
         if (additive)
         {
-            sp = PTR_SEG_OFF_TO_LIN( SEL(pSeg->hSeg), offset );
+            sp = MapSL( MAKESEGPTR( SEL(pSeg->hSeg), offset ) );
             TRACE_(fixup)("    %04x:%04x\n", offset, *sp );
             switch (rep->address_type & 0x7f)
             {
@@ -374,7 +374,7 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         {
             do
             {
-                sp = PTR_SEG_OFF_TO_LIN( SEL(pSeg->hSeg), offset );
+                sp = MapSL( MAKESEGPTR( SEL(pSeg->hSeg), offset ) );
                 next_offset = *sp;
                 TRACE_(fixup)("    %04x:%04x\n", offset, *sp );
                 switch (rep->address_type & 0x7f)
@@ -435,15 +435,14 @@ BOOL NE_LoadAllSegments( NE_MODULE *pModule )
 		     *((BYTE*)pModule + pModule->name_table),
 		     (char *)pModule + pModule->name_table + 1);
         if (!NE_LoadSegment( pModule, 1 )) return FALSE;
-        selfloadheader = (SELFLOADHEADER *)
-                          PTR_SEG_OFF_TO_LIN(SEL(pSegTable->hSeg), 0);
+        selfloadheader = MapSL( MAKESEGPTR(SEL(pSegTable->hSeg), 0) );
         selfloadheader->EntryAddrProc = GetProcAddress16(mod,"EntryAddrProc");
         selfloadheader->MyAlloc       = GetProcAddress16(mod,"MyAlloc");
         selfloadheader->SetOwner      = GetProcAddress16(mod,"FarSetOwner");
         pModule->self_loading_sel = SEL(GLOBAL_Alloc(GMEM_ZEROINIT, 0xFF00, pModule->self, WINE_LDT_FLAGS_DATA));
         oldstack = NtCurrentTeb()->cur_stack;
-        NtCurrentTeb()->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
-                                                          0xff00 - sizeof(STACK16FRAME) );
+        NtCurrentTeb()->cur_stack = MAKESEGPTR(pModule->self_loading_sel,
+                                               0xff00 - sizeof(STACK16FRAME) );
 
         DuplicateHandle( GetCurrentProcess(), NE_OpenFile(pModule),
                          GetCurrentProcess(), &hf, 0, FALSE, DUPLICATE_SAME_ACCESS );
@@ -492,7 +491,7 @@ static void NE_FixupSegmentPrologs(NE_MODULE *pModule, WORD segnum)
 
     if (!(dgroup = SEL(pSegTable[pModule->dgroup-1].hSeg))) return;
     
-    pSeg = PTR_SEG_OFF_TO_LIN(sel, 0);
+    pSeg = MapSL( MAKESEGPTR(sel, 0) );
 
     bundle = (ET_BUNDLE *)((BYTE *)pModule+pModule->entry_table);
 
@@ -714,8 +713,7 @@ static void NE_CallDllEntryPoint( NE_MODULE *pModule, DWORD dwReason )
 
     if ( pModule->flags & NE_FFLAGS_BUILTIN )
     {
-        WinNEEntryProc entryProc = (WinNEEntryProc)
-			  ((ENTRYPOINT16 *)PTR_SEG_TO_LIN( entryPoint ))->target;
+        WinNEEntryProc entryProc = (WinNEEntryProc)((ENTRYPOINT16 *)MapSL( (SEGPTR)entryPoint ))->target;
 
         entryProc( dwReason, hInst, ds, heap, 0, 0 );
     }

@@ -861,7 +861,7 @@ SEGPTR HEAP_GetSegptr( HANDLE heap, DWORD flags, LPCVOID ptr )
     /* Get the subheap */
 
     if ((subheap = HEAP_FindSubHeap( heapPtr, ptr )))
-        ret = PTR_SEG_OFF_TO_SEGPTR(subheap->selector, (char *)ptr - (char *)subheap);
+        ret = MAKESEGPTR(subheap->selector, (char *)ptr - (char *)subheap);
 
     if (!(flags & HEAP_NO_SERIALIZE)) LeaveCriticalSection( &heapPtr->critSection );
     return ret;
@@ -882,14 +882,14 @@ SEGPTR WINAPI MapLS( LPCVOID ptr )
     /* check if the pointer is inside the segptr heap */
     EnterCriticalSection( &segptrHeap->critSection );
     if ((subheap = HEAP_FindSubHeap( segptrHeap, ptr )))
-        ret = PTR_SEG_OFF_TO_SEGPTR( subheap->selector, (char *)ptr - (char *)subheap );
+        ret = MAKESEGPTR( subheap->selector, (char *)ptr - (char *)subheap );
     LeaveCriticalSection( &segptrHeap->critSection );
 
     /* otherwise, allocate a brand-new selector */
     if (!ret)
     {
         WORD sel = SELECTOR_AllocBlock( ptr, 0x10000, WINE_LDT_FLAGS_DATA );
-        ret = PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
+        ret = MAKESEGPTR( sel, 0 );
     }
     return ret;
 }
@@ -907,7 +907,7 @@ void WINAPI UnMapLS( SEGPTR sptr )
 
     /* check if ptr is inside segptr heap */
     EnterCriticalSection( &segptrHeap->critSection );
-    subheap = HEAP_FindSubHeap( segptrHeap, PTR_SEG_TO_LIN(sptr) );
+    subheap = HEAP_FindSubHeap( segptrHeap, MapSL(sptr) );
     if ((subheap) && (subheap->selector != SELECTOROF(sptr))) subheap = NULL;
     LeaveCriticalSection( &segptrHeap->critSection );
     /* if not inside heap, free the selector */
@@ -1844,7 +1844,7 @@ static VOID Local32_ToHandle( LOCAL32HEADER *header, INT16 type,
     switch (type)
     {
         case -2:    /* 16:16 pointer, no handles */
-            *ptr    = PTR_SEG_TO_LIN( addr );
+            *ptr    = MapSL( addr );
             *handle = (LPDWORD)*ptr;
             break;
 
@@ -1864,7 +1864,7 @@ static VOID Local32_ToHandle( LOCAL32HEADER *header, INT16 type,
             break;
 
         case 1:     /* 16:16 pointer */
-            *ptr    = PTR_SEG_TO_LIN( addr );
+            *ptr    = MapSL( addr );
             *handle = Local32_SearchHandle( header, *ptr - header->base );
             break;
 

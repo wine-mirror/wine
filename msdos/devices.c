@@ -444,13 +444,13 @@ void DOSDEV_InstallDOSDevices(void)
   /* allocate DOS data segment or something */
   DOS_LOLSeg = GlobalDOSAlloc16(sizeof(DOS_DATASEG));
   seg = HIWORD(DOS_LOLSeg);
-  dataseg = PTR_SEG_OFF_TO_LIN(LOWORD(DOS_LOLSeg), 0);
+  dataseg = MapSL( MAKESEGPTR(LOWORD(DOS_LOLSeg), 0) );
 
   /* initialize the magnificent List Of Lists */
   InitListOfLists(&dataseg->lol);
 
   /* Set up first device (NUL) */
-  dataseg->lol.NUL_dev.next_dev  = PTR_SEG_OFF_TO_SEGPTR(seg, DOS_DATASEG_OFF(dev[0]));
+  dataseg->lol.NUL_dev.next_dev  = MAKESEGPTR(seg, DOS_DATASEG_OFF(dev[0]));
   dataseg->lol.NUL_dev.attr      = devs[0].attr;
   dataseg->lol.NUL_dev.strategy  = DOS_DATASEG_OFF(thunk[0].ljmp1);
   dataseg->lol.NUL_dev.interrupt = DOS_DATASEG_OFF(thunk[0].ljmp2);
@@ -460,7 +460,7 @@ void DOSDEV_InstallDOSDevices(void)
   for (n = 1; n < NR_DEVS; n++)
   {
     dataseg->dev[n-1].next_dev  = (n+1) == NR_DEVS ? NONEXT :
-                                  PTR_SEG_OFF_TO_SEGPTR(seg, DOS_DATASEG_OFF(dev[n]));
+                                  MAKESEGPTR(seg, DOS_DATASEG_OFF(dev[n]));
     dataseg->dev[n-1].attr      = devs[n].attr;
     dataseg->dev[n-1].strategy  = DOS_DATASEG_OFF(thunk[n].ljmp1);
     dataseg->dev[n-1].interrupt = DOS_DATASEG_OFF(thunk[n].ljmp2);
@@ -477,7 +477,7 @@ void DOSDEV_InstallDOSDevices(void)
   }
 
   /* CON is device 1 */
-  dataseg->lol.ptr_CON_dev_hdr = PTR_SEG_OFF_TO_SEGPTR(seg, DOS_DATASEG_OFF(dev[0]));
+  dataseg->lol.ptr_CON_dev_hdr = MAKESEGPTR(seg, DOS_DATASEG_OFF(dev[0]));
 }
 
 DWORD DOSDEV_Console(void)
@@ -487,8 +487,7 @@ DWORD DOSDEV_Console(void)
 
 DWORD DOSDEV_FindCharDevice(char*name)
 {
-  SEGPTR cur_ptr = PTR_SEG_OFF_TO_SEGPTR(HIWORD(DOS_LOLSeg),
-					 FIELD_OFFSET(DOS_LISTOFLISTS,NUL_dev));
+  SEGPTR cur_ptr = MAKESEGPTR(HIWORD(DOS_LOLSeg), FIELD_OFFSET(DOS_LISTOFLISTS,NUL_dev));
   DOS_DEVICE_HEADER *cur = DOSMEM_MapRealToLinear(cur_ptr);
   char dname[8];
   int cnt;

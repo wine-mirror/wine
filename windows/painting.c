@@ -1431,7 +1431,7 @@ static BOOL PAINTING_DrawStateJam(HDC hdc, UINT opcode,
         else if(_32bit)
             return DrawTextA(hdc, (LPSTR)lp, (INT)wp, rc, dtflags);
         else
-            return DrawTextA(hdc, (LPSTR)PTR_SEG_TO_LIN(lp), (INT)wp, rc, dtflags);
+            return DrawTextA(hdc, MapSL(lp), (INT)wp, rc, dtflags);
 
     case DST_ICON:
         return DrawIcon(hdc, rc->left, rc->top, (HICON)lp);
@@ -1495,7 +1495,7 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr,
         else if(_32bit)
             len = strlen((LPSTR)lp);
         else
-            len = strlen((LPSTR)PTR_SEG_TO_LIN(lp));
+            len = strlen(MapSL(lp));
     }
 
     /* Find out what size the image has if not given by caller */
@@ -1514,7 +1514,7 @@ static BOOL PAINTING_DrawState(HDC hdc, HBRUSH hbr,
             else if(_32bit)
                 retval = GetTextExtentPoint32A(hdc, (LPSTR)lp, len, &s);
             else
-                retval = GetTextExtentPoint32A(hdc, PTR_SEG_TO_LIN(lp), len, &s);
+                retval = GetTextExtentPoint32A(hdc, MapSL(lp), len, &s);
             if(!retval) return FALSE;
             break;
             

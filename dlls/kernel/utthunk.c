@@ -8,7 +8,6 @@
 #include "ntddk.h"
 #include "heap.h"
 #include "module.h"
-#include "selectors.h"
 #include "callback.h"
 #include "debugtools.h"
 
@@ -79,8 +78,8 @@ DWORD WINAPI UTGlue16( LPVOID lpBuff, DWORD dwUserDefined, SEGPTR *translationLi
     if ( translationList )
         for ( i = 0; translationList[i]; i++ )
         {
-            LPVOID flatPtr = PTR_SEG_TO_LIN( translationList[i] );
-            *(LPVOID *)flatPtr = PTR_SEG_TO_LIN( *(SEGPTR *)flatPtr );
+            LPVOID flatPtr = MapSL( translationList[i] );
+            *(LPVOID *)flatPtr = MapSL( *(SEGPTR *)flatPtr );
         }
 
     /* Call 32-bit routine */

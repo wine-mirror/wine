@@ -19,7 +19,6 @@
 #include "wine/unicode.h"
 
 #include "heap.h"
-#include "ldt.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(resource);
@@ -79,7 +78,7 @@ SEGPTR WINAPI AnsiUpper16( SEGPTR strOrChar )
     /* uppercase only one char if strOrChar < 0x10000 */
     if (HIWORD(strOrChar))
     {
-        CharUpperA( PTR_SEG_TO_LIN(strOrChar) );
+        CharUpperA( MapSL(strOrChar) );
         return strOrChar;
     }
     else return toupper((char)strOrChar);
@@ -94,7 +93,7 @@ SEGPTR WINAPI AnsiLower16( SEGPTR strOrChar )
     /* lowercase only one char if strOrChar < 0x10000 */
     if (HIWORD(strOrChar))
     {
-        CharLowerA( PTR_SEG_TO_LIN(strOrChar) );
+        CharLowerA( MapSL(strOrChar) );
         return strOrChar;
     }
     else return tolower((char)strOrChar);
@@ -126,7 +125,7 @@ UINT16 WINAPI AnsiLowerBuff16( LPSTR str, UINT16 len )
  */
 SEGPTR WINAPI AnsiNext16(SEGPTR current)
 {
-    char *ptr = (char *)PTR_SEG_TO_LIN(current);
+    char *ptr = MapSL(current);
     return current + (CharNextA(ptr) - ptr);
 }
 
@@ -136,7 +135,7 @@ SEGPTR WINAPI AnsiNext16(SEGPTR current)
  */
 SEGPTR WINAPI AnsiPrev16( LPCSTR start, SEGPTR current )
 {
-    char *ptr = (char *)PTR_SEG_TO_LIN(current);
+    char *ptr = MapSL(current);
     return current - (ptr - CharPrevA( start, ptr ));
 }
 
@@ -530,7 +529,7 @@ DWORD WINAPI FormatMessage16(
         FIXME("line wrapping (%lu) not supported.\n", width);
     from = NULL;
     if (dwFlags & FORMAT_MESSAGE_FROM_STRING)
-        from = HEAP_strdupA( GetProcessHeap(), 0, PTR_SEG_TO_LIN(lpSource));
+        from = HEAP_strdupA( GetProcessHeap(), 0, MapSL(lpSource));
     if (dwFlags & FORMAT_MESSAGE_FROM_SYSTEM) {
         from = HeapAlloc( GetProcessHeap(),0,200 );
 	sprintf(from,"Systemmessage, messageid = 0x%08x\n",dwMessageId);
@@ -660,7 +659,7 @@ DWORD WINAPI FormatMessage16(
         /* nSize is the MINIMUM size */
         HLOCAL16 h = LocalAlloc16(LPTR,talloced);
         SEGPTR ptr = LocalLock16(h);
-	allocstring = PTR_SEG_TO_LIN( ptr );
+	allocstring = MapSL( ptr );
 	memcpy( allocstring,target,talloced);
         LocalUnlock16( h );
         *((HLOCAL16*)lpBuffer) = h;

@@ -8,8 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "windef.h"
-#include "wine/windef16.h"
-#include "selectors.h"
+#include "wine/winbase16.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(dll);
@@ -41,7 +40,7 @@ SEGPTR WINAPI StackLinearToSegmented16(WORD w1, WORD w2)
  */
 LPVOID WINAPI UTSelectorOffsetToLinear16(SEGPTR sptr)
 {
-        return PTR_SEG_TO_LIN(sptr);
+        return MapSL(sptr);
 }
 
 /***********************************************************************

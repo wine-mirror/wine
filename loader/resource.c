@@ -16,8 +16,6 @@
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/exception.h"
-#include "ldt.h"
-#include "global.h"
 #include "heap.h"
 #include "callback.h"
 #include "cursoricon.h"
@@ -393,7 +391,7 @@ SEGPTR WINAPI WIN16_LockResource16( HGLOBAL16 handle )
  */
 LPVOID WINAPI LockResource16( HGLOBAL16 handle )
 {
-    return PTR_SEG_TO_LIN( WIN16_LockResource16(handle) );
+    return MapSL( WIN16_LockResource16(handle) );
 }
 
 /**********************************************************************

@@ -10,9 +10,8 @@
 #include "config.h"
 #include "windef.h"
 #include "wine/winbase16.h"
-#include "ldt.h"
+#include "wine/port.h"
 #include "builtin16.h"
-#include "global.h"
 #include "miscemu.h"
 #include "msdos.h"
 #include "dosexe.h"
@@ -260,7 +259,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
         UINT16 ss,es;
         DWORD esp,edi;
 
-        INT_SetRealModeContext((REALMODECALL *)PTR_SEG_OFF_TO_LIN( rmcb->regs_sel, rmcb->regs_ofs ), context);
+        INT_SetRealModeContext(MapSL(MAKESEGPTR( rmcb->regs_sel, rmcb->regs_ofs )), context);
         ss = SELECTOR_AllocBlock( (void *)(context->SegSs<<4), 0x10000, WINE_LDT_FLAGS_DATA );
         esp = context->Esp;
 
@@ -291,7 +290,7 @@ static void DPMI_CallRMCBProc( CONTEXT86 *context, RMCB *rmcb, WORD flag )
             edi = ctx.Edi;
         }
 	FreeSelector16(ss);
-        INT_GetRealModeContext((REALMODECALL*)PTR_SEG_OFF_TO_LIN( es, edi ), context);
+        INT_GetRealModeContext( MapSL( MAKESEGPTR( es, edi )), context);
 #else
         ERR("RMCBs only implemented for i386\n");
 #endif
@@ -417,8 +416,7 @@ static void CallRMInt( CONTEXT86 *context )
 {
     CONTEXT86 realmode_ctx;
     FARPROC16 rm_int = INT_GetRMHandler( BL_reg(context) );
-    REALMODECALL *call = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( context->SegEs,
-                                                          DI_reg(context) );
+    REALMODECALL *call = MapSL( MAKESEGPTR( context->SegEs, DI_reg(context) ));
     INT_GetRealModeContext( call, &realmode_ctx );
 
     /* we need to check if a real-mode program has hooked the interrupt */
@@ -449,7 +447,7 @@ static void CallRMInt( CONTEXT86 *context )
 
 static void CallRMProc( CONTEXT86 *context, int iret )
 {
-    REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( context->SegEs, DI_reg(context) );
+    REALMODECALL *p = MapSL( MAKESEGPTR( context->SegEs, DI_reg(context) ));
     CONTEXT86 context16;
 
     TRACE("RealModeCall: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
@@ -464,7 +462,7 @@ static void CallRMProc( CONTEXT86 *context, int iret )
 	return;
     }
     INT_GetRealModeContext(p, &context16);
-    DPMI_CallRMProc( &context16, ((LPWORD)PTR_SEG_OFF_TO_LIN(context->SegSs, LOWORD(context->Esp)))+3,
+    DPMI_CallRMProc( &context16, ((LPWORD)MapSL(MAKESEGPTR(context->SegSs, LOWORD(context->Esp))))+3,
                      CX_reg(context), iret );
     INT_SetRealModeContext(p, &context16);
 }
@@ -853,15 +851,14 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
             LDT_ENTRY entry;
             wine_ldt_set_base( &entry, (void*)W32S_WINE2APP(wine_ldt_get_base(&entry)) );
             /* FIXME: should use ES:EDI for 32-bit clients */
-            *(LDT_ENTRY *)PTR_SEG_OFF_TO_LIN( context->SegEs, LOWORD(context->Edi) ) = entry;
+            *(LDT_ENTRY *)MapSL( MAKESEGPTR( context->SegEs, LOWORD(context->Edi) )) = entry;
         }
         break;
 
     case 0x000c:  /* Set descriptor */
     	TRACE("set descriptor (0x%04x)\n",BX_reg(context));
         {
-            LDT_ENTRY entry = *(LDT_ENTRY *)PTR_SEG_OFF_TO_LIN( context->SegEs,
-                                                                LOWORD(context->Edi) );
+            LDT_ENTRY entry = *(LDT_ENTRY *)MapSL(MAKESEGPTR( context->SegEs, LOWORD(context->Edi)));
             wine_ldt_set_base( &entry, (void*)W32S_APP2WINE(wine_ldt_get_base(&entry)) );
             wine_ldt_set_entry( LOWORD(context->Ebx), &entry );
         }
@@ -910,10 +907,9 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
 
     case 0x0205:  /* Set protected mode interrupt vector */
     	TRACE("set protected mode interrupt handler (0x%02x,%p), stub!\n",
-            BL_reg(context),PTR_SEG_OFF_TO_LIN(CX_reg(context),DX_reg(context)));
+            BL_reg(context),MapSL(MAKESEGPTR(CX_reg(context),DX_reg(context))));
 	INT_SetPMHandler( BL_reg(context),
-                          (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( CX_reg(context),
-                                                            DX_reg(context) ));
+                          (FARPROC16)MAKESEGPTR( CX_reg(context), DX_reg(context) ));
 	break;
 
     case 0x0300:  /* Simulate real mode interrupt */
@@ -977,7 +973,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
 
             mmi.dwSize = sizeof(mmi);
             MemManInfo16(&mmi);
-            ptr = (BYTE *)PTR_SEG_OFF_TO_LIN(context->SegEs,DI_reg(context));
+            ptr = MapSL(MAKESEGPTR(context->SegEs,DI_reg(context)));
             /* the layout is just the same as MEMMANINFO, but without
              * the dwSize entry.
              */
@@ -1041,7 +1037,7 @@ void WINAPI INT_Int31Handler( CONTEXT86 *context )
     case 0x0604:  /* Get page size */
         TRACE("get pagesize\n");
         BX_reg(context) = 0;
-        CX_reg(context) = VIRTUAL_GetPageSize();
+        CX_reg(context) = getpagesize();
 	break;
 
     case 0x0702:  /* Mark page as demand-paging candidate */

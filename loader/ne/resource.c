@@ -15,8 +15,8 @@
 #include <unistd.h>
 #include "windef.h"
 #include "wine/winbase16.h"
+#include "wine/library.h"
 #include "global.h"
-#include "ldt.h"
 #include "module.h"
 #include "callback.h"
 #include "debugtools.h"
@@ -269,7 +269,7 @@ BOOL NE_InitResourceHandler( HMODULE16 hModule )
 /**********************************************************************
  *	SetResourceHandler	(KERNEL.43)
  */
-FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, SEGPTR typeId,
+FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, LPCSTR typeId,
                                      FARPROC16 resourceHandler )
 {
     FARPROC16 prevHandler = NULL;
@@ -279,12 +279,11 @@ FARPROC16 WINAPI SetResourceHandler16( HMODULE16 hModule, SEGPTR typeId,
 
     if (!pModule || !pModule->res_table) return NULL;
 
-    TRACE("module=%04x type=%s\n",
-           hModule, debugres_a(PTR_SEG_TO_LIN(typeId)) );
+    TRACE("module=%04x type=%s\n", hModule, debugres_a(typeId) );
 
     for (;;)
     {
-	if (!(pTypeInfo = NE_FindTypeSection( pResTab, pTypeInfo, PTR_SEG_TO_LIN(typeId) )))
+        if (!(pTypeInfo = NE_FindTypeSection( pResTab, pTypeInfo, typeId )))
             break;
         prevHandler = pTypeInfo->resloader;
         pTypeInfo->resloader = resourceHandler;

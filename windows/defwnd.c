@@ -225,12 +225,12 @@ static HWND DEFWND_ImmGetDefaultIMEWnd( HWND hwnd )
 {
     HINSTANCE hInstIMM = GetModuleHandleA( "imm32" );
     HWND (WINAPI* pFunc)(HWND);
-    HWND hwndRet = NULL;
+    HWND hwndRet = 0;
 
     if (!hInstIMM)
     {
         ERR( "cannot get IMM32 handle\n" );
-        return NULL;
+        return 0;
     }
 
     pFunc = (void*)GetProcAddress(hInstIMM,"ImmGetDefaultIMEWnd");
@@ -665,9 +665,9 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     {
     case WM_NCCREATE:
 	{
-	    CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+	    CREATESTRUCT16 *cs = MapSL(lParam);
 	    if (cs->lpszName)
-		DEFWND_SetTextA( wndPtr, (LPCSTR)PTR_SEG_TO_LIN(cs->lpszName) );
+		DEFWND_SetTextA( wndPtr, MapSL(cs->lpszName) );
 	    result = 1;
 	}
         break;
@@ -675,20 +675,19 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     case WM_NCCALCSIZE:
         {
             RECT rect32;
-            CONV_RECT16TO32( (RECT16 *)PTR_SEG_TO_LIN(lParam), &rect32 );
+            CONV_RECT16TO32( MapSL(lParam), &rect32 );
             result = NC_HandleNCCalcSize( wndPtr, &rect32 );
-            CONV_RECT32TO16( &rect32, (RECT16 *)PTR_SEG_TO_LIN(lParam) );
+            CONV_RECT32TO16( &rect32, MapSL(lParam) );
         }
         break;
 
     case WM_WINDOWPOSCHANGING:
-	result = WINPOS_HandleWindowPosChanging16( wndPtr,
-                                       (WINDOWPOS16 *)PTR_SEG_TO_LIN(lParam) );
+	result = WINPOS_HandleWindowPosChanging16( wndPtr, MapSL(lParam) );
         break;
 
     case WM_WINDOWPOSCHANGED:
 	{
-	    WINDOWPOS16 * winPos = (WINDOWPOS16 *)PTR_SEG_TO_LIN(lParam);
+	    WINDOWPOS16 * winPos = MapSL(lParam);
             DEFWND_HandleWindowPosChanged( wndPtr, winPos->flags );
 	}
         break;
@@ -696,7 +695,7 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     case WM_GETTEXT:
         if (wParam && wndPtr->text)
         {
-            LPSTR dest = PTR_SEG_TO_LIN(lParam);
+            LPSTR dest = MapSL(lParam);
             if (!WideCharToMultiByte( CP_ACP, 0, wndPtr->text, -1, dest, wParam, NULL, NULL ))
                 dest[wParam-1] = 0;
             result = strlen(dest);
@@ -704,7 +703,7 @@ LRESULT WINAPI DefWindowProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
         break;
 
     case WM_SETTEXT:
-	DEFWND_SetTextA( wndPtr, (LPCSTR)PTR_SEG_TO_LIN(lParam) );
+	DEFWND_SetTextA( wndPtr, MapSL(lParam) );
 	if( (wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION )
 	    NC_HandleNCPaint( hwnd , (HRGN)1 );
 	result = 1; /* success. FIXME: check text length */
@@ -803,7 +802,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
 	    HWND hwndIME;
 
 	    hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
-	    if ( hwndIME != NULL )
+	    if (hwndIME)
 		result = SendMessageA( hwndIME, msg, wParam, lParam );
 	}
 	break;
@@ -812,7 +811,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam,
 	    HWND hwndIME;
 
 	    hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
-	    if ( hwndIME != NULL )
+	    if (hwndIME)
 		result = DEFWND_ImmIsUIMessageA( hwndIME, msg, wParam, lParam );
 	}
 	break;
@@ -883,7 +882,7 @@ LRESULT WINAPI DefWindowProcW(
 	    HWND hwndIME;
 
 	    hwndIME = DEFWND_ImmGetDefaultIMEWnd( hwnd );
-	    if ( hwndIME != NULL )
+	    if (hwndIME)
 		result = DEFWND_ImmIsUIMessageW( hwndIME, msg, wParam, lParam );
 	}
 	break;

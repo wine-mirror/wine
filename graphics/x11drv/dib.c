@@ -3578,9 +3578,9 @@ HBITMAP16 X11DRV_DIB_CreateDIBSection16(
 	    }
 	  TRACE("ptr = %p, size =%d, selector = %04x, segptr = %ld\n",
 			 dib->dsBm.bmBits, size, ((X11DRV_DIBSECTION *) bmp->dib)->selector,
-			 PTR_SEG_OFF_TO_SEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0));
+			 MAKESEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0));
       if ( bits ) 
-	*bits = PTR_SEG_OFF_TO_SEGPTR( ((X11DRV_DIBSECTION *) bmp->dib)->selector, 0 );
+	*bits = MAKESEGPTR( ((X11DRV_DIBSECTION *) bmp->dib)->selector, 0 );
     }
       if (bmp) GDI_ReleaseObj( res );
     }

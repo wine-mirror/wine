@@ -72,7 +72,7 @@ owner	kernel32
 64  pascal16 AccessResource(word word) AccessResource16
 65  pascal SizeofResource(word word) SizeofResource16
 66  pascal16 AllocResource(word word long) AllocResource16
-67  pascal SetResourceHandler(word segstr segptr) SetResourceHandler16
+67  pascal SetResourceHandler(word str segptr) SetResourceHandler16
 68  pascal16 InitAtomTable(word) InitAtomTable16
 69  pascal16 FindAtom(str) FindAtom16
 70  pascal16 AddAtom(str) AddAtom16

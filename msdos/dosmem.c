@@ -17,9 +17,9 @@
 
 #include "winbase.h"
 #include "wine/winbase16.h"
+#include "wine/port.h"
 
 #include "global.h"
-#include "ldt.h"
 #include "selectors.h"
 #include "miscemu.h"
 #include "vga.h"
@@ -145,7 +145,7 @@ static void DOSMEM_FillIsrTable(void)
     SEGPTR *isr = (SEGPTR*)DOSMEM_sysmem;
     int x;
  
-    for (x=0; x<256; x++) isr[x]=PTR_SEG_OFF_TO_SEGPTR(VM_STUB_SEGMENT,x*4);
+    for (x=0; x<256; x++) isr[x]=MAKESEGPTR(VM_STUB_SEGMENT,x*4);
 } 
 
 static void DOSMEM_MakeIsrStubs(void)
@@ -228,7 +228,7 @@ BYTE * DOSMEM_BiosSys()
 struct _DOS_LISTOFLISTS * DOSMEM_LOL()
 {
     return (struct _DOS_LISTOFLISTS *)DOSMEM_MapRealToLinear
-      (PTR_SEG_OFF_TO_SEGPTR(HIWORD(DOS_LOLSeg),0));
+      (MAKESEGPTR(HIWORD(DOS_LOLSeg),0));
 }
 
 /***********************************************************************
@@ -449,14 +449,13 @@ static void DOSMEM_InitMemory(void)
 static void setup_dos_mem( int dos_init )
 {
     int sys_offset = 0;
-    int page_size = VIRTUAL_GetPageSize();
-    void *addr = VIRTUAL_mmap( -1, (void *)page_size, 0x110000-page_size, 0,
-                               PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
+    int page_size = getpagesize();
+    void *addr = wine_anon_mmap( (void *)page_size, 0x110000-page_size,
+                                 PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
     if (addr == (void *)page_size)  /* we got what we wanted */
     {
         /* now map from address 0 */
-        addr = VIRTUAL_mmap( -1, NULL, 0x110000, 0,
-                             PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED );
+        addr = wine_anon_mmap( NULL, 0x110000, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED );
         if (addr)
         {
             ERR("MAP_FIXED failed at address 0 for DOS address space\n" );

@@ -916,7 +916,7 @@ typedef struct {
     DWORD   dwReturn;
     DWORD   dwItem;
     DWORD   dwTrack;
-    LPSTR   lpstrDrive;
+    SEGPTR  lpstrDrive;
     DWORD   dwReference;
 } MCI_DGV_STATUS_PARMS16, *LPMCI_DGV_STATUS_PARMS16;
 

@@ -11,7 +11,6 @@
 #include "wine/winbase16.h"
 #include "heap.h"
 #include "user.h"	/* should be removed asap; used in MMDRV_(Get|Alloc|Free) */
-#include "selectors.h"
 #include "winver.h"
 #include "winemm.h"
 #include "debugtools.h"
@@ -365,7 +364,7 @@ static void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstan
 	/* dwParam1 points to a MidiHdr, work to be done !!! */
 	if (mld->bFrom32 && !MMDrvs[mld->mmdIndex].bIs32) {
 	    /* initial map is: 32 => 16 */
-	    LPMIDIHDR		mh16 = (LPMIDIHDR)PTR_SEG_TO_LIN(dwParam1);
+	    LPMIDIHDR		mh16 = MapSL(dwParam1);
 	    LPMIDIHDR		mh32 = *(LPMIDIHDR*)((LPSTR)mh16 - sizeof(LPMIDIHDR));
 	    
 	    dwParam1 = (DWORD)mh32;
@@ -376,8 +375,8 @@ static void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstan
 	} else if (!mld->bFrom32 && MMDrvs[mld->mmdIndex].bIs32) {
 	    /* initial map is: 16 => 32 */
 	    LPMIDIHDR		mh32 = (LPMIDIHDR)(dwParam1);
-	    LPMIDIHDR		segmh16 = *(LPMIDIHDR*)((LPSTR)mh32 - sizeof(LPMIDIHDR));
-	    LPMIDIHDR		mh16 = PTR_SEG_TO_LIN(segmh16);
+	    SEGPTR		segmh16 = *(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR));
+	    LPMIDIHDR		mh16 = MapSL(segmh16);
 	    
 	    dwParam1 = (DWORD)segmh16;
 	    mh16->dwFlags = mh32->dwFlags;
@@ -423,7 +422,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_GETDEVCAPS:
 	{
             LPMIDIOUTCAPSA	moc32 = HeapAlloc(GetProcessHeap(), 0, sizeof(LPMIDIOUTCAPS16) + sizeof(MIDIOUTCAPSA));
-	    LPMIDIOUTCAPS16	moc16 = PTR_SEG_TO_LIN(*lpParam1);
+	    LPMIDIOUTCAPS16	moc16 = MapSL(*lpParam1);
 
 	    if (moc32) {
 		*(LPMIDIOUTCAPS16*)moc32 = moc16;
@@ -440,12 +439,12 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_PREPARE:
 	{
 	    LPMIDIHDR		mh32 = HeapAlloc(GetProcessHeap(), 0, sizeof(LPMIDIHDR) + sizeof(MIDIHDR));
-	    LPMIDIHDR		mh16 = PTR_SEG_TO_LIN(*lpParam1);
+	    LPMIDIHDR		mh16 = MapSL(*lpParam1);
 
 	    if (mh32) {
 		*(LPMIDIHDR*)mh32 = (LPMIDIHDR)*lpParam1;
 		mh32 = (LPMIDIHDR)((LPSTR)mh32 + sizeof(LPMIDIHDR));
-		mh32->lpData = PTR_SEG_TO_LIN(mh16->lpData);
+		mh32->lpData = MapSL((SEGPTR)mh16->lpData);
 		mh32->dwBufferLength = mh16->dwBufferLength;
 		mh32->dwBytesRecorded = mh16->dwBytesRecorded;
 		mh32->dwUser = mh16->dwUser;
@@ -468,7 +467,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_UNPREPARE:
     case MODM_LONGDATA:
 	{
-	    LPMIDIHDR		mh16 = PTR_SEG_TO_LIN(*lpParam1);
+	    LPMIDIHDR		mh16 = MapSL(*lpParam1);
 	    LPMIDIHDR		mh32 = (LPMIDIHDR)mh16->lpNext;
 
 	    *lpParam1 = (DWORD)mh32;
@@ -537,7 +536,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_LONGDATA:
 	{
 	    LPMIDIHDR		mh32 = (LPMIDIHDR)(*lpParam1);
-	    LPMIDIHDR		mh16 = PTR_SEG_TO_LIN(*(LPMIDIHDR*)((LPSTR)mh32 - sizeof(LPMIDIHDR)));
+	    LPMIDIHDR		mh16 = MapSL(*(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR)));
 
 	    assert(mh16->lpNext == mh32);
 	    mh16->dwBufferLength = mh32->dwBufferLength;
@@ -720,7 +719,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	break;
     case MODM_GETDEVCAPS:
 	{
-	    LPMIDIOUTCAPS16		moc16 = (LPMIDIOUTCAPS16)PTR_SEG_TO_LIN(*lpParam1);
+	    LPMIDIOUTCAPS16		moc16 = MapSL(*lpParam1);
 	    LPSTR			ptr   = (LPSTR)moc16 - sizeof(LPMIDIOUTCAPSA);
             LPMIDIOUTCAPSA		moc32 = *(LPMIDIOUTCAPSA*)ptr;
 
@@ -743,7 +742,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
     case MODM_UNPREPARE:
     case MODM_LONGDATA:
 	{
-	    LPMIDIHDR		mh16 = (LPMIDIHDR)PTR_SEG_TO_LIN(*lpParam1);
+	    LPMIDIHDR		mh16 = MapSL(*lpParam1);
 	    LPSTR		ptr = (LPSTR)mh16 - sizeof(LPMIDIHDR);
 	    LPMIDIHDR		mh32 = *(LPMIDIHDR*)ptr;
 
@@ -762,7 +761,7 @@ static	MMDRV_MapType	MMDRV_MidiOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	break;
     case MODM_OPEN:
 	{
-	    LPMIDIOPENDESC16		mod16 = (LPMIDIOPENDESC16)PTR_SEG_TO_LIN(*lpParam1);
+	    LPMIDIOPENDESC16		mod16 = MapSL(*lpParam1);
 	    LPSTR			ptr   = (LPSTR)mod16 - sizeof(LPMIDIOPENDESC) - 2*sizeof(DWORD);
 
 	    **(DWORD**)(ptr + sizeof(LPMIDIOPENDESC)) = *(LPDWORD)(ptr + sizeof(LPMIDIOPENDESC) + sizeof(DWORD));
@@ -798,7 +797,7 @@ static void	CALLBACK MMDRV_MidiOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInsta
     case MOM_DONE:
 	if (mld->bFrom32 && !MMDrvs[mld->mmdIndex].bIs32) {
 	    /* initial map is: 32 => 16 */
-	    LPMIDIHDR		mh16 = (LPMIDIHDR)PTR_SEG_TO_LIN(dwParam1);
+	    LPMIDIHDR		mh16 = MapSL(dwParam1);
 	    LPMIDIHDR		mh32 = *(LPMIDIHDR*)((LPSTR)mh16 - sizeof(LPMIDIHDR));
 	    
 	    dwParam1 = (DWORD)mh32;
@@ -809,8 +808,8 @@ static void	CALLBACK MMDRV_MidiOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInsta
 	} else if (!mld->bFrom32 && MMDrvs[mld->mmdIndex].bIs32) {
 	    /* initial map is: 16 => 32 */
 	    LPMIDIHDR		mh32 = (LPMIDIHDR)(dwParam1);
-	    LPMIDIHDR		segmh16 = *(LPMIDIHDR*)((LPSTR)mh32 - sizeof(LPMIDIHDR));
-	    LPMIDIHDR		mh16 = PTR_SEG_TO_LIN(segmh16);
+	    SEGPTR		segmh16 = *(SEGPTR*)((LPSTR)mh32 - sizeof(LPMIDIHDR));
+	    LPMIDIHDR		mh16 = MapSL(segmh16);
 	    
 	    dwParam1 = (DWORD)segmh16;
 	    mh16->dwFlags = mh32->dwFlags;
@@ -852,7 +851,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
     case WIDM_GETDEVCAPS:
 	{
             LPWAVEINCAPSA	wic32 = HeapAlloc(GetProcessHeap(), 0, sizeof(LPWAVEINCAPS16) + sizeof(WAVEINCAPSA));
-	    LPWAVEINCAPS16	wic16 = PTR_SEG_TO_LIN(*lpParam1);
+	    LPWAVEINCAPS16	wic16 = MapSL(*lpParam1);
 
 	    if (wic32) {
 		*(LPWAVEINCAPS16*)wic32 = wic16;
@@ -869,7 +868,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
     case WIDM_GETPOS:
 	{
             LPMMTIME		mmt32 = HeapAlloc(GetProcessHeap(), 0, sizeof(LPMMTIME16) + sizeof(MMTIME));
-	    LPMMTIME16		mmt16 = PTR_SEG_TO_LIN(*lpParam1);
+	    LPMMTIME16		mmt16 = MapSL(*lpParam1);
 
 	    if (mmt32) {
 		*(LPMMTIME16*)mmt32 = mmt16;
@@ -888,12 +887,12 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
     case WIDM_PREPARE:
 	{
 	    LPWAVEHDR		wh32 = HeapAlloc(GetProcessHeap(), 0, sizeof(LPWAVEHDR) + sizeof(WAVEHDR));
-	    LPWAVEHDR		wh16 = PTR_SEG_TO_LIN(*lpParam1);
+	    LPWAVEHDR		wh16 = MapSL(*lpParam1);
 
 	    if (wh32) {
 		*(LPWAVEHDR*)wh32 = (LPWAVEHDR)*lpParam1;
 		wh32 = (LPWAVEHDR)((LPSTR)wh32 + sizeof(LPWAVEHDR));
-		wh32->lpData = PTR_SEG_TO_LIN(wh16->lpData);
+		wh32->lpData = MapSL((SEGPTR)wh16->lpData);
 		wh32->dwBufferLength = wh16->dwBufferLength;
 		wh32->dwBytesRecorded = wh16->dwBytesRecorded;
 		wh32->dwUser = wh16->dwUser;
@@ -914,7 +913,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPDW
     case WIDM_ADDBUFFER:
     case WIDM_UNPREPARE:
 	{
-	    LPWAVEHDR		wh16 = PTR_SEG_TO_LIN(*lpParam1);
+	    LPWAVEHDR		wh16 = MapSL(*lpParam1);
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)wh16->lpNext;
 
 	    *lpParam1 = (DWORD)wh32;
@@ -985,7 +984,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPDW
     case WIDM_UNPREPARE:
 	{
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)(*lpParam1);
-	    LPWAVEHDR		wh16 = PTR_SEG_TO_LIN(*(LPWAVEHDR*)((LPSTR)wh32 - sizeof(LPWAVEHDR)));
+	    LPWAVEHDR		wh16 = MapSL(*(SEGPTR*)((LPSTR)wh32 - sizeof(LPWAVEHDR)));
 
 	    assert(wh16->lpNext == wh32);
 	    wh16->dwBufferLength = wh32->dwBufferLength;
@@ -1185,7 +1184,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
 
     case WIDM_OPEN:
 	{
-	    LPWAVEOPENDESC16		wod16 = (LPWAVEOPENDESC16)PTR_SEG_TO_LIN(*lpParam1);
+	    LPWAVEOPENDESC16		wod16 = MapSL(*lpParam1);
 	    LPSTR			ptr   = (LPSTR)wod16 - sizeof(LPWAVEOPENDESC) - 2*sizeof(DWORD);
             LPWAVEOPENDESC		wod32 = *(LPWAVEOPENDESC*)ptr;
 
@@ -1203,7 +1202,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
     case WIDM_PREPARE:
     case WIDM_UNPREPARE:
 	{
-	    LPWAVEHDR		wh16 = (LPWAVEHDR)PTR_SEG_TO_LIN(*lpParam1);
+	    LPWAVEHDR		wh16 = MapSL(*lpParam1);
 	    LPSTR		ptr = (LPSTR)wh16 - sizeof(LPWAVEHDR);
 	    LPWAVEHDR		wh32 = *(LPWAVEHDR*)ptr;
 
@@ -1223,7 +1222,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
 	break;
      case WIDM_GETDEVCAPS:
 	{
-	    LPWAVEINCAPS16		wic16 = (LPWAVEINCAPS16)PTR_SEG_TO_LIN(*lpParam1);
+	    LPWAVEINCAPS16		wic16 = MapSL(*lpParam1);
 	    LPSTR			ptr   = (LPSTR)wic16 - sizeof(LPWAVEINCAPSA);
             LPWAVEINCAPSA		wic32 = *(LPWAVEINCAPSA*)ptr;
 
@@ -1240,7 +1239,7 @@ static	MMDRV_MapType	MMDRV_WaveIn_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPDW
 	break;
     case WIDM_GETPOS:
 	{
-	    LPMMTIME16		mmt16 = (LPMMTIME16)PTR_SEG_TO_LIN(*lpParam1);
+	    LPMMTIME16		mmt16 = MapSL(*lpParam1);
 	    LPSTR		ptr   = (LPSTR)mmt16 - sizeof(LPMMTIME);
             LPMMTIME		mmt32 = *(LPMMTIME*)ptr;
 
@@ -1274,7 +1273,7 @@ static void	CALLBACK MMDRV_WaveIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstan
     case WIM_DATA:
 	if (mld->bFrom32 && !MMDrvs[mld->mmdIndex].bIs32) {
 	    /* initial map is: 32 => 16 */
-	    LPWAVEHDR		wh16 = (LPWAVEHDR)PTR_SEG_TO_LIN(dwParam1);
+	    LPWAVEHDR		wh16 = MapSL(dwParam1);
 	    LPWAVEHDR		wh32 = *(LPWAVEHDR*)((LPSTR)wh16 - sizeof(LPWAVEHDR));
 	    
 	    dwParam1 = (DWORD)wh32;
@@ -1283,8 +1282,8 @@ static void	CALLBACK MMDRV_WaveIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstan
 	} else if (!mld->bFrom32 && MMDrvs[mld->mmdIndex].bIs32) {
 	    /* initial map is: 16 => 32 */
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)(dwParam1);
-	    LPWAVEHDR		segwh16 = *(LPWAVEHDR*)((LPSTR)wh32 - sizeof(LPWAVEHDR));
-	    LPWAVEHDR		wh16 = PTR_SEG_TO_LIN(segwh16);
+	    SEGPTR		segwh16 = *(SEGPTR*)((LPSTR)wh32 - sizeof(LPWAVEHDR));
+	    LPWAVEHDR		wh16 = MapSL(segwh16);
 	    
 	    dwParam1 = (DWORD)segwh16;
 	    wh16->dwFlags = wh32->dwFlags;
@@ -1334,7 +1333,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_GETDEVCAPS: 
 	{
             LPWAVEOUTCAPSA		woc32 = HeapAlloc(GetProcessHeap(), 0, sizeof(LPWAVEOUTCAPS16) + sizeof(WAVEOUTCAPSA));
-	    LPWAVEOUTCAPS16		woc16 = PTR_SEG_TO_LIN(*lpParam1);
+	    LPWAVEOUTCAPS16		woc16 = MapSL(*lpParam1);
 
 	    if (woc32) {
 		*(LPWAVEOUTCAPS16*)woc32 = woc16;
@@ -1351,7 +1350,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_GETPOS:
 	{
             LPMMTIME		mmt32 = HeapAlloc(GetProcessHeap(), 0, sizeof(LPMMTIME16) + sizeof(MMTIME));
-	    LPMMTIME16		mmt16 = PTR_SEG_TO_LIN(*lpParam1);
+	    LPMMTIME16		mmt16 = MapSL(*lpParam1);
 
 	    if (mmt32) {
 		*(LPMMTIME16*)mmt32 = mmt16;
@@ -1370,12 +1369,12 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_PREPARE:
 	{
 	    LPWAVEHDR		wh32 = HeapAlloc(GetProcessHeap(), 0, sizeof(LPWAVEHDR) + sizeof(WAVEHDR));
-	    LPWAVEHDR		wh16 = PTR_SEG_TO_LIN(*lpParam1);
+	    LPWAVEHDR		wh16 = MapSL(*lpParam1);
 
 	    if (wh32) {
 		*(LPWAVEHDR*)wh32 = (LPWAVEHDR)*lpParam1;
 		wh32 = (LPWAVEHDR)((LPSTR)wh32 + sizeof(LPWAVEHDR));
-		wh32->lpData = PTR_SEG_TO_LIN(wh16->lpData);
+		wh32->lpData = MapSL((SEGPTR)wh16->lpData);
 		wh32->dwBufferLength = wh16->dwBufferLength;
 		wh32->dwBytesRecorded = wh16->dwBytesRecorded;
 		wh32->dwUser = wh16->dwUser;
@@ -1396,7 +1395,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_Map16To32A  (UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_UNPREPARE:
     case WODM_WRITE:
 	{
-	    LPWAVEHDR		wh16 = PTR_SEG_TO_LIN(*lpParam1);
+	    LPWAVEHDR		wh16 = MapSL(*lpParam1);
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)wh16->lpNext;
 
 	    *lpParam1 = (DWORD)wh32;
@@ -1477,7 +1476,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap16To32A(UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_WRITE:
 	{
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)(*lpParam1);
-	    LPWAVEHDR		wh16 = PTR_SEG_TO_LIN(*(LPWAVEHDR*)((LPSTR)wh32 - sizeof(LPWAVEHDR)));
+	    LPWAVEHDR		wh16 = MapSL(*(SEGPTR*)((LPSTR)wh32 - sizeof(LPWAVEHDR)));
 
 	    assert(wh16->lpNext == wh32);
 	    wh16->dwBufferLength = wh32->dwBufferLength;
@@ -1700,7 +1699,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	
     case WODM_GETDEVCAPS:
 	{
-	    LPWAVEOUTCAPS16		woc16 = (LPWAVEOUTCAPS16)PTR_SEG_TO_LIN(*lpParam1);
+	    LPWAVEOUTCAPS16		woc16 = MapSL(*lpParam1);
 	    LPSTR			ptr   = (LPSTR)woc16 - sizeof(LPWAVEOUTCAPSA);
             LPWAVEOUTCAPSA		woc32 = *(LPWAVEOUTCAPSA*)ptr;
 
@@ -1726,7 +1725,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	break;
     case WODM_GETPOS:
 	{
-	    LPMMTIME16		mmt16 = (LPMMTIME16)PTR_SEG_TO_LIN(*lpParam1);
+	    LPMMTIME16		mmt16 = MapSL(*lpParam1);
 	    LPSTR		ptr   = (LPSTR)mmt16 - sizeof(LPMMTIME);
             LPMMTIME		mmt32 = *(LPMMTIME*)ptr;
 
@@ -1740,7 +1739,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
 	break;
     case WODM_OPEN:
 	{
-	    LPWAVEOPENDESC16		wod16 = (LPWAVEOPENDESC16)PTR_SEG_TO_LIN(*lpParam1);
+	    LPWAVEOPENDESC16		wod16 = MapSL(*lpParam1);
 	    LPSTR			ptr   = (LPSTR)wod16 - sizeof(LPWAVEOPENDESC) - 2*sizeof(DWORD);
             LPWAVEOPENDESC		wod32 = *(LPWAVEOPENDESC*)ptr;
 
@@ -1757,7 +1756,7 @@ static	MMDRV_MapType	MMDRV_WaveOut_UnMap32ATo16(UINT wMsg, LPDWORD lpdwUser, LPD
     case WODM_UNPREPARE:
     case WODM_WRITE:
 	{
-	    LPWAVEHDR		wh16 = (LPWAVEHDR)PTR_SEG_TO_LIN(*lpParam1);
+	    LPWAVEHDR		wh16 = MapSL(*lpParam1);
 	    LPSTR		ptr = (LPSTR)wh16 - sizeof(LPWAVEHDR);
 	    LPWAVEHDR		wh32 = *(LPWAVEHDR*)ptr;
 
@@ -1802,7 +1801,7 @@ static void	CALLBACK MMDRV_WaveOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInsta
     case WOM_DONE:
 	if (mld->bFrom32 && !MMDrvs[mld->mmdIndex].bIs32) {
 	    /* initial map is: 32 => 16 */
-	    LPWAVEHDR		wh16 = (LPWAVEHDR)PTR_SEG_TO_LIN(dwParam1);
+	    LPWAVEHDR		wh16 = MapSL(dwParam1);
 	    LPWAVEHDR		wh32 = *(LPWAVEHDR*)((LPSTR)wh16 - sizeof(LPWAVEHDR));
 	    
 	    dwParam1 = (DWORD)wh32;
@@ -1810,8 +1809,8 @@ static void	CALLBACK MMDRV_WaveOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInsta
 	} else if (!mld->bFrom32 && MMDrvs[mld->mmdIndex].bIs32) {
 	    /* initial map is: 16 => 32 */
 	    LPWAVEHDR		wh32 = (LPWAVEHDR)(dwParam1);
-	    LPWAVEHDR		segwh16 = *(LPWAVEHDR*)((LPSTR)wh32 - sizeof(LPWAVEHDR));
-	    LPWAVEHDR		wh16 = PTR_SEG_TO_LIN(segwh16);
+	    SEGPTR		segwh16 = *(SEGPTR*)((LPSTR)wh32 - sizeof(LPWAVEHDR));
+	    LPWAVEHDR		wh16 = MapSL(segwh16);
 	    
 	    dwParam1 = (DWORD)segwh16;
 	    wh16->dwFlags = wh32->dwFlags;

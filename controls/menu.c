@@ -3609,8 +3609,7 @@ BOOL16 WINAPI InsertMenu16( HMENU16 hMenu, UINT16 pos, UINT16 flags,
     UINT pos32 = (UINT)pos;
     if ((pos == (UINT16)-1) && (flags & MF_BYPOSITION)) pos32 = (UINT)-1;
     if (IS_STRING_ITEM(flags) && data)
-        return InsertMenuA( hMenu, pos32, flags, id,
-                              (LPSTR)PTR_SEG_TO_LIN(data) );
+        return InsertMenuA( hMenu, pos32, flags, id, MapSL(data) );
     return InsertMenuA( hMenu, pos32, flags, id, (LPSTR)data );
 }
 
@@ -3770,8 +3769,7 @@ BOOL16 WINAPI ModifyMenu16( HMENU16 hMenu, UINT16 pos, UINT16 flags,
                             UINT16 id, SEGPTR data )
 {
     if (IS_STRING_ITEM(flags))
-        return ModifyMenuA( hMenu, pos, flags, id,
-                              (LPSTR)PTR_SEG_TO_LIN(data) );
+        return ModifyMenuA( hMenu, pos, flags, id, MapSL(data) );
     return ModifyMenuA( hMenu, pos, flags, id, (LPSTR)data );
 }
 
@@ -4704,7 +4702,7 @@ BOOL16 WINAPI InsertMenuItem16( HMENU16 hmenu, UINT16 pos, BOOL16 byposition,
 
     miia.cbSize        = sizeof(miia);
     miia.fMask         = mii->fMask;
-    miia.dwTypeData    = mii->dwTypeData;
+    miia.dwTypeData    = (LPSTR)mii->dwTypeData;
     miia.fType         = mii->fType;
     miia.fState        = mii->fState;
     miia.wID           = mii->wID;
@@ -4714,7 +4712,7 @@ BOOL16 WINAPI InsertMenuItem16( HMENU16 hmenu, UINT16 pos, BOOL16 byposition,
     miia.dwItemData    = mii->dwItemData;
     miia.cch           = mii->cch;
     if (IS_STRING_ITEM(miia.fType))
-        miia.dwTypeData = PTR_SEG_TO_LIN(miia.dwTypeData);
+        miia.dwTypeData = MapSL(mii->dwTypeData);
     return InsertMenuItemA( hmenu, pos, byposition, &miia );
 }
 

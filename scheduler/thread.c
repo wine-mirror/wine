@@ -14,10 +14,10 @@
 #endif
 #include <unistd.h>
 #include "wine/winbase16.h"
+#include "wine/port.h"
 #include "thread.h"
 #include "task.h"
 #include "module.h"
-#include "global.h"
 #include "winerror.h"
 #include "heap.h"
 #include "selectors.h"
@@ -130,7 +130,7 @@ static void CALLBACK THREAD_FreeTEB( TEB *teb )
 TEB *THREAD_InitStack( TEB *teb, DWORD stack_size, BOOL alloc_stack16 )
 {
     DWORD old_prot, total_size;
-    DWORD page_size = VIRTUAL_GetPageSize();
+    DWORD page_size = getpagesize();
     void *base;
 
     /* Allocate the stack */
@@ -199,8 +199,7 @@ TEB *THREAD_InitStack( TEB *teb, DWORD stack_size, BOOL alloc_stack16 )
     {
         teb->stack_sel = SELECTOR_AllocBlock( teb->stack_top, 0x10000, WINE_LDT_FLAGS_DATA );
         if (!teb->stack_sel) goto error;
-        teb->cur_stack = PTR_SEG_OFF_TO_SEGPTR( teb->stack_sel, 
-                                                0x10000 - sizeof(STACK16FRAME) );
+        teb->cur_stack = MAKESEGPTR( teb->stack_sel, 0x10000 - sizeof(STACK16FRAME) );
     }
     return teb;
 

@@ -15,7 +15,6 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
-#include "ldt.h"
 #include "heap.h"
 #include "commdlg.h"
 #include "debugtools.h"
@@ -202,7 +201,7 @@ BOOL Get16BitsTemplate(LFSPRIVATE lfs)
     {
 	HANDLE16 hResInfo;
 	if (!(hResInfo = FindResource16(ofn16->hInstance,
-					PTR_SEG_TO_LIN(ofn16->lpTemplateName),
+					MapSL(ofn16->lpTemplateName),
                                         RT_DIALOGA)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
@@ -510,7 +509,7 @@ static LONG FILEDLG_WMMeasureItem16(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 {
     LPMEASUREITEMSTRUCT16 lpmeasure;
     
-    lpmeasure = (LPMEASUREITEMSTRUCT16)PTR_SEG_TO_LIN(lParam);
+    lpmeasure = MapSL(lParam);
     lpmeasure->itemHeight = fldrHeight;
     return TRUE;
 }
@@ -652,7 +651,7 @@ void FILEDLG_UpdateResult(LFSPRIVATE lfs, WCHAR *tmpstr)
     /* update the real client structures if any */
     if (lfs->ofn16)
     {
-        char *dest = PTR_SEG_TO_LIN(lfs->ofn16->lpstrFile);
+        char *dest = MapSL(lfs->ofn16->lpstrFile);
         if (!WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFile, -1,
                                   dest, ofnW->nMaxFile, NULL, NULL ))
             dest[ofnW->nMaxFile-1] = 0;
@@ -685,7 +684,7 @@ void FILEDLG_UpdateFileTitle(LFSPRIVATE lfs)
                              (LPARAM)ofnW->lpstrFileTitle );
     if (lfs->ofn16)
     {
-        char *dest = PTR_SEG_TO_LIN(lfs->ofn16->lpstrFileTitle);
+        char *dest = MapSL(lfs->ofn16->lpstrFileTitle);
         if (!WideCharToMultiByte( CP_ACP, 0, ofnW->lpstrFileTitle, -1,
                                   dest, ofnW->nMaxFileTitle, NULL, NULL ))
             dest[ofnW->nMaxFileTitle-1] = 0;
@@ -1127,23 +1126,23 @@ void FILEDLG_MapOfnStruct16(LPOPENFILENAME16 ofn16, LPOPENFILENAMEW ofnW, BOOL o
     ofnA.hwndOwner = ofn16->hwndOwner;
     ofnA.hInstance = ofn16->hInstance;
     if (ofn16->lpstrFilter)
-        ofnA.lpstrFilter = PTR_SEG_TO_LIN(ofn16->lpstrFilter);
+        ofnA.lpstrFilter = MapSL(ofn16->lpstrFilter);
     if (ofn16->lpstrCustomFilter)
-        ofnA.lpstrCustomFilter = PTR_SEG_TO_LIN(ofn16->lpstrCustomFilter);
+        ofnA.lpstrCustomFilter = MapSL(ofn16->lpstrCustomFilter);
     ofnA.nMaxCustFilter = ofn16->nMaxCustFilter;
     ofnA.nFilterIndex = ofn16->nFilterIndex;
-    ofnA.lpstrFile = PTR_SEG_TO_LIN(ofn16->lpstrFile);
+    ofnA.lpstrFile = MapSL(ofn16->lpstrFile);
     ofnA.nMaxFile = ofn16->nMaxFile;
-    ofnA.lpstrFileTitle = PTR_SEG_TO_LIN(ofn16->lpstrFileTitle);
+    ofnA.lpstrFileTitle = MapSL(ofn16->lpstrFileTitle);
     ofnA.nMaxFileTitle = ofn16->nMaxFileTitle;
-    ofnA.lpstrInitialDir = PTR_SEG_TO_LIN(ofn16->lpstrInitialDir);
-    ofnA.lpstrTitle = PTR_SEG_TO_LIN(ofn16->lpstrTitle);
+    ofnA.lpstrInitialDir = MapSL(ofn16->lpstrInitialDir);
+    ofnA.lpstrTitle = MapSL(ofn16->lpstrTitle);
     ofnA.Flags = ofn16->Flags;
     ofnA.nFileOffset = ofn16->nFileOffset;
     ofnA.nFileExtension = ofn16->nFileExtension;
-    ofnA.lpstrDefExt = PTR_SEG_TO_LIN(ofn16->lpstrDefExt);
+    ofnA.lpstrDefExt = MapSL(ofn16->lpstrDefExt);
     if (HIWORD(ofn16->lpTemplateName))
-        ofnA.lpTemplateName = PTR_SEG_TO_LIN(ofn16->lpTemplateName);
+        ofnA.lpTemplateName = MapSL(ofn16->lpTemplateName);
     else
         ofnA.lpTemplateName = (LPSTR) ofn16->lpTemplateName; /* ressource number */
     /* now calls the 32 bits Ansi to Unicode version to complete the job */
@@ -1211,7 +1210,7 @@ LFSPRIVATE FILEDLG_AllocPrivate(LPARAM lParam, int type, UINT dlgType)
     switch(type)
     {
         case LFS16:
-        lfs->ofn16 = (LPOPENFILENAME16) PTR_SEG_TO_LIN(lParam);
+        lfs->ofn16 = MapSL(lParam);
         if (lfs->ofn16->Flags & OFN_ENABLEHOOK)
             if (lfs->ofn16->lpfnHook)
                 lfs->hook = TRUE;
@@ -1344,7 +1343,7 @@ LRESULT WINAPI FileOpenDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
         return FILEDLG_WMMeasureItem16(hWnd, wParam, lParam);
 
     case WM_DRAWITEM:
-        FILEDLG_MapDrawItemStruct((LPDRAWITEMSTRUCT16)PTR_SEG_TO_LIN(lParam), &dis);
+        FILEDLG_MapDrawItemStruct(MapSL(lParam), &dis);
         return FILEDLG_WMDrawItem(hWnd, wParam, lParam, FALSE, &dis);
 
     case WM_COMMAND:
@@ -1392,7 +1391,7 @@ LRESULT WINAPI FileSaveDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
       return FILEDLG_WMMeasureItem16(hWnd, wParam, lParam);
     
    case WM_DRAWITEM:
-      FILEDLG_MapDrawItemStruct((LPDRAWITEMSTRUCT16)PTR_SEG_TO_LIN(lParam), &dis);
+      FILEDLG_MapDrawItemStruct(MapSL(lParam), &dis);
       return FILEDLG_WMDrawItem(hWnd, wParam, lParam, TRUE, &dis);
 
    case WM_COMMAND:
@@ -1485,7 +1484,7 @@ BOOL16 WINAPI GetOpenFileName16(
 {
     HINSTANCE hInst;
     BOOL bRet = FALSE;
-    LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(ofn);
+    LPOPENFILENAME16 lpofn = MapSL(ofn);
     LFSPRIVATE lfs;
     FARPROC16 ptr;
 
@@ -1501,8 +1500,7 @@ BOOL16 WINAPI GetOpenFileName16(
         FILEDLG_DestroyPrivate(lfs);
     }
 
-    TRACE("return lpstrFile='%s' !\n", 
-           (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
+    TRACE("return lpstrFile='%s' !\n", (char *)MapSL(lpofn->lpstrFile));
     return bRet;
 }
 
@@ -1524,7 +1522,7 @@ BOOL16 WINAPI GetSaveFileName16(
 {
     HINSTANCE hInst;
     BOOL bRet = FALSE;
-    LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(ofn);
+    LPOPENFILENAME16 lpofn = MapSL(ofn);
     LFSPRIVATE lfs;
     FARPROC16 ptr;
 
@@ -1540,8 +1538,7 @@ BOOL16 WINAPI GetSaveFileName16(
         FILEDLG_DestroyPrivate(lfs);
     } 
 
-    TRACE("return lpstrFile='%s' !\n", 
-            (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
+    TRACE("return lpstrFile='%s' !\n", (char *)MapSL(lpofn->lpstrFile));
     return bRet;
 }
 

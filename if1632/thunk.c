@@ -12,7 +12,6 @@
 #include "heap.h"
 #include "module.h"
 #include "stackframe.h"
-#include "selectors.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(thunk);
@@ -85,7 +84,7 @@ FARPROC THUNK_Alloc( FARPROC16 func, RELAY relay )
     if ( pModule && (pModule->flags & NE_FFLAGS_BUILTIN) 
                  && NE_SEG_TABLE(pModule)[0].hSeg == hSeg )
     {
-        FARPROC proc = (FARPROC)((ENTRYPOINT16 *)PTR_SEG_TO_LIN( func ))->target;
+        FARPROC proc = (FARPROC)((ENTRYPOINT16 *)MapSL( (SEGPTR)func ))->target;
 
         TRACE( "(%04x:%04x, %p) -> built-in API %p\n",
                SELECTOROF( func ), OFFSETOF( func ), relay, proc );
@@ -153,7 +152,7 @@ static FARPROC THUNK_GetCalloutThunk( NE_MODULE *pModule, LPSTR name, RELAY rela
     if ( !proc ) return 0;
 
     if ( pModule->flags & NE_FFLAGS_BUILTIN )
-        return (FARPROC)((ENTRYPOINT16 *)PTR_SEG_TO_LIN( proc ))->target;
+        return (FARPROC)((ENTRYPOINT16 *)MapSL( (SEGPTR)proc ))->target;
     else
         return (FARPROC)THUNK_Alloc( proc, relay );
 }

@@ -137,7 +137,7 @@ owner	gdi32
 133 pascal16 GetEnvironment(str str word) GetEnvironment16
 134 pascal16 GetRgnBox(word ptr) GetRgnBox16
 #135 pascal ScanLr
-136 pascal16 RemoveFontResource(segptr) RemoveFontResource16
+136 pascal16 RemoveFontResource(str) RemoveFontResource16
 #137 - 147 removed sometime after W2.0
 137 stub GSV
 138 stub DPXlate

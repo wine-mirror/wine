@@ -17,7 +17,6 @@
 #include "module.h"
 #include "miscemu.h"
 #include "stackframe.h"
-#include "selectors.h"
 #include "task.h"
 #include "debugtools.h"
 #include "toolhelp.h"
@@ -204,7 +203,7 @@ LPCSTR BUILTIN_GetEntryPoint16( STACK16FRAME *frame, LPSTR name, WORD *pOrd )
              *pOrd, *p, (char *)(p + 1) );
 
     /* Retrieve type info string */
-    return *(LPCSTR *)((LPBYTE)PTR_SEG_OFF_TO_LIN( frame->module_cs, frame->callfrom_ip ) + 4);
+    return *(LPCSTR *)((LPBYTE)MapSL( MAKESEGPTR( frame->module_cs, frame->callfrom_ip )) + 4);
 }
 
 

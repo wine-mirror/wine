@@ -48,11 +48,11 @@ BOOL RELAY_Init(void)
 
     CallTo16_DataSelector = __get_ds();
     CallTo16_RetAddr = 
-        PTR_SEG_OFF_TO_SEGPTR( codesel, (char*)CallTo16_Ret - (char*)Call16_Ret_Start );
+        MAKESEGPTR( codesel, (char*)CallTo16_Ret - (char*)Call16_Ret_Start );
     CALL32_CBClient_RetAddr = 
-        PTR_SEG_OFF_TO_SEGPTR( codesel, (char*)CALL32_CBClient_Ret - (char*)Call16_Ret_Start );
+        MAKESEGPTR( codesel, (char*)CALL32_CBClient_Ret - (char*)Call16_Ret_Start );
     CALL32_CBClientEx_RetAddr = 
-        PTR_SEG_OFF_TO_SEGPTR( codesel, (char*)CALL32_CBClientEx_Ret - (char*)Call16_Ret_Start );
+        MAKESEGPTR( codesel, (char*)CALL32_CBClientEx_Ret - (char*)Call16_Ret_Start );
 #endif
     return TRUE;
 }
@@ -186,7 +186,7 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
             case 't':
             case 'T':
                 DPRINTF( "%04x:%04x %s", *(WORD *)(args16+2), *(WORD *)args16,
-                         debugres_a( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 )) );
+                         debugres_a( MapSL(*(SEGPTR *)args16 )) );
                 args16 += 4;
                 break;
             }
@@ -230,7 +230,7 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
             case 't':
                 args16 -= 4;
                 DPRINTF( "0x%08x %s", *(int *)args16,
-                         debugres_a( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 )));
+                         debugres_a( MapSL(*(SEGPTR *)args16 )));
                 break;
             case 'p':
                 args16 -= 4;
@@ -239,7 +239,7 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
             case 'T':
                 args16 -= 4;
                 DPRINTF( "%04x:%04x %s", *(WORD *)(args16+2), *(WORD *)args16,
-                         debugres_a( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 )));
+                         debugres_a( MapSL(*(SEGPTR *)args16 )));
                 break;
             }
             args++;

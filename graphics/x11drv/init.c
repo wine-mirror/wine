@@ -13,8 +13,6 @@
 #include "bitmap.h"
 #include "color.h"
 #include "debugtools.h"
-#include "ldt.h"
-#include "local.h"
 #include "winnt.h"
 #include "x11drv.h"
 
@@ -324,7 +322,7 @@ static INT X11DRV_Escape( DC *dc, INT nEscape, INT cbInput,
 	case GETSCALINGFACTOR:
 	     if( lpOutData )
 	     {
-		 LPPOINT16 lppt = (LPPOINT16)PTR_SEG_TO_LIN(lpOutData);
+		 LPPOINT16 lppt = MapSL(lpOutData);
 		 lppt->x = lppt->y = 0;	/* no device scaling */
 		 return 1;
 	     }

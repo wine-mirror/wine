@@ -22,7 +22,6 @@
 #include "wine/unicode.h"
 #include "winerror.h"
 #include "instance.h"
-#include "ldt.h"
 #include "stackframe.h"
 #include "debugtools.h"
 #include "server.h"
@@ -76,7 +75,7 @@ BOOL ATOM_Init( WORD globalTableSel )
  */
 static ATOMTABLE *ATOM_GetTable( BOOL create  /* [in] Create */ )
 {
-    INSTANCEDATA *ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( CURRENT_DS, 0 );
+    INSTANCEDATA *ptr = MapSL( MAKESEGPTR( CURRENT_DS, 0 ) );
     if (ptr->atomtable)
     {
         ATOMTABLE *table = (ATOMTABLE *)((char *)ptr + ptr->atomtable);
@@ -85,7 +84,7 @@ static ATOMTABLE *ATOM_GetTable( BOOL create  /* [in] Create */ )
     if (!create) return NULL;
     if (!InitAtomTable16( 0 )) return NULL;
     /* Reload ptr in case it moved in linear memory */
-    ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( CURRENT_DS, 0 );
+    ptr = MapSL( MAKESEGPTR( CURRENT_DS, 0 ) );
     return (ATOMTABLE *)((char *)ptr + ptr->atomtable);
 }
 
@@ -170,7 +169,7 @@ static BOOL ATOM_IsIntAtomW(LPCWSTR atomstr,WORD *atomid)
  */
 static inline ATOMENTRY *ATOM_MakePtr( HANDLE16 handle /* [in] Handle */ )
 {
-    return (ATOMENTRY *)PTR_SEG_OFF_TO_LIN( CURRENT_DS, handle );
+    return MapSL( MAKESEGPTR( CURRENT_DS, handle ) );
 }
 
 
@@ -200,13 +199,13 @@ WORD WINAPI InitAtomTable16( WORD entries )
     if (!entries) entries = DEFAULT_ATOMTABLE_SIZE;  /* sanity check */
     handle = LocalAlloc16( LMEM_FIXED, sizeof(ATOMTABLE) + (entries-1) * sizeof(HANDLE16) );
     if (!handle) return 0;
-    table = (ATOMTABLE *)PTR_SEG_OFF_TO_LIN( CURRENT_DS, handle );
+    table = MapSL( MAKESEGPTR( CURRENT_DS, handle ) );
     table->size = entries;
     for (i = 0; i < entries; i++) table->entries[i] = 0;
 
       /* Store a pointer to the table in the instance data */
 
-    ((INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( CURRENT_DS, 0 ))->atomtable = handle;
+    ((INSTANCEDATA *)MapSL( MAKESEGPTR( CURRENT_DS, 0 )))->atomtable = handle;
     return handle;
 }
 

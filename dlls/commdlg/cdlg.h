@@ -168,7 +168,7 @@ typedef struct {
 	HWND16		hwndOwner;
 	HWND16		hInstance;
 	COLORREF	rgbResult;
-	COLORREF       *lpCustColors;
+	SEGPTR          lpCustColors;
 	DWORD 		Flags;
 	LPARAM		lCustData;
         LPCCHOOKPROC16  lpfnHook;

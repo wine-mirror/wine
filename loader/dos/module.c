@@ -23,9 +23,7 @@
 #include "winerror.h"
 #include "module.h"
 #include "task.h"
-#include "selectors.h"
 #include "file.h"
-#include "ldt.h"
 #include "miscemu.h"
 #include "debugtools.h"
 #include "dosexe.h"
@@ -144,9 +142,9 @@ static void MZ_InitHandlers(void)
  LPBYTE start=DOSMEM_GetBlock(sizeof(int08),&seg);
  memcpy(start,int08,sizeof(int08));
 /* INT 08: point it at our tick-incrementing handler */
- ((SEGPTR*)0)[0x08]=PTR_SEG_OFF_TO_SEGPTR(seg,0);
+ ((SEGPTR*)0)[0x08]=MAKESEGPTR(seg,0);
 /* INT 1C: just point it to IRET, we don't want to handle it ourselves */
- ((SEGPTR*)0)[0x1C]=PTR_SEG_OFF_TO_SEGPTR(seg,sizeof(int08)-1);
+ ((SEGPTR*)0)[0x1C]=MAKESEGPTR(seg,sizeof(int08)-1);
 }
 
 static WORD MZ_InitEnvironment( LPCSTR env, LPCSTR name )
@@ -382,7 +380,7 @@ BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
       /* save current process's return SS:SP now */
       LPBYTE psp_start = (LPBYTE)((DWORD)lpDosTask->psp_seg << 4);
       PDB16 *psp = (PDB16 *)psp_start;
-      psp->saveStack = (DWORD)PTR_SEG_OFF_TO_SEGPTR(context->SegSs, LOWORD(context->Esp));
+      psp->saveStack = (DWORD)MAKESEGPTR(context->SegSs, LOWORD(context->Esp));
     }
     ret = MZ_DoLoadImage( hFile, filename, NULL );
     if (ret) {
@@ -392,7 +390,7 @@ BOOL MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk )
       ExecBlock *blk = (ExecBlock *)paramblk;
       MZ_FillPSP(psp_start, DOSMEM_MapRealToLinear(blk->cmdline));
       /* the lame MS-DOS engineers decided that the return address should be in int22 */
-      INT_SetRMHandler(0x22, (FARPROC16)PTR_SEG_OFF_TO_SEGPTR(context->SegCs, LOWORD(context->Eip)));
+      INT_SetRMHandler(0x22, (FARPROC16)MAKESEGPTR(context->SegCs, LOWORD(context->Eip)));
       if (func) {
 	/* don't execute, just return startup state */
 	blk->init_cs = init_cs;

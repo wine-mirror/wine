@@ -13,7 +13,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "ldt.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
 #include "wine/wingdi16.h"
@@ -43,11 +42,11 @@ INT16 WINAPI StartDoc16( HDC16 hdc, const DOCINFO16 *lpdoc )
     DOCINFOA docA;
 
     docA.cbSize = lpdoc->cbSize;
-    docA.lpszDocName = PTR_SEG_TO_LIN(lpdoc->lpszDocName);
-    docA.lpszOutput = PTR_SEG_TO_LIN(lpdoc->lpszOutput);
+    docA.lpszDocName = MapSL(lpdoc->lpszDocName);
+    docA.lpszOutput = MapSL(lpdoc->lpszOutput);
 
     if(lpdoc->cbSize >= 14)
-        docA.lpszDatatype = PTR_SEG_TO_LIN(lpdoc->lpszDatatype);
+        docA.lpszDatatype = MapSL(lpdoc->lpszDatatype);
     else
         docA.lpszDatatype = NULL;
 

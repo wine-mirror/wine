@@ -86,7 +86,6 @@
 #include "winnt.h"
 #include "heap.h"
 #include "task.h"
-#include "ldt.h"
 #include "wine/port.h"
 #include "debugtools.h"
 
@@ -362,7 +361,7 @@ static DWORD WINAPI _async_queryfun(LPVOID arg) {
 	async_query	*aq = (async_query*)arg;
 	int		size = 0;
 	WORD		fail = 0;
-	char		*targetptr = (HB_WIN32(aq)?(char*)aq->sbuf:(char*)PTR_SEG_TO_LIN(aq->sbuf));
+	char		*targetptr = (HB_WIN32(aq)?(char*)aq->sbuf:(char*)MapSL(aq->sbuf));
 
 	switch (aq->flags & AQ_GETMASK) {
 	case AQ_GETHOST: {

@@ -14,6 +14,7 @@
 
 #include "wine/winbase16.h"
 #include "wine/exception.h"
+#include "wine/port.h"
 #include "global.h"
 #include "heap.h"
 #include "toolhelp.h"
@@ -412,7 +413,7 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
     }
 
     CURRENT_STACK16->ecx = sel;  /* selector must be returned in CX as well */
-    return PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
+    return MAKESEGPTR( sel, 0 );
 }
 
 
@@ -930,7 +931,7 @@ BOOL16 WINAPI MemManInfo16( MEMMANINFO *info )
      * (under Windows) always fills the structure and returns true.
      */
     GlobalMemoryStatus( &status );
-    info->wPageSize            = VIRTUAL_GetPageSize();
+    info->wPageSize            = getpagesize();
     info->dwLargestFreeBlock   = status.dwAvailVirtual;
     info->dwMaxPagesAvailable  = info->dwLargestFreeBlock / info->wPageSize;
     info->dwMaxPagesLockable   = info->dwMaxPagesAvailable;
@@ -1046,13 +1047,13 @@ HGLOBAL WINAPI GlobalAlloc(
       /* HeapLock(heap); */
 
       pintern=HeapAlloc(heap, 0,  sizeof(GLOBAL32_INTERN));
-      if (!pintern) return NULL;
+      if (!pintern) return 0;
       if(size)
       {
 	 size = (size + 0x1f) & ~0x1f;
 	 if (!(palloc=HeapAlloc(heap, hpflags, size+sizeof(HGLOBAL)))) {
 	    HeapFree(heap, 0, pintern);
-	    return NULL;
+	    return 0;
 	 }
 	 *(HGLOBAL *)palloc=INTERN_TO_HANDLE(pintern);
 	 pintern->Pointer=(char *) palloc+sizeof(HGLOBAL);

@@ -13,7 +13,6 @@
 #include "wine/winuser16.h"
 #include "bitmap.h"
 #include "debugtools.h"
-#include "ldt.h"
 #include "palette.h"
 #include "windef.h"
 
@@ -100,7 +99,7 @@ SEGPTR WINAPI WinGGetDIBPointer16(HBITMAP16 hWinGBitmap, BITMAPINFO* bmpi)
 	FIXME(": Todo - implement setting BITMAPINFO\n");
 
 #ifndef X_DISPLAY_MISSING
-    res = PTR_SEG_OFF_TO_SEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0);
+    res = MAKESEGPTR(((X11DRV_DIBSECTION *) bmp->dib)->selector, 0);
 #endif /* !defined(X_DISPLAY_MISSING) */
     
     GDI_ReleaseObj( hWinGBitmap );

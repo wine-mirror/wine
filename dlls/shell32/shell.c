@@ -13,7 +13,6 @@
 #include "wine/winbase16.h"
 #include "wine/shell16.h"
 #include "winerror.h"
-#include "ldt.h"
 #include "dlgs.h"
 #include "shellapi.h"
 #include "shlobj.h"
@@ -688,7 +687,7 @@ SEGPTR WINAPI FindEnvironmentString16(LPSTR str)
     
   spEnv = GetDOSEnvironment16();
 
-  lpEnv = (LPSTR)PTR_SEG_TO_LIN(spEnv);
+  lpEnv = MapSL(spEnv);
   lpString = (spEnv)?SHELL_FindString(lpEnv, str):NULL; 
 
     if( lpString )		/*  offset should be small enough */
@@ -704,7 +703,7 @@ SEGPTR WINAPI FindEnvironmentString16(LPSTR str)
  */
 DWORD WINAPI DoEnvironmentSubst16(LPSTR str,WORD length)
 {
-  LPSTR   lpEnv = (LPSTR)PTR_SEG_TO_LIN(GetDOSEnvironment16());
+  LPSTR   lpEnv = MapSL(GetDOSEnvironment16());
   LPSTR   lpBuffer = (LPSTR)HeapAlloc( GetProcessHeap(), 0, length);
   LPSTR   lpstr = str;
   LPSTR   lpbstr = lpBuffer;

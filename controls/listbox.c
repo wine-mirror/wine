@@ -15,7 +15,6 @@
 #include "winerror.h"
 #include "heap.h"
 #include "spy.h"
-#include "selectors.h"
 #include "win.h"
 #include "controls.h"
 #include "debugtools.h"
@@ -2494,21 +2493,21 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         return 0;
 
     case LB_ADDSTRING16:
-        if (HAS_STRINGS(descr)) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+        if (HAS_STRINGS(descr)) lParam = (LPARAM)MapSL(lParam);
         /* fall through */
     case LB_ADDSTRING:
         wParam = LISTBOX_FindStringPos( wnd, descr, (LPCSTR)lParam, FALSE );
         return LISTBOX_InsertString( wnd, descr, wParam, (LPCSTR)lParam );
 
     case LB_INSERTSTRING16:
-        if (HAS_STRINGS(descr)) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+        if (HAS_STRINGS(descr)) lParam = (LPARAM)MapSL(lParam);
         wParam = (INT)(INT16)wParam;
         /* fall through */
     case LB_INSERTSTRING:
         return LISTBOX_InsertString( wnd, descr, wParam, (LPCSTR)lParam );
 
     case LB_ADDFILE16:
-        if (HAS_STRINGS(descr)) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+        if (HAS_STRINGS(descr)) lParam = (LPARAM)MapSL(lParam);
         /* fall through */
     case LB_ADDFILE:
         wParam = LISTBOX_FindFileStrPos( wnd, descr, (LPCSTR)lParam );
@@ -2539,7 +2538,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         return descr->nb_items;
 
     case LB_GETTEXT16:
-        lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+        lParam = (LPARAM)MapSL(lParam);
         /* fall through */
     case LB_GETTEXT:
         return LISTBOX_GetText( wnd, descr, wParam, (LPSTR)lParam );
@@ -2621,7 +2620,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         {
             RECT rect;
             ret = LISTBOX_GetItemRect( wnd, descr, (INT16)wParam, &rect );
-            CONV_RECT32TO16( &rect, (RECT16 *)PTR_SEG_TO_LIN(lParam) );
+            CONV_RECT32TO16( &rect, MapSL(lParam) );
         }
 	return ret;
 
@@ -2630,21 +2629,21 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
 
     case LB_FINDSTRING16:
         wParam = (INT)(INT16)wParam;
-        if (HAS_STRINGS(descr)) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+        if (HAS_STRINGS(descr)) lParam = (LPARAM)MapSL(lParam);
         /* fall through */
     case LB_FINDSTRING:
         return LISTBOX_FindString( wnd, descr, wParam, (LPCSTR)lParam, FALSE );
 
     case LB_FINDSTRINGEXACT16:
         wParam = (INT)(INT16)wParam;
-        if (HAS_STRINGS(descr)) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+        if (HAS_STRINGS(descr)) lParam = (LPARAM)MapSL(lParam);
         /* fall through */
     case LB_FINDSTRINGEXACT:
         return LISTBOX_FindString( wnd, descr, wParam, (LPCSTR)lParam, TRUE );
 
     case LB_SELECTSTRING16:
         wParam = (INT)(INT16)wParam;
-        if (HAS_STRINGS(descr)) lParam = (LPARAM)PTR_SEG_TO_LIN(lParam);
+        if (HAS_STRINGS(descr)) lParam = (LPARAM)MapSL(lParam);
         /* fall through */
     case LB_SELECTSTRING:
         {
@@ -2684,7 +2683,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
 
     case LB_GETSELITEMS16:
         return LISTBOX_GetSelItems16( wnd, descr, wParam,
-                                      (LPINT16)PTR_SEG_TO_LIN(lParam) );
+                                      (LPINT16)MapSL(lParam) );
 
     case LB_GETSELITEMS:
         return LISTBOX_GetSelItems( wnd, descr, wParam, (LPINT)lParam );
@@ -2730,8 +2729,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         /* according to Win16 docs, DDL_DRIVES should make DDL_EXCLUSIVE
          * be set automatically (this is different in Win32) */
         if (wParam & DDL_DRIVES) wParam |= DDL_EXCLUSIVE;
-        return LISTBOX_Directory( wnd, descr, wParam,
-                                  (LPCSTR)PTR_SEG_TO_LIN(lParam), FALSE );
+        return LISTBOX_Directory( wnd, descr, wParam, MapSL(lParam), FALSE );
 
     case LB_DIR:
         return LISTBOX_Directory( wnd, descr, wParam, (LPCSTR)lParam, TRUE );
@@ -2750,8 +2748,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         return LISTBOX_SetCount( wnd, descr, (INT)wParam );
 
     case LB_SETTABSTOPS16:
-        return LISTBOX_SetTabStops( wnd, descr, (INT)(INT16)wParam,
-                                    (LPINT)PTR_SEG_TO_LIN(lParam), TRUE );
+        return LISTBOX_SetTabStops( wnd, descr, (INT)(INT16)wParam, MapSL(lParam), TRUE );
 
     case LB_SETTABSTOPS:
         return LISTBOX_SetTabStops( wnd, descr, wParam, (LPINT)lParam, FALSE );
@@ -2871,7 +2868,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
     case WM_DRAGMOVE:
 	if( !descr->lphc )
         {
-            LPDRAGINFO16 dragInfo = (LPDRAGINFO16)PTR_SEG_TO_LIN( (SEGPTR)lParam );
+            LPDRAGINFO16 dragInfo = MapSL( lParam );
             dragInfo->l = LISTBOX_GetItemFromPoint( wnd, descr, dragInfo->pt.x,
                                                 dragInfo->pt.y );
             return SendMessageA( descr->owner, msg, wParam, lParam );

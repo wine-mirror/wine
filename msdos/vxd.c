@@ -198,7 +198,7 @@ void WINAPI VXD_VXDLoader( CONTEXT86 *context )
     case 0x0001: /* load device */
 	FIXME("load device %04lx:%04x (%s)\n",
 	      context->SegDs, DX_reg(context),
-	      debugstr_a(PTR_SEG_OFF_TO_LIN(context->SegDs, DX_reg(context))));
+	      debugstr_a(MapSL(MAKESEGPTR(context->SegDs, DX_reg(context)))));
 	AX_reg(context) = 0x0000;
 	context->SegEs = 0x0000;
 	DI_reg(context) = 0x0000;
@@ -604,8 +604,8 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
             if (   hModule && func1 && func2 
                 && SELECTOROF(func1) == SELECTOROF(func2))
             {
-                BYTE *start = PTR_SEG_TO_LIN(func1);
-                BYTE *end   = PTR_SEG_TO_LIN(func2);
+                BYTE *start = MapSL(func1);
+                BYTE *end   = MapSL(func2);
                 BYTE *p, *retv = NULL;
                 int found = 0;
 
@@ -1375,7 +1375,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
             context->Edx = 0x80;
         else
         {
-            PDB16 *psp = PTR_SEG_OFF_TO_LIN(BX_reg(context), 0);
+            PDB16 *psp = MapSL( MAKESEGPTR( BX_reg(context), 0 ));
             psp->nbFiles = 32;
             psp->fileHandlesPtr = MAKELONG(HIWORD(context->Ebx), 0x5c);
             memset((LPBYTE)psp + 0x5c, '\xFF', 32);
@@ -1544,8 +1544,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          *          EDX: Flat base address of allocated region
          */
     {
-        DWORD *stack  = PTR_SEG_OFF_TO_LIN(LOWORD(context->Edx), 
-                                           HIWORD(context->Edx));
+        DWORD *stack  = MapSL( MAKESEGPTR( LOWORD(context->Edx), HIWORD(context->Edx) ));
         LPVOID base   = (LPVOID)W32S_APP2WINE(stack[0]);
         DWORD  size   = stack[1];
         DWORD  type   = stack[2];
@@ -1586,8 +1585,7 @@ void WINAPI VXD_Win32s( CONTEXT86 *context )
          *          EDX: TRUE if success, FALSE if failure
          */
     {
-        DWORD *stack  = PTR_SEG_OFF_TO_LIN(LOWORD(context->Edx), 
-                                           HIWORD(context->Edx));
+        DWORD *stack  = MapSL( MAKESEGPTR( LOWORD(context->Edx), HIWORD(context->Edx) ));
         LPVOID base   = (LPVOID)W32S_APP2WINE(stack[0]);
         DWORD  size   = stack[1];
         DWORD  type   = stack[2];

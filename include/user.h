@@ -7,7 +7,6 @@
 #ifndef __WINE_USER_H
 #define __WINE_USER_H
 
-#include "ldt.h"
 #include "local.h"
 
 extern WORD USER_HeapSel;
@@ -19,9 +18,7 @@ extern WORD USER_HeapSel;
 #define USER_HEAP_FREE(handle) \
             LOCAL_Free( USER_HeapSel, (handle) )
 #define USER_HEAP_LIN_ADDR(handle)  \
-         ((handle) ? PTR_SEG_OFF_TO_LIN(USER_HeapSel, (handle)) : NULL)
-#define USER_HEAP_SEG_ADDR(handle)  \
-         ((handle) ? PTR_SEG_OFF_TO_SEGPTR(USER_HeapSel, (handle)) : (SEGPTR)0)
+         ((handle) ? MapSL(MAKESEGPTR(USER_HeapSel, (handle))) : NULL)
 
 #define USUD_LOCALALLOC        0x0001
 #define USUD_LOCALFREE         0x0002

@@ -212,7 +212,7 @@ BOOL16 WINAPI SetViewportExtEx16( HDC16 hdc, INT16 x, INT16 y, LPSIZE16 size )
 {
     SIZE size32;
     BOOL16 ret = SetViewportExtEx( hdc, x, y, &size32 );
-    if (size) CONV_SIZE32TO16( &size32, size );
+    if (size) { size->cx = size32.cx; size->cy = size32.cy; }
     return ret;
 }
 
@@ -319,7 +319,7 @@ BOOL16 WINAPI SetWindowExtEx16( HDC16 hdc, INT16 x, INT16 y, LPSIZE16 size )
 {
     SIZE size32;
     BOOL16 ret = SetWindowExtEx( hdc, x, y, &size32 );
-    if (size) CONV_SIZE32TO16( &size32, size );
+    if (size) { size->cx = size32.cx; size->cy = size32.cy; }
     return ret;
 }
 
@@ -527,7 +527,7 @@ BOOL16 WINAPI ScaleViewportExtEx16( HDC16 hdc, INT16 xNum, INT16 xDenom,
     SIZE size32;
     BOOL16 ret = ScaleViewportExtEx( hdc, xNum, xDenom, yNum, yDenom,
                                        &size32 );
-    if (size) CONV_SIZE32TO16( &size32, size );
+    if (size) { size->cx = size32.cx; size->cy = size32.cy; }
     return ret;
 }
 
@@ -592,7 +592,7 @@ BOOL16 WINAPI ScaleWindowExtEx16( HDC16 hdc, INT16 xNum, INT16 xDenom,
     SIZE size32;
     BOOL16 ret = ScaleWindowExtEx( hdc, xNum, xDenom, yNum, yDenom,
                                      &size32 );
-    if (size) CONV_SIZE32TO16( &size32, size );
+    if (size) { size->cx = size32.cx; size->cy = size32.cy; }
     return ret;
 }
 

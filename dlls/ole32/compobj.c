@@ -22,7 +22,6 @@
 #include "ole2ver.h"
 #include "debugtools.h"
 #include "heap.h"
-#include "ldt.h"
 #include "winreg.h"
 #include "rpc.h"
 
@@ -597,8 +596,8 @@ HRESULT WINAPI StringFromCLSID16(
      * everything we need.
      */
     if (!K32WOWCallback16Ex(
-    	(DWORD)((ICOM_VTABLE(IMalloc16)*)PTR_SEG_TO_LIN(
-		ICOM_VTBL(((LPMALLOC16)PTR_SEG_TO_LIN(mllc))))
+    	(DWORD)((ICOM_VTABLE(IMalloc16)*)MapSL(
+            (SEGPTR)ICOM_VTBL(((LPMALLOC16)MapSL((SEGPTR)mllc))))
 	)->fnAlloc,
 	WCB16_CDECL,
 	2*sizeof(DWORD),
@@ -608,7 +607,7 @@ HRESULT WINAPI StringFromCLSID16(
     	WARN("CallTo16 IMalloc16 failed\n");
     	return E_FAIL;
     }
-    return WINE_StringFromCLSID(id,PTR_SEG_TO_LIN(*idstr));
+    return WINE_StringFromCLSID(id,MapSL((SEGPTR)*idstr));
 }
 
 /******************************************************************************

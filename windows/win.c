@@ -3136,7 +3136,7 @@ BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
 {
  BOOL16		wParam, bResult = 0;
  POINT        pt;
- LPDRAGINFO16	ptrDragInfo = (LPDRAGINFO16) PTR_SEG_TO_LIN(spDragInfo);
+ LPDRAGINFO16	ptrDragInfo = MapSL(spDragInfo);
  WND 	       *ptrQueryWnd = WIN_FindWndPtr(hQueryWnd),*ptrWnd;
  RECT		tempRect;
 

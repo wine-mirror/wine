@@ -2272,29 +2272,10 @@ typedef struct {
 typedef struct {
     EMR    emr;
     RECTL  rclBounds;
-    DWORD  cpts;
-    POINTS apts[1];
-} EMRPOLYLINE16,     *PEMRPOLYLINE16,
-  EMRPOLYBEZIER16,   *PEMRPOLYBEZIER16,
-  EMRPOLYGON16,      *PEMRPOLYGON16,
-  EMRPOLYBEZIERTO16, *PEMRPOLYBEZIERTO16,
-  EMRPOLYLINETO16,   *PEMRPOLYLINETO16;
-
-typedef struct {
-    EMR    emr;
-    RECTL  rclBounds;
     DWORD  cptl;
     POINTL aptl[1];
     BYTE   abTypes[1];
 } EMRPOLYDRAW, *PEMRPOLYDRAW; 
-
-typedef struct {
-    EMR    emr;
-    RECTL  rclBounds;
-    DWORD  cpts;
-    POINTS apts[1];
-    BYTE   abTypes[1];
-} EMRPOLYDRAW16, *PEMRPOLYDRAW16;
 
 typedef struct {
     EMR     emr;
@@ -2305,16 +2286,6 @@ typedef struct {
     POINTL  aptl[1];
 } EMRPOLYPOLYLINE, *PEMRPOLYPOLYLINE,
   EMRPOLYPOLYGON,  *PEMRPOLYPOLYGON;
-
-typedef struct {
-    EMR     emr;
-    RECTL   rclBounds;
-    DWORD   nPolys;
-    DWORD   cpts;
-    DWORD   aPolyCounts[1];
-    POINTS  apts[1];
-} EMRPOLYPOLYLINE16, *PEMRPOLYPOLYLINE16,
-  EMRPOLYPOLYGON16,  *PEMRPOLYPOLYGON16;
 
 typedef struct {
     EMR     emr;

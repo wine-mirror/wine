@@ -253,8 +253,8 @@ void WINAPIV _DebugOutput( void )
     flags = VA_ARG16( valist, WORD );
     spec  = VA_ARG16( valist, SEGPTR );
     /* FIXME: cannot use wvsnprintf16 from kernel */
-    /* wvsnprintf16( temp, sizeof(temp), (LPCSTR)PTR_SEG_TO_LIN(spec), valist ); */
+    /* wvsnprintf16( temp, sizeof(temp), MapSL(spec), valist ); */
 
     /* Output */
-    FIXME("%s %04x %s\n", caller, flags, debugstr_a(PTR_SEG_TO_LIN(spec)) );
+    FIXME("%s %04x %s\n", caller, flags, debugstr_a(MapSL(spec)) );
 }

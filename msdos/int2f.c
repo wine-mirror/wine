@@ -398,7 +398,7 @@ static	void	MSCDEX_Dump(char* pfx, BYTE* req, int dorealmode)
     case 12:
 	ptr += sprintf(ptr, "\n\t\t\t\tIO_struct => ");
 	ios = (dorealmode) ? PTR_REAL_TO_LIN( PTR_AT(req, 16, WORD), PTR_AT(req, 14, WORD)) :
-                             PTR_SEG_OFF_TO_LIN(PTR_AT(req, 16, WORD), PTR_AT(req, 14, WORD));
+                             MapSL(MAKESEGPTR(PTR_AT(req, 16, WORD), PTR_AT(req, 14, WORD)));
 
 	for (i = 0; i < PTR_AT(req, 18, WORD); i++) {
 	    ptr += sprintf(ptr, "%02x ", ios[i]);
@@ -515,7 +515,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	    case 3:
 		io_stru = (dorealmode) ? 
                     PTR_REAL_TO_LIN( PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD) ) :
-			PTR_SEG_OFF_TO_LIN(PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD));
+			MapSL( MAKESEGPTR(PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD)));
 		
 		TRACE(" --> IOCTL INPUT <%d>\n", io_stru[0]); 
 		switch (io_stru[0]) {
@@ -680,7 +680,7 @@ static void MSCDEX_Handler(CONTEXT86* context)
 	    case 12:
 		io_stru = (dorealmode) ? 
 		    PTR_REAL_TO_LIN( PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD)) :
-			PTR_SEG_OFF_TO_LIN(PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD));
+			MapSL( MAKESEGPTR(PTR_AT(driver_request, 16, WORD), PTR_AT(driver_request, 14, WORD)));
 		
 		TRACE(" --> IOCTL OUTPUT <%d>\n", io_stru[0]); 
 		switch (io_stru[0]) {

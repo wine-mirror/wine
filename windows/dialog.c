@@ -1491,7 +1491,7 @@ static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
  */
 BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
 {
-    LPMSG16 msg = PTR_SEG_TO_LIN(msg16);
+    LPMSG16 msg = MapSL(msg16);
     BOOL ret, translate, dispatch;
     INT dlgCode = 0;
 

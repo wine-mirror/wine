@@ -12,7 +12,6 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "commdlg.h"
-#include "ldt.h"
 #include "debugtools.h"
 #include "cderr.h"
 
@@ -61,7 +60,7 @@ BOOL FINDDLG_Get16BitsTemplate(LFRPRIVATE lfr)
     {
 	HANDLE16 hResInfo;
 	if (!(hResInfo = FindResource16(fr16->hInstance,
-					PTR_SEG_TO_LIN(fr16->lpTemplateName),
+					MapSL(fr16->lpTemplateName),
                                         RT_DIALOGA)))
 	{
 	    COMDLG32_SetCommDlgExtendedError(CDERR_FINDRESFAILURE);
@@ -159,7 +158,7 @@ HWND16 WINAPI FindText16( SEGPTR find )
     LFRPRIVATE lfr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct FRPRIVATE));
 
     if (!lfr) return 0;
-    lfr->fr16 = (LPFINDREPLACE16)PTR_SEG_TO_LIN(find);
+    lfr->fr16 = MapSL(find);
     lfr->find = TRUE;
     if (FINDDLG_Get16BitsTemplate(lfr))
     {
@@ -189,7 +188,7 @@ HWND16 WINAPI ReplaceText16( SEGPTR find )
      * FIXME : We should do error checking on the lpFind structure here
      * and make CommDlgExtendedError() return the error condition.
      */
-    lfr->fr16 = (LPFINDREPLACE16)PTR_SEG_TO_LIN(find);
+    lfr->fr16 = MapSL(find);
     lfr->find = FALSE;
     if (FINDDLG_Get16BitsTemplate(lfr))
     {
@@ -304,13 +303,13 @@ LRESULT WINAPI FindTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
     LPFINDREPLACE16 lpfr;
     switch (wMsg) {
 	case WM_INITDIALOG:
-            lpfr=(LPFINDREPLACE16)PTR_SEG_TO_LIN(lParam);
+            lpfr=MapSL(lParam);
 	    return FINDDLG_WMInitDialog(hWnd, lParam, &(lpfr->Flags),
-		PTR_SEG_TO_LIN(lpfr->lpstrFindWhat), FALSE);
+		MapSL(lpfr->lpstrFindWhat), FALSE);
 	case WM_COMMAND:
-	    lpfr=(LPFINDREPLACE16)PTR_SEG_TO_LIN(GetWindowLongA(hWnd, DWL_USER));
+	    lpfr=MapSL(GetWindowLongA(hWnd, DWL_USER));
 	    return FINDDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner,
-		&lpfr->Flags, PTR_SEG_TO_LIN(lpfr->lpstrFindWhat),
+		&lpfr->Flags, MapSL(lpfr->lpstrFindWhat),
 		lpfr->wFindWhatLen, FALSE);
     }
     return FALSE;
@@ -460,15 +459,15 @@ LRESULT WINAPI ReplaceTextDlgProc16(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam,
     LPFINDREPLACE16 lpfr;
     switch (wMsg) {
 	case WM_INITDIALOG:
-            lpfr=(LPFINDREPLACE16)PTR_SEG_TO_LIN(lParam);
+            lpfr=MapSL(lParam);
 	    return REPLACEDLG_WMInitDialog(hWnd, lParam, &lpfr->Flags,
-		    PTR_SEG_TO_LIN(lpfr->lpstrFindWhat),
-		    PTR_SEG_TO_LIN(lpfr->lpstrReplaceWith), FALSE);
+		    MapSL(lpfr->lpstrFindWhat),
+		    MapSL(lpfr->lpstrReplaceWith), FALSE);
 	case WM_COMMAND:
-	    lpfr=(LPFINDREPLACE16)PTR_SEG_TO_LIN(GetWindowLongA(hWnd, DWL_USER));
+	    lpfr=MapSL(GetWindowLongA(hWnd, DWL_USER));
 	    return REPLACEDLG_WMCommand(hWnd, wParam, lpfr->hwndOwner, 
-		    &lpfr->Flags, PTR_SEG_TO_LIN(lpfr->lpstrFindWhat),
-		    lpfr->wFindWhatLen, PTR_SEG_TO_LIN(lpfr->lpstrReplaceWith),
+		    &lpfr->Flags, MapSL(lpfr->lpstrFindWhat),
+		    lpfr->wFindWhatLen, MapSL(lpfr->lpstrReplaceWith),
 		    lpfr->wReplaceWithLen, FALSE);
     }
     return FALSE;
