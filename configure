@@ -929,7 +929,7 @@ ac_abs_top_srcdir=`cd "$ac_dir" && cd $ac_top_srcdir && pwd`
     else
       echo "$as_me: WARNING: no configuration information is in $ac_dir" >&2
     fi
-    cd $ac_popdir
+    cd "$ac_popdir"
   done
 fi
 
@@ -16688,8 +16688,6 @@ esac
 
           ac_config_commands="$ac_config_commands programs/regedit/tests"
 
-          ac_config_commands="$ac_config_commands relay32"
-
           ac_config_commands="$ac_config_commands scheduler"
 
           ac_config_commands="$ac_config_commands win32"
@@ -17462,7 +17460,6 @@ do
   "objects" ) CONFIG_COMMANDS="$CONFIG_COMMANDS objects" ;;
   "programs/regapi/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regapi/tests" ;;
   "programs/regedit/tests" ) CONFIG_COMMANDS="$CONFIG_COMMANDS programs/regedit/tests" ;;
-  "relay32" ) CONFIG_COMMANDS="$CONFIG_COMMANDS relay32" ;;
   "scheduler" ) CONFIG_COMMANDS="$CONFIG_COMMANDS scheduler" ;;
   "win32" ) CONFIG_COMMANDS="$CONFIG_COMMANDS win32" ;;
   "windows" ) CONFIG_COMMANDS="$CONFIG_COMMANDS windows" ;;
@@ -18199,8 +18196,6 @@ echo "$as_me: creating objects" >&6;} && mkdir "objects") ;;
 echo "$as_me: creating programs/regapi/tests" >&6;} && mkdir "programs/regapi/tests") ;;
     programs/regedit/tests ) test -d "programs/regedit/tests" || ({ echo "$as_me:$LINENO: creating programs/regedit/tests" >&5
 echo "$as_me: creating programs/regedit/tests" >&6;} && mkdir "programs/regedit/tests") ;;
-    relay32 ) test -d "relay32" || ({ echo "$as_me:$LINENO: creating relay32" >&5
-echo "$as_me: creating relay32" >&6;} && mkdir "relay32") ;;
     scheduler ) test -d "scheduler" || ({ echo "$as_me:$LINENO: creating scheduler" >&5
 echo "$as_me: creating scheduler" >&6;} && mkdir "scheduler") ;;
     win32 ) test -d "win32" || ({ echo "$as_me:$LINENO: creating win32" >&5

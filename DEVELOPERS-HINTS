@@ -177,7 +177,6 @@ respective dlls.
 	memory/			- KERNEL memory management
 	misc/			- KERNEL shell, registry, winsock, etc.
 	msdos/			- KERNEL DOS support
-	relay32/		- KERNEL 32-bit relay code
 	scheduler/		- KERNEL process and thread management
 	win32/			- KERNEL misc Win32 functions
 

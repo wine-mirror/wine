@@ -88,7 +88,7 @@ sub read_spec_file {
 }
 
 my @gdi32_dirs = qw(dlls/gdi/enhmfdrv dlls/gdi/mfdrv graphics objects);
-my @ntdll_dirs = qw(files loader/ne loader memory misc msdos relay32 scheduler win32);
+my @ntdll_dirs = qw(files loader/ne loader memory misc msdos scheduler win32);
 my @user32_dirs = qw(controls dlls/user/dde windows);
 
 push @makefile_in_files, "tools/winebuild/Makefile.in";
