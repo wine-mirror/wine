@@ -999,6 +999,8 @@
 @ stdcall GetSelectorBase(long) GetSelectorBase
 @ stdcall GetSelectorLimit16(long) GetSelectorLimit16
 @ stdcall GetThreadQueue16(long) GetThreadQueue16
+@ stdcall GetVersion16() GetVersion16
+@ stdcall GetWinFlags16() GetWinFlags16
 @ stdcall GlobalDOSAlloc16(long) GlobalDOSAlloc16
 @ stdcall GlobalDOSFree16(long) GlobalDOSFree16
 @ stdcall GlobalFlags16(long) GlobalFlags16
@@ -1053,7 +1055,6 @@
 @ stdcall INT_Int15Handler(ptr) INT_Int15Handler
 @ stdcall INT_Int25Handler(ptr) INT_Int25Handler
 @ stdcall INT_Int26Handler(ptr) INT_Int26Handler  
-@ stdcall INT_Int2fHandler(ptr) INT_Int2fHandler
 @ stdcall NetBIOSCall16(ptr) NetBIOSCall16
 @ cdecl LOCAL_Alloc(long long long) LOCAL_Alloc
 @ cdecl LOCAL_Compact(long long long) LOCAL_Compact

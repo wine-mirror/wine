@@ -175,12 +175,6 @@ struct DPMI_segments
     WORD int48_sel;
 };
 
-/* 48-bit segmented pointers for DOS DPMI32 */
-typedef struct {
-  WORD  selector;
-  DWORD offset;
-} SEGPTR48, FARPROC48;
-
 extern struct DPMI_segments DOSMEM_dpmi_segments;
 extern const struct DPMI_segments *DOSMEM_GetDPMISegments(void);
 
@@ -198,13 +192,6 @@ extern UINT DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 /* memory/instr.c */
 extern BOOL INSTR_EmulateInstruction( CONTEXT86 *context );
 
-/* msdos/interrupts.c */
-typedef void (WINAPI *INTPROC)(CONTEXT86*);
-extern FARPROC16 INT_GetPMHandler( BYTE intnum );
-extern void INT_SetPMHandler( BYTE intnum, FARPROC16 handler );
-extern FARPROC48 INT_GetPMHandler48( BYTE intnum );
-extern void INT_SetPMHandler48( BYTE intnum, FARPROC48 handler );
-
 /* msdos/ioports.c */
 extern DWORD IO_inport( int port, int count );
 extern void IO_outport( int port, int count, DWORD value );
@@ -220,9 +207,6 @@ extern void WINAPI INT_Int25Handler(CONTEXT86*);
 
 /* msdos/int26.c */
 extern void WINAPI INT_Int26Handler(CONTEXT86*);
-
-/* msdos/int2f.c */
-extern void WINAPI INT_Int2fHandler(CONTEXT86*);
 
 /* msdos/int5c.c */
 extern void WINAPI NetBIOSCall16(CONTEXT86*);

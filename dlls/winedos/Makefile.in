@@ -28,6 +28,7 @@ C_SRCS = \
 	int21.c \
 	int29.c \
 	int2a.c \
+	int2f.c \
 	int31.c \
 	int33.c \
 	int41.c \

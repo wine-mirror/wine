@@ -29,7 +29,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
  *		DOSVM_Int15Handler (WINEDOS16.121)
  *		DOSVM_Int25Handler (WINEDOS16.137)
  *		DOSVM_Int26Handler (WINEDOS16.138)
- *		DOSVM_Int2fHandler (WINEDOS16.147)
  *		DOSVM_Int5cHandler (WINEDOS16.192)
  *
  * FIXME: Interrupt handlers for interrupts implemented in other DLLs.
@@ -40,7 +39,6 @@ void WINAPI DOSVM_Int11Handler( CONTEXT86 *context ) { INT_Int11Handler(context)
 void WINAPI DOSVM_Int15Handler( CONTEXT86 *context ) { INT_Int15Handler(context); }
 void WINAPI DOSVM_Int25Handler( CONTEXT86 *context ) { INT_Int25Handler(context); }
 void WINAPI DOSVM_Int26Handler( CONTEXT86 *context ) { INT_Int26Handler(context); }
-void WINAPI DOSVM_Int2fHandler( CONTEXT86 *context ) { INT_Int2fHandler(context); }
 void WINAPI DOSVM_Int5cHandler( CONTEXT86 *context ) { NetBIOSCall16(context); }
 
 static FARPROC16     DOSVM_Vectors16[256];

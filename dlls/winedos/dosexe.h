@@ -30,7 +30,15 @@
 struct _DOSEVENT;
 struct DPMI_segments;
 
+/* 48-bit segmented pointers for DOS DPMI32 */
+typedef struct {
+  WORD  selector;
+  DWORD offset;
+} SEGPTR48, FARPROC48;
+
 typedef void (*DOSRELAY)(CONTEXT86*,void*);
+typedef void (WINAPI *RMCBPROC)(CONTEXT86*);
+typedef void (WINAPI *INTPROC)(CONTEXT86*);
 
 #define DOS_PRIORITY_REALTIME 0  /* IRQ0 */
 #define DOS_PRIORITY_KEYBOARD 1  /* IRQ1 */
@@ -51,12 +59,16 @@ extern const struct DPMI_segments *DOSVM_dpmi_segments;
 
 #define BIOS_DATA ((void *)0x400)
 
+/* module.c */
 extern void WINAPI MZ_LoadImage( LPCSTR filename, HANDLE hFile );
 extern BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID paramblk );
 extern void WINAPI MZ_Exit( CONTEXT86 *context, BOOL cs_psp, WORD retval );
 extern BOOL WINAPI MZ_Current( void );
 extern void WINAPI MZ_AllocDPMITask( void );
 extern void WINAPI MZ_RunInThread( PAPCFUNC proc, ULONG_PTR arg );
+extern BOOL DOSVM_IsWin16(void);
+
+/* dosvm.c */
 extern INT WINAPI DOSVM_Enter( CONTEXT86 *context );
 extern void WINAPI DOSVM_Wait( INT read_pipe, HANDLE hObject );
 extern DWORD WINAPI DOSVM_Loop( HANDLE hThread );
@@ -65,7 +77,6 @@ extern void WINAPI DOSVM_PIC_ioport_out( WORD port, BYTE val );
 extern void WINAPI DOSVM_SetTimer( UINT ticks );
 extern UINT WINAPI DOSVM_GetTimer( void );
 extern void DOSVM_RealModeInterrupt( BYTE intnum, CONTEXT86 *context );
-extern BOOL DOSVM_IsWin16(void);
 
 /* devices.c */
 extern void DOSDEV_InstallDOSDevices(void);
@@ -137,8 +148,10 @@ extern void WINAPI DOSVM_Int29Handler(CONTEXT86*);
 /* int2a.c */
 extern void WINAPI DOSVM_Int2aHandler(CONTEXT86*);
 
+/* int2f.c */
+extern void WINAPI DOSVM_Int2fHandler(CONTEXT86*);
+
 /* int31.c */
-typedef void (WINAPI *RMCBPROC)(CONTEXT86*);
 extern void WINAPI DOSVM_Int31Handler(CONTEXT86*);
 extern BOOL DOSVM_IsDos32(void);
 extern FARPROC16 WINAPI DPMI_AllocInternalRMCB(RMCBPROC);
