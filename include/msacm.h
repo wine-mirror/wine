@@ -919,68 +919,6 @@ MMRESULT WINAPI acmStreamUnprepareHeader(
   HACMSTREAM has, PACMSTREAMHEADER pash, DWORD fdwUnprepare
 );
 
-/***********************************************************************
- * Wine specific - Win32
- */
-typedef struct _WINE_ACMBUILTINDRIVER
-{
-  LPSTR        pszDriverAlias;
-  DRIVERPROC pfnDriverProc;
-} WINE_ACMBUILTINDRIVER, *PWINE_ACMBUILTINDRIVER;
-
-typedef struct _WINE_ACMLOCALDRIVER
-{
-  DRIVERPROC pfnDriverProc;
-} WINE_ACMLOCALDRIVER, *PWINE_ACMLOCALDRIVER;
-
-typedef struct _WINE_ACMDRIVERID *PWINE_ACMDRIVERID;
-
-typedef struct _WINE_ACMOBJ
-{
-  PWINE_ACMDRIVERID pACMDriverID;
-} WINE_ACMOBJ, *PWINE_ACMOBJ;
-
-typedef struct _WINE_ACMDRIVER
-{
-  WINE_ACMOBJ  obj;
-  HDRVR        hDrvr;
-} WINE_ACMDRIVER, *PWINE_ACMDRIVER;
-
-typedef struct _WINE_ACMSTREAM
-{
-  WINE_ACMOBJ  obj;
-  /* FIME: More fields needed */
-} WINE_ACMSTREAM, *PWINE_ACMSTREAM;
-
-typedef struct _WINE_ACMDRIVERID
-{
-  LPSTR                    pszDriverAlias;
-  LPSTR                    pszFileName;
-  PWINE_ACMLOCALDRIVER   pACMLocalDriver;
-  BOOL                   bEnabled;
-  PWINE_ACMDRIVER        pACMDriver;           /* NULL if not open */
-  PWINE_ACMDRIVERID      pNextACMDriverID;
-  PWINE_ACMDRIVERID      pPreviousACMDriverID;
-} WINE_ACMDRIVERID;
-
-/* From builtin.c */
-extern WINE_ACMBUILTINDRIVER MSACM_BuiltinDrivers[];
-
-/* From interal.c */
-extern HANDLE MSACM_hHeap;
-extern PWINE_ACMDRIVERID MSACM_pFirstACMDriverID;
-extern PWINE_ACMDRIVERID MSACM_pLastACMDriverID;
-PWINE_ACMDRIVERID MSACM_RegisterDriver(
-  LPSTR pszDriverAlias, LPSTR pszFileName,
-  PWINE_ACMLOCALDRIVER pLocalDriver);
-void MSACM_RegisterAllDrivers();
-PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p);
-void MSACM_UnregisterAllDrivers();
-PWINE_ACMDRIVERID MSACM_GetDriverID(HACMDRIVERID hDriverID);
-PWINE_ACMDRIVER MSACM_GetDriver(HACMDRIVER hDriver);
-PWINE_ACMOBJ MSACM_GetObj(HACMOBJ hObj);
-HDRVR MSACM_OpenDriverProc(DRIVERPROC pfnDriverProc);
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */

@@ -8,7 +8,6 @@ MODULE    = msacm32
 SPEC_SRCS = msacm32.spec
 
 C_SRCS = \
-	builtin.c \
 	driver.c \
 	filter.c \
 	format.c \
