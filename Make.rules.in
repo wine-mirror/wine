@@ -59,10 +59,6 @@ LINT      = @LINT@
 LINTFLAGS = @LINTFLAGS@
 ALLLINTFLAGS = $(LINTFLAGS) $(DEFS) $(OPTIONS) $(DIVINCL)
 WINAPI_CHECK = $(TOPSRCDIR)/tools/winapi_check/winapi_check
-WINETEST     = $(TOPOBJDIR)/programs/winetest/winetest
-RUNTEST      = $(TOPSRCDIR)/programs/winetest/runtest
-RUNTESTFLAGS = -q -P wine -M $(MODULE) -T $(TOPOBJDIR)
-TESTRESULTS  = $(PLTESTS:.pl=.ok) $(CTESTS:.c=.ok)
 WINEBUILD = $(TOPOBJDIR)/tools/winebuild/winebuild
 MAKEDEP   = $(TOPOBJDIR)/tools/makedep
 WRC       = $(TOPOBJDIR)/tools/wrc/wrc
@@ -73,6 +69,15 @@ LIBWINE   = -L$(TOPOBJDIR)/library -lwine
 LIBTSX11  = -L$(TOPOBJDIR)/tsx11 -lwine_tsx11
 LIBUNICODE= -L$(TOPOBJDIR)/unicode -lwine_unicode
 LIBUUID   = -L$(TOPOBJDIR)/ole -lwine_uuid
+
+WINETEST     = $(TOPOBJDIR)/programs/winetest/winetest
+RUNTEST      = $(TOPSRCDIR)/programs/winetest/runtest
+RUNTESTFLAGS = -q -P wine -M $(MODULE) -T $(TOPOBJDIR)
+TESTRESULTS  = $(PLTESTS:.pl=.ok) $(CTESTS:.c=.ok)
+TESTPROGRAM  = tests/$(MODULE)_test
+TESTLIST     = tests/testlist.c
+TESTOBJS     = $(TESTMAIN) $(TESTLIST:.c=.o) $(CTESTS:.c=.o)
+TESTMAIN     = $(TOPOBJDIR)/programs/winetest/wtmain.o
 
 @SET_MAKE@
 
@@ -129,6 +134,9 @@ LINTS = $(C_SRCS:.c=.ln)
 
 .c.ln:
 	$(LINT) -c $(ALLLINTFLAGS) $< || ( $(RM) $@ && exit 1 )
+
+.c.ok:
+	$(RUNTEST) $(RUNTESTFLAGS) -p $(TESTPROGRAM) $< && touch $@
 
 .pl.ok:
 	$(RUNTEST) $(RUNTESTFLAGS) $< && touch $@
@@ -217,7 +225,7 @@ $(SUBDIRS:%=%/__depend__): $(MAKEDEP) dummy
 	cd `dirname $@` && $(MAKE) depend
 
 depend: $(MAKEDEP) $(GEN_C_SRCS) $(SUBDIRS:%=%/__depend__)
-	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(EXTRA_SRCS) -C. $(GEN_C_SRCS)
+	$(MAKEDEP) $(DIVINCL) -C$(SRCDIR) $(C_SRCS) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(EXTRA_SRCS) $(CTESTS) -C. $(GEN_C_SRCS)
 
 # Rules for cleaning
 
@@ -248,10 +256,27 @@ $(SUBDIRS:%=%/__uninstall__): dummy
 
 test:: $(TESTRESULTS)
 
-$(TESTRESULTS): $(WINETEST)
+$(PLTESTS:.c=.ok): $(WINETEST)
+$(CTESTS:.c=.ok): $(TESTPROGRAM).so
 
 $(WINETEST):
 	cd $(TOPOBJDIR)/programs/winetest && $(MAKE) winetest
+
+$(TESTMAIN):
+	cd $(TOPOBJDIR)/programs/winetest && $(MAKE) wtmain.o
+
+$(TESTLIST): Makefile.in
+	$(TOPSRCDIR)/programs/winetest/make_ctests $(CTESTS) >$(TESTLIST) || $(RM) $(TESTLIST)
+
+$(TESTPROGRAM).so: $(TESTPROGRAM).spec.o $(TESTOBJS)
+	$(LDSHARED) $(LDDLLFLAGS) $(TESTPROGRAM).spec.o $(TESTOBJS) -o $@ $(LIBWINE) $(LIBS)
+
+$(TESTPROGRAM).tmp.o: $(TESTOBJS)
+	$(LDCOMBINE) $(TESTOBJS) -o $@
+	-strip --strip-unneeded $@
+
+$(TESTPROGRAM).spec.c: $(TESTPROGRAM).spec $(TESTPROGRAM).tmp.o $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L$(DLLDIR) -sym $(TESTPROGRAM).tmp.o -o $@ -spec $(SRCDIR)/$(TESTPROGRAM).spec
 
 # Misc. rules
 

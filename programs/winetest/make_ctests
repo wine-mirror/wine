@@ -1,0 +1,28 @@
+#!/usr/bin/perl
+
+use strict;
+
+print "/* Automatically generated file; DO NOT EDIT!! */\n\n";
+
+my @testlist = @ARGV;
+foreach (@testlist)
+{
+    s!.*/([^/]+)\.c$!$1!;
+    printf "extern void func_%s(void);\n", $_;
+}
+
+print <<EOF;
+
+const struct
+{
+    const char *name;
+    void (*func)(void);
+} winetest_testlist[] =
+{
+EOF
+
+foreach (@testlist)
+{
+    printf "    { \"%s\", func_%s },\n", $_, $_;
+}
+print "    { 0, 0 }\n};\n";
