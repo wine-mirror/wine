@@ -659,6 +659,10 @@ LISTVIEW_RedrawItems (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
+/*
+ << LISTVIEW_Scroll >>
+*/
+
 
 static LRESULT
 LISTVIEW_SetBkColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
@@ -674,6 +678,12 @@ LISTVIEW_SetBkColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
     return TRUE;
 }
+
+
+/*
+ << LISTVIEW_SetBkImage >>
+ << LISTVIEW_SetCallbackMask >>
+*/
 
 
 static LRESULT
@@ -733,6 +743,16 @@ LISTVIEW_SetColumn32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
+/*
+ << LISTVIEW_SetColumn32W >>
+ << LISTVIEW_SetColumnOrderArray >>
+ << LISTVIEW_SetColumnWidth >>
+ << LISTVIEW_SetExtendedListviewStyle >>
+ << LISTVIEW_SetHotCursor >>
+ << LISTVIEW_SetHotItem >>
+ << LISTVIEW_SetHoverTime >>
+ << LISTVIEW_SetIconSpacing >>
+*/
 
 
 static LRESULT
@@ -762,7 +782,6 @@ LISTVIEW_SetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
     return (LRESULT)NULL;
 }
-
 
 
 static LRESULT
@@ -863,6 +882,56 @@ LISTVIEW_SetItemPosition (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
+/*
+ << LISTVIEW_SetItemPosition32 >>
+ << LISTVIEW_SetItemState >>
+*/
+
+
+static LRESULT
+LISTVIEW_SetItemText32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    LISTVIEW_INFO *infoPtr = LISTVIEW_GetInfoPtr(wndPtr);
+    LPLVITEM32A lpItem = (LPLVITEM32A)lParam;
+    INT32 nItem = (INT32)wParam;
+    LISTVIEW_ITEM *lpRow, *lpSubItem;
+
+    TRACE (listview, "(%d %p)\n", nItem, lpItem);
+
+    lpRow = DPA_GetPtr (infoPtr->hdpaItems, lpItem->iItem);
+    if (!lpRow)
+	return FALSE;
+
+    lpSubItem = &lpRow[lpItem->iSubItem];
+    if (!lpSubItem)
+	return FALSE;
+
+    if (lpSubItem->pszText) {
+	if (lpSubItem->pszText != LPSTR_TEXTCALLBACK32A)
+	    COMCTL32_Free (lpSubItem->pszText);
+	lpSubItem->pszText = NULL;
+    }
+    if (lpItem->pszText) {
+	if (lpItem->pszText == LPSTR_TEXTCALLBACK32A) {
+	    lpItem->pszText = LPSTR_TEXTCALLBACK32A;
+	}
+	else {
+	    INT32 len = lstrlen32A (lpItem->pszText);
+	    lpSubItem->pszText = (LPWSTR)COMCTL32_Alloc ((len + 1)*sizeof(WCHAR));
+	    lstrcpy32A (lpSubItem->pszText, lpItem->pszText);
+	}
+    }
+
+    return TRUE;
+}
+
+
+/*
+ << LISTVIEW_SetItemText32W >>
+ << LISTVIEW_SetSelectionMark >>
+*/
+
+
 static LRESULT
 LISTVIEW_SetTextBkColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
@@ -895,6 +964,12 @@ LISTVIEW_SetTextColor (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 }
 
 
+/*
+ << LISTVIEW_SetTooltips >>
+ << LISTVIEW_SetUnicodeFormat >>
+ << LISTVIEW_SetWorkAreas >>
+*/
+
 
 static LRESULT
 LISTVIEW_SortItems (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
@@ -907,6 +982,11 @@ LISTVIEW_SortItems (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     return TRUE;
 }
 
+
+/*
+ << LISTVIEW_SubItemHitTest >>
+ << LISTVIEW_Update >>
+*/
 
 
 
@@ -1436,7 +1516,11 @@ LISTVIEW_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 
 /*	case LVM_SETITEMPOSITION32: */
 /*	case LVM_SETITEMSTATE: */
-/*	case LVM_SETITEMTEXT: */
+
+	case LVM_SETITEMTEXT32A:
+	    return LISTVIEW_SetItemText32A (wndPtr, wParam, lParam);
+
+/*	case LVM_SETITEMTEXT32W: */
 /*	case LVM_SETSELECTIONMARK: */
 
 	case LVM_SETTEXTBKCOLOR:

@@ -1,7 +1,8 @@
 /*
- * Date and time picker class extra info
+ * Flat scroll bar class extra info
  *
  * Copyright 1998 Eric Kohl
+ * Copyright 1999 Alex Priem
  */
 
 #ifndef __WINE_FLATSB_H

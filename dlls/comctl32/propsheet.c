@@ -9,11 +9,11 @@
  */
 
 #include "windows.h"
-#include "winversion.h"
 #include "commctrl.h"
 #include "propsheet.h"
 #include "win.h"
 #include "debug.h"
+
 
 LRESULT WINAPI
 PROPSHEET_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam);
@@ -22,21 +22,10 @@ PROPSHEET_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam);
 
 
 
-/*****************************************************************
- *            PropertySheet32AW   (COMCTL32.83)
- */  
-INT32 WINAPI PropertySheet32AW(LPVOID propertySheetHeader)
-{   
-	if (VERSION_OsIsUnicode())
-		return PropertySheet32W ((LPCPROPSHEETHEADER32W) propertySheetHeader);
-	return PropertySheet32A ((LPCPROPSHEETHEADER32A) propertySheetHeader);
-}
- 
-
 
 
 /*****************************************************************
- *            PropertySheet32A   (COMCTL32.84)
+ *            PropertySheet32A   (COMCTL32.84)(COMCTL32.83)
  */
 INT32 WINAPI PropertySheet32A(LPCPROPSHEETHEADER32A lppsh)
 {
@@ -70,19 +59,7 @@ INT32 WINAPI PropertySheet32W(LPCPROPSHEETHEADER32W propertySheetHeader)
 
 
 /*****************************************************************
- *            CreatePropertySheet32AW   (COMCTL32.83)
- */  
-HPROPSHEETPAGE WINAPI CreatePropertySheetPage32AW (LPVOID lpPropSheetPage)
-{   
-	if (VERSION_OsIsUnicode())
-	return CreatePropertySheetPage32W((LPCPROPSHEETPAGE32W) lpPropSheetPage);
-	return CreatePropertySheetPage32A((LPCPROPSHEETPAGE32A) lpPropSheetPage);
-
-}
-
-
-/*****************************************************************
- *            CreatePropertySheetPage32A   (COMCTL32.19)
+ *            CreatePropertySheetPage32A   (COMCTL32.19)(COMCTL32.18)
  */
 HPROPSHEETPAGE WINAPI CreatePropertySheetPage32A(LPCPROPSHEETPAGE32A lpPropSheetPage)
 {
@@ -116,9 +93,9 @@ BOOL32 WINAPI DestroyPropertySheetPage32(HPROPSHEETPAGE hPropPage)
 LRESULT WINAPI
 PROPSHEET_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 {
-   WND *wndPtr = WIN_FindWndPtr(hwnd);
+    WND *wndPtr = WIN_FindWndPtr(hwnd);
 
-  switch (uMsg) {
+    switch (uMsg) {
        case PSM_SETCURSEL:
            FIXME (propsheet, "Unimplemented msg PSM_SETCURSEL\n");
            return 0;
@@ -180,14 +157,12 @@ PROPSHEET_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
            FIXME (propsheet, "Unimplemented msg PSM_GETCURRENTPAGEHWND\n");
            return 0;
 
-	  default:
+       default:
         if (uMsg >= WM_USER)
-        ERR (propsheet, "unknown msg %04x wp=%08x lp=%08lx\n",
-             uMsg, wParam, lParam);
-        return DefWindowProc32A (hwnd, uMsg, wParam, lParam);
-	}
-		
-	
+	    ERR (propsheet, "unknown msg %04x wp=%08x lp=%08lx\n",
+		 uMsg, wParam, lParam);
+	    return DefWindowProc32A (hwnd, uMsg, wParam, lParam);
+    }
 }
 
 
@@ -215,6 +190,5 @@ VOID
 PROPSHEET_UnRegister (VOID)
 {
     if (GlobalFindAtom32A (WC_PROPSHEET32A))
-    UnregisterClass32A (WC_PROPSHEET32A, (HINSTANCE32)NULL);
+        UnregisterClass32A (WC_PROPSHEET32A, (HINSTANCE32)NULL);
 }
-

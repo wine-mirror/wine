@@ -30,7 +30,6 @@
 #include "trackbar.h"
 #include "treeview.h"
 #include "updown.h"
-#include "winversion.h"
 #include "debug.h"
 #include "winerror.h"
 
@@ -76,8 +75,8 @@ COMCTL32_LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		HEADER_Register ();
 		HOTKEY_Register ();
 		LISTVIEW_Register ();
-		PROPSHEET_Register ();
 		PROGRESS_Register ();
+		PROPSHEET_Register ();
 		STATUS_Register ();
 		TAB_Register ();
 		TOOLBAR_Register ();
@@ -104,8 +103,8 @@ COMCTL32_LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		MONTHCAL_Unregister ();
 		NATIVEFONT_Unregister ();
 		PAGER_Unregister ();
-		PROPSHEET_UnRegister ();
 		PROGRESS_Unregister ();
+		PROPSHEET_UnRegister ();
 		REBAR_Unregister ();
 		STATUS_Unregister ();
 		TAB_Unregister ();
@@ -137,11 +136,11 @@ COMCTL32_LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  * MenuHelp [COMCTL32.2]
  *
  * PARAMS
- *     uMsg       [I]
- *     wParam     [I]
- *     lParam     [I]
- *     hMainMenu  [I] handle to the applications main menu
- *     hInst      [I]
+ *     uMsg       [I] message (WM_MENUSELECT) (see NOTES)
+ *     wParam     [I] wParam of the message uMsg
+ *     lParam     [I] lParam of the message uMsg
+ *     hMainMenu  [I] handle to the application's main menu
+ *     hInst      [I] handle to the module that contains string resources
  *     hwndStatus [I] handle to the status bar window
  *     lpwIDs     [I] pointer to an array of intergers (see NOTES)
  *
@@ -150,6 +149,14 @@ COMCTL32_LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *
  * NOTES
  *     The official documentation is incomplete!
+ *     This is the correct documentation:
+ *
+ *     uMsg:
+ *     MenuHelp() does NOT handle WM_COMMAND messages! It only handes
+ *     WM_MENUSELECT messages.
+ *
+ *     lpwIDs:
+ *     (will be written ...)
  */
 
 VOID WINAPI
@@ -214,11 +221,18 @@ MenuHelp (UINT32 uMsg, WPARAM32 wParam, LPARAM lParam, HMENU32 hMainMenu,
  *     Failure: FALSE
  *
  * NOTES
- *     The official documentation is incomplete! This has been fixed.
+ *     The official documentation is incomplete!
+ *     This is the correct documentation:
+ *
+ *     hwnd
+ *     Handle to the window that contains the menu and controls.
+ *
+ *     uFlags
+ *     Identifier of the menu item to receive or loose a check mark.
  *
  *     lpInfo
  *     The array of integers contains pairs of values. BOTH values of
- *     the first pair must be the handles to application's main menu.
+ *     the first pair must be the handles to the application's main menu.
  *     Each subsequent pair consists of a menu id and control id.
  */
 
@@ -269,13 +283,17 @@ ShowHideMenuCtl (HWND32 hwnd, UINT32 uFlags, LPINT32 lpInfo)
  * PARAMS
  *     hwnd   [I] handle to the client window.
  *     lpRect [O] pointer to the rectangle of the client window
- *     lpInfo [I] pointer to an array of integers
+ *     lpInfo [I] pointer to an array of integers (see NOTES)
  *
  * RETURNS
  *     No return value.
  *
  * NOTES
  *     The official documentation is incomplete!
+ *     This is the correct documentation:
+ *
+ *     lpInfo
+ *     (will be written...)
  */
 
 VOID WINAPI
@@ -309,7 +327,7 @@ GetEffectiveClientRect (HWND32 hwnd, LPRECT32 lpRect, LPINT32 lpInfo)
 
 
 /***********************************************************************
- * DrawStatusText32A [COMCTL32.5]
+ * DrawStatusText32A [COMCTL32.5][COMCTL32.27]
  *
  * Draws text with borders, like in a status bar.
  *
@@ -317,10 +335,14 @@ GetEffectiveClientRect (HWND32 hwnd, LPRECT32 lpRect, LPINT32 lpInfo)
  *     hdc   [I] handle to the window's display context
  *     lprc  [I] pointer to a rectangle
  *     text  [I] pointer to the text
- *     style [I]
+ *     style [I] drawing style
  *
  * RETURNS
  *     No return value.
+ *
+ * NOTES
+ *     The style variable can have one of the following values:
+ *     (will be written ...)
  */
 
 VOID WINAPI
@@ -357,7 +379,7 @@ DrawStatusText32A (HDC32 hdc, LPRECT32 lprc, LPCSTR text, UINT32 style)
  *     hdc   [I] handle to the window's display context
  *     lprc  [I] pointer to a rectangle
  *     text  [I] pointer to the text
- *     style [I]
+ *     style [I] drawing style
  *
  * RETURNS
  *     No return value.
@@ -373,45 +395,18 @@ DrawStatusText32W (HDC32 hdc, LPRECT32 lprc, LPCWSTR text, UINT32 style)
 
 
 /***********************************************************************
- * DrawStatusText32AW [COMCTL32.27]
- *
- * Draws text with borders, like in a status bar.
- *
- * PARAMS
- *     hdc   [I] handle to the window's display context
- *     lprc  [I] pointer to a rectangle
- *     text  [I] pointer to the text
- *     style [I]
- *
- * RETURNS
- *     No return value.
- *
- * NOTES
- *     Calls DrawStatusText32A() or DrawStatusText32W().
- */
-
-VOID WINAPI
-DrawStatusText32AW (HDC32 hdc, LPRECT32 lprc, LPVOID text, UINT32 style)
-{
-    if (VERSION_OsIsUnicode())
-	DrawStatusText32W (hdc, lprc, (LPCWSTR)text, style);
-    DrawStatusText32A (hdc, lprc, (LPCSTR)text, style);
-}
-
-
-/***********************************************************************
- * CreateStatusWindow32A [COMCTL32.6]
+ * CreateStatusWindow32A [COMCTL32.6][COMCTL32.21]
  *
  * Creates a status bar
  *
  * PARAMS
- *     style  [I]
- *     text   [I]
+ *     style  [I] window style
+ *     text   [I] pointer to the window text
  *     parent [I] handle to the parent window
  *     wid    [I] control id of the status bar
  *
  * RETURNS
- *     Success: handle to the control
+ *     Success: handle to the status window
  *     Failure: 0
  */
 
@@ -429,13 +424,13 @@ CreateStatusWindow32A (INT32 style, LPCSTR text, HWND32 parent, UINT32 wid)
  * CreateStatusWindow32W [COMCTL32.22] Creates a status bar control
  *
  * PARAMS
- *     style  [I]
- *     text   [I]
+ *     style  [I] window style
+ *     text   [I] pointer to the window text
  *     parent [I] handle to the parent window
  *     wid    [I] control id of the status bar
  *
  * RETURNS
- *     Success: handle to the control
+ *     Success: handle to the status window
  *     Failure: 0
  */
 
@@ -450,47 +445,24 @@ CreateStatusWindow32W (INT32 style, LPCWSTR text, HWND32 parent, UINT32 wid)
 
 
 /***********************************************************************
- * CreateStatusWindow32AW [COMCTL32.21] Creates a status bar control
+ * CreateUpDownControl [COMCTL32.16] Creates an up-down control
  *
  * PARAMS
- *     style  [I]
- *     text   [I]
+ *     style  [I] window styles
+ *     x      [I] horizontal position of the control
+ *     y      [I] vertical position of the control
+ *     cx     [I] with of the control
+ *     cy     [I] height of the control
  *     parent [I] handle to the parent window
- *     wid    [I] control id of the status bar
+ *     id     [I] the control's identifier
+ *     inst   [I] handle to the application's module instance
+ *     buddy  [I] handle to the buddy window, can be NULL
+ *     maxVal [I] upper limit of the control
+ *     minVal [I] lower limit of the control
+ *     curVal [I] current value of the control
  *
  * RETURNS
- *     Success: handle to the control
- *     Failure: 0
- */
-
-HWND32 WINAPI
-CreateStatusWindow32AW (INT32 style, LPVOID text, HWND32 parent, UINT32 wid)
-{
-    if (VERSION_OsIsUnicode())
-	return CreateStatusWindow32W (style, (LPCWSTR)text, parent, wid);
-    return CreateStatusWindow32A (style, (LPCSTR)text, parent, wid);
-}
-
-
-/***********************************************************************
- * CreateUpDownControl [COMCTL32.16] Creates an Up-Down control
- *
- * PARAMS
- *     style
- *     x
- *     y
- *     cx
- *     cy
- *     parent
- *     id
- *     inst
- *     buddy
- *     maxVal [I]
- *     minVal [I]
- *     curVal [I]
- *
- * RETURNS
- *     Success: handle to the control
+ *     Success: handle to the updown control
  *     Failure: 0
  */
 
@@ -526,7 +498,7 @@ CreateUpDownControl (DWORD style, INT32 x, INT32 y, INT32 cx, INT32 cy,
  * NOTES
  *     This function is just a dummy.
  *     The Win95 controls are registered at the DLL's initialization.
- *     To register other controls InitCommonControlsEx must be used.
+ *     To register other controls InitCommonControlsEx() must be used.
  */
 
 VOID WINAPI
@@ -697,14 +669,14 @@ CreateToolbarEx (HWND32 hwnd, DWORD style, UINT32 wID, INT32 nBitmaps,
  * CreateMappedBitmap [COMCTL32.8]
  *
  * PARAMS
- *     hInstance
- *     idBitmap
- *     wFlags
- *     lpColorMap
- *     iNumMaps
+ *     hInstance  [I]
+ *     idBitmap   [I]
+ *     wFlags     [I]
+ *     lpColorMap [I]
+ *     iNumMaps   [I]
  *
  * RETURNS
- *     Success: bitmap handle
+ *     Success: handle to the new bitmap
  *     Failure: 0
  */
 

@@ -2,6 +2,7 @@
  * Flat Scrollbar control
  *
  * Copyright 1998 Eric Kohl
+ * Copyright 1998 Alex Priem
  *
  * NOTES
  *   This is just a dummy control. An author is needed! Any volunteers?

@@ -365,7 +365,7 @@ STATUSBAR_GetText32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     else {
 	result = part->text ? lstrlen32W (part->text) : 0;
 	result |= (part->style << 16);
-	if (lParam)
+	if (lParam && LOWORD(result))
 	    lstrcpyWtoA ((LPSTR)lParam, part->text);
     }
     return result;
