@@ -865,13 +865,47 @@ ORDINAL FUNCTYPE EXPORTNAME([ARGTYPE [ARGTYPE [...]]]) HANDLERNAME
             <term>segstr</term>
             <listitem><para>for a segmented pointer to a null-terminated string</para></listitem>
           </varlistentry>
+          <varlistentry>
+            <term>wstr</term>
+            <listitem><para>for a linear pointer to a null-terminated wide
+              (16-bit Unicode) string</para></listitem>
+          </varlistentry>
         </variablelist>
 
         <para>
-          Only <literal>ptr</literal>, <literal>str</literal> and 
+          Only <literal>ptr</literal>, <literal>str</literal>,
+          <literal>wstr</literal> and
           <literal>long</literal> are valid for Win32 functions.
           <literal>HANDLERNAME</literal> is the name of the actual Wine 
           function that will process the request in 32-bit mode.
+        </para>
+        <para>
+          Strings should almost always map to str, 
+          wide strings - wstr.
+          As the general rule it depends on whether the
+          parameter is IN, OUT or IN/OUT.
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+              IN: str/wstr
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              OUT: ptr
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              IN/OUT: str/wstr
+            </para>
+          </listitem>
+        </itemizedlist>
+        <para>
+          It is for debug messages. If the parameter is OUT
+          it might not be initialized as thus it should not
+          be printed as a string.
         </para>
         <para>
           The two examples define an entry point for the 
