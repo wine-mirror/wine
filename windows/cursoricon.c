@@ -739,11 +739,6 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
                           fCursor ? RT_GROUP_CURSORW : RT_GROUP_ICONW )))
             return 0;
 	hGroupRsrc = hRsrc;
-        /* If shared icon, check whether it was already loaded */
-
-        if (    (loadflags & LR_SHARED) 
-             && (h = CURSORICON_FindSharedIcon( hInstance, hRsrc ) ) != 0 )
-            return h;
 
         /* Find the best entry in the directory */
  
@@ -764,6 +759,12 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
 
         if (!(hRsrc = FindResourceW(hInstance,MAKEINTRESOURCEW(wResId),
                                       fCursor ? RT_CURSORW : RT_ICONW ))) return 0;
+        
+        /* If shared icon, check whether it was already loaded */
+        if (    (loadflags & LR_SHARED) 
+             && (h = CURSORICON_FindSharedIcon( hInstance, hRsrc ) ) != 0 )
+            return h;
+        
         if (!(handle = LoadResource( hInstance, hRsrc ))) return 0;
         bits = (LPBYTE)LockResource( handle );
         h = CURSORICON_CreateFromResource( 0, 0, bits, dwBytesInRes, 
