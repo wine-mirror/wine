@@ -605,8 +605,7 @@ static const char main_key_PT_br[MAIN_LEN][4] =
  "'\"","1!","2@","3#","4$","5%","6®","7&","8*","9(","0)","-_","=+",
  "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","¥`","[{",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","Á«","~^","]}",
- "zZ","xX","cC","vV","bB","nN","mM",",<",".>",";:","/?",
- "\\|"
+ "\\|","zZ","xX","cC","vV","bB","nN","mM",",<",".>",";:","/?",
 };
 
 /*** Brazilian ABNT-2 keyboard layout with <ALT GR> (contributed by Mauro Carvalho Chehab) */
@@ -615,8 +614,7 @@ static const char main_key_PT_br_alt_gr[MAIN_LEN][4] =
  "'\"","1!9","2@2","3#3","4$#","5%\"","6(,","7&","8*","9(","0)","-_","=+'",
  "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","4`","[{*",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","gG","~^","]}:",
- "zZ","xX","cC","vV","bB","nN","mM",",<",".>",";:","/?0",
- "\\|"
+ "\\|","zZ","xX","cC","vV","bB","nN","mM",",<",".>",";:","/?0"
 };
 
 /*** US international keyboard layout (contributed by Gustavo Noronha (kov@debian.org)) */
