@@ -8,6 +8,7 @@
 #include "winuser.h"
 #include "miscemu.h"
 #include "dosexe.h"
+#include "vga.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(int)
@@ -41,7 +42,10 @@ void WINAPI INT_Int33Handler( CONTEXT86 *context )
     CX_reg(context) = sys->x;
     DX_reg(context) = sys->y;
     break;
-  case 0x0C: /* Define interrupt subroutine */
+  case 0x04:
+    FIXME("Position mouse cursor\n");
+    break;
+  case 0x0C:
     TRACE("Define mouse interrupt subroutine\n");
     sys->callmask = CX_reg(context);
     sys->callback = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR(ES_reg(context), DX_reg(context));
@@ -77,10 +81,16 @@ void WINAPI INT_Int33Message(UINT message,WPARAM wParam,LPARAM lParam)
 {
   MOUSESYSTEM *sys = (MOUSESYSTEM *)DOSVM_GetSystemData(0x33);
   WORD mask = 0;
+  unsigned Height, Width, SX=1, SY=1;
 
   if (!sys) return;
-  sys->x = LOWORD(lParam);
-  sys->y = HIWORD(lParam);
+  if (!VGA_GetMode(&Height,&Width,NULL)) {
+    /* may need to do some coordinate scaling */
+    SX = 640/Width;
+    if (!SX) SX=1;
+  }
+  sys->x = LOWORD(lParam) * SX;
+  sys->y = HIWORD(lParam) * SY;
   switch (message) {
   case WM_MOUSEMOVE:
     mask |= 0x01;
