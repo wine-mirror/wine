@@ -56,8 +56,9 @@ typedef struct
 
 typedef struct tagRMCB {
     DWORD address;
+    DWORD proc_ofs,proc_sel;
+    DWORD regs_ofs,regs_sel;
     struct tagRMCB *next;
-
 } RMCB;
 
 static RMCB *FirstRMCB = NULL;
@@ -181,6 +182,73 @@ static void INT_SetRealModeContext( REALMODECALL *call, CONTEXT *context )
 
 
 /**********************************************************************
+ *	    DPMI_CallRMCBProc
+ *
+ * This routine does the hard work of calling a callback procedure.
+ */
+static void DPMI_CallRMCBProc( CONTEXT *context, RMCB *rmcb, WORD flag )
+{
+    if (IS_SELECTOR_SYSTEM( rmcb->proc_sel )) {
+        /* Wine-internal RMCB, call directly */
+        ((RMCBPROC)rmcb->proc_ofs)(context);
+    } else {
+#ifdef __i386__
+        UINT16 ss,es;
+        DWORD edi;
+
+        INT_SetRealModeContext((REALMODECALL *)PTR_SEG_OFF_TO_LIN( rmcb->regs_sel, rmcb->regs_ofs ), context);
+        ss = SELECTOR_AllocBlock( DOSMEM_MemoryBase(0) + (DWORD)(SS_reg(context)<<4), 0x10000, SEGMENT_DATA, FALSE, FALSE );
+
+        FIXME(int31,"untested!\n");
+
+        /* The called proc ends with an IRET, and takes these parameters:
+         * DS:ESI = pointer to real-mode SS:SP
+         * ES:EDI = pointer to real-mode call structure
+         * It returns:
+         * ES:EDI = pointer to real-mode call structure (may be a copy)
+         * It is the proc's responsibility to change the return CS:IP in the
+         * real-mode call structure. */
+        if (flag & 1) {
+            /* 32-bit DPMI client */
+            __asm__ __volatile__("
+                 pushl %%es
+                 pushl %%ds
+                 pushfl
+                 movl %4,%%es
+                 movl %3,%%ds
+                 lcall %2
+                 popl %%ds
+                 movl %%es,%0
+                 popl %%es
+             "
+             : "=g" (es), "=D" (edi)
+             : "m" (rmcb->proc_ofs),
+               "g" (ss), "g" (rmcb->regs_sel),
+               "S" (ESP_reg(context)), "D" (rmcb->regs_ofs)
+             : "eax", "ecx", "edx", "esi", "ebp" );
+        } else {
+            /* 16-bit DPMI client */
+            CONTEXT ctx = *context;
+            CS_reg(&ctx) = rmcb->proc_sel;
+            EIP_reg(&ctx) = rmcb->proc_ofs;
+            DS_reg(&ctx) = ss;
+            ESI_reg(&ctx) = ESP_reg(context);
+            ES_reg(&ctx) = rmcb->regs_sel;
+            EDI_reg(&ctx) = rmcb->regs_ofs;
+            Callbacks->CallRegisterShortProc(&ctx, 2);
+            es = ES_reg(&ctx);
+            edi = EDI_reg(&ctx);
+        }
+        UnMapLS(PTR_SEG_OFF_TO_SEGPTR(ss,0));
+        INT_GetRealModeContext((REALMODECALL*)PTR_SEG_OFF_TO_LIN( es, edi ), context);
+#else
+        ERR(int31,"RMCBs only implemented for i386\n");
+#endif
+    }
+}
+
+
+/**********************************************************************
  *	    DPMI_CallRMProc
  *
  * This routine does the hard work of calling a real mode procedure.
@@ -189,10 +257,11 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
 {
     LPWORD stack16;
     THDB *thdb = THREAD_Current();
-    LPVOID addr;
+    LPVOID addr = NULL; /* avoid gcc warning */
     TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
     NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
-    int alloc = 0;
+    RMCB *CurrRMCB;
+    int alloc = 0, already = 0;
     WORD sel;
     SEGPTR seg_addr;
 
@@ -200,79 +269,114 @@ int DPMI_CallRMProc( CONTEXT *context, LPWORD stack, int args, int iret )
 
     TRACE(int31, "EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
                  EAX_reg(context), EBX_reg(context), ECX_reg(context), EDX_reg(context) );
-    TRACE(int31, "ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x, %d WORD arguments\n",
+    TRACE(int31, "ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x, %d WORD arguments, %s\n",
                  ESI_reg(context), EDI_reg(context), ES_reg(context), DS_reg(context),
-                 CS_reg(context), IP_reg(context), args );
+                 CS_reg(context), IP_reg(context), args, iret?"IRET":"FAR" );
+
+callrmproc_again:
+
+/* shortcut for chaining to internal interrupt handlers */
+    if ((CS_reg(context) == 0xF000) && iret) {
+        return INT_RealModeInterrupt( IP_reg(context)/4, context);
+    }
+
+/* shortcut for RMCBs */
+    CurrRMCB = FirstRMCB;
+
+    while (CurrRMCB && (HIWORD(CurrRMCB->address) != CS_reg(context)))
+        CurrRMCB = CurrRMCB->next;
 
 #ifdef MZ_SUPPORTED
-    FIXME(int31,"DPMI real-mode call using DOS VM task system, not fully tested\n");
-    if (!pModule->lpDosTask) {
+    FIXME(int31,"DPMI real-mode call using DOS VM task system, not fully tested!\n");
+    if (!(CurrRMCB || pModule->lpDosTask)) {
         TRACE(int31,"creating VM86 task\n");
         if (MZ_InitTask( MZ_AllocDPMITask( pModule->self ) ) < 32) {
             ERR(int31,"could not setup VM86 task\n");
             return 1;
         }
     }
-    if (!SS_reg(context)) {
-        alloc = 1; /* allocate default stack */
-        stack16 = addr = DOSMEM_GetBlock( pModule->self, 64, &(SS_reg(context)) );
-        SP_reg(context) = 64-2;
-        stack16 += 32-1;
-        if (!addr) {
-            ERR(int31,"could not allocate default stack\n");
-            return 1;
+    if (!already) {
+        if (!SS_reg(context)) {
+            alloc = 1; /* allocate default stack */
+            stack16 = addr = DOSMEM_GetBlock( pModule->self, 64, &(SS_reg(context)) );
+            SP_reg(context) = 64-2;
+            stack16 += 32-1;
+            if (!addr) {
+                ERR(int31,"could not allocate default stack\n");
+                return 1;
+            }
+        } else {
+            stack16 = CTX_SEG_OFF_TO_LIN(context, SS_reg(context), ESP_reg(context));
+        }
+        SP_reg(context) -= (args + (iret?1:0)) * sizeof(WORD);
+#else
+    if (!already) {
+        stack16 = THREAD_STACK16(thdb);
+#endif
+        stack16 -= args;
+        if (args) memcpy(stack16, stack, args*sizeof(WORD) );
+        /* push flags if iret */
+        if (iret) {
+            stack16--; args++;
+            *stack16 = FL_reg(context);
+        }
+#ifdef MZ_SUPPORTED
+        /* push return address (return to interrupt wrapper) */
+        *(--stack16) = pModule->lpDosTask->dpmi_seg;
+        *(--stack16) = pModule->lpDosTask->wrap_ofs;
+        /* adjust stack */
+        SP_reg(context) -= 2*sizeof(WORD);
+#endif
+        already = 1;
+    }
+
+    if (CurrRMCB) {
+        /* RMCB call, invoke protected-mode handler directly */
+        DPMI_CallRMCBProc(context, CurrRMCB, pModule->lpDosTask?pModule->lpDosTask->dpmi_flag:0);
+        /* check if we returned to where we thought we would */
+        if ((CS_reg(context) != pModule->lpDosTask->dpmi_seg) ||
+            (IP_reg(context) != pModule->lpDosTask->wrap_ofs)) {
+            /* we need to continue at different address in real-mode space,
+               so we need to set it all up for real mode again */
+            goto callrmproc_again;
         }
     } else {
-        stack16 = CTX_SEG_OFF_TO_LIN(context, SS_reg(context), ESP_reg(context));
-        addr = NULL; /* avoid gcc warning */
-    }
-    SP_reg(context) -= (args + (iret?1:0)) * sizeof(WORD);
-#else
-    stack16 = THREAD_STACK16(thdb);
-#endif
-    stack16 -= args;
-    if (args) memcpy(stack16, stack, args*sizeof(WORD) );
-    /* push flags if iret */
-    if (iret) {
-        stack16--; args++;
-        *stack16 = FL_reg(context);
-    }
 #ifdef MZ_SUPPORTED
-    /* push return address (return to interrupt wrapper) */
-    *(--stack16) = pModule->lpDosTask->dpmi_seg;
-    *(--stack16) = pModule->lpDosTask->wrap_ofs;
-    /* push call address */
-    *(--stack16) = CS_reg(context);
-    *(--stack16) = IP_reg(context);
-    /* adjust stack */
-    SP_reg(context) -= 4*sizeof(WORD);
-    /* set initial CS:IP to the wrapper's "lret" */
-    CS_reg(context) = pModule->lpDosTask->dpmi_seg;
-    IP_reg(context) = pModule->lpDosTask->call_ofs;
-    TRACE(int31,"entering real mode...\n");
-    DOSVM_Enter( context );
-    TRACE(int31,"returned from real-mode call\n");
-    if (alloc) DOSMEM_FreeBlock( pModule->self, addr );
-#else
-    addr = CTX_SEG_OFF_TO_LIN(context, CS_reg(context), EIP_reg(context));
-    sel = SELECTOR_AllocBlock( addr, 0x10000, SEGMENT_CODE, FALSE, FALSE );
-    seg_addr = PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
-
-    CS_reg(context) = HIWORD(seg_addr);
-    IP_reg(context) = LOWORD(seg_addr);
-    EBP_reg(context) = OFFSETOF( thdb->cur_stack )
-                               + (WORD)&((STACK16FRAME*)0)->bp;
-    Callbacks->CallRegisterShortProc(context, args*sizeof(WORD));
-    UnMapLS(seg_addr);
+#if 0 /* this was probably unnecessary */
+        /* push call address */
+        *(--stack16) = CS_reg(context);
+        *(--stack16) = IP_reg(context);
+        /* adjust stack */
+        SP_reg(context) -= 2*sizeof(WORD);
+        /* set initial CS:IP to the wrapper's "lret" */
+        CS_reg(context) = pModule->lpDosTask->dpmi_seg;
+        IP_reg(context) = pModule->lpDosTask->call_ofs;
 #endif
+        TRACE(int31,"entering real mode...\n");
+        DOSVM_Enter( context );
+        TRACE(int31,"returned from real-mode call\n");
+#else
+        addr = CTX_SEG_OFF_TO_LIN(context, CS_reg(context), EIP_reg(context));
+        sel = SELECTOR_AllocBlock( addr, 0x10000, SEGMENT_CODE, FALSE, FALSE );
+        seg_addr = PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
+
+        CS_reg(context) = HIWORD(seg_addr);
+        IP_reg(context) = LOWORD(seg_addr);
+        EBP_reg(context) = OFFSETOF( thdb->cur_stack )
+                                   + (WORD)&((STACK16FRAME*)0)->bp;
+        Callbacks->CallRegisterShortProc(context, args*sizeof(WORD));
+        UnMapLS(seg_addr);
+#endif
+    }
+    if (alloc) DOSMEM_FreeBlock( pModule->self, addr );
     return 0;
 }
 
 
 /**********************************************************************
- *	    INT_DoRealModeInt
+ *	    CallRMInt
  */
-static void INT_DoRealModeInt( CONTEXT *context )
+static void CallRMInt( CONTEXT *context )
 {
     CONTEXT realmode_ctx;
     FARPROC16 rm_int = INT_GetRMHandler( BL_reg(context) );
@@ -280,7 +384,6 @@ static void INT_DoRealModeInt( CONTEXT *context )
                                                           DI_reg(context) );
     INT_GetRealModeContext( call, &realmode_ctx );
 
-#ifdef MZ_SUPPORTED
     /* we need to check if a real-mode program has hooked the interrupt */
     if (HIWORD(rm_int)!=0xF000) {
         /* yup, which means we need to switch to real mode... */
@@ -288,11 +391,11 @@ static void INT_DoRealModeInt( CONTEXT *context )
         EIP_reg(&realmode_ctx) = LOWORD(rm_int);
         if (DPMI_CallRMProc( &realmode_ctx, NULL, 0, TRUE))
           SET_CFLAG(context);
-    } else
-#endif
-    {
+    } else {
         RESET_CFLAG(context);
-        if (INT_RealModeInterrupt( BL_reg(context), &realmode_ctx ))
+        /* use the IP we have instead of BL_reg, in case some apps
+           decide to move interrupts around for whatever reason... */
+        if (INT_RealModeInterrupt( LOWORD(rm_int)/4, &realmode_ctx ))
           SET_CFLAG(context);
         if (EFL_reg(context)&1) {
           FIXME(int31,"%02x: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
@@ -307,7 +410,7 @@ static void INT_DoRealModeInt( CONTEXT *context )
 }
 
 
-static void CallRMProcFar( CONTEXT *context )
+static void CallRMProc( CONTEXT *context, int iret )
 {
     REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
     CONTEXT context16;
@@ -318,8 +421,8 @@ static void CallRMProcFar( CONTEXT *context )
 
     TRACE(int31, "RealModeCall: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
 	p->eax, p->ebx, p->ecx, p->edx);
-    TRACE(int31, "              ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x, %d WORD arguments\n",
-	p->esi, p->edi, p->es, p->ds, p->cs, p->ip, CX_reg(context) );
+    TRACE(int31, "              ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x, %d WORD arguments, %s\n",
+	p->esi, p->edi, p->es, p->ds, p->cs, p->ip, CX_reg(context), iret?"IRET":"FAR" );
 
     if (!(p->cs) && !(p->ip)) { /* remove this check
                                    if Int21/6501 case map function
@@ -328,75 +431,76 @@ static void CallRMProcFar( CONTEXT *context )
 	return;
     }
     INT_GetRealModeContext(p, &context16);
-
-#if 0
-    addr = DOSMEM_MapRealToLinear(MAKELONG(p->ip, p->cs));
-    sel = SELECTOR_AllocBlock( addr, 0x10000, SEGMENT_CODE, FALSE, FALSE );
-    seg_addr = PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
-
-    CS_reg(&context16) = HIWORD(seg_addr);
-    IP_reg(&context16) = LOWORD(seg_addr);
-    EBP_reg(&context16) = OFFSETOF( thdb->cur_stack )
-                               + (WORD)&((STACK16FRAME*)0)->bp;
-
-    argsize = CX_reg(context)*sizeof(WORD);
-    memcpy( ((LPBYTE)THREAD_STACK16(thdb))-argsize,
-    (LPBYTE)PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context))+6, argsize );
-
-    Callbacks->CallRegisterShortProc(&context16, argsize);
-
-    UnMapLS(seg_addr);
-#else
     DPMI_CallRMProc( &context16, ((LPWORD)PTR_SEG_OFF_TO_LIN(SS_reg(context), SP_reg(context)))+3,
-                     CX_reg(context), 0 );
-#endif
+                     CX_reg(context), iret );
     INT_SetRealModeContext(p, &context16);
 }
 
 
-void WINAPI RMCallbackProc( FARPROC16 pmProc, REALMODECALL *rmc )
+static void WINAPI RMCallbackProc( RMCB *rmcb )
 {
-    CONTEXT ctx;
-    INT_GetRealModeContext(rmc, &ctx);
-    Callbacks->CallRegisterShortProc(&ctx, 0);
+    /* This routine should call DPMI_CallRMCBProc, but we don't have the
+       register structure available - this is easily fixed by going through
+       a Win16 register relay instead of calling RMCallbackProc "directly",
+       but I won't bother at this time. */
+    FIXME(int31,"not properly supported on your architecture!\n");
+}
+
+static RMCB *DPMI_AllocRMCB( void )
+{
+    RMCB *NewRMCB = HeapAlloc(GetProcessHeap(), 0, sizeof(RMCB));
+    UINT16 uParagraph;
+
+    if (NewRMCB)
+    {
+#ifdef MZ_SUPPORTED
+	LPVOID RMCBmem = DOSMEM_GetBlock(0, 4, &uParagraph);
+	LPBYTE p = RMCBmem;
+
+	*p++ = 0xcd; /* RMCB: */
+	*p++ = 0x31; /* int $0x31 */
+/* it is the called procedure's task to change the return CS:EIP
+   the DPMI 0.9 spec states that if it doesn't, it will be called again */
+	*p++ = 0xeb;
+	*p++ = 0xfc; /* jmp RMCB */
+#else
+	LPVOID RMCBmem = DOSMEM_GetBlock(0, 15, &uParagraph);
+	LPBYTE p = RMCBmem;
+
+	*p++ = 0x68; /* pushl */
+	*(LPVOID *)p = NewRMCB;
+	p+=4;
+	*p++ = 0x9a; /* lcall */
+	*(FARPROC16 *)p = (FARPROC16)RMCallbackProc; /* FIXME: register relay */
+	p+=4;
+	GET_CS(*(WORD *)p);
+	p+=2;
+	*p++=0xc3; /* lret (FIXME?) */
+#endif
+	NewRMCB->address = MAKELONG(0, uParagraph);
+	NewRMCB->next = FirstRMCB;
+	FirstRMCB = NewRMCB;
+    }
+    return NewRMCB;
 }
 
 
 static void AllocRMCB( CONTEXT *context )
 {
-    RMCB *NewRMCB = HeapAlloc(GetProcessHeap(), 0, sizeof(RMCB));
+    RMCB *NewRMCB = DPMI_AllocRMCB();
     REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
-    UINT16 uParagraph;
 
-    FIXME(int31, "EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n", p->eax, p->ebx, p->ecx, p->edx);
-    FIXME(int31, "           ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n", p->esi, p->edi, p->es, p->ds, p->cs, p->ip);
-    FIXME(int31, "           Function to call: %04x:%04x\n",
-         (WORD)DS_reg(context), SI_reg(context) );
+    TRACE(int31, "Function to call: %04x:%04x\n", (WORD)DS_reg(context), SI_reg(context) );
 
     if (NewRMCB)
     {
-	LPVOID RMCBmem = DOSMEM_GetBlock(0, 20, &uParagraph);
-	LPBYTE p = RMCBmem;
-
-	*p++ = 0x68; /* pushl */
-	*(FARPROC16 *)p =
-	PTR_SEG_OFF_TO_LIN(ES_reg(context), SI_reg(context)); /* pmode proc to call */
-	p+=4;
-	*p++ = 0x68; /* pushl */
-	*(LPVOID *)p =
-	PTR_SEG_OFF_TO_LIN(ES_reg(context), DI_reg(context));
-	p+=4;
-	*p++ = 0x9a; /* lcall */
-	*(FARPROC16 *)p = (FARPROC16)RMCallbackProc; /* FIXME ? */
-	p+=4;
-	GET_CS(*(WORD *)p);
-	p+=2;
-	*p++=0xc3; /* retf */
-	NewRMCB->address = MAKELONG(0, uParagraph);
-	NewRMCB->next = FirstRMCB;
-	FirstRMCB = NewRMCB;
-	CX_reg(context) = uParagraph;
-	DX_reg(context) = 0;
+	/* FIXME: if 32-bit DPMI client, use ESI and EDI */
+	NewRMCB->proc_ofs = SI_reg(context);
+	NewRMCB->proc_sel = DS_reg(context);
+	NewRMCB->regs_ofs = DI_reg(context);
+	NewRMCB->regs_sel = ES_reg(context);
+	CX_reg(context) = HIWORD(NewRMCB->address);
+	DX_reg(context) = LOWORD(NewRMCB->address);
     }
     else
     {
@@ -406,15 +510,27 @@ static void AllocRMCB( CONTEXT *context )
 }
 
 
-static void FreeRMCB( CONTEXT *context )
+FARPROC16 WINAPI DPMI_AllocInternalRMCB( RMCBPROC proc )
+{
+    RMCB *NewRMCB = DPMI_AllocRMCB();
+
+    if (NewRMCB) {
+        NewRMCB->proc_ofs = (DWORD)proc;
+        NewRMCB->proc_sel = 0;
+        NewRMCB->regs_ofs = 0;
+        NewRMCB->regs_sel = 0;
+        return (FARPROC16)(NewRMCB->address);
+    }
+    return NULL;
+}
+
+
+static int DPMI_FreeRMCB( DWORD address )
 {
     RMCB *CurrRMCB = FirstRMCB;
     RMCB *PrevRMCB = NULL;
 
-    FIXME(int31, "callback address: %04x:%04x\n",
-          CX_reg(context), DX_reg(context));
-
-    while (CurrRMCB && (CurrRMCB->address != MAKELONG(DX_reg(context), CX_reg(context))))
+    while (CurrRMCB && (CurrRMCB->address != address))
     {
 	PrevRMCB = CurrRMCB;
 	CurrRMCB = CurrRMCB->next;
@@ -427,13 +543,29 @@ static void FreeRMCB( CONTEXT *context )
 	FirstRMCB = CurrRMCB->next;
 	DOSMEM_FreeBlock(0, DOSMEM_MapRealToLinear(CurrRMCB->address));
 	HeapFree(GetProcessHeap(), 0, CurrRMCB);
+	return 0;
     }
-    else
-    {
+    return 1;
+}
+
+
+static void FreeRMCB( CONTEXT *context )
+{
+    FIXME(int31, "callback address: %04x:%04x\n",
+          CX_reg(context), DX_reg(context));
+
+    if (DPMI_FreeRMCB(MAKELONG(DX_reg(context), CX_reg(context)))) {
 	AX_reg(context) = 0x8024; /* invalid callback address */
 	SET_CFLAG(context);
     }
 }
+
+
+void WINAPI DPMI_FreeInternalRMCB( FARPROC16 proc )
+{
+    DPMI_FreeRMCB( (DWORD)proc );
+}
+
 
 #ifdef MZ_SUPPORTED
 /* (see loader/dos/module.c, function MZ_InitDPMI) */
@@ -510,6 +642,19 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             /* This is the XMS driver entry point */
             XMS_Handler(context);
             return;
+        } else
+        {
+            /* Check for RMCB */
+            RMCB *CurrRMCB = FirstRMCB;
+            
+            while (CurrRMCB && (HIWORD(CurrRMCB->address) != CS_reg(context)))
+                CurrRMCB = CurrRMCB->next;
+            
+            if (CurrRMCB) {
+                /* RMCB call, propagate to protected-mode handler */
+                DPMI_CallRMCBProc(context, CurrRMCB, pModule->lpDosTask->dpmi_flag);
+                return;
+            }
         }
     }
 #endif
@@ -726,20 +871,15 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
 	break;
 
     case 0x0300:  /* Simulate real mode interrupt */
-        INT_DoRealModeInt( context );
+        CallRMInt( context );
         break;
 
     case 0x0301:  /* Call real mode procedure with far return */
-	CallRMProcFar( context );
+	CallRMProc( context, FALSE );
 	break;
 
     case 0x0302:  /* Call real mode procedure with interrupt return */
-        {
-            REALMODECALL *p = (REALMODECALL *)PTR_SEG_OFF_TO_LIN( ES_reg(context), DI_reg(context) );
-            FIXME(int31, "RealModeCallIret: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n", p->eax, p->ebx, p->ecx, p->edx);
-            FIXME(int31, "                  ESI=%08lx EDI=%08lx ES=%04x DS=%04x CS:IP=%04x:%04x\n", p->esi, p->edi, p->es, p->ds, p->cs, p->ip );
-            SET_CFLAG(context);
-        }
+	CallRMProc( context, TRUE );
         break;
 
     case 0x0303:  /* Allocate Real Mode Callback Address */

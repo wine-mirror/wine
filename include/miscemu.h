@@ -82,7 +82,10 @@ extern void WINAPI INT_Int29Handler(CONTEXT*);
 extern void WINAPI INT_Int2fHandler(CONTEXT*);
 
 /* msdos/dpmi.c */
+typedef void WINAPI (*RMCBPROC)(CONTEXT*);
 extern void WINAPI INT_Int31Handler(CONTEXT*);
+extern FARPROC16 WINAPI DPMI_AllocInternalRMCB(RMCBPROC);
+extern void WINAPI DPMI_FreeInternalRMCB(FARPROC16);
 
 /* msdos/xms.c */
 extern void WINAPI XMS_Handler(CONTEXT*);
