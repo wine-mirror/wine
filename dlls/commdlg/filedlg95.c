@@ -516,53 +516,63 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
     GetClientRect(hwndParentDlg,&rectParent);
     GetClientRect(hwndChildDlg,&rectChild);
 
+    /*
+      There are two possibilities to add components to the default file dialog box.
+
+      By default, all the new components are added below the standard dialog box (the else case).
+
+      However, if there is a static text component with the stc32 id, a special case happens.
+      The x and y coordinates of stc32 indicate the top left corner where to place the standard file dialog box
+      in the window and the cx and cy indicate how to size the window.
+      Moreover, if the new component's coordinates are on the left of the stc32 , it is placed on the left 
+      of the standard file dialog box. If they are above the stc32 component, it is placed above and so on....
+      
+     */
     if(hwndStc32)
-    {
+    {      
       GetWindowRect(hwndStc32,&rectStc32);
       MapWindowPoints(0, hwndChildDlg,(LPPOINT)&rectStc32,2);
-      CopyRect(&rectTemp,&rectStc32);
+      CopyRect(&rectTemp,&rectStc32);      
 
-      SetRect(&rectStc32,rectStc32.left,rectStc32.top,rectStc32.left + (rectParent.right-rectParent.left),rectStc32.top+(rectParent.bottom-rectParent.top));
-      SetWindowPos(hwndStc32,0,rectStc32.left,rectStc32.top,rectStc32.right-rectStc32.left,rectStc32.bottom-rectStc32.top,SWP_NOMOVE|SWP_NOZORDER | SWP_NOACTIVATE);
-
-      ptParentClient.x = max((rectParent.right-rectParent.left),(rectChild.right-rectChild.left));
-      if(rectStc32.right < rectTemp.right)
-        ptMoveCtl.x = 0;
-      else
-        ptMoveCtl.x = (rectStc32.right - rectTemp.right);
-
-      ptParentClient.y = max((rectParent.bottom-rectParent.top),(rectChild.bottom-rectChild.top));
-      if(rectStc32.bottom < rectTemp.bottom)
-        ptMoveCtl.y = 0;
-      else
-        ptMoveCtl.y = (rectStc32.bottom - rectTemp.bottom);
+      if ((rectParent.right-rectParent.left)>(rectChild.right-rectChild.left)) {
+	ptParentClient.x = (rectParent.right-rectParent.left)+ ((rectChild.right-rectChild.left) - (rectStc32.right-rectStc32.left));
+      } else {
+	ptParentClient.x = max((rectParent.right-rectParent.left),(rectChild.right-rectChild.left));
+      }
+      ptMoveCtl.x = (rectParent.right-rectParent.left) ;
+   
+      if ((rectParent.bottom-rectParent.top)>(rectChild.bottom-rectChild.top)) {
+	ptParentClient.y = (rectParent.bottom-rectParent.top) + (rectChild.bottom-rectChild.top) - (rectStc32.bottom-rectStc32.top);
+      } else {
+	ptParentClient.y = max((rectParent.bottom-rectParent.top),(rectChild.bottom-rectChild.top));
+      }
+      ptMoveCtl.y = (rectParent.bottom-rectParent.top) ;
     }
     else
     {
-      if( (GetWindow(hwndChildDlg,GW_CHILD)) == NULL) return;
-
       SetRectEmpty(&rectTemp);
-      ptParentClient.x = max((rectParent.right-rectParent.left),(rectChild.right-rectChild.left));
-      ptParentClient.y = (rectParent.bottom-rectParent.top) + (rectChild.bottom-rectChild.top);
+      /* After some tests it appears that windows never extends the width in that case */
+      ptParentClient.x = (rectParent.right-rectParent.left);
+      ptParentClient.y = (rectParent.bottom-rectParent.top);
+      /* Some applications use an empty child window, add this test to prevent garbage */
+      if (GetWindow(hwndChildDlg,GW_CHILD))
+	ptParentClient.y += (rectChild.bottom-rectChild.top);
       ptMoveCtl.y = rectParent.bottom-rectParent.top;
-      ptMoveCtl.x=0;
+      ptMoveCtl.x = 0;
     }
+    /* Set the new size of the window from the extra space needed */
     SetRect(&rectParent,rectParent.left,rectParent.top,rectParent.left+ptParentClient.x,rectParent.top+ptParentClient.y);
     AdjustWindowRectEx( &rectParent,GetWindowLongA(hwndParentDlg,GWL_STYLE),FALSE,GetWindowLongA(hwndParentDlg,GWL_EXSTYLE));
 
-    SetWindowPos(hwndChildDlg, 0, 0,0, ptParentClient.x + ptMoveCtl.x,ptParentClient.y + ptMoveCtl.y, SWP_NOZORDER );
-    SetWindowPos(hwndParentDlg, 0, rectParent.left,rectParent.top, (rectParent.right- rectParent.left) + ptMoveCtl.x,
-        (rectParent.bottom-rectParent.top) + ptMoveCtl.y,SWP_NOMOVE | SWP_NOZORDER);
-
+    SetWindowPos(hwndChildDlg, 0, 0,0, ptParentClient.x,ptParentClient.y, SWP_NOZORDER );
+    SetWindowPos(hwndParentDlg, 0, rectParent.left,rectParent.top, (rectParent.right- rectParent.left),
+		 (rectParent.bottom-rectParent.top),SWP_NOMOVE | SWP_NOZORDER);
+      
+    /* 
+       This part moves the child components below the file dialog box if stc32 is not present
+       and place them accordinf to stc32 if it is present.
+     */
     hwndChild = GetWindow(hwndChildDlg,GW_CHILD);
-    if(hwndStc32)
-    {
-      GetWindowRect(hwndStc32,&rectStc32);
-      MapWindowPoints( 0, hwndChildDlg,(LPPOINT)&rectStc32,2);
-    }
-    else
-      SetRect(&rectStc32,0,0,0,0);
-
     if (hwndChild )
     {
       do
@@ -573,35 +583,29 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
 				continue;
           GetWindowRect(hwndChild,&rectCtrl);
           MapWindowPoints( 0, hwndParentDlg,(LPPOINT)&rectCtrl,2);
-
           /*
-            Check the initial position of the controls relative to the initial
-            position and size of stc32 (before it is expanded).
+            If stc32 is present, moves the child components as required.
           */
-          if (rectCtrl.left >= rectTemp.right && rectCtrl.top >= rectTemp.bottom)
-          {
-            rectCtrl.left += ptMoveCtl.x;
-            rectCtrl.top  += ptMoveCtl.y;
-          }
-          else if (rectCtrl.left >= rectTemp.right)
-	  {
-            rectCtrl.left += ptMoveCtl.x;
-            rectCtrl.right += ptMoveCtl.x;
+   	  if ((rectCtrl.left >= rectTemp.right) && ((rectCtrl.left+ptMoveCtl.x)<rectParent.right)){
+	    rectCtrl.left += ptMoveCtl.x;
+	    rectCtrl.right +=ptMoveCtl.x; 
 	  }
-          else if (rectCtrl.top >= rectTemp.bottom)
-          {
+	  if ((rectCtrl.top >= rectTemp.bottom) && ((rectCtrl.top+ptMoveCtl.y)<rectParent.bottom)){
 	    rectCtrl.top  += ptMoveCtl.y;
-           rectCtrl.bottom  += ptMoveCtl.y;
+	    rectCtrl.bottom  += ptMoveCtl.y;
 	  }
-
+    
           SetWindowPos( hwndChild, 0, rectCtrl.left, rectCtrl.top,
 				rectCtrl.right-rectCtrl.left,rectCtrl.bottom-rectCtrl.top,
 				SWP_NOSIZE | SWP_NOZORDER );
         }
       } while ((hwndChild=GetWindow( hwndChild, GW_HWNDNEXT )) != NULL);
-    }
-    hwndChild = GetWindow(hwndParentDlg,GW_CHILD);
+    }   
 
+    /*
+      This part moves the components of the default file dialog box according to the stc32 coordinates.
+     */
+    hwndChild = GetWindow(hwndParentDlg,GW_CHILD);
     if(hwndStc32)
     {
       GetWindowRect(hwndStc32,&rectStc32);
@@ -616,7 +620,7 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
           {
             if (GetWindowLongA( hwndChild, GWL_STYLE ) & WS_MAXIMIZE)
               continue;
-            GetWindowRect(hwndChild,&rectCtrl);
+	    GetWindowRect(hwndChild,&rectCtrl);
             MapWindowPoints( 0, hwndParentDlg,(LPPOINT)&rectCtrl,2);
 
             rectCtrl.left += ptMoveCtl.x;
@@ -653,6 +657,25 @@ INT_PTR CALLBACK FileOpenDlgProcUserTemplate(HWND hwnd, UINT uMsg, WPARAM wParam
         fodInfos = (FileOpenDlgInfos *)lParam;
         lParam = (LPARAM) fodInfos->ofnInfos;
         ArrangeCtrlPositions(hwnd,GetParent(hwnd));
+	
+	/* If the help button and the readonly button are hidden
+	   we have to resize the dialog before calling the hook procedure 
+	   because some apps use the size to resize the window.
+	 */
+	if ( (fodInfos->ofnInfos->Flags & OFN_HIDEREADONLY) &&
+	     (!(fodInfos->ofnInfos->Flags &
+		(OFN_SHOWHELP|OFN_ENABLETEMPLATE|OFN_ENABLETEMPLATEHANDLE))))
+	  {
+	    RECT rectDlg, rectHelp, rectCancel;
+	    GetWindowRect(hwnd, &rectDlg);
+	    GetWindowRect(GetDlgItem(hwnd, pshHelp), &rectHelp);
+	    GetWindowRect(GetDlgItem(hwnd, IDCANCEL), &rectCancel);
+	    /* subtract the height of the help button plus the space between
+	       the help button and the cancel button to the height of the dialog */
+	    SetWindowPos(hwnd, 0, 0, 0, rectDlg.right-rectDlg.left,
+                 (rectDlg.bottom-rectDlg.top) - (rectHelp.bottom - rectCancel.bottom),
+                 SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
+	  }
 
         if(fodInfos && IsHooked(fodInfos))
           return CallWindowProcA((WNDPROC)fodInfos->ofnInfos->lpfnHook,hwnd,uMsg,wParam,lParam);
@@ -684,7 +707,6 @@ HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
         fodInfos->ofnInfos->Flags & OFN_ENABLETEMPLATEHANDLE)
     {
       HINSTANCE hinst;
-
       if (fodInfos->ofnInfos->Flags  & OFN_ENABLETEMPLATEHANDLE)
       {
         hinst = 0;
@@ -719,7 +741,6 @@ HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
           return NULL;
     	}
       }
-
       hChildDlg= CreateDialogIndirectParamA(hinst, template,
            hwnd, FileOpenDlgProcUserTemplate, (LPARAM)fodInfos);
       if(hChildDlg)
@@ -744,8 +765,10 @@ HWND CreateTemplateDialog(FileOpenDlgInfos *fodInfos, HWND hwnd)
       temp.tmplate.cx = rectHwnd.right-rectHwnd.left;
       temp.tmplate.cy = rectHwnd.bottom-rectHwnd.top;
       temp.menu = temp.class = temp.title = 0;
+
       hChildDlg = CreateDialogIndirectParamA(fodInfos->ofnInfos->hInstance,&temp.tmplate,
                   hwnd, FileOpenDlgProcUserTemplate, (LPARAM)fodInfos);
+
       return hChildDlg;
     }
     return NULL;
@@ -1253,10 +1276,12 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   }
 
   /* Resize the height, if open as read only checkbox ad help button
-     are hidden and we are not using a custom template */
+     are hidden and we are not using a custom template nor a customDialog
+     */
   if ( (fodInfos->ofnInfos->Flags & OFN_HIDEREADONLY) &&
        (!(fodInfos->ofnInfos->Flags &
-         (OFN_SHOWHELP|OFN_ENABLETEMPLATE|OFN_ENABLETEMPLATEHANDLE))))
+         (OFN_SHOWHELP|OFN_ENABLETEMPLATE|OFN_ENABLETEMPLATEHANDLE))) && 
+       (!fodInfos->DlgInfos.hwndCustomDlg ))
   {
     RECT rectDlg, rectHelp, rectCancel;
     GetWindowRect(hwnd, &rectDlg);
@@ -1268,7 +1293,6 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
                  (rectDlg.bottom-rectDlg.top) - (rectHelp.bottom - rectCancel.bottom),
                  SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER);
   }
-
   /* change Open to Save FIXME: use resources */
   if (fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
   {
