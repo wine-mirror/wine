@@ -265,7 +265,7 @@ static void joy_polldev(JoystickAImpl *This) {
 		This->js.lZ = map_axis(jse.value);
 		break;
 	    default:
-		FIXME("more then 3 axes (%d) not handled!\n",jse.number);
+		FIXME("more than 3 axes (%d) not handled!\n",jse.number);
 		break;
 	    }
 	}

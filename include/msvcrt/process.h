@@ -56,7 +56,7 @@ int         _spawnlp(int,const char*,const char*,...);
 int         _spawnlpe(int,const char*,const char*,...);
 int         _spawnv(int,const char*,const char* const *);
 int         _spawnve(int,const char*,const char* const *,const char* const *);
-int         _spawnvp(int,const char* ,const char* const *);
+int         _spawnvp(int,const char*,const char* const *);
 int         _spawnvpe(int,const char*,const char* const *,const char* const *);
 
 void        MSVCRT(_c_exit)(void);
