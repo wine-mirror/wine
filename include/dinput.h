@@ -877,6 +877,14 @@ typedef struct DIMOUSESTATE {
   BYTE rgbButtons[4];
 } DIMOUSESTATE;
 
+/* "Standard" Mouse report for DInput 7... */
+typedef struct DIMOUSESTATE2 {
+  LONG lX;
+  LONG lY;
+  LONG lZ;
+  BYTE rgbButtons[8];
+} DIMOUSESTATE2;
+
 #define DIMOFS_X        FIELD_OFFSET(DIMOUSESTATE, lX)
 #define DIMOFS_Y        FIELD_OFFSET(DIMOUSESTATE, lY)
 #define DIMOFS_Z        FIELD_OFFSET(DIMOUSESTATE, lZ)

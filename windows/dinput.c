@@ -82,6 +82,7 @@ struct SysKeyboardAImpl
         /* SysKeyboardAImpl */
         BYTE                            keystate[256];
 	KEYBOARD_CONFIG                 initial_config;
+	int                             acquired;
 };
 
 #ifdef HAVE_LINUX_22_JOYSTICK_API
@@ -128,7 +129,7 @@ struct SysMouseAImpl
 	CRITICAL_SECTION		crit;
 
 	/* This is for mouse reporting. */
-	struct DIMOUSESTATE             m_state;
+	struct DIMOUSESTATE2            m_state;
 };
 
 static int evsequence=0;
@@ -517,15 +518,21 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
 static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 {
 	ICOM_THIS(SysKeyboardAImpl,iface);
-	KEYBOARD_CONFIG no_auto;
 	
 	TRACE("(this=%p)\n",This);
-	/* Save the original config */
-	KEYBOARD_Driver->pGetKeyboardConfig(&(This->initial_config));
+	
+	if (This->acquired == 0) {
+	  KEYBOARD_CONFIG no_auto;
+	  
+	  /* Save the original config */
+	  KEYBOARD_Driver->pGetKeyboardConfig(&(This->initial_config));
+	  
+	  /* Now, remove auto-repeat */
+	  no_auto.auto_repeat = FALSE;
+	  KEYBOARD_Driver->pSetKeyboardConfig(&no_auto, WINE_KEYBOARD_CONFIG_AUTO_REPEAT);
 
-	/* Now, remove auto-repeat */
-	no_auto.auto_repeat = FALSE;
-	KEYBOARD_Driver->pSetKeyboardConfig(&no_auto, WINE_KEYBOARD_CONFIG_AUTO_REPEAT);
+	  This->acquired = 1;
+	}
 	
 	return DI_OK;
 }
@@ -535,8 +542,13 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
 	ICOM_THIS(SysKeyboardAImpl,iface);
 	TRACE("(this=%p)\n",This);
 
-	/* Restore the original configuration */
-	KEYBOARD_Driver->pSetKeyboardConfig(&(This->initial_config), 0xFFFFFFFF);
+	if (This->acquired == 1) {
+	  /* Restore the original configuration */
+	  KEYBOARD_Driver->pSetKeyboardConfig(&(This->initial_config), 0xFFFFFFFF);
+	  This->acquired = 0;
+	} else {
+	  ERR("Unacquiring a not-acquired device !!!\n");
+	}
 
 	return DI_OK;
 }
@@ -823,7 +835,8 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
 
   /* Check size of data format to prevent crashes if the applications
      sends a smaller buffer */
-  if (df->dwDataSize != sizeof(struct DIMOUSESTATE)) {
+  if ((df->dwDataSize != sizeof(struct DIMOUSESTATE)) &&
+      (df->dwDataSize != sizeof(struct DIMOUSESTATE2))) {
     FIXME("non-standard mouse configuration not supported yet.");
     return DIERR_INVALIDPARAM;
   }
@@ -992,7 +1005,8 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 
   if (This->acquired == 0) {
     POINT       point;
-
+    int i;
+    
     /* This stores the current mouse handler. */
     This->prev_handler = mouse_event;
     
@@ -1006,8 +1020,9 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
     This->m_state.rgbButtons[0] = (MouseButtonsStates[0] ? 0xFF : 0x00);
     This->m_state.rgbButtons[1] = (MouseButtonsStates[1] ? 0xFF : 0x00);
     This->m_state.rgbButtons[2] = (MouseButtonsStates[2] ? 0xFF : 0x00);
-    This->m_state.rgbButtons[3] = 0x00;
-    
+    for (i = 0; i < 8; i++) 
+      This->m_state.rgbButtons[i] = 0x00;
+
     /* Install our own mouse event handler */
     MOUSE_Enable(dinput_mouse_event);
     
@@ -1060,20 +1075,20 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE2A iface,DWORD len,LPVOID ptr
 ) {
   ICOM_THIS(SysMouseAImpl,iface);
-  struct DIMOUSESTATE *mstate = (struct DIMOUSESTATE *) ptr;
   
   EnterCriticalSection(&(This->crit));
   TRACE("(this=%p,0x%08lx,%p): \n",This,len,ptr);
   
   /* Check if the buffer is big enough */
-  if (len < sizeof(struct DIMOUSESTATE)) {
+  if ((len != sizeof(struct DIMOUSESTATE)) &&
+      (len != sizeof(struct DIMOUSESTATE2))) {
     FIXME("unsupported state structure.");
     LeaveCriticalSection(&(This->crit));
     return DIERR_INVALIDPARAM;
   }
 
   /* Copy the current mouse state */
-  *mstate = This->m_state;
+  memcpy(ptr, &(This->m_state), len);
   
   /* Check if we need to do a mouse warping */
   if (This->need_warp) {
@@ -1091,8 +1106,8 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
   LeaveCriticalSection(&(This->crit));
   
   TRACE("(X: %ld - Y: %ld   L: %02x M: %02x R: %02x)\n",
-	mstate->lX, mstate->lY,
-	mstate->rgbButtons[0], mstate->rgbButtons[2], mstate->rgbButtons[1]);
+	This->m_state.lX, This->m_state.lY,
+	This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
   
   return 0;
 }
