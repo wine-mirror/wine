@@ -150,6 +150,7 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 <INITIAL>symbolfile|symbols|symbol|sf   { BEGIN(PATH_EXPECTED); return tSYMBOLFILE; }
 
 <INITIAL,INFO_CMD,DEL_CMD>break|brea|bre|br|b	{ BEGIN(PATH_EXPECTED); return tBREAK; }
+<INITIAL>watch|watc|wat			{ BEGIN(PATH_EXPECTED); return tWATCH; }
 
 <INFO_CMD>share|shar|sha		{ return tSHARE; }
 <INFO_CMD>locals|local|loca|loc		{ return tLOCAL; }

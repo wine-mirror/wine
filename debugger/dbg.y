@@ -41,7 +41,7 @@ int yyerror(char *);
 }
 
 %token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
-%token tENABLE tDISABLE tBREAK tDELETE tSET tMODE tPRINT tEXAM tABORT tDEBUGMSG
+%token tENABLE tDISABLE tBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM tABORT
 %token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tREGS tWND tQUEUE tLOCAL
 %token tPROCESS tMODREF
 %token tEOL tSTRING tDEBUGSTR
@@ -407,7 +407,7 @@ void DEBUG_Exit( DWORD exit_code )
  *
  * Debugger main loop.
  */
-BOOL DEBUG_Main( BOOL is_debug, BOOL force )
+BOOL DEBUG_Main( BOOL is_debug, BOOL force, DWORD code )
 {
     int newmode;
     BOOL ret_ok;
@@ -430,14 +430,16 @@ BOOL DEBUG_Main( BOOL is_debug, BOOL force )
             fprintf( stderr, " in 16-bit code (%04x:%04lx).\n",
                      (WORD)DEBUG_context.SegCs, DEBUG_context.Eip );
 #else
-        fprintf( stderr, " (%p).\n", GET_IP(DEBUG_CurrThread->context) );
+        fprintf( stderr, " (%p).\n", GET_IP(&DEBUG_context) );
 #endif
     }
 
     if (DEBUG_LoadEntryPoints("Loading new modules symbols:\n"))
        DEBUG_ProcessDeferredDebug();
 
-    if (force || !(is_debug && DEBUG_ShouldContinue( DEBUG_CurrThread->dbg_exec_mode, &DEBUG_CurrThread->dbg_exec_count )))
+    if (force || !(is_debug && DEBUG_ShouldContinue( code, 
+						     DEBUG_CurrThread->dbg_exec_mode, 
+						     &DEBUG_CurrThread->dbg_exec_count )))
     {
         DBG_ADDR addr;
         DEBUG_GetCurrentAddress( &addr );
@@ -525,7 +527,6 @@ BOOL DEBUG_Main( BOOL is_debug, BOOL force )
      */
     if ((DEBUG_CurrThread->dbg_exec_mode == EXEC_CONT) || (DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS))
 	DEBUG_CurrThread->dbg_exec_count = 0;
-
 /* EPP     if (USER_Driver) USER_Driver->pEndDebugging(); */
     
     return (DEBUG_CurrThread->dbg_exec_mode == EXEC_PASS) ? 0 : DBG_CONTINUE;

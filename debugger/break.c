@@ -321,7 +321,7 @@ void DEBUG_InfoBreakpoints(void)
  * Determine if we should continue execution after a SIGTRAP signal when
  * executing in the given mode.
  */
-BOOL DEBUG_ShouldContinue( enum exec_mode mode, int * count )
+BOOL DEBUG_ShouldContinue( DWORD code, enum exec_mode mode, int * count )
 {
     DBG_ADDR addr;
     DBG_ADDR cond_addr;
@@ -330,7 +330,7 @@ BOOL DEBUG_ShouldContinue( enum exec_mode mode, int * count )
 
 #ifdef __i386__
     /* If not single-stepping, back up over the int3 instruction */
-    if (!(DEBUG_context.EFlags & STEP_FLAG)) 
+    if (code == EXCEPTION_BREAKPOINT) 
        DEBUG_context.Eip--;
 #endif
 
@@ -427,7 +427,7 @@ BOOL DEBUG_ShouldContinue( enum exec_mode mode, int * count )
 #ifdef __i386__
     /* If there's no breakpoint and we are not single-stepping, then we     */
     /* must have encountered an int3 in the Windows program; let's skip it. */
-    if ((bpnum == -1) && !(DEBUG_context.EFlags & STEP_FLAG))
+    if ((bpnum == -1) && code == EXCEPTION_BREAKPOINT)
         DEBUG_context.Eip++;
 #endif
 
