@@ -288,6 +288,22 @@ static int	ds_hel_queue = DS_HEL_QUEUE;
 static int	ds_snd_queue_max = DS_SND_QUEUE_MAX;
 static int	ds_snd_queue_min = DS_SND_QUEUE_MIN;
 
+/* 
+ * Call the callback provided to DirectSoundEnumerateA.
+ */
+
+inline static void enumerate_devices(LPDSENUMCALLBACKA lpDSEnumCallback,
+				     LPVOID lpContext)
+{
+    if (lpDSEnumCallback != NULL)
+	if (lpDSEnumCallback(NULL, "Primary DirectSound Driver",
+			     "sound", lpContext))
+	    lpDSEnumCallback((LPGUID)&DSDEVID_WinePlayback,
+			     "WINE DirectSound", "sound",
+			     lpContext);
+}
+
+
 /*
  * Get a config key from either the app-specific or the default config
  */
@@ -341,8 +357,8 @@ inline static void setup_dsound_options(void)
     /* get options */
 
     if (!get_config_key( hkey, appkey, "EmulDriver", buffer, MAX_PATH )) 
-        ds_emuldriver = atoi(buffer);
- 
+        ds_emuldriver = strcmp(buffer, "N");
+
     if (!get_config_key( hkey, appkey, "HELmargin", buffer, MAX_PATH )) 
         ds_hel_margin = atoi(buffer);
 
@@ -387,18 +403,21 @@ HRESULT WINAPI DirectSoundEnumerateA(
 	LPDSENUMCALLBACKA lpDSEnumCallback,
 	LPVOID lpContext)
 {
+	WAVEOUTCAPSA wcaps;
+	unsigned devs, wod;
+
 	TRACE("lpDSEnumCallback = %p, lpContext = %p\n", 
 	      lpDSEnumCallback, lpContext);
 
-#ifdef HAVE_OSS
-	if (lpDSEnumCallback != NULL)
-		if (lpDSEnumCallback(NULL, "Primary DirectSound Driver",
-				     "sound", lpContext))
-			lpDSEnumCallback((LPGUID)&DSDEVID_WinePlayback,
-					 "WINE DirectSound", "sound",
-					 lpContext);
-#endif
-
+	devs = waveOutGetNumDevs();
+	for (wod = 0; wod < devs; ++wod) {
+		waveOutGetDevCapsA(wod, &wcaps, sizeof(wcaps));
+		if (wcaps.dwSupport & WAVECAPS_DIRECTSOUND) {
+			TRACE("- Device %u supports DirectSound\n", wod);
+			enumerate_devices(lpDSEnumCallback, lpContext);
+			return DS_OK;
+		}
+	}
 	return DS_OK;
 }
 
@@ -3615,7 +3634,7 @@ HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pU
 		return DS_OK;
 	}
 
-	/* get dsound configuration */
+	/* Get dsound configuration */
 	setup_dsound_options();
 
 	/* Enumerate WINMM audio devices and find the one we want */

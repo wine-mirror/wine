@@ -250,6 +250,16 @@ WINE REGISTRY Version 2
 "WaveMapper" = "msacm.drv"
 "MidiMapper" = "midimap.drv"
 
+[dsound]
+;; HEL only: Number of waveOut fragments ahead to mix in new buffers.
+;"HELmargin" = "48"
+;; HEL only: Number of waveOut fragments ahead to queue to driver.
+;"HELqueue" = "5"
+;; Max number of fragments to prebuffer
+;"SndQueueMax" = "28"
+;; Min number of fragments to prebuffer
+;"SndQueueMin" = "12"
+
 ;; sample AppDefaults entries
 ;[AppDefaults\\iexplore.exe\\DllOverrides]
 ;"shlwapi" = "native"
@@ -267,5 +277,10 @@ WINE REGISTRY Version 2
 ;
 ;[AppDefaults\\sol.exe\\Version]
 ;"Windows" = "nt40"
+;
+;; Some games (Quake 2, UT) refuse to accept emulated dsound devices.
+;; You can add an AppDefault entry like this for such cases.
+;[AppDefaults\\pickygame.exe\\dsound]
+;"EmulDriver" = "N"
 
 # </wineconf>
