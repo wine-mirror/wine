@@ -1519,35 +1519,6 @@ BOOL WINAPI ClipCursor( const RECT *rect )
 
 
 /***********************************************************************
- *           GetCursorPos16    (USER.17)
- */
-BOOL16 WINAPI GetCursorPos16( POINT16 *pt )
-{
-    if (!pt) return 0;
-    
-    pt->x = PosX;
-    pt->y = PosY;
-    
-    TRACE_(cursor)("ret=%d,%d\n", pt->x, pt->y );
-    return 1;
-}
-
-
-/***********************************************************************
- *           GetCursorPos    (USER32.229)
- */
-BOOL WINAPI GetCursorPos( POINT *pt )
-{
-    BOOL ret;
-
-    POINT16 pt16;
-    ret = GetCursorPos16( &pt16 );
-    if (pt) CONV_POINT16TO32( &pt16, pt );
-    return ((pt) ? ret : 0);
-}
-
-
-/***********************************************************************
  *           GetClipCursor16    (USER.309)
  */
 void WINAPI GetClipCursor16( RECT16 *rect )

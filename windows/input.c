@@ -39,7 +39,7 @@ DECLARE_DEBUG_CHANNEL(keyboard);
 DECLARE_DEBUG_CHANNEL(win);
 
 static BOOL InputEnabled = TRUE;
-BOOL SwappedButtons = FALSE;
+static BOOL SwappedButtons;
 
 BOOL MouseButtonsStates[3];
 BOOL AsyncMouseButtonsStates[3];
@@ -48,7 +48,14 @@ BYTE QueueKeyStateTable[256];
 BYTE AsyncKeyStateTable[256];
 
 /* Storage for the USER-maintained mouse positions */
-DWORD PosX, PosY;
+static DWORD PosX, PosY;
+
+#define GET_KEYSTATE() \
+     ((MouseButtonsStates[SwappedButtons ? 2 : 0]  ? MK_LBUTTON : 0) | \
+      (MouseButtonsStates[1]                       ? MK_RBUTTON : 0) | \
+      (MouseButtonsStates[SwappedButtons ? 0 : 2]  ? MK_MBUTTON : 0) | \
+      (InputKeyStateTable[VK_SHIFT]   & 0x80       ? MK_SHIFT   : 0) | \
+      (InputKeyStateTable[VK_CONTROL] & 0x80       ? MK_CONTROL : 0))
 
 typedef union
 {
@@ -201,7 +208,7 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
      * Otherwise, we need to determine that info ourselves (probably
      * less accurate, but we can't help that ...).
      */
-    if (   !IsBadReadPtr( (LPVOID)dwExtraInfo, sizeof(WINE_MOUSEEVENT) )
+    if (dwExtraInfo && !IsBadReadPtr( (LPVOID)dwExtraInfo, sizeof(WINE_MOUSEEVENT) )
         && ((WINE_MOUSEEVENT *)dwExtraInfo)->magic == WINE_MOUSEEVENT_MAGIC )
     {
         WINE_MOUSEEVENT *wme = (WINE_MOUSEEVENT *)dwExtraInfo;
@@ -331,6 +338,31 @@ BOOL WINAPI SwapMouseButton( BOOL fSwap )
     SwappedButtons = fSwap;
     return ret;
 }
+
+
+/***********************************************************************
+ *           GetCursorPos16    (USER.17)
+ */
+BOOL16 WINAPI GetCursorPos16( POINT16 *pt )
+{
+    if (!pt) return 0;
+    pt->x = PosX;
+    pt->y = PosY;
+    return 1;
+}
+
+
+/***********************************************************************
+ *           GetCursorPos    (USER32.229)
+ */
+BOOL WINAPI GetCursorPos( POINT *pt )
+{
+    if (!pt) return 0;
+    pt->x = PosX;
+    pt->y = PosY;
+    return 1;
+}
+
 
 /**********************************************************************
  *              EVENT_Capture

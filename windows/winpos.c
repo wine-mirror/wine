@@ -2938,13 +2938,10 @@ Pos:  /* -----------------------------------------------------------------------
         EVENT_Synchronize();  /* Synchronize with the host window system */
 
     if (!GetCapture() && ((wndPtr->dwStyle & WS_VISIBLE) || (flags & SWP_HIDEWINDOW)))
-    { 
+    {
         /* Simulate a mouse event to set the cursor */
 	int iWndsLocks = WIN_SuspendWndsLock();
-	
-	hardware_event( WM_MOUSEMOVE, GET_KEYSTATE(), 0,
-		        PosX, PosY, GetTickCount(), 0 );
-	
+        mouse_event( MOUSEEVENTF_MOVE, 0, 0, 0, 0 );
 	WIN_RestoreWndsLock(iWndsLocks);
     }
 

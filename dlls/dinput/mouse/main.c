@@ -504,18 +504,18 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 
     /* Init the mouse state */
     if (This->absolute) {
-      This->m_state.lX = PosX;
-      This->m_state.lY = PosY;
-
-      This->prevX = PosX;
-      This->prevY = PosY;
+      GetCursorPos( &point );
+      This->m_state.lX = point.x;
+      This->m_state.lY = point.y;
+      This->prevX = point.x;
+      This->prevY = point.y;
     } else {
       This->m_state.lX = 0;
       This->m_state.lY = 0;
     }
-    This->m_state.rgbButtons[0] = (MouseButtonsStates[0] ? 0xFF : 0x00);
-    This->m_state.rgbButtons[1] = (MouseButtonsStates[1] ? 0xFF : 0x00);
-    This->m_state.rgbButtons[2] = (MouseButtonsStates[2] ? 0xFF : 0x00);
+    This->m_state.rgbButtons[0] = (GetKeyState(VK_LBUTTON) ? 0xFF : 0x00);
+    This->m_state.rgbButtons[1] = (GetKeyState(VK_MBUTTON) ? 0xFF : 0x00);
+    This->m_state.rgbButtons[2] = (GetKeyState(VK_RBUTTON) ? 0xFF : 0x00);
 
     /* Install our own mouse event handler */
     MOUSE_Enable(dinput_mouse_event);
@@ -531,7 +531,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
       point.x = This->win_centerX;
       point.y = This->win_centerY;
       MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
-      USER_Driver.pMoveCursor( point.x, point.y );
+      SetCursorPos( point.x, point.y );
 #ifdef MOUSE_HACK
       This->need_warp = WARP_DONE;
 #else
@@ -602,7 +602,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     point.x = This->win_centerX;
     point.y = This->win_centerY;
     MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
-    USER_Driver.pMoveCursor( point.x, point.y );
+    SetCursorPos( point.x, point.y );
 
 #ifdef MOUSE_HACK
     This->need_warp = WARP_DONE;
@@ -672,8 +672,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
     point.x = This->win_centerX;
     point.y = This->win_centerY;
     MapWindowPoints(This->win, HWND_DESKTOP, &point, 1);
-
-    USER_Driver.pMoveCursor( point.x, point.y );
+    SetCursorPos( point.x, point.y );
 
 #ifdef MOUSE_HACK
     This->need_warp = WARP_DONE;

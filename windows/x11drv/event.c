@@ -277,11 +277,13 @@ static void EVENT_ProcessEvent( XEvent *event )
     if ((event->type == DGAKeyPressEventType) ||
 	(event->type == DGAKeyReleaseEventType)) {
       /* Fill a XKeyEvent to send to EVENT_Key */
+      POINT pt;
       XKeyEvent ke;
       XDGAKeyEvent *evt = (XDGAKeyEvent *) event;
 
       TRACE("DGAKeyPress/ReleaseEvent received.\n");
       
+      GetCursorPos( &pt );
       if (evt->type == DGAKeyReleaseEventType)
 	ke.type = KeyRelease;
       else
@@ -293,8 +295,8 @@ static void EVENT_ProcessEvent( XEvent *event )
       ke.root = 0;
       ke.subwindow = 0;
       ke.time = evt->time;
-      ke.x = PosX;
-      ke.y = PosY;
+      ke.x = pt.x;
+      ke.y = pt.y;
       ke.x_root = -1;
       ke.y_root = -1;
       ke.state = evt->state;
