@@ -299,12 +299,6 @@ extern "C" {
 #define ICOM_CINTERFACE 1
 #endif
 
-#ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE
-#define ICOM_COM_INTERFACE_ATTRIBUTE __attribute__((com_interface))
-#else
-#define ICOM_COM_INTERFACE_ATTRIBUTE
-#endif
-
 #ifndef ICOM_CINTERFACE
 /* C++ interface */
 
@@ -549,16 +543,6 @@ extern "C" {
 #define ICOM_VFIELD(iface)       ICOM_VTABLE(iface)* lpVtbl
 #define ICOM_VTBL(iface)         (iface)->lpVtbl
 
-#ifdef ICOM_MSVTABLE_COMPAT
-#define ICOM_MSVTABLE_COMPAT_FIELDS \
-        long dummyRTTI1; \
-        long dummyRTTI2;
-#define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE 0,0,
-#else
-#define ICOM_MSVTABLE_COMPAT_FIELDS
-#define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-#endif /* ICOM_MSVTABLE_COMPAT */
-
 #define ICOM_DEFINE(iface,ibase) \
     typedef struct ICOM_VTABLE(iface) ICOM_VTABLE(iface); \
     struct iface { \
@@ -614,60 +598,6 @@ extern "C" {
 #define ICOM_CALL24(xfn, ptr,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x) ICOM_VTBL(ptr)->xfn(ptr,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x)
 #define ICOM_CALL25(xfn, ptr,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y) ICOM_VTBL(ptr)->xfn(ptr,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y)
 #define ICOM_CALL26(xfn, ptr,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z) ICOM_VTBL(ptr)->xfn(ptr,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z)
-
-
-/*****************************************************************************
- * Predeclare the interfaces
- */
-DEFINE_OLEGUID(IID_IClassFactory,	0x00000001L, 0, 0);
-typedef struct IClassFactory IClassFactory, *LPCLASSFACTORY;
-
-DEFINE_OLEGUID(IID_IUnknown,		0x00000000L, 0, 0);
-typedef struct IUnknown IUnknown, *LPUNKNOWN;
-
-
-/*****************************************************************************
- * IUnknown interface
- */
-#define ICOM_INTERFACE IUnknown
-#define IUnknown_METHODS \
-    ICOM_METHOD2(HRESULT,QueryInterface,REFIID,riid, LPVOID*,ppvObj) \
-    ICOM_METHOD (ULONG,AddRef) \
-    ICOM_METHOD (ULONG,Release)
-#define IUnknown_IMETHODS \
-    IUnknown_METHODS
-ICOM_DEFINE1(IUnknown)
-#undef ICOM_INTERFACE
-
-/*** IUnknown methods ***/
-#define IUnknown_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IUnknown_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IUnknown_Release(p)            ICOM_CALL (Release,p)
-
-HRESULT CALLBACK IUnknown_QueryInterface_Proxy(IUnknown *This,REFIID riid,LPVOID*ppvObj);
-ULONG   CALLBACK IUnknown_AddRef_Proxy(IUnknown *This);
-ULONG   CALLBACK IUnknown_Release_Proxy(IUnknown *This);
-
-/*****************************************************************************
- * IClassFactory interface
- */
-#define ICOM_INTERFACE IClassFactory
-#define IClassFactory_METHODS \
-    ICOM_METHOD3(HRESULT,CreateInstance, LPUNKNOWN,pUnkOuter, REFIID,riid, LPVOID*,ppvObject) \
-    ICOM_METHOD1(HRESULT,LockServer,     BOOL,fLock)
-#define IClassFactory_IMETHODS \
-    IUnknown_IMETHODS \
-    IClassFactory_METHODS
-ICOM_DEFINE(IClassFactory,IUnknown)
-#undef ICOM_INTERFACE
-
-/*** IUnknown methods ***/
-#define IClassFactory_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IClassFactory_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IClassFactory_Release(p)            ICOM_CALL (Release,p)
-/*** IClassFactory methods ***/
-#define IClassFactory_CreateInstance(p,a,b,c) ICOM_CALL3(CreateInstance,p,a,b,c)
-#define IClassFactory_LockServer(p,a)         ICOM_CALL1(LockServer,p,a)
 
 
 #ifdef __cplusplus

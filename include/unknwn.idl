@@ -1,0 +1,93 @@
+/*
+ * Copyright 2002 Ove Kaaven
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+import "wtypes.idl";
+
+/* need this until objidl.h and objbase.h is complete */
+cpp_quote("#define __WINE_INCLUDE_UNKNWN")
+cpp_quote("#include \"wine/obj_base.h\"")
+cpp_quote("#undef __WINE_INCLUDE_UNKNWN")
+
+/* COM vtable compatibility macros for g++ */
+/* Included here because the generated header needs them */
+
+cpp_quote("#if defined(__cplusplus) && !defined(CINTERFACE)")
+cpp_quote(" #ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE")
+cpp_quote("  #define ICOM_COM_INTERFACE_ATTRIBUTE __attribute__((com_interface))")
+cpp_quote(" #else")
+cpp_quote("  #define ICOM_COM_INTERFACE_ATTRIBUTE")
+cpp_quote(" #endif")
+cpp_quote("#else")
+cpp_quote(" #ifdef ICOM_MSVTABLE_COMPAT")
+cpp_quote("  #define ICOM_MSVTABLE_COMPAT_FIELDS \\")
+cpp_quote("    long dummyRTTI1; \\")
+cpp_quote("    long dummyRTTI2;")
+cpp_quote("  #define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE 0,0,")
+cpp_quote(" #else")
+cpp_quote("  #define ICOM_MSVTABLE_COMPAT_FIELDS")
+cpp_quote("  #define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE")
+cpp_quote(" #endif")
+cpp_quote("#endif")
+
+/* Interfaces */
+
+[
+  local,
+  object,
+  uuid(00000000-0000-0000-C000-000000000046),
+  pointer_default(unique)
+]
+interface IUnknown
+{
+  typedef [unique] IUnknown *LPUNKNOWN;
+
+  HRESULT QueryInterface(
+    [in] REFIID riid,
+    [out, iid_is(riid)] void **ppvObject);
+  ULONG AddRef();
+  ULONG Release();
+}
+
+[
+  object,
+  uuid(00000001-0000-0000-C000-000000000046),
+  pointer_default(unique)
+]
+interface IClassFactory : IUnknown
+{
+  typedef [unique] IClassFactory *LPCLASSFACTORY;
+
+  [local]
+  HRESULT CreateInstance(
+    [in, unique] IUnknown *pUnkOuter,
+    [in] REFIID riid,
+    [out, iid_is(riid)] void **ppvObject);
+
+  [call_as(CreateInstance)]
+  HRESULT RemoteCreateInstance(
+    [in] REFIID riid,
+    [out, iid_is(riid)] IUnknown **ppvObject);
+
+  [local]
+  HRESULT LockServer(
+    [in] BOOL fLock);
+
+  [call_as(LockServer)]
+  HRESULT RemoteLockServer(
+    [in] BOOL fLock);
+}

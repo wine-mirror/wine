@@ -5,6 +5,7 @@ VPATH	  = @srcdir@
 MODULE	  = none
 
 IDL_SRCS = \
+	unknwn.idl \
 	wtypes.idl
 
 WINDOWS_INCLUDES = \
@@ -125,7 +126,6 @@ WINDOWS_INCLUDES = \
 	tapi.h \
 	tchar.h \
 	tlhelp32.h \
-	unknwn.h \
 	urlmon.h \
 	uuids.h \
 	ver.h \
