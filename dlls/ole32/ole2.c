@@ -1862,8 +1862,12 @@ static void OLEDD_TrackMouseMove(
       /*
        * Find-out if there is a drag target under the mouse
        */
-      newDropTargetNode = OLEDD_FindDropTarget(hwndNewTarget);
-      
+      HWND nexttar = hwndNewTarget;
+      do {
+	newDropTargetNode = OLEDD_FindDropTarget(nexttar);
+      } while (!newDropTargetNode && (nexttar = GetParent(nexttar)) != 0);
+      if(nexttar) hwndNewTarget = nexttar;
+
       trackerInfo->curDragTargetHWND = hwndNewTarget;
       trackerInfo->curDragTarget     = newDropTargetNode ? newDropTargetNode->dropTarget : 0;
       
