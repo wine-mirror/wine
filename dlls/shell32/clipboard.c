@@ -145,7 +145,7 @@ HGLOBAL RenderSHELLIDLIST (LPITEMIDLIST pidlRoot, LPITEMIDLIST * apidl, UINT cid
 {
 	int i,offset = 0, sizePidl, size;
 	HGLOBAL hGlobal;
-	LPCIDA	pcida;
+	LPIDA	pcida;
 
 	TRACE("(%p,%p,%u)\n", pidlRoot, apidl, cidl);
 

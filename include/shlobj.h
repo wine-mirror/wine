@@ -29,6 +29,8 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+#include "pshpack1.h"
+
 /****************************************************************************
 * SHITEMID, ITEMIDLIST, PIDL API
 */
@@ -84,7 +86,7 @@ extern UINT cfShellIDList;
 typedef struct
 {	UINT cidl;
 	UINT aoffset[1];
-} CIDA, *LPCIDA,*LPIDA;
+} CIDA, *LPIDA;
 
 #define CFSTR_SHELLIDLISTOFFSET "Shell Object Offsets"    /* CF_OBJECTPOSITIONS */
 #define CFSTR_NETRESOURCES      "Net Resource"            /* CF_NETRESOURCE */
@@ -542,6 +544,8 @@ typedef struct _DROPFILES
   BOOL  fNC;
   BOOL  fWide;
 } DROPFILES;
+
+#include "poppack.h" 
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -27,6 +27,8 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+#include "pshpack1.h"
+
 #ifndef NO_SHLWAPI_REG
 
 /* Registry functions */
@@ -923,6 +925,8 @@ typedef struct _DLLVERSIONINFO2 {
   ((ULONGLONG)(mnr)<< 32) | ((ULONGLONG)(bld)<< 16) | (ULONGLONG)(qfe))
 
 HRESULT WINAPI DllInstall(BOOL,LPCWSTR);
+
+#include "poppack.h" 
 
 #ifdef __cplusplus
 } /* extern "C" */

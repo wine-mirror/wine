@@ -194,6 +194,6 @@ BOOL	pcheck	(LPCITEMIDLIST pidl);
  */
 void _ILFreeaPidl(LPITEMIDLIST * apidl, UINT cidl);
 LPITEMIDLIST * _ILCopyaPidl(LPITEMIDLIST * apidlsrc, UINT cidl);
-LPITEMIDLIST * _ILCopyCidaToaPidl(LPITEMIDLIST* pidl, LPCIDA cida);
+LPITEMIDLIST * _ILCopyCidaToaPidl(LPITEMIDLIST* pidl, LPIDA cida);
 
 #endif
