@@ -681,9 +681,7 @@ BOOL WINAPI FlushFileBuffers( HANDLE hFile )
     if (is_console_handle( hFile ))
     {
         /* this will fail (as expected) for an output handle */
-        /* FIXME: wait until FlushFileBuffers is moved to dll/kernel */
-        /* return FlushConsoleInputBuffer( hFile ); */
-        return TRUE;
+        return FlushConsoleInputBuffer( hFile );
     }
     nts = NtFlushBuffersFile( hFile, &ioblk );
     if (nts != STATUS_SUCCESS)
