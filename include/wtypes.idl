@@ -48,6 +48,8 @@ typedef float FLOAT;
 
 typedef void *PVOID, *LPVOID;
 
+typedef DWORD *LPDWORD;
+
 typedef char CHAR;
 typedef [string] CHAR *LPSTR;
 typedef [string] const CHAR *LPCSTR;
