@@ -785,8 +785,9 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
 	    return HTMENU;
     }
 
-      /* Should never get here */
-    return HTERROR;
+    /* Has to return HTNOWHERE if nothing was found  
+       Could happen when a window has a customized non client area */
+    return HTNOWHERE;  
 }
 
 
@@ -934,8 +935,9 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
 	    return HTMENU;
     }
 
-      /* Should never get here */
-    return HTERROR;
+    /* Has to return HTNOWHERE if nothing was found  
+       Could happen when a window has a customized non client area */
+    return HTNOWHERE;
 }
 
 
@@ -2132,7 +2134,6 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
 
     if ((wParam & 0xfff0) == SC_MOVE)
     {
-	if (!(wndPtr->dwStyle & WS_CAPTION)) goto END;
 	if (!hittest) 
 	     hittest = NC_StartSizeMove( wndPtr, wParam, &capturePoint );
 	if (!hittest) goto END;
