@@ -96,7 +96,7 @@
 #include "heap.h"
 #include "wine/port.h"
 #include "services.h"
-#include "server.h"
+#include "wine/server.h"
 #include "file.h"
 #include "debugtools.h"
 

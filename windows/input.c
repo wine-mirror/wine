@@ -23,7 +23,7 @@
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "wine/keyboard16.h"
-#include "server.h"
+#include "wine/server.h"
 #include "win.h"
 #include "heap.h"
 #include "input.h"

@@ -22,7 +22,7 @@
 #include "file.h"
 #include "heap.h"
 #include "winerror.h"
-#include "server.h"
+#include "wine/server.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(module);

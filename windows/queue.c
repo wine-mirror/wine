@@ -18,7 +18,7 @@
 #include "hook.h"
 #include "thread.h"
 #include "debugtools.h"
-#include "server.h"
+#include "wine/server.h"
 #include "spy.h"
 
 DEFAULT_DEBUG_CHANNEL(msg);

@@ -7,7 +7,7 @@
 #include <assert.h>
 #include "winerror.h"
 #include "winbase.h"
-#include "server.h"
+#include "wine/server.h"
 
 
 /***********************************************************************

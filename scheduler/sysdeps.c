@@ -22,7 +22,7 @@
 #endif
 #include "wine/port.h"
 #include "thread.h"
-#include "server.h"
+#include "wine/server.h"
 #include "winbase.h"
 #include "wine/exception.h"
 #include "debugtools.h"

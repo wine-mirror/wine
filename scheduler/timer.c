@@ -10,7 +10,7 @@
 #include "winnls.h"
 #include "wine/unicode.h"
 #include "file.h"  /* for FILETIME routines */
-#include "server.h"
+#include "wine/server.h"
 
 
 /***********************************************************************

@@ -12,7 +12,7 @@
 #include "miscemu.h"
 #include "selectors.h"
 #include "stackframe.h"
-#include "server.h"
+#include "wine/server.h"
 #include "debugtools.h"
 #include "toolhelp.h"
 

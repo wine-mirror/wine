@@ -21,7 +21,7 @@
 #include "winerror.h"
 #include "wine/unicode.h"
 #include "heap.h"
-#include "server.h"
+#include "wine/server.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(reg);

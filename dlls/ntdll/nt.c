@@ -15,7 +15,7 @@
 
 #include "ntddk.h"
 #include "ntdll_misc.h"
-#include "server.h"
+#include "wine/server.h"
 
 DEFAULT_DEBUG_CHANNEL(ntdll);
 

@@ -20,7 +20,7 @@
 #include "file.h"
 #include "thread.h"
 #include "winerror.h"
-#include "server.h"
+#include "wine/server.h"
 #include "options.h"
 #include "callback.h"
 #include "debugtools.h"

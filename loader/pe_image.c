@@ -33,7 +33,7 @@
 #include "wine/winbase16.h"
 #include "winerror.h"
 #include "snoop.h"
-#include "server.h"
+#include "wine/server.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32);

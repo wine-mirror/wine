@@ -12,7 +12,7 @@
 
 #include "winproc.h"
 #include "message.h"
-#include "server.h"
+#include "wine/server.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(timer);

@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "winbase.h"
-#include "server.h"
+#include "wine/server.h"
 #include "winerror.h"
 #include "debugtools.h"
 

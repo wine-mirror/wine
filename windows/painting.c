@@ -10,7 +10,7 @@
 #include "wingdi.h"
 #include "wine/winuser16.h"
 #include "wine/unicode.h"
-#include "server.h"
+#include "wine/server.h"
 #include "region.h"
 #include "user.h"
 #include "win.h"

@@ -9,7 +9,7 @@
 
 #include "winerror.h"
 #include "wine/winbase16.h"
-#include "server.h"
+#include "wine/server.h"
 #include "stackframe.h"
 #include "debugtools.h"
 

@@ -26,7 +26,7 @@
 #include "heap.h"
 #include "debugtools.h"
 #include "options.h"
-#include "server.h"
+#include "wine/server.h"
 
 DEFAULT_DEBUG_CHANNEL(profile);
 

@@ -27,7 +27,7 @@
 #include "msdos.h"
 #include "miscemu.h"
 #include "stackframe.h"
-#include "server.h"
+#include "wine/server.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32);

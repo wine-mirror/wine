@@ -19,7 +19,7 @@
 #include "debugtools.h"
 #include "callback.h"
 #include "loadorder.h"
-#include "server.h"
+#include "wine/server.h"
 
 DEFAULT_DEBUG_CHANNEL(module);
 DECLARE_DEBUG_CHANNEL(win32);

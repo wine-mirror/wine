@@ -19,7 +19,7 @@
 #include "file.h"
 #include "options.h"
 #include "debugtools.h"
-#include "server.h"
+#include "wine/server.h"
 #include "loadorder.h"
 
 DEFAULT_DEBUG_CHANNEL(server);

@@ -22,7 +22,7 @@
 #include "heap.h"
 #include "selectors.h"
 #include "winnt.h"
-#include "server.h"
+#include "wine/server.h"
 #include "services.h"
 #include "stackframe.h"
 #include "builtin16.h"

@@ -10,7 +10,7 @@
 
 #include "winerror.h"
 #include "wine/unicode.h"
-#include "server.h"
+#include "wine/server.h"
 #include "ntddk.h"
 #include "ntdll_misc.h"
 

@@ -65,7 +65,7 @@
 #include "heap.h"
 #include "options.h"
 #include "wine/port.h"
-#include "server.h"
+#include "wine/server.h"
 #include "winerror.h"
 #include "services.h"
 #include "callback.h"

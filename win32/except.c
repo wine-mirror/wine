@@ -31,7 +31,7 @@
 #include "wine/exception.h"
 #include "thread.h"
 #include "stackframe.h"
-#include "server.h"
+#include "wine/server.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(seh);

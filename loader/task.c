@@ -29,7 +29,7 @@
 #include "ntddk.h"
 #include "selectors.h"
 #include "services.h"
-#include "server.h"
+#include "wine/server.h"
 #include "syslevel.h"
 #include "stackframe.h"
 #include "task.h"

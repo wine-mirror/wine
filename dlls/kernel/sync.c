@@ -8,7 +8,7 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "wine/unicode.h"
-#include "server.h"
+#include "wine/server.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win32);

@@ -41,7 +41,7 @@
 #include "file.h"
 #include "heap.h"
 #include "options.h"
-#include "server.h"
+#include "wine/server.h"
 
 #include "debugtools.h"
 

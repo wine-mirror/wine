@@ -31,7 +31,7 @@
 #include "debugtools.h"
 #include "user.h" /* for TWEAK_WineLook (FIXME) */
 #include "x11font.h"
-#include "server.h"
+#include "wine/server.h"
 
 DEFAULT_DEBUG_CHANNEL(font);
 

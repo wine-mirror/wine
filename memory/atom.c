@@ -24,7 +24,7 @@
 #include "instance.h"
 #include "stackframe.h"
 #include "debugtools.h"
-#include "server.h"
+#include "wine/server.h"
 
 DEFAULT_DEBUG_CHANNEL(atom);
 

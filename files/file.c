@@ -44,7 +44,7 @@
 #include "wincon.h"
 #include "debugtools.h"
 
-#include "server.h"
+#include "wine/server.h"
 
 DEFAULT_DEBUG_CHANNEL(file);
 

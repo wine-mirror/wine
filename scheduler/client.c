@@ -32,7 +32,7 @@
 
 #include "wine/port.h"
 #include "thread.h"
-#include "server.h"
+#include "wine/server.h"
 #include "winerror.h"
 #include "options.h"
 

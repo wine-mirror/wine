@@ -34,7 +34,7 @@
 #include "msdos.h"
 #include "ntddk.h"
 #include "options.h"
-#include "server.h"
+#include "wine/server.h"
 
 #include "debugtools.h"
 

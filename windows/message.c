@@ -14,7 +14,7 @@
 #include "wine/winuser16.h"
 #include "message.h"
 #include "winerror.h"
-#include "server.h"
+#include "wine/server.h"
 #include "win.h"
 #include "heap.h"
 #include "hook.h"

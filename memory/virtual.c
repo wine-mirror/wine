@@ -29,7 +29,7 @@
 #include "winerror.h"
 #include "file.h"
 #include "global.h"
-#include "server.h"
+#include "wine/server.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(virtual);
