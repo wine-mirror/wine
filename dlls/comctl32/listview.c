@@ -994,7 +994,7 @@ static void LISTVIEW_UpdateHeaderSize(LISTVIEW_INFO *infoPtr, INT nNewScrollPos)
     RECT winRect;
     POINT point[2];
 
-    TRACE("nNewScrollPos=%d", nNewScrollPos);
+    TRACE("nNewScrollPos=%d\n", nNewScrollPos);
 
     GetWindowRect(infoPtr->hwndHeader, &winRect);
     point[0].x = winRect.left;
@@ -3230,7 +3230,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     TEXTATTR tmpTa, oldTa;
     COLUMNCACHE *lpCols;
     LVCOLUMNW lvColumn;
-    LVITEMW lvItem;
+    LVITEMW item;
     POINT ptOrig;
 
     TRACE("()\n");
@@ -3307,7 +3307,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	if (lStyle & LVS_OWNERDRAWFIXED)
 	{
             DRAWITEMSTRUCT dis;
-            LVITEMW item;
 
             TRACE("Owner Drawn\n");
 
@@ -3333,6 +3332,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
             dis.rcItem.bottom = dis.rcItem.top + infoPtr->nItemHeight;
             OffsetRect(&dis.rcItem, ptOrig.x, 0);
 
+	    TRACE("item=%s, rcItem=%s\n", debuglvitem_t(&item, TRUE), debugrect(&dis.rcItem));
             if (SendMessageW(GetParent(infoPtr->hwndSelf), WM_DRAWITEM, uID, (LPARAM)&dis))
 		continue;
         }
@@ -3340,14 +3340,14 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	/* compute the full select rectangle, if needed */
 	if (bFullSelected)
 	{
-	    lvItem.mask = LVIF_IMAGE | LVIF_STATE | LVIF_INDENT;
-	    lvItem.stateMask = LVIS_SELECTED;
-	    lvItem.iItem = nItem;
-	    lvItem.iSubItem = 0;
-  	    if (!LISTVIEW_GetItemW(infoPtr, &lvItem, TRUE)) continue;
+	    item.mask = LVIF_IMAGE | LVIF_STATE | LVIF_INDENT;
+	    item.stateMask = LVIS_SELECTED;
+	    item.iItem = nItem;
+	    item.iSubItem = 0;
+  	    if (!LISTVIEW_GetItemW(infoPtr, &item, TRUE)) continue;
 	     
 	    rcFullSelect.left = lpCols[0].rc.left + REPORT_MARGINX +
-	    			infoPtr->iconSize.cx * lvItem.iIndent +
+	    			infoPtr->iconSize.cx * item.iIndent +
 				(infoPtr->himlSmall ? infoPtr->iconSize.cx : 0);
 	    rcFullSelect.right = max(rcFullSelect.left, lpCols[nColumnCount - 1].rc.right - REPORT_MARGINX);
 	    rcFullSelect.top = nDrawPosY;
@@ -3356,8 +3356,8 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
 	}
 
 	/* draw the background of the selection rectangle, if need be */
-	select_text_attr(infoPtr, hdc, bFullSelected && (lvItem.state & LVIS_SELECTED), &tmpTa);
-	if (bFullSelected && (lvItem.state & LVIS_SELECTED))
+	select_text_attr(infoPtr, hdc, bFullSelected && (item.state & LVIS_SELECTED), &tmpTa);
+	if (bFullSelected && (item.state & LVIS_SELECTED))
 	    ExtTextOutW(hdc, rcFullSelect.left, rcFullSelect.top, ETO_OPAQUE, &rcFullSelect, 0, 0, 0);
 	    
 	/* iterate through the invalidated columns */
@@ -5276,23 +5276,26 @@ static LRESULT LISTVIEW_GetItemTextT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEM
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
- * [I] INT : item index
- * [I] INT : relationship flag
+ * [I] nItem : item index
+ * [I] uFlags : relationship flag
  *
+ * FIXME:
+ *   This function is ver, very inefficient! Needs work.
+ * 
  * RETURN:
  *   SUCCESS : item index
  *   FAILURE : -1
  */
 static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFlags)
 {
-  UINT uView = LISTVIEW_GetType(infoPtr);
-  UINT uMask = 0;
-  LVFINDINFOW lvFindInfo;
-  INT nCountPerColumn;
-  INT i;
+    UINT uView = LISTVIEW_GetType(infoPtr);
+    UINT uMask = 0;
+    LVFINDINFOW lvFindInfo;
+    INT nCountPerColumn;
+    INT i;
 
-  if ((nItem >= -1) && (nItem < GETITEMCOUNT(infoPtr)))
-  {
+    if ((nItem < -1) || (nItem >= GETITEMCOUNT(infoPtr))) return -1;
+
     ZeroMemory(&lvFindInfo, sizeof(lvFindInfo));
 
     if (uFlags & LVNI_CUT)
@@ -5307,6 +5310,14 @@ static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFla
     if (uFlags & LVNI_SELECTED)
       uMask |= LVIS_SELECTED;
 
+    /* if we're asked for the focused item, that's only one, 
+     * so it's worth optimizing */
+    if (uFlags & LVNI_FOCUSED)
+    {
+	if (!(LISTVIEW_GetItemState(infoPtr, infoPtr->nFocusedItem, uMask) & uMask) == uMask) return -1;
+	return (infoPtr->nFocusedItem == nItem) ? -1 : infoPtr->nFocusedItem;
+    }
+    
     if (uFlags & LVNI_ABOVE)
     {
       if ((uView == LVS_LIST) || (uView == LVS_REPORT))
@@ -5412,9 +5423,8 @@ static LRESULT LISTVIEW_GetNextItem(LISTVIEW_INFO *infoPtr, INT nItem, UINT uFla
           return i;
       }
     }
-  }
 
-  return -1;
+    return -1;
 }
 
 /* LISTVIEW_GetNumberOfWorkAreas */
@@ -6822,15 +6832,16 @@ static BOOL LISTVIEW_SetItemTextT(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEMW l
 {
     LVITEMW lvItem;
 
-    TRACE("(nItem=%d, lpLVItem=%s, isW=%d)\n", nItem, debuglvitem_t(lpLVItem, isW), isW);
-
     if ((nItem < 0) && (nItem >= GETITEMCOUNT(infoPtr))) return FALSE;
     
     lvItem.iItem = nItem;
     lvItem.iSubItem = lpLVItem->iSubItem;
     lvItem.mask = LVIF_TEXT;
     lvItem.pszText = lpLVItem->pszText;
+    lvItem.cchTextMax = lpLVItem->cchTextMax;
     
+    TRACE("(nItem=%d, lpLVItem=%s, isW=%d)\n", nItem, debuglvitem_t(&lvItem, isW), isW);
+
     return LISTVIEW_SetItemT(infoPtr, &lvItem, isW); 
 }
 
