@@ -6,6 +6,12 @@
  */
 
 #include <string.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/wait.h>
+
 #include "debugtools.h"
 #include "winerror.h"
 #include "winbase.h"
@@ -14,11 +20,14 @@
 #include "shlobj.h"
 #include "wine/winestring.h"
 #include "wine/undocshell.h"
+#include "bitmaps/wine.xpm"
 
 #include "heap.h"
 #include "pidl.h"
 #include "shell32_main.h"
 #include "shlguid.h"
+#include "file.h"
+#include "options.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -57,7 +66,48 @@ typedef struct _LINK_HEADER
 
 #define LINK_HEADER_SIZE (sizeof(LINK_HEADER)-sizeof(ITEMIDLIST))
 
+typedef struct
+{
+	BYTE bWidth;
+	BYTE bHeight;
+	BYTE bColorCount;
+	BYTE bReserved;
+	WORD wPlanes;
+	WORD wBitCount;
+	DWORD dwBytesInRes;
+	WORD nID;
+} GRPICONDIRENTRY;
+
+typedef struct
+{
+	WORD idReserved;
+	WORD idType;
+	WORD idCount;
+	GRPICONDIRENTRY idEntries[1];
+} GRPICONDIR;
+
+typedef struct
+{
+	BYTE bWidth;
+	BYTE bHeight;
+	BYTE bColorCount;
+	BYTE bReserved;
+	WORD wPlanes;
+	WORD wBitCount;
+	DWORD dwBytesInRes;
+	DWORD dwImageOffset;
+} ICONDIRENTRY;
+
+typedef struct
+{
+	WORD idReserved;
+	WORD idType;
+	WORD idCount;
+} ICONDIR;
+
+
 #include "poppack.h"
+
 
 static ICOM_VTABLE(IShellLinkA)		slvt;
 static ICOM_VTABLE(IShellLinkW)		slvtw;
@@ -86,6 +136,11 @@ typedef struct
 	SYSTEMTIME	time2;
 	SYSTEMTIME	time3;
 
+	LPSTR		sIcoPath;
+	INT		iIcoNdx;
+	LPSTR		sArgs;
+	LPSTR		sWorkDir;
+	LPSTR		sDescription;
 } IShellLinkImpl;
 
 #define _IShellLinkW_Offset ((int)(&(((IShellLinkImpl*)0)->lpvtblw)))
@@ -173,12 +228,398 @@ static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR pszFile
 	return hRet;
 }
 
+
+/* Icon extraction routines
+ *
+ * FIXME: should use PrivateExtractIcons and friends
+ * FIXME: should not use stdio
+ */
+
+static BOOL SaveIconResAsXPM(const BITMAPINFO *pIcon, const char *szXPMFileName)
+{
+    FILE *fXPMFile;
+    int nHeight;
+    int nXORWidthBytes;
+    int nANDWidthBytes;
+    BOOL b8BitColors;
+    int nColors;
+    BYTE *pXOR;
+    BYTE *pAND;
+    BOOL aColorUsed[256] = {0};
+    int nColorsUsed = 0;
+    int i,j;
+
+    if (!((pIcon->bmiHeader.biBitCount == 4) || (pIcon->bmiHeader.biBitCount == 8)))
+        return 0;
+
+    if (!(fXPMFile = fopen(szXPMFileName, "w")))
+        return 0;
+
+    nHeight = pIcon->bmiHeader.biHeight / 2;
+    nXORWidthBytes = 4 * ((pIcon->bmiHeader.biWidth * pIcon->bmiHeader.biBitCount / 32)
+                          + ((pIcon->bmiHeader.biWidth * pIcon->bmiHeader.biBitCount % 32) > 0));
+    nANDWidthBytes = 4 * ((pIcon->bmiHeader.biWidth / 32)
+                          + ((pIcon->bmiHeader.biWidth % 32) > 0));
+    b8BitColors = pIcon->bmiHeader.biBitCount == 8;
+    nColors = pIcon->bmiHeader.biClrUsed ? pIcon->bmiHeader.biClrUsed
+        : 1 << pIcon->bmiHeader.biBitCount;
+    pXOR = (BYTE*) pIcon + sizeof (BITMAPINFOHEADER) + (nColors * sizeof (RGBQUAD));
+    pAND = pXOR + nHeight * nXORWidthBytes;
+
+#define MASK(x,y) (pAND[(x) / 8 + (nHeight - (y) - 1) * nANDWidthBytes] & (1 << (7 - (x) % 8)))
+#define COLOR(x,y) (b8BitColors ? pXOR[(x) + (nHeight - (y) - 1) * nXORWidthBytes] : (x) % 2 ? pXOR[(x) / 2 + (nHeight - (y) - 1) * nXORWidthBytes] & 0xF : (pXOR[(x) / 2 + (nHeight - (y) - 1) * nXORWidthBytes] & 0xF0) >> 4)
+
+    for (i = 0; i < nHeight; i++)
+        for (j = 0; j < pIcon->bmiHeader.biWidth; j++)
+            if (!aColorUsed[COLOR(j,i)] && !MASK(j,i))
+            {
+                aColorUsed[COLOR(j,i)] = TRUE;
+                nColorsUsed++;
+            }
+
+    if (fprintf(fXPMFile, "/* XPM */\nstatic char *icon[] = {\n") <= 0)
+        goto error;
+    if (fprintf(fXPMFile, "\"%d %d %d %d\",\n",
+                (int) pIcon->bmiHeader.biWidth, nHeight, nColorsUsed + 1, 2) <=0)
+        goto error;
+
+    for (i = 0; i < nColors; i++)
+        if (aColorUsed[i])
+            if (fprintf(fXPMFile, "\"%.2X c #%.2X%.2X%.2X\",\n", i, pIcon->bmiColors[i].rgbRed,
+                        pIcon->bmiColors[i].rgbGreen, pIcon->bmiColors[i].rgbBlue) <= 0)
+                goto error;
+    if (fprintf(fXPMFile, "\"   c None\"") <= 0)
+        goto error;
+
+    for (i = 0; i < nHeight; i++)
+    {
+        if (fprintf(fXPMFile, ",\n\"") <= 0)
+            goto error;
+        for (j = 0; j < pIcon->bmiHeader.biWidth; j++)
+        {
+            if MASK(j,i)
+                {
+                    if (fprintf(fXPMFile, "  ") <= 0)
+                        goto error;
+                }
+            else
+                if (fprintf(fXPMFile, "%.2X", COLOR(j,i)) <= 0)
+                    goto error;
+        }
+        if (fprintf(fXPMFile, "\"") <= 0)
+            goto error;
+    }
+    if (fprintf(fXPMFile, "};\n") <= 0)
+        goto error;
+
+#undef MASK
+#undef COLOR
+
+    fclose(fXPMFile);
+    return 1;
+
+ error:
+    fclose(fXPMFile);
+    unlink( szXPMFileName );
+    return 0;
+}
+
+static BOOL CALLBACK EnumResNameProc(HANDLE hModule, const char *lpszType, char *lpszName, LONG lParam)
+{
+    *(HRSRC *) lParam = FindResourceA(hModule, lpszName, RT_GROUP_ICONA);
+    return FALSE;
+}
+
+static int ExtractFromEXEDLL(const char *szFileName, int nIndex, const char *szXPMFileName)
+{
+    HMODULE hModule;
+    HRSRC hResInfo;
+    char *lpName = NULL;
+    HGLOBAL hResData;
+    GRPICONDIR *pIconDir;
+    BITMAPINFO *pIcon;
+    int nMax = 0;
+    int i;
+
+    if (!(hModule = LoadLibraryExA(szFileName, 0, LOAD_LIBRARY_AS_DATAFILE)))
+        goto error1;
+
+    if (nIndex)
+        hResInfo = FindResourceA(hModule, MAKEINTRESOURCEA(nIndex), RT_GROUP_ICONA);
+    else
+        if (EnumResourceNamesA(hModule, RT_GROUP_ICONA, &EnumResNameProc, (LONG) &hResInfo))
+            goto error2;
+
+    if (!hResInfo)
+        goto error2;
+
+    if (!(hResData = LoadResource(hModule, hResInfo)))
+        goto error2;
+    if (!(pIconDir = LockResource(hResData)))
+        goto error3;
+
+    for (i = 0; i < pIconDir->idCount; i++)
+        if ((pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth) > nMax)
+        {
+            lpName = MAKEINTRESOURCEA(pIconDir->idEntries[i].nID);
+            nMax = pIconDir->idEntries[i].bHeight * pIconDir->idEntries[i].bWidth;
+        }
+
+    FreeResource(hResData);
+
+    if (!(hResInfo = FindResourceA(hModule, lpName, RT_ICONA)))
+        goto error2;
+    if (!(hResData = LoadResource(hModule, hResInfo)))
+        goto error2;
+    if (!(pIcon = LockResource(hResData)))
+        goto error3;
+
+    if(!SaveIconResAsXPM(pIcon, szXPMFileName))
+        goto error3;
+
+    FreeResource(hResData);
+    FreeLibrary(hModule);
+
+    return 1;
+
+ error3:
+    FreeResource(hResData);
+ error2:
+    FreeLibrary(hModule);
+ error1:
+    return 0;
+}
+
+static int ExtractFromICO(const char *szFileName, const char *szXPMFileName)
+{
+    FILE *fICOFile;
+    ICONDIR iconDir;
+    ICONDIRENTRY *pIconDirEntry;
+    int nMax = 0;
+    int nIndex = 0;
+    void *pIcon;
+    int i;
+
+    if (!(fICOFile = fopen(szFileName, "r")))
+        goto error1;
+
+    if (fread(&iconDir, sizeof (ICONDIR), 1, fICOFile) != 1)
+        goto error2;
+    if ((iconDir.idReserved != 0) || (iconDir.idType != 1))
+        goto error2;
+
+    if ((pIconDirEntry = malloc(iconDir.idCount * sizeof (ICONDIRENTRY))) == NULL)
+        goto error2;
+    if (fread(pIconDirEntry, sizeof (ICONDIRENTRY), iconDir.idCount, fICOFile) != iconDir.idCount)
+        goto error3;
+
+    for (i = 0; i < iconDir.idCount; i++)
+        if ((pIconDirEntry[i].bHeight * pIconDirEntry[i].bWidth) > nMax)
+        {
+            nIndex = i;
+            nMax = pIconDirEntry[i].bHeight * pIconDirEntry[i].bWidth;
+        }
+    if ((pIcon = malloc(pIconDirEntry[nIndex].dwBytesInRes)) == NULL)
+        goto error3;
+    if (fseek(fICOFile, pIconDirEntry[nIndex].dwImageOffset, SEEK_SET))
+        goto error4;
+    if (fread(pIcon, pIconDirEntry[nIndex].dwBytesInRes, 1, fICOFile) != 1)
+        goto error4;
+
+    if(!SaveIconResAsXPM(pIcon, szXPMFileName))
+        goto error4;
+
+    free(pIcon);
+    free(pIconDirEntry);
+    fclose(fICOFile);
+
+    return 1;
+
+ error4:
+    free(pIcon);
+ error3:
+    free(pIconDirEntry);
+ error2:
+    fclose(fICOFile);
+ error1:
+    return 0;
+}
+
+/* get the Unix file name for a given path, allocating the string */
+inline static char *get_unix_file_name( const char *dos )
+{
+    DOS_FULL_NAME path;
+
+    if (!DOSFS_GetFullName( dos, FALSE, &path )) return NULL;
+    return HEAP_strdupA( GetProcessHeap(), 0, path.long_name );
+}
+
+static BOOL create_default_icon( const char *filename )
+{
+    FILE *fXPM;
+    int i;
+
+    if (!(fXPM = fopen(filename, "w"))) return FALSE;
+    fprintf(fXPM, "/* XPM */\nstatic char * icon[] = {");
+    for (i = 0; i < sizeof(wine_xpm)/sizeof(wine_xpm[0]); i++)
+        fprintf( fXPM, "\n\"%s\",", wine_xpm[i]);
+    fprintf( fXPM, "};\n" );
+    fclose( fXPM );
+    return TRUE;
+}
+
+/* extract an icon from an exe or icon file; helper for IPersistFile_fnSave */
+static char *extract_icon( const char *path, int index )
+{
+    char *filename = HEAP_strdupA( GetProcessHeap(), 0, tmpnam(NULL) );
+    if (ExtractFromEXEDLL( path, index, filename )) return filename;
+    if (ExtractFromICO( path, filename )) return filename;
+    if (create_default_icon( filename )) return filename;
+    HeapFree( GetProcessHeap(), 0, filename );
+    return NULL;
+}
+
+
 static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR pszFileName, BOOL fRemember)
 {
-	_ICOM_THIS_From_IPersistFile(IShellLinkImpl, iface);
-	FIXME("(%p)->(%s)\n",This,debugstr_w(pszFileName));
-	return NOERROR;
+    HRESULT ret = NOERROR;
+    int pid, status;
+    char buffer[MAX_PATH], buff2[MAX_PATH];
+    char *filename, *link_name, *p;
+    char *shell_link_app = NULL;
+    char *icon_name = NULL;
+    char *path_name = NULL;
+    char *work_dir = NULL;
+    BOOL bDesktop;
+
+    _ICOM_THIS_From_IPersistFile(IShellLinkImpl, iface);
+
+    TRACE("(%p)->(%s)\n",This,debugstr_w(pszFileName));
+
+    ERR("(%p)->(%s),%s,%s,%s\n",This,debugstr_w(pszFileName),This->sPath,This->sArgs,This->sDescription);
+
+    if (!pszFileName || !This->sPath)
+        return ERROR_UNKNOWN;
+
+    /* check for .exe extension */
+    if (!(p = strrchr( This->sPath, '.' ))) return NOERROR;
+    if (strchr( p, '\\' ) || strchr( p, '/' )) return NOERROR;
+    if (strcasecmp( p, ".exe" )) return NOERROR;
+
+    /* check if ShellLinker configured */
+    PROFILE_GetWineIniString( "wine", "ShellLinker", "", buffer, sizeof(buffer) );
+    if (!*buffer) return NOERROR;
+    shell_link_app = HEAP_strdupA( GetProcessHeap(), 0, buffer );
+
+    if (!WideCharToMultiByte( CP_ACP, 0, pszFileName, -1, buffer, sizeof(buffer), NULL, NULL))
+        return ERROR_UNKNOWN;
+    GetFullPathNameA( buffer, sizeof(buff2), buff2, NULL );
+    filename = HEAP_strdupA( GetProcessHeap(), 0, buff2 );
+
+    if (SHGetSpecialFolderPathA( 0, buffer, CSIDL_STARTUP, FALSE ))
+    {
+        /* ignore startup for now */
+        if (!strncasecmp( filename, buffer, strlen(buffer) )) goto done;
+    }
+    if (SHGetSpecialFolderPathA( 0, buffer, CSIDL_DESKTOPDIRECTORY, FALSE ))
+    {
+        if (!strncasecmp( filename, buffer, strlen(buffer) ))
+        {
+            link_name = filename + strlen(buffer);
+            bDesktop = TRUE;
+            goto found;
+        }
+    }
+    if (SHGetSpecialFolderPathA( 0, buffer, CSIDL_STARTMENU, FALSE ))
+    {
+        if (!strncasecmp( filename, buffer, strlen(buffer) ))
+        {
+            link_name = filename + strlen(buffer);
+            bDesktop = FALSE;
+            goto found;
+        }
+    }
+    goto done;
+
+ found:
+    /* make link name a Unix name */
+    for (p = link_name; *p; p++) if (*p == '\\') *p = '/';
+    /* strip leading slashes */
+    while (*link_name == '/') link_name++;
+    /* remove extension */
+    if ((p = strrchr( link_name, '.' ))) *p = 0;
+
+    /* convert app path name */
+    path_name = get_unix_file_name( This->sPath );
+
+    /* convert app working dir */
+    if (This->sWorkDir) work_dir = get_unix_file_name( This->sWorkDir );
+
+    /* extract the icon */
+    if (!(icon_name = extract_icon( This->sIcoPath ? This->sIcoPath : This->sPath,
+                                    This->iIcoNdx ))) goto done;
+
+    ERR("linker app='%s' link='%s' mode=%s path='%s' args='%s' icon='%s' workdir='%s' descr='%s'\n",
+        shell_link_app, link_name, bDesktop ? "desktop" : "menu", path_name,
+        This->sArgs ? This->sArgs : "", icon_name, work_dir ? work_dir : "",
+        This->sDescription ? This->sDescription : "" );
+
+    if ((pid = fork()) == -1) goto done;
+    if (!pid)
+    {
+        int pos = 0;
+        char *argv[20];
+        argv[pos++] = shell_link_app;
+        argv[pos++] = "--link";
+        argv[pos++] = link_name;
+        argv[pos++] = "--path";
+        argv[pos++] = path_name;
+        argv[pos++] = bDesktop ? "--desktop" : "--menu";
+        if (This->sArgs)
+        {
+            argv[pos++] = "--args";
+            argv[pos++] = This->sArgs;
+        }
+        if (icon_name)
+        {
+            argv[pos++] = "--icon";
+            argv[pos++] = icon_name;
+        }
+        if (This->sWorkDir)
+        {
+            argv[pos++] = "--workdir";
+            argv[pos++] = This->sWorkDir;
+        }
+        if (This->sDescription)
+        {
+            argv[pos++] = "--descr";
+            argv[pos++] = This->sDescription;
+        }
+        argv[pos] = NULL;
+        execvp( shell_link_app, argv );
+        _exit(1);
+    }
+
+    while (waitpid( pid, &status, 0 ) == -1)
+    {
+        if (errno != EINTR)
+        {
+            ret = ERROR_UNKNOWN;
+            goto done;
+        }
+    }
+    if (status) ret = E_ACCESSDENIED;
+
+ done:
+    if (icon_name) unlink( icon_name );
+    HeapFree( GetProcessHeap(), 0, shell_link_app );
+    HeapFree( GetProcessHeap(), 0, filename );
+    HeapFree( GetProcessHeap(), 0, icon_name );
+    HeapFree( GetProcessHeap(), 0, path_name );
+    HeapFree( GetProcessHeap(), 0, work_dir );
+    return ret;
 }
+
 static HRESULT WINAPI IPersistFile_fnSaveCompleted(IPersistFile* iface, LPCOLESTR pszFileName)
 {
 	_ICOM_THIS_From_IPersistFile(IShellLinkImpl, iface);
@@ -475,6 +916,18 @@ static ULONG WINAPI IShellLinkA_fnRelease(IShellLinkA * iface)
 	shell32_ObjCount--;
 	if (!--(This->ref)) 
 	{ TRACE("-- destroying IShellLink(%p)\n",This);
+	
+	  if (This->sIcoPath)
+	    HeapFree(GetProcessHeap(), 0, This->sIcoPath);
+	    
+	  if (This->sArgs)
+	    HeapFree(GetProcessHeap(), 0, This->sArgs);
+
+	  if (This->sWorkDir)
+	    HeapFree(GetProcessHeap(), 0, This->sWorkDir);
+	    
+	  if (This->sDescription)
+	    HeapFree(GetProcessHeap(), 0, This->sDescription);
 
 	  if (This->sPath)
 	    HeapFree(GetProcessHeap(),0,This->sPath);
@@ -484,6 +937,8 @@ static ULONG WINAPI IShellLinkA_fnRelease(IShellLinkA * iface)
 
 	  if (This->lpFileStream)
 	    IStream_Release(This->lpFileStream);
+	
+	  This->iIcoNdx = 0;
 
 	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
@@ -536,7 +991,13 @@ static HRESULT WINAPI IShellLinkA_fnSetDescription(IShellLinkA * iface, LPCSTR p
 {
 	ICOM_THIS(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(desc=%s)\n",This, pszName);
+	TRACE("(%p)->(pName=%s)\n", This, pszName);
+
+	if (This->sDescription)
+	    HeapFree(GetProcessHeap(), 0, This->sDescription);
+	if (!(This->sDescription = HEAP_strdupA(GetProcessHeap(), 0, pszName)))
+	    return E_OUTOFMEMORY;
+
 	return NOERROR;
 }
 static HRESULT WINAPI IShellLinkA_fnGetWorkingDirectory(IShellLinkA * iface, LPSTR pszDir,INT cchMaxPath)
@@ -551,7 +1012,13 @@ static HRESULT WINAPI IShellLinkA_fnSetWorkingDirectory(IShellLinkA * iface, LPC
 {
 	ICOM_THIS(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(dir=%s)\n",This, pszDir);
+	TRACE("(%p)->(dir=%s)\n",This, pszDir);
+
+	if (This->sWorkDir)
+	    HeapFree(GetProcessHeap(), 0, This->sWorkDir);
+	if (!(This->sWorkDir = HEAP_strdupA(GetProcessHeap(), 0, pszDir)))
+	    return E_OUTOFMEMORY;
+
 	return NOERROR;
 }
 static HRESULT WINAPI IShellLinkA_fnGetArguments(IShellLinkA * iface, LPSTR pszArgs,INT cchMaxPath)
@@ -566,7 +1033,12 @@ static HRESULT WINAPI IShellLinkA_fnSetArguments(IShellLinkA * iface, LPCSTR psz
 {
 	ICOM_THIS(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(args=%s)\n",This, pszArgs);
+	TRACE("(%p)->(args=%s)\n",This, pszArgs);
+
+	if (This->sArgs)
+	    HeapFree(GetProcessHeap(), 0, This->sArgs);
+	if (!(This->sArgs = HEAP_strdupA(GetProcessHeap(), 0, pszArgs)))
+	    return E_OUTOFMEMORY;
 
 	return NOERROR;
 }
@@ -618,7 +1090,14 @@ static HRESULT WINAPI IShellLinkA_fnSetIconLocation(IShellLinkA * iface, LPCSTR 
 {
 	ICOM_THIS(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(path=%s iicon=%u)\n",This, pszIconPath, iIcon);
+	TRACE("(%p)->(path=%s iicon=%u)\n",This, pszIconPath, iIcon);
+	
+	if (This->sIcoPath)
+	    HeapFree(GetProcessHeap(), 0, This->sIcoPath);
+	if (!(This->sIcoPath = HEAP_strdupA(GetProcessHeap(), 0, pszIconPath)))
+	    return E_OUTOFMEMORY;	
+	This->iIcoNdx = iIcon;
+	
 	return NOERROR;
 }
 static HRESULT WINAPI IShellLinkA_fnSetRelativePath(IShellLinkA * iface, LPCSTR pszPathRel, DWORD dwReserved)
@@ -639,7 +1118,13 @@ static HRESULT WINAPI IShellLinkA_fnSetPath(IShellLinkA * iface, LPCSTR pszFile)
 {
 	ICOM_THIS(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(path=%s)\n",This, pszFile);
+	TRACE("(%p)->(path=%s)\n",This, pszFile);
+
+	if (This->sPath)
+	    HeapFree(GetProcessHeap(), 0, This->sPath);
+	if (!(This->sPath = HEAP_strdupA(GetProcessHeap(), 0, pszFile)))
+	    return E_OUTOFMEMORY;
+	
 	return NOERROR;
 }
 
@@ -748,7 +1233,13 @@ static HRESULT WINAPI IShellLinkW_fnSetDescription(IShellLinkW * iface, LPCWSTR 
 {
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(desc=%s)\n",This, debugstr_w(pszName));
+	TRACE("(%p)->(desc=%s)\n",This, debugstr_w(pszName));
+
+	if (This->sDescription)
+	    HeapFree(GetProcessHeap(), 0, This->sDescription);
+	if (!(This->sDescription = HEAP_strdupWtoA(GetProcessHeap(), 0, pszName)))
+	    return E_OUTOFMEMORY;
+		
 	return NOERROR;
 }
 
@@ -765,7 +1256,13 @@ static HRESULT WINAPI IShellLinkW_fnSetWorkingDirectory(IShellLinkW * iface, LPC
 {
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(dir=%s)\n",This, debugstr_w(pszDir));
+	TRACE("(%p)->(dir=%s)\n",This, debugstr_w(pszDir));
+
+	if (This->sWorkDir)
+	    HeapFree(GetProcessHeap(), 0, This->sWorkDir);
+	if (!(This->sWorkDir = HEAP_strdupWtoA(GetProcessHeap(), 0, pszDir)))
+	    return E_OUTOFMEMORY;
+
 	return NOERROR;
 }
 
@@ -782,7 +1279,13 @@ static HRESULT WINAPI IShellLinkW_fnSetArguments(IShellLinkW * iface, LPCWSTR ps
 {
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(args=%s)\n",This, debugstr_w(pszArgs));
+	TRACE("(%p)->(args=%s)\n",This, debugstr_w(pszArgs));
+	
+	if (This->sArgs)
+	    HeapFree(GetProcessHeap(), 0, This->sArgs);
+	if (!(This->sArgs = HEAP_strdupWtoA(GetProcessHeap(), 0, pszArgs)))
+	    return E_OUTOFMEMORY;
+	
 	return NOERROR;
 }
 
@@ -834,7 +1337,14 @@ static HRESULT WINAPI IShellLinkW_fnSetIconLocation(IShellLinkW * iface, LPCWSTR
 {
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(path=%s iicon=%u)\n",This, debugstr_w(pszIconPath), iIcon);
+	TRACE("(%p)->(path=%s iicon=%u)\n",This, debugstr_w(pszIconPath), iIcon);
+
+	if (This->sIcoPath)
+	    HeapFree(GetProcessHeap(), 0, This->sIcoPath);
+	if (!(This->sIcoPath = HEAP_strdupWtoA(GetProcessHeap(), 0, pszIconPath)))
+	    return E_OUTOFMEMORY;	
+	This->iIcoNdx = iIcon;
+
 	return NOERROR;
 }
 
@@ -858,7 +1368,13 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
 {
 	_ICOM_THIS_From_IShellLinkW(IShellLinkImpl, iface);
 	
-	FIXME("(%p)->(path=%s)\n",This, debugstr_w(pszFile));
+	TRACE("(%p)->(path=%s)\n",This, debugstr_w(pszFile));
+	
+	if (This->sPath)
+	    HeapFree(GetProcessHeap(), 0, This->sPath);
+	if (!(This->sPath = HEAP_strdupWtoA(GetProcessHeap(), 0, pszFile)))
+	    return E_OUTOFMEMORY;	
+	
 	return NOERROR;
 }
 

@@ -1,0 +1,121 @@
+#!/bin/sh
+#
+# Create menu/desktop entries for an application
+# This is used by the IShellLink interface
+#
+# Copyright 2000 Alexandre Julliard
+#
+mode=""
+args=""
+menu=""
+icon=""
+descr=""
+link=""
+path=""
+workdir=""
+
+usage()
+{
+    cat <<EOF
+usage: wineshelllink options
+
+options:
+  --desktop     create a desktop link
+  --menu        create a menu entry
+  --path xx     path to the application
+  --link xx     name of link to create
+  --args xx     command-line arguments for the application
+  --icon xx     icon to display
+  --workdir xx  working directory for the application
+  --descr xx    application description
+
+EOF
+    exit 1
+}
+
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    (--desktop) mode="desktop"; shift 1 ;;
+    (--menu)    mode="menu"; shift 1 ;;
+    (--path)    path=$2; shift 2 ;;
+    (--link)    link=$2; shift 2 ;;
+    (--args)    args=$2; shift 2 ;;
+    (--icon)    icon=$2; shift 2 ;;
+    (--descr)   descr=$2; shift 2 ;;
+    (--workdir) workdir=$2; shift 2 ;;
+    (*) usage ;;
+  esac
+done
+
+kde_entry()
+{
+    cat <<EOF
+# KDE Config File
+[KDE Desktop Entry]
+Name=`basename "$link"`
+Exec=wine "$path" $args
+Type=Application
+Comment=$descr
+EOF
+    [ -z "$workdir" ] || echo "Path=\"$workdir\""
+    [ -z "$xpmicon" ] || echo "Icon=$xpmicon"
+}
+
+gnome_entry()
+{
+    cat <<EOF
+[Desktop Entry]
+Name=`basename "$link"`
+Exec=wine "$path" $args
+Type=Application
+Comment=$descr
+EOF
+    [ -z "$workdir" ] || echo "Path=\"$workdir\""
+    [ -z "$xpmicon" ] || echo "Icon=$xpmicon"
+}
+
+# copy the icon file to a specified dir and set xpmicon to the resulting path
+copy_icon()
+{
+  dir=$1
+  mkdir -p "$dir"
+  mkdir -p "$dir/"`dirname "$link"` || true
+  if [ -f "$icon" ]
+  then
+    cp "$icon" "$dir/$link.xpm"
+    xpmicon="$dir/$link.xpm"
+  else
+    xpmicon=""
+  fi
+}
+
+# KDE
+
+if [ -d "$HOME/.kde" ]
+then
+  copy_icon "$HOME/.kde/share/applnk/Wine"
+  if [ $mode = "menu" ]
+  then
+    kde_entry > "$HOME/.kde/share/applnk/Wine/$link.kdelnk"
+  elif [ -d "$HOME/Desktop" ]
+  then
+    kde_entry > "$HOME/Desktop/$link.kdelnk"
+  fi
+fi
+
+# Gnome
+
+if [ -d "$HOME/.gnome" ]
+then
+  copy_icon "$HOME/.gnome/apps/Wine"
+  if [ $mode = "menu" ]
+  then
+    gnome_entry > "$HOME/.gnome/apps/Wine/$link.desktop"
+  elif [ -d "$HOME/.gnome-desktop" ]
+  then
+    gnome_entry > "$HOME/.gnome-desktop/$link.desktop"
+  fi
+fi
+
+exit 0
