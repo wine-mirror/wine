@@ -3,6 +3,7 @@
  *
  * Copyright 1997 Alexandre Julliard
  * Copyright 1997 Len White
+ * Copyright 1999 Keith Matthews
  */
 
 /* Only empty stubs for now */
@@ -12,10 +13,10 @@
 #include "ddeml.h"
 #include "debug.h"
 #include "windows.h"
+#include "wintypes.h"
+#include "winerror.h"
 #include "heap.h"
-
-/* FIXME: What are these values? */
-#define DMLERR_NO_ERROR		0
+#include "shm_semaph.h"
 
 /* Has defined in atom.c file.
  */
@@ -25,13 +26,35 @@
  */
 #define MAX_BUFFER_LEN            (MAX_ATOM_LEN + 1)
 
-static LONG     DDE_current_handle;
+
+static DDE_HANDLE_ENTRY *DDE_Handle_Table_Base = NULL;
+static LPDWORD 		DDE_Max_Assigned_Instance = 0;  // OK for present, may have to worry about wrap-around later
+static const char	inst_string[]= "DDEMaxInstance";
+static LPCWSTR 		DDEInstanceAccess = (LPCWSTR)&inst_string;
+static const char	handle_string[] = "DDEHandleAccess";
+static LPCWSTR      	DDEHandleAccess = (LPCWSTR)&handle_string;
+static HANDLE32	     	inst_count_mutex = 0;
+static HANDLE32	     	handle_mutex = 0;
+       DDE_HANDLE_ENTRY *this_instance;
+       SECURITY_ATTRIBUTES *s_att= NULL;
+       DWORD 	     	err_no = 0;
+
+/*  typedef struct {
+	DWORD		nLength;
+	LPVOID		lpSecurityDescriptor;
+	BOOL32		bInheritHandle;
+}	SECURITY_ATTRIBUTES; */
+
+#define TRUE	1
+#define FALSE	0
+
+
 
 /* This is a simple list to keep track of the strings created
  * by DdeCreateStringHandle.  The list is used to free
  * the strings whenever DdeUninitialize is called.
  * This mechanism is not complete and does not handle multiple instances.
- * Most of the DDE API use a DWORD parameter indicating witch instance
+ * Most of the DDE API use a DWORD parameter indicating which instance
  * of a given program is calling them.  The API are supposed to
  * associate the data to the instance that created it.
  */
@@ -51,6 +74,15 @@ static HSZNode* pHSZNodes = NULL;
  *            RemoveHSZNodes    (INTERNAL)
  *
  * Remove a node from the list of HSZ nodes.
+ *
+ ******************************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      Dec 1998  Corel/Macadamian    Initial version
+ *
  */
 static void RemoveHSZNode( DWORD idInst, HSZ hsz )
 {
@@ -103,6 +135,15 @@ static void RemoveHSZNode( DWORD idInst, HSZ hsz )
  *
  * Frees up all the strings still allocated in the list and
  * remove all the nodes from the list of HSZ nodes.
+ *
+ ******************************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      Dec 1998  Corel/Macadamian    Initial version
+ *
  */
 static void FreeAndRemoveHSZNodes( DWORD idInst )
 {
@@ -118,6 +159,15 @@ static void FreeAndRemoveHSZNodes( DWORD idInst )
  *            InsertHSZNode    (INTERNAL)
  *
  * Insert a node to the head of the list.
+ *
+ ******************************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      Dec 1998  Corel/Macadamian    Initial version
+ *
  */
 static void InsertHSZNode( DWORD idInst, HSZ hsz )
 {
@@ -143,6 +193,81 @@ static void InsertHSZNode( DWORD idInst, HSZ hsz )
     }
 }
 
+/******************************************************************************
+ *	Release_reserved_mutex
+ *
+ *	generic routine to release a reserved mutex
+ *
+ *
+ ******************************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      Jan 1999  Keith Matthews        Initial version
+ *
+ */
+ DWORD Release_reserved_mutex (HANDLE32 mutex, LPTSTR mutex_name, BOOL32 release_handle_m, BOOL32 release_this_i )
+{
+	ReleaseMutex(mutex);
+        if ( (err_no=GetLastError()) != 0 )
+        {
+                ERR(ddeml,"ReleaseMutex failed - %s mutex %li\n",mutex_name,err_no);
+                HeapFree(GetProcessHeap(), 0, this_instance);
+		if ( release_handle_m )
+		{
+			ReleaseMutex(handle_mutex);
+		}
+                return DMLERR_SYS_ERROR;
+         }
+	if ( release_this_i )
+	{
+                HeapFree(GetProcessHeap(), 0, this_instance);
+	}
+	return DMLERR_NO_ERROR;
+}
+
+/******************************************************************************
+ *		IncrementInstanceId
+ *
+ *	generic routine to increment the max instance Id and allocate a new application instance
+ *
+ ******************************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      Jan 1999  Keith Matthews        Initial version
+ *
+ */
+DWORD IncrementInstanceId()
+{
+    	SECURITY_ATTRIBUTES s_attrib;
+	/*  Need to set up Mutex in case it is not already present */
+	// increment handle count & get value
+	if ( !inst_count_mutex )
+	{
+		s_attrib.bInheritHandle = TRUE;
+		s_attrib.lpSecurityDescriptor = NULL;
+		s_attrib.nLength = sizeof(s_attrib);
+		inst_count_mutex = CreateMutex32W(&s_attrib,1,DDEInstanceAccess); // 1st time through
+	} else {
+		WaitForSingleObject(inst_count_mutex,1000); // subsequent calls
+		/*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
+	}
+	if ( (err_no=GetLastError()) == ERROR_INVALID_HANDLE )
+	{
+		ERR(ddeml,"CreateMutex failed - inst_count %li\n",err_no);
+		err_no=Release_reserved_mutex (handle_mutex,"handle_mutex",0,1);
+		return DMLERR_SYS_ERROR;
+	}
+	DDE_Max_Assigned_Instance++;
+	this_instance->Instance_id = DDE_Max_Assigned_Instance;
+	if (Release_reserved_mutex(inst_count_mutex,"instance_count",1,0)) return DMLERR_SYS_ERROR;
+	return DMLERR_NO_ERROR;
+}
 
 /******************************************************************************
  *            DdeInitialize16   (DDEML.2)
@@ -178,17 +303,234 @@ UINT32 WINAPI DdeInitialize32A( LPDWORD pidInst, PFNCALLBACK32 pfnCallback,
  * RETURNS
  *    Success: DMLERR_NO_ERROR
  *    Failure: DMLERR_DLL_USAGE, DMLERR_INVALIDPARAMETER, DMLERR_SYS_ERROR
+ *
+ ******************************************************************************
+ *
+ *	Change History
+ *
+ *  Vn       Date    	Author         		Comment
+ *
+ *  1.0      Pre 1998  Alexandre/Len	     Initial Stub
+ *  1.1      Jan 1999  Keith Matthews        Initial (near-)complete version
+ *
  */
 UINT32 WINAPI DdeInitialize32W( LPDWORD pidInst, PFNCALLBACK32 pfnCallback,
                                 DWORD afCmd, DWORD ulRes )
 {
-    FIXME(ddeml, "(%p,%p,0x%lx,%ld): stub\n",pidInst,pfnCallback,afCmd,ulRes);
+    DDE_HANDLE_ENTRY *reference_inst;
+    SECURITY_ATTRIBUTES s_attrib;
+    s_att = &s_attrib;
 
-    if(pidInst)
-      *pidInst = 0;
+//  probably not really capable of handling mutliple processes, but should handle
+//	multiple instances within one process
 
     if( ulRes )
+    {
         ERR(dde, "Reserved value not zero?  What does this mean?\n");
+        FIXME(ddeml, "(%p,%p,0x%lx,%ld): stub\n",pidInst,pfnCallback,afCmd,ulRes);
+        /* trap this and no more until we know more */
+        return DMLERR_NO_ERROR;
+    }
+    if (!pfnCallback ) 
+    {
+        /* can't set up the instance with nothing to act as a callback */
+        TRACE(ddeml,"No callback provided\n");
+        return DMLERR_INVALIDPARAMETER; /* might be DMLERR_DLL_USAGE */
+     }
+
+     /* grab enough heap for one control struct - not really necessary for re-initialise
+	but allows us to use same validation routines */
+     this_instance= (DDE_HANDLE_ENTRY*)HeapAlloc( SystemHeap, 0, sizeof(DDE_HANDLE_ENTRY) );
+     if ( this_instance == NULL )
+     {
+	// catastrophe !! warn user & abort
+	ERR (ddeml,"Instance create failed - out of memory\n");
+	return DMLERR_SYS_ERROR;
+     }
+     this_instance->Next_Entry = NULL;
+     this_instance->Monitor=(afCmd|APPCLASS_MONITOR);
+
+     // messy bit, spec implies that 'Client Only' can be set in 2 different ways, catch 1 here
+
+     this_instance->Client_only=afCmd&APPCMD_CLIENTONLY;
+     this_instance->Instance_id = pidInst; // May need to add calling proc Id
+     this_instance->CallBack=*pfnCallback;
+     this_instance->Txn_count=0;
+     this_instance->Unicode = TRUE;
+     this_instance->Win16 = FALSE;
+     this_instance->Monitor_flags = afCmd & MF_MASK;
+
+     // isolate CBF flags in one go, expect this will go the way of all attempts to be clever !!
+
+     this_instance->CBF_Flags=afCmd^((afCmd&MF_MASK)|((afCmd&APPCMD_MASK)|(afCmd&APPCLASS_MASK)));
+
+     if ( ! this_instance->Client_only )
+     {
+
+	// Check for other way of setting Client-only !!
+
+	this_instance->Client_only=(this_instance->CBF_Flags&CBF_FAIL_ALLSVRXACTIONS)
+			==CBF_FAIL_ALLSVRXACTIONS;
+     }
+
+     TRACE(ddeml,"instance created - checking validity \n");
+
+    if( *pidInst == 0 ) {
+        /*  Initialisation of new Instance Identifier */
+        TRACE(ddeml,"new instance, callback %p flags %lX\n",pfnCallback,afCmd);
+	/*  Need to set up Mutex in case it is not already present */
+	s_att->bInheritHandle = TRUE;
+	s_att->lpSecurityDescriptor = NULL;
+	s_att->nLength = sizeof(s_att);
+	handle_mutex = CreateMutex32W(s_att,1,DDEHandleAccess);
+	if ( (err_no=GetLastError()) == ERROR_INVALID_HANDLE )
+	{
+		ERR(ddeml,"CreateMutex failed - handle list  %li\n",err_no);
+                HeapFree(GetProcessHeap(), 0, this_instance);
+		return DMLERR_SYS_ERROR;
+	}
+	TRACE(ddeml,"Handle Mutex created/reserved\n");
+        if (DDE_Handle_Table_Base == NULL ) 
+	{
+                /* can't be another instance in this case, assign to the base pointer */
+                DDE_Handle_Table_Base= this_instance;
+
+		// since first must force filter of XTYP_CONNECT and XTYP_WILDCONNECT for
+		//    present
+		//   -------------------------------      NOTE NOTE NOTE    --------------------------
+		//
+		//	   the manual is not clear if this condition
+		//	applies to the first call to DdeInitialize from an application, or the 
+		//	first call for a given callback !!!
+		//
+
+		this_instance->CBF_Flags=this_instance->CBF_Flags|APPCMD_FILTERINITS;
+ 		TRACE(ddeml,"First application instance detected OK\n");
+		// allocate new instance ID
+		if ((err_no = IncrementInstanceId()) ) return err_no;
+   	} else {
+                /* really need to chain the new one in to the latest here, but after checking conditions
+                such as trying to start a conversation from an application trying to monitor */
+                reference_inst =  DDE_Handle_Table_Base;
+		TRACE(ddeml,"Subsequent application instance - starting checks\n");
+                while ( reference_inst->Next_Entry != NULL ) 
+		{
+			//
+			//	This set of tests will work if application uses same instance Id
+			//	at application level once allocated - which is what manual implies
+			//	should happen. If someone tries to be 
+			//	clever (lazy ?) it will fail to pick up that later calls are for
+			//	the same application - should we trust them ?
+			//
+                        if ( this_instance->Instance_id == reference_inst->Instance_id) 
+			{
+				// Check 1 - must be same Client-only state
+
+                                if ( this_instance->Client_only != reference_inst->Client_only)
+				{
+					if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+						return DMLERR_SYS_ERROR;
+                                        return DMLERR_DLL_USAGE;
+                                }
+
+				// Check 2 - cannot use 'Monitor' with any non-monitor modes
+
+                                if ( this_instance->Monitor != reference_inst->Monitor) 
+				{
+					if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+						return DMLERR_SYS_ERROR;
+                                        return DMLERR_INVALIDPARAMETER;
+                                }
+
+				// Check 3 - must supply different callback address
+
+				if ( this_instance->CallBack == reference_inst->CallBack)
+				{
+					if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+						return DMLERR_SYS_ERROR;
+                                        return DMLERR_DLL_USAGE;
+				}
+                        }
+                        reference_inst = reference_inst->Next_Entry;
+                }
+		//  All cleared, add to chain
+
+		TRACE(ddeml,"Application Instance checks finished\n");
+                if ((err_no = IncrementInstanceId())) return err_no;
+		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,0)) return DMLERR_SYS_ERROR;
+		reference_inst->Next_Entry = this_instance;
+        }
+	pidInst = (LPDWORD)this_instance->Instance_id;
+	TRACE(ddeml,"New application instance processing finished OK\n");
+     } else {
+        /* Reinitialisation situation   --- FIX  */
+        TRACE(ddeml,"reinitialisation of (%p,%p,0x%lx,%ld): stub\n",pidInst,pfnCallback,afCmd,ulRes);
+	WaitForSingleObject(handle_mutex,1000);
+        if ( (err_no=GetLastError()) != 0 )
+            {
+
+	     /*  FIXME  - needs refinement with popup for timeout, also is timeout interval OK */
+
+                    ERR(ddeml,"WaitForSingleObject failed - handle list %li\n",err_no);
+                    HeapFree(GetProcessHeap(), 0, this_instance);
+                    return DMLERR_SYS_ERROR;
+        }
+        if (DDE_Handle_Table_Base == NULL ) 
+	{
+		if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1)) return DMLERR_SYS_ERROR;
+        	return DMLERR_DLL_USAGE;
+ 	}
+        HeapFree(GetProcessHeap(), 0, this_instance); // finished - release heap space used as work store
+        // can't reinitialise if we have initialised nothing !!
+        reference_inst =  DDE_Handle_Table_Base;
+        /* must first check if we have been given a valid instance to re-initialise !!  how do we do that ? */
+	while ( reference_inst->Next_Entry != NULL )
+	{
+		if ( pidInst == reference_inst->Instance_id && pfnCallback == reference_inst->CallBack )
+		{
+			// Check 1 - cannot change client-only mode if set via APPCMD_CLIENTONLY
+
+			if (  reference_inst->Client_only )
+			{
+			   if  ((reference_inst->CBF_Flags & CBF_FAIL_ALLSVRXACTIONS) != CBF_FAIL_ALLSVRXACTIONS) 
+			   {
+				// i.e. Was set to Client-only and through APPCMD_CLIENTONLY
+
+				if ( ! ( afCmd & APPCMD_CLIENTONLY))
+				{
+					if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+						return DMLERR_SYS_ERROR;
+                                	return DMLERR_DLL_USAGE;
+				}
+			   }
+			}
+			// Check 2 - cannot change monitor modes
+
+                        if ( this_instance->Monitor != reference_inst->Monitor) 
+			{
+				if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+					return DMLERR_SYS_ERROR;
+                                return DMLERR_DLL_USAGE;
+                        }
+
+			// Check 3 - trying to set Client-only via APPCMD when not set so previously
+
+			if (( afCmd&APPCMD_CLIENTONLY) && ! reference_inst->Client_only )
+			{
+				if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+					return DMLERR_SYS_ERROR;
+                                return DMLERR_DLL_USAGE;
+			}
+		}
+	}
+	//		All checked - change relevant flags
+
+	reference_inst->CBF_Flags = this_instance->CBF_Flags;
+	reference_inst->Client_only = this_instance->Client_only;
+	reference_inst->Monitor_flags = this_instance->Monitor_flags;
+	if ( Release_reserved_mutex(handle_mutex,"handle_mutex",0,1))
+		return DMLERR_SYS_ERROR;
+     }
 
     return DMLERR_NO_ERROR;
 }
