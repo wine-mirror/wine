@@ -568,6 +568,8 @@ void __RPC_STUB IBindStatusCallback_OnObjectAvailable_Stub(
 
 #endif  /* __IBindStatusCallback_INTERFACE_DEFINED__ */
 
+#define SID_IBindHost IID_IBindHost
+#define SID_SBindHost IID_IBindHost
 #ifndef __IBindHost_FWD_DEFINED__
 #define __IBindHost_FWD_DEFINED__
 typedef struct IBindHost IBindHost;

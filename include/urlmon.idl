@@ -269,6 +269,8 @@ interface IBindStatusCallback : IUnknown
 /*****************************************************************************
  * IBindHost interface
  */
+cpp_quote("#define SID_IBindHost IID_IBindHost")
+cpp_quote("#define SID_SBindHost IID_IBindHost")
 [
     object,
     uuid(fc4801a1-2ba9-11cf-a229-00aa003d7352),
