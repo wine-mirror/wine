@@ -18,6 +18,7 @@
 #include "winuser.h"
 #include "wine/winbase16.h"
 #include "wine/winuser16.h"
+#include "wine/exception.h"
 #include "ldt.h"
 #include "global.h"
 #include "heap.h"
@@ -124,84 +125,111 @@ static WORD MapHRsrc16ToType( NE_MODULE *pModule, HRSRC16 hRsrc16 )
 }
 
 
+/* filter for page-fault exceptions */
+static WINE_EXCEPTION_FILTER(page_fault)
+{
+    if (GetExceptionCode() == EXCEPTION_ACCESS_VIOLATION)
+        return EXCEPTION_EXECUTE_HANDLER;
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+static HRSRC RES_FindResource2( HMODULE hModule, LPCSTR type,
+				LPCSTR name, WORD lang, 
+				BOOL bUnicode, BOOL bRet16 )
+{
+    HRSRC hRsrc = 0;
+    HMODULE16 hMod16   = MapHModuleLS( hModule );
+    NE_MODULE *pModule = NE_GetPtr( hMod16 );
+    WINE_MODREF *wm    = pModule && pModule->module32? 
+	MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
+    
+    TRACE("(%08x %s, %08x%s, %08x%s, %04x, %s, %s)\n",
+	  hModule,
+	  pModule ? (char *)NE_MODULE_NAME(pModule) : "NULL dereference",
+	  (UINT)type, HIWORD(type)? (bUnicode? debugstr_w((LPWSTR)type) : debugstr_a(type)) : "",
+	  (UINT)name, HIWORD(name)? (bUnicode? debugstr_w((LPWSTR)name) : debugstr_a(name)) : "",
+	  lang,
+	  bUnicode? "W"  : "A",
+	  bRet16?   "NE" : "PE" );
+    
+    if (pModule)
+    {
+	if ( wm )
+	{
+	    /* 32-bit PE module */
+	    LPWSTR typeStr, nameStr;
+	    
+	    if ( HIWORD( type ) && !bUnicode )
+		typeStr = HEAP_strdupAtoW( GetProcessHeap(), 0, type );
+	    else
+		typeStr = (LPWSTR)type;
+	    if ( HIWORD( name ) && !bUnicode )
+		nameStr = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
+	    else
+		nameStr = (LPWSTR)name;
+	    
+	    hRsrc = PE_FindResourceExW( wm, nameStr, typeStr, lang );
+	    
+	    if ( HIWORD( type ) && !bUnicode ) 
+		HeapFree( GetProcessHeap(), 0, typeStr );
+	    if ( HIWORD( name ) && !bUnicode ) 
+		HeapFree( GetProcessHeap(), 0, nameStr );
+	    
+	    
+	    /* If we need to return 16-bit HRSRC, perform conversion */
+	    if ( bRet16 )
+		hRsrc = MapHRsrc32To16( pModule, hRsrc, 
+					HIWORD( type )? 0 : LOWORD( type ) );
+	}
+	else
+	{
+	    /* 16-bit NE module */
+	    LPSTR typeStr, nameStr;
+	    
+	    if ( HIWORD( type ) && bUnicode )
+		typeStr = HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)type );
+	    else
+		typeStr = (LPSTR)type;
+	    if ( HIWORD( name ) && bUnicode )
+		nameStr = HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)name );
+	    else
+		nameStr = (LPSTR)name;
+	    
+	    hRsrc = NE_FindResource( pModule, nameStr, typeStr );
+	    
+	    if ( HIWORD( type ) && bUnicode ) 
+		HeapFree( GetProcessHeap(), 0, typeStr );
+	    if ( HIWORD( name ) && bUnicode ) 
+		HeapFree( GetProcessHeap(), 0, nameStr );
+	    
+	    
+	    /* If we need to return 32-bit HRSRC, no conversion is necessary,
+	       we simply use the 16-bit HRSRC as 32-bit HRSRC */
+	}
+    }
+    return hRsrc;
+}
+
 /**********************************************************************
  *          RES_FindResource
  */
+
 static HRSRC RES_FindResource( HMODULE hModule, LPCSTR type,
                                LPCSTR name, WORD lang, 
                                BOOL bUnicode, BOOL bRet16 )
 {
-    HRSRC hRsrc = 0;
-
-    HMODULE16 hMod16   = MapHModuleLS( hModule );
-    NE_MODULE *pModule = NE_GetPtr( hMod16 );
-    WINE_MODREF *wm    = pModule && pModule->module32? 
-                         MODULE32_LookupHMODULE( pModule->module32 ) : NULL;
-
-    TRACE("(%08x %s, %08x%s, %08x%s, %04x, %s, %s)\n",
-          hModule,
-          pModule ? (char *)NE_MODULE_NAME(pModule) : "NULL dereference",
-          (UINT)type, HIWORD(type)? (bUnicode? debugstr_w((LPWSTR)type) : debugstr_a(type)) : "",
-          (UINT)name, HIWORD(name)? (bUnicode? debugstr_w((LPWSTR)name) : debugstr_a(name)) : "",
-          lang,
-          bUnicode? "W"  : "A",
-          bRet16?   "NE" : "PE" );
-
-    if ( !pModule ) return 0;
-
-    if ( wm )
+    HRSRC hRsrc;
+    __TRY
     {
-        /* 32-bit PE module */
-        LPWSTR typeStr, nameStr;
-
-        if ( HIWORD( type ) && !bUnicode )
-            typeStr = HEAP_strdupAtoW( GetProcessHeap(), 0, type );
-        else
-            typeStr = (LPWSTR)type;
-        if ( HIWORD( name ) && !bUnicode )
-            nameStr = HEAP_strdupAtoW( GetProcessHeap(), 0, name );
-        else
-            nameStr = (LPWSTR)name;
-
-        hRsrc = PE_FindResourceExW( wm, nameStr, typeStr, lang );
-
-        if ( HIWORD( type ) && !bUnicode ) 
-            HeapFree( GetProcessHeap(), 0, typeStr );
-        if ( HIWORD( name ) && !bUnicode ) 
-            HeapFree( GetProcessHeap(), 0, nameStr );
-
-
-        /* If we need to return 16-bit HRSRC, perform conversion */
-        if ( bRet16 )
-            hRsrc = MapHRsrc32To16( pModule, hRsrc, 
-                                    HIWORD( type )? 0 : LOWORD( type ) );
+	hRsrc = RES_FindResource2(hModule, type, name, lang, bUnicode, bRet16);
     }
-    else
+    __EXCEPT(page_fault)
     {
-        /* 16-bit NE module */
-        LPSTR typeStr, nameStr;
-
-        if ( HIWORD( type ) && bUnicode )
-            typeStr = HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)type );
-        else
-            typeStr = (LPSTR)type;
-        if ( HIWORD( name ) && bUnicode )
-            nameStr = HEAP_strdupWtoA( GetProcessHeap(), 0, (LPCWSTR)name );
-        else
-            nameStr = (LPSTR)name;
-
-        hRsrc = NE_FindResource( pModule, nameStr, typeStr );
-
-        if ( HIWORD( type ) && bUnicode ) 
-            HeapFree( GetProcessHeap(), 0, typeStr );
-        if ( HIWORD( name ) && bUnicode ) 
-            HeapFree( GetProcessHeap(), 0, nameStr );
-
-
-        /* If we need to return 32-bit HRSRC, no conversion is necessary,
-           we simply use the 16-bit HRSRC as 32-bit HRSRC */
+	WARN("page fault\n");
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
     }
-
+    __ENDTRY
     return hRsrc;
 }
 
