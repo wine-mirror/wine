@@ -68,7 +68,7 @@ static UINT XTextCaps = (TC_OP_CHARACTER | TC_OP_STROKE | TC_CP_STROKE | TC_CR_A
                          TC_UA_ABLE | TC_SO_ABLE | TC_RA_ABLE);
                          /* X11R6 adds TC_SF_X_YINDEP, maybe more... */
 
-static const char*	INIFontMetrics = "/cachedmetrics.";
+static const char*	INIFontMetrics = "cachedmetrics.";
 static const char*	INIFontSection = "Software\\Wine\\Wine\\Config\\fonts";
 static const char*	INIAliasSection = "Alias";
 static const char*	INIIgnoreSection = "Ignore";
@@ -1818,7 +1818,19 @@ static char* XFONT_UserMetricsCache( char* buffer, int* buf_size )
 {
     const char *confdir = get_config_dir();
     const char *display_name = XDisplayName(NULL);
-    int len = strlen(confdir) + strlen(INIFontMetrics) + strlen(display_name) + 2;
+    int len = strlen(confdir) + strlen(INIFontMetrics) + strlen(display_name) + 8;
+    int display = 0;
+    int screen = 0;
+    char *p, *ext;
+
+    /*
+    **  Normalize the display name, since on Red Hat systems, DISPLAY
+    **      is commonly set to one of either 'unix:0.0' or ':0' or ':0.0'.
+    **      after this code, all of the above will resolve to ':0.0'.
+    */
+    if (!strncmp( display_name, "unix:", 5 )) display_name += 4;
+    p = strchr(display_name, ':');
+    if (p) sscanf(p + 1, "%d.%d", &display, &screen);
 
     if ((len > *buf_size) &&
         !(buffer = HeapReAlloc( GetProcessHeap(), 0, buffer, *buf_size = len )))
@@ -1826,8 +1838,13 @@ static char* XFONT_UserMetricsCache( char* buffer, int* buf_size )
         ERR("out of memory\n");
         ExitProcess(1);
     }
+    sprintf( buffer, "%s/%s", confdir, INIFontMetrics );
 
-    sprintf( buffer, "%s/%s%s", confdir, INIFontMetrics, display_name );
+    ext = buffer + strlen(buffer);
+    strcpy( ext, display_name );
+
+    if (!(p = strchr( ext, ':' ))) p = ext + strlen(ext);
+    sprintf( p, ":%d.%d", display, screen );
     return buffer;
 }
 
