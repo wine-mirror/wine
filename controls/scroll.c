@@ -1372,7 +1372,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 
     if (TRACE_ON(scroll))
     {
-        DPRINTF( "hwnd=%04x bar=%d", hwnd, nBar);
+        TRACE("hwnd=%04x bar=%d", hwnd, nBar);
         if (info->fMask & SIF_PAGE) DPRINTF( " page=%d", info->nPage );
         if (info->fMask & SIF_POS) DPRINTF( " pos=%d", info->nPos );
         if (info->fMask & SIF_RANGE) DPRINTF( " min=%d max=%d", info->nMin, info->nMax );

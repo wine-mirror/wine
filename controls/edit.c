@@ -46,8 +46,6 @@ DECLARE_DEBUG_CHANNEL(relay);
 #define EF_UPDATE		0x0004	/* notify parent of changed state on next WM_PAINT */
 #define EF_VSCROLL_TRACK	0x0008	/* don't SetScrollPos() since we are tracking the thumb */
 #define EF_HSCROLL_TRACK	0x0010	/* don't SetScrollPos() since we are tracking the thumb */
-#define EF_VSCROLL_HACK		0x0020	/* we already have informed the user of the hacked handler */
-#define EF_HSCROLL_HACK		0x0040	/* we already have informed the user of the hacked handler */
 #define EF_AFTER_WRAP		0x0080	/* the caret is displayed after the last character of a
 					   wrapped line, instead of in front of the next character */
 #define EF_USE_SOFTBRK		0x0100	/* Enable soft breaks in text. */
@@ -1028,6 +1026,10 @@ static LRESULT WINAPI EditWndProc_locked( WND *wnd, UINT msg,
 	case WM_SETFONT:
 		DPRINTF_EDIT_MSG32("WM_SETFONT");
 		EDIT_WM_SetFont(wnd, es, (HFONT)wParam, LOWORD(lParam) != 0);
+		break;
+
+	case WM_SETREDRAW:
+		/* FIXME: actually set an internal flag and behave accordingly */
 		break;
 
 	case WM_SETTEXT:
@@ -2128,6 +2130,9 @@ static void EDIT_SetRectNP(WND *wnd, EDITSTATE *es, LPRECT rc)
 	    if(max_y_offset < 0) max_y_offset = 0;
 	    if(es->y_offset > max_y_offset)
 		es->y_offset = max_y_offset;
+
+	    /* force scroll info update */
+	    EDIT_UpdateScrollInfo(wnd, es);
 	}
 	else
 	/* Windows doesn't care to fix text placement for SL controls */
@@ -2543,9 +2548,6 @@ static LRESULT EDIT_EM_GetSel(EDITSTATE *es, LPUINT start, LPUINT end)
  *	own scrollbars) (and maybe only for multiline controls ?)
  *	All in all: very poorly documented
  *
- *	FIXME: now it's also broken, because of the new WM_HSCROLL /
- *		WM_VSCROLL handlers
- *
  */
 static LRESULT EDIT_EM_GetThumb(WND *wnd, EDITSTATE *es)
 {
@@ -2715,6 +2717,8 @@ static BOOL EDIT_EM_LineScroll_internal(WND *wnd, EDITSTATE *es, INT dx, INT dy)
 		IntersectRect(&rc, &rc1, &es->format_rect);
 		ScrollWindowEx(wnd->hwndSelf, -dx, dy,
 				NULL, &rc, (HRGN)NULL, NULL, SW_INVALIDATE);
+		/* force scroll info update */
+		EDIT_UpdateScrollInfo(wnd, es);
 	}
 	if (dx && !(es->flags & EF_HSCROLL_TRACK))
 		EDIT_NOTIFY_PARENT(wnd, EN_HSCROLL, "EN_HSCROLL");
@@ -2893,6 +2897,9 @@ static void EDIT_EM_ReplaceSel(WND *wnd, EDITSTATE *es, BOOL can_undo, LPCWSTR l
 	es->flags |= EF_MODIFIED;
 	if (send_update) es->flags |= EF_UPDATE;
 	EDIT_EM_ScrollCaret(wnd, es);
+	
+	/* force scroll info update */
+	EDIT_UpdateScrollInfo(wnd, es);
 
 	/* FIXME: really inefficient */
 	EDIT_UpdateText(wnd, NULL, TRUE);
@@ -3095,6 +3102,8 @@ static void EDIT_EM_SetHandle(WND *wnd, EDITSTATE *es, HLOCAL hloc)
 	EDIT_BuildLineDefs_ML(wnd, es);
 	EDIT_UpdateText(wnd, NULL, TRUE);
 	EDIT_EM_ScrollCaret(wnd, es);
+	/* force scroll info update */
+	EDIT_UpdateScrollInfo(wnd, es);
 }
 
 
@@ -3159,6 +3168,8 @@ static void EDIT_EM_SetHandle16(WND *wnd, EDITSTATE *es, HLOCAL16 hloc)
 	EDIT_BuildLineDefs_ML(wnd, es);
 	EDIT_UpdateText(wnd, NULL, TRUE);
 	EDIT_EM_ScrollCaret(wnd, es);
+	/* force scroll info update */
+	EDIT_UpdateScrollInfo(wnd, es);
 }
 
 
@@ -3632,6 +3643,8 @@ static LRESULT EDIT_WM_Create(WND *wnd, EDITSTATE *es, LPCWSTR name)
 		EDIT_NOTIFY_PARENT(wnd, EN_CHANGE, "EN_CHANGE");
 	   }
        }
+       /* force scroll info update */
+       EDIT_UpdateScrollInfo(wnd, es);
        return 0;
 }
 
@@ -3718,96 +3731,6 @@ static INT EDIT_WM_GetText(EDITSTATE *es, INT count, LPARAM lParam, BOOL unicode
     }
 }
 
-
-/*********************************************************************
- *
- *	EDIT_HScroll_Hack
- *
- *	16 bit notepad needs this.  Actually it is not _our_ hack,
- *	it is notepad's.  Notepad is sending us scrollbar messages with
- *	undocumented parameters without us even having a scrollbar ... !?!?
- *
- */
-static LRESULT EDIT_HScroll_Hack(WND *wnd, EDITSTATE *es, INT action, INT pos)
-{
-	INT dx = 0;
-	INT fw = es->format_rect.right - es->format_rect.left;
-	LRESULT ret = 0;
-
-	if (!(es->flags & EF_HSCROLL_HACK)) {
-		ERR("hacked WM_HSCROLL handler invoked\n");
-		ERR("      if you are _not_ running 16 bit notepad, please report\n");
-		ERR("      (this message is only displayed once per edit control)\n");
-		es->flags |= EF_HSCROLL_HACK;
-	}
-
-	switch (action) {
-	case SB_LINELEFT:
-		if (es->x_offset)
-			dx = -es->char_width;
-		break;
-	case SB_LINERIGHT:
-		if (es->x_offset < es->text_width)
-			dx = es->char_width;
-		break;
-	case SB_PAGELEFT:
-		if (es->x_offset)
-			dx = -fw / HSCROLL_FRACTION / es->char_width * es->char_width;
-		break;
-	case SB_PAGERIGHT:
-		if (es->x_offset < es->text_width)
-			dx = fw / HSCROLL_FRACTION / es->char_width * es->char_width;
-		break;
-	case SB_LEFT:
-		if (es->x_offset)
-			dx = -es->x_offset;
-		break;
-	case SB_RIGHT:
-		if (es->x_offset < es->text_width)
-			dx = es->text_width - es->x_offset;
-		break;
-	case SB_THUMBTRACK:
-		es->flags |= EF_HSCROLL_TRACK;
-		dx = pos * es->text_width / 100 - es->x_offset;
-		break;
-	case SB_THUMBPOSITION:
-		es->flags &= ~EF_HSCROLL_TRACK;
-		if (!(dx = pos * es->text_width / 100 - es->x_offset))
-			EDIT_NOTIFY_PARENT(wnd, EN_HSCROLL, "EN_HSCROLL");
-		break;
-	case SB_ENDSCROLL:
-		break;
-
-	/*
-	 *	FIXME : the next two are undocumented !
-	 *	Are we doing the right thing ?
-	 *	At least Win 3.1 Notepad makes use of EM_GETTHUMB this way,
-	 *	although it's also a regular control message.
-	 */
-	case EM_GETTHUMB16:
-		ret = es->text_width ? es->x_offset * 100 / es->text_width : 0;
-		break;
-	case EM_LINESCROLL16:
-		dx = pos;
-		break;
-
-	default:
-		ERR("undocumented (hacked) WM_HSCROLL parameter, please report\n");
-		return 0;
-	}
-	if (dx)
-	{
-	    INT fw = es->format_rect.right - es->format_rect.left;
-	    /* check if we are going to move too far */
-	    if(es->x_offset + dx + fw > es->text_width)
-		dx = es->text_width - fw - es->x_offset;
-	    if(dx)
-		EDIT_EM_LineScroll_internal(wnd, es, dx, 0);
-	}
-	return ret;
-}
-
-
 /*********************************************************************
  *
  *	WM_HSCROLL
@@ -3824,52 +3747,108 @@ static LRESULT EDIT_WM_HScroll(WND *wnd, EDITSTATE *es, INT action, INT pos)
 	if (!(es->style & ES_AUTOHSCROLL))
 		return 0;
 
-	if (!(es->style & WS_HSCROLL))
-		return EDIT_HScroll_Hack(wnd, es, action, pos);
-
 	dx = 0;
 	fw = es->format_rect.right - es->format_rect.left;
 	switch (action) {
 	case SB_LINELEFT:
+		TRACE("SB_LINELEFT\n");
 		if (es->x_offset)
 			dx = -es->char_width;
 		break;
 	case SB_LINERIGHT:
+		TRACE("SB_LINERIGHT\n");
 		if (es->x_offset < es->text_width)
 			dx = es->char_width;
 		break;
 	case SB_PAGELEFT:
+		TRACE("SB_PAGELEFT\n");
 		if (es->x_offset)
 			dx = -fw / HSCROLL_FRACTION / es->char_width * es->char_width;
 		break;
 	case SB_PAGERIGHT:
+		TRACE("SB_PAGERIGHT\n");
 		if (es->x_offset < es->text_width)
 			dx = fw / HSCROLL_FRACTION / es->char_width * es->char_width;
 		break;
 	case SB_LEFT:
+		TRACE("SB_LEFT\n");
 		if (es->x_offset)
 			dx = -es->x_offset;
 		break;
 	case SB_RIGHT:
+		TRACE("SB_RIGHT\n");
 		if (es->x_offset < es->text_width)
 			dx = es->text_width - es->x_offset;
 		break;
 	case SB_THUMBTRACK:
+		TRACE("SB_THUMBTRACK %d\n", pos);
 		es->flags |= EF_HSCROLL_TRACK;
-		dx = pos - es->x_offset;
+		if(es->style & WS_HSCROLL)
+		    dx = pos - es->x_offset;
+		else
+		{
+		    INT fw, new_x;
+		    /* Sanity check */
+		    if(pos < 0 || pos > 100) return 0;
+		    /* Assume default scroll range 0-100 */
+		    fw = es->format_rect.right - es->format_rect.left;
+		    new_x = pos * (es->text_width - fw) / 100;
+		    dx = es->text_width ? (new_x - es->x_offset) : 0;
+		}
 		break;
 	case SB_THUMBPOSITION:
+		TRACE("SB_THUMBPOSITION %d\n", pos);
 		es->flags &= ~EF_HSCROLL_TRACK;
-		if (!(dx = pos - es->x_offset)) {
-			SetScrollPos(wnd->hwndSelf, SB_HORZ, pos, TRUE);
+		if(wnd->dwStyle & WS_HSCROLL)
+		    dx = pos - es->x_offset;
+		else
+		{
+		    INT fw, new_x;
+		    /* Sanity check */
+		    if(pos < 0 || pos > 100) return 0;
+		    /* Assume default scroll range 0-100 */
+		    fw = es->format_rect.right - es->format_rect.left;
+		    new_x = pos * (es->text_width - fw) / 100;
+		    dx = es->text_width ? (new_x - es->x_offset) : 0;
+		}
+		if (!dx) {
+			/* force scroll info update */
+			EDIT_UpdateScrollInfo(wnd, es);
 			EDIT_NOTIFY_PARENT(wnd, EN_HSCROLL, "EN_HSCROLL");
 		}
 		break;
 	case SB_ENDSCROLL:
+		TRACE("SB_ENDSCROLL\n");
+		break;
+	/*
+	 *	FIXME : the next two are undocumented !
+	 *	Are we doing the right thing ?
+	 *	At least Win 3.1 Notepad makes use of EM_GETTHUMB this way,
+	 *	although it's also a regular control message.
+	 */
+	case EM_GETTHUMB: /* this one is used by NT notepad */
+	case EM_GETTHUMB16:
+	{
+		LRESULT ret;
+		if(wnd->dwStyle & WS_HSCROLL)
+		    ret = GetScrollPos(wnd->hwndSelf, SB_HORZ);
+		else
+		{
+		    /* Assume default scroll range 0-100 */
+		    INT fw = es->format_rect.right - es->format_rect.left;
+		    ret = es->text_width ? es->x_offset * 100 / (es->text_width - fw) : 0;
+		}
+		TRACE("EM_GETTHUMB: returning %ld\n", ret);
+		return ret;
+	}
+	case EM_LINESCROLL16:
+		TRACE("EM_LINESCROLL16\n");
+		dx = pos;
 		break;
 
 	default:
-		ERR("undocumented WM_HSCROLL parameter, please report\n");
+		ERR("undocumented WM_HSCROLL action %d (0x%04x), please report\n",
+                    action, action);
 		return 0;
 	}
 	if (dx)
@@ -4357,8 +4336,6 @@ static void EDIT_WM_Paint(WND *wnd, EDITSTATE *es, WPARAM wParam)
 
         if (!wParam)
             EndPaint(wnd->hwndSelf, &ps);
-
-	EDIT_UpdateScrollInfo(wnd, es);
 }
 
 
@@ -4559,76 +4536,6 @@ static void EDIT_WM_Timer(WND *wnd, EDITSTATE *es)
  */
 }
 
-
-/*********************************************************************
- *
- *	EDIT_VScroll_Hack
- *
- *	16 bit notepad needs this.  Actually it is not _our_ hack,
- *	it is notepad's.  Notepad is sending us scrollbar messages with
- *	undocumented parameters without us even having a scrollbar ... !?!?
- *
- */
-static LRESULT EDIT_VScroll_Hack(WND *wnd, EDITSTATE *es, INT action, INT pos)
-{
-	INT dy = 0;
-	LRESULT ret = 0;
-
-	if (!(es->flags & EF_VSCROLL_HACK)) {
-		ERR("hacked WM_VSCROLL handler invoked\n");
-		ERR("      if you are _not_ running 16 bit notepad, please report\n");
-		ERR("      (this message is only displayed once per edit control)\n");
-		es->flags |= EF_VSCROLL_HACK;
-	}
-
-	switch (action) {
-	case SB_LINEUP:
-	case SB_LINEDOWN:
-	case SB_PAGEUP:
-	case SB_PAGEDOWN:
-		EDIT_EM_Scroll(wnd, es, action);
-		return 0;
-	case SB_TOP:
-		dy = -es->y_offset;
-		break;
-	case SB_BOTTOM:
-		dy = es->line_count - 1 - es->y_offset;
-		break;
-	case SB_THUMBTRACK:
-		es->flags |= EF_VSCROLL_TRACK;
-		dy = (pos * (es->line_count - 1) + 50) / 100 - es->y_offset;
-		break;
-	case SB_THUMBPOSITION:
-		es->flags &= ~EF_VSCROLL_TRACK;
-		if (!(dy = (pos * (es->line_count - 1) + 50) / 100 - es->y_offset))
-			EDIT_NOTIFY_PARENT(wnd, EN_VSCROLL, "EN_VSCROLL");
-		break;
-	case SB_ENDSCROLL:
-		break;
-
-	/*
-	 *	FIXME : the next two are undocumented !
-	 *	Are we doing the right thing ?
-	 *	At least Win 3.1 Notepad makes use of EM_GETTHUMB this way,
-	 *	although it's also a regular control message.
-	 */
-	case EM_GETTHUMB16:
-		ret = (es->line_count > 1) ? es->y_offset * 100 / (es->line_count - 1) : 0;
-		break;
-	case EM_LINESCROLL16:
-		dy = pos;
-		break;
-
-	default:
-		ERR("undocumented (hacked) WM_VSCROLL parameter, please report\n");
-		return 0;
-	}
-	if (dy)
-		EDIT_EM_LineScroll(wnd, es, 0, dy);
-	return ret;
-}
-
-
 /*********************************************************************
  *
  *	WM_VSCROLL
@@ -4644,41 +4551,97 @@ static LRESULT EDIT_WM_VScroll(WND *wnd, EDITSTATE *es, INT action, INT pos)
 	if (!(es->style & ES_AUTOVSCROLL))
 		return 0;
 
-	if (!(es->style & WS_VSCROLL))
-		return EDIT_VScroll_Hack(wnd, es, action, pos);
-
 	dy = 0;
 	switch (action) {
 	case SB_LINEUP:
 	case SB_LINEDOWN:
 	case SB_PAGEUP:
 	case SB_PAGEDOWN:
+		TRACE("action %d\n", action);
 		EDIT_EM_Scroll(wnd, es, action);
 		return 0;
-
 	case SB_TOP:
+		TRACE("SB_TOP\n");
 		dy = -es->y_offset;
 		break;
 	case SB_BOTTOM:
+		TRACE("SB_BOTTOM\n");
 		dy = es->line_count - 1 - es->y_offset;
 		break;
 	case SB_THUMBTRACK:
+		TRACE("SB_THUMBTRACK %d\n", pos);
 		es->flags |= EF_VSCROLL_TRACK;
-		dy = pos - es->y_offset;
+		if(es->style & WS_VSCROLL)
+		    dy = pos - es->y_offset;
+		else
+		{
+		    /* Assume default scroll range 0-100 */
+		    INT vlc, new_y;
+		    /* Sanity check */
+		    if(pos < 0 || pos > 100) return 0;
+		    vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+		    new_y = pos * (es->line_count - vlc) / 100;
+		    dy = es->line_count ? (new_y - es->y_offset) : 0;
+		    TRACE("line_count=%d, y_offset=%d, pos=%d, dy = %d\n",
+			    es->line_count, es->y_offset, pos, dy);
+		}
 		break;
 	case SB_THUMBPOSITION:
+		TRACE("SB_THUMBPOSITION %d\n", pos);
 		es->flags &= ~EF_VSCROLL_TRACK;
-		if (!(dy = pos - es->y_offset)) {
-			SetScrollPos(wnd->hwndSelf, SB_VERT, pos, TRUE);
+		if(es->style & WS_VSCROLL)
+		    dy = pos - es->y_offset;
+		else
+		{
+		    /* Assume default scroll range 0-100 */
+		    INT vlc, new_y;
+		    /* Sanity check */
+		    if(pos < 0 || pos > 100) return 0;
+		    vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+		    new_y = pos * (es->line_count - vlc) / 100;
+		    dy = es->line_count ? (new_y - es->y_offset) : 0;
+		    TRACE("line_count=%d, y_offset=%d, pos=%d, dy = %d\n",
+			    es->line_count, es->y_offset, pos, dy);
+		}
+		if (!dy)
+		{
+			/* force scroll info update */
+			EDIT_UpdateScrollInfo(wnd, es);
 			EDIT_NOTIFY_PARENT(wnd, EN_VSCROLL, "EN_VSCROLL");
 		}
 		break;
 	case SB_ENDSCROLL:
+		TRACE("SB_ENDSCROLL\n");
+		break;
+	/*
+	 *	FIXME : the next two are undocumented !
+	 *	Are we doing the right thing ?
+	 *	At least Win 3.1 Notepad makes use of EM_GETTHUMB this way,
+	 *	although it's also a regular control message.
+	 */
+	case EM_GETTHUMB: /* this one is used by NT notepad */
+	case EM_GETTHUMB16:
+	{
+		LRESULT ret;
+		if(wnd->dwStyle & WS_VSCROLL)
+		    ret = GetScrollPos(wnd->hwndSelf, SB_VERT);
+		else
+		{
+		    /* Assume default scroll range 0-100 */
+		    INT vlc = (es->format_rect.bottom - es->format_rect.top) / es->line_height;
+		    ret = es->line_count ? es->y_offset * 100 / (es->line_count - vlc) : 0;
+		}
+		TRACE("EM_GETTHUMB: returning %ld\n", ret);
+		return ret;
+	}
+	case EM_LINESCROLL16:
+		TRACE("EM_LINESCROLL16 %d\n", pos);
+		dy = pos;
 		break;
 
 	default:
-		ERR("undocumented WM_VSCROLL action %d, please report\n",
-                    action);
+		ERR("undocumented WM_VSCROLL action %d (0x%04x), please report\n",
+                    action, action);
 		return 0;
 	}
 	if (dy)
