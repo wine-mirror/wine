@@ -375,11 +375,12 @@ void StorageImpl_Destroy(
 	    StorageImpl* This);
 
 HRESULT StorageImpl_Construct(
-	    StorageImpl* This,
-	    HANDLE       hFile,
-      ILockBytes*  pLkbyt,
-	    DWORD        openFlags,
-      BOOL         fileBased);
+            StorageImpl* This,
+            HANDLE       hFile,
+            ILockBytes*  pLkbyt,
+            DWORD        openFlags,
+            BOOL         fileBased,
+            BOOL         fileCreate);
 
 BOOL StorageImpl_ReadBigBlock(
             StorageImpl* This,
@@ -605,6 +606,11 @@ struct StgStreamImpl
   StorageBaseImpl* parentStorage;
 
   /*
+   * Access mode of this stream.
+   */
+  DWORD grfMode;
+
+  /*
    * Index of the property that owns (points to) this stream.
    */
   ULONG              ownerProperty;
@@ -626,7 +632,6 @@ struct StgStreamImpl
    */
   BlockChainStream*      bigBlockChain;
   SmallBlockChainStream* smallBlockChain;
-  DWORD grfMode; 
 };
 
 /*
@@ -634,7 +639,8 @@ struct StgStreamImpl
  */
 StgStreamImpl* StgStreamImpl_Construct(
 		StorageBaseImpl* parentStorage,
-		ULONG              ownerProperty);
+    DWORD            grfMode,
+    ULONG            ownerProperty);
 
 void StgStreamImpl_Destroy(
                 StgStreamImpl* This);

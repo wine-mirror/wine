@@ -105,6 +105,24 @@ HRESULT     WINAPI OleCreateDefaultHandler(REFCLSID  clsid,
 					   LPVOID*   ppvObj);
 HRESULT     WINAPI CreateOleAdviseHolder (LPOLEADVISEHOLDER *ppOAHolder);
 
+/*
+ *  OLE version conversion declarations
+ */
+
+
+typedef struct _OLESTREAM* LPOLESTREAM;
+typedef struct _OLESTREAMVTBL {
+	DWORD	(CALLBACK *Get)(LPOLESTREAM,LPSTR,DWORD);
+	DWORD	(CALLBACK *Put)(LPOLESTREAM,LPSTR,DWORD);
+} OLESTREAMVTBL;
+typedef OLESTREAMVTBL*	LPOLESTREAMVTBL;
+typedef struct _OLESTREAM {
+	LPOLESTREAMVTBL	lpstbl;
+} OLESTREAM;
+
+HRESULT     WINAPI OleConvertOLESTREAMToIStorage( LPOLESTREAM lpolestream, LPSTORAGE pstg, const DVTARGETDEVICE* ptd);
+HRESULT     WINAPI OleConvertIStorageToOLESTREAM( LPSTORAGE pstg, LPOLESTREAM lpolestream);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
