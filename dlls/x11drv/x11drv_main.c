@@ -147,17 +147,21 @@ static void create_desktop( const char *geometry )
     XVisualInfo *vi = NULL;
 #ifdef HAVE_OPENGL
     BOOL dblbuf_visual;
-
-    /* Get in wine.ini if the desktop window should have a double-buffered visual or not */
-    dblbuf_visual = PROFILE_GetWineIniBool( "x11drv", "DesktopDoubleBuffered", 0 );
-    if (dblbuf_visual)  {
-      int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
-      
-      ENTER_GL();
-      vi = glXChooseVisual(display, DefaultScreen(display), dblBuf);
-      win_attr.colormap = XCreateColormap(display, RootWindow(display,vi->screen),
-                                         vi->visual, AllocNone);
-      LEAVE_GL();
+    int err_base, evt_base;
+    
+    /* Get in wine.ini if the desktop window should have a double-buffered visual or not.
+       But first, test if OpenGL is even supported on the display ! */
+    if (glXQueryExtension(display, &err_base, &evt_base) == True) {
+      dblbuf_visual = PROFILE_GetWineIniBool( "x11drv", "DesktopDoubleBuffered", 0 );
+      if (dblbuf_visual)  {
+	int dblBuf[]={GLX_RGBA,GLX_DEPTH_SIZE,16,GLX_DOUBLEBUFFER,None};
+	
+	ENTER_GL();
+	vi = glXChooseVisual(display, DefaultScreen(display), dblBuf);
+	win_attr.colormap = XCreateColormap(display, RootWindow(display,vi->screen),
+					    vi->visual, AllocNone);
+	LEAVE_GL();
+      }
     }
 #endif /* HAVE_OPENGL */    
 
