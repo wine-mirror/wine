@@ -1983,7 +1983,7 @@ INT         WINAPI lstrlenW(LPCWSTR);
 
 /* string functions without the exception handler */
 
-extern inline LPWSTR lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
+extern inline LPWSTR WINAPI lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
 {
     LPWSTR d = dst;
     LPCWSTR s = src;
@@ -1998,7 +1998,7 @@ extern inline LPWSTR lstrcpynW( LPWSTR dst, LPCWSTR src, INT n )
     return dst;
 }
 
-extern inline LPSTR lstrcpynA( LPSTR dst, LPCSTR src, INT n )
+extern inline LPSTR WINAPI lstrcpynA( LPSTR dst, LPCSTR src, INT n )
 {
     LPSTR d = dst;
     LPCSTR s = src;
@@ -2013,31 +2013,31 @@ extern inline LPSTR lstrcpynA( LPSTR dst, LPCSTR src, INT n )
     return dst;
 }
 
-extern inline INT lstrlenW( LPCWSTR str )
+extern inline INT WINAPI lstrlenW( LPCWSTR str )
 {
     const WCHAR *s = str;
     while (*s) s++;
     return s - str;
 }
 
-extern inline INT lstrlenA( LPCSTR str )
+extern inline INT WINAPI lstrlenA( LPCSTR str )
 {
     return strlen( str );
 }
 
-extern inline LPWSTR lstrcpyW( LPWSTR dst, LPCWSTR src )
+extern inline LPWSTR WINAPI lstrcpyW( LPWSTR dst, LPCWSTR src )
 {
     WCHAR *p = dst;
     while ((*p++ = *src++));
     return dst;
 }
 
-extern inline LPSTR lstrcpyA( LPSTR dst, LPCSTR src )
+extern inline LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
 {
     return strcpy( dst, src );
 }
 
-extern inline LPWSTR lstrcatW( LPWSTR dst, LPCWSTR src )
+extern inline LPWSTR WINAPI lstrcatW( LPWSTR dst, LPCWSTR src )
 {
     WCHAR *p = dst;
     while (*p) p++;
@@ -2045,7 +2045,7 @@ extern inline LPWSTR lstrcatW( LPWSTR dst, LPCWSTR src )
     return dst;
 }
 
-extern inline LPSTR lstrcatA( LPSTR dst, LPCSTR src )
+extern inline LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
 {
     return strcat( dst, src );
 }
