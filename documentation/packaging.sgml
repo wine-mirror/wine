@@ -3,7 +3,7 @@
   
     <chapter id="pkg-preface"> <title>Preface</title>
 
-        <sect1 id="Authors"> <title>Authors</title>
+        <sect1 id="pkg-authors"> <title>Authors</title>
 
         <para>
           Written by &name-marcus-meissner; <email>&email-marcus-meissner;</email>
@@ -11,7 +11,7 @@
         </para>
     </sect1>
 
-    <sect1 id="Date"> <title>Document Revision Date</title>
+    <sect1 id="pkg-date"> <title>Document Revision Date</title>
 
 
       <para>
@@ -24,7 +24,7 @@
 
       </sect1>
 
-    <sect1 id="Terms"> <title>Terms used in this document</title>
+    <sect1 id="pkg-terms"> <title>Terms used in this document</title>
 
         <para>There are several terms and paths used in this
         document as place holders for configurable values.
@@ -116,7 +116,7 @@
         that have been considered and their rationales.
     </para>
 
-        <sect1 id="Goals"> <title>Goals</title>
+        <sect1 id="pkg-goals"> <title>Goals</title>
         <para>
             An installation from a Wine pacakage should:
         </para>
@@ -194,7 +194,7 @@
 
         </sect1>
 
-        <sect1 id="Requirements"> <title>Requirements</title>
+        <sect1 id="pkg-requirements"> <title>Requirements</title>
       <para>
         Successfully installing Wine requires:
       </para>
@@ -268,13 +268,13 @@
 
 
 
-    <chapter id="Components"><title>Wine Components</title>
+    <chapter id="pkg-components"><title>Wine Components</title>
 
     <para>
         This section lists all files that pertain to Wine.
     </para>
 
-        <sect1 id=static><title>Wine Static and Shareable Files</title>
+        <sect1 id="pkg-static"><title>Wine Static and Shareable Files</title>
 
         <para>
         At the time of this writing, the following components
@@ -646,7 +646,7 @@
         </sect1>
 
 
-        <sect1 id=nonstatic><title>Dynamic Wine Files</title>
+        <sect1 id="pkg-nonstatic"><title>Dynamic Wine Files</title>
 
         <para>
         Wine also generates and depends on a number of dynamic
@@ -700,7 +700,7 @@
                     </para>
                     <para>
                     This debate is addressed more completely
-                    below, in <link linkend=strategy endterm=strategy.id></link>.
+                    below, in <link linkend=pkg-strategy endterm=strategy.id></link>.
                     </para>
                     </listitem>
                   </varlistentry>
@@ -860,7 +860,7 @@
 
         </sect1>
 
-        <sect1 id=winpartition><title>Important Files from a Windows Partition</title>
+        <sect1 id="pkg-winpartition"><title>Important Files from a Windows Partition</title>
         <para>
         Wine has the ability to use files from an installation of the
         actual Microsoft Windows operating system.  Generally these
@@ -924,7 +924,7 @@
 
     </chapter>
 
-    <chapter id=strategy><title id=strategy.id>Packaging Strategies</title>
+    <chapter id="pkg-strategy"><title id=strategy.id>Packaging Strategies</title>
 
         <para>
         There has recently been a lot of discussion on the Wine
@@ -939,7 +939,7 @@
         advocated on the mailing list.
         </para>
 
-        <sect1 id=whatfiles><title>Distribution of Wine into packages</title>
+        <sect1 id="pkg-whatfiles"><title>Distribution of Wine into packages</title>
         <para>
         The most basic question to ask is given the Wine CVS tree,
         what physical files are you, the packager, going to produce?
@@ -954,7 +954,7 @@
         </para>
         </sect1>
 
-        <sect1 id=wherefiles><title>Where to install files</title>
+        <sect1 id="pkg-wherefiles"><title>Where to install files</title>
         <para>
         This question is not really contested.  It will vary
         by distribution, and is really up to the packager.
@@ -1019,7 +1019,7 @@
         
         </sect1>
 
-        <sect1 id=whattomake><title>What files to create</title>
+        <sect1 id="pkg-whattomake"><title>What files to create</title>
         <para>
         After installing the static and shareable files, the next
         question the packager needs to ask is how much dynamic
@@ -1114,7 +1114,7 @@
         </sect1>
 
 
-        <sect1 id=wineconf><title>What to put into the wine config file</title>
+        <sect1 id="pkg-wineconf"><title>What to put into the wine config file</title>
         <para>
         The next hard question is what the Wine config should look like.
         The current best practices seems to involve using drives from M to Z.
@@ -1128,9 +1128,9 @@
 
 
 
-    <chapter id="pkg-Implementation"> <title>Implementation</title>
+    <chapter id="pkg-implementation"> <title>Implementation</title>
 
-    <sect1 id=OpenLinux><title>OpenLinux Sample</title>
+    <sect1 id="pkg-openlinux"><title>OpenLinux Sample</title>
 
           <orderedlist inheritnum="inherit">
             <listitem>
@@ -1754,7 +1754,7 @@ Startup=
 
 </chapter>
 
-<chapter id=todo><Title>Work to be done</title>
+<chapter id="pkg-todo"><Title>Work to be done</title>
 
     <para>
     In preparing this document, it became clear that there were
@@ -1864,6 +1864,6 @@ Startup=
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("wine-doc.sgml" "set" "book" "chapter" "")
+sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
 End:
 -->
