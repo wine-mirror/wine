@@ -25,7 +25,7 @@
 @ stdcall CreateUrlCacheEntryA(str long str ptr long)
 @ stub CreateUrlCacheEntryW
 @ stdcall CreateUrlCacheGroup(long ptr)
-@ stub DeleteIE3Cache
+@ stdcall DeleteIE3Cache(long long str long)
 @ stub DeleteUrlCacheContainerA
 @ stub DeleteUrlCacheContainerW
 @ stdcall DeleteUrlCacheEntry(str) DeleteUrlCacheEntryA

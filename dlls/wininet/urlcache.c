@@ -2125,3 +2125,13 @@ BOOL WINAPI GetUrlCacheConfigInfoA(LPDWORD CacheInfo, LPDWORD size, DWORD bitmas
     INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
     return FALSE;
 }
+
+/***********************************************************************
+ *           DeleteIE3Cache (WININET.@)
+ *
+ */
+DWORD WINAPI DeleteIE3Cache(DWORD long1, DWORD long2, LPSTR strbufA, DWORD long3)
+{
+    FIXME("(%ld, %ld, %s, %ld)\n", long1, long2, debugstr_a(strbufA), long3);
+    return 0;
+}
