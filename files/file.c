@@ -434,7 +434,8 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
         if(!strncasecmp(&filename[4],"pipe\\",5))
         {
             TRACE("Opening a pipe: %s\n",filename);
-            return FILE_OpenPipe(filename,access);
+            ret = FILE_OpenPipe(filename,access);
+            goto done;
         }
         else if (!DOSFS_GetDevice( filename ))
         {
