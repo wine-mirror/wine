@@ -448,7 +448,7 @@ typedef struct _PRINTER_INFO_6 {
 } PRINTER_INFO_6, *PPRINTER_INFO_6, *LPPRINTER_INFO_6;
 
 typedef struct _JOB_INFO_1A {
-  DWORD JobID;
+  DWORD JobId;
   LPSTR pPrinterName;
   LPSTR pMachineName;
   LPSTR pUserName;
@@ -464,7 +464,7 @@ typedef struct _JOB_INFO_1A {
 } JOB_INFO_1A, *PJOB_INFO_1A, *LPJOB_INFO_1A;
 
 typedef struct _JOB_INFO_1W {
-  DWORD JobID;
+  DWORD JobId;
   LPWSTR pPrinterName;
   LPWSTR pMachineName;
   LPWSTR pUserName;
@@ -484,7 +484,7 @@ DECL_WINELIB_TYPE_AW(PJOB_INFO_1)
 DECL_WINELIB_TYPE_AW(LPJOB_INFO_1)
 
 typedef struct _JOB_INFO_2A {
-  DWORD JobID;
+  DWORD JobId;
   LPSTR pPrinterName;
   LPSTR pMachineName;
   LPSTR pUserName;
@@ -510,7 +510,7 @@ typedef struct _JOB_INFO_2A {
 } JOB_INFO_2A, *PJOB_INFO_2A, *LPJOB_INFO_2A;
 
 typedef struct _JOB_INFO_2W {
-  DWORD JobID;
+  DWORD JobId;
   LPWSTR pPrinterName;
   LPWSTR pMachineName;
   LPWSTR pUserName;
@@ -540,19 +540,19 @@ DECL_WINELIB_TYPE_AW(PJOB_INFO_2)
 DECL_WINELIB_TYPE_AW(LPJOB_INFO_2)
 
 typedef struct _JOB_INFO_3 {
-  DWORD JobID;
-  DWORD NextJobID;
+  DWORD JobId;
+  DWORD NextJobId;
   DWORD Reserved;
 } JOB_INFO_3, *PJOB_INFO_3, *LPJOB_INFO_3;
 
 typedef struct _ADDJOB_INFO_1A {
   LPSTR Path;
-  DWORD JobID;
+  DWORD JobId;
 } ADDJOB_INFO_1A, *PADDJOB_INFO_1A, *LPADDJOB_INFO_1A;
 
 typedef struct _ADDJOB_INFO_1W {
   LPWSTR Path;
-  DWORD  JobID;
+  DWORD  JobId;
 } ADDJOB_INFO_1W, *PADDJOB_INFO_1W, *LPADDJOB_INFO_1W;
 
 DECL_WINELIB_TYPE_AW(ADDJOB_INFO_1)
@@ -580,7 +580,7 @@ typedef struct _DOC_INFO_2A {
   LPSTR pOutputFile;
   LPSTR pDatatype;
   DWORD dwMode;
-  DWORD JobID;
+  DWORD JobId;
 } DOC_INFO_2A, *PDOC_INFO_2A, *LPDOC_INFO_2A;
 
 typedef struct _DOC_INFO_2W {
@@ -588,7 +588,7 @@ typedef struct _DOC_INFO_2W {
   LPWSTR pOutputFile;
   LPWSTR pDatatype;
   DWORD dwMode;
-  DWORD JobID;
+  DWORD JobId;
 } DOC_INFO_2W, *PDOC_INFO_2W, *LPDOC_INFO_2W;
 
 DECL_WINELIB_TYPE_AW(DOC_INFO_2)
