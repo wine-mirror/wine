@@ -277,11 +277,26 @@ NTSTATUS WINAPI NtQueryInformationToken(
         break;
     default:
         {
-            ERR("Unhandled Token Information class!\n");
+            ERR("Unhandled Token Information class %ld!\n", tokeninfoclass);
             return STATUS_NOT_IMPLEMENTED;
         }
     }
     return 0;
+}
+
+/******************************************************************************
+*  NtSetInformationToken		[NTDLL.@]
+*  ZwSetInformationToken		[NTDLL.@]
+*/
+NTSTATUS WINAPI NtSetInformationToken(
+        HANDLE TokenHandle,
+        TOKEN_INFORMATION_CLASS TokenInformationClass,
+        PVOID TokenInformation,
+        ULONG TokenInformationLength)
+{
+    FIXME("%p %d %p %lu\n", TokenHandle, TokenInformationClass,
+          TokenInformation, TokenInformationLength);
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 /*
@@ -672,11 +687,25 @@ NTSTATUS WINAPI NtQuerySystemInformation(
                 srqi->RegistryQuotaAllowed = 0x2000000;
                 srqi->RegistryQuotaUsed = 0x200000;
                 srqi->Reserved1 = (void*)0x200000;
-                if (ResultLength) *ResultLength = sizeof(*srqi);
+                len = sizeof(*srqi);
             }
             else ret = STATUS_INFO_LENGTH_MISMATCH;
         }
 	break;
+
+    case SystemKernelDebuggerInformation:
+        {
+            PSYSTEM_KERNEL_DEBUGGER_INFORMATION pkdi;
+            if( Length >= sizeof(*pkdi))
+            {
+                pkdi = SystemInformation;
+                pkdi->DebuggerEnabled = FALSE;
+                pkdi->DebuggerNotPresent = TRUE;
+                len = sizeof(*pkdi);
+            }
+            else ret = STATUS_INFO_LENGTH_MISMATCH;
+        }
+        break;
 
     default:
 	FIXME("(0x%08x,%p,0x%08lx,%p) stub\n",
