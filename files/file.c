@@ -2397,7 +2397,8 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
 
     if (!*path)
     {
-        ERR("Empty path passed\n");
+        WARN("Empty path passed\n");
+        SetLastError( ERROR_FILE_NOT_FOUND );
         return FALSE;
     }
     if (DOSFS_GetDevice( path ))
