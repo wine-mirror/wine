@@ -1913,6 +1913,26 @@ static inline PVOID WINAPI InterlockedExchangePointer( PVOID *dest, PVOID val )
 /* If this is not declared, we cannot compile many sources written with C++. */
 int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
 
+/* Streams */
+#define BACKUP_INVALID        0
+#define BACKUP_DATA           1
+#define BACKUP_EA_DATA        2
+#define BACKUP_SECURITY_DATA  3
+#define BACKUP_ALTERNATE_DATA 4
+#define BACKUP_LINK           5
+#define BACKUP_PROPERTY_DATA  6
+#define BACKUP_OBJECT_ID      7
+#define BACKUP_REPARSE_DATA   8
+#define BACKUP_SPARSE_BLOCK   9
+
+typedef struct _WIN32_STREAM_ID {
+	DWORD   dwStreamID;
+	DWORD   dwStreamAttributes;
+	LARGE_INTEGER Size;
+	DWORD   dwStreamNameSize;
+	WCHAR   cStreamName[ANYSIZE_ARRAY];
+} WIN32_STREAM_ID, *LPWIN32_STREAM_ID;
+
 #ifdef __cplusplus
 }
 #endif
