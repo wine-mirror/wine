@@ -55,7 +55,7 @@ typedef struct
 {
     LONG             getVersion16; 
     LONG             getVersion32;
-    OSVERSIONINFOA getVersionEx;
+    OSVERSIONINFOEXA getVersionEx;
 } VERSION_DATA;
 
 /* FIXME: compare values below with original and fix */
@@ -67,7 +67,8 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
 	MAKELONG( 0x0003, 0x8000 ),
 	{
             sizeof(OSVERSIONINFOA), 2, 0, 0,
-            VER_PLATFORM_WIN32s, "Win32s 1.3" 
+            VER_PLATFORM_WIN32s, "Win32s 1.3",
+	    0, 0, 0, 0, 0
 	}
     },
     /* WIN30 FIXME: verify values */
@@ -76,7 +77,8 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
 	MAKELONG( 0x0003, 0x8000 ),
 	{
             sizeof(OSVERSIONINFOA), 3, 0, 0,
-            VER_PLATFORM_WIN32s, "Win32s 1.3" 
+            VER_PLATFORM_WIN32s, "Win32s 1.3",
+	    0, 0, 0, 0, 0
 	}
     },
     /* WIN31 */
@@ -85,7 +87,8 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
 	MAKELONG( 0x0a03, 0x8000 ),
 	{
             sizeof(OSVERSIONINFOA), 3, 10, 0,
-            VER_PLATFORM_WIN32s, "Win32s 1.3" 
+            VER_PLATFORM_WIN32s, "Win32s 1.3",
+	    0, 0, 0, 0, 0
 	}
     },
     /* WIN95 */
@@ -103,7 +106,8 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
              * http://support.microsoft.com/support/kb/articles/q158/2/38.asp
              */
             sizeof(OSVERSIONINFOA), 4, 0, 0x40003B6,
-            VER_PLATFORM_WIN32_WINDOWS, ""
+            VER_PLATFORM_WIN32_WINDOWS, "",
+	    0, 0, 0, 0, 0
         }
     },
     /* WIN98 */
@@ -115,7 +119,8 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
              * Win98SE: 4, 10, 0x40A08AE, " A "
              */
             sizeof(OSVERSIONINFOA), 4, 10, 0x40A07CE,
-            VER_PLATFORM_WIN32_WINDOWS, " "
+            VER_PLATFORM_WIN32_WINDOWS, " ",
+	    0, 0, 0, 0, 0
         }
     },
     /* WINME */
@@ -124,7 +129,8 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
         0xC0005A04,
         {
             sizeof(OSVERSIONINFOA), 4, 90, 0x45A0BB8,
-            VER_PLATFORM_WIN32_WINDOWS, " "
+            VER_PLATFORM_WIN32_WINDOWS, " ",
+	    0, 0, 0, 0, 0
         }
     },
     /* NT351 */
@@ -133,7 +139,8 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
         0x04213303,
         {
             sizeof(OSVERSIONINFOA), 3, 51, 0x421,
-            VER_PLATFORM_WIN32_NT, "Service Pack 2"
+            VER_PLATFORM_WIN32_NT, "Service Pack 2",
+	    0, 0, 0, 0, 0
         }
     },
     /* NT40 */
@@ -142,7 +149,8 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
         0x05650004,
         {
             sizeof(OSVERSIONINFOA), 4, 0, 0x565,
-            VER_PLATFORM_WIN32_NT, "Service Pack 6"
+            VER_PLATFORM_WIN32_NT, "Service Pack 6",
+	    6, 0, 0, VER_NT_WORKSTATION, 0
         }
     },
     /* NT2K */
@@ -151,7 +159,8 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
         0x08930005,
         {
             sizeof(OSVERSIONINFOA), 5, 0, 0x893,
-            VER_PLATFORM_WIN32_NT, "Service Pack 2"
+            VER_PLATFORM_WIN32_NT, "Service Pack 2",
+	    2, 0, 0, VER_NT_WORKSTATION, 30 /* FIXME: Great, a reserved field with a value! */
         }
     },
     /* WINXP */
@@ -160,7 +169,8 @@ static VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
         0x0A280105,
         {
             sizeof(OSVERSIONINFOA), 5, 1, 0xA28,
-            VER_PLATFORM_WIN32_NT, ""
+            VER_PLATFORM_WIN32_NT, "",
+	    0, 0, 0, VER_NT_WORKSTATION, 0 /* FIXME: Verify last 5 values */
         }
     }
 };
@@ -549,10 +559,14 @@ BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16 *v)
 BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
 {
     WINDOWS_VERSION ver = VERSION_GetVersion();
-    if (v->dwOSVersionInfoSize < sizeof(OSVERSIONINFOA))
+    LPOSVERSIONINFOEXA vex;
+
+    if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFOA) &&
+	v->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXA))
     {
-        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d)\n",
-                        v->dwOSVersionInfoSize, sizeof(OSVERSIONINFOA));
+        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d or %d)\n",
+                        v->dwOSVersionInfoSize, sizeof(OSVERSIONINFOA),
+			sizeof(OSVERSIONINFOEXA));
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
@@ -561,6 +575,13 @@ BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
     v->dwBuildNumber  = VersionData[ver].getVersionEx.dwBuildNumber;
     v->dwPlatformId   = VersionData[ver].getVersionEx.dwPlatformId;
     strcpy( v->szCSDVersion, VersionData[ver].getVersionEx.szCSDVersion );
+    if(v->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXA)) {
+	vex = (LPOSVERSIONINFOEXA) v;
+	vex->wServicePackMajor = VersionData[ver].getVersionEx.wServicePackMajor;
+	vex->wServicePackMinor = VersionData[ver].getVersionEx.wServicePackMinor;
+	vex->wSuiteMask = VersionData[ver].getVersionEx.wSuiteMask;
+	vex->wProductType = VersionData[ver].getVersionEx.wProductType;
+    }
     return TRUE;
 }
 
@@ -571,11 +592,14 @@ BOOL WINAPI GetVersionExA(OSVERSIONINFOA *v)
 BOOL WINAPI GetVersionExW(OSVERSIONINFOW *v)
 {
     WINDOWS_VERSION ver = VERSION_GetVersion();
+    LPOSVERSIONINFOEXW vex;
 
-    if (v->dwOSVersionInfoSize < sizeof(OSVERSIONINFOW))
+    if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFOW) &&
+	v->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXW))
     {
-        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d)\n",
-			v->dwOSVersionInfoSize, sizeof(OSVERSIONINFOW));
+        WARN("wrong OSVERSIONINFO size from app (got: %ld, expected: %d or %d)\n",
+			v->dwOSVersionInfoSize, sizeof(OSVERSIONINFOW),
+			sizeof(OSVERSIONINFOEXW));
         SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
@@ -585,19 +609,276 @@ BOOL WINAPI GetVersionExW(OSVERSIONINFOW *v)
     v->dwPlatformId   = VersionData[ver].getVersionEx.dwPlatformId;
     MultiByteToWideChar( CP_ACP, 0, VersionData[ver].getVersionEx.szCSDVersion, -1,
                          v->szCSDVersion, sizeof(v->szCSDVersion)/sizeof(WCHAR) );
+    if(v->dwOSVersionInfoSize == sizeof(OSVERSIONINFOEXW)) {
+	vex = (LPOSVERSIONINFOEXW) v;
+	vex->wServicePackMajor = VersionData[ver].getVersionEx.wServicePackMajor;
+	vex->wServicePackMinor = VersionData[ver].getVersionEx.wServicePackMinor;
+	vex->wSuiteMask = VersionData[ver].getVersionEx.wSuiteMask;
+	vex->wProductType = VersionData[ver].getVersionEx.wProductType;
+    }
     return TRUE;
 }
 
+
+/******************************************************************************
+ *        VerifyVersionInfoA   (KERNEL32.@)
+ */
+BOOL WINAPI VerifyVersionInfoA( LPOSVERSIONINFOEXA lpVersionInfo, DWORD dwTypeMask,
+                                DWORDLONG dwlConditionMask)
+{
+    OSVERSIONINFOEXW verW;
+
+    verW.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
+    verW.dwMajorVersion = lpVersionInfo->dwMajorVersion;
+    verW.dwMinorVersion = lpVersionInfo->dwMinorVersion;
+    verW.dwBuildNumber = lpVersionInfo->dwBuildNumber;
+    verW.dwPlatformId = lpVersionInfo->dwPlatformId;
+    verW.wServicePackMajor = lpVersionInfo->wServicePackMajor;
+    verW.wServicePackMinor = lpVersionInfo->wServicePackMinor;
+    verW.wSuiteMask = lpVersionInfo->wSuiteMask;
+    verW.wProductType = lpVersionInfo->wProductType;
+    verW.wReserved = lpVersionInfo->wReserved;
+
+    return VerifyVersionInfoW(&verW, dwTypeMask, dwlConditionMask);
+}
 
 
 /******************************************************************************
  *        VerifyVersionInfoW   (KERNEL32.@)
  */
-BOOL WINAPI VerifyVersionInfoW( /* LPOSVERSIONINFOEXW */ LPVOID lpVersionInfo, DWORD dwTypeMask,
+BOOL WINAPI VerifyVersionInfoW( LPOSVERSIONINFOEXW lpVersionInfo, DWORD dwTypeMask,
                                 DWORDLONG dwlConditionMask)
 {
-    FIXME("%p %lu %llx\n", lpVersionInfo, dwTypeMask, dwlConditionMask);
-    return TRUE;
+    OSVERSIONINFOEXW ver;
+    BOOL res, error_set;
+
+    FIXME("(%p,%lu,%llx): Not all cases correctly implemented yet\n", lpVersionInfo, dwTypeMask, dwlConditionMask);
+    /* FIXME:
+	- Check the following special case on Windows (various versions):
+	  o lp->wSuiteMask == 0 and ver.wSuiteMask != 0 and VER_AND/VER_OR
+	  o lp->dwOSVersionInfoSize != sizeof(OSVERSIONINFOEXW)
+	- MSDN talks about some tests being impossible. Check what really happens.
+     */
+
+    ver.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEXW);
+    if(!GetVersionExW((LPOSVERSIONINFOW) &ver))
+	return FALSE;
+
+    res = TRUE;
+    error_set = FALSE;
+    if(!(dwTypeMask && dwlConditionMask)) {
+	res = FALSE;
+	SetLastError(ERROR_BAD_ARGUMENTS);
+	error_set = TRUE;
+    }
+    if(dwTypeMask & VER_PRODUCT_TYPE)
+	switch(dwlConditionMask >> 7*3 & 0x07) {
+	    case VER_EQUAL:
+		if(ver.wProductType != lpVersionInfo->wProductType)
+		    res = FALSE;
+		break;
+	    case VER_GREATER:
+		if(ver.wProductType <= lpVersionInfo->wProductType)
+		    res = FALSE;
+		break;
+	    case VER_GREATER_EQUAL:
+		if(ver.wProductType < lpVersionInfo->wProductType)
+		    res = FALSE;
+		break;
+	    case VER_LESS:
+		if(ver.wProductType >= lpVersionInfo->wProductType)
+		    res = FALSE;
+		break;
+	    case VER_LESS_EQUAL:
+		if(ver.wProductType > lpVersionInfo->wProductType)
+		    res = FALSE;
+		break;
+	    default:
+	        res = FALSE;
+		SetLastError(ERROR_BAD_ARGUMENTS);
+		error_set = TRUE;
+	}
+    if(dwTypeMask & VER_SUITENAME && res)
+	switch(dwlConditionMask >> 6*3 & 0x07) {
+	    case VER_AND:
+		if((lpVersionInfo->wSuiteMask & ver.wSuiteMask) != lpVersionInfo->wSuiteMask)
+		    res = FALSE;
+		break;
+	    case VER_OR:
+		if(!(lpVersionInfo->wSuiteMask & ver.wSuiteMask) && lpVersionInfo->wSuiteMask)
+		    res = FALSE;
+		break;
+	    default:
+	        res = FALSE;
+		SetLastError(ERROR_BAD_ARGUMENTS);
+		error_set = TRUE;
+	}
+    if(dwTypeMask & VER_PLATFORMID && res)
+	switch(dwlConditionMask >> 3*3 & 0x07) {
+	    case VER_EQUAL:
+		if(ver.dwPlatformId != lpVersionInfo->dwPlatformId)
+		    res = FALSE;
+		break;
+	    case VER_GREATER:
+		if(ver.dwPlatformId <= lpVersionInfo->dwPlatformId)
+		    res = FALSE;
+		break;
+	    case VER_GREATER_EQUAL:
+		if(ver.dwPlatformId < lpVersionInfo->dwPlatformId)
+		    res = FALSE;
+		break;
+	    case VER_LESS:
+		if(ver.dwPlatformId >= lpVersionInfo->dwPlatformId)
+		    res = FALSE;
+		break;
+	    case VER_LESS_EQUAL:
+		if(ver.dwPlatformId > lpVersionInfo->dwPlatformId)
+		    res = FALSE;
+		break;
+	    default:
+	        res = FALSE;
+		SetLastError(ERROR_BAD_ARGUMENTS);
+		error_set = TRUE;
+	}
+    if(dwTypeMask & VER_BUILDNUMBER && res)
+	switch(dwlConditionMask >> 2*3 & 0x07) {
+	    case VER_EQUAL:
+		if(ver.dwBuildNumber != lpVersionInfo->dwBuildNumber)
+		    res = FALSE;
+		break;
+	    case VER_GREATER:
+		if(ver.dwBuildNumber <= lpVersionInfo->dwBuildNumber)
+		    res = FALSE;
+		break;
+	    case VER_GREATER_EQUAL:
+		if(ver.dwBuildNumber < lpVersionInfo->dwBuildNumber)
+		    res = FALSE;
+		break;
+	    case VER_LESS:
+		if(ver.dwBuildNumber >= lpVersionInfo->dwBuildNumber)
+		    res = FALSE;
+		break;
+	    case VER_LESS_EQUAL:
+		if(ver.dwBuildNumber > lpVersionInfo->dwBuildNumber)
+		    res = FALSE;
+		break;
+	    default:
+	        res = FALSE;
+		SetLastError(ERROR_BAD_ARGUMENTS);
+		error_set = TRUE;
+	}
+    if(dwTypeMask & VER_MAJORVERSION && res)
+	switch(dwlConditionMask >> 1*3 & 0x07) {
+	    case VER_EQUAL:
+		if(ver.dwMajorVersion != lpVersionInfo->dwMajorVersion)
+		    res = FALSE;
+		break;
+	    case VER_GREATER:
+		if(ver.dwMajorVersion <= lpVersionInfo->dwMajorVersion)
+		    res = FALSE;
+		break;
+	    case VER_GREATER_EQUAL:
+		if(ver.dwMajorVersion < lpVersionInfo->dwMajorVersion)
+		    res = FALSE;
+		break;
+	    case VER_LESS:
+		if(ver.dwMajorVersion >= lpVersionInfo->dwMajorVersion)
+		    res = FALSE;
+		break;
+	    case VER_LESS_EQUAL:
+		if(ver.dwMajorVersion > lpVersionInfo->dwMajorVersion)
+		    res = FALSE;
+		break;
+	    default:
+	        res = FALSE;
+		SetLastError(ERROR_BAD_ARGUMENTS);
+		error_set = TRUE;
+	}
+    if(dwTypeMask & VER_MINORVERSION && res)
+	switch(dwlConditionMask >> 0*3 & 0x07) {
+	    case VER_EQUAL:
+		if(ver.dwMinorVersion != lpVersionInfo->dwMinorVersion)
+		    res = FALSE;
+		break;
+	    case VER_GREATER:
+		if(ver.dwMinorVersion <= lpVersionInfo->dwMinorVersion)
+		    res = FALSE;
+		break;
+	    case VER_GREATER_EQUAL:
+		if(ver.dwMinorVersion < lpVersionInfo->dwMinorVersion)
+		    res = FALSE;
+		break;
+	    case VER_LESS:
+		if(ver.dwMinorVersion >= lpVersionInfo->dwMinorVersion)
+		    res = FALSE;
+		break;
+	    case VER_LESS_EQUAL:
+		if(ver.dwMinorVersion > lpVersionInfo->dwMinorVersion)
+		    res = FALSE;
+		break;
+	    default:
+	        res = FALSE;
+		SetLastError(ERROR_BAD_ARGUMENTS);
+		error_set = TRUE;
+	}
+    if(dwTypeMask & VER_SERVICEPACKMAJOR && res)
+	switch(dwlConditionMask >> 5*3 & 0x07) {
+	    case VER_EQUAL:
+		if(ver.wServicePackMajor != lpVersionInfo->wServicePackMajor)
+		    res = FALSE;
+		break;
+	    case VER_GREATER:
+		if(ver.wServicePackMajor <= lpVersionInfo->wServicePackMajor)
+		    res = FALSE;
+		break;
+	    case VER_GREATER_EQUAL:
+		if(ver.wServicePackMajor < lpVersionInfo->wServicePackMajor)
+		    res = FALSE;
+		break;
+	    case VER_LESS:
+		if(ver.wServicePackMajor >= lpVersionInfo->wServicePackMajor)
+		    res = FALSE;
+		break;
+	    case VER_LESS_EQUAL:
+		if(ver.wServicePackMajor > lpVersionInfo->wServicePackMajor)
+		    res = FALSE;
+		break;
+	    default:
+	        res = FALSE;
+		SetLastError(ERROR_BAD_ARGUMENTS);
+		error_set = TRUE;
+	}
+    if(dwTypeMask & VER_SERVICEPACKMINOR && res)
+	switch(dwlConditionMask >> 4*3 & 0x07) {
+	    case VER_EQUAL:
+		if(ver.wServicePackMinor != lpVersionInfo->wServicePackMinor)
+		    res = FALSE;
+		break;
+	    case VER_GREATER:
+		if(ver.wServicePackMinor <= lpVersionInfo->wServicePackMinor)
+		    res = FALSE;
+		break;
+	    case VER_GREATER_EQUAL:
+		if(ver.wServicePackMinor < lpVersionInfo->wServicePackMinor)
+		    res = FALSE;
+		break;
+	    case VER_LESS:
+		if(ver.wServicePackMinor >= lpVersionInfo->wServicePackMinor)
+		    res = FALSE;
+		break;
+	    case VER_LESS_EQUAL:
+		if(ver.wServicePackMinor > lpVersionInfo->wServicePackMinor)
+		    res = FALSE;
+		break;
+	    default:
+	        res = FALSE;
+		SetLastError(ERROR_BAD_ARGUMENTS);
+		error_set = TRUE;
+	}
+
+    if(!(res || error_set))
+	SetLastError(ERROR_OLD_WIN_VERSION);
+    return res;
 }
 
 
