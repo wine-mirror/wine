@@ -1,12 +1,20 @@
 /* WCIPX.H
  */
 
-#ifndef _WINE_WCIPX_
-#define _WINE_WCIPX_
+#ifndef _WINE_WSIPX_
+#define _WINE_WSIPX_
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
+
+typedef struct ws_sockaddr_ipx
+{
+    short sa_family;
+    char sa_netnum[4];
+    char sa_nodenum[6];
+    unsigned short sa_socket;
+} SOCKADDR_IPX, *PSOCKADDR_IPX, *LPSOCKADDR_IPX;
 
 /*
  * constants
@@ -20,4 +28,4 @@ extern "C" {
 }      /* extern "C" */
 #endif /* defined(__cplusplus) */
 
-#endif /* _WINE_WCIPX_ */
+#endif /* _WINE_WSIPX_ */

@@ -91,6 +91,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winsock2.h"
+#include "wsipx.h"
 #include "wine/winsock16.h"
 #include "winnt.h"
 #include "heap.h"
@@ -153,6 +154,7 @@ static FARPROC blocking_hook;
 int WS_dup_he(struct hostent* p_he, int flag);
 int WS_dup_pe(struct protoent* p_pe, int flag);
 int WS_dup_se(struct servent* p_se, int flag);
+int WINAPI WSOCK32_getpeername(SOCKET s, ws_sockaddr *name, int *namelen);
 
 typedef void	WIN_hostent;
 typedef void	WIN_protoent;
@@ -736,10 +738,13 @@ static struct ws_protoent* check_buffer_pe(int size)
 
 /* ----------------------------------- i/o APIs */
 
-/***********************************************************************
- *		accept		(WS2_32.1)
- */
-static void WSOCK32_async_accept(SOCKET s, SOCKET as)
+#ifdef HAVE_IPX
+#define SUPPORTED_PF(pf) ((pf)==AF_INET || (pf)== AF_IPX)
+#else
+#define SUPPORTED_PF(pf) ((pf)==AF_INET)
+#endif
+
+static void ws2_async_accept(SOCKET s, SOCKET as)
 {
     int q;
     /* queue socket for WSAAsyncSelect */
@@ -756,12 +761,130 @@ static void WSOCK32_async_accept(SOCKET s, SOCKET as)
 
 /**********************************************************************/
 
-SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
-                                 INT *addrlen32)
+/* Returns the converted address if successful, NULL if it was too small to 
+ * start with. Note that the returned pointer may be the original pointer 
+ * if no conversion is necessary.
+ */
+const struct sockaddr* ws_sockaddr_ws2u(const ws_sockaddr* wsaddr, int wsaddrlen, int *uaddrlen)
 {
+    switch (wsaddr->sa_family)
+    {
 #ifdef HAVE_IPX
-    struct ws_sockaddr_ipx*  addr2 = (struct ws_sockaddr_ipx *)addr;
+    case WS_AF_IPX:
+        {
+            struct ws_sockaddr_ipx* wsipx=(struct ws_sockaddr_ipx*)wsaddr;
+            struct sockaddr_ipx* uipx;
+
+            if (wsaddrlen<sizeof(struct ws_sockaddr_ipx))
+                return NULL;
+
+            *uaddrlen=sizeof(struct sockaddr_ipx);
+            uipx=malloc(*uaddrlen);
+            uipx->sipx_family=AF_IPX;
+            uipx->sipx_port=wsipx->sa_socket;
+            /* copy sa_netnum and sa_nodenum to sipx_network and sipx_node 
+             * in one go
+             */
+            memcpy(&uipx->sipx_network,wsipx->sa_netnum,sizeof(uipx->sipx_network)+sizeof(uipx->sipx_node));
+            uipx->sipx_type=IPX_FRAME_NONE;
+            uipx->sipx_zero=0;
+            return (const struct sockaddr*)uipx;
+        }
 #endif
+
+    default:
+        if (wsaddrlen<sizeof(ws_sockaddr))
+            return NULL;
+
+        /* No conversion needed, just return the original address */
+        *uaddrlen=wsaddrlen;
+        return (const struct sockaddr*)wsaddr;
+    }
+    return NULL;
+}
+
+/* allocates a Unix sockaddr structure to receive the data */
+inline struct sockaddr* ws_sockaddr_alloc(const ws_sockaddr* wsaddr, int* wsaddrlen, int* uaddrlen)
+{
+    if (*wsaddrlen==0)
+        *uaddrlen=0;
+    else
+        *uaddrlen=max(sizeof(struct sockaddr),*wsaddrlen);
+    if (wsaddr==NULL)
+        return NULL;
+
+    return malloc(*uaddrlen);
+}
+
+/* Returns 0 if successful, -1 if the buffer is too small */
+int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, ws_sockaddr* wsaddr, int* wsaddrlen)
+{
+    int res;
+
+    switch(uaddr->sa_family)
+    {
+#ifdef HAVE_IPX
+    case AF_IPX:
+        {
+            struct sockaddr_ipx* uipx=(struct sockaddr_ipx*)uaddr;
+            struct ws_sockaddr_ipx* wsipx=(struct ws_sockaddr_ipx*)wsaddr;
+
+            res=-1;
+            switch (*wsaddrlen) /* how much can we copy? */
+            {
+            default:
+                res=0; /* enough */
+                wsipx->sa_socket=uipx->sipx_port;
+                /* fall through */
+            case 13:
+            case 12:
+                memcpy(wsipx->sa_nodenum,uipx->sipx_node,sizeof(wsipx->sa_nodenum));
+                /* fall through */
+            case 11:
+            case 10:
+            case 9:
+            case 8:
+            case 7:
+            case 6:
+                memcpy(wsipx->sa_netnum,&uipx->sipx_network,sizeof(wsipx->sa_netnum));
+                /* fall through */
+            case 5:
+            case 4:
+            case 3:
+            case 2:
+                wsipx->sa_family=AF_IPX;
+                /* fall through */
+            case 1:
+            case 0:
+                /* way too small */
+            }
+        }
+        break;
+#endif
+
+    default:
+        /* No conversion needed */
+        memcpy(wsaddr,uaddr,*wsaddrlen);
+        res=(*wsaddrlen<uaddrlen?-1:0);
+    }
+    return res;
+}
+
+/* to be called to free the memory allocated by ws_sockaddr_ws2u or 
+ * ws_sockaddr_alloc
+ */
+inline void ws_sockaddr_free(const struct sockaddr* uaddr, const ws_sockaddr* wsaddr)
+{
+    if (uaddr!=NULL && uaddr!=(const struct sockaddr*)wsaddr)
+        free((void*)uaddr);
+}
+
+/***********************************************************************
+ *		accept		(WS2_32.1)
+ */
+SOCKET WINAPI WSOCK32_accept(SOCKET s, ws_sockaddr *addr,
+                                 int *addrlen32)
+{
     int fd = _get_sock_fd(s);
 
     TRACE("socket %04x\n", (UINT16)s );
@@ -790,29 +913,15 @@ SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
 	if (as)
 	{
 	    unsigned omask = _get_sock_mask( s );
-	    int fd = _get_sock_fd( as );
-	    if( getpeername(fd, addr, addrlen32) != -1 )
-	    {
-#ifdef HAVE_IPX
-		if (addr && ((struct sockaddr_ipx *)addr)->sipx_family == AF_IPX) {
-		    addr = (struct sockaddr *)
-				malloc(addrlen32 ? *addrlen32 : sizeof(*addr2));
-		    memcpy(addr, addr2,
-				addrlen32 ? *addrlen32 : sizeof(*addr2));
-		    addr2->sipx_family = WS_AF_IPX;
-		    addr2->sipx_network = ((struct sockaddr_ipx *)addr)->sipx_network;
-		    addr2->sipx_port = ((struct sockaddr_ipx *)addr)->sipx_port;
-		    memcpy(addr2->sipx_node,
-			((struct sockaddr_ipx *)addr)->sipx_node, IPX_NODE_LEN);
-		    free(addr);
-		}
-#endif
-	    } else SetLastError(wsaErrno());
-	    close(fd);
+	    WSOCK32_getpeername(fd, addr, addrlen32);
 	    if (omask & FD_WINE_SERVEVENT)
-		WSOCK32_async_accept(s, as);
+		ws2_async_accept(s, as);
 	    return as;
 	}
+    }
+    else
+    {
+        SetLastError(WSAENOTSOCK);
     }
     return INVALID_SOCKET;
 }
@@ -820,7 +929,7 @@ SOCKET WINAPI WSOCK32_accept(SOCKET s, struct sockaddr *addr,
 /***********************************************************************
  *              accept		(WINSOCK.1)
  */
-SOCKET16 WINAPI WINSOCK_accept16(SOCKET16 s, struct sockaddr* addr,
+SOCKET16 WINAPI WINSOCK_accept16(SOCKET16 s, ws_sockaddr* addr,
                                  INT16* addrlen16 )
 {
     INT addrlen32 = addrlen16 ? *addrlen16 : 0;
@@ -832,80 +941,73 @@ SOCKET16 WINAPI WINSOCK_accept16(SOCKET16 s, struct sockaddr* addr,
 /***********************************************************************
  *		bind			(WS2_32.2)
  */
-INT WINAPI WSOCK32_bind(SOCKET s, struct sockaddr *name, INT namelen)
+int WINAPI WSOCK32_bind(SOCKET s, const ws_sockaddr* name, int namelen)
 {
-#ifdef HAVE_IPX
-    struct ws_sockaddr_ipx*  name2 = (struct ws_sockaddr_ipx *)name;
-#endif
     int fd = _get_sock_fd(s);
+    int res;
 
-    TRACE("socket %04x, ptr %8x, length %d\n", s, (int) name, namelen);
+    TRACE("socket %04x, ptr %p, length %d\n", s, name, namelen);
 #if DEBUG_SOCKADDR
     dump_sockaddr(name);
 #endif
 
+    res=SOCKET_ERROR;
     if (fd != -1)
     {
-      /* FIXME: what family does this really map to on the Unix side? */
-      if (name && ((struct ws_sockaddr_ipx *)name)->sipx_family == WS_AF_PUP)
-	((struct ws_sockaddr_ipx *)name)->sipx_family = AF_UNSPEC;
-#ifdef HAVE_IPX
-      else if (name &&
-		((struct ws_sockaddr_ipx *)name)->sipx_family == WS_AF_IPX)
-      {
-	name = (struct sockaddr *) malloc(sizeof(struct sockaddr_ipx));
-	memset(name, '\0', sizeof(struct sockaddr_ipx));
-	((struct sockaddr_ipx *)name)->sipx_family = AF_IPX;
-	((struct sockaddr_ipx *)name)->sipx_port = name2->sipx_port;
-	((struct sockaddr_ipx *)name)->sipx_network = name2->sipx_network;
-	memcpy(((struct sockaddr_ipx *)name)->sipx_node,
-		name2->sipx_node, IPX_NODE_LEN);
-	namelen = sizeof(struct sockaddr_ipx);
-      }
-#endif
-      if ( namelen >= sizeof(*name) ) 
-      {
-	if ( name && (((struct ws_sockaddr_in *)name)->sin_family == AF_INET
-#ifdef HAVE_IPX
-             || ((struct sockaddr_ipx *)name)->sipx_family == AF_IPX
-#endif
-           ))
+        if (!name || !SUPPORTED_PF(name->sa_family))
         {
-	  if ( bind(fd, name, namelen) < 0 ) 
-	  {
-	     int	loc_errno = errno;
-	     WARN("\tfailure - errno = %i\n", errno);
-	     errno = loc_errno;
-	     switch(errno)
-	     {
-		case EBADF: SetLastError(WSAENOTSOCK); break;
-		case EADDRNOTAVAIL: SetLastError(WSAEINVAL); break;
-		default: SetLastError(wsaErrno());break;
-	     }
-	  }
-	  else {
-#ifdef HAVE_IPX
-	    if (((struct sockaddr_ipx *)name)->sipx_family == AF_IPX)
-		free(name);
-#endif
-	    close(fd);
-	    return 0; /* success */
-	  }
-        } else SetLastError(WSAEAFNOSUPPORT);
-      } else SetLastError(WSAEFAULT);
-#ifdef HAVE_IPX
-      if (name && ((struct sockaddr_ipx *)name)->sipx_family == AF_IPX)
-	free(name);
-#endif
-      close(fd);
+            SetLastError(WSAEAFNOSUPPORT);
+        }
+        else
+        {
+            const struct sockaddr* uaddr;
+            int uaddrlen;
+
+            uaddr=ws_sockaddr_ws2u(name,namelen,&uaddrlen);
+            if (uaddr == NULL)
+            {
+                SetLastError(WSAEFAULT);
+            }
+            else
+            {
+                if (bind(fd, uaddr, uaddrlen) < 0)
+                {
+                    int loc_errno = errno;
+                    WARN("\tfailure - errno = %i\n", errno);
+                    errno = loc_errno;
+                    switch (errno)
+                    {
+                    case EBADF:
+                        SetLastError(WSAENOTSOCK);
+                        break;
+                    case EADDRNOTAVAIL:
+                        SetLastError(WSAEINVAL);
+                        break;
+                    default:
+                        SetLastError(wsaErrno());
+                        break;
+                    }
+                }
+                else
+                {
+                    res=0; /* success */
+                }
+                ws_sockaddr_free(uaddr,name);
+            }
+        }
+        close(fd);
     }
-    return SOCKET_ERROR;
+    else
+    {
+        SetLastError(WSAENOTSOCK);
+    }
+    return res;
 }
 
 /***********************************************************************
  *              bind			(WINSOCK.2)
  */
-INT16 WINAPI WINSOCK_bind16(SOCKET16 s, struct sockaddr *name, INT16 namelen)
+INT16 WINAPI WINSOCK_bind16(SOCKET16 s, ws_sockaddr *name, INT16 namelen)
 {
   return (INT16)WSOCK32_bind( s, name, namelen );
 }
@@ -931,89 +1033,85 @@ INT16 WINAPI WINSOCK_closesocket16(SOCKET16 s)
 /***********************************************************************
  *		connect		(WS2_32.4)
  */
-INT WINAPI WSOCK32_connect(SOCKET s, struct sockaddr *name, INT namelen)
+int WINAPI WSOCK32_connect(SOCKET s, const ws_sockaddr* name, int namelen)
 {
-#ifdef HAVE_IPX
-  struct ws_sockaddr_ipx*  name2 = (struct ws_sockaddr_ipx *)name;
-#endif
-  int fd = _get_sock_fd(s);
+    int fd = _get_sock_fd(s);
 
-  TRACE("socket %04x, ptr %8x, length %d\n", s, (int) name, namelen);
+    TRACE("socket %04x, ptr %p, length %d\n", s, name, namelen);
 #if DEBUG_SOCKADDR
-  dump_sockaddr(name);
+    dump_sockaddr(name);
 #endif
 
-  if (fd != -1)
-  {
-    if (name && ((struct ws_sockaddr_ipx *)name)->sipx_family == WS_AF_PUP)
-	((struct ws_sockaddr_ipx *)name)->sipx_family = AF_UNSPEC;
-#ifdef HAVE_IPX
-    else if (name && ((struct ws_sockaddr_ipx *)name)->sipx_family == WS_AF_IPX)
+    if (fd != -1)
     {
-	name = (struct sockaddr *) malloc(sizeof(struct sockaddr_ipx));
-	memset(name, '\0', sizeof(struct sockaddr_ipx));
-	((struct sockaddr_ipx *)name)->sipx_family = AF_IPX;
-	((struct sockaddr_ipx *)name)->sipx_port = name2->sipx_port;
-	((struct sockaddr_ipx *)name)->sipx_network = name2->sipx_network;
-	memcpy(((struct sockaddr_ipx *)name)->sipx_node,
-		name2->sipx_node, IPX_NODE_LEN);
-	namelen = sizeof(struct sockaddr_ipx);
-    }
-#endif
-    if (connect(fd, name, namelen) == 0) {
-	close(fd);
-	goto connect_success;
-    }
-    if (errno == EINPROGRESS)
-    {
-	/* tell wineserver that a connection is in progress */
-	_enable_event(s, FD_CONNECT|FD_READ|FD_WRITE,
-		      FD_CONNECT|FD_READ|FD_WRITE,
-		      FD_WINE_CONNECTED|FD_WINE_LISTENING);
-	if (_is_blocking(s))
-	{
-	    int result;
-	    /* block here */
-	    do_block(fd, 7);
-	    _sync_sock_state(s); /* let wineserver notice connection */
-	    /* retrieve any error codes from it */
-	    result = _get_sock_error(s, FD_CONNECT_BIT);
-	    if (result)
-		SetLastError(result);
-	    else {
-		close(fd);
-		goto connect_success;
-	    }
-	}
-	else SetLastError(WSAEWOULDBLOCK);
-	close(fd);
+        const struct sockaddr* uaddr;
+        int uaddrlen;
+
+        uaddr=ws_sockaddr_ws2u(name,namelen,&uaddrlen);
+        if (uaddr == NULL)
+        {
+            SetLastError(WSAEFAULT);
+        }
+        else
+        {
+            int rc;
+
+            rc=connect(fd, uaddr, uaddrlen);
+            ws_sockaddr_free(uaddr,name);
+            if (rc == 0)
+                goto connect_success;
+        }
+
+        if (errno == EINPROGRESS)
+        {
+            /* tell wineserver that a connection is in progress */
+            _enable_event(s, FD_CONNECT|FD_READ|FD_WRITE,
+                          FD_CONNECT|FD_READ|FD_WRITE,
+                          FD_WINE_CONNECTED|FD_WINE_LISTENING);
+            if (_is_blocking(s))
+            {
+                int result;
+                /* block here */
+                do_block(fd, 7);
+                _sync_sock_state(s); /* let wineserver notice connection */
+                /* retrieve any error codes from it */
+                result = _get_sock_error(s, FD_CONNECT_BIT);
+                if (result)
+                    SetLastError(result);
+                else
+                {
+                    goto connect_success;
+                }
+            }
+            else
+            {
+                SetLastError(WSAEWOULDBLOCK);
+            }
+        }
+        else
+        {
+            SetLastError(wsaErrno());
+        }
+        close(fd);
     }
     else
     {
-	SetLastError(wsaErrno());
-	close(fd);
+        SetLastError(WSAENOTSOCK);
     }
-  }
-#ifdef HAVE_IPX
-  if (name && ((struct sockaddr_ipx *)name)->sipx_family == AF_IPX)
-    free(name);
-#endif
-  return SOCKET_ERROR;
+    return SOCKET_ERROR;
+
 connect_success:
-#ifdef HAVE_IPX
-    if (((struct sockaddr_ipx *)name)->sipx_family == AF_IPX)
-	free(name);
-#endif
+    close(fd);
     _enable_event(s, FD_CONNECT|FD_READ|FD_WRITE,
-		  FD_WINE_CONNECTED|FD_READ|FD_WRITE,
-		  FD_CONNECT|FD_WINE_LISTENING);
-    return 0; 
+                  FD_WINE_CONNECTED|FD_READ|FD_WRITE,
+                  FD_CONNECT|FD_WINE_LISTENING);
+    return 0;
 }
 
 /***********************************************************************
  *              connect               (WINSOCK.4)
  */
-INT16 WINAPI WINSOCK_connect16(SOCKET16 s, struct sockaddr *name, INT16 namelen)
+INT16 WINAPI WINSOCK_connect16(SOCKET16 s, ws_sockaddr *name, INT16 namelen)
 {
   return (INT16)WSOCK32_connect( s, name, namelen );
 }
@@ -1021,44 +1119,47 @@ INT16 WINAPI WINSOCK_connect16(SOCKET16 s, struct sockaddr *name, INT16 namelen)
 /***********************************************************************
  *		getpeername		(WS2_32.5)
  */
-INT WINAPI WSOCK32_getpeername(SOCKET s, struct sockaddr *name,
-                                   INT *namelen)
+int WINAPI WSOCK32_getpeername(SOCKET s, ws_sockaddr *name, int *namelen)
 {
-#ifdef HAVE_IPX
-    struct ws_sockaddr_ipx*  name2 = (struct ws_sockaddr_ipx *)name;
-#endif
     int fd = _get_sock_fd(s);
+    int res;
 
-    TRACE("socket: %04x, ptr %8x, ptr %8x\n", s, (int) name, *namelen);
+    TRACE("socket: %04x, ptr %p, len %8x\n", s, name, *namelen);
+
+    res=SOCKET_ERROR;
     if (fd != -1)
     {
-	if (getpeername(fd, name, namelen) == 0) {
-#ifdef HAVE_IPX
-	    if (((struct ws_sockaddr_ipx *)name)->sipx_family == AF_IPX) {
-		name = (struct sockaddr *)
-				malloc(namelen ? *namelen : sizeof(*name2));
-		memcpy(name, name2, namelen ? *namelen : sizeof(*name2));
-		name2->sipx_family = WS_AF_IPX;
-		name2->sipx_network = ((struct sockaddr_ipx *)name)->sipx_network;
-		name2->sipx_port = ((struct sockaddr_ipx *)name)->sipx_port;
-		memcpy(name2->sipx_node,
-			((struct sockaddr_ipx *)name)->sipx_node, IPX_NODE_LEN);
-		free(name);
-	    }
-#endif
-	    close(fd);
-	    return 0; 
-	}
-	SetLastError(wsaErrno());
-	close(fd);
+        struct sockaddr* uaddr;
+        int uaddrlen;
+
+        uaddr=ws_sockaddr_alloc(name,namelen,&uaddrlen);
+        if (getpeername(fd, uaddr, &uaddrlen) != 0)
+        {
+            SetLastError(wsaErrno());
+        }
+        else if (ws_sockaddr_u2ws(uaddr,uaddrlen,name,namelen) != 0)
+        {
+            /* The buffer was too small */
+            SetLastError(WSAEFAULT);
+        }
+        else
+        {
+            res=0;
+        }
+        ws_sockaddr_free(uaddr,name);
+        close(fd);
     }
-    return SOCKET_ERROR;
+    else
+    {
+        SetLastError(WSAENOTSOCK);
+    }
+    return res;
 }
 
 /***********************************************************************
  *              getpeername		(WINSOCK.5)
  */
-INT16 WINAPI WINSOCK_getpeername16(SOCKET16 s, struct sockaddr *name,
+INT16 WINAPI WINSOCK_getpeername16(SOCKET16 s, ws_sockaddr *name,
                                    INT16 *namelen16)
 {
     INT namelen32 = *namelen16;
@@ -1075,44 +1176,46 @@ INT16 WINAPI WINSOCK_getpeername16(SOCKET16 s, struct sockaddr *name,
 /***********************************************************************
  *		getsockname		(WS2_32.6)
  */
-INT WINAPI WSOCK32_getsockname(SOCKET s, struct sockaddr *name,
-                                   INT *namelen)
+int WINAPI WSOCK32_getsockname(SOCKET s, ws_sockaddr *name, int *namelen)
 {
-#ifdef HAVE_IPX
-    struct ws_sockaddr_ipx*  name2 = (struct ws_sockaddr_ipx *)name;
-#endif
     int fd = _get_sock_fd(s);
+    int res;
 
-    TRACE("socket: %04x, ptr %8x, ptr %8x\n", s, (int) name, (int) *namelen);
+    TRACE("socket: %04x, ptr %p, len %8x\n", s, name, *namelen);
+
+    res=SOCKET_ERROR;
     if (fd != -1)
     {
-	if (getsockname(fd, name, namelen) == 0) {
-#ifdef HAVE_IPX
-	    if (((struct sockaddr_ipx *)name)->sipx_family == AF_IPX) {
-		name = (struct sockaddr *)
-				malloc(namelen ? *namelen : sizeof(*name2));
-		memcpy(name, name2, namelen ? *namelen : sizeof(*name2));
-		name2->sipx_family = WS_AF_IPX;
-		name2->sipx_network = ((struct sockaddr_ipx *)name)->sipx_network;
-		name2->sipx_port = ((struct sockaddr_ipx *)name)->sipx_port;
-		memcpy(name2->sipx_node,
-			((struct sockaddr_ipx *)name)->sipx_node, IPX_NODE_LEN);
-		free(name);
-	    }
-#endif
-	    close(fd);
-	    return 0; 
-	}
-	SetLastError(wsaErrno());
-	close(fd);
+        struct sockaddr* uaddr;
+        int uaddrlen;
+
+        uaddr=ws_sockaddr_alloc(name,namelen,&uaddrlen);
+        if (getsockname(fd, uaddr, &uaddrlen) != 0)
+        {
+            SetLastError(wsaErrno());
+        }
+        else if (ws_sockaddr_u2ws(uaddr,uaddrlen,name,namelen) != 0)
+        {
+            /* The buffer was too small */
+            SetLastError(WSAEFAULT);
+        }
+        else
+        {
+            res=0;
+        }
+        close(fd);
     }
-    return SOCKET_ERROR;
+    else
+    {
+        SetLastError(WSAENOTSOCK);
+    }
+    return res;
 }
 
 /***********************************************************************
  *              getsockname		(WINSOCK.6)
  */
-INT16 WINAPI WINSOCK_getsockname16(SOCKET16 s, struct sockaddr *name,
+INT16 WINAPI WINSOCK_getsockname16(SOCKET16 s, ws_sockaddr *name,
                                    INT16 *namelen16)
 {
     INT retVal;
@@ -1684,77 +1787,70 @@ INT16 WINAPI WINSOCK_recv16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 /***********************************************************************
  *		recvfrom		(WS2_32.17)
  */
-INT WINAPI WSOCK32_recvfrom(SOCKET s, char *buf, INT len, INT flags, 
-                                struct sockaddr *from, INT *fromlen32)
+int WINAPI WSOCK32_recvfrom(SOCKET s, char *buf, INT len, int flags,
+                                ws_sockaddr *from, int *fromlen)
 {
-#ifdef HAVE_IPX
-    struct ws_sockaddr_ipx*  from2 = (struct ws_sockaddr_ipx *)from;
-#endif
     int fd = _get_sock_fd(s);
+    int res;
 
     TRACE("socket %04x, ptr %08x, len %d, flags %d\n", s, (unsigned)buf, len, flags);
 #if DEBUG_SOCKADDR
-    if( from ) dump_sockaddr(from);
-    else DPRINTF("from = NULL\n");
+    if (from)
+        dump_sockaddr(from);
+    else
+        DPRINTF("from = NULL\n");
 #endif
 
+    res=SOCKET_ERROR;
     if (fd != -1)
     {
-	int length;
+        struct sockaddr* uaddr;
+        int uaddrlen;
+        int length;
 
-	if (_is_blocking(s))
-	{
-	    /* block here */
-	    /* FIXME: OOB and exceptfds */
-	    do_block(fd, 1);
-	}
-	if ((length = recvfrom(fd, buf, len, flags, from, fromlen32)) >= 0)
-	{
-	    TRACE(" -> %i bytes\n", length);
+        if (_is_blocking(s))
+        {
+            /* block here */
+            /* FIXME: OOB and exceptfds */
+            do_block(fd, 1);
+        }
 
-#ifdef HAVE_IPX
-	if (from && ((struct sockaddr_ipx *)from)->sipx_family == AF_IPX) {
-	    from = (struct sockaddr *)
-				malloc(fromlen32 ? *fromlen32 : sizeof(*from2));
-	    memcpy(from, from2, fromlen32 ? *fromlen32 : sizeof(*from2));
-	    from2->sipx_family = WS_AF_IPX;
-	    from2->sipx_network = ((struct sockaddr_ipx *)from)->sipx_network;
-	    from2->sipx_port = ((struct sockaddr_ipx *)from)->sipx_port;
-	    memcpy(from2->sipx_node,
-			((struct sockaddr_ipx *)from)->sipx_node, IPX_NODE_LEN);
-	    free(from);
-	}
-#endif
-	    close(fd);
-	    _enable_event(s, FD_READ, 0, 0);
-	    return length;
-	}
-	SetLastError(wsaErrno());
-	close(fd);
+        uaddr=ws_sockaddr_alloc(from,fromlen,&uaddrlen);
+        length=recvfrom(fd, buf, len, flags, uaddr, &uaddrlen);
+        if (length < 0)
+        {
+            SetLastError(wsaErrno());
+            WARN(" -> ERROR\n");
+        }
+        else if (ws_sockaddr_u2ws(uaddr,uaddrlen,from,fromlen) != 0)
+        {
+            /* The from buffer was too small, but we read the data 
+             * anyway. Is that really bad?
+             */
+            SetLastError(WSAEFAULT);
+            WARN(" -> WSAEFAULT\n");
+        }
+        else
+        {
+            TRACE(" -> %i bytes\n", length);
+            _enable_event(s, FD_READ, 0, 0);
+            res=length;
+        }
+        close(fd);
     }
-    else SetLastError(WSAENOTSOCK);
-    WARN(" -> ERROR\n");
-#ifdef HAVE_IPX
-    if (from && ((struct sockaddr_ipx *)from)->sipx_family == AF_IPX) {
-	from = (struct sockaddr *)
-				malloc(fromlen32 ? *fromlen32 : sizeof(*from2));
-	memcpy(from, from2, fromlen32 ? *fromlen32 : sizeof(*from2));
-	from2->sipx_family = WS_AF_IPX;
-	from2->sipx_network = ((struct sockaddr_ipx *)from)->sipx_network;
-	from2->sipx_port = ((struct sockaddr_ipx *)from)->sipx_port;
-	memcpy(from2->sipx_node,
-		((struct sockaddr_ipx *)from)->sipx_node, IPX_NODE_LEN);
-	free(from);
+    else
+    {
+        SetLastError(WSAENOTSOCK);
+        WARN(" -> WSAENOTSOCK\n");
     }
-#endif
-    return SOCKET_ERROR;
+    return res;
 }
 
 /***********************************************************************
  *              recvfrom		(WINSOCK.17)
  */
 INT16 WINAPI WINSOCK_recvfrom16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
-                                struct sockaddr *from, INT16 *fromlen16)
+                                ws_sockaddr *from, INT16 *fromlen16)
 {
     INT fromlen32;
     INT *p = &fromlen32;
@@ -1947,72 +2043,56 @@ INT16 WINAPI WINSOCK_send16(SOCKET16 s, char *buf, INT16 len, INT16 flags)
 /***********************************************************************
  *		sendto		(WS2_32.20)
  */
-INT WINAPI WSOCK32_sendto(SOCKET s, char *buf, INT len, INT flags,
-                              struct sockaddr *to, INT tolen)
+int WINAPI WSOCK32_sendto(SOCKET s, const char *buf, int len, int flags,
+                              const ws_sockaddr *to, int tolen)
 {
-#ifdef HAVE_IPX
-    struct ws_sockaddr_ipx*  to2 = (struct ws_sockaddr_ipx *)to;
-#endif
     int fd = _get_sock_fd(s);
+    int res;
 
     TRACE("socket %04x, ptr %p, length %d, flags %d\n", s, buf, len, flags);
+
+    res=SOCKET_ERROR;
     if (fd != -1)
     {
-	INT	length;
+        const struct sockaddr* uaddr;
+        int uaddrlen;
 
-	if (to && ((struct ws_sockaddr_ipx *)to)->sipx_family == WS_AF_PUP)
-	    ((struct ws_sockaddr_ipx *)to)->sipx_family = AF_UNSPEC;
-#ifdef HAVE_IPX
-	else if (to &&
-		((struct ws_sockaddr_ipx *)to)->sipx_family == WS_AF_IPX)
-	{
-	    to = (struct sockaddr *) malloc(sizeof(struct sockaddr_ipx));
-	    memset(to, '\0', sizeof(struct sockaddr_ipx));
-	    ((struct sockaddr_ipx *)to)->sipx_family = AF_IPX;
-	    ((struct sockaddr_ipx *)to)->sipx_port = to2->sipx_port;
-	    ((struct sockaddr_ipx *)to)->sipx_network = to2->sipx_network;
-	    memcpy(((struct sockaddr_ipx *)to)->sipx_node,
-			to2->sipx_node, IPX_NODE_LEN);
-	    tolen = sizeof(struct sockaddr_ipx);
-	}
-#endif
-	if (_is_blocking(s))
-	{
-	    /* block here */
-	    /* FIXME: exceptfds */
-	    do_block(fd, 2);
-	}
-	if ((length = sendto(fd, buf, len, flags, to, tolen)) < 0 )
-	{
-	    SetLastError(wsaErrno());
-	    if( GetLastError() == WSAEWOULDBLOCK )
-		_enable_event(s, FD_WRITE, 0, 0);
-	} 
-	else {
-#ifdef HAVE_IPX
-	    if (to && ((struct sockaddr_ipx *)to)->sipx_family == AF_IPX) {
-		free(to);
-	    }
-#endif
-	    close(fd);
-	    return length;
-	}
-	close(fd);
+        uaddr=ws_sockaddr_ws2u(to,tolen,&uaddrlen);
+        if (uaddr == NULL)
+        {
+            SetLastError(WSAEFAULT);
+        }
+        else
+        {
+            if (_is_blocking(s))
+            {
+                /* block here */
+                /* FIXME: exceptfds */
+                do_block(fd, 2);
+            }
+            res=sendto(fd, buf, len, flags, uaddr, uaddrlen);
+            if (res < 0 )
+            {
+                SetLastError(wsaErrno());
+                if( GetLastError() == WSAEWOULDBLOCK )
+                    _enable_event(s, FD_WRITE, 0, 0);
+            }
+            ws_sockaddr_free(uaddr,to);
+        }
+        close(fd);
     }
-    else SetLastError(WSAENOTSOCK);
-#ifdef HAVE_IPX
-    if (to && ((struct sockaddr_ipx *)to)->sipx_family == AF_IPX) {
-	free(to);
+    else
+    {
+        SetLastError(WSAENOTSOCK);
     }
-#endif
-    return SOCKET_ERROR;
+    return res;
 }
 
 /***********************************************************************
  *              sendto		(WINSOCK.20)
  */
 INT16 WINAPI WINSOCK_sendto16(SOCKET16 s, char *buf, INT16 len, INT16 flags,
-                              struct sockaddr *to, INT16 tolen)
+                              ws_sockaddr *to, INT16 tolen)
 {
     return (INT16)WSOCK32_sendto( s, buf, len, flags, to, tolen );
 }

@@ -441,17 +441,6 @@ INT     WINAPI   WSARecvEx(SOCKET s, char *buf, INT len, INT *flags);
 
 #define WS_AF_MAX          27
 
-#include "pshpack1.h"
-
-struct ws_sockaddr_ipx
-{
-	SHORT		sipx_family;
-	UINT		sipx_network;
-	CHAR		sipx_node[6];
-	WORD		sipx_port;
-};
-
-#include "poppack.h"
 
 #ifdef __cplusplus
 }
