@@ -36,6 +36,12 @@ typedef float FLOAT;
 
 typedef double DOUBLE;
 
+typedef long LONG_PTR, *PLONG_PTR;
+
+typedef unsigned int UINT_PTR, *PUINT_PTR;
+
+typedef unsigned long ULONG_PTR, *PULONG_PTR;
+
 typedef void *PVOID, *LPVOID;
 
 typedef char CHAR;
@@ -54,6 +60,16 @@ typedef boolean BOOLEAN;
 
 typedef void *HANDLE;
 
+typedef void *HACCEL;
+
+typedef void *HDC;
+
+typedef void *HFONT;
+
+typedef void *HWND;
+
+typedef void *HMENU;
+
 typedef void *HMODULE;
 
 typedef void *HINSTANCE;
@@ -63,6 +79,8 @@ typedef void *HRGN;
 typedef void *HTASK;
 
 typedef void *HKEY;
+
+typedef LONG_PTR LRESULT;
 
 typedef double DATE;
 
@@ -117,6 +135,54 @@ typedef struct _SECURITY_DESCRIPTOR {
     PACL Dacl;
 } SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
 
+typedef struct tagSIZE {
+    LONG cx;
+    LONG cy;
+} SIZE, *PSIZE, *LPSIZE;
+
+typedef SIZE SIZEL, *PSIZEL, *LPSIZEL;
+
+typedef struct tagPOINT {
+    LONG x;
+    LONG y;
+} POINT, *PPOINT, *LPPOINT;
+
+typedef struct _POINTL {
+    LONG x;
+    LONG y;
+} POINTL;
+
+typedef struct tagRECT {
+    LONG left;
+    LONG top;
+    LONG right;
+    LONG bottom;
+} RECT, *PRECT, *LPRECT;
+
+typedef const RECT *LPCRECT;
+
+typedef struct _RECTL {
+    LONG left;
+    LONG top;
+    LONG right;
+    LONG bottom;
+} RECTL, *PRECTL, *LPRECTL;
+
+typedef const RECTL *LPCRECTL;
+
+typedef UINT_PTR WPARAM;
+
+typedef LONG_PTR LPARAM;
+
+typedef struct tagMSG {
+    HWND hwnd;
+    UINT message;
+    WPARAM wParam;
+    LPARAM lParam;
+    DWORD time;
+    POINT pt;
+} MSG, *PMSG, *NPMSG, *LPMSG;
+
 #endif /* winnt.h */
 #ifndef _PALETTEENTRY_DEFINED
 #define _PALETTEENTRY_DEFINED
@@ -143,6 +209,55 @@ typedef struct _FILETIME {
     DWORD dwLowDateTime;
     DWORD dwHighDateTime;
 } FILETIME, *PFILETIME, *LPFILETIME;
+
+#endif
+#ifndef _TEXTMETRIC_DEFINED
+#define _TEXTMETRIC_DEFINED
+typedef struct {
+    LONG tmHeight;
+    LONG tmAscent;
+    LONG tmDescent;
+    LONG tmInternalLeading;
+    LONG tmExternalLeading;
+    LONG tmAveCharWidth;
+    LONG tmMaxCharWidth;
+    LONG tmWeight;
+    LONG tmOverhang;
+    LONG tmDigitizedAspectX;
+    LONG tmDigitizedAspectY;
+    BYTE tmFirstChar;
+    BYTE tmLastChar;
+    BYTE tmDefaultChar;
+    BYTE tmBreakChar;
+    BYTE tmItalic;
+    BYTE tmUnderlined;
+    BYTE tmStruckOut;
+    BYTE tmPitchAndFamily;
+    BYTE tmCharSet;
+} TEXTMETRICA, *LPTEXTMETRICA, *PTEXTMETRICA;
+
+typedef struct {
+    LONG tmHeight;
+    LONG tmAscent;
+    LONG tmDescent;
+    LONG tmInternalLeading;
+    LONG tmExternalLeading;
+    LONG tmAveCharWidth;
+    LONG tmMaxCharWidth;
+    LONG tmWeight;
+    LONG tmOverhang;
+    LONG tmDigitizedAspectX;
+    LONG tmDigitizedAspectY;
+    WCHAR tmFirstChar;
+    WCHAR tmLastChar;
+    WCHAR tmDefaultChar;
+    WCHAR tmBreakChar;
+    BYTE tmItalic;
+    BYTE tmUnderlined;
+    BYTE tmStruckOut;
+    BYTE tmPitchAndFamily;
+    BYTE tmCharSet;
+} TEXTMETRICW, *LPTEXTMETRICW, *PTEXTMETRICW;
 
 #endif
 typedef WCHAR OLECHAR;
@@ -548,6 +663,7 @@ typedef union tagCY {
 #endif
 typedef CY *LPCY;
 
+#if 0
 typedef struct tagDEC {
     USHORT wReserved;
     BYTE scale;
@@ -556,6 +672,33 @@ typedef struct tagDEC {
     ULONGLONG Lo64;
 } DECIMAL;
 
+#else
+typedef struct tagDEC {
+  USHORT wReserved;
+  union {
+    struct {
+      BYTE scale;
+      BYTE sign;
+    } DUMMYSTRUCTNAME;
+    USHORT signscale;
+  } DUMMYUNIONNAME;
+  ULONG Hi32;
+  union {
+    struct {
+#ifdef WORDS_BIGENDIAN
+      ULONG Mid32;
+      ULONG Lo32;
+#else
+      ULONG Lo32;
+      ULONG Mid32;
+#endif
+    } DUMMYSTRUCTNAME1;
+    ULONGLONG Lo64;
+  } DUMMYUNIONNAME1;
+} DECIMAL;
+#endif
+#define DECIMAL_NEG ((BYTE)0x80)
+#define DECIMAL_SETZERO(d) do{ memset(((char*)(d)) + sizeof(USHORT), 0, sizeof(ULONG) * 3u); }while (0)
 typedef DECIMAL *LPDECIMAL;
 
 typedef FLAGGED_WORD_BLOB *wireBSTR;
@@ -628,6 +771,8 @@ enum VARENUM {
     VT_LPSTR = 30,
     VT_LPWSTR = 31,
     VT_RECORD = 36,
+    VT_INT_PTR = 37,
+    VT_UINT_PTR = 38,
     VT_FILETIME = 64,
     VT_BLOB = 65,
     VT_STREAM = 66,

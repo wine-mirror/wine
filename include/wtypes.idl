@@ -48,6 +48,11 @@ typedef unsigned long ULONG;
 typedef float FLOAT;
 typedef double DOUBLE;
 
+/* FIXME: This is wrong for WIN64 */
+typedef long LONG_PTR, *PLONG_PTR;
+typedef unsigned int UINT_PTR, *PUINT_PTR;
+typedef unsigned long ULONG_PTR, *PULONG_PTR;
+
 typedef void *PVOID, *LPVOID;
 
 typedef char CHAR;
@@ -64,11 +69,18 @@ typedef void *HANDLE;
 #define DECLARE_HANDLE(name) typedef void *name
 #define DECLARE_WIREM_HANDLE(name) typedef [wire_marshal(wire##name)] void*name
 
+DECLARE_HANDLE(HACCEL);
+DECLARE_HANDLE(HDC);
+DECLARE_HANDLE(HFONT);
+DECLARE_HANDLE(HWND);
+DECLARE_HANDLE(HMENU);
 DECLARE_HANDLE(HMODULE);
 DECLARE_HANDLE(HINSTANCE);
 DECLARE_HANDLE(HRGN);
 DECLARE_HANDLE(HTASK);
 DECLARE_HANDLE(HKEY);
+
+typedef LONG_PTR LRESULT;
 
 typedef double DATE;
 typedef LONG HRESULT;
@@ -118,6 +130,56 @@ typedef struct _SECURITY_DESCRIPTOR {
   PACL Dacl;
 } SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
 
+typedef struct tagSIZE
+{
+    LONG cx;
+    LONG cy;
+} SIZE, *PSIZE, *LPSIZE;
+typedef SIZE SIZEL, *PSIZEL, *LPSIZEL;
+
+typedef struct tagPOINT
+{
+    LONG  x;
+    LONG  y;
+} POINT, *PPOINT, *LPPOINT;
+
+typedef struct _POINTL
+{
+    LONG x;
+    LONG y;
+} POINTL;
+
+typedef struct tagRECT
+{
+    LONG left;
+    LONG top;
+    LONG right;
+    LONG bottom;
+} RECT, *PRECT, *LPRECT;
+typedef const RECT *LPCRECT;
+
+typedef struct _RECTL
+{
+    LONG left;
+    LONG top;
+    LONG right;
+    LONG bottom;
+} RECTL, *PRECTL, *LPRECTL;
+typedef const RECTL *LPCRECTL;
+
+typedef UINT_PTR WPARAM;
+typedef LONG_PTR LPARAM;
+
+typedef struct tagMSG
+{
+    HWND   hwnd;
+    UINT   message;
+    WPARAM wParam;
+    LPARAM lParam;
+    DWORD  time;
+    POINT  pt;
+} MSG, *PMSG, *NPMSG, *LPMSG;
+
 cpp_quote("#endif /* winnt.h */")
 
 cpp_quote("#ifndef _PALETTEENTRY_DEFINED")
@@ -146,6 +208,57 @@ typedef struct _FILETIME {
   DWORD dwLowDateTime;
   DWORD dwHighDateTime;
 } FILETIME, *PFILETIME, *LPFILETIME;
+cpp_quote("#endif")
+
+cpp_quote("#ifndef _TEXTMETRIC_DEFINED")
+cpp_quote("#define _TEXTMETRIC_DEFINED")
+typedef struct
+{
+    LONG      tmHeight;
+    LONG      tmAscent;
+    LONG      tmDescent;
+    LONG      tmInternalLeading;
+    LONG      tmExternalLeading;
+    LONG      tmAveCharWidth;
+    LONG      tmMaxCharWidth;
+    LONG      tmWeight;
+    LONG      tmOverhang;
+    LONG      tmDigitizedAspectX;
+    LONG      tmDigitizedAspectY;
+    BYTE      tmFirstChar;
+    BYTE      tmLastChar;
+    BYTE      tmDefaultChar;
+    BYTE      tmBreakChar;
+    BYTE      tmItalic;
+    BYTE      tmUnderlined;
+    BYTE      tmStruckOut;
+    BYTE      tmPitchAndFamily;
+    BYTE      tmCharSet;
+} TEXTMETRICA, *LPTEXTMETRICA, *PTEXTMETRICA;
+
+typedef struct
+{
+    LONG      tmHeight;
+    LONG      tmAscent;
+    LONG      tmDescent;
+    LONG      tmInternalLeading;
+    LONG      tmExternalLeading;
+    LONG      tmAveCharWidth;
+    LONG      tmMaxCharWidth;
+    LONG      tmWeight;
+    LONG      tmOverhang;
+    LONG      tmDigitizedAspectX;
+    LONG      tmDigitizedAspectY;
+    WCHAR     tmFirstChar;
+    WCHAR     tmLastChar;
+    WCHAR     tmDefaultChar;
+    WCHAR     tmBreakChar;
+    BYTE      tmItalic;
+    BYTE      tmUnderlined;
+    BYTE      tmStruckOut;
+    BYTE      tmPitchAndFamily;
+    BYTE      tmCharSet;
+} TEXTMETRICW, *LPTEXTMETRICW, *PTEXTMETRICW;
 cpp_quote("#endif")
 
 /******************** BASIC COM/OLE TYPES ********************/
@@ -503,6 +616,7 @@ cpp_quote("#endif")
 
 typedef CY *LPCY;
 
+cpp_quote("#if 0") /* for IDL only */
 typedef struct tagDEC {
   USHORT wReserved;
   BYTE scale;
@@ -510,6 +624,34 @@ typedef struct tagDEC {
   ULONG Hi32;
   ULONGLONG Lo64;
 } DECIMAL;
+cpp_quote("#else") /* C/C++ defs */
+cpp_quote("typedef struct tagDEC {")
+cpp_quote("  USHORT wReserved;")
+cpp_quote("  union {")
+cpp_quote("    struct {")
+cpp_quote("      BYTE scale;")
+cpp_quote("      BYTE sign;")
+cpp_quote("    } DUMMYSTRUCTNAME;")
+cpp_quote("    USHORT signscale;")
+cpp_quote("  } DUMMYUNIONNAME;")
+cpp_quote("  ULONG Hi32;")
+cpp_quote("  union {")
+cpp_quote("    struct {")
+cpp_quote("#ifdef WORDS_BIGENDIAN")
+cpp_quote("      ULONG Mid32;")
+cpp_quote("      ULONG Lo32;")
+cpp_quote("#else")
+cpp_quote("      ULONG Lo32;")
+cpp_quote("      ULONG Mid32;")
+cpp_quote("#endif")
+cpp_quote("    } DUMMYSTRUCTNAME1;")
+cpp_quote("    ULONGLONG Lo64;")
+cpp_quote("  } DUMMYUNIONNAME1;")
+cpp_quote("} DECIMAL;")
+cpp_quote("#endif")
+cpp_quote("#define DECIMAL_NEG ((BYTE)0x80)")
+cpp_quote("#define DECIMAL_SETZERO(d) do{ memset(((char*)(d)) + sizeof(USHORT), 0, sizeof(ULONG) * 3u); }while (0)")
+
 typedef DECIMAL *LPDECIMAL;
 
 typedef [unique] FLAGGED_WORD_BLOB *wireBSTR;
@@ -576,6 +718,8 @@ enum VARENUM {
   VT_LPSTR           = 30,
   VT_LPWSTR          = 31,
   VT_RECORD          = 36,
+  VT_INT_PTR         = 37,
+  VT_UINT_PTR        = 38,
   VT_FILETIME        = 64,
   VT_BLOB            = 65,
   VT_STREAM          = 66,
