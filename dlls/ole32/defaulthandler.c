@@ -925,7 +925,7 @@ static HRESULT WINAPI DefaultHandler_GetMoniker(
 
   }
 
-  return E_UNSPEC;
+  return E_FAIL;
 }
 
 /************************************************************************

@@ -1546,10 +1546,6 @@
 #define E_POINTER                                          _HRESULT_TYPEDEF_(0x80004003L)
 #define E_ABORT                                            _HRESULT_TYPEDEF_(0x80004004L)
 #define E_FAIL                                             _HRESULT_TYPEDEF_(0x80004005L)
-/* FIXME: E_UNSPEC is not a standard value but it is used by
- * FileMoniker, IOleLink and DoDragDrop as a return value.
- */
-#define E_UNSPEC                                           E_FAIL
 
 
 #define CO_E_INIT_TLS                                      _HRESULT_TYPEDEF_(0x80004006L)

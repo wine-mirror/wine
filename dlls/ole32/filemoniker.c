@@ -708,10 +708,8 @@ HRESULT WINAPI FileMonikerImpl_BindToStorage(IMoniker* iface,
         }
         else
             if ( (IsEqualIID(&IID_IStream, riid)) || (IsEqualIID(&IID_ILockBytes, riid)) )
-
-                return E_UNSPEC;
+                return E_FAIL;
             else
-
                 return E_NOINTERFACE;
     }
     else {

@@ -220,7 +220,7 @@ static HRESULT WINAPI WBOOBJ_GetMoniker(LPOLEOBJECT iface, DWORD dwAssign,
                                         DWORD dwWhichMoniker, LPMONIKER *ppmk)
 {
     FIXME("stub (%p, %ld, %ld, %p)\n", iface, dwAssign, dwWhichMoniker, ppmk);
-    return E_UNSPEC;
+    return E_FAIL;
 }
 
 /************************************************************************
