@@ -844,7 +844,7 @@ HRESULT WINAPI SHGetInstanceExplorer (LPUNKNOWN * lpUnknown)
 	if (!SHELL32_IExplorerInterface)
 	  return E_FAIL;
 
-	SHELL32_IExplorerInterface->lpvtbl->fnAddRef(SHELL32_IExplorerInterface);
+	IUnknown_AddRef(SHELL32_IExplorerInterface);
 	return NOERROR;
 }
 /*************************************************************************

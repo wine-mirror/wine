@@ -50,7 +50,6 @@ struct IDirectPlayImpl
 };
 
 
-
 /* Get a new interface. To be used by QueryInterface. */ 
 extern 
 HRESULT directPlay_QueryInterface 
@@ -72,7 +71,7 @@ HRESULT directPlay_QueryInterface
     lpDP->lpvtbl = &directPlay2WVT;
 
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( lpDP );
+    IDirectPlayX_AddRef( (IDirectPlay4*)lpDP );
 
     *ppvObj = lpDP;
 
@@ -92,7 +91,7 @@ HRESULT directPlay_QueryInterface
 
     lpDP->lpvtbl = &directPlay2AVT;
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( lpDP );
+    IDirectPlayX_AddRef( (IDirectPlay4*)lpDP );
 
     *ppvObj = lpDP;
 
@@ -112,7 +111,7 @@ HRESULT directPlay_QueryInterface
 
     lpDP->lpvtbl = &directPlay3WVT;
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( lpDP );
+    IDirectPlayX_AddRef( (IDirectPlay4*)lpDP );
 
     *ppvObj = lpDP;
 
@@ -132,7 +131,7 @@ HRESULT directPlay_QueryInterface
 
     lpDP->lpvtbl = &directPlay3AVT;
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( lpDP );
+    IDirectPlayX_AddRef( (IDirectPlay4*)lpDP );
 
     *ppvObj = lpDP;
 
@@ -152,7 +151,7 @@ HRESULT directPlay_QueryInterface
 
     lpDP->lpvtbl = &directPlay4WVT;
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( lpDP );
+    IDirectPlayX_AddRef( (IDirectPlay4*)lpDP );
 
     *ppvObj = lpDP;
 
@@ -172,7 +171,7 @@ HRESULT directPlay_QueryInterface
 
     lpDP->lpvtbl = &directPlay4AVT;
     InitializeCriticalSection( &lpDP->DP_lock );
-    IDirectPlayX_AddRef( lpDP );
+    IDirectPlayX_AddRef( (IDirectPlay4*)lpDP );
 
     *ppvObj = lpDP;
 

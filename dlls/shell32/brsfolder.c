@@ -168,7 +168,7 @@ Done:
 	SetCursor(LoadCursorA(0, IDC_ARROWA));
 
 	if (lpe)
-	  lpe->lpvtbl->fnRelease(lpe);
+	  IEnumIDList_Release(lpe);
 	if (pidlTemp )
 	  SHFree(pidlTemp);
 }

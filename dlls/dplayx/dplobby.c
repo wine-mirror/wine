@@ -131,7 +131,7 @@ BOOL DPL_CreateIUnknown( IDirectPlayLobbyImpl* lpDPL )
   {
     InitializeCriticalSection( &lpDPL->unk->DPL_lock );
 
-    IDirectPlayLobby_AddRef( lpDPL );
+    IDirectPlayLobby_AddRef( (IDirectPlayLobby*)lpDPL );
 
     return TRUE; 
   }
@@ -475,7 +475,7 @@ static HRESULT WINAPI IDirectPlayLobby3AImpl_QueryInterface
       IsEqualGUID( &IID_IDirectPlayLobby3A, riid )
     )
   {
-    IDirectPlayLobby_AddRef( This );
+    IDirectPlayLobby_AddRef( (IDirectPlayLobby*)This );
     *ppvObj = This;
     return S_OK;
   }
@@ -498,7 +498,7 @@ static HRESULT WINAPI IDirectPlayLobby3WImpl_QueryInterface
       IsEqualGUID( &IID_IDirectPlayLobby3, riid )
     )
   {
-    IDirectPlayLobby_AddRef( This );
+    IDirectPlayLobby_AddRef( (IDirectPlayLobby*)This );
     *ppvObj = This;
     return S_OK;
   }

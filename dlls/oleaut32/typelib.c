@@ -1230,7 +1230,7 @@ static HRESULT WINAPI ITypeLib_fnQueryInterface( LPTYPELIB This, REFIID riid,
             IsEqualIID(riid,&IID_ITypeLib2))
         *ppvObject = This;
     if(*ppvObject){
-        (*(LPTYPELIB*)ppvObject)->lpvtbl->fnAddRef(This);
+        ITypeLib_AddRef(This);
         TRACE_(typelib)("-- Interface: (%p)->(%p)\n",ppvObject,*ppvObject);
         return S_OK;
     }
@@ -1626,7 +1626,7 @@ static HRESULT WINAPI ITypeInfo_fnQueryInterface( LPTYPEINFO iface, REFIID riid,
             IsEqualIID(riid,&IID_ITypeInfo2))
         *ppvObject = This;
     if(*ppvObject){
-        (*(LPTYPEINFO*)ppvObject)->lpvtbl->fnAddRef(iface);
+        ITypeInfo_AddRef(iface);
         TRACE_(typelib)("-- Interface: (%p)->(%p)\n",ppvObject,*ppvObject);
         return S_OK;
     }
@@ -1773,9 +1773,9 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( LPTYPEINFO iface, MEMBERID memid,
                 result=This->lpvtbl->fnGetRefTypeInfo(iface, 
                         This->impltypelist->reference, &pTInfo);
                 if(SUCCEEDED(result)){
-                    result=pTInfo->lpvtbl->fnGetNames(pTInfo, memid, rgBstrNames,
+                    result=ITypeInfo_GetNames(pTInfo, memid, rgBstrNames,
                             cMaxNames, pcNames);
-                    pTInfo->lpvtbl->fnRelease(pTInfo);
+                    ITypeInfo_Release(pTInfo);
                     return result;
                 }
                 WARN_(typelib)("Could not search inherited interface!\n");
@@ -1882,11 +1882,11 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( LPTYPEINFO iface,
             This->TypeAttr.cImplTypes ){
         /* recursive search */
         ITypeInfo *pTInfo;
-        ret=This->lpvtbl->fnGetRefTypeInfo(iface, 
+        ret=ITypeInfo_GetRefTypeInfo(iface, 
                 This->impltypelist->reference, &pTInfo);
         if(SUCCEEDED(ret)){
-            ret=pTInfo->lpvtbl->fnGetIDsOfNames(pTInfo, rgszNames, cNames, pMemId );
-            pTInfo->lpvtbl->fnRelease(pTInfo);
+            ret=ITypeInfo_GetIDsOfNames(pTInfo, rgszNames, cNames, pMemId );
+            ITypeInfo_Release(pTInfo);
             return ret;
         }
         WARN_(typelib)("Could not search inherited interface!\n");
@@ -1977,10 +1977,10 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo( LPTYPEINFO iface,
         result=This->lpvtbl->fnGetContainingTypeLib(iface, &pTLib, 
                 &Index);
         if(SUCCEEDED(result)){
-            result=pTLib->lpvtbl->fnGetTypeInfo(pTLib,
+            result=ITypeLib_GetTypeInfo(pTLib,
                     HREFTYPE_INDEX(hRefType),
                     ppTInfo);
-            pTLib->lpvtbl->fnRelease(pTLib );
+            ITypeLib_Release(pTLib );
         }
     } else{
         /* imported type lib */
@@ -1993,7 +1993,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo( LPTYPEINFO iface,
             return TYPE_E_ELEMENTNOTFOUND; /* FIXME : correct? */
         pTypeLib=pRefType->pImpTLInfo->pImpTypeLib;
         if(pTypeLib) /* typelib already loaded */
-            result=pTypeLib->lpvtbl->fnGetTypeInfoOfGuid(
+            result=ITypeLib_GetTypeInfoOfGuid(
                     (LPTYPELIB)pTypeLib, &pRefType->guid, ppTInfo);
         else{
             result=LoadRegTypeLib( &pRefType->pImpTLInfo->guid,
@@ -2005,7 +2005,7 @@ static HRESULT WINAPI ITypeInfo_fnGetRefTypeInfo( LPTYPEINFO iface,
                 SysFreeString(libnam);
             }
             if(SUCCEEDED(result)){
-                result=pTypeLib->lpvtbl->fnGetTypeInfoOfGuid(
+                result=ITypeLib_GetTypeInfoOfGuid(
                         (LPTYPELIB)pTypeLib, &pRefType->guid, ppTInfo);
                 pRefType->pImpTLInfo->pImpTypeLib=pTypeLib;
            }
@@ -2065,7 +2065,7 @@ static HRESULT WINAPI ITypeInfo_fnGetContainingTypeLib( LPTYPEINFO iface,
 	ICOM_THIS( TLBTypeInfo, iface);
     *ppTLib=(LPTYPELIB )(This->pTypeLib);
     *pIndex=This->index;
-    (*ppTLib)->lpvtbl->fnAddRef(*ppTLib);
+    ITypeLib_AddRef(*ppTLib);
     TRACE_(typelib)("(%p) returns (%p) index %d!\n", This, *ppTLib, *pIndex);
     return S_OK;
 }
