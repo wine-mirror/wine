@@ -2020,7 +2020,7 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD nCount, HANDLE *pHandles,
 	/*
 	 * Then, let the 16 bit scheduler do it's thing.
 	 */
-	Yield16();
+	K32WOWYield16();
 
 	/*
 	 * If a message matching the wait mask has arrived, return.

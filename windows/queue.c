@@ -745,7 +745,7 @@ int QUEUE_WaitBits( WORD bits, DWORD timeout )
 		    QUEUE_Unlock( queue );
                     return 0;   /* exit with timeout */
                 }
-                Yield16();
+                K32WOWYield16();
             }
 	}
     }

@@ -22,7 +22,6 @@
 
 #include "winbase.h"
 #include "wingdi.h"
-#include "wine/winbase16.h"
 #include "wine/winuser16.h"
 #include "heap.h"
 #include "winemm.h"
@@ -4967,7 +4966,7 @@ void	WINAPI	mmTaskYield16(void)
     MSG		msg;
 
     if (PeekMessageA(&msg, 0, 0, 0, 0)) {
-	Yield16();
+	K32WOWYield16();
     }
 }
 
@@ -5248,12 +5247,12 @@ void WINAPI WINE_mmThreadEntryPoint(DWORD _pmt)
     TRACE("[30-%08x]\n", lpMMThd->hThread);
     while (lpMMThd->dwCounter) {
 	Sleep(1);
-	/* Yield16();*/
+	/* K32WOWYield16();*/
     }
     TRACE("[XX-%08x]\n", lpMMThd->hThread);
     /* paranoia */
     lpMMThd->dwSignature = WINE_MMTHREAD_DELETED;
-    /* close lpMMThread->hVxD directio */
+    /* close lpMMThread->hVxD directIO */
     if (lpMMThd->hEvent)
 	CloseHandle(lpMMThd->hEvent);
     GlobalFree16(hndl);

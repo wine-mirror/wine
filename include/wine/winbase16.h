@@ -325,7 +325,9 @@ DWORD       WINAPI SizeofResource16(HMODULE16,HRSRC16);
 void        WINAPI UnlockSegment16(HGLOBAL16);
 BOOL16      WINAPI WritePrivateProfileString16(LPCSTR,LPCSTR,LPCSTR,LPCSTR);
 BOOL16      WINAPI WriteProfileString16(LPCSTR,LPCSTR,LPCSTR);
+/* Yield16 will only be available from kernel module, use K32WOWYield instead */
 VOID        WINAPI Yield16(void);
+VOID        WINAPI K32WOWYield16(void);
 SEGPTR      WINAPI lstrcat16(SEGPTR,LPCSTR);
 SEGPTR      WINAPI lstrcatn16(SEGPTR,LPCSTR,INT16);
 SEGPTR      WINAPI lstrcpy16(SEGPTR,LPCSTR);

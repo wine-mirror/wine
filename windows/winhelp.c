@@ -44,7 +44,7 @@ BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
       /* try to start the 16-bit winhelp */
       if (WinExec( "winhelp.exe -x", SW_SHOWNORMAL ) >= 32)
       {
-          Yield16();
+          K32WOWYield16();
           ret = WinHelpA( hWnd, lpHelpFile, wCommand, (DWORD)MapSL(dwData) );
       }
   }
