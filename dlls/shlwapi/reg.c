@@ -641,8 +641,25 @@ LONG WINAPI SHRegEnumUSKeyW(
 LONG  WINAPI SHRegWriteUSValueA(HUSKEY hUSKey, LPCSTR pszValue, DWORD dwType,
 				LPVOID pvData, DWORD cbData, DWORD dwFlags)
 {
-    FIXME("(0x%lx,%s,%ld,%p,%ld,%ld): stub\n",
+    HKEY dokey;
+
+    TRACE("(0x%lx,%s,%ld,%p,%ld,%ld)\n",
 	  (LONG)hUSKey, debugstr_a(pszValue), dwType, pvData, cbData, dwFlags);
+
+    if ((dwFlags & SHREGSET_FORCE_HKCU) && 
+	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU))) {
+	RegSetValueExA(dokey, pszValue, 0, dwType, pvData, cbData);
+    }
+
+    if ((dwFlags & SHREGSET_FORCE_HKLM) && 
+	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKLM))) {
+	RegSetValueExA(dokey, pszValue, 0, dwType, pvData, cbData);
+    }
+
+    if (dwFlags & (SHREGSET_FORCE_HKCU | SHREGSET_FORCE_HKLM)) 
+	return ERROR_SUCCESS;
+
+    FIXME("SHREGSET_HKCU or SHREGSET_HKLM not supported\n");
     return ERROR_SUCCESS;
 }
 
@@ -652,8 +669,25 @@ LONG  WINAPI SHRegWriteUSValueA(HUSKEY hUSKey, LPCSTR pszValue, DWORD dwType,
 LONG  WINAPI SHRegWriteUSValueW(HUSKEY hUSKey, LPCWSTR pszValue, DWORD dwType,
 				LPVOID pvData, DWORD cbData, DWORD dwFlags)
 {
-    FIXME("(0x%lx,%s,%ld,%p,%ld,%ld): stub\n",
+    HKEY dokey;
+
+    TRACE("(0x%lx,%s,%ld,%p,%ld,%ld)\n",
 	  (LONG)hUSKey, debugstr_w(pszValue), dwType, pvData, cbData, dwFlags);
+
+    if ((dwFlags & SHREGSET_FORCE_HKCU) && 
+	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKCU))) {
+	RegSetValueExW(dokey, pszValue, 0, dwType, pvData, cbData);
+    }
+
+    if ((dwFlags & SHREGSET_FORCE_HKLM) && 
+	    (dokey = REG_GetHKEYFromHUSKEY(hUSKey,REG_HKLM))) {
+	RegSetValueExW(dokey, pszValue, 0, dwType, pvData, cbData);
+    }
+
+    if (dwFlags & (SHREGSET_FORCE_HKCU | SHREGSET_FORCE_HKLM)) 
+	return ERROR_SUCCESS;
+
+    FIXME("SHREGSET_HKCU or SHREGSET_HKLM not supported\n");
     return ERROR_SUCCESS;
 }
 
