@@ -199,6 +199,9 @@
 /* Define if you have the `ossaudio' library (-lossaudio). */
 #undef HAVE_LIBOSSAUDIO
 
+/* Define if you have the `resolv' library (-lresolv). */
+#undef HAVE_LIBRESOLV
+
 /* Define if you have the `socket' library (-lsocket). */
 #undef HAVE_LIBSOCKET
 

@@ -89,6 +89,8 @@ dnl Check for -lnsl for Solaris
 AC_CHECK_FUNCS(gethostbyname,,AC_CHECK_LIB(nsl,gethostbyname))
 dnl Check for -lsocket for Solaris
 AC_CHECK_FUNCS(connect,,AC_CHECK_LIB(socket,connect))
+dnl Check for -lresolv for Solaris
+AC_CHECK_LIB(resolv,inet_aton)
 dnl Check for -lxpg4 for FreeBSD
 AC_CHECK_LIB(xpg4,_xpg4_setrunelocale)
 dnl Check for -lmmap for OS/2
