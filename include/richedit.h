@@ -544,7 +544,7 @@ typedef struct _gettextex {
 #define SEL_MULTICHAR         0x00000004
 #define SEL_MULTIOBJECT       0x00000008
 
-/* mask values in the PARAFORMAT2 structure */
+/* mask values in the PARAFORMAT structure */
 #define PFM_STARTINDENT       0x00000001
 #define PFM_RIGHTINDENT       0x00000002
 #define PFM_OFFSET            0x00000004
@@ -552,6 +552,27 @@ typedef struct _gettextex {
 #define PFM_TABSTOPS          0x00000010
 #define PFM_NUMBERING         0x00000020
 #define PFM_OFFSETINDENT      0x80000000
+
+/* mask values in the PARAFORMAT2 structure */
+#define PFM_SPACEBEFORE       0x00000040
+#define PFM_SPACEAFTER        0x00000080
+#define PFM_LINESPACING       0x00000100
+#define PFM_STYLE             0x00000400
+#define PFM_BORDER            0x00000800
+#define PFM_SHADING           0x00001000
+
+#define PFM_NUMBERINGSTYLE    0x00002000
+#define PFM_NUMBERINGTAB      0x00004000
+#define PFM_NUMBERINGSTART    0x00008000
+#define PFM_RTLPARA           0x00010000
+#define PFM_KEEP              0x00020000
+#define PFM_KEEPNEXT          0x00040000
+#define PFM_PAGEBREAKBEFORE   0x00080000
+#define PFM_NOLINENUMBER      0x00100000
+#define PFM_NOWIDOWCONTROL    0x00200000
+#define PFM_DONOTHYPHEN       0x00400000
+#define PFM_SIDEBYSIDE        0x00800000
+#define PFM_TABLE             0x40000000
 
 /* numbering option */
 #define PFN_BULLET            0x00000001
