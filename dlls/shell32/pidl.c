@@ -1275,6 +1275,59 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 }
 
 /*************************************************************************
+ * SHELL_GetPathFromIDListA
+ */
+HRESULT SHELL_GetPathFromIDListA(LPCITEMIDLIST pidl, LPSTR pszPath, UINT uOutSize)
+{
+	LPSTR pstr = pszPath;
+	LPSTR end = pszPath + uOutSize;
+	HRESULT hr = S_OK;
+
+	/* One case is a PIDL rooted at desktop level */
+	if (_ILIsValue(pidl) || _ILIsFolder(pidl)) {
+	    hr = SHGetSpecialFolderPathA(0, pstr, CSIDL_DESKTOP, FALSE);
+
+	    if (SUCCEEDED(hr))
+		pstr = PathAddBackslashA(pstr);
+	}
+	/* The only other valid case is a item ID list beginning at "My Computer" */
+ 	else if (_ILIsMyComputer(pidl))
+	    pidl = ILGetNext(pidl);
+
+        if (SUCCEEDED(hr)) {
+	    LPSTR txt;
+
+	    while(pidl && pidl->mkid.cb && pstr<end) {
+		if (_ILIsSpecialFolder(pidl))
+		    {hr = E_INVALIDARG; break;}
+
+		txt = _ILGetTextPointer(pidl);
+		if (!txt)
+		    {hr = E_INVALIDARG; break;}
+
+		lstrcpynA(pstr, txt, end-pstr);
+
+		pidl = ILGetNext(pidl);
+		if (!pidl)
+		    {hr = E_INVALIDARG; break;}
+
+		if (!pidl->mkid.cb) {
+		    /* We are at the end and successfully converted the complete PIDL. */
+		    break;
+		}
+
+		pstr = PathAddBackslashA(pstr);
+		if (!pstr)
+		    {hr = E_INVALIDARG; break;}
+	    }
+	} else
+	    hr = E_INVALIDARG;
+
+	TRACE_(shell)("-- %s, 0x%08lx\n", pszPath, hr);
+	return hr;
+}
+
+/*************************************************************************
  * SHGetPathFromIDListA		[SHELL32.@][NT 4.0: SHELL32.220]
  *
  * PARAMETERS
@@ -1292,61 +1345,86 @@ HRESULT WINAPI SHGetDataFromIDListW(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int n
 BOOL WINAPI SHGetPathFromIDListA(LPCITEMIDLIST pidl, LPSTR pszPath)
 {
 	HRESULT hr;
-	STRRET str;
-	LPSHELLFOLDER shellfolder;
 
 	TRACE_(shell)("(pidl=%p,%p)\n",pidl,pszPath);
 	pdump(pidl);
 
 	if (!pidl)
-		return FALSE;
+	    return FALSE;
 
-	hr = SHGetDesktopFolder(&shellfolder);
-	if (SUCCEEDED (hr)) {
-	    hr = IShellFolder_GetDisplayNameOf(shellfolder, pidl, SHGDN_FORPARSING, &str);
-	    if(SUCCEEDED(hr)) {
-	        StrRetToStrNA (pszPath, MAX_PATH, &str, pidl);
-	    }
-	    IShellFolder_Release(shellfolder);
-	}
+	hr = SHELL_GetPathFromIDListA(pidl, pszPath, MAX_PATH);
 
-	/* don't allow to return displaynames of the form "::{guid}" */
-	if (pszPath[0]==':' && pszPath[1]==':') {
-		*pszPath = '\0';
-		return FALSE;
-	}
-
-	TRACE_(shell)("-- %s, 0x%08lx\n",pszPath, hr);
 	return SUCCEEDED(hr);
 }
+
+/*************************************************************************
+ * SHELL_GetPathFromIDListW
+ */
+HRESULT SHELL_GetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath, UINT uOutSize)
+{
+	LPWSTR pstr = pszPath;
+	LPWSTR end = pszPath + uOutSize;
+	HRESULT hr = S_OK;
+
+	/* One case is a PIDL rooted at desktop level */
+	if (_ILIsValue(pidl) || _ILIsFolder(pidl)) {
+	    hr = SHGetSpecialFolderPathW(0, pstr, CSIDL_DESKTOP, FALSE);
+
+	    if (SUCCEEDED(hr))
+		pstr = PathAddBackslashW(pstr);
+	}
+	/* The only other valid case is a item ID list beginning at "My Computer" */
+ 	else if (_ILIsMyComputer(pidl))
+	    pidl = ILGetNext(pidl);
+
+        if (SUCCEEDED(hr)) {
+	    LPSTR txt;
+
+	    while(pidl && pidl->mkid.cb && pstr<end) {
+		if (_ILIsSpecialFolder(pidl))
+		    {hr = E_INVALIDARG; break;}
+
+		txt = _ILGetTextPointer(pidl);
+		if (!txt)
+		    {hr = E_INVALIDARG; break;}
+
+		if (!MultiByteToWideChar(CP_ACP, 0, txt, -1, pstr, uOutSize))
+		    {hr = E_OUTOFMEMORY; break;}
+
+		pidl = ILGetNext(pidl);
+		if (!pidl)
+		    {hr = E_INVALIDARG; break;}
+
+		if (!pidl->mkid.cb) {
+		    /* We are at the end and successfully converted the complete PIDL. */
+		    break;
+		}
+
+		pstr = PathAddBackslashW(pstr);
+		if (!pstr)
+		    {hr = E_INVALIDARG; break;}
+	    }
+	} else
+	    hr = E_INVALIDARG;
+
+    TRACE_(shell)("-- %s, 0x%08lx\n", debugstr_w(pszPath), hr);
+    return hr;
+}
+
 /*************************************************************************
  * SHGetPathFromIDListW 			[SHELL32.@]
  */
 BOOL WINAPI SHGetPathFromIDListW(LPCITEMIDLIST pidl, LPWSTR pszPath)
 {
 	HRESULT hr;
-	STRRET str;
-	LPSHELLFOLDER shellfolder;
 
 	TRACE_(shell)("(pidl=%p,%p)\n", pidl, debugstr_w(pszPath));
 	pdump(pidl);
 
-	if (!pidl) return FALSE;
+	if (!pidl)
+	    return FALSE;
 
-	hr = SHGetDesktopFolder(&shellfolder);
-	if (SUCCEEDED(hr)) {
-	    hr = IShellFolder_GetDisplayNameOf(shellfolder, pidl, SHGDN_FORPARSING, &str);
-	    if (SUCCEEDED(hr)) {
-	        StrRetToStrNW(pszPath, MAX_PATH, &str, pidl);
-	    }
-	    IShellFolder_Release(shellfolder);
-	}
-
-	/* don't allow to return displaynames of the form "::{guid}" */
-	if (pszPath[0]==':' && pszPath[1]==':') {
-		*pszPath = '\0';
-		return FALSE;
-	}
+	hr = SHELL_GetPathFromIDListW(pidl, pszPath, MAX_PATH);
 
 	TRACE_(shell)("-- %s, 0x%08lx\n",debugstr_w(pszPath), hr);
 	return SUCCEEDED(hr);
