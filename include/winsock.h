@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <netdb.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 
 #ifdef HAVE_IPX_GNU
 # include <netipx/ipx.h>
@@ -91,11 +92,13 @@ typedef struct
         SOCKET16  fd_array[FD_SETSIZE];   /* an array of SOCKETs */
 } ws_fd_set16;
 
-typedef struct
+
+typedef struct ws_fd_set32_struct
 {
         UINT    fd_count;               /* how many are SET? */
         SOCKET  fd_array[FD_SETSIZE];   /* an array of SOCKETs */
 } ws_fd_set32;
+
 
 /* ws_fd_set operations */
 
@@ -499,7 +502,7 @@ typedef struct sockaddr SOCKADDR, *PSOCKADDR, *LPSOCKADDR;
 typedef struct sockaddr_in SOCKADDR_IN, *PSOCKADDR_IN, *LPSOCKADDR_IN;
 typedef struct linger LINGER, *PLINGER, *LPLINGER;
 typedef struct in_addr IN_ADDR, *PIN_ADDR, *LPIN_ADDR;
-typedef struct fd_set FD_SET, *PFD_SET, *LPFD_SET;
+typedef struct ws_fd_set32_struct FD_SET, *PFD_SET, *LPFD_SET;
 typedef struct hostent HOSTENT, *PHOSTENT, *LPHOSTENT;
 typedef struct servent SERVENT, *PSERVENT, *LPSERVENT;
 typedef struct protoent PROTOENT, *PPROTOENT, *LPPROTOENT;
