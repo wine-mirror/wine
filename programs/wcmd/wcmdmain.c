@@ -31,7 +31,8 @@ const char *inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", "CTTY",
 		"DATE", "DEL", "DIR", "ECHO", "ERASE", "FOR", "GOTO",
 		"HELP", "IF", "LABEL", "MD", "MKDIR", "MOVE", "PATH", "PAUSE",
 		"PROMPT", "REM", "REN", "RENAME", "RD", "RMDIR", "SET", "SHIFT",
-		"TIME", "TITLE", "TYPE", "VERIFY", "VER", "VOL", "EXIT"  };
+                "TIME", "TITLE", "TYPE", "VERIFY", "VER", "VOL", 
+                "ENDLOCAL", "SETLOCAL", "EXIT" };
 
 HINSTANCE hinst;
 DWORD errorlevel;
@@ -426,6 +427,12 @@ void WCMD_process_command (char *command)
       case WCMD_RD:
       case WCMD_RMDIR:
         WCMD_remove_dir ();
+        break;
+      case WCMD_SETLOCAL:
+        WCMD_setlocal(p);
+        break;
+      case WCMD_ENDLOCAL:
+        WCMD_endlocal();
         break;
       case WCMD_SET:
         WCMD_setshow_env (p);

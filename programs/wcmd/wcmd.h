@@ -35,6 +35,7 @@ void WCMD_create_dir (void);
 void WCMD_delete (int recurse);
 void WCMD_directory (void);
 void WCMD_echo (const char *);
+void WCMD_endlocal (void);
 void WCMD_enter_paged_mode(void);
 void WCMD_for (char *);
 void WCMD_give_help (char *command);
@@ -53,6 +54,7 @@ int  WCMD_read_console (char *string, int str_len);
 void WCMD_remove_dir (void);
 void WCMD_rename (void);
 void WCMD_run_program (char *command);
+void WCMD_setlocal (const char *command);
 void WCMD_setshow_attrib (void);
 void WCMD_setshow_date (void);
 void WCMD_setshow_default (void);
@@ -130,5 +132,8 @@ typedef struct {
 #define WCMD_VER    34
 #define WCMD_VOL    35
 
+#define WCMD_ENDLOCAL 36
+#define WCMD_SETLOCAL 37
+
 /* Must be last in list */
-#define WCMD_EXIT   36
+#define WCMD_EXIT   38

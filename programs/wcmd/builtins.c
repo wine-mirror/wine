@@ -36,6 +36,14 @@
 
 void WCMD_execute (char *orig_command, char *parameter, char *substitution);
 
+struct env_stack
+{
+  struct env_stack *next;
+  WCHAR *strings;
+};
+
+struct env_stack *saved_environment;
+
 extern HINSTANCE hinst;
 extern char *inbuilt[];
 extern char nyi[];
@@ -504,6 +512,133 @@ int status;
   }
   status = MoveFile (param1, param2);
   if (!status) WCMD_print_error ();
+}
+
+/*****************************************************************************
+ * WCMD_dupenv
+ *
+ * Make a copy of the environment.
+ */
+WCHAR *WCMD_dupenv( const WCHAR *env )
+{
+  WCHAR *env_copy;
+  int len;
+
+  if( !env )
+    return NULL;
+
+  len = 0;
+  while ( env[len] )
+    len += (lstrlenW(&env[len]) + 1);
+
+  env_copy = LocalAlloc (LMEM_FIXED, (len+1) * sizeof (WCHAR) );
+  if (!env_copy)
+  {
+    WCMD_output ("out of memory\n");
+    return env_copy;
+  }
+  memcpy (env_copy, env, len*sizeof (WCHAR));
+  env_copy[len] = 0;
+
+  return env_copy;
+}
+
+/*****************************************************************************
+ * WCMD_setlocal
+ *
+ *  setlocal pushes the environment onto a stack
+ *  Save the environment as unicode so we don't screw anything up.
+ */
+void WCMD_setlocal (const char *s) {
+  WCHAR *env;
+  struct env_stack *env_copy;
+
+  /* DISABLEEXTENSIONS ignored */
+
+  env_copy = LocalAlloc (LMEM_FIXED, sizeof (struct env_stack));
+  if( !env_copy )
+  {
+    WCMD_output ("out of memory\n");
+    return;
+  }
+
+  env = GetEnvironmentStringsW ();
+
+  env_copy->strings = WCMD_dupenv (env);
+  if (env_copy->strings)
+  {
+    env_copy->next = saved_environment;
+    saved_environment = env_copy;
+  }
+  else
+    LocalFree (env_copy);
+
+  FreeEnvironmentStringsW (env);
+}
+
+/*****************************************************************************
+ * WCMD_strchrW
+ */
+inline WCHAR *WCMD_strchrW(WCHAR *str, WCHAR ch)
+{
+   while(*str)
+   {
+     if(*str == ch)
+       return str;
+     str++;
+   }
+   return NULL;
+}
+
+/*****************************************************************************
+ * WCMD_endlocal
+ *
+ *  endlocal pops the environment off a stack
+ */
+void WCMD_endlocal (void) {
+  WCHAR *env, *old, *p;
+  struct env_stack *temp;
+  int len, n;
+
+  if (!saved_environment)
+    return;
+
+  /* pop the old environment from the stack */
+  temp = saved_environment;
+  saved_environment = temp->next;
+
+  /* delete the current environment, totally */
+  env = GetEnvironmentStringsW ();
+  old = WCMD_dupenv (GetEnvironmentStringsW ());
+  len = 0;
+  while (old[len]) {
+    n = lstrlenW(&old[len]) + 1;
+    p = WCMD_strchrW(&old[len], '=');
+    if (p)
+    {
+      *p++ = 0;
+      SetEnvironmentVariableW (&old[len], NULL);
+    }
+    len += n;
+  }
+  LocalFree (old);
+  FreeEnvironmentStringsW (env);
+  
+  /* restore old environment */
+  env = temp->strings;
+  len = 0;
+  while (env[len]) {
+    n = lstrlenW(&env[len]) + 1;
+    p = WCMD_strchrW(&env[len], '=');
+    if (p)
+    {
+      *p++ = 0;
+      SetEnvironmentVariableW (&env[len], p);
+    }
+    len += n;
+  }
+  LocalFree (env);
+  LocalFree (temp);
 }
 
 /*****************************************************************************
