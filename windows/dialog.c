@@ -546,6 +546,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         template.style &= ~(WS_CAPTION|WS_SYSMENU);
     if (template.style & DS_MODALFRAME)
         template.exStyle |= WS_EX_DLGMODALFRAME;
+    if (template.style & DS_CONTROL)
+        template.exStyle |= WS_EX_CONTROLPARENT;
     AdjustWindowRectEx( &rect, template.style, (hMenu != 0), template.exStyle );
     rect.right -= rect.left;
     rect.bottom -= rect.top;
