@@ -22,157 +22,158 @@
 #include <time.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <assert.h>
 #include "windows.h"
 #include "hlpfile.h"
 
 typedef struct
 {
-  const char *header1;
-  const char *header2;
-  const char *section;
-  const char *first_paragraph;
-  const char *newline;
-  const char *next_paragraph;
-  const char *special_char;
-  const char *begin_italic;
-  const char *end_italic;
-  const char *begin_boldface;
-  const char *end_boldface;
-  const char *begin_typewriter;
-  const char *end_typewriter;
-  const char *tail;
+    const char *header1;
+    const char *header2;
+    const char *section;
+    const char *first_paragraph;
+    const char *newline;
+    const char *next_paragraph;
+    const char *special_char;
+    const char *begin_italic;
+    const char *end_italic;
+    const char *begin_boldface;
+    const char *end_boldface;
+    const char *begin_typewriter;
+    const char *end_typewriter;
+    const char *tail;
 } FORMAT;
 
 typedef struct
 {
-  const char ch;
-  const char *subst;
+    const char ch;
+    const char *subst;
 } CHARMAP[];
 
 
 FORMAT format =
 {
-  "<!doctype linuxdoc system>\n"
-  "<article>\n"
-  "<title>\n",
+    "<!doctype linuxdoc system>\n"
+    "<article>\n"
+    "<title>\n",
 
-  "\n<author>\n%s\n"
-  "<date>\n%s\n",
+    "\n<author>\n%s\n"
+    "<date>\n%s\n",
 
-  "\n<sect>\n",
-  "\n<p>\n",
-  "\n<newline>\n",
-  "\n\n",
+    "\n<sect>\n",
+    "\n<p>\n",
+    "\n<newline>\n",
+    "\n\n",
 
-  "&%s;",
+    "&%s;",
 
-  "<em>",
-  "</em>",
-  "<bf>",
-  "</bf>",
-  "<tt>",
-  "</tt>",
+    "<em>",
+    "</em>",
+    "<bf>",
+    "</bf>",
+    "<tt>",
+    "</tt>",
 
-  "\n</article>\n"
+    "\n</article>\n"
 };
 
 CHARMAP charmap =
-  {{'Æ', "AElig"},
-   {'Á', "Aacute"},
-   {'Â', "Acirc"},
-   {'À', "Agrave"},
-   {'Ã', "Atilde"},
-   {'Ç', "Ccedil"},
-   {'É', "Eacute"},
-   {'È', "Egrave"},
-   {'Ë', "Euml"},
-   {'Í', "Iacute"},
-   {'Î', "Icirc"},
-   {'Ì', "Igrave"},
-   {'Ï', "Iuml"},
-   {'Ñ', "Ntilde"},
-   {'Ó', "Oacute"},
-   {'Ô', "Ocirc"},
-   {'Ò', "Ograve"},
-   {'Ø', "Oslash"},
-   {'Ú', "Uacute"},
-   {'Ù', "Ugrave"},
-   {'Ý', "Yacute"},
-   {'á', "aacute"},
-   {'â', "acirc"},
-   {'æ', "aelig"},
-   {'à', "agrave"},
-   {'å', "aring"},
-   {'ã', "atilde"},
-   {'ç', "ccedil"},
-   {'é', "eacute"},
-   {'ê', "ecirc"},
-   {'è', "egrave"},
-   {'ë', "euml"},
-   {'í', "iacute"},
-   {'î', "icirc"},
-   {'ì', "igrave"},
-   {'ï', "iuml"},
-   {'ñ', "ntilde"},
-   {'ó', "oacute"},
-   {'ÿ', "yuml"},
-   {'ô', "ocirc"},
-   {'ò', "ograve"},
-   {'ø', "oslash"},
-   {'õ', "otilde"},
-   {'ú', "uacute"},
-   {'û', "ucirc"},
-   {'ù', "ugrave"},
-   {'ý', "yacute"},
-   {'<', "lt"},
-   {'&', "amp"},
-   {'"', "dquot"},
-   {'#', "num"},
-   {'%', "percnt"},
-   {'\'', "quot"},
+{{'Æ', "AElig"},
+ {'Á', "Aacute"},
+ {'Â', "Acirc"},
+ {'À', "Agrave"},
+ {'Ã', "Atilde"},
+ {'Ç', "Ccedil"},
+ {'É', "Eacute"},
+ {'È', "Egrave"},
+ {'Ë', "Euml"},
+ {'Í', "Iacute"},
+ {'Î', "Icirc"},
+ {'Ì', "Igrave"},
+ {'Ï', "Iuml"},
+ {'Ñ', "Ntilde"},
+ {'Ó', "Oacute"},
+ {'Ô', "Ocirc"},
+ {'Ò', "Ograve"},
+ {'Ø', "Oslash"},
+ {'Ú', "Uacute"},
+ {'Ù', "Ugrave"},
+ {'Ý', "Yacute"},
+ {'á', "aacute"},
+ {'â', "acirc"},
+ {'æ', "aelig"},
+ {'à', "agrave"},
+ {'å', "aring"},
+ {'ã', "atilde"},
+ {'ç', "ccedil"},
+ {'é', "eacute"},
+ {'ê', "ecirc"},
+ {'è', "egrave"},
+ {'ë', "euml"},
+ {'í', "iacute"},
+ {'î', "icirc"},
+ {'ì', "igrave"},
+ {'ï', "iuml"},
+ {'ñ', "ntilde"},
+ {'ó', "oacute"},
+ {'ÿ', "yuml"},
+ {'ô', "ocirc"},
+ {'ò', "ograve"},
+ {'ø', "oslash"},
+ {'õ', "otilde"},
+ {'ú', "uacute"},
+ {'û', "ucirc"},
+ {'ù', "ugrave"},
+ {'ý', "yacute"},
+ {'<', "lt"},
+ {'&', "amp"},
+ {'"', "dquot"},
+ {'#', "num"},
+ {'%', "percnt"},
+ {'\'', "quot"},
 #if 0
-   {'(', "lpar"},
-   {')', "rpar"},
-   {'*', "ast"},
-   {'+', "plus"},
-   {',', "comma"},
-   {'-', "hyphen"},
-   {':', "colon"},
-   {';', "semi"},
-   {'=', "equals"},
-   {'@', "commat"},
-   {'[', "lsqb"},
-   {']', "rsqb"},
-   {'^', "circ"},
-   {'_', "lowbar"},
-   {'{', "lcub"},
-   {'|', "verbar"},
-   {'}', "rcub"},
-   {'~', "tilde"},
+ {'(', "lpar"},
+ {')', "rpar"},
+ {'*', "ast"},
+ {'+', "plus"},
+ {',', "comma"},
+ {'-', "hyphen"},
+ {':', "colon"},
+ {';', "semi"},
+ {'=', "equals"},
+ {'@', "commat"},
+ {'[', "lsqb"},
+ {']', "rsqb"},
+ {'^', "circ"},
+ {'_', "lowbar"},
+ {'{', "lcub"},
+ {'|', "verbar"},
+ {'}', "rcub"},
+ {'~', "tilde"},
 #endif
-   {'\\', "bsol"},
-   {'$', "dollar"},
-   {'Ä', "Auml"},
-   {'ä', "auml"},
-   {'Ö', "Ouml"},
-   {'ö', "ouml"},
-   {'Ü', "Uuml"},
-   {'ü', "uuml"},
-   {'ß', "szlig"},
-   {'>', "gt"},
-   {'§', "sect"},
-   {'¶', "para"},
-   {'©', "copy"},
-   {'¡', "iexcl"},
-   {'¿', "iquest"},
-   {'¢', "cent"},
-   {'£', "pound"},
-   {'×', "times"},
-   {'±', "plusmn"},
-   {'÷', "divide"},
-   {'¬', "not"},
-   {'µ', "mu"},
-   {0,0}};
+ {'\\', "bsol"},
+ {'$', "dollar"},
+ {'Ä', "Auml"},
+ {'ä', "auml"},
+ {'Ö', "Ouml"},
+ {'ö', "ouml"},
+ {'Ü', "Uuml"},
+ {'ü', "uuml"},
+ {'ß', "szlig"},
+ {'>', "gt"},
+ {'§', "sect"},
+ {'¶', "para"},
+ {'©', "copy"},
+ {'¡', "iexcl"},
+ {'¿', "iquest"},
+ {'¢', "cent"},
+ {'£', "pound"},
+ {'×', "times"},
+ {'±', "plusmn"},
+ {'÷', "divide"},
+ {'¬', "not"},
+ {'µ', "mu"},
+ {0,0}};
 
 /***********************************************************************
  *
@@ -181,18 +182,18 @@ CHARMAP charmap =
 
 static void print_text(const char *p)
 {
-  int i;
+    int i;
 
-  for (; *p; p++)
+    for (; *p; p++)
     {
-      for (i = 0; charmap[i].ch; i++)
-	if (*p == charmap[i].ch)
-	  {
-	    printf(format.special_char, charmap[i].subst);
-	    break;
-	  }
-      if (!charmap[i].ch)
-	printf("%c", *p);
+        for (i = 0; charmap[i].ch; i++)
+            if (*p == charmap[i].ch)
+            {
+                printf(format.special_char, charmap[i].subst);
+                break;
+            }
+        if (!charmap[i].ch)
+            printf("%c", *p);
     }
 }
 
@@ -203,60 +204,68 @@ static void print_text(const char *p)
 
 int main(int argc, char **argv)
 {
-  HLPFILE   *hlpfile;
-  HLPFILE_PAGE *page;
-  HLPFILE_PARAGRAPH *paragraph;
-  time_t t;
-  char date[50];
-  char *filename;
+    HLPFILE   *hlpfile;
+    HLPFILE_PAGE *page;
+    HLPFILE_PARAGRAPH *paragraph;
+    time_t t;
+    char date[50];
+    char *filename;
 
-  hlpfile = HLPFILE_ReadHlpFile(argc > 1 ? argv[1] : "");
+    hlpfile = HLPFILE_ReadHlpFile(argc > 1 ? argv[1] : "");
 
-  if (!hlpfile) return(2);
+    if (!hlpfile) return 2;
 
-  time(&t);
-  strftime(date, sizeof(date), "%x", localtime(&t));
-  filename = strrchr(hlpfile->lpszPath, '/');
-  if (filename) filename++;
-  else filename = hlpfile->lpszPath;
+    time(&t);
+    strftime(date, sizeof(date), "%x", localtime(&t));
+    filename = strrchr(hlpfile->lpszPath, '/');
+    if (filename) filename++;
+    else filename = hlpfile->lpszPath;
 
-  /* Header */
-  printf(format.header1);
-  print_text(hlpfile->lpszTitle);
-  printf(format.header2, filename, date);
+    /* Header */
+    printf(format.header1);
+    print_text(hlpfile->lpszTitle);
+    printf(format.header2, filename, date);
 
-  for (page = hlpfile->first_page; page; page = page->next)
+    for (page = hlpfile->first_page; page; page = page->next)
     {
-      paragraph = page->first_paragraph;
-      if (!paragraph) continue;
+        paragraph = page->first_paragraph;
+        if (!paragraph) continue;
 
-      /* Section */
-      printf(format.section);
-      for (; paragraph && !paragraph->wVSpace; paragraph = paragraph->next)
-	print_text(paragraph->lpszText);
-      printf(format.first_paragraph);
+        /* Section */
+        printf(format.section);
+        for (; paragraph && !paragraph->u.text.wVSpace; paragraph = paragraph->next)
+            print_text(paragraph->u.text.lpszText);
+        printf(format.first_paragraph);
 
-      for (; paragraph; paragraph = paragraph->next)
+        for (; paragraph; paragraph = paragraph->next)
 	{
-	  /* New line; new paragraph */
-	  if (paragraph->wVSpace == 1)
-	    printf(format.newline);
-	  else if (paragraph->wVSpace > 1)
-	    printf(format.next_paragraph);
+            switch (paragraph->cookie)
+            {
+            case para_normal_text:
+            case para_debug_text:
+                /* New line; new paragraph */
+                if (paragraph->u.text.wVSpace == 1)
+                    printf(format.newline);
+                else if (paragraph->u.text.wVSpace > 1)
+                    printf(format.next_paragraph);
 
-	  if (paragraph->wFont)
-	    printf(format.begin_boldface);
+                if (paragraph->u.text.wFont)
+                    printf(format.begin_boldface);
 
-	  print_text(paragraph->lpszText);
+                print_text(paragraph->u.text.lpszText);
 
-	  if (paragraph->wFont)
-	    printf(format.end_boldface);
+                if (paragraph->u.text.wFont)
+                    printf(format.end_boldface);
+                break;
+            case para_image:
+                break;
+            }
 	}
     }
 
-  printf(format.tail);
+    printf(format.tail);
 
-  return(0);
+    return 0;
 }
 
 /***********************************************************************
@@ -268,64 +277,92 @@ static FILE *file = 0;
 
 HFILE WINAPI OpenFile( LPCSTR path, OFSTRUCT *ofs, UINT mode )
 {
-  file = *path ? fopen(path, "r") : stdin;
-  return file ? (HFILE)1 : HFILE_ERROR;
+    file = *path ? fopen(path, "r") : stdin;
+    return file ? (HFILE)1 : HFILE_ERROR;
 }
 
 HFILE WINAPI _lclose( HFILE hFile )
 {
-  fclose(file);
-  return 0;
+    fclose(file);
+    return 0;
 }
 
 LONG WINAPI _hread( HFILE hFile, LPVOID buffer, LONG count )
 {
-  return fread(buffer, 1, count, file);
+    return fread(buffer, 1, count, file);
 }
 
-HGLOBAL WINAPI GlobalAlloc( UINT flags, DWORD size )
+void* WINAPI HeapAlloc( HANDLE heap, DWORD flags, DWORD size )
 {
-  return (HGLOBAL) malloc(size);
+    assert(flags == 0);
+    return malloc(size);
 }
 
-LPVOID WINAPI GlobalLock( HGLOBAL handle )
+void* WINAPI HeapReAlloc( HANDLE heap, DWORD flags, void* ptr, DWORD size)
 {
-  return (LPVOID) handle;
+    assert(flags == 0);
+    return realloc(ptr, size);
 }
 
-HGLOBAL WINAPI GlobalFree( HGLOBAL handle )
+BOOL WINAPI HeapFree( HGLOBAL handle, DWORD flags, void* ptr )
 {
-  free((VOID*) handle);
-  return(0);
+    free(ptr);
+    return TRUE;
 }
 
+char __wine_dbch_winhelp[] = "\003winhelp";
+
+static char * const debug_channels[1] =
+{
+    __wine_dbch_winhelp
+};
+
+int wine_dbg_log( int cls, const char *channel, const char *func, const char *format, ... )
+{
+    return 1;
+}
+
+HBITMAP WINAPI CreateDIBitmap(HDC hdc, CONST BITMAPINFOHEADER* bih, DWORD a, CONST void* ptr, CONST BITMAPINFO* bi, UINT c)
+{
+    return 0;
+}
+
+HDC WINAPI GetDC(HWND h)
+{
+    return 0;
+}
+
+BOOL WINAPI DeleteObject(HGDIOBJ h)
+{
+    return TRUE;
+}
 /*
  * String functions
  *
  * Copyright 1993 Yngvi Sigurjonsson (yngvi@hafro.is)
  */
 
-INT WINAPI lstrcmp(LPCSTR str1,LPCSTR str2)
+INT WINAPI lstrcmp( LPCSTR str1, LPCSTR str2 )
 {
-  return strcmp( str1, str2 );
+    return strcmp( str1, str2 );
 }
 
 INT WINAPI lstrcmpi( LPCSTR str1, LPCSTR str2 )
 {
-  INT res;
+    INT res;
 
-  while (*str1)
+    while (*str1)
     {
-      if ((res = toupper(*str1) - toupper(*str2)) != 0) return res;
-      str1++;
-      str2++;
+        if ((res = toupper(*str1) - toupper(*str2)) != 0) return res;
+        str1++;
+        str2++;
     }
-  return toupper(*str1) - toupper(*str2);
+    return toupper(*str1) - toupper(*str2);
 }
 
-INT WINAPI lstrlen(LPCSTR str)
+INT WINAPI lstrlen( LPCSTR str )
 {
-  return strlen(str);
+    return strlen(str);
 }
 
 LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
@@ -334,12 +371,3 @@ LPSTR WINAPI lstrcpyA( LPSTR dst, LPCSTR src )
     strcpy( dst, src );
     return dst;
 }
-
-void WINAPI hmemcpy16(LPVOID hpvDest, LPCVOID hpvSource, LONG cbCopy)
-{
-  memcpy(hpvDest, hpvSource, cbCopy);
-}
-
-/* Local Variables:    */
-/* c-file-style: "GNU" */
-/* End:                */

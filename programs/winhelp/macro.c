@@ -18,460 +18,462 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include <stdio.h>
 #include "windows.h"
 #include "commdlg.h"
 #include "winhelp.h"
 #include "macro.h"
 
-VOID MACRO_About(VOID)
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(winhelp);
+
+void MACRO_About(void)
 {
-  fprintf(stderr, "About()\n");
+    WINE_FIXME("About()\n");
 }
 
-VOID MACRO_AddAccelerator(LONG u1, LONG u2, LPCSTR str)
+void MACRO_AddAccelerator(LONG u1, LONG u2, LPCSTR str)
 {
-  fprintf(stderr, "AddAccelerator(%lu, %lu, \"%s\")\n", u1, u2, str);
+    WINE_FIXME("AddAccelerator(%lu, %lu, \"%s\")\n", u1, u2, str);
 }
 
-VOID MACRO_ALink(LPCSTR str1, LONG u, LPCSTR str2)
+void MACRO_ALink(LPCSTR str1, LONG u, LPCSTR str2)
 {
-  fprintf(stderr, "ALink(\"%s\", %lu, \"%s\")\n", str1, u, str2);
+    WINE_FIXME("ALink(\"%s\", %lu, \"%s\")\n", str1, u, str2);
 }
 
-VOID MACRO_Annotate(VOID)
+void MACRO_Annotate(void)
 {
-  fprintf(stderr, "Annotate()\n");
+    WINE_FIXME("Annotate()\n");
 }
 
-VOID MACRO_AppendItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4)
+void MACRO_AppendItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4)
 {
-  fprintf(stderr, "AppendItem(\"%s\", \"%s\", \"%s\", \"%s\")\n", str1, str2, str3, str4);
+    WINE_FIXME("AppendItem(\"%s\", \"%s\", \"%s\", \"%s\")\n", str1, str2, str3, str4);
 }
 
-VOID MACRO_Back(VOID)
+void MACRO_Back(void)
 {
-  fprintf(stderr, "Back()\n");
+    WINE_FIXME("Back()\n");
 }
 
-VOID MACRO_BackFlush(VOID)
+void MACRO_BackFlush(void)
 {
-  fprintf(stderr, "BackFlush()\n");
+    WINE_FIXME("BackFlush()\n");
 }
 
-VOID MACRO_BookmarkDefine(VOID)
+void MACRO_BookmarkDefine(void)
 {
-  fprintf(stderr, "BookmarkDefine()\n");
+    WINE_FIXME("BookmarkDefine()\n");
 }
 
-VOID MACRO_BookmarkMore(VOID)
+void MACRO_BookmarkMore(void)
 {
-  fprintf(stderr, "BookmarkMore()\n");
+    WINE_FIXME("BookmarkMore()\n");
 }
 
-VOID MACRO_BrowseButtons(VOID)
+void MACRO_BrowseButtons(void)
 {
-  MACRO_CreateButton("BTN_PREV", "&<<", "Prev()");
-  MACRO_CreateButton("BTN_NEXT", "&>>", "Next()");
+    MACRO_CreateButton("BTN_PREV", "&<<", "Prev()");
+    MACRO_CreateButton("BTN_NEXT", "&>>", "Next()");
 }
 
-VOID MACRO_ChangeButtonBinding(LPCSTR str1, LPCSTR str2)
+void MACRO_ChangeButtonBinding(LPCSTR str1, LPCSTR str2)
 {
-  fprintf(stderr, "ChangeButtonBinding(\"%s\", \"%s\")\n", str1, str2);
+    WINE_FIXME("ChangeButtonBinding(\"%s\", \"%s\")\n", str1, str2);
 }
 
-VOID MACRO_ChangeEnable(LPCSTR str1, LPCSTR str2)
+void MACRO_ChangeEnable(LPCSTR str1, LPCSTR str2)
 {
-  fprintf(stderr, "ChangeEnable(\"%s\", \"%s\")\n", str1, str2);
+    WINE_FIXME("ChangeEnable(\"%s\", \"%s\")\n", str1, str2);
 }
 
-VOID MACRO_ChangeItemBinding(LPCSTR str1, LPCSTR str2)
+void MACRO_ChangeItemBinding(LPCSTR str1, LPCSTR str2)
 {
-  fprintf(stderr, "ChangeItemBinding(\"%s\", \"%s\")\n", str1, str2);
+    WINE_FIXME("ChangeItemBinding(\"%s\", \"%s\")\n", str1, str2);
 }
 
-VOID MACRO_CheckItem(LPCSTR str)
+void MACRO_CheckItem(LPCSTR str)
 {
-  fprintf(stderr, "CheckItem(\"%s\")\n", str);
+    WINE_FIXME("CheckItem(\"%s\")\n", str);
 }
 
-VOID MACRO_CloseSecondarys(VOID)
+void MACRO_CloseSecondarys(void)
 {
-  WINHELP_WINDOW *win;
-  for (win = Globals.win_list; win; win = win->next)
-    if (win->lpszName && lstrcmpi(win->lpszName, "main"))
-      DestroyWindow(win->hMainWnd);
+    WINHELP_WINDOW *win;
+    for (win = Globals.win_list; win; win = win->next)
+        if (win->lpszName && lstrcmpi(win->lpszName, "main"))
+            DestroyWindow(win->hMainWnd);
 }
 
-VOID MACRO_CloseWindow(LPCSTR lpszWindow)
+void MACRO_CloseWindow(LPCSTR lpszWindow)
 {
-  WINHELP_WINDOW *win;
-  if (!lpszWindow || !lpszWindow[0]) lpszWindow = "main";
+    WINHELP_WINDOW *win;
+    if (!lpszWindow || !lpszWindow[0]) lpszWindow = "main";
 
-  for (win = Globals.win_list; win; win = win->next)
-    if (win->lpszName && !lstrcmpi(win->lpszName, lpszWindow))
-      DestroyWindow(win->hMainWnd);
+    for (win = Globals.win_list; win; win = win->next)
+        if (win->lpszName && !lstrcmpi(win->lpszName, lpszWindow))
+            DestroyWindow(win->hMainWnd);
 }
 
-VOID MACRO_Compare(LPCSTR str)
+void MACRO_Compare(LPCSTR str)
 {
-  fprintf(stderr, "Compare(\"%s\")\n", str);
+    WINE_FIXME("Compare(\"%s\")\n", str);
 }
 
-VOID MACRO_Contents(VOID)
+void MACRO_Contents(void)
 {
-  if (Globals.active_win->page)
-    MACRO_JumpContents(Globals.active_win->page->file->lpszPath, NULL);
+    if (Globals.active_win->page)
+        MACRO_JumpContents(Globals.active_win->page->file->lpszPath, NULL);
 }
 
-VOID MACRO_ControlPanel(LPCSTR str1, LPCSTR str2, LONG u)
+void MACRO_ControlPanel(LPCSTR str1, LPCSTR str2, LONG u)
 {
-  fprintf(stderr, "ControlPanel(\"%s\", \"%s\", %lu)\n", str1, str2, u);
+    WINE_FIXME("ControlPanel(\"%s\", \"%s\", %lu)\n", str1, str2, u);
 }
 
-VOID MACRO_CopyDialog(VOID)
+void MACRO_CopyDialog(void)
 {
-  fprintf(stderr, "CopyDialog()\n");
+    WINE_FIXME("CopyDialog()\n");
 }
 
-VOID MACRO_CopyTopic(VOID)
+void MACRO_CopyTopic(void)
 {
-  fprintf(stderr, "CopyTopic()\n");
+    WINE_FIXME("CopyTopic()\n");
 }
 
-VOID MACRO_CreateButton(LPCSTR id, LPCSTR name, LPCSTR macro)
+void MACRO_CreateButton(LPCSTR id, LPCSTR name, LPCSTR macro)
 {
-  WINHELP_WINDOW *win = Globals.active_win;
-  WINHELP_BUTTON *button, **b;
-  LONG            size;
-  HGLOBAL         handle;
-  LPSTR           ptr;
+    WINHELP_WINDOW *win = Globals.active_win;
+    WINHELP_BUTTON *button, **b;
+    LONG            size;
+    LPSTR           ptr;
 
-  size = sizeof(WINHELP_BUTTON) + lstrlen(id) + lstrlen(name) + lstrlen(macro) + 3;
-  handle = GlobalAlloc(GMEM_FIXED, size);
-  if (!handle) return;
+    size = sizeof(WINHELP_BUTTON) + lstrlen(id) + lstrlen(name) + lstrlen(macro) + 3;
 
-  button = GlobalLock(handle);
-  button->hSelf = handle;
-  button->next  = 0;
-  button->hWnd  = 0;
+    button = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!button) return;
 
-  ptr = GlobalLock(handle);
-  ptr += sizeof(WINHELP_BUTTON);
+    button->next  = 0;
+    button->hWnd  = 0;
 
-  lstrcpy(ptr, (LPSTR) id);
-  button->lpszID = ptr;
-  ptr += lstrlen(id) + 1;
+    ptr = (char*)button + sizeof(WINHELP_BUTTON);
 
-  lstrcpy(ptr, (LPSTR) name);
-  button->lpszName = ptr;
-  ptr += lstrlen(name) + 1;
+    lstrcpy(ptr, (LPSTR) id);
+    button->lpszID = ptr;
+    ptr += lstrlen(id) + 1;
 
-  lstrcpy(ptr, (LPSTR) macro);
-  button->lpszMacro = ptr;
+    lstrcpy(ptr, (LPSTR) name);
+    button->lpszName = ptr;
+    ptr += lstrlen(name) + 1;
 
-  button->wParam = WH_FIRST_BUTTON;
-  for (b = &win->first_button; *b; b = &(*b)->next)
-    button->wParam = max(button->wParam, (*b)->wParam + 1);
-  *b = button;
+    lstrcpy(ptr, (LPSTR) macro);
+    button->lpszMacro = ptr;
 
-  SendMessage(win->hMainWnd, WM_USER, 0, 0);
+    button->wParam = WH_FIRST_BUTTON;
+    for (b = &win->first_button; *b; b = &(*b)->next)
+        button->wParam = max(button->wParam, (*b)->wParam + 1);
+    *b = button;
+
+    SendMessage(win->hMainWnd, WM_USER, 0, 0);
 }
 
-VOID MACRO_DeleteItem(LPCSTR str)
+void MACRO_DeleteItem(LPCSTR str)
 {
-  fprintf(stderr, "DeleteItem(\"%s\")\n", str);
+    WINE_FIXME("DeleteItem(\"%s\")\n", str);
 }
 
-VOID MACRO_DeleteMark(LPCSTR str)
+void MACRO_DeleteMark(LPCSTR str)
 {
-  fprintf(stderr, "DeleteMark(\"%s\")\n", str);
+    WINE_FIXME("DeleteMark(\"%s\")\n", str);
 }
 
-VOID MACRO_DestroyButton(LPCSTR str)
+void MACRO_DestroyButton(LPCSTR str)
 {
-  fprintf(stderr, "DestroyButton(\"%s\")\n", str);
+    WINE_FIXME("DestroyButton(\"%s\")\n", str);
 }
 
-VOID MACRO_DisableButton(LPCSTR str)
+void MACRO_DisableButton(LPCSTR str)
 {
-  fprintf(stderr, "DisableButton(\"%s\")\n", str);
+    WINE_FIXME("DisableButton(\"%s\")\n", str);
 }
 
-VOID MACRO_DisableItem(LPCSTR str)
+void MACRO_DisableItem(LPCSTR str)
 {
-  fprintf(stderr, "DisableItem(\"%s\")\n", str);
+    WINE_FIXME("DisableItem(\"%s\")\n", str);
 }
 
-VOID MACRO_EnableButton(LPCSTR str)
+void MACRO_EnableButton(LPCSTR str)
 {
-  fprintf(stderr, "EnableButton(\"%s\")\n", str);
+    WINE_FIXME("EnableButton(\"%s\")\n", str);
 }
 
-VOID MACRO_EnableItem(LPCSTR str)
+void MACRO_EnableItem(LPCSTR str)
 {
-  fprintf(stderr, "EnableItem(\"%s\")\n", str);
+    WINE_FIXME("EnableItem(\"%s\")\n", str);
 }
 
-VOID MACRO_EndMPrint(VOID)
+void MACRO_EndMPrint(void)
 {
-  fprintf(stderr, "EndMPrint()\n");
+    WINE_FIXME("EndMPrint()\n");
 }
 
-VOID MACRO_ExecFile(LPCSTR str1, LPCSTR str2, LONG u, LPCSTR str3)
+void MACRO_ExecFile(LPCSTR str1, LPCSTR str2, LONG u, LPCSTR str3)
 {
-  fprintf(stderr, "ExecFile(\"%s\", \"%s\", %lu, \"%s\")\n", str1, str2, u, str3);
+    WINE_FIXME("ExecFile(\"%s\", \"%s\", %lu, \"%s\")\n", str1, str2, u, str3);
 }
 
-VOID MACRO_ExecProgram(LPCSTR str, LONG u)
+void MACRO_ExecProgram(LPCSTR str, LONG u)
 {
-  fprintf(stderr, "ExecProgram(\"%s\", %lu)\n", str, u);
+    WINE_FIXME("ExecProgram(\"%s\", %lu)\n", str, u);
 }
 
-VOID MACRO_Exit(VOID)
+void MACRO_Exit(void)
 {
-  while(Globals.win_list)
-    DestroyWindow(Globals.win_list->hMainWnd);
+    while (Globals.win_list)
+        DestroyWindow(Globals.win_list->hMainWnd);
 }
 
-VOID MACRO_ExtAbleItem(LPCSTR str, LONG u)
+void MACRO_ExtAbleItem(LPCSTR str, LONG u)
 {
-  fprintf(stderr, "ExtAbleItem(\"%s\", %lu)\n", str, u);
+    WINE_FIXME("ExtAbleItem(\"%s\", %lu)\n", str, u);
 }
 
-VOID MACRO_ExtInsertItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4, LONG u1, LONG u2)
+void MACRO_ExtInsertItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4, LONG u1, LONG u2)
 {
-  fprintf(stderr, "ExtInsertItem(\"%s\", \"%s\", \"%s\", \"%s\", %lu, %lu)\n", str1, str2, str3, str4, u1, u2);
+    WINE_FIXME("ExtInsertItem(\"%s\", \"%s\", \"%s\", \"%s\", %lu, %lu)\n", str1, str2, str3, str4, u1, u2);
 }
 
-VOID MACRO_ExtInsertMenu(LPCSTR str1, LPCSTR str2, LPCSTR str3, LONG u1, LONG u2)
+void MACRO_ExtInsertMenu(LPCSTR str1, LPCSTR str2, LPCSTR str3, LONG u1, LONG u2)
 {
-  fprintf(stderr, "ExtInsertMenu(\"%s\", \"%s\", \"%s\", %lu, %lu)\n", str1, str2, str3, u1, u2);
+    WINE_FIXME("ExtInsertMenu(\"%s\", \"%s\", \"%s\", %lu, %lu)\n", str1, str2, str3, u1, u2);
 }
 
 BOOL MACRO_FileExist(LPCSTR str)
 {
-  fprintf(stderr, "FileExist(\"%s\")\n", str);
-  return TRUE;
+    WINE_FIXME("FileExist(\"%s\")\n", str);
+    return TRUE;
 }
 
-VOID MACRO_FileOpen(VOID)
+void MACRO_FileOpen(void)
 {
-  OPENFILENAME openfilename;
-  CHAR szPath[MAX_PATHNAME_LEN];
-  CHAR szDir[MAX_PATHNAME_LEN];
-  CHAR szzFilter[2 * MAX_STRING_LEN + 100];
-  LPSTR p = szzFilter;
+    OPENFILENAME openfilename;
+    CHAR szPath[MAX_PATHNAME_LEN];
+    CHAR szDir[MAX_PATHNAME_LEN];
+    CHAR szzFilter[2 * MAX_STRING_LEN + 100];
+    LPSTR p = szzFilter;
 
-  LoadString(Globals.hInstance, 0X12B, p, MAX_STRING_LEN);
-  p += strlen(p) + 1;
-  lstrcpy(p, "*.hlp");
-  p += strlen(p) + 1;
-  LoadString(Globals.hInstance, 0x12A, p, MAX_STRING_LEN);
-  p += strlen(p) + 1;
-  lstrcpy(p, "*.*");
-  p += strlen(p) + 1;
-  *p = '\0';
+    LoadString(Globals.hInstance, 0X12B, p, MAX_STRING_LEN);
+    p += strlen(p) + 1;
+    lstrcpy(p, "*.hlp");
+    p += strlen(p) + 1;
+    LoadString(Globals.hInstance, 0x12A, p, MAX_STRING_LEN);
+    p += strlen(p) + 1;
+    lstrcpy(p, "*.*");
+    p += strlen(p) + 1;
+    *p = '\0';
 
-  GetCurrentDirectory(sizeof(szDir), szDir);
+    GetCurrentDirectory(sizeof(szDir), szDir);
 
-  szPath[0]='\0';
+    szPath[0]='\0';
 
-  openfilename.lStructSize       = 0;
-  openfilename.hwndOwner         = Globals.active_win->hMainWnd;
-  openfilename.hInstance         = Globals.hInstance;
-  openfilename.lpstrFilter       = szzFilter;
-  openfilename.lpstrCustomFilter = 0;
-  openfilename.nMaxCustFilter    = 0;
-  openfilename.nFilterIndex      = 1;
-  openfilename.lpstrFile         = szPath;
-  openfilename.nMaxFile          = sizeof(szPath);
-  openfilename.lpstrFileTitle    = 0;
-  openfilename.nMaxFileTitle     = 0;
-  openfilename.lpstrInitialDir   = szDir;
-  openfilename.lpstrTitle        = 0;
-  openfilename.Flags             = 0;
-  openfilename.nFileOffset       = 0;
-  openfilename.nFileExtension    = 0;
-  openfilename.lpstrDefExt       = 0;
-  openfilename.lCustData         = 0;
-  openfilename.lpfnHook          = 0;
-  openfilename.lpTemplateName    = 0;
+    openfilename.lStructSize       = 0;
+    openfilename.hwndOwner         = Globals.active_win->hMainWnd;
+    openfilename.hInstance         = Globals.hInstance;
+    openfilename.lpstrFilter       = szzFilter;
+    openfilename.lpstrCustomFilter = 0;
+    openfilename.nMaxCustFilter    = 0;
+    openfilename.nFilterIndex      = 1;
+    openfilename.lpstrFile         = szPath;
+    openfilename.nMaxFile          = sizeof(szPath);
+    openfilename.lpstrFileTitle    = 0;
+    openfilename.nMaxFileTitle     = 0;
+    openfilename.lpstrInitialDir   = szDir;
+    openfilename.lpstrTitle        = 0;
+    openfilename.Flags             = 0;
+    openfilename.nFileOffset       = 0;
+    openfilename.nFileExtension    = 0;
+    openfilename.lpstrDefExt       = 0;
+    openfilename.lCustData         = 0;
+    openfilename.lpfnHook          = 0;
+    openfilename.lpTemplateName    = 0;
 
-  if (GetOpenFileName(&openfilename))
-    WINHELP_CreateHelpWindow(szPath, 0, "main", FALSE, 0, NULL, SW_SHOWNORMAL);
+    if (GetOpenFileName(&openfilename))
+        WINHELP_CreateHelpWindowByHash(szPath, 0, "main", FALSE, 0, NULL, SW_SHOWNORMAL);
 }
 
-VOID MACRO_Find(VOID)
+void MACRO_Find(void)
 {
-  fprintf(stderr, "Find()\n");
+    WINE_FIXME("Find()\n");
 }
 
-VOID MACRO_Finder(VOID)
+void MACRO_Finder(void)
 {
-  fprintf(stderr, "Finder()\n");
+    WINE_FIXME("Finder()\n");
 }
 
-VOID MACRO_FloatingMenu(VOID)
+void MACRO_FloatingMenu(void)
 {
-  fprintf(stderr, "FloatingMenu()\n");
+    WINE_FIXME("FloatingMenu()\n");
 }
 
-VOID MACRO_Flush(VOID)
+void MACRO_Flush(void)
 {
-  fprintf(stderr, "Flush()\n");
+    WINE_FIXME("Flush()\n");
 }
 
-VOID MACRO_FocusWindow(LPCSTR str)
+void MACRO_FocusWindow(LPCSTR str)
 {
-  fprintf(stderr, "FocusWindow(\"%s\")\n", str);
+    WINE_FIXME("FocusWindow(\"%s\")\n", str);
 }
 
-VOID MACRO_Generate(LPCSTR str, WPARAM w, LPARAM l)
+void MACRO_Generate(LPCSTR str, WPARAM w, LPARAM l)
 {
-  fprintf(stderr, "Generate(\"%s\", %x, %lx)\n", str, w, l);
+    WINE_FIXME("Generate(\"%s\", %x, %lx)\n", str, w, l);
 }
 
-VOID MACRO_GotoMark(LPCSTR str)
+void MACRO_GotoMark(LPCSTR str)
 {
-  fprintf(stderr, "GotoMark(\"%s\")\n", str);
+    WINE_FIXME("GotoMark(\"%s\")\n", str);
 }
 
-VOID MACRO_HelpOn(VOID)
+void MACRO_HelpOn(void)
 {
-  MACRO_JumpContents((Globals.wVersion > 4) ? "winhelp32.hlp" : "winhelp.hlp", NULL);
+    MACRO_JumpContents((Globals.wVersion > 4) ? "winhelp32.hlp" : "winhelp.hlp", NULL);
 }
 
-VOID MACRO_HelpOnTop(VOID)
+void MACRO_HelpOnTop(void)
 {
-  fprintf(stderr, "HelpOnTop()\n");
+    WINE_FIXME("HelpOnTop()\n");
 }
 
-VOID MACRO_History(VOID)
+void MACRO_History(void)
 {
-  fprintf(stderr, "History()\n");
+    WINE_FIXME("History()\n");
 }
 
-BOOL MACRO_InitMPrint(VOID)
+BOOL MACRO_InitMPrint(void)
 {
-  fprintf(stderr, "InitMPrint()\n");
-  return FALSE;
+    WINE_FIXME("InitMPrint()\n");
+    return FALSE;
 }
 
-VOID MACRO_InsertItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4, LONG u)
+void MACRO_InsertItem(LPCSTR str1, LPCSTR str2, LPCSTR str3, LPCSTR str4, LONG u)
 {
-  fprintf(stderr, "InsertItem(\"%s\", \"%s\", \"%s\", \"%s\", %lu)\n", str1, str2, str3, str4, u);
+    WINE_FIXME("InsertItem(\"%s\", \"%s\", \"%s\", \"%s\", %lu)\n", str1, str2, str3, str4, u);
 }
 
-VOID MACRO_InsertMenu(LPCSTR str1, LPCSTR str2, LONG u)
+void MACRO_InsertMenu(LPCSTR str1, LPCSTR str2, LONG u)
 {
-  fprintf(stderr, "InsertMenu(\"%s\", \"%s\", %lu)\n", str1, str2, u);
+    WINE_FIXME("InsertMenu(\"%s\", \"%s\", %lu)\n", str1, str2, u);
 }
 
-BOOL MACRO_IsBook(VOID)
+BOOL MACRO_IsBook(void)
 {
-  fprintf(stderr, "IsBook()\n");
-  return TRUE;
+    WINE_FIXME("IsBook()\n");
+    return TRUE;
 }
 
 BOOL MACRO_IsMark(LPCSTR str)
 {
-  fprintf(stderr, "IsMark(\"%s\")\n", str);
-  return FALSE;
+    WINE_FIXME("IsMark(\"%s\")\n", str);
+    return FALSE;
 }
 
 BOOL MACRO_IsNotMark(LPCSTR str)
 {
-  fprintf(stderr, "IsNotMark(\"%s\")\n", str);
-  return TRUE;
+    WINE_FIXME("IsNotMark(\"%s\")\n", str);
+    return TRUE;
 }
 
-VOID MACRO_JumpContents(LPCSTR lpszPath, LPCSTR lpszWindow)
+void MACRO_JumpContents(LPCSTR lpszPath, LPCSTR lpszWindow)
 {
-  WINHELP_CreateHelpWindow(lpszPath, 0, lpszWindow, FALSE, 0, NULL, SW_NORMAL);
+    WINHELP_CreateHelpWindowByHash(lpszPath, 0, lpszWindow, FALSE, 0, NULL, SW_NORMAL);
 }
 
-VOID MACRO_JumpContext(LPCSTR lpszPath, LPCSTR lpszWindow, LONG context)
+void MACRO_JumpContext(LPCSTR lpszPath, LPCSTR lpszWindow, LONG context)
 {
-  fprintf(stderr, "JumpContext(\"%s\", \"%s\", %lu)\n", lpszPath, lpszWindow, context);
+    WINE_FIXME("JumpContext(\"%s\", \"%s\", %lu)\n", lpszPath, lpszWindow, context);
 }
 
-VOID MACRO_JumpHash(LPCSTR lpszPath, LPCSTR lpszWindow, LONG lHash)
+void MACRO_JumpHash(LPCSTR lpszPath, LPCSTR lpszWindow, LONG lHash)
 {
-  WINHELP_CreateHelpWindow(lpszPath, lHash, lpszWindow, FALSE, 0, NULL, SW_NORMAL);
+    WINHELP_CreateHelpWindowByHash(lpszPath, lHash, lpszWindow, FALSE, 0, NULL, SW_NORMAL);
 }
 
-VOID MACRO_JumpHelpOn(VOID)
+void MACRO_JumpHelpOn(void)
 {
-  fprintf(stderr, "JumpHelpOn()\n");
+    WINE_FIXME("JumpHelpOn()\n");
 }
 
-VOID MACRO_JumpID(LPCSTR lpszPath, LPCSTR lpszWindow, LPCSTR topic_id)
+void MACRO_JumpID(LPCSTR lpszPath, LPCSTR lpszWindow, LPCSTR topic_id)
 {
-  MACRO_JumpHash(lpszPath, lpszWindow, HLPFILE_Hash(topic_id));
+    MACRO_JumpHash(lpszPath, lpszWindow, HLPFILE_Hash(topic_id));
 }
 
-VOID MACRO_JumpKeyword(LPCSTR lpszPath, LPCSTR lpszWindow, LPCSTR keyword)
+void MACRO_JumpKeyword(LPCSTR lpszPath, LPCSTR lpszWindow, LPCSTR keyword)
 {
-  fprintf(stderr, "JumpKeyword(\"%s\", \"%s\", \"%s\")\n", lpszPath, lpszWindow, keyword);
+    WINE_FIXME("JumpKeyword(\"%s\", \"%s\", \"%s\")\n", lpszPath, lpszWindow, keyword);
 }
 
-VOID MACRO_KLink(LPCSTR str1, LONG u, LPCSTR str2, LPCSTR str3)
+void MACRO_KLink(LPCSTR str1, LONG u, LPCSTR str2, LPCSTR str3)
 {
-  fprintf(stderr, "KLink(\"%s\", %lu, \"%s\", \"%s\")\n", str1, u, str2, str3);
+    WINE_FIXME("KLink(\"%s\", %lu, \"%s\", \"%s\")\n", str1, u, str2, str3);
 }
 
-VOID MACRO_Menu(VOID)
+void MACRO_Menu(void)
 {
-  fprintf(stderr, "Menu()\n");
+    WINE_FIXME("Menu()\n");
 }
 
-VOID MACRO_MPrintHash(LONG u)
+void MACRO_MPrintHash(LONG u)
 {
-  fprintf(stderr, "MPrintHash(%lu)\n", u);
+    WINE_FIXME("MPrintHash(%lu)\n", u);
 }
 
-VOID MACRO_MPrintID(LPCSTR str)
+void MACRO_MPrintID(LPCSTR str)
 {
-  fprintf(stderr, "MPrintID(\"%s\")\n", str);
+    WINE_FIXME("MPrintID(\"%s\")\n", str);
 }
 
-VOID MACRO_Next(VOID)
+void MACRO_Next(void)
 {
-  fprintf(stderr, "Next()\n");
+    if (Globals.active_win->page->next)
+        WINHELP_CreateHelpWindowByPage(Globals.active_win->page->next, "main", FALSE, 0, NULL, SW_NORMAL);
 }
 
-VOID MACRO_NoShow(VOID)
+void MACRO_NoShow(void)
 {
-  fprintf(stderr, "NoShow()\n");
+    WINE_FIXME("NoShow()\n");
 }
 
-VOID MACRO_PopupContext(LPCSTR str, LONG u)
+void MACRO_PopupContext(LPCSTR str, LONG u)
 {
-  fprintf(stderr, "PopupContext(\"%s\", %lu)\n", str, u);
+    WINE_FIXME("PopupContext(\"%s\", %lu)\n", str, u);
 }
 
-VOID MACRO_PopupHash(LPCSTR str, LONG u)
+void MACRO_PopupHash(LPCSTR str, LONG u)
 {
-  fprintf(stderr, "PopupHash(\"%s\", %lu)\n", str, u);
+    WINE_FIXME("PopupHash(\"%s\", %lu)\n", str, u);
 }
 
-VOID MACRO_PopupId(LPCSTR str1, LPCSTR str2)
+void MACRO_PopupId(LPCSTR str1, LPCSTR str2)
 {
-  fprintf(stderr, "PopupId(\"%s\", \"%s\")\n", str1, str2);
+    WINE_FIXME("PopupId(\"%s\", \"%s\")\n", str1, str2);
 }
 
-VOID MACRO_PositionWindow(LONG i1, LONG i2, LONG u1, LONG u2, LONG u3, LPCSTR str)
+void MACRO_PositionWindow(LONG i1, LONG i2, LONG u1, LONG u2, LONG u3, LPCSTR str)
 {
-  fprintf(stderr, "PositionWindow(%li, %li, %lu, %lu, %lu, \"%s\")\n", i1, i2, u1, u2, u3, str);
+    WINE_FIXME("PositionWindow(%li, %li, %lu, %lu, %lu, \"%s\")\n", i1, i2, u1, u2, u3, str);
 }
 
-VOID MACRO_Prev(VOID)
+void MACRO_Prev(void)
 {
-  fprintf(stderr, "Prev()\n");
+    if (Globals.active_win->page->prev)
+        WINHELP_CreateHelpWindowByPage(Globals.active_win->page->prev, "main", FALSE, 0, NULL, SW_NORMAL);
 }
 
-VOID MACRO_Print(VOID)
+void MACRO_Print(void)
 {
     PRINTDLG printer;
 
@@ -496,97 +498,93 @@ VOID MACRO_Print(VOID)
     printer.hSetupTemplate      = 0;
 
     if (PrintDlgA(&printer)) {
-        fprintf(stderr, "Print()\n");
-    };
+        WINE_FIXME("Print()\n");
+    }
 }
 
-VOID MACRO_PrinterSetup(VOID)
+void MACRO_PrinterSetup(void)
 {
-  fprintf(stderr, "PrinterSetup()\n");
+    WINE_FIXME("PrinterSetup()\n");
 }
 
-VOID MACRO_RegisterRoutine(LPCSTR str1, LPCSTR str2, LPCSTR str3)
+void MACRO_RegisterRoutine(LPCSTR str1, LPCSTR str2, LPCSTR str3)
 {
-  fprintf(stderr, "RegisterRoutine(\"%s\", \"%s\", \"%s\")\n", str1, str2, str3);
+    WINE_FIXME("RegisterRoutine(\"%s\", \"%s\", \"%s\")\n", str1, str2, str3);
 }
 
-VOID MACRO_RemoveAccelerator(LONG u1, LONG u2)
+void MACRO_RemoveAccelerator(LONG u1, LONG u2)
 {
-  fprintf(stderr, "RemoveAccelerator(%lu, %lu)\n", u1, u2);
+    WINE_FIXME("RemoveAccelerator(%lu, %lu)\n", u1, u2);
 }
 
-VOID MACRO_ResetMenu(VOID)
+void MACRO_ResetMenu(void)
 {
-  fprintf(stderr, "ResetMenu()\n");
+    WINE_FIXME("ResetMenu()\n");
 }
 
-VOID MACRO_SaveMark(LPCSTR str)
+void MACRO_SaveMark(LPCSTR str)
 {
-  fprintf(stderr, "SaveMark(\"%s\")\n", str);
+    WINE_FIXME("SaveMark(\"%s\")\n", str);
 }
 
-VOID MACRO_Search(VOID)
+void MACRO_Search(void)
 {
-  fprintf(stderr, "Search()\n");
+    WINE_FIXME("Search()\n");
 }
 
-VOID MACRO_SetContents(LPCSTR str, LONG u)
+void MACRO_SetContents(LPCSTR str, LONG u)
 {
-  fprintf(stderr, "SetContents(\"%s\", %lu)\n", str, u);
+    WINE_FIXME("SetContents(\"%s\", %lu)\n", str, u);
 }
 
-VOID MACRO_SetHelpOnFile(LPCSTR str)
+void MACRO_SetHelpOnFile(LPCSTR str)
 {
-  fprintf(stderr, "SetHelpOnFile(\"%s\")\n", str);
+    WINE_FIXME("SetHelpOnFile(\"%s\")\n", str);
 }
 
-VOID MACRO_SetPopupColor(LONG u1, LONG u2, LONG u3)
+void MACRO_SetPopupColor(LONG u1, LONG u2, LONG u3)
 {
-  fprintf(stderr, "SetPopupColor(%lu, %lu, %lu)\n", u1, u2, u3);
+    WINE_FIXME("SetPopupColor(%lu, %lu, %lu)\n", u1, u2, u3);
 }
 
-VOID MACRO_ShellExecute(LPCSTR str1, LPCSTR str2, LONG u1, LONG u2, LPCSTR str3, LPCSTR str4)
+void MACRO_ShellExecute(LPCSTR str1, LPCSTR str2, LONG u1, LONG u2, LPCSTR str3, LPCSTR str4)
 {
-  fprintf(stderr, "ShellExecute(\"%s\", \"%s\", %lu, %lu, \"%s\", \"%s\")\n", str1, str2, u1, u2, str3, str4);
+    WINE_FIXME("ShellExecute(\"%s\", \"%s\", %lu, %lu, \"%s\", \"%s\")\n", str1, str2, u1, u2, str3, str4);
 }
 
-VOID MACRO_ShortCut(LPCSTR str1, LPCSTR str2, WPARAM w, LPARAM l, LPCSTR str)
+void MACRO_ShortCut(LPCSTR str1, LPCSTR str2, WPARAM w, LPARAM l, LPCSTR str)
 {
-  fprintf(stderr, "ShortCut(\"%s\", \"%s\", %x, %lx, \"%s\")\n", str1, str2, w, l, str);
+    WINE_FIXME("ShortCut(\"%s\", \"%s\", %x, %lx, \"%s\")\n", str1, str2, w, l, str);
 }
 
-VOID MACRO_TCard(LONG u)
+void MACRO_TCard(LONG u)
 {
-  fprintf(stderr, "TCard(%lu)\n", u);
+    WINE_FIXME("TCard(%lu)\n", u);
 }
 
-VOID MACRO_Test(LONG u)
+void MACRO_Test(LONG u)
 {
-  fprintf(stderr, "Test(%lu)\n", u);
+    WINE_FIXME("Test(%lu)\n", u);
 }
 
 BOOL MACRO_TestALink(LPCSTR str)
 {
-  fprintf(stderr, "TestALink(\"%s\")\n", str);
-  return FALSE;
+    WINE_FIXME("TestALink(\"%s\")\n", str);
+    return FALSE;
 }
 
 BOOL MACRO_TestKLink(LPCSTR str)
 {
-  fprintf(stderr, "TestKLink(\"%s\")\n", str);
-  return FALSE;
+    WINE_FIXME("TestKLink(\"%s\")\n", str);
+    return FALSE;
 }
 
-VOID MACRO_UncheckItem(LPCSTR str)
+void MACRO_UncheckItem(LPCSTR str)
 {
-  fprintf(stderr, "UncheckItem(\"%s\")\n", str);
+    WINE_FIXME("UncheckItem(\"%s\")\n", str);
 }
 
-VOID MACRO_UpdateWindow(LPCSTR str1, LPCSTR str2)
+void MACRO_UpdateWindow(LPCSTR str1, LPCSTR str2)
 {
-  fprintf(stderr, "UpdateWindow(\"%s\", \"%s\")\n", str1, str2);
+    WINE_FIXME("UpdateWindow(\"%s\", \"%s\")\n", str1, str2);
 }
-
-/* Local Variables:    */
-/* c-file-style: "GNU" */
-/* End:                */

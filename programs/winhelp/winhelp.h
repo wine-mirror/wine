@@ -1,9 +1,10 @@
 /*
  * Help Viewer
  *
- * Copyright 1996 Ulrich Schmid
- * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
-
+ * Copyright    1996 Ulrich Schmid
+ * Copyright    2002 Sylvain Petreolle <spetreolle@yahoo.fr>
+ *              2002 Eric Pouech
+ *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
@@ -19,16 +20,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#define MAX_LANGUAGE_NUMBER 255
-#define MAX_PATHNAME_LEN   1024
-#define MAX_STRING_LEN      255
+#define MAX_LANGUAGE_NUMBER     255
+#define MAX_PATHNAME_LEN        1024
+#define MAX_STRING_LEN          255
 
-#define INTERNAL_BORDER_WIDTH  5
-#define POPUP_YDISTANCE       20
-#define SHADOW_DX     20
-#define SHADOW_DY     20
-#define BUTTON_CX      6
-#define BUTTON_CY      6
+#define INTERNAL_BORDER_WIDTH   5
+#define POPUP_YDISTANCE         20
+#define SHADOW_DX               10
+#define SHADOW_DY               10
+#define BUTTON_CX               6
+#define BUTTON_CY               6
 
 #ifndef RC_INVOKED
 
@@ -38,82 +39,92 @@
 
 typedef struct tagHelpLinePart
 {
-  RECT      rect;
-  LPCSTR    lpsText;
-  UINT      wTextLen;
-  HFONT     hFont;
-  COLORREF  color;
+    RECT      rect;
+    enum {hlp_line_part_text, hlp_line_part_image}      cookie;
+    union
+    {
+        struct
+        {
+            LPCSTR      lpsText;
+            HFONT       hFont;
+            COLORREF    color;
+            WORD        wTextLen;
+            WORD        wUnderline; /* 0 None, 1 simple, 2 double, 3 dotted */
+        } text;
+        struct
+        {
+            HBITMAP     hBitmap;
+        } image;
+    } u;
 
-  struct
-  {
-  LPCSTR    lpszPath;
-  LONG      lHash;
-  BOOL      bPopup;
-  }         link;
+    struct
+    {
+        LPCSTR    lpszPath;
+        LONG      lHash;
+        BOOL      bPopup;
+    } link;
 
-  HGLOBAL   hSelf;
-  struct tagHelpLinePart *next;
+    struct tagHelpLinePart *next;
 } WINHELP_LINE_PART;
 
 typedef struct tagHelpLine
 {
-  RECT              rect;
-  WINHELP_LINE_PART first_part;
-  struct tagHelpLine *next;
+    RECT                rect;
+    WINHELP_LINE_PART   first_part;
+    struct tagHelpLine* next;
 } WINHELP_LINE;
 
 typedef struct tagHelpButton
 {
-  HWND hWnd;
+    HWND                hWnd;
 
-  LPCSTR lpszID;
-  LPCSTR lpszName;
-  LPCSTR lpszMacro;
+    LPCSTR              lpszID;
+    LPCSTR              lpszName;
+    LPCSTR              lpszMacro;
 
-  WPARAM wParam;
+    WPARAM              wParam;
 
-  RECT rect;
+    RECT                rect;
 
-  HGLOBAL hSelf;
-  struct tagHelpButton *next;
+    struct tagHelpButton*next;
 } WINHELP_BUTTON;
 
 typedef struct tagWinHelp
 {
-  LPCSTR lpszName;
+    LPCSTR lpszName;
 
-  WINHELP_BUTTON *first_button;
-  HLPFILE_PAGE   *page;
-  WINHELP_LINE   *first_line;
+    WINHELP_BUTTON*     first_button;
+    HLPFILE_PAGE*       page;
+    WINHELP_LINE*       first_line;
 
-  HWND hMainWnd;
-  HWND hButtonBoxWnd;
-  HWND hTextWnd;
-  HWND hShadowWnd;
+    HWND                hMainWnd;
+    HWND                hButtonBoxWnd;
+    HWND                hTextWnd;
+    HWND                hShadowWnd;
 
-  HFONT (*fonts)[2];
-  UINT  fonts_len;
+    HFONT*              fonts;
+    UINT                fonts_len;
 
-  HCURSOR hArrowCur;
-  HCURSOR hHandCur;
+    HCURSOR             hArrowCur;
+    HCURSOR             hHandCur;
 
-  HGLOBAL hSelf;
-  struct tagWinHelp *next;
+    struct tagWinHelp*  next;
 } WINHELP_WINDOW;
 
 typedef struct
 {
-  UINT   wVersion;
-  HANDLE hInstance;
-  HWND   hPopupWnd;
-  UINT   wStringTableOffset;
-  WINHELP_WINDOW *active_win;
-  WINHELP_WINDOW *win_list;
+    UINT                wVersion;
+    HANDLE              hInstance;
+    HWND                hPopupWnd;
+    UINT                wStringTableOffset;
+    WINHELP_WINDOW*     active_win;
+    WINHELP_WINDOW*     win_list;
 } WINHELP_GLOBALS;
 
 extern WINHELP_GLOBALS Globals;
 
-VOID WINHELP_CreateHelpWindow(LPCSTR, LONG, LPCSTR, BOOL, HWND, LPPOINT, INT);
+BOOL WINHELP_CreateHelpWindowByHash(LPCSTR, LONG, LPCSTR, BOOL, HWND, LPPOINT, INT);
+BOOL WINHELP_CreateHelpWindowByPage(HLPFILE_PAGE*, LPCSTR, BOOL, HWND, LPPOINT, INT);
 INT  WINHELP_MessageBoxIDS(UINT, UINT, WORD);
 INT  WINHELP_MessageBoxIDS_s(UINT, LPCSTR, UINT, WORD);
 
@@ -128,7 +139,3 @@ extern CHAR STRING_DIALOG_TEST[];
 
 /* Buttons */
 #define WH_FIRST_BUTTON     500
-
-/* Local Variables:    */
-/* c-file-style: "GNU" */
-/* End:                */

@@ -97,83 +97,83 @@ macrosep:	';' |
 		':' ;
 
 macro:		/* Empty */ |
-		IF_THEN      '(' bool_macro ','  {if (! $3) skip++;}
-                                 macrostring ')' {if (! $3) skip--;} |
-		IF_THEN_ELSE '(' bool_macro ','  {if (! $3) skip++;}
-                                 macrostring ',' {if (! $3) skip--; else skip++;}
-                                 macrostring ')' {if (  $3) skip--;} |
+		IF_THEN      '(' bool_macro ','  {if (!$3) skip++;}
+                                 macrostring ')' {if (!$3) skip--;} |
+		IF_THEN_ELSE '(' bool_macro ','  {if (!$3) skip++;}
+                                 macrostring ',' {if (!$3) skip--; else skip++;}
+                                 macrostring ')' {if ( $3) skip--;} |
 		VOID_FUNCTION_VOID
 			'(' ')'
-			{if (! skip) (*$1)();} |
+			{if (!skip) (*$1)();} |
 		VOID_FUNCTION_STRING
 			'(' tSTRING ')'
-			{if (! skip) (*$1)($3);} |
+			{if (!skip) (*$1)($3);} |
 		VOID_FUNCTION_2STRING
 			'(' tSTRING ',' tSTRING ')'
-			{if (! skip) (*$1)($3, $5);} |
+			{if (!skip) (*$1)($3, $5);} |
 		VOID_FUNCTION_2STRING_UINT
 			'(' tSTRING ',' tSTRING ',' INTEGER ')'
-			{if (! skip) (*$1)($3, $5, $7);} |
+			{if (!skip) (*$1)($3, $5, $7);} |
 		VOID_FUNCTION_2STRING_UINT_STRING
 			'(' tSTRING ',' tSTRING ',' INTEGER ',' tSTRING ')'
-			{if (! skip) (*$1)($3, $5, $7, $9);} |
+			{if (!skip) (*$1)($3, $5, $7, $9);} |
 		VOID_FUNCTION_2STRING_2UINT_2STRING
 			'(' tSTRING ',' tSTRING ',' INTEGER ',' INTEGER ',' tSTRING ',' tSTRING ')'
-			{if (! skip) (*$1)($3, $5, $7, $9, $11, $13);} |
+			{if (!skip) (*$1)($3, $5, $7, $9, $11, $13);} |
 		VOID_FUNCTION_2STRING_WPARAM_LPARAM_STRING
 			'(' tSTRING ',' tSTRING ',' INTEGER ',' INTEGER ',' tSTRING ')'
-			{if (! skip) (*$1)($3, $5, $7, $9, $11);} |
+			{if (!skip) (*$1)($3, $5, $7, $9, $11);} |
 		VOID_FUNCTION_3STRING
 			'(' tSTRING ',' tSTRING ',' tSTRING ')'
-			{if (! skip) (*$1)($3, $5, $7);} |
+			{if (!skip) (*$1)($3, $5, $7);} |
 		VOID_FUNCTION_3STRING_2UINT
 			'(' tSTRING ',' tSTRING ',' tSTRING ',' INTEGER ',' INTEGER ')'
-			{if (! skip) (*$1)($3, $5, $7, $9, $11);} |
+			{if (!skip) (*$1)($3, $5, $7, $9, $11);} |
 		VOID_FUNCTION_4STRING
 			'(' tSTRING ',' tSTRING ',' tSTRING ',' tSTRING ')'
-			{if (! skip) (*$1)($3, $5, $7, $9);} |
+			{if (!skip) (*$1)($3, $5, $7, $9);} |
 		VOID_FUNCTION_4STRING_UINT
 			'(' tSTRING ',' tSTRING ',' tSTRING ',' tSTRING ',' INTEGER')'
-			{if (! skip) (*$1)($3, $5, $7, $9, $11);} |
+			{if (!skip) (*$1)($3, $5, $7, $9, $11);} |
 		VOID_FUNCTION_4STRING_2UINT
 			'(' tSTRING ',' tSTRING ',' tSTRING ',' tSTRING ',' INTEGER ',' INTEGER')'
-			{if (! skip) (*$1)($3, $5, $7, $9, $11, $13);} |
+			{if (!skip) (*$1)($3, $5, $7, $9, $11, $13);} |
 		VOID_FUNCTION_STRING_UINT
 			'(' tSTRING ',' INTEGER ')'
-			{if (! skip) (*$1)($3, $5);} |
+			{if (!skip) (*$1)($3, $5);} |
 		VOID_FUNCTION_STRING_UINT_STRING
 			'(' tSTRING ',' INTEGER ',' tSTRING ')'
-			{if (! skip) (*$1)($3, $5, $7);} |
+			{if (!skip) (*$1)($3, $5, $7);} |
 		VOID_FUNCTION_STRING_UINT_2STRING
 			'(' tSTRING ',' INTEGER ',' tSTRING ',' tSTRING ')'
-			{if (! skip) (*$1)($3, $5, $7, $9);} |
+			{if (!skip) (*$1)($3, $5, $7, $9);} |
 		VOID_FUNCTION_STRING_WPARAM_LPARAM
 			'(' tSTRING ',' INTEGER ',' INTEGER ')'
-			{if (! skip) (*$1)($3, $5, $7);} |
+			{if (!skip) (*$1)($3, $5, $7);} |
 		VOID_FUNCTION_UINT
 			'(' INTEGER ')'
-			{if (! skip) (*$1)($3);} |
+			{if (!skip) (*$1)($3);} |
 		VOID_FUNCTION_2UINT
 			'(' INTEGER ',' INTEGER ')'
-			{if (! skip) (*$1)($3, $5);} |
+			{if (!skip) (*$1)($3, $5);} |
 		VOID_FUNCTION_2UINT_STRING
 			'(' INTEGER ',' INTEGER ',' tSTRING ')'
-			{if (! skip) (*$1)($3, $5, $7);} |
+			{if (!skip) (*$1)($3, $5, $7);} |
 		VOID_FUNCTION_3UINT
 			'(' INTEGER ',' INTEGER ',' INTEGER ')'
-			{if (! skip) (*$1)($3, $5, $7);} |
+			{if (!skip) (*$1)($3, $5, $7);} |
 		VOID_FUNCTION_2INT_3UINT_STRING
 			'(' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' INTEGER ',' tSTRING ')'
-			{if (! skip) (*$1)($3, $5, $7, $9, $11, $13);} |
+			{if (!skip) (*$1)($3, $5, $7, $9, $11, $13);} |
 		VOID_FUNCTION_FILE_WIN
 			'(' file_win ')'
-			{if (! skip) (*$1)(filename, windowname);} |
+			{if (!skip) (*$1)(filename, windowname);} |
 		VOID_FUNCTION_FILE_WIN_STRING
 			'(' file_win ',' tSTRING ')'
-			{if (! skip) (*$1)(filename, windowname, $5);} |
+			{if (!skip) (*$1)(filename, windowname, $5);} |
 		VOID_FUNCTION_FILE_WIN_UINT
 			'(' file_win ',' INTEGER ')'
-			{if (! skip) (*$1)(filename, windowname, $5);} ;
+			{if (!skip) (*$1)(filename, windowname, $5);} ;
 
 file_win:	tSTRING
                 {

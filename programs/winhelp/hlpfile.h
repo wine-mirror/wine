@@ -1,7 +1,8 @@
 /*
  * Help Viewer
  *
- * Copyright 1996 Ulrich Schmid
+ * Copyright    1996 Ulrich Schmid
+ *              2002 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,74 +23,89 @@ struct tagHelpFile;
 
 typedef struct
 {
-  LPCSTR  lpszPath;
-  LONG    lHash;
-  BOOL    bPopup;
-
-  HGLOBAL hSelf;
+    LPCSTR                      lpszPath;
+    LONG                        lHash;
+    BOOL                        bPopup;
 } HLPFILE_LINK;
+
+enum para_type {para_normal_text, para_debug_text, para_image};
 
 typedef struct tagHlpFileParagraph
 {
-  LPSTR  lpszText;
+    enum para_type              cookie;
 
-  UINT   bDebug;
-  UINT   wFont;
-  UINT   wIndent;
-  UINT   wHSpace;
-  UINT   wVSpace;
+    union
+    {
+        struct
+        {
+            LPSTR                       lpszText;
+            unsigned                    wFont;
+            unsigned                    wIndent;
+            unsigned                    wHSpace;
+            unsigned                    wVSpace;
+        } text;
+        struct
+        {
+            HBITMAP                     hBitmap;
+            unsigned                    pos;    /* 0: center, 1: left, 2: right */
+        } image;
+    } u;
 
-  HLPFILE_LINK *link;
+    HLPFILE_LINK*               link;
 
-  struct tagHlpFileParagraph *next;
-
-  HGLOBAL hSelf;
+    struct tagHlpFileParagraph* next;
 } HLPFILE_PARAGRAPH;
 
 typedef struct tagHlpFilePage
 {
-  LPSTR          lpszTitle;
-  HLPFILE_PARAGRAPH *first_paragraph;
+    LPSTR                       lpszTitle;
+    HLPFILE_PARAGRAPH*          first_paragraph;
 
-  UINT wNumber;
-
-  struct tagHlpFilePage *next;
-  struct tagHlpFileFile *file;
-
-  HGLOBAL hSelf;
+    unsigned                    wNumber;
+    unsigned                    offset;
+    struct tagHlpFilePage*      next;
+    struct tagHlpFilePage*      prev;
+    struct tagHlpFileFile*      file;
 } HLPFILE_PAGE;
 
 typedef struct
 {
-  LONG lHash;
-  UINT wPage;
+    LONG                        lHash;
+    unsigned long               offset;
 } HLPFILE_CONTEXT;
 
 typedef struct tagHlpFileMacro
 {
-  LPCSTR lpszMacro;
-
-  HGLOBAL hSelf;
-  struct tagHlpFileMacro *next;
+    LPCSTR                      lpszMacro;
+    struct tagHlpFileMacro*     next;
 } HLPFILE_MACRO;
+
+typedef struct
+{
+    LOGFONT                     LogFont;
+    HFONT                       hFont;
+    COLORREF                    color;
+} HLPFILE_FONT;
 
 typedef struct tagHlpFileFile
 {
-  LPSTR        lpszPath;
-  LPSTR        lpszTitle;
-  HLPFILE_PAGE    *first_page;
-  HLPFILE_MACRO   *first_macro;
-  UINT         wContextLen;
-  HLPFILE_CONTEXT *Context;
+    LPSTR                       lpszPath;
+    LPSTR                       lpszTitle;
+    HLPFILE_PAGE*               first_page;
+    HLPFILE_MACRO*              first_macro;
+    unsigned                    wContextLen;
+    HLPFILE_CONTEXT*            Context;
+    struct tagHlpFileFile*      prev;
+    struct tagHlpFileFile*      next;
 
-  struct tagHlpFileFile *prev;
-  struct tagHlpFileFile *next;
+    unsigned                    wRefCount;
 
-  UINT       wRefCount;
+    unsigned short              version;
+    unsigned short              flags;
+    unsigned                    hasPhrases; /* Phrases or PhrIndex/PhrImage */
 
-  HGLOBAL    hTitle;
-  HGLOBAL    hContext;
-  HGLOBAL    hSelf;
+    unsigned                    numFonts;
+    HLPFILE_FONT*               fonts;
 } HLPFILE;
 
 HLPFILE      *HLPFILE_ReadHlpFile(LPCSTR lpszPath);
@@ -98,7 +114,3 @@ HLPFILE_PAGE *HLPFILE_PageByHash(LPCSTR lpszPath, LONG wNum);
 LONG          HLPFILE_Hash(LPCSTR lpszContext);
 VOID          HLPFILE_FreeHlpFilePage(HLPFILE_PAGE*);
 VOID          HLPFILE_FreeHlpFile(HLPFILE*);
-
-/* Local Variables:    */
-/* c-file-style: "GNU" */
-/* End:                */
