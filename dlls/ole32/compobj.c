@@ -35,6 +35,8 @@
 #include <time.h>
 #include <assert.h>
 #include "windef.h"
+#include "wtypes.h"
+#include "wingdi.h"
 #include "wine/winbase16.h"
 #include "winerror.h"
 #include "wownt32.h"

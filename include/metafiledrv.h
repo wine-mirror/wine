@@ -5,6 +5,7 @@
 #ifndef __WINE_METAFILEDRV_H
 #define __WINE_METAFILEDRV_H
 
+#include "windef.h"
 #include "wingdi.h"
 #include "gdi.h"
 

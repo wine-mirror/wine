@@ -1,6 +1,7 @@
 #ifndef __WINE_COLOR_H
 #define __WINE_COLOR_H
 
+#include "windef.h"
 #include "wingdi.h"
 #include "palette.h"
 

@@ -31,14 +31,15 @@
  *     was stored but that's about it.
  */
 #include <assert.h>
-#include "wingdi.h"
+#include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winerror.h"
 #include "wine/obj_oleview.h"
 #include "wine/obj_cache.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 /****************************************************************************
  * PresentationDataHeader

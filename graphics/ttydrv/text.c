@@ -6,13 +6,14 @@
 
 #include "config.h"
 
-#include "wine/wingdi16.h"
+#include "windef.h"
+#include "wingdi.h"
 #include "dc.h"
 #include "debugtools.h"
 #include "gdi.h"
 #include "ttydrv.h"
 
-DEFAULT_DEBUG_CHANNEL(ttydrv)
+DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 /***********************************************************************
  *		TTYDRV_DC_ExtTextOut

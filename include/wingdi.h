@@ -1,8 +1,6 @@
 #ifndef __WINE_WINGDI_H
 #define __WINE_WINGDI_H
 
-#include "windef.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -7,6 +7,8 @@
  * Copyright 2000 Andreas Mohr
  */
 
+#include "config.h"
+
 #include <errno.h>
 #include <string.h>
 #include <fcntl.h>

@@ -10,10 +10,14 @@
 #include <assert.h>
 #include <time.h>
 #include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "windef.h"
 #include "winerror.h"
 #include "wine/winestring.h"
 #include "wine/winbase16.h"
+#include "wingdi.h"
+#include "wtypes.h"
 #include "file.h"
 #include "ole.h"
 #include "wine/obj_base.h"
@@ -23,8 +27,8 @@
 #include "ldt.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
-DECLARE_DEBUG_CHANNEL(relay)
+DEFAULT_DEBUG_CHANNEL(ole);
+DECLARE_DEBUG_CHANNEL(relay);
 
 struct storage_header {
 	BYTE	magic[8];	/* 00: magic */

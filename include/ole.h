@@ -5,15 +5,6 @@
 #ifndef __WINE_OLE_H
 #define __WINE_OLE_H
 
-#include "wingdi.h" /* LOGPALETTE */
-
-/* FIXME: we need to include wtypes.h mainly, it seems, because we need BSTR. 
- * Normally none of the APIs in ole.h depend on it. It is most likey that they should 
- * be moved to ole2.h (which includes objbase.h and thus wtypes.h) or some other 
- * OLE include
- */
-#include "wtypes.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

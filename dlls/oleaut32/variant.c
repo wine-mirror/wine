@@ -22,6 +22,16 @@
 
 #include "config.h"
  
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <time.h>
+
+#ifdef HAVE_FLOAT_H
+# include <float.h>
+#endif
+
 #include "windef.h"
 #include "oleauto.h"
 #include "heap.h"
@@ -29,16 +39,7 @@
 #include "winerror.h"
 #include "parsedt.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
-
-#include <string.h>
-#include <stdlib.h>
-#include <math.h>
-#include <time.h>
-
-#ifdef HAVE_FLOAT_H
-# include <float.h>
-#endif
+DEFAULT_DEBUG_CHANNEL(ole);
 
 #ifndef FLT_MAX
 # ifdef MAXFLOAT

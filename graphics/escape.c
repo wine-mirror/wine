@@ -5,6 +5,7 @@
  */
 
 #include <string.h>
+#include "windef.h"
 #include "wingdi.h"
 #include "gdi.h"
 #include "heap.h"
@@ -12,7 +13,7 @@
 #include "dc.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(driver)
+DEFAULT_DEBUG_CHANNEL(driver);
 
 /***********************************************************************
  *            Escape16  [GDI.38]

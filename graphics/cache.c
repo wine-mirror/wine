@@ -6,6 +6,7 @@
  *
  */
 
+#include "windef.h"
 #include "wingdi.h"
 #include "cache.h"
 

@@ -6,6 +6,7 @@
  *
  *	Copyright 1998  Huw D M Davies
  */
+#include "windef.h"
 #include "wingdi.h"
 #include "font.h"
 #include "pen.h"

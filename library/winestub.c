@@ -1,7 +1,9 @@
 /* Sample winestub.c file for compiling programs with libwine.so. */
 
 #include <string.h>
+#include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "xmalloc.h"
 

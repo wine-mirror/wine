@@ -5,6 +5,7 @@
  */
 
 #include <stdlib.h>
+#include "windef.h"
 #include "wingdi.h"
 #include "wine/wingdi16.h"
 

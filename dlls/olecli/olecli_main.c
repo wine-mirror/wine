@@ -6,11 +6,14 @@
 
 /*	At the moment, these are only empty stubs.
  */
+#include "windef.h"
+#include "wingdi.h"
+#include "wtypes.h"
 #include "ole.h"
 #include "gdi.h"
 #include "debugtools.h"
 
-DEFAULT_DEBUG_CHANNEL(ole)
+DEFAULT_DEBUG_CHANNEL(ole);
 
 
 extern LONG	OLE_current_handle;
