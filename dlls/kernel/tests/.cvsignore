@@ -2,6 +2,7 @@ Makefile
 alloc.ok
 atom.ok
 codepage.ok
+comm.ok
 console.ok
 directory.ok
 drive.ok

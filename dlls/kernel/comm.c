@@ -199,7 +199,7 @@ static LPCSTR COMM_ParseStart(LPCSTR ptr)
 static LPCSTR COMM_ParseNumber(LPCSTR ptr, LPDWORD lpnumber)
 {
 	if(*ptr < '0' || *ptr > '9') return NULL;
-	if(!sscanf(ptr, "%ld", lpnumber)) return NULL;
+	if(!sscanf(ptr, "%lu", lpnumber)) return NULL;
 	while(*ptr >= '0' && *ptr <= '9') ptr++;
 	return ptr;
 }
@@ -353,7 +353,9 @@ static BOOL COMM_BuildOldCommDCB(LPCSTR device, LPDCB lpdcb)
 		if(*device) last = toupper(*device++);
 		while(*device == ' ') device++;
 	}
-		
+
+	/* Win NT sets the flow control members based on (or lack of) the last
+	   parameter.  Win 9x does not set these members. */
 	switch(last)
 	{
 	case 0:
@@ -481,6 +483,8 @@ static BOOL COMM_BuildNewCommDCB(LPCSTR device, LPDCB lpdcb, LPCOMMTIMEOUTS lpti
 			if(!(device = COMM_ParseOnOff(device + 5, &temp)))
 				return FALSE;
 
+			/* Win NT sets the fDsrSensitivity member based on the
+			   idsr parameter.  Win 9x sets fOutxDsrFlow instead. */
 			lpdcb->fDsrSensitivity = temp;
 		}
 		else
