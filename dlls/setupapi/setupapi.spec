@@ -246,8 +246,8 @@ debug_channels (setupapi)
 @ stdcall SetupQueueCopySectionA(long str long long str long) SetupQueueCopySectionA
 @ stdcall SetupQueueCopySectionW(long wstr long long wstr long) SetupQueueCopySectionW
 @ stdcall SetupQueueCopyW(long wstr wstr wstr wstr wstr wstr wstr long) SetupQueueCopyW
-@ stdcall SetupQueueDefaultCopyA(long long str str long) SetupQueueDefaultCopyA
-@ stdcall SetupQueueDefaultCopyW(long long wstr wstr long) SetupQueueDefaultCopyW
+@ stdcall SetupQueueDefaultCopyA(long long str str str long) SetupQueueDefaultCopyA
+@ stdcall SetupQueueDefaultCopyW(long long wstr wstr wstr long) SetupQueueDefaultCopyW
 @ stdcall SetupQueueDeleteA(long str str) SetupQueueDeleteA
 @ stdcall SetupQueueDeleteSectionA(long long long str) SetupQueueDeleteSectionA
 @ stdcall SetupQueueDeleteSectionW(long long long wstr) SetupQueueDeleteSectionW

@@ -229,7 +229,7 @@ static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 
 
 /***********************************************************************
- *           X11DRV_SelectBrush   (X11DRV.@)
+ *           SelectBrush   (X11DRV.@)
  */
 HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
 {

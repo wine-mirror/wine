@@ -33,7 +33,7 @@ extern BOOL TTYDRV_DC_BITMAP_DeleteObject(HBITMAP hbitmap, BITMAPOBJ *bitmap);
 
 
 /***********************************************************************
- *		TTYDRV_SelectFont   (TTYDRV.@)
+ *		SelectFont   (TTYDRV.@)
  */
 HFONT TTYDRV_SelectFont(TTYDRV_PDEVICE *physDev, HFONT hfont)
 {

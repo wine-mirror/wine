@@ -136,7 +136,7 @@ static LONG TTYDRV_DC_GetBitmapBits(BITMAPOBJ *bitmap, void *bits, LONG count)
 }
 
 /***********************************************************************
- *		TTYDRV_SelectBitmap   (TTYDRV.@)
+ *		SelectBitmap   (TTYDRV.@)
  */
 HBITMAP TTYDRV_SelectBitmap(TTYDRV_PDEVICE *physDev, HBITMAP hbitmap)
 {

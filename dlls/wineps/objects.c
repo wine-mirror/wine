@@ -24,7 +24,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
 /***********************************************************************
- *           PSDRV_SelectBitmap   (WINEPS.@)
+ *           SelectBitmap   (WINEPS.@)
  */
 HBITMAP PSDRV_SelectBitmap( PSDRV_PDEVICE *physDev, HBITMAP hbitmap )
 {

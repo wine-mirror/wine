@@ -30,7 +30,7 @@ static char PEN_dashdotdot[] = "40 20 20 20 20 20"; /* ----  --  --  ----  */
 static char PEN_alternate[]  = "1";
 
 /***********************************************************************
- *           PSDRV_SelectPen   (WINEPS.@)
+ *           SelectPen   (WINEPS.@)
  */
 HPEN PSDRV_SelectPen( PSDRV_PDEVICE *physDev, HPEN hpen )
 {

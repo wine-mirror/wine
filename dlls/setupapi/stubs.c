@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
 
 /***********************************************************************
- *		SetupIterateCabinetA (SETUPAPI.205)
+ *		SetupIterateCabinetA (SETUPAPI.@)
  */
 BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
                                  PSP_FILE_CALLBACK_A MsgHandler, PVOID Context)
@@ -36,7 +36,7 @@ BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
 }
 
 /***********************************************************************
- *		SetupIterateCabinetW (SETUPAPI.206)
+ *		SetupIterateCabinetW (SETUPAPI.@)
  */
 BOOL WINAPI SetupIterateCabinetW(PWSTR CabinetFile, DWORD Reserved,
                                  PSP_FILE_CALLBACK_W MsgHandler, PVOID Context) 
@@ -47,7 +47,7 @@ BOOL WINAPI SetupIterateCabinetW(PWSTR CabinetFile, DWORD Reserved,
 
 
 /***********************************************************************
- *		TPWriteProfileString16 (SETUPX.62)
+ *		TPWriteProfileString (SETUPX.62)
  */
 BOOL WINAPI TPWriteProfileString16( LPCSTR section, LPCSTR entry, LPCSTR string )
 {
@@ -57,7 +57,7 @@ BOOL WINAPI TPWriteProfileString16( LPCSTR section, LPCSTR entry, LPCSTR string 
 
 
 /***********************************************************************
- *		suErrorToIds16  (SETUPX.61)
+ *		suErrorToIds  (SETUPX.61)
  */
 DWORD WINAPI suErrorToIds16( WORD w1, WORD w2 )
 {

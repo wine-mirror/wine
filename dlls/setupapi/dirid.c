@@ -186,7 +186,7 @@ static BOOL store_user_dirid( HINF hinf, int id, WCHAR *str )
 
 
 /***********************************************************************
- *		SetupSetDirectoryIdW    (SETUPAPI.@)
+ *		SetupSetDirectoryIdA    (SETUPAPI.@)
  */
 BOOL WINAPI SetupSetDirectoryIdA( HINF hinf, DWORD id, PCSTR dir )
 {

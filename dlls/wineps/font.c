@@ -138,7 +138,7 @@ static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
 }
 
 /***********************************************************************
- *           PSDRV_SelectFont   (WINEPS.@)
+ *           SelectFont   (WINEPS.@)
  */
 HFONT PSDRV_SelectFont( PSDRV_PDEVICE *physDev, HFONT hfont )
 {

@@ -32,7 +32,7 @@ static const char PEN_dashdotdot[] = { 12,4,4,4,4,4 };
 static const char PEN_alternate[]  = { 1,1 };
 
 /***********************************************************************
- *           X11DRV_SelectPen   (X11DRV.@)
+ *           SelectPen   (X11DRV.@)
  */
 HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
 {

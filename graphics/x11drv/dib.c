@@ -4816,7 +4816,7 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
 }
 
 /***********************************************************************
- *           X11DRV_SetDIBits   (X11DRV.@)
+ *           SetDIBits   (X11DRV.@)
  */
 INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
                       UINT lines, LPCVOID bits, const BITMAPINFO *info, UINT coloruse )
@@ -4904,7 +4904,7 @@ INT X11DRV_SetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan,
 }
 
 /***********************************************************************
- *           X11DRV_GetDIBits   (X11DRV.@)
+ *           GetDIBits   (X11DRV.@)
  */
 INT X11DRV_GetDIBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap, UINT startscan, UINT lines,
                       LPVOID bits, BITMAPINFO *info, UINT coloruse )
@@ -5854,7 +5854,7 @@ void X11DRV_DIB_DeleteDIBSection(BITMAPOBJ *bmp)
 }
 
 /***********************************************************************
- *           X11DRV_SetDIBColorTable   (X11DRV.@)
+ *           SetDIBColorTable   (X11DRV.@)
  */
 UINT X11DRV_SetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, const RGBQUAD *colors )
 {
@@ -5885,7 +5885,7 @@ UINT X11DRV_SetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, c
 }
 
 /***********************************************************************
- *           X11DRV_GetDIBColorTable   (X11DRV.@)
+ *           GetDIBColorTable   (X11DRV.@)
  */
 UINT X11DRV_GetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, RGBQUAD *colors )
 {

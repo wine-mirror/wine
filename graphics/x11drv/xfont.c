@@ -3182,7 +3182,7 @@ LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont )
  *                                                                     *
  ***********************************************************************/
 /***********************************************************************
- *           X11DRV_SelectFont   (X11DRV.@)
+ *           SelectFont   (X11DRV.@)
  */
 HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
 {

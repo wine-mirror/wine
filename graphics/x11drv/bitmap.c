@@ -74,7 +74,7 @@ BOOL X11DRV_BITMAP_Init(void)
 }
 
 /***********************************************************************
- *           X11DRV_SelectBitmap   (X11DRV.@)
+ *           SelectBitmap   (X11DRV.@)
  */
 HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 {
