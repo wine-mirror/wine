@@ -940,7 +940,7 @@ INT __cdecl CRTDLL_vsprintf( LPSTR buffer, LPCSTR spec, va_list args )
 }
 
 /*********************************************************************
- *                  _vsprintf      (CRTDLL.@)
+ *                  _vsnprintf      (CRTDLL.@)
  */
 INT __cdecl CRTDLL__vsnprintf(LPSTR buffer,DWORD size,LPCSTR spec,va_list args )
 {

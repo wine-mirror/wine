@@ -1945,8 +1945,10 @@ BOOL WINAPI PathSetDlgItemPathAW(HWND hDlg, int id, LPCVOID pszPath)
  
 static char * szSHFolders = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Shell Folders";
 static char * szSHUserFolders = "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders";
+#if 0
 static char * szEnvUserProfile = "%USERPROFILE%";
 static char * szEnvSystemRoot = "%SYSTEMROOT%";
+#endif
 
 BOOL WINAPI SHGetSpecialFolderPathA (
 	HWND hwndOwner,
@@ -2533,7 +2535,7 @@ UINT WINAPI PathGetCharTypeW(WCHAR ch)
 }
 
 /*************************************************************************
- *	
+ *	PathMakeSystemFolderA
  */
 BOOL WINAPI PathMakeSystemFolderA(LPCSTR pszPath)
 {
