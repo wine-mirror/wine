@@ -25,10 +25,6 @@
 #include <stdio.h>
 #include "windows.h"
 
-#ifdef LCC
-#include "lcc.h"
-#endif
-
 #include "main.h"
 #include "license.h"
 #include "dialog.h"

@@ -11,12 +11,20 @@
 
 #define HELPFILE  "notepad.hlp"
 #define LOGPREFIX ".LOG"
-#define DEFAULTICON OIC_WINLOGO
 
 /* hide the following from winerc */
 #ifndef RC_INVOKED
 
+#define WINE_RELEASE_INFO "Wine (www.winehq.com)"
+
 #include "commdlg.h"
+
+/***** Compatibility *****/
+
+#ifndef OIC_WINLOGO
+#define OIC_WINLOGO 32517
+#endif
+#define DEFAULTICON OIC_WINLOGO
 
 typedef struct
 {

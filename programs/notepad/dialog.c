@@ -16,14 +16,6 @@
 #include "language.h"
 #include "dialog.h"
 
-#ifdef LCC
-  #define LCC_HASASSERT
-  #include "lcc.h"
-#else
-  #include "wine/version.h"
-  #include "winnls.h"
-#endif
-
 static LRESULT WINAPI DIALOG_PAGESETUP_DlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam);
 
 
