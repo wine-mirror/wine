@@ -51,7 +51,7 @@ extern BOOL PATH_Rectangle(struct tagDC *dc, INT x1, INT y1,
 extern BOOL PATH_Ellipse(struct tagDC *dc, INT x1, INT y1,
    INT x2, INT y2);
 extern BOOL PATH_Arc(struct tagDC *dc, INT x1, INT y1, INT x2, INT y2,
-   INT xStart, INT yStart, INT xEnd, INT yEnd);
+   INT xStart, INT yStart, INT xEnd, INT yEnd, INT lines);
 extern BOOL PATH_PolyBezierTo(struct tagDC *dc, const POINT *pt, DWORD cbCount);
 extern BOOL PATH_PolyBezier(struct tagDC *dc, const POINT *pt, DWORD cbCount);
 extern BOOL PATH_PolylineTo(struct tagDC *dc, const POINT *pt, DWORD cbCount);
@@ -61,6 +61,9 @@ extern BOOL PATH_PolyPolyline(struct tagDC *dc, const POINT *pt, const DWORD *co
 			      DWORD polylines);
 extern BOOL PATH_PolyPolygon(struct tagDC *dc, const POINT *pt, const INT *counts,
 			     UINT polygons);
+extern BOOL PATH_RoundRect(struct tagDC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width, 
+				INT ell_height); 
+extern BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint, BYTE flags);
 #endif /* __WINE_PATH_H */
 
 

@@ -7,6 +7,8 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
+
 #include "dc.h"
 #include "bitmap.h"
 #include "heap.h"
@@ -128,7 +130,7 @@ BOOL WINAPI Arc( HDC hdc, INT left, INT top, INT right,
     if (dc)
     {
     if(PATH_IsPathOpen(dc->w.path))
-            ret = PATH_Arc(dc, left, top, right, bottom, xstart, ystart, xend, yend);
+            ret = PATH_Arc(dc, left, top, right, bottom, xstart, ystart, xend, yend,0);
         else if (dc->funcs->pArc)
             ret = dc->funcs->pArc(dc,left,top,right,bottom,xstart,ystart,xend,yend);
         GDI_ReleaseObj( hdc );
@@ -197,14 +199,14 @@ BOOL WINAPI Pie( HDC hdc, INT left, INT top,
 {
     BOOL ret = FALSE;
     DC * dc = DC_GetDCUpdate( hdc );
-    if (dc)
-    {
-        if (PATH_IsPathOpen(dc->w.path))
-        FIXME("-> Path: stub\n");
-        else if (dc->funcs->pPie)
-            ret = dc->funcs->pPie(dc,left,top,right,bottom,xstart,ystart,xend,yend);
-        GDI_ReleaseObj( hdc );
-    }
+    if (!dc) return FALSE;
+
+    if(PATH_IsPathOpen(dc->w.path))
+        ret = PATH_Arc(dc,left,top,right,bottom,xstart,ystart,xend,yend,2); 
+    else if(dc->funcs->pPie)
+        ret = dc->funcs->pPie(dc,left,top,right,bottom,xstart,ystart,xend,yend);
+
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -229,14 +231,14 @@ BOOL WINAPI Chord( HDC hdc, INT left, INT top,
 {
     BOOL ret = FALSE;
     DC * dc = DC_GetDCUpdate( hdc );
-    if (dc)
-    {
-        if(PATH_IsPathOpen(dc->w.path))
-        FIXME("-> Path: stub\n");
-        else if (dc->funcs->pChord)
-            ret = dc->funcs->pChord(dc,left,top,right,bottom,xstart,ystart,xend,yend);
-        GDI_ReleaseObj( hdc );
-    }
+    if (!dc) return FALSE;
+
+    if(PATH_IsPathOpen(dc->w.path))
+	ret = PATH_Arc(dc,left,top,right,bottom,xstart,ystart,xend,yend,1);
+    else if(dc->funcs->pChord)
+        ret = dc->funcs->pChord(dc,left,top,right,bottom,xstart,ystart,xend,yend);
+
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -259,14 +261,14 @@ BOOL WINAPI Ellipse( HDC hdc, INT left, INT top,
 {
     BOOL ret = FALSE;
     DC * dc = DC_GetDCUpdate( hdc );
-    if (dc)
-    {
-        if(PATH_IsPathOpen(dc->w.path))
-        FIXME("-> Path: stub\n");
-        else if (dc->funcs->pEllipse)
-            ret = dc->funcs->pEllipse(dc,left,top,right,bottom);
-        GDI_ReleaseObj( hdc );
-    }
+    if (!dc) return FALSE;
+
+    if(PATH_IsPathOpen(dc->w.path))
+	ret = PATH_Ellipse(dc,left,top,right,bottom);
+    else if (dc->funcs->pEllipse)
+        ret = dc->funcs->pEllipse(dc,left,top,right,bottom);
+
+    GDI_ReleaseObj( hdc );
     return ret;
 }
 
@@ -323,7 +325,7 @@ BOOL WINAPI RoundRect( HDC hdc, INT left, INT top, INT right,
     if (dc)
     {
         if(PATH_IsPathOpen(dc->w.path))
-        FIXME("-> Path: stub\n");
+	    ret = PATH_RoundRect(dc,left,top,right,bottom,ell_width,ell_height);
         else if (dc->funcs->pRoundRect)
             ret = dc->funcs->pRoundRect(dc,left,top,right,bottom,ell_width,ell_height);
         GDI_ReleaseObj( hdc );
@@ -1016,12 +1018,10 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
 
 /***********************************************************************
  *      AngleArc (GDI32.5)
- *	
  */
-BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius,
-                       FLOAT eStartAngle, FLOAT eSweepAngle)
+BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, FLOAT eSweepAngle)
 {
-    int x1,y1,x2,y2;
+    INT x1,y1,x2,y2, arcdir;
     BOOL result;
     DC *dc;
 
@@ -1034,11 +1034,16 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius,
     if(dc->funcs->pAngleArc)
     {
         result = dc->funcs->pAngleArc( dc, x, y, dwRadius, eStartAngle, eSweepAngle );
+
         GDI_ReleaseObj( hdc );
         return result;
     }
     GDI_ReleaseObj( hdc );
  
+    /* AngleArc always works counterclockwise */
+    arcdir = GetArcDirection( hdc );
+    SetArcDirection( hdc, AD_COUNTERCLOCKWISE ); 
+
     x1 = x + cos(eStartAngle*M_PI/180) * dwRadius;
     y1 = y - sin(eStartAngle*M_PI/180) * dwRadius;
     x2 = x + cos((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius;
@@ -1053,12 +1058,12 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius,
 		      x2, y2, x1, y1 );
  
     if( result ) MoveToEx( hdc, x2, y2, NULL );
+    SetArcDirection( hdc, arcdir );
     return result; 
 }
 
 /***********************************************************************
  *      PolyDraw (GDI32.270)
- *	
  */
 BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
                        DWORD cCount)
@@ -1091,11 +1096,12 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 	}
 
     /* if no moveto occurs, we will close the figure here */
-    lastmove.x = dc->w.CursPosX;
+    lastmove.x = dc->w.CursPosX; 
     lastmove.y = dc->w.CursPosY;
 
     /* now let's draw */
     for( i = 0; i < cCount; i++ )
+    {
 	if( lpbTypes[i] == PT_MOVETO )
 	{
 	    MoveToEx( hdc, lppt[i].x, lppt[i].y, NULL ); 				
@@ -1103,23 +1109,23 @@ BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
 	    lastmove.y = dc->w.CursPosY; 
 	}
 	else if( lpbTypes[i] & PT_LINETO )
-	{
 	    LineTo( hdc, lppt[i].x, lppt[i].y );
-	    if( lpbTypes[i] & PT_CLOSEFIGURE )
-	        LineTo( hdc, lastmove.x, lastmove.y );
-	} 
 	else if( lpbTypes[i] & PT_BEZIERTO )
 	{
-	    /* optimizeme: multiple BezierTo's with one PolyBezierTo call */ 
-	    PolyBezierTo( hdc, &lppt[i], 3 );    
-
+	    PolyBezierTo( hdc, &lppt[i], 3 );
 	    i += 2;
-
-	    if( lpbTypes[i] & PT_CLOSEFIGURE ) 
-	    	LineTo( hdc, lastmove.x, lastmove.y ); 
 	}
 	else 
 	    return FALSE; 
+
+	if( lpbTypes[i] & PT_CLOSEFIGURE )
+	{
+	    if( PATH_IsPathOpen( dc->w.path ) )
+		CloseFigure( hdc );
+	    else 
+		LineTo( hdc, lastmove.x, lastmove.y );
+	}
+    }
 
     return TRUE; 
 }

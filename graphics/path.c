@@ -70,8 +70,6 @@ DEFAULT_DEBUG_CHANNEL(gdi)
 static BOOL PATH_PathToRegion(GdiPath *pPath, INT nPolyFillMode,
    HRGN *pHrgn);
 static void   PATH_EmptyPath(GdiPath *pPath);
-static BOOL PATH_AddEntry(GdiPath *pPath, const POINT *pPoint,
-   BYTE flags);
 static BOOL PATH_ReserveEntries(GdiPath *pPath, INT numEntries);
 static BOOL PATH_DoArcPart(GdiPath *pPath, FLOAT_POINT corners[],
    double angleStart, double angleEnd, BOOL addMoveTo);
@@ -79,6 +77,7 @@ static void PATH_ScaleNormalizedPoint(FLOAT_POINT corners[], double x,
    double y, POINT *pPoint);
 static void PATH_NormalizePoint(FLOAT_POINT corners[], const FLOAT_POINT
    *pPoint, double *pX, double *pY);
+static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, INT y2);
 
 
 /***********************************************************************
@@ -618,6 +617,67 @@ BOOL PATH_LineTo(DC *dc, INT x, INT y)
    return PATH_AddEntry(pPath, &point, PT_LINETO);
 }
 
+/* PATH_RoundRect
+ *
+ * Should be called when a call to RoundRect is performed on a DC that has
+ * an open path. Returns TRUE if successful, else FALSE.
+ *
+ * FIXME: it adds the same entries to the path as windows does, but there 
+ * is an error in the bezier drawing code so that there are small pixel-size
+ * gaps when the resulting path is drawn by StrokePath()
+ */
+BOOL PATH_RoundRect(DC *dc, INT x1, INT y1, INT x2, INT y2, INT ell_width, INT ell_height)
+{
+   GdiPath *pPath = &dc->w.path;
+   POINT corners[2], pointTemp;
+   FLOAT_POINT ellCorners[2];
+ 
+   /* Check that path is open */
+   if(pPath->state!=PATH_Open)
+      return FALSE;
+
+   if(!PATH_CheckCorners(dc,corners,x1,y1,x2,y2))
+      return FALSE;
+
+   /* Add points to the roundrect path */ 
+   ellCorners[0].x = corners[1].x-ell_width;
+   ellCorners[0].y = corners[0].y; 
+   ellCorners[1].x = corners[1].x; 
+   ellCorners[1].y = corners[0].y+ell_height; 
+   if(!PATH_DoArcPart(pPath, ellCorners, 0, -M_PI_2, TRUE))
+      return FALSE;
+   pointTemp.x = corners[0].x+ell_width/2;
+   pointTemp.y = corners[0].y;
+   if(!PATH_AddEntry(pPath, &pointTemp, PT_LINETO))
+      return FALSE;
+   ellCorners[0].x = corners[0].x;
+   ellCorners[1].x = corners[0].x+ell_width;
+   if(!PATH_DoArcPart(pPath, ellCorners, -M_PI_2, -M_PI, FALSE))
+      return FALSE;
+   pointTemp.x = corners[0].x;
+   pointTemp.y = corners[1].y-ell_height/2;
+   if(!PATH_AddEntry(pPath, &pointTemp, PT_LINETO))
+      return FALSE;
+   ellCorners[0].y = corners[1].y-ell_height;
+   ellCorners[1].y = corners[1].y;
+   if(!PATH_DoArcPart(pPath, ellCorners, M_PI, M_PI_2, FALSE))
+      return FALSE;
+   pointTemp.x = corners[1].x-ell_width/2;
+   pointTemp.y = corners[1].y;
+   if(!PATH_AddEntry(pPath, &pointTemp, PT_LINETO))
+      return FALSE;
+   ellCorners[0].x = corners[1].x-ell_width;
+   ellCorners[1].x = corners[1].x;
+   if(!PATH_DoArcPart(pPath, ellCorners, M_PI_2, 0, FALSE))
+      return FALSE;    
+   
+   /* Close the roundrect figure */
+   if(!CloseFigure(dc->hSelf))
+      return FALSE;
+
+   return TRUE;
+}
+
 /* PATH_Rectangle
  *
  * Should be called when a call to Rectangle is performed on a DC that has
@@ -627,40 +687,13 @@ BOOL PATH_Rectangle(DC *dc, INT x1, INT y1, INT x2, INT y2)
 {
    GdiPath *pPath = &dc->w.path;
    POINT corners[2], pointTemp;
-   INT   temp;
 
    /* Check that path is open */
    if(pPath->state!=PATH_Open)
       return FALSE;
 
-   /* Convert points to device coordinates */
-   corners[0].x=x1;
-   corners[0].y=y1;
-   corners[1].x=x2;
-   corners[1].y=y2;
-   if(!LPtoDP(dc->hSelf, corners, 2))
+   if(!PATH_CheckCorners(dc,corners,x1,y1,x2,y2))
       return FALSE;
-   
-   /* Make sure first corner is top left and second corner is bottom right */
-   if(corners[0].x>corners[1].x)
-   {
-      temp=corners[0].x;
-      corners[0].x=corners[1].x;
-      corners[1].x=temp;
-   }
-   if(corners[0].y>corners[1].y)
-   {
-      temp=corners[0].y;
-      corners[0].y=corners[1].y;
-      corners[1].y=temp;
-   }
-   
-   /* In GM_COMPATIBLE, don't include bottom and right edges */
-   if(dc->w.GraphicsMode==GM_COMPATIBLE)
-   {
-      corners[1].x--;
-      corners[1].y--;
-   }
 
    /* Close any previous figure */
    if(!CloseFigure(dc->hSelf))
@@ -703,25 +736,27 @@ BOOL PATH_Rectangle(DC *dc, INT x1, INT y1, INT x2, INT y2)
  */
 BOOL PATH_Ellipse(DC *dc, INT x1, INT y1, INT x2, INT y2)
 {
-   /* TODO: This should probably be revised to call PATH_AngleArc */
-   /* (once it exists) */
-   return PATH_Arc(dc, x1, y1, x2, y2, x1, (y1+y2)/2, x1, (y1+y2)/2);
+   return( PATH_Arc(dc, x1, y1, x2, y2, x1, (y1+y2)/2, x1, (y1+y2)/2,0) && 
+           CloseFigure(dc->hSelf) );
 }
 
 /* PATH_Arc
  *
  * Should be called when a call to Arc is performed on a DC that has
  * an open path. This adds up to five Bezier splines representing the arc
- * to the path. Returns TRUE if successful, else FALSE.
+ * to the path. When 'lines' is 1, we add 1 extra line to get a chord,
+ * and when 'lines' is 2, we add 2 extra lines to get a pie.
+ * Returns TRUE if successful, else FALSE.
  */
 BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
-   INT xStart, INT yStart, INT xEnd, INT yEnd)
+   INT xStart, INT yStart, INT xEnd, INT yEnd, INT lines)
 {
    GdiPath     *pPath = &dc->w.path;
    double      angleStart, angleEnd, angleStartQuadrant, angleEndQuadrant=0.0;
                /* Initialize angleEndQuadrant to silence gcc's warning */
    double      x, y;
    FLOAT_POINT corners[2], pointStart, pointEnd;
+   POINT       centre;
    BOOL      start, end;
    INT       temp;
 
@@ -732,8 +767,6 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
    if(pPath->state!=PATH_Open)
       return FALSE;
 
-   /* FIXME: Do we have to close the current figure? */
-   
    /* Check for zero height / width */
    /* FIXME: Only in GM_COMPATIBLE? */
    if(x1==x2 || y1==y2)
@@ -839,6 +872,20 @@ BOOL PATH_Arc(DC *dc, INT x1, INT y1, INT x2, INT y2,
       start=FALSE;
    }  while(!end);
 
+   /* chord: close figure. pie: add line and close figure */
+   if(lines==1)
+   {
+      if(!CloseFigure(dc->hSelf))
+         return FALSE;
+   }
+   else if(lines==2)
+   {
+      centre.x = (corners[0].x+corners[1].x)/2; 
+      centre.y = (corners[0].y+corners[1].y)/2;
+      if(!PATH_AddEntry(pPath, &centre, PT_LINETO | PT_CLOSEFIGURE))
+         return FALSE;
+   }
+	
    return TRUE;
 }
 
@@ -1016,9 +1063,47 @@ BOOL PATH_PolyPolyline( DC *dc, const POINT* pts, const DWORD* counts,
  * Internal functions
  */
 
+/* PATH_CheckCorners
+ *
+ * Helper function for PATH_RoundRect() and PATH_Rectangle() 
+ */
+static BOOL PATH_CheckCorners(DC *dc, POINT corners[], INT x1, INT y1, INT x2, INT y2)
+{
+   INT temp;
+
+   /* Convert points to device coordinates */
+   corners[0].x=x1;
+   corners[0].y=y1;
+   corners[1].x=x2;
+   corners[1].y=y2;
+   if(!LPtoDP(dc->hSelf, corners, 2))
+      return FALSE;
+   
+   /* Make sure first corner is top left and second corner is bottom right */
+   if(corners[0].x>corners[1].x)
+   {
+      temp=corners[0].x;
+      corners[0].x=corners[1].x;
+      corners[1].x=temp;
+   }
+   if(corners[0].y>corners[1].y)
+   {
+      temp=corners[0].y;
+      corners[0].y=corners[1].y;
+      corners[1].y=temp;
+   }
+   
+   /* In GM_COMPATIBLE, don't include bottom and right edges */
+   if(dc->w.GraphicsMode==GM_COMPATIBLE)
+   {
+      corners[1].x--;
+      corners[1].y--;
+   }
+
+   return TRUE;
+}
 
 /* PATH_AddFlatBezier
- *
  */
 static BOOL PATH_AddFlatBezier(GdiPath *pPath, POINT *pt, BOOL closed)
 {
