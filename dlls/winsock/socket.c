@@ -896,6 +896,7 @@ int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct WS_socka
 
     default:
         /* No conversion needed */
+        *wsaddrlen = min(*wsaddrlen,uaddrlen);
         memcpy(wsaddr,uaddr,*wsaddrlen);
         res=(*wsaddrlen<uaddrlen?-1:0);
     }
