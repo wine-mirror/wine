@@ -1102,7 +1102,7 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, const LPWSTR source,
 }
 
 
-typedef UINT CustomEntry(MSIHANDLE);
+typedef UINT __stdcall CustomEntry(MSIHANDLE);
 typedef struct 
 {
         MSIPACKAGE *package;
