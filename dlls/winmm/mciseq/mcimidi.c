@@ -67,7 +67,7 @@ typedef struct tagWINE_MCIMIDI {
     WORD		wNotifyDeviceID;    	/* MCI device ID with a pending notification */
     HANDLE 		hCallback;         	/* Callback handle for pending notification  */
     HMMIO		hFile;	            	/* mmio file handle open as Element          */
-    LPSTR		lpstrElementName;	/* Name of file */
+    LPSTR		lpstrElementName;       /* Name of file (if any)                     */
     LPSTR		lpstrCopyright;
     LPSTR		lpstrName;
     WORD		dwStatus;		/* one from MCI_MODE_xxxx */
@@ -726,6 +726,7 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParms)
 
     wmm->hFile = 0;
     wmm->hMidi = 0;
+    wmm->lpstrElementName = NULL;
     dwDeviceID = lpParms->wDeviceID;
 
     TRACE("wDevID=%04X (lpParams->wDeviceID=%08lX)\n", wDevID, dwDeviceID);
@@ -741,15 +742,12 @@ static DWORD MIDI_mciOpen(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpParms)
 		wmm->nUseCount--;
 		return MCIERR_FILE_NOT_FOUND;
 	    }
-	} else {
-	    wmm->hFile = 0;
+            wmm->lpstrElementName = HeapAlloc(GetProcessHeap(), 0, strlen(lpParms->lpstrElementName) + 1);
+            strcpy(wmm->lpstrElementName, lpParms->lpstrElementName);
 	}
     }
     TRACE("hFile=%p\n", wmm->hFile);
 
-    /* FIXME: should I get a strdup() of it instead? */
-    wmm->lpstrElementName = HeapAlloc( GetProcessHeap(), 0, strlen(lpParms->lpstrElementName)+1 );
-    strcpy( wmm->lpstrElementName, lpParms->lpstrElementName );
     wmm->lpstrCopyright = NULL;
     wmm->lpstrName = NULL;
 
@@ -918,7 +916,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
     if (wmm == NULL)	return MCIERR_INVALID_DEVICE_ID;
 
     if (wmm->hFile == 0) {
-	WARN("Can't play: no file '%s' !\n", wmm->lpstrElementName);
+	WARN("Can't play: no file '%s' !\n", debugstr_a(wmm->lpstrElementName));
 	return MCIERR_FILE_NOT_FOUND;
     }
 
@@ -1196,7 +1194,7 @@ static DWORD MIDI_mciRecord(UINT wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpPar
     if (wmm == 0)	return MCIERR_INVALID_DEVICE_ID;
 
     if (wmm->hFile == 0) {
-	WARN("Can't find file='%s' !\n", wmm->lpstrElementName);
+	WARN("Can't find file='%s' !\n", debugstr_a(wmm->lpstrElementName));
 	return MCIERR_FILE_NOT_FOUND;
     }
     start = 1; 		end = 99999;
@@ -1430,7 +1428,7 @@ static DWORD MIDI_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 	    TRACE("MCI_STATUS_READY = %u\n", LOWORD(lpParms->dwReturn));
 	    break;
 	case MCI_STATUS_TIME_FORMAT:
-	    lpParms->dwReturn = MAKEMCIRESOURCE(wmm->dwMciTimeFormat, wmm->dwMciTimeFormat);
+	    lpParms->dwReturn = MAKEMCIRESOURCE(wmm->dwMciTimeFormat, MCI_FORMAT_RETURN_BASE + wmm->dwMciTimeFormat);
 	    TRACE("MCI_STATUS_TIME_FORMAT => %u\n", LOWORD(lpParms->dwReturn));
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;

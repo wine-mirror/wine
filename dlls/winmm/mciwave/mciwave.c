@@ -1383,7 +1383,7 @@ static DWORD WAVE_mciStatus(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpPar
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_STATUS_TIME_FORMAT:
-	    lpParms->dwReturn = MAKEMCIRESOURCE(wmw->dwMciTimeFormat, wmw->dwMciTimeFormat);
+	    lpParms->dwReturn = MAKEMCIRESOURCE(wmw->dwMciTimeFormat, MCI_FORMAT_RETURN_BASE + wmw->dwMciTimeFormat);
 	    TRACE("MCI_STATUS_TIME_FORMAT => %lu\n", lpParms->dwReturn);
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
