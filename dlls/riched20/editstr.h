@@ -191,6 +191,16 @@ typedef enum {
   umAddBackToUndo
 } ME_UndoMode;
 
+typedef struct tagME_FontCacheItem
+{
+  LOGFONTW lfSpecs;
+  HFONT hFont;
+  int nRefs;
+  int nAge;
+} ME_FontCacheItem;
+
+#define HFONT_CACHE_SIZE 10
+
 typedef struct tagME_TextEditor
 {
   HWND hWnd;
@@ -211,6 +221,7 @@ typedef struct tagME_TextEditor
   ME_DisplayItem *pUndoStack, *pRedoStack;
   ME_UndoMode nUndoMode;
   int nParagraphs;
+  ME_FontCacheItem pFontCache[HFONT_CACHE_SIZE];
 } ME_TextEditor;
 
 typedef struct tagME_Context

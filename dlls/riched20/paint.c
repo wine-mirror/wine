@@ -58,14 +58,6 @@ void ME_PaintContent(ME_TextEditor *editor, HDC hDC, BOOL bOnlyNew) {
     FillRect(hDC, &rc, (HBRUSH)GetStockObject(LTGRAY_BRUSH));
   }
   ME_DestroyContext(&c);
-
-  item = editor->pBuffer->pFirst->next;
-  while(item != editor->pBuffer->pLast) {
-    if (item->type == diRun)
-      ME_UnprepareStyle(item->member.run.style);
-    item = item->next;
-  }
-
 }
 
 void ME_Repaint(ME_TextEditor *editor)
@@ -101,8 +93,7 @@ void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, int nChar
   HDC hDC = c->hDC;
   HGDIOBJ hOldFont;
   COLORREF rgbOld, rgbBack;
-  ME_PrepareStyle(c, s);
-  hOldFont = SelectObject(hDC, s->hFont);
+  hOldFont = ME_SelectStyleFont(c->editor, hDC, s);
   rgbBack = ME_GetBackColor(c->editor);
   if ((s->fmt.dwMask & CFM_COLOR) && (s->fmt.dwEffects & CFE_AUTOCOLOR))
     rgbOld = SetTextColor(hDC, GetSysColor(COLOR_WINDOWTEXT));
@@ -125,11 +116,7 @@ void ME_DrawTextWithStyle(ME_Context *c, int x, int y, LPCWSTR szText, int nChar
     PatBlt(hDC, x, ymin, sz.cx, cy, DSTINVERT);
   }
   SetTextColor(hDC, rgbOld);
-  SelectObject(hDC, hOldFont);
-}
-
-void ME_DrawSelection(ME_Context *c)
-{
+  ME_UnselectStyleFont(c->editor, hDC, s, hOldFont);
 }
 
 void ME_DebugWrite(HDC hDC, POINT *pt, WCHAR *szText) {

@@ -367,7 +367,6 @@ void ME_WrapTextParagraph(ME_Context *c, ME_DisplayItem *tp) {
   for (p = tp->next; p!=tp->member.para.next_para; ) {
     assert(p->type != diStartRow);
     if (p->type == diRun) {
-      ME_PrepareStyle(c, p->member.run.style);
       p = ME_WrapHandleRun(&wc, p);
       continue;
     }

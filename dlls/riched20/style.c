@@ -248,68 +248,114 @@ void ME_DumpStyleToBuf(CHARFORMAT2W *pFmt, char buf[2048])
   ME_DumpStyleEffect(&p, "Text protected:", pFmt, CFM_PROTECTED);
 }
 
-void ME_UnprepareStyle(ME_Style *s)
+void ME_LogFontFromStyle(HDC hDC, LOGFONTW *lf, ME_Style *s)
 {
-  if (s->hFont) {
-    DeleteObject(s->hFont);
-    s->hFont = NULL;
-    s->nSequence = -2;
-  }
-}
-
-void ME_PrepareStyleFromDC(ME_Style *s, HDC hDC, int nSequence)
-{
-  HGDIOBJ hOldFont;
-  LOGFONTW lf;
   int rx, ry;
-  
-  if (nSequence == s->nSequence && s->hFont)
-    return;
-/*  assert(s); */
   rx = GetDeviceCaps(hDC, LOGPIXELSX);
   ry = GetDeviceCaps(hDC, LOGPIXELSY);
-  if (s->hFont) {
-    DeleteObject(s->hFont);
-    s->hFont = NULL;
-  }
-  ZeroMemory(&lf, sizeof(lf));
-  lstrcpyW(lf.lfFaceName, s->fmt.szFaceName);
-  lf.lfHeight = -s->fmt.yHeight*ry/1440;
-  lf.lfWeight = 400;
+  ZeroMemory(lf, sizeof(LOGFONTW));
+  lstrcpyW(lf->lfFaceName, s->fmt.szFaceName);
+  lf->lfHeight = -s->fmt.yHeight*ry/1440;
+  lf->lfWeight = 400;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_BOLD)
-    lf.lfWeight = 700;
+    lf->lfWeight = 700;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_WEIGHT)
-    lf.lfWeight = s->fmt.wWeight;
+    lf->lfWeight = s->fmt.wWeight;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_ITALIC)
-    lf.lfItalic = 1;
+    lf->lfItalic = 1;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_UNDERLINE)
-    lf.lfUnderline = 1;
+    lf->lfUnderline = 1;
   if (s->fmt.dwEffects & s->fmt.dwMask & CFM_STRIKEOUT)
-    lf.lfStrikeOut = 1;
+    lf->lfStrikeOut = 1;
 /*lf.lfQuality = PROOF_QUALITY; */
-  lf.lfPitchAndFamily = s->fmt.bPitchAndFamily;
-  lf.lfCharSet = s->fmt.bCharSet;
-  s->hFont = CreateFontIndirectW(&lf);
-  assert(s->hFont);
-  GetObjectW(s->hFont, sizeof(LOGFONTW), &lf);
-  hOldFont = SelectObject(hDC, s->hFont);
-  GetTextMetricsW(hDC, &s->tm);
-  SelectObject(hDC, hOldFont);
-  s->nSequence = nSequence;
+  lf->lfPitchAndFamily = s->fmt.bPitchAndFamily;
+  lf->lfCharSet = s->fmt.bCharSet;
 }
 
-HFONT ME_SelectStyleFont(HDC hDC, ME_Style *s)
+
+BOOL ME_IsFontEqual(LOGFONTW *p1, LOGFONTW *p2)
+{
+  if (memcmp(p1, p2, sizeof(LOGFONTW)-sizeof(p1->lfFaceName)))
+    return FALSE;
+  if (lstrcmpW(p1->lfFaceName, p2->lfFaceName))
+    return FALSE;
+  return TRUE;
+}
+
+HFONT ME_SelectStyleFont(ME_TextEditor *editor, HDC hDC, ME_Style *s)
 {
   HFONT hOldFont;
-  ME_PrepareStyleFromDC(s, hDC, -1);
-  assert(s->hFont);
+  LOGFONTW lf;
+  int i, nEmpty, nAge = 0x7FFFFFFF;
+  ME_FontCacheItem *item;
+  assert(hDC);
+  assert(s);
+  
+  ME_LogFontFromStyle(hDC, &lf, s);
+  
+  for (i=0; i<HFONT_CACHE_SIZE; i++)
+    editor->pFontCache[i].nAge++;
+  for (i=0, nEmpty=-1, nAge=0; i<HFONT_CACHE_SIZE; i++)
+  {
+    item = &editor->pFontCache[i];
+    if (!item->nRefs)
+    {
+      if (item->nAge > nAge)
+        nEmpty = i, nAge = item->nAge;
+    }
+    if (ME_IsFontEqual(&item->lfSpecs, &lf))
+      break;
+  }
+  if (i < HFONT_CACHE_SIZE) /* found */
+  {
+    item = &editor->pFontCache[i];
+    TRACE("font reused %d\n", i);
+
+    s->hFont = item->hFont;
+    item->nRefs++;
+  }
+  else
+  {
+    item = &editor->pFontCache[nEmpty]; /* this legal even when nEmpty == -1, as we don't dereference it */
+
+    assert(nEmpty != -1); /* otherwise we leak cache entries or get too many fonts at once*/
+    if (item->hFont) {
+      TRACE("font deleted %d\n", nEmpty);
+      DeleteObject(item->hFont);
+      item->hFont = NULL;
+    }
+    s->hFont = CreateFontIndirectW(&lf);
+    assert(s->hFont);
+    TRACE("font created %d\n", nEmpty);
+    item->hFont = s->hFont;
+    item->nRefs = 1;
+    memcpy(&item->lfSpecs, &lf, sizeof(LOGFONTW));
+  }
   hOldFont = SelectObject(hDC, s->hFont);
+  /* should be cached too, maybe ? */
+  GetTextMetricsW(hDC, &s->tm);
   return hOldFont;
 }
 
-void ME_PrepareStyle(ME_Context *c, ME_Style *s)
+void ME_UnselectStyleFont(ME_TextEditor *editor, HDC hDC, ME_Style *s, HFONT hOldFont)
 {
-  ME_PrepareStyleFromDC(s, c->hDC, c->nSequence);
+  int i;
+  
+  assert(hDC);
+  assert(s);
+  SelectObject(hDC, hOldFont);
+  for (i=0; i<HFONT_CACHE_SIZE; i++)
+  {
+    ME_FontCacheItem *pItem = &editor->pFontCache[i];
+    if (pItem->hFont == s->hFont && pItem->nRefs > 0)
+    {
+      pItem->nRefs--;
+      pItem->nAge = 0;
+      s->hFont = NULL;
+      return;
+    }
+  }
+  assert(0 == "UnselectStyleFont without SelectStyleFont");
 }
 
 void ME_DestroyStyle(ME_Style *s) {

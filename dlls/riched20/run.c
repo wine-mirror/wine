@@ -378,11 +378,10 @@ int ME_CharFromPoint(ME_TextEditor *editor, int cx, ME_Run *run)
     return 1;
   }
   hDC = GetDC(editor->hWnd);
-  hOldFont = ME_SelectStyleFont(hDC, run->style);
+  hOldFont = ME_SelectStyleFont(editor, hDC, run->style);
   GetTextExtentExPointW(hDC, run->strText->szData, run->strText->nLen, 
     cx, &fit, NULL, &sz);
-  assert(run->style->hFont);
-  SelectObject(hDC, hOldFont);  
+  ME_UnselectStyleFont(editor, hDC, run->style, hOldFont);  
   ReleaseDC(editor->hWnd, hDC);
   return fit;
 }
@@ -406,7 +405,7 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
   }
 
   hDC = GetDC(editor->hWnd);
-  hOldFont = ME_SelectStyleFont(hDC, run->style);
+  hOldFont = ME_SelectStyleFont(editor, hDC, run->style);
   GetTextExtentExPointW(hDC, run->strText->szData, run->strText->nLen, 
     cx, &fit, NULL, &sz);
   if (fit != run->strText->nLen)
@@ -419,7 +418,7 @@ int ME_CharFromPointCursor(ME_TextEditor *editor, int cx, ME_Run *run)
     if (cx >= (sz2.cx+sz3.cx)/2)
       fit = fit1;
   }
-  SelectObject(hDC, hOldFont);  
+  ME_UnselectStyleFont(editor, hDC, run->style, hOldFont);  
   ReleaseDC(editor->hWnd, hDC);
   return fit;
 }
@@ -436,9 +435,9 @@ int ME_PointFromChar(ME_TextEditor *editor, ME_Run *pRun, int nOffset)
     ME_GetGraphicsSize(editor, pRun, &size);
     return 1;
   }
-  hOldFont = ME_SelectStyleFont(hDC, pRun->style);
+  hOldFont = ME_SelectStyleFont(editor, hDC, pRun->style);
   GetTextExtentPoint32W(hDC, pRun->strText->szData, nOffset, &size);
-  SelectObject(hDC, hOldFont);  
+  ME_UnselectStyleFont(editor, hDC, pRun->style, hOldFont);  
   ReleaseDC(editor->hWnd, hDC);
   return size.cx;
 }
@@ -448,9 +447,9 @@ void ME_GetTextExtent(ME_Context *c, LPCWSTR szText, int nChars, ME_Style *s,
 {
   HDC hDC = c->hDC;
   HGDIOBJ hOldFont;
-  hOldFont = ME_SelectStyleFont(hDC, s);
+  hOldFont = ME_SelectStyleFont(c->editor, hDC, s);
   GetTextExtentPoint32W(hDC, szText, nChars, size);
-  SelectObject(hDC, hOldFont);  
+  ME_UnselectStyleFont(c->editor, hDC, s, hOldFont);  
 }
 
 SIZE ME_GetRunSize(ME_Context *c, ME_Run *run, int nLen)

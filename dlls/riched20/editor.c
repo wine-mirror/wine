@@ -334,6 +334,7 @@ static LRESULT ME_StreamIn(HWND hwnd, DWORD format, EDITSTREAM *stream)
 ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ME_TextEditor *ed = ALLOC_OBJ(ME_TextEditor);
   HDC hDC;
+  int i;
   ed->hWnd = hWnd;
   ed->pBuffer = ME_MakeText();
   hDC = GetDC(hWnd);
@@ -357,6 +358,12 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->pUndoStack = ed->pRedoStack = NULL;
   ed->nUndoMode = umAddToUndo;
   ed->nParagraphs = 1;
+  for (i=0; i<HFONT_CACHE_SIZE; i++)
+  {
+    ed->pFontCache[i].nRefs = 0;
+    ed->pFontCache[i].nAge = 0;
+    ed->pFontCache[i].hFont = NULL;
+  }
   ME_CheckCharOffsets(ed);
   return ed;
 }
@@ -365,6 +372,7 @@ void ME_DestroyEditor(ME_TextEditor *editor)
 {
   ME_DisplayItem *pFirst = editor->pBuffer->pFirst;
   ME_DisplayItem *p = pFirst, *pNext = NULL;
+  int i;
   
   ME_ClearTempStyle(editor);
   ME_EmptyUndoStack(editor);
@@ -374,6 +382,11 @@ void ME_DestroyEditor(ME_TextEditor *editor)
     p = pNext;
   }
   ME_ReleaseStyle(editor->pBuffer->pDefaultStyle);
+  for (i=0; i<HFONT_CACHE_SIZE; i++)
+  {
+    if (editor->pFontCache[i].hFont)
+      DeleteObject(editor->pFontCache[i].hFont);
+  }
     
   FREE_OBJ(editor);
 }
@@ -597,6 +610,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     ME_Style *style;
     LPWSTR wszText = ME_ToUnicode(hWnd, (void *)lParam);
     size_t len = lstrlenW(wszText);
+    TRACE("EM_REPLACESEL - %s\n", debugstr_w(wszText));
     
     ME_GetSelection(editor, &from, &to);
     ME_CursorFromCharOfs(editor, from, &c);
@@ -624,6 +638,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case WM_SETTEXT:
   {
     LPWSTR wszText = ME_ToUnicode(hWnd, (void *)lParam);
+    TRACE("WM_SETTEXT - %s\n", (char *)(wszText)); /* debugstr_w() */
     ME_InternalDeleteText(editor, 0, ME_GetTextLength(editor));
     /* uses default style! */
     ME_InsertTextFromCursor(editor, 0, wszText, -1, editor->pBuffer->pDefaultStyle);
