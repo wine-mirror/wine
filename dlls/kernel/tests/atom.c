@@ -130,7 +130,7 @@ static void test_get_atom_name(void)
 
     /* Check error code returns */
     memset(buf, '.', 10);
-    ok( !GlobalGetAtomNameA( atom, buf,  0 ), "succeded" );
+    ok( !GlobalGetAtomNameA( atom, buf,  0 ), "succeeded" );
     ok( !memcmp( buf, "..........", 10 ), "should not touch buffer" );
 
     if (unicode_OS)
@@ -138,7 +138,7 @@ static void test_get_atom_name(void)
         static const WCHAR sampleW[10] = {'.','.','.','.','.','.','.','.','.','.'};
 
         for (i = 0; i < 10; i++) bufW[i] = '.';
-        ok( !GlobalGetAtomNameW( atom, bufW, 0 ), "succeded" );
+        ok( !GlobalGetAtomNameW( atom, bufW, 0 ), "succeeded" );
         ok( !memcmp( bufW, sampleW, 10 * sizeof(WCHAR) ), "should not touch buffer" );
     }
 
@@ -168,15 +168,15 @@ static void test_error_handling(void)
 
     memset( buffer, 'a', 256 );
     buffer[256] = 0;
-    ok( !GlobalAddAtomA(buffer), "add succeded" );
-    ok( !GlobalFindAtomA(buffer), "find succeded" );
+    ok( !GlobalAddAtomA(buffer), "add succeeded" );
+    ok( !GlobalFindAtomA(buffer), "find succeeded" );
 
     if (unicode_OS)
     {
         for (i = 0; i < 256; i++) bufferW[i] = 'b';
         bufferW[256] = 0;
-        ok( !GlobalAddAtomW(bufferW), "add succeded" );
-        ok( !GlobalFindAtomW(bufferW), "find succeded" );
+        ok( !GlobalAddAtomW(bufferW), "add succeeded" );
+        ok( !GlobalFindAtomW(bufferW), "find succeeded" );
     }
 }
 

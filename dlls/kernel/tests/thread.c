@@ -524,7 +524,7 @@ VOID test_thread_processor(DWORD version)
        error=SetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS+1);
      }
        ok(error==-1,
-          "SetThreadIdealProccesor succeded with an illegal processor #");
+          "SetThreadIdealProccesor succeeded with an illegal processor #");
      todo_wine {
        error=SetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS);
        ok(error==0, "SetThreadIdealProccesor returned an incorrect value");
