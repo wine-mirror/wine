@@ -150,7 +150,7 @@ static BOOL CALLBACK CRYPT_VerifyImage(LPCSTR lpszImage, BYTE* pData)
 		return FALSE;
 	}
 
-	FIXME("(%s, %p): not verifying image", lpszImage, pData);
+	FIXME("(%s, %p): not verifying image\n", lpszImage, pData);
 
 	return TRUE;
 }
