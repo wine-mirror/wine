@@ -5,6 +5,8 @@
  *
  * Ulrich Czekalla
  * Noureddine Jemmali
+ *
+ * Copyright 2000 Andreas Mohr
  */
 
 #include "config.h"
@@ -70,6 +72,7 @@ typedef enum {
   FTP_CMD_ABOR,
   FTP_CMD_LIST,
   FTP_CMD_NLST,
+  FTP_CMD_PASV,
   FTP_CMD_PWD, 
   FTP_CMD_QUIT,
 } FTP_COMMAND; 
@@ -91,6 +94,7 @@ static const CHAR *szFtpCommands[] = {
   "ABOR",
   "LIST",
   "NLST",
+  "PASV",
   "PWD",
   "QUIT",
 };
@@ -100,7 +104,7 @@ static const CHAR szMonths[] = "JANFEBMARAPRMAYJUNJULAUGSEPOCTNOVDEC";
 BOOL FTP_SendCommand(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
 	INTERNET_STATUS_CALLBACK lpfnStatusCB, HINTERNET hHandle, DWORD dwContext);
 BOOL FTP_SendStore(LPWININETFTPSESSIONA lpwfs, LPCSTR lpszRemoteFile, DWORD dwType);
-BOOL FTP_InitDataSocket(LPWININETFTPSESSIONA lpwfs, LPINT nDataSocket);
+BOOL FTP_GetDataSocket(LPWININETFTPSESSIONA lpwfs, LPINT nDataSocket);
 BOOL FTP_SendData(LPWININETFTPSESSIONA lpwfs, INT nDataSocket, HANDLE hFile);
 INT FTP_ReceiveResponse(INT nSocket, LPSTR lpszResponse, DWORD dwResponse,
 	INTERNET_STATUS_CALLBACK lpfnStatusCB, HINTERNET hHandle, DWORD dwContext);
@@ -112,6 +116,8 @@ BOOL FTP_SendPassword(LPWININETFTPSESSIONA lpwfs);
 BOOL FTP_SendAccount(LPWININETFTPSESSIONA lpwfs);
 BOOL FTP_SendType(LPWININETFTPSESSIONA lpwfs, DWORD dwType);
 BOOL FTP_SendPort(LPWININETFTPSESSIONA lpwfs);
+BOOL FTP_DoPassive(LPWININETFTPSESSIONA lpwfs);
+BOOL FTP_SendPortOrPasv(LPWININETFTPSESSIONA lpwfs);
 BOOL FTP_ParsePermission(LPCSTR lpszPermission, LPFILEPROPERTIESA lpfp);
 BOOL FTP_ParseDirectory(LPWININETFTPSESSIONA lpwfs, INT nSocket, LPFILEPROPERTIESA *lpafp, LPDWORD dwfp);
 HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONA lpwfs, INT nSocket, 
@@ -213,13 +219,13 @@ BOOL WINAPI FTP_FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
     {
         INT nDataSocket;
 
-        /* Accept connection from ftp server */
-        if (FTP_InitDataSocket(lpwfs, &nDataSocket)) 
+        /* Get data socket to server */
+        if (FTP_GetDataSocket(lpwfs, &nDataSocket)) 
         {
             FTP_SendData(lpwfs, nDataSocket, hFile);
             close(nDataSocket);
 	    nResCode = FTP_ReceiveResponse(lpwfs->sndSocket, INTERNET_GetResponseBuffer(),
-					   MAX_REPLY_LEN,0, 0, 0);
+					   MAX_REPLY_LEN, 0, 0, 0);
 	    if (nResCode)
 	    {
 	        if (nResCode == 226)
@@ -231,6 +237,9 @@ BOOL WINAPI FTP_FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
     }
 
 lend:
+    if (lpwfs->lstnSocket != INVALID_SOCKET)
+        close(lpwfs->lstnSocket);
+
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC  && hIC->lpfnStatusCB)
     {
         INTERNET_ASYNC_RESULT iar;
@@ -522,7 +531,7 @@ INTERNETAPI HINTERNET WINAPI FTP_FtpFindFirstFileA(HINTERNET hConnect,
     if (!FTP_SendType(lpwfs, INTERNET_FLAG_TRANSFER_ASCII))
         goto lend;
 
-    if (!FTP_SendPort(lpwfs))
+    if (!FTP_SendPortOrPasv(lpwfs))
         goto lend;
 
     hIC = (LPWININETAPPINFOA) lpwfs->hdr.lpwhparent;
@@ -538,7 +547,8 @@ INTERNETAPI HINTERNET WINAPI FTP_FtpFindFirstFileA(HINTERNET hConnect,
         {
             INT nDataSocket;
 
-            if (FTP_InitDataSocket(lpwfs, &nDataSocket))
+            /* Get data socket to server */
+            if (FTP_GetDataSocket(lpwfs, &nDataSocket))
             {
                 hFindNext = FTP_ReceiveFileList(lpwfs, nDataSocket, lpFindFileData, dwContext);
 
@@ -791,8 +801,8 @@ HINTERNET FTP_FtpOpenFileA(HINTERNET hFtpSession,
         bSuccess = FTP_SendStore(lpwfs, lpszFileName, dwFlags);
     }
 
-    /* Accept connection from server */ 
-    if (bSuccess && FTP_InitDataSocket(lpwfs, &nDataSocket)) 
+    /* Get data socket to server */ 
+    if (bSuccess && FTP_GetDataSocket(lpwfs, &nDataSocket)) 
     {
         hFile = HeapAlloc(GetProcessHeap(), 0, sizeof(WININETFILE));
         hFile->hdr.htype = WH_HFILE;
@@ -801,6 +811,9 @@ HINTERNET FTP_FtpOpenFileA(HINTERNET hFtpSession,
         hFile->hdr.lpwhparent = hFtpSession;
         hFile->nDataSocket = nDataSocket;
     }
+
+    if (lpwfs->lstnSocket != INVALID_SOCKET)
+        close(lpwfs->lstnSocket);
 
     hIC = (LPWININETAPPINFOA) lpwfs->hdr.lpwhparent;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC && hIC->lpfnStatusCB)
@@ -915,8 +928,8 @@ BOOL WINAPI FTP_FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR l
     {
         INT nDataSocket;
 
-        /* Accept connection from ftp server */
-        if (FTP_InitDataSocket(lpwfs, &nDataSocket)) 
+        /* Get data socket to server */ 
+        if (FTP_GetDataSocket(lpwfs, &nDataSocket)) 
         {
             INT nResCode;
 
@@ -936,6 +949,9 @@ BOOL WINAPI FTP_FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR l
     }
 
 lend:
+    if (lpwfs->lstnSocket != INVALID_SOCKET)
+        close(lpwfs->lstnSocket);
+
     if (hFile)
         CloseHandle(hFile);
 
@@ -1389,7 +1405,7 @@ lerror:
 
 
 /***********************************************************************
- *           FTP_ConnectHost (internal)
+ *           FTP_ConnectToHost (internal)
  *
  * Connect to a ftp server
  *
@@ -1648,7 +1664,7 @@ BOOL FTP_SendStore(LPWININETFTPSESSIONA lpwfs, LPCSTR lpszRemoteFile, DWORD dwTy
     if (!FTP_SendType(lpwfs, dwType))
         goto lend;
 
-    if (!FTP_SendPort(lpwfs))
+    if (!FTP_SendPortOrPasv(lpwfs))
         goto lend;
 
     if (!FTP_SendCommand(lpwfs->sndSocket, FTP_CMD_STOR, lpszRemoteFile, 0, 0, 0))
@@ -1739,6 +1755,9 @@ lend:
  *   TRUE on success
  *   FALSE on failure
  *
+ * W98SE doesn't cache the type that's currently set
+ * (i.e. it sends it always),
+ * so we probably don't want to do that either.
  */
 BOOL FTP_SendType(LPWININETFTPSESSIONA lpwfs, DWORD dwType)
 {
@@ -1812,8 +1831,116 @@ lend:
 
 
 /***********************************************************************
- *           FTP_InitDataSocket (internal)
+ *           FTP_DoPassive (internal)
  *
+ * Tell server that we want to do passive transfers
+ * and connect data socket
+ *
+ * RETURNS
+ *   TRUE on success
+ *   FALSE on failure
+ *
+ */
+BOOL FTP_DoPassive(LPWININETFTPSESSIONA lpwfs)
+{
+    INT nResCode;
+    BOOL bSuccess = FALSE;
+
+    TRACE("\n");
+    if (!FTP_SendCommand(lpwfs->sndSocket, FTP_CMD_PASV, NULL, 0, 0, 0))
+        goto lend;
+
+    nResCode = FTP_ReceiveResponse(lpwfs->sndSocket, INTERNET_GetResponseBuffer(),
+        MAX_REPLY_LEN,0, 0, 0);
+    if (nResCode)
+    {
+        if (nResCode == 227)
+	{
+	    LPSTR lpszResponseBuffer = INTERNET_GetResponseBuffer();
+	    LPSTR p;
+	    int f[6];
+	    int i;
+	    char *pAddr, *pPort;
+	    INT nsocket = INVALID_SOCKET;
+	    struct sockaddr_in dataSocketAddress;
+
+	    p = lpszResponseBuffer+4; /* skip status code */
+
+	    /* do a very strict check; we can improve that later. */
+
+	    if (strncmp(p, "Entering Passive Mode", 21))
+	    {
+		ERR("unknown response '%.*s', aborting\n", 21, p);
+		goto lend;
+	    }
+	    p += 21; /* skip string */
+	    if ((*p++ != ' ') || (*p++ != '('))
+	    {
+		ERR("unknown response format, aborting\n");
+		goto lend;
+	    }
+
+	    if (sscanf(p, "%d,%d,%d,%d,%d,%d",  &f[0], &f[1], &f[2], &f[3],
+				    		&f[4], &f[5]) != 6)
+	    {
+		ERR("unknown response address format '%s', aborting\n", p);
+		goto lend;
+	    }
+	    for (i=0; i < 6; i++)
+		f[i] = f[i] & 0xff;
+
+	    dataSocketAddress = lpwfs->socketAddress;
+	    pAddr = (char *)&(dataSocketAddress.sin_addr.s_addr);
+	    pPort = (char *)&(dataSocketAddress.sin_port);
+            pAddr[0] = f[0];
+            pAddr[1] = f[1];
+            pAddr[2] = f[2];
+            pAddr[3] = f[3];
+	    pPort[0] = f[4];
+	    pPort[1] = f[5];
+
+            if (INVALID_SOCKET == (nsocket = socket(AF_INET,SOCK_STREAM,0)))
+                goto lend;
+
+	    if (connect(nsocket, (struct sockaddr *)&dataSocketAddress, sizeof(dataSocketAddress)))
+            {
+	        ERR("can't connect passive FTP data port.\n");
+	        goto lend;
+            }
+	    lpwfs->pasvSocket = nsocket;
+            bSuccess = TRUE;
+	}
+        else
+            FTP_SetResponseError(nResCode);
+    }
+
+lend:
+    return bSuccess;
+}
+
+
+BOOL FTP_SendPortOrPasv(LPWININETFTPSESSIONA lpwfs)
+{
+    if (lpwfs->hdr.dwFlags & INTERNET_FLAG_PASSIVE)
+    {
+        if (!FTP_DoPassive(lpwfs))
+            return FALSE;
+    }
+    else
+    {
+	if (!FTP_SendPort(lpwfs))
+            return FALSE;
+    }
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           FTP_GetDataSocket (internal)
+ *
+ * Either accepts an incoming data socket connection from the server
+ * or just returns the already opened socket after a PASV command
+ * in case of passive FTP.
  * 
  *
  * RETURNS
@@ -1821,16 +1948,22 @@ lend:
  *   FALSE on failure
  *
  */
-BOOL FTP_InitDataSocket(LPWININETFTPSESSIONA lpwfs, LPINT nDataSocket)
+BOOL FTP_GetDataSocket(LPWININETFTPSESSIONA lpwfs, LPINT nDataSocket)
 {
     struct sockaddr_in saddr;
     size_t addrlen = sizeof(struct sockaddr);
 
     TRACE("\n");
-    *nDataSocket = accept(lpwfs->lstnSocket, (struct sockaddr *) &saddr, &addrlen);
-    close(lpwfs->lstnSocket);
-    lpwfs->lstnSocket = INVALID_SOCKET;
-
+    if (lpwfs->hdr.dwFlags & INTERNET_FLAG_PASSIVE)
+    {
+	*nDataSocket = lpwfs->pasvSocket;
+    }
+    else
+    {
+        *nDataSocket = accept(lpwfs->lstnSocket, (struct sockaddr *) &saddr, &addrlen);
+        close(lpwfs->lstnSocket);
+        lpwfs->lstnSocket = INVALID_SOCKET;
+    }
     return *nDataSocket != INVALID_SOCKET;
 }
 
@@ -1939,7 +2072,7 @@ DWORD FTP_SendRetrieve(LPWININETFTPSESSIONA lpwfs, LPCSTR lpszRemoteFile, DWORD 
     if (!FTP_SendType(lpwfs, dwType))
         goto lend;
 
-    if (!FTP_SendPort(lpwfs))
+    if (!FTP_SendPortOrPasv(lpwfs))
         goto lend;
 
     if (!FTP_SendCommand(lpwfs->sndSocket, FTP_CMD_RETR, lpszRemoteFile, 0, 0, 0))

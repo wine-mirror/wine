@@ -74,6 +74,7 @@ typedef struct
     WININETHANDLEHEADER hdr;
     int sndSocket;
     int lstnSocket;
+    int pasvSocket; /* data socket connected by us in case of passive FTP */
     struct sockaddr_in socketAddress;
     struct sockaddr_in lstnSocketAddress;
     struct hostent *phostent;
