@@ -335,7 +335,7 @@ typedef struct {
    union {
       TW_UINT32 EOJ;
       TW_UINT32 Reserved;
-   } DUMMYUNIONNAME;
+   } u;
 } TW_PENDINGXFERS, FAR *pTW_PENDINGXFERS;
 
 /* DAT_RGBRESPONSE */

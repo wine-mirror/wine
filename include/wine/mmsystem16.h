@@ -330,11 +330,11 @@ typedef struct {
 	struct {
 	    LONG	lMinimum;	/* signed minimum for this control */
 	    LONG	lMaximum;	/* signed maximum for this control */
-	} DUMMYSTRUCTNAME;
+	} s;
 	struct {
 	    DWORD	dwMinimum;	/* unsigned minimum for this control */
 	    DWORD	dwMaximum;	/* unsigned maximum for this control */
-	} DUMMYSTRUCTNAME1;
+	} s1;
 	DWORD       	dwReserved[6];
     } Bounds;
     union {
@@ -350,7 +350,7 @@ typedef struct {
     union {
 	DWORD	dwControlID;	/* MIXER_GETLINECONTROLSF_ONEBYID */
 	DWORD	dwControlType;	/* MIXER_GETLINECONTROLSF_ONEBYTYPE */
-    } DUMMYUNIONNAME;
+    } u;
     DWORD	cControls;	/* count of controls pmxctrl points to */
     DWORD	cbmxctrl;	/* size in bytes of _one_ MIXERCONTROL */
     SEGPTR	pamxctrl;	/* pointer to first MIXERCONTROL array */
@@ -363,7 +363,7 @@ typedef struct {
     union {
         HWND16	hwndOwner;	/* for MIXER_SETCONTROLDETAILSF_CUSTOM */
         DWORD	cMultipleItems;	/* if _MULTIPLE, the number of items per channel */
-    } DUMMYUNIONNAME;
+    } u;
     DWORD	cbDetails;	/* size of _one_ details_XX struct */
     LPVOID	paDetails;	/* pointer to array of details_XX structs */
 } MIXERCONTROLDETAILS16,*LPMIXERCONTROLDETAILS16;

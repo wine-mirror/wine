@@ -304,9 +304,9 @@ typedef struct Direct3DVertexStridedData {
              Direct3DStridedData  diffuse;
              Direct3DStridedData  specular;
              Direct3DStridedData  texCoords[8];
-        } DUMMYSTRUCTNAME;
+        } s;
         Direct3DStridedData input[16];  /* Indexed by constants in D3DVSDE_REGISTER */
-    } DUMMYUNIONNAME;
+    } u;
 } Direct3DVertexStridedData;
 
 #define USE_GL_FUNC(type, pfn) type pfn;
