@@ -1023,7 +1023,7 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
    LPSUBCLASS_INFO stack;
    int newnum, n;
 
-   TRACE ("(%x, %p, %x, %x)\n", hWnd, pfnSubclass, uIDSubclass, dwRef);
+   TRACE ("(%x, %p, %x, %lx)\n", hWnd, pfnSubclass, uIDSubclass, dwRef);
 
    /* Since the window procedure that we set here has two additional arguments,
     * we can't simply set it as the new window procedure of the window. So we
@@ -1049,6 +1049,17 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
       else
          stack->origproc = (WNDPROC)SetWindowLongA (hWnd, GWL_WNDPROC,
                                                    (LONG)DefSubclassProc);
+   } else {
+      WNDPROC current;
+      if (IsWindowUnicode (hWnd))
+         current = (WNDPROC)GetWindowLongW (hWnd, GWL_WNDPROC);
+      else
+         current = (WNDPROC)GetWindowLongA (hWnd, GWL_WNDPROC);
+
+      if (current != DefSubclassProc) {
+         ERR ("Application has subclassed with our procedure, then manually, then with us again.  The current implementation can't handle this.\n");
+         return FALSE;
+      }
    }
 
    /* Check to see if we have called this function with the same uIDSubClass
