@@ -17,7 +17,7 @@
  *   LISTVIEW_Notify : most notifications from children (editbox and header)
  *
  * Data structure:
- *   LISTVIEW_SetItemCount : not completed
+ *   LISTVIEW_SetItemCount : not completed for non OWNERDATA
  * 
  * Unicode:
  *   LISTVIEW_SetItemW : no unicode support
@@ -37,7 +37,6 @@
  *   LISTVIEW_Arrange : empty stub
  *   LISTVIEW_ApproximateViewRect : incomplete
  *   LISTVIEW_Scroll : not implemented 
- *   LISTVIEW_RedrawItems : empty stub
  *   LISTVIEW_Update : not completed
  */
 
@@ -6623,7 +6622,7 @@ static LRESULT LISTVIEW_RedrawItems(HWND hwnd, INT nFirst, INT nLast)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0); 
   BOOL bResult = FALSE;
-  RECT rc;
+  RECT rcItem;
 
   if (nFirst <= nLast)
   {
@@ -6631,8 +6630,13 @@ static LRESULT LISTVIEW_RedrawItems(HWND hwnd, INT nFirst, INT nLast)
     {
       if ((nLast >= 0) && (nLast < GETITEMCOUNT(infoPtr)))
       {
-        /* bResult = */
-        InvalidateRect(hwnd, &rc, FALSE);
+          INT i;
+          for (i = nFirst; i <= nLast; i++)
+          {
+ 	          rcItem.left = LVIR_BOUNDS;
+	          LISTVIEW_GetItemRect(hwnd, i, &rcItem);
+	          InvalidateRect(hwnd, &rcItem, TRUE);
+          }
       }
     }
   }
@@ -7131,8 +7135,6 @@ static LRESULT LISTVIEW_SetItemA(HWND hwnd, LPLVITEMA lpLVItem)
 static BOOL LISTVIEW_SetItemCount(HWND hwnd, INT nItems, DWORD dwFlags)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO*)GetWindowLongA(hwnd, 0);
-
-  FIXME("(%d %08lx)stub!\n", nItems, dwFlags);
 
   if (GetWindowLongA(hwnd, GWL_STYLE) & LVS_OWNERDATA)
   {
