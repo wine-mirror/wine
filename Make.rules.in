@@ -305,7 +305,7 @@ $(TESTLIST): Makefile.in
 	$(TOPSRCDIR)/programs/winetest/make_ctests $(CTESTS) >$(TESTLIST) || $(RM) $(TESTLIST)
 
 $(TESTPROGRAM).so: $(TESTPROGRAM).spec.o $(TESTOBJS)
-	$(LDSHARED) $(LDDLLFLAGS) $(TESTPROGRAM).spec.o $(TESTOBJS) -o $@ $(LIBWINE) $(LIBS)
+	$(LDSHARED) @LDDLLFLAGS@ $(TESTPROGRAM).spec.o $(TESTOBJS) -o $@ $(LIBWINE) $(LIBS)
 
 $(TESTPROGRAM).tmp.o: $(TESTOBJS)
 	$(LDCOMBINE) $(TESTOBJS) -o $@
