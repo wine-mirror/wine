@@ -44,6 +44,7 @@ SUBDIRS = \
 	msnet32 \
 	msrle32 \
 	msvcrt \
+	msvcrt20 \
 	msvideo \
 	netapi32 \
 	ntdll \
@@ -149,6 +150,7 @@ all: \
 	libmsnet32.$(LIBEXT) \
 	libmsrle32.$(LIBEXT) \
 	libmsvcrt.$(LIBEXT) \
+	libmsvcrt20.$(LIBEXT) \
 	libmsvfw32.$(LIBEXT) \
 	libmsvideo.$(LIBEXT) \
 	libnetapi32.$(LIBEXT) \
@@ -339,6 +341,9 @@ libmsrle32.$(LIBEXT): msrle32/libmsrle32.$(LIBEXT)
 
 libmsvcrt.$(LIBEXT): msvcrt/libmsvcrt.$(LIBEXT)
 	$(RM) $@ && $(LN_S) msvcrt/libmsvcrt.$(LIBEXT) $@
+
+libmsvcrt20.$(LIBEXT): msvcrt20/libmsvcrt20.$(LIBEXT)
+	$(RM) $@ && $(LN_S) msvcrt20/libmsvcrt20.$(LIBEXT) $@
 
 libmsvfw32.$(LIBEXT) libmsvideo.$(LIBEXT): msvideo/libmsvfw32.$(LIBEXT)
 	$(RM) $@ && $(LN_S) msvideo/libmsvfw32.$(LIBEXT) $@
@@ -577,6 +582,9 @@ msrle32/libmsrle32.$(LIBEXT): dummy libwinmm.$(LIBEXT) libuser32.$(LIBEXT) \
 
 msvcrt/libmsvcrt.$(LIBEXT): dummy libkernel32.$(LIBEXT) libntdll.$(LIBEXT)
 	@cd msvcrt && $(MAKE) libmsvcrt.$(LIBEXT)
+
+msvcrt20/libmsvcrt20.$(LIBEXT): dummy libmsvcrt.$(LIBEXT) libntdll.$(LIBEXT)
+	@cd msvcrt20 && $(MAKE) libmsvcrt20.$(LIBEXT)
 
 msvideo/libmsvfw32.$(LIBEXT): dummy libwinmm.$(LIBEXT) libcomctl32.$(LIBEXT) \
   libversion.$(LIBEXT) libuser32.$(LIBEXT) libgdi32.$(LIBEXT) libkernel32.$(LIBEXT) \

@@ -1267,6 +1267,7 @@ dlls/msimg32/Makefile
 dlls/msnet32/Makefile
 dlls/msrle32/Makefile
 dlls/msvcrt/Makefile
+dlls/msvcrt20/Makefile
 dlls/msvideo/Makefile
 dlls/netapi32/Makefile
 dlls/ntdll/Makefile
