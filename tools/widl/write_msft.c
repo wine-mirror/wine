@@ -974,12 +974,13 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
     int offset;
     int *typedata;
     int i, index = func->idx, id;
-    int decoded_size;
+    int decoded_size, extra_attr = 0;
     int num_params = 0, num_defaults = 0;
     var_t *arg, *last_arg = NULL;
     char *namedata;
     attr_t *attr;
     unsigned int funcflags = 0, callconv = 4;
+    int help_context = 0, help_string_context = 0, help_string_offset = -1;
 
     id = ((0x6000 | typeinfo->typeinfo->cImplTypes) << 16) | index;
 
@@ -1004,13 +1005,23 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
     chat("num of params %d\n", num_params);
 
     for(attr = func->def->attrs; attr; attr = NEXT_LINK(attr)) {
+        expr_t *expr = attr->u.pval; 
         switch(attr->type) {
         case ATTR_ID:
-          {
-            expr_t *expr = attr->u.pval; 
             id = expr->u.lval;
             break;
-          }
+        case ATTR_HELPCONTEXT:
+            extra_attr = 1;
+            help_context = expr->u.lval;
+            break;
+        case ATTR_HELPSTRING:
+            extra_attr = 2;
+            help_string_offset = ctl2_alloc_string(typeinfo->typelib, attr->u.pval);
+            break;
+        case ATTR_HELPSTRINGCONTEXT:
+            extra_attr = 6;
+            help_string_context = expr->u.lval;
+            break;
         case ATTR_OUT:
             break;
 
@@ -1021,11 +1032,11 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
     }
     /* allocate type data space for us */
     offset = typeinfo->typedata[0];
-    typeinfo->typedata[0] += 0x18 + (num_params * (num_defaults ? 16 : 12));
+    typeinfo->typedata[0] += 0x18 + extra_attr * sizeof(int) + (num_params * (num_defaults ? 16 : 12));
     typedata = typeinfo->typedata + (offset >> 2) + 1;
 
     /* fill out the basic type information */
-    typedata[0] = (0x18 + (num_params * (num_defaults ? 16 : 12))) | (index << 16);
+    typedata[0] = (0x18 + extra_attr * sizeof(int) + (num_params * (num_defaults ? 16 : 12))) | (index << 16);
     ctl2_encode_type(typeinfo->typelib, func->def->type, func->def->ptr_level, func->def->array, &typedata[1], NULL, NULL, &decoded_size);
     typedata[2] = funcflags;
     typedata[3] = ((52 /*sizeof(FUNCDESC)*/ + decoded_size) << 16) | typeinfo->typeinfo->cbSizeVft;
@@ -1038,11 +1049,24 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
     typedata[3] += (16 /*sizeof(ELEMDESC)*/ * num_params) << 16;
     typedata[3] += (24 /*sizeof(PARAMDESCEX)*/ * num_defaults) << 16;
 
+    switch(extra_attr) {
+    case 6: typedata[11] = help_string_context;
+    case 5: typedata[10] = -1;
+    case 4: typedata[9] = -1;
+    case 3: typedata[8] = -1;
+    case 2: typedata[7] = help_string_offset;
+    case 1: typedata[6] = help_context;
+    case 0:
+        break;
+    default:
+        warning("unknown number of optional attrs\n");
+    }
+
     for (arg = last_arg, i = 0; arg; arg = PREV_LINK(arg), i++) {
         attr_t *attr;
         int paramflags = 0;
-        int *paramdata = typedata + 6 + (num_defaults ? num_params : 0) + i * 3;
-        int *defaultdata = num_defaults ? typedata + 6 + i : NULL;
+        int *paramdata = typedata + 6 + extra_attr + (num_defaults ? num_params : 0) + i * 3;
+        int *defaultdata = num_defaults ? typedata + 6 + extra_attr + i : NULL;
 
         if(defaultdata) *defaultdata = -1;
 
@@ -1122,7 +1146,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func)
     for (arg = last_arg, i = 0; arg; arg = PREV_LINK(arg), i++) {
 	/* FIXME: Almost certainly easy to break */
 	int *paramdata = &typeinfo->typedata[typeinfo->offsets[index] >> 2];
-        paramdata += 7 + (num_defaults ? num_params : 0) + i * 3;
+        paramdata += 7 + extra_attr + (num_defaults ? num_params : 0) + i * 3;
 	offset = ctl2_alloc_name(typeinfo->typelib, arg->name);
 	paramdata[1] = offset;
         chat("param %d name %s offset %d\n", i, arg->name, offset);
@@ -1356,6 +1380,25 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, typelib_en
 
     for( ; attr; attr = NEXT_LINK(attr)) {
         switch(attr->type) {
+        case ATTR_HELPCONTEXT:
+          {
+            expr_t *expr = (expr_t*)attr->u.pval;
+            typeinfo->helpcontext = expr->cval;
+            break;
+          }
+        case ATTR_HELPSTRING:
+          {
+            int offset = ctl2_alloc_string(typelib, attr->u.pval);
+            if (offset == -1) break;
+            typeinfo->docstringoffs = offset;
+            break;
+          }
+        case ATTR_HELPSTRINGCONTEXT:
+          {
+            expr_t *expr = (expr_t*)attr->u.pval;
+            typeinfo->helpstringcontext = expr->cval;
+            break;
+          }
         case ATTR_HIDDEN:
             typeinfo->flags |= 0x10; /* TYPEFLAG_FHIDDEN */
             break;

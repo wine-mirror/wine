@@ -47,16 +47,20 @@
  *
  */
 typedef struct tagMSFT_Header {
-/*0x00*/INT magic1;       /* 0x5446534D "MSFT" */
+/*0x00*/INT   magic1;       /* 0x5446534D "MSFT" */
         INT   magic2;       /* 0x00010002 version nr? */
         INT   posguid;      /* position of libid in guid table  */
                             /* (should be,  else -1) */
         INT   lcid;         /* locale id */
 /*0x10*/INT   lcid2;
-        INT   varflags;     /* (largely) unknown flags ,seems to be always 41 */
-                            /* becomes 0x51 with a helpfile defined */
-                            /* if help dll defined it's 0x151 */
-                            /* update : the lower nibble is syskind */
+        INT   varflags;     /* (largely) unknown flags */
+                            /* the lower nibble is syskind */
+                            /* 0x40 always seems to be set */
+                            /* 0x10 set with a helpfile defined */
+                            /* 0x100 set with a helpstringdll defined - in this
+                                  case the offset to the name in the stringtable
+                                  appears right after this struct, before the
+                                  typeinfo offsets */
         INT   version;      /* set with SetVersion() */
         INT   flags;        /* set with SetFlags() */
 /*0x20*/INT   nrtypeinfos;  /* number of typeinfo's (till so far) */
