@@ -574,6 +574,7 @@ static void test_CopyFileA(void)
     ok(GetFileTime(hfile, NULL, NULL, &ft1), "GetFileTime error %ld\n", GetLastError());
     ft1.dwLowDateTime -= 600000000; /* 60 second */
     ok(SetFileTime(hfile, NULL, NULL, &ft1), "SetFileTime error %ld\n", GetLastError());
+    GetFileTime(hfile, NULL, NULL, &ft1);  /* get the actual time back */
     CloseHandle(hfile);
 
     ret = GetTempFileNameA(temp_path, prefix, 0, dest);
