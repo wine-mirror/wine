@@ -56,6 +56,7 @@ extern const char * const debug_ch_name[];
 #define TRACE_(ch)   __DPRINTF(__DBCL_TRACE,dbch_##ch)
 #define TRACE_ON(ch) __GET_DEBUGGING(__DBCL_TRACE,dbch_##ch)
 #else
+#define TRACE        __DUMMY_DPRINTF
 #define TRACE_(ch)   __DUMMY_DPRINTF
 #define TRACE_ON(ch) 0
 #endif /* NO_TRACE_MSGS */
