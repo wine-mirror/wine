@@ -258,10 +258,44 @@ WND *X11DRV_WND_SetParent(WND *wndPtr, WND *pWndParent)
 	    WIN_UnlinkWindow(wndPtr->hwndSelf);
 	    wndPtr->parent = pWndParent;
 
-	    /* FIXME: Create an X counterpart for reparented top-level windows
+            /* Create an X counterpart for reparented top-level windows
 	     * when not in the desktop mode. */
-     
-	    if ( pWndParent != WIN_GetDesktop() ) wndPtr->dwStyle |= WS_CHILD;
+
+            if( pWndParent == WIN_GetDesktop () )
+            {
+                wndPtr->dwStyle &= ~WS_CHILD;
+                wndPtr->wIDmenu = 0;
+                if( rootWindow == DefaultRootWindow(display) )
+                {
+                    CREATESTRUCT32A cs;
+                    cs.lpCreateParams = NULL;
+                    cs.hInstance = 0; /* not used if following call */
+                    cs.hMenu = 0; /* not used in following call */
+                    cs.hwndParent = pWndParent->hwndSelf;
+                    cs.cy = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
+                    cs.cx = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
+                    cs.y = wndPtr->rectWindow.top;
+                    cs.x = wndPtr->rectWindow.left;
+                    cs.style = wndPtr->dwStyle;
+                    cs.lpszName = 0; /* not used in following call */
+                    cs.lpszClass = 0; /*not used in following call */
+                    cs.dwExStyle = wndPtr->dwExStyle;
+                    X11DRV_WND_CreateWindow(wndPtr, wndPtr->class,
+                                            &cs, FALSE);
+                }
+            }
+            else /* a child window */
+            {
+                if( !( wndPtr->dwStyle & WS_CHILD ) )
+                {
+                    wndPtr->dwStyle |= WS_CHILD;
+                    if( wndPtr->wIDmenu != 0)
+                    {
+                        DestroyMenu32( (HMENU32) wndPtr->wIDmenu );
+                        wndPtr->wIDmenu = 0;
+                    }
+                }
+            }
 	    WIN_LinkWindow(wndPtr->hwndSelf, HWND_TOP);
 
 	    if( bFixupDCE )
