@@ -331,7 +331,7 @@
 331 stub @
 332 forward @ user32.CallMsgFilterW
 333 stdcall @(ptr) SHLWAPI_333
-334 stdcall @(ptr wstr) SHLWAPI_334
+334 stdcall @(ptr ptr) SHLWAPI_334
 335 stdcall @(ptr) SHLWAPI_335
 336 stdcall @(ptr) SHLWAPI_336
 337 stdcall @(wstr long ptr ptr long) SHLWAPI_337
