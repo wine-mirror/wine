@@ -34,8 +34,16 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_caps);
 /**********************************************************
  * IWineD3DDevice implementation follows
  **********************************************************/
+HRESULT WINAPI IWineD3DDeviceImpl_GetParent(IWineD3DDevice *iface, IUnknown **pParent) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    *pParent = This->parent;
+    IUnknown_AddRef(This->parent);
+    return D3D_OK;
+}
+
 HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT Size, DWORD Usage, 
-                             DWORD FVF, D3DPOOL Pool, IWineD3DVertexBuffer** ppVertexBuffer, HANDLE *sharedHandle) {
+                             DWORD FVF, D3DPOOL Pool, IWineD3DVertexBuffer** ppVertexBuffer, HANDLE *sharedHandle,
+                             IUnknown *parent) {
 
     IWineD3DVertexBufferImpl *object;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -44,6 +52,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DVertexBufferImpl));
     object->lpVtbl                = &IWineD3DVertexBuffer_Vtbl;
     object->resource.wineD3DDevice= iface;
+    IWineD3DDevice_AddRef(iface);
+    object->resource.parent       = parent;
     object->resource.resourceType = D3DRTYPE_VERTEXBUFFER;
     object->resource.ref          = 1;
     object->allocatedMemory       = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Size);
@@ -58,7 +68,7 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *iface, UINT
     return D3D_OK;
 }
 
-HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTATEBLOCKTYPE Type, IWineD3DStateBlock** ppStateBlock) {
+HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTATEBLOCKTYPE Type, IWineD3DStateBlock** ppStateBlock, IUnknown *parent) {
   
     IWineD3DDeviceImpl     *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object;
@@ -67,6 +77,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface, D3DSTA
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DStateBlockImpl));
     object->lpVtbl        = &IWineD3DStateBlock_Vtbl;
     object->wineD3DDevice = iface;
+    IWineD3DDevice_AddRef(iface);
+    object->parent        = parent;
     object->ref           = 1;
     object->blockType     = Type;
     *ppStateBlock         = (IWineD3DStateBlock *)object;
@@ -109,6 +121,46 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetFVF(IWineD3DDevice *iface, DWORD *pfvf) {
     return D3D_OK;
 }
 
+/*****
+ * Get / Set Stream Source
+ *****/
+HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, UINT StreamNumber,IWineD3DVertexBuffer* pStreamData, UINT OffsetInBytes, UINT Stride) {
+    IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DVertexBuffer     *oldSrc;
+
+    oldSrc = This->stateBlock->stream_source[StreamNumber];
+    TRACE("(%p) : StreamNo: %d, OldStream (%p), NewStream (%p), NewStride %d\n", This, StreamNumber, oldSrc, pStreamData, Stride);
+
+    This->updateStateBlock->changed.stream_source[StreamNumber] = TRUE;
+    This->updateStateBlock->set.stream_source[StreamNumber]     = TRUE;
+    This->updateStateBlock->stream_stride[StreamNumber]         = Stride;
+    This->updateStateBlock->stream_source[StreamNumber]         = pStreamData;
+    This->updateStateBlock->stream_offset[StreamNumber]         = OffsetInBytes;
+
+    /* Handle recording of state blocks */
+    if (This->isRecordingState) {
+        TRACE("Recording... not performing anything\n");
+        return D3D_OK;
+    }
+
+    /* Not recording... */
+    if (oldSrc != NULL) IWineD3DVertexBuffer_Release(oldSrc);
+    if (pStreamData != NULL) IWineD3DVertexBuffer_AddRef(pStreamData);
+
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, UINT StreamNumber,IWineD3DVertexBuffer** pStream, UINT *pOffset, UINT* pStride) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    TRACE("(%p) : StreamNo: %d, Stream (%p), Stride %d\n", This, StreamNumber, This->stateBlock->stream_source[StreamNumber], This->stateBlock->stream_stride[StreamNumber]);
+    *pStream = This->stateBlock->stream_source[StreamNumber];
+    *pStride = This->stateBlock->stream_stride[StreamNumber];
+    *pOffset = This->stateBlock->stream_offset[StreamNumber];
+    IWineD3DVertexBuffer_AddRef(*pStream); /* We have created a new reference to the VB */
+    return D3D_OK;
+}
+
 /**********************************************************
  * IUnknown parts follows
  **********************************************************/
@@ -130,6 +182,7 @@ ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
+        IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->stateBlock);
         IWineD3D_Release(This->WineD3D);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -145,8 +198,11 @@ IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_QueryInterface,
     IWineD3DDeviceImpl_AddRef,
     IWineD3DDeviceImpl_Release,
+    IWineD3DDeviceImpl_GetParent,
     IWineD3DDeviceImpl_CreateVertexBuffer,
     IWineD3DDeviceImpl_CreateStateBlock,
     IWineD3DDeviceImpl_SetFVF,
-    IWineD3DDeviceImpl_GetFVF
+    IWineD3DDeviceImpl_GetFVF,
+    IWineD3DDeviceImpl_SetStreamSource,
+    IWineD3DDeviceImpl_GetStreamSource
 };

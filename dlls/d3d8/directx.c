@@ -583,7 +583,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     localParameters.Flags                          = &pPresentationParameters->Flags;                      
     localParameters.FullScreen_RefreshRateInHz     = &pPresentationParameters->FullScreen_RefreshRateInHz; 
     localParameters.PresentationInterval           = &pPresentationParameters->FullScreen_PresentationInterval;    /* Renamed in dx9 */
-    IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice);
+    IWineD3D_CreateDevice(This->WineD3D, Adapter, DeviceType, hFocusWindow, BehaviourFlags, &localParameters, &object->WineD3DDevice, (IUnknown *)object);
 
     /** use StateBlock Factory here, for creating the startup stateBlock */
     object->StateBlock = NULL;

@@ -45,6 +45,7 @@ ULONG WINAPI IWineD3DResourceImpl_Release(IWineD3DResource *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
+        IWineD3DDevice_Release(This->resource.wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -97,11 +98,20 @@ D3DRESOURCETYPE WINAPI IWineD3DResourceImpl_GetType(IWineD3DResource *iface) {
     return This->resource.resourceType;
 }
 
+HRESULT WINAPI IWineD3DResourceImpl_GetParent(IWineD3DResource *iface, IUnknown **pParent) {
+    IWineD3DResourceImpl *This = (IWineD3DResourceImpl *)iface;
+    IUnknown_AddRef(This->resource.parent);
+    *pParent = This->resource.parent;
+    return D3D_OK;
+}
+
+
 IWineD3DResourceVtbl IWineD3DResource_Vtbl =
 {
     IWineD3DResourceImpl_QueryInterface,
     IWineD3DResourceImpl_AddRef,
     IWineD3DResourceImpl_Release,
+    IWineD3DResourceImpl_GetParent,
     IWineD3DResourceImpl_GetDevice,
     IWineD3DResourceImpl_SetPrivateData,
     IWineD3DResourceImpl_GetPrivateData,

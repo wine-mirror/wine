@@ -88,6 +88,7 @@ DECLARE_INTERFACE_(IWineD3D,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3D methods ***/
+    STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
     STDMETHOD_(UINT,GetAdapterCount)(THIS) PURE;
     STDMETHOD(RegisterSoftwareDevice)(THIS_ void * pInitializeFunction) PURE;
     STDMETHOD_(HMONITOR,GetAdapterMonitor)(THIS_ UINT Adapter) PURE;
@@ -101,7 +102,7 @@ DECLARE_INTERFACE_(IWineD3D,IUnknown)
     STDMETHOD(CheckDeviceFormat)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, D3DFORMAT  AdapterFormat, DWORD  Usage, D3DRESOURCETYPE  RType, D3DFORMAT  CheckFormat) PURE;
     STDMETHOD(CheckDeviceFormatConversion)(THIS_ UINT Adapter, D3DDEVTYPE DeviceType, D3DFORMAT SourceFormat, D3DFORMAT TargetFormat) PURE;
     STDMETHOD(GetDeviceCaps)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType, void * pCaps) PURE;
-    STDMETHOD(CreateDevice)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, WINED3DPRESENT_PARAMETERS * pPresentationParameters, IWineD3DDevice ** ppReturnedDeviceInterface) PURE;
+    STDMETHOD(CreateDevice)(THIS_ UINT  Adapter, D3DDEVTYPE  DeviceType,HWND  hFocusWindow, DWORD  BehaviorFlags, WINED3DPRESENT_PARAMETERS * pPresentationParameters, IWineD3DDevice ** ppReturnedDeviceInterface, IUnknown *parent) PURE;
 };
 #undef INTERFACE
 
@@ -111,6 +112,7 @@ DECLARE_INTERFACE_(IWineD3D,IUnknown)
 #define IWineD3D_AddRef(p)                                (p)->lpVtbl->AddRef(p)
 #define IWineD3D_Release(p)                               (p)->lpVtbl->Release(p)
 /*** IWineD3D methods ***/
+#define IWineD3D_GetParent(p,a)                           (p)->lpVtbl->GetParent(p,a)
 #define IWineD3D_GetAdapterCount(p)                       (p)->lpVtbl->GetAdapterCount(p)
 #define IWineD3D_RegisterSoftwareDevice(p,a)              (p)->lpVtbl->RegisterSoftwareDevice(p,a)
 #define IWineD3D_GetAdapterMonitor(p,a)                   (p)->lpVtbl->GetAdapterMonitor(p,a)
@@ -124,11 +126,11 @@ DECLARE_INTERFACE_(IWineD3D,IUnknown)
 #define IWineD3D_CheckDeviceFormat(p,a,b,c,d,e,f)         (p)->lpVtbl->CheckDeviceFormat(p,a,b,c,d,e,f)
 #define IWineD3D_CheckDeviceFormatConversion(p,a,b,c,d)   (p)->lpVtbl->CheckDeviceFormatConversion(p,a,b,c,d)
 #define IWineD3D_GetDeviceCaps(p,a,b,c)                   (p)->lpVtbl->GetDeviceCaps(p,a,b,c)
-#define IWineD3D_CreateDevice(p,a,b,c,d,e,f)              (p)->lpVtbl->CreateDevice(p,a,b,c,d,e,f)
+#define IWineD3D_CreateDevice(p,a,b,c,d,e,f,g)            (p)->lpVtbl->CreateDevice(p,a,b,c,d,e,f,g)
 #endif
 
 /* Define the main WineD3D entrypoint */
-IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion);
+IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *parent);
 
 /*****************************************************************************
  * WineD3DDevice interface 
@@ -141,10 +143,13 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3D methods ***/
-    STDMETHOD(CreateVertexBuffer)(THIS_ UINT  Length,DWORD  Usage,DWORD  FVF,D3DPOOL  Pool,IWineD3DVertexBuffer **ppVertexBuffer, HANDLE *sharedHandle) PURE;
-    STDMETHOD(CreateStateBlock)(THIS_ D3DSTATEBLOCKTYPE Type, IWineD3DStateBlock **ppStateBlock) PURE;
+    STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
+    STDMETHOD(CreateVertexBuffer)(THIS_ UINT  Length,DWORD  Usage,DWORD  FVF,D3DPOOL  Pool,IWineD3DVertexBuffer **ppVertexBuffer, HANDLE *sharedHandle, IUnknown *parent) PURE;
+    STDMETHOD(CreateStateBlock)(THIS_ D3DSTATEBLOCKTYPE Type, IWineD3DStateBlock **ppStateBlock, IUnknown *parent) PURE;
     STDMETHOD(SetFVF)(THIS_ DWORD  fvf) PURE;
     STDMETHOD(GetFVF)(THIS_ DWORD * pfvf) PURE;
+    STDMETHOD(SetStreamSource)(THIS_ UINT  StreamNumber,IWineD3DVertexBuffer * pStreamData,UINT Offset,UINT  Stride) PURE;
+    STDMETHOD(GetStreamSource)(THIS_ UINT  StreamNumber,IWineD3DVertexBuffer ** ppStreamData,UINT *pOffset, UINT * pStride) PURE;
 };
 #undef INTERFACE
 
@@ -154,10 +159,13 @@ DECLARE_INTERFACE_(IWineD3DDevice,IUnknown)
 #define IWineD3DDevice_AddRef(p)                                (p)->lpVtbl->AddRef(p)
 #define IWineD3DDevice_Release(p)                               (p)->lpVtbl->Release(p)
 /*** IWineD3DDevice methods ***/
-#define IWineD3DDevice_CreateVertexBuffer(p,a,b,c,d,e,f)        (p)->lpVtbl->CreateVertexBuffer(p,a,b,c,d,e,f)
-#define IWineD3DDevice_CreateStateBlock(p,a,b)                  (p)->lpVtbl->CreateStateBlock(p,a,b)
+#define IWineD3DDevice_GetParent(p,a)                           (p)->lpVtbl->GetParent(p,a)
+#define IWineD3DDevice_CreateVertexBuffer(p,a,b,c,d,e,f,g)      (p)->lpVtbl->CreateVertexBuffer(p,a,b,c,d,e,f,g)
+#define IWineD3DDevice_CreateStateBlock(p,a,b,c)                (p)->lpVtbl->CreateStateBlock(p,a,b,c)
 #define IWineD3DDevice_SetFVF(p,a)                              (p)->lpVtbl->SetFVF(p,a)
 #define IWineD3DDevice_GetFVF(p,a)                              (p)->lpVtbl->GetFVF(p,a)
+#define IWineD3DDevice_SetStreamSource(p,a,b,c,d)               (p)->lpVtbl->SetStreamSource(p,a,b,c,d)
+#define IWineD3DDevice_GetStreamSource(p,a,b,c,d)               (p)->lpVtbl->GetStreamSource(p,a,b,c,d)
 #endif
 
 /*****************************************************************************
@@ -171,6 +179,7 @@ DECLARE_INTERFACE_(IWineD3DResource,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3DResource methods ***/
+    STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
     STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
@@ -188,6 +197,7 @@ DECLARE_INTERFACE_(IWineD3DResource,IUnknown)
 #define IWineD3DResource_AddRef(p)                    (p)->lpVtbl->AddRef(p)
 #define IWineD3DResource_Release(p)                   (p)->lpVtbl->Release(p)
 /*** IWineD3DResource methods ***/
+#define IWineD3DResource_GetParent(p,a)               (p)->lpVtbl->GetParent(p,a)
 #define IWineD3DResource_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DResource_SetPrivateData(p,a,b,c,d)    (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
 #define IWineD3DResource_GetPrivateData(p,a,b,c)      (p)->lpVtbl->GetPrivateData(p,a,b,c)
@@ -209,6 +219,7 @@ DECLARE_INTERFACE_(IWineD3DVertexBuffer,IDirect3DResource8)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3DResource methods ***/
+    STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice ** ppDevice) PURE;
     STDMETHOD(SetPrivateData)(THIS_ REFGUID  refguid, CONST void * pData, DWORD  SizeOfData, DWORD  Flags) PURE;
     STDMETHOD(GetPrivateData)(THIS_ REFGUID  refguid, void * pData, DWORD * pSizeOfData) PURE;
@@ -230,6 +241,7 @@ DECLARE_INTERFACE_(IWineD3DVertexBuffer,IDirect3DResource8)
 #define IWineD3DVertexBuffer_AddRef(p)                    (p)->lpVtbl->AddRef(p)
 #define IWineD3DVertexBuffer_Release(p)                   (p)->lpVtbl->Release(p)
 /*** IWineD3DResource methods ***/
+#define IWineD3DVertexBuffer_GetParent(p,a)               (p)->lpVtbl->GetParent(p,a)
 #define IWineD3DVertexBuffer_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DVertexBuffer_SetPrivateData(p,a,b,c,d)    (p)->lpVtbl->SetPrivateData(p,a,b,c,d)
 #define IWineD3DVertexBuffer_GetPrivateData(p,a,b,c)      (p)->lpVtbl->GetPrivateData(p,a,b,c)
@@ -255,6 +267,7 @@ DECLARE_INTERFACE_(IWineD3DStateBlock,IUnknown)
     STDMETHOD_(ULONG,AddRef)(THIS) PURE;
     STDMETHOD_(ULONG,Release)(THIS) PURE;
     /*** IWineD3DStateBlock methods ***/
+    STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
     STDMETHOD(InitStartupStateBlock)(THIS) PURE;
 };
 #undef INTERFACE
@@ -265,6 +278,7 @@ DECLARE_INTERFACE_(IWineD3DStateBlock,IUnknown)
 #define IWineD3DStateBlock_AddRef(p)                            (p)->lpVtbl->AddRef(p)
 #define IWineD3DStateBlock_Release(p)                           (p)->lpVtbl->Release(p)
 /*** IWineD3DStateBlock methods ***/
+#define IWineD3DStateBlock_GetParent(p,a)                       (p)->lpVtbl->GetParent(p,a)
 #define IWineD3DStateBlock_InitStartupStateBlock(p)             (p)->lpVtbl->InitStartupStateBlock(p)
 #endif
 

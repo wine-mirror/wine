@@ -606,35 +606,20 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetFVF(LPDIRECT3DDEVICE9 iface, DWORD* pFV
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetStreamSource(LPDIRECT3DDEVICE9 iface, UINT StreamNumber, IDirect3DVertexBuffer9* pStreamData, UINT OffsetInBytes, UINT Stride) {
-    IDirect3DVertexBuffer9 *oldSrc;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-
-    oldSrc = This->StateBlock->stream_source[StreamNumber];
-    TRACE("(%p) : StreamNo: %d, OldStream (%p), NewStream (%p), NewStride %d\n", This, StreamNumber, oldSrc, pStreamData, Stride);
-
-    This->UpdateStateBlock->Changed.stream_source[StreamNumber] = TRUE;
-    This->UpdateStateBlock->Set.stream_source[StreamNumber] = TRUE;
-    This->UpdateStateBlock->stream_stride[StreamNumber] = Stride;
-    This->UpdateStateBlock->stream_source[StreamNumber] = pStreamData;
-
-    /* Handle recording of state blocks */
-    if (This->isRecordingState) {
-        TRACE("Recording... not performing anything\n");
-        return D3D_OK;
-    }
-
-    if (oldSrc != NULL) IDirect3DVertexBuffer9Impl_Release(oldSrc);
-    if (pStreamData != NULL) IDirect3DVertexBuffer9Impl_AddRef(pStreamData);
-    return D3D_OK;
+    return IWineD3DDevice_SetStreamSource(This->WineD3DDevice, StreamNumber, 
+                                          pStreamData==NULL ? NULL:((IDirect3DVertexBuffer9Impl *)pStreamData)->wineD3DVertexBuffer, 
+                                          OffsetInBytes, Stride);
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_GetStreamSource(LPDIRECT3DDEVICE9 iface, UINT StreamNumber, IDirect3DVertexBuffer9** pStream, UINT* OffsetInBytes, UINT* pStride) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    TRACE("(%p) : StreamNo: %d, Stream (%p), Stride %d\n", This, StreamNumber, This->StateBlock->stream_source[StreamNumber], This->StateBlock->stream_stride[StreamNumber]);
-    *pStream = This->StateBlock->stream_source[StreamNumber];
-    *pStride = This->StateBlock->stream_stride[StreamNumber];
-    IDirect3DVertexBuffer9Impl_AddRef((LPDIRECT3DVERTEXBUFFER9) *pStream);
-    return D3D_OK;
+    IWineD3DVertexBuffer *retStream = NULL;
+    HRESULT rc = D3D_OK;
+
+    rc = IWineD3DDevice_GetStreamSource(This->WineD3DDevice, StreamNumber, (IWineD3DVertexBuffer **)&retStream, OffsetInBytes, pStride);
+    if (rc == D3D_OK && NULL != *pStream) IWineD3DVertexBuffer_GetParent(retStream, (IUnknown **)pStream);
+    return rc;
 }
 
 HRESULT  WINAPI  IDirect3DDevice9Impl_SetStreamSourceFreq(LPDIRECT3DDEVICE9 iface, UINT StreamNumber, UINT Divider) {

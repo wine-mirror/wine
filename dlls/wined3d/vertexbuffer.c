@@ -38,6 +38,7 @@ HRESULT WINAPI IWineD3DVertexBufferImpl_QueryInterface(IWineD3DVertexBuffer *ifa
 ULONG WINAPI IWineD3DVertexBufferImpl_AddRef(IWineD3DVertexBuffer *iface) {
     IWineD3DVertexBufferImpl *This = (IWineD3DVertexBufferImpl *)iface;
     TRACE("(%p) : AddRef increasing from %ld\n", This, This->resource.ref);
+    IUnknown_AddRef(This->resource.parent);
     return InterlockedIncrement(&This->resource.ref);
 }
 
@@ -48,7 +49,10 @@ ULONG WINAPI IWineD3DVertexBufferImpl_Release(IWineD3DVertexBuffer *iface) {
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
         if (NULL != This->allocatedMemory) HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
+        IWineD3DDevice_Release(This->resource.wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);
+    } else {
+        IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx VB */
     }
     return ref;
 }
@@ -88,6 +92,9 @@ D3DRESOURCETYPE WINAPI IWineD3DVertexBufferImpl_GetType(IWineD3DVertexBuffer *if
     return IWineD3DResource_GetType((IWineD3DResource *)iface);
 }
 
+HRESULT WINAPI IWineD3DVertexBufferImpl_GetParent(IWineD3DVertexBuffer *iface, IUnknown **pParent) {
+    return IWineD3DResource_GetParent((IWineD3DResource *)iface, pParent);
+}
 
 /* ******************************************************
    IWineD3DVertexBuffer IWineD3DVertexBuffer parts follow
@@ -122,6 +129,7 @@ IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl =
     IWineD3DVertexBufferImpl_QueryInterface,
     IWineD3DVertexBufferImpl_AddRef,
     IWineD3DVertexBufferImpl_Release,
+    IWineD3DVertexBufferImpl_GetParent,
     IWineD3DVertexBufferImpl_GetDevice,
     IWineD3DVertexBufferImpl_SetPrivateData,
     IWineD3DVertexBufferImpl_GetPrivateData,

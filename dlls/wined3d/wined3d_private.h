@@ -26,6 +26,7 @@
 #include <stdarg.h>
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
+#define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -98,6 +99,7 @@ typedef struct IWineD3DImpl
     DWORD                   ref;     /* Note: Ref counting not required */
 
     /* WineD3D Information */
+    IUnknown               *parent;
     UINT                    dxVersion;
 
     /* GL Information */
@@ -117,6 +119,7 @@ typedef struct IWineD3DDeviceImpl
     DWORD                   ref;     /* Note: Ref counting not required */
 
     /* WineD3D Information  */
+    IUnknown               *parent;  /* TODO - to be a new interface eventually */
     IWineD3D               *WineD3D;
 
     /* X and GL Information */
@@ -159,6 +162,7 @@ typedef struct IWineD3DResourceClass
     DWORD                   ref;     /* Note: Ref counting not required */
 
     /* WineD3DResource Information */
+    IUnknown               *parent;
     IWineD3DDevice         *wineD3DDevice;
     D3DRESOURCETYPE         resourceType;
 
@@ -200,6 +204,7 @@ extern IWineD3DVertexBufferVtbl IWineD3DVertexBuffer_Vtbl;
 /*   to resolve everything we need, so doing it manually for now */
 typedef struct SAVEDSTATES {
         BOOL                      fvf;
+        BOOL                      stream_source[MAX_STREAMS];
 } SAVEDSTATES;
 
 struct IWineD3DStateBlockImpl
@@ -209,6 +214,7 @@ struct IWineD3DStateBlockImpl
     DWORD                     ref;     /* Note: Ref counting not required */
     
     /* IWineD3DStateBlock information */
+    IUnknown                 *parent;
     IWineD3DDevice           *wineD3DDevice;
     D3DSTATEBLOCKTYPE         blockType;
 
@@ -219,6 +225,10 @@ struct IWineD3DStateBlockImpl
     /* Drawing - Vertex Shader or FVF related */
     DWORD                     fvf;
 
+    /* Stream Source */
+    UINT                      stream_stride[MAX_STREAMS];
+    UINT                      stream_offset[MAX_STREAMS];
+    IWineD3DVertexBuffer     *stream_source[MAX_STREAMS];
 };
 
 extern IWineD3DStateBlockVtbl IWineD3DStateBlock_Vtbl;

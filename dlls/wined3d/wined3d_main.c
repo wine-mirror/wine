@@ -32,11 +32,12 @@ void (*wine_tsx11_unlock_ptr)(void) = NULL;
 int vs_mode = VS_HW;   /* Hardware by default */
 int ps_mode = PS_NONE; /* Disabled by default */
 
-IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion) {
+IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *parent) {
     IWineD3DImpl* object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DImpl));
     object->lpVtbl = &IWineD3D_Vtbl;
     object->dxVersion = dxVersion;
     object->ref = 1;
+    object->parent = parent;
 
     TRACE("Created WineD3D object @ %p for d3d%d support\n", object, dxVersion);
 

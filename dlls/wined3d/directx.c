@@ -1310,7 +1310,7 @@ HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, D3DDEVT
    and fields being inserted in the middle, a new structure is used in place    */
 HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
                                            DWORD BehaviourFlags, WINED3DPRESENT_PARAMETERS* pPresentationParameters,
-                                                            IWineD3DDevice** ppReturnedDeviceInterface) {
+                                           IWineD3DDevice** ppReturnedDeviceInterface, IUnknown *parent) {
 
     HWND                whichHWND;
     HDC                 hDc;
@@ -1337,6 +1337,7 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     object->ref     = 1;
     object->WineD3D = iface;
     IWineD3D_AddRef(object->WineD3D);
+    object->parent  = parent;
     
     TRACE("(%p)->(Adptr:%d, DevType: %x, FocusHwnd: %p, BehFlags: %lx, PresParms: %p, RetDevInt: %p)\n", This, Adapter, DeviceType,
           hFocusWindow, BehaviourFlags, pPresentationParameters, ppReturnedDeviceInterface);
@@ -1468,7 +1469,8 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     /* Creating the startup stateBlock - Note Special Case: 0 => Don't fill in yet! */
     IWineD3DDevice_CreateStateBlock((IWineD3DDevice *)object, 
                                     (D3DSTATEBLOCKTYPE) 0, 
-                                    (IWineD3DStateBlock **)&object->stateBlock); 
+                                    (IWineD3DStateBlock **)&object->stateBlock,
+                                    NULL);   /* Note: No parent needed for initial internal stateblock */
     object->updateStateBlock = object->stateBlock;
 
     /* Setup surfaces for the backbuffer, frontbuffer and depthstencil buffer */
@@ -1581,6 +1583,13 @@ HRESULT  WINAPI  IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, D3DDEV
     return D3D_OK;
 }
 
+HRESULT WINAPI IWineD3DImpl_GetParent(IWineD3D *iface, IUnknown **pParent) {
+    IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    IUnknown_AddRef(This->parent);
+    *pParent = This->parent;
+    return D3D_OK;
+}
+
 /**********************************************************
  * IUnknown parts follows
  **********************************************************/
@@ -1614,6 +1623,7 @@ IWineD3DVtbl IWineD3D_Vtbl =
     IWineD3DImpl_QueryInterface,
     IWineD3DImpl_AddRef,
     IWineD3DImpl_Release,
+    IWineD3DImpl_GetParent,
     IWineD3DImpl_GetAdapterCount,
     IWineD3DImpl_RegisterSoftwareDevice,
     IWineD3DImpl_GetAdapterMonitor,
