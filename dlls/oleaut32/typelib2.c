@@ -1085,8 +1085,78 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddFuncDesc(
         UINT index,
         FUNCDESC* pFuncDesc)
 {
+    ICOM_THIS(ICreateTypeInfo2Impl, iface);
+
+    int offset;
+    int *typedata;
+    int i;
+    int decoded_size;
+
     FIXME("(%p,%d,%p), stub!\n", iface, index, pFuncDesc);
-    return E_OUTOFMEMORY;
+    FIXME("{%ld,%p,%p,%d,%d,%d,%d,%d,%d,%d,{%d},%d}\n", pFuncDesc->memid, pFuncDesc->lprgscode, pFuncDesc->lprgelemdescParam, pFuncDesc->funckind, pFuncDesc->invkind, pFuncDesc->callconv, pFuncDesc->cParams, pFuncDesc->cParamsOpt, pFuncDesc->oVft, pFuncDesc->cScodes, pFuncDesc->elemdescFunc.tdesc.vt, pFuncDesc->wFuncFlags);
+/*     FIXME("{%d, %d}\n", pFuncDesc->lprgelemdescParam[0].tdesc.vt, pFuncDesc->lprgelemdescParam[1].tdesc.vt); */
+/*     return E_OUTOFMEMORY; */
+    
+    if (!This->typedata) {
+	This->typedata = HeapAlloc(GetProcessHeap(), 0, 0x2000);
+	This->typedata[0] = 0;
+    }
+
+    /* allocate type data space for us */
+    offset = This->typedata[0];
+    This->typedata[0] += 0x18 + (pFuncDesc->cParams * 12);
+    typedata = This->typedata + (offset >> 2) + 1;
+
+    /* fill out the basic type information */
+    typedata[0] = (0x18 + (pFuncDesc->cParams * 12)) | (index << 16);
+    ctl2_encode_typedesc(This->typelib, &pFuncDesc->elemdescFunc.tdesc, &typedata[1], NULL, NULL, &decoded_size);
+    typedata[2] = pFuncDesc->wFuncFlags;
+    typedata[3] = ((sizeof(FUNCDESC) + decoded_size) << 16) | This->typeinfo->cbSizeVft;
+    typedata[4] = (index << 16) | (pFuncDesc->callconv << 8) | 9;
+    typedata[5] = pFuncDesc->cParams;
+
+    /* NOTE: High word of typedata[3] is total size of FUNCDESC + size of all ELEMDESCs for params + TYPEDESCs for pointer params and return types. */
+    /* That is, total memory allocation required to reconstitute the FUNCDESC in its entirety. */
+    typedata[3] += (sizeof(ELEMDESC) * pFuncDesc->cParams) << 16;
+
+    for (i = 0; i < pFuncDesc->cParams; i++) {
+	ctl2_encode_typedesc(This->typelib, &pFuncDesc->lprgelemdescParam[i].tdesc, &typedata[6+(i*3)], NULL, NULL, &decoded_size);
+	typedata[7+(i*3)] = -1;
+	typedata[8+(i*3)] = pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+	typedata[3] += decoded_size << 16;
+
+#if 0
+	/* FIXME: Doesn't work. Doesn't even come up with usable VTs for varDefaultValue. */
+	if (pFuncDesc->lprgelemdescParam[i].u.paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT) {
+	    ctl2_alloc_custdata(This->typelib, &pFuncDesc->lprgelemdescParam[i].u.paramdesc.pparamdescex->varDefaultValue);
+	}
+#endif
+    }
+
+    /* update the index data */
+    This->indices[index] = ((0x6000 | This->typeinfo->cImplTypes) << 16) | index;
+    This->names[index] = -1;
+    This->offsets[index] = offset;
+
+    /* ??? */
+    if (!This->typeinfo->res2) This->typeinfo->res2 = 0x20;
+    This->typeinfo->res2 <<= 1;
+
+    /* ??? */
+    if (This->typeinfo->res3 == -1) This->typeinfo->res3 = 0;
+    This->typeinfo->res3 += 0x38;
+
+    /* ??? */
+    if (index < 2) This->typeinfo->res2 += pFuncDesc->cParams << 4;
+    This->typeinfo->res3 += pFuncDesc->cParams << 4;
+
+    /* adjust size of VTBL */
+    This->typeinfo->cbSizeVft += 4;
+
+    /* Increment the number of function elements */
+    This->typeinfo->cElement += 1;
+
+    return S_OK;
 }
 
 /******************************************************************************
@@ -1246,8 +1316,32 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetFuncAndParamNames(
         LPOLESTR* rgszNames,
         UINT cNames)
 {
+    ICOM_THIS(ICreateTypeInfo2Impl, iface);
+
+    int i;
+    int offset;
+    char *namedata;
+
     FIXME("(%p,%d,%s,%d), stub!\n", iface, index, debugstr_w(*rgszNames), cNames);
-    return E_OUTOFMEMORY;
+
+    offset = ctl2_alloc_name(This->typelib, rgszNames[0]);
+    This->names[index] = offset;
+
+    namedata = This->typelib->typelib_segment_data[MSFT_SEG_NAME] + offset;
+    namedata[9] &= ~0x10;
+    if (*((INT *)namedata) == -1) {
+	*((INT *)namedata) = This->typelib->typelib_typeinfo_offsets[This->typeinfo->typekind >> 16];
+    }
+
+    for (i = 1; i < cNames; i++) {
+	/* FIXME: Almost certainly easy to break */
+	int *paramdata = &This->typedata[This->offsets[index] >> 2];
+
+	offset = ctl2_alloc_name(This->typelib, rgszNames[i]);
+	paramdata[(i * 3) + 5] = offset;
+    }
+
+    return S_OK;
 }
 
 /******************************************************************************
