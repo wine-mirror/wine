@@ -10237,7 +10237,7 @@ else
   cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
-void ac_asm(void) { asm(".string \"test\""); }
+void ac_asm(void) { asm(".data\n\t.string \"test\"\n\t.text"); }
 
 #ifdef F77_DUMMY_MAIN
 #  ifdef __cplusplus

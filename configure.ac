@@ -743,7 +743,8 @@ fi
 dnl **** Check for .string in assembler ****
 
 AC_CACHE_CHECK([whether assembler accepts .string], ac_cv_c_asm_string,
-    WINE_TRY_ASM_LINK([".string \"test\""],,,ac_cv_c_asm_string="yes",ac_cv_c_asm_string="no"))
+    WINE_TRY_ASM_LINK([".data\n\t.string \"test\"\n\t.text"],,,
+                      ac_cv_c_asm_string="yes",ac_cv_c_asm_string="no"))
 if test "$ac_cv_c_asm_string" = "yes"
 then
   AC_DEFINE(HAVE_ASM_STRING, 1, [Define to use .string instead of .ascii])
