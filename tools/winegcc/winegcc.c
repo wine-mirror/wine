@@ -125,10 +125,6 @@ static const char *app_loader_template =
     "      debugmsg=\"$1 $2\"\n"
     "      shift; shift;\n"
     "      ;;\n"
-    "    --dll)\n"
-    "      dll=\"$1 $2\"\n"
-    "      shift; shift;\n"
-    "      ;;\n"
     "    *)\n"
     "      break\n"
     "      ;;\n"
@@ -148,7 +144,7 @@ static const char *app_loader_template =
     "if [ ! -x \"$WINELOADER\" ]; then WINELOADER=\"wine\"; fi\n"
     "\n"
     "# and try to start the app\n"
-    "exec \"$WINELOADER\" $debugmsg $dll -- \"$apppath\" \"$@\"\n"
+    "exec \"$WINELOADER\" $debugmsg -- \"$apppath\" \"$@\"\n"
 ;
 
 static int keep_generated = 0;
@@ -339,7 +335,11 @@ static void build(struct options* opts)
     strarray *res_files, *obj_files, *spec_args, *comp_args, *link_args;
     char *spec_c_name, *spec_o_name, *base_file, *base_name;
     const char* output_name;
+    const char *winebuild = getenv("WINEBUILD");
     int j;
+    int generate_app_loader = 1;
+
+    if (!winebuild) winebuild = "winebuild";
 
     so_libs = strarray_alloc();
     arh_libs = strarray_alloc();
@@ -352,7 +352,11 @@ static void build(struct options* opts)
 
     /* get base filename by removing the .exe extension, if present */
     base_file = strdup(output_name);
-    if (strendswith(base_file, ".exe.so")) base_file[strlen(base_file) - 7] = 0;
+    if (strendswith(base_file, ".exe.so"))
+    {
+        base_file[strlen(base_file) - 7] = 0;
+        generate_app_loader = 0;
+    }
     else if (strendswith(base_file, ".exe")) base_file[strlen(base_file) - 4] = 0;
     if ((base_name = strrchr(base_file, '/'))) base_name++;
     else base_name = base_file;
@@ -433,7 +437,7 @@ static void build(struct options* opts)
     /* run winebuild to generate the .spec.c file */
     spec_args = strarray_alloc();
     spec_c_name = get_temp_file(base_name, ".spec.c");
-    strarray_add(spec_args, "winebuild");
+    strarray_add(spec_args, winebuild);
     strarray_add(spec_args, "-o");
     strarray_add(spec_args, spec_c_name);
     strarray_add(spec_args, "--exe");
@@ -446,14 +450,14 @@ static void build(struct options* opts)
     for ( j = 0; j < dll_libs->size; j++ )
 	strarray_add(spec_args, dll_libs->base[j]);
 
-    for ( j = 0; j < arh_libs->size; j++)
-	strarray_add(spec_args, arh_libs->base[j]);
-
     for ( j = 0; j < res_files->size; j++ )
 	strarray_add(spec_args, res_files->base[j]);
 
     for ( j = 0; j < obj_files->size; j++ )
 	strarray_add(spec_args, obj_files->base[j]);
+
+    for ( j = 0; j < arh_libs->size; j++)
+	strarray_add(spec_args, arh_libs->base[j]);
 
     spawn(spec_args);
 
@@ -489,19 +493,22 @@ static void build(struct options* opts)
     for ( j = 0; j < so_libs->size; j++ )
 	strarray_add(link_args, so_libs->base[j]);
 
-    for ( j = 0; j < arh_libs->size; j++ )
-	strarray_add(link_args, arh_libs->base[j]);
-
     for ( j = 0; j < obj_files->size; j++ )
 	strarray_add(link_args, obj_files->base[j]);
 
     strarray_add(link_args, spec_o_name);
 
+    for ( j = 0; j < arh_libs->size; j++ )
+	strarray_add(link_args, arh_libs->base[j]);
+
     spawn(link_args);
 
     /* create the loader script */
-    create_file(base_file, app_loader_template, base_name);
-    chmod(base_file, 0755);
+    if (generate_app_loader)
+    {
+        create_file(base_file, app_loader_template, base_name);
+        chmod(base_file, 0755);
+    }
 }
 
 
@@ -624,7 +631,7 @@ int main(int argc, char **argv)
 	    {
 		case 'x': case 'o': case 'D': case 'U':
 		case 'I': case 'A': case 'l': case 'u':
-		case 'b': case 'V': case 'G':
+		case 'b': case 'V': case 'G': case 'L':
 		    if (argv[i][2]) option_arg = &argv[i][2];
 		    else next_is_arg = 1;
 		    break;
