@@ -894,11 +894,8 @@ UINT16 WINAPI GetCommEventMask16(INT16 cid,UINT16 fnEvtClear)
  */
 INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 {
-	struct termios port;
 	struct DosDeviceStruct *ptr;
-        int bytesize, stopbits;
-        int fail=0;
-	int fd,r=0;
+	DCB dcb;
 
     	TRACE("cid %d, ptr %p\n", lpdcb->Id, lpdcb);
 	if ((ptr = GetDeviceStruct(lpdcb->Id)) == NULL) {
@@ -906,248 +903,33 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
 		return -1;
 	}
 
-	/* FIXME: replace with a call to SetCommState */
-	if ( (fd = FILE_GetUnixHandle(ptr->handle,GENERIC_READ)) == 0 )
-		return -1;
-	if (tcgetattr(fd, &port) == -1) {
-		close(fd);
-		ptr->commerror = WinError();	
-		return -1;
-	}
-
-	port.c_cc[VMIN] = 0;
-	port.c_cc[VTIME] = 1;
-
-#ifdef IMAXBEL
-	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR|IMAXBEL);
-#else
-	port.c_iflag &= ~(ISTRIP|BRKINT|IGNCR|ICRNL|INLCR);
-#endif
-	port.c_iflag |= (IGNBRK);
-
-	port.c_oflag &= ~(OPOST);
-
-	port.c_cflag &= ~(HUPCL);
-	port.c_cflag |= CLOCAL | CREAD;
-
-	port.c_lflag &= ~(ICANON|ECHO|ISIG);
-	port.c_lflag |= NOFLSH;
-
-    	TRACE("baudrate %d\n",lpdcb->BaudRate);
-#ifdef CBAUD
-	port.c_cflag &= ~CBAUD;
-	switch (lpdcb->BaudRate) {
-		case 110:
-		case CBR_110:
-			port.c_cflag |= B110;
-			break;		
-		case 300:
-		case CBR_300:
-			port.c_cflag |= B300;
-			break;		
-		case 600:
-		case CBR_600:
-			port.c_cflag |= B600;
-			break;		
-		case 1200:
-		case CBR_1200:
-			port.c_cflag |= B1200;
-			break;		
-		case 2400:
-		case CBR_2400:
-			port.c_cflag |= B2400;
-			break;		
-		case 4800:
-		case CBR_4800:
-			port.c_cflag |= B4800;
-			break;		
-		case 9600:
-		case CBR_9600:
-			port.c_cflag |= B9600;
-			break;		
-		case 19200:
-		case CBR_19200:
-			port.c_cflag |= B19200;
-			break;		
-		case 38400:
-		case CBR_38400:
-			port.c_cflag |= B38400;
-			break;		
-#ifdef B57600
-		case 57600:
-			port.c_cflag |= B57600;
-			break;		
-#endif
-#ifdef B115200
-		case 57601:
-			port.c_cflag |= B115200;
-			break;		
-#endif
-		default:
-			ptr->commerror = IE_BAUDRATE;
-			fail=1;
-	}
-#elif !defined(__EMX__)
-        switch (lpdcb->BaudRate) {
-                case 110:
-                case CBR_110:
-                        port.c_ospeed = B110;
-                        break;
-                case 300:
-                case CBR_300:
-                        port.c_ospeed = B300;
-                        break;
-                case 600:
-                case CBR_600:
-                        port.c_ospeed = B600;
-                        break;
-                case 1200:
-                case CBR_1200:
-                        port.c_ospeed = B1200;
-                        break;
-                case 2400:
-                case CBR_2400:
-                        port.c_ospeed = B2400;
-                        break;
-                case 4800:
-                case CBR_4800:
-                        port.c_ospeed = B4800;
-                        break;
-                case 9600:
-                case CBR_9600:
-                        port.c_ospeed = B9600;
-                        break;
-                case 19200:
-                case CBR_19200:
-                        port.c_ospeed = B19200;
-                        break;
-                case 38400:
-                case CBR_38400:
-                        port.c_ospeed = B38400;
-                        break;
-                default:
-                        ptr->commerror = IE_BAUDRATE;
-                        fail=1;
-        }
-        port.c_ispeed = port.c_ospeed;
-#endif
-        bytesize=lpdcb->ByteSize;
-        stopbits=lpdcb->StopBits;
-
-    	TRACE("fParity %d Parity %d\n",lpdcb->fParity, lpdcb->Parity);
-#ifdef CMSPAR
-	port.c_cflag &= ~(PARENB | PARODD | CMSPAR);
-#else
-	port.c_cflag &= ~(PARENB | PARODD);
-#endif
-	if (lpdcb->fParity)
-            port.c_iflag |= INPCK;
+	memset(&dcb,0,sizeof dcb);
+	dcb.DCBlength = sizeof dcb;
+	if(lpdcb->BaudRate==57601)
+		dcb.BaudRate = 115200;
         else
-            port.c_iflag &= ~INPCK;
-        switch (lpdcb->Parity) {
-                case NOPARITY:
-                        break;
-                case ODDPARITY:
-                        port.c_cflag |= (PARENB | PARODD);
-                        break;
-                case EVENPARITY:
-                        port.c_cflag |= PARENB;
-                        break;
-#ifdef CMSPAR
-                /* Linux defines mark/space (stick) parity */
-                case MARKPARITY:
-                        port.c_cflag |= (PARENB | CMSPAR);
-                        break;
-                case SPACEPARITY:
-                        port.c_cflag |= (PARENB | PARODD |  CMSPAR);
-                        break;
-#else
-                /* try the POSIX way */
-                case MARKPARITY:
-                        if( stopbits == ONESTOPBIT) {
-                            stopbits = TWOSTOPBITS;
-                            port.c_iflag &= ~INPCK;
-                        } else {
-                            ptr->commerror = IE_BYTESIZE;
-                            fail=1;
-                        }
-                        break;
-                case SPACEPARITY:
-                        if( bytesize < 8) {
-                            bytesize +=1;
-                            port.c_iflag &= ~INPCK;
-                        } else {
-                            ptr->commerror = IE_BYTESIZE;
-                            fail=1;
-                        }
-                        break;
-#endif
-                default:
-                        ptr->commerror = IE_BYTESIZE;
-                        fail=1;
-        }
+		dcb.BaudRate = lpdcb->BaudRate;
 	
-    	TRACE("bytesize %d\n",bytesize);
-	port.c_cflag &= ~CSIZE;
-	switch (bytesize) {
-		case 5:
-			port.c_cflag |= CS5;
-			break;
-		case 6:
-			port.c_cflag |= CS6;
-			break;
-		case 7:
-			port.c_cflag |= CS7;
-			break;
-		case 8:
-			port.c_cflag |= CS8;
-			break;
-		default:
-			ptr->commerror = IE_BYTESIZE;
-			fail=1;
-	}
+        dcb.ByteSize=lpdcb->ByteSize;
+        dcb.StopBits=lpdcb->StopBits;
 
-    	TRACE("stopbits %d\n",stopbits);
+	dcb.fParity=lpdcb->fParity;
+	dcb.Parity=lpdcb->Parity;
 
-	switch (stopbits) {
-		case ONESTOPBIT:
-				port.c_cflag &= ~CSTOPB;
-				break;
-		case ONE5STOPBITS: /* wil be selected if bytesize is 5 */
-		case TWOSTOPBITS:
-				port.c_cflag |= CSTOPB;
-				break;
-		default:
-			ptr->commerror = IE_BYTESIZE;
-			fail=1;
-	}
-#ifdef CRTSCTS
+	dcb.fOutxCtsFlow = lpdcb->fOutxCtsFlow;
 
-	if (lpdcb->fDtrflow || lpdcb->fRtsflow || lpdcb->fOutxCtsFlow)
-		port.c_cflag |= CRTSCTS;
+	if (lpdcb->fDtrflow || lpdcb->fRtsflow)
+		dcb.fRtsControl = TRUE;
 
 	if (lpdcb->fDtrDisable) 
-		port.c_cflag &= ~CRTSCTS;
-#endif	
-	if (lpdcb->fInX)
-		port.c_iflag |= IXON;
-	else
-		port.c_iflag &= ~IXON;
-	if (lpdcb->fOutX)
-		port.c_iflag |= IXOFF;
-	else
-		port.c_iflag &= ~IXOFF;
+		dcb.fDtrControl = TRUE;
 
 	ptr->evtchar = lpdcb->EvtChar;
 
-	if(!fail)
-		r = tcsetattr(fd, TCSADRAIN, &port);
-	close(fd);
-
-        if(fail)
-		return -1;
+	dcb.fInX = lpdcb->fInX;
+	dcb.fOutX = lpdcb->fOutX;
         
-	if (r == -1) {
+	if (!SetCommState(ptr->handle,&dcb)) {
 		ptr->commerror = WinError();	
 		return -1;
 	} else {
