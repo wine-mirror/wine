@@ -1017,11 +1017,6 @@ HINSTANCE16 WINAPI LoadModule16( LPCSTR name, LPVOID paramBlock )
 
     if (params->hEnvironment) GlobalUnlock16( params->hEnvironment );
     HeapFree( GetProcessHeap(), 0, new_cmd_line );
-
-    /* Start task */
-
-    if (pdb) TASK_StartTask( pdb->task );
-
     return hInstance;
 }
 
