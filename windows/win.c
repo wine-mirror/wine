@@ -345,7 +345,7 @@ BOOL32 WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew )
                 ret = TRUE;
             }
             if (wnd->child)
-                ret |= WIN_ResetQueueWindows( wnd->child, hQueue, hNew );
+                ret |= WIN_ResetQueueWindows( wnd, hQueue, hNew );
         }
     }
     else  /* Queue is being destroyed */
