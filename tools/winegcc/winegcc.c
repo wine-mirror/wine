@@ -345,7 +345,8 @@ static void build(struct options* opts)
     static const char *stdlibpath[] = { DLLDIR, LIBDIR, "/usr/lib", "/usr/local/lib", "/lib" };
     strarray *lib_dirs, *files;
     strarray *spec_args, *comp_args, *link_args;
-    char *spec_c_name, *spec_o_name, *base_file, *base_name;
+    char *base_file, *base_name;
+    const char *spec_c_name, *spec_o_name;
     const char* output_name;
     const char* winebuild = getenv("WINEBUILD");
     int generate_app_loader = 1;
@@ -498,15 +499,7 @@ static void build(struct options* opts)
 
     /* compile the .spec.c file into a .spec.o file */
     comp_args = strarray_alloc();
-    spec_o_name = get_temp_file(base_name, ".spec.o");
-    strarray_add(comp_args, CC);
-    strarray_addall(comp_args, strarray_fromstring(DLLFLAGS, " "));
-    strarray_add(comp_args, "-o");
-    strarray_add(comp_args, spec_o_name);
-    strarray_add(comp_args, "-c");
-    strarray_add(comp_args, spec_c_name);
-
-    spawn(opts->prefix, comp_args);
+    spec_o_name = compile_to_object(opts, spec_c_name);
     
     /* link everything together now */
     link_args = strarray_alloc();
@@ -797,6 +790,8 @@ int main(int argc, char **argv)
 			strarray* Wb = strarray_fromstring(argv[i] + 4, ",");
 			strarray_addall(opts.winebuild_args, Wb);
 			strarray_free(Wb);
+                        /* don't pass it to the compiler, it generates errors */
+                        raw_compiler_arg = raw_linker_arg = 0;
 		    }
                     break;
                 case '-':
