@@ -691,7 +691,7 @@ static void destroy_key_container(OBJECTHDR *pObjectHdr)
     KEYCONTAINER *pKeyContainer = (KEYCONTAINER*)pObjectHdr;
     CRYPTKEY *pKey;
     CHAR szRSABase[MAX_PATH];
-    HKEY hKey;
+    HKEY hKey, hRootKey;
     DWORD dwLen;
     BYTE *pbKey;
 
@@ -701,7 +701,13 @@ static void destroy_key_container(OBJECTHDR *pObjectHdr)
          */
         sprintf(szRSABase, RSAENH_REGKEY, pKeyContainer->szName);
 
-        if (RegCreateKeyExA(HKEY_CURRENT_USER, szRSABase, 0, NULL, REG_OPTION_NON_VOLATILE, 
+        if (pKeyContainer->dwFlags & CRYPT_MACHINE_KEYSET) {
+            hRootKey = HKEY_LOCAL_MACHINE;
+        } else {
+            hRootKey = HKEY_CURRENT_USER;
+        }
+        
+        if (RegCreateKeyExA(hRootKey, szRSABase, 0, NULL, REG_OPTION_NON_VOLATILE, 
                             KEY_WRITE, NULL, &hKey, NULL) == ERROR_SUCCESS)
         {
             if (lookup_handle(&handle_table, pKeyContainer->hKeyExchangeKeyPair, RSAENH_MAGIC_KEY, 
@@ -816,14 +822,20 @@ static HCRYPTPROV read_key_container(PCHAR pszContainerName, DWORD dwFlags, PVTa
 {
     CHAR szRSABase[MAX_PATH];
     BYTE *pbKey;
-    HKEY hKey;
+    HKEY hKey, hRootKey;
     DWORD dwValueType, dwLen;
     KEYCONTAINER *pKeyContainer;
     HCRYPTPROV hKeyContainer;
     
     sprintf(szRSABase, RSAENH_REGKEY, pszContainerName);
 
-    if (RegOpenKeyExA(HKEY_CURRENT_USER, szRSABase, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
+    if (dwFlags & CRYPT_MACHINE_KEYSET) {
+        hRootKey = HKEY_LOCAL_MACHINE;
+    } else {
+        hRootKey = HKEY_CURRENT_USER;
+    }
+
+    if (RegOpenKeyExA(hRootKey, szRSABase, 0, KEY_READ, &hKey) != ERROR_SUCCESS)
     {
         SetLastError(NTE_BAD_KEYSET);
         return (HCRYPTPROV)INVALID_HANDLE_VALUE;
