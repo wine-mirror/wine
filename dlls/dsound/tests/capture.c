@@ -434,9 +434,10 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
         if (winetest_interactive)
 	    trace("  Testing the capture buffer at %s\n", format_string(&wfx));
 	rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
-	ok(((rc==DS_OK)&&(dscbo!=NULL))||(rc==DSERR_BADFORMAT)||(rc==DSERR_ALLOCATED),
+	ok(((rc==DS_OK)&&(dscbo!=NULL))||(rc==DSERR_BADFORMAT)||
+           (rc==DSERR_ALLOCATED)||(rc==E_INVALIDARG),
            "IDirectSoundCapture_CreateCaptureBuffer() failed to create a "
-           "capture buffer: %s\n",DXGetErrorString8(rc));
+           "%s capture buffer: %s\n",format_string(&wfx),DXGetErrorString8(rc));
 	if (rc==DS_OK) {
 	    test_capture_buffer(dsco, dscbo, winetest_interactive);
 	    ref=IDirectSoundCaptureBuffer_Release(dscbo);
@@ -448,8 +449,29 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
                "capture buffer: format listed as supported but using it failed\n");
             if (!(dsccaps.dwFormats & formats[f][3]))
                 trace("  Format not supported: %s\n", format_string(&wfx));
-        } else if (rc==DSERR_ALLOCATED)
+        } else if (rc==DSERR_ALLOCATED) {
             trace("  Already In Use\n");
+        } else if (rc==E_INVALIDARG) { /* try the old version struct */
+            DSCBUFFERDESC1 bufdesc1;
+	    ZeroMemory(&bufdesc1, sizeof(bufdesc1));
+	    bufdesc1.dwSize=sizeof(bufdesc1);
+	    bufdesc1.dwFlags=0;
+	    bufdesc1.dwBufferBytes=wfx.nAvgBytesPerSec;
+	    bufdesc1.dwReserved=0;
+	    bufdesc1.lpwfxFormat=&wfx;
+	    rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,
+                (DSCBUFFERDESC*)&bufdesc1,&dscbo,NULL);
+	    ok(rc==DS_OK,
+               "IDirectSoundCapture_CreateCaptureBuffer() failed to create a "
+               "%s capture buffer: %s\n",format_string(&wfx),
+               DXGetErrorString8(rc));
+            if (rc==DS_OK) {
+	        test_capture_buffer(dsco, dscbo, winetest_interactive);
+	        ref=IDirectSoundCaptureBuffer_Release(dscbo);
+	        ok(ref==0,"IDirectSoundCaptureBuffer_Release() has %d "
+                   "references, should have 0\n",ref);
+            }
+        }
     }
 
     /* try a non PCM format */
