@@ -912,8 +912,11 @@ FAR * ) PURE;
 } *LPDIRECTDRAW_VTABLE,IDirectDraw_VTable;
 
 struct _common_directdrawdata {
-    DWORD			screen_depth;
-    DWORD                       depth;          /* SetDisplayMode */
+    DDPIXELFORMAT             directdraw_pixelformat;
+    DDPIXELFORMAT             screen_pixelformat;
+    int                       pixmap_depth;
+    void (*pixel_convert)(void *src, void *dst, DWORD width, DWORD height, LONG pitch, LPDIRECTDRAWPALETTE palette);
+    void (*palette_convert)(LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count);
     DWORD			height,width;	/* SetDisplayMode */
     HWND                      mainWindow;     /* SetCooperativeLevel */
 

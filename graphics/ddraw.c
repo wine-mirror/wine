@@ -416,47 +416,6 @@ static void _dump_pixelformat(LPDDPIXELFORMAT pf) {
        pf->y.dwRBitMask, pf->z.dwGBitMask, pf->xx.dwBBitMask, pf->xy.dwRGBAlphaBitMask);
 }
 
-static int _getpixelformat(LPDIRECTDRAW2 ddraw,LPDDPIXELFORMAT pf) {
-	static XVisualInfo	*vi;
-	XVisualInfo		vt;
-	int			nitems;
-
-	if (!vi)
-		vi = TSXGetVisualInfo(display,VisualNoMask,&vt,&nitems);
-
-	pf->dwFourCC = 0;
-	pf->dwSize = sizeof(DDPIXELFORMAT);
-	if (ddraw->d.depth==8) {
-		pf->dwFlags 		= DDPF_RGB|DDPF_PALETTEINDEXED8;
-		pf->x.dwRGBBitCount	= 8;
-		pf->y.dwRBitMask  	= 0;
-		pf->z.dwGBitMask  	= 0;
-		pf->xx.dwBBitMask 	= 0;
-		pf->xy.dwRGBAlphaBitMask= 0;
-		return 0;
-	}
-	if (ddraw->d.depth==16) {
-		pf->dwFlags       	= DDPF_RGB;
-		pf->x.dwRGBBitCount	= 16;
-		pf->y.dwRBitMask	= vi[0].red_mask;
-		pf->z.dwGBitMask	= vi[0].green_mask;
-		pf->xx.dwBBitMask	= vi[0].blue_mask;
-		pf->xy.dwRGBAlphaBitMask= 0;
-		return 0;
-	}
-	if (ddraw->d.depth==24) {
-		pf->dwFlags       	= DDPF_RGB;
-		pf->x.dwRGBBitCount	= 24;
-		pf->y.dwRBitMask	= vi[0].red_mask;
-		pf->z.dwGBitMask	= vi[0].green_mask;
-		pf->xx.dwBBitMask	= vi[0].blue_mask;
-		pf->xy.dwRGBAlphaBitMask= 0;
-		return 0;
-	}
-	FIXME(ddraw,"_getpixelformat:unknown depth %ld?\n",ddraw->d.depth);
-	return DDERR_GENERIC;
-}
-
 /******************************************************************************
  *		IDirectDrawSurface methods
  *
@@ -500,29 +459,13 @@ static HRESULT WINAPI DGA_IDirectDrawSurface4_Unlock(
 }
 
 static void Xlib_copy_surface_on_screen(LPDIRECTDRAWSURFACE4 this) {
-  if (this->s.ddraw->d.depth != this->s.ddraw->d.screen_depth) {
-    /* Pixel convertion ! */
-    if ((this->s.ddraw->d.depth == 8) && (this->s.ddraw->d.screen_depth == 16)) {
-      unsigned char  *src = (unsigned char  *) this->s.surface_desc.y.lpSurface;
-      unsigned short *dst = (unsigned short *) this->t.xlib.image->data;
-      unsigned short *pal;
-      int x, y;
-
-      if (this->s.palette != NULL) {
-	pal = (unsigned short *) this->s.palette->screen_palents;
-	for (y = 0; y < this->s.surface_desc.dwHeight; y++) {
-	  for (x = 0; x < this->s.surface_desc.dwWidth; x++) {
-	    dst[x + y * this->s.surface_desc.lPitch] = pal[src[x + y * this->s.surface_desc.lPitch]];
-	  }
-	}
-      } else {
-	WARN(ddraw, "No palette set...\n");
-	memset(dst, 0, this->s.surface_desc.lPitch * this->s.surface_desc.dwHeight * 2);
-      }
-    } else {
-      ERR(ddraw, "Unsupported pixel convertion...\n");
-    }
-  }
+  if (this->s.ddraw->d.pixel_convert != NULL)
+    this->s.ddraw->d.pixel_convert(this->s.surface_desc.y.lpSurface,
+				   this->t.xlib.image->data,
+				   this->s.surface_desc.dwWidth,
+				   this->s.surface_desc.dwHeight,
+				   this->s.surface_desc.lPitch,
+				   this->s.palette);
 
 #ifdef HAVE_LIBXXSHM
     if (this->s.ddraw->e.xlib.xshm_active)
@@ -652,7 +595,7 @@ static HRESULT WINAPI Xlib_IDirectDrawSurface4_SetPalette(
 	  return DD_OK;
 	}
 	
-	if( !(pal->cm) && (this->s.ddraw->d.screen_depth<=8)) 
+	if( !(pal->cm) && (this->s.ddraw->d.screen_pixelformat.x.dwRGBBitCount<=8)) 
 	{
 		pal->cm = TSXCreateColormap(display,this->s.ddraw->d.drawable,
 					    DefaultVisualOfScreen(X11DRV_GetXScreen()),AllocAll);
@@ -1031,6 +974,10 @@ static HRESULT WINAPI IDirectDrawSurface4_GetSurfaceDesc(
       DUMP("   caps:  ");
       _dump_DDSCAPS(ddsd->ddsCaps.dwCaps);
     }
+    if (ddsd->dwFlags & DDSD_PIXELFORMAT) {
+      DUMP("   pixel format : \n");
+      _dump_pixelformat(&(ddsd->ddpfPixelFormat));
+    }
 	}
 
 	return DD_OK;
@@ -1076,7 +1023,7 @@ static ULONG WINAPI Xlib_IDirectDrawSurface4_Release(LPDIRECTDRAWSURFACE4 this) 
 		  this->s.backbuffer->lpvtbl->fnRelease(this->s.backbuffer);
 
     if (this->t.xlib.image != NULL) {
-      if (this->s.ddraw->d.depth != this->s.ddraw->d.screen_depth) {
+      if (this->s.ddraw->d.pixel_convert != NULL) {
 	/* In pixel conversion mode, there are two buffers to release... */
 	HeapFree(GetProcessHeap(),0,this->s.surface_desc.y.lpSurface);
 	
@@ -1810,28 +1757,9 @@ static HRESULT WINAPI Xlib_IDirectDrawPalette_SetEntries(
 	}
 
 	/* Now, if we are in 'depth conversion mode', update the screen palette */
-	if (this->ddraw->d.depth != this->ddraw->d.screen_depth) {
-	  int i;
+	if (this->ddraw->d.palette_convert != NULL)
+	  this->ddraw->d.palette_convert(palent, this->screen_palents, start, count);
 	  
-	  switch (this->ddraw->d.screen_depth) {
-	  case 16: {
-	    unsigned short *screen_palette = (unsigned short *) this->screen_palents;
-	    
-	    for (i = 0; i < count; i++) {
-	      screen_palette[start + i] = (((((unsigned short) palent[i].peRed) & 0xF8) << 8) |
-					   ((((unsigned short) palent[i].peBlue) & 0xF8) >> 3) |
-					   ((((unsigned short) palent[i].peGreen) & 0xFC) << 3));
-	    }
-	  } break;
-	    
-	  default:
-	    ERR(ddraw, "Memory corruption !\n");
-	    break;
-	  }
-	}
-	
-	if (!this->cm) /* should not happen */ {
-	}
 	return DD_OK;
 }
 
@@ -2232,7 +2160,7 @@ static HRESULT common_off_screen_CreateSurface(LPDIRECTDRAW2 this,
     /* This is a standard image */
   if (!(lpddsd->dwFlags & DDSD_PIXELFORMAT)) {
     /* No pixel format => use DirectDraw's format */
-    _getpixelformat(this,&(lpddsd->ddpfPixelFormat));
+    lpddsd->ddpfPixelFormat = this->d.directdraw_pixelformat;
     lpddsd->dwFlags |= DDSD_PIXELFORMAT;
   }  else {
     /* To check what the program wants */
@@ -2302,19 +2230,19 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 		/* if i == 32 or maximum ... return error */
 		this->e.dga.vpmask|=(1<<i);
 	  (*lpdsf)->s.surface_desc.y.lpSurface =
-	    this->e.dga.fb_addr+((i*this->e.dga.fb_height)*this->e.dga.fb_width*this->d.depth/8);
+	    this->e.dga.fb_addr+((i*this->e.dga.fb_height)*this->e.dga.fb_width*this->d.directdraw_pixelformat.x.dwRGBBitCount/8);
 		(*lpdsf)->t.dga.fb_height = i*this->e.dga.fb_height;
-	  (*lpdsf)->s.surface_desc.lPitch = this->e.dga.fb_width*this->d.depth/8;
+	  (*lpdsf)->s.surface_desc.lPitch = this->e.dga.fb_width*this->d.directdraw_pixelformat.x.dwRGBBitCount/8;
 	  lpddsd->lPitch = (*lpdsf)->s.surface_desc.lPitch;
 
 	  /* Add flags if there were not present */
-	  (*lpdsf)->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE;
+	  (*lpdsf)->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE|DDSD_PIXELFORMAT;
 	  (*lpdsf)->s.surface_desc.dwWidth = this->d.width;
 	  (*lpdsf)->s.surface_desc.dwHeight = this->d.height;
 	  TRACE(ddraw,"primary surface: dwWidth=%ld, dwHeight=%ld, lPitch=%ld\n",this->d.width,this->d.height,lpddsd->lPitch);
 	  /* We put our surface always in video memory */
 	  (*lpdsf)->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VISIBLE|DDSCAPS_VIDEOMEMORY;
-	  _getpixelformat(this,&((*lpdsf)->s.surface_desc.ddpfPixelFormat));
+	  (*lpdsf)->s.surface_desc.ddpfPixelFormat = this->d.directdraw_pixelformat;
 	(*lpdsf)->s.backbuffer = NULL;
 	  
 	if (lpddsd->dwFlags & DDSD_BACKBUFFERCOUNT) {
@@ -2340,7 +2268,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreateSurface(
 	    back->s.surface_desc = (*lpdsf)->s.surface_desc;
 	    /* Change the parameters that are not the same */
 	    back->s.surface_desc.y.lpSurface = this->e.dga.fb_addr+
-	      ((i*this->e.dga.fb_height)*this->e.dga.fb_width*this->d.depth/8);
+	      ((i*this->e.dga.fb_height)*this->e.dga.fb_width*this->d.directdraw_pixelformat.x.dwRGBBitCount/8);
 		back->s.ddraw = this;
 		back->s.backbuffer = NULL; /* does not have a backbuffer, it is
 					    * one! */
@@ -2377,7 +2305,7 @@ static XImage *create_xshmimage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) 
 
     img = TSXShmCreateImage(display,
 			    DefaultVisualOfScreen(X11DRV_GetXScreen()),
-			    this->d.screen_depth,
+			    this->d.pixmap_depth,
 			    ZPixmap,
 			    NULL,
 			    &(lpdsf->t.xlib.shminfo),
@@ -2448,11 +2376,11 @@ static XImage *create_xshmimage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) 
   
     shmctl(lpdsf->t.xlib.shminfo.shmid, IPC_RMID, 0);
 
-    if (this->d.depth != this->d.screen_depth) {
+    if (this->d.pixel_convert != NULL) {
       lpdsf->s.surface_desc.y.lpSurface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
 						    lpdsf->s.surface_desc.dwWidth *
 						    lpdsf->s.surface_desc.dwHeight *
-						    (this->d.depth / 8));
+						    (this->d.directdraw_pixelformat.x.dwRGBBitCount));
     } else {
     lpdsf->s.surface_desc.y.lpSurface = img->data;
     }
@@ -2476,13 +2404,13 @@ static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) {
     lpdsf->s.surface_desc.y.lpSurface = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
 						  lpdsf->s.surface_desc.dwWidth *
 						  lpdsf->s.surface_desc.dwHeight *
-						  (this->d.depth / 8));
+						  (this->d.directdraw_pixelformat.x.dwRGBBitCount / 8));
     
-    if (this->d.depth != this->d.screen_depth) {
+    if (this->d.pixel_convert != NULL) {
       img_data = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
 			   lpdsf->s.surface_desc.dwWidth *
 			   lpdsf->s.surface_desc.dwHeight *
-			   (this->d.screen_depth / 8));
+			   (this->d.screen_pixelformat.x.dwRGBBitCount / 8));
     } else {
       img_data = lpdsf->s.surface_desc.y.lpSurface;
     }
@@ -2491,21 +2419,21 @@ static XImage *create_ximage(LPDIRECTDRAW2 this, LPDIRECTDRAWSURFACE4 lpdsf) {
     img =
       TSXCreateImage(display,
 		     DefaultVisualOfScreen(X11DRV_GetXScreen()),
-		     this->d.screen_depth,
+		     this->d.pixmap_depth,
 		     ZPixmap,
 		     0,
 		     img_data,
 		     lpdsf->s.surface_desc.dwWidth,
 		     lpdsf->s.surface_desc.dwHeight,
 		     32,
-		     lpdsf->s.surface_desc.dwWidth * (this->d.screen_depth / 8)
+		     lpdsf->s.surface_desc.dwWidth * (this->d.screen_pixelformat.x.dwRGBBitCount / 8)
 		     );
     
 #ifdef HAVE_LIBXXSHM
   }
 #endif
-  if (this->d.depth != this->d.screen_depth) {
-    lpdsf->s.surface_desc.lPitch = (this->d.depth / 8) * lpdsf->s.surface_desc.dwWidth;
+  if (this->d.pixel_convert != NULL) {
+    lpdsf->s.surface_desc.lPitch = (this->d.directdraw_pixelformat.x.dwRGBBitCount / 8) * lpdsf->s.surface_desc.dwWidth;
   } else {
   lpdsf->s.surface_desc.lPitch = img->bytes_per_line;
   }
@@ -2557,11 +2485,11 @@ static HRESULT WINAPI Xlib_IDirectDraw2_CreateSurface(
     (*lpdsf)->t.xlib.image = img;
 
 	  /* Add flags if there were not present */
-	  (*lpdsf)->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE;
+	  (*lpdsf)->s.surface_desc.dwFlags |= DDSD_WIDTH|DDSD_HEIGHT|DDSD_PITCH|DDSD_LPSURFACE|DDSD_PIXELFORMAT;
 	  (*lpdsf)->s.surface_desc.dwWidth = this->d.width;
 	  (*lpdsf)->s.surface_desc.dwHeight = this->d.height;
 	  (*lpdsf)->s.surface_desc.ddsCaps.dwCaps |= DDSCAPS_VISIBLE|DDSCAPS_VIDEOMEMORY;
-	  _getpixelformat(this,&((*lpdsf)->s.surface_desc.ddpfPixelFormat));
+	  (*lpdsf)->s.surface_desc.ddpfPixelFormat = this->d.directdraw_pixelformat;
 	  (*lpdsf)->s.backbuffer = NULL;
     
     /* Check for backbuffers */
@@ -2703,34 +2631,122 @@ static void _common_IDirectDraw_SetDisplayMode(LPDIRECTDRAW this) {
 	SetFocus(this->d.window);
 }
 
+static int _common_depth_to_pixelformat(DWORD depth, DDPIXELFORMAT *pixelformat, DDPIXELFORMAT *screen_pixelformat, int *pix_depth) {
+  XVisualInfo *vi;
+  XPixmapFormatValues *pf;
+  XVisualInfo vt;
+  int nvisuals, npixmap, i;
+  int match = 0;
+
+  vi = TSXGetVisualInfo(display, VisualNoMask, &vt, &nvisuals);
+  pf = XListPixmapFormats(display, &npixmap);
+  
+  for (i = 0; i < npixmap; i++) {
+    if (pf[i].bits_per_pixel == depth) {
+      int j;
+      
+      for (j = 0; j < nvisuals; j++) {
+	if (vi[j].depth == pf[i].depth) {
+	  pixelformat->dwSize = sizeof(*pixelformat);
+	  if (depth == 8) {
+	    pixelformat->dwFlags = DDPF_PALETTEINDEXED8;
+	    pixelformat->y.dwRBitMask = 0;
+	    pixelformat->z.dwGBitMask = 0;
+	    pixelformat->xx.dwBBitMask = 0;
+	  } else {
+	    pixelformat->dwFlags = DDPF_RGB;
+	    pixelformat->y.dwRBitMask = vi[j].red_mask;
+	    pixelformat->z.dwGBitMask = vi[j].green_mask;
+	    pixelformat->xx.dwBBitMask = vi[j].blue_mask;
+	  }
+	  pixelformat->dwFourCC = 0;
+	  pixelformat->x.dwRGBBitCount = pf[i].bits_per_pixel;
+	  pixelformat->xy.dwRGBAlphaBitMask= 0;
+
+	  *screen_pixelformat = *pixelformat;
+	  
+	  if (pix_depth != NULL)
+	    *pix_depth = vi[j].depth;
+	  
+	  match = 1;
+	  
+	  break;
+	}
+      }
+
+      if (j == nvisuals)
+	ERR(ddraw, "No visual corresponding to pixmap format !\n");
+    }
+  }
+
+  if ((match == 0) && (depth == 8)) {
+    pixelformat->dwSize = sizeof(*pixelformat);
+    pixelformat->dwFlags = DDPF_PALETTEINDEXED8;
+    pixelformat->dwFourCC = 0;
+    pixelformat->x.dwRGBBitCount = 8;
+    pixelformat->y.dwRBitMask = 0;
+    pixelformat->z.dwGBitMask = 0;
+    pixelformat->xx.dwBBitMask = 0;
+    pixelformat->xy.dwRGBAlphaBitMask= 0;    
+    
+    /* In that case, find a visual to emulate the 8 bpp format */
+    for (i = 0; i < npixmap; i++) {
+      if (pf[i].bits_per_pixel >= depth) {
+	int j;
+	
+	for (j = 0; j < nvisuals; j++) {
+	  if (vi[j].depth == pf[i].depth) {
+	    screen_pixelformat->dwSize = sizeof(*screen_pixelformat);
+	    screen_pixelformat->dwFlags = DDPF_RGB;
+	    screen_pixelformat->dwFourCC = 0;
+	    screen_pixelformat->x.dwRGBBitCount = pf[i].bits_per_pixel;
+	    screen_pixelformat->y.dwRBitMask = vi[j].red_mask;
+	    screen_pixelformat->z.dwGBitMask = vi[j].green_mask;
+	    screen_pixelformat->xx.dwBBitMask = vi[j].blue_mask;
+	    screen_pixelformat->xy.dwRGBAlphaBitMask= 0;
+
+	    if (pix_depth != NULL)
+	      *pix_depth = vi[j].depth;
+	    
+	    match = 2;
+	    
+	    break;
+	  }
+	}
+	
+	if (j == nvisuals)
+	  ERR(ddraw, "No visual corresponding to pixmap format !\n");
+      }
+    }
+  }
+  
+  TSXFree(vi);
+  TSXFree(pf);
+
+  return match;
+}
+
 static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 	LPDIRECTDRAW this,DWORD width,DWORD height,DWORD depth
 ) {
 #ifdef HAVE_LIBXXF86DGA
-        int	i,*depths,depcount,mode_count;
+        int	i,mode_count;
 
 	TRACE(ddraw, "(%p)->(%ld,%ld,%ld)\n", this, width, height, depth);
 
 	/* We hope getting the asked for depth */
-	this->d.screen_depth = depth;
-
-	depths = TSXListDepths(display,DefaultScreen(display),&depcount);
-
-	for (i=0;i<depcount;i++)
-		if (depths[i]==depth)
-			break;
-	TSXFree(depths);
-	if (i==depcount) {/* not found */
+	if (_common_depth_to_pixelformat(depth, &(this->d.directdraw_pixelformat), &(this->d.screen_pixelformat), NULL) != 1) {
+	  /* I.e. no visual found or emulated */
 		ERR(ddraw,"(w=%ld,h=%ld,d=%ld), unsupported depth!\n",width,height,depth);
 		return DDERR_UNSUPPORTEDMODE;
 	}
+	
 	if (this->d.width < width) {
 		ERR(ddraw,"SetDisplayMode(w=%ld,h=%ld,d=%ld), width %ld exceeds framebuffer width %ld\n",width,height,depth,width,this->d.width);
 		return DDERR_UNSUPPORTEDMODE;
 	}
 	this->d.width	= width;
 	this->d.height	= height;
-	this->d.depth	= depth;
 
 	/* adjust fb_height, so we don't overlap */
 	if (this->e.dga.fb_height < height)
@@ -2805,43 +2821,155 @@ static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
 #endif /* defined(HAVE_LIBXXF86DGA) */
 }
 
+/* *************************************
+      16 / 15 bpp to palettized 8 bpp
+   ************************************* */
+static void pixel_convert_16_to_8(void *src, void *dst, DWORD width, DWORD height, LONG pitch, LPDIRECTDRAWPALETTE palette) {
+  unsigned char  *c_src = (unsigned char  *) src;
+  unsigned short *c_dst = (unsigned short *) dst;
+  int x, y;
+
+  if (palette != NULL) {
+    unsigned short *pal = (unsigned short *) palette->screen_palents;
+
+    for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+	c_dst[x + y * width] = pal[c_src[x + y * pitch]];
+      }
+    }
+  } else {
+    WARN(ddraw, "No palette set...\n");
+    memset(dst, 0, width * height * 2);
+  }
+}
+static void palette_convert_16_to_8(LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count) {
+  int i;
+  unsigned short *pal = (unsigned short *) screen_palette;
+  
+  for (i = 0; i < count; i++)
+    pal[start + i] = (((((unsigned short) palent[i].peRed) & 0xF8) << 8) |
+		      ((((unsigned short) palent[i].peBlue) & 0xF8) >> 3) |
+		      ((((unsigned short) palent[i].peGreen) & 0xFC) << 3));
+}
+static void palette_convert_15_to_8(LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count) {
+  int i;
+  unsigned short *pal = (unsigned short *) screen_palette;
+  
+  for (i = 0; i < count; i++)
+    pal[start + i] = (((((unsigned short) palent[i].peRed) & 0xF8) << 7) |
+		      ((((unsigned short) palent[i].peBlue) & 0xF8) >> 3) |
+		      ((((unsigned short) palent[i].peGreen) & 0xF8) << 2));
+}
+
+/* *************************************
+      24 / 32 bpp to palettized 8 bpp
+   ************************************* */
+static void pixel_convert_32_to_8(void *src, void *dst, DWORD width, DWORD height, LONG pitch, LPDIRECTDRAWPALETTE palette) {
+  unsigned char  *c_src = (unsigned char  *) src;
+  unsigned int *c_dst = (unsigned int *) dst;
+  int x, y;
+
+  if (palette != NULL) {
+    unsigned int *pal = (unsigned int *) palette->screen_palents;
+    
+    for (y = 0; y < height; y++) {
+      for (x = 0; x < width; x++) {
+	c_dst[x + y * width] = pal[c_src[x + y * pitch]];
+      }
+    }
+  } else {
+    WARN(ddraw, "No palette set...\n");
+    memset(dst, 0, width * height * 4);
+  }
+}
+static void palette_convert_24_to_8(LPPALETTEENTRY palent, void *screen_palette, DWORD start, DWORD count) {
+  int i;
+  unsigned int *pal = (unsigned int *) screen_palette;
+  
+  for (i = 0; i < count; i++)
+    pal[start + i] = ((((unsigned int) palent[i].peRed) << 16) |
+		      (((unsigned int) palent[i].peGreen) << 8) |
+		      ((unsigned int) palent[i].peBlue));
+}
+
 static HRESULT WINAPI Xlib_IDirectDraw_SetDisplayMode(
 	LPDIRECTDRAW this,DWORD width,DWORD height,DWORD depth
 ) {
-	int	i,*depths,depcount;
 	char	buf[200];
 
 	TRACE(ddraw, "(%p)->SetDisplayMode(%ld,%ld,%ld)\n",
 		      this, width, height, depth);
 
-	/* We hope getting the asked for depth */
-	this->d.screen_depth = depth;
+	switch (_common_depth_to_pixelformat(depth,
+					     &(this->d.directdraw_pixelformat),
+					     &(this->d.screen_pixelformat),
+					     &(this->d.pixmap_depth))) {
+	case 0:
+	  sprintf(buf,"SetDisplayMode(w=%ld,h=%ld,d=%ld), unsupported depth!",width,height,depth);
+	  MessageBoxA(0,buf,"WINE DirectDraw",MB_OK|MB_ICONSTOP);
+	  return DDERR_UNSUPPORTEDMODE;
 
-	depths = TSXListDepths(display,DefaultScreen(display),&depcount);
+	case 1:
+	  /* No convertion */
+	  this->d.pixel_convert = NULL;
+	  this->d.palette_convert = NULL;
+	  break;
 
-	for (i=0;i<depcount;i++)
-		if (depths[i]==depth)
+	case 2: {
+	  int found = 0;
+
+	  WARN(ddraw, "Warning : running in depth-convertion mode. Should run using a %ld depth for optimal performances.\n", depth);
+	  
+	  /* Set the depth convertion routines */
+	  switch (this->d.screen_pixelformat.x.dwRGBBitCount) {
+	  case 16:
+	    if ((this->d.screen_pixelformat.y.dwRBitMask == 0xF800) &&
+		(this->d.screen_pixelformat.z.dwGBitMask == 0x07E0) &&
+		(this->d.screen_pixelformat.xx.dwBBitMask == 0x001F)) {
+	      /* 16 bpp */
+	      found = 1;
+	      
+	      this->d.pixel_convert = pixel_convert_16_to_8;
+	      this->d.palette_convert = palette_convert_16_to_8;
+	    } else if ((this->d.screen_pixelformat.y.dwRBitMask == 0x7C00) &&
+		       (this->d.screen_pixelformat.z.dwGBitMask == 0x03E0) &&
+		       (this->d.screen_pixelformat.xx.dwBBitMask == 0x001F)) {
+	      /* 15 bpp */
+	      found = 1;
+
+	      this->d.pixel_convert = pixel_convert_16_to_8;
+	      this->d.palette_convert = palette_convert_15_to_8;
+	    }
+	    break;
+	    
+	  case 24:
+	    /* Not handled yet :/ */
+	    found = 0;
 			break;
-	if (i==depcount) {/* not found */
-	  for (i=0;i<depcount;i++)
-	    if (depths[i]==16)
-	      break;
+	    
+	  case 32:
+	    if ((this->d.screen_pixelformat.y.dwRBitMask ==  0xFF0000) &&
+		(this->d.screen_pixelformat.z.dwGBitMask ==  0x00FF00) &&
+		(this->d.screen_pixelformat.xx.dwBBitMask == 0x0000FF)) {
+	      /* 24 bpp */
+	      found = 1;
 
-	  if (i==depcount) {
+	      this->d.pixel_convert = pixel_convert_32_to_8;
+	      this->d.palette_convert = palette_convert_24_to_8;
+	    }
+	      break;
+	  }
+
+	  if (!found) {
 		sprintf(buf,"SetDisplayMode(w=%ld,h=%ld,d=%ld), unsupported depth!",width,height,depth);
 		MessageBoxA(0,buf,"WINE DirectDraw",MB_OK|MB_ICONSTOP);
-	    TSXFree(depths);
 		return DDERR_UNSUPPORTEDMODE;
-	  } else {
-	    WARN(ddraw, "Warning : running in depth-convertion mode. Should run using a %ld depth for optimal performances.\n", depth);
-	    this->d.screen_depth = 16;
 	  }
+	} break;
 	}
-	TSXFree(depths);
 
 	this->d.width	= width;
 	this->d.height	= height;
-	this->d.depth	= depth;
 
 	_common_IDirectDraw_SetDisplayMode(this);
 
@@ -2959,43 +3087,13 @@ static HRESULT WINAPI common_IDirectDraw2_CreatePalette(
         if (palent)
         {
 	  /* Now, if we are in 'depth conversion mode', create the screen palette */
-	  if (this->d.depth != this->d.screen_depth) {
-	    int i;
-	  
-	    switch (this->d.screen_depth) {
-	    case 16: {
-	      unsigned short *screen_palette = (unsigned short *) (*lpddpal)->screen_palents;
-	      
-	      for (i = 0; i < size; i++) {
-		screen_palette[i] = (((((unsigned short) palent[i].peRed) & 0xF8) << 8) |
-				     ((((unsigned short) palent[i].peBlue) & 0xF8) >> 3) |
-				     ((((unsigned short) palent[i].peGreen) & 0xFC) << 3));
-	      }
-	    } break;
+	  if (this->d.palette_convert != NULL)	    
+	    this->d.palette_convert(palent, (*lpddpal)->screen_palents, 0, size);
 
-	    default:
-	      ERR(ddraw, "Memory corruption ! (depth=%ld, screen_depth=%ld)\n",this->d.depth,this->d.screen_depth);
-	      break;
-	    }
-	  }
-	  
 	  memcpy((*lpddpal)->palents, palent, size * sizeof(PALETTEENTRY));
-        } else if (this->d.depth != this->d.screen_depth) {
-	  int i;
-	  
-	  switch (this->d.screen_depth) {
-	  case 16: {
-	    unsigned short *screen_palette = (unsigned short *) (*lpddpal)->screen_palents;
-	    
-	    for (i = 0; i < size; i++) {
-	      screen_palette[i] = 0xFFFF;
-        }
-	  } break;
-	    
-	  default:
-	    ERR(ddraw, "Memory corruption !\n");
-	    break;
-	  }
+        } else if (this->d.palette_convert != NULL) {
+	  /* In that case, put all 0xFF */
+	  memset((*lpddpal)->screen_palents, 0xFF, 256 * sizeof(int));
 	}
 	
 	return DD_OK;
@@ -3011,7 +3109,7 @@ static HRESULT WINAPI DGA_IDirectDraw2_CreatePalette(
 	res = common_IDirectDraw2_CreatePalette(this,dwFlags,palent,lpddpal,lpunk,&xsize);
 	if (res != 0) return res;
 	(*lpddpal)->lpvtbl = &dga_ddpalvt;
-	if (this->d.depth<=8) {
+	if (this->d.directdraw_pixelformat.x.dwRGBBitCount<=8) {
 		(*lpddpal)->cm = TSXCreateColormap(display,DefaultRootWindow(display),DefaultVisualOfScreen(X11DRV_GetXScreen()),AllocAll);
 	} else {
 		FIXME(ddraw,"why are we doing CreatePalette in hi/truecolor?\n");
@@ -3278,7 +3376,7 @@ static HRESULT WINAPI IDirectDraw2_GetVerticalBlankStatus(
 	return DD_OK;
 }
 
-static HRESULT WINAPI IDirectDraw2_EnumDisplayModes(
+static HRESULT WINAPI DGA_IDirectDraw2_EnumDisplayModes(
 	LPDIRECTDRAW2 this,DWORD dwFlags,LPDDSURFACEDESC lpddsfd,LPVOID context,LPDDENUMMODESCALLBACK modescb
 ) {
 	DDSURFACEDESC	ddsfd;
@@ -3362,6 +3460,132 @@ static HRESULT WINAPI IDirectDraw2_EnumDisplayModes(
 	return DD_OK;
 }
 
+static HRESULT WINAPI Xlib_IDirectDraw2_EnumDisplayModes(
+	LPDIRECTDRAW2 this,DWORD dwFlags,LPDDSURFACEDESC lpddsfd,LPVOID context,LPDDENUMMODESCALLBACK modescb
+) {
+  XVisualInfo *vi;
+  XPixmapFormatValues *pf;
+  XVisualInfo vt;
+  int nvisuals, npixmap, i;
+  int send_mode;
+  int has_8bpp = 0;
+  DDSURFACEDESC	ddsfd;
+  static struct {
+    int w,h;
+  } modes[] = { /* some of the usual modes */
+    {512,384},
+    {640,400},
+    {640,480},
+    {800,600},
+    {1024,768},
+    {1280,1024}
+  };
+  DWORD maxWidth, maxHeight;
+
+  TRACE(ddraw,"(%p)->(0x%08lx,%p,%p,%p)\n",this,dwFlags,lpddsfd,context,modescb);
+  ddsfd.dwSize = sizeof(ddsfd);
+  ddsfd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_CAPS;
+  if (dwFlags & DDEDM_REFRESHRATES) {
+    ddsfd.dwFlags |= DDSD_REFRESHRATE;
+    ddsfd.x.dwRefreshRate = 60;
+  }
+  maxWidth = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+  maxHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
+  
+  vi = TSXGetVisualInfo(display, VisualNoMask, &vt, &nvisuals);
+  pf = XListPixmapFormats(display, &npixmap);
+
+  i = 0;
+  send_mode = 0;
+  while (i < npixmap) {
+    if ((has_8bpp == 0) && (pf[i].depth == 8)) {
+      /* Special case of a 8bpp depth */
+      has_8bpp = 1;
+      send_mode = 1;
+
+      ddsfd.ddsCaps.dwCaps = DDSCAPS_PALETTE;
+      ddsfd.ddpfPixelFormat.dwSize = sizeof(ddsfd.ddpfPixelFormat);
+      ddsfd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8;
+      ddsfd.ddpfPixelFormat.dwFourCC = 0;
+      ddsfd.ddpfPixelFormat.x.dwRGBBitCount = 8;
+      ddsfd.ddpfPixelFormat.y.dwRBitMask = 0;
+      ddsfd.ddpfPixelFormat.z.dwGBitMask = 0;
+      ddsfd.ddpfPixelFormat.xx.dwBBitMask = 0;
+      ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
+    } else if (pf[i].depth > 8) {
+      int j;
+      
+      /* All the 'true color' depths (15, 16 and 24)
+	 First, find the corresponding visual to extract the bit masks */
+      for (j = 0; j < nvisuals; j++) {
+	if (vi[j].depth == pf[i].depth) {
+	  ddsfd.ddsCaps.dwCaps = 0;
+	  ddsfd.ddpfPixelFormat.dwSize = sizeof(ddsfd.ddpfPixelFormat);
+	  ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+	  ddsfd.ddpfPixelFormat.dwFourCC = 0;
+	  ddsfd.ddpfPixelFormat.x.dwRGBBitCount = pf[i].bits_per_pixel;
+	  ddsfd.ddpfPixelFormat.y.dwRBitMask = vi[j].red_mask;
+	  ddsfd.ddpfPixelFormat.z.dwGBitMask = vi[j].green_mask;
+	  ddsfd.ddpfPixelFormat.xx.dwBBitMask = vi[j].blue_mask;
+	  ddsfd.ddpfPixelFormat.xy.dwRGBAlphaBitMask= 0;
+
+	  send_mode = 1;
+	  break;
+	}
+      }
+      
+      if (j == nvisuals)
+	ERR(ddraw, "Did not find visual corresponding the the pixmap format !\n");
+    } else {
+      send_mode = 0;
+    }
+
+    if (send_mode) {
+      int mode;
+
+      if (TRACE_ON(ddraw)) {
+	TRACE(ddraw, "Enumerating with pixel format : \n");
+	_dump_pixelformat(&(ddsfd.ddpfPixelFormat));
+      }
+      
+      for (mode = 0; mode < sizeof(modes)/sizeof(modes[0]); mode++) {
+	/* Do not enumerate modes we cannot handle anyway */
+	if ((modes[mode].w > maxWidth) || (modes[mode].h > maxHeight))
+	  break;
+
+	ddsfd.dwWidth = modes[mode].w;
+	ddsfd.dwHeight = modes[mode].h;
+	
+	/* Now, send the mode description to the application */
+	TRACE(ddraw, " - mode %4ld - %4ld\n", ddsfd.dwWidth, ddsfd.dwHeight);
+	if (!modescb(&ddsfd, context))
+	  goto exit_enum;
+      }
+
+      if (!(dwFlags & DDEDM_STANDARDVGAMODES)) {
+	/* modeX is not standard VGA */
+	ddsfd.dwWidth = 320;
+	ddsfd.dwHeight = 200;
+	if (!modescb(&ddsfd, context))
+	  goto exit_enum;
+      }
+    }
+
+    /* Hack to always enumerate a 8bpp depth */
+    i++;
+    if ((i == npixmap) && (has_8bpp == 0)) {
+      i--;
+      pf[i].depth = 8;
+    }
+  }
+  
+ exit_enum:
+  TSXFree(vi);
+  TSXFree(pf);
+
+  return DD_OK;
+}
+
 static HRESULT WINAPI DGA_IDirectDraw2_GetDisplayMode(
 	LPDIRECTDRAW2 this,LPDDSURFACEDESC lpddsfd
 ) {
@@ -3370,11 +3594,11 @@ static HRESULT WINAPI DGA_IDirectDraw2_GetDisplayMode(
 	lpddsfd->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
 	lpddsfd->dwHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
 	lpddsfd->dwWidth = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
-	lpddsfd->lPitch = this->e.dga.fb_width*this->d.depth/8;
+	lpddsfd->lPitch = this->e.dga.fb_width*this->d.directdraw_pixelformat.x.dwRGBBitCount/8;
 	lpddsfd->dwBackBufferCount = 1;
 	lpddsfd->x.dwRefreshRate = 60;
 	lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
-	_getpixelformat(this,&(lpddsfd->ddpfPixelFormat));
+	lpddsfd->ddpfPixelFormat = this->d.directdraw_pixelformat;
 	return DD_OK;
 #else /* defined(HAVE_LIBXXF86DGA) */
 	return E_UNEXPECTED;
@@ -3388,13 +3612,11 @@ static HRESULT WINAPI Xlib_IDirectDraw2_GetDisplayMode(
 	lpddsfd->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
 	lpddsfd->dwHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
 	lpddsfd->dwWidth = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
-	/* POOLE FIXME: Xlib */
-	lpddsfd->lPitch = this->e.dga.fb_width*this->d.depth/8;
-	/* END FIXME: Xlib */
+	lpddsfd->lPitch = lpddsfd->dwWidth * this->d.directdraw_pixelformat.x.dwRGBBitCount/8;
 	lpddsfd->dwBackBufferCount = 1;
 	lpddsfd->x.dwRefreshRate = 60;
 	lpddsfd->ddsCaps.dwCaps = DDSCAPS_PALETTE;
-	_getpixelformat(this,&(lpddsfd->ddpfPixelFormat));
+	lpddsfd->ddpfPixelFormat = this->d.directdraw_pixelformat;
 	return DD_OK;
 }
 
@@ -3471,7 +3693,7 @@ static struct IDirectDraw_VTable dga_ddvt = {
 	XCAST(CreatePalette)DGA_IDirectDraw2_CreatePalette,
 	XCAST(CreateSurface)DGA_IDirectDraw2_CreateSurface,
 	XCAST(DuplicateSurface)IDirectDraw2_DuplicateSurface,
-	XCAST(EnumDisplayModes)IDirectDraw2_EnumDisplayModes,
+	XCAST(EnumDisplayModes)DGA_IDirectDraw2_EnumDisplayModes,
 	XCAST(EnumSurfaces)IDirectDraw2_EnumSurfaces,
 	XCAST(FlipToGDISurface)IDirectDraw2_FlipToGDISurface,
 	XCAST(GetCaps)DGA_IDirectDraw2_GetCaps,
@@ -3497,7 +3719,7 @@ static struct IDirectDraw_VTable xlib_ddvt = {
 	XCAST(CreatePalette)Xlib_IDirectDraw2_CreatePalette,
 	XCAST(CreateSurface)Xlib_IDirectDraw2_CreateSurface,
 	XCAST(DuplicateSurface)IDirectDraw2_DuplicateSurface,
-	XCAST(EnumDisplayModes)IDirectDraw2_EnumDisplayModes,
+	XCAST(EnumDisplayModes)Xlib_IDirectDraw2_EnumDisplayModes,
 	XCAST(EnumSurfaces)IDirectDraw2_EnumSurfaces,
 	XCAST(FlipToGDISurface)IDirectDraw2_FlipToGDISurface,
 	XCAST(GetCaps)Xlib_IDirectDraw2_GetCaps,
@@ -3565,7 +3787,7 @@ static IDirectDraw2_VTable dga_dd2vt = {
 	DGA_IDirectDraw2_CreatePalette,
 	DGA_IDirectDraw2_CreateSurface,
 	IDirectDraw2_DuplicateSurface,
-	IDirectDraw2_EnumDisplayModes,
+	DGA_IDirectDraw2_EnumDisplayModes,
 	IDirectDraw2_EnumSurfaces,
 	IDirectDraw2_FlipToGDISurface,
 	DGA_IDirectDraw2_GetCaps,
@@ -3592,7 +3814,7 @@ static struct IDirectDraw2_VTable xlib_dd2vt = {
 	Xlib_IDirectDraw2_CreatePalette,
 	Xlib_IDirectDraw2_CreateSurface,
 	IDirectDraw2_DuplicateSurface,
-	IDirectDraw2_EnumDisplayModes,
+	Xlib_IDirectDraw2_EnumDisplayModes,
 	IDirectDraw2_EnumSurfaces,
 	IDirectDraw2_FlipToGDISurface,
 	Xlib_IDirectDraw2_GetCaps,
@@ -3659,7 +3881,7 @@ static struct IDirectDraw4_VTable dga_dd4vt = {
 	XCAST(CreatePalette)DGA_IDirectDraw2_CreatePalette,
 	XCAST(CreateSurface)DGA_IDirectDraw2_CreateSurface,
 	XCAST(DuplicateSurface)IDirectDraw2_DuplicateSurface,
-	XCAST(EnumDisplayModes)IDirectDraw2_EnumDisplayModes,
+	XCAST(EnumDisplayModes)DGA_IDirectDraw2_EnumDisplayModes,
 	XCAST(EnumSurfaces)IDirectDraw2_EnumSurfaces,
 	XCAST(FlipToGDISurface)IDirectDraw2_FlipToGDISurface,
 	XCAST(GetCaps)DGA_IDirectDraw2_GetCaps,
@@ -3690,7 +3912,7 @@ static struct IDirectDraw4_VTable xlib_dd4vt = {
 	XCAST(CreatePalette)Xlib_IDirectDraw2_CreatePalette,
 	XCAST(CreateSurface)Xlib_IDirectDraw2_CreateSurface,
 	XCAST(DuplicateSurface)IDirectDraw2_DuplicateSurface,
-	XCAST(EnumDisplayModes)IDirectDraw2_EnumDisplayModes,
+	XCAST(EnumDisplayModes)Xlib_IDirectDraw2_EnumDisplayModes,
 	XCAST(EnumSurfaces)IDirectDraw2_EnumSurfaces,
 	XCAST(FlipToGDISurface)IDirectDraw2_FlipToGDISurface,
 	XCAST(GetCaps)Xlib_IDirectDraw2_GetCaps,
@@ -3782,6 +4004,7 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 	int	memsize,banksize,width,major,minor,flags,height;
 	char	*addr;
 	int     fd;             	
+	int     depth;
 
         /* Must be able to access /dev/mem for DGA extensions to work, root is not neccessary. --stephenc */
         if ((fd = open("/dev/mem", O_RDWR)) != -1)
@@ -3824,8 +4047,8 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 #endif
 
 	/* just assume the default depth is the DGA depth too */
-	(*lplpDD)->d.screen_depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
-	(*lplpDD)->d.depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
+	depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
+	_common_depth_to_pixelformat(depth, &((*lplpDD)->d.directdraw_pixelformat), &((*lplpDD)->d.screen_pixelformat), NULL);
 #ifdef RESTORE_SIGNALS
 	SIGNAL_InitHandlers();
 #endif
@@ -3858,6 +4081,7 @@ DDRAW_XSHM_Available(void)
 }
 
 HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) {
+	int depth;
 
 	*lplpDD = (LPDIRECTDRAW)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(IDirectDraw));
 	(*lplpDD)->lpvtbl = &xlib_ddvt;
@@ -3865,8 +4089,8 @@ HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter)
 	(*lplpDD)->d.drawable = 0; /* in SetDisplayMode */
 
 	/* At DirectDraw creation, the depth is the default depth */
-	(*lplpDD)->d.depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
-	(*lplpDD)->d.screen_depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
+	depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
+	_common_depth_to_pixelformat(depth, &((*lplpDD)->d.directdraw_pixelformat), &((*lplpDD)->d.screen_pixelformat), NULL);
 	(*lplpDD)->d.height = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
 	(*lplpDD)->d.width = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
 
