@@ -557,9 +557,9 @@ static const char main_key_LA[MAIN_LEN][4] =
 /*** Lithuanian (Baltic) keyboard layout (contributed by Nerijus Baliûnas) */
 static const char main_key_LT_B[MAIN_LEN][4] =
 {
- "`~","àÀ","èÈ","æÆ","ëË","áÁ","ğĞ","øØ","ûÛ","((","))","-_","şŞ",
+ "`~","1àÀ","2èÈ","3æÆ","4ëË","5áÁ","6ğĞ","7øØ","8ûÛ","9¥(","0´)","-_","=şŞ","\\|",
  "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","[{","]}",
- "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:","'\"","\\|",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:","'\"",
  "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?"
 };
 
