@@ -931,7 +931,7 @@ INT WINAPI LoadStringA( HINSTANCE instance, UINT resource_id,
  *
  * (lastentry-firstentry) * stringentry:
  * 0: WORD len (0 marks end)
- * 2: WORD unknown (flags?)
+ * 2: WORD flags
  * 4: CHAR[len-4]
  * 	(stringentry i of a subentry refers to the ID 'firstentry+i')
  *
@@ -946,18 +946,10 @@ INT WINAPI LoadMessageA( HMODULE instance, UINT id, WORD lang,
 {
     HGLOBAL	hmem;
     HRSRC	hrsrc;
-    BYTE	*p;
-    int		nrofentries,i,slen;
-    struct	_subentry {
-    	DWORD	firstentry;
-	DWORD	lastentry;
-	DWORD	offset;
-    } *se;
-    struct	_stringentry {
-    	WORD	len;
-	WORD	unknown;
-	CHAR	str[1];
-    } *stre;
+    PMESSAGE_RESOURCE_DATA	mrd;
+    PMESSAGE_RESOURCE_BLOCK	mrb;
+    PMESSAGE_RESOURCE_ENTRY	mre;
+    int		i,slen;
 
     TRACE(resource, "instance = %08lx, id = %08lx, buffer = %p, length = %ld\n", (DWORD)instance, (DWORD)id, buffer, (DWORD)buflen);
 
@@ -967,32 +959,31 @@ INT WINAPI LoadMessageA( HMODULE instance, UINT id, WORD lang,
     hmem = LoadResource( instance, hrsrc );
     if (!hmem) return 0;
     
-    p = LockResource(hmem);
-    nrofentries = *(DWORD*)p;
-    stre = NULL;
-    se = (struct _subentry*)(p+4);
-    for (i=nrofentries;i--;) {
-    	if ((id>=se->firstentry) && (id<=se->lastentry)) {
-	    stre = (struct _stringentry*)(p+se->offset);
-	    id	-= se->firstentry;
+    mrd = (PMESSAGE_RESOURCE_DATA)LockResource(hmem);
+    mre = NULL;
+    mrb = &(mrd->Blocks[0]);
+    for (i=mrd->NumberOfBlocks;i--;) {
+    	if ((id>=mrb->LowId) && (id<=mrb->HighId)) {
+	    mre = (PMESSAGE_RESOURCE_ENTRY)(((char*)mrd)+mrb->OffsetToEntries);
+	    id	-= mrb->LowId;
 	    break;
 	}
-	se++;
+	mrb++;
     }
-    if (!stre)
+    if (!mre)
     	return 0;
     for (i=id;i--;) {
-    	if (!(slen=stre->len))
+    	if (!mre->Length)
 		return 0;
-    	stre = (struct _stringentry*)(((char*)stre)+slen);
+    	mre = (PMESSAGE_RESOURCE_ENTRY)(((char*)mre)+(mre->Length));
     }
-    slen=stre->len;
+    slen=mre->Length;
     TRACE(resource,"	- strlen=%d\n",slen);
     i = MIN(buflen - 1, slen);
     if (buffer == NULL)
 	return slen; /* different to LoadString */
     if (i>0) {
-	lstrcpynA(buffer,stre->str,i);
+	lstrcpynA(buffer,(char*)mre->Text,i);
 	buffer[i]=0;
     } else {
 	if (buflen>1) {
