@@ -49,6 +49,13 @@
 #include "gl_api.h"
 #undef GL_API_FUNCTION
 
+/* This is also where I store our private extension defines...
+   I know that Raphael won't like it, but well, I prefer doing that than battling 10 different headers :-)
+
+   Note: this is perfectly 'legal' as the three variants of the enum have exactly the same value
+*/
+#define GL_MIRRORED_REPEAT_WINE 0x8370
+
 #ifndef GLPRIVATE_NO_REDEFINE
 
 #define glAlphaFunc pglAlphaFunc
@@ -86,6 +93,7 @@
 #define glGetError pglGetError
 #define glGetFloatv pglGetFloatv
 #define glGetIntegerv pglGetIntegerv
+#define glGetString pglGetString
 #define glGetTexEnviv pglGetTexEnviv
 #define glGetTexParameteriv pglGetTexParameteriv
 #define glHint pglHint
@@ -130,6 +138,7 @@
 #define glXCreateContext pglXCreateContext
 #define glXDestroyContext pglXDestroyContext
 #define glXMakeCurrent pglXMakeCurrent
+#define glXQueryExtensionsString pglXQueryExtensionsString
 #define glXSwapBuffers pglXSwapBuffers
 
 #endif /* GLPRIVATE_NO_REDEFINE */

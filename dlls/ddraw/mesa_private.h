@@ -154,6 +154,17 @@ typedef struct {
     LPVOID vertices;
 } IDirect3DVertexBufferGLImpl;
 
+/* This is for GL extension support.
+   
+   This can contain either only a boolean if no function pointer exists or a set
+   of function pointers.
+*/
+typedef struct {
+    /* Mirrored Repeat */
+    BOOLEAN mirrored_repeat;
+} GL_EXTENSIONS_LIST; 
+extern GL_EXTENSIONS_LIST GL_extensions;
+
 /* All non-static functions 'exported' by various sub-objects */
 extern HRESULT direct3d_create(IDirectDrawImpl *This);
 extern HRESULT d3dtexture_create(IDirectDrawImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOLEAN at_creation, IDirectDrawSurfaceImpl *main_surf);

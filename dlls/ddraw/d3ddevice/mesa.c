@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <string.h>
 #include <math.h>
@@ -32,6 +33,7 @@
 #include "ddraw.h"
 #include "d3d.h"
 #include "wine/debug.h"
+#include "wine/library.h"
 
 #include "mesa_private.h"
 #include "main.h"
@@ -66,6 +68,7 @@ const float id_mat[16] = {
 
 /* This is filled at DLL loading time */
 static D3DDEVICEDESC7 opengl_device_caps;
+GL_EXTENSIONS_LIST GL_extensions;
 
 static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 				   D3DPRIMITIVETYPE d3dptPrimitiveType,
@@ -1749,11 +1752,13 @@ GL_IDirect3DDeviceImpl_7_3T_SetTextureStageState(LPDIRECT3DDEVICE7 iface,
 	        case D3DTADDRESS_WRAP:   TRACE(" Stage type is : %s => D3DTADDRESS_WRAP\n", type); break;
 	        case D3DTADDRESS_CLAMP:  TRACE(" Stage type is : %s => D3DTADDRESS_CLAMP\n", type); break;
 	        case D3DTADDRESS_BORDER: TRACE(" Stage type is : %s => D3DTADDRESS_BORDER\n", type); break;
-#if defined(GL_VERSION_1_4)
-		case D3DTADDRESS_MIRROR: TRACE(" Stage type is : %s => D3DTADDRESS_MIRROR\n", type); break;
-#elif defined(GL_ARB_texture_mirrored_repeat)
-		case D3DTADDRESS_MIRROR: TRACE(" Stage type is : %s => D3DTADDRESS_MIRROR\n", type); break;
-#endif
+		case D3DTADDRESS_MIRROR:
+		    if (GL_extensions.mirrored_repeat == TRUE) {
+			TRACE(" Stage type is : %s => D3DTADDRESS_MIRROR\n", type);
+		    } else {
+			FIXME(" Stage type is : %s => D3DTADDRESS_MIRROR - not supported by GL !\n", type);
+		    }
+		    break;
 	        default: FIXME(" Unhandled stage type : %s => %08lx\n", type, dwState); break;
 	    }
         } break;
@@ -3787,6 +3792,9 @@ static void fill_opengl_primcaps(D3DPRIMCAPS *pc)
     pc->dwTextureBlendCaps = D3DPTBLENDCAPS_ADD | D3DPTBLENDCAPS_COPY | D3DPTBLENDCAPS_DECAL | D3DPTBLENDCAPS_DECALALPHA | D3DPTBLENDCAPS_DECALMASK |
       D3DPTBLENDCAPS_MODULATE | D3DPTBLENDCAPS_MODULATEALPHA | D3DPTBLENDCAPS_MODULATEMASK;
     pc->dwTextureAddressCaps = D3DPTADDRESSCAPS_BORDER | D3DPTADDRESSCAPS_CLAMP | D3DPTADDRESSCAPS_WRAP | D3DPTADDRESSCAPS_INDEPENDENTUV;
+    if (GL_extensions.mirrored_repeat == TRUE) {
+	pc->dwTextureAddressCaps |= D3DPTADDRESSCAPS_MIRROR;
+    }
     pc->dwStippleWidth = 32;
     pc->dwStippleHeight = 32;
 }
@@ -3863,7 +3871,12 @@ d3ddevice_init_at_startup(void *gl_handle)
     XWindowAttributes win_attr;
     GLXContext gl_context;
     int num;
-
+    const char *glExtensions;
+    const char *glVersion;
+    const char *glXExtensions = NULL;
+    const void *(*pglXGetProcAddressARB)(const GLubyte *) = NULL;
+    int major, minor, patch;
+    
     TRACE("Initializing GL...\n");
     
     /* Get a default rendering context to have the 'caps' function query some info from GL */    
@@ -3898,7 +3911,33 @@ d3ddevice_init_at_startup(void *gl_handle)
 	return FALSE;	
     }
     
-    /* Then, query all extensions and fill our extension context. TODO :-) */
+    /* Then, query all extensions */
+    glXExtensions = glXQueryExtensionsString(display, DefaultScreen(display));
+    glExtensions = (const char *) glGetString(GL_EXTENSIONS);
+    glVersion = (const char *) glGetString(GL_VERSION);
+    if ((glXExtensions != NULL) && (gl_handle != NULL) && (strstr(glXExtensions, "GLX_ARB_get_proc_address"))) {
+	pglXGetProcAddressARB = wine_dlsym(gl_handle, "glXGetProcAddressARB", NULL, 0);
+    }
+    
+    /* Parse the GL version string */
+    sscanf(glVersion, "%d.%d.%d", &major, &minor, &patch);
+    TRACE("GL version %d.%d.%d\n", major, minor, patch);
+
+    /* And starts to fill the extension context properly */
+    memset(&GL_extensions, 0, sizeof(GL_extensions));
+    TRACE("GL supports following extensions used by Wine :\n");
+    
+    /* Mirrored Repeat extension :
+        - GL_ARB_texture_mirrored_repeat
+	- GL_IBM_texture_mirrored_repeat
+	- GL >= 1.4
+    */
+    if ((strstr(glExtensions, "GL_ARB_texture_mirrored_repeat")) ||
+	(strstr(glExtensions, "GL_IBM_texture_mirrored_repeat")) ||
+	((major >= 1) && (minor >= 4))) {
+	TRACE(" - mirrored repeat\n");
+	GL_extensions.mirrored_repeat = TRUE;
+    }
     
     /* Fill the D3D capabilities according to what GL tells us... */
     fill_caps();

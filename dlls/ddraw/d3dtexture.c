@@ -143,11 +143,17 @@ convert_tex_address_to_GL(D3DTEXTUREADDRESS dwState)
         case D3DTADDRESS_WRAP:   gl_state = GL_REPEAT; break;
 	case D3DTADDRESS_CLAMP:  gl_state = GL_CLAMP; break;
 	case D3DTADDRESS_BORDER: gl_state = GL_CLAMP_TO_EDGE; break;
-#if defined(GL_VERSION_1_4)
-	case D3DTADDRESS_MIRROR: gl_state = GL_MIRRORED_REPEAT; break;
-#elif defined(GL_ARB_texture_mirrored_repeat)
-	case D3DTADDRESS_MIRROR: gl_state = GL_MIRRORED_REPEAT_ARB; break;
-#endif
+	case D3DTADDRESS_MIRROR:
+	    if (GL_extensions.mirrored_repeat == TRUE) {
+		gl_state = GL_MIRRORED_REPEAT_WINE;
+	    } else {
+		gl_state = GL_REPEAT;
+		/* This is a TRACE instead of a FIXME as the FIXME was already printed when the game
+		   actually set D3DTADDRESS_MIRROR.
+		*/
+		TRACE(" setting GL_REPEAT instead of GL_MIRRORED_REPEAT.\n");
+	    }
+	break;
 	default:                 gl_state = GL_REPEAT; break;
     }
     return gl_state;
