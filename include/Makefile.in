@@ -15,6 +15,9 @@ INSTALLED_INCLUDES = \
 	compobj.h \
 	cpl.h \
 	d3d.h \
+	d3d8.h \
+	d3d8caps.h \
+	d3d8types.h \
 	d3dcaps.h \
 	d3dtypes.h \
 	d3dvec.inl \
