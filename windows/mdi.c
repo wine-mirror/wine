@@ -1536,7 +1536,7 @@ LRESULT WINAPI DefMDIChildProc32W( HWND32 hwnd, UINT32 message,
  *    Success: Handle to created window
  *    Failure: NULL
  */
-HWND32 CreateMDIWindow32A(
+HWND32 WINAPI CreateMDIWindow32A(
     LPCSTR lpClassName,    /* [in] Pointer to registered child class name */
     LPCSTR lpWindowName,   /* [in] Pointer to window name */
     DWORD dwStyle,         /* [in] Window style */
@@ -1604,7 +1604,7 @@ HWND32 MDI_CreateMDIWindow32A(
  *    Success: Handle to created window
  *    Failure: NULL
  */
-HWND32 CreateMDIWindow32W(
+HWND32 WINAPI CreateMDIWindow32W(
     LPCWSTR lpClassName,    /* [in] Pointer to registered child class name */
     LPCWSTR lpWindowName,   /* [in] Pointer to window name */
     DWORD dwStyle,         /* [in] Window style */
