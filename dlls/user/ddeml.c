@@ -2123,10 +2123,9 @@ INT WINAPI DdeCmpStringHandles( HSZ hsz1, HSZ hsz2 )
  *            PackDDElParam (USER32.414)
  *
  * RETURNS
- *   success: nonzero
- *   failure: zero
+ *   the packed lParam
  */
-UINT WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
+LPARAM WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
 {
     FIXME("stub.\n");
     return 0;
@@ -2140,8 +2139,8 @@ UINT WINAPI PackDDElParam(UINT msg, UINT uiLo, UINT uiHi)
  *   success: nonzero
  *   failure: zero
  */
-UINT WINAPI UnpackDDElParam(UINT msg, UINT lParam,
-                              UINT *uiLo, UINT *uiHi)
+BOOL WINAPI UnpackDDElParam(UINT msg, LPARAM lParam,
+                              PUINT uiLo, PUINT uiHi)
 {
     FIXME("stub.\n");
     return 0;
@@ -2155,7 +2154,7 @@ UINT WINAPI UnpackDDElParam(UINT msg, UINT lParam,
  *   success: nonzero
  *   failure: zero
  */
-UINT WINAPI FreeDDElParam(UINT msg, UINT lParam)
+BOOL WINAPI FreeDDElParam(UINT msg, LPARAM lParam)
 {
     FIXME("stub.\n");
     return 0;
@@ -2164,8 +2163,10 @@ UINT WINAPI FreeDDElParam(UINT msg, UINT lParam)
 /*****************************************************************
  *            ReuseDDElParam (USER32.446)
  *
+ * RETURNS
+ *   the packed lParam
  */
-UINT WINAPI ReuseDDElParam(UINT lParam, UINT msgIn, UINT msgOut,
+LPARAM WINAPI ReuseDDElParam(UINT lParam, UINT msgIn, UINT msgOut,
                              UINT uiLi, UINT uiHi)
 {
     FIXME("stub.\n");
