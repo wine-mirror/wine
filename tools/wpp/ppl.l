@@ -531,7 +531,7 @@ includelogicentry_t *pp_includelogiclist = NULL;
 	/*
 	 * Remove C++ style comment (almost all start-conditions)
 	 */
-<INITIAL,pp_pp,pp_ignore,pp_eol,pp_inc,pp_if,pp_ifd,pp_defined,pp_def,pp_define,pp_macro,pp_mbody,pp_macscan,RCINCL>"//"[^\n]*	{
+<INITIAL,pp_pp,pp_ignore,pp_eol,pp_inc,pp_if,pp_ifd,pp_endif,pp_defined,pp_def,pp_define,pp_macro,pp_mbody,pp_macscan,RCINCL>"//"[^\n]*	{
 		if(pptext[ppleng-1] == '\\')
 			ppwarning("C++ style comment ends with an escaped newline (escape ignored)");
 	}
