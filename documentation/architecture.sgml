@@ -1,0 +1,1032 @@
+  <chapter id="architecture">
+    <title>Overview</title>
+    <para>Brief overview of Wine's architecture...</para>
+
+    <sect1 id="basic-overview">
+      <title>Basic Overview</title>
+
+      <para>Written by Ove Kaaven</para>
+
+      <para>
+        With the fundamental architecture of Wine stabilizing, and
+        people starting to think that we might soon be ready to
+        actually release this thing, it may be time to take a look at
+        how Wine actually works and operates.
+      </para>
+
+      <sect2>
+        <title>Wine Overview</title>
+        <para>
+          Wine is often used as a recursive acronym, standing for
+          "Wine Is Not an Emulator". Sometimes it is also known to be
+          used for "Windows Emulator". In a way, both meanings are
+          correct, only seen from different perspectives. The first
+          meaning says that Wine is not a virtual machine, it does not
+          emulate a CPU, and you are not supposed to install neither
+          Windows nor any Windows device drivers on top of it; rather,
+          Wine is an implementation of the Windows API, and can be
+          used as a library to port Windows applications to Unix. The
+          second meaning, obviously, is that to Windows binaries
+          (<filename>.exe</filename> files), Wine does look like
+          Windows, and emulates its behaviour and quirks rather
+          closely.
+        </para>
+        <note>
+          <title>Note</title>
+          <para>
+            The "Emulator" perspective should not be thought of as if
+            Wine is a typical inefficient emulation layer that means
+            Wine can't be anything but slow - the faithfulness to the
+            badly designed Windows API may of course impose a minor
+            overhead in some cases, but this is both balanced out by
+            the higher efficiency of the Unix platforms Wine runs on,
+            and that other possible abstraction libraries (like Motif,
+            GTK+, CORBA, etc) has a runtime overhead typically
+            comparable to Wine's.
+          </para>
+        </note>
+      </sect2>
+
+      <sect2>
+        <title>Win16 and Win32</title>
+        <para>
+          Win16 and Win32 applications have different requirements;
+          for example, Win16 apps expect cooperative multitasking
+          among themselves, and to exist in the same address space,
+          while Win32 apps except the complete opposite, i.e.
+          preemptive multitasking, and separate address spaces.
+        </para>
+        <para>
+          Wine now deals with this issue by launching a separate Wine
+          process for each Win32 process, but not for Win16 tasks.
+          Win16 tasks are now run as different intersynchronized
+          threads in the same Wine process; this Wine process is
+          commonly known as a <firstterm>WOW</firstterm> process,
+          referring to a similar mechanism used by Windows NT.
+          Synchronization between the Win16 tasks running in the WOW
+          process is normally done through the Win16 mutex - whenever
+          one of them is running, it holds the Win16 mutex, keeping
+          the others from running. When the task wishes to let the
+          other tasks run, the thread releases the Win16 mutex, and
+          one of the waiting threads will then acquire it and let its
+          task run.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>The Wineserver</title>
+        <para>
+          The Wineserver is among the most confusing concepts in Wine.
+          What is its function in Wine? Well, to be brief, it provides
+          Inter-Process Communication (IPC), synchronization, and
+          process/thread management. When the wineserver launches, it
+          creates a Unix socket for the current host in your home
+          directory's <filename>.wine</filename> subdirectory (or
+          wherever the <constant>WINEPREFIX</constant> environment
+          variable points) - all Wine processes launched later
+          connects to the wineserver using this socket. (If a
+          wineserver was not already running, the first Wine process
+          will start up the wineserver in auto-terminate mode (i.e.
+          the wineserver will then terminate itself once the last Wine
+          process has terminated).)
+        </para>
+        <para>
+          Every thread in each Wine process has its own request
+          buffer, which is shared with the wineserver. When a thread
+          needs to synchronize or communicate with any other thread or
+          process, it fills out its request buffer, then writes a
+          command code through the socket. The wineserver handles the
+          command as appropriate, while the client thread waits for a
+          reply. In some cases, like with the various
+          <function>WaitFor</function> synchronization primitives, the
+          server handles it by marking the client thread as waiting
+          and does not send it a reply before the wait condition has
+          been satisfied.
+        </para>
+        <para>
+          The wineserver itself is a single and separate process and
+          does not have its own threading - instead, it is built on
+          top of a large <function>poll()</function> loop that alerts
+          the wineserver whenever anything happens, such that a client
+          has sent a command, or a wait condition has been satisfied.
+          There is thus no danger of race conditions inside the
+          wineserver itself - it is often called upon to do operations
+          that look completely atomic to its clients.
+        </para>
+        <para>
+          Because the wineserver needs to manage processes, threads,
+          shared handles, synchronization, and any related issues, all
+          the client's Win32 objects are also managed by the
+          wineserver, and the clients must send requests to the
+          wineserver whenever they need to know any Win32 object
+          handle's associated Unix file descriptor (in which case the
+          wineserver duplicates the file descriptor, transmits it to
+          the client, and leaves to the client to close the duplicate
+          when it's done with it).
+          </para>
+      </sect2>
+
+      <sect2>
+        <title>The Service Thread</title>
+        <para>
+          The Wineserver cannot do everything that needs to be done
+          behind the application's back, considering that it's not
+          threaded (so cannot do anything that would block or take any
+          significant amount of time), nor does it share the address
+          space of its client threads. Thus, a special event loop also
+          exists in each Win32 process' own address space, but handled
+          like one of the process' own threads. This special thread is
+          called the <firstterm>service thread</firstterm>, and does
+          things that it wouldn't be appropriate for the wineserver to
+          do. For example, it can call the application's asynchronous
+          system timer callbacks every time a timer event is signalled
+          (the wineserver handles the signalling, of course).
+        </para>
+        <para>
+          One important function of the service thread is to support
+          the X11 driver's event loop. Whenever an event arrives from
+          the X server, the service thread wakes up and sees the
+          event, processes it, and posts messages into the
+          application's message queues as appropriate. But this
+          function is not unique - any number of Wine core components
+          can install their own handlers into the service thread as
+          necessary, whenever they need to do something independent of
+          the application's own event loop. (At the moment, this
+          includes, but is not limited to, multimedia timers, serial
+          comms, and winsock async selects.)
+        </para>
+        <para>
+          The implementation of the service thread is in
+          <filename>scheduler/services.c</filename>.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Relays, Thunks, and DLL descriptors</title>
+        <para>
+          Loading a Windows binary into memory isn't that hard by
+          itself, the hard part is all those various DLLs and entry
+          points it imports and expects to be there and function as
+          expected; this is, obviously, what the entire Wine
+          implementation is all about. Wine contains a range of DLL
+          implementations. Each of the implemented (or
+          half-implemented) DLLs (which can be found in the
+          <filename>dlls/</filename> directory) need to make
+          themselves known to the Wine core through a DLL descriptor.
+          These descriptors point to such things as the DLL's
+          resources and the entry point table.
+        </para>
+        <para>
+          The DLL descriptor and entry point table is generated by the
+          <command>winebuild</command> tool (previously just named
+          <command>build</command>), taking DLL specification files
+          with the extension <filename>.spec</filename> as input. The
+          output file contains a global constructor that automatically
+          registers the DLL's descriptor with the Wine core at
+          runtime.
+        </para>
+        <para>
+          Once an application module wants to import a DLL, Wine will
+          look through its list of registered DLLs (if it's not
+          registered, it will look for it on disk). (Failing that, it
+          will look for a real Windows <filename>.DLL</filename> file
+          to use, and look through its imports, etc.) To resolve the
+          module's imports, Wine looks through the entry point table
+          and finds if it's defined there. (If not, it'll emit the
+          error "No handler for ...", which, if the application called
+          the entry point, is a fatal error.)
+        </para>
+        <para>
+          Since Wine is 32-bit code itself, and if the compiler
+          supports Windows' calling convention, <type>stdcall</type>
+          (<command>gcc</command> does), Wine can resolve imports into
+          Win32 code by substituting the addresses of the Wine
+          handlers directly without any thunking layer in between.
+          This eliminates the overhead most people associate with
+          "emulation", and is what the applications expect anyway.
+        </para>
+        <para>
+          However, if the user specified <parameter>--debugmsg
+            +relay</parameter>, a thunk layer is inserted between the
+          application imports and the Wine handlers; this layer is
+          known as "relay" because all it does is print out the
+          arguments/return values (by using the argument lists in the
+          DLL descriptor's entry point table), then pass the call on,
+          but it's invaluable for debugging misbehaving calls into
+          Wine code. A similar mechanism also exists between Windows
+          DLLs - Wine can optionally insert thunk layers between them,
+          by using <parameter>--debugmsg +snoop</parameter>, but since
+          no DLL descriptor information exists for non-Wine DLLs, this
+          is less reliable and may lead to crashes.
+        </para>
+        <para>
+          For Win16 code, there is no way around thunking - Wine needs
+          to relay between 16-bit and 32-bit code. These thunks switch
+          between the app's 16-bit stack and Wine's 32-bit stack,
+          copies and converts arguments as appropriate, and handles
+          the Win16 mutex. Suffice to say that the kind of intricate
+          stack content juggling this results in, is not exactly
+          suitable study material for beginners.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Core and non-core DLLs</title>
+
+<!-- FIXME: Should do this without the .jpg (AJ)
+        <para>
+          This slide (by Marcus Meissner of Caldera Systems, shown at
+          the Comdex 99) shows how Wine is meant to fit into the
+          Windows DLL model.
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="arch-layout.jpg" format="jpg">
+            </imageobject>
+          </mediaobject>
+        </para>
+FIXME -->
+
+        <para>
+          Wine must at least completely replace the "Big Three" DLLs
+          (KERNEL/KERNEL32, GDI/GDI32, and USER/USER32), which all
+          other DLLs are layered on top of. But since Wine is (for
+          various reasons) leaning towards the NT way of implementing
+          things, the NTDLL is another core DLL to be implemented in
+          Wine, and many KERNEL32 and ADVAPI32 features will be
+          implemented through the NTDLL. The wineserver and the
+          service thread provide the backbone for the implementation
+          of these core DLLs, and integration with the X11 driver
+          (which provides GDI/GDI32 and USER/USER32 functionality
+          along with the Windows standard controls). All non-core
+          DLLs, on the other hand, are expected to only use routines
+          exported by other DLLs (and none of these backbone services
+          directly), to keep the code base as tidy as possible. An
+          example of this is COMCTL32 (Common Controls), which should
+          only use standard GDI32- and USER32-exported routines.
+        </para>
+      </sect2>
+    </sect1>
+
+    <sect1 id="module-overview">
+      <title>Module Overview</title>
+
+      <para>
+        written by (???)
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/internals</filename>)
+      </para>
+
+      <sect2>
+        <title>KERNEL Module</title>
+
+        <para>Needs some content...</para>
+      </sect2>
+
+      <sect2>
+        <title>GDI Module</title>
+
+        <sect3>
+          <title>X Windows System interface</title>
+
+          <para>
+            The X libraries used to implement X clients (such as Wine)
+            do not work properly if multiple threads access the same
+            display concurrently. It is possible to compile the X
+            libraries to perform their own synchronization (initiated
+            by calling <function>XInitThreads()</function>). However,
+            Wine does not use this approach. Instead Wine performs its
+            own synchronization by putting a wrapper around every X
+            call that is used. This wrapper protects library access
+            with a critical section, and also arranges things so that
+            X libraries compiled without <option>-D_REENTRANT</option>
+            (eg. with global <varname>errno</varname> variable) will
+            work with Wine.
+          </para>
+          <para>
+            To make this scheme work, all calls to X must use the
+            proper wrapper functions (or do their own synchronization
+            that is compatible with the wrappers). The wrapper for a
+            function <function>X...()</function> is calles
+            <function>TSX...()</function> (for "Thread Safe X ...").
+            So for example, instead of calling
+            <function>XOpenDisplay()</function> in the code,
+            <function>TSXOpenDisplay()</function> must be used.
+            Likewise, X header files that contain function prototypes
+            are wrapped, so that eg. <filename>"ts_xutil.h"</filename>
+            must be included rather than
+            <filename>&lt;X11/Xutil.h&gt;</filename>. It is important
+            that this scheme is used everywhere to avoid the
+            introduction of nondeterministic and hard-to-find errors
+            in Wine.
+          </para>
+          <para>
+            The code for the thread safe X wrappers is contained in
+            the <filename>tsx11/</filename> directory and in
+            <filename>include/ts*.h</filename>. To use a new (ie. not
+            previously used) X function in Wine, a new wrapper must be
+            created. The wrappers are generated (semi-)automatically
+            from the X11R6 includes using the
+            <filename>tools/make_X11wrappers</filename> perl script.
+            In simple cases it should be enough to add the name of the
+            new function to the list in
+            <filename>tsx11/X11_calls</filename>; if this does not
+            work the wrapper must be added manually to the
+            <filename>make_X11wrappers</filename> script. See comments
+            in <filename>tsx11/X11_calls</filename> and
+            <filename>tools/make_X11wrappers</filename> for further
+            details.
+          </para>
+        </sect3>
+      </sect2>
+
+      <sect2>
+        <title>USER Module</title>
+
+        <para>
+          USER implements windowing and messaging subsystems. It also
+          contains code for common controls and for other
+          miscellaneous  stuff (rectangles, clipboard, WNet, etc).
+          Wine USER code is  located in <filename>windows/</filename>,
+          <filename>controls/</filename>, and
+          <filename>misc/</filename> directories.
+        </para>
+
+        <sect3>
+          <title>Windowing subsystem</title>
+
+          <para><filename>windows/win.c</filename></para>
+          <para><filename>windows/winpos.c</filename></para>
+          <para>
+            Windows are arranged into parent/child hierarchy with one
+            common ancestor for all windows (desktop window). Each
+            window structure contains a pointer to the immediate
+            ancestor (parent window if <constant>WS_CHILD</constant>
+            style bit is set), a pointer to the sibling (returned by
+            <function>GetWindow(..., GW_NEXT)</function>), a pointer
+            to the owner  window (set only for popup window if it was
+            created with valid  <varname>hwndParent</varname>
+            parameter), and a pointer to the first child window
+            (<function>GetWindow(.., GW_CHILD)</function>). All popup
+            and non-child windows are therefore placed in the first
+            level of this hierarchy and their ancestor link
+            (<varname>wnd-&gt;parent</varname>) points to the desktop
+            window.
+          </para>
+          <screen>
+   Desktop window			- root window
+    |     \      `-.
+    |      \        `-.
+   popup -&gt; wnd1  -&gt;  wnd2		- top level windows    
+    |       \   `-.      `-.
+    |        \     `-.      `-.
+   child1  child2 -&gt; child3  child4     - child windows
+          </screen>
+          <para>
+            Horizontal arrows denote sibling relationship, vertical
+            lines - ancestor/child. To summarize, all windows with the
+            same immediate ancestor are sibling windows, all windows
+            which do not have desktop as their immediate ancestor are
+            child windows. Popup windows behave as topmost top-level
+            windows unless they are owned. In this case the only
+            requirement is that they must precede their owners in the
+            top-level sibling list (they are not topmost). Child
+            windows are confined to the client area of their parent
+            windows (client area is where window gets to do its own
+            drawing, non-client area consists of caption, menu,
+            borders, intrinsic scrollbars, and
+            minimize/maximize/close/help buttons). 
+          </para>
+          <para>
+            Another fairly important concept is
+            <firstterm>z-order</firstterm>. It is derived from the
+            ancestor/child hierarchy and is used to determine
+            "above/below" relationship. For instance, in the example
+            above, z-order is
+          </para>
+          <screen>
+child1-&gt;popup-&gt;child2-&gt;child3-&gt;wnd1-&gt;child4-&gt;wnd2-&gt;desktop.
+          </screen>
+          <para>
+            Current  active window ("foreground window" in Win32) is
+            moved to the front of z-order unless its top-level
+            ancestor owns popup windows.
+          </para>
+          <para>
+            All these issues are dealt with (or supposed to be) in
+            <filename>windows/winpos.c</filename> with
+            <function>SetWindowPos()</function> being the primary
+            interface to the window manager.
+          </para>
+          <para>
+            Wine specifics: in default and managed mode each top-level
+            window gets its own X counterpart with desktop window
+            being basically a fake stub. In desktop mode, however,
+            only desktop window has an X window associated with it.
+            Also, <function>SetWindowPos()</function> should
+            eventually be implemented via
+            <function>Begin/End/DeferWindowPos()</function> calls and
+            not the other way around.
+          </para>
+
+          <sect4>
+            <title>Visible region, clipping region and update region</title>
+
+            <para><filename>windows/dce.c</filename></para>
+            <para><filename>windows/winpos.c</filename></para>
+            <para><filename>windows/painting.c</filename></para>
+
+            <screen>
+    ________________________
+   |_________               |  A and B are child windows of C
+   |    A    |______        | 
+   |         |      |       |
+   |---------'      |       |
+   |   |      B     |       |
+   |   |            |       |
+   |   `------------'       |
+   |                   C    |
+   `------------------------'
+            </screen>
+            <para>
+              Visible region determines which part of the window is
+              not obscured by other windows. If a window has the
+              <constant>WS_CLIPCHILDREN</constant> style then all
+              areas below its children are considered invisible.
+              Similarily, if the <constant>WS_CLIPSIBLINGS</constant>
+              bit is in effect then all areas obscured by its siblings
+              are invisible. Child windows are always clipped by the
+              boundaries of their parent windows.
+            </para>
+            <para>
+              B has a <constant>WS_CLIPSIBLINGS</constant> style:
+            </para>
+            <screen>
+   .          ______ 
+   :         |      |
+   |   ,-----'      |
+   |   |      B     | - visible region of B
+   |   |            |
+   :   `------------'
+            </screen>
+            <para>
+              When the program requests a <firstterm>display
+                context</firstterm> (DC) for a window it  can specify
+              an optional clipping region that further restricts the
+              area where the graphics output can appear. This area is
+              calculated as an intersection of the visible region and
+              a clipping region. 
+            </para>
+            <para>
+              Program asked for a DC with a clipping region:
+            </para>
+            <screen>
+          ______
+      ,--|--.   |     .    ,--. 
+   ,--+--'  |   |     :   _:  |
+   |  |   B |   |  =&gt; |  |    | - DC region where the painting will
+   |  |     |   |     |  |    |   be visible
+   `--|-----|---'     :  `----'
+      `-----'
+            </screen>
+            <para>
+              When the window manager detects that some part of the window
+              became visible it adds this area to the update region of this
+              window and then generates <constant>WM_ERASEBKGND</constant> and
+              <constant>WM_PAINT</constant> messages.  In addition,
+              <constant>WM_NCPAINT</constant> message is sent when the
+              uncovered area  intersects a nonclient part of the window.
+              Application must reply to the <constant>WM_PAINT</constant>
+              message by calling the
+              <function>BeginPaint()</function>/<function>EndPaint()</function>
+              pair of functions. <function>BeginPaint()</function> returns a DC
+              that uses accumulated update region as a clipping region. This
+              operation cleans up invalidated area and the window will not
+              receive another <constant>WM_PAINT</constant> until the window
+              manager creates a new update region.
+            </para>
+            <para>
+              A was moved to the left:
+            </para>
+            <screen>
+    ________________________       ...          / C update region
+   |______                  |     :      .___ /
+   | A    |_________        |  =&gt; |   ...|___|..
+   |      |         |       |     |   :  |   |
+   |------'         |       |     |   :  '---' 
+   |   |      B     |       |     |   :      \
+   |   |            |       |     :            \
+   |   `------------'       |                    B update region
+   |                   C    |
+   `------------------------'
+            </screen>
+            <para>
+              Windows maintains a display context cache consisting of
+              entries that include the DC itself, the window to which
+              it belongs, and an optional clipping region (visible
+              region is stored in the DC itself). When an API call
+              changes the state of the window tree, window manager has
+              to go through the DC cache to recalculate visible
+              regions for entries whose windows were involved in the
+              operation. DC entries (DCE) can be either private to the
+              window, or private to the window class, or shared
+              between all windows (Windows 3.1 limits the number of
+              shared DCEs to 5).
+            </para>
+          </sect4>
+        </sect3>
+
+        <sect3>
+          <title>Messaging subsystem</title>
+
+          <para><filename>windows/queue.c</filename></para>
+          <para><filename>windows/message.c</filename></para>
+
+          <para>
+            Each Windows task/thread has its own message queue - this
+            is where it gets messages from. Messages can be:
+            <orderedlist>
+              <listitem>
+                <para>
+                  generated on the fly (<constant>WM_PAINT</constant>,
+                  <constant>WM_NCPAINT</constant>,
+                  <constant>WM_TIMER</constant>)
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  created by the system (hardware messages)
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  posted by other tasks/threads (<function>PostMessage</function>)
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  sent by other tasks/threads (<function>SendMessage</function>)
+                </para>
+              </listitem>
+            </orderedlist>
+          </para>
+          <para>
+            Message priority:
+          </para>
+          <para>
+            First the system looks for sent messages, then for posted
+            messages, then for hardware messages, then it checks if
+            the queue has the "dirty window" bit set, and, finally, it
+            checks for expired timers. See
+            <filename>windows/message.c</filename>.
+          </para>
+          <para>
+            From all these different types of messages, only posted
+            messages go directly into the private message queue.
+            System messages (even in Win95) are first collected in the
+            system message queue and then they either sit there until
+            <function>Get/PeekMessage</function> gets to process them
+            or, as in Win95, if system queue is getting clobbered, a
+            special thread ("raw input thread") assigns them to the
+            private queues. Sent messages are queued separately and
+            the sender sleeps until it gets a reply. Special messages
+            are generated on the fly depending on the window/queue
+            state. If the window update region is not empty, the
+            system sets the <constant>QS_PAINT</constant> bit in the
+            owning queue and eventually this window receives a
+            <constant>WM_PAINT</constant> message
+            (<constant>WM_NCPAINT</constant> too if the update region
+            intersects with the non-client area). A timer event is
+            raised when one of the queue timers expire. Depending on
+            the timer parameters <function>DispatchMessage</function>
+            either calls the callback function or the window
+            procedure. If there are no messages pending the
+            task/thread sleeps until messages appear.
+          </para>
+          <para>
+            There are several tricky moments (open for discussion) - 
+          </para>
+
+          <itemizedlist>
+            <listitem>
+              <para>
+                System message order has to be honored and messages
+                should be processed within correct task/thread
+                context. Therefore when <function>Get/PeekMessage</function> encounters
+                unassigned system message and this message appears not
+                to be for the current task/thread it should either
+                skip it (or get rid of it by moving it into the
+                private message queue of the target task/thread -
+                Win95, AFAIK) and look further or roll back and then
+                yield until this message gets processed when system
+                switches to the correct context (Win16). In the first
+                case we lose correct message ordering, in the second
+                case we have the infamous synchronous system message
+                queue. Here is a post to one of the OS/2 newsgroup I
+                found to be relevant:
+              </para>
+              <blockquote>
+                <attribution>by David Charlap</attribution>
+                <para>
+                  " Here's the problem in a nutshell, and there is no
+                  good solution. Every possible solution creates a
+                  different problem.
+                </para>
+                <para>
+                  With a windowing system, events can go to many
+                  different windows. Most are sent by applications or
+                  by the OS when things relating to that window happen
+                  (like repainting, timers, etc.)
+                </para>
+                <para>
+                  Mouse input events go to the window you click on
+                  (unless some window captures the mouse).
+                </para>
+                <para>
+                  So far, no problem.  Whenever an event happens, you
+                  put a message on the target window's message queue.
+                  Every process has a message queue.  If the process
+                  queue fills up, the messages back up onto the system
+                  queue.
+                </para>
+                <para>
+                  This is the first cause of apps hanging the GUI.  If
+                  an app doesn't handle messages and they back up into
+                  the system queue, other apps can't get any more
+                  messages.  The reason is that the next message in
+                  line can't go anywhere, and the system won't skip
+                  over it.
+                </para>
+                <para>
+                  This can be fixed by making apps have bigger private
+                  message queues. The SIQ fix does this.  PMQSIZE does
+                  this for systems without the SIQ fix.  Applications
+                  can also request large queues on their own.
+                </para>
+                <para>
+                  Another source of the problem, however, happens when
+                  you include keyboard events.  When you press a key,
+                  there's no easy way to know what window the
+                  keystroke message should be delivered to.
+                </para>
+                <para>
+                  Most windowing systems use a concept known as
+                  "focus".  The window with focus gets all incoming
+                  keyboard messages.  Focus can be changed from window
+                  to window by apps or by users clicking on winodws.
+                </para>
+                <para>
+                  This is the second source of the problem.  Suppose
+                  window A has focus. You click on window B and start
+                  typing before the window gets focus. Where should
+                  the keystrokes go?  On the one hand, they should go
+                  to A until the focus actually changes to B.  On the
+                  other hand, you probably want the keystrokes to go
+                  to B, since you clicked there first.
+                </para>
+                <para>
+                  OS/2's solution is that when a focus-changing event
+                  happens (like clicking on a window), OS/2 holds all
+                  messages in the system queue until the focus change
+                  actually happens.  This way, subsequent keystrokes
+                  go to the window you clicked on, even if it takes a
+                  while for that window to get focus.
+                </para>
+                <para>
+                  The downside is that if the window takes a real long
+                  time to get focus (maybe it's not handling events,
+                  or maybe the window losing focus isn't handling
+                  events), everything backs up in the system queue and
+                  the system appears hung.
+                </para>
+                <para>
+                  There are a few solutions to this problem.
+                </para>
+                <para>
+                  One is to make focus policy asynchronous.  That is,
+                  focus changing has absolutely nothing to do with the
+                  keyboard.  If you click on a window and start typing
+                  before the focus actually changes, the keystrokes go
+                  to the first window until focus changes, then they
+                  go to the second. This is what X-windows does.
+                </para>
+                <para>
+                  Another is what NT does.  When focus changes,
+                  keyboard events are held in the system message
+                  queue, but other events are allowed through. This is
+                  "asynchronous" because the messages in the system
+                  queue are delivered to the application queues in a
+                  different order from that with which they were
+                  posted.  If a bad app won't handle the "lose focus"
+                  message, it's of no consequence - the app receiving
+                  focus will get its "gain focus" message, and the
+                  keystrokes will go to it.
+                </para>
+                <para>
+                  The NT solution also takes care of the application
+                  queue filling up problem.  Since the system delivers
+                  messages asynchronously, messages waiting in the
+                  system queue will just sit there and the rest of the
+                  messages will be delivered to their apps.
+                </para>
+                <para>
+                  The OS/2 SIQ solution is this:  When a
+                  focus-changing event happens, in addition to
+                  blocking further messages from the application
+                  queues, a timer is started.  When the timer goes
+                  off, if the focus change has not yet happened, the
+                  bad app has its focus taken away and all messages
+                  targetted at that window are skipped.  When the bad
+                  app finally handles the focus change message, OS/2
+                  will detect this and stop skipping its messages.
+                </para>
+
+                <para>
+                  As for the pros and cons:
+                </para>
+                <para>
+                  The X-windows solution is probably the easiest.  The
+                  problem is that users generally don't like having to
+                  wait for the focus to change before they start
+                  typing.  On many occasions, you can type and the
+                  characters end up in the wrong window because
+                  something (usually heavy system load) is preventing
+                  the focus change from happening in a timely manner.
+                </para>
+                <para>
+                  The NT solution seems pretty nice, but making the
+                  system message queue asynchronous can cause similar
+                  problems to the X-windows problem. Since messages
+                  can be delivered out of order, programs must not
+                  assume that two messages posted in a particular
+                  order will be delivered in that same order.  This
+                  can break legacy apps, but since Win32 always had an
+                  asynchronous queue, it is fair to simply tell app
+                  designers "don't do that".  It's harder to tell app
+                  designers something like that on OS/2 - they'll
+                  complain "you changed the rules and our apps are
+                  breaking."
+                </para>
+                <para>
+                  The OS/2 solution's problem is that nothing happens
+                  until you try to change window focus, and then wait
+                  for the timeout.  Until then, the bad app is not
+                  detected and nothing is done."
+                </para>
+              </blockquote>
+            </listitem>
+
+            <listitem>
+              <para>
+                Intertask/interthread
+                <function>SendMessage</function>. The system has to
+                inform the target queue about the forthcoming message,
+                then it has to carry out the context switch and wait
+                until the result is available.  Win16 stores necessary
+                parameters in the queue structure and then calls
+                <function>DirectedYield()</function> function.
+                However, in Win32 there could be  several messages
+                pending sent by preemptively executing threads, and in
+                this case <function>SendMessage</function> has to
+                build some sort of message queue for sent messages.
+                Another issue is what to do with messages sent to the
+                sender when it is blocked inside its own
+                <function>SendMessage</function>. 
+              </para>
+            </listitem>
+          </itemizedlist>
+        </sect3>
+      </sect2>
+    </sect1>
+
+    <sect1 id="arch-dlls">
+      <title>WINE/WINDOWS DLLs</title>
+
+      <para>
+        Based upon various messages on wine-devel especially by Ulrich
+        Weigand. Adapted by Michele Petrovski and Klaas van Gend.
+      </para>
+
+      <para>
+        (Extracted from <filename>wine/documentation/dlls</filename>)
+      </para>
+
+      <para>
+        This document mainly deals with the status of current DLL
+        support by Wine.  The Wine ini file currently supports
+        settings to change the load order of DLLs.  The load order
+        depends on several issues, which results in different settings
+        for various DLLs.
+      </para>
+
+      <sect2>
+        <title>Pros of Native DLLs</title>
+
+        <para>
+          Native DLLs of course guarantee 100% compatibility for
+          routines they implement. For example, using the native USER
+          DLL would maintain a virtually perfect and Windows 95-like
+          look for window borders, dialog controls, and so on. Using
+          the built-in WINE version of this library, on the other
+          hand, would produce a display that does not precisely mimic
+          that of Windows 95.  Such subtle differences can be
+          engendered in other important DLLs, such as the common
+          controls library COMMCTRL or the common dialogs library
+          COMMDLG, when built-in WINE DLLs outrank other types in load
+          order.
+        </para>
+        <para>
+          More significant, less aesthetically-oriented problems can
+          result if the built-in WINE version of the SHELL DLL is
+          loaded before the native version of this library. SHELL
+          contains routines such as those used by installer utilities
+          to create desktop shortcuts. Some installers might fail when
+          using WINE's built-in SHELL.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Cons of Native DLLs</title>
+
+        <para>
+          Not every application performs better under native DLLs. If
+          a library tries to access features of the rest of the system
+          that are not fully implemented in Wine, the native DLL might
+          work much worse than the corresponding built-in one, if at
+          all. For example, the native Windows GDI library must be
+          paired with a Windows display driver, which of course is not
+          present under Intel Unix and WINE.
+        </para>
+        <para>
+          Finally, occassionally built-in WINE DLLs implement more
+          features than the corresponding native Windows DLLs.
+          Probably the most important example of such behavior is the
+          integration of Wine with X provided by WINE's built-in USER
+          DLL. Should the native Windows USER library take load-order
+          precedence, such features as the ability to use the
+          clipboard or drag-and- drop between Wine windows and X
+          windows will be lost.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Deciding Between Native and Built-In DLLs</title>
+
+        <para>
+          Clearly, there is no one rule-of-thumb regarding which
+          load-order to use. So, you must become familiar with:
+        </para>
+
+        <itemizedlist>
+          <listitem>
+            <para>what specific DLLs do</para>
+          </listitem>
+          <listitem>
+            <para>which other DLLs or features a given library interacts with</para>
+          </listitem>
+        </itemizedlist>
+        <para>
+          and use this information to make a case-by-case decision.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Load Order for DLLs</title>
+
+        <para>
+          Using the DLL sections from the wine configuration file, the
+          load order can be tweaked to a high degree. In general it is
+          advised not to change the settings of the configuration
+          file. The default configuration specifies the right load
+          order for the most important DLLs.
+        </para>
+        <para>
+          The default load order follows this algorithm: for all DLLs
+          which have a fully-functional Wine implementation, or where
+          the native DLL is known not to work, the built-in library
+          will be loaded first. In all other cases, the native DLL
+          takes load-order precedence.
+        </para>
+        <para>
+          The <varname>DefaultLoadOrder</varname> from the
+          [DllDefaults] section specifies for all DLLs which version
+          to try first. See manpage for explanation of the arguments.
+        </para>
+        <para>
+          The [DllOverrides] section deals with DLLs, which need a
+          different-from-default treatment. 
+        </para>
+        <para>
+          The [DllPairs] section is for DLLs, which must be loaded in
+          pairs. In general, these are DLLs for either 16-bit or
+          32-bit applications. In most cases in Windows, the 32-bit
+          version cannot be used without its 16-bit counterpart. For
+          WINE, it is customary that the 16-bit implementations rely
+          on the 32-bit implementations and cast the results back to
+          16-bit arguments. Changing anything in this section is bound
+          to result in errors.
+        </para>
+        <para>
+          For the future, the Wine implementation of Windows DLL seems
+          to head towards unifying the 16 and 32 bit DLLs wherever
+          possible, resulting in larger DLLs.  They are stored in the
+          <filename>dlls/</filename> subdirectory using the 16-bit
+          name.  For large DLLs, a split might be discussed.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Understanding What DLLs Do</title>
+
+        <para>
+          The following list briefly describes each of the DLLs
+          commonly found in Windows whose load order may be modified
+          during the configuration and compilation of WINE.
+        </para>
+        <para>
+          (See also <filename>./DEVELOPER-HINTS</filename> or the
+          <filename>dlls/</filename> subdirectory to see which DLLs
+          are currently being rewritten for wine)
+        </para>
+
+<!-- FIXME: Should convert this table into a VariableList element -->
+        <screen>
+ADVAPI32.DLL:	   32-bit application advanced programming interfaces
+                   like crypto, systeminfo, security and eventlogging
+AVIFILE.DLL:	   32-bit application programming interfaces for the
+                   Audio Video Interleave (AVI) Windows-specific
+                   Microsoft audio-video standard
+COMMCTRL.DLL:	   16-bit common controls
+COMCTL32.DLL:	   32-bit common controls 
+COMDLG32.DLL:	   32-bit common dialogs
+COMMDLG.DLL:	   16-bit common dialogs
+COMPOBJ.DLL:	   OLE 16- and 32-bit compatibility libraries
+CRTDLL.DLL:	   Microsoft C runtime
+DCIMAN.DLL:	   16-bit
+DCIMAN32.DLL:	   32-bit display controls
+DDEML.DLL:	   DDE messaging
+D3D*.DLL	   DirectX/Direct3D drawing libraries
+DDRAW.DLL:	   DirectX drawing libraries
+DINPUT.DLL:	   DirectX input libraries
+DISPLAY.DLL:	   Display libraries
+DPLAY.DLL, DPLAYX.DLL:  DirectX playback libraries
+DSOUND.DLL:	   DirectX audio libraries
+GDI.DLL:	   16-bit graphics driver interface
+GDI32.DLL:	   32-bit graphics driver interface
+IMAGEHLP.DLL:	   32-bit IMM API helper libraries (for PE-executables)
+IMM32.DLL:	   32-bit IMM API
+IMGUTIL.DLL:	   
+KERNEL32.DLL	   32-bit kernel DLL
+KEYBOARD.DLL:	   Keyboard drivers
+LZ32.DLL:	   32-bit Lempel-Ziv or LZ file compression 
+                   used by the installshields (???).
+LZEXPAND.DLL:	   LZ file expansion; needed for Windows Setup
+MMSYSTEM.DLL:	   Core of the Windows multimedia system
+MOUSE.DLL:	   Mouse drivers
+MPR.DLL:	   32-bit Windows network interface
+MSACM.DLL:	   Core of the Addressed Call Mode or ACM system
+MSACM32.DLL:	   Core of the 32-bit ACM system
+                   Audio Compression Manager ???
+MSNET32.DLL	   32-bit network APIs
+MSVFW32.DLL:	   32-bit Windows video system
+MSVIDEO.DLL:	   16-bit Windows video system
+OLE2.DLL:	   OLE 2.0 libraries
+OLE32.DLL:	   32-bit OLE 2.0 components
+OLE2CONV.DLL:	   Import filter for graphics files
+OLE2DISP.DLL, OLE2NLS.DLL: OLE 2.1 16- and 32-bit interoperability
+OLE2PROX.DLL:	   Proxy server for OLE 2.0
+OLE2THK.DLL:	   Thunking for OLE 2.0
+OLEAUT32.DLL	   32-bit OLE 2.0 automation
+OLECLI.DLL:	   16-bit OLE client
+OLECLI32.DLL:	   32-bit OLE client
+OLEDLG.DLL:	   OLE 2.0 user interface support
+OLESVR.DLL:	   16-bit OLE server libraries
+OLESVR32.DLL:	   32-bit OLE server libraries
+PSAPI.DLL:	   Proces Status API libraries
+RASAPI16.DLL:	   16-bit Remote Access Services libraries
+RASAPI32.DLL:	   32-bit Remote Access Services libraries
+SHELL.DLL:	   16-bit Windows shell used by Setup
+SHELL32.DLL:	   32-bit Windows shell (COM object?)
+TAPI/TAPI32/TAPIADDR:  Telephone API (for Modems)
+W32SKRNL:	   Win32s Kernel ? (not in use for Win95 and up!)
+WIN32S16.DLL:	   Application compatibility for Win32s
+WIN87EM.DLL:	   80387 math-emulation libraries
+WINASPI.DLL:	   Advanced SCSI Peripheral Interface or ASPI libraries
+WINDEBUG.DLL	   Windows debugger
+WINMM.DLL:	   Libraries for multimedia thunking
+WING.DLL:	   Libraries required to "draw" graphics
+WINSOCK.DLL:	   Sockets APIs
+WINSPOOL.DLL:	   Print spooler libraries
+WNASPI32.DLL:	   32-bit ASPI libraries
+WSOCK32.DLL:	   32-bit sockets APIs
+        </screen>
+      </sect2>
+    </sect1>
+    </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+End:
+-->

@@ -1,0 +1,847 @@
+  <chapter id="debugger">
+    <title>The Wine Debugger</title>
+
+    <sect1 id="dbg-intro">
+      <title>I Introduction</title>
+
+      <para>
+        written by Eric Pouech (???) (Last updated: 6/14/2000)
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/winedbg</filename>)
+      </para>
+
+      <sect2>
+        <title>I.1 Processes and threads: in underlying OS and in Windows</title>
+
+        <para>
+          Before going into the depths of debugging in Wine, here's
+          a small overview of process and thread handling in Wine.
+          It has to be clear that there are two different beasts:
+          processes/threads from the Unix point of view and
+          processes/threads from a Windows point of view.
+        </para>
+        <para>
+          Each Windows' thread is implemented as a Unix process (under
+          Linux using the <function>clone</function> syscall), meaning
+          that all threads of a same Windows' process share the same
+          (unix) address space.
+        </para>
+        <para>
+          In the following:
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para><varname>W-process</varname> means a process in Windows' terminology</para>
+          </listitem>
+          <listitem>
+            <para><varname>U-process</varname> means a process in Unix' terminology</para>
+          </listitem>
+          <listitem>
+            <para><varname>W-thread</varname> means a thread in Windows' terminology</para>
+          </listitem>
+        </itemizedlist>
+        <para>
+          A <varname>W-process</varname> is made of one or several
+          <varname>W-threads</varname>. Each
+          <varname>W-thread</varname> is mapped to one and only one
+          <varname>U-process</varname>. All
+          <varname>U-processes</varname> of a same
+          <varname>W-process</varname> share the same address space.
+        </para>
+        <para>
+          Each Unix process can be identified by two values:
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>the Unix process id (<varname>upid</varname> in the following)</para>
+          </listitem>
+          <listitem>
+            <para>the Windows's thread id (<varname>tid</varname>)</para>
+          </listitem>
+        </itemizedlist>
+        <para>
+          Each Windows' process has also a Windows' process id
+          (<varname>wpid</varname> in the following). It must be clear
+          that <varname>upid</varname> and <varname>wpid</varname> are
+          different and shall not be used instead of the other.
+        </para>
+        <para>
+          <varname>Wpid</varname> and <varname>tid</varname> are
+          defined (Windows) system wide. They must not be confused
+          with process or thread handles which, as any handle, is an
+          indirection to a system object (in this case process or
+          thread). A same process can have several different handles
+          on the same kernel object. The handles can be defined as
+          local (the values is only valid in a process), or system
+          wide (the same handle can be used by any
+          <varname>W-process</varname>).
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>I.2 Wine, debugging and WineDbg</title>
+
+        <para>
+          When talking of debugging in Wine, there are at least two
+          levels to think of:
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>the Windows' debugging API.</para>
+          </listitem>
+          <listitem>
+            <para>the Wine integrated debugger, dubbed
+              <command>WineDbg</command>.</para>
+          </listitem>
+        </itemizedlist>
+        <para>
+          Wine implements most the the Windows' debugging API (the
+          part in KERNEL32, not the one in
+          <filename>IMAGEHLP.DLL</filename>), and allows any program
+          (emulated or WineLib) using that API to debug a
+          <varname>W-process</varname>.
+        </para>
+        <para>
+          <command>WineDbg</command> is a WineLib application making
+          use of this API to allow debugging both any Wine or WineLib
+          applications as well as Wine itself (kernel and all DLLs).
+        </para>
+      </sect2>
+    </sect1>
+
+    <sect1 id="dbg-modes">
+      <title>II WineDbg's modes of invocation</title>
+
+      <sect2>
+        <title>II.1 Starting a process</title>
+
+        <para>
+          Any application (either a Windows' native executable, or a
+          WineLib application) can be run through
+          <command>WineDbg</command>. Command line options and tricks
+          are the same as for wine:
+        </para>
+        <screen>
+winedbg telnet.exe
+winedbg "hl.exe -windowed"
+        </screen>
+      </sect2>
+
+      <sect2>
+        <title>II.2 Attaching</title>
+
+        <para>
+          <command>WineDbg</command> can also be launched without any
+          command line argument: <command>WineDbg</command> is started
+          without any attached process. You can get a list of running
+          <varname>W-processes</varname> (and their
+          <varname>wpid</varname>'s) using the <command>walk
+            process</command> command, and then, with the
+          <command>attach</command> command, pick up the
+          <varname>wpid</varname> of the <varname>W-process</varname>
+          you want to debug. This is (for now) a neat feature for the
+          following reasons: 
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>you can debug an already started application</para>
+          </listitem>
+        </itemizedlist>
+      </sect2>
+
+      <sect2>
+        <title>II.3 On exception</title>
+
+        <para>
+          When something goes wrong, Windows tracks this as an
+          exception. Exceptions exist for segmentation violation,
+          stack overflow, division by zero...
+        </para>
+        <para>
+          When an exception occurs, Wine checks if the <varname>W-process</varname> is
+          debugged. If so, the exception event is sent to the
+          debugger, which takes care of it: end of the story. This
+          mechanism is part of the standard Windows' debugging API. 
+        </para>
+        <para>
+          If the <varname>W-process</varname> is not debugged, Wine
+          tries to launch a debugger. This debugger (normally
+          <command>WineDbg</command>, see III Configuration for more
+          details), at startup, attaches to the
+          <varname>W-process</varname> which generated the exception
+          event. In this case, you are able to look at the causes of
+          the exception, and either fix the causes (and continue
+          further the execution) or dig deeper to understand what went
+          wrong.
+        </para>
+        <para>
+          If <command>WineDbg</command> is the standard debugger, the
+          <command>pass</command> and <command>cont</command> commands
+          are the two ways to let the process go further for the
+          handling of the  exception event.
+        </para>
+        <para>
+          To be more precise on the way Wine (and Windows) generates
+          exception events, when a fault occurs (segmentation
+          violation, stack overflow...), the event is first sent to
+          the debugger (this is known as a first chance exception).
+          The debugger can give two answers:
+        </para>
+
+        <variablelist>
+          <varlistentry>
+            <term>continue:</term>
+            <listitem>
+              <para>
+                the debugger had the ability to correct what's
+                generated the exception, and is now able to continue
+                process execution.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>pass:</term>
+            <listitem>
+              <para>
+                the debugger couldn't correct the cause of the
+                first chance exception. Wine will now try to walk
+                the list of exception handlers to see if one of them
+                can handle the exception. If no exception handler is
+                found, the exception is sent once again to the
+                debugger to indicate the failure of the exception
+                handling.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+        <note>
+          <para>
+            since some of Wine's code uses exceptions and
+            <function>try/catch</function> blocks to provide some
+            functionality, <command>WineDbg</command> can be entered
+            in such cases with segv exceptions. This happens, for
+            example, with <function>IsBadReadPtr</function> function.
+            In that case, the <command>pass</command> command shall be
+            used, to let the handling of the exception to be done by
+            the <function>catch</function> block in
+            <function>IsBadReadPtr</function>.
+          </para>
+        </note>
+      </sect2>
+
+      <sect2>
+        <title>II.4 Quitting</title>
+
+        <para>
+          Unfortunately, Windows doesn't provide a detach kind of API,
+          meaning that once you started debugging a process, you must
+          do so until the process dies. Killing (or stopping/aborting)
+          the debugger will also kill the debugged process. This will
+          be true for any Windows' debugging API compliant debugger,
+          starting with <command>WineDbg</command>.
+        </para>
+      </sect2>
+    </sect1>
+
+    <sect1 id="dbg-config">
+      <title>III Configuration</title>
+
+      <sect2>
+        <title>III.1 Registry configuration</title>
+
+        <para>
+          The Windows' debugging API uses a registry entry to know
+          with debugger  to invoke when an unhandled exception
+          occurs (see II.3 for some details). Two values in key 
+        </para>
+        <programlisting>
+"MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug"
+        </programlisting>
+        <para>
+          Determine the behavior:
+        </para>
+        <variablelist>
+          <varlistentry>
+            <term>Debugger:</term>
+            <listitem>
+              <para>
+                this is the command line used to launch the debugger
+                (it uses two <function>printf</function> formats
+                (<literal>%ld</literal>) to pass context dependent
+                information to  the debugger). You should put here a
+                complete path to your debugger
+                (<command>WineDbg</command> can of course be used, but
+                any other Windows' debugging API aware debugger will
+                do).
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term>Auto:</term>
+            <listitem>
+              <para>
+                if this value is zero, a message box will ask the
+                user if he/she wishes to launch the debugger when an
+                unhandled exception occurs. Otherwise, the debugger
+                is automatically started.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>
+          A regular Wine registry looks like:
+        </para>
+        <programlisting>
+[MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug] 957636538
+"Auto"=dword:00000001
+"Debugger"="/usr/local/bin/winedbg %ld %ld"
+        </programlisting>
+
+        <note>
+          <title>Note 1</title>
+          <para>
+            creating this key is mandatory. Not doing so will not
+            fire the debugger when an exception occurs.
+          </para>
+        </note>
+        <note>
+          <title>Note 2</title>
+          <para>
+            <command>wineinstall</command> sets up this correctly.
+            However, due to some limitation of the registry installed,
+            if a previous Wine installation exists, it's safer to
+            remove the whole
+          </para>
+          <programlisting>
+[MACHINE\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug]
+          </programlisting>
+          <para>
+            key before running again <command>wineinstall</command> to
+            regenerate this key.
+          </para>
+        </note>
+      </sect2>
+
+      <sect2>
+        <title>III.2 WineDbg configuration</title>
+
+        <para>
+          <command>WineDbg</command> can be configured thru a number
+          of options. Those options are stored in the registry, on a
+          per user basis. The key is (in *my* registry)
+        </para>
+        <programlisting>
+[eric\\Software\\Wine\\WineDbg]
+        </programlisting>
+        <para>
+          Those options can be read/written while inside
+          <command>WineDbg</command>, as part of the debugger
+          expressions. To refer to one of this option, its name must
+          be  prefixed by a <literal>$</literal> sign. For example, 
+        </para>
+        <programlisting>
+set $BreakAllThreadsStartup = 1
+        </programlisting>
+        <para>
+          sets the option <varname>BreakAllThreadsStartup</varname> to
+          <literal>TRUE</literal>.
+        </para>
+        <para>
+          All the options are read from the registry when
+          <command>WineDbg</command> starts (if no corresponding value
+          is found, a default value is used), and are written back to
+          the registry when <command>WineDbg</command> exits (hence,
+          all modifications to those options are automatically saved
+          when <command>WineDbg</command> terminates).
+        </para>
+        <para>
+          Here's the list of all options:
+        </para>
+
+        <sect3>
+          <title>III.2.1 Controling when the debugger is entered</title>
+
+          <variablelist>
+            <varlistentry>
+              <term><varname>BreakAllThreadsStartup</varname></term>
+              <listitem>
+                <para>
+                  Set to <literal>TRUE</literal> if at all threads
+                  start-up the debugger stops  set to
+                  <literal>FALSE</literal> if only at the first thread
+                  startup of a given process the debugger stops.
+                  <literal>FALSE</literal> by default.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><varname>BreakOnCritSectTimeOut</varname></term>
+              <listitem>
+                <para>
+                  Set to <literal>TRUE</literal> if the debugger stops
+                  when a critical section times out (5 minutes);
+                  <literal>TRUE</literal> by default.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><varname>BreakOnAttach</varname></term>
+              <listitem>
+                <para>
+                  Set to <literal>TRUE</literal> if when
+                  <command>WineDbg</command> attaches to an existing
+                  process after an unhandled exception,
+                  <command>WineDbg</command> shall be entered on the
+                  first attach event. Since the attach event is
+                  meaningless in the context of an exception event
+                  (the next event  which is the exception event is of
+                  course relevant), that option is likely to be
+                  <literal>FALSE</literal>.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><varname>BreakOnFirstChance</varname></term>
+              <listitem>
+                <para>
+                  An exception can generate two debug events. The
+                  first one is passed to the debugger (known as a
+                  first chance) just after the exception. The debugger
+                  can then decides either to resume execution (see
+                  <command>WineDbg</command>'s <command>cont</command>
+                  command) or pass the exception up to the exception
+                  handler chain in the program (if it exists)
+                  (<command>WineDbg</command> implements this thru the
+                  <command>pass</command> command). If none of the
+                  exception handlers takes care of the exception, the
+                  exception event is sent again to the debugger (known
+                  as last chance exception). You cannot pass on a last
+                  exception. When the
+                  <varname>BreakOnFirstChance</varname> exception is
+                  <literal>TRUE</literal>, then winedbg is entered for
+                  both first and last chance execptions (to
+                  <literal>FALSE</literal>, it's only entered for last
+                  chance exceptions).
+                </para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+        </sect3>
+
+        <sect3>
+          <title>III.2.2 Output handling</title>
+
+          <variablelist>
+            <varlistentry>
+              <term><varname>ConChannelMask</varname></term>
+              <listitem>
+                <para>
+                  Mask of active debugger output channels on console 
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><varname>StdChannelMask</varname></term>
+              <listitem>
+                <para>
+                  Mask of active debugger output channels on <filename>stderr</filename>
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><varname>UseXTerm</varname></term>
+              <listitem>
+                <para>
+                  Set to <literal>TRUE</literal> if the debugger uses
+                  its own <command>xterm</command> window for console
+                  input/output.  Set to <literal>FALSE</literal> if
+                  the debugger uses the current Unix console for
+                  input/output
+                </para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+
+          <para>
+            Those last 3 variables are jointly used in two generic ways:
+          </para>
+
+          <orderedlist>
+            <listitem>
+              <para>default</para>
+              <programlisting>
+ConChannelMask = DBG_CHN_MESG (1)
+StdChannelMask = 0
+UseXTerm = 1
+              </programlisting>
+              <para>
+                In this case, all input/output goes into a specific
+                <command>xterm</command> window (but all debug
+                messages <function>TRACE</function>,
+                <function>WARN</function>... still goes to tty where
+                wine is run from).
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                to have all input/output go into the tty where Wine
+                was started from (to be used in a X11-free
+                environment)
+              </para>
+              <screen>
+ConChannelMask = 0
+StdChannelMask = DBG_CHN_MESG (1)
+UseXTerm = 1
+              </screen>
+            </listitem>
+          </orderedlist>
+          <para>
+            Those variables also allow, for example for debugging
+            purposes, to use: 
+          </para>
+          <screen>
+ConChannelMask = 0xfff
+StdChannelMask = 0xfff
+UseXTerm = 1
+          </screen>
+          <para>
+            This allows to redirect all <function>WineDbg</function>
+            output to both tty Wine was started from, and
+            <command>xterm</command> debugging window. If Wine (or
+            <command>WineDbg</command>) was started with a redirection
+            of <filename>stdout</filename> and/or
+            <filename>stderr</filename> to a file (with for
+            example &gt;& shell redirect command), you'll get in that
+            file both outputs. It may be interesting to look in the
+            relay trace for specific values which the process segv'ed
+            on.
+          </para>
+        </sect3>
+        
+        <sect3>
+          <title>III.2.2 Context information</title>
+
+          <variablelist>
+            <varlistentry>
+              <term><varname>ThreadId</varname></term>
+              <listitem>
+                <para>ID of the <varname>W-thread</varname> currently
+                  examined by the debugger</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term><varname>ProcessId</varname></term>
+              <listitem>
+                <para>ID of the <varname>W-thread</varname> currently
+                  examined by the debugger</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>&lt;registers></term>
+              <listitem>
+                <para>All CPU registers are also available</para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+
+          <para>
+            The <varname>ThreadId</varname> and
+            <varname>ProcessId</varname> variables can be handy to set
+            conditional breakpoints on a given thread or process.
+          </para>
+        </sect3>
+      </sect2>
+    </sect1>
+
+    <sect1 id="dbg-commands">
+      <title>IV WineDbg commands</title>
+
+      <sect2>
+        <title>IV.1 Misc</title>
+
+        <screen>
+abort		aborts the debugger
+quit		exits the debugger
+
+attach N	attach to a W-process (N is its ID). IDs can be
+		obtained thru walk process command
+        </screen>
+        <screen>
+help		prints some help on the commands
+help info	prints some help on info commands
+        </screen>
+        <screen>
+mode 16		switch to 16 bit mode
+mode 32		switch to 32 bit mode
+        </screen>
+      </sect2>
+
+      <sect2>
+        <title>IV.2 Flow control</title>
+
+        <screen>
+cont		continue execution until next breakpoint or exception.
+pass		pass the exception event up to the filter chain. 
+step		continue execution until next C line of code (enters
+		function call)
+next 		continue execution until next C line of code (doesn't
+		enter function call) 
+stepi		execute next assembly instruction (enters function
+		call)
+nexti		execute next assembly instruction (doesn't enter
+		function call)
+finish		do nexti commands until current function is exited
+        </screen>
+        <para>
+          cont, step, next, stepi, nexti can be postfixed by a
+          number (N), meaning that the command must be executed N
+          times.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>IV.3 Breakpoints, watch points</title>
+
+        <screen>
+enable N	enables (break|watch)point #N
+disable N	disables (break|watch)point #N
+delete N	deletes  (break|watch)point #N
+cond N		removes any a existing condition to (break|watch)point N
+cond N &lt;expr&gt;	adds condition &lt;expr&gt; to (break|watch)point N. &lt;expr&gt;
+		will be evaluated each time the breakpoint is hit. If
+		the result is a zero value, the breakpoint isn't
+		triggered 
+break * N	adds a breakpoint at address N
+break &lt;id&gt;	adds a breakpoint at the address of symbol &lt;id&gt;
+break &lt;id&gt; N	adds a breakpoint at the address of symbol &lt;id&gt; (N ?)
+break N		adds a breakpoint at line N of current source file
+break		adds a breakpoint at current $pc address
+watch * N	adds a watch command (on write) at address N (on 4 bytes)
+watch &lt;id&gt;	adds a watch command (on write) at the address of
+		symbol &lt;id&gt;
+info break	lists all (break|watch)points (with state)
+        </screen>
+      </sect2>
+
+      <sect2>
+        <title>IV.4 Stack manipulation</title>
+
+        <screen>
+bt		print calling stack of current thread
+up		goes up one frame in current thread's stack
+up N		goes up N frames in current thread's stack
+dn		goes down one frame in current thread's stack
+dn N		goes down N frames in current thread's stack
+frame N		set N as the current frame
+info local	prints information on local variables for current
+		function 
+        </screen>
+      </sect2>
+
+      <sect2>
+        <title>IV.5 Directory & source file manipulation</title>
+
+        <screen>
+show dir
+dir &lt;pathname&gt;
+dir
+symbolfile &lt;pathname&gt;
+        </screen>
+        <screen>
+list		lists 10 source lines from current position
+list - 		lists 10 source lines before current position
+list N		lists 10 source lines from line N in current file
+list &lt;path&gt;:N	lists 10 source lines from line N in file &lt;path&gt;
+list &lt;id&gt;	lists 10 source lines of function &lt;id&gt;
+list * N	lists 10 source lines from address N
+        </screen>
+        <para>
+          You can specify the end target (to change the 10 lines
+          value) using the ','. For example:
+        </para>
+        <screen>
+list 123, 234 	lists source lines from line 123 up to line 234 in
+		current file
+list foo.c:1,56	lists source lines from line 1 up to 56 in file foo.c
+        </screen>
+      </sect2>
+
+      <sect2>
+        <title>IV.6 Displaying</title>
+
+        <para>
+          A display is an expression that's evaluated and printed
+          after the execution of any <command>WineDbg</command>
+          command.
+        </para>
+        <screen>
+display		lists the active displays
+info display	(same as above command)
+display &lt;expr&gt;	adds a display for expression &lt;expr&gt;
+display /fmt &lt;expr&gt;	adds a display for expression &lt;expr&gt;. Printing 
+		evaluated &lt;expr&gt; is done using the given format (see
+		print command for more on formats)
+del display N	deletes display #N
+undisplay N	(same as del display)
+        </screen>
+      </sect2>
+
+      <sect2>
+        <title>IV.7 Disassembly</title>
+
+        <screen>
+disas		disassemble from current position
+disas &lt;expr&gt;	disassemble from address &lt;expr&gt;
+disas &lt;expr&gt;,&lt;expr&gt;disassembles code between addresses specified by
+		the two &lt;expr&gt;
+        </screen>
+      </sect2>
+
+      <sect2>
+        <title>IV.8 Information on Wine's internals</title>
+
+        <screen>
+info class &lt;id&gt;	prints information on Windows's class &lt;id&gt;
+walk class	lists all Windows' class registered in Wine
+info share	lists all the dynamic libraries loaded the debugged
+		program (including .so files, NE and PE DLLs)
+info module N	prints information on module of handle N
+walk module	lists all modules loaded by debugged program
+info queue N	prints information on Wine's queue N
+walk queue	lists all queues allocated in Wine
+info regs	prints the value of CPU register
+info segment N	prints information on segment N
+info segment	lists all allocated segments
+info stack	prints the values on top of the stack
+info map	lists all virtual mappings used by the debugged
+		program 
+info wnd N	prints information of Window of handle N
+walk wnd	lists all the window hierarchy starting from the
+		desktop window
+walk wnd N	lists all the window hierarchy starting from the
+		window of handle N
+walk process	lists all w-processes in Wine session
+walk thread	lists all w-threads in Wine session
+walk modref	(no longer avail)
+        </screen>
+      </sect2>
+
+      <sect2>
+        <title>IV.9 Memory (reading, writing, typing)</title>
+
+        <screen>
+x &lt;expr&gt;	examines memory at &lt;expr&gt; address
+x /fmt &lt;expr&gt;	examines memory at &lt;expr&gt; address using format /fmt
+print &lt;expr&gt;	prints the value of &lt;expr&gt; (possibly using its type)
+print /fmt &lt;expr&gt;	prints the value of &lt;expr&gt; (possibly using its
+		type) 
+set &lt;lval&gt;=&lt;expr&gt;	writes the value of &lt;expr&gt; in &lt;lval&gt; 
+whatis &lt;expr&gt;	prints the C type of expression &lt;expr&gt;
+        </screen>
+        <para>
+          <filename>/fmt</filename> is either <filename>/&lt;letter&gt;</filename> or
+          <filename>/&lt;count&gt;&lt;letter&gt;</filename> letter can be	
+        </para>
+        <screen>
+s =&gt; an ASCII string
+u =&gt; an Unicode UTF16 string
+i =&gt; instructions (disassemble)
+x =&gt; 32 bit unsigned hexadecimal integer
+d =&gt; 32 bit signed decimal integer
+w =&gt; 16 bit unsigned hexadecimal integer
+c =&gt; character (only printable 0x20-0x7f are actually
+     printed) 
+b =&gt; 8 bit unsigned hexadecimal integer
+        </screen>
+      </sect2>
+    </sect1>
+
+    <sect1 id="dbg-others">
+      <title>V Other debuggers</title>
+
+      <sect2>
+        <title>V.1 Using other Unix debuggers</title>
+
+        <para>
+          You can also use other debuggers (like
+          <command>gdb</command>), but you must be aware of a few
+          items:
+        </para>
+        <para>
+          You need to attach the unix debugger to the correct unix
+          process (representing the correct windows thread) (you can
+          "guess" it from a <command>ps fax</command> for example:
+          When running the emulator, usually the first two
+          <varname>upids</varname> are for the Windows' application
+          running the desktop, the first thread of the application is
+          generally the third <varname>upid</varname>; when running a
+          WineLib program, the first thread of the application is
+          generally the first <varname>upid</varname>)
+        </para>
+        <note>
+          <para>
+            Even if latest <command>gdb</command> implements the
+            notion of threads, it won't work with Wine because the
+            thread abstraction used for implementing Windows' thread
+            is not 100% mapped onto the linux posix threads
+            implementation. It means that you'll have to spawn a
+            different <command>gdb</command> session for each Windows'
+            thread you wish to debug.
+          </para>
+        </note>
+      </sect2>
+
+      <sect2>
+        <title>V.2 Using other Windows debuggers</title>
+
+        <para>
+          You can use any Windows' debugging API compliant debugger
+          with Wine. Some reports have been made of success with
+          VisualStudio debugger (in remote mode, only the hub runs
+          in Wine). GoVest fully runs in Wine.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>V.3 Main differences between winedbg and regular Unix debuggers</title>
+
+        <!-- FIXME: convert this into a table -->
+        <screen>
++----------------------------------+---------------------------------+
+|             WineDbg              |                 gdb             |
++----------------------------------+---------------------------------+
+|WineDbg debugs a Windows' process:|gdb debugs a Windows' thread:    |
+|+ the various threads will be     |+ a separate gdb session is      |
+|  handled by the same WineDbg     |  needed for each thread of      |
+| session                          |  Windows' process               |
+|+ a breakpoint will be triggered  |+ a breakpoint will be triggered |
+|  for any thread of the w-process |  only for the w-thread debugged |
++----------------------------------+---------------------------------+
+|WineDbg supports debug information|gdb supports debug information   |
+|from:                             |from:                            |
+|+ stabs (standard Unix format)    |+ stabs (standard Unix format)   |
+|+ Microsoft's C, CodeView, .DBG   |                                 |
++----------------------------------+---------------------------------+
+        </screen>
+      </sect2>
+    </sect1>
+
+    <sect1 id="dbg-limits">
+      <title>VI Limitations</title>
+
+      <para>
+        16 bit processes are not supported (but calls to 16 bit code
+        in 32 bit  applications are).
+      </para>
+
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+End:
+-->

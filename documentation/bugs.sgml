@@ -1,0 +1,216 @@
+  <chapter id="bugs">
+    <title>Finding and Reporting Bugs</title>
+
+    <sect1 id="bug-reporting">
+      <title>How To Report A Bug</title>
+
+      <para>
+        written by Gerard Patel (???)
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/bugreports</filename>)
+      </para>
+
+      <para>
+        There are two ways for you to make a bug report. One uses a
+        simple perl script, and is recommended if you don't want to
+        spend a lot of time producing the report. It is designed for
+        use by just about anyone, from the newest of newbies to
+        advanced developers. You can also make a bug report the hard
+        way -- advanced developers will probably prefer this.
+      </para>
+
+      <sect2>
+        <title>The Easy Way</title>
+        <orderedlist>
+          <listitem>
+            <para>
+              Your computer *must* have perl on it for this method to
+              work. To find out if you have perl, run <command>which
+                perl</command>. If it returns something like
+              <filename>/usr/bin/perl</filename>, you're in business.
+              Otherwise, skip on down to "The Hard Way". If you aren't
+              sure, just keep on going. When you try to run the
+              script, it will become *very* apparent if you don't have
+              perl.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Change directory to <filename>&lt;dirs to
+                wine>/tools</filename>
+            </para>
+          </listitem>
+          <listitem>
+              <para>
+                Type in <command>./bug_report.pl</command> and follow
+                the directions.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Post a message to the
+              <systemitem>comp.emulators.ms-windows.wine</systemitem>
+              newsgroup with the "Nice Formatted Report" attatched. If
+              possible, upload the full debug output to a web/ftp
+              server and provide the address in your message.
+            </para>
+          </listitem>
+        </orderedlist>
+      </sect2>
+
+      <sect2>
+        <title>The Hard Way</title>
+        <para>
+          Some simple advice on making your bug report more useful
+          (and thus more likely to get answered and fixed):
+        </para>
+        <orderedlist>
+          <listitem>
+            <para>Post as much information as possible.</para>
+            <para>
+              This means we need more information than a simple "MS
+              Word crashes whenever I run it.  Do you know why?"
+              Include at least the following information:
+            </para>
+            <itemizedlist spacing="compact">
+              <listitem>
+                <para>Version of Wine you're using (run <command>wine
+                    -v</command>)</para>
+              </listitem>
+              <listitem>
+                <para>
+                  Operating system you're using, what distribution (if
+                  any), and what version
+                </para>
+              </listitem>
+              <listitem>
+                <para>Compiler and version (run <command>gcc -v</command>)</para>
+              </listitem>
+              <listitem>
+                <para>Windows version, if installed</para>
+              </listitem>
+              <listitem>
+                <para>
+                  Program you're trying to run, its version number,
+                  and a URL for  where the program can be obtained (if
+                  available)
+                </para>
+              </listitem>
+              <listitem>
+                <para>Command line you used to start wine</para>
+              </listitem>
+              <listitem>
+                <para>
+                  Any other information you think may be relevant or
+                  helpful, such as X server version in case of X
+                  problems, libc version etc.
+                </para>
+              </listitem>
+            </itemizedlist>
+          </listitem>
+          <listitem>
+            <para>
+              Re-run the program with the <parameter>--debugmsg
+                +relay</parameter> option (i.e., <command>wine
+                --debugmsg +relay sol.exe</command>).
+            </para>
+            <para>
+              If Wine crashes while running your program, it is
+              important that we have this information to have a chance
+              at figuring out what is causing the crash.  This can put
+              out quite a lot (several MB) of information, though, so
+              it's best to output it to a file.  When the <prompt>Wine-dbg></prompt>
+              prompt appears, type <userinput>quit</userinput>.
+            </para>
+            <para>
+              You might want to try
+              <parameter>+relay,+snoop</parameter> instead of
+              <parameter>+relay</parameter>, but please note that
+              <parameter>+snoop</parameter> is pretty unstable and
+              often will crash earlier than a simple
+              <parameter>+relay</parameter>! If this is the case, then
+              please use *only* <parameter>+relay</parameter>!! A bug
+              report with a crash in <parameter>+snoop</parameter>
+              code is useless in most cases!
+            </para>
+            <para>
+              To get the trace output, use the following commands:
+            </para>
+
+            <variablelist>
+              <varlistentry>
+                <term>all shells:</term>
+                <listitem>
+                  <screen>
+<prompt>$ </prompt>echo quit | wine -debugmsg +relay [other_options] program_name >& filename.out; 
+<prompt>$ </prompt>tail -n 100 filename.out > report_file
+                  </screen>
+                  <para>
+                    (This will print wine's debug messages only to the file and then
+                    auto-quit. It's probably a good idea to use this command, since wine
+                    prints out so many debug msgs that they flood the terminal, eating CPU.)
+                  </para>
+                </listitem>
+              </varlistentry>	
+              <varlistentry>
+                <term>tcsh and other csh-like shells:</term>
+                <listitem>
+                  <screen>
+<prompt>$ </prompt>wine -debugmsg +relay [other_options] program_name |& tee filename.out;
+<prompt>$ </prompt>tail -100 filename.out > report_file
+                  </screen>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>bash and other sh-like shells:</term>
+                <listitem>
+                  <screen>
+<prompt>$ </prompt>wine -debugmsg +relay [other_options] program_name 2>&1 | tee filename.out;
+<prompt>$ </prompt>tail -100 filename.out > report_file
+                  </screen>
+                </listitem>
+              </varlistentry>                  
+            </variablelist>
+            <para>
+              <filename>report_file</filename> will now contain the
+              last hundred lines of the debugging output, including
+              the register dump and backtrace, which are the most
+              important pieces of information.  Please do not delete
+              this part, even if you don't understand what it means.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Post your report to the newsgroup
+              <systemitem>comp.emulators.ms-windows.wine</systemitem>
+            </para>
+            <para>
+              In your post, include all of the information from part
+              1), and insert the text from the output file in part 2).
+              If you do this, your chances of receiving some sort of
+              helpful response should be very good.
+            </para>
+          </listitem>
+        </orderedlist>
+      </sect2>
+
+      <sect2>
+        <title>Questions and comments</title>
+        <para>
+          If after reading this document there is something you
+          couldn't figure out, or think could be explained better, or
+          that should have been included, please post to
+          <systemitem>comp.emulators.ms-windows.wine</systemitem> to
+          let us know how this document can be improved.
+        </para>
+      </sect2>
+    </sect1>
+ </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+End:
+-->

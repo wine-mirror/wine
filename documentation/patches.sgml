@@ -1,0 +1,11 @@
+    <chapter id="patches">
+      <title>Submitting Patches</title>
+    <para>How to create patches, and where to send them...</para>
+    </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+End:
+-->

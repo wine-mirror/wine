@@ -1,0 +1,535 @@
+  <chapter id="implementation">
+    <title>Low-level Implementation</title>
+    <para>Details of Wine's Low-level Implementation...</para>
+
+    <sect1 id="builtin-dlls">
+      <title>Builtin DLLs</title>
+
+      <para>
+        written by &lt;juergen.schmied@metronet.de>
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/internal-dll</filename>)
+      </para>
+
+      <para>
+        This document describes some points you should know before
+        implementing the internal counterparts to external DLL's.
+        Only 32 bit DLL's are considered.
+      </para>
+
+      <sect2>
+        <title>1. The LibMain function</title>
+
+        <para>
+          This is the way to do some initializing when a process or
+          thread is attached to the dll. The function name is taken
+          from a <filename>*.spec</filename> file line:
+        </para>
+        <programlisting>
+init    YourFunctionName
+        </programlisting>
+        <para>
+          Then, you have to implement the function:
+        </para>
+        <programlisting>
+BOOL32 WINAPI YourLibMain(HINSTANCE32 hinstDLL,
+			 DWORD fdwReason, LPVOID lpvReserved)
+{ if (fdwReason==DLL_PROCESS_ATTACH)
+  { ...
+  } 
+  ....
+}
+        </programlisting>
+      </sect2>
+
+      <sect2>
+        <title>2. Using functions from other built-in DLL's</title>
+
+        <para>
+          The problem here is, that you can't know if you have to call
+          the function from the internal or the external DLL. If you
+          just call the function you will get the internal
+          implementation. If the external DLL is loaded the executed
+          program will use the external DLL and you the internal one.
+          When you -as an example- fill an iconlist placed in the
+          internal DLL the application won't get the icons from the
+          external DLL.
+        </para>
+        <para>
+          To work around this, you should always use a pointer to call
+          such functions:
+        </para>
+        <programlisting>
+/* definition of the pointer type*/
+void (CALLBACK* pDLLInitComctl)();
+
+/* getting the function address  this should be done in the
+ LibMain function when called with DLL_PROCESS_ATTACH*/
+ 
+BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason,
+							 LPVOID lpvReserved)
+{ HINSTANCE32 hComctl32;
+  if (fdwReason==DLL_PROCESS_ATTACH)
+  { /* load the external / internal DLL*/
+    hComctl32 = LoadLibrary32A("COMCTL32.DLL"); 
+    if (hComctl32)
+    { /* get the function pointer */
+      pDLLInitComctl=GetProcAddress32(hComctl32,"InitCommonControlsEx");
+
+	  /* check it */
+      if (pDLLInitComctl)
+      { /* use it */
+        pDLLInitComctl();
+      }
+      
+      /* free the DLL / decrease the ref count */
+      FreeLibrary32(hComctl32);
+    }
+    else
+    { /* do some panic*/
+      ERR(shell,"P A N I C error getting functionpointers\n");
+      exit (1);
+    }
+  }
+ ....
+        </programlisting>
+      </sect2>
+
+      <sect2>
+        <title>3. Getting resources from a <filename>*.rc</filename> file linked to the DLL</title>
+
+        <para>
+          &lt; If you know how, write some lines&gt;
+        </para>
+      </sect2>
+    </sect1>
+
+    <sect1 id="accel-impl">
+      <title>Accelerators</title>
+
+      <para>
+        Findings researched by Uwe Bonnes, Ulrich Weigand and Marcus Meissner.
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/accelerators</filename>)
+      </para>
+
+      <para>
+        Some notes concerning accelerators.
+      </para>
+      <para>
+        There are <emphasis>three</emphasis> differently sized
+        accelerator structures exposed to the user. The general layout
+        is:
+      </para>
+      <programlisting>
+BYTE   fVirt;
+WORD   key;
+WORD   cmd;
+      </programlisting>
+      <para>
+        We now have three different appearances:
+      </para>
+
+      <orderedlist>
+        <listitem>
+          <para>
+            Accelerators in NE resources. These have a size of 5 byte
+            and do not have any padding. This is also the internal
+            layout of the global handle <type>HACCEL</type> (16 and
+            32) in Windows 95 and WINE. Exposed to the user as Win16
+            global handles <type>HACCEL16</type> and
+            <type>HACCEL32</type> by the Win16/Win32 API.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Accelerators in PE resources. These have a size of 8 byte.
+            Layout is:
+          </para>
+          <programlisting>
+BYTE   fVirt;
+BYTE   pad0;
+WORD   key;
+WORD   cmd;
+WORD   pad1;
+          </programlisting>
+          <para>
+            They are exposed to the user only by direct accessing PE
+            resources.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Accelerators in the Win32 API. These have a size of 6
+            bytes. Layout is:
+          </para>
+          <programlisting>
+BYTE   fVirt;
+BYTE   pad0;
+WORD   key;
+WORD   cmd;
+          </programlisting>
+          <para>
+            These are exposed to the user by the
+            <function>CopyAcceleratorTable</function> and
+            <function>CreateAcceleratorTable</function> functions in
+            the Win32 API.
+          </para>
+        </listitem>
+      </orderedlist>
+
+      <para>
+        Why two types of accelerators in the Win32 API? We can only
+        guess, but my best bet is that the Win32 resource compiler
+        can/does not handle struct packing. Win32 <type>ACCEL</type>
+        is defined using <function>#pragma(2)</function> for the
+        compiler but without any packing for RC, so it will assume
+        <function>#pragma(4)</function>.
+      </para>
+
+    </sect1>
+
+    <sect1 id="file-handles">
+      <title>File Handles</title>
+
+      <para>
+        written by (???)
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/filehandles</filename>)
+      </para>
+
+      <para>
+        DOS treats the first 5 file handles as special cases.  They
+        map directly to <filename>stdin</filename>,
+        <filename>stdout</filename>, <filename>stderr</filename>,
+        <filename>stdaux</filename> and <filename>stdprn</filename>.
+        Windows 16 inherits this behavior, and in fact, win16 handles
+        are interchangable with DOS handles. Some nasty windows
+        programs even do this!
+      </para>
+      <para>
+        Windows32 issues file handles starting from
+        <literal>1</literal>, on the grounds that most GUI processes
+        don't need a <filename>stdin</filename>,
+        <filename>stdout</filename>, etc.
+      </para>
+      <para>
+        The Wine handle code is implemented in the Win32 style, and
+        the Win16 functions use two macros to convert to and from the
+        two types.
+      </para>
+
+      <para>
+        The macros are defined in <filename>file.h</filename> as follows:
+      </para>
+      <programlisting>
+#define HFILE16_TO_HFILE32(handle) \
+(((handle)==0) ? GetStdHandle(STD_INPUT_HANDLE) : \
+ ((handle)==1) ? GetStdHandle(STD_OUTPUT_HANDLE) : \
+ ((handle)==2) ? GetStdHandle(STD_ERROR_HANDLE) : \
+ ((handle)>0x400) ? handle : \
+ (handle)-5)
+
+#define HFILE32_TO_HFILE16(handle) ({ HFILE32 hnd=handle; \
+      ((hnd==HFILE_ERROR32) ? HFILE_ERROR16 : \
+      ((handle>0x400) ? handle : \
+       (HFILE16)hnd+5); })
+      </programlisting>
+
+      <warning>
+        <para>
+          Be careful not to use the macro
+          <function>HFILE16_TO_HFILE32</function> on functions with
+          side-effects, as it will cause them to be evaluated several
+          times.  This could be considered a bug, but the use of this
+          macro is limited enough not to need a rewrite.
+        </para>
+      </warning>
+      <note>
+        <para>
+          The <literal>0x400</literal> special case above deals with
+          LZW filehandles (see <filename>misc/lzexpand.c</filename>).
+        </para>
+      </note>
+    </sect1>
+
+    <sect1 id="hardware-trace">
+      <title>Doing A Hardware Trace In Wine</title>
+
+      <para>
+        written by Jonathan Buzzard &lt;jab@hex.prestel.co.uk>
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/ioport-trace-hints</filename>)
+      </para>
+
+      <para>
+        The primary reason to do this is to reverse engineer a
+        hardware device for which you don't have documentation, but
+        can get to work under Wine.
+      </para>
+      <para>
+        This lot is aimed at parallel port devices, and in particular
+        parallel port scanners which are now so cheap they are
+        virtually being given away. The problem is that few
+        manufactures will release any programming information which
+        prevents drivers being written for Sane, and the traditional
+        technique of using DOSemu to produce the traces does not work
+        as the scanners invariably only have drivers for Windows.
+      </para>
+      <para>
+        Please note that I have not been able to get my scanner
+        working properly (a UMAX Astra 600P), but a couple of people
+        have reported success with at least the Artec AS6e scanner. I
+        am not in the process of developing any driver nor do I intend
+        to, so don't bug me about it. My time is now spent writing
+        programs to set things like battery save options under Linux
+        on Toshiba laptops, and as such I don't have any spare time
+        for writing a driver for a parallel port scanner etc.
+      </para>
+      <para>
+        Presuming that you have compiled and installed wine the first
+        thing to do is is to enable direct hardware access to your
+        parallel port. To do this edit <filename>wine.conf</filename>
+        (usually in <filename>/usr/local/etc</filename>) and in the
+        ports section add the following two lines
+      </para>
+      <programlisting>
+read=0x378,0x379,0x37a,0x37c,0x77a
+write=0x378,x379,0x37a,0x37c,0x77a
+      </programlisting>
+      <para>
+        This adds the necessary access required for SPP/PS2/EPP/ECP
+        parallel port on LPT1. You will need to adjust these number
+        accordingly if your parallel port is on LPT2 or LPT0.
+      </para>
+      <para>
+        When starting wine use the following command line, where
+        <literal>XXXX</literal> is the program you need to run in
+        order to access your scanner, and <literal>YYYY</literal> is
+        the file your trace will be stored in:
+      </para>
+      <programlisting>
+wine -debugmsg +io XXXX 2&gt; &gt;(sed 's/^[^:]*:io:[^ ]* //' &gt; YYYY)
+      </programlisting>
+      <para>
+        You will need large amounts of hard disk space (read hundreds
+        of megabytes if you do a full page scan), and for reasonable
+        performance a really fast processor and lots of RAM.
+      </para>
+      <para>
+        You might well find the log compression program that <email>David
+        Campbell campbell@torque.net</email> wrote helpful in
+        reducing the size of the log files. This can be obtained by
+        the following command:
+      </para>
+      <programlisting>
+sh ioport-trace-hints
+      </programlisting>
+      <para>
+        This should extract <filename>shrink.c</filename> (which is
+        located at the end of this file. Compile the log compression
+        program by:
+      </para>
+      <programlisting>
+cc shrink.c -o shrink
+      </programlisting>
+      <para>
+        Use the <command>shrink</command> program to reduce the
+        physical size of the raw log as follows:
+      </para>
+      <programlisting>
+cat log | shrink &gt; log2
+      </programlisting>
+      <para>
+        The trace has the basic form of
+      </para>
+      <programlisting>
+XXXX &gt; YY @ ZZZZ:ZZZZ
+      </programlisting>
+      <para>
+        where <literal>XXXX</literal> is the port in hexidecimal being
+        accessed, <literal>YY</literal> is the data written (or read)
+        from the port, and <literal>ZZZZ:ZZZZ</literal> is the address
+        in memory of the instruction that accessed the port. The
+        direction of the arrow indicates whether the data was written
+        or read from the port.
+      </para>
+      <programlisting>
+&gt; data was written to the port
+&lt; data was read from the port
+      </programlisting>
+      <para>
+        My basic tip for interperating these logs is to pay close
+        attention to the addresses of the IO instructions. Their
+        grouping and sometimes proximity should reveal the presence of
+        subroutines in the driver. By studying the different versions
+        you should be able to work them out. For example consider the
+        following section of trace from my UMAX Astra 600P
+      </para>
+      <programlisting>
+0x378 &gt; 55 @ 0297:01ec
+0x37a &gt; 05 @ 0297:01f5
+0x379 &lt; 8f @ 0297:01fa
+0x37a &gt; 04 @ 0297:0211
+0x378 &gt; aa @ 0297:01ec
+0x37a &gt; 05 @ 0297:01f5
+0x379 &lt; 8f @ 0297:01fa
+0x37a &gt; 04 @ 0297:0211
+0x378 &gt; 00 @ 0297:01ec
+0x37a &gt; 05 @ 0297:01f5
+0x379 &lt; 8f @ 0297:01fa
+0x37a &gt; 04 @ 0297:0211
+0x378 &gt; 00 @ 0297:01ec
+0x37a &gt; 05 @ 0297:01f5
+0x379 &lt; 8f @ 0297:01fa
+0x37a &gt; 04 @ 0297:0211
+0x378 &gt; 00 @ 0297:01ec
+0x37a &gt; 05 @ 0297:01f5
+0x379 &lt; 8f @ 0297:01fa
+0x37a &gt; 04 @ 0297:0211
+0x378 &gt; 00 @ 0297:01ec
+0x37a &gt; 05 @ 0297:01f5
+0x379 &lt; 8f @ 0297:01fa
+0x37a &gt; 04 @ 0297:0211
+      </programlisting>
+      <para>
+        As you can see their is a repeating structure starting at
+        address <literal>0297:01ec</literal> that consists of four io
+        accesses on the parallel port. Looking at it the first io
+        access writes a changing byte to the data port the second
+        always writes the byte <literal>0x05</literal> to the control
+        port, then a value which always seems to
+        <literal>0x8f</literal> is read from the status port at which
+        point a byte <literal>0x04</literal> is written to the control
+        port. By studying this and other sections of the trace we can
+        write a C routine that emulates this, shown below with some
+        macros to make reading/writing on the parallel port easier to
+        read.
+      </para>
+      <programlisting>
+#define r_dtr(x)        inb(x)
+#define r_str(x)        inb(x+1)
+#define r_ctr(x)        inb(x+2)
+#define w_dtr(x,y)      outb(y, x)
+#define w_str(x,y)      outb(y, x+1)
+#define w_ctr(x,y)      outb(y, x+2)
+
+/*
+ * Seems to be sending a command byte to the scanner
+ *
+ */
+int udpp_put(int udpp_base, unsigned char command)
+{
+        int loop,value;
+
+        w_dtr(udpp_base, command);
+        w_ctr(udpp_base, 0x05);
+
+        for (loop=0;loop&lt;10;loop++)
+                if (((value=r_str(udpp_base)) & 0x80)!=0x00) {
+                        w_ctr(udpp_base, 0x04);
+                        return value & 0xf8;
+                        }
+
+        return (value & 0xf8) | 0x01;
+}
+      </programlisting>
+      <para>
+        For the UMAX Astra 600P only seven such routines exist (well
+        14 really, seven for SPP and seven for EPP). Whether you
+        choose to disassemble the driver at this point to verify the
+        routines is your own choice. If you do, the address from the
+        trace should help in locating them in the disassembly.
+      </para>
+      <para>
+        You will probably then find it useful to write a script/perl/C
+        program to analyse the logfile and decode them futher as this
+        can reveal higher level grouping of the low level routines.
+        For example from the logs from my UMAX Astra 600P when decoded
+        futher reveal (this is a small snippet)
+      </para>
+      <programlisting>
+start:
+put: 55 8f
+put: aa 8f
+put: 00 8f
+put: 00 8f
+put: 00 8f
+put: c2 8f
+wait: ff
+get: af,87
+wait: ff
+get: af,87
+end: cc
+start:
+put: 55 8f
+put: aa 8f
+put: 00 8f
+put: 03 8f
+put: 05 8f
+put: 84 8f
+wait: ff
+      </programlisting>
+      <para>
+        From this it is easy to see that <varname>put</varname>
+        routine is often grouped together in five successive calls
+        sending information to the scanner. Once these are understood
+        it should be possible to process the logs further to show the
+        higher level routines in an easy to see format. Once the
+        highest level format that you can derive from this process is
+        understood, you then need to produce a series of scans varying
+        only one parameter between them, so you can discover how to
+        set the various parameters for the scanner.
+      </para>
+
+      <para>
+        The following is the <filename>shrink.c</filename> program.
+      </para>
+
+      <programlisting>
+cat &gt; shrink.c &lt;&lt;EOF
+#include &lt;stdio.h&gt;
+#include &lt;string.h&gt;
+
+void 
+main (void)
+{
+  char buff[256], lastline[256];
+  int count;
+
+  count = 0;
+  lastline[0] = 0;
+
+  while (!feof (stdin))
+    {
+      fgets (buff, sizeof (buff), stdin);
+      if (strcmp (buff, lastline) == 0)
+	{
+	  count++;
+	}
+      else
+	{
+	  if (count &gt; 1)
+	    fprintf (stdout, "# Last line repeated %i times #\n", count);
+	  fprintf (stdout, "%s", buff);
+	  strcpy (lastline, buff);
+	    count = 1;
+	}
+    }
+}
+EOF
+      </programlisting>
+    </sect1>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+End:
+-->

@@ -1,0 +1,344 @@
+  <sect1 id="registry">
+    <title>The Registry</title>
+
+      <para>
+        written by Ove Kåven
+      </para>
+      <para>
+      (Extracted from <filename>wine/documentation/registry</filename>)
+      </para>
+
+    <para>
+      After Win3.x, the registry became a fundamental part of Windows.
+      It is the place where both Windows itself, and all
+      Win95/98/NT/2000/whatever-compliant applications, store
+      configuration and state data. While most sane system
+      administrators (and Wine developers) curse badly at the twisted
+      nature of the Windows registry, it is still necessary for Wine
+      to support it somehow.
+    </para>
+
+    <sect2>
+      <title>Registry structure</title>
+  
+      <para>
+        The Windows registry is an elaborate tree structure, and not
+        even most Windows programmers are fully aware of how the
+        registry is laid out, with its different "hives" and numerous
+        links between them; a full coverage is out of the scope of
+        this document. But here are the basic registry keys you might
+        need to know about for now.
+      </para>
+
+
+      <variablelist>
+        <varlistentry>
+          <term>HKEY_LOCAL_MACHINE</term>
+          <listitem>
+            <para>
+              This fundamental root key (in win9x, stored in the
+              hidden file <filename>system.dat</filename>) contains
+              everything pertaining to the current Windows
+              installation.
+            </para>
+          </listitem>
+        </varlistentry>          
+        <varlistentry>
+          <term>HKEY_USERS</term>
+          <listitem>
+            <para>
+              This fundamental root key (in win9x, stored in the
+              hidden file <filename>user.dat</filename>) contains
+              configuration data for every user of the installation.
+            </para>
+          </listitem>
+        </varlistentry>          
+        <varlistentry>
+          <term>HKEY_CLASSES_ROOT</term>
+          <listitem>
+            <para>
+              This is a link to HKEY_LOCAL_MACHINE\Software\Classes.
+              It contains data describing things like file
+              associations, OLE document handlers, and COM classes.
+            </para>
+          </listitem>
+        </varlistentry>          
+        <varlistentry>
+          <term>HKEY_CURRENT_USER</term>
+          <listitem>
+            <para>
+              This is a link to HKEY_USERS\your_username, i.e., your
+              personal configuration.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </sect2>
+
+    <sect2>
+      <title>Using a Windows registry</title>
+  
+      <para>
+        If you point Wine at an existing MS Windows installation (by
+        setting the appropriate directories in
+        <filename>wine.conf</filename> or
+        <filename>.winerc</filename>), then Wine is able to load
+        registry data from it. However, Wine will not save anything to
+        the real Windows registry, but rather to its own registry
+        files (see below). Of course, if a particular registry value
+        exists in both the Windows registry and in the Wine registry,
+        then Wine will use the latter.
+      </para>
+      <para>
+        Occasionally, Wine may have trouble loading the Windows
+        registry. Usually, this is because the registry is
+        inconsistent or damaged in some way. If that becomes a
+        problem, you may want to download the
+        <filename>regclean.exe</filename> from the MS website and use
+        it to clean up the registry. Alternatively, you can always use
+        <filename>regedit.exe</filename> to export the registry data
+        you want into a text file, and then import it in Wine.
+      </para>
+    </sect2>
+
+    <sect2>
+      <title>Wine registry data filesr</title>
+  
+      <para>
+        In the user's home directory, there is a subdirectory named
+        <filename>.wine</filename>, where Wine will try to save its
+        registry by default. It saves into four files, which are:
+      </para>
+
+      <variablelist>
+        <varlistentry>
+          <term><filename>system.reg</filename></term>
+          <listitem>
+            <para>
+              This file contains HKEY_LOCAL_MACHINE.
+            </para>
+          </listitem>
+        </varlistentry>          
+        <varlistentry>
+          <term><filename>user.reg</filename></term>
+          <listitem>
+            <para>
+              This file contains HKEY_CURRENT_USER.
+            </para>
+          </listitem>
+        </varlistentry>          
+        <varlistentry>
+          <term><filename>userdef.reg</filename></term>
+          <listitem>
+            <para>
+              This file contains HKEY_USERS\.Default (i.e. the default
+              user settings).
+            </para>
+          </listitem>
+        </varlistentry>          
+        <varlistentry>
+          <term><filename>wine.userreg</filename></term>
+          <listitem>
+            <para>
+              Wine saves HKEY_USERS to this file (both current and
+              default user), but does not load from it, unless
+              <filename>userdef.reg</filename> is missing.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+      <para>
+        All of these files are human-readable text files, so unlike
+        Windows, you can actually use an ordinary text editor on them
+        if you must.
+      </para>
+      <para>
+        In addition to these files, Wine can also optionally load from
+        global registry files residing in the same directory as the
+        global <filename>wine.conf</filename> (i.e.
+        <filename>/usr/local/etc</filename> if you compiled from
+        source). These are:
+      </para>
+
+      <variablelist>
+        <varlistentry>
+          <term><filename>wine.systemreg</filename></term>
+          <listitem>
+            <para>Contains HKEY_LOCAL_MACHINE.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><filename>wine.userreg</filename></term>
+          <listitem>
+            <para>Contains HKEY_USERS.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </sect2>
+
+    <sect2>
+      <title>System administration</title>
+  
+      <para>
+        With the above file structure, it is possible for a system
+        administrator to configure the system so that a system Wine
+        installation (and applications) can be shared by all the
+        users, and still let the users all have their own personalized
+        configuration. An administrator can, after having installed
+        Wine and any Windows application software he wants the users
+        to have access to, copy the resulting
+        <filename>system.reg</filename> and
+        <filename>wine.userreg</filename> over to the global registry
+        files (which we assume will reside in
+        <filename>/usr/local/etc</filename> here), with:
+      </para>
+      <screen>
+cd ~/.wine
+cp system.reg /usr/local/etc/wine.systemreg
+cp wine.userreg /usr/local/etc/wine.userreg
+      </screen>
+      <para>
+        and perhaps even symlink these back to the administrator's
+        account, to make it easier to install apps system-wide later:
+      </para>
+      <screen>
+ln -sf /usr/local/etc/wine.systemreg system.reg
+ln -sf /usr/local/etc/wine.userreg wine.userreg
+      </screen>
+      <para>
+        Note that the <filename>tools/wineinstall</filename> script
+        already does all of this for you, if you install Wine as root.
+        If you then install Windows applications while logged in as
+        root, all your users will automatically be able to use them.
+        While the application setup will be taken from the global
+        registry, the users' personalized configurations will be saved
+        in their own home directories.
+      </para>
+      <para>
+        But be careful with what you do with the administrator account
+        - if you do copy or link the administrator's registry to the
+        global registry, any user might be able to read the
+        administrator's preferences, which might not be good if
+        sensitive information (passwords, personal information, etc)
+        is stored there. Only use the administrator account to install
+        software, not for daily work; use an ordinary user account for
+        that.
+      </para>
+    </sect2>
+
+    <sect2>
+      <title>The default registry</title>
+
+      <para>
+        A Windows registry contains many keys by default, and some of
+        them are necessary for even installers to operate correctly.
+        The keys that the Wine developers have found necessary to
+        install applications are distributed in a file called
+        <filename>winedefault.reg</filename>. It is automatically
+        installed for you if you use the
+        <filename>tools/wineinstall</filename> script, but if you want
+        to install it manually, you can do so by using the
+        <command>regapi</command> tool. You can find more information
+        about this in the
+        <filename>documentation/no-windows</filename> document in the
+        Wine distribution.
+      </para>
+    </sect2>
+
+    <sect2>
+      <title>The [registry] section</title>
+
+      <para>
+        With the above information fresh in mind, let's look at the
+        <filename>wine.conf</filename>/<filename>.winerc</filename>
+        options for handling the registry.
+      </para>
+
+      <variablelist>
+        <varlistentry>
+          <term>LoadGlobalRegistryFiles</term>
+          <listitem>
+            <para>
+              Controls whether to try to load the global registry
+              files, if they exist.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>LoadHomeRegistryFiles</term>
+          <listitem>
+            <para>
+              Controls whether to try to load the user's registry
+              files (in the <filename>.wine</filename> subdirectory of
+              the user's home directory).
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>LoadWindowsRegistryFiles</term>
+          <listitem>
+            <para>
+              Controls whether Wine will attempt to load registry data
+              from a real Windows registry in an existing MS Windows
+              installation.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>WritetoHomeRegistryFiles</term>
+          <listitem>
+            <para>
+              Controls whether registry data will be written to the
+              user's registry files. (Currently, there is no
+              alternative, so if you turn this off, Wine cannot save
+              the registry on disk at all; after you exit Wine, your
+              changes will be lost.)
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>UseNewFormat</term>
+          <listitem>
+            <para>
+              This option is obsolete. Wine now always use the new
+              format; support for the old format was removed a while
+              ago.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>PeriodicSave</term>
+          <listitem>
+            <para>
+              If this option is set to a nonzero value, it specifies
+              that you want the registry to be saved to disk at the
+              given interval. If it is not set, the registry will only
+              be saved to disk when the wineserver terminates.
+            </para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>SaveOnlyUpdatedKeys</term>
+          <listitem>
+            <para>
+              Controls whether the entire registry is saved to the
+              user's registry files, or only subkeys the user have
+              actually changed. Considering that the user's registry
+              will override any global registry files and Windows
+              registry files, it usually makes sense to only save
+              user-modified subkeys; that way, changes to the rest of
+              the global or Windows registries will still affect the
+              user.
+            </para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </sect2>
+  </sect1>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("configuring.sgml" "chapter" "sect1" "")
+End:
+-->

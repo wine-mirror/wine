@@ -1,0 +1,498 @@
+  <chapter id="fonts">
+    <title>Dealing with Fonts</title>
+
+    <sect1 id="windows-fonts">
+      <title>Fonts</title>
+
+      <para>
+        written by ???
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/fonts</filename>)
+      </para>
+
+      <para>
+        <note>
+          <para>
+            The <command>fnt2bdf</command> utility is included with
+            Wine. It can be found in the <filename>tools</filename>
+            directory. Links to the other tools mentioned in this
+            document can be found on wine headquarters:
+            <ulink url="http://www.winehq.com/tools.html">http://www.winehq.com/tools.html</ulink>
+          </para>
+        </note>
+      </para>
+
+      <sect2>
+        <title>How To Convert Windows Fonts</title>
+        <para>
+          If you have access to a Windows installation you should use
+          <command>fnt2bdf</command> utility (found in the
+          <filename>tools</filename> directory) to convert bitmap
+          fonts (<filename>VGASYS.FON</filename>,
+          <filename>SSERIFE.FON</filename>, and
+          <filename>SERIFE.FON</filename>) into the format that the X
+          Window System can recognize. 
+        </para>
+
+        <orderedlist>
+          <listitem>
+            <para>Extract bitmap fonts with <command>fnt2bdf</command>.</para>
+          </listitem>
+          <listitem>
+            <para>
+              Convert <filename>.bdf</filename> files produced by Step
+              1 into <filename>.pcf</filename> files with
+              <command>bdftopcf</command>.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Copy <filename>.pcf</filename> files to the font server
+              directory which is usually
+              <filename>/usr/lib/X11/fonts/misc</filename> (you will
+              probably  need superuser privileges). If you want to
+              create a new font directory you will need to add it to
+              the font path.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Run <command>mkfontdir</command> for the directory you
+              copied fonts to. If you are already in X you should run
+              <command>xset fp rehash</command> to make X server aware
+              of the new fonts.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Edit the <filename>wine.conf</filename> file to remove
+              aliases for the fonts you've just installed.
+            </para>
+          </listitem>
+        </orderedlist>
+        <para>
+          WINE can get by without these fonts but 'the look and feel'
+          may be quite different. Also, some applications try to load
+          their custom fonts on the fly (WinWord 6.0) and since WINE
+          does not implement this yet it instead prints out something
+          like;
+        </para>
+        <screen>
+STUB: AddFontResource( SOMEFILE.FON )
+        </screen>
+        <para>
+          You can convert this file too. Note that
+          <filename>.FON</filename> file may not hold  any bitmap
+          fonts and <command>fnt2bdf</command> will fail if this is
+          the case. Also note that although the above message will not
+          disappear WINE will work around the problem by using the
+          font you extracted from the
+          <filename>SOMEFILE.FON</filename>.
+          <command>fnt2bdf</command> will only work for Windows 3.1
+          fonts. It  will not work for TrueType fonts.
+        </para>
+        <para>
+          What to do with TrueType fonts? There are several commercial
+          font tools that can convert them to the Type1 format but the
+          quality of the resulting fonts is far from stellar. The
+          other way to use them is to get a font server capable of
+          rendering  TrueType (Caldera has one, there also is the free
+          <command>xfstt</command> in
+          <filename>Linux/X11/fonts</filename> on sunsite and mirrors,
+          if you're on FreeBSD you can use the port in
+          <filename>/usr/ports/x11-servers/Xfstt</filename>.  And
+          there is <command>xfsft</command> which uses the freetype
+          library, see <filename>documentation/ttfserver</filename>).
+        </para>
+        <para>
+          However, there is a possibility of the native TrueType
+          support via FreeType renderer in the future (hint, hint :-)
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>How To Add Font Aliases To <filename>wine.conf</filename></title>
+        <para>
+          Many Windows applications assume that fonts included in
+          original Windows 3.1  distribution are always present. By
+          default Wine creates a number of aliases that map them on
+          the existing X fonts:
+        </para>
+
+        <informaltable>
+          <tgroup cols="3">
+            <thead>
+              <row>
+                <entry>Windows font</entry>
+                <entry>...is mapped to...</entry>
+                <entry>X font</entry>
+              </row>
+            </thead>
+            <tbody>
+              <row>
+                <entry>"MS Sans Serif"</entry>
+                <entry align="center">-&gt;</entry>
+                <entry>"-adobe-helvetica-"</entry>
+              </row>
+              <row>
+                <entry>"MS Serif"</entry>
+                <entry align="center">-&gt;</entry>
+                <entry>"-bitstream-charter-"</entry>
+              </row>
+              <row>
+                <entry>"Times New Roman"</entry>
+                <entry align="center">-&gt;</entry>
+                <entry>"-adobe-times-"</entry>
+              </row>
+              <row>
+                <entry>"Arial"</entry>
+                <entry align="center">-&gt;</entry>
+                <entry>"-adobe-helvetica-"</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </informaltable>
+
+        <para>
+          There is no default alias for the "System" font. Also, no
+          aliases are  created for the fonts that applications install
+          at runtime. The recommended  way to deal with this problem
+          is to convert the missing font (see above).  If it proves
+          impossible, like in the case with TrueType fonts, you can
+          force  the font mapper to choose a closely related X font by
+          adding an alias to the  [fonts] section. Make sure that the
+          X font actually exists (with <command>xfontsel</command>
+          tool).
+        </para>
+        <screen>
+AliasN = [Windows font], [X font] &lt;, optional "mask X font" flag&gt;
+        </screen>
+        <para>
+          Example:
+        </para>
+        <screen>
+Alias0 = System, --international-, subst
+Alias1 = ...
+...
+        </screen>
+        <para>
+          Comments:
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+              There must be no gaps in the sequence <literal>{0, ...,
+                N}</literal> otherwise all aliases after the first gap
+              won't be read.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Usually font mapper translates X font names into font
+              names visible to Windows programs in the following
+              fashion:
+            </para>
+
+            <informaltable>
+              <tgroup cols="3">
+                <thead>
+                  <row>
+                    <entry>X font</entry>
+                    <entry>...will show up as...</entry>
+                    <entry>Extracted name</entry>
+                  </row>
+                </thead>
+                <tbody>
+                  <row>
+                    <entry>--international-...</entry>
+                    <entry align="center">-&gt;</entry>
+                    <entry>"International"</entry>
+                  </row>
+                  <row>
+                    <entry>-adobe-helvetica-...</entry>
+                    <entry align="center">-&gt;</entry>
+                    <entry>"Helvetica"</entry>
+                  </row>
+                  <row>
+                    <entry>-adobe-utopia-...</entry>
+                    <entry align="center">-&gt;</entry>
+                    <entry>"Utopia"</entry>
+                  </row>
+                  <row>
+                    <entry>-misc-fixed-...</entry>
+                    <entry align="center">-&gt;</entry>
+                    <entry>"Fixed"</entry>
+                  </row>
+                  <row>
+                    <entry>-...</entry>
+                    <entry align="center">-&gt;</entry>
+                    <entry></entry>
+                  </row>
+                  <row>
+                    <entry>-sony-fixed-...</entry>
+                    <entry align="center">-&gt;</entry>
+                    <entry>"Sony Fixed"</entry>
+                  </row>
+                  <row>
+                    <entry>-...</entry>
+                    <entry align="center">-&gt;</entry>
+                    <entry></entry>
+                  </row>
+                </tbody>
+              </tgroup>
+            </informaltable>
+
+            <para>
+              Note that since <literal>-misc-fixed-</literal> and
+              <literal>-sony-fixed-</literal> are different fonts Wine
+              modified the second extracted name to make sure Windows
+              programs can distinguish them because only extracted
+              names appear in the font selection dialogs. 
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              "Masking" alias replaces the original extracted name so
+              that in the  example case we will have the following
+              mapping:
+            </para>
+            <informaltable>
+              <tgroup cols="3">
+                <thead>
+                  <row>
+                    <entry>X font</entry>
+                    <entry>...is masked to...</entry>
+                    <entry>Extracted name</entry>
+                  </row>
+                </thead>
+                <tbody>
+                  <row>
+                    <entry>--international-...</entry>
+                    <entry align="center">-&gt;</entry>
+                    <entry>"System"</entry>
+                  </row>
+                </tbody>
+              </tgroup>
+            </informaltable>
+            <para>
+              "Nonmasking" aliases are transparent to the user and
+              they do not replace extracted names.
+            </para>
+            <para>
+              Wine discards an alias when it sees that the native X
+              font is available.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              If you do not have access to Windows fonts mentioned in
+              the first  paragraph you should try to substitute the
+              "System" font with  nonmasking alias. The
+              <command>xfontsel</command> application will show you
+              the fonts available to X.
+            </para>
+            <screen>
+Alias.. = System, ...bold font without serifs
+            </screen>
+          </listitem>
+        </itemizedlist>
+        <para>
+          Also, some Windows applications request fonts without
+          specifying the  typeface name of the font. Font table starts
+          with Arial in most Windows  installations, however X font
+          table starts with whatever is the first line  in the
+          <filename>fonts.dir</filename>.  Therefore WINE uses the
+          following entry to determine  which font to check first.
+        </para>
+        <para>
+          Example:
+        </para>
+        <screen>
+Default = -adobe-times-
+        </screen>
+        <para>
+          Comments:
+        </para>
+        <para>
+          It is better to have a scalable font family (bolds and
+          italics included)  as the default choice because mapper
+          checks all available fonts until  requested height and other
+          attributes match perfectly or the end of the  font table is
+          reached. Typical X installations have scalable fonts in the
+          <filename>../fonts/Type1</filename> and
+          <filename>../fonts/Speedo</filename> directories.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>How To Manage Cached Font Metrics</title>
+        <para>
+          WINE stores detailed information about available fonts in
+          the <filename>~/.wine/.cachedmetrics</filename> file. You
+          can copy it elsewhere and add this entry to the [fonts]
+          section  in your <filename>wine.conf</filename>:
+        </para>
+        <screen>
+FontMetrics = &lt;file with metrics&gt;
+        </screen>
+        <para>
+          If WINE detects changes in the X font configuration it will
+          rebuild font metrics from scratch and then it will overwrite
+          <filename>~/.wine/.cachedmetrics</filename> with  the new
+          information. This process can take a while.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Too Small Or Too Large Fonts</title>
+        <para>
+          Windows programs may ask WINE to render a font with the
+          height specified in points. However, point-to-pixel ratio
+          depends on the real physical size  of your display (15",
+          17", etc...). X tries to provide an estimate of that  but it
+          can be quite different from the actual size. You can change
+          this ratio by adding the following entry to the [fonts]
+          section:
+        </para>
+        <screen>
+Resolution = &lt;integer value&gt;
+        </screen>
+        <para>
+          In general, higher numbers give you larger fonts. Try to
+          experiment with values in the 60 - 120 range. 96 is a good
+          starting point.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>"FONT_Init: failed to load ..." Messages On Startup</title>
+        <para>
+          The most likely cause is a broken
+          <filename>fonts.dir</filename> file in one of your font
+          directories. You need to rerun <command>mkfontdir</command>
+          to rebuild this file. Read its manpage for more information.
+          If you can't run <command>mkfontdir</command> on this
+          machine as you are not root, use <command>xset -fp
+            xxx</command> to remove the broken font path.
+        </para>
+      </sect2>
+    </sect1>
+
+    <sect1 id="ttfont-server">
+    <title>Setting up a TrueType Font Server</title>
+      <para>
+        written by ???
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/ttfserver</filename>)
+      </para>
+
+      <para>
+        Follow these instructions to set up a TrueType font server on your system.
+      </para>
+
+      <orderedlist>
+        <listitem>
+          <para>Get <filename>freetype-1.0.full.tar.gz</filename></para>
+        </listitem>
+        <listitem>
+          <para>Read docs, unpack, configure and install</para>
+        </listitem>
+        <listitem>
+          <para>Test the library, e.g. <command>ftview 20 /dosc/win95/fonts/times</command></para>
+        </listitem>
+        <listitem>
+          <para>Get <filename>xfsft-beta1e.linux-i586</filename></para>
+        </listitem>
+        <listitem>
+          <para>
+            Install it and start it when booting, e.g. in an
+            rc-script.  The manpage for <command>xfs</command>
+            applies.
+          </para>
+        </listitem>
+        <listitem>
+          <para>Follow the hints given by <email>williamc@dai.ed.ac.uk</email></para>
+        </listitem>
+        <listitem>
+          <para>
+            I got <command>xfsft</command> from
+            <ulink url="http://www.dcs.ed.ac.uk/home/jec/progindex.html">http://www.dcs.ed.ac.uk/home/jec/progindex.html</ulink>.
+            I have it running all the time.  Here is
+            <filename>/usr/X11R6/lib/X11/fs/config</filename>:
+          </para>
+          <programlisting>
+clone-self = on
+use-syslog = off
+catalogue = /c/windows/fonts
+error-file = /usr/X11R6/lib/X11/fs/fs-errors
+default-point-size = 120
+default-resolutions = 75,75,100,100
+          </programlisting>
+          <para>
+            Obviously <filename>/c/windows/fonts</filename> is where
+            my Windows fonts on my Win95 <medialabel>C:</medialabel>
+            drive live; could be e.g.
+            <filename>/mnt/dosC/windows/system</filename> for Win31.
+            In <filename>/c/windows/fonts/fonts.scale</filename> I
+            have
+          </para>
+          <programlisting>
+14
+arial.ttf -monotype-arial-medium-r-normal--0-0-0-0-p-0-iso8859-1
+arialbd.ttf -monotype-arial-bold-r-normal--0-0-0-0-p-0-iso8859-1
+arialbi.ttf -monotype-arial-bold-o-normal--0-0-0-0-p-0-iso8859-1
+ariali.ttf -monotype-arial-medium-o-normal--0-0-0-0-p-0-iso8859-1
+cour.ttf -monotype-courier-medium-r-normal--0-0-0-0-p-0-iso8859-1
+courbd.ttf -monotype-courier-bold-r-normal--0-0-0-0-p-0-iso8859-1
+courbi.ttf -monotype-courier-bold-o-normal--0-0-0-0-p-0-iso8859-1
+couri.ttf -monotype-courier-medium-o-normal--0-0-0-0-p-0-iso8859-1
+times.ttf -monotype-times-medium-r-normal--0-0-0-0-p-0-iso8859-1
+timesbd.ttf -monotype-times-bold-r-normal--0-0-0-0-p-0-iso8859-1
+timesbi.ttf -monotype-times-bold-i-normal--0-0-0-0-p-0-iso8859-1
+timesi.ttf -monotype-times-medium-i-normal--0-0-0-0-p-0-iso8859-1
+symbol.ttf -monotype-symbol-medium-r-normal--0-0-0-0-p-0-microsoft-symbol
+wingding.ttf -microsoft-wingdings-medium-r-normal--0-0-0-0-p-0-microsoft-symbol
+          </programlisting>
+          <para>
+            In <filename>/c/windows/fonts/fonts.dir</filename> I have
+            exactly the same.
+          </para>
+          <para>
+            In <filename>/usr/X11R6/lib/X11/XF86Config</filename> I have
+          </para>
+          <programlisting>
+FontPath "tcp/localhost:7100"
+          </programlisting>
+          <para>
+            in front of the other <literal>FontPath</literal> lines.
+            That's it!  As an interesting by-product of course, all
+            those web pages which specify Arial come up in Arial in
+            Netscape ...
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Shut down X and restart (and debug errors you did while
+            setting up everything).
+          </para>
+        </listitem>
+        <listitem>
+          <para>Test with e.g <command>xlsfont | grep arial</command></para>
+        </listitem>
+      </orderedlist>
+
+      <para>
+        Hope this helps...
+    </para>
+  </sect1>
+
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+End:
+-->

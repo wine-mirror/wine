@@ -1,0 +1,265 @@
+  <chapter id="printing">
+    <title>Printing in Wine</title>
+    <para>How to print documents in Wine...</para>
+
+    <sect1 id="wine-printing">
+      <title>Printing</title>
+
+      <para>
+        written by (???)
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/printing</filename>)
+      </para>
+
+      <para>
+        Printing in Wine can be done in one of two ways. Both of which are very
+        alpha.
+      </para>
+      <orderedlist>
+        <listitem>
+          <para>Use an external windows 3.1 printer driver.</para>
+        </listitem>
+        <listitem>
+          <para>
+            Use the builtin Wine Postscript driver (+ ghostscript to produce
+            output for non-postscript printers).
+          </para>
+        </listitem>
+      </orderedlist>
+
+      <para>
+        Note that at the moment WinPrinters (cheap, dumb printers that require
+        the host computer to explicitly control the head) will not work. It is
+        unclear whether they ever will.
+      </para>
+
+      <sect2>
+        <title>External printer drivers</title>
+        <para>
+          At present only 16 bit drivers will work (note that these include win9x
+          drivers).  To use them, add
+        </para>
+        <screen>
+printer=on
+        </screen>
+        <para>
+          to the [wine] section of <filename>wine.conf</filename> (or
+          <filename>~/.winerc</filename>). This lets
+          <function>CreateDC</function> proceed if its driver argument is a 16
+          bit driver. You will probably also need to add
+        </para>
+        <screen>
+TTEnable=0 TTOnly=0
+        </screen>
+        <para>
+          to the [TrueType] section of <filename>win.ini</filename>. The code for
+          the driver interface is in <filename>graphics/win16drv</filename>.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Builtin Wine PostScript driver</title>
+        <para>
+          Enables printing of PostScript files via a driver built into Wine. See
+          <filename>documentation/psdriver</filename> for installation
+          instructions. The code for the PostScript driver is in
+          <filename>graphics/psdrv</filename>.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Spooling</title>
+        <para>
+          Spooling is rather primitive. The [spooler] section of
+          <filename>wine.conf</filename> maps a port (e.g.
+          <systemitem>LPT1:</systemitem>) to a file or a command via a pipe. For
+          example the following lines
+        </para>
+        <screen>
+LPT1:=foo.ps LPT2:=|lpr
+        </screen>
+        <para>
+          map <systemitem>LPT1:</systemitem> to file <filename>foo.ps</filename>
+          and <systemitem>LPT2:</systemitem> to the <command>lpr</command>
+          command. If a job is sent to an unlisted port then a file is created
+          with that port's name e.g. for <systemitem>LPT3:</systemitem> a file
+          called <systemitem>LPT3:</systemitem> would be created.
+        </para>
+      </sect2>
+    </sect1>
+
+    <sect1 id="psdriver">
+      <title>The Wine PostScript Driver</title>
+
+      <para>
+        written by Huw Davies <email>h.davies1@physics.ox.ac.uk</email>
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/psdriver</filename>)
+      </para>
+
+      <para>
+        When complete this will allow Wine to generate PostScript files without
+        needing an external printer driver. It should be possible to print to a
+        non PostScript printer by filtering the output through ghostscript.
+      </para>
+
+      <sect2>
+        <title>Installation</title>
+        <para>
+          The driver behaves as if it were a DRV file called
+          <filename>wineps.drv</filename> which at the moment is built into Wine.
+          Although it mimics a 16 bit driver it will work with both 16 and 32 bit
+          apps, just as win9x drivers do.
+        </para>
+        <para>
+          To install it add
+        </para>
+        <screen>
+Wine PostScript Driver=WINEPS,LPT1:
+        </screen>
+        <para>
+          to the [devices] section of <filename>win.ini</filename> and to set it
+          as the default printer also add
+        </para>
+        <screen>
+device=Wine PostScript Driver,WINEPS,LPT1:
+        </screen>
+        <para>
+          to the [windows] section of <filename>win.ini</filename> and ???
+          <emphasis>[sic]</emphasis>
+        </para>
+        <para>
+          To run 32 bit apps (and 16 bit apps using the
+          <literal>builtin</literal> commdlg) you also need to add certain
+          entries to the registry.  The easiest way to do that at the moment is
+          to use the winelib program <command>programs/regapi/regapi</command>
+          with the file <filename>documentation/psdrv.reg</filename>.  To do this
+          <command>cd</command> to <filename>programs/regapi/regapi</filename>
+          and type <userinput>make</userinput> to actually make the program, then
+          type <userinput>./regapi setValue
+            &lt;../../documentation/psdrv.reg</userinput>.  You can obviously
+          edit <filename>psdrv.reg</filename> to suit your requirements.
+        </para>
+        <para>
+          You will need Adobe Font Metric (AFM) files for the (type 1 PostScript)
+          fonts that you wish to use. You can get these from
+          <ulink url="ftp://ftp.adobe.com/pub/adobe/type/win/all/afmfiles">
+            ftp://ftp.adobe.com/pub/adobe/type/win/all/afmfiles </ulink>. The
+          directories <filename>base17</filename> or <filename>base35</filename>
+          are good places to start. Note that these are only the font metrics and
+          not the fonts themselves. At the moment the driver does not download
+          additional fonts, so you can only use fonts that are already present on
+          the printer.
+        </para>
+        <para>
+          Then create a [afmfiles] section in your
+          <filename>wine.conf</filename> (or
+          <filename>~/.winerc</filename>) and add a line of the form
+        </para>
+        <screen>
+file&lt;n&gt;=/unix/path/name/filename.afm
+        </screen>
+        <para>
+          for each AFM file that you wish to use. [This might change in the future]
+        </para>
+        <para>
+          You also require a PPD file for your printer.  This describes certain
+          characteristics of the printer such as which fonts are installed, how
+          to select manual feed etc. Adobe also has many of these on its website,
+          have a look in <ulink url="ftp://ftp.adobe.com/pub/adobe/printerdrivers/win/all/">
+            ftp://ftp.adobe.com/pub/adobe/printerdrivers/win/all/</ulink>. Create
+          a [psdrv] section in your <filename>wine.conf</filename> (or
+          <filename>~/.winerc</filename>) and add the  following entry:
+        </para>
+        <screen>
+ppdfile=/somewhere/file.ppd
+        </screen>
+        <para>
+          By default, the driver will look for a file named
+          <filename>default.ppd</filename> in the directory from which
+          you started wine.
+        </para>
+        <para>
+          To enable colour printing you need to have the
+          <literal>*ColorDevice</literal> entry in the PPD set to
+          <literal>true</literal>, otherwise the driver will generate
+          greyscale.
+        </para>
+        <para>
+          Note that you need not set <literal>printer=on</literal> in
+          the [wine] section of <filename>wine.conf</filename>, this
+          enables printing via external printer drivers and does not
+          affect wineps.
+        </para>
+        <para>
+          If you're lucky you should now be able to produce PS files
+          from Wine!
+        </para>
+        <para>
+          I've tested it with win3.1 notepad/write, Winword6 and
+          Origin4.0 and 32 bit apps such as win98 wordpad, Winword97,
+          Powerpoint2000 with some degree of success - you should be
+          able to get something out, it may not be in the right place.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>TODO / Bugs</title>
+
+        <itemizedlist>
+          <listitem>
+            <para>
+              Driver does read PPD files, but ignores all constraints
+              and doesn't let you specify whether you have optional
+              extras such as envelope feeders. You will therefore find
+              a larger than normal selection of input bins in the
+              print setup dialog box. I've only really tested ppd
+              parsing on the <filename>hp4m6_v1.ppd</filename> file.
+            </para>
+          </listitem>
+          <listitem>
+            <para>No TrueType download.</para>
+          </listitem>
+          <listitem>
+            <para>StretchDIBits uses level 2 PostScript.</para>
+          </listitem>
+          <listitem>
+            <para>AdvancedSetup dialog box.</para>
+          </listitem>
+          <listitem>
+            <para>Many partially implemented functions.</para>
+          </listitem>
+          <listitem>
+            <para>ps.c is becoming messy.</para>
+          </listitem>
+          <listitem>
+            <para>
+              Notepad often starts text too far to the left depending
+              on the margin settings. However the win3.1
+              <filename>pscript.drv</filename> (under wine) also does
+              this.
+            </para>
+          </listitem>
+          <listitem>
+            <para>Probably many more...</para>
+          </listitem>
+        </itemizedlist>
+
+        <para>
+          Please contact me if you want to help so that we can avoid duplication.
+        </para>
+        <para>
+          Huw Davies <email>h.davies1@physics.ox.ac.uk</email>
+        </para>
+      </sect2>
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+End:
+-->

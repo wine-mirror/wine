@@ -1,0 +1,202 @@
+  <chapter id="i18n">
+    <title>Internationalization</title>
+
+    <sect1 id="adding-languages">
+      <title>Adding New Languages</title>
+
+      <para>
+        written by Morten Welinder, January 1996.
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Thereafter revised Februari 1999 by Klaas van Gend</para>
+        </listitem>
+        <listitem>
+          <para>Revised again May 23, 1999, Klaas van Gend</para>
+        </listitem>
+        <listitem>
+          <para>Updated May 26, 2000, Zoran Dzelajlija</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>
+        (Extracted from <filename>wine/documentation/languages</filename>)
+      </para>
+
+      <para>
+        This file documents the necessary procedure for adding a new
+        language to the list of languages that Wine can display system
+        menus and forms in. Currently at least the following languages
+        are still missing:
+        <simplelist columns="5" type="horiz">
+          <member>Bulgarian</member>
+          <member>Chinese</member>
+          <member>Greek</member>
+          <member>Icelandic</member>
+          <member>Japanese</member>
+          <member>Romanian</member>
+          <member>Croatian</member>
+          <member>Slovak</member>
+          <member>Turkish</member>
+          <member>Slovanian</member>
+        </simplelist>
+      </para>
+
+      <note>
+        <para>
+          <emphasis>I hope I got all the places where changes are
+            needed.  If you see any place missing from the list,
+            submit a patch to this file please. Also note that
+            re-organization of the source code might change the list of
+            places.</emphasis>
+        </para>
+      </note>
+
+      <para>
+        To add a new language you need to be able to translate the
+        relatively few texts, of course.  You will need very little
+        knowledge of programming, so you have almost no excuses for
+        not adding your language, right?  We should easily be able to
+        support 20 languages within a few months, get going!  Apart
+        from re-compilation it'll take you about an hour or two.
+      </para>
+      <para>
+        To add a new language to the list of languages that Wine can
+        handle you must...
+      </para>
+
+      <orderedlist>
+        <listitem>
+          <para>Find the language ID in
+            <filename>include/winnls.h</filename>.</para>
+        </listitem>
+        <listitem>
+          <para>
+            Look in <filename>ole/ole2nls.c</filename> if your
+            language is already incorporated in the <varname>static
+              const struct NLS_langlocale</varname>. If not: find the
+            appropriate entries in
+            <filename>include/winnls.h</filename> and add them to the
+            list.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Edit the parameters defined in
+            <filename>ole/nls/*.nls</filename> to fit your local
+            habits and language.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Edit <filename>documentation/wine.man.in</filename>
+            (search for <parameter>-language</parameter>) to show the
+            new language abbreviation.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Edit <filename>misc/main.c</filename> variable
+            <varname>Languages</varname> to contain the new language
+            abbreviation and language ID.  Also edit
+            <structname>struct option_table</structname> in
+            <filename>misc/options.c</filename> to show the new
+            abbreviation.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Edit <filename>include/options.h</filename>
+            <type>enum</type> <varname>WINE_LANGUAGE</varname> to have
+            a member called <literal>LANG_XX</literal> where
+            <literal>XX</literal> is the new abbreviation.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Create a new file
+            <filename>dlls/commdlg/cdlg_XX.rc</filename> (where
+            <literal>XX</literal> is your language  abbreviation)
+            containing all menus. Your best bet is to copy
+            <filename>cdlg_En.rc</filename> and start translating.
+            There is no real need to know how the internal structure
+            of the file, as you only need to translate the text within
+            quotes. 
+          </para>
+          <para>
+            In menus, the character "&amp;" means that the next
+            character will be highlighted and that pressing that
+            letter will select the item. You should place these
+            "&amp;" characters suitably for your language, not just
+            copy the positions from (say) English.  In particular,
+            items within one menu should have different highlighted
+            letters.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Edit <filename>dlls/commdlg/rsrc.rc</filename> to contain
+            an <symbol>#include</symbol> statement for your
+            <filename>cdlg_XX.rc</filename> file.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Repeat steps 6 and 7 again for:
+            <itemizedlist>
+              <listitem>
+                <para>
+                  <filename>dlls/shell32/shell32_XX.rc</filename> and
+                  <filename>shres.rc</filename>
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  <filename>resources/sysres_XX.rc</filename> and
+                  <filename>user32.rc</filename>
+                </para>
+              </listitem>
+            </itemizedlist>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Re-configure, re-make dependencies, and re-make Wine.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Check your new menus and forms; when they're not ok, go
+            back to 6) and adapt the sizes, etc.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Several of the winelib based programs in the subdirectory
+            programs also have internationalisation support. See the
+            appropriate files there for reference.
+          </para>
+        </listitem>
+        <listitem>
+          <para>Edit
+            <filename>documentation/internationalisation</filename> to
+            show the new status.</para>
+        </listitem>
+        <listitem>
+          <para>
+            Submit patches for inclusion in the next Wine release, see
+            file <filename>./ANNOUNCE</filename> for details about
+            where to submit.
+          </para>
+        </listitem>
+      </orderedlist>
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+End:
+-->

@@ -1,0 +1,386 @@
+  <chapter id="consoles">
+    <title>Consoles in Wine</title>
+
+    <sect1 id="wine-consoles">
+      <title>Consoles</title>
+
+      <para>
+        written by (???)
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/console</filename>)
+      </para>
+
+      <sect2>
+        <title>Console - First Pass</title>
+
+        <para>
+          Consoles are just xterms created with the
+          <parameter>-Sxxn</parameter> switch. A
+          <systemitem>pty</systemitem> is opened and the master goes
+          to the <filename>xterm</filename> side and the slave is held
+          by the wine side.  The console itself it turned into a few
+          <type>HANDLE32</type>s and is set to the
+          <varname>STD_*_HANDLES</varname>.
+        </para>
+        <para>
+          It is possible to use the <function>WriteFile</function> and
+          <function>ReadFile</function> commands to write to a win32
+          console.  To accomplish this, all <type>K32OBJ</type>s that
+          support I/O have a read and write function pointer. So,
+          <function>WriteFile</function> calls
+          <function>K32OBJ_WriteFile</function> which calls the
+          <type>K32OBJ</type>'s write function pointer, which then
+          finally calls <function>write</function>.
+        </para>
+        <para>
+          <emphasis>[this paragraph is now out of date]</emphasis> If
+          the command line console is to be inheirited or a process
+          inherits its parent's console (-- can that happen???), the
+          console is created at process init time via
+          <function>PROCESS_InheritConsole</function>. The
+          <literal>0</literal>, <literal>1</literal>, and
+          <literal>2</literal> file descriptors are duped to be the
+          <varname>STD_*_HANDLES</varname> in this case.  Also in this
+          case a flag is set to indicate that the console comes from
+          the parent process or command line.
+        </para>
+        <para>
+          If a process doesn't have a console at all, its
+          <varname>pdb-&gt;console</varname> is set to
+          <constant>NULL</constant>.  This helps indicate when it is
+          possible to create a new console (via
+          <function>AllocConsole</function>).
+        </para>
+        <para>
+          When <function>FreeConsole</function> is called, all handles that the process has
+          open to the console are closed.  Like most <type>K32OBJ</type>s, if the
+          console's refcount reaches zero, its <type>K32OBJ</type> destroy function
+          is called.  The destroy kills the xterm if one was open.
+        </para>
+        <para>
+          Also like most k32 objects, we assume that
+          (<type>K32OBJ</type>) header is the first field so the
+          casting (from <type>K32OBJ*</type>to <type>CONSOLE*</type>)
+          works correctly.
+        </para>
+        <para>
+          <function>FreeConsole</function> is called on process exit
+          (in <function>ExitProcess</function>) if
+          <varname>pdb-&gt;console</varname> is not
+          <constant>NULL</constant>.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>BUGS</title>
+
+        <para>
+          Console processes do not inherit their parent's handles.  I
+          think there needs to be two cases, one where they have to
+          inherit the <filename>stdin</filename> /
+          <filename>stdout</filename> / <filename>stderr</filename>
+          from unix, and one where they have to inherit from another
+          windows app.
+        </para>
+        <para>
+          <function>SetConsoleMode</function> -- UNIX only has
+          <constant>ICANON</constant> and various
+          <constant>ECHO</constant>s to play around with for
+          processing input.  Win32 has line-at-a-time processing,
+          character processing, and echo. I'm putting together an
+          intermediate driver that will handle this (and hopefully
+          won't be any more buggy then the NT4 console
+          implementation).
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Experimentation</title>
+
+        <para>
+          experimentation with NT4 yields that:
+        </para>
+
+        <variablelist>
+          <varlistentry>
+            <term><function>WriteFile</function></term>
+            <listitem>
+              <itemizedlist>
+                <listitem>
+                  <para>does not truncate file on 0 length write</para>
+                </listitem>
+                <listitem>
+                  <para>
+                    0 length write or error on write changes
+                    <varname>numcharswritten</varname> to
+                    <literal>0</literal>
+                  </para>
+                </listitem>
+                <listitem>
+                  <para>0 length write returns <constant>TRUE</constant></para>
+                </listitem>
+                <listitem>
+                  <para>works with console handles</para>
+                </listitem>
+              </itemizedlist>            
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><function>_lwrite</function></term>
+            <listitem>
+              <itemizedlist>
+                <listitem>
+                  <para>does truncate/expand file at current position on 0 length write</para>
+                </listitem>
+                <listitem>
+                  <para>returns 0 on a zero length write</para>
+                </listitem>
+                <listitem>
+                  <para>works with console handles (typecasted)</para>
+                </listitem>
+              </itemizedlist>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><function>WriteConsole</function></term>
+            <listitem>
+              <itemizedlist>
+                <listitem>
+                  <para>expects only console handles</para>
+                </listitem>
+              </itemizedlist>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><function>SetFilePointer</function></term>
+            <listitem>
+              <itemizedlist>
+                <listitem>
+                  <para>returns -1 (err 6) when used with a console handle</para>
+                </listitem>
+              </itemizedlist>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><function>FreeConsole</function></term>
+            <listitem>
+              <itemizedlist>
+                <listitem>
+                  <para>
+                    even when all the handles to it are freed, the
+                    win32 console stays visible, the only way I could
+                    find to free it was via the <function>FreeConsole</function>
+                  </para>
+                </listitem>
+              </itemizedlist>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>
+          Is it possible to interrupt win32's
+          <function>FileWrite</function>?  I'm not sure. It may not be
+          possible to interrupt any system calls.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>DOS (Generic) Console Support</title>
+
+        <sect3>
+          <title>I. Command Line Configuration</title>
+
+          <para>
+            DOS consoles must be configured either on the command line
+            or in a dot resource file (<filename>.console</filename>).
+            A typical configuration consists of a string of driver
+            keywords separated by plus ('+') signs. To change the
+            configuration on the command-line, use the
+            <parameter>-console</parameter> switch.
+          </para>
+          <para>
+            For example:
+          </para>
+          <screen>
+wine -console ncurses+xterm &lt;application&gt;
+          </screen>
+          <para>
+            Possible drivers:
+          </para>
+
+          <variablelist>
+            <varlistentry>
+              <term>tty:</term>
+              <listitem>
+                <para>Generic text-only support. Supports redirection.</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>ncurses:</term>
+              <listitem>
+                <para>Full-screen graphical support with color.</para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>xterm:</term>
+              <listitem>
+                <para>
+                  Load a new window to display the console in. Also
+                  supports resizing windows.
+                </para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+        </sect3>
+
+        <sect3>
+          <title>II. <filename>wine.conf</filename> Configuration</title>
+
+          <para>
+            In the <filename>wine.conf</filename> file, you can create
+            a section called [console] that contains configuration
+            options that are respected by the assorted console
+            drivers.
+          </para>
+          <para>
+            Current Options:
+          </para>
+
+          <variablelist>
+            <varlistentry>
+              <term>XtermProg=&lt;program&gt;</term>
+              <listitem>
+                <para>
+                  Use this program instead of
+                  <command>xterm</command>. This eliminates the need
+                  for a recompile. See the table below for a
+                  comparison of various terminals.
+                </para>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>InitialRows=&lt;number&gt;</term>
+              <listitem>
+                <para>
+                  Attempt to start all drivers with this number of
+                  rows. This causes xterms to be resized, for
+                  instance.
+                </para>
+                <note>
+                  <para>
+                    This information is passed on the command-line
+                    with the <parameter>-g</parameter> switch.
+                  </para>
+                </note>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>InitialColumns=&lt;number&gt;</term>
+              <listitem>
+                <para>
+                  Attempt to start all drivers with this number of
+                  columns. This causes xterms to be resized, for
+                  instance.
+                </para>
+                <note>
+                  <para>
+                    This information is passed on the command-line
+                    with the <parameter>-g</parameter> switch.
+                  </para>
+                </note>
+              </listitem>
+            </varlistentry>
+            <varlistentry>
+              <term>TerminalType=&lt;name&gt;</term>
+              <listitem>
+                <para>
+                  Tell any driver that is interested (ncurses) which
+                  termcap and/or terminfo type to use. The default is
+                  xterm which is appropiate for most uses.
+                  <command>nxterm</command> may give you better
+                  support if you use that terminal. This can also be
+                  changed to "linux" (or "console" on older systems)
+                  if you manage to hack the ability to write to the
+                  console into this driver.
+                </para>
+              </listitem>
+            </varlistentry>
+          </variablelist>
+        </sect3>
+
+        <sect3>
+          <title>III. Terminal Types</title>
+
+          <para>
+            There are a large number of potential terminals that can
+            be used with Wine, depending on what you are trying to do.
+            Unfortunately, I am still looking for the "best" driver
+            combination.
+          </para>
+          <note>
+            <para>
+              'slave' is required for use in Wine, currently.
+            </para>
+          </note>
+
+          <informaltable>
+            <tgroup cols="4">
+              <thead>
+                <row>
+                  <entry>Program</entry>
+                  <entry>Color?</entry>
+                  <entry>Resizing?</entry>
+                  <entry>Slave?</entry>
+                </row>
+              </thead>
+              <tfoot>
+                <row>
+                  <entry>(linux console)</entry>
+                  <entry>Y</entry>
+                  <entry>N</entry>
+                  <entry>?</entry>
+                </row>
+              </tfoot>
+              <tbody>
+                <row>
+                  <entry>xterm</entry>
+                  <entry>N</entry>
+                  <entry>Y</entry>
+                  <entry>Y</entry>
+                </row>
+                <row>
+                  <entry>nxterm</entry>
+                  <entry>Y</entry>
+                  <entry>N</entry>
+                  <entry>Y</entry>
+                </row>
+                <row>
+                  <entry>rxvt</entry>
+                  <entry>Y</entry>
+                  <entry>?</entry>
+                  <entry>N</entry>
+                </row>
+              </tbody>
+            </tgroup>
+          </informaltable>
+
+          <para>
+            As X terminals typically use a 24x80 screen resolution
+            rather than the typical 25x80 one, it is necessary to
+            resize the screen to allow a DOS program to work
+            full-screen. There is a <filename>wine.conf</filename>
+            option to work around this in some cases but run-time
+            resizing will be disabled.
+          </para>
+        </sect3>
+      </sect2>
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+End:
+-->

@@ -1,0 +1,11 @@
+  <chapter id="compiling">
+    <title>Compiling Wine</title>
+    <para>How to compile wine, and problems that may arise...</para>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+End:
+-->

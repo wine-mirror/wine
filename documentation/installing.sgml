@@ -1,0 +1,751 @@
+  <chapter id="installing">
+    <title>Installing Wine</title>
+    <para>How to install Wine...</para>
+
+    <sect1 id="replace-windows">
+      <title>WWN #52 Feature: Replacing Windows</title>
+
+      <para>
+        Written by Ove Kåven <email>ovek@winehq.com</email>
+      </para>
+
+      <sect2>
+        <title>Installation Overview</title>
+
+        <para>
+          A Windows installation consists of many different parts.
+        </para>
+
+        <itemizedlist>
+          <listitem>
+            <para>
+              Registry. Many keys are supposed to exist and contain
+              meaningful data, even in a newly-installed Windows.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Directory structure. Applications expect to find and/or
+              install things in specific predetermined locations. Most
+              of these directories are expected to exist. But unlike
+              Unix directory structures, most of these locations are
+              not hardcoded, and can be queried via the Windows API
+              and the registry. This places additional requirements on
+              a Wine installation.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              System DLLs. In Windows, these usually reside in the
+              <filename>system</filename> (or
+              <filename>system32</filename>) directories. Some Windows
+              applications check for their existence in these
+              directories before attempting to load them. While Wine
+              is able to load its own internal DLLs
+              (<filename>.so</filename> files) when the application
+              asks for a DLL, Wine does not simulate the existence of
+              nonexisting files.
+            </para>
+          </listitem>
+        </itemizedlist>
+
+        <para>
+          While the users are of course free to set up everything
+          themselves, the Wine team will make the automated Wine
+          installation script, <filename>tools/wineinstall</filename>,
+          do everything we find necessary to do; running the
+          conventional <command>configure && make depend && make && make
+            install</command> cycle is thus not recommended, unless
+          you know what you're doing. At the moment,
+          <filename>tools/wineinstall</filename> is able to create a
+          configuration file, install the registry, and create the
+          directory structure itself.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>The Registry</title>
+        <para>
+          The default registry is in the file
+          <filename>winedefault.reg</filename>. It contains directory
+          paths, class IDs, and more; it must be installed before most
+          <filename>INSTALL.EXE</filename> or
+          <filename>SETUP.EXE</filename> applications will work. The
+          registry is covered in more detail in an earlier article.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Directory Structure</title>
+        <para>
+          Here's the fundamental layout that Windows applications and
+          installers expect. Without it, they seldom operate
+          correctly.
+        </para>
+
+        <informaltable frame="none">
+          <tgroup cols="5">
+            <tbody>
+              <row>
+                <entry>C:\</entry>
+                <entry></entry><entry></entry><entry></entry>
+                <entry>Root directory of primary disk drive</entry>
+              </row>
+              <row>
+                <entry></entry>
+                <entry>Windows\</entry>
+                <entry></entry><entry></entry>
+                <entry>Windows directory, containing .INI files, accessories, etc</entry>
+              </row>
+              <row>
+                <entry></entry><entry></entry>
+                <entry valign="middle">System\</entry>
+                <entry></entry>
+                <entry><literallayout>Win3.x/95/98/ME directory for common DLLs
+WinNT/2000 directory for common 16-bit DLLs</literallayout></entry>
+              </row>
+              <row>
+                <entry></entry><entry></entry>
+                <entry>System32\</entry>
+                <entry></entry>
+                <entry>WinNT/2000 directory for common 32-bit DLLs</entry>
+              </row>
+              <row>
+                <entry></entry><entry></entry>
+                <entry>Start Menu\</entry>
+                <entry></entry>
+                <entry>Program launcher directory structure</entry>
+              </row>
+              <row>
+                <entry></entry><entry></entry><entry></entry>
+                <entry>Programs\</entry>
+                <entry>Program launcher links (.LNK files) to applications</entry>
+              </row>
+              <row>
+                <entry></entry>
+                <entry>Program Files\</entry>
+                <entry></entry><entry></entry>
+                <entry>Application binaries (.EXE and .DLL files)</entry>
+              </row>
+            </tbody>
+          </tgroup>
+        </informaltable>
+
+        <para>
+          Wine emulates drives by placing their virtual drive roots to
+          user-configurable points in the Unix filesystem, so it's
+          your choice where <medialabel>C:</medialabel>'s root should
+          be (<filename>tools/wineinstall</filename> will even ask
+          you). If you choose, say, <filename>/var/wine</filename>, as
+          the root of your virtual drive <medialabel>C</medialabel>,
+          then you'd put this in your <filename>wine.conf</filename>:
+        </para>
+
+        <programlisting>
+[Drive C]
+Path=/var/wine
+Type=hd
+Label=MS-DOS
+Filesystem=win95
+        </programlisting>
+
+        <para>
+          With this configuration, what windows apps think of as
+          "c:\windows\system" would map to
+          <filename>/var/wine/windows/system</filename> in the UNIX
+          filesystem. Note that you need to specify
+          <literal>Filesystem=win95</literal>, NOT
+          <literal>Filesystem=unix</literal>, to make Wine simulate a
+          Windows-compatible (case-insensitive) filesystem, otherwise
+          most apps won't work.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>System DLLs</title>
+        <para>
+          The Wine team has determined that it is necessary to create
+          fake DLL files to trick many applications that check for
+          file existence to determine whether a particular feature
+          (such as Winsock and its TCP/IP networking) is available. If
+          this is a problem for you, you can create empty files in the
+          <filename>system</filename> directory to make the
+          application think it's there, and Wine's built-in DLL will
+          be loaded when the application actually asks for it.
+          (Unfortunately, <filename>tools/wineinstall</filename> does
+          not create such empty files itself.)
+        </para>
+        <para>
+          Applications sometimes also try to inspect the version
+          resources from the physical files (for example, to determine
+          the DirectX version). Empty files will not do in this case,
+          it is rather necessary to install files with complete
+          version resources. This problem is currently being worked
+          on. In the meantime, you may still need to grab some real
+          DLL files to fool these apps with.
+        </para>
+        <para>
+          And there are of course DLLs that wine does not currently
+          implement very well (or at all). If you do not have a real
+          Windows you can steal necessary DLLs from, you can always
+          get some from a DLL archive such as
+          <ulink url="http://solo.abac.com/dllarchive/">http://solo.abac.com/dllarchive/</ulink>.
+        </para>
+      </sect2>
+    </sect1>
+
+    <sect1 id="no-windows">
+      <title>Installing Wine Without Windows</title>
+      <para>
+        written by ???
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/no-windows</filename>)
+      </para>
+
+      <para>
+        A major goal of Wine is to allow users to run Windows programs
+        without having to install Windows on their machine. Wine
+        implements the functionality of the main DLL's usually
+        provided with Windows. Therefore, once Wine is finished, you
+        will not need to have windows installed to use Wine.
+      </para>
+      <para>
+        Wine has already made enough progress that it may be possible
+        to run your target applications without Windows installed. If
+        you want to try it, follow these steps:
+      </para>
+
+      <orderedlist>
+        <listitem>
+          <para>
+            Create empty <filename>C:\windows</filename>,
+            <filename>C:\windows\system</filename>,
+            <filename>C:\windows\Start Menu</filename>, and
+            <filename>C:\windows\Start Menu\Programs</filename>
+            directories. Do not point Wine to a
+            <filename>Windows</filename> directory full of old
+            installations and a messy registry. (Wine creates a
+            special registry in your <filename >home</filename>
+            directory, in <filename>$HOME/.wine/*.reg</filename>.
+            Perhaps you have to remove these files).
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Point <medialabel>[Drive C]</medialabel> in
+            <filename>wine.conf</filename> or
+            <filename>.winerc</filename> to where you want
+            <filename>C:</filename> to be. Refer to the Wine man page
+            for more information. Remember to use
+            <userinput>filesystem=win95</userinput>!
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Use <filename>tools/wineinstall</filename> to compile Wine
+            and install the default registry. Or if you prefer to do
+            it yourself, compile <filename>programs/regapi</filename>,
+            and run:   <command>programs/regapi/regapi setValue &lt;
+            winedefault.reg</command>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Run and/or install your applications.
+          </para>
+        </listitem>
+      </orderedlist>
+
+      <para>
+        Because Wine is not yet complete, some programs will work
+        better with native Windows DLL's than with Wine's
+        replacements. Wine has been designed to make this possible.
+        Here are some tips by Juergen Schmied (and others) on how to
+        proceed. This assumes that your
+        <filename>C:\windows</filename> directory in the configuration
+        file does not point to a native Windows installation but is in
+        a separate Unix file system. (For instance, <quote>C:\windows</quote> is
+        really subdirectory <quote>windows</quote> located in
+        <quote>/home/ego/wine/drives/c</quote>).
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para>
+            Run the application with <parameter>--debugmsg
+              +module,+file</parameter> to find out which files are
+            needed. Copy the required DLL's one by one to the
+            <filename>C:\windows\system</filename> directory. Do not
+            copy KERNEL/KERNEL32, GDI/GDI32, or USER/USER32. These
+            implement the core functionality of the Windows API, and
+            the Wine internal versions must be used.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Edit the <quote>[DllOverrides]</quote> section of
+            <filename>wine.conf</filename> or
+            <filename>.winerc</filename> to specify
+            <quote>native</quote> before <quote>builtin</quote> for
+            the Windows DLL's you want to use. For more information
+            about this, see the Wine manpage.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Note that some network DLL's are not needed even though
+            Wine is looking for them. The Windows
+            <filename>MPR.DLL</filename> currently does not work; you
+            must use the internal implementation.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Copy SHELL/SHELL32 and COMDLG/COMDLG32 COMMCTRL/COMCTL32
+            only as pairs to your Wine directory (these DLL's are
+            <quote>clean</quote> to use).  Make sure you have these
+            specified in the <quote>[DllPairs]</quote> section of
+            <filename>wine.conf</filename> or .winerc.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Be consistent: Use only DLL's from the same Windows version
+            together.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Put <filename>regedit.exe</filename> in the
+            <filename>C:\windows</filename> directory
+            (<application>office95</application> imports a
+            <filename>*.reg</filename> file when it runs with a empty
+            registry, don't know about
+            <application>office97</application>).
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Also add <filename>winhelp.exe</filename> and
+            <filename>winhlp32.exe</filename> if you want to be able
+            to browse through your programs' help function.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </sect1>
+
+    <sect1 id="vfat">
+      <title>Dealing With FAT/VFAT Partitions</title>
+      <para>
+        written by Steven Elliott (elliotsl@mindspring.com)
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/linux-fat-permissions</filename>)
+      </para>
+      <para>
+        This document describes how FAT and
+        VFAT file system permissions work in Linux
+        with a focus on configuring them for Wine.
+      </para>
+
+      <sect2>
+        <title>Introduction</title>
+        <para>
+          Linux is able to access DOS and Windows file systems using
+          either the FAT (older 8.3 DOS filesystems) or VFAT (newer
+          Windows 95 or later long filename filesystems) modules.
+          Mounted FAT or VFAT filesystems provide the primary means
+          for which existing applications and their data are accessed
+          through Wine for dual boot (Linux + Windows) systems.
+        </para>
+        <para>
+          Wine maps mounted FAT filesystems, such as
+          <filename>/c</filename>, to driver letters, such as
+          <quote>c:</quote>, as indicated by the
+          <filename>wine.conf</filename> file.  The following excerpt
+          from a <filename>wine.conf</filename> file does this:
+        </para>
+        <programlisting>
+[Drive C]
+Path=/c
+Type=hd
+        </programlisting>
+        <para>
+          Although VFAT filesystems are preferable to FAT filesystems
+          for their long filename support the term <quote>FAT</quote>
+          will be used throughout the remainder of this document to
+          refer to FAT filesystems and their derivatives. Also,
+          <quote>/c</quote> will be used as the FAT mount point in
+          examples throughout this document.
+        </para>
+        <para>
+          Most modern Linux distributions either detect or allow
+          existing FAT file systems to be configured so that can be
+          mounted, in a location such as <filename>/c</filename>,
+          either persistently (on bootup) or on an as needed basis. In
+          either case, by default, the permissions will probably be
+          configured so that they look something like:
+        </para>
+        <screen>
+<prompt>~></prompt><userinput>cd /c</userinput>
+<prompt>/c></prompt><userinput>ls -l</userinput>
+<computeroutput>-rwxr-xr-x   1 root     root           91 Oct 10 17:58 autoexec.bat
+-rwxr-xr-x   1 root     root          245 Oct 10 17:58 config.sys
+drwxr-xr-x  41 root     root        16384 Dec 30  1998 windows</computeroutput>
+        </screen>
+        <para>
+          where all the files are owned by "root", are in the "root"
+          group and are only writable by "root"
+          (<literal>755</literal> permissions). This is restrictive in
+          that it requires that Wine be run as root in order for
+          applications to be able to write to any part of the
+          filesystem.
+        </para>
+        <para>
+          There three major approaches to overcoming the restrictive
+          permissions mentioned in the previous paragraph:
+        </para>
+        <orderedlist>
+          <listitem>
+            <para>
+              Run <application>Wine</application> as root
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Mount the FAT filesystem with less restrictive
+              permissions
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Shadow the FAT filesystem by completely or partially
+              copying it
+            </para>
+          </listitem>
+        </orderedlist>
+        <para>
+          Each approach will be discussed in the following sections.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Running Wine as root</title>
+        <para>
+          Running Wine as root is the easiest and most thorough way of giving
+          applications that Wine runs unrestricted access to FAT files systems.
+          Running wine as root also allows applications to do things unrelated
+          to FAT filesystems, such as listening to ports that are less than
+          1024.  Running Wine as root is dangerous since there is no limit to
+          what the application can do to the system.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Mounting FAT filesystems</title>
+        <para>
+          The FAT filesystem can be mounted with permissions less restrictive
+          than the default.  This can be done by either changing the user that
+          mounts the FAT filesystem or by explicitly changing the permissions
+          that the FAT filesystem is mounted with.  The permissions are
+          inherited from the process that mounts the FAT filesystem.  Since the
+          process that mounts the FAT filesystem is usually a startup script
+          running as root the FAT filesystem inherits root's permissions.  This
+          results in the files on the FAT filesystem having permissions similar
+          to files created by root.  For example:
+        </para>
+        <screen>
+<prompt>~></prompt><userinput>whoami</userinput>
+<computeroutput>root</computeroutput>
+<prompt>~></prompt><userinput>touch root_file</userinput>
+<prompt>~></prompt><userinput>ls -l root_file</userinput>
+<computeroutput></computeroutput>-rw-r--r--   1 root     root            0 Dec 10 00:20 root_file
+        </screen>
+        <para>
+          which matches the owner, group and permissions of files seen
+          on the FAT filesystem except for the missing 'x's.  The
+          permissions on the FAT filesystem can be changed by changing
+          root's umask (unset permissions bits).  For example:
+        </para>
+        <screen>
+<prompt>~></prompt><userinput>umount /c</userinput>
+<prompt>~></prompt><userinput>umask</userinput>
+<computeroutput>022</computeroutput>
+<prompt>~></prompt><userinput>umask 073</userinput>
+<prompt>~></prompt><userinput>mount /c</userinput>
+<prompt>~></prompt><userinput>cd /c</userinput>
+<prompt>/c></prompt><userinput>ls -l</userinput>
+<computeroutput>-rwx---r--   1 root     root           91 Oct 10 17:58 autoexec.bat
+-rwx---r--   1 root     root          245 Oct 10 17:58 config.sys
+drwx---r--  41 root     root        16384 Dec 30  1998 windows</computeroutput>
+        </screen>
+        <para>
+          Mounting the FAT filesystem with a umask of
+          <literal>000</literal> gives all users complete control over
+          it. Explicitly specifying the permissions of the FAT
+          filesystem when it is mounted provides additional control.
+          There are three mount options that are relevant to FAT
+          permissions: <literal>uid</literal>, <literal>gid</literal>
+          and <literal>umask</literal>.  They can each be specified
+          when the filesystem is manually mounted.  For example:
+        </para>
+        <screen>
+<prompt>~></prompt><userinput>umount /c</userinput>
+<prompt>~></prompt><userinput>mount -o uid=500 -o gid=500 -o umask=002 /c</userinput>
+<prompt>~></prompt><userinput>cd /c</userinput>
+<prompt>/c></prompt><userinput>ls -l</userinput>
+<computeroutput>-rwxrwxr-x   1 sle      sle            91 Oct 10 17:58 autoexec.bat
+-rwxrwxr-x   1 sle      sle           245 Oct 10 17:58 config.sys
+drwxrwxr-x  41 sle      sle         16384 Dec 30  1998 windows</computeroutput>
+        </screen>
+        <para>
+          which gives "sle" complete control over
+          <filename>/c</filename>.  The options listed above can be
+          made permanent by adding them to the
+          <filename>/etc/fstab</filename> file:
+        </para>
+        <screen>
+<prompt>~></prompt><userinput>grep /c /etc/fstab</userinput>
+<computeroutput>/dev/hda1  /c  vfat  uid=500,gid=500,umask=002,exec,dev,suid,rw 1 1</computeroutput>
+        </screen>
+        <para>
+          Note that the umask of <literal>002</literal> is common in
+          the user private group file permission scheme.  On FAT file
+          systems this umask assures that all files are fully
+          accessible by all users in the specified group
+          (<literal>gid</literal>).
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>Shadowing FAT filesystems</title>
+        <para>
+          Shadowing provides a finer granularity of control.  Parts of
+          the original FAT filesystem can be copied so that the
+          application can safely work with those copied parts while
+          the application continue to directly read the remaining
+          parts.  This is done with symbolic links. For example,
+          consider a system where an application named
+          <application>AnApp</application> must be able to read and
+          write to the <filename>c:\windows</filename> and
+          <filename>c:\AnApp</filename> directories as well as have
+          read access to the entire FAT filesystem.  On this system
+          the FAT filesystem has default permissions which should not
+          be changed for security reasons or can not be changed due to
+          lack of root access.  On this system a shadow directory
+          might be set up in the following manner:
+        </para>
+        <screen>
+<prompt>~></prompt><userinput>cd /</userinput>
+<prompt>/></prompt><userinput>mkdir c_shadow</userinput>
+<prompt>/></prompt><userinput>cd c_shadow</userinput>
+<prompt>/c_shadow></prompt><userinput>ln -s /c_/* .</userinput>
+<prompt>/c_shadow></prompt><userinput>rm windows AnApp</userinput>
+<prompt>/c_shadow></prompt><userinput>cp -R /c_/{windows,AnApp} .</userinput>
+<prompt>/c_shadow></prompt><userinput>chmod -R 777 windows AnApp</userinput>
+<prompt>/c_shadow></prompt><userinput>perl -p -i -e 's|/c$|/c_shadow|g' /usr/local/etc/wine.conf</userinput>
+        </screen>
+        <para>
+          The above gives everyone complete read and write access to
+          the <filename>windows</filename> and
+          <filename>AnApp</filename> directories while only root has
+          write access to all other directories.
+        </para>
+      </sect2>    
+    </sect1>
+
+    <sect1 id="scsi-support">
+      <title>SCSI Support</title>
+      <para>
+        written by Bruce Milner; Additions by Andreas Mohr
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/aspi</filename>)
+      </para>
+
+      <para>
+        This file describes setting up the Windows ASPI interface.
+      </para>
+
+      <para>
+        <warning>
+          <title>Warning/Warning/Warning!!!!!!</title>
+          <para>
+            <screen>
+THIS MAY TRASH YOUR SYSTEM IF USED INCORRECTLY
+THIS MAY TRASH YOUR SYSTEM IF USED CORRECTLY
+            </screen>
+          </para>
+        </warning>
+      </para>
+
+      <para>
+        Now that I have said that. ASPI is a direct link to SCSI devices from
+        windows programs. ASPI just forwards the SCSI commands that programs send
+        to it to the SCSI bus.
+      </para>
+      <para>
+        If you use the wrong scsi device in your setup file, you can send
+        completely bogus commands to the wrong device - An example would be
+        formatting your hard drives (assuming the device gave you permission -
+        if you're running as root, all bets are off).
+      </para>
+      <para>
+        So please make sure that **all** SCSI devices not needed by the program 
+        have their permissions set as restricted as possible ! 
+      </para>
+
+      <para>
+        Cookbook for setting up scanner: (At least how mine is to work)
+      </para>
+
+      <sect2>
+        <title>Windows requirements</title>
+        <orderedlist>
+          <listitem>
+            <para>
+              The scanner software needs to use the "Adaptec"
+              compatible drivers (ASPI). At least with Mustek, they
+              allow you the choice of using the builtin card or the
+              "Adaptec (AHA)" compatible drivers. This will not work
+              any other way. Software that accesses the scanner via a
+              DOS ASPI driver (e.g. ASPI2DOS) is supported, too. [AM]
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              You probably need a real windows install of the software
+              to set the LUN's/SCSI id's up correctly. I'm not exactly
+              sure.
+            </para>
+          </listitem>
+        </orderedlist>
+      </sect2>
+
+      <sect2>
+        <title>LINUX requirements:</title>
+        <orderedlist>
+          <listitem>
+            <para>
+              Your scsi card must be supported under linux. This will
+              not work with an unknown scsi card. Even for cheap'n
+              crappy "scanner only" controllers some special Linux
+              drivers exist on the net.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Compile generic scsi drivers into your kernel.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Linux by default uses smaller scsi buffers than Windows.
+              There is a kernel build define <literal>SG_BIG_BUFF</literal> (in
+              <filename>sg.h</filename>) that is by default set too
+              low. The SANE project recommends
+              <literal>130560</literal> and this seems to work just
+              fine. This does require a kernel rebuild.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Make the devices for the scanner (generic scsi devices)
+              - look at the scsi programming how-to for device
+              numbering.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              I would recommend making the scanner device writable by
+              a group. I made a group called
+              <literal>scanner</literal> and added myself to it.
+              Running as root increases your risk of sending bad scsi
+              commands to the wrong device. With a regular user, you
+              are better protected.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Add a scsi device entry for your particular scanner to
+              wine.conf. The format is <literal>[scsi
+                cCtTdD]</literal> where
+              <literal>C=controller</literal>,
+              <literal>T=target</literal>, <literal>D=LUN</literal>
+            </para>
+            <para>
+              For example, I set mine up as  controller <literal>0</literal>,
+              Target <literal>6</literal>, LUN <literal>0</literal>.
+              <programlisting>
+[scsi c0t6d0]
+Device=/dev/sgi
+              </programlisting>
+              Yours will vary with your particular SCSI setup.
+            </para>
+          </listitem>
+        </orderedlist>
+      </sect2>
+
+      <sect2>
+        <title>General Information</title>
+        <para>
+          The mustek scanner I have was shipped with a package
+          "ipplus". This program uses the TWAIN driver specification
+          to access scanners.
+        </para>
+        <para>
+          (TWAIN MANAGER)
+        </para>
+        <para>
+          <programlisting>
+ipplus.exe &lt;---> (TWAIN INTERFACE) &lt;---> (TWAIN DATA SOURCE . ASPI) -> WINASPI
+          </programlisting>
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>NOTES/BUGS</title>
+        <para>
+          The biggest is that it only works under linux at the moment.
+        </para>
+        <para>
+          The ASPI code has only been tested with:
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+              a Mustek 800SP with a Buslogic controller under Linux [BM]
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              a Siemens Nixdorf 9036 with Adaptec AVA-1505 under Linux
+              accessed via DOSASPI. Note that I had color problems,
+              though (barely readable result) [AM]
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              a Fujitsu M2513A MO drive (640MB) using generic scsi
+              drivers. Formatting and ejecting worked perfectly.
+              Thanks to Uwe Bonnes for access to the hardware ! [AM]
+            </para>
+          </listitem>
+        </itemizedlist>
+        <para>
+          I make no warranty to the aspi code. It makes my scanner
+          work. Your devices may explode. I have no way of determining
+          this. I take zero responsibility!
+        </para>
+      </sect2>
+    </sect1>
+
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+End:
+-->

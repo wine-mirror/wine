@@ -1,0 +1,458 @@
+  <chapter id="opengl">
+    <title>Wine and OpenGL</title>
+
+      <para>
+        written by Lionel Ulmer &lt;lionel.ulmer@free.fr>, last modification : 2000/06/13
+      </para>
+      <para>
+      (Extracted from <filename>wine/documentation/opengl</filename>)
+      </para>
+
+    <sect1 id="opengl-required">
+      <title>I What is needed to have OpenGL support in Wine</title>
+
+      <para>
+        Basically, if you have a Linux OpenGL ABI compliant libGL
+        (<ulink url="http://oss.sgi.com/projects/ogl-sample/ABI/">
+          http://oss.sgi.com/projects/ogl-sample/ABI/</ulink>)
+        installed on your computer, you should everything that is
+        needed.
+      </para>
+      <para>
+        To be more clear, I will detail one step after another what
+        the <command>configure</command> script checks.
+      </para>
+      <para>
+        If, after Wine compiles, OpenGL support is not compiled in,
+        you can always check <filename>config.log</filename> to see
+        which of the following points failed.
+      </para>
+
+      <sect2>
+        <title>I.1 Header files</title>
+
+        <para>
+          The needed header files to build OpenGL support in Wine are :
+        </para>
+
+        <variablelist>
+          <varlistentry>
+            <term><filename>gl.h:</filename></term>
+            <listitem>
+              <para>the definition of all OpenGL core functions, types and enumerants</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><filename>glx.h:</filename></term>
+            <listitem>
+              <para>how OpenGL integrates in the X Window environment</para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><filename>glext.h:</filename></term>
+            <listitem>
+              <para>the list of all registered OpenGL extensions</para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+
+        <para>
+          The latter file (<filename>glext.h</filename>) is, as of
+          now, not necessary to build Wine. But as this file can be
+          easily obtained from SGI 
+          (<ulink url="http://oss.sgi.com/projects/ogl-sample/ABI/glext.h">
+            http://oss.sgi.com/projects/ogl-sample/ABI/glext.h</ulink>),
+          and that all OpenGL should provide one, I decided to keep it here.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>I.2 OpenGL library thread-safety</title>
+
+        <para>
+          After that, the script checks if the OpenGL library relies
+          or not on the pthread library to provide thread safety (most
+          'modern' OpenGL libraries do).
+        </para>
+        <para>
+          If the OpenGL library explicitely links in libpthread (you
+          can check it with a <command>ldd libGL.so</command>), you
+          need to force OpenGL support by starting
+          <command>configure</command> with the
+          <parameter>--enable-opengl</parameter> flag.
+        </para>
+        <para>
+          The reason to this is that Wine contains some hacks done by
+          Ove to cohabit with pthread that are known to work well in
+          most of the cases (glibc 2.1.x). On the other hand, we never
+          got Wine to work with glibc 2.0.6. Thus, I deemed preferable
+          to play it safe : by default, I suppose that the hack won't
+          work and that it's the user's responsability to enable it.
+        </para>
+        <para>
+          Anyway, it should be pretty safe to build with
+          <parameter>--enable-opengl</parameter>.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>I.3 OpenGL library itself</title>
+
+        <para>
+          To check for the presence of 'libGL' on the system, the
+          script checks if it defines the
+          <function>glXCreateContext</function> function. There should
+          be no problem here.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>I.4 glXGetProcAddressARB function</title>
+
+        <para>
+          The core of Wine's OpenGL implementation (at least for all
+          extensions) is the <function>glXGetProcAddressARB</function>
+          function. Your OpenGL library needs to have this function
+          defined for Wine to be able to support OpenGL.
+        </para>
+        <para>
+          If your library does not provide it, you are out of luck.
+        </para>
+        <note>
+          <para>
+            this is not completely true as one could rewrite a
+            <function>glXGetProcAddressARB</function> replacement
+            using <function>dlopen</function> and friends, but well,
+            telling people to upgrade is easier :-).
+          </para>
+        </note>
+      </sect2>
+    </sect1>
+
+    <sect1 id="opengl-configure">
+      <title>II How to configure</title>
+
+      <para>
+        Configuration is quite easy : once OpenGL support has been
+        built in Wine, this internal OpenGL driver will be used each
+        time an application tries to load
+        <filename>opengl32.dll</filename>.
+      </para>
+      <para>
+        Due to restrictions (that do not exist in Windows) on OpenGL
+        contexts, if you want to prevent the screen to flicker when
+        using OpenGL applications (all games are using double-buffered
+        contexts), you need to set the following option in your
+        <filename>.winerc</filename> / <filename>wine.ini</filename>
+        in the [x11drv] section :
+      </para>
+      <programlisting>
+DesktopDoubleBuffered = Y
+      </programlisting>
+      <para>
+        and to run Wine with the <parameter>--desktop</parameter>
+        option.
+      </para>
+    </sect1>
+
+    <sect1 id="opengl-works">
+      <title>III How it all works</title>
+
+      <para>
+        The core OpenGL function calls are the same between Windows
+        and Linux. So what is the difficulty to support it in Wine ?
+        Well, there are two different problems :
+      </para>
+
+      <orderedlist>
+        <listitem>
+          <para>
+            the interface to the windowing system is different for
+            each OS. It's called 'GLX' for Linux (well, for X Window)
+            and 'wgl' for Windows. Thus, one need first to emulate one
+            (wgl) with the other (GLX).
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            the calling convention between Windows (the 'Pascal'
+            convention or 'stdcall') is different from the one used on
+            Linux (the 'C' convention or 'cdecl'). This means that
+            each call to an OpenGL function must be 'translated' and
+            cannot be used directly by the Windows program.
+          </para>
+        </listitem>
+      </orderedlist>
+
+      <para>
+        Add to this some braindead programs (using GL calls without
+        setting-up a context or deleting three time the same context)
+        and you have still some work to do :-)
+      </para>
+
+      <sect2>
+        <title>III.1 The Windowing system integration</title>
+
+        <para>
+          This integration is done at two levels : 
+        </para>
+
+        <orderedlist>
+          <listitem>
+            <para>
+              At GDI level for all pixel format selection routines (ie
+              choosing if one wants a depth / alpha buffer, the size
+              of these buffers, ...) and to do the 'page flipping' in
+              double buffer mode. This is implemented in
+              <filename>graphics/x11drv/opengl.c</filename> (all these
+              functions are part of Wine's graphic driver function
+              pointer table and thus could be reimplented if ever Wine
+              works on another Windowing system than X).
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              In the <filename>OpenGL32.DLL</filename> itself for all
+              other functionalities (context creation / deletion,
+              querying of extension functions, ...). This is done in
+              <filename>dlls/opengl32/wgl.c</filename>.
+            </para>
+          </listitem>
+        </orderedlist>
+      </sect2>
+
+      <sect2>
+        <title>III.2 The thunks</title>
+
+        <para>
+          The thunks are the Wine code that does the calling
+          convention translation and they are auto-generated by a Perl
+          script. In Wine's CVS tree, these thunks are already
+          generated for you. Now, if you want to do it yourself, there
+          is how it all works....
+        </para>
+        <para>
+          The script is located in <filename>dlls/opengl32</filename>
+          and is called <command>make_opengl</command>. It requires
+          Perl5 to work and takes two arguments :
+        </para>
+
+        <orderedlist>
+          <listitem>
+            <para>
+              The first is the path to the OpenGL registry. Now, you
+              will all ask 'but what is the OpenGL registry ?' :-)
+              Well, it's part of the OpenGL sample implementation
+              source tree from SGI (more informations at this URL :
+              <ulink url="http://oss.sgi.com/projects/ogl-sample/">
+                http://oss.sgi.com/projects/ogl-sample/</ulink>. 
+            </para>
+            <para>
+              To summarize, these files contain human-readable but
+              easily parsed information on ALL OpenGL core functions
+              and ALL registered extensions (for example the
+              prototype, the OpenGL version, ...).
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              the second is the OpenGL version to 'simulate'. This
+              fixes the list of functions that the Windows application
+              can link directly to without having to query them from
+              the OpenGL driver. Windows is based, for now, on OpenGL
+              1.1, but the thunks that are in the CVS tree are
+              generated for OpenGL 1.2.
+            </para>
+            <para>
+              This option can have three values:
+              <literal>1.0</literal>, <literal>1.1</literal> and
+              <literal>1.2</literal>.
+            </para>
+          </listitem>
+        </orderedlist>
+
+        <para>
+          This script generates three files :
+        </para>
+
+        <orderedlist>
+          <listitem>
+            <para>
+              <filename>opengl32.spec</filename> gives Wine's linker
+              the signature of all function in the
+              <filename>OpenGL32.DLL</filename> library so that the
+              application can link them. Only 'core' functions are
+              listed here.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <filename>opengl_norm.c</filename> contains all the
+              thunks for the 'core' functions. Your OpenGL library
+              must provide ALL the function used in this file as these
+              are not queried at run time.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              <filename>opengl_ext.c</filename> contains all the
+              functions that are not part of the 'core' functions.
+              Contrary to the thunks in
+              <filename>opengl_norm.c</filename>, these functions do
+              not depend at all on what your libGL provides. 
+            </para>
+            <para>
+              In fact, before using one of these thunks, the Windows
+              program first needs to 'query' the function pointer. At
+              this point, the corresponding thunk is useless. But as
+              we first query the same function in libGL and store the
+              returned function pointer in the thunk, the latter
+              becomes functional.
+            </para>
+          </listitem>
+        </orderedlist>
+      </sect2>
+    </sect1>
+
+    <sect1 id="opengl-problems">
+      <title>IV  Known problems - shortcomings</title>
+
+      <sect2>
+        <title>IV.1 Missing GLU32.DLL</title>
+
+        <para>
+          GLU is a library that is layered upon OpenGL. There is a
+          100% correspondence between the
+          <filename>libGLU.so</filename> that is used on Linux and
+          <filename>GLU32.DLL</filename>.
+        </para>
+        <para>
+          As for the moment, I did not create a set of thunks to support this
+          library natively in Wine (it would easy to do, but I am waiting for
+          a better solution than adding another autogenerated thunk file), you
+          can always download anywhere on the net (it's free) a
+          <filename>GLU32.DLL</filename> file (by browsing, for example,
+          <ulink url="http://ftpsearch.lycos.com/">
+            http://ftpsearch.lycos.com/</ulink>).
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>IV.2 OpenGL not detected at configure time</title>
+
+        <para>
+          See section (I) for a detailed explanation of the
+          <filename>configure</filename> requirements.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>IV.3 When running an OpenGL application, the screen flickers</title>
+
+        <para>
+          See section (II) for how to create the context
+          double-buffered and thus preventing this flicker effect.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>IV.4 Wine gives me the following error message : </title>
+
+        <screen>
+Extension defined in the OpenGL library but NOT in opengl_ext.c...
+Please report (lionel.ulmer@free.fr) !
+        </screen>
+
+        <para>
+          This means that the extension requested by the application
+          is found in the libGL used by Linux (ie the call to
+          <function>glXGetProcAddressARB</function> returns a
+          non-<constant>NULL</constant> pointer) but that this string
+          was NOT found in Wine's extension registry.
+        </para>
+        <para>
+          This can come from two causes :
+        </para>
+
+        <orderedlist>
+          <listitem>
+            <para>
+              The <filename>opengl_ext.c</filename> file is too old
+              and needs to be generated again.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Use of obsolete extensions that are not supported
+              anymore by SGI or of 'private' extensions that are not
+              registered. An example of the former are
+              <function>glMTexCoord2fSGIS</function> and
+              <function>glSelectTextureSGIS</function> as used by
+              Quake 2 (and apparently also by old versions of Half
+              Life). If documentation can be found on these functions,
+              they can be added to Wine's extension set.
+            </para>
+          </listitem>
+        </orderedlist>
+
+        <para>
+          If you have this, run with <parameter>--debugmsg
+            +opengl</parameter> and send me
+          <email>lionel.ulmer@free.fr</email> the TRACE.
+        </para>
+      </sect2>
+
+      <sect2>
+        <title>IV.5 <filename>libopengl32.so</filename> is built but it is still not working</title>
+
+        <para>
+          This may be caused by some missing functions required by
+          <filename>opengl_norm.c</filename> but that your Linux
+          OpenGL library does not provide.
+        </para>
+        <para>
+          To check for this, do the following steps :
+        </para>
+
+        <orderedlist>
+          <listitem>
+            <para>
+              create a dummy <filename>.c</filename> file :
+            </para>
+            <programlisting>
+int main(void) {
+    return 0;
+}
+            </programlisting>
+          </listitem>
+          <listitem>
+            <para>
+              try to compile it by linking both libwine and
+              libopengl32 (this command line supposes that you
+              installed the Wine libraries in
+              <filename>/usr/local/lib</filename>, YMMV) :
+            </para>
+            <programlisting>
+gcc dummy.c -L/usr/local/lib -lwine -lopengl32
+            </programlisting>
+          </listitem>
+          <listitem>
+            <para>
+              if it works, the problem is somewhere else (and you can
+              send me an email). If not, you could re-generate the
+              thunk files for OpenGL 1.1 for example (and send me your
+              OpenGL version so that this problem can be detected at
+              configure time).
+            </para>
+          </listitem>
+        </orderedlist>
+      </sect2>
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+End:
+-->

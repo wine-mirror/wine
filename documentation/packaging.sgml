@@ -1,0 +1,760 @@
+  <chapter id="packaging">
+    <title>Packaging Wine</title>
+
+    <sect1 id="distributing">
+      <title>A Small WINE Distribution Guide</title>
+
+      <para>
+        written by Marcus Meissner &lt;Marcus.Meissner@caldera.de>
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/distributors</filename>)
+      </para>
+
+      <para>
+        While packaging WINE for one of the Linux distributions I came
+        across several points which have not been clarified yet.
+        Particularly a how-to for WINE packaging distributors is
+        missing. This document tries to give a brief overview over the
+        rationales I thought up and how I tried to implement it.
+        (While the examples use <command>rpm</command> most of this
+        stuff can be applied to other packagers too.)
+      </para>
+
+      <note>
+        <para>
+          YOU SHOULD RECHECK THIS FILE EVERY TWO MONTHS OR SO
+          (<command>diff -uN</command> comes to my mind here...).
+          We'll be adding stuff constantly here in order to improve
+          the Wine environment !
+        </para>
+      </note>
+
+      <orderedlist>
+        <listitem>
+
+          <para>Rationales</para>
+          <para>
+            A WINE install should:
+          </para>
+          <itemizedlist>
+            <listitem>
+              <para>Not have a world writeable directory (-tree).</para>
+            </listitem>
+            <listitem>
+              <para>
+                Require only as much user input as needed. It would be
+                very good if it would not require any at all. Just let
+                the system administrator do <command>rpm -i
+                  wine.rpm</command> and let any user be able to run
+                <command>wine sol.exe</command> instantly.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Give the user as much flexibility as possible to
+                install his own applications, do his own configuring
+                etc.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Come as preconfigured as possible, so the user does
+                not need to change any configuration files.
+              </para>
+            </listitem>
+            <listitem>
+              <para>Use only as much diskspace as needed per user.</para>
+            </listitem>
+          </itemizedlist>
+
+          <para>
+            A WINE install needs:
+          </para>
+
+          <itemizedlist>
+            <listitem>
+              <para>
+                A writeable <filename>C:\</filename> directory
+                structure on a per user basis. Applications do dump
+                <filename>.ini</filename> files into
+                <filename>c:\windows</filename>, installers dump
+                <filename>.exe</filename>, <filename>.dll</filename>
+                and more into <filename>c:\windows\</filename> and
+                subdirectories or into <filename>C:\Program
+                  Files\</filename>.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                The <filename>.exe</filename> and
+                <filename>.dll</filename> from a global read-only
+                Windows installation to be found by applications.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Some special <filename>.dll</filename> and
+                <filename>.exe</filename> files in the
+                <filename>windows\system</filename> directory, since
+                applications directly check for their presence.
+              </para>
+            </listitem>
+            <listitem>
+              <para>Some special program environment.</para>
+            </listitem>
+          </itemizedlist>
+        </listitem>
+
+        <listitem>
+          <para>Implementation</para>
+
+          <orderedlist inheritnum="inherit">
+            <listitem>
+              <para>Building the package</para>
+              <para>
+                WINE is configured the usual way (depending on your
+                build environment). The "prefix" is chosen using your
+                application placement policy
+                (<filename>/usr/</filename>,
+                <filename>/usr/X11R6/</filename>,
+                <filename>/opt/wine/</filename> or similar).  The
+                configuration files (<filename>wine.conf</filename>,
+                <filename>wine.userreg</filename>,
+                <filename>wine.systemreg</filename>) are targeted for
+                <filename>/etc/wine/</filename> (rationale: FHS 2.0,
+                multiple readonly configuration files of a package).
+              </para>
+              <para>
+                Example (split this into <literal>%build</literal> and
+                <literal>%install</literal> section for
+                <command>rpm</command>):
+              </para>
+              <screen>
+CFLAGS=$RPM_OPT_FLAGS \
+./configure --prefix=/usr/X11R6 --sysconfdir=/etc/wine/ --enable-dll
+make
+BR=$RPM_BUILD_ROOT
+make install prefix=$BR/usr/X11R6/ sysconfdir=$BR/etc/wine/
+install -d $BR/etc/wine/
+install -m 644 wine.ini $BR/etc/wine/wine.conf
+
+# Put all our dlls in a seperate directory. (this works only if
+# you have a buildroot)
+install -d $BR/usr/X11R6/lib/wine
+mv $BR/usr/X11R6/lib/lib* $BR/usr/X11R6/lib/wine/
+
+# the clipboard server is started on demand.
+install -m 755 windows/x11drv/wineclipsrv $BR/usr/X11R6/bin/
+
+# The WINE server is needed.
+install -m 755 server/wineserver $BR/usr/X11R6/bin/
+              </screen>
+              <para>
+                Here we unfortunately do need to create
+                <filename>wineuser.reg</filename> and
+                <filename>winesystem.reg</filename> from the WINE
+                distributed <filename>winedefault.reg</filename>. This
+                can be done using <command>./regapi</command> once for
+                one example user and then reusing his
+                <filename>.wine/user.reg</filename> and
+                <filename>.wine/system.reg</filename> files.
+                <note>
+                  <title>FIXME</title>
+                  <para>this needs to be done better</para>
+                </note>
+              </para>
+              <screen>
+install -m 644 wine.sytemreg $BR/etc/wine/
+install -m 644 wine.userreg $BR/etc/wine/
+              </screen>
+              <para>
+                There are now a lot of libraries generated by the
+                build process, so a seperate library directory should
+                be used.
+              </para>
+              <screen>
+install -d 755 $BR/usr/X11R6/lib/
+mv $BR/
+              </screen>
+              <para>
+                You will need to package the files:
+              </para>
+              <screen>
+$prefix/bin/wine, $prefix/bin/dosmod, $prefix/lib/wine/*
+$prefix/man/man1/wine.1, $prefix/include/wine/*,
+$prefix/bin/wineserver, $prefix/bin/wineclipsrv
+
+%config /etc/wine/*
+%doc ... choose from the toplevel directory and documentation/
+              </screen>
+              <para>
+                The post-install script:
+              </para>
+              <screen>
+if ! grep -q /usr/X11R6/lib/wine /etc/ld.so.conf; then
+    echo "/usr/X11R6/lib/wine" &gt;&gt; /etc/ld.so.conf
+fi
+/sbin/ldconfig
+              </screen>
+              <para>
+                The post-uninstall script:
+              </para>
+              <screen>
+if [ "$1" = 0 ]; then
+    perl -ni -e 'print unless m:/usr/X11R6/lib/wine:;' /etc/ld.so.conf
+fi
+/sbin/ldconfig
+              </screen>
+            </listitem>
+            <listitem>
+              <para>Creating a good default configuration file</para>
+              <para>
+                For the rationales of needing as less input from the
+                user as possible  arises the need for a very good
+                configuration file. The one supplied with WINE is
+                currently lacking. We need:
+              </para>
+              <itemizedlist>
+                <listitem>
+                  <para>
+                    [Drive X]:
+                  </para>
+                  <itemizedlist>
+                    <listitem>
+                      <para>
+                        A for the floppy. Specify your distributions
+                        default floppy mountpoint here.
+                      </para>
+                      <programlisting>
+Path=/auto/floppy
+                      </programlisting>
+                    </listitem>
+                    <listitem>
+                      <para>
+                        C for the <filename>C:\</filename> directory.
+                        Here we use the users homedirectory, for most
+                        applications do see <filename>C:\</filename>
+                        as root-writeable directory of every windows
+                        installation and this basically is it in the
+                        UNIX-user context.
+                        </para>
+                      <programlisting>
+Path=${HOME}
+                      </programlisting>
+                    </listitem>
+                    <listitem>
+                      <para>
+                        R for the CD-Rom drive. Specify your
+                        distributions default CD-ROM drives mountpoint
+                        here.
+                        </para>
+                      <programlisting>
+Path=/auto/cdrom
+                      </programlisting>
+                    </listitem>
+                    <listitem>
+                      <para>
+                        T for temporary storage. We do use
+                        <filename>/tmp/</filename> (rationale: between
+                        process temporary data belongs to
+                        <filename>/tmp/</filename>, FHS 2.0)
+                      </para>
+                    </listitem>
+                    <listitem>
+                      <para>
+                        W for the original Windows installation. This
+                        drive points to the
+                        <filename>windows\</filename> subdirectory of
+                        the original windows installation. This avoids
+                        problems with renamed
+                        <filename>windows</filename> directories (as
+                        for instance <filename>lose95</filename>,
+                        <filename>win</filename> or
+                        <filename>sys\win95</filename>). During
+                        compile/package/install we leave this  to be
+                        <filename>/</filename>, it has to be
+                        configured after the package install.
+                      </para>
+                    </listitem>
+                    <listitem>
+                      <para>
+                        Z for the UNIX Root directory. This avoids any
+                        problems with "could not find drive for
+                        current directory" users occasionaly complain
+                        about in the newsgroup and the ircchannel. It
+                        also makes the whole directory structure
+                        browseable. The type of Z should be network,
+                        so applications expect it to be readonly.
+                      </para>
+                      <programlisting>
+Path=/
+                      </programlisting>
+                    </listitem>
+                  </itemizedlist>
+                </listitem>
+                <listitem>
+                  <para>
+                    [wine]:
+                  </para>
+                  <screen>
+  Windows=c:\windows\ 		(the windows/ subdirectory in the users
+  				 homedirectory)
+  System=c:\windows\system\	(the windows/system subdirectory in the users
+  				 homedirectory)
+  Path=c:\windows;c:\windows\system;c:\windows\system32;w:\;w:\system;w:\system32;
+  ; Using this trick we have in fact two windows installations in one, we
+  ; get the stuff from the readonly installation and can write to our own.
+  Temp=t:\			(the TEMP directory)
+                  </screen>
+                </listitem>
+                <listitem>
+                  <para>[Tweak.Layout]</para>
+                  <screen>
+  WineLook=win95		(just the coolest look ;)
+                  </screen>
+                </listitem>
+                <listitem>
+                  <para>
+                    Possibly modify the [spooler], [serialports] and
+                    [parallelports] sections.
+                  </para>
+                  <note>
+                    <title>FIXME</title>
+                    <para>possibly more, including printer stuff.</para>
+                  </note>
+                </listitem>
+              </itemizedlist>
+
+              <para>Add this prepared configuration file to the package.</para>
+            </listitem>
+            <listitem>
+              <para>Installing WINE for the system administrator</para>
+              <para>
+                Install the package using the usual packager
+                <command>rpm -i wine.rpm</command>. You may edit
+                <filename>/etc/wine/wine.conf</filename>, [Drive W],
+                to point to a possible windows installation right
+                after the install. That's it.
+              </para>
+              <para>
+                Note that on Linux you should somehow try to add the
+                <option>unhide</option> mount option (see <command>man
+                  mount</command>) to the CD-ROM entry in
+                <filename>/etc/fstab</filename> during package
+                install, as several stupid Windows programs mark some
+                setup (!) files as hidden (ISO9660) on CD-ROMs, which
+                will greatly confuse users as they won't find their
+                setup files on the CD-ROMs as they were used on
+                Windows systems when <option>unhide</option> is not
+                set ;-\ And of course the setup program will complain
+                that <filename>setup.ins</filename> or some other mess
+                is missing... If you choose to do so, then please make
+                this change verbose to the admin.
+              </para>
+            </listitem>
+            <listitem>
+              <para>Installing WINE for the user</para>
+              <para>
+                The user will need to run a setup script before the
+                first invocation of WINE. This script should:
+              </para>
+              <itemizedlist>
+                <listitem>
+                  <para>
+                    Copy <filename>/etc/wine/wine.conf</filename> for
+                    user modification.
+                  </para>
+                </listitem>
+                <listitem>
+                  <para>
+                    Allow specification of the original windows
+                    installation to use (which modifies the copied
+                    <filename>wine.conf</filename> file).
+                  </para>
+                </listitem>
+                <listitem>
+                  <para>
+                    Create the windows directory structure
+                    (<filename>c:\windows</filename>,
+                    <filename>c:\windows\system</filename>,
+                    <filename>c:\windows\Start Menu\Programs</filename>,
+                    <filename>c:\Program Files</filename>,
+                    <filename>c:\Desktop</filename>, etc.)
+                  </para>
+                </listitem>
+                <listitem>
+                  <para>
+                    Symlink all <filename>.dll</filename> and
+                    <filename>.exe</filename> files from the original
+                    windows installation to the
+                    <filename>windows</filename> directory. Why? Some
+                    programs reference "%windowsdir%/file.dll" or
+                    "%systemdir%/file.dll" directly and fail if they
+                    are not present.
+                  </para>
+                  <para>
+                    This will give a huge number of symlinks, yes.
+                    However, if an installer later overwrites on of
+                    those files, it will overwrite the symlink (so
+                    that the file now lies in the
+                    <filename>windows/</filename> subdirectory).
+                  </para>
+                  <note>
+                    <title>FIXME</title>
+                    <para>Not sure this is needed for all files.</para>
+                  </note>
+                </listitem>
+                <listitem>
+                  <para>
+                    On later invocation the script might want to
+                    compare regular files in  the users windows
+                    directories and in the global windows directories
+                    and replace same files by symlinks (to avoid
+                    diskspace problems).
+                  </para>
+                </listitem>
+              </itemizedlist>
+            </listitem>
+          </orderedlist>
+        </listitem>
+      </orderedlist>
+
+      <para>Done.</para>
+
+      <para>
+        This procedure requires:
+      </para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Much thought and work from the packager (1x)</para>
+        </listitem>
+        <listitem>
+          <para>
+            No work for the sysadmin. Well except one <command>rpm
+              -i</command> and possible one edit of the configuration
+            file.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Some or no work from the user, except running the per-user
+            setup script once.
+          </para>
+        </listitem>
+        <listitem>
+          <para>It scales well and suffices most of the rationales.</para>
+        </listitem>
+      </itemizedlist>
+
+
+      <bridgehead>Sample <filename>wine.ini</filename> for OpenLinux 2.x:</bridgehead>
+
+      <programlisting>
+;;
+;; MS-DOS drives configuration
+;;
+;; Each section has the following format:
+;; [Drive X]
+;; Path=xxx       (Unix path for drive root)
+;; Type=xxx       (supported types are 'floppy', 'hd', 'cdrom' and 'network')
+;; Label=xxx      (drive label, at most 11 characters)
+;; Serial=xxx     (serial number, 8 characters hexadecimal number)
+;; Filesystem=xxx (supported types are 'msdos'/'dos'/'fat', 'win95'/'vfat', 'unix')
+;;   This is the FS Wine is supposed to emulate on a certain
+;;   directory structure.
+;;   Recommended:
+;;   - "win95" for ext2fs, VFAT and FAT32
+;;   - "msdos" for FAT16 (ugly, upgrading to VFAT driver strongly recommended)
+;;   DON'T use "unix" unless you intend to port programs using Winelib !
+;; Device=/dev/xx (only if you want to allow raw device access)
+;;
+
+;
+;
+; Floppy 'A' and 'B'
+;
+; OpenLinux uses an automounter under /auto/, so we use that too.
+;
+[Drive A]
+Path=/auto/floppy/
+Type=floppy
+Label=Floppy
+Serial=87654321
+Device=/dev/fd0
+Filesystem=win95
+
+; 
+; Comment in ONLY if you have a second floppy or the automounter hangs
+; for 5 minutes.
+;
+;[Drive B]
+;Path=/auto/floppy2/
+;Type=floppy
+;Label=Floppy
+;Serial=87654321
+;Device=/dev/fd1
+;Filesystem=win95
+
+
+;
+; Drive 'C' links to the users homedirectory. 
+; 
+; This must point to a writeable directory structure (not your readonly
+; mounted DOS partitions!) since programs want to dump stuff into
+; "Program Files/" "Programme/", "windows/", "windows/system/" etc.
+; 
+; The basic structure is set up using the config script.
+;
+[Drive C]
+Path=${HOME}
+Type=hd
+Label=MS-DOS
+Filesystem=win95
+
+;
+; /tmp/ directory
+; 
+; The temp drive (and directory) points to /tmp/. Windows programs fill it
+; with junk, so it is approbiate.
+;
+[Drive T]
+Path=/tmp
+Type=hd
+Label=Tmp Drive
+Filesystem=win95
+
+;
+; 'U'ser homedirectory
+; 
+; Just in case you want C:\ elsewhere.
+; 
+[Drive U]
+Path=${HOME}
+Type=hd
+Label=Home
+Filesystem=win95
+
+;
+; CD-'R'OM drive (automounted)
+; 
+; The default cdrom drive.
+;
+; If an application (or game) wants a specific CD-ROM you might have to
+; temporary change the Label to the one of the CD itself.
+;
+; How to read them is described in /usr/doc/wine-cvs-xxxxx/cdrom-labels.
+; 
+[Drive R]
+Path=/auto/cdrom
+Type=cdrom
+Label=CD-Rom
+Filesystem=win95
+
+;
+; The drive where the old windows installation resides (it points to the 
+; windows/ subdirectory).
+; 
+; The Path is modified by the winesetup script.
+;
+[Drive W]
+Path=/
+Type=network
+Label=Windows
+Filesystem=win95
+;
+; The UNIX Root directory, so all other programs and directories are reachable.
+;
+; type network is used to tell programs to not write here. 
+;
+[Drive Z]
+Path=/
+Type=network
+Label=ROOT
+Filesystem=win95
+
+;
+; Standard Windows path entries. WINE will not work if they are incorrect.
+;
+[wine]
+; 
+; The windows/ directory. It must be writeable, for programs write into it.
+;
+Windows=c:\windows
+;
+; The windows/system/ directory. It must be writeable, for especially setup
+; programs install dlls in there.
+;
+System=c:\windows\system
+;
+; The temp directory. Should be cleaned regulary, since install programs leave
+; junk without end in there.
+;
+Temp=t:\
+;
+; The dll search path. It should contain at least:
+; - the windows and the windows/system directory of the user.
+; - the global windows and windows/system directory (from a possible readonly
+;   windows installation either on msdos filesystems or somewhere in the UNIX
+;   directory tree)
+; - any other windows style directories you want to add.
+;
+Path=c:\windows;c:\windows\system;c:\windows\system32;t:\;w:\;w:\system;w:\system32
+;
+; Outdated and no longer used. (but needs to be present).
+;
+SymbolTableFile=./wine.sym
+
+# &lt;wineconf&gt;
+
+; 
+; Dll loadorder defaults. No need to modify.
+;
+[DllDefaults]
+EXTRA_LD_LIBRARY_PATH=${HOME}/wine/cvs/lib
+DefaultLoadOrder = native, elfdll, so, builtin
+
+;
+; What 32/16 dlls belong to each other (context wise). No need to modify.
+;
+[DllPairs]
+kernel	= kernel32
+gdi	= gdi32
+user	= user32
+commdlg	= comdlg32
+commctrl= comctl32
+ver	= version
+shell	= shell32
+lzexpand= lz32
+mmsystem= winmm
+msvideo = msvfw32
+winsock	= wsock32
+
+;
+; What type of dll to use in their respective loadorder.
+; 
+[DllOverrides]
+kernel32, gdi32, user32	= builtin
+kernel, gdi, user	= builtin
+toolhelp		= builtin
+comdlg32, commdlg	= elfdll, builtin, native
+version, ver		= elfdll, builtin, native
+shell32, shell		= builtin, native
+lz32, lzexpand		= builtin, native
+commctrl, comctl32	= builtin, native
+wsock32, winsock	= builtin
+advapi32, crtdll, ntdll	= builtin, native
+mpr, winspool		= builtin, native
+ddraw, dinput, dsound	= builtin, native
+winmm, mmsystem         = builtin
+msvideo, msvfw32        = builtin, native
+mcicda.drv, mciseq.drv  = builtin, native
+mciwave.drv		= builtin, native
+mciavi.drv, mcianim.drv = native, builtin
+w32skrnl                = builtin
+wnaspi32, wow32		= builtin
+system, display, wprocs	= builtin
+wineps			= builtin
+
+;
+; Options section. Does not need to be edited.
+;
+[options]
+; allocate how much system colors on startup. No need to modify.
+AllocSystemColors=100
+
+;;
+; Font specification. You usually do not need to edit this section.
+; 
+; Read documentation/fonts before adding aliases
+;
+[fonts]
+; The resolution defines what fonts to use (usually either 75 or 100 dpi fonts,
+; or nearest match).
+Resolution = 96
+; Default font
+Default = -adobe-times-
+
+;
+; serial ports used by "COM1" "COM2" "COM3" "COM4". Useful for applications
+; that try to access serial ports.
+; 
+[serialports]
+Com1=/dev/ttyS0
+Com2=/dev/ttyS1
+Com3=/dev/modem,38400
+Com4=/dev/modem
+
+;
+; parallel port(s) used by "LPT1" etc. Useful for applications that try to 
+; access these ports.
+;
+[parallelports]
+Lpt1=/dev/lp0
+
+;
+; What spooling program to use on printing.
+; Use "|program" or "filename", where the output will be dumped into.
+;
+[spooler]
+LPT1:=|lpr
+LPT2:=|gs -sDEVICE=bj200 -sOutputFile=/tmp/fred -q -
+LPT3:=/dev/lp3
+
+; 
+; Allow port access to WINE started by the root user. Useful for some
+; supported devices, but it can make the system unstable.
+; Read /usr/doc/wine-cvs-xxxxx/ioport-trace-hints.
+;
+[ports]
+;read=0x779,0x379,0x280-0x2a0
+;write=0x779,0x379,0x280-0x2a0
+
+; debugging, not need to be modified.
+[spy]
+Exclude=WM_SIZE;WM_TIMER;
+
+;
+; What names for the registry datafiles, no need to modify.
+;
+[Registry]
+; Paths must be given in /dir/dir/file.reg format.
+; Wine will not understand dos file names here...
+;UserFileName=xxx		; alternate registry file name (user.reg)
+;LocalMachineFileName=xxx	; (system.reg)
+
+;
+; Layout/Look modifications. Here you can switch with a single line between
+; windows 3.1 and windows 95 style.
+; This does not change WINE behaviour or reported versions, just the look!
+;
+[Tweak.Layout]
+;; WineLook=xxx  (supported styles are 'Win31'(default), 'Win95', 'Win98')
+WineLook=Win95
+
+;
+; What programs to start on WINE startup. (you should probably leave it empty)
+;
+[programs]
+Default=
+Startup=
+
+; defunct section.
+[Console]
+;XtermProg=nxterm
+;InitialRows=25
+;InitialColumns=80
+;TerminalType=nxterm
+
+# &lt;/wineconf&gt;
+      </programlisting>
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+End:
+-->

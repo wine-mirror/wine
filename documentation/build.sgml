@@ -1,0 +1,11 @@
+  <chapter id="build">
+    <title>The Wine Build System</title>
+    <para>How the Wine build system works, and how to tweak it...</para>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+End:
+-->

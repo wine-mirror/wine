@@ -1,0 +1,89 @@
+  <chapter id="documentation">
+    <title>Documenting Wine</title>
+    <para>How to help out with the Wine documentation effort...</para>
+
+    <sect1 id="api-docs">
+      <title>Writing Wine API Documentation</title>
+
+      <para>
+        written by (???)
+      </para>
+      <para>
+        (Extracted from <filename>wine/documentation/README.documentation</filename>)
+      </para>
+
+      <para>
+        To improve the documentation of the Wine API, just add
+        comments to the existing source. For example,
+      </para>
+      <screen>
+/******************************************************************
+ *         CopyMetaFile32A   (GDI32.23)
+ *
+ *  Copies the metafile corresponding to hSrcMetaFile to either
+ *  a disk file, if a filename is given, or to a new memory based
+ *  metafile, if lpFileName is NULL.
+ *
+ * RETURNS
+ *
+ *  Handle to metafile copy on success, NULL on failure.
+ *
+ * BUGS
+ *
+ *  Copying to disk returns NULL even if successful.
+ */
+HMETAFILE32 WINAPI CopyMetaFile32A(
+		   HMETAFILE32 hSrcMetaFile, /* handle of metafile to copy */
+		   LPCSTR lpFilename /* filename if copying to a file */
+) { ... }
+      </screen>
+      <para>
+        becomes, after processing with <command>c2man</command> and
+        <command>nroff -man</command>,
+      </para>
+      <screen>
+CopyMetaFileA(3w)                               CopyMetaFileA(3w)
+
+
+NAME
+       CopyMetaFileA - CopyMetaFile32A   (GDI32.23)
+
+SYNOPSIS
+       HMETAFILE32 CopyMetaFileA
+       (
+            HMETAFILE32 hSrcMetaFile,
+            LPCSTR lpFilename
+       );
+
+PARAMETERS
+       HMETAFILE32 hSrcMetaFile
+              Handle of metafile to copy.
+
+       LPCSTR lpFilename
+              Filename if copying to a file.
+
+DESCRIPTION
+       Copies  the  metafile  corresponding  to  hSrcMetaFile  to
+       either a disk file, if a filename is given, or  to  a  new
+       memory based metafile, if lpFileName is NULL.
+
+RETURNS
+       Handle to metafile copy on success, NULL on failure.
+
+BUGS
+       Copying to disk returns NULL even if successful.
+
+SEE ALSO
+       GetMetaFileA(3w),   GetMetaFileW(3w),   CopyMetaFileW(3w),
+       PlayMetaFile(3w),  SetMetaFileBitsEx(3w),  GetMetaFileBit-
+       sEx(3w)
+      </screen>
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "part" "chapter" "")
+End:
+-->

@@ -1,0 +1,18 @@
+  <chapter id="running">
+    <title>Running Wine</title>
+    <para>Explain the command-line options you can use to run Wine</para>
+
+    <sect1 id="running-wine">
+      <title>How to run Wine</title>
+      <para>
+        The first thing you need to do is...
+      </para>
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("wine-doc.sgml" "book" "chapter" "")
+End:
+-->

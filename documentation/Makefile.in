@@ -3,52 +3,52 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
-
-INCLUDES = \
-	AUTHORS \
-	LICENSE \
-	WARRANTY
-
-SOURCES = \
-	wine.texinfo \
-	$(INCLUDES)
-
-INFOFILES = \
-	wine.info \
-	wine.info-1 \
-	wine.info-2
-
-HTMLFILES = \
-	wine_toc.html \
-	wine.html
-
-DVIFILES = wine.dvi
+BOOKNAME  = wine-doc
 
 EXTRASUBDIRS = samples status
 
-all: $(INFOFILES) $(DVIFILES) $(HTMLFILES)
+BOOK_SRCS = \
+	architecture.sgml \
+	bugs.sgml \
+	build.sgml \
+	compiling.sgml \
+	configuring.sgml \
+	consoles.sgml \
+	debugger.sgml \
+	debugging.sgml \
+	dlls.sgml \
+	documentation.sgml \
+	fonts.sgml \
+	i18n.sgml \
+	implementation.sgml \
+	installing.sgml \
+	opengl.sgml \
+	packaging.sgml \
+	patches.sgml \
+	porting.sgml \
+	printing.sgml \
+	registry.sgml \
+	running.sgml \
+	tools.sgml \
+	wine-doc.sgml
 
-info: $(INFOFILES)
+BOOK_TARGETS = \
+	$(BOOKNAME)/index.html \
+	$(BOOKNAME).pdf \
+	$(BOOKNAME).ps
 
-dvi: $(DVIFILES)
-
-html: $(HTMLFILES)
+all: $(BOOK_TARGETS)
 
 @MAKE_RULES@
 
-$(INFOFILES): $(SOURCES)
-	makeinfo $(SRCDIR)/wine.texinfo
+$(BOOKNAME)/index.html: $(BOOK_SRCS)
+	db2html $(BOOKNAME).sgml
 
-$(DVIFILES): $(SOURCES)
-	texi2dvi $(SRCDIR)/wine.texinfo
+$(BOOKNAME).pdf: $(BOOK_SRCS)
+	db2pdf $(BOOKNAME).sgml
 
-$(HTMLFILES): $(SOURCES)
-	makeinfo -E wine.texi $(SRCDIR)/wine.texinfo
-	texi2html wine.texi 
-
-$(INCLUDES):
-	$(RM) $(INCLUDES)
-	for i in $(INCLUDES); do $(LN_S) $(TOPSRCDIR)/$$i $$i || exit 1; done
+$(BOOKNAME).ps: $(BOOK_SRCS)
+	db2ps $(BOOKNAME).sgml
 
 install:: 
 	$(INSTALL) -d $(mandir)/man$(prog_manext)
@@ -62,19 +62,8 @@ uninstall::
 	$(RM) $(mandir)/man$(prog_manext)/wine.$(prog_manext)
 	$(RM) $(mandir)/man$(conf_manext)/wine.conf.$(conf_manext)
 
-# Not done by default because of makeinfo bugs
-install_info: $(INFOFILES)
-	[ -d $(infodir) ] || mkdir -p $(infodir)
-	for i in $(INFOFILES); do $(INSTALL_DATA) $$i $(infodir)/$$i; done
-
-uninstall_info:
-	for i in $(INFOFILES); do $(RM) $(infodir)/$$i; done
-
 clean::
-	$(RM) $(INFOFILES) $(DVIFILES) $(INCLUDES)
-	$(RM) wine.aux wine.cp wine.cps wine.fn wine.fns wine.ky wine.log \
-		wine.pg wine.toc wine.tp wine.tps wine.vr wine.vrs \
-		wine.texi
-	$(RM) -r man3w
+	$(RM) *.aux *.dvi *.tex *.log $(BOOKNAME).pdf $(BOOKNAME).ps
+	$(RM) -r $(BOOKNAME) html man3w *.junk DBTOHTML_OUTPUT_DIR*
 
 ### Dependencies:
