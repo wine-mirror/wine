@@ -79,8 +79,8 @@ char *strmake(const char *fmt, ...)
         va_start(ap, fmt);
 	n = vsnprintf (p, size, fmt, ap);
 	va_end(ap);
-        if (n > -1 && n < size) return p;
-	size = min( size*2, n+1 );
+        if (n > -1 && (size_t)n < size) return p;
+	size = min( size*2, (size_t)n+1 );
 	p = xrealloc (p, size);
     }
 }
