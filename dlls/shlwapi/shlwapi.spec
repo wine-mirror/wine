@@ -657,8 +657,8 @@
 @ stdcall UrlCombineW(wstr wstr wstr ptr long) UrlCombineW
 @ stdcall UrlCompareA(str str long) UrlCompareA
 @ stdcall UrlCompareW(wstr wstr long) UrlCompareW
-@ stub    UrlCreateFromPathA
-@ stub    UrlCreateFromPathW
+@ stdcall UrlCreateFromPathA(str ptr ptr long) UrlCreateFromPathA
+@ stdcall UrlCreateFromPathW(wstr ptr ptr long) UrlCreateFromPathW
 @ stdcall UrlEscapeA(str ptr ptr long)UrlEscapeA
 @ stdcall UrlEscapeW(wstr ptr ptr long)UrlEscapeW
 @ stdcall UrlGetLocationA(str) UrlGetLocationA

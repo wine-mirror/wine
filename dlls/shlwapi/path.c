@@ -3124,11 +3124,18 @@ LPWSTR WINAPI PathSkipRootW(LPCWSTR lpszPath)
 HRESULT WINAPI PathCreateFromUrlA(LPCSTR lpszUrl, LPSTR lpszPath,
                                   LPDWORD pcchPath, DWORD dwFlags)
 {
-  FIXME("(%s,%p,%p,0x%08lx)-stub\n", debugstr_a(lpszUrl), lpszPath, pcchPath, dwFlags);
+  LPSTR pszPathPart;
+  TRACE("(%s,%p,%p,0x%08lx)\n", debugstr_a(lpszUrl), lpszPath, pcchPath, dwFlags);
 
   if (!lpszUrl || !lpszPath || !pcchPath || !*pcchPath)
     return E_INVALIDARG;
 
+  pszPathPart = StrChrA(lpszUrl, ':');
+  if ((((pszPathPart - lpszUrl) == 1) && isalpha(*lpszUrl)) ||
+         !lstrcmpA(lpszUrl, "file:"))
+  {
+    return UrlUnescapeA(pszPathPart, lpszPath, pcchPath, dwFlags);
+  }
     /* extracts thing prior to : in pszURL and checks against:
      *   https
      *   shell
@@ -3136,7 +3143,7 @@ HRESULT WINAPI PathCreateFromUrlA(LPCSTR lpszUrl, LPSTR lpszPath,
      *   about  - if match returns E_INVALIDARG
      */
 
-  return S_OK;
+  return E_INVALIDARG;
 }
 
 /*************************************************************************

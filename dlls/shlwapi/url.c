@@ -181,7 +181,7 @@ static BOOL URL_NeedEscapeA(CHAR ch, DWORD dwFlags)
 	case '{':
 	case '}':
 	case '|':
-	case '\\':
+/*	case '\\': */
 	case '^':
 	case ']':
 	case '[':
@@ -921,8 +921,8 @@ HRESULT WINAPI UrlEscapeA(
     char next[3], *dst = pszEscaped;
     INT len;
 
-    TRACE("(%s %p %p 0x%08lx)\n", debugstr_a(pszUrl), pszEscaped,
-	  pcchEscaped, dwFlags);
+    TRACE("(%s %p %lx 0x%08lx)\n", debugstr_a(pszUrl), pszEscaped,
+	  *pcchEscaped, dwFlags);
 
     if(dwFlags & ~(URL_ESCAPE_SPACES_ONLY |
 		   URL_ESCAPE_SEGMENT_ONLY |
@@ -1980,4 +1980,204 @@ BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
     base.size = sizeof(base);
     res1 = SHLWAPI_2(lpstrPath, &base);
     return (base.fcncde > 0);
+}
+
+/*************************************************************************
+ *      UrlCreateFromPathA  	[SHLWAPI.@]
+ */
+HRESULT WINAPI UrlCreateFromPathA(LPCSTR pszPath, LPSTR pszUrl, LPDWORD pcchUrl, DWORD dwReserved)
+{
+	DWORD nCharBeforeColon = 0;
+	DWORD nSlashes = 0;
+	DWORD dwChRequired = 0;
+	LPSTR pszNewUrl = NULL;
+	LPCSTR pszConstPointer = NULL;
+	LPSTR pszPointer = NULL;
+	DWORD i;
+	HRESULT ret;
+
+	TRACE("(%s, %p, %p, 0x%08lx)\n", debugstr_a(pszPath), pszUrl, pcchUrl, dwReserved);
+
+	/* Validate arguments */
+	if (dwReserved != 0)
+	{
+		FIXME("dwReserved should be 0: 0x%08lx\n", dwReserved);
+		return E_INVALIDARG;
+	}
+	if (!pszUrl || !pcchUrl || !pszUrl)
+	{
+		ERR("Invalid argument\n");
+		return E_INVALIDARG;
+	}
+
+	for (pszConstPointer = pszPath; *pszConstPointer; pszConstPointer++)
+	{
+		if (isalpha(*pszConstPointer) || isdigit(*pszConstPointer) ||
+			*pszConstPointer == '.' || *pszConstPointer == '-')
+			nCharBeforeColon++;
+		else break;
+	}
+	if (*pszConstPointer == ':') /* then already in URL format, so copy */
+	{
+		dwChRequired = lstrlenA(pszPath);
+		if (dwChRequired > *pcchUrl)
+		{
+			*pcchUrl = dwChRequired;
+			return E_POINTER;
+		}
+		else
+		{
+			*pcchUrl = dwChRequired;
+			StrCpyA(pszUrl, pszPath);
+			return S_FALSE;
+		}
+	}
+	/* then must need converting to file: format */
+
+	/* Strip off leading slashes */
+	while (*pszPath == '\\' || *pszPath == '/')
+	{
+		pszPath++;
+		nSlashes++;
+	}
+
+	dwChRequired = *pcchUrl; /* UrlEscape will fill this in with the correct amount */
+	TRACE("pszUrl: %s\n", debugstr_a(pszPath));
+	pszNewUrl = HeapAlloc(GetProcessHeap(), 0, dwChRequired + 1);
+	ret = UrlEscapeA(pszPath, pszNewUrl, &dwChRequired, URL_ESCAPE_PERCENT);
+	TRACE("ret: 0x%08lx, pszUrl: %s\n", ret, debugstr_a(pszNewUrl));
+	TRACE("%ld\n", dwChRequired);
+	if (ret != E_POINTER && FAILED(ret))
+		return ret;
+	dwChRequired += 5; /* "file:" */
+	if ((lstrlenA(pszUrl) > 1) && isalpha(pszUrl[0]) && (pszUrl[1] == ':'))
+	{
+		dwChRequired += 3; /* "///" */
+		nSlashes = 3;
+	}
+	else
+		switch (nSlashes)
+		{
+		case 0: /* no slashes */
+			break;
+		case 2: /* two slashes */
+		case 4:
+		case 5:
+		case 6:
+			dwChRequired += 2;
+			nSlashes = 2;
+			break;
+		default: /* three slashes */
+			dwChRequired += 3;
+			nSlashes = 3;
+		}
+
+	if (dwChRequired > *pcchUrl)
+		return E_POINTER;
+	*pcchUrl = dwChRequired; /* Return number of chars required (not including termination) */
+	StrCpyA(pszUrl, "file:");
+	pszPointer = pszUrl + lstrlenA(pszUrl);
+	for (i=0; i < nSlashes; i++)
+	{
+		*pszPointer = '/';
+		pszPointer++;
+	}
+	StrCpyA(pszPointer, pszNewUrl);
+	TRACE("<- %s\n", debugstr_a(pszUrl));
+	return S_OK;
+}
+
+/*************************************************************************
+ *      UrlCreateFromPathA  	[SHLWAPI.@]
+ */
+HRESULT WINAPI UrlCreateFromPathW(LPCWSTR pszPath, LPWSTR pszUrl, LPDWORD pcchUrl, DWORD dwReserved)
+{
+	DWORD nCharBeforeColon = 0;
+	DWORD nSlashes = 0;
+	DWORD dwChRequired = 0;
+	LPWSTR pszNewUrl = NULL;
+	LPCWSTR pszConstPointer = NULL;
+	LPWSTR pszPointer = NULL;
+	DWORD i;
+	HRESULT ret;
+
+	TRACE("(%s, %p, %p, 0x%08lx)\n", debugstr_w(pszPath), pszUrl, pcchUrl, dwReserved);
+
+	/* Validate arguments */
+	if (dwReserved != 0)
+		return E_INVALIDARG;
+	if (!pszUrl || !pcchUrl || !pszUrl)
+		return E_INVALIDARG;
+
+	for (pszConstPointer = pszPath; *pszConstPointer; pszConstPointer++)
+	{
+		if (isalphaW(*pszConstPointer) || isdigitW(*pszConstPointer) ||
+			*pszConstPointer == '.' || *pszConstPointer == '-')
+			nCharBeforeColon++;
+		else break;
+	}
+	if (*pszConstPointer == ':') /* then already in URL format, so copy */
+	{
+		dwChRequired = lstrlenW(pszPath);
+		*pcchUrl = dwChRequired;
+		if (dwChRequired > *pcchUrl)
+			return E_POINTER;
+		else
+		{
+			StrCpyW(pszUrl, pszPath);
+			return S_FALSE;
+		}
+	}
+	/* then must need converting to file: format */
+
+	/* Strip off leading slashes */
+	while (*pszPath == '\\' || *pszPath == '/')
+	{
+		pszPath++;
+		nSlashes++;
+	}
+
+	dwChRequired = *pcchUrl; /* UrlEscape will fill this in with the correct amount */
+	ret = UrlEscapeW(pszPath, pszUrl, &dwChRequired, URL_ESCAPE_PERCENT);
+	if (ret != E_POINTER && FAILED(ret))
+		return ret;
+	dwChRequired += 5; /* "file:" */
+	if ((lstrlenW(pszUrl) > 1) && isalphaW(pszUrl[0]) && (pszUrl[1] == ':'))
+	{
+		dwChRequired += 3; /* "///" */
+		nSlashes = 3;
+	}
+	else
+		switch (nSlashes)
+		{
+		case 0: /* no slashes */
+			break;
+		case 2: /* two slashes */
+		case 4:
+		case 5:
+		case 6:
+			dwChRequired += 2;
+			nSlashes = 2;
+			break;
+		default: /* three slashes */
+			dwChRequired += 3;
+			nSlashes = 3;
+		}
+
+	*pcchUrl = dwChRequired; /* Return number of chars required (not including termination) */
+	if (dwChRequired > *pcchUrl)
+		return E_POINTER;
+	pszNewUrl = HeapAlloc(GetProcessHeap(), 0, (dwChRequired + 1) * sizeof(WCHAR));
+	StrCpyW(pszNewUrl, fileW);
+	pszPointer = pszNewUrl + 4;
+	*pszPointer = ':';
+	pszPointer++;
+	for (i=0; i < nSlashes; i++)
+	{
+		*pszPointer = '/';
+		pszPointer++;
+	}
+	StrCpyW(pszPointer, pszPath);
+	StrCpyW(pszUrl, pszNewUrl);
+	return S_OK;
 }
