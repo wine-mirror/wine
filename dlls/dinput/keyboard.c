@@ -356,6 +356,37 @@ static HRESULT WINAPI SysKeyboardAImpl_SetProperty(
 	return DI_OK;
 }
 
+static HRESULT WINAPI SysKeyboardAImpl_GetProperty(
+	LPDIRECTINPUTDEVICE8A iface,REFGUID rguid,LPDIPROPHEADER ph
+)
+{
+	SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
+
+	TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
+	TRACE("(size=%ld,headersize=%ld,obj=%ld,how=%ld\n",
+            ph->dwSize,ph->dwHeaderSize,ph->dwObj,ph->dwHow);
+	if (!HIWORD(rguid)) {
+		switch ((DWORD)rguid) {
+		case (DWORD) DIPROP_BUFFERSIZE: {
+			LPDIPROPDWORD	pd = (LPDIPROPDWORD)ph;
+
+			TRACE("(buffersize=%ld)\n",pd->dwData);
+
+                        if (This->acquired)
+                           return DIERR_INVALIDPARAM;
+
+                        pd->dwData = This->buffersize;
+
+			break;
+		}
+		default:
+			WARN("Unknown type %ld\n",(DWORD)rguid);
+			break;
+		}
+	}
+	return DI_OK;
+}
+
 static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 	LPDIRECTINPUTDEVICE8A iface,DWORD len,LPVOID ptr
 )
@@ -712,7 +743,7 @@ static IDirectInputDevice8AVtbl SysKeyboardAvt =
 	SysKeyboardAImpl_Release,
 	SysKeyboardAImpl_GetCapabilities,
 	SysKeyboardAImpl_EnumObjects,
-	IDirectInputDevice2AImpl_GetProperty,
+	SysKeyboardAImpl_GetProperty,
 	SysKeyboardAImpl_SetProperty,
 	SysKeyboardAImpl_Acquire,
 	SysKeyboardAImpl_Unacquire,
@@ -754,7 +785,7 @@ static IDirectInputDevice8WVtbl SysKeyboardWvt =
 	XCAST(Release)SysKeyboardAImpl_Release,
 	XCAST(GetCapabilities)SysKeyboardAImpl_GetCapabilities,
 	SysKeyboardWImpl_EnumObjects,
-	XCAST(GetProperty)IDirectInputDevice2AImpl_GetProperty,
+	XCAST(GetProperty)SysKeyboardAImpl_GetProperty,
 	XCAST(SetProperty)SysKeyboardAImpl_SetProperty,
 	XCAST(Acquire)SysKeyboardAImpl_Acquire,
 	XCAST(Unacquire)SysKeyboardAImpl_Unacquire,
