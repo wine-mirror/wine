@@ -36,4 +36,6 @@ y.tab.c y.tab.h: sql.y
 y.tab.h: y.tab.c
 y.tab.o: y.tab.h
 
+tokenize.o: y.tab.h
+
 ### Dependencies:
