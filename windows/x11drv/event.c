@@ -150,7 +150,7 @@ void X11DRV_EVENT_DeleteIO( int fd, unsigned io_type )
 /***********************************************************************
  *		X11DRV_EVENT_IsUserIdle 
  */
-BOOL16 WINAPI X11DRV_EVENT_IsUserIdle(void)
+BOOL16 X11DRV_EVENT_IsUserIdle(void)
 {
   struct timeval timeout = {0, 0};
   fd_set check_set;
