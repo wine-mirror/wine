@@ -4,7 +4,7 @@ type    win32
 import	ole32.dll
 import	ntdll.dll
 
-debug_channels (win32)
+debug_channels (urlmon win32)
 
 1 stub CDLGetLongPathNameA
 2 stub CDLGetLongPathNameW
@@ -57,12 +57,12 @@ debug_channels (win32)
 @ stub MkParseDisplayNameEx
 @ stub ObtainUserAgentString
 @ stub PrivateCoInstall
-@ stub RegisterBindStatusCallback
+@ stdcall RegisterBindStatusCallback(ptr ptr ptr long) RegisterBindStatusCallback
 @ stub RegisterFormatEnumerator
 @ stub RegisterMediaTypeClass
 @ stub RegisterMediaTypes
 @ stub ReleaseBindInfo
-@ stub RevokeBindStatusCallback
+@ stdcall RevokeBindStatusCallback(ptr ptr) RevokeBindStatusCallback
 @ stub RevokeFormatEnumerator
 @ stub SetSoftwareUpdateAdvertisementState
 @ stub URLDownloadA
