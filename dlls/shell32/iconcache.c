@@ -475,9 +475,9 @@ HICON WINAPI ExtractAssociatedIconA(HINSTANCE hInst, LPSTR lpIconPath, LPWORD lp
 	if( hIcon < (HICON)2 )
 	{ if( hIcon == (HICON)1 ) /* no icons found in given file */
 	  { char  tempPath[0x80];
-	    UINT16  uRet = FindExecutable16(lpIconPath,NULL,tempPath);
+	    HINSTANCE uRet = FindExecutableA(lpIconPath,NULL,tempPath);
 
-	    if( uRet > 32 && tempPath[0] )
+	    if( uRet > (HINSTANCE)32 && tempPath[0] )
 	    { strcpy(lpIconPath,tempPath);
 	      hIcon = ExtractIconA(hInst, lpIconPath, *lpiIcon);
 	      if( hIcon > (HICON)2 )
