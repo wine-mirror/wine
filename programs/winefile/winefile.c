@@ -2328,7 +2328,7 @@ static void set_curdir(ChildWnd* child, Entry* entry)
 	TCHAR path[MAX_PATH];
 
 	child->left.cur = entry;
-	child->right.root = entry;
+	child->right.root = entry->down;
 	child->right.cur = entry;
 
 	if (!entry->scanned)
