@@ -333,17 +333,6 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 
 	if (len == 0) {
 		/* This should only happen if we aren't looping and temp < 4 */
-
-		/* We skip the remainder, so check for possible events */
-		DSOUND_CheckEvent(dsb, dsb->buflen - dsb->buf_mixpos);
-		/* Stop */
-		dsb->state = STATE_STOPPED;
-		dsb->playpos = 0;
-		dsb->last_playpos = 0;
-		dsb->buf_mixpos = 0;
-		dsb->leadin = FALSE;
-		/* Check for DSBPN_OFFSETSTOP */
-		DSOUND_CheckEvent(dsb, 0);
 		return 0;
 	}
 
@@ -385,9 +374,6 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 	}
 	/* free(buf); */
 
-	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY)
-		DSOUND_CheckEvent(dsb, ilen);
-
 	if (dsb->leadin && (dsb->startpos > dsb->buf_mixpos) && (dsb->startpos <= dsb->buf_mixpos + ilen)) {
 		/* HACK... leadin should be reset when the PLAY position reaches the startpos,
 		 * not the MIX position... but if the sound buffer is bigger than our prebuffering
@@ -399,14 +385,7 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 	dsb->buf_mixpos += ilen;
 
 	if (dsb->buf_mixpos >= dsb->buflen) {
-		if (!(dsb->playflags & DSBPLAY_LOOPING)) {
-			dsb->state = STATE_STOPPED;
-			dsb->playpos = 0;
-			dsb->last_playpos = 0;
-			dsb->buf_mixpos = 0;
-			dsb->leadin = FALSE;
-			DSOUND_CheckEvent(dsb, 0);		/* For DSBPN_OFFSETSTOP */
-		} else {
+		if (dsb->playflags & DSBPLAY_LOOPING) {
 			/* wrap */
 			while (dsb->buf_mixpos >= dsb->buflen)
 				dsb->buf_mixpos -= dsb->buflen;
@@ -561,6 +540,10 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	DWORD adv_done =
 		((dsb->dsound->mixpos < writepos) ? dsb->dsound->buflen : 0) +
 		dsb->dsound->mixpos - writepos;
+	DWORD played =
+		((buf_writepos < dsb->playpos) ? dsb->buflen : 0) +
+		buf_writepos - dsb->playpos;
+	DWORD buf_left = dsb->buflen - buf_writepos;
 	int still_behind;
 
 	TRACE("buf_writepos=%ld, primary_writepos=%ld\n", buf_writepos, writepos);
@@ -568,6 +551,12 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	TRACE("buf_mixpos=%ld, primary_mixpos=%ld, mixlen=%ld\n", dsb->buf_mixpos, dsb->primary_mixpos,
 	      mixlen);
 	TRACE("looping=%ld, startpos=%ld, leadin=%ld\n", dsb->playflags, dsb->startpos, dsb->leadin);
+
+	/* check for notification positions */
+	if (dsb->dsbd.dwFlags & DSBCAPS_CTRLPOSITIONNOTIFY &&
+	    dsb->state != STATE_STARTING) {
+		DSOUND_CheckEvent(dsb, played);
+	}
 
 	/* save write position for non-GETCURRENTPOSITION2... */
 	dsb->playpos = buf_writepos;
@@ -640,7 +629,8 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 		/* smaller than a fragment, wait until it gets larger
 		 * before we take the mixing overhead */
 		TRACE("mixlen not worth it, deferring mixing\n");
-		return 0;
+		still_behind = 1;
+		goto post_mix;
 	}
 
 	/* ok, we know how much to mix, let's go */
@@ -662,6 +652,19 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	}
 	TRACE("new primary_mixpos=%ld, primary_advbase=%ld\n", dsb->primary_mixpos, dsb->dsound->mixpos);
 	TRACE("mixed data len=%ld, still_behind=%d\n", mixlen-len, still_behind);
+
+post_mix:
+	/* check if buffer should be considered complete */
+	if (buf_left < dsb->writelead &&
+	    !(dsb->playflags & DSBPLAY_LOOPING)) {
+		dsb->state = STATE_STOPPED;
+		dsb->playpos = 0;
+		dsb->last_playpos = 0;
+		dsb->buf_mixpos = 0;
+		dsb->leadin = FALSE;
+		DSOUND_CheckEvent(dsb, buf_left);
+	}
+
 	/* return how far we think the primary buffer can
 	 * advance its underrun detector...*/
 	if (still_behind) return 0;
@@ -694,6 +697,7 @@ static DWORD DSOUND_MixToPrimary(DWORD playpos, DWORD writepos, DWORD mixlen, BO
 			if (dsb->state == STATE_STOPPING) {
 				DSOUND_MixCancel(dsb, writepos, TRUE);
 				dsb->state = STATE_STOPPED;
+				DSOUND_CheckEvent(dsb, 0);
 			} else {
 				if ((dsb->state == STATE_STARTING) || recover) {
 					dsb->primary_mixpos = writepos;
