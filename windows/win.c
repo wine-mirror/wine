@@ -1747,7 +1747,7 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
         {
 	    SetFocus( 0 );  /* A disabled window can't have the focus */
         }
-	if ((hwnd == GetCapture()) || IsChild( hwnd, GetCapture() ))
+	if (hwnd == GetCapture())
         {
 	    ReleaseCapture();  /* A disabled window can't capture the mouse */
         }
