@@ -1131,6 +1131,7 @@ LRESULT CFn_WMPaint(HWND hDlg, WPARAM wParam, LPARAM lParam,
                 sample_lang_text[CHARSET_ORDER[lpcf->lpLogFont->lfCharSet]],
                 -1, &info.rcWindow, DT_CENTER|DT_VCENTER|DT_SINGLELINE );
 
+        DeleteObject(SelectObject( hdc, hOrigFont ));
         EndPaint( hDlg, &ps );
     }
 
