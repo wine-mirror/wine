@@ -1335,6 +1335,8 @@ int DEBUG_SetLocalSymbolType(struct wine_locals * sym, struct datatype * type)
   return TRUE;
 }
 
+#ifdef HAVE_REGEX_H
+
 static int cmp_sym_by_name(const void * p1, const void * p2)
 {
   struct name_hash ** name1 = (struct name_hash **) p1;
@@ -1396,3 +1398,12 @@ void DEBUG_InfoSymbols(const char* str)
     }
     HeapFree(GetProcessHeap(), 0, array);
 }
+
+#else /* HAVE_REGEX_H */
+
+void DEBUG_InfoSymbols(const char* str)
+{
+    DEBUG_Printf( DBG_CHN_MESG, "FIXME: needs regex support\n" );
+}
+
+#endif /* HAVE_REGEX_H */

@@ -1017,6 +1017,7 @@ AC_CHECK_HEADERS(\
 	netinet/tcp.h \
 	pty.h \
 	pwd.h \
+	regex.h \
 	sched.h \
 	scsi/sg.h \
 	socket.h \

@@ -413,6 +413,9 @@
 /* Define to 1 if you have the `pwrite' function. */
 #undef HAVE_PWRITE
 
+/* Define to 1 if you have the <regex.h> header file. */
+#undef HAVE_REGEX_H
+
 /* Define to 1 if you have the `resizeterm' function. */
 #undef HAVE_RESIZETERM
 
