@@ -31,7 +31,7 @@ MAIN_MENU MENU LANGUAGE LANG_DUTCH, SUBLANG_DEFAULT
   MENUITEM "&Afsluiten", MNID_FILE_EXIT
  }
  POPUP "&Bewerken" {
-   MENUITEM "&KopiÃ«ren...", MNID_EDIT_COPYDLG
+   MENUITEM "&Kopiëren...", MNID_EDIT_COPYDLG
    MENUITEM SEPARATOR
    MENUITEM "&Annoteren...", MNID_EDIT_ANNOTATE
  }
@@ -56,7 +56,7 @@ STID_WINE_HELP, 	"WINE Help"
 STID_WHERROR, 		"FOUT"
 STID_WARNING,  		"WAARSCHUWING"
 STID_INFO,  		"Informatie"
-STID_NOT_IMPLEMENTED, 	"Niet geÃ¯mplementeerd"
+STID_NOT_IMPLEMENTED, 	"Niet geïmplementeerd"
 STID_HLPFILE_ERROR_s, 	"Fout bij het lezen van het helpbestand `%s'"
 STID_CONTENTS, 		"&Inhoud"
 STID_SEARCH, 		"&Zoeken"
