@@ -648,7 +648,7 @@ static	DWORD	MCI_GetString(LPSTR* str, LPSTR* args)
  * 				MCI_ParseOptArgs		[internal]
  */
 static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd, 
-				    LPSTR args, LPDWORD dwFlags)
+				 LPSTR args, LPDWORD dwFlags)
 {
     int		len, offset;
     LPCSTR	lmem, str;
@@ -661,6 +661,9 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 	lmem = lpCmd;
 	found = inCst = FALSE;
 	offset = _offset;
+
+	/* skip any leading white space(s) */
+	while (*args == ' ') args++;
 	TRACE("args='%s' offset=%d\n", args, offset);
 	    
 	do { /* loop on options for command table for the requested verb */
@@ -687,7 +690,7 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 		(args[len] == 0 || args[len] == ' ')) {
 		/* store good values into data[] */
 		args += len;
-		if (*args == ' ') args++;
+		while (*args == ' ') args++;
 		found = TRUE;
 
 		switch (eid) {
@@ -731,8 +734,8 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 		    break;
 		default:	ERR("oops");
 		}
-		/* exit inside while loop */
-		eid = MCI_END_COMMAND;
+		/* exit inside while loop, except if just entered in constant area definition */
+		if (!inCst || eid != MCI_CONSTANT) eid = MCI_END_COMMAND;
 	    } else {
 		/* have offset incremented if needed */
 		switch (eid) {
@@ -751,7 +754,7 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 	    }
 	} while (eid != MCI_END_COMMAND);
 	if (!found) {
-	    TRACE("Optarg '%s' not found\n", args);
+	    WARN("Optarg '%s' not found\n", args);
 	    return MCIERR_UNRECOGNIZED_COMMAND;
 	}
 	if (offset == MCI_DATA_SIZE) {
@@ -882,6 +885,8 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
 	    dwFlags |= MCI_OPEN_TYPE;
 	    data[2] = (DWORD)devType;
 	    devType = CharUpperA(HEAP_strdupA(GetProcessHeap(), 0, devType));
+	    dwFlags |= MCI_OPEN_ELEMENT;
+	    data[3] = (DWORD)dev;
 	} else if (strchr(dev, '.') == NULL) {
 	    tmp = strchr(dev,' ');
 	    if (tmp) *tmp = '\0';
@@ -940,14 +945,16 @@ DWORD WINAPI mciSendStringA(LPCSTR lpstrCommand, LPSTR lpstrRet,
     }
 
     /* get the verb in the different command tables */
-    /* try the device specific command table */
-    if (wmd) lpCmd = MCI_FindCommand(wmd->uSpecificCmdTable, verb);
-    /* try the type specific command table */
-    if (!lpCmd) {
-	if (wmd && wmd->uTypeCmdTable == MCI_COMMAND_TABLE_NOT_LOADED)
-	    wmd->uTypeCmdTable = MCI_GetCommandTable(iData, wmd->wType);
-	if (wmd && wmd->uTypeCmdTable != MCI_NO_COMMAND_TABLE)
-	    lpCmd = MCI_FindCommand(wmd->uTypeCmdTable, verb);
+    if (wmd) {
+	/* try the device specific command table */
+	lpCmd = MCI_FindCommand(wmd->uSpecificCmdTable, verb);
+	if (!lpCmd) {
+	    /* try the type specific command table */
+	    if (wmd->uTypeCmdTable == MCI_COMMAND_TABLE_NOT_LOADED)
+		wmd->uTypeCmdTable = MCI_GetCommandTable(iData, wmd->wType);
+	    if (wmd->uTypeCmdTable != MCI_NO_COMMAND_TABLE)
+		lpCmd = MCI_FindCommand(wmd->uTypeCmdTable, verb);
+	}
     }
     /* try core command table */
     if (!lpCmd) lpCmd = MCI_FindCommand(MCI_GetCommandTable(iData, 0), verb);
@@ -1109,8 +1116,42 @@ BOOL16 WINAPI mciFreeCommandResource16(UINT16 uTable)
  *
  * Strangely, this function only exists as an UNICODE one.
  */
-UINT WINAPI mciLoadCommandResource(HINSTANCE hinst, LPCWSTR resNameW, UINT type)
+UINT WINAPI mciLoadCommandResource(HINSTANCE hInst, LPCWSTR resNameW, UINT type)
 {
+    HRSRC	        hRsrc = 0;
+    HGLOBAL      	hMem;
+    UINT16		ret = MCI_NO_COMMAND_TABLE;
+    LPWINE_MM_IDATA 	iData = MULTIMEDIA_GetIData();
+
+    TRACE("(%04x, %s, %d)!\n", hInst, debugstr_w(resNameW), type);
+
+#if 0
+    /* if file exists "resname.mci", then load resource "resname" from it
+     * otherwise directly from driver
+     * We don't support it (who uses this feature ?), but we check anyway
+     */
+    if (!type) {
+	char		buf[128];
+	OFSTRUCT       	ofs;
+
+	strcat(strcpy(buf, resname), ".mci");
+	if (OpenFile(buf, &ofs, OF_EXIST) != HFILE_ERROR) {
+	    FIXME("NIY: command table to be loaded from '%s'\n", ofs.szPathName);
+	}
+    }
+#endif
+    if (!(hRsrc = FindResourceW(hInst, resNameW, (LPCWSTR)RT_RCDATAA))) {
+	WARN("No command table found in resource\n");
+    } else if ((hMem = LoadResource(hInst, hRsrc))) {
+	ret = MCI_SetCommandTable(iData, hMem, type);
+    } else {
+	WARN("Couldn't load resource.\n");
+    }
+    TRACE("=> %04x\n", ret);
+    return ret;
+}
+
+#if 0
     LPSTR 	resNameA;
     UINT	ret;
 
@@ -1120,7 +1161,7 @@ UINT WINAPI mciLoadCommandResource(HINSTANCE hinst, LPCWSTR resNameW, UINT type)
     ret = mciLoadCommandResource16(hinst, resNameA, type);
     HeapFree(GetProcessHeap(), 0, resNameA);
     return ret;
-}
+#endif
 
 /**************************************************************************
  *                    	mciFreeCommandResource			[WINMM.39]
@@ -1147,7 +1188,7 @@ static	MCI_MapType	MCI_MapMsg16To32A(WORD uDevType, WORD wMsg, DWORD* lParam)
 	/* case MCI_CAPTURE */
     case MCI_CLOSE:		
     case MCI_CLOSE_DRIVER:	
-	/* case MCI_CONFIGURE:*/
+    case MCI_CONFIGURE:
     case MCI_COPY:
     case MCI_CUE:
     case MCI_CUT:
@@ -1309,7 +1350,7 @@ static	MCI_MapType	MCI_UnMapMsg16To32A(WORD uDevType, WORD wMsg, DWORD lParam)
 	/* case MCI_CAPTURE */
     case MCI_CLOSE:
     case MCI_CLOSE_DRIVER:	
-	/* case MCI_CONFIGURE:*/
+    case MCI_CONFIGURE:
     case MCI_COPY:
     case MCI_CUE:
     case MCI_CUT:
@@ -1534,9 +1575,9 @@ static	MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DW
 	/* case MCI_CAPTURE */
     case MCI_CLOSE:
     case MCI_CLOSE_DRIVER:	
+    case MCI_CONFIGURE:
 	size = sizeof(MCI_GENERIC_PARMS);	
 	break;
-	/* case MCI_CONFIGURE:*/
 	/* case MCI_COPY: */
     case MCI_CUE:
 	switch (uDevType) {
@@ -1694,6 +1735,13 @@ static	MCI_MapType	MCI_MapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, DW
 	default:			size = sizeof(MCI_SET_PARMS);		break;
 	}
 	break;	
+    case MCI_SETAUDIO:
+	switch (uDevType) {
+	case MCI_DEVTYPE_DIGITAL_VIDEO:	size = sizeof(MCI_DGV_SETAUDIO_PARMS16);map = 0x0000077FF;	break;
+	case MCI_DEVTYPE_VCR:		/*size = sizeof(MCI_VCR_SETAUDIO_PARMS);	break;*/FIXME("NIY vcr\n");	return MCI_MAP_NOMEM;
+	default:			size = sizeof(MCI_GENERIC_PARMS);	break;
+	}
+	break;
 	/* case MCI_SETTIMECODE:*/
 	/* case MCI_SIGNAL:*/
     case MCI_SPIN:
@@ -1827,8 +1875,8 @@ static	MCI_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, 
 	/* case MCI_CAPTURE */
     case MCI_CLOSE:	
     case MCI_CLOSE_DRIVER:	
+    case MCI_CONFIGURE:
 	break;
-	/* case MCI_CONFIGURE:*/
 	/* case MCI_COPY: */
     case MCI_CUE:	
 	break;
@@ -1897,6 +1945,12 @@ static	MCI_MapType	MCI_UnMapMsg32ATo16(WORD uDevType, WORD wMsg, DWORD dwFlags, 
     case MCI_SEEK:
 	break;
     case MCI_SET:
+	break;
+    case MCI_SETAUDIO:
+	switch (uDevType) {
+	case MCI_DEVTYPE_DIGITAL_VIDEO:	map = 0x0000077FF;	break;
+	case MCI_DEVTYPE_VCR:		/*size = sizeof(MCI_VCR_SETAUDIO_PARMS);	break;*/FIXME("NIY vcr\n");	return MCI_MAP_NOMEM;
+	}
 	break;
 	/* case MCI_SETTIMECODE:*/
 	/* case MCI_SIGNAL:*/
