@@ -65,6 +65,9 @@ static const WCHAR szComponents[] = {
 /* the UI level */
 INSTALLUILEVEL gUILevel;
 HWND           gUIhwnd;
+INSTALLUI_HANDLERA gUIHandler;
+DWORD gUIFilter;
+LPVOID gUIContext;
 
 /*
  *  .MSI  file format
@@ -701,8 +704,14 @@ INSTALLUILEVEL WINAPI MsiSetInternalUI(INSTALLUILEVEL dwUILevel, HWND *phWnd)
 INSTALLUI_HANDLERA WINAPI MsiSetExternalUIA(INSTALLUI_HANDLERA puiHandler, 
                                   DWORD dwMessageFilter, LPVOID pvContext)
 {
-    FIXME("STUB\n");
-    return NULL;
+    INSTALLUI_HANDLERA prev = gUIHandler;
+
+    TRACE("(%p %lx %p)\n",puiHandler,dwMessageFilter,pvContext);
+    gUIHandler = puiHandler;
+    gUIFilter = dwMessageFilter;
+    gUIContext = pvContext;
+
+    return prev;
 }
 
 UINT WINAPI MsiLoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int nBufferMax, DWORD e)
@@ -1084,8 +1093,14 @@ UINT WINAPI MsiVerifyPackageW( LPCWSTR szPackage )
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
   if (fdwReason == DLL_PROCESS_ATTACH) {
     DisableThreadLibraryCalls(hinstDLL);
+    /*
+     * UI Initialization
+     */
     gUILevel = INSTALLUILEVEL_BASIC;
     gUIhwnd = 0;
+    gUIHandler = NULL;
+    gUIFilter = 0;
+    gUIContext = NULL;
     /* FIXME: Initialisation */
   } else if (fdwReason == DLL_PROCESS_DETACH) {
     /* FIXME: Cleanup */

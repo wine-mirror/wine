@@ -1245,6 +1245,8 @@ static UINT ACTION_CostFinalize(MSIHANDLE hPackage)
     MsiViewClose(view);
     MsiCloseHandle(view);
 
+    MsiSetPropertyA(hPackage,"CostingComplete","1");
+
     return ERROR_SUCCESS;
 }
 

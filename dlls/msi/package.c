@@ -338,7 +338,43 @@ MSIHANDLE WINAPI MsiGetActiveDatabase(MSIHANDLE hInstall)
 INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
                               MSIHANDLE hRecord)
 {
-    FIXME("STUB: \n");
+    DWORD log_type = 0;
+    LPSTR message;
+    DWORD sz;
+    INT msg_field=1;
+    FIXME("STUB: %x \n",eMessageType);
+
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ERROR)
+        log_type |= INSTALLLOGMODE_ERROR;
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_WARNING)
+        log_type |= INSTALLLOGMODE_WARNING;
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_USER)
+        log_type |= INSTALLLOGMODE_USER;
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_INFO)
+        log_type |= INSTALLLOGMODE_INFO;
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_COMMONDATA)
+        log_type |= INSTALLLOGMODE_COMMONDATA;
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONSTART)
+    {
+        log_type |= INSTALLLOGMODE_ACTIONSTART;
+        msg_field = 2;
+    }
+    if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ACTIONDATA)
+        log_type |= INSTALLLOGMODE_ACTIONDATA;
+
+    sz = 0;
+    MsiRecordGetStringA(hRecord,msg_field,NULL,&sz);
+    sz++;
+    message = HeapAlloc(GetProcessHeap(),0,sz);
+    MsiRecordGetStringA(hRecord,msg_field,message,&sz);
+
+    TRACE("(%p %lx %lx)\n",gUIHandler, gUIFilter, log_type);
+    if (gUIHandler && (gUIFilter & log_type))
+        gUIHandler(gUIContext,eMessageType,message);
+    else
+        TRACE("%s\n",debugstr_a(message));
+
+    HeapFree(GetProcessHeap(),0,message);
     return ERROR_SUCCESS;
 }
 
@@ -388,8 +424,17 @@ UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue
     MSIHANDLE view,row;
     UINT rc;
     DWORD sz = 0;
-    static const CHAR Insert[]=
-     "INSERT into `_Property` (`_Property`,`Value`) VALUES (?)";
+    static const WCHAR Insert[]=
+     {'I','N','S','E','R','T',' ','i','n','t','o',' ','`','_','P','r','o','p'
+,'e','r','t','y','`',' ','(','`','_','P','r','o','p','e','r','t','y','`'
+,',','`','V','a','l','u','e','`',')',' ','V','A','L','U','E','S'
+,' ','(','?',')',0};
+    static const WCHAR Update[]=
+     {'U','P','D','A','T','E',' ','_','P','r','o','p','e'
+,'r','t','y',' ','s','e','t',' ','`','V','a','l','u','e','`',' ','='
+,' ','?',' ','w','h','e','r','e',' ','`','_','P','r','o','p'
+,'e','r','t','y','`',' ','=',' ','\'','%','s','\'',0};
+    WCHAR Query[1024];
 
     TRACE("Setting property (%s %s)\n",debugstr_w(szName),
           debugstr_w(szValue));
@@ -397,24 +442,35 @@ UINT WINAPI MsiSetPropertyW( MSIHANDLE hInstall, LPCWSTR szName, LPCWSTR szValue
     if (!hInstall)
         return ERROR_INVALID_HANDLE;
 
-    rc = MsiGetPropertyW(hInstall,szName,0,&sz);
-    if (rc==ERROR_MORE_DATA || rc == ERROR_SUCCESS)
-    {
-        FIXME("Cannot set exising properties! FIXME MIKE!\n");
-        return ERROR_SUCCESS;
-    }
-
     package = msihandle2msiinfo( hInstall, MSIHANDLETYPE_PACKAGE);
     if( !package)
         return ERROR_INVALID_HANDLE;
 
-    rc = MsiDatabaseOpenViewA(package->db,Insert,&view);
-    if (rc!= ERROR_SUCCESS)
-        return rc;
+    rc = MsiGetPropertyW(hInstall,szName,0,&sz);
+    if (rc==ERROR_MORE_DATA || rc == ERROR_SUCCESS)
+    {
+        sprintfW(Query,Update,szName);
 
-    row = MsiCreateRecord(2);
-    MsiRecordSetStringW(row,1,szName);
-    MsiRecordSetStringW(row,2,szValue);
+        row = MsiCreateRecord(1);
+        MsiRecordSetStringW(row,1,szValue);
+
+    }
+    else
+    {
+       strcpyW(Query,Insert);
+
+        row = MsiCreateRecord(2);
+        MsiRecordSetStringW(row,1,szName);
+        MsiRecordSetStringW(row,2,szValue);
+    }
+
+
+    rc = MsiDatabaseOpenViewW(package->db,Query,&view);
+    if (rc!= ERROR_SUCCESS)
+    {
+        MsiCloseHandle(row);
+        return rc;
+    }
 
     rc = MsiViewExecute(view,row);
 

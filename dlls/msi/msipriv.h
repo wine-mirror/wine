@@ -225,5 +225,8 @@ extern void enum_stream_names( IStorage *stg );
 /* UI globals */
 extern INSTALLUILEVEL gUILevel;
 extern HWND gUIhwnd;
+extern INSTALLUI_HANDLERA gUIHandler;
+extern DWORD gUIFilter;
+extern LPVOID gUIContext;
 
 #endif /* __WINE_MSI_PRIVATE__ */
