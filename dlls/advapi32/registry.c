@@ -1517,6 +1517,9 @@ LONG WINAPI RegGetKeySecurity( HKEY hkey, SECURITY_INFORMATION SecurityInformati
     FIXME("(%x,%ld,%p,%ld): stub\n",hkey,SecurityInformation,
           pSecurityDescriptor,lpcbSecurityDescriptor?*lpcbSecurityDescriptor:0);
 
+    /* Do not leave security descriptor filled with garbage */
+    RtlCreateSecurityDescriptor(pSecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
+
     return ERROR_SUCCESS;
 }
 
