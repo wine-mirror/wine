@@ -331,6 +331,14 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	}
 	break;
 
+     case WM_MOUSEWHEEL:
+	if (wndPtr->dwStyle & WS_CHILD)
+	{
+	    return SendMessageA( wndPtr->parent->hwndSelf,
+				 WM_MOUSEWHEEL, wParam, lParam );
+	}
+	break;
+
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
 	{
