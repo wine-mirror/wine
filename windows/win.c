@@ -218,11 +218,11 @@ WND *WIN_LockWndPtr(WND *initWndPtr)
     USER_Lock();
     /*and increment destruction monitoring*/
     initWndPtr->irefCount++;
-    
+
     return initWndPtr;
 
 }
-        
+
 /***********************************************************************
  *           WIN_ReleaseWndPtr
  *
@@ -257,7 +257,7 @@ void WIN_ReleaseWndPtr(WND *wndPtr)
 void WIN_UpdateWndPtr(WND **oldPtr, WND *newPtr)
 {
     WND *tmpWnd = NULL;
-    
+
     tmpWnd = WIN_LockWndPtr(newPtr);
     WIN_ReleaseWndPtr(*oldPtr);
     *oldPtr = tmpWnd;
@@ -351,7 +351,7 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
     HWND hwndRet;
     WND *pWnd;
 
-    /* Note: the desktop window never gets WM_PAINT messages 
+    /* Note: the desktop window never gets WM_PAINT messages
      * The real reason why is because Windows DesktopWndProc
      * does ValidateRgn inside WM_ERASEBKGND handler.
      */
@@ -361,41 +361,39 @@ HWND WIN_FindWinToRepaint( HWND hwnd )
 
     for ( ; pWnd ; WIN_UpdateWndPtr(&pWnd,pWnd->next))
     {
-        if (!(pWnd->dwStyle & WS_VISIBLE))
-        {
-            TRACE("skipping window %04x\n",
-                         pWnd->hwndSelf );
-        }
-        else if ((pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT)) &&
-                 GetWindowThreadProcessId( pWnd->hwndSelf, NULL ) == GetCurrentThreadId())
+        if (!(pWnd->dwStyle & WS_VISIBLE)) continue;
+        if ((pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT)) &&
+            GetWindowThreadProcessId( pWnd->hwndSelf, NULL ) == GetCurrentThreadId())
             break;
-        
-        else if (pWnd->child )
+        if (pWnd->child )
+        {
             if ((hwndRet = WIN_FindWinToRepaint( pWnd->child->hwndSelf )) )
             {
                 WIN_ReleaseWndPtr(pWnd);
                 return hwndRet;
+            }
+        }
     }
-    
-    }
-    
+
     if(!pWnd)
     {
+        TRACE("nothing found\n");
         return 0;
     }
-    
     hwndRet = pWnd->hwndSelf;
 
     /* look among siblings if we got a transparent window */
-    while (pWnd && ((pWnd->dwExStyle & WS_EX_TRANSPARENT) ||
-                    !(pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT))))
+    while (pWnd)
     {
+        if (!(pWnd->dwExStyle & WS_EX_TRANSPARENT) &&
+            (pWnd->hrgnUpdate || (pWnd->flags & WIN_INTERNAL_PAINT)) &&
+            GetWindowThreadProcessId( pWnd->hwndSelf, NULL ) == GetCurrentThreadId())
+        {
+            hwndRet = pWnd->hwndSelf;
+            WIN_ReleaseWndPtr(pWnd);
+            break;
+        }
         WIN_UpdateWndPtr(&pWnd,pWnd->next);
-    }
-    if (pWnd)
-    {
-        hwndRet = pWnd->hwndSelf;
-    WIN_ReleaseWndPtr(pWnd);
     }
     TRACE("found %04x\n",hwndRet);
     return hwndRet;
@@ -601,20 +599,20 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
 
             if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
             {
-                /* Never believe Microsoft's documentation... CreateWindowEx doc says 
-                 * that if an overlapped window is created with WS_VISIBLE style bit 
+                /* Never believe Microsoft's documentation... CreateWindowEx doc says
+                 * that if an overlapped window is created with WS_VISIBLE style bit
                  * set and the x parameter is set to CW_USEDEFAULT, the system ignores
                  * the y parameter. However, disassembling NT implementation (WIN32K.SYS)
                  * reveals that
                  *
-                 * 1) not only it checks for CW_USEDEFAULT but also for CW_USEDEFAULT16 
-                 * 2) it does not ignore the y parameter as the docs claim; instead, it 
+                 * 1) not only it checks for CW_USEDEFAULT but also for CW_USEDEFAULT16
+                 * 2) it does not ignore the y parameter as the docs claim; instead, it
                  *    uses it as second parameter to ShowWindow() unless y is either
                  *    CW_USEDEFAULT or CW_USEDEFAULT16.
-                 * 
+                 *
                  * The fact that we didn't do 2) caused bogus windows pop up when wine
-                 * was running apps that were using this obscure feature. Example - 
-                 * calc.exe that comes with Win98 (only Win98, it's different from 
+                 * was running apps that were using this obscure feature. Example -
+                 * calc.exe that comes with Win98 (only Win98, it's different from
                  * the one that comes with Win95 and NT)
                  */
                 if (cs->y != CW_USEDEFAULT && cs->y != CW_USEDEFAULT16) *sw = cs->y;
@@ -649,7 +647,7 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
 static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 				WINDOWPROCTYPE type )
 {
-    INT sw = SW_SHOW; 
+    INT sw = SW_SHOW;
     struct tagCLASS *classPtr;
     WND *wndPtr;
     HWND hwnd, hwndLinkAfter;
@@ -661,7 +659,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     BOOL unicode = (type == WIN_PROC_32W);
 
     TRACE("%s %s %08lx %08lx %d,%d %dx%d %04x %04x %08x %p\n",
-          (type == WIN_PROC_32W) ? debugres_w((LPWSTR)cs->lpszName) : debugres_a(cs->lpszName), 
+          (type == WIN_PROC_32W) ? debugres_w((LPWSTR)cs->lpszName) : debugres_a(cs->lpszName),
           (type == WIN_PROC_32W) ? debugres_w((LPWSTR)cs->lpszClass) : debugres_a(cs->lpszClass),
           cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
           cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams );
@@ -699,7 +697,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
      * These are patches that appear to affect both the style loaded into the
      * WIN structure and passed in the CreateStruct to the WM_CREATE etc.
      *
-     * WS_EX_WINDOWEDGE appears to be enforced based on the other styles, so 
+     * WS_EX_WINDOWEDGE appears to be enforced based on the other styles, so
      * why does the user get to set it?
      */
 
@@ -743,7 +741,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
         else
             wndPtr->owner = GetAncestor( cs->hwndParent, GA_ROOT );
     }
-    
+
 
     wndPtr->class          = classPtr;
     wndPtr->winproc        = winproc;
@@ -907,7 +905,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
 HWND16 WINAPI CreateWindow16( LPCSTR className, LPCSTR windowName,
                               DWORD style, INT16 x, INT16 y, INT16 width,
                               INT16 height, HWND16 parent, HMENU16 menu,
-                              HINSTANCE16 instance, LPVOID data ) 
+                              HINSTANCE16 instance, LPVOID data )
 {
     return CreateWindowEx16( 0, className, windowName, style,
 			   x, y, width, height, parent, menu, instance, data );
@@ -921,7 +919,7 @@ HWND16 WINAPI CreateWindowEx16( DWORD exStyle, LPCSTR className,
                                 LPCSTR windowName, DWORD style, INT16 x,
                                 INT16 y, INT16 width, INT16 height,
                                 HWND16 parent, HMENU16 menu,
-                                HINSTANCE16 instance, LPVOID data ) 
+                                HINSTANCE16 instance, LPVOID data )
 {
     ATOM classAtom;
     CREATESTRUCTA cs;
@@ -1276,7 +1274,7 @@ BOOL16 WINAPI CloseWindow16( HWND16 hwnd )
     return CloseWindow( hwnd );
 }
 
- 
+
 /***********************************************************************
  *		CloseWindow (USER32.@)
  */
@@ -1284,7 +1282,7 @@ BOOL WINAPI CloseWindow( HWND hwnd )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     BOOL retvalue;
-    
+
     if (!wndPtr || (wndPtr->dwStyle & WS_CHILD))
     {
         retvalue = FALSE;
@@ -1298,7 +1296,7 @@ end:
 
 }
 
- 
+
 /***********************************************************************
  *		OpenIcon (USER.44)
  */
@@ -1416,7 +1414,7 @@ HWND WINAPI FindWindowExA( HWND parent, HWND child,
     {
         /* If the atom doesn't exist, then no class */
         /* with this name exists either. */
-        if (!(atom = GlobalFindAtomA( className ))) 
+        if (!(atom = GlobalFindAtomA( className )))
         {
             SetLastError (ERROR_CANNOT_FIND_WND_CLASS);
             return 0;
@@ -1546,7 +1544,7 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 
 /***********************************************************************
  *		IsWindowEnabled (USER.35)
- */ 
+ */
 BOOL16 WINAPI IsWindowEnabled16(HWND16 hWnd)
 {
     return IsWindowEnabled(hWnd);
@@ -1555,10 +1553,10 @@ BOOL16 WINAPI IsWindowEnabled16(HWND16 hWnd)
 
 /***********************************************************************
  *		IsWindowEnabled (USER32.@)
- */ 
+ */
 BOOL WINAPI IsWindowEnabled(HWND hWnd)
 {
-    WND * wndPtr; 
+    WND * wndPtr;
     BOOL retvalue;
 
     if (!(wndPtr = WIN_FindWndPtr(hWnd))) return FALSE;
@@ -1574,7 +1572,7 @@ BOOL WINAPI IsWindowEnabled(HWND hWnd)
  */
 BOOL WINAPI IsWindowUnicode( HWND hwnd )
 {
-    WND * wndPtr; 
+    WND * wndPtr;
     BOOL retvalue;
 
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return FALSE;
@@ -1614,16 +1612,16 @@ WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
     }
     switch(offset)
     {
-    case GWW_ID:         
+    case GWW_ID:
     	if (HIWORD(wndPtr->wIDmenu))
     		WARN("GWW_ID: discards high bits of 0x%08x!\n",
                     wndPtr->wIDmenu);
         retvalue = (WORD)wndPtr->wIDmenu;
         goto end;
-    case GWW_HWNDPARENT: 
+    case GWW_HWNDPARENT:
     	retvalue =  GetParent(hwnd);
         goto end;
-    case GWW_HINSTANCE:  
+    case GWW_HINSTANCE:
     	if (HIWORD(wndPtr->hInstance))
     		WARN("GWW_HINSTANCE: discards high bits of 0x%08x!\n",
                     wndPtr->hInstance);
@@ -1756,7 +1754,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
     LONG *ptr, retval;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     STYLESTRUCT style;
-    
+
     TRACE("%x=%p %x %lx %x\n",hwnd, wndPtr, offset, newval, type);
 
     if (!wndPtr)
@@ -1783,7 +1781,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
         if ((offset == DWL_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
         {
             retval = (LONG)WINPROC_GetProc( (HWINDOWPROC)*ptr, type );
-            WINPROC_SetProc( (HWINDOWPROC *)ptr, (WNDPROC16)newval, 
+            WINPROC_SetProc( (HWINDOWPROC *)ptr, (WNDPROC16)newval,
                              type, WIN_PROC_WINDOW );
             goto end;
         }
@@ -1798,7 +1796,7 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
                 goto end;
 	case GWL_WNDPROC:
 		retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
-		WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval, 
+		WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval,
 						type, WIN_PROC_WINDOW );
 		goto end;
 	case GWL_STYLE:
@@ -1809,11 +1807,11 @@ static LONG WIN_SetWindowLong( HWND hwnd, INT offset, LONG newval,
                 SendMessageA(hwnd,WM_STYLECHANGED,GWL_STYLE,(LPARAM)&style);
                 retval = style.styleOld;
                 goto end;
-		    
-        case GWL_USERDATA: 
-		ptr = &wndPtr->userdata; 
+
+        case GWL_USERDATA:
+		ptr = &wndPtr->userdata;
 		break;
-        case GWL_EXSTYLE:  
+        case GWL_EXSTYLE:
 	        style.styleOld = wndPtr->dwExStyle;
 		style.styleNew = newval;
                 SendMessageA(hwnd,WM_STYLECHANGING,GWL_EXSTYLE,(LPARAM)&style);
@@ -1888,7 +1886,7 @@ LONG WINAPI SetWindowLongA( HWND hwnd, INT offset, LONG newval )
  *		SetWindowLongW (USER32.@) Set window attribute
  *
  * SetWindowLong() alters one of a window's attributes or sets a 32-bit (long)
- * value in a window's extra memory. 
+ * value in a window's extra memory.
  *
  * The _hwnd_ parameter specifies the window.  is the handle to a
  * window that has extra memory. The _newval_ parameter contains the
@@ -1899,22 +1897,22 @@ LONG WINAPI SetWindowLongA( HWND hwnd, INT offset, LONG newval )
  *
  * GWL_EXSTYLE      The window's extended window style
  *
- * GWL_STYLE        The window's window style. 
+ * GWL_STYLE        The window's window style.
  *
- * GWL_WNDPROC      Pointer to the window's window procedure. 
+ * GWL_WNDPROC      Pointer to the window's window procedure.
  *
  * GWL_HINSTANCE    The window's pplication instance handle.
  *
  * GWL_ID           The window's identifier.
  *
- * GWL_USERDATA     The window's user-specified data. 
+ * GWL_USERDATA     The window's user-specified data.
  *
- * If the window is a dialog box, the _offset_ parameter can be one of 
+ * If the window is a dialog box, the _offset_ parameter can be one of
  * the following values:
  *
  * DWL_DLGPROC      The address of the window's dialog box procedure.
  *
- * DWL_MSGRESULT    The return value of a message 
+ * DWL_MSGRESULT    The return value of a message
  *                  that the dialog box procedure processed.
  *
  * DWL_USER         Application specific information.
@@ -1926,10 +1924,10 @@ LONG WINAPI SetWindowLongA( HWND hwnd, INT offset, LONG newval )
  *
  * NOTES
  *
- * Extra memory for a window class is specified by a nonzero cbWndExtra 
+ * Extra memory for a window class is specified by a nonzero cbWndExtra
  * parameter of the WNDCLASS structure passed to RegisterClass() at the
  * time of class creation.
- *  
+ *
  * Using GWL_WNDPROC to set a new window procedure effectively creates
  * a window subclass. Use CallWindowProc() in the new windows procedure
  * to pass messages to the superclass's window procedure.
@@ -1956,10 +1954,10 @@ LONG WINAPI SetWindowLongA( HWND hwnd, INT offset, LONG newval )
  *
  * CONFORMANCE
  *
- * ECMA-234, Win32 
+ * ECMA-234, Win32
  *
  */
-LONG WINAPI SetWindowLongW( 
+LONG WINAPI SetWindowLongW(
     HWND hwnd,  /* [in] window to alter */
     INT offset, /* [in] offset, in bytes, of location to alter */
     LONG newval /* [in] new value of location */
@@ -2262,7 +2260,7 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
 
     /* SetParent additionally needs to make hwnd the topmost window
        in the x-order and send the expected WM_WINDOWPOSCHANGING and
-       WM_WINDOWPOSCHANGED notification messages. 
+       WM_WINDOWPOSCHANGED notification messages.
     */
     SetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 0, 0,
                   SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOSIZE|
@@ -2388,7 +2386,7 @@ HWND16 WINAPI GetWindow16( HWND16 hwnd, WORD rel )
 HWND WINAPI GetWindow( HWND hwnd, WORD rel )
 {
     HWND retval;
-    
+
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
     switch(rel)
@@ -2396,7 +2394,7 @@ HWND WINAPI GetWindow( HWND hwnd, WORD rel )
     case GW_HWNDFIRST:
 	retval = wndPtr->parent ? wndPtr->parent->child->hwndSelf : 0;
         goto end;
-	
+
     case GW_HWNDLAST:
         if (!wndPtr->parent)
         {
@@ -2409,11 +2407,11 @@ HWND WINAPI GetWindow( HWND hwnd, WORD rel )
         }
         retval = wndPtr->hwndSelf;
         goto end;
-	
+
     case GW_HWNDNEXT:
 	retval = wndPtr->next ? wndPtr->next->hwndSelf : 0;
         goto end;
-	
+
     case GW_HWNDPREV:
         if (!wndPtr->parent)
         {
@@ -2437,7 +2435,7 @@ HWND WINAPI GetWindow( HWND hwnd, WORD rel )
         }
         retval = 0;
         goto end;
-	
+
     case GW_OWNER:
         retval = wndPtr->owner;
         goto end;
@@ -2463,13 +2461,13 @@ HWND16 WINAPI GetNextWindow16( HWND16 hwnd, WORD flag )
 }
 
 /***********************************************************************
- *           WIN_InternalShowOwnedPopups 
+ *           WIN_InternalShowOwnedPopups
  *
  * Internal version of ShowOwnedPopups; Wine functions should use this
  * to avoid interfering with application calls to ShowOwnedPopups
  * and to make sure the application can't prevent showing/hiding.
  *
- * Set unmanagedOnly to TRUE to show/hide unmanaged windows only. 
+ * Set unmanagedOnly to TRUE to show/hide unmanaged windows only.
  *
  */
 
@@ -2867,10 +2865,10 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
         if (bInvert && !(wndPtr->flags & WIN_NCACTIVATED))
         {
             HDC hDC = GetDC(hWnd);
-            
+
             if (!SendMessageW( hWnd, WM_ERASEBKGND, (WPARAM16)hDC, 0 ))
                 wndPtr->flags |= WIN_NEEDS_ERASEBKGND;
-            
+
             ReleaseDC( hWnd, hDC );
             wndPtr->flags |= WIN_NCACTIVATED;
         }
@@ -2946,7 +2944,7 @@ BOOL WINAPI SetWindowContextHelpId( HWND hwnd, DWORD id )
 /*******************************************************************
  *			DRAG_QueryUpdate
  *
- * recursively find a child that contains spDragInfo->pt point 
+ * recursively find a child that contains spDragInfo->pt point
  * and send WM_QUERYDROPOBJECT
  */
 BOOL16 DRAG_QueryUpdate( HWND hQueryWnd, SEGPTR spDragInfo, BOOL bNoSend )
@@ -3108,7 +3106,7 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
     lpDragInfo->wFlags = wObj;
     lpDragInfo->hList  = szList; /* near pointer! */
     lpDragInfo->hOfStruct = hOfStruct;
-    lpDragInfo->l = 0L; 
+    lpDragInfo->l = 0L;
 
     SetCapture(hWnd);
     ShowCursor( TRUE );
@@ -3136,18 +3134,18 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 	    SetCursor(hCurrentCursor);
 
 	/* send WM_DRAGLOOP */
-	SendMessage16( hWnd, WM_DRAGLOOP, (WPARAM16)(hCurrentCursor != hBummer), 
+	SendMessage16( hWnd, WM_DRAGLOOP, (WPARAM16)(hCurrentCursor != hBummer),
 	                                  (LPARAM) spDragInfo );
 	/* send WM_DRAGSELECT or WM_DRAGMOVE */
 	if( hCurrentWnd != lpDragInfo->hScope )
 	{
 	    if( hCurrentWnd )
-	        SendMessage16( hCurrentWnd, WM_DRAGSELECT, 0, 
+	        SendMessage16( hCurrentWnd, WM_DRAGSELECT, 0,
 		       (LPARAM)MAKELONG(LOWORD(spDragInfo)+sizeof(DRAGINFO16),
 				        HIWORD(spDragInfo)) );
 	    hCurrentWnd = lpDragInfo->hScope;
 	    if( hCurrentWnd )
-                SendMessage16( hCurrentWnd, WM_DRAGSELECT, 1, (LPARAM)spDragInfo); 
+                SendMessage16( hCurrentWnd, WM_DRAGSELECT, 1, (LPARAM)spDragInfo);
 	}
 	else
 	    if( hCurrentWnd )
@@ -3164,8 +3162,8 @@ DWORD WINAPI DragObject16( HWND16 hwndScope, HWND16 hWnd, UINT16 wObj,
 	if (hDragCursor) DestroyCursor( hDragCursor );
     }
 
-    if( hCurrentCursor != hBummer ) 
-	msg.lParam = SendMessage16( lpDragInfo->hScope, WM_DROPOBJECT, 
+    if( hCurrentCursor != hBummer )
+	msg.lParam = SendMessage16( lpDragInfo->hScope, WM_DROPOBJECT,
 				   (WPARAM16)hWnd, (LPARAM)spDragInfo );
     else
         msg.lParam = 0;
