@@ -218,6 +218,30 @@ static BOOL read_scm_lock_data( LPWSTR buffer )
 }
 
 /******************************************************************************
+ * open_seb_shmem
+ *
+ * helper function for StartServiceCtrlDispatcherA/W
+ */
+static struct SEB* open_seb_shmem( LPWSTR service_name, HANDLE* hServiceShmem )
+{
+    WCHAR object_name[ MAX_PATH ];
+    HANDLE hmem;
+    struct SEB *ret;
+
+    snprintfW( object_name, MAX_PATH, szServiceShmemNameFmtW, service_name );
+    hmem = OpenFileMappingW( FILE_MAP_ALL_ACCESS, FALSE, object_name );
+    if( NULL == hmem )
+        return NULL;
+
+    ret = MapViewOfFile( hmem, FILE_MAP_ALL_ACCESS, 0, 0, 0 );
+    if( NULL == ret )
+        CloseHandle( hmem );
+    else
+        *hServiceShmem = hmem;
+    return ret;
+}
+
+/******************************************************************************
  * build_arg_vectors
  *
  * helper function for StartServiceCtrlDispatcherA/W
@@ -253,13 +277,13 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
 {
     LPSERVICE_MAIN_FUNCTIONA fpMain;
     WCHAR service_name[ MAX_SERVICE_NAME ];
-    WCHAR object_name[ MAX_PATH ];
     HANDLE hServiceShmem = NULL;
     struct SEB *seb = NULL;
-    DWORD  dwNumServiceArgs ;
+    DWORD  dwNumServiceArgs = 0;
     LPWSTR *lpArgVecW = NULL;
-    LPSTR  *lpArgVecA;
+    LPSTR  *lpArgVecA = NULL;
     unsigned int i;
+    BOOL ret = FALSE;
 
     TRACE("(%p)\n", servent);
 
@@ -271,30 +295,17 @@ StartServiceCtrlDispatcherA( LPSERVICE_TABLE_ENTRYA servent )
            submitted against revision 1.45 and so preserved here.
          */
         FIXME("should fail with ERROR_FAILED_SERVICE_CONTROLLER_CONNECT\n");
-        dwNumServiceArgs = 0;
-        lpArgVecA = NULL;
         goto run_service;
     }
 
-    snprintfW( object_name, MAX_PATH, szServiceShmemNameFmtW, service_name );
-    hServiceShmem = OpenFileMappingW( FILE_MAP_ALL_ACCESS, FALSE, object_name );
-    if( NULL == hServiceShmem )
-        return FALSE;
-
-    seb = MapViewOfFile( hServiceShmem, FILE_MAP_ALL_ACCESS, 0, 0, 0 );
+    seb = open_seb_shmem( service_name, &hServiceShmem );
     if( NULL == seb )
-    {
-        CloseHandle( hServiceShmem );
         return FALSE;
-    }
 
     lpArgVecW = build_arg_vectors( seb );
     if( NULL == lpArgVecW )
-    {
-        UnmapViewOfFile( seb );
-        CloseHandle( hServiceShmem );
-        return FALSE;
-    }
+        goto done;
+
     lpArgVecW[0] = service_name;
     dwNumServiceArgs = seb->argc + 1;
 
@@ -316,6 +327,7 @@ run_service:
         servent++;
     }
 
+done:
     if(dwNumServiceArgs)
     {
         /* free arg strings */
@@ -327,7 +339,7 @@ run_service:
     if( lpArgVecW ) HeapFree( GetProcessHeap(), 0, lpArgVecW );
     if( seb ) UnmapViewOfFile( seb );
     if( hServiceShmem ) CloseHandle( hServiceShmem );
-    return TRUE;
+    return ret;
 }
 
 /******************************************************************************
@@ -341,8 +353,7 @@ StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
 {
     LPSERVICE_MAIN_FUNCTIONW fpMain;
     WCHAR service_name[ MAX_SERVICE_NAME ];
-    WCHAR object_name[ MAX_PATH ];
-    HANDLE hServiceShmem;
+    HANDLE hServiceShmem = NULL;
     struct SEB *seb;
     DWORD  dwNumServiceArgs ;
     LPWSTR *lpServiceArgVectors ;
@@ -352,17 +363,9 @@ StartServiceCtrlDispatcherW( LPSERVICE_TABLE_ENTRYW servent )
     if( ! read_scm_lock_data( service_name ) )
         return FALSE;
 
-    snprintfW( object_name, MAX_PATH, szServiceShmemNameFmtW, service_name );
-    hServiceShmem = OpenFileMappingW( FILE_MAP_ALL_ACCESS, FALSE, object_name );
-    if( NULL == hServiceShmem )
-        return FALSE;
-
-    seb = MapViewOfFile( hServiceShmem, FILE_MAP_ALL_ACCESS, 0, 0, 0 );
+    seb = open_seb_shmem( service_name, &hServiceShmem );
     if( NULL == seb )
-    {
-        CloseHandle( hServiceShmem );
         return FALSE;
-    }
 
     lpServiceArgVectors = build_arg_vectors( seb );
     if( NULL == lpServiceArgVectors )
