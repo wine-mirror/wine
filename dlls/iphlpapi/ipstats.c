@@ -25,10 +25,19 @@
 #include <string.h>
 #include <sys/types.h>
 #ifdef HAVE_SYS_SOCKET_H
-# include <sys/socket.h>
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
 #endif
 #if HAVE_NET_IF_H
 #include <net/if.h>
+#endif
+#if HAVE_NET_IF_ARP_H
+#include <net/if_arp.h>
 #endif
 #if HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
@@ -664,20 +673,26 @@ PMIB_IPNETTABLE getArpTable(void)
         if (ptr) {
           char *endPtr;
 
-          if (ptr && *ptr) {
-            ret->table[ret->dwNumEntries].dwAddr = strtoul(ptr, &endPtr, 16);
-            ptr = endPtr;
-          }
+          ret->table[ret->dwNumEntries].dwAddr = inet_addr(ptr);
+          while (ptr && *ptr && !isspace(*ptr))
+            ptr++;
+
           if (ptr && *ptr) {
             strtoul(ptr, &endPtr, 16); /* hw type (skip) */
             ptr = endPtr;
           }
           if (ptr && *ptr) {
-            strtoul(ptr, &endPtr, 16); /* flags (skip) */
+            DWORD flags = strtoul(ptr, &endPtr, 16);
+
+            if (flags & ATF_COM)
+              ret->table[ret->dwNumEntries].dwType = MIB_IPNET_TYPE_DYNAMIC;
+            else if (flags & ATF_PERM)
+              ret->table[ret->dwNumEntries].dwType = MIB_IPNET_TYPE_STATIC;
+            else
+              ret->table[ret->dwNumEntries].dwType = MIB_IPNET_TYPE_OTHER;
+
             ptr = endPtr;
           }
-          /* FIXME:  maybe this comes from flags? */
-          ret->table[ret->dwNumEntries].dwType = MIB_IPNET_TYPE_DYNAMIC;
           while (ptr && *ptr && isspace(*ptr))
             ptr++;
           while (ptr && *ptr && !isspace(*ptr)) {
