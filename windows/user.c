@@ -330,7 +330,7 @@ BOOL WINAPI ExitWindowsEx( UINT flags, DWORD reserved )
     HeapFree( GetProcessHeap(), 0, list );
 
     if (result) ExitKernel16();
-    return FALSE;
+    return TRUE;
 }
 
 /***********************************************************************
