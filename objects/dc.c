@@ -940,7 +940,7 @@ INT WINAPI SetGraphicsMode( HDC hdc, INT mode )
      * make a lot of sense to me, but that's the way it is.
      */
     if (!dc) return 0;
-    if ((mode > 0) || (mode <= GM_LAST))
+    if ((mode > 0) && (mode <= GM_LAST))
     {
         ret = dc->GraphicsMode;
         dc->GraphicsMode = mode;
