@@ -1379,8 +1379,8 @@ BOOL        WINAPI GetCommModemStatus(HANDLE,LPDWORD);
 BOOL        WINAPI GetCommProperties(HANDLE,LPCOMMPROP);
 BOOL        WINAPI GetCommState(HANDLE,LPDCB);
 BOOL        WINAPI GetCommTimeouts(HANDLE,LPCOMMTIMEOUTS);
-LPCSTR      WINAPI GetCommandLineA(void);
-LPCWSTR     WINAPI GetCommandLineW(void);
+LPSTR       WINAPI GetCommandLineA(void);
+LPWSTR      WINAPI GetCommandLineW(void);
 #define     GetCommandLine WINELIB_NAME_AW(GetCommandLine)
 BOOL      WINAPI GetComputerNameA(LPSTR,LPDWORD);
 BOOL      WINAPI GetComputerNameW(LPWSTR,LPDWORD);
@@ -2003,6 +2003,10 @@ VOID        WINAPI SetLastError(DWORD);
 #define GetCurrentProcess() ((HANDLE)0xffffffff)
 #define GetCurrentThread()  ((HANDLE)0xfffffffe)
 #endif
+
+/* WinMain(entry point) must be declared in winbase.h. */
+/* If this is not declared, we cannot compile many sources written with C++. */
+int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int);
 
 #ifdef __cplusplus
 }

@@ -103,7 +103,7 @@ BOOL ENV_BuildEnvironment(void)
 /***********************************************************************
  *           GetCommandLineA      (KERNEL32.289)
  */
-LPCSTR WINAPI GetCommandLineA(void)
+LPSTR WINAPI GetCommandLineA(void)
 {
     return PROCESS_Current()->env_db->cmd_line;
 }
@@ -111,7 +111,7 @@ LPCSTR WINAPI GetCommandLineA(void)
 /***********************************************************************
  *           GetCommandLineW      (KERNEL32.290)
  */
-LPCWSTR WINAPI GetCommandLineW(void)
+LPWSTR WINAPI GetCommandLineW(void)
 {
     PDB *pdb = PROCESS_Current();
     EnterCriticalSection( &pdb->env_db->section );
