@@ -236,7 +236,7 @@ static BOOL ODBC_LoadDriverManager(void)
           s = "libodbc.so";
    strcpy(gProxyHandle.dmLibName, s);
 
-   gProxyHandle.dmHandle = wine_dlopen(gProxyHandle.dmLibName, RTLD_LAZY, error, sizeof(error));
+   gProxyHandle.dmHandle = wine_dlopen(gProxyHandle.dmLibName, RTLD_LAZY | RTLD_GLOBAL, error, sizeof(error));
 
    if (gProxyHandle.dmHandle == NULL)           /* fail to load unixODBC driver manager */
    {
