@@ -294,7 +294,19 @@ int main(int argc, char **argv)
 	gcc_argv[i++] = "-D_stdcall=__attribute__((__stdcall__))";
 	gcc_argv[i++] = "-D_cdecl=__attribute__((__cdecl__))";
 	gcc_argv[i++] = "-D_fastcall=__attribute__((__fastcall__))";
-	gcc_argv[i++] = "-D__declspec(x)=__attribute__((x))";
+	gcc_argv[i++] = "-D__declspec(x)=__declspec_##x";
+        gcc_argv[i++] = "-D__declspec_align(x)=__attribute__((aligned(x)))";
+        gcc_argv[i++] = "-D__declspec_allocate(x)=__attribute__((section(x)))";
+        gcc_argv[i++] = "-D__declspec_deprecated=__attribute__((deprecated))";
+        gcc_argv[i++] = "-D__declspec_dllimport=__attribute__((dllimport))";
+        gcc_argv[i++] = "-D__declspec_dllexport=__attribute__((dllexport))";
+        gcc_argv[i++] = "-D__declspec_naked=__attribute__((naked))";
+        gcc_argv[i++] = "-D__declspec_noinline=__attribute__((noinline))";
+        gcc_argv[i++] = "-D__declspec_noreturn=__attribute__((noreturn))";
+        gcc_argv[i++] = "-D__declspec_nothrow=__attribute__((nothrow))";
+        gcc_argv[i++] = "-D__declspec_novtable=__attribute__(())"; /* ignore it */
+        gcc_argv[i++] = "-D__declspec_selectany=__attribute__((weak))";
+        gcc_argv[i++] = "-D__declspec_thread=__thread";
     
 	/* Wine specific defines */
 	gcc_argv[i++] = "-D__WINE__";
