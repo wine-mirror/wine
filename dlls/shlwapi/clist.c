@@ -1,5 +1,5 @@
 /*
- * SHLWAPI Compact List functions
+ * SHLWAPI DataBlock List functions
  *
  * Copyright 2002 Jon Griffiths
  *
@@ -27,7 +27,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-/* Compact list element (ordinals 17-22) */
+/* DataBlock list element (ordinals 17-22) */
 typedef struct tagSHLWAPI_CLIST
 {
   ULONG ulSize;        /* Size of this list element and its data */
@@ -45,7 +45,7 @@ HRESULT WINAPI SHAddDataBlock(LPSHLWAPI_CLIST*,LPCSHLWAPI_CLIST);
 /*************************************************************************
  * NextItem
  *
- * Internal helper: move a clist pointer to the next item.
+ * Internal helper: move a DataBlock pointer to the next item.
  */
 inline static LPSHLWAPI_CLIST NextItem(LPCSHLWAPI_CLIST lpList)
 {
@@ -57,7 +57,7 @@ inline static LPSHLWAPI_CLIST NextItem(LPCSHLWAPI_CLIST lpList)
 /*************************************************************************
  *      @	[SHLWAPI.17]
  *
- * Write a compact list to an IStream object.
+ * Write a DataBlock list to an IStream object.
  *
  * PARAMS
  *  lpStream  [I] IStream object to write the list to
@@ -69,23 +69,19 @@ inline static LPSHLWAPI_CLIST NextItem(LPCSHLWAPI_CLIST lpList)
  *
  * NOTES
  *  Ordinals 17,18,19,20,21 and 22 are related and together provide a compact
- *  list structure which may be stored and retrieved from an IStream object.
+ *  list structure (a "DataBlock List"), which may be stored and retrieved from
+ *  an IStream object.
  *
  *  The exposed API consists of:
  *
- *   SHWriteDataBlockList - Write a compact list to a stream,
+ *  - SHWriteDataBlockList() - Write a DataBlock list to a stream,
+ *  - SHReadDataBlockList() - Read and create a list from a stream,
+ *  - SHFreeDataBlockList() - Free a list,
+ *  - SHAddDataBlock() - Insert a new item into a list,
+ *  - SHRemoveDataBlock() - Remove an item from a list,
+ *  - SHFindDataBlock() - Find an item in a list.
  *
- *   SHReadDataBlockList - Read and create a list from a stream,
- *
- *   SHFreeDataBlockList - Free a list,
- *
- *   SHAddDataBlock - Insert a new item into a list,
- *
- *   SHRemoveDataBlock - Remove an item from a list,
- *
- *   SHFindDataBlock - Find an item in a list.
- *
- *  The compact list is stored packed into a memory array. Each element has a
+ *  The DataBlock list is stored packed into a memory array. Each element has a
  *  size and an associated ID. Elements must be less than 64k if the list is
  *  to be subsequently read from a stream.
  *
@@ -137,7 +133,7 @@ HRESULT WINAPI SHWriteDataBlockList(IStream* lpStream, LPSHLWAPI_CLIST lpList)
 /*************************************************************************
  *      @	[SHLWAPI.18]
  *
- * Read and create a compact list from an IStream object.
+ * Read and create a DataBlock list from an IStream object.
  *
  * PARAMS
  *  lpStream  [I] Stream to read the list from
@@ -237,7 +233,7 @@ HRESULT WINAPI SHReadDataBlockList(IStream* lpStream, LPSHLWAPI_CLIST* lppList)
 /*************************************************************************
  *      @	[SHLWAPI.19]
  *
- * Free a compact list.
+ * Free a DataBlock list.
  *
  * PARAMS
  *  lpList [I] List to free
@@ -259,7 +255,7 @@ VOID WINAPI SHFreeDataBlockList(LPSHLWAPI_CLIST lpList)
 /*************************************************************************
  *      @	[SHLWAPI.20]
  *
- * Insert a new item into a compact list.
+ * Insert a new item into a DataBlock list.
  *
  * PARAMS
  *  lppList   [0] Pointer to the List
@@ -354,7 +350,7 @@ HRESULT WINAPI SHAddDataBlock(LPSHLWAPI_CLIST* lppList, LPCSHLWAPI_CLIST lpNewIt
 /*************************************************************************
  *      @	[SHLWAPI.21]
  *
- * Remove an item from a compact list.
+ * Remove an item from a DataBlock list.
  *
  * PARAMS
  *  lppList [O] List to remove the item from
@@ -424,7 +420,7 @@ BOOL WINAPI SHRemoveDataBlock(LPSHLWAPI_CLIST* lppList, ULONG ulId)
 /*************************************************************************
  *      @	[SHLWAPI.22]
  *
- * Find an item in a compact list.
+ * Find an item in a DataBlock list.
  *
  * PARAMS
  *  lpList [I] List to search

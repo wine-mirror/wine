@@ -276,9 +276,9 @@ static UINT WPRINTF_GetLen( WPRINTF_FORMAT *format, WPRINTF_DATA *arg,
  * Print formatted output to a string, up to a maximum number of chars.
  *
  * PARAMS
- * lpOut      [O] Destination for output string
- * cchLimitIn [I] Maximum number of characters to write
- * lpFmt      [I] Format string
+ * buffer [O] Destination for output string
+ * maxlen [I] Maximum number of characters to write
+ * spec   [I] Format string
  *
  * RETURNS
  *  Success: The number of characters written.

@@ -482,7 +482,7 @@ HRESULT WINAPI SHCreateStreamOnFileW(LPCWSTR lpszPath, DWORD dwMode,
     return E_INVALIDARG;
 
   dwAttr = GetFileAttributesW(lpszPath);
-  if (dwAttr == -1u)
+  if (dwAttr == INVALID_FILE_ATTRIBUTES)
     dwAttr = 0;
 
   return SHCreateStreamOnFileEx(lpszPath, dwMode|STGM_WRITE, dwAttr,

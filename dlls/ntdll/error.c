@@ -43,6 +43,15 @@ static const struct error_table error_table[20];
 
 /**************************************************************************
  *           RtlNtStatusToDosError (NTDLL.@)
+ *
+ * Convert an NTSTATUS code to a Win32 error code.
+ *
+ * PARAMS
+ *  status [I] Nt error code to map.
+ *
+ * RETURNS
+ *  The mapped Win32 error code, or ERROR_MR_MID_NOT_FOUND if there is no
+ *  mapping defined.
  */
 ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
 {
