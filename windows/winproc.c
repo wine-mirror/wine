@@ -2564,9 +2564,11 @@ static LRESULT WINAPI WINPROC_CallProc32WTo16( WNDPROC16 func, HWND hwnd,
 LRESULT WINAPI CallWindowProc16( WNDPROC16 func, HWND16 hwnd, UINT16 msg,
                                  WPARAM16 wParam, LPARAM lParam )
 {
-    WINDOWPROC *proc = WINPROC_GetPtr( func );
+    WINDOWPROC *proc;
 
-    if (!proc)
+    if (!func) return 0;
+
+    if (!(proc = WINPROC_GetPtr( func )))
         return WINPROC_CallWndProc16( func, hwnd, msg, wParam, lParam );
 
 #if testing
