@@ -2399,8 +2399,9 @@ HANDLE WINAPI OpenProcess( DWORD access, BOOL inherit, DWORD id )
 
 /*********************************************************************
  *           MapProcessHandle   (KERNEL.483)
+ *           GetProcessId       (KERNEL32.@)
  */
-DWORD WINAPI MapProcessHandle( HANDLE hProcess )
+DWORD WINAPI GetProcessId( HANDLE hProcess )
 {
     NTSTATUS status;
     PROCESS_BASIC_INFORMATION pbi;

@@ -1092,6 +1092,7 @@
 @ stdcall FindActCtxSectionStringA(long ptr long str ptr)
 @ stdcall FindActCtxSectionStringW(long ptr long wstr ptr)
 @ stdcall GetCurrentActCtx(ptr)
+@ stdcall GetProcessId(long)
 @ stdcall QueryActCtxW(long ptr ptr long ptr long ptr)
 @ stdcall ReleaseActCtx(ptr)
 @ stdcall ZombifyActCtx(ptr)

@@ -385,7 +385,7 @@
 480 pascal -ret16 _EnterWin16Lock() _EnterWin16Lock
 481 pascal -ret16 _LeaveWin16Lock() _LeaveWin16Lock
 482 pascal LoadSystemLibrary32(str) LoadLibrary32_16   # FIXME!
-483 pascal MapProcessHandle(long) MapProcessHandle
+483 pascal MapProcessHandle(long) GetProcessId
 484 pascal SetProcessDword(long s_word long) SetProcessDword
 485 pascal GetProcessDword(long s_word) GetProcessDword
 486 pascal FreeLibrary32(long) FreeLibrary
