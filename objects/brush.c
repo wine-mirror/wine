@@ -400,16 +400,29 @@ INT BRUSH_GetObject( BRUSHOBJ * brush, INT count, LPSTR buffer )
 /***********************************************************************
  *           SetSolidBrush16   (GDI.604)
  *
- *  If hBrush is a solid brush, change it's color to newColor.
+ *  If hBrush is a solid brush, change its color to newColor.
  *
  *  RETURNS
  *           TRUE on success, FALSE on failure.
- *   FIXME: not yet implemented!
+ *
+ *  FIXME: untested, not sure if correct.
  */
 BOOL16 WINAPI SetSolidBrush16(HBRUSH16 hBrush, COLORREF newColor )
 {
-     FIXME("(hBrush %04x, newColor %04x): stub!\n", hBrush, (int)newColor);
+    BRUSHOBJ * brushPtr;
+    BOOL16 res = FALSE;
 
-     return(FALSE);
+    TRACE("(hBrush %04x, newColor %08lx)\n", hBrush, (DWORD)newColor);
+    if (!(brushPtr = (BRUSHOBJ *) GDI_GetObjPtr( hBrush, BRUSH_MAGIC )))
+	return FALSE;
+
+    if (brushPtr->logbrush.lbStyle == BS_SOLID)
+    {
+        brushPtr->logbrush.lbColor = newColor;
+	res = TRUE;
+    }
+
+     GDI_ReleaseObj( hBrush );
+     return res;
 }
 
