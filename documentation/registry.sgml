@@ -218,14 +218,14 @@
         Wine and any Windows application software he wants the users
         to have access to, copy the resulting
         <filename>system.reg</filename> and
-        <filename>wine.userreg</filename> over to the global registry
+        <filename>user.reg</filename> over to the global registry
         files (which we assume will reside in
         <filename>/usr/local/etc</filename> here), with:
       </para>
   <screen>
   cd ~/.wine
   cp system.reg /usr/local/etc/wine.systemreg
-  cp wine.userreg /usr/local/etc/wine.userreg
+  cp user.reg /usr/local/etc/wine.userreg
   </screen>
       <para>
         and perhaps even symlink these back to the administrator's
@@ -233,7 +233,7 @@
       </para>
   <screen>
   ln -sf /usr/local/etc/wine.systemreg system.reg
-  ln -sf /usr/local/etc/wine.userreg wine.userreg
+  ln -sf /usr/local/etc/wine.userreg user.reg
   </screen>
       <para>
         Note that the <filename>tools/wineinstall</filename> script
