@@ -50,6 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 static short iF10Key = 0;
 static short iMenuSysKey = 0;
+static const WCHAR imm32W[] = { 'i','m','m','3','2','\0' };
 
 /***********************************************************************
  *           DEFWND_HandleWindowPosChanged
@@ -261,7 +262,7 @@ static void DEFWND_Print( HWND hwnd, HDC hdc, ULONG uFlags)
  */
 static HWND DEFWND_ImmGetDefaultIMEWnd( HWND hwnd )
 {
-    HINSTANCE hInstIMM = GetModuleHandleA( "imm32" );
+    HINSTANCE hInstIMM = GetModuleHandleW( imm32W );
     HWND (WINAPI *pFunc)(HWND);
     HWND hwndRet = 0;
 
@@ -280,7 +281,7 @@ static HWND DEFWND_ImmGetDefaultIMEWnd( HWND hwnd )
 
 static BOOL DEFWND_ImmIsUIMessageA( HWND hwndIME, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    HINSTANCE hInstIMM = GetModuleHandleA( "imm32" );
+    HINSTANCE hInstIMM = GetModuleHandleW( imm32W );
     BOOL (WINAPI *pFunc)(HWND,UINT,WPARAM,LPARAM);
     BOOL fRet = FALSE;
 
@@ -299,8 +300,6 @@ static BOOL DEFWND_ImmIsUIMessageA( HWND hwndIME, UINT msg, WPARAM wParam, LPARA
 
 static BOOL DEFWND_ImmIsUIMessageW( HWND hwndIME, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    static const WCHAR imm32W[] = {'i','m','m','3','2',0};
-
     HINSTANCE hInstIMM = GetModuleHandleW( imm32W );
     BOOL (WINAPI *pFunc)(HWND,UINT,WPARAM,LPARAM);
     BOOL fRet = FALSE;
