@@ -1828,7 +1828,14 @@ LPSTR __cdecl CRTDLL__strtime (LPSTR date)
 /*********************************************************************
  *                  _except_handler2  (CRTDLL.78)
  */
-INT __cdecl CRTDLL__except_handler2 (void *a0, void *a1, void *a2, void *a3)
-{	FIXME ("%p %p %p %p stub\n", a0, a1, a2, a3);
-	return 0;
+INT __cdecl CRTDLL__except_handler2 (
+	PEXCEPTION_RECORD rec,
+	PEXCEPTION_FRAME frame,
+	PCONTEXT context,
+	PEXCEPTION_FRAME  *dispatcher)
+{
+	FIXME ("exception %lx flags=%lx at %p handler=%p %p %p stub\n",
+	rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
+	frame->Handler, context, dispatcher);
+	return ExceptionContinueSearch;
 }
