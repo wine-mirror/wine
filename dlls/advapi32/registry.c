@@ -53,6 +53,9 @@ inline static int is_version_nt(void)
     return !(GetVersion() & 0x80000000);
 }
 
+/* allowed bits for access mask */
+#define KEY_ACCESS_MASK (KEY_ALL_ACCESS | MAXIMUM_ALLOWED)
+
 /******************************************************************************
  *           RegCreateKeyExW   [ADVAPI32.@]
  *
@@ -69,6 +72,8 @@ inline static int is_version_nt(void)
  *
  * NOTES
  *  in case of failing retkey remains untouched
+ *
+ * FIXME MAXIMUM_ALLOWED in access mask not supported by server
  */
 DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR class,
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa, 
@@ -78,7 +83,7 @@ DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR cl
     UNICODE_STRING nameW, classW;
 
     if (reserved) return ERROR_INVALID_PARAMETER;
-    if (!(access & KEY_ALL_ACCESS) || (access & ~KEY_ALL_ACCESS)) return ERROR_ACCESS_DENIED;
+    if (!(access & KEY_ACCESS_MASK) || (access & ~KEY_ACCESS_MASK)) return ERROR_ACCESS_DENIED;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
@@ -96,6 +101,8 @@ DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR cl
 
 /******************************************************************************
  *           RegCreateKeyExA   [ADVAPI32.@]
+ *
+ * FIXME MAXIMUM_ALLOWED in access mask not supported by server
  */
 DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR class,
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa, 
@@ -108,7 +115,7 @@ DWORD WINAPI RegCreateKeyExA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR clas
 
     if (reserved) return ERROR_INVALID_PARAMETER;
     if (!is_version_nt()) access = KEY_ALL_ACCESS;  /* Win95 ignores the access mask */
-    else if (!(access & KEY_ALL_ACCESS) || (access & ~KEY_ALL_ACCESS)) return ERROR_ACCESS_DENIED;
+    else if (!(access & KEY_ACCESS_MASK) || (access & ~KEY_ACCESS_MASK)) return ERROR_ACCESS_DENIED;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = hkey;
