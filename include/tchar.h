@@ -23,6 +23,10 @@
 #error Wine should not include tchar.h internally
 #endif
 
+#if defined(_UNICODE) || defined(_MBCS)
+#error You must use msvcrt when builing in Unicode/MBCS mode
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,14 +46,16 @@ extern "C" {
  * tchar mappings
  */
 #ifndef _UNICODE
-#include <string.h>
-#ifndef _MBCS
-#define WINE_tchar_routine(std,mbcs,unicode) std
-#else /* _MBCS defined */
-#define WINE_tchar_routine(std,mbcs,unicode) mbcs
-#endif
-#else /* _UNICODE defined */
-#define WINE_tchar_routine(std,mbcs,unicode) unicode
+#  ifndef _MBCS
+#    include <string.h>
+#    define WINE_tchar_routine(std,mbcs,unicode) std
+#  else
+#    include <mbstring.h>
+#    define WINE_tchar_routine(std,mbcs,unicode) mbcs
+#  endif
+#else /* _UNICODE */
+#  include <wchar.h>
+#  define WINE_tchar_routine(std,mbcs,unicode) unicode
 #endif
 
 #define WINE_tchar_true(a) (1)
@@ -212,12 +218,45 @@ extern "C" {
 #define _T(x) __T(x)
 #define _TEXT(x) __T(x)
 
-typedef CHAR  _TCHARA;
-typedef WCHAR _TCHARW;
-DECL_WINELIB_TYPE_AW(_TCHAR)
-typedef UCHAR  _TUCHARA;
-typedef WCHAR _TUCHARW;
-DECL_WINELIB_TYPE_AW(_TUCHAR)
+#ifdef _UNICODE
+#ifndef _WCTYPE_T_DEFINED
+typedef unsigned short wint_t;
+typedef unsigned short wctype_t;
+#define _WCTYPE_T_DEFINED
+#endif
+
+#ifndef __TCHAR_DEFINED
+#ifdef WINE_UNICODE_NATIVE
+typedef wchar_t       _TCHAR;
+#else
+typedef unsigned short _TCHAR;
+#endif
+typedef _TCHAR        _TUCHAR;
+typedef _TCHAR        _TSCHAR;
+typedef _TCHAR        _TXCHAR;
+typedef _TCHAR        _TINT;
+#define __TCHAR_DEFINED
+#endif
+
+#else /* _UNICODE */
+#ifndef __TCHAR_DEFINED
+typedef char          _TCHAR;
+typedef unsigned char _TUCHAR;
+typedef signed char   _TSCHAR;
+#ifndef _MBCS
+typedef unsigned char _TXCHAR;
+typedef int           _TINT;
+#else
+typedef char          _TXCHAR;
+typedef unsigned int  _TINT;
+#endif
+#endif
+#endif
+
+#ifndef _TCHAR_DEFINED
+typedef _TCHAR        TCHAR, *PTCHAR;
+#define _TCHAR_DEFINED
+#endif
 
 #ifdef __cplusplus
 } /* extern "C" */
