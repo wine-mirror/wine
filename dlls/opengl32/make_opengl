@@ -140,6 +140,26 @@ $gen_traces = 1;
      "_GLfuncptr" => [ "ptr", 4 ]);
 
 #
+# Used to convert some types
+#
+sub ConvertType {
+    my ($type) = @_;
+
+    %hash = ( "GLstring" => "const GLubyte *",
+	      "GLintptrARB" => "ptrdiff_t",
+	      "GLsizeiptrARB" => "ptrdiff_t",
+	      "GLhalfNV" => "unsigned short" );
+
+    foreach $org (keys %hash) {
+	if ($type =~ /$org/) {
+	    ($before, $after) = ($type =~ /^(.*)$org(.*)$/);
+	    return "$before$hash{$org}$after";
+	}
+    }
+    return $type;
+}
+
+#
 # This functions generates the thunk for a given function.
 #
 sub GenerateThunk {
@@ -155,11 +175,11 @@ sub GenerateThunk {
 	$ret = $ret . " *              " . $func_ref->[0] . " (OPENGL32.@)\n";
 	$ret = $ret . " */\n";
     }
-    $ret = $ret . $func_ref->[1] . " WINAPI wine_" . $func_ref->[0] . "( ";
+    $ret = $ret . ConvertType($func_ref->[1]) . " WINAPI wine_" . $func_ref->[0] . "( ";
     for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
 	$type = $func_ref->[2]->[$i]->[0];
 	$name = $func_ref->[2]->[$i]->[1];
-	$ret = $ret . "$type $name";
+	$ret = $ret . ConvertType($type) . " $name";
 	$call_arg = $call_arg . "$name";
 	if ($type =~ /\*/) {
 	    $trace_arg = $trace_arg . "%p";
@@ -177,7 +197,7 @@ sub GenerateThunk {
     }
     $ret = $ret . ") {\n";
     if ($func_ref->[1] ne "void") {
-	$ret = $ret . "  " . $func_ref->[1] . " ret_value;\n";
+	$ret = $ret . "  " . ConvertType($func_ref->[1]) . " ret_value;\n";
     }
     if ($gen_traces) {
 	$ret = $ret . "  TRACE(\"(" . $trace_arg . ")\\n\"";
@@ -576,8 +596,6 @@ print NORM "
 #include \"opengl_ext.h\"
 #include \"wine/debug.h\"
 
-typedef const GLubyte * GLstring;
-
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 ";
@@ -599,13 +617,7 @@ print EXT "
 #include \"opengl_ext.h\"
 #include \"wine/debug.h\"
 
-typedef const GLubyte * GLstring;
-
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
-
-typedef ptrdiff_t GLintptrARB;
-typedef ptrdiff_t GLsizeiptrARB;
-typedef unsigned short GLhalfNV;
 
 ";
 
@@ -614,7 +626,7 @@ foreach (sort keys %ext_functions) {
     $func_ref = $ext_functions{$_};
     print EXT $func_ref->[1] . " (*" . $ext_prefix . $func_ref->[0] . ")( ";
     for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
-	$type = $func_ref->[2]->[$i]->[0];
+	$type = ConvertType($func_ref->[2]->[$i]->[0]);
 	print EXT "$type";
 	if ($i != $#{@{$func_ref->[2]}}) {
 	    print EXT ", ";
@@ -631,7 +643,7 @@ foreach (sort keys %ext_functions) {
     $func_ref = $ext_functions{$_};
     print EXT $func_ref->[1] . " WINAPI " . "wine_" . $func_ref->[0] . "( ";
     for ($i = 0; $i <= $#{@{$func_ref->[2]}}; $i++) {
-	$type = $func_ref->[2]->[$i]->[0];
+	$type = ConvertType($func_ref->[2]->[$i]->[0]);
 	print EXT "$type";
 	if ($i != $#{@{$func_ref->[2]}}) {
 	    print EXT ", ";

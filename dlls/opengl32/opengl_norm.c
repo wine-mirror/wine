@@ -5,8 +5,6 @@
 #include "opengl_ext.h"
 #include "wine/debug.h"
 
-typedef const GLubyte * GLstring;
-
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 /***********************************************************************
@@ -1518,8 +1516,8 @@ void WINAPI wine_glGetSeparableFilter( GLenum target, GLenum format, GLenum type
 /***********************************************************************
  *              glGetString (OPENGL32.@)
  */
-GLstring WINAPI wine_glGetString( GLenum name ) {
-  GLstring ret_value;
+const GLubyte * WINAPI wine_glGetString( GLenum name ) {
+  const GLubyte * ret_value;
   TRACE("(%d)\n", name );
   ENTER_GL();
   ret_value = glGetString( name );
@@ -4104,4 +4102,3 @@ void WINAPI wine_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) {
   glViewport( x, y, width, height );
   LEAVE_GL();
 }
-
