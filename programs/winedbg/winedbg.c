@@ -552,7 +552,7 @@ static	BOOL DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
         case CONTROL_C_EXIT:
             DEBUG_Printf(DBG_CHN_MESG, "^C");
             break;
-        case EXCEPTION_CRITICAL_SECTION_WAIT:
+        case STATUS_POSSIBLE_DEADLOCK:
 	    {
 		DBG_ADDR	addr;
 

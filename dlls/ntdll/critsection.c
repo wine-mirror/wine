@@ -172,7 +172,7 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
         /* Throw exception only for Wine internal locks */
         if (!crit->DebugInfo) continue;
 
-        rec.ExceptionCode    = EXCEPTION_CRITICAL_SECTION_WAIT;
+        rec.ExceptionCode    = STATUS_POSSIBLE_DEADLOCK;
         rec.ExceptionFlags   = 0;
         rec.ExceptionRecord  = NULL;
         rec.ExceptionAddress = RtlRaiseException;  /* sic */

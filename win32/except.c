@@ -127,7 +127,7 @@ static int format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, in
     case CONTROL_C_EXIT:
         len = snprintf( buffer, size, "Unhandled ^C");
         break;
-    case EXCEPTION_CRITICAL_SECTION_WAIT:
+    case STATUS_POSSIBLE_DEADLOCK:
         len = snprintf( buffer, size, "Critical section %08lx wait failed",
                  rec->ExceptionInformation[0]);
         break;

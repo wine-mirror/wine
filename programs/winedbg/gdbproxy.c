@@ -543,7 +543,7 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
         gdbctx->last_sig = SIGINT;
         ret = TRUE;
         break;
-    case EXCEPTION_CRITICAL_SECTION_WAIT:
+    case STATUS_POSSIBLE_DEADLOCK:
         gdbctx->last_sig = SIGALRM;
         ret = TRUE;
         /* FIXME: we could also add here a O packet with additional information */
