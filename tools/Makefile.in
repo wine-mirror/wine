@@ -1,4 +1,4 @@
-DEFS      = -DLEX_OUTPUT_ROOT="\"@LEX_OUTPUT_ROOT@\"" -DINCLUDEDIR="\"$(includedir)\""
+DEFS      = -DLEX_OUTPUT_ROOT="\"@LEX_OUTPUT_ROOT@\""
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
@@ -8,21 +8,18 @@ MODULE    = none
 PROGRAMS = \
 	bin2res \
 	fnt2bdf \
-	makedep \
-	winegcc \
-	winewrap
+	makedep
 
 C_SRCS = \
 	bin2res.c \
 	fnt2bdf.c \
-	makedep.c \
-	winegcc.c \
-	winewrap.c
+	makedep.c
 
 SUBDIRS = \
 	widl \
 	winebuild \
 	winedump \
+	winegcc \
 	wmc \
 	wrc
 
@@ -45,21 +42,12 @@ fnt2bdf: fnt2bdf.o
 bin2res: bin2res.o
 	$(CC) $(CFLAGS) -o bin2res bin2res.o $(LIBPORT)
 
-winegcc: winegcc.o
-	$(CC) $(CFLAGS) -o winegcc winegcc.o $(LIBPORT)
-
-winewrap: winewrap.o
-	$(CC) $(CFLAGS) -o winewrap winewrap.o $(LIBPORT)
-
 install::
 	$(MKINSTALLDIRS) $(bindir) $(mandir)/man$(prog_manext)
 	$(INSTALL_SCRIPT) $(SRCDIR)/winemaker $(bindir)/winemaker
-	$(INSTALL_PROGRAM) winegcc $(bindir)/winegcc
-	cd $(bindir) && $(RM) wineg++ && $(LN_S) winegcc wineg++
-	$(INSTALL_PROGRAM) winewrap $(bindir)/winewrap
 	$(INSTALL_DATA) $(SRCDIR)/winemaker.man $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 
 uninstall::
-	$(RM) $(bindir)/winemaker $(bindir)/winegcc $(bindir)/wineg++ $(bindir)/winewrap $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
+	$(RM) $(bindir)/winemaker $(mandir)/man$(prog_manext)/winemaker.$(prog_manext)
 
 ### Dependencies:

@@ -1,0 +1,35 @@
+DEFS      = -DINCLUDEDIR="\"$(includedir)\""
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+
+PROGRAMS = \
+	winegcc \
+	winewrap
+
+C_SRCS = \
+	winegcc.c \
+	winewrap.c
+
+all: $(PROGRAMS)
+
+@MAKE_RULES@
+
+winegcc: winegcc.o
+	$(CC) $(CFLAGS) -o $@ winegcc.o $(LIBPORT)
+
+winewrap: winewrap.o
+	$(CC) $(CFLAGS) -o $@ winewrap.o $(LIBPORT)
+
+install:: $(PROGRAMS)
+	$(MKINSTALLDIRS) $(bindir)
+	$(INSTALL_PROGRAM) winegcc $(bindir)/winegcc
+	$(INSTALL_PROGRAM) winewrap $(bindir)/winewrap
+	cd $(bindir) && $(RM) wineg++ && $(LN_S) winegcc wineg++
+
+uninstall::
+	$(RM) $(bindir)/winegcc $(bindir)/wineg++ $(bindir)/winewrap
+
+### Dependencies:

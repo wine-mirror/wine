@@ -1581,6 +1581,7 @@ tools/widl/Makefile
 tools/winapi/Makefile
 tools/winebuild/Makefile
 tools/winedump/Makefile
+tools/winegcc/Makefile
 tools/wmc/Makefile
 tools/wrc/Makefile])
 
