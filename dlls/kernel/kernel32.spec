@@ -328,8 +328,8 @@ import  ntdll.dll
 310 stdcall GetDateFormatA(long long ptr str ptr long) GetDateFormatA
 311 stdcall GetDateFormatW(long long ptr wstr ptr long) GetDateFormatW
 312 stub GetDaylightFlag
-313 stub GetDefaultCommConfigA
-314 stub GetDefaultCommConfigW
+313 stdcall GetDefaultCommConfigA(str ptr long) GetDefaultCommConfigA
+314 stdcall GetDefaultCommConfigW(wstr ptr long) GetDefaultCommConfigW
 315 stdcall GetDiskFreeSpaceA(str ptr ptr ptr ptr) GetDiskFreeSpaceA
 316 stdcall GetDiskFreeSpaceW(wstr ptr ptr ptr ptr) GetDiskFreeSpaceW
 317 stdcall GetDriveTypeA(str) GetDriveTypeA

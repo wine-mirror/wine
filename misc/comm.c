@@ -2584,3 +2584,55 @@ BOOL WINAPI GetCommProperties(HANDLE hFile, LPCOMMPROP lpCommProp)
     return TRUE;
 }
 
+/***********************************************************************
+ *           GetDefaultCommConfigA   (KERNEL32.313)
+ */
+BOOL WINAPI GetDefaultCommConfigA(LPCSTR lpszName,LPCOMMCONFIG lpCC,
+                                      LPDWORD lpdwSize)
+{    
+     LPDCB lpdcb = &(lpCC->dcb);
+     char  temp[40];
+
+     if (strncasecmp(lpszName,"COM",3)) {
+        ERR("not implemented for <%s>\n", lpszName);
+        return FALSE;
+     }
+
+     if (!ValidCOMPort(lpszName[3]-'1'))
+        return FALSE;
+
+     TRACE("(%s %p %ld)\n", lpszName, lpCC, *lpdwSize );
+     if (*lpdwSize < sizeof(COMMCONFIG)) {
+         *lpdwSize = sizeof(COMMCONFIG);
+         return FALSE;
+       }
+
+     *lpdwSize = sizeof(COMMCONFIG);
+
+     lpCC->dwSize = sizeof(COMMCONFIG);
+     lpCC->wVersion = 1;
+     lpCC->dwProviderSubType = PST_RS232;
+     lpCC->dwProviderOffset = 0L;
+     lpCC->dwProviderSize = 0L;
+
+     (void) sprintf( temp, "COM%c:38400,n,8,1", lpszName[3]);
+     FIXME("setting %s as default\n", temp);
+
+     return BuildCommDCBA( temp, lpdcb);
+}
+
+/**************************************************************************
+ *         GetDefaultCommConfigW		(KERNEL32.314)
+ */
+BOOL WINAPI GetDefaultCommConfigW( LPCWSTR lpszName,LPCOMMCONFIG lpCC,
+                                      LPDWORD lpdwSize)
+{
+	LPSTR	lpszNameA;
+	BOOL	ret;
+
+	TRACE("(%p,%p,%d)\n",lpszName,lpCC,*lpdwSize);
+	lpszNameA = HEAP_strdupWtoA( GetProcessHeap(), 0, lpszName );
+	ret=GetDefaultCommConfigA(lpszNameA,lpCC,lpdwSize);
+        HeapFree( GetProcessHeap(), 0, lpszNameA );
+	return ret;
+}
