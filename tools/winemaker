@@ -728,8 +728,8 @@ sub source_scan_directory
       $basename=$target_name;
       push @exe_list,$target;
     }
-    # This is the default link list of Visual Studio, except for uuid and
-    # odbccp32 which we don't have in Wine. Also I add ntdll which seems 
+    # This is the default link list of Visual Studio, except odbccp32 
+    # which we don't have in Wine. Also I add ntdll which seems 
     # necessary for Winelib.
     my @std_imports=qw(advapi32.dll comdlg32.dll gdi32.dll kernel32.dll ntdll.dll odbc32.dll ole32 oleaut32.dll shell32.dll user32.dll winspool.drv);
     @$target[$T_IMPORTS]=\@std_imports;
@@ -2249,7 +2249,7 @@ then
 fi
 
 CFLAGS="$CFLAGS -fPIC"
-DLL_LINK="\$(WINE_LIBRARY_PATH) \$(LIBRARY_PATH) \$(LIBRARIES:%=-l%) -lwine -lwine_unicode"
+DLL_LINK="\$(WINE_LIBRARY_PATH) \$(LIBRARY_PATH) \$(LIBRARIES:%=-l%) -lwine -lwine_unicode -luuid"
 
 AC_SUBST(DLL_LINK)
 AC_SUBST(LDSHARED)
