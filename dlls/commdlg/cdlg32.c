@@ -22,6 +22,8 @@ static DWORD	COMDLG32_TlsIndex;
 static int	COMDLG32_Attach = 0;
 
 HINSTANCE	COMCTL32_hInstance = 0;
+HINSTANCE	SHELL32_hInstance = 0;
+
 HDPA	(WINAPI* COMDLG32_DPA_Create) (INT);  
 LPVOID	(WINAPI* COMDLG32_DPA_GetPtr) (const HDPA, INT);   
 LPVOID	(WINAPI* COMDLG32_DPA_DeletePtr) (const HDPA hdpa, INT i);
@@ -81,6 +83,13 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		}
 
 		COMCTL32_hInstance = LoadLibraryA("COMCTL32.DLL");	
+		SHELL32_hInstance = LoadLibraryA("SHELL32.DLL");
+		
+		if (!COMCTL32_hInstance || !SHELL32_hInstance)
+		{
+			ERR("loading of comctl32 or shell32 failed\n");
+			return FALSE;
+		}
 
 		COMDLG32_DPA_Create=(void*)GetProcAddress(COMCTL32_hInstance, (LPCSTR)328L);
 		COMDLG32_DPA_Destroy=(void*)GetProcAddress(COMCTL32_hInstance, (LPCSTR)329L);
@@ -103,8 +112,9 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 			if(COMDLG32_hInstance16)
 				FreeLibrary16(COMDLG32_hInstance16);
 
-			FreeLibrary(COMCTL32_hInstance);
 		}
+		FreeLibrary(COMCTL32_hInstance);
+		FreeLibrary(SHELL32_hInstance);
 		break;
 	}
 	return TRUE;
