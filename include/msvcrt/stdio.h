@@ -129,10 +129,10 @@ typedef unsigned short MSVCRT(wchar_t);
 #endif
 #endif
 
-#ifndef MSVCRT_WCTYPE_T_DEFINED
-typedef MSVCRT(wchar_t) MSVCRT(wint_t);
-typedef MSVCRT(wchar_t) MSVCRT(wctype_t);
-#define MSVCRT_WCTYPE_T_DEFINED
+#ifndef _WCTYPE_T_DEFINED
+typedef unsigned short  MSVCRT(wint_t);
+typedef unsigned short  MSVCRT(wctype_t);
+#define _WCTYPE_T_DEFINED
 #endif
 
 #ifdef __cplusplus
