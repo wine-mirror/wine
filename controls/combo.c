@@ -1112,7 +1112,7 @@ static void CBDropDown( LPHEADCOMBO lphc )
    int nItems = 0;
    int i;
    int nHeight;
-   int nDroppedHeight;
+   int nDroppedHeight, nTempDroppedHeight;
 
    TRACE("[%04x]: drop down\n", CB_HWND(lphc));
 
@@ -1152,19 +1152,24 @@ static void CBDropDown( LPHEADCOMBO lphc )
      items list, then force the drop down list height to be the total height
      of the items in the dropped list */
 
+  /* And Remove any extra space (Best Fit) */
    nDroppedHeight = lphc->droppedRect.bottom - lphc->droppedRect.top;
    nItems = (int)SendMessageA (lphc->hWndLBox, LB_GETCOUNT, 0, 0);
-   nHeight = COMBO_YBORDERGAP;
+   nHeight = COMBO_YBORDERSIZE();
+   nTempDroppedHeight = 0;
    for (i = 0; i < nItems; i++)
    {
      nHeight += (int)SendMessageA (lphc->hWndLBox, LB_GETITEMHEIGHT, i, 0);
 
-     if (nHeight >= nDroppedHeight)
+     /* Did we pass the limit of what can be displayed */
+     if (nHeight > nDroppedHeight)
+     {
        break;
    }
+     nTempDroppedHeight = nHeight;
+   }
 
-   if (nHeight < nDroppedHeight)
-      nDroppedHeight = nHeight;
+   nDroppedHeight = nTempDroppedHeight;
 
    SetWindowPos( lphc->hWndLBox, HWND_TOP, rect.left, rect.bottom, 
 		 lphc->droppedRect.right - lphc->droppedRect.left,
