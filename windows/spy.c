@@ -1289,7 +1289,7 @@ void SPY_DumpStructure (UINT msg, BOOL enter, LPARAM structure)
 		    if (p->len > 0) {
 			int i;
 			q = (UINT *)(pnmh + 1);
-			for(i=0; i<p->len-12; i+=16) {
+			for(i=0; i<((INT)p->len)-12; i+=16) {
 			    TRACE("NM extra [%04x] %08x %08x %08x %08x\n",
 				  i, *q, *(q+1), *(q+2), *(q+3));
 			    q += 4;
