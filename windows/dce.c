@@ -652,6 +652,27 @@ HWND WINAPI WindowFromDC( HDC hDC )
  */
 BOOL WINAPI LockWindowUpdate( HWND hwnd )
 {
-    FIXME("(%x), stub!\n",hwnd);
+    static HWND lockedWnd;
+
+    FIXME("(%x), partial stub!\n",hwnd);
+
+    USER_Lock();
+    if (lockedWnd)
+    {
+        if (!hwnd)
+        {
+            /* Unlock lockedWnd */
+            /* FIXME: Do something */
+        }
+        else
+        {
+            /* Attempted to lock a second window */
+            /* Return FALSE and do nothing */
+            USER_Unlock();
+            return FALSE;
+        }
+    }
+    lockedWnd = hwnd;
+    USER_Unlock();
     return TRUE;
 }
