@@ -1417,6 +1417,29 @@ static UCHAR NetBTEnum(void)
     return ret;
 }
 
+static const WCHAR VxD_MSTCPW[] = { 'S','Y','S','T','E','M','\\','C','u','r',
+ 'r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','S','e','r','v',
+ 'i','c','e','s','\\','V','x','D','\\','M','S','T','C','P','\0' };
+static const WCHAR NetBT_ParametersW[] = { 'S','Y','S','T','E','M','\\','C','u',
+ 'r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\','S','e','r',
+ 'v','i','c','e','s','\\','N','e','t','B','T','\\','P','a','r','a','m','e','t',
+ 'e','r','s','\0' };
+static const WCHAR EnableDNSW[] = { 'E','n','a','b','l','e','D','N','S','\0' };
+static const WCHAR BcastNameQueryCountW[] = { 'B','c','a','s','t','N','a','m',
+ 'e','Q','u','e','r','y','C','o','u','n','t','\0' };
+static const WCHAR BcastNameQueryTimeoutW[] = { 'B','c','a','s','t','N','a','m',
+ 'e','Q','u','e','r','y','T','i','m','e','o','u','t','\0' };
+static const WCHAR NameSrvQueryCountW[] = { 'N','a','m','e','S','r','v',
+ 'Q','u','e','r','y','C','o','u','n','t','\0' };
+static const WCHAR NameSrvQueryTimeoutW[] = { 'N','a','m','e','S','r','v',
+ 'Q','u','e','r','y','T','i','m','e','o','u','t','\0' };
+static const WCHAR ScopeIDW[] = { 'S','c','o','p','e','I','D','\0' };
+static const WCHAR CacheTimeoutW[] = { 'C','a','c','h','e','T','i','m','e','o',
+ 'u','t','\0' };
+static const WCHAR Config_NetworkW[] = { 'S','o','f','t','w','a','r','e','\\',
+ 'W','i','n','e','\\','W','i','n','e','\\','C','o','n','f','i','g','\\','N','e',
+ 't','w','o','r','k','\0' };
+
 /* Initializes global variables and registers the NetBT transport */
 void NetBTInit(void)
 {
@@ -1437,43 +1460,41 @@ void NetBTInit(void)
     gCacheTimeout = CACHE_TIMEOUT;
 
     /* Try to open the Win9x NetBT configuration key */
-    ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-     "SYSTEM\\CurrentControlSet\\Services\\VxD\\MSTCP", 0, KEY_READ, &hKey);
+    ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, VxD_MSTCPW, 0, KEY_READ, &hKey);
     /* If that fails, try the WinNT NetBT configuration key */
     if (ret != ERROR_SUCCESS)
-        ret = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-         "SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters", 0,
-         KEY_READ, &hKey);
+        ret = RegOpenKeyExW(HKEY_LOCAL_MACHINE, NetBT_ParametersW, 0, KEY_READ,
+         &hKey);
     if (ret == ERROR_SUCCESS)
     {
         DWORD dword, size;
 
         size = sizeof(dword);
-        if (RegQueryValueExA(hKey, "EnableDNS", NULL, NULL,
+        if (RegQueryValueExW(hKey, EnableDNSW, NULL, NULL,
          (LPBYTE)&dword, &size) == ERROR_SUCCESS)
             gEnableDNS = dword;
         size = sizeof(dword);
-        if (RegQueryValueExA(hKey, "BcastNameQueryCount", NULL, NULL,
+        if (RegQueryValueExW(hKey, BcastNameQueryCountW, NULL, NULL,
          (LPBYTE)&dword, &size) == ERROR_SUCCESS && dword >= MIN_QUERIES
          && dword <= MAX_QUERIES)
             gBCastQueries = dword;
         size = sizeof(dword);
-        if (RegQueryValueExA(hKey, "BcastNameQueryTimeout", NULL, NULL,
+        if (RegQueryValueExW(hKey, BcastNameQueryTimeoutW, NULL, NULL,
          (LPBYTE)&dword, &size) == ERROR_SUCCESS && dword >= MIN_QUERY_TIMEOUT
          && dword <= MAX_QUERY_TIMEOUT)
             gBCastQueryTimeout = dword;
         size = sizeof(dword);
-        if (RegQueryValueExA(hKey, "NameSrvQueryCount", NULL, NULL,
+        if (RegQueryValueExW(hKey, NameSrvQueryCountW, NULL, NULL,
          (LPBYTE)&dword, &size) == ERROR_SUCCESS && dword >= MIN_QUERIES
          && dword <= MAX_QUERIES)
             gWINSQueries = dword;
         size = sizeof(dword);
-        if (RegQueryValueExA(hKey, "NameSrvQueryTimeout", NULL, NULL,
+        if (RegQueryValueExW(hKey, NameSrvQueryTimeoutW, NULL, NULL,
          (LPBYTE)&dword, &size) == ERROR_SUCCESS && dword >= MIN_QUERY_TIMEOUT
          && dword <= MAX_QUERY_TIMEOUT)
             gWINSQueryTimeout = dword;
         size = MAX_DOMAIN_NAME_LEN - 1;
-        if (RegQueryValueExA(hKey, "ScopeID", NULL, NULL, gScopeID + 1, &size)
+        if (RegQueryValueExW(hKey, ScopeIDW, NULL, NULL, gScopeID + 1, &size)
          == ERROR_SUCCESS)
         {
             /* convert into L2-encoded version, suitable for use by
@@ -1489,7 +1510,7 @@ void NetBTInit(void)
                 ptr++;
             }
         }
-        if (RegQueryValueExA(hKey, "CacheTimeout", NULL, NULL,
+        if (RegQueryValueExW(hKey, CacheTimeoutW, NULL, NULL,
          (LPBYTE)&dword, &size) == ERROR_SUCCESS && dword >= MIN_CACHE_TIMEOUT)
             gCacheTimeout = dword;
         RegCloseKey(hKey);
@@ -1498,8 +1519,7 @@ void NetBTInit(void)
      * different than MS', we can't do per-adapter WINS configuration in the
      * same place.  Just do a global WINS configuration instead.
      */
-    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
-     "Software\\Wine\\Wine\\Config\\Network", 0, KEY_READ, &hKey)
+    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, Config_NetworkW, 0, KEY_READ, &hKey)
      == ERROR_SUCCESS)
     {
         static const char *nsValueNames[] = { "WinsServer", "BackupWinsServer" };
