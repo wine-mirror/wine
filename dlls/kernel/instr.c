@@ -559,6 +559,20 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
 		}
 		/* fallthrough to illegal instruction */
 		break;
+            case 0x21: /* mov drX, eax */
+                switch (instr[2])
+                {
+                case 0xf8: /* mov dr7, eax */
+                    TRACE("mov dr7,eax at 0x%08lx\n",context->Eip);
+                    context->Eax = 0x400;
+                    context->Eip += prefixlen+3;
+                    return ExceptionContinueExecution;
+                default: /* fallthrough to illegal instruction */
+                    ERR("Unknown DR register, eip+2 is %02x\n", instr[2]);
+                    break;
+                }
+                /* fallthrough to illegal instruction */
+                break;
             case 0xa1: /* pop fs */
                 {
                     WORD seg = *(WORD *)get_stack( context );
