@@ -86,13 +86,13 @@ void CheckSize(HWND hwnd, INT width, INT height)
     /* trace ("Got (%ld,%ld)-(%ld,%ld)", rTab.left, rTab.top, rTab.right, rTab.bottom); */
     trace (" (%ld,%ld)-(%ld,%ld)\n", r1.left, r1.top, r1.right, r1.bottom);
     if ((width  >= 0) && (height < 0))
-	ok (width  == rTab.right  - rTab.left, "Expected [%d] got [%ld]",  width,  rTab.right  - rTab.left);
+	ok (width  == rTab.right  - rTab.left, "Expected [%d] got [%ld]\n",  width,  rTab.right  - rTab.left);
     else if ((height >= 0) && (width  < 0))
-	ok (height == rTab.bottom - rTab.top,  "Expected [%d] got [%ld]",  height, rTab.bottom - rTab.top);
+	ok (height == rTab.bottom - rTab.top,  "Expected [%d] got [%ld]\n",  height, rTab.bottom - rTab.top);
     else
 	ok ((width  == rTab.right  - rTab.left) &&
 	    (height == rTab.bottom - rTab.top ),
-	    "Expected [%d,%d] got [%ld,%ld]", width, height, rTab.right - rTab.left, rTab.bottom - rTab.top);
+	    "Expected [%d,%d] got [%ld,%ld]\n", width, height, rTab.right - rTab.left, rTab.bottom - rTab.top);
 }
 
 void TabCheckSetSize(HWND hwnd, INT SetWidth, INT SetHeight, INT ExpWidth, INT ExpHeight)
