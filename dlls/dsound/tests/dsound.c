@@ -94,10 +94,15 @@ static void IDirectSound_test(LPDIRECTSOUND dso, BOOL initialized,
            DXGetErrorString8(rc));
 
         rc=IDirectSound_Initialize(dso,lpGuid);
-        ok(rc==DS_OK||rc==DSERR_NODRIVER,"IDirectSound_Initialize() failed: %s\n",
-           DXGetErrorString8(rc));
-        if (rc==DSERR_NODRIVER)
+        ok(rc==DS_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+           "IDirectSound_Initialize() failed: %s\n",DXGetErrorString8(rc));
+        if (rc==DSERR_NODRIVER) {
+            trace("  No Driver\n");
             return;
+        } else if (rc==DSERR_ALLOCATED) {
+            trace("  Already Allocated\n");
+            return;
+        }
     }
 
     /* DSOUND: Error: Invalid caps buffer */
@@ -210,21 +215,22 @@ static void IDirectSound_tests()
 
     /* try with no device specified */
     rc=DirectSoundCreate(NULL,&dso,NULL);
-    ok(rc==S_OK||rc==DSERR_NODRIVER,"DirectSoundCreate(NULL) failed: %s\n",
-        DXGetErrorString8(rc));
+    ok(rc==S_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate(NULL) failed: %s\n",DXGetErrorString8(rc));
     if (rc==S_OK && dso)
         IDirectSound_test(dso, TRUE, NULL);
 
     /* try with default playback device specified */
     rc=DirectSoundCreate(&DSDEVID_DefaultPlayback,&dso,NULL);
-    ok(rc==S_OK||rc==DSERR_NODRIVER,"DirectSoundCreate(DSDEVID_DefaultPlayback)"
-       " failed: %s\n", DXGetErrorString8(rc));
+    ok(rc==S_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
+       "DirectSoundCreate(DSDEVID_DefaultPlayback) failed: %s\n",
+       DXGetErrorString8(rc));
     if (rc==DS_OK && dso)
         IDirectSound_test(dso, TRUE, NULL);
 
     /* try with default voice playback device specified */
     rc=DirectSoundCreate(&DSDEVID_DefaultVoicePlayback,&dso,NULL);
-    ok(rc==S_OK||rc==DSERR_NODRIVER,
+    ok(rc==S_OK||rc==DSERR_NODRIVER||rc==DSERR_ALLOCATED,
        "DirectSoundCreate(DSDEVID_DefaultVoicePlayback) failed: %s\n",
        DXGetErrorString8(rc));
     if (rc==DS_OK && dso)
