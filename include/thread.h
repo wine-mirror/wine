@@ -15,6 +15,7 @@ struct _PDB;
 struct __EXCEPTION_FRAME;
 struct _SECURITY_ATTRIBUTES;
 struct tagSYSLEVEL;
+struct server_buffer_info;
 
 /* Thread exception block
 
@@ -89,17 +90,16 @@ typedef struct _TEB
     DWORD        unknown6[5];    /* --n 1e8 Unknown */
 
     /* The following are Wine-specific fields (NT: GDI stuff) */
-    struct _TEB *next;           /* --3 1fc Global thread list */
-    DWORD        cleanup;        /* --3 200 Cleanup service handle */
-    int          socket;         /* --3 204 Socket for server communication */
-    void        *buffer;         /* --3 208 Buffer shared with server */
-    int          buffer_size;    /* --3 20c Size of server buffer */
-    void        *debug_info;     /* --3 210 Info for debugstr functions */
-    void        *pthread_data;   /* --3 214 Data for pthread emulation */
+    DWORD        cleanup;        /* --3 1fc Cleanup service handle */
+    int          socket;         /* --3 200 Socket for server communication */
+    void        *buffer;         /* --3 204 Buffer shared with server */
+    struct server_buffer_info *buffer_info;   /* --3 208 Buffer information */
+    void        *debug_info;     /* --3 20c Info for debugstr functions */
+    void        *pthread_data;   /* --3 210 Data for pthread emulation */
     /* here is plenty space for wine specific fields (don't forget to change pad6!!) */
 
     /* the following are nt specific fields */
-    DWORD        pad6[632];                  /* --n 218 */
+    DWORD        pad6[633];                  /* --n 214 */
     UNICODE_STRING StaticUnicodeString;      /* -2- bf8 used by advapi32 */
     USHORT       StaticUnicodeBuffer[261];   /* -2- c00 used by advapi32 */
     DWORD        pad7;                       /* --n e0c */

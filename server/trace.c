@@ -787,7 +787,6 @@ static void dump_alloc_console_reply( const struct alloc_console_request *req )
 
 static void dump_free_console_request( const struct free_console_request *req )
 {
-    fprintf( stderr, " dummy=%d", req->dummy );
 }
 
 static void dump_open_console_request( const struct open_console_request *req )

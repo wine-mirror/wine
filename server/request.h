@@ -48,17 +48,26 @@ static inline void *get_req_ptr( struct thread *thread )
     return thread->buffer;
 }
 
+/* get the request vararg data */
+inline static void *get_req_data( const void *req )
+{
+    return ((union generic_request *)req + 1);
+}
+
+
+#define REQUEST_END(req) ((char *)(req) + MAX_REQUEST_LENGTH - sizeof(struct server_buffer_info))
+
 /* get the remaining size in the request buffer for object of a given size */
 static inline int get_req_size( const void *req, const void *ptr, size_t typesize )
 {
-    return ((char *)req + MAX_REQUEST_LENGTH - (char *)ptr) / typesize;
+    return (REQUEST_END(req) - (char *)ptr) / typesize;
 }
 
 /* get the length of a request string, without going past the end of the request */
 static inline size_t get_req_strlen( const void *req, const char *str )
 {
     const char *p = str;
-    while (*p && (p < (char *)req + MAX_REQUEST_LENGTH - 1)) p++;
+    while (*p && (p < REQUEST_END(req) - 1)) p++;
     return p - str;
 }
 
@@ -66,7 +75,7 @@ static inline size_t get_req_strlen( const void *req, const char *str )
 static inline size_t get_req_strlenW( const void *req, const WCHAR *str )
 {
     const WCHAR *p = str;
-    while (*p && (p < (WCHAR *)req + MAX_REQUEST_LENGTH/sizeof(WCHAR) - 1)) p++;
+    while (*p && (p < (WCHAR *)REQUEST_END(req) - 1)) p++;
     return p - str;
 }
 

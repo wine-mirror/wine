@@ -111,21 +111,54 @@ static void server_perror( const char *err )
 
 
 /***********************************************************************
+ *           server_exception_handler
+ */
+DWORD server_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
+                                CONTEXT *context, EXCEPTION_FRAME **pdispatcher )
+{
+    struct __server_exception_frame *server_frame = (struct __server_exception_frame *)frame;
+    if ((record->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND)))
+        *NtCurrentTeb()->buffer_info = server_frame->info;
+    return ExceptionContinueSearch;
+}
+
+
+/***********************************************************************
+ *           server_alloc_req
+ */
+void *server_alloc_req( size_t fixed_size, size_t var_size )
+{
+    unsigned int pos = NtCurrentTeb()->buffer_info->cur_pos;
+    union generic_request *req = (union generic_request *)((char *)NtCurrentTeb()->buffer + pos);
+    size_t size = sizeof(*req) + var_size;
+
+    assert( fixed_size <= sizeof(*req) );
+
+    if ((char *)req + size > (char *)NtCurrentTeb()->buffer_info)
+        server_protocol_error( "buffer overflow %d bytes\n",
+                               (char *)req + size - (char *)NtCurrentTeb()->buffer_info );
+    NtCurrentTeb()->buffer_info->cur_pos = pos + size;
+    req->header.fixed_size = fixed_size;
+    req->header.var_size = var_size;
+    return req;
+}
+
+
+/***********************************************************************
  *           send_request
  *
  * Send a request to the server.
  */
-static void send_request( enum request req )
+static void send_request( enum request req, struct request_header *header )
 {
-    int ret;
-    if ((ret = write( NtCurrentTeb()->socket, &req, sizeof(req) )) == sizeof(req))
-        return;
-    if (ret == -1)
+    header->req = req;
+    NtCurrentTeb()->buffer_info->cur_req = (char *)header - (char *)NtCurrentTeb()->buffer;
+    /* write a single byte; the value is ignored anyway */
+    if (write( NtCurrentTeb()->socket, header, 1 ) == -1)
     {
         if (errno == EPIPE) SYSDEPS_ExitThread(0);
         server_perror( "sendmsg" );
     }
-    server_protocol_error( "partial msg sent %d/%d\n", ret, sizeof(req) );
 }
 
 /***********************************************************************
@@ -133,17 +166,17 @@ static void send_request( enum request req )
  *
  * Send a request to the server, passing a file descriptor.
  */
-static void send_request_fd( enum request req, int fd )
+static void send_request_fd( enum request req, struct request_header *header, int fd )
 {
-    int ret;
 #ifndef HAVE_MSGHDR_ACCRIGHTS
     struct cmsg_fd cmsg;
 #endif
     struct msghdr msghdr;
     struct iovec vec;
 
-    vec.iov_base = (void *)&req;
-    vec.iov_len  = sizeof(req);
+    /* write a single byte; the value is ignored anyway */
+    vec.iov_base = (void *)header;
+    vec.iov_len  = 1;
 
     msghdr.msg_name    = NULL;
     msghdr.msg_namelen = 0;
@@ -163,13 +196,13 @@ static void send_request_fd( enum request req, int fd )
     msghdr.msg_flags      = 0;
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
-    if ((ret = sendmsg( NtCurrentTeb()->socket, &msghdr, 0 )) == sizeof(req)) return;
-    if (ret == -1)
+    header->req = req;
+
+    if (sendmsg( NtCurrentTeb()->socket, &msghdr, 0 ) == -1)
     {
         if (errno == EPIPE) SYSDEPS_ExitThread(0);
         server_perror( "sendmsg" );
     }
-    server_protocol_error( "partial msg sent %d/%d\n", ret, sizeof(req) );
 }
 
 /***********************************************************************
@@ -177,23 +210,18 @@ static void send_request_fd( enum request req, int fd )
  *
  * Wait for a reply from the server.
  */
-static unsigned int wait_reply(void)
+static void wait_reply(void)
 {
     int ret;
-    unsigned int res;
+    char dummy[1];
 
     for (;;)
     {
-        if ((ret = read( NtCurrentTeb()->socket, &res, sizeof(res) )) == sizeof(res))
-            return res;
+        if ((ret = read( NtCurrentTeb()->socket, dummy, 1 )) > 0) return;
         if (!ret) break;
-        if (ret == -1)
-        {
-            if (errno == EINTR) continue;
-            if (errno == EPIPE) break;
-            server_perror("read");
-        }
-        server_protocol_error( "partial msg received %d/%d\n", ret, sizeof(res) );
+        if (errno == EINTR) continue;
+        if (errno == EPIPE) break;
+        server_perror("read");
     }
     /* the server closed the connection; time to die... */
     SYSDEPS_ExitThread(0);
@@ -205,11 +233,11 @@ static unsigned int wait_reply(void)
  *
  * Wait for a reply from the server, when a file descriptor is passed.
  */
-static unsigned int wait_reply_fd( int *fd )
+static void wait_reply_fd( int *fd )
 {
     struct iovec vec;
     int ret;
-    unsigned int res;
+    char dummy[1];
 
 #ifdef HAVE_MSGHDR_ACCRIGHTS
     struct msghdr msghdr;
@@ -234,26 +262,22 @@ static unsigned int wait_reply_fd( int *fd )
     msghdr.msg_namelen = 0;
     msghdr.msg_iov     = &vec;
     msghdr.msg_iovlen  = 1;
-    vec.iov_base = (void *)&res;
-    vec.iov_len  = sizeof(res);
+    vec.iov_base = (void *)dummy;
+    vec.iov_len  = 1;
 
     for (;;)
     {
-        if ((ret = recvmsg( NtCurrentTeb()->socket, &msghdr, 0 )) == sizeof(res))
+        if ((ret = recvmsg( NtCurrentTeb()->socket, &msghdr, 0 )) > 0)
         {
 #ifndef HAVE_MSGHDR_ACCRIGHTS
             *fd = cmsg.fd;
 #endif
-            return res;
+            return;
         }
         if (!ret) break;
-        if (ret == -1)
-        {
-            if (errno == EINTR) continue;
-            if (errno == EPIPE) break;
-            server_perror("recvmsg");
-        }
-        server_protocol_error( "partial seq received %d/%d\n", ret, sizeof(res) );
+        if (errno == EINTR) continue;
+        if (errno == EPIPE) break;
+        server_perror("recvmsg");
     }
     /* the server closed the connection; time to die... */
     SYSDEPS_ExitThread(0);
@@ -267,8 +291,10 @@ static unsigned int wait_reply_fd( int *fd )
  */
 unsigned int server_call_noerr( enum request req )
 {
-    send_request( req );
-    return wait_reply();
+    void *req_ptr = get_req_buffer();
+    send_request( req, req_ptr );
+    wait_reply();
+    return ((struct request_header *)req_ptr)->error;
 }
 
 
@@ -282,13 +308,16 @@ unsigned int server_call_noerr( enum request req )
 unsigned int server_call_fd( enum request req, int fd_out, int *fd_in )
 {
     unsigned int res;
+    void *req_ptr = get_req_buffer();
 
-    if (fd_out == -1) send_request( req );
-    else send_request_fd( req, fd_out );
+    if (fd_out == -1) send_request( req, req_ptr );
+    else send_request_fd( req, req_ptr, fd_out );
 
-    if (fd_in) res = wait_reply_fd( fd_in );
-    else res = wait_reply();
-    if (res) SetLastError( RtlNtStatusToDosError(res) );
+    if (fd_in) wait_reply_fd( fd_in );
+    else wait_reply();
+
+    if ((res = ((struct request_header *)req_ptr)->error))
+        SetLastError( RtlNtStatusToDosError(res) );
     return res;  /* error code */
 }
 
@@ -517,37 +546,44 @@ int CLIENT_InitServer(void)
  */
 int CLIENT_InitThread(void)
 {
-    struct get_thread_buffer_request *first_req;
-    struct init_thread_request *req;
+    struct get_thread_buffer_request *req;
     TEB *teb = NtCurrentTeb();
-    int fd;
+    int fd, ret, size;
 
     /* ignore SIGPIPE so that we get a EPIPE error instead  */
     signal( SIGPIPE, SIG_IGN );
 
-    if (wait_reply_fd( &fd ) || (fd == -1))
-        server_protocol_error( "no fd passed on first request\n" );
-    if ((teb->buffer_size = lseek( fd, 0, SEEK_END )) == -1) server_perror( "lseek" );
-    teb->buffer = mmap( 0, teb->buffer_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
+    wait_reply_fd( &fd );
+    if (fd == -1) server_protocol_error( "no fd passed on first request\n" );
+
+    if ((size = lseek( fd, 0, SEEK_END )) == -1) server_perror( "lseek" );
+    teb->buffer = mmap( 0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0 );
     close( fd );
     if (teb->buffer == (void*)-1) server_perror( "mmap" );
-    first_req = teb->buffer;
-    teb->pid = first_req->pid;
-    teb->tid = first_req->tid;
-    if (first_req->version != SERVER_PROTOCOL_VERSION)
+    teb->buffer_info = (struct server_buffer_info *)((char *)teb->buffer + size) - 1;
+
+    req = (struct get_thread_buffer_request *)teb->buffer;
+    teb->pid = req->pid;
+    teb->tid = req->tid;
+    if (req->version != SERVER_PROTOCOL_VERSION)
         server_protocol_error( "version mismatch %d/%d.\n"
                                "Your %s binary was not upgraded correctly,\n"
                                "or you have an older one somewhere in your PATH.\n",
-                               first_req->version, SERVER_PROTOCOL_VERSION,
-                               (first_req->version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
-    if (first_req->boot) boot_thread_id = teb->tid;
+                               req->version, SERVER_PROTOCOL_VERSION,
+                               (req->version > SERVER_PROTOCOL_VERSION) ? "wine" : "wineserver" );
+    if (req->boot) boot_thread_id = teb->tid;
     else if (boot_thread_id == teb->tid) boot_thread_id = 0;
 
-    req = teb->buffer;
-    req->unix_pid = getpid();
-    req->teb      = teb;
-    req->entry    = teb->entry_point;
-    return server_call_noerr( REQ_INIT_THREAD );
+    SERVER_START_REQ
+    {
+        struct init_thread_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->unix_pid = getpid();
+        req->teb      = teb;
+        req->entry    = teb->entry_point;
+        ret = server_call_noerr( REQ_INIT_THREAD );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /***********************************************************************
@@ -557,9 +593,15 @@ int CLIENT_InitThread(void)
  */
 int CLIENT_BootDone( int debug_level )
 {
-    struct boot_done_request *req = get_req_buffer();
-    req->debug_level = debug_level;
-    return server_call( REQ_BOOT_DONE );
+    int ret;
+    SERVER_START_REQ
+    {
+        struct boot_done_request *req = server_alloc_req( sizeof(*req), 0 );
+        req->debug_level = debug_level;
+        ret = server_call( REQ_BOOT_DONE );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 

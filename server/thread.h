@@ -59,6 +59,7 @@ struct thread
     int                 affinity;  /* affinity mask */
     int                 suspend;   /* suspend count */
     void               *buffer;    /* buffer for communication with the client */
+    struct server_buffer_info *buffer_info;   /* buffer information structure */
     enum request        last_req;  /* last request received (for debugging) */
 };
 

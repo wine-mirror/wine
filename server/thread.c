@@ -96,6 +96,7 @@ static int alloc_client_buffer( struct thread *thread )
     if (ftruncate( fd, MAX_REQUEST_LENGTH ) == -1) goto error;
     if ((thread->buffer = mmap( 0, MAX_REQUEST_LENGTH, PROT_READ | PROT_WRITE,
                                 MAP_SHARED, fd, 0 )) == (void*)-1) goto error;
+    thread->buffer_info = (struct server_buffer_info *)((char *)thread->buffer + MAX_REQUEST_LENGTH) - 1;
     /* build the first request into the buffer and send it */
     req = thread->buffer;
     req->pid  = get_process_id( thread->process );

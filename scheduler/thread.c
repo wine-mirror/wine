@@ -105,7 +105,8 @@ static void CALLBACK THREAD_FreeTEB( TEB *teb )
     if (teb->socket != -1) close( teb->socket );
     if (teb->stack_sel) SELECTOR_FreeBlock( teb->stack_sel, 1 );
     SELECTOR_FreeBlock( teb->teb_sel, 1 );
-    if (teb->buffer) munmap( teb->buffer, teb->buffer_size );
+    if (teb->buffer) munmap( (void *)teb->buffer,
+                             (char *)(teb->buffer_info+1) - (char *)teb->buffer );
     if (teb->debug_info) HeapFree( GetProcessHeap(), 0, teb->debug_info );
     VirtualFree( teb->stack_base, 0, MEM_RELEASE );
 }

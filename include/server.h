@@ -22,7 +22,24 @@
 /* to generate the request/reply tracing functions */
 #define IN  /*nothing*/
 #define OUT /*nothing*/
+#define VARARG(name,func) /*nothing*/
 
+struct request_header
+{
+    IN  int            req;          /* request code */
+    IN  unsigned short fixed_size;   /* size of the fixed part of the request */
+    IN  unsigned short var_size;     /* size of the variable part of the request */
+    OUT unsigned int   error;        /* error result */
+};
+#define REQUEST_HEADER  struct request_header header
+
+
+/* placeholder structure for the maximum allowed request size */
+/* this is used to construct the generic_request union */
+struct request_max_size
+{
+    int pad[16]; /* the max request size is 16 ints */
+};
 
 /* a path name for server requests (Unicode) */
 typedef WCHAR path_t[MAX_PATH+1];
@@ -104,6 +121,7 @@ typedef struct
 /* Create a new process from the context of the parent */
 struct new_process_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          inherit_all;  /* inherit all handles from parent */
     IN  int          create_flags; /* creation flags */
     IN  int          start_flags;  /* flags from startup info */
@@ -120,6 +138,7 @@ struct new_process_request
 /* Wait for the new process to start */
 struct wait_process_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          pinherit;     /* process handle inherit flag */
     IN  int          tinherit;     /* thread handle inherit flag */
     IN  int          timeout;      /* wait timeout */
@@ -135,6 +154,7 @@ struct wait_process_request
 /* Create a new thread from the context of the parent */
 struct new_thread_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          suspend;      /* new thread should be suspended on creation */ 
     IN  int          inherit;      /* inherit flag */
     OUT void*        tid;          /* thread id */
@@ -145,6 +165,7 @@ struct new_thread_request
 /* Signal that we are finished booting on the client side */
 struct boot_done_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          debug_level;  /* new debug level */
 };
 
@@ -152,6 +173,7 @@ struct boot_done_request
 /* Initialize a process; called from the new process context */
 struct init_process_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  void*        ldt_copy;     /* addr of LDT copy */
     IN  void*        ldt_flags;    /* addr of LDT flags */
     IN  int          ppid;         /* parent Unix pid */
@@ -168,6 +190,7 @@ struct init_process_request
 /* Signal the end of the process initialization */
 struct init_process_done_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  void*        module;       /* main module base address */
     IN  void*        entry;        /* process entry point */
     IN  void*        name;         /* ptr to ptr to name (in process addr space) */
@@ -179,6 +202,7 @@ struct init_process_done_request
 /* Initialize a thread; called from the child after fork()/clone() */
 struct init_thread_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          unix_pid;     /* Unix pid of new thread */
     IN  void*        teb;          /* TEB of new thread (in thread address space) */
     IN  void*        entry;        /* thread entry point (in thread address space) */
@@ -190,6 +214,7 @@ struct init_thread_request
 /* created thread gets (without having to request it) */
 struct get_thread_buffer_request
 {
+    REQUEST_HEADER;                /* request header */
     OUT void*        pid;          /* process id of the new thread's process */
     OUT void*        tid;          /* thread id of the new thread */
     OUT int          boot;         /* is this the boot thread? */
@@ -200,6 +225,7 @@ struct get_thread_buffer_request
 /* Terminate a process */
 struct terminate_process_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* process handle to terminate */
     IN  int          exit_code;    /* process exit code */
     OUT int          self;         /* suicide? */
@@ -209,6 +235,7 @@ struct terminate_process_request
 /* Terminate a thread */
 struct terminate_thread_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* thread handle to terminate */
     IN  int          exit_code;    /* thread exit code */
     OUT int          self;         /* suicide? */
@@ -219,6 +246,7 @@ struct terminate_thread_request
 /* Retrieve information about a process */
 struct get_process_info_request
 {
+    REQUEST_HEADER;                    /* request header */
     IN  int          handle;           /* process handle */
     OUT void*        pid;              /* server process id */
     OUT int          debugged;         /* debugged? */
@@ -232,6 +260,7 @@ struct get_process_info_request
 /* Set a process informations */
 struct set_process_info_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* process handle */
     IN  int          mask;         /* setting mask (see below) */
     IN  int          priority;     /* priority class */
@@ -244,6 +273,7 @@ struct set_process_info_request
 /* Retrieve information about a thread */
 struct get_thread_info_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* thread handle */
     IN  void*        tid_in;       /* thread id (optional) */
     OUT void*        tid;          /* server thread id */
@@ -256,6 +286,7 @@ struct get_thread_info_request
 /* Set a thread informations */
 struct set_thread_info_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* thread handle */
     IN  int          mask;         /* setting mask (see below) */
     IN  int          priority;     /* priority class */
@@ -268,6 +299,7 @@ struct set_thread_info_request
 /* Suspend a thread */
 struct suspend_thread_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* thread handle */
     OUT int          count;        /* new suspend count */
 };
@@ -276,6 +308,7 @@ struct suspend_thread_request
 /* Resume a thread */
 struct resume_thread_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* thread handle */
     OUT int          count;        /* new suspend count */
 };
@@ -284,6 +317,7 @@ struct resume_thread_request
 /* Notify the server that a dll has been loaded */
 struct load_dll_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* file handle */
     IN  void*        base;         /* base address */
     IN  int          dbg_offset;   /* debug info offset */
@@ -295,6 +329,7 @@ struct load_dll_request
 /* Notify the server that a dll is being unloaded */
 struct unload_dll_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  void*        base;         /* base address */
 };
 
@@ -302,6 +337,7 @@ struct unload_dll_request
 /* Queue an APC for a thread */
 struct queue_apc_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* thread handle */
     IN  void*        func;         /* function to call */
     IN  void*        param;        /* param for function to call */
@@ -311,6 +347,7 @@ struct queue_apc_request
 /* Get next APC to call */
 struct get_apc_request
 {
+    REQUEST_HEADER;                /* request header */
     OUT void*        func;         /* function to call */
     OUT int          type;         /* function type */
     OUT int          nb_args;      /* number of arguments */
@@ -322,6 +359,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER };
 /* Close a handle for the current process */
 struct close_handle_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* handle to close */
 };
 
@@ -329,6 +367,7 @@ struct close_handle_request
 /* Get information about a handle */
 struct get_handle_info_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* handle we are interested in */
     OUT int          flags;        /* handle flags */
 };
@@ -337,6 +376,7 @@ struct get_handle_info_request
 /* Set a handle information */
 struct set_handle_info_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* handle we are interested in */
     IN  int          flags;        /* new handle flags */
     IN  int          mask;         /* mask for flags to set */
@@ -346,6 +386,7 @@ struct set_handle_info_request
 /* Duplicate a handle */
 struct dup_handle_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          src_process;  /* src process handle */
     IN  int          src_handle;   /* src handle to duplicate */
     IN  int          dst_process;  /* dst process handle */
@@ -362,6 +403,7 @@ struct dup_handle_request
 /* Open a handle to a process */
 struct open_process_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  void*        pid;          /* process id to open */
     IN  unsigned int access;       /* wanted access rights */
     IN  int          inherit;      /* inherit flag */
@@ -372,6 +414,7 @@ struct open_process_request
 /* Wait for handles */
 struct select_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          count;        /* handles count */
     IN  int          flags;        /* wait flags (see below) */
     IN  int          timeout;      /* timeout in ms */
@@ -386,6 +429,7 @@ struct select_request
 /* Create an event */
 struct create_event_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          manual_reset;  /* manual reset event */
     IN  int          initial_state; /* initial state of the event */
     IN  int          inherit;       /* inherit flag */
@@ -396,6 +440,7 @@ struct create_event_request
 /* Event operation */
 struct event_op_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int           handle;       /* handle to event */
     IN  int           op;           /* event operation (see below) */
 };
@@ -405,6 +450,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Open an event */
 struct open_event_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the event */
@@ -415,6 +461,7 @@ struct open_event_request
 /* Create a mutex */
 struct create_mutex_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          owned;         /* initially owned? */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the mutex */
@@ -425,6 +472,7 @@ struct create_mutex_request
 /* Release a mutex */
 struct release_mutex_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the mutex */
 };
 
@@ -432,6 +480,7 @@ struct release_mutex_request
 /* Open a mutex */
 struct open_mutex_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the mutex */
@@ -442,6 +491,7 @@ struct open_mutex_request
 /* Create a semaphore */
 struct create_semaphore_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  unsigned int initial;       /* initial count */
     IN  unsigned int max;           /* maximum count */
     IN  int          inherit;       /* inherit flag */
@@ -453,6 +503,7 @@ struct create_semaphore_request
 /* Release a semaphore */
 struct release_semaphore_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the semaphore */
     IN  unsigned int count;         /* count to add to semaphore */
     OUT unsigned int prev_count;    /* previous semaphore count */
@@ -462,6 +513,7 @@ struct release_semaphore_request
 /* Open a semaphore */
 struct open_semaphore_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the semaphore */
@@ -472,6 +524,7 @@ struct open_semaphore_request
 /* Create a file */
 struct create_file_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     IN  unsigned int sharing;       /* sharing flags */
@@ -485,6 +538,7 @@ struct create_file_request
 /* Allocate a file handle for a Unix fd */
 struct alloc_file_handle_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     OUT int          handle;        /* handle to the file */
 };
@@ -493,6 +547,7 @@ struct alloc_file_handle_request
 /* Get a Unix fd to read from a file */
 struct get_read_fd_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the file */
 };
 
@@ -500,6 +555,7 @@ struct get_read_fd_request
 /* Get a Unix fd to write to a file */
 struct get_write_fd_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the file */
 };
 
@@ -507,6 +563,7 @@ struct get_write_fd_request
 /* Set a file current position */
 struct set_file_pointer_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the file */
     IN  int          low;           /* position low word */
     IN  int          high;          /* position high word */
@@ -519,6 +576,7 @@ struct set_file_pointer_request
 /* Truncate (or extend) a file */
 struct truncate_file_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the file */
 };
 
@@ -526,6 +584,7 @@ struct truncate_file_request
 /* Set a file access and modification times */
 struct set_file_time_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the file */
     IN  time_t       access_time;   /* last access time */
     IN  time_t       write_time;    /* last write time */
@@ -535,6 +594,7 @@ struct set_file_time_request
 /* Flush a file buffers */
 struct flush_file_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the file */
 };
 
@@ -542,6 +602,7 @@ struct flush_file_request
 /* Get information about a file */
 struct get_file_info_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the file */
     OUT int          type;          /* file type */
     OUT int          attr;          /* file attributes */
@@ -559,6 +620,7 @@ struct get_file_info_request
 /* Lock a region of a file */
 struct lock_file_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the file */
     IN  unsigned int offset_low;    /* offset of start of lock */
     IN  unsigned int offset_high;   /* offset of start of lock */
@@ -570,6 +632,7 @@ struct lock_file_request
 /* Unlock a region of a file */
 struct unlock_file_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the file */
     IN  unsigned int offset_low;    /* offset of start of unlock */
     IN  unsigned int offset_high;   /* offset of start of unlock */
@@ -581,6 +644,7 @@ struct unlock_file_request
 /* Create an anonymous pipe */
 struct create_pipe_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle_read;   /* handle to the read-side of the pipe */
     OUT int          handle_write;  /* handle to the write-side of the pipe */
@@ -590,6 +654,7 @@ struct create_pipe_request
 /* Create a socket */
 struct create_socket_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     IN  int          family;        /* family, see socket manpage */
@@ -602,6 +667,7 @@ struct create_socket_request
 /* Accept a socket */
 struct accept_socket_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          lhandle;       /* handle to the listening socket */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
@@ -612,6 +678,7 @@ struct accept_socket_request
 /* Set socket event parameters */
 struct set_socket_event_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the socket */
     IN  unsigned int mask;          /* event mask */
     IN  int          event;         /* event object */
@@ -621,6 +688,7 @@ struct set_socket_event_request
 /* Get socket event parameters */
 struct get_socket_event_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the socket */
     IN  int          service;       /* clear pending? */
     IN  int          s_event;       /* "expected" event object */
@@ -635,6 +703,7 @@ struct get_socket_event_request
 /* Reenable pending socket events */
 struct enable_socket_event_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the socket */
     IN  unsigned int mask;          /* events to re-enable */
     IN  unsigned int sstate;        /* status bits to set */
@@ -645,6 +714,7 @@ struct enable_socket_event_request
 /* Allocate a console for the current process */
 struct alloc_console_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle_in;     /* handle to console input */
@@ -655,13 +725,14 @@ struct alloc_console_request
 /* Free the console of the current process */
 struct free_console_request
 {
-    IN  int dummy;
+    REQUEST_HEADER;                 /* request header */
 };
 
 
 /* Open a handle to the process console */
 struct open_console_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          output;        /* input or output? */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
@@ -672,6 +743,7 @@ struct open_console_request
 /* Set a console file descriptor */
 struct set_console_fd_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the console */
     IN  int          file_handle;   /* handle of file to use as file descriptor */
     IN  int          pid;           /* pid of xterm (hack) */
@@ -681,6 +753,7 @@ struct set_console_fd_request
 /* Get a console mode (input or output) */
 struct get_console_mode_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the console */
     OUT int          mode;          /* console mode */
 };
@@ -689,6 +762,7 @@ struct get_console_mode_request
 /* Set a console mode (input or output) */
 struct set_console_mode_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the console */
     IN  int          mode;          /* console mode */
 };
@@ -697,6 +771,7 @@ struct set_console_mode_request
 /* Set info about a console (output only) */
 struct set_console_info_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the console */
     IN  int          mask;          /* setting mask (see below) */
     IN  int          cursor_size;   /* size of cursor (percentage filled) */
@@ -709,6 +784,7 @@ struct set_console_info_request
 /* Get info about a console (output only) */
 struct get_console_info_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the console */
     OUT int          cursor_size;   /* size of cursor (percentage filled) */
     OUT int          cursor_visible;/* cursor visibility flag */
@@ -720,6 +796,7 @@ struct get_console_info_request
 /* Add input records to a console input queue */
 struct write_console_input_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the console input */
     IN  int          count;         /* number of input records */
     OUT int          written;       /* number of records written */
@@ -729,6 +806,7 @@ struct write_console_input_request
 /* Fetch input records from a console input queue */
 struct read_console_input_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the console input */
     IN  int          count;         /* max number of records to retrieve */
     IN  int          flush;         /* flush the retrieved records from the queue? */
@@ -740,6 +818,7 @@ struct read_console_input_request
 /* Create a change notification */
 struct create_change_notification_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          subtree;       /* watch all the subtree */
     IN  int          filter;        /* notification filter */
     OUT int          handle;        /* handle to the change notification */
@@ -749,6 +828,7 @@ struct create_change_notification_request
 /* Create a file mapping */
 struct create_mapping_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          size_high;     /* mapping size */
     IN  int          size_low;      /* mapping size */
     IN  int          protect;       /* protection flags (see below) */
@@ -771,6 +851,7 @@ struct create_mapping_request
 /* Open a mapping */
 struct open_mapping_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the mapping */
@@ -781,6 +862,7 @@ struct open_mapping_request
 /* Get information about a file mapping */
 struct get_mapping_info_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the mapping */
     OUT int          size_high;     /* mapping size */
     OUT int          size_low;      /* mapping size */
@@ -795,6 +877,7 @@ struct get_mapping_info_request
 /* Create a device */
 struct create_device_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     IN  int          id;            /* client private id */
@@ -805,6 +888,7 @@ struct create_device_request
 /* Create a snapshot */
 struct create_snapshot_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          inherit;       /* inherit flag */
     IN  int          flags;         /* snapshot flags (TH32CS_*) */
     IN  void*        pid;           /* process id */
@@ -815,6 +899,7 @@ struct create_snapshot_request
 /* Get the next process from a snapshot */
 struct next_process_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the snapshot */
     IN  int          reset;         /* reset snapshot position? */
     OUT int          count;         /* process usage count */
@@ -827,6 +912,7 @@ struct next_process_request
 /* Get the next thread from a snapshot */
 struct next_thread_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the snapshot */
     IN  int          reset;         /* reset snapshot position? */
     OUT int          count;         /* thread usage count */
@@ -840,6 +926,7 @@ struct next_thread_request
 /* Get the next module from a snapshot */
 struct next_module_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the snapshot */
     IN  int          reset;         /* reset snapshot position? */
     OUT void*        pid;           /* process id */
@@ -850,6 +937,7 @@ struct next_module_request
 /* Wait for a debug event */
 struct wait_debug_event_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int           timeout;     /* timeout in ms */
     OUT void*         pid;         /* process id */
     OUT void*         tid;         /* thread id */
@@ -860,6 +948,7 @@ struct wait_debug_event_request
 /* Send an exception event */
 struct exception_event_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  EXCEPTION_RECORD record;   /* exception record */
     IN  int              first;    /* first chance exception? */
     IN  CONTEXT          context;  /* thread context */
@@ -870,6 +959,7 @@ struct exception_event_request
 /* Send an output string to the debugger */
 struct output_debug_string_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  void*         string;      /* string to display (in debugged process address space) */
     IN  int           unicode;     /* is it Unicode? */
     IN  int           length;      /* string length */
@@ -879,6 +969,7 @@ struct output_debug_string_request
 /* Continue a debug event */
 struct continue_debug_event_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  void*        pid;          /* process id to continue */
     IN  void*        tid;          /* thread id to continue */
     IN  int          status;       /* continuation status */
@@ -888,6 +979,7 @@ struct continue_debug_event_request
 /* Start debugging an existing process */
 struct debug_process_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  void*        pid;          /* id of the process to debug */
 };
 
@@ -895,6 +987,7 @@ struct debug_process_request
 /* Read data from a process address space */
 struct read_process_memory_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* process handle */
     IN  void*        addr;         /* addr to read from (must be int-aligned) */
     IN  int          len;          /* number of ints to read */
@@ -905,6 +998,7 @@ struct read_process_memory_request
 /* Write data to a process address space */
 struct write_process_memory_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* process handle */
     IN  void*        addr;         /* addr to write to (must be int-aligned) */
     IN  int          len;          /* number of ints to write */
@@ -917,6 +1011,7 @@ struct write_process_memory_request
 /* Create a registry key */
 struct create_key_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          parent;       /* handle to the parent key */
     IN  unsigned int access;       /* desired access rights */
     IN  unsigned int options;      /* creation options */
@@ -931,6 +1026,7 @@ struct create_key_request
 /* Open a registry key */
 struct open_key_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          parent;       /* handle to the parent key */
     IN  unsigned int access;       /* desired access rights */
     OUT int          hkey;         /* handle to the open key */
@@ -941,6 +1037,7 @@ struct open_key_request
 /* Delete a registry key */
 struct delete_key_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* handle to the parent key */
     IN  path_t       name;         /* key name */
 };
@@ -949,6 +1046,7 @@ struct delete_key_request
 /* Close a registry key */
 struct close_key_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          hkey;          /* key to close */
 };
 
@@ -956,6 +1054,7 @@ struct close_key_request
 /* Enumerate registry subkeys */
 struct enum_key_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* handle to registry key */
     IN  int          index;        /* index of subkey */
     OUT time_t       modif;        /* last modification time */
@@ -967,6 +1066,7 @@ struct enum_key_request
 /* Query information about a registry key */
 struct query_key_info_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* handle to registry key */
     OUT int          subkeys;      /* number of subkeys */
     OUT int          max_subkey;   /* longest subkey name */
@@ -983,6 +1083,7 @@ struct query_key_info_request
 /* Set a value of a registry key */
 struct set_key_value_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* handle to registry key */
     IN  int          type;         /* value type */
     IN  unsigned int total;        /* total value len */
@@ -996,6 +1097,7 @@ struct set_key_value_request
 /* Retrieve the value of a registry key */
 struct get_key_value_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* handle to registry key */
     IN  unsigned int offset;       /* offset for getting data */
     OUT int          type;         /* value type */
@@ -1008,6 +1110,7 @@ struct get_key_value_request
 /* Enumerate a value of a registry key */
 struct enum_key_value_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* handle to registry key */
     IN  int          index;        /* value index */
     IN  unsigned int offset;       /* offset for getting data */
@@ -1021,6 +1124,7 @@ struct enum_key_value_request
 /* Delete a value of a registry key */
 struct delete_key_value_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* handle to registry key */
     IN  path_t       name;         /* value name */
 };
@@ -1029,6 +1133,7 @@ struct delete_key_value_request
 /* Load a registry branch from a file */
 struct load_registry_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* root key to load to */
     IN  int          file;         /* file to load from */
     IN  path_t       name;         /* subkey name */
@@ -1038,6 +1143,7 @@ struct load_registry_request
 /* Save a registry branch to a file */
 struct save_registry_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* key to save */
     IN  int          file;         /* file to save to */
 };
@@ -1046,6 +1152,7 @@ struct save_registry_request
 /* Save a registry branch at server exit */
 struct save_registry_atexit_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          hkey;         /* key to save */
     IN  char         file[1];      /* file to save to */
 };
@@ -1054,6 +1161,7 @@ struct save_registry_atexit_request
 /* Set the current and saving level for the registry */
 struct set_registry_levels_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          current;      /* new current level */
     IN  int          saving;       /* new saving level */
     IN  int          period;       /* duration between periodic saves (milliseconds) */
@@ -1063,6 +1171,7 @@ struct set_registry_levels_request
 /* Create a waitable timer */
 struct create_timer_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          inherit;       /* inherit flag */
     IN  int          manual;        /* manual reset */
     OUT int          handle;        /* handle to the timer */
@@ -1073,6 +1182,7 @@ struct create_timer_request
 /* Open a waitable timer */
 struct open_timer_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  unsigned int access;        /* wanted access rights */
     IN  int          inherit;       /* inherit flag */
     OUT int          handle;        /* handle to the timer */
@@ -1082,6 +1192,7 @@ struct open_timer_request
 /* Set a waitable timer */
 struct set_timer_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the timer */
     IN  int          sec;           /* next expiration absolute time */
     IN  int          usec;          /* next expiration absolute time */
@@ -1093,6 +1204,7 @@ struct set_timer_request
 /* Cancel a waitable timer */
 struct cancel_timer_request
 {
+    REQUEST_HEADER;                 /* request header */
     IN  int          handle;        /* handle to the timer */
 };
 
@@ -1100,6 +1212,7 @@ struct cancel_timer_request
 /* Retrieve the current context of a thread */
 struct get_thread_context_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* thread handle */
     IN  unsigned int flags;        /* context flags */
     OUT CONTEXT      context;      /* thread context */
@@ -1109,6 +1222,7 @@ struct get_thread_context_request
 /* Set the current context of a thread */
 struct set_thread_context_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* thread handle */
     IN  unsigned int flags;        /* context flags */
     IN  CONTEXT      context;      /* thread context */
@@ -1118,6 +1232,7 @@ struct set_thread_context_request
 /* Fetch a selector entry for a thread */
 struct get_selector_entry_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int           handle;      /* thread handle */
     IN  int           entry;       /* LDT entry */
     OUT unsigned int  base;        /* selector base */
@@ -1129,6 +1244,7 @@ struct get_selector_entry_request
 /* Add an atom */
 struct add_atom_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int           local;       /* is atom in local process table? */
     OUT int           atom;        /* resulting atom */
     IN  WCHAR         name[1];     /* atom name */
@@ -1138,6 +1254,7 @@ struct add_atom_request
 /* Delete an atom */
 struct delete_atom_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int           atom;        /* atom handle */
     IN  int           local;       /* is atom in local process table? */
 };
@@ -1146,6 +1263,7 @@ struct delete_atom_request
 /* Find an atom */
 struct find_atom_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          local;        /* is atom in local process table? */
     OUT int          atom;         /* atom handle */
     IN  WCHAR        name[1];      /* atom name */
@@ -1155,6 +1273,7 @@ struct find_atom_request
 /* Get an atom name */
 struct get_atom_name_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          atom;         /* atom handle */
     IN  int          local;        /* is atom in local process table? */
     OUT int          count;        /* atom lock count */
@@ -1165,6 +1284,7 @@ struct get_atom_name_request
 /* Init the process atom table */
 struct init_atom_table_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          entries;      /* number of entries */
 };
 
@@ -1172,12 +1292,14 @@ struct init_atom_table_request
 /* Get the message queue of the current thread */
 struct get_msg_queue_request
 {
+    REQUEST_HEADER;                /* request header */
     OUT int          handle;       /* handle to the queue */
 };
 
 /* Wake up a message queue */
 struct wake_queue_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* handle to the queue */
     IN  unsigned int bits;         /* wake bits */
 };
@@ -1185,6 +1307,7 @@ struct wake_queue_request
 /* Wait for a process to start waiting on input */
 struct wait_input_idle_request
 {
+    REQUEST_HEADER;                /* request header */
     IN  int          handle;       /* process handle */
     IN  int          timeout;      /* timeout */
     OUT int          event;        /* handle to idle event */
@@ -1306,11 +1429,133 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 17
+union generic_request
+{
+    struct request_max_size max_size;
+    struct request_header header;
+    struct new_process_request new_process;
+    struct wait_process_request wait_process;
+    struct new_thread_request new_thread;
+    struct boot_done_request boot_done;
+    struct init_process_request init_process;
+    struct init_process_done_request init_process_done;
+    struct init_thread_request init_thread;
+    struct get_thread_buffer_request get_thread_buffer;
+    struct terminate_process_request terminate_process;
+    struct terminate_thread_request terminate_thread;
+    struct get_process_info_request get_process_info;
+    struct set_process_info_request set_process_info;
+    struct get_thread_info_request get_thread_info;
+    struct set_thread_info_request set_thread_info;
+    struct suspend_thread_request suspend_thread;
+    struct resume_thread_request resume_thread;
+    struct load_dll_request load_dll;
+    struct unload_dll_request unload_dll;
+    struct queue_apc_request queue_apc;
+    struct get_apc_request get_apc;
+    struct close_handle_request close_handle;
+    struct get_handle_info_request get_handle_info;
+    struct set_handle_info_request set_handle_info;
+    struct dup_handle_request dup_handle;
+    struct open_process_request open_process;
+    struct select_request select;
+    struct create_event_request create_event;
+    struct event_op_request event_op;
+    struct open_event_request open_event;
+    struct create_mutex_request create_mutex;
+    struct release_mutex_request release_mutex;
+    struct open_mutex_request open_mutex;
+    struct create_semaphore_request create_semaphore;
+    struct release_semaphore_request release_semaphore;
+    struct open_semaphore_request open_semaphore;
+    struct create_file_request create_file;
+    struct alloc_file_handle_request alloc_file_handle;
+    struct get_read_fd_request get_read_fd;
+    struct get_write_fd_request get_write_fd;
+    struct set_file_pointer_request set_file_pointer;
+    struct truncate_file_request truncate_file;
+    struct set_file_time_request set_file_time;
+    struct flush_file_request flush_file;
+    struct get_file_info_request get_file_info;
+    struct lock_file_request lock_file;
+    struct unlock_file_request unlock_file;
+    struct create_pipe_request create_pipe;
+    struct create_socket_request create_socket;
+    struct accept_socket_request accept_socket;
+    struct set_socket_event_request set_socket_event;
+    struct get_socket_event_request get_socket_event;
+    struct enable_socket_event_request enable_socket_event;
+    struct alloc_console_request alloc_console;
+    struct free_console_request free_console;
+    struct open_console_request open_console;
+    struct set_console_fd_request set_console_fd;
+    struct get_console_mode_request get_console_mode;
+    struct set_console_mode_request set_console_mode;
+    struct set_console_info_request set_console_info;
+    struct get_console_info_request get_console_info;
+    struct write_console_input_request write_console_input;
+    struct read_console_input_request read_console_input;
+    struct create_change_notification_request create_change_notification;
+    struct create_mapping_request create_mapping;
+    struct open_mapping_request open_mapping;
+    struct get_mapping_info_request get_mapping_info;
+    struct create_device_request create_device;
+    struct create_snapshot_request create_snapshot;
+    struct next_process_request next_process;
+    struct next_thread_request next_thread;
+    struct next_module_request next_module;
+    struct wait_debug_event_request wait_debug_event;
+    struct exception_event_request exception_event;
+    struct output_debug_string_request output_debug_string;
+    struct continue_debug_event_request continue_debug_event;
+    struct debug_process_request debug_process;
+    struct read_process_memory_request read_process_memory;
+    struct write_process_memory_request write_process_memory;
+    struct create_key_request create_key;
+    struct open_key_request open_key;
+    struct delete_key_request delete_key;
+    struct close_key_request close_key;
+    struct enum_key_request enum_key;
+    struct query_key_info_request query_key_info;
+    struct set_key_value_request set_key_value;
+    struct get_key_value_request get_key_value;
+    struct enum_key_value_request enum_key_value;
+    struct delete_key_value_request delete_key_value;
+    struct load_registry_request load_registry;
+    struct save_registry_request save_registry;
+    struct save_registry_atexit_request save_registry_atexit;
+    struct set_registry_levels_request set_registry_levels;
+    struct create_timer_request create_timer;
+    struct open_timer_request open_timer;
+    struct set_timer_request set_timer;
+    struct cancel_timer_request cancel_timer;
+    struct get_thread_context_request get_thread_context;
+    struct set_thread_context_request set_thread_context;
+    struct get_selector_entry_request get_selector_entry;
+    struct add_atom_request add_atom;
+    struct delete_atom_request delete_atom;
+    struct find_atom_request find_atom;
+    struct get_atom_name_request get_atom_name;
+    struct init_atom_table_request init_atom_table;
+    struct get_msg_queue_request get_msg_queue;
+    struct wake_queue_request wake_queue;
+    struct wait_input_idle_request wait_input_idle;
+};
+
+#define SERVER_PROTOCOL_VERSION 18
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
 
+#undef REQUEST_HEADER
+#undef VARARG
+
+/* format of the server buffer */
+struct server_buffer_info
+{
+    volatile unsigned int cur_req;    /* offset of the current request */
+    volatile unsigned int cur_pos;    /* first available position in buffer */
+};
 
 /* client-side functions */
 
@@ -1318,12 +1563,14 @@ enum request
 
 #include "thread.h"
 #include "ntddk.h"
+#include "wine/exception.h"
 
 /* client communication functions */
 
 extern unsigned int server_call_noerr( enum request req );
 extern unsigned int server_call_fd( enum request req, int fd_out, int *fd_in );
 extern void server_protocol_error( const char *err, ... ) WINE_NORETURN;
+extern void *server_alloc_req( size_t fixed_size, size_t var_size );
 extern const char *get_config_dir(void);
 
 /* get a pointer to the request buffer */
@@ -1335,7 +1582,7 @@ static inline void WINE_UNUSED *get_req_buffer(void)
 /* maximum remaining size in the server buffer */
 static inline int WINE_UNUSED server_remaining( const void *ptr )
 {
-    return (char *)NtCurrentTeb()->buffer + NtCurrentTeb()->buffer_size - (char *)ptr;
+    return (char *)NtCurrentTeb()->buffer_info - (char *)ptr;
 }
 
 /* do a server call and set the last error code */
@@ -1351,7 +1598,7 @@ static inline void server_strcpyW( WCHAR *dst, const WCHAR *src )
 {
     if (src)
     {
-        WCHAR *end = (WCHAR *)((char *)NtCurrentTeb()->buffer + NtCurrentTeb()->buffer_size) - 1;
+        WCHAR *end = (WCHAR *)NtCurrentTeb()->buffer_info - 1;
         while ((dst < end) && *src) *dst++ = *src++;
     }
     *dst = 0;
@@ -1362,11 +1609,43 @@ static inline void server_strcpyAtoW( WCHAR *dst, const char *src )
 {
     if (src)
     {
-        WCHAR *end = (WCHAR *)((char *)NtCurrentTeb()->buffer + NtCurrentTeb()->buffer_size) - 1;
+        WCHAR *end = (WCHAR *)NtCurrentTeb()->buffer_info - 1;
         while ((dst < end) && *src) *dst++ = (WCHAR)(unsigned char)*src++;
     }
     *dst = 0;
 }
+
+/* get a pointer to the variable part of the request */
+inline static void *server_data_ptr( void *req )
+{
+    return (union generic_request *)req + 1;
+}
+
+
+/* exception support for server calls */
+
+extern DWORD server_exception_handler( PEXCEPTION_RECORD record, EXCEPTION_FRAME *frame,
+                                       CONTEXT *context, EXCEPTION_FRAME **pdispatcher );
+
+struct __server_exception_frame
+{
+    EXCEPTION_FRAME           frame;
+    struct server_buffer_info info;  /* saved buffer information */
+};
+
+#define SERVER_START_REQ \
+    do { \
+        struct __server_exception_frame __f; \
+        __f.frame.Handler = server_exception_handler; \
+        __f.info = *NtCurrentTeb()->buffer_info; \
+        __wine_push_frame( &__f.frame ); \
+        do {
+
+#define SERVER_END_REQ \
+        } while(0); \
+        *NtCurrentTeb()->buffer_info = __f.info; \
+        __wine_pop_frame( &__f.frame ); \
+    } while(0);
 
 extern int CLIENT_InitServer(void);
 extern int CLIENT_BootDone( int debug_level );

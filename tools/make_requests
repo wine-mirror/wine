@@ -9,7 +9,6 @@
 %formats =
 (
     "int"           => "%d",
-    "long"          => "%ld",
     "char"          => "%c",
     "unsigned char" => "%02x",
     "unsigned int"  => "%08x",
@@ -70,8 +69,13 @@ my @server_lines = ();
 
 push @server_lines, "enum request\n{\n";
 foreach $req (@requests) { push @server_lines, "    REQ_\U$req,\n"; }
-push @server_lines, "    REQ_NB_REQUESTS\n};\n";
-push @server_lines, "\n#define SERVER_PROTOCOL_VERSION $protocol\n";
+push @server_lines, "    REQ_NB_REQUESTS\n};\n\n";
+push @server_lines, "union generic_request\n{\n";
+push @server_lines, "    struct request_max_size max_size;\n";
+push @server_lines, "    struct request_header header;\n";
+foreach $req (@requests) { push @server_lines, "    struct ${req}_request $req;\n"; }
+push @server_lines, "};\n\n";
+push @server_lines, "#define SERVER_PROTOCOL_VERSION $protocol\n";
 
 REPLACE_IN_FILE( "include/server.h", @server_lines );
 
@@ -98,6 +102,7 @@ sub DO_REQUEST
     my $name = shift;
     my @in_struct = ();
     my @out_struct = ();
+    my $got_header = 0;
     while (<SERVER>)
     {
 	my ($dir, $type, $var);
@@ -105,14 +110,34 @@ sub DO_REQUEST
         next if /^{$/;
 	s!/\*.*\*/!!g;
 	next if /^\s*$/;
-	/^\s*(IN|OUT)\s*(\w+\**(\s+\w+\**)*)\s+(\w+)(\[[1]\])?;/ or die "Unrecognized syntax $_";
-	$dir = $1;
-	$type = $2 . ($5 || "");
-	$var = $4;
-	die "Unrecognized type $type" unless (defined($formats{$type}) || $5);
+        if (/REQUEST_HEADER/)
+        {
+            die "Duplicated header" if $got_header;
+            die "Header must be first" if ($#in_struct != -1 || $#out_struct != -1);
+            $got_header++;
+            next;
+        }
+        if (/^\s*(IN|OUT)\s*VARARG\((\w+),(\w+)\)/)
+        {
+            $dir = $1;
+            $var = $2;
+            $type = "&" . $3;
+        }
+	elsif (/^\s*(IN|OUT)\s*(\w+\**(\s+\w+\**)*)\s+(\w+)(\[[1]\])?;/)
+        {
+            $dir = $1;
+            $type = $2 . ($5 || "");
+            $var = $4;
+            die "Unrecognized type $type" unless (defined($formats{$type}) || $5);
+        }
+        else
+        {
+            die "Unrecognized syntax $_";
+        }
 	if ($dir =~ /IN/) { push @in_struct, $type, $var; }
 	if ($dir =~ /OUT/) { push @out_struct, $type, $var; }
     }
+    die "Missing header" unless $got_header;
     push @requests, $name;
     &DO_DUMP_FUNC( $name, "request", @in_struct);
     if ($#out_struct >= 0)

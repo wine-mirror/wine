@@ -129,10 +129,13 @@ void fatal_perror( const char *err, ... )
 }
 
 /* call a request handler */
-static inline void call_req_handler( struct thread *thread, enum request req )
+static inline void call_req_handler( struct thread *thread )
 {
+    enum request req;
     current = thread;
     clear_error();
+
+    req = ((struct request_header *)current->buffer)->req;
 
     if (debug_level) trace_request( req );
 
@@ -165,7 +168,7 @@ void send_reply( struct thread *thread )
 void read_request( struct thread *thread )
 {
     int ret;
-    enum request req;
+    char dummy[1];
 
 #ifdef HAVE_MSGHDR_ACCRIGHTS
     msghdr.msg_accrightslen = sizeof(int);
@@ -178,25 +181,18 @@ void read_request( struct thread *thread )
 
     assert( thread->pass_fd == -1 );
 
-    myiovec.iov_base = (void *)&req;
-    myiovec.iov_len  = sizeof(req);
+    myiovec.iov_base = dummy;
+    myiovec.iov_len  = 1;
 
     ret = recvmsg( thread->obj.fd, &msghdr, 0 );
 #ifndef HAVE_MSGHDR_ACCRIGHTS
     thread->pass_fd = cmsg.fd;
 #endif
 
-    if (ret == sizeof(req))
+    if (ret > 0)
     {
-        call_req_handler( thread, req );
+        call_req_handler( thread );
         thread->pass_fd = -1;
-        return;
-    }
-    if (ret == -1)
-    {
-        perror("recvmsg");
-        thread->exit_code = 1;
-        kill_thread( thread, 1 );
         return;
     }
     if (!ret)  /* closed pipe */
@@ -204,17 +200,23 @@ void read_request( struct thread *thread )
         kill_thread( thread, 0 );
         return;
     }
-    fatal_protocol_error( thread, "partial message received %d/%d\n", ret, sizeof(req) );
+    perror("recvmsg");
+    thread->exit_code = 1;
+    kill_thread( thread, 1 );
 }
 
 /* send a message to a client that is ready to receive something */
 int write_request( struct thread *thread )
 {
     int ret;
+    struct request_header *header = thread->buffer;
+
+    header->error = thread->error;
 
     if (thread->pass_fd == -1)
     {
-        ret = write( thread->obj.fd, &thread->error, sizeof(thread->error) );
+        /* write a single byte; the value is ignored anyway */
+        ret = write( thread->obj.fd, header, 1 );
     }
     else  /* we have an fd to send */
     {
@@ -227,37 +229,28 @@ int write_request( struct thread *thread )
         cmsg.fd = thread->pass_fd;
 #endif  /* HAVE_MSGHDR_ACCRIGHTS */
 
-        myiovec.iov_base = (void *)&thread->error;
-        myiovec.iov_len  = sizeof(thread->error);
+        myiovec.iov_base = (void *)header;
+        myiovec.iov_len  = 1;
 
         ret = sendmsg( thread->obj.fd, &msghdr, 0 );
         close( thread->pass_fd );
         thread->pass_fd = -1;
     }
-    if (ret == sizeof(thread->error))
+    if (ret > 0)
     {
         set_select_events( &thread->obj, POLLIN );
         return 1;
     }
-    if (ret == -1)
+    if (errno == EWOULDBLOCK) return 0;  /* not a fatal error */
+    if (errno == EPIPE)
     {
-        if (errno == EWOULDBLOCK) return 0;  /* not a fatal error */
-        if (errno == EPIPE)
-        {
-            kill_thread( thread, 0 );  /* normal death */
-        }
-        else
-        {
-            perror("sendmsg");
-            thread->exit_code = 1;
-            kill_thread( thread, 1 );
-        }
+        kill_thread( thread, 0 );  /* normal death */
     }
     else
     {
+        perror("sendmsg");
         thread->exit_code = 1;
         kill_thread( thread, 1 );
-        fprintf( stderr, "Partial message sent %d/%d\n", ret, sizeof(thread->error) );
     }
     return -1;
 }
