@@ -21,6 +21,8 @@
 #ifndef __WINE_SHLWAPI_H
 #define __WINE_SHLWAPI_H
 
+#include "objbase.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
@@ -234,6 +236,30 @@ typedef enum
 {
     ASSOCENUM_NONE
 } ASSOCENUM;
+
+typedef struct IQueryAssociations IQueryAssociations,*LPQUERYASSOCIATIONS;
+
+#define ICOM_INTERFACE IQueryAssociations
+#define IQueryAssociations_METHODS \
+    ICOM_METHOD4 (HRESULT, Init, ASSOCF, flags, LPCWSTR, pszAssoc, HKEY, hkProgid, HWND, hwnd) \
+    ICOM_METHOD5 (HRESULT, GetString, ASSOCF, flags, ASSOCSTR, str, LPCWSTR, pszExtra, LPWSTR, pszOut, DWORD*, pcchOut) \
+    ICOM_METHOD4 (HRESULT, GetKey, ASSOCF, flags, ASSOCKEY, key, LPCWSTR, pszExtra, HKEY*, phkeyOut) \
+    ICOM_METHOD5 (HRESULT, GetData, ASSOCF, flags, ASSOCDATA, data, LPCWSTR, pszExtra, LPVOID, pvOut, DWORD*, pcbOut) \
+    ICOM_METHOD5 (HRESULT, GetEnum, ASSOCF, flags, ASSOCENUM, assocenum, LPCWSTR, pszExtra, REFIID, riid, LPVOID*, ppvOut)
+#define IQueryAssociations_IMETHODS \
+        IUnknown_IMETHODS \
+        IQueryAssociations_METHODS
+ICOM_DEFINE(IQueryAssociations,IUnknown)
+#undef ICOM_INTERFACE
+
+#define IQueryAssociations_QueryInterface(p,a,b)   ICOM_CALL2(QueryInterface,p,a,b)
+#define IQueryAssociations_AddRef(p)               ICOM_CALL(AddRef,p)
+#define IQueryAssociations_Release(p)              ICOM_CALL(Release,p)
+#define IQueryAssociations_Init(p,a,b,c,d)         ICOM_CALL4(Init,p,a,b,c,d)
+#define IQueryAssociations_GetString(p,a,b,c,d,e)  ICOM_CALL5(GetString,p,a,b,c,d,e)
+#define IQueryAssociations_GetKey(p,a,b,c,d)       ICOM_CALL4(GetKey,p,a,b,c,d)
+#define IQueryAssociations_GetData(p,a,b,c,d,e)    ICOM_CALL5(GetData,p,a,b,c,d,e)
+#define IQueryAssociations_GetEnum(p,a,b,c,d,e)    ICOM_CALL5(GetEnum,p,a,b,c,d,e)
 
 HRESULT WINAPI AssocCreate(CLSID,REFIID,LPVOID*);
 

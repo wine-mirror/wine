@@ -168,7 +168,6 @@ INSTALLED_INCLUDES = \
 	wine/obj_picture.h \
 	wine/obj_property.h \
 	wine/obj_propertystorage.h \
-	wine/obj_queryassociations.h \
 	wine/obj_serviceprovider.h \
 	wine/obj_shellbrowser.h \
 	wine/obj_shellextinit.h \
