@@ -1339,7 +1339,9 @@ void DEBUG_InfoSymbols(const char* str)
             {
                 if (num_used_array == num_alloc_array)
                 {
-                    array = HeapReAlloc(GetProcessHeap(), 0, array, sizeof(*array) * (num_alloc_array += 32));
+		    int size = sizeof(*array) * (num_alloc_array += 32);
+		    if (!array) array = HeapAlloc(GetProcessHeap(), 0, size);
+                    else array = HeapReAlloc(GetProcessHeap(), 0, array, size);
                     if (!array) return;
                 }
                 array[num_used_array++] = nh;

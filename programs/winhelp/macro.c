@@ -832,6 +832,7 @@ void MACRO_RegisterRoutine(LPCSTR dll, LPCSTR proc, LPCSTR args)
 {
     HANDLE      hLib;
     void        (*fn)();
+    int         size;
 
     WINE_TRACE("(\"%s\", \"%s\", \"%s\")\n", dll, proc, args);
 
@@ -849,9 +850,9 @@ void MACRO_RegisterRoutine(LPCSTR dll, LPCSTR proc, LPCSTR args)
     }
 
     /* FIXME: the library will not be unloaded until exit of program */
-
-    MACRO_Loaded = HeapReAlloc(GetProcessHeap(), 0, MACRO_Loaded, 
-                               ++MACRO_NumLoaded * sizeof(struct MacroDesc));
+    size = ++MACRO_NumLoaded * sizeof(struct MacroDesc);
+    if (!MACRO_Loaded) MACRO_Loaded = HeapAlloc(GetProcessHeap(), 0, size);
+    else MACRO_Loaded = HeapReAlloc(GetProcessHeap(), 0, MACRO_Loaded, size);
     MACRO_Loaded[MACRO_NumLoaded - 1].name      = strdup(proc); /* FIXME */
     MACRO_Loaded[MACRO_NumLoaded - 1].alias     = NULL;
     MACRO_Loaded[MACRO_NumLoaded - 1].isBool    = 0;

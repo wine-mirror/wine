@@ -133,7 +133,8 @@ HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLSID rcls
 	TRACE("(%p, %s, %p, %p, %p)\n", This, debugstr_guid(rclsidPort), pPortParams, ppPort, pUnkOuter);
 	for (i = 0; S_FALSE != IDirectMusic8Impl_EnumPort(iface, i, &PortCaps); i++) {				
 		if (IsEqualCLSID (rclsidPort, &PortCaps.guidPort)) {		
-			This->ppPorts = HeapReAlloc(GetProcessHeap(), 0, This->ppPorts, sizeof(LPDIRECTMUSICPORT) * This->nrofports);
+			if(!This->ppPorts) This->ppPorts = HeapAlloc(GetProcessHeap(), 0, sizeof(LPDIRECTMUSICPORT) * This->nrofports);
+			else This->ppPorts = HeapReAlloc(GetProcessHeap(), 0, This->ppPorts, sizeof(LPDIRECTMUSICPORT) * This->nrofports);
 			if (NULL == This->ppPorts[This->nrofports]) {
 				*ppPort = (LPDIRECTMUSICPORT)NULL;
 				return E_OUTOFMEMORY;
