@@ -1,6 +1,5 @@
 %long
 
-DWORD
 HRESULT
 
 %ptr

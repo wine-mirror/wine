@@ -16,6 +16,12 @@ use config qw(
 use output qw($output);
 use winapi_extract_options qw($options);
 
+if($options->progress) {
+    $output->enable_progress;
+} else {
+    $output->disable_progress;
+}
+
 use function;
 use type;
 use winapi_function;
@@ -144,9 +150,7 @@ foreach my $file (@c_files) {
     my %functions;
 
     $progress_current++;
-    if($options->progress) {
-	$output->progress("$file: file $progress_current of $progress_max");
-    }
+    $output->progress("$file (file $progress_current of $progress_max)");
 
     my $create_function = sub {
 	if($options->stub_statistics) {
@@ -159,18 +163,19 @@ foreach my $file (@c_files) {
     my $found_function = sub {
 	my $function = shift;
 
+	my $internal_name = $function->internal_name;
+	$functions{$internal_name} = $function;
+	
+	$output->progress("$file (file $progress_current of $progress_max): $internal_name");
+	$output->prefix_callback(sub { return $function->prefix; });
+
 	my $documentation_line = $function->documentation_line;
 	my $documentation = $function->documentation;
 	my $function_line = $function->function_line;
 	my $linkage = $function->linkage;
 	my $return_type = $function->return_type;
 	my $calling_convention = $function->calling_convention;
-	my $internal_name = $function->internal_name;
 	my $statements = $function->statements;
-
-	$functions{$internal_name} = $function;
-
-	$output->prefix_callback(sub { return $function->prefix; });
 
 	if($options->spec_files) {
 	    documentation_specifications($function);

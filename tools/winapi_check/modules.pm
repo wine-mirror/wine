@@ -70,9 +70,7 @@ sub new {
 
     my $module_file = "$winapi_check_dir/modules.dat";
 
-    if($options->progress) {
-	$output->progress("modules.dat");
-    }
+    $output->progress("modules.dat");
 
     my %spec_file_found;
     my $allowed_dir;

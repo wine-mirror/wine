@@ -105,9 +105,7 @@ sub parse_api_file {
     my $extension = 0;
     my $forbidden = 0;
 
-    if($options->progress) {
-	$output->lazy_progress("$file");
-    }
+    $output->lazy_progress("$file");
 
     open(IN, "< $wine_dir/$file") || die "$wine_dir/$file: $!\n";
     $/ = "\n";
@@ -217,9 +215,7 @@ sub parse_spec_file {
     my $module;
     my $module_file;
 
-    if($options->progress) {
-	$output->lazy_progress("$file");
-    }
+    $output->lazy_progress("$file");
 
     open(IN, "< $file") || die "$file: $!\n";
     $/ = "\n";

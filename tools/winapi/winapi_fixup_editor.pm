@@ -94,7 +94,7 @@ sub flush {
 
 	    my $line = $. - $lookahead_count;
 	    foreach my $action (@{$$triggers{$line}}) {
-		if($. < $action->{end_line}) {
+    		if($. < $action->{end_line}) {
 		    $lookahead = 1;
 		    next LINE;
 		}

@@ -36,9 +36,7 @@ sub new {
     $configure_in_file =~ s/^\.\///;
     $config_h_in_file =~ s/^\.\///;
 
-    if($options->progress) {
-	$output->progress("$api_file");
-    }
+    $output->progress("$api_file");
 
     open(IN, "< $api_file");
     local $/ = "\n";
@@ -51,9 +49,7 @@ sub new {
     }
     close(IN);
 
-    if($options->progress) {
-	$output->progress("$configure_in_file");
-    }
+    $output->progress("$configure_in_file");
 
     my $again = 0;
     open(IN, "< $configure_in_file");   
@@ -102,9 +98,7 @@ sub new {
     }
     close(IN);
 
-    if($options->progress) {
-	$output->progress("$config_h_in_file");
-    }
+    $output->progress("$config_h_in_file");
 
     open(IN, "< $config_h_in_file");
     local $/ = "\n";

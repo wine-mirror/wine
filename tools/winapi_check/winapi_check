@@ -26,6 +26,13 @@ use config qw(
 );
 use output qw($output);
 use winapi_check_options qw($options);
+
+if($options->progress) {
+    $output->enable_progress;
+} else {
+    $output->disable_progress;
+}
+
 use modules qw($modules);
 use nativeapi qw($nativeapi);
 use winapi qw($win16api $win32api @winapis);
@@ -50,9 +57,7 @@ my %include2info;
 
     foreach my $file (@files) {
 	$progress_current++;
-	if($options->progress) {
-	    $output->lazy_progress("$file: file $progress_current of $progress_max");
-	}
+	$output->lazy_progress("$file: file $progress_current of $progress_max");
 
 	my $file_dir = $file;
 	if(!($file_dir =~ s%(.*?)/[^/]+$%$1%)) {
@@ -128,9 +133,7 @@ if($options->headers) {
 	my %functions;
 	
 	$progress_current++;
-	if($options->progress) {
-	    $output->progress("$file: file $progress_current of $progress_max");
-	}
+	$output->progress("$file: file $progress_current of $progress_max");
 
 	my $create_function = sub {
 	    return 'winapi_function'->new;
@@ -139,11 +142,13 @@ if($options->headers) {
 	my $found_function = sub {
 	    my $function = shift;
 
+	    my $internal_name = $function->internal_name;
+
+	    $output->progress("$file (file $progress_current of $progress_max): $internal_name");
 	    $output->prefix_callback(sub { return $function->prefix; });
 
 	    my $function_line = $function->function_line;
 	    my $linkage = $function->linkage;
-	    my $internal_name = $function->internal_name;
 	    my $external_name = $function->external_name;
 	    my $statements = $function->statements;
 
@@ -200,9 +205,7 @@ foreach my $file (@c_files) {
     my $file_module32 = $modules->allowed_modules_in_file("$current_dir/$file");
 
     $progress_current++;
-    if($options->progress) {
-	$output->progress("$file: file $progress_current of $progress_max");
-    }
+    $output->progress("$file (file $progress_current of $progress_max)");
 
     my $file_dir = $file;
     if(!($file_dir =~ s/(.*?)\/[^\/]*$/$1/)) {
@@ -216,10 +219,11 @@ foreach my $file (@c_files) {
     my $found_function = sub {
 	my $function = shift;
 
-	$output->prefix_callback(sub { return $function->prefix; });
-
 	my $internal_name = $function->internal_name;
 	$functions{$internal_name} = $function;
+
+	$output->progress("$file (file $progress_current of $progress_max): $internal_name");
+	$output->prefix_callback(sub { return $function->prefix; });
 
 	my $declared_function = $declared_functions{$internal_name};
 

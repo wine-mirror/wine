@@ -162,8 +162,13 @@ sub prefix {
     my $prefix = \${$self->{PREFIX}};
     my $prefix_callback = \${$self->{PREFIX_CALLBACK}};
 
-    $$prefix = shift;
-    $$prefix_callback = undef;
+    my $new_prefix = shift;
+    if(defined($new_prefix)) {
+	$$prefix = $new_prefix;
+	$$prefix_callback = undef;
+    } else {
+	return $$prefix;
+    }
 }
 
 sub prefix_callback {

@@ -9,10 +9,19 @@ require Exporter;
 @EXPORT = qw();
 @EXPORT_OK = qw(&fixup_statements);
 
+use config qw($wine_dir);
 use options qw($options);
 use output qw($output);
 
 use c_parser;
+use winapi_module_user qw(
+    &get_message_result_kind
+    &get_message_wparam_kind
+    &get_message_lparam_kind
+);
+
+########################################################################
+# fixup_function_call
 
 sub fixup_function_call {
     my $name = shift;
@@ -21,36 +30,57 @@ sub fixup_function_call {
     return "$name(" . join(", ", @arguments) . ")";
 }
 
+########################################################################
+# _parse_makelong
+
 sub _parse_makelong {
-    my $value = shift;
+    local $_ = shift;
 
     my $low;
     my $high;
-    if($value =~ /^
-       (?:\(\w+\)\s*)?
-       MAKE(?:LONG|LPARAM|LRESULT|WPARAM)\s*
-       \(\s*(.*?)\s*,\s*(.*?)\s*\)$/sx)
+
+    my $name;
+    my @arguments;
+    my @argument_lines;
+    my @argument_columns;
+
+    my $parser = new c_parser;
+
+    my $line = 1;
+    my $column = 0;
+    if($parser->parse_c_function_call(\$_, \$line, \$column, \$name, \@arguments, \@argument_lines, \@argument_columns) &&
+       $name =~ /^MAKE(?:LONG|LPARAM|LRESULT|WPARAM)$/) 
     {
-	$low = $1;
-	$high = $2;
-    } elsif($value =~ /^(?:\(\w+\)\s*)?0L?$/) {
+	$low = $arguments[0];
+	$high = $arguments[1];
+    } elsif(/^(?:\(\w+\)\s*)?0L?$/) {
 	$low = "0";
 	$high = "0";
     } else {
-	$low = "($value) & 0xffff";
-	$high = "($value) << 16";
+	$low = "($_) & 0xffff";
+	$high = "($_) << 16";
     }
+
+    $low =~ s/^\s*(.*?)\s*$/$1/;
+    $high =~ s/^\s*(.*?)\s*$/$1/;
 
     return ($low, $high);
 }
 
-sub fixup_function_call_2_forward_wm_call {
+########################################################################
+# fixup_function_call_2_windowsx
+
+sub fixup_user_message_2_windowsx {
     my $name = shift;
     (my $hwnd, my $msg, my $wparam, my $lparam) = @{(shift)};
 
-    if($msg =~ /^(?:WM_BEGINDRAG|WM_ENTERMENULOOP|WM_EXITMENULOOP|WM_HELP|
-		  WM_ISACTIVEICON|WM_LBTRACKPOINT|WM_NEXTMENU)$/x) 
+    if($msg !~ /^WM_/) {
+	return undef;
+    } elsif($msg =~ /^(?:WM_BEGINDRAG|WM_ENTERMENULOOP|WM_EXITMENULOOP|WM_HELP|
+		       WM_ISACTIVEICON|WM_LBTRACKPOINT|WM_NEXTMENU)$/x) 
     {
+	return undef;
+    } elsif($msg =~ /^WM_(?:GET|SET)TEXT$/) {
 	return undef;
     }
 
@@ -62,8 +92,8 @@ sub fixup_function_call_2_forward_wm_call {
 	$suffix = "";
     }
 
-    $wparam =~ s/^\(WPARAM\)//;
-    $lparam =~ s/^\(LPARAM\)//;
+    $wparam =~ s/^\(WPARAM\)\s*//;
+    $lparam =~ s/^\(LPARAM\)\s*//;
 
     my @arguments;
     if(0) {
@@ -131,67 +161,161 @@ sub fixup_function_call_2_forward_wm_call {
     return "FORWARD_" . $msg . "(" . join(", ", @arguments) . ", $name)";
 }
 
+########################################################################
+# _fixup_user_message
+
+sub _get_messages {
+    local $_ = shift;
+
+    if(/^WM_\w+$/) {
+	return ($_)
+    } elsif(/^(.*?)\s*\?\s*(WM_\w+)\s*:\s*(WM_\w+)$/) {
+	return ($2, $3);
+    } elsif(/^\w+$/) {
+	return ();
+    } else {
+	$output->write("_fixup_user_message: '$_'\n");
+	exit 1;
+    }
+}
+
+########################################################################
+# _fixup_user_message
+
+sub _fixup_user_message {
+    my $name = shift;
+    (my $hwnd, my $msg, my $wparam, my $lparam) = @{(shift)};
+
+    my $modified = 0;
+
+    my $wkind;
+    my $lkind;
+    foreach my $msg (_get_messages($msg)) {
+	my $new_wkind = &get_message_wparam_kind($msg);
+	if(defined($wkind) && $new_wkind ne $wkind) {
+	    $output->write("messsages used together do not have the same type\n");
+	} else {
+	    $wkind = $new_wkind;
+	}
+
+	my $new_lkind = &get_message_lparam_kind($msg);
+	if(defined($lkind) && $new_lkind ne $lkind) {
+	    $output->write("messsages used together do not have the same type\n");
+	} else {
+	    $lkind = $new_lkind;
+	}
+    }
+
+    my @entries = (
+	[ \$wparam, $wkind, "W", "w" ],
+	[ \$lparam, $lkind, "L", "l" ]
+    );
+    foreach my $entry (@entries) {
+	(my $refparam, my $kind, my $upper, my $lower) = @$entry;
+
+	if(!defined($kind)) {
+	    if($msg =~ /^WM_/) {
+		$output->write("messsage $msg not defined\n");
+	    }
+	} elsif($kind eq "ptr") {
+	    if($$refparam =~ /^(\(${upper}PARAM\))?\s*($lower[pP]aram)$/) {
+		if(defined($1)) {
+		    $$refparam = $2;
+		    $modified = 1;
+		}
+	    } elsif($$refparam =~ /^(\(${upper}PARAM\))?\s*0$/) {
+	        $$refparam = "(${upper}PARAM) NULL";
+		$modified = 1;
+	    } elsif($$refparam !~ /^\(${upper}PARAM\)\s*/) {
+                $$refparam = "(${upper}PARAM) $$refparam";
+		$modified = 1;
+	    }
+	} elsif($kind eq "long") {
+	    if($$refparam =~ s/^\(${upper}PARAM\)\s*//) {
+		$modified = 1;
+	    }
+	}
+    }
+
+    if($modified) {
+	my @arguments = ($hwnd, $msg, $wparam, $lparam);
+	return "$name(" . join(", ", @arguments) . ")";
+    } else {
+	return undef;
+    }
+}
+
+########################################################################
+# fixup_statements
+
 sub fixup_statements {
     my $function = shift;
     my $editor = shift;
 
+    my $file = $function->file;
     my $linkage = $function->linkage;
-    my $internal_name = $function->internal_name;
+    my $name = $function->name;
     my $statements_line = $function->statements_line;
+    my $statements_column = $function->statements_column;
     my $statements = $function->statements;
-    
-    if(($linkage eq "extern" && !defined($statements)) ||
-       ($linkage eq "" && !defined($statements)))
-    {
+   
+    if(!defined($statements)) {
 	return;
     }
-    
-    if($options->statements_windowsx && defined($statements)) {
-	my $found_function_call = sub {
-	    my $begin_line = shift;
-	    my $begin_column = shift;
-	    my $end_line = shift;
-	    my $end_column = shift;
-	    my $name = shift;
-	    my $arguments = shift;
-	    
-	    foreach my $argument (@$arguments) {
-		$argument =~ s/^\s*(.*?)\s*$/$1/;
-	    }
 
-	    if($options->statements_windowsx &&
-	       $name =~ /^(?:DefWindowProc|SendMessage)[AW]$/ &&
-	       $$arguments[1] =~ /^WM_\w+$/) 
-	    {
-		fixup_replace(\&fixup_function_call_2_forward_wm_call, $editor,
-			      $begin_line, $begin_column, $end_line, $end_column,
-			      $name, $arguments);
-	    } elsif(0) {
-		$output->write("$begin_line.$begin_column-$end_line.$end_column: " .
-			       "$name(" . join(", ", @$arguments) . ")\n");
-	    }
-	};
+    if(0 && $statements_line > 490) {
+	$output->write("$statements_line: \\\n");
 	my $line = $statements_line;
-	my $column = 1;
-	
-	if(!&c_parser::parse_c_statements(\$statements, \$line, \$column, $found_function_call)) {
-	    $output->write("error: can't parse statements\n");
+	foreach my $statement (split(/\n/, $statements)) {
+	    $output->write("$line: $statement\n");
+	    $line++;
 	}
     }
-}
 
-sub fixup_replace {
-    my $function = shift;
-    my $editor = shift;
-    my $begin_line = shift;
-    my $begin_column = shift;
-    my $end_line = shift;
-    my $end_column = shift;
+    my $parser = new c_parser($file);
+    
+    my $found_function_call = sub {
+	my $begin_line = shift;
+	my $begin_column = shift;
+	my $end_line = shift;
+	my $end_column = shift;
+	my $name = shift;
+	my $arguments = shift;
+	
+	foreach my $argument (@$arguments) {
+	    $argument =~ s/^\s*(.*?)\s*$/$1/;
+	}
 
-    my $replace = &$function(@_);
+	my $fixup_function_call;
+	if($name =~ /^(?:DefWindowProc|SendMessage)[AW]$/)
+	{
+	    if($options->statements_windowsx) {
+		$fixup_function_call = \&fixup_user_message_2_windowsx;
+	    } else {
+		$fixup_function_call = \&_fixup_user_message;
+	    }
+	} 
 
-    if(defined($replace)) {
-	$editor->replace($begin_line, $begin_column, $end_line, $end_column, $replace);
+	if(defined($fixup_function_call)) {
+	    my $replace = &$fixup_function_call($name, $arguments);
+
+	    if(defined($replace)) {
+		$editor->replace($begin_line, $begin_column, $end_line, $end_column, $replace);
+	    }
+	}  elsif(0 || $options->debug) {
+	    $output->write("$begin_line.$begin_column-$end_line.$end_column: " .
+			   "$name(" . join(", ", @$arguments) . ")\n");
+	}
+
+	return 0;
+    };
+    
+    $parser->set_found_function_call_callback($found_function_call);
+    
+    my $line = $statements_line;
+    my $column = 0;	
+    if(!$parser->parse_c_statements(\$statements, \$line, \$column)) {
+	$output->write("error: can't parse statements\n");
     }
 }
 

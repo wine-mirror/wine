@@ -19,9 +19,14 @@ use config qw(
 use output qw($output);
 use winapi_fixup_options qw($options);
 
+if($options->progress) {
+    $output->enable_progress;
+} else {
+    $output->disable_progress;
+}
+
+use c_parser;
 use type;
-use winapi_function;
-use winapi_parser;
 
 use winapi_fixup_documentation qw(&fixup_documentation);
 use winapi_fixup_editor;
@@ -39,50 +44,109 @@ foreach my $file (@c_files) {
     my $editor = new winapi_fixup_editor($file);
 
     $progress_current++;
-    if($options->progress) {
-	$output->progress("$file (file $progress_current of $progress_max)");
-    }
+    $output->progress("$file (file $progress_current of $progress_max)");
+    $output->prefix("$file:");
 
-    my $create_function = sub {
-	return 'winapi_function'->new;
+    {
+	open(IN, "< $file");
+	local $/ = undef;
+	$_ = <IN>;
+	close(IN);
+    }
+    
+    my $parser = new c_parser($file);
+
+    my $found_preprocessor = sub {
+	my $begin_line = shift;
+	my $begin_column = shift;
+	my $preprocessor = shift;
+
+	# $output->write("$begin_line.$begin_column: preprocessor: $preprocessor\n");
+
+	return 1;
     };
 
+    $parser->set_found_preprocessor_callback($found_preprocessor);  
+
+    my $found_comment = sub {
+	my $begin_line = shift;
+	my $begin_column = shift;
+	my $comment = shift;
+
+	# $output->write("$begin_line.$begin_column: comment: $comment\n");
+
+	return 1;
+    };
+
+    $parser->set_found_comment_callback($found_comment);  
+
+    my $found_declaration = sub {
+	my $begin_line = shift;
+	my $begin_column = shift;
+	my $end_line = shift;
+	my $end_column = shift;
+	my $declaration = shift;
+
+	# $output->write("$begin_line.$begin_column-$end_line.$end_column: declaration: \\\n$declaration\n");
+
+	return 1;
+    };
+
+    $parser->set_found_declaration_callback($found_declaration);  
+
+    my $function;
+
     my $found_function = sub {
-	my $function = shift;
-
-	my $internal_name = $function->internal_name;
-	if($options->progress) {
-	    $output->progress("$file (file $progress_current of $progress_max): $internal_name");
-	}
-
-	$output->prefix_callback(sub { return $function->prefix; });
-
+	$function = shift;
+	
+	my $name = $function->name;
+	my $begin_line = $function->begin_line;
+	my $begin_column = $function->begin_column;
+	
+	$output->progress("$file (file $progress_current of $progress_max): $name");
+	$output->prefix("$file:$begin_line: function $name: ");
+	# $output->prefix_callback(sub { return $function->prefix; });
+	
 	if($options->documentation) {
-	    fixup_documentation($function, $editor);
+	    # fixup_documentation($function, $editor);
 	}
-
+	
 	if($options->statements) {
 	    fixup_statements($function, $editor);
 	}
+	
+	my $statements = $function->statements;
+	if(!defined($statements)) {
+	    $function = undef;
+	    $output->prefix("$file: ");
+	}
 
-	$output->prefix("");
+	return 0;
     };
+    
+    $parser->set_found_function_callback($found_function);
 
-    my $create_type = sub {
-	return 'type'->new;
-    };
-
-    my $found_type = sub {
+    my $found_variable = sub {
+	my $begin_line = shift;
+	my $begin_column = shift;
+	my $linkage = shift;
 	my $type = shift;
+	my $name = shift;
+
+	# $output->write("$begin_line.$begin_column: $linkage $type $name\n");
+	
+	return 1;
     };
 
-    my $found_preprocessor = sub {
-	my $directive = shift;
-	my $argument = shift;
-    };
+    $parser->set_found_variable_callback($found_variable);        
 
-    &winapi_parser::parse_c_file($file, $create_function, $found_function, $create_type, $found_type, $found_preprocessor);
+    my $line = 1;
+    my $column = 0;
+    if(!$parser->parse_c_file(\$_, \$line, \$column)) {
+	$output->write("can't parse file\n");
+    }
+
+    $output->prefix("");
 
     $editor->flush;
 }
-

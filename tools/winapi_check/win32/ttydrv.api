@@ -43,7 +43,7 @@ POINT *
 RECT *
 WINDOWPOS *
 struct tagCURSORICONINFO *
-struct tagWND *
+
 void *
 
 %str

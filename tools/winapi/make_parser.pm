@@ -51,9 +51,9 @@ sub error {
     }
 
     if(defined($tool)) {
-	$output->write("make_filter: $context: can't parse output: '$current'\n");
+	$output->write("$directory: $context: can't parse output: '$current'\n");
     } else {
-	$output->write("make_filter: $context: can't parse output: '$current'\n");
+	$output->write("$directory: $context: can't parse output: '$current'\n");
     }
     exit 1;
 }
@@ -133,8 +133,12 @@ sub line {
 	# Nothing
     } elsif($tool eq "gcc" && /^(?:In file included |\s*)from (.+?):(\d+)[,:]$/) {
 	# Nothing
-    } elsif($tool =~ /^gcc|ld$/ && s/^(.+?\.o(?:\(.*?\))?):\s*//) {
-	ld_output($1, $_)
+    } elsif($tool =~ /^gcc|ld$/ && s/^(.+?\.s?o)(?:\(.*?\))?:\s*//) {
+	$tool = "ld";
+	ld_output($1, $_);
+    } elsif($tool =~ /^gcc|ld$/ && s/^collect2:\s*//) {
+	$tool = "ld";
+	ld_output("collect2", $_);
     } elsif($tool eq "gcc" && s/^(.+?\.[chly]):\s*//) {
 	gcc_output($1, $_);
     } elsif($tool eq "winebuild" && s/^(.+?\.spec):\s*//) {
@@ -427,13 +431,13 @@ sub gcc_output {
 		# Nothing
 	    } elsif(/^((?:signed |unsigned )?(?:int|long)) format, (different type|\S+) arg \(arg (\d+)\)$/) {
 		my $type = $2;
-		if($type =~ /^
-		   HACCEL|HANDLE|HBITMAP|HBRUSH|HCALL|HCURSOR|HDC|HDRVR|HDESK|
-		   HGDIOBJ|HKL|HGLOBAL|HINSTANCE|HKEY|
+		if($type =~ /^(?:
+		   HACCEL|HACMDRIVER|HANDLE|HBITMAP|HBRUSH|HCALL|HCURSOR|HDC|HDRVR|HDESK|HDRAWDIB
+		   HGDIOBJ|HKL|HGLOBAL|HIMC|HINSTANCE|HKEY|HLOCAL|
 		   HMENU|HMIDISTRM|HMIDIIN|HMIDIOUT|HMIXER|HMIXEROBJ|HMMIO|HMODULE|
-		   HLINE|HPHONE|HPHONEAPP|
-		   HRASCONN|HRGN|HRSRC|HWAVEIN|HWAVEOUT|HWINSTA|HWND|WSAEVENT|
-		   handle_t|pointer$/x) 
+		   HLINE|HPEN|HPHONE|HPHONEAPP|
+		   HRASCONN|HRGN|HRSRC|HWAVEIN|HWAVEOUT|HWINSTA|HWND|
+		   SC_HANDLE|WSAEVENT|handle_t|pointer)$/x) 
 		{
 		    $supress = 1;
 		} else {
@@ -580,8 +584,14 @@ sub ld_output {
     $file = shift;
     local $_ = shift;
 
-    if(/^the use of \`(.+?)\' is dangerous, better use \`(.+?)\'$/) {
-	# nothing
+    if(0) {
+	# Nothing
+    } elsif(/^In function \`(.*?)\':$/) {
+	$function = $1;
+    } elsif(0 && /^the use of \`(.+?)\' is dangerous, better use \`(.+?)\'$/) {
+	# Nothing
+    } else {
+	$message = "$_";
     }
 }
 
