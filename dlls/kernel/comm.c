@@ -1435,9 +1435,23 @@ BOOL WINAPI TransmitCommChar(
     HANDLE hComm,      /* [in] The communication device in need of a command character. */
     CHAR   chTransmit) /* [in] The character to transmit. */
 {
-    	FIXME("(%x,'%c'), stub ! Use win32 handle!\n",hComm,chTransmit);
-	return TRUE;
+    BOOL r = FALSE;
+    int fd;
+
+    WARN("(%x,'%c') not perfect!\n",hComm,chTransmit);
+
+    fd = FILE_GetUnixHandle( hComm, GENERIC_READ );
+    if ( fd < 0 )
+        SetLastError ( ERROR_INVALID_PARAMETER );
+    else
+    {
+        r = (1 == write(fd, &chTransmit, 1));
+        close(fd);
+    }
+
+    return r;
 }
+
 
 /*****************************************************************************
  *	GetCommTimeouts		(KERNEL32.@)
