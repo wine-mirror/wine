@@ -329,7 +329,9 @@ static BOOL supportedFormat(LPWAVEFORMATEX wf)
     } else if (wf->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
         WAVEFORMATEXTENSIBLE 	* wfex = (WAVEFORMATEXTENSIBLE *)wf;
 
-        if (wf->cbSize == 22 && IsEqualGUID(&wfex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) {
+        if (wf->cbSize == 22 &&
+            (IsEqualGUID(&wfex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM) ||
+             IsEqualGUID(&wfex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))) {
             if (wf->nChannels>=1 && wf->nChannels<=6) {
                 if (wf->wBitsPerSample==wfex->Samples.wValidBitsPerSample) {
                     if (wf->wBitsPerSample==8||wf->wBitsPerSample==16||
@@ -340,7 +342,8 @@ static BOOL supportedFormat(LPWAVEFORMATEX wf)
                     WARN("wBitsPerSample != wValidBitsPerSample not supported yet\n");
             }
         } else
-            WARN("only KSDATAFORMAT_SUBTYPE_PCM supported\n");
+            WARN("only KSDATAFORMAT_SUBTYPE_PCM and KSDATAFORMAT_SUBTYPE_IEEE_FLOAT "
+                 "supported\n");
     } else if (wf->wFormatTag == WAVE_FORMAT_MULAW || wf->wFormatTag == WAVE_FORMAT_ALAW) {
         if (wf->wBitsPerSample==8)
             return TRUE;
@@ -1686,6 +1689,9 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
                  (wwo->format.Format.wBitsPerSample == 16) ? SND_PCM_FORMAT_S16_LE :
                  (wwo->format.Format.wBitsPerSample == 24) ? SND_PCM_FORMAT_S24_LE :
                  (wwo->format.Format.wBitsPerSample == 32) ? SND_PCM_FORMAT_S32_LE : -1;
+    } else if ((wwo->format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE) &&
+        IsEqualGUID(&wwo->format.SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)){
+        format = (wwo->format.Format.wBitsPerSample == 32) ? SND_PCM_FORMAT_FLOAT_LE : -1;
     } else if (wwo->format.Format.wFormatTag == WAVE_FORMAT_MULAW) {
         FIXME("unimplemented format: WAVE_FORMAT_MULAW\n");
         snd_pcm_close(pcm);
@@ -3171,6 +3177,9 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
                  (wwi->format.Format.wBitsPerSample == 16) ? SND_PCM_FORMAT_S16_LE :
                  (wwi->format.Format.wBitsPerSample == 24) ? SND_PCM_FORMAT_S24_LE :
                  (wwi->format.Format.wBitsPerSample == 32) ? SND_PCM_FORMAT_S32_LE : -1;
+    } else if ((wwi->format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE) &&
+        IsEqualGUID(&wwi->format.SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)){
+        format = (wwi->format.Format.wBitsPerSample == 32) ? SND_PCM_FORMAT_FLOAT_LE : -1;
     } else if (wwi->format.Format.wFormatTag == WAVE_FORMAT_MULAW) {
         FIXME("unimplemented format: WAVE_FORMAT_MULAW\n");
         snd_pcm_close(pcm);
