@@ -481,8 +481,8 @@ init	RPCRT4_LibMain
 @ stub I_RpcBindingInqWireIdForSnego
 @ stub I_RpcBindingIsClientLocal
 @ stub I_RpcBindingToStaticStringBindingW
-@ stdcall I_RpcBindingSetAsync(ptr ptr long) I_RpcBindingSetAsync # win9x
-# NT version of I_RpcBindingSetAsync has 2 arguments, not 3
+@ stdcall I_RpcBindingSetAsync(ptr ptr) I_RpcBindingSetAsync # winnt
+# 9x version of I_RpcBindingSetAsync has 3 arguments, not 2
 @ stub I_RpcClearMutex
 @ stub I_RpcConnectionInqSockBuffSize
 @ stub I_RpcConnectionInqSockBuffSize2

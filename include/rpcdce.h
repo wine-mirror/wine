@@ -37,14 +37,14 @@ typedef struct _RPC_BINDING_VECTOR
 {
   unsigned long Count;
   RPC_BINDING_HANDLE BindingH[1];
-} RPC_BINDING_VECTOR;
+} RPC_BINDING_VECTOR, *PRPC_BINDING_VECTOR;
 #define rpc_binding_vector_t RPC_BINDING_VECTOR
 
 typedef struct _UUID_VECTOR
 {
   unsigned long Count;
   UUID *Uuid[1];
-} UUID_VECTOR;
+} UUID_VECTOR, *PUUID_VECTOR;
 #define uuid_vector_t UUID_VECTOR
 
 typedef struct _RPC_IF_ID
@@ -144,11 +144,11 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   RpcEpResolveBinding( RPC_BINDING_HANDLE Binding, RPC_IF_HANDLE IfSpec );
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcEpRegisterA( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
-                  UUID_VECTOR* UuidVector, LPSTR Annotation );
+  RpcEpRegisterA( RPC_IF_HANDLE IfSpec, PRPC_BINDING_VECTOR BindingVector,
+                  PUUID_VECTOR UuidVector, LPSTR Annotation );
 RPCRTAPI RPC_STATUS RPC_ENTRY
-  RpcEpRegisterW( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR* BindingVector,
-                  UUID_VECTOR* UuidVector, LPWSTR Annotation );
+  RpcEpRegisterW( RPC_IF_HANDLE IfSpec, PRPC_BINDING_VECTOR BindingVector,
+                  PUUID_VECTOR UuidVector, LPWSTR Annotation );
 #define RpcEpRegister WINELIB_NAME_AW(RpcEpRegister)
 
 RPCRTAPI RPC_STATUS RPC_ENTRY

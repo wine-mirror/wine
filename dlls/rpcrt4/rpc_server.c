@@ -690,7 +690,7 @@ RPC_STATUS WINAPI I_RpcServerStopListening( void )
 /***********************************************************************
  *             I_RpcWindowProc (RPCRT4.@)
  */
-LONG WINAPI I_RpcWindowProc( HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam )
+UINT WINAPI I_RpcWindowProc( void *hWnd, UINT Message, UINT wParam, ULONG lParam )
 {
   FIXME( "(%p,%08x,%08x,%08lx): stub\n", hWnd, Message, wParam, lParam );
 

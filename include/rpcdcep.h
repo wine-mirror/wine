@@ -133,8 +133,8 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcSetThreadParams( int fClientFree, void* Context, void* hWndClient );
 
-RPCRTAPI LONG RPC_ENTRY
-  I_RpcWindowProc( HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam );
+RPCRTAPI UINT RPC_ENTRY
+  I_RpcWindowProc( void* hWnd, UINT Message, UINT wParam, ULONG lParam );
 
 /* WINNT */
 RPCRTAPI RPC_STATUS RPC_ENTRY
