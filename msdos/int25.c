@@ -26,7 +26,7 @@ void WINAPI INT_Int25Handler( CONTEXT *context )
     if (!DRIVE_IsValid(AL_reg(context)))
     {
         SET_CFLAG(context);
-        AX_reg(context) = 0x0101;        /* unknown unit */
+        AX_reg(context) = 0x0201;        /* unknown unit */
         return;
     }
 
