@@ -1090,7 +1090,8 @@ static UINT FILE_GetTempFileName( LPCWSTR path, LPCWSTR prefix, UINT unique,
                 CloseHandle( handle );
                 break;
             }
-            if (GetLastError() != ERROR_FILE_EXISTS)
+            if (GetLastError() != ERROR_FILE_EXISTS &&
+                GetLastError() != ERROR_SHARING_VIOLATION)
                 break;  /* No need to go on */
             num++;
             sprintf( buf, "%04x.tmp", num );
