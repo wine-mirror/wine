@@ -991,7 +991,8 @@ static INT XFONT_GetAvgCharWidth( LPIFONTINFO16 pFI, const XFontStruct* x_fs,
     if( x_fs->per_char )
     {
 	int  width = 0, chars = 0, j;
-	if( IS_LATIN_CHARSET(pFI->dfCharSet))
+	if( IS_LATIN_CHARSET(pFI->dfCharSet) ||
+	    pFI->dfCharSet == DEFAULT_CHARSET )
 	{
 	    /* FIXME - should use a weighted average */
 	    for( j = 0; j < 26; j++ )
@@ -1074,66 +1075,6 @@ static void XFONT_SetFontMetric(fontInfo* fi, const fontResource* fr, XFontStruc
 	fi->df.dfType = RASTER_FONTTYPE;
 
     fi->df.dfFace = fr->lfFaceName;
-}
-
-/***********************************************************************
- *              XFONT_GetTextMetrics
- *
- * GetTextMetrics() back end.
- */
-static void XFONT_GetTextMetrics( const fontObject* pfo, const LPTEXTMETRICA pTM )
-{
-    LPIFONTINFO16 pdf = &pfo->fi->df;
-
-    if( ! pfo->lpX11Trans ) {
-      pTM->tmAscent = pfo->fs->ascent;
-      pTM->tmDescent = pfo->fs->descent;
-    } else {
-      pTM->tmAscent = pfo->lpX11Trans->ascent;
-      pTM->tmDescent = pfo->lpX11Trans->descent;
-    }
-
-    pTM->tmAscent *= pfo->rescale;
-    pTM->tmDescent *= pfo->rescale;
-
-    pTM->tmHeight = pTM->tmAscent + pTM->tmDescent;
-
-    pTM->tmAveCharWidth = pfo->foAvgCharWidth * pfo->rescale;
-    pTM->tmMaxCharWidth = pfo->foMaxCharWidth * pfo->rescale;
-
-    pTM->tmInternalLeading = pfo->foInternalLeading * pfo->rescale;
-    pTM->tmExternalLeading = pdf->dfExternalLeading * pfo->rescale;
-
-    pTM->tmStruckOut = (pfo->fo_flags & FO_SYNTH_STRIKEOUT )
-			? 1 : pdf->dfStrikeOut;
-    pTM->tmUnderlined = (pfo->fo_flags & FO_SYNTH_UNDERLINE )
-			? 1 : pdf->dfUnderline;
-
-    pTM->tmOverhang = 0;
-    if( pfo->fo_flags & FO_SYNTH_ITALIC ) 
-    {
-	pTM->tmOverhang += pTM->tmHeight/3;
-	pTM->tmItalic = 1;
-    } else 
-	pTM->tmItalic = pdf->dfItalic;
-
-    pTM->tmWeight = pdf->dfWeight;
-    if( pfo->fo_flags & FO_SYNTH_BOLD ) 
-    {
-	pTM->tmOverhang++; 
-	pTM->tmWeight += 100;
-    } 
-
-    pTM->tmFirstChar = pdf->dfFirstChar;
-    pTM->tmLastChar = pdf->dfLastChar;
-    pTM->tmDefaultChar = pdf->dfDefaultChar;
-    pTM->tmBreakChar = pdf->dfBreakChar;
-
-    pTM->tmCharSet = pdf->dfCharSet;
-    pTM->tmPitchAndFamily = pdf->dfPitchAndFamily;
-
-    pTM->tmDigitizedAspectX = pdf->dfHorizRes;
-    pTM->tmDigitizedAspectY = pdf->dfVertRes;
 }
 
 /***********************************************************************
@@ -3103,7 +3044,7 @@ BOOL X11DRV_GetTextMetrics(DC *dc, TEXTMETRICA *metrics)
     if( CHECK_PFONT(physDev->font) )
     {
 	fontObject* pfo = __PFONT(physDev->font);
-	XFONT_GetTextMetrics( pfo, metrics );
+	X11DRV_cptable[pfo->fi->cptable].pGetTextMetricsA( pfo, metrics );
 
 	return TRUE;
     }

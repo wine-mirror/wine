@@ -242,6 +242,7 @@ typedef struct tagX11DRV_CP
     void (*pTextExtents)( fontObject* pfo, XChar2b* pstr, int count,
                           int* pdir, int* pascent, int* pdescent,
                           int* pwidth );
+    void (*pGetTextMetricsA)( fontObject* pfo, LPTEXTMETRICA pTM );
 } X11DRV_CP;
 
 extern const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT];

@@ -8,6 +8,8 @@
 
 #include "ts_xlib.h"
 
+#include <math.h>
+
 #include "windef.h"
 #include "winnls.h"
 #include "heap.h"
@@ -259,6 +261,60 @@ static void X11DRV_TextExtents_normal( fontObject* pfo, XChar2b* pstr, int count
     *pwidth = info.width;
 }
 
+static void X11DRV_GetTextMetricsA_normal( fontObject* pfo, LPTEXTMETRICA pTM )
+{
+    LPIFONTINFO16 pdf = &pfo->fi->df;
+
+    if( ! pfo->lpX11Trans ) {
+      pTM->tmAscent = pfo->fs->ascent;
+      pTM->tmDescent = pfo->fs->descent;
+    } else {
+      pTM->tmAscent = pfo->lpX11Trans->ascent;
+      pTM->tmDescent = pfo->lpX11Trans->descent;
+    }
+
+    pTM->tmAscent *= pfo->rescale;
+    pTM->tmDescent *= pfo->rescale;
+
+    pTM->tmHeight = pTM->tmAscent + pTM->tmDescent;
+
+    pTM->tmAveCharWidth = pfo->foAvgCharWidth * pfo->rescale;
+    pTM->tmMaxCharWidth = pfo->foMaxCharWidth * pfo->rescale;
+
+    pTM->tmInternalLeading = pfo->foInternalLeading * pfo->rescale;
+    pTM->tmExternalLeading = pdf->dfExternalLeading * pfo->rescale;
+
+    pTM->tmStruckOut = (pfo->fo_flags & FO_SYNTH_STRIKEOUT )
+			? 1 : pdf->dfStrikeOut;
+    pTM->tmUnderlined = (pfo->fo_flags & FO_SYNTH_UNDERLINE )
+			? 1 : pdf->dfUnderline;
+
+    pTM->tmOverhang = 0;
+    if( pfo->fo_flags & FO_SYNTH_ITALIC ) 
+    {
+	pTM->tmOverhang += pTM->tmHeight/3;
+	pTM->tmItalic = 1;
+    } else 
+	pTM->tmItalic = pdf->dfItalic;
+
+    pTM->tmWeight = pdf->dfWeight;
+    if( pfo->fo_flags & FO_SYNTH_BOLD ) 
+    {
+	pTM->tmOverhang++; 
+	pTM->tmWeight += 100;
+    } 
+
+    pTM->tmFirstChar = pdf->dfFirstChar;
+    pTM->tmLastChar = pdf->dfLastChar;
+    pTM->tmDefaultChar = pdf->dfDefaultChar;
+    pTM->tmBreakChar = pdf->dfBreakChar;
+
+    pTM->tmCharSet = pdf->dfCharSet;
+    pTM->tmPitchAndFamily = pdf->dfPitchAndFamily;
+
+    pTM->tmDigitizedAspectX = pdf->dfHorizRes;
+    pTM->tmDigitizedAspectY = pdf->dfVertRes;
+}
 
 
 
@@ -367,6 +423,75 @@ void X11DRV_TextExtents_cp932( fontObject* pfo, XChar2b* pstr, int count,
     *pwidth = width;
 }
 
+static void X11DRV_GetTextMetricsA_cp932( fontObject* pfo, LPTEXTMETRICA pTM )
+{
+    fontObject* pfo_ansi = XFONT_GetFontObject( pfo->prefobjs[0] );
+    LPIFONTINFO16 pdf = &pfo->fi->df;
+    LPIFONTINFO16 pdf_ansi;
+
+    pdf_ansi = ( pfo_ansi != NULL ) ? (&pfo_ansi->fi->df) : pdf;
+
+    if( ! pfo->lpX11Trans ) {
+      pTM->tmAscent = pfo->fs->ascent;
+      pTM->tmDescent = pfo->fs->descent;
+    } else {
+      pTM->tmAscent = pfo->lpX11Trans->ascent;
+      pTM->tmDescent = pfo->lpX11Trans->descent;
+    }
+
+    pTM->tmAscent *= pfo->rescale;
+    pTM->tmDescent *= pfo->rescale;
+
+    pTM->tmHeight = pTM->tmAscent + pTM->tmDescent;
+
+    if ( pfo_ansi != NULL )
+    {
+	pTM->tmAveCharWidth = floor((pfo_ansi->foAvgCharWidth * 2.0 + pfo->foAvgCharWidth) / 3.0 * pfo->rescale + 0.5);
+	pTM->tmMaxCharWidth = __max(pfo_ansi->foMaxCharWidth, pfo->foMaxCharWidth) * pfo->rescale;
+    }
+    else
+    {
+	pTM->tmAveCharWidth = floor((pfo->foAvgCharWidth * pfo->rescale + 1.0) / 2.0);
+	pTM->tmMaxCharWidth = pfo->foMaxCharWidth * pfo->rescale;
+    }
+
+    pTM->tmInternalLeading = pfo->foInternalLeading * pfo->rescale;
+    pTM->tmExternalLeading = pdf->dfExternalLeading * pfo->rescale;
+
+    pTM->tmStruckOut = (pfo->fo_flags & FO_SYNTH_STRIKEOUT )
+			? 1 : pdf->dfStrikeOut;
+    pTM->tmUnderlined = (pfo->fo_flags & FO_SYNTH_UNDERLINE )
+			? 1 : pdf->dfUnderline;
+
+    pTM->tmOverhang = 0;
+    if( pfo->fo_flags & FO_SYNTH_ITALIC ) 
+    {
+	pTM->tmOverhang += pTM->tmHeight/3;
+	pTM->tmItalic = 1;
+    } else 
+	pTM->tmItalic = pdf->dfItalic;
+
+    pTM->tmWeight = pdf->dfWeight;
+    if( pfo->fo_flags & FO_SYNTH_BOLD ) 
+    {
+	pTM->tmOverhang++; 
+	pTM->tmWeight += 100;
+    } 
+
+    pTM->tmFirstChar = pdf_ansi->dfFirstChar;
+    pTM->tmLastChar = pdf_ansi->dfLastChar;
+    pTM->tmDefaultChar = pdf_ansi->dfDefaultChar;
+    pTM->tmBreakChar = pdf_ansi->dfBreakChar;
+
+    pTM->tmCharSet = pdf->dfCharSet;
+    pTM->tmPitchAndFamily = pdf->dfPitchAndFamily;
+
+    pTM->tmDigitizedAspectX = pdf->dfHorizRes;
+    pTM->tmDigitizedAspectY = pdf->dfVertRes;
+}
+
+
+
 
 
 const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
@@ -378,6 +503,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextWidth_normal,
 	X11DRV_DrawText_normal,
 	X11DRV_TextExtents_normal,
+	X11DRV_GetTextMetricsA_normal,
     },
     { /* UNICODE */
 	X11DRV_enum_subfont_charset_normal,
@@ -386,6 +512,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextWidth_normal,
 	X11DRV_DrawText_normal,
 	X11DRV_TextExtents_normal,
+        X11DRV_GetTextMetricsA_normal,
     },
     { /* CP932 */
 	X11DRV_enum_subfont_charset_cp932,
@@ -394,6 +521,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextWidth_cp932,
 	X11DRV_DrawText_cp932,
 	X11DRV_TextExtents_cp932,
+        X11DRV_GetTextMetricsA_cp932,
     },
     { /* CP936 */
 	X11DRV_enum_subfont_charset_cp936,
@@ -402,6 +530,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextWidth_normal, /* FIXME */
 	X11DRV_DrawText_normal, /* FIXME */
 	X11DRV_TextExtents_normal, /* FIXME */
+        X11DRV_GetTextMetricsA_normal, /* FIXME */
     },
     { /* CP949 */
 	X11DRV_enum_subfont_charset_cp949,
@@ -410,6 +539,7 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextWidth_normal, /* FIXME */
 	X11DRV_DrawText_normal, /* FIXME */
 	X11DRV_TextExtents_normal, /* FIXME */
+        X11DRV_GetTextMetricsA_normal, /* FIXME */
     },
     { /* CP950 */
 	X11DRV_enum_subfont_charset_cp950,
@@ -418,5 +548,6 @@ const X11DRV_CP X11DRV_cptable[X11DRV_CPTABLE_COUNT] =
 	X11DRV_TextWidth_normal, /* FIXME */
 	X11DRV_DrawText_normal, /* FIXME */
 	X11DRV_TextExtents_normal, /* FIXME */
+        X11DRV_GetTextMetricsA_normal, /* FIXME */
     },
 };
