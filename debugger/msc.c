@@ -1715,8 +1715,8 @@ int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile, void* _nth,
 {
     IMAGE_SECTION_HEADER	pe_seg;
     unsigned long		pe_seg_ofs;
-    int 		      	i, stabsize = 0, stabstrsize = 0, xcnlnksize = 0;
-    unsigned int 		stabs = 0, stabstr = 0, xcnlnk = 0;
+    int 		      	i, stabsize = 0, stabstrsize = 0;
+    unsigned int 		stabs = 0, stabstr = 0;
     PIMAGE_NT_HEADERS		nth = (PIMAGE_NT_HEADERS)_nth;
 
     pe_seg_ofs = nth_ofs + OFFSET_OF(IMAGE_NT_HEADERS, OptionalHeader) +
@@ -1733,9 +1733,6 @@ int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile, void* _nth,
       } else if (!strncasecmp(pe_seg.Name, ".stabstr", 8)) {
 	stabstr = pe_seg.VirtualAddress;
 	stabstrsize = pe_seg.SizeOfRawData;
-      } else if (!strncasecmp(pe_seg.Name, ".xcnlnk", 7)) {
-	xcnlnk = pe_seg.VirtualAddress;
-	xcnlnksize = pe_seg.SizeOfRawData;
       }
     }
 
@@ -1754,18 +1751,6 @@ int DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module, HANDLE hFile, void* _nth,
        } else {
 	  DEBUG_Printf(DBG_CHN_MESG, "couldn't alloc %d bytes\n", 
 		       stabsize + stabstrsize);
-       }
-    }
-    if (xcnlnksize) {
-       DWORD	addr;
-       char	bufstr[256];
-
-       if (DEBUG_READ_MEM_VERBOSE((char*)module->load_addr + xcnlnk, &addr, 
-				  sizeof(addr)) &&
-	   DEBUG_READ_MEM_VERBOSE((char*)addr, bufstr, sizeof(bufstr))) {
-	  bufstr[sizeof(bufstr) - 1] = 0;
-	  DEBUG_Printf(DBG_CHN_TRACE, "Got xcnlnk: argv0 '%s'\n", bufstr);
- 	  DEBUG_ReadExecutableDbgInfo(bufstr);
        }
     }
     return TRUE;

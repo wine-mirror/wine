@@ -33,7 +33,6 @@
 #include "winerror.h"
 #include "server.h"
 #include "debugtools.h"
-#include "options.h" /* for argv0 */
 
 DEFAULT_DEBUG_CHANNEL(module);
 DECLARE_DEBUG_CHANNEL(relay);
@@ -146,23 +145,16 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     IMAGE_EXPORT_DIRECTORY *exports = descr->exports;
     INT i, size, nb_sections;
     BYTE *addr, *code_start, *data_start;
-    BYTE* xcnlnk;
-    DWORD xcnsize = 0;
     int page_size = VIRTUAL_GetPageSize();
 
     /* Allocate the module */
 
     nb_sections = 2;  /* code + data */
 
-    if (!strcmp(descr->filename, "kernel32.dll")) {
-       nb_sections++;
-       xcnsize = sizeof(DWORD);
-    }
     size = (sizeof(IMAGE_DOS_HEADER)
             + sizeof(IMAGE_NT_HEADERS)
             + nb_sections * sizeof(IMAGE_SECTION_HEADER)
-            + (descr->nb_imports+1) * sizeof(IMAGE_IMPORT_DESCRIPTOR)
-	    + xcnsize);
+            + (descr->nb_imports+1) * sizeof(IMAGE_IMPORT_DESCRIPTOR));
 
     assert( size <= page_size );
 
@@ -184,7 +176,6 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
     nt     = (IMAGE_NT_HEADERS *)(dos + 1);
     sec    = (IMAGE_SECTION_HEADER *)(nt + 1);
     imp    = (IMAGE_IMPORT_DESCRIPTOR *)(sec + nb_sections);
-    xcnlnk = (char *)(imp + descr->nb_imports + 1);
     code_start = addr + page_size;
 
     /* HACK! */
@@ -256,23 +247,6 @@ static HMODULE BUILTIN32_DoLoadImage( const BUILTIN32_DESCRIPTOR *descr )
             /* hack: make first thunk point to some zero value */
             imp[i].FirstThunk = (PIMAGE_THUNK_DATA)((BYTE *)&imp[i].u.Characteristics - addr);
         }
-    }
-
-    /* Build Wine's .so link section. Those sections are used by the wine debugger to
-     * link a builtin PE header with the corresponding ELF module (from either a 
-     * shared library, or the main executable - wine emulator or any winelib program 
-     */
-    if (xcnsize) 
-    {
-       strcpy( sec->Name, ".xcnlnk" );
-       sec->Misc.VirtualSize = xcnsize;
-       sec->VirtualAddress   = (BYTE *)xcnlnk - addr;
-       sec->SizeOfRawData    = sec->Misc.VirtualSize;
-       sec->PointerToRawData = (BYTE *)xcnlnk - addr;
-       sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_READ);
-       sec++;
-
-       *(const char**)xcnlnk = argv0;
     }
 
     /* Build the resource directory */

@@ -12,6 +12,7 @@
 
 #include "thread.h"
 #include "process.h"
+#include "file.h"
 #include "wincon.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -479,9 +480,32 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
 	    
 	    DEBUG_InitCurrProcess();
 	    DEBUG_InitCurrThread();
-	    /* so far, process name is not set */
-	    DEBUG_LoadModule32("<Debugged process>", de->u.CreateProcessInfo.hFile, 
+
+            DEBUG_ProcessGetStringIndirect(buffer, sizeof(buffer), 
+                                           DEBUG_CurrThread->process->handle, 
+                                           de->u.CreateProcessInfo.lpImageName);
+	    DEBUG_LoadModule32(buffer[0] ? buffer : "<Debugged process>",
+                               de->u.CreateProcessInfo.hFile, 
 			       (DWORD)de->u.CreateProcessInfo.lpBaseOfImage);
+
+            if (buffer[0])  /* we got a process name */
+            {
+                DWORD type;
+                if (!GetBinaryTypeA( buffer, &type ))
+                {
+                    /* not a Windows binary, assume it's a Unix executable then */
+                    DOS_FULL_NAME fullname;
+                    /* HACK!! should fix DEBUG_ReadExecutableDbgInfo to accept DOS filenames */
+                    if (DOSFS_GetFullName( buffer, TRUE, &fullname ))
+                    {
+                        DEBUG_ReadExecutableDbgInfo( fullname.long_name );
+                        break;
+                    }
+                }
+            }
+            /* if it is a Windows binary, or an invalid or missing file name,
+             * we use wine itself as the main executable */
+            DEBUG_ReadExecutableDbgInfo( "wine" );
 	    break;
 	    
 	case EXIT_THREAD_DEBUG_EVENT:
