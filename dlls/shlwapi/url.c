@@ -419,6 +419,9 @@ HRESULT WINAPI UrlCanonicalizeA(LPCSTR pszUrl, LPSTR pszCanonicalized,
 	  debugstr_a(pszUrl), pszCanonicalized,
 	  pcchCanonicalized, dwFlags);
 
+    if(!pszUrl || !pszCanonicalized || !pcchCanonicalized)
+	return E_INVALIDARG;
+
     base = (LPWSTR) HeapAlloc(GetProcessHeap(), 0,
 			      (2*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
     canonical = base + INTERNET_MAX_URL_LENGTH;
@@ -460,6 +463,9 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 
     TRACE("(%s %p %p 0x%08lx)\n", debugstr_w(pszUrl), pszCanonicalized,
 	  pcchCanonicalized, dwFlags);
+
+    if(!pszUrl || !pszCanonicalized || !pcchCanonicalized)
+	return E_INVALIDARG;
 
     nByteLen = (lstrlenW(pszUrl) + 1) * sizeof(WCHAR); /* length in bytes */
     lpszUrlCpy = HeapAlloc(GetProcessHeap(), 0, nByteLen);
@@ -629,7 +635,10 @@ HRESULT WINAPI UrlCombineA(LPCSTR pszBase, LPCSTR pszRelative,
 
     TRACE("(base %s, Relative %s, Combine size %ld, flags %08lx) using W version\n",
 	  debugstr_a(pszBase),debugstr_a(pszRelative),
-	  *pcchCombined,dwFlags);
+	  pcchCombined?*pcchCombined:0,dwFlags);
+
+    if(!pszBase || !pszRelative || !pszCombined || !pcchCombined)
+	return E_INVALIDARG;
 
     base = (LPWSTR) HeapAlloc(GetProcessHeap(), 0,
 			      (3*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
@@ -678,7 +687,10 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 
     TRACE("(base %s, Relative %s, Combine size %ld, flags %08lx)\n",
 	  debugstr_w(pszBase),debugstr_w(pszRelative),
-	  *pcchCombined,dwFlags);
+	  pcchCombined?*pcchCombined:0,dwFlags);
+
+    if(!pszBase || !pszRelative || !pszCombined || !pcchCombined)
+	return E_INVALIDARG;
 
     base.size = 24;
     relative.size = 24;
@@ -964,7 +976,10 @@ HRESULT WINAPI UrlEscapeA(
     INT len;
 
     TRACE("(%s %p %lx 0x%08lx)\n", debugstr_a(pszUrl), pszEscaped,
-	  *pcchEscaped, dwFlags);
+	  pcchEscaped?*pcchEscaped:0, dwFlags);
+
+    if(!pszUrl || !pszEscaped || !pcchEscaped)
+	return E_INVALIDARG;
 
     if(dwFlags & ~(URL_ESCAPE_SPACES_ONLY |
 		   URL_ESCAPE_SEGMENT_ONLY |
@@ -1038,6 +1053,9 @@ HRESULT WINAPI UrlEscapeW(
 
     TRACE("(%s %p %p 0x%08lx)\n", debugstr_w(pszUrl), pszEscaped,
 	  pcchEscaped, dwFlags);
+
+    if(!pszUrl || !pszEscaped || !pcchEscaped)
+	return E_INVALIDARG;
 
     if(dwFlags & ~(URL_ESCAPE_SPACES_ONLY |
 		   URL_ESCAPE_SEGMENT_ONLY |
@@ -1144,6 +1162,9 @@ HRESULT WINAPI UrlUnescapeA(
     TRACE("(%s, %p, %p, 0x%08lx)\n", debugstr_a(pszUrl), pszUnescaped,
 	  pcchUnescaped, dwFlags);
 
+    if(!pszUrl || !pszUnescaped || !pcchUnescaped)
+	return E_INVALIDARG;
+
     if(dwFlags & URL_UNESCAPE_INPLACE)
         dst = pszUrl;
     else
@@ -1207,6 +1228,9 @@ HRESULT WINAPI UrlUnescapeW(
 
     TRACE("(%s, %p, %p, 0x%08lx)\n", debugstr_w(pszUrl), pszUnescaped,
 	  pcchUnescaped, dwFlags);
+
+    if(!pszUrl || !pszUnescaped || !pcchUnescaped)
+	return E_INVALIDARG;
 
     if(dwFlags & URL_UNESCAPE_INPLACE)
         dst = pszUrl;
