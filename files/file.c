@@ -35,6 +35,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
+#include "wine/port.h"
 #include "drive.h"
 #include "file.h"
 #include "global.h"

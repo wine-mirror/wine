@@ -109,4 +109,8 @@ int strcasecmp(const char *str1, const char *str2);
 int usleep (unsigned int useconds);
 #endif /* !defined(HAVE_USLEEP) */
 
+#ifndef HAVE_LSTAT
+int lstat(const char *file_name, struct stat *buf);
+#endif /* HAVE_LSTAT */
+
 #endif /* !defined(__WINE_WINE_PORT_H) */

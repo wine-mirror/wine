@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 
+#include "wine/port.h"
 #include "process.h"
 #include "thread.h"
 #include "server.h"

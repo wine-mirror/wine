@@ -361,6 +361,17 @@ int statfs(const char *name, struct statfs *info)
 
 
 /***********************************************************************
+ *		lstat
+ */
+#ifndef HAVE_LSTAT
+int lstat(const char *file_name, struct stat *buf)
+{
+    return stat( file_name, buf );
+}
+#endif /* HAVE_LSTAT */
+
+
+/***********************************************************************
  *		wine_anon_mmap
  *
  * Portable wrapper for anonymous mmaps

@@ -739,6 +739,7 @@ AC_CHECK_FUNCS(\
 	getservbyport \
 	getsockopt \
 	inet_network \
+	lstat \
 	memmove \
 	mmap \
 	rfork \
