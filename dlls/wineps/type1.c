@@ -56,6 +56,7 @@ TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
     char *buf;
     TYPE1 *t1;
     LOGFONTW lf;
+    RECT rc;
 
     char dict[] = /* name, emsquare, fontbbox */
       "25 dict begin\n"
@@ -85,7 +86,10 @@ TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
     t1->emsize = potm->otmEMSquare;
 
     GetObjectW(GetCurrentObject(physDev->hdc, OBJ_FONT), sizeof(lf), &lf);
-    lf.lfHeight = -t1->emsize;
+    rc.left = rc.right = rc.bottom = 0;
+    rc.top = t1->emsize;
+    DPtoLP(physDev->hdc, (POINT*)&rc, 2);
+    lf.lfHeight = -abs(rc.top - rc.bottom);
     t1->unscaled_font = CreateFontIndirectW(&lf);
     t1->glyph_sent_size = GLYPH_SENT_INC;
     t1->glyph_sent = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -191,7 +195,7 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     POINT curpos;
     TTPOLYGONHEADER *pph;
     TTPOLYCURVE *ppc;
-    char glyph_def_begin[] = 
+    char glyph_def_begin[] =
       "/%s findfont dup\n"
       "/Private get begin\n"
       "/CharStrings get begin\n"
