@@ -820,8 +820,13 @@ static DWORD CDROM_GetLabel(int drive, WCHAR *label)
         break;
     }
     case CDROM_DISK_DATA_TRACK|CDROM_DISK_AUDIO_TRACK:
-        FIXME("Need to get the label of a mixed mode CD: not implemented yet !\n");
-        /* fall through */
+        FIXME("Need to get the label of a mixed mode CD!\n");
+	/* This assumes that the first track is a data track! */
+	/* I guess the correct way would be to enumerate all data tracks
+	   and check each for the title */
+        if (!CDROM_Data_GetLabel(drive, label))
+            ret = 0;
+        break;
     case 0:
         ret = 0;
         break;
