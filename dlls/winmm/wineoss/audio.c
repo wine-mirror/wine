@@ -254,6 +254,8 @@ static	void	wodPlayer_Notify(WINE_WAVEOUT* wwo, WORD uDevID, BOOL force)
     
     /* get effective number of written bytes */
     if (!force) {
+	int	c;
+
 	if (ioctl(wwo->unixdev, SNDCTL_DSP_GETOPTR, &cinfo) == -1) {
 	    perror("ioctl SNDCTL_DSP_GETOPTR");
 	    wwo->hThread = 0;
@@ -261,7 +263,11 @@ static	void	wodPlayer_Notify(WINE_WAVEOUT* wwo, WORD uDevID, BOOL force)
 	    ExitThread(-1);
 	}
 	TRACE("Played %d bytes (played=%ld) on fd %d\n", cinfo.bytes, wwo->dwPlayed, wwo->unixdev);
-	wwo->wFragsUsedInQueue -= cinfo.bytes / wwo->dwFragmentSize - wwo->dwPlayed / wwo->dwFragmentSize;
+	c = cinfo.bytes / wwo->dwFragmentSize - wwo->dwPlayed / wwo->dwFragmentSize;
+	if (wwo->wFragsUsedInQueue > c)
+	    wwo->wFragsUsedInQueue -= c;
+	else
+	    wwo->wFragsUsedInQueue = 0;
 	wwo->dwPlayed = cinfo.bytes;
     }
     if (force || cinfo.bytes > wwo->dwNotifiedBytes) {
