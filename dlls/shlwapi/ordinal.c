@@ -1622,8 +1622,8 @@ DWORD WINAPI SHLWAPI_266 (
  *   interface circumventing the forwarding to the outer object.
  */
 HRESULT WINAPI SHLWAPI_267 (
-	IUnknown * pUnk,   /* outer object */
-	IUnknown * pInner, /* inner object */
+	IUnknown * pUnk,   /* [in] outer object */
+	IUnknown * pInner, /* [in] inner object */
 	IID * riid,
 	LPVOID* ppv)
 {

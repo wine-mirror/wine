@@ -1303,7 +1303,7 @@ static	DWORD	wodGetNumDevs(void)
 }
 
 /**************************************************************************
- * 				wodMessage (WINEALSA.7)
+ * 				wodMessage (WINEALSA.@)
  */
 DWORD WINAPI ALSA_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
                              DWORD dwParam1, DWORD dwParam2)

@@ -4876,7 +4876,7 @@ HRESULT WINAPI VarDateFromUdate(UDATE *pudateout,
 
 
 /**********************************************************************
- *              VarBstrCmp [OLEAUT32.440]
+ *              VarBstrCmp [OLEAUT32.314]
  *
  * flags can be:
  *   NORM_IGNORECASE, NORM_IGNORENONSPACE, NORM_IGNORESYMBOLS
@@ -4911,7 +4911,7 @@ HRESULT WINAPI VarBstrCmp(BSTR left, BSTR right, LCID lcid, DWORD flags)
 }
 
 /**********************************************************************
- *              VarBstrCat [OLEAUT32.439]
+ *              VarBstrCat [OLEAUT32.313]
  */
 HRESULT WINAPI VarBstrCat(BSTR left, BSTR right, BSTR *out)
 {
@@ -4935,7 +4935,7 @@ HRESULT WINAPI VarBstrCat(BSTR left, BSTR right, BSTR *out)
 }
 
 /**********************************************************************
- *              VarCat [OLEAUT32.441]
+ *              VarCat [OLEAUT32.318]
  */
 HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
 {
@@ -4959,7 +4959,7 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
 }
 
 /**********************************************************************
- *              VarCmp [OLEAUT32.442]
+ *              VarCmp [OLEAUT32.176]
  *
  * flags can be:
  *   NORM_IGNORECASE, NORM_IGNORENONSPACE, NORM_IGNORESYMBOLS
@@ -5069,7 +5069,7 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
 }
 
 /**********************************************************************
- *              VarAnd [OLEAUT32.438]
+ *              VarAnd [OLEAUT32.142]
  *
  */
 HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
@@ -5103,7 +5103,7 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 }
 
 /**********************************************************************
- *              VarNot [OLEAUT32.482]
+ *              VarNot [OLEAUT32.174]
  *
  */
 HRESULT WINAPI VarNot(LPVARIANT in, LPVARIANT result)
@@ -5133,7 +5133,7 @@ HRESULT WINAPI VarNot(LPVARIANT in, LPVARIANT result)
 }
 
 /**********************************************************************
- *              VarTokenizeFormatString [OLEAUT32.490]
+ *              VarTokenizeFormatString [OLEAUT32.140]
  *
  * From investigation on W2K, a list is built up which is:
  *
@@ -5141,7 +5141,7 @@ HRESULT WINAPI VarNot(LPVARIANT in, LPVARIANT result)
  * <token> - Insert appropriate token
  *
  */
-HRESULT VarTokenizeFormatString(LPOLESTR  format, LPBYTE rgbTok,
+HRESULT WINAPI VarTokenizeFormatString(LPOLESTR  format, LPBYTE rgbTok,
                      int   cbTok, int iFirstDay, int iFirstWeek,
                      LCID  lcid, int *pcbActual) {
 
@@ -5279,10 +5279,10 @@ HRESULT VarTokenizeFormatString(LPOLESTR  format, LPBYTE rgbTok,
 }
 
 /**********************************************************************
- *              VarFormatFromTokens [OLEAUT32.472]
+ *              VarFormatFromTokens [OLEAUT32.139]
  * FIXME: No account of flags or iFirstDay etc
  */
-HRESULT VarFormatFromTokens(LPVARIANT varIn, LPOLESTR format,
+HRESULT WINAPI VarFormatFromTokens(LPVARIANT varIn, LPOLESTR format,
                             LPBYTE pbTokCur, ULONG dwFlags, BSTR *pbstrOut,
                             LCID  lcid) {
 
@@ -5477,7 +5477,7 @@ HRESULT VarFormatFromTokens(LPVARIANT varIn, LPOLESTR format,
 }
 
 /**********************************************************************
- *              VarFormat [OLEAUT32.469]
+ *              VarFormat [OLEAUT32.87]
  *
  */
 HRESULT WINAPI VarFormat(LPVARIANT varIn, LPOLESTR format,

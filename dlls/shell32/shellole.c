@@ -113,6 +113,8 @@ DWORD WINAPI __SHGUIDToStringW (REFGUID guid, LPWSTR str)
 
 }
 
+/************************************************************************/
+
 LRESULT WINAPI SHCoCreateInstance(
 	LPCSTR aclsid,
 	REFCLSID clsid,

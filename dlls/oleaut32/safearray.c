@@ -144,7 +144,7 @@ HRESULT WINAPI SafeArrayAllocDescriptor(
 }
 
 /*************************************************************************
- *		SafeArrayAllocDescriptorEx (OLEAUT32.429)
+ *		SafeArrayAllocDescriptorEx (OLEAUT32.41)
  * Allocate the appropriate amount of memory for the SafeArray descriptor
  *
  * This is a minimal implementation just to get things moving.

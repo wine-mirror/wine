@@ -250,7 +250,7 @@
 @ stdcall NtWaitForSingleObject(long long long) NtWaitForSingleObject
 @ stub NtWaitHighEventPair
 @ stub NtWaitLowEventPair
-@ stub NtWriteFile
+@ stdcall NtWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
 @ stub NtWriteRequestData
 @ stub NtWriteVirtualMemory
 @ stub PfxFindPrefix
@@ -755,7 +755,7 @@
 @ stdcall ZwWaitForSingleObject(long long long) NtWaitForSingleObject
 @ stub ZwWaitHighEventPair
 @ stub ZwWaitLowEventPair
-@ stub ZwWriteFile
+@ stdcall ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
 @ stub ZwWriteRequestData
 @ stub ZwWriteVirtualMemory
 @ cdecl _CIpow() NTDLL__CIpow

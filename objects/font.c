@@ -2111,36 +2111,36 @@ DWORD WINAPI GetFontLanguageInfo(HDC hdc)
 		GCP_LIGATE_MASK=0x00000000,
 		GCP_USEKERNING_MASK=0x00000000,
 		GCP_REORDER_MASK=0x00000060;
-	
+
 	DWORD result=0;
-	
+
 	GetTextCharsetInfo( hdc, &fontsig, 0 );
 	/* We detect each flag we return using a bitmask on the Codepage Bitfields */
 
 	if( (fontsig.fsCsb[0]&GCP_DBCS_MASK)!=0 )
 		result|=GCP_DBCS;
-	
+
 	if( (fontsig.fsCsb[0]&GCP_DIACRITIC_MASK)!=0 )
 		result|=GCP_DIACRITIC;
-	
+
 	if( (fontsig.fsCsb[0]&FLI_GLYPHS_MASK)!=0 )
 		result|=FLI_GLYPHS;
-	
+
 	if( (fontsig.fsCsb[0]&GCP_GLYPHSHAPE_MASK)!=0 )
 		result|=GCP_GLYPHSHAPE;
-	
+
 	if( (fontsig.fsCsb[0]&GCP_KASHIDA_MASK)!=0 )
 		result|=GCP_KASHIDA;
-	
+
 	if( (fontsig.fsCsb[0]&GCP_LIGATE_MASK)!=0 )
 		result|=GCP_LIGATE;
 
 	if( (fontsig.fsCsb[0]&GCP_USEKERNING_MASK)!=0 )
 		result|=GCP_USEKERNING;
-	
+
 	if( (fontsig.fsCsb[0]&GCP_REORDER_MASK)!=0 )
 		result|=GCP_REORDER;
-	
+
 	return result;
 }
 
@@ -2298,12 +2298,12 @@ GetCharacterPlacementA(HDC hdc, LPCSTR lpString, INT uCount,
  */
 DWORD WINAPI
 GetCharacterPlacementW(
-		HDC hdc,	/* Device context for which the rendering is to be done */
-		LPCWSTR lpString,	/* The string for which information is to be returned */
-		INT uCount,	/* Number of WORDS in string. */
-		INT nMaxExtent,	/* Maximum extent the string is to take (in HDC logical units) */
-		GCP_RESULTSW *lpResults,	/* A pointer to a GCP_RESULTSW struct */
-		DWORD dwFlags	/* Flags specifying how to process the string */
+		HDC hdc,		/* [in] Device context for which the rendering is to be done */
+		LPCWSTR lpString,	/* [in] The string for which information is to be returned */
+		INT uCount,		/* [in] Number of WORDS in string. */
+		INT nMaxExtent,		/* [in] Maximum extent the string is to take (in HDC logical units) */
+		GCP_RESULTSW *lpResults,/* [in/out] A pointer to a GCP_RESULTSW struct */
+		DWORD dwFlags 		/* [in] Flags specifying how to process the string */
 		)
 {
     DWORD ret=0;
@@ -2342,7 +2342,7 @@ GetCharacterPlacementW(
 			for(i = 0; i < nSet; i++)
 				lpResults->lpOrder[i] = i;
 		}
-		
+
 	} else
 	{
 		WORD *pwCharType;
@@ -2353,18 +2353,18 @@ GetCharacterPlacementW(
 		 * 0 - neutral
 		 */
 		static const int chardir[]={ 0, 1, -1, 1, 1, 1, -1, 1, 0, 0, 0, 0 };
-		
+
 		WARN("The BiDi algorythm doesn't conform to Windows' yet\n");
 		if( (pwCharType=HeapAlloc(GetProcessHeap(), 0, uCount * sizeof(WORD)))==NULL )
 		{
 			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-			
+
 			return 0;
 		}
-		
+
 		/* Fill in the order array with directionality values */
 		GetStringTypeW(CT_CTYPE2, lpString, uCount, pwCharType);
-		
+
 		/* The complete and correct (at list according to MS) BiDi algorythm is not
 		 * yet implemented here. Instead, we just make sure that consecutive runs of
 		 * the same direction (or neutral) are ordered correctly
@@ -2375,7 +2375,7 @@ GetCharacterPlacementW(
 			     (chardir[pwCharType[i+run_end]]==chardir[pwCharType[i]] ||
 			     chardir[pwCharType[i+run_end]]==0); ++run_end )
 				;
-			
+
 			if( chardir[pwCharType[i]]==1 || chardir[pwCharType[i]]==0 )
 			{
 				/* A LTR run */
@@ -2387,7 +2387,7 @@ GetCharacterPlacementW(
 						lpResults->lpOutString[i+j]=lpString[i+j];
 					}
 				}
-				
+
 				if(lpResults->lpOrder)
 				{
 					int j;
@@ -2405,7 +2405,7 @@ GetCharacterPlacementW(
 						lpResults->lpOutString[i+j]=lpString[i+run_end-j-1];
 					}
 				}
-				
+
 				if(lpResults->lpOrder)
 				{
 					int j;
@@ -2414,7 +2414,7 @@ GetCharacterPlacementW(
 				}
 			}
 		}
-		
+
 		HeapFree(GetProcessHeap(), 0, pwCharType);
 	}
 

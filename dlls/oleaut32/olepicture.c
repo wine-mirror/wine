@@ -1270,7 +1270,7 @@ HRESULT WINAPI OleLoadPicture( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 }
 
 /***********************************************************************
- * OleLoadPictureEx (OLEAUT32.425)
+ * OleLoadPictureEx (OLEAUT32.401)
  */
 HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 		            REFIID reed, DWORD xsiz, DWORD ysiz, DWORD flags, LPVOID *ppvObj )
@@ -1279,4 +1279,3 @@ HRESULT WINAPI OleLoadPictureEx( LPSTREAM lpstream, LONG lSize, BOOL fRunmode,
 	lpstream, lSize, fRunmode, reed, xsiz, ysiz, flags, ppvObj);
   return S_OK;
 }
-

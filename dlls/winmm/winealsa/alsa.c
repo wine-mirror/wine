@@ -61,7 +61,7 @@ static	DWORD	ALSA_drvClose(DWORD dwDevID)
 
 
 /**************************************************************************
- * 				DriverProc (WINEALSA.1)
+ * 				DriverProc (WINEALSA.@)
  */
 LONG CALLBACK	ALSA_DriverProc(DWORD dwDevID, HDRVR hDriv, DWORD wMsg,
 			       DWORD dwParam1, DWORD dwParam2)
