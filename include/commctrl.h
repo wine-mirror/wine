@@ -790,7 +790,41 @@ typedef struct tagTBADDBITMAP {
 } TBADDBITMAP, *LPTBADDBITMAP;
 
 #define HINST_COMMCTRL         ((HINSTANCE32)-1)
+#define IDB_STD_SMALL_COLOR     0
+#define IDB_STD_LARGE_COLOR     1
+#define IDB_VIEW_SMALL_COLOR    4
+#define IDB_VIEW_LARGE_COLOR    5
+#define IDB_HIST_SMALL_COLOR    8
+#define IDB_HIST_LARGE_COLOR    9
 
+#define STD_CUT                 0
+#define STD_COPY                1
+#define STD_PASTE               2
+#define STD_UNDO                3
+#define STD_REDOW               4
+#define STD_DELETE              5
+#define STD_FILENEW             6
+#define STD_FILEOPEN            7
+#define STD_FILESAVE            8
+#define STD_PRINTPRE            9
+#define STD_PROPERTIES          10
+#define STD_HELP                11
+#define STD_FIND                12
+#define STD_REPLACE             13
+#define STD_PRINT               14
+
+#define VIEW_LARGEICONS         0
+#define VIEW_SMALLICONS         1
+#define VIEW_LIST               2
+#define VIEW_DETAILS            3
+#define VIEW_SORTNAME           4
+#define VIEW_SORTSIZE           5
+#define VIEW_SORTDATE           6
+#define VIEW_SORTTYPE           7
+#define VIEW_PARENTFOLDER       8
+#define VIEW_NETCONNECT         9
+#define VIEW_NETDISCONNECT      10
+#define VIEW_NEWFOLDER          11
 
 typedef struct tagTBSAVEPARAMSA {
     HKEY   hkr;
