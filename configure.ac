@@ -982,6 +982,7 @@ AC_CHECK_HEADERS(\
 	netinet/in.h \
 	netinet/in_systm.h \
 	netinet/tcp.h \
+	netinet/tcp_fsm.h \
 	pty.h \
 	pwd.h \
 	regex.h \
@@ -1039,7 +1040,7 @@ AC_CHECK_HEADERS(sys/mount.h sys/user.h,,,
      # include <sys/param.h>
      #endif])
 
-AC_CHECK_HEADERS(net/if.h,,,
+AC_CHECK_HEADERS([net/if.h net/if_arp.h net/if_dl.h net/if_types.h net/route.h resolv.h],,,
     [#include <sys/types.h>
      #if HAVE_SYS_SOCKET_H
      # include <sys/socket.h>
@@ -1052,12 +1053,6 @@ AC_CHECK_HEADERS(netinet/ip.h,,,
      #endif
      #if HAVE_NETINET_IN_SYSTM_H
      # include <netinet/in_systm.h>
-     #endif])
-
-AC_CHECK_HEADERS(resolv.h,,,
-    [#include <sys/types.h>
-     #if HAVE_SYS_SOCKET_H
-     # include <sys/socket.h>
      #endif])
 
 AC_CHECK_HEADERS(ucontext.h,,,[#include <signal.h>])
@@ -1402,6 +1397,7 @@ dlls/glu32/Makefile
 dlls/icmp/Makefile
 dlls/imagehlp/Makefile
 dlls/imm32/Makefile
+dlls/iphlpapi/Makefile
 dlls/kernel/Makefile
 dlls/kernel/tests/Makefile
 dlls/lzexpand/Makefile

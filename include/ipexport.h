@@ -96,4 +96,21 @@ typedef struct icmp_echo_reply ICMP_ECHO_REPLY, *PICMP_ECHO_REPLY;
 #define IP_PENDING                  (IP_STATUS_BASE + 255)
 
 
+#define MAX_ADAPTER_NAME 128
+
+typedef struct _IP_ADAPTER_INDEX_MAP {
+  ULONG Index;
+  WCHAR Name[MAX_ADAPTER_NAME];
+} IP_ADAPTER_INDEX_MAP, *PIP_ADAPTER_INDEX_MAP;
+
+typedef struct _IP_INTERFACE_INFO {
+  LONG                 NumAdapters;
+  IP_ADAPTER_INDEX_MAP Adapter[1];
+} IP_INTERFACE_INFO,*PIP_INTERFACE_INFO;
+
+typedef struct _IP_UNIDIRECTIONAL_ADAPTER_ADDRESS {
+  ULONG  NumAdapters;
+  IPAddr Address[1];
+} IP_UNIDIRECTIONAL_ADAPTER_ADDRESS, *PIP_UNIDIRECTIONAL_ADAPTER_ADDRESS;
+
 #endif /* __WINE_IPEXPORT_H */

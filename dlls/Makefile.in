@@ -47,6 +47,7 @@ BASEDIRS = \
 	icmp \
 	imagehlp \
 	imm32 \
+	iphlpapi \
 	kernel \
 	lzexpand \
 	mapi32 \
@@ -226,6 +227,7 @@ all: \
 	imaadp32.acm$(DLLEXT) \
 	imagehlp.dll$(DLLEXT) \
 	imm32.dll$(DLLEXT) \
+	iphlpapi.dll$(DLLEXT) \
 	joystick.drv$(DLLEXT) \
 	kernel32.dll$(DLLEXT) \
 	lz32.dll$(DLLEXT) \
@@ -414,6 +416,9 @@ imagehlp.dll$(DLLEXT): imagehlp/imagehlp.dll$(DLLEXT)
 
 imm32.dll$(DLLEXT) imm.dll$(DLLEXT): imm32/imm32.dll$(DLLEXT)
 	$(RM) $@ && $(LN_S) imm32/imm32.dll$(DLLEXT) $@
+
+iphlpapi.dll$(DLLEXT): iphlpapi/iphlpapi.dll$(DLLEXT)
+	$(RM) $@ && $(LN_S) iphlpapi/iphlpapi.dll$(DLLEXT) $@
 
 joystick.drv$(DLLEXT): winmm/joystick/joystick.drv$(DLLEXT)
 	$(RM) $@ && $(LN_S) winmm/joystick/joystick.drv$(DLLEXT) $@
@@ -688,6 +693,7 @@ IMPORT_LIBS = \
 	libicmp \
 	libimagehlp \
 	libimm32 \
+	libiphlpapi \
 	libkernel32 \
 	liblz32 \
 	libmapi32 \
@@ -926,6 +932,11 @@ libimm32.def: imm32/imm32.spec.def
 	$(RM) $@ && $(LN_S) imm32/imm32.spec.def $@
 libimm32.a: imm32/imm32.spec.def
 	$(DLLTOOL) -k -l $@ -d imm32/imm32.spec.def
+
+libiphlpapi.def: iphlpapi/iphlpapi.spec.def
+	$(RM) $@ && $(LN_S) iphlpapi/iphlpapi.spec.def $@
+libiphlpapi.a: iphlpapi/iphlpapi.spec.def
+	$(DLLTOOL) -k -l $@ -d iphlpapi/iphlpapi.spec.def
 
 libkernel32.def: kernel/kernel32.spec.def
 	$(RM) $@ && $(LN_S) kernel/kernel32.spec.def $@
@@ -1253,6 +1264,7 @@ glu32/glu32.spec.def: $(WINEBUILD)
 icmp/icmp.spec.def: $(WINEBUILD)
 imagehlp/imagehlp.spec.def: $(WINEBUILD)
 imm32/imm32.spec.def: $(WINEBUILD)
+iphlpapi/iphlpapi.spec.def: $(WINEBUILD)
 kernel/kernel32.spec.def: $(WINEBUILD)
 lzexpand/lz32.spec.def: $(WINEBUILD)
 mapi32/mapi32.spec.def: $(WINEBUILD)
@@ -1354,6 +1366,7 @@ icmp/icmp.dll$(DLLEXT): icmp
 msacm/imaadp32/imaadp32.acm$(DLLEXT): msacm/imaadp32
 imagehlp/imagehlp.dll$(DLLEXT): imagehlp
 imm32/imm32.dll$(DLLEXT): imm32
+iphlpapi/iphlpapi.dll$(DLLEXT): iphlpapi
 winmm/joystick/joystick.drv$(DLLEXT): winmm/joystick
 kernel/kernel32.dll$(DLLEXT): kernel
 lzexpand/lz32.dll$(DLLEXT): lzexpand
@@ -1470,6 +1483,7 @@ icmp/__install__: icmp.dll$(DLLEXT)
 msacm/imaadp32/__install__: imaadp32.acm$(DLLEXT)
 imagehlp/__install__: imagehlp.dll$(DLLEXT)
 imm32/__install__: imm32.dll$(DLLEXT)
+iphlpapi/__install__: iphlpapi.dll$(DLLEXT)
 winmm/joystick/__install__: joystick.drv$(DLLEXT)
 kernel/__install__: kernel32.dll$(DLLEXT)
 lzexpand/__install__: lz32.dll$(DLLEXT)

@@ -68,6 +68,10 @@ WINDOWS_INCLUDES = \
 	initguid.h \
 	instance.h \
 	ipexport.h \
+	iphlpapi.h \
+	ipifcons.h \
+	iprtrmib.h \
+	iptypes.h \
 	lm.h \
 	lmaccess.h \
 	lmapibuf.h \
