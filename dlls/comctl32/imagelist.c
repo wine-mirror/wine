@@ -188,6 +188,7 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
     HBRUSH hBrush, hOldBrush;
     HBITMAP hOldBitmapImage, hOldBitmapMask;
     HIMAGELIST himlLocal = pimldp->himl;
+    COLORREF oldBkColor, oldFgColor;
 
     bUseCustomBackground = (himlLocal->clrBk != CLR_NONE);
     bBlendFlag = (pimldp->fStyle & ILD_BLEND50 ) 
@@ -220,6 +221,12 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
         || ((pimldp->fStyle & ILD_IMAGE) && bUseCustomBackground)
         || bBlendFlag)
     {
+        /* to obtain a transparent look, background color should be set
+           to white and foreground color to black when blting the 
+           monochrome mask. */
+        oldBkColor = SetBkColor(pimldp->hdcDst, RGB(0xff, 0xff, 0xff)); 
+        oldFgColor = SetTextColor(pimldp->hdcDst, RGB(0, 0, 0));
+
         BitBlt(pimldp->hdcDst, 
             pimldp->x, pimldp->y, cx, cy,
             hMaskDC, 
@@ -231,6 +238,9 @@ IMAGELIST_InternalDrawMask(IMAGELISTDRAWPARAMS *pimldp, INT cx, INT cy)
             hImageDC, 
             himlLocal->cx * pimldp->i, 0, 
             SRCPAINT);
+
+	SetBkColor(pimldp->hdcDst, oldBkColor); 
+	SetTextColor(pimldp->hdcDst, oldFgColor);
     }
     /* Draw the image when no Background is specified
     */
