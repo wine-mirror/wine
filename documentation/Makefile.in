@@ -51,7 +51,7 @@ $(INCLUDES):
 
 install:: 
 	[ -d $(mandir) ] || mkdir -p $(mandir)
-	$(INSTALL_DATA) $(SRCDIR)/wine.man $(mandir)/wine$(manext)
+	$(INSTALL_DATA) wine.man $(mandir)/wine$(manext)
 
 uninstall::
 	$(RM) $(mandir)/wine$(manext)
@@ -68,7 +68,7 @@ clean::
 	$(RM) $(INFOFILES) $(DVIFILES) $(INCLUDES)
 	$(RM) wine.aux wine.cp wine.cps wine.fn wine.fns wine.ky wine.log \
 		wine.pg wine.toc wine.tp wine.tps wine.vr wine.vrs \
-		wine.texi wine.man
+		wine.texi
 	$(RM) -r man3w
 
 ### Dependencies:
