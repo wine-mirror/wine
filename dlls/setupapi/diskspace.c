@@ -120,7 +120,7 @@ BOOL WINAPI SetupQuerySpaceRequiredOnDriveA(HDSKSPC DiskSpace,
     int i;
     LPDISKSPACELIST list = (LPDISKSPACELIST)DiskSpace;
     BOOL rc = FALSE;
-    WCHAR bkslsh[]= {'\\',0};
+    static const WCHAR bkslsh[]= {'\\',0};
 
     MultiByteToWideChar(CP_ACP,0,DriveSpec,-1,driveW,20);
 

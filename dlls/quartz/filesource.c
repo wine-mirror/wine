@@ -193,7 +193,7 @@ static HRESULT GetClassMediaFile(IAsyncReader * pReader, LPCOLESTR pszFileName, 
     HKEY hkeyMediaType = NULL;
     HRESULT hr = S_OK;
     BOOL bFound = FALSE;
-    WCHAR wszMediaType[] = {'M','e','d','i','a',' ','T','y','p','e',0};
+    static const WCHAR wszMediaType[] = {'M','e','d','i','a',' ','T','y','p','e',0};
 
     CopyMemory(majorType, &GUID_NULL, sizeof(*majorType));
     CopyMemory(minorType, &GUID_NULL, sizeof(*minorType));

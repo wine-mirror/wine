@@ -3467,7 +3467,7 @@ TREEVIEW_EditLabel(TREEVIEW_INFO *infoPtr, HTREEITEM hItem)
     HDC hdc;
     HFONT hOldFont=0;
     TEXTMETRICW textMetric;
-    WCHAR EditW[] = {'E','d','i','t',0};
+    static const WCHAR EditW[] = {'E','d','i','t',0};
 
     TRACE("%x %p\n", (unsigned)hwnd, hItem);
     if (!TREEVIEW_ValidItem(infoPtr, editItem))

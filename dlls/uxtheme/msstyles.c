@@ -78,13 +78,13 @@ HRESULT MSSTYLES_OpenThemeFile(LPCWSTR lpThemeFile, LPCWSTR pszColorName, LPCWST
     HMODULE hTheme;
     HRSRC hrsc;
     HRESULT hr = S_OK;
-    WCHAR szPackThemVersionResource[] = {
+    static const WCHAR szPackThemVersionResource[] = {
         'P','A','C','K','T','H','E','M','_','V','E','R','S','I','O','N', '\0'
     };
-    WCHAR szColorNamesResource[] = {
+    static const WCHAR szColorNamesResource[] = {
         'C','O','L','O','R','N','A','M','E','S','\0'
     };
-    WCHAR szSizeNamesResource[] = {
+    static const WCHAR szSizeNamesResource[] = {
         'S','I','Z','E','N','A','M','E','S','\0'
     };
 
@@ -250,7 +250,7 @@ PUXINI_FILE MSSTYLES_GetThemeIni(PTHEME_FILE tf)
  */
 PUXINI_FILE MSSTYLES_GetActiveThemeIni(PTHEME_FILE tf)
 {
-    WCHAR szFileResNamesResource[] = {
+    static const WCHAR szFileResNamesResource[] = {
         'F','I','L','E','R','E','S','N','A','M','E','S','\0'
     };
     DWORD dwColorCount = 0;
@@ -661,8 +661,8 @@ PTHEME_PROPERTY MSSTYLES_AddMetric(PTHEME_FILE tf, int iPropertyPrimitive, int i
  */
 void MSSTYLES_ParseThemeIni(PTHEME_FILE tf)
 {
-    WCHAR szSysMetrics[] = {'S','y','s','M','e','t','r','i','c','s','\0'};
-    WCHAR szGlobals[] = {'g','l','o','b','a','l','s','\0'};
+    static const WCHAR szSysMetrics[] = {'S','y','s','M','e','t','r','i','c','s','\0'};
+    static const WCHAR szGlobals[] = {'g','l','o','b','a','l','s','\0'};
     PTHEME_CLASS cls;
     PTHEME_CLASS globals;
     PTHEME_PARTSTATE ps;

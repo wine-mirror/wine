@@ -133,22 +133,22 @@ HRESULT WINAPI DXTraceW(const char* strFile, DWORD dwLine, HRESULT hr, const WCH
     TRACE("(%p,%ld,0x%08lx,%p,%d)\n", strFile, dwLine, hr, strMsg, bPopMsgBox);
 
     if (bPopMsgBox) {
-        WCHAR format[] = { 'F','i','l','e',':',' ','%','s','\\','n','L','i','n',
+        static const WCHAR format[] = { 'F','i','l','e',':',' ','%','s','\\','n','L','i','n',
             'e',':',' ','%','l','d','\\','n','E','r','r','o','r',' ','C','o',
             'd','e',':',' ','%','s',' ','(','0','x','%','0','8','l','x',')',
             '\\','n','C','a','l','l','i','n','g',':',' ','%','s',0 };
-        WCHAR caption[] = { 'U','n','e','x','p','e','c','t','e','d',' ','e','r',
-            'r','o','r',' ','e','n','c','o','u','n','t','e','r','e','d',0 }; 
+        static const WCHAR caption[] = { 'U','n','e','x','p','e','c','t','e','d',' ','e','r',
+            'r','o','r',' ','e','n','c','o','u','n','t','e','r','e','d',0 };
         /* FIXME: should use wsnprintf */
-        wsprintfW(msg, format, strFile, dwLine, 
+        wsprintfW(msg, format, strFile, dwLine,
                   DXGetErrorString8W(hr), hr, strMsg);
         MessageBoxW(0, msg, caption, MB_OK|MB_ICONERROR);
     } else {
-        WCHAR format[] = { '%','s','(','%','l','d',')',':',' ','%','s',' ','(',
+        static const WCHAR format[] = { '%','s','(','%','l','d',')',':',' ','%','s',' ','(',
             'h','r','=','%','s',' ','(','0','x','%','0','8','l','x',')',')',' ',
             0 };
         /* FIXME: should use wsnprintf */
-        wsprintfW(msg, format, strFile, dwLine, strMsg, 
+        wsprintfW(msg, format, strFile, dwLine, strMsg,
                   DXGetErrorString8W(hr), hr);
         OutputDebugStringW(msg);
     }

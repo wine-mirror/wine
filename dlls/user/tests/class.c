@@ -45,8 +45,8 @@ static LRESULT WINAPI ClassTest_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPA
 static void ClassTest(HINSTANCE hInstance, BOOL global)
 {
     WNDCLASSW cls, wc;
-    WCHAR className[] = {'T','e','s','t','C','l','a','s','s',0};
-    WCHAR winName[]   = {'W','i','n','C','l','a','s','s','T','e','s','t',0};
+    static const WCHAR className[] = {'T','e','s','t','C','l','a','s','s',0};
+    static const WCHAR winName[]   = {'W','i','n','C','l','a','s','s','T','e','s','t',0};
     ATOM test_atom;
     HWND hTestWnd;
     DWORD i;

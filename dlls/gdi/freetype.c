@@ -2270,7 +2270,7 @@ UINT WineEngGetOutlineTextMetrics(GdiFont font, UINT cbSize,
     TT_Postscript *pPost;
     FT_Fixed x_scale, y_scale;
     WCHAR *family_nameW, *style_nameW;
-    WCHAR spaceW[] = {' ', '\0'};
+    static const WCHAR spaceW[] = {' ', '\0'};
     char *cp;
     INT ascent, descent;
 

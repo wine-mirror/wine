@@ -308,7 +308,7 @@ HRESULT WINAPI LoadTypeLibEx(
 		return TYPE_E_CANTLOADLIBRARY;
 	} else {
 	    WCHAR tstpath[260];
-	    WCHAR stdole32tlb[] = { 's','t','d','o','l','e','3','2','.','t','l','b',0 };
+	    static const WCHAR stdole32tlb[] = { 's','t','d','o','l','e','3','2','.','t','l','b',0 };
 	    int i;
 
 	    lstrcpyW(tstpath,szFile);

@@ -1193,7 +1193,7 @@ LsaQueryInformationPolicy(
                KEY_READ, &key)) == ERROR_SUCCESS)
               {
                   DWORD size = 0;
-                  WCHAR wg[] = { 'W','o','r','k','g','r','o','u','p',0 };
+                  static const WCHAR wg[] = { 'W','o','r','k','g','r','o','u','p',0 };
 
                   ret = RegQueryValueExW(key, wg, NULL, NULL, NULL, &size);
                   if (ret == ERROR_MORE_DATA || ret == ERROR_SUCCESS)

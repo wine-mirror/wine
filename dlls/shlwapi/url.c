@@ -687,8 +687,8 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
     DWORD myflags, sizeloc = 0;
     DWORD len, res1, res2, process_case = 0;
     LPWSTR work, preliminary, mbase, mrelative;
-    WCHAR myfilestr[] = {'f','i','l','e',':','/','/','/','\0'};
-    WCHAR single_slash[] = {'/','\0'};
+    static const WCHAR myfilestr[] = {'f','i','l','e',':','/','/','/','\0'};
+    static const WCHAR single_slash[] = {'/','\0'};
     HRESULT ret;
 
     TRACE("(base %s, Relative %s, Combine size %ld, flags %08lx)\n",

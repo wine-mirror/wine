@@ -191,7 +191,7 @@ static void test_RtlInitUnicodeString(void)
 
 static void test_RtlInitUnicodeStringEx(void)
 {
-    WCHAR teststring[] = {'S','o','m','e',' ','W','i','l','d',' ','S','t','r','i','n','g',0};
+    static const WCHAR teststring[] = {'S','o','m','e',' ','W','i','l','d',' ','S','t','r','i','n','g',0};
     WCHAR *teststring2;
     UNICODE_STRING uni;
     NTSTATUS result;

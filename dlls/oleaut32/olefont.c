@@ -1214,7 +1214,7 @@ static HRESULT WINAPI OLEFontImpl_GetTypeInfo(
   LCID        lcid,
   ITypeInfo** ppTInfo)
 {
-  WCHAR stdole32tlb[] = {'s','t','d','o','l','e','3','2','.','t','l','b',0};
+  static const WCHAR stdole32tlb[] = {'s','t','d','o','l','e','3','2','.','t','l','b',0};
   ITypeLib *tl;
   HRESULT hres;
 

@@ -473,8 +473,8 @@ HRESULT WINAPI FileMonikerImpl_Construct(FileMonikerImpl* This, LPCOLESTR lpszPa
     int nb=0,i;
     int sizeStr=lstrlenW(lpszPathName);
     LPOLESTR *tabStr=0;
-    WCHAR twoPoint[]={'.','.',0};
-    WCHAR bkSlash[]={'\\',0};
+    static const WCHAR twoPoint[]={'.','.',0};
+    static const WCHAR bkSlash[]={'\\',0};
     BYTE addBkSlash;
 
     TRACE("(%p,%p)\n",This,lpszPathName);
@@ -751,8 +751,8 @@ HRESULT WINAPI FileMonikerImpl_ComposeWith(IMoniker* iface,
 {
     HRESULT res;
     LPOLESTR str1=0,str2=0,*strDec1=0,*strDec2=0,newStr=0;
-    WCHAR twoPoint[]={'.','.',0};
-    WCHAR bkSlash[]={'\\',0};
+    static const WCHAR twoPoint[]={'.','.',0};
+    static const WCHAR bkSlash[]={'\\',0};
     IBindCtx *bind=0;
     int i=0,j=0,lastIdx1=0,lastIdx2=0;
     DWORD mkSys;
@@ -1098,7 +1098,7 @@ HRESULT WINAPI FileMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOth
  ******************************************************************************/
 int WINAPI FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable)
 {
-    WCHAR bSlash[] = {'\\',0};
+    static const WCHAR bSlash[] = {'\\',0};
     WCHAR word[MAX_PATH];
     int i=0,j,tabIndex=0;
     LPOLESTR *strgtable ;
@@ -1157,7 +1157,7 @@ HRESULT WINAPI FileMonikerImpl_RelativePathTo(IMoniker* iface,IMoniker* pmOther,
     HRESULT res;
     LPOLESTR str1=0,str2=0,*tabStr1=0,*tabStr2=0,relPath=0;
     DWORD len1=0,len2=0,sameIdx=0,j=0;
-    WCHAR back[] ={'.','.','\\',0};
+    static const WCHAR back[] ={'.','.','\\',0};
 
     TRACE("(%p,%p,%p)\n",iface,pmOther,ppmkRelPath);
 

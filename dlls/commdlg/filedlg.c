@@ -1016,8 +1016,8 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
   int win98plus   = 0;
   int handledPath = FALSE;
   OSVERSIONINFOA osVi;
-  const WCHAR szwSlash[] = { '\\', 0 };
-  const WCHAR szwStar[] = { '*',0 };
+  static const WCHAR szwSlash[] = { '\\', 0 };
+  static const WCHAR szwStar[] = { '*',0 };
 
   TBBUTTON tbb[] =
   {
@@ -1539,7 +1539,7 @@ BOOL FILEDLG95_OnOpenMultipleFiles(HWND hwnd, LPWSTR lpstrFileList, UINT nFileCo
         WCHAR lpstrNotFound[100];
         WCHAR lpstrMsg[100];
         WCHAR tmp[400];
-        WCHAR nl[] = {'\n',0};
+        static const WCHAR nl[] = {'\n',0};
 
         LoadStringW(COMDLG32_hInstance, IDS_FILENOTFOUND, lpstrNotFound, 100);
         LoadStringW(COMDLG32_hInstance, IDS_VERIFYFILE, lpstrMsg, 100);
@@ -1717,7 +1717,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
   {
     LPWSTR lpszTemp, lpszTemp1;
     LPITEMIDLIST pidl = NULL;
-    WCHAR szwInvalid[] = { '/',':','<','>','|', 0};
+    static const WCHAR szwInvalid[] = { '/',':','<','>','|', 0};
 
     /* check for invalid chars */
     if((strpbrkW(lpstrPathAndFile+3, szwInvalid) != NULL) && !(fodInfos->ofnInfos->Flags & OFN_NOVALIDATE))
@@ -1747,7 +1747,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 
       if(*lpszTemp==0)
       {
-        WCHAR wszWild[] = { '*', '?', 0 };
+        static const WCHAR wszWild[] = { '*', '?', 0 };
 	/* if the last element is a wildcard do a search */
         if(strpbrkW(lpszTemp1, wszWild) != NULL)
         {
@@ -1886,7 +1886,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 	    /* only add "." in case a default extension does exist */
 	    if (*fodInfos->defext != '\0')
 	    {
-                const WCHAR szwDot[] = {'.',0};
+                static const WCHAR szwDot[] = {'.',0};
 		int PathLength = strlenW(lpstrPathAndFile);
 
 	        strcatW(lpstrPathAndFile, szwDot);
@@ -3188,7 +3188,7 @@ static BOOL BrowseSelectedFolder(HWND hwnd)
           if ( FAILED( IShellBrowser_BrowseObject( fodInfos->Shell.FOIShellBrowser,
                          pidlSelection, SBSP_RELATIVE ) ) )
           {
-               WCHAR notexist[] = {'P','a','t','h',' ','d','o','e','s',
+               static const WCHAR notexist[] = {'P','a','t','h',' ','d','o','e','s',
                                    ' ','n','o','t',' ','e','x','i','s','t',0};
                MessageBoxW( hwnd, notexist, fodInfos->title, MB_OK | MB_ICONEXCLAMATION );
           }

@@ -596,7 +596,7 @@ static void test_CreateFileW(void)
     HANDLE hFile;
     WCHAR temp_path[MAX_PATH];
     WCHAR filename[MAX_PATH];
-    WCHAR emptyW[]={'\0'};
+    static const WCHAR emptyW[]={'\0'};
     static const WCHAR prefix[] = {'p','f','x',0};
     DWORD ret;
 
@@ -668,7 +668,7 @@ static void test_DeleteFileA( void )
 static void test_DeleteFileW( void )
 {
     BOOL ret;
-    WCHAR emptyW[]={'\0'};
+    static const WCHAR emptyW[]={'\0'};
 
     ret = DeleteFileW(NULL);
     if (ret==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)

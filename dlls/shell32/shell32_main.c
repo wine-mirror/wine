@@ -356,8 +356,8 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 	/* get the type name */
 	if (SUCCEEDED(hr) && (flags & SHGFI_TYPENAME))
         {
-            WCHAR szFile[] = { 'F','i','l','e',0 };
-            WCHAR szDashFile[] = { '-','f','i','l','e',0 };
+            static const WCHAR szFile[] = { 'F','i','l','e',0 };
+            static const WCHAR szDashFile[] = { '-','f','i','l','e',0 };
             if (!(flags & SHGFI_USEFILEATTRIBUTES))
             {
                 char ftype[80];
@@ -428,7 +428,7 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
                psfi->iIcon = 2;
             else
             {
-               WCHAR p1W[] = {'%','1',0};
+               static const WCHAR p1W[] = {'%','1',0};
                psfi->iIcon = 0;
                szExt = (LPWSTR) PathFindExtensionW(sTemp);
                if ( szExt && HCR_MapTypeToValueW(szExt, sTemp, MAX_PATH, TRUE)

@@ -602,10 +602,10 @@ HRESULT WINAPI EnumThemes(LPCWSTR pszThemePath, EnumThemeProc callback,
 {
     WCHAR szDir[MAX_PATH];
     WCHAR szPath[MAX_PATH];
-    WCHAR szStar[] = {'*','.','*','\0'};
-    WCHAR szFormat[] = {'%','s','%','s','\\','%','s','.','m','s','s','t','y','l','e','s','\0'};
-    WCHAR szDisplayName[] = {'d','i','s','p','l','a','y','n','a','m','e','\0'};
-    WCHAR szTooltip[] = {'t','o','o','l','t','i','p','\0'};
+    static const WCHAR szStar[] = {'*','.','*','\0'};
+    static const WCHAR szFormat[] = {'%','s','%','s','\\','%','s','.','m','s','s','t','y','l','e','s','\0'};
+    static const WCHAR szDisplayName[] = {'d','i','s','p','l','a','y','n','a','m','e','\0'};
+    static const WCHAR szTooltip[] = {'t','o','o','l','t','i','p','\0'};
     WCHAR szName[60];
     WCHAR szTip[60];
     HANDLE hFind;
