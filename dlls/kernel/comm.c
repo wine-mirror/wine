@@ -2387,7 +2387,6 @@ BOOL WINAPI SetCommState(
 	}
 #ifdef CRTSCTS
 	if (	lpdcb->fOutxCtsFlow 			||
-		lpdcb->fDtrControl == DTR_CONTROL_ENABLE||
 		lpdcb->fRtsControl == RTS_CONTROL_ENABLE
 	) 
 	  {
@@ -2395,7 +2394,7 @@ BOOL WINAPI SetCommState(
 	    TRACE("CRTSCTS\n");
 	  }
 	
-	if (lpdcb->fDtrControl == DTR_CONTROL_DISABLE)
+	if (lpdcb->fDtrControl == DTR_CONTROL_ENABLE)
 	  {
 	    port.c_cflag &= ~CRTSCTS;
 	    TRACE("~CRTSCTS\n");
@@ -2749,8 +2748,26 @@ BOOL WINAPI SetCommTimeouts(
         FIXME("tcgetattr on fd %d failed!\n",fd);
         return FALSE;
     }
+
     /* VTIME is in 1/10 seconds */
-    tios.c_cc[VTIME]= (lptimeouts->ReadIntervalTimeout+99)/100;
+	{
+		unsigned int ux_timeout;
+
+		if(lptimeouts->ReadIntervalTimeout == 0) /* 0 means no timeout */
+		{
+			ux_timeout = 0;
+		}
+		else
+		{
+			ux_timeout = (lptimeouts->ReadIntervalTimeout+99)/100;
+			if(ux_timeout == 0)
+			{
+				ux_timeout = 1; /* must be at least some timeout */
+			}
+		}
+		tios.c_cc[VTIME] = ux_timeout;
+	}
+
     if (-1==tcsetattr(fd,0,&tios)) {
         FIXME("tcsetattr on fd %d failed!\n",fd);
         return FALSE;
