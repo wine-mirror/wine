@@ -250,7 +250,6 @@ typedef struct tagLISTVIEW_INFO
   INT ntmHeight;		/* Some cached metrics of the font used */
   INT ntmAveCharWidth;		/* by the listview to draw items */
   BOOL bRedraw;  		/* Turns on/off repaints & invalidations */
-  BOOL bFirstPaint;		/* Flags if the control has never painted before */
   BOOL bAutoarrange;		/* Autoarrange flag when NOT in LVS_AUTOARRANGE */
   BOOL bFocus;
   BOOL bDoChangeNotify;                /* send change notification messages? */
@@ -1315,7 +1314,7 @@ static inline BOOL LISTVIEW_GetItemW(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem)
 
 static inline BOOL is_redrawing(LISTVIEW_INFO *infoPtr)
 {
-    return infoPtr->bRedraw && !infoPtr->bFirstPaint;
+    return infoPtr->bRedraw;
 }
 
 static inline void LISTVIEW_InvalidateRect(LISTVIEW_INFO *infoPtr, const RECT* rect)
@@ -7162,7 +7161,6 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->nSelectionMark = -1;
   infoPtr->nHotItem = -1;
   infoPtr->bRedraw = TRUE;
-  infoPtr->bFirstPaint = TRUE;
   infoPtr->bNoItemMetrics = TRUE;
   infoPtr->bDoChangeNotify = TRUE;
   infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING);
@@ -7984,7 +7982,6 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
 {
     TRACE("(hdc=%p)\n", hdc);
 
-    infoPtr->bFirstPaint = FALSE;
     if (infoPtr->bNoItemMetrics && infoPtr->nItemCount)
     {
 	UINT uView =  infoPtr->dwStyle & LVS_TYPEMASK;
