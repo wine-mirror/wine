@@ -149,6 +149,8 @@ struct thread *create_process( int fd, struct process *parent,
     process->console_out     = NULL;
     process->init_event      = NULL;
     process->info            = NULL;
+    process->ldt_copy        = NULL;
+    process->ldt_flags       = NULL;
     gettimeofday( &process->start_time, NULL );
     if ((process->next = first_process) != NULL) process->next->prev = process;
     first_process = process;
@@ -539,6 +541,8 @@ DECL_HANDLER(init_process)
         fatal_protocol_error( current, "init_process: called twice\n" );
         return;
     }
+    current->process->ldt_copy  = req->ldt_copy;
+    current->process->ldt_flags = req->ldt_flags;
     current->process->info = NULL;
     req->start_flags = info->start_flags;
     req->hstdin      = info->hstdin;

@@ -254,6 +254,8 @@ static BOOL PROCESS_CreateEnvDB(void)
 
     /* Retrieve startup info from the server */
 
+    req->ldt_copy  = ldt_copy;
+    req->ldt_flags = ldt_flags_copy;
     if (server_call( REQ_INIT_PROCESS )) return FALSE;
     startup->dwFlags     = req->start_flags;
     startup->wShowWindow = req->cmd_show;

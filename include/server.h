@@ -148,6 +148,8 @@ struct boot_done_request
 /* Initialize a process; called from the new process context */
 struct init_process_request
 {
+    IN  void*        ldt_copy;     /* addr of LDT copy */
+    IN  void*        ldt_flags;    /* addr of LDT flags */
     OUT int          start_flags;  /* flags from startup info */
     OUT int          hstdin;       /* handle for stdin */
     OUT int          hstdout;      /* handle for stdout */
@@ -1031,6 +1033,17 @@ struct set_thread_context_request
 };
 
 
+/* Fetch a selector entry for a thread */
+struct get_selector_entry_request
+{
+    IN  int           handle;      /* thread handle */
+    IN  int           entry;       /* LDT entry */
+    OUT unsigned int  base;        /* selector base */
+    OUT unsigned int  limit;       /* selector limit */
+    OUT unsigned char flags;       /* selector flags */
+};
+
+
 /* Everything below this line is generated automatically by tools/make_requests */
 /* ### make_requests begin ### */
 
@@ -1128,6 +1141,7 @@ enum request
     REQ_CANCEL_TIMER,
     REQ_GET_THREAD_CONTEXT,
     REQ_SET_THREAD_CONTEXT,
+    REQ_GET_SELECTOR_ENTRY,
     REQ_NB_REQUESTS
 };
 

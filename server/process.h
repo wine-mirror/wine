@@ -34,6 +34,8 @@ struct process
     struct object       *console_in;      /* console input */
     struct object       *console_out;     /* console output */
     struct event        *init_event;      /* event for init done */
+    void                *ldt_copy;        /* pointer to LDT copy in client addr space */
+    void                *ldt_flags;       /* pointer to LDT flags in client addr space */
     struct new_process_request *info;     /* startup info (freed after startup) */
 };
 

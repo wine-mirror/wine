@@ -5,16 +5,18 @@
  */
 
 #include <string.h>
+#include "winerror.h"
 #include "wine/winbase16.h"
 #include "ldt.h"
 #include "miscemu.h"
 #include "selectors.h"
 #include "stackframe.h"
 #include "process.h"
+#include "server.h"
 #include "debugtools.h"
 #include "toolhelp.h"
 
-DEFAULT_DEBUG_CHANNEL(selector)
+DEFAULT_DEBUG_CHANNEL(selector);
 
 
 /***********************************************************************
@@ -604,28 +606,74 @@ void WINAPI UnMapLS( SEGPTR sptr )
 
 /***********************************************************************
  *           GetThreadSelectorEntry   (KERNEL32)
- * FIXME: add #ifdef i386 for non x86
  */
-BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel,
-                                      LPLDT_ENTRY ldtent)
+BOOL WINAPI GetThreadSelectorEntry( HANDLE hthread, DWORD sel, LPLDT_ENTRY ldtent)
 {
-    ldt_entry	ldtentry;
+#ifdef __i386__
+    struct get_selector_entry_request *req = get_req_buffer();
 
-    LDT_GetEntry(SELECTOR_TO_ENTRY(sel),&ldtentry);
-    ldtent->BaseLow = ldtentry.base & 0x0000ffff;
-    ldtent->HighWord.Bits.BaseMid = (ldtentry.base & 0x00ff0000) >> 16;
-    ldtent->HighWord.Bits.BaseHi = (ldtentry.base & 0xff000000) >> 24;
-    ldtent->LimitLow = ldtentry.limit & 0x0000ffff;
-    ldtent->HighWord.Bits.LimitHi = (ldtentry.limit & 0x00ff0000) >> 16;
-    ldtent->HighWord.Bits.Dpl = 3;
-    ldtent->HighWord.Bits.Sys = 0;
-    ldtent->HighWord.Bits.Pres = 1;
-    ldtent->HighWord.Bits.Type = 0x10|(ldtentry.type << 2);
-    if (!ldtentry.read_only)
-    	ldtent->HighWord.Bits.Type|=0x2;
-    ldtent->HighWord.Bits.Granularity = ldtentry.limit_in_pages;
-    ldtent->HighWord.Bits.Default_Big = ldtentry.seg_32bit;
+    if (!(sel & 4))  /* GDT selector */
+    {
+        WORD seg;
+        sel &= ~3;  /* ignore RPL */
+        if (!sel)  /* null selector */
+        {
+            memset( ldtent, 0, sizeof(*ldtent) );
+            return TRUE;
+        }
+        ldtent->BaseLow                   = 0;
+        ldtent->HighWord.Bits.BaseMid     = 0;
+        ldtent->HighWord.Bits.BaseHi      = 0;
+        ldtent->LimitLow                  = 0xffff;
+        ldtent->HighWord.Bits.LimitHi     = 0xf;
+        ldtent->HighWord.Bits.Dpl         = 3;
+        ldtent->HighWord.Bits.Sys         = 0;
+        ldtent->HighWord.Bits.Pres        = 1;
+        ldtent->HighWord.Bits.Granularity = 1;
+        ldtent->HighWord.Bits.Default_Big = 1;
+        ldtent->HighWord.Bits.Type        = 0x12;
+        /* it has to be one of the system GDT selectors */
+        GET_DS(seg);
+        if (sel == (seg & ~3)) return TRUE;
+        GET_SS(seg);
+        if (sel == (seg & ~3)) return TRUE;
+        GET_CS(seg);
+        if (sel == (seg & ~3))
+        {
+            ldtent->HighWord.Bits.Type |= 8;  /* code segment */
+            return TRUE;
+        }
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+
+    req->handle = hthread;
+    req->entry = sel >> __AHSHIFT;
+    if (server_call( REQ_GET_SELECTOR_ENTRY )) return FALSE;
+
+    if (!(req->flags & LDT_FLAGS_ALLOCATED))
+    {
+        SetLastError( ERROR_MR_MID_NOT_FOUND );  /* sic */
+        return FALSE;
+    }
+    if (req->flags & LDT_FLAGS_BIG) req->limit >>= 12;
+    ldtent->BaseLow                   = req->base & 0x0000ffff;
+    ldtent->HighWord.Bits.BaseMid     = (req->base & 0x00ff0000) >> 16;
+    ldtent->HighWord.Bits.BaseHi      = (req->base & 0xff000000) >> 24;
+    ldtent->LimitLow                  = req->limit & 0x0000ffff;
+    ldtent->HighWord.Bits.LimitHi     = (req->limit & 0x000f0000) >> 16;
+    ldtent->HighWord.Bits.Dpl         = 3;
+    ldtent->HighWord.Bits.Sys         = 0;
+    ldtent->HighWord.Bits.Pres        = 1;
+    ldtent->HighWord.Bits.Granularity = (req->flags & LDT_FLAGS_BIG) !=0;
+    ldtent->HighWord.Bits.Default_Big = (req->flags & LDT_FLAGS_32BIT) != 0;
+    ldtent->HighWord.Bits.Type        = ((req->flags & LDT_FLAGS_TYPE) << 2) | 0x10;
+    if (!(req->flags & LDT_FLAGS_READONLY)) ldtent->HighWord.Bits.Type |= 0x2;
     return TRUE;
+#else
+    SetLastError( ERROR_NOT_IMPLEMENTED );
+    return FALSE;
+#endif
 }
 
 

@@ -162,6 +162,7 @@ DECL_HANDLER(set_timer);
 DECL_HANDLER(cancel_timer);
 DECL_HANDLER(get_thread_context);
 DECL_HANDLER(set_thread_context);
+DECL_HANDLER(get_selector_entry);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -261,6 +262,7 @@ static const struct handler {
     { (void(*)())req_cancel_timer, sizeof(struct cancel_timer_request) },
     { (void(*)())req_get_thread_context, sizeof(struct get_thread_context_request) },
     { (void(*)())req_set_thread_context, sizeof(struct set_thread_context_request) },
+    { (void(*)())req_get_selector_entry, sizeof(struct get_selector_entry_request) },
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

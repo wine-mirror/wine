@@ -239,6 +239,8 @@ static void dump_boot_done_request( const struct boot_done_request *req )
 
 static void dump_init_process_request( const struct init_process_request *req )
 {
+    fprintf( stderr, " ldt_copy=%p,", req->ldt_copy );
+    fprintf( stderr, " ldt_flags=%p", req->ldt_flags );
 }
 
 static void dump_init_process_reply( const struct init_process_request *req )
@@ -1167,6 +1169,19 @@ static void dump_set_thread_context_request( const struct set_thread_context_req
     dump_context( &req->context );
 }
 
+static void dump_get_selector_entry_request( const struct get_selector_entry_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
+    fprintf( stderr, " entry=%d", req->entry );
+}
+
+static void dump_get_selector_entry_reply( const struct get_selector_entry_request *req )
+{
+    fprintf( stderr, " base=%08x,", req->base );
+    fprintf( stderr, " limit=%08x,", req->limit );
+    fprintf( stderr, " flags=%02x", req->flags );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_new_thread_request,
@@ -1260,6 +1275,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_cancel_timer_request,
     (dump_func)dump_get_thread_context_request,
     (dump_func)dump_set_thread_context_request,
+    (dump_func)dump_get_selector_entry_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -1355,6 +1371,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_get_thread_context_reply,
     (dump_func)0,
+    (dump_func)dump_get_selector_entry_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -1450,6 +1467,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "cancel_timer",
     "get_thread_context",
     "set_thread_context",
+    "get_selector_entry",
 };
 
 /* ### make_requests end ### */

@@ -520,6 +520,37 @@ static int thread_queue_apc( struct thread *thread, void *func, void *param )
     return 1;
 }
 
+/* retrieve an LDT selector entry */
+static void get_selector_entry( struct thread *thread, int entry,
+                                unsigned int *base, unsigned int *limit,
+                                unsigned char *flags )
+{
+    if (!thread->process->ldt_copy || !thread->process->ldt_flags)
+    {
+        set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
+    if (entry >= 8192)
+    {
+        set_error( STATUS_INVALID_PARAMETER );  /* FIXME */
+        return;
+    }
+    suspend_thread( thread, 0 );
+    if (thread->attached)
+    {
+        unsigned char flags_buf[4];
+        int *addr = (int *)thread->process->ldt_copy + 2 * entry;
+        if (read_thread_int( thread, addr, base ) == -1) goto done;
+        if (read_thread_int( thread, addr + 1, limit ) == -1) goto done;
+        addr = (int *)thread->process->ldt_flags + (entry >> 2);
+        if (read_thread_int( thread, addr, (int *)flags_buf ) == -1) goto done;
+        *flags = flags_buf[entry & 3];
+    }
+    else set_error( STATUS_ACCESS_DENIED );
+ done:
+    resume_thread( thread );
+}
+
 /* kill a thread on the spot */
 void kill_thread( struct thread *thread, int exit_code )
 {
@@ -687,5 +718,16 @@ DECL_HANDLER(get_apcs)
         free( current->apc );
         current->apc = NULL;
         current->apc_count = 0;
+    }
+}
+
+/* fetch a selector entry for a thread */
+DECL_HANDLER(get_selector_entry)
+{
+    struct thread *thread;
+    if ((thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION )))
+    {
+        get_selector_entry( thread, req->entry, &req->base, &req->limit, &req->flags );
+        release_object( thread );
     }
 }
