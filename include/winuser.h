@@ -1655,6 +1655,12 @@ typedef BOOL CALLBACK (*DRAWSTATEPROC)(HDC,LPARAM,WPARAM,INT,INT);
 #define STM_GETICON       0x0171
 #define STM_SETIMAGE        0x0172
 #define STM_GETIMAGE        0x0173
+#define STM_MSGMAX          0x0174
+
+#define STN_CLICKED         0
+#define STN_DBLCLK          1
+#define STN_ENABLE          2
+#define STN_DISABLE         3
 
 /* Scrollbar messages */
 #define SBM_SETPOS             0x00e0
