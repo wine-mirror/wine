@@ -68,6 +68,7 @@ static const WCHAR szComponents[] = {
 INSTALLUILEVEL gUILevel;
 HWND           gUIhwnd;
 INSTALLUI_HANDLERA gUIHandler;
+INSTALLUI_HANDLERW gUIHandlerW;
 DWORD gUIFilter;
 LPVOID gUIContext;
 WCHAR gszLogFile[MAX_PATH];
@@ -849,8 +850,14 @@ INSTALLUI_HANDLERA WINAPI MsiSetExternalUIA(INSTALLUI_HANDLERA puiHandler,
 INSTALLUI_HANDLERW WINAPI MsiSetExternalUIW(INSTALLUI_HANDLERW puiHandler,
                                   DWORD dwMessageFilter, LPVOID pvContext)
 {
-    TRACE(" STUB (%p %lx %p)\n",puiHandler,dwMessageFilter,pvContext);
-    return NULL;
+    INSTALLUI_HANDLERW prev = gUIHandlerW;
+
+    TRACE("(%p %lx %p)\n",puiHandler,dwMessageFilter,pvContext);
+    gUIHandlerW = puiHandler;
+    gUIFilter = dwMessageFilter;
+    gUIContext = pvContext;
+
+    return prev;
 }
 
 UINT WINAPI MsiLoadStringA(HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int nBufferMax, DWORD e)
@@ -1596,10 +1603,34 @@ BOOL WINAPI MSI_DllCanUnloadNow(void)
   return S_FALSE;
 }
 
-UINT WINAPI MsiEnumRelatedProductsA (LPCSTR lpUpgradeCode, DWORD dwReserved,
+UINT WINAPI MsiEnumRelatedProductsW(LPCWSTR szUpgradeCode, DWORD dwReserved,
+                                    DWORD iProductIndex, LPWSTR lpProductBuf)
+{
+    FIXME("%s %lu %lu %p\n", debugstr_w(szUpgradeCode), dwReserved,
+          iProductIndex, lpProductBuf);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiEnumRelatedProductsA(LPCSTR szUpgradeCode, DWORD dwReserved,
                                     DWORD iProductIndex, LPSTR lpProductBuf)
 {
-    FIXME("STUB: (%s, %li %li %s)\n",lpUpgradeCode, dwReserved, iProductIndex,
-          lpProductBuf);
+    FIXME("%s %lu %lu %p\n", debugstr_a(szUpgradeCode), dwReserved,
+          iProductIndex, lpProductBuf);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiGetFeatureUsageW(LPCWSTR szProduct, LPCWSTR szFeature,
+                                DWORD* pdwUseCount, WORD* pwDateUsed)
+{
+    FIXME("%s %s %p %p\n",debugstr_w(szProduct), debugstr_w(szFeature),
+          pdwUseCount, pwDateUsed);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+UINT WINAPI MsiGetFeatureUsageA(LPCSTR szProduct, LPCSTR szFeature,
+                                DWORD* pdwUseCount, WORD* pwDateUsed)
+{
+    FIXME("%s %s %p %p\n", debugstr_a(szProduct), debugstr_a(szFeature),
+          pdwUseCount, pwDateUsed);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
