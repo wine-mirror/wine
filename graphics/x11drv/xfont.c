@@ -123,7 +123,7 @@ static BYTE	chset_microsoft[] = { ANSI_CHARSET, RUSSIAN_CHARSET, EE_CHARSET, GRE
 static BYTE	chset_ansi[] = { ANSI_CHARSET, ANSI_CHARSET };
 static BYTE	chset_koi8[] = { KOI8_CHARSET, KOI8_CHARSET, KOI8_CHARSET };
 static BYTE	chset_tcvn[] = { TCVN_CHARSET, TCVN_CHARSET };
-static BYTE	chset_tis620[] = { THAI_CHARSET };
+static BYTE	chset_tis620[] = { THAI_CHARSET, THAI_CHARSET };
 static BYTE	chset_fontspecific[] = { SYMBOL_CHARSET };
 static BYTE	chset_viscii[] = { VISCII_CHARSET, VISCII_CHARSET };
 
@@ -148,7 +148,7 @@ static fontEncodingTemplate __fETTable[10] = {
 			{ "fontspecific", &suffx_null, &chset_fontspecific, &__fETTable[6] },
 			{ "koi8", &suffx_koi8, &chset_koi8, &__fETTable[7] },
 			{ "tcvn", &suffx_ansi, &chset_tcvn, &__fETTable[8] },
-			{ "tis620", &suffx_null, &chset_tis620, &__fETTable[9] },
+			{ "tis620.2533", &suffx_ansi, &chset_tis620, &__fETTable[9] },
 			{ "viscii1.1", &suffx_viscii, &chset_viscii, NULL }
 		};
 static fontEncodingTemplate* fETTable = __fETTable;
