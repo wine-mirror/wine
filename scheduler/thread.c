@@ -713,45 +713,6 @@ VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT boost )
 
 
 /***********************************************************************
- *           GetThreadLocale    (KERNEL32.@)
- */
-LCID WINAPI GetThreadLocale(void)
-{
-    LCID ret = NtCurrentTeb()->CurrentLocale;
-    if (!ret) NtCurrentTeb()->CurrentLocale = ret = GetUserDefaultLCID();
-    return ret;
-}
-
-
-/**********************************************************************
- * SetThreadLocale [KERNEL32.@]  Sets the calling threads current locale.
- *
- * RETURNS
- *    Success: TRUE
- *    Failure: FALSE
- *
- * FIXME
- *  check if lcid is a valid cp
- */
-BOOL WINAPI SetThreadLocale(
-    LCID lcid)     /* [in] Locale identifier */
-{
-    switch (lcid)
-    {
-      case LOCALE_SYSTEM_DEFAULT:
-        lcid = GetSystemDefaultLCID();
-	break;
-      case LOCALE_USER_DEFAULT:
-      case LOCALE_NEUTRAL:
-        lcid = GetUserDefaultLCID();
-	break;
-    }
-    NtCurrentTeb()->CurrentLocale = lcid;
-    return TRUE;
-}
-
-
-/***********************************************************************
  * GetCurrentThread [KERNEL32.@]  Gets pseudohandle for current thread
  *
  * RETURNS

@@ -8,12 +8,14 @@ ALTNAMES  = krnl386.exe comm.dll stress.dll system.dll toolhelp.dll windebug.dll
 LDIMPORTS = ntdll.dll
 
 C_SRCS = \
+	$(TOPOBJDIR)/ole/ole2nls.c \
 	comm.c \
 	console.c \
 	debugger.c \
 	editline.c \
 	format_msg.c \
 	kernel_main.c \
+	locale.c \
 	stress.c \
 	string.c \
 	sync.c \

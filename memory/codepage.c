@@ -27,6 +27,7 @@
 #include "winerror.h"
 #include "winnls.h"
 #include "wine/unicode.h"
+#include "thread.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(string);
@@ -35,16 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(string);
 static const union cptable *ansi_cptable;
 static const union cptable *oem_cptable;
 static const union cptable *mac_cptable;
-
-/* retrieve a code page table from the locale info */
-static const union cptable *get_locale_cp( LCID lcid, LCTYPE type )
-{
-    const union cptable *table = NULL;
-    char buf[32];
-
-    if (GetLocaleInfoA( lcid, type, buf, sizeof(buf) )) table = cp_get_table( atoi(buf) );
-    return table;
-}
+static LCID default_lcid = MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
 
 /* setup default codepage info before we can get at the locale stuff */
 static void init_codepages(void)
@@ -66,13 +58,18 @@ static const union cptable *get_codepage_table( unsigned int codepage )
 
     switch(codepage)
     {
-    case CP_ACP:        return ansi_cptable;
-    case CP_OEMCP:      return oem_cptable;
-    case CP_MACCP:      return mac_cptable;
-    case CP_THREAD_ACP: return get_locale_cp( GetThreadLocale(), LOCALE_IDEFAULTANSICODEPAGE );
+    case CP_ACP:
+        return ansi_cptable;
+    case CP_OEMCP:
+        return oem_cptable;
+    case CP_MACCP:
+        return mac_cptable;
     case CP_UTF7:
     case CP_UTF8:
         break;
+    case CP_THREAD_ACP:
+        if (!(codepage = NtCurrentTeb()->code_page)) return ansi_cptable;
+        /* fall through */
     default:
         if (codepage == ansi_cptable->info.codepage) return ansi_cptable;
         if (codepage == oem_cptable->info.codepage) return oem_cptable;
@@ -86,17 +83,17 @@ static const union cptable *get_codepage_table( unsigned int codepage )
 /* initialize default code pages from locale info */
 /* FIXME: should be done in init_codepages, but it can't right now */
 /* since it needs KERNEL32 to be loaded for the locale info. */
-void CODEPAGE_Init(void)
+void CODEPAGE_Init( UINT ansi, UINT oem, UINT mac, LCID lcid )
 {
     extern void __wine_init_codepages( const union cptable *ansi, const union cptable *oem );
     const union cptable *table;
-    LCID lcid = GetUserDefaultLCID();
 
+    default_lcid = lcid;
     if (!ansi_cptable) init_codepages();  /* just in case */
 
-    if ((table = get_locale_cp( lcid, LOCALE_IDEFAULTANSICODEPAGE ))) ansi_cptable = table;
-    if ((table = get_locale_cp( lcid, LOCALE_IDEFAULTMACCODEPAGE ))) mac_cptable = table;
-    if ((table = get_locale_cp( lcid, LOCALE_IDEFAULTCODEPAGE ))) oem_cptable = table;
+    if ((table = cp_get_table( ansi ))) ansi_cptable = table;
+    if ((table = cp_get_table( oem ))) oem_cptable = table;
+    if ((table = cp_get_table( mac ))) mac_cptable = table;
     __wine_init_codepages( ansi_cptable, oem_cptable );
 
     TRACE( "ansi=%03d oem=%03d mac=%03d\n", ansi_cptable->info.codepage,
@@ -111,7 +108,7 @@ void CODEPAGE_Init(void)
  */
 UINT WINAPI GetACP(void)
 {
-    if (!ansi_cptable) init_codepages();
+    if (!ansi_cptable) return 1252;
     return ansi_cptable->info.codepage;
 }
 
@@ -121,7 +118,7 @@ UINT WINAPI GetACP(void)
  */
 UINT WINAPI GetOEMCP(void)
 {
-    if (!oem_cptable) init_codepages();
+    if (!oem_cptable) return 437;
     return oem_cptable->info.codepage;
 }
 
@@ -144,6 +141,42 @@ BOOL WINAPI IsValidCodePage( UINT codepage )
 
 
 /***********************************************************************
+ *		GetUserDefaultLangID (KERNEL32.@)
+ */
+LANGID WINAPI GetUserDefaultLangID(void)
+{
+    return LANGIDFROMLCID(default_lcid);
+}
+
+
+/***********************************************************************
+ *		GetSystemDefaultLangID (KERNEL32.@)
+ */
+LANGID WINAPI GetSystemDefaultLangID(void)
+{
+    return GetUserDefaultLangID();
+}
+
+
+/***********************************************************************
+ *		GetUserDefaultLCID (KERNEL32.@)
+ */
+LCID WINAPI GetUserDefaultLCID(void)
+{
+    return default_lcid;
+}
+
+
+/***********************************************************************
+ *		GetSystemDefaultLCID (KERNEL32.@)
+ */
+LCID WINAPI GetSystemDefaultLCID(void)
+{
+    return GetUserDefaultLCID();
+}
+
+
+/***********************************************************************
  *           IsDBCSLeadByteEx   (KERNEL32.@)
  */
 BOOL WINAPI IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
@@ -159,7 +192,7 @@ BOOL WINAPI IsDBCSLeadByteEx( UINT codepage, BYTE testchar )
  */
 BOOL WINAPI IsDBCSLeadByte( BYTE testchar )
 {
-    if (!ansi_cptable) init_codepages();
+    if (!ansi_cptable) return FALSE;
     return is_dbcs_leadbyte( ansi_cptable, testchar );
 }
 
@@ -382,119 +415,4 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
         ret = 0;
     }
     return ret;
-}
-
-
-/******************************************************************************
- *              GetStringTypeW   (KERNEL32.@)
- *
- */
-BOOL WINAPI GetStringTypeW( DWORD type, LPCWSTR src, INT count, LPWORD chartype )
-{
-    if (count == -1) count = strlenW(src) + 1;
-    switch(type)
-    {
-    case CT_CTYPE1:
-        while (count--) *chartype++ = get_char_typeW( *src++ ) & 0xfff;
-        break;
-    case CT_CTYPE2:
-        while (count--) *chartype++ = get_char_typeW( *src++ ) >> 12;
-        break;
-    case CT_CTYPE3:
-    {
-	WARN("CT_CTYPE3: semi-stub.\n");
-	while (count--)
-	{
-        int c = *src;
-	    WORD type1, type3 = 0; /* C3_NOTAPPLICABLE */
-
-	    type1 = get_char_typeW( *src++ ) & 0xfff;
-	    /* try to construct type3 from type1 */
-	    if(type1 & C1_SPACE) type3 |= C3_SYMBOL;
-	    if(type1 & C1_ALPHA) type3 |= C3_ALPHA;
-        if ((c>=0x30A0)&&(c<=0x30FF)) type3 |= C3_KATAKANA;
-        if ((c>=0x3040)&&(c<=0x309F)) type3 |= C3_HIRAGANA;
-        if ((c>=0x4E00)&&(c<=0x9FAF)) type3 |= C3_IDEOGRAPH;
-        if ((c>=0x0600)&&(c<=0x06FF)) type3 |= C3_KASHIDA;
-        if ((c>=0x3000)&&(c<=0x303F)) type3 |= C3_SYMBOL;
-
-        if ((c>=0xFF00)&&(c<=0xFF60)) type3 |= C3_FULLWIDTH;
-        if ((c>=0xFF00)&&(c<=0xFF20)) type3 |= C3_SYMBOL;
-        if ((c>=0xFF3B)&&(c<=0xFF40)) type3 |= C3_SYMBOL;
-        if ((c>=0xFF5B)&&(c<=0xFF60)) type3 |= C3_SYMBOL;
-        if ((c>=0xFF21)&&(c<=0xFF3A)) type3 |= C3_ALPHA;
-        if ((c>=0xFF41)&&(c<=0xFF5A)) type3 |= C3_ALPHA;
-        if ((c>=0xFFE0)&&(c<=0xFFE6)) type3 |= C3_FULLWIDTH;
-        if ((c>=0xFFE0)&&(c<=0xFFE6)) type3 |= C3_SYMBOL;
-
-        if ((c>=0xFF61)&&(c<=0xFFDC)) type3 |= C3_HALFWIDTH;
-        if ((c>=0xFF61)&&(c<=0xFF64)) type3 |= C3_SYMBOL;
-        if ((c>=0xFF65)&&(c<=0xFF9F)) type3 |= C3_KATAKANA;
-        if ((c>=0xFF65)&&(c<=0xFF9F)) type3 |= C3_ALPHA;
-        if ((c>=0xFFE8)&&(c<=0xFFEE)) type3 |= C3_HALFWIDTH;
-        if ((c>=0xFFE8)&&(c<=0xFFEE)) type3 |= C3_SYMBOL;
-	    *chartype++ = type3;
-	}
-	break;
-    }
-    default:
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    return TRUE;
-}
-
-
-/******************************************************************************
- *              GetStringTypeExW   (KERNEL32.@)
- */
-BOOL WINAPI GetStringTypeExW( LCID locale, DWORD type, LPCWSTR src, INT count, LPWORD chartype )
-{
-    /* locale is ignored for Unicode */
-    return GetStringTypeW( type, src, count, chartype );
-}
-
-/******************************************************************************
- *		GetStringTypeA	[KERNEL32.@]
- */
-BOOL WINAPI GetStringTypeA(LCID locale, DWORD type, LPCSTR src, INT count, LPWORD chartype)
-{
-    char buf[20];
-    UINT cp;
-    INT countW;
-    LPWSTR srcW;
-    BOOL ret = FALSE;
-
-    if(count == -1) count = strlen(src) + 1;
-
-    if(!GetLocaleInfoA(locale, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_NOUSEROVERRIDE,
-		   buf, sizeof(buf)))
-    {
-	FIXME("For locale %04lx using current ANSI code page\n", locale);
-	cp = GetACP();
-    }
-    else
-	cp = atoi(buf);
-
-    countW = MultiByteToWideChar(cp, 0, src, count, NULL, 0);
-    if((srcW = HeapAlloc(GetProcessHeap(), 0, countW * sizeof(WCHAR))))
-    {
-	MultiByteToWideChar(cp, 0, src, count, srcW, countW);
-    /* 
-     * NOTE: the target buffer has 1 word for each CHARACTER in the source
-     * string, with multibyte characters there maybe be more bytes in count 
-     * than character space in the buffer!
-     */
-	ret = GetStringTypeW(type, srcW, countW, chartype);
-	HeapFree(GetProcessHeap(), 0, srcW);
-    }
-    return ret;
-}
-
-/******************************************************************************
- *		GetStringTypeExA	[KERNEL32.@]
- */
-BOOL WINAPI GetStringTypeExA(LCID locale, DWORD type, LPCSTR src, INT count, LPWORD chartype)
-{
-    return GetStringTypeA(locale, type, src, count, chartype);
 }

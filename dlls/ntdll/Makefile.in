@@ -70,7 +70,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/msdos/ioports.c \
 	$(TOPOBJDIR)/msdos/ppdev.c \
 	$(TOPOBJDIR)/msdos/vxd.c \
-	$(TOPOBJDIR)/ole/ole2nls.c \
 	$(TOPOBJDIR)/relay32/builtin32.c \
 	$(TOPOBJDIR)/relay32/relay386.c \
 	$(TOPOBJDIR)/relay32/snoop.c \
@@ -131,7 +130,6 @@ EXTRASUBDIRS = \
 	$(TOPOBJDIR)/memory \
 	$(TOPOBJDIR)/misc \
 	$(TOPOBJDIR)/msdos \
-	$(TOPOBJDIR)/ole \
 	$(TOPOBJDIR)/relay32 \
 	$(TOPOBJDIR)/scheduler \
 	$(TOPOBJDIR)/win32

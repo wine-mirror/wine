@@ -697,7 +697,7 @@ init	MAIN_KernelInit
 @ stdcall SetLastError(long) SetLastError
 @ stdcall SetLocalTime(ptr) SetLocalTime
 @ stdcall SetLocaleInfoA(long long str) SetLocaleInfoA
-@ stub SetLocaleInfoW
+@ stdcall SetLocaleInfoW(long long wstr) SetLocaleInfoW
 @ stub SetMailslotInfo
 @ stdcall SetNamedPipeHandleState(long ptr ptr ptr) SetNamedPipeHandleState
 @ stdcall SetPriorityClass(long long) SetPriorityClass

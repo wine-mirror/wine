@@ -33,6 +33,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "ntddk.h"
 #include "wine/unicode.h"
 #include "winver.h"
 #include "winnls.h"
@@ -40,365 +41,8 @@
 #include "winerror.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(string);
+WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
-/* Locale name to id map. used by EnumSystemLocales, GetLocaleInfoA
- * MUST contain all #defines from winnls.h
- * last entry has NULL name, 0 id.
- */
-#define LOCALE_ENTRY(x)	{#x,LOCALE_##x}
-static const struct tagLOCALE_NAME2ID {
-    const char	*name;
-    LCTYPE	id;
-} locale_name2id[]= {
-	LOCALE_ENTRY(ILANGUAGE),
-	LOCALE_ENTRY(SLANGUAGE),
-	LOCALE_ENTRY(SENGLANGUAGE),
-	LOCALE_ENTRY(SABBREVLANGNAME),
-	LOCALE_ENTRY(SNATIVELANGNAME),
-	LOCALE_ENTRY(ICOUNTRY),
-	LOCALE_ENTRY(SCOUNTRY),
-	LOCALE_ENTRY(SENGCOUNTRY),
-	LOCALE_ENTRY(SABBREVCTRYNAME),
-	LOCALE_ENTRY(SNATIVECTRYNAME),
-	LOCALE_ENTRY(IDEFAULTLANGUAGE),
-	LOCALE_ENTRY(IDEFAULTCOUNTRY),
-	LOCALE_ENTRY(IDEFAULTCODEPAGE),
-	LOCALE_ENTRY(IDEFAULTANSICODEPAGE),
-	LOCALE_ENTRY(IDEFAULTMACCODEPAGE),
-	LOCALE_ENTRY(SLIST),
-	LOCALE_ENTRY(IMEASURE),
-	LOCALE_ENTRY(SDECIMAL),
-	LOCALE_ENTRY(STHOUSAND),
-	LOCALE_ENTRY(SGROUPING),
-	LOCALE_ENTRY(IDIGITS),
-	LOCALE_ENTRY(ILZERO),
-	LOCALE_ENTRY(INEGNUMBER),
-	LOCALE_ENTRY(SNATIVEDIGITS),
-	LOCALE_ENTRY(SCURRENCY),
-	LOCALE_ENTRY(SINTLSYMBOL),
-	LOCALE_ENTRY(SMONDECIMALSEP),
-	LOCALE_ENTRY(SMONTHOUSANDSEP),
-	LOCALE_ENTRY(SMONGROUPING),
-	LOCALE_ENTRY(ICURRDIGITS),
-	LOCALE_ENTRY(IINTLCURRDIGITS),
-	LOCALE_ENTRY(ICURRENCY),
-	LOCALE_ENTRY(INEGCURR),
-	LOCALE_ENTRY(SDATE),
-	LOCALE_ENTRY(STIME),
-	LOCALE_ENTRY(SSHORTDATE),
-	LOCALE_ENTRY(SLONGDATE),
-	LOCALE_ENTRY(STIMEFORMAT),
-	LOCALE_ENTRY(IDATE),
-	LOCALE_ENTRY(ILDATE),
-	LOCALE_ENTRY(ITIME),
-	LOCALE_ENTRY(ITIMEMARKPOSN),
-	LOCALE_ENTRY(ICENTURY),
-	LOCALE_ENTRY(ITLZERO),
-	LOCALE_ENTRY(IDAYLZERO),
-	LOCALE_ENTRY(IMONLZERO),
-	LOCALE_ENTRY(S1159),
-	LOCALE_ENTRY(S2359),
-	LOCALE_ENTRY(ICALENDARTYPE),
-	LOCALE_ENTRY(IOPTIONALCALENDAR),
-	LOCALE_ENTRY(IFIRSTDAYOFWEEK),
-	LOCALE_ENTRY(IFIRSTWEEKOFYEAR),
-	LOCALE_ENTRY(SDAYNAME1),
-	LOCALE_ENTRY(SDAYNAME2),
-	LOCALE_ENTRY(SDAYNAME3),
-	LOCALE_ENTRY(SDAYNAME4),
-	LOCALE_ENTRY(SDAYNAME5),
-	LOCALE_ENTRY(SDAYNAME6),
-	LOCALE_ENTRY(SDAYNAME7),
-	LOCALE_ENTRY(SABBREVDAYNAME1),
-	LOCALE_ENTRY(SABBREVDAYNAME2),
-	LOCALE_ENTRY(SABBREVDAYNAME3),
-	LOCALE_ENTRY(SABBREVDAYNAME4),
-	LOCALE_ENTRY(SABBREVDAYNAME5),
-	LOCALE_ENTRY(SABBREVDAYNAME6),
-	LOCALE_ENTRY(SABBREVDAYNAME7),
-	LOCALE_ENTRY(SMONTHNAME1),
-	LOCALE_ENTRY(SMONTHNAME2),
-	LOCALE_ENTRY(SMONTHNAME3),
-	LOCALE_ENTRY(SMONTHNAME4),
-	LOCALE_ENTRY(SMONTHNAME5),
-	LOCALE_ENTRY(SMONTHNAME6),
-	LOCALE_ENTRY(SMONTHNAME7),
-	LOCALE_ENTRY(SMONTHNAME8),
-	LOCALE_ENTRY(SMONTHNAME9),
-	LOCALE_ENTRY(SMONTHNAME10),
-	LOCALE_ENTRY(SMONTHNAME11),
-	LOCALE_ENTRY(SMONTHNAME12),
-	LOCALE_ENTRY(SMONTHNAME13),
-	LOCALE_ENTRY(SABBREVMONTHNAME1),
-	LOCALE_ENTRY(SABBREVMONTHNAME2),
-	LOCALE_ENTRY(SABBREVMONTHNAME3),
-	LOCALE_ENTRY(SABBREVMONTHNAME4),
-	LOCALE_ENTRY(SABBREVMONTHNAME5),
-	LOCALE_ENTRY(SABBREVMONTHNAME6),
-	LOCALE_ENTRY(SABBREVMONTHNAME7),
-	LOCALE_ENTRY(SABBREVMONTHNAME8),
-	LOCALE_ENTRY(SABBREVMONTHNAME9),
-	LOCALE_ENTRY(SABBREVMONTHNAME10),
-	LOCALE_ENTRY(SABBREVMONTHNAME11),
-	LOCALE_ENTRY(SABBREVMONTHNAME12),
-	LOCALE_ENTRY(SABBREVMONTHNAME13),
-	LOCALE_ENTRY(SPOSITIVESIGN),
-	LOCALE_ENTRY(SNEGATIVESIGN),
-	LOCALE_ENTRY(IPOSSIGNPOSN),
-	LOCALE_ENTRY(INEGSIGNPOSN),
-	LOCALE_ENTRY(IPOSSYMPRECEDES),
-	LOCALE_ENTRY(IPOSSEPBYSPACE),
-	LOCALE_ENTRY(INEGSYMPRECEDES),
-	LOCALE_ENTRY(INEGSEPBYSPACE),
-	LOCALE_ENTRY(FONTSIGNATURE),
-	LOCALE_ENTRY(SISO639LANGNAME),
-	LOCALE_ENTRY(SISO3166CTRYNAME),
-	{NULL,0}
-};
-
-static char *GetLocaleSubkeyName( DWORD lctype );
-
-/***********************************************************************
- *		GetUserDefaultLCID (KERNEL32.@)
- */
-LCID WINAPI GetUserDefaultLCID(void)
-{
-	return MAKELCID( GetUserDefaultLangID() , SORT_DEFAULT );
-}
-
-/***********************************************************************
- *		GetSystemDefaultLCID (KERNEL32.@)
- */
-LCID WINAPI GetSystemDefaultLCID(void)
-{
-	return GetUserDefaultLCID();
-}
-
-#define NLS_MAX_LANGUAGES 20
-typedef struct {
-    char lang[128];
-    char country[128];
-    LANGID found_lang_id[NLS_MAX_LANGUAGES];
-    char found_language[NLS_MAX_LANGUAGES][3];
-    char found_country[NLS_MAX_LANGUAGES][3];
-    int n_found;
-} LANG_FIND_DATA;
-
-static BOOL CALLBACK NLS_FindLanguageID_ProcA(HMODULE hModule, LPCSTR type,
-                                              LPCSTR name, WORD LangID, LONG lParam)
-{
-    LANG_FIND_DATA *l_data = (LANG_FIND_DATA *)lParam;
-    LCID lcid = MAKELCID(LangID, SORT_DEFAULT);
-    char buf_language[128];
-    char buf_country[128];
-    char buf_en_language[128];
-
-    TRACE("%04X\n", (UINT)LangID);
-    if(PRIMARYLANGID(LangID) == LANG_NEUTRAL)
-        return TRUE; /* continue search */
-
-    buf_language[0] = 0;
-    buf_country[0] = 0;
-
-    GetLocaleInfoA(lcid, LOCALE_SISO639LANGNAME|LOCALE_NOUSEROVERRIDE,
-                   buf_language, sizeof(buf_language));
-    TRACE("LOCALE_SISO639LANGNAME: %s\n", buf_language);
-
-    GetLocaleInfoA(lcid, LOCALE_SISO3166CTRYNAME|LOCALE_NOUSEROVERRIDE,
-                   buf_country, sizeof(buf_country));
-    TRACE("LOCALE_SISO3166CTRYNAME: %s\n", buf_country);
-
-    if(l_data->lang && strlen(l_data->lang) > 0 && !strcasecmp(l_data->lang, buf_language))
-    {
-	if(l_data->country && strlen(l_data->country) > 0)
-	{
-	    if(!strcasecmp(l_data->country, buf_country))
-	    {
-		l_data->found_lang_id[0] = LangID;
-		l_data->n_found = 1;
-		TRACE("Found lang_id %04X for %s_%s\n", LangID, l_data->lang, l_data->country);
-		return FALSE; /* stop enumeration */
-	    }
-	}
-	else /* l_data->country not specified */
-	{
-	    if(l_data->n_found < NLS_MAX_LANGUAGES)
-	    {
-		l_data->found_lang_id[l_data->n_found] = LangID;
-		strncpy(l_data->found_country[l_data->n_found], buf_country, 3);
-		strncpy(l_data->found_language[l_data->n_found], buf_language, 3);
-		l_data->n_found++;
-		TRACE("Found lang_id %04X for %s\n", LangID, l_data->lang);
-		return TRUE; /* continue search */
-	    }
-	}
-    }
-
-    /* Just in case, check LOCALE_SENGLANGUAGE too,
-     * in hope that possible alias name might have that value.
-     */
-    buf_en_language[0] = 0;
-    GetLocaleInfoA(lcid, LOCALE_SENGLANGUAGE|LOCALE_NOUSEROVERRIDE,
-                   buf_en_language, sizeof(buf_en_language));
-    TRACE("LOCALE_SENGLANGUAGE: %s\n", buf_en_language);
-
-    if(l_data->lang && strlen(l_data->lang) > 0 && !strcasecmp(l_data->lang, buf_en_language))
-    {
-	l_data->found_lang_id[l_data->n_found] = LangID;
-	strncpy(l_data->found_country[l_data->n_found], buf_country, 3);
-	strncpy(l_data->found_language[l_data->n_found], buf_language, 3);
-	l_data->n_found++;
-	TRACE("Found lang_id %04X for %s\n", LangID, l_data->lang);
-    }
-
-    return TRUE; /* continue search */
-}
-
-/***********************************************************************
- *           NLS_GetLanguageID
- *
- * INPUT:
- *	Lang: a string whose two first chars are the iso name of a language.
- *	Country: a string whose two first chars are the iso name of country
- *	Charset: a string defining the chossen charset encoding
- *	Dialect: a string defining a variation of the locale
- *
- *	all those values are from the standardized format of locale
- *	name in unix which is: Lang[_Country][.Charset][@Dialect]
- *
- * RETURNS:
- *	the numeric code of the language used by Windows
- *
- * FIXME: Charset and Dialect are not handled
- */
-static LANGID NLS_GetLanguageID(LPCSTR Lang, LPCSTR Country, LPCSTR Charset, LPCSTR Dialect)
-{
-    LANG_FIND_DATA l_data;
-    char lang_string[256];
-
-    if(!Lang)
-    {
-	l_data.found_lang_id[0] = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
-	goto END;
-    }
-
-    memset(&l_data, 0, sizeof(LANG_FIND_DATA));
-    strncpy(l_data.lang, Lang, sizeof(l_data.lang));
-
-    if(Country && strlen(Country) > 0)
-	strncpy(l_data.country, Country, sizeof(l_data.country));
-
-    EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), RT_STRINGA,
-	(LPCSTR)LOCALE_ILANGUAGE, NLS_FindLanguageID_ProcA, (LONG)&l_data);
-
-    strcpy(lang_string, l_data.lang);
-    if(l_data.country && strlen(l_data.country) > 0)
-    {
-	strcat(lang_string, "_");
-	strcat(lang_string, l_data.country);
-    }
-
-    if(!l_data.n_found)
-    {
-	if(l_data.country && strlen(l_data.country) > 0)
-	{
-	    MESSAGE("Warning: Language '%s' was not found, retrying without country name...\n", lang_string);
-	    l_data.country[0] = 0;
-	    EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), RT_STRINGA,
-		(LPCSTR)LOCALE_ILANGUAGE, NLS_FindLanguageID_ProcA, (LONG)&l_data);
-	}
-    }
-
-    /* Re-evaluate lang_string */
-    strcpy(lang_string, l_data.lang);
-    if(l_data.country && strlen(l_data.country) > 0)
-    {
-	strcat(lang_string, "_");
-	strcat(lang_string, l_data.country);
-    }
-
-    if(!l_data.n_found)
-    {
-	MESSAGE("Warning: Language '%s' was not recognized, defaulting to English\n", lang_string);
-	l_data.found_lang_id[0] = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
-    }
-    else
-    {
-	if(l_data.n_found == 1)
-	    TRACE("For language '%s' lang_id %04X was found\n", lang_string, l_data.found_lang_id[0]);
-	else /* l_data->n_found > 1 */
-	{
-	    int i;
-	    MESSAGE("For language '%s' several language ids were found:\n", lang_string);
-	    for(i = 0; i < l_data.n_found; i++)
-		MESSAGE("%s_%s - %04X; ", l_data.found_language[i], l_data.found_country[i], l_data.found_lang_id[i]);
-
-	    MESSAGE("\nInstead of using first in the list, suggest to define\n"
-		    "your LANG environment variable like this: LANG=%s_%s\n",
-		    l_data.found_language[0], l_data.found_country[0]);
-	}
-    }
-END:
-    TRACE("Returning %04X\n", l_data.found_lang_id[0]);
-    return l_data.found_lang_id[0];
-}
-
-/***********************************************************************
- *		GetUserDefaultLangID (KERNEL32.@)
- */
-LANGID WINAPI GetUserDefaultLangID(void)
-{
-	/* caching result, if defined from environment, which should (?) not change during a WINE session */
-	static	LANGID	userLCID = 0;
-
-	if (userLCID == 0)
-        {
-                char buf[256];
-		char *lang,*country,*charset,*dialect,*next;
-
-		if (GetEnvironmentVariableA( "LANGUAGE", buf, sizeof(buf) )) goto ok;
-		if (GetEnvironmentVariableA( "LANG", buf, sizeof(buf) )) goto ok;
-		if (GetEnvironmentVariableA( "LC_ALL", buf, sizeof(buf) )) goto ok;
-		if (GetEnvironmentVariableA( "LC_MESSAGES", buf, sizeof(buf) )) goto ok;
-		if (GetEnvironmentVariableA( "LC_CTYPE", buf, sizeof(buf) )) goto ok;
-
-		return userLCID = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
-
-        ok:
-		if (!strcmp(buf,"POSIX") || !strcmp(buf,"C"))
-                    return userLCID = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
-
-		lang=buf;
-
-		do {
-			next=strchr(lang,':'); if (next) *next++='\0';
-			dialect=strchr(lang,'@'); if (dialect) *dialect++='\0';
-			charset=strchr(lang,'.'); if (charset) *charset++='\0';
-			country=strchr(lang,'_'); if (country) *country++='\0';
-
-			userLCID = NLS_GetLanguageID(lang, country, charset, dialect);
-
-			lang=next;
-		} while (lang && !userLCID);
-
-		if (!userLCID)
-                {
-                    MESSAGE( "Warning: language '%s' not recognized, defaulting to English\n",
-                             buf );
-                    userLCID = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
-                }
-	}
-	return userLCID;
-}
-
-/***********************************************************************
- *		GetSystemDefaultLangID (KERNEL32.@)
- */
-LANGID WINAPI GetSystemDefaultLangID(void)
-{
-	return GetUserDefaultLangID();
-}
 
 /******************************************************************************
  *		ConvertDefaultLocale (KERNEL32.@)
@@ -415,357 +59,6 @@ LCID WINAPI ConvertDefaultLocale (LCID lcid)
 	return MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_NEUTRAL);
 }
 
-/* Enhanced version of LoadStringW.
- * It takes LanguageId to find and load language dependant resources.
- * Resource is copied as is: "binary" strings are not truncated.
- * Return: length of resource + 1 to distinguish absent resources
- * from the resources with zero length.
- */
-static INT NLS_LoadStringExW(HMODULE hModule, LANGID lang_id, UINT res_id, LPWSTR buffer, INT buflen)
-{
-    HRSRC hrsrc;
-    HGLOBAL hmem;
-    WCHAR *p;
-    int string_num;
-    int i;
-
-    /* Replace SUBLANG_NEUTRAL by SUBLANG_DEFAULT */
-    if(SUBLANGID(lang_id) == SUBLANG_NEUTRAL)
-        lang_id = MAKELANGID(PRIMARYLANGID(lang_id), SUBLANG_DEFAULT);
-
-    hrsrc = FindResourceExW(hModule, RT_STRINGW, (LPCWSTR)((res_id >> 4) + 1), lang_id);
-
-    if(!hrsrc) return 0;
-    hmem = LoadResource(hModule, hrsrc);
-    if(!hmem) return 0;
-
-    p = LockResource(hmem);
-    string_num = res_id & 0x000f;
-    for(i = 0; i < string_num; i++)
-	p += *p + 1;
-
-    TRACE("strlen = %d\n", (int)*p );
-
-    if (buffer == NULL) return *p;
-    i = min(buflen - 1, *p);
-    if (i > 0) {
-	memcpy(buffer, p + 1, i * sizeof (WCHAR));
-	buffer[i] = (WCHAR) 0;
-    } else {
-	if (buflen > 1)
-	    buffer[0] = (WCHAR) 0;
-    }
-
-    FreeResource(hmem);
-    TRACE("%s loaded!\n", debugstr_w(buffer));
-    return (i + 1);
-}
-
-/******************************************************************************
- *		GetLocaleInfoA (KERNEL32.@)
- *
- * NOTES
- *  LANG_NEUTRAL is equal to LOCALE_SYSTEM_DEFAULT
- *
- *  MS online documentation states that the string returned is NULL terminated
- *  except for LOCALE_FONTSIGNATURE  which "will return a non-NULL
- *  terminated string".
- */
-INT WINAPI GetLocaleInfoA(LCID lcid,LCTYPE LCType,LPSTR buf,INT len)
-{
-    LPCSTR  retString = NULL;
-    int	found = 0, i;
-    char    *pacKey;
-    char    acBuffer[128];
-    DWORD   dwBufferSize=128;
-    BOOL NoUserOverride;
-
-  TRACE("(lcid=0x%lx,lctype=0x%lx,%p,%x)\n",lcid,LCType,buf,len);
-
-  if (len && (! buf) ) {
-    SetLastError(ERROR_INSUFFICIENT_BUFFER);
-		return 0;
-	}
-
-	if (lcid == LOCALE_NEUTRAL || lcid == LANG_SYSTEM_DEFAULT)
-	{
-            lcid = GetSystemDefaultLCID();
-	}
-	else if (lcid == LANG_USER_DEFAULT) /*0x800*/
-	{
-            lcid = GetUserDefaultLCID();
-	}
-
-    /* LOCALE_NOUSEROVERRIDE means: do not get user redefined settings
-       from the registry. Instead, use system default values. */
-    NoUserOverride = (LCType & LOCALE_NOUSEROVERRIDE) != 0;
-
-	LCType &= ~(LOCALE_NOUSEROVERRIDE|LOCALE_USE_CP_ACP);
-
-    /* First, check if it's in the registry. */
-    /* All user customized values are stored in the registry by SetLocaleInfo */
-    if ( !NoUserOverride && (pacKey = GetLocaleSubkeyName(LCType)) )
-    {
-        char    acRealKey[128];
-        HKEY    hKey;
-
-        sprintf( acRealKey, "Control Panel\\International\\%s", pacKey );
-
-        if ( RegOpenKeyExA( HKEY_CURRENT_USER, acRealKey,
-                            0, KEY_READ, &hKey) == ERROR_SUCCESS )
-        {
-            if ( RegQueryValueExA( hKey, NULL, NULL, NULL, (LPBYTE)acBuffer,
-                                   &dwBufferSize ) == ERROR_SUCCESS )
-            {
-                retString = acBuffer;
-                found = 1;
-            }
-            RegCloseKey(hKey);
-        }
-    }
-
-    /* If not in the registry, get it from the NLS entries. */
-    if(!found) {
-	WCHAR wcBuffer[128];
-	int res_size;
-
-	/* check if language is registered in the kernel32 resources */
-	if((res_size = NLS_LoadStringExW(GetModuleHandleA("KERNEL32"), LANGIDFROMLCID(lcid),
-		LCType, wcBuffer, sizeof(wcBuffer)/sizeof(wcBuffer[0])))) {
-	    WideCharToMultiByte(CP_ACP, 0, wcBuffer, res_size, acBuffer, dwBufferSize, NULL, NULL);
-	    retString = acBuffer;
-	    found = 1;
-	}
-    }
-
-    /* if not found report a most descriptive error */
-    if(!found) {
-	retString=0;
-	/* If we are through all of this, retLen should not be zero anymore.
-	   If it is, the value is not supported */
-	i=0;
-	while (locale_name2id[i].name!=NULL) {
-	    if (LCType == locale_name2id[i].id) {
-		retString = locale_name2id[i].name;
-		break;
-	    }
-	    i++;
-	}
-	if(!retString)
-	    FIXME("Unkown LC type %lX\n", LCType);
-	else
-	    FIXME("'%s' is not defined for your language (%04X).\n"
-		"Please define it in dlls/kernel/nls/YourLanguage.nls\n"
-		"and submit patch for inclusion into the next Wine release.\n",
-			retString, LOWORD(lcid));
-	SetLastError(ERROR_INVALID_PARAMETER);
-	return 0;
-    }
-
-    /* a FONTSIGNATURE is not a string, just 6 DWORDs  */
-    if (LCType == LOCALE_FONTSIGNATURE) {
-        if (len) {
-	    len = (len < sizeof(FONTSIGNATURE)) ? len : sizeof(FONTSIGNATURE);
-            memcpy(buf, retString, len);
-	    return len;
-	}
-        return sizeof(FONTSIGNATURE);
-    }
-    /* if len=0 return only the length, don't touch the buffer*/
-    if (len) {
-	/* Like Windows we copy len bytes to buffer and we check len after */
-        INT ret = strlen(retString) + 1;
-        memcpy( buf, retString, min(len, ret) );
-        return (len < ret) ? 0 : ret;
-    }
-    return strlen(retString)+1;
-}
-
-/******************************************************************************
- *		GetLocaleInfoW (KERNEL32.@)
- *
- * NOTES
- *  MS documentation states that len "specifies the size, in bytes (ANSI version)
- *  or characters (Unicode version), of" wbuf. Thus the number returned is
- *  the same between GetLocaleInfoW and GetLocaleInfoA.
- */
-INT WINAPI GetLocaleInfoW(LCID lcid,LCTYPE LCType,LPWSTR wbuf,INT len)
-{	WORD wlen;
-	LPSTR abuf;
-
-	if (len && (! wbuf) )
-	{ SetLastError(ERROR_INSUFFICIENT_BUFFER);
-	  return 0;
-	}
-
-	abuf = (LPSTR)HeapAlloc(GetProcessHeap(),0,len);
-	wlen = GetLocaleInfoA(lcid, LCType, abuf, len);
-
-	if (wlen && len)	/* if len=0 return only the length*/
-            MultiByteToWideChar( CP_ACP, 0, abuf, -1, wbuf, len );
-
-	HeapFree(GetProcessHeap(),0,abuf);
-	return wlen;
-}
-
-/******************************************************************************
- *
- *		GetLocaleSubkeyName [helper function]
- *
- *          - For use with the registry.
- *          - Gets the registry subkey name for a given lctype.
- */
-static char *GetLocaleSubkeyName( DWORD lctype )
-{
-    char    *pacKey=NULL;
-
-    switch ( lctype )
-    {
-    /* These values are used by SetLocaleInfo and GetLocaleInfo, and
-     * the values are stored in the registry, confirmed under Windows,
-     * for the ones that actually assign pacKey. Cases that aren't finished
-     * have not been confirmed, so that must be done before they can be
-     * added.
-     */
-    case LOCALE_SDATE :        /* The date separator. */
-        pacKey = "sDate";
-        break;
-    case LOCALE_ICURRDIGITS:
-        pacKey = "iCurrDigits";
-        break;
-    case LOCALE_SDECIMAL :
-        pacKey = "sDecimal";
-        break;
-    case LOCALE_ICURRENCY:
-        pacKey = "iCurrency";
-        break;
-    case LOCALE_SGROUPING :
-        pacKey = "sGrouping";
-        break;
-    case LOCALE_IDIGITS:
-        pacKey = "iDigits";
-        break;
-    case LOCALE_SLIST :
-        pacKey = "sList";
-        break;
-    /* case LOCALE_ICALENDARTYPE: */
-    /* case LOCALE_IFIRSTDAYOFWEEK: */
-    /* case LOCALE_IFIRSTWEEKOFYEAR: */
-    /* case LOCALE_SYEARMONTH : */
-    /* case LOCALE_SPOSITIVESIGN : */
-    /* case LOCALE_IPAPERSIZE: */
-    /*     break; */
-    case LOCALE_SLONGDATE :
-        pacKey = "sLongDate";
-        break;
-    case LOCALE_SMONDECIMALSEP :
-        pacKey = "sMonDecimalSep";
-        break;
-    case LOCALE_SMONGROUPING:
-        pacKey = "sMonGrouping";
-        break;
-    case LOCALE_IMEASURE:
-        pacKey = "iMeasure";
-        break;
-    case LOCALE_SMONTHOUSANDSEP :
-        pacKey = "sMonThousandSep";
-        break;
-    case LOCALE_INEGCURR:
-        pacKey = "iNegCurr";
-        break;
-    case LOCALE_SNEGATIVESIGN :
-        pacKey = "sNegativeSign";
-        break;
-    case LOCALE_INEGNUMBER:
-        pacKey = "iNegNumber";
-        break;
-    case LOCALE_SSHORTDATE :
-        pacKey = "sShortDate";
-        break;
-    case LOCALE_ILDATE:        /* Long Date format ordering specifier. */
-        pacKey = "iLDate";
-        break;
-    case LOCALE_ILZERO:
-        pacKey = "iLZero";
-        break;
-    case LOCALE_ITLZERO:
-        pacKey = "iTLZero";
-        break;
-    case LOCALE_ITIME:        /* Time format specifier. */
-        pacKey = "iTime";
-        break;
-    case LOCALE_STHOUSAND :
-        pacKey = "sThousand";
-        break;
-    case LOCALE_S1159:        /* AM */
-        pacKey = "s1159";
-        break;
-    case LOCALE_STIME:
-        pacKey = "sTime";
-        break;
-    case LOCALE_S2359:        /* PM */
-        pacKey = "s2359";
-        break;
-    case LOCALE_STIMEFORMAT :
-        pacKey = "sTimeFormat";
-        break;
-    case LOCALE_SCURRENCY:
-        pacKey = "sCurrency";
-        break;
-
-    /* The following are not listed under MSDN as supported,
-     * but seem to be used and also stored in the registry.
-     */
-
-    case LOCALE_IDATE:
-        pacKey = "iDate";
-        break;
-    case LOCALE_SCOUNTRY:
-        pacKey = "sCountry";
-        break;
-    case LOCALE_ICOUNTRY:
-        pacKey = "iCountry";
-        break;
-    case LOCALE_SLANGUAGE:
-        pacKey = "sLanguage";
-        break;
-
-    default:
-        break;
-    }
-
-    return( pacKey );
-}
-
-/******************************************************************************
- *		SetLocaleInfoA	[KERNEL32.@]
- */
-BOOL WINAPI SetLocaleInfoA(LCID lcid, LCTYPE lctype, LPCSTR data)
-{
-    HKEY    hKey;
-    char    *pacKey;
-    char    acRealKey[128];
-
-    if ( (pacKey = GetLocaleSubkeyName(lctype)) )
-    {
-        sprintf( acRealKey, "Control Panel\\International\\%s", pacKey );
-        if ( RegCreateKeyA( HKEY_CURRENT_USER, acRealKey,
-                               &hKey ) == ERROR_SUCCESS )
-        {
-            if ( RegSetValueExA( hKey, NULL, 0, REG_SZ,
-                                 data, strlen(data)+1 ) != ERROR_SUCCESS )
-            {
-                ERR("SetLocaleInfoA: %s did not work\n", pacKey );
-            }
-            RegCloseKey( hKey );
-        }
-    }
-    else
-    {
-    FIXME("(%ld,%ld,%s): stub\n",lcid,lctype,data);
-    }
-    return TRUE;
-}
 
 /******************************************************************************
  *		IsValidLocale	[KERNEL32.@]
@@ -785,7 +78,7 @@ static BOOL CALLBACK EnumResourceLanguagesProcW(HMODULE hModule, LPCWSTR type,
     CHAR bufA[20];
     WCHAR bufW[20];
     LOCALE_ENUMPROCW lpfnLocaleEnum = (LOCALE_ENUMPROCW)lParam;
-    sprintf(bufA, "%08X", (UINT)LangID);
+    sprintf(bufA, "%08x", (UINT)LangID);
     MultiByteToWideChar(CP_ACP, 0, bufA, -1, bufW, sizeof(bufW)/sizeof(bufW[0]));
     return lpfnLocaleEnum(bufW);
 }
@@ -810,7 +103,7 @@ static BOOL CALLBACK EnumResourceLanguagesProcA(HMODULE hModule, LPCSTR type,
 {
     CHAR bufA[20];
     LOCALE_ENUMPROCA lpfnLocaleEnum = (LOCALE_ENUMPROCA)lParam;
-    sprintf(bufA, "%08X", (UINT)LangID);
+    sprintf(bufA, "%08x", (UINT)LangID);
     return lpfnLocaleEnum(bufA);
 }
 
@@ -1978,6 +1271,58 @@ int WINAPI CompareStringW(LCID lcid, DWORD fdwStyle,
 	/* the longer one is lexically greater */
 	return (l1<l2)? 1 : 3;
 }
+
+/***********************************************************************
+ *           lstrcmp    (KERNEL32.@)
+ *           lstrcmpA   (KERNEL32.@)
+ */
+INT WINAPI lstrcmpA( LPCSTR str1, LPCSTR str2 )
+{
+    return CompareStringA(LOCALE_SYSTEM_DEFAULT,0,str1,-1,str2,-1) - 2 ;
+}
+
+
+/***********************************************************************
+ *           lstrcmpW   (KERNEL32.@)
+ * FIXME : should call CompareStringW, when it is implemented.
+ *    This implementation is not "word sort", as it should.
+ */
+INT WINAPI lstrcmpW( LPCWSTR str1, LPCWSTR str2 )
+{
+    TRACE("%s and %s\n",
+		   debugstr_w (str1), debugstr_w (str2));
+    if (!str1 || !str2) {
+    	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
+    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
+    return (INT)(*str1 - *str2);
+}
+
+
+/***********************************************************************
+ *           lstrcmpi    (KERNEL32.@)
+ *           lstrcmpiA   (KERNEL32.@)
+ */
+INT WINAPI lstrcmpiA( LPCSTR str1, LPCSTR str2 )
+{    TRACE("strcmpi %s and %s\n",
+		   debugstr_a (str1), debugstr_a (str2));
+    return CompareStringA(LOCALE_SYSTEM_DEFAULT,NORM_IGNORECASE,str1,-1,str2,-1)-2;
+}
+
+
+/***********************************************************************
+ *           lstrcmpiW   (KERNEL32.@)
+ */
+INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
+{
+    if (!str1 || !str2) {
+    	SetLastError(ERROR_INVALID_PARAMETER);
+	return 0;
+    }
+    return strcmpiW( str1, str2 );
+}
+
 
 /******************************************************************************
  *		OLE_GetFormatA	[Internal]

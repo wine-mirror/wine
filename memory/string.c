@@ -118,58 +118,6 @@ SEGPTR WINAPI lstrcatn16( SEGPTR dst, LPCSTR src, INT16 n )
 
 
 /***********************************************************************
- *           lstrcmp    (KERNEL32.@)
- *           lstrcmpA   (KERNEL32.@)
- */
-INT WINAPI lstrcmpA( LPCSTR str1, LPCSTR str2 )
-{
-    return CompareStringA(LOCALE_SYSTEM_DEFAULT,0,str1,-1,str2,-1) - 2 ;
-}
-
-
-/***********************************************************************
- *           lstrcmpW   (KERNEL32.@)
- * FIXME : should call CompareStringW, when it is implemented.
- *    This implementation is not "word sort", as it should.
- */
-INT WINAPI lstrcmpW( LPCWSTR str1, LPCWSTR str2 )
-{
-    TRACE("%s and %s\n",
-		   debugstr_w (str1), debugstr_w (str2));
-    if (!str1 || !str2) {
-    	SetLastError(ERROR_INVALID_PARAMETER);
-	return 0;
-    }
-    while (*str1 && (*str1 == *str2)) { str1++; str2++; }
-    return (INT)(*str1 - *str2);
-}
-
-
-/***********************************************************************
- *           lstrcmpi    (KERNEL32.@)
- *           lstrcmpiA   (KERNEL32.@)
- */
-INT WINAPI lstrcmpiA( LPCSTR str1, LPCSTR str2 )
-{    TRACE("strcmpi %s and %s\n",
-		   debugstr_a (str1), debugstr_a (str2));
-    return CompareStringA(LOCALE_SYSTEM_DEFAULT,NORM_IGNORECASE,str1,-1,str2,-1)-2;
-}
-
-
-/***********************************************************************
- *           lstrcmpiW   (KERNEL32.@)
- */
-INT WINAPI lstrcmpiW( LPCWSTR str1, LPCWSTR str2 )
-{
-    if (!str1 || !str2) {
-    	SetLastError(ERROR_INVALID_PARAMETER);
-	return 0;
-    }
-    return strcmpiW( str1, str2 );
-}
-
-
-/***********************************************************************
  *           lstrcpy   (KERNEL.88)
  */
 SEGPTR WINAPI lstrcpy16( SEGPTR dst, LPCSTR src )

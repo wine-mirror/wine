@@ -103,7 +103,8 @@ typedef struct _TEB
     DWORD        unknown6[5];    /* --n 1e8 Unknown */
 
     /* The following are Wine-specific fields (NT: GDI stuff) */
-    DWORD        unused[4];      /* --3 1fc Was server buffer */
+    UINT         code_page;      /* --3 1fc Thread code page */
+    DWORD        unused[3];      /* --3 200 Was server buffer */
     int          request_fd;     /* --3 20c fd for sending server requests */
     int          reply_fd;       /* --3 210 fd for receiving server replies */
     int          wait_fd[2];     /* --3 214 fd for sleeping server requests */

@@ -39,8 +39,6 @@ extern "C" {
 #define	LOCALE_USE_CP_ACP	    0x40000000
 #define	LOCALE_RETURN_NUMBER	    0x20000000
 
-#define LOCALE_LOCALEINFOFLAGSMASK  0xC0000000
-
 /* When adding new defines, don't forget to add an entry to the
  * locale_name2id map in ole/ole2nls.c
  */

@@ -38,7 +38,7 @@
 #include "module.h"
 #include "task.h"
 
-extern void CODEPAGE_Init(void);
+extern void LOCALE_Init(void);
 extern BOOL RELAY_Init(void);
 
 extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
@@ -58,7 +58,7 @@ static BOOL process_attach(void)
     umask( FILE_umask );
 
     /* Setup codepage info */
-    CODEPAGE_Init();
+    LOCALE_Init();
 
     /* Initialize relay entry points */
     if (!RELAY_Init()) return FALSE;
