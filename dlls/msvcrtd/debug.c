@@ -22,6 +22,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+int _crtAssertBusy = -1;
+int _crtBreakAlloc = -1;
+int _crtDbgFlag = 0;
+
 /*********************************************************************
  *		_CrtSetDumpClient (MSVCRTD.@)
  */
@@ -50,11 +54,23 @@ int _CrtSetReportMode()
 
 
 /*********************************************************************
+ *		_CrtSetBreakAlloc (MSVCRTD.@)
+ */
+int _CrtSetBreakAlloc(int new)
+{
+    int old = _crtBreakAlloc;
+    _crtBreakAlloc = new;
+    return old;
+}
+
+/*********************************************************************
  *		_CrtSetDbgFlag (MSVCRTD.@)
  */
-int _CrtSetDbgFlag()
+int _CrtSetDbgFlag(int new)
 {
-    return 0;
+    int old = _crtDbgFlag;
+    _crtDbgFlag = new;
+    return old;
 }
 
 
@@ -72,4 +88,28 @@ int _CrtDbgReport()
 int _CrtDumpMemoryLeaks()
 {
     return 0;
+}
+
+/*********************************************************************
+ *		__p__crtAssertBusy (MSVCRTD.@)
+ */
+int *__p__crtAssertBusy(void)
+{
+    return &_crtAssertBusy;
+}
+
+/*********************************************************************
+ *		__p__crtBreakAlloc (MSVCRTD.@)
+ */
+int *__p__crtBreakAlloc(void)
+{
+    return &_crtBreakAlloc;
+}
+
+/*********************************************************************
+ *		__p__crtDbgFlag (MSVCRTD.@)
+ */
+int *__p__crtDbgFlag(void)
+{
+    return &_crtDbgFlag;
 }
