@@ -59,6 +59,15 @@ static const float id_mat[16] = {
     0.0, 0.0, 0.0, 1.0
 };
 
+static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
+				     D3DPRIMITIVETYPE d3dptPrimitiveType,
+				     DWORD d3dvtVertexType,
+				     LPD3DDRAWPRIMITIVESTRIDEDDATA lpD3DDrawPrimStrideData,
+				     DWORD dwVertexCount,
+				     LPWORD dwIndices,
+				     DWORD dwIndexCount,
+				     DWORD dwFlags) ;
+
 /* retrieve the X display to use on a given DC */
 inline static Display *get_display( HDC hdc )
 {
@@ -735,71 +744,50 @@ static void draw_primitive_handle_GL_state(IDirect3DDeviceGLImpl *glThis,
 }
 
 
-inline static void draw_primitive(IDirect3DDeviceGLImpl *glThis, DWORD maxvert, WORD *index,
+inline static void draw_primitive(IDirect3DDeviceImpl *This, DWORD maxvert, WORD *index,
 				  D3DVERTEXTYPE d3dvt, D3DPRIMITIVETYPE d3dpt, void *lpvertex)
 {
-    DWORD vx_index;
-  
-    draw_primitive_handle_GL_state(glThis, d3dvt == D3DVT_TLVERTEX, d3dvt != D3DVT_VERTEX);
-    draw_primitive_start_GL(d3dpt);
-    
-    /* Draw the primitives */
-    for (vx_index = 0; vx_index < maxvert; vx_index++) {
-        switch (d3dvt) {
-	    case D3DVT_VERTEX: {
-	        D3DVERTEX *vx = ((D3DVERTEX *) lpvertex) + (index == 0 ? vx_index : index[vx_index]);
+    D3DDRAWPRIMITIVESTRIDEDDATA strided;
 
-		glNormal3f(vx->u4.nx, vx->u5.ny, vx->u6.nz);
-		glVertex3f(vx->u1.x, vx->u2.y, vx->u3.z);
-		TRACE("   V: %f %f %f\n", vx->u1.x, vx->u2.y, vx->u3.z);
-	    } break;
+    switch (d3dvt) {
+        case D3DVT_VERTEX: {
+	    strided.position.lpvData = &((D3DVERTEX *) lpvertex)->u1.x;
+	    strided.position.dwStride = sizeof(D3DVERTEX);
+	    strided.normal.lpvData = &((D3DVERTEX *) lpvertex)->u4.nx;
+	    strided.normal.dwStride = sizeof(D3DVERTEX);
+	    strided.textureCoords[0].lpvData = &((D3DVERTEX *) lpvertex)->u7.tu;
+	    strided.textureCoords[0].dwStride = sizeof(D3DVERTEX);
+	    draw_primitive_strided_7(This, d3dpt, D3DFVF_VERTEX, &strided, 0 /* Unused */, index, maxvert, 0 /* Unused */);
+	} break;
 
-	    case D3DVT_LVERTEX: {
-	        D3DLVERTEX *vx = ((D3DLVERTEX *) lpvertex) + (index == 0 ? vx_index : index[vx_index]);
-		DWORD col = vx->u4.color;
+        case D3DVT_LVERTEX: {
+	    strided.position.lpvData = &((D3DLVERTEX *) lpvertex)->u1.x;
+	    strided.position.dwStride = sizeof(D3DLVERTEX);
+	    strided.diffuse.lpvData = &((D3DLVERTEX *) lpvertex)->u4.color;
+	    strided.diffuse.dwStride = sizeof(D3DLVERTEX);
+	    strided.specular.lpvData = &((D3DLVERTEX *) lpvertex)->u5.specular;
+	    strided.specular.dwStride = sizeof(D3DLVERTEX);
+	    strided.textureCoords[0].lpvData = &((D3DLVERTEX *) lpvertex)->u6.tu;
+	    strided.textureCoords[0].dwStride = sizeof(D3DLVERTEX);
+	    draw_primitive_strided_7(This, d3dpt, D3DFVF_LVERTEX, &strided, 0 /* Unused */, index, maxvert, 0 /* Unused */);
+	} break;
 
-		glColor4ub((col >> 16) & 0xFF,
-			   (col >>  8) & 0xFF,
-			   (col >>  0) & 0xFF,
-			   (col >> 24) & 0xFF);
-		glVertex3f(vx->u1.x, vx->u2.y, vx->u3.z);
-		TRACE("  LV: %f %f %f (%02lx %02lx %02lx %02lx)\n",
-		      vx->u1.x, vx->u2.y, vx->u3.z,
-		      ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF), ((col >> 24) & 0xFF));
-	    } break;
+        case D3DVT_TLVERTEX: {
+	    strided.position.lpvData = &((D3DTLVERTEX *) lpvertex)->u1.sx;
+	    strided.position.dwStride = sizeof(D3DTLVERTEX);
+	    strided.diffuse.lpvData = &((D3DTLVERTEX *) lpvertex)->u5.color;
+	    strided.diffuse.dwStride = sizeof(D3DTLVERTEX);
+	    strided.specular.lpvData = &((D3DTLVERTEX *) lpvertex)->u6.specular;
+	    strided.specular.dwStride = sizeof(D3DTLVERTEX);
+	    strided.textureCoords[0].lpvData = &((D3DTLVERTEX *) lpvertex)->u7.tu;
+	    strided.textureCoords[0].dwStride = sizeof(D3DTLVERTEX);
+	    draw_primitive_strided_7(This, d3dpt, D3DFVF_TLVERTEX, &strided, 0 /* Unused */, index, maxvert, 0 /* Unused */);
+	} break;
 
-	    case D3DVT_TLVERTEX: {
-	        D3DTLVERTEX *vx = ((D3DTLVERTEX *) lpvertex) + (index == 0 ? vx_index : index[vx_index]);
-		DWORD col = vx->u5.color;
-
-		glColor4ub((col >> 16) & 0xFF,
-			   (col >>  8) & 0xFF,
-			   (col >>  0) & 0xFF,
-			   (col >> 24) & 0xFF);
-		glTexCoord2f(vx->u7.tu, vx->u8.tv);
-		if (vx->u4.rhw < 0.01)
-		    glVertex3f(vx->u1.sx,
-			       vx->u2.sy,
-			       vx->u3.sz);
-		else
-		    glVertex4f(vx->u1.sx / vx->u4.rhw,
-			       vx->u2.sy / vx->u4.rhw,
-			       vx->u3.sz / vx->u4.rhw,
-			       1.0 / vx->u4.rhw);
-		TRACE(" TLV: %f %f %f (%02lx %02lx %02lx %02lx) (%f %f) (%f)\n",
-		      vx->u1.sx, vx->u2.sy, vx->u3.sz,
-		      ((col >> 16) & 0xFF), ((col >>  8) & 0xFF), ((col >>  0) & 0xFF), ((col >> 24) & 0xFF),
-		      vx->u7.tu, vx->u8.tv, vx->u4.rhw);
-	    } break;
-
-	    default:
-	        FIXME("Unhandled vertex type\n");
-	        break;
-        }
+        default:
+	    FIXME("Unhandled vertex type\n");
+	    break;
     }
-
-    glEnd();
-    TRACE("End\n");
 }
 
 HRESULT WINAPI
@@ -814,7 +802,7 @@ GL_IDirect3DDeviceImpl_2_DrawPrimitive(LPDIRECT3DDEVICE2 iface,
     TRACE("(%p/%p)->(%08x,%08x,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwFlags);
 
     ENTER_GL();
-    draw_primitive((IDirect3DDeviceGLImpl *) This, dwVertexCount, NULL, d3dvtVertexType, d3dptPrimitiveType, lpvVertices);
+    draw_primitive(This, dwVertexCount, NULL, d3dvtVertexType, d3dptPrimitiveType, lpvVertices);
     LEAVE_GL();
 		   
     return DD_OK;
@@ -834,7 +822,7 @@ GL_IDirect3DDeviceImpl_2_DrawIndexedPrimitive(LPDIRECT3DDEVICE2 iface,
     TRACE("(%p/%p)->(%08x,%08x,%p,%08lx,%p,%08lx,%08lx)\n", This, iface, d3dptPrimitiveType, d3dvtVertexType, lpvVertices, dwVertexCount, dwIndices, dwIndexCount, dwFlags);
 
     ENTER_GL();
-    draw_primitive((IDirect3DDeviceGLImpl *) This, dwIndexCount, dwIndices, d3dvtVertexType, d3dptPrimitiveType, lpvVertices);
+    draw_primitive(This, dwIndexCount, dwIndices, d3dvtVertexType, d3dptPrimitiveType, lpvVertices);
     LEAVE_GL();
     
     return DD_OK;
@@ -916,44 +904,11 @@ void dump_flexible_vertex(DWORD d3dvtVertexType)
     DPRINTF("\n");
 }
 
-/* Some types used by the fast paths... */
-typedef struct {
-    float x, y, z;
-    float nx, ny, nz;
-    float tu1, tv1;
-} D3DFVF_VERTEX_1;
-
-typedef struct {
-    float x, y, z, rhw;
-    DWORD diffuse;
-    DWORD specular;
-    float tu1, tv1;
-} D3DFVF_TLVERTEX_1;
-
-typedef struct {
-    float x, y, z, rhw;
-} VERTEX_COORDS;
-
-typedef struct {
-    float nx,ny,nz;
-} NORMAL_COORDS;
-
-typedef struct {
-    float u,v;
-} TEXTURE_COORDS;
-
-#define GET_COMPONENT(cpnt,i,type) ((type*)(lpD3DDrawPrimStrideData->cpnt.lpvData+i*lpD3DDrawPrimStrideData->cpnt.dwStride))
-#define GET_POSITION(i)  GET_COMPONENT(position,i,VERTEX_COORDS)
-#define GET_NORMAL(i)    GET_COMPONENT(normal,i,NORMAL_COORDS)
-#define GET_DIFFUSE(i)   *GET_COMPONENT(diffuse,i,DWORD)
-#define GET_SPECULAR(i)  *GET_COMPONENT(specular,i,DWORD)
-#define GET_TEXTURE(i,n) GET_COMPONENT(textureCoords[n],i,TEXTURE_COORDS)
-
 /* These are the various handler used in the generic path */
-inline static void handle_xyz(float *coords) {
+inline static void handle_xyz(D3DVALUE *coords) {
     glVertex3fv(coords);
 }
-inline static void handle_xyzrhw(float *coords) {
+inline static void handle_xyzrhw(D3DVALUE *coords) {
     if (coords[3] < 0.00001)
         glVertex3f(coords[0], coords[1], coords[2]);
     else
@@ -962,35 +917,39 @@ inline static void handle_xyzrhw(float *coords) {
 		   coords[2] / coords[3],
 		   1.0 / coords[3]);
 }
-inline static void handle_normal(float *coords) {
+inline static void handle_normal(D3DVALUE *coords) {
     glNormal3fv(coords);
 }
-inline static void handle_specular(DWORD color) {
+inline static void handle_specular(DWORD *color) {
     /* Specular not handled yet properly... */
 }
-inline static void handle_diffuse(DWORD color) {
-    glColor4ub((color >> 16) & 0xFF,
-	       (color >>  8) & 0xFF,
-	       (color >>  0) & 0xFF,
-	       (color >> 24) & 0xFF);
+inline static void handle_diffuse(DWORD *color) {
+    glColor4ub((*color >> 16) & 0xFF,
+	       (*color >>  8) & 0xFF,
+	       (*color >>  0) & 0xFF,
+	       (*color >> 24) & 0xFF);
 }
-inline static void handle_texture(float *coords, int stage, int single) {
-    if (single) {
-        /* Special case for single texture... */
-        glTexCoord2fv(coords);
-    } else {
-        /* Multitexturing not handled yet */
-    }
+inline static void handle_diffuse_and_specular(DWORD *color_d, DWORD *color_s) {
+    glColor4ub((*color_d >> 16) & 0xFF,
+	       (*color_d >>  8) & 0xFF,
+	       (*color_d >>  0) & 0xFF,
+	       (*color_d >> 24) & 0xFF);
+}
+inline static void handle_texture(D3DVALUE *coords) {
+    glTexCoord2fv(coords);
+}
+inline static void handle_textures(D3DVALUE *coords, int num_coords) {
+
 }
 
 static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
-			     D3DPRIMITIVETYPE d3dptPrimitiveType,
-			     DWORD d3dvtVertexType,
-			     LPD3DDRAWPRIMITIVESTRIDEDDATA lpD3DDrawPrimStrideData,
-			     DWORD dwVertexCount,
-			     LPWORD dwIndices,
-			     DWORD dwIndexCount,
-			     DWORD dwFlags)
+				     D3DPRIMITIVETYPE d3dptPrimitiveType,
+				     DWORD d3dvtVertexType,
+				     LPD3DDRAWPRIMITIVESTRIDEDDATA lpD3DDrawPrimStrideData,
+				     DWORD dwVertexCount,
+				     LPWORD dwIndices,
+				     DWORD dwIndexCount,
+				     DWORD dwFlags)
 {
     IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
     if (TRACE_ON(ddraw)) {
@@ -1009,46 +968,51 @@ static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
 	
 	for (index = 0; index < dwIndexCount; index++) {
 	    int i = (dwIndices == NULL) ? index : dwIndices[index];
+	    D3DVALUE *normal = 
+	      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->normal.lpvData) + i * lpD3DDrawPrimStrideData->normal.dwStride);
+	    D3DVALUE *tex_coord =
+	      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[0].lpvData) + i * lpD3DDrawPrimStrideData->textureCoords[0].dwStride);
+	    D3DVALUE *position =
+	      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
 	    
-	    glNormal3fv(&GET_NORMAL(i)->nx);
-	    glTexCoord2fv(&GET_TEXTURE(i,0)->u);
-	    glVertex3fv(&GET_POSITION(i)->x);
+	    handle_normal(normal);
+	    handle_texture(tex_coord);
+	    handle_xyz(position);
+	    
 	    TRACE(" %f %f %f / %f %f %f (%f %f)\n",
-		  GET_POSITION(i)->x,GET_POSITION(i)->y,GET_POSITION(i)->z,
-		  GET_NORMAL(i)->nx,GET_NORMAL(i)->ny,GET_NORMAL(i)->nz,
-		  GET_TEXTURE(i,0)->u,GET_TEXTURE(i,0)->v);
+		  position[0], position[1], position[2],
+		  normal[0], normal[1], normal[2],
+		  tex_coord[0], tex_coord[1]);
 	}
     } else if (d3dvtVertexType == D3DFVF_TLVERTEX) {
 	int index;
 	
 	for (index = 0; index < dwIndexCount; index++) {
 	    int i = (dwIndices == NULL) ? index : dwIndices[index];
+	    DWORD *color_d = 
+	      (DWORD *) (((char *) lpD3DDrawPrimStrideData->diffuse.lpvData) + i * lpD3DDrawPrimStrideData->diffuse.dwStride);
+	    DWORD *color_s = 
+	      (DWORD *) (((char *) lpD3DDrawPrimStrideData->specular.lpvData) + i * lpD3DDrawPrimStrideData->specular.dwStride);
+	    D3DVALUE *tex_coord =
+	      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[0].lpvData) + i * lpD3DDrawPrimStrideData->textureCoords[0].dwStride);
+	    D3DVALUE *position =
+	      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
 
-	    glColor4ub((GET_DIFFUSE(i) >> 16) & 0xFF,
-		       (GET_DIFFUSE(i) >>  8) & 0xFF,
-		       (GET_DIFFUSE(i) >>  0) & 0xFF,
-		       (GET_DIFFUSE(i) >> 24) & 0xFF);
-	    /* Todo : handle specular... */
-	    glTexCoord2fv(&GET_TEXTURE(i,0)->u);
-	    if (GET_POSITION(i)->rhw < 0.00001)
-	        glVertex3fv(&GET_POSITION(i)->x);
-	    else {
-	        glVertex4f(GET_POSITION(i)->x / GET_POSITION(i)->rhw,
-	                   GET_POSITION(i)->y / GET_POSITION(i)->rhw,
-	                   GET_POSITION(i)->z / GET_POSITION(i)->rhw,
-	                   1.0 / GET_POSITION(i)->rhw);
-	    }
+	    handle_diffuse_and_specular(color_d, color_s);
+	    handle_texture(tex_coord);
+	    handle_xyzrhw(position);
+
 	    TRACE(" %f %f %f %f / %02lx %02lx %02lx %02lx - %02lx %02lx %02lx %02lx (%f %f)\n",
-		  GET_POSITION(i)->x,GET_POSITION(i)->y,GET_POSITION(i)->z,GET_POSITION(i)->rhw,
-		  (GET_DIFFUSE(i) >> 16) & 0xFF,
-		  (GET_DIFFUSE(i) >>  8) & 0xFF,
-		  (GET_DIFFUSE(i) >>  0) & 0xFF,
-		  (GET_DIFFUSE(i) >> 24) & 0xFF,
-		  (GET_SPECULAR(i) >> 16) & 0xFF,
-		  (GET_SPECULAR(i) >>  8) & 0xFF,
-		  (GET_SPECULAR(i) >>  0) & 0xFF,
-		  (GET_SPECULAR(i) >> 24) & 0xFF,
-		  GET_TEXTURE(i,0)->u,GET_TEXTURE(i,0)->v);
+		  position[0], position[1], position[2], position[3], 
+		  (*color_d >> 16) & 0xFF,
+		  (*color_d >>  8) & 0xFF,
+		  (*color_d >>  0) & 0xFF,
+		  (*color_d >> 24) & 0xFF,
+		  (*color_s >> 16) & 0xFF,
+		  (*color_s >>  8) & 0xFF,
+		  (*color_s >>  0) & 0xFF,
+		  (*color_s >> 24) & 0xFF,
+		  tex_coord[0], tex_coord[1]);
 	} 
     } else if (((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) ||
 	       ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW)) {
@@ -1057,29 +1021,53 @@ static void draw_primitive_strided_7(IDirect3DDeviceImpl *This,
 	*/  
 	int index;
 	for (index = 0; index < dwIndexCount; index++) {
-	    int i = (dwIndices == NULL) ? index : dwIndices[index];
-	    if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) {
-	         handle_xyz(&GET_POSITION(i)->x);
-	    } else {
-	         handle_xyzrhw(&GET_POSITION(i)->x);
-	    }
+	    int i = (dwIndices == NULL) ? index : dwIndices[index];	    
+
 	    if (d3dvtVertexType & D3DFVF_NORMAL) { 
-	        handle_normal(&GET_NORMAL(i)->nx);
+	        D3DVALUE *normal = 
+		  (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->normal.lpvData) + i * lpD3DDrawPrimStrideData->normal.dwStride);	    
+		handle_normal(normal);
 	    }
-	    if (d3dvtVertexType & D3DFVF_DIFFUSE) {
-		handle_diffuse(GET_DIFFUSE(i));
+	    if ((d3dvtVertexType & (D3DFVF_DIFFUSE|D3DFVF_SPECULAR)) == (D3DFVF_DIFFUSE|D3DFVF_SPECULAR)) {
+	        DWORD *color_d = 
+		  (DWORD *) (((char *) lpD3DDrawPrimStrideData->diffuse.lpvData) + i * lpD3DDrawPrimStrideData->diffuse.dwStride);
+		DWORD *color_s = 
+		  (DWORD *) (((char *) lpD3DDrawPrimStrideData->specular.lpvData) + i * lpD3DDrawPrimStrideData->specular.dwStride);
+		handle_diffuse_and_specular(color_d, color_s);
+	    } else {
+	        if (d3dvtVertexType & D3DFVF_SPECULAR) { 
+		    DWORD *color_s = 
+		      (DWORD *) (((char *) lpD3DDrawPrimStrideData->specular.lpvData) + i * lpD3DDrawPrimStrideData->specular.dwStride);
+		    handle_specular(color_s);
+		} else if (d3dvtVertexType & D3DFVF_DIFFUSE) {
+		    DWORD *color_d = 
+		      (DWORD *) (((char *) lpD3DDrawPrimStrideData->diffuse.lpvData) + i * lpD3DDrawPrimStrideData->diffuse.dwStride);
+		    handle_diffuse(color_d);
+		}
 	    }
-	    if (d3dvtVertexType & D3DFVF_SPECULAR) { 
-	        /* Todo : handle specular... */
-	    }
+		
 	    if (((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT) == 1) {
                 /* Special case for single texture... */
-	        handle_texture(&GET_TEXTURE(i,0)->u,0,1);
+	        D3DVALUE *tex_coord =
+		  (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[0].lpvData) + i * lpD3DDrawPrimStrideData->textureCoords[0].dwStride);
+	        handle_texture(tex_coord);
 	    } else {
 	        int tex_index;
 		for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
-                    /* Multitexturing not handled yet */
+                    D3DVALUE *tex_coord =
+		      (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->textureCoords[tex_index].lpvData) + 
+				    i * lpD3DDrawPrimStrideData->textureCoords[tex_index].dwStride);
+		    handle_textures(tex_coord, tex_index);
 		}
+	    }
+	    if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZ) {
+	        D3DVALUE *position =
+		  (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
+		handle_xyz(position);
+	    } else if ((d3dvtVertexType & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW) {
+	        D3DVALUE *position =
+		  (D3DVALUE *) (((char *) lpD3DDrawPrimStrideData->position.lpvData) + i * lpD3DDrawPrimStrideData->position.dwStride);
+		handle_xyzrhw(position);
 	    }
 	}
     } else {
@@ -1112,19 +1100,19 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
         current_offset += 4 * sizeof(D3DVALUE);
     }
     if (d3dvtVertexType & D3DFVF_NORMAL) { 
-        strided.normal.lpvData  = lpvVertices + current_offset;
+        strided.normal.lpvData  = ((char *) lpvVertices) + current_offset;
         current_offset += 3 * sizeof(D3DVALUE);
     }
     if (d3dvtVertexType & D3DFVF_DIFFUSE) { 
-        strided.diffuse.lpvData  = lpvVertices + current_offset;
+        strided.diffuse.lpvData  = ((char *) lpvVertices) + current_offset;
         current_offset += sizeof(DWORD);
     }
     if (d3dvtVertexType & D3DFVF_SPECULAR) {
-        strided.specular.lpvData  = lpvVertices + current_offset;
+        strided.specular.lpvData  = ((char *) lpvVertices) + current_offset;
         current_offset += sizeof(DWORD);
     }
     for (tex_index = 0; tex_index < ((d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT); tex_index++) {
-        strided.textureCoords[tex_index].lpvData  = lpvVertices + current_offset;
+        strided.textureCoords[tex_index].lpvData  = ((char *) lpvVertices) + current_offset;
         current_offset += 2*sizeof(D3DVALUE);
     }
     strided.position.dwStride = current_offset;
