@@ -421,6 +421,7 @@ typedef struct
 #define LMEM_LOCKCOUNT	    0x00FF
 
 #define LPTR (LMEM_FIXED | LMEM_ZEROINIT)
+#define LHND (LMEM_MOVEABLE | LMEM_ZEROINIT)
 
 #define GMEM_FIXED          0x0000
 #define GMEM_MOVEABLE       0x0002
