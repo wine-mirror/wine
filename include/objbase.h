@@ -3,7 +3,7 @@
 
 #define _OBJBASE_H_
 
-#include "wine/obj_base.h"
+#include "unknwn.h"
 
 /* the following depend only on obj_base.h */
 #include "wine/obj_misc.h"
