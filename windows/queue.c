@@ -1357,18 +1357,22 @@ HTASK16 WINAPI GetWindowTask16( HWND16 hwnd )
  */
 DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
 {
-    HTASK16 htask;
-    TDB	*tdb;
+    DWORD retvalue;
+    MESSAGEQUEUE *queue;
 
     WND *wndPtr = WIN_FindWndPtr( hwnd );
-
     if (!wndPtr) return 0;
-    htask=QUEUE_GetQueueTask( wndPtr->hmemTaskQ );
+
+    queue = QUEUE_Lock( wndPtr->hmemTaskQ );
     WIN_ReleaseWndPtr(wndPtr);
-    tdb = (TDB*)GlobalLock16(htask);
-    if (!tdb || !tdb->thdb) return 0;
-    if (process) *process = (DWORD)tdb->thdb->process->server_pid;
-    return (DWORD)tdb->thdb->server_tid;
+
+    if (!queue) return 0;
+
+    if ( process ) *process = (DWORD)queue->thdb->process->server_pid;
+    retvalue = (DWORD)queue->thdb->server_tid;
+
+    QUEUE_Unlock( queue );
+    return retvalue;
 }
 
 
