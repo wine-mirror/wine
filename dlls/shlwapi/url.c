@@ -56,6 +56,8 @@ typedef enum {
     USERPASS,
 } WINE_URL_SCAN_TYPE;
 
+static const CHAR hexDigits[] = "0123456789ABCDEF";
+
 static const WCHAR fileW[] = {'f','i','l','e','\0'};
 
 static const unsigned char HashDataLookup[256] = {
@@ -730,7 +732,6 @@ HRESULT WINAPI UrlEscapeA(
     DWORD needed = 0, ret;
     BOOL stop_escaping = FALSE;
     char next[3], *dst = pszEscaped;
-    char hex[] = "0123456789ABCDEF";
     INT len;
 
     TRACE("(%s %p %p 0x%08lx)\n", debugstr_a(pszUrl), pszEscaped,
@@ -762,8 +763,8 @@ HRESULT WINAPI UrlEscapeA(
 	if(URL_NeedEscapeA(*src, dwFlags) && stop_escaping == FALSE) {
 	    /* TRACE("escaping %c\n", *src); */
 	    next[0] = '%';
-	    next[1] = hex[(*src >> 4) & 0xf];
-	    next[2] = hex[*src & 0xf];
+	    next[1] = hexDigits[(*src >> 4) & 0xf];
+	    next[2] = hexDigits[*src & 0xf];
 	    len = 3;
 	} else {
 	    /* TRACE("passing %c\n", *src); */
@@ -804,7 +805,6 @@ HRESULT WINAPI UrlEscapeW(
     DWORD needed = 0, ret;
     BOOL stop_escaping = FALSE;
     WCHAR next[5], *dst = pszEscaped;
-    CHAR hex[] = "0123456789ABCDEF";
     INT len;
 
     TRACE("(%s %p %p 0x%08lx)\n", debugstr_w(pszUrl), pszEscaped,
@@ -846,14 +846,14 @@ HRESULT WINAPI UrlEscapeW(
 	     * the character with 4 hex digits (or even 8),
 	     * however, experiments show that native shlwapi escapes
 	     * with only 2 hex digits.
-	     *   next[1] = hex[(*src >> 12) & 0xf];
-	     *   next[2] = hex[(*src >> 8) & 0xf];
-	     *   next[3] = hex[(*src >> 4) & 0xf];
-	     *   next[4] = hex[*src & 0xf];
+	     *   next[1] = hexDigits[(*src >> 12) & 0xf];
+	     *   next[2] = hexDigits[(*src >> 8) & 0xf];
+	     *   next[3] = hexDigits[(*src >> 4) & 0xf];
+	     *   next[4] = hexDigits[*src & 0xf];
 	     *   len = 5;
 	     */
-	    next[1] = hex[(*src >> 4) & 0xf];
-	    next[2] = hex[*src & 0xf];
+	    next[1] = hexDigits[(*src >> 4) & 0xf];
+	    next[2] = hexDigits[*src & 0xf];
 	    len = 3;
 	} else {
 	    /* TRACE("passing %c\n", *src); */
