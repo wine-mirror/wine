@@ -348,7 +348,12 @@ static void LISTBOX_UpdateSize( WND *wnd, LB_DESCR *descr )
     descr->height = rect.bottom - rect.top;
     if (!(descr->style & LBS_NOINTEGRALHEIGHT) && !(descr->style & LBS_OWNERDRAWVARIABLE))
     {
-        UINT remaining = descr->height % descr->item_height;
+        UINT remaining;
+
+        if(descr->item_height != 0)
+            remaining = descr->height % descr->item_height;
+        else
+            remaining = 0;
         if ((descr->height > descr->item_height) && remaining)
         {
             if (!(wnd->flags & WIN_ISWIN32))
