@@ -68,7 +68,7 @@ init    MSVCRT_Init
 @ cdecl -noimport _CIsqrt() _CIsqrt
 @ cdecl -noimport _CItan() _CItan
 @ cdecl -noimport _CItanh() _CItanh
-@ stub _CxxThrowException
+@ cdecl _CxxThrowException(long long) _CxxThrowException
 @ cdecl -i386 -norelay _EH_prolog() _EH_prolog
 @ cdecl _Getdays() _Getdays
 @ cdecl _Getmonths() _Getmonths
@@ -76,7 +76,7 @@ init    MSVCRT_Init
 @ extern _HUGE MSVCRT__HUGE
 @ cdecl _Strftime(str long str ptr ptr) _Strftime
 @ cdecl _XcptFilter(long ptr) _XcptFilter
-@ cdecl __CxxFrameHandler(ptr ptr ptr ptr) __CxxFrameHandler
+@ cdecl -register -i386 __CxxFrameHandler(ptr ptr ptr ptr) __CxxFrameHandler
 @ stub __CxxLongjmpUnwind
 @ cdecl -noimport __RTCastToVoid(ptr) MSVCRT___RTCastToVoid
 @ cdecl -noimport __RTDynamicCast(ptr long ptr ptr long) MSVCRT___RTDynamicCast

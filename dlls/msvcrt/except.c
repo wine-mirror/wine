@@ -373,20 +373,3 @@ void* MSVCRT_signal(int sig, MSVCRT_sig_handler_func func)
   FIXME("(%d %p):stub\n", sig, func);
   return (void*)-1;
 }
-
-/*********************************************************************
- *		__CxxFrameHandler (MSVCRT.@)
- */
-DWORD __CxxFrameHandler(PEXCEPTION_RECORD rec, struct __EXCEPTION_FRAME* frame,
-                        PCONTEXT context, struct __EXCEPTION_FRAME** dispatch)
-{
-    FIXME("(%p,%p,%p,%p):stub?\n",rec,frame,context,dispatch);
-
-    /* Copied from MSVCRT_nested_handler, I hope this is more
-     * or less the right thing to do
-     */
-    if (rec->ExceptionFlags & 0x6)
-        return ExceptionContinueSearch;
-    *dispatch = frame;
-    return ExceptionCollidedUnwind;
-}

@@ -13,6 +13,7 @@ SYMBOLFILE = $(MODULE).tmp.o
 C_SRCS = \
 	console.c \
 	cpp.c \
+	cppexcept.c \
 	ctype.c \
 	data.c \
 	dir.c \
