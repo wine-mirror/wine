@@ -1036,9 +1036,9 @@ BOOL static do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style)
                         docopy = FALSE;
                     }
                 }
-                HeapFree(GetProcessHeap(),0,VersionSource);
-                HeapFree(GetProcessHeap(),0,VersionTarget);
             }
+            HeapFree(GetProcessHeap(),0,VersionSource);
+            HeapFree(GetProcessHeap(),0,VersionTarget);
         }
     }
     if (style & (SP_COPY_NOOVERWRITE | SP_COPY_FORCE_NOOVERWRITE))
