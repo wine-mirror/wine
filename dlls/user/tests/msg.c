@@ -88,7 +88,6 @@ static const struct message WmShowOverlappedSeq[] = {
     { WM_MOVE, sent },
     { 0 }
 };
-
 /* DestroyWindow (for overlapped window) (32) */
 static const struct message WmDestroyOverlappedSeq[] = {
     { HCBT_DESTROYWND, hook },
@@ -101,6 +100,55 @@ static const struct message WmDestroyOverlappedSeq[] = {
     { WM_IME_SETCONTEXT, sent|optional },
     { WM_DESTROY, sent },
     { WM_NCDESTROY, sent },
+    { 0 }
+};
+/* CreateWindow (for a child popup window, not initially visible) */
+static const struct message WmCreateChildPopupSeq[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent }, 
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { 0 }
+};
+/* CreateWindow (for a popup window, not initially visible,
+ * which sets WS_VISIBLE in WM_CREATE handler)
+ */
+static const struct message WmCreateInvisiblePopupSeq[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent }, 
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_STYLECHANGING, sent },
+    { WM_STYLECHANGED, sent },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { 0 }
+};
+/* ShowWindow (for a popup window with WS_VISIBLE style set) */
+static const struct message WmShowVisiblePopupSeq[] = {
+    { 0 }
+};
+/* SetWindowPos(SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER)
+ * for a popup window with WS_VISIBLE style set
+ */
+static const struct message WmShowVisiblePopupSeq_2[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { 0 }
+};
+/* SetWindowPos(SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE)
+ * for a popup window with WS_VISIBLE style set
+ */
+static const struct message WmShowVisiblePopupSeq_3[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { HCBT_ACTIVATE, hook },
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_NCACTIVATE, sent|wparam, 1 },
+    { WM_ACTIVATE, sent|wparam, 1 },
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|optional },
+    { WM_SETFOCUS, sent|defwinproc },
     { 0 }
 };
 /* CreateWindow (for child window, not initially visible) */
@@ -454,7 +502,7 @@ static void test_messages(void)
     ok (hwnd != 0, "Failed to create overlapped window\n");
     ok_sequence(WmCreateOverlappedSeq, "CreateWindow:overlapped");
     
-    ShowWindow(hwnd, TRUE);
+    ShowWindow(hwnd, SW_SHOW);
     ok_sequence(WmShowOverlappedSeq, "ShowWindow:overlapped");
 
     DestroyWindow(hwnd);
@@ -480,7 +528,7 @@ static void test_messages(void)
     ok (hbutton != 0, "Failed to create button window\n");
     flush_sequence();
 
-    ShowWindow(hchild, TRUE);
+    ShowWindow(hchild, SW_SHOW);
     ok_sequence(WmShowChildSeq, "ShowWindow:child");
 
     SetFocus(hchild);
@@ -493,6 +541,51 @@ static void test_messages(void)
     ok_sequence(WmDestroyChildSeq, "DestroyWindow:child");
     DestroyWindow(hchild2);
     DestroyWindow(hbutton);
+
+    flush_sequence();
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test Child Popup", WS_CHILD | WS_POPUP,
+                             0, 0, 100, 100, hparent, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create child popup window\n");
+    ok_sequence(WmCreateChildPopupSeq, "CreateWindow:child_popup");
+    DestroyWindow(hchild);
+
+    /* test what happens to a window which sets WS_VISIBLE in WM_CREATE */
+    flush_sequence();
+    hchild = CreateWindowExA(0, "TestPopupClass", "Test Popup", WS_POPUP,
+                             0, 0, 100, 100, hparent, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create popup window\n");
+    ok_sequence(WmCreateInvisiblePopupSeq, "CreateWindow:invisible_popup");
+    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(IsWindowVisible(hchild), "IsWindowVisible() should return TRUE\n");
+    flush_sequence();
+    ShowWindow(hchild, SW_SHOW);
+    ok_sequence(WmShowVisiblePopupSeq, "CreateWindow:show_visible_popup");
+    flush_sequence();
+    SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
+    ok_sequence(WmShowVisiblePopupSeq_2, "CreateWindow:show_visible_popup_2");
+    flush_sequence();
+    SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE);
+    ok_sequence(WmShowVisiblePopupSeq_3, "CreateWindow:show_visible_popup_3");
+    DestroyWindow(hchild);
+
+    /* this time add WS_VISIBLE for CreateWindowEx, but this fact actually
+     * changes nothing in message sequences.
+     */
+    flush_sequence();
+    hchild = CreateWindowExA(0, "TestPopupClass", "Test Popup", WS_POPUP | WS_VISIBLE,
+                             0, 0, 100, 100, hparent, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create popup window\n");
+    ok_sequence(WmCreateInvisiblePopupSeq, "CreateWindow:invisible_popup");
+    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(IsWindowVisible(hchild), "IsWindowVisible() should return TRUE\n");
+    flush_sequence();
+    ShowWindow(hchild, SW_SHOW);
+    ok_sequence(WmShowVisiblePopupSeq, "CreateWindow:show_visible_popup");
+    flush_sequence();
+    SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
+    ok_sequence(WmShowVisiblePopupSeq_2, "CreateWindow:show_visible_popup_2");
+    DestroyWindow(hchild);
+
     DestroyWindow(hparent);
     flush_sequence();
 
@@ -507,7 +600,7 @@ static void test_messages(void)
     ok_sequence(WmSetMenuNonVisibleSizeChangeSeq, "SetMenu:NonVisibleSizeChange");    
     ok (SetMenu(hwnd, 0), "SetMenu");
     ok_sequence(WmSetMenuNonVisibleNoSizeChangeSeq, "SetMenu:NonVisibleNoSizeChange");    
-    ShowWindow(hwnd, TRUE);
+    ShowWindow(hwnd, SW_SHOW);
     flush_sequence();
     ok (SetMenu(hwnd, 0), "SetMenu");
     ok_sequence(WmSetMenuVisibleNoSizeChangeSeq, "SetMenu:VisibleNoSizeChange");    
@@ -532,11 +625,32 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
     return DefWindowProcA(hwnd, message, wParam, lParam);
 }
 
+static LRESULT WINAPI PopupMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    struct message msg;
+
+    trace("popup: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(&msg);
+
+    if (message == WM_CREATE)
+    {
+	DWORD style = GetWindowLongA(hwnd, GWL_STYLE) | WS_VISIBLE;
+	SetWindowLongA(hwnd, GWL_STYLE, style);
+    }
+
+    return DefWindowProcA(hwnd, message, wParam, lParam);
+}
+
 static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     struct message msg;
 
-    trace("%p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+    trace("parent: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
 
     if (message == WM_PARENTNOTIFY)
     {
@@ -564,33 +678,18 @@ static BOOL RegisterWindowClasses(void)
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "TestWindowClass";
-
     if(!RegisterClassA(&cls)) return FALSE;
 
-    cls.style = 0;
+    cls.lpfnWndProc = PopupMsgCheckProcA;
+    cls.lpszClassName = "TestPopupClass";
+    if(!RegisterClassA(&cls)) return FALSE;
+
     cls.lpfnWndProc = ParentMsgCheckProcA;
-    cls.cbClsExtra = 0;
-    cls.cbWndExtra = 0;
-    cls.hInstance = GetModuleHandleA(0);
-    cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
-    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
-    cls.lpszMenuName = NULL;
     cls.lpszClassName = "TestParentClass";
-
     if(!RegisterClassA(&cls)) return FALSE;
 
-    cls.style = 0;
     cls.lpfnWndProc = DefWindowProcA;
-    cls.cbClsExtra = 0;
-    cls.cbWndExtra = 0;
-    cls.hInstance = GetModuleHandleA(0);
-    cls.hIcon = 0;
-    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
-    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
-    cls.lpszMenuName = NULL;
     cls.lpszClassName = "SimpleWindowClass";
-
     if(!RegisterClassA(&cls)) return FALSE;
 
     return TRUE;
@@ -608,6 +707,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
     {
 	if (!strcmp(buf, "TestWindowClass") ||
 	    !strcmp(buf, "TestParentClass") ||
+	    !strcmp(buf, "TestPopupClass") ||
 	    !strcmp(buf, "SimpleWindowClass"))
 	{
 	    struct message msg;
