@@ -2323,16 +2323,20 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
     if( (vk == VK_LEFT &&  menu->FocusedItem == 0 ) ||
         (vk == VK_RIGHT && menu->FocusedItem == menu->nItems - 1))
     {
+        MDINEXTMENU next_menu;
 	HMENU hNewMenu;
 	HWND  hNewWnd;
 	UINT  id = 0;
-	LRESULT l = SendMessageA( pmt->hOwnerWnd, WM_NEXTMENU, vk, 
-		(IS_SYSTEM_MENU(menu)) ? GetSubMenu(pmt->hTopMenu,0) : pmt->hTopMenu );
+
+        next_menu.hmenuIn = (IS_SYSTEM_MENU(menu)) ? GetSubMenu(pmt->hTopMenu,0) : pmt->hTopMenu;
+        next_menu.hmenuNext = 0;
+        next_menu.hwndNext = 0;
+        SendMessageW( pmt->hOwnerWnd, WM_NEXTMENU, vk, (LPARAM)&next_menu );
 
 	TRACE("%04x [%04x] -> %04x [%04x]\n",
-		     (UINT16)pmt->hCurrentMenu, (UINT16)pmt->hOwnerWnd, LOWORD(l), HIWORD(l) );
+              pmt->hCurrentMenu, pmt->hOwnerWnd, next_menu.hmenuNext, next_menu.hwndNext );
 
-	if( l == 0 )
+	if (!next_menu.hmenuNext || !next_menu.hwndNext)
 	{
             DWORD style = GetWindowLongA( pmt->hOwnerWnd, GWL_STYLE );
 	    hNewWnd = pmt->hOwnerWnd;
@@ -2357,8 +2361,8 @@ static LRESULT MENU_DoNextMenu( MTRACKER* pmt, UINT vk )
 	}
 	else    /* application returned a new menu to switch to */
 	{
-	    hNewMenu = LOWORD(l);
-            hNewWnd = HIWORD(l);
+            hNewMenu = next_menu.hmenuNext;
+            hNewWnd = next_menu.hwndNext;
 
 	    if( IsMenu(hNewMenu) && IsWindow(hNewWnd) )
 	    {

@@ -1309,9 +1309,18 @@ INT WINPROC_MapMsg16To32A( UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
 	  *plparam = (LPARAM) idThread;
 	}
         return 0;
+    case WM_NEXTMENU:
+        {
+            MDINEXTMENU *next = HeapAlloc( GetProcessHeap(), 0, sizeof(*next) );
+            if (!next) return -1;
+            next->hmenuIn = *plparam;
+            next->hmenuNext = 0;
+            next->hwndNext = 0;
+            *plparam = (LPARAM)next;
+            return 1;
+        }
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
-    case WM_NEXTMENU:
         FIXME_(msg)("message %04x needs translation\n",msg16 );
         return -1;
 
@@ -1413,6 +1422,13 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND16 hwnd, UINT msg, WPARAM wParam, LPARAM lP
             WINPROC_UnmapMsg16To32A( hwnd, msg32->message, msg32->wParam, msg32->lParam,
                                      result);
             HeapFree( GetProcessHeap(), 0, msg32 );
+        }
+        break;
+    case WM_NEXTMENU:
+        {
+            MDINEXTMENU *next = (MDINEXTMENU *)lParam;
+            result = MAKELONG( next->hmenuNext, next->hwndNext );
+            HeapFree( GetProcessHeap(), 0, next );
         }
         break;
     }
@@ -2036,9 +2052,14 @@ INT WINPROC_MapMsg32ATo16( HWND hwnd, UINT msg32, WPARAM wParam32,
     case WM_ACTIVATEAPP:
         if (*plparam) *plparam = (LPARAM)THREAD_IdToTEB((DWORD) *plparam)->htask16;
         return 0;
+    case WM_NEXTMENU:
+        {
+            MDINEXTMENU *next = (MDINEXTMENU *)*plparam;
+            *plparam = next->hmenuIn;
+            return 1;
+        }
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
-    case WM_NEXTMENU:
         FIXME_(msg)("message %04x needs translation\n", msg32 );
         return -1;
     /* following messages should not be sent to 16-bit apps */
@@ -2205,6 +2226,14 @@ void WINPROC_UnmapMsg32ATo16( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
                     ((LPMSG)lParam)->wParam, ((LPMSG)lParam)->lParam,
                     &msgp16 );
             SEGPTR_FREE(msg16);
+        }
+        break;
+    case WM_NEXTMENU:
+        {
+            MDINEXTMENU *next = (MDINEXTMENU *)lParam;
+            next->hmenuNext = LOWORD(p16->lResult);
+            next->hwndNext = HIWORD(p16->lResult);
+            p16->lResult = 0;
         }
         break;
     }
