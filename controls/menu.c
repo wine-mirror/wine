@@ -216,24 +216,24 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
     TRACE("%s ", prefix);
     if (mp) {
 	UINT flags = mp->fType;
-	int typ = MENU_ITEM_TYPE(flags);
+	int type = MENU_ITEM_TYPE(flags);
 	DPRINTF( "{ ID=0x%x", mp->wID);
 	if (flags & MF_POPUP)
 	    DPRINTF( ", Sub=0x%x", mp->hSubMenu);
 	if (flags) {
 	    int count = 0;
-	    DPRINTF( ", Typ=");
-	    if (typ == MFT_STRING)
+	    DPRINTF( ", Type=");
+	    if (type == MFT_STRING)
 		/* Nothing */ ;
-	    else if (typ == MFT_SEPARATOR)
+	    else if (type == MFT_SEPARATOR)
 		MENUOUT("sep");
-	    else if (typ == MFT_OWNERDRAW)
+	    else if (type == MFT_OWNERDRAW)
 		MENUOUT("own");
-	    else if (typ == MFT_BITMAP)
+	    else if (type == MFT_BITMAP)
 		MENUOUT("bit");
 	    else
 		MENUOUT("???");
-	    flags -= typ;
+	    flags -= type;
 
 	    MENUFLAG(MF_POPUP, "pop");
 	    MENUFLAG(MFT_MENUBARBREAK, "barbrk");
@@ -265,7 +265,7 @@ static void do_debug_print_menuitem(const char *prefix, MENUITEM * mp,
 	if (mp->hUnCheckBit)
 	    DPRINTF( ", Unc=0x%x", mp->hUnCheckBit);
 
-	if (typ == MFT_STRING) {
+	if (type == MFT_STRING) {
 	    if (mp->text)
 		DPRINTF( ", Text=%s", debugstr_w(mp->text));
 	    else
@@ -357,11 +357,13 @@ HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
 {
     HMENU hMenu;
 
+    TRACE("loading system menu, hWnd %04x, hPopupMenu %04x\n", hWnd, hPopupMenu);
     if ((hMenu = CreateMenu()))
     {
 	POPUPMENU *menu = MENU_GetMenu(hMenu);
 	menu->wFlags = MF_SYSMENU;
 	menu->hWnd = WIN_GetFullHandle( hWnd );
+	TRACE("hWnd %04x (hMenu %04x)\n", menu->hWnd, hMenu);
 
 	if (hPopupMenu == (HMENU)(-1))
 	    hPopupMenu = MENU_CopySysPopup();
@@ -375,7 +377,7 @@ HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
             menu->items[0].fState = 0;
             if ((menu = MENU_GetMenu(hPopupMenu))) menu->wFlags |= MF_SYSMENU;
 
-	    TRACE("GetSysMenu hMenu=%04x (%04x)\n", hMenu, hPopupMenu );
+	    TRACE("hMenu=%04x (hPopup %04x)\n", hMenu, hPopupMenu );
 	    return hMenu;
 	}
 	DestroyMenu( hMenu );
@@ -678,7 +680,7 @@ static UINT MENU_FindItemByKey( HWND hwndOwner, HMENU hmenu,
 	     key = toupper(key);
 	     for (i = 0; i < menu->nItems; i++, item++)
 	     {
-		if (item->text && (IS_STRING_ITEM(item->fType)))
+		if (IS_STRING_ITEM(item->fType) && item->text)
 		{
 		    WCHAR *p = item->text - 2;
 		    do
@@ -1407,7 +1409,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 		uFormat = DT_RIGHT | DT_VCENTER | DT_SINGLELINE;
 	    }
 
-	    if( !(TWEAK_WineLook == WIN31_LOOK) && (lpitem->fState & MF_GRAYED))
+	    if( (TWEAK_WineLook != WIN31_LOOK) && (lpitem->fState & MF_GRAYED))
 	    {
 		if (!(lpitem->fState & MF_HILITE) )
 		{
@@ -1752,7 +1754,7 @@ static void MENU_MoveSelection( HWND hwndOwner, HMENU hmenu, INT offset )
 /**********************************************************************
  *         MENU_SetItemData
  *
- * Set an item flags, id and text ptr. Called by InsertMenu() and
+ * Set an item's flags, id and text ptr. Called by InsertMenu() and
  * ModifyMenu().
  */
 static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT id,
@@ -1836,7 +1838,7 @@ static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT id,
 /**********************************************************************
  *         MENU_InsertItem
  *
- * Insert a new item into a menu.
+ * Insert (allocate) a new item into a menu.
  */
 static MENUITEM *MENU_InsertItem( HMENU hMenu, UINT pos, UINT flags )
 {
@@ -2254,7 +2256,7 @@ static void MENU_SwitchTracking( MTRACKER* pmt, HMENU hPtMenu, UINT id )
  */
 static BOOL MENU_ButtonDown( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags )
 {
-    TRACE("%p hmenu=0x%04x\n", pmt, hPtMenu);
+    TRACE("%p hPtMenu=0x%04x\n", pmt, hPtMenu);
 
     if (hPtMenu)
     {
@@ -3842,6 +3844,9 @@ BOOL WINAPI DestroyMenu( HMENU hMenu )
 
         if (!lppop) return FALSE;
 
+	/* unregister menu in owning window */
+	SetWindowLongA( lppop->hWnd, GWL_ID, 0 );
+
         lppop->wMagic = 0;  /* Mark it as destroyed */
 
         if ((lppop->wFlags & MF_POPUP) && lppop->hWnd)
@@ -4164,11 +4169,11 @@ HMENU WINAPI LoadMenuIndirectA( LPCVOID template )
     WORD version, offset;
     LPCSTR p = (LPCSTR)template;
 
-    TRACE("%p\n", template );
     version = GET_WORD(p);
     p += sizeof(WORD);
+    TRACE("%p, ver %d\n", template, version );
     switch (version)
-      {
+    {
       case 0:
 	offset = GET_WORD(p);
 	p += sizeof(WORD) + offset;
@@ -4192,7 +4197,7 @@ HMENU WINAPI LoadMenuIndirectA( LPCVOID template )
       default:
         ERR("version %d not supported.\n", version);
         return 0;
-      }
+    }
 }
 
 
@@ -4362,8 +4367,8 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
     debug_print_menuitem("MENU_SetItemInfo_common from: ", menu, "");
 
     if (lpmii->fMask & MIIM_TYPE ) {
-	/* Get rid of old string.  */
-	if ( IS_STRING_ITEM(menu->fType) && menu->text) {
+	/* Get rid of old string. */
+	if (IS_STRING_ITEM(menu->fType) && menu->text) {
 	    HeapFree(GetProcessHeap(), 0, menu->text);
 	    menu->text = NULL;
 	}
@@ -4392,7 +4397,7 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
 
     if (lpmii->fMask & MIIM_STRING ) {
 	/* free the string when used */
-	if ( IS_STRING_ITEM(menu->fType) && menu->text) {
+	if (IS_STRING_ITEM(menu->fType) && menu->text) {
 	    HeapFree(GetProcessHeap(), 0, menu->text);
             set_menu_item_text( menu, lpmii->dwTypeData, unicode );
 	}
