@@ -37,7 +37,7 @@
 #include "oleauto.h"
 
 #define VARTYPE_NOT_SUPPORTED 0
-static int vttypes[] = {
+static ULONG vttypes[] = {
   /* this is taken from wtypes.h.  Only [S]es are supported by the SafeArray */
 VARTYPE_NOT_SUPPORTED,  /* VT_EMPTY    [V]   [P]    nothing			*/
 VARTYPE_NOT_SUPPORTED,  /* VT_NULL     [V]   [P]    SQL style Nul	*/
@@ -88,7 +88,7 @@ VARTYPE_NOT_SUPPORTED 	/* VT_BYREF    [V]          void* for local use	*/
 START_TEST(safearray)
 {
 	SAFEARRAY 	*a;
-	int 		i;
+	unsigned short i;
 	HRESULT 	hres;
 	SAFEARRAYBOUND	bound;
 
@@ -130,7 +130,7 @@ START_TEST(safearray)
 		a = SafeArrayCreate(i, 1, &bound);
 		ok(	((a == NULL) && (vttypes[i] == 0)) ||
 			((a != NULL) && (vttypes[i] == a->cbElements)),
-		"SAC(%d,1,[1,0]), result %ld, expected %d\n",i,(a?a->cbElements:0),vttypes[i]
+		"SAC(%d,1,[1,0]), result %ld, expected %ld\n",i,(a?a->cbElements:0),vttypes[i]
 		);
 	}
 }
