@@ -26,7 +26,18 @@ void WINAPI INT_Int13Handler( CONTEXT *context )
     switch(AH_reg(context))
     {
 	case 0x00:                            /* RESET DISK SYSTEM     */
+		break; /* no return ? */
+	case 0x01:			      /* STATUS OF DISK SYSTEM */
+		AL_reg(context) = 0; /* successful completion */
+		break;
+	case 0x02:			      /* READ SECTORS INTO MEMORY */
+		AL_reg(context) = 0; /* number of sectors read */
+		AH_reg(context) = 0; /* status */
+		break;
+	case 0x03:			      /* WRITE SECTORS FROM MEMORY */
+		break; /* no return ? */
 	case 0x04:                            /* VERIFY DISK SECTOR(S) */
+		AL_reg(context) = 0; /* number of sectors verified */
 		AH_reg(context) = 0;
 		break;
 	       
@@ -116,14 +127,26 @@ void WINAPI INT_Int13Handler( CONTEXT *context )
 		break;
 
         case 0x09:         /* INITIALIZE CONTROLLER WITH DRIVE PARAMETERS */
+	case 0x0a:         /* FIXED DISK - READ LONG (XT,AT,XT286,PS)     */
+	case 0x0b:	   /* FIXED DISK - WRITE LONG (XT,AT,XT286,PS)    */
 	case 0x0c:         /* SEEK TO CYLINDER                            */
-	case 0x0d:         /* RESET HARD DISKS                            */
+	case 0x0d:         /* ALTERNATE RESET HARD DISKS                  */
 	case 0x10:         /* CHECK IF DRIVE READY                        */
 	case 0x11:         /* RECALIBRATE DRIVE                           */
 	case 0x14:         /* CONTROLLER INTERNAL DIAGNOSTIC              */
 		AH_reg(context) = 0;
 		break;
 
+	case 0x15:	   /* GET DISK TYPE (AT,XT2,XT286,CONV,PS) */
+		if (DL_reg(context) & 0x80) { /* hard disk ? */
+			AH_reg(context) = 3; /* fixed disk */
+			SET_CFLAG(context);
+		}
+		else { /* floppy disk ? */
+			AH_reg(context) = 2; /* floppy with change detection */
+			SET_CFLAG(context);
+		}
+		break;
 	case 0x0e:                    /* READ SECTOR BUFFER (XT only)      */
 	case 0x0f:                    /* WRITE SECTOR BUFFER (XT only)     */
         case 0x12:                    /* CONTROLLER RAM DIAGNOSTIC (XT,PS) */
@@ -132,18 +155,22 @@ void WINAPI INT_Int13Handler( CONTEXT *context )
                 SET_CFLAG(context);
 		break;
 
+	case 0x16:	   /* FLOPPY - CHANGE OF DISK STATUS */
+		AH_reg(context) = 0; /* FIXME - no change */
+		break;
 	case 0x17:	   /* SET DISK TYPE FOR FORMAT */
 		if (DL_reg(context) < 4)
 		    AH_reg(context) = 0x00; /* successful completion */
 		else
 		    AH_reg(context) = 0x01; /* error */
 		break;
-	case 0x18:
+	case 0x18:         /* SET MEDIA TYPE FOR FORMAT */
 		if (DL_reg(context) < 4)
 		    AH_reg(context) = 0x00; /* successful completion */
 		else
 		    AH_reg(context) = 0x01; /* error */
 		break;
+	case 0x19:	   /* FIXED DISK - PARK HEADS */
 	default:
 		INT_BARF( context, 0x13 );
     }
