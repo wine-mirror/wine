@@ -793,6 +793,13 @@ case $host_os in
       then
         LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
         LDDLLFLAGS="-Wl,-Bsymbolic"
+        AC_CACHE_CHECK([whether the linker accepts -z defs], ac_cv_c_dll_zdefs,
+          [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs],
+                           ac_cv_c_dll_zdefs="yes",ac_cv_c_dll_zdefs="no")])
+        if test "$ac_cv_c_dll_zdefs" = "yes"
+        then
+          LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
+        fi
       else
         AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll, ac_cv_c_dll_unixware,
             [WINE_TRY_CFLAGS([-fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic],
