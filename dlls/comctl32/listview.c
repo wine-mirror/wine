@@ -25,7 +25,6 @@
  * Listview control implementation.
  *
  * TODO:
- *   -- Drawing optimizations.
  *   -- Hot item handling.
  *   -- Expand large item in ICON mode when the cursor is flying over the icon or text.
  *   -- Support CustonDraw options for _WIN32_IE >= 0x560 (see NMLVCUSTOMDRAW docs)
@@ -7580,14 +7579,6 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
   /* destroy image lists */
   if (!(lStyle & LVS_SHAREIMAGELISTS))
   {
-      /* FIXME: If the caller does a ImageList_Destroy and then we
-       *        do this code the area will be freed twice. Currently
-       *        this generates an "err:heap:HEAP_ValidateInUseArena
-       *        Heap xxxxxxxx: in-use arena yyyyyyyy next block
-       *        has PREV_FREE flag" sometimes.
-       *
-       *        We will leak the memory till we figure out how to fix
-       */
       if (infoPtr->himlNormal)
 	  ImageList_Destroy(infoPtr->himlNormal);
       if (infoPtr->himlSmall)
