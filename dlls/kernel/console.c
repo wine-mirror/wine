@@ -782,7 +782,7 @@ BOOL WINAPI ReadConsoleOutputW( HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COO
  *    Success: TRUE
  *    Failure: FALSE
  */
-BOOL WINAPI ReadConsoleInputA( HANDLE handle, LPINPUT_RECORD buffer, DWORD count, LPDWORD pRead )
+BOOL WINAPI ReadConsoleInputA( HANDLE handle, PINPUT_RECORD buffer, DWORD count, LPDWORD pRead )
 {
     DWORD read;
 
@@ -798,7 +798,7 @@ BOOL WINAPI ReadConsoleInputA( HANDLE handle, LPINPUT_RECORD buffer, DWORD count
  *
  * Gets 'count' first events (or less) from input queue.
  */
-BOOL WINAPI PeekConsoleInputA( HANDLE handle, LPINPUT_RECORD buffer, DWORD count, LPDWORD pRead )
+BOOL WINAPI PeekConsoleInputA( HANDLE handle, PINPUT_RECORD buffer, DWORD count, LPDWORD pRead )
 {
     DWORD read;
 
@@ -812,7 +812,7 @@ BOOL WINAPI PeekConsoleInputA( HANDLE handle, LPINPUT_RECORD buffer, DWORD count
 /***********************************************************************
  *            PeekConsoleInputW   (KERNEL32.@)
  */
-BOOL WINAPI PeekConsoleInputW( HANDLE handle, LPINPUT_RECORD buffer, DWORD count, LPDWORD read )
+BOOL WINAPI PeekConsoleInputW( HANDLE handle, PINPUT_RECORD buffer, DWORD count, LPDWORD read )
 {
     BOOL ret;
     SERVER_START_REQ( read_console_input )
@@ -859,7 +859,7 @@ BOOL WINAPI GetNumberOfConsoleInputEvents( HANDLE handle, LPDWORD nrofevents )
  *      0 for error, 1 for no INPUT_RECORD ready, 2 with INPUT_RECORD ready
  */
 enum read_console_input_return {rci_error = 0, rci_timeout = 1, rci_gotone = 2};
-static enum read_console_input_return read_console_input(HANDLE handle, LPINPUT_RECORD ir, DWORD timeout)
+static enum read_console_input_return read_console_input(HANDLE handle, PINPUT_RECORD ir, DWORD timeout)
 {
     enum read_console_input_return      ret;
 
@@ -1257,7 +1257,7 @@ BOOL WINAPI ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer,
 /***********************************************************************
  *            ReadConsoleInputW   (KERNEL32.@)
  */
-BOOL WINAPI ReadConsoleInputW(HANDLE hConsoleInput, LPINPUT_RECORD lpBuffer,
+BOOL WINAPI ReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer,
                               DWORD nLength, LPDWORD lpNumberOfEventsRead)
 {
     DWORD idx = 0;

@@ -160,7 +160,7 @@ typedef struct tagINPUT_RECORD
 	MENU_EVENT_RECORD MenuEvent;
 	FOCUS_EVENT_RECORD FocusEvent;
 	} Event;
-} INPUT_RECORD,*LPINPUT_RECORD;
+} INPUT_RECORD,*PINPUT_RECORD;
 
 /* INPUT_RECORD.wEventType */
 #define KEY_EVENT			0x01
@@ -214,17 +214,17 @@ DWORD WINAPI  GetConsoleTitleW(LPWSTR title, DWORD size);
 #define       GetConsoleTitle WINELIB_NAME_AW(GetConsoleTitle)
 BOOL WINAPI   GetNumberOfConsoleInputEvents( HANDLE hcon,LPDWORD nrofevents);
 BOOL WINAPI   GetNumberOfConsoleMouseButtons(LPDWORD nrofbuttons);
-BOOL WINAPI   PeekConsoleInputA( HANDLE handle, LPINPUT_RECORD buffer, DWORD count, LPDWORD read );
-BOOL WINAPI   PeekConsoleInputW( HANDLE handle, LPINPUT_RECORD buffer, DWORD count, LPDWORD read );
+BOOL WINAPI   PeekConsoleInputA( HANDLE handle, PINPUT_RECORD buffer, DWORD count, LPDWORD read );
+BOOL WINAPI   PeekConsoleInputW( HANDLE handle, PINPUT_RECORD buffer, DWORD count, LPDWORD read );
 #define       PeekConsoleInput WINELIB_NAME_AW(PeekConsoleInput)
 BOOL WINAPI   ReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead,
                            LPDWORD lpNumberOfCharsRead, LPVOID lpReserved);
 BOOL WINAPI   ReadConsoleW(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfCharsToRead,
                            LPDWORD lpNumberOfCharsRead, LPVOID lpReserved);
 #define       ReadConsole WINELIB_NAME_AW(ReadConsole)
-BOOL WINAPI   ReadConsoleInputA(HANDLE hConsoleInput, LPINPUT_RECORD lpBuffer, DWORD nLength,
+BOOL WINAPI   ReadConsoleInputA(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength,
                                 LPDWORD lpNumberOfEventsRead);
-BOOL WINAPI   ReadConsoleInputW(HANDLE hConsoleInput, LPINPUT_RECORD lpBuffer, DWORD nLength,
+BOOL WINAPI   ReadConsoleInputW(HANDLE hConsoleInput, PINPUT_RECORD lpBuffer, DWORD nLength,
                                 LPDWORD lpNumberOfEventsRead);
 #define       ReadConsoleInput WINELIB_NAME_AW(ReadConsoleInput)
 BOOL WINAPI   ReadConsoleOutputA( HANDLE hConsoleOutput, LPCHAR_INFO lpBuffer, COORD dwBufferSize,
