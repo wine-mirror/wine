@@ -36,6 +36,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
+
+#define versionSection (appSettings == EDITING_GLOBAL ? "Version" : (getSectionForApp("Version")))
+#define tweakSection (appSettings == EDITING_GLOBAL ? "Tweak.Layout" : (getSectionForApp("Tweak.Layout")))
+
 void CALLBACK
 PropSheetCallback (HWND hWnd, UINT uMsg, LPARAM lParam)
 {
@@ -60,9 +64,9 @@ initGeneralDlg (HWND hDlg)
 {
     int i;
     const VERSION_DESC *pVer = NULL;
-    char *curWinVer = getConfigValue("Version", "Windows", "win98");
-    char *curDOSVer = getConfigValue("Version", "DOS", "6.22");
-    char *curWineLook = getConfigValue("Tweak.Layout", "WineLook", "win95");
+    char *curWinVer = getConfigValue(versionSection, "Windows", "win98");
+    char *curDOSVer = getConfigValue(versionSection, "DOS", "6.22");
+    char *curWineLook = getConfigValue(tweakSection, "WineLook", "win95");
 
     /* normalize the version strings */
     if (!strcmp(curWinVer, "win2000") || !strcmp(curWinVer, "nt2k") || !strcmp(curWinVer, "nt2000")) {
@@ -118,7 +122,10 @@ INT_PTR CALLBACK
 GeneralDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg) {
-	
+
+	case WM_NOTIFY:
+	    if (((LPNMHDR)lParam)->code != PSN_SETACTIVE) break;
+	    /* otherwise fall through, we want to refresh the page as well */
 	case WM_INITDIALOG:
 	    initGeneralDlg (hDlg);
 	    break;
@@ -133,9 +140,33 @@ GeneralDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		    while (selection > 0) {
 			desc++; selection--;
 		    }
-		    addTransaction("Version", "Windows", ACTION_SET, desc->szVersion);
+		    addTransaction(versionSection, "Windows", ACTION_SET, desc->szVersion);
 		}
 	        break;
+
+		case IDC_WINELOOK: if (HIWORD(wParam) == CBN_SELCHANGE) {
+		    /* user changed the wine look combo box */
+		    int selection = SendDlgItemMessage( hDlg, IDC_WINELOOK, CB_GETCURSEL, 0, 0);
+		    VERSION_DESC *desc = getWinelook();
+
+		    while (selection > 0) {
+			desc++; selection--;
+		    }
+		    addTransaction(tweakSection, "WineLook", ACTION_SET, desc->szVersion);
+		}
+		break;
+
+		case IDC_DOSVER: if (HIWORD(wParam) == CBN_SELCHANGE) {
+		    /* user changed the dos version combo box */
+		    int selection = SendDlgItemMessage( hDlg, IDC_WINELOOK, CB_GETCURSEL, 0, 0);
+		    VERSION_DESC *desc = getDOSVersions();
+
+		    while (selection > 0) {
+			desc++; selection--;
+		    }
+		    addTransaction(versionSection, "DOS", ACTION_SET, desc->szVersion);
+		    
+		}
 	    }
 	    break;
 	    
