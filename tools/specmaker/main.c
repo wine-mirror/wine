@@ -38,6 +38,14 @@ static void do_input (const char *arg)
 }
 
 
+static void do_demangle (const char *arg)
+{
+  globals.do_demangle = 1;
+  globals.do_code = 1;
+  globals.input_name = arg;
+}
+
+
 static void do_code (void)
 {
   globals.do_code = 1;
@@ -108,6 +116,7 @@ struct option
 
 static const struct option option_table[] = {
   {"-d", 1, do_input,    "-d dll   Use dll for input file (mandatory)"},
+  {"-S", 1, do_demangle, "-S sym   Demangle C++ symbol 'sym' and exit"},
   {"-h", 0, do_usage,    "-h       Display this help message"},
   {"-I", 1, do_include,  "-I dir   Look for prototypes in 'dir' (implies -c)"},
   {"-o", 1, do_name,     "-o name  Set the output dll name (default: dll)"},
@@ -127,7 +136,7 @@ static const struct option option_table[] = {
 void do_usage (void)
 {
   const struct option *opt;
-  printf ("Usage: specmaker [options] -d dll\n\nOptions:\n");
+  printf ("Usage: specmaker [options] [-d dll | -S sym]\n\nOptions:\n");
   for (opt = option_table; opt->name; opt++)
     printf ("   %s\n", opt->usage);
   puts ("\n");
@@ -180,7 +189,7 @@ static void parse_options (char *argv[])
     ptr++;
   }
 
-  if (globals.do_code && !globals.directory)
+  if (!globals.do_demangle && globals.do_code && !globals.directory)
     fatal ("-I must be used if generating code");
 
   if (!globals.input_name)
@@ -205,13 +214,24 @@ int   main (int argc, char *argv[])
 
   parse_options (argv);
 
+  memset (&symbol, 0, sizeof (parsed_symbol));
+
+  if (globals.do_demangle)
+  {
+    int result;
+    globals.uc_dll_name = "";
+    symbol.symbol = strdup(globals.input_name);
+    result = symbol_demangle (&symbol);
+    output_prototype (stdout, &symbol);
+    fputc ('\n', stdout);
+    return result ? 1 : 0;
+  }
+
   dll_open (globals.input_name);
 
   output_spec_preamble ();
   output_header_preamble ();
   output_c_preamble ();
-
-  memset (&symbol, 0, sizeof (parsed_symbol));
 
   while ((symbol.symbol = dll_next_symbol ()))
   {

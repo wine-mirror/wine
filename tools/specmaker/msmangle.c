@@ -76,19 +76,46 @@ int symbol_demangle (parsed_symbol *sym)
     case '2': function_name = strdup ("operator_new"); break;
     case '3': function_name = strdup ("operator_delete"); break;
     case '4': function_name = strdup ("operator_equals"); break;
-    case '5': function_name = strdup ("operator_5"); break;
-    case '6': function_name = strdup ("operator_6"); break;
-    case '7': function_name = strdup ("operator_7"); break;
-    case '8': function_name = strdup ("operator_equals_equals"); break;
-    case '9': function_name = strdup ("operator_not_equals"); break;
-    case 'E': function_name = strdup ("operator_plus_plus"); break;
+    case '5': function_name = strdup ("operator_shiftright"); break;
+    case '6': function_name = strdup ("operator_shiftleft"); break;
+    case '7': function_name = strdup ("operator_not"); break;
+    case '8': function_name = strdup ("operator_equalsequals"); break;
+    case '9': function_name = strdup ("operator_notequals"); break;
+    case 'A': function_name = strdup ("operator_array"); break;
+    case 'C': function_name = strdup ("operator_dereference"); break;
+    case 'D': function_name = strdup ("operator_multiply"); break;
+    case 'E': function_name = strdup ("operator_plusplus"); break;
+    case 'F': function_name = strdup ("operator_minusminus"); break;
+    case 'G': function_name = strdup ("operator_minus"); break;
     case 'H': function_name = strdup ("operator_plus"); break;
+    case 'I': function_name = strdup ("operator_address"); break;
+    case 'J': function_name = strdup ("operator_dereferencememberptr"); break;
+    case 'K': function_name = strdup ("operator_divide"); break;
+    case 'L': function_name = strdup ("operator_modulo"); break;
+    case 'M': function_name = strdup ("operator_lessthan"); break;
+    case 'N': function_name = strdup ("operator_lessthanequal"); break;
+    case 'O': function_name = strdup ("operator_greaterthan"); break;
+    case 'P': function_name = strdup ("operator_greaterthanequal"); break;
+    case 'R': function_name = strdup ("operator_functioncall"); break;
+    case 'S': function_name = strdup ("operator_compliment"); break;
+    case 'T': function_name = strdup ("operator_xor"); break;
+    case 'U': function_name = strdup ("operator_logicalor"); break;
+    case 'V': function_name = strdup ("operator_logicaland"); break;
+    case 'W': function_name = strdup ("operator_or"); break;
+    case 'X': function_name = strdup ("operator_multiplyequals"); break;
+    case 'Y': function_name = strdup ("operator_plusequals"); break;
+    case 'Z': function_name = strdup ("operator_minusequals"); break;
     case '_':
-      /* FIXME: Seems to be some kind of escape character - overloads? */
       switch (*++name)
       {
-      case '7': /* FIXME: Compiler generated default copy/assignment ctor? */
-        return -1;
+      case '0': function_name = strdup ("operator_divideequals"); break;
+      case '1': function_name = strdup ("operator_moduloequals"); break;
+      case '2': function_name = strdup ("operator_shiftrightequals"); break;
+      case '3': function_name = strdup ("operator_shiftleftequals"); break;
+      case '4': function_name = strdup ("operator_andequals"); break;
+      case '5': function_name = strdup ("operator_orequals"); break;
+      case '6': function_name = strdup ("operator_xorequals"); break;
+      /* FIXME: These look like static vtable/rtti information ? */
       case 'E': function_name = strdup ("_unknown_E"); break;
       case 'G': function_name = strdup ("_unknown_G"); break;
       default:
@@ -287,6 +314,15 @@ static char *demangle_datatype (char **str, compound_type *ct,
 
   switch (*iter)
   {
+    case '_':
+      if (*++iter != 'N') /* _N = bool */
+        return NULL;
+      iter++;
+      ct->dest_type = 'I'; /* treat as int */
+      if (!get_constraints_convention_2 (&iter, ct))
+        return NULL;
+      ct->expression = get_type_string (ct->dest_type, ct->flags);
+      break;
     case 'C': case 'D': case 'E': case 'F': case 'G':
     case 'H': case 'I': case 'J': case 'K': case 'M':
     case 'N': case 'O': case 'X': case 'Z':

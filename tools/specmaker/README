@@ -54,10 +54,11 @@ Usage
 Specmaker is a command line tool. Running it with no arguments or passing
 it '-h' on the command line lists the available options:
 
-Usage: specmaker [options] -d dll
+Usage: specmaker [options] [-d dll | -S sym]
 
 Options:
    -d dll   Use dll for input file (mandatory)
+   -S sym   Demangle C++ symbol 'sym' and exit
    -h       Display this help message
    -I dir   Look for prototypes in 'dir' (implies -c)
    -o name  Set the output dll name (default: dll)
@@ -75,10 +76,26 @@ Options:
 Basic options
 -------------
 
+OPTION: -S sym   Demangle C++ symbol 'sym' and exit
+
+The -S option is used to demangle a C++ symbol as it appears in the exports
+section of a dll. This is useful for testing the demangler or implementing
+C++ functions in partially implemented wine DLLS. As an example:
+
+specmaker -S "??3@YAXPAX@Z"
+
+Gives:
+
+void __cdecl _global_operator_delete_1(void * arg0)
+
+Which is enough information to begin implementing the function.
+
+
 OPTION: -d dll   Use dll for input file (mandatory)
 
 The -d option tells specmaker which DLL you want to create a .spec file
-for. You *must* give this option.
+for. You *must* give this option, unless you are demangling a single symbol
+using the -S argument.
 
 16 bit DLL's are not currently supported (Note that Winelib is intended
 only for Win32 programs).

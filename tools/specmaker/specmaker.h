@@ -77,6 +77,7 @@ typedef struct __globals
   int   do_quiet;          /* -q */
   int   do_verbose;        /* -v */
   int   do_documentation;  /* -D */
+  int   do_demangle;       /* -S */
 
   /* Option arguments */
   int   start_ordinal;     /* -s */
@@ -138,6 +139,8 @@ void  output_header_symbol (const parsed_symbol *sym);
 void  output_c_preamble (void);
 
 void  output_c_symbol (const parsed_symbol *sym);
+
+void  output_prototype (FILE *file, const parsed_symbol *sym);
 
 void  output_makefile (void);
 

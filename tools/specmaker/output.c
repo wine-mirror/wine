@@ -13,7 +13,6 @@ static FILE *cfile    = NULL;
 static void  output_spec_postamble (void);
 static void  output_header_postamble (void);
 static void  output_c_postamble (void);
-static void  output_prototype (FILE *file, const parsed_symbol *sym);
 static void  output_c_banner (const parsed_symbol *sym);
 static const char *get_format_str (int type);
 static const char *get_in_or_out (const parsed_symbol *sym, size_t arg);
@@ -435,7 +434,7 @@ void  output_install_script (void)
  *
  * Write a C prototype for a parsed symbol
  */
-static void  output_prototype (FILE *file, const parsed_symbol *sym)
+void  output_prototype (FILE *file, const parsed_symbol *sym)
 {
   unsigned int i;
 
