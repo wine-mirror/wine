@@ -1960,6 +1960,7 @@ static void _common_IDirectDraw_SetDisplayMode(LPDIRECTDRAW this) {
 	    ShowWindow32(this->d.window,TRUE);
 	    UpdateWindow32(this->d.window);
 	}
+	SetFocus32(this->d.window);
 }
 
 static HRESULT WINAPI DGA_IDirectDraw_SetDisplayMode(
