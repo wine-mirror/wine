@@ -13,6 +13,7 @@
 #include "user.h"
 #include "heap.h"
 #include "module.h"
+#include "neexe.h"
 #include "process.h"
 #include "stackframe.h"
 #include "selectors.h"
@@ -861,8 +862,13 @@ WORD WINAPI WIN16_CreateSystemTimer( WORD rate, FARPROC16 proc )
  */
 void THUNK_InitCallout(void)
 {
-    HMODULE hModule = GetModuleHandleA( "USER32" );
-    if ( hModule )
+    HMODULE hModule;
+    WINE_MODREF *wm;
+    NE_MODULE *pModule;
+
+    hModule = GetModuleHandleA( "USER32" );
+    wm = MODULE32_LookupHMODULE( hModule );
+    if ( wm && !(wm->flags & WINE_MODREF_INTERNAL) )
     {
 #define GETADDR( var, name )  \
         *(FARPROC *)&Callout.##var = GetProcAddress( hModule, name )
@@ -887,7 +893,8 @@ void THUNK_InitCallout(void)
     }
 
     hModule = GetModuleHandle16( "USER" );
-    if ( hModule )
+    pModule = NE_GetPtr( hModule );
+    if ( pModule && !(pModule->flags & NE_FFLAGS_BUILTIN) )
     {
 #define GETADDR( var, name, thk )  \
         *(FARPROC *)&Callout.##var = (FARPROC) \
