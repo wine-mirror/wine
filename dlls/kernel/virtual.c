@@ -526,6 +526,8 @@ BOOL WINAPI IsBadReadPtr(
               UINT size )  /* [in] Size of block */
 {
     if (!size) return FALSE;  /* handle 0 size case w/o reference */
+    if (!ptr) return TRUE;
+    
     if (!page_size) page_size = getpagesize();
     __TRY
     {
@@ -564,6 +566,8 @@ BOOL WINAPI IsBadWritePtr(
               UINT size ) /* [in] Size of block in bytes */
 {
     if (!size) return FALSE;  /* handle 0 size case w/o reference */
+    if (!ptr) return TRUE;
+    
     if (!page_size) page_size = getpagesize();
     __TRY
     {
@@ -641,6 +645,8 @@ BOOL WINAPI IsBadStringPtrA(
               LPCSTR str, /* [in] Address of string */
               UINT max )  /* [in] Maximum size of string */
 {
+    if (!str) return TRUE;
+    
     __TRY
     {
         volatile const char *p = str;
@@ -662,6 +668,8 @@ BOOL WINAPI IsBadStringPtrA(
  */
 BOOL WINAPI IsBadStringPtrW( LPCWSTR str, UINT max )
 {
+    if (!str) return TRUE;
+    
     __TRY
     {
         volatile const WCHAR *p = str;
