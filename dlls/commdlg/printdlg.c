@@ -2053,24 +2053,21 @@ INT_PTR CALLBACK PrintDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam,
     INT_PTR res = FALSE;
 
     if (uMsg!=WM_INITDIALOG) {
-        PrintStructures = (PRINT_PTRW*) GetWindowLongW(hDlg, DWL_USER);
+	PrintStructures = (PRINT_PTRW*) GetPropW(hDlg, "__WINE_PRINTDLGDATA");
 	if (!PrintStructures)
 	    return FALSE;
     } else {
         PrintStructures = (PRINT_PTRW*) lParam;
-	SetWindowLongA(hDlg, DWL_USER, lParam);
+	SetPropW(hDlg, "__WINE_PRINTDLGDATA", PrintStructures);
 	res = PRINTDLG_WMInitDialogW(hDlg, wParam, PrintStructures);
 
 	if(PrintStructures->dlg.lpPrintDlg->Flags & PD_ENABLEPRINTHOOK)
-	    res = PrintStructures->dlg.lpPrintDlg->lpfnPrintHook(
-		hDlg, uMsg, wParam, (LPARAM)PrintStructures->dlg.lpPrintDlg
-	    );
+	    res = PrintStructures->dlg.lpPrintDlg->lpfnPrintHook(hDlg, uMsg, wParam, (LPARAM)PrintStructures->dlg.lpPrintDlg);
 	return res;
     }
 
     if(PrintStructures->dlg.lpPrintDlg->Flags & PD_ENABLEPRINTHOOK) {
-        res = PrintStructures->dlg.lpPrintDlg->lpfnPrintHook(hDlg,uMsg,wParam,
-							 lParam);
+        res = PrintStructures->dlg.lpPrintDlg->lpfnPrintHook(hDlg,uMsg,wParam, lParam);
 	if(res) return res;
     }
 
