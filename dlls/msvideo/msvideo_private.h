@@ -40,6 +40,7 @@ typedef struct tagWINE_HIC {
 					/* 26: */
     DWORD               driverproc16;   /* Wine specific flags */
     HIC                 hic;
+    DWORD               driverId;
     struct tagWINE_HIC* next;
 } WINE_HIC;
 

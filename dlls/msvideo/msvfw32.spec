@@ -34,12 +34,12 @@
 @ stdcall ICImageCompress(long long ptr ptr ptr long ptr)
 @ stdcall ICImageDecompress(long long ptr ptr ptr)
 @ stdcall ICInfo(long long ptr)
-@ stub    ICInstall
+@ stdcall ICInstall(long long ptr str long)
 @ stdcall ICLocate(long long ptr ptr long)
 @ stub    ICMThunk
 @ stdcall ICOpen(long long long)
 @ stdcall ICOpenFunction(long long long ptr)
-@ stub    ICRemove
+@ stdcall ICRemove(long long long)
 @ stdcall ICSendMessage(long long long long)
 @ stub    ICSeqCompressFrame
 @ stub    ICSeqCompressFrameEnd

@@ -47,6 +47,35 @@ LRESULT (CALLBACK *pFnCallTo16)(HDRVR, HIC, UINT, LPARAM, LPARAM) = NULL;
 
 static WINE_HIC*        MSVIDEO_FirstHic /* = NULL */;
 
+typedef struct _reg_driver reg_driver;
+struct _reg_driver{
+	DWORD fccType;
+	DWORD fccHandler;
+	DRIVERPROC proc;
+	char* name;
+	reg_driver* next;
+};
+
+static reg_driver* reg_driver_list = NULL;
+
+static int compare_fourcc(DWORD fcc1, DWORD fcc2)
+{
+  char fcc_str1[5];
+  char fcc_str2[5];
+  fcc_str1[0] = LOBYTE(LOWORD(fcc1));
+  fcc_str1[1] = HIBYTE(LOWORD(fcc1));
+  fcc_str1[2] = LOBYTE(HIWORD(fcc1));
+  fcc_str1[3] = HIBYTE(HIWORD(fcc1));
+  fcc_str1[4] = 0;
+  fcc_str2[0] = LOBYTE(LOWORD(fcc2));
+  fcc_str2[1] = HIBYTE(LOWORD(fcc2));
+  fcc_str2[2] = LOBYTE(HIWORD(fcc2));
+  fcc_str2[3] = HIBYTE(HIWORD(fcc2));
+  fcc_str2[4] = 0;
+
+  return strcasecmp(fcc_str1,fcc_str2);
+}
+
 /******************************************************************
  *		MSVIDEO_GetHicPtr
  *
@@ -130,6 +159,88 @@ BOOL VFWAPI ICInfo(
 static DWORD IC_HandleRef = 1;
 
 /***********************************************************************
+ *		ICInstall			[MSVFW32.@]
+ */
+BOOL VFWAPI ICInstall(DWORD fccType, DWORD fccHandler, LPARAM lParam, LPSTR szDesc, UINT wFlags) 
+{
+    reg_driver* driver;
+
+    TRACE("(%s,%s,%p,%p,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), (void*)lParam, szDesc, wFlags);
+
+    /* Check if a driver is already registered */
+    driver = reg_driver_list;
+    while(driver)
+        if (!compare_fourcc(fccType, driver->fccType) &&
+            !compare_fourcc(fccHandler, driver->fccHandler))
+            break;
+        else
+            driver = driver->next;
+    if (driver)
+        return FALSE;
+
+    /* Register the driver */
+    driver = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(reg_driver));
+    driver->fccType = fccType;
+    driver->fccHandler = fccHandler;
+
+    switch(wFlags) {
+    case ICINSTALL_FUNCTION:
+        driver->proc = (DRIVERPROC)lParam;
+	driver->name = NULL;
+        break;
+    case ICINSTALL_DRIVER:
+	driver->proc = NULL;
+	driver->name = HeapAlloc(GetProcessHeap(), 0, strlen((char*)lParam));
+	strcpy(driver->name, (char*) lParam);
+	break;
+    default:
+	ERR("Invalid flags!\n");
+	HeapFree(GetProcessHeap(), 0, driver);
+	return FALSE;
+   }
+
+   /* Insert our driver in the list*/
+   driver->next = reg_driver_list;
+   reg_driver_list = driver;
+    
+   return TRUE;
+}
+
+/***********************************************************************
+ *		ICRemove			[MSVFW32.@]
+ */
+BOOL VFWAPI ICRemove(DWORD fccType, DWORD fccHandler, UINT wFlags) 
+{
+    reg_driver* driver;
+    reg_driver** previous;
+    
+    TRACE("(%s,%s,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wFlags);
+
+    /* Check if a driver is already registered */
+    driver = reg_driver_list;
+    previous = &reg_driver_list;
+    while(driver)
+        if (!compare_fourcc(fccType, driver->fccType) &&
+            !compare_fourcc(fccHandler, driver->fccHandler))
+            break;
+        else {
+            previous = &(driver->next);
+            driver = driver->next;
+        }
+    if (!driver)
+        return FALSE;
+
+    /* Remove the driver from the list */
+    *previous = driver->next;
+    if (driver->name)
+        HeapFree(GetProcessHeap(), 0, driver->name);
+    HeapFree(GetProcessHeap(), 0, driver);
+    
+    return TRUE;  
+}
+
+
+/***********************************************************************
  *		ICOpen				[MSVFW32.@]
  * Opens an installable compressor. Return special handle.
  */
@@ -140,20 +251,23 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
     HDRVR		hdrv;
     WINE_HIC*           whic;
     BOOL                bIs16;
+    reg_driver*         driver;
 
     TRACE("(%s,%s,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode);
 
-    codecname[0] = LOBYTE(LOWORD(fccType));
-    codecname[1] = HIBYTE(LOWORD(fccType));
-    codecname[2] = LOBYTE(HIWORD(fccType));
-    codecname[3] = HIBYTE(HIWORD(fccType));
-    codecname[4] = '.';
-    codecname[5] = LOBYTE(LOWORD(fccHandler));
-    codecname[6] = HIBYTE(LOWORD(fccHandler));
-    codecname[7] = LOBYTE(HIWORD(fccHandler));
-    codecname[8] = HIBYTE(HIWORD(fccHandler));
-    codecname[9] = '\0';
+    /* Check if there is a registered driver that matches */
+    driver = reg_driver_list;
+    while(driver)
+        if (!compare_fourcc(fccType, driver->fccType) &&
+            !compare_fourcc(fccHandler, driver->fccHandler))
+	    break;
+        else
+            driver = driver->next;
 
+    if (driver && driver->proc)
+	/* The driver has been registered at runtime with its driverproc */
+        return MSVIDEO_OpenFunction(fccType, fccHandler, wMode, (DRIVERPROC)driver->proc, (DWORD)NULL);
+  
     /* Well, lParam2 is in fact a LPVIDEO_OPEN_PARMS, but it has the
      * same layout as ICOPEN
      */
@@ -166,22 +280,41 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
     icopen.pV1Reserved          = NULL;
     icopen.pV2Reserved          = NULL;
     icopen.dnDevNode            = 0; /* FIXME */
-        
-    hdrv = OpenDriverA(codecname, "drivers32", (LPARAM)&icopen);
-    if (!hdrv) 
-    {
-        if (fccType == streamtypeVIDEO) 
-        {
-            codecname[0] = 'v';
-            codecname[1] = 'i';
-            codecname[2] = 'd';
-            codecname[3] = 'c';
+	
+    if (!driver) {
+        /* The driver is registered in the registry */
+        codecname[0] = LOBYTE(LOWORD(fccType));
+        codecname[1] = HIBYTE(LOWORD(fccType));
+        codecname[2] = LOBYTE(HIWORD(fccType));
+        codecname[3] = HIBYTE(HIWORD(fccType));
+        codecname[4] = '.';
+        codecname[5] = LOBYTE(LOWORD(fccHandler));
+        codecname[6] = HIBYTE(LOWORD(fccHandler));
+        codecname[7] = LOBYTE(HIWORD(fccHandler));
+        codecname[8] = HIBYTE(HIWORD(fccHandler));
+        codecname[9] = '\0';
 
-            fccType = ICTYPE_VIDEO;
-            hdrv = OpenDriverA(codecname, "drivers32", (LPARAM)&icopen);
-        }
-        if (!hdrv)
-            return 0;
+        hdrv = OpenDriverA(codecname, "drivers32", (LPARAM)&icopen);
+        if (!hdrv) 
+        {
+            if (fccType == streamtypeVIDEO) 
+            {
+                codecname[0] = 'v';
+                codecname[1] = 'i';
+                codecname[2] = 'd';
+                codecname[3] = 'c';
+
+		fccType = ICTYPE_VIDEO;
+                hdrv = OpenDriverA(codecname, "drivers32", (LPARAM)&icopen);   
+	    }
+            if (!hdrv)
+                return 0;
+	}
+    } else {
+        /* The driver has been registered at runtime with its name */
+        hdrv = OpenDriverA(driver->name, NULL, (LPARAM)&icopen);
+        if (!hdrv) 
+            return 0; 
     }
     bIs16 = GetDriverFlags(hdrv) & WINE_GDF_16BIT;
 
@@ -256,9 +389,11 @@ HIC MSVIDEO_OpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode,
     /* return value is not checked */
     MSVIDEO_SendMessage(whic, DRV_ENABLE, 0L, 0L);
 
-    whic->hdrv = (HDRVR)MSVIDEO_SendMessage(whic, DRV_OPEN, 0, (DWORD)&icopen);
-
-    if (whic->hdrv == 0) 
+    whic->driverId = (DWORD)MSVIDEO_SendMessage(whic, DRV_OPEN, 0, (DWORD)&icopen);
+    /* FIXME: What should we put here? */
+    whic->hdrv = (HDRVR)0;
+    
+    if (whic->driverId == 0) 
     {
         WARN("DRV_OPEN failed for hic %p\n", whic->hic);
         MSVIDEO_FirstHic = whic->next;
@@ -621,7 +756,8 @@ LRESULT MSVIDEO_SendMessage(WINE_HIC* whic, UINT msg, DWORD lParam1, DWORD lPara
 #undef XX
     
     if (whic->driverproc) {
-        ret = whic->driverproc((DWORD)whic->hic, whic->hdrv, msg, lParam1, lParam2);
+	/* dwDriverId parameter is the value returned by the DRV_OPEN */
+        ret = whic->driverproc(whic->driverId, whic->hdrv, msg, lParam1, lParam2);
     } else {
         ret = SendDriverMessage(whic->hdrv, msg, lParam1, lParam2);
     }
