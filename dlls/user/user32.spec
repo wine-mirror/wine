@@ -681,7 +681,6 @@ init	UserClientDllInitialize
 # Wine dll separation hacks, these will go away, don't use them
 #
 @ cdecl CARET_GetHwnd() CARET_GetHwnd
-@ cdecl CARET_GetRect(ptr) CARET_GetRect
 @ cdecl CLIPBOARD_DeleteRecord(ptr long) CLIPBOARD_DeleteRecord
 @ cdecl CLIPBOARD_EmptyCache(long) CLIPBOARD_EmptyCache
 @ cdecl CLIPBOARD_GetFormatName(long ptr long) CLIPBOARD_GetFormatName
@@ -703,7 +702,6 @@ init	UserClientDllInitialize
 @ cdecl WIN_FindWndPtr(long) WIN_FindWndPtr
 @ cdecl WIN_GetPtr(long) WIN_GetPtr
 @ cdecl WIN_Handle32(long) WIN_Handle32
-@ cdecl WIN_IsWindowDrawable(long long) WIN_IsWindowDrawable
 @ cdecl WIN_LinkWindow(long long long) WIN_LinkWindow
 @ cdecl WIN_ListChildren(long) WIN_ListChildren
 @ cdecl WIN_ListParents(long) WIN_ListParents

@@ -26,9 +26,41 @@
 #include "wine/winuser16.h"
 #include "winuser.h"
 #include "user.h"
+#include "win.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scroll);
+
+/*************************************************************************
+ *             fix_caret
+ */
+static HWND fix_caret(HWND hWnd, LPRECT lprc, UINT flags)
+{
+   HWND hCaret = CARET_GetHwnd();
+
+   if( hCaret )
+   {
+       RECT rc;
+       CARET_GetRect( &rc );
+       if( hCaret == hWnd ||
+          (flags & SW_SCROLLCHILDREN && IsChild(hWnd, hCaret)) )
+       {
+           POINT pt;
+           pt.x = rc.left;
+           pt.y = rc.top;
+           MapWindowPoints( hCaret, hWnd, (LPPOINT)&rc, 2 );
+           if( IntersectRect(lprc, lprc, &rc) )
+           {
+               HideCaret(hCaret);
+               lprc->left = pt.x;
+               lprc->top = pt.y;
+               return hCaret;
+           }
+       }
+   }
+   return 0;
+}
+
 
 /*************************************************************************
  *		ScrollWindow (USER32.@)
@@ -89,8 +121,37 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
                                HRGN hrgnUpdate, LPRECT rcUpdate,
                                UINT flags )
 {
-    if (USER_Driver.pScrollWindowEx)
-        return USER_Driver.pScrollWindowEx( hwnd, dx, dy, rect, clipRect,
-                                            hrgnUpdate, rcUpdate, flags );
-    return ERROR;
+    RECT rc, cliprc;
+    INT result;
+    
+    if (!WIN_IsWindowDrawable( hwnd, TRUE )) return ERROR;
+    hwnd = WIN_GetFullHandle( hwnd );
+
+    GetClientRect(hwnd, &rc);
+    if (rect) IntersectRect(&rc, &rc, rect);
+
+    if (clipRect) IntersectRect(&cliprc,&rc,clipRect);
+    else cliprc = rc;
+
+    if (!IsRectEmpty(&cliprc) && (dx || dy))
+    {
+        RECT caretrc = rc;
+        HWND hwndCaret = fix_caret(hwnd, &caretrc, flags);
+
+	if (USER_Driver.pScrollWindowEx)
+            result = USER_Driver.pScrollWindowEx( hwnd, dx, dy, &rc, &cliprc,
+                                                  hrgnUpdate, rcUpdate, flags );
+	else
+	    result = ERROR; /* FIXME: we should have a fallback implementation */
+	
+        if( hwndCaret )
+        {
+            SetCaretPos( caretrc.left + dx, caretrc.top + dy );
+            ShowCaret(hwndCaret);
+        }
+    }
+    else 
+	result = NULLREGION;
+    
+    return result;
 }
