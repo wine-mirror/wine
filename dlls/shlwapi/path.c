@@ -1305,6 +1305,7 @@ BOOL WINAPI PathIsUNCServerShareA(
 	LPCSTR lpszPath)
 {
 	TRACE("%s\n", debugstr_a(lpszPath));
+	if (!lpszPath) return FALSE;
 	if (lpszPath[0]=='\\' && lpszPath[1]=='\\')		
 	{
 	  int foundbackslash = 0;
@@ -1327,6 +1328,7 @@ BOOL WINAPI PathIsUNCServerShareW(
 	LPCWSTR lpszPath)
 {
 	TRACE("%s\n", debugstr_w(lpszPath));
+	if (!lpszPath) return FALSE;
 	if (lpszPath[0]=='\\' && lpszPath[1]=='\\')		
 	{
 	  int foundbackslash = 0;
