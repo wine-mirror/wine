@@ -397,7 +397,11 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
 
     case RELATIVE_PATH:         /* foo     */
         reqsize += cd->Length;
-        if (reqsize <= size) strcpyW(buffer, cd->Buffer);
+        if (reqsize <= size)
+        {
+            memcpy(buffer, cd->Buffer, cd->Length);
+            buffer[cd->Length / sizeof(WCHAR)] = 0;
+        }
         if (cd->Buffer[1] != ':')
         {
             ptr = strchrW(cd->Buffer + 2, '\\');
@@ -501,7 +505,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
                 break;
             case '\\':
                 reqsize -= 2 * sizeof(WCHAR);
-                memmove(ptr + 2, ptr, buffer + reqsize - ptr + sizeof(WCHAR));
+                memmove(ptr, ptr + 2, buffer + reqsize - ptr + sizeof(WCHAR));
                 break;
             }
         }
@@ -518,7 +522,7 @@ done:
  *
  * Returns the number of bytes written to buffer (not including the
  * terminating NULL) if the function succeeds, or the required number of bytes
- * (including the terminating NULL) if the buffer is to small.
+ * (including the terminating NULL) if the buffer is too small.
  *
  * file_part will point to the filename part inside buffer (except if we use
  * DOS device name, in which case file_in_buf is NULL)
