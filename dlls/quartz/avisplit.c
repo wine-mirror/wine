@@ -549,30 +549,34 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
         else
             offset_src = 0;
 
-        switch (TWOCCFromFOURCC(This->CurrentChunk.fcc))
+        switch (This->CurrentChunk.fcc)
         {
-        case cktypeDIBcompressed:
-            bSyncPoint = FALSE;
-            /* fall-through */
-        case cktypeDIBbits:
-            /* FIXME: check that pin is of type video */
-            break;
-        case cktypeWAVEbytes:
-            /* FIXME: check that pin is of type audio */
-            break;
-        case cktypePALchange:
-            FIXME("handle palette change\n");
-            break;
         case ckidJUNK:
             /* silently ignore */
             if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream))
                 bMoreData = FALSE;
             continue;
         default:
-            FIXME("Skipping unknown chunk type: %s at file offset 0x%lx\n", debugstr_an((LPSTR)&This->CurrentChunk.fcc, 4), (DWORD)BYTES_FROM_MEDIATIME(This->CurrentChunkOffset));
-            if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream))
-                bMoreData = FALSE;
-            continue;
+            switch (TWOCCFromFOURCC(This->CurrentChunk.fcc))
+            {
+            case cktypeDIBcompressed:
+                bSyncPoint = FALSE;
+                /* fall-through */
+            case cktypeDIBbits:
+                /* FIXME: check that pin is of type video */
+                break;
+            case cktypeWAVEbytes:
+                /* FIXME: check that pin is of type audio */
+                break;
+            case cktypePALchange:
+                FIXME("handle palette change\n");
+                break;
+            default:
+                FIXME("Skipping unknown chunk type: %s at file offset 0x%lx\n", debugstr_an((LPSTR)&This->CurrentChunk.fcc, 4), (DWORD)BYTES_FROM_MEDIATIME(This->CurrentChunkOffset));
+                if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream))
+                    bMoreData = FALSE;
+                continue;
+            }
         }
 
         streamId = StreamFromFOURCC(This->CurrentChunk.fcc);
