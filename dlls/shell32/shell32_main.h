@@ -35,6 +35,7 @@
 #include "shlobj.h"
 #include "shellapi.h"
 #include "wine/windef16.h"
+#include "wine/unicode.h"
 
 /*******************************************
 *  global SHELL32.DLL variables
@@ -62,6 +63,7 @@ INT SIC_GetIconIndex (LPCSTR sSourceFile, INT dwSourceIndex );
 /* Classes Root */
 BOOL HCR_MapTypeToValueW(LPCWSTR szExtension, LPWSTR szFileType, DWORD len, BOOL bPrependDot);
 BOOL HCR_GetExecuteCommandW(LPCWSTR szClass, LPCWSTR szVerb, LPWSTR szDest, DWORD len);
+BOOL HCR_GetExecuteCommandExW( HKEY hkeyClass, LPCWSTR szClass, LPCWSTR szVerb, LPWSTR szDest, DWORD len );
 BOOL HCR_GetDefaultIconW(LPCWSTR szClass, LPWSTR szDest, DWORD len, LPDWORD dwNr);
 BOOL HCR_GetDefaultIconFromGUIDW(REFIID riid, LPWSTR szDest, DWORD len, LPDWORD dwNr);
 BOOL HCR_GetClassNameW(REFIID riid, LPWSTR szDest, DWORD len);
@@ -69,10 +71,10 @@ BOOL HCR_GetClassNameW(REFIID riid, LPWSTR szDest, DWORD len);
 /* ANSI versions of above functions, supposed to go away as soon as they are not used anymore */
 BOOL HCR_MapTypeToValueA(LPCSTR szExtension, LPSTR szFileType, DWORD len, BOOL bPrependDot);
 BOOL HCR_GetExecuteCommandA(LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len);
+BOOL HCR_GetExecuteCommandExA( HKEY hkeyClass, LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len );
 BOOL HCR_GetDefaultIconA(LPCSTR szClass, LPSTR szDest, DWORD len, LPDWORD dwNr);
 BOOL HCR_GetClassNameA(REFIID riid, LPSTR szDest, DWORD len);
 
-BOOL HCR_GetExecuteCommandEx ( HKEY hkeyClass, LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len );
 BOOL HCR_GetFolderAttributes(REFIID riid, LPDWORD szDest);
 
 INT_PTR CALLBACK AboutDlgProc(HWND,UINT,WPARAM,LPARAM);
@@ -202,8 +204,8 @@ inline static BOOL SHELL_OsIsUnicode(void)
 	};
 inline static void __SHCloneStrA(char ** target,const char * source)
 {
-	*target = SHAlloc(strlen(source)+1); \
-	strcpy(*target, source); \
+	*target = SHAlloc(strlen(source)+1);
+	strcpy(*target, source);
 }
 
 inline static void __SHCloneStrWtoA(char ** target, const WCHAR * source)
@@ -211,6 +213,20 @@ inline static void __SHCloneStrWtoA(char ** target, const WCHAR * source)
 	int len = WideCharToMultiByte(CP_ACP, 0, source, -1, NULL, 0, NULL, NULL);
 	*target = SHAlloc(len);
 	WideCharToMultiByte(CP_ACP, 0, source, -1, *target, len, NULL, NULL);
+}
+
+inline static void __SHCloneStrW(WCHAR ** target, const WCHAR * source)
+{
+	*target = SHAlloc( (strlenW(source)+1) * sizeof(WCHAR) );
+	strcpyW(*target, source);
+}
+
+inline static WCHAR * __SHCloneStrAtoW(WCHAR ** target, const char * source)
+{
+	int len = MultiByteToWideChar(CP_ACP, 0, source, -1, NULL, 0);
+	*target = SHAlloc(len*sizeof(WCHAR));
+	MultiByteToWideChar(CP_ACP, 0, source, -1, *target, len);
+	return *target;
 }
 
 /* handle conversions */
@@ -221,5 +237,7 @@ inline static void __SHCloneStrWtoA(char ** target, const WCHAR * source)
 
 typedef UINT (*SHELL_ExecuteA1632)(char *lpCmd, void *env, LPSHELLEXECUTEINFOA sei, BOOL shWait);
 BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execfunc);
+typedef UINT (*SHELL_ExecuteW32)(WCHAR *lpCmd, void *env, LPSHELLEXECUTEINFOW sei, BOOL shWait);
+BOOL WINAPI ShellExecuteExW32 (LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc);
 
 #endif

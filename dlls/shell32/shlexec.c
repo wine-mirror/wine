@@ -688,7 +688,7 @@ BOOL WINAPI ShellExecuteExA32 (LPSHELLEXECUTEINFOA sei, SHELL_ExecuteA1632 execf
         /* the Commandline contains 'c:\Path\wordpad.exe "%1"' */
         /* FIXME: szCommandline should not be of a fixed size. Plus MAX_PATH is way too short! */
         if (sei->fMask & SEE_MASK_CLASSKEY)
-            HCR_GetExecuteCommandEx(sei->hkeyClass,
+            HCR_GetExecuteCommandExA(sei->hkeyClass,
                                     (sei->fMask & SEE_MASK_CLASSNAME) ? sei->lpClass: NULL,
                                     (sei->lpVerb) ? sei->lpVerb : "open", szCommandline, sizeof(szCommandline));
         else if (sei->fMask & SEE_MASK_CLASSNAME)

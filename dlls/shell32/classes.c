@@ -149,7 +149,7 @@ BOOL HCR_GetExecuteCommandA(LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD l
 	return FALSE;
 }
 
-BOOL HCR_GetExecuteCommandEx( HKEY hkeyClass, LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len )
+BOOL HCR_GetExecuteCommandExA( HKEY hkeyClass, LPCSTR szClass, LPCSTR szVerb, LPSTR szDest, DWORD len )
 {
 	BOOL	ret = FALSE;
 
@@ -171,6 +171,34 @@ BOOL HCR_GetExecuteCommandEx( HKEY hkeyClass, LPCSTR szClass, LPCSTR szVerb, LPS
 	}
 
 	TRACE("-- %s\n", szDest );
+	return ret;
+}
+
+BOOL HCR_GetExecuteCommandExW( HKEY hkeyClass, LPCWSTR szClass, LPCWSTR szVerb, LPWSTR szDest, DWORD len )
+{
+        static const WCHAR swShell[] = {'\\','s','h','e','l','l','\\',0};
+        static const WCHAR swCommand[] = {'\\','c','o','m','m','a','n','d',0};
+	BOOL	ret = FALSE;
+
+	TRACE("%p %s %s %p\n", hkeyClass, debugstr_w(szClass), debugstr_w(szVerb), szDest);
+
+	if (szClass)
+            RegOpenKeyExW(hkeyClass,szClass,0,0x02000000,&hkeyClass);
+
+        if (hkeyClass)
+	{
+	    WCHAR sTemp[MAX_PATH];
+	    lstrcpyW(sTemp, swShell);
+	    lstrcatW(sTemp, szVerb);
+	    lstrcatW(sTemp, swCommand);
+
+	    ret = (ERROR_SUCCESS == SHGetValueW(hkeyClass, sTemp, NULL, NULL, szDest, &len));
+
+	    if (szClass)
+	       RegCloseKey(hkeyClass);
+	}
+
+	TRACE("-- %s\n", debugstr_w(szDest) );
 	return ret;
 }
 
