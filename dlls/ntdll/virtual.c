@@ -660,7 +660,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
                           sec->PointerToRawData, pos, sec->SizeOfRawData,
                           size, sec->Characteristics );
             if (VIRTUAL_mmap( shared_fd, ptr + sec->VirtualAddress, size,
-                              pos, 0, PROT_READ|PROT_WRITE|PROT_EXEC,
+                              pos, 0, PROT_READ | PROT_WRITE,
                               MAP_SHARED|MAP_FIXED, NULL ) == (void *)-1)
             {
                 ERR_(module)( "Could not map shared section %.8s\n", sec->Name );
@@ -676,8 +676,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
                 if (end > sec->VirtualAddress + size) end = sec->VirtualAddress + size;
                 if (end > base) VIRTUAL_mmap( shared_fd, ptr + base, end - base,
                                               pos + (base - sec->VirtualAddress), 0,
-                                              PROT_READ|PROT_WRITE|PROT_EXEC,
-                                              MAP_PRIVATE|MAP_FIXED, NULL );
+                                              PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, NULL );
             }
             pos += size;
             continue;
@@ -696,7 +695,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, DWORD total_size
          *       fall back to read(), so we don't need to check anything here.
          */
         if (VIRTUAL_mmap( fd, ptr + sec->VirtualAddress, sec->SizeOfRawData,
-                          sec->PointerToRawData, 0, PROT_READ|PROT_WRITE|PROT_EXEC,
+                          sec->PointerToRawData, 0, PROT_READ | PROT_WRITE,
                           MAP_PRIVATE | MAP_FIXED, &removable ) == (void *)-1)
         {
             ERR_(module)( "Could not map section %.8s, file probably truncated\n", sec->Name );
