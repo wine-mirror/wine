@@ -1,7 +1,6 @@
 name ddraw
 type win32
 
-import ole32.dll
 import user32.dll
 import x11drv.dll
 import gdi32.dll

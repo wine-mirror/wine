@@ -13,7 +13,6 @@
 #include "heap.h"
 #include "wine/winbase16.h"
 #include "wine/obj_base.h"
-#include "local.h"
 #include "module.h"
 #include "debugtools.h"
 
@@ -99,10 +98,6 @@ typedef struct
         ICOM_VFIELD(IMalloc16);
         DWORD                   ref;
         /* IMalloc16 fields */
-        /* Gmm, I think one is not enough, we should probably manage a list of
-         * heaps
- */
-        HGLOBAL16 heap;
 } IMalloc16Impl;
 
 /******************************************************************************
@@ -142,28 +137,28 @@ ULONG WINAPI IMalloc16_fnRelease(IMalloc16* iface) {
 /******************************************************************************
  * IMalloc16_Alloc [COMPOBJ.503]
  */
-LPVOID WINAPI IMalloc16_fnAlloc(IMalloc16* iface,DWORD cb) {
+SEGPTR WINAPI IMalloc16_fnAlloc(IMalloc16* iface,DWORD cb) {
         ICOM_THIS(IMalloc16Impl,iface);
 	TRACE("(%p)->Alloc(%ld)\n",This,cb);
-	return (LPVOID)PTR_SEG_OFF_TO_SEGPTR(This->heap,LOCAL_Alloc(This->heap,0,cb));
+        return MapLS( HeapAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, cb ) );
 }
 
 /******************************************************************************
  * IMalloc16_Realloc [COMPOBJ.504]
  */
-LPVOID WINAPI IMalloc16_fnRealloc(IMalloc16* iface,LPVOID pv,DWORD cb) {
+SEGPTR WINAPI IMalloc16_fnRealloc(IMalloc16* iface,SEGPTR pv,DWORD cb) {
         ICOM_THIS(IMalloc16Impl,iface);
-	TRACE("(%p)->Realloc(%p,%ld)\n",This,pv,cb);
-	return (LPVOID)PTR_SEG_OFF_TO_SEGPTR(This->heap,LOCAL_ReAlloc(This->heap,0,LOWORD(pv),cb));
+        TRACE("(%p)->Realloc(%08lx,%ld)\n",This,pv,cb);
+        return MapLS( HeapReAlloc( GetProcessHeap(), HEAP_WINE_SEGPTR, PTR_SEG_TO_LIN(pv), cb ) );
 }
 
 /******************************************************************************
  * IMalloc16_Free [COMPOBJ.505]
  */
-VOID WINAPI IMalloc16_fnFree(IMalloc16* iface,LPVOID pv) {
+VOID WINAPI IMalloc16_fnFree(IMalloc16* iface,SEGPTR pv) {
         ICOM_THIS(IMalloc16Impl,iface);
-	TRACE("(%p)->Free(%p)\n",This,pv);
-	LOCAL_Free(This->heap,LOWORD(pv));
+        TRACE("(%p)->Free(%08lx)\n",This,pv);
+        HeapFree( GetProcessHeap(), HEAP_WINE_SEGPTR, PTR_SEG_TO_LIN(pv) );
 }
 
 /******************************************************************************
@@ -172,7 +167,7 @@ VOID WINAPI IMalloc16_fnFree(IMalloc16* iface,LPVOID pv) {
 DWORD WINAPI IMalloc16_fnGetSize(const IMalloc16* iface,LPVOID pv) {
 	ICOM_CTHIS(IMalloc16Impl,iface);
 	TRACE("(%p)->GetSize(%p)\n",This,pv);
-	return LOCAL_Size(This->heap,LOWORD(pv));
+        return HeapSize( GetProcessHeap(), HEAP_WINE_SEGPTR, PTR_SEG_TO_LIN(pv) );
 }
 
 /******************************************************************************
@@ -221,9 +216,6 @@ IMalloc16_Constructor() {
 	}
         ICOM_VTBL(This) = (ICOM_VTABLE(IMalloc16)*)SEGPTR_GET(msegvt16);
 	This->ref = 1;
-	/* FIXME: implement multiple heaps */
-	This->heap = GlobalAlloc16(GMEM_MOVEABLE,64000);
-	LocalInit16(This->heap,0,64000);
 	return (LPMALLOC16)SEGPTR_GET(This);
 }
 
