@@ -234,9 +234,7 @@ static void test_get_set()
     ok(SUCCEEDED(r), "GetIconLocation failed (0x%08lx)\n", r);
     }
     ok(*buffer=='\0', "GetIconLocation returned '%s'\n", buffer);
-    todo_wine {
     ok(i==0, "GetIconLocation returned %d\n", i);
-    }
 
     str="c:\\nonexistent\\file";
     r = IShellLinkA_SetIconLocation(sl, str, 0xbabecafe);
@@ -383,9 +381,7 @@ static void check_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
     }
 
     r = IPersistFile_Load(pf, path, STGM_READ);
-    todo_wine {
     lok(SUCCEEDED(r), "load failed (0x%08lx)\n", r);
-    }
     IPersistFile_Release(pf);
     if (!SUCCEEDED(r))
     {
@@ -473,7 +469,7 @@ static void test_load_save()
 
     /* Save an empty .lnk file */
     memset(&desc, 0, sizeof(desc));
-    create_lnk(lnkfile, &desc, 1);
+    create_lnk(lnkfile, &desc, 0);
 
     /* It should come back as a bunch of empty strings */
     desc.description="";
