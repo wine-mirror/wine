@@ -844,7 +844,12 @@ UINT WINAPI MsiGetPropertyA(MSIHANDLE hInstall, LPCSTR szName, LPSTR szValueBuf,
         return ERROR_INVALID_HANDLE;
     ret = MSI_GetPropertyA(package, szName, szValueBuf, pchValueBuf );
     msiobj_release( &package->hdr );
-    return ret;
+
+    /* MsiGetProperty does not return error codes on missing properties */
+    if (ret!= ERROR_MORE_DATA)
+        return ERROR_SUCCESS;
+    else
+        return ret;
 }
 
   
@@ -866,5 +871,10 @@ UINT WINAPI MsiGetPropertyW(MSIHANDLE hInstall, LPCWSTR szName,
         return ERROR_INVALID_HANDLE;
     ret = MSI_GetPropertyW(package, szName, szValueBuf, pchValueBuf );
     msiobj_release( &package->hdr );
-    return ret;
+
+    /* MsiGetProperty does not return error codes on missing properties */
+    if (ret!= ERROR_MORE_DATA)
+        return ERROR_SUCCESS;
+    else
+        return ret;
 }
