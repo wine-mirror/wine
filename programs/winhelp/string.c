@@ -18,19 +18,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "windows.h"
-#include "winhelp.h"
-
 /* Class names */
 
-CHAR MAIN_WIN_CLASS_NAME[]       = "WHMain";
-CHAR BUTTON_BOX_WIN_CLASS_NAME[] = "WHButtonBox";
-CHAR TEXT_WIN_CLASS_NAME[]       = "WHText";
-CHAR SHADOW_WIN_CLASS_NAME[]     = "WHShadow";
-CHAR STRING_BUTTON[]             = "BUTTON";
+char MAIN_WIN_CLASS_NAME[]       = "MS_WINHELP";
+char BUTTON_BOX_WIN_CLASS_NAME[] = "WHButtonBox";
+char TEXT_WIN_CLASS_NAME[]       = "WHText";
+char SHADOW_WIN_CLASS_NAME[]     = "WHShadow";
+char STRING_BUTTON[]             = "BUTTON";
 
 /* Resource names */
-CHAR STRING_DIALOG_TEST[]    = "DIALOG_TEST";
+char STRING_DIALOG_TEST[]        = "DIALOG_TEST";
 
 /* Local Variables:    */
 /* c-file-style: "GNU" */

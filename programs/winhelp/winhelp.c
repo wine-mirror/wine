@@ -54,11 +54,11 @@ static BOOL MacroTest = FALSE;
  */
 int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 {
-    MSG    msg;
-    LONG   lHash = 0;
+    MSG         msg;
+    LONG        lHash = 0;
 
     Globals.hInstance = hInstance;
-
+    
     /* Get options */
     while (*cmdline && (*cmdline == ' ' || *cmdline == '-'))
     {
@@ -86,6 +86,14 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
 
 	case 't':
             MacroTest = TRUE;
+            break;
+
+        case 'x':
+            show = SW_HIDE; 
+            break;
+
+        default:
+            WINE_FIXME("Unsupported cmd line: %s\n", cmdline);
             break;
 	}
     }
@@ -140,6 +148,69 @@ static BOOL WINHELP_RegisterWinClasses(void)
             RegisterClass(&class_button_box) &&
             RegisterClass(&class_text) &&
             RegisterClass(&class_shadow));
+}
+
+typedef struct
+{
+    WORD size;
+    WORD command;
+    LONG data;
+    LONG reserved;
+    WORD ofsFilename;
+    WORD ofsData;
+} WINHELP,*LPWINHELP;
+
+/******************************************************************
+ *		WINHELP_HandleCommand
+ *
+ *
+ */
+static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
+{
+    COPYDATASTRUCT*     cds = (COPYDATASTRUCT*)lParam;
+    WINHELP*            wh;
+
+    if (cds->dwData != 0xA1DE505)
+    {
+        WINE_FIXME("Wrong magic number (%08lx)\n", cds->dwData);
+        return 0;
+    }
+
+    wh = (WINHELP*)cds->lpData;
+
+    if (wh)
+    {
+        WINE_TRACE("Got[%u]: cmd=%u data=%08lx fn=%s\n", 
+                   wh->size, wh->command, wh->data,
+                   wh->ofsFilename ? (LPSTR)wh + wh->ofsFilename : "");
+        switch (wh->command)
+        {
+        case HELP_QUIT:
+            MACRO_Exit();
+            break;
+        case HELP_FINDER:
+            /* in fact, should be the topic dialog box */
+            if (wh->ofsFilename)
+            {
+                MACRO_JumpHash((LPSTR)wh + wh->ofsFilename, "main", 0);
+            }
+            break;
+        case HELP_CONTEXT:
+        case HELP_SETCONTENTS:
+        case HELP_CONTENTS:
+        case HELP_CONTEXTPOPUP:
+        case HELP_FORCEFILE:
+        case HELP_HELPONHELP:
+        case HELP_KEY:
+        case HELP_PARTIALKEY:
+        case HELP_COMMAND:
+        case HELP_MULTIKEY:
+        case HELP_SETWINPOS:
+            WINE_FIXME("NIY\n");
+            break;
+        }
+    }
+    return 0L;
 }
 
 /***********************************************************************
@@ -257,6 +328,7 @@ static BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, LPCSTR lpszWindow,
                 WINHELP_SetupText(win->hTextWnd);
                 InvalidateRect(win->hTextWnd, NULL, TRUE);
                 SendMessage(win->hMainWnd, WM_USER, 0, 0);
+                ShowWindow(win->hMainWnd, nCmdShow);
                 UpdateWindow(win->hTextWnd);
 
 
@@ -418,8 +490,9 @@ static LRESULT CALLBACK WINHELP_MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
     case WM_DESTROY:
         if (Globals.hPopupWnd) DestroyWindow(Globals.hPopupWnd);
         break;
+    case WM_COPYDATA:
+        return WINHELP_HandleCommand((HWND)wParam, lParam);
     }
-
     return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 

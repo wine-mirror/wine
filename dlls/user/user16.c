@@ -438,3 +438,21 @@ BOOL16 WINAPI DrawEdge16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
     CONV_RECT32TO16( &rect32, rc );
     return ret;
 }
+
+/**********************************************************************
+ *		WinHelp (USER.171)
+ */
+BOOL16 WINAPI WinHelp16( HWND16 hWnd, LPCSTR lpHelpFile, UINT16 wCommand,
+                         DWORD dwData )
+{
+    BOOL ret;
+    DWORD mutex_count;
+
+    /* We might call WinExec() */
+    ReleaseThunkLock(&mutex_count);
+
+    ret = WinHelpA(WIN_Handle32(hWnd), lpHelpFile, wCommand, (DWORD)MapSL(dwData));
+
+    RestoreThunkLock(mutex_count);
+    return ret;
+}

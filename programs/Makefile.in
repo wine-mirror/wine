@@ -67,7 +67,8 @@ INSTALLPROGS = \
 # Symlinks to apps that we want to run from inside the source tree
 SYMLINKS = \
 	wineconsole.exe \
-	winedbg.exe
+	winedbg.exe \
+	winhelp.exe
 
 @MAKE_RULES@
 
@@ -120,7 +121,11 @@ wineconsole.exe$(DLLEXT): wineconsole/wineconsole.exe$(DLLEXT)
 winedbg.exe$(DLLEXT): winedbg/winedbg.exe$(DLLEXT)
 	$(RM) $@ && $(LN_S) winedbg/winedbg.exe$(DLLEXT) $@
 
+winhelp.exe$(DLLEXT): winhelp/winhelp.exe$(DLLEXT)
+	$(RM) $@ && $(LN_S) winhelp/winhelp.exe$(DLLEXT) $@
+
 wineconsole/wineconsole.exe$(DLLEXT): wineconsole
 winedbg/winedbg.exe$(DLLEXT): winedbg
+winhelp/winhelp.exe$(DLLEXT): winhelp
 
 ### Dependencies:
