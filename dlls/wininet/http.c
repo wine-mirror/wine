@@ -2308,7 +2308,10 @@ BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR value, D
 
     /* Try to get index into standard header array */
     index = HTTP_GetStdHeaderIndex(field);
-    if (index >= 0)
+    /* Don't let applications add Connection header to request */
+    if ((index == HTTP_QUERY_CONNECTION) && (dwModifier & HTTP_ADDHDR_FLAG_REQ))
+        return TRUE;
+    else if (index >= 0)
     {
         lphttpHdr = &lpwhr->StdHeaders[index];
     }
