@@ -20,8 +20,6 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * TODO:
- *   - implement autorepeat for paging
- *   - possition buddy controls
  *   - custom draw notifications
  */
 
@@ -65,8 +63,8 @@ typedef struct
 
 DEFINE_COMMON_NOTIFICATIONS(TRACKBAR_INFO, hwndSelf);
 
-/* #define TB_REFRESH_TIMER       1 */
-/* #define TB_REFRESH_DELAY       1 */
+#define TB_REFRESH_TIMER	1
+#define TB_REFRESH_DELAY	500
 
 #define TOOLTIP_OFFSET		15   /* distance from thumb to tooltip */
 
@@ -78,6 +76,9 @@ DEFINE_COMMON_NOTIFICATIONS(TRACKBAR_INFO, hwndSelf);
 #define TB_THUMBCHANGED 	(TB_THUMBPOSCHANGED | TB_THUMBSIZECHANGED)
 #define TB_SELECTIONCHANGED     4
 #define TB_DRAG_MODE            8     /* we're dragging the slider */
+#define TB_AUTO_PAGE_LEFT	16
+#define TB_AUTO_PAGE_RIGHT	32
+#define TB_AUTO_PAGE		(TB_AUTO_PAGE_LEFT | TB_AUTO_PAGE_RIGHT)
 
 /* helper defines for TRACKBAR_DrawTic */
 #define TIC_EDGE                0x20
@@ -120,19 +121,19 @@ static void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
 /* converts from physical (mouse) position to logical position
    (in range of trackbar) */
 
-static inline double
+static inline LONG
 TRACKBAR_ConvertPlaceToPosition (TRACKBAR_INFO *infoPtr, int place,
                                  int vertical)
 {
     double range, width, pos;
 
-    range=infoPtr->lRangeMax - infoPtr->lRangeMin;
+    range = infoPtr->lRangeMax - infoPtr->lRangeMin;
     if (vertical) {
-    	width=infoPtr->rcChannel.bottom - infoPtr->rcChannel.top;
-        pos=(range*(place - infoPtr->rcChannel.top)) / width;
+    	width = infoPtr->rcChannel.bottom - infoPtr->rcChannel.top;
+        pos = (range*(place - infoPtr->rcChannel.top)) / width;
     } else {
-    	width=infoPtr->rcChannel.right - infoPtr->rcChannel.left;
-        pos=(range*(place - infoPtr->rcChannel.left)) / width;
+    	width = infoPtr->rcChannel.right - infoPtr->rcChannel.left;
+        pos = (range*(place - infoPtr->rcChannel.left)) / width;
     }
     pos += infoPtr->lRangeMin;
     if (pos > infoPtr->lRangeMax)
@@ -141,9 +142,64 @@ TRACKBAR_ConvertPlaceToPosition (TRACKBAR_INFO *infoPtr, int place,
         pos = infoPtr->lRangeMin;
 
     TRACE("%.2f\n", pos);
-    return pos;
+    return (LONG)(pos + 0.5);
 }
 
+
+/* return: 0> prev, 0 none, >0 next */
+static LONG
+TRACKBAR_GetAutoPageDirection (TRACKBAR_INFO *infoPtr, POINT clickPoint)
+{
+    DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
+    RECT pageRect;
+
+    if (dwStyle & TBS_VERT) {
+	pageRect.top = infoPtr->rcChannel.top;
+	pageRect.bottom = infoPtr->rcChannel.bottom;
+	pageRect.left = infoPtr->rcThumb.left;
+	pageRect.right = infoPtr->rcThumb.right;
+    } else {
+	pageRect.top = infoPtr->rcThumb.top;
+	pageRect.bottom = infoPtr->rcThumb.bottom;
+	pageRect.left = infoPtr->rcChannel.left;
+	pageRect.right = infoPtr->rcChannel.right;
+    }
+
+
+    if (PtInRect(&pageRect, clickPoint))
+    {
+	int clickPlace = (dwStyle & TBS_VERT) ? clickPoint.y : clickPoint.x;
+
+        LONG clickPos = TRACKBAR_ConvertPlaceToPosition(infoPtr, clickPlace,
+                                                        dwStyle & TBS_VERT);
+	return clickPos - infoPtr->lPos;
+    }
+
+    return 0;
+}
+
+static void inline
+TRACKBAR_PageUp (TRACKBAR_INFO *infoPtr)
+{
+    if (infoPtr->lPos == infoPtr->lRangeMax) return;
+
+    infoPtr->lPos += infoPtr->lPageSize;
+    if (infoPtr->lPos > infoPtr->lRangeMax)
+	infoPtr->lPos = infoPtr->lRangeMax;
+    TRACKBAR_SendNotify (infoPtr, TB_PAGEUP);
+}
+
+
+static void inline
+TRACKBAR_PageDown (TRACKBAR_INFO *infoPtr)
+{
+    if (infoPtr->lPos == infoPtr->lRangeMin) return;
+
+    infoPtr->lPos -= infoPtr->lPageSize;
+    if (infoPtr->lPos < infoPtr->lRangeMin)
+        infoPtr->lPos = infoPtr->lRangeMin;
+    TRACKBAR_SendNotify (infoPtr, TB_PAGEDOWN);
+}
 
 static void
 TRACKBAR_CalcChannel (TRACKBAR_INFO *infoPtr)
@@ -272,6 +328,26 @@ TRACKBAR_CalcSelection (TRACKBAR_INFO *infoPtr)
 	   selection->left, selection->top, selection->right, selection->bottom);
 }
 
+static BOOL
+TRACKBAR_AutoPage (TRACKBAR_INFO *infoPtr, POINT clickPoint)
+{
+    LONG dir = TRACKBAR_GetAutoPageDirection(infoPtr, clickPoint);
+    LONG prevPos = infoPtr->lPos;
+
+    TRACE("x=%ld, y=%ld, dir=%ld\n", clickPoint.x, clickPoint.y, dir);
+
+    if (dir > 0 && (infoPtr->flags & TB_AUTO_PAGE_RIGHT))
+	TRACKBAR_PageUp(infoPtr);
+    else if (dir < 0 && (infoPtr->flags & TB_AUTO_PAGE_LEFT))
+	TRACKBAR_PageDown(infoPtr);
+    else return FALSE;
+
+    infoPtr->flags |= TB_THUMBPOSCHANGED;
+    TRACKBAR_InvalidateThumbMove (infoPtr, prevPos, infoPtr->lPos);
+
+    return TRUE;
+}
+
 /* Trackbar drawing code. I like my spaghetti done milanese.  */
 
 /* ticPos is in tic-units, not in pixels */
@@ -376,7 +452,7 @@ TRACKBAR_DrawThumb(TRACKBAR_INFO *infoPtr, HDC hdc, DWORD dwStyle)
     static INT PointDepth = 4;
 
     oldbr = SelectObject (hdc, hbr);
-    SetPolyFillMode (hdc,WINDING);
+    SetPolyFillMode (hdc, WINDING);
 
     if (dwStyle & TBS_BOTH)
     {
@@ -489,7 +565,7 @@ TRACKBAR_DrawThumb(TRACKBAR_INFO *infoPtr, HDC hdc, DWORD dwStyle)
     /*
      * White Part
      */
-    Polyline(hdc,&points[BlackUntil-1],PointCount+1-BlackUntil);
+    Polyline(hdc, &points[BlackUntil-1], PointCount+1-BlackUntil);
 
     /*
      * restore the brush and pen
@@ -772,15 +848,11 @@ TRACKBAR_SetBuddy (TRACKBAR_INFO *infoPtr, BOOL fLocation, HWND hwndBuddy)
 	/* buddy is left or above */
 	hwndTemp = infoPtr->hwndBuddyLA;
 	infoPtr->hwndBuddyLA = hwndBuddy;
-
-	FIXME("move buddy!\n");
     }
     else {
         /* buddy is right or below */
         hwndTemp = infoPtr->hwndBuddyRB;
         infoPtr->hwndBuddyRB = hwndBuddy;
-
-        FIXME("move buddy!\n");
     }
 
     TRACKBAR_AlignBuddies (infoPtr);
@@ -1158,66 +1230,25 @@ TRACKBAR_KillFocus (TRACKBAR_INFO *infoPtr, HWND hwndGetFocus)
     return 0;
 }
 
-
 static LRESULT
 TRACKBAR_LButtonDown (TRACKBAR_INFO *infoPtr, DWORD fwKeys, POINTS pts)
 {
-    DWORD dwStyle = GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE);
     POINT clickPoint = { pts.x, pts.y };
-    RECT pageRect;
 
     SetFocus(infoPtr->hwndSelf);
 
-    if (PtInRect(&infoPtr->rcThumb, clickPoint))
-    {
+    if (PtInRect(&infoPtr->rcThumb, clickPoint)) {
         infoPtr->flags |= TB_DRAG_MODE;
         SetCapture (infoPtr->hwndSelf);
 	TRACKBAR_UpdateToolTip (infoPtr);
 	TRACKBAR_ActivateToolTip (infoPtr, TRUE);
-        return 0;
-    }
-
-    if (dwStyle & TBS_VERT) {
-	pageRect.top = infoPtr->rcChannel.top;
-	pageRect.bottom = infoPtr->rcChannel.bottom;
-	pageRect.left = infoPtr->rcThumb.left;
-	pageRect.right = infoPtr->rcThumb.right;
     } else {
-	pageRect.top = infoPtr->rcThumb.top;
-	pageRect.bottom = infoPtr->rcThumb.bottom;
-	pageRect.left = infoPtr->rcChannel.left;
-	pageRect.right = infoPtr->rcChannel.right;
-    }
-
-    if (PtInRect(&pageRect, clickPoint))
-    {
-        int clickPlace, prevPos;
-        DOUBLE clickPos;
-
-	clickPlace = (dwStyle & TBS_VERT) ? pts.x : pts.y;
-
-        clickPos = TRACKBAR_ConvertPlaceToPosition(infoPtr, clickPlace,
-                                                   dwStyle & TBS_VERT);
-        prevPos = infoPtr->lPos;
-        if (clickPos > (int)prevPos)
-        {  /* similar to VK_NEXT */
-            infoPtr->lPos += infoPtr->lPageSize;
-            if (infoPtr->lPos > infoPtr->lRangeMax)
-                infoPtr->lPos = infoPtr->lRangeMax;
-            TRACKBAR_SendNotify (infoPtr, TB_PAGEUP);
-        }
-        else
-        {
-            infoPtr->lPos -= infoPtr->lPageSize;  /* similar to VK_PRIOR */
-            if (infoPtr->lPos < infoPtr->lRangeMin)
-                infoPtr->lPos = infoPtr->lRangeMin;
-            TRACKBAR_SendNotify (infoPtr, TB_PAGEDOWN);
-        }
-
-        if (prevPos != infoPtr->lPos) {
-            infoPtr->flags |= TB_THUMBPOSCHANGED;
-	    TRACKBAR_InvalidateThumbMove (infoPtr, prevPos, infoPtr->lPos);
-        }
+	LONG dir = TRACKBAR_GetAutoPageDirection(infoPtr, clickPoint);
+	if (dir == 0) return 0;
+	infoPtr->flags |= (dir < 0) ? TB_AUTO_PAGE_LEFT : TB_AUTO_PAGE_RIGHT;
+	TRACKBAR_AutoPage (infoPtr, clickPoint);
+        SetCapture (infoPtr->hwndSelf);
+        SetTimer(infoPtr->hwndSelf, TB_REFRESH_TIMER, TB_REFRESH_DELAY, 0);
     }
 
     return 0;
@@ -1227,16 +1258,19 @@ TRACKBAR_LButtonDown (TRACKBAR_INFO *infoPtr, DWORD fwKeys, POINTS pts)
 static LRESULT
 TRACKBAR_LButtonUp (TRACKBAR_INFO *infoPtr, DWORD fwKeys, POINTS pts)
 {
-    TRACKBAR_SendNotify (infoPtr, TB_ENDTRACK);
-
-    if (infoPtr->flags & TB_DRAG_MODE)
-    {
+    if (infoPtr->flags & TB_DRAG_MODE) {
+        TRACKBAR_SendNotify (infoPtr, TB_ENDTRACK);
         infoPtr->flags &= ~TB_DRAG_MODE;
         ReleaseCapture ();
 	notify_releasedcapture(infoPtr);
+        TRACKBAR_ActivateToolTip(infoPtr, FALSE);
     }
-
-    TRACKBAR_ActivateToolTip(infoPtr, FALSE);
+    if (infoPtr->flags & TB_AUTO_PAGE) {
+	KillTimer (infoPtr->hwndSelf, TB_REFRESH_TIMER);
+        infoPtr->flags &= ~TB_AUTO_PAGE;
+        ReleaseCapture ();
+	notify_releasedcapture(infoPtr);
+    }
 
     return 0;
 }
@@ -1287,6 +1321,19 @@ TRACKBAR_Size (TRACKBAR_INFO *infoPtr, DWORD fwSizeType, INT nWidth, INT nHeight
 }
 
 
+static LRESULT
+TRACKBAR_Timer (TRACKBAR_INFO *infoPtr, INT wTimerID, TIMERPROC *tmrpc)
+{
+    if (infoPtr->flags & TB_AUTO_PAGE) {
+	POINT pt;
+	if (GetCursorPos(&pt))
+	    if (ScreenToClient(infoPtr->hwndSelf, &pt))
+		TRACKBAR_AutoPage(infoPtr, pt);
+    }
+    return 0;
+}
+
+
 static BOOL
 TRACKBAR_SendNotify (TRACKBAR_INFO *infoPtr, UINT code)
 {
@@ -1309,8 +1356,14 @@ TRACKBAR_MouseMove (TRACKBAR_INFO *infoPtr, DWORD fwKeys, POINTS pts)
 
     TRACE("(x=%d. y=%d)\n", pts.x, pts.y);
 
-    if (!(infoPtr->flags & TB_DRAG_MODE))
+    if (infoPtr->flags & TB_AUTO_PAGE) {
+	POINT pt;
+	POINTSTOPOINT(pt, pts);
+	TRACKBAR_AutoPage (infoPtr, pt);
 	return TRUE;
+    }
+
+    if (!(infoPtr->flags & TB_DRAG_MODE)) return TRUE;
 
     dragPos = TRACKBAR_ConvertPlaceToPosition (infoPtr, clickPlace,
                                                dwStyle & TBS_VERT);
@@ -1363,20 +1416,12 @@ TRACKBAR_KeyDown (TRACKBAR_INFO *infoPtr, INT nVirtKey, DWORD lKeyData)
     case VK_NEXT:
 	if (downIsLeft) goto page_left;
     page_right:
-        if (infoPtr->lPos == infoPtr->lRangeMax) return FALSE;
-        infoPtr->lPos += infoPtr->lPageSize;
-        if (infoPtr->lPos > infoPtr->lRangeMax)
-            infoPtr->lPos = infoPtr->lRangeMax;
-        TRACKBAR_SendNotify (infoPtr, TB_PAGEUP);
+	TRACKBAR_PageUp(infoPtr);
         break;
     case VK_PRIOR:
 	if (downIsLeft) goto page_right;
     page_left:
-        if (infoPtr->lPos == infoPtr->lRangeMin) return FALSE;
-        infoPtr->lPos -= infoPtr->lPageSize;
-        if (infoPtr->lPos < infoPtr->lRangeMin)
-            infoPtr->lPos = infoPtr->lRangeMin;
-        TRACKBAR_SendNotify (infoPtr, TB_PAGEDOWN);
+	TRACKBAR_PageDown(infoPtr);
         break;
     case VK_HOME:
         if (infoPtr->lPos == infoPtr->lRangeMin) return FALSE;
@@ -1579,7 +1624,8 @@ TRACKBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_SIZE:
         return TRACKBAR_Size (infoPtr, wParam, LOWORD(lParam), HIWORD(lParam));
 
-/*	case WM_TIMER: */
+    case WM_TIMER:
+	return TRACKBAR_Timer (infoPtr, (INT)wParam, (TIMERPROC *)lParam);
 
     case WM_WININICHANGE:
         return TRACKBAR_InitializeThumb (infoPtr);
