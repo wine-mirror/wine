@@ -206,16 +206,26 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* in, unsigned int len)
     if (old==NULL)
       return 0;
 
-    /*
-     * Make sure we free the old string.
-     */
-    if (*old!=NULL)
-      SysFreeString(*old);
-
-    /*
-     * Allocate the new string
-     */
-    *old = SysAllocStringLen(in, len);
+    if (*old!=NULL) {
+      DWORD newbytelen = len*sizeof(WCHAR);
+      DWORD *ptr = HeapReAlloc(GetProcessHeap(),0,((DWORD*)*old)-1,newbytelen+sizeof(WCHAR)+sizeof(DWORD));
+      *old = (BSTR)(ptr+1);
+      *ptr = newbytelen;
+      if (in) {
+        memcpy(*old, in, newbytelen);
+        (*old)[len] = 0;
+      } else {
+	/* Subtle hidden feature: The old string data is still there
+	 * when 'in' is NULL! 
+	 * Some Microsoft program needs it.
+	 */
+      }
+    } else {
+      /*
+       * Allocate the new string
+       */
+      *old = SysAllocStringLen(in, len);
+    }
 
     return 1;
 }
