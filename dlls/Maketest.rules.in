@@ -11,7 +11,6 @@
 
 DEFS         = $(EXTRADEFS)
 DLLFLAGS     = @DLLFLAGS@
-LDDLLFLAGS   = @LDDLLFLAGS@
 
 MODULE       = $(TESTDLL:%.dll=%)_test.exe
 TESTLIST     = testlist.c
@@ -42,7 +41,7 @@ $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(OBJS) $(IMPORTLIBS) $(WINEBUILD)
 # Rules for .so main module
 
 $(MODULE).so: $(MODULE).spec.o $(OBJS) Makefile.in
-	$(LDSHARED) $(LDDLLFLAGS) $(MODULE).spec.o $(OBJS) -o $@ $(ALL_LIBS) -lc
+	$(LDDLL) $(MODULE).spec.o $(OBJS) -o $@ $(ALL_LIBS) -lc
 
 # Rules for .exe main module
 

@@ -308,7 +308,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS WIN16_FILES WIN16_INSTALL LIBPTHREAD build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP TOOLSDIR X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS YACC LEX LEXLIB LEX_OUTPUT_ROOT XYACC XLEX AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS DB2HTML DB2PDF DB2PS DB2TXT JPEGLIB EGREP GIFLIB XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS ft_devel ft_devel2 FREETYPEINCL ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS EXTRACFLAGS DLLEXT DLLFLAGS DLLIBS LDDLLFLAGS LDSHARED LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS LDD ALLOCA LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS WIN16_FILES WIN16_INSTALL LIBPTHREAD build build_cpu build_vendor build_os host host_cpu host_vendor host_os SET_MAKE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP TOOLSDIR X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS YACC LEX LEXLIB LEX_OUTPUT_ROOT XYACC XLEX AS ac_ct_AS LD ac_ct_LD AR ac_ct_AR RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP WINDRES ac_ct_WINDRES LN_S LN LDCONFIG INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LINT LINTFLAGS DB2HTML DB2PDF DB2PS DB2TXT JPEGLIB EGREP GIFLIB XLIB XFILES OPENGLFILES GLU32FILES OPENGL_LIBS NASLIBS CURSESLIBS sane_devel SANELIBS SANEINCL ICULIBS ft_devel ft_devel2 FREETYPEINCL ARTSCCONFIG ARTSLIBS ARTSINCL ALSALIBS AUDIOIOLIBS EXTRACFLAGS DLLEXT DLLFLAGS DLLIBS LDSHARED LDDLL LIBEXT IMPLIBEXT DLLTOOL ac_ct_DLLTOOL DLLWRAP ac_ct_DLLWRAP LDEXECFLAGS CROSSTEST CROSSCC CROSSWINDRES LDPATH CRTLIBS LDD ALLOCA LIBOBJS LTLIBOBJS'
 ac_subst_files='MAKE_RULES MAKE_DLL_RULES MAKE_TEST_RULES MAKE_LIB_RULES MAKE_PROG_RULES'
 
 # Initialize some variables set by options.
@@ -11675,9 +11675,9 @@ DLLFLAGS="-D_REENTRANT"
 
 DLLIBS=""
 
-LDDLLFLAGS=""
-
 LDSHARED=""
+
+LDDLL=""
 
 LIBEXT="so"
 
@@ -12202,7 +12202,7 @@ echo "${ECHO_T}$ac_cv_c_dll_gnuelf" >&6
       if test "$ac_cv_c_dll_gnuelf" = "yes"
       then
         LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
-        LDDLLFLAGS="-Wl,-Bsymbolic"
+        LDDLL="\$(CC) -shared -Wl,-Bsymbolic"
         echo "$as_me:$LINENO: checking whether the linker accepts -z defs" >&5
 echo $ECHO_N "checking whether the linker accepts -z defs... $ECHO_C" >&6
 if test "${ac_cv_c_dll_zdefs+set}" = set; then
@@ -12252,7 +12252,7 @@ echo "$as_me:$LINENO: result: $ac_cv_c_dll_zdefs" >&5
 echo "${ECHO_T}$ac_cv_c_dll_zdefs" >&6
         if test "$ac_cv_c_dll_zdefs" = "yes"
         then
-          LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
+          LDDLL="$LDDLL,-z,defs"
         fi
         echo "$as_me:$LINENO: checking whether we can relocate the executable to 0x3c000000" >&5
 echo $ECHO_N "checking whether we can relocate the executable to 0x3c000000... $ECHO_C" >&6
@@ -12356,7 +12356,7 @@ echo "${ECHO_T}$ac_cv_c_dll_unixware" >&6
         if test "$ac_cv_c_dll_unixware" = "yes"
         then
           LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
-          LDDLLFLAGS="-Wl,-B,symbolic"
+          LDDLL="\$(CC) -Wl,-G,-B,symbolic"
         fi
       fi
     fi
@@ -17767,8 +17767,8 @@ s,@EXTRACFLAGS@,$EXTRACFLAGS,;t t
 s,@DLLEXT@,$DLLEXT,;t t
 s,@DLLFLAGS@,$DLLFLAGS,;t t
 s,@DLLIBS@,$DLLIBS,;t t
-s,@LDDLLFLAGS@,$LDDLLFLAGS,;t t
 s,@LDSHARED@,$LDSHARED,;t t
+s,@LDDLL@,$LDDLL,;t t
 s,@LIBEXT@,$LIBEXT,;t t
 s,@IMPLIBEXT@,$IMPLIBEXT,;t t
 s,@DLLTOOL@,$DLLTOOL,;t t

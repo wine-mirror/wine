@@ -29,7 +29,7 @@ $(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(ALL_OBJS) $(IMPORTLIBS) $(WINEB
 	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:.rc=.res) $(ALL_OBJS) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 $(MODULE).so: $(MAINSPEC).o $(ALL_OBJS) Makefile.in
-	$(LDSHARED) $(LDDLLFLAGS) $(MAINSPEC).o $(ALL_OBJS) -o $@ $(ALL_LIBS) -lc
+	$(LDDLL) $(MAINSPEC).o $(ALL_OBJS) -o $@ $(ALL_LIBS) -lc
 
 # Rules for .dll files
 
@@ -40,14 +40,12 @@ $(SPEC_DEF): $(WINEBUILD)
 
 # Rules for checking that no imports are missing
 
-CHECKLINK_RPATH = dlls libs/unicode libs/wine
-
 .PHONY: checklink16 $(WIN16_FILES:%=__checklink16__%)
 
 $(WIN16_FILES:%=__checklink16__%): checklink16
 
 checklink16:: $(MAINSPEC).o $(OBJS) $(MODULE).dbg.o dummy
-	$(CC) -o checklink $(CHECKLINK_RPATH:%=-Wl,-rpath,$(TOPOBJDIR)/%) $(TOPSRCDIR)/dlls/checklink.c $(MAINSPEC).o $(OBJS) $(MODULE).dbg.o $(ALL_LIBS) && $(RM) checklink
+	$(CC) -o checklink -Wl,-rpath,$(TOPOBJDIR)/libs $(TOPSRCDIR)/dlls/checklink.c $(MAINSPEC).o $(OBJS) $(MODULE).dbg.o $(ALL_LIBS) && $(RM) checklink
 
 checklink:: $(WIN16_FILES:%=__checklink16__%)
 
@@ -69,12 +67,6 @@ doc-sgml: $(C_SRCS)
 	$(C2MAN) -o $(TOPOBJDIR)/documentation/api-guide -R$(TOPOBJDIR) $(INCLUDES) -Ts $(MAINSPEC:%=-w %) $(SPEC_SRCS16:%=-w %) $(C_SRCS) $(C_SRCS16)
 
 .PHONY: man doc-html doc-sgml
-
-# Sanity check
-
-Makedll.rules: $(TOPSRCDIR)/dlls/Makedll.rules.in $(TOPSRCDIR)/configure
-	@echo $? is newer than 'Makedll.rules', please rerun ./configure!
-	@exit 1
 
 # Rules for installation
 

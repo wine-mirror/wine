@@ -810,8 +810,8 @@ dnl **** Check for working dll ****
 AC_SUBST(DLLEXT,"")
 AC_SUBST(DLLFLAGS,"-D_REENTRANT")
 AC_SUBST(DLLIBS,"")
-AC_SUBST(LDDLLFLAGS,"")
 AC_SUBST(LDSHARED,"")
+AC_SUBST(LDDLL,"")
 AC_SUBST(LIBEXT,"so")
 AC_SUBST(IMPLIBEXT,"def")
 
@@ -846,13 +846,13 @@ case $host_os in
       if test "$ac_cv_c_dll_gnuelf" = "yes"
       then
         LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
-        LDDLLFLAGS="-Wl,-Bsymbolic"
+        LDDLL="\$(CC) -shared -Wl,-Bsymbolic"
         AC_CACHE_CHECK([whether the linker accepts -z defs], ac_cv_c_dll_zdefs,
           [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-Bsymbolic,-z,defs],
                            ac_cv_c_dll_zdefs="yes",ac_cv_c_dll_zdefs="no")])
         if test "$ac_cv_c_dll_zdefs" = "yes"
         then
-          LDDLLFLAGS="$LDDLLFLAGS,-z,defs"
+          LDDLL="$LDDLL,-z,defs"
         fi
         AC_CACHE_CHECK([whether we can relocate the executable to 0x3c000000], ac_cv_ld_reloc_exec,
           [saved_CFLAGS="$CFLAGS"
@@ -874,7 +874,7 @@ case $host_os in
         if test "$ac_cv_c_dll_unixware" = "yes"
         then
           LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
-          LDDLLFLAGS="-Wl,-B,symbolic"
+          LDDLL="\$(CC) -Wl,-G,-B,symbolic"
         fi
       fi
     fi

@@ -1,6 +1,5 @@
 DEFS       = $(EXTRADEFS)
 DLLFLAGS   = @DLLFLAGS@
-LDDLLFLAGS = @LDDLLFLAGS@
 TOPSRCDIR  = @top_srcdir@
 TOPOBJDIR  = ../..
 SRCDIR     = @srcdir@
@@ -28,13 +27,13 @@ icinfo.exe.spec.c: icinfo.o $(WINEBUILD)
 	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --exe icinfo.exe --exe-mode gui icinfo.o -L$(DLLDIR) -lmsvfw32 -lkernel32
 
 aviinfo.exe.so: aviinfo.o aviinfo.exe.spec.o
-	$(LDSHARED) $(LDDLLFLAGS) -o $@ aviinfo.o aviinfo.exe.spec.o $(ALL_LIBS) -lc
+	$(LDDLL) -o $@ aviinfo.o aviinfo.exe.spec.o $(ALL_LIBS) -lc
 
 aviplay.exe.so: aviplay.o aviplay.exe.spec.o
-	$(LDSHARED) $(LDDLLFLAGS) -o $@ aviplay.o aviplay.exe.spec.o $(ALL_LIBS) -lc
+	$(LDDLL) -o $@ aviplay.o aviplay.exe.spec.o $(ALL_LIBS) -lc
 
 icinfo.exe.so: icinfo.o icinfo.exe.spec.o
-	$(LDSHARED) $(LDDLLFLAGS) -o $@ icinfo.o icinfo.exe.spec.o $(ALL_LIBS) -lc
+	$(LDDLL) -o $@ icinfo.o icinfo.exe.spec.o $(ALL_LIBS) -lc
 
 aviinfo.exe: aviinfo.o
 	$(CC) -o $@ aviinfo.o -lkernel32 $(ALL_LIBS)
