@@ -29,6 +29,9 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -688,6 +691,7 @@ LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
 	/*  TRACE(pidl,"--new pidl=%p\n",pidlNew);*/
 	return pidlNew;
 }
+
 /*************************************************************************
  *  SHGetRealIDL [SHELL32.98]
  *
@@ -695,10 +699,41 @@ LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
  */
 HRESULT WINAPI SHGetRealIDL(LPSHELLFOLDER lpsf, LPCITEMIDLIST pidlSimple, LPITEMIDLIST *pidlReal)
 {
-	FIXME("sf=%p pidlSimple=%p pidlReal=%p\n", lpsf, pidlSimple, pidlReal);
+	IDataObject* pDataObj;
+	HRESULT hr = IShellFolder_GetUIObjectOf(lpsf, 0, 1, &pidlSimple, &IID_IDataObject, 0, (LPVOID*)&pDataObj);
 
-	pdump (pidlSimple);
-	return 0;
+	if (SUCCEEDED(hr)) {
+            STGMEDIUM medium;
+            FORMATETC fmt;
+
+            fmt.cfFormat = RegisterClipboardFormatA(CFSTR_SHELLIDLIST);
+            fmt.ptd = NULL;
+            fmt.dwAspect = DVASPECT_CONTENT;
+            fmt.lindex = -1;
+            fmt.tymed = TYMED_HGLOBAL;
+
+	    hr = IDataObject_GetData(pDataObj, &fmt, &medium);
+
+	    IDataObject_Release(pDataObj);
+
+	    if (SUCCEEDED(hr)) {
+		/*assert(pida->cidl==1);*/
+		LPIDA pida = (LPIDA)GlobalLock(medium.u.hGlobal);
+
+		LPCITEMIDLIST pidl_folder = (LPCITEMIDLIST) ((LPBYTE)pida+pida->aoffset[0]);
+		LPCITEMIDLIST pidl_child = (LPCITEMIDLIST) ((LPBYTE)pida+pida->aoffset[1]);
+
+		*pidlReal = ILCombine(pidl_folder, pidl_child);
+
+		if (!*pidlReal)
+			hr = E_OUTOFMEMORY;
+
+		GlobalUnlock(medium.u.hGlobal);
+		GlobalFree(medium.u.hGlobal);
+	    }
+	}
+
+	return hr;
 }
 
 /*************************************************************************
