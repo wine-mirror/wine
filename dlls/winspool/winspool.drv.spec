@@ -94,6 +94,8 @@ debug_channels (winspool)
 @ stub FindFirstPrinterChangeNotification
 @ stub FindNextPrinterChangeNotification
 @ stub FreePrinterNotifyInfo
+@ stdcall GetDefaultPrinterA(str ptr) GetDefaultPrinterA
+@ stdcall GetDefaultPrinterW(wstr ptr) GetDefaultPrinterW
 @ stdcall GetFormA(long str long ptr long ptr) GetFormA
 @ stdcall GetFormW(long wstr long ptr long ptr) GetFormW
 @ stub GetJobA

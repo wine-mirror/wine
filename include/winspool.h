@@ -888,6 +888,10 @@ BOOL WINAPI EnumPrinterDriversW(LPWSTR pName, LPWSTR pEnvironment, DWORD Level,
 				LPDWORD pcbNeeded, LPDWORD pcbReturned);
 #define EnumPrinterDrivers WINELIB_NAME_AW(EnumPrinterDrivers)
 
+BOOL WINAPI GetDefaultPrinterA(LPSTR pName, LPDWORD pcbNameSize);
+BOOL WINAPI GetDefaultPrinterW(LPWSTR pName, LPDWORD pcbNameSize);
+#define GetDefaultPrinter WINELIB_NAME_AW(GetDefaultPrinter)
+
 BOOL WINAPI DeletePrinterDriverA(LPSTR pName, LPSTR pEnvironment,
 				 LPSTR pDriverName);
 BOOL WINAPI DeletePrinterDriverW(LPWSTR pName, LPWSTR pEnvironment,

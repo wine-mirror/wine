@@ -2687,6 +2687,71 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE ports,DWORD bufsize,
 }
 
 /******************************************************************************
+ *		GetDefaultPrinterA   (WINSPOOL.@)
+ *
+ * Based on PRINTDLG_GetDefaultPrinterName in dlls/commdlg/printdlg.c
+ */
+BOOL WINAPI GetDefaultPrinterA(LPSTR name, LPDWORD namesize)
+{
+   char *ptr;
+
+   if (*namesize < 1)
+   {
+      SetLastError (ERROR_INSUFFICIENT_BUFFER);
+      return FALSE;
+   }
+
+   if (!GetProfileStringA ("windows", "device", "", name, *namesize))
+   {
+      SetLastError (ERROR_FILE_NOT_FOUND);
+      return FALSE;
+   }
+
+   if ((ptr = strchr (name, ',')) == NULL)
+   {
+      SetLastError (ERROR_FILE_NOT_FOUND);
+      return FALSE;
+   }
+
+   *ptr = '\0';
+   *namesize = strlen (name) + 1;
+   return TRUE;
+}
+
+
+/******************************************************************************
+ *		GetDefaultPrinterW   (WINSPOOL.@)
+ */
+BOOL WINAPI GetDefaultPrinterW(LPWSTR name, LPDWORD namesize)
+{
+   char *buf;
+   BOOL  ret;
+
+   if (*namesize < 1)
+   {
+      SetLastError (ERROR_INSUFFICIENT_BUFFER);
+      return FALSE;
+   }
+
+   buf = HeapAlloc (GetProcessHeap (), 0, *namesize);
+   ret = GetDefaultPrinterA (buf, namesize);
+   if (ret)
+   {
+       DWORD len = MultiByteToWideChar (CP_ACP, 0, buf, -1, name, *namesize);
+       if (!len)
+       {
+           SetLastError (ERROR_INSUFFICIENT_BUFFER);
+           ret = FALSE;
+       }
+       else *namesize = len;
+   }
+
+   HeapFree (GetProcessHeap (), 0, buf);
+   return ret;
+}
+
+
+/******************************************************************************
  *		SetPrinterDataExA   (WINSPOOL.@)
  */
 DWORD WINAPI SetPrinterDataExA(HANDLE hPrinter, LPSTR pKeyName,
