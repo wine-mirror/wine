@@ -12,6 +12,22 @@
 <book id="index">
   <bookinfo>
     <title>Winelib User's Guide</title>
+    <!-- Until we learn how to format this thing nicely, 
+	 we can't really incude it -->
+    <!--authorgroup>
+      <author>
+	<firstname>Wilbur</firstname>
+	<surname>Dale</surname>
+      </author>
+      <author>
+	<firstname>Francois</firstname>
+	<surname>Gouget</surname>
+      </author>
+      <author>
+	<firstname>John</firstname>
+	<surname>Sheets</surname>
+      </author>
+    <authorgroup-->
   </bookinfo>
 
   &intro;

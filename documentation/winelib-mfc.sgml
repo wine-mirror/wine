@@ -47,17 +47,10 @@
     <sect1 id="mfc-legal-issues">
       <title id="mfc-legal-issues.title">Legal issues</title>
       <para>
-        (Extracted from the HOWTO-Winelib written by Wilbur Dale
-        &lt;wilbur.dale@lumin.nl&gt;)
-      </para>
-      <para>
         The purpose of this section is to make you aware of potential legal
         problems. Be sure to read your licenses and to consult your lawyers.
         In any case you should not consider the remainder of this section to
         be authoritative since it has not been written by a lawyer.
-      </para>
-      <para>
-        Well, let's try to have a look at the situation anyway.
       </para>
       <para>
         During the compilation of your program, you will be combining code

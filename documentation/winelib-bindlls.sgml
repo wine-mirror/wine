@@ -1,9 +1,10 @@
   <chapter id="bindlls">
-    <title id="bindlls.title">Using Linux libraries as DLLs</title>
+    <!-- FIXME: note that you can link PE DLLs to Winelib apps -->
+    <title id="bindlls.title">Building WineLib DLLs</title>
     <sect1 id="bindlls-intro">
       <title id="binary-dlls-intro.title">Introduction</title>
       <para>
-        For one reason or another you may find yourself with a Linux shared
+        For one reason or another you may find yourself with a Linux
         library that you want to use as if it were a Windows Dll.  There are
         various reasons for this including the following:
         <itemizedlist>
@@ -17,14 +18,14 @@
           <listitem>
             <para>
               There is a well-defined interface available and there are several 
-	      Linux solutions that are available for it. 
-	      (The ODBC interface in Wine)
+	      Linux solutions that are available for it
+	      (e.g. the ODBC interface in Wine).
             </para>
           </listitem>
           <listitem>
             <para>
-              You wish to do something that you can do in Linux but Wine does
-              not yet support it.
+	      You have a binary only Windows application that can be extended 
+	      through plugins, such as a text editor or IDE.
             </para>
           </listitem>
         </itemizedlist>
@@ -184,8 +185,7 @@ signed short WINAPI MyProxyWinFunc (unsigned short a, void *b, void *c,
         is quite long it is extremely simple in structure.
       </para>
       <para>
-        The MAIN_OdbcInit function is the function that was named in the
-        <link linkend="bindlls-spec">spec file</link> as the init function.
+        <function>DllMain</function> the function is used to initialize the DLL.
         On the process attach event the function dynamically links to the
         desired Linux ODBC library (since there are several available) and
         builds a list of function pointers.  It unlinks on the process

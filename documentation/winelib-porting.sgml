@@ -6,12 +6,11 @@
 
       <para>
 	The <literal>wchar_t</literal> type has different standard
-	sizes in Unix (4 bytes) and Windows (2 bytes). Recent versions
-	of gcc (2.9.7 or later) support the 
+	sizes in Unix (4 bytes) and Windows (2 bytes). You need a
+        recent gcc version (2.9.7 or later) that supports the
 	<parameter>-fshort-wchar</parameter> option to set the
 	size of <literal>wchar_t</literal> to the one expected
-	by Windows applications. Pass this option to every file
-	that is built.
+	by Windows applications. 
       </para>
 
       <para>
@@ -21,25 +20,10 @@
         the msvcrt runtime library instead of glibc. The functions in
         glibc will not work correctly with 16 bit strings.
       </para>
-      <para>
-        To prevent warnings when declaring a single unicode character
-        in C, use <function>(WCHAR)L'x'</function>, rather than
-        <function>__TEXT('x')</function>.  This works on Windows also.
-      </para>
     </sect1>
 
     <sect1 id="C-library">
       <title id="C-library.title">C library</title>
-
-      <!-- *** Is all of this covered now?  Make sure before deleting ***
-      <para>
-        Winelib currently only supports on C library: that of your
-        compiler.  three solutions: native, mixed or msvcrt except we
-        only have native right now, using the native C library ->
-        different behavior: fopen, O_TEXT, unicode support,
-        reimplement msvcrt
-      </para>
-      -->
 
       <para>
         There are 2 choices available to you regarding which C library
