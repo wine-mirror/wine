@@ -1236,8 +1236,7 @@ HCOLORSPACE32 WINAPI GetColorSpace(HDC32 hdc)
  */
 UINT16 WINAPI GetBoundsRect16(HDC16 hdc, LPRECT16 rect, UINT16 flags)
 {
-    FIXME(dc, "(): stub\n");
-    return DCB_RESET;   /* bounding rectangle always empty */
+    return DCB_RESET | DCB_DISABLE; /* bounding rectangle always empty and disabled*/
 }
 
 /***********************************************************************
@@ -1245,7 +1244,9 @@ UINT16 WINAPI GetBoundsRect16(HDC16 hdc, LPRECT16 rect, UINT16 flags)
  */
 UINT16 WINAPI SetBoundsRect16(HDC16 hdc, const RECT16* rect, UINT16 flags)
 {
-    FIXME(dc, "(): stub\n");
-    return DCB_DISABLE;   /* bounding rectangle always empty */
+    if ( (flags & DCB_ACCUMULATE) || (flags & DCB_ENABLE) )
+        FIXME( dc, "(%04x, %p, %04x): stub\n", hdc, rect, flags );
+
+    return DCB_RESET | DCB_DISABLE; /* bounding rectangle always empty and disabled*/
 }
 

@@ -1454,6 +1454,6 @@ void WINAPI CBClientThunkSL( CONTEXT *context )
 void WINAPI KERNEL_365( CONTEXT *context )
 {
     LPWORD args = PTR_SEG_OFF_TO_LIN( SS_reg( context ), SP_reg( context ) );
-    FIXME( thunk, "(%04X, %d): stub!\n", args[3], (INT16)args[2] );
+    TRACE( thunk, "(%04X, %d): stub!\n", args[3], (INT16)args[2] );
 }
 
