@@ -42,6 +42,7 @@ LIBSUBDIRS = \
 	dlls/tapi32 \
 	dlls/ver \
 	dlls/version \
+	dlls/win87em \
 	dlls/winaspi \
 	dlls/winspool \
 	dlls/wnaspi32 \
@@ -51,6 +52,8 @@ LIBSUBDIRS = \
 	graphics/metafiledrv \
 	graphics/psdrv \
 	graphics/ttydrv \
+	graphics/win16drv \
+	if1632 \
 	library \
 	loader \
 	loader/ne \
@@ -76,8 +79,6 @@ X11SUBDIRS = \
 
 EMUSUBDIRS = \
 	debugger \
-	graphics/win16drv \
-	if1632 \
 	miscemu
 
 PROGSUBDIRS = libtest programs
@@ -117,6 +118,7 @@ LIBOBJS = \
 	dlls/tapi32/tapi32.o \
 	dlls/ver/ver.o \
 	dlls/version/version.o \
+	dlls/win87em/win87em.o \
 	dlls/winaspi/winaspi.o \
 	dlls/winspool/winspool.o \
 	dlls/wnaspi32/wnaspi32.o \
@@ -126,6 +128,8 @@ LIBOBJS = \
 	graphics/metafiledrv/metafiledrv.o \
 	graphics/psdrv/psdrv.o \
 	graphics/ttydrv/ttydrv.o \
+	graphics/win16drv/win16drv.o \
+	if1632/if1632.o \
 	loader/loader.o \
 	loader/ne/ne.o \
 	loader/dos/dos.o \
@@ -150,8 +154,6 @@ X11OBJS = \
 
 EMUOBJS = \
 	debugger/debugger.o \
-	graphics/win16drv/win16drv.o \
-	if1632/if1632.o \
 	miscemu/miscemu.o
 
 LIB_TARGET  = @LIB_TARGET@

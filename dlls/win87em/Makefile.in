@@ -1,12 +1,12 @@
-DEFS      = -D__WINE__
+DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ..
+TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = miscemu
+MODULE    = win87em
 
 C_SRCS = \
-	main.c
+	emulate.c
 
 all: $(MODULE).o
 

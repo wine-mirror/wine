@@ -68,8 +68,10 @@ void WINAPI WIN87_fpmath( CONTEXT86 *context )
             /* I don't know much about asm() programming. This could be
              * wrong.
              */
+#ifdef __i386__
            __asm__ __volatile__("frndint");
            __asm__ __volatile__("fist %0;wait" : "=m" (dw) : : "memory");
+#endif
             TRACE("On top of stack is %ld\n",dw);
         }
         break;

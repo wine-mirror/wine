@@ -64,6 +64,6 @@ all: $(MODULE).o
 @MAKE_RULES@
 
 call32.s: $(BUILD)
-	$(BUILD) -o $@ -call32
+	$(BUILD) @BUILDFLAGS@ -o $@ -call32
 
 ### Dependencies:

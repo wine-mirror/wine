@@ -168,6 +168,8 @@ char *ParseNext;
 char ParseSaveChar;
 int Line;
 
+static int UsePIC = 0;
+
 static int debugging = 1;
 
   /* Offset of a structure field relative to the start of the struct */
@@ -870,6 +872,8 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     strcpy( pFileInfo->szPathName, DLLFileName );
     pstr = (char *)pFileInfo + pFileInfo->cBytes + 1;
         
+#ifdef __i386__  /* FIXME: Alignment problems! */
+
       /* Segment table */
 
     pSegment = (SEGTABLEENTRY *)pstr;
@@ -985,6 +989,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
 	pstr += sizeof(ET_ENTRY);
     }
     *pstr++ = 0;
+#endif
 
       /* Dump the module content */
 
@@ -1852,13 +1857,14 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
     fprintf( outfile, "\tpushl %%ecx\n" );
     fprintf( outfile, "\tpushl %%edx\n" );
 
-#ifdef USE__PIC__
-    /* Get Global Offset Table into %ecx */
-    fprintf( outfile, "\tcall .LCallFrom16%s.getgot\n", name );
-    fprintf( outfile, ".LCallFrom16%s.getgot:\n", name );
-    fprintf( outfile, "\tpopl %%ecx\n" );
-    fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE+[.-.LCallFrom16%s.getgot], %%ecx\n" );
-#endif
+    if ( UsePIC )
+    {
+        /* Get Global Offset Table into %ecx */
+        fprintf( outfile, "\tcall .LCallFrom16%s.getgot1\n", name );
+        fprintf( outfile, ".LCallFrom16%s.getgot1:\n", name );
+        fprintf( outfile, "\tpopl %%ecx\n" );
+        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.LCallFrom16%s.getgot1], %%ecx\n", name );
+    }
 
     /* Load 32-bit segment registers */
     fprintf( outfile, "\tmovw $0x%04x, %%dx\n", Data_Selector );
@@ -1870,19 +1876,20 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
     fprintf( outfile, "\tdata16\n");
 #endif
     fprintf( outfile, "\tmovw %%dx, %%es\n" );
-#ifdef USE__PIC__
-    fprintf( outfile, "\tmovl " PREFIX "SYSLEVEL_Win16CurrentTeb@GOT(%%ecx), %%edx\n" );
-    fprintf( outfile, "\tmovw (%%edx), %%fs\n" );
-#else
-    fprintf( outfile, "\tmovw " PREFIX "SYSLEVEL_Win16CurrentTeb, %%fs\n" );
-#endif
+
+    if ( UsePIC )
+    {
+        fprintf( outfile, "\tmovl " PREFIX "SYSLEVEL_Win16CurrentTeb@GOT(%%ecx), %%edx\n" );
+        fprintf( outfile, "\tmovw (%%edx), %%fs\n" );
+    }
+    else
+        fprintf( outfile, "\tmovw " PREFIX "SYSLEVEL_Win16CurrentTeb, %%fs\n" );
 
     /* Get address of ldt_copy array into %ecx */
-#ifdef USE__PIC__
-    fprintf( outfile, "\tmovl " PREFIX "ldt_copy@GOT(%%ecx), %%ecx\n" );
-#else
-    fprintf( outfile, "\tmovl $" PREFIX "ldt_copy, %%ecx\n" );
-#endif
+    if ( UsePIC )
+        fprintf( outfile, "\tmovl " PREFIX "ldt_copy@GOT(%%ecx), %%ecx\n" );
+    else
+        fprintf( outfile, "\tmovl $" PREFIX "ldt_copy, %%ecx\n" );
 
     /* Translate STACK16FRAME base to flat offset in %edx */
     fprintf( outfile, "\tmovw %%ss, %%dx\n" );
@@ -1956,7 +1963,7 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
     /* Build register CONTEXT */
     if ( reg_func )
     {
-        fprintf( outfile, "\tsubl $%d, %%esp\n", sizeof(CONTEXT) );
+        fprintf( outfile, "\tsubl $%d, %%esp\n", sizeof(CONTEXT86) );
 
         fprintf( outfile, "\tpushfl\n" );
         fprintf( outfile, "\tpopl %d(%%esp)\n", CONTEXTOFFSET(EFlags) );  
@@ -2001,6 +2008,17 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
     /* Print debug info before call */
     if ( debugging )
     {
+        if ( UsePIC )
+        {
+            fprintf( outfile, "\tpushl %%ebx\n" );
+
+            /* Get Global Offset Table into %ebx (for PLT call) */
+            fprintf( outfile, "\tcall .LCallFrom16%s.getgot2\n", name );
+            fprintf( outfile, ".LCallFrom16%s.getgot2:\n", name );
+            fprintf( outfile, "\tpopl %%ebx\n" );
+            fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.LCallFrom16%s.getgot2], %%ebx\n", name );
+        }
+
         fprintf( outfile, "\tpushl %%ecx\n" );
         fprintf( outfile, "\tpushl %%edx\n" );
         if ( reg_func )
@@ -2008,14 +2026,18 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
                               sizeof(CONTEXT) + STRUCTOFFSET(STACK32FRAME, ebp) );
         else
             fprintf( outfile, "\tpushl $0\n" );
-#if USE__PIC__
-        fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom16@PLT\n ");
-#else
-        fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom16\n ");
-#endif
+
+        if ( UsePIC )
+            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom16@PLT\n ");
+        else
+            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom16\n ");
+
         fprintf( outfile, "\tpopl %%edx\n" );
         fprintf( outfile, "\tpopl %%edx\n" );
         fprintf( outfile, "\tpopl %%ecx\n" );
+
+        if ( UsePIC )
+            fprintf( outfile, "\tpopl %%ebx\n" );
     }
 
     /* Call *Thunk* relay routine (which will call the API entry point) */
@@ -2024,19 +2046,34 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
     /* Print debug info after call */
     if ( debugging )
     {
+        if ( UsePIC )
+        {
+            fprintf( outfile, "\tpushl %%ebx\n" );
+
+            /* Get Global Offset Table into %ebx (for PLT call) */
+            fprintf( outfile, "\tcall .LCallFrom16%s.getgot3\n", name );
+            fprintf( outfile, ".LCallFrom16%s.getgot3:\n", name );
+            fprintf( outfile, "\tpopl %%ebx\n" );
+            fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.LCallFrom16%s.getgot3], %%ebx\n", name );
+        }
+
         fprintf( outfile, "\tpushl %%eax\n" );
         if ( reg_func )
             fprintf( outfile, "\tleal -%d(%%ebp), %%eax\n\tpushl %%eax\n",
                               sizeof(CONTEXT) + STRUCTOFFSET(STACK32FRAME, ebp) );
         else
             fprintf( outfile, "\tpushl $0\n" );
-#if USE__PIC__
-        fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom16Ret@PLT\n ");
-#else
-        fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom16Ret\n ");
-#endif
+
+        if ( UsePIC )
+            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom16Ret@PLT\n ");
+        else
+            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallFrom16Ret\n ");
+
         fprintf( outfile, "\tpopl %%eax\n" );
         fprintf( outfile, "\tpopl %%eax\n" );
+
+        if ( UsePIC )
+            fprintf( outfile, "\tpopl %%ebx\n" );
     }
 
 
@@ -2082,6 +2119,9 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk )
         /* fprintf( outfile, "\t.byte 0x64\n\tlssw (%d), %%sp\n", STACKOFFSET ); */
         fprintf( outfile, "\t.byte 0x64,0x66,0x0f,0xb2,0x25\n\t.long %d\n", STACKOFFSET );
         fprintf( outfile, "\t.byte 0x64\n\tpopl (%d)\n", STACKOFFSET );
+
+        /* Set flags according to return value */
+        fprintf( outfile, "\torl %%eax, %%eax\n" );
 
         /* Restore registers and return to *ThunkRet* routine */
         fprintf( outfile, "\tpopl %%edx\n" );
@@ -2144,24 +2184,24 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
     fprintf( outfile, "\tpushl %%esi\n" );
     fprintf( outfile, "\tpushl %%edi\n" );
 
-#ifdef USE__PIC__
-    /* Get Global Offset Table into %ebx */
-    fprintf( outfile, "\tcall .LCallTo16%s.getgot\n", name );
-    fprintf( outfile, ".LCallFrom16%s.getgot:\n", name );
-    fprintf( outfile, "\tpopl %%ebx\n" );
-    fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE+[.-.LCallFrom16%s.getgot], %%ebx\n" );
-#endif
+    if ( UsePIC )
+    {
+        /* Get Global Offset Table into %ebx */
+        fprintf( outfile, "\tcall .LCallTo16%s.getgot1\n", name );
+        fprintf( outfile, ".LCallTo16%s.getgot1:\n", name );
+        fprintf( outfile, "\tpopl %%ebx\n" );
+        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.LCallTo16%s.getgot1], %%ebx\n", name );
+    }
 
     /* Move relay target address to %edi */
     if ( !reg_func )
         fprintf( outfile, "\tmovl %%eax, %%edi\n" );
 
     /* Enter Win16 Mutex */
-#ifdef USE__PIC__
-    fprintf( outfile, "\tcall " PREFIX "SYSLEVEL_EnterWin16Lock@PLT\n" );
-#else
-    fprintf( outfile, "\tcall " PREFIX "SYSLEVEL_EnterWin16Lock\n" );
-#endif
+    if ( UsePIC )
+        fprintf( outfile, "\tcall " PREFIX "SYSLEVEL_EnterWin16Lock@PLT\n" );
+    else
+        fprintf( outfile, "\tcall " PREFIX "SYSLEVEL_EnterWin16Lock\n" );
 
     /* Print debugging info */
     if (debugging)
@@ -2176,21 +2216,20 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
         fprintf( outfile, "\tleal 8(%%ebp),%%eax\n" );
         fprintf( outfile, "\tpushl %%eax\n" );
 
-#ifdef USE__PIC__
-        fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16@PLT\n" );
-#else
-        fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16\n" );
-#endif
+        if ( UsePIC )
+            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16@PLT\n" );
+        else
+            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16\n" );
+
         fprintf( outfile, "\tpopl %%eax\n" );
         fprintf( outfile, "\tpopl %%eax\n" );
     }
 
     /* Get return address */
-#ifdef USE__PIC__
-    fprintf( outfile, "\tmovl " PREFIX "CallTo16_RetAddr@GOTOFF(%%ebx), %%ecx\n" );
-#else
-    fprintf( outfile, "\tmovl " PREFIX "CallTo16_RetAddr, %%ecx\n" );
-#endif
+    if ( UsePIC )
+        fprintf( outfile, "\tmovl " PREFIX "CallTo16_RetAddr@GOTOFF(%%ebx), %%ecx\n" );
+    else
+        fprintf( outfile, "\tmovl " PREFIX "CallTo16_RetAddr, %%ecx\n" );
 
     /* Call the actual CallTo16 routine (simulate a lcall) */
     fprintf( outfile, "\tpushl %%cs\n" );
@@ -2211,22 +2250,29 @@ static void BuildCallTo16Core( FILE *outfile, int short_ret, int reg_func )
     else
         fprintf( outfile, "\tpushl %%eax\n" );
 
+    if ( UsePIC )
+    {
+        /* Get Global Offset Table into %ebx (might have been overwritten) */
+        fprintf( outfile, "\tcall .LCallTo16%s.getgot2\n", name );
+        fprintf( outfile, ".LCallTo16%s.getgot2:\n", name );
+        fprintf( outfile, "\tpopl %%ebx\n" );
+        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.LCallTo16%s.getgot2], %%ebx\n", name );
+    }
+
     /* Print debugging info */
     if (debugging)
     {
-#ifdef USE__PIC__
-        fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16Ret@PLT\n" );
-#else
-        fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16Ret\n" );
-#endif
+        if ( UsePIC )
+            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16Ret@PLT\n" );
+        else
+            fprintf( outfile, "\tcall " PREFIX "RELAY_DebugCallTo16Ret\n" );
     }
 
     /* Leave Win16 Mutex */
-#ifdef USE__PIC__
-    fprintf( outfile, "\tcall " PREFIX "SYSLEVEL_LeaveWin16Lock@PLT\n" );
-#else
-    fprintf( outfile, "\tcall " PREFIX "SYSLEVEL_LeaveWin16Lock\n" );
-#endif
+    if ( UsePIC )
+        fprintf( outfile, "\tcall " PREFIX "SYSLEVEL_LeaveWin16Lock@PLT\n" );
+    else
+        fprintf( outfile, "\tcall " PREFIX "SYSLEVEL_LeaveWin16Lock\n" );
 
     /* Get return value */
     fprintf( outfile, "\tpopl %%eax\n" );
@@ -2791,7 +2837,7 @@ static void BuildCallFrom32Regs( FILE *outfile )
     fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(SegDs) - STACK_SPACE );
     fprintf( outfile, "\tmovw %%ax,%%es\n" );  /* set %es equal to %ds just in case */
 
-    fprintf( outfile, "\tmovl $0x%x,%%eax\n", CONTEXT_FULL );
+    fprintf( outfile, "\tmovl $0x%x,%%eax\n", CONTEXT86_FULL );
     fprintf( outfile, "\tmovl %%eax,%d(%%ebp)\n", CONTEXTOFFSET(ContextFlags) - STACK_SPACE );
 
     fprintf( outfile, "\tmovl 8(%%ebp),%%eax\n" ); /* Get %eip at time of call */
@@ -2895,6 +2941,8 @@ static int BuildGlue( FILE *outfile, char * outname, int argc, char *argv[] )
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
     fprintf( outfile, "\t.text\n" );
 
+#ifdef __i386__
+
 #ifdef USE_STABS
     fprintf( outfile, "\t.file\t\"%s\"\n", outname );
     getcwd(buffer, sizeof(buffer));
@@ -2951,6 +2999,13 @@ static int BuildGlue( FILE *outfile, char * outname, int argc, char *argv[] )
     fprintf( outfile, ".Letext:\n");
 #endif
 
+#else  /* __i386__ */
+
+    /* Just to avoid an empty file */
+    fprintf( outfile, "\t.long 0\n" );
+
+#endif  /* __i386__ */
+
     fclose( infile );
     return 0;
 }
@@ -2970,6 +3025,8 @@ static int BuildCall16( FILE *outfile, char * outname )
 
     fprintf( outfile, "/* File generated automatically. Do not edit! */\n\n" );
     fprintf( outfile, "\t.text\n" );
+
+#ifdef __i386__
 
 #ifdef USE_STABS
     fprintf( outfile, "\t.file\t\"%s\"\n", outname );
@@ -3043,6 +3100,22 @@ static int BuildCall16( FILE *outfile, char * outname )
     fprintf( outfile, "\n\t.globl " PREFIX "Call16_Ret_End\n" );
     fprintf( outfile, PREFIX "Call16_Ret_End:\n" );
 
+#else  /* __i386__ */
+
+    fprintf( outfile, PREFIX"Call16_Start:\n" );
+    fprintf( outfile, "\t.globl "PREFIX"Call16_Start\n" );
+    fprintf( outfile, "\t.byte 0\n\n" );
+    fprintf( outfile, PREFIX"Call16_End:\n" );
+    fprintf( outfile, "\t.globl "PREFIX"Call16_End\n" );
+
+    fprintf( outfile, "\t.globl " PREFIX "Call16_Ret_Start\n" );
+    fprintf( outfile, PREFIX "Call16_Ret_Start:\n" );
+    fprintf( outfile, "\t.byte 0\n\n" );
+    fprintf( outfile, "\n\t.globl " PREFIX "Call16_Ret_End\n" );
+    fprintf( outfile, PREFIX "Call16_Ret_End:\n" );
+
+#endif  /* __i386__ */
+
     return 0;
 }
 
@@ -3109,10 +3182,10 @@ static int BuildCall32( FILE *outfile, char * outname )
 static void usage(void)
 {
     fprintf( stderr,
-             "usage: build [-o outfile] -spec SPECNAMES\n"
-             "       build [-o outfile] -glue SOURCE_FILE\n"
-             "       build [-o outfile] -call16\n"
-             "       build [-o outfile] -call32\n" );
+             "usage: build [-pic] [-o outfile] -spec SPECNAMES\n"
+             "       build [-pic] [-o outfile] -glue SOURCE_FILE\n"
+             "       build [-pic] [-o outfile] -call16\n"
+             "       build [-pic] [-o outfile] -call32\n" );
     exit(1);
 }
 
@@ -3127,6 +3200,14 @@ int main(int argc, char **argv)
     int res = -1;
 
     if (argc < 2) usage();
+
+    if (!strcmp( argv[1], "-pic" ))
+    {
+        UsePIC = 1;
+        argv += 1;
+        argc -= 1;
+        if (argc < 2) usage();
+    }
 
     if (!strcmp( argv[1], "-o" ))
     {

@@ -1,4 +1,4 @@
-DEFS      = -D__WINE__
+DEFS      = @DLLFLAGS@ -D__WINE__
 TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ..
 SRCDIR    = @srcdir@
@@ -67,6 +67,6 @@ all: $(MODULE).o
 @MAKE_RULES@
 
 call16.s: $(BUILD)
-	$(BUILD) -o $@ -call16
+	$(BUILD) @BUILDFLAGS@ -o $@ -call16
 
 ### Dependencies:

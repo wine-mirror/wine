@@ -320,6 +320,7 @@ fi
 dnl **** Check for working dll ****
 
 DLLFLAGS=""
+BUILDFLAGS=""
 LDSHARED=""
 if test "$LIB_TARGET" = "libwine.so.1.0"
 then
@@ -332,6 +333,7 @@ then
   ])
   if test "$ac_cv_c_dll_linux" = "yes"
   then
+    BUILDFLAGS="-pic"
     DLLFLAGS="-fPIC"
     LDSHARED="\$(CC) -shared -Wl,-soname,libwine.so"
   else
@@ -344,6 +346,7 @@ then
     ])
     if test "$ac_cv_c_dll_netbsd" = "yes"
     then
+      BUILDFLAGS="-pic"
       DLLFLAGS="-fPIC"
       LDSHARED="ld -Bshareable -Bforcearchive"
     fi
@@ -353,6 +356,7 @@ then
     LIB_TARGET="libwine.a"
   fi
 fi
+AC_SUBST(BUILDFLAGS)
 AC_SUBST(DLLFLAGS)
 AC_SUBST(LDSHARED)
 
@@ -766,6 +770,7 @@ dlls/shell32/Makefile
 dlls/tapi32/Makefile
 dlls/ver/Makefile
 dlls/version/Makefile
+dlls/win87em/Makefile
 dlls/winaspi/Makefile
 dlls/winspool/Makefile
 dlls/wnaspi32/Makefile

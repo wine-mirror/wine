@@ -103,10 +103,10 @@ OBJS = $(C_SRCS:.c=.o) $(GEN_ASM_SRCS:.s=.o) $(ASM_SRCS:.S=.o) $(RC_SRCS:.rc=.o)
 	$(WRC) $(WRCFLAGS) $(WRCEXTRA) -bnh $<
 
 .spec.spec.c:
-	$(BUILD) -o $@ -spec $<
+	$(BUILD) @BUILDFLAGS@ -o $@ -spec $<
 
 .c.glue.s:
-	$(BUILD) -o $@ -glue $<
+	$(BUILD) @BUILDFLAGS@ -o $@ -glue $<
 
 # Rule to rebuild the resource compiler
 

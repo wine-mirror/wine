@@ -12,6 +12,7 @@ SUBDIRS = \
 	tapi32 \
 	ver \
 	version \
+	win87em \
 	winaspi \
 	wnaspi32
 
