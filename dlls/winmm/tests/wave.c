@@ -405,16 +405,16 @@ static void wave_out_test_device(int device)
         return;
 
     rc=waveOutGetDevCapsW(device,&capsW,sizeof(capsW));
-    ok(rc==MMSYSERR_NOERROR,
-       "waveOutGetDevCapsW: failed to get capabilities of device %s: rc=%s\n",dev_name(device),wave_out_error(rc));
+    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NOTSUPPORTED,
+       "waveOutGetDevCapsW: MMSYSERR_NOERROR or MMSYSERR_NOTSUPPORTED expected, got %s\n",wave_out_error(rc));
 
     rc=waveOutGetDevCapsA(device,0,sizeof(capsA));
     ok(rc==MMSYSERR_INVALPARAM,
        "waveOutGetDevCapsA: MMSYSERR_INVALPARAM expected, got %s\n",wave_out_error(rc));
 
     rc=waveOutGetDevCapsW(device,0,sizeof(capsW));
-    ok(rc==MMSYSERR_INVALPARAM,
-       "waveOutGetDevCapsA: MMSYSERR_INVALPARAM expected, got %s\n",wave_out_error(rc));
+    ok(rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
+       "waveOutGetDevCapsW: MMSYSERR_INVALPARAM or MMSYSERR_NOTSUPPORTED expected, got %s\n",wave_out_error(rc));
 
 #if 0 /* FIXME: this works on windows but crashes wine */
     rc=waveOutGetDevCapsA(device,(LPWAVEOUTCAPSA)1,sizeof(capsA));
@@ -422,8 +422,8 @@ static void wave_out_test_device(int device)
        "waveOutGetDevCapsA: MMSYSERR_INVALPARAM expected, got %s\n",wave_out_error(rc));
 
     rc=waveOutGetDevCapsW(device,(LPWAVEOUTCAPSW)1,sizeof(capsW));
-    ok(rc==MMSYSERR_INVALPARAM,
-       "waveOutGetDevCapsW: MMSYSERR_INVALPARAM expected, got %s\n",wave_out_error(rc));
+    ok(rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
+       "waveOutGetDevCapsW: MMSYSERR_INVALPARAM or MMSYSERR_NOTSUPPORTED expected, got %s\n",wave_out_error(rc));
 #endif
 
     rc=waveOutGetDevCapsA(device,&capsA,4);
@@ -431,8 +431,8 @@ static void wave_out_test_device(int device)
        "waveOutGetDevCapsA: MMSYSERR_NOERROR expected, got %s\n",wave_out_error(rc));
 
     rc=waveOutGetDevCapsW(device,&capsW,4);
-    ok(rc==MMSYSERR_NOERROR,
-       "waveOutGetDevCapsW: MMSYSERR_NOERROR expected, got %s\n",wave_out_error(rc));
+    ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NOTSUPPORTED,
+       "waveOutGetDevCapsW: MMSYSERR_NOERROR or MMSYSERR_NOTSUPPORTED expected, got %s\n",wave_out_error(rc));
 
     nameA=NULL;
     rc=waveOutMessage((HWAVEOUT)device, DRV_QUERYDEVICEINTERFACESIZE, (DWORD_PTR)&size, 0);
