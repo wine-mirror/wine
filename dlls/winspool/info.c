@@ -957,7 +957,17 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
  */
 BOOL WINAPI AddMonitorA(LPSTR pName, DWORD Level, LPBYTE pMonitors)
 {
-    FIXME("(%s,%lx,%p):stub!\n", pName, Level, pMonitors);
+    FIXME("(%s,0x%08lx,%p), stub!\n", debugstr_a(pName), Level, pMonitors);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************************
+ *              AddMonitorW        [WINSPOOL.@]
+ */
+BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
+{
+    FIXME("(%s,0x%08lx,%p), stub!\n",debugstr_w(pName), Level, pMonitors);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -975,6 +985,18 @@ DeletePrinterDriverA (LPSTR pName, LPSTR pEnvironment, LPSTR pDriverName)
     return FALSE;
 }
 
+/******************************************************************
+ *              DeletePrinterDriverW        [WINSPOOL.@]
+ *
+ */
+BOOL WINAPI
+DeletePrinterDriverW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pDriverName)
+{
+    FIXME("(%s,%s,%s):stub\n",debugstr_w(pName),debugstr_w(pEnvironment),
+          debugstr_w(pDriverName));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
 
 /******************************************************************
  *              DeleteMonitorA        [WINSPOOL.@]
@@ -989,6 +1011,18 @@ DeleteMonitorA (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
     return FALSE;
 }
 
+/******************************************************************
+ *              DeleteMonitorW        [WINSPOOL.@]
+ *
+ */
+BOOL WINAPI
+DeleteMonitorW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorName)
+{
+    FIXME("(%s,%s,%s):stub\n",debugstr_w(pName),debugstr_w(pEnvironment),
+          debugstr_w(pMonitorName));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
 
 /******************************************************************
  *              DeletePortA        [WINSPOOL.@]
@@ -999,6 +1033,19 @@ DeletePortA (LPSTR pName, HWND hWnd, LPSTR pPortName)
 {
     FIXME("(%s,%p,%s):stub\n",debugstr_a(pName),hWnd,
           debugstr_a(pPortName));
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/******************************************************************
+ *              DeletePortW        [WINSPOOL.@]
+ *
+ */
+BOOL WINAPI
+DeletePortW (LPWSTR pName, HWND hWnd, LPWSTR pPortName)
+{
+    FIXME("(%s,%p,%s):stub\n",debugstr_w(pName),hWnd,
+          debugstr_w(pPortName));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -1080,7 +1127,20 @@ BOOL WINAPI GetPrintProcessorDirectoryA(LPSTR server, LPSTR env,
                                         DWORD level,  LPBYTE Info,
                                         DWORD cbBuf, LPDWORD needed)
 {
-    FIXME("(%s,%s,%ld,%p,0x%08lx): stub\n", server, env, level, Info, cbBuf);
+    FIXME("(%s,%s,%ld,%p,0x%08lx): stub\n", debugstr_a(server), debugstr_a(env),
+          level, Info, cbBuf);
+    return 0;
+}
+
+/*****************************************************************************
+ *          GetPrintProcessorDirectoryW  [WINSPOOL.@]
+ */
+BOOL WINAPI GetPrintProcessorDirectoryW(LPWSTR server, LPWSTR env,
+                                        DWORD level,  LPBYTE Info,
+                                        DWORD cbBuf, LPDWORD needed)
+{
+    FIXME("(%s,%s,%ld,%p,0x%08lx): stub\n", debugstr_w(server), debugstr_w(env),
+          level, Info, cbBuf);
     return 0;
 }
 
@@ -2789,6 +2849,7 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
 
     return TRUE;
 }
+
 /*****************************************************************************
  *          AddPrinterDriverW  [WINSPOOL.@]
  */
@@ -2800,6 +2861,67 @@ BOOL WINAPI AddPrinterDriverW(LPWSTR printerName,DWORD level,
     return FALSE;
 }
 
+/*****************************************************************************
+ *          AddPrintProcessorA  [WINSPOOL.@]
+ */
+BOOL WINAPI AddPrintProcessorA(LPSTR pName, LPSTR pEnvironment, LPSTR pPathName,
+                               LPSTR pPrintProcessorName)
+{
+    FIXME("(%s,%s,%s,%s): stub\n", debugstr_a(pName), debugstr_a(pEnvironment),
+          debugstr_a(pPathName), debugstr_a(pPrintProcessorName));
+    return FALSE;
+}
+
+/*****************************************************************************
+ *          AddPrintProcessorW  [WINSPOOL.@]
+ */
+BOOL WINAPI AddPrintProcessorW(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pPathName,
+                               LPWSTR pPrintProcessorName)
+{
+    FIXME("(%s,%s,%s,%s): stub\n", debugstr_w(pName), debugstr_w(pEnvironment),
+          debugstr_w(pPathName), debugstr_w(pPrintProcessorName));
+    return FALSE;
+}
+
+/*****************************************************************************
+ *          AddPrintProvidorA  [WINSPOOL.@]
+ */
+BOOL WINAPI AddPrintProvidorA(LPSTR pName, DWORD Level, LPBYTE pProviderInfo)
+{
+    FIXME("(%s,0x%08lx,%p): stub\n", debugstr_a(pName), Level, pProviderInfo);
+    return FALSE;
+}
+
+/*****************************************************************************
+ *          AddPrintProvidorW  [WINSPOOL.@]
+ */
+BOOL WINAPI AddPrintProvidorW(LPWSTR pName, DWORD Level, LPBYTE pProviderInfo)
+{
+    FIXME("(%s,0x%08lx,%p): stub\n", debugstr_w(pName), Level, pProviderInfo);
+    return FALSE;
+}
+
+/*****************************************************************************
+ *          AdvancedDocumentPropertiesA  [WINSPOOL.@]
+ */
+LONG WINAPI AdvancedDocumentPropertiesA(HWND hWnd, HANDLE hPrinter, LPSTR pDeviceName,
+                                        PDEVMODEA pDevModeOutput, PDEVMODEA pDevModeInput)
+{
+    FIXME("(%p,%p,%s,%p,%p): stub\n", hWnd, hPrinter, debugstr_a(pDeviceName),
+          pDevModeOutput, pDevModeInput);
+    return 0;
+}
+
+/*****************************************************************************
+ *          AdvancedDocumentPropertiesW  [WINSPOOL.@]
+ */
+LONG WINAPI AdvancedDocumentPropertiesW(HWND hWnd, HANDLE hPrinter, LPWSTR pDeviceName,
+                                        PDEVMODEW pDevModeOutput, PDEVMODEW pDevModeInput)
+{
+    FIXME("(%p,%p,%s,%p,%p): stub\n", hWnd, hPrinter, debugstr_w(pDeviceName),
+          pDevModeOutput, pDevModeInput);
+    return 0;
+}
 
 /*****************************************************************************
  *          PrinterProperties  [WINSPOOL.@]
@@ -3044,7 +3166,7 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
     BOOL retval = TRUE;
 
     TRACE("(%s,%ld,%p,%ld,%p,%p)\n",
-          name,level,buffer,bufsize,bufneeded,bufreturned);
+          debugstr_a(name),level,buffer,bufsize,bufneeded,bufreturned);
 
     switch( level )
     {
@@ -3148,6 +3270,16 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
     return retval;
 }
 
+/******************************************************************************
+ *      EnumPortsW   (WINSPOOL.@)
+ */
+BOOL WINAPI EnumPortsW(LPWSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
+                       LPDWORD bufneeded,LPDWORD bufreturned)
+{
+    FIXME("(%s,%ld,%p,%ld,%p,%p) - stub\n",
+          debugstr_w(name),level,buffer,bufsize,bufneeded,bufreturned);
+    return FALSE;
+}
 
 /******************************************************************************
  *		GetDefaultPrinterW   (WINSPOOL.@)
@@ -3793,9 +3925,18 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
 /******************************************************************************
  *		AddPortA (WINSPOOL.@)
  */
-BOOL WINAPI AddPortA(LPSTR pName ,HWND hWnd, LPSTR pMonitorName)
+BOOL WINAPI AddPortA(LPSTR pName, HWND hWnd, LPSTR pMonitorName)
 {
-    FIXME("(%s, %p, %s\n), stub!\n",pName,hWnd,pMonitorName);
+    FIXME("(%s, %p, %s), stub!\n",debugstr_a(pName),hWnd,debugstr_a(pMonitorName));
+    return FALSE;
+}
+
+/******************************************************************************
+ *      AddPortW (WINSPOOL.@)
+ */
+BOOL WINAPI AddPortW(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
+{
+    FIXME("(%s, %p, %s), stub!\n",debugstr_w(pName),hWnd,debugstr_w(pMonitorName));
     return FALSE;
 }
 
@@ -3820,6 +3961,24 @@ BOOL WINAPI AddPrinterDriverExA( LPSTR pName, DWORD Level,
     FIXME("%s %ld %p %ld\n", debugstr_a(pName),
            Level, pDriverInfo, dwFileCopyFlags);
     SetLastError(ERROR_PRINTER_DRIVER_BLOCKED);
+    return FALSE;
+}
+
+/******************************************************************************
+ *      ConfigurePortA (WINSPOOL.@)
+ */
+BOOL WINAPI ConfigurePortA(LPSTR pName, HWND hWnd, LPSTR pPortName)
+{
+    FIXME("%s %p %s\n", debugstr_a(pName), hWnd, debugstr_a(pPortName));
+    return FALSE;
+}
+
+/******************************************************************************
+ *      ConfigurePortW (WINSPOOL.@)
+ */
+BOOL WINAPI ConfigurePortW(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
+{
+    FIXME("%s %p %s\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
     return FALSE;
 }
 
@@ -3867,6 +4026,46 @@ DWORD WINAPI DeletePrinterDataExA( HANDLE hPrinter, LPCSTR pKeyName,
     return ERROR_INVALID_PARAMETER;
 }
 
+/******************************************************************************
+ *      DeletePrintProcessorA (WINSPOOL.@)
+ */
+BOOL WINAPI DeletePrintProcessorA(LPSTR pName, LPSTR pEnvironment, LPSTR pPrintProcessorName)
+{
+    FIXME("%s %s %s\n", debugstr_a(pName), debugstr_a(pEnvironment),
+          debugstr_a(pPrintProcessorName));
+    return TRUE;
+}
+
+/******************************************************************************
+ *      DeletePrintProcessorW (WINSPOOL.@)
+ */
+BOOL WINAPI DeletePrintProcessorW(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pPrintProcessorName)
+{
+    FIXME("%s %s %s\n", debugstr_w(pName), debugstr_w(pEnvironment),
+          debugstr_w(pPrintProcessorName));
+    return TRUE;
+}
+
+/******************************************************************************
+ *      DeletePrintProvidorA (WINSPOOL.@)
+ */
+BOOL WINAPI DeletePrintProvidorA(LPSTR pName, LPSTR pEnvironment, LPSTR pPrintProviderName)
+{
+    FIXME("%s %s %s\n", debugstr_a(pName), debugstr_a(pEnvironment),
+          debugstr_a(pPrintProviderName));
+    return TRUE;
+}
+
+/******************************************************************************
+ *      DeletePrintProvidorW (WINSPOOL.@)
+ */
+BOOL WINAPI DeletePrintProvidorW(LPWSTR pName, LPWSTR pEnvironment, LPWSTR pPrintProviderName)
+{
+    FIXME("%s %s %s\n", debugstr_w(pName), debugstr_w(pEnvironment),
+          debugstr_w(pPrintProviderName));
+    return TRUE;
+}
+
 /*****************************************************************************
  *          EnumMonitorsA [WINSPOOL.@]
  *
@@ -3909,6 +4108,33 @@ BOOL WINAPI XcvDataW( HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
     return FALSE;
 }
 
+/*****************************************************************************
+ *          EnumPrintProcessorDatatypesA [WINSPOOL.@]
+ *
+ */
+BOOL WINAPI EnumPrintProcessorDatatypesA(LPSTR pName, LPSTR pPrintProcessorName,
+                                         DWORD Level, LPBYTE pDatatypes, DWORD cbBuf,
+                                         LPDWORD pcbNeeded, LPDWORD pcReturned)
+{
+    FIXME("Stub: %s %s %ld %p %ld %p %p\n", debugstr_a(pName),
+          debugstr_a(pPrintProcessorName), Level, pDatatypes, cbBuf,
+          pcbNeeded, pcReturned);
+    return FALSE;
+}
+
+/*****************************************************************************
+ *          EnumPrintProcessorDatatypesW [WINSPOOL.@]
+ *
+ */
+BOOL WINAPI EnumPrintProcessorDatatypesW(LPWSTR pName, LPWSTR pPrintProcessorName,
+                                         DWORD Level, LPBYTE pDatatypes, DWORD cbBuf,
+                                         LPDWORD pcbNeeded, LPDWORD pcReturned)
+{
+    FIXME("Stub: %s %s %ld %p %ld %p %p\n", debugstr_w(pName),
+          debugstr_w(pPrintProcessorName), Level, pDatatypes, cbBuf,
+          pcbNeeded, pcReturned);
+    return FALSE;
+}
 
 /*****************************************************************************
  *          EnumPrintProcessorsA [WINSPOOL.@]
@@ -3932,5 +4158,29 @@ BOOL WINAPI EnumPrintProcessorsW(LPWSTR pName, LPWSTR pEnvironment, DWORD Level,
     FIXME("Stub: %s %s %ld %p %ld %p %p\n", debugstr_w(pName),
         debugstr_w(pEnvironment), Level, pPrintProcessorInfo,
         cbBuf, pcbNeeded, pcbReturned);
+    return FALSE;
+}
+
+/*****************************************************************************
+ *          GetJobA [WINSPOOL.@]
+ *
+ */
+BOOL WINAPI GetJobA(HANDLE hPrinter, DWORD JobId, DWORD Level, LPBYTE pJob,
+                           DWORD cbBuf, LPDWORD pcbNeeded)
+{
+    FIXME("Stub: %p %ld %ld %p %ld %p\n", hPrinter, JobId, Level, pJob,
+          cbBuf, pcbNeeded);
+    return FALSE;
+}
+
+/*****************************************************************************
+ *          GetJobW [WINSPOOL.@]
+ *
+ */
+BOOL WINAPI GetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level, LPBYTE pJob,
+                           DWORD cbBuf, LPDWORD pcbNeeded)
+{
+    FIXME("Stub: %p %ld %ld %p %ld %p\n", hPrinter, JobId, Level, pJob,
+          cbBuf, pcbNeeded);
     return FALSE;
 }
