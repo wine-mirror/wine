@@ -1236,7 +1236,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
     LONG lStyle = infoPtr->dwStyle;
     UINT uView = lStyle & LVS_TYPEMASK;
     POINT Origin, Position, TopLeft;
-    RECT Icon, Boundary, Label;
+    RECT Icon, Boundary, Label, FullText;
     INT nIndent = 0;
 
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return FALSE;
@@ -1380,7 +1380,6 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
       if (infoPtr->himlNormal != NULL)
       {
 	  INT nLabelWidth;
-	  RECT FullText;
 
 	  Label.left = TopLeft.x + Origin.x;
 	  Label.top = TopLeft.y + Origin.y + ICON_TOP_PADDING_HITABLE +
@@ -1404,10 +1403,6 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	  InflateRect(&FullText, 2, 0);
 	  if (lprcLabel) *lprcLabel = Label;
 	  if (lprcText) *lprcText = FullText;
-	  TRACE("hwnd=%x, item=%d, label=(%d,%d)-(%d,%d), fulltext=(%d,%d)-(%d,%d)\n",
-		infoPtr->hwndSelf, nItem,
-		Label.left, Label.top, Label.right, Label.bottom,
-		FullText.left, FullText.top, FullText.right, FullText.bottom);
       }
       else return FALSE;
   }
@@ -1433,9 +1428,6 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
 	  Label.right = nLeftPos + infoPtr->nItemWidth;
       if (lprcLabel) *lprcLabel = Label;
       if (lprcText) *lprcText = Label;
-      TRACE("hwnd=%x, item=%d, label=(%d,%d)-(%d,%d)\n",
-	    infoPtr->hwndSelf, nItem,
-	    Label.left, Label.top, Label.right, Label.bottom);
   }
   else /* LVS_LIST or LVS_REPORT */
   {
@@ -1461,7 +1453,8 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
         if (lprcText) *lprcText = Label;
   }
   
-  TRACE("hwnd=%x, item=%d, label=%s\n", infoPtr->hwndSelf, nItem, debugrect(&Label));
+    TRACE("hwnd=%x, item=%d, label=%s, fulltext=%s\n",
+	  infoPtr->hwndSelf, nItem, debugrect(&Label), debugrect(lprcText));
   
     /***********************************************************/
     /* compute boundary box for the item (ala LVM_GETITEMRECT) */
@@ -2296,6 +2289,8 @@ static void LISTVIEW_SetSelection(LISTVIEW_INFO *infoPtr, INT nItem)
 {
     LVITEMW lvItem;
 
+    TRACE("nItem=%d\n", nItem);
+    
     LISTVIEW_RemoveAllSelections(infoPtr);
 
     lvItem.state = LVIS_FOCUSED | LVIS_SELECTED;
@@ -2485,14 +2480,16 @@ static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
     NMLISTVIEW nmlv;
     INT oldState;
 
-    /* a virtual livst view stores only state for the main item */
+    /* a virtual listview stores only the state for the main item */
     if (lpLVItem->iSubItem || !(lpLVItem->mask & LVIF_STATE)) return FALSE;
 
     oldState = LISTVIEW_GetItemState(infoPtr, lpLVItem->iItem, LVIS_FOCUSED | LVIS_SELECTED);
+    TRACE("oldState=%x, newState=%x, uCallbackMask=%x\n", 
+	  oldState, lpLVItem->state, infoPtr->uCallbackMask);
 
     /* we're done if we don't need to change anything we handle */
-    if ( (oldState ^ lpLVItem->state) & lpLVItem->stateMask &
-         ~infoPtr->uCallbackMask & (LVIS_FOCUSED | LVIS_SELECTED)) return FALSE;
+    if ( !((oldState ^ lpLVItem->state) & lpLVItem->stateMask &
+           ~infoPtr->uCallbackMask & (LVIS_FOCUSED | LVIS_SELECTED))) return TRUE;
 
     /*
      * As per MSDN LVN_ITEMCHANGING notifications are _NOT_ sent for
@@ -2517,7 +2514,7 @@ static BOOL set_owner_item(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL isW)
 	    add_selection_range(infoPtr, lpLVItem->iItem, lpLVItem->iItem, TRUE);
         }
         else
-	remove_selection_range(infoPtr, lpLVItem->iItem, lpLVItem->iItem, TRUE);
+	    remove_selection_range(infoPtr, lpLVItem->iItem, lpLVItem->iItem, TRUE);
     }
 
     /* notify the parent now that things have changed */
@@ -3267,7 +3264,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     }
     
     /* Get scroll info once before loop */
-    LISTVIEW_GetOrigin(infoPtr, &ptOrig);
+    if (!LISTVIEW_GetOrigin(infoPtr, &ptOrig)) return;
     
     /* we now narrow the columns as well */
     nLastCol = nColumnCount - 1;
@@ -3315,7 +3312,8 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
             item.mask = LVIF_PARAM | LVIF_STATE;
 	    item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
 	    if (!LISTVIEW_GetItemW(infoPtr, &item, TRUE)) continue;
-	    
+	   
+	    ZeroMemory(&dis, sizeof(dis)); 
             dis.hwndItem = infoPtr->hwndSelf;
             dis.hDC = hdc;
             dis.CtlType = ODT_LISTVIEW;
@@ -3323,7 +3321,6 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
             dis.itemID = nItem;
             dis.itemAction = ODA_DRAWENTIRE;
             dis.itemData = item.lParam;
-            dis.itemState = 0;
             if (item.state & LVIS_SELECTED) dis.itemState |= ODS_SELECTED;
             if (item.state & LVIS_FOCUSED) dis.itemState |= ODS_FOCUS;
             dis.rcItem.left = lpCols[0].rc.left;
@@ -3333,7 +3330,7 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
             OffsetRect(&dis.rcItem, ptOrig.x, 0);
 
 	    TRACE("item=%s, rcItem=%s\n", debuglvitem_t(&item, TRUE), debugrect(&dis.rcItem));
-            if (SendMessageW(GetParent(infoPtr->hwndSelf), WM_DRAWITEM, uID, (LPARAM)&dis))
+            if (SendMessageW(GetParent(infoPtr->hwndSelf), WM_DRAWITEM, dis.CtlID, (LPARAM)&dis))
 		continue;
         }
 	
@@ -3481,7 +3478,7 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, BOOL bSmall, D
   if(GETITEMCOUNT(infoPtr) == 0)
     return;
 
-  LISTVIEW_GetOrigin(infoPtr, &ptOrigin);
+  if (!LISTVIEW_GetOrigin(infoPtr, &ptOrigin)) return;
 
   GetClipBox(hdc, &rcClip);
 
@@ -4746,7 +4743,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	}
 
 	/* we store only a little state, so if we're not asked, we're done */
-	if (!(lpLVItem->mask & LVIF_STATE) || lpLVItem->iSubItem) return FALSE;
+	if (!(lpLVItem->mask & LVIF_STATE) || lpLVItem->iSubItem) return TRUE;
 
 	/* if focus is handled by us, report it */
 	if ( !(infoPtr->uCallbackMask & LVIS_FOCUSED) ) 
@@ -6790,28 +6787,26 @@ static BOOL LISTVIEW_SetItemPosition(LISTVIEW_INFO *infoPtr, INT nItem,
  */
 static LRESULT LISTVIEW_SetItemState(LISTVIEW_INFO *infoPtr, INT nItem, LPLVITEMW lpLVItem)
 {
-  BOOL bResult = TRUE;
-  LVITEMW lvItem;
+    BOOL bResult = TRUE;
+    LVITEMW lvItem;
 
-  TRACE("(nItem=%d, state=%x, stateMask=%x)\n", nItem, lpLVItem->state,
-        lpLVItem->stateMask);
+    lvItem.iItem = nItem;
+    lvItem.iSubItem = 0;
+    lvItem.mask = LVIF_STATE;
+    lvItem.state = lpLVItem->state;
+    lvItem.stateMask = lpLVItem->stateMask;
+    TRACE("lvItem=%s\n", debuglvitem_t(&lvItem, TRUE));
 
-  lvItem.iItem = nItem;
-  lvItem.iSubItem = 0;
-  lvItem.mask = LVIF_STATE;
-  lvItem.state = lpLVItem->state;
-  lvItem.stateMask = lpLVItem->stateMask;
+    if (nItem == -1)
+    {
+    	/* apply to all items */
+    	for (lvItem.iItem = 0; lvItem.iItem < GETITEMCOUNT(infoPtr); lvItem.iItem++)
+	    if (!LISTVIEW_SetItemT(infoPtr, &lvItem, TRUE)) bResult = FALSE;
+    }
+    else
+	bResult = LISTVIEW_SetItemT(infoPtr, &lvItem, TRUE);
 
-  if (nItem == -1)
-  {
-    /* apply to all items */
-    for (lvItem.iItem = 0; lvItem.iItem < GETITEMCOUNT(infoPtr); lvItem.iItem++)
-      if (!LISTVIEW_SetItemT(infoPtr, &lvItem, TRUE)) bResult = FALSE;
-  }
-  else
-    bResult = LISTVIEW_SetItemT(infoPtr, &lvItem, TRUE);
-
-  return bResult;
+    return bResult;
 }
 
 /***
