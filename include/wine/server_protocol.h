@@ -2874,6 +2874,7 @@ struct set_hook_request
     thread_id_t    tid;
     void*          proc;
     int            unicode;
+    /* VARARG(module,unicode_str); */
 };
 struct set_hook_reply
 {
@@ -2908,6 +2909,7 @@ struct start_hook_chain_reply
     user_handle_t  handle;
     void*          proc;
     int            unicode;
+    /* VARARG(module,unicode_str); */
 };
 
 
@@ -2937,6 +2939,7 @@ struct get_next_hook_reply
     void*          proc;
     int            prev_unicode;
     int            next_unicode;
+    /* VARARG(module,unicode_str); */
 };
 
 
@@ -3463,6 +3466,6 @@ union generic_reply
     struct get_next_hook_reply get_next_hook_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 89
+#define SERVER_PROTOCOL_VERSION 90
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

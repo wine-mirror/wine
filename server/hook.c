@@ -41,6 +41,8 @@ struct hook
     int                 index;    /* hook table index */
     void               *proc;     /* hook function */
     int                 unicode;  /* is it a unicode hook? */
+    WCHAR              *module;   /* module name for global hooks */
+    size_t              module_size;
 };
 
 #define NB_HOOKS (WH_MAXHOOK-WH_MINHOOK+1)
@@ -74,6 +76,8 @@ static const struct object_ops hook_table_ops =
 };
 
 
+static struct hook_table *global_hooks;
+
 /* create a new hook table */
 static struct hook_table *alloc_hook_table(void)
 {
@@ -95,12 +99,13 @@ static struct hook_table *alloc_hook_table(void)
 static struct hook *add_hook( struct thread *thread, int index )
 {
     struct hook *hook;
-    struct hook_table *table = thread->hooks;
+    struct hook_table *table = thread ? thread->hooks : global_hooks;
 
     if (!table)
     {
         if (!(table = alloc_hook_table())) return NULL;
-        thread->hooks = table;
+        if (thread) thread->hooks = table;
+        else global_hooks = table;
     }
     if (!(hook = mem_alloc( sizeof(*hook) ))) return NULL;
 
@@ -119,6 +124,7 @@ static struct hook *add_hook( struct thread *thread, int index )
 static void free_hook( struct hook *hook )
 {
     free_user_handle( hook->handle );
+    if (hook->module) free( hook->module );
     if (hook->thread) release_object( hook->thread );
     list_remove( &hook->chain );
     free( hook );
@@ -144,7 +150,7 @@ static struct hook *find_hook( struct thread *thread, int index, void *proc )
 /* get the hook table that a given hook belongs to */
 inline static struct hook_table *get_table( struct hook *hook )
 {
-    return hook->thread->hooks;
+    return hook->thread ? hook->thread->hooks : global_hooks;
 }
 
 /* get the first hook in the chain */
@@ -154,23 +160,37 @@ inline static struct hook *get_first_hook( struct hook_table *table, int index )
     return elem ? HOOK_ENTRY( elem ) : NULL;
 }
 
+/* find the first non-deleted hook in the chain */
+inline static struct hook *get_first_valid_hook( struct hook_table *table, int index )
+{
+    struct hook *hook = get_first_hook( table, index );
+    while (hook && !hook->proc)
+        hook = HOOK_ENTRY( list_next( &table->hooks[index], &hook->chain ) );
+    return hook;
+}
+
 /* find the next hook in the chain, skipping the deleted ones */
 static struct hook *get_next_hook( struct hook *hook )
 {
     struct hook_table *table = get_table( hook );
-    struct hook *next;
+    int index = hook->index;
 
-    while ((next = HOOK_ENTRY( list_next( &table->hooks[hook->index], &hook->chain ) )))
+    while ((hook = HOOK_ENTRY( list_next( &table->hooks[index], &hook->chain ) )))
     {
-        if (next->proc) break;
+        if (hook->proc) return hook;
     }
-    return next;
+    if (global_hooks && table != global_hooks)  /* now search through the global table */
+    {
+        hook = get_first_valid_hook( global_hooks, index );
+    }
+    return hook;
 }
 
 static void hook_table_dump( struct object *obj, int verbose )
 {
-/*    struct hook_table *table = (struct hook_table *)obj; */
-    fprintf( stderr, "Hook table\n" );
+    struct hook_table *table = (struct hook_table *)obj;
+    if (table == global_hooks) fprintf( stderr, "Global hook table\n" );
+    else fprintf( stderr, "Hook table\n" );
 }
 
 static void hook_table_destroy( struct object *obj )
@@ -183,6 +203,12 @@ static void hook_table_destroy( struct object *obj )
     {
         while ((hook = get_first_hook( table, i )) != NULL) free_hook( hook );
     }
+}
+
+/* free the global hooks table */
+void close_global_hooks(void)
+{
+    if (global_hooks) release_object( global_hooks );
 }
 
 /* remove a hook, freeing it if the chain is not in use */
@@ -221,22 +247,41 @@ DECL_HANDLER(set_hook)
 {
     struct thread *thread;
     struct hook *hook;
+    WCHAR *module;
+    size_t module_size = get_req_data_size();
 
     if (!req->proc || req->id < WH_MINHOOK || req->id > WH_MAXHOOK)
     {
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-    if (!req->tid) thread = (struct thread *)grab_object( current );
-    else if (!(thread = get_thread_from_id( req->tid ))) return;
+    if (!req->tid)
+    {
+        if (!module_size)
+        {
+            set_error( STATUS_INVALID_PARAMETER );
+            return;
+        }
+        if (!(module = memdup( get_req_data(), module_size ))) return;
+        thread = NULL;
+    }
+    else
+    {
+        module = NULL;
+        if (!(thread = get_thread_from_id( req->tid ))) return;
+    }
 
     if ((hook = add_hook( thread, req->id - WH_MINHOOK )))
     {
-        hook->proc    = req->proc;
-        hook->unicode = req->unicode;
+        hook->proc        = req->proc;
+        hook->unicode     = req->unicode;
+        hook->module      = module;
+        hook->module_size = module_size;
         reply->handle = hook->handle;
     }
-    release_object( thread );
+    else if (module) free( module );
+
+    if (thread) release_object( thread );
 }
 
 
@@ -271,12 +316,19 @@ DECL_HANDLER(start_hook_chain)
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-    if (!table) return;  /* no hook set */
-    if (!(hook = get_first_hook( table, req->id - WH_MINHOOK ))) return;  /* no hook set */
+
+    if (!table || !(hook = get_first_valid_hook( table, req->id - WH_MINHOOK )))
+    {
+        /* try global table */
+        if (!(table = global_hooks) ||
+            !(hook = get_first_valid_hook( global_hooks, req->id - WH_MINHOOK )))
+            return;  /* no hook set */
+    }
     reply->handle  = hook->handle;
     reply->proc    = hook->proc;
     reply->unicode = hook->unicode;
     table->counts[hook->index]++;
+    if (hook->module) set_reply_data( hook->module, hook->module_size );
 }
 
 
@@ -292,6 +344,7 @@ DECL_HANDLER(finish_hook_chain)
         return;
     }
     if (table) release_hook_chain( table, index );
+    if (global_hooks) release_hook_chain( global_hooks, index );
 }
 
 
@@ -301,7 +354,7 @@ DECL_HANDLER(get_next_hook)
     struct hook *hook, *next;
 
     if (!(hook = get_user_object( req->handle, USER_HOOK ))) return;
-    if (hook->thread != current)
+    if (hook->thread && (hook->thread != current))
     {
         set_error( STATUS_INVALID_HANDLE );
         return;
@@ -313,5 +366,6 @@ DECL_HANDLER(get_next_hook)
         reply->proc = next->proc;
         reply->prev_unicode = hook->unicode;
         reply->next_unicode = next->unicode;
+        if (hook->module) set_reply_data( hook->module, hook->module_size );
     }
 }

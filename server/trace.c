@@ -2287,7 +2287,9 @@ static void dump_set_hook_request( const struct set_hook_request *req )
     fprintf( stderr, " id=%d,", req->id );
     fprintf( stderr, " tid=%08x,", req->tid );
     fprintf( stderr, " proc=%p,", req->proc );
-    fprintf( stderr, " unicode=%d", req->unicode );
+    fprintf( stderr, " unicode=%d,", req->unicode );
+    fprintf( stderr, " module=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_set_hook_reply( const struct set_hook_reply *req )
@@ -2311,7 +2313,9 @@ static void dump_start_hook_chain_reply( const struct start_hook_chain_reply *re
 {
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " proc=%p,", req->proc );
-    fprintf( stderr, " unicode=%d", req->unicode );
+    fprintf( stderr, " unicode=%d,", req->unicode );
+    fprintf( stderr, " module=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static void dump_finish_hook_chain_request( const struct finish_hook_chain_request *req )
@@ -2330,7 +2334,9 @@ static void dump_get_next_hook_reply( const struct get_next_hook_reply *req )
     fprintf( stderr, " id=%d,", req->id );
     fprintf( stderr, " proc=%p,", req->proc );
     fprintf( stderr, " prev_unicode=%d,", req->prev_unicode );
-    fprintf( stderr, " next_unicode=%d", req->next_unicode );
+    fprintf( stderr, " next_unicode=%d,", req->next_unicode );
+    fprintf( stderr, " module=" );
+    dump_varargs_unicode_str( cur_size );
 }
 
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {

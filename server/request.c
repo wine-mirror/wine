@@ -51,6 +51,7 @@
 #include "handle.h"
 #include "thread.h"
 #include "process.h"
+#include "user.h"
 #define WANT_REQUEST_HANDLERS
 #include "request.h"
 
@@ -742,6 +743,7 @@ static void close_socket_timeout( void *arg )
 #ifdef DEBUG_OBJECTS
     /* shut down everything properly */
     release_object( master_socket );
+    close_global_hooks();
     close_global_handles();
     close_registry();
     close_atom_table();

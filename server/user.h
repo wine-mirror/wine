@@ -42,6 +42,10 @@ extern user_handle_t get_user_full_handle( user_handle_t handle );
 extern void *free_user_handle( user_handle_t handle );
 extern void *next_user_handle( user_handle_t *handle, enum user_object type );
 
+/* hook functions */
+
+extern void close_global_hooks(void);
+
 /* queue functions */
 
 extern void free_msg_queue( struct thread *thread );

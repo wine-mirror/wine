@@ -69,6 +69,7 @@
 #include "queue.h"
 #include "win.h"
 #include "wine/server.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hook);
@@ -103,6 +104,7 @@ static const char * const hook_names[WH_MAXHOOK - WH_MINHOOK + 1] =
 static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid, BOOL unicode )
 {
     HHOOK handle = 0;
+    WCHAR module[MAX_PATH];
 
     if (tid)  /* thread-local hook */
     {
@@ -116,23 +118,29 @@ static HHOOK set_windows_hook( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid,
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
+        inst = 0;
     }
     else  /* system-global hook */
     {
-        if (!inst)
+        if (!inst || !GetModuleFileNameW( inst, module, MAX_PATH ))
         {
             SetLastError( ERROR_INVALID_PARAMETER );
             return 0;
         }
-        FIXME( "system hook %s won't work right\n", hook_names[id-WH_MINHOOK] );
     }
 
     SERVER_START_REQ( set_hook )
     {
         req->id      = id;
         req->tid     = tid;
-        req->proc    = proc;
         req->unicode = unicode;
+        if (inst) /* make proc relative to the module base */
+        {
+            req->proc = (void *)((char *)proc - (char *)inst);
+            wine_server_add_data( req, module, strlenW(module) * sizeof(WCHAR) );
+        }
+        else req->proc = proc;
+
         if (!wine_server_call_err( req )) handle = reply->handle;
     }
     SERVER_END_REQ;
@@ -229,6 +237,25 @@ static LRESULT call_hook( HOOKPROC proc, INT id, INT code, WPARAM wparam, LPARAM
 
 
 /***********************************************************************
+ *		get_hook_proc
+ *
+ * Retrieve the hook procedure real value for a module-relative proc
+ */
+static HOOKPROC get_hook_proc( HOOKPROC proc, const WCHAR *module )
+{
+    HMODULE mod;
+
+    if (!(mod = GetModuleHandleW(module)))
+    {
+        TRACE( "loading %s\n", debugstr_w(module) );
+        /* FIXME: the library will never be freed */
+        if (!(mod = LoadLibraryW(module))) return NULL;
+    }
+    return (HOOKPROC)((char *)mod + (ULONG_PTR)proc);
+}
+
+
+/***********************************************************************
  *		HOOK_CallHooks
  */
 LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode )
@@ -236,17 +263,19 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
     MESSAGEQUEUE *queue = QUEUE_Current();
     HOOKPROC proc = NULL;
     HHOOK prev;
+    WCHAR module[MAX_PATH];
     BOOL unicode_hook = FALSE;
     LRESULT ret = 0;
-    int locks;
 
     if (!queue) return 0;
     prev = queue->hook;
     SERVER_START_REQ( start_hook_chain )
     {
         req->id = id;
+        wine_server_set_reply( req, module, sizeof(module)-sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
         {
+            module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
             queue->hook = reply->handle;
             proc = reply->proc;
             unicode_hook = reply->unicode;
@@ -256,12 +285,15 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
 
     if (proc)
     {
-        TRACE( "calling hook %p %s code %x wp %x lp %lx\n",
-               proc, hook_names[id-WH_MINHOOK], code, wparam, lparam );
+        TRACE( "calling hook %p %s code %x wp %x lp %lx module %s\n",
+               proc, hook_names[id-WH_MINHOOK], code, wparam, lparam, debugstr_w(module) );
 
-        locks = WIN_SuspendWndsLock();
-        ret = call_hook( proc, id, code, wparam, lparam, unicode, unicode_hook );
-        WIN_RestoreWndsLock( locks );
+        if (!module[0] || (proc = get_hook_proc( proc, module )) != NULL)
+        {
+            int locks = WIN_SuspendWndsLock();
+            ret = call_hook( proc, id, code, wparam, lparam, unicode, unicode_hook );
+            WIN_RestoreWndsLock( locks );
+        }
 
         SERVER_START_REQ( finish_hook_chain )
         {
@@ -367,6 +399,7 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
 {
     MESSAGEQUEUE *queue = QUEUE_Current();
     HHOOK prev;
+    WCHAR module[MAX_PATH];
     HOOKPROC proc = NULL;
     INT id = 0;
     BOOL prev_unicode = FALSE, next_unicode = FALSE;
@@ -377,8 +410,10 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
     SERVER_START_REQ( get_next_hook )
     {
         req->handle = prev;
+        wine_server_set_reply( req, module, sizeof(module)-sizeof(WCHAR) );
         if (!wine_server_call_err( req ))
         {
+            module[wine_server_reply_size(req) / sizeof(WCHAR)] = 0;
             queue->hook  = reply->next;
             id           = reply->id;
             proc         = reply->proc;
@@ -387,12 +422,14 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wparam, LPARAM lpar
         }
     }
     SERVER_END_REQ;
+
     if (proc)
     {
-        TRACE( "calling hook %p %s code %x wp %x lp %lx\n",
-               proc, hook_names[id-WH_MINHOOK], code, wparam, lparam );
+        TRACE( "calling hook %p %s code %x wp %x lp %lx module %s\n",
+               proc, hook_names[id-WH_MINHOOK], code, wparam, lparam, debugstr_w(module) );
 
-        return call_hook( proc, id, code, wparam, lparam, prev_unicode, next_unicode );
+        if (!module[0] || (proc = get_hook_proc( proc, module )) != NULL)
+            return call_hook( proc, id, code, wparam, lparam, prev_unicode, next_unicode );
     }
     queue->hook = prev;
     return ret;
