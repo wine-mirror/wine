@@ -120,6 +120,17 @@ static BYTE vga_index_3ce;
 static BYTE vga_index_3d4;
 static BOOL vga_address_3c0 = TRUE;
 
+/*
+ * This mutex is used to protect VGA state during asynchronous
+ * screen updates (see VGA_Poll). It makes sure that VGA state changes
+ * are atomic and the user interface is protected from flicker and
+ * corruption.
+ *
+ * The mutex actually serializes VGA operations and the screen update. 
+ * Which means that whenever VGA_Poll occurs, application stalls if it 
+ * tries to modify VGA state. This is not how real VGA adapters work,
+ * but it makes timing and correctness issues much easier to deal with.
+ */
 static CRITICAL_SECTION vga_lock = CRITICAL_SECTION_INIT("VGA");
 
 typedef HRESULT (WINAPI *DirectDrawCreateProc)(LPGUID,LPDIRECTDRAW *,LPUNKNOWN);
@@ -549,6 +560,8 @@ void VGA_SetWindowStart(int start)
     if(start == vga_fb_window)
         return;
 
+    EnterCriticalSection(&vga_lock);
+
     if(vga_fb_window == -1)
         FIXME("Remove VGA memory emulation.\n");
     else
@@ -560,6 +573,8 @@ void VGA_SetWindowStart(int start)
         FIXME("Install VGA memory emulation.\n");
     else
         memmove( (char *)0xa0000, vga_fb_data + vga_fb_window, 64 * 1024);
+
+    LeaveCriticalSection(&vga_lock);
 }
 
 /*
@@ -689,13 +704,6 @@ void VGA_SetCursorPos(unsigned X,unsigned Y)
 {
     vga_text_x = X;
     vga_text_y = Y;
-
-    if (vga_text_console) {
-        COORD pos;
-        pos.X = X;
-        pos.Y = Y;
-        SetConsoleCursorPosition(VGA_AlphaConsole(),pos);
-    }
 }
 
 void VGA_GetCursorPos(unsigned*X,unsigned*Y)
@@ -704,54 +712,20 @@ void VGA_GetCursorPos(unsigned*X,unsigned*Y)
     if (Y) *Y = vga_text_y;
 }
 
-static void VGA_PutCharAt(unsigned x, unsigned y, BYTE ascii, BYTE attr)
+static void VGA_PutCharAt(unsigned x, unsigned y, BYTE ascii, int attr)
 {
-    char *dat;
-
-    dat = VGA_AlphaBuffer() + ((vga_text_width * y + x) * 2);
+    char *dat = VGA_AlphaBuffer() + ((vga_text_width * y + x) * 2);
     dat[0] = ascii;
-    dat[1] = attr;
-    
-    dat = vga_text_old + ((vga_text_width * y + x) * 2);
-    dat[0] = ascii;
-    dat[1] = attr;
+    if (attr>=0)
+        dat[1] = attr;
 }
 
 void VGA_WriteChars(unsigned X,unsigned Y,unsigned ch,int attr,int count)
 {
-    CHAR_INFO info;
-    COORD siz, off;
-    SMALL_RECT dest;
-
     EnterCriticalSection(&vga_lock);
 
-    info.Char.AsciiChar = ch;
-    info.Attributes = (WORD)attr;
-    siz.X = 1;
-    siz.Y = 1;
-    off.X = 0;
-    off.Y = 0;
-    dest.Top=Y;
-    dest.Bottom=Y;
-
-    while (count--) {
-        BYTE realattr;
-
-        if (attr < 0) {
-            char *dat = VGA_AlphaBuffer() + ((vga_text_width * Y + X + count) * 2);
-            realattr = dat[1];
-        } else
-            realattr = attr;
-
-        VGA_PutCharAt(X + count, Y, ch, realattr);
-
-        if (vga_text_console) {
-            dest.Left = X + count;
-            dest.Right = X + count;
-            info.Attributes= realattr;
-            WriteConsoleOutputA(VGA_AlphaConsole(), &info, siz, off, &dest);
-        }
-    }
+    while (count--) 
+        VGA_PutCharAt(X + count, Y, ch, attr);
 
     LeaveCriticalSection(&vga_lock);
 }
@@ -791,19 +765,11 @@ void VGA_PutChar(BYTE ascii)
      * FIXME: add line wrapping and scrolling
      */
 
-    WriteFile(VGA_AlphaConsole(), &ascii, 1, NULL, NULL);
-
     /*
-     * The following is just a sanity check.
+     * If we don't have a console, write directly to standard output.
      */
-    if(vga_text_console) {
-        CONSOLE_SCREEN_BUFFER_INFO info;
-        GetConsoleScreenBufferInfo( VGA_AlphaConsole(), &info );
-
-        if( info.dwCursorPosition.X != vga_text_x || 
-            info.dwCursorPosition.Y != vga_text_y)
-            WARN("VGA emulator and text console have become unsynchronized.\n");
-    }
+    if(!vga_text_console)
+        WriteFile(VGA_AlphaConsole(), &ascii, 1, NULL, NULL);
 
     LeaveCriticalSection(&vga_lock);
 }
@@ -811,32 +777,19 @@ void VGA_PutChar(BYTE ascii)
 void VGA_SetTextAttribute(BYTE attr)
 {
     vga_text_attr = attr;
-    if(vga_text_console)
-        SetConsoleTextAttribute(VGA_AlphaConsole(), attr);
 }
 
 void VGA_ClearText(unsigned row1, unsigned col1,
-                  unsigned row2, unsigned col2,
-                  BYTE attr)
+                   unsigned row2, unsigned col2,
+                   BYTE attr)
 {
     unsigned x, y;
 
     EnterCriticalSection(&vga_lock);
 
-    for(y=row1; y<=row2; y++) {
-        if(vga_text_console) {
-            HANDLE con = VGA_AlphaConsole();
-            COORD off;
-
-            off.X = col1;
-            off.Y = y;        
-            FillConsoleOutputCharacterA(con, ' ', col2-col1+1, off, NULL);
-            FillConsoleOutputAttribute(con, attr, col2-col1+1, off, NULL);
-        }
-
+    for(y=row1; y<=row2; y++)
         for(x=col1; x<=col2; x++)
             VGA_PutCharAt(x, y, ' ', attr);
-    }
 
     LeaveCriticalSection(&vga_lock);
 }
@@ -913,12 +866,18 @@ static void VGA_Poll_Text(void)
     COORD siz, off;
     SMALL_RECT dest;
     HANDLE con = VGA_AlphaConsole();
-    BOOL linechanged = FALSE; /* video memory area differs from stored copy ? */
+    BOOL linechanged = FALSE; /* video memory area differs from stored copy? */
+
+    /* Synchronize cursor position. */
+    off.X = vga_text_x;
+    off.Y = vga_text_y;
+    SetConsoleCursorPosition(con,off);
 
     dat = VGA_AlphaBuffer();
     old = vga_text_old; /* pointer to stored video mem copy */
     siz.X = vga_text_width; siz.Y = 1;
     off.X = 0; off.Y = 0;
+
     /* copy from virtual VGA frame buffer to console */
     for (Y=0; Y<vga_text_height; Y++) {
 	linechanged = memcmp(dat, old, vga_text_width*2);
@@ -946,19 +905,18 @@ static void VGA_Poll_Text(void)
 
 static void CALLBACK VGA_Poll( LPVOID arg, DWORD low, DWORD high )
 {
-    if(!TryEnterCriticalSection(&vga_lock))
-        return;
+    EnterCriticalSection(&vga_lock);
 
-    if (lpddraw) {
+    if (lpddraw)
         VGA_Poll_Graphics();
-    } else {
+    else
         VGA_Poll_Text();
-    }
 
     /*
      * Fake start of retrace.
      */
     vga_retrace_vertical = TRUE;
+
     LeaveCriticalSection(&vga_lock);
 }
 
