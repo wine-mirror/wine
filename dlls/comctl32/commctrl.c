@@ -1211,7 +1211,7 @@ BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR u
    if (!stack)
       return FALSE;
 
-   if ((stack->stacknum == stack->stackpos == 1) && !stack->stacknew) {
+   if ((stack->stacknum == 1) && (stack->stackpos == 1) && !stack->stacknew) {
       TRACE("Last Subclass removed, cleaning up\n");
       /* clean up our heap and reset the origional window procedure */
       if (IsWindowUnicode (hWnd))
@@ -1299,7 +1299,7 @@ LRESULT WINAPI DefSubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 
    /* If we removed the last entry in our stack while a window procedure was
     * running then we have to clean up */
-   if (stack->stackpos == stack->stacknum == 0) {
+   if ((stack->stackpos == 0) && (stack->stacknum == 0)) {
       TRACE("Last Subclass removed, cleaning up\n");
       /* clean up our heap and reset the origional window procedure */
       if (IsWindowUnicode (hWnd))
