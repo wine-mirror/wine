@@ -44,6 +44,109 @@ static const WCHAR szServiceManagerKey[] = { 'S','y','s','t','e','m','\\',
       'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
       'S','e','r','v','i','c','e','s','\\',0 };
 
+/******************************************************************************
+ * SC_HANDLEs
+ */
+
+#define MAX_SERVICE_NAME 256
+
+typedef enum { SC_HTYPE_MANAGER, SC_HTYPE_SERVICE } SC_HANDLE_TYPE;
+
+struct sc_handle;
+
+struct sc_manager       /* SCM handle */
+{
+    HKEY hkey_scm_db;   /* handle to services database in the registry */
+    LONG ref_count;     /* handle must remain alive until any related service */
+                        /* handle exists because DeleteService requires it */
+};
+
+struct sc_service       /* service handle */
+{
+    HKEY hkey;          /* handle to service entry in the registry (under hkey_scm_db) */
+    struct sc_handle *sc_manager;  /* pointer to SCM handle */
+    WCHAR name[ MAX_SERVICE_NAME ];
+};
+
+struct sc_handle
+{
+    SC_HANDLE_TYPE htype;
+    union
+    {
+        struct sc_manager manager;
+        struct sc_service service;
+    } u;
+};
+
+static struct sc_handle* alloc_sc_handle( SC_HANDLE_TYPE htype )
+{
+    struct sc_handle *retval;
+
+    retval = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct sc_handle) );
+    if( retval != NULL )
+    {
+        retval->htype = htype;
+    }
+    TRACE("SC_HANDLE type=%d -> %p\n",htype,retval);
+    return retval;
+}
+
+static void free_sc_handle( struct sc_handle* handle )
+{
+    switch( handle->htype )
+    {
+        case SC_HTYPE_MANAGER:
+        {
+            if( InterlockedDecrement( &handle->u.manager.ref_count ) )
+                /* there are references to this handle */
+                return;
+
+            if( handle->u.manager.hkey_scm_db )
+                RegCloseKey( handle->u.manager.hkey_scm_db );
+            break;
+        }
+
+        case SC_HTYPE_SERVICE:
+        {
+            struct sc_handle *h = handle->u.service.sc_manager;
+
+            if( h )
+            {
+                /* release SCM handle */
+                if( 0 == InterlockedDecrement( &h->u.manager.ref_count ) )
+                {
+                    /* it's time to destroy SCM handle */
+                    if( h->u.manager.hkey_scm_db )
+                        RegCloseKey( h->u.manager.hkey_scm_db );
+                    
+                    TRACE("SC_HANDLE (SCM) %p type=%d\n",h,h->htype);
+                    
+                    HeapFree( GetProcessHeap(), 0, h );
+                }
+            }
+            if( handle->u.service.hkey )
+                RegCloseKey( handle->u.service.hkey );
+            break;
+        }
+    }
+
+    TRACE("SC_HANDLE %p type=%d\n",handle,handle->htype);
+
+    HeapFree( GetProcessHeap(), 0, handle );
+}
+
+static void init_service_handle( struct sc_handle* handle,
+                                 struct sc_handle* sc_manager,
+                                 HKEY hKey, LPCWSTR lpServiceName )
+{
+    /* init sc_service structure */
+    handle->u.service.hkey = hKey;
+    lstrcpynW( handle->u.service.name, lpServiceName, MAX_SERVICE_NAME );
+
+    /* add reference to SCM handle */
+    InterlockedIncrement( &sc_manager->u.manager.ref_count );
+    handle->u.service.sc_manager = sc_manager;
+}
 
 /******************************************************************************
  * EnumServicesStatusA [ADVAPI32.@]
@@ -274,7 +377,8 @@ SC_HANDLE WINAPI OpenSCManagerA( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
 SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
                                  DWORD dwDesiredAccess )
 {
-    HKEY hReg, hKey = NULL;
+    struct sc_handle *retval;
+    HKEY hReg;
     LONG r;
 
     TRACE("(%s,%s,0x%08lx)\n", debugstr_w(lpMachineName),
@@ -286,16 +390,28 @@ SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
      * docs, but what if it isn't?
      */
 
+    retval = alloc_sc_handle( SC_HTYPE_MANAGER );
+    if( NULL == retval ) return NULL;
+
+    retval->u.manager.ref_count = 1;
+
     r = RegConnectRegistryW(lpMachineName,HKEY_LOCAL_MACHINE,&hReg);
-    if (r==ERROR_SUCCESS)
-    {
-        r = RegOpenKeyExW(hReg, szServiceManagerKey,0, dwDesiredAccess, &hKey );
-        RegCloseKey( hReg );
-    }
+    if (r!=ERROR_SUCCESS)
+        goto error;
 
-    TRACE("returning %p\n", hKey);
+    r = RegOpenKeyExW(hReg, szServiceManagerKey,
+                      0, KEY_ALL_ACCESS, &retval->u.manager.hkey_scm_db);
+    RegCloseKey( hReg );
+    if (r!=ERROR_SUCCESS)
+        goto error;
 
-    return hKey;
+    TRACE("returning %p\n", retval);
+
+    return (SC_HANDLE) retval;
+
+error:
+    free_sc_handle( retval );
+    return NULL;
 }
 
 
@@ -353,7 +469,7 @@ CloseServiceHandle( SC_HANDLE hSCObject )
 {
     TRACE("(%p)\n", hSCObject);
 
-    RegCloseKey(hSCObject);
+    free_sc_handle( (struct sc_handle*) hSCObject );
 
     return TRUE;
 }
@@ -397,19 +513,31 @@ SC_HANDLE WINAPI OpenServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
 SC_HANDLE WINAPI OpenServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                                DWORD dwDesiredAccess)
 {
+    struct sc_handle *hscm = hSCManager;
+    struct sc_handle *retval;
     HKEY hKey;
     long r;
 
     TRACE("(%p,%p,%ld)\n",hSCManager, lpServiceName,
           dwDesiredAccess);
 
-    r = RegOpenKeyExW(hSCManager, lpServiceName, 0, KEY_ALL_ACCESS, &hKey );
+    retval = alloc_sc_handle( SC_HTYPE_SERVICE );
+    if( NULL == retval )
+        return NULL;
+
+    r = RegOpenKeyExW( hscm->u.manager.hkey_scm_db,
+                       lpServiceName, 0, KEY_ALL_ACCESS, &hKey );
     if (r!=ERROR_SUCCESS)
-        return 0;
+    {
+        free_sc_handle( retval );
+        return NULL;
+    }
+    
+    init_service_handle( retval, hscm, hKey, lpServiceName );
 
-    TRACE("returning %p\n",hKey);
+    TRACE("returning %p\n",retval);
 
-    return hKey;
+    return (SC_HANDLE) retval;
 }
 
 /******************************************************************************
@@ -424,6 +552,8 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                   LPCWSTR lpDependencies, LPCWSTR lpServiceStartName,
                   LPCWSTR lpPassword )
 {
+    struct sc_handle *hscm = hSCManager;
+    struct sc_handle *retval;
     HKEY hKey;
     LONG r;
     DWORD dp;
@@ -438,41 +568,47 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
     FIXME("%p %s %s\n", hSCManager, 
           debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
 
-    r = RegCreateKeyExW(hSCManager, lpServiceName, 0, NULL,
+    retval = alloc_sc_handle( SC_HTYPE_SERVICE );
+    if( NULL == retval )
+        return NULL;
+
+    r = RegCreateKeyExW(hscm->u.manager.hkey_scm_db, lpServiceName, 0, NULL,
                        REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hKey, &dp);
     if (r!=ERROR_SUCCESS)
-        return 0;
+        goto error;
+
+    init_service_handle( retval, hscm, hKey, lpServiceName );
 
     if (dp != REG_CREATED_NEW_KEY)
-        return 0;
+        goto error;
 
     if(lpDisplayName)
     {
         r = RegSetValueExW(hKey, szDisplayName, 0, REG_SZ, (LPBYTE)lpDisplayName,
                            (strlenW(lpDisplayName)+1)*sizeof(WCHAR) );
         if (r!=ERROR_SUCCESS)
-            return 0;
+            goto error;
     }
 
     r = RegSetValueExW(hKey, szType, 0, REG_DWORD, (LPVOID)&dwServiceType, sizeof (DWORD) );
     if (r!=ERROR_SUCCESS)
-        return 0;
+        goto error;
 
     r = RegSetValueExW(hKey, szStart, 0, REG_DWORD, (LPVOID)&dwStartType, sizeof (DWORD) );
     if (r!=ERROR_SUCCESS)
-        return 0;
+        goto error;
 
     r = RegSetValueExW(hKey, szError, 0, REG_DWORD,
                            (LPVOID)&dwErrorControl, sizeof (DWORD) );
     if (r!=ERROR_SUCCESS)
-        return 0;
+        goto error;
 
     if(lpBinaryPathName)
     {
         r = RegSetValueExW(hKey, szImagePath, 0, REG_SZ, (LPBYTE)lpBinaryPathName,
                            (strlenW(lpBinaryPathName)+1)*sizeof(WCHAR) );
         if (r!=ERROR_SUCCESS)
-            return 0;
+            goto error;
     }
 
     if(lpLoadOrderGroup)
@@ -480,7 +616,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         r = RegSetValueExW(hKey, szGroup, 0, REG_SZ, (LPBYTE)lpLoadOrderGroup,
                            (strlenW(lpLoadOrderGroup)+1)*sizeof(WCHAR) );
         if (r!=ERROR_SUCCESS)
-            return 0;
+            goto error;
     }
 
     if(lpDependencies)
@@ -495,7 +631,7 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         r = RegSetValueExW(hKey, szDependencies, 0, REG_MULTI_SZ,
                            (LPBYTE)lpDependencies, len );
         if (r!=ERROR_SUCCESS)
-            return 0;
+            goto error;
     }
 
     if(lpPassword)
@@ -508,7 +644,11 @@ CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
         FIXME("Don't know how to add a ServiceStartName for a service.\n");
     }
 
-    return hKey;
+    return (SC_HANDLE) retval;
+    
+error:
+    free_sc_handle( retval );
+    return NULL;
 }
 
 
@@ -607,63 +747,30 @@ CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
  */
 BOOL WINAPI DeleteService( SC_HANDLE hService )
 {
+    struct sc_handle *hsvc = hService;
+    HKEY hKey = hsvc->u.service.hkey;
     WCHAR valname[MAX_PATH+1];
     INT index = 0;
     LONG rc;
-    DWORD value = 0x1;
     DWORD size;
-    HKEY hKey;
 
-    static const WCHAR szDeleted[] = {'D','e','l','e','t','e','d',0};
-
-    FIXME("(%p): stub\n",hService);
-   
     size = MAX_PATH+1; 
     /* Clean out the values */
-    rc = RegEnumValueW(hService, index, valname,&size,0,0,0,0);
+    rc = RegEnumValueW(hKey, index, valname,&size,0,0,0,0);
     while (rc == ERROR_SUCCESS)
     {
-        RegDeleteValueW(hService,valname);
+        RegDeleteValueW(hKey,valname);
         index++;
         size = MAX_PATH+1; 
-        rc = RegEnumValueW(hService, index, valname, &size,0,0,0,0);
+        rc = RegEnumValueW(hKey, index, valname, &size,0,0,0,0);
     }
 
-    /* tag for deletion */
-    RegSetValueExW(hService, szDeleted, 0, REG_DWORD, (LPVOID)&value, 
-                    sizeof (DWORD) );
-
-    RegCloseKey(hService);
-
-    /* find and delete the key */
-    rc = RegOpenKeyExW(HKEY_LOCAL_MACHINE, szServiceManagerKey,0,
-                        KEY_ALL_ACCESS, &hKey );
-    index = 0;
-    size = MAX_PATH+1; 
-    rc = RegEnumKeyExW(hKey,0, valname, &size, 0, 0, 0, 0);
-    while (rc == ERROR_SUCCESS)
-    {
-        HKEY checking;
-        rc = RegOpenKeyExW(hKey,valname,0,KEY_ALL_ACCESS,&checking);
-        if (rc == ERROR_SUCCESS)
-        {
-            DWORD deleted = 0;
-            DWORD size = sizeof(DWORD);
-            rc = RegQueryValueExW(checking, szDeleted , NULL, NULL,
-                                  (LPVOID)&deleted, &size);
-            if (deleted)
-            {
-                RegDeleteValueW(checking,szDeleted);
-                RegDeleteKeyW(hKey,valname);
-            }
-            else
-                index ++;
-            RegCloseKey(checking);
-        }
-        size = MAX_PATH+1; 
-        rc = RegEnumKeyExW(hKey, index, valname, &size, 0, 0, 0, 0);
-    }
     RegCloseKey(hKey);
+    hsvc->u.service.hkey = NULL;
+
+    /* delete the key */
+    RegDeleteKeyW(hsvc->u.service.sc_manager->u.manager.hkey_scm_db,
+                  hsvc->u.service.name);
 
     return TRUE;
 }
@@ -741,6 +848,7 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
                                                 'c','e','S','t','a','r','t',0};
     static const WCHAR  _ImagePathW[]  = {'I','m','a','g','e','P','a','t','h',0};
                                                 
+    struct sc_handle *hsvc = hService;
     WCHAR path[MAX_PATH],str[MAX_PATH];
     DWORD type,size;
     long r;
@@ -751,7 +859,7 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
           lpServiceArgVectors);
 
     size = sizeof(str);
-    r = RegQueryValueExW(hService, _ImagePathW, NULL, &type, (LPVOID)str, &size);
+    r = RegQueryValueExW(hsvc->u.service.hkey, _ImagePathW, NULL, &type, (LPVOID)str, &size);
     if (r!=ERROR_SUCCESS)
         return FALSE;
     ExpandEnvironmentStringsW(str,path,sizeof(path));
@@ -831,6 +939,7 @@ StartServiceW( SC_HANDLE hService, DWORD dwNumServiceArgs,
 BOOL WINAPI
 QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
 {
+    struct sc_handle *hsvc = hService;
     LONG r;
     DWORD type, val, size;
 
@@ -838,7 +947,7 @@ QueryServiceStatus( SC_HANDLE hService, LPSERVICE_STATUS lpservicestatus )
 
     /* read the service type from the registry */
     size = sizeof(val);
-    r = RegQueryValueExA(hService, "Type", NULL, &type, (LPBYTE)&val, &size);
+    r = RegQueryValueExA(hsvc->u.service.hkey, "Type", NULL, &type, (LPBYTE)&val, &size);
     if(type!=REG_DWORD)
     {
         ERR("invalid Type\n");
@@ -913,6 +1022,7 @@ QueryServiceConfigW( SC_HANDLE hService,
     static const WCHAR szGroup[] = {'G','r','o','u','p',0};
     static const WCHAR szDependencies[] = {
         'D','e','p','e','n','d','e','n','c','i','e','s',0};
+    HKEY hKey = ((struct sc_handle*) hService)->u.service.hkey;
     LONG r;
     DWORD type, val, sz, total, n;
     LPBYTE p;
@@ -924,27 +1034,27 @@ QueryServiceConfigW( SC_HANDLE hService,
     total = sizeof (QUERY_SERVICE_CONFIGW);
 
     sz = 0;
-    r = RegQueryValueExW( hService, szImagePath, 0, &type, NULL, &sz );
+    r = RegQueryValueExW( hKey, szImagePath, 0, &type, NULL, &sz );
     if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
         total += sz;
 
     sz = 0;
-    r = RegQueryValueExW( hService, szGroup, 0, &type, NULL, &sz );
+    r = RegQueryValueExW( hKey, szGroup, 0, &type, NULL, &sz );
     if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
         total += sz;
 
     sz = 0;
-    r = RegQueryValueExW( hService, szDependencies, 0, &type, NULL, &sz );
+    r = RegQueryValueExW( hKey, szDependencies, 0, &type, NULL, &sz );
     if( ( r == ERROR_SUCCESS ) && ( type == REG_MULTI_SZ ) )
         total += sz;
 
     sz = 0;
-    r = RegQueryValueExW( hService, szStart, 0, &type, NULL, &sz );
+    r = RegQueryValueExW( hKey, szStart, 0, &type, NULL, &sz );
     if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
         total += sz;
 
     sz = 0;
-    r = RegQueryValueExW( hService, szDisplayName, 0, &type, NULL, &sz );
+    r = RegQueryValueExW( hKey, szDisplayName, 0, &type, NULL, &sz );
     if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
         total += sz;
 
@@ -960,17 +1070,17 @@ QueryServiceConfigW( SC_HANDLE hService,
     ZeroMemory( lpServiceConfig, total );
 
     sz = sizeof val;
-    r = RegQueryValueExW( hService, szType, 0, &type, (LPBYTE)&val, &sz );
+    r = RegQueryValueExW( hKey, szType, 0, &type, (LPBYTE)&val, &sz );
     if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
         lpServiceConfig->dwServiceType = val;
 
     sz = sizeof val;
-    r = RegQueryValueExW( hService, szStart, 0, &type, (LPBYTE)&val, &sz );
+    r = RegQueryValueExW( hKey, szStart, 0, &type, (LPBYTE)&val, &sz );
     if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
         lpServiceConfig->dwStartType = val;
 
     sz = sizeof val;
-    r = RegQueryValueExW( hService, szError, 0, &type, (LPBYTE)&val, &sz );
+    r = RegQueryValueExW( hKey, szError, 0, &type, (LPBYTE)&val, &sz );
     if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
         lpServiceConfig->dwErrorControl = val;
 
@@ -979,7 +1089,7 @@ QueryServiceConfigW( SC_HANDLE hService,
     n = total - sizeof (QUERY_SERVICE_CONFIGW);
 
     sz = n;
-    r = RegQueryValueExW( hService, szImagePath, 0, &type, p, &sz );
+    r = RegQueryValueExW( hKey, szImagePath, 0, &type, p, &sz );
     if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
     {
         lpServiceConfig->lpBinaryPathName = (LPWSTR) p;
@@ -988,7 +1098,7 @@ QueryServiceConfigW( SC_HANDLE hService,
     }
 
     sz = n;
-    r = RegQueryValueExW( hService, szGroup, 0, &type, p, &sz );
+    r = RegQueryValueExW( hKey, szGroup, 0, &type, p, &sz );
     if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
     {
         lpServiceConfig->lpLoadOrderGroup = (LPWSTR) p;
@@ -997,7 +1107,7 @@ QueryServiceConfigW( SC_HANDLE hService,
     }
 
     sz = n;
-    r = RegQueryValueExW( hService, szDependencies, 0, &type, p, &sz );
+    r = RegQueryValueExW( hKey, szDependencies, 0, &type, p, &sz );
     if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
     {
         lpServiceConfig->lpDependencies = (LPWSTR) p;
@@ -1062,6 +1172,8 @@ BOOL WINAPI ChangeServiceConfig2A( SC_HANDLE hService, DWORD dwInfoLevel,
 BOOL WINAPI ChangeServiceConfig2W( SC_HANDLE hService, DWORD dwInfoLevel, 
     LPVOID lpInfo)
 {
+    HKEY hKey = ((struct sc_handle*) hService)->u.service.hkey;
+
     if (dwInfoLevel == SERVICE_CONFIG_DESCRIPTION)
     {
         static const WCHAR szDescription[] = {'D','e','s','c','r','i','p','t','i','o','n',0};
@@ -1070,9 +1182,9 @@ BOOL WINAPI ChangeServiceConfig2W( SC_HANDLE hService, DWORD dwInfoLevel,
         {
             TRACE("Setting Description to %s\n",debugstr_w(sd->lpDescription));
             if (sd->lpDescription[0] == 0)
-                RegDeleteValueW(hService,szDescription);
+                RegDeleteValueW(hKey,szDescription);
             else
-                RegSetValueExW(hService, szDescription, 0, REG_SZ,
+                RegSetValueExW(hKey, szDescription, 0, REG_SZ,
                                         (LPVOID)sd->lpDescription,
                                  sizeof(WCHAR)*(strlenW(sd->lpDescription)+1));
         }
