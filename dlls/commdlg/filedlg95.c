@@ -96,6 +96,8 @@ typedef struct tagLookInInfo
     SendMessageA(hwnd,CB_GETCOUNT,0,0);
 #define CBShowDropDown(hwnd,show) \
   SendMessageA(hwnd,CB_SHOWDROPDOWN,(WPARAM)show,0);
+#define CBSetItemHeight(hwnd,index,height) \
+  SendMessageA(hwnd,CB_SETITEMHEIGHT,(WPARAM)index,(LPARAM)height);
 
 
 const char *FileOpenDlgInfosStr = "FileOpenDlgInfos"; /* windows property description string */
@@ -518,12 +520,12 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   if (ofn->lpstrInitialDir)
   {
     fodInfos->ofnInfos.lpstrInitialDir = (LPSTR)MemAlloc(lstrlenW(ofn->lpstrInitialDir)+1);
-    lstrcpyWtoA(fodInfos->ofnInfos.lpstrInitialDir,ofn->lpstrInitialDir);
+    lstrcpyWtoA((LPSTR)fodInfos->ofnInfos.lpstrInitialDir,ofn->lpstrInitialDir);
   }
   if (ofn->lpstrTitle)
   {
     fodInfos->ofnInfos.lpstrTitle = (LPSTR)MemAlloc(lstrlenW(ofn->lpstrTitle)+1);
-    lstrcpyWtoA(fodInfos->ofnInfos.lpstrTitle,ofn->lpstrTitle);
+    lstrcpyWtoA((LPSTR)fodInfos->ofnInfos.lpstrTitle,ofn->lpstrTitle);
   }
   fodInfos->ofnInfos.Flags = ofn->Flags|OFN_WINE|OFN_UNICODE;
   fodInfos->ofnInfos.nFileOffset = ofn->nFileOffset;
@@ -531,14 +533,14 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   if (ofn->lpstrDefExt)
   {
     fodInfos->ofnInfos.lpstrDefExt = (LPSTR)MemAlloc(lstrlenW(ofn->lpstrDefExt)+1);
-    lstrcpyWtoA(fodInfos->ofnInfos.lpstrDefExt,ofn->lpstrDefExt);
+    lstrcpyWtoA((LPSTR)fodInfos->ofnInfos.lpstrDefExt,ofn->lpstrDefExt);
   }
   fodInfos->ofnInfos.lCustData = ofn->lCustData;
   fodInfos->ofnInfos.lpfnHook = (LPOFNHOOKPROC)ofn->lpfnHook;
   if (ofn->lpTemplateName) 
   { 
     fodInfos->ofnInfos.lpTemplateName = (LPSTR)MemAlloc(lstrlenW(ofn->lpTemplateName)+1);
-    lstrcpyWtoA(fodInfos->ofnInfos.lpTemplateName,ofn->lpTemplateName);
+    lstrcpyWtoA((LPSTR)fodInfos->ofnInfos.lpTemplateName,ofn->lpTemplateName);
   }
   /* Initialise the dialog property */
   fodInfos->DlgInfos.dwDlgProp = 0;
@@ -1453,6 +1455,7 @@ static HRESULT FILEDLG95_LOOKIN_Init(HWND hwndCombo)
   liInfos->iMaxIndentation = 0;
 
   SetPropA(hwndCombo, LookInInfosStr, (HANDLE) liInfos);
+  CBSetItemHeight(hwndCombo,0,GetSystemMetrics(SM_CYSMICON));
 
   /* Initialise data of Desktop folder */
   COMDLG32_SHGetSpecialFolderLocation(0,CSIDL_DESKTOP,&pidlTmp);
