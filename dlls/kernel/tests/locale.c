@@ -27,21 +27,18 @@
 #define eq(received, expected, label, type) \
         ok((received) == (expected), "%s: got " type " instead of " type, (label),(received),(expected))
 
-
-
 #define BUFFER_SIZE		50
-// Buffer used by callback function
+/* Buffer used by callback function */
 char GlobalBuffer[BUFFER_SIZE];
 
-// TODO :
-// Unicode versions
-// EnumTimeFormatsA
-// EnumDateFormatsA
-// LCMapStringA
-// GetUserDefaultLangID
-// ...
-
-
+/* TODO :
+ * Unicode versions
+ * EnumTimeFormatsA
+ * EnumDateFormatsA
+ * LCMapStringA
+ * GetUserDefaultLangID
+ * ...
+ */
 
 void TestGetLocaleInfoA()
 {
@@ -194,7 +191,9 @@ char buffer[BUFFER_SIZE], Expected[BUFFER_SIZE], format[BUFFER_SIZE];
 LCID lcid;
 
 	lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT );
-//	lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT );
+#if 0
+	lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT );
+#endif
 
 	memset( buffer, 'x', sizeof (buffer)/sizeof(buffer[0]) );
 	ret = GetCurrencyFormatA(lcid, 0, "23,65", NULL, buffer, sizeof(buffer));
@@ -277,7 +276,9 @@ BOOL CALLBACK EnumTimeFormatsProc(char * lpTimeFormatString)
 {
 	trace("%s\n", lpTimeFormatString);
 	strcpy(GlobalBuffer, lpTimeFormatString);
-//	return TRUE;
+#if 0
+	return TRUE;
+#endif
 	return FALSE;
 }
 
@@ -336,7 +337,9 @@ char buffer1[BUFFER_SIZE], buffer2[BUFFER_SIZE];
 
 START_TEST(locale)
 {
-//	TestEnumTimeFormats();
+#if 0
+	TestEnumTimeFormats();
+#endif
 	TestGetLocaleInfoA();
 	TestGetTimeFormatA();
 	TestGetDateFormatA();

@@ -1774,10 +1774,7 @@ BOOL WINAPI AreFileApisANSI(void)
 
 
 /***********************************************************************
- *           GetTickCount       (USER.13)
- *           GetCurrentTime     (USER.15)
  *           GetTickCount       (KERNEL32.@)
- *           GetSystemMSecCount (SYSTEM.6)
  *
  * Returns the number of milliseconds, modulo 2^32, since the start
  * of the wineserver.

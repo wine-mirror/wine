@@ -44,6 +44,9 @@ RETERR16 WINAPI DiGetClassDevs16(LPLPDEVICE_INFO16 lplpdi,
     return OK;
 }
 
+/***********************************************************************
+ *		SetupDiGetDeviceInterfaceDetailA (SETUPAPI.@)
+ */
 BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
       HDEVINFO DeviceInfoSet,
       PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
@@ -56,6 +59,9 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
     return FALSE;
 }
 
+/***********************************************************************
+ *		SetupDiGetDeviceInterfaceDetailW (SETUPAPI.@)
+ */
 BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
       HDEVINFO DeviceInfoSet,
       PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData,
@@ -68,6 +74,9 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
     return FALSE;
 }
 
+/***********************************************************************
+ *		SetupDiEnumDeviceInterfaces (SETUPAPI.@)
+ */
 BOOL WINAPI SetupDiEnumDeviceInterfaces(
        HDEVINFO DeviceInfoSet,
        PSP_DEVINFO_DATA DeviceInfoData,
@@ -79,6 +88,9 @@ BOOL WINAPI SetupDiEnumDeviceInterfaces(
     return FALSE;
 }
 
+/***********************************************************************
+ *		SetupDiGetClassDevsA (SETUPAPI.@)
+ */
 HDEVINFO WINAPI SetupDiGetClassDevsA(
        CONST GUID *class,
        LPCSTR enumstr,
@@ -90,6 +102,9 @@ HDEVINFO WINAPI SetupDiGetClassDevsA(
     return NULL;
 }
 
+/***********************************************************************
+ *		SetupDiEnumDeviceInfo (SETUPAPI.@)
+ */
 BOOL WINAPI SetupDiEnumDeviceInfo(
         HDEVINFO  devinfo,
         DWORD  index,
@@ -105,12 +120,18 @@ BOOL WINAPI SetupDiEnumDeviceInfo(
     return FALSE;
 }
 
+/***********************************************************************
+ *		SetupDiDestroyDeviceInfoList (SETUPAPI.@)
+ */
 BOOL WINAPI SetupDiDestroyDeviceInfoList( HDEVINFO devinfo )
 {
     FIXME("%04lx\n", (DWORD)devinfo);
     return FALSE;
 }
 
+/***********************************************************************
+ *		SetupDiGetDeviceRegistryPropertyA (SETUPAPI.@)
+ */
 BOOL WINAPI SetupDiGetDeviceRegistryPropertyA(
         HDEVINFO  devinfo,
         PSP_DEVINFO_DATA  DeviceInfoData,
