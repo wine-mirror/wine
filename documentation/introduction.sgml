@@ -5,7 +5,10 @@
       <title>What is Wine?</title>
 
       <para>
-        Written by &name-john-sheets; <email>&email-john-sheets;</email>
+        <literallayout>
+          Written by &name-john-sheets; <email>&email-john-sheets;</email>
+          Modified by <ulink url="mailto:&email-dustin-navea;">&name-dustin-navea;</ulink>
+        </literallayout>
       </para>
 
       <sect2>
@@ -14,9 +17,10 @@
         <para>
           Many people have faced the frustration of owning software that
           won't run on their computer.  With the recent popularity of
-          Linux, this is happening more and more often because of
-          differing operating systems.  Your Windows software won't run
-          on Linux, and your Linux software won't run in Windows.
+          <ulink url="http://www.tldp.org/FAQ/Linux-FAQ/index.html">
+          Linux</ulink>, this is happening more and more often because
+          of differing operating systems.  Your Windows software won't
+          run on Linux, and your Linux software won't run in Windows.
         </para>
         <para>
           A common solution to this problem is to install both operating
@@ -33,7 +37,7 @@
           Life would be so much easier if you could run all your
           applications on the same system, regardless of whether they
           are written for Windows or for Linux.  On Windows, this isn't
-          really possible.
+          really possible, yet.
           <footnote>
             <para>
               Technically, if you have two networked computers, one
@@ -47,10 +51,10 @@
             </para>
           </footnote>
           However, Wine makes it possible to run native Windows
-          applications alongside native Linux applications on a Linux
-          (or BSD or Solaris) system.  You can share desktop space between MS
-          Word and GnuCash, overlapping their windows, iconizing them,
-          and even running them from the same launcher.
+          applications alongside native Linux applications on any Unix-like
+          system.  You can share desktop space between MS Word and GnuCash,
+          overlapping their windows, iconizing them, and even running them
+          from the same launcher.
         </para>
       </sect2>
 
@@ -70,8 +74,9 @@
         </para>
         <para>
           Wine can run applications in two discrete ways: as
-          pre-compiled Windows binaries, or as natively compiled X11
-          (X Window System) applications.  The former method uses
+          pre-compiled Windows binaries, or as natively compiled
+          <ulink url="http://www.xfree86.org/#whatis">X11 (X-Window
+          System)</ulink> applications.  The former method uses
           emulation to connect a Windows application to the Wine
           libraries.  You can run your Windows application directly
           with the emulator, by installing through Wine or by simply
@@ -104,13 +109,13 @@
           If during reading this document there is something you
           can't figure out, or think could be explained better, or
           that should have been included, please immediately mail to
-          &name-web-admin; <email>&email-web-admin</email> or
-          post a bug report at the
-          <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink> to
-          let us know how this document can be improved.
-          Remember, Open Source is
-          "free as in free speech, not as in free beer":
-          it can only work in case of very active involvement of its users !
+          either the &name-web-admin; <email>&email-web-admin;</email> or
+          the &name-wine-devel; <email>&email-wine-devel;</email>, or
+          post a bug report to
+          <ulink url="http://bugs.winehq.com/">Wine's Bugzilla</ulink> to
+          let us know how this document can be improved.  Remember, Open
+          Source is "free as in free speech, not as in free beer": it can
+          only work in the case of very active involvement by its users !
         </para>
       </sect2>
     </sect1>
@@ -144,7 +149,10 @@
       <title>Wine Requirements and Features</title>
 
       <para>
-        Written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
+        <literallayout>
+          Written by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
+          Modified by <ulink url="mailto:&email-dustin-navea;">&name-dustin-navea;</ulink>
+        </literallayout>
       </para>
 
       <sect2 id="system-requirements">
@@ -156,26 +164,26 @@
           <itemizedlist>
             <listitem>
               <para>
-                a computer ;-) Wine: only PCs >= i386 are supported at
-                the moment.  Winelib: other platforms may be
-                supported, but can be tricky.
+                <literallayout>A computer ;-)</literallayout>
+                <literallayout>  Wine: only PCs >= i386 are supported at the moment.</literallayout>
+                <literallayout>  Winelib: other platforms may be supported, but can be tricky.</literallayout>
               </para>
             </listitem>
             <listitem>
               <para>
-                a UNIX-like operating system such as Linux, *BSD,
-                Solaris x86
+                A UNIX-like operating system such as Linux, *BSD,
+                Solaris x86, ReactOS, Cygwin
               </para>
             </listitem>
             <listitem>
               <para>
-                >= 16MB of RAM.  Everything below is pretty much
-                unusable.  >= 64 MB is needed for "good" execution.
+                >= 32MB of RAM.  Everything below is pretty much
+                unusable.  >= 96 MB is needed for "good" execution.
               </para>
             </listitem>
             <listitem>
               <para>
-                an X11 window system (XFree86 etc.).  Wine is prepared
+                An X11 window system (XFree86 etc.).  Wine is prepared
                 for other graphics display drivers, but writing
                 support is not too easy.  The text console display
                 driver (ttydrv) is nearly usable.
