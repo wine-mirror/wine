@@ -37,6 +37,8 @@
 # define SPI_GETDESKWALLPAPER 0x0073
 #endif
 
+static int strict;
+
 #define eq(received, expected, label, type) \
         ok((received) == (expected), "%s: got " type " instead of " type, (label),(received),(expected))
 
@@ -59,13 +61,17 @@
 #define SPI_SETGRIDGRANULARITY_VALNAME          "GridGranularity"
 #define SPI_SETKEYBOARDDELAY_REGKEY             "Control Panel\\Keyboard"
 #define SPI_SETKEYBOARDDELAY_VALNAME            "KeyboardDelay"
-#define SPI_SETICONTITLEWRAP_REGKEY             "Control Panel\\Desktop\\WindowMetrics"
+#define SPI_SETICONTITLEWRAP_REGKEY1            "Control Panel\\Desktop\\WindowMetrics"
+#define SPI_SETICONTITLEWRAP_REGKEY2            "Control Panel\\Desktop"
 #define SPI_SETICONTITLEWRAP_VALNAME            "IconTitleWrap"
-#define SPI_SETMENUDROPALIGNMENT_REGKEY         "Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows"
+#define SPI_SETMENUDROPALIGNMENT_REGKEY1        "Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows"
+#define SPI_SETMENUDROPALIGNMENT_REGKEY2        "Control Panel\\Desktop"
 #define SPI_SETMENUDROPALIGNMENT_VALNAME        "MenuDropAlignment"
-#define SPI_SETDOUBLECLKWIDTH_REGKEY            "Control Panel\\Mouse"
+#define SPI_SETDOUBLECLKWIDTH_REGKEY1           "Control Panel\\Mouse"
+#define SPI_SETDOUBLECLKWIDTH_REGKEY2           "Control Panel\\Desktop"
 #define SPI_SETDOUBLECLKWIDTH_VALNAME           "DoubleClickWidth"
-#define SPI_SETDOUBLECLKHEIGHT_REGKEY           "Control Panel\\Mouse"
+#define SPI_SETDOUBLECLKHEIGHT_REGKEY1          "Control Panel\\Mouse"
+#define SPI_SETDOUBLECLKHEIGHT_REGKEY2          "Control Panel\\Desktop"
 #define SPI_SETDOUBLECLKHEIGHT_VALNAME          "DoubleClickHeight"
 #define SPI_SETDOUBLECLICKTIME_REGKEY           "Control Panel\\Mouse"
 #define SPI_SETDOUBLECLICKTIME_VALNAME          "DoubleClickSpeed"
@@ -148,23 +154,55 @@ static void test_change_message( int action, int optional )
  * lpsRegName - registry entry name
  * lpsTestValue - value to test
  */
-static void _test_reg_key( LPSTR subKey, LPSTR valName, LPSTR testValue, char *file, int line )
+static void _test_reg_key( LPSTR subKey1, LPSTR subKey2, LPSTR valName, LPSTR testValue )
 {
-    CHAR  value[MAX_PATH] = "";
-    DWORD valueLen = MAX_PATH;
+    CHAR  value[MAX_PATH];
+    DWORD valueLen;
     DWORD type;
     HKEY hKey;
+    LONG rc;
+    int found=0;
 
-    RegOpenKeyA( HKEY_CURRENT_USER, subKey, &hKey );
-    RegQueryValueExA( hKey, valName, NULL, &type, value, &valueLen );
+    *value='\0';
+    valueLen=sizeof(value);
+    RegOpenKeyA( HKEY_CURRENT_USER, subKey1, &hKey );
+    rc=RegQueryValueExA( hKey, valName, NULL, &type, value, &valueLen );
     RegCloseKey( hKey );
-    ok( !strcmp( testValue, value ),
-        "Wrong value in registry: subKey=%s, valName=%s, testValue=%s, value=%s",
-        subKey, valName, testValue, value );
+    if (rc==ERROR_SUCCESS)
+    {
+        ok( !strcmp( testValue, value ),
+            "Wrong value in registry: subKey=%s, valName=%s, testValue=%s, value=%s",
+            subKey1, valName, testValue, value );
+        found++;
+    }
+    else if (strict)
+    {
+        ok(0,"Missing registry entry: subKey=%s, valName=%s",
+           subKey1, valName);
+    }
+    if (subKey2 && !strict)
+    {
+        *value='\0';
+        valueLen=sizeof(value);
+        RegOpenKeyA( HKEY_CURRENT_USER, subKey2, &hKey );
+        rc=RegQueryValueExA( hKey, valName, NULL, &type, value, &valueLen );
+        RegCloseKey( hKey );
+        if (rc==ERROR_SUCCESS)
+        {
+            ok( !strcmp( testValue, value ),
+                "Wrong value in registry: subKey=%s, valName=%s, testValue=%s, value=%s",
+                subKey2, valName, testValue, value );
+            found++;
+        }
+    }
+    ok(found,"Missing registry entry: %s in %s or %s",
+       valName, subKey1, (subKey2?subKey2:"<n/a>") );
 }
 
 #define test_reg_key( subKey, valName, testValue ) \
-    _test_reg_key( subKey, valName, testValue, __FILE__, __LINE__ )
+    _test_reg_key( subKey, NULL, valName, testValue )
+#define test_reg_key_ex( subKey1, subKey2, valName, testValue ) \
+    _test_reg_key( subKey1, subKey2, valName, testValue )
 
 static void test_SPI_SETBEEP( void )                   /*      2 */
 {
@@ -243,6 +281,7 @@ static void run_spi_setmouse_test( int curr_val[], POINT *req_change, POINT *pro
     int i;
 
     aw_turn++;
+    rc=0;
     if (aw_turn % 2!=0)        /* call unicode version each second call */
         rc=SystemParametersInfoW( SPI_SETMOUSE, 0, curr_val, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
     if (aw_turn % 2==0 || (rc==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED))
@@ -653,9 +692,10 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
         test_change_message( SPI_SETICONTITLEWRAP, 1 );
-        test_reg_key( SPI_SETICONTITLEWRAP_REGKEY,
-                      SPI_SETICONTITLEWRAP_VALNAME,
-                      vals[i] ? "1" : "0" );
+        test_reg_key_ex( SPI_SETICONTITLEWRAP_REGKEY1,
+                         SPI_SETICONTITLEWRAP_REGKEY2,
+                         SPI_SETICONTITLEWRAP_VALNAME,
+                         vals[i] ? "1" : "0" );
 
         rc=SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &v, 0 );
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
@@ -685,9 +725,10 @@ static void test_SPI_SETMENUDROPALIGNMENT( void )      /*     28 */
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
         test_change_message( SPI_SETMENUDROPALIGNMENT, 0 );
-        test_reg_key( SPI_SETMENUDROPALIGNMENT_REGKEY,
-                      SPI_SETMENUDROPALIGNMENT_VALNAME,
-                      vals[i] ? "1" : "0" );
+        test_reg_key_ex( SPI_SETMENUDROPALIGNMENT_REGKEY1,
+                         SPI_SETMENUDROPALIGNMENT_REGKEY2,
+                         SPI_SETMENUDROPALIGNMENT_VALNAME,
+                         vals[i] ? "1" : "0" );
 
         rc=SystemParametersInfoA( SPI_GETMENUDROPALIGNMENT, 0, &v, 0 );
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
@@ -720,8 +761,9 @@ static void test_SPI_SETDOUBLECLKWIDTH( void )         /*     29 */
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
         test_change_message( SPI_SETDOUBLECLKWIDTH, 0 );
         sprintf( buf, "%d", vals[i] );
-        test_reg_key( SPI_SETDOUBLECLKWIDTH_REGKEY,
-                      SPI_SETDOUBLECLKWIDTH_VALNAME, buf );
+        test_reg_key_ex( SPI_SETDOUBLECLKWIDTH_REGKEY1,
+                         SPI_SETDOUBLECLKWIDTH_REGKEY2,
+                         SPI_SETDOUBLECLKWIDTH_VALNAME, buf );
         eq( GetSystemMetrics( SM_CXDOUBLECLK ), (int)vals[i],
             "SM_CXDOUBLECLK", "%d" );
     }
@@ -750,8 +792,9 @@ static void test_SPI_SETDOUBLECLKHEIGHT( void )        /*     30 */
         ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
         test_change_message( SPI_SETDOUBLECLKHEIGHT, 0 );
         sprintf( buf, "%d", vals[i] );
-        test_reg_key( SPI_SETDOUBLECLKHEIGHT_REGKEY,
-                      SPI_SETDOUBLECLKHEIGHT_VALNAME, buf );
+        test_reg_key_ex( SPI_SETDOUBLECLKHEIGHT_REGKEY1,
+                         SPI_SETDOUBLECLKHEIGHT_REGKEY2,
+                         SPI_SETDOUBLECLKHEIGHT_VALNAME, buf );
         eq( GetSystemMetrics( SM_CYDOUBLECLK ), (int)vals[i],
             "SM_CYDOUBLECLK", "%d" );
     }
@@ -1054,11 +1097,17 @@ static DWORD WINAPI SysParamsThreadFunc( LPVOID lpParam )
 
 START_TEST(sysparams)
 {
+    int argc;
+    char** argv;
     WNDCLASSA wc;
     MSG msg;
     HANDLE hThread;
     DWORD dwThreadId;
     HANDLE hInstance = GetModuleHandleA( NULL );
+
+    argc = winetest_get_mainargs(&argv);
+    strict=(argc >= 3 && strcmp(argv[2],"strict")==0);
+    trace("strict=%d\n",strict);
 
     change_counter = 0;
     change_last_param = 0;
