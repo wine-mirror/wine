@@ -67,27 +67,25 @@ struct dll_name_table_entry_s dll_builtin_table[N_BUILTINS] =
     { "COMPOBJ",  WineLibSkip(&COMPOBJ_table), 1 },
     { "STORAGE",  WineLibSkip(&STORAGE_table), 1 },
     { "WINPROCS", WineLibSkip(&WINPROCS_table), 1 },
+    { "DDEML",    WineLibSkip(&DDEML_table), 1 }
+    
 };
 /* don't forget to increase N_BUILTINS in dlls.h if you add a dll */
 
   /* Saved 16-bit stack */
 WORD IF1632_Saved16_ss = 0;
 WORD IF1632_Saved16_sp = 0;
-WORD IF1632_Saved16_bp = 0;
 
   /* Saved 32-bit stack */
 DWORD IF1632_Saved32_esp = 0;
-DWORD IF1632_Saved32_ebp = 0;
+
 
 /***********************************************************************
  *           RELAY_Init
  */
 BOOL RELAY_Init(void)
 {
-    WORD codesel, datasel;
-    struct dll_table_s *table;
-    struct dll_table_entry_s *entry;
-    int i, j;
+    WORD codesel;
 
       /* Allocate the code selector for CallTo16 routines */
 
@@ -106,31 +104,6 @@ BOOL RELAY_Init(void)
                                     codesel );
     CALL16_RetAddr_long = MAKELONG( (int)CALL16_Ret_long - (int)CALL16_Start,
                                     codesel );
-
-      /* Allocate the selectors for built-in dlls */
-
-    for (i = 0; i < N_BUILTINS; i++)
-    {
-        table = dll_builtin_table[i].table;
-        codesel = SELECTOR_AllocBlock( table->code_start,
-                                   (int)table->code_end-(int)table->code_start,
-                                   SEGMENT_CODE, TRUE, FALSE );
-        if (!codesel) return FALSE;
-        if (table->data_start != table->data_end)
-            datasel = SELECTOR_AllocBlock( table->data_start,
-                                   (int)table->data_end-(int)table->data_start,
-                                   SEGMENT_DATA, TRUE, FALSE );
-        else datasel = 0;
-        entry = table->dll_table;
-        for (j = 0; j < table->dll_table_length; j++, entry++)
-        {
-            if (entry->selector == 1)  /* code selector */
-                entry->selector = codesel;
-            else if (entry->selector == 2)  /* data selector */
-                entry->selector = datasel;
-            else entry->selector = 0;  /* constant selector */
-        }
-    }
 
     return TRUE;
 }
@@ -212,9 +185,10 @@ void RELAY_Unimplemented(void)
 {
     STACK16FRAME *frame = CURRENT_STACK16;
 
-    fprintf( stderr, "No handler for routine %s.%d\n",
+    fprintf( stderr, "No handler for routine %s.%d (%s)\n",
              dll_builtin_table[frame->dll_id-1].dll_name,
-             frame->ordinal_number );
+             frame->ordinal_number,
+             dll_builtin_table[frame->dll_id-1].table->dll_table[frame->ordinal_number].export_name );
     exit(1);
 }
 

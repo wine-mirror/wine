@@ -20,11 +20,9 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "wine.h"
 #include "msdos.h"
 #include "windows.h"
-#include "comm.h"
 #include "miscemu.h"
 #include "winsock.h"
 #include "options.h"
-#include "dos_fs.h"
 #include "desktop.h"
 #include "prototypes.h"
 #include "texts.h"
@@ -38,13 +36,16 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 extern ButtonTexts ButtonText;
 
 static const char people[] = "Wine is available thanks to the work of "\
-"Bob Amstadt, Dag Asheim, Martin Ayotte, Erik Bos, John Brezak, "\
-"Andrew Bulhak, John Burton, Paul Falstad, Peter Galbavy, Jeffrey Hsu, "\
-"Miguel de Icaza, Alexandre Julliard, Jon Konrath, Scott A. Laird, "\
-"Martin von Loewis, Kenneth MacDonald, Peter MacDonald, David Metcalfe, "\
-"Michael Patra, John Richardson, Johannes Ruscheinski, Yngvi Sigurjonsson, "\
-"Rick Sladkey, William Smith, Jon Tombs, Linus Torvalds, Carl Williams, "\
-"Karl Guenter Wuensch, and Eric Youngdale.";
+"Bob Amstadt, Dag Asheim, Martin Ayotte, Ross Biro, Erik Bos, Fons Botman, "\
+"John Brezak, Andrew Bulhak, John Burton, Paul Falstad, Olaf Flebbe, "\
+"Peter Galbavy, Cameron Heide, Jeffrey Hsu, Miguel de Icaza, "\
+"Alexandre Julliard, Jon Konrath, Scott A. Laird, Martin von Loewis, "\
+"Kenneth MacDonald, Peter MacDonald, William Magro, David Metcalfe, "\
+"Michael Patra, John Richardson, Johannes Ruscheinski, Thomas Sandford, "\
+"Constantine Sapuntzakis, Bernd Schmidt, Yngvi Sigurjonsson, Rick Sladkey, "\
+"William Smith, Erik Svendsen, Goran Thyni, Jimmy Tirtawangsa, Jon Tombs, "\
+"Linus Torvalds, Michael Veksler, Carl Williams, Karl Guenter Wuensch, "\
+"Eric Youngdale, and James Youngman.";
 
 #define WINE_CLASS    "Wine"    /* Class name for resources */
 
@@ -516,7 +517,6 @@ static void malloc_error()
 
 static void called_at_exit(void)
 {
-    Comm_DeInit();
     sync_profiles();
     MAIN_RestoreSetup();
     WSACleanup();
@@ -574,13 +574,7 @@ int main( int argc, char *argv[] )
     if (Options.desktopGeometry) MAIN_CreateDesktop( argc, argv );
     else rootWindow = DefaultRootWindow( display );
 
-    RELAY_Init();
     MAIN_SaveSetup();
-    DOS_InitFS();
-    Comm_Init();
-#ifndef WINELIB
-    INT21_Init();
-#endif
 #ifndef sparc
     atexit(called_at_exit);
 #else
@@ -822,6 +816,20 @@ BOOL SystemParametersInfo (UINT uAction, UINT uParam, void FAR *lpvParam, UINT f
 				return (DESKTOP_SetPattern((LPSTR) lpvParam));
 			break;
 
+	        case SPI_GETICONTITLELOGFONT: 
+	        {
+		  LPLOGFONT lpLogFont = (LPLOGFONT)lpvParam;
+		  lpLogFont->lfHeight = 10;
+		  lpLogFont->lfWidth = 0;
+		  lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
+		  lpLogFont->lfWeight = FW_NORMAL;
+		  lpLogFont->lfItalic = lpLogFont->lfStrikeOut = lpLogFont->lfUnderline = FALSE;
+		  lpLogFont->lfCharSet = ANSI_CHARSET;
+		  lpLogFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
+		  lpLogFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+		  lpLogFont->lfPitchAndFamily = DEFAULT_PITCH | FF_SWISS;
+		  break;
+		}
 		case SPI_LANGDRIVER:
 		case SPI_SETBORDER:
 		case SPI_SETDOUBLECLKHEIGHT:

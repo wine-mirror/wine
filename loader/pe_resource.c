@@ -24,6 +24,7 @@
 /* #define DEBUG_RESOURCE */
 #include "debug.h"
 
+#if 0
 
 static int
 find_lang(char *root, struct PE_Resource_Directory *resource, RESOURCE *r)
@@ -88,7 +89,7 @@ find_resource(char *root, struct PE_Resource_Directory *resource,
 
 static int 
 find_type(struct PE_Resource_Directory *resource, LPSTR resource_name,
-		LPSTR type_name, RESOURCE *r)
+		LPSTR type_name)
 {
 	int i;
 	char *root, res_name[256];
@@ -146,5 +147,6 @@ PE_FindResource(HANDLE instance, SEGPTR resource_name, SEGPTR type_name,
                 else
                         type_name = (SEGPTR) type_name_ptr;
         }
-	return find_type(r->wpnt->pe->pe_resource, resource_name, type_name,r);
+	return find_type(r->wpnt->pe->pe_resource, resource_name, type_name);
 }
+#endif

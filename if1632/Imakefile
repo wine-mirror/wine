@@ -17,6 +17,7 @@ CALLOBJS = \
 DLLS = \
 	commdlg \
 	compobj \
+	ddeml \
 	gdi \
 	kernel \
 	keyboard \
@@ -41,7 +42,7 @@ DLLS = \
 	winsock
 #endif
 
-OBJS = $(DLLS:%=dll_%.o) $(CALLOBJS) $(SRCS:.c=.o) $(DLLS:%=tab_%.o)
+OBJS = $(SRCS:.c=.o) $(CALLOBJS) $(DLLS:%=dll_%.o) $(DLLS:%=tab_%.o)
 
 BUILD = $(TOP)/tools/build
 
@@ -54,6 +55,7 @@ Concat(dll_,name.S) Concat(tab_,name.c): name.spec $(BUILD)	@@\
  */
 MakeDllFromSpec(commdlg)
 MakeDllFromSpec(compobj)
+MakeDllFromSpec(ddeml)
 MakeDllFromSpec(gdi)
 MakeDllFromSpec(kernel)
 MakeDllFromSpec(keyboard)

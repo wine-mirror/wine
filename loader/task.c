@@ -1,279 +1,831 @@
 /*
- *        Tasks functions
+ * Task functions
  *
-static char Copyright[] = "Copyright  Martin Ayotte, 1994";
-*/
+ * Copyright 1995 Alexandre Julliard
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include "windows.h"
-#include "callback.h"
 #include "task.h"
+#include "callback.h"
+#include "global.h"
+#include "instance.h"
+#include "module.h"
+#include "neexe.h"
+#include "selectors.h"
+#include "toolhelp.h"
+#include "wine.h"
 #include "stddebug.h"
 #include "debug.h"
 
-static LPWINETASKENTRY lpTaskList = NULL;
-static int nTaskCount = 0;
 
-/**********************************************************************
- *				GetCurrentTask	[KERNEL.36]
+#define MIN_THUNKS  32  /* Min. thunks allocated when creating a new segment */
+
+#define STACK32_SIZE 0x10000  /* 32-bit stack size for each task */
+
+
+static HTASK hFirstTask = 0;
+static HTASK hCurrentTask = 0;
+static HTASK hTaskToKill = 0;
+static WORD nTaskCount = 0;
+
+  /* TASK_Reschedule() 16-bit entry point */
+static FARPROC TASK_RescheduleProc;
+
+#define TASK_SCHEDULE()  CallTo16_word_(TASK_RescheduleProc,0)
+
+
+/***********************************************************************
+ *           TASK_Init
  */
-HTASK GetCurrentTask(void)
+BOOL TASK_Init(void)
 {
-	LPWINETASKENTRY lpTask = lpTaskList;
-	int pid = getpid();
-	dprintf_task(stddeb,"GetCurrentTask() // unix_pid=%08X !\n", pid);
-	if (lpTask == NULL) return 0;
-	while (TRUE) {
-		if (lpTask->unix_pid == pid) break;
-		if (lpTask->lpNextTask == NULL) return 0;
-		lpTask = lpTask->lpNextTask;
-		}
-	dprintf_task(stddeb,"GetCurrentTask() returned hTask=%04X !\n", lpTask->te.hTask);
-	return lpTask->te.hTask;
+    TASK_RescheduleProc = (FARPROC)GetWndProcEntry16( "TASK_Reschedule" );
+    return TRUE;
 }
 
 
-/**********************************************************************
- *				GetNumTasks	[KERNEL.152]
+/***********************************************************************
+ *           TASK_LinkTask
  */
-WORD GetNumTasks(void)
+static void TASK_LinkTask( HTASK hTask )
 {
-	dprintf_task(stddeb,"GetNumTasks() returned %d !\n", nTaskCount);
-	return nTaskCount;
+    HTASK *prevTask;
+    TDB *pTask;
+
+    if (!(pTask = (TDB *)GlobalLock( hTask ))) return;
+    prevTask = &hFirstTask;
+    while (*prevTask)
+    {
+        TDB *prevTaskPtr = (TDB *)GlobalLock( *prevTask );
+        if (prevTaskPtr->priority >= pTask->priority) break;
+        prevTask = &prevTaskPtr->hNext;
+    }
+    pTask->hNext = *prevTask;
+    *prevTask = hTask;
+    nTaskCount++;
 }
 
 
-/**********************************************************************
- *				GetWindowTask	[USER.224]
+/***********************************************************************
+ *           TASK_UnlinkTask
  */
-HTASK GetWindowTask(HWND hWnd)
+static void TASK_UnlinkTask( HTASK hTask )
 {
-	HWND 	*wptr;
-	int		count;
-	LPWINETASKENTRY lpTask = lpTaskList;
-	dprintf_task(stddeb,"GetWindowTask(%04X) !\n", hWnd);
-	while (lpTask != NULL) {
-		wptr = lpTask->lpWndList;
-		if (wptr != NULL) {
-			count = 0;
-			while (++count < MAXWIN_PER_TASK) {
-				dprintf_task(stddeb,"GetWindowTask // searching %04X %04X !\n",
-										lpTask->te.hTask, *(wptr));
-				if (*(wptr) == hWnd) {
-					dprintf_task(stddeb,"GetWindowTask(%04X) found hTask=%04X !\n", 
-												hWnd, lpTask->te.hTask);
-					return lpTask->te.hTask;
-					}
-				wptr++;
-				}
-			}
-		lpTask = lpTask->lpNextTask;
-		}
-	return 0;
+    HTASK *prevTask;
+    TDB *pTask;
+
+    prevTask = &hFirstTask;
+    while (*prevTask && (*prevTask != hTask))
+    {
+        pTask = (TDB *)GlobalLock( *prevTask );
+        prevTask = &pTask->hNext;
+    }
+    if (*prevTask)
+    {
+        pTask = (TDB *)GlobalLock( *prevTask );
+        *prevTask = pTask->hNext;
+        pTask->hNext = 0;
+        nTaskCount--;
+    }
 }
 
 
-/**********************************************************************
- *				EnumTaskWindows	[USER.225]
+/***********************************************************************
+ *           TASK_CreateThunks
+ *
+ * Create a thunk free-list in segment 'handle', starting from offset 'offset'
+ * and containing 'count' entries.
  */
-BOOL EnumTaskWindows(HANDLE hTask, FARPROC lpEnumFunc, LONG lParam)
+static void TASK_CreateThunks( HGLOBAL handle, WORD offset, WORD count )
 {
-	HWND 	*wptr, hWnd;
-	BOOL	bRet;
-	int		count = 0;
-	LPWINETASKENTRY lpTask = lpTaskList;
-	dprintf_task(stddeb,"EnumTaskWindows(%04X, %08X, %08X) !\n", hTask, 
-		(unsigned int) lpEnumFunc, (unsigned int) lParam);
-	while (TRUE) {
-		if (lpTask->te.hTask == hTask) break;
-		if (lpTask == NULL) {
-			dprintf_task(stddeb,"EnumTaskWindows // hTask=%04X not found !\n", hTask);
-			return FALSE;
-			}
-		lpTask = lpTask->lpNextTask;
-		}
-	dprintf_task(stddeb,"EnumTaskWindows // found hTask=%04X !\n", hTask);
-	wptr = lpTask->lpWndList;
-	if (wptr == NULL) return FALSE;
-	if (lpEnumFunc == NULL)	return FALSE;
-	while ((hWnd = *(wptr++)) != 0) {
-		if (++count >= MAXWIN_PER_TASK) return FALSE;
-		dprintf_task(stddeb,"EnumTaskWindows // hWnd=%04X count=%d !\n", hWnd, count);
-                bRet = CallEnumTaskWndProc( lpEnumFunc, hWnd, lParam );
-		if (bRet == 0) break;
-		}
-	return TRUE;
+    int i;
+    WORD free;
+    THUNKS *pThunk;
+
+    pThunk = (THUNKS *)((BYTE *)GlobalLock( handle ) + offset);
+    pThunk->next = 0;
+    pThunk->magic = THUNK_MAGIC;
+    pThunk->free = (int)&pThunk->thunks - (int)pThunk;
+    free = pThunk->free;
+    for (i = 0; i < count-1; i++)
+    {
+        free += 8;  /* Offset of next thunk */
+        pThunk->thunks[4*i] = free;
+    }
+    pThunk->thunks[4*i] = 0;  /* Last thunk */
 }
 
 
-/**********************************************************************
- *				CreateNewTask		[internal]
+/***********************************************************************
+ *           TASK_AllocThunk
+ *
+ * Allocate a thunk for MakeProcInstance().
  */
-HANDLE CreateNewTask(HINSTANCE hInst, HTASK hTaskParent)
+static SEGPTR TASK_AllocThunk( HTASK hTask )
 {
-	HANDLE hTask;
-	LPWINETASKENTRY lpTask = lpTaskList;
-	LPWINETASKENTRY lpNewTask;
-	MODULEENTRY module;
+    TDB *pTask;
+    THUNKS *pThunk;
+    WORD sel, base;
+    
+    if (!(pTask = (TDB *)GlobalLock( hTask ))) return 0;
+    sel = pTask->hCSAlias;
+    pThunk = &pTask->thunks;
+    base = (int)pThunk - (int)pTask;
+    while (!pThunk->free)
+    {
+        sel = pThunk->next;
+        if (!sel)  /* Allocate a new segment */
+        {
+            sel = GLOBAL_Alloc( GMEM_FIXED, sizeof(THUNKS) + (MIN_THUNKS-1)*8,
+                                pTask->hPDB, TRUE, FALSE, FALSE );
+            if (!sel) return (SEGPTR)0;
+            TASK_CreateThunks( sel, 0, MIN_THUNKS );
+            pThunk->next = sel;
+        }
+        pThunk = (THUNKS *)GlobalLock( sel );
+        base = 0;
+    }
+    base += pThunk->free;
+    pThunk->free = *(WORD *)((BYTE *)pThunk + pThunk->free);
+    return MAKELONG( base, sel );
+}
 
-	module.dwSize = sizeof(module);
-	ModuleFindHandle(&module, hInst);
 
-	if (lpTask != NULL) {
-		while (TRUE) {
-			if (lpTask->lpNextTask == NULL) break;
-			lpTask = lpTask->lpNextTask;
-			}
-		}
-	hTask = GlobalAlloc(GMEM_MOVEABLE, sizeof(WINETASKENTRY));
-	lpNewTask = (LPWINETASKENTRY) GlobalLock(hTask);
-    	dprintf_task(stddeb,"CreateNewTask entry allocated %p\n", lpNewTask);
-	if (lpNewTask == NULL) return 0;
-	if (lpTaskList == NULL) {
-		lpTaskList = lpNewTask;
-		lpNewTask->lpPrevTask = NULL;
-		}
-	else {
-		lpTask->lpNextTask = lpNewTask;
-		lpTask->te.hNext = lpNewTask->te.hTask;
-		lpNewTask->lpPrevTask = lpTask;
-		}
-	lpNewTask->lpNextTask = NULL;
-	lpNewTask->hIcon = 0;
-	lpNewTask->te.dwSize = sizeof(TASKENTRY);
-	lpNewTask->te.hModule = 0;
-	lpNewTask->te.hInst = hInst;
-	lpNewTask->te.hTask = hTask;
-	lpNewTask->te.hTaskParent = hTaskParent;
-	lpNewTask->te.wSS = 0;
-	lpNewTask->te.wSP = 0;
-	lpNewTask->te.wStackTop = 0;
-	lpNewTask->te.wStackMinimum = 0;
-	lpNewTask->te.wStackBottom = 0;
-	lpNewTask->te.wcEvents = 0;
-	lpNewTask->te.hQueue = 0;
-	strcpy(lpNewTask->te.szModule, module.szModule);
-	lpNewTask->te.wPSPOffset = 0;
-	lpNewTask->unix_pid = getpid();
-	lpNewTask->lpWndList = (HWND *) malloc(MAXWIN_PER_TASK * sizeof(HWND));
-	if (lpNewTask->lpWndList != NULL) 
-		memset((LPSTR)lpNewTask->lpWndList, 0, MAXWIN_PER_TASK * sizeof(HWND));
-    	dprintf_task(stddeb,"CreateNewTask // unix_pid=%08X return hTask=%04X\n", 
-									lpNewTask->unix_pid, hTask);
-	GlobalUnlock(hTask);	
-	nTaskCount++;
+/***********************************************************************
+ *           TASK_FreeThunk
+ *
+ * Free a MakeProcInstance() thunk.
+ */
+static BOOL TASK_FreeThunk( HTASK hTask, SEGPTR thunk )
+{
+    TDB *pTask;
+    THUNKS *pThunk;
+    WORD sel, base;
+    
+    if (!(pTask = (TDB *)GlobalLock( hTask ))) return 0;
+    sel = pTask->hCSAlias;
+    pThunk = &pTask->thunks;
+    base = (int)pThunk - (int)pTask;
+    while (sel && (sel != HIWORD(thunk)))
+    {
+        sel = pThunk->next;
+        pThunk = (THUNKS *)GlobalLock( sel );
+        base = 0;
+    }
+    if (!sel) return FALSE;
+    *(WORD *)((BYTE *)pThunk + LOWORD(thunk) - base) = pThunk->free;
+    pThunk->free = LOWORD(thunk) - base;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           TASK_CallToStart
+ *
+ * 32-bit entry point for a new task. This function is responsible for
+ * setting up the registers and jumping to the 16-bit entry point.
+ */
+static void TASK_CallToStart(void)
+{
+    int cs_reg, ds_reg, ip_reg;
+    TDB *pTask = (TDB *)GlobalLock( hCurrentTask );
+    NE_MODULE *pModule = (NE_MODULE *)GlobalLock( pTask->hModule );
+    SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
+    extern unsigned short WIN_StackSize;
+
+    /* Registers at initialization must be:
+     * ax   zero
+     * bx   stack size in bytes
+     * cx   heap size in bytes
+     * si   previous app instance
+     * di   current app instance
+     * bp   zero
+     * es   selector to the PSP
+     * ds   dgroup of the application
+     * ss   stack selector
+     * sp   top of the stack
+     */
+
+    WIN_StackSize = pModule->stack_size;
+
+    cs_reg = pSegTable[pModule->cs - 1].selector;
+    ip_reg = pModule->ip;
+    ds_reg = pSegTable[pModule->dgroup - 1].selector;
+    IF1632_Saved16_ss = pTask->ss;
+    IF1632_Saved16_sp = pTask->sp;
+/*    dprintf_task( stddeb, "Starting main program: cs:ip=%04x:%04x ds=%04x ss:sp=%04x:%04x\n",
+                 cs_reg, ip_reg, ds_reg,
+                 IF1632_Saved16_ss, IF1632_Saved16_sp);
+*/
+    CallTo16_regs_( (FARPROC)(cs_reg << 16 | ip_reg), ds_reg,
+                   pTask->hPDB /*es*/, 0 /*bp*/, 0 /*ax*/,
+                   WIN_StackSize /*bx*/, pModule->heap_size /*cx*/,
+                   0 /*dx*/, 0 /*si*/, ds_reg /*di*/ );
+    /* This should never return */
+    fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
+    exit(1);
+}
+
+
+/***********************************************************************
+ *           TASK_CreateTask
+ */
+HTASK TASK_CreateTask( HMODULE hModule, HANDLE hEnvironment,
+                       HTASK hTaskParent, char *cmdLine )
+{
+    HTASK hTask;
+    TDB *pTask;
+    NE_MODULE *pModule;
+    SEGTABLEENTRY *pSegTable;
+    LPSTR name;
+    char *stack16Top, *stack32Top;
+    STACK16FRAME *frame16;
+    STACK32FRAME *frame32;
+    extern DWORD CALL16_RetAddr_word;
+
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    pSegTable = NE_SEG_TABLE( pModule );
+
+      /* Allocate the task structure */
+
+    hTask = GLOBAL_Alloc( GMEM_FIXED | GMEM_ZEROINIT, sizeof(TDB),
+                          hModule, FALSE, FALSE, FALSE );
+    if (!hTask) return 0;
+    pTask = (TDB *)GlobalLock( hTask );
+
+      /* Fill the task structure */
+
+    pTask->nEvents   = 1;  /* So the task can be started */
+    pTask->hSelf     = hTask;
+    pTask->flags     = 0;
+    pTask->version   = pModule->expected_version;
+    pTask->hInstance = NE_SEG_TABLE(pModule)[pModule->dgroup-1].selector,
+    pTask->hModule   = hModule;
+    pTask->hParent   = hTaskParent;
+    pTask->curdrive  = 'C' - 'A' + 0x80;
+    pTask->magic     = TDB_MAGIC;
+    strcpy( pTask->curdir, "WINDOWS" );
+
+      /* Create the thunks block */
+
+    TASK_CreateThunks( hTask, (int)&pTask->thunks - (int)pTask, 7 );
+
+      /* Copy the module name */
+
+    name = MODULE_GetModuleName( hModule );
+    strncpy( pTask->module_name, name, sizeof(pTask->module_name) );
+
+      /* Fill the PDB */
+
+    pTask->pdb.int20 = 0x20cd;
+    pTask->pdb.dispatcher[0] = 0x9a;
+    *(DWORD *)&pTask->pdb.dispatcher[1] = MODULE_GetEntryPoint( GetModuleHandle("KERNEL"), 102 );  /* KERNEL.102 is DOS3Call() */
+    pTask->pdb.savedint22 = MODULE_GetEntryPoint( GetModuleHandle("KERNEL"),
+                                    137 );  /* KERNEL.137 is FatalAppExit() */
+    pTask->pdb.savedint23 = pTask->pdb.savedint22;
+    pTask->pdb.savedint24 = pTask->pdb.savedint22;
+    pTask->pdb.environment = hEnvironment;
+    strncpy( pTask->pdb.cmdLine + 1, cmdLine, 126 );
+    pTask->pdb.cmdLine[127] = '\0';
+    pTask->pdb.cmdLine[0] = strlen( pTask->pdb.cmdLine + 1 );
+
+      /* Get the compatibility flags */
+
+    pTask->compat_flags = GetProfileInt( name, "Compatibility", 0 );
+
+      /* Allocate a selector for the PDB */
+
+    pTask->hPDB = GLOBAL_CreateBlock( GMEM_FIXED, &pTask->pdb, sizeof(PDB),
+                                      hModule, FALSE, FALSE, FALSE );
+
+      /* Allocate a code segment alias for the TDB */
+
+    pTask->hCSAlias = GLOBAL_CreateBlock( GMEM_FIXED, (void *)pTask,
+                                          sizeof(TDB), pTask->hPDB, TRUE,
+                                          FALSE, FALSE );
+
+      /* Set the owner of the environment block */
+
+    FarSetOwner( pTask->pdb.environment, pTask->hPDB );
+
+      /* Default DTA overwrites command-line */
+
+    pTask->dta = MAKELONG( (int)&pTask->pdb.cmdLine - (int)&pTask->pdb,
+                           pTask->hPDB );
+
+      /* Allocate the 32-bit stack */
+
+    pTask->hStack32 = GLOBAL_Alloc( GMEM_FIXED, STACK32_SIZE, pTask->hPDB,
+                                    FALSE, FALSE, FALSE );
+
+      /* Create the 32-bit stack frame */
+
+    stack32Top = (char*)GlobalLock(pTask->hStack32) + STACK32_SIZE;
+    frame32 = (STACK32FRAME *)stack32Top - 1;
+    frame32->saved_esp = (DWORD)stack32Top;
+    frame32->edi = 0;
+    frame32->esi = 0;
+    frame32->edx = 0;
+    frame32->ecx = 0;
+    frame32->ebx = 0;
+    frame32->ebp = 0;
+    frame32->retaddr = (DWORD)TASK_CallToStart;
+    frame32->codeselector = WINE_CODE_SELECTOR;
+    pTask->esp = (DWORD)frame32;
+
+      /* Create the 16-bit stack frame */
+
+    pTask->ss = pSegTable[pModule->ss - 1].selector;
+    pTask->sp = (pModule->sp != 0) ? pModule->sp :
+                pSegTable[pModule->ss-1].minsize + pModule->stack_size;
+    stack16Top = (char *)PTR_SEG_OFF_TO_LIN( pTask->ss, pTask->sp );
+    frame16 = (STACK16FRAME *)stack16Top - 1;
+    frame16->saved_ss = pTask->ss;
+    frame16->saved_sp = pTask->sp;
+    frame16->ds = pTask->hInstance;
+    frame16->entry_point = 0;
+    frame16->ordinal_number = 1;
+    frame16->dll_id = 1;
+    frame16->bp = 0;
+    frame16->ip = LOWORD( CALL16_RetAddr_word );
+    frame16->cs = HIWORD( CALL16_RetAddr_word );
+    pTask->sp -= sizeof(STACK16FRAME);
+
+      /* If there's no 16-bit stack yet, use a part of the new task stack */
+      /* This is only needed to have a stack to switch from on the first  */
+      /* call to DirectedYield(). */
+
+    if (!IF1632_Saved16_ss)
+    {
+        IF1632_Saved16_ss = pTask->ss;
+        IF1632_Saved16_sp = pTask->sp;
+    }
+
+      /* Add the task to the linked list */
+
+    TASK_LinkTask( hTask );
+
+    dprintf_task( stddeb, "CreateTask: module='%s' cmdline='%s' task=%04x\n",
+                  name, cmdLine, hTask );
+
     return hTask;
 }
 
 
-/**********************************************************************
- *				AddWindowToTask		[internal]
+/***********************************************************************
+ *           TASK_DeleteTask
  */
-BOOL AddWindowToTask(HTASK hTask, HWND hWnd)
+void TASK_DeleteTask( HTASK hTask )
 {
-	HWND 	*wptr;
-	int		count = 0;
-	LPWINETASKENTRY lpTask = lpTaskList;
-	dprintf_task(stddeb,"AddWindowToTask(%04X, %04X); !\n", hTask, hWnd);
-	while (TRUE) {
-		if (lpTask->te.hTask == hTask) break;
-		if (lpTask == NULL) {
-			fprintf(stderr,"AddWindowToTask // hTask=%04X not found !\n", hTask);
-			return FALSE;
-			}
-		lpTask = lpTask->lpNextTask;
-		}
-	wptr = lpTask->lpWndList;
-	if (wptr == NULL) return FALSE;
-	while (*(wptr) != 0) {
-		if (++count >= MAXWIN_PER_TASK) return FALSE;
-		wptr++;
-		}
-	*wptr = hWnd;
-	dprintf_task(stddeb,"AddWindowToTask // window added, count=%d !\n", count);
-	return TRUE;
+    TDB *pTask;
+
+    if (!(pTask = (TDB *)GlobalLock( hTask ))) return;
+
+      /* Free all memory used by this task (including the 32-bit stack, */
+      /* the environment block and the thunk segments). */
+
+    GlobalFreeAll( pTask->hPDB );
+
+      /* Free the selector aliases */
+
+    GLOBAL_FreeBlock( pTask->hCSAlias );
+    GLOBAL_FreeBlock( pTask->hPDB );
+
+    GlobalFree( hTask );  /* Free the task structure */
+}
+
+
+/***********************************************************************
+ *           TASK_KillCurrentTask
+ *
+ * Kill the currently running task. As it's not possible to kill the
+ * current task like this, it is simply marked for destruction, and will
+ * be killed when either TASK_Reschedule or this function is called again 
+ * in the context of another task.
+ */
+void TASK_KillCurrentTask( int exitCode )
+{
+    if (hTaskToKill && (hTaskToKill != hCurrentTask))
+    {
+        /* If another task is already marked for destruction, */
+        /* we call kill it now, as we are in another context. */
+        TASK_DeleteTask( hTaskToKill );
+    }
+
+    if (nTaskCount <= 1)
+    {
+        dprintf_task( stddeb, "Killing the last task, exiting\n" );
+        exit(0);
+    }
+
+    /* Remove the task from the list to be sure we never switch back to it */
+    TASK_UnlinkTask( hCurrentTask );
+    
+    hTaskToKill = hCurrentTask;
+    Yield();
+    /* We never return from Yield() */
+}
+
+
+/***********************************************************************
+ *           TASK_Reschedule
+ *
+ * This is where all the magic of task-switching happens!
+ *
+ * This function should only be called via the TASK_SCHEDULE() macro, to make
+ * sure that all the context is saved correctly.
+ */
+void TASK_Reschedule(void)
+{
+    TDB *pOldTask = NULL, *pNewTask;
+    HTASK hTask = 0;
+
+      /* First check if there's a task to kill */
+
+    if (hTaskToKill && (hTaskToKill != hCurrentTask))
+        TASK_DeleteTask( hTaskToKill );
+
+      /* Find a task to yield to */
+
+    pOldTask = (TDB *)GlobalLock( hCurrentTask );
+    if (pOldTask && pOldTask->hYieldTo)
+    {
+        /* If a task is stored in hYieldTo of the current task (put there */
+        /* by DirectedYield), yield to it only if it has events pending.  */
+        hTask = pOldTask->hYieldTo;
+        if (!(pNewTask = (TDB *)GlobalLock( hTask )) || !pNewTask->nEvents)
+            hTask = 0;
+    }
+
+    if (!hTask)
+    {
+        hTask = hFirstTask;
+        while (hTask)
+        {
+            pNewTask = (TDB *)GlobalLock( hTask );
+            if (pNewTask->nEvents && (hTask != hCurrentTask)) break;
+            hTask = pNewTask->hNext;
+        }
+    }
+
+     /* If there's a task to kill, switch to any other task, */
+     /* even if it doesn't have events pending. */
+
+    if (!hTask && hTaskToKill) hTask = hFirstTask;
+
+    if (!hTask) return;  /* Do nothing */
+
+    pNewTask = (TDB *)GlobalLock( hTask );
+    dprintf_task( stddeb, "Switching to task %04x (%.8s)\n",
+                  hTask, pNewTask->module_name );
+
+      /* Save the stacks of the previous task (if any) */
+
+    if (pOldTask)
+    {
+        pOldTask->ss  = IF1632_Saved16_ss;
+        pOldTask->sp  = IF1632_Saved16_sp;
+        pOldTask->esp = IF1632_Saved32_esp;
+    }
+
+     /* Make the task the last in the linked list (round-robin scheduling) */
+
+    pNewTask->priority++;
+    TASK_UnlinkTask( hTask );
+    TASK_LinkTask( hTask );
+    pNewTask->priority--;
+
+      /* Switch to the new stack */
+
+    hCurrentTask = hTask;
+    IF1632_Saved16_ss  = pNewTask->ss;
+    IF1632_Saved16_sp  = pNewTask->sp;
+    IF1632_Saved32_esp = pNewTask->esp;
+}
+
+
+/***********************************************************************
+ *           WaitEvent  (KERNEL.30)
+ */
+BOOL WaitEvent( HTASK hTask )
+{
+    TDB *pTask;
+
+    if (!hTask) hTask = hCurrentTask;
+    pTask = (TDB *)GlobalLock( hTask );
+    if (pTask->nEvents > 0)
+    {
+        pTask->nEvents--;
+        return FALSE;
+    }
+    TASK_SCHEDULE();
+    /* When we get back here, we have an event */
+    pTask->nEvents--;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           PostEvent  (KERNEL.31)
+ */
+void PostEvent( HTASK hTask )
+{
+    TDB *pTask;
+
+    if (!hTask) hTask = hCurrentTask;
+    if (!(pTask = (TDB *)GlobalLock( hTask ))) return;
+    pTask->nEvents++;
+}
+
+
+/***********************************************************************
+ *           SetPriority  (KERNEL.32)
+ */
+void SetPriority( HTASK hTask, int delta )
+{
+    TDB *pTask;
+    int newpriority;
+
+    if (!hTask) hTask = hCurrentTask;
+    if (!(pTask = (TDB *)GlobalLock( hTask ))) return;
+    newpriority = pTask->priority + delta;
+    if (newpriority < -32) newpriority = -32;
+    else if (newpriority > 15) newpriority = 15;
+
+    pTask->priority = newpriority + 1;
+    TASK_UnlinkTask( hTask );
+    TASK_LinkTask( hTask );
+    pTask->priority--;
+}
+
+
+/***********************************************************************
+ *           OldYield  (KERNEL.117)
+ */
+void OldYield(void)
+{
+    TDB *pCurTask;
+
+    pCurTask = (TDB *)GlobalLock( hCurrentTask );
+    if (pCurTask) pCurTask->nEvents++;  /* Make sure we get back here */
+    TASK_SCHEDULE();
+    if (pCurTask) pCurTask->nEvents--;
+}
+
+
+/***********************************************************************
+ *           DirectedYield  (KERNEL.150)
+ */
+void DirectedYield( HTASK hTask )
+{
+    TDB *pCurTask;
+
+    if ((pCurTask = (TDB *)GlobalLock( hCurrentTask )) != NULL)
+        pCurTask->hYieldTo = hTask;
+
+    OldYield();
+}
+
+
+/***********************************************************************
+ *           Yield  (KERNEL.29)
+ */
+void Yield(void)
+{
+    DirectedYield( 0 );
+}
+
+
+/***********************************************************************
+ *           MakeProcInstance  (KERNEL.51)
+ */
+FARPROC MakeProcInstance( FARPROC func, HANDLE hInstance )
+{
+    BYTE *thunk;
+    SEGPTR thunkaddr;
+    
+    thunkaddr = TASK_AllocThunk( hCurrentTask );
+    if (!thunkaddr) return (FARPROC)0;
+    thunk = PTR_SEG_TO_LIN( thunkaddr );
+
+    dprintf_task( stddeb, "MakeProcInstance(%08lx,%04x): got thunk %08lx\n",
+                  (SEGPTR)func, hInstance, (SEGPTR)thunkaddr );
+    
+    *thunk++ = 0xb8;    /* movw instance, %ax */
+    *thunk++ = (BYTE)(hInstance & 0xff);
+    *thunk++ = (BYTE)(hInstance >> 8);
+    *thunk++ = 0xea;    /* ljmp func */
+    *(DWORD *)thunk = (DWORD)func;
+    return (FARPROC)thunkaddr;
+}
+
+
+/***********************************************************************
+ *           FreeProcInstance  (KERNEL.52)
+ */
+void FreeProcInstance( FARPROC func )
+{
+    dprintf_task( stddeb, "FreeProcInstance(%08lx)\n", (SEGPTR)func );
+    TASK_FreeThunk( hCurrentTask, (SEGPTR)func );
 }
 
 
 /**********************************************************************
- *				RemoveWindowFromTask		[internal]
+ *	    GetCodeHandle    (KERNEL.93)
  */
-BOOL RemoveWindowFromTask(HTASK hTask, HWND hWnd)
+HANDLE GetCodeHandle( FARPROC proc )
 {
-	HWND 	*wptr;
-	int		count = 0;
-	LPWINETASKENTRY lpTask = lpTaskList;
-	dprintf_task(stddeb,"RemoveWindowFromTask (%04X, %04X); !\n", hTask, hWnd);
-	while (TRUE) {
-		if (lpTask->te.hTask == hTask) break;
-		if (lpTask == NULL) {
-			fprintf(stderr,"RemoveWindowFromTask // hTask=%04X not found !\n", hTask);
-			return FALSE;
-			}
-		lpTask = lpTask->lpNextTask;
-		}
-	wptr = lpTask->lpWndList;
-	if (wptr == NULL) return FALSE;
-	while (*(wptr) != hWnd) {
-		if (++count >= MAXWIN_PER_TASK) return FALSE;
-		wptr++;
-		}
-	while (*(wptr) != 0) {
-		*(wptr) = *(wptr + 1);
-		if (++count >= MAXWIN_PER_TASK) return FALSE;
-		wptr++;
-		}
-	dprintf_task(stddeb,"RemoveWindowFromTask // window removed, count=%d !\n", --count);
-	return TRUE;
+    HANDLE handle;
+    BYTE *thunk = (BYTE *)PTR_SEG_TO_LIN( proc );
+
+    /* Return the code segment containing 'proc'. */
+    /* Not sure if this is really correct (shouldn't matter that much). */
+
+    /* Check if it is really a thunk */
+    if ((thunk[0] == 0xb8) && (thunk[3] == 0xea))
+        handle = GlobalHandle( thunk[6] + (thunk[7] << 8) );
+    else
+        handle = GlobalHandle( HIWORD(proc) );
+
+    printf( "STUB: GetCodeHandle(%p) returning %04x\n", proc, handle );
+    return handle;
 }
 
-BOOL TaskFirst(LPTASKENTRY lpTask)
+
+/***********************************************************************
+ *           SetTaskQueue  (KERNEL.34)
+ */
+HGLOBAL SetTaskQueue( HANDLE hTask, HGLOBAL hQueue )
 {
-	dprintf_task(stddeb,"TaskFirst(%8x)\n", (int) lpTask);
-	if (lpTaskList) {
-		memcpy(lpTask, &lpTaskList->te, lpTask->dwSize);
-		return TRUE;
-	} else
-		return FALSE;
+    HGLOBAL hPrev;
+    TDB *pTask;
+
+    if (!hTask) hTask = hCurrentTask;
+    if (!(pTask = (TDB *)GlobalLock( hTask ))) return 0;
+    hPrev = pTask->hQueue;
+    pTask->hQueue = hQueue;
+    return hPrev;
 }
 
-BOOL TaskNext(LPTASKENTRY lpTask)
+
+/***********************************************************************
+ *           GetTaskQueue  (KERNEL.35)
+ */
+HGLOBAL GetTaskQueue( HANDLE hTask )
 {
-	LPWINETASKENTRY list;
-	dprintf_task(stddeb,"TaskNext(%8x)\n", (int) lpTask);
-	list = lpTaskList;
-	while (list) {
-		if (list->te.hTask == lpTask->hTask) {
-			list = list->lpNextTask;
-			if (list) {
-				memcpy(lpTask, &list->te, lpTask->dwSize);
-				return TRUE;
-			} else
-				return FALSE;
-		}
-		list = list->lpNextTask;
-	}
-	return FALSE;
+    TDB *pTask;
+
+    if (!hTask) hTask = hCurrentTask;
+    if (!(pTask = (TDB *)GlobalLock( hTask ))) return 0;
+    return pTask->hQueue;
 }
 
-BOOL TaskFindHandle(LPTASKENTRY lpTask, HTASK hTask)
+
+/***********************************************************************
+ *           GetCurrentTask   (KERNEL.36)
+ */
+HTASK GetCurrentTask(void)
 {
-	static LPWINETASKENTRY list;
-	dprintf_task(stddeb,"TaskFindHandle(%8x,%4x)\n", (int) lpTask, hTask);
-	list = lpTaskList;
-	while (list) {
-		if (list->te.hTask == hTask) {
-			list = list->lpNextTask;
-			if (list) {
-				memcpy(lpTask, &list->te, lpTask->dwSize);
-				return TRUE;
-			} else
-				return FALSE;
-		}
-		list = list->lpNextTask;
-	}
-	return FALSE;
+      /* Undocumented: first task is returned in high word */
+    return MAKELONG( hCurrentTask, hFirstTask );
+}
+
+
+/***********************************************************************
+ *           GetCurrentPDB   (KERNEL.37)
+ */
+WORD GetCurrentPDB(void)
+{
+    TDB *pTask;
+
+    if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return 0;
+    return pTask->hPDB;
+}
+
+
+/***********************************************************************
+ *           GetNumTasks   (KERNEL.152)
+ */
+WORD GetNumTasks(void)
+{
+    return nTaskCount;
+}
+
+
+/***********************************************************************
+ *           GetTaskDS   (KERNEL.155)
+ */
+WORD GetTaskDS(void)
+{
+    TDB *pTask;
+
+    if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return 0;
+    return pTask->hInstance;
+}
+
+
+/***********************************************************************
+ *           IsTask   (KERNEL.320)
+ */
+BOOL IsTask( HTASK hTask )
+{
+    TDB *pTask;
+
+    if (!(pTask = (TDB *)GlobalLock( hTask ))) return FALSE;
+    if (GlobalSize( hTask ) < sizeof(TDB)) return FALSE;
+    return (pTask->magic == TDB_MAGIC);
+}
+
+
+/***********************************************************************
+ *           GetExePtr   (KERNEL.133)
+ */
+HMODULE GetExePtr( HANDLE handle )
+{
+    char *ptr;
+    HTASK hTask;
+    HANDLE owner;
+
+      /* Check for module handle */
+
+    if (!(ptr = GlobalLock( handle ))) return 0;
+    if (((NE_MODULE *)ptr)->magic == NE_SIGNATURE) return handle;
+
+      /* Check the owner for module handle */
+
+    owner = FarGetOwner( handle );
+    if (!(ptr = GlobalLock( owner ))) return 0;
+    if (((NE_MODULE *)ptr)->magic == NE_SIGNATURE) return owner;
+
+      /* Search for this handle and its owner inside all tasks */
+
+    hTask = hFirstTask;
+    while (hTask)
+    {
+        TDB *pTask = (TDB *)GlobalLock( hTask );
+        if ((hTask == handle) ||
+            (pTask->hInstance == handle) ||
+            (pTask->hQueue == handle) ||
+            (pTask->hPDB == handle)) return pTask->hModule;
+        if ((hTask == owner) ||
+            (pTask->hInstance == owner) ||
+            (pTask->hQueue == owner) ||
+            (pTask->hPDB == owner)) return pTask->hModule;
+    }
+    return 0;
+}
+
+
+/***********************************************************************
+ *           TaskFirst   (TOOLHELP.63)
+ */
+BOOL TaskFirst( TASKENTRY *lpte )
+{
+    lpte->hNext = hFirstTask;
+    return TaskNext( lpte );
+}
+
+
+/***********************************************************************
+ *           TaskNext   (TOOLHELP.64)
+ */
+BOOL TaskNext( TASKENTRY *lpte )
+{
+    TDB *pTask;
+    INSTANCEDATA *pInstData;
+
+    dprintf_toolhelp( stddeb, "TaskNext(%p): task=%04x\n", lpte, lpte->hNext );
+    if (!lpte->hNext) return FALSE;
+    pTask = (TDB *)GlobalLock( lpte->hNext );
+    if (!pTask || pTask->magic != TDB_MAGIC) return FALSE;
+    pInstData = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( pTask->hInstance, 0 );
+    lpte->hTask         = lpte->hNext;
+    lpte->hTaskParent   = pTask->hParent;
+    lpte->hInst         = pTask->hInstance;
+    lpte->hModule       = pTask->hModule;
+    lpte->wSS           = pTask->ss;
+    lpte->wSP           = pTask->sp;
+    lpte->wStackTop     = pInstData->stacktop;
+    lpte->wStackMinimum = pInstData->stackmin;
+    lpte->wStackBottom  = pInstData->stackbottom;
+    lpte->wcEvents      = pTask->nEvents;
+    lpte->hQueue        = pTask->hQueue;
+    strncpy( lpte->szModule, pTask->module_name, 8 );
+    lpte->szModule[8]   = '\0';
+    lpte->wPSPOffset    = 0x100;  /*??*/
+    lpte->hNext         = pTask->hNext;
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           TaskFindHandle   (TOOLHELP.65)
+ */
+BOOL TaskFindHandle( TASKENTRY *lpte, HTASK hTask )
+{
+    lpte->hNext = hTask;
+    return TaskNext( lpte );
 }

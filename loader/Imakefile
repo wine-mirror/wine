@@ -6,6 +6,7 @@ SRCS = \
 	dump.c \
 	ldt.c \
 	main.c \
+	module.c \
 	ne_image.c \
 	ne_resource.c \
 	pe_image.c \

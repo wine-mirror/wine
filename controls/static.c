@@ -17,7 +17,6 @@ extern void DEFWND_SetText( HWND hwnd, LPSTR text );  /* windows/defwnd.c */
 
 static void PaintTextfn( HWND hwnd, HDC hdc );
 static void PaintRectfn( HWND hwnd, HDC hdc );
-static void PaintFramefn( HWND hwnd, HDC hdc );
 static void PaintIconfn( HWND hwnd, HDC hdc );
 
 
@@ -37,9 +36,9 @@ static pfPaint staticPaintFunc[LAST_STATIC_TYPE+1] =
     PaintRectfn,             /* SS_BLACKRECT */
     PaintRectfn,             /* SS_GRAYRECT */
     PaintRectfn,             /* SS_WHITERECT */
-    PaintFramefn,            /* SS_BLACKFRAME */
-    PaintFramefn,            /* SS_GRAYFRAME */
-    PaintFramefn,            /* SS_WHITEFRAME */
+    PaintRectfn,             /* SS_BLACKFRAME */
+    PaintRectfn,             /* SS_GRAYFRAME */
+    PaintRectfn,             /* SS_WHITEFRAME */
     NULL,                    /* Not defined */
     PaintTextfn,             /* SS_SIMPLE */
     PaintTextfn              /* SS_LEFTNOWORDWRAP */
@@ -241,63 +240,36 @@ static void PaintRectfn( HWND hwnd, HDC hdc )
 
     GetClientRect(hwnd, &rc);
     
-    switch (wndPtr->dwStyle & 0x0000000F)
+    switch (wndPtr->dwStyle & 0x0f)
     {
     case SS_BLACKRECT:
 	hBrush = CreateSolidBrush(color_windowframe);
+        FillRect( hdc, &rc, hBrush );
 	break;
-
     case SS_GRAYRECT:
 	hBrush = CreateSolidBrush(color_background);
+        FillRect( hdc, &rc, hBrush );
 	break;
-
     case SS_WHITERECT:
 	hBrush = CreateSolidBrush(color_window);
+        FillRect( hdc, &rc, hBrush );
 	break;
-
-    default:
-        return;
-    }
-    FillRect( hdc, &rc, hBrush );
-}
-
-static void PaintFramefn( HWND hwnd, HDC hdc )
-{
-    RECT rc;
-    HPEN hOldPen, hPen;
-    HBRUSH hOldBrush, hBrush;
-
-    WND *wndPtr = WIN_FindWndPtr(hwnd);
-
-    GetClientRect(hwnd, &rc);
-    
-    switch (wndPtr->dwStyle & 0x0000000F)
-    {
     case SS_BLACKFRAME:
-	hPen = CreatePen(PS_SOLID, 1, color_windowframe);
+	hBrush = CreateSolidBrush(color_windowframe);
+        FrameRect( hdc, &rc, hBrush );
 	break;
-
     case SS_GRAYFRAME:
-	hPen = CreatePen(PS_SOLID, 1, color_background);
+	hBrush = CreateSolidBrush(color_background);
+        FrameRect( hdc, &rc, hBrush );
 	break;
-
     case SS_WHITEFRAME:
-	hPen = CreatePen(PS_SOLID, 1, color_window);
+	hBrush = CreateSolidBrush(color_window);
+        FrameRect( hdc, &rc, hBrush );
 	break;
-
     default:
         return;
     }
-
-    hBrush = CreateSolidBrush(color_window);
-    hOldPen = (HPEN)SelectObject(hdc, (HANDLE)hPen);
-    hOldBrush = (HBRUSH)SelectObject(hdc, (HANDLE)hBrush);
-    Rectangle(hdc, rc.left, rc.top, rc.right, rc.bottom);
-
-    SelectObject(hdc, (HANDLE)hOldPen);
-    SelectObject(hdc, (HANDLE)hOldBrush);
-    DeleteObject((HANDLE)hPen);
-    DeleteObject((HANDLE)hBrush);
+    DeleteObject( hBrush );
 }
 
 

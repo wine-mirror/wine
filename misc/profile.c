@@ -320,18 +320,18 @@ int GetProfileString (LPSTR AppName, LPSTR KeyName, LPSTR Default,
 WORD GetPrivateProfileInt (LPSTR AppName, LPSTR KeyName, short Default,
 			   LPSTR File)
 {
-    static char IntBuf [6];
-    static char buf [6];
+    static char IntBuf[10];
+    static char buf[10];
 
     sprintf (buf, "%d", Default);
     
     /* Check the exact semantic with the SDK */
-    GetPrivateProfileString (AppName, KeyName, buf, IntBuf, 6, File);
+    GetPrivateProfileString (AppName, KeyName, buf, IntBuf, 10, File);
     if (!strcasecmp (IntBuf, "true"))
 	return 1;
     if (!strcasecmp (IntBuf, "yes"))
 	return 1;
-    return atoi (IntBuf);
+    return strtoul( IntBuf, NULL, 0 );
 }
 
 WORD GetProfileInt (LPSTR AppName, LPSTR KeyName, int Default)

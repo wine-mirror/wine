@@ -6,15 +6,17 @@
 #ifndef NEEXE_H
 #define NEEXE_H
 
+#include "wintypes.h"
+
 /*
  * Old MZ header for DOS programs.  Actually just a couple of fields
  * from it, so that we can find the start of the NE header.
  */
 struct mz_header_s
 {
-    u_short mz_magic;         /* MZ Header signature */
-    u_char  dont_care[0x3a];  /* MZ Header stuff */
-    u_short ne_offset;        /* Offset to extended header */
+    WORD mz_magic;         /* MZ Header signature */
+    BYTE  dont_care[0x3a];  /* MZ Header stuff */
+    WORD ne_offset;        /* Offset to extended header */
 };
 
 #define MZ_SIGNATURE  ('M' | ('Z' << 8))
@@ -24,38 +26,38 @@ struct mz_header_s
  */
 struct ne_header_s
 {
-    u_short ne_magic;           /* NE signature 'NE' */
-    u_char  linker_version;	/* Linker version number		*/
-    u_char  linker_revision;	/* Linker revision number		*/
-    u_short entry_tab_offset;	/* Offset to entry table relative to NE */
-    u_short entry_tab_length;	/* Length of entry table in bytes	*/
-    u_long  reserved1;		/* Reserved by Microsoft		*/
-    u_short format_flags;	/* Flags about segments in this file	*/
-    u_short auto_data_seg;	/* Automatic data segment number	*/
-    u_short local_heap_length;	/* Initial size of local heap		*/
-    u_short stack_length;	/* Initial size of stack		*/
-    u_short ip;			/* Initial IP				*/
-    u_short cs;			/* Initial CS				*/
-    u_short sp;			/* Initial SP				*/
-    u_short ss;			/* Initial SS				*/
-    u_short n_segment_tab;	/* # of entries in segment table	*/
-    u_short n_mod_ref_tab;	/* # of entries in module reference tab.*/
-    u_short nrname_tab_length; 	/* Length of nonresident-name table     */
-    u_short segment_tab_offset;	/* Offset to segment table		*/
-    u_short resource_tab_offset;/* Offset to resource table		*/
-    u_short rname_tab_offset;	/* Offset to resident-name table	*/
-    u_short moduleref_tab_offset;/* Offset to module reference table	*/
-    u_short iname_tab_offset;	/* Offset to imported name table	*/
-    u_long  nrname_tab_offset;	/* Offset to nonresident-name table	*/
-    u_short n_mov_entry_points;	/* # of movable entry points		*/
-    u_short align_shift_count;	/* Logical sector alignment shift count */
-    u_short n_resource_seg;	/* # of resource segments		*/
-    u_char  operating_system;	/* Flags indicating target OS		*/
-    u_char  additional_flags;	/* Additional information flags		*/
-    u_short fastload_offset;	/* Offset to fast load area		*/
-    u_short fastload_length;	/* Length of fast load area		*/
-    u_short reserved2;		/* Reserved by Microsoft		*/
-    u_short expect_version;	/* Expected Windows version number	*/
+    WORD  ne_magic;           /* NE signature 'NE' */
+    BYTE  linker_version;	/* Linker version number		*/
+    BYTE  linker_revision;	/* Linker revision number		*/
+    WORD  entry_tab_offset;	/* Offset to entry table relative to NE */
+    WORD  entry_tab_length;	/* Length of entry table in bytes	*/
+    DWORD reserved1;		/* Reserved by Microsoft		*/
+    WORD  format_flags;	/* Flags about segments in this file	*/
+    WORD  auto_data_seg;	/* Automatic data segment number	*/
+    WORD  local_heap_length;	/* Initial size of local heap		*/
+    WORD  stack_length;	/* Initial size of stack		*/
+    WORD  ip;			/* Initial IP				*/
+    WORD  cs;			/* Initial CS				*/
+    WORD  sp;			/* Initial SP				*/
+    WORD  ss;			/* Initial SS				*/
+    WORD  n_segment_tab;	/* # of entries in segment table	*/
+    WORD  n_mod_ref_tab;	/* # of entries in module reference tab.*/
+    WORD  nrname_tab_length; 	/* Length of nonresident-name table     */
+    WORD  segment_tab_offset;	/* Offset to segment table		*/
+    WORD  resource_tab_offset;/* Offset to resource table		*/
+    WORD  rname_tab_offset;	/* Offset to resident-name table	*/
+    WORD  moduleref_tab_offset;/* Offset to module reference table	*/
+    WORD  iname_tab_offset;	/* Offset to imported name table	*/
+    DWORD nrname_tab_offset;	/* Offset to nonresident-name table	*/
+    WORD  n_mov_entry_points;	/* # of movable entry points		*/
+    WORD  align_shift_count;	/* Logical sector alignment shift count */
+    WORD  n_resource_seg;	/* # of resource segments		*/
+    BYTE  operating_system;	/* Flags indicating target OS		*/
+    BYTE  additional_flags;	/* Additional information flags		*/
+    WORD  fastload_offset;	/* Offset to fast load area		*/
+    WORD  fastload_length;	/* Length of fast load area		*/
+    WORD  reserved2;		/* Reserved by Microsoft		*/
+    WORD  expect_version;	/* Expected Windows version number	*/
 };
 
 #define NE_SIGNATURE  ('N' | ('E' << 8))
@@ -88,10 +90,10 @@ struct ne_header_s
  */
 struct ne_segment_table_entry_s
 {
-    u_short seg_data_offset;	/* Sector offset of segment data	*/
-    u_short seg_data_length;	/* Length of segment data		*/
-    u_short seg_flags;		/* Flags associated with this segment	*/
-    u_short min_alloc;		/* Minimum allocation size for this	*/
+    WORD seg_data_offset;	/* Sector offset of segment data	*/
+    WORD seg_data_length;	/* Length of segment data		*/
+    WORD seg_flags;		/* Flags associated with this segment	*/
+    WORD min_alloc;		/* Minimum allocation size for this	*/
 };
 
 /*
@@ -113,11 +115,11 @@ struct ne_segment_table_entry_s
  */
 struct relocation_entry_s
 {
-    u_char  address_type;	/* Relocation address type		*/
-    u_char  relocation_type;	/* Relocation type			*/
-    u_short offset;		/* Offset in segment to fixup		*/
-    u_short target1;		/* Target specification			*/
-    u_short target2;		/* Target specification			*/
+    BYTE address_type;	/* Relocation address type		*/
+    BYTE relocation_type;	/* Relocation type			*/
+    WORD offset;		/* Offset in segment to fixup		*/
+    WORD target1;		/* Target specification			*/
+    WORD target2;		/* Target specification			*/
 };
 
 /*

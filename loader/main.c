@@ -30,7 +30,6 @@ char **Argv;
 int Argc;
 HINSTANCE hSysRes, hInstMain;
 unsigned short WIN_StackSize;
-unsigned short WIN_HeapSize;
 
 /**********************************************************************
  *					myerror
@@ -45,20 +44,89 @@ myerror(const char *s)
 
     exit(1);
 }
-
+
+
+/***********************************************************************
+ *           Main initialisation routine
+ */
+int MAIN_Init(void)
+{
+    int queueSize;
+
+    SpyInit();
+
+      /* Initialize relay code */
+    if (!RELAY_Init()) return 0;
+
+      /* Create built-in modules */
+    if (!MODULE_Init()) return 0;
+
+      /* Initialize tasks */
+    if (!TASK_Init()) return 0;
+
+      /* Initialize the DOS file system */
+    DOS_InitFS();
+
+      /* Initialize communications */
+    COMM_Init();
+
+#ifndef WINELIB    
+      /* Initialize the DOS memory */
+    INT21_Init();
+
+      /* Create USER heap */
+    if (!USER_HeapInit()) return 0;
+#endif
+    
+      /* Global atom table initialisation */
+    if (!ATOM_Init()) return 0;
+    
+      /* GDI initialisation */
+    if (!GDI_Init()) return 0;
+
+      /* Initialize system colors and metrics*/
+    SYSMETRICS_Init();
+    SYSCOLOR_Init();
+
+      /* Create the DCEs */
+    DCE_Init();
+    
+      /* Initialize built-in window classes */
+    if (!WIDGETS_Init()) return 0;
+
+      /* Initialize dialog manager */
+    if (!DIALOG_Init()) return 0;
+
+      /* Initialize menus */
+    if (!MENU_Init()) return 0;
+
+      /* Create desktop window */
+    if (!WIN_CreateDesktopWindow()) return 0;
+    if (!DESKTOP_Init()) return 0;
+
+      /* Create system message queue */
+    queueSize = GetProfileInt( "windows", "TypeAhead", 120 );
+    if (!MSG_CreateSysMsgQueue( queueSize )) return 0;
+
+    return 1;
+}
+
+
 #ifndef WINELIB
 /**********************************************************************
  *					main
  */
 int _WinMain(int argc, char **argv)
 {
-	char *p, filename[256];
-	HANDLE	hTaskMain;
+    char *p, filename[256];
+    int i;
 
-	struct w_files *wpnt;
+    struct w_files *wpnt;
 #ifdef WINESTAT
-	char * cp;
+    char * cp;
 #endif
+
+    if (!MAIN_Init()) return 0;
 
 	Argc = argc - 1;
 	Argv = argv + 1;
@@ -76,13 +144,13 @@ int _WinMain(int argc, char **argv)
 	    	    strcat(WindowsPath, filename);
 	}
 
-	if ((hInstMain = LoadImage(Argv[0], EXE, 1)) < 32) {
-		fprintf(stderr, "wine: can't load %s!.\n", Argv[0]);
+	for (i = 0; i < Argc; i++)
+        {
+            if ((hInstMain = LoadImage(Argv[i], EXE, 1)) < 32) {
+		fprintf(stderr, "wine: can't load %s!.\n", Argv[i]);
 		exit(1);
-	}
-	hTaskMain = CreateNewTask(hInstMain, 0);
-	dprintf_dll(stddeb,"_WinMain // hTaskMain=%04X hInstMain=%04X !\n",
-		    hTaskMain, hInstMain);
+            }
+        }
 
 	GetPrivateProfileString("wine", "SystemResources", "sysres.dll", 
 				filename, sizeof(filename), WINE_INI);
@@ -110,15 +178,14 @@ int _WinMain(int argc, char **argv)
      * Initialize signal handling.
      */
     init_wine_signals();
-
+        
     wpnt = GetFileInfo(hInstMain);
     if (Options.debug)
 	wine_debug(0, NULL);
 
-    if (wpnt->ne)
-	return(NE_StartProgram(wpnt));
-    else
-	return(PE_StartProgram(wpnt));
+    Yield();  /* Start the first task */
+    fprintf( stderr, "WinMain: Should never happen: returned from Yield()\n" );
+    return 0;
 }
 
 #endif /* #ifndef WINELIB */

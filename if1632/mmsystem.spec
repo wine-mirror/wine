@@ -1,8 +1,5 @@
-# $Id: mmsystem.spec,v 1.3 1993/07/04 04:04:21 root Exp root $
-#
 name	mmsystem
 id	10
-length 1226
 
 1      pascal  MMSYSTEM_WEP(word word word ptr) MMSYSTEM_WEP
 2      pascal  SNDPLAYSOUND(ptr word) sndPlaySound

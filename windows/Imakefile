@@ -20,6 +20,7 @@ SRCS = \
 	message.c \
 	nonclient.c \
 	painting.c \
+	property.c \
 	scroll.c \
 	syscolor.c \
 	sysmetrics.c \

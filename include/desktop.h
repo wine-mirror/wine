@@ -17,6 +17,7 @@ typedef struct
     BOOL     fTileWallPaper;
 } DESKTOPINFO;
 
+extern BOOL DESKTOP_Init();
 extern BOOL DESKTOP_SetPattern(char *pattern );
 
 #endif  /* DESKTOP_H */

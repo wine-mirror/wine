@@ -15,6 +15,17 @@ int do_int25(struct sigcontext_struct *context)
 	BYTE *dataptr = PTR_SEG_OFF_TO_LIN(DS, BX);
 	DWORD begin, length;
 
+        if(!DOS_ValidDrive(AL))
+        {
+            SetCflag;
+            AX = 0x0101;        /* unknown unit */
+
+            /* push flags on stack */
+            SP -= sizeof(WORD);
+            setword(PTR_SEG_OFF_TO_LIN(SS,SP), (WORD) EFL);
+            return 1;
+        }
+
 	if (CX == 0xffff) {
 		begin = getdword(dataptr);
 		length = getword(&dataptr[4]);

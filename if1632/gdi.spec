@@ -1,8 +1,5 @@
-# $Id: gdi.spec,v 1.3 1993/07/04 04:04:21 root Exp root $
-#
 name	gdi
 id	3
-length	490
 
 1   pascal SetBkColor(word long) SetBkColor
 2   pascal16 SetBkMode(word word) SetBkMode
@@ -50,7 +47,7 @@ length	490
 38  pascal Escape(word word word ptr ptr) Escape
 39  pascal16 RestoreDC(word s_word) RestoreDC
 40  pascal16 FillRgn(word word word) FillRgn
-#41  pascal FrameRgn
+41  stub FrameRgn
 42  pascal16 InvertRgn(word word) InvertRgn
 43  pascal16 PaintRgn(word word) PaintRgn
 44  pascal16 SelectClipRgn(word word) SelectClipRgn
@@ -80,7 +77,7 @@ length	490
 68  pascal16 DeleteDC(word) DeleteDC
 69  pascal16 DeleteObject(word) DeleteObject
 70  pascal16 EnumFonts(word ptr segptr long) EnumFonts
-71  pascal16 EnumObjects(word word ptr long) EnumObjects
+71  pascal16 EnumObjects(word word segptr long) EnumObjects
 72  pascal16 EqualRgn(word word) EqualRgn
 73  pascal16 ExcludeVisRect(word s_word s_word s_word s_word) ExcludeVisRect
 74  pascal GetBitmapBits(word long ptr) GetBitmapBits
@@ -138,84 +135,84 @@ length	490
 148 pascal SetBrushOrg(word s_word s_word) SetBrushOrg
 149 pascal GetBrushOrg(word) GetBrushOrg
 150 pascal16 UnrealizeObject(word) UnrealizeObject
-#151 pascal CopyMetaFile
+151 stub CopyMetaFile
 153 pascal16 CreateIC(ptr ptr ptr ptr) CreateIC
 154 pascal GetNearestColor(word long) GetNearestColor
-#155 pascal QueryAbort
+155 stub QueryAbort
 156 pascal16 CreateDiscardableBitmap(word word word) CreateDiscardableBitmap
-#159 pascal GetMetaFileBits
-#160 pascal SetMetaFileBits
+159 stub GetMetaFileBits
+160 stub SetMetaFileBits
 161 pascal16 PtInRegion(word s_word s_word) PtInRegion
 162 pascal GetBitmapDimension(word) GetBitmapDimension
 163 pascal SetBitmapDimension(word s_word s_word) SetBitmapDimension
-#169 pascal IsDCDirty
-#170 pascal SetDCStatus
+169 stub IsDCDirty
+170 stub SetDCStatus
 172 pascal16 SetRectRgn(word s_word s_word s_word s_word) SetRectRgn
 173 pascal16 GetClipRgn(word) GetClipRgn
-#175 pascal EnumMetaFile
+175 stub EnumMetaFile
 176 pascal16 PlayMetaFileRecord(word ptr ptr word) PlayMetaFileRecord
 179 pascal16 GetDCState(word) GetDCState
 180 pascal16 SetDCState(word word) SetDCState
 181 pascal16 RectInRegionOld(word ptr) RectInRegion
-#190 pascal SetDCHook
-#191 pascal GetDCHook
-#192 pascal SetHookFlags
-#193 pascal SetBoundsRect
-#194 pascal GetBoundsRect
-#195 pascal SelectBitmap
-#196 pascal SetMetaFileBitsBetter
-#201 pascal DMBITBLT
-#202 pascal DMCOLORINFO
-#206 pascal DMENUMDFONTS
-#207 pascal DMENUMOBJ
-#208 pascal DMOUTPUT
-#209 pascal DMPIXEL
-#210 pascal DMREALIZEOBJECT
-#211 pascal DMSTRBLT
-#212 pascal DMSCANLR
-#213 pascal BRUTE
-#214 pascal DMEXTTEXTOUT
-#215 pascal DMGETCHARWIDTH
-#216 pascal DMSTRETCHBLT
-#217 pascal DMDIBBITS
-#218 pascal DMSTRETCHDIBITS
-#219 pascal DMSETDIBTODEV
-#220 pascal DMTRANSPOSE
-#230 pascal CREATEPQ
-#231 pascal MINPQ
-#232 pascal EXTRACTPQ
-#233 pascal INSERTPQ
-#234 pascal SIZEPQ
-#235 pascal DELETEPQ
-#240 pascal OPENJOB
-#241 pascal WRITESPOOL
-#242 pascal WRITEDIALOG
-#243 pascal CLOSEJOB
-#244 pascal DELETEJOB
-#245 pascal GETSPOOLJOB
-#246 pascal STARTSPOOLPAGE
-#247 pascal ENDSPOOLPAGE
-#248 pascal QUERYJOB
+190 stub SetDCHook
+191 stub GetDCHook
+192 stub SetHookFlags
+193 stub SetBoundsRect
+194 stub GetBoundsRect
+195 stub SelectBitmap
+196 stub SetMetaFileBitsBetter
+201 stub DMBITBLT
+202 stub DMCOLORINFO
+206 stub DMENUMDFONTS
+207 stub DMENUMOBJ
+208 stub DMOUTPUT
+209 stub DMPIXEL
+210 stub DMREALIZEOBJECT
+211 stub DMSTRBLT
+212 stub DMSCANLR
+213 stub BRUTE
+214 stub DMEXTTEXTOUT
+215 stub DMGETCHARWIDTH
+216 stub DMSTRETCHBLT
+217 stub DMDIBBITS
+218 stub DMSTRETCHDIBITS
+219 stub DMSETDIBTODEV
+220 stub DMTRANSPOSE
+230 stub CREATEPQ
+231 stub MINPQ
+232 stub EXTRACTPQ
+233 stub INSERTPQ
+234 stub SIZEPQ
+235 stub DELETEPQ
+240 stub OPENJOB
+241 stub WRITESPOOL
+242 stub WRITEDIALOG
+243 stub CLOSEJOB
+244 stub DELETEJOB
+245 stub GetSpoolJob
+246 stub StartSpoolPage
+247 stub EndSpoolPage
+248 stub QueryJob
 250 pascal16 Copy(ptr ptr word) Copy
-#253 pascal DeleteSpoolPage
-#254 pascal SpoolFile
-#300 pascal ENGINEENUMERATEFONT
-#301 pascal ENGINEDELETEFONT
-#302 pascal ENGINEREALIZEFONT
-#303 pascal ENGINEGETCHARWIDTH
-#304 pascal ENGINESETFONTCONTEXT
-#305 pascal ENGINEGETGLYPHBMP
-#306 pascal ENGINEMAKEFONTDIR
-#307 pascal GETCHARABCWIDTHS
-#308 pascal GETOUTLINETEXTMETRICS
-#309 pascal GETGLYPHOUTLINE
-#310 pascal CREATESCALABLEFONTRESOURCE
-#311 pascal GETFONTDATA
-#312 pascal CONVERTOUTLINEFONTFILE
+253 stub DeleteSpoolPage
+254 stub SpoolFile
+300 stub ENGINEENUMERATEFONT
+301 stub ENGINEDELETEFONT
+302 stub ENGINEREALIZEFONT
+303 stub ENGINEGETCHARWIDTH
+304 stub ENGINESETFONTCONTEXT
+305 stub ENGINEGETGLYPHBMP
+306 stub ENGINEMAKEFONTDIR
+307 stub GetCharABCWidths
+308 stub GetOutLineTextMetrics
+309 stub GetGlyphOutLine
+310 stub CreateScalableFontResource
+311 stub GetFontData
+312 stub ConvertOutLineFontFile
 313 pascal16 GetRasterizerCaps(ptr word) GetRasterizerCaps
-#314 pascal ENGINEEXTTEXTOUT
+314 stub EngineExtTextOut
 330 pascal16 EnumFontFamilies(word ptr segptr long) EnumFontFamilies
-#332 pascal GETKERNINGPAIRS
+332 stub GetKerningPairs
 345 pascal16 GetTextAlign(word) GetTextAlign
 346 pascal16 SetTextAlign(word word) SetTextAlign
 348 pascal16 Chord(word s_word s_word s_word s_word s_word s_word
@@ -223,39 +220,39 @@ length	490
 349 pascal SetMapperFlags(word word) SetMapperFlags
 350 pascal16 GetCharWidth(word word word ptr) GetCharWidth
 351 pascal16 ExtTextOut(word s_word s_word word ptr ptr s_word ptr) ExtTextOut
-#352 pascal GETPHYSICALFONTHANDLE
-#353 pascal GETASPECTRATIOFILTER
-#354 pascal SHRINKGDIHEAP
+352 stub GetPhysicalFontHandle
+353 stub GetAspectRatioFilter
+354 stub ShrinkGDIHeap
 360 pascal16 CreatePalette(ptr) CreatePalette
 361 pascal16 GDISelectPalette(word word) GDISelectPalette
 362 pascal16 GDIRealizePalette(word) GDIRealizePalette
 363 pascal16 GetPaletteEntries(word word word ptr) GetPaletteEntries
 364 pascal16 SetPaletteEntries(word word word ptr) SetPaletteEntries
 365 pascal16 RealizeDefaultPalette(word) RealizeDefaultPalette
-#366 pascal UPDATECOLORS
-#367 pascal ANIMATEPALETTE
-#368 pascal RESIZEPALETTE
+366 stub UpdateColors
+367 stub AnimatePalette
+368 stub ResizePalette
 370 pascal16 GetNearestPaletteIndex(word long) GetNearestPaletteIndex
 372 pascal16 ExtFloodFill(word s_word s_word long word) ExtFloodFill
 375 pascal16 GetSystemPaletteEntries(word word word ptr)
              GetSystemPaletteEntries
-#376 pascal RESETDC
-#377 pascal STARTDOC
-#378 pascal ENDDOC
-#379 pascal STARTPAGE
-#380 pascal ENDPAGE
-#381 pascal SETABORTPROC
-#382 pascal ABORTDOC
-#400 pascal FASTWINDOWFRAME
-#401 pascal GDIMOVEBITMAP
-#403 pascal GDIINIT2
-#405 pascal FINALGDIINIT
-#407 pascal CREATEUSERBITMAP
-#409 pascal CREATEUSERDISCARDABLEBITMAP
-#410 pascal ISVALIDMETAFILE
+376 stub ResetDC
+377 stub STARTDOC
+378 stub ENDDOC
+379 stub STARTPAGE
+380 stub ENDPAGE
+381 stub SETABORTPROC
+382 stub ABORTDOC
+400 stub FASTWINDOWFRAME
+401 stub GDIMOVEBITMAP
+403 stub GDIINIT2
+405 stub FINALGDIINIT
+407 stub CREATEUSERBITMAP
+409 stub CREATEUSERDISCARDABLEBITMAP
+410 stub ISVALIDMETAFILE
 411 pascal16 GetCurLogFont(word) GetCurLogFont
-#412 pascal ISDCCURRENTPALETTE
-#439 pascal STRETCHDIBITS
+412 stub IsDCCurrentPalette
+439 stub StretchDIBits
 440 pascal16 SetDIBits(word word word word ptr ptr word) SetDIBits
 441 pascal16 GetDIBits(word word word word ptr ptr word) GetDIBits
 442 pascal16 CreateDIBitmap(word ptr long ptr ptr word) CreateDIBitmap
@@ -264,18 +261,18 @@ length	490
 444 pascal16 CreateRoundRectRgn(s_word s_word s_word s_word s_word s_word)
              CreateRoundRectRgn
 445 pascal16 CreateDIBPatternBrush(word word) CreateDIBPatternBrush
-#449 pascal DEVICECOLORMATCH
+449 stub DEVICECOLORMATCH
 450 pascal16 PolyPolygon(word ptr ptr word) PolyPolygon
 451 pascal16 CreatePolyPolygonRgn(ptr ptr word word) CreatePolyPolygonRgn
-#452 pascal GDISEEGDIDO
-#460 pascal GDITASKTERMINATION
+452 stub GDISEEGDIDO
+460 stub GDITASKTERMINATION
 461 return SetObjectOwner 4 0
 462 pascal16 IsGDIObject(word) IsGDIObject
-#463 pascal MAKEOBJECTPRIVATE
-#464 pascal FIXUPBOGUSPUBLISHERMETAFILE
+463 stub MAKEOBJECTPRIVATE
+464 stub FIXUPBOGUSPUBLISHERMETAFILE
 465 pascal16 RectVisible(word ptr) RectVisible
 466 pascal16 RectInRegion(word ptr) RectInRegion
-#467 pascal UNICODETOANSI
+467 stub UNICODETOANSI
 468 pascal16 GetBitmapDimensionEx(word ptr) GetBitmapDimensionEx
 469 pascal16 GetBrushOrgEx(word ptr) GetBrushOrgEx
 470 pascal16 GetCurrentPositionEx(word ptr) GetCurrentPositionEx
@@ -296,4 +293,4 @@ length	490
              ScaleViewportExtEx
 485 pascal16 ScaleWindowExtEx(word s_word s_word s_word s_word ptr)
              ScaleWindowExtEx
-#486 pascal GETASPECTRATIOFILEREX
+486 stub GETASPECTRATIOFILEREX

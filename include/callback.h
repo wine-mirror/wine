@@ -18,6 +18,7 @@
 /* by the build program to generate the file if1632/call16.S */
 
                                /* func     ds    parameters */
+extern WORD CallTo16_word_     ( FARPROC, WORD );
 extern WORD CallTo16_word_wl   ( FARPROC, WORD, WORD, LONG );
 extern WORD CallTo16_word_ll   ( FARPROC, WORD, LONG, LONG );
 extern WORD CallTo16_word_wwl  ( FARPROC, WORD, WORD, WORD, LONG );
@@ -28,8 +29,8 @@ extern LONG CallTo16_long_wwwl ( FARPROC, WORD, WORD, WORD, WORD, LONG );
 extern WORD CallTo16_word_wllwl( FARPROC, WORD, WORD, LONG, LONG, WORD, LONG );
 extern WORD CallTo16_word_wwlll( FARPROC, WORD, WORD, WORD, LONG, LONG, LONG );
 
-extern WORD CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD ax, WORD bx,
-                            WORD cx, WORD dx, WORD si, WORD di );
+extern WORD CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD bp, WORD ax,
+                            WORD bx, WORD cx, WORD dx, WORD si, WORD di );
 
 #define CallEnumChildProc( func, hwnd, lParam ) \
     CallTo16_word_wl( func, CURRENT_DS, hwnd, lParam )
@@ -55,8 +56,8 @@ extern WORD CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD ax, WORD bx,
     CallTo16_long_wwl( func, CURRENT_DS, code, wParam, lParam )
 #define CallTimeFuncProc( func, id, msg, dwUser, dw1, dw2 ) \
     CallTo16_word_wwlll( func, CURRENT_DS, id, msg, dwUser, dw1, dw2 )
-#define CallWndProc( func, hwnd, msg, wParam, lParam ) \
-    CallTo16_long_wwwl( func, CURRENT_DS, hwnd, msg, wParam, lParam )
+#define CallWndProc( func, ds, hwnd, msg, wParam, lParam ) \
+    CallTo16_long_wwwl( func, ds, hwnd, msg, wParam, lParam )
 
 #else  /* WINELIB */
 

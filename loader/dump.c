@@ -40,24 +40,6 @@ PrintFileHeader(struct ne_header_s *ne_header)
 }
 
 /**********************************************************************
- *					PrintSegmentTable
- */
-void
-PrintSegmentTable(struct ne_segment_table_entry_s *seg_table, int nentries)
-{
-    int i;
-
-    for (i = 0; i < nentries; i++)
-    {
-	printf("  %2d: OFFSET %04x, LENGTH %04x, ",
-	       i + 1, seg_table[i].seg_data_offset, 
-	       seg_table[i].seg_data_length);
-	printf("FLAGS %04x, MIN ALLOC %04x\n",
-	       seg_table[i].seg_flags, seg_table[i].min_alloc);
-    }
-}
-
-/**********************************************************************
  *					PrintRelocationTable
  */
 void 

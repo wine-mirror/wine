@@ -31,6 +31,7 @@ extern struct dosdirent *DOS_readdir(struct dosdirent *de);
 extern void DOS_closedir(struct dosdirent *de);
 extern void DOS_ExpandToFullPath(char *filename, int drive);
 extern void DOS_ExpandToFullUnixPath(char *filename);
+extern char *DOS_GetRedirectedDir(int drive);
 
 extern char WindowsPath[256];
 

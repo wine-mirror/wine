@@ -979,17 +979,17 @@ static BOOL BITBLT_GetVisRectangles( DC *dcDst, short xDst, short yDst,
         visRectSrc->left = xDst + (visRectSrc->left-xSrc)*widthDst/widthSrc;
         visRectSrc->top = yDst + (visRectSrc->top-ySrc)*heightDst/heightSrc;
         visRectSrc->right = xDst +
-             ((visRectSrc->right-xSrc) * widthDst + widthSrc-1) / widthSrc;
+                            ((visRectSrc->right-xSrc) * widthDst) / widthSrc;
         visRectSrc->bottom = yDst +
-             ((visRectSrc->bottom-ySrc) * heightDst + heightSrc-1) / heightSrc;
+                         ((visRectSrc->bottom-ySrc) * heightDst) / heightSrc;
         if (!IntersectRect( &tmpRect, visRectSrc, visRectDst )) return FALSE;
         *visRectSrc = *visRectDst = tmpRect;
         visRectSrc->left = xSrc + (visRectSrc->left-xDst)*widthSrc/widthDst;
         visRectSrc->top = ySrc + (visRectSrc->top-yDst)*heightSrc/heightDst;
         visRectSrc->right = xSrc +
-             ((visRectSrc->right-xDst) * widthSrc + widthDst-1) / widthDst;
+                            ((visRectSrc->right-xDst) * widthSrc) / widthDst;
         visRectSrc->bottom = ySrc +
-             ((visRectSrc->bottom-yDst) * heightSrc + heightDst-1) / heightDst;
+                         ((visRectSrc->bottom-yDst) * heightSrc) / heightDst;
         if (IsRectEmpty( visRectSrc )) return FALSE;
     }
     return TRUE;

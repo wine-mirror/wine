@@ -14,7 +14,8 @@ static char Copyright3[] = "Copyright Alexandre Julliard, 1994";
 #include "syscolor.h"
 #include "graphics.h"
 #include "button.h"
-
+#include "stddebug.h"
+#include "debug.h"
 extern void DEFWND_SetText( HWND hwnd, LPSTR text );  /* windows/defwnd.c */
 
 static void PB_Paint( HWND hWnd, HDC hDC, WORD action );
@@ -138,8 +139,8 @@ LONG ButtonWndProc(HWND hWnd, WORD uMsg, WORD wParam, LONG lParam)
 		break;
 
 	case WM_LBUTTONUP:
-                if (GetCapture() != hWnd) break;
-                ReleaseCapture();
+	        ReleaseCapture();
+	        if (!(infoPtr->state & BUTTON_HIGHLIGHTED)) break;
                 SendMessage( hWnd, BM_SETSTATE, FALSE, 0 );
                 GetClientRect( hWnd, &rect );
                 if (PtInRect( &rect, MAKEPOINT(lParam) ))

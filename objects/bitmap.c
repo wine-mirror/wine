@@ -10,6 +10,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "gdi.h"
+#include "arch.h"
 #include "dc.h"
 #include "bitmap.h"
 #include "stddebug.h"
@@ -200,6 +201,51 @@ LONG SetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
     image->data = NULL;
     XDestroyImage( image );
     return height * bmp->bitmap.bmWidthBytes;
+}
+
+
+/**********************************************************************
+ *	    LoadBitmap    (USER.175)
+ */
+HBITMAP LoadBitmap( HANDLE instance, SEGPTR name )
+{
+    HBITMAP hbitmap = 0;
+    HDC hdc;
+    HRSRC hRsrc;
+    HGLOBAL handle;
+    int size;
+    long *lp;
+
+    if (HIWORD(name))
+    {
+        char *str = (char *)PTR_SEG_TO_LIN( name );
+        dprintf_bitmap( stddeb, "LoadBitmap(%04x,'%s')\n", instance, str );
+        if (str[0] == '#') name = (SEGPTR)atoi( str + 1 );
+    }
+    else
+        dprintf_bitmap(stddeb,"LoadBitmap(%04x,%04x)\n",instance,LOWORD(name));
+
+    if (!instance)  /* OEM bitmap */
+    {
+        if (HIWORD((int)name)) return 0;
+        return OBM_LoadBitmap( LOWORD((int)name) );
+    }
+
+    if (!(hRsrc = FindResource( instance, name, RT_BITMAP ))) return 0;
+    if (!(handle = LoadResource( instance, hRsrc ))) return 0;
+
+    lp = (long *)LockResource( handle );
+    size = CONV_LONG(*lp);
+    if ((hdc = GetDC(0)) != 0)
+    {
+        if (size == sizeof(BITMAPCOREHEADER))
+            hbitmap = ConvertCoreBitmap( hdc, (BITMAPCOREHEADER *) lp );
+        else if (size == sizeof(BITMAPINFOHEADER))
+            hbitmap = ConvertInfoBitmap( hdc, (BITMAPINFO *) lp );
+        ReleaseDC( 0, hdc );
+    }
+    FreeResource( handle );
+    return hbitmap;
 }
 
 

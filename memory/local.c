@@ -377,7 +377,7 @@ HLOCAL LOCAL_Alloc( WORD ds, WORD flags, WORD size )
       /* Find a suitable free block */
 
     if (!(pInfo = LOCAL_GetHeap( ds ))) {
-	  LOCAL_PrintHeap(ds);
+      LOCAL_PrintHeap(ds);
       return 0;
     }
     size += ARENA_HEADER_SIZE;
@@ -388,7 +388,7 @@ HLOCAL LOCAL_Alloc( WORD ds, WORD flags, WORD size )
     {
         if (arena == pArena->free_next) {
 	  LOCAL_PrintHeap(ds);
-	   return 0;  /* not found */
+          return 0;  /* not found */
 	}
         arena = pArena->free_next;
         pArena = ARENA_PTR( ptr, arena );
@@ -428,6 +428,10 @@ HLOCAL LOCAL_ReAlloc( WORD ds, HLOCAL handle, WORD size, WORD flags )
     if (!(pInfo = LOCAL_GetHeap( ds ))) return 0;
     arena = handle - ARENA_HEADER_SIZE;
     pArena = ARENA_PTR( ptr, arena );
+    if (flags & LMEM_MODIFY) {
+      dprintf_local( stddeb, "LMEM_MODIFY set\n");
+      return handle;
+    }
     if (!size) size = 1;
     size = LALIGN( size );
 

@@ -1,11 +1,8 @@
-# $Id: kernel.spec,v 1.3 1993/07/04 04:04:21 root Exp root $
-#
 name	kernel
 id	1
-length	415
 
-#1 FATALEXIT
-#2 EXITKERNEL
+1   stub FatalExit
+2   stub ExitKernel
 3   pascal GetVersion() GetVersion
 4   pascal16 LocalInit(word word word) LocalInit
 5   pascal16 LocalAlloc(word word) LocalAlloc
@@ -29,18 +26,18 @@ length	415
 23  pascal16 LockSegment(word) LockSegment
 24  pascal16 UnlockSegment(word) UnlockSegment
 25  pascal GlobalCompact(long) GlobalCompact
-#26 GLOBALFREEALL
-#28 GLOBALMASTERHANDLE
-29  return Yield 0 0
-30  pascal WaitEvent(word) KERNEL_WaitEvent
-#31 POSTEVENT
-#32 SETPRIORITY
-#33 LOCKCURRENTTASK
+26  pascal16 GlobalFreeAll(word) GlobalFreeAll
+28  stub GlobalMasterHandle
+29  pascal16 Yield() Yield
+30  pascal16 WaitEvent(word) WaitEvent
+31  pascal16 PostEvent(word) PostEvent
+32  pascal16 SetPriority(word s_word) SetPriority
+33  stub LockCurrentTask
 34  pascal SetTaskQueue(word word) SetTaskQueue
-35  pascal GetTaskQueue(word) GetTaskQueue
-36  pascal16 GetCurrentTask() GetCurrentTask
-37  pascal16 GetCurrentPDB() GetCurrentPDB
-#38 SETTASKSIGNALPROC
+35  pascal16 GetTaskQueue(word) GetTaskQueue
+36  pascal GetCurrentTask() GetCurrentTask
+37  pascal GetCurrentPDB() GetCurrentPDB
+38  stub SetTaskSignalProc
 41  return EnableDos 0 0
 42  return DisableDos 0 0
 45  pascal16 LoadModule(ptr ptr) LoadModule
@@ -48,13 +45,13 @@ length	415
 47  pascal16 GetModuleHandle(ptr) GetModuleHandle
 48  pascal16 GetModuleUsage(word) GetModuleUsage
 49  pascal16 GetModuleFileName(word ptr s_word) GetModuleFileName
-50  pascal GetProcAddress(word ptr) GetProcAddress
+50  pascal GetProcAddress(word segptr) GetProcAddress
 51  pascal MakeProcInstance(segptr word) MakeProcInstance
-52  pascal FreeProcInstance(segptr) FreeProcInstance
-#53 CALLPROCINSTANCE
-#54 pascal16 GETINSTANCEDATA
+52  pascal16 FreeProcInstance(segptr) FreeProcInstance
+53  stub CallProcInstance
+54  stub GetInstanceData
 55  pascal16 Catch(ptr) Catch 
-56  pascal Throw(ptr word) Throw
+56  pascal16 Throw(ptr word) Throw
 57  pascal16 GetProfileInt(ptr ptr word) GetProfileInt
 58  pascal16 GetProfileString(ptr ptr ptr ptr word) GetProfileString
 59  pascal16 WriteProfileString(ptr ptr ptr) WriteProfileString
@@ -65,7 +62,7 @@ length	415
 64  pascal16 AccessResource(word word) AccessResource
 65  pascal SizeofResource(word word) SizeofResource
 66  pascal16 AllocResource(word word long) AllocResource
-#67 SETRESOURCEHANDLER
+67  stub SetResourceHandler
 68  pascal16 InitAtomTable(word) InitAtomTable
 69  pascal16 FindAtom(ptr) FindAtom
 70  pascal16 AddAtom(ptr) AddAtom
@@ -73,8 +70,8 @@ length	415
 72  pascal16 GetAtomName(word ptr word) GetAtomName
 73  pascal16 GetAtomHandle(word) GetAtomHandle
 74  pascal16 OpenFile(ptr ptr word) OpenFile
-#75 OPENPATHNAME
-#76 DELETEPATHNAME
+75  stub OpenPathName
+76  stub DeletePathName
 #77 RESERVED1
 #78 RESERVED2
 #79 RESERVED3
@@ -91,40 +88,40 @@ length	415
 90  pascal16 lstrlen(ptr) lstrlen
 91  register InitTask() KERNEL_InitTask
 92  pascal16 GetTempDrive(byte) GetTempDrive
-93 pascal16 GetCodeHandle(ptr) GetCodeHandle
-#94 DEFINEHANDLETABLE
+93  pascal16 GetCodeHandle(segptr) GetCodeHandle
+94  stub DefineHandleTable
 95  pascal16 LoadLibrary(ptr) LoadLibrary
 96  pascal16 FreeLibrary(word) FreeLibrary
 97  pascal16 GetTempFileName(byte ptr word ptr) GetTempFileName
-#98 GETLASTDISKCHANGE
-#99 GETLPERRMODE
-#100 VALIDATECODESEGMENTS
-#101 NOHOOKDOSCALL
+98  stub GetLastDiskChange
+99  stub GetLPErrMode
+100 stub ValidateCodeSegments
+101 stub NoHookDosCall
 102 register DOS3Call() DOS3Call
-#103 NETBIOSCALL
-#104 GETCODEINFO
-#105 GETEXEVERSION
+103 stub NetBiosCall
+104 stub GetCodeInfo
+105 stub GetExeVersion
 106 pascal SetSwapAreaSize(word) SetSwapAreaSize
 107 pascal SetErrorMode(word) SetErrorMode
-#108 SWITCHSTACKTO
-#109 SWITCHSTACKBACK
-#110 PATCHCODEHANDLE
+108 stub SwitchStackTo
+109 stub SwitchStackBack
+110 stub PatchCodeHandle
 111 pascal GlobalWire(word) GlobalWire
 112 pascal16 GlobalUnWire(word) GlobalUnWire
 113 equate __AHSHIFT 3
 114 equate __AHINCR 8
 115 pascal OutputDebugString(ptr) OutputDebugString
-#116 INITLIB
-117 return OldYield 0 0
-#118 GETTASKQUEUEDS
-#119 GETTASKQUEUEES
-#120 UNDEFDYNLINK
+116 stub InitLib
+117 pascal16 OldYield() OldYield
+118 stub GetTaskQueueDS
+119 stub GetTaskQueueES
+120 stub UndefDynLink
 121 pascal16 LocalShrink(word word) LocalShrink
-#122 ISTASKLOCKED
-#123 KBDRST
+122 stub IsTaskLocked
+123 stub KbdRst
 124 return EnableKernel 0 0
 125 return DisableKernel 0 0
-#126 MEMORYFREED
+126 stub MemoryFreed
 127 pascal16 GetPrivateProfileInt(ptr ptr s_word ptr) GetPrivateProfileInt
 128 pascal16 GetPrivateProfileString(ptr ptr ptr ptr s_word ptr)
              GetPrivateProfileString
@@ -133,33 +130,33 @@ length	415
 130 pascal FileCDR(ptr) FileCDR
 131 pascal GetDOSEnvironment() GetDOSEnvironment
 132 pascal GetWinFlags() GetWinFlags
-#133 GETEXEPTR
+133 pascal16 GetExePtr(word) GetExePtr
 134 pascal16 GetWindowsDirectory(ptr word) GetWindowsDirectory
 135 pascal16 GetSystemDirectory(ptr word) GetSystemDirectory
 136 pascal16 GetDriveType(byte) GetDriveType
 137 pascal FatalAppExit(word ptr) FatalAppExit
 138 pascal GetHeapSpaces(word) GetHeapSpaces
-#139 DOSIGNAL
-#140 SETSIGHANDLER
-#141 INITTASK1
-150 return DirectedYield 2 0
-#151 WINOLDAPCALL
+139 stub DoSignal
+140 stub SetSigHandler
+141 stub InitTask1
+150 pascal16 DirectedYield(word) DirectedYield
+151 stub WinOldApCall
 152 pascal16 GetNumTasks() GetNumTasks
 154 return GlobalNotify 4 0
-#155 GETTASKDS
-#156 LIMITEMSPAGES
-#157 GETCURPID
-#158 ISWINOLDAPTASK
-#159 GLOBALHANDLENORIP
-#160 EMSCOPY
+155 pascal16 GetTaskDS() GetTaskDS
+156 stub LimitEMSPages
+157 return GetCurPID 4 0
+158 stub IsWinOldApTask
+159 stub GlobalHandleNoRIP
+160 stub EMSCopy
 161 pascal16 LocalCountFree() LocalCountFree
 162 pascal16 LocalHeapSize() LocalHeapSize
 163 pascal16 GlobalLRUOldest(word) GlobalLRUOldest
 164 pascal16 GlobalLRUNewest(word) GlobalLRUNewest
-#165 A20PROC
+165 stub A20Proc
 166 pascal16 WinExec(ptr word) WinExec
-#167 GETEXPWINVER
-#168 DIRECTRESALLOC
+167 stub GetExpWinVer
+168 stub DirectResAlloc
 169 pascal GetFreeSpace(word) GetFreeSpace
 170 pascal16 AllocCStoDSAlias(word) AllocCStoDSAlias
 171 pascal16 AllocDStoCSAlias(word) AllocDStoCSAlias
@@ -191,42 +188,42 @@ length	415
 197 pascal16 GlobalFix(word) GlobalFix
 198 pascal16 GlobalUnfix(word) GlobalUnfix
 199 pascal16 SetHandleCount(word) SetHandleCount
-#200 VALIDATEFREESPACES
-#201 REPLACEINST
-#202 REGISTERPTRACE
-#203 DEBUGBREAK
-#204 SWAPRECORDING
-#205 CVWBREAK
+200 stub ValidateFreeSpaces
+201 stub ReplaceInst
+202 stub RegisterPtrace
+203 stub DebugBreak
+204 stub SwapRecording
+205 stub CVWBreak
 206 pascal16 AllocSelectorArray(word) AllocSelectorArray
 207 return IsDBCSLeadByte 2 0
 310 pascal16 LocalHandleDelta(word) LocalHandleDelta
-#311 GETSETKERNELDOSPROC
-#314 DEBUGDEFINESEGMENT
+311 stub GetSetKernelDosProc
+314 stub DebugDefineSegment
 315 pascal WriteOutProfiles() sync_profiles
-#316 GETFREEMEMINFO
-#318 FATALEXITHOOK
-#319 FLUSHCACHEDFILEHANDLE
-#320 ISTASK
+316 stub GetFreeMemInfo
+318 stub FatalExitHook
+319 stub FlushCachedFileHandle
+320 pascal16 IsTask(word) IsTask
 323 return IsRomModule 2 0
-#324 LOGERROR
-#325 LOGPARAMERROR
+324 stub LogError
+325 stub LogParamError
 326 return IsRomFile 2 0
 #327 K327
-#328 _DEBUGOUTPUT
+328 stub _DebugOutput
 #329 K329
-#332 THHOOK
+332 stub THHOOK
 334 pascal16 IsBadReadPtr(segptr word) IsBadReadPtr
 335 pascal16 IsBadWritePtr(segptr word) IsBadWritePtr
 336 pascal16 IsBadCodePtr(segptr) IsBadCodePtr
 337 pascal16 IsBadStringPtr(segptr word) IsBadStringPtr
-#338 HASGPHANDLER
-#339 DIAGQUERY
-#340 DIAGOUTPUT
-#341 TOOLHELPHOOK
-#342 __GP
-#343 REGISTERWINOLDAPHOOK
-#344 GETWINOLDAPHOOKS
-#345 ISSHAREDSELECTOR
+338 stub HasGPHandler
+339 stub DiagQuery
+340 stub DiagOutput
+341 stub ToolHelpHook
+342 stub __GP
+343 stub RegisterWinOldApHook
+344 stub GetWinOldApHooks
+345 stub IsSharedSelector
 346 pascal16 IsBadHugeReadPtr(segptr long) IsBadHugeReadPtr
 347 pascal16 IsBadHugeWritePtr(segptr long) IsBadHugeWritePtr
 348 pascal hmemcpy(ptr ptr long) hmemcpy
@@ -234,8 +231,8 @@ length	415
 350 pascal16 _hwrite(word ptr long) _hwrite
 #351 BUNNY_351
 353 pascal lstrcpyn(segptr segptr word) lstrcpyn
-#354 GETAPPCOMPATFLAGS
-#355 GETWINDEBUGINFO
-#356 SETWINDEBUGINFO
+354 stub GetAppCompatFlags
+355 stub GetWinDebugInfo
+356 stub SetWinDebugInfo
 403 pascal16 FarSetOwner(word word) FarSetOwner
 404 pascal16 FarGetOwner(word) FarGetOwner

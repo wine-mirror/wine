@@ -21,12 +21,13 @@ static char Copyright[] = "Copyright 1993, 1994 Martin Ayotte, Robert J. Amstadt
 #include "task.h"
 #include "toolhelp.h"
 #include "selectors.h"
-#include "stddebug.h"
-#include "debug.h"
 #include "prototypes.h"
 #include "library.h"
 #include "ne_image.h"
 #include "pe_image.h"
+#include "module.h"
+#include "stddebug.h"
+#include "debug.h"
 
 struct w_files *wine_files = NULL;
 static char *DLL_Extensions[] = { "dll", NULL };
@@ -63,7 +64,7 @@ struct w_files *GetFileInfo(unsigned short instance)
     
     return w;
 }
-
+/*
 int IsDLLLoaded(char *name)
 {
 	struct w_files *wpnt;
@@ -72,16 +73,16 @@ int IsDLLLoaded(char *name)
 		return 1;
 
 	for(wpnt = wine_files; wpnt; wpnt = wpnt->next)
-		if(strcmp(wpnt->name, name) == 0)
+		if(strcmp(wpnt->name, name) == 0 )
 			return 1;
 
 	return 0;
 }
-
+*/
 void InitDLL(struct w_files *wpnt)
 {
 	if (wpnt->ne) 
-		NE_InitDLL(wpnt);
+		NE_InitDLL(wpnt->hModule);
 	else
 		PE_InitDLL(wpnt);
 }
@@ -142,9 +143,11 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
     }
     
     /* already loaded ? */
-    for (wpnt = wine_files ; wpnt ; wpnt = wpnt->next)
-    	if (strcasecmp(wpnt->name, modulename) == 0)
-    		return wpnt->hinstance;
+    for (wpnt = wine_files ; wpnt ; wpnt = wpnt->next)  {
+      if (strcasecmp(wpnt->name, modulename) == 0 && filetype == wpnt->type) {
+	return wpnt->hinstance;
+      }
+    }
 
     /*
      * search file
@@ -195,6 +198,8 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
      */
     wpnt->filename = strdup(buffer);
     wpnt->name = strdup(modulename);
+    wpnt->type = filetype;
+    wpnt->initialised = FALSE;
 
     /* read mz header */
     wpnt->mz_header = (struct mz_header_s *) malloc(sizeof(struct mz_header_s));;
@@ -260,121 +265,6 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
 }
 
 /**********************************************************************
- *				GetModuleHandle	[KERNEL.47]
- */
-HANDLE GetModuleHandle(LPSTR lpModuleName)
-{
-	register struct w_files *w = wine_files;
-	int 	i;
-	char dllname[256];
-
-	if ((int) lpModuleName & 0xffff0000)
-		ExtractDLLName(lpModuleName, dllname);
-
-	if ((int) lpModuleName & 0xffff0000)
-	 	dprintf_module(stddeb,"GetModuleHandle('%s');\n", lpModuleName);
-	else
-	 	dprintf_module(stddeb,"GetModuleHandle('%p');\n", lpModuleName);
-
-/* 	dprintf_module(stddeb,"GetModuleHandle // searching in builtin libraries\n");*/
-	for (i = 0; i < N_BUILTINS; i++) {
-		if (dll_builtin_table[i].dll_name == NULL) break;
-		if (!dll_builtin_table[i].dll_is_used){
-			dprintf_module(stddeb,"Skipping builtin %s\n",
-			dll_builtin_table[i].dll_name);
-			continue;
-		}
-		if (((int) lpModuleName & 0xffff0000) == 0) {
-			if (0xFF00 + i == (int) lpModuleName) {
-				dprintf_module(stddeb,"GetModuleHandle('%s') return %04X \n",
-				       lpModuleName, 0xff00 + i);
-				return 0xFF00 + i;
-				}
-			}
-		else if (strcasecmp(dll_builtin_table[i].dll_name, dllname) == 0) {
-			dprintf_module(stddeb,"GetModuleHandle('%p') return %04X \n", 
-							lpModuleName, 0xFF00 + i);
-			return (0xFF00 + i);
-			}
-		}
-
- 	dprintf_module(stddeb,"GetModuleHandle // searching in loaded modules\n");
-	while (w) {
-/*		dprintf_module(stddeb,"GetModuleHandle // '%x' \n", w->name);  */
-		if (((int) lpModuleName & 0xffff0000) == 0) {
-			if (w->hinstance == (int) lpModuleName) {
-				dprintf_module(stddeb,"GetModuleHandle('%p') return %04X \n",
-				       lpModuleName, w->hinstance);
-				return w->hinstance;
-				}
-			}
-		else if (strcasecmp(w->name, dllname) == 0) {
-			dprintf_module(stddeb,"GetModuleHandle('%s') return %04X \n", 
-							lpModuleName, w->hinstance);
-			return w->hinstance;
-			}
-		w = w->next;
-		}
-	printf("GetModuleHandle('%p') not found !\n", lpModuleName);
-	return 0;
-}
-
-
-/**********************************************************************
- *				GetModuleUsage	[KERNEL.48]
- */
-int GetModuleUsage(HANDLE hModule)
-{
-	struct w_files *w;
-
-	dprintf_module(stddeb,"GetModuleUsage(%04X);\n", hModule);
-
-	/* built-in dll ? */
-	if (IS_BUILTIN_DLL(hModule)) 
-		return 2;
-		
-	w = GetFileInfo(hModule);
-/*	return w->Usage; */
-	return 1;
-}
-
-
-/**********************************************************************
- *				GetModuleFilename [KERNEL.49]
- */
-int GetModuleFileName(HANDLE hModule, LPSTR lpFileName, short nSize)
-{
-    struct w_files *w;
-    LPSTR str;
-    char windir[256], temp[256];
-
-    dprintf_module(stddeb,"GetModuleFileName(%04X, %p, %d);\n", hModule, lpFileName, nSize);
-
-    if (lpFileName == NULL) return 0;
-    if (nSize < 1) return 0;
-
-    /* built-in dll ? */
-    if (IS_BUILTIN_DLL(hModule)) {
-	GetWindowsDirectory(windir, sizeof(windir));
-	sprintf(temp, "%s\\%s.DLL", windir, dll_builtin_table[hModule & 0x00ff].dll_name);
-	ToDos(temp);
-	strncpy(lpFileName, temp, nSize);
-        dprintf_module(stddeb,"GetModuleFileName copied '%s' (internal dll) return %d \n", lpFileName, nSize);
-	return strlen(lpFileName);
-    }
-
-    /* check loaded dlls */
-    if ((w = GetFileInfo(hModule)) == NULL)
-    	return 0;
-    str = DOS_GetDosFileName(w->filename);
-    if (nSize > strlen(str)) nSize = strlen(str) + 1;
-    strncpy(lpFileName, str, nSize);
-    dprintf_module(stddeb,"GetModuleFileName copied '%s' return %d \n", lpFileName, nSize);
-    return nSize - 1;
-}
-
-
-/**********************************************************************
  *				LoadLibrary	[KERNEL.95]
  */
 HANDLE LoadLibrary(LPSTR libname)
@@ -429,214 +319,33 @@ void FreeLibrary(HANDLE hLib)
 }
 
 
-/**********************************************************************
- *					GetProcAddress	[KERNEL.50]
+/***********************************************************************
+ *           GetProcAddress   (KERNEL.50)
  */
-FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
+FARPROC GetProcAddress( HANDLE hModule, SEGPTR name )
 {
-#ifdef WINELIB
-    WINELIB_UNIMP ("GetProcAddress");
-#else
-    int		ret;
-    WORD        sel, addr;
-    register struct w_files *w = wine_files;
-    int 	ordinal, len;
-    char 	* cpnt;
-    char	C[128];
-    HTASK	hTask;
-    LPTASKENTRY lpTask;
+    WORD ordinal;
+    SEGPTR ret;
 
-    /* built-in dll ? */
-    if (IS_BUILTIN_DLL(hModule))
+    if (!hModule) hModule = GetCurrentTask();
+    hModule = GetExePtr( hModule );
+
+    if (HIWORD(name) != 0)
     {
-	if ((int) proc_name & 0xffff0000) 
-	{
-	    dprintf_module(stddeb,"GetProcAddress: builtin %#04X, '%s'\n", 
-		   hModule, proc_name);
-	    if (GetEntryDLLName(dll_builtin_table[hModule - 0xFF00].dll_name,
-				proc_name, &sel, &addr)) 
-	    {
-		printf("Address not found !\n");
-	    }
-	}
-	else 
-	{
-	    dprintf_module(stddeb,"GetProcAddress: builtin %#04X, %d\n", 
-		   hModule, (int)proc_name);
-	    if (GetEntryDLLOrdinal(dll_builtin_table[hModule-0xFF00].dll_name,
-				   (int)proc_name & 0x0000FFFF, &sel, &addr)) 
-	    {
-		printf("Address not found !\n");
-	    }
-	}
-	ret = MAKELONG(addr, sel);
-	dprintf_module(stddeb,"GetProcAddress // ret=%08X sel=%04X addr=%04X\n", 
-	       ret, sel, addr);
-	return (FARPROC)ret;
+        ordinal = MODULE_GetOrdinal( hModule, (LPSTR)PTR_SEG_TO_LIN(name) );
+        dprintf_module( stddeb, "GetProcAddress: %04x '%s'\n",
+                        hModule, (LPSTR)PTR_SEG_TO_LIN(name) );
     }
-    if (hModule == 0) 
+    else
     {
-	hTask = GetCurrentTask();
-	dprintf_module(stddeb,"GetProcAddress // GetCurrentTask()=%04X\n", hTask);
-	lpTask = (LPTASKENTRY) GlobalLock(hTask);
-	if (lpTask == NULL) 
-	{
-	    printf("GetProcAddress: can't find current module handle !\n");
-	    return NULL;
-	}
-	hModule = lpTask->hInst;
-	dprintf_module(stddeb,"GetProcAddress: current module=%04X instance=%04X!\n", 
-	       lpTask->hModule, lpTask->hInst);
-	GlobalUnlock(hTask);
+        ordinal = LOWORD(name);
+        dprintf_module( stddeb, "GetProcAddress: %04x %04x\n",
+                        hModule, ordinal );
     }
-    while (w && w->hinstance != hModule) 
-	w = w->next;
-    if (w == NULL) 
-	return NULL;
-    dprintf_module(stddeb,"GetProcAddress // Module Found ! w->filename='%s'\n", w->filename);
-    if ((int)proc_name & 0xFFFF0000) 
-    {
-	AnsiUpper(proc_name);
-	dprintf_module(stddeb,"GetProcAddress: %04X, '%s'\n", hModule, proc_name);
-	cpnt = w->ne->nrname_table;
-	while(TRUE) 
-	{
-	    if (((int) cpnt)  - ((int)w->ne->nrname_table) >  
-		w->ne->ne_header->nrname_tab_length)  return NULL;
-	    len = *cpnt++;
-	    strncpy(C, cpnt, len);
-	    C[len] = '\0';
-	    dprintf_module(stddeb,"pointing Function '%s' ordinal=%d !\n", 
-		   C, *((unsigned short *)(cpnt +  len)));
-	    if (strncmp(cpnt, proc_name, len) ==  0) 
-	    {
-		ordinal =  *((unsigned short *)(cpnt +  len));
-		break;
-	    }
-	    cpnt += len + 2;
-	}
-	if (ordinal == 0) 
-	{
-	    printf("GetProcAddress // function '%s' not found !\n", proc_name);
-	    return NULL;
-	}
-    }
-    else 
-    {
-	dprintf_module(stddeb,"GetProcAddress: %#04x, %d\n", hModule, (int) proc_name);
-	ordinal = (int)proc_name;
-    }
-    ret = GetEntryPointFromOrdinal(w, ordinal);
-    if (ret == -1) 
-    {
-	printf("GetProcAddress // Function #%d not found !\n", ordinal);
-	return NULL;
-    }
-    addr  = ret & 0xffff;
-    sel = (ret >> 16);
-    dprintf_module(stddeb,"GetProcAddress // ret=%08X sel=%04X addr=%04X\n", ret, sel, addr);
-    return (FARPROC) ret;
-#endif /* WINELIB */
+    if (!ordinal) return (FARPROC)0;
+
+    ret = MODULE_GetEntryPoint( hModule, ordinal );
+
+    dprintf_module( stddeb, "GetProcAddress: returning %08lx\n", ret );
+    return (FARPROC)ret;
 }
-
-/* internal dlls */
-static void 
-FillModStructBuiltIn(MODULEENTRY *lpModule, struct dll_name_table_entry_s *dll)
-{
-	lpModule->dwSize = dll->table->dll_table_length * 1024;
-	strcpy(lpModule->szModule, dll->dll_name);
-	lpModule->hModule = 0xff00 + dll->table->dll_number;
-	lpModule->wcUsage = GetModuleUsage(lpModule->hModule);
-	GetModuleFileName(lpModule->hModule, lpModule->szExePath, MAX_PATH + 1);
-	lpModule->wNext = 0;
-}
-
-/* loaded dlls */
-static void 
-FillModStructLoaded(MODULEENTRY *lpModule, struct w_files *dll)
-{
-	lpModule->dwSize = 16384;
-	strcpy(lpModule->szModule, dll->name);
-	lpModule->hModule = dll->hinstance;
-	lpModule->wcUsage = GetModuleUsage(lpModule->hModule);
-	GetModuleFileName(lpModule->hModule, lpModule->szExePath, MAX_PATH + 1);
-	lpModule->wNext = 0;
-}
-
-/**********************************************************************
- *		ModuleFirst [TOOLHELP.59]
- */
-BOOL ModuleFirst(MODULEENTRY *lpModule)
-{
-	dprintf_module(stddeb,"ModuleFirst(%08X)\n", (int) lpModule);
-	
-	FillModStructBuiltIn(lpModule, &dll_builtin_table[0]);
-	return TRUE;
-}
-
-/**********************************************************************
- *		ModuleNext [TOOLHELP.60]
- */
-BOOL ModuleNext(MODULEENTRY *lpModule)
-{
-	struct w_files *w;
-
-	dprintf_module(stddeb,"ModuleNext(%08X)\n", (int) lpModule);
-
-	if (IS_BUILTIN_DLL(lpModule->hModule)) 
-	{
-		int builtin_no=lpModule->hModule & 0xff;
-		do{
-			/* last built-in ? */
-			if (builtin_no == (N_BUILTINS - 1) ) {
-				if (wine_files) {
-					FillModStructLoaded(lpModule, wine_files);
-					return TRUE;
-				} else
-					return FALSE;
-			}
-			builtin_no++;
-		}while(!dll_builtin_table[builtin_no].dll_is_used);
-
-		FillModStructBuiltIn(lpModule, &dll_builtin_table[builtin_no]);
-		return TRUE;
-	}
-	w = GetFileInfo(lpModule->hModule);
-	if (w->next) {
-		FillModStructLoaded(lpModule, w->next);
-		return TRUE;
-	}
-	return FALSE;
-}
-
-/**********************************************************************
- *		ModuleFindHandle [TOOLHELP.62]
- */
-HMODULE ModuleFindHandle(MODULEENTRY *lpModule, HMODULE hModule)
-{
-	struct w_files *w;
-
-	dprintf_module(stddeb,"ModuleFindHandle(%08X, %04X)\n", (int) lpModule, (int)hModule);
-
-	/* built-in dll ? */
-	if (IS_BUILTIN_DLL(hModule)) {
-		FillModStructBuiltIn(lpModule, &dll_builtin_table[hModule & 0xff]);
-		return hModule;
-	}
-
-	/* check loaded dlls */
-	if ((w = GetFileInfo(hModule)) == NULL)
-	    	return (HMODULE) NULL;
-	
-	FillModStructLoaded(lpModule, w);
-	return w->hinstance;
-}
-
-/**********************************************************************
- *		ModuleFindName [TOOLHELP.61]
- */
-HMODULE ModuleFindName(MODULEENTRY *lpModule, LPCSTR lpstrName)
-{
-	return (ModuleFindHandle(lpModule, GetModuleHandle((char*)lpstrName)));
-}
-

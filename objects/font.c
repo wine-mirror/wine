@@ -164,7 +164,7 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
       break;
     }
     
-	while (TRUE) {
+    while (TRUE) {
 	    /* Width==0 seems not to be a valid wildcard on SGI's, using * instead */
 	    if ( width == 0 )
 	      sprintf( pattern, "-%s-%s-%c-normal-*-*-%d-*-*-%c-*-%s",
@@ -180,7 +180,7 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font, DC * dc )
                 dprintf_font(stddeb,"*** No match for %s\n", pattern );
                 return NULL;
             }
-        }
+    }
     dprintf_font(stddeb,"        Found '%s'\n", *names );
     fontStruct = XLoadQueryFont( display, *names );
     XFreeFontNames( names );
@@ -600,73 +600,81 @@ int ParseFontParms(LPSTR lpFont, WORD wParmsNo, LPSTR lpRetStr, WORD wMaxSiz)
 /*************************************************************************
  *				InitFontsList		[internal]
  */
+
+static int logfcmp(const void *a,const void *b) 
+{
+  return strcmp( (*(LPLOGFONT *)a)->lfFaceName, (*(LPLOGFONT *)b)->lfFaceName );
+}
+
 void InitFontsList(void)
 {
-    char 	str[32];
-    char 	pattern[100];
-    char 	*family, *weight, *charset;
-	char 	**names;
-    char 	slant, spacing;
-    int 	i, count;
-	LPLOGFONT	lpNewFont;
-    weight = "medium";
-    slant = 'r';
-    spacing = '*';
-    charset = "*";
-    family = "*-*";
-    dprintf_font(stddeb,"InitFontsList !\n");
-    sprintf( pattern, "-%s-%s-%c-normal-*-*-*-*-*-%c-*-%s",
-	      family, weight, slant, spacing, charset);
-    names = XListFonts( display, pattern, MAX_FONTS, &count );
-    dprintf_font(stddeb,"InitFontsList // count=%d \n", count);
-	for (i = 0; i < count; i++) {
-		lpNewFont = malloc(sizeof(LOGFONT) + LF_FACESIZE);
-		if (lpNewFont == NULL) {
-			dprintf_font(stddeb, "InitFontsList // Error alloc new font structure !\n");
-			break;
-			}
-		dprintf_font(stddeb,"InitFontsList // names[%d]='%s' \n", i, names[i]);
-		ParseFontParms(names[i], 2, str, sizeof(str));
-		if (strcmp(str, "fixed") == 0) strcat(str, "sys");
-		AnsiUpper(str);
-		strcpy(lpNewFont->lfFaceName, str);
-		ParseFontParms(names[i], 7, str, sizeof(str));
-		lpNewFont->lfHeight = atoi(str) / 10;
-		ParseFontParms(names[i], 12, str, sizeof(str));
-		lpNewFont->lfWidth = atoi(str) / 10;
-		lpNewFont->lfEscapement = 0;
-		lpNewFont->lfOrientation = 0;
-		lpNewFont->lfWeight = FW_REGULAR;
-		lpNewFont->lfItalic = 0;
-		lpNewFont->lfUnderline = 0;
-		lpNewFont->lfStrikeOut = 0;
-		ParseFontParms(names[i], 13, str, sizeof(str));
-		if (strcmp(str, "iso8859") == 0)
-			lpNewFont->lfCharSet = ANSI_CHARSET;
-		else
-			lpNewFont->lfCharSet = OEM_CHARSET;
-		lpNewFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
-		lpNewFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
-		lpNewFont->lfQuality = DEFAULT_QUALITY;
-		ParseFontParms(names[i], 11, str, sizeof(str));
-		switch(str[0]) {
-			case 'p':
-				lpNewFont->lfPitchAndFamily = VARIABLE_PITCH | FF_SWISS;
-				break;
-			case 'm':
-				lpNewFont->lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
-				break;
-			default:
-				lpNewFont->lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
-				break;
-			}
-		dprintf_font(stddeb,"InitFontsList // lpNewFont->lfHeight=%d \n", lpNewFont->lfHeight);
-		dprintf_font(stddeb,"InitFontsList // lpNewFont->lfWidth=%d \n", lpNewFont->lfWidth);
-		dprintf_font(stddeb,"InitFontsList // lfFaceName='%s' \n", lpNewFont->lfFaceName);
-		lpLogFontList[i] = lpNewFont;
-		lpLogFontList[i+1] = NULL;
-		}
-    XFreeFontNames(names);
+  char 	str[32];
+  char 	pattern[100];
+  char 	*family, *weight, *charset;
+  char 	**names;
+  char 	slant, spacing;
+  int 	i, count;
+  LPLOGFONT lpNewFont;
+  weight = "medium";
+  slant = 'r';
+  spacing = '*';
+  charset = "*";
+  family = "*-*";
+  dprintf_font(stddeb,"InitFontsList !\n");
+  sprintf( pattern, "-%s-%s-%c-normal-*-*-*-*-*-%c-*-%s",
+	  family, weight, slant, spacing, charset);
+  names = XListFonts( display, pattern, MAX_FONTS, &count );
+  dprintf_font(stddeb,"InitFontsList // count=%d \n", count);
+  for (i = 0; i < count; i++) {
+    lpNewFont = malloc(sizeof(LOGFONT));
+    if (lpNewFont == NULL) {
+      dprintf_font(stddeb, "InitFontsList // Error alloc new font structure !\n");
+      break;
+    }
+    dprintf_font(stddeb,"InitFontsList // names[%d]='%s' \n", i, names[i]);
+    ParseFontParms(names[i], 2, str, sizeof(str));
+    if (strcmp(str, "fixed") == 0) strcat(str, "sys");
+    AnsiUpper(str);
+    strcpy(lpNewFont->lfFaceName, str);
+    ParseFontParms(names[i], 8, str, sizeof(str));
+    lpNewFont->lfHeight = atoi(str) / 10;
+    ParseFontParms(names[i], 12, str, sizeof(str));
+    lpNewFont->lfWidth = atoi(str) / 10;
+    lpNewFont->lfEscapement = 0;
+    lpNewFont->lfOrientation = 0;
+    lpNewFont->lfWeight = FW_REGULAR;
+    lpNewFont->lfItalic = 0;
+    lpNewFont->lfUnderline = 0;
+    lpNewFont->lfStrikeOut = 0;
+    ParseFontParms(names[i], 13, str, sizeof(str));
+    if (strcmp(str, "iso8859") == 0)  {
+      lpNewFont->lfCharSet = ANSI_CHARSET;
+    } else  {
+      lpNewFont->lfCharSet = OEM_CHARSET;
+    }
+    lpNewFont->lfOutPrecision = OUT_DEFAULT_PRECIS;
+    lpNewFont->lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    lpNewFont->lfQuality = DEFAULT_QUALITY;
+    ParseFontParms(names[i], 11, str, sizeof(str));
+    switch(str[0]) {
+     case 'p':
+      lpNewFont->lfPitchAndFamily = VARIABLE_PITCH | FF_SWISS;
+      break;
+     case 'm':
+      lpNewFont->lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+      break;
+     default:
+      lpNewFont->lfPitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
+      break;
+    }
+    dprintf_font(stddeb,"InitFontsList // lpNewFont->lfHeight=%d \n", lpNewFont->lfHeight);
+    dprintf_font(stddeb,"InitFontsList // lpNewFont->lfWidth=%d \n", lpNewFont->lfWidth);
+    dprintf_font(stddeb,"InitFontsList // lfFaceName='%s' \n", lpNewFont->lfFaceName);
+    lpLogFontList[i] = lpNewFont;
+    lpLogFontList[i+1] = NULL;
+  }
+  qsort(lpLogFontList,count,sizeof(*lpLogFontList),logfcmp);
+  XFreeFontNames(names);
 }
 
 
@@ -675,79 +683,67 @@ void InitFontsList(void)
  */
 int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
 {
-	HANDLE			hLog;
-	HANDLE			hMet;
-	HFONT			hFont;
-	HFONT			hOldFont;
-	LPLOGFONT		lpLogFont;
-	LPTEXTMETRIC	lptm;
-	LPSTR			lpFaceList[MAX_FONTS];
-	char			FaceName[LF_FACESIZE];
-	int				nRet;
-	int				j, i = 0;
-
-	dprintf_font(stddeb,"EnumFonts(%04X, %p='%s', %p, %p)\n", 
-		hDC, lpFaceName, lpFaceName, lpEnumFunc, lpData);
-	if (lpEnumFunc == NULL) return 0;
-	hLog = GDI_HEAP_ALLOC( sizeof(LOGFONT) + LF_FACESIZE );
-	lpLogFont = (LPLOGFONT) GDI_HEAP_LIN_ADDR(hLog);
-	if (lpLogFont == NULL) {
-		dprintf_font(stddeb,"EnumFonts // can't alloc LOGFONT struct !\n");
-		return 0;
-		}
-	hMet = GDI_HEAP_ALLOC( sizeof(TEXTMETRIC) );
-	lptm = (LPTEXTMETRIC) GDI_HEAP_LIN_ADDR(hMet);
-	if (lptm == NULL) {
-		GDI_HEAP_FREE(hLog);
-		dprintf_font(stddeb, "EnumFonts // can't alloc TEXTMETRIC struct !\n");
-		return 0;
-		}
-	if (lpFaceName != NULL) {
-		strcpy(FaceName, lpFaceName);
-		AnsiUpper(FaceName);
-		}
-	if (lpLogFontList[0] == NULL) InitFontsList();
-	memset(lpFaceList, 0, MAX_FONTS * sizeof(LPSTR));
-	while (TRUE) {
-		if (lpLogFontList[i] == NULL) break;
-		if (lpFaceName == NULL) {
-			for (j = 0; j < MAX_FONTS; j++)	{
-				if (lpFaceList[j] == NULL) break;
-				if (strcmp(lpFaceList[j], lpLogFontList[i]->lfFaceName) == 0) {
-					i++; j = 0;
-					if (lpLogFontList[i] == NULL) break;
-					}
-				}
-			if (lpLogFontList[i] == NULL) break;
-			lpFaceList[j] = lpLogFontList[i]->lfFaceName;
-			dprintf_font(stddeb,"EnumFonts // enum all 'lpFaceName' '%s' !\n", lpFaceList[j]);
-			}
-		else {
-			while(lpLogFontList[i] != NULL) {
-				if (strcmp(FaceName, lpLogFontList[i]->lfFaceName) == 0) break;
-				i++;
-				}
-			if (lpLogFontList[i] == NULL) break;
-			}
-		memcpy(lpLogFont, lpLogFontList[i++], sizeof(LOGFONT) + LF_FACESIZE);
-		hFont = CreateFontIndirect(lpLogFont);
-		hOldFont = SelectObject(hDC, hFont);
-		GetTextMetrics(hDC, lptm);
-		SelectObject(hDC, hOldFont);
-		DeleteObject(hFont);
-		dprintf_font(stddeb,"EnumFonts // i=%d lpLogFont=%p lptm=%p\n", i, lpLogFont, lptm);
-                nRet = CallEnumFontsProc( lpEnumFunc,
-                                          GDI_HEAP_SEG_ADDR(hLog),
-                                          GDI_HEAP_SEG_ADDR(hMet),
-                                          0, (LONG)lpData );
-		if (nRet == 0) {
-			dprintf_font(stddeb,"EnumFonts // EnumEnd requested by application !\n");
-			break;
-			}
-		}
-	GDI_HEAP_FREE(hMet);
-	GDI_HEAP_FREE(hLog);
-	return 0;
+  HANDLE       hLog;
+  HANDLE       hMet;
+  HFONT	       hFont;
+  HFONT	       hOldFont;
+  LPLOGFONT    lpLogFont;
+  LPTEXTMETRIC lptm;
+  LPSTR	       lpOldName;
+  char	       FaceName[LF_FACESIZE];
+  int          nRet;
+  int          i;
+  
+  dprintf_font(stddeb,"EnumFonts(%04X, %p='%s', %p, %p)\n", 
+	       hDC, lpFaceName, lpFaceName, lpEnumFunc, lpData);
+  if (lpEnumFunc == NULL) return 0;
+  hLog = GDI_HEAP_ALLOC( sizeof(LOGFONT) + LF_FACESIZE );
+  lpLogFont = (LPLOGFONT) GDI_HEAP_LIN_ADDR(hLog);
+  if (lpLogFont == NULL) {
+    fprintf(stderr,"EnumFonts // can't alloc LOGFONT struct !\n");
+    return 0;
+  }
+  hMet = GDI_HEAP_ALLOC( sizeof(TEXTMETRIC) );
+  lptm = (LPTEXTMETRIC) GDI_HEAP_LIN_ADDR(hMet);
+  if (lptm == NULL) {
+    GDI_HEAP_FREE(hLog);
+    fprintf(stderr, "EnumFonts // can't alloc TEXTMETRIC struct !\n");
+    return 0;
+  }
+  if (lpFaceName != NULL) {
+    strcpy(FaceName, lpFaceName);
+    AnsiUpper(FaceName);
+  } 
+  lpOldName = NULL;
+  
+  if (lpLogFontList[0] == NULL) InitFontsList();
+  for(i = 0; lpLogFontList[i] != NULL; i++) {
+    if (lpFaceName == NULL) {
+      if (lpOldName != NULL) {
+	if (strcmp(lpOldName,lpLogFontList[i]->lfFaceName) == 0) continue;
+      }
+      lpOldName = lpLogFontList[i]->lfFaceName;
+    } else {
+      if (strcmp(FaceName, lpLogFontList[i]->lfFaceName) != 0) continue;
+    }
+    dprintf_font(stddeb,"EnumFonts // enum '%s' !\n", lpLogFontList[i]->lfFaceName);
+    memcpy(lpLogFont, lpLogFontList[i], sizeof(LOGFONT) + LF_FACESIZE);
+    hFont = CreateFontIndirect(lpLogFont);
+    hOldFont = SelectObject(hDC, hFont);
+    GetTextMetrics(hDC, lptm);
+    SelectObject(hDC, hOldFont);
+    DeleteObject(hFont);
+    dprintf_font(stddeb,"EnumFonts // i=%d lpLogFont=%p lptm=%p\n", i, lpLogFont, lptm);
+    nRet = CallEnumFontsProc(lpEnumFunc, GDI_HEAP_SEG_ADDR(hLog),
+			     GDI_HEAP_SEG_ADDR(hMet), 0, (LONG)lpData );
+    if (nRet == 0) {
+      dprintf_font(stddeb,"EnumFonts // EnumEnd requested by application !\n");
+      break;
+    }
+  }
+  GDI_HEAP_FREE(hMet);
+  GDI_HEAP_FREE(hLog);
+  return nRet;
 }
 
 
@@ -756,81 +752,70 @@ int EnumFonts(HDC hDC, LPSTR lpFaceName, FARPROC lpEnumFunc, LPSTR lpData)
  */
 int EnumFontFamilies(HDC hDC, LPSTR lpszFamily, FARPROC lpEnumFunc, LPSTR lpData)
 {
-	HANDLE			hLog;
-	HANDLE			hMet;
-	HFONT			hFont;
-	HFONT			hOldFont;
-	LPLOGFONT		lpLogFont;
-	LPTEXTMETRIC	lptm;
-	LPSTR			lpFaceList[MAX_FONTS];
-	char			FaceName[LF_FACESIZE];
-	int				nRet;
-	int				j, i = 0;
-
-	dprintf_font(stddeb,"EnumFontFamilies(%04X, %p, %p, %p)\n", 
-					hDC, lpszFamily, lpEnumFunc, lpData);
-	if (lpEnumFunc == NULL) return 0;
-	hLog = GDI_HEAP_ALLOC( sizeof(LOGFONT) + LF_FACESIZE );
-	lpLogFont = (LPLOGFONT) GDI_HEAP_LIN_ADDR(hLog);
-	if (lpLogFont == NULL) {
-		dprintf_font(stddeb,"EnumFontFamilies // can't alloc LOGFONT struct !\n");
-		return 0;
-		}
-	hMet = GDI_HEAP_ALLOC( sizeof(TEXTMETRIC) );
-	lptm = (LPTEXTMETRIC) GDI_HEAP_LIN_ADDR(hMet);
-	if (lptm == NULL) {
-		GDI_HEAP_FREE(hLog);
-		dprintf_font(stddeb,"EnumFontFamilies // can't alloc TEXTMETRIC struct !\n");
-		return 0;
-		}
-	if (lpszFamily != NULL) {
-		strcpy(FaceName, lpszFamily);
-		AnsiUpper(FaceName);
-		}
-	if (lpLogFontList[0] == NULL) InitFontsList();
-	memset(lpFaceList, 0, MAX_FONTS * sizeof(LPSTR));
-	while (TRUE) {
-		if (lpLogFontList[i] == NULL) break;
-		if (lpszFamily == NULL) {
-			if (lpLogFontList[i] == NULL) break;
-			for (j = 0; j < MAX_FONTS; j++)	{
-				if (lpFaceList[j] == NULL) break;
-				if (lpLogFontList[i] == NULL) break;
-				if (strcmp(lpFaceList[j], lpLogFontList[i]->lfFaceName) == 0) {
-					i++; j = 0;
-					}
-				}
-			if (lpLogFontList[i] == NULL) break;
-			lpFaceList[j] = lpLogFontList[i]->lfFaceName;
-			dprintf_font(stddeb,"EnumFontFamilies // enum all 'lpszFamily' '%s' !\n", lpFaceList[j]);
-			}
-		else {
-			while(lpLogFontList[i] != NULL) {
-				if (strcmp(FaceName, lpLogFontList[i]->lfFaceName) == 0) break;
-				i++;
-				}
-			if (lpLogFontList[i] == NULL) break;
-			}
-		memcpy(lpLogFont, lpLogFontList[i++], sizeof(LOGFONT) + LF_FACESIZE);
-		hFont = CreateFontIndirect(lpLogFont);
-		hOldFont = SelectObject(hDC, hFont);
-		GetTextMetrics(hDC, lptm);
-		SelectObject(hDC, hOldFont);
-		DeleteObject(hFont);
-		dprintf_font(stddeb, "EnumFontFamilies // i=%d lpLogFont=%p lptm=%p\n", i, lpLogFont, lptm);
-
-                nRet = CallEnumFontFamProc( lpEnumFunc,
-                                            GDI_HEAP_SEG_ADDR(hLog),
-                                            GDI_HEAP_SEG_ADDR(hMet),
-                                            0, (LONG)lpData );
-		if (nRet == 0) {
-			dprintf_font(stddeb,"EnumFontFamilies // EnumEnd requested by application !\n");
-			break;
-			}
-		}
-	GDI_HEAP_FREE(hMet);
-	GDI_HEAP_FREE(hLog);
-	return 0;
+  HANDLE       	hLog;
+  HANDLE       	hMet;
+  HFONT	       	hFont;
+  HFONT	       	hOldFont;
+  LPENUMLOGFONT lpEnumLogFont;
+  LPTEXTMETRIC	lptm;
+  LPSTR	       	lpOldName;
+  char	       	FaceName[LF_FACESIZE];
+  int	       	nRet;
+  int	       	i;
+  
+  dprintf_font(stddeb,"EnumFontFamilies(%04X, %p, %p, %p)\n", 
+	       hDC, lpszFamily, lpEnumFunc, lpData);
+  if (lpEnumFunc == NULL) return 0;
+  hLog = GDI_HEAP_ALLOC( sizeof(ENUMLOGFONT) );
+  lpEnumLogFont = (LPENUMLOGFONT) GDI_HEAP_LIN_ADDR(hLog);
+  if (lpEnumLogFont == NULL) {
+    fprintf(stderr,"EnumFontFamilies // can't alloc LOGFONT struct !\n");
+    return 0;
+  }
+  hMet = GDI_HEAP_ALLOC( sizeof(TEXTMETRIC) );
+  lptm = (LPTEXTMETRIC) GDI_HEAP_LIN_ADDR(hMet);
+  if (lptm == NULL) {
+    GDI_HEAP_FREE(hLog);
+    fprintf(stderr,"EnumFontFamilies // can't alloc TEXTMETRIC struct !\n");
+    return 0;
+  }
+  lpOldName = NULL;
+  if (lpszFamily != NULL) {
+    strcpy(FaceName, lpszFamily);
+    AnsiUpper(FaceName);
+  }
+  if (lpLogFontList[0] == NULL) InitFontsList();
+  for(i = 0; lpLogFontList[i] != NULL; i++) {
+    if (lpszFamily == NULL) {
+      if (lpOldName != NULL) {
+	if (strcmp(lpOldName,lpLogFontList[i]->lfFaceName) == 0) continue;
+      }
+      lpOldName = lpLogFontList[i]->lfFaceName;
+    } else {
+      if (strcmp(FaceName, lpLogFontList[i]->lfFaceName) != 0) continue;
+    }
+    memcpy(lpEnumLogFont, lpLogFontList[i], sizeof(LOGFONT));
+    strcpy(lpEnumLogFont->elfFullName,"");
+    strcpy(lpEnumLogFont->elfStyle,"");
+    hFont = CreateFontIndirect((LPLOGFONT)lpEnumLogFont);
+    hOldFont = SelectObject(hDC, hFont);
+    GetTextMetrics(hDC, lptm);
+    SelectObject(hDC, hOldFont);
+    DeleteObject(hFont);
+    dprintf_font(stddeb, "EnumFontFamilies // i=%d lpLogFont=%p lptm=%p\n", i, lpEnumLogFont, lptm);
+    
+    nRet = CallEnumFontFamProc( lpEnumFunc,
+			       GDI_HEAP_SEG_ADDR(hLog),
+			       GDI_HEAP_SEG_ADDR(hMet),
+			       0, (LONG)lpData );
+    if (nRet == 0) {
+      dprintf_font(stddeb,"EnumFontFamilies // EnumEnd requested by application !\n");
+      break;
+    }
+  }
+  GDI_HEAP_FREE(hMet);
+  GDI_HEAP_FREE(hLog);
+  return nRet;
 }
 
 /*************************************************************************

@@ -50,23 +50,24 @@ typedef struct {
 	DWORD		lStructSize;
 	HWND		hwndOwner;
 	HINSTANCE	hInstance;
-	LPCSTR		lpstrFilter;
-	LPSTR		lpstrCustomFilter;
+	SEGPTR	        lpstrFilter;
+	SEGPTR          lpstrCustomFilter;
 	DWORD		nMaxCustFilter;
 	DWORD		nFilterIndex;
-	LPSTR		lpstrFile;
+	SEGPTR          lpstrFile;
 	DWORD		nMaxFile;
-	LPSTR		lpstrFileTitle;
+	SEGPTR		lpstrFileTitle;
 	DWORD		nMaxFileTitle;
-	LPCSTR 		lpstrInitialDir;
-	LPCSTR 		lpstrTitle;
+	SEGPTR 		lpstrInitialDir;
+	SEGPTR 		lpstrTitle;
 	DWORD		Flags;
 	UINT		nFileOffset;
 	UINT		nFileExtension;
-	LPCSTR		lpstrDefExt;
+	SEGPTR		lpstrDefExt;
 	LPARAM 		lCustData;
-	UINT 		(CALLBACK *lpfnHook)(HWND, UINT, WPARAM, LPARAM);
-	LPCSTR 		lpTemplateName;
+/*	UINT 		(CALLBACK *lpfnHook)(HWND, UINT, WPARAM, LPARAM);*/
+        FARPROC         lpfnHook;
+	SEGPTR 		lpTemplateName;
 	}   OPENFILENAME;
 typedef OPENFILENAME * LPOPENFILENAME;
 
@@ -98,13 +99,14 @@ typedef struct {
 	HINSTANCE	hInstance; 				/* instance handle of.EXE that  */
 										/*	contains cust. dlg. template */
 	DWORD		Flags;                  /* one or more of the FR_?? */
-	LPSTR		lpstrFindWhat;          /* ptr. to search string    */
-	LPSTR		lpstrReplaceWith;       /* ptr. to replace string   */
+	SEGPTR		lpstrFindWhat;          /* ptr. to search string    */
+	SEGPTR		lpstrReplaceWith;       /* ptr. to replace string   */
 	UINT		wFindWhatLen;           /* size of find buffer      */
 	UINT 		wReplaceWithLen;        /* size of replace buffer   */
 	LPARAM 		lCustData;              /* data passed to hook fn.  */
-	UINT		(CALLBACK* lpfnHook)(HWND, UINT, WPARAM, LPARAM);
-	LPCSTR 		lpTemplateName;         /* custom template name     */
+/*	UINT		(CALLBACK* lpfnHook)(HWND, UINT, WPARAM, LPARAM); */
+        FARPROC         lpfnHook;
+	SEGPTR 		lpTemplateName;         /* custom template name     */
 	} FINDREPLACE;
 typedef FINDREPLACE *LPFINDREPLACE;
 
@@ -130,17 +132,18 @@ typedef FINDREPLACE *LPFINDREPLACE;
 typedef struct {
 	DWORD			lStructSize;
 	HWND			hwndOwner;          /* caller's window handle   */
-	HDC				hDC;                /* printer DC/IC or NULL    */
-	LOGFONT FAR*	lpLogFont;          /* ptr. to a LOGFONT struct */
+	HDC            	        hDC;                /* printer DC/IC or NULL    */
+	SEGPTR                  lpLogFont;          /* ptr. to a LOGFONT struct */
 	short			iPointSize;         /* 10 * size in points of selected font */
 	DWORD			Flags;              /* enum. type flags         */
 	COLORREF		rgbColors;          /* returned text color      */
-	LPARAM			lCustData;          /* data passed to hook fn.  */
-	UINT (CALLBACK* lpfnHook)(HWND, UINT, WPARAM, LPARAM);
-	LPCSTR			lpTemplateName;     /* custom template name     */
+	LPARAM	                lCustData;          /* data passed to hook fn.  */
+/*	UINT (CALLBACK* lpfnHook)(HWND, UINT, WPARAM, LPARAM);*/
+        FARPROC                 lpfnHook;
+	SEGPTR			lpTemplateName;     /* custom template name     */
 	HINSTANCE		hInstance;          /* instance handle of.EXE that   */
 										/* contains cust. dlg. template  */
-	LPSTR			lpszStyle;          /* return the style field here   */
+	SEGPTR			lpszStyle;          /* return the style field here   */
 										/* must be LF_FACESIZE or bigger */
 	UINT			nFontType;          /* same value reported to the    */
 										/* EnumFonts callback with the   */
@@ -204,7 +207,7 @@ typedef struct {
 	HWND 		hwndOwner;
 	HGLOBAL		hDevMode;
 	HGLOBAL		hDevNames;
-	HDC			hDC;
+	HDC	       	hDC;
 	DWORD 		Flags;
 	UINT		nFromPage;
 	UINT		nToPage;
@@ -213,10 +216,12 @@ typedef struct {
 	UINT		nCopies;
 	HINSTANCE 	hInstance;
 	LPARAM 		lCustData;
-	UINT		(CALLBACK* lpfnPrintHook)(HWND, UINT, WPARAM, LPARAM);
-	UINT		(CALLBACK* lpfnSetupHook)(HWND, UINT, WPARAM, LPARAM);
-	LPCSTR 		lpPrintTemplateName;
-	LPCSTR 		lpSetupTemplateName;
+/*	UINT		(CALLBACK* lpfnPrintHook)(HWND, UINT, WPARAM, LPARAM);
+	UINT		(CALLBACK* lpfnSetupHook)(HWND, UINT, WPARAM, LPARAM);*/
+        FARPROC         lpfnPrintHook;
+        FARPROC         lpfnSetupHook;
+	SEGPTR 		lpPrintTemplateName;
+	SEGPTR 		lpSetupTemplateName;
 	HGLOBAL 	hPrintTemplate;
 	HGLOBAL 	hSetupTemplate;
 	} PRINTDLG;

@@ -154,6 +154,7 @@ load_entrypoints(){
 	int j, ordinal, len;
 	unsigned int address;
 
+#if 0
 	struct w_files * wpnt;
 	for(wpnt = wine_files; wpnt; wpnt = wpnt->next){
 		cpnt  = wpnt->ne->nrname_table;
@@ -174,4 +175,5 @@ load_entrypoints(){
 		};
 	};
 	return;
+#endif
 }

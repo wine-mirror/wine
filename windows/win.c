@@ -254,14 +254,8 @@ BOOL WIN_CreateDesktopWindow()
     wndPtr->flags             = 0;
     wndPtr->window            = rootWindow;
     wndPtr->hSysMenu          = 0;
-    wndPtr->hProp	          = 0;
-    wndPtr->hTask	          = 0;
-
-      /* Send dummy WM_NCCREATE message */
-    SendMessage( hwndDesktop, WM_NCCREATE, 0, 0 );
+    wndPtr->hProp	      = 0;
     EVENT_RegisterWindow( wndPtr->window, hwndDesktop );
-    RedrawWindow( hwndDesktop, NULL, 0,
-		  RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW );
     return TRUE;
 }
 
@@ -382,7 +376,6 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->hHScroll          = 0;
     wndPtr->hSysMenu          = 0;
     wndPtr->hProp             = 0;
-    wndPtr->hTask             = 0;
 
     if (classPtr->wc.cbWndExtra)
 	memset( wndPtr->wExtra, 0, classPtr->wc.cbWndExtra );
@@ -516,9 +509,6 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
       /* Create a copy of SysMenu */
     if (style & WS_SYSMENU) wndPtr->hSysMenu = CopySysMenu();
 
-      /* Register window in current task windows list */
-    AddWindowToTask(GetCurrentTask(), hwnd);
-
     WIN_SendParentNotify( hwnd, WM_CREATE, MAKELONG( hwnd, wndPtr->wIDmenu ) );
     
     if (style & WS_VISIBLE) ShowWindow( hwnd, SW_SHOW );
@@ -575,9 +565,6 @@ BOOL DestroyWindow( HWND hwnd )
     while (wndPtr->hwndChild)  /* The child removes itself from the list */
 	DestroyWindow( wndPtr->hwndChild );
     SendMessage( hwnd, WM_NCDESTROY, 0, 0 );
-
-      /* Remove the window from current task windows list */
-	RemoveWindowFromTask(GetCurrentTask(), hwnd);
 
       /* Destroy the window */
 
@@ -725,8 +712,8 @@ WORD SetWindowWord( HWND hwnd, short offset, WORD newval )
     if (offset >= 0) ptr = (WORD *)(((char *)wndPtr->wExtra) + offset);
     else switch(offset)
     {
-	case GWW_ID: ptr = &wndPtr->wIDmenu;
-	case GWW_HINSTANCE: ptr = &wndPtr->hInstance;
+	case GWW_ID:        ptr = &wndPtr->wIDmenu;   break;
+	case GWW_HINSTANCE: ptr = &wndPtr->hInstance; break;
 	default: return 0;
     }
     retval = *ptr;
@@ -764,12 +751,9 @@ LONG SetWindowLong( HWND hwnd, short offset, LONG newval )
     if (offset >= 0) ptr = (LONG *)(((char *)wndPtr->wExtra) + offset);
     else switch(offset)
     {
-	case GWL_STYLE:   ptr = &wndPtr->dwStyle;
-	  break;
-        case GWL_EXSTYLE: ptr = &wndPtr->dwExStyle;
-	  break;
-	case GWL_WNDPROC: ptr = (LONG *)(&wndPtr->lpfnWndProc);
-	  break;
+	case GWL_STYLE:   ptr = &wndPtr->dwStyle; break;
+        case GWL_EXSTYLE: ptr = &wndPtr->dwExStyle; break;
+	case GWL_WNDPROC: ptr = (LONG *)&wndPtr->lpfnWndProc; break;
 	default: return 0;
     }
     retval = *ptr;
@@ -996,38 +980,96 @@ HWND GetLastActivePopup(HWND hwnd)
 
 
 /*******************************************************************
- *    EnumWindows             (USER.54)
- * 
- *  o gets the desktop window and iterates over all the windows
- *    which are direct decendents of the desktop * by iterating over
- *    the desktop's child window and all the child windows next
- *    pointers
- *
- *  o call wndenumprc for every child window the desktop has
- *
- *  o if wndenumprc returns 0 exit
- * 
+ *           EnumWindows   (USER.54)
  */
-BOOL EnumWindows(FARPROC wndenumprc, LPARAM lParam)
+BOOL EnumWindows( FARPROC lpEnumFunc, LPARAM lParam )
 {
-    HWND hwnd = GetTopWindow( GetDesktopWindow() );
+    HWND hwnd;
     WND *wndPtr;
-    int result;
+    HWND *list, *pWnd;
+    int count;
 
-    dprintf_enum(stddeb,"EnumWindows\n");
+    /* We have to build a list of all windows first, to avoid */
+    /* unpleasant side-effects, for instance if the callback  */
+    /* function changes the Z-order of the windows.           */
 
-    while (hwnd) {
-        if ( !(wndPtr=WIN_FindWndPtr(hwnd)) ) {
-              return 0;
-      }
-      result = CallEnumWindowsProc( wndenumprc, hwnd, lParam );
-      if ( ! result )  {
-              return 0;
-      }
-      hwnd=wndPtr->hwndNext;
+      /* First count the windows */
+
+    count = 0;
+    for (hwnd = hwndDesktop; hwnd != 0; hwnd = wndPtr->hwndNext)
+    {
+        if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+        count++;
     }
-    return 1; /* for now */
+    if (!count) return TRUE;
+
+      /* Now build the list of all windows */
+
+    if (!(list = (HWND *)malloc( sizeof(HWND) * count ))) return FALSE;
+    for (hwnd = hwndDesktop, pWnd = list; hwnd != 0; hwnd = wndPtr->hwndNext)
+    {
+        wndPtr = WIN_FindWndPtr( hwnd );
+        *pWnd++ = hwnd;
+    }
+
+      /* Now call the callback function for every window */
+
+    for (pWnd = list; count > 0; count--, pWnd++)
+    {
+          /* Make sure that window still exists */
+        if (!IsWindow(*pWnd)) continue;
+        if (!CallEnumWindowsProc( lpEnumFunc, *pWnd, lParam )) break;
+    }
+    free( list );
+    return TRUE;
 }
+
+
+/**********************************************************************
+ *           EnumTaskWindows   (USER.225)
+ */
+BOOL EnumTaskWindows( HTASK hTask, FARPROC lpEnumFunc, LONG lParam )
+{
+    HWND hwnd;
+    WND *wndPtr;
+    HWND *list, *pWnd;
+    HANDLE hQueue = GetTaskQueue( hTask );
+    int count;
+
+    /* This function is the same as EnumWindows(),    */
+    /* except for an added check on the window queue. */
+
+      /* First count the windows */
+
+    count = 0;
+    for (hwnd = hwndDesktop; hwnd != 0; hwnd = wndPtr->hwndNext)
+    {
+        if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
+        if (wndPtr->hmemTaskQ == hQueue) count++;
+    }
+    if (!count) return TRUE;
+
+      /* Now build the list of all windows */
+
+    if (!(list = (HWND *)malloc( sizeof(HWND) * count ))) return FALSE;
+    for (hwnd = hwndDesktop, pWnd = list; hwnd != 0; hwnd = wndPtr->hwndNext)
+    {
+        wndPtr = WIN_FindWndPtr( hwnd );
+        if (wndPtr->hmemTaskQ == hQueue) *pWnd++ = hwnd;
+    }
+
+      /* Now call the callback function for every window */
+
+    for (pWnd = list; count > 0; count--, pWnd++)
+    {
+          /* Make sure that window still exists */
+        if (!IsWindow(*pWnd)) continue;
+        if (!CallEnumTaskWndProc( lpEnumFunc, *pWnd, lParam )) break;
+    }
+    free( list );
+    return TRUE;
+}
+
 
 /*******************************************************************
  *    WIN_EnumChildWin
@@ -1072,6 +1114,7 @@ BOOL EnumChildWindows(HWND hwnd, FARPROC wndenumprc, LPARAM lParam)
     hwnd = wndPtr->hwndChild;
     return WIN_EnumChildWin(hwnd, wndenumprc, lParam);         
 }
+
 
 /*******************************************************************
  *			AnyPopup		[USER.52]

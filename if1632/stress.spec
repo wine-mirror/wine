@@ -2,7 +2,6 @@
 #
 name	stress
 id	9
-length	15
 
 2   pascal allocmem(long)		AllocMem
 3   pascal freeallmem()			FreeAllMem

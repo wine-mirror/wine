@@ -738,8 +738,8 @@ static void MENU_SelectItem( HMENU hmenu, WORD wIndex )
 	    items[lppop->FocusedItem].item_flags |= MF_HILITE;
 	    MENU_DrawMenuItem( lppop->hWnd, hdc, &items[lppop->FocusedItem], lppop->Height,
 			       !(lppop->wFlags & MF_POPUP) );
-	    SendMessage(lppop->hWnd, WM_MENUSELECT,
-			items[lppop->FocusedItem].item_id, 
+	    dprintf_menu(stddeb,"Sending WM_MENUSELECT %04x %04x\n", items[lppop->FocusedItem].item_id,items[lppop->FocusedItem].item_flags);
+	    SendMessage(lppop->hWnd, WM_MENUSELECT, items[lppop->FocusedItem].item_id,
 		       MAKELONG( hmenu, items[lppop->FocusedItem].item_flags));
 	}
     }
@@ -1494,18 +1494,24 @@ WORD MENU_GetMenuBarHeight( HWND hwnd, WORD menubarWidth, int orgX, int orgY )
 BOOL ChangeMenu(HMENU hMenu, WORD nPos, LPSTR lpNewItem, 
 			WORD wItemID, WORD wFlags)
 {
-	dprintf_menu(stddeb,"ChangeMenu(%04X, %X, '%s', %X, %X)\n",
-		hMenu, nPos, lpNewItem, wItemID, wFlags);
-	if (wFlags & MF_APPEND)
-		return AppendMenu(hMenu, wFlags, wItemID, lpNewItem);
-	if (wFlags & MF_DELETE)
-		return DeleteMenu(hMenu, wItemID, wFlags);
-	if (wFlags & MF_CHANGE) 
-		return ModifyMenu(hMenu, nPos, wFlags, wItemID, lpNewItem);
-	if (wFlags & MF_REMOVE) 
-		return RemoveMenu(hMenu, wItemID, wFlags);
-	/* Default: MF_INSERT */
-	return InsertMenu(hMenu, nPos, wFlags, wItemID, lpNewItem);
+  dprintf_menu(stddeb,"ChangeMenu(%04X, %X, '%s', %X, %X)\n",
+	       hMenu, nPos, lpNewItem, wItemID, wFlags);
+  if (wFlags & MF_APPEND)  {
+    return AppendMenu(hMenu, wFlags & ~MF_APPEND, wItemID, lpNewItem);
+  }
+  if (wFlags & MF_DELETE) {
+    return DeleteMenu(hMenu, wFlags & MF_BYPOSITION ? nPos : wItemID, 
+		      wFlags & ~MF_DELETE);
+  }
+  if (wFlags & MF_CHANGE) {
+    return ModifyMenu(hMenu, nPos, wFlags & ~MF_CHANGE, wItemID, lpNewItem);
+  }
+  if (wFlags & MF_REMOVE) {
+    return RemoveMenu(hMenu, wFlags & MF_BYPOSITION ? nPos : wItemID,
+		      wFlags & ~MF_REMOVE);
+  }
+  /* Default: MF_INSERT */
+  return InsertMenu(hMenu, nPos, wFlags, wItemID, lpNewItem);
 }
 
 
@@ -2071,6 +2077,34 @@ HMENU LookupMenuHandle( HMENU hmenu, INT id )
 {
     if (!MENU_FindItem( &hmenu, &id, MF_BYCOMMAND )) return 0;
     else return hmenu;
+}
+
+
+/**********************************************************************
+ *	    LoadMenu    (USER.150)
+ */
+HMENU LoadMenu( HINSTANCE instance, SEGPTR name )
+{
+    HRSRC hRsrc;
+    HGLOBAL handle;
+    HMENU hMenu;
+
+    if (HIWORD(name))
+    {
+        char *str = (char *)PTR_SEG_TO_LIN( name );
+        dprintf_menu( stddeb, "LoadMenu(%04x,'%s')\n", instance, str );
+        if (str[0] == '#') name = (SEGPTR)atoi( str + 1 );
+    }
+    else
+        dprintf_resource(stddeb,"LoadMenu(%04x,%04x)\n",instance,LOWORD(name));
+
+    if (!name) return 0;
+
+    if (!(hRsrc = FindResource( instance, name, RT_MENU ))) return 0;
+    if (!(handle = LoadResource( instance, hRsrc ))) return 0;
+    hMenu = LoadMenuIndirect( LockResource(handle) );
+    FreeResource( handle );
+    return hMenu;
 }
 
 

@@ -14,10 +14,10 @@
 #pragma pack(1)
 #endif
 
+  /* 16-bit stack layout after CallTo32() */
 typedef struct
 {
     WORD    saved_ss;                /* saved previous 16-bit stack */
-    WORD    saved_bp;
     WORD    saved_sp;
     WORD    ds;                      /* 16-bit ds */
     DWORD   entry_point WINE_PACKED; /* entry point to call */
@@ -29,13 +29,32 @@ typedef struct
     WORD    args[1];                 /* arguments to API function */
 } STACK16FRAME;
 
+  /* 32-bit stack layout after CallTo16() */
+typedef struct
+{
+    DWORD   saved_esp;      /* saved previous 32-bit stack */
+    DWORD   edi;            /* saved registers */
+    DWORD   esi;
+    DWORD   edx;
+    DWORD   ecx;
+    DWORD   ebx;
+    DWORD   ebp;            /* saved 32-bit frame pointer */
+    DWORD   retaddr;        /* return address */
+    DWORD   codeselector;   /* code selector for return address */
+    DWORD   args[1];        /* arguments to 16-bit function */
+} STACK32FRAME;
+
 #ifndef WINELIB
 #pragma pack(4)
 #endif
 
+  /* Saved 16-bit stack */
 extern WORD IF1632_Saved16_ss;
 extern WORD IF1632_Saved16_sp;
-extern WORD IF1632_Saved16_bp;
+
+  /* Saved 32-bit stack */
+extern DWORD IF1632_Saved32_esp;
+
 
 #define CURRENT_STACK16 \
     ((STACK16FRAME *)PTR_SEG_OFF_TO_LIN(IF1632_Saved16_ss,IF1632_Saved16_sp))

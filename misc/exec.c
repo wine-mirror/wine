@@ -42,102 +42,6 @@ typedef struct {
 
 typedef BOOL (CALLBACK * LPFNWINMAIN)(HANDLE, HANDLE, LPSTR, int);
 
-HANDLE CreateNewTask(HINSTANCE hInst);
-
-#ifndef WINELIB
-void InitializeLoadedNewDLLs(HINSTANCE hInst)
-{
-    struct w_files * w;
-    struct w_files * wpnt;
-    int cs_reg, ds_reg, ip_reg;
-    int rv;
-
-    dprintf_exec(stddeb, "Initializing New DLLs\n");
-
-    /*
-     * Initialize libraries
-     */
-    dprintf_exec(stddeb,
-	"InitializeLoadedNewDLLs() before searching hInst=%04X !\n", hInst);
-	w = wine_files;
-	while (w && w->hinstance != hInst) w = w->next;
-	if (w == NULL) return;
-    dprintf_exec(stddeb,"InitializeLoadedNewDLLs() // before InitLoop !\n");
-    for(wpnt = w; wpnt; wpnt = wpnt->next)
-    {
-	/* 
-	 * Is this a library? 
-	 */
-	if (wpnt->ne->ne_header->format_flags & 0x8000)
-	{
-	    if (!(wpnt->ne->ne_header->format_flags & 0x0001))
-	    {
-		/* Not SINGLEDATA */
-		fprintf(stderr, "Library is not marked SINGLEDATA\n");
-		exit(1);
-	    }
-
-	    ds_reg = wpnt->ne->selector_table[wpnt->ne->
-					  ne_header->auto_data_seg-1];
-	    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1];
-	    ip_reg = wpnt->ne->ne_header->ip;
-
-        dprintf_exec(stddeb, "Initializing %s, cs:ip %04x:%04x, ds %04x\n",
-		    wpnt->name, cs_reg, ip_reg, ds_reg);
-
-            rv = CallTo16_regs_( (FARPROC)(cs_reg << 16 | ip_reg), ds_reg,
-                                 0 /*es*/, 0 /*ax*/, 0 /*bx*/, 0 /*cx*/,
-                                 0 /*dx*/, 0 /*si*/, wpnt->hinstance /*di*/ );
-        dprintf_exec(stddeb,"rv = %x\n", rv);
-	}
-    }
-}
-
-
-void StartNewTask(HINSTANCE hInst)
-{
-	struct w_files * wpnt;
-	struct w_files * w;
-	int cs_reg, ds_reg, ss_reg, ip_reg, sp_reg;
-	int rv;
-	int segment;
-
-    	dprintf_exec(stddeb,
-		"StartNewTask() before searching hInst=%04X !\n", hInst);
-	wpnt = wine_files;
-	while (wpnt && wpnt->hinstance != hInst) wpnt = wpnt->next;
-	if (wpnt == NULL) return;
-    	dprintf_exec(stddeb,"StartNewTask() // before FixupSegment !\n");
-	for(w = wpnt; w; w = w->next)	{
-		for (segment = 0; segment < w->ne->ne_header->n_segment_tab; segment++) {
-			if (NE_FixupSegment(w, segment) < 0) {
-				myerror("fixup failed.");
-				}
-			}
-		}
-	dprintf_exec(stddeb,"StartNewTask() before InitializeLoadedNewDLLs !\n");
-	InitializeLoadedNewDLLs(hInst);
-	dprintf_exec(stddeb,"StartNewTask() before setup register !\n");
-    ds_reg = (wpnt->ne->selector_table[wpnt->ne->ne_header->auto_data_seg-1]);
-    cs_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->cs-1];
-    ip_reg = wpnt->ne->ne_header->ip;
-    ss_reg = wpnt->ne->selector_table[wpnt->ne->ne_header->ss-1];
-    sp_reg = wpnt->ne->ne_header->sp;
-
-	dprintf_exec(stddeb,"StartNewTask() before CallToInit16() !\n");
-/*
-    rv = CallToInit16(cs_reg << 16 | ip_reg, ss_reg << 16 | sp_reg, ds_reg);
-*/
-    dprintf_exec(stddeb,"rv = %x\n", rv);
-
-}
-
-#else
-void StartNewTask (HINSTANCE hInst)
-{
-    fprintf(stdnimp, "StartNewTask(): Not yet implemented\n");
-}
-#endif
 
 /**********************************************************************
  *				LoadModule	[KERNEL.45]
@@ -177,6 +81,11 @@ WORD WinExec(LPSTR lpCmdLine, WORD nCmdShow)
 	ArgV[c] = NULL;
     for (c = 0; ArgV[c] != NULL; c++) 
 	dprintf_exec(stddeb,"--> '%s' \n", ArgV[c]);
+
+        if ((hInst = LoadImage(ArgV[0], EXE, 1)) == (HINSTANCE) NULL ) {
+            fprintf(stderr, "wine: can't find %s!.\n", ArgV[0]);
+        }
+#if 0
 	switch(fork()) {
 		case -1:
             fprintf(stderr,"Can't 'fork' process !\n");
@@ -187,20 +96,7 @@ WORD WinExec(LPSTR lpCmdLine, WORD nCmdShow)
                 		fprintf(stderr,"Child process died !\n");
 				exit(1);
 				}
-			hTask = CreateNewTask(hInst);
-            		dprintf_exec(stddeb,
-			"WinExec // hTask=%04X hInst=%04X !\n", hTask, hInst);
 			StartNewTask(hInst); 
-/*
-			lpfnMain = (LPFNWINMAIN)GetProcAddress(hInst, (LPSTR)0L);
-            		dprintf_exec(stddeb,
-			"WineExec() // lpfnMain=%08X\n", (LONG)lpfnMain);
-			if (lpfnMain != NULL) {
-				(lpfnMain)(hInst, 0, lpCmdLine, nCmdShow);
-                		dprintf_exec(stddeb,
-					"WineExec() // after lpfnMain\n");
-				}
-*/
 /*			hTask = CreateNewTask(0);
             		dprintf_exec(stddeb,
 				"WinExec // New Task hTask=%04X !\n", hTask);
@@ -214,6 +110,7 @@ WORD WinExec(LPSTR lpCmdLine, WORD nCmdShow)
 			hTask);
 			break;         
 		}
+#endif
 	for (c = 0; ArgV[c] != NULL; c++) 	free(ArgV[c]);
 	return hTask;
 }

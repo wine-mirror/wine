@@ -59,42 +59,26 @@ static GLOBALARENA *GLOBAL_GetArena( WORD sel, WORD selcount )
 
 
 /***********************************************************************
- *           GLOBAL_Alloc
+ *           GLOBAL_CreateBlock
  *
- * Implementation of GlobalAlloc()
+ * Create a global heap block for a fixed range of linear memory.
  */
-HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
-                      BOOL isCode, BOOL isReadOnly )
+HGLOBAL GLOBAL_CreateBlock( WORD flags, void *ptr, DWORD size,
+                            HGLOBAL hOwner, BOOL isCode,
+                            BOOL is32Bit, BOOL isReadOnly  )
 {
     WORD sel, selcount;
-    void *ptr;
     GLOBALARENA *pArena;
-
-      /* Fixup the size */
-
-    if (size >= GLOBAL_MAX_ALLOC_SIZE - 0x0f) return 0;
-    if (size == 0) size = 0x10;
-    else size = (size + 0x0f) & ~0x0f;
-
-      /* Allocate the linear memory */
-
-    ptr = malloc( size );
-    if (!ptr) return 0;
 
       /* Allocate the selector(s) */
 
     sel = SELECTOR_AllocBlock( ptr, size, isCode ? SEGMENT_CODE : SEGMENT_DATA,
-                               0, isReadOnly );
-    if (!sel)
-    {
-        free( ptr );
-        return 0;
-    }
+                               is32Bit, isReadOnly );
+    if (!sel) return 0;
     selcount = (size + 0xffff) / 0x10000;
 
     if (!(pArena = GLOBAL_GetArena( sel, selcount )))
     {
-        free( ptr );
         FreeSelector( sel );
         return 0;
     }
@@ -114,8 +98,64 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
     if (selcount > 1)  /* clear the next arena blocks */
         memset( pArena + 1, 0, (selcount - 1) * sizeof(GLOBALARENA) );
 
-    if (flags & GMEM_ZEROINIT) memset( ptr, 0, size );
     return pArena->handle;
+}
+
+
+/***********************************************************************
+ *           GLOBAL_FreeBlock
+ *
+ * Free a block allocated by GLOBAL_CreateBlock, without touching
+ * the associated linear memory range.
+ */
+BOOL GLOBAL_FreeBlock( HGLOBAL handle )
+{
+    WORD sel;
+
+    if (!handle) return TRUE;
+    sel = GlobalHandleToSel( handle );
+    if (FreeSelector( sel )) return FALSE;  /* failed */
+    memset( GET_ARENA_PTR(handle), 0, sizeof(GLOBALARENA) );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *           GLOBAL_Alloc
+ *
+ * Implementation of GlobalAlloc()
+ */
+HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
+                      BOOL isCode, BOOL is32Bit, BOOL isReadOnly )
+{
+    void *ptr;
+    HGLOBAL handle;
+
+    dprintf_global( stddeb, "GlobalAlloc: %ld flags=%04x\n", size, flags );
+
+      /* Fixup the size */
+
+    if (size >= GLOBAL_MAX_ALLOC_SIZE - 0x0f) return 0;
+    if (size == 0) size = 0x20;
+    else size = (size + 0x1f) & ~0x1f;
+
+      /* Allocate the linear memory */
+
+    ptr = malloc( size );
+    if (!ptr) return 0;
+
+      /* Allocate the selector(s) */
+
+    handle = GLOBAL_CreateBlock( flags, ptr, size, hOwner,
+                                 isCode, is32Bit, isReadOnly);
+    if (!handle)
+    {
+        free( ptr );
+        return 0;
+    }
+
+    if (flags & GMEM_ZEROINIT) memset( ptr, 0, size );
+    return handle;
 }
 
 
@@ -124,9 +164,12 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
  */
 HGLOBAL GlobalAlloc( WORD flags, DWORD size )
 {
-    dprintf_global( stddeb, "GlobalAlloc: %ld flags=%04x\n", size, flags );
+    HANDLE owner = GetCurrentPDB();
 
-    return GLOBAL_Alloc( flags, size, GetCurrentPDB(), 0, 0 );
+    if (flags & GMEM_DDESHARE)
+        owner = GetExePtr(owner);  /* Make it a module handle */
+
+    return GLOBAL_Alloc( flags, size, owner, FALSE, FALSE, FALSE );
 }
 
 
@@ -142,11 +185,8 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
 
     dprintf_global( stddeb, "GlobalReAlloc: %04x %ld flags=%04x\n",
                     handle, size, flags );
-    if (!handle)
-    {
-        printf( "GlobalReAlloc: handle is 0.\n" );
-        return 0;
-    }
+    if (!handle) return 0;
+    pArena = GET_ARENA_PTR( handle );
 
       /* Fixup the size */
 
@@ -154,12 +194,23 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
     if (size == 0) size = 0x10;
     else size = (size + 0x0f) & ~0x0f;
 
+      /* Change the flags */
+
+    if (flags & GMEM_MODIFY)
+    {
+          /* Change the flags, leaving GA_DGROUP alone */
+        pArena->flags = (pArena->flags & GA_DGROUP) |
+                           (flags & ~GA_DGROUP);
+        if (flags & GMEM_DISCARDABLE) pArena->flags |= GA_DISCARDABLE;
+        return handle;
+    }
+
       /* Reallocate the linear memory */
 
-    pArena = GET_ARENA_PTR( handle );
     sel = GlobalHandleToSel( handle );
     ptr = (void *)pArena->base;
     oldsize = pArena->size;
+    dprintf_global(stddeb,"oldsize %08lx\n",oldsize);
     if (size == oldsize) return handle;  /* Nothing to do */
 
     ptr = realloc( ptr, size );
@@ -194,13 +245,6 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
     pNewArena->base = (DWORD)ptr;
     pNewArena->size = GET_SEL_LIMIT(sel) + 1;
     pNewArena->selCount = selcount;
-    if (flags & GMEM_MODIFY)
-    {
-          /* Change the flags, leaving GA_DGROUP alone */
-        pNewArena->flags = (pNewArena->flags & GA_DGROUP) |
-                           (flags & ~GA_DGROUP);
-        if (flags & GMEM_DISCARDABLE) pNewArena->flags |= GA_DISCARDABLE;
-    }
     pNewArena->handle = (pNewArena->flags & GMEM_MOVEABLE) ? sel - 1 : sel;
 
     if (selcount > 1)  /* clear the next arena blocks */
@@ -217,16 +261,12 @@ HGLOBAL GlobalReAlloc( HGLOBAL handle, DWORD size, WORD flags )
  */
 HGLOBAL GlobalFree( HGLOBAL handle )
 {
-    WORD sel;
     void *ptr;
 
     dprintf_global( stddeb, "GlobalFree: %04x\n", handle );
-    if (!handle) return 0;
-    sel = GlobalHandleToSel( handle );
-    ptr = (void *)GET_SEL_BASE(sel);
-    if (FreeSelector( sel )) return handle;  /* failed */
+    if (!(ptr = GlobalLock( handle ))) return handle;  /* failed */
+    if (!GLOBAL_FreeBlock( handle )) return handle;  /* failed */
     free( ptr );
-    memset( GET_ARENA_PTR(handle), 0, sizeof(GLOBALARENA) );
     return 0;
 }
 
@@ -238,7 +278,8 @@ HGLOBAL GlobalFree( HGLOBAL handle )
  */
 SEGPTR WIN16_GlobalLock( HGLOBAL handle )
 {
-    dprintf_global( stddeb, "WIN16_GlobalLock: %04x\n", handle );
+    dprintf_global( stddeb, "WIN16_GlobalLock(%04x) -> %08lx\n",
+                    handle, MAKELONG( 0, GlobalHandleToSel(handle)) );
     if (!handle) return 0;
     return (SEGPTR)MAKELONG( 0, GlobalHandleToSel(handle) );
 }
@@ -332,6 +373,23 @@ void UnlockSegment( HGLOBAL handle )
 DWORD GlobalCompact( DWORD desired )
 {
     return GLOBAL_MAX_ALLOC_SIZE;
+}
+
+
+/***********************************************************************
+ *           GlobalFreeAll   (KERNEL.26)
+ */
+void GlobalFreeAll( HANDLE owner )
+{
+    DWORD i;
+    GLOBALARENA *pArena;
+
+    pArena = pGlobalArena;
+    for (i = 0; i < globalArenaSize; i++, pArena++)
+    {
+        if ((pArena->size != 0) && (pArena->hOwner == owner))
+            GlobalFree( pArena->handle );
+    }
 }
 
 
@@ -506,6 +564,7 @@ BOOL GlobalNext( GLOBALENTRY *pGlobal, WORD wFlags)
 {
     GLOBALARENA *pArena;
 
+    if (pGlobal->dwNext >= globalArenaSize) return FALSE;
     pArena = pGlobalArena + pGlobal->dwNext;
     if (wFlags == GLOBAL_FREE)  /* only free blocks */
     {

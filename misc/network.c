@@ -2,9 +2,13 @@
  * Network functions
  */
 
+#include <ctype.h>
 #include "stdio.h"
 #include "windows.h"
 #include "user.h"
+
+#include "msdos.h"
+#include "dos_fs.h"
 
 #define WN_SUCCESS       			0x0000
 #define WN_NOT_SUPPORTED 			0x0001
@@ -154,9 +158,29 @@ int WNetUnlockQueueData(LPSTR szQueue)
 int WNetGetConnection(LPSTR lpLocalName, 
 	LPSTR lpRemoteName, UINT FAR *cbRemoteName)
 {
-	printf("EMPTY STUB !!! WNetGetConnection('%s', %p, %p);\n", 
-		lpLocalName, lpRemoteName, cbRemoteName);
-	return	WN_NET_ERROR;
+    int drive, rc;
+
+    if(lpLocalName[1] == ':')
+    {
+        drive = toupper(lpLocalName[0]) - 'A';
+        if(!DOS_ValidDrive(drive))
+            rc = WN_NOT_CONNECTED;
+        else
+        {
+            if(strlen(DOS_GetRedirectedDir(drive)) + 1 > *cbRemoteName)
+                rc = WN_MORE_DATA;
+            else
+            {
+                strcpy(lpRemoteName, DOS_GetRedirectedDir(drive));
+                *cbRemoteName = strlen(lpRemoteName) + 1;
+                rc = WN_SUCCESS;
+            }
+        }
+    }
+    else
+        rc = WN_BAD_LOCALNAME;
+
+    return rc;
 }
 
 /**************************************************************************

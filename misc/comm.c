@@ -29,7 +29,7 @@ int commerror = 0, eventmask = 0;
 struct DosDeviceStruct COM[MAX_PORTS];
 struct DosDeviceStruct LPT[MAX_PORTS];
 
-void Comm_Init(void)
+void COMM_Init(void)
 {
 	int x;
 	char option[10], temp[256], *btemp;
@@ -90,24 +90,6 @@ void Comm_Init(void)
 	}
 }
 
-void Comm_DeInit(void)
-{
-	int x;
-
-	for (x=0; x!=MAX_PORTS; x++) {
-
-		if (COM[x].devicename) {
-			if (COM[x].fd)
-	    			close(COM[x].fd);
-	        	free(COM[x].devicename);
-	    	}
-		if (LPT[x].devicename) {
-			if (LPT[x].fd)
-		    		close(LPT[x].fd);
-			free(LPT[x].devicename);
-		}
-	}
-}
 
 struct DosDeviceStruct *GetDeviceStruct(int fd)
 {

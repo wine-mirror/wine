@@ -1,13 +1,10 @@
-# $Id: user.spec,v 1.3 1993/07/04 04:04:21 root Exp root $
-#
 name	user
 id	2
-length	540
 
 1   pascal MessageBox(word ptr ptr word) MessageBox
-#2 OLDEXITWINDOWS
-#3 ENABLEOEMLAYER
-#4 DISABLEOEMLAYER
+2   stub OldExitWindows
+3   stub EnableOEMLayer
+4   stub DisableOEMLayer
 5   pascal InitApp(word) USER_InitApp
 6   pascal PostQuitMessage(word) PostQuitMessage
 7   pascal ExitWindows(long word) ExitWindows
@@ -25,10 +22,10 @@ length	540
 21  pascal GetDoubleClickTime() GetDoubleClickTime
 22  pascal SetFocus(word) SetFocus
 23  pascal GetFocus() GetFocus
-24  pascal RemoveProp(word ptr) RemoveProp
-25  pascal GetProp(word ptr) GetProp
-26  pascal SetProp(word ptr word) SetProp
-27  pascal EnumProps(word ptr) EnumProps
+24  pascal16 RemoveProp(word segptr) RemoveProp
+25  pascal16 GetProp(word segptr) GetProp
+26  pascal16 SetProp(word segptr word) SetProp
+27  pascal16 EnumProps(word segptr) EnumProps
 28  pascal ClientToScreen(word ptr) ClientToScreen
 29  pascal ScreenToClient(word ptr) ScreenToClient
 30  pascal WindowFromPoint(long) WindowFromPoint
@@ -56,8 +53,8 @@ length	540
 #51 BEAR51
 52  pascal AnyPopup() AnyPopup
 53  pascal DestroyWindow(word) DestroyWindow
-54  pascal EnumWindows(ptr long) EnumWindows
-55  pascal EnumChildWindows(word ptr long) EnumChildWindows
+54  pascal EnumWindows(segptr long) EnumWindows
+55  pascal EnumChildWindows(word segptr long) EnumChildWindows
 56  pascal MoveWindow(word word word word word word) MoveWindow
 57  pascal RegisterClass(ptr) RegisterClass
 58  pascal GetClassName(word ptr word) GetClassName
@@ -116,8 +113,8 @@ length	540
 112 pascal WaitMessage() WaitMessage
 113 pascal TranslateMessage(ptr) TranslateMessage
 114 pascal DispatchMessage(ptr) DispatchMessage
-#115 REPLYMESSAGE
-#116 POSTAPPMESSAGE
+115 stub ReplyMessage
+116 stub PostAppMessage
 118 pascal RegisterWindowMessage(ptr) RegisterWindowMessage
 119 pascal GetMessagePos() GetMessagePos
 120 pascal GetMessageTime() GetMessageTime
@@ -172,7 +169,7 @@ length	540
 169 pascal GetCaretBlinkTime() GetCaretBlinkTime
 170 pascal ArrangeIconicWindows(word) ArrangeIconicWindows
 171 pascal WinHelp(word ptr word long) WinHelp
-#172 SWITCHTOTHISWINDOW
+172 stub SwitchToThisWindow
 173 pascal16 LoadCursor(word segptr) LoadCursor
 174 pascal16 LoadIcon(word segptr) LoadIcon
 175 pascal16 LoadBitmap(word segptr) LoadBitmap
@@ -184,7 +181,7 @@ length	540
 181 pascal SetSysColors(word ptr ptr) SetSysColors
 182 pascal KillSystemTimer(word word) KillSystemTimer
 183 pascal GetCaretPos(ptr) GetCaretPos
-#184 QUERYSENDMESSAGE
+184 stub QuerySendMessage
 185 pascal GrayString(word word ptr ptr word word word word word) GrayString
 186 pascal SwapMouseButton(word) SwapMouseButton
 187 pascal EndMenu() EndMenu
@@ -224,15 +221,15 @@ length	540
 220 pascal LoadMenuIndirect(ptr) LoadMenuIndirect
 221 pascal ScrollDC(word s_word s_word ptr ptr word ptr) ScrollDC
 222 pascal16 GetKeyboardState(ptr) GetKeyboardState
-#223 SETKEYBOARDSTATE
+223 stub SetKeyboardState
 224 pascal16 GetWindowTask(word) GetWindowTask
 225 pascal EnumTaskWindows(word segptr long) EnumTaskWindows
-#226 LOCKINPUT
+226 stub LockInput
 227 pascal GetNextDlgGroupItem(word word word) GetNextDlgGroupItem
 228 pascal GetNextDlgTabItem(word word word) GetNextDlgTabItem
 229 pascal GetTopWindow(word) GetTopWindow
 230 pascal GetNextWindow(word word) GetNextWindow
-#231 GETSYSTEMDEBUGSTATE
+231 stub GetSystemDebugState
 232 pascal SetWindowPos(word word word word word word word) SetWindowPos
 233 pascal SetParent(word word) SetParent
 234 pascal UnhookWindowsHook(s_word segptr) UnhookWindowsHook
@@ -248,8 +245,8 @@ length	540
              CreateDialogIndirectParam
 243 pascal GetDialogBaseUnits() GetDialogBaseUnits
 244 pascal EqualRect(ptr ptr) EqualRect
-#245 ENABLECOMMNOTIFICATION
-#246 EXITWINDOWSEXEC
+245 stub EnableCommNotification
+246 stub ExitWindowsExec
 247 pascal GetCursor() GetCursor
 248 pascal GetOpenClipboardWindow() GetOpenClipboardWindow
 249 pascal GetAsyncKeyState(word) GetAsyncKeyState
@@ -269,7 +266,7 @@ length	540
 262 pascal GetWindow(word word) GetWindow
 263 pascal GetMenuItemCount(word) GetMenuItemCount
 264 pascal GetMenuItemID(word word) GetMenuItemID
-#265 SHOWOWNEDPOPUPS
+265 stub ShowOwnedPopups
 266 pascal SetMessageQueue(word) SetMessageQueue
 267 pascal ShowScrollBar(word word word) ShowScrollBar
 268 pascal GlobalAddAtom(ptr) GlobalAddAtom
@@ -277,14 +274,14 @@ length	540
 270 pascal GlobalFindAtom(ptr) GlobalFindAtom
 271 pascal GlobalGetAtomName(word ptr s_word) GlobalGetAtomName
 272 pascal IsZoomed(word) IsZoomed
-#273 CONTROLPANELINFO
-#274 GETNEXTQUEUEWINDOW
-#275 REPAINTSCREEN
-#276 LOCKMYTASK
+273 stub ControlPanelInfo
+274 stub GetNextQueueWindow
+275 stub RepaintScreen
+276 stub LockMyTask
 277 pascal GetDlgCtrlID(word) GetDlgCtrlID
 278 pascal GetDeskTopHwnd() GetDesktopWindow
-#279 OLDSETDESKPATTERN
-#280 SETSYSTEMMENU
+279 stub OldSetDeskPattern
+280 stub SetSystemMenu
 281 pascal GetSysColorBrush(word) GetSysColorBrush
 282 pascal SelectPalette(word word word) SelectPalette
 283 pascal RealizePalette(word) RealizePalette
@@ -298,49 +295,49 @@ length	540
 291 pascal SetWindowsHookEx(s_word segptr word word) SetWindowsHookEx
 292 pascal UnhookWindowsHookEx(segptr) UnhookWindowsHookEx
 293 pascal CallNextHookEx(segptr s_word word long) CallNextHookEx
-#294 LOCKWINDOWUPDATE
+294 stub LockWindowUpdate
 #299 MOUSE_EVENT
 #301 BOZOSLIVEHERE :-))
 #306 BEAR306
 308 pascal DefDlgProc(word word word long) DefDlgProc
-#314 SIGNALPROC
+314 stub SignalProc
 319 pascal ScrollWindowEx(word s_word s_word ptr ptr word ptr word)
            ScrollWindowEx
-#320 SYSERRORBOX
-#321 SETEVENTHOOK
-#322 WINOLDAPPHACKOMATIC
-#323 GETMESSAGE2
+320 stub SysErrorBox
+321 stub SetEventHook
+322 stub WinOldAppHackOMatic
+323 stub GetMessage2
 324 pascal FillWindow(word word word word) FillWindow
 325 pascal PaintRect(word word word word ptr) PaintRect
 326 pascal16 GetControlBrush(word word word) GetControlBrush
 331 pascal EnableHardwareInput(word) EnableHardwareInput
 332 return UserYield 0 0
-#333 ISUSERIDLE
+333 stub IsUserIdle
 334 pascal GetQueueStatus(word) GetQueueStatus
 335 pascal GetInputState() GetInputState
-#336 LOADCURSORICONHANDLER
-#337 GETMOUSEEVENTPROC
+336 stub LoadCursorIconHandler
+337 stub GetMouseEventProc
 #341 _FFFE_FARFRAME
-#343 GETFILEPORTNAME
-#356 LOADDIBCURSORHANDLER
-#357 LOADDIBICONHANDLER
+343 stub GetFilePortName
+356 stub LoadDIBCursorHandler
+357 stub LoadDIBIconHandler
 358 pascal IsMenu(word) IsMenu
 359 pascal GetDCEx(word word long) GetDCEx
-#362 DCHOOK
-#368 COPYICON
-#369 COPYCURSOR
+362 stub DCHook
+368 stub CopyIcon
+369 stub CopyCursor
 370 pascal GetWindowPlacement(word ptr) GetWindowPlacement
 371 pascal SetWindowPlacement(word ptr) SetWindowPlacement
-#372 GETINTERNALICONHEADER
+372 stub GetInternalIconHeader
 373 pascal SubtractRect(ptr ptr ptr) SubtractRect
-#400 FINALUSERINIT
+400 stub FinalUserInit
 402 pascal GetPriorityClipboardFormat(word ptr s_word)
            GetPriorityClipboardFormat
 403 pascal UnregisterClass(ptr word) UnregisterClass
-404 pascal GetClassInfo(word ptr ptr) GetClassInfo
+404 pascal GetClassInfo(word segptr ptr) GetClassInfo
 406 pascal CreateCursor(word word word word word ptr ptr) CreateCursor
 407 pascal CreateIcon(word word word byte byte ptr ptr) CreateIcon
-#408 CREATECURSORICONINDIRECT
+408 stub CreateCursorIconIndirect
 410 pascal InsertMenu(word word word word ptr) InsertMenu
 411 pascal AppendMenu(word word word ptr) AppendMenu
 412 pascal RemoveMenu(word word word) RemoveMenu
@@ -354,8 +351,8 @@ length	540
 # windows_wsprintf() handles arguments itself, as libc can't handle an
 # 16-bit stack. DLLRelay() will pass 16-bit stack pointer as 1st arg.
 421 pascal wvsprintf(ptr ptr ptr) wvsprintf
-#422 DLGDIRSELECTEX
-#423 DLGDIRSELECTCOMBOBOXEX
+422 stub DlgDirSelectEx
+423 stub DlgDirSelectComboBoxEx
 430 pascal16 lstrcmp(ptr ptr) lstrcmp
 431 pascal AnsiUpper(segptr) WIN16_AnsiUpper
 432 pascal AnsiLower(segptr) WIN16_AnsiLower
@@ -371,23 +368,23 @@ length	540
 452 pascal CreateWindowEx(long ptr ptr long s_word s_word s_word s_word
                           word word word segptr) CreateWindowEx
 454 pascal AdjustWindowRectEx(ptr long word long) AdjustWindowRectEx
-#455 GETICONID
-#456 LOADICONHANDLER
+455 stub GetIconId
+456 stub LoadIconHandler
 457 pascal DestroyIcon(word) DestroyIcon
 458 pascal DestroyCursor(word) DestroyCursor
-#459 DUMPICON
+459 stub DumpIcon
 460 pascal GetInternalWindowPos(word ptr ptr) GetInternalWindowPos
 461 pascal SetInternalWindowPos(word word ptr ptr) SetInternalWindowPos
-#462 CALCCHILDSCROLL
-#463 SCROLLCHILDREN
-#464 DRAGOBJECT
-#465 DRAGDETECT
+462 stub CalcChildScroll
+463 stub ScrollChildren
+464 stub DragObject
+465 stub DragDetect
 466 pascal DrawFocusRect(word ptr) DrawFocusRect
-#470 STRINGFUNC
+470 stub StringFunc
 471 pascal16 lstrcmpi(ptr ptr) lstrcmpi
 472 pascal AnsiNext(segptr) AnsiNext
 473 pascal AnsiPrev(segptr segptr) AnsiPrev
-#480 GETUSERLOCALOBJTYPE
+480 stub GetUserLocalObjType
 #481 HARDWARE_EVENT
 482 pascal16 EnableScrollBar(word word word) EnableScrollBar
 483 pascal SystemParametersInfo(word word ptr word) SystemParametersInfo
@@ -413,8 +410,8 @@ length	540
 518 pascal16 WNetCancelConnection(ptr word) WNetCancelConnection
 519 pascal WNetGetError(ptr) WNetGetError
 520 pascal WNetGetErrorText(word ptr ptr) WNetGetErrorText
-#521 WNETENABLE
-#522 WNETDISABLE
+521 stub WNetEnable
+522 stub WNetDisable
 523 pascal WNetRestoreConnection(word ptr) WNetRestoreConnection
 524 pascal WNetWriteJob(word ptr ptr) WNetWriteJob
 525 pascal WnetConnectDialog(word word) WNetConnectDialog

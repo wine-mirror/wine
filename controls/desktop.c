@@ -16,6 +16,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "dos_fs.h"
 #include "graphics.h"
 
+
 /***********************************************************************
  *           DESKTOP_LoadBitmap
  *
@@ -109,6 +110,31 @@ static LONG DESKTOP_DoEraseBkgnd( HWND hwnd, HDC hdc, DESKTOPINFO *infoPtr )
     }
 
     return 1;
+}
+
+
+/***********************************************************************
+ *           DESKTOP_Init
+ *
+ * Initialize the desktop window private information.
+ */
+BOOL DESKTOP_Init()
+{
+    HWND hwnd = GetDesktopWindow();
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    DESKTOPINFO *infoPtr = (DESKTOPINFO *)wndPtr->wExtra;
+
+    infoPtr->hbrushPattern = 0;
+    infoPtr->hbitmapWallPaper = 0;
+    SetDeskPattern();
+    SetDeskWallPaper( (LPSTR)-1 );
+    if (rootWindow != DefaultRootWindow(display))
+    {
+        HDC hdc = GetDC( hwnd );
+        DESKTOP_DoEraseBkgnd( hwnd, hdc, infoPtr );
+        ReleaseDC( hwnd, hdc );
+    }
+    return TRUE;
 }
 
 

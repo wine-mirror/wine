@@ -1,7 +1,9 @@
 /*
-static char RCSId[] = "$Id: ne_resource.c,v 1.4 1993/07/04 04:04:21 root Exp root $";
-static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
-*/
+ *
+ * Copyright 1993 Robert J. Amstadt
+ * Copyright 1995 Alexandre Julliard
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,375 +12,341 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <fcntl.h>
 #include <unistd.h>
 #include "windows.h"
-#include "ldt.h"
-#include "neexe.h"
-#include "peexe.h"
 #include "arch.h"
-#include "dlls.h"
-#include "library.h"
+#include "dos_fs.h"
+#include "global.h"
+#include "ldt.h"
+#include "module.h"
+#include "neexe.h"
 #include "resource.h"
 #include "stddebug.h"
 #include "debug.h"
-
-/**********************************************************************
- *			NE_LoadNameTable
+
+typedef struct resource_typeinfo_s NE_TYPEINFO;
+typedef struct resource_nameinfo_s NE_NAMEINFO;
+
+
+/***********************************************************************
+ *           NE_FindNameTableId
+ *
+ * Find the type and resource id from their names.
+ * Return value is MAKELONG( typeId, resId ), or 0 if not found.
  */
-static void NE_LoadNameTable(struct w_files *wpnt)
+static DWORD NE_FindNameTableId( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
 {
-    struct resource_typeinfo_s typeinfo;
-    struct resource_nameinfo_s nameinfo;
-    unsigned short             size_shift;
-    RESNAMTAB                 *top, *new;
-    char                       read_buf[1024];
-    char                      *p;
-    int                        i;
-    unsigned short             len;
-    off_t		       saved_pos;
-    
-    top = NULL;
-    /*
-     * Move to beginning of resource table.
-     */
-    lseek(wpnt->fd, wpnt->mz_header->ne_offset + 
-	    	wpnt->ne->ne_header->resource_tab_offset, SEEK_SET);
+    NE_MODULE *pModule;
+    NE_TYPEINFO *pTypeInfo;
+    NE_NAMEINFO *pNameInfo;
+    HGLOBAL handle;
+    WORD *p;
+    DWORD ret = 0;
+    int count;
 
-    /*
-     * Read block size.
-     */
-    if (read(wpnt->fd, &size_shift, sizeof(size_shift)) != sizeof(size_shift))
-	return;
-
-    size_shift = CONV_SHORT(size_shift);
-
-    /*
-     * Find resource.
-     */
-    typeinfo.type_id = 0xffff;
-    while (typeinfo.type_id != 0) 
+    pModule = (NE_MODULE *)GlobalLock( hModule );
+    pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
+    for (; pTypeInfo->type_id != 0;
+             pTypeInfo = (NE_TYPEINFO *)((char*)(pTypeInfo+1) +
+                                       pTypeInfo->count * sizeof(NE_NAMEINFO)))
     {
-	if (read(wpnt->fd, &typeinfo, sizeof(typeinfo)) != sizeof(typeinfo))
-	    break;
+        if (pTypeInfo->type_id != 0x800f) continue;
+        pNameInfo = (NE_NAMEINFO *)(pTypeInfo + 1);
+        for (count = pTypeInfo->count; count > 0; count--, pNameInfo++)
+        {
+            dprintf_resource( stddeb, "NameTable entry: type=%04x id=%04x\n",
+                              pTypeInfo->type_id, pNameInfo->id );
+            handle = LoadResource( hModule, (int)pNameInfo - (int)pModule );
+            for(p = (WORD*)LockResource(handle); *p; p = (WORD *)((char*)p+*p))
+            {
+                dprintf_resource( stddeb,"  type=%04x '%s' id=%04x '%s'\n",
+                                  p[1], (char *)(p+3), p[2],
+                                  (char *)(p+3)+strlen((char *)(p+3))+1 );
+                /* Check for correct type */
 
-	if (typeinfo.type_id == 0) 
-	    break;
+                if (p[1] & 0x8000)
+                {
+                    if (!HIWORD(typeId)) continue;
+                    if (strcasecmp( (char *)PTR_SEG_TO_LIN(typeId),
+                                   (char *)(p + 3) )) continue;
+                }
+                else if (HIWORD(typeId) || ((typeId & ~0x8000)!= p[1]))
+                  continue;
 
-	if (typeinfo.type_id == 0x800f) 
-	{
-	    for (i = 0; i < typeinfo.count; i++) 
-	    {
-		if (read(wpnt->fd, &nameinfo, sizeof(nameinfo)) != sizeof(nameinfo))
-		    break;
-		
-		saved_pos = lseek(wpnt->fd, 0, SEEK_CUR);
-		lseek(wpnt->fd, (long) nameinfo.offset << size_shift, 
-		      SEEK_SET);
-		read(wpnt->fd, &len, sizeof(len));
-		while (len)
-		{
-		    new = (RESNAMTAB *) GlobalLock(GlobalAlloc(GMEM_MOVEABLE,sizeof(*new)));
-		    new->next = top;
-		    top = new;
+                /* Now check for the id */
 
-		    read(wpnt->fd, &new->type_ord, 2);
-		    read(wpnt->fd, &new->id_ord, 2);
-		    read(wpnt->fd, read_buf, len - 6);
-		    
-		    p = read_buf + strlen(read_buf) + 1;
-		    strncpy(new->id, p, MAX_NAME_LENGTH);
-		    new->id[MAX_NAME_LENGTH - 1] = '\0';
+                if (p[2] & 0x8000)
+                {
+                    if (!HIWORD(resId)) continue;
+                    if (strcasecmp( (char *)PTR_SEG_TO_LIN(resId),
+                               (char*)(p+3)+strlen((char*)(p+3))+1 )) continue;
+                    
+                }
+                else if (HIWORD(resId) || ((resId & ~0x8000) != p[2]))
+                  continue;
 
-		    read(wpnt->fd, &len, sizeof(len));
-		}
-		lseek(wpnt->fd, saved_pos, SEEK_SET);
-	    }
-	} else 
-		lseek(wpnt->fd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
-    }
-    wpnt->ne->resnamtab = top;
-}
+                /* If we get here, we've found the entry */
 
-static int type_match(int type_id1, int type_id2, int fd, off_t off)
-{
-	off_t old_pos;
-	unsigned char c;
-	size_t nbytes;
-	char name[256];
-
-	if (type_id1 == -1)
-		return 1;
-	if ((type_id1 & 0xffff0000) == 0) {
-		if ((type_id2 & 0x8000) == 0)
-			return 0;
-		return (type_id1 & 0x000f) == (type_id2 & 0x000f);
-	}
-	if ((type_id2 & 0x8000) != 0)
-		return 0;
-	dprintf_resource(stddeb, "type_compare: type_id2=%04X !\n", type_id2);
-
-	old_pos = lseek(fd, 0, SEEK_CUR);
-	lseek(fd, off + type_id2, SEEK_SET);
-	read(fd, &c, 1);
-	nbytes = CONV_CHAR_TO_LONG(c);
-
-	dprintf_resource(stddeb, "type_compare: namesize=%d\n", nbytes);
-	read(fd, name, nbytes);
-	lseek(fd, old_pos, SEEK_SET);
-	name[nbytes] = '\0';
-	dprintf_resource(stddeb, "type_compare: name=`%s'\n", name);
-	return strcasecmp((char *) type_id1, name) == 0;
-}
-
-/**********************************************************************
- *					FindResourceByNumber
- */
-static int FindResourceByNumber(RESOURCE *r, int type_id, int resource_id)
-{
-    struct resource_typeinfo_s typeinfo;
-    struct resource_nameinfo_s nameinfo;
-    unsigned short size_shift;
-    int i;
-    off_t rtoff;
-
-    dprintf_resource(stddeb, "FindResourceByNumber: type_id =%x,m res_id = %x\n",
-		type_id, resource_id);
-
-    /* Move to beginning of resource table */
-    rtoff = (r->wpnt->mz_header->ne_offset +
-	     r->wpnt->ne->ne_header->resource_tab_offset);
-    lseek(r->wpnt->fd, rtoff, SEEK_SET);
-
-    /* Read block size */
-    if (read(r->wpnt->fd, &size_shift, sizeof(size_shift)) != sizeof(size_shift)) {
-    	printf("FindResourceByNumber (%d) bad block size !\n",(int) resource_id);
-	return -1;
-    }
-    size_shift = CONV_SHORT(size_shift);
-
-    /* Find resource */
-    for (;;) {
-	if (read(r->wpnt->fd, &typeinfo, sizeof(typeinfo)) != sizeof(typeinfo)) {
-	    printf("FindResourceByNumber (%X) bad typeinfo size !\n", resource_id);
-	    return -1;
-	}
-	dprintf_resource(stddeb, "FindResourceByNumber type=%X count=%d ?=%ld searched=%08X\n", 
-		typeinfo.type_id, typeinfo.count, typeinfo.reserved, type_id);
-	if (typeinfo.type_id == 0)
-		break;
-	if (type_match(type_id, typeinfo.type_id, r->wpnt->fd, rtoff)) {
-
-	    for (i = 0; i < typeinfo.count; i++) {
-#ifndef WINELIB
-		if (read(r->wpnt->fd, &nameinfo, sizeof(nameinfo)) != sizeof(nameinfo))
-#else
-		if (!load_nameinfo(r->wpnt->fd, &nameinfo))
-#endif
-		{
-		    printf("FindResourceByNumber (%X) bad nameinfo size !\n", resource_id);
-		    return -1;
-		}
-		dprintf_resource(stddeb, "FindResource: search type=%X id=%X // type=%X id=%X\n",
-			type_id, resource_id, typeinfo.type_id, nameinfo.id);
-		if (nameinfo.id == resource_id) {
-			r->size = nameinfo.length << size_shift;
-			r->offset = nameinfo.offset << size_shift;
-			return size_shift;
-		    }
-	        }
-	    }
-	else
-	    lseek(r->wpnt->fd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
+                dprintf_resource( stddeb, "  Found!\n" );
+                ret = MAKELONG( p[1], p[2] );
+                break;
+            }
+            FreeResource( handle );
+            if (ret) return ret;
         }
-    return -1;
-}
-
-/**********************************************************************
- *					FindResourceByName
- */
-static int FindResourceByName(RESOURCE *r, int type_id, char *resource_name)
-{
-    struct resource_typeinfo_s typeinfo;
-    struct resource_nameinfo_s nameinfo;
-    unsigned short size_shift;
-    off_t old_pos, new_pos;
-    unsigned char nbytes;
-    char name[256];
-    int i;
-    off_t rtoff;
-
-    /* Check for loaded name table */
-    if (r->wpnt->ne->resnamtab != NULL) {
-	RESNAMTAB *e;
-
-	for (e = r->wpnt->ne->resnamtab; e != NULL; e = e->next)
-	    if (e->type_ord == (type_id & 0x000f) && 
-	    	strcasecmp(e->id, resource_name) == 0)
-	    {
-		return FindResourceByNumber(r, type_id, e->id_ord);
-	    }
-	    return -1;
-    }
-
-    /* Move to beginning of resource table */
-    rtoff = (r->wpnt->mz_header->ne_offset +
-	     r->wpnt->ne->ne_header->resource_tab_offset);
-    lseek(r->wpnt->fd, rtoff, SEEK_SET);
-
-    /* Read block size */
-    if (read(r->wpnt->fd, &size_shift, sizeof(size_shift)) != sizeof(size_shift))
-    {
-    	printf("FindResourceByName (%s) bad block size !\n", resource_name);
-	return -1;
-    }
-    size_shift = CONV_SHORT (size_shift);
-    
-    /* Find resource */
-    for (;;)
-    {
-	if (read(r->wpnt->fd, &typeinfo, sizeof(typeinfo)) != sizeof(typeinfo)) {
-	    printf("FindResourceByName (%s) bad typeinfo size !\n", resource_name);
-	    return -1;
-	}
-	dprintf_resource(stddeb, "FindResourceByName typeinfo.type_id=%X count=%d type_id=%X\n",
-			typeinfo.type_id, typeinfo.count, type_id);
-	if (typeinfo.type_id == 0)
-		break;
-	if (type_match(type_id, typeinfo.type_id, r->wpnt->fd, rtoff))
-	{
-	    for (i = 0; i < typeinfo.count; i++)
-	    {
-#ifndef WINELIB
-		if (read(r->wpnt->fd, &nameinfo, sizeof(nameinfo)) != sizeof(nameinfo))
-#else
-		if (!load_nameinfo (r->wpnt->fd, &nameinfo))
-#endif
-		{
-		    printf("FindResourceByName (%s) bad nameinfo size !\n", resource_name);
-		    return -1;
-		}
-/*
-		if ((nameinfo.id & 0x8000) != 0) continue;
-*/		
-		dprintf_resource(stddeb, "FindResourceByName // nameinfo.id=%04X !\n", nameinfo.id);
-		old_pos = lseek(r->wpnt->fd, 0, SEEK_CUR);
-		new_pos = rtoff + nameinfo.id;
-		lseek(r->wpnt->fd, new_pos, SEEK_SET);
-		read(r->wpnt->fd, &nbytes, 1);
-		dprintf_resource(stddeb, "FindResourceByName // namesize=%d !\n", nbytes);
- 		nbytes = CONV_CHAR_TO_LONG (nbytes);
-		read(r->wpnt->fd, name, nbytes);
-		lseek(r->wpnt->fd, old_pos, SEEK_SET);
-		name[nbytes] = '\0';
-		dprintf_resource(stddeb, "FindResourceByName type_id=%X (%d of %d) name='%s' resource_name='%s'\n", 
-			typeinfo.type_id, i + 1, typeinfo.count, 
-			name, resource_name);
-		if (strcasecmp(name, resource_name) == 0) {
-			r->size = nameinfo.length << size_shift;
-			r->offset = nameinfo.offset << size_shift;
-			return size_shift;
-		}
-	    }
-	}
-	else
-	    lseek(r->wpnt->fd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
-    }
-    return -1;
-}
-
-
-/**********************************************************************
- *					GetRsrcCount		[internal]
- */
-int GetRsrcCount(HINSTANCE hInst, int type_id)
-{
-    struct w_files *wpnt;
-    struct resource_typeinfo_s typeinfo;
-    struct resource_nameinfo_s nameinfo;
-    unsigned short size_shift;
-    off_t rtoff;
-
-    if (hInst == 0)
-    	return 0;
-    dprintf_resource(stddeb, "GetRsrcCount hInst=%04X typename=%08X\n", 
-	hInst, type_id);
-
-    if ((wpnt = GetFileInfo(hInst)) == NULL)
-    	return 0;
-    /*
-     * Move to beginning of resource table.
-     */
-    rtoff = (wpnt->mz_header->ne_offset +
-    		wpnt->ne->ne_header->resource_tab_offset);
-    lseek(wpnt->fd, rtoff, SEEK_SET);
-    /*
-     * Read block size.
-     */
-    if (read(wpnt->fd, &size_shift, sizeof(size_shift)) != sizeof(size_shift)) {
-		printf("GetRsrcCount // bad block size !\n");
-		return -1;
-    }
-    size_shift = CONV_SHORT (size_shift);
-    for (;;) {
-	if (read(wpnt->fd, &typeinfo, sizeof(typeinfo)) != sizeof(typeinfo)) {
-		printf("GetRsrcCount // bad typeinfo size !\n");
-		return 0;
-	}
-	dprintf_resource(stddeb, "GetRsrcCount // typeinfo.type_id=%X count=%d type_id=%X\n",
-				typeinfo.type_id, typeinfo.count, type_id);
-	if (typeinfo.type_id == 0)
-		break;
-	if (type_match(type_id, typeinfo.type_id, wpnt->fd, rtoff))
-		return typeinfo.count;
-	else
-		lseek(wpnt->fd, (typeinfo.count * sizeof(nameinfo)), SEEK_CUR);
     }
     return 0;
 }
 
-/**********************************************************************
- *			NE_FindResource	[KERNEL.60]
+
+/***********************************************************************
+ *           NE_FindResourceFromType
+ *
+ * Find a resource once the type info structure has been found.
  */
-int NE_FindResource(HANDLE instance, SEGPTR resource_name, SEGPTR type_name,
-                    RESOURCE *r)
+static HRSRC NE_FindResourceFromType( NE_MODULE *pModule,
+                                      NE_TYPEINFO *pTypeInfo, SEGPTR resId )
 {
-    int type, x;
-    char *type_name_ptr, *resource_name_ptr;
+    BYTE *p;
+    int count;
+    NE_NAMEINFO *pNameInfo = (NE_NAMEINFO *)(pTypeInfo + 1);
 
-    dprintf_resource(stddeb, "NE_FindResource hInst=%04X typename=%08lx resname=%08lx\n", 
-			instance, type_name, resource_name);
+    if (HIWORD(resId) != 0)  /* Named resource */
+    {
+        char *str = (char *)PTR_SEG_TO_LIN( resId );
+        BYTE len = strlen( str );
+        for (count = pTypeInfo->count; count > 0; count--, pNameInfo++)
+        {
+            if (pNameInfo->id & 0x8000) continue;
+            p = (BYTE *)pModule + pModule->res_table + pNameInfo->id;
+            if ((*p == len) && !strncasecmp( p+1, str, len ))
+                return (int)pNameInfo - (int)pModule;
+        }
+    }
+    else  /* Numeric resource id */
+    {
+        WORD id = LOWORD(resId) | 0x8000;
+        for (count = pTypeInfo->count; count > 0; count--, pNameInfo++)
+            if (pNameInfo->id == id) return (int)pNameInfo - (int)pModule;
+    }
+    return 0;
+}
 
-    r->size = r->offset = 0;
 
-    /* nametable loaded ? */
-    if (r->wpnt->ne->resnamtab == NULL)
-	NE_LoadNameTable(r->wpnt);
+/***********************************************************************
+ *           NE_FindResource
+ */
+HRSRC NE_FindResource( HMODULE hModule, SEGPTR typeId, SEGPTR resId )
+{
+    NE_MODULE *pModule;
+    NE_TYPEINFO *pTypeInfo;
+    HRSRC hRsrc;
 
-    if (HIWORD(type_name) == 0)
-	type = (int) type_name;
-    else {
-        type_name_ptr = PTR_SEG_TO_LIN( type_name );
-    	if (type_name_ptr[0] == '\0')
-		type = -1;
-    	if (type_name_ptr[0] == '#')
-		type = atoi(type_name_ptr + 1);
-	    else
-    		type = (int) type_name_ptr;
+    pModule = (NE_MODULE *)GlobalLock( hModule );
+    if (!pModule || !pModule->res_table) return 0;
+    pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
+
+    if (HIWORD(typeId) || HIWORD(resId))
+    {
+        /* Search the names in the nametable */
+        DWORD id = NE_FindNameTableId( hModule, typeId, resId );
+        if (id)  /* found */
+        {
+            typeId = LOWORD(id);
+            resId  = HIWORD(id);
+        }
     }
 
-    if (HIWORD(resource_name) == 0)
-	x = FindResourceByNumber(r, type, LOWORD(resource_name) | 0x8000);
-    else {
-        resource_name_ptr = PTR_SEG_TO_LIN( resource_name );
-	if (resource_name_ptr[0] == '\0')
-		x = FindResourceByNumber(r, type, -1);
-	if (resource_name_ptr[0] == '#')
-		x = FindResourceByNumber(r, type, atoi(resource_name_ptr + 1));
-	else
-		x = FindResourceByName(r, type, resource_name_ptr);
+    if (HIWORD(typeId) != 0)  /* Named type */
+    {
+        char *str = (char *)PTR_SEG_TO_LIN( typeId );
+        BYTE len = strlen( str );
+        while (pTypeInfo->type_id)
+        {
+            if (!(pTypeInfo->type_id & 0x8000))
+            {
+                BYTE *p = (BYTE*)pModule+pModule->res_table+pTypeInfo->type_id;
+                if ((*p == len) && !strncasecmp( p+1, str, len ))
+                {
+                    dprintf_resource( stddeb, "  Found type '%s'\n", str );
+                    hRsrc = NE_FindResourceFromType(pModule, pTypeInfo, resId);
+                    if (hRsrc)
+                    {
+                        dprintf_resource( stddeb, "    Found id %08lx\n", resId );
+                        return hRsrc;
+                    }
+                    dprintf_resource( stddeb, "    Not found, going on\n" );
+                }
+            }
+            dprintf_resource( stddeb, "  Skipping type %04x\n",
+                              pTypeInfo->type_id );
+            pTypeInfo = (NE_TYPEINFO *)((char*)(pTypeInfo+1) +
+                                       pTypeInfo->count * sizeof(NE_NAMEINFO));
+        }
     }
-    if (x == -1) {
-        printf("NE_FindResource hInst=%04x typename=%p resname=%p not found!\n", 
-		instance, type_name_ptr, resource_name_ptr);
-	return 0;
+    else  /* Numeric type id */
+    {
+        WORD id = LOWORD(typeId) | 0x8000;
+        while (pTypeInfo->type_id)
+        {
+            if (pTypeInfo->type_id == id)
+            {
+                dprintf_resource( stddeb, "  Found type %04x\n", id );
+                hRsrc = NE_FindResourceFromType( pModule, pTypeInfo, resId );
+                if (hRsrc)
+                {
+                    dprintf_resource( stddeb, "    Found id %08lx\n", resId );
+                    return hRsrc;
+                }
+                dprintf_resource( stddeb, "    Not found, going on\n" );
+            }
+            dprintf_resource( stddeb, "  Skipping type %04x\n",
+                              pTypeInfo->type_id );
+            pTypeInfo = (NE_TYPEINFO *)((char*)(pTypeInfo+1) +
+                                       pTypeInfo->count * sizeof(NE_NAMEINFO));
+        }
     }
-    return 1;
+    fprintf( stderr, "FindResource(%04x,%08lx,%08lx): Not found.\n",
+             hModule, typeId, resId );
+    return 0;
+}
+
+
+
+/***********************************************************************
+ *           NE_AllocResource
+ */
+HGLOBAL NE_AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
+{
+    NE_MODULE *pModule;
+    NE_NAMEINFO *pNameInfo;
+    WORD sizeShift;
+
+    pModule = (NE_MODULE *)GlobalLock( hModule );
+    if (!pModule || !pModule->res_table) return 0;
+    sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
+    pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
+    if (size < (DWORD)pNameInfo->length << sizeShift)
+        size = (DWORD)pNameInfo->length << sizeShift;
+    return GLOBAL_Alloc( GMEM_FIXED, size, hModule, FALSE, FALSE, FALSE );
+}
+
+
+/***********************************************************************
+ *           NE_AccessResource
+ */
+int NE_AccessResource( HMODULE hModule, HRSRC hRsrc )
+{
+    NE_MODULE *pModule;
+    NE_NAMEINFO *pNameInfo;
+    WORD sizeShift;
+    char *name;
+    int fd;
+
+    pModule = (NE_MODULE *)GlobalLock( hModule );
+    if (!pModule || !pModule->res_table) return 0;
+    pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
+
+    name = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
+    fd = open( name, O_RDONLY );
+    sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
+    lseek( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
+    return fd;
+}
+
+
+/***********************************************************************
+ *           NE_SizeofResource
+ */
+DWORD NE_SizeofResource( HMODULE hModule, HRSRC hRsrc )
+{
+    NE_MODULE *pModule;
+    NE_NAMEINFO *pNameInfo;
+    WORD sizeShift;
+
+    pModule = (NE_MODULE *)GlobalLock( hModule );
+    if (!pModule || !pModule->res_table) return 0;
+    sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
+    pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
+    return (DWORD)pNameInfo->length << sizeShift;
+}
+
+
+/***********************************************************************
+ *           NE_LoadResource
+ */
+HGLOBAL NE_LoadResource( HMODULE hModule,  HRSRC hRsrc )
+{
+    NE_MODULE *pModule;
+    NE_NAMEINFO *pNameInfo;
+    WORD sizeShift;
+    int fd;
+
+    pModule = (NE_MODULE *)GlobalLock( hModule );
+    if (!pModule || !pModule->res_table) return 0;
+    pNameInfo = (NE_NAMEINFO*)((char*)pModule + hRsrc);
+    if (pNameInfo->handle)
+    {
+        pNameInfo->usage++;
+        dprintf_resource( stddeb, "  Already loaded, new count=%d\n",
+                          pNameInfo->usage );
+        return pNameInfo->handle;
+    }
+    sizeShift = *(WORD *)((char *)pModule + pModule->res_table);
+    dprintf_resource( stddeb, "  Loading, pos=%d, len=%d\n",
+                      (int)pNameInfo->offset << sizeShift,
+                      (int)pNameInfo->length << sizeShift );
+    if ((fd = MODULE_OpenFile( hModule )) == -1) return 0;
+    pNameInfo->handle = NE_AllocResource( hModule, hRsrc, 0 );
+    pNameInfo->usage = 1;
+    lseek( fd, (int)pNameInfo->offset << sizeShift, SEEK_SET );
+    read( fd, GlobalLock( pNameInfo->handle ),
+          (int)pNameInfo->length << sizeShift );
+    return pNameInfo->handle;
+}
+
+
+/***********************************************************************
+ *           NE_LockResource
+ */
+SEGPTR NE_LockResource( HMODULE hModule, HGLOBAL handle )
+{
+    /* May need to reload the resource if discarded */
+
+    return WIN16_GlobalLock( handle );
+}
+
+
+/***********************************************************************
+ *           NE_FreeResource
+ */
+BOOL NE_FreeResource( HMODULE hModule, HGLOBAL handle )
+{
+    NE_MODULE *pModule;
+    NE_TYPEINFO *pTypeInfo;
+    NE_NAMEINFO *pNameInfo;
+    WORD count;
+
+    pModule = (NE_MODULE *)GlobalLock( hModule );
+    if (!pModule || !pModule->res_table) return FALSE;
+    pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
+    while (pTypeInfo->type_id)
+    {
+        pNameInfo = (NE_NAMEINFO *)(pTypeInfo + 1);
+        for (count = pTypeInfo->count; count > 0; count--)
+        {
+            if (pNameInfo->handle == handle)
+            {
+                if (pNameInfo->usage > 0) pNameInfo->usage--;
+                if (pNameInfo->usage == 0)
+                {
+                    GlobalFree( pNameInfo->handle );
+                    pNameInfo->handle = 0;
+                }
+                return TRUE;
+            }
+            pNameInfo++;
+        }
+        pTypeInfo = (NE_TYPEINFO *)pNameInfo;
+    }
+    fprintf( stderr, "FreeResource: %04x %04x not found!\n", hModule, handle );
+    return FALSE;
 }

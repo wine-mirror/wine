@@ -11,8 +11,8 @@
 #define CONV_CHAR_TO_LONG(x) ((unsigned long)(x) >> 24)
 #define CONV_SHORT_TO_LONG(x) ((unsigned long)(x) >> 16)
 
-#define CONV_BITMAPINFO ARCH_ConvBitmapInfo
-#define CONV_BITMAPCOREHEADER ARCH_ConvCoreHeader
+#define CONV_BITMAPINFO(a) ARCH_ConvBitmapInfo(a)
+#define CONV_BITMAPCOREHEADER(a) ARCH_ConvCoreHeader(a)
 #else
 #define CONV_LONG(a) (a)
 #define CONV_SHORT(a) (a)

@@ -23,7 +23,11 @@ typedef WORD *LPWORD;
 typedef DWORD *LPDWORD;
 typedef LONG *LPLONG;
 typedef void *LPVOID;
+#ifdef WINELIB
 typedef long (*FARPROC)();
+#else
+typedef SEGPTR FARPROC;
+#endif
 typedef FARPROC DLGPROC;
 typedef int CATCHBUF[9];
 typedef int *LPCATCHBUF;
@@ -50,6 +54,7 @@ DECLARE_HANDLE(HMODULE);
 DECLARE_HANDLE(HPALETTE);
 DECLARE_HANDLE(HPEN);
 DECLARE_HANDLE(HRGN);
+DECLARE_HANDLE(HRSRC);
 DECLARE_HANDLE(HTASK);
 DECLARE_HANDLE(HWND);
 DECLARE_HANDLE(LOCALHANDLE);
@@ -65,7 +70,7 @@ DECLARE_HANDLE(LOCALHANDLE);
 #define CALLBACK            PASCAL
 
 #ifndef NULL
-#define NULL (void *)0
+#define NULL (0)
 #endif
 
 #ifdef WINELIB

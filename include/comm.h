@@ -12,7 +12,6 @@ struct DosDeviceStruct {
     int baudrate;
 };
 
-extern void Comm_Init(void);
-extern void Comm_DeInit(void);
+extern void COMM_Init(void);
 
 #endif  /* COMM_H */

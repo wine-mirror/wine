@@ -16,12 +16,12 @@ SRCS = \
 	keyboard.c \
 	lstr.c \
 	main.c \
+	ole2nls.c \
 	olecli.c \
 	olesvr.c \
 	message.c \
 	network.c \
 	profile.c \
-	property.c \
 	rect.c \
 	shell.c \
 	sound.c \

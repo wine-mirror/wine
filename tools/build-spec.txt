@@ -1,10 +1,11 @@
 name	NAME
 id	ID_NUMBER
-length	NUMBER_OF_ORDINALS
 
 ORDINAL VARTYPE EXPORTNAME (DATA [DATA [DATA [...]]])
 
 ORDINAL FUNCTYPE EXPORTNAME([ARGTYPE [ARGTYPE [...]]]) HANDLERNAME
+
+ORDINAL stub EXPORTNAME
 
 ORDINAL equate EXPORTNAME DATA
 
@@ -15,10 +16,9 @@ ORDINAL return EXPORTNAME ARGLENGTH RETVALUE
 --------------------
 General:
 
-    "name", "id" and "length" fields are mandatory.  Specific ordinal 
-declarations are optional, but the default handler will print an
-error message.  Lines whose first character is a '#' will be ignored
-as comments.
+    "name" and "id" fields are mandatory.  Specific ordinal declarations
+are optional, but the default handler will print an error message.  Lines
+whose first character is a '#' will be ignored as comments.
 
 Variable ordinals:
 
@@ -56,6 +56,12 @@ call (the ordinal 100 is just an example):
 call (the ordinal 100 is just an example):
 
 	100 pascal GetFocus() WIN_GetFocus()
+
+Stub ordinals:
+
+    This type defines a stub function. It makes the name and ordinal
+available for dynamic linking, but will terminate execution with an
+error message if the function is ever called.
 
 Equate ordinals:
 

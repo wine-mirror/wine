@@ -11,6 +11,8 @@ static char Copyright[] = "Copyright  Yngvi Sigurjonsson (yngvi@hafro.is), 1993"
 
 #include "ldt.h"
 #include "windows.h"
+#include "stddebug.h"
+#include "debug.h"
 
 #define ToUpper(c)	toupper(c)
 #define ToLower(c)	tolower(c)
@@ -220,8 +222,9 @@ INT AnsiToOem(LPSTR lpAnsiStr, LPSTR lpOemStr)   /* why is this int ??? */
 {
   InitOemAnsiTranslations(); /* should called called in some init function*/
   while(*lpAnsiStr){
-    *lpOemStr++=Ansi2Oem[*lpAnsiStr++];
+    *lpOemStr++=Ansi2Oem[(unsigned char)(*lpAnsiStr++)];
   }
+  *lpOemStr = 0;
   return -1;
 }
 
@@ -230,8 +233,9 @@ BOOL OemToAnsi(LPSTR lpOemStr, LPSTR lpAnsiStr)   /* why is this BOOL ???? */
 {
   InitOemAnsiTranslations(); /* should called called in some init function*/
   while(*lpOemStr){
-    *lpAnsiStr++=Oem2Ansi[*lpOemStr++];
+    *lpAnsiStr++=Oem2Ansi[(unsigned char)(*lpOemStr++)];
   }
+  *lpAnsiStr = 0;
   return -1;
 }
 
@@ -241,7 +245,7 @@ void AnsiToOemBuff(LPSTR lpAnsiStr, LPSTR lpOemStr, INT nLength)
   int i;
   InitOemAnsiTranslations(); /* should called called in some init function*/
   for(i=0;i<nLength;i++)
-    lpOemStr[i]=Ansi2Oem[lpAnsiStr[i]];  
+    lpOemStr[i]=Ansi2Oem[(unsigned char)(lpAnsiStr[i])];
 }
 
 /* OemToAnsi Keyboard.135 */
@@ -250,5 +254,5 @@ void OemToAnsiBuff(LPSTR lpOemStr, LPSTR lpAnsiStr, INT nLength)
   int i;
   InitOemAnsiTranslations(); /* should called called in some init function*/
   for(i=0;i<nLength;i++)
-    lpAnsiStr[i]=Oem2Ansi[lpOemStr[i]];
+    lpAnsiStr[i]=Oem2Ansi[(unsigned char)(lpOemStr[i])];
 }

@@ -1,8 +1,5 @@
-# $Id: sound.spec,v 1.3 1993/07/04 04:04:21 root Exp root $
-#
 name	sound
 id	6
-length	20
 
 1    pascal  OPENSOUND() OpenSound
 2    pascal  CLOSESOUND() CloseSound

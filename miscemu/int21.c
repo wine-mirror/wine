@@ -20,6 +20,7 @@
 #include "msdos.h"
 #include "registers.h"
 #include "ldt.h"
+#include "task.h"
 #include "options.h"
 #include "miscemu.h"
 #include "stddebug.h"
@@ -55,13 +56,10 @@ struct DPB
 
 WORD ExtendedError, CodePage = 437;
 BYTE ErrorClass, Action, ErrorLocus;
-BYTE *dta;
-DWORD dtasegptr;
 struct DPB *dpb;
 DWORD dpbsegptr;
 
 struct DosHeap {
-	BYTE dta[256];
 	BYTE InDosFlag;
         BYTE mediaID;
 	BYTE biosdate[8];
@@ -124,6 +122,13 @@ void errno_to_doserr(void)
 			break;
 	}
 }
+
+BYTE *GetCurrentDTA(void)
+{
+    TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+    return (BYTE *)PTR_SEG_TO_LIN( pTask->dta );
+}
+
 
 void ChopOffWhiteSpace(char *string)
 {
@@ -694,7 +699,8 @@ static void FindNext(struct sigcontext_struct *context)
 {
 	struct dosdirent *dp;
         struct tm *t;
-	
+	BYTE *dta = GetCurrentDTA();
+
         memcpy(&dp, dta+0x11, sizeof(dp));
 
 	do {
@@ -729,6 +735,8 @@ static void FindFirst(struct sigcontext_struct *context)
 {
 	BYTE drive, *path = PTR_SEG_OFF_TO_LIN(DS, DX);
 	struct dosdirent *dp;
+
+	BYTE *dta = GetCurrentDTA();
 
         dprintf_int(stddeb, "int21: FindFirst path = %s\n", path);
 
@@ -933,6 +941,8 @@ static void FindFirstFCB(struct sigcontext_struct *context)
 	struct fcb *output_fcb;
 	int drive;
 	char path[12];
+
+	BYTE *dta = GetCurrentDTA();
 
 	DumpFCB( fcb );
 	
@@ -1167,6 +1177,8 @@ static void GetFileAttribute (struct sigcontext_struct * context)
 
 int do_int21(struct sigcontext_struct * context)
 {
+    int drive;
+
     dprintf_int(stddeb,"int21: AX %04x, BX %04x, CX %04x, DX %04x, "
            "SI %04x, DI %04x, DS %04x, ES %04x\n",
            AX, BX, CX, DX, SI, DI, DS, ES);
@@ -1182,7 +1194,8 @@ int do_int21(struct sigcontext_struct * context)
 	switch(AH) 
 	{
 	  case 0x00: /* TERMINATE PROGRAM */
-	    exit(0);
+            TASK_KillCurrentTask( 0 );
+            break;
 
 	  case 0x01: /* READ CHARACTER FROM STANDARD INPUT, WITH ECHO */
 	  case 0x02: /* WRITE CHARACTER TO STANDARD OUTPUT */
@@ -1266,8 +1279,10 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 
 	  case 0x1a: /* SET DISK TRANSFER AREA ADDRESS */
-            dtasegptr = MAKELONG( DX, DS );
-            dta = PTR_SEG_TO_LIN(dtasegptr);
+            {
+                TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+                pTask->dta = MAKELONG( DX, DS );
+            }
             break;
 
 	  case 0x1b: /* GET ALLOCATION INFORMATION FOR DEFAULT DRIVE */
@@ -1298,8 +1313,11 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 
 	  case 0x2f: /* GET DISK TRANSFER AREA ADDRESS */
-            ES = SELECTOROF(dtasegptr);
-            BX = OFFSETOF(dtasegptr);
+            {
+                TDB *pTask = (TDB *)GlobalLock( GetCurrentTask() );
+                ES = SELECTOROF( pTask->dta );
+                BX = OFFSETOF( pTask->dta );
+            }
             break;
             
 	  case 0x30: /* GET DOS VERSION */
@@ -1436,13 +1454,34 @@ int do_int21(struct sigcontext_struct * context)
 		break;
 
               case 0x08:   /* Check if drive is removable. */
-                EAX = (EAX & 0xFFFF0000) | 0x0001;   /* Nope, not removable. */
-                ResetCflag;
+                drive = BL ? (BL - 1) : DOS_GetDefaultDrive();
+                if(!DOS_ValidDrive(drive))
+                {
+                    SetCflag;
+                    AX = 0x000F;        /* Bad drive number */
+                }
+                else
+                {
+                    if(drive > 1)
+                        EAX = (EAX & 0xFFFF0000) | 0x0001;   /* not removable */
+                    else
+                        EAX = (EAX & 0xFFFF0000);       /* removable */
+                    ResetCflag;
+                }
                 break;
 		   
 	      case 0x09:   /* CHECK IF BLOCK DEVICE REMOTE */
-		EDX = (EDX & 0xffff0000) | (1<<9) | (1<<12) | (1<<15);
-		ResetCflag;
+                drive = BL ? (BL - 1) : DOS_GetDefaultDrive();
+                if(!DOS_ValidDrive(drive))
+                {
+                    SetCflag;
+                    AX = 0x000F;        /* Bad drive number */
+                }
+                else
+                {
+		    EDX = (EDX & 0xffff0000) | (1<<9) | (1<<12) | (1<<15);
+		    ResetCflag;
+                }
 		break;
 
 	      case 0x0b:   /* SET SHARING RETRY COUNT */
@@ -1498,7 +1537,7 @@ int do_int21(struct sigcontext_struct * context)
 	    break;		
 	
 	  case 0x4c: /* "EXIT" - TERMINATE WITH RETURN CODE */
-	    exit(AL);
+            TASK_KillCurrentTask( AL );
 	    break;
 
 	  case 0x4d: /* GET RETURN CODE */
@@ -1682,9 +1721,7 @@ void INT21_Init(void)
     }
     heap = (struct DosHeap *) GlobalLock(DosHeapHandle);
 
-    dta = heap->dta;
     dpb = &heap->dpb;
-    dtasegptr = MAKELONG( 0, DosHeapHandle );
     dpbsegptr = MAKELONG( (int)&heap->dpb - (int)heap, DosHeapHandle );
     heap->InDosFlag = 0;
     strcpy(heap->biosdate, "01/01/80");

@@ -54,6 +54,7 @@ static struct { SEGPTR name; HCURSOR cursor; } system_cursor[] =
 HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
 {
     HCURSOR 	hCursor;
+    HRSRC       hRsrc;
     HANDLE 	rsc_mem;
     WORD 	*lp;
     LONG        *lpl,size;
@@ -125,16 +126,20 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
 #endif
 
     if (!(hdc = GetDC(0))) return 0;
-    rsc_mem = RSC_LoadResource(instance, cursor_name, NE_RSCTYPE_GROUP_CURSOR, 
-			       &image_size);
+    if (!(hRsrc = FindResource( instance, cursor_name, RT_GROUP_CURSOR )))
+    {
+	ReleaseDC(0, hdc); 
+	return 0;
+    }
+    rsc_mem = LoadResource(instance, hRsrc );
     if (rsc_mem == (HANDLE)NULL) {
     fprintf(stderr,"LoadCursor / Cursor %08lx not Found !\n", cursor_name);
 	ReleaseDC(0, hdc); 
 	return 0;
 	}
-    lp = (WORD *)GlobalLock(rsc_mem);
+    lp = (WORD *)LockResource(rsc_mem);
     if (lp == NULL) {
-	GlobalFree(rsc_mem);
+        FreeResource( rsc_mem );
 	ReleaseDC(0, hdc); 
 	return 0;
 	}
@@ -158,23 +163,22 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
 		(DWORD)lpcurdesc->curDIBOffset);
 #endif
     lpcur->descriptor = *lpcurdesc;
-    GlobalUnlock(rsc_mem);
-    GlobalFree(rsc_mem);
-    rsc_mem = RSC_LoadResource(instance, 
-    	MAKEINTRESOURCE(lpcurdesc->curDIBOffset), 
-    	NE_RSCTYPE_CURSOR, &image_size);
+    FreeResource( rsc_mem );
+    if (!(hRsrc = FindResource( instance,
+                                MAKEINTRESOURCE(lpcurdesc->curDIBOffset), 
+                                RT_CURSOR )))
+    {
+	ReleaseDC(0, hdc); 
+	return 0;
+    }
+    rsc_mem = LoadResource(instance, hRsrc );
     if (rsc_mem == (HANDLE)NULL) {
     	fprintf(stderr,
 		"LoadCursor / Cursor %08lx Bitmap not Found !\n", cursor_name);
 	ReleaseDC(0, hdc); 
 	return 0;
 	}
-    lpl = (LONG *)GlobalLock(rsc_mem);
-    if (lp == NULL) {
-	GlobalFree(rsc_mem);
-	ReleaseDC(0, hdc); 
-	return 0;
-    }
+    lpl = (LONG *)LockResource(rsc_mem);
     lpl++;
     size = CONV_LONG (*lpl);
     if (size == sizeof(BITMAPCOREHEADER)){
@@ -220,8 +224,7 @@ HCURSOR LoadCursor(HANDLE instance, SEGPTR cursor_name)
 	lpcur->descriptor.Height/2,
 	(LPSTR)lpl, ((LPSTR)lpl)+size);
 
-    GlobalUnlock(rsc_mem);
-    GlobalFree(rsc_mem);
+    FreeResource( rsc_mem );
     GlobalUnlock(hCursor);
     ReleaseDC(0,hdc);
     return hCursor;

@@ -8,6 +8,8 @@
 #include <string.h>
 #include <ctype.h>
 #include "wine.h"
+#include "module.h"
+#include "neexe.h"
 
 /* ELF symbols do not have an underscore in front */
 #ifdef __ELF__
@@ -25,8 +27,12 @@
 #define TYPE_REGISTER    6
 #define TYPE_ABS         7
 #define TYPE_RETURN      8
+#define TYPE_STUB        9
 
 #define MAX_ORDINALS	1299
+
+  /* Callback function used for stub functions */
+#define STUB_CALLBACK  "RELAY_Unimplemented"
 
 typedef struct ordinal_definition_s
 {
@@ -59,7 +65,7 @@ static ORDDEF OrdinalDefinitions[MAX_ORDINALS];
 
 char LowerDLLName[80];
 char UpperDLLName[80];
-int Limit;
+int Limit = 0;
 int DLLId;
 FILE *SpecFp;
 
@@ -122,7 +128,7 @@ static char * GetTokenInLine(void)
     for (p = ParseNext; isspace(*p); p++)
 	;
     
-    if (*p == '\0')
+    if ((*p == '\0') || (*p == '#'))
 	return NULL;
     
     /*
@@ -234,7 +240,7 @@ static int ParseVariable(int ordinal, int type)
     odp = &OrdinalDefinitions[ordinal];
     odp->type = type;
     strcpy(odp->export_name, export_name);
-    
+
     vdp = malloc(sizeof(*vdp));
     odp->additional_data = vdp;
     
@@ -250,12 +256,6 @@ static int ParseExportFunction(int ordinal, int type)
     ORDDEF *odp;
     ORDFUNCDEF *fdp;
     int i;
-    
-    if (ordinal >= MAX_ORDINALS)
-    {
-	fprintf(stderr, "%d: Ordinal number too large\n", Line);
-	exit(1);
-    }
     
     odp = &OrdinalDefinitions[ordinal];
     strcpy(odp->export_name, GetToken());
@@ -309,12 +309,6 @@ static int ParseEquate(int ordinal)
     char *endptr;
     int value;
     
-    if (ordinal >= MAX_ORDINALS)
-    {
-	fprintf(stderr, "%d: Ordinal number too large\n", Line);
-	exit(1);
-    }
-    
     odp = &OrdinalDefinitions[ordinal];
     strcpy(odp->export_name, GetToken());
 
@@ -340,12 +334,6 @@ static int ParseReturn(int ordinal)
     char *token;
     char *endptr;
     
-    if (ordinal >= MAX_ORDINALS)
-    {
-	fprintf(stderr, "%d: Ordinal number too large\n", Line);
-	exit(1);
-    }
-
     rdp = malloc(sizeof(*rdp));
     
     odp = &OrdinalDefinitions[ordinal];
@@ -374,10 +362,34 @@ static int ParseReturn(int ordinal)
     return 0;
 }
 
+
+static int ParseStub( int ordinal )
+{
+    ORDDEF *odp;
+    ORDFUNCDEF *fdp;
+    
+    odp = &OrdinalDefinitions[ordinal];
+    strcpy( odp->export_name, GetToken() );
+    odp->type = TYPE_STUB;
+    fdp = malloc(sizeof(*fdp));
+    odp->additional_data = fdp;
+    fdp->arg_types[0] = '\0';
+    strcpy( fdp->internal_name, STUB_CALLBACK );
+    return 0;
+}
+
+
 static int ParseOrdinal(int ordinal)
 {
     char *token;
     
+    if (ordinal >= MAX_ORDINALS)
+    {
+	fprintf(stderr, "%d: Ordinal number too large\n", Line);
+	exit(1);
+    }
+    if (ordinal > Limit) Limit = ordinal;
+
     token = GetToken();
     if (token == NULL)
     {
@@ -403,6 +415,8 @@ static int ParseOrdinal(int ordinal)
 	return ParseEquate(ordinal);
     else if (strcmp(token, "return") == 0)
 	return ParseReturn(ordinal);
+    else if (strcmp(token, "stub") == 0)
+	return ParseStub(ordinal);
     else
     {
 	fprintf(stderr, 
@@ -436,17 +450,6 @@ static int ParseTopLevel(void)
 	    }
 	    
 	    DLLId = atoi(token);
-	}
-	else if (strcmp(token, "length") == 0)
-	{
-	    token = GetToken();
-	    if (!IsNumberString(token))
-	    {
-		fprintf(stderr, "%d: Expected number after length\n", Line);
-		exit(1);
-	    }
-
-	    Limit = atoi(token);
 	}
 	else if (IsNumberString(token))
 	{
@@ -493,6 +496,202 @@ static int OutputVariableCode(FILE *fp, char *storage, ORDDEF *odp)
     return vdp->n_values;
 }
 
+
+/*******************************************************************
+ *         BuildModule
+ *
+ * Build the in-memory representation of the module, and dump it
+ * as a byte stream into the assembly code.
+ */
+static void BuildModule( FILE *fp, int max_code_offset, int max_data_offset )
+{
+    ORDDEF *odp;
+    int i, size;
+    char *buffer;
+    NE_MODULE *pModule;
+    SEGTABLEENTRY *pSegment;
+    LOADEDFILEINFO *pFileInfo;
+    BYTE *pstr, *bundle;
+    WORD *pword;
+
+    /*   Module layout:
+     * NE_MODULE       Module
+     * LOADEDFILEINFO  File information
+     * SEGTABLEENTRY   Segment 1 (code)
+     * SEGTABLEENTRY   Segment 2 (data)
+     * WORD[2]         Resource table (empty)
+     * BYTE[2]         Imported names (empty)
+     * BYTE[n]         Resident names table
+     * BYTE[n]         Entry table
+     */
+
+    buffer = malloc( 0x10000 );
+
+    pModule = (NE_MODULE *)buffer;
+    pModule->magic = NE_SIGNATURE;
+    pModule->count = 1;
+    pModule->next = 0;
+    pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_LIBMODULE;
+    pModule->dgroup = 2;
+    pModule->heap_size = 0xffff;
+    pModule->stack_size = 0;
+    pModule->ip = 0;
+    pModule->cs = 0;
+    pModule->sp = 0;
+    pModule->ss = 0;
+    pModule->seg_count = 2;
+    pModule->modref_count = 0;
+    pModule->nrname_size = 0;
+    pModule->modref_table = 0;
+    pModule->nrname_fpos = 0;
+    pModule->moveable_entries = 0;
+    pModule->alignment = 0;
+    pModule->truetype = 0;
+    pModule->os_flags = NE_OSFLAGS_WINDOWS;
+    pModule->misc_flags = 0;
+    pModule->reserved = 0;
+    pModule->nrname_handle = 0;
+    pModule->min_swap_area = 0;
+    pModule->expected_version = 0x030a;
+
+      /* File information */
+
+    pFileInfo = (LOADEDFILEINFO *)(pModule + 1);
+    pModule->fileinfo = (int)pFileInfo - (int)pModule;
+    pFileInfo->length = sizeof(LOADEDFILEINFO) + strlen(UpperDLLName) + 3;
+    pFileInfo->fixed_media = 0;
+    pFileInfo->error = 0;
+    pFileInfo->date = 0;
+    pFileInfo->time = 0;
+    sprintf( pFileInfo->filename, "%s.DLL", UpperDLLName );
+    pstr = (char *)pFileInfo + pFileInfo->length + 1;
+        
+      /* Segment table */
+
+    pSegment = (SEGTABLEENTRY *)pstr;
+    pModule->seg_table = (int)pSegment - (int)pModule;
+    pSegment->filepos = 0;
+    pSegment->size = max_code_offset;
+    pSegment->flags = 0;
+    pSegment->minsize = max_code_offset;
+    pSegment->selector = 0;
+    pSegment++;
+
+    pModule->dgroup_entry = (int)pSegment - (int)pModule;
+    pSegment->filepos = 0;
+    pSegment->size = max_data_offset;
+    pSegment->flags = NE_SEGFLAGS_DATA;
+    pSegment->minsize = max_data_offset;
+    pSegment->selector = 0;
+    pSegment++;
+
+      /* Resource table */
+
+    pword = (WORD *)pSegment;
+    pModule->res_table = (int)pword - (int)pModule;
+    *pword++ = 0;
+    *pword++ = 0;
+
+      /* Imported names table */
+
+    pstr = (char *)pword;
+    pModule->import_table = (int)pstr - (int)pModule;
+    *pstr++ = 0;
+    *pstr++ = 0;
+
+      /* Resident names table */
+
+    pModule->name_table = (int)pstr - (int)pModule;
+    /* First entry is module name */
+    *pstr = strlen(UpperDLLName );
+    strcpy( pstr + 1, UpperDLLName );
+    pstr += *pstr + 1;
+    *(WORD *)pstr = 0;
+    pstr += sizeof(WORD);
+    /* Store all ordinals */
+    odp = OrdinalDefinitions + 1;
+    for (i = 1; i <= Limit; i++, odp++)
+    {
+        if (!odp->export_name[0]) continue;
+        *pstr = strlen( odp->export_name );
+        strcpy( pstr + 1, odp->export_name );
+        strupper( pstr + 1 );
+        pstr += *pstr + 1;
+        *(WORD *)pstr = i;
+        pstr += sizeof(WORD);
+    }
+    *pstr++ = 0;
+
+      /* Entry table */
+
+    pModule->entry_table = (int)pstr - (int)pModule;
+    bundle = NULL;
+    odp = OrdinalDefinitions + 1;
+    for (i = 1; i <= Limit; i++, odp++)
+    {
+        int selector = 0;
+
+	switch (odp->type)
+	{
+        case TYPE_INVALID:
+            selector = 0;  /* Invalid selector */
+            break;
+
+        case TYPE_PASCAL:
+        case TYPE_PASCAL_16:
+        case TYPE_REGISTER:
+        case TYPE_RETURN:
+        case TYPE_STUB:
+            selector = 1;  /* Code selector */
+            break;
+
+        case TYPE_BYTE:
+        case TYPE_WORD:
+        case TYPE_LONG:
+            selector = 2;  /* Data selector */
+            break;
+
+        case TYPE_ABS:
+            selector = 0xfe;  /* Constant selector */
+            break;
+        }
+
+          /* create a new bundle if necessary */
+        if (!bundle || (bundle[0] >= 254) || (bundle[1] != selector))
+        {
+            bundle = pstr;
+            bundle[0] = 0;
+            bundle[1] = selector;
+            pstr += 2;
+        }
+
+        (*bundle)++;
+        if (selector != 0)
+        {
+            *pstr++ = 1;
+            *(WORD *)pstr = odp->offset;
+            pstr += sizeof(WORD);
+        }
+    }
+    *pstr++ = 0;
+
+      /* Dump the module content */
+
+    fprintf( fp, "\t.data\n" );
+    fprintf( fp, "\t.globl " PREFIX "%s_Module_Start\n", UpperDLLName );
+    fprintf( fp, PREFIX "%s_Module_Start:\n", UpperDLLName );
+    size = (int)pstr - (int)pModule;
+    for (i = 0, pstr = buffer; i < size; i++, pstr++)
+    {
+        if (!(i & 7)) fprintf( fp, "\t.byte " );
+        fprintf( fp, "%d%c", *pstr, ((i & 7) != 7) ? ',' : '\n' );
+    }
+    if (i & 7) fprintf( fp, "0\n" );
+    fprintf( fp, "\t.globl " PREFIX "%s_Module_End\n", UpperDLLName );
+    fprintf( fp, PREFIX "%s_Module_End:\n", UpperDLLName );
+}
+
+
 static void BuildSpecFiles( char *specname)
 {
     ORDDEF *odp;
@@ -518,10 +717,12 @@ static void BuildSpecFiles( char *specname)
     fprintf( fp, "\t.data\n" );
     fprintf( fp, "\t.globl " PREFIX "%s_Data_Start\n", UpperDLLName );
     fprintf( fp, PREFIX "%s_Data_Start:\n", UpperDLLName );
+    fprintf( fp, "\t.word 0,0,0,0,0,0,0,0\n" );
+    data_offset = 16;
     fprintf( fp, "\t.text\n" );
     fprintf( fp, "\t.globl " PREFIX "%s_Code_Start\n", UpperDLLName );
     fprintf( fp, PREFIX "%s_Code_Start:\n", UpperDLLName );
-    code_offset = data_offset = 0;
+    code_offset = 0;
 
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)
@@ -532,14 +733,7 @@ static void BuildSpecFiles( char *specname)
         switch (odp->type)
         {
           case TYPE_INVALID:
-            fprintf( fp, "/* %s.%d */\n", UpperDLLName, i);
-            fprintf( fp, "\tpushw %%bp\n" );
-            fprintf( fp, "\tpushl $0x%08x\n", (DLLId << 16) | i);
-            fprintf( fp, "\tpushl $" PREFIX "RELAY_Unimplemented\n" );
-            fprintf( fp, "\tljmp $0x%04x, $" PREFIX "CallTo32_word_\n",
-                         WINE_CODE_SELECTOR );
-            odp->offset = code_offset;
-            code_offset += 19;  /* Assembly code is 19 bytes long */
+            odp->offset = 0xffff;
             break;
 
           case TYPE_ABS:
@@ -581,6 +775,7 @@ static void BuildSpecFiles( char *specname)
           case TYPE_REGISTER:
           case TYPE_PASCAL:
           case TYPE_PASCAL_16:
+          case TYPE_STUB:
             fprintf( fp, "/* %s.%d */\n", UpperDLLName, i);
             fprintf(fp, "\tpushw %%bp\n" );
             fprintf(fp, "\tpushl $0x%08x\n", (DLLId << 16) | i);
@@ -600,12 +795,13 @@ static void BuildSpecFiles( char *specname)
 	}
     }
 
-    fprintf( fp, "\t.data\n" );
-    fprintf( fp, "\t.globl " PREFIX "%s_Data_End\n", UpperDLLName );
-    fprintf( fp, PREFIX "%s_Data_End:\n", UpperDLLName );
-    fprintf( fp, "\t.text\n" );
-    fprintf( fp, "\t.globl " PREFIX "%s_Code_End\n", UpperDLLName );
-    fprintf( fp, PREFIX "%s_Code_End:\n", UpperDLLName );
+    if (!code_offset)  /* Make sure the code segment is not empty */
+    {
+        fprintf( fp, "\t.byte 0\n" );
+        code_offset++;
+    }
+
+    BuildModule( fp, code_offset, data_offset );
 
     fclose(fp);
 
@@ -619,16 +815,19 @@ static void BuildSpecFiles( char *specname)
     odp = OrdinalDefinitions;
     for (i = 0; i <= Limit; i++, odp++)
     {
-        int selector;
-
-	fdp = odp->additional_data;
+        int selector = 0;
 
 	switch (odp->type)
 	{
         case TYPE_INVALID:
+            selector = 0;  /* Invalid selector */
+            break;
+
         case TYPE_PASCAL:
         case TYPE_PASCAL_16:
         case TYPE_REGISTER:
+        case TYPE_RETURN:
+        case TYPE_STUB:
             selector = 1;  /* Code selector */
             break;
 
@@ -643,7 +842,8 @@ static void BuildSpecFiles( char *specname)
             break;
         }
 
-        fprintf(fp, "    { %d, %d, ", selector, odp->offset );
+/*         fprintf(fp, "    { %d, %d, ", selector, odp->offset ); */
+        fprintf( fp, "    { " );
         fprintf(fp, "\"%s\" ", odp->export_name);
 #ifdef WINESTAT
         fprintf(fp, ",0 ");
@@ -653,16 +853,16 @@ static void BuildSpecFiles( char *specname)
 
     fprintf(fp, "};\n\n");
 
-    fprintf( fp, "extern void %s_Code_Start();\n", UpperDLLName );
-    fprintf( fp, "extern void %s_Code_End();\n", UpperDLLName );
-    fprintf( fp, "extern void %s_Data_Start();\n", UpperDLLName );
-    fprintf( fp, "extern void %s_Data_End();\n\n", UpperDLLName );
+    fprintf( fp, "extern BYTE %s_Code_Start[];\n", UpperDLLName );
+    fprintf( fp, "extern BYTE %s_Data_Start[];\n", UpperDLLName );
+    fprintf( fp, "extern BYTE %s_Module_Start[];\n", UpperDLLName );
+    fprintf( fp, "extern BYTE %s_Module_End[];\n\n", UpperDLLName );
     fprintf( fp, "struct dll_table_s %s_table =\n{\n", UpperDLLName );
     fprintf( fp, "  %s_table_entries, %d, %d,\n",
              UpperDLLName, Limit + 1, DLLId );
-    fprintf( fp, "  (void *)%s_Code_Start, (void *)%s_Code_End,\n",
+    fprintf( fp, "  %s_Code_Start, %s_Data_Start,\n",
              UpperDLLName, UpperDLLName );
-    fprintf( fp, "  (void *)%s_Data_Start, (void *)%s_Data_End\n};\n",
+    fprintf( fp, "  %s_Module_Start, %s_Module_End\n};\n",
              UpperDLLName, UpperDLLName );
     fclose(fp);
 }
@@ -771,7 +971,8 @@ static void BuildContext(void)
     printf( "\tmovl %%edx,%d(%%ebx)\n", CONTEXTOFFSET(sc_edx) );
     printf( "\tmovl %%esi,%d(%%ebx)\n", CONTEXTOFFSET(sc_esi) );
     printf( "\tmovl %%edi,%d(%%ebx)\n", CONTEXTOFFSET(sc_edi) );
-    printf( "\tmovw %%es,%d(%%ebx)\n", CONTEXTOFFSET(sc_es) );
+    printf( "\tpushw %%es\n" );
+    printf( "\tpopw %d(%%ebx)\n", CONTEXTOFFSET(sc_es) );
     printf( "\tmovw -10(%%ebp),%%ax\n" );  /* Get saved ds from stack */
     printf( "\tmovw %%ax,%d(%%ebx)\n", CONTEXTOFFSET(sc_ds) );
     printf( "\tpushfl\n" );
@@ -800,7 +1001,8 @@ static void RestoreContext(void)
     printf( "\tmovl %d(%%ebx),%%edx\n", CONTEXTOFFSET(sc_edx) );
     printf( "\tmovl %d(%%ebx),%%esi\n", CONTEXTOFFSET(sc_esi) );
     printf( "\tmovl %d(%%ebx),%%edi\n", CONTEXTOFFSET(sc_edi) );
-    printf( "\tmovw %d(%%ebx),%%es\n", CONTEXTOFFSET(sc_es) );
+    printf( "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(sc_es) );
+    printf( "\tpopw %%es\n" );
     printf( "\tpopw %%ax\n" );  /* Remove old ds from the stack */
     printf( "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(sc_ds) ); /* Push new ds */
 #ifndef __FreeBSD__
@@ -855,7 +1057,7 @@ static void BuildCall32Func( char *profile )
     printf( " * " PREFIX "CallTo32_%s\n", profile );
     printf( " **********/\n" );
     printf( "\t.align 4\n" );
-    printf( "\t.global " PREFIX "CallTo32_%s\n\n", profile );
+    printf( "\t.globl " PREFIX "CallTo32_%s\n\n", profile );
     printf( PREFIX "CallTo32_%s:\n", profile );
 
     /* Setup bp to point to its copy on the stack */
@@ -874,12 +1076,10 @@ static void BuildCall32Func( char *profile )
 
     /* Save the 16-bit stack */
 
-    printf( "\tpushw " PREFIX "IF1632_Saved16_bp\n" );
     printf( "\tpushw " PREFIX "IF1632_Saved16_sp\n" );
     printf( "\tpushw " PREFIX "IF1632_Saved16_ss\n" );
     printf( "\tmovw %%ss," PREFIX "IF1632_Saved16_ss\n" );
     printf( "\tmovw %%sp," PREFIX "IF1632_Saved16_sp\n" );
-    printf( "\tmovw %%bp," PREFIX "IF1632_Saved16_bp\n" );
 
     /* Transfer the arguments */
 
@@ -900,7 +1100,12 @@ static void BuildCall32Func( char *profile )
     printf( "\tpushw %%ds\n" );
     printf( "\tpopw %%ss\n" );
     printf( "\tmovl " PREFIX "IF1632_Saved32_esp,%%esp\n" );
-    printf( "\tmovl " PREFIX "IF1632_Saved32_ebp,%%ebp\n" );
+
+    /* Setup %ebp to point to the previous stack frame (built by CallTo16) */
+
+    printf( "\tmovl %%esp,%%ebp\n" );
+    printf( "\taddl $24,%%ebp\n" );
+
     if (reg_func)
         printf( "\tsubl $%d,%%esp\n", sizeof(struct sigcontext_struct) );
     else if (*args)
@@ -937,16 +1142,12 @@ static void BuildCall32Func( char *profile )
 
     printf( "\tmovw " PREFIX "IF1632_Saved16_ss,%%ss\n" );
     printf( "\tmovw " PREFIX "IF1632_Saved16_sp,%%sp\n" );
-    printf( "\tmovw " PREFIX "IF1632_Saved16_bp,%%bp\n" );
     printf( "\tpopw " PREFIX "IF1632_Saved16_ss\n" );
     printf( "\tpopw " PREFIX "IF1632_Saved16_sp\n" );
-    printf( "\tpopw " PREFIX "IF1632_Saved16_bp\n" );
-
-    /* Restore registers from the context structure */
 
     if (reg_func)
     {
-        printf( "\tandl $0xffff,%%ebp\n" );
+        /* Restore registers from the context structure */
         RestoreContext();
     }
     else  /* Store the return value in dx:ax if needed */
@@ -962,7 +1163,8 @@ static void BuildCall32Func( char *profile )
     /* Restore ds and bp */
 
     printf( "\tpopw %%ds\n" );
-    printf( "\tmovw %%bp,%%sp\n" );
+    printf( "\tpopl %%ebp\n" );  /* Remove entry point address */
+    printf( "\tpopl %%ebp\n" );  /* Remove DLL id and ordinal */
     printf( "\tpopw %%bp\n" );
 
     /* Remove the arguments and return */
@@ -987,10 +1189,10 @@ static void BuildCall32Func( char *profile )
  *
  * Stack frame of the callback function:
  *  ...      ...
- * (ebp+22) arg2
- * (ebp+18) arg1
- * (ebp+14) 16-bit ds
- * (ebp+10) func to call
+ * (ebp+24) arg2
+ * (ebp+20) arg1
+ * (ebp+16) 16-bit ds
+ * (ebp+12) func to call
  * (ebp+8)  code selector
  * (ebp+4)  return address
  * (ebp)    previous ebp
@@ -998,8 +1200,9 @@ static void BuildCall32Func( char *profile )
  * Prototypes for the CallTo16 functions:
  *   extern WORD CallTo16_word_xxx( FARPROC func, WORD ds, args... );
  *   extern LONG CallTo16_long_xxx( FARPROC func, WORD ds, args... );
- *   extern void CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD ax,
- *                               WORD bx, WORD cx, WORD dx, WORD si, WORD di );
+ *   extern void CallTo16_regs_( FARPROC func, WORD ds, WORD es, WORD bp,
+ *                               WORD ax, WORD bx, WORD cx, WORD dx,
+ *                               WORD si, WORD di );
  */
 static void BuildCall16Func( char *profile )
 {
@@ -1021,13 +1224,13 @@ static void BuildCall16Func( char *profile )
     printf( " * " PREFIX "CallTo16_%s\n", profile );
     printf( " **********/\n" );
     printf( "\t.align 4\n" );
-    printf( "\t.global " PREFIX "CallTo16_%s\n\n", profile );
+    printf( "\t.globl " PREFIX "CallTo16_%s\n\n", profile );
     printf( PREFIX "CallTo16_%s:\n", profile );
 
     /* Push code selector before return address to simulate a lcall */
 
     printf( "\tpopl %%eax\n" );
-    printf( "\tpushw $0x%04x\n", WINE_CODE_SELECTOR );
+    printf( "\tpushl $0x%04x\n", WINE_CODE_SELECTOR );
     printf( "\tpushl %%eax\n" );
 
     /* Entry code */
@@ -1046,9 +1249,7 @@ static void BuildCall16Func( char *profile )
     /* Save the 32-bit stack */
 
     printf( "\tpushl " PREFIX "IF1632_Saved32_esp\n" );
-    printf( "\tpushl " PREFIX "IF1632_Saved32_ebp\n" );
     printf( "\tmovl %%esp," PREFIX "IF1632_Saved32_esp\n" );
-    printf( "\tmovl %%ebp," PREFIX "IF1632_Saved32_ebp\n" );
     printf( "\tmovl %%ebp,%%ebx\n" );
 
     /* Print debugging info */
@@ -1057,7 +1258,7 @@ static void BuildCall16Func( char *profile )
     {
         /* Push the address of the first argument */
         printf( "\tmovl %%ebx,%%eax\n" );
-        printf( "\taddl $10,%%eax\n" );
+        printf( "\taddl $12,%%eax\n" );
         printf( "\tpushl $%d\n", reg_func ? 7 : strlen(args) );
         printf( "\tpushl %%eax\n" );
         printf( "\tcall " PREFIX "RELAY_DebugCall16\n" );
@@ -1069,23 +1270,29 @@ static void BuildCall16Func( char *profile )
 
     printf( "\tmovw " PREFIX "IF1632_Saved16_ss,%%ss\n" );
     printf( "\tmovw " PREFIX "IF1632_Saved16_sp,%%sp\n" );
-    printf( "\tmovzwl " PREFIX "IF1632_Saved16_bp,%%ebp\n" );
 
     /* Transfer the arguments */
 
     if (reg_func)
     {
         /* Get the registers. ebx is handled later on. */
-        printf( "\tmovl 18(%%ebx),%%es\n" );
-        printf( "\tmovl 22(%%ebx),%%eax\n" );
-        printf( "\tmovl 30(%%ebx),%%ecx\n" );
-        printf( "\tmovl 34(%%ebx),%%edx\n" );
-        printf( "\tmovl 38(%%ebx),%%esi\n" );
-        printf( "\tmovl 42(%%ebx),%%edi\n" );
+        printf( "\tpushw 20(%%ebx)\n" );
+        printf( "\tpopw %%es\n" );
+        printf( "\tmovl 24(%%ebx),%%ebp\n" );
+        printf( "\tmovl 28(%%ebx),%%eax\n" );
+        printf( "\tmovl 36(%%ebx),%%ecx\n" );
+        printf( "\tmovl 40(%%ebx),%%edx\n" );
+        printf( "\tmovl 44(%%ebx),%%esi\n" );
+        printf( "\tmovl 48(%%ebx),%%edi\n" );
     }
     else  /* not a register function */
     {
-        int pos = 18;  /* first argument position */
+        int pos = 20;  /* first argument position */
+
+        /* Make %bp point to the previous stackframe (built by CallTo32) */
+        printf( "\tmovw %%sp,%%bp\n" );
+        printf( "\taddw $16,%%bp\n" );
+
         while (*args)
         {
             switch(*args++)
@@ -1108,17 +1315,18 @@ static void BuildCall16Func( char *profile )
 
     /* Push the called routine address */
 
-    printf( "\tpushl 10(%%ebx)\n" );
+    printf( "\tpushl 12(%%ebx)\n" );
 
     /* Get the 16-bit ds */
     /* FIXME: this shouldn't be necessary if function prologs fixup worked. */
 
-    printf( "\tmovw 14(%%ebx),%%ds\n" );
+    printf( "\tpushw 16(%%ebx)\n" );
+    printf( "\tpopw %%ds\n" );
 
     if (reg_func)
     {
         /* Retrieve ebx from the 32-bit stack */
-        printf( "\tmovl %%fs:26(%%ebx),%%ebx\n" );
+        printf( "\tmovl %%fs:28(%%ebx),%%ebx\n" );
     }
     else
     {
@@ -1161,8 +1369,6 @@ static void BuildRet16Func()
     /* Restore the 32-bit stack */
 
     printf( "\tmovl " PREFIX "IF1632_Saved32_esp,%%esp\n" );
-    printf( "\tmovl " PREFIX "IF1632_Saved32_ebp,%%ebp\n" );
-    printf( "\tpopl " PREFIX "IF1632_Saved32_ebp\n" );
     printf( "\tpopl " PREFIX "IF1632_Saved32_esp\n" );
 
     /* Restore the 32-bit registers */
@@ -1175,7 +1381,6 @@ static void BuildRet16Func()
 
     /* Return to caller */
 
-    printf( "\tmovl %%ebp,%%esp\n" );
     printf( "\tpopl %%ebp\n" );
     printf( "\tlret\n" );
 

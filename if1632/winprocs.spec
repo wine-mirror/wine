@@ -1,6 +1,5 @@
 name	winprocs
 id	24
-length	23
 
 1  pascal ButtonWndProc(word word word long) ButtonWndProc
 2  pascal StaticWndProc(word word word long) StaticWndProc
@@ -25,3 +24,4 @@ length	23
 21 pascal AboutDlgProc(word word word long) AboutDlgProc
 22 pascal AboutWine_Proc(word word word long) AboutWine_Proc
 23 pascal16 CARET_Callback(word word word long) CARET_Callback
+24 pascal16 TASK_Reschedule() TASK_Reschedule

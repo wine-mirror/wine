@@ -288,12 +288,8 @@ void dbg_bt(){
       if (frame->u.win16.saved_bp & 1) cs = frame->u.win16.saved_cs;
       fprintf(stderr,"%d %4.4x:%4.4x\n", frameno++, cs, 
 	      frame->u.win16.saved_ip);
+      if (!frame->u.win16.saved_bp) break;
       frame = (struct frame *) PTR_SEG_OFF_TO_LIN( SC_SS, frame->u.win16.saved_bp & ~1);
-      if ((cs & 7) != 7)  /* switching to 32-bit mode */
-      {
-          extern int IF1632_Saved32_ebp;
-          frame = (struct frame *)IF1632_Saved32_ebp;
-      }
     }
   }
   putchar('\n');

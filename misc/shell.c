@@ -434,9 +434,11 @@ HICON ExtractIcon(HINSTANCE hInst, LPCSTR lpszExeFileName, UINT nIconIndex)
 		hInst2 = LoadLibrary(lpszExeFileName);
 		}
 	if (hInst2 != 0 && nIconIndex == (UINT)-1) {
+#if 0
 		count = GetRsrcCount(hInst2, NE_RSCTYPE_GROUP_ICON);
 		dprintf_reg(stddeb, "ExtractIcon // '%s' has %d icons !\n", lpszExeFileName, count);
 		return (HICON)count;
+#endif
 		}
 	if (hInst2 != hInst && hInst2 != 0) {
 		FreeLibrary(hInst2);

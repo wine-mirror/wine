@@ -1,8 +1,5 @@
-# $Id: keyboard.spec,v 1.1 1993/09/10 05:32:12 scott Exp $
-#
 name	keyboard
 id	7
-length	137
 
 #1	pascal	Inquire
 #2	pascal	Enable

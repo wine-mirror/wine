@@ -65,9 +65,11 @@ void ListBoxSendNotification(HWND hwnd, WORD code);
 #define LIST_HEAP_ADDR(lphl,handle) \
     ((void *)((handle) ? ((handle) | ((int)lphl->Heap & 0xffff0000)) : 0))
 #else
+/* FIXME: shouldn't each listbox have its own heap? */
 #define LIST_HEAP_ALLOC(lphl,f,size) USER_HEAP_ALLOC(size)
 #define LIST_HEAP_FREE(lphl,handle)  USER_HEAP_FREE(handle)
 #define LIST_HEAP_ADDR(lphl,handle)  USER_HEAP_LIN_ADDR(handle)
+#define LIST_HEAP_SEG_ADDR(lphl,handle) USER_HEAP_SEG_ADDR(handle)
 #endif
 
 #define LIST_HEAP_SIZE 0x10000
@@ -440,7 +442,7 @@ LONG LBLButtonUp( HWND hwnd, WORD message, WORD wParam, LONG lParam )
   LPHEADLIST lphl;
   WND        *wndPtr;
 
-  ReleaseCapture();
+  if (GetCapture() == hwnd) ReleaseCapture();
 
   lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
   if (lphl == NULL) return 0;
@@ -1214,7 +1216,6 @@ LONG ListBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     }
     idx++;
   }
-  
   return DefWindowProc (hwnd, message, wParam, lParam);
 }
 
@@ -1280,15 +1281,14 @@ void ListBoxDrawItem (HWND hwnd, HDC hdc, LPLISTSTRUCT lpls,
       dis->CtlID   = ParentWndPtr->wIDmenu;
     }
 
-    if (HasStrings(wndPtr)) dis->itemData = (DWORD)lpls->itemText;
+    if (HasStrings(wndPtr)) dis->itemData = LIST_HEAP_SEG_ADDR(lpls,lpls->hData);
    
     dis->itemAction = itemAction;
     dis->itemState  = itemState;
 
     SendMessage(lphl->hWndLogicParent, WM_DRAWITEM, 
 		0, (LPARAM)USER_HEAP_SEG_ADDR(lphl->hDrawItemStruct));
-  }
-  else {
+  } else {
 
     if (itemAction == ODA_DRAWENTIRE ||
 	itemAction == ODA_SELECT) {
@@ -1476,7 +1476,7 @@ void ListBoxAskMeasure(WND *wndPtr, LPHEADLIST lphl, LPLISTSTRUCT lpls)
   lpmeasure->itemHeight = 0;
 
   if (HasStrings(wndPtr))
-    lpmeasure->itemData = (DWORD)lpls->itemText;
+    lpmeasure->itemData = LIST_HEAP_SEG_ADDR(lpls,lpls->hData);
   else
     lpmeasure->itemData = lpls->dis.itemData;
 
@@ -1563,8 +1563,7 @@ int ListBoxInsertString(HWND hwnd, UINT uIndex, LPSTR newstr)
     newstr = str;
     lplsnew->itemText = str;
     dprintf_listbox(stddeb,"ListBoxInsertString // LBS_HASSTRINGS after strcpy '%s'\n", str);
-  }
-  else {
+  } else {
     lplsnew->itemText = NULL;
     lplsnew->dis.itemData = (DWORD)newstr;
   }
@@ -1614,7 +1613,7 @@ int ListBoxGetText(HWND hwnd, UINT uIndex, LPSTR OutStr, BOOL bItemData)
   if (!bItemData) *OutStr=0;
 
   if ((lpls = ListBoxGetItem (hwnd, uIndex)) == NULL) 
-    return 0;
+    return LB_ERR;
 
   if (bItemData)
     return lpls->dis.itemData;
@@ -1634,7 +1633,7 @@ int ListBoxSetItemData(HWND hwnd, UINT uIndex, DWORD ItemData)
   LPLISTSTRUCT lpls;
 
   if ((lpls = ListBoxGetItem(hwnd, uIndex)) == NULL)
-    return 0;
+    return LB_ERR;
 
   lpls->dis.itemData = ItemData;
   return 1;
@@ -1807,12 +1806,14 @@ int ListBoxSetCurSel(HWND hwnd, WORD wIndex)
 
   if (lphl->ItemFocused != -1) {
     lpls = ListBoxGetItem(hwnd, lphl->ItemFocused);
+    if (lpls == 0) return LB_ERR;
     lpls->dis.itemState = 0;
   }
 
   if (wIndex != (UINT)-1) {
     lphl->ItemFocused = wIndex;
     lpls = ListBoxGetItem(hwnd, wIndex);
+    if (lpls == 0) return LB_ERR;
     lpls->dis.itemState = ODS_SELECTED | ODS_FOCUS;
 
     return 0;
@@ -1867,10 +1868,11 @@ int ListBoxDirectory(HWND hwnd, UINT attrib, LPSTR filespec)
 {
   struct dosdirent *dp, *dp_old;
   int	x, wRet = LB_OKAY;
-  BOOL    OldFlag;
+  BOOL  OldFlag;
   char 	temp[256];
   LPHEADLIST 	lphl;
-  int drive;
+  int   drive;
+  LPSTR tstr;
 
   dprintf_listbox(stddeb,"ListBoxDirectory: %s, %4x\n",filespec,attrib);
 
@@ -1880,19 +1882,15 @@ int ListBoxDirectory(HWND hwnd, UINT attrib, LPSTR filespec)
       drive = toupper(filespec[0]) - 'A';
       filespec += 2;
     }
-    if( !strchr( filespec, '\\' ) ) 
+    strcpy(temp,filespec);
+    tstr = strrchr(temp, '\\');
+    if( tstr == NULL ) 
       DOS_SetDefaultDrive( drive );
     else {
-      int i;
-      strcpy( temp, filespec );
-      for( i=0; i<strlen(temp); i++ )
-	if( temp[i] == '\\' ) {
-	  temp[i] = 0;
-	  filespec += ( i+1 );
-	  break;
-	}
+      *tstr = 0;
+      filespec = tstr + 1;
       DOS_ChangeDir( drive, temp );
-      DOS_SetDefaultDrive( drive );
+      if (!DOS_ChangeDir( drive, temp )) return 0;
     }
     dprintf_listbox(stddeb,"Changing directory to %c:%s, filemask is %s\n",
 		    drive+'A', temp, filespec );
@@ -1908,15 +1906,14 @@ int ListBoxDirectory(HWND hwnd, UINT attrib, LPSTR filespec)
     dprintf_listbox( stddeb, "ListBoxDirectory %p '%s' !\n", dp->filename, 
 		    dp->filename);
     if (dp->attribute & FA_DIREC) {
-      if (attrib & DDL_DIRECTORY &&
-	  strcmp(dp->filename, ".")) {
+      if (attrib & DDL_DIRECTORY && strcmp(dp->filename, ".") != 0) {
 	sprintf(temp, "[%s]", dp->filename);
 	if ( (wRet = ListBoxAddString(hwnd, temp)) == LB_ERR) break;
       }
     } 
     else {
       if (attrib & DDL_EXCLUSIVE) {
-	if (attrib & (DDL_READWRITE | DDL_READONLY | DDL_HIDDEN | 
+	if (attrib & (DDL_READWRITE | DDL_READONLY | DDL_HIDDEN |
 		      DDL_SYSTEM) )
 	  if ( (wRet = ListBoxAddString(hwnd, dp->filename)) 
 	      == LB_ERR) break;

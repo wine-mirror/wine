@@ -187,16 +187,15 @@ HWND CreateDialogParam( HINSTANCE hInst, SEGPTR dlgTemplate,
 		        HWND owner, WNDPROC dlgProc, LPARAM param )
 {
     HWND hwnd = 0;
-    HANDLE hres, hmem;
+    HRSRC hRsrc;
+    HGLOBAL hmem;
     LPCSTR data;
 
     dprintf_dialog(stddeb, "CreateDialogParam: %d,%08lx,%d,%p,%ld\n",
 	    hInst, dlgTemplate, owner, dlgProc, param );
      
-      /* FIXME: MAKEINTRESOURCE should be replaced by RT_DIALOG */
-    if (!(hres = FindResource( hInst, dlgTemplate, MAKEINTRESOURCE(0x8005) )))
-	return 0;
-    if (!(hmem = LoadResource( hInst, hres ))) return 0;
+    if (!(hRsrc = FindResource( hInst, dlgTemplate, RT_DIALOG ))) return 0;
+    if (!(hmem = LoadResource( hInst, hRsrc ))) return 0;
     if (!(data = LockResource( hmem ))) hwnd = 0;
     else hwnd = CreateDialogIndirectParam(hInst, data, owner, dlgProc, param);
     FreeResource( hmem );

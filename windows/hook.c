@@ -12,7 +12,6 @@
 #include "hook.h"
 #include "user.h"
 
-
 HHOOK systemHooks[LAST_HOOK-FIRST_HOOK+1] = { 0, };
 
   /* Task-specific hooks should probably be in the task structure */
@@ -23,18 +22,49 @@ HHOOK taskHooks[LAST_HOOK-FIRST_HOOK+1] = { 0, };
 /***********************************************************************
  *           SetWindowsHook   (USER.121)
  */
-HHOOK SetWindowsHook( short id, HOOKPROC proc )
+FARPROC SetWindowsHook( short id, HOOKPROC proc )
 {
-    return SetWindowsHookEx( id, proc, 0, 0 );
+  HHOOK hhook = SetWindowsHookEx( id, proc, 0, 0 );
+  HOOKDATA *data = PTR_SEG_TO_LIN(hhook);
+  if (data != NULL)  {
+    data = PTR_SEG_TO_LIN(data->next);
+    if (data != NULL)  {
+      return data->proc;
+    }
+  }
+  return 0;
 }
 
 
 /***********************************************************************
  *           UnhookWindowsHook   (USER.234)
  */
-BOOL UnhookWindowsHook( short id, HHOOK hhook )
+BOOL UnhookWindowsHook( short id, FARPROC hproc )
 {
-    return UnhookWindowsHookEx( hhook );
+  HHOOK *prevHook,hhook;
+  
+  prevHook = &TASK_HOOK(id);
+  while (*prevHook)  {
+    HOOKDATA *data = (HOOKDATA *)PTR_SEG_TO_LIN(*prevHook);
+
+    if (data->proc == hproc) {
+      hhook = *prevHook;
+      *prevHook = data->next;
+      USER_HEAP_FREE(LOWORD(hhook));
+      return TRUE;
+    }
+  }
+  prevHook = &SYSTEM_HOOK(id);
+  while (*prevHook) {
+    HOOKDATA *data = (HOOKDATA *)PTR_SEG_TO_LIN(*prevHook);
+    if (data->proc == hproc) {
+      hhook = *prevHook;
+      *prevHook = data->next;
+      USER_HEAP_FREE(LOWORD(hhook));
+      return TRUE;
+    }
+  }
+  return FALSE;
 }
 
 
@@ -101,8 +131,9 @@ BOOL UnhookWindowsHookEx( HHOOK hhook )
 
     if (!data) return FALSE;
     prevHook = data->htask ? &TASK_HOOK(data->id) : &SYSTEM_HOOK(data->id);
-    while (*prevHook && (*prevHook != hhook))
+    while (*prevHook && (*prevHook != hhook)) {    
 	prevHook = &((HOOKDATA *)*prevHook)->next;
+    }
     if (!*prevHook) return FALSE;
     *prevHook = data->next;
     USER_HEAP_FREE( hhook & 0xffff );

@@ -957,3 +957,11 @@ void DOS_closedir(struct dosdirent *de)
 		de->inuse = 0;
 	}
 }
+
+char *DOS_GetRedirectedDir(int drive)
+{
+    if(DOS_ValidDrive(drive))
+        return (DosDrives[drive].rootdir);
+    else
+        return ("/");
+}

@@ -1,4 +1,163 @@
 ----------------------------------------------------------------------
+Sat Apr 29 20:42:01 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
+
+	* [controls/static.c]
+	Fixed painting of SS_*FRAME controls.
+
+	* [if1632/callback.c]
+	Pass the window instance as DS to the 16-bit window procedure.
+	Rewrote Catch() and Throw() to make them work with multiple tasks.
+
+	* [loader/main.c]
+	New function MAIN_Init() to perform initializations before the
+	first task is started instead of doing them in InitApp().
+	Temporary hack to command-line parsing to load one program per
+	command-line argument, to make testing task-switching easier.
+
+	* [loader/*.c]
+	Reimplemented modules to use a Windows-compatible layout and to
+	allow multiple tasks and multiple module instances. Not really
+	finished yet.
+
+	* [loader/task.c] [misc/exec.c]
+	Reimplemented tasks to use a common address space, and implemented
+	preliminary task-switching capabilities.
+
+	* [memory/global.c]
+	Fixed bug in GlobalNext().
+
+	* [misc/main.c]
+	Updated the list of contributors. Let me know if I forgot someone.
+
+	* [miscemu/int21.c]
+	Use one DTA per task instead of a global one.
+
+	* [objects/bitblt.c]
+	Fixed bug in BitBlt() that could cause BadMatch errors.
+
+	* [tools/build.c]
+	Added new function type 'stub', that makes possible to export an
+	unimplemented function by name as well as by ordinal. This will
+	avoid loading errors for unimplemented functions.
+	Generate an in-memory module layout for built-in DLLs so that the
+	same code can be used for built-in and loaded modules.
+	Changed relay code to make it unnecessary to save the value of the
+	BP register.
+
+	* [windows/message.c]
+	Implemented multiple message queues and preliminary task-switching
+	capabilities. Inter-task SendMessage() calls are not implemented
+	yet and will probably cause crashes if used.
+
+	* [windows/property.c]
+	Reimplemented properties and allocate them on the USER heap.
+
+	* [windows/win.c]
+	Fixed bug in SetWindowWord().
+	Reimplemented EnumWindows() and EnumTaskWindows().
+
+Tue Apr 18 09:48:38 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+        
+	* [misc/main.c]
+	GetSystemParametersInfo(): Additional action SPI_GETICONTITLEFONT.
+	
+	* [loader/resource.c]
+	Removed the check for NE_SEGFLAGS_EXECUTEONLY, since it broke
+	control.exe.
+	Fixed icon loading.
+	
+	* [objects/font.c] [include/windows.h]
+	Fixed a bug in InitFontsList() and worked on the EnumFonts()
+	functions to make them comprehensible.
+
+        * [controls/button.c]
+	Fixed my previous patch to handle LBUTTONUP messages.
+
+Fri Apr 14 11:41:28 1995  Cameron Heide  (heide@ee.ualberta.ca)
+
+        * [misc/network.c, misc/dos_fs.c]
+        Implemented WNetGetConnection.  All that is currently
+        supported are drives, for which the remote name is simply
+        the redirected UNIX directory name.
+
+        * [miscemu/int2?.c]
+        More drive number validity checking.
+
+Wed Apr 12 11:28:37 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+        
+        * [controls/listbox.c]
+	Oops, my previous change to ListBoxDirectory broke the Borland
+	file open dialog. Fixed.
+
+Mon Apr 10 23:17:12 1995  Martin von Loewis  <loewis@informatik.hu-berlin.de>
+
+	* [if1632/ole2nls.spec] [misc/ole2nls.c] [misc/Imakefile]
+	New file ole2nls.c. Added stubs for GetUserDefaultLCID, 
+	GetSystemDefaultLCID, GetUserDefaultLangID, GetSystemDefaultLangID.
+
+Mon Apr 10 10:05:18 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+        
+	* [memory/global.c] [memory/local.c] [include/windows.h]
+	GlobalReAlloc(): If GMEM_MODIFY is set, don't resize the block.
+	LocalReAlloc(): Same for LMEM_MODIFY.
+	
+        * [controls/listbox.c]
+	Fixed a bug in ListBoxDirectory that prevented commdlg from working.
+	Check for errors in some more places.
+
+        * [if1632/gdi.spec] [if1632/user.spec]
+	16 bit callback functions should be passed as segptrs.
+	
+	* [include/dlls.h] [loader/ne_image.c] [loader/selector.c]
+	[loader/library.c]
+	Prevent a DLL from being initialized twice (Borlands Resource
+	Workshop used to do this).
+	Provide an additional flag for each w_file that indicates whether
+	it's an EXE or a DLL, for combinations like pbrush.exe/.dll.
+	
+	* [controls/button.c]
+	Handle LBUTTONUP messages even if the button no longer has the
+	capture (for WinHelp).
+	
+	* [include/wintypes.h]
+	FARPROC is now a segptr for the emulator and a function
+	pointer for the library.
+	
+	* [misc/commdlg.c] [misc/commdlg.h]
+	Cleaned the file dialogs up a little. They now work reasonably well,
+	although there are still some problems (e.g. files are initially
+        invisible).
+
+	* [windows/class.c] [if1632/user.spec] [include/windows.h]
+	GetClassInfo() must take a segptr, as it checks whether the
+	highword is zero.
+	GetClassName() called the wrong atom function. No surprise it didn't
+        find anything.
+
+	* [misc/lstr.c]
+	AnsiToOem() and OemToAnsi() didn't terminate the strings. Fixed.
+        Removed some warnings.
+
+	* [if1632/relay.c] [if1632/ddeml.spec] [include/dlls.h]
+	New spec file for the 3.1 DDEML DDL. 
+
+	* [controls/menu.c]
+	Small fix to ChangeMenu - mask out the obsolete flags
+	(MF_APPEND == MF_OWNERDRAW, this led to problems). It also had
+	problems with the MF_BYPOSITION flag.
+
+        * [windows/message.c]
+        SendMessage(): call the WH_CALLWNDPROC hook function. This is rather
+        ugly, I'm afraid. Windows probably passes a pointer to the 16 bit
+        stack for speed reasons.
+	
+        * [windows/hook.c] [include/windows.h]
+        Set/HookWindowsHook() shouldn't just call their *Ex counterparts, as
+        they have slightly different semantics.
+        MS Hearts now works somewhat, if you disable the new builtin DDEML.
+        The graphics are completely messed up, though.
+
+----------------------------------------------------------------------
 Sun Apr  2 18:31:12 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
 
 	* [Configure] [if1632/Imakefile]

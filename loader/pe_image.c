@@ -198,12 +198,6 @@ int PE_UnloadImage(struct w_files *wpnt)
 	return 1;
 }
 
-int PE_StartProgram(struct w_files *wpnt)
-{
-	printf("StartPEprogram() called!\n");
-	return 0;
-}
-
 void PE_InitDLL(struct w_files *wpnt)
 {
 	/* Is this a library? */

@@ -26,13 +26,3 @@ void KERNEL_InitTask( struct sigcontext_struct context )
     context.sc_edi = context.sc_ds;
 }
 
-/**********************************************************************
- *					KERNEL_WaitEvent
- */
-int
-KERNEL_WaitEvent(int task)
-{
-    if (debugging_relay)
-    	fprintf(stddeb,"WaitEvent: task %d\n", task);
-    return 0;
-}

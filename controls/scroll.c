@@ -99,6 +99,7 @@ static SCROLLINFO *SCROLL_GetScrollInfo( HWND hwnd, int nBar )
     HANDLE handle;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
 
+    if (!wndPtr) return NULL;
     switch(nBar)
     {
         case SB_HORZ: handle = wndPtr->hHScroll; break;
@@ -588,7 +589,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
         if (hittest == trackHitTest)
         {
             SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
+                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                            (FARPROC)0 );
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_LINEUP, MAKELONG( 0, hwndCtl ));
@@ -603,7 +605,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
         if (hittest == trackHitTest)
         {
             SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
+                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                            (FARPROC)0 );
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_PAGEUP, MAKELONG( 0, hwndCtl ));
@@ -646,7 +649,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
         if (hittest == trackHitTest)
         {
             SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
+                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                            (FARPROC)0 );
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_PAGEDOWN, MAKELONG( 0, hwndCtl ));
@@ -660,7 +664,8 @@ void SCROLL_HandleScrollEvent( HWND hwnd, int nBar, WORD msg, POINT pt )
         if (hittest == trackHitTest)
         {
             SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
-                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY, NULL );
+                            SCROLL_FIRST_DELAY : SCROLL_REPEAT_DELAY,
+                            (FARPROC)0 );
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
                 SendMessage( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                              SB_LINEDOWN, MAKELONG( 0, hwndCtl ));

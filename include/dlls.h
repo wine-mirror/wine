@@ -11,22 +11,9 @@
 
 #define MAX_NAME_LENGTH		64
 
-typedef struct resource_name_table
-{
-    struct resource_name_table *next;
-    unsigned short type_ord;
-    unsigned short id_ord;
-    char id[MAX_NAME_LENGTH];
-} RESNAMTAB;
 
 struct ne_data {
     struct ne_header_s *ne_header;
-    struct ne_segment_table_entry_s *seg_table;
-    unsigned short *selector_table;
-    char *lookup_table;
-    char *nrname_table;
-    char *rname_table;
-    RESNAMTAB *resnamtab;
 };
 
 struct pe_data {
@@ -43,8 +30,10 @@ struct w_files
     struct w_files  * next;
     char * name;   /* Name, as it appears in the windows binaries */
     char * filename; /* Actual name of the unix file that satisfies this */
+    int type;        /* DLL or EXE */
     int fd;
     unsigned short hinstance;
+    HANDLE hModule;
     int initialised;
     struct mz_header_s *mz_header;
     struct ne_data *ne;
@@ -59,12 +48,6 @@ extern struct  w_files *wine_files;
 struct dll_table_entry_s
 {
     /*
-     * Relocation data
-     */
-    WORD selector;  /* Selector of entry point */
-    WORD offset;    /* Offset in segment of entry point */
-
-    /*
      * 16->32 bit interface data
      */
     char *export_name;
@@ -78,10 +61,11 @@ struct dll_table_s
     struct dll_table_entry_s *dll_table;
     int dll_table_length;
     int dll_number;
-    void *code_start;  /* 32-bit address of DLL code */
-    void *code_end;
-    void *data_start;  /* 32-bit address of DLL data */
-    void *data_end;
+    BYTE *code_start;    /* 32-bit address of DLL code */
+    BYTE *data_start;    /* 32-bit address of DLL data */
+    BYTE *module_start;  /* 32-bit address of the module data */
+    BYTE *module_end;
+    HMODULE hModule;
 };
 
 struct dll_name_table_entry_s
@@ -115,8 +99,9 @@ extern struct dll_table_s OLESVR_table;
 extern struct dll_table_s COMPOBJ_table;
 extern struct dll_table_s STORAGE_table;
 extern struct dll_table_s WINPROCS_table;
+extern struct dll_table_s DDEML_table;
 
-#define N_BUILTINS	24
+#define N_BUILTINS	25
 
 #endif /* DLLS_H */
 

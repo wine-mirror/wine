@@ -5,8 +5,11 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <stdio.h>
 #include <stdlib.h>
 #include "atom.h"
+#include "comm.h"
 #include "gdi.h"
+#include "desktop.h"
 #include "dlls.h"
+#include "dos_fs.h"
 #include "sysmetrics.h"
 #include "menu.h"
 #include "dce.h"
@@ -74,7 +77,7 @@ BOOL SystemHeapInfo( SYSHEAPINFO *pHeapInfo )
 /***********************************************************************
  *           USER_HeapInit
  */
-static BOOL USER_HeapInit(void)
+BOOL USER_HeapInit(void)
 {
     if (!(USER_HeapSel = GlobalAlloc(GMEM_FIXED,USER_HEAP_SIZE))) return FALSE;
     USER_Heap = GlobalLock( USER_HeapSel );
@@ -83,55 +86,17 @@ static BOOL USER_HeapInit(void)
 }
 #endif
 
+
 /**********************************************************************
  *					USER_InitApp
- *
- * Load necessary resources?
  */
-int
-USER_InitApp(int hInstance)
+int USER_InitApp(int hInstance)
 {
     int queueSize;
-
-    SpyInit();
-
-#ifndef WINELIB    
-      /* Create USER heap */
-    if (!USER_HeapInit()) return 0;
-#endif
-    
-      /* Global atom table initialisation */
-    if (!ATOM_Init()) return 0;
-    
-      /* GDI initialisation */
-    if (!GDI_Init()) return 0;
-
-      /* Initialize system colors and metrics*/
-    SYSMETRICS_Init();
-    SYSCOLOR_Init();
-
-      /* Create the DCEs */
-    DCE_Init();
-    
-      /* Initialize built-in window classes */
-    if (!WIDGETS_Init()) return 0;
-
-      /* Initialize dialog manager */
-    if (!DIALOG_Init()) return 0;
-
-      /* Initialize menus */
-    if (!MENU_Init()) return 0;
-
-      /* Create system message queue */
-    queueSize = GetProfileInt( "windows", "TypeAhead", 120 );
-    if (!MSG_CreateSysMsgQueue( queueSize )) return 0;
 
       /* Create task message queue */
     queueSize = GetProfileInt( "windows", "DefaultQueueSize", 8 );
     if (!SetMessageQueue( queueSize )) return 0;
-
-      /* Create desktop window */
-    if (!WIN_CreateDesktopWindow()) return 0;
 
 #ifndef WINELIB
     /* Initialize DLLs */

@@ -35,7 +35,7 @@ typedef struct tagWND
     RECT         rectNormal;     /* Window rect. when in normal state */
     POINT        ptIconPos;      /* Icon position */
     POINT        ptMaxPos;       /* Maximized window position */
-    HANDLE       hmemTaskQ;      /* Task queue global memory handle */
+    HGLOBAL      hmemTaskQ;      /* Task queue global memory handle */
     HRGN         hrgnUpdate;     /* Update region */
     HWND         hwndPrevActive; /* Previous active top-level window */
     HWND         hwndLastActive; /* Last active popup hwnd */
@@ -51,7 +51,6 @@ typedef struct tagWND
     Window       window;         /* X window (only for top-level windows) */
     HMENU        hSysMenu;	 /* window's copy of System Menu */
     HANDLE       hProp;          /* Handle of Properties List */
-    HTASK        hTask;          /* Task Handle of the owner */
     WORD         wExtra[1];      /* Window extra bytes */
 } WND;
 

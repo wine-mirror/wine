@@ -38,10 +38,6 @@ extern BOOL TIMER_CheckTimer( LONG *next, MSG *msg,
 static HANDLE hmemSysMsgQueue = 0;
 static MESSAGEQUEUE * sysMsgQueue = NULL;
 
-  /* Application message queue (should be a list, one queue per task) */
-static HANDLE hmemAppMsgQueue = 0;
-static MESSAGEQUEUE * appMsgQueue = NULL;
-
   /* Double-click time */
 static int doubleClickSpeed = 452;
 
@@ -108,11 +104,12 @@ BOOL MSG_CreateSysMsgQueue( int size )
  *
  * Add a message to the queue. Return FALSE if queue is full.
  */
-static int MSG_AddMsg( MESSAGEQUEUE * msgQueue, MSG * msg, DWORD extraInfo )
+static int MSG_AddMsg( HANDLE hQueue, MSG * msg, DWORD extraInfo )
 {
     int pos;
-  
-    if (!msgQueue) return FALSE;
+    MESSAGEQUEUE *msgQueue;
+
+    if (!(msgQueue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return FALSE;
     pos = msgQueue->nextFreeMessage;
 
       /* Check if queue is full */
@@ -379,6 +376,8 @@ static BOOL MSG_PeekHardwareMsg( MSG *msg, HWND hwnd, WORD first, WORD last,
         if (hwnd && (msg->hwnd != hwnd)) continue;
         if ((first || last) && 
             ((msg->message < first) || (msg->message > last))) continue;
+        if (GetWindowTask(msg->hwnd) != GetCurrentTask())
+            continue;  /* Not for this task */
         if (remove) MSG_RemoveMsg( sysMsgQueue, pos );
         return TRUE;
     }
@@ -412,10 +411,12 @@ WORD GetDoubleClickTime()
  */
 void MSG_IncPaintCount( HANDLE hQueue )
 {
-    if (hQueue != hmemAppMsgQueue) return;
-    appMsgQueue->wPaintCount++;
-    appMsgQueue->status |= QS_PAINT;
-    appMsgQueue->tempStatus |= QS_PAINT;    
+    MESSAGEQUEUE *queue;
+
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return;
+    queue->wPaintCount++;
+    queue->status |= QS_PAINT;
+    queue->tempStatus |= QS_PAINT;    
 }
 
 
@@ -424,9 +425,11 @@ void MSG_IncPaintCount( HANDLE hQueue )
  */
 void MSG_DecPaintCount( HANDLE hQueue )
 {
-    if (hQueue != hmemAppMsgQueue) return;
-    appMsgQueue->wPaintCount--;
-    if (!appMsgQueue->wPaintCount) appMsgQueue->status &= ~QS_PAINT;
+    MESSAGEQUEUE *queue;
+
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return;
+    queue->wPaintCount--;
+    if (!queue->wPaintCount) queue->status &= ~QS_PAINT;
 }
 
 
@@ -435,10 +438,12 @@ void MSG_DecPaintCount( HANDLE hQueue )
  */
 void MSG_IncTimerCount( HANDLE hQueue )
 {
-    if (hQueue != hmemAppMsgQueue) return;
-    appMsgQueue->wTimerCount++;
-    appMsgQueue->status |= QS_TIMER;
-    appMsgQueue->tempStatus |= QS_TIMER;
+    MESSAGEQUEUE *queue;
+
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return;
+    queue->wTimerCount++;
+    queue->status |= QS_TIMER;
+    queue->tempStatus |= QS_TIMER;
 }
 
 
@@ -447,9 +452,11 @@ void MSG_IncTimerCount( HANDLE hQueue )
  */
 void MSG_DecTimerCount( HANDLE hQueue )
 {
-    if (hQueue != hmemAppMsgQueue) return;
-    appMsgQueue->wTimerCount--;
-    if (!appMsgQueue->wTimerCount) appMsgQueue->status &= ~QS_TIMER;
+    MESSAGEQUEUE *queue;
+
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock( hQueue ))) return;
+    queue->wTimerCount--;
+    if (!queue->wTimerCount) queue->status &= ~QS_TIMER;
 }
 
 
@@ -537,31 +544,12 @@ BOOL MSG_GetHardwareMessage( LPMSG msg )
 
 
 /***********************************************************************
- *           SetTaskQueue  (KERNEL.34)
- */
-WORD SetTaskQueue( HANDLE hTask, HANDLE hQueue )
-{
-    HANDLE prev = hmemAppMsgQueue;
-    hmemAppMsgQueue = hQueue;
-    return prev;
-}
-
-
-/***********************************************************************
- *           GetTaskQueue  (KERNEL.35)
- */
-WORD GetTaskQueue( HANDLE hTask )
-{
-    return hmemAppMsgQueue;
-}
-
-
-/***********************************************************************
  *           SetMessageQueue  (USER.266)
  */
 BOOL SetMessageQueue( int size )
 {
-    HANDLE hQueue;
+    HGLOBAL hQueue;
+    MESSAGEQUEUE *queuePtr;
 
     if ((size > MAX_QUEUE_SIZE) || (size <= 0)) return TRUE;
 
@@ -573,9 +561,25 @@ BOOL SetMessageQueue( int size )
     }
   
     if (!(hQueue = MSG_CreateMsgQueue( size ))) return FALSE;
+    queuePtr = (MESSAGEQUEUE *)GlobalLock( hQueue );
+    queuePtr->hTask = GetCurrentTask();
     SetTaskQueue( 0, hQueue );
-    appMsgQueue = (MESSAGEQUEUE *)GlobalLock( hQueue );
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetWindowTask  (USER.224)
+ */
+HTASK GetWindowTask( HWND hwnd )
+{
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    MESSAGEQUEUE *queuePtr;
+
+    if (!wndPtr) return 0;
+    queuePtr = (MESSAGEQUEUE *)GlobalLock( wndPtr->hmemTaskQ );
+    if (!queuePtr) return 0;
+    return queuePtr->hTask;
 }
 
 
@@ -584,9 +588,11 @@ BOOL SetMessageQueue( int size )
  */
 void PostQuitMessage( int exitCode )
 {
-    if (!appMsgQueue) return;
-    appMsgQueue->wPostQMsg = TRUE;
-    appMsgQueue->wExitCode = exitCode;
+    MESSAGEQUEUE *queue;
+
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return;
+    queue->wPostQMsg = TRUE;
+    queue->wExitCode = exitCode;
 }
 
 
@@ -595,9 +601,13 @@ void PostQuitMessage( int exitCode )
  */
 DWORD GetQueueStatus( int flags )
 {
-    unsigned long ret = (appMsgQueue->status << 16) | appMsgQueue->tempStatus;
-    appMsgQueue->tempStatus = 0;
-    return ret & ((flags << 16) | flags);
+    MESSAGEQUEUE *queue;
+    DWORD ret;
+
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
+    ret = MAKELONG( queue->tempStatus, queue->status );
+    queue->tempStatus = 0;
+    return ret & MAKELONG( flags, flags );
 }
 
 
@@ -606,7 +616,10 @@ DWORD GetQueueStatus( int flags )
  */
 BOOL GetInputState()
 {
-    return appMsgQueue->status & (QS_KEY | QS_MOUSEBUTTON);
+    MESSAGEQUEUE *queue;
+
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return FALSE;
+    return queue->status & (QS_KEY | QS_MOUSEBUTTON);
 }
 
 
@@ -666,10 +679,11 @@ BOOL MSG_WaitXEvent( LONG maxWait )
 /***********************************************************************
  *           MSG_PeekMessage
  */
-static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
-			     WORD first, WORD last, WORD flags, BOOL peek )
+static BOOL MSG_PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last,
+                             WORD flags, BOOL peek )
 {
     int pos, mask;
+    MESSAGEQUEUE *msgQueue;
     LONG nextExp;  /* Next timer expiration time */
 
     if (first || last)
@@ -685,6 +699,9 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 
     while(1)
     {    
+        msgQueue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) );
+        if (!msgQueue) return FALSE;
+
 	  /* First handle a message put by SendMessage() */
 	if (msgQueue->status & QS_SENDMESSAGE)
 	{
@@ -755,6 +772,8 @@ static BOOL MSG_PeekMessage( MESSAGEQUEUE * msgQueue, LPMSG msg, HWND hwnd,
 	}
 	else nextExp = -1;  /* No timeout needed */
 
+        Yield();
+
 	  /* Wait until something happens */
         if (peek)
         {
@@ -785,17 +804,17 @@ BOOL MSG_InternalGetMessage( SEGPTR msg, HWND hwnd, HWND hwndOwner, short code,
     {
 	if (sendIdle)
 	{
-	    if (!MSG_PeekMessage( appMsgQueue, (MSG *)PTR_SEG_TO_LIN(msg),
+	    if (!MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
                                   0, 0, 0, flags, TRUE ))
 	    {
 		  /* No message present -> send ENTERIDLE and wait */
 		SendMessage( hwndOwner, WM_ENTERIDLE, code, (LPARAM)hwnd );
-		MSG_PeekMessage( appMsgQueue, (MSG *)PTR_SEG_TO_LIN(msg),
+		MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
                                  0, 0, 0, flags, FALSE );
 	    }
 	}
 	else  /* Always wait for a message */
-	    MSG_PeekMessage( appMsgQueue, (MSG *)PTR_SEG_TO_LIN(msg),
+	    MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
                              0, 0, 0, flags, FALSE );
 
 	if (!CallMsgFilter( msg, code ))
@@ -804,7 +823,7 @@ BOOL MSG_InternalGetMessage( SEGPTR msg, HWND hwnd, HWND hwndOwner, short code,
 	  /* Message filtered -> remove it from the queue */
 	  /* if it's still there. */
 	if (!(flags & PM_REMOVE))
-	    MSG_PeekMessage( appMsgQueue, (MSG *)PTR_SEG_TO_LIN(msg),
+	    MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
                              0, 0, 0, PM_REMOVE, TRUE );
     }
 }
@@ -815,7 +834,7 @@ BOOL MSG_InternalGetMessage( SEGPTR msg, HWND hwnd, HWND hwndOwner, short code,
  */
 BOOL PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last, WORD flags )
 {
-    return MSG_PeekMessage( appMsgQueue, msg, hwnd, first, last, flags, TRUE );
+    return MSG_PeekMessage( msg, hwnd, first, last, flags, TRUE );
 }
 
 
@@ -824,7 +843,7 @@ BOOL PeekMessage( LPMSG msg, HWND hwnd, WORD first, WORD last, WORD flags )
  */
 BOOL GetMessage( SEGPTR msg, HWND hwnd, WORD first, WORD last ) 
 {
-    MSG_PeekMessage( appMsgQueue, (MSG *)PTR_SEG_TO_LIN(msg),
+    MSG_PeekMessage( (MSG *)PTR_SEG_TO_LIN(msg),
                      hwnd, first, last, PM_REMOVE, FALSE );
     CALL_SYSTEM_HOOK( WH_GETMESSAGE, 0, 0, (LPARAM)msg );
     CALL_TASK_HOOK( WH_GETMESSAGE, 0, 0, (LPARAM)msg );
@@ -841,7 +860,7 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     MSG 	msg;
     WND 	*wndPtr;
 
-	if (hwnd == HWND_BROADCAST) {
+    if (hwnd == HWND_BROADCAST) {
 	    dprintf_msg(stddeb,"PostMessage // HWND_BROADCAST !\n");
 	    hwnd = GetTopWindow(GetDesktopWindow());
 	    while (hwnd) {
@@ -872,7 +891,7 @@ BOOL PostMessage( HWND hwnd, WORD message, WORD wParam, LONG lParam )
     msg.pt.x    = 0;
     msg.pt.y    = 0;
 
-    return MSG_AddMsg( appMsgQueue, &msg, 0 );
+    return MSG_AddMsg( wndPtr->hmemTaskQ, &msg, 0 );
 }
 
 
@@ -886,10 +905,32 @@ LONG SendMessage( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 
     wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
-    ret = CallWindowProc( wndPtr->lpfnWndProc, hwnd, msg, wParam, lParam );
-    dprintf_msg( stddeb,"SendMessage(%4.4x,%x,%x,%lx) -> %lx\n",
-		 hwnd, msg, wParam, lParam, ret );
-	return ret;
+    else {
+      /* Argh. This is inefficient. */
+      typedef struct {
+	LONG lParam;
+	WORD wParam;
+	WORD wMsg;
+	WORD hWnd;
+      } msgstruct;
+      HANDLE msgh    = GlobalAlloc(0,sizeof(msgstruct));
+      SEGPTR segmsg  = WIN16_GlobalLock(msgh);
+      msgstruct *Msg = PTR_SEG_TO_LIN(segmsg);
+    
+      Msg->hWnd    = hwnd;
+      Msg->wMsg    = msg;
+      Msg->wParam  = wParam;
+      Msg->lParam  = lParam;
+      CALL_SYSTEM_HOOK( WH_CALLWNDPROC, 0, 0, (LPARAM)segmsg );
+      CALL_TASK_HOOK( WH_CALLWNDPROC, 0, 0, (LPARAM)segmsg );
+      ret = CallWindowProc( wndPtr->lpfnWndProc, Msg->hWnd, Msg->wMsg, Msg->wParam,
+			   Msg->lParam );
+      GlobalUnlock(msgh);
+      GlobalFree(msgh);
+      dprintf_msg( stddeb,"SendMessage(%4.4x,%x,%x,%lx) -> %lx\n",
+		  hwnd, msg, wParam, lParam, ret );
+      return ret;
+    }
 }
 
 
@@ -899,13 +940,15 @@ LONG SendMessage( HWND hwnd, WORD msg, WORD wParam, LONG lParam )
 void WaitMessage( void )
 {
     MSG msg;
+    MESSAGEQUEUE *queue;
     LONG nextExp = -1;  /* Next timer expiration time */
 
-    if ((appMsgQueue->wPostQMsg) || 
-        (appMsgQueue->status & (QS_SENDMESSAGE | QS_PAINT)) ||
-        (appMsgQueue->msgCount) || (sysMsgQueue->msgCount) )
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return;
+    if ((queue->wPostQMsg) || 
+        (queue->status & (QS_SENDMESSAGE | QS_PAINT)) ||
+        (queue->msgCount) || (sysMsgQueue->msgCount) )
         return;
-    if ((appMsgQueue->status & QS_TIMER) && 
+    if ((queue->status & QS_TIMER) && 
         TIMER_CheckTimer( &nextExp, &msg, 0, FALSE))
         return;
     MSG_WaitXEvent( nextExp );
@@ -973,7 +1016,10 @@ LONG DispatchMessage( LPMSG msg )
  */
 DWORD GetMessagePos(void)
 {
-    return appMsgQueue->GetMessagePosVal;
+    MESSAGEQUEUE *queue;
+
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
+    return queue->GetMessagePosVal;
 }
 
 
@@ -982,7 +1028,10 @@ DWORD GetMessagePos(void)
  */
 LONG GetMessageTime(void)
 {
-    return appMsgQueue->GetMessageTimeVal;
+    MESSAGEQUEUE *queue;
+
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
+    return queue->GetMessageTimeVal;
 }
 
 
@@ -991,7 +1040,10 @@ LONG GetMessageTime(void)
  */
 LONG GetMessageExtraInfo(void)
 {
-    return appMsgQueue->GetMessageExtraInfoVal;
+    MESSAGEQUEUE *queue;
+
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock( GetTaskQueue(0) ))) return 0;
+    return queue->GetMessageExtraInfoVal;
 }
 
 

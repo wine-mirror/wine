@@ -1,11 +1,10 @@
 name	mouse
 id	13
-length	8
 
-#1 pascal INQUIRE
-#2 pascal ENABLE
-#3 pascal DISABLE
-#4 pascal MOUSEGETINTVECT
-#5 pascal GETSETMOUSEDATA
-#6 pascal CPLAPPLET
-#7 pascal POWEREVENTPROC
+1 stub INQUIRE
+2 stub ENABLE
+3 stub DISABLE
+4 stub MOUSEGETINTVECT
+5 stub GETSETMOUSEDATA
+6 stub CPLAPPLET
+7 stub POWEREVENTPROC

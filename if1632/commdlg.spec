@@ -1,8 +1,5 @@
-# $Id: commdlg.spec,v 1.3 1994/20/08 04:04:21 root Exp root $
-#
 name	commdlg
 id	14
-length	31
 
   1   pascal  GETOPENFILENAME(ptr) GetOpenFileName
   2   pascal  GETSAVEFILENAME(ptr) GetSaveFileName

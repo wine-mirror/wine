@@ -258,43 +258,44 @@ int GetClassName(HWND hwnd, LPSTR lpClassName, short maxCount)
     CLASS *classPtr;
 
     /* FIXME: We have the find the correct hInstance */
-    dprintf_class(stddeb,"GetClassName(%x,%p,%d\n)",hwnd,lpClassName,maxCount);
+    dprintf_class(stddeb,"GetClassName(%x,%p,%d)\n",hwnd,lpClassName,maxCount);
     if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
     if (!(classPtr = CLASS_FindClassPtr(wndPtr->hClass))) return 0;
-
-    return (GetAtomName(classPtr->atomName, lpClassName, maxCount));
+    
+    return GlobalGetAtomName(classPtr->atomName, lpClassName, maxCount);
 }
 
 
 /***********************************************************************
  *           GetClassInfo      (USER.404)
  */
-BOOL GetClassInfo(HANDLE hInstance, LPSTR lpClassName, 
+BOOL GetClassInfo(HANDLE hInstance, SEGPTR ClassName, 
 		                    LPWNDCLASS lpWndClass)
 {
     CLASS *classPtr;
-
-    if (HIWORD(lpClassName))
-    {
-        dprintf_class(stddeb, "GetClassInfo   hInstance=%04x  lpClassName=%s\n",
-            hInstance, lpClassName);
+    LPSTR lpClassName = 0;
+    char  temp[10];
+    if (HIWORD(ClassName)) {
+      lpClassName = PTR_SEG_TO_LIN(ClassName);
+    } else  {
+      sprintf(temp,"#%d",(int)LOWORD(ClassName));
+      lpClassName = temp;
     }
-    else
-       dprintf_class(stddeb, "GetClassInfo   hInstance=%04x  lpClassName=#%d\n",
-            hInstance, (int)lpClassName);    
+    dprintf_class(stddeb, "GetClassInfo   hInstance=%04x  lpClassName=%s\n",
+		  hInstance, lpClassName);
 
 
     /* if (!(CLASS_FindClassByName(lpClassName, &classPtr))) return FALSE; */
     if (!(CLASS_FindClassByName(lpClassName, hInstance, &classPtr)))
     {
-        if (!HIWORD(lpClassName))
+/*        if (!HIWORD(lpClassName))
         {
             char temp[10];
             sprintf(temp, "#%d", (int)lpClassName);
-            if (!(CLASS_FindClassByName(temp, hInstance, &classPtr))) return FALSE;        
-    
+            if (!(CLASS_FindClassByName(temp, hInstance, &classPtr))) return FALSE;
+
         }
-        else return FALSE;
+        else */return FALSE;
     }
 
     if (hInstance && (hInstance != classPtr->wc.hInstance)) return FALSE;
