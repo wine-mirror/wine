@@ -101,7 +101,7 @@ BOOL WINAPI DdePostAdvise(DWORD idInst, HSZ hszTopic, HSZ hszItem)
 	if (DdeCmpStringHandles(hszItem, pLink->hszItem) == 0)
 	{
 	    hDdeData = WDML_InvokeCallback(pInstance, XTYP_ADVREQ, pLink->uFmt, pLink->hConv,
-					   hszTopic, hszItem, 0, 0, 0);
+					   hszTopic, hszItem, 0, --count, 0);
 
 	    if (hDdeData == (HDDEDATA)CBR_BLOCK)
 	    {
@@ -581,10 +581,10 @@ static	WDML_QUEUE_STATE WDML_ServerHandleRequest(WDML_CONV* pConv, WDML_XACT* pX
 	break;
     default:
         {
-	    HGLOBAL	hMem = WDML_DataHandle2Global(hDdeData, TRUE, TRUE, FALSE, FALSE);
+	    HGLOBAL	hMem = WDML_DataHandle2Global(hDdeData, TRUE, FALSE, FALSE, FALSE);
 	    if (!PostMessageA(pConv->hwndClient, WM_DDE_DATA, (WPARAM)pConv->hwndServer,
 			      ReuseDDElParam(pXAct->lParam, WM_DDE_REQUEST, WM_DDE_DATA,
-					     (UINT)hMem, (UINT)pXAct->atom)))
+					     (UINT_PTR)hMem, (UINT_PTR)pXAct->atom)))
 	    {
 		DdeFreeDataHandle(hDdeData);
 		GlobalFree(hMem);
