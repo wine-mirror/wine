@@ -181,10 +181,22 @@ typedef struct
 #define ES_sig(context)      ((context)->sc_es)
 #define SS_sig(context)      ((context)->sc_ss)
                             
-#ifdef linux
 /* FS and GS are now in the sigcontext struct of FreeBSD, but not 
  * saved by the exception handling. duh.
+ * Actually they are in -current (have been for a while), and that
+ * patch now finally has been MFC'd to -stable too (Nov 15 1999).
+ * If you're running a system from the -stable branch older than that,
+ * like a 3.3-RELEASE, grab the patch from the ports tree:
+ * ftp://ftp.freebsd.org/pub/FreeBSD/FreeBSD-current/ports/emulators/wine/files/patch-3.3-sys-fsgs
+ * (If its not yet there when you look, go here:
+ * http://www.jelal.kn-bremen.de/freebsd/ports/emulators/wine/files/ )
  */
+#ifdef __FreeBSD__
+#define FS_sig(context)      ((context)->sc_fs)
+#define GS_sig(context)      ((context)->sc_gs)
+#endif
+
+#ifdef linux
 #define FS_sig(context)      ((context)->sc_fs)
 #define GS_sig(context)      ((context)->sc_gs)
 #define CR2_sig(context)     ((context)->cr2)
