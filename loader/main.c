@@ -251,9 +251,6 @@ BOOL WINAPI MAIN_UserInit(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
     /* Create desktop window */
     if (!WIN_CreateDesktopWindow()) return FALSE;
 
-    /* Install default USER Signal Handler */
-    SetTaskSignalProc( 0, (FARPROC16)USER_SignalProc );
-
     /* Initialize keyboard driver */
     KEYBOARD_Enable( keybd_event, InputKeyStateTable );
 

@@ -10,6 +10,7 @@
 #include "task.h"
 #include "syslevel.h"
 #include "cursoricon.h"
+#include "user.h"
 #include "queue.h"
 #include "debug.h"
 
@@ -321,6 +322,7 @@ CALLOUT_TABLE Callout =
     TranslateMessage16, TranslateMessage,
     DispatchMessage16, DispatchMessageA, DispatchMessageW,
     RedrawWindow16, RedrawWindow,
+    UserSignalProc,
     InitThreadInput16,
     UserYield16,
     CURSORICON_Destroy

@@ -27,6 +27,7 @@
 #include "local.h"
 #include "class.h"
 #include "desktop.h"
+#include "process.h"
 #include "debug.h"
 
 /***********************************************************************
@@ -125,11 +126,18 @@ static void USER_ModuleUnload( HMODULE16 hModule )
 /**********************************************************************
  *           USER_QueueCleanup
  */
-void USER_QueueCleanup( HQUEUE16 hQueue )
+static void USER_QueueCleanup( HQUEUE16 hQueue )
 {
     if ( hQueue )
     {
         WND* desktop = WIN_GetDesktop();
+
+        /* Patch desktop window */
+        if ( desktop->hmemTaskQ == hQueue )
+        {
+            HTASK16 nextTask = TASK_GetNextTask( GetCurrentTask() );
+            desktop->hmemTaskQ = GetTaskQueue16( nextTask );
+        }
 
         /* Patch resident popup menu window */
         MENU_PatchResidentPopup( hQueue, NULL );
@@ -153,27 +161,17 @@ void USER_QueueCleanup( HQUEUE16 hQueue )
 /**********************************************************************
  *           USER_AppExit
  */
-static void USER_AppExit( HTASK16 hTask, HINSTANCE16 hInstance, HQUEUE16 hQueue )
+static void USER_AppExit( HINSTANCE16 hInstance )
 {
     /* FIXME: empty clipboard if needed, maybe destroy menus (Windows
      *	      only complains about them but does nothing);
      */
-
-    WND* desktop = WIN_GetDesktop();
-
-    /* Patch desktop window */
-    if( desktop->hmemTaskQ == hQueue )
-        desktop->hmemTaskQ = GetTaskQueue16(TASK_GetNextTask(hTask));
-                  
-    USER_QueueCleanup(hQueue);
 
     /* ModuleUnload() in "Internals" */
 
     hInstance = GetExePtr( hInstance );
     if( GetModuleUsage16( hInstance ) <= 1 ) 
 	USER_ModuleUnload( hInstance );
-
-    WIN_ReleaseDesktop();
 }
 
 
@@ -202,24 +200,70 @@ void WINAPI USER_SignalProc( HANDLE16 hTaskOrModule, UINT16 uCode,
                              UINT16 uExitFn, HINSTANCE16 hInstance,
                              HQUEUE16 hQueue )
 {
-    switch( uCode )
-    {
-	case USIG_GPF:
-	case USIG_TERMINATION:
-	     USER_AppExit( hTaskOrModule, hInstance, hQueue ); /* task */
-	     break;
-
-	case USIG_DLL_LOAD:
-	     break;
-
-	case USIG_DLL_UNLOAD:
-	     USER_ModuleUnload( hTaskOrModule ); /* module */
-	     break;
-
-	default:
-	     FIXME(msg,"Unimplemented USER signal: %i\n", (int)uCode );
-    }
+    FIXME( win, "Win 3.1 USER signal %04x\n", uCode );
 }
+
+/***********************************************************************
+ *           UserSignalProc     (USER.610) (USER32.559)
+ *
+ * For comments about the meaning of uCode and dwFlags 
+ * see PROCESS_CallUserSignalProc.
+ *
+ */
+WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
+                            DWORD dwFlags, HMODULE16 hModule )
+{
+    HINSTANCE16 hInst;
+
+    /* FIXME: Proper reaction to most signals still missing. */
+
+    switch ( uCode )
+    {
+    case USIG_DLL_UNLOAD_WIN16:
+    case USIG_DLL_UNLOAD_WIN32:
+        USER_ModuleUnload( hModule );
+        break;
+
+    case USIG_DLL_UNLOAD_ORPHANS:
+        break;
+
+    case USIG_FAULT_DIALOG_PUSH:
+    case USIG_FAULT_DIALOG_POP:
+        break;
+
+    case USIG_THREAD_INIT:
+        break;
+
+    case USIG_THREAD_EXIT:
+        USER_QueueCleanup( GetThreadQueue16( dwThreadOrProcessID ) );
+        SetThreadQueue16( dwThreadOrProcessID, 0 );
+        break;
+
+    case USIG_PROCESS_CREATE:
+    case USIG_PROCESS_INIT:
+    case USIG_PROCESS_LOADED:
+    case USIG_PROCESS_RUNNING:
+        break;
+
+    case USIG_PROCESS_EXIT:
+        break;
+
+    case USIG_PROCESS_DESTROY:
+        hInst = GetProcessDword( dwThreadOrProcessID, GPD_HINSTANCE16 );
+        USER_AppExit( hInst );
+        break;
+
+    default:
+        FIXME( win, "(%04x, %08lx, %04lx, %04x)\n",
+                    uCode, dwThreadOrProcessID, dwFlags, hModule );
+        break;
+    }
+
+    /* FIXME: Should chain to GdiSignalProc now. */
+
+    return 0;
+}
+
 
 
 /***********************************************************************

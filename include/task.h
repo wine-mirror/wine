@@ -118,11 +118,11 @@ typedef struct _TDB
 #define TDBF_OS2APP     0x0008
 #define TDBF_WIN32      0x0010
 
-  /* USER signals */
-#define USIG_TERMINATION	0x0020
-#define USIG_DLL_LOAD		0x0040
-#define USIG_DLL_UNLOAD		0x0080
-#define USIG_GPF		0x0666
+  /* Windows 3.1 USER signals */
+#define USIG16_TERMINATION	0x0020
+#define USIG16_DLL_LOAD		0x0040
+#define USIG16_DLL_UNLOAD	0x0080
+#define USIG16_GPF		0x0666
 
 
   /* THHOOK Kernel Data Structure */

@@ -554,31 +554,15 @@ DWORD WINAPI THUNK_GetDCHook( HDC16 hdc, FARPROC16 *phookProc )
  */
 FARPROC16 WINAPI THUNK_SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
 {
-    static FARPROC16 defSignalProc16 = NULL;
+    THUNK *thunk = THUNK_Alloc( proc, (RELAY)CallTo16_word_wwwww );
+    if ( !thunk ) return NULL;
 
-    THUNK *thunk = NULL;
+    thunk = (THUNK*)SetTaskSignalProc( hTask, (FARPROC16)thunk );
+    if ( !thunk ) return NULL;
 
-    if( !defSignalProc16 )
-	defSignalProc16 = NE_GetEntryPoint(GetModuleHandle16("USER"), 314 );
-
-    if( proc == defSignalProc16 )
-	thunk = (THUNK*)SetTaskSignalProc( hTask, (FARPROC16)&USER_SignalProc );
-    else 
-    {
-	thunk = THUNK_Alloc( proc, (RELAY)CallTo16_word_wwwww );
-	if( !thunk ) return FALSE;
-	thunk = (THUNK*)SetTaskSignalProc( hTask, (FARPROC16)thunk );
-    }
-
-    if( thunk != (THUNK*)USER_SignalProc )
-    {
-	if( !thunk ) return NULL;
-
-	proc = thunk->proc;
-	THUNK_Free( thunk );
-	return proc;
-    }
-    return defSignalProc16;
+    proc = thunk->proc;
+    THUNK_Free( thunk );
+    return proc;
 }
 
 /***********************************************************************
@@ -883,6 +867,7 @@ void THUNK_InitCallout(void)
         GETADDR( DispatchMessageW, "DispatchMessageW" );
         GETADDR( DispatchMessageA, "DispatchMessageA" );
         GETADDR( RedrawWindow, "RedrawWindow" );
+        GETADDR( UserSignalProc, "UserSignalProc" );
 
 #undef GETADDR
     }

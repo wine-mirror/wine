@@ -38,8 +38,8 @@ typedef struct tagUSER_DRIVER {
 
 extern USER_DRIVER *USER_Driver;
 
-void WINAPI USER_SignalProc(HANDLE16, UINT16, UINT16, HINSTANCE16, HQUEUE16);
 void USER_ExitWindows(void);
-void USER_QueueCleanup( HQUEUE16 hQueue );
+WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
+                            DWORD dwFlags, HMODULE16 hModule );
 
 #endif  /* __WINE_USER_H */

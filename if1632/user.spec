@@ -361,7 +361,7 @@ file	user.exe
 385 pascal16 GetMenuContextHelpId(word) GetMenuContextHelpId16
 389 pascal LoadImage(word segstr word word word word) LoadImage16
 390 pascal16 CopyImage(word word word word word) CopyImage16
-391 stub SignalProc32
+391 pascal16 SignalProc32(long long long word) UserSignalProc
 394 pascal16 DrawIconEx(word word word word word word word word word) DrawIconEx16
 395 pascal16 GetIconInfo(word ptr) GetIconInfo16
 397 pascal16 RegisterClassEx(ptr) RegisterClassEx16

@@ -625,3 +625,4 @@ init	MAIN_UserInit
 620 stdcall GetTaskmanWindow () GetTaskmanWindow
 621 stdcall SetTaskmanWindow (long) SetTaskmanWindow
 622 stdcall GetProgmanWindow () GetProgmanWindow
+623 stdcall UserSignalProc(long long long long) UserSignalProc
