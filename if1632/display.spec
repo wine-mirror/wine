@@ -28,7 +28,7 @@ type	win16
 101 pascal16 Inquire(ptr) DisplayInquire
 102 pascal16 SetCursor(ptr) DisplaySetCursor
 103 pascal16 MoveCursor(word word) DisplayMoveCursor
-140 stub CheckCursor
+140 pascal16 CheckCursor() DisplayCheckCursor
 500 pascal16 UserRepaintDisable(word) UserRepaintDisable
 600 stub InkReady
 601 stub GetLPDevice

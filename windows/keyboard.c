@@ -1488,6 +1488,14 @@ VOID WINAPI DisplayMoveCursor( WORD wAbsX, WORD wAbsY )
 }
 
 /***********************************************************************
+ *           DisplayCheckCursor                  (DISPLAY.104)
+ */
+VOID WINAPI DisplayCheckCursor()
+{
+    FIXME(keyboard, "stub\n");
+}
+
+/***********************************************************************
  *           UserRepaintDisable			(DISPLAY.103)
  */
 VOID WINAPI UserRepaintDisable( BOOL16 disable )
