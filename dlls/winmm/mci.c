@@ -506,6 +506,7 @@ static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp,
     wmd->lpfnYieldProc = MCI_DefYieldProc;
     wmd->dwYieldData = VK_CANCEL;
     wmd->hCreatorTask = GetCurrentTask();
+    wmd->CreatorThread = GetCurrentThreadId();
 
     EnterCriticalSection(&iData->cs);
     /* wmd must be inserted in list before sending opening the driver, coz' it
@@ -2708,4 +2709,3 @@ BOOL MULTIMEDIA_MciInit(void)
     RegCloseKey(hWineConf);
     return TRUE;
 }
-

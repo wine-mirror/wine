@@ -1969,7 +1969,13 @@ YIELDPROC WINAPI mciGetYieldProc(UINT uDeviceID, DWORD* lpdwYieldData)
  */
 HTASK16 WINAPI mciGetCreatorTask16(UINT16 uDeviceID)
 {
-    return mciGetCreatorTask(uDeviceID);
+    LPWINE_MCIDRIVER wmd;
+    HTASK16 ret = 0;
+
+    if ((wmd = MCI_GetDriver(uDeviceID))) ret = wmd->hCreatorTask;
+
+    TRACE("(%u) => %04x\n", uDeviceID, ret);
+    return ret;
 }
 
 /**************************************************************************
@@ -1978,13 +1984,11 @@ HTASK16 WINAPI mciGetCreatorTask16(UINT16 uDeviceID)
 HTASK WINAPI mciGetCreatorTask(UINT uDeviceID)
 {
     LPWINE_MCIDRIVER	wmd;
-    HTASK		ret;
+    HTASK ret = 0;
 
-    TRACE("(%u)\n", uDeviceID);
+    if ((wmd = MCI_GetDriver(uDeviceID))) ret = (HTASK)wmd->CreatorThread;
 
-    ret = (!(wmd = MCI_GetDriver(uDeviceID))) ? 0 : wmd->hCreatorTask;
-
-    TRACE("=> %04x\n", ret);
+    TRACE("(%u) => %08lx\n", uDeviceID, ret);
     return ret;
 }
 

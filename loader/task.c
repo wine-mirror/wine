@@ -1577,19 +1577,10 @@ void WINAPI TerminateApp16(HTASK16 hTask, WORD wFlags)
  */
 DWORD WINAPI GetAppCompatFlags16( HTASK16 hTask )
 {
-    return GetAppCompatFlags( hTask );
-}
-
-
-/***********************************************************************
- *           GetAppCompatFlags   (USER32.@)
- */
-DWORD WINAPI GetAppCompatFlags( HTASK hTask )
-{
     TDB *pTask;
 
     if (!hTask) hTask = GetCurrentTask();
-    if (!(pTask=TASK_GetPtr( (HTASK16)hTask ))) return 0;
+    if (!(pTask=TASK_GetPtr( hTask ))) return 0;
     if (GlobalSize16(hTask) < sizeof(TDB)) return 0;
     return pTask->compat_flags;
 }

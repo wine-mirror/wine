@@ -222,6 +222,17 @@ DWORD WINAPI RegisterTasklist (DWORD x)
     return TRUE;
 }
 
+
+/***********************************************************************
+ *           GetAppCompatFlags   (USER32.@)
+ */
+DWORD WINAPI GetAppCompatFlags( HTASK hTask )
+{
+    FIXME("stub\n");
+    return 0;
+}
+
+
 /***********************************************************************
  *		USER_489 (USER.489)
  */

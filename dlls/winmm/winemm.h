@@ -126,6 +126,7 @@ typedef struct tagWINE_MCIDRIVER {
         DWORD	                dwYieldData;
         BOOL			bIs32;
         HTASK16			hCreatorTask;
+        DWORD                   CreatorThread;
         UINT			uTypeCmdTable;
         UINT			uSpecificCmdTable;
         struct tagWINE_MCIDRIVER*lpNext;
