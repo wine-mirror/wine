@@ -471,56 +471,56 @@ END:
 /***********************************************************************
  * 		RDW_ValidateParent [RDW_UpdateRgns() helper] 
  *
- *  Validate the portions of parent that are covered by a validated child
+ *  Validate the portions of parents that are covered by a validated child
  *  wndPtr = child
  */
 void  RDW_ValidateParent(WND *wndChild)  
 {
     WND *wndParent = WIN_LockWndPtr(wndChild->parent);
     WND *wndDesktop = WIN_GetDesktop();
+    HRGN hrg;
 
-    if ((wndParent) && (wndParent != wndDesktop) && !(wndParent->dwStyle & WS_CLIPCHILDREN))
-    {
-        HRGN hrg;
-        if (wndChild->hrgnUpdate == 1 )
+    if (wndChild->hrgnUpdate == 1 ) {
+        RECT r;
+        r.left = 0;
+        r.top = 0;
+        r.right = wndChild->rectWindow.right - wndChild->rectWindow.left;
+        r.bottom = wndChild->rectWindow.bottom - wndChild->rectWindow.top;
+        hrg = CreateRectRgnIndirect( &r );
+    } else
+        hrg = wndChild->hrgnUpdate;
+
+    while ((wndParent) && (wndParent != wndDesktop) ) {
+        if (!(wndParent->dwStyle & WS_CLIPCHILDREN))
         {
-            RECT r;
-
-	    r.left = 0;
-	    r.top = 0;
-	    r.right = wndChild->rectWindow.right - wndChild->rectWindow.left;
-	    r.bottom = wndChild->rectWindow.bottom - wndChild->rectWindow.top;
-
-            hrg = CreateRectRgnIndirect( &r );
-        }
-        else
-	   hrg = wndChild->hrgnUpdate;
-        if (wndParent->hrgnUpdate != 0)
-        {
-            POINT ptOffset;
-            RECT rect, rectParent;
-            if( wndParent->hrgnUpdate == 1 )
+            if (wndParent->hrgnUpdate != 0)
             {
-	       RECT r;
+                POINT ptOffset;
+                RECT rect, rectParent;
+                if( wndParent->hrgnUpdate == 1 )
+                {
+                   RECT r;
 
-	       r.left = 0;
-	       r.top = 0;
-	       r.right = wndParent->rectWindow.right - wndParent->rectWindow.left;
-	       r.bottom = wndParent->rectWindow.bottom - wndParent->rectWindow.top;
+                   r.left = 0;
+                   r.top = 0;
+                   r.right = wndParent->rectWindow.right - wndParent->rectWindow.left;
+                   r.bottom = wndParent->rectWindow.bottom - wndParent->rectWindow.top;
 
-               wndParent->hrgnUpdate = CreateRectRgnIndirect( &r );
+                   wndParent->hrgnUpdate = CreateRectRgnIndirect( &r );
+                }
+                /* we must offset the child region by the offset of the child rect in the parent */
+                GetWindowRect(wndParent->hwndSelf, &rectParent);
+                GetWindowRect(wndChild->hwndSelf, &rect);
+                ptOffset.x = rect.left - rectParent.left;
+                ptOffset.y = rect.top - rectParent.top;
+                OffsetRgn( hrg, ptOffset.x, ptOffset.y );
+                CombineRgn( wndParent->hrgnUpdate, wndParent->hrgnUpdate, hrg, RGN_DIFF );
+                OffsetRgn( hrg, -ptOffset.x, -ptOffset.y );
             }
-            /* we must offset the child region by the offset of the child rect in the parent */
-            GetWindowRect(wndParent->hwndSelf, &rectParent);
-            GetWindowRect(wndChild->hwndSelf, &rect);
-            ptOffset.x = rect.left - rectParent.left;
-            ptOffset.y = rect.top - rectParent.top;
-            OffsetRgn( hrg, ptOffset.x, ptOffset.y );
-            CombineRgn( wndParent->hrgnUpdate, wndParent->hrgnUpdate, hrg, RGN_DIFF );
-            OffsetRgn( hrg, -ptOffset.x, -ptOffset.y );
         }
-        if (hrg != wndChild->hrgnUpdate) DeleteObject( hrg );
+        WIN_UpdateWndPtr(&wndParent, wndParent->parent);    
     }
+    if (hrg != wndChild->hrgnUpdate) DeleteObject( hrg );
     WIN_ReleaseWndPtr(wndParent);
     WIN_ReleaseDesktop();
 }
