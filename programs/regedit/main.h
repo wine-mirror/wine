@@ -94,6 +94,7 @@ extern LPCTSTR GetItemPath(HWND hwndTV, HTREEITEM hItem, HKEY* phRootKey);
 
 /* edit.c */
 extern BOOL CreateKey(HKEY hKey);
+extern BOOL CreateValue(HWND hwnd, HKEY hKey, DWORD valueType);
 extern BOOL ModifyValue(HWND hwnd, HKEY hKey, LPCTSTR valueName);
 extern BOOL DeleteValue(HWND hwnd, HKEY hKey, LPCTSTR valueName);
 

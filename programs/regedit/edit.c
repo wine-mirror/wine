@@ -127,36 +127,31 @@ INT_PTR CALLBACK modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
 
 BOOL CreateKey(HKEY hKey)
 {
-    LONG lRet;
+    LONG lRet = ERROR_SUCCESS;
     HKEY retKey;
     TCHAR keyName[32];
-    static TCHAR newKey[28] = ""; /* should be max keyName len - 4 */
-    HINSTANCE hInstance;
-    unsigned int keyNum = 1;
+    TCHAR newKey[COUNT_OF(keyName) - 4];
+    int keyNum;
          
     /* If we have illegal parameter return with operation failure */
     if (!hKey) return FALSE;
 
-    /* Load localized "new key" string. -4 is because we need max 4 character
-	to numbering. */
-    if (newKey[0] == 0) {
-	hInstance = GetModuleHandle(0);
-	if (!LoadString(hInstance, IDS_NEWKEY, newKey, COUNT_OF(newKey)))
-    	    lstrcpy(newKey, "New Key");
-    }
-    lstrcpy(keyName, newKey);
+    if (!LoadString(GetModuleHandle(0), IDS_NEWKEY, newKey, COUNT_OF(newKey))) return FALSE;
 
-    /* try to find out a name for the newly create key.
-	We try it max 100 times. */
-    lRet = RegOpenKey(hKey, keyName, &retKey);
-    while (lRet == ERROR_SUCCESS && keyNum < 100) {
-	wsprintf(keyName, "%s %u", newKey, ++keyNum);
+    /* try to find out a name for the newly create key (max 100 times) */
+    for (keyNum = 1; keyNum < 100; keyNum++) {
+	wsprintf(keyName, newKey, keyNum);
 	lRet = RegOpenKey(hKey, keyName, &retKey);
+	if (lRet != ERROR_SUCCESS) break;
+	RegCloseKey(retKey);
     }
     if (lRet == ERROR_SUCCESS) return FALSE;
     
     lRet = RegCreateKey(hKey, keyName, &retKey);
-    return lRet == ERROR_SUCCESS;
+    if (lRet != ERROR_SUCCESS) return FALSE;
+
+    RegCloseKey(retKey);
+    return TRUE;
 }
 
 BOOL ModifyValue(HWND hwnd, HKEY hKey, LPCTSTR valueName)
@@ -225,4 +220,31 @@ BOOL DeleteValue(HWND hwnd, HKEY hKey, LPCTSTR valueName)
         error(hwnd, IDS_BAD_VALUE, valueName);
     }
     return lRet == ERROR_SUCCESS;
+}
+
+BOOL CreateValue(HWND hwnd, HKEY hKey, DWORD valueType)
+{
+    LONG lRet = ERROR_SUCCESS;
+    TCHAR valueName[32];
+    TCHAR newValue[COUNT_OF(valueName) - 4];
+    DWORD valueDword = 0;
+    int valueNum;
+         
+    /* If we have illegal parameter return with operation failure */
+    if (!hKey) return FALSE;
+
+    if (!LoadString(GetModuleHandle(0), IDS_NEWVALUE, newValue, COUNT_OF(newValue))) return FALSE;
+
+    /* try to find out a name for the newly create key (max 100 times) */
+    for (valueNum = 1; valueNum < 100; valueNum++) {
+	wsprintf(valueName, newValue, valueNum);
+	lRet = RegQueryValueEx(hKey, valueName, 0, 0, 0, 0);
+	if (lRet != ERROR_SUCCESS) break;
+    }
+    if (lRet == ERROR_SUCCESS) return FALSE;
+   
+    lRet = RegSetValueEx(hKey, valueName, 0, valueType, (BYTE*)&valueDword, sizeof(DWORD));
+    if (lRet != ERROR_SUCCESS) return FALSE;
+
+    return TRUE;
 }

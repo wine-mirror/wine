@@ -440,6 +440,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     LPCTSTR valueName;
     BOOL result = TRUE;
     LONG lRet;
+    DWORD valueType;
 
     if ((keyPath = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hKeyRoot))) {
         lRet = RegOpenKeyEx(hKeyRoot, keyPath, 0, KEY_ALL_ACCESS, &hKey);
@@ -475,6 +476,19 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case ID_EDIT_NEW_KEY:
 	CreateKey(hKey);
 	break;
+    case ID_EDIT_NEW_STRINGVALUE:
+	valueType = REG_SZ;
+	goto create_value;
+    case ID_EDIT_NEW_BINARYVALUE:
+	valueType = REG_BINARY;
+	goto create_value;
+    case ID_EDIT_NEW_DWORDVALUE:
+	valueType = REG_DWORD;
+	/* fall through */
+    create_value:
+	if (CreateValue(hWnd, hKey, valueType))
+	    RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
+    break;
     case ID_REGISTRY_PRINTERSETUP:
         /*PRINTDLG pd;*/
         /*PrintDlg(&pd);*/
