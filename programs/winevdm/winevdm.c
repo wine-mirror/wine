@@ -69,10 +69,11 @@ static char *build_command_line( char **argv )
             len+=2; /* for the quotes */
     }
 
-    if (!(cmd_line = HeapAlloc( GetProcessHeap(), 0, len + 1 ))) return NULL;
+    if (!(cmd_line = HeapAlloc( GetProcessHeap(), 0, len ? len + 1 : 2 ))) 
+        return NULL;
 
     p = cmd_line;
-    *p++ = len;
+    *p++ = (len < 256) ? len : 255;
     for (arg = argv; *arg; arg++)
     {
         int has_space,has_quote;
@@ -130,7 +131,7 @@ static char *build_command_line( char **argv )
             *p++='"';
         *p++=' ';
     }
-    if (p > cmd_line) p--;  /* remove last space */
+    if (len) p--;  /* remove last space */
     *p = '\0';
     return cmd_line;
 }
@@ -207,7 +208,8 @@ int main( int argc, char *argv[] )
     {
         if (instance == 11)  /* try DOS format */
         {
-            wine_load_dos_exe( appname, cmdline );
+            /* loader expects arguments to be regular C strings */
+            wine_load_dos_exe( appname, cmdline + 1 );
             /* if we get back here it failed */
             instance = GetLastError();
         }

@@ -105,7 +105,7 @@ static WORD init_cs,init_ip,init_ss,init_sp;
 static HANDLE dosvm_thread, loop_thread;
 static DWORD dosvm_tid, loop_tid;
 
-static void MZ_Launch( LPCSTR cmdline );
+static void MZ_Launch( LPCSTR cmdtail, int length );
 static BOOL MZ_InitTask(void);
 
 static void MZ_CreatePSP( LPVOID lpPSP, WORD env, WORD par )
@@ -124,34 +124,32 @@ static void MZ_CreatePSP( LPVOID lpPSP, WORD env, WORD par )
   /* FIXME: more PSP stuff */
 }
 
-static void MZ_FillPSP( LPVOID lpPSP, LPCSTR cmdline, int length )
+static void MZ_FillPSP( LPVOID lpPSP, LPCSTR cmdtail, int length )
 {
-  PDB16      *psp = lpPSP;
+    PDB16 *psp = lpPSP;
 
-  while(length > 0 && *cmdline != ' ') {
-    length--;
-    cmdline++;
-  }
+    if(length > 127) 
+    {
+        WARN( "Command tail truncated! (length %d)\n", length );
+        length = 126;
+    }
 
-  /* command.com does not skip over multiple spaces */
+    psp->cmdLine[0] = length;
 
-  if(length > 126) {
     /*
-     * FIXME: If length > 126 we should put truncated command line to
-     *        PSP and store the entire command line in the environment 
-     *        variable CMDLINE.
+     * Length of exactly 127 bytes means that full command line is 
+     * stored in environment variable CMDLINE and PSP contains 
+     * command tail truncated to 126 bytes.
      */
-    FIXME("Command line truncated! (length %d > maximum length 126)\n",
-          length);
-    length = 126;
-  }
+    if(length == 127)
+        length = 126;
 
-  psp->cmdLine[0] = length;
-  if(length > 0)
-    memmove(psp->cmdLine+1, cmdline, length);
-  psp->cmdLine[length+1] = '\r';
+    if(length > 0)
+        memmove(psp->cmdLine+1, cmdtail, length);
 
-  /* FIXME: more PSP stuff */
+    psp->cmdLine[length+1] = '\r';
+
+    /* FIXME: more PSP stuff */
 }
 
 /* default INT 08 handler: increases timer tick counter but not much more */
@@ -353,11 +351,78 @@ load_error:
  */
 void WINAPI wine_load_dos_exe( LPCSTR filename, LPCSTR cmdline )
 {
-  HANDLE hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
-  if (hFile == INVALID_HANDLE_VALUE) return;
-  DOSVM_isdosexe = TRUE;
-  if (MZ_DoLoadImage( hFile, filename, NULL )) MZ_Launch( cmdline );
+    char dos_cmdtail[126];
+    int  dos_length = 0;
 
+    HANDLE hFile = CreateFileA( filename, GENERIC_READ, FILE_SHARE_READ, 
+                                NULL, OPEN_EXISTING, 0, 0 );
+    if (hFile == INVALID_HANDLE_VALUE) return;
+    DOSVM_isdosexe = TRUE;
+
+    if(cmdline && *cmdline)
+    {
+        dos_length = strlen(cmdline);
+        memmove( dos_cmdtail + 1, cmdline, 
+                 (dos_length < 125) ? dos_length : 125 );
+
+        /* Non-empty command tail always starts with at least one space. */
+        dos_cmdtail[0] = ' ';
+        dos_length++;
+
+        /*
+         * If command tail is longer than 126 characters,
+         * set tail length to 127 and fill CMDLINE environment variable 
+         * with full command line (this includes filename).
+         */
+        if (dos_length > 126)
+        {
+            char *cmd = HeapAlloc( GetProcessHeap(), 0, 
+                                   dos_length + strlen(filename) + 4 );
+            char *ptr = cmd;
+
+            if (!cmd)
+                return;
+
+            /*
+             * Append filename. If path includes spaces, quote the path.
+             */
+            if (strchr(filename, ' '))
+            {
+                *ptr++ = '\"';
+                strcpy( ptr, filename );
+                ptr += strlen(filename);                   
+                *ptr++ = '\"';
+            }
+            else
+            {
+                strcpy( ptr, filename );
+                ptr += strlen(filename);  
+            }
+
+            /*
+             * Append command tail.
+             */
+            if (cmdline[0] != ' ')
+                *ptr++ = ' ';
+            strcpy( ptr, cmdline );
+
+            /*
+             * Set environment variable. This will be passed to
+             * new DOS process.
+             */
+            if (!SetEnvironmentVariableA( "CMDLINE", cmd ))
+            {
+                HeapFree(GetProcessHeap(), 0, cmd );
+                return;
+            }
+
+            HeapFree(GetProcessHeap(), 0, cmd );
+            dos_length = 127;
+        }
+    }
+
+    if (MZ_DoLoadImage( hFile, filename, NULL )) 
+        MZ_Launch( dos_cmdtail, dos_length );
 }
 
 /***********************************************************************
@@ -391,13 +456,18 @@ BOOL WINAPI MZ_Exec( CONTEXT86 *context, LPCSTR filename, BYTE func, LPVOID para
       ExecBlock *blk = (ExecBlock *)paramblk;
       LPBYTE cmdline = PTR_REAL_TO_LIN(SELECTOROF(blk->cmdline),OFFSETOF(blk->cmdline));
       LPBYTE envblock = PTR_REAL_TO_LIN(psp->environment, 0);
-      BYTE cmdLength = cmdline[0];
+      int    cmdLength = cmdline[0];
 
       /*
-       * FIXME: If cmdLength == 126, PSP may contain truncated version
-       *        of the full command line. In this case environment
-       *        variable CMDLINE contains the entire command line.
+       * If cmdLength is 127, command tail is truncated and environment 
+       * variable CMDLINE should contain full command line 
+       * (this includes filename).
        */
+      if (cmdLength == 127)
+      {
+          FIXME( "CMDLINE argument passing is unimplemented.\n" );
+          cmdLength = 126; /* FIXME */
+      }
 
       fullCmdLength = (strlen(filename) + 1) + cmdLength + 1; /* filename + space + cmdline + terminating null character */
 
@@ -560,14 +630,14 @@ static BOOL MZ_InitTask(void)
   return TRUE;
 }
 
-static void MZ_Launch( LPCSTR cmdline )
+static void MZ_Launch( LPCSTR cmdtail, int length )
 {
   TDB *pTask = GlobalLock16( GetCurrentTask() );
   BYTE *psp_start = PTR_REAL_TO_LIN( DOSVM_psp, 0 );
   DWORD rv;
   SYSLEVEL *lock;
 
-  MZ_FillPSP(psp_start, cmdline, cmdline ? strlen(cmdline) : 0);
+  MZ_FillPSP(psp_start, cmdtail, length);
   pTask->flags |= TDBF_WINOLDAP;
 
   /* DTA is set to PSP:0080h when a program is started. */
