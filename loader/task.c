@@ -258,7 +258,6 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
 {
     HTASK16 hTask;
     TDB *pTask;
-    char name[10];
     FARPROC16 proc;
     HMODULE16 hModule = pModule ? pModule->self : 0;
 
@@ -302,8 +301,10 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
 
     if (hModule)
     {
+        char name[10];
         GetModuleName16( hModule, name, sizeof(name) );
         strncpy( pTask->module_name, name, sizeof(pTask->module_name) );
+        pTask->compat_flags = GetProfileIntA( "Compatibility", name, 0 );
     }
 
       /* Allocate a selector for the PDB */
@@ -345,11 +346,7 @@ static TDB *TASK_Create( NE_MODULE *pModule, UINT16 cmdShow, TEB *teb, LPCSTR cm
     memcpy( pTask->pdb.cmdLine + 1, cmdline, len );
     /* pTask->pdb.cmdLine[len+1] = 0; */
 
-    TRACE("module='%s' cmdline='%.*s' task=%04x\n", name, len, cmdline, hTask );
-
-      /* Get the compatibility flags */
-
-    pTask->compat_flags = GetProfileIntA( "Compatibility", name, 0 );
+    TRACE("cmdline='%.*s' task=%04x\n", len, cmdline, hTask );
 
       /* Allocate a code segment alias for the TDB */
 
