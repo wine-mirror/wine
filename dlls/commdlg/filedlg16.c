@@ -691,7 +691,7 @@ static LRESULT FILEDLG_TestPath( LFSPRIVATE lfs, LPWSTR path )
 
     /* if ScanDir succeeds, we have changed the directory */
     if (FILEDLG_ScanDir(hWnd, path))
-        return TRUE;
+        return FALSE; /* and path is not a valid file name */
 
     /* if not, this must be a filename */
 
