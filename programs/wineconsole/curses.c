@@ -80,9 +80,21 @@ static void WCCURSES_ResizeScreenBuffer(struct inner_data* data)
  */
 static void	WCCURSES_PosCursor(const struct inner_data* data)
 {
-    wmove(PRIVATE(data)->pad, data->cursor.Y, data->cursor.X);
-    prefresh(PRIVATE(data)->pad, 
-             data->curcfg.win_pos.Y, data->curcfg.win_pos.X, 
+    if (data->curcfg.cursor_visible &&
+        data->cursor.Y >= data->curcfg.win_pos.Y &&
+        data->cursor.Y < data->curcfg.win_pos.Y + data->curcfg.win_height &&
+        data->cursor.X >= data->curcfg.win_pos.X &&
+        data->cursor.X < data->curcfg.win_pos.X + data->curcfg.win_width)
+    {
+        if (curs_set(2) == ERR) curs_set(1);
+        wmove(PRIVATE(data)->pad, data->cursor.Y, data->cursor.X);
+    }
+    else
+    {
+        curs_set(0);
+    }
+    prefresh(PRIVATE(data)->pad,
+             data->curcfg.win_pos.Y, data->curcfg.win_pos.X,
              0, 0, data->curcfg.win_height, data->curcfg.win_width);
 }
 
@@ -93,6 +105,10 @@ static void	WCCURSES_PosCursor(const struct inner_data* data)
  */
 void	WCCURSES_ShapeCursor(struct inner_data* data, int size, int vis, BOOL force)
 {
+    /* we can't do much about the size... */
+    data->curcfg.cursor_size = size;
+    data->curcfg.cursor_visible = vis ? TRUE : FALSE;
+    WCCURSES_PosCursor(data);
 }
 
 /******************************************************************
@@ -156,12 +172,13 @@ static void WCCURSES_Refresh(const struct inner_data* data, int tp, int bm)
             if (cell[x].Attributes & BACKGROUND_GREEN)     attr |= COLOR_PAIR(COLOR_GREEN << 3);
 
             if (cell[x].Attributes & FOREGROUND_INTENSITY) attr |= A_BOLD;
-
             PRIVATE(data)->line[x] = attr;
         }
         mvwaddchnstr(PRIVATE(data)->pad, y, 0, PRIVATE(data)->line, data->curcfg.sb_width);
     }
-    WCCURSES_PosCursor(data);
+    prefresh(PRIVATE(data)->pad,
+             data->curcfg.win_pos.Y, data->curcfg.win_pos.X,
+             0, 0, data->curcfg.win_height, data->curcfg.win_width);
 }
 
 /******************************************************************
@@ -179,8 +196,7 @@ static void WCCURSES_Scroll(struct inner_data* data, int pos, BOOL horz)
     {
 	data->curcfg.win_pos.Y = pos;
     }
-    WCCURSES_Refresh(data, data->curcfg.win_pos.Y, 
-                     data->curcfg.win_pos.Y + data->curcfg.win_height - 1);
+    WCCURSES_PosCursor(data);
 }
 
 /******************************************************************
@@ -258,14 +274,14 @@ static unsigned WCCURSES_FillSimpleChar(INPUT_RECORD* ir, unsigned inchar)
      vk = vkkeyscan_table[inchar];
      if (vk & 0x0100)
 	  ir->Event.KeyEvent.dwControlKeyState |= SHIFT_PRESSED;
-     if (vk & 0x0200)
+     if (vk & 0x0200 || (unsigned char)inchar <= 26)
 	  ir->Event.KeyEvent.dwControlKeyState |= LEFT_CTRL_PRESSED;
      if (vk & 0x0400)
 	  ir->Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
      ir->Event.KeyEvent.wVirtualKeyCode = vk;
      ir->Event.KeyEvent.wVirtualScanCode = mapvkey_0[vk & 0x00ff]; /* VirtualKeyCodes to ScanCode */
      ir->Event.KeyEvent.uChar.UnicodeChar = (unsigned char)inchar;
-     
+
      return TRUE;
 }
 
@@ -656,11 +672,9 @@ BOOL WCCURSES_InitBackend(struct inner_data* data)
     nodelay(stdscr, TRUE);
     keypad(stdscr, TRUE);
     mousemask(0xffffffff, &PRIVATE(data)->initial_mouse_mask);
-    /* no click generation...
-     * --hmmm man page says -1, instead of 0, to disable click event generation
-     * -1 doesn't seem to work, while 0 does
-     */
-    mouseinterval(0);
+    /* no click event generation... we just need button up/down event */
+    mouseinterval(-1);
+
     return TRUE;
 }
 
