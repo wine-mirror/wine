@@ -2044,7 +2044,7 @@ BOOL WineEngGetCharWidth(GdiFont font, UINT firstChar, UINT lastChar,
 BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
 			       LPSIZE size)
 {
-    UINT idx;
+    INT idx;
     GLYPHMETRICS gm;
     TEXTMETRICW tm;
     FT_UInt glyph_index;
@@ -2073,7 +2073,7 @@ BOOL WineEngGetTextExtentPoint(GdiFont font, LPCWSTR wstr, INT count,
 BOOL WineEngGetTextExtentPointI(GdiFont font, const WORD *indices, INT count,
 				LPSIZE size)
 {
-    UINT idx;
+    INT idx;
     GLYPHMETRICS gm;
     TEXTMETRICW tm;
 
