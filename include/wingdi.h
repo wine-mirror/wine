@@ -1076,6 +1076,7 @@ DECL_WINELIB_TYPE_AW(LPPOLYTEXT)
 #define NTM_BOLD        0x00000020L
 #define NTM_ITALIC      0x00000001L
 
+#include "pshpack4.h"
 typedef struct
 {
     LONG      tmHeight;
@@ -1131,6 +1132,7 @@ typedef struct
     UINT      ntmCellHeight;
     UINT      ntmAvgWidth;
 } NEWTEXTMETRICW, *PNEWTEXTMETRICW, *LPNEWTEXTMETRICW;
+#include "poppack.h"
 
 DECL_WINELIB_TYPE_AW(NEWTEXTMETRIC)
 DECL_WINELIB_TYPE_AW(PNEWTEXTMETRIC)
