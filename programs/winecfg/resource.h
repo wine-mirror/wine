@@ -35,7 +35,6 @@
 #define IDD_GRAPHCFG                    110
 #define IDD_DLLCFG                      111
 #define IDD_DRIVECFG                    112
-#define IDD_SYSTEMCFG                   113
 #define IDD_DRIVE_EDIT                  114
 #define IDB_WINE_LOGO                   200
 #define IDC_TABABOUT                    1001
@@ -95,13 +94,15 @@
 #define IDC_RADIO_AUTODETECT            1068
 #define IDC_RADIO_ASSIGN                1069
 #define IDC_BUTTON_BROWSE_DEVICE        1070
-#define IDC_BOX_LABELSERIAL             1071
 #define IDC_STATIC_SERIAL               1072
 #define IDC_STATIC_LABEL                1073
 #define IDC_ENABLE_DESKTOP              1074
 #define IDS_DRIVE_NO_C                  1075
 #define IDC_BUTTON_SHOW_HIDE_ADVANCED   1076
 #define IDC_STATIC_TYPE                 1077
+#define IDC_LABELSERIAL_STATIC          1078
+
+#define IDC_DRIVE_LABEL                 1078
 
 /* graphics */
 #define IDC_ENABLE_MANAGED              1100

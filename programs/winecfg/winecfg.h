@@ -38,15 +38,7 @@
 #define IS_OPTION_FALSE(ch) \
     ((ch) == 'n' || (ch) == 'N' || (ch) == 'f' || (ch) == 'F' || (ch) == '0')
 
-#define return_if_fail(try) \
-    if (!(try)) { \
-        WINE_ERR("check (" #try ") at %s:%d failed, returning\n", __FILE__,  __LINE__ - 1); \
-	return; \
-    }
-
-#define WRITEME(owner) MessageBox(owner, "Write me!", "", MB_OK | MB_ICONEXCLAMATION);
-
-extern char *currentApp; /* NULL means editing global settings  */
+extern char *current_app; /* NULL means editing global settings  */
 
 /* Use get and set to alter registry settings. The changes made through set
    won't be committed to the registry until process_all_settings is called,
@@ -55,6 +47,7 @@ extern char *currentApp; /* NULL means editing global settings  */
    You are expected to release the result of get. The parameters to set will
    be copied, so release them too when necessary.
  */
+
 void set(char *path, char *name, char *value);
 char *get(char *path, char *name, char *def);
 BOOL exists(char *path, char *name);
@@ -62,37 +55,52 @@ void apply(void);
 char **enumerate_values(char *path);
 
 /* returns a string of the form "AppDefaults\\appname.exe\\section", or just "section" if
- * the user is editing the global settings.
- *
- * no explicit free is needed of the string returned by this function
+   the user is editing the global settings.
+ 
+   no explicit free is needed of the string returned by this function
  */
 char *keypath(char *section); 
 
-/* Initializes the transaction system */
 int initialize(void);
 extern HKEY config_key;
 
+/* hack for the property sheet control  */
 void set_window_title(HWND dialog);
 
-/* Graphics */
-
-void initGraphDlg (HWND hDlg);
-void saveGraphDlgSettings (HWND hDlg);
+/* Window procedures */
 INT_PTR CALLBACK GraphDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-/* Drive management */
-void initDriveDlg (HWND hDlg);
-void saveDriveSettings (HWND hDlg);
-
 INT_PTR CALLBACK DriveDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK DriveEditDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK LibrariesDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-/* Audio config dialog */
 INT_PTR CALLBACK AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-/* some basic utilities to make win32 suck less */
+/* Drive management  */
+void load_drives();
+int autodetect_drives();
+
+struct drive
+{
+    char letter;
+    char *unixpath;
+    char *label;
+    char *serial;
+    DWORD type; /* one of the DRIVE_ constants from winbase.h  */
+
+    BOOL in_use;
+};
+
+#define DRIVE_MASK_BIT(B) 1 << (toupper(B) - 'A')
+
+long drive_available_mask(char letter);
+BOOL add_drive(char letter, char *targetpath, char *label, char *serial, unsigned int type);
+void delete_drive(struct drive *pDrive);
+void apply_drive_changes();
+extern struct drive drives[26]; /* one for each drive letter */
+
+BOOL gui_mode;
+
+/* Some basic utilities to make win32 suck less */
 #define disable(id) EnableWindow(GetDlgItem(dialog, id), 0);
 #define enable(id) EnableWindow(GetDlgItem(dialog, id), 1);
 void PRINTERROR(void); /* WINE_TRACE() the plaintext error message from GetLastError() */
@@ -104,15 +112,20 @@ static inline char *strdupA(char *s)
     return strcpy(r, s);
 }
 
-static inline char *get_control_text(HWND dialog, WORD id)
+static inline char *get_text(HWND dialog, WORD id)
 {
     HWND item = GetDlgItem(dialog, id);
     int len = GetWindowTextLength(item) + 1;
-    char *result = HeapAlloc(GetProcessHeap(), 0, len);
-    if (GetWindowText(item, result, len) == 0) return NULL;
+    char *result = len ? HeapAlloc(GetProcessHeap(), 0, len) : NULL;
+    if (!result || GetWindowText(item, result, len) == 0) return NULL;
     return result;
 }
 
-#define WINE_KEY_ROOT "Software\\Wine\\Wine\\Config"
+static inline void set_text(HWND dialog, WORD id, char *text)
+{
+    SetWindowText(GetDlgItem(dialog, id), text);
+}
+
+#define WINE_KEY_ROOT "Software\\Wine\\Testing\\Config"
 
 #endif

@@ -145,8 +145,8 @@ static void set_from_desktop_edits(HWND dialog) {
     
     WINE_TRACE("\n");
 
-    width = get_control_text(dialog, IDC_DESKTOP_WIDTH);
-    height = get_control_text(dialog, IDC_DESKTOP_HEIGHT);
+    width = get_text(dialog, IDC_DESKTOP_WIDTH);
+    height = get_text(dialog, IDC_DESKTOP_HEIGHT);
 
     if (strcmp(width, "") == 0)
     {
@@ -184,7 +184,7 @@ void on_enable_desktop_clicked(HWND dialog) {
 }
 
 static void on_screen_depth_changed(HWND dialog) {
-    char *newvalue = get_control_text(dialog, IDC_SCREEN_DEPTH);
+    char *newvalue = get_text(dialog, IDC_SCREEN_DEPTH);
     char *spaceIndex = strchr(newvalue, ' ');
     
     WINE_TRACE("newvalue=%s\n", newvalue);

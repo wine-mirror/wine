@@ -19,6 +19,12 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ * TODO:
+ *  - Use unicode
+ *  - Icons in listviews/icons
+ *  - Better add app dialog, scan c: for EXE files and add to list in background
+ *  - Use [GNOME] HIG style groupboxes rather than win32 style (looks nicer, imho)
+ *
  */
 
 #include <assert.h>
@@ -47,11 +53,11 @@ void set_window_title(HWND dialog)
     char *newtitle;
 
     /* update the window title  */
-    if (currentApp)
+    if (current_app)
     {
         char *template = "Wine Configuration for %s";
-        newtitle = HeapAlloc(GetProcessHeap(), 0, strlen(template) + strlen(currentApp) + 1);
-        sprintf(newtitle, template, currentApp);
+        newtitle = HeapAlloc(GetProcessHeap(), 0, strlen(template) + strlen(current_app) + 1);
+        sprintf(newtitle, template, current_app);
     }
     else
     {
@@ -65,7 +71,7 @@ void set_window_title(HWND dialog)
 
 
 /**
- * get_config_key: Retrieves a configuration value from the registry
+ * getkey: Retrieves a configuration value from the registry
  *
  * char *subkey : the name of the config section
  * char *name : the name of the config value
@@ -75,7 +81,7 @@ void set_window_title(HWND dialog)
  * not. Caller is responsible for releasing the result.
  *
  */
-static char *get_config_key (char *subkey, char *name, char *def)
+static char *getkey (char *subkey, char *name, char *def)
 {
     LPBYTE buffer = NULL;
     DWORD len;
@@ -123,7 +129,7 @@ end:
 }
 
 /**
- * set_config_key: convenience wrapper to set a key/value pair
+ * setkey: convenience wrapper to set a key/value pair
  *
  * const char *subKey : the name of the config section
  * const char *valueName : the name of the config value
@@ -133,7 +139,7 @@ end:
  *
  * If valueName or value is NULL, an empty section will be created
  */
-int set_config_key(const char *subkey, const char *name, const char *value) {
+int setkey(const char *subkey, const char *name, const char *value) {
     DWORD res = 1;
     HKEY key = NULL;
 
@@ -252,7 +258,7 @@ char *get(char *path, char *name, char *def)
     }
 
     /* no, so get from the registry */
-    val = get_config_key(path, name, def);
+    val = getkey(path, name, def);
 
     WINE_TRACE("returning %s\n", val);
 
@@ -439,7 +445,7 @@ static void process_setting(struct setting *s)
     if (s->value)
     {
 	WINE_TRACE("Setting %s:%s to '%s'\n", s->path, s->name, s->value);
-        set_config_key(s->path, s->name, s->value);
+        setkey(s->path, s->name, s->value);
     }
     else
     {
@@ -465,7 +471,7 @@ void apply(void)
 
 /* ================================== utility functions ============================ */
 
-char *currentApp = NULL; /* the app we are currently editing, or NULL if editing global */
+char *current_app = NULL; /* the app we are currently editing, or NULL if editing global */
 
 /* returns a registry key path suitable for passing to addTransaction  */
 char *keypath(char *section)
@@ -474,10 +480,10 @@ char *keypath(char *section)
 
     if (result) HeapFree(GetProcessHeap(), 0, result);
 
-    if (currentApp)
+    if (current_app)
     {
-        result = HeapAlloc(GetProcessHeap(), 0, strlen("AppDefaults\\") + strlen(currentApp) + 2 /* \\ */ + strlen(section) + 1 /* terminator */);
-        sprintf(result, "AppDefaults\\%s\\%s", currentApp, section);
+        result = HeapAlloc(GetProcessHeap(), 0, strlen("AppDefaults\\") + strlen(current_app) + 2 /* \\ */ + strlen(section) + 1 /* terminator */);
+        sprintf(result, "AppDefaults\\%s\\%s", current_app, section);
     }
     else
     {
@@ -494,6 +500,10 @@ void PRINTERROR(void)
         FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
                        0, GetLastError(), MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),
                        (LPSTR)&msg, 0, NULL);
+
+        /* eliminate trailing newline, is this a Wine bug? */
+        *(strrchr(msg, '\n')) = '\0';
+        
         WINE_TRACE("error: '%s'\n", msg);
 }
 

@@ -10,6 +10,8 @@ C_SRCS = \
 	appdefaults.c \
 	audio.c \
 	drive.c \
+	drivedetect.c \
+	driveui.c \
 	libraries.c \
 	main.c \
 	properties.c \

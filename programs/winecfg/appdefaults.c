@@ -105,7 +105,7 @@ init_comboboxes (HWND dialog)
   SendDlgItemMessage(dialog, IDC_DOSVER, CB_RESETCONTENT, 0, 0);  
   
   /* add the default entries (automatic) which correspond to no setting  */
-  if (currentApp)
+  if (current_app)
   {
       SendDlgItemMessage(dialog, IDC_WINVER, CB_ADDSTRING, 0, (LPARAM) "Use global settings");
       SendDlgItemMessage(dialog, IDC_DOSVER, CB_ADDSTRING, 0, (LPARAM) "Use global settings");      
@@ -173,7 +173,7 @@ static void init_appsheet(HWND dialog)
       size = sizeof(appname);
       while (RegEnumKeyEx(key, i, appname, &size, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
       {
-          add_listview_item(listview, appname, strdup(appname));
+          add_listview_item(listview, appname, strdupA(appname));
 
           i++;
           size = sizeof(appname);
@@ -219,7 +219,7 @@ static int get_listview_selection(HWND listview)
 static void on_selection_change(HWND dialog, HWND listview)
 {
   LVITEM item;
-  char *oldapp = currentApp;
+  char *oldapp = current_app;
     
   WINE_TRACE("()\n");
   
@@ -230,23 +230,23 @@ static void on_selection_change(HWND dialog, HWND listview)
   
   ListView_GetItem(listview, &item);
 
-  currentApp = (char *) item.lParam;
+  current_app = (char *) item.lParam;
 
-  if (currentApp)
+  if (current_app)
   {
-      WINE_TRACE("currentApp is now %s\n", currentApp);
+      WINE_TRACE("current_app is now %s\n", current_app);
       enable(IDC_APP_REMOVEAPP);
   }
   else
   {
-      WINE_TRACE("currentApp=NULL, editing global settings\n");
+      WINE_TRACE("current_app=NULL, editing global settings\n");
       /* focus will never be on the button in this callback so it's safe  */
       disable(IDC_APP_REMOVEAPP);
   }
 
   /* reset the combo boxes if we changed from/to global/app-specific  */
 
-  if ((oldapp && !currentApp) || (!oldapp && currentApp))
+  if ((oldapp && !current_app) || (!oldapp && current_app))
       init_comboboxes(dialog);
   
   update_comboboxes(dialog);
@@ -276,12 +276,12 @@ static void on_add_app_click(HWND dialog)
       HWND listview = GetDlgItem(dialog, IDC_APP_LISTVIEW);
       int count = ListView_GetItemCount(listview);
       
-      if (currentApp) free(currentApp);
-      currentApp = strdup(filetitle);
+      if (current_app) HeapFree(GetProcessHeap(), 0, current_app);
+      current_app = strdupA(filetitle);
 
-      WINE_TRACE("adding %s\n", currentApp);
+      WINE_TRACE("adding %s\n", current_app);
       
-      add_listview_item(listview, currentApp, currentApp);
+      add_listview_item(listview, current_app, current_app);
 
       ListView_SetItemState(listview, count, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
 
@@ -375,9 +375,11 @@ AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
       break;
     
     case WM_COMMAND:
-      switch(HIWORD(wParam)) {
+      switch(HIWORD(wParam))
+      {
         case CBN_SELCHANGE:
-          switch(LOWORD(wParam)) {
+          switch(LOWORD(wParam))
+          {
             case IDC_WINVER:
               on_winver_change(hDlg);
               break;
@@ -386,7 +388,8 @@ AppDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
               break;
           }
         case BN_CLICKED:
-          switch(LOWORD(wParam)) {
+          switch(LOWORD(wParam))
+          {
             case IDC_APP_ADDAPP:
               on_add_app_click(hDlg);
               break;
