@@ -1646,19 +1646,25 @@ static UINT resolve_folder(MSIHANDLE hPackage, LPCWSTR name, LPWSTR path,
                        package->folders[i].ParentIndex].Directory, path,source,
                        set_prop, NULL);
 
-        if (!source && package->folders[i].TargetDefault[0])
+        if (!source)
         {
-            strcatW(path,package->folders[i].TargetDefault);
-            strcatW(path,cszbs);
+            if (package->folders[i].TargetDefault[0])
+            {
+                strcatW(path,package->folders[i].TargetDefault);
+                strcatW(path,cszbs);
+            }
             strcpyW(package->folders[i].ResolvedTarget,path);
             TRACE("   resolved into %s\n",debugstr_w(path));
             if (set_prop)
                 MsiSetPropertyW(hPackage,name,path);
         }
-        else if (package->folders[i].SourceDefault[0])
+        else 
         {
-            strcatW(path,package->folders[i].SourceDefault);
-            strcatW(path,cszbs);
+            if (package->folders[i].SourceDefault[0])
+            {
+                strcatW(path,package->folders[i].SourceDefault);
+                strcatW(path,cszbs);
+            }
             strcpyW(package->folders[i].ResolvedSource,path);
         }
     }
@@ -2195,7 +2201,7 @@ inline static UINT get_file_target(MSIHANDLE hPackage, LPCWSTR file_key,
         {
             if (package->files[index].State >= 3)
             {
-                strcmpW(file_source,package->files[index].TargetPath);
+                strcpyW(file_source,package->files[index].TargetPath);
                 return ERROR_SUCCESS;
             }
             else
@@ -2287,7 +2293,6 @@ static UINT ACTION_DuplicateFiles(MSIHANDLE hPackage)
 
         if (MsiRecordIsNull(row,4))
         {
-ERR("HERE target path %s\n",debugstr_w(file_source));
             strcpyW(dest_name,strrchrW(file_source,'\\')+1);
         }
         else
