@@ -21,10 +21,6 @@
 #ifndef __WINE_WINDEF_H
 #define __WINE_WINDEF_H
 
-#ifdef __WINESRC__
-# undef UNICODE
-#endif  /* __WINESRC__ */
-
 #ifndef WINVER
 #define WINVER 0x0500
 #endif
@@ -67,60 +63,62 @@ extern "C" {
 # endif
 #endif /* __stdcall */
 
-#ifndef __WINESRC__
+#ifdef __WINESRC__
+#define __ONLY_IN_WINELIB(x)	do_not_use_this_in_wine
+#else
+#define __ONLY_IN_WINELIB(x)	x
+#endif
 
 #ifndef pascal
-#define pascal      __stdcall
+#define pascal      __ONLY_IN_WINELIB(__stdcall)
 #endif
 #ifndef _pascal
-#define _pascal     __stdcall
+#define _pascal	    __ONLY_IN_WINELIB(__stdcall)
 #endif
 #ifndef _stdcall
-#define _stdcall    __stdcall
+#define _stdcall    __ONLY_IN_WINELIB(__stdcall)
 #endif
 #ifndef _fastcall
-#define _fastcall   __stdcall
+#define _fastcall   __ONLY_IN_WINELIB(__stdcall)
 #endif
 #ifndef __fastcall
-#define __fastcall  __stdcall
+#define __fastcall  __ONLY_IN_WINELIB(__stdcall)
 #endif
 #ifndef __export
-#define __export    __stdcall
+#define __export    __ONLY_IN_WINELIB(__stdcall)
 #endif
 #ifndef cdecl
-#define cdecl       __cdecl
+#define cdecl       __ONLY_IN_WINELIB(__cdecl)
 #endif
 #ifndef _cdecl
-#define _cdecl      __cdecl
+#define _cdecl      __ONLY_IN_WINELIB(__cdecl)
 #endif
 
 #ifndef near
-#define near
+#define near        __ONLY_IN_WINELIB()
 #endif
 #ifndef far
-#define far
+#define far         __ONLY_IN_WINELIB()
 #endif
 #ifndef _near
-#define _near
+#define _near       __ONLY_IN_WINELIB()
 #endif
 #ifndef _far
-#define _far
+#define _far        __ONLY_IN_WINELIB()
 #endif
 #ifndef NEAR
-#define NEAR
+#define NEAR        __ONLY_IN_WINELIB()
 #endif
 #ifndef FAR
-#define FAR
+#define FAR         __ONLY_IN_WINELIB()
 #endif
 
 #ifndef _declspec
-#define _declspec(x)
+#define _declspec(x)    __ONLY_IN_WINELIB()
 #endif
 #ifndef __declspec
-#define __declspec(x)
+#define __declspec(x)   __ONLY_IN_WINELIB()
 #endif
-
-#endif /* __WINESRC__ */
 
 #define CALLBACK    __stdcall
 #define WINAPI      __stdcall
@@ -184,7 +182,6 @@ typedef double          DATE;
 #include "winnt.h"
 
 /* Macros to map Winelib names to the correct implementation name */
-/* depending on __WINESRC__ and UNICODE macros.                   */
 /* Note that Winelib is purely Win32.                             */
 
 #ifdef __WINESRC__

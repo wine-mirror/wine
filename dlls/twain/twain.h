@@ -54,10 +54,12 @@
 
 #include "windef.h"
 
+#undef FAR
 #define FAR
 #define huge
 #define WIN32
 #define _WIN32
+#undef __declspec
 #define __declspec(spec)
 
 /****************************************************************************

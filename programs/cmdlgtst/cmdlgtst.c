@@ -56,9 +56,6 @@ struct FlagTableEntry {
 	unsigned long ft_bit;
 };
 
-#if 0
-#define FAR
-#endif
 #define EXPORT
 
 static char menuName[] = "CmdlgtstMenu";
@@ -288,9 +285,9 @@ void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 
 	/* now draw a couple of lines, just for giggles. */
 
-	MoveToEx(ps.hdc, rect.left, rect.top, (POINT FAR *) 0);
+	MoveToEx(ps.hdc, rect.left, rect.top, (POINT *) 0);
 	LineTo(ps.hdc, rect.right, rect.bottom);
-	MoveToEx(ps.hdc, rect.left, rect.bottom, (POINT FAR *) 0);
+	MoveToEx(ps.hdc, rect.left, rect.bottom, (POINT *) 0);
 	LineTo(ps.hdc, rect.right, rect.top);
 
 	/* draw some text */
@@ -722,7 +719,7 @@ LRESULT CALLBACK EXPORT mainWindowDispatcher(
 {
 
 	if(uMsg == findMessageId) {
-		FINDREPLACE FAR* lpfr = (FINDREPLACE FAR*) lParam;
+		FINDREPLACE * lpfr = (FINDREPLACE *) lParam;
 		if(lpfr->Flags & FR_DIALOGTERM) {
 			MessageBox(hWnd, "User closing us down.", "Down", MB_OK);
 			findDialogBox = 0;

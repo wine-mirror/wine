@@ -89,7 +89,7 @@ HRESULT WINAPI DPNHPAST_DllCanUnloadNow(void)
  *
  *
  */
-HRESULT WINAPI DPNHPAST_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID FAR)
+HRESULT WINAPI DPNHPAST_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
 	FIXME(":stub\n");
 	return E_FAIL;
