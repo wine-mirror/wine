@@ -117,6 +117,8 @@ typedef struct tagMSFT_ImpFile {
 typedef struct tagICreateTypeLib2Impl
 {
     ICOM_VFIELD(ICreateTypeLib2);
+    ICOM_VTABLE(ITypeLib2) *lpVtblTypeLib2;
+
     UINT ref;
 
     WCHAR *filename;
@@ -138,6 +140,8 @@ typedef struct tagICreateTypeLib2Impl
 typedef struct tagICreateTypeInfo2Impl
 {
     ICOM_VFIELD(ICreateTypeInfo2);
+    ICOM_VTABLE(ITypeInfo2) *lpVtblTypeInfo2;
+
     UINT ref;
 
     ICreateTypeLib2Impl *typelib;
@@ -155,6 +159,9 @@ typedef struct tagICreateTypeInfo2Impl
 
     struct tagICreateTypeInfo2Impl *next_typeinfo;
 } ICreateTypeInfo2Impl;
+
+#define _ITypeInfo2_Offset(impl) ((int)(&(((impl*)0)->lpVtblTypeInfo2)))
+#define ICOM_THIS_From_ITypeInfo2(impl, iface) impl* This = (impl*)(((char*)iface)-_ITypeInfo2_Offset(impl))
 
 static ULONG WINAPI ICreateTypeLib2_fnRelease(ICreateTypeLib2 *iface);
 
@@ -876,7 +883,7 @@ static HRESULT WINAPI ICreateTypeInfo2_fnQueryInterface(
         *ppvObject = This;
     } else if (IsEqualIID(riid, &IID_ITypeInfo) ||
 	       IsEqualIID(riid, &IID_ITypeInfo2)) {
-	FIXME("QI for ITypeInfo interfaces not supported yet.\n");
+	*ppvObject = &This->lpVtblTypeInfo2;
     }
 
     if(*ppvObject)
@@ -1071,8 +1078,37 @@ static HRESULT WINAPI ICreateTypeInfo2_fnAddRefTypeInfo(
         ITypeInfo* pTInfo,
         HREFTYPE* phRefType)
 {
-    FIXME("(%p,%p,%p), stub!\n", iface, pTInfo, phRefType);
-    return E_OUTOFMEMORY;
+    ICOM_THIS(ICreateTypeInfo2Impl, iface);
+
+    ITypeLib *container;
+    int index;
+    HRESULT res;
+
+    TRACE("(%p,%p,%p)\n", iface, pTInfo, phRefType);
+
+    /*
+     * If this is one of ours, we set *phRefType to the TYPEINFO offset of
+     * the referred TypeInfo. Otherwise, we presumably have more magic to do.
+     *
+     * Unfortunately, we can't rely on the passed-in TypeInfo even having the
+     * same internal structure as one of ours. It could be from another
+     * implementation of ITypeInfo. So we need to do the following...
+     */
+    res = ITypeInfo_GetContainingTypeLib(pTInfo, &container, &index);
+    if (!SUCCEEDED(res)) {
+	TRACE("failed to find containing typelib.\n");
+	return res;
+    }
+
+    if (container == (ITypeLib *)&This->typelib->lpVtblTypeLib2) {
+	*phRefType = This->typelib->typelib_typeinfo_offsets[index];
+	This->typelib->ref--; /* FIXME: no vtbl yet. */
+	return S_OK;
+    } else {
+	FIXME("(%p,%p,%p), pTInfo from different typelib.\n", iface, pTInfo, phRefType);
+	ITypeLib_Release(container);
+	return S_OK;
+    }
 }
 
 /******************************************************************************
@@ -1787,6 +1823,619 @@ static HRESULT WINAPI ICreateTypeInfo2_fnSetName(
     return E_OUTOFMEMORY;
 }
 
+/*================== ITypeInfo2 Implementation ===================================*/
+
+/******************************************************************************
+ * ITypeInfo2_QueryInterface {OLEAUT32}
+ *
+ *  See IUnknown_QueryInterface.
+ */
+static HRESULT WINAPI ITypeInfo2_fnQueryInterface(ITypeInfo2 * iface, REFIID riid, LPVOID * ppv)
+{
+    ICOM_THIS_From_ITypeInfo2(ICreateTypeInfo2Impl, iface);
+
+    return ICreateTypeInfo2_QueryInterface((ICreateTypeInfo2 *)This, riid, ppv);
+}
+
+/******************************************************************************
+ * ITypeInfo2_AddRef {OLEAUT32}
+ *
+ *  See IUnknown_AddRef.
+ */
+static ULONG WINAPI ITypeInfo2_fnAddRef(ITypeInfo2 * iface)
+{
+    ICOM_THIS_From_ITypeInfo2(ICreateTypeInfo2Impl, iface);
+
+    return ICreateTypeInfo2_AddRef((ICreateTypeInfo2 *)This);
+}
+
+/******************************************************************************
+ * ITypeInfo2_Release {OLEAUT32}
+ *
+ *  See IUnknown_Release.
+ */
+static ULONG WINAPI ITypeInfo2_fnRelease(ITypeInfo2 * iface)
+{
+    ICOM_THIS_From_ITypeInfo2(ICreateTypeInfo2Impl, iface);
+
+    return ICreateTypeInfo2_Release((ICreateTypeInfo2 *)This);
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetTypeAttr {OLEAUT32}
+ *
+ *  See ITypeInfo_GetTypeAttr.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetTypeAttr(
+        ITypeInfo2* iface,
+        TYPEATTR** ppTypeAttr)
+{
+    FIXME("(%p,%p), stub!\n", iface, ppTypeAttr);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetTypeComp {OLEAUT32}
+ *
+ *  See ITypeInfo_GetTypeComp.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetTypeComp(
+        ITypeInfo2* iface,
+        ITypeComp** ppTComp)
+{
+    FIXME("(%p,%p), stub!\n", iface, ppTComp);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetFuncDesc {OLEAUT32}
+ *
+ *  See ITypeInfo_GetFuncDesc.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetFuncDesc(
+        ITypeInfo2* iface,
+        UINT index,
+        FUNCDESC** ppFuncDesc)
+{
+    FIXME("(%p,%d,%p), stub!\n", iface, index, ppFuncDesc);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetVarDesc {OLEAUT32}
+ *
+ *  See ITypeInfo_GetVarDesc.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetVarDesc(
+        ITypeInfo2* iface,
+        UINT index,
+        VARDESC** ppVarDesc)
+{
+    FIXME("(%p,%d,%p), stub!\n", iface, index, ppVarDesc);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetNames {OLEAUT32}
+ *
+ *  See ITypeInfo_GetNames.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetNames(
+        ITypeInfo2* iface,
+        MEMBERID memid,
+        BSTR* rgBstrNames,
+        UINT cMaxNames,
+        UINT* pcNames)
+{
+    FIXME("(%p,%ld,%p,%d,%p), stub!\n", iface, memid, rgBstrNames, cMaxNames, pcNames);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetRefTypeOfImplType {OLEAUT32}
+ *
+ *  See ITypeInfo_GetRefTypeOfImplType.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetRefTypeOfImplType(
+        ITypeInfo2* iface,
+        UINT index,
+        HREFTYPE* pRefType)
+{
+    FIXME("(%p,%d,%p), stub!\n", iface, index, pRefType);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetImplTypeFlags {OLEAUT32}
+ *
+ *  See ITypeInfo_GetImplTypeFlags.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetImplTypeFlags(
+        ITypeInfo2* iface,
+        UINT index,
+        INT* pImplTypeFlags)
+{
+    FIXME("(%p,%d,%p), stub!\n", iface, index, pImplTypeFlags);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetIDsOfNames {OLEAUT32}
+ *
+ *  See ITypeInfo_GetIDsOfNames.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetIDsOfNames(
+        ITypeInfo2* iface,
+        LPOLESTR* rgszNames,
+        UINT cNames,
+        MEMBERID* pMemId)
+{
+    FIXME("(%p,%p,%d,%p), stub!\n", iface, rgszNames, cNames, pMemId);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_Invoke {OLEAUT32}
+ *
+ *  See ITypeInfo_Invoke.
+ */
+static HRESULT WINAPI ITypeInfo2_fnInvoke(
+        ITypeInfo2* iface,
+        PVOID pvInstance,
+        MEMBERID memid,
+        WORD wFlags,
+        DISPPARAMS* pDispParams,
+        VARIANT* pVarResult,
+        EXCEPINFO* pExcepInfo,
+        UINT* puArgErr)
+{
+    FIXME("(%p,%p,%ld,%x,%p,%p,%p,%p), stub!\n", iface, pvInstance, memid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetDocumentation {OLEAUT32}
+ *
+ *  See ITypeInfo_GetDocumentation.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetDocumentation(
+        ITypeInfo2* iface,
+        MEMBERID memid,
+        BSTR* pBstrName,
+        BSTR* pBstrDocString,
+        DWORD* pdwHelpContext,
+        BSTR* pBstrHelpFile)
+{
+    FIXME("(%p,%ld,%p,%p,%p,%p), stub!\n", iface, memid, pBstrName, pBstrDocString, pdwHelpContext, pBstrHelpFile);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetDllEntry {OLEAUT32}
+ *
+ *  See ITypeInfo_GetDllEntry.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetDllEntry(
+        ITypeInfo2* iface,
+        MEMBERID memid,
+        INVOKEKIND invKind,
+        BSTR* pBstrDllName,
+        BSTR* pBstrName,
+        WORD* pwOrdinal)
+{
+    FIXME("(%p,%ld,%d,%p,%p,%p), stub!\n", iface, memid, invKind, pBstrDllName, pBstrName, pwOrdinal);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetRefTypeInfo {OLEAUT32}
+ *
+ *  See ITypeInfo_GetRefTypeInfo.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetRefTypeInfo(
+        ITypeInfo2* iface,
+        HREFTYPE hRefType,
+        ITypeInfo** ppTInfo)
+{
+    FIXME("(%p,%ld,%p), stub!\n", iface, hRefType, ppTInfo);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_AddressOfMember {OLEAUT32}
+ *
+ *  See ITypeInfo_AddressOfMember.
+ */
+static HRESULT WINAPI ITypeInfo2_fnAddressOfMember(
+        ITypeInfo2* iface,
+        MEMBERID memid,
+        INVOKEKIND invKind,
+        PVOID* ppv)
+{
+    FIXME("(%p,%ld,%d,%p), stub!\n", iface, memid, invKind, ppv);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_CreateInstance {OLEAUT32}
+ *
+ *  See ITypeInfo_CreateInstance.
+ */
+static HRESULT WINAPI ITypeInfo2_fnCreateInstance(
+        ITypeInfo2* iface,
+        IUnknown* pUnkOuter,
+        REFIID riid,
+        PVOID* ppvObj)
+{
+    FIXME("(%p,%p,%s,%p), stub!\n", iface, pUnkOuter, debugstr_guid(riid), ppvObj);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetMops {OLEAUT32}
+ *
+ *  See ITypeInfo_GetMops.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetMops(
+        ITypeInfo2* iface,
+        MEMBERID memid,
+        BSTR* pBstrMops)
+{
+    FIXME("(%p,%ld,%p), stub!\n", iface, memid, pBstrMops);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetContainingTypeLib {OLEAUT32}
+ *
+ *  See ITypeInfo_GetContainingTypeLib.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetContainingTypeLib(
+        ITypeInfo2* iface,
+        ITypeLib** ppTLib,
+        UINT* pIndex)
+{
+    ICOM_THIS_From_ITypeInfo2(ICreateTypeInfo2Impl, iface);
+
+    TRACE("(%p,%p,%p)\n", iface, ppTLib, pIndex);
+    
+    *ppTLib = (ITypeLib *)&This->typelib->lpVtblTypeLib2;
+    This->typelib->ref++;
+    *pIndex = This->typeinfo->typekind >> 16;
+
+    return S_OK;
+}
+
+/******************************************************************************
+ * ITypeInfo2_ReleaseTypeAttr {OLEAUT32}
+ *
+ *  See ITypeInfo_ReleaseTypeAttr.
+ */
+static void WINAPI ITypeInfo2_fnReleaseTypeAttr(
+        ITypeInfo2* iface,
+        TYPEATTR* pTypeAttr)
+{
+    FIXME("(%p,%p), stub!\n", iface, pTypeAttr);
+}
+
+/******************************************************************************
+ * ITypeInfo2_ReleaseFuncDesc {OLEAUT32}
+ *
+ *  See ITypeInfo_ReleaseFuncDesc.
+ */
+static void WINAPI ITypeInfo2_fnReleaseFuncDesc(
+        ITypeInfo2* iface,
+        FUNCDESC* pFuncDesc)
+{
+    FIXME("(%p,%p), stub!\n", iface, pFuncDesc);
+}
+
+/******************************************************************************
+ * ITypeInfo2_ReleaseVarDesc {OLEAUT32}
+ *
+ *  See ITypeInfo_ReleaseVarDesc.
+ */
+static void WINAPI ITypeInfo2_fnReleaseVarDesc(
+        ITypeInfo2* iface,
+        VARDESC* pVarDesc)
+{
+    FIXME("(%p,%p), stub!\n", iface, pVarDesc);
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetTypeKind {OLEAUT32}
+ *
+ *  Get the TYPEKIND value for a TypeInfo.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetTypeKind(
+        ITypeInfo2* iface,   /* [I] The TypeInfo to obtain the typekind for. */
+        TYPEKIND* pTypeKind) /* [O] The typekind for this TypeInfo. */
+{
+    FIXME("(%p,%p), stub!\n", iface, pTypeKind);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetTypeFlags {OLEAUT32}
+ *
+ *  Get the Type Flags for a TypeInfo.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetTypeFlags(
+        ITypeInfo2* iface, /* [I] The TypeInfo to obtain the typeflags for. */
+        ULONG* pTypeFlags) /* [O] The type flags for this TypeInfo. */
+{
+    FIXME("(%p,%p), stub!\n", iface, pTypeFlags);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetFuncIndexOfMemId {OLEAUT32}
+ *
+ *  Gets the index of a function given its member id.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetFuncIndexOfMemId(
+        ITypeInfo2* iface,  /* [I] The TypeInfo in which to find the function. */
+        MEMBERID memid,     /* [I] The member id for the function. */
+        INVOKEKIND invKind, /* [I] The invocation kind for the function. */
+        UINT* pFuncIndex)   /* [O] The index of the function. */
+{
+    FIXME("(%p,%ld,%d,%p), stub!\n", iface, memid, invKind, pFuncIndex);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetVarIndexOfMemId {OLEAUT32}
+ *
+ *  Gets the index of a variable given its member id.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetVarIndexOfMemId(
+        ITypeInfo2* iface, /* [I] The TypeInfo in which to find the variable. */
+        MEMBERID memid,    /* [I] The member id for the variable. */
+        UINT* pVarIndex)   /* [O] The index of the variable. */
+{
+    FIXME("(%p,%ld,%p), stub!\n", iface, memid, pVarIndex);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetCustData {OLEAUT32}
+ *
+ *  Gets a custom data element from a TypeInfo.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetCustData(
+        ITypeInfo2* iface, /* [I] The TypeInfo in which to find the custom data. */
+        REFGUID guid,      /* [I] The GUID under which the custom data is stored. */
+        VARIANT* pVarVal)  /* [O] The custom data. */
+{
+    FIXME("(%p,%s,%p), stub!\n", iface, debugstr_guid(guid), pVarVal);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetFuncCustData {OLEAUT32}
+ *
+ *  Gets a custom data element from a function.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetFuncCustData(
+        ITypeInfo2* iface, /* [I] The TypeInfo in which to find the custom data. */
+        UINT index,        /* [I] The index of the function for which to retrieve the custom data. */
+        REFGUID guid,      /* [I] The GUID under which the custom data is stored. */
+        VARIANT* pVarVal)  /* [O] The custom data. */
+{
+    FIXME("(%p,%d,%s,%p), stub!\n", iface, index, debugstr_guid(guid), pVarVal);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetParamCustData {OLEAUT32}
+ *
+ *  Gets a custom data element from a parameter.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetParamCustData(
+        ITypeInfo2* iface, /* [I] The TypeInfo in which to find the custom data. */
+        UINT indexFunc,    /* [I] The index of the function for which to retrieve the custom data. */
+        UINT indexParam,   /* [I] The index of the parameter for which to retrieve the custom data. */
+        REFGUID guid,      /* [I] The GUID under which the custom data is stored. */
+        VARIANT* pVarVal)  /* [O] The custom data. */
+{
+    FIXME("(%p,%d,%d,%s,%p), stub!\n", iface, indexFunc, indexParam, debugstr_guid(guid), pVarVal);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetVarCustData {OLEAUT32}
+ *
+ *  Gets a custom data element from a variable.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetVarCustData(
+        ITypeInfo2* iface, /* [I] The TypeInfo in which to find the custom data. */
+        UINT index,        /* [I] The index of the variable for which to retrieve the custom data. */
+        REFGUID guid,      /* [I] The GUID under which the custom data is stored. */
+        VARIANT* pVarVal)  /* [O] The custom data. */
+{
+    FIXME("(%p,%d,%s,%p), stub!\n", iface, index, debugstr_guid(guid), pVarVal);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetImplTypeCustData {OLEAUT32}
+ *
+ *  Gets a custom data element from an implemented type of a TypeInfo.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetImplTypeCustData(
+        ITypeInfo2* iface, /* [I] The TypeInfo in which to find the custom data. */
+        UINT index,        /* [I] The index of the implemented type for which to retrieve the custom data. */
+        REFGUID guid,      /* [I] The GUID under which the custom data is stored. */
+        VARIANT* pVarVal)  /* [O] The custom data. */
+{
+    FIXME("(%p,%d,%s,%p), stub!\n", iface, index, debugstr_guid(guid), pVarVal);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetDocumentation2 {OLEAUT32}
+ *
+ *  Gets some documentation from a TypeInfo in a locale-aware fashion.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of STG_E_INSUFFICIENTMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetDocumentation2(
+        ITypeInfo2* iface,           /* [I] The TypeInfo to retrieve the documentation from. */
+        MEMBERID memid,              /* [I] The member id (why?). */
+        LCID lcid,                   /* [I] The locale (why?). */
+        BSTR* pbstrHelpString,       /* [O] The help string. */
+        DWORD* pdwHelpStringContext, /* [O] The help string context. */
+        BSTR* pbstrHelpStringDll)    /* [O] The help file name. */
+{
+    FIXME("(%p,%ld,%ld,%p,%p,%p), stub!\n", iface, memid, lcid, pbstrHelpString, pdwHelpStringContext, pbstrHelpStringDll);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetAllCustData {OLEAUT32}
+ *
+ *  Gets all of the custom data associated with a TypeInfo.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetAllCustData(
+        ITypeInfo2* iface,   /* [I] The TypeInfo in which to find the custom data. */
+        CUSTDATA* pCustData) /* [O] A pointer to the custom data. */
+{
+    FIXME("(%p,%p), stub!\n", iface, pCustData);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetAllFuncCustData {OLEAUT32}
+ *
+ *  Gets all of the custom data associated with a function.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetAllFuncCustData(
+        ITypeInfo2* iface,   /* [I] The TypeInfo in which to find the custom data. */
+        UINT index,          /* [I] The index of the function for which to retrieve the custom data. */
+        CUSTDATA* pCustData) /* [O] A pointer to the custom data. */
+{
+    FIXME("(%p,%d,%p), stub!\n", iface, index, pCustData);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetAllParamCustData {OLEAUT32}
+ *
+ *  Gets all of the custom data associated with a parameter.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetAllParamCustData(
+        ITypeInfo2* iface,   /* [I] The TypeInfo in which to find the custom data. */
+        UINT indexFunc,      /* [I] The index of the function for which to retrieve the custom data. */
+        UINT indexParam,     /* [I] The index of the parameter for which to retrieve the custom data. */
+        CUSTDATA* pCustData) /* [O] A pointer to the custom data. */
+{
+    FIXME("(%p,%d,%d,%p), stub!\n", iface, indexFunc, indexParam, pCustData);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetAllVarCustData {OLEAUT32}
+ *
+ *  Gets all of the custom data associated with a variable.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetAllVarCustData(
+        ITypeInfo2* iface,   /* [I] The TypeInfo in which to find the custom data. */
+        UINT index,          /* [I] The index of the variable for which to retrieve the custom data. */
+        CUSTDATA* pCustData) /* [O] A pointer to the custom data. */
+{
+    FIXME("(%p,%d,%p), stub!\n", iface, index, pCustData);
+    return E_OUTOFMEMORY;
+}
+
+/******************************************************************************
+ * ITypeInfo2_GetAllImplTypeCustData {OLEAUT32}
+ *
+ *  Gets all of the custom data associated with an implemented type.
+ *
+ * RETURNS
+ *
+ *  Success: S_OK.
+ *  Failure: One of E_OUTOFMEMORY or E_INVALIDARG.
+ */
+static HRESULT WINAPI ITypeInfo2_fnGetAllImplTypeCustData(
+        ITypeInfo2* iface,   /* [I] The TypeInfo in which to find the custom data. */
+        UINT index,          /* [I] The index of the implemented type for which to retrieve the custom data. */
+        CUSTDATA* pCustData) /* [O] A pointer to the custom data. */
+{
+    FIXME("(%p,%d,%p), stub!\n", iface, index, pCustData);
+    return E_OUTOFMEMORY;
+}
+
+
+/*================== ICreateTypeInfo2 & ITypeInfo2 VTABLEs And Creation ===================================*/
 
 static ICOM_VTABLE(ICreateTypeInfo2) ctypeinfo2vt =
 {
@@ -1837,6 +2486,51 @@ static ICOM_VTABLE(ICreateTypeInfo2) ctypeinfo2vt =
     ICreateTypeInfo2_fnSetName
 };
 
+static ICOM_VTABLE(ITypeInfo2) typeinfo2vt =
+{
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+
+    ITypeInfo2_fnQueryInterface,
+    ITypeInfo2_fnAddRef,
+    ITypeInfo2_fnRelease,
+
+    ITypeInfo2_fnGetTypeAttr,
+    ITypeInfo2_fnGetTypeComp,
+    ITypeInfo2_fnGetFuncDesc,
+    ITypeInfo2_fnGetVarDesc,
+    ITypeInfo2_fnGetNames,
+    ITypeInfo2_fnGetRefTypeOfImplType,
+    ITypeInfo2_fnGetImplTypeFlags,
+    ITypeInfo2_fnGetIDsOfNames,
+    ITypeInfo2_fnInvoke,
+    ITypeInfo2_fnGetDocumentation,
+    ITypeInfo2_fnGetDllEntry,
+    ITypeInfo2_fnGetRefTypeInfo,
+    ITypeInfo2_fnAddressOfMember,
+    ITypeInfo2_fnCreateInstance,
+    ITypeInfo2_fnGetMops,
+    ITypeInfo2_fnGetContainingTypeLib,
+    ITypeInfo2_fnReleaseTypeAttr,
+    ITypeInfo2_fnReleaseFuncDesc,
+    ITypeInfo2_fnReleaseVarDesc,
+
+    ITypeInfo2_fnGetTypeKind,
+    ITypeInfo2_fnGetTypeFlags,
+    ITypeInfo2_fnGetFuncIndexOfMemId,
+    ITypeInfo2_fnGetVarIndexOfMemId,
+    ITypeInfo2_fnGetCustData,
+    ITypeInfo2_fnGetFuncCustData,
+    ITypeInfo2_fnGetParamCustData,
+    ITypeInfo2_fnGetVarCustData,
+    ITypeInfo2_fnGetImplTypeCustData,
+    ITypeInfo2_fnGetDocumentation2,
+    ITypeInfo2_fnGetAllCustData,
+    ITypeInfo2_fnGetAllFuncCustData,
+    ITypeInfo2_fnGetAllParamCustData,
+    ITypeInfo2_fnGetAllVarCustData,
+    ITypeInfo2_fnGetAllImplTypeCustData,
+};
+
 static ICreateTypeInfo2 *ICreateTypeInfo2_Constructor(ICreateTypeLib2Impl *typelib, WCHAR *szName, TYPEKIND tkind)
 {
     ICreateTypeInfo2Impl *pCreateTypeInfo2Impl;
@@ -1851,6 +2545,7 @@ static ICreateTypeInfo2 *ICreateTypeInfo2_Constructor(ICreateTypeLib2Impl *typel
     if (!pCreateTypeInfo2Impl) return NULL;
 
     pCreateTypeInfo2Impl->lpVtbl = &ctypeinfo2vt;
+    pCreateTypeInfo2Impl->lpVtblTypeInfo2 = &typeinfo2vt;
     pCreateTypeInfo2Impl->ref = 1;
 
     pCreateTypeInfo2Impl->typelib = typelib;
