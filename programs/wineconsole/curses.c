@@ -25,6 +25,8 @@
  *   functions which can be implemented as macros)
  * - finish buffer scrolling (mainly, need to decide of a nice way for 
  *   requesting the UP/DOWN operations
+ * - Resizing (unix) terminal does not change (Win32) console size.
+ * - Initial console size comes from registry and not from terminal size.
  */
 
 #include "config.h"
@@ -60,6 +62,7 @@ struct inner_data_curse
     int                 allow_scroll;
 };
 
+
 /******************************************************************
  *		WCCURSES_ResizeScreenBuffer
  *
@@ -83,6 +86,11 @@ static void WCCURSES_ResizeScreenBuffer(struct inner_data* data)
  */
 static void	WCCURSES_PosCursor(const struct inner_data* data)
 {
+    int scr_width;
+    int scr_height;
+
+    getmaxyx(stdscr, scr_height, scr_width);
+
     if (data->curcfg.cursor_visible &&
         data->cursor.Y >= data->curcfg.win_pos.Y &&
         data->cursor.Y < data->curcfg.win_pos.Y + data->curcfg.win_height &&
@@ -96,9 +104,10 @@ static void	WCCURSES_PosCursor(const struct inner_data* data)
     {
         curs_set(0);
     }
+
     prefresh(PRIVATE(data)->pad,
              data->curcfg.win_pos.Y, data->curcfg.win_pos.X,
-             0, 0, data->curcfg.win_height, data->curcfg.win_width);
+             0, 0, scr_height, scr_width);
 }
 
 /******************************************************************
@@ -147,7 +156,7 @@ static void	WCCURSES_SetTitle(const struct inner_data* data)
 }
 
 /******************************************************************
- *		Refresh
+ *		WCCURSES_Refresh
  *
  *
  */
@@ -179,9 +188,8 @@ static void WCCURSES_Refresh(const struct inner_data* data, int tp, int bm)
         }
         mvwaddchnstr(PRIVATE(data)->pad, y, 0, PRIVATE(data)->line, data->curcfg.sb_width);
     }
-    prefresh(PRIVATE(data)->pad,
-             data->curcfg.win_pos.Y, data->curcfg.win_pos.X,
-             0, 0, data->curcfg.win_height, data->curcfg.win_width);
+
+    WCCURSES_PosCursor(data);
 }
 
 /******************************************************************
