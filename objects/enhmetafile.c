@@ -352,7 +352,39 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     {
     case EMR_HEADER:
       {
-	/* ENHMETAHEADER *h = (LPENHMETAHEADER) mr; */
+#if 0
+	ENHMETAHEADER* h = (LPENHMETAHEADER)mr;
+        XFORM dcTransform;
+
+        /* Scale the enhanced metafile according to the reference hdc
+           it was created with */
+        if( h->szlDevice.cx )
+        {
+          dcTransform.eM11 = (FLOAT)( (DOUBLE)GetDeviceCaps( hdc, HORZRES ) /  
+                                      (DOUBLE)h->szlDevice.cx );
+        }
+        else 
+        {
+          ERR( "Invalid szlDevice.cx in header\n" ); 
+          dcTransform.eM11 = (FLOAT)1.0;
+        }
+
+        if( h->szlDevice.cy )
+        { 
+          dcTransform.eM22 = (FLOAT)( (DOUBLE)GetDeviceCaps( hdc, VERTRES ) /
+                                      (DOUBLE)h->szlDevice.cy );
+        }
+        else 
+        {
+          ERR( "Invalid szlDevice.cy in header\n" ); 
+          dcTransform.eM22 = (FLOAT)1.0;
+        }
+
+        dcTransform.eM12 = dcTransform.eM21 = (FLOAT)0;
+        dcTransform.eDx = dcTransform.eDy = (FLOAT)0;
+
+        ModifyWorldTransform( hdc, &dcTransform, MWT_RIGHTMULTIPLY ); 
+#endif
 	break;
       }
     case EMR_EOF:
@@ -1048,6 +1080,100 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         break;
       }
 
+    case EMR_CREATECOLORSPACE:
+      {
+        PEMRCREATECOLORSPACE lpCreateColorSpace = (PEMRCREATECOLORSPACE)mr;
+
+        (handletable->objectHandle)[lpCreateColorSpace->ihCS] = 
+           CreateColorSpaceA( &lpCreateColorSpace->lcs ); 
+
+        break;
+      }
+
+    case EMR_SETCOLORSPACE:
+      {
+        PEMRSETCOLORSPACE lpSetColorSpace = (PEMRSETCOLORSPACE)mr; 
+
+        SetColorSpace( hdc, 
+                       (handletable->objectHandle)[lpSetColorSpace->ihCS] );
+
+        break;
+      }
+
+    case EMR_DELETECOLORSPACE:
+      {
+        PEMRDELETECOLORSPACE lpDeleteColorSpace = (PEMRDELETECOLORSPACE)mr;
+
+        DeleteColorSpace( (handletable->objectHandle)[lpDeleteColorSpace->ihCS] );
+   
+        break; 
+      }
+
+    case EMR_SETICMMODE:
+      {
+        PERMSETICMMODE lpSetICMMode = (PERMSETICMMODE)mr;
+
+        SetICMMode( hdc,
+                    (INT)lpSetICMMode->iMode );
+
+        break;
+      }
+
+    case EMR_PIXELFORMAT: 
+      {
+        INT iPixelFormat;
+        PEMRPIXELFORMAT lpPixelFormat = (PEMRPIXELFORMAT)mr;
+
+        iPixelFormat = ChoosePixelFormat( hdc, &lpPixelFormat->pfd );
+        SetPixelFormat( hdc, iPixelFormat, &lpPixelFormat->pfd ); 
+         
+        break;
+      }
+
+    case EMR_SETPALETTEENTRIES:  
+      {
+        PEMRSETPALETTEENTRIES lpSetPaletteEntries = (PEMRSETPALETTEENTRIES)mr;
+
+        SetPaletteEntries( (handletable->objectHandle)[lpSetPaletteEntries->ihPal],
+                           (UINT)lpSetPaletteEntries->iStart,
+                           (UINT)lpSetPaletteEntries->cEntries,
+                           lpSetPaletteEntries->aPalEntries ); 
+                           
+        break;
+      }
+
+    case EMR_RESIZEPALETTE:
+      {
+        PEMRRESIZEPALETTE lpResizePalette = (PEMRRESIZEPALETTE)mr;
+
+        ResizePalette( (handletable->objectHandle)[lpResizePalette->ihPal],
+                       (UINT)lpResizePalette->cEntries );
+
+        break;
+      }
+
+    case EMR_CREATEDIBPATTERNBRUSHPT:
+      {
+        PEMRCREATEDIBPATTERNBRUSHPT lpCreate = (PEMRCREATEDIBPATTERNBRUSHPT)mr;
+
+        /* This is a BITMAPINFO struct followed directly by bitmap bits */
+        LPVOID lpPackedStruct = HeapAlloc( GetProcessHeap(), 
+                                           0, 
+                                           lpCreate->cbBmi + lpCreate->cbBits );
+        /* Now pack this structure */
+        memcpy( lpPackedStruct, 
+                ((BYTE*)lpCreate) + lpCreate->offBmi,
+                lpCreate->cbBmi ); 
+        memcpy( ((BYTE*)lpPackedStruct) + lpCreate->cbBmi,
+                ((BYTE*)lpCreate) + lpCreate->offBits,
+                lpCreate->cbBits );
+
+        (handletable->objectHandle)[lpCreate->ihBrush] = 
+           CreateDIBPatternBrushPt( lpPackedStruct,
+                                    (UINT)lpCreate->iUsage ); 
+
+        break; 
+      }
 
     case EMR_BITBLT:
     case EMR_STRETCHBLT:
@@ -1062,22 +1188,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_POLYPOLYGON16:
     case EMR_POLYDRAW16:
     case EMR_CREATEMONOBRUSH:
-    case EMR_CREATEDIBPATTERNBRUSHPT:
     case EMR_POLYTEXTOUTA:
     case EMR_POLYTEXTOUTW:
-    case EMR_SETICMMODE:
-    case EMR_CREATECOLORSPACE:
-    case EMR_SETCOLORSPACE:
-    case EMR_DELETECOLORSPACE:
-    case EMR_GLSRECORD:
-    case EMR_GLSBOUNDEDRECORD:
-    case EMR_PIXELFORMAT: 
-    case EMR_SETPALETTEENTRIES:  
-    case EMR_RESIZEPALETTE:
     case EMR_FILLRGN:
     case EMR_FRAMERGN:
     case EMR_INVERTRGN:
     case EMR_PAINTRGN:
+    case EMR_GLSRECORD:
+    case EMR_GLSBOUNDEDRECORD:
     default:
       /* From docs: If PlayEnhMetaFileRecord doesn't recognize a 
                     record then ignore and return TRUE. */

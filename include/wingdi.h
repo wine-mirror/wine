@@ -1966,9 +1966,15 @@ typedef struct {
     DWORD nPalEntries; 
     SIZEL szlDevice; 
     SIZEL szlMillimeters;
+
+    /* Fields for winver >= win95 */
     DWORD cbPixelFormat;
     DWORD offPixelFormat;
     DWORD bOpenGL;
+
+    /* Fields for winver >= win98 */ 
+    SIZEL szlMicrometers;
+
 } ENHMETAHEADER, *LPENHMETAHEADER; 
 
 typedef struct {
@@ -2049,8 +2055,17 @@ typedef struct {
 typedef struct {
     EMR            emr;
     DWORD          ihCS;
-    LOGCOLORSPACEW lcs;
+    LOGCOLORSPACEA lcs;
 } EMRCREATECOLORSPACE, *PEMRCREATECOLORSPACE;
+
+typedef struct {
+  EMR            emr;
+  DWORD          ihCS;
+  LOGCOLORSPACEW lcs;
+  DWORD          dwFlags;
+  DWORD          cbData;
+  BYTE           Data[1];
+} EMRCREATECOLORSPACEW, *PEMRCREATECOLORSPACEW;
 
 typedef struct {
     EMR   emr;
@@ -2507,6 +2522,24 @@ typedef struct {
     LONG  cxDest;
     LONG  cyDst;
 } EMRSTRETCHDIBITS, *PEMRSTRETCHDIBITS;
+
+typedef struct {
+    EMR                   emr; 
+    PIXELFORMATDESCRIPTOR pfd; 
+} EMRPIXELFORMAT, *PEMRPIXELFORMAT;
+
+typedef struct tagEMRGLSRECORD {
+  EMR   emr;
+  DWORD cbData;
+  BYTE  Data[1];
+} EMRGLSRECORD, *PEMRGLSRECORD;
+
+typedef struct {
+  EMR   emr;
+  RECTL rclBounds;
+  DWORD cbData;
+  BYTE  Data[1];
+} EMRGLSBOUNDEDRECORD, *PEMRGLSBOUNDEDRECORD; 
 
 typedef INT (CALLBACK *ENHMFENUMPROC)(HDC, LPHANDLETABLE, 
 					  LPENHMETARECORD, INT, LPVOID);
@@ -3046,6 +3079,9 @@ HMETAFILE WINAPI CopyMetaFileW(HMETAFILE,LPCWSTR);
 HBITMAP   WINAPI CreateBitmap(INT,INT,UINT,UINT,LPCVOID);
 HBITMAP   WINAPI CreateBitmapIndirect(const BITMAP*);
 HBRUSH    WINAPI CreateBrushIndirect(const LOGBRUSH*);
+HCOLORSPACE WINAPI CreateColorSpaceA(LPLOGCOLORSPACEA);
+HCOLORSPACE WINAPI CreateColorSpaceW(LPLOGCOLORSPACEW);
+#define     CreateColorSpace WINELIB_NAME_AW(CreateColorSpace)
 HBITMAP   WINAPI CreateCompatibleBitmap(HDC,INT,INT);
 HDC       WINAPI CreateCompatibleDC(HDC);
 HDC       WINAPI CreateDCA(LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
@@ -3093,6 +3129,7 @@ BOOL      WINAPI CreateScalableFontResourceW(DWORD,LPCWSTR,LPCWSTR,LPCWSTR);
 #define     CreateScalableFontResource WINELIB_NAME_AW(CreateScalableFontResource)
 HBRUSH    WINAPI CreateSolidBrush(COLORREF);
 BOOL      WINAPI DPtoLP(HDC,LPPOINT,INT);
+BOOL      WINAPI DeleteColorSpace(HCOLORSPACE);
 BOOL      WINAPI DeleteDC(HDC);
 BOOL      WINAPI DeleteEnhMetaFile(HENHMETAFILE);
 BOOL      WINAPI DeleteMetaFile(HMETAFILE);
@@ -3308,12 +3345,14 @@ INT       WINAPI SetBkMode(HDC,INT);
 UINT      WINAPI SetBoundsRect(HDC,const RECT*,UINT);
 BOOL      WINAPI SetBrushOrgEx(HDC,INT,INT,LPPOINT);
 BOOL      WINAPI SetColorAdjustment(HDC,const COLORADJUSTMENT*);
+HCOLORSPACE WINAPI SetColorSpace(HDC,HCOLORSPACE);
 UINT      WINAPI SetDIBColorTable(HDC,UINT,UINT,RGBQUAD*);
 INT       WINAPI SetDIBits(HDC,HBITMAP,UINT,UINT,LPCVOID,const BITMAPINFO*,UINT);
 INT       WINAPI SetDIBitsToDevice(HDC,INT,INT,DWORD,DWORD,INT,
                          INT,UINT,UINT,LPCVOID,const BITMAPINFO*,UINT);
 HENHMETAFILE WINAPI SetEnhMetaFileBits(UINT,const BYTE *);
 INT         WINAPI SetGraphicsMode(HDC,INT);
+INT         WINAPI SetICMMode(HDC,INT);
 DWORD       WINAPI SetLayout(HDC,DWORD);
 INT         WINAPI SetMapMode(HDC,INT);
 DWORD       WINAPI SetMapperFlags(HDC,DWORD);

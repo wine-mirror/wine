@@ -39,8 +39,8 @@ init    MAIN_GdiInit
 @ stdcall CreateBitmap(long long long long ptr) CreateBitmap
 @ stdcall CreateBitmapIndirect(ptr) CreateBitmapIndirect
 @ stdcall CreateBrushIndirect(ptr) CreateBrushIndirect
-@ stub CreateColorSpaceA
-@ stub CreateColorSpaceW
+@ stdcall CreateColorSpaceA(ptr) CreateColorSpaceA
+@ stdcall CreateColorSpaceW(ptr) CreateColorSpaceW
 @ stdcall CreateCompatibleBitmap(long long long) CreateCompatibleBitmap
 @ stdcall CreateCompatibleDC(long) CreateCompatibleDC
 @ stdcall CreateDCA(str str str ptr) CreateDCA
@@ -77,7 +77,7 @@ init    MAIN_GdiInit
 @ stdcall CreateScalableFontResourceW(long wstr wstr wstr) CreateScalableFontResourceW
 @ stdcall CreateSolidBrush(long) CreateSolidBrush
 @ stdcall DPtoLP(long ptr long) DPtoLP
-@ stub DeleteColorSpace
+@ stdcall DeleteColorSpace(long) DeleteColorSpace
 @ stdcall DeleteDC(long) DeleteDC
 @ stdcall DeleteEnhMetaFile(long) DeleteEnhMetaFile
 @ stdcall DeleteMetaFile(long) DeleteMetaFile
@@ -343,7 +343,7 @@ init    MAIN_GdiInit
 @ stdcall SetBoundsRect(long ptr long) SetBoundsRect
 @ stdcall SetBrushOrgEx(long long long ptr) SetBrushOrgEx
 @ stdcall SetColorAdjustment(long ptr) SetColorAdjustment
-@ stub SetColorSpace
+@ stdcall SetColorSpace(long long) SetColorSpace
 @ stdcall SetDIBColorTable(long long long ptr) SetDIBColorTable
 @ stdcall SetDIBits(long long long long ptr ptr long) SetDIBits
 @ stdcall SetDIBitsToDevice(long long long long long long long long long ptr ptr long) SetDIBitsToDevice
