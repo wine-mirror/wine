@@ -1364,7 +1364,6 @@ void X11DRV_MapNotify( HWND hwnd, XMapEvent *event )
         WIN_SetStyle( hwnd, style );
         WIN_ReleasePtr( win );
 
-        WIN_InternalShowOwnedPopups( hwnd, TRUE, TRUE );
         SendMessageA( hwnd, WM_SHOWWINDOW, SW_RESTORE, 0 );
         SetWindowPos( hwnd, 0, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
                       SWP_NOZORDER | SWP_WINE_NOHOSTMOVE );
@@ -1397,8 +1396,6 @@ void X11DRV_UnmapNotify( HWND hwnd, XUnmapEvent *event )
         SendMessageA( hwnd, WM_SHOWWINDOW, SW_MINIMIZE, 0 );
         SetWindowPos( hwnd, 0, 0, 0, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
                       SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_WINE_NOHOSTMOVE );
-
-        WIN_InternalShowOwnedPopups( hwnd, FALSE, TRUE );
     }
     else WIN_ReleasePtr( win );
 }
