@@ -194,10 +194,11 @@ HBRUSH32 WINAPI CreateDIBPatternBrush32(
  *	
  */
 HBRUSH32 WINAPI CreateDIBPatternBrushPt(
-		BITMAPINFO *info,		/* Pointer to a BITMAPINFO structure */ 
+		const void* data,		/* Pointer to a BITMAPINFO structure followed by more data */ 
 		UINT32 coloruse 		/* Specifies color format, if provided */
 )
 {
+    BITMAPINFO *info=(BITMAPINFO*)data;
     LOGBRUSH32 logbrush = { BS_DIBPATTERN, coloruse, 0 };
     BITMAPINFO  *newInfo;
     INT32 size;
