@@ -1,5 +1,5 @@
   <chapter id="cvs-regression">
-    <title>How to do regression testing using Cvs</title>
+    <title>How to do regression testing using CVS</title>
 
     <para>
       written by Gerard Patel
@@ -18,8 +18,8 @@
     <orderedlist>
       <listitem>
         <para>
-          Get the 'full cvs' archive from winehq. This archive is
-          the cvs tree but with the tags controlling the versioning
+          Get the <quote>full CVS</quote> archive from winehq. This archive is
+          the CVS tree but with the tags controlling the versioning
           system. It's a big file (> 40 meg) with a name like
           wine-cvsdirs-&lt;last update date> (it's more than 100mb
           when uncompressed, you can't very well do this with
@@ -30,9 +30,9 @@
         <para>
           untar it into a repository directory:
           <screen>
-            cd /home/gerard
-            tar -zxfcvs-dirs-2000-05-20.tar.gz
-            mv wine repository
+cd /home/gerard
+tar -zxf cvs-dirs-2003-01-15.tar.gz
+mv wine repository
           </screen>
         </para>
       </listitem>
@@ -43,11 +43,11 @@
           <command>cvs</command> will think it's part of the
           repository and deny you an extraction in the repository:
           <screen>
-            cd /home/gerard
-            mv wine wine_current (-> this protects your current wine sandbox, if any)
-            export CVSROOT=/home/gerard/repository
-            cd /home/gerard
-            cvs -d $CVSROOT checkout wine
+cd /home/gerard
+mv wine wine_current (-> this protects your current wine sandbox, if any)
+export CVSROOT=/home/gerard/repository
+cd /home/gerard
+cvs -d $CVSROOT checkout wine
           </screen>
         </para>
         <para>
@@ -57,49 +57,52 @@
         </para>
         <para>
           Note also that it is possible to do all this with a direct
-          Cvs connection, of course. The full cvs file method is less
-          painful for the winehq cvs server and probably a bit faster
+          CVS connection, of course. The full CVS file method is less
+          painful for the winehq CVS server and probably a bit faster
           if you don't have a very good net connection.
         </para>
         <note>
           <para>
-            If you use Cvs directly from the winehq.com server, do not
+            If you use CVS directly from the winehq.com server, do not
             forget to add to your <filename>.cvsrc</filename> file:
           </para>
           <screen>
-            cvs -z 3
-            update -dPA
-            diff -u
+cvs -z 3
+update -dPA
+diff -u
           </screen>
          </note>
       </listitem>
       <listitem>
         <para>
           you will have now in the <filename>~/wine</filename>
-          directory an image of the cvs tree, on the client side.
+          directory an image of the CVS tree, on the client side.
           Now update this image to the date you want:
           <screen>
-            cd /home/gerard/wine
-            cvs -d $CVSROOT update -D "1999-06-01 EDT"   
+cd /home/gerard/wine
+cvs -d $CVSROOT update -D "2002-06-01 CST"   
           </screen>
         </para>
         <para>
           The date format is <literal>YYYY-MM-DD HH:MM:SS</literal>.
-          Using the EDT date format ensure that you will be able to
+          Using the CST date format ensure that you will be able to
           extract patches in a way that will be compatible with the
-          wine-cvs archive : http://www.winehq.com/hypermail/wine-cvs
+          wine-cvs archive
+          <ulink url="http://www.winehq.com/hypermail/wine-cvs">
+          http://www.winehq.com/hypermail/wine-cvs</ulink>
         </para>
         <para>
           Many messages will inform you that more recent files have
           been deleted to set back the client cvs tree to the date
           you asked, for example:
           <screen>
-            cvs update: tsx11/ts_xf86dga2.c is no longer in the repository
+cvs update: tsx11/ts_xf86dga2.c is no longer in the repository
           </screen>
         </para>
         <para>
           <command>cvs update</command> is not limited to upgrade to
-          a <emphasis>newer</emphasis> version as I have believed for far too long :-(
+          a <emphasis>newer</emphasis> version as I have believed for
+          far too long :-(
         </para>
       </listitem>
       <listitem>
@@ -107,8 +110,8 @@
           Now proceed as for a normal update:
         </para>
         <screen>
-          ./configure
-          make depend && make
+./configure
+make depend && make
         </screen>
         <para>
           If any non-programmer reads this, the fastest method to get
@@ -118,18 +121,19 @@
           April, if not, to 1st October, and so on.
         </para>
         <para>
-          If you have lot of hard disk free space (a full compile takes
-          currently 400 Mb), copy the oldest known working version before
-          updating it, it will save time if you need to go back (it's
-          better to make distclean before going back in time, so you
-          have to make everything if you don't backup the older version)
+          If you have lot of hard disk free space (a full compile currently
+          takes 400 Mb), copy the oldest known working version before
+          updating it, it will save time if you need to go back. (it's
+          better to <command>make distclean</command> before going back in
+          time, so you have to make everything if you don't backup the older
+          version)
         </para>
         <para>  
           When you have found the day where the problem happened, continue
           the search using the wine-cvs archive (sorted by date) and a
           more precise cvs update including hour, minute, second :
           <screen>
-            cvs -d $CVSROOT update -D "1999-06-01 15:17:25 EDT"
+cvs -d $CVSROOT update -D "2002-06-01 15:17:25 CST"
           </screen>
           This will allow you to find easily the exact patch that did it.
         </para>
@@ -137,8 +141,10 @@
       <listitem>
         <para>
           If you find the patch that is the cause of the problem, you have
-          almost won; report about it on <systemitem>comp.emulators.windows.wine</systemitem>
-          or susbscribe to wine-devel and post it there. There is a chance that the author
+          almost won; report about it to
+          <ulink url="http://bugs.winehq.com/">Wine Bugzilla</ulink>
+          or susbscribe to wine-devel and post it there. There is a chance
+          that the author
           will jump in to suggest a fix; or there is always the possibility
           to look hard at the patch until it is coerced to reveal where is
           the bug :-) 
