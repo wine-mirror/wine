@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "winbase.h"
+#include "wine/winbase16.h"
 #include "clipboard.h"
 #include "gdi.h"
 #include "message.h"
