@@ -677,9 +677,6 @@ HRESULT WINAPI DirectSoundCreate8(REFGUID lpGUID,LPDIRECTSOUND8 *ppDS,IUnknown *
 		}
 
                 (*ippDS)->drvdesc.dnDevNode--; /* take away last increment */
-
-                /* for aRts sound server */
-                if (err == DS_OK) waveOutSetVolume( (*ippDS)->drvdesc.dnDevNode, 0xFFFFFFFFL );
 	}
 
 	if (drv && (err == DS_OK))
