@@ -576,6 +576,12 @@ UINT WINAPI MsiGetPropertyA(MSIHANDLE hInstall, LPCSTR szName, LPSTR szValueBuf,
             goto end;
     }
 
+    if(  *pchValueBuf > 0 )
+    {
+        /* be sure to blank the string first */
+        szValueBuf[0]=0;      
+    }
+
     hr = MsiGetPropertyW( hInstall, szwName, szwValueBuf, pchValueBuf );
 
     if(  *pchValueBuf > 0 )
@@ -624,7 +630,11 @@ UINT WINAPI MsiGetPropertyW(MSIHANDLE hInstall, LPCWSTR szName,
     {
         DWORD sz;
         WCHAR value[0x100];
-
+    
+        /* even on unsuccessful lookup native msi blanks this string */
+        if (*pchValueBuf > 0)
+            szValueBuf[0] = 0;
+            
         rc = MsiViewExecute(view, 0);
         if (rc != ERROR_SUCCESS)
         {
