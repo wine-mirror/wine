@@ -145,6 +145,7 @@ unsigned short get_type_vt(type_t *t)
       return VT_DISPATCH;
     return VT_USERDEFINED;
         
+  case RPC_FC_ENUM16:
   case RPC_FC_STRUCT:
   case RPC_FC_PSTRUCT:
     return VT_USERDEFINED;
