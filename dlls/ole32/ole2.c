@@ -25,6 +25,7 @@
 #include "debugtools.h"
 #include "ole2ver.h"
 #include "winreg.h"
+#include "ole32_main.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -1920,15 +1921,21 @@ static void OLEDD_TrackMouseMove(
    */
   if (hr==DRAGDROP_S_USEDEFAULTCURSORS)
   {
-    if ( (*trackerInfo->pdwEffect & DROPEFFECT_MOVE) ||
-	 (*trackerInfo->pdwEffect & DROPEFFECT_COPY) ||
-	 (*trackerInfo->pdwEffect & DROPEFFECT_LINK) )
+    if (*trackerInfo->pdwEffect & DROPEFFECT_MOVE)
     {
-      SetCursor(LoadCursorA(0, IDC_SIZEALLA));
+      SetCursor(LoadCursorA(OLE32_hInstance, MAKEINTRESOURCEA(1)));
+    }
+    else if (*trackerInfo->pdwEffect & DROPEFFECT_COPY)
+    {
+      SetCursor(LoadCursorA(OLE32_hInstance, MAKEINTRESOURCEA(2)));
+    }
+    else if (*trackerInfo->pdwEffect & DROPEFFECT_LINK)
+    {
+      SetCursor(LoadCursorA(OLE32_hInstance, MAKEINTRESOURCEA(3)));
     }
     else
     {
-      SetCursor(LoadCursorA(0, IDC_NOA));
+      SetCursor(LoadCursorA(OLE32_hInstance, MAKEINTRESOURCEA(0)));
     }
   }  
 }

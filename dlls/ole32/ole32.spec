@@ -1,5 +1,7 @@
 name	ole32
 type	win32
+init	OLE32_DllEntryPoint
+rsrc	ole32res.res
 
 import advapi32.dll
 import user32.dll

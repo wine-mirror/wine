@@ -26,11 +26,15 @@ C_SRCS = \
 	ole2stubs.c \
 	ole2impl.c \
 	ole2nls.c \
+	ole32_main.c \
 	oleobj.c \
 	stg_bigblockfile.c \
 	stg_stream.c \
 	storage.c \
 	storage32.c
+
+RC_SRCS = \
+	ole32res.rc
 
 @MAKE_DLL_RULES@
 
