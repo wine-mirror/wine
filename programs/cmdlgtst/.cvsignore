@@ -1,4 +1,5 @@
 Makefile
+about.ico
 cmdlgr.res
 cmdlgtst.exe.dbg.c
 cmdlgtst.exe.spec.c

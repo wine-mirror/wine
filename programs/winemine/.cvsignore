@@ -1,4 +1,8 @@
 Makefile
+faces.bmp
+leds.bmp
+mines.bmp
 rsrc.res
 winemine.exe.dbg.c
 winemine.exe.spec.c
+winemine.ico

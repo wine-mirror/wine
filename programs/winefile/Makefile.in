@@ -5,7 +5,6 @@ VPATH     = @srcdir@
 MODULE    = winefile.exe
 APPMODE   = gui
 IMPORTS   = shell32 comctl32 ole32 user32 gdi32 kernel32
-EXTRADEFS = -D__WINE__
 EXTRALIBS = $(LIBUUID)
 
 C_SRCS = \
@@ -14,7 +13,12 @@ C_SRCS = \
 	winefile.c
 
 RC_SRCS = rsrc.rc
-EXTRARCFLAGS = -D__WINE__
+RC_BINSRC = resource.rc
+RC_BINARIES = \
+	drivebar.bmp \
+	images.bmp \
+	toolbar.bmp \
+	winefile.ico
 
 @MAKE_PROG_RULES@
 

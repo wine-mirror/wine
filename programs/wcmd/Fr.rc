@@ -200,7 +200,7 @@ au système d'exploitation ou au shell où vous avez invoqué wcmd.\n"
 
   1000, "Les commandes internes WCMD sont:\n\
 ATTRIB\t\tAffiche ou change les attributs de fichiers DOS\n\
-CALL\t\t\Invoque un fichier batch à l'intérieur d'un autre\n\
+CALL\t\tInvoque un fichier batch à l'intérieur d'un autre\n\
 CD (CHDIR)\tChange le répertoire courant par défaut\n\
 CLS\t\tEfface l'écran\n\
 COPY\t\tCopie un ou plusieurs fichiers\n\

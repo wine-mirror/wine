@@ -57,7 +57,7 @@ END
 
 VIEW ACCELERATORS
 BEGIN
-    "Q",            IDM_EXIT,                CONTROL
+    "Q", IDM_EXIT, VIRTKEY, CONTROL
 END
 
 

@@ -60,7 +60,7 @@ preceding it with an @ sign.\n"
 \n\
 Syntax: FOR %variable IN (set) DO command\n\
 \n\
-The requirement to double the \% sign when using FOR in a batch file does\n\
+The requirement to double the % sign when using FOR in a batch file does\n\
 not exist in wcmd.\n"
 
   WCMD_GOTO,
