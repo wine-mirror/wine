@@ -373,6 +373,9 @@ HRESULT WINAPI SafeArrayGetUBound(
   if(nDim > psa->cDims) 
     return DISP_E_BADINDEX;
 
+  if(0 == nDim)
+    return DISP_E_BADINDEX;
+
   *plUbound = psa->rgsabound[nDim-1].lLbound + 
               psa->rgsabound[nDim-1].cElements - 1;
 
@@ -394,6 +397,9 @@ HRESULT WINAPI SafeArrayGetLBound(
   if(nDim > psa->cDims) 
     return DISP_E_BADINDEX;
 
+  if(0 == nDim)
+    return DISP_E_BADINDEX;
+  
   *plLbound = psa->rgsabound[nDim-1].lLbound;
   return S_OK;
 }
@@ -951,9 +957,9 @@ static BOOL validCoordinate(
   HRESULT hRes;
 
   for(; iter<psa->cDims; iter++) {
-    if((hRes = SafeArrayGetLBound(psa, iter, &lLBound)) != S_OK)
+    if((hRes = SafeArrayGetLBound(psa, (iter+1), &lLBound)) != S_OK)
       return FALSE;
-    if((hRes = SafeArrayGetUBound(psa, iter, &lUBound)) != S_OK)
+    if((hRes = SafeArrayGetUBound(psa, (iter+1), &lUBound)) != S_OK)
       return FALSE;
  
     if(lLBound == lUBound) 
