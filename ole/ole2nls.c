@@ -133,7 +133,161 @@ const struct map_lcid2str {
 	LCID		langid;
 	const char	*langname;
 } languages[]={
-	{0x0401,"Arabisch"},
+	{0x0401,"Arabic (Saudi Arabia)"},
+	{0x0801,"Arabic (Iraq)"},
+	{0x0c01,"Arabic (Egypt)"},
+	{0x1001,"Arabic (Libya)"},
+	{0x1401,"Arabic (Algeria)"},
+	{0x1801,"Arabic (Morocco)"},
+	{0x1c01,"Arabic (Tunisia)"},
+	{0x2001,"Arabic (Oman)"},
+	{0x2401,"Arabic (Yemen)"},
+	{0x2801,"Arabic (Syria)"},
+	{0x2c01,"Arabic (Jordan)"},
+	{0x3001,"Arabic (Lebanon)"},
+	{0x3401,"Arabic (Kuwait)"},
+	{0x3801,"Arabic (United Arab Emirates)"},
+	{0x3c01,"Arabic (Bahrain)"},
+	{0x4001,"Arabic (Qatar)"},
+	{0x0402,"Bulgarian"},
+	{0x0403,"Catalan"},
+	{0x0404,"Chinese (Taiwan)"},
+	{0x0804,"Chinese (People's Republic of China)"},
+	{0x0c04,"Chinese (Hong Kong)"},
+	{0x1004,"Chinese (Singapore)"},
+	{0x1404,"Chinese (Macau)"},
+	{0x0405,"Czech"},
+	{0x0406,"Danish"},
+	{0x0407,"German (Germany)"},
+	{0x0807,"German (Switzerland)"},
+	{0x0c07,"German (Austria)"},
+	{0x1007,"German (Luxembourg)"},
+	{0x1407,"German (Liechtenstein)"},
+	{0x0408,"Greek"},
+	{0x0409,"English (United States)"},
+	{0x0809,"English (United Kingdom)"},
+	{0x0c09,"English (Australia)"},
+	{0x1009,"English (Canada)"},
+	{0x1409,"English (New Zealand)"},
+	{0x1809,"English (Ireland)"},
+	{0x1c09,"English (South Africa)"},
+	{0x2009,"English (Jamaica)"},
+	{0x2409,"English (Caribbean)"},
+	{0x2809,"English (Belize)"},
+	{0x2c09,"English (Trinidad)"},
+	{0x3009,"English (Zimbabwe)"},
+	{0x3409,"English (Philippines)"},
+	{0x040a,"Spanish (Spain, traditional sorting)"},
+	{0x080a,"Spanish (Mexico)"},
+	{0x0c0a,"Spanish (Spain, international sorting)"},
+	{0x100a,"Spanish (Guatemala)"},
+	{0x140a,"Spanish (Costa Rica)"},
+	{0x180a,"Spanish (Panama)"},
+	{0x1c0a,"Spanish (Dominican Republic)"},
+	{0x200a,"Spanish (Venezuela)"},
+	{0x240a,"Spanish (Colombia)"},
+	{0x280a,"Spanish (Peru)"},
+	{0x2c0a,"Spanish (Argentina)"},
+	{0x300a,"Spanish (Ecuador)"},
+	{0x340a,"Spanish (Chile)"},
+	{0x380a,"Spanish (Uruguay)"},
+	{0x3c0a,"Spanish (Paraguay)"},
+	{0x400a,"Spanish (Bolivia)"},
+	{0x440a,"Spanish (El Salvador)"},
+	{0x480a,"Spanish (Honduras)"},
+	{0x4c0a,"Spanish (Nicaragua)"},
+	{0x500a,"Spanish (Puerto Rico)"},
+	{0x040b,"Finnish"},
+	{0x040c,"French (France)"},
+	{0x080c,"French (Belgium)"},
+	{0x0c0c,"French (Canada)"},
+	{0x100c,"French (Switzerland)"},
+	{0x140c,"French (Luxembourg)"},
+	{0x180c,"French (Monaco)"},
+	{0x040d,"Hebrew"},
+	{0x040e,"Hungarian"},
+	{0x040f,"Icelandic"},
+	{0x0410,"Italian (Italy)"},
+	{0x0810,"Italian (Switzerland)"},
+	{0x0411,"Japanese"},
+	{0x0412,"Korean (Wansung)"},
+	{0x0812,"Korean (Johab)"},
+	{0x0413,"Dutch (Netherlands)"},
+	{0x0813,"Dutch (Belgium)"},
+	{0x0414,"Norwegian (Bokmal)"},
+	{0x0814,"Norwegian (Nynorsk)"},
+	{0x0415,"Polish"},
+	{0x0416,"Portuguese (Brazil)"},
+	{0x0816,"Portuguese (Portugal)"},
+	{0x0417,"Rhaeto Romanic"},
+	{0x0418,"Romanian"},
+	{0x0818,"Moldavian"},
+	{0x0419,"Russian (Russia)"},
+	{0x0819,"Russian (Moldavia)"},
+	{0x041a,"Croatian"},
+	{0x081a,"Serbian (latin)"},
+	{0x0c1a,"Serbian (cyrillic)"},
+	{0x041b,"Slovak"},
+	{0x041c,"Albanian"},
+	{0x041d,"Swedish (Sweden)"},
+	{0x081d,"Swedish (Finland)"},
+	{0x041e,"Thai"},
+	{0x041f,"Turkish"},
+	{0x0420,"Urdu"},
+	{0x0421,"Indonesian"},
+	{0x0422,"Ukrainian"},
+	{0x0423,"Belarusian"},
+	{0x0424,"Slovene"},
+	{0x0425,"Estonian"},
+	{0x0426,"Latvian"},
+	{0x0427,"Lithuanian (modern)"},
+	{0x0827,"Lithuanian (classic)"},
+	{0x0428,"Maori"},
+	{0x0429,"Farsi"},
+	{0x042a,"Vietnamese"},
+	{0x042b,"Armenian"},
+	{0x042c,"Azeri (latin)"},
+	{0x082c,"Azeri (cyrillic)"},
+	{0x042d,"Basque"},
+	{0x042e,"Sorbian"},
+	{0x042f,"Macedonian"},
+	{0x0430,"Sutu"},
+	{0x0431,"Tsonga"},
+	{0x0432,"Tswana"},
+	{0x0433,"Venda"},
+	{0x0434,"Xhosa"},
+	{0x0435,"Zulu"},
+	{0x0436,"Afrikaans"},
+	{0x0437,"Georgian"},
+	{0x0438,"Faeroese"},
+	{0x0439,"Hindi"},
+	{0x043a,"Maltese"},
+	{0x043b,"Saami"},
+	{0x043c,"Irish gaelic"},
+	{0x083c,"Scottish gaelic"},
+	{0x043e,"Malay (Malaysia)"},
+	{0x083e,"Malay (Brunei Darussalam)"},
+	{0x043f,"Kazak"},
+	{0x0441,"Swahili"},
+	{0x0443,"Uzbek (latin)"},
+	{0x0843,"Uzbek (cyrillic)"},
+	{0x0444,"Tatar"},
+	{0x0445,"Bengali"},
+	{0x0446,"Punjabi"},
+	{0x0447,"Gujarati"},
+	{0x0448,"Oriya"},
+	{0x0449,"Tamil"},
+	{0x044a,"Telugu"},
+	{0x044b,"Kannada"},
+	{0x044c,"Malayalam"},
+	{0x044d,"Assamese"},
+	{0x044e,"Marathi"},
+	{0x044f,"Sanskrit"},
+	{0x0457,"Konkani"},
+	{0x048f,"Esperanto"}, /* Non official */
+	{0x0000,"Unknown"}
+    }, languages_de[]={
+	{0x0401,"Arabic"},
 	{0x0402,"Bulgarisch"},
 	{0x0403,"Katalanisch"},
 	{0x0404,"Traditionales Chinesisch"},
@@ -163,7 +317,7 @@ const struct map_lcid2str {
 	{0x041C,"Albanisch"},
 	{0x041D,"Schwedisch"},
 	{0x041E,"Thai"},
-	{0x041F,"T|rkisch"},
+	{0x041F,"Türkisch"},
 	{0x0420,"Urdu"},
 	{0x0421,"Bahasa"},
 	{0x0804,"Vereinfachtes Chinesisch"},
@@ -187,36 +341,87 @@ const struct map_lcid2str {
 LCID WINAPI GetUserDefaultLCID()
 {
 /* Default sorting, neutral sublanguage */
+/* language names following ISO 639 (rfc 1766) */
     switch(Options.language)
     {
+ /* case LANG_Ar: return 0x01; */      /* Arabic */
  /* case LANG_Bu: return 0x02; */      /* Bulgarian */
- /* case LANG_Ch: return 0x04; */      /* Chinese */
-    case LANG_Cz: return 0x05;         /* Czech */
+    case LANG_Ca: return 0x03;         /* Catalan */
+ /* case LANG_Zh: return 0x04; */      /* Chinese */
+    case LANG_Cs: return 0x05;         /* Czech */
     case LANG_Da: return 0x06;         /* Danish */
     case LANG_De: return 0x07;         /* German */
- /* case LANG_Gr: return 0x08; */      /* Greek */
+ /* case LANG_El: return 0x08; */      /* Greek */
     case LANG_En: return 0x09;         /* English */
     case LANG_Es: return 0x0a;         /* Spanish */
     case LANG_Fi: return 0x0b;         /* Finnish */
     case LANG_Fr: return 0x0c;         /* French */
+ /* case LANG_Iw: return 0x0d; */      /* Hebrew */
     case LANG_Hu: return 0x0e;         /* Hungarian */
  /* case LANG_Ic: return 0x0f; */      /* Icelandic */
     case LANG_It: return 0x10;         /* Italian */
- /* case LANG_Jp: return 0x11; */      /* Japanese */
+ /* case LANG_Ja: return 0x11; */      /* Japanese */
     case LANG_Ko: return 0x12;         /* Korean */
- /* case LANG_Du: return 0x13; */      /* Dutch */
+ /* case LANG_Nl: return 0x13; */      /* Dutch */
     case LANG_No: return 0x14;         /* Norwegian */
     case LANG_Pl: return 0x15;         /* Polish */
-    case LANG_Po: return 0x16;         /* Portuguese */
+    case LANG_Pt: return 0x16;         /* Portuguese */
+ /* case LANG_Rm: return 0x17; */      /* Rhaeto-romance */   
  /* case LANG_Ro: return 0x18; */      /* Romanian */
  /* case LANG_Ru: return 0x19; */      /* Russian */
- /* case LANG_Cr: return 0x1a; */      /* Croatian */
- /* case LANG_Sl: return 0x1b; */      /* Slovak */
-    case LANG_Sw: return 0x1d;         /* Swedish */
- /* case LANG_Tu: return 0x1f; */      /* Turkish */
- /* case LANG_Sv: return 0x24; */      /* Slovenian */
-    case LANG_Eo: return 0x25;         /* Esperanto (not official) */
-    case LANG_Ca: return 0x26;         /* Catalan */
+ /* case LANG_Hr: return 0x1a; */      /* Croatian */
+ /* case LANG_Sk: return 0x1b; */      /* Slovak */
+ /* case LANG_Sq: return 0x1c; */      /* Albanian */
+    case LANG_Sv: return 0x1d;         /* Swedish */
+ /* case LANG_Th: return 0x1e; */      /* Thai */
+ /* case LANG_Tr: return 0x1f; */      /* Turkish */
+ /* case LANG_Ur: return 0x20; */      /* Urdu */
+ /* case LANG_In: return 0x21; */      /* Indonesian */
+ /* case LANG_Uk: return 0x22; */      /* Ukrainian */
+ /* case LANG_Be: return 0x23; */      /* Belarusian */
+ /* case LANG_Sl: return 0x24; */      /* Slovenian */
+ /* case LANG_Et: return 0x25; */      /* Estonian */
+ /* case LANG_Lv: return 0x26; */      /* Latvian */
+ /* case LANG_Lt: return 0x27; */      /* Lithuanian */
+ /* case LANG_Mi: return 0x28; */      /* Maori */
+ /* case LANG_Fa: return 0x29; */      /* Farsi */
+ /* case LANG_Vi: return 0x2a; */      /* Vietnamese */
+ /* case LANG_Hy: return 0x2b; */      /* Armenian */
+ /* case LANG_Az: return 0x2c; */      /* Azeri */
+ /* case LANG_Eu: return 0x2d; */      /* Basque */
+ /* case LANG_??: return 0x2e; */      /* Sorbian */
+ /* case LANG_Mk: return 0x2f; */      /* Macedonian */
+ /* case LANG_??: return 0x30; */      /* Sutu */
+ /* case LANG_Ts: return 0x31; */      /* Tsonga */
+ /* case LANG_??: return 0x32; */      /* Tswana */
+ /* case LANG_??: return 0x33; */      /* Venda */
+ /* case LANG_Xh: return 0x34; */      /* Xhosa */
+ /* case LANG_Zu: return 0x35; */      /* Zulu */
+ /* case LANG_Af: return 0x36; */      /* Afrikaans */
+ /* case LANG_Ka: return 0x37; */      /* Georgian */
+ /* case LANG_Fo: return 0x38; */      /* Faeroese */
+ /* case LANG_Hi: return 0x39; */      /* Hindi */
+ /* case LANG_Mt: return 0x3a; */      /* Maltese */
+ /* case LANG_??: return 0x3b; */      /* Saami */
+ /* case LANG_Ga: return 0x3c; */      /* Gaelic */
+ /* case LANG_Ms: return 0x3e; */      /* Malay */
+ /* case LANG_Kk: return 0x3f; */      /* Kazakh */
+ /* case LANG_Sw: return 0x41; */      /* Swahili */
+ /* case LANG_Uz: return 0x43; */      /* Uzbek */
+ /* case LANG_Tt: return 0x44; */      /* Tatar */
+ /* case LANG_Bn: return 0x45; */      /* Bengali */
+ /* case LANG_Pa: return 0x46; */      /* Punjabi */
+ /* case LANG_Gu: return 0x47; */      /* Gujarati */
+ /* case LANG_Or: return 0x48; */      /* Oriya */
+ /* case LANG_Ta: return 0x49; */      /* Tamil */
+ /* case LANG_Te: return 0x4a; */      /* Telugu */
+ /* case LANG_Kn: return 0x4b; */      /* Kannada */
+ /* case LANG_Ml: return 0x4c; */      /* Malayalam */
+ /* case LANG_As: return 0x4d; */      /* Assamese */
+ /* case LANG_Mr: return 0x4e; */      /* Marathi */
+ /* case LANG_Sa: return 0x4f; */      /* Sanskrit */
+ /* case LANG_??: return 0x57; */      /* Konkani */
+    case LANG_Eo: return 0x8f;         /* Esperanto (not official number) */
 
     default:
 	return 0x00;                   /* Neutral language */
@@ -362,19 +567,19 @@ INT32 WINAPI GetLocaleInfo32A(LCID lcid,LCTYPE LCType,LPSTR buf,INT32 len)
 	}
     break;  /* LANG(Pl) */
 
-    case LANG_Po:
+    case LANG_Pt:
     	switch (LCType) {
 #include "nls/ptb.nls"
 	default: found=0;break;
 	}
-    break; /* LANG(Po) */
+    break; /* LANG(Pt) */
 
-    case LANG_Sw:
+    case LANG_Sv:
     	switch (LCType) {
 #include "nls/sve.nls"
 	default: found=0;break;
 	}
-    break; /* LANG(Sw) */
+    break; /* LANG(Sv) */
 
 /*Insert other languages here*/
 
@@ -2553,6 +2758,91 @@ INT32 WINAPI GetDateFormat32W(LCID locale,DWORD flags,
    
 }
 
+/**************************************************************************
+ *              EnumDateFormats32A	(KERNEL32.198)
+ */
+BOOL32 WINAPI EnumDateFormats32A(
+  DATEFMT_ENUMPROC32A lpDateFmtEnumProc, LCID Locale,  DWORD dwFlags)
+{
+  FIXME(ole, "Only US English supported\n");
+
+  if(!lpDateFmtEnumProc)
+    {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      return FALSE;
+    }
+
+  switch(dwFlags)
+    {
+      case DATE_SHORTDATE:
+	if(!(*lpDateFmtEnumProc)("M/d/yy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("M/d/yyyy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("MM/dd/yy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("MM/dd/yyyy")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("yy/MM/dd")) return TRUE;
+	if(!(*lpDateFmtEnumProc)("dd-MMM-yy")) return TRUE;
+	return TRUE;
+      case DATE_LONGDATE:
+        if(!(*lpDateFmtEnumProc)("dddd, MMMM dd, yyyy")) return TRUE;
+        if(!(*lpDateFmtEnumProc)("MMMM dd, yyyy")) return TRUE;
+        if(!(*lpDateFmtEnumProc)("dddd, dd MMMM, yyyy")) return TRUE;
+        if(!(*lpDateFmtEnumProc)("dd MMMM, yyyy")) return TRUE;
+	return TRUE;
+      default:
+	FIXME(ole, "Unknown date format (%ld)\n", dwFlags); 
+	SetLastError(ERROR_INVALID_PARAMETER);
+	return FALSE;
+    }
+}
+
+/**************************************************************************
+ *              EnumDateFormats32W	(KERNEL32.199)
+ */
+BOOL32 WINAPI EnumDateFormats32W(
+  DATEFMT_ENUMPROC32W lpDateFmtEnumProc, LCID Locale, DWORD dwFlags)
+{
+  FIXME(ole, "(%p, %ld, %ld): stub\n", lpDateFmtEnumProc, Locale, dwFlags);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
+
+/**************************************************************************
+ *              EnumTimeFormats32A	(KERNEL32.210)
+ */
+BOOL32 WINAPI EnumTimeFormats32A(
+  TIMEFMT_ENUMPROC32A lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
+{
+  FIXME(ole, "Only US English supported\n");
+
+  if(!lpTimeFmtEnumProc)
+    {
+      SetLastError(ERROR_INVALID_PARAMETER);
+      return FALSE;
+    }
+
+  if(dwFlags)
+    {
+      FIXME(ole, "Unknown time format (%ld)\n", dwFlags); 
+    }
+  
+  if(!(*lpTimeFmtEnumProc)("h:mm:ss tt")) return TRUE;
+  if(!(*lpTimeFmtEnumProc)("hh:mm:ss tt")) return TRUE;
+  if(!(*lpTimeFmtEnumProc)("H:mm:ss")) return TRUE;
+  if(!(*lpTimeFmtEnumProc)("HH:mm:ss")) return TRUE;
+
+  return TRUE;
+}
+
+/**************************************************************************
+ *              EnumTimeFormats32W	(KERNEL32.211)
+ */
+BOOL32 WINAPI EnumTimeFormats32W(
+  TIMEFMT_ENUMPROC32W lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags)
+{
+  FIXME(ole, "(%p,%ld,%ld): stub", lpTimeFmtEnumProc, Locale, dwFlags);
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+  return FALSE;
+}
 
 /**************************************************************************
  *              GetNumberFormat32A	(KERNEL32.355)

@@ -1,4 +1,406 @@
 ----------------------------------------------------------------------
+Sun Sep 27 14:25:38 1998  Petter Reinholdtsen <pere@td.org.uit.no>
+
+	* [files/drive.c]
+	Make sure GetDriveType32A() handles param NULL.  Added some
+	doc on function.
+
+Sun Sep 27 14:07:26 1998  Huw D M Davies <daviesh@abacus.physics.ox.ac.uk>
+
+	* [controls/edit.c] [windows/win.c]
+	Don't call SetWindowLong() in EDIT_WM_NCREATE.
+	Fix SetWindowLong(GWL_[EX]STYLE) to work for 16bit windows. Remove
+	UpdateWindow() call. 
+
+Sun Sep 27 13:41:22 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [scheduler/*.c] [server/event.c] [server/mutex.c]
+	  [server/semaphore.c]
+	Implemented server-side synchronisation objects.
+
+Sun Sep 27 01:13:35 1998  Alex Priem <alexp@sci.kun.nl>
+
+	* [dlls/comctl32/treeview.c] [include/treeview.h] [include/comctl.h]
+	Treeview implementation.
+
+	* [dlls/comctl32/trackbar.c] [include/trackbar.h] 
+	Trackbar implementation.
+
+Sat Sep 26 20:49:13 1998  Ulrich Weigand <weigand@informatik.uni-erlangen.de>
+
+	* [if1632/thunk.c] [tools/build.c] [win32/kernel32.c]
+	Bugfix: several problems with flat thunks fixed.
+
+	* [memory/selector.c]
+	Bugfix: IsBad...Ptr16 didn't work for limit_in_pages segments.
+
+	* [scheduler/thread.c]
+	Bugfix: CreateThread: Allow id parameter == NULL.
+
+	* [objects/gdiobj.c]
+	Bugfix: IsGDIObject: Return correct object type for stock objects.
+
+	* [msdos/dpmi.c]
+	Bugfix: fixed typo in INT_DoRealModeInt.
+
+	* [msdos/int21.c]
+	Bugfix: int21 READ *must* use WIN16_hread, not _hread16.
+
+	* [if1632/kernel.spec] [if1632/dummy.c] [if1632/thunk.c]
+	  [loader/ne/module.c] [scheduler/event.c] [scheduler/synchro.c]
+	  [scheduler/thread.c] [win32/kernel32.c] [win32/ordinals.c]
+	Added names/stubs for all undocumented KERNEL routines (Win95).
+	Added the following undoc. 16-bit equivalents to Win32 routines:
+	KERNEL.441-443,449-453,456-462,471-476,479-486,488.
+	Added stubs for some other KERNEL routines.
+
+	* [memory/heap.c] [memory/global.c] [include/global.h]
+	Implemented Local32... 32-bit local heap routines (KERNEL.208-215, 229).
+
+	* [miscemu/instr.c] [loader/module.c] [include/module.h]
+	Implemented __GP fault handling and HasGPHandler (KERNEL.338).
+
+	* [misc/error.c]
+	Implemented LogParamErrorRegs (KERNEL.327).
+
+	* [loader/task.c] [include/windows.h]
+	Implemented GetCodeInfo (KERNEL.104).
+
+	* [loader/task.c] [scheduler/thread.c] [include/thread.h]
+	Implemented [GS]etThreadQueue and [GS]etFastQueue (KERNEL.463/4, 624/5).
+
+	* [if1632/gdi.spec] [objects/dc.c] [objects/dib.c]
+	  [objects/bitmap.c] [include/windows.h]
+	Bugfix: fixed wrong parameter for CreateDIBSection16.
+	Added [GS]etDIBColorTable16, stub for GetBoundsRect16.
+	Partially implemented BITMAP_GetObject16 for DIBs.
+
+	* [if1632/gdi.spec] [relay32/gdi32.spec] [objects/palette.c]
+	Added some GDI stubs.
+
+	* [if1632/Makefile.in] [if1632/display.spec] [if1632/mouse.spec]
+	  [if1632/keyboard.spec] [if1632/builtin.c] [windows/keyboard.c]
+	Added some stubs for Win16 drivers: KEYBOARD, MOUSE, DISPLAY.
+
+	* [if1632/wprocs.spec] [msdos/vxd.c]
+	Added some stubs for VxDs: VMM, ConfigMG, TimerAPI.
+
+	* [msdos/int2f.c]
+	Added some stubs for real-mode network drivers.
+
+Sat Sep 26 18:18:18 1998  Marcus Meissner <marcus@jet.franken.de>
+
+	* [configure.in]
+	Merged in some more of the FreeBSD ports/emulators/wine patches. 
+	(Maintainer(s) of this port: You can just submit these
+	patches to Alexandre directly.)
+
+	 * [loader/pe_image.c]
+	Check filesize of image against size derived from header
+	to spot truncated executeables without crashing.
+
+	* [files/directory.c]
+	Set envvar "COMSPEC". One win32(!!) program crashes without it.
+
+	* [multimedia/mmio.c]
+	Added mmioSetInfo32.
+
+	* [include/file.h]
+	Return STD_ERROR_HANDLE for AUX and PRT dos handles.
+
+	* [loader/module.c]
+	Handle executeables with spaces in their names a bit better in
+	CreateProcess.
+
+	* [relay32/msvfw32.spec][if1632/msvideo.spec][multimedia/msvideo.c][include/vfw.h]
+	Started on MS Video support (can load Win32 ICMs).
+
+	* [tools/testrun]
+	A bit smarter use of ps.
+
+	* [memory/virtual.c]
+	Report PAGE_GUARDed pages as PAGE_PROTECTED (AutoCAD LT R17 fails
+	without that check (since Win95 doesn't know about PAGE_GUARD)).
+
+Sat Sep 26 15:04:05 1998  Ove Kaaven <ovek@arcticnet.no>
+
+	* [include/miscemu.h] [if1632/builtin.c] [loader/task.c]
+	  [miscemu/instr.c] [msdos/dpmi.c] [msdos/int21.c]
+	  [msdos/interrupts.c] [windows/user.c]
+	INT_[S|G]etHandler was renamed to INT_[S|G]etPMHandler.
+	Added handlers to deal with real-mode interrupts; DOS
+	programs are now able to hook real-mode interrupts.
+
+	* [loader/dos/module.c] [msdos/dosmem.c] [msdos/int21.c]
+	Moved real-mode interrupt table initialization to
+	msdos/dosmem.c, and made new V86 tasks get a full copy
+	of the existing "system memory" instead of almost empty
+	space. Misc fixes.
+
+	* [include/dosexe.h] [loader/dos/module.c] [msdos/dpmi.c]
+	  [msdos/int2f.c]
+	First shot at letting DOS programs start up DPMI (but DPMI
+	is still disabled for DOS programs, for pkunzip's sake).
+
+	* [include/debugger.h] [debugger/break.c] [debugger/dbg.y]
+	  [debugger/registers.c] [debugger/memory.c] [debugger/info.c]
+	  [loader/dos/dosvm.c]
+	First shot at making Wine's debugger work for DOS programs.
+	The -debug flag works, as do "nexti" and "stepi".
+
+Sat Sep 26 13:13:13 1998  Juergen Schmied <juergen.schmied@metronet.de>
+
+	* [dlls/shell32/dataobject.c]
+	New classes IEnumFORMATETC implemented, IDataObject stubs.
+	
+	* [dlls/shell32/*.*][relay32/shell32.spec]
+	Bugfixes.
+	New: ICM_InsertItem(), ILCreateFromPath().
+	Implemented: ILCloneFirst().
+	Stubs: ILIsEqual(), ILFindChild(), SHLogILFromFSIL(),
+	  PathMatchSpec(), PathIsExe().
+	Changed: ILGetSize(), _ILIsDesktop(), PathCombine().
+
+	* [include/shlobj.h]
+	New SHLGUID's
+	New structures: DVTARGETDEVICE32, STGMEDIUM32, FORMATETC32,
+	CLIPFORMAT32.
+	New interfaces: IEnumFORMATETC, IDataObject, ICommDlgBrowser
+	IDockingWindowFrame, IServiceProvider.
+
+	* [dlls/shell32/folders.c]
+	Stubs for IShellLink.
+
+	* [loader/resource.c]
+	Small fixes.
+
+	* [misc/crtdll.c][relay32/crtdll.spec]
+	New __dllonexit().
+
+	* [windows/message.c]
+	SendNotifyMessageA, SendMessageCallBack32A half implemented.
+
+	* [controls/edit.c]
+	EDIT_WM_SetText set EF_UPDATE flag not for ES_MULTILINE.
+
+	* [files/file.c]
+	Handling of fileposition fixed.
+
+Fri Sep 25 18:13:30 1998  Patrik Stridvall <ps@leissner.se>
+
+	* [include/windows.h] [include/wintypes.h]
+	  [ole/ole2nls.h] [relay32/kernel32.spec]
+	Implemented EnumDateFormats and EnumTimeFormats.
+	Only adds US English support.
+
+	* [Makefile.in] [configure.in] 
+	  [dlls/Makefile.in] [dlls/psapi/Makefile.in] 
+	  [dlls/psapi/psapi_main.c] 
+	New files to implement stubs for PSAPI.DLL (NT only).
+
+	* [relay32/Makefile.in] [relay32/builtin32.c] 
+	  [relay32/psapi.spec]
+	New spec file for PSAPI.DLL (NT only).
+
+	* [scheduler/handle.c]
+	HANDLE_GetObjPtr should only interpret the pseudo handles as the
+	current thread or the current process if a thread or a process is
+	requested.
+
+	* [include/winversion.h] [misc/version.c]
+	Adds the global function VERSION_GetVersion() so functions can
+	have different behavior depending on the -winver flag.
+
+	* [include/oledlg.h] [ole/oledlg.c]
+	Minor fixes. 
+
+	* [windows/winproc.c]
+	Minor changes.
+
+	* [include/imm.h] [misc/imm.c]
+	Now returns correct values under both Windows 95 and NT 4.0.
+
+Thu Sep 24 22:11:44 1998  Kristian Nielsen  <kristian.nielsen@risoe.dk>
+
+	* [configure.in] [include/acconfig.h] [include/thread.h]
+	  [scheduler/sysdeps.c]
+	Autoconfig test for non-reentrant libc.
+
+Wed Sep 23 19:52:12 1998  Matthew Becker <mbecker@glasscity.net>
+
+	* [*/*.c]
+	Miscellaneous documentation updates and debugging output 
+	standardizations.
+
+	* [objects/clipping.c]
+	Added ExtSelectClipRgn.
+
+Wed Sep 23 00:03:28 EDT 1998  Pete Ratzlaff <pratzlaff@cfa.harvard.edu>
+
+	* [include/windows.h] [if1632/user.spec] [relay32/user32.spec]
+	  [windows/keyboard.c]
+	Added, marginally implemented, GetKeyboardLayoutName().
+	Only returns US English keyboard name.
+
+Tue Sep 22 16:32:41 1998  Marcel Baur <mbaur@iiic.ethz.ch>
+
+	* [programs/control/*]
+	New Winelib application.
+
+Mon Sep 21 00:29:18 1998  Peter Hunnisett <hunnise@nortel.ca>
+
+	* [include/dplay.h][multimedia/dplay.c][ole/compobj.c]
+	Added all DirectPlayLobby interfaces and enhanced DirectPlay
+	and DirectPlayLobby support. Still not all that much. Useful
+	enough if you just need to start a program, don't try any
+	real dplay/lobby stuff.
+
+	* [documentation/status/directplay]
+	Added a very little bit.
+
+	* [graphics/ddraw.c]
+	- Call to SetWindowLong32A wasn't working because there was no
+	  memory set aside when the window class was registered.
+	- Fixed some xlib reference counting and change the behaviour
+	  of DirectDrawSurface3_SetPalette to mimic observed behaviour
+	  (palette is associated will all backbuffers)
+	- Also stored all palette colour fields and spit back our saved
+	  colour fields rather than query X for them.
+	- Added plenty of AddRef and Release traces.
+	- Added Xlib support for using -desktop option.
+	- Fixed Xlib message handling. Messages weren't being passed to
+	  the application. Fixes mouse movements in some xlib DDraw games.
+	- Added a few stubs.
+
+	* [windows/win.c][include/winerror.h]
+	Fixed up some error handling in WIN_SetWindowLong. SetLastError
+	wasn't being used. Could cause problems with 0 return codes.
+	Added new error in winerror (1400).
+
+	* [AUTHORS] [include/authors.h]
+	Added myself as a Wine author.
+
+Sun Sep 20 21:22:44 1998  Alexander Larsson  <alla@lysator.liu.se>
+
+	* [loader/module.c]
+	Changed GetModuleFileName32A so that is returns the
+	long version of the filename. Note that just the name
+	is long, not the directories.
+
+Sat Sep 19 20:05:30 1998 Per Ångström <pang@mind.nu> 
+
+	* [controls/menu.c]
+	Made a couple of fixes to make life easier for applications that alter
+	their menus at runtime.
+
+	* [windows/defdlg.c]
+	Removed the cast of the return value from dialog procedures to a 16-bit
+	bool. The return value needs to retain all its 32 bits, since it is not 
+	always a bool, such as when responding to the WM_NCHITTEST message.
+
+Fri Sep 18 11:30:38 1998  Sergey Turchanov <turchanov@usa.net>
+
+	* [loader/resource.c]
+	Fixed very funny bug (though gravely affecting further excecution)
+	with FindResource[Ex]32 functions.
+
+	* [include/multimon.h] [windows/multimon.c] [relay32/user32.spec]
+	  [include/windows.h] [windows/sysmetrics.c]
+	Default implementation for Multimonitor API.
+
+	* [include/windows.h] [windows/winpos.c]
+	Fixed incorrect declaration (and behaviour) of GetWindowRect32.
+
+Wed Sep 16 10:21:15 1998  Gerard Patel <G.Patel@Wanadoo.fr>
+
+	* [controls/edit.c]
+	Fixed EDIT_EM_GetLine to use correctly length of lines.
+
+Tue Sep 15 20:40:16 1998  Eric Kohl <ekohl@abo.rhein-zeitung.de>
+
+	* [misc/tweak.c][include/tweak.h][controls/menu.c]
+	Replaced the tweak graphic routines by calls to DrawEdge32().
+
+	* [misc/tweak.c][include/tweak.h][documentation/win95look]
+	  [wine.ini][*/*]
+	Changed "look and feel" selection. Allows Win3.1, Win95 and
+	Win98 (no GUI code implemented) look and feel.
+
+	* [dlls/comctl32/header.c][include/header.h][include/commctrl.h]
+	Started callback item support and did some minor improvements.
+
+	* [dlls/comctl32/imagelist.c]
+	Fixed bug in transparent image display.
+	ImageList_GetIcon is still buggy :-(
+
+	* [dlls/comctl32/toolbar.c]
+	Fixed button drawing (partial hack).
+
+	* [dlls/comctl32/commctrl.c]
+	Fixed MenuHelp().
+
+	* [controls/button.c]
+	Added 3d effect for groupbox.
+
+	* [windows/msgbox.c]
+	Added font support for message boxes.
+
+	* [windows/nonclient.c]
+	Fixed window moving bug.
+
+	* [dlls/comctl32/*.c]
+	Various improvements.
+
+	* [dlls/comctl32/listview.c][dlls/comctl32/rebar.c]
+	  [include/commctrl.h]
+	More messages.
+
+	* [windows/syscolor.c][include/windows.h]
+	Introduced new Win98 system colors.
+
+Tue Sep 15 18:29:45 1998 Wesley Filardo <eightknots@aol.com>
+
+	* [files/profile.c]
+	Added support in PROFILE_LoadWineIni for -config option
+
+	* [misc/main.c] [include/options.h]
+	Added -config option.
+
+Tue Sep 15 18:22:26 1998  Petter Reinholdtsen <pere@td.org.uit.no>
+
+	* [documentation/Makefile.in]
+	Make sure directory exists before installing into it.
+
+Tue Sep 15 01:47:33 1998  Pablo Saratxaga <pablo.sarachaga@ping.be>
+
+	* [ole/nls/*] [ole/ole2nls.c] [include/winnls.h]
+	Fixed a few errors and completed some NLS files.
+
+Mon Sep 14 01:23:45 1998  Joseph Pranevich <knight@baltimore.wwaves.com>
+
+	* [include/miscemu.h] [msdos/interrupts.c]
+	Removed a compilation warning, added INT 25 to the list of interrupts
+	callable from DOS applications, added a debug message when unsupported
+	interrupts are used.
+
+Sun Sep 13 19:55:22 1998  Lawson Whitney <lawson_whitney@juno.com>
+
+	* [if1632/relay.c]
+	CallProcEx32W should not reverse arguments.
+
+Sun Aug 17 21:18:12 1998  Eric Pouech  <eric.pouech@lemel.fr>
+
+	* [multimedia/midi.c] [multimedia/init.c] [multimedia/mmsys.c] 
+	  [include/multimedia.h] [include/mmsystem.h] 
+	  [multimedia/Makefile.in] [multimedia/midipatch.c]
+	  [if1632/multimedia.spec]
+	Made MIDI input and output functional on OSS capable systems.
+
+	* [multimedia/timer.c]
+	Changes to trigger callbacks at the accurate pace even when
+	fake timers are used.
+
+----------------------------------------------------------------------
 Fri Sep 11 13:14:35 1998  Andreas Mohr <100.30936@germany.net>
 
 	* [files/file.c] [include/file.h]

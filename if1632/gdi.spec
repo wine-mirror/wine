@@ -117,8 +117,8 @@ file	gdi.exe
 106 pascal SetBitmapBits(word long ptr) SetBitmapBits16
 117 pascal SetDCOrg(word s_word s_word) SetDCOrg
 119 pascal16 AddFontResource(str) AddFontResource16
-#121 pascal Death
-#122 pascal ReSurRection
+121 stub Death
+122 stub ReSurRection
 123 pascal16 PlayMetaFile(word word) PlayMetaFile16
 124 pascal16 GetMetaFile(str) GetMetaFile16
 125 pascal16 CreateMetaFile(str) CreateMetaFile16
@@ -161,7 +161,7 @@ file	gdi.exe
 191 pascal   GetDCHook(word ptr) THUNK_GetDCHook
 192 pascal16 SetHookFlags(word word) SetHookFlags
 193 stub SetBoundsRect
-194 stub GetBoundsRect
+194 pascal16 GetBoundsRect(word ptr word) GetBoundsRect16
 195 stub SelectBitmap
 196 pascal16 SetMetaFileBitsBetter(word) SetMetaFileBitsBetter
 201 stub DMBITBLT
@@ -289,7 +289,7 @@ file	gdi.exe
 460 stub GDITASKTERMINATION
 461 pascal16 SetObjectOwner(word word) SetObjectOwner16
 462 pascal16 IsGDIObject(word) IsGDIObject
-463 stub MAKEOBJECTPRIVATE
+463 pascal16 MakeObjectPrivate(word word) MakeObjectPrivate
 464 stub FIXUPBOGUSPUBLISHERMETAFILE
 465 pascal16 RectVisible(word ptr) RectVisible16
 466 pascal16 RectInRegion(word ptr) RectInRegion16
@@ -315,7 +315,7 @@ file	gdi.exe
 485 pascal16 ScaleWindowExtEx(word s_word s_word s_word s_word ptr)
              ScaleWindowExtEx16
 486 pascal16 GetAspectRatioFilterEx(word ptr) GetAspectRatioFilterEx16
-489 pascal16 CreateDIBSection(word ptr word ptr word long) CreateDIBSection16
+489 pascal16 CreateDIBSection(word ptr word ptr long long) CreateDIBSection16
 490 stub CloseEnhMetafile
 491 stub CopyEnhMetafile
 492 stub CreateEnhMetafile
@@ -371,10 +371,10 @@ file	gdi.exe
 556 pascal16 GDI_556() stub_GDI_556
 558 pascal16 GDI_558() stub_GDI_558
 569 pascal16 GDI_569() stub_GDI_569
-602 stub SetDIBColorTable
-603 stub GetDIBColorTable
+602 pascal16 SetDIBColorTable(word word word ptr) SetDIBColorTable16
+603 pascal16 GetDIBColorTable(word word word ptr) GetDIBColorTable16
 604 stub SetSolidBrush
-605 stub SysDeleteObject
+605 pascal16 SysDeleteObject(word) DeleteObject16    # ???
 606 stub SetMagicColors
 607 stub GetRegionData
 608 stub ExtCreateRegion

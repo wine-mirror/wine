@@ -10,6 +10,10 @@
 #include "wintypes.h"
 
   /* Supported languages */
+  /* When adding a new language look at ole/ole2nls.c 
+   * for the LANG_Xx name to choose, and uncomment there
+   * the proper case line
+   */
 typedef enum
 {
     LANG_En,  /* English */
@@ -19,14 +23,14 @@ typedef enum
     LANG_Fr,  /* French */
     LANG_Fi,  /* Finnish */
     LANG_Da,  /* Danish */
-    LANG_Cz,  /* Czech */
+    LANG_Cs,  /* Czech */
     LANG_Eo,  /* Esperanto */
     LANG_It,  /* Italian */
     LANG_Ko,  /* Korean */
     LANG_Hu,  /* Hungarian */
     LANG_Pl,  /* Polish */
-    LANG_Po,  /* Portuguese */
-    LANG_Sw,  /* Swedish */
+    LANG_Pt,  /* Portuguese */
+    LANG_Sv,  /* Swedish */
     LANG_Ca   /* Catalan */
 } WINE_LANGUAGE;
 
@@ -64,6 +68,7 @@ struct options
     WINE_LANGUAGE language; /* Current language */
     int    managed;	    /* Managed windows */
     int    perfectGraphics; /* Favor correctness over speed for graphics */
+    char * configFileName;  /* Command line config file */
 };
 
 extern struct options Options;
@@ -71,6 +76,7 @@ extern struct options Options;
 /* Profile functions */
 
 extern int PROFILE_LoadWineIni(void);
+extern void PROFILE_UsageWineIni(void);
 extern int PROFILE_GetWineIniString( const char *section, const char *key_name,
                                      const char *def, char *buffer, int len );
 extern int PROFILE_GetWineIniInt( const char *section, const char *key_name,

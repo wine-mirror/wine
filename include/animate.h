@@ -10,7 +10,8 @@
 
 typedef struct tagANIMATE_INFO
 {
-    DWORD dwDummy;
+    LPVOID  lpAvi;   /* pointer to avi data */
+    HFILE32 hFile;   /* handle to avi file */
 } ANIMATE_INFO;
 
 

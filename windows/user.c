@@ -143,7 +143,7 @@ INT16 WINAPI InitApp( HINSTANCE16 hInstance )
 
     /* Hack: restore the divide-by-zero handler */
     /* FIXME: should set a USER-specific handler that displays a msg box */
-    INT_SetHandler( 0, INT_GetHandler( 0xff ) );
+    INT_SetPMHandler( 0, INT_GetPMHandler( 0xff ) );
 
       /* Create task message queue */
     queueSize = GetProfileInt32A( "windows", "DefaultQueueSize", 8 );

@@ -1506,3 +1506,13 @@ HCOLORSPACE32 WINAPI GetColorSpace(HDC32 hdc)
 /*FIXME    Need to to whatever GetColorSpace actually does */
     return 0;
 }
+
+/***********************************************************************
+ *           GetBoundsRect16    (GDI.194)
+ */
+UINT16 WINAPI GetBoundsRect16(HDC16 hdc, LPRECT16 rect, UINT16 flags)
+{
+    FIXME(dc, "(): stub\n");
+    return DCB_RESET;   /* bounding rectangle always empty */
+}
+

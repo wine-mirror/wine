@@ -16,7 +16,7 @@ init	ComCtl32LibMain
   8 stdcall CreateMappedBitmap(long long long ptr long) CreateMappedBitmap
   9 stub COMCTL32_9
  10 stub COMCTL32_10
- 11 stub COMCTL32_11
+ 11 stdcall COMCTL32_11(long long long long long long) COMCTL32_11
  12 stub Cctl1632_ThunkData32
  13 stub MakeDragList
  14 stub LBItemFromPt
@@ -94,24 +94,24 @@ init	ComCtl32LibMain
  86 stub UninitializeFlatSB
  87 stub _TrackMouseEvent
 
-151 stdcall CreateMRUListA(long) CreateMRUList32A
-152 stub FreeMRUList@4
+151 stdcall CreateMRUListA(ptr) CreateMRUList32A
+152 stdcall FreeMRUList(long) FreeMRUList32A
 153 stub AddMRUStringA@8
 154 stub EnumMRUListA@16
 155 stub FindMRUStringA@12
 156 stub DelMRUString@8
-157 stub COMCTL32_157
+157 stdcall COMCTL32_157(ptr long long long) CreateMRUListEx32A
 
 163 stub CreatePage
 164 stub CreateProxyPage
 
-167 stub AddMRUData@12
-169 stub FindMRUData@16
+167 stdcall AddMRUData(long long long) AddMRUData
+169 stdcall FindMRUData(long long long long) FindMRUData
 
-233 stub Str_GetPtrA
-234 stdcall Str_SetPtrA(long long) COMCTL32_Str_SetPtrA
-235 stub Str_GetPtrW
-236 stub Str_SetPtrW
+233 stdcall Str_GetPtrA(str str long) Str_GetPtr32A
+234 stdcall Str_SetPtrA(str str) Str_SetPtr32A
+235 stdcall Str_GetPtrW(wstr wstr long) Str_GetPtr32W
+236 stdcall Str_SetPtrW(wstr wstr) Str_SetPtr32W
 
 320 stdcall DSA_Create(long long) DSA_Create
 321 stdcall DSA_Destroy(ptr) DSA_Destroy
@@ -168,10 +168,10 @@ init	ComCtl32LibMain
 382 stub SmoothScrollWindow@4
 383 stub DoReaderMode@4
 384 stub SetPathWordBreakProc@8
-385 stub COMCTL32_385
-386 stub COMCTL32_386
-387 stub COMCTL32_387
-388 stub COMCTL32_388
+385 stdcall COMCTL32_385(long long long) COMCTL32_385
+386 stdcall COMCTL32_386(long long long) COMCTL32_386
+387 stdcall COMCTL32_387(long long long) COMCTL32_387
+388 stdcall COMCTL32_388(long long long) COMCTL32_388
 389 stub COMCTL32_389
 390 stub COMCTL32_390
 

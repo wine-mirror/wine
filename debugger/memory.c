@@ -99,6 +99,7 @@ BOOL32 DEBUG_checkmap_bad(char *addr, size_t size, int rwflag)
  */
 BOOL32 DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
 {
+    if (!IS_SELECTOR_V86(address->seg))
     if (address->seg)  /* segmented addr */
     {
         if (IsBadReadPtr16( (SEGPTR)MAKELONG( (WORD)address->off,
@@ -116,6 +117,7 @@ BOOL32 DEBUG_IsBadReadPtr( const DBG_ADDR *address, int size )
  */
 BOOL32 DEBUG_IsBadWritePtr( const DBG_ADDR *address, int size )
 {
+    if (!IS_SELECTOR_V86(address->seg))
     if (address->seg)  /* segmented addr */
     {
         /* Note: we use IsBadReadPtr here because we are */

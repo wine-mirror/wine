@@ -3,8 +3,9 @@
  *
  *	Copyright 1998	Juergen Schmied
  *
- *  !!! currently work in progress on all classes !!!
- *  <contact juergen.schmied@metronet.de, 980801>
+ * NOTES
+ *  a pidl == NULL means desktop and is legal
+ *
  */
 
 #include <ctype.h>
@@ -29,15 +30,24 @@ void pdump (LPCITEMIDLIST pidl)
 {	DWORD type;
 	CHAR * szData;
 	LPITEMIDLIST pidltemp = pidl;
-	TRACE(pidl,"---------- pidl=%p \n", pidl);
-	do
-	{ type   = _ILGetDataPointer(pidltemp)->type;
-	  szData = _ILGetTextPointer(type, _ILGetDataPointer(pidltemp));
+	if (! pidltemp)
+	{ TRACE(pidl,"-------- pidl = NULL (Root)\n");
+	  return;
+	}
+	TRACE(pidl,"-------- pidl=%p \n", pidl);
+	if (pidltemp->mkid.cb)
+	{ do
+	  { type   = _ILGetDataPointer(pidltemp)->type;
+	    szData = _ILGetTextPointer(type, _ILGetDataPointer(pidltemp));
 
-	  TRACE(pidl,"---- pidl=%p size=%u type=%lx %s\n",pidltemp, pidltemp->mkid.cb,type,debugstr_a(szData));
+	    TRACE(pidl,"---- pidl=%p size=%u type=%lx %s\n",pidltemp, pidltemp->mkid.cb,type,debugstr_a(szData));
 
-	  pidltemp = ILGetNext(pidltemp);
-	} while (pidltemp->mkid.cb);
+	    pidltemp = ILGetNext(pidltemp);
+	  } while (pidltemp->mkid.cb);
+	  return;
+	}
+	else
+	  TRACE(pidl,"empty pidl (Desktop)\n");	
 }
 /*************************************************************************
  * ILGetDisplayName			[SHELL32.15]
@@ -88,6 +98,8 @@ LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl)
 
   TRACE(pidl,"%p\n",pidl);
 
+  pdump(pidl);
+
   if (!pidl)
     return NULL;
     
@@ -104,8 +116,40 @@ LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl)
  *  duplicates the first idlist of a complex pidl
  */
 LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
-{ FIXME(pidl,"pidl=%p\n",pidl);
-  return NULL;
+{	DWORD len;
+	LPITEMIDLIST newpidl=NULL;
+	TRACE(pidl,"pidl=%p\n",pidl);
+	
+	if (pidl)
+	{ len = pidl->mkid.cb;	
+	  newpidl = (LPITEMIDLIST) SHAlloc (len+2);
+	  if (newpidl)
+	  { memcpy(newpidl,pidl,len);
+   	    ILGetNext(newpidl)->mkid.cb = 0x00;
+	  }
+	 }
+
+  	return newpidl;
+}
+/*************************************************************************
+ * ILIsEqual [SHELL32.21]
+ *
+ */
+BOOL32 WINAPI ILIsEqual(LPCITEMIDLIST pidl1, LPCITEMIDLIST pidl2)
+{	FIXME(pidl,"pidl1=%p pidl2=%p stub\n",pidl1, pidl2);
+	pdump (pidl1);
+	pdump (pidl2);
+	return FALSE;
+}
+/*************************************************************************
+ * ILFindChild [SHELL32.24]
+ *
+ */
+DWORD WINAPI ILFindChild(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2)
+{	FIXME(pidl,"%p %p stub\n",pidl1,pidl2);
+	pdump (pidl1);
+	pdump (pidl2);
+	return 0;
 }
 
 /*************************************************************************
@@ -125,6 +169,9 @@ LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2)
   if(!pidl1 && !pidl2)
   {  return NULL;
   }
+
+  pdump (pidl1);
+  pdump (pidl2);
  
   if(!pidl1)
   { pidlNew = ILClone(pidl2);
@@ -149,6 +196,18 @@ LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2)
   return pidlNew;
 }
 /*************************************************************************
+ *  SHLogILFromFSIL [SHELL32.95]
+ *
+ * NOTES
+ *  might be the prepending of MyComputer to a filesystem pidl (?)
+ */
+LPITEMIDLIST WINAPI SHLogILFromFSIL(LPITEMIDLIST pidl)
+{	FIXME(pidl,"(pidl=%p)\n",pidl);
+	pdump(pidl);
+	return ILClone(pidl);
+}
+
+/*************************************************************************
  * ILGetSize [SHELL32.152]
  *  gets the byte size of an idlist including zero terminator (pidl)
  *
@@ -162,19 +221,19 @@ LPITEMIDLIST WINAPI ILCombine(LPCITEMIDLIST pidl1,LPCITEMIDLIST pidl2)
  *  exported by ordinal
  */
 DWORD WINAPI ILGetSize(LPITEMIDLIST pidl)
-{ LPSHITEMID si = &(pidl->mkid);
-  DWORD  len=0;
+{	LPSHITEMID si = &(pidl->mkid);
+	DWORD  len=0;
 
-  TRACE(pidl,"pidl=%p\n",pidl);
+	/*TRACE(pidl,"pidl=%p\n",pidl);*/
 
-  if (pidl)
-  { while (si->cb) 
-    { len += si->cb;
-      si  = (LPSHITEMID)(((LPBYTE)si)+si->cb);
-    }
-    len += 2;
+	if (pidl)
+	{ while (si->cb) 
+	  { len += si->cb;
+	    si  = (LPSHITEMID)(((LPBYTE)si)+si->cb);
+	  }
+	  len += 2;
 	}
-/*  TRACE(pidl,"-- size=%lu\n",len);*/
+	/*TRACE(pidl,"-- size=%lu\n",len);*/
 	return len;
 }
 /*************************************************************************
@@ -191,7 +250,7 @@ DWORD WINAPI ILGetSize(LPITEMIDLIST pidl)
 LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl)
 {	LPITEMIDLIST nextpidl;
 
-	TRACE(pidl,"(pidl=%p)\n",pidl);
+/*	TRACE(pidl,"(pidl=%p)\n",pidl);*/
 	if(pidl)
 	{ nextpidl = (LPITEMIDLIST)(LPBYTE)(((LPBYTE)pidl) + pidl->mkid.cb);
 	  return nextpidl;
@@ -210,8 +269,8 @@ LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl)
  *  Destroys the passed in idlist!
  */
 LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL32 bEnd)
-{ TRACE(pidl,"(pidl=%p,pidl=%p,%08u)\n",pidl,item,bEnd);
-  return NULL;
+{	FIXME(pidl,"(pidl=%p,pidl=%p,%08u)stub\n",pidl,item,bEnd);
+	return NULL;
 }
 /*************************************************************************
  * ILFree [SHELL32.155]
@@ -222,10 +281,31 @@ LPITEMIDLIST WINAPI ILAppend(LPITEMIDLIST pidl,LPCITEMIDLIST item,BOOL32 bEnd)
  *     exported by ordinal
  */
 DWORD WINAPI ILFree(LPVOID pidl) 
-{ TRACE(pidl,"(pidl=0x%08lx)\n",(DWORD)pidl);
-  if (!pidl)
-		return 0;
-  return SHFree(pidl);
+{	TRACE(pidl,"(pidl=0x%08lx)\n",(DWORD)pidl);
+	if (!pidl)
+	  return 0;
+	return SHFree(pidl);
+}
+/*************************************************************************
+ * ILCreateFromPath [SHELL32.157]
+ *
+ */
+LPITEMIDLIST WINAPI ILCreateFromPath(LPSTR path) 
+{	LPSHELLFOLDER shellfolder;
+	LPITEMIDLIST pidlnew;
+	CHAR pszTemp[MAX_PATH*2];
+	LPWSTR lpszDisplayName = (LPWSTR)&pszTemp[0];
+	DWORD pchEaten;
+	
+	TRACE(pidl,"(path=%s)\n",path);
+	
+	LocalToWideChar32(lpszDisplayName, path, MAX_PATH);
+  
+	if (SHGetDesktopFolder(&shellfolder)==S_OK)
+	{ shellfolder->lpvtbl->fnParseDisplayName(shellfolder,0, NULL,lpszDisplayName,&pchEaten,&pidlnew,NULL);
+	  shellfolder->lpvtbl->fnRelease(shellfolder);
+	}
+	return pidlnew;
 }
 
 /**************************************************************************
@@ -303,12 +383,12 @@ DWORD WINAPI _ILGetItemText(LPCITEMIDLIST pidl, LPSTR lpszText, UINT16 uSize)
  *  _ILIsDrive()
  *  _ILIsFolder()
  *  _ILIsValue()
-*/
+ */
 BOOL32 WINAPI _ILIsDesktop(LPCITEMIDLIST pidl)
 { TRACE(pidl,"(%p)\n",pidl);
 
   if (! pidl)
-    return FALSE;
+    return TRUE;
 
   return (  pidl->mkid.cb == 0x00 );
 }
@@ -695,7 +775,7 @@ LPPIDLDATA WINAPI _ILGetDataPointer(LPITEMIDLIST pidl)
 {	if(!pidl)
 	{ return NULL;
 	}
-	TRACE(pidl,"(%p)\n",  pidl);
+/*	TRACE(pidl,"(%p)\n",  pidl);*/
 	return (LPPIDLDATA)(&pidl->mkid.abID);
 }
 /**************************************************************************
@@ -703,7 +783,7 @@ LPPIDLDATA WINAPI _ILGetDataPointer(LPITEMIDLIST pidl)
  * gets a pointer to the string stored in the pidl
  */
 LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
-{	TRACE(pidl,"(type=%x data=%p)\n", type, pidldata);
+{/*	TRACE(pidl,"(type=%x data=%p)\n", type, pidldata);*/
 
 	if(!pidldata)
 	{ return NULL;

@@ -534,21 +534,7 @@ HGLOBAL16 OBM_LoadCursorIcon( WORD id, BOOL32 fCursor )
  */
 BOOL32 OBM_Init()
 {
-    if(TWEAK_Win95Look) {
-	OBM_Pixmaps_Data[OBM_ZOOMD - OBM_FIRST].data = obm_zoomd_95;
-	OBM_Pixmaps_Data[OBM_REDUCED - OBM_FIRST].data = obm_reduced_95;
-	OBM_Pixmaps_Data[OBM_ZOOM - OBM_FIRST].data = obm_zoom_95;
-	OBM_Pixmaps_Data[OBM_REDUCE - OBM_FIRST].data = obm_reduce_95;
-	OBM_Pixmaps_Data[OBM_CLOSE - OBM_FIRST].data = obm_close_95;
-        OBM_Pixmaps_Data[OBM_RESTORE - OBM_FIRST].data = obm_restore_95;
-        OBM_Pixmaps_Data[OBM_RESTORED - OBM_FIRST].data = obm_restored_95;
-
-        OBM_Icons_Data[OIC_HAND - OIC_FIRST] = oic_hand_95;
-        OBM_Icons_Data[OIC_QUES - OIC_FIRST] = oic_ques_95;
-        OBM_Icons_Data[OIC_BANG - OIC_FIRST] = oic_bang_95;
-        OBM_Icons_Data[OIC_NOTE - OIC_FIRST] = oic_note_95;
-    }
-    else {
+    if (TWEAK_WineLook == WIN31_LOOK) {
 	OBM_Pixmaps_Data[OBM_ZOOMD - OBM_FIRST].data = obm_zoomd;
 	OBM_Pixmaps_Data[OBM_REDUCED - OBM_FIRST].data = obm_reduced;
 	OBM_Pixmaps_Data[OBM_ZOOM - OBM_FIRST].data = obm_zoom;
@@ -561,6 +547,20 @@ BOOL32 OBM_Init()
         OBM_Icons_Data[OIC_QUES - OIC_FIRST] = oic_ques;
         OBM_Icons_Data[OIC_BANG - OIC_FIRST] = oic_bang;
         OBM_Icons_Data[OIC_NOTE - OIC_FIRST] = oic_note;
+    }
+    else {
+	OBM_Pixmaps_Data[OBM_ZOOMD - OBM_FIRST].data = obm_zoomd_95;
+	OBM_Pixmaps_Data[OBM_REDUCED - OBM_FIRST].data = obm_reduced_95;
+	OBM_Pixmaps_Data[OBM_ZOOM - OBM_FIRST].data = obm_zoom_95;
+	OBM_Pixmaps_Data[OBM_REDUCE - OBM_FIRST].data = obm_reduce_95;
+	OBM_Pixmaps_Data[OBM_CLOSE - OBM_FIRST].data = obm_close_95;
+        OBM_Pixmaps_Data[OBM_RESTORE - OBM_FIRST].data = obm_restore_95;
+        OBM_Pixmaps_Data[OBM_RESTORED - OBM_FIRST].data = obm_restored_95;
+
+        OBM_Icons_Data[OIC_HAND - OIC_FIRST] = oic_hand_95;
+        OBM_Icons_Data[OIC_QUES - OIC_FIRST] = oic_ques_95;
+        OBM_Icons_Data[OIC_BANG - OIC_FIRST] = oic_bang_95;
+        OBM_Icons_Data[OIC_NOTE - OIC_FIRST] = oic_note_95;
     }
 
     return 1;

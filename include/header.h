@@ -10,11 +10,9 @@
 
 typedef struct 
 {
-    UINT32    mask;
     INT32     cxy;
     HBITMAP32 hbm;
     LPSTR     pszText;
-    INT32     cchTextMax;
     INT32     fmt;
     LPARAM    lParam;
     INT32     iImage;

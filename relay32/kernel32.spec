@@ -212,8 +212,8 @@ type	win32
 195 stdcall EnterCriticalSection(ptr) EnterCriticalSection
 196 stub EnumCalendarInfoA
 197 stub EnumCalendarInfoW
-198 stub EnumDateFormatsA
-199 stub EnumDateFormatsW
+198 stdcall EnumDateFormatsA(ptr long long) EnumDateFormats32A
+199 stdcall EnumDateFormatsW(ptr long long) EnumDateFormats32W
 200 stdcall EnumResourceLanguagesA(long str str ptr long) EnumResourceLanguages32A
 201 stdcall EnumResourceLanguagesW(long wstr wstr ptr long) EnumResourceLanguages32W
 202 stdcall EnumResourceNamesA(long str ptr long) EnumResourceNames32A
@@ -224,8 +224,8 @@ type	win32
 207 stdcall EnumSystemCodePagesW(ptr long) EnumSystemCodePages32W
 208 stdcall EnumSystemLocalesA(ptr long) EnumSystemLocales32A
 209 stdcall EnumSystemLocalesW(ptr long) EnumSystemLocales32W
-210 stub EnumTimeFormatsA
-211 stub EnumTimeFormatsW
+210 stdcall EnumTimeFormatsA(ptr long long) EnumTimeFormats32A
+211 stdcall EnumTimeFormatsW(ptr long long) EnumTimeFormats32W
 212 stub EraseTape
 213 stdcall EscapeCommFunction(long long) EscapeCommFunction32
 214 stdcall ExitProcess(long) ExitProcess

@@ -281,9 +281,12 @@ type	win16
 #
 #400+VXD_ID register <VxD handler>() <VxD handler>
 #
+401 register VXD_VMM() VXD_VMM
 405 register VXD_Timer() VXD_Timer
 414 register VXD_Comm() VXD_Comm
 #415 register VXD_Printer() VXD_Printer
 423 register VXD_Shell() VXD_Shell
 433 register VXD_PageFile() VXD_PageFile
 445 register VXD_Win32s() VXD_Win32s
+451 register VXD_ConfigMG() VXD_ConfigMG
+1490 register VXD_TimerAPI() VXD_TimerAPI

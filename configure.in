@@ -79,6 +79,8 @@ dnl Check for -li386 for NetBSD and OpenBSD
 AC_CHECK_LIB(i386,i386_set_ldt)
 dnl Check for -lw for Solaris
 AC_CHECK_LIB(w,iswalnum)
+dnl Check for -lxpg4 for FreeBSD
+AC_CHECK_LIB(xpg4,setrunelocale)
 dnl Check for XFree86 DGA extension
 AC_CHECK_LIB(Xxf86dga,XF86DGAQueryExtension,AC_DEFINE(HAVE_LIBXXF86DGA) X_PRE_LIBS="$X_PRE_LIBS -lXxf86dga",,$X_LIBS -lXext -lX11)
 
@@ -199,6 +201,23 @@ then
   fi
 fi
 AC_SUBST(DLLFLAGS)
+
+dnl **** Check for reentrant libc ****
+dnl
+dnl For cross-compiling we blindly assume that libc is reentrant. This is
+dnl ok since non-reentrant libc is quite rare (mostly old libc5 versions).
+
+AC_CACHE_CHECK("for reentrant libc", wine_cv_libc_reentrant,
+  [AC_TRY_RUN([int myerrno = 0;
+char buf[256];
+int *__errno_location(){return &myerrno;}
+main(){connect(0,buf,255); exit(!myerrno);}],
+  wine_cv_libc_reentrant=yes, wine_cv_libc_reentrant=no,
+  wine_cv_libc_reentrant=yes ) ] )
+if test "$wine_cv_libc_reentrant" = "no" 
+then
+  AC_DEFINE(NO_REENTRANT_LIBC)
+fi
 
 dnl **** Check for reentrant X libraries ****
 dnl
@@ -462,7 +481,10 @@ controls/Makefile
 debugger/Makefile
 dlls/Makefile
 dlls/comctl32/Makefile
+dlls/psapi/Makefile
 dlls/shell32/Makefile
+dlls/winaspi/Makefile
+dlls/wnaspi32/Makefile
 documentation/Makefile
 files/Makefile
 graphics/Makefile
@@ -486,6 +508,7 @@ objects/Makefile
 ole/Makefile
 programs/Makefile
 programs/clock/Makefile
+programs/control/Makefile
 programs/notepad/Makefile
 programs/progman/Makefile
 programs/regtest/Makefile
@@ -502,6 +525,15 @@ tools/wrc/Makefile
 tsx11/Makefile
 win32/Makefile
 windows/Makefile ])
+
+if test "$wine_cv_libc_reentrant" = "no" 
+then
+  echo
+  echo "*** Warning: non-reentrant libc detected. Wine will be build without"
+  echo "*** thread support. Consider upgrading libc to a more recent"
+  echo "*** reentrant version of libc."
+  echo
+fi
 
 echo
 echo "Configure finished.  Do 'make depend; make' to compile Wine."

@@ -27,6 +27,7 @@
 #include "debug.h"
 #include "xmalloc.h"
 
+#define SEL(x) GlobalHandleToSel(x)
 
 /***********************************************************************
  *           NE_GetRelocAddrName
@@ -73,27 +74,27 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     if (!pSeg->filepos) return TRUE;  /* No file image, just return */
 	
     fd = NE_OpenFile( pModule );
-    TRACE(module, "Loading segment %d, selector=%04x, flags=%04x\n",
-                    segnum, pSeg->selector, pSeg->flags );
+    TRACE(module, "Loading segment %d, hSeg=%04x, flags=%04x\n",
+                    segnum, pSeg->hSeg, pSeg->flags );
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
     if (pSeg->size) size = pSeg->size;
     else if (pSeg->minsize) size = pSeg->minsize;
     else size = 0x10000;
-    mem = GlobalLock16(pSeg->selector);
+    mem = GlobalLock16(pSeg->hSeg);
     if (pModule->flags & NE_FFLAGS_SELFLOAD && segnum > 1)
     {
  	/* Implement self loading segments */
  	SELFLOADHEADER *selfloadheader;
         STACK16FRAME *stack16Top;
         DWORD oldstack;
- 	WORD oldselector, newselector;
+ 	WORD old_hSeg, new_hSeg;
         THDB *thdb = THREAD_Current();
         HFILE32 hf = FILE_DupUnixHandle( fd );
 
  	selfloadheader = (SELFLOADHEADER *)
- 		PTR_SEG_OFF_TO_LIN(pSegTable->selector,0);
+ 		PTR_SEG_OFF_TO_LIN(SEL(pSegTable->hSeg),0);
  	oldstack = thdb->cur_stack;
- 	oldselector = pSeg->selector;
+ 	old_hSeg = pSeg->hSeg;
  	thdb->cur_stack = PTR_SEG_OFF_TO_SEGPTR(pModule->self_loading_sel,
                                                  0xff00 - sizeof(*stack16Top));
         stack16Top = (STACK16FRAME *)PTR_SEG_TO_LIN(thdb->cur_stack);
@@ -107,27 +108,27 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         stack16Top->cs = 0;
 	TRACE(dll,"CallLoadAppSegProc(hmodule=0x%04x,hf=0x%04x,segnum=%d\n",
 		pModule->self,hf,segnum );
- 	newselector = Callbacks->CallLoadAppSegProc(selfloadheader->LoadAppSeg,
+ 	new_hSeg = Callbacks->CallLoadAppSegProc(selfloadheader->LoadAppSeg,
                                                     pModule->self,
                                                     HFILE32_TO_HFILE16(hf),
                                                     segnum );
-	TRACE(dll,"Ret CallLoadAppSegProc: selector = 0x%04x\n",newselector);
+	TRACE(dll,"Ret CallLoadAppSegProc: hSeg = 0x%04x\n",new_hSeg);
         _lclose32( hf );
- 	if (newselector != oldselector) {
+ 	if (SEL(new_hSeg) != SEL(old_hSeg)) {
  	  /* Self loaders like creating their own selectors; 
  	   * they love asking for trouble to Wine developers
  	   */
  	  if (segnum == pModule->dgroup) {
- 	    memcpy(PTR_SEG_OFF_TO_LIN(oldselector,0),
- 		   PTR_SEG_OFF_TO_LIN(newselector,0), 
+ 	    memcpy(PTR_SEG_OFF_TO_LIN(SEL(old_hSeg),0),
+ 		   PTR_SEG_OFF_TO_LIN(SEL(new_hSeg),0), 
  		   pSeg->minsize ? pSeg->minsize : 0x10000);
- 	    FreeSelector(newselector);
- 	    pSeg->selector = oldselector;
- 	    TRACE(module, "New selector allocated for dgroup segment:Old=%d,New=%d\n", 
-                oldselector, newselector);
+ 	    FreeSelector(SEL(new_hSeg));
+ 	    pSeg->hSeg = old_hSeg;
+ 	    TRACE(module, "New hSeg allocated for dgroup segment:Old=%d,New=%d\n", 
+                old_hSeg, new_hSeg);
  	  } else {
- 	    FreeSelector(pSeg->selector);
- 	    pSeg->selector = newselector;
+ 	    FreeSelector(SEL(pSeg->hSeg));
+ 	    pSeg->hSeg = new_hSeg;
  	  }
  	} 
  	
@@ -166,14 +167,14 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
     read( fd, &count, sizeof(count) );
     if (!count) return TRUE;
 
-    TRACE(fixup, "Fixups for %.*s, segment %d, selector %04x\n",
+    TRACE(fixup, "Fixups for %.*s, segment %d, hSeg %04x\n",
                    *((BYTE *)pModule + pModule->name_table),
                    (char *)pModule + pModule->name_table + 1,
-                   segnum, pSeg->selector );
-    TRACE(segment, "Fixups for %.*s, segment %d, selector %04x\n",
+                   segnum, pSeg->hSeg );
+    TRACE(segment, "Fixups for %.*s, segment %d, hSeg %04x\n",
                    *((BYTE *)pModule + pModule->name_table),
                    (char *)pModule + pModule->name_table + 1,
-                   segnum, pSeg->selector );
+                   segnum, pSeg->hSeg );
 
     reloc_entries = (struct relocation_entry_s *)xmalloc(count * sizeof(struct relocation_entry_s));
     if (read( fd, reloc_entries, count * sizeof(struct relocation_entry_s)) !=
@@ -268,7 +269,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 	    }
 	    else
 	    {
-                address = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( pSegTable[rep->target1-1].selector, rep->target2 );
+                address = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( SEL(pSegTable[rep->target1-1].hSeg), rep->target2 );
 	    }
 	    
 	    TRACE( fixup,"%d: %04x:%04x %s\n", 
@@ -306,7 +307,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
 
         if (additive)
         {
-            sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
+            sp = PTR_SEG_OFF_TO_LIN( SEL(pSeg->hSeg), offset );
             TRACE( fixup,"    %04x:%04x\n", offset, *sp );
             switch (rep->address_type & 0x7f)
             {
@@ -335,7 +336,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         {
             do
             {
-                sp = PTR_SEG_OFF_TO_LIN( pSeg->selector, offset );
+                sp = PTR_SEG_OFF_TO_LIN( SEL(pSeg->hSeg), offset );
                 next_offset = *sp;
                 TRACE( fixup,"    %04x:%04x\n", offset, *sp );
                 switch (rep->address_type & 0x7f)
@@ -356,7 +357,7 @@ BOOL32 NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
                     goto unknown;
                 }
                 if (next_offset == offset) break;  /* avoid infinite loop */
-                if (next_offset >= GlobalSize16(pSeg->selector)) break;
+                if (next_offset >= GlobalSize16(pSeg->hSeg)) break;
                 offset = next_offset;
             } while (offset != 0xffff);
         }
@@ -392,14 +393,14 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
         THDB *thdb = THREAD_Current();
         HMODULE16 hselfload = GetModuleHandle16("WPROCS");
         DWORD oldstack;
-        WORD saved_dgroup = pSegTable[pModule->dgroup - 1].selector;
+        WORD saved_hSeg = pSegTable[pModule->dgroup - 1].hSeg;
 
         TRACE(module, "%.*s is a self-loading module!\n",
 		     *((BYTE*)pModule + pModule->name_table),
 		     (char *)pModule + pModule->name_table + 1);
         if (!NE_LoadSegment( pModule, 1 )) return FALSE;
         selfloadheader = (SELFLOADHEADER *)
-                          PTR_SEG_OFF_TO_LIN(pSegTable->selector, 0);
+                          PTR_SEG_OFF_TO_LIN(SEL(pSegTable->hSeg), 0);
         selfloadheader->EntryAddrProc = NE_GetEntryPoint(hselfload,27);
         selfloadheader->MyAlloc  = NE_GetEntryPoint(hselfload,28);
         selfloadheader->SetOwner = NE_GetEntryPoint(GetModuleHandle16("KERNEL"),403);
@@ -425,8 +426,8 @@ BOOL32 NE_LoadAllSegments( NE_MODULE *pModule )
                                    HFILE32_TO_HFILE16(hf));
 	TRACE(dll,"Return from CallBootAppProc\n");
         _lclose32(hf);
-        /* some BootApp procs overwrite the selector of dgroup */
-        pSegTable[pModule->dgroup - 1].selector = saved_dgroup;
+        /* some BootApp procs overwrite the segment handle of dgroup */
+        pSegTable[pModule->dgroup - 1].hSeg = saved_hSeg;
         thdb->cur_stack = oldstack;
 
 	/* FIXME
@@ -460,7 +461,7 @@ void NE_FixupPrologs( NE_MODULE *pModule )
 
     pSegTable = NE_SEG_TABLE(pModule);
     if (pModule->flags & NE_FFLAGS_SINGLEDATA)
-        dgroup = pSegTable[pModule->dgroup-1].selector;
+        dgroup = SEL(pSegTable[pModule->dgroup-1].hSeg);
 
     TRACE(module, "(%04x)\n", pModule->self );
     p = (BYTE *)pModule + pModule->entry_table;
@@ -491,10 +492,10 @@ void NE_FixupPrologs( NE_MODULE *pModule )
 	     */
 	    if (sel == 0xff) { /* moveable */
 		dsprintf(module, "(%02x) o %04x", p[3], *(WORD *)(p+4) );
-		fixup_ptr = (char *)GET_SEL_BASE(pSegTable[p[3]-1].selector) + *(WORD *)(p + 4);
+		fixup_ptr = (char *)GET_SEL_BASE(SEL(pSegTable[p[3]-1].hSeg)) + *(WORD *)(p + 4);
 	    } else { /* fixed */
 		dsprintf(module, "offset %04x", *(WORD *)(p+1) );
-		fixup_ptr = (char *)GET_SEL_BASE(pSegTable[sel-1].selector) + 
+		fixup_ptr = (char *)GET_SEL_BASE(SEL(pSegTable[sel-1].hSeg)) + 
 		  *(WORD *)(p + 1);
 	    }
 	    TRACE(module, "%s Signature: %02x %02x %02x,ff %x\n",
@@ -564,7 +565,7 @@ static VOID NE_GetDLLInitParams( NE_MODULE *pModule,
     else  /* DATA SINGLE DLL */
     {
 	if (pModule->dgroup) {
-            *ds   = pSegTable[pModule->dgroup-1].selector;
+            *ds   = SEL(pSegTable[pModule->dgroup-1].hSeg);
             *heap = pModule->heap_size;
 	}
 	else /* hmm, DLL has no dgroup,
@@ -625,7 +626,7 @@ static BOOL32 NE_InitDLL( TDB* pTask, NE_MODULE *pModule )
     DS_reg(&context)  = ds;
     ES_reg(&context)  = ds;   /* who knows ... */
 
-    CS_reg(&context)  = pSegTable[pModule->cs-1].selector;
+    CS_reg(&context)  = SEL(pSegTable[pModule->cs-1].hSeg);
     EIP_reg(&context) = pModule->ip;
     EBP_reg(&context) = OFFSETOF(THREAD_Current()->cur_stack)
                           + (WORD)&((STACK16FRAME*)0)->bp;
@@ -733,13 +734,13 @@ HINSTANCE16 NE_CreateInstance( NE_MODULE *pModule, HINSTANCE16 *prev,
     }
 
     pSegment = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
-    if (prev) *prev = pSegment->selector;
+    if (prev) *prev = SEL(pSegment->hSeg);
 
       /* if it's a library, create a new instance only the first time */
-    if (pSegment->selector)
+    if (pSegment->hSeg)
     {
-        if (pModule->flags & NE_FFLAGS_LIBMODULE) return pSegment->selector;
-        if (lib_only) return pSegment->selector;
+        if (pModule->flags & NE_FFLAGS_LIBMODULE) return SEL(pSegment->hSeg);
+        if (lib_only) return SEL(pSegment->hSeg);
     }
 
     minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
@@ -748,7 +749,7 @@ HINSTANCE16 NE_CreateInstance( NE_MODULE *pModule, HINSTANCE16 *prev,
     hNewInstance = GLOBAL_Alloc( GMEM_ZEROINIT | GMEM_FIXED, minsize,
                                  pModule->self, FALSE, FALSE, FALSE );
     if (!hNewInstance) return 0;
-    pSegment->selector = hNewInstance;
+    pSegment->hSeg = hNewInstance;
     pSegment->flags |= NE_SEGFLAGS_ALLOCATED;
     return hNewInstance;
 }
@@ -775,7 +776,7 @@ void WINAPI PatchCodeHandle(HANDLE16 hSel)
 static WORD NE_Ne2MemFlags(WORD flags)
 { 
     WORD memflags = 0;
-#if 0
+#if 1
     if (flags & NE_SEGFLAGS_DISCARDABLE) 
       memflags |= GMEM_DISCARDABLE;
     if (flags & NE_SEGFLAGS_MOVEABLE || 
@@ -788,8 +789,8 @@ static WORD NE_Ne2MemFlags(WORD flags)
     memflags |= GMEM_ZEROINIT;
 #else
     memflags = GMEM_ZEROINIT | GMEM_FIXED;
-    return memflags;
 #endif
+    return memflags;
 }
 
 /***********************************************************************
@@ -820,12 +821,12 @@ BOOL32 NE_CreateSegments( NE_MODULE *pModule )
         if (i == pModule->ss) minsize += pModule->stack_size;
 	/* The DGROUP is allocated by NE_CreateInstance */
         if (i == pModule->dgroup) continue;
-        pSegment->selector = GLOBAL_Alloc( NE_Ne2MemFlags(pSegment->flags),
+        pSegment->hSeg = GLOBAL_Alloc( NE_Ne2MemFlags(pSegment->flags),
                                       minsize, pModule->self,
                                       !(pSegment->flags & NE_SEGFLAGS_DATA),
                                       FALSE,
                             FALSE /*pSegment->flags & NE_SEGFLAGS_READONLY*/ );
-        if (!pSegment->selector) return FALSE;
+        if (!pSegment->hSeg) return FALSE;
 	pSegment->flags |= NE_SEGFLAGS_ALLOCATED;
     }
 

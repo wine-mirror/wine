@@ -103,6 +103,75 @@ static void dump_select_reply( struct select_reply *req )
     printf( " signaled=%d", req->signaled );
 }
 
+static void dump_create_event_request( struct create_event_request *req )
+{
+    printf( " manual_reset=%d,", req->manual_reset );
+    printf( " initial_state=%d,", req->initial_state );
+    printf( " inherit=%d", req->inherit );
+}
+
+static void dump_create_event_reply( struct create_event_reply *req )
+{
+    printf( " handle=%d", req->handle );
+}
+
+static void dump_event_op_request( struct event_op_request *req )
+{
+    printf( " handle=%d,", req->handle );
+    printf( " op=%d", req->op );
+}
+
+static void dump_create_mutex_request( struct create_mutex_request *req )
+{
+    printf( " owned=%d,", req->owned );
+    printf( " inherit=%d", req->inherit );
+}
+
+static void dump_create_mutex_reply( struct create_mutex_reply *req )
+{
+    printf( " handle=%d", req->handle );
+}
+
+static void dump_release_mutex_request( struct release_mutex_request *req )
+{
+    printf( " handle=%d", req->handle );
+}
+
+static void dump_create_semaphore_request( struct create_semaphore_request *req )
+{
+    printf( " initial=%08x,", req->initial );
+    printf( " max=%08x,", req->max );
+    printf( " inherit=%d", req->inherit );
+}
+
+static void dump_create_semaphore_reply( struct create_semaphore_reply *req )
+{
+    printf( " handle=%d", req->handle );
+}
+
+static void dump_release_semaphore_request( struct release_semaphore_request *req )
+{
+    printf( " handle=%d,", req->handle );
+    printf( " count=%08x", req->count );
+}
+
+static void dump_release_semaphore_reply( struct release_semaphore_reply *req )
+{
+    printf( " prev_count=%08x", req->prev_count );
+}
+
+static void dump_open_named_obj_request( struct open_named_obj_request *req )
+{
+    printf( " type=%d,", req->type );
+    printf( " access=%08x,", req->access );
+    printf( " inherit=%d", req->inherit );
+}
+
+static void dump_open_named_obj_reply( struct open_named_obj_reply *req )
+{
+    printf( " handle=%d", req->handle );
+}
+
 struct dumper
 {
     void (*dump_req)();
@@ -142,6 +211,27 @@ static const struct dumper dumpers[REQ_NB_REQUESTS] =
     { (void(*)())dump_select_request,
       (void(*)())dump_select_reply,
       sizeof(struct select_request) },
+    { (void(*)())dump_create_event_request,
+      (void(*)())dump_create_event_reply,
+      sizeof(struct create_event_request) },
+    { (void(*)())dump_event_op_request,
+      (void(*)())0,
+      sizeof(struct event_op_request) },
+    { (void(*)())dump_create_mutex_request,
+      (void(*)())dump_create_mutex_reply,
+      sizeof(struct create_mutex_request) },
+    { (void(*)())dump_release_mutex_request,
+      (void(*)())0,
+      sizeof(struct release_mutex_request) },
+    { (void(*)())dump_create_semaphore_request,
+      (void(*)())dump_create_semaphore_reply,
+      sizeof(struct create_semaphore_request) },
+    { (void(*)())dump_release_semaphore_request,
+      (void(*)())dump_release_semaphore_reply,
+      sizeof(struct release_semaphore_request) },
+    { (void(*)())dump_open_named_obj_request,
+      (void(*)())dump_open_named_obj_reply,
+      sizeof(struct open_named_obj_request) },
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] =
@@ -156,6 +246,13 @@ static const char * const req_names[REQ_NB_REQUESTS] =
     "dup_handle",
     "open_process",
     "select",
+    "create_event",
+    "event_op",
+    "create_mutex",
+    "release_mutex",
+    "create_semaphore",
+    "release_semaphore",
+    "open_named_obj",
 };
 
 void trace_request( enum request req, void *data, int len, int fd )

@@ -36,7 +36,7 @@
       Dummy written by Eric Kohl. <ekohl@abo.rhein-zeitung.de>
 
   Status:
-      - Dummy control. No functionality.
+      Dummy control. No functionality.
 
   Notes:
       Author needed!! Any volunteers??
@@ -48,7 +48,7 @@
       Dummy written by Eric Kohl. <ekohl@abo.rhein-zeitung.de>
 
   Status:
-      - Dummy control. No functionality.
+      Dummy control. No functionality.
 
   Notes:
       Author needed!! Any volunteers??
@@ -57,7 +57,7 @@
 3.3 Date and Time Picker Control
 --------------------------------
   Status:
-      - Nothing done at all.
+      Nothing done at all.
 
   Notes:
       Author needed!! Any volunteers??
@@ -66,7 +66,7 @@
 3.4 Drag List Box Control
 -------------------------
   Status:
-      - Nothing done at all.
+      Nothing done at all.
 
   Notes:
       Author needed!! Any volunteers??
@@ -75,7 +75,7 @@
 3.5 Flat Scroll Bar Control
 ---------------------------
   Status:
-      - Nothing done at all.
+      Nothing done at all.
 
   Notes:
       Author needed!! Any volunteers??
@@ -87,7 +87,7 @@
       Eric Kohl <ekohl@abo.rhein-zeitung.de>
 
   Status:
-      - Almost finished.
+      Almost finished.
 
 
 3.7 Hot Key Control
@@ -108,18 +108,13 @@
       Eric Kohl <ekohl@abo.rhein-zeitung.de>
 
   Status:
-      - Almost finished.
-
-  Notes:
-      Most of my test programs work as expected. But when image lists are used
-      in other controls (e.g. Toolbar) they don't seem to be error-free.
-      It looks like I have to do a major re-write (use DIB's instead of DDB's).
+      Almost finished.
 
 
 3.9 IP Address Control
 ----------------------
   Status:
-      - Nothing done at all.
+      Nothing done at all.
 
   Notes:
       Author needed!! Any volunteers??
@@ -129,9 +124,10 @@
 ----------------------
   Author:
       Dummy written by Eric Kohl. <ekohl@abo.rhein-zeitung.de>
+      Ben Williams <.edu>
 
   Status:
-      - Development in progress.
+      Under construction.
 
   Notes:
       Author needed!! Any volunteers??
@@ -140,13 +136,22 @@
 3.11 Month Calendar Control
 ---------------------------
   Status:
-      - Nothing done at all.
+      Nothing done at all.
 
   Notes:
       Author needed!! Any volunteers??
 
 
-3.12 Pager Control
+3.12 Native font control
+------------------------
+  Status:
+      Nothing done at all.
+
+  Notes:
+      Author needed!! Any volunteers??
+
+
+3.13 Pager Control
 ------------------
   Author:
       Dummy written by Eric Kohl.
@@ -158,14 +163,14 @@
       Author needed!! Any volunteers??
 
 
-3.13 Progress Bar Control
+3.14 Progress Bar Control
 -------------------------
   Author:
       Original implementation by Dimitrie O. Paun.
       Fixes and improvements by Eric Kohl.
 
   Status:
-      - Almost finished (should behave like the original).
+      Almost finished (should behave like the original).
 
   Notes:
       WM_GETFONT and WM_SETFONT are not implemented yet. They seem to be
@@ -174,7 +179,7 @@
       textual information (e.g. percentage) these messages would make sense.
 
 
-3.14 Property Sheet
+3.15 Property Sheet
 -------------------
   Author:
       Anders Carlsson <anders.carlsson@linux.nu>
@@ -187,33 +192,33 @@
       Tab control must be implemented first.
 
 
-3.15 Rebar Control (Cool Bar)
+3.16 Rebar Control (Cool Bar)
 -----------------------------
   Author:
       Dummy written by Eric Kohl.
 
   Status:
-      - Dummy control. No functionality.
+      Dummy control. No functionality.
 
   Notes:
       Author needed!! Any volunteers??
 
 
-3.16 Status Bar Control
+3.17 Status Bar Control
 -----------------------
   Author:
       Original implementation by Bruce Milner.
       Fixes and improvements by Eric Kohl.
 
   Status:
-      - Almost finished.
+      Almost finished.
 
   Notes:
       - Unicode support is still missing.
       - Tooltip integration is almost complete.
 
 
-3.17 Tab Control
+3.18 Tab Control
 ----------------
   Author:
       Anders Carlsson <anders.carlsson@linux.nu>
@@ -223,7 +228,7 @@
       - Not yet published.
 
 
-3.18 Toolbar Control
+3.19 Toolbar Control
 --------------------
   Author:
       Eric Kohl <ekohl@abo.rhein-zeitung.de>
@@ -236,7 +241,7 @@
       - Bitmaps are not correctly displayed.
 
 
-3.19 Tooltip Control
+3.20 Tooltip Control
 --------------------
   Author:
       Eric Kohl <ekohl@abo.rhein-zeitung.de>
@@ -248,7 +253,7 @@
       - Unicode support is still missing.
 
 
-3.20 Trackbar Control
+3.21 Trackbar Control
 ---------------------
   Author:
       Dummy written by Eric Kohl <ekohl@abo.rhein-zeitung.de>
@@ -258,7 +263,7 @@
       Under construction.
 
 
-3.21 Tree View Control
+3.22 Tree View Control
 ----------------------
   Author:
       Dummy written by Eric Kohl.
@@ -268,7 +273,7 @@
       Under contstruction.
 
 
-3.22 Updown Control
+3.23 Updown Control
 -------------------
   Author:
       Original implementation by Dimitrie O. Paun.
@@ -306,30 +311,31 @@
   Have a look at relay32/comctl32.spec.
 
 
-5.1 Dymnamic Storage Arrays (DSA)
+5.1 Dymnamic Storage Array (DSA)
 ---------------------------------
-  Most of the DSA functions are implemented. I used TASKMAN.EXE to write them.
-  Since TASKMAN.EXE doesn't bail out or crash I think I've done it right.
+  The DSA functions are used to store and manage dynamic arrays of fixed size
+  memory blocks. They are used by TASKMAN.EXE, Explorer, IE4 and other
+  Programs and DLL's that are "parts of the Windows Operating System".
+  The implementation should be complete.
 
   Have a look at the source code to get more information.
 
-  Further documentation will be written...
 
-
-5.2 Dynamic Pointer Arrays ??? (DPA)
+5.2 Dynamic Pointer Array (DPA)
 ------------------------------------
-  Similar to the DSA functions, but they just store pointers. I have written
-  some stubs and semi-stubs. They are used by Explorer and IE4 but the 
-  implementation is still incomplete since both programs seem to crash because
-  of other incomplete functions.
+  Similar to the DSA functions, but they just store pointers. They are used by
+  Explorer, IE4 and other Programs and DLL's that are "parts of the Windows
+  Operating System". The implementation should be complete.
 
   Have a look at the source code to get more information.
-  Further documentation will be written...
 
 
 5.3 "Most Recently Used" - List (MRU)
 -------------------------------------
-  Currently no information available!
+  The function 'COMCTL32_157()' could be called 'CreateMRUListEx32A()'.
+  Only stubs are implemented to keep Explorer from bailing out.
+
+  No more information available at this time!
 
 
 5.4 MenuHelp
@@ -351,6 +357,14 @@
   Both values of the first pair must be the handle to the applications main
   menu.
   ...
+
+
+5.7 Other undocumented functions
+--------------------------------
+  Several other undocumented functions are used by IE4.
+
+  COMCTL32_11, COMCTL_385, COMCTL32_386 and COMCTL32_388.
+  Their stubs are implemented to keep IE4 from bailing out.
 
 
 6. Epilogue

@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/errno.h>
 #include <signal.h>
 #include <assert.h>
 #include "windows.h"
@@ -526,7 +527,7 @@ BOOL32 WINAPI GetConsoleMode(HANDLE32 hcon,LPDWORD mode)
  */
 BOOL32 WINAPI SetConsoleMode( HANDLE32 hcon, DWORD mode )
 {
-    FIXME(console,"(%08x,%08lx): stub\n",hcon,mode);
+    FIXME(console,"(0x%08x,0x%08lx): stub\n",hcon,mode);
     return TRUE;
 }
 

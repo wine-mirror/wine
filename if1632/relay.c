@@ -425,6 +425,7 @@ static DWORD RELAY_CallProc32W(int Ex)
 	DWORD *args, ret;
         VA_LIST16 valist;
 	int i;
+	int aix;
 	dbg_decl_str(relay, 1024);
 
         VA_START16( valist );
@@ -434,17 +435,23 @@ static DWORD RELAY_CallProc32W(int Ex)
 	dsprintf(relay, "CallProc32W(%ld,%ld,%p, Ex%d args[",nrofargs,argconvmask,proc32,Ex);
 	args = (DWORD*)HEAP_xalloc( GetProcessHeap(), 0,
                                     sizeof(DWORD)*nrofargs );
+	/* CallProcEx doesn't need its args reversed */
 	for (i=0;i<nrofargs;i++) {
+		if (Ex) {
+		   aix = i;
+		} else {
+		   aix = nrofargs - i - 1;
+		}
 		if (argconvmask & (1<<i))
                 {
                     SEGPTR ptr = VA_ARG16( valist, SEGPTR );
-                    args[nrofargs-i-1] = (DWORD)PTR_SEG_TO_LIN(ptr);
+                    args[aix] = (DWORD)PTR_SEG_TO_LIN(ptr);
                     dsprintf(relay,"%08lx(%p),",ptr,PTR_SEG_TO_LIN(ptr));
 		}
                 else
                 {
-                    args[nrofargs-i-1] = VA_ARG16( valist, DWORD );
-                    dsprintf(relay,"%ld,",args[nrofargs-i-1]);
+                    args[aix] = VA_ARG16( valist, DWORD );
+                    dsprintf(relay,"%ld,",args[aix]);
 		}
 	}
 	dsprintf(relay,"])");

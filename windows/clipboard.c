@@ -803,8 +803,7 @@ BOOL32 WINAPI ChangeClipboardChain32(HWND32 hWnd, HWND32 hWndNext)
 {
     BOOL32 bRet = 0;
 
-    FIXME(clipboard, "(%04x, %04x) - stub?\n", 
-		      hWnd, hWndNext);
+    FIXME(clipboard, "(0x%04x, 0x%04x): stub?\n", hWnd, hWndNext);
 
     if( hWndViewer )
 	bRet = !SendMessage16( hWndViewer, WM_CHANGECBCHAIN,

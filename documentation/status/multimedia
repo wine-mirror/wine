@@ -57,14 +57,23 @@ midlevel (MCI commands) and highlevel abstraction layers.
    They call the lowlevel driver functions in multimedia/midi.c using the
    midMessage and the modMessage functions.
 
-   The current implementation is completely broken. (I think open(), read()
-   and write() of the /dev/midi device would make this implementation nearly
-   complete...)
+   The lowlevel audio driver is currently only implemented for the
+   OpenSoundSystem (OSS) as supplied in the Linux and FreeBSD kernels by
+   4Front Technologies (http://www.4front-tech.com/). The presence of this
+   driver is checked by configure (depends on the <sys/soundcard.h> file).
+   Both Midi in and Midi out are provided. The type of MIDI devices supported
+   is external MIDI port (requires an MIDI capable device - keyboard...) and
+   OPL/2 synthesis (the OPL/2patches for all instruments are in midiPatch.c).
 
    TODO:
-   	- Implement correct MIDI output
 	- Do not implement a software synthesizer. This should be done
 	  using MIDI loopback devices in an external program (like timidity).
+	  the only trouble is that timidity is GPL'ed...
+        - use better instrument definition for OPL/2 (midiPatch.c)
+        - have a look at OPL/3 ?
+	- a hack is used in mmsystem.c (setting reserved to the 32 bit linear
+	  address of the block whatever the call is made from 16 or 32 bits 
+	  code...). this should be in midi.c I think
 
 1.4 Timers
 

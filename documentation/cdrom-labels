@@ -1,3 +1,5 @@
+*** VOLUME LABEL
+
 If a program depends on the correct label and/or serial number for the
 CD-Rom, you can use the following command to extract that information:
 
@@ -7,6 +9,8 @@ You need read access to the device, so perhaps you have to do it as root.
 Put the resulting string (without trailing blanks) into your
 wine.ini/.winerc file like:
 Label=<the label>
+
+*** SERIAL NUMBER
 
 [FIXME: if someone knows how to get the serial number in Linux, please
         put this information here].
@@ -39,4 +43,18 @@ int main(int argc,char **argv[])
     }
     return 0;
 }
+
+Probably you can get that information also from the File Manager in
+Windows.
+
 ------------------------- end volinfo.c -----------------------------
+
+
+*** DRIVE LETTER
+
+Some installed programs only look for the CD-Rom in the drive letter
+that the CD-Rom had when the program was installed. In this case, make
+sure you use the correct letter, especially if you installed the
+program under Windows and are now trying to run it in Wine.
+Some programs reportedly store the drive letter in their .INI file,
+so you might look there and try to change it.

@@ -6,9 +6,11 @@ VPATH     = @srcdir@
 MODULE    = if1632
 
 DLLS = \
+	avifile.spec \
 	commdlg.spec \
 	compobj.spec \
 	ddeml.spec \
+	display.spec \
 	gdi.spec \
 	kernel.spec \
 	keyboard.spec \

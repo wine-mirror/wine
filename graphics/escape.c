@@ -116,9 +116,27 @@ INT32 WINAPI Escape32( HDC32 hdc, INT32 nEscape, INT32 cbInput,
     return ret;
 }
 
-INT32 WINAPI ExtEscape32(HDC32 hdc,INT32 nEscape,INT32 cbInput,LPCSTR x,INT32 cbOutput,LPSTR out) {
-	FIXME(driver,"(0x%04x,0x%x,%d,%s,%d,%p),stub!\n",
-		hdc,nEscape,cbInput,x,cbOutput,out
-	);
-	return 1;
+/******************************************************************************
+ *		ExtEscape32	[GDI32.95]
+ *
+ * PARAMS
+ *    hdc         [I] Handle to device context
+ *    nEscape     [I] Escape function
+ *    cbInput     [I] Number of bytes in input structure
+ *    lpszInData  [I] Pointer to input structure
+ *    cbOutput    [I] Number of bytes in output structure
+ *    lpszOutData [O] Pointer to output structure
+ *
+ * RETURNS
+ *    Success: >0
+ *    Not implemented: 0
+ *    Failure: <0
+ */
+INT32 WINAPI ExtEscape32( HDC32 hdc, INT32 nEscape, INT32 cbInput, 
+                          LPCSTR lpszInData, INT32 cbOutput, LPSTR lpszOutData )
+{
+    FIXME(driver,"(0x%04x,0x%x,%d,%s,%d,%p):stub\n",
+          hdc,nEscape,cbInput,debugstr_a(lpszInData),cbOutput,lpszOutData);
+    return 0;
 }
+

@@ -17,6 +17,7 @@
 
 struct process;
 struct thread_wait;
+struct mutex;
 
 enum run_state { STARTING, RUNNING, TERMINATED };
 
@@ -28,6 +29,7 @@ struct thread
     struct thread      *proc_next; /* per-process thread list */
     struct thread      *proc_prev;
     struct process     *process;
+    struct mutex       *mutex;     /* list of currently owned mutexes */
     struct thread_wait *wait;      /* current wait condition if sleeping */
     int                 error;     /* current error code */
     enum run_state      state;     /* running state */
@@ -57,6 +59,7 @@ extern void sleep_on( struct thread *thread, int count, int *handles,
                       int flags, int timeout );
 extern void wake_up( struct object *obj, int max );
 
+#define GET_ERROR()     (current->error)
 #define SET_ERROR(err)  (current->error = (err))
 #define CLEAR_ERROR()   (current->error = 0)
 

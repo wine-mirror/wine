@@ -4,7 +4,7 @@
  *	Copyright 1997	Marcus Meissner
  *	Copyright 1998	Juergen Schmied
  *
- *  !!! currently work in progress on all classes 980818 !!!
+ *  !!! currently work in progress on all classes 980930 !!!
  *  <contact juergen.schmied@metronet.de>
  */
 
@@ -105,8 +105,8 @@ LPSHELLFOLDER IShellFolder_Constructor(LPSHELLFOLDER pParent,LPITEMIDLIST pidl)
 	sf=(LPSHELLFOLDER)HeapAlloc(GetProcessHeap(),0,sizeof(IShellFolder));
 	sf->ref=1;
 	sf->lpvtbl=&sfvt;
-	sf->mlpszFolder=NULL;
-	sf->mpSFParent=pParent;
+	sf->mlpszFolder=NULL;	/* path of the folder */
+	sf->mpSFParent=pParent;	/* parrent shellfolder */
 
 	TRACE(shell,"(%p)->(parent=%p, pidl=%p)\n",sf,pParent, pidl);
 	
@@ -114,24 +114,24 @@ LPSHELLFOLDER IShellFolder_Constructor(LPSHELLFOLDER pParent,LPITEMIDLIST pidl)
 	sf->mpidl = ILClone(pidl);
 	sf->mpidlNSRoot = NULL;
 	
-	if(sf->mpidl)        /* do we have a pidl?*/
+	if(sf->mpidl)        /* do we have a pidl? */
 	{ dwSize = 0;
-	  if(sf->mpSFParent->mlpszFolder)
+	  if(sf->mpSFParent->mlpszFolder)		/* get the size of the parents path */
 	  { dwSize += strlen(sf->mpSFParent->mlpszFolder) + 1;
+	    TRACE(shell,"-- (%p)->(parent's path=%s)\n",sf, debugstr_a(sf->mpSFParent->mlpszFolder));
 	  }   
-	  dwSize += _ILGetFolderText(sf->mpidl,NULL,0);
+	  dwSize += _ILGetFolderText(sf->mpidl,NULL,0); /* add the size of the foldername*/
 	  sf->mlpszFolder = SHAlloc(dwSize);
 	  if(sf->mlpszFolder)
 	  { *(sf->mlpszFolder)=0x00;
-	    if(sf->mpSFParent->mlpszFolder)
+	    if(sf->mpSFParent->mlpszFolder)		/* if the parent has a path, get it*/
 	    {  strcpy(sf->mlpszFolder, sf->mpSFParent->mlpszFolder);
 	       PathAddBackslash (sf->mlpszFolder);
 	    }
 	    _ILGetFolderText(sf->mpidl, sf->mlpszFolder+strlen(sf->mlpszFolder), dwSize-strlen(sf->mlpszFolder));
+	    TRACE(shell,"-- (%p)->(my path=%s)\n",sf, debugstr_a(sf->mlpszFolder));
 	  }
 	}
-	
-	TRACE(shell,"-- (%p)->(%p,%p,parent=%s)\n",sf,pParent, pidl, debugstr_a(sf->mlpszFolder));
 	return sf;
 }
 /**************************************************************************
@@ -288,16 +288,15 @@ static HRESULT WINAPI IShellFolder_EnumObjects(
 	HWND32 hwndOwner,
 	DWORD dwFlags,
 	LPENUMIDLIST* ppEnumIDList)
-{ HRESULT  hr;
-	TRACE(shell,"(%p)->(HWND=0x%08x,0x%08lx,%p)\n",this,hwndOwner,dwFlags,ppEnumIDList);
+{	TRACE(shell,"(%p)->(HWND=0x%08x flags=0x%08lx pplist=%p)\n",this,hwndOwner,dwFlags,ppEnumIDList);
 
-  *ppEnumIDList = NULL;
-	*ppEnumIDList = IEnumIDList_Constructor (this->mlpszFolder, dwFlags, &hr);
-  TRACE(shell,"-- (%p)->(new ID List: %p)\n",this,*ppEnumIDList);
-  if(!*ppEnumIDList)
-  { return hr;
-  }
-  return S_OK;		
+	*ppEnumIDList = NULL;
+	*ppEnumIDList = IEnumIDList_Constructor (this->mlpszFolder, dwFlags);
+	TRACE(shell,"-- (%p)->(new ID List: %p)\n",this,*ppEnumIDList);
+	if(!*ppEnumIDList)
+	{ return E_OUTOFMEMORY;
+	}
+	return S_OK;		
 }
 /**************************************************************************
  *  IShellFolder_Initialize()
@@ -496,19 +495,21 @@ static HRESULT WINAPI IShellFolder_GetAttributesOf(LPSHELLFOLDER this,UINT32 cid
   do
   { if (*pidltemp)
     { if (_ILIsDesktop( *pidltemp))
-      { *rgfInOut |= (SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_FILESYSANCESTOR);
+      { *rgfInOut |= ( SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANLINK );
       }
       else if (_ILIsMyComputer( *pidltemp))
-      { *rgfInOut |= (SFGAO_FOLDER | SFGAO_HASSUBFOLDER);
+      { *rgfInOut |= ( SFGAO_HASSUBFOLDER | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR
+      			| SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANRENAME | SFGAO_CANLINK );
       }
       else if (_ILIsDrive( *pidltemp))
-      { *rgfInOut |= (SFGAO_FOLDER | SFGAO_HASSUBFOLDER  | SFGAO_FILESYSTEM);
+      { *rgfInOut |= ( SFGAO_HASSUBFOLDER | SFGAO_FILESYSTEM  | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR  | 
+      			SFGAO_DROPTARGET | SFGAO_HASPROPSHEET | SFGAO_CANLINK );
       }
       else if (_ILIsFolder( *pidltemp))
-      { *rgfInOut |= (SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_FILESYSTEM );
+      { *rgfInOut |= ( SFGAO_HASSUBFOLDER | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_CAPABILITYMASK );
       }
       else if (_ILIsValue( *pidltemp))
-      { *rgfInOut |= (SFGAO_FILESYSTEM);
+      { *rgfInOut |= (SFGAO_FILESYSTEM | SFGAO_CAPABILITYMASK );
       }
     }
     pidltemp++;
@@ -624,17 +625,14 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 		
 	TRACE(shell,"(%p)->(pidl=%p,0x%08lx,%p)\n",this,pidl,dwFlags,lpName);
 
-	if (!pidl)
-	{  return E_OUTOFMEMORY;
-	} 
-
 	szSpecial[0]=0x00; 
 	szDrive[0]=0x00;
 
 	/* test if simple(relative) or complex(absolute) pidl */
 	pidlTemp = ILGetNext(pidl);
-	if (pidlTemp->mkid.cb==0x00)
+	if (pidlTemp && pidlTemp->mkid.cb==0x00)
 	{ bSimplePidl = TRUE;
+	  TRACE(shell,"-- simple pidl\n");
 	}
 	if (_ILIsDesktop( pidl))
 	{ strcpy (szText,"Desktop");
@@ -667,12 +665,15 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	  { case SHGDN_NORMAL:
 	      _ILGetPidlPath( pidl, szText, MAX_PATH);
 	      break;
+
+	    case SHGDN_INFOLDER | SHGDN_FORPARSING: /*fall thru*/
 	    case SHGDN_INFOLDER:
 	      pidlTemp = ILFindLastID(pidl);
 	      if (pidlTemp)
 	      { _ILGetItemText( pidlTemp, szText, MAX_PATH);
 	      }
 	      break;				
+
 	    case SHGDN_FORPARSING:
 	      if (bSimplePidl)
 	      { /* if the IShellFolder has parents, get the path from the
@@ -696,6 +697,7 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	      }
 	      break;
 	    default:
+	      TRACE(shell,"--- wrong flags=%lx\n", dwFlags);
 	      return E_INVALIDARG;
 	  }
 	  if ((szText[0]==0x00 && szDrive[0]!=0x00)|| (bSimplePidl && szDrive[0]!=0x00))
@@ -706,7 +708,7 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	  }
 	}
   
-	TRACE(shell,"-- (%p)->(%s,%s,%s)\n",this,szSpecial,szDrive,szText);
+	TRACE(shell,"-- (%p)->(%s)\n",this,szText);
 
 	if(!(lpName))
 	{  return E_OUTOFMEMORY;

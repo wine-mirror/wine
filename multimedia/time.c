@@ -1,3 +1,5 @@
+/* -*- tab-width: 8; c-basic-offset: 4 -*- */
+
 /*
  * MMSYTEM time functions
  *
@@ -6,6 +8,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "windows.h"
 #include "win.h"
 #include "ldt.h"
@@ -16,32 +19,33 @@
 #include "mmsystem.h"
 #include "debug.h"
 #include "xmalloc.h"
+#include "options.h"
 
-static BOOL32 mmTimeStarted = FALSE;
+#define USE_FAKE_MM_TIMERS
+
 static MMTIME16 mmSysTimeMS;
 static MMTIME16 mmSysTimeSMPTE;
 
-/* this is used to avoid infinite loop in timeGetTime, because
-   of the faked multimedia timers, and will desappear as soon as
-   the timers are implemented correctly.
- */
-static int time_called=0;
-
 typedef struct tagTIMERENTRY {
-    UINT32	wDelay;
-    UINT32	wResol;
-    FARPROC16 lpFunc;
-    HINSTANCE32	hInstance;
-    DWORD	dwUser;
-    UINT32	wFlags;
-    UINT32	wTimerID;
-    UINT32	wCurTime;
-    UINT32	iswin32;
-    struct tagTIMERENTRY *Next;
-    DWORD	triggertime;
+    UINT32			wDelay;
+    UINT32			wResol;
+    FARPROC16 			lpFunc;
+    HINSTANCE32			hInstance;
+    DWORD			dwUser;
+    UINT32			wFlags;
+    UINT32			wTimerID;
+    UINT32			wCurTime;
+    UINT32			isWin32;
+    struct tagTIMERENTRY*	Next;
 } TIMERENTRY, *LPTIMERENTRY;
 
 static LPTIMERENTRY lpTimerList = NULL;
+
+#ifdef USE_FAKE_MM_TIMERS
+static DWORD dwLastCBTick = 0;
+static BOOL32 bUseFakeTimers = FALSE;
+static WORD wInCallBackLoop = 0;
+#endif
 
 /*
  * FIXME
@@ -52,46 +56,34 @@ static LPTIMERENTRY lpTimerList = NULL;
 #define MMSYSTIME_MININTERVAL (1)
 #define MMSYSTIME_MAXINTERVAL (65535)
 
-
-/**************************************************************************
- *           check_MMtimers
- */
-static VOID check_MMtimers()
+static	void	TIME_TriggerCallBack(LPTIMERENTRY lpTimer, DWORD dwCurrent)
 {
-    LPTIMERENTRY lpTimer = lpTimerList;
-    DWORD	curtick = GetTickCount();
-
-    while (lpTimer != NULL) {
-    	if (lpTimer->triggertime <= curtick) {
-	    lpTimer->wCurTime = lpTimer->wDelay;
-
-	    if (lpTimer->lpFunc != (FARPROC16) NULL) {
-		TRACE(mmtime, "before CallBack16 !\n");
-		TRACE(mmtime, "lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
-			lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
-		TRACE(mmtime, "hInstance=%04X !\n", lpTimer->hInstance);
-
-
-/*        - TimeProc callback that is called here is something strange, under Windows 3.1x it is called 
- *          during interrupt time,  is allowed to execute very limited number of API calls (like
- *	    PostMessage), and must reside in DLL (therefore uses stack of active application). So I 
- *          guess current implementation via SetTimer has to be improved upon.		
- */
- 		if (lpTimer->iswin32)
-			lpTimer->lpFunc(lpTimer->wTimerID,0,lpTimer->dwUser,0,0);
-		else
-			Callbacks->CallTimeFuncProc(lpTimer->lpFunc,
-						    lpTimer->wTimerID,0,
-						    lpTimer->dwUser,0,0
-			);
-
-		TRACE(mmtime, "after CallBack16 !\n");
-	    }
-	    if (lpTimer->wFlags & TIME_ONESHOT)
-		timeKillEvent32(lpTimer->wTimerID);
-	}
-	lpTimer = lpTimer->Next;
+    lpTimer->wCurTime = lpTimer->wDelay;
+    
+    if (lpTimer->lpFunc != (FARPROC16) NULL) {
+	TRACE(mmtime, "before CallBack16 (%lu)!\n", dwCurrent);
+	TRACE(mmtime, "lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
+	      lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
+	TRACE(mmtime, "hInstance=%04X !\n", lpTimer->hInstance);
+	
+	
+	/* - TimeProc callback that is called here is something strange, under Windows 3.1x it is called 
+	 * 		during interrupt time,  is allowed to execute very limited number of API calls (like
+	 *	    	PostMessage), and must reside in DLL (therefore uses stack of active application). So I 
+	 *       guess current implementation via SetTimer has to be improved upon.		
+	 */
+	if (lpTimer->isWin32)
+	    lpTimer->lpFunc(lpTimer->wTimerID,0,lpTimer->dwUser,0,0);
+	else
+	    Callbacks->CallTimeFuncProc(lpTimer->lpFunc,
+					lpTimer->wTimerID,0,
+					lpTimer->dwUser,0,0);
+	
+	TRACE(mmtime, "after CallBack16 !\n");
+	fflush(stdout);
     }
+    if (lpTimer->wFlags & TIME_ONESHOT)
+	timeKillEvent32(lpTimer->wTimerID);
 }
 
 /**************************************************************************
@@ -100,49 +92,27 @@ static VOID check_MMtimers()
 static VOID TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
                                     UINT32 id, DWORD dwTime )
 {
-    LPTIMERENTRY lpTimer = lpTimerList;
+    LPTIMERENTRY lpTimer;
+    
     mmSysTimeMS.u.ms += MMSYSTIME_MININTERVAL;
     mmSysTimeSMPTE.u.smpte.frame++;
-    while (lpTimer != NULL) {
-	lpTimer->wCurTime--;
-	if (lpTimer->wCurTime == 0) {
-	    lpTimer->wCurTime = lpTimer->wDelay;
+    
+#ifdef USE_FAKE_MM_TIMERS
+    if (bUseFakeTimers)
+	dwLastCBTick = GetTickCount();
 
-	    if (lpTimer->lpFunc != (FARPROC16) NULL) {
-		TRACE(mmtime, "before CallBack16 !\n");
-		TRACE(mmtime, "lpFunc=%p wTimerID=%04X dwUser=%08lX !\n",
-			lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser);
-		TRACE(mmtime, "hInstance=%04X !\n", lpTimer->hInstance);
-
-/* This is wrong (lpFunc is NULL all the time)
-
-   	        lpFunc = MODULE_GetEntryPoint( lpTimer->hInstance,
-                         MODULE_GetOrdinal(lpTimer->hInstance,"TimerCallBack" ));
-		TRACE(mmtime, "lpFunc=%08lx !\n", lpFunc);
-*/
-
-
-/*        - TimeProc callback that is called here is something strange, under Windows 3.1x it is called 
- *          during interrupt time,  is allowed to execute very limited number of API calls (like
- *	    PostMessage), and must reside in DLL (therefore uses stack of active application). So I 
- *          guess current implementation via SetTimer has to be improved upon.		
- */
- 		if (lpTimer->iswin32)
-			lpTimer->lpFunc(lpTimer->wTimerID,0,lpTimer->dwUser,0,0);
-		else
-			Callbacks->CallTimeFuncProc(lpTimer->lpFunc,
-						    lpTimer->wTimerID,0,
-						    lpTimer->dwUser,0,0
-			);
-
-		TRACE(mmtime, "after CallBack16 !\n");
-		fflush(stdout);
+    if (!wInCallBackLoop++)
+#endif
+	for (lpTimer = lpTimerList; lpTimer != NULL; lpTimer = lpTimer->Next) {
+	    if (lpTimer->wCurTime < MMSYSTIME_MININTERVAL) {
+		TIME_TriggerCallBack(lpTimer, dwTime);			
+	    } else {
+		lpTimer->wCurTime -= MMSYSTIME_MININTERVAL;
 	    }
-	    if (lpTimer->wFlags & TIME_ONESHOT)
-		timeKillEvent32(lpTimer->wTimerID);
 	}
-	lpTimer = lpTimer->Next;
-    }
+#ifdef USE_FAKE_MM_TIMERS
+    wInCallBackLoop--;
+#endif
 }
 
 /**************************************************************************
@@ -150,6 +120,8 @@ static VOID TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
  */
 static void StartMMTime()
 {
+    static BOOL32 	mmTimeStarted = FALSE;
+    
     if (!mmTimeStarted) {
 	mmTimeStarted = TRUE;
 	mmSysTimeMS.wType = TIME_MS;
@@ -161,7 +133,13 @@ static void StartMMTime()
 	mmSysTimeSMPTE.u.smpte.frame = 0;
 	mmSysTimeSMPTE.u.smpte.fps = 0;
 	mmSysTimeSMPTE.u.smpte.dummy = 0;
-	SetTimer32( 0, 1, MMSYSTIME_MININTERVAL, TIME_MMSysTimeCallback );
+	SetTimer32( 0, 0, MMSYSTIME_MININTERVAL, TIME_MMSysTimeCallback );
+#ifdef USE_FAKE_MM_TIMERS
+	bUseFakeTimers = PROFILE_GetWineIniBool("options", "MMFakeTimers", TRUE);
+	TRACE(mmtime, "FakeTimer=%c\n", bUseFakeTimers ? 'Y' : 'N');
+	if (bUseFakeTimers)
+	    dwLastCBTick = GetTickCount();
+#endif
     }
 }
 
@@ -171,8 +149,7 @@ static void StartMMTime()
 MMRESULT32 WINAPI timeGetSystemTime32(LPMMTIME32 lpTime, UINT32 wSize)
 {
     TRACE(mmsys, "(%p, %u);\n", lpTime, wSize);
-    if (!mmTimeStarted)
-	StartMMTime();
+    StartMMTime();
     lpTime->wType = TIME_MS;
     lpTime->u.ms = mmSysTimeMS.u.ms;
     return 0;
@@ -184,11 +161,45 @@ MMRESULT32 WINAPI timeGetSystemTime32(LPMMTIME32 lpTime, UINT32 wSize)
 MMRESULT16 WINAPI timeGetSystemTime16(LPMMTIME16 lpTime, UINT16 wSize)
 {
     TRACE(mmsys, "(%p, %u);\n", lpTime, wSize);
-    if (!mmTimeStarted)
-	StartMMTime();
+    StartMMTime();
     lpTime->wType = TIME_MS;
     lpTime->u.ms = mmSysTimeMS.u.ms;
     return 0;
+}
+
+static	WORD	timeSetEventInternal(UINT32 wDelay,UINT32 wResol,
+				     FARPROC16 lpFunc,DWORD dwUser,
+				     UINT32 wFlags, UINT16 isWin32)
+{
+    WORD 		wNewID = 0;
+    LPTIMERENTRY	lpNewTimer;
+    LPTIMERENTRY	lpTimer = lpTimerList;
+    
+    TRACE(mmtime, "(%u, %u, %p, %08lX, %04X);\n",
+	  wDelay, wResol, lpFunc, dwUser, wFlags);
+    StartMMTime();
+    lpNewTimer = (LPTIMERENTRY)xmalloc(sizeof(TIMERENTRY));
+    if (lpNewTimer == NULL)
+	return 0;
+    while (lpTimer != NULL) {
+	wNewID = MAX(wNewID, lpTimer->wTimerID);
+	lpTimer = lpTimer->Next;
+    }
+    
+    lpNewTimer->Next = lpTimerList;
+    lpTimerList = lpNewTimer;
+    lpNewTimer->wTimerID = wNewID + 1;
+    lpNewTimer->wCurTime = wDelay;
+    lpNewTimer->wDelay = wDelay;
+    lpNewTimer->wResol = wResol;
+    lpNewTimer->lpFunc = lpFunc;
+    lpNewTimer->isWin32 = isWin32;
+    lpNewTimer->hInstance = GetTaskDS();
+    TRACE(mmtime, "hInstance=%04X !\n", lpNewTimer->hInstance);
+    TRACE(mmtime, "lpFunc=%p !\n", isWin32 ? lpFunc : PTR_SEG_TO_LIN(lpFunc));
+    lpNewTimer->dwUser = dwUser;
+    lpNewTimer->wFlags = wFlags;
+    return lpNewTimer->wTimerID;
 }
 
 /**************************************************************************
@@ -198,38 +209,8 @@ MMRESULT32 WINAPI timeSetEvent32(UINT32 wDelay,UINT32 wResol,
 				 LPTIMECALLBACK32 lpFunc,DWORD dwUser,
 				 UINT32 wFlags)
 {
-    WORD wNewID = 0;
-    LPTIMERENTRY lpNewTimer;
-    LPTIMERENTRY lpTimer = lpTimerList;
-
-    TRACE(mmtime, "(%u, %u, %p, %08lX, %04X);\n",
-		  wDelay, wResol, lpFunc, dwUser, wFlags);
-    if (!mmTimeStarted)
-	StartMMTime();
-    lpNewTimer = (LPTIMERENTRY)xmalloc(sizeof(TIMERENTRY));
-    if (lpNewTimer == NULL)
-	return 0;
-    while (lpTimer != NULL) {
-	wNewID = MAX(wNewID, lpTimer->wTimerID);
-	lpTimer = lpTimer->Next;
-    }
-
-    lpNewTimer->Next = lpTimerList;
-    lpTimerList = lpNewTimer;
-    lpNewTimer->wTimerID = wNewID + 1;
-    lpNewTimer->wCurTime = wDelay;
-    lpNewTimer->triggertime = wDelay+GetTickCount();
-    lpNewTimer->wDelay = wDelay;
-    lpNewTimer->wResol = wResol;
-    lpNewTimer->lpFunc = (FARPROC16) lpFunc;
-    lpNewTimer->iswin32 = 1;
-    lpNewTimer->hInstance = GetTaskDS();
-	TRACE(mmtime, "hInstance=%04X !\n", lpNewTimer->hInstance);
-	TRACE(mmtime, "lpFunc=%p !\n", 
-				lpFunc);
-    lpNewTimer->dwUser = dwUser;
-    lpNewTimer->wFlags = wFlags;
-    return lpNewTimer->wTimerID;
+    return timeSetEventInternal(wDelay, wResol, (FARPROC16)lpFunc, 
+				dwUser, wFlags, 1);
 }
 
 /**************************************************************************
@@ -239,37 +220,8 @@ MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol,
 				 LPTIMECALLBACK16 lpFunc,DWORD dwUser,
 				 UINT16 wFlags)
 {
-    WORD wNewID = 0;
-    LPTIMERENTRY lpNewTimer;
-    LPTIMERENTRY lpTimer = lpTimerList;
-    TRACE(mmtime, "(%u, %u, %p, %08lX, %04X);\n",
-		  wDelay, wResol, lpFunc, dwUser, wFlags);
-    if (!mmTimeStarted)
-	StartMMTime();
-    lpNewTimer = (LPTIMERENTRY)xmalloc(sizeof(TIMERENTRY));
-    if (lpNewTimer == NULL)
-	return 0;
-    while (lpTimer != NULL) {
-	wNewID = MAX(wNewID, lpTimer->wTimerID);
-	lpTimer = lpTimer->Next;
-    }
-
-    lpNewTimer->Next = lpTimerList;
-    lpTimerList = lpNewTimer;
-    lpNewTimer->wTimerID = wNewID + 1;
-    lpNewTimer->wCurTime = wDelay;
-    lpNewTimer->wDelay = wDelay;
-    lpNewTimer->triggertime = wDelay+GetTickCount();
-    lpNewTimer->wResol = wResol;
-    lpNewTimer->lpFunc = (FARPROC16) lpFunc;
-    lpNewTimer->iswin32 = 0;
-    lpNewTimer->hInstance = GetTaskDS();
-	TRACE(mmtime, "hInstance=%04X !\n", lpNewTimer->hInstance);
-	TRACE(mmtime, "(lpFunc)=%p !\n", 
-				PTR_SEG_TO_LIN(lpFunc));
-    lpNewTimer->dwUser = dwUser;
-    lpNewTimer->wFlags = wFlags;
-    return lpNewTimer->wTimerID;
+    return timeSetEventInternal(wDelay, wResol, (FARPROC16)lpFunc, 
+				dwUser, wFlags, 0);
 }
 
 /**************************************************************************
@@ -277,15 +229,16 @@ MMRESULT16 WINAPI timeSetEvent16(UINT16 wDelay, UINT16 wResol,
  */
 MMRESULT32 WINAPI timeKillEvent32(UINT32 wID)
 {
-    LPTIMERENTRY xlptimer,*lpTimer = &lpTimerList;
-    while (*lpTimer) {
+    LPTIMERENTRY*	lpTimer;
+    
+    for (lpTimer = &lpTimerList; *lpTimer; lpTimer = &((*lpTimer)->Next)) {
 	if (wID == (*lpTimer)->wTimerID) {
-	    xlptimer = (*lpTimer)->Next;
+	    LPTIMERENTRY xlptimer = (*lpTimer)->Next;
+	    
 	    free(*lpTimer);
 	    *lpTimer = xlptimer;
 	    return TRUE;
 	}
-	lpTimer = &((*lpTimer)->Next);
     }
     return 0;
 }
@@ -304,8 +257,7 @@ MMRESULT16 WINAPI timeKillEvent16(UINT16 wID)
 MMRESULT32 WINAPI timeGetDevCaps32(LPTIMECAPS32 lpCaps,UINT32 wSize)
 {
     TRACE(mmtime, "(%p, %u) !\n", lpCaps, wSize);
-    if (!mmTimeStarted)
-	StartMMTime();
+    StartMMTime();
     lpCaps->wPeriodMin = MMSYSTIME_MININTERVAL;
     lpCaps->wPeriodMax = MMSYSTIME_MAXINTERVAL;
     return 0;
@@ -317,8 +269,7 @@ MMRESULT32 WINAPI timeGetDevCaps32(LPTIMECAPS32 lpCaps,UINT32 wSize)
 MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16 lpCaps, UINT16 wSize)
 {
     TRACE(mmtime, "(%p, %u) !\n", lpCaps, wSize);
-    if (!mmTimeStarted)
-	StartMMTime();
+    StartMMTime();
     lpCaps->wPeriodMin = MMSYSTIME_MININTERVAL;
     lpCaps->wPeriodMax = MMSYSTIME_MAXINTERVAL;
     return 0;
@@ -330,10 +281,9 @@ MMRESULT16 WINAPI timeGetDevCaps16(LPTIMECAPS16 lpCaps, UINT16 wSize)
 MMRESULT32 WINAPI timeBeginPeriod32(UINT32 wPeriod)
 {
     TRACE(mmtime, "(%u) !\n", wPeriod);
-    if (!mmTimeStarted)
-	StartMMTime();
+    StartMMTime();
     if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
-        return TIMERR_NOCANDO;
+	return TIMERR_NOCANDO;
     return 0;
 }
 /**************************************************************************
@@ -342,10 +292,9 @@ MMRESULT32 WINAPI timeBeginPeriod32(UINT32 wPeriod)
 MMRESULT16 WINAPI timeBeginPeriod16(UINT16 wPeriod)
 {
     TRACE(mmtime, "(%u) !\n", wPeriod);
-    if (!mmTimeStarted)
-	StartMMTime();
+    StartMMTime();
     if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
-        return TIMERR_NOCANDO;
+	return TIMERR_NOCANDO;
     return 0;
 }
 
@@ -355,8 +304,9 @@ MMRESULT16 WINAPI timeBeginPeriod16(UINT16 wPeriod)
 MMRESULT32 WINAPI timeEndPeriod32(UINT32 wPeriod)
 {
     TRACE(mmtime, "(%u) !\n", wPeriod);
+    StartMMTime();
     if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
-        return TIMERR_NOCANDO;
+	return TIMERR_NOCANDO;
     return 0;
 }
 
@@ -367,7 +317,7 @@ MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
 {
     TRACE(mmtime, "(%u) !\n", wPeriod);
     if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
-        return TIMERR_NOCANDO;
+	return TIMERR_NOCANDO;
     return 0;
 }
 
@@ -376,37 +326,38 @@ MMRESULT16 WINAPI timeEndPeriod16(UINT16 wPeriod)
  */
 DWORD WINAPI timeGetTime()
 {
-  /* FIXME all this function should have to be is
-       long result;
-       struct timeval time;
-       TRACE(mmtime,"timeGetTime(); !\n");
-       gettimeofday(&time, 0);
-       result = (((long)time.tv_sec * (long)1000) + ((long)time.tv_usec / (long)1000));
-
-     but the multimedia timers are not implemented correctly, so all the rest
-     is a workaround to fake them.
-       
-   */  
-    static DWORD lasttick=0;
-    DWORD	newtick;
-
-    TRACE(mmtime, "!\n");
-    if (!mmTimeStarted)
-	StartMMTime();
-    newtick = GetTickCount();
-    mmSysTimeMS.u.ms+=newtick-lasttick; /* FIXME: faked timer */
-    if (newtick!=lasttick)
-
-    if (!time_called) { /* to avoid infinite recursion if timeGetTime is called
-			   inside check_MMtimers
-			 */
-      time_called++;
-    	check_MMtimers();
-      time_called--;
-    }    //check_MMtimers();
-    lasttick = newtick;
-    TRACE(mmtime, "Time = %ld\n",mmSysTimeMS.u.ms);
-
-
-    return mmSysTimeMS.u.ms;
+    DWORD	dwNewTick = GetTickCount();
+    
+#ifdef USE_FAKE_MM_TIMERS
+    if (bUseFakeTimers) {
+	if (wInCallBackLoop++) { 
+	    DWORD		dwDelta;
+	    
+	    StartMMTime();
+	    
+	    if (dwNewTick < dwLastCBTick) {
+		ERR(mmtime, "dwNewTick(%lu) < dwLastCBTick(%lu)\n", dwNewTick, dwLastCBTick);
+	    }
+	    dwDelta = dwNewTick - dwLastCBTick;
+	    if (dwDelta > MMSYSTIME_MININTERVAL) {
+		LPTIMERENTRY lpTimer;
+		
+		mmSysTimeMS.u.ms += dwDelta; /* FIXME: faked timer */
+		dwLastCBTick = dwNewTick;
+		for (lpTimer = lpTimerList; lpTimer != NULL; lpTimer = lpTimer->Next) {
+		    if (lpTimer->wCurTime < dwDelta) {
+			TIME_TriggerCallBack(lpTimer, dwNewTick);
+		    } else {
+			lpTimer->wCurTime -= dwDelta;
+		    }
+		}
+		dwNewTick = mmSysTimeMS.u.ms;
+	    }
+	}
+	wInCallBackLoop--;
+    }
+#endif
+    TRACE(mmtime, "Time = %ld\n", dwNewTick);
+    
+    return dwNewTick;
 }

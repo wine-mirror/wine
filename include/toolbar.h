@@ -53,6 +53,7 @@ typedef struct tagTOOLBAR_INFO
     BOOL32     bTransparent;    /* background transparency flag */
     BOOL32     bAutoSize;       /* auto size deadlock indicator */
     DWORD      dwExStyle;       /* extended toolbar style */
+    DWORD      dwDTFlags;       /* DrawText flags */
 
     COLORREF   clrInsertMark;   /* insert mark color */
     RECT32     rcBound;         /* bounding rectangle */

@@ -10,9 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "winerror.h"
 #include "server.h"
-
-#include "server/object.h"
+#include "server/thread.h"
 
 int debug_level = 0;
 
@@ -30,6 +30,16 @@ static struct object_name *names[NAME_HASH_SIZE];
 
 /*****************************************************************/
 
+void *mem_alloc( size_t size )
+{
+    void *ptr = malloc( size );
+    if (ptr) memset( ptr, 0x55, size );
+    else if (current) SET_ERROR( ERROR_OUTOFMEMORY );
+    return ptr;
+}
+
+/*****************************************************************/
+
 static int get_name_hash( const char *name )
 {
     int hash = 0;
@@ -43,7 +53,7 @@ static struct object_name *add_name( struct object *obj, const char *name )
     int hash = get_name_hash( name );
     int len = strlen( name );
 
-    if (!(ptr = (struct object_name *)malloc( sizeof(*ptr) + len )))
+    if (!(ptr = (struct object_name *)mem_alloc( sizeof(*ptr) + len )))
         return NULL;
     ptr->next = names[hash];
     ptr->obj  = obj;
@@ -64,15 +74,40 @@ static void free_name( struct object *obj )
 }
 
 /* initialize an already allocated object */
-void init_object( struct object *obj, const struct object_ops *ops,
-                  const char *name )
+/* return 1 if OK, 0 on error */
+int init_object( struct object *obj, const struct object_ops *ops,
+                 const char *name )
 {
     obj->refcount = 1;
     obj->ops      = ops;
     obj->head     = NULL;
     obj->tail     = NULL;
     if (!name) obj->name = NULL;
-    else obj->name = add_name( obj, name );
+    else if (!(obj->name = add_name( obj, name ))) return 0;
+    return 1;
+}
+
+struct object *create_named_object( const char *name, const struct object_ops *ops, size_t size )
+{
+    struct object *obj;
+    if ((obj = find_object( name )))
+    {
+        if (obj->ops == ops)
+        {
+            SET_ERROR( ERROR_ALREADY_EXISTS );
+            return obj;
+        }
+        SET_ERROR( ERROR_INVALID_HANDLE );
+        return NULL;
+    }
+    if (!(obj = mem_alloc( size ))) return NULL;
+    if (!init_object( obj, ops, name ))
+    {
+        free( obj );
+        return NULL;
+    }
+    CLEAR_ERROR();
+    return obj;
 }
 
 /* grab an object (i.e. increment its refcount) and return the object */
@@ -102,10 +137,10 @@ void release_object( void *ptr )
 /* find an object by its name; the refcount is incremented */
 struct object *find_object( const char *name )
 {
-    int hash = get_name_hash( name );
-    struct object_name *ptr = names[hash];
+    struct object_name *ptr;
+    if (!name) return NULL;
+    ptr = names[ get_name_hash( name ) ];
     while (ptr && strcmp( ptr->name, name )) ptr = ptr->next;
     if (!ptr) return NULL;
-    grab_object( ptr->obj );
-    return ptr->obj;
+    return grab_object( ptr->obj );
 }

@@ -1,173 +1,118 @@
+/* ASPI definitions used for both WNASPI16 and WNASPI32 */
+
 #if !defined(ASPI_H)
 #define ASPI_H
 
 #pragma pack(1)
 
-#define SS_PENDING	0x00
-#define SS_COMP		0x01
-#define SS_ABORTED	0x02
-#define SS_ERR		0x04
-#define SS_OLD_MANAGE	0xe1
-#define SS_ILLEGAL_MODE	0xe2
-#define SS_NO_ASPI	0xe3
-#define SS_FAILED_INIT	0xe4
-#define SS_INVALID_HA	0x81
-#define SS_INVALID_SRB	0xe0
-#define SS_ASPI_IS_BUSY	0xe5
-#define SS_BUFFER_TO_BIG	0xe6
+#define SS_PENDING      0x00
+#define SS_COMP         0x01
+#define SS_ABORTED      0x02
+#define SS_ERR          0x04
+#define SS_OLD_MANAGE   0xe1
+#define SS_ILLEGAL_MODE 0xe2
+#define SS_NO_ASPI      0xe3
+#define SS_FAILED_INIT  0xe4
+#define SS_INVALID_HA   0x81
+#define SS_INVALID_SRB  0xe0
+#define SS_ASPI_IS_BUSY 0xe5
+#define SS_BUFFER_TO_BIG        0xe6
 
-#define SC_HA_INQUIRY		0x00
-#define SC_GET_DEV_TYPE 	0x01
-#define SC_EXEC_SCSI_CMD	0x02
-#define SC_ABORT_SRB		0x03
-#define SC_RESET_DEV		0x04
+#define SC_HA_INQUIRY           0x00
+#define SC_GET_DEV_TYPE         0x01
+#define SC_EXEC_SCSI_CMD        0x02
+#define SC_ABORT_SRB            0x03
+#define SC_RESET_DEV            0x04
+
 
 /* Host adapter status codes */
-#define HASTAT_OK		0x00
-#define HASTAT_SEL_TO		0x11
-#define HASTAT_DO_DU		0x12
-#define HASTAT_BUS_FREE		0x13
-#define HASTAT_PHASE_ERR	0x14
+#define HASTAT_OK               0x00
+#define HASTAT_SEL_TO           0x11
+#define HASTAT_DO_DU            0x12
+#define HASTAT_BUS_FREE         0x13
+#define HASTAT_PHASE_ERR        0x14
 
 /* Target status codes */
-#define STATUS_GOOD		0x00
-#define STATUS_CHKCOND		0x02
-#define STATUS_BUSY		0x08
-#define STATUS_RESCONF		0x18
+#define STATUS_GOOD             0x00
+#define STATUS_CHKCOND          0x02
+#define STATUS_BUSY             0x08
+#define STATUS_RESCONF          0x18
+
+#ifdef linux
+
+/* This is a duplicate of the sg_header from /usr/src/linux/include/scsi/sg.h
+ * kernel 2.0.30
+ * This will probably break at some point, but for those who don't have
+ * kernels installed, I think this should still work.
+ *
+ */
+
+struct sg_header
+ {
+  int pack_len;    /* length of incoming packet <4096 (including header) */
+  int reply_len;   /* maximum length <4096 of expected reply */
+  int pack_id;     /* id number of packet */
+  int result;      /* 0==ok, otherwise refer to errno codes */
+  unsigned int twelve_byte:1; /* Force 12 byte command length for group 6 & 7
+commands  */
+  unsigned int other_flags:31;                  /* for future use */
+  unsigned char sense_buffer[16]; /* used only by reads */
+  /* command follows then data for command */
+ };
+
+#define SCSI_OFF sizeof(struct sg_header)
+#endif
+
+#define ASPI_POSTING(prb) (prb->SRB_Flags & 0x1)
+
+#define HOST_TO_TARGET(prb) (((prb->SRB_Flags>>3) & 0x3) == 0x2)
+#define TARGET_TO_HOST(prb) (((prb->SRB_Flags>>3) & 0x3) == 0x1)
+#define NO_DATA_TRANSFERED(prb) (((prb->SRB_Flags>>3) & 0x3) == 0x3)
+
+#define SRB_ENABLE_RESIDUAL_COUNT 0x4
+#define SRB_EVENT_NOTIFY 0x40 /* Enable ASPI event notification */
+
+#define INQUIRY_VENDOR          8
+
+#define MUSTEK_SCSI_AREA_AND_WINDOWS 0x04
+#define MUSTEK_SCSI_READ_SCANNED_DATA 0x08
+#define MUSTEK_SCSI_GET_IMAGE_STATUS 0x0f
+#define MUSTEK_SCSI_ADF_AND_BACKTRACE 0x10
+#define MUSTEK_SCSI_CCD_DISTANCE 0x11
+#define MUSTEK_SCSI_START_STOP 0x1b
+
+#define CMD_TEST_UNIT_READY 0x00
+#define CMD_REQUEST_SENSE 0x03
+#define CMD_INQUIRY 0x12
+
+/* scanner commands - just for debug */
+#define CMD_SCAN_GET_DATA_BUFFER_STATUS 0x34
+#define CMD_SCAN_GET_WINDOW 0x25
+#define CMD_SCAN_OBJECT_POSITION 0x31
+#define CMD_SCAN_READ 0x28
+#define CMD_SCAN_RELEASE_UNIT 0x17
+#define CMD_SCAN_RESERVE_UNIT 0x16
+#define CMD_SCAN_SCAN 0x1b
+#define CMD_SCAN_SEND 0x2a
+#define CMD_SCAN_CHANGE_DEFINITION 0x40
+
+#define INQURIY_CMDLEN 6
+#define INQURIY_REPLY_LEN 96
+#define INQUIRY_VENDOR 8
+
+#define SENSE_BUFFER(prb) (&prb->CDBByte[prb->SRB_CDBLen])
 
 
-typedef union SRB16 * LPSRB16;
-
-struct SRB_HaInquiry16 {
-  BYTE	SRB_cmd;
-  BYTE	SRB_Status;
-  BYTE	SRB_HaId;
-  BYTE	SRB_Flags;
-  WORD	SRB_55AASignature;
-  WORD	SRB_ExtBufferSize;
-  BYTE	HA_Count;
-  BYTE	HA_SCSI_ID;
-  BYTE	HA_ManagerId[16];
-  BYTE	HA_Identifier[16];
-  BYTE	HA_Unique[16];
-  BYTE	HA_ExtBuffer[4];
-} WINE_PACKED;
-
-typedef struct SRB_HaInquiry16 SRB_HaInquiry16;
-
-struct SRB_ExecSCSICmd16 {
-  BYTE        SRB_Cmd;                /* ASPI command code	      (W)  */
-  BYTE        SRB_Status;             /* ASPI command status byte     (R)  */
-  BYTE        SRB_HaId;               /* ASPI host adapter number     (W)  */
-  BYTE        SRB_Flags;              /* ASPI request flags	      (W)  */
-  DWORD       SRB_Hdr_Rsvd;           /* Reserved, MUST = 0	      (-)  */
-  BYTE        SRB_Target;             /* Target's SCSI ID	      (W)  */
-  BYTE        SRB_Lun;                /* Target's LUN number	      (W)  */
-  DWORD       SRB_BufLen;             /* Data Allocation LengthPG     (W/R)*/
-  BYTE        SRB_SenseLen;           /* Sense Allocation Length      (W)  */
-  SEGPTR      SRB_BufPointer;         /* Data Buffer Pointer	      (W)  */
-  DWORD       SRB_Rsvd1;              /* Reserved, MUST = 0	      (-/W)*/
-  BYTE        SRB_CDBLen;             /* CDB Length = 6		      (W)  */
-  BYTE        SRB_HaStat;             /* Host Adapter Status	      (R)  */
-  BYTE        SRB_TargStat;           /* Target Status		      (R)  */
-  FARPROC16   SRB_PostProc;	      /* Post routine		      (W)  */
-  BYTE        SRB_Rsvd2[34];          /* Reserved, MUST = 0                */
-  BYTE		CDBByte[0];	      /* SCSI CBD - variable length   (W)  */
-  /* variable example for 6 byte cbd
-   * BYTE        CDBByte[6];             * SCSI CDB                    (W) *
-   * BYTE        SenseArea6[SENSE_LEN];  * Request Sense buffer 	(R) *
-   */
-} WINE_PACKED ;
-
-typedef struct SRB_ExecSCSICmd16 SRB_ExecSCSICmd16;
-
-struct SRB_ExecSCSICmd32 {
-  BYTE        SRB_Cmd;            /* ASPI command code = SC_EXEC_SCSI_CMD */
-  BYTE        SRB_Status;         /* ASPI command status byte */
-  BYTE        SRB_HaId;           /* ASPI host adapter number */
-  BYTE        SRB_Flags;          /* ASPI request flags */
-  DWORD       SRB_Hdr_Rsvd;       /* Reserved */
-  BYTE        SRB_Target;         /* Target's SCSI ID */
-  BYTE        SRB_Lun;            /* Target's LUN number */
-  WORD        SRB_Rsvd1;          /* Reserved for Alignment */
-  DWORD       SRB_BufLen;         /* Data Allocation Length */
-  BYTE        *SRB_BufPointer;    /* Data Buffer Point */
-  BYTE        SRB_SenseLen;       /* Sense Allocation Length */
-  BYTE        SRB_CDBLen;         /* CDB Length */
-  BYTE        SRB_HaStat;         /* Host Adapter Status */
-  BYTE        SRB_TargStat;       /* Target Status */
-  void        (*SRB_PostProc)();  /* Post routine */
-  void        *SRB_Rsvd2;         /* Reserved */
-  BYTE        SRB_Rsvd3[16];      /* Reserved for expansion */
-  BYTE        CDBByte[16];        /* SCSI CDB */
-  BYTE        SenseArea[0];       /* Request sense buffer - var length */
+/* Just a container for seeing what devices are open */
+struct ASPI_DEVICE_INFO {
+    struct ASPI_DEVICE_INFO *   next;
+    int                         fd;
+    int                         hostId;
+    int                         target;
+    int                         lun;
 };
 
-typedef struct SRB_ExecSCSICmd32 SRB_ExecSCSICmd32;
-
-struct SRB_Abort16 {
-  BYTE        SRB_Cmd;            /* ASPI command code = SC_ABORT_SRB */
-  BYTE        SRB_Status;         /* ASPI command status byte */
-  BYTE        SRB_HaId;           /* ASPI host adapter number */
-  BYTE        SRB_Flags;          /* ASPI request flags */
-  DWORD       SRB_Hdr_Rsvd;       /* Reserved, MUST = 0 */
-  LPSRB16     SRB_ToAbort;        /* Pointer to SRB to abort */
-} WINE_PACKED;
-
-typedef struct SRB_Abort16 SRB_Abort16;
-
-struct SRB_BusDeviceReset16 {
-  BYTE        SRB_Cmd;            /* ASPI command code = SC_RESET_DEV */
-  BYTE        SRB_Status;         /* ASPI command status byte */
-  BYTE        SRB_HaId;           /* ASPI host adapter number */
-  BYTE        SRB_Flags;          /* ASPI request flags */
-  DWORD       SRB_Hdr_Rsvd;       /* Reserved, MUST = 0 */
-  BYTE        SRB_Target;         /* Target's SCSI ID */
-  BYTE        SRB_Lun;            /* Target's LUN number */
-  BYTE        SRB_ResetRsvd1[14]; /* Reserved, MUST = 0 */
-  BYTE        SRB_HaStat;         /* Host Adapter Status */
-  BYTE        SRB_TargStat;       /* Target Status */
-  SEGPTR      SRB_PostProc;       /* Post routine */
-  BYTE        SRB_ResetRsvd2[34]; /* Reserved, MUST = 0 */
-} WINE_PACKED;
-
-typedef struct SRB_BusDeviceReset16 SRB_BusDeviceReset16;
-
-struct SRB_GDEVBlock16 {
-  BYTE        SRB_Cmd;            /* ASPI command code = SC_GET_DEV_TYPE */
-  BYTE        SRB_Status;         /* ASPI command status byte */
-  BYTE        SRB_HaId;           /* ASPI host adapter number */
-  BYTE        SRB_Flags;          /* ASPI request flags */
-  DWORD       SRB_Hdr_Rsvd;       /* Reserved, MUST = 0 */
-  BYTE        SRB_Target;         /* Target's SCSI ID */
-  BYTE        SRB_Lun;            /* Target's LUN number */
-  BYTE        SRB_DeviceType;     /* Target's peripheral device type */
-} WINE_PACKED;
-
-typedef struct SRB_GDEVBlock16 SRB_GDEVBlock16;
-
-
-
-struct SRB_Common16 {
-  BYTE	SRB_cmd;
-};
-
-
-typedef struct SRB_Common16 SRB_Common16;
-
-
-union SRB16 {
-  SRB_Common16		common;
-  SRB_HaInquiry16	inquiry;
-  SRB_ExecSCSICmd16	cmd;
-  SRB_Abort16		abort;
-  SRB_BusDeviceReset16	reset;
-  SRB_GDEVBlock16	devtype;
-};
-
-typedef union SRB16 SRB16;
-
-
-
+typedef struct ASPI_DEVICE_INFO ASPI_DEVICE_INFO;
+static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
 
 #endif

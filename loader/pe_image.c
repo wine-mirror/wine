@@ -474,8 +474,12 @@ static void do_relocations(WINE_MODREF *wm)
  */
 static HMODULE32 PE_LoadImage( HFILE32 hFile )
 {
-    HMODULE32 hModule;
-    HANDLE32 mapping;
+    HMODULE32	hModule;
+    HANDLE32	mapping;
+    int		i,rawsize = 0;
+    IMAGE_SECTION_HEADER	*pe_sec;
+    BY_HANDLE_FILE_INFORMATION	bhfi;
+
 
     /* map the PE file somewhere */
     mapping = CreateFileMapping32A( hFile, NULL, PAGE_READONLY | SEC_COMMIT,
@@ -519,6 +523,24 @@ static HMODULE32 PE_LoadImage( HFILE32 hFile )
         }
         goto error;
     }
+    /* find out how large this executeable should be */
+    pe_sec = PE_SECTIONS(hModule);
+    for (i=0;i<PE_HEADER(hModule)->FileHeader.NumberOfSections;i++) {
+    	if (pe_sec[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+	    continue;
+	if (pe_sec[i].PointerToRawData+pe_sec[i].SizeOfRawData > rawsize)
+	    rawsize = pe_sec[i].PointerToRawData+pe_sec[i].SizeOfRawData;
+    }
+    if (GetFileInformationByHandle(hFile,&bhfi)) {
+    	/* FIXME: 64 bit */
+    	if (bhfi.nFileSizeLow < rawsize) {
+	    ERR(win32,"PE module is too small (header: %d, filesize: %d), probably truncated download?\n",rawsize,bhfi.nFileSizeLow);
+	    goto error;
+	}
+    }
+    /* Else ... Hmm, we have opened it, so we should be able to get info?
+     * Anyway, don't care in this case
+     */
     return hModule;
 
 error:

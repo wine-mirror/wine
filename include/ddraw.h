@@ -431,6 +431,14 @@ typedef struct _DDCAPS
 #define DDCAPS2_CANFLIPODDEVEN		0x00002000
 #define DDCAPS2_CANBOBHARDWARE		0x00004000
 
+
+/* Set/Get Colour Key Flags */
+#define DDCKEY_COLORSPACE  0x00000001  /* Struct is ingle colour space */
+#define DDCKEY_DESTBLT     0x00000002  /* To be used as dest for blt */
+#define DDCKEY_DESTOVERLAY 0x00000004  /* To be used as dest for CK overlays */
+#define DDCKEY_SRCBLT      0x00000008  /* To be used as src for blt */
+#define DDCKEY_SRCOVERLAY  0x00000010  /* To be used as src for CK overlays */
+
 typedef struct _DDCOLORKEY
 {
 	DWORD	dwColorSpaceLowValue;/* low boundary of color space that is to
@@ -876,6 +884,7 @@ FAR * ) PURE;
 struct _common_directdrawdata {
     DWORD			depth;
     DWORD			height,width;	/* SetDisplayMode */
+    HWND32                      mainWindow;     /* SetCooperativeLevel */
 };
 
 struct _dga_directdrawdata {

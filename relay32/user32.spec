@@ -252,8 +252,8 @@ type	win32
 249 stdcall GetKeyState(long) GetKeyState32
 250 stdcall GetKeyboardLayout(long) GetKeyboardLayout
 251 stdcall GetKeyboardLayoutList(long ptr) GetKeyboardLayoutList
-252 stub GetKeyboardLayoutNameA
-253 stub GetKeyboardLayoutNameW
+252 stdcall GetKeyboardLayoutNameA(ptr) GetKeyboardLayoutName32A
+253 stdcall GetKeyboardLayoutNameW(ptr) GetKeyboardLayoutName32W
 254 stdcall GetKeyboardState(ptr) GetKeyboardState
 255 stdcall GetKeyboardType(long) GetKeyboardType32
 256 stdcall GetLastActivePopup(long) GetLastActivePopup32
@@ -608,7 +608,9 @@ type	win32
 604 stub ChangeDisplaySettingsA
 605 stub ChangeDisplaySettingsW
 606 stdcall SetWindowText(long str) SetWindowText32A
-607 stub GetMonitorInfoA
-608 stub MonitorFromWindow
-609 stub MonitorFromRect
-610 stub MonitorFromPoint
+607 stdcall GetMonitorInfoA(long ptr) GetMonitorInfo32A
+608 stdcall GetMonitorInfoW(long ptr) GetMonitorInfo32W
+609 stdcall MonitorFromWindow(long long) MonitorFromPoint
+610 stdcall MonitorFromRect(ptr long) MonitorFromRect
+611 stdcall MonitorFromPoint(ptr long) MonitorFromPoint
+612 stdcall EnumDisplayMonitors(long ptr ptr long) EnumDisplayMonitors

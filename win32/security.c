@@ -66,7 +66,7 @@ BOOL32 WINAPI EqualPrefixSid (LPSID pSid1, LPSID pSid2) {
  *           GetSidLengthRequired  (ADVAPI.63)
  */
 DWORD WINAPI GetSidLengthRequired (BYTE nSubAuthorityCount) {
-    return sizeof (SID) + (nSubAuthorityCount - 1 * sizeof (DWORD));
+    return sizeof (SID) + (nSubAuthorityCount - 1) * sizeof (DWORD);
 }
 
 /***********************************************************************
@@ -124,7 +124,7 @@ VOID* WINAPI FreeSid(LPSID pSid)
 BOOL32 WINAPI InitializeSecurityDescriptor( SECURITY_DESCRIPTOR *pDescr,
                                             DWORD revision )
 {
-    FIXME(security, "(%p,%#lx): empty stub\n", pDescr, revision);
+    FIXME(security, "(%p,%#lx): stub\n", pDescr, revision);
     return TRUE;
 }
 

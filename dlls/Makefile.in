@@ -1,6 +1,9 @@
 SUBDIRS = \
 	comctl32 \
-	shell32
+	psapi \
+	shell32 \
+	winaspi \
+	wnaspi32
 
 all: $(SUBDIRS)
 

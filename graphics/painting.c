@@ -812,8 +812,7 @@ BOOL32 WINAPI DrawAnimatedRects32( HWND32 hwnd, int idAni,
                                    const LPRECT32 lprcFrom,
                                    const LPRECT32 lprcTo )
 {
-    FIXME(gdi,"(%x,%d,%p,%p): empty stub!\n",
-	  hwnd, idAni, lprcFrom, lprcTo );
+    FIXME(gdi,"(0x%x,%d,%p,%p): stub\n",hwnd,idAni,lprcFrom,lprcTo);
     return TRUE;
 }
 

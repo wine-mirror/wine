@@ -24,6 +24,8 @@
 #include "dsound.h"
 #include "dinput.h"
 #include "d3d.h"
+#include "dplay.h"
+
 
 LPMALLOC16 currentMalloc16=NULL;
 LPMALLOC32 currentMalloc32=NULL;

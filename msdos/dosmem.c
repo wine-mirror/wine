@@ -102,12 +102,12 @@ typedef struct {
   unsigned      free;
 } dosmem_info;
 
-static dosmem_entry* 	root_block = NULL;
-static dosmem_info*	info_block = NULL;
-
 #define NEXT_BLOCK(block) \
         (dosmem_entry*)(((char*)(block)) + \
 	 sizeof(dosmem_entry) + ((block)->size & DM_BLOCK_MASK))
+
+#define VM_STUB(x) (0x90CF00CD|(x<<8)) /* INT x; IRET; NOP */
+#define VM_STUB_SEGMENT 0xf000         /* BIOS segment */
 
 /***********************************************************************
  *           DOSMEM_MemoryBase
@@ -125,7 +125,7 @@ char *DOSMEM_MemoryBase(HMODULE16 hModule)
     else
         return DOSMEM_dosmem;
 }
-                                                            
+
 /***********************************************************************
  *           DOSMEM_MemoryTop
  *
@@ -135,7 +135,51 @@ static char *DOSMEM_MemoryTop(HMODULE16 hModule)
 {
     return DOSMEM_MemoryBase(hModule)+0x9FFFC; /* 640K */
 }
-                                                            
+
+/***********************************************************************
+ *           DOSMEM_InfoBlock
+ *
+ * Gets the DOS memory info block.
+ */
+static dosmem_info *DOSMEM_InfoBlock(HMODULE16 hModule)
+{
+    return (dosmem_info*)(DOSMEM_MemoryBase(hModule)+0x10000); /* 64K */
+}
+
+/***********************************************************************
+ *           DOSMEM_RootBlock
+ *
+ * Gets the DOS memory root block.
+ */
+static dosmem_entry *DOSMEM_RootBlock(HMODULE16 hModule)
+{
+    /* first block has to be paragraph-aligned */
+    return (dosmem_entry*)(((char*)DOSMEM_InfoBlock(hModule)) +
+                           ((((sizeof(dosmem_info) + 0xf) & ~0xf) - sizeof(dosmem_entry))));
+}
+
+/***********************************************************************
+ *           DOSMEM_FillIsrTable
+ *
+ * Fill the interrupt table with fake BIOS calls to BIOSSEG (0xf000).
+ *
+ * NOTES:
+ * Linux normally only traps INTs performed from or destined to BIOSSEG
+ * for us to handle, if the int_revectored table is empty. Filling the
+ * interrupt table with calls to INT stubs in BIOSSEG allows DOS programs
+ * to hook interrupts, as well as use their familiar retf tricks to call
+ * them, AND let Wine handle any unhooked interrupts transparently.
+ */
+static void DOSMEM_FillIsrTable(HMODULE16 hModule)
+{
+    SEGPTR *isr = (SEGPTR*)DOSMEM_MemoryBase(hModule);
+    DWORD *stub = (DWORD*)((char*)isr + (VM_STUB_SEGMENT << 4));
+    int x;
+ 
+    for (x=0; x<256; x++) isr[x]=PTR_SEG_OFF_TO_SEGPTR(VM_STUB_SEGMENT,x*4);
+    for (x=0; x<256; x++) stub[x]=VM_STUB(x);
+} 
+
 /***********************************************************************
  *           DOSMEM_FillBiosSegment
  *
@@ -252,16 +296,10 @@ static void DOSMEM_InitMemory(HMODULE16 hModule)
    /* Low 64Kb are reserved for DOS/BIOS so the useable area starts at
     * 1000:0000 and ends at 9FFF:FFEF. */
 
-    char*               dosmem = DOSMEM_MemoryBase(hModule);
+    dosmem_info*        info_block = DOSMEM_InfoBlock(hModule);
+    dosmem_entry*       root_block = DOSMEM_RootBlock(hModule);
     dosmem_entry*       dm;
 
-    /* FIXME: these static variables can't cope with several DOS heaps */
-    info_block = (dosmem_info*)( dosmem + 0x10000 );
-
-    /* first block has to be paragraph-aligned relative to the DOSMEM_dosmem */
-
-    root_block = (dosmem_entry*)( dosmem + 0x10000 +
-                 ((((sizeof(dosmem_info) + 0xf) & ~0xf) - sizeof(dosmem_entry))));
     root_block->size = DOSMEM_MemoryTop(hModule) - (((char*)root_block) + sizeof(dosmem_entry));
 
     info_block->blocks = 0;
@@ -299,13 +337,22 @@ BOOL32 DOSMEM_Init(HMODULE16 hModule)
         }
         DOSMEM_BiosSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0x400,0x100,
                                         0, FALSE, FALSE, FALSE, NULL );
+        DOSMEM_FillIsrTable(0);
         DOSMEM_FillBiosSegment();
         DOSMEM_InitMemory(0);
         DOSMEM_InitCollateTable();
         DOSMEM_InitErrorTable();
     }
     else
+    {
+#if 0
+        DOSMEM_FillIsrTable(hModule);
         DOSMEM_InitMemory(hModule);
+#else
+        /* bootstrap the new V86 task with a copy of the "system" memory */
+        memcpy(DOSMEM_MemoryBase(hModule), DOSMEM_dosmem, 0x100000);
+#endif
+    }
     return TRUE;
 }
 
@@ -329,13 +376,14 @@ LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT32 size, UINT16* pseg)
 {
    UINT32  	 blocksize;
    char         *block = NULL;
+   dosmem_info  *info_block = DOSMEM_InfoBlock(hModule);
    dosmem_entry *dm;
 #ifdef __DOSMEM_DEBUG_
    dosmem_entry *prev = NULL;
 #endif
  
    if( size > info_block->free ) return NULL;
-   dm = root_block;
+   dm = DOSMEM_RootBlock(hModule);
 
    while (dm && dm->size != DM_BLOCK_TERMINAL)
    {
@@ -399,7 +447,9 @@ LPVOID DOSMEM_GetBlock(HMODULE16 hModule, UINT32 size, UINT16* pseg)
  */
 BOOL32 DOSMEM_FreeBlock(HMODULE16 hModule, void* ptr)
 {
-   if( ptr >= (void*)(((char*)root_block) + sizeof(dosmem_entry)) &&
+   dosmem_info  *info_block = DOSMEM_InfoBlock(hModule);
+
+   if( ptr >= (void*)(((char*)DOSMEM_RootBlock(hModule)) + sizeof(dosmem_entry)) &&
        ptr < (void*)DOSMEM_MemoryTop(hModule) && !((((char*)ptr)
                   - DOSMEM_MemoryBase(hModule)) & 0xf) )
    {
@@ -427,8 +477,9 @@ BOOL32 DOSMEM_FreeBlock(HMODULE16 hModule, void* ptr)
 LPVOID DOSMEM_ResizeBlock(HMODULE16 hModule, void* ptr, UINT32 size, UINT16* pseg)
 {
    char         *block = NULL;
+   dosmem_info  *info_block = DOSMEM_InfoBlock(hModule);
 
-   if( ptr >= (void*)(((char*)root_block) + sizeof(dosmem_entry)) &&
+   if( ptr >= (void*)(((char*)DOSMEM_RootBlock(hModule)) + sizeof(dosmem_entry)) &&
        ptr < (void*)DOSMEM_MemoryTop(hModule) && !((((char*)ptr)
                   - DOSMEM_MemoryBase(hModule)) & 0xf) )
    {
@@ -491,7 +542,7 @@ UINT32 DOSMEM_Available(HMODULE16 hModule)
    UINT32  	 blocksize, available = 0;
    dosmem_entry *dm;
    
-   dm = root_block;
+   dm = DOSMEM_RootBlock(hModule);
 
    while (dm && dm->size != DM_BLOCK_TERMINAL)
    {

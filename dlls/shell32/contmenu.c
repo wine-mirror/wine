@@ -10,11 +10,6 @@
 #include "shlobj.h"
 #include "shell32_main.h"
 
-#define IDM_EXPLORE  0
-#define IDM_OPEN     1
-#define IDM_RENAME   2
-#define IDM_LAST     IDM_RENAME
-
 #define __T(x)      x
 #define _T(x)       __T(x)
 #define TEXT        _T
@@ -132,8 +127,26 @@ LPCONTEXTMENU IContextMenu_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST *a
 	TRACE(shell,"(%p)->()\n",cm);
 	return cm;
 }
+/**************************************************************************
+*  ICM_InsertItem()
+*/ 
+static void ICM_InsertItem (HMENU32 hmenu, UINT32 indexMenu, UINT32 wID, UINT32 fType, LPSTR dwTypeData, UINT32 fState)
+{	MENUITEMINFO32A	mii;
 
-
+	ZeroMemory(&mii, sizeof(mii));
+	mii.cbSize = sizeof(mii);
+	if (fType == MFT_SEPARATOR)
+	{ mii.fMask = MIIM_ID | MIIM_TYPE;
+	}
+	else
+	{ mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
+	  mii.dwTypeData = dwTypeData;
+	  mii.fState = MFS_ENABLED | MFS_DEFAULT;
+	}
+	mii.wID = wID;
+	mii.fType = fType;
+	InsertMenuItem32A( hmenu, indexMenu, TRUE, &mii);
+}
 /**************************************************************************
 * IContextMenu_QueryContextMenu()
 */
@@ -141,71 +154,28 @@ LPCONTEXTMENU IContextMenu_Constructor(LPSHELLFOLDER pSFParent, LPCITEMIDLIST *a
 static HRESULT WINAPI  IContextMenu_QueryContextMenu( LPCONTEXTMENU this, HMENU32 hmenu,
 							UINT32 indexMenu,UINT32 idCmdFirst,UINT32 idCmdLast,UINT32 uFlags)
 {	BOOL32			fExplore ;
-	MENUITEMINFO32A	mii;
 
 	TRACE(shell,"(%p)->(hmenu=%x indexmenu=%x cmdfirst=%x cmdlast=%x flags=%x )\n",this, hmenu, indexMenu, idCmdFirst, idCmdLast, uFlags);
+
 	if(!(CMF_DEFAULTONLY & uFlags))
 	{ if(!this->bAllValues)
-      { fExplore = uFlags & CMF_EXPLORE;
-        if(fExplore)
-        { ZeroMemory(&mii, sizeof(mii));
-          mii.cbSize = sizeof(mii);
-          mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
-          mii.wID = idCmdFirst + IDM_EXPLORE;
-          mii.fType = MFT_STRING;
-          mii.dwTypeData = TEXT("&Explore");
-          mii.fState = MFS_ENABLED | MFS_DEFAULT;
-          InsertMenuItem32A( hmenu, indexMenu++, TRUE, &mii);
+	  { fExplore = uFlags & CMF_EXPLORE;
+	    if(fExplore)
+	    { ICM_InsertItem(hmenu, indexMenu++, idCmdFirst+IDM_EXPLORE, MFT_STRING, TEXT("&Explore"), MFS_ENABLED|MFS_DEFAULT);
+	      ICM_InsertItem(hmenu, indexMenu++, idCmdFirst+IDM_OPEN, MFT_STRING, TEXT("&Open"), MFS_ENABLED);
+	    }
+	    else
+            { ICM_InsertItem(hmenu, indexMenu++, idCmdFirst+IDM_OPEN, MFT_STRING, TEXT("&Open"), MFS_ENABLED|MFS_DEFAULT);
+	      ICM_InsertItem(hmenu, indexMenu++, idCmdFirst+IDM_EXPLORE, MFT_STRING, TEXT("&Explore"), MFS_ENABLED);
+            }
 
-          ZeroMemory(&mii, sizeof(mii));
-          mii.cbSize = sizeof(mii);
-          mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
-          mii.wID = idCmdFirst + IDM_OPEN;
-          mii.fType = MFT_STRING;
-          mii.dwTypeData = TEXT("&Open");
-          mii.fState = MFS_ENABLED;
-          InsertMenuItem32A( hmenu, indexMenu++, TRUE, &mii);
-        }
-        else
-        { ZeroMemory(&mii, sizeof(mii));
-          mii.cbSize = sizeof(mii);
-          mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
-          mii.wID = idCmdFirst + IDM_OPEN;
-          mii.fType = MFT_STRING;
-          mii.dwTypeData = TEXT("&Open");
-          mii.fState = MFS_ENABLED | MFS_DEFAULT;
-          InsertMenuItem32A( hmenu, indexMenu++, TRUE, &mii);
-
-          ZeroMemory(&mii, sizeof(mii));
-          mii.cbSize = sizeof(mii);
-          mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
-          mii.wID = idCmdFirst + IDM_EXPLORE;
-          mii.fType = MFT_STRING;
-          mii.dwTypeData = TEXT("&Explore");
-          mii.fState = MFS_ENABLED;
-          InsertMenuItem32A( hmenu, indexMenu++, TRUE, &mii);
-        }
-
-        if(uFlags & CMF_CANRENAME)
-        { ZeroMemory(&mii, sizeof(mii));
-          mii.cbSize = sizeof(mii);
-          mii.fMask = MIIM_ID | MIIM_TYPE;
-          mii.wID = 0;
-          mii.fType = MFT_SEPARATOR;
-          InsertMenuItem32A( hmenu, indexMenu++, TRUE, &mii);
- 
-          ZeroMemory(&mii, sizeof(mii));
-          mii.cbSize = sizeof(mii);
-          mii.fMask = MIIM_ID | MIIM_TYPE | MIIM_STATE;
-          mii.wID = idCmdFirst + IDM_RENAME;
-          mii.fType = MFT_STRING;
-          mii.dwTypeData = TEXT("&Rename");
-          mii.fState = (IContextMenu_CanRenameItems(this) ? MFS_ENABLED : MFS_DISABLED);
-          InsertMenuItem32A( hmenu, indexMenu++, TRUE, &mii);
-        }
-      }
-      return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (IDM_LAST + 1));
-    }
+            if(uFlags & CMF_CANRENAME)
+            { ICM_InsertItem(hmenu, indexMenu++, 0, MFT_SEPARATOR, NULL, 0);
+	      ICM_InsertItem(hmenu, indexMenu++, idCmdFirst+IDM_RENAME, MFT_STRING, TEXT("&Rename"), (IContextMenu_CanRenameItems(this) ? MFS_ENABLED : MFS_DISABLED));
+	    }
+	  }
+	  return MAKE_HRESULT(SEVERITY_SUCCESS, 0, (IDM_LAST + 1));
+	}
 	return MAKE_HRESULT(SEVERITY_SUCCESS, 0, 0);
 }
 
@@ -230,41 +200,41 @@ static HRESULT WINAPI IContextMenu_InvokeCommand(LPCONTEXTMENU this, LPCMINVOKEC
 	switch(LOWORD(lpcmi->lpVerb))
 	{ case IDM_EXPLORE:
 	  case IDM_OPEN:
-        /* Find the first item in the list that is not a value. These commands 
-      	should never be invoked if there isn't at least one key item in the list.*/
+            /* Find the first item in the list that is not a value. These commands 
+      	    should never be invoked if there isn't at least one folder item in the list.*/
 
-        for(i = 0; this->aPidls[i]; i++)
+	    for(i = 0; this->aPidls[i]; i++)
 	    { if(!_ILIsValue(this->aPidls[i]))
-            break;
-        }
+                break;
+	    }
       
-		pidlTemp = ILCombine(this->pSFParent->mpidl, this->aPidls[i]);
-		pidlFQ = ILCombine(this->pSFParent->mpidlNSRoot, pidlTemp);
-		SHFree(pidlTemp);
+	    pidlTemp = ILCombine(this->pSFParent->mpidl, this->aPidls[i]);
+	    pidlFQ = ILCombine(this->pSFParent->mpidlNSRoot, pidlTemp);
+	    SHFree(pidlTemp);
       
-		ZeroMemory(&sei, sizeof(sei));
-		sei.cbSize = sizeof(sei);
-		sei.fMask = SEE_MASK_IDLIST | SEE_MASK_CLASSNAME;
-		sei.lpIDList = pidlFQ;
-		sei.lpClass = TEXT("folder");
-		sei.hwnd = lpcmi->hwnd;
-		sei.nShow = SW_SHOWNORMAL;
+	    ZeroMemory(&sei, sizeof(sei));
+	    sei.cbSize = sizeof(sei);
+	    sei.fMask = SEE_MASK_IDLIST | SEE_MASK_CLASSNAME;
+	    sei.lpIDList = pidlFQ;
+	    sei.lpClass = TEXT("folder");
+	    sei.hwnd = lpcmi->hwnd;
+	    sei.nShow = SW_SHOWNORMAL;
       
-		if(LOWORD(lpcmi->lpVerb) == IDM_EXPLORE)
+	    if(LOWORD(lpcmi->lpVerb) == IDM_EXPLORE)
 	    { sei.lpVerb = TEXT("explore");
-        }
-		else
-        { sei.lpVerb = TEXT("open");
-        }
-        ShellExecuteEx32A(&sei);
-		SHFree(pidlFQ);
-        break;
-
+	    }
+	    else
+	    { sei.lpVerb = TEXT("open");
+	    }
+	    ShellExecuteEx32A(&sei);
+	    SHFree(pidlFQ);
+	    break;
+		
 	  case IDM_RENAME:
-        MessageBeep32(MB_OK);
-        /*handle rename for the view here*/
-        break;
-   	}
+	    MessageBeep32(MB_OK);
+	    /*handle rename for the view here*/
+	    break;
+	}
 	return NOERROR;
 }
 
@@ -361,9 +331,9 @@ BOOL32 IContextMenu_FillPidlTable(LPCONTEXTMENU this, LPCITEMIDLIST *aPidls, UIN
 	TRACE(shell,"(%p)->(apidl=%p count=%u)\n",this, aPidls, uItemCount);
 	if(this->aPidls)
 	{ for(i = 0; i < uItemCount; i++)
-      { this->aPidls[i] = ILClone(aPidls[i]);
-      }
-      return TRUE;
+	  { this->aPidls[i] = ILClone(aPidls[i]);
+	  }
+	  return TRUE;
  	}
 	return FALSE;
 }

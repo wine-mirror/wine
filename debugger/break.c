@@ -11,6 +11,8 @@
 #include <sys/mman.h>
 #include "module.h"
 #include "process.h"
+#include "task.h"
+#include "miscemu.h"
 #include "toolhelp.h"
 #include "windows.h"
 #include "debugger.h"
@@ -42,10 +44,7 @@ static int next_bp = 1;  /* breakpoint 0 is reserved for step-over */
  */
 static void DEBUG_SetOpcode( const DBG_ADDR *addr, BYTE op )
 {
-    BYTE *ptr;
-
-    if (addr->seg) ptr = (BYTE *)PTR_SEG_OFF_TO_LIN( addr->seg, addr->off );
-    else ptr = (BYTE *)addr->off;
+    BYTE *ptr = DBG_ADDR_TO_LIN(addr);
 
     /* There are a couple of problems with this. On Linux prior to
        1.1.62, this call fails (ENOACCESS) due to a bug in fs/exec.c.
@@ -72,7 +71,8 @@ static void DEBUG_SetOpcode( const DBG_ADDR *addr, BYTE op )
  */
 static BOOL32 DEBUG_IsStepOverInstr()
 {
-    BYTE *instr = (BYTE *)PTR_SEG_OFF_TO_LIN( CS_reg(&DEBUG_context),
+    BYTE *instr = (BYTE *)CTX_SEG_OFF_TO_LIN( &DEBUG_context,
+                                              CS_reg(&DEBUG_context),
                                               EIP_reg(&DEBUG_context) );
 
     for (;;)
@@ -138,7 +138,8 @@ static BOOL32 DEBUG_IsStepOverInstr()
  */
 BOOL32 DEBUG_IsFctReturn(void)
 {
-    BYTE *instr = (BYTE *)PTR_SEG_OFF_TO_LIN( CS_reg(&DEBUG_context),
+    BYTE *instr = (BYTE *)CTX_SEG_OFF_TO_LIN( &DEBUG_context,
+                                              CS_reg(&DEBUG_context),
                                               EIP_reg(&DEBUG_context) );
 
     for (;;)
@@ -346,9 +347,16 @@ void DEBUG_AddModuleBreakpoints(void)
         if (!(pModule = NE_GetPtr( entry.hModule ))) continue;
         if (pModule->flags & NE_FFLAGS_LIBMODULE) continue;  /* Library */
 
+        if (pModule->dos_image) { /* DOS module */
+            addr.seg = pModule->cs | ((DWORD)pModule->self << 16);
+            addr.off = pModule->ip;
+            fprintf( stderr, "DOS task '%s': ", entry.szModule );
+            DEBUG_AddBreakpoint( &addr );
+        } else
         if (!(pModule->flags & NE_FFLAGS_WIN32))  /* NE module */
         {
-            addr.seg = NE_SEG_TABLE(pModule)[pModule->cs-1].selector;
+            addr.seg =
+		GlobalHandleToSel(NE_SEG_TABLE(pModule)[pModule->cs-1].hSeg);
             addr.off = pModule->ip;
             fprintf( stderr, "Win16 task '%s': ", entry.szModule );
             DEBUG_AddBreakpoint( &addr );
@@ -395,13 +403,17 @@ BOOL32 DEBUG_ShouldContinue( enum exec_mode mode, int * count )
     DBG_ADDR cond_addr;
     int bpnum;
     struct list_id list;
+    TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
 
       /* If not single-stepping, back up over the int3 instruction */
     if (!(EFL_reg(&DEBUG_context) & STEP_FLAG)) EIP_reg(&DEBUG_context)--;
 
     addr.seg = CS_reg(&DEBUG_context);
     addr.off = EIP_reg(&DEBUG_context);
+    if (ISV86(&DEBUG_context)) addr.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16; else
     if (IS_SELECTOR_SYSTEM(addr.seg)) addr.seg = 0;
+
+    GlobalUnlock16( GetCurrentTask() );
 
     bpnum = DEBUG_FindBreakpoint( &addr );
     breakpoints[0].enabled = 0;  /* disable the step-over breakpoint */
@@ -519,10 +531,14 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
     unsigned int * value;
     enum exec_mode ret_mode;
     BYTE *instr;
+    TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
 
     addr.seg = CS_reg(&DEBUG_context);
     addr.off = EIP_reg(&DEBUG_context);
+    if (ISV86(&DEBUG_context)) addr.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16; else
     if (IS_SELECTOR_SYSTEM(addr.seg)) addr.seg = 0;
+
+    GlobalUnlock16( GetCurrentTask() );
 
     /*
      * This is the mode we will be running in after we finish.  We would like
@@ -555,7 +571,8 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
 	mode = ret_mode = EXEC_STEPI_INSTR;
       }
 
-    instr = (BYTE *)PTR_SEG_OFF_TO_LIN( CS_reg(&DEBUG_context),
+    instr = (BYTE *)CTX_SEG_OFF_TO_LIN( &DEBUG_context,
+					CS_reg(&DEBUG_context),
 					EIP_reg(&DEBUG_context) );
     /*
      * See if the function we are stepping into has debug info

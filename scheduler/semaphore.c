@@ -11,6 +11,8 @@
 #include "process.h"
 #include "thread.h"
 #include "heap.h"
+#include "server/request.h"
+#include "server.h"
 
 typedef struct
 {
@@ -44,6 +46,9 @@ const K32OBJ_OPS SEMAPHORE_Ops =
 HANDLE32 WINAPI CreateSemaphore32A( SECURITY_ATTRIBUTES *sa, LONG initial,
                                     LONG max, LPCSTR name )
 {
+    struct create_semaphore_request req;
+    struct create_semaphore_reply reply;
+    int len = name ? strlen(name) + 1 : 0;
     HANDLE32 handle;
     SEMAPHORE *sem;
 
@@ -55,9 +60,19 @@ HANDLE32 WINAPI CreateSemaphore32A( SECURITY_ATTRIBUTES *sa, LONG initial,
         return INVALID_HANDLE_VALUE32;
     }
 
+    req.initial = (unsigned int)initial;
+    req.max     = (unsigned int)max;
+    req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+
+    CLIENT_SendRequest( REQ_CREATE_SEMAPHORE, -1, 2, &req, sizeof(req), name, len );
+    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
+    CHECK_LEN( len, sizeof(reply) );
+    if (reply.handle == -1) return NULL;
+
     SYSTEM_LOCK();
     sem = (SEMAPHORE *)K32OBJ_Create( K32OBJ_SEMAPHORE, sizeof(*sem),
-                                      name, SEMAPHORE_ALL_ACCESS, sa, &handle);
+                                      name, reply.handle, SEMAPHORE_ALL_ACCESS,
+                                      sa, &handle);
     if (sem)
     {
         /* Finish initializing it */
@@ -119,15 +134,34 @@ HANDLE32 WINAPI OpenSemaphore32W( DWORD access, BOOL32 inherit, LPCWSTR name )
  */
 BOOL32 WINAPI ReleaseSemaphore( HANDLE32 handle, LONG count, LONG *previous )
 {
+    struct release_semaphore_request req;
     SEMAPHORE *sem;
 
+    if (count < 0)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
     SYSTEM_LOCK();
     if (!(sem = (SEMAPHORE *)HANDLE_GetObjPtr( PROCESS_Current(), handle,
                                                K32OBJ_SEMAPHORE,
-                                               SEMAPHORE_MODIFY_STATE, NULL )))
+                                               SEMAPHORE_MODIFY_STATE, &req.handle )))
     {
         SYSTEM_UNLOCK();
         return FALSE;
+    }
+    if (req.handle != -1)
+    {
+        struct release_semaphore_reply reply;
+        int len;
+
+        SYSTEM_UNLOCK();
+        req.count = (unsigned int)count;
+        CLIENT_SendRequest( REQ_RELEASE_SEMAPHORE, -1, 1, &req, sizeof(req) );
+        if (CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) )) return FALSE;
+        CHECK_LEN( len, sizeof(reply) );
+        if (previous) *previous = reply.prev_count;
+        return TRUE;
     }
     if (previous) *previous = sem->count;
     if (sem->count + count > sem->max)

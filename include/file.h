@@ -47,6 +47,8 @@ typedef struct
 (((handle)==0) ? GetStdHandle(STD_INPUT_HANDLE) : \
  ((handle)==1) ? GetStdHandle(STD_OUTPUT_HANDLE) : \
  ((handle)==2) ? GetStdHandle(STD_ERROR_HANDLE) : \
+ ((handle)==3) ? GetStdHandle(STD_ERROR_HANDLE) : \
+ ((handle)==4) ? GetStdHandle(STD_ERROR_HANDLE) : \
  ((handle)>=0x400) ? handle : \
  (handle)-5)
 

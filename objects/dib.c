@@ -1381,6 +1381,15 @@ INT32 WINAPI SetDIBitsToDevice32(HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
 }
 
 /***********************************************************************
+ *           SetDIBColorTable16    (GDI.602)
+ */
+UINT16 WINAPI SetDIBColorTable16( HDC16 hdc, UINT16 startpos, UINT16 entries,
+				  RGBQUAD *colors )
+{
+    return SetDIBColorTable32( hdc, startpos, entries, colors );
+}
+
+/***********************************************************************
  *           SetDIBColorTable32    (GDI32.311)
  */
 UINT32 WINAPI SetDIBColorTable32( HDC32 hdc, UINT32 startpos, UINT32 entries,
@@ -1421,6 +1430,15 @@ UINT32 WINAPI SetDIBColorTable32( HDC32 hdc, UINT32 startpos, UINT32 entries,
     }
     GDI_HEAP_UNLOCK( dc->w.hPalette );
     return entries;
+}
+
+/***********************************************************************
+ *           GetDIBColorTable16    (GDI.603)
+ */
+UINT16 WINAPI GetDIBColorTable16( HDC16 hdc, UINT16 startpos, UINT16 entries,
+				  RGBQUAD *colors )
+{
+    return GetDIBColorTable32( hdc, startpos, entries, colors );
 }
 
 /***********************************************************************
@@ -1949,7 +1967,7 @@ void DIB_UpdateDIBSection( DC *dc, BOOL32 toDIB )
  *           CreateDIBSection16    (GDI.489)
  */
 HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
-				     LPVOID **bits, HANDLE16 section,
+				     LPVOID **bits, HANDLE32 section,
 				     DWORD offset)
 {
     return CreateDIBSection32(hdc, bmi, usage, bits, section, offset);

@@ -233,7 +233,7 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 /***********************************************************************
  *           DEFDLG_Epilog
  */
-static LRESULT DEFDLG_Epilog(DIALOGINFO* dlgInfo, UINT32 msg, BOOL16 fResult)
+static LRESULT DEFDLG_Epilog(DIALOGINFO* dlgInfo, UINT32 msg, BOOL32 fResult)
 {
     /* see SDK 3.1 */
 
@@ -253,7 +253,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                              LPARAM lParam )
 {
     DIALOGINFO * dlgInfo;
-    BOOL16 result = FALSE;
+    BOOL32 result = FALSE;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     
     if (!wndPtr) return 0;
@@ -261,7 +261,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
     dlgInfo->msgResult = 0;
 
     if (dlgInfo->dlgProc) 	/* Call dialog procedure */
-	result = (BOOL16)CallWindowProc16( (WNDPROC16)dlgInfo->dlgProc,
+	result = CallWindowProc16( (WNDPROC16)dlgInfo->dlgProc,
                                            hwnd, msg, wParam, lParam );
 
     /* Check if window was destroyed by dialog procedure */
@@ -308,7 +308,7 @@ LRESULT WINAPI DefDlgProc32A( HWND32 hwnd, UINT32 msg,
                               WPARAM32 wParam, LPARAM lParam )
 {
     DIALOGINFO * dlgInfo;
-    BOOL16 result = FALSE;
+    BOOL32 result = FALSE;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     
     if (!wndPtr) return 0;
@@ -316,7 +316,7 @@ LRESULT WINAPI DefDlgProc32A( HWND32 hwnd, UINT32 msg,
     dlgInfo->msgResult = 0;
 
     if (dlgInfo->dlgProc)       /* Call dialog procedure */
-        result = (BOOL16)CallWindowProc32A( (WNDPROC32)dlgInfo->dlgProc,
+        result = CallWindowProc32A( (WNDPROC32)dlgInfo->dlgProc,
                                             hwnd, msg, wParam, lParam );
 
     /* Check if window was destroyed by dialog procedure */
@@ -363,7 +363,7 @@ LRESULT WINAPI DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                               LPARAM lParam )
 {
     DIALOGINFO * dlgInfo;
-    BOOL16 result = FALSE;
+    BOOL32 result = FALSE;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     
     if (!wndPtr) return 0;
@@ -371,7 +371,7 @@ LRESULT WINAPI DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
     dlgInfo->msgResult = 0;
 
     if (dlgInfo->dlgProc)       /* Call dialog procedure */
-        result = (BOOL16)CallWindowProc32W( (WNDPROC32)dlgInfo->dlgProc,
+        result = CallWindowProc32W( (WNDPROC32)dlgInfo->dlgProc,
                                             hwnd, msg, wParam, lParam );
 
     /* Check if window was destroyed by dialog procedure */

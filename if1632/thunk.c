@@ -566,6 +566,28 @@ FARPROC16 WINAPI THUNK_SetTaskSignalProc( HTASK16 hTask, FARPROC16 proc )
     return defSignalProc16;
 }
 
+/***********************************************************************
+ *           THUNK_CreateThread16   (KERNEL.441)
+ */
+static DWORD CALLBACK THUNK_StartThread16( LPVOID threadArgs )
+{
+    FARPROC16 start = ((FARPROC16 *)threadArgs)[0];
+    DWORD     param = ((DWORD *)threadArgs)[1];
+    HeapFree( GetProcessHeap(), 0, threadArgs );
+
+    return CallTo16_long_l( start, param );
+}
+HANDLE32 WINAPI THUNK_CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
+                                      FARPROC16 start, SEGPTR param,
+                                      DWORD flags, LPDWORD id )
+{
+    DWORD *threadArgs = HeapAlloc( GetProcessHeap(), 0, 2*sizeof(DWORD) );
+    if (!threadArgs) return INVALID_HANDLE_VALUE32;
+    threadArgs[0] = (DWORD)start;
+    threadArgs[1] = (DWORD)param;
+
+    return CreateThread( sa, stack, THUNK_StartThread16, threadArgs, flags, id );
+}
 
 /***********************************************************************
  *           THUNK_WOWCallback16Ex	(WOW32.3)(KERNEL32.55)
@@ -783,7 +805,7 @@ void WINAPI C16ThkSL(CONTEXT *context)
 
     *x++ = 0xB8; *((WORD *)x)++ = ds;
     *x++ = 0x8E; *x++ = 0xC0;
-    *x++ = 0x60; *x++ = 0x0F; *x++ = 0xB7; *x++ = 0xC9;
+    *x++ = 0x66; *x++ = 0x0F; *x++ = 0xB7; *x++ = 0xC9;
     *x++ = 0x67; *x++ = 0x66; *x++ = 0x26; *x++ = 0x8B;
                  *x++ = 0x91; *((DWORD *)x)++ = EDX_reg(context);
 

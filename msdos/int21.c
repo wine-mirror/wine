@@ -817,12 +817,12 @@ static int INT21_FindNextFCB( CONTEXT *context )
 
 static void DeleteFileFCB( CONTEXT *context )
 {
-    FIXME(int21, "(%p): not implemented yet\n", context);
+    FIXME(int21, "(%p): stub\n", context);
 }
 
 static void RenameFileFCB( CONTEXT *context )
 {
-    FIXME(int21, "(%p): not implemented yet\n", context);
+    FIXME(int21, "(%p): stub\n", context);
 }
 
 
@@ -895,19 +895,18 @@ INT21_networkfunc (CONTEXT *context)
      }
 }
 
-static void INT21_SetCurrentPSP(CONTEXT *context)
+static void INT21_SetCurrentPSP(WORD psp)
 {
-/* FIXME - What is this MZ stuff and what if it isn't supported?? */
 #ifdef MZ_SUPPORTED
     TDB *pTask = hModule ? NULL : (TDB *)GlobalLock16( GetCurrentTask() );
     NE_MODULE *pModule = (hModule || pTask) ? NE_GetPtr( hModule ? hModule : pTask->hModule ) : NULL;
     
     GlobalUnlock16( GetCurrentTask() );
     if (pModule->lpDosTask)
-        pModule->lpDosTask->psp_seg = BX_reg(context);
-#else
-    FIXME(int21, "MZ Not Supported.\n");
+        pModule->lpDosTask->psp_seg = psp;
+    else
 #endif
+        ERR(int21, "Cannot change PSP for non-DOS task!\n");
 }
     
 static WORD INT21_GetCurrentPSP()
@@ -1165,7 +1164,7 @@ void WINAPI DOS3Call( CONTEXT *context )
         break;
 		
     case 0x25: /* SET INTERRUPT VECTOR */
-        INT_SetHandler( AL_reg(context),
+        INT_CtxSetHandler( context, AL_reg(context),
                         (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( DS_reg(context),
                                                           DX_reg(context)));
         break;
@@ -1271,7 +1270,7 @@ void WINAPI DOS3Call( CONTEXT *context )
     case 0x35: /* GET INTERRUPT VECTOR */
         TRACE(int21,"GET INTERRUPT VECTOR 0x%02x\n",AL_reg(context));
         {
-            FARPROC16 addr = INT_GetHandler( AL_reg(context) );
+            FARPROC16 addr = INT_CtxGetHandler( context, AL_reg(context) );
             ES_reg(context) = SELECTOROF(addr);
             BX_reg(context) = OFFSETOF(addr);
         }
@@ -1360,10 +1359,17 @@ void WINAPI DOS3Call( CONTEXT *context )
         TRACE(int21,"READ from %d to %04lX:%04X for %d byte\n",BX_reg(context),
 	      DS_reg(context),DX_reg(context),CX_reg(context) );
         {
-            LONG result = _hread16( BX_reg(context),
-                                    CTX_SEG_OFF_TO_LIN(context, DS_reg(context),
-                                                                DX_reg(context) ),
-                                    CX_reg(context) );
+            LONG result;
+            if (ISV86(context))
+                result = _hread16( BX_reg(context),
+                                   CTX_SEG_OFF_TO_LIN(context, DS_reg(context),
+                                                               DX_reg(context) ),
+                                   CX_reg(context) );
+            else
+                result = WIN16_hread( BX_reg(context),
+                                      PTR_SEG_OFF_TO_SEGPTR( DS_reg(context),
+                                                             DX_reg(context) ),
+                                      CX_reg(context) );
             if (result == -1) bSetDOSExtendedError = TRUE;
             else AX_reg(context) = (WORD)result;
         }
@@ -1548,6 +1554,10 @@ void WINAPI DOS3Call( CONTEXT *context )
 	    }
             break;
 	    }
+
+        case 0xe0:  /* Sun PC-NFS API */
+            /* not installed */
+            break;
                 
         default:
             INT_BARF( context, 0x21 );
@@ -1671,9 +1681,8 @@ void WINAPI DOS3Call( CONTEXT *context )
         else AX_reg(context) = 0;  /* OK */
         break;
     case 0x50: /* SET CURRENT PROCESS ID (SET PSP ADDRESS) */
-        TRACE(int21, "SET CURRENT PROCESS ID (GET PSP ADDRESS)\n");
-        /* FIXME: Is this right? */
-        INT21_SetCurrentPSP(context);
+        TRACE(int21, "SET CURRENT PROCESS ID (SET PSP ADDRESS)\n");
+        INT21_SetCurrentPSP(BX_reg(context));
         break;
     case 0x51: /* GET PSP ADDRESS */
         TRACE(int21,"GET CURRENT PROCESS ID (GET PSP ADDRESS)\n");
@@ -1715,7 +1724,7 @@ void WINAPI DOS3Call( CONTEXT *context )
                 FILETIME filetime;
                 TRACE(int21,"GET FILE DATE AND TIME for handle %d\n",
 		      BX_reg(context));
-                if (!GetFileTime( BX_reg(context), NULL, NULL, &filetime ))
+                if (!GetFileTime( HFILE16_TO_HFILE32(BX_reg(context)), NULL, NULL, &filetime ))
 		     bSetDOSExtendedError = TRUE;
                 else FileTimeToDosDateTime( &filetime, &DX_reg(context),
                                             &CX_reg(context) );
@@ -2106,6 +2115,7 @@ void WINAPI DOS3Call( CONTEXT *context )
 
 FARPROC16 WINAPI GetSetKernelDOSProc(FARPROC16 DosProc)
 {
-	FIXME(int21, "(DosProc=%08x);\n", (UINT32)DosProc);
+	FIXME(int21, "(DosProc=0x%08x): stub\n", (UINT32)DosProc);
 	return NULL;
 }
+

@@ -5,9 +5,13 @@
  *      Esperanto seems not to be supported by Windows
  *
  *      TODO: ISO numerical ID for language ?
+ *
+ *	I choose 0x8f for esperanto language as it is high enough
+ *	not to be attributed to another language in the immediate
+ *	future (as of 19980901 the last official languageID is 0x51)
  */
 
-/* LOCVAL(LOCALE_ILANGUAGE,"9") */
+LOCVAL(LOCALE_ILANGUAGE,"0x048f")
 LOCVAL(LOCALE_SLANGUAGE,"Esperanto")
 LOCVAL(LOCALE_SENGLANGUAGE,"Esperanto")
 /* LOCVAL(LOCALE_SABBREVLANGNAME,"deu") */
@@ -17,7 +21,7 @@ LOCVAL(LOCALE_SNATIVELANGNAME,"Esperanto")
 /* LOCVAL(LOCALE_SENGCOUNTRY,"") */
 /* LOCVAL(LOCALE_SABBREVCTRYNAME,"") */
 /* LOCVAL(LOCALE_SNATIVECTRYNAME,"") */
-/* LOCVAL(LOCALE_IDEFAULTLANGUAGE,"") ISO ID of lang TODO */
+LOCVAL(LOCALE_IDEFAULTLANGUAGE,"0x048f") /* ISO ID of lang TODO */
 /* LOCVAL(LOCALE_IDEFAULTCOUNTRY,"") */
 LOCVAL(LOCALE_IDEFAULTCODEPAGE,"3") /* is this right? TODO */
 LOCVAL(LOCALE_IDEFAULTANSICODEPAGE,"3") /* is this right? TODO */

@@ -1,6 +1,37 @@
 This file describes where to start debugging Wine and how to write
 useful bug reports.
 
+To avoid debugging
+==================
+
+Sometimes you can bring applications to run by using some of the
+native Windows DLL's, together with Wine. Here are some Tips by
+Juergen Schmied on how to proceed. This assumes that your C:\windows
+directory in the configuration file does not point to a native Windows
+installation but is in a separate Unix file system. (For instance,
+C:\windows is really /home/ego/wine/drives/c).
+
+- Create empty C:\windows and C:\windows\system directories.
+  Do not point Wine to a Windows directory full of old installations
+  and a messy registry. (Wine creates a special registry in your home
+  directory, in $HOME/.wine/*.reg. Perhaps you have to remove these
+  files).
+- Run the application with   -debugmsg +module,+file   to find out
+  which files are needed. Copy the required DLL's one by one to the
+  C:\windows\system directory.
+- Note that some network DLL's are not needed even though Wine is
+  looking for them. Do not copy the MPR.DLL into the directory,
+  use the internal implementation.
+- Copy SHELL/SHELL32 and COMDLG/COMDLG32 COMMCTRL/COMCTL32
+  only as pairs to your Wine directory (these DLL's are
+  "clean" to use)
+- Be consistent: Use only DLLS from the same Windows version
+  together.
+- Put regedit.exe in the C:\windows directory (office95 imports
+  a *.reg file when it runs with a empty registry, don't know
+  about office97).
+
+
 Crashes
 =======
 
@@ -336,3 +367,30 @@ file management problems etc.
 
 pedump: http://oak.oakland.edu/pub/simtelnet/win95/prog/pedump.zip
 Dumps the imports and exports of a PE (Portable Executable) DLL.
+
+
+Some basic debugger usages:
+===========================
+
+After starting you program with
+  wine -debug myprog.exe
+the program loads and you get a prompt at the program starting point.
+Then you can set breakpoints:
+  b RoutineName      (by outine name) OR
+  b *0x812575        (by address)
+Then you hit 'c' (continue) to run the program. It stops at
+the breakpoint. You can type
+  step               (to step one line) OR
+  stepi              (to step one machine instruction at a time;
+                      here, it helps to know the basic 386
+                      instruction set)
+  info reg           (to see registers)
+  info stack         (to see hex values in the stack)
+  info local         (to see local variables)
+  list <line number> (to list source code)
+  x <variable name>  (to examine a variable; only works if code
+                      is not compiled with optimization)
+  x 0x4269978        (to examine a memory location)
+  ?                  (help)
+  q                  (quit)
+By hitting Enter, you repeat the last command.

@@ -2486,7 +2486,7 @@ LRESULT WINAPI ListBoxWndProc( HWND32 hwnd, UINT32 msg,
 	break;
 
     case WM_NCCREATE:
-	if (TWEAK_Win95Look)
+	if (TWEAK_WineLook > WIN31_LOOK)
 	    wnd->dwExStyle |= WS_EX_CLIENTEDGE;
         return DefWindowProc32A( hwnd, msg, wParam, lParam );
 

@@ -16,23 +16,26 @@ typedef struct tagLISTVIEW_ITEM
     LPARAM lParam;
     INT32  iIndent;
 
-    HDSA   hdsaItem;
 } LISTVIEW_ITEM;
 
 
 typedef struct tagLISTVIEW_INFO
 {
     COLORREF   clrBk;
+    COLORREF   clrText;
+    COLORREF   clrTextBk;
     HIMAGELIST himlNormal;
     HIMAGELIST himlSmall;
     HIMAGELIST himlState;
     INT32      nItemCount;
+    INT32      nColumnCount;
     HWND32     hwndHeader;
     HFONT32    hDefaultFont;
     HFONT32    hFont;
     RECT32     rcList;       /* "client" area of the list (without header) */
+    BOOL32     bFocus;
 
-    HDSA       hdsaItems;
+    HDPA       hdpaItems;
 
 } LISTVIEW_INFO;
 

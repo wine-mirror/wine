@@ -98,7 +98,7 @@ type	win32
  94 stdcall ExtCreateRegion(ptr long ptr) ExtCreateRegion
  95 stdcall ExtEscape(long long long ptr long ptr) ExtEscape32
  96 stdcall ExtFloodFill(long long long long long) ExtFloodFill32
- 97 stub ExtSelectClipRgn
+ 97 stdcall ExtSelectClipRgn(long long long) ExtSelectClipRgn
  98 stdcall ExtTextOutA(long long long long ptr str long ptr) ExtTextOut32A
  99 stdcall ExtTextOutW(long long long long ptr wstr long ptr) ExtTextOut32W
 100 stdcall FillPath(long) FillPath32
@@ -389,3 +389,6 @@ type	win32
 384 stub UpdateICMRegKeyW
 385 stub gdiPlaySpoolStream
 386 stdcall SetObjectOwner(long long) SetObjectOwner32
+387 stub UpdateICMRegKey
+388 extern pfnRealizePalette pfnRealizePalette
+389 extern pfnSelectPalette pfnSelectPalette

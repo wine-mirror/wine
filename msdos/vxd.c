@@ -34,6 +34,27 @@ static WORD VXD_WinVersion(void)
 }
 
 /***********************************************************************
+ *           VXD_VMM
+ */
+void VXD_VMM ( CONTEXT *context )
+{
+    unsigned service = AX_reg(context);
+
+    TRACE(vxd,"[%04x] VMM  \n", (UINT16)service);
+
+    switch(service)
+    {
+    case 0x0000: /* version */
+        AX_reg(context) = VXD_WinVersion();
+        RESET_CFLAG(context);
+        break;
+
+    default:
+        VXD_BARF( context, "VMM" );
+    }
+}
+
+/***********************************************************************
  *           VXD_PageFile
  */
 void WINAPI VXD_PageFile( CONTEXT *context )
@@ -195,6 +216,61 @@ void VXD_Timer( CONTEXT *context )
 
     default:
 	VXD_BARF( context, "VTD" );
+    }
+}
+
+/***********************************************************************
+ *           VXD_TimerAPI
+ */
+void VXD_TimerAPI ( CONTEXT *context )
+{
+    static DWORD clockTicks = 0;
+    static WORD clockTickSelector = 0;
+
+    unsigned service = AX_reg(context);
+
+    TRACE(vxd,"[%04x] TimerAPI  \n", (UINT16)service);
+
+    switch(service)
+    {
+    case 0x0000: /* version */
+        AX_reg(context) = VXD_WinVersion();
+        RESET_CFLAG(context);
+        break;
+
+    case 0x0009: /* get system time selector */
+        FIXME(vxd, "Get_System_Time_Selector: this clock doesn't tick!\n");
+
+        if ( !clockTickSelector )
+            clockTickSelector = SELECTOR_AllocBlock( &clockTicks, sizeof(DWORD), 
+                                                     SEGMENT_DATA, FALSE, TRUE );
+        AX_reg(context) = clockTickSelector;
+        RESET_CFLAG(context);
+        break;
+
+    default:
+        VXD_BARF( context, "VTDAPI" );
+    }
+}
+
+/***********************************************************************
+ *           VXD_ConfigMG
+ */
+void VXD_ConfigMG ( CONTEXT *context )
+{
+    unsigned service = AX_reg(context);
+
+    TRACE(vxd,"[%04x] ConfigMG  \n", (UINT16)service);
+
+    switch(service)
+    {
+    case 0x0000: /* version */
+        AX_reg(context) = VXD_WinVersion();
+        RESET_CFLAG(context);
+        break;
+
+    default:
+        VXD_BARF( context, "CONFIGMG" );
     }
 }
 

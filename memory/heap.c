@@ -2,6 +2,7 @@
  * Win32 heap functions
  *
  * Copyright 1996 Alexandre Julliard
+ * Copyright 1998 Ulrich Weigand
  */
 
 #include <assert.h>
@@ -9,6 +10,7 @@
 #include <string.h>
 #include "windows.h"
 #include "selectors.h"
+#include "global.h"
 #include "winbase.h"
 #include "winerror.h"
 #include "winnt.h"
@@ -426,17 +428,104 @@ static void HEAP_ShrinkBlock(SUBHEAP *subheap, ARENA_INUSE *pArena, DWORD size)
     }
 }
 
+/***********************************************************************
+ *           HEAP_InitSubHeap
+ */
+static BOOL32 HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
+                                DWORD commitSize, DWORD totalSize )
+{
+    SUBHEAP *subheap = (SUBHEAP *)address;
+    WORD selector = 0;
+    FREE_LIST_ENTRY *pEntry;
+    int i;
+
+    /* Commit memory */
+
+    if (!VirtualAlloc(address, commitSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE))
+    {
+        WARN(heap, "Could not commit %08lx bytes for sub-heap %08lx\n",
+                   commitSize, (DWORD)address );
+        return FALSE;
+    }
+
+    /* Allocate a selector if needed */
+
+    if (flags & HEAP_WINE_SEGPTR)
+    {
+        selector = SELECTOR_AllocBlock( address, totalSize,
+                     (flags & HEAP_WINE_CODESEG) ? SEGMENT_CODE : SEGMENT_DATA,
+                     (flags & HEAP_WINE_CODESEG) != 0, FALSE );
+        if (!selector)
+        {
+            WARN(heap, "Could not allocate selector\n" );
+            return FALSE;
+        }
+    }
+
+    /* Fill the sub-heap structure */
+
+    subheap->heap       = heap;
+    subheap->selector   = selector;
+    subheap->size       = totalSize;
+    subheap->commitSize = commitSize;
+    subheap->magic      = SUBHEAP_MAGIC;
+
+    if ( subheap != (SUBHEAP *)heap )
+    {
+        /* If this is a secondary subheap, insert it into list */
+
+        subheap->headerSize = sizeof(SUBHEAP);
+        subheap->next       = heap->subheap.next;
+        heap->subheap.next  = subheap;
+    }
+    else
+    {
+        /* If this is a primary subheap, initialize main heap */
+
+        subheap->headerSize = sizeof(HEAP);
+        subheap->next       = NULL;
+        heap->next          = NULL;
+        heap->flags         = flags;
+        heap->magic         = HEAP_MAGIC;
+
+        /* Build the free lists */
+
+        for (i = 0, pEntry = heap->freeList; i < HEAP_NB_FREE_LISTS; i++, pEntry++)
+        {
+            pEntry->size           = HEAP_freeListSizes[i];
+            pEntry->arena.size     = 0 | ARENA_FLAG_FREE;
+            pEntry->arena.next     = i < HEAP_NB_FREE_LISTS-1 ?
+                         &heap->freeList[i+1].arena : &heap->freeList[0].arena;
+            pEntry->arena.prev     = i ? &heap->freeList[i-1].arena : 
+                                   &heap->freeList[HEAP_NB_FREE_LISTS-1].arena;
+            pEntry->arena.threadId = 0;
+            pEntry->arena.magic    = ARENA_FREE_MAGIC;
+        }
+
+        /* Initialize critical section */
+
+        InitializeCriticalSection( &heap->critSection );
+        if (!SystemHeap) HEAP_SystemLock = &heap->critSection;
+    }
+ 
+    /* Create the first free block */
+
+    HEAP_CreateFreeBlock( subheap, (LPBYTE)subheap + subheap->headerSize, 
+                          subheap->size - subheap->headerSize );
+
+    return TRUE;
+}
 
 /***********************************************************************
  *           HEAP_CreateSubHeap
  *
  * Create a sub-heap of the given size.
+ * If heap == NULL, creates a main heap.
  */
-static SUBHEAP *HEAP_CreateSubHeap( DWORD flags, DWORD commitSize,
-                                    DWORD totalSize )
+static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, DWORD flags, 
+                                    DWORD commitSize, DWORD totalSize )
 {
-    SUBHEAP *subheap;
-    WORD selector = 0;
+    LPVOID address;
 
     /* Round-up sizes on a 64K boundary */
 
@@ -454,46 +543,24 @@ static SUBHEAP *HEAP_CreateSubHeap( DWORD flags, DWORD commitSize,
 
     /* Allocate the memory block */
 
-    if (!(subheap = VirtualAlloc( NULL, totalSize,
+    if (!(address = VirtualAlloc( NULL, totalSize,
                                   MEM_RESERVE, PAGE_EXECUTE_READWRITE )))
     {
         WARN(heap, "Could not VirtualAlloc %08lx bytes\n",
                  totalSize );
         return NULL;
     }
-    if (!VirtualAlloc(subheap, commitSize, MEM_COMMIT, PAGE_EXECUTE_READWRITE))
+
+    /* Initialize subheap */
+
+    if (!HEAP_InitSubHeap( heap? heap : (HEAP *)address, 
+                           address, flags, commitSize, totalSize ))
     {
-        WARN(heap, "Could not commit %08lx bytes for sub-heap %08lx\n",
-                 commitSize, (DWORD)subheap );
-        VirtualFree( subheap, 0, MEM_RELEASE );
+        VirtualFree( address, 0, MEM_RELEASE );
         return NULL;
     }
 
-    /* Allocate a selector if needed */
-
-    if (flags & HEAP_WINE_SEGPTR)
-    {
-        selector = SELECTOR_AllocBlock( subheap, totalSize,
-                     (flags & HEAP_WINE_CODESEG) ? SEGMENT_CODE : SEGMENT_DATA,
-                     (flags & HEAP_WINE_CODESEG) != 0, FALSE );
-        if (!selector)
-        {
-            WARN(heap, "Could not allocate selector\n" );
-            VirtualFree( subheap, 0, MEM_RELEASE );
-            return NULL;
-        }
-    }
-
-    /* Fill the sub-heap structure */
-
-    subheap->size       = totalSize;
-    subheap->commitSize = commitSize;
-    subheap->headerSize = sizeof(*subheap);
-    subheap->next       = NULL;
-    subheap->heap       = NULL;
-    subheap->magic      = SUBHEAP_MAGIC;
-    subheap->selector   = selector;
-    return subheap;
+    return (SUBHEAP *)address;
 }
 
 
@@ -538,20 +605,13 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, DWORD size,
         return NULL;
     }
     size += sizeof(SUBHEAP) + sizeof(ARENA_FREE);
-    if (!(subheap = HEAP_CreateSubHeap( heap->flags, size,
+    if (!(subheap = HEAP_CreateSubHeap( heap, heap->flags, size,
                                         MAX( HEAP_DEF_SIZE, size ) )))
         return NULL;
 
-    /* Insert the new sub-heap in the list */
-
-    subheap->heap = heap;
-    subheap->next = heap->subheap.next;
-    heap->subheap.next = subheap;
-    size = subheap->size;
     TRACE(heap, "created new sub-heap %08lx of %08lx bytes for heap %08lx\n",
-                  (DWORD)subheap, size, (DWORD)heap );
+                (DWORD)subheap, size, (DWORD)heap );
 
-    HEAP_CreateFreeBlock( subheap, subheap + 1, size - sizeof(*subheap) );
     *ppSubHeap = subheap;
     return (ARENA_FREE *)(subheap + 1);
 }
@@ -809,10 +869,7 @@ HANDLE32 WINAPI HeapCreate(
                 DWORD initialSize, /* [in] Initial heap size */
                 DWORD maxSize      /* [in] Maximum heap size */
 ) {
-    int i;
-    HEAP *heap;
     SUBHEAP *subheap;
-    FREE_LIST_ENTRY *pEntry;
 
     /* Allocate the heap block */
 
@@ -821,49 +878,14 @@ HANDLE32 WINAPI HeapCreate(
         maxSize = HEAP_DEF_SIZE;
         flags |= HEAP_GROWABLE;
     }
-    if (!(subheap = HEAP_CreateSubHeap( flags, initialSize, maxSize )))
+    if (!(subheap = HEAP_CreateSubHeap( NULL, flags, initialSize, maxSize )))
     {
         SetLastError( ERROR_OUTOFMEMORY );
         return 0;
     }
 
-    /* Fill the heap structure */
-
-    heap = (HEAP *)subheap;
-    subheap->heap       = heap;
-    subheap->headerSize = sizeof(HEAP);
-    heap->next          = NULL;
-    heap->flags         = flags;
-    heap->magic         = HEAP_MAGIC;
-
-    /* Build the free lists */
-
-    for (i = 0, pEntry = heap->freeList; i < HEAP_NB_FREE_LISTS; i++, pEntry++)
-    {
-        pEntry->size           = HEAP_freeListSizes[i];
-        pEntry->arena.size     = 0 | ARENA_FLAG_FREE;
-        pEntry->arena.next     = i < HEAP_NB_FREE_LISTS-1 ?
-                         &heap->freeList[i+1].arena : &heap->freeList[0].arena;
-        pEntry->arena.prev     = i ? &heap->freeList[i-1].arena : 
-                                   &heap->freeList[HEAP_NB_FREE_LISTS-1].arena;
-        pEntry->arena.threadId = 0;
-        pEntry->arena.magic    = ARENA_FREE_MAGIC;
-    }
-
-    /* Create the first free block */
-
-    HEAP_CreateFreeBlock( subheap, heap + 1, subheap->size - sizeof(*heap) );
-
-    /* Initialize critical section */
-
-    InitializeCriticalSection( &heap->critSection );
-    if (!SystemHeap) HEAP_SystemLock = &heap->critSection;
-
-    /* We are done */
-
-    return (HANDLE32)heap;
+    return (HANDLE32)subheap;
 }
-
 
 /***********************************************************************
  *           HeapDestroy   (KERNEL32.337)
@@ -1354,3 +1376,453 @@ LPSTR HEAP_strdupWtoA( HANDLE32 heap, DWORD flags, LPCWSTR str )
     lstrcpyWtoA( ret, str );
     return ret;
 }
+
+
+
+/***********************************************************************
+ * 32-bit local heap functions (Win95; undocumented)
+ */
+
+#define HTABLE_SIZE      0x10000
+#define HTABLE_PAGESIZE  0x1000
+#define HTABLE_NPAGES    (HTABLE_SIZE / HTABLE_PAGESIZE)
+
+#pragma pack(1)
+typedef struct _LOCAL32HEADER
+{
+    WORD     freeListFirst[HTABLE_NPAGES];
+    WORD     freeListSize[HTABLE_NPAGES];
+    WORD     freeListLast[HTABLE_NPAGES];
+
+    DWORD    selectorTableOffset;
+    WORD     selectorTableSize;
+    WORD     selectorDelta;
+
+    DWORD    segment;
+    LPBYTE   base;
+
+    DWORD    limit;
+    DWORD    flags;
+
+    DWORD    magic;
+    HANDLE32 heap;
+
+} LOCAL32HEADER;
+#pragma pack(4)
+
+#define LOCAL32_MAGIC    ((DWORD)('L' | ('H'<<8) | ('3'<<16) | ('2'<<24)))
+
+/***********************************************************************
+ *           Local32Init   (KERNEL.208)
+ */
+HANDLE32 WINAPI Local32Init( WORD segment, DWORD tableSize,
+                             DWORD heapSize, DWORD flags )
+{
+    DWORD totSize, segSize = 0;
+    LPBYTE base;
+    LOCAL32HEADER *header;
+    HEAP *heap;
+    WORD *selectorTable;
+    WORD selectorEven, selectorOdd;
+    int i, nrBlocks;
+
+    /* Determine new heap size */
+
+    if ( segment )
+        if ( (segSize = GetSelectorLimit( segment )) == 0 )
+            return 0;
+        else
+            segSize++;
+
+    if ( heapSize == -1L )
+        heapSize = 1024L*1024L;   /* FIXME */
+
+    heapSize = (heapSize + 0xffff) & 0xffff0000;
+    segSize  = (segSize  + 0x0fff) & 0xfffff000;
+    totSize  = segSize + HTABLE_SIZE + heapSize;
+
+
+    /* Allocate memory and initialize heap */
+
+    if ( !(base = VirtualAlloc( NULL, totSize, MEM_RESERVE, PAGE_READWRITE )) )
+        return 0;
+
+    if ( !VirtualAlloc( base, segSize + HTABLE_PAGESIZE, 
+                        MEM_COMMIT, PAGE_READWRITE ) )
+    {
+        VirtualFree( base, 0, MEM_RELEASE );
+        return 0;
+    }
+
+    heap = (HEAP *)(base + segSize + HTABLE_SIZE);
+    if ( !HEAP_InitSubHeap( heap, (LPVOID)heap, 0, 0x10000, heapSize ) )
+    {
+        VirtualFree( base, 0, MEM_RELEASE );
+        return 0;
+    }
+
+
+    /* Set up header and handle table */
+    
+    header = (LOCAL32HEADER *)(base + segSize);
+    header->base    = base;
+    header->limit   = HTABLE_PAGESIZE-1;
+    header->flags   = 0;
+    header->magic   = LOCAL32_MAGIC;
+    header->heap    = (HANDLE32)heap;
+
+    header->freeListFirst[0] = sizeof(LOCAL32HEADER);
+    header->freeListLast[0]  = HTABLE_PAGESIZE - 4;
+    header->freeListSize[0]  = (HTABLE_PAGESIZE - sizeof(LOCAL32HEADER)) / 4;
+
+    for (i = header->freeListFirst[0]; i < header->freeListLast[0]; i += 4)
+        *(DWORD *)((LPBYTE)header + i) = i+4;
+
+    header->freeListFirst[1] = 0xffff;
+
+
+    /* Set up selector table */
+  
+    nrBlocks      = (totSize + 0x7fff) >> 15; 
+    selectorTable = (LPWORD) HeapAlloc( header->heap,  0, nrBlocks * 2 );
+    selectorEven  = SELECTOR_AllocBlock( base, totSize, 
+                                         SEGMENT_DATA, FALSE, FALSE );
+    selectorOdd   = SELECTOR_AllocBlock( base + 0x8000, totSize - 0x8000, 
+                                         SEGMENT_DATA, FALSE, FALSE );
+    
+    if ( !selectorTable || !selectorEven || !selectorOdd )
+    {
+        if ( selectorTable ) HeapFree( header->heap, 0, selectorTable );
+        if ( selectorEven  ) SELECTOR_FreeBlock( selectorEven, totSize >> 16 );
+        if ( selectorOdd   ) SELECTOR_FreeBlock( selectorOdd, (totSize-0x8000) >> 16 );
+        HeapDestroy( header->heap );
+        VirtualFree( base, 0, MEM_RELEASE );
+        return 0;
+    }
+
+    header->selectorTableOffset = (LPBYTE)selectorTable - header->base;
+    header->selectorTableSize   = nrBlocks * 4;  /* ??? Win95 does it this way! */
+    header->selectorDelta       = selectorEven - selectorOdd;
+    header->segment             = segment? segment : selectorEven;
+
+    for (i = 0; i < nrBlocks; i++)
+        selectorTable[i] = (i & 1)? selectorOdd  + ((i >> 1) << __AHSHIFT)
+                                  : selectorEven + ((i >> 1) << __AHSHIFT);
+
+    /* Move old segment */
+
+    if ( segment )
+    {
+        /* FIXME: This is somewhat ugly and relies on implementation
+                  details about 16-bit global memory handles ... */
+
+        LPBYTE oldBase = (LPBYTE)GetSelectorBase( segment );
+        memcpy( base, oldBase, segSize );
+        GLOBAL_MoveBlock( segment, base, totSize );
+        HeapFree( SystemHeap, 0, oldBase );
+    }
+    
+    return (HANDLE32)header;
+}
+
+/***********************************************************************
+ *           Local32_SearchHandle
+ */
+static LPDWORD Local32_SearchHandle( LOCAL32HEADER *header, DWORD addr )
+{
+    LPDWORD handle;
+
+    for ( handle = (LPDWORD)((LPBYTE)header + sizeof(LOCAL32HEADER));
+          handle < (LPDWORD)((LPBYTE)header + header->limit);
+          handle++)
+    {
+        if (*handle == addr)
+            return handle;
+    }
+
+    return NULL;
+}
+
+/***********************************************************************
+ *           Local32_ToHandle
+ */
+static VOID Local32_ToHandle( LOCAL32HEADER *header, INT16 type, 
+                              DWORD addr, LPDWORD *handle, LPBYTE *ptr )
+{
+    *handle = NULL;
+    *ptr    = NULL;
+
+    switch (type)
+    {
+        case -2:    /* 16:16 pointer, no handles */
+            *ptr    = PTR_SEG_TO_LIN( addr );
+            *handle = (LPDWORD)*ptr;
+            break;
+
+        case -1:    /* 32-bit offset, no handles */
+            *ptr    = header->base + addr;
+            *handle = (LPDWORD)*ptr;
+            break;
+
+        case 0:     /* handle */
+            if (    addr >= sizeof(LOCAL32HEADER) 
+                 && addr <  header->limit && !(addr & 3) 
+                 && *(LPDWORD)((LPBYTE)header + addr) >= HTABLE_SIZE )
+            {
+                *handle = (LPDWORD)((LPBYTE)header + addr);
+                *ptr    = header->base + **handle;
+            }
+            break;
+
+        case 1:     /* 16:16 pointer */
+            *ptr    = PTR_SEG_TO_LIN( addr );
+            *handle = Local32_SearchHandle( header, *ptr - header->base );
+            break;
+
+        case 2:     /* 32-bit offset */
+            *ptr    = header->base + addr;
+            *handle = Local32_SearchHandle( header, *ptr - header->base );
+            break;
+    }
+}
+
+/***********************************************************************
+ *           Local32_FromHandle
+ */
+static VOID Local32_FromHandle( LOCAL32HEADER *header, INT16 type, 
+                                DWORD *addr, LPDWORD handle, LPBYTE ptr )
+{
+    switch (type)
+    {
+        case -2:    /* 16:16 pointer */
+        case  1:
+        {
+            WORD *selTable = (LPWORD)(header->base + header->selectorTableOffset);
+            DWORD offset   = (LPBYTE)ptr - header->base;
+            *addr = MAKELONG( offset & 0x7fff, selTable[offset >> 15] ); 
+        }
+        break;
+
+        case -1:    /* 32-bit offset */
+        case  2:
+            *addr = ptr - header->base;
+            break;
+
+        case  0:    /* handle */
+            *addr = (LPBYTE)handle - (LPBYTE)header;
+            break;
+    }
+}
+
+/***********************************************************************
+ *           Local32Alloc   (KERNEL.209)
+ */
+DWORD WINAPI Local32Alloc( HANDLE32 heap, DWORD size, INT16 type, DWORD flags )
+{
+    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    LPDWORD handle;
+    LPBYTE ptr;
+    DWORD addr;
+
+    /* Allocate memory */
+    ptr = HeapAlloc( header->heap, 
+                     (flags & LMEM_MOVEABLE)? HEAP_ZERO_MEMORY : 0, size );
+    if (!ptr) return 0;
+
+
+    /* Allocate handle if requested */
+    if (type >= 0)
+    {
+        int page, i;
+
+        /* Find first page of handle table with free slots */
+        for (page = 0; page < HTABLE_NPAGES; page++)
+            if (header->freeListFirst[page] != 0)
+                break;
+        if (page == HTABLE_NPAGES)
+        {
+            WARN( heap, "Out of handles!\n" );
+            HeapFree( header->heap, 0, ptr );
+            return 0;
+        }
+
+        /* If virgin page, initialize it */
+        if (header->freeListFirst[page] == 0xffff)
+        {
+            if ( !VirtualAlloc( (LPBYTE)header + (page << 12), 
+                                0x1000, MEM_COMMIT, PAGE_READWRITE ) )
+            {
+                WARN( heap, "Cannot grow handle table!\n" );
+                HeapFree( header->heap, 0, ptr );
+                return 0;
+            }
+            
+            header->limit += HTABLE_PAGESIZE;
+
+            header->freeListFirst[page] = 0;
+            header->freeListLast[page]  = HTABLE_PAGESIZE - 4;
+            header->freeListSize[page]  = HTABLE_PAGESIZE / 4;
+           
+            for (i = 0; i < HTABLE_PAGESIZE; i += 4)
+                *(DWORD *)((LPBYTE)header + i) = i+4;
+
+            if (page < 31) 
+                header->freeListFirst[page+1] = 0xffff;
+        }
+
+        /* Allocate handle slot from page */
+        handle = (LPDWORD)((LPBYTE)header + header->freeListFirst[page]);
+        if (--header->freeListSize[page] == 0)
+            header->freeListFirst[page] = header->freeListLast[page] = 0;
+        else
+            header->freeListFirst[page] = *handle;
+
+        /* Store 32-bit offset in handle slot */
+        *handle = ptr - header->base;
+    }
+    else
+    {
+        handle = (LPDWORD)ptr;
+        header->flags |= 1;
+    }
+
+
+    /* Convert handle to requested output type */
+    Local32_FromHandle( header, type, &addr, handle, ptr );
+    return addr;
+}
+
+/***********************************************************************
+ *           Local32ReAlloc   (KERNEL.210)
+ */
+DWORD WINAPI Local32ReAlloc( HANDLE32 heap, DWORD addr, INT16 type,
+                             DWORD size, DWORD flags )
+{
+    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    LPDWORD handle;
+    LPBYTE ptr;
+
+    if (!addr)
+        return Local32Alloc( heap, size, type, flags );
+
+    /* Retrieve handle and pointer */
+    Local32_ToHandle( header, type, addr, &handle, &ptr );
+    if (!handle) return FALSE;
+
+    /* Reallocate memory block */
+    ptr = HeapReAlloc( header->heap, 
+                       (flags & LMEM_MOVEABLE)? HEAP_ZERO_MEMORY : 0, 
+                       ptr, size );
+    if (!ptr) return 0;
+
+    /* Modify handle */
+    if (type >= 0)
+        *handle = ptr - header->base;
+    else
+        handle = (LPDWORD)ptr;
+
+    /* Convert handle to requested output type */
+    Local32_FromHandle( header, type, &addr, handle, ptr );
+    return addr;
+}
+
+/***********************************************************************
+ *           Local32Free   (KERNEL.211)
+ */
+BOOL32 WINAPI Local32Free( HANDLE32 heap, DWORD addr, INT16 type )
+{
+    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    LPDWORD handle;
+    LPBYTE ptr;
+
+    /* Retrieve handle and pointer */
+    Local32_ToHandle( header, type, addr, &handle, &ptr );
+    if (!handle) return FALSE;
+
+    /* Free handle if necessary */
+    if (type >= 0)
+    {
+        int offset = (LPBYTE)handle - (LPBYTE)header;
+        int page   = offset >> 12;
+
+        /* Return handle slot to page free list */
+        if (header->freeListSize[page]++ == 0)
+            header->freeListFirst[page] = header->freeListLast[page]  = offset;
+        else
+            *(LPDWORD)((LPBYTE)header + header->freeListLast[page]) = offset,
+            header->freeListLast[page] = *handle;
+
+        *handle = 0;
+
+        /* Shrink handle table when possible */
+        while (page > 0 && header->freeListSize[page] == HTABLE_PAGESIZE / 4)
+        {
+            if ( VirtualFree( (LPBYTE)header + 
+                              (header->limit & ~(HTABLE_PAGESIZE-1)),
+                              HTABLE_PAGESIZE, MEM_DECOMMIT ) )
+                break;
+
+            header->limit -= HTABLE_PAGESIZE;
+            header->freeListFirst[page] = -1;
+            page--;
+        }
+    }
+
+    /* Free memory */
+    return HeapFree( header->heap, 0, ptr );
+}
+
+/***********************************************************************
+ *           Local32Translate   (KERNEL.213)
+ */
+DWORD WINAPI Local32Translate( HANDLE32 heap, DWORD addr, INT16 type1, INT16 type2 )
+{
+    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    LPDWORD handle;
+    LPBYTE ptr;
+
+    Local32_ToHandle( header, type1, addr, &handle, &ptr );
+    if (!handle) return 0;
+
+    Local32_FromHandle( header, type2, &addr, handle, ptr );
+    return addr;
+}
+
+/***********************************************************************
+ *           Local32Size   (KERNEL.214)
+ */
+DWORD WINAPI Local32Size( HANDLE32 heap, DWORD addr, INT16 type )
+{
+    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    LPDWORD handle;
+    LPBYTE ptr;
+
+    Local32_ToHandle( header, type, addr, &handle, &ptr );
+    if (!handle) return 0;
+
+    return HeapSize( header->heap, 0, ptr );
+}
+
+/***********************************************************************
+ *           Local32ValidHandle   (KERNEL.215)
+ */
+BOOL32 WINAPI Local32ValidHandle( HANDLE32 heap, WORD addr )
+{
+    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    LPDWORD handle;
+    LPBYTE ptr;
+
+    Local32_ToHandle( header, 0, addr, &handle, &ptr );
+    return handle != NULL;
+}
+
+/***********************************************************************
+ *           Local32GetSegment   (KERNEL.229)
+ */
+WORD WINAPI Local32GetSegment( HANDLE32 heap )
+{
+    LOCAL32HEADER *header = (LOCAL32HEADER *)heap;
+    return header->segment;
+}
+
+

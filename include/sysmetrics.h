@@ -129,6 +129,13 @@
 #define SYSMETRICS_MIDEASTENABLED       sysMetrics[SM_MIDEASTENABLED]       /* 74 */
 #define SYSMETRICS_MOUSEWHEELPRESENT    sysMetrics[SM_MOUSEWHEELPRESENT]    /* 75 */
 
+#define SYSMETRICS_CXVIRTUALSCREEN	sysMetrics[SM_CXVIRTUALSCREEN]	    /* 77 */
+#define SYSMETRICS_CYVIRTUALSCREEN	sysMetrics[SM_CYVIRTUALSCREEN]	    /* 77 */
+#define SYSMETRICS_YVIRTUALSCREEN	sysMetrics[SM_YVIRTUALSCREEN]	    /* 78 */
+#define SYSMETRICS_XVIRTUALSCREEN	sysMetrics[SM_XVIRTUALSCREEN]	    /* 79 */
+#define SYSMETRICS_CMONITORS		sysMetrics[SM_CMONITORS]	    /* 81 */
+#define SYSMETRICS_SAMEDISPLAYFORMAT	sysMetrics[SM_SAMEDISPLAYFORMAT]    /* 82 */
+
 extern void SYSMETRICS_Init(void);  /* sysmetrics.c */
 extern short sysMetrics[SM_CMETRICS+1];
 

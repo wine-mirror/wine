@@ -9,6 +9,7 @@
 #include <callback.h>
 #include "windows.h"
 #include "aspi.h"
+#include "winaspi.h"
 #include "options.h"
 #include "heap.h"
 #include "debug.h"
@@ -22,83 +23,6 @@
  * 2) Make this code re-entrant for multithreading
  * 3) Only linux supported so far
  */
-
-#ifdef linux
-
-/* This is a duplicate of the sg_header from /usr/src/linux/include/scsi/sg.h
- * kernel 2.0.30
- * This will probably break at some point, but for those who don't have
- * kernels installed, I think this should still work.
- *
- */
-
-struct sg_header
- {
-  int pack_len;    /* length of incoming packet <4096 (including header) */
-  int reply_len;   /* maximum length <4096 of expected reply */
-  int pack_id;     /* id number of packet */
-  int result;      /* 0==ok, otherwise refer to errno codes */
-  unsigned int twelve_byte:1; /* Force 12 byte command length for group 6 & 7 commands  */
-  unsigned int other_flags:31;			/* for future use */
-  unsigned char sense_buffer[16]; /* used only by reads */
-  /* command follows then data for command */
- };
-
-#define SCSI_OFF sizeof(struct sg_header)
-#endif
-
-#define ASPI_POSTING(prb) (prb->SRB_Flags & 0x1)
-
-#define HOST_TO_TARGET(prb) (((prb->SRB_Flags>>3) & 0x3) == 0x2)
-#define TARGET_TO_HOST(prb) (((prb->SRB_Flags>>3) & 0x3) == 0x1)
-#define NO_DATA_TRANSFERED(prb) (((prb->SRB_Flags>>3) & 0x3) == 0x3)
-
-#define SRB_ENABLE_RESIDUAL_COUNT 0x4
-
-#define INQUIRY_VENDOR		8
-
-#define MUSTEK_SCSI_AREA_AND_WINDOWS 0x04
-#define MUSTEK_SCSI_READ_SCANNED_DATA 0x08
-#define MUSTEK_SCSI_GET_IMAGE_STATUS 0x0f
-#define MUSTEK_SCSI_ADF_AND_BACKTRACE 0x10
-#define MUSTEK_SCSI_CCD_DISTANCE 0x11
-#define MUSTEK_SCSI_START_STOP 0x1b
-
-#define CMD_TEST_UNIT_READY 0x00
-#define CMD_REQUEST_SENSE 0x03
-#define CMD_INQUIRY 0x12
-
-/* scanner commands - just for debug */
-#define CMD_SCAN_GET_DATA_BUFFER_STATUS 0x34
-#define CMD_SCAN_GET_WINDOW 0x25
-#define CMD_SCAN_OBJECT_POSITION 0x31
-#define CMD_SCAN_READ 0x28
-#define CMD_SCAN_RELEASE_UNIT 0x17
-#define CMD_SCAN_RESERVE_UNIT 0x16
-#define CMD_SCAN_SCAN 0x1b
-#define CMD_SCAN_SEND 0x2a
-#define CMD_SCAN_CHANGE_DEFINITION 0x40
-
-#define INQURIY_CMDLEN 6
-#define INQURIY_REPLY_LEN 96
-#define INQUIRY_VENDOR 8
-
-#define SENSE_BUFFER(prb) (&prb->CDBByte[prb->SRB_CDBLen])
-
-
-/* Just a container for seeing what devices are open */
-struct ASPI_DEVICE_INFO {
-    struct ASPI_DEVICE_INFO *	next;
-    int				fd;
-    int				hostId;
-    int				target;
-    int				lun;
-};
-
-typedef struct ASPI_DEVICE_INFO ASPI_DEVICE_INFO;
-static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
-
-static BOOL16 DOSASPI = FALSE;
 
 #ifdef linux
 static int
@@ -135,7 +59,7 @@ ASPI_OpenDevice16(SRB_ExecSCSICmd16 *prb)
     fd = open(device_str, O_RDWR);
     if (fd == -1) {
 	int save_error = errno;
-	WARN(aspi, "Error opening device errno=%d\n", save_error);
+	ERR(aspi, "Error opening device %s, errno=%d\n", device_str, save_error);
 	return -1;
     }
 
@@ -154,18 +78,25 @@ ASPI_OpenDevice16(SRB_ExecSCSICmd16 *prb)
 
 
 static void
-ASPI_DebugPrintCmd16(SRB_ExecSCSICmd16 *prb)
+ASPI_DebugPrintCmd(SRB_ExecSCSICmd16 *prb, UINT16 mode)
 {
   BYTE	cmd;
   int	i;
   BYTE *cdb;
-  BYTE *lpBuf;
+  BYTE *lpBuf = 0;
   dbg_decl_str(aspi, 512);
 
-  if ((DOSASPI) && (prb->SRB_BufPointer)) /* translate real mode address */
-    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT32)prb->SRB_BufPointer);
-  else
-    lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
+  switch (mode)
+  {
+      case ASPI_DOS:
+	/* translate real mode address */
+	if (prb->SRB_BufPointer)
+	    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT32)prb->SRB_BufPointer);
+	break;
+      case ASPI_WIN16:
+	lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
+	break;
+  }
 
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
@@ -218,7 +149,7 @@ ASPI_DebugPrintCmd16(SRB_ExecSCSICmd16 *prb)
 }
 
 static void
-PrintSenseArea16(SRB_ExecSCSICmd16 *prb)
+ASPI_PrintSenseArea16(SRB_ExecSCSICmd16 *prb)
 {
   int	i;
   BYTE *cdb;
@@ -233,80 +164,107 @@ PrintSenseArea16(SRB_ExecSCSICmd16 *prb)
 }
 
 static void
-ASPI_DebugPrintResult16(SRB_ExecSCSICmd16 *prb)
+ASPI_DebugPrintResult(SRB_ExecSCSICmd16 *prb, UINT16 mode)
 {
-  BYTE *lpBuf;
+  BYTE *lpBuf = 0;
 
-  if ((DOSASPI) && (prb->SRB_BufPointer)) /* translate real mode address */
-    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT32)prb->SRB_BufPointer);
-  else
-    lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
+  switch (mode)
+  {
+      case ASPI_DOS:
+	/* translate real mode address */
+	if (prb->SRB_BufPointer)
+	    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT32)prb->SRB_BufPointer);
+	break;
+      case ASPI_WIN16:
+	lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
+	break;
+  }
 
   switch (prb->CDBByte[0]) {
   case CMD_INQUIRY:
-    TRACE(aspi, "Vendor: %s\n", lpBuf + INQUIRY_VENDOR);
+    TRACE(aspi, "Vendor: '%s'\n", lpBuf + INQUIRY_VENDOR);
     break;
   case CMD_TEST_UNIT_READY:
-    PrintSenseArea16(prb);
+    ASPI_PrintSenseArea16(prb);
     break;
   }
 }
 
 static WORD
-ASPI_ExecScsiCmd16(SRB_ExecSCSICmd16 *prb, SEGPTR segptr_prb)
+ASPI_ExecScsiCmd(DWORD ptrPRB, UINT16 mode)
 {
+  SRB_ExecSCSICmd16 *lpPRB = 0;
   struct sg_header *sg_hd, *sg_reply_hdr;
   int	status;
-  BYTE *lpBuf;
+  BYTE *lpBuf = 0;
   int	in_len, out_len;
   int	error_code = 0;
   int	fd;
 
-  ASPI_DebugPrintCmd16(prb);
+  switch (mode)
+  {
+      case ASPI_DOS:
+	if (ptrPRB)
+	    lpPRB = (SRB_ExecSCSICmd16 *)DOSMEM_MapRealToLinear(ptrPRB);
+	break;
+      case ASPI_WIN16:
+	lpPRB = PTR_SEG_TO_LIN(ptrPRB);
+	break;
+  }
 
-  fd = ASPI_OpenDevice16(prb);
+  ASPI_DebugPrintCmd(lpPRB, mode);
+
+  fd = ASPI_OpenDevice16(lpPRB);
   if (fd == -1) {
-      WARN(aspi, "ASPI_ExecScsiCmd16 failed: could not open device.\n");
-      prb->SRB_Status = SS_ERR;
+      ERR(aspi, "Failed: could not open device. Device permissions !?\n");
+      lpPRB->SRB_Status = SS_ERR;
       return SS_ERR;
   }
 
   sg_hd = NULL;
   sg_reply_hdr = NULL;
 
-  prb->SRB_Status = SS_PENDING;
-  if ((DOSASPI) && (prb->SRB_BufPointer)) /* translate real mode address */
-    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT32)prb->SRB_BufPointer);
-  else
-    lpBuf = PTR_SEG_TO_LIN(prb->SRB_BufPointer);
+  lpPRB->SRB_Status = SS_PENDING;
 
-  if (!prb->SRB_CDBLen) {
-      WARN(aspi, "ASPI_ExecScsiCmd16 failed: prb->SRB_CDBLen = 0.\n");
-      prb->SRB_Status = SS_ERR;
+  switch (mode)
+  {
+      case ASPI_DOS:
+	/* translate real mode address */
+	if (ptrPRB)
+	    lpBuf = (BYTE *)DOSMEM_MapRealToLinear((UINT32)lpPRB->SRB_BufPointer);
+	break;
+      case ASPI_WIN16:
+	lpBuf = PTR_SEG_TO_LIN(lpPRB->SRB_BufPointer);
+	break;
+  }
+
+  if (!lpPRB->SRB_CDBLen) {
+      WARN(aspi, "Failed: lpPRB->SRB_CDBLen = 0.\n");
+      lpPRB->SRB_Status = SS_ERR;
       return SS_ERR;
   }
 
   /* build up sg_header + scsi cmd */
-  if (HOST_TO_TARGET(prb)) {
+  if (HOST_TO_TARGET(lpPRB)) {
     /* send header, command, and then data */
-    in_len = SCSI_OFF + prb->SRB_CDBLen + prb->SRB_BufLen;
+    in_len = SCSI_OFF + lpPRB->SRB_CDBLen + lpPRB->SRB_BufLen;
     sg_hd = (struct sg_header *) malloc(in_len);
     memset(sg_hd, 0, SCSI_OFF);
-    memcpy(sg_hd + 1, &prb->CDBByte[0], prb->SRB_CDBLen);
-    if (prb->SRB_BufLen) {
-      memcpy(((BYTE *) sg_hd) + SCSI_OFF + prb->SRB_CDBLen, lpBuf, prb->SRB_BufLen);
+    memcpy(sg_hd + 1, &lpPRB->CDBByte[0], lpPRB->SRB_CDBLen);
+    if (lpPRB->SRB_BufLen) {
+      memcpy(((BYTE *) sg_hd) + SCSI_OFF + lpPRB->SRB_CDBLen, lpBuf, lpPRB->SRB_BufLen);
     }
   }
   else {
     /* send header and command - no data */
-    in_len = SCSI_OFF + prb->SRB_CDBLen;
+    in_len = SCSI_OFF + lpPRB->SRB_CDBLen;
     sg_hd = (struct sg_header *) malloc(in_len);
     memset(sg_hd, 0, SCSI_OFF);
-    memcpy(sg_hd + 1, &prb->CDBByte[0], prb->SRB_CDBLen);
+    memcpy(sg_hd + 1, &lpPRB->CDBByte[0], lpPRB->SRB_CDBLen);
   }
 
-  if (TARGET_TO_HOST(prb)) {
-    out_len = SCSI_OFF + prb->SRB_BufLen;
+  if (TARGET_TO_HOST(lpPRB)) {
+    out_len = SCSI_OFF + lpPRB->SRB_BufLen;
     sg_reply_hdr = (struct sg_header *) malloc(out_len);
     memset(sg_reply_hdr, 0, SCSI_OFF);
     sg_hd->reply_len = out_len;
@@ -344,54 +302,68 @@ ASPI_ExecScsiCmd16(SRB_ExecSCSICmd16 *prb, SEGPTR segptr_prb)
     goto error_exit;
   }
 
-  if (TARGET_TO_HOST(prb) && prb->SRB_BufLen) {
-    memcpy(lpBuf, sg_reply_hdr + 1, prb->SRB_BufLen);
+  if (TARGET_TO_HOST(lpPRB) && lpPRB->SRB_BufLen) {
+    memcpy(lpBuf, sg_reply_hdr + 1, lpPRB->SRB_BufLen);
   }
 
   /* copy in sense buffer to amount that is available in client */
-  if (prb->SRB_SenseLen) {
-    int sense_len = prb->SRB_SenseLen;
-    if (prb->SRB_SenseLen > 16)
+  if (lpPRB->SRB_SenseLen) {
+    int sense_len = lpPRB->SRB_SenseLen;
+    if (lpPRB->SRB_SenseLen > 16)
       sense_len = 16;
-    memcpy(SENSE_BUFFER(prb), &sg_reply_hdr->sense_buffer[0], sense_len);
+    memcpy(SENSE_BUFFER(lpPRB), &sg_reply_hdr->sense_buffer[0], sense_len);
   }
 
 
-  prb->SRB_Status = SS_COMP;
-  prb->SRB_HaStat = HASTAT_OK;
-  prb->SRB_TargStat = STATUS_GOOD;
+  lpPRB->SRB_Status = SS_COMP;
+  lpPRB->SRB_HaStat = HASTAT_OK;
+  lpPRB->SRB_TargStat = STATUS_GOOD;
 
-  /* now do  posting */
+  /* now do posting */
 
-  if (ASPI_POSTING(prb) && prb->SRB_PostProc) {
-    TRACE(aspi, "Post Routine (%lx) called\n", (DWORD) prb->SRB_PostProc);
-    Callbacks->CallASPIPostProc(prb->SRB_PostProc, segptr_prb);
+  if (ASPI_POSTING(lpPRB) && lpPRB->SRB_PostProc) {
+    TRACE(aspi, "Post Routine (%lx) called\n", (DWORD) lpPRB->SRB_PostProc);
+    switch (mode)
+    {
+      case ASPI_DOS:
+      {
+	SEGPTR spPRB = MapLS(lpPRB);
+
+	Callbacks->CallASPIPostProc(lpPRB->SRB_PostProc, spPRB);	
+	UnMapLS(spPRB);
+	break;
+      }
+      case ASPI_WIN16:
+        Callbacks->CallASPIPostProc(lpPRB->SRB_PostProc, ptrPRB);
+	break;
+    }
   }
 
   free(sg_reply_hdr);
   free(sg_hd);
-  ASPI_DebugPrintResult16(prb);
+  ASPI_DebugPrintResult(lpPRB, mode);
   return SS_COMP;
   
 error_exit:
   if (error_code == EBUSY) {
-      prb->SRB_Status = SS_ASPI_IS_BUSY;
+      lpPRB->SRB_Status = SS_ASPI_IS_BUSY;
       TRACE(aspi, "Device busy\n");
   }
   else {
-      WARN(aspi, "ASPI_GenericHandleScsiCmd failed\n");
-      prb->SRB_Status = SS_ERR;
+      WARN(aspi, "Failed\n");
+      lpPRB->SRB_Status = SS_ERR;
   }
 
   /* I'm not sure exactly error codes work here
-   * We probably should set prb->SRB_TargStat, SRB_HaStat ?
+   * We probably should set lpPRB->SRB_TargStat, SRB_HaStat ?
    */
-  WARN(aspi, "ASPI_GenericHandleScsiCmd: error_exit\n");
+  WARN(aspi, "error_exit\n");
   free(sg_reply_hdr);
   free(sg_hd);
-  return prb->SRB_Status;
+  return lpPRB->SRB_Status;
 }
 #endif
+
 
 /***********************************************************************
  *             GetASPISupportInfo16   (WINASPI.1)
@@ -400,48 +372,61 @@ error_exit:
 WORD WINAPI GetASPISupportInfo16()
 {
 #ifdef linux
-    TRACE(aspi, "GETASPISupportInfo\n");
+    TRACE(aspi, "GETASPISupportInfo16\n");
     /* high byte SS_COMP - low byte number of host adapters.
      * FIXME!!! The number of host adapters is incorrect.
      * I'm not sure how to determine this under linux etc.
      */
-    return ((SS_COMP << 8) | 0x1);
+    return ((SS_COMP << 8) | 1);
 #else
-    return ((SS_COMP << 8) | 0x0);
+    return ((SS_COMP << 8) | 0);
 #endif
 }
 
-/***********************************************************************
- *             SendASPICommand16   (WINASPI.2)
- */
 
-WORD WINAPI SendASPICommand16(SEGPTR segptr_srb)
+DWORD ASPI_SendASPICommand(DWORD ptrSRB, UINT16 mode)
 {
 #ifdef linux
-  LPSRB16 lpSRB = PTR_SEG_TO_LIN(segptr_srb);
+  LPSRB16 lpSRB = 0;
 
-  switch (lpSRB->common.SRB_cmd) {
+  switch (mode)
+  {
+      case ASPI_DOS:
+	if (ptrSRB)
+	    lpSRB = (LPSRB16)DOSMEM_MapRealToLinear(ptrSRB);
+	break;
+      case ASPI_WIN16:
+	lpSRB = PTR_SEG_TO_LIN(ptrSRB);
+	break;
+  }
+
+  switch (lpSRB->common.SRB_Cmd) {
   case SC_HA_INQUIRY:
-    lpSRB->inquiry.SRB_Status = 0x1;           /* completed successfully */
-    lpSRB->inquiry.SRB_HaId = 1;               /* bogus value */
+    lpSRB->inquiry.SRB_Status = SS_COMP;       /* completed successfully */
+    if (lpSRB->inquiry.SRB_55AASignature == 0x55aa) {
+	TRACE(aspi, "Extended request detected (Adaptec's ASPIxDOS).\nWe don't support it at the moment.\n");
+    }
+    lpSRB->inquiry.SRB_ExtBufferSize = 0x2000; /* bogus value */
     lpSRB->inquiry.HA_Count = 1;               /* not always */
     lpSRB->inquiry.HA_SCSI_ID = 7;             /* not always ID 7 */
-    strcat(lpSRB->inquiry.HA_ManagerId, "Wine ASPI"); /* max 15 chars */
-    lpSRB->inquiry.SRB_55AASignature = 0x55aa; /* correct ??? */
-    lpSRB->inquiry.SRB_ExtBufferSize = 0x2000; /* bogus value */
-    FIXME(aspi, "ASPI: Partially implemented SC_HA_INQUIRY\n");
-    break;
+    strcat(lpSRB->inquiry.HA_ManagerId, "Wine ASPI16"); /* max 15 chars */
+    strcat(lpSRB->inquiry.HA_Identifier, "Wine host"); /* FIXME: return host
+adapter name */
+    memset(lpSRB->inquiry.HA_Unique, 0, 16); /* default HA_Unique content */
+    lpSRB->inquiry.HA_Unique[6] = 0x02; /* Maximum Transfer Length (128K, Byte> 4-7) */
+    FIXME(aspi, "ASPI: Partially implemented SC_HA_INQUIRY for adapter %d.\n", lpSRB->inquiry.SRB_HaId);
+    return SS_COMP;
   case SC_GET_DEV_TYPE:
     FIXME(aspi, "Not implemented SC_GET_DEV_TYPE\n");
     break;
   case SC_EXEC_SCSI_CMD:
-    return ASPI_ExecScsiCmd16(&lpSRB->cmd, segptr_srb);
+    return ASPI_ExecScsiCmd((DWORD)ptrSRB, mode);
     break;
   case SC_RESET_DEV:
     FIXME(aspi, "Not implemented SC_RESET_DEV\n");
     break;
   default:
-    WARN(aspi, "Unknown command %d\n", lpSRB->common.SRB_cmd);
+    WARN(aspi, "Unknown command %d\n", lpSRB->common.SRB_Cmd);
   }
   return SS_INVALID_SRB;
 #else
@@ -449,11 +434,25 @@ WORD WINAPI SendASPICommand16(SEGPTR segptr_srb)
 #endif
 }
 
+
 /***********************************************************************
- *             GetASPIDLLVersion   (WINASPI.4)
+ *             SendASPICommand16   (WINASPI.2)
+ */
+WORD WINAPI SendASPICommand16(SEGPTR segptr_srb)
+{
+#ifdef linux
+    return ASPI_SendASPICommand(segptr_srb, ASPI_WIN16);
+#else
+    return 0; 
+#endif
+}
+
+
+/***********************************************************************
+ *             GetASPIDLLVersion16   (WINASPI.4)
  */
 
-DWORD WINAPI GetASPIDLLVersion()
+DWORD WINAPI GetASPIDLLVersion16()
 {
 #ifdef linux
 	return (DWORD)2;
@@ -465,14 +464,7 @@ DWORD WINAPI GetASPIDLLVersion()
 
 void WINAPI ASPI_DOS_func(DWORD srb)
 {
-       LPSRB16 lpSRB = (LPSRB16)DOSMEM_MapRealToLinear(srb);
-       SEGPTR spSRB = MapLS(lpSRB);
-
-       TRACE(aspi, "DOSASPI: function #%d\n", lpSRB->common.SRB_cmd);
-       DOSASPI = TRUE;
-       SendASPICommand16(spSRB);
-       DOSASPI = FALSE;
-       UnMapLS(spSRB);
+       ASPI_SendASPICommand(srb, ASPI_DOS);
 }
 
 
@@ -498,19 +490,3 @@ void ASPI_DOS_HandleInt(CONTEXT *context)
        SET_CFLAG(context);
 #endif
 }
-
-/*******************************************************************
- *     GetASPI32SupportInfo		[WNASPI32.0]
- *
- * Checks if the ASPI subsystem is initialized correctly.
- *
- * RETURNS
- *    HIWORD: 0.
- *    HIBYTE of LOWORD: status (SS_COMP or SS_FAILED_INIT)
- *    LOBYTE of LOWORD: # of host adapters.  
- */
-DWORD WINAPI GetASPI32SupportInfo()
-{
-    return (SS_COMP << 8) | 1; /* FIXME: get # of host adapters installed */
-}
-

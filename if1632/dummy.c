@@ -31,7 +31,6 @@ long WINAPI stub_GDI_573(void) { FIXME(relay, "stub\n"); return 0; }
 long WINAPI stub_GDI_556(void) { FIXME(relay, "stub\n"); return 0; }
 long WINAPI stub_GDI_558(void) { FIXME(relay, "stub\n"); return 0; }
 long WINAPI stub_GDI_569(void) { FIXME(relay, "stub\n"); return 0; }
-long WINAPI stub_KERNEL_450(void) { FIXME(relay, "stub\n"); return 0; }
 long WINAPI stub_USER_489(void) { FIXME(relay, "stub\n"); return 0; }
 long WINAPI stub_USER_490(void) { FIXME(relay, "stub\n"); return 0; }
 long WINAPI stub_USER_492(void) { FIXME(relay, "stub\n"); return 0; }
@@ -53,4 +52,3 @@ long WINAPI stub_USER_919(void) { FIXME(relay, "stub\n"); return 0; }
 long WINAPI stub_USER_920(void) { FIXME(relay, "stub\n"); return 0; }
 long WINAPI stub_USER_922(void) { FIXME(relay, "stub\n"); return 0; }
 long WINAPI stub_USER_923(void) { FIXME(relay, "stub\n"); return 0; }
-long WINAPI stub_KERNEL_700(void) { FIXME(relay, "stub\n"); return 1; }

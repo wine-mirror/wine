@@ -35,15 +35,6 @@
 #include "debug.h"
 
 
-UINT32  MENU_BarItemTopNudge;
-UINT32  MENU_BarItemLeftNudge;
-UINT32  MENU_ItemTopNudge;
-UINT32  MENU_ItemLeftNudge;
-UINT32  MENU_HighlightTopNudge;
-UINT32  MENU_HighlightLeftNudge;
-UINT32  MENU_HighlightBottomNudge;
-UINT32  MENU_HighlightRightNudge;
-
 /* internal popup menu window messages */
 
 #define MM_SETMENUHANDLE	(WM_USER + 0)
@@ -653,10 +644,10 @@ static void MENU_CalcItemSize( HDC32 hdc, MENUITEM *lpitem, HWND32 hwndOwner,
     {
         dwSize = GetTextExtent( hdc, lpitem->text, strlen(lpitem->text) );
         lpitem->rect.right  += LOWORD(dwSize);
-	if (TWEAK_Win95Look)
-            lpitem->rect.bottom += MAX (HIWORD(dwSize), sysMetrics[SM_CYMENU]- 1);
-        else
+	if (TWEAK_WineLook == WIN31_LOOK)
             lpitem->rect.bottom += MAX( HIWORD(dwSize), SYSMETRICS_CYMENU );
+        else
+            lpitem->rect.bottom += MAX (HIWORD(dwSize), sysMetrics[SM_CYMENU]- 1);
         lpitem->xTab = 0;
 
         if (menuBar) lpitem->rect.right += MENU_BAR_ITEMS_SPACE;
@@ -710,7 +701,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND32 hwndOwner )
 	    if ((i != start) &&
 		(lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
 
-	    if(TWEAK_Win95Look)
+	    if (TWEAK_WineLook > WIN31_LOOK)
 		++orgY;
 
 	    MENU_CalcItemSize( hdc, lpitem, hwndOwner, orgX, orgY, FALSE );
@@ -735,7 +726,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND32 hwndOwner )
 	lppop->Height = MAX( lppop->Height, orgY );
     }
 
-    if(TWEAK_Win95Look)
+    if(TWEAK_WineLook > WIN31_LOOK)
 	lppop->Height++;
 
     lppop->Width  = maxX;
@@ -833,7 +824,7 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
     if (lpitem->fType & MF_SYSMENU)
     {
 	if( !IsIconic32(hwnd) ) {
-	    if(TWEAK_Win95Look)
+	    if (TWEAK_WineLook > WIN31_LOOK)
 		NC_DrawSysButton95( hwnd, hdc,
 				    lpitem->fState &
 				    (MF_HILITE | MF_MOUSESELECT) );
@@ -874,7 +865,7 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
     rect = lpitem->rect;
 
     /* Draw the background */
-    if(TWEAK_Win95Look) {
+    if (TWEAK_WineLook > WIN31_LOOK) {
 	rect.left += 2;
 	rect.right -= 2;
 
@@ -899,8 +890,13 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 
     if (!menuBar && (lpitem->fType & MF_MENUBARBREAK))
     {
-	if(TWEAK_Win95Look)
-	    TWEAK_DrawMenuSeparatorVert95(hdc, rect.left - 1, 3, height - 3);
+	/* vertical separator */
+	if (TWEAK_WineLook > WIN31_LOOK) {
+	    RECT32 rc = rect;
+	    rc.top = 3;
+	    rc.bottom = height - 3;
+	    DrawEdge32 (hdc, &rc, EDGE_ETCHED, BF_LEFT);
+	}
 	else {
 	    SelectObject32( hdc, GetSysColorPen32(COLOR_WINDOWFRAME) );
 	    MoveTo( hdc, rect.left, 0 );
@@ -909,10 +905,14 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
     }
     if (lpitem->fType & MF_SEPARATOR)
     {
-	if(TWEAK_Win95Look)
-	    TWEAK_DrawMenuSeparatorHoriz95(hdc, rect.left + 1,
-					   rect.top + SEPARATOR_HEIGHT / 2 + 1,
-					   rect.right - 1);
+	/* horizontal separator */
+	if (TWEAK_WineLook > WIN31_LOOK) {
+	    RECT32 rc = rect;
+	    rc.left++;
+	    rc.right--;
+	    rc.top += SEPARATOR_HEIGHT / 2;
+	    DrawEdge32 (hdc, &rc, EDGE_ETCHED, BF_TOP);
+	}
 	else {
 	    SelectObject32( hdc, GetSysColorPen32(COLOR_WINDOWFRAME) );
 	    MoveTo( hdc, rect.left, rect.top + SEPARATOR_HEIGHT/2 );
@@ -1000,21 +1000,15 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 	    rect.left += MENU_BAR_ITEMS_SPACE / 2;
 	    rect.right -= MENU_BAR_ITEMS_SPACE / 2;
 	    i = strlen( lpitem->text );
-
-	    rect.top += MENU_BarItemTopNudge;
-	    rect.left += MENU_BarItemLeftNudge;
 	}
 	else
 	{
 	    for (i = 0; lpitem->text[i]; i++)
                 if ((lpitem->text[i] == '\t') || (lpitem->text[i] == '\b'))
                     break;
-
-	    rect.top += MENU_ItemTopNudge;
-	    rect.left += MENU_ItemLeftNudge;
 	}
 
-	if(!TWEAK_Win95Look || !(lpitem->fState & MF_GRAYED)) {
+	if((TWEAK_WineLook == WIN31_LOOK) || !(lpitem->fState & MF_GRAYED)) {
 	    DrawText32A( hdc, lpitem->text, i, &rect,
 			 DT_LEFT | DT_VCENTER | DT_SINGLELINE );
 	}
@@ -1083,7 +1077,7 @@ static void MENU_DrawPopupMenu( HWND32 hwnd, HDC32 hdc, HMENU32 hmenu )
 	    POPUPMENU *menu;
 
 	    /* draw 3-d shade */
-	    if(!TWEAK_Win95Look) {
+	    if(TWEAK_WineLook == WIN31_LOOK) {
 		SelectObject32( hdc, hShadeBrush );
 		SetBkMode32( hdc, TRANSPARENT );
 		ropPrev = SetROP232( hdc, R2_MASKPEN );
@@ -1144,7 +1138,7 @@ UINT32 MENU_DrawMenuBar( HDC32 hDC, LPRECT32 lprect, HWND32 hwnd,
     
     FillRect32(hDC, lprect, GetSysColorBrush32(COLOR_MENU) );
 
-    if(!TWEAK_Win95Look) {
+    if (TWEAK_WineLook == WIN31_LOOK) {
 	SelectObject32( hDC, GetSysColorPen32(COLOR_WINDOWFRAME) );
 	MoveTo( hDC, lprect->left, lprect->bottom );
 	LineTo32( hDC, lprect->right, lprect->bottom );
@@ -1362,10 +1356,10 @@ static void MENU_SelectItem( HWND32 hwndOwner, HMENU32 hmenu, UINT32 wIndex,
                                     hmenu) );
         }
     }
-    else if (sendMenuSelect)
+    else if (sendMenuSelect) {
         SendMessage16( hwndOwner, WM_MENUSELECT, hmenu,
                        MAKELONG( lppop->wFlags | MF_MOUSESELECT, hmenu ) ); 
-
+    }
     ReleaseDC32( lppop->hWnd, hdc );
 }
 
@@ -1476,7 +1470,10 @@ static BOOL32 MENU_SetItemData( MENUITEM *item, UINT32 flags, UINT32 id,
     item->fState = (flags & STATE_MASK) &
         ~(MF_HILITE | MF_MOUSESELECT | MF_BYPOSITION);
 
-    SetRectEmpty32( &item->rect );
+
+    /* Don't call SetRectEmpty here! */
+
+
     if (prevText) HeapFree( SystemHeap, 0, prevText );
 
     debug_print_menuitem("MENU_SetItemData to  : ", item, "");
@@ -1741,9 +1738,12 @@ static HMENU32 MENU_ShowSubPopup( HWND32 hwndOwner, HMENU32 hmenu,
 
     /* message must be send before using item,
        because nearly everything may by changed by the application ! */
-    rect = item->rect;
+
     SendMessage16( hwndOwner, WM_INITMENUPOPUP, (WPARAM16)item->hSubMenu,
 		   MAKELONG( menu->FocusedItem, IS_SYSTEM_MENU(menu) ));
+
+    item = &menu->items[menu->FocusedItem];
+    rect = item->rect;
 
     /* correct item if modified as a reaction to WM_INITMENUPOPUP-message */
     if (!(item->fState & MF_HILITE)) 

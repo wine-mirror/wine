@@ -6,9 +6,8 @@
  */
 
 #include "windows.h"
-#include "status.h"
 #include "commctrl.h"
-#include "heap.h"
+#include "status.h"
 #include "win.h"
 #include "debug.h"
 
@@ -528,17 +527,16 @@ STATUSBAR_SetParts (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     if (oldNumParts > self->numParts) {
 	for (i = self->numParts ; i < oldNumParts; i++) {
 	    if (self->parts[i].text && (self->parts[i].style != SBT_OWNERDRAW))
-		HeapFree(GetProcessHeap (), 0, self->parts[i].text);
+		COMCTL32_Free (self->parts[i].text);
 	}
     }
     else if (oldNumParts < self->numParts) {
-	tmp = HeapAlloc(GetProcessHeap (), HEAP_ZERO_MEMORY,
-			sizeof(STATUSWINDOWPART) * self->numParts);
+	tmp = COMCTL32_Alloc (sizeof(STATUSWINDOWPART) * self->numParts);
 	for (i = 0; i < oldNumParts; i++) {
 	    tmp[i] = self->parts[i];
 	}
 	if (self->parts)
-	    HeapFree(GetProcessHeap (), 0, self->parts);
+	    COMCTL32_Free (self->parts);
 	self->parts = tmp;
     }
     
@@ -614,10 +612,10 @@ STATUSBAR_SetText32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     else {
 	/* duplicate string */
 	if (part->text)
-	    HeapFree (GetProcessHeap (), 0, part->text);
+	    COMCTL32_Free (part->text);
 	part->text = 0;
 	if (text && (len = lstrlen32A(text))) {
-	    part->text = HeapAlloc (GetProcessHeap (), 0, len+1);
+	    part->text = COMCTL32_Alloc (len+1);
 	    lstrcpy32A(part->text, text);
 	}
     }
@@ -694,8 +692,7 @@ STATUSBAR_WMCreate (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     HDC32	hdc;
     STATUSWINDOWINFO *self;
 
-    self = (STATUSWINDOWINFO*)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-					 sizeof(STATUSWINDOWINFO));
+    self = (STATUSWINDOWINFO*)COMCTL32_Alloc (sizeof(STATUSWINDOWINFO));
     wndPtr->wExtra[0] = (DWORD)self;
 
     self->numParts = 1;
@@ -717,8 +714,7 @@ STATUSBAR_WMCreate (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     self->part0.hIcon = 0;
 
     /* initialize first part */
-    self->parts = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-			     sizeof(STATUSWINDOWPART));
+    self->parts = COMCTL32_Alloc (sizeof(STATUSWINDOWPART));
     self->parts[0].bound = rect;
     self->parts[0].text = 0;
     self->parts[0].x = -1;
@@ -726,7 +722,7 @@ STATUSBAR_WMCreate (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     self->parts[0].hIcon = 0;
 
     if ((len = lstrlen32A (lpCreate->lpszName))) {
-        self->parts[0].text = HeapAlloc (GetProcessHeap (), 0, len + 1);
+        self->parts[0].text = COMCTL32_Alloc (len + 1);
         lstrcpy32A (self->parts[0].text, lpCreate->lpszName);
     }
 
@@ -781,11 +777,11 @@ STATUSBAR_WMDestroy (WND *wndPtr)
 
     for (i = 0; i < self->numParts; i++) {
 	if (self->parts[i].text && (self->parts[i].style != SBT_OWNERDRAW))
-	    HeapFree(GetProcessHeap (), 0, self->parts[i].text);
+	    COMCTL32_Free (self->parts[i].text);
     }
     if (self->part0.text && (self->part0.style != SBT_OWNERDRAW))
-	HeapFree(GetProcessHeap (), 0, self->part0.text);
-    HeapFree(GetProcessHeap (), 0, self->parts);
+	COMCTL32_Free (self->part0.text);
+    COMCTL32_Free (self->parts);
 
     /* delete default font */
     if (self->hDefaultFont)
@@ -795,7 +791,7 @@ STATUSBAR_WMDestroy (WND *wndPtr)
     if (self->hwndToolTip)
 	DestroyWindow32 (self->hwndToolTip);
 
-    HeapFree(GetProcessHeap (), 0, self);
+    COMCTL32_Free (self);
 
     return 0;
 }
@@ -939,10 +935,10 @@ STATUSBAR_WMSetText (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     part = &self->parts[0];
     /* duplicate string */
     if (part->text)
-        HeapFree(GetProcessHeap (), 0, part->text);
+        COMCTL32_Free (part->text);
     part->text = 0;
     if (lParam && (len = lstrlen32A((LPCSTR)lParam))) {
-        part->text = HeapAlloc (GetProcessHeap (), 0, len+1);
+        part->text = COMCTL32_Alloc (len+1);
         lstrcpy32A (part->text, (LPCSTR)lParam);
     }
 

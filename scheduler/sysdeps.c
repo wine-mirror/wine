@@ -22,7 +22,7 @@ static int *ph_errno = &h_errno;
 /* Xlib critical section (FIXME: does not belong here) */
 CRITICAL_SECTION X11DRV_CritSection = { 0, };
 
-#ifdef __linux__
+#ifdef HAVE_CLONE_SYSCALL
 # ifdef HAVE_SCHED_H
 #  include <sched.h>
 # endif
@@ -35,10 +35,10 @@ CRITICAL_SECTION X11DRV_CritSection = { 0, };
 /* If we didn't get the flags, we probably didn't get the prototype either */
 extern int clone( int (*fn)(void *arg), void *stack, int flags, void *arg );
 # endif  /* CLONE_VM */
-#endif  /* __linux__ */
+#endif  /* HAVE_CLONE_SYSCALL */
 
 
-#ifdef __linux__
+#ifdef USE_THREADS
 /***********************************************************************
  *           __errno_location
  *
@@ -84,7 +84,7 @@ static void SYSDEPS_StartThread( THDB *thdb )
     SET_FS( thdb->teb_sel );
     THREAD_Start( thdb );
 }
-#endif  /* __linux__ */
+#endif  /* USE_THREADS */
 
 
 /***********************************************************************
@@ -95,15 +95,23 @@ static void SYSDEPS_StartThread( THDB *thdb )
  */
 int SYSDEPS_SpawnThread( THDB *thread )
 {
-#ifdef __linux__
+#ifdef USE_THREADS
+
+#ifdef HAVE_CLONE_SYSCALL
     if (clone( (int (*)(void *))SYSDEPS_StartThread, thread->teb.stack_top,
                CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, thread ) < 0)
         return -1;
     /* FIXME: close the child socket in the parent process */
 /*    close( thread->socket );*/
-#else
+#endif
+
+#ifdef HAVE_RFORK
+    FIXME(thread, "Threads using rfork() not implemented\n" );
+#endif
+
+#else  /* !USE_THREADS */
     FIXME(thread, "CreateThread: stub\n" );
-#endif  /* __linux__ */
+#endif  /* USE_THREADS */
     return 0;
 }
 

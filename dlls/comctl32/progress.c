@@ -8,9 +8,8 @@
  */
 
 #include "windows.h"
-#include "progress.h"
 #include "commctrl.h"
-#include "heap.h"
+#include "progress.h"
 #include "win.h"
 #include "debug.h"
 
@@ -185,8 +184,7 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
     case WM_CREATE:
       /* allocate memory for info struct */
       infoPtr = 
-	(PROGRESS_INFO *)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-                                    sizeof(PROGRESS_INFO));
+	(PROGRESS_INFO *)COMCTL32_Alloc (sizeof(PROGRESS_INFO));
       wndPtr->wExtra[0] = (DWORD)infoPtr;
 
       /* initialize the info struct */
@@ -200,8 +198,8 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
       break;
     
     case WM_DESTROY:
-      TRACE(progress, "Progress Ctrl destruction, hwnd=%04x\n", hwnd);
-      HeapFree (GetProcessHeap (), 0, infoPtr);
+      TRACE (progress, "Progress Ctrl destruction, hwnd=%04x\n", hwnd);
+      COMCTL32_Free (infoPtr);
       break;
 
     case WM_ERASEBKGND:
@@ -328,11 +326,12 @@ LRESULT WINAPI ProgressWindowProc(HWND32 hwnd, UINT32 message,
 
 
 /***********************************************************************
- *           PROGRESS_Register [Internal]
+ * PROGRESS_Register [Internal]
  *
  * Registers the progress bar window class.
  * 
  */
+
 void 
 PROGRESS_Register(void)
 {

@@ -27,14 +27,12 @@
  */
 
 #include <stdlib.h>
-#include <assert.h>
-#include <string.h>
 #include "windows.h"
+#include "commctrl.h"
 #include "winnls.h"
 #include "sysmetrics.h"
 #include "updown.h"
 #include "graphics.h"
-#include "heap.h"
 #include "win.h"
 #include "debug.h"
 
@@ -249,7 +247,7 @@ static BOOL32 UPDOWN_SetBuddyInt(WND *wndPtr)
     if (!(wndPtr->dwStyle & UDS_NOTHOUSANDS)) {
       char txt2[20], *src = txt1, *dst = txt2;
       if(len%3 > 0){
-	strncpy(dst, src, len%3);
+	lstrcpyn32A (dst, src, len%3);
 	dst += len%3;
 	src += len%3;
       }
@@ -597,9 +595,7 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
       return TRUE;
 
     case WM_CREATE:
-      infoPtr =
-	(UPDOWN_INFO*)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-				 sizeof(UPDOWN_INFO));
+      infoPtr = (UPDOWN_INFO*)COMCTL32_Alloc (sizeof(UPDOWN_INFO));
       wndPtr->wExtra[0] = (DWORD)infoPtr;
 
       /* initialize the info struct */
@@ -618,9 +614,9 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
     
     case WM_DESTROY:
       if(infoPtr->AccelVect)
-	free(infoPtr->AccelVect);
+	COMCTL32_Free (infoPtr->AccelVect);
 
-      HeapFree (GetProcessHeap (), 0, infoPtr);
+      COMCTL32_Free (infoPtr);
       wndPtr->wExtra[0] = 0;
 
       TRACE(updown, "UpDown Ctrl destruction, hwnd=%04x\n", hwnd);
@@ -715,13 +711,13 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
     case UDM_SETACCEL:
       TRACE(updown, "UpDown Ctrl new accel info, hwnd=%04x\n", hwnd);
       if(infoPtr->AccelVect){
-	free(infoPtr->AccelVect);
+	COMCTL32_Free (infoPtr->AccelVect);
 	infoPtr->AccelCount = 0;
 	infoPtr->AccelVect  = 0;
       }
       if(wParam==0)
 	return TRUE;
-      infoPtr->AccelVect = malloc(wParam*sizeof(UDACCEL));
+      infoPtr->AccelVect = COMCTL32_Alloc (wParam*sizeof(UDACCEL));
       if(infoPtr->AccelVect==0)
 	return FALSE;
       memcpy(infoPtr->AccelVect, (void*)lParam, wParam*sizeof(UDACCEL));
@@ -816,9 +812,9 @@ LRESULT WINAPI UpDownWindowProc(HWND32 hwnd, UINT32 message, WPARAM32 wParam,
 
     default: 
       if (message >= WM_USER) 
-	WARN(updown, "unknown msg %04x wp=%04x lp=%08lx\n", 
-		     message, wParam, lParam );
-      return DefWindowProc32A( hwnd, message, wParam, lParam ); 
+	ERR (updown, "unknown msg %04x wp=%04x lp=%08lx\n", 
+	     message, wParam, lParam);
+      return DefWindowProc32A (hwnd, message, wParam, lParam); 
     } 
 
     return 0;

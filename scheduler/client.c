@@ -15,8 +15,8 @@
 
 #include "process.h"
 #include "thread.h"
-#include "server.h"
 #include "server/request.h"
+#include "server.h"
 #include "winerror.h"
 
 /* Some versions of glibc don't define this */
@@ -24,14 +24,11 @@
 #define SCM_RIGHTS 1
 #endif
 
-#define CHECK_LEN(len,wanted) \
-  if ((len) == (wanted)) ; \
-  else CLIENT_ProtocolError( __FUNCTION__ ": len %d != %d\n", (len), (wanted) );
 
 /***********************************************************************
  *           CLIENT_ProtocolError
  */
-static void CLIENT_ProtocolError( const char *err, ... )
+void CLIENT_ProtocolError( const char *err, ... )
 {
     THDB *thdb = THREAD_Current();
     va_list args;
@@ -96,8 +93,8 @@ static void CLIENT_SendRequest_v( enum request req, int pass_fd,
  *
  * Send a request to the server.
  */
-static void CLIENT_SendRequest( enum request req, int pass_fd,
-                                int n, ... /* arg_1, len_1, etc. */ )
+void CLIENT_SendRequest( enum request req, int pass_fd,
+                         int n, ... /* arg_1, len_1, etc. */ )
 {
     struct iovec vec[16];
     va_list args;
@@ -198,8 +195,8 @@ static unsigned int CLIENT_WaitReply_v( int *len, int *passed_fd,
  *
  * Wait for a reply from the server.
  */
-static unsigned int CLIENT_WaitReply( int *len, int *passed_fd,
-                                      int n, ... /* arg_1, len_1, etc. */ )
+unsigned int CLIENT_WaitReply( int *len, int *passed_fd,
+                               int n, ... /* arg_1, len_1, etc. */ )
 {
     struct iovec vec[16];
     va_list args;
@@ -454,4 +451,3 @@ int CLIENT_Select( int count, int *handles, int flags, int timeout )
     CHECK_LEN( len, sizeof(reply) );
     return reply.signaled;
 }
-

@@ -351,14 +351,14 @@ int     l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
 	/* Microsoft just had to invent its own charsets! */
 
 	case ANSI_CHARSET: 	fputs("ansi-0\n", fs); break;
-	case GREEK_CHARSET: 	fputs("cp125-3\n", fs); break;
-	case TURKISH_CHARSET: 	fputs("cp125-4\n", fs); break;
-	case HEBREW_CHARSET: 	fputs("cp125-5\n", fs); break;
-	case ARABIC_CHARSET: 	fputs("cp125-6\n", fs); break;
-	case BALTIC_CHARSET: 	fputs("cp125-7\n", fs); break;
-	case RUSSIAN_CHARSET: 	fputs("cp125-1\n", fs); break;
-	case EE_CHARSET: 	fputs("cp125-0\n", fs); break; 
-	case SYMBOL_CHARSET: 	fputs("misc-fontspecific\n", fs); break;
+	case GREEK_CHARSET: 	fputs("microsoft-cp1253\n", fs); break;
+	case TURKISH_CHARSET: 	fputs("microsoft-cp1254\n", fs); break;
+	case HEBREW_CHARSET: 	fputs("microsoft-cp1255\n", fs); break;
+	case ARABIC_CHARSET: 	fputs("microsoft-cp1256\n", fs); break;
+	case BALTIC_CHARSET: 	fputs("microsoft-cp1257\n", fs); break;
+	case RUSSIAN_CHARSET: 	fputs("microsoft-cp1251\n", fs); break;
+	case EE_CHARSET: 	fputs("microsoft-cp1250\n", fs); break; 
+	case SYMBOL_CHARSET: 	fputs("microsoft-symbol\n", fs); break;
 	case SHIFTJIS_CHARSET: 	fputs("jisx0208.1983-0\n", fs); break;
 	case DEFAULT_CHARSET:	fputs("iso8859-1\n", fs); break;
 

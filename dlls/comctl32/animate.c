@@ -14,6 +14,8 @@
  */
 
 #include "windows.h"
+#include "winnt.h"
+#include "winbase.h"
 #include "commctrl.h"
 #include "animate.h"
 #include "win.h"
@@ -23,32 +25,134 @@
 #define ANIMATE_GetInfoPtr(wndPtr) ((ANIMATE_INFO *)wndPtr->wExtra[0])
 
 
+static BOOL32
+ANIMATE_LoadRes32A (ANIMATE_INFO *infoPtr, HINSTANCE32 hInst, LPSTR lpName)
+{
+    HRSRC32 hrsrc;
+    HGLOBAL32 handle;
+
+    hrsrc = FindResource32A (hInst, lpName, "AVI");
+    if (!hrsrc)
+	return FALSE;
+
+    handle = LoadResource32 (hInst, hrsrc);
+    if (!handle)
+	return FALSE;
+
+    infoPtr->lpAvi = LockResource32 (handle);
+    if (!infoPtr->lpAvi)
+	return FALSE;
+
+    return TRUE;
+}
+
+
+static BOOL32
+ANIMATE_LoadFile32A (ANIMATE_INFO *infoPtr, LPSTR lpName)
+{
+    HANDLE32 handle;
+
+    infoPtr->hFile =
+	CreateFile32A (lpName, GENERIC_READ, 0, NULL, OPEN_EXISTING,
+		       FILE_ATTRIBUTE_NORMAL, 0);
+    if (!infoPtr->hFile)
+	return FALSE;
+
+    handle =
+	CreateFileMapping32A (infoPtr->hFile, NULL, PAGE_READONLY | SEC_COMMIT,
+			      0, 0, NULL);
+    if (!handle) {
+	CloseHandle (infoPtr->hFile);
+	infoPtr->hFile = 0;
+	return FALSE;
+    }
+
+    infoPtr->lpAvi = MapViewOfFile (handle, FILE_MAP_READ, 0, 0, 0);
+    if (!infoPtr->lpAvi) {
+	CloseHandle (infoPtr->hFile);
+	infoPtr->hFile = 0;
+	return FALSE;
+    }
+
+    return TRUE;
+}
+
+
+static VOID
+ANIMATE_Free (ANIMATE_INFO *infoPtr)
+{
+    if (infoPtr->hFile) {
+	UnmapViewOfFile (infoPtr->lpAvi);
+	CloseHandle (infoPtr->hFile);
+	infoPtr->lpAvi = NULL;
+    }
+    else {
+	GlobalFree32 (infoPtr->lpAvi);
+	infoPtr->lpAvi = NULL;
+    }
+}
+
+
+static VOID
+ANIMATE_GetAviInfo (infoPtr)
+{
+
+
+}
+
+
 static LRESULT
 ANIMATE_Open32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr);
+    HINSTANCE32 hInstance = (HINSTANCE32)wParam;
+
+    ANIMATE_Free (infoPtr);
 
     if (!lParam) {
-
-	FIXME (animate, "close avi: empty stub!\n");
-
+	TRACE (animate, "closing avi!\n");
 	return TRUE;
     }
     
     if (HIWORD(lParam)) {
-
 	FIXME (animate, "(\"%s\") empty stub!\n", (LPSTR)lParam);
 
+	if (ANIMATE_LoadRes32A (infoPtr, hInstance, (LPSTR)lParam)) {
+
+	    FIXME (animate, "AVI resource found!\n");
+
+	}
+	else {
+	    FIXME (animate, "No AVI resource found!\n");
+	    if (ANIMATE_LoadFile32A (infoPtr, (LPSTR)lParam)) {
+		FIXME (animate, "AVI file found!\n");
+	    }
+	    else {
+		FIXME (animate, "No AVI file found!\n");
+		return FALSE;
+	    }
+	}
     }
     else {
-
 	FIXME (animate, "(%u) empty stub!\n", (WORD)LOWORD(lParam));
 
+	if (ANIMATE_LoadRes32A (infoPtr, hInstance,
+				MAKEINTRESOURCE32A((INT32)lParam))) {
+	    FIXME (animate, "AVI resource found!\n");
+	}
+	else {
+	    FIXME (animate, "No AVI resource found!\n");
+	    return FALSE;
+	}
     }
 
+    ANIMATE_GetAviInfo (infoPtr);
 
     return TRUE;
 }
+
+
+// << ANIMATE_Open32W >>
 
 
 static LRESULT
@@ -131,7 +235,8 @@ ANIMATE_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     ANIMATE_INFO *infoPtr = ANIMATE_GetInfoPtr(wndPtr);
 
 
-
+    /* free avi data */
+    ANIMATE_Free (infoPtr);
 
     /* free animate info data */
     COMCTL32_Free (infoPtr);

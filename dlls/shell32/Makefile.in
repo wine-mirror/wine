@@ -8,6 +8,7 @@ WRCEXTRA  = -A -p $*
 
 C_SRCS = \
 	contmenu.c \
+	dataobject.c \
 	enumidlist.c \
 	folders.c \
 	pidl.c \

@@ -29,7 +29,11 @@
 
 #include <sys/errno.h>
 
+#ifdef HAVE_OSS
+#define MIDI_SEQ "/dev/sequencer"
+#else
 #define MIDI_DEV "/dev/midi"
+#endif
 
 #ifdef SOUND_VERSION
 #define IOCTL(a,b,c)		ioctl(a,b,&c)
@@ -38,40 +42,53 @@
 #endif
 
 typedef struct {
+#ifndef HAVE_OSS
 	int		unixdev;
+#endif
 	int		state;
 	DWORD		bufsize;
-	MIDIOPENDESC	midiDesc;
+	LPMIDIOPENDESC	midiDesc;
 	WORD		wFlags;
 	LPMIDIHDR 	lpQueueHdr;
 	DWORD		dwTotalPlayed;
+#ifdef HAVE_OSS
+	unsigned char	incoming[3];
+	unsigned char	incPrev;
+	char		incLen;
+	DWORD		startTime;
+#endif
 } LINUX_MIDIIN;
 
 typedef struct {
+#ifndef HAVE_OSS
 	int		unixdev;
+#endif
 	int		state;
 	DWORD		bufsize;
-	MIDIOPENDESC	midiDesc;
+	LPMIDIOPENDESC	midiDesc;
 	WORD		wFlags;
 	LPMIDIHDR 	lpQueueHdr;
 	DWORD		dwTotalPlayed;
+#ifdef HAVE_OSS
+	void*		lpExtra;	 	/* according to port type (MIDI, FM...), extra data when needed */
+#endif
 } LINUX_MIDIOUT;
 
 typedef struct {
-	int	nUseCount;          /* Incremented for each shared open */
-	BOOL16	fShareable;         /* TRUE if first open was shareable */
-	WORD	wNotifyDeviceID;    /* MCI device ID with a pending notification */
-	HANDLE16 hCallback;         /* Callback handle for pending notification */
-	HMMIO16	hFile;	            /* mmio file handle open as Element		*/
-	DWORD	dwBeginData;
-	DWORD	dwTotalLen;
-	WORD	wFormat;
-	WORD	nTracks;
-	WORD	nTempo;
+	int		nUseCount;          	/* Incremented for each shared open */
+	BOOL16		fShareable;         	/* TRUE if first open was shareable */
+	WORD		wNotifyDeviceID;    	/* MCI device ID with a pending notification */
+	HANDLE16 	hCallback;         	/* Callback handle for pending notification */
+	HMMIO16		hFile;	            	/* mmio file handle open as Element		*/
+	DWORD		dwBeginData;
+	DWORD		dwTotalLen;
+	WORD		wFormat;
+	WORD		nTracks;
+	WORD		nTempo;
 	MCI_OPEN_PARMS16 openParms;
 /* 	MIDIHDR	MidiHdr; */
 	HLOCAL16	hMidiHdr;
-	WORD	dwStatus;
+	WORD		dwStatus;
 } LINUX_MCIMIDI;
 
 /* function prototypes */

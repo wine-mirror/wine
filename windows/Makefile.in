@@ -23,6 +23,7 @@ C_SRCS = \
 	mdi.c \
 	message.c \
 	msgbox.c \
+	multimon.c \
 	nonclient.c \
 	painting.c \
 	property.c \

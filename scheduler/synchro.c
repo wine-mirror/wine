@@ -13,6 +13,7 @@
 #include "process.h"
 #include "thread.h"
 #include "winerror.h"
+#include "syslevel.h"
 #include "server.h"
 #include "debug.h"
 
@@ -398,3 +399,34 @@ DWORD WINAPI WaitForMultipleObjectsEx( DWORD count, const HANDLE32 *handles,
 {
     return SYNC_DoWait( count, handles, wait_all, timeout, alertable, FALSE );
 }
+
+
+/***********************************************************************
+ *           WIN16_WaitForSingleObject   (KERNEL.460)
+ */
+DWORD WINAPI WIN16_WaitForSingleObject( HANDLE32 handle, DWORD timeout )
+{
+    DWORD retval;
+
+    SYSLEVEL_ReleaseWin16Lock();
+    retval = WaitForSingleObject( handle, timeout );
+    SYSLEVEL_RestoreWin16Lock();
+
+    return retval;
+}
+
+/***********************************************************************
+ *           WIN16_WaitForMultipleObjects   (KERNEL.461)
+ */
+DWORD WINAPI WIN16_WaitForMultipleObjects( DWORD count, const HANDLE32 *handles,
+                                           BOOL32 wait_all, DWORD timeout )
+{
+    DWORD retval;
+
+    SYSLEVEL_ReleaseWin16Lock();
+    retval = WaitForMultipleObjects( count, handles, wait_all, timeout );
+    SYSLEVEL_RestoreWin16Lock();
+
+    return retval;
+}
+

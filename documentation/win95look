@@ -1,8 +1,8 @@
-Win95 interface code is being introduced.
+Win95/Win98 interface code is being introduced.
 
 Instead of compiling Wine for Win3.1 vs. Win95 using #define switches,
 the code now looks in a special [Tweaks.Layout] section of wine.conf
-for a "Win95Look=true" entry.
+for a "WineLook=Win95" or "WineLook=Win98" entry.
 
 A few new sections and a number of entries have been added to the
 wine.conf file -- these are for debugging the Win95 tweaks only and may
@@ -20,13 +20,5 @@ AnsiVar.xxx                   # Same parameters for the Ansi variable typeface
 SystemFixed.xxx               # Same parameters for the System fixed typeface
 
 [Tweak.Layout]
-Win95Look=[true|false]        # Enables/disables the Win95 look and feel
-MenuBarItemTopNudge=<pixels>  # Nudges the menu bar items down/up
-MenuBarItemLeftNudge=<pixels> # Nudges the menu bar items left/right
-MenuItemTopNudge=<pixels>     # Nudges the menu items down/up
-MenuItemLeftNudge=<pixels>    # Nudges the menu items left/right
-MenuHighlightTopNudge=<pixels> # Nudges the top of the highlight bar
-MenuHighlightLeftNudge=<pixels> # Nudges the left side of the highlight bar
-MenuHighlightRightNudge=<pixels> # Nudges the right side of the highlight bar
-MenuHighlightBottomNudge=<pixels> # Nudges the bottom of the highlight bar
+WineLook=[Win31|Win95|Win98]  # Changes Wine's look and feel
 

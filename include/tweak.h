@@ -11,13 +11,17 @@
 
 #include "wintypes.h"
 
+typedef enum
+{
+    WIN31_LOOK,
+    WIN95_LOOK,
+    WIN98_LOOK
+} WINE_LOOK;
+
+
 int  TWEAK_Init(void);
 int  TWEAK_CheckConfiguration(void);
-void  TWEAK_DrawReliefRect95(HDC32, RECT32 const *);
-void  TWEAK_DrawRevReliefRect95(HDC32, RECT32 const *);
-void  TWEAK_DrawMenuSeparatorHoriz95(HDC32, UINT32, UINT32, UINT32);
-void  TWEAK_DrawMenuSeparatorVert95(HDC32, UINT32, UINT32, UINT32);
-extern int  TWEAK_Win95Look;
-extern int  TWEAK_WineInitialized;
+
+extern WINE_LOOK TWEAK_WineLook;
 
 #endif /* __WINE_TWEAK_H */

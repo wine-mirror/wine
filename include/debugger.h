@@ -11,6 +11,7 @@
 #include "selectors.h"
 #include "sig_context.h"
 #include "pe_image.h"
+#include "miscemu.h"
 
 #define STEP_FLAG 0x100 /* single step flag */
 
@@ -85,13 +86,20 @@ struct  wine_locals {
 typedef struct wine_locals WineLocals;
 
 
+#define DBG_V86_MODULE(seg) ((seg)>>16)
+#define IS_SELECTOR_V86(seg) DBG_V86_MODULE(seg)
+
 #define DBG_FIX_ADDR_SEG(addr,default) { \
       if ((addr)->seg == 0xffffffff) (addr)->seg = (default); \
+      if (!IS_SELECTOR_V86((addr)->seg)) \
       if (IS_SELECTOR_SYSTEM((addr)->seg)) (addr)->seg = 0; }
 
 #define DBG_ADDR_TO_LIN(addr) \
+    (IS_SELECTOR_V86((addr)->seg) \
+      ? (char*)(DOSMEM_MemoryBase(DBG_V86_MODULE((addr)->seg)) + \
+         ((((addr)->seg)&0xFFFF)<<4)+(addr)->off) : \
     (IS_SELECTOR_SYSTEM((addr)->seg) ? (char *)(addr)->off \
-      : (char *)PTR_SEG_OFF_TO_LIN((addr)->seg,(addr)->off))
+      : (char *)PTR_SEG_OFF_TO_LIN((addr)->seg,(addr)->off)))
 
 #define DBG_CHECK_READ_PTR(addr,len) \
     (!DEBUG_IsBadReadPtr((addr),(len)) || \
@@ -310,6 +318,7 @@ extern void DEBUG_NukePath(void);
 extern void DEBUG_Disassemble( const DBG_ADDR *, const DBG_ADDR*, int offset );
 
   /* debugger/dbg.y */
+extern void ctx_debug( int signal, CONTEXT *regs );
 extern void wine_debug( int signal, SIGCONTEXT *regs );
 
 #endif  /* __WINE_DEBUGGER_H */

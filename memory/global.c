@@ -3,6 +3,7 @@
  *
  * Copyright 1995 Alexandre Julliard
  */
+/* 0xffff sometimes seems to mean: CURRENT_DS */
 
 #include <sys/types.h>
 #include <stdlib.h>
@@ -173,6 +174,30 @@ BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle )
     return TRUE;
 }
 
+/***********************************************************************
+ *           GLOBAL_MoveBlock
+ */
+BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, const void *ptr, DWORD size )
+{
+    WORD sel;
+    GLOBALARENA *pArena;
+
+    if (!handle) return TRUE;
+    sel = GlobalHandleToSel( handle ); 
+    if (!VALID_HANDLE(sel))
+    	return FALSE;
+    pArena = GET_ARENA_PTR(sel);
+    if (pArena->selCount != 1)
+        return FALSE;
+
+    pArena->base = (DWORD)ptr;
+    pArena->size = size;
+
+    SELECTOR_MoveBlock( sel, ptr );
+    SetSelectorLimit( sel, size-1 );
+
+    return TRUE;
+}
 
 /***********************************************************************
  *           GLOBAL_Alloc

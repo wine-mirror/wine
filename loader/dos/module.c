@@ -19,12 +19,14 @@
 #include "winbase.h"
 #include "module.h"
 #include "task.h"
+#include "selectors.h"
 #include "file.h"
 #include "ldt.h"
 #include "process.h"
 #include "miscemu.h"
 #include "debug.h"
 #include "dosexe.h"
+#include "options.h"
 
 #ifdef MZ_SUPPORTED
 
@@ -36,34 +38,11 @@
 #undef MZ_MAPSELF
 
 #define BIOS_DATA_SEGMENT 0x40
-#define BIOS_SEGMENT BIOSSEG /* BIOSSEG is defined to 0xf000 in sys/vm86.h */
-#define STUB_SEGMENT BIOS_SEGMENT
 #define START_OFFSET 0
 #define PSP_SIZE 0x10
 
 #define SEG16(ptr,seg) ((LPVOID)((BYTE*)ptr+((DWORD)(seg)<<4)))
 #define SEGPTR16(ptr,segptr) ((LPVOID)((BYTE*)ptr+((DWORD)SELECTOROF(segptr)<<4)+OFFSETOF(segptr)))
-
-#define STUB(x) (0x90CF00CD|(x<<8)) /* INT x; IRET; NOP */
-
-static void MZ_InitSystem( LPVOID lpImage )
-{
- SEGPTR*isr=lpImage;
- DWORD*stub=SEG16(lpImage,STUB_SEGMENT);
- int x;
- 
- /* initialize ISR table to make it point to INT stubs in BIOSSEG;
-    Linux only sends INTs performed from or destined to BIOSSEG at us,
-    if the int_revectored table is empty.
-    This allows DOS programs to hook interrupts, as well as use their
-    familiar retf tricks to call them... */
- /* (note that the hooking might not actually work since DOS3Call stuff
-     isn't fully integrated with the DOS VM yet...) */
- TRACE(module,"Initializing interrupt vector table\n");
- for (x=0; x<256; x++) isr[x]=PTR_SEG_OFF_TO_SEGPTR(STUB_SEGMENT,x*4);
- TRACE(module,"Initializing interrupt stub table\n");
- for (x=0; x<256; x++) stub[x]=STUB(x);
-}
 
 static void MZ_InitPSP( LPVOID lpPSP, LPCSTR cmdline, LPCSTR env )
 {
@@ -85,6 +64,36 @@ static void MZ_InitPSP( LPVOID lpPSP, LPCSTR cmdline, LPCSTR env )
  } else psp->cmdLine[1]='\r';
  /* FIXME: integrate the memory stuff from Wine (msdos/dosmem.c) */
  /* FIXME: integrate the PDB stuff from Wine (loader/task.c) */
+}
+
+static char enter_pm[]={
+ 0x50,           /* pushw %ax */
+ 0x52,           /* pushw %dx */
+ 0x55,           /* pushw %bp */
+ 0x89,0xE5,      /* movw %sp,%bp */
+/* get return CS */
+ 0x8B,0x56,0x08, /* movw 8(%bp),%dx */
+/* just call int 31 here to get into protected mode... */
+/* it'll check whether it was called from dpmi_seg... */
+ 0xCD,0x31,      /* int 0x31 */
+/* fixup our stack; return address will be lost, but we won't worry quite yet */
+ 0x8E,0xD0,      /* movw %ax,%ss */
+ 0x89,0xEC,      /* movw %bp,%sp */
+/* set return CS */
+ 0x89,0x56,0x08, /* movw %dx,8(%bp) */
+ 0x5D,           /* popw %bp */
+ 0x5A,           /* popw %dx */
+ 0x58,           /* popw %ax */
+ 0xCB            /* retf */
+};
+
+static void MZ_InitDPMI( LPDOSTASK lpDosTask )
+{
+ LPBYTE start=DOSMEM_GetBlock(lpDosTask->hModule,sizeof(enter_pm),&(lpDosTask->dpmi_seg));
+ 
+ lpDosTask->dpmi_sel = SELECTOR_AllocBlock( start, sizeof(enter_pm), SEGMENT_CODE, FALSE, TRUE );
+
+ memcpy(start,enter_pm,sizeof(enter_pm));
 }
 
 int MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
@@ -118,10 +127,9 @@ int MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
  pModule->dos_image=lpDosTask->img;
 
  /* initialize the memory */
- MZ_InitSystem(lpDosTask->img);
  TRACE(module,"Initializing DOS memory structures\n");
- /* FIXME: make DOSMEM_Init copy static dosmem memory into newly allocated shared memory */
  DOSMEM_Init(lpDosTask->hModule);
+ MZ_InitDPMI(lpDosTask);
  return 32;
 }
 
@@ -195,7 +203,18 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR cmdline, LPCSTR env,
   }
  }
 
+ /* initialize module variables */
+ pModule->cs=lpDosTask->load_seg+mz_header.e_cs;
+ pModule->ip=mz_header.e_ip;
+ pModule->ss=lpDosTask->load_seg+mz_header.e_ss;
+ pModule->sp=mz_header.e_sp;
+ pModule->self_loading_sel=lpDosTask->psp_seg;
+
+ TRACE(module,"entry point: %04x:%04x\n",pModule->cs,pModule->ip);
+
  /* initialize vm86 struct */
+ /* note: this may be moved soon, to be able to remove VM86 from lpDosTask
+    (got tired of all those compiler warnings, and don't like the system dependency) */
  memset(&lpDosTask->VM86,0,sizeof(lpDosTask->VM86));
  lpDosTask->VM86.regs.cs=lpDosTask->load_seg+mz_header.e_cs;
  lpDosTask->VM86.regs.eip=mz_header.e_ip;
@@ -210,7 +229,6 @@ static int MZ_LoadImage( HFILE16 hFile, LPCSTR cmdline, LPCSTR env,
 
 int MZ_InitTask( LPDOSTASK lpDosTask )
 {
- extern char * DEBUG_argv0;
  int read_fd[2],write_fd[2];
  pid_t child;
  char *fname,*farg,arg[16],fproc[64],path[256],*fpath;
@@ -250,9 +268,13 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
     if ((errno==EINTR)||(errno==EAGAIN)) continue;
     /* failure */
     ERR(module,"dosmod has failed to initialize\n");
+    if (lpDosTask->mm_name[0]!=0) unlink(lpDosTask->mm_name);
     return 0;
    }
   } while (0);
+  /* the child has now mmaped the temp file, it's now safe to unlink.
+   * do it here to avoid leaving a mess in /tmp if/when Wine crashes... */
+  if (lpDosTask->mm_name[0]!=0) unlink(lpDosTask->mm_name);
   /* all systems are now go */
  } else {
   /* child process */
@@ -266,7 +288,7 @@ int MZ_InitTask( LPDOSTASK lpDosTask )
   /* hmm, they didn't install properly */
   execl("loader/dos/dosmod",fname,farg,NULL);
   /* last resort, try to find it through argv[0] */
-  fpath=strrchr(strcpy(path,DEBUG_argv0),'/');
+  fpath=strrchr(strcpy(path,Options.argv0),'/');
   if (fpath) {
    strcpy(fpath,"/loader/dos/dosmod");
    execl(path,fname,farg,NULL);
@@ -323,11 +345,6 @@ HINSTANCE16 MZ_CreateProcess( LPCSTR name, LPCSTR cmdline, LPCSTR env,
    return err;
   }
   err = MZ_InitTask( lpDosTask );
-  if (lpDosTask->mm_name[0]!=0) {
-   /* we unlink the temp file here to avoid leaving a mess in /tmp
-      if/when Wine crashes; the mapping still remains open, though */
-   unlink(lpDosTask->mm_name);
-  }
   if (err<32) {
    MZ_KillModule( lpDosTask );
    /* FIXME: cleanup hModule */
@@ -351,6 +368,8 @@ void MZ_KillModule( LPDOSTASK lpDosTask )
  close(lpDosTask->read_pipe);
  close(lpDosTask->write_pipe);
  kill(lpDosTask->task,SIGTERM);
+ if (lpDosTask->dpmi_sel)
+  UnMapLS(PTR_SEG_OFF_TO_SEGPTR(lpDosTask->dpmi_sel,0));
 }
 
 int MZ_RunModule( LPDOSTASK lpDosTask )

@@ -19,7 +19,12 @@
 #include "server/request.h"
 #include "server/thread.h"
 
-
+/* check that the string is NULL-terminated and that the len is correct */
+#define CHECK_STRING(func,str,len) \
+  do { if (((str)[(len)-1] || strlen(str) != (len)-1)) \
+         fatal_protocol_error( "%s: invalid string '.*s'\n", (func), (len), (str) ); \
+     } while(0)
+ 
 struct thread *current = NULL;  /* thread handling the current request */
 
 /* complain about a protocol error and terminate the client connection */
@@ -107,8 +112,8 @@ DECL_HANDLER(new_thread)
     if (!(new_thread = create_thread( new_fd, req->pid, &reply.thandle,
                                       &reply.phandle )))
     {
-        err = ERROR_NOT_ENOUGH_MEMORY;
         close( new_fd );
+        err = ERROR_OUTOFMEMORY;
         goto done;
     }
     reply.tid = new_thread;
@@ -139,11 +144,7 @@ DECL_HANDLER(init_thread)
     }
     current->state    = RUNNING;
     current->unix_pid = req->unix_pid;
-    if (!(current->name = malloc( len + 1 )))
-    {
-        SET_ERROR( ERROR_NOT_ENOUGH_MEMORY );
-        goto done;
-    }
+    if (!(current->name = mem_alloc( len + 1 ))) goto done;
     memcpy( current->name, data, len );
     current->name[len] = '\0';
     CLEAR_ERROR();
@@ -256,3 +257,118 @@ DECL_HANDLER(select)
                               len, req->count );
     sleep_on( current, req->count, (int *)data, req->flags, req->timeout );
 }
+
+/* create an event */
+DECL_HANDLER(create_event)
+{
+    struct create_event_reply reply = { -1 };
+    struct object *obj;
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "create_event", name, len );
+
+    obj = create_event( name, req->manual_reset, req->initial_state );
+    if (obj)
+    {
+        reply.handle = alloc_handle( current->process, obj, EVENT_ALL_ACCESS, req->inherit );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* do an event operation */
+DECL_HANDLER(event_op)
+{
+    switch(req->op)
+    {
+    case PULSE_EVENT:
+        pulse_event( req->handle );
+        break;
+    case SET_EVENT:
+        set_event( req->handle );
+        break;
+    case RESET_EVENT:
+        reset_event( req->handle );
+        break;
+    default:
+        fatal_protocol_error( "event_op: invalid operation %d\n", req->op );
+    }
+    send_reply( current, -1, 0 );
+}
+
+/* create a mutex */
+DECL_HANDLER(create_mutex)
+{
+    struct create_mutex_reply reply = { -1 };
+    struct object *obj;
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "create_mutex", name, len );
+
+    obj = create_mutex( name, req->owned );
+    if (obj)
+    {
+        reply.handle = alloc_handle( current->process, obj, MUTEX_ALL_ACCESS, req->inherit );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* release a mutex */
+DECL_HANDLER(release_mutex)
+{
+    if (release_mutex( req->handle )) CLEAR_ERROR();
+    send_reply( current, -1, 0 );
+}
+
+/* create a semaphore */
+DECL_HANDLER(create_semaphore)
+{
+    struct create_semaphore_reply reply = { -1 };
+    struct object *obj;
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "create_semaphore", name, len );
+
+    obj = create_semaphore( name, req->initial, req->max );
+    if (obj)
+    {
+        reply.handle = alloc_handle( current->process, obj, SEMAPHORE_ALL_ACCESS, req->inherit );
+        release_object( obj );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* release a semaphore */
+DECL_HANDLER(release_semaphore)
+{
+    struct release_semaphore_reply reply;
+    if (release_semaphore( req->handle, req->count, &reply.prev_count )) CLEAR_ERROR();
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+
+/* open a handle to a named object (event, mutex, semaphore) */
+DECL_HANDLER(open_named_obj)
+{
+    struct open_named_obj_reply reply;
+    char *name = (char *)data;
+    if (!len) name = NULL;
+    else CHECK_STRING( "open_named_obj", name, len );
+
+    switch(req->type)
+    {
+    case OPEN_EVENT:
+        reply.handle = open_event( req->access, req->inherit, name );
+        break;
+    case OPEN_MUTEX:
+        reply.handle = open_mutex( req->access, req->inherit, name );
+        break;
+    case OPEN_SEMAPHORE:
+        reply.handle = open_semaphore( req->access, req->inherit, name );
+        break;
+    default:
+        fatal_protocol_error( "open_named_obj: invalid type %d\n", req->type );
+    }
+    send_reply( current, -1, 1, &reply, sizeof(reply) );
+}
+

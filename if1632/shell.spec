@@ -32,7 +32,7 @@ type	win16
 102 pascal16 RegisterShellHook(word word) RegisterShellHook
 103 pascal   ShellHookProc(word word long) ShellHookProc
 
-#  157 RESTARTDIALOG
+157 stub RESTARTDIALOG
 #  166 PICKICONDLG
 
 262 pascal16 DriveType(long) GetDriveType16

@@ -33,24 +33,32 @@
 #include "xmalloc.h"
 #include "version.h"
 
+/* when adding new languages look at ole/ole2nls.c 
+ * for proper iso name and Windows code (add 0x0400 
+ * to the code listed there)
+ */
 const WINE_LANGUAGE_DEF Languages[] =
 {
     {"En",0x0409},	/* LANG_En */
     {"Es",0x040A},	/* LANG_Es */
     {"De",0x0407},	/* LANG_De */
     {"No",0x0414},	/* LANG_No */
-    {"Fr",0x0400},	/* LANG_Fr */
+    {"Fr",0x040C},	/* LANG_Fr */
     {"Fi",0x040B},	/* LANG_Fi */
     {"Da",0x0406},	/* LANG_Da */
-    {"Cz",0x0405},	/* LANG_Cz */
-    {"Eo",0x0425},	/* LANG_Eo */
+    {"Cs",0x0405},	/* LANG_Cs */
+    {"Eo",0x048f},	/* LANG_Eo */
     {"It",0x0410},	/* LANG_It */
     {"Ko",0x0412},	/* LANG_Ko */
-    {"Hu",0x0436},	/* LANG_Hu */
+    {"Hu",0x040e},	/* LANG_Hu */
     {"Pl",0x0415},	/* LANG_Pl */
-    {"Po",0x0416},	/* LANG_Po */
-    {"Sw",0x0417},	/* LANG_Sw */
-    {"Ca",0x0426},	/* LANG_Ca */
+    {"Pt",0x0416},	/* LANG_Pt */
+    {"Sv",0x041d},	/* LANG_Sv */
+    {"Ca",0x0403},	/* LANG_Ca */
+/* for compatibility whith non-iso names previously used */
+    {"Sw",0x041d},      /* LANG_Sv */
+    {"Cz",0x0405},      /* LANG_Cs */
+    {"Po",0x0416},      /* LANG_Pt */
     {NULL,0}
 };
 
@@ -86,7 +94,8 @@ struct options Options =
     LANG_En,
 #endif
     FALSE,          /* Managed windows */
-    FALSE           /* Perfect graphics */
+    FALSE,          /* Perfect graphics */
+    NULL            /* Alternate config file name */
 };
 
 
@@ -109,7 +118,8 @@ static XrmOptionDescRec optionsTable[] =
     { "-failreadonly",  ".failreadonly",    XrmoptionNoArg,  (caddr_t)"on" },
     { "-mode",          ".mode",            XrmoptionSepArg, (caddr_t)NULL },
     { "-managed",       ".managed",         XrmoptionNoArg,  (caddr_t)"off"},
-    { "-winver",        ".winver",          XrmoptionSepArg, (caddr_t)NULL }
+    { "-winver",        ".winver",          XrmoptionSepArg, (caddr_t)NULL },
+    { "-config",        ".config",          XrmoptionSepArg, (caddr_t)NULL }
 };
 
 #define NB_OPTIONS  (sizeof(optionsTable) / sizeof(optionsTable[0]))
@@ -120,6 +130,7 @@ static XrmOptionDescRec optionsTable[] =
   "\n" \
   "Options:\n" \
   "    -backingstore   Turn on backing store\n" \
+  "    -config name    Specify config file to use\n" \
   "    -debug          Enter debugger before starting application\n" \
   "    -debugmsg name  Turn debugging-messages on or off\n" \
   "    -depth n        Change the depth to use for multiple-depth screens\n" \
@@ -130,7 +141,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -fixedmap       Use a \"standard\" color map\n" \
   "    -help           Show this help message\n" \
   "    -iconic         Start as an icon\n" \
-  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It,Ko,\n                    Hu,Pl,Po,Sw,Ca)\n" \
+  "    -language xx    Set the language (one of Ca,Cs,Da,De,En,Eo,Es,Fi,Fr,Hu,It,\n                    Ko,No,Pl,Pt,Sv)\n" \
   "    -managed        Allow the window manager to manage created windows\n" \
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
   "    -name name      Set the application name\n" \
@@ -502,6 +513,8 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 
       if (MAIN_GetResource( db, ".winver", &value))
           VERSION_ParseVersion( (char*)value.addr );
+      if (MAIN_GetResource( db, ".config", &value))
+         Options.configFileName = xstrdup((char *)value.addr);
 }
 
 
@@ -1189,6 +1202,6 @@ BOOL32 WINAPI SystemParametersInfo32W( UINT32 uAction, UINT32 uParam,
 */
 FARPROC16 WINAPI FileCDR(FARPROC16 x)
 {
-	FIXME(file,"(%8x): stub\n", (int) x);
+	FIXME(file,"(0x%8x): stub\n", (int) x);
 	return (FARPROC16)TRUE;
 }

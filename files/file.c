@@ -119,6 +119,7 @@ static BOOL32 FILE_Read(K32OBJ *ptr, LPVOID lpBuffer, DWORD nNumberOfChars,
             FILE_SetDosError();
             return FALSE;
 	}
+	file->pos += result;
 	*lpNumberOfChars = result;
 	return TRUE;
 }
@@ -156,7 +157,8 @@ static BOOL32 FILE_Write(K32OBJ *ptr, LPCVOID lpBuffer, DWORD nNumberOfChars,
 		result = write(file->unix_handle, lpBuffer, nNumberOfChars);
 		if (result != -1) {
 			*lpNumberOfChars = result;
-                        return TRUE;
+			file->pos += result;
+			return TRUE;
 		}
 		if (errno != EINTR) {
 			FILE_SetDosError();

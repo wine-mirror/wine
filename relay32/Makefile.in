@@ -29,6 +29,7 @@ DLLS = \
 	olecli32.spec \
 	oledlg.spec \
 	olesvr32.spec \
+	psapi.spec \
 	rasapi32.spec \
 	shell32.spec \
 	tapi32.spec \

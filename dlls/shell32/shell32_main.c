@@ -89,9 +89,10 @@ LPWSTR* WINAPI CommandLineToArgvW(LPWSTR cmdline,LPDWORD numargs)
  * http://premium.microsoft.com/msdn/library/techart/msdn193.htm
  */
 
-void WINAPI Control_RunDLL (HWND32 hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4)
-{ FIXME(shell, "(%08x, %p, \"%s\", %08lx)\n",
-	hwnd, code ? code : "(null)", cmd ? cmd : "(null)", arg4);
+void WINAPI Control_RunDLL( HWND32 hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4 )
+{
+    FIXME(shell, "(0x%08x, %p, %s, 0x%08lx): stub\n", hwnd, code,
+          debugstr_a(cmd), arg4);
 }
 
 /*************************************************************************
@@ -108,10 +109,10 @@ void WINAPI Control_RunDLL (HWND32 hwnd, LPCVOID code, LPCSTR cmd, DWORD arg4)
 BOOL32 WINAPI Shell_GetImageList(HIMAGELIST * imglist1,HIMAGELIST * imglist2)
 {	WARN(shell,"(%p,%p):semi-stub.\n",imglist1,imglist2);
 	if (imglist1)
-	{ *imglist1=ShellBigIconList;
+	{ *imglist1=ShellSmallIconList;
 	}
 	if (imglist2)
-	{ *imglist2=ShellSmallIconList;
+	{ *imglist2=ShellBigIconList;
 	}
 
 	return TRUE;
@@ -351,7 +352,7 @@ UINT32 WINAPI SHAppBarMessage32(DWORD msg, PAPPBARDATA data)
  *
  */
 LPITEMIDLIST WINAPI SHBrowseForFolder32A (LPBROWSEINFO32A lpbi)
-{ FIXME (shell, "(%lx,%s) empty stub!\n", (DWORD)lpbi, lpbi->lpszTitle);
+{ FIXME (shell, "(0x%lx,%s): stub\n", (DWORD)lpbi, debugstr_a(lpbi->lpszTitle));
   return NULL;
 }
 

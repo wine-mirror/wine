@@ -1,5 +1,6 @@
 SUBDIRS = \
 	clock \
+	control \
 	notepad \
 	progman \
 	regtest \

@@ -356,7 +356,7 @@ REGS_ENTRYPOINT(FT_Thunk)
 
     CONTEXT context16;
     DWORD i, argsize;
-    LPBYTE newstack;
+    LPBYTE newstack, oldstack;
     THDB *thdb = THREAD_Current();
 
     memcpy(&context16,context,sizeof(context16));
@@ -368,15 +368,17 @@ REGS_ENTRYPOINT(FT_Thunk)
 
     argsize  = EBP_reg(context)-ESP_reg(context)-0x44;
     newstack = ((LPBYTE)THREAD_STACK16(thdb))-argsize;
+    oldstack = (LPBYTE)ESP_reg(context)+4;
 
-    memcpy( newstack, (LPBYTE)ESP_reg(context)+4, argsize );
+    memcpy( newstack, oldstack, argsize );
 
     for (i = 0; i < 32; i++)	/* NOTE: What about > 32 arguments? */
 	if (mapESPrelative & (1 << i))
 	{
 	    SEGPTR *arg = (SEGPTR *)(newstack + 2*i);
 	    *arg = PTR_SEG_OFF_TO_SEGPTR(SELECTOROF(thdb->cur_stack), 
-					 *(LPBYTE *)arg - newstack);
+                                         OFFSETOF(thdb->cur_stack) - argsize
+					 + (*(LPBYTE *)arg - oldstack));
 	}
 
     EAX_reg(context) = Callbacks->CallRegisterShortProc( &context16, argsize );
@@ -821,6 +823,16 @@ VOID WINAPI ThunkInitSL(
 }
 
 /**********************************************************************
+ *           SSInit		KERNEL.700
+ * RETURNS
+ *	TRUE for success.
+ */
+BOOL32 WINAPI SSInit()
+{
+    return TRUE;
+}
+
+/**********************************************************************
  *           SSOnBigStack	KERNEL32.87
  * Check if thunking is initialized (ss selector set up etc.)
  * We do that differently, so just return TRUE.
@@ -896,10 +908,19 @@ DWORD WINAPIV SSCall(
 }
 
 /**********************************************************************
- * 		KERNEL_619		(KERNEL)
+ * 		InitCBClient		(KERNEL.623)
+ */
+WORD WINAPI InitCBClient(DWORD x)
+{
+    FIXME(thunk,"(0x%08lx): stub\n",x);
+    return TRUE;
+}
+
+/**********************************************************************
+ * 		RegisterCBClient	(KERNEL.619)
  * Seems to store y and z depending on x in some internal lists...
  */
-WORD WINAPI _KERNEL_619(WORD x,DWORD y,DWORD z)
+WORD WINAPI RegisterCBClient(WORD x,DWORD y,DWORD z)
 {
     FIXME(thunk,"(0x%04x,0x%08lx,0x%08lx): stub\n",x,y,z);
     return x;
@@ -952,6 +973,17 @@ SEGPTR WINAPI _KERNEL_608(LPVOID target, SEGPTR relay, DWORD dummy)
  */
 VOID WINAPI _KERNEL_611(DWORD relay, DWORD target)
 {
+}
+
+/**********************************************************************
+ * 		KERNEL_612		(KERNEL)
+ */
+BOOL16 WINAPI _KERNEL_612(LPBYTE target)
+{
+    return    target[ 0] == 0x66 && target[ 1] == 0x68 
+           && target[ 6] == 0x66 && target[ 2] == 0x68
+           && target[12] == 0x66 && target[13] == 0x58 
+           && target[14] == 0xCB;
 }
 
 /**********************************************************************
@@ -1019,39 +1051,10 @@ FreeSLCallback(
 
 
 /**********************************************************************
- * 		KERNEL_471		(KERNEL.471)
- * RETURNS
- * 	Seems to return the uncrypted current process pointer. [Not 100% sure].
- */
-LPVOID WINAPI
-_KERNEL_471() {
-	return PROCESS_Current();
-}
-
-/**********************************************************************
- * 		KERNEL_472		(KERNEL.472)
- * something like GetCurrenthInstance.
- * RETURNS
- *	the hInstance
- */
-VOID WINAPI
-_KERNEL_472(CONTEXT *context) {
-	FIXME(win32,"(0x%08lx): stub\n",EAX_reg(context));
-	if (!EAX_reg(context)) {
-		TDB *pTask = (TDB*)GlobalLock16(GetCurrentTask());
-		AX_reg(context)=pTask->hInstance;
-		return;
-	}
-	if (!HIWORD(EAX_reg(context)))
-		return; /* returns the passed value */
-	/* hmm ... fixme */
-}
-
-/**********************************************************************
- * 		KERNEL_475		(KERNEL.475)
+ * 		GetTEBSelectorFS	(KERNEL.475)
  * 	Set the 16-bit %fs to the 32-bit %fs (current TEB selector)
  */
-VOID WINAPI _KERNEL_475(CONTEXT *context) 
+VOID WINAPI GetTEBSelectorFS( CONTEXT *context ) 
 {
     GET_FS( FS_reg(context) );
 }

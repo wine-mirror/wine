@@ -1,7 +1,7 @@
 name	msvfw32
 type	win32
 
-  2 stub    VideoForWindowsVersion
+  2 stdcall VideoForWindowsVersion() VideoForWindowsVersion
   3 stub    DrawDibBegin
   4 stub    DrawDibChangePalette
   5 stub    DrawDibClose
@@ -9,7 +9,7 @@ type	win32
   7 stub    DrawDibEnd
   8 stub    DrawDibGetBuffer
   9 stub    DrawDibGetPalette
- 10 stub    DrawDibOpen
+ 10 stdcall DrawDibOpen() DrawDibOpen32
  11 stub    DrawDibProfileDisplay
  12 stub    DrawDibRealize
  13 stub    DrawDibSetPalette
@@ -27,19 +27,19 @@ type	win32
  25 stub    ICCompressorFree
  26 stub    ICDecompress
  27 stub    ICDraw
- 28 stub    ICDrawBegin
+ 28 stdcall ICDrawBegin(long long long long long long long long long ptr long long long long long long) ICDrawBegin32
  29 stub    ICGetDisplayFormat
- 30 stub    ICGetInfo
+ 30 stdcall ICGetInfo(long ptr long) ICGetInfo32
  31 stub    ICImageCompress
  32 stub    ICImageDecompress
- 33 stub    ICInfo
+ 33 stdcall ICInfo(long long ptr) ICInfo32
  34 stub    ICInstall
  35 stub    ICLocate
  36 stub    ICMThunk32
- 37 stub    ICOpen
+ 37 stdcall ICOpen(long long long) ICOpen32
  38 stub    ICOpenFunction
  39 stub    ICRemove
- 40 stub    ICSendMessage
+ 40 stdcall ICSendMessage(long long long long) ICSendMessage32
  41 stub    ICSeqCompressFrame
  42 stub    ICSeqCompressFrameEnd
  43 stub    ICSeqCompressFrameStart

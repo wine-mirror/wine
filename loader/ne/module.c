@@ -83,9 +83,9 @@ void NE_DumpModule( HMODULE16 hModule )
     DUMP( "Segment table:\n" );
     pSeg = NE_SEG_TABLE( pModule );
     for (i = 0; i < pModule->seg_count; i++, pSeg++)
-        DUMP( "%02x: pos=%d size=%d flags=%04x minsize=%d sel=%04x\n",
+        DUMP( "%02x: pos=%d size=%d flags=%04x minsize=%d hSeg=%04x\n",
 	      i + 1, pSeg->filepos, pSeg->size, pSeg->flags,
-	      pSeg->minsize, pSeg->selector );
+	      pSeg->minsize, pSeg->hSeg );
 
       /* Dump the resource table */
     DUMP( "---\n" );
@@ -332,7 +332,7 @@ FARPROC16 NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal )
     }
 
     if (sel == 0xfe) sel = 0xffff;  /* constant entry */
-    else sel = (WORD)(DWORD)NE_SEG_TABLE(pModule)[sel-1].selector;
+    else sel = GlobalHandleToSel(NE_SEG_TABLE(pModule)[sel-1].hSeg);
     if (sel==0xffff)
 	return (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( sel, offset );
     if (!fnSNOOP16_GetProcAddress16)
@@ -1168,5 +1168,19 @@ REGS_ENTRYPOINT(MapHInstLS) {
  *		MapHInstLS			(KERNEL32.518)
  */
 REGS_ENTRYPOINT(MapHInstSL) {
+	EAX_reg(context) = MapHModuleSL(EAX_reg(context));
+}
+
+/***************************************************************************
+ *		WIN16_MapHInstLS		(KERNEL.472)
+ */
+VOID WINAPI WIN16_MapHInstLS( CONTEXT *context ) {
+	EAX_reg(context) = MapHModuleLS(EAX_reg(context));
+}
+
+/***************************************************************************
+ *		WIN16_MapHInstSL		(KERNEL.473)
+ */
+VOID WINAPI WIN16_MapHInstSL( CONTEXT *context ) {
 	EAX_reg(context) = MapHModuleSL(EAX_reg(context));
 }

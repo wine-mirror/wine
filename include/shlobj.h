@@ -30,15 +30,40 @@ typedef struct tagCONTEXTMENU	*LPCONTEXTMENU,	IContextMenu;
 typedef struct tagSHELLEXTINIT	*LPSHELLEXTINIT,IShellExtInit;
 typedef struct tagENUMIDLIST	*LPENUMIDLIST,	IEnumIDList;
 typedef struct tagSHELLFOLDER	*LPSHELLFOLDER,	IShellFolder;
-typedef struct tagSHELLVIEW		*LPSHELLVIEW,	IShellView;
+typedef struct tagSHELLVIEW	*LPSHELLVIEW,	IShellView;
 typedef struct tagSHELLBROWSER	*LPSHELLBROWSER,IShellBrowser;
-
-typedef struct IDataObject		IDataObject,	*LPDATAOBJECT;
-
+typedef struct tagDATAOBJECT	*LPDATAOBJECT,	IDataObject;
+typedef struct tagSHELLICON	*LPSHELLICON,	IShellIcon;
+typedef struct tagDOCKINGWINDOWFRAME	*LPDOCKINGWINDOWFRAME,	IDockingWindowFrame;
+typedef struct tagSERVICEPROVIDER	*LPSERVICEPROVIDER,	IServiceProvider;
+typedef struct tagCOMMDLGBROWSER	*LPCOMMDLGBROWSER,	ICommDlgBrowser;
+typedef struct tagENUMFORMATETC	*LPENUMFORMATETC,	IEnumFORMATETC;
+ 
+typedef struct IAdviseSink		IAdviseSink,	*LPIADVISESINK;
+typedef struct IEnumSTATDATA		IEnumSTATDATA,	*LPENUMSTATDATA;
 /****************************************************************************
 *  SHELL ID
 */
-/* shell32 classids */
+/* strange Objects */
+DEFINE_SHLGUID(IID_IEnumUnknown,	0x00000100L, 0, 0);
+DEFINE_SHLGUID(IID_IEnumString,		0x00000101L, 0, 0);
+DEFINE_SHLGUID(IID_IEnumMoniker,	0x00000102L, 0, 0);
+DEFINE_SHLGUID(IID_IEnumFORMATETC,	0x00000103L, 0, 0);
+DEFINE_SHLGUID(IID_IEnumOLEVERB,	0x00000104L, 0, 0);
+DEFINE_SHLGUID(IID_IEnumSTATDATA,	0x00000105L, 0, 0);
+
+DEFINE_SHLGUID(IID_IPersistStream,	0x00000109L, 0, 0);
+DEFINE_SHLGUID(IID_IPersistStorage,	0x0000010AL, 0, 0);
+DEFINE_SHLGUID(IID_IPersistFile,	0x0000010BL, 0, 0);
+DEFINE_SHLGUID(IID_IPersist,		0x0000010CL, 0, 0);
+DEFINE_SHLGUID(IID_IViewObject,		0x0000010DL, 0, 0);
+DEFINE_SHLGUID(IID_IDataObject,		0x0000010EL, 0, 0);
+
+DEFINE_GUID (IID_IServiceProvider,	0x6D5140C1L, 0x7436, 0x11CE, 0x80, 0x34, 0x00, 0xAA, 0x00, 0x60, 0x09, 0xFA);
+DEFINE_GUID (IID_IDockingWindow,	0x012dd920L, 0x7B26, 0x11D0, 0x8C, 0xA9, 0x00, 0xA0, 0xC9, 0x2D, 0xBF, 0xE8);
+DEFINE_GUID (IID_IDockingWindowSite,	0x2A342FC2L, 0x7B26, 0x11D0, 0x8C, 0xA9, 0x00, 0xA0, 0xC9, 0x2D, 0xBF, 0xE8);
+DEFINE_GUID (IID_IDockingWindowFrame,	0x47D2657AL, 0x7B27, 0x11D0, 0x8C, 0xA9, 0x00, 0xA0, 0xC9, 0x2D, 0xBF, 0xE8);
+
 DEFINE_SHLGUID(CLSID_ShellDesktop,      0x00021400L, 0, 0);
 DEFINE_SHLGUID(CLSID_ShellLink,         0x00021401L, 0, 0);
 /* shell32 formatids */
@@ -51,6 +76,7 @@ DEFINE_SHLGUID(CGID_ShellDocView,       0x000214D1L, 0, 0);
  /* shell32interface ids */
 DEFINE_SHLGUID(IID_INewShortcutHookA,   0x000214E1L, 0, 0);
 DEFINE_SHLGUID(IID_IShellBrowser,       0x000214E2L, 0, 0);
+#define SID_SShellBrowser IID_IShellBrowser
 DEFINE_SHLGUID(IID_IShellView,          0x000214E3L, 0, 0);
 DEFINE_SHLGUID(IID_IContextMenu,        0x000214E4L, 0, 0);
 DEFINE_SHLGUID(IID_IShellIcon,          0x000214E5L, 0, 0);
@@ -94,6 +120,12 @@ typedef struct _STRRET
  * IContextMenu interface
  */
 #define THIS LPCONTEXTMENU this
+
+/* default menu items*/
+#define IDM_EXPLORE  0
+#define IDM_OPEN     1
+#define IDM_RENAME   2
+#define IDM_LAST     IDM_RENAME
 
 /* QueryContextMenu uFlags */
 #define CMF_NORMAL              0x00000000
@@ -204,6 +236,100 @@ struct tagCONTEXTMENU
 };
 
 #undef THIS
+/*****************************************************************************
+ * IData structures
+ */
+typedef struct
+{	DWORD tdSize;
+	WORD tdDriverNameOffset;
+	WORD tdDeviceNameOffset;
+	WORD tdPortNameOffset;
+	WORD tdExtDevmodeOffset;
+	BYTE tdData[ 1 ];
+}   DVTARGETDEVICE32;
+
+typedef WORD CLIPFORMAT32, *LPCLIPFORMAT32;
+
+typedef struct 
+{	DWORD tymed;
+	union 
+	{ HBITMAP32 hBitmap;
+	  /*HMETAFILEPICT32 hMetaFilePict;*/
+	  /*HENHMETAFILE32 hEnhMetaFile;*/
+	  HGLOBAL32 hGlobal;
+	  LPOLESTR32 lpszFileName;
+	  IStream32 *pstm;
+	  IStorage32 *pstg;
+        } u;
+	IUnknown *pUnkForRelease;
+} STGMEDIUM32;   
+ 
+typedef struct 
+{	CLIPFORMAT32 cfFormat;
+	DVTARGETDEVICE32 *ptd;
+	DWORD dwAspect;
+	LONG lindex;
+	DWORD tymed;
+} FORMATETC32, *LPFORMATETC32;
+
+/*****************************************************************************
+ * IEnumFORMATETC interface
+ */
+#define THIS LPENUMFORMATETC this
+
+typedef struct IEnumFORMATETC_VTable 
+{    /* IUnknown methods */
+	STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+	STDMETHOD_(ULONG,AddRef) (THIS) PURE;
+	STDMETHOD_(ULONG,Release) (THIS) PURE;
+
+	/* IEnumFORMATETC methods */
+	STDMETHOD (Next)(THIS_ ULONG celt, FORMATETC32 *rgelt, ULONG *pceltFethed) PURE;
+	STDMETHOD (Skip)(THIS_ ULONG celt) PURE;
+	STDMETHOD (Reset)(THIS) PURE;
+	STDMETHOD (Clone)(THIS_ IEnumFORMATETC ** ppenum) PURE;
+} IEnumFORMATETC_VTable,*LPENUMFORMATETC_VTABLE;
+
+struct tagENUMFORMATETC
+{	LPENUMFORMATETC_VTABLE	lpvtbl;
+	DWORD			 ref;
+        UINT32	posFmt;
+        UINT32	countFmt;
+        LPFORMATETC32 pFmt;
+};
+
+#undef THIS
+
+/*****************************************************************************
+ * IDataObject interface
+ */
+#define THIS LPDATAOBJECT this
+
+typedef struct IDataObject_VTable 
+{	/*** IUnknown methods ***/
+	STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+	STDMETHOD_(ULONG,AddRef) (THIS) PURE;
+	STDMETHOD_(ULONG,Release) (THIS) PURE;
+
+	STDMETHOD (GetData )(THIS_ LPFORMATETC32 pformatetcIn, STGMEDIUM32 *pmedium) PURE;
+	STDMETHOD (GetDataHere)(THIS_ LPFORMATETC32 pformatetc, STGMEDIUM32 *pmedium) PURE;
+        STDMETHOD (QueryGetData)(THIS_ LPFORMATETC32 pformatetc) PURE;
+        STDMETHOD (GetCanonicalFormatEtc)(THIS_ LPFORMATETC32 pformatectIn, LPFORMATETC32 pformatetcOut) PURE;
+        STDMETHOD (SetData)(THIS_ LPFORMATETC32 pformatetc, STGMEDIUM32 *pmedium, BOOL32 fRelease) PURE;
+        STDMETHOD (EnumFormatEtc)(THIS_ DWORD dwDirection, IEnumFORMATETC **ppenumFormatEtc) PURE;
+        STDMETHOD (DAdvise )(THIS_ LPFORMATETC32 *pformatetc, DWORD advf, IAdviseSink *pAdvSink, DWORD *pdwConnection) PURE;
+        STDMETHOD (DUnadvise)(THIS_ DWORD dwConnection) PURE;
+        STDMETHOD (EnumDAdvise)(THIS_ IEnumSTATDATA **ppenumAdvise) PURE;
+} IDataObject_VTable,*LPDATAOBJECT_VTABLE;
+
+struct tagDATAOBJECT
+{	LPDATAOBJECT_VTABLE	lpvtbl;
+	DWORD			 ref;
+};
+
+#undef THIS
+
+
 /*****************************************************************************
  * IShellExtInit interface
  */
@@ -402,19 +528,50 @@ struct tagSHELLFOLDER {
 };
 
 extern LPSHELLFOLDER pdesktopfolder;
+
+/************************
+* Shellfolder API
+*/
+DWORD WINAPI SHGetDesktopFolder(LPSHELLFOLDER *);
 #undef THIS
 
 /************************************************************************
 * IShellBrowser interface
 */
 #define THIS LPSHELLBROWSER this
+/* targets for GetWindow/SendControlMsg */
+#define FCW_STATUS		0x0001
+#define FCW_TOOLBAR		0x0002
+#define FCW_TREE		0x0003
+#define FCW_INTERNETBAR		0x0006
+#define FCW_PROGRESS		0x0008
 
-#define FCW_STATUS      0x0001
-#define FCW_TOOLBAR     0x0002
-#define FCW_TREE        0x0003
-#define FCW_INTERNETBAR 0x0006
-#define FCW_PROGRESS    0x0008
+/* wFlags for BrowseObject*/
+#define SBSP_DEFBROWSER		0x0000
+#define SBSP_SAMEBROWSER	0x0001
+#define SBSP_NEWBROWSER		0x0002
 
+#define SBSP_DEFMODE		0x0000
+#define SBSP_OPENMODE		0x0010
+#define SBSP_EXPLOREMODE	0x0020
+
+#define SBSP_ABSOLUTE		0x0000
+#define SBSP_RELATIVE		0x1000
+#define SBSP_PARENT		0x2000
+#define SBSP_NAVIGATEBACK	0x4000
+#define SBSP_NAVIGATEFORWARD	0x8000
+
+#define SBSP_ALLOW_AUTONAVIGATE		0x10000
+
+#define SBSP_INITIATEDBYHLINKFRAME	0x80000000
+#define SBSP_REDIRECT			0x40000000
+#define SBSP_WRITENOHISTORY		0x08000000
+
+/* uFlage for SetToolbarItems */
+#define FCT_MERGE       0x0001
+#define FCT_CONFIGABLE  0x0002
+#define FCT_ADDTOEND    0x0004
+ 
 typedef struct IShellBrowser_VTable 
 {    // *** IUnknown methods ***
     STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
@@ -536,7 +693,7 @@ typedef struct IShellView_VTable
     STDMETHOD(SaveViewState)(THIS) PURE;
     STDMETHOD(SelectItem)(THIS_ LPCITEMIDLIST pidlItem, UINT32 uFlags) PURE;
     STDMETHOD(GetItemObject)(THIS_ UINT32 uItem, REFIID riid,LPVOID *ppv) PURE;
-} IShellView_VTable,*LPSHELLVIEW_VTABLE;;
+} IShellView_VTable,*LPSHELLVIEW_VTABLE;
 
 struct tagSHELLVIEW 
 { LPSHELLVIEW_VTABLE lpvtbl;
@@ -544,6 +701,7 @@ struct tagSHELLVIEW
   LPITEMIDLIST       mpidl;
   LPSHELLFOLDER      pSFParent;
   LPSHELLBROWSER     pShellBrowser;
+  LPCOMMDLGBROWSER   pCommDlgBrowser;
   HWND32             hWnd;
   HWND32             hWndList;
   FOLDERSETTINGS     FolderSettings;
@@ -553,10 +711,37 @@ struct tagSHELLVIEW
 };
 
 typedef GUID SHELLVIEWID;
-#define SV_CLASS_NAME   ("ShellViewClass")
+#define SV_CLASS_NAME   ("SHELLDLL_DefView")
 
 #undef THIS
+/****************************************************************************
+ * ICommDlgBrowser interface
+ */
+#define THIS LPCOMMDLGBROWSER this
 
+/* for OnStateChange*/
+#define CDBOSC_SETFOCUS     0x00000000
+#define CDBOSC_KILLFOCUS    0x00000001
+#define CDBOSC_SELCHANGE    0x00000002
+#define CDBOSC_RENAME       0x00000003
+
+typedef struct ICommDlgBrowser_VTable
+{   /* IUnknown methods */
+    STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+    STDMETHOD_(ULONG,Release) (THIS) PURE;
+
+    /* ICommDlgBrowser methods */
+    STDMETHOD(OnDefaultCommand) (THIS_  LPSHELLVIEW ppshv) PURE;
+    STDMETHOD(OnStateChange) (THIS_ LPSHELLVIEW ppshv, ULONG uChange) PURE;
+    STDMETHOD(IncludeObject) (THIS_ LPSHELLVIEW ppshv, LPCITEMIDLIST pidl) PURE;
+} ICommDlgBrowser_VTable,*LPCOMMDLGBROWSER_VTABLE;
+
+struct tagCOMMDLGBROWSER
+{ LPCOMMDLGBROWSER_VTABLE lpvtbl;
+  DWORD			     ref;
+};
+#undef THIS
 /****************************************************************************
  * IShellLink interface
  */
@@ -666,7 +851,7 @@ struct IExtractIcon
  */
 
 #define THIS LPSHELLICON this
-typedef struct IShellIcon IShellIcon,*LPSHELLICON;
+
 typedef struct IShellIcon_VTable
 { /*** IUnknown methods ***/
   STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
@@ -677,24 +862,73 @@ typedef struct IShellIcon_VTable
   STDMETHOD(GetIconOf)(THIS_ LPCITEMIDLIST pidl, UINT32 flags, LPINT32 lpIconIndex) PURE;
 } IShellIcon_VTable,*LPSHELLICON_VTABLE;
 
-struct IShellIcon
+struct tagSHELLICON
 { LPSHELLICON_VTABLE lpvtbl;
   DWORD ref;
 };
 #undef THIS
+/****************************************************************************
+ * IDockingWindowFrame interface
+ */
+#define THIS LPDOCKINGWINDOWFRAME this
 
+#define DWFRF_NORMAL		0x0000  /* femove toolbar flags*/
+#define DWFRF_DELETECONFIGDATA	0x0001
+#define DWFAF_HIDDEN		0x0001   /* add tolbar*/
 
+typedef struct IDockingWindowFrame_VTable
+{   STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+    STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+    STDMETHOD_(ULONG,Release) (THIS) PURE;
+
+    /*** IOleWindow methods ***/
+    STDMETHOD(GetWindow) (THIS_ HWND32 * lphwnd) PURE;
+    STDMETHOD(ContextSensitiveHelp) (THIS_ BOOL32 fEnterMode) PURE;
+
+    /*** IDockingWindowFrame methods ***/
+    STDMETHOD(AddToolbar) (THIS_ IUnknown* punkSrc, LPCWSTR pwszItem, DWORD dwAddFlags) PURE;
+    STDMETHOD(RemoveToolbar) (THIS_ IUnknown* punkSrc, DWORD dwRemoveFlags) PURE;
+    STDMETHOD(FindToolbar) (THIS_ LPCWSTR pwszItem, REFIID riid, LPVOID* ppvObj) PURE;
+} IDockingWindowFrame_VTable, *LPDOCKINGWINDOWFRAME_VTABLE;
+
+struct tagDOCKINGWINDOWFRAME
+{ LPDOCKINGWINDOWFRAME_VTABLE lpvtbl;
+  DWORD ref;
+};
+
+#undef THIS
+/****************************************************************************
+ * IServiceProvider interface
+ */
+#define THIS LPSERVICEPROVIDER this
+
+typedef struct IServiceProvider_VTable
+{	/*** IUnknown methods ***/
+	STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+	STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
+	STDMETHOD_(ULONG,Release) (THIS) PURE;
+
+	STDMETHOD(QueryService)(THIS_ REFGUID guidService, REFIID riid, void **ppvObject);
+} IServiceProvider_VTable, *LPSERVICEPROVIDER_VTABLE;
+
+struct tagSERVICEPROVIDER
+{	LPSERVICEPROVIDER_VTABLE lpvtbl;
+	DWORD ref;
+};           
 /****************************************************************************
  * Class constructors
  */
 #ifdef __WINE__
-extern LPCLASSFACTORY IClassFactory_Constructor();
-extern LPCONTEXTMENU IContextMenu_Constructor(LPSHELLFOLDER, LPCITEMIDLIST *, UINT32);
-extern LPSHELLFOLDER IShellFolder_Constructor(LPSHELLFOLDER,LPITEMIDLIST);
-extern LPSHELLVIEW IShellView_Constructor();
-extern LPSHELLLINK IShellLink_Constructor();
-extern LPENUMIDLIST IEnumIDList_Constructor(LPCSTR,DWORD,HRESULT*);
-extern LPEXTRACTICON IExtractIcon_Constructor(LPITEMIDLIST);
+extern LPDATAOBJECT	IDataObject_Constructor();
+extern LPENUMFORMATETC	IEnumFORMATETC_Constructor(UINT32, const FORMATETC32 []);
+
+extern LPCLASSFACTORY	IClassFactory_Constructor();
+extern LPCONTEXTMENU	IContextMenu_Constructor(LPSHELLFOLDER, LPCITEMIDLIST *, UINT32);
+extern LPSHELLFOLDER	IShellFolder_Constructor(LPSHELLFOLDER,LPITEMIDLIST);
+extern LPSHELLVIEW	IShellView_Constructor();
+extern LPSHELLLINK	IShellLink_Constructor();
+extern LPENUMIDLIST	IEnumIDList_Constructor(LPCSTR,DWORD);
+extern LPEXTRACTICON	IExtractIcon_Constructor(LPITEMIDLIST);
 #endif
 /****************************************************************************
  * Shell Execute API

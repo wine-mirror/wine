@@ -11,6 +11,8 @@
 #include "msdos.h"
 #include "miscemu.h"
 #include "module.h"
+#include "task.h"
+#include "dosexe.h"
 /* #define DEBUG_INT */
 #include "debug.h"
 
@@ -32,6 +34,21 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
     {
     case 0x10:
         AL_reg(context) = 0xff; /* share is installed */
+        break;
+
+    case 0x11:  /* Network Redirector / IFSFUNC */
+        switch (AL_reg(context))
+        {
+        case 0x00:  /* Install check */
+            /* not installed */
+            break;
+        case 0x80:  /* Enhanced services - Install check */
+            /* not installed */
+            break;
+        default:
+	    INT_BARF( context, 0x2f );
+            break;
+        }
         break;
 
     case 0x12:
@@ -131,16 +148,49 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
             /* return nothing -> NetWare not installed */
             break;
         default:
-            SET_CFLAG(context);
+	    INT_BARF( context, 0x2f );
             break;
         }
         break;
     case 0xb7:  /* append */
         AL_reg(context) = 0; /* not installed */
         break;
+    case 0xb8:  /* network */
+        switch (AL_reg(context))
+        {
+        case 0x00:  /* Install check */
+            /* not installed */
+            break;
+        default:
+	    INT_BARF( context, 0x2f );
+            break;
+        }
+        break;
     case 0xbd:  /* some Novell network install check ??? */
         AX_reg(context) = 0xa5a5; /* pretend to have Novell IPX installed */
 	break;
+    case 0xbf:  /* REDIRIFS.EXE */
+        switch (AL_reg(context))
+        {
+        case 0x00:  /* Install check */
+            /* not installed */
+            break;
+        default:
+	    INT_BARF( context, 0x2f );
+            break;
+        }
+        break;
+    case 0xd7:  /* Banyan Vines */
+        switch (AL_reg(context))
+        {
+        case 0x01:  /* Install check - Get Int Number */
+            /* not installed */
+            break;
+        default:
+	    INT_BARF( context, 0x2f );
+            break;
+        }
+        break;
     case 0xfa:  /* Watcom debugger check, returns 0x666 if installed */
         break;
     default:
@@ -200,10 +250,8 @@ static void do_int2f_16( CONTEXT *context )
                                         VXD_BASE + BX_reg(context) );
         if (!addr)  /* not supported */
         {
-	    WARN(int,"Application attempted to access VxD %04x\n",
+	    ERR(int,"Accessing unknown VxD %04x - Expect a failure now.\n",
                      BX_reg(context) );
-	    WARN(int,"This device is not known to Wine.");
-	    WARN(int,"Expect a failure now\n");
         }
 	ES_reg(context) = SELECTOROF(addr);
 	DI_reg(context) = OFFSETOF(addr);
@@ -213,21 +261,28 @@ static void do_int2f_16( CONTEXT *context )
         AX_reg(context) = 0;  /* Running under DPMI */
         break;
 
-    /* FIXME: is this right?  Specs say that this should only be callable
-       in real (v86) mode which we never enter.  */
-    /* FIXME: we do now, and this breaks pkunzip */
     case 0x87: /* DPMI installation check */
+#if 1   /* DPMI still breaks pkunzip */
         if (ISV86(context)) break; /* so bail out for now if in v86 mode */
+#endif
         {
+            TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+            NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
 	    SYSTEM_INFO si;
 
+            GlobalUnlock16( GetCurrentTask() );
 	    GetSystemInfo(&si);
 	    AX_reg(context) = 0x0000; /* DPMI Installed */
             BX_reg(context) = 0x0001; /* 32bits available */
             CL_reg(context) = si.wProcessorLevel;
             DX_reg(context) = 0x005a; /* DPMI major/minor 0.90 */
             SI_reg(context) = 0;      /* # of para. of DOS extended private data */
-            ES_reg(context) = 0;      /* ES:DI is DPMI switch entry point */
+#ifdef MZ_SUPPORTED                   /* ES:DI is DPMI switch entry point */
+            if (pModule && pModule->lpDosTask)
+                ES_reg(context) = pModule->lpDosTask->dpmi_seg;
+            else
+#endif
+                ES_reg(context) = 0;
             DI_reg(context) = 0;
             break;
         }

@@ -1766,7 +1766,7 @@ static void EDIT_SetRectNP(WND *wnd, EDITSTATE *es, LPRECT32 rc)
 	CopyRect32(&es->format_rect, rc);
 	if (es->style & WS_BORDER) {
 		INT32 bw = GetSystemMetrics32(SM_CXBORDER) + 1;
-		if(!TWEAK_Win95Look)
+		if(TWEAK_WineLook == WIN31_LOOK)
 			bw += 2;
 		es->format_rect.left += bw;
 		es->format_rect.top += bw;
@@ -2066,8 +2066,9 @@ static INT32 EDIT_EM_GetLine(WND *wnd, EDITSTATE *es, INT32 line, LPSTR lpch)
 			return 0;
 	} else
 		line = 0;
-	src = es->text + EDIT_EM_LineIndex(wnd, es, line);
-	len = MIN(*(WORD *)lpch, EDIT_EM_LineLength(wnd, es, line));
+	i = EDIT_EM_LineIndex(wnd, es, line);
+	src = es->text + i;
+	len = MIN(*(WORD *)lpch, EDIT_EM_LineLength(wnd, es, i));
 	for (i = 0 ; i < len ; i++) {
 		*lpch = *src;
 		src++;
@@ -3366,7 +3367,7 @@ static LRESULT EDIT_WM_KeyDown(WND *wnd, EDITSTATE *es, INT32 key, DWORD key_dat
 			EDIT_MovePageDown_ML(wnd, es, shift);
 		break;
 	case VK_BACK:
-		if (!(es->style & ES_READONLY) && !control)
+		if (!(es->style & ES_READONLY) && !control) {
 			if (es->selection_start != es->selection_end)
 				EDIT_WM_Clear(wnd, es);
 			else {
@@ -3375,9 +3376,10 @@ static LRESULT EDIT_WM_KeyDown(WND *wnd, EDITSTATE *es, INT32 key, DWORD key_dat
 				EDIT_MoveBackward(wnd, es, TRUE);
 				EDIT_WM_Clear(wnd, es);
 			}
+		}
 		break;
 	case VK_DELETE:
-		if (!(es->style & ES_READONLY) && !(shift && control))
+		if (!(es->style & ES_READONLY) && !(shift && control)) {
 			if (es->selection_start != es->selection_end) {
 				if (shift)
 					EDIT_WM_Cut(wnd, es);
@@ -3401,6 +3403,7 @@ static LRESULT EDIT_WM_KeyDown(WND *wnd, EDITSTATE *es, INT32 key, DWORD key_dat
 					EDIT_WM_Clear(wnd, es);
 				}
 			}
+		}
 		break;
 	case VK_INSERT:
 		if (shift) {
@@ -3538,13 +3541,19 @@ static LRESULT EDIT_WM_NCCreate(WND *wnd, LPCREATESTRUCT32A cs)
 	if (!(es = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*es))))
 		return FALSE;
 	*(EDITSTATE **)wnd->wExtra = es;
-	if (!(es->heap = HeapCreate(0, 0x10000, 0)))
-		return FALSE;
-	es->style = cs->style;
 
+       /*
+        *      Note: since the EDITSTATE has not been fully initialized yet,
+        *            we can't use any API calls that may send
+        *            WM_XXX messages before WM_NCCREATE is completed.
+        */
+
+ 	if (!(es->heap = HeapCreate(0, 0x10000, 0)))
+ 		return FALSE;
+ 	es->style = cs->style;
+ 
 	if ((es->style & WS_BORDER) && !(es->style & WS_DLGFRAME))
-		SetWindowLong32A(wnd->hwndSelf, GWL_STYLE, 
-				es->style & ~WS_BORDER);
+		wnd->dwStyle &= ~WS_BORDER;
 
 	if (es->style & ES_MULTILINE) {
 		es->buffer_size = BUFSTART_MULTI;
@@ -3756,7 +3765,7 @@ static void EDIT_WM_SetFont(WND *wnd, EDITSTATE *es, HFONT32 font, BOOL32 redraw
 	if (font)
 		SelectObject32(dc, old_font);
 	ReleaseDC32(wnd->hwndSelf, dc);
-	if (font & TWEAK_Win95Look)
+	if (font && (TWEAK_WineLook > WIN31_LOOK))
 		EDIT_EM_SetMargins(wnd, es, EC_LEFTMARGIN | EC_RIGHTMARGIN,
 				   EC_USEFONTINFO, EC_USEFONTINFO);
 	if (es->style & ES_MULTILINE)
@@ -3782,6 +3791,13 @@ static void EDIT_WM_SetFont(WND *wnd, EDITSTATE *es, HFONT32 font, BOOL32 redraw
  *
  *	WM_SETTEXT
  *
+ * NOTES
+ *  For multiline controls (ES_MULTILINE), reception of WM_SETTEXT triggers:
+ *  The modified flag is reset. No notifications are sent.
+ *
+ *  For single-line controls, reception of WM_SETTEXT triggers:
+ *  The modified flag is reset. EN_UPDATE and EN_CHANGE notifications are sent.
+ *
  */
 static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPCSTR text)
 {
@@ -3794,8 +3810,12 @@ static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPCSTR text)
 		EDIT_EM_ReplaceSel(wnd, es, FALSE, "");
 	}
 	es->x_offset = 0;
+	if (es->style & ES_MULTILINE) {
+		es->flags &= ~EF_UPDATE;
+	} else {
+		es->flags |= EF_UPDATE;
+	}
 	es->flags &= ~EF_MODIFIED;
-	es->flags &= ~EF_UPDATE;
 	EDIT_EM_SetSel(wnd, es, 0, 0, FALSE);
 	EDIT_EM_ScrollCaret(wnd, es);
 }

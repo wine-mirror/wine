@@ -96,15 +96,33 @@ close(IPCS);
 sub kill_subprocesses {
 	local($killedalready,%parentof,%kids,$changed,%cmdline);
 
-	# FIXME: Linux ps dependend...
+	# FIXME: substitute ps command that shows PID,PPID and COMMAND
+	# On Linux' latest procps this is "ps aulc"
 	#
-	open(PSAUX,"ps --format pid,ppid,comm|");
+	open(PSAUX,"ps aulc|");
 	# lookup all processes, remember their parents and cmdlines.
 	%parentof=();
-	while (<PSAUX>) {
-		if (/\s*(\d*)\s*(\d*)\s*(\S*)/) {
-			$parentof{$1}=$2;
-			$cmdline{$1}=$3;
+	$xline = <PSAUX>; # fmtline 
+	@psformat = split(/\s\s*/,$xline);
+
+	psline: while (<PSAUX>) {
+		chop;
+		@psline = split(/\s\s*/);
+		$pid=0;
+		for ($i=0;$i<=$#psformat;$i++) {
+			if ($psformat[$i] =~ /COMMAND/) {
+				die unless $pid;
+				$cmdline{$pid}=$psline[$i];
+				break;
+			}
+			if ($psformat[$i] =~ /PPID/ ) {
+				$parentof{$pid} = $psline[$i];
+				next;
+			}
+			if ($psformat[$i] =~ /PID/ ) {
+				$pid = $psline[$i];
+				next;
+			}
 		}
 	}
 	close(PSAUX);

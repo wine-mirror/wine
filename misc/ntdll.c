@@ -624,7 +624,7 @@ DWORD WINAPI NtQuerySystemInformation( DWORD x1, DWORD x2, DWORD x3, DWORD x4 )
  */
 DWORD WINAPI NtQueryObject( DWORD x1, DWORD x2 ,DWORD x3, DWORD x4, DWORD x5 )
 {
-    FIXME(ntdll,"(%lx,%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4,x5);
+    FIXME(ntdll,"(0x%lx,%lx,%lx,%lx,%lx): stub\n",x1,x2,x3,x4,x5);
     return 0;
 }
 

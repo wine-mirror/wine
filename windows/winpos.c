@@ -223,14 +223,15 @@ void WINAPI GetWindowRect16( HWND16 hwnd, LPRECT16 rect )
 /***********************************************************************
  *           GetWindowRect32   (USER32.308)
  */
-void WINAPI GetWindowRect32( HWND32 hwnd, LPRECT32 rect ) 
+BOOL32 WINAPI GetWindowRect32( HWND32 hwnd, LPRECT32 rect ) 
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd ); 
-    if (!wndPtr) return;
+    if (!wndPtr) return FALSE;
     
     *rect = wndPtr->rectWindow;
     if (wndPtr->dwStyle & WS_CHILD)
 	MapWindowPoints32( wndPtr->parent->hwndSelf, 0, (POINT32 *)rect, 2 );
+    return TRUE;
 }
 
 

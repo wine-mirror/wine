@@ -63,7 +63,8 @@ typedef struct
     WORD      size;      /* Segment size on disk */
     WORD      flags;     /* Segment flags */
     WORD      minsize;   /* Min. size of segment in memory */
-    HANDLE16  selector;  /* Selector of segment in memory */
+    HANDLE16  hSeg;      /* Selector or handle (selector - 1) */
+                         /* of segment in memory */
 } SEGTABLEENTRY;
 
 
@@ -143,6 +144,7 @@ extern HMODULE32 MODULE_FindModule32( struct _PDB32 *process, LPCSTR path );
 extern HMODULE32 MODULE_CreateDummyModule( const OFSTRUCT *ofs );
 extern FARPROC16 MODULE_GetWndProcEntry16( const char *name );
 extern FARPROC16 WINAPI WIN32_GetProcAddress16( HMODULE32 hmodule, LPCSTR name );
+extern SEGPTR WINAPI HasGPHandler( SEGPTR address );
 
 /* loader/ne/module.c */
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );

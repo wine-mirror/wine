@@ -1448,7 +1448,7 @@ BOOL16 WINAPI PrintDlg16( SEGPTR printdlg )
  */
 BOOL32 WINAPI PrintDlg32A( LPPRINTDLG32A printdlg )
 {
-    FIXME(commdlg, "empty stub\n" );
+    FIXME(commdlg, "(%p): stub\n",printdlg);
     /* Altough returning FALSE is theoricaly the right thing
      * most programs check for a printer at startup, and if
      * none is found popup PrintDlg32A(), if it fails the program

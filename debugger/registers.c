@@ -156,6 +156,8 @@ void DEBUG_SetSigContext( const SIGCONTEXT *sigcontext )
     GET_GS( GS_reg(&DEBUG_context) );
     GS_reg(&DEBUG_context) &= 0xffff;
 #endif
+    if (ISV86(&DEBUG_context))
+        (char*)V86BASE(&DEBUG_context) = DOSMEM_MemoryBase(0);
 }
 
 
@@ -298,6 +300,8 @@ BOOL32 DEBUG_ValidateRegisters(void)
 {
     WORD cs, ds;
 
+    if (ISV86(&DEBUG_context)) return TRUE;
+
 /* Check that a selector is a valid ring-3 LDT selector, or a NULL selector */
 #define CHECK_SEG(seg,name) \
     if (((seg) & ~3) && \
@@ -319,6 +323,7 @@ BOOL32 DEBUG_ValidateRegisters(void)
 
     /* Check that CS and SS are not NULL */
 
+    if (!ISV86(&DEBUG_context))
     if (!(CS_reg(&DEBUG_context) & ~3))
     {
         fprintf( stderr, "*** Invalid value for CS register: %04x\n",

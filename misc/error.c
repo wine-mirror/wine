@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "windows.h"
+#include "stackframe.h"
 #include "debug.h"
 
 #define ErrorString(manifest) { manifest, # manifest }
@@ -153,3 +154,34 @@ void WINAPI LogParamError(UINT16 uErr, FARPROC16 lpfn, LPVOID lpvParam)
 	 */
 	MSG("(%s, %p, %p)\n", GetParamErrorString(uErr), lpfn, lpvParam);
 }
+
+/***********************************************************************
+*	LogParamErrorRegs (KERNEL.327)
+*/
+void WINAPI LogParamErrorRegs( CONTEXT *context )
+{
+	UINT16 uErr = BX_reg( context );
+        FARPROC16 lpfn = (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( CS_reg(context),
+                                                           EIP_reg(context) );
+        LPVOID lpvParam = (LPVOID)MAKELONG( AX_reg( context ), 
+                                            CX_reg( context ) );
+	
+	LogParamError( uErr, lpfn, lpvParam );
+
+	if (!(uErr & ERR_WARNING))
+	{
+		/* Abort current procedure: Unwind stack frame and jump
+		   to error handler (location at [bp-2]) */
+
+		WORD *stack = PTR_SEG_OFF_TO_LIN( SS_reg( context ), 
+						  BP_reg( context ));
+		SP_reg( context ) = BP_reg( context ) - 2;
+		BP_reg( context ) = stack[0] & 0xfffe;
+
+		IP_reg( context ) = stack[-1];
+
+		EAX_reg( context ) = ECX_reg( context ) = EDX_reg( context ) = 0;
+		ES_reg( context) = 0;
+	}
+}
+

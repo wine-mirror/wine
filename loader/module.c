@@ -456,12 +456,35 @@ BOOL32 WINAPI CreateProcess32A( LPCSTR lpApplicationName, LPSTR lpCommandLine,
 
     if (lpApplicationName)
         lstrcpyn32A(name, lpApplicationName, sizeof(name) - 4);
-    else
-    {
-        char *ptr = strchr(lpCommandLine, ' ');
-        int len = (ptr? ptr-lpCommandLine : strlen(lpCommandLine)) + 1;
-        if (len > sizeof(name) - 4) len = sizeof(name) - 4;
-        lstrcpyn32A(name, lpCommandLine, len);
+    else {
+        char	*ptr;
+        int	len;
+
+	/* Take care off .exes with spaces in their names */
+	ptr = strchr(lpCommandLine, ' ');
+	do {
+	    len = (ptr? ptr-lpCommandLine : strlen(lpCommandLine)) + 1;
+	    if (len > sizeof(name) - 4) len = sizeof(name) - 4;
+	    lstrcpyn32A(name, lpCommandLine, len);
+	    if (!strchr(name, '\\') && !strchr(name, '.'))
+		strcat(name, ".exe");
+	    fprintf(stderr,"looking for: %s\n",name);
+	    if (GetFileAttributes32A(name)!=-1)
+	    	break;
+	    /* if there is a space and no file found yet, include the word
+	     * up to the next space too. If there is no next space, just
+	     * use the first word.
+	     */
+	    if (ptr) {
+	    	ptr = strchr(ptr+1, ' ');
+	    } else {
+	        ptr = strchr(lpCommandLine, ' ');
+		len = (ptr? ptr-lpCommandLine : strlen(lpCommandLine)) + 1;
+		if (len > sizeof(name) - 4) len = sizeof(name) - 4;
+		lstrcpyn32A(name, lpCommandLine, len);
+		break;
+	    }
+	} while (1);
     }
 
     if (!strchr(name, '\\') && !strchr(name, '.'))
@@ -613,14 +636,22 @@ DWORD WINAPI GetModuleFileName32A(
         DWORD size		/* [in] size of filenamebuffer */
 ) {                   
     WINE_MODREF *wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
+    char *p;
 
     if (!wm) /* can happen on start up or the like */
     	return 0;
 
     /* FIXME: we should probably get a real long name, but wm->longname
      * is currently a UNIX filename!
+     * Use the module name to at least get the long version of the filename.
      */
     lstrcpyn32A( lpFileName, wm->shortname, size );
+    if ( (p = strrchr( lpFileName, '\\' )) ) {
+      p++;
+      size -= (p-lpFileName);
+      lstrcpyn32A( p, wm->modname, size);
+    }
+       
     TRACE(module, "%s\n", lpFileName );
     return strlen(lpFileName);
 }                   
@@ -704,7 +735,7 @@ HMODULE32 WINAPI LoadLibraryEx32W(LPCWSTR libnameW,HFILE32 hfile,DWORD flags)
  */
 BOOL32 WINAPI FreeLibrary32(HINSTANCE32 hLibModule)
 {
-    FIXME(module,"(%08x): stub\n", hLibModule);
+    FIXME(module,"(0x%08x): stub\n", hLibModule);
     return TRUE;  /* FIXME */
 }
 
@@ -1008,3 +1039,44 @@ LPIMAGE_NT_HEADERS WINAPI RtlImageNtHeader(HMODULE32 hModule)
     if (!wm || (wm->type != MODULE32_PE)) return (LPIMAGE_NT_HEADERS)0;
     return PE_HEADER(wm->module);
 }
+
+
+/***************************************************************************
+ *              HasGPHandler                    (KERNEL.338)
+ */
+
+#pragma pack(1)
+typedef struct _GPHANDLERDEF
+{
+    WORD selector;
+    WORD rangeStart;
+    WORD rangeEnd;
+    WORD handler;
+} GPHANDLERDEF;
+#pragma pack(4)
+
+SEGPTR WINAPI HasGPHandler( SEGPTR address )
+{
+    HMODULE16 hModule;
+    SEGPTR gpPtr;
+    GPHANDLERDEF *gpHandler;
+   
+    if (    (hModule = FarGetOwner( SELECTOROF(address) )) != 0
+         && (gpPtr = (SEGPTR)WIN32_GetProcAddress16( hModule, "__GP" )) != 0
+         && !IsBadReadPtr16( gpPtr, sizeof(GPHANDLERDEF) )
+         && (gpHandler = PTR_SEG_TO_LIN( gpPtr )) != NULL )
+    {
+        while (gpHandler->selector)
+        {
+            if (    SELECTOROF(address) == gpHandler->selector
+                 && OFFSETOF(address)   >= gpHandler->rangeStart
+                 && OFFSETOF(address)   <  gpHandler->rangeEnd  )
+                return PTR_SEG_OFF_TO_SEGPTR( gpHandler->selector,
+                                              gpHandler->handler );
+            gpHandler++;
+        }
+    }
+
+    return 0;
+}
+

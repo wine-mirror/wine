@@ -62,8 +62,8 @@ extern void K32OBJ_DecCount( K32OBJ *ptr );
 extern BOOL32 K32OBJ_IsValid( K32OBJ *ptr, K32OBJ_TYPE type );
 extern BOOL32 K32OBJ_AddName( K32OBJ *obj, LPCSTR name );
 extern K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
-                              DWORD access, SECURITY_ATTRIBUTES *sa,
-                              HANDLE32 *handle );
+                              int server_handle, DWORD access,
+                              SECURITY_ATTRIBUTES *sa, HANDLE32 *handle );
 extern K32OBJ *K32OBJ_FindName( LPCSTR name );
 extern K32OBJ *K32OBJ_FindNameType( LPCSTR name, K32OBJ_TYPE type );
 

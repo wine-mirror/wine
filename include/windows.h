@@ -1053,6 +1053,7 @@ typedef DWORD COLORREF;
 #define COLOR_BTNTEXT		   18
 #define COLOR_INACTIVECAPTIONTEXT  19
 #define COLOR_BTNHIGHLIGHT         20
+/* win95 colors */
 #define COLOR_3DDKSHADOW           21
 #define COLOR_3DLIGHT              22
 #define COLOR_INFOTEXT             23
@@ -1063,6 +1064,11 @@ typedef DWORD COLORREF;
 #define COLOR_3DHIGHLIGHT          COLOR_BTNHIGHLIGHT
 #define COLOR_3DHILIGHT            COLOR_BTNHIGHLIGHT
 #define COLOR_BTNHILIGHT           COLOR_BTNHIGHLIGHT
+/* win98 colors */
+#define COLOR_ALTERNATEBTNFACE         25  /* undocumented, constant's name unknown */
+#define COLOR_HOTLIGHT                 26
+#define COLOR_GRADIENTACTIVECAPTION    27
+#define COLOR_GRADIENTINACTIVECAPTION  28
 
   /* WM_CTLCOLOR values */
 #define CTLCOLOR_MSGBOX             0
@@ -1076,6 +1082,15 @@ typedef DWORD COLORREF;
 #define ICM_OFF   1
 #define ICM_ON    2
 #define ICM_QUERY 3
+
+  /* Bounds Accumulation APIs */
+#define DCB_RESET       0x0001
+#define DCB_ACCUMULATE  0x0002
+#define DCB_DIRTY       DCB_ACCUMULATE
+#define DCB_SET         (DCB_RESET | DCB_ACCUMULATE)
+#define DCB_ENABLE      0x0004
+#define DCB_DISABLE     0x0008
+
 
   /* Bitmaps */
 
@@ -2050,8 +2065,14 @@ DECL_WINELIB_TYPE(LPLOGPEN)
 #define SM_SLOWMACHINE	      73
 #define SM_MIDEASTENABLED     74
 #define SM_MOUSEWHEELPRESENT  75
+#define SM_XVIRTUALSCREEN     76
+#define SM_YVIRTUALSCREEN     77
+#define SM_CXVIRTUALSCREEN    78
+#define SM_CYVIRTUALSCREEN    79
+#define SM_CMONITORS          80
+#define SM_SAMEDISPLAYFORMAT  81
+#define SM_CMETRICS           83
 
-#define SM_CMETRICS           76
 
   /* Device-independent bitmaps */
 
@@ -6293,6 +6314,15 @@ typedef struct _DllVersionInfo {
     DWORD dwPlatformID;
 } DLLVERSIONINFO;
 
+typedef struct _SEGINFO {
+    UINT16    offSegment;
+    UINT16    cbSegment;
+    UINT16    flags;
+    UINT16    cbAlloc;
+    HGLOBAL16 h;
+    UINT16    alignShift;
+    UINT16    reserved[2];
+} SEGINFO;
 
 
 #pragma pack(4)
@@ -6338,7 +6368,7 @@ HANDLE16    WINAPI GetCodeHandle(FARPROC16);
 INT16       WINAPI GetCommError(INT16,LPCOMSTAT);
 UINT16      WINAPI GetCommEventMask(INT16,UINT16);
 HBRUSH16    WINAPI GetControlBrush(HWND16,HDC16,UINT16);
-VOID        WINAPI GetCodeInfo(FARPROC16,LPVOID);
+VOID        WINAPI GetCodeInfo(FARPROC16,SEGINFO*);
 HFONT16     WINAPI GetCurLogFont(HDC16);
 HANDLE16    WINAPI GetCurrentPDB(void);
 DWORD       WINAPI GetCurrentPosition(HDC16);
@@ -6515,6 +6545,9 @@ BOOL32      WINAPI DestroyAcceleratorTable(HACCEL32);
 BOOL32      WINAPI DisableThreadLibraryCalls(HMODULE32);
 BOOL32      WINAPI DosDateTimeToFileTime(WORD,WORD,LPFILETIME);
 BOOL32      WINAPI DuplicateHandle(HANDLE32,HANDLE32,HANDLE32,HANDLE32*,DWORD,BOOL32,DWORD);
+BOOL32      WINAPI EnumDateFormats32A(DATEFMT_ENUMPROC32A lpDateFmtEnumProc, LCID Locale, DWORD dwFlags);
+BOOL32      WINAPI EnumDateFormats32W(DATEFMT_ENUMPROC32W lpDateFmtEnumProc, LCID Locale, DWORD dwFlags);
+#define     EnumDateFormats WINELIB_NAME_AW(EnumDateFormats)
 INT32       WINAPI EnumPropsEx32A(HWND32,PROPENUMPROCEX32A,LPARAM);
 INT32       WINAPI EnumPropsEx32W(HWND32,PROPENUMPROCEX32W,LPARAM);
 #define     EnumPropsEx WINELIB_NAME_AW(EnumPropsEx)
@@ -6538,6 +6571,9 @@ BOOL32      WINAPI EnumSystemLocales32A(LOCALE_ENUMPROC32A,DWORD);
 BOOL32      WINAPI EnumSystemLocales32W(LOCALE_ENUMPROC32W,DWORD);
 #define     EnumSystemLocales WINELIB_NAME_AW(EnumSystemLocales)
 BOOL32      WINAPI EnumThreadWindows(DWORD,WNDENUMPROC32,LPARAM);
+BOOL32      WINAPI EnumTimeFormats32A(TIMEFMT_ENUMPROC32A lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags);
+BOOL32      WINAPI EnumTimeFormats32W(TIMEFMT_ENUMPROC32W lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags);
+#define     EnumTimeFormats WINELIB_NAME_AW(EnumTimeFormats)
 VOID        WINAPI ExitProcess(DWORD);
 VOID        WINAPI ExitThread(DWORD);
 BOOL32      WINAPI ExitWindowsEx(UINT32,DWORD);
@@ -7197,7 +7233,7 @@ HBRUSH16    WINAPI CreateDIBPatternBrush16(HGLOBAL16,UINT16);
 HBRUSH32    WINAPI CreateDIBPatternBrush32(HGLOBAL32,UINT32);
 #define     CreateDIBPatternBrush WINELIB_NAME(CreateDIBPatternBrush)
 HBITMAP16   WINAPI CreateDIBSection16 (HDC16, BITMAPINFO *, UINT16,
-				       LPVOID **, HANDLE16, DWORD offset);
+				       LPVOID **, HANDLE32, DWORD offset);
 HBITMAP32   WINAPI CreateDIBSection32 (HDC32, BITMAPINFO *, UINT32,
 				       LPVOID **, HANDLE32, DWORD offset);
 #define     CreateDIBSection WINELIB_NAME(CreateDIBSection)
@@ -7651,6 +7687,9 @@ COLORREF    WINAPI GetBkColor32(HDC32);
 INT16       WINAPI GetBkMode16(HDC16);
 INT32       WINAPI GetBkMode32(HDC32);
 #define     GetBkMode WINELIB_NAME(GetBkMode)
+UINT16      WINAPI GetBoundsRect16(HDC16,LPRECT16,UINT16);
+UINT32      WINAPI GetBoundsRect32(HDC32,LPRECT32,UINT32);
+#define     GetBoundsRect WINELIB_NAME(GetBoundsRect)
 HWND16      WINAPI GetCapture16(void);
 HWND32      WINAPI GetCapture32(void);
 #define     GetCapture WINELIB_NAME(GetCapture)
@@ -7833,6 +7872,10 @@ INT16       WINAPI GetKeyNameText16(LONG,LPSTR,INT16);
 INT32       WINAPI GetKeyNameText32A(LONG,LPSTR,INT32);
 INT32       WINAPI GetKeyNameText32W(LONG,LPWSTR,INT32);
 #define     GetKeyNameText WINELIB_NAME_AW(GetKeyNameText)
+INT16       WINAPI GetKeyboardLayoutName16(LPSTR);
+INT32       WINAPI GetKeyboardLayoutName32A(LPSTR);
+INT32       WINAPI GetKeyboardLayoutName32W(LPWSTR);
+#define     GetKeyboardLayoutName WINELIB_NAME_AW(GetKeyboardLayoutName)
 WORD        WINAPI GetKeyState16(INT16);
 WORD        WINAPI GetKeyState32(INT32);
 #define     GetKeyState WINELIB_NAME(GetKeyState)
@@ -8126,7 +8169,7 @@ BOOL16      WINAPI GetWindowPlacement16(HWND16,LPWINDOWPLACEMENT16);
 BOOL32      WINAPI GetWindowPlacement32(HWND32,LPWINDOWPLACEMENT32);
 #define     GetWindowPlacement WINELIB_NAME(GetWindowPlacement)
 void        WINAPI GetWindowRect16(HWND16,LPRECT16);
-void        WINAPI GetWindowRect32(HWND32,LPRECT32);
+BOOL32      WINAPI GetWindowRect32(HWND32,LPRECT32);
 #define     GetWindowRect WINELIB_NAME(GetWindowRect)
 INT16       WINAPI GetWindowRgn16(HWND16,HRGN16);
 INT32       WINAPI GetWindowRgn32(HWND32,HRGN32);
@@ -8781,6 +8824,9 @@ COLORREF    WINAPI SetBkColor32(HDC32,COLORREF);
 INT16       WINAPI SetBkMode16(HDC16,INT16);
 INT32       WINAPI SetBkMode32(HDC32,INT32);
 #define     SetBkMode WINELIB_NAME(SetBkMode)
+UINT16      WINAPI SetBoundsRect16(HDC16,LPRECT16,UINT16);
+UINT32      WINAPI SetBoundsRect32(HDC32,LPRECT32,UINT32);
+#define     SetBoundsRect WINELIB_NAME(SetBoundsRect)
 HWND16      WINAPI SetCapture16(HWND16);
 HWND32      WINAPI SetCapture32(HWND32);
 #define     SetCapture WINELIB_NAME(SetCapture)

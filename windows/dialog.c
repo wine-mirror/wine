@@ -5,11 +5,10 @@
  */
 
 #include <ctype.h>
-#include <errno.h>
+#include <sys/errno.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include "windows.h"
 #include "dialog.h"
 #include "drive.h"

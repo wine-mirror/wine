@@ -18,26 +18,80 @@ static FARPROC16 INT_Vectors[256];
 
 
 /**********************************************************************
- *	    INT_GetHandler
+ *	    INT_GetPMHandler
  *
- * Return the interrupt vector for a given interrupt.
+ * Return the protected mode interrupt vector for a given interrupt.
  */
-FARPROC16 INT_GetHandler( BYTE intnum )
+FARPROC16 INT_GetPMHandler( BYTE intnum )
 {
     return INT_Vectors[intnum];
 }
 
 
 /**********************************************************************
- *	    INT_SetHandler
+ *	    INT_SetPMHandler
+ *
+ * Set the protected mode interrupt handler for a given interrupt.
+ */
+void INT_SetPMHandler( BYTE intnum, FARPROC16 handler )
+{
+    TRACE(int, "Set protected mode interrupt vector %02x <- %04x:%04x\n",
+                 intnum, HIWORD(handler), LOWORD(handler) );
+    INT_Vectors[intnum] = handler;
+}
+
+
+/**********************************************************************
+ *	    INT_GetRMHandler
+ *
+ * Return the real mode interrupt vector for a given interrupt.
+ */
+FARPROC16 INT_GetRMHandler( BYTE intnum )
+{
+    return ((FARPROC16*)DOSMEM_MemoryBase(0))[intnum];
+}
+
+
+/**********************************************************************
+ *	    INT_SetRMHandler
+ *
+ * Set the real mode interrupt handler for a given interrupt.
+ */
+void INT_SetRMHandler( BYTE intnum, FARPROC16 handler )
+{
+    TRACE(int, "Set real mode interrupt vector %02x <- %04x:%04x\n",
+                 intnum, HIWORD(handler), LOWORD(handler) );
+    ((FARPROC16*)DOSMEM_MemoryBase(0))[intnum] = handler;
+}
+
+
+/**********************************************************************
+ *	    INT_CtxGetHandler
+ *
+ * Return the interrupt vector for a given interrupt.
+ */
+FARPROC16 INT_CtxGetHandler( CONTEXT *context, BYTE intnum )
+{
+    if (ISV86(context))
+        return ((FARPROC16*)V86BASE(context))[intnum];
+    else
+        return INT_GetPMHandler(intnum);
+}
+
+
+/**********************************************************************
+ *	    INT_CtxSetHandler
  *
  * Set the interrupt handler for a given interrupt.
  */
-void INT_SetHandler( BYTE intnum, FARPROC16 handler )
+void INT_CtxSetHandler( CONTEXT *context, BYTE intnum, FARPROC16 handler )
 {
-    TRACE(int, "Set interrupt vector %02x <- %04x:%04x\n",
-                 intnum, HIWORD(handler), LOWORD(handler) );
-    INT_Vectors[intnum] = handler;
+    if (ISV86(context)) {
+        TRACE(int, "Set real mode interrupt vector %02x <- %04x:%04x\n",
+                     intnum, HIWORD(handler), LOWORD(handler) );
+        ((FARPROC16*)V86BASE(context))[intnum] = handler;
+    } else
+        INT_SetPMHandler(intnum, handler);
 }
 
 
@@ -63,10 +117,17 @@ int INT_RealModeInterrupt( BYTE intnum, PCONTEXT context )
         case 0x21:
             DOS3Call(context);
             break;
+        case 0x25:
+            INT_Int25Handler(context);
+            break;
         case 0x2f:
             INT_Int2fHandler(context);
             break;
+        case 0x31:
+            INT_Int31Handler(context);
+            break;
         default:
+            FIXME(int, "Unknown Interrupt in DOS mode: 0x%x\n", intnum);
             return 1;
     }
     return 0;

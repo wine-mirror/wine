@@ -53,24 +53,26 @@ static IEnumIDList_VTable eidlvt =
  *  IEnumIDList_Constructor
  */
 
-LPENUMIDLIST IEnumIDList_Constructor( LPCSTR lpszPath, DWORD dwFlags, HRESULT* pResult)
+LPENUMIDLIST IEnumIDList_Constructor( LPCSTR lpszPath, DWORD dwFlags)
 {	LPENUMIDLIST	lpeidl;
 
 	lpeidl = (LPENUMIDLIST)HeapAlloc(GetProcessHeap(),0,sizeof(IEnumIDList));
+	if (! lpeidl)
+	  return NULL;
+
 	lpeidl->ref = 1;
 	lpeidl->lpvtbl = &eidlvt;
 	lpeidl->mpFirst=NULL;
 	lpeidl->mpLast=NULL;
 	lpeidl->mpCurrent=NULL;
 
-	TRACE(shell,"(%p)->(%s 0x%08lx %p)\n",lpeidl,debugstr_a(lpszPath),dwFlags,pResult);
+	TRACE(shell,"(%p)->(%s flags=0x%08lx)\n",lpeidl,debugstr_a(lpszPath),dwFlags);
 
 	if(!IEnumIDList_CreateEnumList(lpeidl, lpszPath, dwFlags))
-	{ if(pResult)
-	  { *pResult = E_OUTOFMEMORY;
-	    HeapFree(GetProcessHeap(),0,lpeidl);
-	    return NULL;
+	{ if (lpeidl)
+	  { HeapFree(GetProcessHeap(),0,lpeidl);
 	  }
+	  return NULL;	  
 	}
 
 	TRACE(shell,"-- (%p)->()\n",lpeidl);
@@ -214,7 +216,7 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 	CHAR  szDriveName[4];
 	CHAR  szPath[MAX_PATH];
     
-	TRACE(shell,"(%p)->(%s 0x%08lx) \n",this,debugstr_a(lpszPath),dwFlags);
+	TRACE(shell,"(%p)->(path=%s flags=0x%08lx) \n",this,debugstr_a(lpszPath),dwFlags);
 
 	if (lpszPath && lpszPath[0]!='\0')
 	{ strcpy(szPath, lpszPath);

@@ -26,7 +26,7 @@ BOOL32 WINAPI WOWGetDescriptor(SEGPTR segptr,LPLDT_ENTRY ldtent)
 
 
 /***********************************************************************
- *           GetProcessDword    (KERNEL32.18)
+ *           GetProcessDword    (KERNEL32.18) (KERNEL.485)
  * 'Of course you cannot directly access Windows internal structures'
  */
 DWORD WINAPI GetProcessDword(DWORD processid,DWORD action)
@@ -96,6 +96,26 @@ DWORD WINAPI GetProcessDword(DWORD processid,DWORD action)
 		return 0;
 	}
 	/* shouldn't come here */
+}
+
+/***********************************************************************
+ *           SetProcessDword    (KERNEL.484)
+ * 'Of course you cannot directly access Windows internal structures'
+ */
+VOID WINAPI SetProcessDword(DWORD processid,DWORD action,DWORD value)
+{
+	PDB32	*process = processid? PROCESS_IdToPDB( processid )
+                                    : PROCESS_Current();
+
+	action+=56;
+	TRACE(win32,"(%ld,%ld+0x38)\n",processid,action);
+	if (!process || action>56) return;
+
+	switch (action) {
+	default:
+		FIXME(win32,"Unknown offset (%ld)\n",action);
+                break;
+	}
 }
 
 /***********************************************************************

@@ -2759,6 +2759,7 @@ typedef struct {
 	HMIDI16		hMidi;
 	DWORD		dwCallback;
 	DWORD		dwInstance;
+	UINT16	wDevID;
 } MIDIOPENDESC, *LPMIDIOPENDESC;
 
 typedef struct {

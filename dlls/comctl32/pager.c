@@ -169,7 +169,7 @@ PAGER_SetChild (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     SetParent32 (infoPtr->hwndChild, wndPtr->hwndSelf);
     SetWindowPos32 (infoPtr->hwndChild, wndPtr->hwndSelf,
 		    0, 0, 40, 40, SWP_SHOWWINDOW);
-    RedrawWindow32 (wndPtr->hwndSelf, NULL, 0, RDW_INVALIDATE);
+    RedrawWindow32 (wndPtr->hwndSelf, NULL, NULL, RDW_INVALIDATE);
 
     return 0;
 }

@@ -224,7 +224,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32, INT32, LPITEMIDLIST *);
 *  string and path functions
 */
 LPSTR WINAPI PathAddBackslash(LPSTR path);	
-LPSTR WINAPI PathCombine(LPSTR target,LPSTR x1,LPSTR x2);
+LPSTR WINAPI PathCombine(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile);
 LPSTR WINAPI PathRemoveBlanks(LPSTR str);
 LPSTR WINAPI PathFindFilename(LPSTR fn);
 /****************************************************************************

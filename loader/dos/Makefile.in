@@ -14,7 +14,7 @@ PROGRAMS = dosmod
 all: $(MODULE).o $(PROGRAMS)
 
 dosmod: dosmod.c
-	$(CC) $(ALLCFLAGS) -o dosmod dosmod.c
+	$(CC) $(ALLCFLAGS) -o dosmod $(SRCDIR)/dosmod.c
 
 @MAKE_RULES@
 

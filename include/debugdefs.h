@@ -4,9 +4,10 @@
 #include "debugtools.h"
 #endif
 
-#define DEBUG_CHANNEL_COUNT 139
+#define DEBUG_CHANNEL_COUNT 140
 #ifdef DEBUG_RUNTIME
 short debug_msg_enabled[][DEBUG_CLASS_COUNT] = {
+{1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
 {1, 1, 0, 0},
@@ -202,6 +203,7 @@ const char* debug_ch_name[] = {
 "hotkey",
 "icon",
 "imagelist",
+"imm",
 "int",
 "int10",
 "int21",
@@ -227,7 +229,6 @@ const char* debug_ch_name[] = {
 "module",
 "mpr",
 "msg",
-"msvideo",
 "nonclient",
 "ntdll",
 "ole",
@@ -239,6 +240,7 @@ const char* debug_ch_name[] = {
 "profile",
 "progress",
 "prop",
+"psapi",
 "psdrv",
 "rebar",
 "reg",

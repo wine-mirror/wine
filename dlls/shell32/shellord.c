@@ -231,34 +231,40 @@ LPSTR WINAPI PathAppend(LPSTR x1,LPSTR x2) {
  * PathCombine [SHELL32.37]
  * 
  * NOTES
- *     concat_paths(char*target,const char*add);
- *     concats "target\\add" and writes them to target
+ *  if lpszFile='.' skip it
  */
-LPSTR WINAPI PathCombine(LPSTR target,LPSTR x1,LPSTR x2) {
-	char	buf[260];
-  TRACE(shell,"%s %s\n",x1,x2);
-	if (!x2 || !x2[0]) {
-		lstrcpy32A(target,x1);
-		return target;
+LPSTR WINAPI PathCombine(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile) 
+{	TRACE(shell,"%s %s\n",lpszDir,lpszFile);
+
+	if (!lpszFile || !lpszFile[0] || (lpszFile[0]=='.' && !lpszFile[1]) ) 
+	{ strcpy(szDest,lpszDir);
+	  return szDest;
 	}
-	lstrcpy32A(buf,x1);
-	PathAddBackslash(buf); /* append \ if not there */
-	lstrcat32A(buf,x2);
-	lstrcpy32A(target,buf);
-	return target;
+	strcpy(szDest,lpszDir);
+	PathAddBackslash(szDest);
+	strcat(szDest,lpszFile);
+	return szDest;
 }
 
 /*************************************************************************
  * PathIsUNC [SHELL32.39]
  * 
  * NOTES
- *     isUNC(const char*path);
+ *     PathIsUNC(char*path);
  */
 BOOL32 WINAPI PathIsUNC(LPCSTR path) {
   TRACE(shell,"%s\n",path);
 	if ((path[0]=='\\') && (path[1]=='\\'))
 		return TRUE;
 	return FALSE;
+}
+/*************************************************************************
+ *  PathIsExe [SHELL32.43]
+ * 
+ */
+BOOL32 WINAPI PathIsExe (LPCSTR path)
+{  TRACE(shell,"path=%s\n",path);
+    return FALSE;
 }
 
 /*************************************************************************
@@ -273,6 +279,17 @@ BOOL32 WINAPI PathFileExists(LPSTR fn) {
     	return FALSE;
     else
     	return TRUE;
+}
+/*************************************************************************
+ * PathMatchSpec [SHELL32.46]
+ * 
+ * NOTES
+ *     used from COMDLG32
+ */
+
+BOOL32 WINAPI PathMatchSpec(LPSTR x, LPSTR y) 
+{	FIXME(shell,"%s %s stub\n",x,y);
+	return TRUE;
 }
 
 /*************************************************************************
@@ -417,7 +434,7 @@ BOOL32 WINAPI PathYetAnotherMakeUniqueName(LPDWORD x,LPDWORD y) {
  */
 DWORD WINAPI
 SHMapPIDLToSystemImageListIndex(LPSHELLFOLDER sh,DWORD y,DWORD z)
-{ FIXME(shell,"(folder=%p,%08lx,%08lx):stub.\n",sh,y,z);
+{ FIXME(shell,"(SF=%p,pidl=%08lx,%08lx):stub.\n",sh,y,z);
   return 0;
 }
 
@@ -872,7 +889,8 @@ HRESULT WINAPI SHRunConrolPanel (DWORD x, DWORD z)
  */
 BOOL32 WINAPI ShellExecuteEx32A (LPSHELLEXECUTEINFO32A sei)
 { 	CHAR szTemp[MAX_PATH];
-  	FIXME(shell,"%p stub\n",sei);
+
+  	FIXME(shell,"(%p): stub\n",sei);
 
 	if (sei->fMask & SEE_MASK_IDLIST)
 	{ SHGetPathFromIDList32A (sei->lpIDList,szTemp);

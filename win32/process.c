@@ -62,14 +62,49 @@ BOOL32 WINAPI SetThreadAffinityMask(HANDLE32 hThread, DWORD dwThreadAffinityMask
  *  ContinueDebugEvent [KERNEL32.146]
  */
 BOOL32 WINAPI ContinueDebugEvent(DWORD pid,DWORD tid,DWORD contstatus) {
-    FIXME(win32,"(%ld,%ld,%ld): stub\n",pid,tid,contstatus);
+    FIXME(win32,"(0x%lx,%ld,%ld): stub\n",pid,tid,contstatus);
 	return TRUE;
+}
+
+/*********************************************************************
+ *      Process_ClockTimeToFileTime
+ *      (olorin@fandra.org, 20-Sep-1998)
+ *      Converts clock_t into FILETIME.
+ *      Used by GetProcessTime.
+ *      Differences to UnixTimeToFileTime:
+ *          1) Divided by CLK_TCK
+ *          2) Time is relative. There is no 'starting date', so there is 
+ *             no need in offset correction, like in UnixTimeToFileTime
+ *      FIXME: This function should be moved to a more appropriate .c file
+ *      FIXME: On floating point operations, it is assumed that
+ *             floating values are truncated on convertion to integer.
+ */
+void Process_ClockTimeToFileTime( clock_t unix_time, LPFILETIME filetime )
+{
+    double td = (unix_time*10000000.0)/CLK_TCK;
+    /* Yes, double, because long int might overflow here. */
+#if (SIZEOF_LONG_LONG >= 8)
+    unsigned long long t = td;
+    filetime->dwLowDateTime  = (UINT32) t;
+    filetime->dwHighDateTime = (UINT32) (t >> 32);
+#else
+    double divider = 1. * (1 << 16) * (1 << 16);
+    filetime->dwHighDateTime = (UINT32) (td / divider);
+    filetime->dwLowDateTime  = (UINT32) (td - filetime->dwHighDateTime*divider);
+    /* using floor() produces wierd results, better leave this as it is 
+     * ( with (UINT32) convertion )
+     */
+#endif
 }
 
 /*********************************************************************
  *	GetProcessTimes				[KERNEL32.262]
  *
- * FIXME: implement this better ...
+ * FIXME: lpCreationTime, lpExitTime are NOT INITIALIZED.
+ * olorin@fandra.org: Would be nice to substract the cpu time,
+ *                    used by Wine at startup.
+ *                    Also, there is a need to separate times
+ *                    used by different applications.
  */
 BOOL32 WINAPI GetProcessTimes(
 	HANDLE32 hprocess,LPFILETIME lpCreationTime,LPFILETIME lpExitTime,
@@ -78,8 +113,8 @@ BOOL32 WINAPI GetProcessTimes(
 	struct tms tms;
 
 	times(&tms);
-	DOSFS_UnixTimeToFileTime(tms.tms_utime,lpUserTime,0);
-	DOSFS_UnixTimeToFileTime(tms.tms_stime,lpKernelTime,0);
+        Process_ClockTimeToFileTime(tms.tms_utime,lpUserTime);
+        Process_ClockTimeToFileTime(tms.tms_stime,lpKernelTime);
 	return TRUE;
 }
 

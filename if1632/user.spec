@@ -431,7 +431,7 @@ file	user.exe
 473 pascal   AnsiPrev(segptr segptr) AnsiPrev16
 475 pascal16 SetScrollInfo(word s_word ptr word) SetScrollInfo16
 476 pascal16 GetScrollInfo(word s_word ptr) GetScrollInfo16
-477 stub GetKeyboardLayoutName
+477 pascal16 GetKeyboardLayoutName(ptr) GetKeyboardLayoutName16
 478 stub LoadKeyboardLayout
 479 stub MenuItemFromPoint
 480 stub GetUserLocalObjType

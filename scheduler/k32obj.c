@@ -164,7 +164,7 @@ BOOL32 K32OBJ_AddName( K32OBJ *obj, LPCSTR name )
  * Returns NULL if there was an error _or_ if the object already existed.
  * The refcount of the object must be decremented once it is initialized.
  */
-K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
+K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name, int server_handle,
                        DWORD access, SECURITY_ATTRIBUTES *sa, HANDLE32 *handle)
 {
     BOOL32 inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
@@ -177,12 +177,13 @@ K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
         if (obj->type == type)
         {
             SetLastError( ERROR_ALREADY_EXISTS );
-            *handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, -1 );
+            *handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, server_handle );
         }
         else
         {
             SetLastError( ERROR_DUP_NAME );
             *handle = INVALID_HANDLE_VALUE32;
+            if (server_handle != -1) CLIENT_CloseHandle( server_handle );
         }
         K32OBJ_DecCount( obj );
         return NULL;
@@ -195,6 +196,7 @@ K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
     {
         SYSTEM_UNLOCK();
         *handle = INVALID_HANDLE_VALUE32;
+        if (server_handle != -1) CLIENT_CloseHandle( server_handle );
         return NULL;
     }
     obj->type     = type;
@@ -209,12 +211,13 @@ K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
         HeapFree( SystemHeap, 0, obj );
         SYSTEM_UNLOCK();
         *handle = INVALID_HANDLE_VALUE32;
+        if (server_handle != -1) CLIENT_CloseHandle( server_handle );
         return NULL;
     }
 
     /* Allocate a handle */
 
-    *handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, -1 );
+    *handle = HANDLE_Alloc( PROCESS_Current(), obj, access, inherit, server_handle );
     SYSTEM_UNLOCK();
     return obj;
 }

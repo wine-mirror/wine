@@ -24,6 +24,9 @@
 /* Define if X libraries are not reentrant (compiled without -D_REENTRANT).  */
 #undef NO_REENTRANT_X11
 
+/* Define if libc is not reentrant  */
+#undef NO_REENTRANT_LIBC
+
 /* Define if all debug messages are to be compiled out */
 #undef NO_DEBUG_MSGS
 

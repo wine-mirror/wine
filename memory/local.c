@@ -345,7 +345,8 @@ BOOL16 WINAPI LocalInit( HANDLE16 selector, WORD start, WORD end )
 	if ((pModule = NE_GetPtr( selector )))
 	{
 	    SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
-	    if (pModule->dgroup && (pSeg->selector == selector)) {
+	    if (pModule->dgroup && (GlobalHandleToSel(pSeg->hSeg) == selector))
+	    {
 		/* We can't just use the simple method of using the value
                  * of minsize + stacksize, since there are programs that
                  * resize the data segment before calling InitTask(). So,
@@ -1602,7 +1603,8 @@ DWORD WINAPI GetHeapSpaces( HMODULE16 module )
     WORD ds;
 
     if (!(pModule = NE_GetPtr( module ))) return 0;
-    ds = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
+    ds =
+    GlobalHandleToSel((NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->hSeg);
     return MAKELONG( LOCAL_CountFree( ds ), LOCAL_HeapSize( ds ) );
 }
 

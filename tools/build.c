@@ -862,7 +862,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     pSegment->size = max_code_offset;
     pSegment->flags = 0;
     pSegment->minsize = max_code_offset;
-    pSegment->selector = 0;
+    pSegment->hSeg = 0;
     pSegment++;
 
     pModule->dgroup_entry = (int)pSegment - (int)pModule;
@@ -870,7 +870,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     pSegment->size = max_data_offset;
     pSegment->flags = NE_SEGFLAGS_DATA;
     pSegment->minsize = max_data_offset;
-    pSegment->selector = 0;
+    pSegment->hSeg = 0;
     pSegment++;
 
       /* Resource table */
@@ -1656,7 +1656,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
         fprintf( outfile, "\tmovl " PREFIX "ldt_copy(%%eax),%%eax\n" );
         fprintf( outfile, "\tmovl %%eax,-24(%%ebp)\n" );
         /* Add the offset */
-        fprintf( outfile, "\tleal -20(%%ebp),%%eax\n" );
+        fprintf( outfile, "\tleal -16(%%ebp),%%eax\n" );
         fprintf( outfile, "\taddl %%eax,-24(%%ebp)\n" );
     }
 

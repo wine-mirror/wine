@@ -599,9 +599,24 @@ UINT32 WINAPI mmioGetInfo32(HMMIO32 hmmio, MMIOINFO32*lpmmioinfo, UINT32 uFlags)
 }
 
 /**************************************************************************
-* 				mmioSetInfo    		[MMSYSTEM.1216]
-*/
-UINT16 WINAPI mmioSetInfo(HMMIO16 hmmio, const MMIOINFO16 * lpmmioinfo, UINT16 uFlags)
+ * 				mmioSetInfo    		[MMSYSTEM.1216]
+ */
+UINT16 WINAPI mmioSetInfo16(HMMIO16 hmmio, const MMIOINFO16 * lpmmioinfo, UINT16 uFlags)
+{
+	LPMMIOINFO16	lpmminfo;
+	TRACE(mmio, "mmioSetInfo\n");
+	lpmminfo = (LPMMIOINFO16)GlobalLock16(hmmio);
+	if (lpmminfo == NULL) return 0;
+	lpmminfo->pchNext	= lpmmioinfo->pchNext;
+	lpmminfo->pchEndRead	= lpmmioinfo->pchEndRead;
+	GlobalUnlock16(hmmio);
+	return 0;
+}
+
+/**************************************************************************
+ * 				mmioSetInfo    		[WINMM.130]
+ */
+UINT32 WINAPI mmioSetInfo32(HMMIO32 hmmio, const MMIOINFO32 * lpmmioinfo, UINT32 uFlags)
 {
 	LPMMIOINFO16	lpmminfo;
 	TRACE(mmio, "mmioSetInfo\n");

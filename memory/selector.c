@@ -406,7 +406,7 @@ BOOL16 WINAPI IsBadCodePtr16( SEGPTR lpfn )
     if (IS_SELECTOR_FREE(sel)) return TRUE;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
     if (entry.type != SEGMENT_CODE) return TRUE;
-    if (OFFSETOF(lpfn) > entry.limit) return TRUE;
+    if (OFFSETOF(lpfn) > GET_SEL_LIMIT(sel)) return TRUE;
     return FALSE;
 }
 
@@ -425,7 +425,7 @@ BOOL16 WINAPI IsBadStringPtr16( SEGPTR ptr, UINT16 size )
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
     if ((entry.type == SEGMENT_CODE) && entry.read_only) return TRUE;
     if (strlen(PTR_SEG_TO_LIN(ptr)) < size) size = strlen(PTR_SEG_TO_LIN(ptr));
-    if (OFFSETOF(ptr) + size - 1 > entry.limit) return TRUE;
+    if (OFFSETOF(ptr) + size - 1 > GET_SEL_LIMIT(sel)) return TRUE;
     return FALSE;
 }
 
@@ -443,7 +443,7 @@ BOOL16 WINAPI IsBadHugeReadPtr16( SEGPTR ptr, DWORD size )
     if (IS_SELECTOR_FREE(sel)) return TRUE;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
     if ((entry.type == SEGMENT_CODE) && entry.read_only) return TRUE;
-    if (OFFSETOF(ptr) + size - 1 > entry.limit) return TRUE;
+    if (OFFSETOF(ptr) + size - 1 > GET_SEL_LIMIT(sel)) return TRUE;
     return FALSE;
 }
 
@@ -461,7 +461,7 @@ BOOL16 WINAPI IsBadHugeWritePtr16( SEGPTR ptr, DWORD size )
     if (IS_SELECTOR_FREE(sel)) return TRUE;
     LDT_GetEntry( SELECTOR_TO_ENTRY(sel), &entry );
     if ((entry.type == SEGMENT_CODE) || entry.read_only) return TRUE;
-    if (OFFSETOF(ptr) + size - 1 > entry.limit) return TRUE;
+    if (OFFSETOF(ptr) + size - 1 > GET_SEL_LIMIT(sel)) return TRUE;
     return FALSE;
 }
 

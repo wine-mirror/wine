@@ -39,7 +39,11 @@ static const char * const DefSysColors[] =
     "3DDarkShadow", "32 32 32",      /* COLOR_3DDKSHADOW          */
     "3DLight", "192 192 192",        /* COLOR_3DLIGHT             */
     "InfoText", "0 0 0",             /* COLOR_INFOTEXT            */
-    "InfoBackground", "255 255 192"  /* COLOR_INFOBK              */
+    "InfoBackground", "255 255 192", /* COLOR_INFOBK              */
+    "AlternateButtonFace", "184 180 184",  /* COLOR_ALTERNATEBTNFACE */
+    "HotTrackingColor", "0 0 255",         /* COLOR_HOTLIGHT */
+    "GradientActiveTitle", "16 132 208",   /* COLOR_GRADIENTACTIVECAPTION */
+    "GradientInactiveTitle", "184 180 184" /* COLOR_GRADIENTINACTIVECAPTION */
 };
 
 static const char * const DefSysColors95[] =
@@ -68,11 +72,15 @@ static const char * const DefSysColors95[] =
     "3DDarkShadow", "0 0 0",         /* COLOR_3DDKSHADOW          */
     "3DLight", "223 223 223",        /* COLOR_3DLIGHT             */
     "InfoText", "0 0 0",             /* COLOR_INFOTEXT            */
-    "InfoBackground", "255 255 192"  /* COLOR_INFOBK              */
+    "InfoBackground", "255 255 192", /* COLOR_INFOBK              */
+    "AlternateButtonFace", "184 180 184",  /* COLOR_ALTERNATEBTNFACE */
+    "HotTrackingColor", "0 0 255",         /* COLOR_HOTLIGHT */
+    "GradientActiveTitle", "16 132 208",   /* COLOR_GRADIENTACTIVECAPTION */
+    "GradientInactiveTitle", "184 180 184" /* COLOR_GRADIENTINACTIVECAPTION */
 };
 
 
-#define NUM_SYS_COLORS     (COLOR_INFOBK+1)
+#define NUM_SYS_COLORS     (COLOR_GRADIENTINACTIVECAPTION+1)
 
 static COLORREF SysColors[NUM_SYS_COLORS];
 static HBRUSH32 SysColorBrushes[NUM_SYS_COLORS];
@@ -104,8 +112,8 @@ void SYSCOLOR_Init(void)
     const char * const *p;
     char buffer[100];
 
-    for (i = 0, p = TWEAK_Win95Look ? DefSysColors95 : DefSysColors;
-	 i < NUM_SYS_COLORS; i++, p += 2)
+    p = (TWEAK_WineLook == WIN31_LOOK) ? DefSysColors : DefSysColors95;
+    for (i = 0; i < NUM_SYS_COLORS; i++, p += 2)
     {
 	GetProfileString32A( "colors", p[0], p[1], buffer, 100 );
 	if (sscanf( buffer, " %d %d %d", &r, &g, &b ) != 3) r = g = b = 0;

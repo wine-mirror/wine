@@ -239,7 +239,7 @@ LPCLASSFACTORY IClassFactory_Constructor()
 	return lpclf;
 }
 /**************************************************************************
- *  IClassFactory::QueryInterface
+ *  IClassFactory_QueryInterface
  */
 static HRESULT WINAPI IClassFactory_QueryInterface(
   LPCLASSFACTORY this, REFIID riid, LPVOID *ppvObj)
@@ -315,6 +315,9 @@ static HRESULT WINAPI IClassFactory_CreateInstance(
 	} 
 	else if (IsEqualIID(riid, &IID_IContextMenu))
 	{ pObj = (IUnknown *)IContextMenu_Constructor(NULL, NULL, 0);
+ 	} 
+	else if (IsEqualIID(riid, &IID_IDataObject))
+	{ pObj = (IUnknown *)IDataObject_Constructor();
  	} 
 	else
 	{ ERR(shell,"unknown IID requested\n\tIID:\t%s\n",xriid);

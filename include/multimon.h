@@ -1,0 +1,65 @@
+/*
+ * Multimonitor APIs
+ *
+ * Copyright 1998 Turchanov Sergey
+ */
+
+#ifndef __WINE_MULTIMON_H
+#define __WINE_MULTIMON_H
+
+#define MONITOR_DEFAULTTONULL       0x00000000
+#define MONITOR_DEFAULTTOPRIMARY    0x00000001
+#define MONITOR_DEFAULTTONEAREST    0x00000002
+
+#define HMONITOR HANDLE32 
+
+HMONITOR WINAPI MonitorFromPoint(POINT32 pt, DWORD dwFlags);
+
+HMONITOR WINAPI MonitorFromRect(LPRECT32 lprc, DWORD dwFlags);
+
+HMONITOR WINAPI MonitorFromWindow(HWND32 hwnd, DWORD dwFlags);
+
+#define MONITORINFOF_PRIMARY        0x00000001
+
+#ifndef CCHDEVICENAME
+#define CCHDEVICENAME 32
+#endif
+
+typedef struct tagMONITORINFO
+{
+    DWORD   cbSize;
+    RECT32  rcMonitor;
+    RECT32  rcWork;
+    DWORD   dwFlags;
+} MONITORINFO, *LPMONITORINFO;
+
+typedef struct tagMONITORINFOEX32A
+{
+    MONITORINFO dummy;
+    CHAR        szDevice[CCHDEVICENAME];
+} MONITORINFOEX32A, *LPMONITORINFOEX32A;
+
+typedef struct tagMONITORINFOEX32W
+{
+    MONITORINFO dummy;
+    WCHAR       szDevice[CCHDEVICENAME];
+} MONITORINFOEX32W, *LPMONITORINFOEX32W;
+
+DECL_WINELIB_TYPE_AW (MONITOINFOEX)
+DECL_WINELIB_TYPE_AW (LPMONITORINFOEXW)
+
+BOOL32 WINAPI GetMonitorInfo32A(HMONITOR hMonitor, LPMONITORINFO lpmi);
+BOOL32 WINAPI GetMonitorInfo32W(HMONITOR hMonitor, LPMONITORINFO lpmi);
+
+#define GetMonitorInfo WINELIB_NAME_AW(GetMonitorInfo)
+
+typedef BOOL32 (CALLBACK* MONITORENUMPROC)(HMONITOR, HDC32, LPRECT32, LPARAM);
+
+BOOL32 WINAPI EnumDisplayMonitors(
+    HDC32             hdc,
+    LPRECT32         lprcClip,
+    MONITORENUMPROC lpfnEnum,
+    LPARAM          dwData);
+    
+#endif __WINE_MULTIMON_H
+

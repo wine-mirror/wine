@@ -6,6 +6,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <sys/errno.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -310,8 +311,10 @@ static void VIRTUAL_GetWin32Prot(
 ) {
     if (protect) {
     	*protect = VIRTUAL_Win32Flags[vprot & 0x0f];
-    	if (vprot & VPROT_GUARD) *protect |= PAGE_GUARD;
+/*    	if (vprot & VPROT_GUARD) *protect |= PAGE_GUARD;*/
     	if (vprot & VPROT_NOCACHE) *protect |= PAGE_NOCACHE;
+
+    	if (vprot & VPROT_GUARD) *protect = PAGE_NOACCESS;
     }
 
     if (state) *state = (vprot & VPROT_COMMITTED) ? MEM_COMMIT : MEM_RESERVE;

@@ -15,6 +15,7 @@
 #include "file.h"
 #include "heap.h"
 #include "debug.h"
+#include "options.h"
 
 typedef struct tagPROFILEKEY
 {
@@ -56,6 +57,9 @@ static PROFILESECTION *WineProfile;
 
 /* Wine profile name in $HOME directory; must begin with slash */
 static const char PROFILE_WineIniName[] = "/.winerc";
+
+/* Wine profile: the profile file being used */
+static char PROFILE_WineIniUsed[MAX_PATHNAME_LEN] = "";
 
 /* Check for comments in profile */
 #define IS_ENTRY_COMMENT(str)  ((str)[0] == ';')
@@ -824,10 +828,20 @@ int PROFILE_LoadWineIni(void)
     const char *p;
     FILE *f;
 
+    if ( (Options.configFileName!=NULL) && (f = fopen(Options.configFileName, "r")) )
+    {
+      /* Open -config specified file */
+      WineProfile = PROFILE_Load ( f);
+      fclose ( f );
+      strncpy(PROFILE_WineIniUsed,Options.configFileName,MAX_PATHNAME_LEN-1);
+      return 1;
+    }
+
     if ( (p = getenv( "WINE_INI" )) && (f = fopen( p, "r" )) )
       {
 	WineProfile = PROFILE_Load( f );
 	fclose( f );
+	strncpy(PROFILE_WineIniUsed,p,MAX_PATHNAME_LEN-1);
 	return 1;
       }
     if ((p = getenv( "HOME" )) != NULL)
@@ -838,6 +852,7 @@ int PROFILE_LoadWineIni(void)
         {
             WineProfile = PROFILE_Load( f );
             fclose( f );
+	    strncpy(PROFILE_WineIniUsed,buffer,MAX_PATHNAME_LEN-1);
             return 1;
         }
     }
@@ -849,11 +864,32 @@ int PROFILE_LoadWineIni(void)
     {
         WineProfile = PROFILE_Load( f );
         fclose( f );
+	strncpy(PROFILE_WineIniUsed,WINE_INI_GLOBAL,MAX_PATHNAME_LEN-1);
         return 1;
     }
     MSG( "Can't open configuration file %s or $HOME%s\n",
 	 WINE_INI_GLOBAL, PROFILE_WineIniName );
     return 0;
+}
+
+
+/***********************************************************************
+ *           PROFILE_UsageWineIni
+ *
+ * Explain the wine.ini file to those who don't read documentation.
+ * Keep below one screenful in length so that error messages above are
+ * noticed.
+ */
+void PROFILE_UsageWineIni(void)
+{
+    MSG("Perhaps you have not properly edited or created "
+	"your Wine configuration file.\n");
+    MSG("This is either %s or $HOME%s\n",WINE_INI_GLOBAL,PROFILE_WineIniName);
+    MSG("  or it is determined by the -config option or from\n"
+        "  the WINE_INI environment variable.\n");
+    if (*PROFILE_WineIniUsed)
+	MSG("Wine has used %s as configuration file.\n", PROFILE_WineIniUsed);
+    /* RTFM, so to say */
 }
 
 

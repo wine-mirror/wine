@@ -73,18 +73,18 @@ static aliasTemplate faTemplate[4] = {
 			  { "-adobe-helvetica-", "Arial" }
 			  };
 
-/* Charset translation table, cp125-.. encoded fonts are produced by
- * the fnt2bdf */
+/* Charset translation table, microsoft-cp125.. encoded fonts are produced by
+ * the fnt2bdf or the True Type X11 font servers */
 
 static int	 numCPTranslation = 8;
-static BYTE	 CPTranslation[] = { EE_CHARSET,	/* cp125-0 */
-				     RUSSIAN_CHARSET,	/* cp125-1 */
-				     ANSI_CHARSET,	/* cp125-2 */
-				     GREEK_CHARSET,	/* cp125-3 */
-				     TURKISH_CHARSET,	/* cp125-4 */
-				     HEBREW_CHARSET,	/* cp125-5 */
-				     ARABIC_CHARSET,	/* cp125-6 */
-				     BALTIC_CHARSET	/* cp125-7 */
+static BYTE	 CPTranslation[] = { EE_CHARSET,	/* cp1250 */
+				     RUSSIAN_CHARSET,	/* cp1251 */
+				     ANSI_CHARSET,	/* cp1252 */
+				     GREEK_CHARSET,	/* cp1253 */
+				     TURKISH_CHARSET,	/* cp1254 */
+				     HEBREW_CHARSET,	/* cp1255 */
+				     ARABIC_CHARSET,	/* cp1256 */
+				     BALTIC_CHARSET	/* cp1257 */
 				   }; 
 
 UINT16			XTextCaps = TC_OP_CHARACTER | TC_OP_STROKE |
@@ -104,7 +104,7 @@ static const char*	INIResolution = "Resolution";
 static const char*	INIGlobalMetrics = "FontMetrics";
 
 static const char*	LFDSeparator = "*-";
-static const char*	localMSEncoding = "cp125-";
+static const char*	localMSEncoding = "microsoft-cp125";
 static const char*	iso8859Encoding = "iso8859-";
 static const char*	iso646Encoding = "iso646.1991-";
 static const char*	ansiEncoding = "ansi-";
@@ -372,7 +372,7 @@ static int LFD_InitFontInfo( fontInfo* fi, LPSTR lpstr )
      fi->fi_flags |= FI_ENC_ISO646;
    else if( strstr(lpch, ansiEncoding) )	/* fnt2bdf produces -ansi-0 LFD */
      fi->fi_flags |= FI_ENC_ANSI;
-   else						/* ... and -cp125-x */
+   else						/* ... and -microsoft-cp125x */
    {
 	fi->df.dfCharSet = OEM_CHARSET;
 	if( !strncasecmp(lpch, localMSEncoding, 6) )
@@ -384,7 +384,8 @@ static int LFD_InitFontInfo( fontInfo* fi, LPSTR lpstr )
 		fi->df.dfCharSet = CPTranslation[i];
 	    }
 	}
-	else if( strstr(lpch, "fontspecific") )
+	else if( strstr(lpch, "fontspecific") ||
+		 strstr(lpch, "microsoft-symbol") )
 	    fi->df.dfCharSet = SYMBOL_CHARSET;
    }
    return TRUE;					
@@ -1993,14 +1994,14 @@ static BOOL32 XFONT_SetX11Trans( fontObject *pfo )
   int i;
   char *cp, *start;
 
-  XGetFontProperty( pfo->fs, XA_FONT, &nameAtom );
-  fontName = XGetAtomName( display, nameAtom );
+  TSXGetFontProperty( pfo->fs, XA_FONT, &nameAtom );
+  fontName = TSXGetAtomName( display, nameAtom );
   for(i = 0, cp = fontName; i < 7; i++) {
     cp = strchr(cp, '-');
     cp++;
   }
   if(*cp != '[') {
-    XFree(fontName);
+    TSXFree(fontName);
     return FALSE;
   }
   start = cp;
@@ -2010,10 +2011,10 @@ static BOOL32 XFONT_SetX11Trans( fontObject *pfo )
 #define PX pfo->lpX11Trans
 
   sscanf(start, "[%f%f%f%f]", &PX->a, &PX->b, &PX->c, &PX->d);
-  XFree(fontName);
+  TSXFree(fontName);
 
-  XGetFontProperty( pfo->fs, RAW_ASCENT, &PX->RAW_ASCENT );
-  XGetFontProperty( pfo->fs, RAW_DESCENT, &PX->RAW_DESCENT );
+  TSXGetFontProperty( pfo->fs, RAW_ASCENT, &PX->RAW_ASCENT );
+  TSXGetFontProperty( pfo->fs, RAW_DESCENT, &PX->RAW_DESCENT );
 
   PX->pixelsize = hypot(PX->a, PX->b);
   PX->ascent = PX->pixelsize / 1000.0 * PX->RAW_ASCENT;

@@ -2,9 +2,9 @@
 #ifndef __WINE_DPLAY_H
 #define __WINE_DPLAY_H
 
-#include "mmsystem.h"
+#pragma pack(1)
 
-/* Return Values */
+/* Return Values for Direct Play */
 #define _FACDP  0x877
 #define MAKE_DPHRESULT( code )    MAKE_HRESULT( 1, _FACDP, code )
 
@@ -34,8 +34,8 @@
 #define DPERR_NONAMESERVERFOUND         MAKE_DPHRESULT( 200 )
 #define DPERR_NOPLAYERS                 MAKE_DPHRESULT( 210 )
 #define DPERR_NOSESSIONS                MAKE_DPHRESULT( 220 )
-#define DPERR_PENDING                                   E_PENDING
-#define DPERR_SENDTOOBIG                                MAKE_DPHRESULT( 230 )
+#define DPERR_PENDING                   E_PENDING
+#define DPERR_SENDTOOBIG                MAKE_DPHRESULT( 230 )
 #define DPERR_TIMEOUT                   MAKE_DPHRESULT( 240 )
 #define DPERR_UNAVAILABLE               MAKE_DPHRESULT( 250 )
 #define DPERR_UNSUPPORTED               E_NOTIMPL
@@ -107,11 +107,7 @@ DEFINE_GUID(DPSPGUID_SERIAL, 0xf1d6860, 0x88d9, 0x11cf, 0x9c, 0x4e, 0x0, 0xa0, 0
 /* GUID for Modem service provider {44EAA760-CB68-11cf-9C4E-00A0C905425E} */
 DEFINE_GUID(DPSPGUID_MODEM, 0x44eaa760, 0xcb68, 0x11cf, 0x9c, 0x4e, 0x0, 0xa0, 0xc9, 0x5, 0x42, 0x5e);
 
-
-#pragma pack(1)
-
-/* Direct Play */
-typedef struct IDirectPlay        IDirectPlay, *LPDIRECTPLAY;
+typedef struct IDirectPlay IDirectPlay, *LPDIRECTPLAY;
 
 /* Direct Play 2 */
 typedef struct IDirectPlay2       IDirectPlay2, *LPDIRECTPLAY2;
@@ -154,59 +150,109 @@ typedef struct tagDPNAME
 {
     DWORD   dwSize;             
     DWORD   dwFlags;            /* Not used must be 0 */
-    union playerShortName       /* Player's Handle? */
+
+    union /*playerShortName */      /* Player's Handle? */
     {                           
         LPWSTR  lpszShortName;  
         LPSTR   lpszShortNameA; 
-    };
-    union playerLongName        /* Player's formal/real name */
+    }psn;
+
+    union /*playerLongName */       /* Player's formal/real name */
     {                         
         LPWSTR  lpszLongName;  
         LPSTR   lpszLongNameA;  
-    };
+    }pln;
 
 } DPNAME, *LPDPNAME;
+
+#define DPLONGNAMELEN     52
+#define DPSHORTNAMELEN    20
+#define DPSESSIONNAMELEN  32
+#define DPPASSWORDLEN     16
+#define DPUSERRESERVED    16
+
+typedef struct tagDPSESSIONDESC
+{
+    DWORD   dwSize;
+    GUID    guidSession;
+    DWORD   dwSession;
+    DWORD   dwMaxPlayers;
+    DWORD   dwCurrentPlayers;
+    DWORD   dwFlags;
+    char    szSessionName[ DPSESSIONNAMELEN ];
+    char    szUserField[ DPUSERRESERVED ];
+    DWORD   dwReserved1;
+    char    szPassword[ DPPASSWORDLEN ];
+    DWORD   dwReserved2;
+    DWORD   dwUser1;
+    DWORD   dwUser2;
+    DWORD   dwUser3;
+    DWORD   dwUser4;
+} DPSESSIONDESC, *LPDPSESSIONDESC;
 
 typedef struct tagDPSESSIONDESC2
 {
     DWORD   dwSize;             
     DWORD   dwFlags;           
     GUID    guidInstance;      
-    GUID    guidApplication;   
+    GUID    guidApplication;   /* GUID of the DP application, GUID_NULL if
+                                * all applications! */
                                
     DWORD   dwMaxPlayers;      
-    DWORD   dwCurrentPlayers;  
+    DWORD   dwCurrentPlayers;   /* (read only value) */
 
-    union sessionName
+    union  /* Session name */
     {                             
         LPWSTR  lpszSessionName;  
         LPSTR   lpszSessionNameA; 
-    };
+    }sess;
 
-    union optnlSessionPasswd
+    union  /* Optional password */
     {                           
         LPWSTR  lpszPassword;   
         LPSTR   lpszPasswordA;  
-    };
+    }pass;
 
     DWORD   dwReserved1;       
     DWORD   dwReserved2;
-    DWORD   dwUser1;          
+
+    DWORD   dwUser1;        /* For use by the application */  
     DWORD   dwUser2;
     DWORD   dwUser3;
     DWORD   dwUser4;
 } DPSESSIONDESC2, *LPDPSESSIONDESC2;
+typedef const DPSESSIONDESC2* LPCDPSESSIONDESC2;
+
+#define DPOPEN_JOIN                     0x00000001
+#define DPOPEN_CREATE                   0x00000002
+#define DPOPEN_RETURNSTATUS             DPENUMSESSIONS_RETURNSTATUS
+
+#define DPSESSION_NEWPLAYERSDISABLED    0x00000001
+#define DPSESSION_MIGRATEHOST           0x00000004
+#define DPSESSION_NOMESSAGEID           0x00000008
+#define DPSESSION_JOINDISABLED          0x00000020
+#define DPSESSION_KEEPALIVE             0x00000040
+#define DPSESSION_NODATAMESSAGES        0x00000080
+#define DPSESSION_SECURESERVER          0x00000100
+#define DPSESSION_PRIVATE               0x00000200
+#define DPSESSION_PASSWORDREQUIRED      0x00000400
+#define DPSESSION_MULTICASTSERVER       0x00000800
+#define DPSESSION_CLIENTSERVER          0x00001000
 
 typedef struct tagDPLCONNECTION
 {
     DWORD               dwSize;          
     DWORD               dwFlags;          
-    LPDPSESSIONDESC2    lpSessionDesc;   
-    LPDPNAME            lpPlayerName;    
-    GUID                guidSP;          
-    LPVOID              lpAddress;       
-    DWORD               dwAddressSize;  
+    LPDPSESSIONDESC2    lpSessionDesc;  /* Ptr to session desc to use for connect */  
+    LPDPNAME            lpPlayerName;   /* Ptr to player name structure */
+    GUID                guidSP;         /* GUID of Service Provider to use */ 
+    LPVOID              lpAddress;      /* Ptr to Address of Service Provider to use */
+    DWORD               dwAddressSize;  /* Size of address data */
 } DPLCONNECTION, *LPDPLCONNECTION;
+
+/* DPLCONNECTION flags (for dwFlags) */
+#define DPLCONNECTION_CREATESESSION DPOPEN_CREATE
+#define DPLCONNECTION_JOINSESSION   DPOPEN_JOIN
 
 typedef struct tagDPLAPPINFO
 {
@@ -229,6 +275,62 @@ typedef struct DPCOMPOUNDADDRESSELEMENT
     LPVOID  lpData;
 } DPCOMPOUNDADDRESSELEMENT, *LPDPCOMPOUNDADDRESSELEMENT;
 typedef const DPCOMPOUNDADDRESSELEMENT *LPCDPCOMPOUNDADDRESSELEMENT;
+
+typedef struct tagDPCHAT
+{
+    DWORD               dwSize;
+    DWORD               dwFlags;
+    union
+    {                          // Message string
+        LPWSTR  lpszMessage;   // Unicode
+        LPSTR   lpszMessageA;  // ANSI
+    }msgstr;
+} DPCHAT, *LPDPCHAT;
+
+typedef struct tagDPSECURITYDESC
+{
+    DWORD dwSize;                   // Size of structure
+    DWORD dwFlags;                  // Not used. Must be zero.
+    union
+    {                               // SSPI provider name
+        LPWSTR  lpszSSPIProvider;   // Unicode
+        LPSTR   lpszSSPIProviderA;  // ANSI
+    }sspi;
+    union
+    {                               // CAPI provider name
+        LPWSTR lpszCAPIProvider;    // Unicode
+        LPSTR  lpszCAPIProviderA;   // ANSI
+    }capi;
+    DWORD dwCAPIProviderType;       // Crypto Service Provider type
+    DWORD dwEncryptionAlgorithm;    // Encryption Algorithm type
+} DPSECURITYDESC, *LPDPSECURITYDESC;
+
+typedef const DPSECURITYDESC *LPCDPSECURITYDESC;
+
+typedef struct tagDPCREDENTIALS
+{
+    DWORD dwSize;               // Size of structure
+    DWORD dwFlags;              // Not used. Must be zero.
+    union
+    {                           // User name of the account
+        LPWSTR  lpszUsername;   // Unicode
+        LPSTR   lpszUsernameA;  // ANSI
+    }name;
+    union
+    {                           // Password of the account
+        LPWSTR  lpszPassword;   // Unicode
+        LPSTR   lpszPasswordA;  // ANSI
+    }pass;
+    union
+    {                           // Domain name of the account
+        LPWSTR  lpszDomain;     // Unicode
+        LPSTR   lpszDomainA;    // ANSI
+    }domain;
+} DPCREDENTIALS, *LPDPCREDENTIALS;
+
+typedef const DPCREDENTIALS *LPCDPCREDENTIALS;
+
+
 
 typedef BOOL32 (CALLBACK* LPDPENUMDPCALLBACKW)(
     LPGUID      lpguidSP,
@@ -255,9 +357,16 @@ typedef BOOL32 (CALLBACK* LPDPENUMCONNECTIONSCALLBACK)(
     DWORD       dwFlags,
     LPVOID      lpContext);
 
+typedef BOOL32 (CALLBACK* LPDPENUMSESSIONSCALLBACK)(
+    LPDPSESSIONDESC lpDPSessionDesc,
+    LPVOID      lpContext,
+    LPDWORD     lpdwTimeOut,
+    DWORD       dwFlags);
+
+
 extern HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA, LPVOID );
 extern HRESULT WINAPI DirectPlayEnumerateW( LPDPENUMDPCALLBACKW, LPVOID );
-extern HRESULT WINAPI DirectPlayCreate( LPGUID lpGUID, LPDIRECTPLAY *lplpDP, IUnknown *pUnk);
+extern HRESULT WINAPI DirectPlayCreate( LPGUID lpGUID, LPDIRECTPLAY2 *lplpDP, IUnknown *pUnk);
 
 
 /* Direct Play Lobby 1 */
@@ -268,8 +377,8 @@ typedef struct IDirectPlayLobby   IDirectPlayLobbyA, *LPDIRECTPLAYLOBBYA;
 typedef struct IDirectPlayLobby2    IDirectPlayLobby2, *LPDIRECTPLAYLOBBY2;
 typedef struct IDirectPlayLobby2    IDirectPlayLobby2A, *LPDIRECTPLAYLOBBY2A;
 
-extern HRESULT WINAPI DirectPlayLobbyCreateW(LPGUID, LPDIRECTPLAYLOBBY2 *, IUnknown *, LPVOID, DWORD );
-extern HRESULT WINAPI DirectPlayLobbyCreateA(LPGUID, LPDIRECTPLAYLOBBY2A *, IUnknown *, LPVOID, DWORD );
+extern HRESULT WINAPI DirectPlayLobbyCreateW(LPGUID, LPDIRECTPLAYLOBBY *, IUnknown *, LPVOID, DWORD );
+extern HRESULT WINAPI DirectPlayLobbyCreateA(LPGUID, LPDIRECTPLAYLOBBYA *, IUnknown *, LPVOID, DWORD );
 
 
 
@@ -277,17 +386,31 @@ typedef BOOL32 (CALLBACK* LPDPENUMADDRESSCALLBACK)(
     REFGUID         guidDataType,
     DWORD           dwDataSize,
     LPCVOID         lpData,
-    LPVOID          lpContext);
+    LPVOID          lpContext );
 
 typedef BOOL32 (CALLBACK* LPDPLENUMADDRESSTYPESCALLBACK)(
     REFGUID         guidDataType,
     LPVOID          lpContext,
-    DWORD           dwFlags);
+    DWORD           dwFlags );
 
 typedef BOOL32 (CALLBACK* LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
     LPCDPLAPPINFO   lpAppInfo,
     LPVOID          lpContext,
-    DWORD           dwFlags);
+    DWORD           dwFlags );
+
+typedef BOOL32 (CALLBACK* LPDPENUMPLAYERSCALLBACK2)(
+    DPID            dpId,
+    DWORD           dwPlayerType,
+    LPCDPNAME       lpName,
+    DWORD           dwFlags,
+    LPVOID          lpContext );
+
+typedef BOOL32 (CALLBACK* LPDPENUMSESSIONSCALLBACK2)(
+    LPCDPSESSIONDESC2   lpThisSD,
+    LPDWORD             lpdwTimeOut,
+    DWORD               dwFlags,
+    LPVOID              lpContext );
+
 
 
 #define STDMETHOD(xfn) HRESULT (CALLBACK *fn##xfn)
@@ -296,36 +419,334 @@ typedef BOOL32 (CALLBACK* LPDPLENUMLOCALAPPLICATIONSCALLBACK)(
 #define FAR
 #define THIS_ THIS,
 
-#define THIS LPDIRECTPLAYLOBBY2 this
-typedef struct tagLPDIRECTPLAYLOBBY2_VTABLE {
+#define THIS LPDIRECTPLAY2 this
+typedef struct tagLPDIRECTPLAY2_VTABLE
+{
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)       (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+    STDMETHOD_(ULONG,AddRef)        (THIS)  PURE;
+    STDMETHOD_(ULONG,Release)       (THIS) PURE;
+
+    /*** IDirectPlay2 methods ***/
+    STDMETHOD(AddPlayerToGroup)     (THIS_ DPID, DPID) PURE;
+    STDMETHOD(Close)                (THIS) PURE;
+    STDMETHOD(CreateGroup)          (THIS_ LPDPID,LPDPNAME,LPVOID,DWORD,DWORD) PURE;
+    STDMETHOD(CreatePlayer)         (THIS_ LPDPID,LPDPNAME,HANDLE32,LPVOID,DWORD,DWORD) PURE;
+    STDMETHOD(DeletePlayerFromGroup)(THIS_ DPID,DPID) PURE;
+    STDMETHOD(DestroyGroup)         (THIS_ DPID) PURE;
+    STDMETHOD(DestroyPlayer)        (THIS_ DPID) PURE;
+    STDMETHOD(EnumGroupPlayers)     (THIS_ DPID,LPGUID,LPDPENUMPLAYERSCALLBACK2,LPVOID,DWORD) PURE;
+    STDMETHOD(EnumGroups)           (THIS_ LPGUID,LPDPENUMPLAYERSCALLBACK2,LPVOID,DWORD) PURE;
+    STDMETHOD(EnumPlayers)          (THIS_ LPGUID,LPDPENUMPLAYERSCALLBACK2,LPVOID,DWORD) PURE;
+    STDMETHOD(EnumSessions)         (THIS_ LPDPSESSIONDESC2,DWORD,LPDPENUMSESSIONSCALLBACK2,LPVOID,DWORD) PURE;
+    STDMETHOD(GetCaps)              (THIS_ LPDPCAPS,DWORD) PURE;
+    STDMETHOD(GetGroupData)         (THIS_ DPID,LPVOID,LPDWORD,DWORD) PURE;
+    STDMETHOD(GetGroupName)         (THIS_ DPID,LPVOID,LPDWORD) PURE;
+    STDMETHOD(GetMessageCount)      (THIS_ DPID, LPDWORD) PURE;
+    STDMETHOD(GetPlayerAddress)     (THIS_ DPID,LPVOID,LPDWORD) PURE;
+    STDMETHOD(GetPlayerCaps)        (THIS_ DPID,LPDPCAPS,DWORD) PURE;
+    STDMETHOD(GetPlayerData)        (THIS_ DPID,LPVOID,LPDWORD,DWORD) PURE;
+    STDMETHOD(GetPlayerName)        (THIS_ DPID,LPVOID,LPDWORD) PURE;
+    STDMETHOD(GetSessionDesc)       (THIS_ LPVOID,LPDWORD) PURE;
+    STDMETHOD(Initialize)           (THIS_ LPGUID) PURE;
+    STDMETHOD(Open)                 (THIS_ LPDPSESSIONDESC2,DWORD) PURE;
+    STDMETHOD(Receive)              (THIS_ LPDPID,LPDPID,DWORD,LPVOID,LPDWORD) PURE;
+    STDMETHOD(Send)                 (THIS_ DPID, DPID, DWORD, LPVOID, DWORD) PURE;
+    STDMETHOD(SetGroupData)         (THIS_ DPID,LPVOID,DWORD,DWORD) PURE;
+    STDMETHOD(SetGroupName)         (THIS_ DPID,LPDPNAME,DWORD) PURE;
+    STDMETHOD(SetPlayerData)        (THIS_ DPID,LPVOID,DWORD,DWORD) PURE;
+    STDMETHOD(SetPlayerName)        (THIS_ DPID,LPDPNAME,DWORD) PURE;
+    STDMETHOD(SetSessionDesc)       (THIS_ LPDPSESSIONDESC2,DWORD) PURE;
+} DIRECTPLAY2_VTABLE, *LPDIRECTPLAY2_VTABLE;
+#undef THIS
+
+#define THIS LPDIRECTPLAY3 this
+typedef struct tagLPDIRECTPLAY3_VTABLE
+{
+    /*** IUnknown methods ***/
+    STDMETHOD(QueryInterface)       (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+    STDMETHOD_(ULONG,AddRef)        (THIS)  PURE;
+    STDMETHOD_(ULONG,Release)       (THIS) PURE;
+
+    /*** IDirectPlay2 methods ***/
+    STDMETHOD(AddPlayerToGroup)     (THIS_ DPID, DPID) PURE;
+    STDMETHOD(Close)                (THIS) PURE;
+    STDMETHOD(CreateGroup)          (THIS_ LPDPID,LPDPNAME,LPVOID,DWORD,DWORD) PURE;
+    STDMETHOD(CreatePlayer)         (THIS_ LPDPID,LPDPNAME,HANDLE32,LPVOID,DWORD,DWORD) PURE;
+    STDMETHOD(DeletePlayerFromGroup)(THIS_ DPID,DPID) PURE;
+    STDMETHOD(DestroyGroup)         (THIS_ DPID) PURE;
+    STDMETHOD(DestroyPlayer)        (THIS_ DPID) PURE;
+    STDMETHOD(EnumGroupPlayers)     (THIS_ DPID,LPGUID,LPDPENUMPLAYERSCALLBACK2,LPVOID,DWORD) PURE;
+    STDMETHOD(EnumGroups)           (THIS_ LPGUID,LPDPENUMPLAYERSCALLBACK2,LPVOID,DWORD) PURE;
+    STDMETHOD(EnumPlayers)          (THIS_ LPGUID,LPDPENUMPLAYERSCALLBACK2,LPVOID,DWORD) PURE;
+    STDMETHOD(EnumSessions)         (THIS_ LPDPSESSIONDESC2,DWORD,LPDPENUMSESSIONSCALLBACK2,LPVOID,DWORD) PURE;
+    STDMETHOD(GetCaps)              (THIS_ LPDPCAPS,DWORD) PURE;
+    STDMETHOD(GetGroupData)         (THIS_ DPID,LPVOID,LPDWORD,DWORD) PURE;
+    STDMETHOD(GetGroupName)         (THIS_ DPID,LPVOID,LPDWORD) PURE;
+    STDMETHOD(GetMessageCount)      (THIS_ DPID, LPDWORD) PURE;
+    STDMETHOD(GetPlayerAddress)     (THIS_ DPID,LPVOID,LPDWORD) PURE;
+    STDMETHOD(GetPlayerCaps)        (THIS_ DPID,LPDPCAPS,DWORD) PURE;
+    STDMETHOD(GetPlayerData)        (THIS_ DPID,LPVOID,LPDWORD,DWORD) PURE;
+    STDMETHOD(GetPlayerName)        (THIS_ DPID,LPVOID,LPDWORD) PURE;
+    STDMETHOD(GetSessionDesc)       (THIS_ LPVOID,LPDWORD) PURE;
+    STDMETHOD(Initialize)           (THIS_ LPGUID) PURE;
+    STDMETHOD(Open)                 (THIS_ LPDPSESSIONDESC2,DWORD) PURE;
+    STDMETHOD(Receive)              (THIS_ LPDPID,LPDPID,DWORD,LPVOID,LPDWORD) PURE;
+    STDMETHOD(Send)                 (THIS_ DPID, DPID, DWORD, LPVOID, DWORD) PURE;
+    STDMETHOD(SetGroupData)         (THIS_ DPID,LPVOID,DWORD,DWORD) PURE;
+    STDMETHOD(SetGroupName)         (THIS_ DPID,LPDPNAME,DWORD) PURE;
+    STDMETHOD(SetPlayerData)        (THIS_ DPID,LPVOID,DWORD,DWORD) PURE;
+    STDMETHOD(SetPlayerName)        (THIS_ DPID,LPDPNAME,DWORD) PURE;
+    STDMETHOD(SetSessionDesc)       (THIS_ LPDPSESSIONDESC2,DWORD) PURE;
+
+    /*** IDirectPlay3 methods ***/
+    STDMETHOD(AddGroupToGroup)            (THIS_ DPID, DPID) PURE;
+    STDMETHOD(CreateGroupInGroup)         (THIS_ DPID,LPDPID,LPDPNAME,LPVOID,DWORD,DWORD) PURE;
+    STDMETHOD(DeleteGroupFromGroup)       (THIS_ DPID,DPID) PURE;
+    STDMETHOD(EnumConnections)            (THIS_ LPCGUID,LPDPENUMCONNECTIONSCALLBACK,LPVOID,DWORD) PURE;
+    STDMETHOD(EnumGroupsInGroup)          (THIS_ DPID,LPGUID,LPDPENUMPLAYERSCALLBACK2,LPVOID,DWORD) PURE;
+    STDMETHOD(GetGroupConnectionSettings) (THIS_ DWORD, DPID, LPVOID, LPDWORD) PURE;
+    STDMETHOD(InitializeConnection)       (THIS_ LPVOID,DWORD) PURE;
+    STDMETHOD(SecureOpen)                 (THIS_ LPCDPSESSIONDESC2,DWORD,LPCDPSECURITYDESC,LPCDPCREDENTIALS) PURE;
+    STDMETHOD(SendChatMessage)            (THIS_ DPID,DPID,DWORD,LPDPCHAT);
+    STDMETHOD(SetGroupConnectionSettings) (THIS_ DWORD,DPID,LPDPLCONNECTION) PURE;
+    STDMETHOD(StartSession)               (THIS_ DWORD,DPID);
+    STDMETHOD(GetGroupFlags)              (THIS_ DPID,LPDWORD);
+    STDMETHOD(GetGroupParent)             (THIS_ DPID,LPDPID);
+    STDMETHOD(GetPlayerAccount)           (THIS_ DPID, DWORD, LPVOID, LPDWORD) PURE;
+    STDMETHOD(GetPlayerFlags)             (THIS_ DPID,LPDWORD);
+} DIRECTPLAY3_VTABLE, *LPDIRECTPLAY3_VTABLE;
+#undef THIS
+
+
+/**********************************************************************************
+ *
+ * Macros for a nicer interface to DirectPlay 
+ *
+ **********************************************************************************/
+
+/* COM Interface */
+#define IDirectPlay_QueryInterface(p,a,b)           (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectPlay_AddRef(p)                       (p)->lpVtbl->AddRef(p)
+#define IDirectPlay_Release(p)                      (p)->lpVtbl->Release(p)
+
+#define IDirectPlay2_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectPlay2_AddRef(p)                      (p)->lpVtbl->AddRef(p)
+#define IDirectPlay2_Release(p)                     (p)->lpVtbl->Release(p)
+
+#define IDirectPlay3_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectPlay3_AddRef(p)                      (p)->lpVtbl->AddRef(p)
+#define IDirectPlay3_Release(p)                     (p)->lpVtbl->Release(p)
+
+/* Direct Play 1&2 Interface */
+#define IDirectPlay_AddPlayerToGroup(p,a,b)         (p)->lpVtbl->AddPlayerToGroup(p,a,b)
+#define IDirectPlay_Close(p)                        (p)->lpVtbl->Close(p)
+#define IDirectPlay_CreateGroup(p,a,b,c)            (p)->lpVtbl->CreateGroup(p,a,b,c)
+#define IDirectPlay_CreatePlayer(p,a,b,c,d)         (p)->lpVtbl->CreatePlayer(p,a,b,c,d)
+#define IDirectPlay_DeletePlayerFromGroup(p,a,b)    (p)->lpVtbl->DeletePlayerFromGroup(p,a,b)
+#define IDirectPlay_DestroyGroup(p,a)               (p)->lpVtbl->DestroyGroup(p,a)
+#define IDirectPlay_DestroyPlayer(p,a)              (p)->lpVtbl->DestroyPlayer(p,a)
+#define IDirectPlay_EnableNewPlayers(p,a)           (p)->lpVtbl->EnableNewPlayers(p,a)
+#define IDirectPlay_EnumGroupPlayers(p,a,b,c,d)     (p)->lpVtbl->EnumGroupPlayers(p,a,b,c,d)
+#define IDirectPlay_EnumGroups(p,a,b,c,d)           (p)->lpVtbl->EnumGroups(p,a,b,c,d)
+#define IDirectPlay_EnumPlayers(p,a,b,c,d)          (p)->lpVtbl->EnumPlayers(p,a,b,c,d)
+#define IDirectPlay_EnumSessions(p,a,b,c,d,e)       (p)->lpVtbl->EnumSessions(p,a,b,c,d,e)
+#define IDirectPlay_GetCaps(p,a)                    (p)->lpVtbl->GetCaps(p,a)
+#define IDirectPlay_GetMessageCount(p,a,b)          (p)->lpVtbl->GetMessageCount(p,a,b)
+#define IDirectPlay_GetPlayerCaps(p,a,b)            (p)->lpVtbl->GetPlayerCaps(p,a,b)
+#define IDirectPlay_GetPlayerName(p,a,b,c,d,e)      (p)->lpVtbl->GetPlayerName(p,a,b,c,d,e)
+#define IDirectPlay_Initialize(p,a)                 (p)->lpVtbl->Initialize(p,a)
+#define IDirectPlay_Open(p,a)                       (p)->lpVtbl->Open(p,a)
+#define IDirectPlay_Receive(p,a,b,c,d,e)            (p)->lpVtbl->Receive(p,a,b,c,d,e)
+#define IDirectPlay_SaveSession(p,a)                (p)->lpVtbl->SaveSession(p,a)
+#define IDirectPlay_Send(p,a,b,c,d,e)               (p)->lpVtbl->Send(p,a,b,c,d,e)
+#define IDirectPlay_SetPlayerName(p,a,b,c)          (p)->lpVtbl->SetPlayerName(p,a,b,c)
+
+#define IDirectPlay2_AddPlayerToGroup(p,a,b)        (p)->lpVtbl->AddPlayerToGroup(p,a,b)
+#define IDirectPlay2_Close(p)                       (p)->lpVtbl->Close(p)
+#define IDirectPlay2_CreateGroup(p,a,b,c,d,e)       (p)->lpVtbl->CreateGroup(p,a,b,c,d,e)
+#define IDirectPlay2_CreatePlayer(p,a,b,c,d,e,f)    (p)->lpVtbl->CreatePlayer(p,a,b,c,d,e,f)
+#define IDirectPlay2_DeletePlayerFromGroup(p,a,b)   (p)->lpVtbl->DeletePlayerFromGroup(p,a,b)
+#define IDirectPlay2_DestroyGroup(p,a)              (p)->lpVtbl->DestroyGroup(p,a)
+#define IDirectPlay2_DestroyPlayer(p,a)             (p)->lpVtbl->DestroyPlayer(p,a)
+#define IDirectPlay2_EnumGroupPlayers(p,a,b,c,d,e)  (p)->lpVtbl->EnumGroupPlayers(p,a,b,c,d,e)
+#define IDirectPlay2_EnumGroups(p,a,b,c,d)          (p)->lpVtbl->EnumGroups(p,a,b,c,d)
+#define IDirectPlay2_EnumPlayers(p,a,b,c,d)         (p)->lpVtbl->EnumPlayers(p,a,b,c,d)
+#define IDirectPlay2_EnumSessions(p,a,b,c,d,e)      (p)->lpVtbl->EnumSessions(p,a,b,c,d,e)
+#define IDirectPlay2_GetCaps(p,a,b)                 (p)->lpVtbl->GetCaps(p,a,b)
+#define IDirectPlay2_GetMessageCount(p,a,b)         (p)->lpVtbl->GetMessageCount(p,a,b)
+#define IDirectPlay2_GetGroupData(p,a,b,c,d)        (p)->lpVtbl->GetGroupData(p,a,b,c,d)
+#define IDirectPlay2_GetGroupName(p,a,b,c)          (p)->lpVtbl->GetGroupName(p,a,b,c)
+#define IDirectPlay2_GetPlayerAddress(p,a,b,c)      (p)->lpVtbl->GetPlayerAddress(p,a,b,c)
+#define IDirectPlay2_GetPlayerCaps(p,a,b,c)         (p)->lpVtbl->GetPlayerCaps(p,a,b,c)
+#define IDirectPlay2_GetPlayerData(p,a,b,c,d)       (p)->lpVtbl->GetPlayerData(p,a,b,c,d)
+#define IDirectPlay2_GetPlayerName(p,a,b,c)         (p)->lpVtbl->GetPlayerName(p,a,b,c)
+#define IDirectPlay2_GetSessionDesc(p,a,b)          (p)->lpVtbl->GetSessionDesc(p,a,b)
+#define IDirectPlay2_Initialize(p,a)                (p)->lpVtbl->Initialize(p,a)
+#define IDirectPlay2_Open(p,a,b)                    (p)->lpVtbl->Open(p,a,b)
+#define IDirectPlay2_Receive(p,a,b,c,d,e)           (p)->lpVtbl->Receive(p,a,b,c,d,e)
+#define IDirectPlay2_Send(p,a,b,c,d,e)              (p)->lpVtbl->Send(p,a,b,c,d,e)
+#define IDirectPlay2_SetGroupData(p,a,b,c,d)        (p)->lpVtbl->SetGroupData(p,a,b,c,d)
+#define IDirectPlay2_SetGroupName(p,a,b,c)          (p)->lpVtbl->SetGroupName(p,a,b,c)
+#define IDirectPlay2_SetPlayerData(p,a,b,c,d)       (p)->lpVtbl->SetPlayerData(p,a,b,c,d)
+#define IDirectPlay2_SetPlayerName(p,a,b,c)         (p)->lpVtbl->SetPlayerName(p,a,b,c)
+#define IDirectPlay2_SetSessionDesc(p,a,b)          (p)->lpVtbl->SetSessionDesc(p,a,b)
+
+#define IDirectPlay3_AddPlayerToGroup(p,a,b)        (p)->lpVtbl->AddPlayerToGroup(p,a,b)
+#define IDirectPlay3_Close(p)                       (p)->lpVtbl->Close(p)
+#define IDirectPlay3_CreateGroup(p,a,b,c,d,e)       (p)->lpVtbl->CreateGroup(p,a,b,c,d,e)
+#define IDirectPlay3_CreatePlayer(p,a,b,c,d,e,f)    (p)->lpVtbl->CreatePlayer(p,a,b,c,d,e,f)
+#define IDirectPlay3_DeletePlayerFromGroup(p,a,b)   (p)->lpVtbl->DeletePlayerFromGroup(p,a,b)
+#define IDirectPlay3_DestroyGroup(p,a)              (p)->lpVtbl->DestroyGroup(p,a)
+#define IDirectPlay3_DestroyPlayer(p,a)             (p)->lpVtbl->DestroyPlayer(p,a)
+#define IDirectPlay3_EnumGroupPlayers(p,a,b,c,d,e)  (p)->lpVtbl->EnumGroupPlayers(p,a,b,c,d,e)
+#define IDirectPlay3_EnumGroups(p,a,b,c,d)          (p)->lpVtbl->EnumGroups(p,a,b,c,d)
+#define IDirectPlay3_EnumPlayers(p,a,b,c,d)         (p)->lpVtbl->EnumPlayers(p,a,b,c,d)
+#define IDirectPlay3_EnumSessions(p,a,b,c,d,e)      (p)->lpVtbl->EnumSessions(p,a,b,c,d,e)
+#define IDirectPlay3_GetCaps(p,a,b)                 (p)->lpVtbl->GetCaps(p,a,b)
+#define IDirectPlay3_GetMessageCount(p,a,b)         (p)->lpVtbl->GetMessageCount(p,a,b)
+#define IDirectPlay3_GetGroupData(p,a,b,c,d)        (p)->lpVtbl->GetGroupData(p,a,b,c,d)
+#define IDirectPlay3_GetGroupName(p,a,b,c)          (p)->lpVtbl->GetGroupName(p,a,b,c)
+#define IDirectPlay3_GetPlayerAddress(p,a,b,c)      (p)->lpVtbl->GetPlayerAddress(p,a,b,c)
+#define IDirectPlay3_GetPlayerCaps(p,a,b,c)         (p)->lpVtbl->GetPlayerCaps(p,a,b,c)
+#define IDirectPlay3_GetPlayerData(p,a,b,c,d)       (p)->lpVtbl->GetPlayerData(p,a,b,c,d)
+#define IDirectPlay3_GetPlayerName(p,a,b,c)         (p)->lpVtbl->GetPlayerName(p,a,b,c)
+#define IDirectPlay3_GetSessionDesc(p,a,b)          (p)->lpVtbl->GetSessionDesc(p,a,b)
+#define IDirectPlay3_Initialize(p,a)                (p)->lpVtbl->Initialize(p,a)
+#define IDirectPlay3_Open(p,a,b)                    (p)->lpVtbl->Open(p,a,b)
+#define IDirectPlay3_Receive(p,a,b,c,d,e)           (p)->lpVtbl->Receive(p,a,b,c,d,e)
+#define IDirectPlay3_Send(p,a,b,c,d,e)              (p)->lpVtbl->Send(p,a,b,c,d,e)
+#define IDirectPlay3_SetGroupData(p,a,b,c,d)        (p)->lpVtbl->SetGroupData(p,a,b,c,d)
+#define IDirectPlay3_SetGroupName(p,a,b,c)          (p)->lpVtbl->SetGroupName(p,a,b,c)
+#define IDirectPlay3_SetPlayerData(p,a,b,c,d)       (p)->lpVtbl->SetPlayerData(p,a,b,c,d)
+#define IDirectPlay3_SetPlayerName(p,a,b,c)         (p)->lpVtbl->SetPlayerName(p,a,b,c)
+#define IDirectPlay3_SetSessionDesc(p,a,b)          (p)->lpVtbl->SetSessionDesc(p,a,b)
+
+
+/* Direct Play 3 Interface. */
+
+#define IDirectPlay3_AddGroupToGroup(p,a,b)             (p)->lpVtbl->AddGroupToGroup(p,a,b)
+#define IDirectPlay3_CreateGroupInGroup(p,a,b,c,d,e,f) (p)->lpVtbl->CreateGroupInGroup(p,a,b,c,d,e,f)
+#define IDirectPlay3_DeleteGroupFromGroup(p,a,b)        (p)->lpVtbl->DeleteGroupFromGroup(p,a,b)
+#define IDirectPlay3_EnumConnections(p,a,b,c,d)         (p)->lpVtbl->EnumConnections(p,a,b,c,d)
+#define IDirectPlay3_EnumGroupsInGroup(p,a,b,c,d,e) (p)->lpVtbl->EnumGroupsInGroup(p,a,b,c,d,e)
+#define IDirectPlay3_GetGroupConnectionSettings(p,a,b,c,d) (p)->lpVtbl->GetGroupConnectionSettings(p,a,b,c,d)
+#define IDirectPlay3_InitializeConnection(p,a,b)        (p)->lpVtbl->InitializeConnection(p,a,b)
+#define IDirectPlay3_SecureOpen(p,a,b,c,d)          (p)->lpVtbl->SecureOpen(p,a,b,c,d)
+#define IDirectPlay3_SendChatMessage(p,a,b,c,d)     (p)->lpVtbl->SendChatMessage(p,a,b,c,d)
+#define IDirectPlay3_SetGroupConnectionSettings(p,a,b,c) (p)->lpVtbl->SetGroupConnectionSettings(p,a,b,c)
+#define IDirectPlay3_StartSession(p,a,b)            (p)->lpVtbl->StartSession(p,a,b)
+#define IDirectPlay3_GetGroupFlags(p,a,b)           (p)->lpVtbl->GetGroupFlags(p,a,b)
+#define IDirectPlay3_GetGroupParent(p,a,b)          (p)->lpVtbl->GetGroupParent(p,a,b)
+#define IDirectPlay3_GetPlayerAccount(p,a,b,c,d)    (p)->lpVtbl->GetPlayerAccount(p,a,b,c,d)
+#define IDirectPlay3_GetPlayerFlags(p,a,b)          (p)->lpVtbl->GetPlayerFlags(p,a,b)
+
+
+/****************************************************************************
+ *
+ * DIRECT PLAY LOBBY VIRTUAL TABLE DEFINITIONS 
+ *
+ ****************************************************************************/
+
+
+#define THIS LPDIRECTPLAYLOBBY this
+typedef struct tagLPDIRECTPLAYLOBBY_VTABLE 
+{
     /*  IUnknown Methods "Inherited Methods" */
     STDMETHOD(QueryInterface)       (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
-    STDMETHOD_(ULONG,AddRef)        (THIS) PURE;
+    STDMETHOD_(ULONG,AddRef)        (THIS)  PURE;
     STDMETHOD_(ULONG,Release)       (THIS) PURE;
 
     /*  IDirectPlayLobby Methods */
-    STDMETHOD(Connect)              (THIS_ DWORD, LPDIRECTPLAY2 *, IUnknown *) PURE;
-    STDMETHOD(CreateAddress)        (THIS_ REFGUID, REFGUID, LPCVOID, DWORD, LPVOID, LPDWORD) PURE;
-    STDMETHOD(EnumAddress)          (THIS_ LPDPENUMADDRESSCALLBACK, LPCVOID, DWORD, LPVOID) PURE;
-    STDMETHOD(EnumAddressTypes)     (THIS_ LPDPLENUMADDRESSTYPESCALLBACK, REFGUID, LPVOID, DWORD) PURE;
-    STDMETHOD(EnumLocalApplications)(THIS_ LPDPLENUMLOCALAPPLICATIONSCALLBACK, LPVOID, DWORD) PURE;
-    STDMETHOD(GetConnectionSettings)(THIS_ DWORD, LPVOID, LPDWORD) PURE;
-    STDMETHOD(ReceiveLobbyMessage)  (THIS_ DWORD, DWORD, LPDWORD, LPVOID, LPDWORD) PURE;
-    STDMETHOD(RunApplication)       (THIS_ DWORD, LPDWORD, LPDPLCONNECTION, HANDLE32) PURE;
-    STDMETHOD(SendLobbyMessage)     (THIS_ DWORD, DWORD, LPVOID, DWORD) PURE;
-    STDMETHOD(SetConnectionSettings)(THIS_ DWORD, DWORD, LPDPLCONNECTION) PURE;
+    STDMETHOD(Connect)              (THIS_ DWORD, LPDIRECTPLAY *, IUnknown *) PURE;                       
+    STDMETHOD(CreateAddress)        (THIS_ REFGUID, REFGUID, LPCVOID, DWORD, LPVOID, LPDWORD) PURE;       
+    STDMETHOD(EnumAddress)          (THIS_ LPDPENUMADDRESSCALLBACK, LPCVOID, DWORD, LPVOID) PURE;         
+    STDMETHOD(EnumAddressTypes)     (THIS_ LPDPLENUMADDRESSTYPESCALLBACK, REFGUID, LPVOID, DWORD) PURE;   
+    STDMETHOD(EnumLocalApplications)(THIS_ LPDPLENUMLOCALAPPLICATIONSCALLBACK, LPVOID, DWORD) PURE;       
+    STDMETHOD(GetConnectionSettings)(THIS_ DWORD, LPVOID, LPDWORD) PURE;                                  
+    STDMETHOD(ReceiveLobbyMessage)  (THIS_ DWORD, DWORD, LPDWORD, LPVOID, LPDWORD) PURE;                  
+    STDMETHOD(RunApplication)       (THIS_ DWORD, LPDWORD, LPDPLCONNECTION, HANDLE32) PURE;               
+    STDMETHOD(SendLobbyMessage)     (THIS_ DWORD, DWORD, LPVOID, DWORD) PURE;                             
+    STDMETHOD(SetConnectionSettings)(THIS_ DWORD, DWORD, LPDPLCONNECTION) PURE;                           
+    STDMETHOD(SetLobbyMessageEvent) (THIS_ DWORD, DWORD, HANDLE32) PURE;
+
+
+} DIRECTPLAYLOBBY_VTABLE, *LPDIRECTPLAYLOBBY_VTABLE;
+#undef THIS
+
+#define THIS LPDIRECTPLAYLOBBY2 this
+typedef struct tagLPDIRECTPLAYLOBBY2_VTABLE 
+{
+    /*  IUnknown Methods "Inherited Methods" */
+    STDMETHOD(QueryInterface)       (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
+    STDMETHOD_(ULONG,AddRef)        (THIS)  PURE;
+    STDMETHOD_(ULONG,Release)       (THIS) PURE;
+
+    /*  IDirectPlayLobby Methods */
+    STDMETHOD(Connect)              (THIS_ DWORD, LPDIRECTPLAY2 *, IUnknown *) PURE;                       
+    STDMETHOD(CreateAddress)        (THIS_ REFGUID, REFGUID, LPCVOID, DWORD, LPVOID, LPDWORD) PURE;       
+    STDMETHOD(EnumAddress)          (THIS_ LPDPENUMADDRESSCALLBACK, LPCVOID, DWORD, LPVOID) PURE;         
+    STDMETHOD(EnumAddressTypes)     (THIS_ LPDPLENUMADDRESSTYPESCALLBACK, REFGUID, LPVOID, DWORD) PURE;   
+    STDMETHOD(EnumLocalApplications)(THIS_ LPDPLENUMLOCALAPPLICATIONSCALLBACK, LPVOID, DWORD) PURE;       
+    STDMETHOD(GetConnectionSettings)(THIS_ DWORD, LPVOID, LPDWORD) PURE;                                  
+    STDMETHOD(ReceiveLobbyMessage)  (THIS_ DWORD, DWORD, LPDWORD, LPVOID, LPDWORD) PURE;                  
+    STDMETHOD(RunApplication)       (THIS_ DWORD, LPDWORD, LPDPLCONNECTION, HANDLE32) PURE;               
+    STDMETHOD(SendLobbyMessage)     (THIS_ DWORD, DWORD, LPVOID, DWORD) PURE;                             
+    STDMETHOD(SetConnectionSettings)(THIS_ DWORD, DWORD, LPDPLCONNECTION) PURE;                           
     STDMETHOD(SetLobbyMessageEvent) (THIS_ DWORD, DWORD, HANDLE32) PURE;
 
     /*  IDirectPlayLobby2 Methods */
     STDMETHOD(CreateCompoundAddress)(THIS_ LPCDPCOMPOUNDADDRESSELEMENT, DWORD, LPVOID, LPDWORD) PURE;
 
 } DIRECTPLAYLOBBY2_VTABLE, *LPDIRECTPLAYLOBBY2_VTABLE;
+#undef THIS
 
-/* Is this right? How does one know? */
-struct IDirectPlayLobby2 {
-    LPDIRECTPLAYLOBBY2_VTABLE lpvtbl;
-    DWORD                     ref;
-};
+/**********************************************************************************
+ *
+ * Macros for a nicer interface to DirectPlayLobby
+ *
+ **********************************************************************************/
+
+/* COM Interface */
+
+#define IDirectPlayLobby_QueryInterface(p,a,b)              (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectPlayLobby_AddRef(p)                          (p)->lpVtbl->AddRef(p)
+#define IDirectPlayLobby_Release(p)                         (p)->lpVtbl->Release(p)
+
+#define IDirectPlayLobby2_QueryInterface(p,a,b)             (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectPlayLobby2_AddRef(p)                         (p)->lpVtbl->AddRef(p)
+#define IDirectPlayLobby2_Release(p)                        (p)->lpVtbl->Release(p)
+
+/* Direct Play Lobby 1 */
+
+#define IDirectPlayLobby_Connect(p,a,b,c)                   (p)->lpVtbl->Connect(p,a,b,c)
+#define IDirectPlayLobby_CreateAddress(p,a,b,c,d,e,f)       (p)->lpVtbl->CreateAddress(p,a,b,c,d,e,f)
+#define IDirectPlayLobby_EnumAddress(p,a,b,c,d)             (p)->lpVtbl->EnumAddress(p,a,b,c,d)
+#define IDirectPlayLobby_EnumAddressTypes(p,a,b,c,d)        (p)->lpVtbl->EnumAddressTypes(p,a,b,c,d)
+#define IDirectPlayLobby_EnumLocalApplications(p,a,b,c)     (p)->lpVtbl->EnumLocalApplications(p,a,b,c)
+#define IDirectPlayLobby_GetConnectionSettings(p,a,b,c)     (p)->lpVtbl->GetConnectionSettings(p,a,b,c)
+#define IDirectPlayLobby_ReceiveLobbyMessage(p,a,b,c,d,e)   (p)->lpVtbl->ReceiveLobbyMessage(p,a,b,c,d,e)
+#define IDirectPlayLobby_RunApplication(p,a,b,c,d)          (p)->lpVtbl->RunApplication(p,a,b,c,d)
+#define IDirectPlayLobby_SendLobbyMessage(p,a,b,c,d)        (p)->lpVtbl->SendLobbyMessage(p,a,b,c,d)
+#define IDirectPlayLobby_SetConnectionSettings(p,a,b,c)     (p)->lpVtbl->SetConnectionSettings(p,a,b,c)
+#define IDirectPlayLobby_SetLobbyMessageEvent(p,a,b,c)      (p)->lpVtbl->SetLobbyMessageEvent(p,a,b,c)
+
+#define IDirectPlayLobby2_Connect(p,a,b,c)                  (p)->lpVtbl->Connect(p,a,b,c)
+#define IDirectPlayLobby2_CreateAddress(p,a,b,c,d,e,f)      (p)->lpVtbl->CreateAddress(p,a,b,c,d,e,f)
+#define IDirectPlayLobby2_EnumAddress(p,a,b,c,d)            (p)->lpVtbl->EnumAddress(p,a,b,c,d)
+#define IDirectPlayLobby2_EnumAddressTypes(p,a,b,c,d)       (p)->lpVtbl->EnumAddressTypes(p,a,b,c,d)
+#define IDirectPlayLobby2_EnumLocalApplications(p,a,b,c)    (p)->lpVtbl->EnumLocalApplications(p,a,b,c)
+#define IDirectPlayLobby2_GetConnectionSettings(p,a,b,c)    (p)->lpVtbl->GetConnectionSettings(p,a,b,c)
+#define IDirectPlayLobby2_ReceiveLobbyMessage(p,a,b,c,d,e)  (p)->lpVtbl->ReceiveLobbyMessage(p,a,b,c,d,e)
+#define IDirectPlayLobby2_RunApplication(p,a,b,c,d)         (p)->lpVtbl->RunApplication(p,a,b,c,d)
+#define IDirectPlayLobby2_SendLobbyMessage(p,a,b,c,d)       (p)->lpVtbl->SendLobbyMessage(p,a,b,c,d)
+#define IDirectPlayLobby2_SetConnectionSettings(p,a,b,c)    (p)->lpVtbl->SetConnectionSettings(p,a,b,c)
+#define IDirectPlayLobby2_SetLobbyMessageEvent(p,a,b,c)     (p)->lpVtbl->SetLobbyMessageEvent(p,a,b,c)
+
+
+/* Direct Play Lobby 2 */
+
+#define IDirectPlayLobby2_CreateCompoundAddress(p,a,b,c,d)   (p)->lpVtbl->CreateCompoundAddress(p,a,b,c,d)
 
 #pragma pack(4)
 

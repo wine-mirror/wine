@@ -50,6 +50,7 @@ $(INCLUDES):
 	for i in $(INCLUDES); do $(LN_S) $(TOPSRCDIR)/$$i $$i || exit 1; done
 
 install:: 
+	[ -d $(mandir) ] || mkdir -p $(mandir)
 	$(INSTALL_DATA) $(SRCDIR)/wine.man $(mandir)/wine$(manext)
 
 uninstall::
@@ -57,6 +58,7 @@ uninstall::
 
 # Not done by default because of makeinfo bugs
 install_info: $(INFOFILES)
+	[ -d $(infodir) ] || mkdir -p $(infodir)
 	for i in $(INFOFILES); do $(INSTALL_DATA) $$i $(infodir)/$$i; done
 
 uninstall_info:

@@ -41,6 +41,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <sys/errno.h>
 #include <netdb.h>
 #include <unistd.h>
 

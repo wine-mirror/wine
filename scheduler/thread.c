@@ -83,6 +83,33 @@ BOOL32 THREAD_IsWin16( THDB *thdb )
     }
 }
 
+/***********************************************************************
+ *           THREAD_IdToTHDB
+ *
+ * Convert a thread id to a THDB, making sure it is valid.
+ */
+THDB *THREAD_IdToTHDB( DWORD id )
+{
+    THDB *thdb;
+
+    if (!id) return THREAD_Current();
+    thdb = THREAD_ID_TO_THDB( id );
+    if (!K32OBJ_IsValid( &thdb->header, K32OBJ_THREAD ))
+    {
+        /* Allow task handles to be used; convert to main thread */
+        if ( IsTask( id ) )
+        {
+            TDB *pTask = (TDB *)GlobalLock16( id );
+            if (pTask) return pTask->thdb;
+        }
+        
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+    return thdb;
+}
+
+
 
 /***********************************************************************
  *           THREAD_AddQueue
@@ -361,7 +388,7 @@ HANDLE32 WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
                            THREAD_ALL_ACCESS, inherit, server_handle );
     if (handle == INVALID_HANDLE_VALUE32) goto error;
     if (SYSDEPS_SpawnThread( thread ) == -1) goto error;
-    *id = THDB_TO_THREAD_ID( thread );
+    if (id) *id = THDB_TO_THREAD_ID( thread );
     return handle;
 
 error:
@@ -880,5 +907,21 @@ BOOL32 WINAPI AttachThreadInput(
         ret = FALSE;
     };
     return ret;
+}
+
+/**********************************************************************
+ * VWin32_BoostThreadGroup [KERNEL.535]
+ */
+VOID WINAPI VWin32_BoostThreadGroup( DWORD threadId, INT32 boost )
+{
+    FIXME(thread, "(0x%08lx,%d): stub\n", threadId, boost);
+}
+
+/**********************************************************************
+ * VWin32_BoostThreadStatic [KERNEL.536]
+ */
+VOID WINAPI VWin32_BoostThreadStatic( DWORD threadId, INT32 boost )
+{
+    FIXME(thread, "(0x%08lx,%d): stub\n", threadId, boost);
 }
 

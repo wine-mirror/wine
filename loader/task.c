@@ -290,8 +290,8 @@ static void TASK_CallToStart(void)
         CONTEXT context;
 
         memset( &context, 0, sizeof(context) );
-        CS_reg(&context)  = pSegTable[pModule->cs - 1].selector;
-        DS_reg(&context)  = pSegTable[pModule->dgroup - 1].selector;
+        CS_reg(&context)  = GlobalHandleToSel(pSegTable[pModule->cs - 1].hSeg);
+        DS_reg(&context)  = GlobalHandleToSel(pSegTable[pModule->dgroup - 1].hSeg);
         ES_reg(&context)  = pTask->hPDB;
         EIP_reg(&context) = pModule->ip;
         EBX_reg(&context) = pModule->stack_size;
@@ -383,9 +383,9 @@ HTASK16 TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
     pTask->pdb.dispatcher[0] = 0x9a;  /* ljmp */
     PUT_DWORD(&pTask->pdb.dispatcher[1], (DWORD)NE_GetEntryPoint(
            GetModuleHandle16("KERNEL"), 102 ));  /* KERNEL.102 is DOS3Call() */
-    pTask->pdb.savedint22 = INT_GetHandler( 0x22 );
-    pTask->pdb.savedint23 = INT_GetHandler( 0x23 );
-    pTask->pdb.savedint24 = INT_GetHandler( 0x24 );
+    pTask->pdb.savedint22 = INT_GetPMHandler( 0x22 );
+    pTask->pdb.savedint23 = INT_GetPMHandler( 0x23 );
+    pTask->pdb.savedint24 = INT_GetPMHandler( 0x24 );
     pTask->pdb.fileHandlesPtr =
         PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel(pTask->hPDB),
                                (int)&((PDB *)0)->fileHandles );
@@ -1091,6 +1091,53 @@ HANDLE16 WINAPI GetCodeHandle( FARPROC16 proc )
     return handle;
 }
 
+/**********************************************************************
+ *	    GetCodeInfo    (KERNEL.104)
+ */
+VOID WINAPI GetCodeInfo( FARPROC16 proc, SEGINFO *segInfo )
+{
+    BYTE *thunk = (BYTE *)PTR_SEG_TO_LIN( proc );
+    NE_MODULE *pModule = NULL;
+    SEGTABLEENTRY *pSeg = NULL;
+    WORD segNr;
+
+    /* proc is either a thunk, or else a pair of module handle
+       and segment number. In the first case, we also need to
+       extract module and segment number. */
+
+    if ((thunk[0] == 0xb8) && (thunk[3] == 0xea))
+    {
+        WORD selector = thunk[6] + (thunk[7] << 8);
+        pModule = NE_GetPtr( GlobalHandle16( selector ) );
+        pSeg = pModule? NE_SEG_TABLE( pModule ) : NULL;
+
+        if ( pModule )
+            for ( segNr = 0; segNr < pModule->seg_count; segNr++, pSeg++ )
+                if ( GlobalHandleToSel(pSeg->hSeg) == selector )
+                    break;
+
+        if ( pModule && segNr >= pModule->seg_count )
+            pSeg = NULL;
+    }
+    else
+    {
+        pModule = NE_GetPtr( HIWORD( proc ) );
+        segNr   = LOWORD( proc );
+
+        if ( pModule && segNr < pModule->seg_count )
+            pSeg = NE_SEG_TABLE( pModule ) + segNr;
+    }
+
+    /* fill in segment information */
+
+    segInfo->offSegment = pSeg? pSeg->filepos : 0;
+    segInfo->cbSegment  = pSeg? pSeg->size : 0;
+    segInfo->flags      = pSeg? pSeg->flags : 0;
+    segInfo->cbAlloc    = pSeg? pSeg->minsize : 0;
+    segInfo->h          = pSeg? pSeg->hSeg : 0;
+    segInfo->alignShift = pModule? pModule->alignment : 0;
+}
+
 
 /**********************************************************************
  *          DefineHandleTable16    (KERNEL.94)
@@ -1133,6 +1180,56 @@ HQUEUE16 WINAPI GetTaskQueue( HTASK16 hTask )
     return pTask->hQueue;
 }
 
+/***********************************************************************
+ *           SetThreadQueue  (KERNEL.463)
+ */
+HQUEUE16 WINAPI SetThreadQueue( DWORD thread, HQUEUE16 hQueue )
+{
+    THDB *thdb = THREAD_IdToTHDB( thread );
+    HQUEUE16 oldQueue = thdb? thdb->teb.queue : 0;
+
+    if ( thdb )
+    {
+        thdb->teb.queue = hQueue;
+
+        if ( GetTaskQueue( thdb->process->task ) == oldQueue )
+            SetTaskQueue( thdb->process->task, hQueue );
+    }
+
+    return oldQueue;
+}
+
+/***********************************************************************
+ *           GetThreadQueue  (KERNEL.464)
+ */
+HQUEUE16 WINAPI GetThreadQueue( DWORD thread )
+{
+    THDB *thdb = THREAD_IdToTHDB( thread );
+    return (HQUEUE16)(thdb? thdb->teb.queue : 0);
+}
+
+/***********************************************************************
+ *           SetFastQueue  (KERNEL.624)
+ */
+VOID WINAPI SetFastQueue( DWORD thread, HANDLE32 hQueue )
+{
+    THDB *thdb = THREAD_IdToTHDB( thread );
+    if ( thdb ) thdb->teb.queue = (HQUEUE16) hQueue;
+}
+
+/***********************************************************************
+ *           GetFastQueue  (KERNEL.625)
+ */
+HANDLE32 WINAPI GetFastQueue( void )
+{
+    THDB *thdb = THREAD_Current();
+    if (!thdb) return 0;
+
+    if (!(thdb->teb.queue))
+        FIXME( task, "(): should initialize thread-local queue, expect failure!\n" );
+
+    return (HANDLE32)thdb->teb.queue;
+}
 
 /***********************************************************************
  *           SwitchStackTo   (KERNEL.108)

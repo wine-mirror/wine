@@ -2,6 +2,9 @@ name	kernel
 type	win16
 file	krnl386.exe
 
+# 1-207 are the basic functions, those are (with minor variations)
+# present in win31, win95 and nt351
+
 1   stub FatalExit
 2   stub ExitKernel
 3   pascal GetVersion() GetVersion16
@@ -102,7 +105,7 @@ file	krnl386.exe
 101 stub NoHookDosCall
 102 register DOS3Call() DOS3Call
 103 register NetBIOSCall() NetBIOSCall
-104 stub GetCodeInfo
+104 pascal16 GetCodeInfo(segptr ptr) GetCodeInfo
 105 pascal16 GetExeVersion() GetExeVersion
 106 pascal SetSwapAreaSize(word) SetSwapAreaSize16
 107 pascal16 SetErrorMode(word) SetErrorMode16
@@ -207,26 +210,32 @@ file	krnl386.exe
 205 stub CVWBreak
 206 pascal16 AllocSelectorArray(word) AllocSelectorArray
 207 pascal16 IsDBCSLeadByte(word) IsDBCSLeadByte16
-208 stub KERNEL_208
-209 stub KERNEL_209
-210 stub KERNEL_210
-211 stub KERNEL_211
-213 stub KERNEL_213
-214 stub KERNEL_214
-216 pascal   RegEnumKey(long long ptr long) RegEnumKey16
-217 pascal   RegOpenKey(long str ptr) RegOpenKey16
-218 pascal   RegCreateKey(long str ptr) RegCreateKey16
-219 pascal   RegDeleteKey(long str) RegDeleteKey16
-220 pascal   RegCloseKey(long) RegCloseKey
-221 pascal   RegSetValue(long str long ptr long) RegSetValue16
-222 pascal   RegDeleteValue(long str) RegDeleteValue16
-223 pascal   RegEnumValue(long long ptr ptr ptr ptr ptr ptr) RegEnumValue16
-224 pascal   RegQueryValue(long str ptr ptr) RegQueryValue16
-225 pascal   RegQueryValueEx(long str ptr ptr ptr ptr) RegQueryValueEx16
-226 pascal   RegSetValueEx(long str long long ptr long) RegSetValueEx16
-227 pascal   RegFlushKey(long) RegFlushKey
+
+
+# 208-237 are Win95 extensions; a few of those are also present in WinNT
+
+208 pascal K208(word long long long) Local32Init
+209 pascal K209(long long word long) Local32Alloc
+210 pascal K210(long long word long long) Local32ReAlloc
+211 pascal K211(long long word) Local32Free
+213 pascal K213(long long word word) Local32Translate
+214 pascal K214(long long word) Local32Size
+215 pascal K215(long word) Local32ValidHandle  # Win95 only -- CONFLICT!
+#215 stub WOWShouldWeSayWin95                  # WinNT only -- CONFLICT!
+216 pascal RegEnumKey(long long ptr long) RegEnumKey16                    # Both 95/NT
+217 pascal RegOpenKey(long str ptr) RegOpenKey16                          # Both 95/NT
+218 pascal RegCreateKey(long str ptr) RegCreateKey16
+219 pascal RegDeleteKey(long str) RegDeleteKey16
+220 pascal RegCloseKey(long) RegCloseKey                                  # Both 95/NT
+221 pascal RegSetValue(long str long ptr long) RegSetValue16
+222 pascal RegDeleteValue(long str) RegDeleteValue16
+223 pascal RegEnumValue(long long ptr ptr ptr ptr ptr ptr) RegEnumValue16 # Both 95/NT
+224 pascal RegQueryValue(long str ptr ptr) RegQueryValue16
+225 pascal RegQueryValueEx(long str ptr ptr ptr ptr) RegQueryValueEx16
+226 pascal RegSetValueEx(long str long long ptr long) RegSetValueEx16
+227 pascal RegFlushKey(long) RegFlushKey
 228 stub K228
-229 stub K229
+229 pascal16 K229(long) Local32GetSegment
 230 pascal GlobalSmartPageLock(word) GlobalPageLock #?
 231 stub GlobalSmartPageUnlock
 232 stub RegLoadKey
@@ -234,9 +243,19 @@ file	krnl386.exe
 234 stub RegSaveKey
 235 stub InvalidateNlsCache
 236 stub GetProductName
-237 stub KERNEL_237
-262 stub KERNEL_262
-263 stub KERNEL_263
+237 stub K237
+
+
+# 262-274 are WinNT extensions; those are not present in Win95
+
+262 stub WOWWaitForMsgAndEvent
+263 stub WOWMsgBox
+273 stub K273
+274 stub GetShortPathName
+
+
+# 310-356 are again shared between all versions
+
 310 pascal16 LocalHandleDelta(word) LocalHandleDelta
 311 pascal GetSetKernelDOSProc(ptr) GetSetKernelDOSProc
 314 stub DebugDefineSegment
@@ -245,12 +264,11 @@ file	krnl386.exe
 318 stub FatalExitHook
 319 stub FlushCachedFileHandle
 320 pascal16 IsTask(word) IsTask
-321 stub KERNEL_321
 323 return IsRomModule 2 0
 324 pascal16 LogError(word ptr) LogError
 325 pascal16 LogParamError(word ptr ptr) LogParamError
 326 return IsRomFile 2 0
-327 stub KERNEL_327
+327 register K327() LogParamErrorRegs
 328 stub _DebugOutput
 329 pascal16 K329(str word) DebugFillBuffer
 332 long THHOOK(0 0 0 0 0 0 0 0)
@@ -258,11 +276,11 @@ file	krnl386.exe
 335 pascal16 IsBadWritePtr(segptr word) IsBadWritePtr16
 336 pascal16 IsBadCodePtr(segptr) IsBadCodePtr16
 337 pascal16 IsBadStringPtr(segptr word) IsBadStringPtr16
-338 stub HasGPHandler
+338 pascal16 HasGPHandler(segptr) HasGPHandler
 339 pascal16 DiagQuery() DiagQuery
 340 pascal16 DiagOutput(str) DiagOutput
 341 pascal ToolHelpHook(ptr) ToolHelpHook
-342 stub __GP
+342 word __GP(0 0 0 0)
 343 stub RegisterWinOldApHook
 344 stub GetWinOldApHooks
 345 pascal16 IsSharedSelector(word) IsSharedSelector
@@ -271,22 +289,40 @@ file	krnl386.exe
 348 pascal16 hmemcpy(ptr ptr long) hmemcpy
 349 pascal   _hread(word segptr long) WIN16_hread
 350 pascal   _hwrite(word ptr long) _hwrite16
-#351 BUNNY_351
+351 stub BUNNY_351
 352 pascal   lstrcatn(segstr str word) lstrcatn16
 353 pascal   lstrcpyn(segptr str word) lstrcpyn16
 354 pascal   GetAppCompatFlags(word) GetAppCompatFlags16
 355 pascal16 GetWinDebugInfo(ptr word) GetWinDebugInfo
 356 pascal16 SetWinDebugInfo(ptr) SetWinDebugInfo
+
+
+# 357-365 are present in Win95 only
+# Note that from here on most of the Win95-only functions are exported 
+# ordinal-only; the names given here are mostly guesses :-)
+
 357 pascal MapSL(segptr) MapSL
 358 pascal MapLS(long) MapLS
 359 pascal UnMapLS(segptr) UnMapLS
 360 pascal16 OpenFileEx(str ptr word) OpenFile16
-#361 PIGLET_361
+361 return PIGLET_361 0 0
+362 stub ThunkTerminateProcess
 365 stub KERNEL_365
+
+
+# 403-404 are common to all versions
+
 403 pascal16 FarSetOwner(word word) FarSetOwner
 404 pascal16 FarGetOwner(word) FarGetOwner
+
+
+# 406-494 are present only in Win95
+
 406 stub WritePrivateProfileStruct
 407 stub GetPrivateProfileStruct
+408 stub KERNEL_408
+409 stub KERNEL_409
+410 stub CreateProcessFromWinExec
 411 pascal   GetCurrentDirectory(long ptr) GetCurrentDirectory16
 412 pascal16 SetCurrentDirectory(ptr) SetCurrentDirectory16
 413 pascal16 FindFirstFile(ptr ptr) FindFirstFile16
@@ -299,37 +335,76 @@ file	krnl386.exe
 420 pascal   GetFileAttributes(ptr) GetFileAttributes16
 421 pascal16 SetFileAttributes(ptr long) SetFileAttributes16
 422 pascal16 GetDiskFreeSpace(ptr ptr ptr ptr ptr) GetDiskFreeSpace16 
+423 stub LogApiThk
 431 pascal16 IsPeFormat(str word) IsPeFormat
 432 stub FileTimeToLocalFileTime
 434 stub KERNEL_434
-435 stub KERNEL_435
-439 stub KERNEL_439
-440 stub KERNEL_440
-444 stub KERNEL_444
-445 stub KERNEL_445
-446 stub KERNEL_446
+435 stub GetTaskFlags
+436 stub _ConfirmSysLevel
+437 stub _CheckNotSysLevel
+438 stub _CreateSysLevel
+439 stub _EnterSysLevel
+440 stub _LeaveSysLevel
+441 pascal CreateThread16(ptr long segptr segptr long ptr) THUNK_CreateThread16
+442 pascal VWin32_EventCreate() VWin32_EventCreate
+443 pascal VWin32_EventDestroy(long) VWin32_EventDestroy
+444 stub KERNEL_444     # Local32 ???
+445 stub KERNEL_445     # Local32 ???
+446 stub KERNEL_446     # Local32 ???
 447 stub KERNEL_447
+448 stub KERNEL_448
 449 pascal GetpWin16Lock() GetpWin16Lock16
-450 pascal16 KERNEL_450() stub_KERNEL_450
-452 stub KERNEL_452
-453 stub KERNEL_453
+450 pascal VWin32_EventWait(long) VWin32_EventWait
+451 pascal VWin32_EventSet(long) VWin32_EventSet
+452 pascal LoadLibrary32(str) LoadLibrary32A
+453 pascal GetProcAddress32(long str) GetProcAddress32
 454 equate __FLATCS 0   # initialized by BUILTIN_Init()
 455 equate __FLATDS 0   # initialized by BUILTIN_Init()
-471 pascal KERNEL_471() _KERNEL_471
-472 register KERNEL_472() _KERNEL_472
-473 stub KERNEL_473
-475 register KERNEL_475() _KERNEL_475
-480 stub KERNEL_480
-481 stub KERNEL_481
-482 pascal LoadLibrary32(str) LoadLibrary32A
+456 pascal DefResourceHandler(word word word) NE_DefResourceHandler
+457 pascal CreateW32Event(long long) WIN16_CreateEvent
+458 pascal SetW32Event(long) SetEvent
+459 pascal ResetW32Event(long) ResetEvent
+460 pascal WaitForSingleObject(long long) WIN16_WaitForSingleObject
+461 pascal WaitForMultipleObjects(long ptr long long) WIN16_WaitForMultipleObjects
+462 pascal GetCurrentThreadId() GetCurrentThreadId
+463 pascal SetThreadQueue(long word) SetThreadQueue
+464 pascal GetThreadQueue(long) GetThreadQueue
+465 stub NukeProcess
+466 stub ExitProcess
+467 stub WOACreateConsole
+468 stub WOASpawnConApp
+469 stub WOAGimmeTitle
+470 stub WOADestroyConsole
+471 pascal GetCurrentProcessId() GetCurrentProcessId
+472 register MapHInstLS() WIN16_MapHInstLS
+473 register MapHInstSL() WIN16_MapHInstSL
+474 pascal CloseW32Handle(long) CloseHandle
+475 register GetTEBSelectorFS() GetTEBSelectorFS
+476 pascal ConvertToGlobalHandle(long) ConvertToGlobalHandle
+477 stub WOAFullScreen
+478 stub WOATerminateProcess
+479 pascal KERNEL_479(long) VWin32_EventSet  # ???
+480 pascal16 _EnterWin16Lock() SYSLEVEL_EnterWin16Lock
+481 pascal16 _LeaveWin16Lock() SYSLEVEL_LeaveWin16Lock
+482 pascal LoadSystemLibrary32(str) LoadLibrary32A   # FIXME!
+483 pascal GetModuleFileName32(long str long) GetModuleFileName32A
+484 pascal SetProcessDWORD(long s_word long) SetProcessDword
 485 pascal GetProcessDWORD(long s_word) GetProcessDword
-486 stub KERNEL_486
+486 pascal FreeLibrary32(long) FreeLibrary32
+487 stub MapProcessHandle
+488 pascal GetModuleHandle32(str) GetModuleHandle32A
+489 stub KERNEL_489  # VWin32_BoostWithDecay
+490 stub KERNEL_490
 491 stub RegisterServiceProcess
+492 stub WOAAbort
+493 stub UTInit
+494 stub KERNEL_494
 
-# Those stubs can be found in WindowNT3.51 krnl386.exe. Some are used by Win95
-# too, some seem to specify different functions in Win95... Ugh.
+
+# 500-544 are WinNT extensions; some are also available in Win95
+
 500 pascal WOW16Call(word word word) WOW16Call
-501 stub KDDBGOUT
+501 stub KDDBGOUT                                               # Both NT/95 (?)
 502 stub WOWGETNEXTVDMCOMMAND
 503 stub WOWREGISTERSHELLWINDOWHANDLE
 504 stub WOWLOADMODULE
@@ -340,14 +415,14 @@ file	krnl386.exe
 509 stub WOWKILLREMOTETASK
 511 stub WOWKILLREMOTETASK
 512 stub WOWQUERYDEBUG
-513 pascal   LoadLibraryEx32W(ptr long long) LoadLibraryEx32W16
-514 pascal16 FreeLibrary32W(long) FreeLibrary32
-515 pascal   GetProcAddress32W(long str) GetProcAddress32
-516 pascal GetVDMPointer32W(segptr long) GetVDMPointer32W
-517 pascal CallProc32W() WIN16_CallProc32W
-518 pascal CallProcEx32W() WIN16_CallProcEx32W 
+513 pascal   LoadLibraryEx32W(ptr long long) LoadLibraryEx32W16 # Both NT/95
+514 pascal16 FreeLibrary32W(long) FreeLibrary32                 # Both NT/95
+515 pascal   GetProcAddress32W(long str) GetProcAddress32       # Both NT/95
+516 pascal   GetVDMPointer32W(segptr long) GetVDMPointer32W     # Both NT/95
+517 pascal   CallProc32W() WIN16_CallProc32W                    # Both NT/95
+518 pascal   CallProcEx32W() WIN16_CallProcEx32W                # Both NT/95
 519 stub EXITKERNELTHUNK
-# the __MOD_ variables are WORD datareferences.
+# the __MOD_ variables are WORD datareferences, the current values are invented.
 520 equate __MOD_KERNEL 4200
 521 equate __MOD_DKERNEL 4201
 522 equate __MOD_USER 4203
@@ -361,25 +436,83 @@ file	krnl386.exe
 530 equate __MOD_TOOLHELP 4211
 531 equate __MOD_MMEDIA 4212
 532 equate __MOD_COMMDLG 4213
-540 stub KERNEL_540
 541 stub WOWSETEXITONLASTAPP
 544 stub WOWSETCOMPATHANDLE
 
-600 stub KERNEL_600
-601 stub KERNEL_601
-604 stub KERNEL_604
-605 stub KERNEL_605
-606 stub KERNEL_606
-607 pascal KERNEL_607(long long long) _KERNEL_607
-608 pascal KERNEL_608(long long long) _KERNEL_608
-611 pascal KERNEL_611(long long) _KERNEL_611
-612 stub KERNEL_612
-613 stub KERNEL_613
-614 stub KERNEL_614
-619 pascal KERNEL_619(word long long) _KERNEL_619
-621 stub KERNEL_621
+
+# 531-568 are Win95-only extensions.
+# NOTE: Ordinals 531,532,541 clash with the WinNT extensions given above! Argh!
+
+#531 stub ConvertClipboardHandleLS
+#532 stub ConvertClipboardHandleSL
+533 stub ConvertDDEHandleLS
+534 stub ConvertDDEHandleSL
+535 pascal VWin32_BoostThreadGroup(long long) VWin32_BoostThreadGroup
+536 pascal VWin32_BoostThreadStatic(long long) VWin32_BoostThreadStatic
+537 stub KERNEL_537
+538 stub ThunkTheTemplateHandle
+540 stub KERNEL_540
+#541 stub KERNEL_541
+542 stub KERNEL_542
+543 stub KERNEL_543
+560 stub KERNEL_560  # (thunklet)  # InitThunkletHandler
+561 stub KERNEL_561  # (thunklet)  # AllocLSThunklet
+562 stub KERNEL_562  # (thunklet)  # AllocSLThunklet
+563 stub KERNEL_563  # (thunklet)  # FindSLThunklet
+564 stub KERNEL_564  # (thunklet)  # FindLSThunklet
+565 stub KERNEL_565  # (thunklet)  # AllocLSThunklet_Special
+566 stub KERNEL_566  # (thunklet)  # AllocSLThunklet_Special
+567 stub KERNEL_567  # (thunklet)  # AllocLSThunkletEx
+568 stub KERNEL_568  # (thunklet)  # AllocSLThunkletEx
+
+
+# 600-653 are Win95 only
+
+600 stub KERNEL_600  # AllocSelector (?)
+601 stub KERNEL_601  # FreeSelector (?)
+602 stub GetCurrentHInstanceDS
+603 stub KERNEL_603  # OutputDebugString (?)
+604 stub KERNEL_604  # (cbclient) # Thunk_CBClient
+605 stub KERNEL_605  # (thunklet) # AllocSLThunklet
+606 stub KERNEL_606  # (thunklet) # AllocLSThunklet
+607 pascal KERNEL_607(long long long) _KERNEL_607  # AllocLSThunklet_Systhunk
+608 pascal KERNEL_608(long long long) _KERNEL_608  # AllocSLThunklet_Systhunk
+609 stub KERNEL_609  # (thunklet) # FindSLThunklet
+610 stub KERNEL_610  # (thunklet) # FindLSThunklet
+611 pascal16 KERNEL_611(long long) _KERNEL_611  # FreeThunklet
+612 pascal16 KERNEL_612(ptr) _KERNEL_612  # IsSLThunklet
+613 stub KERNEL_613  # (cbclient)
+614 stub KERNEL_614  # (cbclient)
+615 stub KERNEL_615  # (cbclient)
+616 stub KERNEL_616  # (cbclient)
+617 stub KERNEL_617  # (cbclient)
+618 stub KERNEL_618  # (cbclient)
+619 pascal16 RegisterCBClient(word long long) RegisterCBClient
+620 stub KERNEL_620  # (cbclient)
+621 stub KERNEL_621  # (cbclient)
+622 stub UnRegisterCBClient
+623 pascal16 InitCBClient(long) InitCBClient
+624 pascal SetFastQueue(long long) SetFastQueue
+625 pascal GetFastQueue() GetFastQueue
+626 stub SmashEnvironment
 627 stub IsBadFlatReadWritePtr
 630 register C16ThkSL() C16ThkSL
 631 register C16ThkSL01() C16ThkSL01
 651 pascal ThunkConnect16(str str word long ptr str word) ThunkConnect16
-700 pascal KERNEL_700() stub_KERNEL_700
+652 stub IsThreadId
+653 stub OkWithKernelToChangeUsers
+
+
+# 700-704 are Win95 only
+
+700 pascal SSInit() SSInit
+701 stub SSOnBigStack
+702 stub SSCall
+703 stub CallProc32WFix
+704 stub SSConfirmSmallStack
+
+
+# Win95 krnl386.exe also exports ordinals 802-864,
+# however, those seem to be only callback stubs that are
+# never called directly by other modules ...
+

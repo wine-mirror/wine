@@ -1,0 +1,27 @@
+DEFS      = -DWINELIB
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = none
+PROGRAMS  = control
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
+
+C_SRCS = control.c
+
+all: $(PROGRAMS)
+
+@MAKE_RULES@
+
+control: $(OBJS)
+	$(CC) -o control $(OBJS) $(LDOPTIONS) $(ALL_LIBS)
+
+install: dummy
+	$(INSTALL_PROGRAM) control $(bindir)/control
+
+uninstall: dummy
+	$(RM) $(bindir)/control
+
+dummy:
+
+### Dependencies:

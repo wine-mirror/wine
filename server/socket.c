@@ -279,7 +279,12 @@ void server_main_loop( int fd )
     while (nb_clients)
     {
         fd_set read = read_set, write = write_set;
-
+#if 0
+        printf( "select: " );
+        for (i = 0; i <= max_fd; i++) printf( "%c", FD_ISSET( i, &read_set ) ? 'r' :
+                                                    (FD_ISSET( i, &write_set ) ? 'w' : '-') );
+        printf( "\n" );
+#endif
         if (timeout_head)
         {
             struct timeval tv, now;

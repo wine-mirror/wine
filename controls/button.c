@@ -9,6 +9,7 @@
 #include "graphics.h"
 #include "button.h"
 #include "windows.h"
+#include "tweak.h"
 
 static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action );
 static void PB_PaintGrayOnGray(HDC32 hDC,HFONT32 hFont,RECT32 *rc,char *text);
@@ -485,7 +486,7 @@ static void BUTTON_CheckAutoRadioButton( WND *wndPtr )
 
 static void GB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 {
-    RECT32 rc;
+    RECT32 rc, rcFrame;
     BUTTONINFO *infoPtr = (BUTTONINFO *)wndPtr->wExtra;
 
     if (action != ODA_DRAWENTIRE) return;
@@ -493,8 +494,20 @@ static void GB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
     BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
 
     GetClientRect32( wndPtr->hwndSelf, &rc);
-    GRAPH_DrawRectangle( hDC, rc.left, rc.top + 2, rc.right - 1, rc.bottom - 1,
-			 GetSysColorPen32(COLOR_WINDOWFRAME) );
+    if (TWEAK_WineLook == WIN31_LOOK)
+	GRAPH_DrawRectangle( hDC, rc.left, rc.top + 2, rc.right - 1, rc.bottom - 1,
+			    GetSysColorPen32(COLOR_WINDOWFRAME) );
+    else {
+	TEXTMETRIC32A tm;
+	rcFrame = rc;
+
+	if (infoPtr->hFont)
+	    SelectObject32 (hDC, infoPtr->hFont);
+	GetTextMetrics32A (hDC, &tm);
+	rcFrame.top += (tm.tmHeight / 2) - 1;
+	DrawEdge32 (hDC, &rcFrame, EDGE_ETCHED, BF_RECT);
+    }
+
     if (wndPtr->text)
     {
 	if (infoPtr->hFont) SelectObject32( hDC, infoPtr->hFont );

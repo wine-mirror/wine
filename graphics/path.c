@@ -239,7 +239,7 @@ BOOL32 WINAPI CloseFigure32(HDC32 hdc)
 INT16 WINAPI GetPath16(HDC16 hdc, LPPOINT16 pPoints, LPBYTE pTypes,
    INT16 nSize)
 {
-   FIXME(gdi, "Unimplemented stub\n");
+   FIXME(gdi, "(%d,%p,%p): stub\n",hdc,pPoints,pTypes);
 
    return 0;
 }

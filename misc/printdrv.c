@@ -237,11 +237,12 @@ LONG WINAPI DocumentProperties32A(HWND32 hWnd,HANDLE32 hPrinter,
 BOOL32 WINAPI OpenPrinter32A(LPSTR lpPrinterName,HANDLE32 *phPrinter,
 			     LPPRINTER_DEFAULTS32A pDefault)
 {
-    FIXME(print,"(%s,%p,%p):stub.\n",
-	    lpPrinterName, phPrinter, pDefault);
+    FIXME(print,"(%s,%p,%p):stub\n",debugstr_a(lpPrinterName), phPrinter,
+          pDefault);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
 BOOL32  WINAPI EnumPrinters32A(DWORD dwType, LPSTR lpszName,
 			       DWORD dwLevel, LPBYTE lpbPrinters,
 			       DWORD cbBuf, LPDWORD lpdwNeeded,
@@ -264,7 +265,8 @@ BOOL32 WINAPI AddMonitor32A(LPCSTR pName, DWORD Level, LPBYTE pMonitors)
 BOOL32 WINAPI
 DeletePrinterDriver32A (LPSTR pName, LPSTR pEnvironment, LPSTR pDriverName)
 {
-    FIXME(print, "(%s,%s,%s):stub!\n", pName, pEnvironment, pDriverName);
+    FIXME(print,"(%s,%s,%s):stub\n",debugstr_a(pName),debugstr_a(pEnvironment),
+          debugstr_a(pDriverName));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -273,7 +275,8 @@ DeletePrinterDriver32A (LPSTR pName, LPSTR pEnvironment, LPSTR pDriverName)
 BOOL32 WINAPI
 DeleteMonitor32A (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
 {
-    FIXME(print, "(%s,%s,%s):stub!\n", pName, pEnvironment, pMonitorName);
+    FIXME(print,"(%s,%s,%s):stub\n",debugstr_a(pName),debugstr_a(pEnvironment),
+          debugstr_a(pMonitorName));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -282,7 +285,8 @@ DeleteMonitor32A (LPSTR pName, LPSTR pEnvironment, LPSTR pMonitorName)
 BOOL32 WINAPI
 DeletePort32A (LPSTR pName, HWND32 hWnd, LPSTR pPortName)
 {
-    FIXME(print, "(%s,0x%08x,%s):stub!\n", pName, hWnd, pPortName);
+    FIXME(print,"(%s,0x%08x,%s):stub\n",debugstr_a(pName),hWnd,
+          debugstr_a(pPortName));
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }

@@ -788,20 +788,56 @@ INT32 WINAPI EnumObjects32( HDC32 hdc, INT32 nObjType,
  */
 BOOL16 WINAPI IsGDIObject( HGDIOBJ16 handle )
 {
+    UINT16 magic = 0;
+
     if (handle >= FIRST_STOCK_HANDLE ) 
-	return TRUE;
+    {
+        switch (handle)
+        {
+        case STOCK_WHITE_BRUSH:
+        case STOCK_LTGRAY_BRUSH:
+        case STOCK_GRAY_BRUSH:
+        case STOCK_DKGRAY_BRUSH:
+        case STOCK_BLACK_BRUSH:
+        case STOCK_HOLLOW_BRUSH:
+            magic = BRUSH_MAGIC;
+            break;
+
+        case STOCK_WHITE_PEN:
+        case STOCK_BLACK_PEN:
+        case STOCK_NULL_PEN :
+            magic = PEN_MAGIC;
+            break;
+
+        case STOCK_OEM_FIXED_FONT:
+        case STOCK_ANSI_FIXED_FONT:
+        case STOCK_ANSI_VAR_FONT:
+        case STOCK_SYSTEM_FONT:
+        case STOCK_DEVICE_DEFAULT_FONT:
+        case STOCK_SYSTEM_FIXED_FONT:
+        case STOCK_DEFAULT_GUI_FONT:
+            magic = FONT_MAGIC;
+            break;
+
+        case STOCK_DEFAULT_PALETTE:
+            magic = PALETTE_MAGIC;
+            break;
+        }
+    }
     else
     {
 	GDIOBJHDR *object = (GDIOBJHDR *) GDI_HEAP_LOCK( handle );
 	if (object)
 	{
-	    UINT16 magic = object->wMagic;
+	    magic = object->wMagic;
 	    GDI_HEAP_UNLOCK( handle );
-	    if (magic >= PEN_MAGIC && magic <= METAFILE_DC_MAGIC)
-		return magic - PEN_MAGIC + 1;
 	}
     }
-    return FALSE;
+
+    if (magic >= PEN_MAGIC && magic <= METAFILE_DC_MAGIC)
+        return magic - PEN_MAGIC + 1;
+    else
+        return FALSE;
 }
 
 
@@ -821,6 +857,15 @@ void WINAPI SetObjectOwner32( HGDIOBJ32 handle, HANDLE32 owner )
 {
     /* Nothing to do */
 }
+
+/***********************************************************************
+ *           MakeObjectPrivate    (GDI.463)
+ */
+void WINAPI MakeObjectPrivate( HGDIOBJ16 handle, BOOL16 private )
+{
+    /* FIXME */
+}
+
 
 /***********************************************************************
  *           GdiFlush    (GDI32.128)

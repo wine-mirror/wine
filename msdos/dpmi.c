@@ -14,6 +14,8 @@
 #include "miscemu.h"
 #include "drive.h"
 #include "msdos.h"
+#include "task.h"
+#include "dosexe.h"
 #include "toolhelp.h"
 #include "debug.h"
 #include "selectors.h"
@@ -189,7 +191,7 @@ static void INT_DoRealModeInt( CONTEXT *context )
     INT_GetRealModeContext( call, &realmode_ctx );
 
     RESET_CFLAG(context);
-    if (INT_RealModeInterrupt( BL_reg(context), context ))
+    if (INT_RealModeInterrupt( BL_reg(context), &realmode_ctx ))
       SET_CFLAG(context);
     if (EFL_reg(context)&1) {
       FIXME(int31,"%02x: EAX=%08lx EBX=%08lx ECX=%08lx EDX=%08lx\n",
@@ -326,6 +328,44 @@ static void FreeRMCB( CONTEXT *context )
     }
 }
 
+#ifdef MZ_SUPPORTED
+/* (see loader/dos/module.c, function MZ_InitDPMI) */
+
+static void StartPM( CONTEXT *context, LPDOSTASK lpDosTask )
+{
+    char *base = DOSMEM_MemoryBase(0);
+    UINT16 cs, ss, ds, es;
+    CONTEXT pm_ctx;
+
+    RESET_CFLAG(context);
+    lpDosTask->dpmi_flag = AX_reg(context);
+/* our mode switch wrapper have placed the desired CS into DX */
+    cs = SELECTOR_AllocBlock( base + (DWORD)(DX_reg(context)<<4), 0x10000, SEGMENT_CODE, FALSE, FALSE );
+    ss = SELECTOR_AllocBlock( base + (DWORD)(SS_reg(context)<<4), 0x10000, SEGMENT_DATA, FALSE, FALSE );
+    ds = SELECTOR_AllocBlock( base + (DWORD)(DS_reg(context)<<4), 0x10000, SEGMENT_DATA, FALSE, FALSE );
+    es = SELECTOR_AllocBlock( base + (DWORD)(lpDosTask->psp_seg<<4), 0x100, SEGMENT_DATA, FALSE, FALSE );
+
+    pm_ctx = *context;
+    CS_reg(&pm_ctx) = lpDosTask->dpmi_sel;
+/* our mode switch wrapper expects the new CS in DX, and the new SS in AX */
+    AX_reg(&pm_ctx) = ss;
+    DX_reg(&pm_ctx) = cs;
+    DS_reg(&pm_ctx) = ds;
+    ES_reg(&pm_ctx) = es;
+    FS_reg(&pm_ctx) = 0;
+    GS_reg(&pm_ctx) = 0;
+
+    TRACE(int31,"DOS program is now entering protected mode\n");
+    Callbacks->CallRegisterShortProc(&pm_ctx, 0);
+
+    /* in the current state of affairs, we won't ever actually return here... */
+
+    UnMapLS(PTR_SEG_OFF_TO_SEGPTR(es,0));
+    UnMapLS(PTR_SEG_OFF_TO_SEGPTR(ds,0));
+    UnMapLS(PTR_SEG_OFF_TO_SEGPTR(ss,0));
+    UnMapLS(PTR_SEG_OFF_TO_SEGPTR(cs,0));
+}
+#endif
 
 /**********************************************************************
  *	    INT_Int31Handler
@@ -346,6 +386,23 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
 
     DWORD dw;
     BYTE *ptr;
+
+    TDB *pTask = (TDB *)GlobalLock16( GetCurrentTask() );
+    NE_MODULE *pModule = pTask ? NE_GetPtr( pTask->hModule ) : NULL;
+
+    GlobalUnlock16( GetCurrentTask() );
+
+#ifdef MZ_SUPPORTED
+    if (ISV86(context) && pModule && pModule->lpDosTask) {
+        /* Called from real mode, check if it's our wrapper */
+        TRACE(int31,"called from real mode\n");
+        if (CS_reg(context)==pModule->lpDosTask->dpmi_seg) {
+            /* This is the protected mode switch */
+            StartPM(context,pModule->lpDosTask);
+            return;
+        }
+    }
+#endif
 
     RESET_CFLAG(context);
     switch(AX_reg(context))
@@ -503,7 +560,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
     case 0x0204:  /* Get protected mode interrupt vector */
     	TRACE(int31,"get protected mode interrupt handler (0x%02x), stub!\n",BL_reg(context));
-	dw = (DWORD)INT_GetHandler( BL_reg(context) );
+	dw = (DWORD)INT_GetPMHandler( BL_reg(context) );
 	CX_reg(context) = HIWORD(dw);
 	DX_reg(context) = LOWORD(dw);
 	break;
@@ -511,9 +568,9 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
     case 0x0205:  /* Set protected mode interrupt vector */
     	TRACE(int31,"set protected mode interrupt handler (0x%02x,%p), stub!\n",
             BL_reg(context),PTR_SEG_OFF_TO_LIN(CX_reg(context),DX_reg(context)));
-	INT_SetHandler( BL_reg(context),
-                        (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( CX_reg(context),
-                                                          DX_reg(context) ));
+	INT_SetPMHandler( BL_reg(context),
+                          (FARPROC16)PTR_SEG_OFF_TO_SEGPTR( CX_reg(context),
+                                                            DX_reg(context) ));
 	break;
 
     case 0x0300:  /* Simulate real mode interrupt */

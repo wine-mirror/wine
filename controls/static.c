@@ -175,7 +175,7 @@ LRESULT WINAPI StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
     switch (uMsg)
     {
     case WM_NCCREATE:
-	if (TWEAK_Win95Look && (wndPtr->dwStyle & SS_SUNKEN))
+	if ((TWEAK_WineLook > WIN31_LOOK) && (wndPtr->dwStyle & SS_SUNKEN))
 	    wndPtr->dwExStyle |= WS_EX_STATICEDGE;
 
         if (style == SS_ICON)
@@ -432,7 +432,8 @@ static void STATIC_PaintEtchedfn( WND *wndPtr, HDC32 hdc )
     HBRUSH32 hbrush;
     HPEN32 hpen;
 
-    if (!TWEAK_Win95Look) return;
+    if (TWEAK_WineLook == WIN31_LOOK)
+	return;
 
     GetClientRect32( wndPtr->hwndSelf, &rc );
     hbrush = SendMessage32A( GetParent32(wndPtr->hwndSelf), WM_CTLCOLORSTATIC,

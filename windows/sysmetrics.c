@@ -27,7 +27,7 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CXVSCROLL] =
 	PROFILE_GetWineIniInt("Tweak.Layout", "ScrollBarWidth", 16) + 1;
     sysMetrics[SM_CYHSCROLL] = sysMetrics[SM_CXVSCROLL];
-    if (TWEAK_Win95Look)
+    if (TWEAK_WineLook > WIN31_LOOK)
 	sysMetrics[SM_CYCAPTION] =
 	    PROFILE_GetWineIniInt("Tweak.Layout", "CaptionHeight", 19);
     else
@@ -37,13 +37,13 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_CYBORDER] = sysMetrics[SM_CXBORDER];
     sysMetrics[SM_CXDLGFRAME] =
 	PROFILE_GetWineIniInt("Tweak.Layout", "DialogFrameWidth",
-			      TWEAK_Win95Look ? 3 : 4);
+			      (TWEAK_WineLook > WIN31_LOOK) ? 3 : 4);
     sysMetrics[SM_CYDLGFRAME] = sysMetrics[SM_CXDLGFRAME];
     sysMetrics[SM_CYVTHUMB] = sysMetrics[SM_CXVSCROLL] - 1;
     sysMetrics[SM_CXHTHUMB] = sysMetrics[SM_CYVTHUMB];
     sysMetrics[SM_CXICON] = 32;
     sysMetrics[SM_CYICON] = 32;
-    if (TWEAK_Win95Look)
+    if (TWEAK_WineLook > WIN31_LOOK)
 	sysMetrics[SM_CYMENU] =
 	    PROFILE_GetWineIniInt("Tweak.Layout", "MenuHeight", 19);
     else
@@ -68,8 +68,8 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_RESERVED4] = 0;
 
     /* FIXME: The following two are calculated, but how? */
-    sysMetrics[SM_CXMIN] = TWEAK_Win95Look ? 112 : 100;
-    sysMetrics[SM_CYMIN] = TWEAK_Win95Look ? 27 : 28;
+    sysMetrics[SM_CXMIN] = (TWEAK_WineLook > WIN31_LOOK) ? 112 : 100;
+    sysMetrics[SM_CYMIN] = (TWEAK_WineLook > WIN31_LOOK) ? 27 : 28;
 
     sysMetrics[SM_CXSIZE] = sysMetrics[SM_CYCAPTION] - 2;
     sysMetrics[SM_CYSIZE] = sysMetrics[SM_CXSIZE];
@@ -139,6 +139,13 @@ void SYSMETRICS_Init(void)
     sysMetrics[SM_MIDEASTENABLED] = 0;
 
     sysMetrics[SM_MOUSEWHEELPRESENT] = 0;
+    
+    sysMetrics[SM_CXVIRTUALSCREEN] = sysMetrics[SM_CXSCREEN];
+    sysMetrics[SM_CYVIRTUALSCREEN] = sysMetrics[SM_CYSCREEN];
+    sysMetrics[SM_XVIRTUALSCREEN] = 0;
+    sysMetrics[SM_YVIRTUALSCREEN] = 0;
+    sysMetrics[SM_CMONITORS] = 1;
+    sysMetrics[SM_SAMEDISPLAYFORMAT] = 1;
     sysMetrics[SM_CMETRICS] = SM_CMETRICS;
 }
 
@@ -148,8 +155,7 @@ void SYSMETRICS_Init(void)
  */
 INT16 WINAPI GetSystemMetrics16( INT16 index )
 {
-    if ((index < 0) || (index > SM_CMETRICS)) return 0;
-    else return sysMetrics[index];    
+    return (INT16)GetSystemMetrics32(index);
 }
 
 

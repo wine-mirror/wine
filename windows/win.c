@@ -1554,6 +1554,12 @@ static LONG WIN_GetWindowLong( HWND32 hwnd, INT32 offset, WINDOWPROCTYPE type )
  *	     WIN_SetWindowLong
  *
  * Helper function for SetWindowLong().
+ *
+ * 0 is the failure code. However, in the case of failure SetLastError
+ * must be set to distinguish between a 0 return value and a failure.
+ *
+ * FIXME: The error values for SetLastError may not be right. Can
+ *        someone check with the real thing?
  */
 static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
                                WINDOWPROCTYPE type )
@@ -1563,12 +1569,23 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
     STYLESTRUCT style;
     
     TRACE(win,"%x=%p %x %lx %x\n",hwnd, wndPtr, offset, newval, type);
-    if (!wndPtr) return 0;
+
+    if (!wndPtr)
+    {
+       /* Is this the right error? */
+       SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+       return 0;
+    }
+
     if (offset >= 0)
     {
         if (offset + sizeof(LONG) > wndPtr->class->cbWndExtra)
         {
             WARN( win, "Invalid offset %d\n", offset );
+
+            /* Is this the right error? */
+            SetLastError( ERROR_OUTOFMEMORY );
+
             return 0;
         }
         ptr = (LONG *)(((char *)wndPtr->wExtra) + offset);
@@ -1594,32 +1611,36 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
 						type, WIN_PROC_WINDOW );
 		return retval;
 	case GWL_STYLE:
-		if (wndPtr->flags & WIN_ISWIN32)
-		{	style.styleOld = wndPtr->dwStyle;
-			newval &= ~(WS_VISIBLE | WS_CHILD);	/* Some bits can't be changed this way */
-			style.styleNew = newval | (style.styleOld & (WS_VISIBLE | WS_CHILD));
+	       	style.styleOld = wndPtr->dwStyle;
+		newval &= ~(WS_VISIBLE | WS_CHILD);	/* Some bits can't be changed this way */
+		style.styleNew = newval | (style.styleOld & (WS_VISIBLE | WS_CHILD));
 
+		if (wndPtr->flags & WIN_ISWIN32)
 			SendMessage32A(hwnd,WM_STYLECHANGING,GWL_STYLE,(LPARAM)&style);
-			wndPtr->dwStyle = style.styleNew;
+		wndPtr->dwStyle = style.styleNew;
+		if (wndPtr->flags & WIN_ISWIN32)
 			SendMessage32A(hwnd,WM_STYLECHANGED,GWL_STYLE,(LPARAM)&style);
-			UpdateWindow32(hwnd);
-			return style.styleOld;
-		}
+		return style.styleOld;
+		    
         case GWL_USERDATA: 
 		ptr = &wndPtr->userdata; 
 		break;
         case GWL_EXSTYLE:  
+	        style.styleOld = wndPtr->dwExStyle;
+		style.styleNew = newval;
 		if (wndPtr->flags & WIN_ISWIN32)
-		{	style.styleOld = wndPtr->dwExStyle;
-			style.styleNew = newval;
 			SendMessage32A(hwnd,WM_STYLECHANGING,GWL_EXSTYLE,(LPARAM)&style);
-			wndPtr->dwExStyle = newval;
+		wndPtr->dwExStyle = newval;
+		if (wndPtr->flags & WIN_ISWIN32)
 			SendMessage32A(hwnd,WM_STYLECHANGED,GWL_EXSTYLE,(LPARAM)&style);
-			UpdateWindow32(hwnd);
-			return style.styleOld;
-		}
+		return style.styleOld;
+
 	default:
             WARN( win, "Invalid offset %d\n", offset );
+
+            /* Don't think this is right error but it should do */
+            SetLastError( ERROR_OUTOFMEMORY );
+
             return 0;
     }
     retval = *ptr;

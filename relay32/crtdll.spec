@@ -26,7 +26,7 @@ type	win32
  22 cdecl __GetMainArgs(ptr ptr ptr long) CRTDLL__GetMainArgs
  23 extern __argc_dll CRTDLL_argc_dll
  24 extern __argv_dll CRTDLL_argv_dll
- 25 stub __dllonexit
+ 25 cdecl __dllonexit() CRTDLL__dllonexit
  26 stub __doserrno
  27 stub __fpecode
  28 stub __isascii

@@ -12,6 +12,7 @@
 #endif
 
 #include <sys/time.h>
+#include "server.h"
 #include "server/request.h"
 
 /* kernel objects */
@@ -37,12 +38,16 @@ struct object
     struct object_name       *name;
 };
 
-extern void init_object( struct object *obj, const struct object_ops *ops,
-                         const char *name );
+extern void *mem_alloc( size_t size );  /* malloc wrapper */
+extern struct object *create_named_object( const char *name, const struct object_ops *ops,
+                                           size_t size );
+extern int init_object( struct object *obj, const struct object_ops *ops,
+                        const char *name );
 /* grab/release_object can take any pointer, but you better make sure */
 /* that the thing pointed to starts with a struct object... */
 extern struct object *grab_object( void *obj );
 extern void release_object( void *obj );
+extern struct object *find_object( const char *name );
 
 /* request handlers */
 
@@ -97,6 +102,31 @@ extern struct object *get_handle_obj( struct process *process, int handle,
                                       unsigned int access, const struct object_ops *ops );
 extern int duplicate_handle( struct process *src, int src_handle, struct process *dst,
                              int dst_handle, unsigned int access, int inherit, int options );
+extern int open_object( const char *name, const struct object_ops *ops,
+                        unsigned int access, int inherit );
+
+/* event functions */
+
+extern struct object *create_event( const char *name, int manual_reset, int initial_state );
+extern int open_event( unsigned int access, int inherit, const char *name );
+extern int pulse_event( int handle );
+extern int set_event( int handle );
+extern int reset_event( int handle );
+
+
+/* mutex functions */
+
+extern struct object *create_mutex( const char *name, int owned );
+extern int open_mutex( unsigned int access, int inherit, const char *name );
+extern int release_mutex( int handle );
+extern void abandon_mutexes( struct thread *thread );
+
+
+/* semaphore functions */
+
+extern struct object *create_semaphore( const char *name, unsigned int initial, unsigned int max );
+extern int open_semaphore( unsigned int access, int inherit, const char *name );
+extern int release_semaphore( int handle, unsigned int count, unsigned int *prev_count );
 
 extern int debug_level;
 

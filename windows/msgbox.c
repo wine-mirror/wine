@@ -13,6 +13,7 @@
 #include "task.h"
 #include "debug.h"
 #include "debugstr.h"
+#include "tweak.h"
 
 /**************************************************************************
  *           MSGBOX_DlgProc
@@ -22,6 +23,7 @@
 static LRESULT CALLBACK MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
                                         WPARAM32 wParam, LPARAM lParam )
 {
+  static HFONT32 hFont = 0;
   LPMSGBOXPARAMS32A lpmb;
 
   RECT32 rect, textrect;
@@ -34,6 +36,18 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
   switch(message) {
    case WM_INITDIALOG:
     lpmb = (LPMSGBOXPARAMS32A)lParam;
+    if (TWEAK_WineLook >= WIN95_LOOK) {
+	NONCLIENTMETRICS32A nclm;
+	INT32 i;
+	nclm.cbSize = sizeof(NONCLIENTMETRICS32A);
+	SystemParametersInfo32A (SPI_GETNONCLIENTMETRICS, 0, &nclm, 0);
+	hFont = CreateFontIndirect32A (&nclm.lfMessageFont);
+        /* set button font */
+	for (i=1; i < 8; i++)
+	    SendDlgItemMessage32A (hwnd, i, WM_SETFONT, (WPARAM32)hFont, 0);
+        /* set text font */
+	SendDlgItemMessage32A (hwnd, 100, WM_SETFONT, (WPARAM32)hFont, 0);
+    }
     if (lpmb->lpszCaption) SetWindowText32A(hwnd, lpmb->lpszCaption);
     SetWindowText32A(GetDlgItem32(hwnd, 100), lpmb->lpszText);
     /* Hide not selected buttons */
@@ -166,9 +180,12 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND32 hwnd, UINT32 message,
      case IDIGNORE:
      case IDYES:
      case IDNO:
+      if ((TWEAK_WineLook > WIN31_LOOK) && hFont)
+        DeleteObject32 (hFont);
       EndDialog32(hwnd, wParam);
       break;
     }
+
    default:
      /* Ok. Ignore all the other messages */
      TRACE (dialog, "Message number %i is being ignored.\n", message);
@@ -190,6 +207,10 @@ INT16 WINAPI MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type)
 
 /**************************************************************************
  *           MessageBox32A   (USER32.391)
+ *
+ * NOTES
+ *   The WARN is here to help debug erroneous MessageBoxes
+ *   Use: -debugmsg warn+dialog,+relay
  */
 INT32 WINAPI MessageBox32A(HWND32 hWnd, LPCSTR text, LPCSTR title, UINT32 type)
 {

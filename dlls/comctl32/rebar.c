@@ -16,7 +16,6 @@
 #include "windows.h"
 #include "commctrl.h"
 #include "rebar.h"
-#include "heap.h"
 #include "win.h"
 #include "debug.h"
 
@@ -42,10 +41,24 @@ REBAR_Refresh (WND *wndPtr, HDC32 hdc)
 
 
 
-
-
 // << REBAR_BeginDrag >>
-// << REBAR_DeleteBand >>
+
+
+static LRESULT
+REBAR_DeleteBand (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    REBAR_INFO *infoPtr = REBAR_GetInfoPtr (wndPtr);
+    UINT32 uBand = (UINT32)wParam;
+
+    if (uBand >= infoPtr->uNumBands)
+	return FALSE;
+
+    FIXME (rebar, "deleting band %u!\n", uBand);
+
+    return TRUE;
+}
+
+
 // << REBAR_DragMove >>
 // << REBAR_EndDrag >>
 // << REBAR_GetBandBorders >>
@@ -246,16 +259,13 @@ REBAR_InsertBand32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     TRACE (rebar, "insert band at %u!\n", uIndex);
 
     if (infoPtr->uNumBands == 0) {
-	infoPtr->bands =
-	    (REBAR_BAND *)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-				     sizeof (REBAR_BAND));
+	infoPtr->bands = (REBAR_BAND *)COMCTL32_Alloc (sizeof (REBAR_BAND));
 	uIndex = 0;
     }
     else {
 	REBAR_BAND *oldBands = infoPtr->bands;
 	infoPtr->bands =
-	    (REBAR_BAND *)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-				     (infoPtr->uNumBands+1)*sizeof(REBAR_BAND));
+	    (REBAR_BAND *)COMCTL32_Alloc ((infoPtr->uNumBands+1)*sizeof(REBAR_BAND));
 	if (((INT32)uIndex == -1) || (uIndex > infoPtr->uNumBands))
 	    uIndex = infoPtr->uNumBands;
 
@@ -271,7 +281,7 @@ REBAR_InsertBand32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		    (infoPtr->uNumBands - uIndex - 1) * sizeof(REBAR_BAND));
 	}
 
-	HeapFree (GetProcessHeap (), 0, &oldBands);
+	COMCTL32_Free (&oldBands);
     }
 
     infoPtr->uNumBands++;
@@ -292,8 +302,7 @@ REBAR_InsertBand32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     if ((lprbbi->fMask & RBBIM_TEXT) && (lprbbi->lpText)) {
 	INT32 len = lstrlen32A (lprbbi->lpText);
 	if (len > 0) {
-	    lpBand->lpText = 
-		(LPSTR)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len + 1);
+	    lpBand->lpText = (LPSTR)COMCTL32_Alloc (len + 1);
 	    lstrcpy32A (lpBand->lpText, lprbbi->lpText);
 	}
     }
@@ -377,8 +386,7 @@ REBAR_SetBandInfo32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 /*
 	INT32 len = lstrlen32A (lprbbi->lpText);
 	if (len > 0) {
-	    lpBand->lpText = 
-		(LPSTR)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len + 1);
+	    lpBand->lpText = (LPSTR)COMCTL32_Alloc (len + 1);
 	    lstrcpy32A (lpBand->lpText, lprbbi->lpText);
 	}
 */
@@ -566,13 +574,13 @@ REBAR_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
 	    /* delete text strings */
 	    if (lpBand->lpText) {
-		HeapFree (GetProcessHeap (), 0, lpBand->lpText);
+		COMCTL32_Free (lpBand->lpText);
 		lpBand->lpText = NULL;
 	    }
 	}
 
 	/* free band array */
-	HeapFree (GetProcessHeap (), 0, infoPtr->bands);
+	COMCTL32_Free (infoPtr->bands);
 	infoPtr->bands = NULL;
     }
 
@@ -608,7 +616,10 @@ REBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
     switch (uMsg)
     {
 //	case RB_BEGINDRAG:
-//	case RB_DELETEBAND:
+
+	case RB_DELETEBAND:
+	    return REBAR_DeleteBand (wndPtr, wParam, lParam);
+
 //	case RB_DRAGMOVE:
 //	case RB_ENDDRAG:
 //	case RB_GETBANDBORDERS:
@@ -620,7 +631,6 @@ REBAR_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 
 	case RB_GETBANDINFO32A:
 	    return REBAR_GetBandInfo32A (wndPtr, wParam, lParam);
-
 
 //	case RB_GETBANDINFO32W:
 

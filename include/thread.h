@@ -7,11 +7,28 @@
 #ifndef __WINE_THREAD_H
 #define __WINE_THREAD_H
 
+#include "config.h"
 #include "k32obj.h"
 #include "windows.h"
 #include "winbase.h"
 #include "winnt.h"
 #include "selectors.h"  /* for SET_FS */
+
+#ifdef linux
+#define HAVE_CLONE_SYSCALL
+#endif
+
+/* This is what we will use on *BSD, once threads using rfork() get
+ * implemented:
+ *
+ * #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+ * #define HAVE_RFORK
+ * #endif
+ */
+
+#if (defined(HAVE_CLONE_SYSCALL) || defined(HAVE_RFORK)) && !defined(NO_REENTRANT_LIBC)
+#define USE_THREADS
+#endif
 
 struct _PDB32;
 
@@ -133,6 +150,7 @@ extern THDB *THREAD_Create( struct _PDB32 *pdb, DWORD stack_size,
                             LPTHREAD_START_ROUTINE start_addr, LPVOID param );
 extern THDB *THREAD_Current(void);
 extern BOOL32 THREAD_IsWin16( THDB *thdb );
+extern THDB *THREAD_IdToTHDB( DWORD id );
 extern void THREAD_Start( THDB *thdb );
 extern THDB *THREAD_GetPtr( HANDLE32 handle, DWORD access, int *server_handle );
 extern void THREAD_AddQueue( THREAD_QUEUE *queue, THDB *thread );

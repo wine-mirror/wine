@@ -868,8 +868,25 @@ INT16 BITMAP_GetObject16( BITMAPOBJ * bmp, INT16 count, LPVOID buffer )
 {
     if (bmp->dib)
     {
-	FIXME(bitmap, "not implemented for DIBs\n");
-	return 0;
+        if ( count <= sizeof(BITMAP16) )
+        {
+            BITMAP32 *bmp32 = &bmp->dib->dibSection.dsBm;
+	    BITMAP16 bmp16;
+	    bmp16.bmType       = bmp32->bmType;
+	    bmp16.bmWidth      = bmp32->bmWidth;
+	    bmp16.bmHeight     = bmp32->bmHeight;
+	    bmp16.bmWidthBytes = bmp32->bmWidthBytes;
+	    bmp16.bmPlanes     = bmp32->bmPlanes;
+	    bmp16.bmBitsPixel  = bmp32->bmBitsPixel;
+	    bmp16.bmBits       = NULL;
+	    memcpy( buffer, &bmp16, count );
+	    return count;
+        }
+        else
+        {
+	    FIXME(bitmap, "not implemented for DIBs: count %d\n", count);
+	    return 0;
+        }
     }
     else
     {

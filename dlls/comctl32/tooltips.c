@@ -21,7 +21,6 @@
 #include "windows.h"
 #include "commctrl.h"
 #include "tooltips.h"
-#include "heap.h"
 #include "win.h"
 #include "debug.h"
 
@@ -108,8 +107,7 @@ TOOLTIPS_GetTipText (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 		if (ttnmdi.uFlags & TTF_DI_SETITEM) {
 		    INT32 len = lstrlen32A (ttnmdi.szText) + 1;
 		    toolPtr->hinst = 0;
-		    toolPtr->lpszText =	
-			HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len);
+		    toolPtr->lpszText =	COMCTL32_Alloc (len);
 		    lstrcpy32A (toolPtr->lpszText, ttnmdi.szText);
 		}
 	    }
@@ -124,8 +122,7 @@ TOOLTIPS_GetTipText (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 		if (ttnmdi.uFlags & TTF_DI_SETITEM) {
 		    INT32 len = lstrlen32A (ttnmdi.lpszText) + 1;
 		    toolPtr->hinst = 0;
-		    toolPtr->lpszText =	
-			HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len);
+		    toolPtr->lpszText =	COMCTL32_Alloc (len);
 		    lstrcpy32A (toolPtr->lpszText, ttnmdi.lpszText);
 		}
 	    }
@@ -177,7 +174,7 @@ static VOID
 TOOLTIPS_Show (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 {
     TTTOOL_INFO *toolPtr;
-    POINT32 pt;
+    RECT32 rect;
     SIZE32 size;
     NMHDR hdr;
 
@@ -212,31 +209,37 @@ TOOLTIPS_Show (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
     TRACE (tooltips, "size %d - %d\n", size.cx, size.cy);
 
     if ((toolPtr->uFlags & TTF_TRACK) && (toolPtr->uFlags & TTF_ABSOLUTE)) {
-	pt.x = infoPtr->xTrackPos;
-	pt.y = infoPtr->yTrackPos;
+	rect.left = infoPtr->xTrackPos;
+	rect.top  = infoPtr->yTrackPos;
     }
     else if (toolPtr->uFlags & TTF_CENTERTIP) {
-	RECT32 rect;
+	RECT32 rc;
 
 	if (toolPtr->uFlags & TTF_IDISHWND)
-	    GetWindowRect32 ((HWND32)toolPtr->uId, &rect);
+	    GetWindowRect32 ((HWND32)toolPtr->uId, &rc);
 	else {
-	    rect = toolPtr->rect;
-	    MapWindowPoints32 (toolPtr->hwnd, (HWND32)0, (LPPOINT32)&rect, 2);
+	    rc = toolPtr->rect;
+	    MapWindowPoints32 (toolPtr->hwnd, (HWND32)0, (LPPOINT32)&rc, 2);
 	}
-	pt.x = (rect.left + rect.right - size.cx) / 2;
-	pt.y = rect.bottom + 2;
+	rect.left = (rc.left + rc.right - size.cx) / 2;
+	rect.top  = rc.bottom + 2;
     }
     else {
-	GetCursorPos32 (&pt);
-	pt.y += 20;
+	GetCursorPos32 ((LPPOINT32)&rect);
+	rect.top += 20;
     }
 
-    TRACE (tooltips, "pos %d - %d\n", pt.x, pt.y);
+    TRACE (tooltips, "pos %d - %d\n", rect.left, rect.top);
+
+    rect.right = rect.left + size.cx;
+    rect.bottom = rect.top + size.cy;
+
+    AdjustWindowRectEx32 (&rect, wndPtr->dwStyle, FALSE, wndPtr->dwExStyle);
 
 //    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, 1, 1,
-    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, pt.x, pt.y,
-		    size.cx, size.cy, SWP_SHOWWINDOW);
+    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, rect.left, rect.top,
+		    rect.right - rect.left, rect.bottom - rect.top,
+		    SWP_SHOWWINDOW);
 
     SetTimer32 (wndPtr->hwndSelf, ID_TIMER2, infoPtr->nAutoPopTime, 0);
 }
@@ -263,7 +266,8 @@ TOOLTIPS_Hide (WND *wndPtr, TOOLTIPS_INFO *infoPtr)
 
     infoPtr->nCurrentTool = -1;
 
-    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, 0, 0, 0, 0, SWP_HIDEWINDOW);
+    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, 0, 0, 0, 0,
+		    SWP_NOZORDER | SWP_HIDEWINDOW);
 }
 
 
@@ -406,19 +410,16 @@ TOOLTIPS_AddTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	   (lpToolInfo->uFlags & TTF_IDISHWND) ? " TTF_IDISHWND" : "");
 
     if (infoPtr->uNumTools == 0) {
-	infoPtr->tools =
-	    HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-		       sizeof(TTTOOL_INFO));
+	infoPtr->tools = COMCTL32_Alloc (sizeof(TTTOOL_INFO));
 	toolPtr = infoPtr->tools;
     }
     else {
 	TTTOOL_INFO *oldTools = infoPtr->tools;
 	infoPtr->tools =
-	    HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-		       sizeof(TTTOOL_INFO) * (infoPtr->uNumTools + 1));
+	    COMCTL32_Alloc (sizeof(TTTOOL_INFO) * (infoPtr->uNumTools + 1));
 	memcpy (infoPtr->tools, oldTools,
 		infoPtr->uNumTools * sizeof(TTTOOL_INFO));
-	HeapFree (GetProcessHeap (), 0, oldTools);
+	COMCTL32_Free (oldTools);
 	toolPtr = &infoPtr->tools[infoPtr->uNumTools];
     }
 
@@ -443,8 +444,7 @@ TOOLTIPS_AddTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	else {
 	    INT32 len = lstrlen32A (lpToolInfo->lpszText);
 	    TRACE (tooltips, "add text \"%s\"!\n", lpToolInfo->lpszText);
-	    toolPtr->lpszText =
-		HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len + 1);
+	    toolPtr->lpszText =	COMCTL32_Alloc (len + 1);
 	    lstrcpy32A (toolPtr->lpszText, lpToolInfo->lpszText);
 	}
     }
@@ -458,8 +458,8 @@ TOOLTIPS_AddTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	    LPTT_SUBCLASS_INFO lpttsi =
 		(LPTT_SUBCLASS_INFO)GetProp32A ((HWND32)toolPtr->uId, TT_SUBCLASS_PROP);
 	    if (lpttsi == NULL) {
-		lpttsi = (LPTT_SUBCLASS_INFO)HeapAlloc (GetProcessHeap(),
-		    HEAP_ZERO_MEMORY, sizeof(TT_SUBCLASS_INFO));
+		lpttsi =
+		    (LPTT_SUBCLASS_INFO)COMCTL32_Alloc (sizeof(TT_SUBCLASS_INFO));
 		lpttsi->wpOrigProc = 
 		    (WNDPROC32)SetWindowLong32A ((HWND32)toolPtr->uId,
 		    GWL_WNDPROC,(LONG)TOOLTIPS_SubclassProc);
@@ -475,8 +475,8 @@ TOOLTIPS_AddTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	    LPTT_SUBCLASS_INFO lpttsi =
 		(LPTT_SUBCLASS_INFO)GetProp32A (toolPtr->hwnd, TT_SUBCLASS_PROP);
 	    if (lpttsi == NULL) {
-		lpttsi = (LPTT_SUBCLASS_INFO)HeapAlloc (GetProcessHeap(),
-		    HEAP_ZERO_MEMORY, sizeof(TT_SUBCLASS_INFO));
+		lpttsi =
+		    (LPTT_SUBCLASS_INFO)COMCTL32_Alloc (sizeof(TT_SUBCLASS_INFO));
 		lpttsi->wpOrigProc = 
 		    (WNDPROC32)SetWindowLong32A (toolPtr->hwnd,
 		    GWL_WNDPROC,(LONG)TOOLTIPS_SubclassProc);
@@ -521,7 +521,7 @@ TOOLTIPS_DelTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     toolPtr = &infoPtr->tools[nTool]; 
     if ((toolPtr->hinst) && (toolPtr->lpszText)) {
 	if (toolPtr->lpszText != LPSTR_TEXTCALLBACK32A)
-	    HeapFree (GetProcessHeap (), 0, toolPtr->lpszText);
+	    COMCTL32_Free (toolPtr->lpszText);
     }
 
     /* remove subclassing */
@@ -533,7 +533,7 @@ TOOLTIPS_DelTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		SetWindowLong32A ((HWND32)toolPtr->uId, GWL_WNDPROC,
 				  (LONG)lpttsi->wpOrigProc);
 		RemoveProp32A ((HWND32)toolPtr->uId, TT_SUBCLASS_PROP);
-		HeapFree (GetProcessHeap(), 0, &lpttsi);
+		COMCTL32_Free (&lpttsi);
 	    }
 	    else
 		ERR (tooltips, "Invalid data handle!\n");
@@ -546,7 +546,7 @@ TOOLTIPS_DelTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		    SetWindowLong32A ((HWND32)toolPtr->uId, GWL_WNDPROC,
 				      (LONG)lpttsi->wpOrigProc);
 		    RemoveProp32A ((HWND32)toolPtr->uId, TT_SUBCLASS_PROP);
-		    HeapFree (GetProcessHeap(), 0, &lpttsi);
+		    COMCTL32_Free (&lpttsi);
 		}
 		else
 		    lpttsi->uRefCount--;
@@ -558,14 +558,13 @@ TOOLTIPS_DelTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 
     /* delete tool from tool list */
     if (infoPtr->uNumTools == 1) {
-	HeapFree (GetProcessHeap (), 0, infoPtr->tools);
+	COMCTL32_Free (infoPtr->tools);
 	infoPtr->tools = NULL;
     }
     else {
 	TTTOOL_INFO *oldTools = infoPtr->tools;
 	infoPtr->tools =
-	    HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-		       sizeof(TTTOOL_INFO) * (infoPtr->uNumTools - 1));
+	    COMCTL32_Alloc (sizeof(TTTOOL_INFO) * (infoPtr->uNumTools - 1));
 
 	if (nTool > 0)
 	    memcpy (&infoPtr->tools[0], &oldTools[0],
@@ -575,7 +574,7 @@ TOOLTIPS_DelTool32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	    memcpy (&infoPtr->tools[nTool], &oldTools[nTool + 1],
 		    (infoPtr->uNumTools - nTool - 1) * sizeof(TTTOOL_INFO));
 
-	HeapFree (GetProcessHeap (), 0, oldTools);
+	COMCTL32_Free (oldTools);
     }
 
     infoPtr->uNumTools--;
@@ -1051,9 +1050,8 @@ TOOLTIPS_SetToolInfo32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	    toolPtr->lpszText = lpToolInfo->lpszText;
 	else {
 	    INT32 len = lstrlen32A (lpToolInfo->lpszText);
-	    HeapFree (GetProcessHeap (), 0, toolPtr->lpszText);
-	    toolPtr->lpszText =
-		HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len + 1);
+	    COMCTL32_Free (toolPtr->lpszText);
+	    toolPtr->lpszText =	COMCTL32_Alloc (len + 1);
 	    lstrcpy32A (toolPtr->lpszText, lpToolInfo->lpszText);
 	}
     }
@@ -1160,9 +1158,8 @@ TOOLTIPS_UpdateTipText32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	    toolPtr->lpszText = lpToolInfo->lpszText;
 	else {
 	    INT32 len = lstrlen32A (lpToolInfo->lpszText);
-	    HeapFree (GetProcessHeap (), 0, toolPtr->lpszText);
-	    toolPtr->lpszText =
-		HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, len + 1);
+	    COMCTL32_Free (toolPtr->lpszText);
+	    toolPtr->lpszText =	COMCTL32_Alloc (len + 1);
 	    lstrcpy32A (toolPtr->lpszText, lpToolInfo->lpszText);
 	}
     }
@@ -1189,8 +1186,7 @@ TOOLTIPS_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     NONCLIENTMETRICS32A nclm;
 
     /* allocate memory for info structure */
-    infoPtr = (TOOLTIPS_INFO *)HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY,
-					  sizeof(TOOLTIPS_INFO));
+    infoPtr = (TOOLTIPS_INFO *)COMCTL32_Alloc (sizeof(TOOLTIPS_INFO));
     wndPtr->wExtra[0] = (DWORD)infoPtr;
 
     if (infoPtr == NULL) {
@@ -1219,7 +1215,8 @@ TOOLTIPS_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     infoPtr->nAutoPopTime   = 5000;
     infoPtr->nInitialTime   = 500;
 
-    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, 0, 0, 0, 0, SWP_HIDEWINDOW);
+    SetWindowPos32 (wndPtr->hwndSelf, HWND_TOP, 0, 0, 0, 0,
+		    SWP_NOZORDER | SWP_HIDEWINDOW);
 
     return 0;
 }
@@ -1230,15 +1227,15 @@ TOOLTIPS_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     TOOLTIPS_INFO *infoPtr = TOOLTIPS_GetInfoPtr(wndPtr);
     TTTOOL_INFO *toolPtr;
+    INT32 i;
 
     /* free tools */
     if (infoPtr->tools) {
-	INT32 i;
 	for (i = 0; i < infoPtr->uNumTools; i++) {
 	    toolPtr = &infoPtr->tools[i];
 	    if ((toolPtr->hinst) && (toolPtr->lpszText)) {
 		if (toolPtr->lpszText != LPSTR_TEXTCALLBACK32A)
-		    HeapFree (GetProcessHeap (), 0, toolPtr->lpszText);
+		    COMCTL32_Free (toolPtr->lpszText);
 	    }
 
 	    /* remove subclassing */
@@ -1254,18 +1251,18 @@ TOOLTIPS_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 		    SetWindowLong32A ((HWND32)toolPtr->uId, GWL_WNDPROC,
 				      (LONG)lpttsi->wpOrigProc);
 		    RemoveProp32A ((HWND32)toolPtr->uId, TT_SUBCLASS_PROP);
-		    HeapFree (GetProcessHeap(), 0, &lpttsi);
+		    COMCTL32_Free (&lpttsi);
 		}
 	    }
 	}
-	HeapFree (GetProcessHeap (), 0, infoPtr->tools);
+	COMCTL32_Free (infoPtr->tools);
     }
 
     /* delete font */
     DeleteObject32 (infoPtr->hFont);
 
     /* free tool tips info data */
-    HeapFree (GetProcessHeap (), 0, infoPtr);
+    COMCTL32_Free (infoPtr);
 
     return 0;
 }
@@ -1327,7 +1324,10 @@ static LRESULT
 TOOLTIPS_NcCreate (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     wndPtr->dwStyle &= 0x0000FFFF;
-    wndPtr->dwStyle |= (WS_POPUP | WS_BORDER);
+    wndPtr->dwStyle |= (WS_POPUP | WS_BORDER | WS_CLIPSIBLINGS);
+
+//    FIXME (tooltips, "style 0x%08x\n", wndPtr->dwStyle);
+//    SetParent32 (wndPtr->hwndSelf, NULL);
 
     return TRUE;
 }

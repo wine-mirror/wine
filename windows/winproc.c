@@ -13,6 +13,7 @@
 #include "win.h"
 #include "winproc.h"
 #include "debug.h"
+#include "spy.h"
 
 /* Window procedure 16-to-32-bit thunk,
  * see BuildSpec16Files() in tools/build.c */
@@ -113,8 +114,8 @@ BOOL32 WINPROC_Init(void)
 static LRESULT WINPROC_CallWndProc32( WNDPROC32 proc, HWND32 hwnd, UINT32 msg,
                                       WPARAM32 wParam, LPARAM lParam )
 {
-    TRACE(relay, "(wndproc=%p,hwnd=%08x,msg=%08x,wp=%08x,lp=%08lx)\n",
-                   proc, hwnd, msg, wParam, lParam );
+    TRACE(relay, "(wndproc=%p,hwnd=%08x,msg=%s,wp=%08x,lp=%08lx)\n",
+                   proc, hwnd, SPY_GetMsgName(msg), wParam, lParam );
     return proc( hwnd, msg, wParam, lParam );
 }
 
@@ -441,7 +442,7 @@ INT32 WINPROC_MapMsg32ATo32W( UINT32 msg, WPARAM32 wParam, LPARAM *plparam )
     case WM_PAINTCLIPBOARD:
     case WM_SIZECLIPBOARD:
     case WM_WININICHANGE:
-        TRACE(msg, "message %04x needs translation\n", msg );
+        TRACE(msg, "message %s needs translation\n", SPY_GetMsgName(msg) );
         return -1;
     default:  /* No translation needed */
         return 0;

@@ -1052,6 +1052,36 @@ UINT32 WINAPI GetKBCodePage32(void)
 }
 
 /****************************************************************************
+ *	GetKeyboardLayoutName32A   (USER32.252)
+ */
+INT32 WINAPI GetKeyboardLayoutName32A(LPSTR pwszKLID)
+{
+	return GetKeyboardLayoutName16(pwszKLID);
+}
+
+/****************************************************************************
+ *	GetKeyboardLayoutName32W   (USER32.253)
+ */
+INT32 WINAPI GetKeyboardLayoutName32W(LPWSTR pwszKLID)
+{
+	LPSTR buf = HEAP_xalloc( GetProcessHeap(), 0, strlen("00000409")+1);
+	int res = GetKeyboardLayoutName32A(buf);
+	lstrcpyAtoW(pwszKLID,buf);
+	HeapFree( GetProcessHeap(), 0, buf );
+	return res;
+}
+
+/****************************************************************************
+ *	GetKeyboardLayoutName16   (USER.477)
+ */
+INT16 WINAPI GetKeyboardLayoutName16(LPSTR pwszKLID)
+{
+	FIXME(keyboard,"always returns primary U.S. English layout\n");
+	strcpy(pwszKLID,"00000409");
+	return 1;
+}
+
+/****************************************************************************
  *	GetKeyNameText32A   (USER32.247)
  */
 INT32 WINAPI GetKeyNameText32A(LONG lParam, LPSTR lpBuffer, INT32 nSize)
@@ -1304,9 +1334,7 @@ INT32 WINAPI GetKeyboardLayoutList(INT32 nBuff,HKL32 *layouts)
  *           RegisterHotKey			(USER32.433)
  */
 BOOL32 WINAPI RegisterHotKey(HWND32 hwnd,INT32 id,UINT32 modifiers,UINT32 vk) {
-	FIXME(keyboard,"(%08x,%d,%08x,%d): stub\n",
-		hwnd,id,modifiers,vk
-	);
+	FIXME(keyboard,"(0x%08x,%d,0x%08x,%d): stub\n",hwnd,id,modifiers,vk);
 	return TRUE;
 }
 
@@ -1314,6 +1342,140 @@ BOOL32 WINAPI RegisterHotKey(HWND32 hwnd,INT32 id,UINT32 modifiers,UINT32 vk) {
  *           UnregisterHotKey			(USER32.565)
  */
 BOOL32 WINAPI UnregisterHotKey(HWND32 hwnd,INT32 id) {
-	FIXME(keyboard,"(%08x,%d): stub\n",hwnd,id);
+	FIXME(keyboard,"(0x%08x,%d): stub\n",hwnd,id);
 	return TRUE;
 }
+
+/***********************************************************************
+ *           KeyboardInquire			(KEYBOARD.1)
+ */
+
+#pragma pack(1)
+typedef struct _KBINFO
+{
+    BYTE Begin_First_Range;
+    BYTE End_First_Range;
+    BYTE Begin_Second_Range;
+    BYTE End_Second_Range;
+    WORD StateSize;
+} KBINFO;
+#pragma pack(4)
+
+WORD WINAPI KeyboardInquire(KBINFO *kbInfo) 
+{
+    kbInfo->Begin_First_Range = 0;
+    kbInfo->End_First_Range = 0;
+    kbInfo->Begin_Second_Range = 0;
+    kbInfo->End_Second_Range = 0;
+    kbInfo->StateSize = 16; 
+
+    return sizeof(KBINFO);
+}
+
+/***********************************************************************
+ *           KeyboardEnable			(KEYBOARD.2)
+ */
+VOID WINAPI KeyboardEnable(FARPROC16 eventProc, LPBYTE lpKeyState)
+{
+    FIXME(keyboard, "(%08lx,%08lx): stub\n", 
+                    (DWORD)eventProc, (DWORD)lpKeyState);
+}
+
+/***********************************************************************
+ *           KeyboardDisable			(KEYBOARD.3)
+ */
+VOID WINAPI KeyboardDisable(VOID)
+{
+    FIXME(keyboard, "(): stub\n");
+}
+
+/***********************************************************************
+ *           MouseInquire			(MOUSE.1)
+ */
+
+#pragma pack(1)
+typedef struct _MOUSEINFO
+{
+    BYTE msExist;
+    BYTE msRelative;
+    WORD msNumButtons;
+    WORD msRate;
+    WORD msXThreshold;
+    WORD msYThreshold;
+    WORD msXRes;
+    WORD msYRes;
+    WORD msMouseCommPort;
+} MOUSEINFO;
+#pragma pack(4)
+
+WORD WINAPI MouseInquire(MOUSEINFO *mouseInfo) 
+{
+    mouseInfo->msExist = TRUE;
+    mouseInfo->msRelative = FALSE;
+    mouseInfo->msNumButtons = 2;
+    mouseInfo->msRate = 34;  /* the DDK says so ... */
+    mouseInfo->msMouseCommPort = 0;
+
+    return sizeof(MOUSEINFO);
+}
+
+/***********************************************************************
+ *           MouseEnable			(MOUSE.2)
+ */
+VOID WINAPI MouseEnable(FARPROC16 eventProc)
+{
+    FIXME(keyboard, "(%08lx): stub\n", (DWORD)eventProc);
+}
+
+/***********************************************************************
+ *           MouseDisable			(MOUSE.3)
+ */
+VOID WINAPI MouseDisable(VOID)
+{
+    FIXME(keyboard, "(): stub\n");
+}
+
+/***********************************************************************
+ *           DisplayInquire			(DISPLAY.101)
+ */
+
+#pragma pack(1)
+typedef struct _CURSORINFO
+{
+    WORD wXMickeys;
+    WORD wYMickeys;
+} CURSORINFO;
+#pragma pack(4)
+
+WORD WINAPI DisplayInquire(CURSORINFO *cursorInfo) 
+{
+    cursorInfo->wXMickeys = 1;
+    cursorInfo->wYMickeys = 1;
+
+    return sizeof(CURSORINFO);
+}
+
+/***********************************************************************
+ *           DisplaySetCursor			(DISPLAY.102)
+ */
+VOID WINAPI DisplaySetCursor( LPVOID cursorShape )
+{
+    FIXME(keyboard, "(%p): stub\n", cursorShape );
+}
+
+/***********************************************************************
+ *           DisplayMoveCursor			(DISPLAY.103)
+ */
+VOID WINAPI DisplayMoveCursor( WORD wAbsX, WORD wAbsY )
+{
+    FIXME(keyboard, "(%d,%d): stub\n", wAbsX, wAbsY );
+}
+
+/***********************************************************************
+ *           UserRepaintDisable			(DISPLAY.103)
+ */
+VOID WINAPI UserRepaintDisable( BOOL16 disable )
+{
+    FIXME(keyboard, "(%d): stub\n", disable);
+}
+

@@ -74,7 +74,7 @@ struct process *create_process(void)
 {
     struct process *process;
 
-    if (!(process = malloc( sizeof(*process) ))) return NULL;
+    if (!(process = mem_alloc( sizeof(*process) ))) return NULL;
 
     if (!copy_handle_table( process, current ? current->process : NULL ))
     {
@@ -219,7 +219,7 @@ static int grow_handle_table( struct process *process )
     count *= 2;
     if (!(new_entries = realloc( process->entries, count * sizeof(struct handle_entry) )))
     {
-        SET_ERROR( ERROR_NOT_ENOUGH_MEMORY );
+        SET_ERROR( ERROR_OUTOFMEMORY );
         return 0;
     }
     process->handle_count = count;
@@ -344,7 +344,7 @@ static int copy_handle_table( struct process *process, struct process *parent )
         last  = parent->handle_last;
     }
 
-    if (!(ptr = malloc( count * sizeof(struct handle_entry)))) return 0;
+    if (!(ptr = mem_alloc( count * sizeof(struct handle_entry)))) return 0;
     process->entries      = ptr;
     process->handle_count = count;
     process->handle_last  = last;
@@ -436,6 +436,20 @@ int duplicate_handle( struct process *src, int src_handle, struct process *dst,
     if (options & DUPLICATE_SAME_ACCESS) access = entry->access;
     access &= ~RESERVED_ALL;
     return alloc_specific_handle( dst, entry->ptr, dst_handle, access, inherit );
+}
+
+/* open a new handle to an existing object */
+int open_object( const char *name, const struct object_ops *ops,
+                 unsigned int access, int inherit )
+{
+    struct object *obj = find_object( name );
+    if (!obj) return -1;  /* FIXME: set error code */
+    if (ops && obj->ops != ops)
+    {
+        release_object( obj );
+        return -1;  /* FIXME: set error code */
+    }
+    return alloc_handle( current->process, obj, access, inherit );
 }
 
 /* dump a handle table on stdout */

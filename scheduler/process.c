@@ -649,12 +649,24 @@ DWORD WINAPI GetProcessFlags( DWORD processid )
 }
 
 /***********************************************************************
- *           SetProcessWorkingSetSize    (KERNEL32)
+ *		SetProcessWorkingSetSize	[KERNEL32.662]
+ * Sets the min/max working set sizes for a specified process.
+ *
+ * PARAMS
+ *    hProcess [I] Handle to the process of interest
+ *    minset   [I] Specifies minimum working set size
+ *    maxset   [I] Specifies maximum working set size
+ *
+ * RETURNS  STD
  */
 BOOL32 WINAPI SetProcessWorkingSetSize(HANDLE32 hProcess,DWORD minset,
                                        DWORD maxset)
 {
-    FIXME(process,"(0x%08x,%ld,%ld): stub\n",hProcess,minset,maxset);
+    FIXME(process,"(0x%08x,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
+    if(( minset == -1) && (maxset == -1)) {
+        /* Trim the working set to zero */
+        /* Swap the process out of physical RAM */
+    }
     return TRUE;
 }
 

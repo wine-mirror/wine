@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/errno.h>
 
 #include "windows.h"
 #include "winerror.h"
@@ -76,16 +77,20 @@ int DIR_Init(void)
         DRIVE_Chdir( drive, cwd );
     }
 
-    if (!(DIR_GetPath( "windows", "c:\\windows", &DIR_Windows )))
+    if (!(DIR_GetPath( "windows", "c:\\windows", &DIR_Windows )) ||
+	!(DIR_GetPath( "system", "c:\\windows\\system", &DIR_System )) ||
+	!(DIR_GetPath( "temp", "c:\\windows", &tmp_dir )))
+    {
+	PROFILE_UsageWineIni();
         return 0;
-    if (!(DIR_GetPath( "system", "c:\\windows\\system", &DIR_System )))
-        return 0;
-    if (!(DIR_GetPath( "temp", "c:\\windows", &tmp_dir )))
-        return 0;
+    }
     if (-1 == access( tmp_dir.long_name, W_OK ))
     {
     	if (errno==EACCES)
-		MSG("Warning: The Temporary Directory (as specified in wine.conf or ~/.winerc) is NOT writeable. Please check your configuration.\n");
+	{
+		MSG("Warning: The Temporary Directory (as specified in your configuration file) is NOT writeable.\n");
+		PROFILE_UsageWineIni();
+	}
 	else
 		MSG("Warning: Access to Temporary Directory failed (%s).\n",
 		    strerror(errno));
@@ -104,6 +109,7 @@ int DIR_Init(void)
     /* Set the environment variables */
 
     SetEnvironmentVariable32A( "PATH", path );
+    SetEnvironmentVariable32A( "COMSPEC", "c:\\command.com" );
     SetEnvironmentVariable32A( "TEMP", tmp_dir.short_name );
     SetEnvironmentVariable32A( "windir", DIR_Windows.short_name );
     SetEnvironmentVariable32A( "winsysdir", DIR_System.short_name );

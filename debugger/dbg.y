@@ -13,6 +13,7 @@
 #include "winbase.h"
 #include "class.h"
 #include "module.h"
+#include "task.h"
 #include "options.h"
 #include "queue.h"
 #include "win.h"
@@ -465,18 +466,22 @@ static void DEBUG_Main( int signal )
 						      &dbg_exec_count ))
     {
         DBG_ADDR addr;
+        TDB *pTask = (TDB*)GlobalLock16( GetCurrentTask() );
 
         addr.seg = CS_reg(&DEBUG_context);
         addr.off = EIP_reg(&DEBUG_context);
+        if (ISV86(&DEBUG_context)) addr.seg |= (DWORD)(pTask?(pTask->hModule):0)<<16;
 	addr.type = NULL;
         DBG_FIX_ADDR_SEG( &addr, 0 );
 
+        GlobalUnlock16( GetCurrentTask() );
+
         /* Put the display in a correct state */
 
-        XUngrabServer( display );
-        XFlush( display );
+        TSXUngrabServer( display );
+        TSXFlush( display );
 
-        newmode = IS_SELECTOR_32BIT(addr.seg) ? 32 : 16;
+        newmode = ISV86(&DEBUG_context) ? 16 : IS_SELECTOR_32BIT(addr.seg) ? 32 : 16;
         if (newmode != dbg_mode)
             fprintf(stderr,"In %d bit mode.\n", dbg_mode = newmode);
 
@@ -526,7 +531,7 @@ static void DEBUG_Main( int signal )
             issue_prompt();
             yyparse();
             flush_symbols();
-            addr.seg = CS_reg(&DEBUG_context);
+            addr.seg = CS_reg(&DEBUG_context) | (addr.seg&0xffff0000);
             addr.off = EIP_reg(&DEBUG_context);
             DBG_FIX_ADDR_SEG( &addr, 0 );
             ret_ok = DEBUG_ValidateRegisters();
@@ -564,6 +569,13 @@ void DebugBreak( CONTEXT *regs )
     DEBUG_Main( SIGTRAP );
 }
 
+
+void ctx_debug( int signal, CONTEXT *regs )
+{
+    DEBUG_context = *regs;
+    DEBUG_Main( signal );
+    *regs = DEBUG_context;
+}
 
 void wine_debug( int signal, SIGCONTEXT *regs )
 {

@@ -1899,21 +1899,41 @@ LONG WINAPI BroadcastSystemMessage(
 
 /***********************************************************************
  *           SendNotifyMessageA    (USER32.460)
+ * FIXME
+ *  The message sended with PostMessage has to be put in the queue
+ *  with a higher priority as the other "Posted" messages.
+ *  QUEUE_AddMsg has to be modifyed.
  */
 LONG WINAPI SendNotifyMessage32A(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lParam)
-{
-	FIXME(msg,"(%04x,%08lx,%08lx,%08lx): stub!\n",
-	      hwnd,(long)msg,(long)wParam,lParam
-	);
-	return 0;
+{	BOOL32 ret = TRUE;
+	FIXME(msg,"(%04x,%08x,%08x,%08lx) not complete\n",
+	      hwnd, msg, wParam, lParam);
+	      
+	if ( GetCurrentThreadId() == GetWindowThreadProcessId ( hwnd, NULL))
+	{	ret=SendMessage32A ( hwnd, msg, wParam, lParam );
+	}
+	else
+	{	PostMessage32A ( hwnd, msg, wParam, lParam );
+	}
+	return ret;
 }
-
+/***********************************************************************
+ *           SendMessageCallBack32A
+ * FIXME: It's like PostMessage. The callback gets called when the message
+ * is processed. We have to modify the message processing for a exact
+ * implementation...
+ */
 BOOL32 WINAPI SendMessageCallBack32A(
 	HWND32 hWnd,UINT32 Msg,WPARAM32 wParam,LPARAM lParam,
-	/*SENDASYNCPROC*/FARPROC32 lpResultCallBack,DWORD dwData
-) {
+	FARPROC32 lpResultCallBack,DWORD dwData)
+{	
 	FIXME(msg,"(0x%04x,0x%04x,0x%08x,0x%08lx,%p,0x%08lx),stub!\n",
-		hWnd,Msg,wParam,lParam,lpResultCallBack,dwData
-	);
-	return FALSE;
+		hWnd,Msg,wParam,lParam,lpResultCallBack,dwData);
+	if ( hWnd == HWND_BROADCAST)
+	{	PostMessage32A( hWnd, Msg, wParam, lParam);
+		FIXME(msg,"Broadcast: Callback will not be called!\n");
+		return TRUE;
+	}
+	(lpResultCallBack)( hWnd, Msg, dwData, SendMessage32A ( hWnd, Msg, wParam, lParam ));
+		return TRUE;
 }

@@ -46,9 +46,11 @@ typedef struct
 
 /* 16-bit DLLs */
 
+extern const WIN16_DESCRIPTOR AVIFILE_Descriptor;
 extern const WIN16_DESCRIPTOR COMMDLG_Descriptor;
 extern const WIN16_DESCRIPTOR COMPOBJ_Descriptor;
 extern const WIN16_DESCRIPTOR DDEML_Descriptor;
+extern const WIN16_DESCRIPTOR DISPLAY_Descriptor;
 extern const WIN16_DESCRIPTOR GDI_Descriptor;
 extern const WIN16_DESCRIPTOR KERNEL_Descriptor;
 extern const WIN16_DESCRIPTOR KEYBOARD_Descriptor;
@@ -92,8 +94,10 @@ static BUILTIN16_DLL BuiltinDLLs[] =
     { &USER_Descriptor,     DLL_FLAG_ALWAYS_USED },
     { &GDI_Descriptor,      DLL_FLAG_ALWAYS_USED },
     { &SYSTEM_Descriptor,   DLL_FLAG_ALWAYS_USED },
+    { &DISPLAY_Descriptor,  DLL_FLAG_ALWAYS_USED },
     { &WPROCS_Descriptor,   DLL_FLAG_ALWAYS_USED },
     { &WINDEBUG_Descriptor, DLL_FLAG_NOT_USED },
+    { &AVIFILE_Descriptor,  DLL_FLAG_NOT_USED },
     { &COMMDLG_Descriptor,  DLL_FLAG_NOT_USED },
     { &COMPOBJ_Descriptor,  DLL_FLAG_NOT_USED },
     { &DDEML_Descriptor,    DLL_FLAG_NOT_USED },
@@ -159,10 +163,10 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
     /* Allocate the code segment */
 
     pSegTable = NE_SEG_TABLE( pModule );
-    pSegTable->selector = GLOBAL_CreateBlock( GMEM_FIXED, descr->code_start,
+    pSegTable->hSeg = GLOBAL_CreateBlock( GMEM_FIXED, descr->code_start,
                                               pSegTable->minsize, hModule,
                                               TRUE, TRUE, FALSE, NULL );
-    if (!pSegTable->selector) return 0;
+    if (!pSegTable->hSeg) return 0;
     pSegTable++;
 
     /* Allocate the data segment */
@@ -170,13 +174,14 @@ static HMODULE16 BUILTIN_DoLoadModule16( const WIN16_DESCRIPTOR *descr )
     minsize = pSegTable->minsize ? pSegTable->minsize : 0x10000;
     minsize += pModule->heap_size;
     if (minsize > 0x10000) minsize = 0x10000;
-    pSegTable->selector = GLOBAL_Alloc( GMEM_FIXED, minsize,
+    pSegTable->hSeg = GLOBAL_Alloc( GMEM_FIXED, minsize,
                                         hModule, FALSE, FALSE, FALSE );
-    if (!pSegTable->selector) return 0;
-    if (pSegTable->minsize) memcpy( GlobalLock16( pSegTable->selector ),
+    if (!pSegTable->hSeg) return 0;
+    if (pSegTable->minsize) memcpy( GlobalLock16( pSegTable->hSeg ),
                                     descr->data_start, pSegTable->minsize);
     if (pModule->heap_size)
-        LocalInit( pSegTable->selector, pSegTable->minsize, minsize );
+        LocalInit( GlobalHandleToSel(pSegTable->hSeg),
+		pSegTable->minsize, minsize );
 
     NE_RegisterModule( pModule );
     return hModule;
@@ -207,9 +212,9 @@ BOOL32 BUILTIN_Init(void)
     /* Set the USER and GDI heap selectors */
 
     pModule      = NE_GetPtr( GetModuleHandle16( "USER" ));
-    USER_HeapSel = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
+    USER_HeapSel = pModule ? GlobalHandleToSel((NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->hSeg) : 0;
     pModule      = NE_GetPtr( GetModuleHandle16( "GDI" ));
-    GDI_HeapSel  = (NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->selector;
+    GDI_HeapSel  = pModule ? GlobalHandleToSel((NE_SEG_TABLE( pModule ) + pModule->dgroup - 1)->hSeg) : 0;
 
     /* Initialize KERNEL.178 (__WINFLAGS) with the correct flags value */
 
@@ -254,7 +259,7 @@ BOOL32 BUILTIN_Init(void)
         FARPROC16 proc = NE_GetEntryPoint( hModule,
                                            FIRST_INTERRUPT_ORDINAL + vector );
         assert(proc);
-        INT_SetHandler( vector, proc );
+        INT_SetPMHandler( vector, proc );
     }
 
     SNOOP16_Init();

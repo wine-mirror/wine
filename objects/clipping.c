@@ -83,6 +83,15 @@ INT32 WINAPI SelectClipRgn32( HDC32 hdc, HRGN32 hrgn )
     return retval;
 }
 
+/******************************************************************************
+ *		ExtSelectClipRgn	[GDI32.97]
+ */
+INT32 WINAPI ExtSelectClipRgn( HDC32 hdc, HRGN32 hrgn, INT32 fnMode )
+{
+    if (fnMode != RGN_COPY)
+        FIXME(clipping, "Unimplemented mode: %d\n", fnMode); 
+    return SelectClipRgn32( hdc, hrgn );
+}
 
 /***********************************************************************
  *           SelectVisRgn    (GDI.105)

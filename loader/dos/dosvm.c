@@ -91,8 +91,9 @@ int DOSVM_Process( LPDOSTASK lpDosTask )
   case VM86_SIGNAL:
    printf("Trapped signal\n");
    ret=-1; break;
-  case VM86_UNKNOWN:
+  case VM86_UNKNOWN: /* unhandled GPF */
    DOSVM_Dump(lpDosTask);
+   ctx_debug(SIGSEGV,&context);
    break;
   case VM86_INTx:
    TRACE(int,"DOS EXE calls INT %02x with AX=%04lx\n",VM86_ARG(lpDosTask->fn),context.Eax);
@@ -102,7 +103,8 @@ int DOSVM_Process( LPDOSTASK lpDosTask )
   case VM86_PICRETURN:
    printf("Trapped due to pending PIC request\n"); break;
   case VM86_TRAP:
-   printf("Trapped debug request\n"); break;
+   ctx_debug(SIGTRAP,&context);
+   break;
   default:
    DOSVM_Dump(lpDosTask);
  }

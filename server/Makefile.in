@@ -6,9 +6,12 @@ VPATH     = @srcdir@
 MODULE    = server
 
 C_SRCS = \
+	event.c \
+	mutex.c \
 	object.c \
 	process.c \
 	request.c \
+	semaphore.c \
 	socket.c \
 	thread.c \
 	trace.c

@@ -18,6 +18,9 @@
 #include "xmalloc.h"
 #include "debug.h"
 
+FARPROC32 pfnSelectPalette = NULL;
+FARPROC32 pfnRealizePalette = NULL;
+
 static UINT32 SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
 
 static HPALETTE16 hPrimaryPalette = 0; /* used for WM_PALETTECHANGED */
@@ -125,7 +128,7 @@ HPALETTE32 WINAPI CreatePalette32(
 HPALETTE32 WINAPI CreateHalftonePalette(
     HDC32 hdc) /* [in] Handle to device context */
 {
-    FIXME(palette,"(%x): stub\n", hdc);
+    FIXME(palette,"(0x%x): stub\n", hdc);
     return (HPALETTE32)NULL;
 }
 

@@ -130,7 +130,7 @@ type win32
 127 stdcall mmioSeek(long long long) mmioSeek32
 128 stub mmioSendMessage
 129 stub mmioSetBuffer
-130 stub mmioSetInfo
+130 stdcall mmioSetInfo(long ptr long) mmioSetInfo32
 131 stdcall mmioStringToFOURCCA(str long) mmioStringToFOURCC32A
 132 stdcall mmioStringToFOURCCW(wstr long) mmioStringToFOURCC32W
 133 stub mmioWrite

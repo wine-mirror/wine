@@ -5,8 +5,10 @@
 #ifndef __WINE_IMM_H
 #define __WINE_IMM_H
 
-typedef DWORD HIMC32;
-typedef DWORD HIMCC32;
+#include "wintypes.h"
+
+typedef HANDLE32 HIMC32;
+typedef HANDLE32 HIMCC32;
 
 typedef HKL32 *LPHKL32;
 

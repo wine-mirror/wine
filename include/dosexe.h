@@ -16,6 +16,7 @@ typedef struct _DOSTASK {
  LPVOID img;
  unsigned img_ofs;
  WORD psp_seg,load_seg;
+ WORD dpmi_seg,dpmi_sel,dpmi_flag;
  HMODULE16 hModule;
  struct vm86plus_struct VM86;
  int fn, state;

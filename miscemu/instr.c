@@ -7,6 +7,7 @@
 #include "windows.h"
 #include "ldt.h"
 #include "global.h"
+#include "module.h"
 #include "miscemu.h"
 #include "sig_context.h"
 #include "debug.h"
@@ -295,6 +296,7 @@ static BOOL32 INSTR_EmulateLDS( SIGCONTEXT *context, BYTE *instr, int long_op,
 BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
 {
     int prefix, segprefix, prefixlen, len, repX, long_op, long_addr;
+    SEGPTR gpHandler;
     BYTE *instr;
 
     /* Check for page-fault */
@@ -573,7 +575,7 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
             }
             else
             {
-                FARPROC16 addr = INT_GetHandler( instr[1] );
+                FARPROC16 addr = INT_GetPMHandler( instr[1] );
                 WORD *stack = (WORD *)STACK_PTR( context );
                 /* Push the flags and return address on the stack */
                 *(--stack) = FL_sig(context);
@@ -657,6 +659,23 @@ BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context )
   	    EIP_sig(context) += prefixlen + 1;
             return TRUE;
     }
+
+
+    /* Check for Win16 __GP handler */
+    gpHandler = HasGPHandler( PTR_SEG_OFF_TO_SEGPTR( CS_sig(context),
+                                                     EIP_sig(context) ) );
+    if (gpHandler)
+    {
+        WORD *stack = (WORD *)STACK_PTR( context );
+        *--stack = CS_sig(context);
+        *--stack = EIP_sig(context);
+        STACK_sig(context) -= 2*sizeof(WORD);
+
+        CS_sig(context) = SELECTOROF( gpHandler );
+        EIP_sig(context) = OFFSETOF( gpHandler );
+        return TRUE;
+    }
+
     MSG("Unexpected Windows program segfault"
                     " - opcode = %x\n", *instr);
     return FALSE;  /* Unable to emulate it */

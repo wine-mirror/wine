@@ -162,7 +162,7 @@ HANDLE32 WINAPI OpenSCManager32A( LPCSTR lpMachineName, LPCSTR lpDatabaseName,
 HANDLE32 WINAPI OpenSCManager32W( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
                                   DWORD dwDesiredAccess )
 {
-    FIXME(advapi,"(%s,%s,%08lx): stub\n", debugstr_w(lpMachineName), 
+    FIXME(advapi,"(%s,%s,0x%08lx): stub\n", debugstr_w(lpMachineName), 
           debugstr_w(lpDatabaseName), dwDesiredAccess);
     return 1;
 }

@@ -37,8 +37,8 @@ extern short debug_msg_enabled[][DEBUG_CLASS_COUNT];
 #define DPRINTF(format, args...) fprintf(stddeb, format, ## args)
 
 #define DPRINTF_(cl, ch, format, args...) \
-  if(!DEBUGGING(cl, ch)) ; \
-  else DPRINTF(# cl ":" # ch ":%s " format, __FUNCTION__ , ## args)
+  do {if(!DEBUGGING(cl, ch)) ; \
+  else DPRINTF(# cl ":" # ch ":%s " format, __FUNCTION__ , ## args); } while (0)
 
 /* use configure to allow user to compile out debugging messages */
 

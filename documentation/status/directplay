@@ -5,13 +5,18 @@ Most methods and APIs are not implemented at this point. Examine the code
 to see what has been implemented.  Stay tuned for some information here once
 there is more implementation (and I figure out what the heck I'm doing).
 
-The files are include/dplay.h and multimedia/dplay.c.
+The files are include/dplay.h and multimedia/dplay.c. They're getting a 
+little cumbersome at present perhaps they will be broken out in a later
+version.
 
 I think I can safely say that any application which requires direct play
 or direct play lobby will not work at this point. Priority will be to get
-lserver.exe and star wars rebellion going (at least the direct play portions).
+lserver.exe from the sdk running.
 
 
 
 TODO:
-  Just about everything
+  - Just about everything
+
+
+Peter Hunnisett  -  hunnise@nortel.ca

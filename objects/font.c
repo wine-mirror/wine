@@ -1028,9 +1028,8 @@ DWORD WINAPI SetMapperFlags16( HDC16 hDC, DWORD dwFlag )
  */
 DWORD WINAPI SetMapperFlags32( HDC32 hDC, DWORD dwFlag )
 {
-    FIXME(font, "(%04x, %08lX) -- Empty Stub !\n",
-		  hDC, dwFlag);
-    return 0L;
+    FIXME(font, "(0x%04x, 0x%08lx): stub - harmless\n", hDC, dwFlag);
+    return 0;
 }
 
 /***********************************************************************
@@ -1101,7 +1100,7 @@ DWORD WINAPI GetGlyphOutline16( HDC16 hdc, UINT16 uChar, UINT16 fuFormat,
                                 LPGLYPHMETRICS16 lpgm, DWORD cbBuffer,
                                 LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): empty stub!\n",
+    FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
 	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     return (DWORD)-1; /* failure */
 }
@@ -1114,7 +1113,7 @@ DWORD WINAPI GetGlyphOutline32A( HDC32 hdc, UINT32 uChar, UINT32 fuFormat,
                                  LPGLYPHMETRICS32 lpgm, DWORD cbBuffer,
                                  LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): empty stub!\n",
+    FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
 	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     return (DWORD)-1; /* failure */
 }
@@ -1126,7 +1125,7 @@ DWORD WINAPI GetGlyphOutline32W( HDC32 hdc, UINT32 uChar, UINT32 fuFormat,
                                  LPGLYPHMETRICS32 lpgm, DWORD cbBuffer,
                                  LPVOID lpBuffer, const MAT2 *lpmat2 )
 {
-    FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): empty stub!\n",
+    FIXME(font,"(%04x, '%c', %04x, %p, %ld, %p, %p): stub\n",
 	  hdc, uChar, fuFormat, lpgm, cbBuffer, lpBuffer, lpmat2 );
     return (DWORD)-1; /* failure */
 }
@@ -1154,7 +1153,7 @@ BOOL32 WINAPI CreateScalableFontResource32A( DWORD fHidden,
      * enumbered with EnumFonts/EnumFontFamilies
      * lpszCurrentPath can be NULL
      */
-    FIXME(font,"(%ld,%s,%s,%s): empty stub\n",
+    FIXME(font,"(%ld,%s,%s,%s): stub\n",
 	  fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
     return FALSE; /* create failed */
 }
@@ -1167,7 +1166,7 @@ BOOL32 WINAPI CreateScalableFontResource32W( DWORD fHidden,
                                              LPCWSTR lpszFontFile,
                                              LPCWSTR lpszCurrentPath )
 {
-    FIXME(font,"(%ld,%p,%p,%p): empty stub\n",
+    FIXME(font,"(%ld,%p,%p,%p): stub\n",
 	  fHidden, lpszResourceFile, lpszFontFile, lpszCurrentPath );
     return FALSE; /* create failed */
 }

@@ -34,13 +34,13 @@ extern WORD WINE_LanguageId;
  */
 HANDLE32 WINAPI FindResource32A( HMODULE32 hModule, LPCSTR name, LPCSTR type)
 {
-    return FindResourceEx32A(hModule,name,type,WINE_LanguageId);
+    return FindResourceEx32A(hModule,type,name,WINE_LanguageId);
 }
 
 /**********************************************************************
  *	    FindResourceEx32A    (KERNEL32.129)
  */
-HANDLE32 WINAPI FindResourceEx32A( HMODULE32 hModule, LPCSTR name, LPCSTR type,
+HANDLE32 WINAPI FindResourceEx32A( HMODULE32 hModule, LPCSTR type, LPCSTR name,
 				   WORD lang
 ) {
     LPWSTR xname,xtype;
@@ -54,7 +54,7 @@ HANDLE32 WINAPI FindResourceEx32A( HMODULE32 hModule, LPCSTR name, LPCSTR type,
         xtype = HEAP_strdupAtoW( GetProcessHeap(), 0, type);
     else
         xtype = (LPWSTR)type;
-    ret = FindResourceEx32W( hModule, xname, xtype, lang );
+    ret = FindResourceEx32W( hModule, xtype, xname, lang );
     if (HIWORD((DWORD)name)) HeapFree( GetProcessHeap(), 0, xname );
     if (HIWORD((DWORD)type)) HeapFree( GetProcessHeap(), 0, xtype );
     return ret;
@@ -64,14 +64,14 @@ HANDLE32 WINAPI FindResourceEx32A( HMODULE32 hModule, LPCSTR name, LPCSTR type,
 /**********************************************************************
  *	    FindResourceEx32W    (KERNEL32.130)
  */
-HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR name,
-                                  LPCWSTR type, WORD lang )
+HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR type,
+                                  LPCWSTR name, WORD lang )
 {	HRSRC32 ret;
     WINE_MODREF	*wm = MODULE32_LookupHMODULE(PROCESS_Current(),hModule);
     HRSRC32	hrsrc;
 
-    TRACE(resource, "module=%08x type=%s name=%s\n",
-	  hModule,
+    TRACE(resource, "module=%08x(%s) type=%s name=%s\n",
+	  hModule, wm->modname,
 	  debugres_w (type),
 	  debugres_w (name));
 
@@ -85,7 +85,7 @@ HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR name,
 	case MODULE32_PE:
 	    ret =  PE_FindResourceEx32W(wm,name,type,lang);
         if ( ret==0 )
-          ERR(resource,"(0x%08lx(%s),%s not found!\n",hModule,wm->modname,debugres_w (name));
+          ERR(resource,"(0x%08x(%s),%s not found!\n",hModule,wm->modname,debugres_w (name));
 	    return ret;
 	default:
 	    ERR(module,"unknown module type %d\n",wm->type);
@@ -101,7 +101,7 @@ HRSRC32 WINAPI FindResourceEx32W( HMODULE32 hModule, LPCWSTR name,
  */
 HRSRC32 WINAPI FindResource32W(HINSTANCE32 hModule, LPCWSTR name, LPCWSTR type)
 {
-    return FindResourceEx32W(hModule,name,type,WINE_LanguageId);
+    return FindResourceEx32W(hModule,type,name,WINE_LanguageId);
 }
 
 
@@ -457,7 +457,7 @@ INT16 WINAPI LoadString16( HINSTANCE16 instance, UINT16 resource_id,
     }
     FreeResource16( hmem );
 
-    TRACE(resource,"'%s' copied !\n", buffer);
+    TRACE(resource,"'%s' loaded !\n", buffer);
     return i;
 }
 
@@ -507,7 +507,7 @@ INT32 WINAPI LoadString32W( HINSTANCE32 instance, UINT32 resource_id,
 #endif
     }
 
-    TRACE(resource,"'%s' copied !\n", (char *)buffer);
+    TRACE(resource,"%s loaded !\n", debugstr_w(buffer));
     return i;
 }
 
@@ -582,7 +582,7 @@ INT32 WINAPI LoadMessage32A( HMODULE32 instance, UINT32 id, WORD lang,
     TRACE(resource, "instance = %08lx, id = %08lx, buffer = %p, length = %ld\n", (DWORD)instance, (DWORD)id, buffer, (DWORD)buflen);
 
     /*FIXME: I am not sure about the '1' ... But I've only seen those entries*/
-    hrsrc = FindResourceEx32W(instance,(LPWSTR)1,RT_MESSAGELIST32W,lang);
+    hrsrc = FindResourceEx32W(instance,RT_MESSAGELIST32W,(LPWSTR)1,lang);
     if (!hrsrc) return 0;
     hmem = LoadResource32( instance, hrsrc );
     if (!hmem) return 0;

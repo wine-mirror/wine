@@ -24,12 +24,12 @@ init	Shell32LibMain
   16 stdcall ILFindLastID(ptr) ILFindLastID
   17 stdcall ILRemoveLastID@4(ptr) ILRemoveLastID
   18 stdcall ILClone(ptr) ILClone
-  19 stub ILCloneFirst@4
+  19 stdcall ILCloneFirst (ptr) ILCloneFirst
   20 stub ILGlobalClone@4
-  21 stub ILIsEqual@8
+  21 stdcall ILIsEqual (ptr ptr) ILIsEqual
   22 stdcall Control_RunDLL(long long long long) Control_RunDLL # exported by name
   23 stub ILIsParent@12
-  24 stub ILFindChild@8
+  24 stdcall ILFindChild (long long) ILFindChild
   25 stdcall ILCombine(ptr ptr) ILCombine
   26 stub ILLoadFromStream@8
   27 stub ILSaveToStream@8
@@ -48,10 +48,10 @@ init	Shell32LibMain
   40 stub PathIsRelative
   41 stub Control_RunDLLA   # exported by name
   42 stub Control_RunDLLW   # exported by name
-  43 stub PathIsExe
+  43 stdcall PathIsExe (ptr) PathIsExe
   44 stub DoEnvironmentSubstA   # exported by name
   45 stdcall PathFileExists(str) PathFileExists
-  46 stub PathMatchSpec
+  46 stdcall PathMatchSpec (str str) PathMatchSpec
   47 stub PathMakeUniqueName
   48 stub PathSetDlgItemPath
   49 stub PathQualify
@@ -100,7 +100,7 @@ init	Shell32LibMain
   92 stub PathGetShortPath
   93 stub Win32CreateDirectory
   94 stub Win32RemoveDirectory
-  95 stub SHLogILFromFSIL
+  95 stdcall SHLogILFromFSIL (ptr) SHLogILFromFSIL
   96 stub StrRetToStrN
   97 stub SHWaitForFileToOpen
   98 stub SHGetRealIDL
@@ -162,7 +162,7 @@ init	Shell32LibMain
  154 stub ILAppend
  155 stdcall ILFree(ptr) ILFree
  156 stub ILGlobalFree
- 157 stub ILCreateFromPath
+ 157 stdcall ILCreateFromPath (ptr) ILCreateFromPath
  158 stdcall PathGetExtension(str long long) PathGetExtension
  159 stub PathIsDirectory
  160 stub SHNetConnectionDialog

@@ -30,14 +30,21 @@ extern LPVOID DOSMEM_MapDosToLinear(UINT32); /* linear DOS to Wine */
 extern UINT32 DOSMEM_MapLinearToDos(LPVOID); /* linear Wine to DOS */
 
 /* msdos/interrupts.c */
-extern FARPROC16 INT_GetHandler( BYTE intnum );
-extern void INT_SetHandler( BYTE intnum, FARPROC16 handler );
+extern FARPROC16 INT_GetPMHandler( BYTE intnum );
+extern void INT_SetPMHandler( BYTE intnum, FARPROC16 handler );
+extern FARPROC16 INT_GetRMHandler( BYTE intnum );
+extern void INT_SetRMHandler( BYTE intnum, FARPROC16 handler );
+extern FARPROC16 INT_CtxGetHandler( CONTEXT *context, BYTE intnum );
+extern void INT_CtxSetHandler( CONTEXT *context, BYTE intnum, FARPROC16 handler );
 extern int INT_RealModeInterrupt( BYTE intnum, PCONTEXT context );
 
 /* msdos/ioports.c */
 extern void IO_port_init (void);
 extern DWORD IO_inport( int port, int count );
 extern void IO_outport( int port, int count, DWORD value );
+
+/* msdos/int10.c */
+extern void WINAPI INT_Int10Handler(CONTEXT*);
 
 /* msdos/int1a.c */
 extern DWORD INT1A_GetTicksSinceMidnight(void);
@@ -46,8 +53,14 @@ extern void WINAPI INT_Int1aHandler(CONTEXT*);
 /* msdos/int20.c */
 extern void WINAPI INT_Int20Handler(CONTEXT*);
 
+/* msdos/int25.c */
+extern void WINAPI INT_Int25Handler(CONTEXT*);
+
 /* msdos/int2f.c */
 extern void WINAPI INT_Int2fHandler(CONTEXT*);
+
+/* msdos/int31.c */
+extern void WINAPI INT_Int31Handler(CONTEXT*);
 
 /* loader/signal.c */
 extern BOOL32 SIGNAL_Init(void);

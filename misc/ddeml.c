@@ -55,10 +55,13 @@ UINT32 WINAPI DdeInitialize32A( LPDWORD pidInst, PFNCALLBACK32 pfnCallback,
 UINT32 WINAPI DdeInitialize32W( LPDWORD pidInst, PFNCALLBACK32 pfnCallback,
                                 DWORD afCmd, DWORD ulRes )
 {
-    FIXME(ddeml, "(%p,%p,%ld,%ld): stub\n",pidInst,pfnCallback,afCmd,ulRes);
+    FIXME(ddeml, "(%p,%p,0x%lx,%ld): stub\n",pidInst,pfnCallback,afCmd,ulRes);
 
     if(pidInst)
       *pidInst = 0;
+
+    if( ulRes )
+        ERR(dde, "Reserved value not zero?  What does this mean?\n");
 
     return DMLERR_NO_ERROR;
 }
@@ -184,7 +187,8 @@ HCONV WINAPI DdeConnect16( DWORD idInst, HSZ hszService, HSZ hszTopic,
 HCONV WINAPI DdeConnect32( DWORD idInst, HSZ hszService, HSZ hszTopic,
                            LPCONVCONTEXT32 pCC )
 {
-    FIXME( ddeml, "(...): stub\n");
+    FIXME(ddeml, "(0x%lx,%ld,%ld,%p): stub\n",idInst,hszService,hszTopic,
+          pCC);
     return 0;
 }
 
@@ -202,16 +206,19 @@ BOOL16 WINAPI DdeDisconnect16( HCONV hConv )
  */
 BOOL16 WINAPI DdeSetUserHandle( HCONV hConv, DWORD id, DWORD hUser )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME( ddeml, "(%ld,%ld,%ld): stub\n",hConv,id, hUser );
     return 0;
 }
 
 /*****************************************************************
  *            DdeCreateDataHandle (DDEML.14)
  */
-HDDEDATA WINAPI DdeCreateDataHandle( DWORD idInst, LPBYTE pSrc, DWORD cb, DWORD cbOff, HSZ hszItem, UINT16 wFmt, UINT16 afCmd )
+HDDEDATA WINAPI DdeCreateDataHandle( DWORD idInst, LPBYTE pSrc, DWORD cb, 
+                                     DWORD cbOff, HSZ hszItem, UINT16 wFmt, 
+                                     UINT16 afCmd )
 {
-    FIXME( ddeml, "empty stub\n" );
+    FIXME( ddeml, "(%ld,%p,%ld,%ld,%ld,%d,%d): stub\n",idInst,pSrc,cb,cbOff,
+           hszItem, wFmt, afCmd );
     return 0;
 }
 

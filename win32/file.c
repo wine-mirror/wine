@@ -5,6 +5,7 @@
  */
 
 #include <errno.h>
+#include <sys/errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/types.h>

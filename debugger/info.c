@@ -79,7 +79,7 @@ DEBUG_PrintAddress( const DBG_ADDR *addr, int addrlen, int flag )
     const char *name = DEBUG_FindNearestSymbol( addr, flag, &rtn.sym, 0, 
 						&rtn.list );
 
-    if (addr->seg) fprintf( stderr, "0x%04lx:", addr->seg );
+    if (addr->seg) fprintf( stderr, "0x%04lx:", addr->seg&0xFFFF );
     if (addrlen == 16) fprintf( stderr, "0x%04lx", addr->off );
     else fprintf( stderr, "0x%08lx", addr->off );
     if (name) fprintf( stderr, " (%s)", name );

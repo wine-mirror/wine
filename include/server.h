@@ -152,9 +152,105 @@ struct select_reply
 #define SELECT_ALERTABLE 4
 #define SELECT_TIMEOUT   8
 
+
+/* Create an event */
+struct create_event_request
+{
+    int          manual_reset;  /* manual reset event */
+    int          initial_state; /* initial state of the event */
+    int          inherit;       /* inherit flag */
+    /* char name[] */
+};
+struct create_event_reply
+{
+    int          handle;        /* handle to the event */
+};
+
+/* Event operation */
+struct event_op_request
+{
+    int           handle;       /* handle to event */
+    int           op;           /* event operation (see below) */
+};
+enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
+
+
+/* Create a mutex */
+struct create_mutex_request
+{
+    int          owned;         /* initially owned? */
+    int          inherit;       /* inherit flag */
+    /* char name[] */
+};
+struct create_mutex_reply
+{
+    int          handle;        /* handle to the mutex */
+};
+
+
+/* Release a mutex */
+struct release_mutex_request
+{
+    int          handle;        /* handle to the mutex */
+};
+
+
+/* Create a semaphore */
+struct create_semaphore_request
+{
+    unsigned int initial;       /* initial count */
+    unsigned int max;           /* maximum count */
+    int          inherit;       /* inherit flag */
+    /* char name[] */
+};
+struct create_semaphore_reply
+{
+    int          handle;        /* handle to the semaphore */
+};
+
+
+/* Release a semaphore */
+struct release_semaphore_request
+{
+    int          handle;        /* handle to the semaphore */
+    unsigned int count;         /* count to add to semaphore */
+};
+struct release_semaphore_reply
+{
+    unsigned int prev_count;    /* previous semaphore count */
+};
+
+/* Open a named object (event, mutex, semaphore) */
+struct open_named_obj_request
+{
+    int          type;         /* object type (see below) */
+    unsigned int access;       /* wanted access rights */
+    int          inherit;      /* inherit flag */
+    /* char name[] */
+};
+enum open_named_obj { OPEN_EVENT, OPEN_MUTEX, OPEN_SEMAPHORE };
+
+struct open_named_obj_reply
+{
+    int          handle;        /* handle to the object */
+};
+
+
 /* client-side functions */
 
 #ifndef __WINE_SERVER__
+
+/* client communication functions */
+enum request;
+#define CHECK_LEN(len,wanted) \
+  if ((len) == (wanted)) ; \
+  else CLIENT_ProtocolError( __FUNCTION__ ": len %d != %d\n", (len), (wanted) );
+extern void CLIENT_ProtocolError( const char *err, ... );
+extern void CLIENT_SendRequest( enum request req, int pass_fd,
+                                int n, ... /* arg_1, len_1, etc. */ );
+extern unsigned int CLIENT_WaitReply( int *len, int *passed_fd,
+                                      int n, ... /* arg_1, len_1, etc. */ );
+
 struct _THDB;
 extern int CLIENT_NewThread( struct _THDB *thdb, int *thandle, int *phandle );
 extern int CLIENT_InitThread(void);

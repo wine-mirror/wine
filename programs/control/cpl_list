@@ -1,0 +1,66 @@
+
+Alphabetical List of Windows 95 Control Panels
+----------------------------------------------
+
+Filename       Description
+
+APPWIZ.CPL     Software Properties
+DESK.CPL       Desktop Properties
+               ,,0 - Background Properties
+               ,,1 - Screen Saver Properties
+               ,,2 - Color Properties
+INETCPL.CPL    Internet Properties (does not take arguments)
+INTL.CPL       Internation Country/Timezone Properties
+               ,,0 - Country-specific settings
+               ,,1 - Numbers
+               ,,2 - Currency
+               ,,3 - Clock
+               ,,4 - Date
+JOY.CPL        Joystick Properties
+MAIN.CPL       @0   - Mouse Buttons Properties 
+               @1   - Keyboard Speed Properties
+               @1,1 - Keyboard Language Properties
+               @1,2 - Keyboard General Properties
+               @2   - Printer
+               @3   - Fonts
+               @4   - Energy
+MMSYS.CPL      Multimedia Properties
+               ,,0  - Audio
+               ,,1  - Video
+               ,,2  - MIDI
+               ,,3  - Audio CD
+               ,,4  - Extended (Multimedia drivers)
+MODEM.CPL      Modem Properties (does not take parameters)
+MSWEBCPL.CPL   Personal WebServer Properties (comes with Win95 4.0B) 
+               (does not take parameters)
+NETCPL.CPL     Network (does not take parameters)
+PASSWORD.CPL   Password Properties (does not take parameters)
+SYSDM.CPL      System Properties
+               ,,0 - Generic
+               ,,1 - Device Manager
+               ,,2 - Hardware Profiles
+               ,,3 - Advanced Features
+TELEPHON.CPL   Telephone Properties (renamed to TELEPHON.CP$ if not installed)
+               (does not take parameters)
+TIMEDATE.CPL   Time/Date Properties
+               ,,0 - Date and Time
+               ,,1 - Timezone
+               ,,m - summer/wintertime notification
+                     (issued by kernel32.dll on windows startup)
+
+
+
+Alphabetical List of alien CPLs / rundll commands
+-------------------------------------------------
+
+    command: amovie.ocx,RunDll
+description: run ActiveMovie Viewer
+
+    command: deskcp16.dll,QUICKRES_RUNDLLENTRY
+description: show SVGA display manager in task bar
+
+    command: shell32.dll,SHHelpShortcuts_RunDLL PrintersFolder
+description: show "Printers" Explorer Window
+
+(add your alien commands here)
+

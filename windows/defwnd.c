@@ -86,7 +86,7 @@ HBRUSH32 DEFWND_ControlColor( HDC32 hDC, UINT16 ctlType )
 
     SetTextColor32( hDC, GetSysColor32(COLOR_WINDOWTEXT));
 
-    if (TWEAK_Win95Look) {
+    if (TWEAK_WineLook > WIN31_LOOK) {
 	if ((ctlType == CTLCOLOR_EDIT) || (ctlType == CTLCOLOR_LISTBOX))
 	    SetBkColor32( hDC, GetSysColor32(COLOR_WINDOW) );
 	else {
@@ -107,7 +107,7 @@ static void DEFWND_SetRedraw( WND* wndPtr, WPARAM32 wParam )
 {
     BOOL32 bVisible = wndPtr->dwStyle & WS_VISIBLE;
 
-TRACE(win,"%04x %i\n", wndPtr->hwndSelf, (wParam!=0) );
+    TRACE(win,"%04x %i\n", wndPtr->hwndSelf, (wParam!=0) );
 
     if( wParam )
     {
@@ -153,7 +153,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 
     case WM_RBUTTONDOWN:
     case WM_NCRBUTTONDOWN:
-        if ((wndPtr->flags & WIN_ISWIN32) || TWEAK_Win95Look)
+        if ((wndPtr->flags & WIN_ISWIN32) || (TWEAK_WineLook > WIN31_LOOK))
         {
 	    ClientToScreen16(wndPtr->hwndSelf, (LPPOINT16)&lParam);
             SendMessage32A( wndPtr->hwndSelf, WM_CONTEXTMENU,

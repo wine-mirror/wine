@@ -10,7 +10,8 @@
  *     COMCTL32.DLL (internally).
  *
  * TODO
- *     - Write documentation.
+ *     - Add more functions.
+ *     - Write some documentation.
  */
 
 #include <string.h>
@@ -24,6 +25,22 @@
 
 CRITICAL_SECTION cs_comctl_alloc;
 HANDLE32 hComctl32Heap = 0;
+
+
+/**************************************************************************
+ * COMCTL32_11 [COMCTL32.11]
+ */
+
+DWORD WINAPI
+COMCTL32_11 (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3,
+	     DWORD dwParam4, DWORD dwParam5, DWORD dwParam6)
+{
+
+    FIXME (commctrl, "(%08lx, %08lx, %08lx, %08lx, %08lx, %08lx): empty stub\n",
+	   dwParam1, dwParam2, dwParam3, dwParam4, dwParam5, dwParam6);
+
+    return 0;
+}
 
 
 /**************************************************************************
@@ -153,6 +170,25 @@ COMCTL32_GetSize (LPVOID lpMem)
 
 
 /**************************************************************************
+ * The MRU-API is a set of functions to manipulate MRU(Most Recently Used)
+ * lists.
+ *
+ *
+ */
+
+typedef struct tagMRUINFO
+{
+    DWORD  dwParam1;
+    DWORD  dwParam2;
+    DWORD  dwParam3;
+    HKEY   hkeyMain;
+    LPCSTR lpszSubKey;
+    DWORD  dwParam6;
+} MRUINFO, *LPMRUINFO;
+ 
+
+
+/**************************************************************************
  * CreateMRUListA [COMCTL32.151]
  *
  * PARAMS
@@ -161,54 +197,233 @@ COMCTL32_GetSize (LPVOID lpMem)
  * RETURNS
  */
 
-DWORD WINAPI
-CreateMRUList32A (DWORD dwParam)
+LPVOID WINAPI
+CreateMRUListEx32A (LPMRUINFO lpmi, DWORD dwParam2,
+		    DWORD dwParam3, DWORD dwParam4);
+
+LPVOID WINAPI
+CreateMRUList32A (LPMRUINFO lpmi)
 {
-
-    FIXME (commctrl, "(%lx)\n", dwParam);
-
-    return 1;
+     return CreateMRUListEx32A (lpmi, 0, 0, 0);
 }
 
 
+
+DWORD WINAPI
+FreeMRUList32A (LPVOID ptr)
+{
+    FIXME (commctrl, "(%p) empty stub!\n", ptr);
+
+    COMCTL32_Free (ptr);
+
+    return TRUE;
+}
+
+
+
+
+
+
+LPVOID WINAPI
+CreateMRUListEx32A (LPMRUINFO lpmi, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
+{
+    DWORD  dwLocal1;
+    HKEY   hkeyResult;
+    DWORD  dwLocal3;
+    LPVOID lMRU;
+    DWORD  dwLocal5;
+    DWORD  dwLocal6;
+    DWORD  dwLocal7;
+    DWORD  dwDisposition;
+
+    /* internal variables */
+    LPVOID ptr;
+
+    FIXME (commctrl, "(%p) empty stub!\n", lpmi);
+
+    if (lpmi) {
+	FIXME (commctrl, "(%lx %lx %lx %lx \"%s\" %lx)\n",
+	       lpmi->dwParam1, lpmi->dwParam2, lpmi->dwParam3,
+	       lpmi->hkeyMain, lpmi->lpszSubKey, lpmi->dwParam6);
+    }
+
+    /* dummy pointer creation */
+    ptr = COMCTL32_Alloc (32);
+
+    FIXME (commctrl, "-- ret = %p\n", ptr);
+
+    return ptr;
+}
+
+
+
+DWORD WINAPI
+AddMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+{
+
+    FIXME (commctrl, "(%lx %lx %lx) empty stub!\n",
+	   dwParam1, dwParam2, dwParam3);
+
+    return 0;
+}
+
+
+DWORD WINAPI
+FindMRUData (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3, DWORD dwParam4)
+{
+
+    FIXME (commctrl, "(%lx %lx %lx %lx) empty stub!\n",
+	   dwParam1, dwParam2, dwParam3, dwParam4);
+
+    return -1;
+}
+
+
+
+/**************************************************************************
+ * Str_GetPtrA [COMCTL32.233]
+ *
+ * PARAMS
+ *     lpSrc   [I]
+ *     lpDest  [O]
+ *     nMaxLen [I]
+ *
+ * RETURNS
+ */
+
+INT32 WINAPI
+Str_GetPtr32A (LPCSTR lpSrc, LPSTR lpDest, INT32 nMaxLen)
+{
+    INT32 len;
+
+    TRACE (commctrl, "(%p %p %d)\n", lpSrc, lpDest, nMaxLen);
+
+    if (!lpDest && lpSrc)
+	return lstrlen32A (lpSrc);
+
+    if (nMaxLen == 0)
+	return 0;
+
+    if (lpSrc == NULL) {
+	lpDest[0] = '\0';
+	return 0;
+    }
+
+    len = lstrlen32A (lpSrc);
+    if (len >= nMaxLen)
+	len = nMaxLen - 1;
+
+    RtlMoveMemory (lpDest, lpSrc, len);
+    lpDest[len] = '\0';
+
+    return len;
+}
 
 
 /**************************************************************************
  * Str_SetPtrA [COMCTL32.234]
  *
  * PARAMS
- *     dwParam1 [I]
- *     dwParam2 [I]
+ *     lppDest [O]
+ *     lpSrc   [I]
  *
  * RETURNS
  */
 
 BOOL32 WINAPI
-COMCTL32_Str_SetPtrA (LPSTR lpStr, LPVOID *lpPtr)
+Str_SetPtr32A (LPSTR *lppDest, LPCSTR lpSrc)
+{
+    TRACE (commctrl, "(%p %p)\n", lppDest, lpSrc);
+ 
+    if (lpSrc) {
+	LPSTR ptr = COMCTL32_ReAlloc (lppDest, lstrlen32A (lpSrc) + 1);
+	if (!ptr)
+	    return FALSE;
+	lstrcpy32A (ptr, lpSrc);
+	*lppDest = ptr;
+    }
+    else {
+	if (*lppDest) {
+	    COMCTL32_Free (*lppDest);
+	    *lppDest = NULL;
+	}
+    }
+
+    return TRUE;
+}
+
+
+/**************************************************************************
+ * Str_GetPtrW [COMCTL32.235]
+ *
+ * PARAMS
+ *     lpSrc   [I]
+ *     lpDest  [O]
+ *     nMaxLen [I]
+ *
+ * RETURNS
+ */
+
+INT32 WINAPI
+Str_GetPtr32W (LPCWSTR lpSrc, LPWSTR lpDest, INT32 nMaxLen)
 {
     INT32 len;
-    LPSTR ptr;
 
-    TRACE (commctrl, "(%p %p)\n", lpStr, lpPtr);
+    TRACE (commctrl, "(%p %p %d)\n", lpSrc, lpDest, nMaxLen);
+
+    if (!lpDest && lpSrc)
+	return lstrlen32W (lpSrc);
+
+    if (nMaxLen == 0)
+	return 0;
+
+    if (lpSrc == NULL) {
+	lpDest[0] = L'\0';
+	return 0;
+    }
+
+    len = lstrlen32W (lpSrc);
+    if (len >= nMaxLen)
+	len = nMaxLen - 1;
+
+    RtlMoveMemory (lpDest, lpSrc, len*sizeof(WCHAR));
+    lpDest[len] = L'\0';
+
+    return len;
+}
+
+
+/**************************************************************************
+ * Str_SetPtrW [COMCTL32.236]
+ *
+ * PARAMS
+ *     lpDest [O]
+ *     lpSrc  [I]
+ *
+ * RETURNS
+ */
+
+BOOL32 WINAPI
+Str_SetPtr32W (LPWSTR *lppDest, LPCWSTR lpSrc)
+{
+    TRACE (commctrl, "(%p %p)\n", lppDest, lpSrc);
  
-    if (lpStr) {
-	len = lstrlen32A (lpStr);
-	ptr = COMCTL32_ReAlloc (lpPtr, len + 1);
-	if (!(ptr))
+    if (lpSrc) {
+	INT32 len = lstrlen32W (lpSrc) + 1;
+	LPWSTR ptr = COMCTL32_ReAlloc (lppDest, len * sizeof(WCHAR));
+	if (!ptr)
 	    return FALSE;
-	lstrcpy32A (ptr, lpStr);
-	if (!lpPtr)
-	    return FALSE;
-	*lpPtr = ptr;
-	return TRUE;
+	lstrcpy32W (ptr, lpSrc);
+	*lppDest = ptr;
+    }
+    else {
+	if (*lppDest) {
+	    COMCTL32_Free (*lppDest);
+	    *lppDest = NULL;
+	}
     }
 
-    if (*lpPtr) {
-	COMCTL32_Free (*lpPtr);
-	return TRUE;
-    }
-
-    return FALSE;
+    return TRUE;
 }
 
 
@@ -636,7 +851,7 @@ DPA_Destroy (const HDPA hdpa)
 BOOL32 WINAPI
 DPA_Grow (const HDPA hdpa, INT32 nGrow)
 {
-    FIXME (commctrl, "(%p %d) stub!\n", hdpa, nGrow);
+    TRACE (commctrl, "(%p %d)\n", hdpa, nGrow);
 
     if (!hdpa)
 	return FALSE;
@@ -676,7 +891,7 @@ DPA_Clone (const HDPA hdpa, const HDPA hdpaNew)
     if (!hdpa)
 	return NULL;
 
-    FIXME (commctrl, "(%p %p) stub!\n", hdpa, hdpaNew);
+    TRACE (commctrl, "(%p %p)\n", hdpa, hdpaNew);
 
     if (!hdpaNew) {
 	/* create a new DPA */
@@ -1019,7 +1234,7 @@ DPA_QuickSort (LPVOID *lpPtrs , INT32 l, INT32 r,
     LPVOID t, v;
     INT32  i, j;
 
-    if (l > r) {
+    if (r > l) {
 	v = lpPtrs[r];
 	i = l - 1;
 	j = r;
@@ -1064,7 +1279,9 @@ DPA_Sort (const HDPA hdpa, PFNDPACOMPARE pfnCompare, LPARAM lParam)
 
     TRACE (commctrl, "(%p %p 0x%lx)\n", hdpa, pfnCompare, lParam);
 
-    DPA_QuickSort (hdpa->ptrs, 0, hdpa->nItemCount - 1, pfnCompare, lParam);
+    if ((hdpa->nItemCount > 1) && (hdpa->ptrs))
+	DPA_QuickSort (hdpa->ptrs, 0, hdpa->nItemCount - 1,
+		       pfnCompare, lParam);
 
     return TRUE;
 }
@@ -1107,6 +1324,8 @@ DPA_Search (const HDPA hdpa, LPVOID pFind, INT32 nStart,
 	INT32 l, r, x, n;
 	LPVOID *lpPtr;
 
+	TRACE (commctrl, "binary search\n");
+
 	l = (nStart == -1) ? 0 : nStart;
 	r = hdpa->nItemCount - 1;
 	lpPtr = hdpa->ptrs;
@@ -1138,7 +1357,7 @@ DPA_Search (const HDPA hdpa, LPVOID pFind, INT32 nStart,
 	LPVOID *lpPtr;
 	INT32  nIndex;
 
-	FIXME (commctrl, "linear search\n");
+	TRACE (commctrl, "linear search\n");
 	
 	nIndex = (nStart == -1)? 0 : nStart;
 	lpPtr = hdpa->ptrs;
@@ -1265,5 +1484,65 @@ INT32 WINAPI
 COMCTL32_StrToIntA (LPSTR lpString)
 {
     return atoi(lpString);
+}
+
+
+/**************************************************************************
+ * COMCTL32_385 [COMCTL32.385]
+ */
+
+DWORD WINAPI
+COMCTL32_385 (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+{
+
+    FIXME (commctrl, "(%08lx, %08lx, %08lx): empty stub\n",
+	   dwParam1, dwParam2, dwParam3);
+
+    return 0;
+}
+
+
+/**************************************************************************
+ * COMCTL32_386 [COMCTL32.386]
+ */
+
+DWORD WINAPI
+COMCTL32_386 (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+{
+
+    FIXME (commctrl, "(%08lx, %08lx, %08lx): empty stub\n",
+	   dwParam1, dwParam2, dwParam3);
+
+    return 0;
+}
+
+
+/**************************************************************************
+ * COMCTL32_387 [COMCTL32.387]
+ */
+
+DWORD WINAPI
+COMCTL32_387 (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+{
+
+    FIXME (commctrl, "(%08lx, %08lx, %08lx): empty stub\n",
+	   dwParam1, dwParam2, dwParam3);
+
+    return 0;
+}
+
+
+/**************************************************************************
+ * COMCTL32_388 [COMCTL32.388]
+ */
+
+DWORD WINAPI
+COMCTL32_388 (DWORD dwParam1, DWORD dwParam2, DWORD dwParam3)
+{
+
+    FIXME (commctrl, "(%08lx, %08lx, %08lx): empty stub\n",
+	   dwParam1, dwParam2, dwParam3);
+
+    return 0;
 }
 

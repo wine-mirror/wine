@@ -64,7 +64,7 @@ struct thread *create_thread( int fd, void *pid, int *thread_handle,
     struct thread *thread;
     struct process *process;
 
-    if (!(thread = malloc( sizeof(*thread) ))) return NULL;
+    if (!(thread = mem_alloc( sizeof(*thread) ))) return NULL;
 
     if (pid) process = get_process_from_id( pid );
     else process = create_process();
@@ -79,6 +79,7 @@ struct thread *create_thread( int fd, void *pid, int *thread_handle,
     thread->process   = process;
     thread->unix_pid  = 0;  /* not known yet */
     thread->name      = NULL;
+    thread->mutex     = NULL;
     thread->wait      = NULL;
     thread->error     = 0;
     thread->state     = STARTING;
@@ -250,11 +251,7 @@ static int wait_on( struct thread *thread, int count,
         SET_ERROR( ERROR_INVALID_PARAMETER );
         return 0;
     }
-    if (!(wait = malloc( sizeof(*wait) + (count-1) * sizeof(*entry) )))
-    {
-        SET_ERROR( ERROR_OUTOFMEMORY );
-        return 0;
-    }
+    if (!(wait = mem_alloc( sizeof(*wait) + (count-1) * sizeof(*entry) ))) return 0;
     thread->wait  = wait;
     wait->count   = count;
     wait->flags   = flags;
@@ -396,6 +393,7 @@ void wake_up( struct object *obj, int max )
 /* kill a thread on the spot */
 void kill_thread( struct thread *thread, int exit_code )
 {
+    if (thread->state == TERMINATED) return;  /* already killed */
     if (thread->unix_pid) kill( thread->unix_pid, SIGTERM );
     remove_client( thread->client_fd, exit_code ); /* this will call thread_killed */
 }
@@ -406,6 +404,7 @@ void thread_killed( struct thread *thread, int exit_code )
     thread->state = TERMINATED;
     thread->exit_code = exit_code;
     if (thread->wait) end_wait( thread );
+    abandon_mutexes( thread );
     remove_process_thread( thread->process, thread );
     wake_up( &thread->obj, 0 );
     release_object( thread );

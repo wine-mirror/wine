@@ -28,7 +28,10 @@ LIBSUBDIRS = \
 	tools/wrc \
 	controls \
 	dlls/comctl32 \
+	dlls/psapi \
 	dlls/shell32 \
+	dlls/winaspi \
+	dlls/wnaspi32 \
 	files \
 	graphics \
 	graphics/metafiledrv \
@@ -79,7 +82,10 @@ INSTALLSUBDIRS = $(DOCSUBDIRS)
 LIBOBJS = \
 	controls/controls.o \
 	dlls/comctl32/comctl32.o \
+	dlls/psapi/psapi.o \
 	dlls/shell32/shell32.o \
+	dlls/winaspi/winaspi.o \
+	dlls/wnaspi32/wnaspi32.o \
 	files/files.o \
 	graphics/graphics.o \
 	graphics/metafiledrv/metafiledrv.o \

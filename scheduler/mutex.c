@@ -11,6 +11,8 @@
 #include "process.h"
 #include "thread.h"
 #include "heap.h"
+#include "server/request.h"
+#include "server.h"
 
 typedef struct _MUTEX
 {
@@ -81,12 +83,24 @@ void MUTEX_Abandon( K32OBJ *obj )
 HANDLE32 WINAPI CreateMutex32A( SECURITY_ATTRIBUTES *sa, BOOL32 owner,
                                 LPCSTR name )
 {
+    struct create_mutex_request req;
+    struct create_mutex_reply reply;
+    int len = name ? strlen(name) + 1 : 0;
     HANDLE32 handle;
     MUTEX *mutex;
 
+    req.owned   = owner;
+    req.inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
+
+    CLIENT_SendRequest( REQ_CREATE_MUTEX, -1, 2, &req, sizeof(req), name, len );
+    CLIENT_WaitReply( &len, NULL, 1, &reply, sizeof(reply) );
+    CHECK_LEN( len, sizeof(reply) );
+    if (reply.handle == -1) return NULL;
+
     SYSTEM_LOCK();
     mutex = (MUTEX *)K32OBJ_Create( K32OBJ_MUTEX, sizeof(*mutex),
-                                    name, MUTEX_ALL_ACCESS, sa, &handle );
+                                    name, reply.handle, MUTEX_ALL_ACCESS,
+                                    sa, &handle );
     if (mutex)
     {
         /* Finish initializing it */
@@ -165,13 +179,21 @@ HANDLE32 WINAPI OpenMutex32W( DWORD access, BOOL32 inherit, LPCWSTR name )
  */
 BOOL32 WINAPI ReleaseMutex( HANDLE32 handle )
 {
+    struct release_mutex_request req;
     MUTEX *mutex;
     SYSTEM_LOCK();
     if (!(mutex = (MUTEX *)HANDLE_GetObjPtr(PROCESS_Current(), handle,
-                                            K32OBJ_MUTEX, MUTEX_MODIFY_STATE, NULL)))
+                                            K32OBJ_MUTEX, MUTEX_MODIFY_STATE,
+                                            &req.handle )))
     {
         SYSTEM_UNLOCK();
         return FALSE;
+    }
+    if (req.handle != -1)
+    {
+        SYSTEM_UNLOCK();
+        CLIENT_SendRequest( REQ_RELEASE_MUTEX, -1, 1, &req, sizeof(req) );
+        return !CLIENT_WaitReply( NULL, NULL, 0 );
     }
     if (!mutex->count || (mutex->owner != GetCurrentThreadId()))
     {

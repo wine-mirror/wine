@@ -49,7 +49,7 @@ type	win16
 301    pascal  midiInGetNumDevs() midiInGetNumDevs16
 302    pascal  midiInGetDevCaps(word ptr word) midiInGetDevCaps16
 303    pascal  midiInGetErrorText(word ptr word) midiInGetErrorText16
-304    pascal  midiInOpen(ptr word ptr long long long) midiInOpen16
+304    pascal  midiInOpen(ptr word long long long) midiInOpen16
 305    pascal  midiInClose(word) midiInClose16
 306    pascal  midiInPrepareHeader(word ptr word) midiInPrepareHeader16
 307    pascal  midiInUnprepareHeader(word ptr word) midiInUnprepareHeader16
@@ -155,7 +155,7 @@ type	win16
 1213   pascal  mmioWrite(word ptr long) mmioWrite16
 1214   pascal  mmioSeek(word long word) mmioSeek16
 1215   pascal  mmioGetInfo(word ptr word) mmioGetInfo16
-1216   pascal  MMIOSETINFO(word ptr word) mmioSetInfo
+1216   pascal  MMIOSETINFO(word ptr word) mmioSetInfo16
 1217   pascal  MMIOSETBUFFER(word ptr long word) mmioSetBuffer
 1218   pascal  mmioFlush(word word) mmioFlush16
 1219   pascal  mmioAdvance(word ptr word) mmioAdvance16

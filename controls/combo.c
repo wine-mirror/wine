@@ -158,7 +158,7 @@ static void CBCalcPlacement( LPHEADCOMBO lphc, LPRECT32 lprEdit,
 	 mi32.CtlID   = lphc->self->wIDmenu;
 	 mi32.itemID  = -1;
 	 mi32.itemWidth  = size.cx;
-	 mi32.itemHeight = size.cy - 6;	/* ownerdrawn cb is taller */
+	 mi32.itemHeight = u - 6;	/* ownerdrawn cb is taller */
 	 mi32.itemData   = 0;
 	 SendMessage32A(lphc->owner, WM_MEASUREITEM, 
 				(WPARAM32)mi32.CtlID, (LPARAM)&mi32);
@@ -172,12 +172,13 @@ static void CBCalcPlacement( LPHEADCOMBO lphc, LPRECT32 lprEdit,
    {
        HDC32    hDC = GetDC32( lphc->self->hwndSelf );
        HFONT32  hPrevFont = 0;
+       SIZE32   font_size;
 
        if( lphc->hFont ) hPrevFont = SelectObject32( hDC, lphc->hFont );
 
-       GetTextExtentPoint32A( hDC, "0", 1, &size);
+       GetTextExtentPoint32A( hDC, "0", 1, &font_size);
 
-       size.cy += size.cy / 4 + 4 * SYSMETRICS_CYBORDER;
+       size.cy = font_size.cy + font_size.cy / 4 + 4 * SYSMETRICS_CYBORDER;
 
        if( hPrevFont ) SelectObject32( hDC, hPrevFont );
        ReleaseDC32( lphc->self->hwndSelf, hDC );
@@ -1069,13 +1070,14 @@ static void COMBO_Size( LPHEADCOMBO lphc )
 
   /* CreateWindow() may send a bogus WM_SIZE, ignore it */
 
-  if( w == (lphc->RectCombo.right - lphc->RectCombo.left) )
+  if( w == (lphc->RectCombo.right - lphc->RectCombo.left) ) {
       if( (CB_GETTYPE(lphc) == CBS_SIMPLE) &&
 	  (h == (lphc->RectCombo.bottom - lphc->RectCombo.top)) )
           return;
       else if( (lphc->dwStyle & CBS_DROPDOWN) &&
 	       (h == (lphc->RectEdit.bottom - lphc->RectEdit.top))  )
 	       return;
+  }
   
   lphc->RectCombo = rect;
   CBCalcPlacement( lphc, &lphc->RectEdit, &lphc->RectButton, &rect );
@@ -1141,11 +1143,12 @@ static LRESULT COMBO_SelectString( LPHEADCOMBO lphc, INT32 start, LPCSTR pText )
 {
    INT32 index = SendMessage32A( lphc->hWndLBox, LB_SELECTSTRING32, 
 				 (WPARAM32)start, (LPARAM)pText );
-   if( index >= 0 )
+   if( index >= 0 ) {
         if( lphc->wState & CBF_EDIT )
 	    CBUpdateEdit( lphc, index );
 	else
 	    CBPaintText( lphc, 0 );
+   }
    return (LRESULT)index;
 }
 
@@ -1493,15 +1496,15 @@ LRESULT WINAPI ComboWndProc( HWND32 hwnd, UINT32 message,
 				       (LPSTR)lParam, (message == CB_DIR32));
 	case CB_SHOWDROPDOWN16:
 	case CB_SHOWDROPDOWN32:
-		if( CB_GETTYPE(lphc) != CBS_SIMPLE )
-		    if( wParam )
-		    {
+		if( CB_GETTYPE(lphc) != CBS_SIMPLE ) {
+		    if( wParam ) {
 			if( !(lphc->wState & CBF_DROPPED) )
 			    CBDropDown( lphc );
-		    }
-		    else 
+		    } else  {
 			if( lphc->wState & CBF_DROPPED ) 
 		            CBRollUp( lphc, FALSE, TRUE );
+		    }
+		}
 		return TRUE;
 
 	case CB_GETCOUNT16: 

@@ -161,7 +161,7 @@ DWORD __cdecl CRTDLL__findfirst(LPCSTR fname,struct find_t* x2)
  */
 INT32 __cdecl CRTDLL__findnext(DWORD hand,struct find_t* x2)
 {
-  FIXME(crtdll, ":(%d,%p): stub\n",hand,x2);
+  FIXME(crtdll, ":(%ld,%p): stub\n",hand,x2);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return FALSE;
 }
@@ -1929,3 +1929,9 @@ INT32 __cdecl CRTDLL__memicmp(
 	}
 	return 0;
 }
+/*********************************************************************
+ *                  __dllonexit           (CRTDLL.25)
+ */
+VOID __cdecl CRTDLL__dllonexit ()
+{	FIXME(crtdll,"stub\n");
+ }

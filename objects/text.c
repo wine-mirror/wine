@@ -323,7 +323,11 @@ INT32 WINAPI DrawTextEx32A( HDC32 hdc, LPCSTR str, INT32 count,
                      LPRECT32 rect, UINT32 flags, LPDRAWTEXTPARAMS dtp )
 {
     TRACE(text,"(%d,'%s',%d,%p,0x%08x,%p)\n",hdc,str,count,rect,flags,dtp);
-    FIXME(text,"ignores extended functionality\n");
+    if(dtp) {
+        FIXME(text,"Ignores params:%d,%d,%d,%d,%d\n",dtp->cbSize,
+                   dtp->iTabLength,dtp->iLeftMargin,dtp->iRightMargin,
+                   dtp->uiLengthDrawn);
+    }
     return DrawText32A(hdc,str,count,rect,flags);
 }
 

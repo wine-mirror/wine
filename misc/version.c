@@ -3,6 +3,7 @@
  *
  * Copyright 1997 Alexandre Julliard
  * Copyright 1997 Marcus Meissner
+ * Copyright 1998 Patrik Stridvall
  */
 
 #include <string.h>
@@ -12,15 +13,7 @@
 #include "options.h"
 #include "debug.h"
 #include "ole.h"
-
-typedef enum
-{
-    WIN31, /* Windows 3.1 */
-    WIN95, /* Windows 95 */
-    NT351, /* Windows NT 3.51 */
-    NT40,  /* Windows NT 4.0 */
-    NB_VERSIONS
-} VERSION;
+#include "winversion.h"
 
 typedef struct
 {
@@ -31,7 +24,7 @@ typedef struct
 
 
 /* FIXME: compare values below with original and fix */
-static const VERSION_DATA VersionData[NB_VERSIONS] =
+static const VERSION_DATA VersionData[NB_WINDOWS_VERSIONS] =
 {
     /* WIN31 */
     {
@@ -71,7 +64,7 @@ static const VERSION_DATA VersionData[NB_VERSIONS] =
     }
 };
 
-static const char *VersionNames[NB_VERSIONS] =
+static const char *VersionNames[NB_WINDOWS_VERSIONS] =
 {
     "win31",
     "win95",
@@ -81,7 +74,7 @@ static const char *VersionNames[NB_VERSIONS] =
 
 /* the current version has not been autodetected but forced via cmdline */
 static BOOL32 versionForced = FALSE;
-static VERSION defaultVersion = WIN31;
+static WINDOWS_VERSION defaultVersion = WIN31;
 
 
 /**********************************************************************
@@ -90,27 +83,27 @@ static VERSION defaultVersion = WIN31;
 void VERSION_ParseVersion( char *arg )
 {
     int i;
-    for (i = 0; i < NB_VERSIONS; i++)
+    for (i = 0; i < NB_WINDOWS_VERSIONS; i++)
     {
         if (!strcmp( VersionNames[i], arg ))
         {
-            defaultVersion = (VERSION)i;
+            defaultVersion = (WINDOWS_VERSION)i;
             versionForced = TRUE;
             return;
         }
     }
     MSG("Invalid winver value '%s' specified.\n", arg );
     MSG("Valid versions are:" );
-    for (i = 0; i < NB_VERSIONS; i++)
+    for (i = 0; i < NB_WINDOWS_VERSIONS; i++)
         MSG(" '%s'%c", VersionNames[i],
-	    (i == NB_VERSIONS - 1) ? '\n' : ',' );
+	    (i == NB_WINDOWS_VERSIONS - 1) ? '\n' : ',' );
 }
 
 
 /**********************************************************************
- *         VERSION_get_version
+ *         VERSION_GetVersion
  */
-static VERSION VERSION_GetVersion(void)
+WINDOWS_VERSION VERSION_GetVersion(void)
 {
     LPIMAGE_NT_HEADERS peheader;	
 
@@ -143,12 +136,34 @@ static VERSION VERSION_GetVersion(void)
 }
 
 
+/**********************************************************************
+ *         VERSION_GetVersionName
+ */
+char *VERSION_GetVersionName()
+{
+  WINDOWS_VERSION ver = VERSION_GetVersion();
+  switch(ver)
+    {
+    case WIN31:
+      return "Windows 3.1";
+    case WIN95:  
+      return "Windows 95";
+    case NT351:
+      return "Windows NT 3.51";
+    case NT40:
+      return "Windows NT 4.0";
+    default:
+      FIXME(ver,"Windows version %d not named",ver);
+      return "Windows <Unknown>";
+    }
+}
+
 /***********************************************************************
  *         GetVersion16   (KERNEL.3)
  */
 LONG WINAPI GetVersion16(void)
 {
-    VERSION ver = VERSION_GetVersion();
+    WINDOWS_VERSION ver = VERSION_GetVersion();
     return VersionData[ver].getVersion16;
 }
 
@@ -158,7 +173,7 @@ LONG WINAPI GetVersion16(void)
  */
 LONG WINAPI GetVersion32(void)
 {
-    VERSION ver = VERSION_GetVersion();
+    WINDOWS_VERSION ver = VERSION_GetVersion();
     return VersionData[ver].getVersion32;
 }
 
@@ -168,7 +183,7 @@ LONG WINAPI GetVersion32(void)
  */
 BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16 *v)
 {
-    VERSION ver = VERSION_GetVersion();
+    WINDOWS_VERSION ver = VERSION_GetVersion();
     if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFO16))
     {
         WARN(ver,"wrong OSVERSIONINFO size from app");
@@ -188,7 +203,7 @@ BOOL16 WINAPI GetVersionEx16(OSVERSIONINFO16 *v)
  */
 BOOL32 WINAPI GetVersionEx32A(OSVERSIONINFO32A *v)
 {
-    VERSION ver = VERSION_GetVersion();
+    WINDOWS_VERSION ver = VERSION_GetVersion();
     if (v->dwOSVersionInfoSize != sizeof(OSVERSIONINFO32A))
     {
         WARN(ver,"wrong OSVERSIONINFO size from app");
@@ -208,7 +223,8 @@ BOOL32 WINAPI GetVersionEx32A(OSVERSIONINFO32A *v)
  */
 BOOL32 WINAPI GetVersionEx32W(OSVERSIONINFO32W *v)
 {
-    VERSION ver = VERSION_GetVersion();
+    WINDOWS_VERSION ver = VERSION_GetVersion();
+
     if (v->dwOSVersionInfoSize!=sizeof(OSVERSIONINFO32W))
     {
         WARN(ver,"wrong OSVERSIONINFO size from app");
@@ -319,7 +335,7 @@ BOOL16 WINAPI DiagQuery()
 void WINAPI DiagOutput(LPCSTR str)
 {
         /* FIXME */
-	DPRINTF("DIAGOUTPUT:%s\n",str);
+	DPRINTF("DIAGOUTPUT:%s\n", debugstr_a(str));
 }
 
 /***********************************************************************
@@ -327,7 +343,7 @@ void WINAPI DiagOutput(LPCSTR str)
  */
 UINT32 WINAPI OaBuildVersion()
 {
-    VERSION ver = VERSION_GetVersion();
+    WINDOWS_VERSION ver = VERSION_GetVersion();
 
     switch(VersionData[ver].getVersion32)
     {
