@@ -759,6 +759,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND32 hwndOwner )
 		++orgY;
 
 	    MENU_CalcItemSize( hdc, lpitem, hwndOwner, orgX, orgY, FALSE );
+
             if (lpitem->fType & MF_MENUBARBREAK) orgX++;
 	    maxX = MAX( maxX, lpitem->rect.right );
 	    orgY = lpitem->rect.bottom;
@@ -829,6 +830,7 @@ static void MENU_MenuBarCalcSize( HDC32 hdc, LPRECT32 lprect,
 			 orgX, orgY );
 	    debug_print_menuitem ("  item: ", lpitem, "");
 	    MENU_CalcItemSize( hdc, lpitem, hwndOwner, orgX, orgY, TRUE );
+
 	    if (lpitem->rect.right > lprect->right)
 	    {
 		if (i != start) break;
@@ -4091,36 +4093,42 @@ BOOL16 WINAPI CheckMenuRadioItem16(HMENU16 hMenu,
 
 /**********************************************************************
  *		GetMenuItemRect32    (USER32.266)
+ *
+ *      ATTENTION: Here, the returned values in rect are the screen 
+ *                 coordinates of the item just like if the menu was 
+ *                 always on the upper left side of the application.
+ *                 
  */
-
 BOOL32 WINAPI GetMenuItemRect32 (HWND32 hwnd, HMENU32 hMenu, UINT32 uItem,
 				 LPRECT32 rect)
 {
-     RECT32 saverect, clientrect;
-     BOOL32 barp;
-     HDC32 hdc;
-     WND *wndPtr;
+     POPUPMENU *itemMenu;
      MENUITEM *item;
-     HMENU32 orghMenu = hMenu;
+     HWND32 referenceHwnd;
 
-     TRACE(menu, "(0x%x,0x%x,%d,%p)\n",
-		  hwnd, hMenu, uItem, rect);
+     TRACE(menu, "(0x%x,0x%x,%d,%p)\n", hwnd, hMenu, uItem, rect);
 
      item = MENU_FindItem (&hMenu, &uItem, MF_BYPOSITION);
-     wndPtr = WIN_FindWndPtr (hwnd);
-     if (!rect || !item || !wndPtr) return FALSE;
+     referenceHwnd = hwnd;
 
-     GetClientRect32( hwnd, &clientrect );
-     hdc = GetDCEx32( hwnd, 0, DCX_CACHE | DCX_WINDOW );
-     barp = (hMenu == orghMenu);
+     if(!hwnd)
+     {
+	 itemMenu = (POPUPMENU *) USER_HEAP_LIN_ADDR(hMenu);
+	 if (itemMenu == NULL) 
+	     return FALSE;
 
-     saverect = item->rect;
-     MENU_CalcItemSize (hdc, item, hwnd,
-			clientrect.left, clientrect.top, barp);
+	 if(itemMenu->hWnd == NULL)
+	     return FALSE;
+	 referenceHwnd = itemMenu->hWnd;
+     }
+
+     if ((rect == NULL) || (item == NULL)) 
+	 return FALSE;
+
      *rect = item->rect;
-     item->rect = saverect;
 
-     ReleaseDC32( hwnd, hdc );
+     MapWindowPoints32(referenceHwnd, 0, (LPPOINT32)rect, 2);
+
      return TRUE;
 }
 
