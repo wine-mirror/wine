@@ -1125,7 +1125,7 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE2A iface)
 	if (This->data_queue != NULL)
 	  HeapFree(GetProcessHeap(),0,This->data_queue);
 
-	/* Install the previous event handler (in case of releasing an aquired
+	/* Install the previous event handler (in case of releasing an acquired
 	   mouse device) */
 	if (This->prev_handler != NULL)
 	  MOUSE_Enable(This->prev_handler);
@@ -1456,7 +1456,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
 
     This->acquired = 1;
   }
-  return 0;
+  return DI_OK;
 }
 
 /******************************************************************************
@@ -1464,21 +1464,26 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE2A iface)
   */
 static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
 {
-  ICOM_THIS(SysMouseAImpl,iface);
+    ICOM_THIS(SysMouseAImpl,iface);
 
-  TRACE("(this=%p)\n",This);
+    TRACE("(this=%p)\n",This);
 
-  /* Reinstall previous mouse event handler */
-  MOUSE_Enable(This->prev_handler);
-  This->prev_handler = NULL;
+    if (This->acquired)
+    {
+        /* Reinstall previous mouse event handler */
+        MOUSE_Enable(This->prev_handler);
+        This->prev_handler = NULL;
   
-  /* No more locks */
-  current_lock = NULL;
+        /* No more locks */
+        current_lock = NULL;
 
-  /* Unacquire device */
-  This->acquired = 0;
+        /* Unacquire device */
+        This->acquired = 0;
+    }
+    else
+	ERR("Unacquiring a not-acquired device !!!\n");
   
-  return 0;
+    return DI_OK;
 }
 
 /******************************************************************************
@@ -1608,6 +1613,12 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
 							  pd->dwData * sizeof(DIDEVICEOBJECTDATA));
       This->queue_pos  = 0;
       This->queue_len  = pd->dwData;
+      break;
+    }
+    case (DWORD) DIPROP_AXISMODE: {
+      LPCDIPROPDWORD    pd = (LPCDIPROPDWORD)ph;
+      This->absolute = !(pd->dwData);
+      TRACE("absolute mode: %d\n", This->absolute);
       break;
     }
     default:
@@ -1876,7 +1887,7 @@ static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
   	close(This->joyfd);
 	This->joyfd = -1;
     }
-    return 0;
+    return DI_OK;
 }
 
 #define map_axis(val) ((val+32768)*(This->lMax-This->lMin)/65536+This->lMin)
@@ -1944,7 +1955,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
 }
 
 /******************************************************************************
-  *     GetDeviceState : gets buffered input data.
+  *     GetDeviceData : gets buffered input data.
   */
 static HRESULT WINAPI JoystickAImpl_GetDeviceData(LPDIRECTINPUTDEVICE2A iface,
 					      DWORD dodsize,
