@@ -78,7 +78,7 @@ static void clip_children( WND *win, WND *last, HRGN hrgn, int whole_window )
     else x = y = 0;
 
     rectRgn = CreateRectRgn( 0, 0, 0, 0 );
-    while (ptr != last)
+    while (ptr && ptr != last)
     {
         if (ptr->dwStyle & WS_VISIBLE)
         {
