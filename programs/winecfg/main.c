@@ -266,6 +266,9 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
 int WINAPI
 WinMain (HINSTANCE hInstance, HINSTANCE hPrev, LPSTR szCmdLine, int nShow)
 {
+    /* Until winecfg is fully functional, warn users that it is incomplete and doesn't do anything */
+    MessageBox(NULL, "The winecfg tool is not yet complete, and does not actually alter your configuration. If you want to alter the way Wine works, look in the ~/.wine/config file for more information.", "winecfg", MB_OK | MB_ICONWARNING);
+
     /*
      * Load the configuration from registry
      */
