@@ -8522,7 +8522,7 @@ struct tagPROPVARIANT {
 
 typedef struct tagPROPVARIANT *LPPROPVARIANT;
 
-#define PRSPEC_INVALID (0x7fffffff)
+#define PRSPEC_INVALID (0xffffffff)
 
 #define PRSPEC_LPWSTR (0)
 

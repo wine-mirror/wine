@@ -141,11 +141,11 @@ static UUID* parse_uuid(const char*u)
 				return aUUID;
 			}
 {hex}			{
-				yylval.num = strtol(yytext, NULL, 0);
+				yylval.num = strtoul(yytext, NULL, 0);
 				return aHEXNUM;
 			}
 {int}			{
-				yylval.num = strtol(yytext, NULL, 0);
+				yylval.num = strtoul(yytext, NULL, 0);
 				return aNUM;
 			}
 {cident}		return kw_token(yytext);
@@ -360,7 +360,7 @@ int do_import(char *fname)
                 p = hname + strlen(hname) - 2;
                 if (p <= hname || strcmp( p, ".h" )) strcat(hname, ".h");
 
-		fprintf(header, "#include \"%s\"\n", hname);
+		fprintf(header, "#include <%s>\n", hname);
 		free(hname);
 	}
 

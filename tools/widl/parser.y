@@ -107,7 +107,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 	func_t *func;
 	char *str;
 	UUID *uuid;
-	int num;
+	unsigned int num;
 }
 
 %token <str> aIDENTIFIER
