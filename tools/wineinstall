@@ -27,6 +27,11 @@
 #  added --enable-opengl to default confargs
 #  added conf_question, conf_yesno_answer, and conf_string_answer functions
 #  added DEFCAT variable
+# (later that day...)
+#  added conf_reset_question function
+#  added file existence checks to the registry copying
+#  fixed problem with no-windows directory creation
+#  some text reformatting from Eric Maryniak
 
 #--- defaults (change these if you are a packager)
 CONFARGS=--enable-opengl      # configure args, e.g. --prefix=/usr --sysconfdir=/etc
@@ -85,6 +90,12 @@ function conf_question {
   done
 }
 
+function conf_reset_question {
+  # parameters: $1 = question-id
+  # this is used to flush any cached answers and "already-displayed" flags
+  shift # dummy command
+}
+
 function conf_yesno_answer {
   unset ANSWER
   while [ "$ANSWER" != 'yes' ] && [ "$ANSWER" != 'no' ]
@@ -135,7 +146,7 @@ if [ $RET -eq 0 ]; then
       echo "Sorry, I won't install Wine when an rpm version is still installed."
       echo "(Wine support suffered from way too many conflicts)"
       echo "Have a nice day !"
-      exit
+      exit 1
     fi 
   fi
 fi
@@ -186,7 +197,8 @@ then {
   echo "Hmm, looks like WINE is already compiled. I'll skip that too, I guess."
 }
 else {
-  echo "Compiling WINE. Grab a lunch or two, rent a video, or whatever, in the meantime..."
+  echo "Compiling WINE. Grab a lunch or two, rent a video, or whatever,"
+  echo "in the meantime..."
   echo
   if ! { make depend && make; }
   then {
@@ -298,13 +310,13 @@ then {
   then {
     echo
     echo -n "Searching for an existing Windows installation..."
-    if ! $WINECONF > $CONF 2>/dev/null
+    if ! $WINECONF -inifile "$WINEINI" > $CONF 2>/dev/null
     then {
       rm -f $CONF
       echo " not found."
       conf_question low do_without_windows \
-       "Windows was not found on your system, so I assume you want a Wine-only installation." \
-       "Am I correct?"
+       "Windows was not found on your system, so I assume you want" \
+       "a Wine-only installation. Am I correct?"
       conf_yesno_answer "(yes/no) "
       if [ "$ANSWER" = 'no' ]
       then {
@@ -318,6 +330,7 @@ then {
     }
     else {
       echo " found."
+      conf_reset_question windows_found
       conf_question low windows_found \
        "Created $CONF using your existing Windows installation." \
        "You probably want to review the file, though."
@@ -341,25 +354,31 @@ then {
   else DCROOT=/c
   fi
   conf_question low drivec_path \
-   "Configuring Wine without Windows. Some fake Windows directories must be created, to" \
-   "hold any .ini files, DLLs, and start menu entries your applications may need to install."
+   "Configuring Wine without Windows." \
+   "Some fake Windows directories must be created, to hold any .ini files, DLLs," \
+   "start menu entries, and other things your applications may need to install." \
+   "Where would oyu like your fake C drive to be placed?"
   while [ -z "$CROOT" ]
   do {
-    conf_string_answer "Where would you like your fake C drive to be placed? (default is $DCROOT)"
+    conf_string_answer "(default is $DCROOT) "
     if [ -z "$ANSWER" ]
     then CROOT="$DCROOT"
-    fi
-    if ! [ -d "$ANSWER" ]
+    elif ! [ -d "$ANSWER" ]
     then {
       if mkdir -p "$ANSWER"
       then CROOT="$ANSWER"
+      else conf_reset_question drivec_path
       fi
     }
+    else CROOT="$ANSWER"
     fi
   }
   done
   echo "Configuring Wine for a no-windows install in $CROOT..."
-  for tdir in "$CROOT/windows" "$CROOT/windows/system" "$CROOT/windows/Start Menu" "$CROOT/windows/Start Menu/Programs" "$CROOT/Common Files" "$CROOT/windows/Profiles/Administrator" "$CROOT/Program Files"
+  for tdir in "$CROOT/windows" "$CROOT/windows/system" \
+              "$CROOT/windows/Start Menu" "$CROOT/windows/Start Menu/Programs" \
+              "$CROOT/Common Files" "$CROOT/Program Files" \
+              "$CROOT/windows/Profiles" "$CROOT/windows/Profiles/Administrator"
   do [ -d "$tdir" ] || mkdir "$tdir"
   done
   [ -f "$CROOT/windows/win.ini" ]    || cp "$WININI"    "$CROOT/windows/win.ini"
@@ -367,6 +386,7 @@ then {
   if [ "$DOCONF" = 'yes' ]
   then {
     sed "s|Path=/c\$|Path=${CROOT}|" $WINEINI > $CONF
+    conf_reset_question default_config
     conf_question low default_config \
      "Created $CONF using default Wine configuration." \
      "You probably want to review the file, though."
@@ -442,6 +462,7 @@ then {
   then {
     rm -f $TMPCONF $TMPREG
     echo "Registry install failed."
+    conf_reset_question regapi_error
     conf_question high regapi_error
     exit 1
   }
@@ -461,14 +482,14 @@ then {
   if ! [ -f $sysconfdir/wine.userreg ]
   then {
     echo "Linking root's user registry hive to the global registry..."
-    cp ~/.wine/wine.userreg $sysconfdir/wine.userreg
+    [ -f ~/.wine/wine.userreg ] && cp ~/.wine/wine.userreg $sysconfdir/wine.userreg
     ln -sf $sysconfdir/wine.userreg ~/.wine/wine.userreg
   }
   fi
   if ! [ -f $sysconfdir/wine.systemreg ]
   then {
     echo "Linking root's system registry hive to the global registry..."
-    cp ~/.wine/system.reg $sysconfdir/wine.systemreg
+    [ -f ~/.wine/system.reg ] && cp ~/.wine/system.reg $sysconfdir/wine.systemreg
     ln -sf $sysconfdir/wine.systemreg ~/.wine/system.reg
   }
   fi
@@ -480,3 +501,5 @@ echo
 echo "Installation complete for now. Good luck (this is still alpha software)."
 echo "If you have problems with WINE, please read the documentation first,"
 echo "as many kinds of potential problems are explained there."
+
+exit 0
