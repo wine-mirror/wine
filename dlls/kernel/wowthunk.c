@@ -42,6 +42,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(thunk);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
+WINE_DECLARE_DEBUG_CHANNEL(snoop);
 
 /*
  * These are the 16-bit side WOW routines.  They reside in wownt16.h
@@ -112,7 +113,7 @@ BOOL WOWTHUNK_Init(void)
     CALL32_CBClientEx_RetAddr =
         MAKESEGPTR( codesel, (char*)CALL32_CBClientEx_Ret - (char*)Call16_Ret_Start );
 
-    if (TRACE_ON(relay)) RELAY16_InitDebugLists();
+    if (TRACE_ON(relay) || TRACE_ON(snoop)) RELAY16_InitDebugLists();
     return TRUE;
 }
 
