@@ -680,8 +680,8 @@
 @ stub RegisterConsoleOS2
 @ stdcall RegisterServiceProcess(long long)
 @ stub RegisterSysMsgHandler
-@ stub RegisterWaitForSingleObject
-@ stub RegisterWaitForSingleObjectEx
+@ stdcall RegisterWaitForSingleObject(ptr long ptr ptr long long)
+@ stdcall RegisterWaitForSingleObjectEx(long ptr ptr long long)
 @ stdcall ReinitializeCriticalSection(ptr)
 @ stdcall ReleaseMutex(long)
 @ stdcall ReleaseSemaphore(long long ptr)
@@ -831,6 +831,8 @@
 @ stdcall UnmapViewOfFile(ptr)
 @ stdcall UpdateResourceA(long str str long ptr long)
 @ stdcall UpdateResourceW(long wstr wstr long ptr long)
+@ stdcall UnregisterWait(long)
+@ stdcall UnregisterWaitEx(long long)
 @ stub ValidateLCType
 @ stub ValidateLocale
 @ stdcall VerLanguageNameA(long str long)

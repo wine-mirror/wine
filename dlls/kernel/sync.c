@@ -217,6 +217,48 @@ DWORD WINAPI WaitForMultipleObjectsEx16( DWORD count, const HANDLE *handles,
 }
 
 /***********************************************************************
+ *           RegisterWaitForSingleObject   (KERNEL32.@)
+ */
+BOOL WINAPI RegisterWaitForSingleObject(PHANDLE phNewWaitObject, HANDLE hObject,
+                WAITORTIMERCALLBACK Callback, PVOID Context,
+                ULONG dwMilliseconds, ULONG dwFlags)
+{
+    FIXME("%p %p %p %p %ld %ld\n",
+          phNewWaitObject,hObject,Callback,Context,dwMilliseconds,dwFlags);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           RegisterWaitForSingleObjectEx   (KERNEL32.@)
+ */
+BOOL WINAPI RegisterWaitForSingleObjectEx( HANDLE hObject, 
+                WAITORTIMERCALLBACK Callback, PVOID Context,
+                ULONG dwMilliseconds, ULONG dwFlags ) 
+{
+    FIXME("%p %p %p %ld %ld\n",
+          hObject,Callback,Context,dwMilliseconds,dwFlags);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           UnregisterWait   (KERNEL32.@)
+ */
+BOOL WINAPI UnregisterWait( HANDLE WaitHandle ) 
+{
+    FIXME("%p\n",WaitHandle);
+    return FALSE;
+}
+
+/***********************************************************************
+ *           UnregisterWaitEx   (KERNEL32.@)
+ */
+BOOL WINAPI UnregisterWaitEx( HANDLE WaitHandle, HANDLE CompletionEvent ) 
+{
+    FIXME("%p %p\n",WaitHandle, CompletionEvent);
+    return FALSE;
+}
+
+/***********************************************************************
  *           InitializeCriticalSection   (KERNEL32.@)
  *
  * Initialise a critical section before use.
