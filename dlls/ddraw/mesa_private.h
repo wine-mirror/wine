@@ -169,6 +169,9 @@ extern HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, 
 extern HRESULT d3ddevice_enumerate7(LPD3DENUMDEVICESCALLBACK7 cb, LPVOID context) ;
 extern HRESULT d3ddevice_find(IDirectDrawImpl *d3d, LPD3DFINDDEVICESEARCH lpD3DDFS, LPD3DFINDDEVICERESULT lplpD3DDevice);
 
+/* Used by the DLL init routine to set-up the GL context and stuff properly */
+extern BOOL d3ddevice_init_at_startup(void *gl_handle);
+
 /* Used to upload the texture */
 extern HRESULT gltex_upload_texture(IDirectDrawSurfaceImpl *This, IDirect3DDeviceImpl *d3ddev, DWORD stage) ;
 

@@ -64,6 +64,9 @@ const float id_mat[16] = {
     0.0, 0.0, 0.0, 1.0
 };
 
+/* This is filled at DLL loading time */
+static D3DDEVICEDESC7 opengl_device_caps;
+
 static void draw_primitive_strided(IDirect3DDeviceImpl *This,
 				   D3DPRIMITIVETYPE d3dptPrimitiveType,
 				   DWORD d3dvtVertexType,
@@ -307,127 +310,53 @@ static void set_context(IDirect3DDeviceImpl* This)
     LEAVE_GL();
 }
 
-static void fill_opengl_primcaps(D3DPRIMCAPS *pc)
-{
-    pc->dwSize = sizeof(*pc);
-    pc->dwMiscCaps = D3DPMISCCAPS_CONFORMANT | D3DPMISCCAPS_CULLCCW | D3DPMISCCAPS_CULLCW |
-      D3DPMISCCAPS_LINEPATTERNREP | D3DPMISCCAPS_MASKZ;
-    pc->dwRasterCaps = D3DPRASTERCAPS_DITHER | D3DPRASTERCAPS_FOGRANGE | D3DPRASTERCAPS_FOGTABLE |
-      D3DPRASTERCAPS_FOGVERTEX | D3DPRASTERCAPS_STIPPLE | D3DPRASTERCAPS_ZBIAS | D3DPRASTERCAPS_ZTEST | D3DPRASTERCAPS_SUBPIXEL;
-    pc->dwZCmpCaps = D3DPCMPCAPS_ALWAYS | D3DPCMPCAPS_EQUAL | D3DPCMPCAPS_GREATER | D3DPCMPCAPS_GREATEREQUAL |
-      D3DPCMPCAPS_LESS | D3DPCMPCAPS_LESSEQUAL | D3DPCMPCAPS_NEVER | D3DPCMPCAPS_NOTEQUAL;
-    pc->dwSrcBlendCaps  = D3DPBLENDCAPS_ZERO | D3DPBLENDCAPS_ONE | D3DPBLENDCAPS_DESTCOLOR | D3DPBLENDCAPS_INVDESTCOLOR |
-      D3DPBLENDCAPS_SRCALPHA | D3DPBLENDCAPS_INVSRCALPHA | D3DPBLENDCAPS_DESTALPHA | D3DPBLENDCAPS_INVDESTALPHA | D3DPBLENDCAPS_SRCALPHASAT |
-	D3DPBLENDCAPS_BOTHSRCALPHA | D3DPBLENDCAPS_BOTHINVSRCALPHA;
-    pc->dwDestBlendCaps = D3DPBLENDCAPS_ZERO | D3DPBLENDCAPS_ONE | D3DPBLENDCAPS_SRCCOLOR | D3DPBLENDCAPS_INVSRCCOLOR |
-      D3DPBLENDCAPS_SRCALPHA | D3DPBLENDCAPS_INVSRCALPHA | D3DPBLENDCAPS_DESTALPHA | D3DPBLENDCAPS_INVDESTALPHA | D3DPBLENDCAPS_SRCALPHASAT |
-	D3DPBLENDCAPS_BOTHSRCALPHA | D3DPBLENDCAPS_BOTHINVSRCALPHA;
-    pc->dwAlphaCmpCaps  = D3DPCMPCAPS_ALWAYS | D3DPCMPCAPS_EQUAL | D3DPCMPCAPS_GREATER | D3DPCMPCAPS_GREATEREQUAL |
-      D3DPCMPCAPS_LESS | D3DPCMPCAPS_LESSEQUAL | D3DPCMPCAPS_NEVER | D3DPCMPCAPS_NOTEQUAL;
-    pc->dwShadeCaps = D3DPSHADECAPS_ALPHAFLATBLEND | D3DPSHADECAPS_ALPHAGOURAUDBLEND | D3DPSHADECAPS_COLORFLATRGB | D3DPSHADECAPS_COLORGOURAUDRGB |
-      D3DPSHADECAPS_FOGFLAT | D3DPSHADECAPS_FOGGOURAUD | D3DPSHADECAPS_SPECULARFLATRGB | D3DPSHADECAPS_SPECULARGOURAUDRGB;
-    pc->dwTextureCaps = D3DPTEXTURECAPS_ALPHA | D3DPTEXTURECAPS_ALPHAPALETTE | D3DPTEXTURECAPS_BORDER | D3DPTEXTURECAPS_PERSPECTIVE |
-      D3DPTEXTURECAPS_POW2 | D3DPTEXTURECAPS_TRANSPARENCY;
-    pc->dwTextureFilterCaps = D3DPTFILTERCAPS_LINEAR | D3DPTFILTERCAPS_LINEARMIPLINEAR | D3DPTFILTERCAPS_LINEARMIPNEAREST |
-      D3DPTFILTERCAPS_MIPLINEAR | D3DPTFILTERCAPS_MIPNEAREST | D3DPTFILTERCAPS_NEAREST;
-    pc->dwTextureBlendCaps = D3DPTBLENDCAPS_ADD | D3DPTBLENDCAPS_COPY | D3DPTBLENDCAPS_DECAL | D3DPTBLENDCAPS_DECALALPHA | D3DPTBLENDCAPS_DECALMASK |
-      D3DPTBLENDCAPS_MODULATE | D3DPTBLENDCAPS_MODULATEALPHA | D3DPTBLENDCAPS_MODULATEMASK;
-    pc->dwTextureAddressCaps = D3DPTADDRESSCAPS_BORDER | D3DPTADDRESSCAPS_CLAMP | D3DPTADDRESSCAPS_WRAP | D3DPTADDRESSCAPS_INDEPENDENTUV;
-    pc->dwStippleWidth = 32;
-    pc->dwStippleHeight = 32;
-}
-
 static void fill_opengl_caps(D3DDEVICEDESC *d1)
 {
-    /* GLint maxlight; */
-
     d1->dwSize  = sizeof(*d1);
-    d1->dwFlags = D3DDD_DEVCAPS | D3DDD_BCLIPPING | D3DDD_COLORMODEL | D3DDD_DEVICERENDERBITDEPTH | D3DDD_DEVICEZBUFFERBITDEPTH
-      | D3DDD_LIGHTINGCAPS | D3DDD_LINECAPS | D3DDD_MAXBUFFERSIZE | D3DDD_MAXVERTEXCOUNT | D3DDD_TRANSFORMCAPS | D3DDD_TRICAPS;
+    d1->dwFlags = D3DDD_COLORMODEL | D3DDD_DEVCAPS | D3DDD_TRANSFORMCAPS | D3DDD_BCLIPPING | D3DDD_LIGHTINGCAPS |
+	D3DDD_LINECAPS | D3DDD_TRICAPS | D3DDD_DEVICERENDERBITDEPTH | D3DDD_DEVICEZBUFFERBITDEPTH |
+	D3DDD_MAXBUFFERSIZE | D3DDD_MAXVERTEXCOUNT;
     d1->dcmColorModel = D3DCOLOR_RGB;
-    d1->dwDevCaps = D3DDEVCAPS_CANRENDERAFTERFLIP | D3DDEVCAPS_DRAWPRIMTLVERTEX | D3DDEVCAPS_EXECUTESYSTEMMEMORY |
-      D3DDEVCAPS_EXECUTEVIDEOMEMORY | D3DDEVCAPS_FLOATTLVERTEX | D3DDEVCAPS_TEXTURENONLOCALVIDMEM | D3DDEVCAPS_TEXTURESYSTEMMEMORY |
-      D3DDEVCAPS_TEXTUREVIDEOMEMORY | D3DDEVCAPS_TLVERTEXSYSTEMMEMORY | D3DDEVCAPS_TLVERTEXVIDEOMEMORY |
-      /* D3D 7 capabilities */
-      D3DDEVCAPS_DRAWPRIMITIVES2 | D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_HWRASTERIZATION;
+    d1->dwDevCaps = opengl_device_caps.dwDevCaps;
     d1->dtcTransformCaps.dwSize = sizeof(D3DTRANSFORMCAPS);
     d1->dtcTransformCaps.dwCaps = D3DTRANSFORMCAPS_CLIP;
     d1->bClipping = TRUE;
     d1->dlcLightingCaps.dwSize = sizeof(D3DLIGHTINGCAPS);
     d1->dlcLightingCaps.dwCaps = D3DLIGHTCAPS_DIRECTIONAL | D3DLIGHTCAPS_PARALLELPOINT | D3DLIGHTCAPS_POINT | D3DLIGHTCAPS_SPOT;
     d1->dlcLightingCaps.dwLightingModel = D3DLIGHTINGMODEL_RGB;
-    d1->dlcLightingCaps.dwNumLights = 16; /* glGetIntegerv(GL_MAX_LIGHTS, &maxlight); d1->dlcLightingCaps.dwNumLights = maxlight; */
-    fill_opengl_primcaps(&(d1->dpcLineCaps));
-    fill_opengl_primcaps(&(d1->dpcTriCaps));
-    d1->dwDeviceRenderBitDepth  = DDBD_16|DDBD_24|DDBD_32;
-    d1->dwDeviceZBufferBitDepth = DDBD_16|DDBD_24|DDBD_32;
+    d1->dlcLightingCaps.dwNumLights = opengl_device_caps.dwMaxActiveLights;
+    d1->dpcLineCaps = opengl_device_caps.dpcLineCaps;
+    d1->dpcTriCaps = opengl_device_caps.dpcTriCaps;
+    d1->dwDeviceRenderBitDepth  = opengl_device_caps.dwDeviceRenderBitDepth;
+    d1->dwDeviceZBufferBitDepth = opengl_device_caps.dwDeviceZBufferBitDepth;
     d1->dwMaxBufferSize = 0;
     d1->dwMaxVertexCount = 65536;
-    d1->dwMinTextureWidth  = 1;
-    d1->dwMinTextureHeight = 1;
-    d1->dwMaxTextureWidth  = 1024;
-    d1->dwMaxTextureHeight = 1024;
+    d1->dwMinTextureWidth  = opengl_device_caps.dwMinTextureWidth;
+    d1->dwMinTextureHeight = opengl_device_caps.dwMinTextureHeight;
+    d1->dwMaxTextureWidth  = opengl_device_caps.dwMaxTextureWidth;
+    d1->dwMaxTextureHeight = opengl_device_caps.dwMaxTextureHeight;
     d1->dwMinStippleWidth  = 1;
     d1->dwMinStippleHeight = 1;
     d1->dwMaxStippleWidth  = 32;
     d1->dwMaxStippleHeight = 32;
-    d1->dwMaxTextureRepeat = 16;
-    d1->dwMaxTextureAspectRatio = 1024;
-    d1->dwMaxAnisotropy = 0;
-    d1->dvGuardBandLeft = 0.0;
-    d1->dvGuardBandRight = 0.0;
-    d1->dvGuardBandTop = 0.0;
-    d1->dvGuardBandBottom = 0.0;
-    d1->dvExtentsAdjust = 0.0;
-    d1->dwStencilCaps = D3DSTENCILCAPS_DECRSAT | D3DSTENCILCAPS_INCRSAT | D3DSTENCILCAPS_INVERT | D3DSTENCILCAPS_KEEP |
-      D3DSTENCILCAPS_REPLACE | D3DSTENCILCAPS_ZERO;
-    d1->dwFVFCaps = D3DFVFCAPS_DONOTSTRIPELEMENTS | 1;
-    d1->dwTextureOpCaps = 0; /* TODO add proper caps according to OpenGL multi-texture stuff */
-    d1->wMaxTextureBlendStages = 1;  /* TODO add proper caps according to OpenGL multi-texture stuff */
-    d1->wMaxSimultaneousTextures = 1;  /* TODO add proper caps according to OpenGL multi-texture stuff */
+    d1->dwMaxTextureRepeat = opengl_device_caps.dwMaxTextureRepeat;
+    d1->dwMaxTextureAspectRatio = opengl_device_caps.dwMaxTextureAspectRatio;
+    d1->dwMaxAnisotropy = opengl_device_caps.dwMaxAnisotropy;
+    d1->dvGuardBandLeft = opengl_device_caps.dvGuardBandLeft;
+    d1->dvGuardBandRight = opengl_device_caps.dvGuardBandRight;
+    d1->dvGuardBandTop = opengl_device_caps.dvGuardBandTop;
+    d1->dvGuardBandBottom = opengl_device_caps.dvGuardBandBottom;
+    d1->dvExtentsAdjust = opengl_device_caps.dvExtentsAdjust;
+    d1->dwStencilCaps = opengl_device_caps.dwStencilCaps;
+    d1->dwFVFCaps = opengl_device_caps.dwFVFCaps;
+    d1->dwTextureOpCaps = opengl_device_caps.dwTextureOpCaps;
+    d1->wMaxTextureBlendStages = opengl_device_caps.wMaxTextureBlendStages;
+    d1->wMaxSimultaneousTextures = opengl_device_caps.wMaxSimultaneousTextures;
 }
 
 static void fill_opengl_caps_7(D3DDEVICEDESC7 *d)
 {
-    D3DDEVICEDESC d1;
-
-    /* Copy first D3D1/2/3 capabilities */
-    fill_opengl_caps(&d1);
-
-    /* And fill the D3D7 one with it */
-    d->dwDevCaps = d1.dwDevCaps;
-    d->dpcLineCaps = d1.dpcLineCaps;
-    d->dpcTriCaps = d1.dpcTriCaps;
-    d->dwDeviceRenderBitDepth = d1.dwDeviceRenderBitDepth;
-    d->dwDeviceZBufferBitDepth = d1.dwDeviceZBufferBitDepth;
-    d->dwMinTextureWidth = d1.dwMinTextureWidth;
-    d->dwMinTextureHeight = d1.dwMinTextureHeight;
-    d->dwMaxTextureWidth = d1.dwMaxTextureWidth;
-    d->dwMaxTextureHeight = d1.dwMaxTextureHeight;
-    d->dwMaxTextureRepeat = d1.dwMaxTextureRepeat;
-    d->dwMaxTextureAspectRatio = d1.dwMaxTextureAspectRatio;
-    d->dwMaxAnisotropy = d1.dwMaxAnisotropy;
-    d->dvGuardBandLeft = d1.dvGuardBandLeft;
-    d->dvGuardBandTop = d1.dvGuardBandTop;
-    d->dvGuardBandRight = d1.dvGuardBandRight;
-    d->dvGuardBandBottom = d1.dvGuardBandBottom;
-    d->dvExtentsAdjust = d1.dvExtentsAdjust;
-    d->dwStencilCaps = d1.dwStencilCaps;
-    d->dwFVFCaps = d1.dwFVFCaps;
-    d->dwTextureOpCaps = d1.dwTextureOpCaps;
-    d->wMaxTextureBlendStages = d1.wMaxTextureBlendStages;
-    d->wMaxSimultaneousTextures = d1.wMaxSimultaneousTextures;
-    d->dwMaxActiveLights = d1.dlcLightingCaps.dwNumLights;
-    d->dvMaxVertexW = 100000000.0; /* No idea exactly what to put here... */
-    d->deviceGUID = IID_IDirect3DTnLHalDevice;
-    d->wMaxUserClipPlanes = 1;
-    d->wMaxVertexBlendMatrices = 0;
-    d->dwVertexProcessingCaps = D3DVTXPCAPS_TEXGEN | D3DVTXPCAPS_MATERIALSOURCE7 | D3DVTXPCAPS_VERTEXFOG | D3DVTXPCAPS_DIRECTIONALLIGHTS |
-      D3DVTXPCAPS_POSITIONALLIGHTS | D3DVTXPCAPS_LOCALVIEWER;
-    d->dwReserved1 = 0;
-    d->dwReserved2 = 0;
-    d->dwReserved3 = 0;
-    d->dwReserved4 = 0;
+    *d = opengl_device_caps;
 }
 
 HRESULT d3ddevice_enumerate(LPD3DENUMDEVICESCALLBACK cb, LPVOID context, DWORD version)
@@ -3654,7 +3583,6 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     XVisualInfo template;
     GLenum buffer = GL_FRONT;
     int light;
-    GLint max_clipping_planes = 0;
     
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDeviceGLImpl));
     if (object == NULL) return DDERR_OUTOFMEMORY;
@@ -3774,13 +3702,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     TRACE(" current context set\n");
 
     /* allocate the clipping planes */
-    glGetIntegerv(GL_MAX_CLIP_PLANES,&max_clipping_planes);
-    if (max_clipping_planes>32) {
-	object->max_clipping_planes=32;
-    } else {
-	object->max_clipping_planes = max_clipping_planes;
-    }
-    TRACE(" capable of %d clipping planes\n", (int)object->max_clipping_planes );
+    object->max_clipping_planes = opengl_device_caps.wMaxUserClipPlanes;
     object->clipping_planes = (d3d7clippingplane*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->max_clipping_planes * sizeof(d3d7clippingplane));
 
     glHint(GL_FOG_HINT,GL_NICEST);
@@ -3835,4 +3757,154 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirectDrawImpl *d3d, IDirectDrawSur
     build_fog_table(gl_object->fog_table, object->state_block.render_state[D3DRENDERSTATE_FOGCOLOR - 1]);
     
     return DD_OK;
+}
+
+static void fill_opengl_primcaps(D3DPRIMCAPS *pc)
+{
+    pc->dwSize = sizeof(*pc);
+    pc->dwMiscCaps = D3DPMISCCAPS_CONFORMANT | D3DPMISCCAPS_CULLCCW | D3DPMISCCAPS_CULLCW |
+      D3DPMISCCAPS_LINEPATTERNREP | D3DPMISCCAPS_MASKZ;
+    pc->dwRasterCaps = D3DPRASTERCAPS_DITHER | D3DPRASTERCAPS_FOGRANGE | D3DPRASTERCAPS_FOGTABLE |
+      D3DPRASTERCAPS_FOGVERTEX | D3DPRASTERCAPS_STIPPLE | D3DPRASTERCAPS_ZBIAS | D3DPRASTERCAPS_ZTEST | D3DPRASTERCAPS_SUBPIXEL;
+    pc->dwZCmpCaps = D3DPCMPCAPS_ALWAYS | D3DPCMPCAPS_EQUAL | D3DPCMPCAPS_GREATER | D3DPCMPCAPS_GREATEREQUAL |
+      D3DPCMPCAPS_LESS | D3DPCMPCAPS_LESSEQUAL | D3DPCMPCAPS_NEVER | D3DPCMPCAPS_NOTEQUAL;
+    pc->dwSrcBlendCaps  = D3DPBLENDCAPS_ZERO | D3DPBLENDCAPS_ONE | D3DPBLENDCAPS_DESTCOLOR | D3DPBLENDCAPS_INVDESTCOLOR |
+      D3DPBLENDCAPS_SRCALPHA | D3DPBLENDCAPS_INVSRCALPHA | D3DPBLENDCAPS_DESTALPHA | D3DPBLENDCAPS_INVDESTALPHA | D3DPBLENDCAPS_SRCALPHASAT |
+	D3DPBLENDCAPS_BOTHSRCALPHA | D3DPBLENDCAPS_BOTHINVSRCALPHA;
+    pc->dwDestBlendCaps = D3DPBLENDCAPS_ZERO | D3DPBLENDCAPS_ONE | D3DPBLENDCAPS_SRCCOLOR | D3DPBLENDCAPS_INVSRCCOLOR |
+      D3DPBLENDCAPS_SRCALPHA | D3DPBLENDCAPS_INVSRCALPHA | D3DPBLENDCAPS_DESTALPHA | D3DPBLENDCAPS_INVDESTALPHA | D3DPBLENDCAPS_SRCALPHASAT |
+	D3DPBLENDCAPS_BOTHSRCALPHA | D3DPBLENDCAPS_BOTHINVSRCALPHA;
+    pc->dwAlphaCmpCaps  = D3DPCMPCAPS_ALWAYS | D3DPCMPCAPS_EQUAL | D3DPCMPCAPS_GREATER | D3DPCMPCAPS_GREATEREQUAL |
+      D3DPCMPCAPS_LESS | D3DPCMPCAPS_LESSEQUAL | D3DPCMPCAPS_NEVER | D3DPCMPCAPS_NOTEQUAL;
+    pc->dwShadeCaps = D3DPSHADECAPS_ALPHAFLATBLEND | D3DPSHADECAPS_ALPHAGOURAUDBLEND | D3DPSHADECAPS_COLORFLATRGB | D3DPSHADECAPS_COLORGOURAUDRGB |
+      D3DPSHADECAPS_FOGFLAT | D3DPSHADECAPS_FOGGOURAUD | D3DPSHADECAPS_SPECULARFLATRGB | D3DPSHADECAPS_SPECULARGOURAUDRGB;
+    pc->dwTextureCaps = D3DPTEXTURECAPS_ALPHA | D3DPTEXTURECAPS_ALPHAPALETTE | D3DPTEXTURECAPS_BORDER | D3DPTEXTURECAPS_PERSPECTIVE |
+      D3DPTEXTURECAPS_POW2 | D3DPTEXTURECAPS_TRANSPARENCY;
+    pc->dwTextureFilterCaps = D3DPTFILTERCAPS_LINEAR | D3DPTFILTERCAPS_LINEARMIPLINEAR | D3DPTFILTERCAPS_LINEARMIPNEAREST |
+      D3DPTFILTERCAPS_MIPLINEAR | D3DPTFILTERCAPS_MIPNEAREST | D3DPTFILTERCAPS_NEAREST;
+    pc->dwTextureBlendCaps = D3DPTBLENDCAPS_ADD | D3DPTBLENDCAPS_COPY | D3DPTBLENDCAPS_DECAL | D3DPTBLENDCAPS_DECALALPHA | D3DPTBLENDCAPS_DECALMASK |
+      D3DPTBLENDCAPS_MODULATE | D3DPTBLENDCAPS_MODULATEALPHA | D3DPTBLENDCAPS_MODULATEMASK;
+    pc->dwTextureAddressCaps = D3DPTADDRESSCAPS_BORDER | D3DPTADDRESSCAPS_CLAMP | D3DPTADDRESSCAPS_WRAP | D3DPTADDRESSCAPS_INDEPENDENTUV;
+    pc->dwStippleWidth = 32;
+    pc->dwStippleHeight = 32;
+}
+
+static void fill_caps(void)
+{
+    GLint max_clip_planes;
+    
+    /* Fill first all the fields with default values which will be overriden later on with
+       corrent one from the GL code
+    */
+    opengl_device_caps.dwDevCaps = D3DDEVCAPS_CANRENDERAFTERFLIP | D3DDEVCAPS_DRAWPRIMTLVERTEX | D3DDEVCAPS_EXECUTESYSTEMMEMORY |
+      D3DDEVCAPS_EXECUTEVIDEOMEMORY | D3DDEVCAPS_FLOATTLVERTEX | D3DDEVCAPS_TEXTURENONLOCALVIDMEM | D3DDEVCAPS_TEXTURESYSTEMMEMORY |
+      D3DDEVCAPS_TEXTUREVIDEOMEMORY | D3DDEVCAPS_TLVERTEXSYSTEMMEMORY | D3DDEVCAPS_TLVERTEXVIDEOMEMORY |
+      /* D3D 7 capabilities */
+      D3DDEVCAPS_DRAWPRIMITIVES2 | D3DDEVCAPS_HWTRANSFORMANDLIGHT | D3DDEVCAPS_HWRASTERIZATION;
+    fill_opengl_primcaps(&(opengl_device_caps.dpcLineCaps));
+    fill_opengl_primcaps(&(opengl_device_caps.dpcTriCaps));
+    opengl_device_caps.dwDeviceRenderBitDepth  = DDBD_16|DDBD_24|DDBD_32;
+    opengl_device_caps.dwDeviceZBufferBitDepth = DDBD_16|DDBD_24|DDBD_32;
+    opengl_device_caps.dwMinTextureWidth  = 1;
+    opengl_device_caps.dwMinTextureHeight = 1;
+    opengl_device_caps.dwMaxTextureWidth  = 1024;
+    opengl_device_caps.dwMaxTextureHeight = 1024;
+    opengl_device_caps.dwMaxTextureRepeat = 16;
+    opengl_device_caps.dwMaxTextureAspectRatio = 1024;
+    opengl_device_caps.dwMaxAnisotropy = 0;
+    opengl_device_caps.dvGuardBandLeft = 0.0;
+    opengl_device_caps.dvGuardBandRight = 0.0;
+    opengl_device_caps.dvGuardBandTop = 0.0;
+    opengl_device_caps.dvGuardBandBottom = 0.0;
+    opengl_device_caps.dvExtentsAdjust = 0.0;
+    opengl_device_caps.dwStencilCaps = D3DSTENCILCAPS_DECRSAT | D3DSTENCILCAPS_INCRSAT | D3DSTENCILCAPS_INVERT | D3DSTENCILCAPS_KEEP |
+      D3DSTENCILCAPS_REPLACE | D3DSTENCILCAPS_ZERO;
+    opengl_device_caps.dwFVFCaps = D3DFVFCAPS_DONOTSTRIPELEMENTS | 1;
+    opengl_device_caps.dwTextureOpCaps = 0;
+    opengl_device_caps.wMaxTextureBlendStages = 1;
+    opengl_device_caps.wMaxSimultaneousTextures = 1;
+    opengl_device_caps.dwMaxActiveLights = 16;
+    opengl_device_caps.dvMaxVertexW = 100000000.0; /* No idea exactly what to put here... */
+    opengl_device_caps.deviceGUID = IID_IDirect3DTnLHalDevice;
+    opengl_device_caps.wMaxUserClipPlanes = 1;
+    opengl_device_caps.wMaxVertexBlendMatrices = 0;
+    opengl_device_caps.dwVertexProcessingCaps = D3DVTXPCAPS_TEXGEN | D3DVTXPCAPS_MATERIALSOURCE7 | D3DVTXPCAPS_VERTEXFOG |
+	D3DVTXPCAPS_DIRECTIONALLIGHTS | D3DVTXPCAPS_POSITIONALLIGHTS | D3DVTXPCAPS_LOCALVIEWER;
+    opengl_device_caps.dwReserved1 = 0;
+    opengl_device_caps.dwReserved2 = 0;
+    opengl_device_caps.dwReserved3 = 0;
+    opengl_device_caps.dwReserved4 = 0;
+
+    /* And now some GL overides :-) */
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint *) &opengl_device_caps.dwMaxTextureWidth);
+    opengl_device_caps.dwMaxTextureHeight = opengl_device_caps.dwMaxTextureWidth;
+    opengl_device_caps.dwMaxTextureAspectRatio = opengl_device_caps.dwMaxTextureWidth;
+    TRACE(": max texture size = %ld\n", opengl_device_caps.dwMaxTextureWidth);
+    
+    glGetIntegerv(GL_MAX_LIGHTS, (GLint *) &opengl_device_caps.dwMaxActiveLights);
+    TRACE(": max active lights = %ld\n", opengl_device_caps.dwMaxActiveLights);
+
+    glGetIntegerv(GL_MAX_CLIP_PLANES, &max_clip_planes);
+    opengl_device_caps.wMaxUserClipPlanes = max_clip_planes;
+    TRACE(": max clipping planes = %d\n", opengl_device_caps.wMaxUserClipPlanes);
+}
+
+BOOL
+d3ddevice_init_at_startup(void *gl_handle)
+{
+    XVisualInfo template;
+    XVisualInfo *vis;
+    HDC device_context;
+    Display *display;
+    Visual *visual;
+    Drawable drawable = (Drawable) GetPropA(GetDesktopWindow(), "__wine_x11_whole_window");
+    XWindowAttributes win_attr;
+    GLXContext gl_context;
+    int num;
+
+    TRACE("Initializing GL...\n");
+    
+    /* Get a default rendering context to have the 'caps' function query some info from GL */    
+    device_context = GetDC(0);
+    display = get_display(device_context);
+    ReleaseDC(0, device_context);
+
+    ENTER_GL();
+    if (XGetWindowAttributes(display, drawable, &win_attr)) {
+	visual = win_attr.visual;
+    } else {
+	visual = DefaultVisual(display, DefaultScreen(display));
+    }
+    template.visualid = XVisualIDFromVisual(visual);
+    vis = XGetVisualInfo(display, VisualIDMask, &template, &num);
+    if (vis == NULL) {
+	LEAVE_GL();
+	WARN("Error creating visual info for capabilities initialization - D3D support disabled !\n");
+	return FALSE;
+    }
+    gl_context = glXCreateContext(display, vis, NULL, GL_TRUE);
+
+    if (gl_context == NULL) {
+	LEAVE_GL();
+	WARN("Error creating default context for capabilities initialization - D3D support disabled !\n");
+	return FALSE;
+    }
+    if (glXMakeCurrent(display, drawable, gl_context) == False) {
+	glXDestroyContext(display, gl_context);
+	LEAVE_GL();
+	WARN("Error setting default context as current for capabilities initialization - D3D support disabled !\n");
+	return FALSE;	
+    }
+    
+    /* Then, query all extensions and fill our extension context. TODO :-) */
+    
+    /* Fill the D3D capabilities according to what GL tells us... */
+    fill_caps();
+
+    /* And frees this now-useless context */
+    glXMakeCurrent(display, None, NULL);
+    glXDestroyContext(display, gl_context);
+    LEAVE_GL();
+    
+    return TRUE;
 }

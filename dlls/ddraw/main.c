@@ -67,6 +67,8 @@ BOOL opengl_initialized = 0;
 
 #ifdef HAVE_OPENGL
 
+#include "mesa_private.h"
+
 static void *gl_handle = NULL;
 
 #define GL_API_FUNCTION(f) typeof(f) * p##f;
@@ -80,7 +82,8 @@ static void *gl_handle = NULL;
 static BOOL DDRAW_bind_to_opengl( void )
 {
     char *glname = SONAME_LIBGL;
-
+    BOOL ret_value;
+    
     gl_handle = wine_dlopen(glname, RTLD_NOW, NULL, 0);
     if (!gl_handle) {
         WARN("Wine cannot find the OpenGL graphics library (%s).\n",glname);
@@ -96,8 +99,13 @@ static BOOL DDRAW_bind_to_opengl( void )
 #include "gl_api.h"
 #undef GL_API_FUNCTION
 
-    return TRUE;
+    /* And now calls the function to initialize the various fields for the rendering devices */
+    ret_value = d3ddevice_init_at_startup(gl_handle);
 
+    wine_dlclose(gl_handle, NULL, 0);
+    gl_handle = NULL;
+    return ret_value;
+    
 sym_not_found:
     WARN("Wine cannot find certain functions that it needs inside the OpenGL\n"
 	 "graphics library.  To enable Wine to use OpenGL please upgrade\n"
