@@ -466,8 +466,13 @@ void  RDW_ValidateParent(WND *wndChild)
         HRGN hrg;
         if (wndChild->hrgnUpdate == 1 )
         {
-            RECT r = {0, 0, wndChild->rectWindow.right - wndChild->rectWindow.left,
-                            wndChild->rectWindow.bottom - wndChild->rectWindow.top };
+            RECT r;
+
+	    r.left = 0;
+	    r.top = 0;
+	    r.right = wndChild->rectWindow.right - wndChild->rectWindow.left;
+	    r.bottom = wndChild->rectWindow.bottom - wndChild->rectWindow.top;
+
             hrg = CreateRectRgnIndirect( &r );
         }
         else
@@ -478,8 +483,13 @@ void  RDW_ValidateParent(WND *wndChild)
             RECT rect, rectParent;
             if( wndParent->hrgnUpdate == 1 )
             {
-               RECT r = {0, 0, wndParent->rectWindow.right - wndParent->rectWindow.left,
-	         	    wndParent->rectWindow.bottom - wndParent->rectWindow.top };
+	       RECT r;
+
+	       r.left = 0;
+	       r.top = 0;
+	       r.right = wndParent->rectWindow.right - wndParent->rectWindow.left;
+	       r.bottom = wndParent->rectWindow.bottom - wndParent->rectWindow.top;
+
                wndParent->hrgnUpdate = CreateRectRgnIndirect( &r );
             }
             /* we must offset the child region by the offset of the child rect in the parent */

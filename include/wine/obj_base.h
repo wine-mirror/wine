@@ -686,9 +686,9 @@ struct IUnknown {
 
 #endif /* ICOM_CINTERFACE */
 
-    ICOM_METHOD2(HRESULT,QueryInterface,REFIID,riid, LPVOID*,ppvObj);
-    ICOM_METHOD (ULONG,AddRef);
-    ICOM_METHOD (ULONG,Release);
+    ICOM_METHOD2(HRESULT,QueryInterface,REFIID,riid, LPVOID*,ppvObj)
+    ICOM_METHOD (ULONG,AddRef)
+    ICOM_METHOD (ULONG,Release)
 };
 #undef ICOM_INTERFACE
 

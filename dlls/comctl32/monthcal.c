@@ -304,7 +304,7 @@ static void MONTHCAL_Refresh (HWND hwnd, HDC hdc)
 	HBRUSH hbr;
     HFONT currentFont;
 	TEXTMETRICA tm;
-//    LOGFONTA logFont;
+/*    LOGFONTA logFont; */
 	char buf[20],*thisMonthtxt;
     COLORREF oldTextColor,oldBkColor;
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);

@@ -604,31 +604,31 @@ static void _dump_DDCOLORKEY(void *in) {
 
 static void _dump_surface_desc(DDSURFACEDESC *lpddsd) {
   int	i;
-  const struct {
+  struct {
     DWORD	mask;
     char	*name;
     void (*func)(void *);
     void        *elt;
-  } flags[] = {
-#define FE(x,func,elt) { x, #x, func, (void *) &(lpddsd->elt)}
-    FE(DDSD_CAPS, _dump_DDSCAPS, ddsCaps),
-    FE(DDSD_HEIGHT, _dump_DWORD, dwHeight),
-    FE(DDSD_WIDTH, _dump_DWORD, dwWidth),
-    FE(DDSD_PITCH, _dump_DWORD, lPitch),
-    FE(DDSD_BACKBUFFERCOUNT, _dump_DWORD, dwBackBufferCount),
-    FE(DDSD_ZBUFFERBITDEPTH, _dump_DWORD, x.dwZBufferBitDepth),
-    FE(DDSD_ALPHABITDEPTH, _dump_DWORD, dwAlphaBitDepth),
-    FE(DDSD_PIXELFORMAT, _dump_pixelformat, ddpfPixelFormat),
-    FE(DDSD_CKDESTOVERLAY, _dump_DDCOLORKEY, ddckCKDestOverlay),
-    FE(DDSD_CKDESTBLT, _dump_DDCOLORKEY, ddckCKDestBlt),
-    FE(DDSD_CKSRCOVERLAY, _dump_DDCOLORKEY, ddckCKSrcOverlay),
-    FE(DDSD_CKSRCBLT, _dump_DDCOLORKEY, ddckCKSrcBlt),
-    FE(DDSD_MIPMAPCOUNT, _dump_DWORD, x.dwMipMapCount),
-    FE(DDSD_REFRESHRATE, _dump_DWORD, x.dwRefreshRate),
-    FE(DDSD_LINEARSIZE, _dump_DWORD, y.dwLinearSize),
-    FE(DDSD_LPSURFACE, _dump_PTR, y.lpSurface)
+  } flags[16], *fe = flags;
+#define FE(x,f,e) do { fe->mask = x;  fe->name = #x; fe->func = f; fe->elt = (void *) &(lpddsd->e); fe++; } while(0)
+    FE(DDSD_CAPS, _dump_DDSCAPS, ddsCaps);
+    FE(DDSD_HEIGHT, _dump_DWORD, dwHeight);
+    FE(DDSD_WIDTH, _dump_DWORD, dwWidth);
+    FE(DDSD_PITCH, _dump_DWORD, lPitch);
+    FE(DDSD_BACKBUFFERCOUNT, _dump_DWORD, dwBackBufferCount);
+    FE(DDSD_ZBUFFERBITDEPTH, _dump_DWORD, x.dwZBufferBitDepth);
+    FE(DDSD_ALPHABITDEPTH, _dump_DWORD, dwAlphaBitDepth);
+    FE(DDSD_PIXELFORMAT, _dump_pixelformat, ddpfPixelFormat);
+    FE(DDSD_CKDESTOVERLAY, _dump_DDCOLORKEY, ddckCKDestOverlay);
+    FE(DDSD_CKDESTBLT, _dump_DDCOLORKEY, ddckCKDestBlt);
+    FE(DDSD_CKSRCOVERLAY, _dump_DDCOLORKEY, ddckCKSrcOverlay);
+    FE(DDSD_CKSRCBLT, _dump_DDCOLORKEY, ddckCKSrcBlt);
+    FE(DDSD_MIPMAPCOUNT, _dump_DWORD, x.dwMipMapCount);
+    FE(DDSD_REFRESHRATE, _dump_DWORD, x.dwRefreshRate);
+    FE(DDSD_LINEARSIZE, _dump_DWORD, y.dwLinearSize);
+    FE(DDSD_LPSURFACE, _dump_PTR, y.lpSurface);
 #undef FE
-  };
+
   for (i=0;i<sizeof(flags)/sizeof(flags[0]);i++)
     if (flags[i].mask & lpddsd->dwFlags) {
       DPRINTF(" - %s : ",flags[i].name);
@@ -3525,7 +3525,7 @@ static void pixel_convert_16_to_8(void *src, void *dst, DWORD width, DWORD heigh
     const unsigned short * pal = (unsigned short *) palette->screen_palents;
 
     for (y = height; y--; ) {
-#ifdef __i386__
+#if defined(__i386__) && defined(__GNUC__)
       /* gcc generates slightly inefficient code for the the copy / lookup,
        * it generates one excess memory access (to pal) per pixel. Since
        * we know that pal is not modified by the memory write we can
@@ -3615,7 +3615,7 @@ static void pixel_convert_32_to_8(void *src, void *dst, DWORD width, DWORD heigh
     const unsigned int *pal = (unsigned int *) palette->screen_palents;
     
     for (y = height; y--; ) {
-#ifdef __i386__
+#if defined(__i386__) && defined(__GNUC__)
       /* See comment in pixel_convert_16_to_8 */
       __asm__ __volatile__(
       "xor %%eax,%%eax\n"

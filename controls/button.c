@@ -333,10 +333,10 @@ static void PB_Paint( WND *wndPtr, HDC hDC, WORD action )
      * Delegate this to the more generic pushbutton painting
      * method.
      */
-    return BUTTON_DrawPushButton(wndPtr,
-				 hDC,
-				 action,
-				 bHighLighted);
+    BUTTON_DrawPushButton(wndPtr,
+			  hDC,
+			  action,
+			  bHighLighted);
 }
 
 /**********************************************************************
@@ -640,10 +640,11 @@ static void CB_Paint( WND *wndPtr, HDC hDC, WORD action )
         BOOL bHighLighted = ((infoPtr->state & BUTTON_HIGHLIGHTED) ||
 			     (infoPtr->state & BUTTON_CHECKED));
 
-        return BUTTON_DrawPushButton(wndPtr,
-				     hDC,
-				     action,
-				     bHighLighted);
+        BUTTON_DrawPushButton(wndPtr,
+			      hDC,
+			      action,
+			      bHighLighted);
+	return;
     }
 
     textlen = 0;

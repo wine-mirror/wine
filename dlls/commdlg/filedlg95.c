@@ -678,8 +678,8 @@ void FILEDLG95_Clean(HWND hwnd)
  */
 static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-  WORD wNotifyCode = HIWORD(wParam); // notification code 
-  WORD wID = LOWORD(wParam);         // item, control, or accelerator identifier
+  WORD wNotifyCode = HIWORD(wParam); /* notification code */
+  WORD wID = LOWORD(wParam);         /* item, control, or accelerator identifier */
 
   switch(wID)
   {

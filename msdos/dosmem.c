@@ -389,7 +389,7 @@ static void DOSMEM_InitMemory(HMODULE16 hModule)
  */
 static void DOSMEM_MovePointers(LPVOID dest, LPVOID src, DWORD size)
 {
-  unsigned long delta = dest-src;
+  unsigned long delta = (char *) dest - (char *) src;
   unsigned cnt;
   ldt_entry ent;
 

@@ -3183,7 +3183,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   ULONG propertyIndex;
   BOOL successRead, successWrite;
   StgProperty chainProperty;
-  BYTE buffer[DEF_SMALL_BLOCK_SIZE];
+  BYTE *buffer;
   BlockChainStream *bbTempChain = NULL;
   BlockChainStream *bigBlockChain = NULL;
 
@@ -3211,11 +3211,12 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
   cbTotalRead = 0;
   cbTotalWritten = 0;
 
+  buffer = (BYTE *) malloc(DEF_SMALL_BLOCK_SIZE);
   do
   {
     successRead = SmallBlockChainStream_ReadAt(*ppsbChain,
                                                offset,
-                                               sizeof(buffer),
+                                               DEF_SMALL_BLOCK_SIZE,
                                                buffer,
                                                &cbRead);
     cbTotalRead += cbRead;
@@ -3230,6 +3231,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
     offset.LowPart += This->smallBlockSize;
 
   } while (successRead && successWrite);
+  free(buffer);
 
   assert(cbTotalRead == cbTotalWritten);
 

@@ -354,7 +354,9 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
                 IShellView_DestroyViewWindow(fodInfos->Shell.FOIShellView);
                 IShellView_Release(fodInfos->Shell.FOIShellView);
             }
-            //ShowWindow(fodInfos->ShellInfos.hwndView,SW_HIDE);
+#if 0
+            ShowWindow(fodInfos->ShellInfos.hwndView,SW_HIDE);
+#endif
             fodInfos->Shell.FOIShellView = psvTmp;
 
             fodInfos->ShellInfos.hwndView = hwndView;
