@@ -85,6 +85,24 @@ static BOOL GetProductCode(LPCSTR str, LPGUID guid)
 	return ret;
 }
 
+static VOID StringListAppend(LPSTR *StringList, LPCSTR StringAppend)
+{
+	LPSTR TempStr = HeapReAlloc(GetProcessHeap(), 0, *StringList, HeapSize(GetProcessHeap(), 0, *StringList)+strlen(StringAppend));
+	if(!TempStr)
+	{
+		WINE_ERR("Out of memory!\n");
+		ExitProcess(1);
+	}
+	*StringList = TempStr;
+	strcat(*StringList, StringAppend);
+}
+
+static VOID StringCompareRemoveLast(LPSTR String, CHAR character)
+{
+	int len = strlen(String);
+	if(len && String[len-1] == character) String[len-1] = 0;
+}
+
 static VOID *LoadProc(LPCSTR DllName, LPCSTR ProcName, HMODULE* DllHandle)
 {
 	VOID* (*proc)(void);
@@ -159,7 +177,6 @@ int main(int argc, char *argv[])
 	LPSTR PackageName = NULL;
 	LPGUID ProductCode = HeapAlloc(GetProcessHeap(), 0, sizeof(GUID));
 	LPSTR Properties = HeapAlloc(GetProcessHeap(), 0, 1);
-	LPSTR TempStr = NULL;
 
 	DWORD RepairMode = 0;
 
@@ -210,14 +227,7 @@ int main(int argc, char *argv[])
 				ShowUsage(1);
 			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
 			PackageName = argv[i];
-			TempStr = HeapReAlloc(GetProcessHeap(), 0, Properties, HeapSize(GetProcessHeap(), 0, Properties)+strlen(ActionAdmin));
-			if(!TempStr)
-			{
-				WINE_ERR("Out of memory!\n");
-				ExitProcess(1);
-			}
-			Properties = TempStr;
-			strcat(Properties, ActionAdmin);
+			StringListAppend(&Properties, ActionAdmin);
 		}
 		else if(!strncasecmp(argv[i], "/f", 2))
 		{
@@ -307,14 +317,7 @@ int main(int argc, char *argv[])
 				ProductCode = NULL;
 				PackageName = argv[i];
 			}
-			TempStr = HeapReAlloc(GetProcessHeap(), 0, Properties, HeapSize(GetProcessHeap(), 0, Properties)+strlen(RemoveAll));
-			if(!TempStr)
-			{
-				WINE_ERR("Out of memory!\n");
-				ExitProcess(1);
-			}
-			Properties = TempStr;
-			strcat(Properties, RemoveAll);
+			StringListAppend(&Properties, RemoveAll);
 		}
 		else if(!strncasecmp(argv[i], "/j", 2))
 		{
@@ -370,27 +373,13 @@ int main(int argc, char *argv[])
 			if(i >= argc)
 				ShowUsage(1);
 			WINE_TRACE("argv[%d] = %s\n", i, argv[i]);
-			TempStr = HeapReAlloc(GetProcessHeap(), 0, Transforms, HeapSize(GetProcessHeap(), 0, Transforms)+strlen(argv[i])+1);
-			if(!TempStr)
-			{
-				WINE_ERR("Out of memory!\n");
-				ExitProcess(1);
-			}
-			Transforms = TempStr;
-			strcat(Transforms, argv[i]);
-			strcat(Transforms, ";");
+			StringListAppend(&Transforms, argv[i]);
+			StringListAppend(&Transforms, ";");
 		}
 		else if(!strncasecmp(argv[i], "TRANSFORMS=", 11))
 		{
-			TempStr = HeapReAlloc(GetProcessHeap(), 0, Transforms, HeapSize(GetProcessHeap(), 0, Transforms)+strlen(argv[i])+1-11);
-			if(!TempStr)
-			{
-				WINE_ERR("Out of memory!\n");
-				ExitProcess(1);
-			}
-			Transforms = TempStr;
-			strcat(Transforms, argv[i]+11);
-			strcat(Transforms, ";");
+			StringListAppend(&Transforms, argv[i]+11);
+			StringListAppend(&Transforms, ";");
 		}
 		else if(!strcasecmp(argv[i], "/g"))
 		{
@@ -564,15 +553,8 @@ int main(int argc, char *argv[])
 		}
 		else if(strchr(argv[i], '='))
 		{
-			TempStr = HeapReAlloc(GetProcessHeap(), 0, Properties, HeapSize(GetProcessHeap(), 0, Properties)+strlen(argv[i])+1);
-			if(!TempStr)
-			{
-				WINE_ERR("Out of memory!\n");
-				ExitProcess(1);
-			}
-			Properties = TempStr;
-			strcat(Properties, argv[i]);
-			strcat(Properties, " ");
+			StringListAppend(&Properties, argv[i]);
+			StringListAppend(&Properties, " ");
 		}
 		else
 		{
@@ -587,28 +569,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if(Properties[strlen(Properties)-1] == ' ')
-	{
-		Properties[strlen(Properties)-1] = 0;
-		TempStr = HeapReAlloc(GetProcessHeap(), 0, Properties, HeapSize(GetProcessHeap(), 0, Properties)-1);
-		if(!TempStr)
-		{
-			fprintf(stderr, "Out of memory!\n");
-			ExitProcess(1);
-		}
-		Properties = TempStr;
-	}
-	if(Transforms[strlen(Transforms)-1] == ';')
-	{
-		Transforms[strlen(Transforms)-1] = 0;
-		TempStr = HeapReAlloc(GetProcessHeap(), 0, Transforms, HeapSize(GetProcessHeap(), 0, Transforms)-1);
-		if(!TempStr)
-		{
-			fprintf(stderr, "Out of memory!\n");
-			ExitProcess(1);
-		}
-		Transforms = TempStr;
-	}
+	StringCompareRemoveLast(Properties, ' ');
+	StringCompareRemoveLast(Transforms, ';');
 
 	if(FunctionInstallAdmin && FunctionPatch)
 		FunctionInstall = FALSE;
