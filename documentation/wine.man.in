@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINE 1 "April 26, 1999" "Version 990328" "Windows On Unix"
+.TH WINE 1 "June  1, 1999" "Version 990523" "Windows On Unix"
 .SH NAME
 wine \- run Windows programs on Unix
 .SH SYNOPSIS
@@ -16,10 +16,10 @@ loads and runs the given program, where the program is a DOS, Windows 3.x,
 or Win32 executable.
 .PP
 .B wine 
-currently runs a growing list of applications written for both Win3.1 and 
-Win95.  Older, simpler applications work better than newer, more complex 
-ones.  A large percentage of the API has been implemented, although there
-are still several major pieces of work left to do.
+currently runs a growing list of applications written for Win3.1,
+Win95, Win95, and Windows NT. Older, simpler applications work better than
+newer, more complex ones.  A large percentage of the API has been implemented,
+although there are still several major pieces of work left to do.
 .SH REQUIREMENTS
 .B wine
 requires kernel-level threads to run. Currently, only Linux version 2.0
@@ -80,7 +80,8 @@ detect your specific setup and create the Makefiles.  You can run
 .B wine
 executable, and then "make install" to install it. By default,
 .B wine
-is installed in the /usr/local/ heirarchy; you can specify a different path with
+is installed in the /usr/local/ hierarchy (current configuration has it in
+the @prefix@ hierarchy); you can specify a different path with
 the --prefix option when running
 .B configure.
 .PP
@@ -94,7 +95,7 @@ Turn on backing store
 .TP
 .I -config filename
 Use the named configuration file rather than the default
-(/usr/local/etc/wine.conf or ~/.winerc).
+(@sysconfdir@/wine.conf or ~/.winerc).
 .TP
 .I -debug
 Enter the debugger before starting application
@@ -165,8 +166,8 @@ Use the specified display
 .TP
 .I -dll name[,name[,...]]={native|elfdll|so|builtin}[,{n|e|s|b}[,...]][:...]
 Selects the override type and load order of dll used in the loading process
-for any dll. The default is set in wine.conf or ~/.winerc. There are
-currently four types of libraries that can be loaded into a process' address
+for any dll. The default is set in @sysconfdir@/wine.conf or ~/.winerc. There
+are currently four types of libraries that can be loaded into a process' address
 space: Native windows dlls (
 .I native
 ), ELF encapsulated windows dlls (
@@ -261,11 +262,11 @@ by placing all of them on the command line (such as: wine notepad clock).
 .SH CONFIGURATION FILE
 .B wine
 expects a configuration file (
-.I /usr/local/etc/wine.conf
+.I @sysconfdir@/wine.conf
 ), which should
 conform to the following rules (the format is just like a Windows .ini
-file).  The actual file name may be specified during the execution of
-the
+file).  The actual directory where that file resides may be specified during
+the execution of the
 .B configure
 script with the --sysconfdir option.  Alternatively, you may have a 
 .I .winerc
@@ -391,7 +392,7 @@ debugger.
 .PP
 .B [DllDefaults]
 .br
-.I format: EXTRA_LD_LIBRARY_PATH=/usr/local/lib/wine[:/more/path/to/search[:...]]
+.I format: EXTRA_LD_LIBRARY_PATH=@prefix@/lib/wine[:/more/path/to/search[:...]]
 .br
 The path will be appended to any existing LD_LIBRARY_PATH from the 
 environment for the search of elfdlls and .so libraries.
@@ -560,19 +561,19 @@ All discussions about the project take place in this forum.
 .SH FILES
 .PD 0
 .TP
-.I /usr/local/bin/wine
+.I @prefix@/bin/wine
 The Wine program loader.
 .TP
-.I /usr/local/bin/dosmod
+.I @prefix@/bin/dosmod
 The DOS program loader.
 .TP
-.I /usr/local/etc/wine.conf
+.I @sysconfdir@/wine.conf
 Global configuration file for wine.
 .TP
 .I ~/.winerc
 User-specific configuration file
 .TP
-.I /usr/local/lib/wine.sym
+.I @prefix@/lib/wine.sym
 Global symbol table (used in debugger)
 .SH "SEE ALSO"
 .BR clone (2)

@@ -68,7 +68,7 @@ clean::
 	$(RM) $(INFOFILES) $(DVIFILES) $(INCLUDES)
 	$(RM) wine.aux wine.cp wine.cps wine.fn wine.fns wine.ky wine.log \
 		wine.pg wine.toc wine.tp wine.tps wine.vr wine.vrs \
-		wine.texi
+		wine.texi wine.man
 	$(RM) -r man3w
 
 ### Dependencies:
