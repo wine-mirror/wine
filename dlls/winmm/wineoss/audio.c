@@ -157,6 +157,7 @@ typedef struct tagOSS_DEVICE {
     char                        interface_name[64];
     unsigned                    open_count;
     WAVEOUTCAPSA                out_caps;
+    WAVEOUTCAPSA                duplex_out_caps;
     WAVEINCAPSA                 in_caps;
     DWORD                       in_caps_support;
     unsigned                    open_access;
@@ -239,16 +240,24 @@ static DWORD wodDsGuid(UINT wDevID, LPGUID pGuid);
 static DWORD widDsGuid(UINT wDevID, LPGUID pGuid);
 
 /* These strings used only for tracing */
-static const char *wodPlayerCmdString[] = {
-    "WINE_WM_PAUSING",
-    "WINE_WM_RESTARTING",
-    "WINE_WM_RESETTING",
-    "WINE_WM_HEADER",
-    "WINE_WM_UPDATE",
-    "WINE_WM_BREAKLOOP",
-    "WINE_WM_CLOSING",
-    "WINE_WM_STARTING",
-    "WINE_WM_STOPPING",
+static const char * getCmdString(enum win_wm_message msg)
+{
+    static char unknown[32];
+#define MSG_TO_STR(x) case x: return #x
+    switch(msg) {
+    MSG_TO_STR(WINE_WM_PAUSING);
+    MSG_TO_STR(WINE_WM_RESTARTING);
+    MSG_TO_STR(WINE_WM_RESETTING);
+    MSG_TO_STR(WINE_WM_HEADER);
+    MSG_TO_STR(WINE_WM_UPDATE);
+    MSG_TO_STR(WINE_WM_BREAKLOOP);
+    MSG_TO_STR(WINE_WM_CLOSING);
+    MSG_TO_STR(WINE_WM_STARTING);
+    MSG_TO_STR(WINE_WM_STOPPING);
+    }
+#undef MSG_TO_STR
+    sprintf(unknown, "UNKNOWN(0x%08x)", msg);
+    return unknown;
 };
 
 static int getEnables(OSS_DEVICE *ossdev)
@@ -301,6 +310,7 @@ static const char * getMessage(UINT msg)
     MSG_TO_STR(DRV_QUERYDSOUNDDESC);
     MSG_TO_STR(DRV_QUERYDSOUNDGUID);
     }
+#undef MSG_TO_STR
     sprintf(unknown, "UNKNOWN(0x%04x)", msg);
     return unknown;
 }
@@ -1095,38 +1105,64 @@ static void OSS_WaveFullDuplexInit(OSS_DEVICE* ossdev)
     if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &caps) == 0)
         ossdev->full_duplex = (caps & DSP_CAP_DUPLEX);
 
+    ossdev->duplex_out_caps = ossdev->out_caps;
+
+    ossdev->duplex_out_caps.wChannels = 1;
+    ossdev->duplex_out_caps.dwFormats = 0x00000000;
+    ossdev->duplex_out_caps.dwSupport = WAVECAPS_VOLUME;
+
     if (WINE_TRACE_ON(wave))
-    {
         OSS_Info(ossdev->fd);
 
-        /* See the comment in OSS_WaveOutInit for the loop order */
-        for (f=0;f<2;f++) {
-            arg=win_std_oss_fmts[f];
-            rc=ioctl(ossdev->fd, SNDCTL_DSP_SAMPLESIZE, &arg);
-            if (rc!=0 || arg!=win_std_oss_fmts[f]) {
-                TRACE("DSP_SAMPLESIZE: rc=%d returned 0x%x for 0x%x\n",
-                      rc,arg,win_std_oss_fmts[f]);
+    /* See the comment in OSS_WaveOutInit for the loop order */
+    for (f=0;f<2;f++) {
+        arg=win_std_oss_fmts[f];
+        rc=ioctl(ossdev->fd, SNDCTL_DSP_SAMPLESIZE, &arg);
+        if (rc!=0 || arg!=win_std_oss_fmts[f]) {
+            TRACE("DSP_SAMPLESIZE: rc=%d returned 0x%x for 0x%x\n",
+                  rc,arg,win_std_oss_fmts[f]);
+            continue;
+        }
+
+        for (c=0;c<2;c++) {
+            arg=c;
+            rc=ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &arg);
+            if (rc!=0 || arg!=c) {
+                TRACE("DSP_STEREO: rc=%d returned %d for %d\n",rc,arg,c);
                 continue;
             }
+	    if (c == 0) {
+		ossdev->ds_caps.dwFlags |= DSCAPS_PRIMARYMONO;
+	    } else if (c==1) {
+                ossdev->duplex_out_caps.wChannels=2;
+                ossdev->duplex_out_caps.dwSupport|=WAVECAPS_LRVOLUME;
+		ossdev->ds_caps.dwFlags |= DSCAPS_PRIMARYSTEREO;
+            }
 
-            for (c=0;c<2;c++) {
-                arg=c;
-                rc=ioctl(ossdev->fd, SNDCTL_DSP_STEREO, &arg);
-                if (rc!=0 || arg!=c) {
-                    TRACE("DSP_STEREO: rc=%d returned %d for %d\n",rc,arg,c);
-                    continue;
-                }
-
-                for (r=0;r<sizeof(win_std_rates)/sizeof(*win_std_rates);r++) {
-                    arg=win_std_rates[r];
-                    rc=ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &arg);
-                    TRACE("DSP_SPEED: rc=%d returned %d for %dx%dx%d\n",
-                          rc,arg,win_std_rates[r],win_std_oss_fmts[f],c+1);
-                }
+            for (r=0;r<sizeof(win_std_rates)/sizeof(*win_std_rates);r++) {
+                arg=win_std_rates[r];
+                rc=ioctl(ossdev->fd, SNDCTL_DSP_SPEED, &arg);
+                TRACE("DSP_SPEED: rc=%d returned %d for %dx%dx%d\n",
+                      rc,arg,win_std_rates[r],win_std_oss_fmts[f],c+1);
+                if (rc==0 && arg!=0 && NEAR_MATCH(arg,win_std_rates[r]))
+                    ossdev->duplex_out_caps.dwFormats|=win_std_formats[f][c][r];
             }
         }
     }
+
+    if (ioctl(ossdev->fd, SNDCTL_DSP_GETCAPS, &arg) == 0) {
+        if ((arg & DSP_CAP_REALTIME) && !(arg & DSP_CAP_BATCH)) {
+            ossdev->duplex_out_caps.dwSupport |= WAVECAPS_SAMPLEACCURATE;
+        }
+        /* well, might as well use the DirectSound cap flag for something */
+        if ((arg & DSP_CAP_TRIGGER) && (arg & DSP_CAP_MMAP) &&
+            !(arg & DSP_CAP_BATCH)) {
+            ossdev->duplex_out_caps.dwSupport |= WAVECAPS_DIRECTSOUND;
+	}
+    }
     OSS_CloseDevice(ossdev);
+    TRACE("duplex dwFormats = %08lX, dwSupport = %08lX\n",
+          ossdev->duplex_out_caps.dwFormats, ossdev->duplex_out_caps.dwSupport);
 }
 
 #define INIT_GUID(guid, l, w1, w2, b1, b2, b3, b4, b5, b6, b7, b8)	\
@@ -1272,7 +1308,9 @@ static int OSS_AddRingMessage(OSS_MSG_RING* omr, enum win_wm_message msg, DWORD 
             return 0;
         }
         if (omr->msg_toget != omr->msg_tosave && omr->messages[omr->msg_toget].msg != WINE_WM_HEADER)
-            FIXME("two fast messages in the queue!!!!\n");
+            FIXME("two fast messages in the queue!!!! toget = %d(%s), tosave=%d(%s)\n",
+            omr->msg_toget,getCmdString(omr->messages[omr->msg_toget].msg),
+            omr->msg_tosave,getCmdString(omr->messages[omr->msg_tosave].msg));
 
         /* fast messages have to be added at the start of the queue */
         omr->msg_toget = (omr->msg_toget + omr->ring_buffer_size - 1) % omr->ring_buffer_size;
@@ -1659,7 +1697,7 @@ static void wodPlayer_ProcessMessages(WINE_WAVEOUT* wwo)
     HANDLE		ev;
 
     while (OSS_RetrieveRingMessage(&wwo->msgRing, &msg, &param, &ev)) {
-	TRACE("Received %s %lx\n", wodPlayerCmdString[msg - WM_USER - 1], param);
+	TRACE("Received %s %lx\n", getCmdString(msg), param);
 	switch (msg) {
 	case WINE_WM_PAUSING:
 	    wodPlayer_Reset(wwo, FALSE);
@@ -1823,14 +1861,21 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSA lpCaps, DWORD dwSize)
 {
     TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
 
-    if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
+    if (lpCaps == NULL) {
+        WARN("not enabled\n");
+        return MMSYSERR_NOTENABLED;
+    }
 
     if (wDevID >= numOutDev) {
-	TRACE("numOutDev reached !\n");
+	WARN("numOutDev reached !\n");
 	return MMSYSERR_BADDEVICEID;
     }
 
-    memcpy(lpCaps, &WOutDev[wDevID].ossdev->out_caps, min(dwSize, sizeof(*lpCaps)));
+    if (WOutDev[wDevID].ossdev->open_access == O_RDWR)
+        memcpy(lpCaps, &WOutDev[wDevID].ossdev->duplex_out_caps, min(dwSize, sizeof(*lpCaps)));
+    else
+        memcpy(lpCaps, &WOutDev[wDevID].ossdev->out_caps, min(dwSize, sizeof(*lpCaps)));
+
     return MMSYSERR_NOERROR;
 }
 
@@ -1869,20 +1914,23 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	return MMSYSERR_NOERROR;
     }
 
-    TRACE("OSS_OpenDevice requested this format: %ldx%dx%d\n",
+    TRACE("OSS_OpenDevice requested this format: %ldx%dx%d %s\n",
           lpDesc->lpFormat->nSamplesPerSec,
           lpDesc->lpFormat->wBitsPerSample,
-          lpDesc->lpFormat->nChannels);
+          lpDesc->lpFormat->nChannels,
+          lpDesc->lpFormat->wFormatTag == WAVE_FORMAT_PCM ? "WAVE_FORMAT_PCM" :
+          lpDesc->lpFormat->wFormatTag == WAVE_FORMAT_EXTENSIBLE ? "WAVE_FORMAT_EXTENSIBLE" :
+          "UNSUPPORTED");
 
     wwo = &WOutDev[wDevID];
 
     if ((dwFlags & WAVE_DIRECTSOUND) &&
-        !(wwo->ossdev->out_caps.dwSupport & WAVECAPS_DIRECTSOUND))
+        !(wwo->ossdev->duplex_out_caps.dwSupport & WAVECAPS_DIRECTSOUND))
 	/* not supported, ignore it */
 	dwFlags &= ~WAVE_DIRECTSOUND;
 
     if (dwFlags & WAVE_DIRECTSOUND) {
-        if (wwo->ossdev->out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
+        if (wwo->ossdev->duplex_out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
 	    /* we have realtime DirectSound, fragments just waste our time,
 	     * but a large buffer is good, so choose 64KB (32 * 2^11) */
 	    audio_fragment = 0x0020000B;
@@ -2190,8 +2238,13 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 
     wwo = &WOutDev[wDevID];
 #ifdef EXACT_WODPOSITION
-    if (wwo->ossdev->out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
-	OSS_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
+    if (wwo->ossdev->open_access == O_RDWR) {
+        if (wwo->ossdev->duplex_out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
+	    OSS_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
+    } else {
+        if (wwo->ossdev->out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
+	    OSS_AddRingMessage(&wwo->msgRing, WINE_WM_UPDATE, 0, TRUE);
+    }
 #endif
 
     return bytes_to_mmtime(lpTime, wwo->dwPlayedTotal, &wwo->waveFormat);
@@ -2848,7 +2901,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
     if (lpdwPlay) *lpdwPlay = ptr;
     if (lpdwWrite) {
 	/* add some safety margin (not strictly necessary, but...) */
-	if (WOutDev[This->drv->wDevID].ossdev->out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
+	if (WOutDev[This->drv->wDevID].ossdev->duplex_out_caps.dwSupport & WAVECAPS_SAMPLEACCURATE)
 	    *lpdwWrite = ptr + 32;
 	else
 	    *lpdwWrite = ptr + WOutDev[This->drv->wDevID].dwFragmentSize;
@@ -3212,7 +3265,7 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv)
     TRACE("(%d,%p)\n",wDevID,drv);
 
     /* the HAL isn't much better than the HEL if we can't do mmap() */
-    if (!(WOutDev[wDevID].ossdev->out_caps.dwSupport & WAVECAPS_DIRECTSOUND)) {
+    if (!(WOutDev[wDevID].ossdev->duplex_out_caps.dwSupport & WAVECAPS_DIRECTSOUND)) {
 	ERR("DirectSound flag not set\n");
 	MESSAGE("This sound card's driver does not support direct access\n");
 	MESSAGE("The (slower) DirectSound HEL mode will be used instead.\n");
@@ -3473,7 +3526,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 					LPWAVEHDR hdr;
 					OSS_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev);
 					hdr = ((LPWAVEHDR)param);
-					TRACE("msg = %s, hdr = %p, ev = %p\n", wodPlayerCmdString[msg - WM_USER - 1], hdr, ev);
+					TRACE("msg = %s, hdr = %p, ev = %p\n", getCmdString(msg), hdr, ev);
 					hdr->lpNext = 0;
 					if (lpWaveHdr == 0) {
 					    /* new head of queue */
@@ -3507,7 +3560,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
 	while (OSS_RetrieveRingMessage(&wwi->msgRing, &msg, &param, &ev))
 	{
-            TRACE("msg=%s param=0x%lx\n", wodPlayerCmdString[msg - WM_USER - 1], param);
+            TRACE("msg=%s param=0x%lx\n", getCmdString(msg), param);
 	    switch (msg) {
 	    case WINE_WM_PAUSING:
 		wwi->state = WINE_WS_PAUSED;
@@ -3675,6 +3728,14 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return MMSYSERR_NOERROR;
     }
+
+    TRACE("OSS_OpenDevice requested this format: %ldx%dx%d %s\n",
+          lpDesc->lpFormat->nSamplesPerSec,
+          lpDesc->lpFormat->wBitsPerSample,
+          lpDesc->lpFormat->nChannels,
+          lpDesc->lpFormat->wFormatTag == WAVE_FORMAT_PCM ? "WAVE_FORMAT_PCM" :
+          lpDesc->lpFormat->wFormatTag == WAVE_FORMAT_EXTENSIBLE ? "WAVE_FORMAT_EXTENSIBLE" :
+          "UNSUPPORTED");
 
     wwi = &WInDev[wDevID];
 
