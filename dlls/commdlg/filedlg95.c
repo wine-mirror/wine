@@ -3,7 +3,7 @@
  *
  * FIXME: lpstrCustomFilter not handled
  *
- * FIXME: if the size of lpstrFile (nMaxFile) is to small the first
+ * FIXME: if the size of lpstrFile (nMaxFile) is too small the first
  * two bytes of lpstrFile should contain the needed size
  *
  * FIXME: algorithm for selecting the initial directory is too simple
@@ -69,7 +69,6 @@ typedef struct tagLookInInfo
 
 /* Draw item constant */
 #define ICONWIDTH 18
-#define YTEXTOFFSET 2
 #define XTEXTOFFSET 3
 
 /* AddItem flags*/
@@ -85,7 +84,7 @@ typedef struct tagLookInInfo
 
 /* NOTE
  * Those macros exist in windowsx.h. However, you can't really use them since
- * they rely on the UNICODE defines and can't be use inside Wine itself.
+ * they rely on the UNICODE defines and can't be used inside Wine itself.
  */
 
 /* Combo box macros */
@@ -217,7 +216,7 @@ BOOL WINAPI GetFileName95(FileOpenDlgInfos *fodInfos)
                                   (DLGPROC) FileOpenDlgProc95,
                                   (LPARAM) fodInfos);
 
-    /* Unable to create the dialog*/
+    /* Unable to create the dialog */
     if( lRes == -1)
         return FALSE;
     
@@ -842,7 +841,7 @@ static LRESULT FILEDLG95_OnWMInitDialog(HWND hwnd, WPARAM wParam, LPARAM lParam)
   /* Initialise dialog UI */
   FILEDLG95_InitUI(hwnd);
 
-  /* Initialize the Look In combo box*/
+  /* Initialize the Look In combo box */
   FILEDLG95_LOOKIN_Init(fodInfos->DlgInfos.hwndLookInCB);
 
   /* Initialize the filter combo box */
@@ -1764,6 +1763,9 @@ static HRESULT FILEDLG95_LOOKIN_Init(HWND hwndCombo)
   liInfos->iMaxIndentation = 0;
 
   SetPropA(hwndCombo, LookInInfosStr, (HANDLE) liInfos);
+
+  /* set item height for both text field and listbox */
+  CBSetItemHeight(hwndCombo,-1,GetSystemMetrics(SM_CYSMICON));
   CBSetItemHeight(hwndCombo,0,GetSystemMetrics(SM_CYSMICON));
 
   /* Initialise data of Desktop folder */
@@ -1830,6 +1832,7 @@ static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct)
   SHFILEINFOA sfi;
   HIMAGELIST ilItemImage;
   int iIndentation;
+  TEXTMETRICA tm;
   LPSFOLDER tmpFolder;
 
 
@@ -1866,7 +1869,7 @@ static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct)
                                                   SHGFI_DISPLAYNAME);
   }
 
-  /* Is this item selected ?*/
+  /* Is this item selected ? */
   if(pDIStruct->itemState & ODS_SELECTED)
   {
     SetTextColor(pDIStruct->hDC,(0x00FFFFFF & ~(crText)));
@@ -1880,7 +1883,7 @@ static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct)
     FillRect(pDIStruct->hDC,&pDIStruct->rcItem,(HBRUSH)crWin);
   }
 
-  /* Do not indent item  if drawing in the edit of the combo*/
+  /* Do not indent item if drawing in the edit of the combo */
   if(pDIStruct->itemState & ODS_COMBOBOXEDIT)
   {
     iIndentation = 0;
@@ -1905,11 +1908,13 @@ static LRESULT FILEDLG95_LOOKIN_DrawItem(LPDRAWITEMSTRUCT pDIStruct)
   rectIcon.bottom = pDIStruct->rcItem.bottom;
 
   /* Initialise the text display area */
+  GetTextMetricsA(pDIStruct->hDC, &tm);
   rectText.left = rectIcon.right;
-  rectText.top = pDIStruct->rcItem.top + YTEXTOFFSET;
+  rectText.top =
+	  (pDIStruct->rcItem.top + pDIStruct->rcItem.bottom - tm.tmHeight) / 2;
   rectText.right = pDIStruct->rcItem.right + XTEXTOFFSET;
-  rectText.bottom = pDIStruct->rcItem.bottom;
-
+  rectText.bottom =
+	  (pDIStruct->rcItem.top + pDIStruct->rcItem.bottom + tm.tmHeight) / 2;
  
   /* Draw the icon from the image list */
   COMDLG32_ImageList_Draw(ilItemImage,

@@ -160,7 +160,7 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
  * This method will calculate the height of the text area of the 
  * combobox.
  * The height of the text area is set in two ways. 
- * It can be set explicitely through a combobox message of through a
+ * It can be set explicitely through a combobox message or through a
  * WM_MEASUREITEM callback.
  * If this is not the case, the height is set to 13 dialog units.
  * This height was determined through experimentation.
@@ -613,10 +613,10 @@ static LRESULT COMBO_Create( LPHEADCOMBO lphc, WND* wnd, LPARAM lParam)
               /* Now do the trick with parent */
 	      SetParent(lphc->hWndLBox, HWND_DESKTOP);
               /* 
-               * If the combo is a dropdown, we must resize the control to fit only
-               * the text area and button. To do this, we send a dummy resize and the
-               * WM_WINDOWPOSCHANGING message will take care of setting the height for
-               * us.
+               * If the combo is a dropdown, we must resize the control
+	       * to fit only the text area and button. To do this,
+	       * we send a dummy resize and the WM_WINDOWPOSCHANGING message
+	       * will take care of setting the height for us.
                */
 	      CBForceDummyResize(lphc);
 	    }
