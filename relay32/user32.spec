@@ -606,8 +606,8 @@ init	MAIN_UserInit
 601 stub WNDPROC_CALLBACK
 602 stdcall DrawCaptionTempW(long long ptr long long wstr long) DrawCaptionTempW
 603 stub IsHungAppWindow
-604 stub ChangeDisplaySettingsA
-605 stub ChangeDisplaySettingsW
+604 stub ChangeDisplaySettingsExA
+605 stub ChangeDisplaySettingsExW
 606 stdcall SetWindowText(long str) SetWindowTextA
 607 stdcall GetMonitorInfoA(long ptr) GetMonitorInfoA
 608 stdcall GetMonitorInfoW(long ptr) GetMonitorInfoW
