@@ -455,7 +455,7 @@ UINT MSI_RecordSetStringA( MSIRECORD *rec, unsigned int iField, LPCSTR szValue )
         return ERROR_INVALID_FIELD;
 
     MSI_FreeField( &rec->fields[iField] );
-    if( szValue )
+    if( szValue && szValue[0] )
     {
         len = MultiByteToWideChar( CP_ACP, 0, szValue, -1, NULL, 0 );
         str = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
@@ -501,7 +501,7 @@ UINT MSI_RecordSetStringW( MSIRECORD *rec, unsigned int iField, LPCWSTR szValue 
 
     MSI_FreeField( &rec->fields[iField] );
 
-    if( szValue )
+    if( szValue && szValue[0] )
     {
         len = lstrlenW(szValue) + 1;
         str = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR));

@@ -123,6 +123,10 @@ void test_msirecord(void)
     ok(r == ERROR_SUCCESS, "Failed to set null string at 0\n");
     r = MsiRecordIsNull(h, 0);
     ok(r == TRUE, "null string not null field\n");
+    r = MsiRecordSetString(h, 0, "");
+    ok(r == ERROR_SUCCESS, "Failed to set empty string at 0\n");
+    r = MsiRecordIsNull(h, 0);
+    ok(r == TRUE, "null string not null field\n");
     r = MsiRecordSetString(h,0,str);
     ok(r == ERROR_SUCCESS, "Failed to set string at 0\n");
     r = MsiRecordGetInteger(h, 0);
