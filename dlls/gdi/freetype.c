@@ -419,6 +419,7 @@ static void LoadSubstList(void)
 	        HeapFree(GetProcessHeap(), 0, (*ppsub)->to.name);
 		HeapFree(GetProcessHeap(), 0, (*ppsub)->from.name);
 		HeapFree(GetProcessHeap(), 0, *ppsub);
+                *ppsub = NULL;
 	    } else {
 	        ppsub = &((*ppsub)->next);
 	    }
