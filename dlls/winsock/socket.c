@@ -2705,21 +2705,44 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
                 optval= (char*) &woptval;
                 optlen=sizeof(int);
             }
-	    if (level == SOL_SOCKET && optname == SO_RCVTIMEO && optlen < sizeof(struct timeval)) {
-	        if (optlen == sizeof(time_t)) {
-	            /* Apparently WinSock will accept a shortened struct timeval.
-		       FIXME: should we do the same for SO_SNDTIMEO? */
-	            WARN("Short struct timeval in SO_RCVTIMEO: assuming time_t\n");
-		    tval.tv_sec = *(time_t*)optval;
-		    tval.tv_usec = 0;
+#ifdef SO_RCVTIMEO
+           if (level == SOL_SOCKET && optname == SO_RCVTIMEO) {
+               if (optlen == sizeof(UINT32)) {
+                   /* WinSock passes miliseconds instead of struct timeval */
+                   tval.tv_usec = *(PUINT32)optval % 1000;
+                   tval.tv_sec = *(PUINT32)optval / 1000;
+                   /* min of 500 milisec */
+                   if (tval.tv_sec == 0 && tval.tv_usec < 500) tval.tv_usec = 500;
 	            optlen = sizeof(struct timeval);
 	            optval = (char*)&tval;
+               } else if (optlen == sizeof(struct timeval)) {
+                   WARN("SO_RCVTIMEO for %d bytes: assuming unixism\n", optlen);
 		} else {
-		    WARN("SO_RCVTIMEO for %d bytes is too small: ignored\n", optlen);
+                   WARN("SO_RCVTIMEO for %d bytes is weird: ignored\n", optlen);
 		    close(fd);
 		    return 0;
 		}
 	    }
+#endif
+#ifdef SO_SNDTIMEO
+           if (level == SOL_SOCKET && optname == SO_SNDTIMEO) {
+               if (optlen == sizeof(UINT32)) {
+                   /* WinSock passes miliseconds instead of struct timeval */
+                   tval.tv_usec = *(PUINT32)optval % 1000;
+                   tval.tv_sec = *(PUINT32)optval / 1000;
+                   /* min of 500 milisec */
+                   if (tval.tv_sec == 0 && tval.tv_usec < 500) tval.tv_usec = 500;
+                   optlen = sizeof(struct timeval);
+                   optval = (char*)&tval;
+               } else if (optlen == sizeof(struct timeval)) {
+                   WARN("SO_SNDTIMEO for %d bytes: assuming unixism\n", optlen);
+               } else {
+                   WARN("SO_SNDTIMEO for %d bytes is weird: ignored\n", optlen);
+                   close(fd);
+                   return 0;
+               }
+           }
+#endif
 	}
         if(optname == SO_RCVBUF && *(int*)optval < 2048) {
             WARN("SO_RCVBF for %d bytes is too small: ignored\n", *(int*)optval );
