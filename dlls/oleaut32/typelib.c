@@ -156,7 +156,7 @@ QueryPathOfRegTypeLib(
                 /* try with sub-langid */
                 myLCID = SUBLANGID(lcid);
             }
-            else if (myLCID == SUBLANGID(lcid))
+            else if ((myLCID == SUBLANGID(lcid)) && myLCID)
             {
                 /* try with system langid */
                 myLCID = 0;
@@ -1296,7 +1296,8 @@ int TLB_ReadTypeLib(LPSTR pszFileName, ITypeLib2 **ppTypeLib)
       strncpy(pszDllName, pszFileName, nMemToAlloc);
       
       /* move index string pointer pass the backslash */
-      ++pszTypeLibIndex;
+      while (*pszTypeLibIndex == '\\')
+        ++pszTypeLibIndex;
     }
     else
     {
@@ -2733,6 +2734,8 @@ static HRESULT WINAPI ITypeInfo_fnGetContainingTypeLib( ITypeInfo2 *iface,
         ITypeLib  * *ppTLib, UINT  *pIndex)
 {
     ICOM_THIS( ITypeInfoImpl, iface);
+    if (!pIndex)
+        return E_INVALIDARG;
     *ppTLib=(LPTYPELIB )(This->pTypeLib);
     *pIndex=This->index;
     ITypeLib2_AddRef(*ppTLib);
