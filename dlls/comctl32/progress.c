@@ -34,12 +34,40 @@ typedef struct
    "(%04x): wp=%04x lp=%08lx\n", msg, wParam, lParam); 
 
 /***********************************************************************
+ * PROGRESS_EraseBackground
+ */
+static void PROGRESS_EraseBackground(PROGRESS_INFO *infoPtr, WPARAM wParam)
+{
+    RECT rect;
+    HBRUSH hbrBk;
+    HDC hdc = wParam ? (HDC)wParam : GetDC(infoPtr->Self);
+
+    /* get the required background brush */
+    if(infoPtr->ColorBk == CLR_DEFAULT)
+	hbrBk = GetSysColorBrush(COLOR_3DFACE);
+    else
+	hbrBk = CreateSolidBrush(infoPtr->ColorBk);
+
+    /* get client rectangle */
+    GetClientRect(infoPtr->Self, &rect);
+
+    /* draw the background */
+    FillRect(hdc, &rect, hbrBk);
+
+    /* delete background brush */
+    if(infoPtr->ColorBk != CLR_DEFAULT)
+	DeleteObject (hbrBk);
+
+    if(!wParam) ReleaseDC(infoPtr->Self, hdc);
+}
+
+/***********************************************************************
  * PROGRESS_Draw
  * Draws the progress bar.
  */
 static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
 {
-    HBRUSH hbrBar, hbrBk;
+    HBRUSH hbrBar;
     int rightBar, rightMost, ledWidth;
     RECT rect;
     DWORD dwStyle;
@@ -52,17 +80,8 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
     else
         hbrBar = CreateSolidBrush (infoPtr->ColorBar);
 
-    /* get the required background brush */
-    if (infoPtr->ColorBk == CLR_DEFAULT)
-        hbrBk = GetSysColorBrush (COLOR_3DFACE);
-    else
-        hbrBk = CreateSolidBrush (infoPtr->ColorBk);
-
     /* get client rectangle */
     GetClientRect (infoPtr->Self, &rect);
-
-    /* draw the background */
-    FillRect(hdc, &rect, hbrBk);
 
     InflateRect(&rect, -1, -1);
 
@@ -117,24 +136,9 @@ static LRESULT PROGRESS_Draw (PROGRESS_INFO *infoPtr, HDC hdc)
     if (infoPtr->ColorBar != CLR_DEFAULT)
         DeleteObject (hbrBar);
 
-    /* delete background brush */
-    if (infoPtr->ColorBk != CLR_DEFAULT)
-        DeleteObject (hbrBk);
-
     return 0;
 }
 
-/***********************************************************************
- * PROGRESS_Refresh
- * Draw the progress bar. The background need not be erased.
- */
-static LRESULT PROGRESS_Refresh (PROGRESS_INFO *infoPtr)
-{
-    HDC hdc = GetDC (infoPtr->Self);
-    LRESULT res = PROGRESS_Draw (infoPtr, hdc);
-    ReleaseDC (infoPtr->Self, hdc);
-    return res;
-}
 
 /***********************************************************************
  * PROGRESS_Paint
@@ -173,7 +177,7 @@ static HFONT PROGRESS_SetFont (PROGRESS_INFO *infoPtr, HFONT hFont, BOOL bRedraw
 {
     HFONT hOldFont = infoPtr->Font;
     infoPtr->Font = hFont;
-    if (bRedraw) PROGRESS_Refresh (infoPtr);
+    /* Since infoPtr->Font is not used, there is no need for repaint */
     return hOldFont;
 }
 
@@ -184,12 +188,9 @@ static DWORD PROGRESS_SetRange (PROGRESS_INFO *infoPtr, int low, int high)
     /* if nothing changes, simply return */
     if(infoPtr->MinVal == low && infoPtr->MaxVal == high) return res;
     
-    /* if things are different, adjust values and repaint the control */
-    if (high <= low) high = low + 1;
     infoPtr->MinVal = low;
     infoPtr->MaxVal = high;
     PROGRESS_CoercePos(infoPtr);
-    PROGRESS_Refresh (infoPtr);
     return res;
 }
 
@@ -199,16 +200,19 @@ static DWORD PROGRESS_SetRange (PROGRESS_INFO *infoPtr, int low, int high)
 static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message, 
                                   WPARAM wParam, LPARAM lParam)
 {
-    PROGRESS_INFO *infoPtr = (PROGRESS_INFO *)GetWindowLongW(hwnd, 0);
-    DWORD dwExStyle;
-    UINT temp;
+    PROGRESS_INFO *infoPtr;
+
+    TRACE("hwnd=%x msg=%04x wparam=%x lParam=%lx\n", hwnd, message, wParam, lParam);
+
+    infoPtr = (PROGRESS_INFO *)GetWindowLongW(hwnd, 0);
 
     if (!infoPtr && message != WM_CREATE)
         return DefWindowProcW( hwnd, message, wParam, lParam ); 
 
     switch(message) {
     case WM_CREATE:
-        dwExStyle = GetWindowLongW (hwnd, GWL_EXSTYLE);
+    {
+	DWORD dwExStyle = GetWindowLongW (hwnd, GWL_EXSTYLE);
 	dwExStyle &= ~(WS_EX_CLIENTEDGE | WS_EX_WINDOWEDGE);
 	dwExStyle |= WS_EX_STATICEDGE;
         SetWindowLongW (hwnd, GWL_EXSTYLE, dwExStyle | WS_EX_STATICEDGE);
@@ -232,6 +236,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         infoPtr->Font = 0;
         TRACE("Progress Ctrl creation, hwnd=%04x\n", hwnd);
         return 0;
+    }
     
     case WM_DESTROY:
         TRACE("Progress Ctrl destruction, hwnd=%04x\n", hwnd);
@@ -240,8 +245,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         return 0;
 
     case WM_ERASEBKGND:
-        /* pretend to erase it here, but we will do it in the paint
-	   function to avoid flicker */
+	PROGRESS_EraseBackground(infoPtr, wParam);
         return TRUE;
 	
     case WM_GETFONT:
@@ -254,44 +258,67 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
         return PROGRESS_Paint (infoPtr, (HDC)wParam);
     
     case PBM_DELTAPOS:
+    {
+	INT oldVal;
         if(lParam) UNKNOWN_PARAM(PBM_DELTAPOS, wParam, lParam);
-        temp = infoPtr->CurVal;
+        oldVal = infoPtr->CurVal;
         if(wParam != 0) {
-	    infoPtr->CurVal += (WORD)wParam;
+	    BOOL bErase;
+	    infoPtr->CurVal += (INT)wParam;
 	    PROGRESS_CoercePos (infoPtr);
-	    PROGRESS_Refresh (infoPtr);
+	    TRACE("PBM_DELTAPOS: current pos changed from %d to %d\n", oldVal, infoPtr->CurVal);
+	    bErase = (oldVal > infoPtr->CurVal);
+	    InvalidateRect(hwnd, NULL, bErase);
         }
-        return temp;
+        return oldVal;
+    }
 
     case PBM_SETPOS:
+    {
+	INT oldVal;
         if (lParam) UNKNOWN_PARAM(PBM_SETPOS, wParam, lParam);
-        temp = infoPtr->CurVal;
-        if(temp != wParam) {
-	    infoPtr->CurVal = (WORD)wParam;
+        oldVal = infoPtr->CurVal;
+        if(oldVal != wParam) {
+	    BOOL bErase;
+	    infoPtr->CurVal = (INT)wParam;
 	    PROGRESS_CoercePos(infoPtr);
-	    PROGRESS_Refresh (infoPtr);
+	    TRACE("PBM_SETPOS: current pos changed from %d to %d\n", oldVal, infoPtr->CurVal);
+	    bErase = (oldVal > infoPtr->CurVal);
+	    InvalidateRect(hwnd, NULL, bErase);
         }
-        return temp;          
+        return oldVal;
+    }
       
     case PBM_SETRANGE:
         if (wParam) UNKNOWN_PARAM(PBM_SETRANGE, wParam, lParam);
         return PROGRESS_SetRange (infoPtr, (int)LOWORD(lParam), (int)HIWORD(lParam));
 
     case PBM_SETSTEP:
+    {
+	INT oldStep;
         if (lParam) UNKNOWN_PARAM(PBM_SETSTEP, wParam, lParam);
-        temp = infoPtr->Step;   
-        infoPtr->Step = (WORD)wParam;   
-        return temp;
+        oldStep = infoPtr->Step;
+        infoPtr->Step = (INT)wParam;
+        return oldStep;
+    }
 
     case PBM_STEPIT:
+    {
+	INT oldVal;
         if (wParam || lParam) UNKNOWN_PARAM(PBM_STEPIT, wParam, lParam);
-        temp = infoPtr->CurVal;   
+        oldVal = infoPtr->CurVal;   
         infoPtr->CurVal += infoPtr->Step;
         if(infoPtr->CurVal > infoPtr->MaxVal)
 	    infoPtr->CurVal = infoPtr->MinVal;
-        if(temp != infoPtr->CurVal)
-	    PROGRESS_Refresh (infoPtr);
-        return temp;
+        if(oldVal != infoPtr->CurVal)
+	{
+	    BOOL bErase;
+	    TRACE("PBM_STEPIT: current pos changed from %d to %d\n", oldVal, infoPtr->CurVal);
+	    bErase = (oldVal > infoPtr->CurVal);
+	    InvalidateRect(hwnd, NULL, bErase);
+	}
+        return oldVal;
+    }
 
     case PBM_SETRANGE32:
         return PROGRESS_SetRange (infoPtr, (int)wParam, (int)lParam);
@@ -309,13 +336,15 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 
     case PBM_SETBARCOLOR:
         if (wParam) UNKNOWN_PARAM(PBM_SETBARCOLOR, wParam, lParam);
-        infoPtr->ColorBar = (COLORREF)lParam;     
-        return PROGRESS_Refresh (infoPtr);
+        infoPtr->ColorBar = (COLORREF)lParam;
+	InvalidateRect(hwnd, NULL, TRUE);
+	return 0;
 
     case PBM_SETBKCOLOR:
         if (wParam) UNKNOWN_PARAM(PBM_SETBKCOLOR, wParam, lParam);
         infoPtr->ColorBk = (COLORREF)lParam;
-        return PROGRESS_Refresh (infoPtr);
+	InvalidateRect(hwnd, NULL, TRUE);
+	return 0;
 
     default: 
         if (message >= WM_USER) 
