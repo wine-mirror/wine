@@ -937,3 +937,16 @@ debug_channels (comm debugstr dll int resource stress thunk toolhelp win32)
 @ stdcall InitializeCriticalSectionAndSpinCount(ptr long) InitializeCriticalSectionAndSpinCount
 @ stdcall SetCriticalSectionSpinCount(ptr long) SetCriticalSectionSpinCount
 @ stdcall ProcessIdToSessionId(long ptr) ProcessIdToSessionId
+
+##################
+# Wine extensions
+#
+# All functions must be prefixed with '__wine_' (for internal functions)
+# or 'wine_' (for user-visible functions) to avoid namespace conflicts.
+
+# 16-bit relays
+@ cdecl __wine_register_dll_16(ptr) __wine_register_dll_16
+@ varargs __wine_call_from_16_word() __wine_call_from_16_word
+@ varargs __wine_call_from_16_long() __wine_call_from_16_word
+@ varargs __wine_call_from_16_regs() __wine_call_from_16_word
+@ varargs __wine_call_from_16_thunk() __wine_call_from_16_word

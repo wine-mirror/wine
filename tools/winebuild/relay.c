@@ -87,17 +87,16 @@
  */
 static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int short_ret )
 {
-    char *name = thunk? "Thunk" : reg_func? "Register" : short_ret? "Word" : "Long";
+    char *name = thunk? "thunk" : reg_func? "regs" : short_ret? "word" : "long";
 
     /* Function header */
     fprintf( outfile, "\n\t.align 4\n" );
 #ifdef USE_STABS
-    fprintf( outfile, ".stabs \"CallFrom16%s:F1\",36,0,0," PREFIX "CallFrom16%s\n", 
-	     name, name);
+    fprintf( outfile, ".stabs \"__wine_call_from_16_%s:F1\",36,0,0," PREFIX "__wine_call_from_16_%s\n", name, name);
 #endif
-    fprintf( outfile, "\t.type " PREFIX "CallFrom16%s,@function\n", name );
-    fprintf( outfile, "\t.globl " PREFIX "CallFrom16%s\n", name );
-    fprintf( outfile, PREFIX "CallFrom16%s:\n", name );
+    fprintf( outfile, "\t.type " PREFIX "__wine_call_from_16_%s,@function\n", name );
+    fprintf( outfile, "\t.globl " PREFIX "__wine_call_from_16_%s\n", name );
+    fprintf( outfile, PREFIX "__wine_call_from_16_%s:\n", name );
 
     /* Create STACK16FRAME (except STACK32FRAME link) */
     fprintf( outfile, "\tpushw %%gs\n" );
@@ -114,10 +113,10 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
     if ( UsePIC )
     {
         /* Get Global Offset Table into %ecx */
-        fprintf( outfile, "\tcall .LCallFrom16%s.getgot1\n", name );
-        fprintf( outfile, ".LCallFrom16%s.getgot1:\n", name );
+        fprintf( outfile, "\tcall .L__wine_call_from_16_%s.getgot1\n", name );
+        fprintf( outfile, ".L__wine_call_from_16_%s.getgot1:\n", name );
         fprintf( outfile, "\tpopl %%ecx\n" );
-        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.LCallFrom16%s.getgot1], %%ecx\n", name );
+        fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.L__wine_call_from_16_%s.getgot1], %%ecx\n", name );
     }
 
     if (UsePIC)
@@ -278,10 +277,10 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
             fprintf( outfile, "\tpushl %%ebx\n" );
 
             /* Get Global Offset Table into %ebx (for PLT call) */
-            fprintf( outfile, "\tcall .LCallFrom16%s.getgot2\n", name );
-            fprintf( outfile, ".LCallFrom16%s.getgot2:\n", name );
+            fprintf( outfile, "\tcall .L__wine_call_from_16_%s.getgot2\n", name );
+            fprintf( outfile, ".L__wine_call_from_16_%s.getgot2:\n", name );
             fprintf( outfile, "\tpopl %%ebx\n" );
-            fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.LCallFrom16%s.getgot2], %%ebx\n", name );
+            fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.L__wine_call_from_16_%s.getgot2], %%ebx\n", name );
         }
 
         fprintf( outfile, "\tpushl %%edx\n" );
@@ -317,10 +316,10 @@ static void BuildCallFrom16Core( FILE *outfile, int reg_func, int thunk, int sho
             fprintf( outfile, "\tpushl %%ebx\n" );
 
             /* Get Global Offset Table into %ebx (for PLT call) */
-            fprintf( outfile, "\tcall .LCallFrom16%s.getgot3\n", name );
-            fprintf( outfile, ".LCallFrom16%s.getgot3:\n", name );
+            fprintf( outfile, "\tcall .L__wine_call_from_16_%s.getgot3\n", name );
+            fprintf( outfile, ".L__wine_call_from_16_%s.getgot3:\n", name );
             fprintf( outfile, "\tpopl %%ebx\n" );
-            fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.LCallFrom16%s.getgot3], %%ebx\n", name );
+            fprintf( outfile, "\taddl $_GLOBAL_OFFSET_TABLE_+[.-.L__wine_call_from_16_%s.getgot3], %%ebx\n", name );
         }
 
         fprintf( outfile, "\tpushl %%eax\n" );

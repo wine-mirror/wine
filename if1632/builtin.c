@@ -209,11 +209,11 @@ LPCSTR BUILTIN_GetEntryPoint16( STACK16FRAME *frame, LPSTR name, WORD *pOrd )
 
 
 /***********************************************************************
- *           BUILTIN_RegisterDLL
+ *           __wine_register_dll_16
  *
  * Register a built-in DLL descriptor.
  */
-void BUILTIN_RegisterDLL( const BUILTIN16_DESCRIPTOR *descr )
+void __wine_register_dll_16( const BUILTIN16_DESCRIPTOR *descr )
 {
     assert( nb_dlls < MAX_DLLS );
     builtin_dlls[nb_dlls++] = descr;

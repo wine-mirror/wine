@@ -682,11 +682,11 @@ void BuildSpec16File( FILE *outfile )
         if ( typelist[i]->type == TYPE_INTERRUPT )
             argsize += 2;
 
-        fprintf( outfile, "    { 0x68, %s_CallFrom16_%s, 0x9a, CallFrom16%s,\n",
+        fprintf( outfile, "    { 0x68, %s_CallFrom16_%s, 0x9a, __wine_call_from_16_%s,\n",
                  DLLName, profile, 
                  (typelist[i]->type == TYPE_REGISTER 
-                  || typelist[i]->type == TYPE_INTERRUPT)? "Register":
-                 typelist[i]->type == TYPE_PASCAL_16? "Word" : "Long" );
+                  || typelist[i]->type == TYPE_INTERRUPT)? "regs":
+                 typelist[i]->type == TYPE_PASCAL_16? "word" : "long" );
         if (argsize)
             fprintf( outfile, "        0x%04x, 0x66, 0xca, %d, \"%s\" },\n",
                      code_selector, argsize, profile );
@@ -787,7 +787,7 @@ void BuildSpec16File( FILE *outfile )
     fprintf( outfile, "    \"\\t.previous\\n\");\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif /* defined(__GNUC__) */\n" );
-    fprintf( outfile, "static void %s_init(void) { BUILTIN_RegisterDLL( &descriptor ); }\n",
+    fprintf( outfile, "static void %s_init(void) { __wine_register_dll_16( &descriptor ); }\n",
              DLLName );
 }
 

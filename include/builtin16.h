@@ -14,11 +14,6 @@
 struct _CONTEXT86;
 struct _STACK16FRAME;
 
-extern WORD CallFrom16Word();
-extern LONG CallFrom16Long();
-extern void CallFrom16Register();
-extern void CallFrom16Thunk();
-
 extern WORD CALLBACK CallTo16Word( FARPROC16 target, INT nArgs );
 extern LONG CALLBACK CallTo16Long( FARPROC16 target, INT nArgs );
 extern void CALLBACK CallTo16RegisterShort( struct _CONTEXT86 *context, INT nArgs );
@@ -63,6 +58,11 @@ typedef struct
 
 extern HMODULE16 BUILTIN_LoadModule( LPCSTR name );
 extern LPCSTR BUILTIN_GetEntryPoint16( struct _STACK16FRAME *frame, LPSTR name, WORD *pOrd );
-extern void BUILTIN_RegisterDLL( const BUILTIN16_DESCRIPTOR *descr );
+
+extern void __wine_register_dll_16( const BUILTIN16_DESCRIPTOR *descr );
+extern WORD __wine_call_from_16_word();
+extern LONG __wine_call_from_16_long();
+extern void __wine_call_from_16_regs();
+extern void __wine_call_from_16_thunk();
 
 #endif /* __WINE_BUILTIN16_H */

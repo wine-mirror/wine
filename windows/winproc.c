@@ -42,7 +42,7 @@ typedef struct
     BYTE       pushl_relay;          /* pushl $relay */
     void     (*relay)();             /* WINPROC_Thunk16To32A/W() */
     BYTE       lcall;                /* lcall cs:glue */
-    void     (*glue)();              /* CallFrom16Long */
+    void     (*glue)();              /* __wine_call_from_16_long */
     WORD       cs;                   /* __FLATCS */
     WORD       lret;                 /* lret $10 */
     WORD       nArgs;
@@ -335,7 +335,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
                                            (void(*)())WINPROC_Thunk16To32A :
                                            (void(*)())WINPROC_Thunk16To32W;
             proc->thunk.t_from16.lcall       = 0x9a;   /* lcall cs:glue */
-            proc->thunk.t_from16.glue        = (void*)CallFrom16Long;
+            proc->thunk.t_from16.glue        = (void*)__wine_call_from_16_long;
             proc->thunk.t_from16.cs          = __get_cs();
             proc->thunk.t_from16.lret        = 0xca66;
             proc->thunk.t_from16.nArgs       = 10;

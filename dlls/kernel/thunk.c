@@ -1302,7 +1302,7 @@ void WINAPI C16ThkSL(CONTEXT86 *context)
      *   push edx
      *   push dx
      *   push edx
-     *   call __FLATCS:CallFrom16Thunk
+     *   call __FLATCS:__wine_call_from_16_thunk
      */
 
     *x++ = 0xB8; *((WORD *)x)++ = ds;
@@ -1315,7 +1315,7 @@ void WINAPI C16ThkSL(CONTEXT86 *context)
     *x++ = 0x66; *x++ = 0x52;
     *x++ = 0x52;
     *x++ = 0x66; *x++ = 0x52;
-    *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)CallFrom16Thunk;
+    *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)__wine_call_from_16_thunk;
                               *((WORD *)x)++ = cs;
 
     /* Jump to the stub code just created */
@@ -1361,7 +1361,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
          *   push edx
          *   push dx
          *   push edx
-         *   call __FLATCS:CallFrom16Thunk
+         *   call __FLATCS:__wine_call_from_16_thunk
          */
 
         *x++ = 0x66; *x++ = 0x33; *x++ = 0xC0;
@@ -1372,7 +1372,7 @@ void WINAPI C16ThkSL01(CONTEXT86 *context)
         *x++ = 0x66; *x++ = 0x52;
         *x++ = 0x52;
         *x++ = 0x66; *x++ = 0x52;
-        *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)CallFrom16Thunk;
+        *x++ = 0x66; *x++ = 0x9A; *((DWORD *)x)++ = (DWORD)__wine_call_from_16_thunk;
                                   *((WORD *)x)++ = cs;
 
         /* Jump to the stub code just created */
