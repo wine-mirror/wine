@@ -102,7 +102,7 @@ static int midiOpenSeq(void);
 static int midiCloseSeq(void);
 
 /**************************************************************************
- * 			unixToWindowsDeviceType  		[internal]
+ * 			MIDI_unixToWindowsDeviceType  		[internal]
  *
  * return the Windows equivalent to a Unix Device Type
  *
@@ -432,6 +432,9 @@ SEQ_DEFINEBUF(1024);
  */
 /**************************************************************************
  * 			seqbuf_dump				[internal]
+ *
+ * Used by SEQ_DUMPBUF to flush the buffer.
+ *
  */
 void seqbuf_dump(void)
 {
@@ -448,6 +451,9 @@ void seqbuf_dump(void)
     }
 }
 
+/**************************************************************************
+ * 			midRecieveChar				[internal]
+ */
 static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 {
     DWORD		toSend = 0;
@@ -1496,7 +1502,7 @@ static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	return MMSYSERR_NOTENABLED;
     }
 
-    /* MS doc says taht dwFlags must be set to zero, but (kinda funny) MS mciseq drivers
+    /* MS doc says that dwFlags must be set to zero, but (kinda funny) MS mciseq drivers
      * asks to prepare MIDIHDR which dwFlags != 0.
      * So at least check for the inqueue flag
      */

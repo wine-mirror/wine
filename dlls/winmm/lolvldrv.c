@@ -121,7 +121,7 @@ static	BOOL	MMDRV_GetDescription32(const char* fname, char* buf, int buflen)
         goto theEnd;
     if (!(pGetFileVersionInfoA = GetProcAddress( hmodule, "GetFileVersionInfoA" )))
         goto theEnd;
-    if (!(pVerQueryValueA = GetProcAddress( hmodule, "pVerQueryValueA" )))
+    if (!(pVerQueryValueA = GetProcAddress( hmodule, "VerQueryValueA" )))
         goto theEnd;
 
     if (!(dw = pGetFileVersionInfoSizeA(ofs.szPathName, &h)))	E(("Can't get FVIS\n"));
@@ -166,7 +166,7 @@ UINT	MMDRV_GetNum(UINT type)
 }
 
 /**************************************************************************
- * 				WINE_Message			[internal]
+ * 				MMDRV_Message			[internal]
  */
 DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 		      DWORD dwParam2, BOOL bFrom32)
@@ -178,7 +178,7 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
     WINMM_MapType		map;
     int				devID;
 
-    TRACE("(%s %u %u 0x%08lx 0x%08lx 0x%08lx %c)!\n",
+    TRACE("(%s %u %u 0x%08lx 0x%08lx 0x%08lx %c)\n",
 	  llTypes[mld->type].typestr, mld->uDeviceID, wMsg,
 	  mld->dwDriverInstance, dwParam1, dwParam2, bFrom32?'Y':'N');
 
@@ -212,7 +212,7 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 	assert(part->u.fnMessage32);
 
 	if (bFrom32) {
-	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n",
+	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
 		  mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
             ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 	    TRACE("=> %lu\n", ret);
@@ -228,7 +228,7 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 		break;
 	    case WINMM_MAP_OK:
 	    case WINMM_MAP_OKMEM:
-		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n",
+		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
 		      mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 		ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance,
 					  dwParam1, dwParam2);
@@ -257,7 +257,7 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 		break;
 	    case WINMM_MAP_OK:
 	    case WINMM_MAP_OKMEM:
-		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n",
+		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
 		      mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 		ret = pFnCallMMDrvFunc16((FARPROC16)part->u.fnMessage16, 
                                          mld->uDeviceID, wMsg, mld->dwDriverInstance, 
@@ -272,7 +272,7 @@ DWORD	MMDRV_Message(LPWINE_MLD mld, WORD wMsg, DWORD dwParam1,
 		break;
 	    }
 	} else {
-	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx\n",
+	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
 		  mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
             ret = pFnCallMMDrvFunc16((FARPROC16)part->u.fnMessage16, 
                                      mld->uDeviceID, wMsg, mld->dwDriverInstance, 
