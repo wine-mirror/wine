@@ -59,6 +59,7 @@ my %options = (
     "calling-convention" => { default => 0, parent => "local", description => "calling convention checking" },
     "misplaced" => { default => 0, parent => "local", description => "check for misplaced functions" },
     "cross-call" => { default => 0, parent => "local", description => "check for cross calling functions" },
+    "documentation" => { default => 0, parent => "local", description => "check for documentation inconsistances\n" },
              
     "global" => { default => 1, description => "global checking" }, 
     "declared" => { default => 1, parent => "global", description => "declared checking" }, 

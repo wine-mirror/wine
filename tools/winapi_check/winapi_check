@@ -6,6 +6,7 @@ use strict;
 
 my $wine_dir;
 my $winapi_check_dir;
+
 BEGIN {
 
     if($0 =~ /^((.*?)\/?tools\/winapi_check)\/winapi_check$/)
@@ -24,6 +25,7 @@ BEGIN {
     require "output.pm";
     require "preprocessor.pm";
     require "winapi.pm";
+    require "winapi_function.pm";
     require "winapi_local.pm";
     require "winapi_global.pm";
     require "winapi_options.pm";
@@ -33,6 +35,7 @@ BEGIN {
     import output;
     import preprocessor;
     import winapi;
+    import winapi_function;
     import winapi_local;
     import winapi_global;
     import winapi_options;
@@ -51,7 +54,7 @@ my $win16api = 'winapi'->new($output, "win16", "$winapi_check_dir/win16api.dat",
 my $win32api = 'winapi'->new($output, "win32", "$winapi_check_dir/win32api.dat", "$winapi_check_dir/win32");
 'winapi'->read_spec_files($wine_dir, $win16api, $win32api);
 
-my $nativeapi = 'nativeapi'->new("$winapi_check_dir/nativeapi.dat", "$wine_dir/configure.in", "$wine_dir/include/config.h.in");
+my $nativeapi = 'nativeapi'->new($output, "$winapi_check_dir/nativeapi.dat", "$wine_dir/configure.in", "$wine_dir/include/config.h.in");
 
 for my $name ($win32api->all_functions) {
     my $module16 = $win16api->function_module($name);
@@ -62,7 +65,7 @@ for my $name ($win32api->all_functions) {
 	$win32api->found_shared_function($name);
 	
 	if($options->shared) {
-	    print "*.spec: $name: is shared between $module16 (Win16) and $module32 (Win32)\n";
+	    $output->write("*.spec: $name: is shared between $module16 (Win16) and $module32 (Win32)\n");
 	}
     }
 }
@@ -86,19 +89,21 @@ my %includes;
     }
 }
 
-my %functions;
-
 my $progress_output;
 my $progress_current=0;
 my $progress_max=scalar($options->files);
 foreach my $file ($options->files) {
+    my %functions;
+
     $progress_current++;
     if($options->progress) {
 	$output->progress("$file: file $progress_current of $progress_max");
     }
 
     my $file_dir = $file;
-    $file_dir =~ s/(.*?)\/[^\/]*$/$1/;
+    if(!($file_dir =~ s/(.*?)\/[^\/]*$/$1/)) {
+	$file_dir = ".";
+    }
 
     my $file_type;
     if($file_dir =~ /^(libtest|program|rc)/) {
@@ -112,6 +117,7 @@ foreach my $file ($options->files) {
     }
     
     my $found_function = sub {
+	my $documentation = shift;
 	my $return_type = shift;
 	my $calling_convention = shift;
 	my $name = shift;
@@ -135,16 +141,19 @@ foreach my $file ($options->files) {
 	    my $module16 = $win16api->function_module($name);
 	    my $module32 = $win32api->function_module($name);
 
-	    my $module;
-	    if(defined($module16) && defined($module32)) {
-		$module = "$module16 & $module32";
-	    } elsif(defined($module16)) {
-		$module = $module16;
-	    } elsif(defined($module32)) {
-		$module = $module32;
-	    } else {
-		$module = "";
-	    }
+	    my $function = 'winapi_function'->new;
+	    $functions{$name} = $function;
+	   
+ 	    $function->documentation($documentation);
+	    $function->file($file);
+	    $function->return_type($return_type); 
+	    $function->calling_convention($calling_convention);
+	    $function->name($name); 
+	    $function->arguments([@arguments]);
+	    $function->statements($statements);
+	    $function->module16($module16);
+	    $function->module32($module32);
+
 	    my $output_module = sub { 
 		my $module = shift;
 		return sub {
@@ -157,22 +166,13 @@ foreach my $file ($options->files) {
 	    my $output16 = &$output_module($module16);
 	    my $output32 = &$output_module($module32);
 	    
-	    my $function = $functions{$name};
-	    $$function{file} = $file;
-	    $$function{return_type} = $return_type;
-	    $$function{calling_convention} = $calling_convention;
-	    $$function{arguments} = [@arguments];
-	    $$function{module} = $module;
-	    $$function{module16} = $module16;
-	    $$function{module32} = $module32;
-
 	    if($options->argument) {
 		if($options->win16 && $options->report_module($module16)) {
-		  winapi_local::check_arguments $options, $output16,
+		  winapi_local::check_function $options, $output16,
 		    $return_type, $calling_convention, $name, [@arguments], $win16api;
 		}	
 		if($options->win32 && $options->report_module($module32)) {
-		  winapi_local::check_arguments $options, $output32,
+		  winapi_local::check_function $options, $output32,
 		    $return_type, $calling_convention, $name, [@arguments], $win32api;
 		}
 	    }
@@ -202,14 +202,42 @@ foreach my $file ($options->files) {
 			$_ = $';
 			my $called_name = $1;
 			if($called_name !~ /^if|for|while|switch|sizeof$/) {
-			    $functions{$name}{called_function_names}{$called_name}++;
-			    $functions{$called_name}{called_by_function_names}{$name}++;
+			    $functions{$name}->function_called($called_name);
+			    if(!defined($functions{$called_name})) {
+				$functions{$called_name} = 'function'->new;
+			    }
+			    $functions{$called_name}->function_called_by($name);
 			}
 		    } else {
 		       undef $_
 		    }
 		}
 	    }
+	    
+	    if($options->documentation && (defined($module16) || defined($module32))) {
+		my $name2 = $name;
+		my $name3 = $name;
+		my $name4 = $name;
+		my $name5 = $name;
+
+		if(defined($module16) && !defined($module32)) {
+		    $name2 =~ s/([AW])$/16$1/;
+		    $name3 =~ s/16(([AW])?)$/$1/;		    
+		    $name4 =~ s/^\U$module16\E\_//;
+		    $name5 =~ s/^WIN16_//;
+		} elsif(!defined($module16) && defined($module32)) {
+		    $name2 =~ s/([AW])$/32$1/;
+		    $name3 =~ s/32(([AW])?)$/$1/;
+		    $name4 =~ s/^\U$module32\E\_//;
+		    $name5 =~ s/^WIN16_//;
+		}
+
+		if($name !~ /^SMapLS|SUnMapLS/ && $documentation !~ /($name|$name2|$name3|$name4|$name5)/) {
+		    $output->write("$file: $name: \\\n");
+		    $output->write("$documentation\n");
+		}	       
+	    }
+
 	}
     };
 
@@ -278,7 +306,7 @@ foreach my $file ($options->files) {
 			foreach my $name (keys(%{$includes{"$file_dir/$header"}{includes}})) {
 			    $includes{$name}{used}++;
 			}
-		    } elsif(-e "include/$header") {
+		    } elsif(-e "$wine_dir/include/$header") {
 			$includes{"include/$header"}{used}++;
 			foreach my $name (keys(%{$includes{"include/$header"}{includes}})) {
 			    $includes{$name}{used}++;
@@ -291,7 +319,7 @@ foreach my $file ($options->files) {
 	}
     };
   
-    winapi_parser::parse_c_file $options, $file, $found_function, $found_preprocessor;
+    winapi_parser::parse_c_file $options, $output, $file, $found_function, $found_preprocessor;
     
     if($options->config_unnessary) {
 	if($config && $conditional == 0) {
@@ -299,26 +327,7 @@ foreach my $file ($options->files) {
 	}
     }
 
-    if($options->cross_call) {
-	my @names = sort(keys(%functions));
-	for my $name (@names) {
-	    my @called_names = sort(keys(%{$functions{$name}{called_function_names}}));
-	    my @called_by_names = sort(keys(%{$functions{$name}{called_by_function_names}}));
-	    my $module = $functions{$name}{module};
-	    my $module16 = $functions{$name}{module16};
-	    my $module32 = $functions{$name}{module32};
-
-	    if($#called_names >= 0 && (defined($module16) || defined($module32)) ) {
-		$output->write("$file: $module: $name: \\\n");
-		for my $called_name (@called_names) {
-		    my $function;
-		    if($function = $functions{$called_name}) {		    
-			$output->write("  $called_name\n");
-		    }
-		}
-	    }
-	}
-    }
+    winapi_local::check_file $options, $output, $file, \%functions;
 }
 
 $output->hide_progress;
@@ -327,12 +336,12 @@ if($options->global) {
     foreach my $name (sort(keys(%includes))) {
 	if(!$includes{$name}{used}) {
 	    if($options->include) {
-		print "$name: include file is never used\n";
+		$output->write("$name: include file is never used\n");
 	    }
 	}
     }
 
-    winapi_global::check $options, $win16api, $nativeapi if $options->win16;
-    winapi_global::check $options, $win32api, $nativeapi if $options->win32;
+    winapi_global::check $options, $output, $win16api, $nativeapi if $options->win16;
+    winapi_global::check $options, $output, $win32api, $nativeapi if $options->win32;
 }
 

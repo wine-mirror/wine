@@ -2,7 +2,7 @@ package winapi_local;
 
 use strict;
 
-sub check_arguments {
+sub check_function {
     my $options = shift;
     my $output = shift;
     my $return_type = shift;
@@ -160,6 +160,37 @@ sub check_arguments {
 
     if($segmented && $options->shared_segmented && $winapi->is_shared_function($name)) {
 	&$output("function using segmented pointers shared between Win16 och Win32");
+    }
+}
+
+sub check_file {
+    my $options = shift;
+    my $output = shift;
+    my $file = shift;
+    my $functions = shift;
+
+    if($options->cross_call) {
+	my @names = sort(keys(%$functions));
+	for my $name (@names) {
+	    my @called_names = $$functions{$name}->called_function_names;
+	    my @called_by_names = $$functions{$name}->called_by_function_names;
+	    my $module = $$functions{$name}->module;
+	    my $module16 = $$functions{$name}->module16;
+	    my $module32 = $$functions{$name}->module32;
+
+	    if($#called_names >= 0 && (defined($module16) || defined($module32)) ) {	
+		for my $called_name (@called_names) {
+		    my $called_module16 = $$functions{$called_name}->module16;
+		    my $called_module32 = $$functions{$called_name}->module32;
+		    if(defined($module32) &&
+		       defined($called_module16) && !defined($called_module32) &&
+		       $name ne $called_name) 
+		    {
+			$output->write("$file: $module: $name: illegal call to $called_name (Win16)\n");
+		    }
+		}
+	    }
+	}
     }
 }
 

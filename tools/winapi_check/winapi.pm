@@ -70,12 +70,12 @@ sub parse_api_file {
 	    if(!$forbidden) {
 		if(defined($module)) {
 		    if($$allowed_modules_unlimited{$type}) {
-			print "$file: type ($type) already specificed as an unlimited type\n";
+			$$output->write("$file: type ($type) already specificed as an unlimited type\n");
 		    } elsif(!$$allowed_modules{$type}{$module}) {
 			$$allowed_modules{$type}{$module} = 1;
 			$$allowed_modules_limited{$type} = 1;
 		    } else {
-			print "$file: type ($type) already specificed\n";
+			$$output->write("$file: type ($type) already specificed\n");
 		    }
 		} else {
 		    $$allowed_modules_unlimited{$type} = 1;
@@ -84,12 +84,12 @@ sub parse_api_file {
 		$$allowed_modules_limited{$type} = 1;
 	    }
 	    if(defined($$translate_argument{$type}) && $$translate_argument{$type} ne $kind) {
-		print "$file: type ($type) respecified as different kind ($kind != $$translate_argument{$type})\n";
+		$$output->write("$file: type ($type) respecified as different kind ($kind != $$translate_argument{$type})\n");
 	    } else {
 		$$translate_argument{$type} = $kind;
 	    }
 	} else {
-	    print "$file: file must begin with %<type> statement\n";
+	    $$output->write("$file: file must begin with %<type> statement\n");
 	    exit 1;
 	}
     }
@@ -208,7 +208,7 @@ sub parse_spec_file {
 	
 	if(defined($ordinal)) {
 	    if($ordinals{$ordinal}) {
-		print "$file: ordinal redefined: $_\n";
+		$$output->write("$file: ordinal redefined: $_\n");
 	    }
 	    $ordinals{$ordinal}++;
 	}

@@ -8,13 +8,18 @@ sub new {
     my $self  = {};
     bless ($self, $class);
 
+    my $output = \${$self->{OUTPUT}};
     my $functions = \%{$self->{FUNCTIONS}};
     my $conditionals = \%{$self->{CONDITIONALS}};
     my $conditional_headers = \%{$self->{CONDITIONAL_HEADERS}};
+    my $conditional_functions = \%{$self->{CONDITIONAL_FUNCTIONS}};
 
+    $$output = shift;
     my $api_file = shift;
     my $configure_in_file = shift;
     my $config_h_in_file = shift;
+
+    $$output->progress("$api_file");
 
     open(IN, "< $api_file");
     $/ = "\n";
@@ -27,8 +32,10 @@ sub new {
     }
     close(IN);
 
+    $$output->progress("$configure_in_file");
+
     my $again = 0;
-    open(IN, "< $configure_in_file");
+    open(IN, "< $configure_in_file");   
     local $/ = "\n";
     while($again || (defined($_ = <IN>))) {
 	$again = 0;
@@ -46,8 +53,13 @@ sub new {
 
 	if(/^AC_CHECK_HEADERS\(\s*(.*?)\)\s*$/) {
 	    my @arguments = split(/,/,$1);
-	    foreach my $header (split(/\s+/, $arguments[0])) {		
-		$$conditional_headers{$header}++;
+	    foreach my $name (split(/\s+/, $arguments[0])) {		
+		$$conditional_headers{$name}++;
+	    }
+	} elsif(/^AC_CHECK_FUNCS\(\s*(.*?)\)\s*$/) {
+	    my @arguments = split(/,/,$1);
+	    foreach my $name (split(/\s+/, $arguments[0])) {		
+		$$conditional_functions{$name}++;
 	    }
 	} elsif(/^AC_FUNC_ALLOCA/) {
 	    $$conditional_headers{"alloca.h"}++;
@@ -56,10 +68,12 @@ sub new {
     }
     close(IN);
 
+    $$output->progress("$config_h_in_file");
+
     open(IN, "< $config_h_in_file");
     local $/ = "\n";
     while(<IN>) {
-	if(/^\#undef (\S+)$/) {
+	if(/^\#undef\s+(\S+)$/) {
 	    $$conditionals{$1}++;
 	}
     }
@@ -93,6 +107,15 @@ sub is_conditional_header {
     my $name = shift;
 
     return $$conditional_headers{$name};
+}
+
+sub is_conditional_function {
+    my $self = shift;
+    my $conditional_functions = \%{$self->{CONDITIONAL_FUNCTIONS}};
+
+    my $name = shift;
+
+    return $$conditional_functions{$name};
 }
 
 1;
