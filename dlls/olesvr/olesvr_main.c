@@ -245,11 +245,61 @@ OLESTATUS WINAPI OleRegisterServerDoc( LHSERVER hServer, LPCSTR docname,
 }
 
 /******************************************************************************
+ *		OleRenameServerDoc	[OLESVR.8]
+ *
+ */
+OLESTATUS WINAPI OleRenameServerDoc16(LHSERVERDOC hDoc, LPCSTR newName)
+{
+    FIXME("(%ld,%s): stub.\n", hDoc, newName);
+    return OLE_OK;
+}
+
+/******************************************************************************
  *		OleRenameServerDoc	[OLESVR32.8]
  *
  */
 OLESTATUS WINAPI OleRenameServerDoc(LHSERVERDOC hDoc, LPCSTR newName)
 {
     FIXME("(%ld,%s): stub.\n",hDoc, newName);
+    return OLE_OK;
+}
+
+/******************************************************************************
+ *		OleRevertServerDoc	[OLESVR.9]
+ *
+ */
+OLESTATUS WINAPI OleRevertServerDoc16(LHSERVERDOC hDoc)
+{
+    FIXME("(%ld): stub.\n", hDoc);
+    return OLE_OK;
+}
+
+/******************************************************************************
+ *		OleRevertServerDoc	[OLESVR32.9]
+ *
+ */
+OLESTATUS WINAPI OleRevertServerDoc(LHSERVERDOC hDoc)
+{
+    FIXME("(%ld): stub.\n", hDoc);
+    return OLE_OK;
+}
+
+/******************************************************************************
+ *		OleSavedServerDoc	[OLESVR.10]
+ *
+ */
+OLESTATUS WINAPI OleSavedServerDoc16(LHSERVERDOC hDoc)
+{
+    FIXME("(%ld): stub.\n", hDoc);
+    return OLE_OK;
+}
+
+/******************************************************************************
+ *		OleSavedServerDoc	[OLESVR32.10]
+ *
+ */
+OLESTATUS WINAPI OleSavedServerDoc(LHSERVERDOC hDoc)
+{
+    FIXME("(%ld): stub.\n", hDoc);
     return OLE_OK;
 }

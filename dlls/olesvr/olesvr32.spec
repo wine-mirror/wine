@@ -6,7 +6,7 @@
  6 stdcall OleRegisterServerDoc(ptr str ptr ptr)
  7 stdcall OleRevokeServerDoc(long)
  8 stdcall OleRenameServerDoc(long str)
- 9 stub OleRevertServerDoc
-10 stub OleSavedServerDoc
+ 9 stdcall OleRevertServerDoc(long)
+10 stdcall OleSavedServerDoc(long)
 11 stub OleRevokeObject
 12 stub OleQueryServerVersion
