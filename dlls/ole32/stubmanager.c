@@ -41,6 +41,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+/* this refs the apartment on success, otherwise there is no ref */
 struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object)
 {
     struct stub_manager *sm;
@@ -71,6 +72,7 @@ struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object)
     list_add_head(&apt->stubmgrs, &sm->entry);
     LeaveCriticalSection(&apt->cs);
 
+    COM_ApartmentAddRef(apt);
     TRACE("Created new stub manager (oid=%s) at %p for object with IUnknown %p\n", wine_dbgstr_longlong(sm->oid), sm, object);
     
     return sm;
@@ -82,7 +84,7 @@ struct stub_manager *get_stub_manager_from_object(OXID oxid, void *object)
     struct list         *cursor;
     APARTMENT           *apt;
 
-    if (!(apt = COM_ApartmentFromOXID(oxid)))
+    if (!(apt = COM_ApartmentFromOXID(oxid, TRUE)))
     {
         WARN("Could not map OXID %s to apartment object\n", wine_dbgstr_longlong(oxid));
         return NULL;
@@ -101,6 +103,8 @@ struct stub_manager *get_stub_manager_from_object(OXID oxid, void *object)
     }
     LeaveCriticalSection(&apt->cs);
 
+    COM_ApartmentRelease(apt);
+    
     TRACE("found %p from object %p\n", result, object);
 
     return result;    
@@ -112,14 +116,13 @@ struct stub_manager *get_stub_manager(OXID oxid, OID oid)
     struct list         *cursor;
     APARTMENT           *apt;
 
-    if (!(apt = COM_ApartmentFromOXID(oxid)))
+    if (!(apt = COM_ApartmentFromOXID(oxid, TRUE)))
     {
         WARN("Could not map OXID %s to apartment object\n", wine_dbgstr_longlong(oxid));
         return NULL;
     }
     
     EnterCriticalSection(&apt->cs);
-    
     LIST_FOR_EACH( cursor, &apt->stubmgrs )
     {
         struct stub_manager *m = LIST_ENTRY( cursor, struct stub_manager, entry );
@@ -130,8 +133,9 @@ struct stub_manager *get_stub_manager(OXID oxid, OID oid)
             break;
         }
     }
-    
     LeaveCriticalSection(&apt->cs);
+
+    COM_ApartmentRelease(apt);
 
     TRACE("found %p from oid %s\n", result, wine_dbgstr_longlong(oid));
 

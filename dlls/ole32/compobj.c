@@ -30,6 +30,8 @@
  *   - Rewrite the CoLockObjectExternal code, it does totally the wrong
  *     thing currently (should be controlling the stub manager)
  *
+ *   - Make the MTA dynamically allocated and refcounted
+ *
  *   - Implement the service control manager (in rpcss) to keep track
  *     of registered class objects: ISCM::ServerRegisterClsid et al
  *   - Implement the OXID resolver so we don't need magic pipe names for
@@ -99,7 +101,8 @@ static void COM_ExternalLockFreeList(void);
 
 const CLSID CLSID_StdGlobalInterfaceTable = { 0x00000323, 0, 0, {0xc0, 0, 0, 0, 0, 0, 0, 0x46} };
 
-APARTMENT MTA, *apts;
+APARTMENT MTA;
+struct list apts = LIST_INIT( apts );
 
 static CRITICAL_SECTION csApartment;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -236,6 +239,7 @@ static void COM_UninitMTA(void)
     MTA.oxid = 0;
 }
 
+
 /* creates an apartment structure which stores OLE thread-local
  * information. Call with COINIT_UNINITIALIZED to create an apartment
  * that will be initialized with a model later. Note: do not call
@@ -243,100 +247,138 @@ static void COM_UninitMTA(void)
  * with a different COINIT value */
 APARTMENT* COM_CreateApartment(DWORD model)
 {
-    APARTMENT *apt;
-    BOOL create = (NtCurrentTeb()->ReservedForOle == NULL);
+    APARTMENT *apt = COM_CurrentApt();
 
-    if (create)
+    if (!apt)
     {
+        if (model & COINIT_MULTITHREADED)
+        {
+            TRACE("thread 0x%lx is entering the multithreaded apartment\n", GetCurrentThreadId());
+            COM_CurrentInfo()->apt = &MTA;
+            return apt;
+        }
+
+        TRACE("creating new apartment, model=%ld\n", model);
+
         apt = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(APARTMENT));
         apt->tid = GetCurrentThreadId();
         DuplicateHandle(GetCurrentProcess(), GetCurrentThread(),
                         GetCurrentProcess(), &apt->thread,
                         THREAD_ALL_ACCESS, FALSE, 0);
-    }
-    else
-        apt = NtCurrentTeb()->ReservedForOle;
 
-    list_init(&apt->proxies);
-    list_init(&apt->stubmgrs);
-    apt->oidc = 1;
-    
-    apt->model = model;
-    if (model & COINIT_APARTMENTTHREADED) {
-      /* FIXME: how does windoze create OXIDs? */
-      apt->oxid = MTA.oxid | GetCurrentThreadId();
-      apt->win = CreateWindowA(aptWinClass, NULL, 0,
-			       0, 0, 0, 0,
-			       0, 0, OLE32_hInstance, NULL);
-      InitializeCriticalSection(&apt->cs);
+        list_init(&apt->proxies);
+        list_init(&apt->stubmgrs);
+        apt->oidc = 1;
+        apt->refs = 1;
+        InitializeCriticalSection(&apt->cs);
+
+        apt->model = model;
+
+        /* we don't ref the apartment as CoInitializeEx will do it for us */
+
+        if (model & COINIT_APARTMENTTHREADED)
+        {
+            /* FIXME: how does windoze create OXIDs? */
+            apt->oxid = MTA.oxid | GetCurrentThreadId();
+            apt->win = CreateWindowA(aptWinClass, NULL, 0,
+                                     0, 0, 0, 0,
+                                     0, 0, OLE32_hInstance, NULL);
+        }
+
+        EnterCriticalSection(&csApartment);
+        list_add_head(&apts, &apt->entry);
+        LeaveCriticalSection(&csApartment);
+
+        COM_CurrentInfo()->apt = apt;
     }
-    else if (!(model & COINIT_UNINITIALIZED)) {
-      apt->parent = &MTA;
-      apt->oxid = MTA.oxid;
-    }
+
+    return apt;
+}
+
+DWORD COM_ApartmentAddRef(struct apartment *apt)
+{
+    return InterlockedIncrement(&apt->refs);
+}
+
+DWORD COM_ApartmentRelease(struct apartment *apt)
+{
+    DWORD ret;
+
     EnterCriticalSection(&csApartment);
-    if (create)
+
+    ret = InterlockedDecrement(&apt->refs);
+    if (ret == 0)
     {
-        if (apts) apts->prev = apt;
-        apt->next = apts;
-        apts = apt;
+        TRACE("destroying apartment %p, oxid %s\n", apt, wine_dbgstr_longlong(apt->oxid));
+
+        MARSHAL_Disconnect_Proxies(apt);
+
+        list_remove(&apt->entry);
+        if ((apt->model & COINIT_APARTMENTTHREADED) && apt->win) DestroyWindow(apt->win);
+
+        if (!list_empty(&apt->stubmgrs))
+        {
+            FIXME("PANIC: Apartment being destroyed with outstanding stubs, what do we do now?\n");
+        }
+
+        if (apt->filter) IUnknown_Release(apt->filter);
+
+
+        DeleteCriticalSection(&apt->cs);
+        CloseHandle(apt->thread);
+        HeapFree(GetProcessHeap(), 0, apt);
+
+        apt = NULL;
+    }
+
+    LeaveCriticalSection(&csApartment);
+
+    return ret;
+}
+
+/* The given OXID must be local to this process: you cannot use
+ * apartment windows to send RPCs to other processes. This all needs
+ * to move to rpcrt4.
+ *
+ * The ref parameter is here mostly to ensure people remember that
+ * they get one, you should normally take a ref for thread safety.
+ */
+APARTMENT *COM_ApartmentFromOXID(OXID oxid, BOOL ref)
+{
+    APARTMENT *result = NULL;
+    struct list *cursor;
+
+    EnterCriticalSection(&csApartment);
+    LIST_FOR_EACH( cursor, &apts )
+    {
+        struct apartment *apt = LIST_ENTRY( cursor, struct apartment, entry );
+        if (apt->oxid == oxid)
+        {
+            result = apt;
+            if (ref) COM_ApartmentAddRef(result);
+            break;
+        }
     }
     LeaveCriticalSection(&csApartment);
-    NtCurrentTeb()->ReservedForOle = apt;
-    return apt;
+
+    return result;
 }
 
-static void COM_DestroyApartment(APARTMENT *apt)
+HWND COM_GetApartmentWin(OXID oxid, BOOL ref)
 {
-    EnterCriticalSection(&csApartment);
-    if (apt->prev) apt->prev->next = apt->next;
-    if (apt->next) apt->next->prev = apt->prev;
-    if (apts == apt) apts = apt->next;
-    apt->prev = NULL; apt->next = NULL;
-    LeaveCriticalSection(&csApartment);
-    if (apt->model & COINIT_APARTMENTTHREADED) {
-      /* disconnect proxies to release the corresponding stubs.
-       * It is confirmed in "Essential COM" in the sub-chapter on
-       * "Lifecycle Management and Marshalling" that the native version also
-       * disconnects proxies in this function. */
-      /* FIXME: this should also be called for MTA destruction, but that
-       * requires restructuring how apartments work slightly. */
-      MARSHAL_Disconnect_Proxies(apt);
+    APARTMENT *apt;
 
-      if (apt->win) DestroyWindow(apt->win);
-      DeleteCriticalSection(&apt->cs);
-    }
-    CloseHandle(apt->thread);
-    HeapFree(GetProcessHeap(), 0, apt);
-}
+    apt = COM_ApartmentFromOXID(oxid, ref);
+    if (!apt) return NULL;
 
-/* The given OXID must be local to this process: you cannot use apartment
-   windows to send RPCs to other processes. This all needs to move to rpcrt4 */
-
-APARTMENT *COM_ApartmentFromOXID(OXID oxid)
-{
-    APARTMENT *apt = NULL;
-
-    EnterCriticalSection(&csApartment);
-    apt = apts;
-    while (apt && apt->oxid != oxid) apt = apt->next;
-    LeaveCriticalSection(&csApartment);
-
-    return apt;
-}
-
-HWND COM_GetApartmentWin(OXID oxid)
-{
-    APARTMENT *apt = COM_ApartmentFromOXID(oxid);
-
-    return apt ? apt->win : NULL;
+    return apt->win;
 }
 
 /* Currently inter-thread marshalling is not fully implemented, so this does nothing */
 static LRESULT CALLBACK COM_AptWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   return DefWindowProcA(hWnd, msg, wParam, lParam);
-} 
+}
 
 /*****************************************************************************
  * This section contains OpenDllList implemantation
@@ -467,8 +509,7 @@ HRESULT WINAPI CoInitialize(
  *   CoUninitialize
  */
 HRESULT WINAPI CoInitializeEx(
-	LPVOID lpReserved,	/* [in] pointer to win32 malloc interface
-                                   (obsolete, should be NULL) */
+	LPVOID lpReserved,	/* [in] pointer to win32 malloc interface (obsolete, should be NULL) */
 	DWORD dwCoInit		/* [in] A value from COINIT specifies the threading model */
 )
 {
@@ -481,21 +522,6 @@ HRESULT WINAPI CoInitializeEx(
   {
     ERR("(%p, %x) - Bad parameter passed-in %p, must be an old Windows Application\n", lpReserved, (int)dwCoInit, lpReserved);
   }
-
-  apt = NtCurrentTeb()->ReservedForOle;
-  if (apt && !(apt->model == COINIT_UNINITIALIZED))
-  {
-    if (dwCoInit != apt->model)
-    {
-      /* Changing the threading model after it's been set is illegal. If this warning is triggered by Wine
-         code then we are probably using the wrong threading model to implement that API. */
-      ERR("Attempt to change threading model of this apartment from 0x%lx to 0x%lx\n", apt->model, dwCoInit);
-      return RPC_E_CHANGED_MODE;
-    }
-    hr = S_FALSE;
-  }
-  else
-    hr = S_OK;
 
   /*
    * Check the lock count. If this is the first time going through the initialize
@@ -512,13 +538,27 @@ HRESULT WINAPI CoInitializeEx(
 
     COM_InitMTA();
 
+    /* we may need to defer this until after apartment initialisation */
     RunningObjectTableImpl_Initialize();
   }
 
-  if (!apt || apt->model == COINIT_UNINITIALIZED) apt = COM_CreateApartment(dwCoInit);
+  if (!(apt = COM_CurrentInfo()->apt))
+  {
+    apt = COM_CreateApartment(dwCoInit);
+  }
+  else
+  {
+    InterlockedIncrement(&apt->refs);
+  }
 
-  InterlockedIncrement(&apt->inits);
-  if (hr == S_OK) NtCurrentTeb()->ReservedForOle = apt;
+  if (dwCoInit != apt->model)
+  {
+    /* Changing the threading model after it's been set is illegal. If this warning is triggered by Wine
+       code then we are probably using the wrong threading model to implement that API. */
+    ERR("Attempt to change threading model of this apartment from 0x%lx to 0x%lx\n", apt->model, dwCoInit);
+    return RPC_E_CHANGED_MODE;
+  }
+  
 
   return hr;
 }
@@ -529,14 +569,20 @@ HRESULT WINAPI CoInitializeEx(
 void COM_FlushMessageQueue(void)
 {
     MSG message;
-    APARTMENT *apt = NtCurrentTeb()->ReservedForOle;
+    APARTMENT *apt = COM_CurrentApt();
 
     if (!apt || !apt->win) return;
 
     TRACE("Flushing STA message queue\n");
 
-    while (PeekMessageA(&message, NULL, 0, 0, PM_REMOVE)) {
-        if (message.hwnd != apt->win) continue;
+    while (PeekMessageA(&message, NULL, 0, 0, PM_REMOVE))
+    {
+        if (message.hwnd != apt->win)
+        {
+            WARN("discarding message 0x%x for window %p\n", message.message, message.hwnd);
+            continue;
+        }
+
         TranslateMessage(&message);
         DispatchMessageA(&message);
     }
@@ -561,17 +607,11 @@ void COM_FlushMessageQueue(void)
 void WINAPI CoUninitialize(void)
 {
   LONG lCOMRefCnt;
-  APARTMENT *apt;
 
   TRACE("()\n");
 
-  apt = NtCurrentTeb()->ReservedForOle;
-  if (!apt) return;
-  if (InterlockedDecrement(&apt->inits)==0) {
-    NtCurrentTeb()->ReservedForOle = NULL;
-    COM_DestroyApartment(apt);
-    apt = NULL;
-  }
+  if (!COM_ApartmentRelease(COM_CurrentInfo()->apt))
+      COM_CurrentInfo()->apt = NULL;
 
   /*
    * Decrease the reference count.
@@ -1134,14 +1174,14 @@ end:
 
 /******************************************************************************
  *		CoRegisterClassObject	[OLE32.@]
- * 
+ *
  * Registers the class object for a given class ID. Servers housed in EXE
  * files use this method instead of exporting DllGetClassObject to allow
  * other code to connect to their objects.
  *
  * RETURNS
- *   S_OK on success, 
- *   E_INVALIDARG if lpdwRegister or pUnk are NULL, 
+ *   S_OK on success,
+ *   E_INVALIDARG if lpdwRegister or pUnk are NULL,
  *   CO_E_OBJISREG if the object is already registered. We should not return this.
  *
  * SEE ALSO
@@ -1217,7 +1257,7 @@ HRESULT WINAPI CoRegisterClassObject(
   if (dwClsContext & CLSCTX_LOCAL_SERVER) {
       IClassFactory *classfac;
 
-      hr = IUnknown_QueryInterface(newClass->classObject, &IID_IClassFactory, 
+      hr = IUnknown_QueryInterface(newClass->classObject, &IID_IClassFactory,
                                    (LPVOID*)&classfac);
       if (hr) return hr;
 
@@ -1556,7 +1596,7 @@ HRESULT WINAPI CoCreateInstance(
   LPCLASSFACTORY lpclf = 0;
 
   if (!COM_CurrentApt()) return CO_E_NOTINITIALIZED;
-        
+
   /*
    * Sanity check
    */
@@ -1573,15 +1613,15 @@ HRESULT WINAPI CoCreateInstance(
    * Rather than create a class factory, we can just check for it here
    */
   if (IsEqualIID(rclsid, &CLSID_StdGlobalInterfaceTable)) {
-    if (StdGlobalInterfaceTableInstance == NULL) 
+    if (StdGlobalInterfaceTableInstance == NULL)
       StdGlobalInterfaceTableInstance = StdGlobalInterfaceTable_Construct();
     hres = IGlobalInterfaceTable_QueryInterface( (IGlobalInterfaceTable*) StdGlobalInterfaceTableInstance, iid, ppv);
     if (hres) return hres;
-    
+
     TRACE("Retrieved GIT (%p)\n", *ppv);
     return S_OK;
   }
-  
+
   /*
    * Get a class factory to construct the object we want.
    */
@@ -2000,19 +2040,19 @@ HRESULT WINAPI CoInitializeWOW(DWORD x,DWORD y) {
  */
 HRESULT WINAPI CoGetState(IUnknown ** ppv)
 {
-	APARTMENT * apt = COM_CurrentInfo();
+    HRESULT    hr  = E_FAIL;
 
-	FIXME("\n");
+    *ppv = NULL;
 
-	if(apt && apt->state) {
-	    IUnknown_AddRef(apt->state);
-	    *ppv = apt->state;
-	    FIXME("-- %p\n", *ppv);
-	    return S_OK;
-	}
-	*ppv = NULL;
-	return E_FAIL;
+    if (COM_CurrentInfo()->state)
+    {
+        IUnknown_AddRef(COM_CurrentInfo()->state);
+        *ppv = COM_CurrentInfo()->state;
+        TRACE("apt->state=%p\n", COM_CurrentInfo()->state);
+        hr = S_OK;
+    }
 
+    return hr;
 }
 
 /***********************************************************************
@@ -2021,22 +2061,17 @@ HRESULT WINAPI CoGetState(IUnknown ** ppv)
  */
 HRESULT WINAPI CoSetState(IUnknown * pv)
 {
-    APARTMENT * apt = COM_CurrentInfo();
+    if (pv) IUnknown_AddRef(pv);
 
-    if (!apt) apt = COM_CreateApartment(COINIT_UNINITIALIZED);
+    if (COM_CurrentInfo()->state)
+    {
+        TRACE("-- release %p now\n", COM_CurrentInfo()->state);
+        IUnknown_Release(COM_CurrentInfo()->state);
+    }
 
-	FIXME("(%p),stub!\n", pv);
+    COM_CurrentInfo()->state = pv;
 
-	if (pv) {
-	    IUnknown_AddRef(pv);
-	}
-
-	if (apt->state) {
-	    TRACE("-- release %p now\n", apt->state);
-	    IUnknown_Release(apt->state);
-	}
-	apt->state = pv;
-	return S_OK;
+    return S_OK;
 }
 
 
@@ -2191,7 +2226,7 @@ HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID clsidNew)
 done:
     if (hkey) RegCloseKey(hkey);
     return res;
-    
+
 }
 
 /***********************************************************************

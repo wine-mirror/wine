@@ -308,8 +308,6 @@ PipeBuf_Release(LPRPCCHANNELBUFFER iface) {
     if (ref)
 	return ref;
 
-    FIXME("Free all stuff\n");
-
     memcpy(&header.mid, &This->mid, sizeof(wine_marshal_id));
 
     pipe = PIPE_FindByMID(&This->mid);
@@ -892,7 +890,7 @@ static DWORD WINAPI apartment_listener_thread(LPVOID param)
     HANDLE		listenPipe;
     APARTMENT          *apt = (APARTMENT *) param;
 
-    /* we must join the marshalling threads apartment */
+    /* we must join the marshalling threads apartment. we already have a ref here */
     NtCurrentTeb()->ReservedForOle = apt;
 
     sprintf(pipefn,OLESTUBMGR"_%08lx%08lx", (DWORD)(apt->oxid >> 32), (DWORD)(apt->oxid));
@@ -926,7 +924,7 @@ static DWORD WINAPI apartment_listener_thread(LPVOID param)
 void start_apartment_listener_thread()
 {
     APARTMENT *apt = COM_CurrentApt();
-
+    
     assert( apt );
     
     TRACE("apt->listenertid=%ld\n", apt->listenertid);

@@ -38,12 +38,8 @@
 #include "winreg.h"
 #include "winternl.h"
 
-/* Windows maps COINIT values to 0x80 for apartment threaded, 0x140
- * for free threaded, and 0 for uninitialized apartments. There is
- * no real advantage in us doing this and certainly no release version
- * of an app should be poking around with these flags. So we need a
- * special value for uninitialized */
-#define COINIT_UNINITIALIZED 0x100
+struct apartment;
+
 
 /* exported interface */
 typedef struct tagXIF {
@@ -59,7 +55,7 @@ typedef struct tagXIF {
 /* exported object */
 typedef struct tagXOBJECT {
   IRpcStubBufferVtbl *lpVtbl;
-  struct tagAPARTMENT *parent;
+  struct apartment *parent;
   struct tagXOBJECT *next;
   LPUNKNOWN obj;           /* object identity (IUnknown) */
   OID oid;                 /* object ID */
@@ -83,7 +79,7 @@ struct ifproxy
 struct proxy_manager
 {
   const IInternalUnknownVtbl *lpVtbl;
-  struct tagAPARTMENT *parent;
+  struct apartment *parent;
   struct list entry;
   LPRPCCHANNELBUFFER chan; /* channel to object */
   OXID oxid;               /* object exported ID */
@@ -93,11 +89,13 @@ struct proxy_manager
   CRITICAL_SECTION cs;     /* thread safety for this object and children */
 };
 
-/* apartment */
-typedef struct tagAPARTMENT {
-  struct tagAPARTMENT *next, *prev, *parent;
+/* this needs to become a COM object that implements IRemUnknown */
+struct apartment
+{
+  struct list entry;       
+
+  DWORD refs;              /* refcount of the apartment */
   DWORD model;             /* threading model */
-  DWORD inits;             /* CoInitialize count */
   DWORD tid;               /* thread id */
   HANDLE thread;           /* thread handle */
   OXID oxid;               /* object exporter ID */
@@ -107,13 +105,11 @@ typedef struct tagAPARTMENT {
   LPMESSAGEFILTER filter;  /* message filter */
   XOBJECT *objs;           /* exported objects */
   struct list proxies;     /* imported objects */
-  LPUNKNOWN state;         /* state object (see Co[Get,Set]State) */
-  LPVOID ErrorInfo;        /* thread error info */
   DWORD listenertid;       /* id of apartment_listener_thread */
   struct list stubmgrs;    /* stub managers for exported objects */
-} APARTMENT;
+};
 
-extern APARTMENT MTA, *apts;
+typedef struct apartment APARTMENT;
 
 extern void* StdGlobalInterfaceTable_Construct(void);
 extern void  StdGlobalInterfaceTable_Destroy(void* self);
@@ -196,26 +192,40 @@ int WINAPI FileMonikerImpl_DecomposePath(LPCOLESTR str, LPOLESTR** stringTable);
 
 HRESULT WINAPI __CLSIDFromStringA(LPCSTR idstr, CLSID *id);
 
+/* compobj.c */
+APARTMENT *COM_CreateApartment(DWORD model);
+APARTMENT *COM_ApartmentFromOXID(OXID oxid, BOOL ref);
+DWORD COM_ApartmentAddRef(struct apartment *apt);
+DWORD COM_ApartmentRelease(struct apartment *apt);
+
+extern CRITICAL_SECTION csApartment;
+
+/* this is what is stored in TEB->ReservedForOle */
+struct oletls
+{
+    struct apartment *apt;
+    IErrorInfo       *errorinfo;   /* see errorinfo.c */
+    IUnknown         *state;       /* see CoSetState */
+};
+
 /*
  * Per-thread values are stored in the TEB on offset 0xF80,
  * see http://www.microsoft.com/msj/1099/bugslayer/bugslayer1099.htm
  */
-static inline APARTMENT* COM_CurrentInfo(void)
+
+/* will create if necessary */
+static inline struct oletls *COM_CurrentInfo(void)
 {
-  APARTMENT* apt = NtCurrentTeb()->ReservedForOle;
-  return apt;
-}
-static inline APARTMENT* COM_CurrentApt(void)
-{
-  APARTMENT* apt = COM_CurrentInfo();
-  if (apt && apt->parent) apt = apt->parent;
-  return apt;
+    if (!NtCurrentTeb()->ReservedForOle)     
+        NtCurrentTeb()->ReservedForOle = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct oletls));
+    
+    return NtCurrentTeb()->ReservedForOle;
 }
 
-/* compobj.c */
-APARTMENT *COM_CreateApartment(DWORD model);
-HWND COM_GetApartmentWin(OXID oxid);
-APARTMENT *COM_ApartmentFromOXID(OXID oxid);
+static inline APARTMENT* COM_CurrentApt(void)
+{  
+    return COM_CurrentInfo()->apt;
+}
 
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 

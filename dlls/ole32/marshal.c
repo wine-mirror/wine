@@ -109,9 +109,13 @@ static HRESULT register_ifstub(wine_marshal_id *mid, IUnknown *obj, IRpcStubBuff
     }
     else
     {
-        TRACE("constructing new stub manager\n");
+        struct apartment *apt;
         
-        manager = new_stub_manager(COM_ApartmentFromOXID(mid->oxid), obj);
+        TRACE("constructing new stub manager\n");
+
+        apt = COM_ApartmentFromOXID(mid->oxid, TRUE);
+        manager = new_stub_manager(apt, obj);
+        COM_ApartmentRelease(apt);
         if (!manager) return E_OUTOFMEMORY;
 
         if (!tablemarshal) stub_manager_ref(manager, 1);

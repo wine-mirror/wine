@@ -20,7 +20,7 @@
  * NOTES:
  *
  * The errorinfo is a per-thread object. The reference is stored in the
- * TEB at offset 0xf80
+ * TEB at offset 0xf80.
  */
 
 #include <stdarg.h>
@@ -483,20 +483,20 @@ HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **pperrinfo)
  */
 HRESULT WINAPI GetErrorInfo(ULONG dwReserved, IErrorInfo **pperrinfo)
 {
-	APARTMENT * apt = COM_CurrentInfo();
-
-	TRACE("(%ld, %p, %p)\n", dwReserved, pperrinfo, COM_CurrentInfo()->ErrorInfo);
+	TRACE("(%ld, %p, %p)\n", dwReserved, pperrinfo, COM_CurrentInfo()->errorinfo);
 
 	if(!pperrinfo) return E_INVALIDARG;
-	if (!apt || !apt->ErrorInfo)
+        
+	if (!COM_CurrentInfo()->errorinfo)
 	{
 	   *pperrinfo = NULL;
 	   return S_FALSE;
 	}
 
-	*pperrinfo = (IErrorInfo*)(apt->ErrorInfo);
+	*pperrinfo = COM_CurrentInfo()->errorinfo;
+        
 	/* clear thread error state */
-	apt->ErrorInfo = NULL;
+	COM_CurrentInfo()->errorinfo = NULL;
 	return S_OK;
 }
 
@@ -506,18 +506,16 @@ HRESULT WINAPI GetErrorInfo(ULONG dwReserved, IErrorInfo **pperrinfo)
 HRESULT WINAPI SetErrorInfo(ULONG dwReserved, IErrorInfo *perrinfo)
 {
 	IErrorInfo * pei;
-	APARTMENT * apt = COM_CurrentInfo();
 
 	TRACE("(%ld, %p)\n", dwReserved, perrinfo);
 	
-	if (!apt) apt = COM_CreateApartment(COINIT_UNINITIALIZED);
-
 	/* release old errorinfo */
-	pei = (IErrorInfo*)apt->ErrorInfo;
-	if(pei) IErrorInfo_Release(pei);
+	pei = COM_CurrentInfo()->errorinfo;
+	if (pei) IErrorInfo_Release(pei);
 
 	/* set to new value */
-	apt->ErrorInfo = perrinfo;
-	if(perrinfo) IErrorInfo_AddRef(perrinfo);
+	COM_CurrentInfo()->errorinfo = perrinfo;
+	if (perrinfo) IErrorInfo_AddRef(perrinfo);
+        
 	return S_OK;
 }
