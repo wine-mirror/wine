@@ -194,6 +194,8 @@ static WINE_EXCEPTION_FILTER(rpc_filter)
   msg->BufferLength = sizeof(DWORD);
   I_RpcGetBuffer(msg);
   *(DWORD*)msg->Buffer = GetExceptionCode();
+  WARN("exception caught with code 0x%08lx = %ld\n", *(DWORD*)msg->Buffer, *(DWORD*)msg->Buffer);
+  TRACE("returning failure packet\n");
   return EXCEPTION_EXECUTE_HANDLER;
 }
 
@@ -249,7 +251,6 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, void* buf
         if (func) func(&msg);
       } __EXCEPT(rpc_filter) {
         /* failure packet was created in rpc_filter */
-        TRACE("exception caught, returning failure packet\n");
       } __ENDTRY
 
       /* send response packet */

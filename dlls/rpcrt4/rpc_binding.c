@@ -212,12 +212,12 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
         memset(&Connection->ovl, 0, sizeof(Connection->ovl));
         Connection->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
         if (!ConnectNamedPipe(Connection->conn, &Connection->ovl)) {
-          DWORD err = GetLastError();
-          if (err == ERROR_PIPE_CONNECTED) {
+          WARN("Couldn't ConnectNamedPipe (error was %ld)\n", GetLastError());
+          if (GetLastError() == ERROR_PIPE_CONNECTED) {
             SetEvent(Connection->ovl.hEvent);
             return RPC_S_OK;
           }
-          return err;
+          return RPC_S_SERVER_UNAVAILABLE;
         }
       }
       /* protseq=ncacn_np: named pipes */
@@ -233,12 +233,12 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
         memset(&Connection->ovl, 0, sizeof(Connection->ovl));
         Connection->ovl.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
         if (!ConnectNamedPipe(Connection->conn, &Connection->ovl)) {
-          DWORD err = GetLastError();
-          if (err == ERROR_PIPE_CONNECTED) {
+          WARN("Couldn't ConnectNamedPipe (error was %ld)\n", GetLastError());
+          if (GetLastError() == ERROR_PIPE_CONNECTED) {
             SetEvent(Connection->ovl.hEvent);
             return RPC_S_OK;
           }
-          return err;
+          return RPC_S_SERVER_UNAVAILABLE;
         }
       }
       else {
@@ -267,12 +267,12 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
             if (err == ERROR_PIPE_BUSY) continue;
             TRACE("connection failed, error=%lx\n", err);
             HeapFree(GetProcessHeap(), 0, pname);
-            return err;
+            return RPC_S_SERVER_TOO_BUSY;
           } else {
             err = GetLastError();
             TRACE("connection failed, error=%lx\n", err);
             HeapFree(GetProcessHeap(), 0, pname);
-            return err;
+            return RPC_S_SERVER_UNAVAILABLE;
           }
         }
 
@@ -300,7 +300,10 @@ RPC_STATUS RPCRT4_OpenConnection(RpcConnection* Connection)
            * the doc says that it is returned to the app */
           TRACE("connection failed, error=%lx\n", err);
           HeapFree(GetProcessHeap(), 0, pname);
-          return err;
+          if (err == ERROR_PIPE_BUSY)
+            return RPC_S_SERVER_TOO_BUSY;
+          else
+            return RPC_S_SERVER_UNAVAILABLE;
         }
 
         /* success */

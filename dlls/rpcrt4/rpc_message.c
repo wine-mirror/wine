@@ -49,7 +49,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 RPC_STATUS WINAPI I_RpcGetBuffer(PRPC_MESSAGE pMsg)
 {
   RpcBinding* bind = (RpcBinding*)pMsg->Handle;
-  void* buf;
 
   TRACE("(%p): BufferLength=%d\n", pMsg, pMsg->BufferLength);
   /* FIXME: pfnAllocate? */
@@ -57,14 +56,15 @@ RPC_STATUS WINAPI I_RpcGetBuffer(PRPC_MESSAGE pMsg)
     /* it turns out that the original buffer data must still be available
      * while the RPC server is marshalling a reply, so we should not deallocate
      * it, we'll leave deallocating the original buffer to the RPC server */
-    buf = HeapAlloc(GetProcessHeap(), 0, pMsg->BufferLength);
+    pMsg->Buffer = HeapAlloc(GetProcessHeap(), 0, pMsg->BufferLength);
   } else {
-    buf = HeapReAlloc(GetProcessHeap(), 0, pMsg->Buffer, pMsg->BufferLength);
+    if (pMsg->Buffer)
+        HeapFree(GetProcessHeap(), 0, pMsg->Buffer);
+    pMsg->Buffer = HeapAlloc(GetProcessHeap(), 0, pMsg->BufferLength);
   }
-  TRACE("Buffer=%p\n", buf);
-  if (buf) pMsg->Buffer = buf;
+  TRACE("Buffer=%p\n", pMsg->Buffer);
   /* FIXME: which errors to return? */
-  return buf ? S_OK : E_OUTOFMEMORY;
+  return pMsg->Buffer ? S_OK : E_OUTOFMEMORY;
 }
 
 /***********************************************************************
@@ -132,11 +132,20 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
 
   /* transmit packet */
   if (!WriteFile(conn->conn, &hdr, sizeof(hdr), NULL, NULL)) {
-    status = GetLastError();
+    WARN("WriteFile failed with error %ld\n", GetLastError());
+    status = RPC_S_PROTOCOL_ERROR;
     goto fail;
   }
-  if (pMsg->BufferLength && !WriteFile(conn->conn, pMsg->Buffer, pMsg->BufferLength, NULL, NULL)) {
-    status = GetLastError();
+  
+  if (!pMsg->BufferLength)
+  {
+    status = RPC_S_OK;
+    goto fail;
+  }
+ 
+  if (!WriteFile(conn->conn, pMsg->Buffer, pMsg->BufferLength, NULL, NULL)) {
+    WARN("WriteFile failed with error %ld\n", GetLastError());
+    status = RPC_S_PROTOCOL_ERROR;
     goto fail;
   }
 
@@ -184,17 +193,20 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
     if (!ReadFile(conn->conn, &hdr, sizeof(hdr), &dwRead, &conn->ovl)) {
       DWORD err = GetLastError();
       if (err != ERROR_IO_PENDING) {
-        status = err;
+        WARN("ReadFile failed with error %ld\n", err);
+        status = RPC_S_PROTOCOL_ERROR;
         goto fail;
       }
       if (!GetOverlappedResult(conn->conn, &conn->ovl, &dwRead, TRUE)) {
-        status = GetLastError();
+        WARN("ReadFile failed with error %ld\n", GetLastError());
+        status = RPC_S_PROTOCOL_ERROR;
         goto fail;
       }
     }
 #else
     if (!ReadFile(conn->conn, &hdr, sizeof(hdr), &dwRead, NULL)) {
-      status = GetLastError();
+      WARN("ReadFile failed with error %ld\n", GetLastError());
+      status = RPC_S_PROTOCOL_ERROR;
       goto fail;
     }
 #endif
@@ -210,19 +222,21 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
     if (!pMsg->BufferLength) dwRead = 0; else
 #ifdef OVERLAPPED_WORKS
     if (!ReadFile(conn->conn, pMsg->Buffer, hdr.len, &dwRead, &conn->ovl)) {
-      DWORD err = GetLastError();
-      if (err != ERROR_IO_PENDING) {
-        status = err;
+      if (GetLastError() != ERROR_IO_PENDING) {
+        WARN("ReadFile failed with error %ld\n", GetLastError());
+        status = RPC_S_PROTOCOL_ERROR;
         goto fail;
       }
       if (!GetOverlappedResult(conn->conn, &conn->ovl, &dwRead, TRUE)) {
-        status = GetLastError();
+        WARN("ReadFile failed with error %ld\n", GetLastError());
+        status = RPC_S_PROTOCOL_ERROR;
         goto fail;
       }
     }
 #else
     if (!ReadFile(conn->conn, pMsg->Buffer, hdr.len, &dwRead, NULL)) {
-      status = GetLastError();
+      WARN("ReadFile failed with error %ld\n", GetLastError());
+      status = RPC_S_PROTOCOL_ERROR;
       goto fail;
     }
 #endif
