@@ -10,7 +10,7 @@
 
 
 #include <X11/Xlib.h>
-#include "debug.h"
+#include "debugtools.h"
 #include "x11drv.h"
 
 DEFAULT_DEBUG_CHANNEL(x11)
@@ -18,1285 +18,1285 @@ DEFAULT_DEBUG_CHANNEL(x11)
 XFontStruct * TSXLoadQueryFont(Display* a0, const  char* a1)
 {
   XFontStruct * r;
-  TRACE(x11, "Call XLoadQueryFont\n");
+  TRACE("Call XLoadQueryFont\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XLoadQueryFont(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XLoadQueryFont\n");
+  TRACE("Ret XLoadQueryFont\n");
   return r;
 }
 
 XModifierKeymap	* TSXGetModifierMapping(Display* a0)
 {
   XModifierKeymap	* r;
-  TRACE(x11, "Call XGetModifierMapping\n");
+  TRACE("Call XGetModifierMapping\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XGetModifierMapping(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGetModifierMapping\n");
+  TRACE("Ret XGetModifierMapping\n");
   return r;
 }
 
 XImage * TSXCreateImage(Display* a0, Visual* a1, unsigned int a2, int a3, int a4, char* a5, unsigned int a6, unsigned int a7, int a8, int a9)
 {
   XImage * r;
-  TRACE(x11, "Call XCreateImage\n");
+  TRACE("Call XCreateImage\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XCreateImage(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XCreateImage\n");
+  TRACE("Ret XCreateImage\n");
   return r;
 }
 
 XImage * TSXGetImage(Display* a0, Drawable a1, int a2, int a3, unsigned int a4, unsigned int a5, unsigned long a6, int a7)
 {
   XImage * r;
-  TRACE(x11, "Call XGetImage\n");
+  TRACE("Call XGetImage\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XGetImage(a0, a1, a2, a3, a4, a5, a6, a7);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGetImage\n");
+  TRACE("Ret XGetImage\n");
   return r;
 }
 
 Display * TSXOpenDisplay(const  char* a0)
 {
   Display * r;
-  TRACE(x11, "Call XOpenDisplay\n");
+  TRACE("Call XOpenDisplay\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XOpenDisplay(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XOpenDisplay\n");
+  TRACE("Ret XOpenDisplay\n");
   return r;
 }
 
 void  TSXrmInitialize(void)
 {
-  TRACE(x11, "Call XrmInitialize\n");
+  TRACE("Call XrmInitialize\n");
   EnterCriticalSection( &X11DRV_CritSection );
   XrmInitialize();
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XrmInitialize\n");
+  TRACE("Ret XrmInitialize\n");
 }
 
 char * TSXGetAtomName(Display* a0, Atom a1)
 {
   char * r;
-  TRACE(x11, "Call XGetAtomName\n");
+  TRACE("Call XGetAtomName\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XGetAtomName(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGetAtomName\n");
+  TRACE("Ret XGetAtomName\n");
   return r;
 }
 
 char * TSXKeysymToString(KeySym a0)
 {
   char * r;
-  TRACE(x11, "Call XKeysymToString\n");
+  TRACE("Call XKeysymToString\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XKeysymToString(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XKeysymToString\n");
+  TRACE("Ret XKeysymToString\n");
   return r;
 }
 
 Atom  TSXInternAtom(Display* a0, const  char* a1, int a2)
 {
   Atom  r;
-  TRACE(x11, "Call XInternAtom\n");
+  TRACE("Call XInternAtom\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XInternAtom(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XInternAtom\n");
+  TRACE("Ret XInternAtom\n");
   return r;
 }
 
 Colormap  TSXCopyColormapAndFree(Display* a0, Colormap a1)
 {
   Colormap  r;
-  TRACE(x11, "Call XCopyColormapAndFree\n");
+  TRACE("Call XCopyColormapAndFree\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XCopyColormapAndFree(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XCopyColormapAndFree\n");
+  TRACE("Ret XCopyColormapAndFree\n");
   return r;
 }
 
 Colormap  TSXCreateColormap(Display* a0, Window a1, Visual* a2, int a3)
 {
   Colormap  r;
-  TRACE(x11, "Call XCreateColormap\n");
+  TRACE("Call XCreateColormap\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XCreateColormap(a0, a1, a2, a3);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XCreateColormap\n");
+  TRACE("Ret XCreateColormap\n");
   return r;
 }
 
 Cursor  TSXCreatePixmapCursor(Display* a0, Pixmap a1, Pixmap a2, XColor* a3, XColor* a4, unsigned int a5, unsigned int a6)
 {
   Cursor  r;
-  TRACE(x11, "Call XCreatePixmapCursor\n");
+  TRACE("Call XCreatePixmapCursor\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XCreatePixmapCursor(a0, a1, a2, a3, a4, a5, a6);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XCreatePixmapCursor\n");
+  TRACE("Ret XCreatePixmapCursor\n");
   return r;
 }
 
 Cursor  TSXCreateFontCursor(Display* a0, unsigned int a1)
 {
   Cursor  r;
-  TRACE(x11, "Call XCreateFontCursor\n");
+  TRACE("Call XCreateFontCursor\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XCreateFontCursor(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XCreateFontCursor\n");
+  TRACE("Ret XCreateFontCursor\n");
   return r;
 }
 
 GC  TSXCreateGC(Display* a0, Drawable a1, unsigned long a2, XGCValues* a3)
 {
   GC  r;
-  TRACE(x11, "Call XCreateGC\n");
+  TRACE("Call XCreateGC\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XCreateGC(a0, a1, a2, a3);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XCreateGC\n");
+  TRACE("Ret XCreateGC\n");
   return r;
 }
 
 Pixmap  TSXCreatePixmap(Display* a0, Drawable a1, unsigned int a2, unsigned int a3, unsigned int a4)
 {
   Pixmap  r;
-  TRACE(x11, "Call XCreatePixmap\n");
+  TRACE("Call XCreatePixmap\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XCreatePixmap(a0, a1, a2, a3, a4);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XCreatePixmap\n");
+  TRACE("Ret XCreatePixmap\n");
   return r;
 }
 
 Pixmap  TSXCreateBitmapFromData(Display* a0, Drawable a1, const  char* a2, unsigned int a3, unsigned int a4)
 {
   Pixmap  r;
-  TRACE(x11, "Call XCreateBitmapFromData\n");
+  TRACE("Call XCreateBitmapFromData\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XCreateBitmapFromData(a0, a1, a2, a3, a4);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XCreateBitmapFromData\n");
+  TRACE("Ret XCreateBitmapFromData\n");
   return r;
 }
 
 Window  TSXGetSelectionOwner(Display* a0, Atom a1)
 {
   Window  r;
-  TRACE(x11, "Call XGetSelectionOwner\n");
+  TRACE("Call XGetSelectionOwner\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XGetSelectionOwner(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGetSelectionOwner\n");
+  TRACE("Ret XGetSelectionOwner\n");
   return r;
 }
 
 Window  TSXCreateWindow(Display* a0, Window a1, int a2, int a3, unsigned int a4, unsigned int a5, unsigned int a6, int a7, unsigned int a8, Visual* a9, unsigned long a10, XSetWindowAttributes* a11)
 {
   Window  r;
-  TRACE(x11, "Call XCreateWindow\n");
+  TRACE("Call XCreateWindow\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XCreateWindow(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XCreateWindow\n");
+  TRACE("Ret XCreateWindow\n");
   return r;
 }
 
 char ** TSXListFonts(Display* a0, const  char* a1, int a2, int* a3)
 {
   char ** r;
-  TRACE(x11, "Call XListFonts\n");
+  TRACE("Call XListFonts\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XListFonts(a0, a1, a2, a3);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XListFonts\n");
+  TRACE("Ret XListFonts\n");
   return r;
 }
 
 KeySym  TSXKeycodeToKeysym(Display* a0, unsigned int a1, int a2)
 {
   KeySym  r;
-  TRACE(x11, "Call XKeycodeToKeysym\n");
+  TRACE("Call XKeycodeToKeysym\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XKeycodeToKeysym(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XKeycodeToKeysym\n");
+  TRACE("Ret XKeycodeToKeysym\n");
   return r;
 }
 
 KeySym  TSXLookupKeysym(XKeyEvent* a0, int a1)
 {
   KeySym  r;
-  TRACE(x11, "Call XLookupKeysym\n");
+  TRACE("Call XLookupKeysym\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XLookupKeysym(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XLookupKeysym\n");
+  TRACE("Ret XLookupKeysym\n");
   return r;
 }
 
 KeySym * TSXGetKeyboardMapping(Display* a0, unsigned int a1, int a2, int* a3)
 {
   KeySym * r;
-  TRACE(x11, "Call XGetKeyboardMapping\n");
+  TRACE("Call XGetKeyboardMapping\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XGetKeyboardMapping(a0, a1, a2, a3);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGetKeyboardMapping\n");
+  TRACE("Ret XGetKeyboardMapping\n");
   return r;
 }
 
 char * TSXResourceManagerString(Display* a0)
 {
   char * r;
-  TRACE(x11, "Call XResourceManagerString\n");
+  TRACE("Call XResourceManagerString\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XResourceManagerString(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XResourceManagerString\n");
+  TRACE("Ret XResourceManagerString\n");
   return r;
 }
 
 int   TSXInitThreads(void)
 {
   int   r;
-  TRACE(x11, "Call XInitThreads\n");
+  TRACE("Call XInitThreads\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XInitThreads();
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XInitThreads\n");
+  TRACE("Ret XInitThreads\n");
   return r;
 }
 
 int * TSXListDepths(Display* a0, int a1, int* a2)
 {
   int * r;
-  TRACE(x11, "Call XListDepths\n");
+  TRACE("Call XListDepths\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XListDepths(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XListDepths\n");
+  TRACE("Ret XListDepths\n");
   return r;
 }
 
 int   TSXReconfigureWMWindow(Display* a0, Window a1, int a2, unsigned int a3, XWindowChanges* a4)
 {
   int   r;
-  TRACE(x11, "Call XReconfigureWMWindow\n");
+  TRACE("Call XReconfigureWMWindow\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XReconfigureWMWindow(a0, a1, a2, a3, a4);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XReconfigureWMWindow\n");
+  TRACE("Ret XReconfigureWMWindow\n");
   return r;
 }
 
 int   TSXSetWMProtocols(Display* a0, Window a1, Atom* a2, int a3)
 {
   int   r;
-  TRACE(x11, "Call XSetWMProtocols\n");
+  TRACE("Call XSetWMProtocols\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetWMProtocols(a0, a1, a2, a3);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetWMProtocols\n");
+  TRACE("Ret XSetWMProtocols\n");
   return r;
 }
 
 int   TSXIconifyWindow(Display* a0, Window a1, int a2)
 {
   int   r;
-  TRACE(x11, "Call XIconifyWindow\n");
+  TRACE("Call XIconifyWindow\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XIconifyWindow(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XIconifyWindow\n");
+  TRACE("Ret XIconifyWindow\n");
   return r;
 }
 
 int  TSXSetTransientForHint(Display* a0, Window a1, Window a2)
 {
   int  r;
-  TRACE(x11, "Call XSetTransientForHint\n");
+  TRACE("Call XSetTransientForHint\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetTransientForHint(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetTransientForHint\n");
+  TRACE("Ret XSetTransientForHint\n");
   return r;
 }
 
 int  TSXActivateScreenSaver(Display* a0)
 {
   int  r;
-  TRACE(x11, "Call XActivateScreenSaver\n");
+  TRACE("Call XActivateScreenSaver\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XActivateScreenSaver(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XActivateScreenSaver\n");
+  TRACE("Ret XActivateScreenSaver\n");
   return r;
 }
 
 int   TSXAllocColor(Display* a0, Colormap a1, XColor* a2)
 {
   int   r;
-  TRACE(x11, "Call XAllocColor\n");
+  TRACE("Call XAllocColor\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XAllocColor(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XAllocColor\n");
+  TRACE("Ret XAllocColor\n");
   return r;
 }
 
 int   TSXAllocColorCells(Display* a0, Colormap a1, int a2, unsigned long* a3, unsigned int a4, unsigned long* a5, unsigned int a6)
 {
   int   r;
-  TRACE(x11, "Call XAllocColorCells\n");
+  TRACE("Call XAllocColorCells\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XAllocColorCells(a0, a1, a2, a3, a4, a5, a6);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XAllocColorCells\n");
+  TRACE("Ret XAllocColorCells\n");
   return r;
 }
 
 int  TSXBell(Display* a0, int a1)
 {
   int  r;
-  TRACE(x11, "Call XBell\n");
+  TRACE("Call XBell\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XBell(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XBell\n");
+  TRACE("Ret XBell\n");
   return r;
 }
 
 int  TSXChangeGC(Display* a0, GC a1, unsigned long a2, XGCValues* a3)
 {
   int  r;
-  TRACE(x11, "Call XChangeGC\n");
+  TRACE("Call XChangeGC\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XChangeGC(a0, a1, a2, a3);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XChangeGC\n");
+  TRACE("Ret XChangeGC\n");
   return r;
 }
 
 int  TSXChangeKeyboardControl(Display* a0, unsigned long a1, XKeyboardControl* a2)
 {
   int  r;
-  TRACE(x11, "Call XChangeKeyboardControl\n");
+  TRACE("Call XChangeKeyboardControl\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XChangeKeyboardControl(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XChangeKeyboardControl\n");
+  TRACE("Ret XChangeKeyboardControl\n");
   return r;
 }
 
 int  TSXChangeProperty(Display* a0, Window a1, Atom a2, Atom a3, int a4, int a5, const  unsigned char* a6, int a7)
 {
   int  r;
-  TRACE(x11, "Call XChangeProperty\n");
+  TRACE("Call XChangeProperty\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XChangeProperty(a0, a1, a2, a3, a4, a5, a6, a7);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XChangeProperty\n");
+  TRACE("Ret XChangeProperty\n");
   return r;
 }
 
 int  TSXChangeWindowAttributes(Display* a0, Window a1, unsigned long a2, XSetWindowAttributes* a3)
 {
   int  r;
-  TRACE(x11, "Call XChangeWindowAttributes\n");
+  TRACE("Call XChangeWindowAttributes\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XChangeWindowAttributes(a0, a1, a2, a3);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XChangeWindowAttributes\n");
+  TRACE("Ret XChangeWindowAttributes\n");
   return r;
 }
 
 int   TSXCheckTypedWindowEvent(Display* a0, Window a1, int a2, XEvent* a3)
 {
   int   r;
-  TRACE(x11, "Call XCheckTypedWindowEvent\n");
+  TRACE("Call XCheckTypedWindowEvent\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XCheckTypedWindowEvent(a0, a1, a2, a3);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XCheckTypedWindowEvent\n");
+  TRACE("Ret XCheckTypedWindowEvent\n");
   return r;
 }
 
 int   TSXCheckWindowEvent(Display* a0, Window a1, long a2, XEvent* a3)
 {
   int   r;
-  TRACE(x11, "Call XCheckWindowEvent\n");
+  TRACE("Call XCheckWindowEvent\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XCheckWindowEvent(a0, a1, a2, a3);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XCheckWindowEvent\n");
+  TRACE("Ret XCheckWindowEvent\n");
   return r;
 }
 
 int  TSXConvertSelection(Display* a0, Atom a1, Atom a2, Atom a3, Window a4, Time a5)
 {
   int  r;
-  TRACE(x11, "Call XConvertSelection\n");
+  TRACE("Call XConvertSelection\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XConvertSelection(a0, a1, a2, a3, a4, a5);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XConvertSelection\n");
+  TRACE("Ret XConvertSelection\n");
   return r;
 }
 
 int  TSXCopyArea(Display* a0, Drawable a1, Drawable a2, GC a3, int a4, int a5, unsigned int a6, unsigned int a7, int a8, int a9)
 {
   int  r;
-  TRACE(x11, "Call XCopyArea\n");
+  TRACE("Call XCopyArea\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XCopyArea(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XCopyArea\n");
+  TRACE("Ret XCopyArea\n");
   return r;
 }
 
 int  TSXCopyPlane(Display* a0, Drawable a1, Drawable a2, GC a3, int a4, int a5, unsigned int a6, unsigned int a7, int a8, int a9, unsigned long a10)
 {
   int  r;
-  TRACE(x11, "Call XCopyPlane\n");
+  TRACE("Call XCopyPlane\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XCopyPlane(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XCopyPlane\n");
+  TRACE("Ret XCopyPlane\n");
   return r;
 }
 
 int  TSXDefineCursor(Display* a0, Window a1, Cursor a2)
 {
   int  r;
-  TRACE(x11, "Call XDefineCursor\n");
+  TRACE("Call XDefineCursor\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XDefineCursor(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XDefineCursor\n");
+  TRACE("Ret XDefineCursor\n");
   return r;
 }
 
 int  TSXDestroyWindow(Display* a0, Window a1)
 {
   int  r;
-  TRACE(x11, "Call XDestroyWindow\n");
+  TRACE("Call XDestroyWindow\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XDestroyWindow(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XDestroyWindow\n");
+  TRACE("Ret XDestroyWindow\n");
   return r;
 }
 
 int  TSXDisplayKeycodes(Display* a0, int* a1, int* a2)
 {
   int  r;
-  TRACE(x11, "Call XDisplayKeycodes\n");
+  TRACE("Call XDisplayKeycodes\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XDisplayKeycodes(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XDisplayKeycodes\n");
+  TRACE("Ret XDisplayKeycodes\n");
   return r;
 }
 
 int  TSXDrawArc(Display* a0, Drawable a1, GC a2, int a3, int a4, unsigned int a5, unsigned int a6, int a7, int a8)
 {
   int  r;
-  TRACE(x11, "Call XDrawArc\n");
+  TRACE("Call XDrawArc\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XDrawArc(a0, a1, a2, a3, a4, a5, a6, a7, a8);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XDrawArc\n");
+  TRACE("Ret XDrawArc\n");
   return r;
 }
 
 int  TSXDrawLine(Display* a0, Drawable a1, GC a2, int a3, int a4, int a5, int a6)
 {
   int  r;
-  TRACE(x11, "Call XDrawLine\n");
+  TRACE("Call XDrawLine\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XDrawLine(a0, a1, a2, a3, a4, a5, a6);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XDrawLine\n");
+  TRACE("Ret XDrawLine\n");
   return r;
 }
 
 int  TSXDrawLines(Display* a0, Drawable a1, GC a2, XPoint* a3, int a4, int a5)
 {
   int  r;
-  TRACE(x11, "Call XDrawLines\n");
+  TRACE("Call XDrawLines\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XDrawLines(a0, a1, a2, a3, a4, a5);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XDrawLines\n");
+  TRACE("Ret XDrawLines\n");
   return r;
 }
 
 int  TSXDrawPoint(Display* a0, Drawable a1, GC a2, int a3, int a4)
 {
   int  r;
-  TRACE(x11, "Call XDrawPoint\n");
+  TRACE("Call XDrawPoint\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XDrawPoint(a0, a1, a2, a3, a4);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XDrawPoint\n");
+  TRACE("Ret XDrawPoint\n");
   return r;
 }
 
 int  TSXDrawRectangle(Display* a0, Drawable a1, GC a2, int a3, int a4, unsigned int a5, unsigned int a6)
 {
   int  r;
-  TRACE(x11, "Call XDrawRectangle\n");
+  TRACE("Call XDrawRectangle\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XDrawRectangle(a0, a1, a2, a3, a4, a5, a6);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XDrawRectangle\n");
+  TRACE("Ret XDrawRectangle\n");
   return r;
 }
 
 int  TSXDrawSegments(Display* a0, Drawable a1, GC a2, XSegment* a3, int a4)
 {
   int  r;
-  TRACE(x11, "Call XDrawSegments\n");
+  TRACE("Call XDrawSegments\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XDrawSegments(a0, a1, a2, a3, a4);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XDrawSegments\n");
+  TRACE("Ret XDrawSegments\n");
   return r;
 }
 
 int  TSXDrawString(Display* a0, Drawable a1, GC a2, int a3, int a4, const  char* a5, int a6)
 {
   int  r;
-  TRACE(x11, "Call XDrawString\n");
+  TRACE("Call XDrawString\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XDrawString(a0, a1, a2, a3, a4, a5, a6);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XDrawString\n");
+  TRACE("Ret XDrawString\n");
   return r;
 }
 
 int  TSXDrawText(Display* a0, Drawable a1, GC a2, int a3, int a4, XTextItem* a5, int a6)
 {
   int  r;
-  TRACE(x11, "Call XDrawText\n");
+  TRACE("Call XDrawText\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XDrawText(a0, a1, a2, a3, a4, a5, a6);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XDrawText\n");
+  TRACE("Ret XDrawText\n");
   return r;
 }
 
 int  TSXFillArc(Display* a0, Drawable a1, GC a2, int a3, int a4, unsigned int a5, unsigned int a6, int a7, int a8)
 {
   int  r;
-  TRACE(x11, "Call XFillArc\n");
+  TRACE("Call XFillArc\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XFillArc(a0, a1, a2, a3, a4, a5, a6, a7, a8);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XFillArc\n");
+  TRACE("Ret XFillArc\n");
   return r;
 }
 
 int  TSXFillPolygon(Display* a0, Drawable a1, GC a2, XPoint* a3, int a4, int a5, int a6)
 {
   int  r;
-  TRACE(x11, "Call XFillPolygon\n");
+  TRACE("Call XFillPolygon\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XFillPolygon(a0, a1, a2, a3, a4, a5, a6);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XFillPolygon\n");
+  TRACE("Ret XFillPolygon\n");
   return r;
 }
 
 int  TSXFillRectangle(Display* a0, Drawable a1, GC a2, int a3, int a4, unsigned int a5, unsigned int a6)
 {
   int  r;
-  TRACE(x11, "Call XFillRectangle\n");
+  TRACE("Call XFillRectangle\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XFillRectangle(a0, a1, a2, a3, a4, a5, a6);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XFillRectangle\n");
+  TRACE("Ret XFillRectangle\n");
   return r;
 }
 
 int  TSXFlush(Display* a0)
 {
   int  r;
-  TRACE(x11, "Call XFlush\n");
+  TRACE("Call XFlush\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XFlush(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XFlush\n");
+  TRACE("Ret XFlush\n");
   return r;
 }
 
 int  TSXFree(void* a0)
 {
   int  r;
-  TRACE(x11, "Call XFree\n");
+  TRACE("Call XFree\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XFree(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XFree\n");
+  TRACE("Ret XFree\n");
   return r;
 }
 
 int  TSXFreeColormap(Display* a0, Colormap a1)
 {
   int  r;
-  TRACE(x11, "Call XFreeColormap\n");
+  TRACE("Call XFreeColormap\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XFreeColormap(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XFreeColormap\n");
+  TRACE("Ret XFreeColormap\n");
   return r;
 }
 
 int  TSXFreeColors(Display* a0, Colormap a1, unsigned long* a2, int a3, unsigned long a4)
 {
   int  r;
-  TRACE(x11, "Call XFreeColors\n");
+  TRACE("Call XFreeColors\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XFreeColors(a0, a1, a2, a3, a4);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XFreeColors\n");
+  TRACE("Ret XFreeColors\n");
   return r;
 }
 
 int  TSXFreeCursor(Display* a0, Cursor a1)
 {
   int  r;
-  TRACE(x11, "Call XFreeCursor\n");
+  TRACE("Call XFreeCursor\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XFreeCursor(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XFreeCursor\n");
+  TRACE("Ret XFreeCursor\n");
   return r;
 }
 
 int  TSXFreeFont(Display* a0, XFontStruct* a1)
 {
   int  r;
-  TRACE(x11, "Call XFreeFont\n");
+  TRACE("Call XFreeFont\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XFreeFont(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XFreeFont\n");
+  TRACE("Ret XFreeFont\n");
   return r;
 }
 
 int  TSXFreeFontNames(char** a0)
 {
   int  r;
-  TRACE(x11, "Call XFreeFontNames\n");
+  TRACE("Call XFreeFontNames\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XFreeFontNames(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XFreeFontNames\n");
+  TRACE("Ret XFreeFontNames\n");
   return r;
 }
 
 int  TSXFreeGC(Display* a0, GC a1)
 {
   int  r;
-  TRACE(x11, "Call XFreeGC\n");
+  TRACE("Call XFreeGC\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XFreeGC(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XFreeGC\n");
+  TRACE("Ret XFreeGC\n");
   return r;
 }
 
 int  TSXFreeModifiermap(XModifierKeymap* a0)
 {
   int  r;
-  TRACE(x11, "Call XFreeModifiermap\n");
+  TRACE("Call XFreeModifiermap\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XFreeModifiermap(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XFreeModifiermap\n");
+  TRACE("Ret XFreeModifiermap\n");
   return r;
 }
 
 int  TSXFreePixmap(Display* a0, Pixmap a1)
 {
   int  r;
-  TRACE(x11, "Call XFreePixmap\n");
+  TRACE("Call XFreePixmap\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XFreePixmap(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XFreePixmap\n");
+  TRACE("Ret XFreePixmap\n");
   return r;
 }
 
 int   TSXGetFontProperty(XFontStruct* a0, Atom a1, unsigned long* a2)
 {
   int   r;
-  TRACE(x11, "Call XGetFontProperty\n");
+  TRACE("Call XGetFontProperty\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XGetFontProperty(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGetFontProperty\n");
+  TRACE("Ret XGetFontProperty\n");
   return r;
 }
 
 int   TSXGetGeometry(Display* a0, Drawable a1, Window* a2, int* a3, int* a4, unsigned int* a5, unsigned int* a6, unsigned int* a7, unsigned int* a8)
 {
   int   r;
-  TRACE(x11, "Call XGetGeometry\n");
+  TRACE("Call XGetGeometry\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XGetGeometry(a0, a1, a2, a3, a4, a5, a6, a7, a8);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGetGeometry\n");
+  TRACE("Ret XGetGeometry\n");
   return r;
 }
 
 int  TSXGetInputFocus(Display* a0, Window* a1, int* a2)
 {
   int  r;
-  TRACE(x11, "Call XGetInputFocus\n");
+  TRACE("Call XGetInputFocus\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XGetInputFocus(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGetInputFocus\n");
+  TRACE("Ret XGetInputFocus\n");
   return r;
 }
 
 int  TSXGetKeyboardControl(Display* a0, XKeyboardState* a1)
 {
   int  r;
-  TRACE(x11, "Call XGetKeyboardControl\n");
+  TRACE("Call XGetKeyboardControl\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XGetKeyboardControl(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGetKeyboardControl\n");
+  TRACE("Ret XGetKeyboardControl\n");
   return r;
 }
 
 int  TSXGetScreenSaver(Display* a0, int* a1, int* a2, int* a3, int* a4)
 {
   int  r;
-  TRACE(x11, "Call XGetScreenSaver\n");
+  TRACE("Call XGetScreenSaver\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XGetScreenSaver(a0, a1, a2, a3, a4);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGetScreenSaver\n");
+  TRACE("Ret XGetScreenSaver\n");
   return r;
 }
 
 int  TSXGetWindowProperty(Display* a0, Window a1, Atom a2, long a3, long a4, int a5, Atom a6, Atom* a7, int* a8, unsigned long* a9, unsigned long* a10, unsigned char** a11)
 {
   int  r;
-  TRACE(x11, "Call XGetWindowProperty\n");
+  TRACE("Call XGetWindowProperty\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XGetWindowProperty(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGetWindowProperty\n");
+  TRACE("Ret XGetWindowProperty\n");
   return r;
 }
 
 int   TSXGetWindowAttributes(Display* a0, Window a1, XWindowAttributes* a2)
 {
   int   r;
-  TRACE(x11, "Call XGetWindowAttributes\n");
+  TRACE("Call XGetWindowAttributes\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XGetWindowAttributes(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGetWindowAttributes\n");
+  TRACE("Ret XGetWindowAttributes\n");
   return r;
 }
 
 int  TSXGrabServer(Display* a0)
 {
   int  r;
-  TRACE(x11, "Call XGrabServer\n");
+  TRACE("Call XGrabServer\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XGrabServer(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XGrabServer\n");
+  TRACE("Ret XGrabServer\n");
   return r;
 }
 
 int  TSXInstallColormap(Display* a0, Colormap a1)
 {
   int  r;
-  TRACE(x11, "Call XInstallColormap\n");
+  TRACE("Call XInstallColormap\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XInstallColormap(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XInstallColormap\n");
+  TRACE("Ret XInstallColormap\n");
   return r;
 }
 
 KeyCode  TSXKeysymToKeycode(Display* a0, KeySym a1)
 {
   KeyCode  r;
-  TRACE(x11, "Call XKeysymToKeycode\n");
+  TRACE("Call XKeysymToKeycode\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XKeysymToKeycode(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XKeysymToKeycode\n");
+  TRACE("Ret XKeysymToKeycode\n");
   return r;
 }
 
 int  TSXMapWindow(Display* a0, Window a1)
 {
   int  r;
-  TRACE(x11, "Call XMapWindow\n");
+  TRACE("Call XMapWindow\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XMapWindow(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XMapWindow\n");
+  TRACE("Ret XMapWindow\n");
   return r;
 }
 
 int  TSXNextEvent(Display* a0, XEvent* a1)
 {
   int  r;
-  TRACE(x11, "Call XNextEvent\n");
+  TRACE("Call XNextEvent\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XNextEvent(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XNextEvent\n");
+  TRACE("Ret XNextEvent\n");
   return r;
 }
 
 int  TSXParseGeometry(const  char* a0, int* a1, int* a2, unsigned int* a3, unsigned int* a4)
 {
   int  r;
-  TRACE(x11, "Call XParseGeometry\n");
+  TRACE("Call XParseGeometry\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XParseGeometry(a0, a1, a2, a3, a4);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XParseGeometry\n");
+  TRACE("Ret XParseGeometry\n");
   return r;
 }
 
 int  TSXPending(Display* a0)
 {
   int  r;
-  TRACE(x11, "Call XPending\n");
+  TRACE("Call XPending\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XPending(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XPending\n");
+  TRACE("Ret XPending\n");
   return r;
 }
 
 int  TSXPutBackEvent(Display* a0, XEvent* a1)
 {
   int  r;
-  TRACE(x11, "Call XPutBackEvent\n");
+  TRACE("Call XPutBackEvent\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XPutBackEvent(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XPutBackEvent\n");
+  TRACE("Ret XPutBackEvent\n");
   return r;
 }
 
 int  TSXPutImage(Display* a0, Drawable a1, GC a2, XImage* a3, int a4, int a5, int a6, int a7, unsigned int a8, unsigned int a9)
 {
   int  r;
-  TRACE(x11, "Call XPutImage\n");
+  TRACE("Call XPutImage\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XPutImage(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XPutImage\n");
+  TRACE("Ret XPutImage\n");
   return r;
 }
 
 int  TSXQueryColor(Display* a0, Colormap a1, XColor* a2)
 {
   int  r;
-  TRACE(x11, "Call XQueryColor\n");
+  TRACE("Call XQueryColor\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XQueryColor(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XQueryColor\n");
+  TRACE("Ret XQueryColor\n");
   return r;
 }
 
 int  TSXQueryKeymap(Display* a0, char* a1)
 {
   int  r;
-  TRACE(x11, "Call XQueryKeymap\n");
+  TRACE("Call XQueryKeymap\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XQueryKeymap(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XQueryKeymap\n");
+  TRACE("Ret XQueryKeymap\n");
   return r;
 }
 
 int   TSXQueryPointer(Display* a0, Window a1, Window* a2, Window* a3, int* a4, int* a5, int* a6, int* a7, unsigned int* a8)
 {
   int   r;
-  TRACE(x11, "Call XQueryPointer\n");
+  TRACE("Call XQueryPointer\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XQueryPointer(a0, a1, a2, a3, a4, a5, a6, a7, a8);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XQueryPointer\n");
+  TRACE("Ret XQueryPointer\n");
   return r;
 }
 
 int   TSXQueryTree(Display* a0, Window a1, Window* a2, Window* a3, Window** a4, unsigned int* a5)
 {
   int   r;
-  TRACE(x11, "Call XQueryTree\n");
+  TRACE("Call XQueryTree\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XQueryTree(a0, a1, a2, a3, a4, a5);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XQueryTree\n");
+  TRACE("Ret XQueryTree\n");
   return r;
 }
 
 int  TSXResetScreenSaver(Display* a0)
 {
   int  r;
-  TRACE(x11, "Call XResetScreenSaver\n");
+  TRACE("Call XResetScreenSaver\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XResetScreenSaver(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XResetScreenSaver\n");
+  TRACE("Ret XResetScreenSaver\n");
   return r;
 }
 
 int  TSXRestackWindows(Display* a0, Window* a1, int a2)
 {
   int  r;
-  TRACE(x11, "Call XRestackWindows\n");
+  TRACE("Call XRestackWindows\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XRestackWindows(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XRestackWindows\n");
+  TRACE("Ret XRestackWindows\n");
   return r;
 }
 
 int   TSXSendEvent(Display* a0, Window a1, int a2, long a3, XEvent* a4)
 {
   int   r;
-  TRACE(x11, "Call XSendEvent\n");
+  TRACE("Call XSendEvent\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSendEvent(a0, a1, a2, a3, a4);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSendEvent\n");
+  TRACE("Ret XSendEvent\n");
   return r;
 }
 
 int  TSXSetArcMode(Display* a0, GC a1, int a2)
 {
   int  r;
-  TRACE(x11, "Call XSetArcMode\n");
+  TRACE("Call XSetArcMode\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetArcMode(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetArcMode\n");
+  TRACE("Ret XSetArcMode\n");
   return r;
 }
 
 int  TSXSetBackground(Display* a0, GC a1, unsigned long a2)
 {
   int  r;
-  TRACE(x11, "Call XSetBackground\n");
+  TRACE("Call XSetBackground\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetBackground(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetBackground\n");
+  TRACE("Ret XSetBackground\n");
   return r;
 }
 
 int  TSXSetClipMask(Display* a0, GC a1, Pixmap a2)
 {
   int  r;
-  TRACE(x11, "Call XSetClipMask\n");
+  TRACE("Call XSetClipMask\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetClipMask(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetClipMask\n");
+  TRACE("Ret XSetClipMask\n");
   return r;
 }
 
 int  TSXSetClipOrigin(Display* a0, GC a1, int a2, int a3)
 {
   int  r;
-  TRACE(x11, "Call XSetClipOrigin\n");
+  TRACE("Call XSetClipOrigin\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetClipOrigin(a0, a1, a2, a3);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetClipOrigin\n");
+  TRACE("Ret XSetClipOrigin\n");
   return r;
 }
 
 int  TSXSetClipRectangles(Display* a0, GC a1, int a2, int a3, XRectangle* a4, int a5, int a6)
 {
   int  r;
-  TRACE(x11, "Call XSetClipRectangles\n");
+  TRACE("Call XSetClipRectangles\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetClipRectangles(a0, a1, a2, a3, a4, a5, a6);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetClipRectangles\n");
+  TRACE("Ret XSetClipRectangles\n");
   return r;
 }
 
 int  TSXSetDashes(Display* a0, GC a1, int a2, const  char* a3, int a4)
 {
   int  r;
-  TRACE(x11, "Call XSetDashes\n");
+  TRACE("Call XSetDashes\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetDashes(a0, a1, a2, a3, a4);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetDashes\n");
+  TRACE("Ret XSetDashes\n");
   return r;
 }
 
 int  TSXSetFillStyle(Display* a0, GC a1, int a2)
 {
   int  r;
-  TRACE(x11, "Call XSetFillStyle\n");
+  TRACE("Call XSetFillStyle\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetFillStyle(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetFillStyle\n");
+  TRACE("Ret XSetFillStyle\n");
   return r;
 }
 
 int  TSXSetForeground(Display* a0, GC a1, unsigned long a2)
 {
   int  r;
-  TRACE(x11, "Call XSetForeground\n");
+  TRACE("Call XSetForeground\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetForeground(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetForeground\n");
+  TRACE("Ret XSetForeground\n");
   return r;
 }
 
 int  TSXSetFunction(Display* a0, GC a1, int a2)
 {
   int  r;
-  TRACE(x11, "Call XSetFunction\n");
+  TRACE("Call XSetFunction\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetFunction(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetFunction\n");
+  TRACE("Ret XSetFunction\n");
   return r;
 }
 
 int  TSXSetGraphicsExposures(Display* a0, GC a1, int a2)
 {
   int  r;
-  TRACE(x11, "Call XSetGraphicsExposures\n");
+  TRACE("Call XSetGraphicsExposures\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetGraphicsExposures(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetGraphicsExposures\n");
+  TRACE("Ret XSetGraphicsExposures\n");
   return r;
 }
 
 int  TSXSetIconName(Display* a0, Window a1, const  char* a2)
 {
   int  r;
-  TRACE(x11, "Call XSetIconName\n");
+  TRACE("Call XSetIconName\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetIconName(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetIconName\n");
+  TRACE("Ret XSetIconName\n");
   return r;
 }
 
 int  TSXSetInputFocus(Display* a0, Window a1, int a2, Time a3)
 {
   int  r;
-  TRACE(x11, "Call XSetInputFocus\n");
+  TRACE("Call XSetInputFocus\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetInputFocus(a0, a1, a2, a3);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetInputFocus\n");
+  TRACE("Ret XSetInputFocus\n");
   return r;
 }
 
 int  TSXSetLineAttributes(Display* a0, GC a1, unsigned int a2, int a3, int a4, int a5)
 {
   int  r;
-  TRACE(x11, "Call XSetLineAttributes\n");
+  TRACE("Call XSetLineAttributes\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetLineAttributes(a0, a1, a2, a3, a4, a5);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetLineAttributes\n");
+  TRACE("Ret XSetLineAttributes\n");
   return r;
 }
 
 int  TSXSetScreenSaver(Display* a0, int a1, int a2, int a3, int a4)
 {
   int  r;
-  TRACE(x11, "Call XSetScreenSaver\n");
+  TRACE("Call XSetScreenSaver\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetScreenSaver(a0, a1, a2, a3, a4);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetScreenSaver\n");
+  TRACE("Ret XSetScreenSaver\n");
   return r;
 }
 
 int  TSXSetSelectionOwner(Display* a0, Atom a1, Window a2, Time a3)
 {
   int  r;
-  TRACE(x11, "Call XSetSelectionOwner\n");
+  TRACE("Call XSetSelectionOwner\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetSelectionOwner(a0, a1, a2, a3);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetSelectionOwner\n");
+  TRACE("Ret XSetSelectionOwner\n");
   return r;
 }
 
 int  TSXSetSubwindowMode(Display* a0, GC a1, int a2)
 {
   int  r;
-  TRACE(x11, "Call XSetSubwindowMode\n");
+  TRACE("Call XSetSubwindowMode\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetSubwindowMode(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetSubwindowMode\n");
+  TRACE("Ret XSetSubwindowMode\n");
   return r;
 }
 
 int  TSXSetWindowColormap(Display* a0, Window a1, Colormap a2)
 {
   int  r;
-  TRACE(x11, "Call XSetWindowColormap\n");
+  TRACE("Call XSetWindowColormap\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSetWindowColormap(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSetWindowColormap\n");
+  TRACE("Ret XSetWindowColormap\n");
   return r;
 }
 
 int  TSXStoreColor(Display* a0, Colormap a1, XColor* a2)
 {
   int  r;
-  TRACE(x11, "Call XStoreColor\n");
+  TRACE("Call XStoreColor\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XStoreColor(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XStoreColor\n");
+  TRACE("Ret XStoreColor\n");
   return r;
 }
 
 int  TSXStoreName(Display* a0, Window a1, const  char* a2)
 {
   int  r;
-  TRACE(x11, "Call XStoreName\n");
+  TRACE("Call XStoreName\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XStoreName(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XStoreName\n");
+  TRACE("Ret XStoreName\n");
   return r;
 }
 
 int  TSXSync(Display* a0, int a1)
 {
   int  r;
-  TRACE(x11, "Call XSync\n");
+  TRACE("Call XSync\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSync(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSync\n");
+  TRACE("Ret XSync\n");
   return r;
 }
 
 int  TSXTextExtents(XFontStruct* a0, const  char* a1, int a2, int* a3, int* a4, int* a5, XCharStruct* a6)
 {
   int  r;
-  TRACE(x11, "Call XTextExtents\n");
+  TRACE("Call XTextExtents\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XTextExtents(a0, a1, a2, a3, a4, a5, a6);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XTextExtents\n");
+  TRACE("Ret XTextExtents\n");
   return r;
 }
 
 int  TSXTextWidth(XFontStruct* a0, const  char* a1, int a2)
 {
   int  r;
-  TRACE(x11, "Call XTextWidth\n");
+  TRACE("Call XTextWidth\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XTextWidth(a0, a1, a2);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XTextWidth\n");
+  TRACE("Ret XTextWidth\n");
   return r;
 }
 
 int  TSXUngrabServer(Display* a0)
 {
   int  r;
-  TRACE(x11, "Call XUngrabServer\n");
+  TRACE("Call XUngrabServer\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XUngrabServer(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XUngrabServer\n");
+  TRACE("Ret XUngrabServer\n");
   return r;
 }
 
 int  TSXUninstallColormap(Display* a0, Colormap a1)
 {
   int  r;
-  TRACE(x11, "Call XUninstallColormap\n");
+  TRACE("Call XUninstallColormap\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XUninstallColormap(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XUninstallColormap\n");
+  TRACE("Ret XUninstallColormap\n");
   return r;
 }
 
 int  TSXUnmapWindow(Display* a0, Window a1)
 {
   int  r;
-  TRACE(x11, "Call XUnmapWindow\n");
+  TRACE("Call XUnmapWindow\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XUnmapWindow(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XUnmapWindow\n");
+  TRACE("Ret XUnmapWindow\n");
   return r;
 }
 
 int  TSXWarpPointer(Display* a0, Window a1, Window a2, int a3, int a4, unsigned int a5, unsigned int a6, int a7, int a8)
 {
   int  r;
-  TRACE(x11, "Call XWarpPointer\n");
+  TRACE("Call XWarpPointer\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XWarpPointer(a0, a1, a2, a3, a4, a5, a6, a7, a8);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XWarpPointer\n");
+  TRACE("Ret XWarpPointer\n");
   return r;
 }
 
 XIM  TSXOpenIM(Display* a0, struct _XrmHashBucketRec* a1, char* a2, char* a3)
 {
   XIM  r;
-  TRACE(x11, "Call XOpenIM\n");
+  TRACE("Call XOpenIM\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XOpenIM(a0, a1, a2, a3);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XOpenIM\n");
+  TRACE("Ret XOpenIM\n");
   return r;
 }
 
 int (*TSXSynchronize(Display *a0, Bool a1))(Display *)
 {
   int (*r)(Display *);
-  TRACE(x11, "Call XSynchronize\n");
+  TRACE("Call XSynchronize\n");
   EnterCriticalSection( &X11DRV_CritSection );
   r = XSynchronize(a0, a1);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret XSynchronize\n");
+  TRACE("Ret XSynchronize\n");
   return r;
 }
 
@@ -1304,11 +1304,11 @@ extern void _XInitImageFuncPtrs(XImage *);
 
 void TS_XInitImageFuncPtrs(XImage *a0)
 {
-  TRACE(x11, "Call _XInitImageFuncPtrs\n");
+  TRACE("Call _XInitImageFuncPtrs\n");
   EnterCriticalSection( &X11DRV_CritSection );
   _XInitImageFuncPtrs(a0);
   LeaveCriticalSection( &X11DRV_CritSection );
-  TRACE(x11, "Ret _XInitImageFuncPtrs\n");
+  TRACE("Ret _XInitImageFuncPtrs\n");
 }
 
 
