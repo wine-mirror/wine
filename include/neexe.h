@@ -135,6 +135,7 @@ struct ne_segment_table_entry_s
 #define NE_SEGFLAGS_RELOC_DATA	0x0100
 #define NE_SEGFLAGS_SELFLOAD	0x0800
 #define NE_SEGFLAGS_DISCARDABLE	0x1000
+#define NE_SEGFLAGS_32BIT	0x2000
 
 /*
  * Relocation table entry

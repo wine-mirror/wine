@@ -860,7 +860,7 @@ BOOL NE_CreateSegments( NE_MODULE *pModule )
         pSegment->hSeg = GLOBAL_Alloc( NE_Ne2MemFlags(pSegment->flags),
                                       minsize, pModule->self,
                                       !(pSegment->flags & NE_SEGFLAGS_DATA),
-                                      FALSE,
+                                      (pSegment->flags & NE_SEGFLAGS_32BIT) != 0,
                             FALSE /*pSegment->flags & NE_SEGFLAGS_READONLY*/ );
         if (!pSegment->hSeg) return FALSE;
 	pSegment->flags |= NE_SEGFLAGS_ALLOCATED;
