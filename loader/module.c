@@ -810,8 +810,11 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     HFILE hFile;
     OFSTRUCT ofs;
     DWORD type;
-    char name[256], cmdline[256];
+    char name[256];
+    LPCSTR cmdline;
+#if 0
     LPCSTR p = NULL;
+#endif
 
     /* Get name and command line */
 
@@ -822,26 +825,21 @@ BOOL WINAPI CreateProcessA( LPCSTR lpApplicationName, LPSTR lpCommandLine,
     }
 
     name[0] = '\0';
-    cmdline[0] = '\0';
 
     if (lpApplicationName) {
         get_executable_name( lpApplicationName, name, sizeof(name), NULL, FALSE);
-        strcpy(cmdline, name);
 #if 0
         p = strrchr(name, '.');
         if (p >= name+strlen(name)-4) /* FIXME */
             *p = '\0';
 #endif
     }
-    if (lpCommandLine) 
-        if (strlen(name)) {
-            get_executable_name(lpCommandLine, cmdline, sizeof(cmdline), &p, TRUE);
-            strcat(cmdline, p);
-                } else {
-            get_executable_name(lpCommandLine, name, sizeof(name), &p, TRUE);
-            strcpy(cmdline, name);
-            strcat(cmdline, p);
-        }
+    else {
+      get_executable_name ( lpCommandLine, name, sizeof ( name ), NULL, FALSE );
+    }
+    if (!lpCommandLine) 
+      cmdline = lpApplicationName;
+    else cmdline = lpCommandLine;
 
     if (!strchr(name, '\\') && !strchr(name, '.'))
         strcat(name, ".exe");
