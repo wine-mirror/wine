@@ -36,12 +36,16 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
     switch (nEscape) {
     	/* Escape(hdc,QUERYESCSUPPORT,LPINT,NULL) */
         /* Escape(hdc,EXT_DEVICE_CAPS,LPINT,NULL) */
+        /* Escape(hdc,SETLINECAP,LPINT,NULL) */
     case QUERYESCSUPPORT:
     case EXT_DEVICE_CAPS:
+    case SETLINECAP:
+    case SETLINEJOIN:
       {
     	LPINT16 x = (LPINT16)SEGPTR_NEW(INT16);
 	*x = *(INT*)lpszInData;
 	segin = SEGPTR_GET(x);
+ 	cbInput = sizeof(INT16);
 	break;
       }
 
@@ -53,6 +57,7 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
     case GETPHYSPAGESIZE:
     case GETPRINTINGOFFSET:
 	segout = SEGPTR_GET(SEGPTR_NEW(POINT16));
+	cbInput = sizeof(POINT16);
 	break;
 
       /* Escape(hdc,GETTECHNOLOGY,NULL,LPSTR); */
@@ -70,6 +75,7 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
         segout = SEGPTR_GET(SEGPTR_NEW(INT16));
         segin = SEGPTR_GET(enab);
         *enab = *(INT*)lpszInData;
+	cbInput = sizeof(INT16);
         break;
     }
 
@@ -105,6 +111,8 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
     	SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
 	break;
     case EXT_DEVICE_CAPS:
+    case SETLINECAP:
+    case SETLINEJOIN:
         SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
 	break;
     case GETSCALINGFACTOR:
