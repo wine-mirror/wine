@@ -341,7 +341,7 @@ int receive_fd( struct process *process )
         if (data.tid) thread = get_thread_from_id( data.tid );
         else thread = (struct thread *)grab_object( process->thread_list );
 
-        if (!thread || thread->process != process)
+        if (!thread || thread->process != process || thread->state == TERMINATED)
         {
             if (debug_level)
                 fprintf( stderr, "%08x: *fd* %d <- %d bad thread id\n",

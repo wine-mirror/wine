@@ -680,6 +680,7 @@ void CLIENT_InitThread(void)
     wine_server_send_fd( reply_pipe[1] );
     wine_server_send_fd( teb->wait_fd[1] );
     teb->reply_fd = reply_pipe[0];
+    close( reply_pipe[1] );
 
     /* set close on exec flag */
     fcntl( teb->reply_fd, F_SETFD, 1 );
@@ -699,7 +700,6 @@ void CLIENT_InitThread(void)
         version  = reply->version;
         if (reply->boot) boot_thread_id = teb->tid;
         else if (boot_thread_id == teb->tid) boot_thread_id = 0;
-        close( reply_pipe[1] );
     }
     SERVER_END_REQ;
 
