@@ -59,6 +59,10 @@
  *     processing for "USEDOUBLECLICKTIME".
  */
 
+
+#include "config.h"
+#include "wine/port.h"
+
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
