@@ -1263,8 +1263,8 @@ HRESULT WINAPI CoRegisterClassObject(
   if (dwClsContext & CLSCTX_LOCAL_SERVER) {
       DWORD tid;
 
-      STUBMGR_Start();
-      newClass->hThread=CreateThread(NULL,0,_LocalServerThread,newClass,0,&tid);
+      start_listener_thread();
+      newClass->hThread = CreateThread(NULL,0,_LocalServerThread,newClass,0,&tid);
   }
   return S_OK;
 }

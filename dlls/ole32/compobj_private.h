@@ -152,7 +152,7 @@ HRESULT MARSHAL_Disconnect_Proxies();
 
 HRESULT MARSHAL_GetStandardMarshalCF(LPVOID *ppv);
 
-void STUBMGR_Start();
+void start_listener_thread();
 
 extern HRESULT PIPE_GetNewPipeBuf(wine_marshal_id *mid, IRpcChannelBuffer **pipebuf);
 

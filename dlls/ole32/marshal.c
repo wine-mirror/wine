@@ -502,7 +502,8 @@ CoMarshalInterface( IStream *pStm, REFIID riid, IUnknown *pUnk,
   if (pUnk == NULL)
     return E_INVALIDARG;
 
-  STUBMGR_Start(); /* Just to be sure we have one running. */
+  start_listener_thread(); /* Just to be sure we have one running. */
+  
   mid.processid = GetCurrentProcessId();
   IUnknown_QueryInterface(pUnk,&IID_IUnknown,(LPVOID*)&pUnknown);
   mid.objectid = (DWORD)pUnknown;

@@ -759,13 +759,16 @@ _StubReaderThread(LPVOID param) {
     return 0;
 }
 
-static DWORD WINAPI
-_StubMgrThread(LPVOID param) {
+/* This thread listens on a named pipe for the entire process. It
+ * deals with incoming connection requests to objects.
+ */
+static DWORD WINAPI listener_thread(LPVOID param)
+{
     char		pipefn[200];
     HANDLE		listenPipe;
 
     sprintf(pipefn,OLESTUBMGR"_%08lx",GetCurrentProcessId());
-    TRACE("Stub Manager Thread starting on (%s)\n",pipefn);
+    TRACE("Process listener thread starting on (%s)\n",pipefn);
 
     while (1) {
 	listenPipe = CreateNamedPipeA(
@@ -792,14 +795,15 @@ _StubMgrThread(LPVOID param) {
     return 0;
 }
 
-void
-STUBMGR_Start() {
-  static BOOL stubMgrRunning = FALSE;
+void start_listener_thread()
+{
+  static BOOL running = FALSE;
   DWORD tid;
 
-  if (!stubMgrRunning) {
-      stubMgrRunning = TRUE;
-      CreateThread(NULL,0,_StubMgrThread,NULL,0,&tid);
+  if (!running)
+  {
+      running = TRUE;
+      CreateThread(NULL, 0, listener_thread, NULL, 0, &tid);
       Sleep(2000); /* actually we just try opening the pipe until it succeeds */
   }
 }
