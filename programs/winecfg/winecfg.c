@@ -32,6 +32,9 @@
  *   - Multimedia page
  *   - Settings migration code (from old configs)
  *
+ *   Minor things that should be done someday:
+ *   - Make the desktop size UI a combo box, with a Custom option, so it's more obvious what you might want to choose here
+ *
  */
 
 #include <assert.h>

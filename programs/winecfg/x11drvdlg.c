@@ -89,7 +89,17 @@ void initX11DrvDlg (HWND hDlg)
     free(buf);
 
     SendDlgItemMessage(hDlg, IDC_DESKTOP_WIDTH, EM_LIMITTEXT, RES_MAXLEN, 0);
-    SendDlgItemMessage(hDlg, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);    
+    SendDlgItemMessage(hDlg, IDC_DESKTOP_HEIGHT, EM_LIMITTEXT, RES_MAXLEN, 0);
+
+    buf = getConfigValue("x11drv", "AllocSysColors", "100");
+    SetWindowText(GetDlgItem(hDlg, IDC_SYSCOLORS), buf);
+    free(buf);
+
+    buf = getConfigValue("x11drv", "Managed", "Y");
+    if (IS_OPTION_TRUE(*buf))
+	CheckDlgButton(hDlg, IDC_ENABLE_MANAGED, BST_CHECKED);
+    else
+	CheckDlgButton(hDlg, IDC_ENABLE_MANAGED, BST_UNCHECKED);
     
     updatingUI = FALSE;
 }
@@ -130,7 +140,25 @@ void onEnableDesktopClicked(HWND hDlg) {
     }
     updateGUIForDesktopMode(hDlg);
 }
+
+void onSysColorsChange(HWND hDlg) {
+    char *newvalue = getDialogItemText(hDlg, IDC_SYSCOLORS);
     
+    WINE_TRACE("\n");
+    if (updatingUI) return;
+    if (!newvalue) return;
+
+    addTransaction("x11drv", "AllocSystemColors", ACTION_SET, newvalue);
+    free(newvalue);
+}
+
+void onEnableManagedClicked(HWND hDlg) {
+    if (IsDlgButtonChecked(hDlg, IDC_ENABLE_MANAGED) == BST_CHECKED)
+	addTransaction("x11drv", "Managed", ACTION_SET, "Y");
+    else
+	addTransaction("x11drv", "Managed", ACTION_SET, "N");
+}
+
 INT_PTR CALLBACK
 X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -143,12 +171,14 @@ X11DrvDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case EN_CHANGE: {
 		    SendMessage(GetParent(hDlg), PSM_CHANGED, 0, 0);
 		    if ( (LOWORD(wParam) == IDC_DESKTOP_WIDTH) || (LOWORD(wParam) == IDC_DESKTOP_HEIGHT) ) setFromDesktopSizeEdits(hDlg);
+		    if (LOWORD(wParam) == IDC_SYSCOLORS) onSysColorsChange(hDlg);
 		    break;
 		}
 		case BN_CLICKED: {
 		    WINE_TRACE("%d\n", LOWORD(wParam));
 		    switch(LOWORD(wParam)) {
 			case IDC_ENABLE_DESKTOP: onEnableDesktopClicked(hDlg); break;
+			case IDC_ENABLE_MANAGED: onEnableManagedClicked(hDlg); break;
 		    };
 		    break;
 		}

@@ -102,3 +102,4 @@
 #define IDC_STATIC_LABEL                1073
 #define IDC_ENABLE_DESKTOP              1074
 #define IDS_DRIVE_NO_C                  1075
+#define IDC_ENABLE_MANAGED              1076
