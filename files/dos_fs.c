@@ -115,7 +115,7 @@ typedef struct
 {
     int used;
     int size;
-    char names[1];
+    WCHAR names[1];
 } DOS_DIR;
 
 /* Info structure for FindFirstFile handle */
@@ -201,8 +201,6 @@ BOOL DOSFS_ToDosFCBFormat( LPCWSTR name, LPWSTR buffer )
     static const char invalid_chars[] = INVALID_DOS_CHARS;
     LPCWSTR p = name;
     int i;
-
-    TRACE("(%s, %p)\n", debugstr_w(name), buffer);
 
     /* Check for "." and ".." */
     if (*p == '.')
@@ -425,8 +423,8 @@ static int DOSFS_MatchLong( LPCWSTR mask, LPCWSTR name, int case_sensitive )
  */
 static BOOL DOSFS_AddDirEntry(DOS_DIR **dir, LPCWSTR name, LPCWSTR dosname)
 {
-    int extra1 = (strlenW(name) + 1) * sizeof(WCHAR);
-    int extra2 = (strlenW(dosname) + 1) * sizeof(WCHAR);
+    int extra1 = strlenW(name) + 1;
+    int extra2 = strlenW(dosname) + 1;
 
     /* if we need more, at minimum double the size */
     if( (extra1 + extra2 + (*dir)->used) > (*dir)->size)
@@ -437,7 +435,8 @@ static BOOL DOSFS_AddDirEntry(DOS_DIR **dir, LPCWSTR name, LPCWSTR dosname)
         if(more<(extra1+extra2))
             more = extra1+extra2;
 
-        t = HeapReAlloc(GetProcessHeap(), 0, *dir, sizeof(**dir) + (*dir)->size + more );
+        t = HeapReAlloc(GetProcessHeap(), 0, *dir, sizeof(**dir) + 
+                        ((*dir)->size + more)*sizeof(WCHAR) );
         if(!t)
         {
             SetLastError( ERROR_NOT_ENOUGH_MEMORY );
@@ -450,9 +449,9 @@ static BOOL DOSFS_AddDirEntry(DOS_DIR **dir, LPCWSTR name, LPCWSTR dosname)
     }
 
     /* at this point, the dir structure is big enough to hold these names */
-    strcpyW((LPWSTR)&(*dir)->names[(*dir)->used], name);
+    strcpyW(&(*dir)->names[(*dir)->used], name);
     (*dir)->used += extra1;
-    strcpyW((LPWSTR)&(*dir)->names[(*dir)->used], dosname);
+    strcpyW(&(*dir)->names[(*dir)->used], dosname);
     (*dir)->used += extra2;
 
     return TRUE;
@@ -545,7 +544,7 @@ static BOOL DOSFS_OpenDir_Normal( UINT codepage, DOS_DIR **dir, const char *unix
 static DOS_DIR *DOSFS_OpenDir( UINT codepage, const char *unix_path )
 {
     const int init_size = 0x100;
-    DOS_DIR *dir = HeapAlloc( GetProcessHeap(), 0, sizeof(*dir) + init_size);
+    DOS_DIR *dir = HeapAlloc( GetProcessHeap(), 0, sizeof(*dir) + init_size*sizeof (WCHAR));
     BOOL r;
 
     TRACE("%s\n",debugstr_a(unix_path));
@@ -599,23 +598,20 @@ static BOOL DOSFS_ReadDir( DOS_DIR *dir, LPCWSTR *long_name,
        return FALSE;
 
     /* the long pathname is first */
-    ln = (LPCWSTR)&dir->names[dir->used];
+    ln = &dir->names[dir->used];
     if(ln[0])
         *long_name  = ln;
     else
         return FALSE;
-    dir->used += (strlenW(ln) + 1) * sizeof(WCHAR);
+    dir->used += (strlenW(ln) + 1);
 
     /* followed by the short path name */
-    sn = (LPCWSTR)&dir->names[dir->used];
+    sn = &dir->names[dir->used];
     if(sn[0])
         *short_name = sn;
     else
         *short_name = NULL;
-    dir->used += (strlenW(sn) + 1) * sizeof(WCHAR);
-
-    TRACE("Read: long_name: %s, short_name: %s\n", 
-          debugstr_w(*long_name), debugstr_w(*short_name));
+    dir->used += (strlenW(sn) + 1);
 
     return TRUE;
 }
@@ -814,7 +810,7 @@ const DOS_DEVICE *DOSFS_GetDevice( LPCWSTR name )
     unsigned int i;
     const WCHAR *p;
 
-    if (!name) return NULL; /* if FILE_DupUnixHandle was used */
+    if (!name) return NULL; /* if wine_server_handle_to_fd was used */
     if (name[0] && (name[1] == ':')) name += 2;
     if ((p = strrchrW( name, '/' ))) name = p + 1;
     if ((p = strrchrW( name, '\\' ))) name = p + 1;
