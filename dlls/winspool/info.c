@@ -3908,3 +3908,29 @@ BOOL WINAPI XcvDataW( HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
           cbOutputData, pcbOutputNeeded, pdwStatus);
     return FALSE;
 }
+
+
+/*****************************************************************************
+ *          EnumPrintProcessorsA [WINSPOOL.@]
+ *
+ */
+BOOL WINAPI EnumPrintProcessorsA(LPSTR pName, LPSTR pEnvironment, DWORD Level, 
+    LPBYTE pPrintProcessorInfo, DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcbReturned)
+{
+    FIXME("Stub: %s %s %ld %p %ld %p %p\n", pName, pEnvironment, Level,
+        pPrintProcessorInfo, cbBuf, pcbNeeded, pcbReturned);
+    return FALSE;
+}
+
+/*****************************************************************************
+ *          EnumPrintProcessorsW [WINSPOOL.@]
+ *
+ */
+BOOL WINAPI EnumPrintProcessorsW(LPWSTR pName, LPWSTR pEnvironment, DWORD Level,
+    LPBYTE pPrintProcessorInfo, DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcbReturned)
+{
+    FIXME("Stub: %s %s %ld %p %ld %p %p\n", debugstr_w(pName),
+        debugstr_w(pEnvironment), Level, pPrintProcessorInfo,
+        cbBuf, pcbNeeded, pcbReturned);
+    return FALSE;
+}

@@ -74,8 +74,8 @@
 @ stub EnumPortsW
 @ stub EnumPrintProcessorDatatypesA
 @ stub EnumPrintProcessorDatatypesW
-@ stub EnumPrintProcessorsA
-@ stub EnumPrintProcessorsW
+@ stdcall EnumPrintProcessorsA(str str long ptr long ptr ptr)
+@ stdcall EnumPrintProcessorsW(wstr wstr long ptr long ptr ptr)
 @ stub EnumPrinterDataA
 @ stdcall EnumPrinterDataExA(long str ptr long ptr ptr)
 @ stdcall EnumPrinterDataExW(long wstr ptr long ptr ptr)
