@@ -23,7 +23,7 @@ debug_channels (ole typelib)
 10 stdcall VariantCopy(ptr ptr) VariantCopy
 11 stdcall VariantCopyInd(ptr ptr) VariantCopyInd
 12 stdcall VariantChangeType(ptr ptr long long) VariantChangeType
-13 stub VariantTimeToDosDateTime
+13 stdcall VariantTimeToDosDateTime(double ptr ptr) VariantTimeToDosDateTime
 14 stdcall DosDateTimeToVariantTime(long long ptr) DosDateTimeToVariantTime
 15 stdcall SafeArrayCreate(long long ptr) SafeArrayCreate
 16 stdcall SafeArrayDestroy(ptr) SafeArrayDestroy
@@ -152,8 +152,8 @@ debug_channels (ole typelib)
 171 stub ClearCustData
 180 stub CreateTypeLib2
 183 stdcall LoadTypeLibEx (ptr long ptr) LoadTypeLibEx
-184 stub SystemTimeToVariantTime
-185 stub VariantTimeToSystemTime
+184 stdcall SystemTimeToVariantTime(ptr ptr) SystemTimeToVariantTime
+185 stdcall VariantTimeToSystemTime(double ptr) VariantTimeToSystemTime
 186 stdcall UnRegisterTypeLib (ptr long long long long) UnRegisterTypeLib
 190 stub VarDecFromUI1
 191 stub VarDecFromI2
@@ -263,8 +263,8 @@ debug_channels (ole typelib)
 297 stub LPSAFEARRAY_Unmarshal
 320 stdcall DllRegisterServer() OLEAUT32_DllRegisterServer
 321 stdcall DllUnregisterServer() OLEAUT32_DllUnregisterServer
-330 stub VarDateFromUdate
-331 stub VarUdateFromDate
+330 stdcall VarDateFromUdate(ptr long ptr) VarDateFromUdate
+331 stdcall VarUdateFromDate(double long ptr) VarUdateFromDate
 332 stub GetAltMonthNames
 380 stub UserHWND_from_local
 381 stub UserHWND_to_local

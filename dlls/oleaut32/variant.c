@@ -383,7 +383,7 @@ static BOOL DateToTm( DATE dateIn, LCID lcid, struct tm* pTm )
 			 * Note: The day must be converted from [1-366] to [0-365]
 			 */
 			/*pTm->tm_yday = nDay - 1;*/
-			/* find which mount this day corresponds to.
+			/* find which month this day corresponds to.
 			 */
 			if( nDay <= 31 )
 			{
@@ -4331,3 +4331,244 @@ INT WINAPI DosDateTimeToVariantTime(USHORT wDosDate, USHORT wDosTime,
     return TmToDATE( &t, pvtime );
 }
 
+/**********************************************************************
+ *              VariantTimeToDosDateTime [OLEAUT32.??]
+ * Convert variant representation of time to the date and time representation
+ * stored in dos.
+ */
+INT WINAPI VariantTimeToDosDateTime(DATE pvtime, USHORT *wDosDate, USHORT *wDosTime)
+{
+    struct tm t;
+    wDosTime = 0;
+    wDosDate = 0;
+
+    TRACE("( 0x%x, 0x%x, 0x%p ), stub\n", *wDosDate, *wDosTime, &pvtime );
+
+    if (DateToTm(pvtime, (LCID)NULL, &t) < 0) return 0;
+
+    *wDosTime = *wDosTime | (t.tm_sec / 2);
+    *wDosTime = *wDosTime | (t.tm_min << 5);
+    *wDosTime = *wDosTime | (t.tm_hour << 11);
+
+    *wDosDate = *wDosDate | t.tm_mday ;
+    *wDosDate = *wDosDate | t.tm_mon << 5;
+    *wDosDate = *wDosDate | ((t.tm_year - 1980) << 9) ;
+
+    return 1;
+}
+
+
+HRESULT WINAPI SystemTimeToVariantTime( LPSYSTEMTIME  lpSystemTime, double *pvtime )
+{
+    static const BYTE Days_Per_Month[] = {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    static const BYTE Days_Per_Month_LY[] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+    struct tm t;
+
+    TRACE(" %d/%d/%d %d:%d:%d\n",
+          lpSystemTime->wMonth, lpSystemTime->wDay,
+          lpSystemTime->wYear, lpSystemTime->wHour,
+          lpSystemTime->wMinute, lpSystemTime->wSecond);
+
+    if (lpSystemTime->wYear >= 1900)
+    {
+        t.tm_sec = lpSystemTime->wSecond;
+        t.tm_min = lpSystemTime->wMinute;
+        t.tm_hour = lpSystemTime->wHour;
+
+        t.tm_mday = lpSystemTime->wDay;
+        t.tm_mon = lpSystemTime->wMonth;
+        t.tm_year = lpSystemTime->wYear;
+
+        return TmToDATE( &t, pvtime );
+    }
+    else
+    {
+        t.tm_sec = lpSystemTime->wSecond;
+        t.tm_min = lpSystemTime->wMinute;
+        t.tm_hour = lpSystemTime->wHour;
+
+        if (isleap(lpSystemTime->wYear) )
+            t.tm_mday = Days_Per_Month_LY[13 - lpSystemTime->wMonth] - lpSystemTime->wDay;
+        else
+            t.tm_mday = Days_Per_Month[13 - lpSystemTime->wMonth] - lpSystemTime->wDay;
+
+        t.tm_mon = 13 - lpSystemTime->wMonth;
+        t.tm_year = 1900 + 1899 - lpSystemTime->wYear;
+
+        TmToDATE( &t, pvtime );
+
+        *pvtime *= -1;
+
+        return 1;
+    }
+
+    return 0;
+}
+
+HRESULT WINAPI VariantTimeToSystemTime( double vtime, LPSYSTEMTIME  lpSystemTime )
+{
+    double t = 0, timeofday = 0;
+
+    static const BYTE Days_Per_Month[] =    {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    static const BYTE Days_Per_Month_LY[] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+    /* The Month_Code is used to find the Day of the Week (LY = LeapYear)*/
+    static const BYTE Month_Code[] =    {0, 1, 4, 4, 0, 2, 5, 0, 3, 6, 1, 4, 6};
+    static const BYTE Month_Code_LY[] = {0, 0, 3, 4, 0, 2, 5, 0, 3, 6, 1, 4, 6};
+
+    /* The Century_Code is used to find the Day of the Week */
+    static const BYTE Century_Code[]  = {0, 6, 4, 2};
+
+    struct tm r;
+
+    TRACE(" Variant = %f SYSTEMTIME ptr %p", vtime, lpSystemTime);
+
+    if (vtime >= 0)
+    {
+
+        if (DateToTm(vtime, (LCID)NULL, &r ) <= 0) return 0;
+
+        lpSystemTime->wSecond = r.tm_sec;
+        lpSystemTime->wMinute = r.tm_min;
+        lpSystemTime->wHour = r.tm_hour;
+        lpSystemTime->wDay = r.tm_mday;
+        lpSystemTime->wMonth = r.tm_mon;
+
+        if (lpSystemTime->wMonth == 12)
+            lpSystemTime->wMonth = 1;
+        else
+            lpSystemTime->wMonth++;
+
+        lpSystemTime->wYear = r.tm_year;
+    }
+    else
+    {
+        vtime = -1*vtime;
+
+        if (DateToTm(vtime, (LCID)NULL, &r ) <= 0) return 0;
+
+        lpSystemTime->wSecond = r.tm_sec;
+        lpSystemTime->wMinute = r.tm_min;
+        lpSystemTime->wHour = r.tm_hour;
+
+        lpSystemTime->wMonth = 13 - r.tm_mon;
+
+        if (lpSystemTime->wMonth == 1)
+            lpSystemTime->wMonth = 12;
+        else
+            lpSystemTime->wMonth--;
+
+        lpSystemTime->wYear = 1899 - (r.tm_year - 1900);
+
+        if (!isleap(lpSystemTime->wYear) )
+            lpSystemTime->wDay = Days_Per_Month[13 - lpSystemTime->wMonth] - r.tm_mday;
+        else
+            lpSystemTime->wDay = Days_Per_Month_LY[13 - lpSystemTime->wMonth] - r.tm_mday;
+
+
+    }
+
+    if (!isleap(lpSystemTime->wYear))
+    {
+        /*
+          (Century_Code+Month_Code+Year_Code+Day) % 7
+
+          The century code repeats every 400 years , so the array
+          works out like this,
+
+          Century_Code[0] is for 16th/20th Centry
+          Century_Code[1] is for 17th/21th Centry
+          Century_Code[2] is for 18th/22th Centry
+          Century_Code[3] is for 19th/23th Centry
+
+          The year code is found with the formula (year + (year / 4))
+          the "year" must be between 0 and 99 .
+
+          The Month Code (Month_Code[1]) starts with January and
+          ends with December.
+        */
+
+        lpSystemTime->wDayOfWeek = (
+            Century_Code[(( (lpSystemTime->wYear+100) - lpSystemTime->wYear%100) /100) %4]+
+            ((lpSystemTime->wYear%100)+(lpSystemTime->wYear%100)/4)+
+            Month_Code[lpSystemTime->wMonth]+
+            lpSystemTime->wDay) % 7;
+
+        if (lpSystemTime->wDayOfWeek == 0) lpSystemTime->wDayOfWeek = 7;
+        else lpSystemTime->wDayOfWeek -= 1;
+    }
+    else
+    {
+        lpSystemTime->wDayOfWeek = (
+            Century_Code[(((lpSystemTime->wYear+100) - lpSystemTime->wYear%100)/100)%4]+
+            ((lpSystemTime->wYear%100)+(lpSystemTime->wYear%100)/4)+
+            Month_Code_LY[lpSystemTime->wMonth]+
+            lpSystemTime->wDay) % 7;
+
+        if (lpSystemTime->wDayOfWeek == 0) lpSystemTime->wDayOfWeek = 7;
+        else lpSystemTime->wDayOfWeek -= 1;
+    }
+
+    t = floor(vtime);
+    timeofday = vtime - t;
+
+    lpSystemTime->wMilliseconds = (timeofday
+                                   - lpSystemTime->wHour*(1/24)
+                                   - lpSystemTime->wMinute*(1/1440)
+                                   - lpSystemTime->wSecond*(1/86400) )*(1/5184000);
+
+    return 1;
+}
+
+HRESULT WINAPI VarUdateFromDate( DATE datein, ULONG dwFlags, UDATE *pudateout)
+{
+    HRESULT i = 0;
+    static const BYTE Days_Per_Month[] =    {0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    static const BYTE Days_Per_Month_LY[] = {0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+    TRACE("DATE = %f\n", (double)datein);
+    i = VariantTimeToSystemTime(datein, &(pudateout->st) );
+
+    if (i)
+    {
+        pudateout->wDayOfYear = 0;
+
+        if (isleap(pudateout->st.wYear))
+        {
+            for (i =1; i<pudateout->st.wMonth; i++)
+                pudateout->wDayOfYear += Days_Per_Month[i];
+        }
+        else
+        {
+            for (i =1; i<pudateout->st.wMonth; i++)
+                pudateout->wDayOfYear += Days_Per_Month_LY[i];
+        }
+
+        pudateout->wDayOfYear += pudateout->st.wDay;
+        dwFlags = 0; /*VAR_VALIDDATE*/
+    }
+    else dwFlags = 0;
+
+    return i;
+}
+
+HRESULT WINAPI VarDateFromUdate(UDATE *pudateout,
+                                ULONG dwFlags, DATE *datein)
+{
+    HRESULT i;
+    double t = 0;
+    TRACE(" %d/%d/%d %d:%d:%d\n",
+          pudateout->st.wMonth, pudateout->st.wDay,
+          pudateout->st.wYear, pudateout->st.wHour,
+          pudateout->st.wMinute, pudateout->st.wSecond);
+
+
+    i = SystemTimeToVariantTime(&(pudateout->st), &t);
+    *datein = t;
+
+    if (i) dwFlags = 0; /*VAR_VALIDDATE*/
+    else dwFlags = 0;
+
+    return i;
+}

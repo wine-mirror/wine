@@ -1,6 +1,7 @@
 #ifndef __WINE_OLEAUTO_H
 #define __WINE_OLEAUTO_H
 
+#include "winbase.h"
 #include "wtypes.h"
 #include "wine/obj_base.h"
 #include "wine/obj_oleaut.h"
@@ -13,6 +14,7 @@
 struct tagSAFEARRAY;
 struct tagSAFEARRAYBOUND;
 struct tagVARIANT;
+struct UDATE;
 
 #ifdef __cplusplus
 extern "C" {
@@ -519,8 +521,19 @@ typedef enum tagREGKIND
     REGKIND_NONE
 } REGKIND;
 
+typedef struct {
+    SYSTEMTIME st;
+    USHORT wDayOfYear;
+} UDATE;
 
 INT WINAPI DosDateTimeToVariantTime(USHORT,USHORT,DATE*);
+INT WINAPI VariantTimeToDosDateTime(DATE, USHORT *, USHORT *);
+
+HRESULT WINAPI VariantTimeToSystemTime(double,LPSYSTEMTIME);
+HRESULT WINAPI SystemTimeToVariantTime(LPSYSTEMTIME,double*);
+
+HRESULT WINAPI VarDateFromUdate(UDATE*,ULONG, DATE*);
+HRESULT WINAPI VarUdateFromDate(DATE, ULONG, UDATE *);
 
 ULONG WINAPI LHashValOfNameSysA(SYSKIND syskind,LCID lcid,LPCSTR szName);
 ULONG WINAPI LHashValOfNameSys (SYSKIND syskind,LCID lcid,LPCOLESTR szName);
