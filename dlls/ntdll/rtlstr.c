@@ -221,6 +221,12 @@ NTSTATUS WINAPI RtlInitUnicodeStringEx(
 
 /**************************************************************************
  *	RtlCreateUnicodeString   (NTDLL.@)
+ *
+ * Creates a UNICODE_STRING from a null-terminated Unicode string.
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
  */
 BOOLEAN WINAPI RtlCreateUnicodeString( PUNICODE_STRING target, LPCWSTR src )
 {
@@ -235,6 +241,12 @@ BOOLEAN WINAPI RtlCreateUnicodeString( PUNICODE_STRING target, LPCWSTR src )
 
 /**************************************************************************
  *	RtlCreateUnicodeStringFromAsciiz   (NTDLL.@)
+ *
+ * Creates a UNICODE_STRING from a null-terminated Ascii string.
+ *
+ * RETURNS
+ *     Success: TRUE
+ *     Failure: FALSE
  */
 BOOLEAN WINAPI RtlCreateUnicodeStringFromAsciiz( PUNICODE_STRING target, LPCSTR src )
 {
@@ -246,6 +258,12 @@ BOOLEAN WINAPI RtlCreateUnicodeStringFromAsciiz( PUNICODE_STRING target, LPCSTR 
 
 /**************************************************************************
  *	RtlFreeUnicodeString   (NTDLL.@)
+ *
+ * Frees a UNICODE_STRING created with RtlCreateUnicodeString() or 
+ * RtlCreateUnicodeStringFromAsciiz().
+ *
+ * RETURNS
+ *     nothing
  */
 void WINAPI RtlFreeUnicodeString( PUNICODE_STRING str )
 {
@@ -255,6 +273,11 @@ void WINAPI RtlFreeUnicodeString( PUNICODE_STRING str )
 
 /**************************************************************************
  *	RtlCopyUnicodeString   (NTDLL.@)
+ *
+ * Copies from one UNICODE_STRING to another.
+ *
+ * RETURNS
+ *     nothing
  */
 void WINAPI RtlCopyUnicodeString( UNICODE_STRING *dst, const UNICODE_STRING *src )
 {
@@ -330,6 +353,11 @@ NTSTATUS WINAPI RtlDuplicateUnicodeString(
 
 /**************************************************************************
  *	RtlEraseUnicodeString   (NTDLL.@)
+ *
+ * Overwrites a UNICODE_STRING with zeros.
+ *
+ * RETURNS
+ *     nothing
  */
 void WINAPI RtlEraseUnicodeString( UNICODE_STRING *str )
 {
@@ -717,6 +745,11 @@ NTSTATUS WINAPI RtlUnicodeStringToOemString( STRING *oem,
 /**************************************************************************
  *	RtlMultiByteToUnicodeN   (NTDLL.@)
  *
+ * Converts a multi-byte string to a Unicode string.
+ *
+ * RETURNS
+ *  NTSTATUS code
+ *
  * NOTES
  *  Performs a partial copy if dst is too small.
  */
@@ -733,6 +766,11 @@ NTSTATUS WINAPI RtlMultiByteToUnicodeN( LPWSTR dst, DWORD dstlen, LPDWORD reslen
 
 /**************************************************************************
  *	RtlOemToUnicodeN   (NTDLL.@)
+ *
+ * Converts a multi-byte string in the OEM code page to a Unicode string.
+ *
+ * RETURNS
+ *  NTSTATUS code
  */
 NTSTATUS WINAPI RtlOemToUnicodeN( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
                                   LPCSTR src, DWORD srclen )
@@ -746,6 +784,11 @@ NTSTATUS WINAPI RtlOemToUnicodeN( LPWSTR dst, DWORD dstlen, LPDWORD reslen,
 
 /**************************************************************************
  *	RtlUnicodeToMultiByteN   (NTDLL.@)
+ *
+ * Converts a Unicode string to a multi-byte string in the ANSI code page.
+ *
+ * RETURNS
+ *  NTSTATUS code
  */
 NTSTATUS WINAPI RtlUnicodeToMultiByteN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
                                         LPCWSTR src, DWORD srclen )
@@ -760,6 +803,11 @@ NTSTATUS WINAPI RtlUnicodeToMultiByteN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
 
 /**************************************************************************
  *	RtlUnicodeToOemN   (NTDLL.@)
+ *
+ * Converts a Unicode string to a multi-byte string in the OEM code page.
+ *
+ * RETURNS
+ *  NTSTATUS code
  */
 NTSTATUS WINAPI RtlUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
                                   LPCWSTR src, DWORD srclen )
@@ -951,6 +999,11 @@ NTSTATUS WINAPI RtlDowncaseUnicodeString(
 /**************************************************************************
  *	RtlUpcaseUnicodeStringToAnsiString   (NTDLL.@)
  *
+ * Converts a Unicode string to the equivalent ANSI upper-case representation.
+ *
+ * RETURNS
+ *  NTSTATUS code
+ *
  * NOTES
  *  writes terminating 0
  */
@@ -973,6 +1026,12 @@ NTSTATUS WINAPI RtlUpcaseUnicodeStringToAnsiString( STRING *dst,
 /**************************************************************************
  *	RtlUpcaseUnicodeStringToOemString   (NTDLL.@)
  *
+ * Converts a UNICODE_STRING to the equivalent OEM upper-case representation
+ * stored in STRING format.
+ *
+ * RETURNS
+ *  NTSTATUS code
+ *
  * NOTES
  *  writes terminating 0
  */
@@ -994,6 +1053,12 @@ NTSTATUS WINAPI RtlUpcaseUnicodeStringToOemString( STRING *dst,
 
 /**************************************************************************
  *	RtlUpcaseUnicodeStringToCountedOemString   (NTDLL.@)
+ *
+ * Converts a UNICODE_STRING to the equivalent OEM upper-case representation
+ * stored in STRING format.
+ *
+ * RETURNS
+ *  NTSTATUS code
  *
  * NOTES
  *  Same as RtlUpcaseUnicodeStringToOemString but doesn't write terminating null
@@ -1034,6 +1099,11 @@ NTSTATUS WINAPI RtlUpcaseUnicodeStringToCountedOemString( STRING *oem,
 
 /**************************************************************************
  *	RtlUpcaseUnicodeToMultiByteN   (NTDLL.@)
+ *
+ * Converts a Unicode string to the equivalent ANSI upper-case representation.
+ *
+ * RETURNS
+ *  NTSTATUS code
  */
 NTSTATUS WINAPI RtlUpcaseUnicodeToMultiByteN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
                                               LPCWSTR src, DWORD srclen )
@@ -1052,6 +1122,11 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToMultiByteN( LPSTR dst, DWORD dstlen, LPDWORD r
 
 /**************************************************************************
  *	RtlUpcaseUnicodeToOemN   (NTDLL.@)
+ *
+ * Converts a Unicode string to the equivalent OEM upper-case representation.
+ *
+ * RETURNS
+ *  NTSTATUS code
  */
 NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( LPSTR dst, DWORD dstlen, LPDWORD reslen,
                                         LPCWSTR src, DWORD srclen )
