@@ -38,10 +38,6 @@ extern BOOL DESKTOP_SetPattern( LPCSTR pattern );
 /* icon title */
 extern HWND ICONTITLE_Create( struct tagWND * );
 
-/* MDI client */
-extern HWND MDI_CreateMDIWindowA(LPCSTR,LPCSTR,DWORD,INT,INT,INT,INT,HWND,HINSTANCE,LPARAM);
-extern HWND MDI_CreateMDIWindowW(LPCWSTR,LPCWSTR,DWORD,INT,INT,INT,INT,HWND,HINSTANCE,LPARAM);
-
 /* menu controls */
 extern BOOL MENU_Init(void);
 extern BOOL MENU_IsMenuActive(void);

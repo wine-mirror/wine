@@ -3243,6 +3243,7 @@ UINT      WINAPI ArrangeIconicWindows(HWND);
 HDWP      WINAPI BeginDeferWindowPos(INT);
 HDC       WINAPI BeginPaint(HWND,LPPAINTSTRUCT);
 BOOL      WINAPI BringWindowToTop(HWND);
+void      WINAPI CalcChildScroll(HWND, INT);
 BOOL      WINAPI CallMsgFilterA(LPMSG,INT);
 BOOL      WINAPI CallMsgFilterW(LPMSG,INT);
 #define     CallMsgFilter WINELIB_NAME_AW(CallMsgFilter)

@@ -25,7 +25,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall BeginPaint(long ptr) BeginPaint
 @ stdcall BringWindowToTop(long) BringWindowToTop
 @ stdcall BroadcastSystemMessage(long ptr long long long) BroadcastSystemMessage
-@ stub CalcChildScroll
+@ stdcall CalcChildScroll(long long) CalcChildScroll
 @ stub CallMsgFilter
 @ stdcall CallMsgFilterA(ptr long) CallMsgFilterA
 @ stdcall CallMsgFilterW(ptr long) CallMsgFilterW

@@ -720,7 +720,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     DWORD clsStyle;
     WNDPROC winproc;
     DCE *dce;
-    LRESULT (CALLBACK *localSend32)(HWND, UINT, WPARAM, LPARAM);
+    LRESULT CALLBACK (*localSend32)(HWND, UINT, WPARAM, LPARAM);
 
     TRACE("%s %s %08lx %08lx %d,%d %dx%d %04x %04x %08x %p\n",
           (type == WIN_PROC_32W) ? debugres_w((LPWSTR)cs->lpszName) : debugres_a(cs->lpszName), 
@@ -1098,7 +1098,7 @@ HWND WINAPI CreateWindowExA( DWORD exStyle, LPCSTR className,
         instance=GetModuleHandleA(NULL);
 
     if(exStyle & WS_EX_MDICHILD)
-        return MDI_CreateMDIWindowA(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);
+        return CreateMDIWindowA(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);
 
     /* Find the class atom */
 
@@ -1157,7 +1157,7 @@ HWND WINAPI CreateWindowExW( DWORD exStyle, LPCWSTR className,
         instance=GetModuleHandleA(NULL);
 
     if(exStyle & WS_EX_MDICHILD)
-        return MDI_CreateMDIWindowW(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);
+        return CreateMDIWindowW(className, windowName, style, x, y, width, height, parent, instance, (LPARAM)data);
 
     /* Find the class atom */
 
