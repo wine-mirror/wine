@@ -865,10 +865,7 @@ static void DEBUG_LoadEntryPoints32( HMODULE32 hModule, const char *name )
           DEBUG_AddSymbol( buffer, &addr, NULL, SYM_WIN32 | SYM_FUNC );
       }
     }
-
-    dir = &PE_HEADER(hModule)->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG];
-    if (dir->Size)
-        DEBUG_RegisterDebugInfo(hModule, name, dir->VirtualAddress, dir->Size);
+    DEBUG_RegisterDebugInfo(hModule, name);
 #undef RVA
 }
 

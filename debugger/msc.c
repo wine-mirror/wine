@@ -915,17 +915,21 @@ DEBUG_InitCVDataTypes()
  * We don't fully process it here for performance reasons.
  */
 int
-DEBUG_RegisterDebugInfo( HMODULE32 hModule, const char *module_name,
-                         u_long v_addr, u_long size)
+DEBUG_RegisterDebugInfo( HMODULE32 hModule, const char *module_name)
 {
   int			  has_codeview = FALSE;
   int			  rtn = FALSE;
   int			  orig_size;
   PIMAGE_DEBUG_DIRECTORY dbgptr;
+  u_long v_addr, size;
+  PIMAGE_NT_HEADERS	  nth  = PE_HEADER(hModule);
 
-  orig_size = size;
-  dbgptr = (PIMAGE_DEBUG_DIRECTORY) (hModule + v_addr);
-  for(; size >= sizeof(*dbgptr); size -= sizeof(*dbgptr), dbgptr++ )
+  size = nth->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].Size;
+  if (size) {
+    v_addr = nth->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress;
+    dbgptr = (PIMAGE_DEBUG_DIRECTORY) (hModule + v_addr);
+    orig_size = size;
+    for(; size >= sizeof(*dbgptr); size -= sizeof(*dbgptr), dbgptr++ )
     {
       switch(dbgptr->Type)
 	{
@@ -936,9 +940,9 @@ DEBUG_RegisterDebugInfo( HMODULE32 hModule, const char *module_name,
 	}
     }
 
-  size = orig_size;
-  dbgptr = (PIMAGE_DEBUG_DIRECTORY) (hModule + v_addr);
-  for(; size >= sizeof(*dbgptr); size -= sizeof(*dbgptr), dbgptr++ )
+    size = orig_size;
+    dbgptr = (PIMAGE_DEBUG_DIRECTORY) (hModule + v_addr);
+    for(; size >= sizeof(*dbgptr); size -= sizeof(*dbgptr), dbgptr++ )
     {
       switch(dbgptr->Type)
 	{
@@ -1029,11 +1033,35 @@ DEBUG_RegisterDebugInfo( HMODULE32 hModule, const char *module_name,
 	default:
 	}
     }
-
-  DEBUG_next_index++;
-
+    DEBUG_next_index++;
+  }
+  /* look for .stabs/.stabstr sections */
+  {
+    PIMAGE_SECTION_HEADER      pe_seg = PE_SECTIONS(hModule);
+    int i,stabsize=0,stabstrsize=0;
+    unsigned int stabs=0,stabstr=0;
+    
+    for (i=0;i<nth->FileHeader.NumberOfSections;i++) {
+      if (!strcasecmp(pe_seg[i].Name,".stab")) {
+	stabs = pe_seg[i].VirtualAddress;
+	stabsize = pe_seg[i].SizeOfRawData;
+      }
+      if (!strncasecmp(pe_seg[i].Name,".stabstr",8)) {
+	stabstr = pe_seg[i].VirtualAddress;
+	stabstrsize = pe_seg[i].SizeOfRawData;
+      }
+    }
+    if (stabstrsize && stabsize) {
+#ifdef _WE_SUPPORT_THE_STAB_TYPES_USED_BY_MINGW_TOO
+      /* Won't work currently, since MINGW32 uses some special typedefs
+       * which we do not handle yet. Support for them is a bit difficult.
+       */
+      DEBUG_ParseStabs(hModule,0,stabs,stabsize,stabstr,stabstrsize);
+#endif
+      fprintf(stderr,"(stabs not loaded)");
+    }
+  }
   return (rtn);
-
 }
 
 /*

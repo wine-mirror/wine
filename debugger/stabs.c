@@ -620,7 +620,6 @@ DEBUG_ParseStabType(const char * stab)
   return stab_types[DEBUG_ReadTypeEnum(&c)];
 }
 
-static 
 int
 DEBUG_ParseStabs(char * addr, unsigned int load_offset,
 		 unsigned int staboff, int stablen, 

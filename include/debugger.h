@@ -271,10 +271,10 @@ extern int  DEBUG_GetCurrentFrame(struct name_hash ** name,
 
   /* debugger/stabs.c */
 extern int DEBUG_ReadExecutableDbgInfo(void);
+extern int DEBUG_ParseStabs(char * addr, unsigned int load_offset, unsigned int staboff, int stablen, unsigned int strtaboff, int strtablen);
 
   /* debugger/msc.c */
-extern int DEBUG_RegisterDebugInfo( HMODULE32, const char *,
-                                    unsigned long, unsigned long);
+extern int DEBUG_RegisterDebugInfo( HMODULE32, const char *);
 extern int DEBUG_ProcessDeferredDebug(void);
 extern int DEBUG_RegisterELFDebugInfo(int load_addr, u_long size, char * name);
 extern void DEBUG_InfoShare(void);
