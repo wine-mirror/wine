@@ -1763,7 +1763,7 @@ HRESULT WINAPI CoGetState16(LPDWORD state)
 HRESULT WINAPI CoSetState(LPDWORD state)
 {
     FIXME(ole, "(%p),stub!\n", state);
-    *state = 0;
+    if (state) *state = 0;
     return S_OK;
 }
 
