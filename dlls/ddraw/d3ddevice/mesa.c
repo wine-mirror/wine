@@ -123,7 +123,7 @@ static void fill_opengl_caps(D3DDEVICEDESC *d1, D3DDEVICEDESC *d2)
 }
 
 static void fill_device_capabilities(IDirectDrawImpl* ddraw) {
-  x11_dd_private *private = (x11_dd_private *) ddraw->private;
+  x11_dd_private *private = (x11_dd_private *) ddraw->d->private;
   const char *ext_string;
   Mesa_DeviceCapabilities *devcap;
   

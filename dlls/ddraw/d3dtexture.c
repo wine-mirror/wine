@@ -413,7 +413,7 @@ HRESULT WINAPI IDirect3DTexture2Impl_Load(
 
       if (color_table_queried == FALSE) {
 	ptr_ColorTableEXT =
-	  ((Mesa_DeviceCapabilities *) ((x11_dd_private *) This->surface->s.ddraw->private)->device_capabilities)->ptr_ColorTableEXT;
+	  ((Mesa_DeviceCapabilities *) ((x11_dd_private *) This->surface->s.ddraw->d->private)->device_capabilities)->ptr_ColorTableEXT;
       }
       
       if (pal == NULL) {
