@@ -72,6 +72,7 @@ typedef struct IDirectSound3DListenerImpl IDirectSound3DListenerImpl;
 typedef struct IDirectSound3DBufferImpl IDirectSound3DBufferImpl;
 typedef struct IDirectSoundCaptureImpl IDirectSoundCaptureImpl;
 typedef struct IDirectSoundCaptureBufferImpl IDirectSoundCaptureBufferImpl;
+typedef struct IKsPropertySetImpl IKsPropertySetImpl;
 
 /*****************************************************************************
  * IDirectSound implementation structure
@@ -161,6 +162,15 @@ struct IDirectSound3DListenerImpl
     CRITICAL_SECTION        lock;   
 };
 
+struct IKsPropertySetImpl 
+{
+    /* IUnknown fields */
+    ICOM_VFIELD(IKsPropertySet);
+    DWORD			ref;
+    /* IKsPropertySetImpl fields */
+    IDirectSound3DBufferImpl	*ds3db;	/* backptr, no ref */
+};
+
 /*****************************************************************************
  * IDirectSound3DBuffer implementation structure
  */
@@ -175,6 +185,7 @@ struct IDirectSound3DBufferImpl
     LPBYTE                  buffer;
     DWORD                   buflen;
     CRITICAL_SECTION        lock;
+    IKsPropertySetImpl*     iks;
 };
 
 
@@ -318,6 +329,76 @@ static void _dump_DSBCAPS(DWORD xmask) {
 }
 
 /*******************************************************************************
+ *              IKsPropertySet
+ */
+
+/* IUnknown methods */
+static HRESULT WINAPI IKsPropertySetImpl_QueryInterface(
+	LPKSPROPERTYSET iface, REFIID riid, LPVOID *ppobj
+) {
+	ICOM_THIS(IKsPropertySetImpl,iface);
+
+	FIXME("(%p,%s,%p), stub!\n",This,debugstr_guid(riid),ppobj);
+	return E_FAIL;
+}
+
+static ULONG WINAPI IKsPropertySetImpl_AddRef(LPKSPROPERTYSET iface) {
+	ICOM_THIS(IKsPropertySetImpl,iface);
+
+	This->ref++;
+	return This->ref;
+}
+
+static ULONG WINAPI IKsPropertySetImpl_Release(LPKSPROPERTYSET iface) {
+	ICOM_THIS(IKsPropertySetImpl,iface);
+
+	This->ref--;
+	return This->ref;
+}
+
+static HRESULT WINAPI IKsPropertySetImpl_Get(LPKSPROPERTYSET iface,
+	REFGUID guidPropSet, ULONG dwPropID,
+	LPVOID pInstanceData, ULONG cbInstanceData,
+	LPVOID pPropData, ULONG cbPropData,
+	PULONG pcbReturned
+) {
+	ICOM_THIS(IKsPropertySetImpl,iface);
+
+	FIXME("(%p,%s,%ld,%p,%ld,%p,%ld,%p), stub!\n",This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData,pcbReturned);
+	return E_PROP_ID_UNSUPPORTED;
+}
+
+static HRESULT WINAPI IKsPropertySetImpl_Set(LPKSPROPERTYSET iface,
+	REFGUID guidPropSet, ULONG dwPropID,
+	LPVOID pInstanceData, ULONG cbInstanceData,
+	LPVOID pPropData, ULONG cbPropData
+) {
+	ICOM_THIS(IKsPropertySetImpl,iface);
+
+	FIXME("(%p,%s,%ld,%p,%ld,%p,%ld), stub!\n",This,debugstr_guid(guidPropSet),dwPropID,pInstanceData,cbInstanceData,pPropData,cbPropData);
+	return E_PROP_ID_UNSUPPORTED;
+}
+
+static HRESULT WINAPI IKsPropertySetImpl_QuerySupport(LPKSPROPERTYSET iface,
+	REFGUID guidPropSet, ULONG dwPropID, PULONG pTypeSupport
+) {
+	ICOM_THIS(IKsPropertySetImpl,iface);
+
+	FIXME("(%p,%s,%ld,%p), stub!\n",This,debugstr_guid(guidPropSet),dwPropID,pTypeSupport);
+	return E_PROP_ID_UNSUPPORTED;
+}
+
+static ICOM_VTABLE(IKsPropertySet) iksvt = {
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IKsPropertySetImpl_QueryInterface,
+	IKsPropertySetImpl_AddRef,
+	IKsPropertySetImpl_Release,
+	IKsPropertySetImpl_Get,
+	IKsPropertySetImpl_Set,
+	IKsPropertySetImpl_QuerySupport
+};
+
+/*******************************************************************************
  *              IDirectSound3DBuffer
  */
 
@@ -328,7 +409,13 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_QueryInterface(
 {
 	ICOM_THIS(IDirectSound3DBufferImpl,iface);
 
-	TRACE("(%p,%s,%p)\n",This,debugstr_guid(riid),ppobj);
+	if ( IsEqualGUID( &IID_IKsPropertySet, riid ) ) {
+	    IDirectSound3DBuffer_AddRef(iface);
+	    *ppobj = This->iks;
+	    return S_OK;
+	}
+
+	FIXME("(%p,%s,%p), no such interface.\n",This,debugstr_guid(riid),ppobj);
 	return E_FAIL;
 }
 #endif
@@ -1777,7 +1864,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
                 ICOM_VTBL(ds3db) = &ds3dbvt;
 		InitializeCriticalSection(&ds3db->lock);
 
-		IDirectSoundBuffer_AddRef((LPDIRECTSOUNDBUFFER)This);
+		IDirectSoundBuffer_AddRef(iface);
 
                 ds3db->ds3db.dwSize = sizeof(DS3DBUFFER);
                 ds3db->ds3db.vPosition.u1.x = 0.0;
@@ -1801,6 +1888,11 @@ static HRESULT WINAPI IDirectSoundBufferImpl_QueryInterface(
                         ds3db->buflen = 0;
                         ds3db->ds3db.dwMode = DS3DMODE_DISABLE;
                 }
+
+		ds3db->iks = (IKsPropertySetImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(*(ds3db->iks)));
+		ds3db->iks->ref = 1;
+		ds3db->iks->ds3db = ds3db;
+		ICOM_VTBL(ds3db->iks) = &iksvt;
 
 		return S_OK;
 	}
@@ -2067,7 +2159,7 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 		(*ippdsb)->ds3db = ds3db;
 
 		ds3db->dsb = (*ippdsb);
-		IDirectSoundBufferImpl_AddRef((LPDIRECTSOUNDBUFFER)ippdsb);
+		IDirectSoundBufferImpl_AddRef((LPDIRECTSOUNDBUFFER)(*ippdsb));
 
 		InitializeCriticalSection(&ds3db->lock);
 
@@ -2094,6 +2186,11 @@ static HRESULT WINAPI IDirectSoundImpl_CreateSoundBuffer(
 			ds3db->buflen = 0;
 			ds3db->ds3db.dwMode = DS3DMODE_DISABLE;
 		}
+		ds3db->iks = (IKsPropertySetImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(*(ds3db->iks)));
+		ds3db->iks->ref = 1;
+		ds3db->iks->ds3db = ds3db;
+		ICOM_VTBL(ds3db->iks) = &iksvt;
+
 	}
 #endif
 	return DS_OK;

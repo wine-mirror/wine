@@ -1879,6 +1879,10 @@ extern int WIN32_LastError;
 #define E_OUTOFMEMORY                                      0x8007000EL
 #define E_INVALIDARG                                       0x80070057L
 
+/* For IKsPropertySets */
+#define E_PROP_ID_UNSUPPORTED				   0x80070490L
+#define E_PROP_SET_UNSUPPORTED				   0x80070492L
+
 #define CO_S_NOTALLINTERFACES                              0x00080012L
 
 #define CO_E_CLASS_CREATE_FAILED                           0x80080001L
