@@ -4510,7 +4510,8 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
 	return S_OK;
     }
     if (vt==VT_UNKNOWN && V_VT(arg)==VT_DISPATCH) {
-    	/* in this context, if the type lib specifies IUnknown*, giving an IDispatch* is correct; so, don't invoke VariantChangeType */
+    	/* in this context, if the type lib specifies IUnknown*, giving an
+           IDispatch* is correct; so, don't invoke VariantChangeType */
     	memcpy(argpos,&V_UNION(arg,lVal), arglen);
 	return S_OK;
     }
@@ -4518,82 +4519,110 @@ _copy_arg(	ITypeInfo2 *tinfo, TYPEDESC *tdesc,
 	return _copy_arg(tinfo, tdesc->u.lptdesc, argpos, arg, tdesc->u.lptdesc->vt);
 
     if ((vt == VT_USERDEFINED) && tdesc && tinfo) {
-	ITypeInfo	*tinfo2;
-	TYPEATTR	*tattr;
+	ITypeInfo	*tinfo2 = NULL;
+	TYPEATTR	*tattr = NULL;
 	HRESULT		hres;
 
 	hres = ITypeInfo_GetRefTypeInfo(tinfo,tdesc->u.hreftype,&tinfo2);
 	if (hres) {
-	    FIXME("Could not get typeinfo of hreftype %lx for VT_USERDEFINED, while coercing from vt 0x%x. Copying 4 byte.\n",tdesc->u.hreftype,V_VT(arg));
+	    FIXME("Could not get typeinfo of hreftype %lx for VT_USERDEFINED, "
+                  "while coercing from vt 0x%x. Copying 4 byte.\n",
+                  tdesc->u.hreftype,V_VT(arg));
 	    memcpy(argpos, &V_UNION(arg,lVal), 4);
 	    return S_OK;
 	}
-	ITypeInfo_GetTypeAttr(tinfo2,&tattr);
+	hres = ITypeInfo_GetTypeAttr(tinfo2,&tattr);
+        if( hres )
+        {
+            ERR("GetTypeAttr failed\n");
+	    ITypeInfo_Release(tinfo2);
+            return hres;
+        }
 	switch (tattr->typekind) {
 	case TKIND_ENUM:
           switch ( V_VT( arg ) ) {
           case VT_I2:
              *argpos = V_UNION(arg,iVal);
-             return S_OK;
+             hres = S_OK;
+             break;
           case VT_I4:
              memcpy(argpos, &V_UNION(arg,lVal), 4);
-             return S_OK;
+             hres = S_OK;
+             break;
           default:
              FIXME("vt 0x%x -> TKIND_ENUM unhandled.\n",V_VT(arg));
+             hres = E_FAIL;
              break;
           }
+          break;
 
 	case TKIND_ALIAS:
 	    tdesc = &(tattr->tdescAlias);
 	    hres = _copy_arg((ITypeInfo2*)tinfo2, tdesc, argpos, arg, tdesc->vt);
-	    ITypeInfo_Release(tinfo2);
-	    return hres;
+	    break;
 
 	case TKIND_INTERFACE:
 	    if (V_VT(arg) == VT_DISPATCH) {
 		IDispatch *disp;
 		if (IsEqualIID(&IID_IDispatch,&(tattr->guid))) {
 		    memcpy(argpos, &V_UNION(arg,pdispVal), 4);
-		    return S_OK;
+		    hres = S_OK;
+                    break;
 		}
-		hres=IUnknown_QueryInterface(V_UNION(arg,pdispVal),&IID_IDispatch,(LPVOID*)&disp);
+		hres=IUnknown_QueryInterface(V_UNION(arg,pdispVal),
+                                             &IID_IDispatch,(LPVOID*)&disp);
 		if (SUCCEEDED(hres)) {
 		    memcpy(argpos,&disp,4);
 		    IUnknown_Release(V_UNION(arg,pdispVal));
-		    return S_OK;
+		    hres = S_OK;
+                    break;
 		}
-		FIXME("Failed to query IDispatch interface from %s while converting to VT_DISPATCH!\n",debugstr_guid(&(tattr->guid)));
-		return E_FAIL;
+		FIXME("Failed to query IDispatch interface from %s while "
+                     "converting to VT_DISPATCH!\n",debugstr_guid(&(tattr->guid)));
+		hres = E_FAIL;
+                break;
 	    }
 	    if (V_VT(arg) == VT_UNKNOWN) {
 		memcpy(argpos, &V_UNION(arg,punkVal), 4);
-		return S_OK;
+		hres = S_OK;
+                break;
 	    }
-	    FIXME("vt 0x%x -> TKIND_INTERFACE(%s) unhandled\n",V_VT(arg),debugstr_guid(&(tattr->guid)));
+	    FIXME("vt 0x%x -> TKIND_INTERFACE(%s) unhandled\n",
+                  V_VT(arg),debugstr_guid(&(tattr->guid)));
+            hres = E_FAIL;
 	    break;
+
 	case TKIND_DISPATCH:
 	    if (V_VT(arg) == VT_DISPATCH) {
 		memcpy(argpos, &V_UNION(arg,pdispVal), 4);
-		return S_OK;
+		hres = S_OK;
 	    }
-	    FIXME("TKIND_DISPATCH unhandled for target vt 0x%x.\n",V_VT(arg));
+            else {
+                hres = E_FAIL;
+	        FIXME("TKIND_DISPATCH unhandled for target vt 0x%x.\n",V_VT(arg));
+            }
 	    break;
 	case TKIND_RECORD:
 	    FIXME("TKIND_RECORD unhandled.\n");
+            hres = E_FAIL;
 	    break;
 	default:
 	    FIXME("TKIND %d unhandled.\n",tattr->typekind);
+            hres = E_FAIL;
 	    break;
 	}
-	return E_FAIL;
+	ITypeInfo_ReleaseTypeAttr(tinfo2, tattr);
+	ITypeInfo_Release(tinfo2);
+	return hres;
     }
 
     oldvt = V_VT(arg);
     VariantInit(&va);
     if (VariantChangeType(&va,arg,0,vt)==S_OK) {
 	memcpy(argpos,&V_UNION(&va,lVal), arglen);
-	FIXME("Should not use VariantChangeType here. (conversion from 0x%x -> 0x%x)\n",
-		V_VT(arg), vt
+	FIXME("Should not use VariantChangeType here."
+              " (conversion from 0x%x -> 0x%x) %08lx\n",
+		V_VT(arg), vt, *argpos
 	);
 	return S_OK;
     }
