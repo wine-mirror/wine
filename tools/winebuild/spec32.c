@@ -515,18 +515,22 @@ void BuildSpec32File( FILE *outfile )
 
     /* Reserve some space for the PE header */
 
-    fprintf( outfile, "extern char pe_header[];\n" );
+    fprintf( outfile, "extern char __wine_spec_pe_header[];\n" );
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "static void __asm__dummy_header(void) {\n" );
     fprintf( outfile, "#endif\n" );
     fprintf( outfile, "asm(\".text\\n\\t\"\n" );
     fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(page_size) );
-    fprintf( outfile, "    \"" __ASM_NAME("pe_header") ":\\t" __ASM_SKIP " 65536\\n\\t\");\n" );
+    fprintf( outfile, "    \"" __ASM_NAME("__wine_spec_pe_header") ":\\t" __ASM_SKIP " 65536\\n\\t\"\n" );
+    fprintf( outfile, "    \".data\\n\\t\"\n" );
+    fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(4) );
+    fprintf( outfile, "    \"" __ASM_NAME("__wine_spec_data_start") ":\\t.long 1\");\n" );
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif\n" );
 
-    fprintf( outfile, "extern int __wine_spec_exports[];\n\n" );
+    fprintf( outfile, "extern char _end[];\n" );
+    fprintf( outfile, "extern int __wine_spec_data_start[], __wine_spec_exports[];\n\n" );
 
 #ifdef __i386__
     fprintf( outfile, "#define __stdcall __attribute__((__stdcall__))\n\n" );
@@ -753,7 +757,7 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "    short MajorSubsystemVersion;\n" );
     fprintf( outfile, "    short MinorSubsystemVersion;\n" );
     fprintf( outfile, "    int   Win32VersionValue;\n" );
-    fprintf( outfile, "    int   SizeOfImage;\n" );
+    fprintf( outfile, "    void *SizeOfImage;\n" );
     fprintf( outfile, "    int   SizeOfHeaders;\n" );
     fprintf( outfile, "    int   CheckSum;\n" );
     fprintf( outfile, "    short Subsystem;\n" );
@@ -784,15 +788,15 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "    0, 0,\n" );                   /* Major/MinorLinkerVersion */
     fprintf( outfile, "    0, 0, 0,\n" );                /* SizeOfCode/Data */
     fprintf( outfile, "    %s,\n", init_func ? init_func : "DllMain" );  /* AddressOfEntryPoint */
-    fprintf( outfile, "    0, 0,\n" );                   /* BaseOfCode/Data */
-    fprintf( outfile, "    pe_header,\n" );              /* ImageBase */
+    fprintf( outfile, "    0, __wine_spec_data_start,\n" );              /* BaseOfCode/Data */
+    fprintf( outfile, "    __wine_spec_pe_header,\n" );  /* ImageBase */
     fprintf( outfile, "    %ld,\n", page_size );         /* SectionAlignment */
     fprintf( outfile, "    %ld,\n", page_size );         /* FileAlignment */
     fprintf( outfile, "    1, 0,\n" );                   /* Major/MinorOperatingSystemVersion */
     fprintf( outfile, "    0, 0,\n" );                   /* Major/MinorImageVersion */
     fprintf( outfile, "    4, 0,\n" );                   /* Major/MinorSubsystemVersion */
     fprintf( outfile, "    0,\n" );                      /* Win32VersionValue */
-    fprintf( outfile, "    %ld,\n", page_size );         /* SizeOfImage */
+    fprintf( outfile, "    _end,\n" );                   /* SizeOfImage */
     fprintf( outfile, "    %ld,\n", page_size );         /* SizeOfHeaders */
     fprintf( outfile, "    0,\n" );                      /* CheckSum */
     fprintf( outfile, "    0x%04x,\n", subsystem );      /* Subsystem */

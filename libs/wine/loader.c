@@ -210,8 +210,10 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER *sec;
-    BYTE *addr, *code_start, *data_start;
-    size_t page_size = getpagesize();
+    BYTE *addr;
+    DWORD code_start, data_start, data_end;
+    const size_t page_size = getpagesize();
+    const size_t page_mask = page_size - 1;
     int nb_sections = 2;  /* code + data */
 
     size_t size = (sizeof(IMAGE_DOS_HEADER)
@@ -227,10 +229,6 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
     dos    = (IMAGE_DOS_HEADER *)addr;
     nt     = (IMAGE_NT_HEADERS *)(dos + 1);
     sec    = (IMAGE_SECTION_HEADER *)(nt + 1);
-    code_start = addr + page_size;
-
-    /* HACK! */
-    data_start = code_start + page_size;
 
     /* Build the DOS and NT headers */
 
@@ -239,10 +237,17 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
 
     *nt = *nt_descr;
 
+    code_start = page_size;
+    data_start = ((BYTE *)nt->OptionalHeader.BaseOfData - addr) & ~page_mask;
+    data_end   = (((BYTE *)nt->OptionalHeader.SizeOfImage - addr) + page_mask) & ~page_mask;
+
     nt->FileHeader.NumberOfSections                = nb_sections;
+    nt->OptionalHeader.BaseOfCode                  = code_start;
+    nt->OptionalHeader.BaseOfData                  = data_start;
     nt->OptionalHeader.SizeOfCode                  = data_start - code_start;
-    nt->OptionalHeader.SizeOfInitializedData       = 0;
+    nt->OptionalHeader.SizeOfInitializedData       = data_end - data_start;
     nt->OptionalHeader.SizeOfUninitializedData     = 0;
+    nt->OptionalHeader.SizeOfImage                 = data_end;
     nt->OptionalHeader.ImageBase                   = (DWORD)addr;
 
     fixup_rva_ptrs( &nt->OptionalHeader.AddressOfEntryPoint, addr, 1 );
@@ -252,18 +257,18 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
     strcpy( sec->Name, ".text" );
     sec->SizeOfRawData = data_start - code_start;
     sec->Misc.VirtualSize = sec->SizeOfRawData;
-    sec->VirtualAddress   = code_start - addr;
-    sec->PointerToRawData = code_start - addr;
+    sec->VirtualAddress   = code_start;
+    sec->PointerToRawData = code_start;
     sec->Characteristics  = (IMAGE_SCN_CNT_CODE | IMAGE_SCN_MEM_EXECUTE | IMAGE_SCN_MEM_READ);
     sec++;
 
     /* Build the data section */
 
     strcpy( sec->Name, ".data" );
-    sec->SizeOfRawData = 0;
+    sec->SizeOfRawData = data_end - data_start;
     sec->Misc.VirtualSize = sec->SizeOfRawData;
-    sec->VirtualAddress   = data_start - addr;
-    sec->PointerToRawData = data_start - addr;
+    sec->VirtualAddress   = data_start;
+    sec->PointerToRawData = data_start;
     sec->Characteristics  = (IMAGE_SCN_CNT_INITIALIZED_DATA |
                              IMAGE_SCN_MEM_WRITE | IMAGE_SCN_MEM_READ);
     sec++;
