@@ -33,7 +33,9 @@
 # include <sys/signal.h>
 #endif
 
+#include "ntddk.h"
 #include "winnt.h"
+
 #include "selectors.h"
 
 /***********************************************************************
@@ -1118,13 +1120,11 @@ void __wine_enter_vm86( CONTEXT *context )
 /**********************************************************************
  *		DbgBreakPoint   (NTDLL.@)
  */
-void WINAPI DbgBreakPoint(void);
 __ASM_GLOBAL_FUNC( DbgBreakPoint, "int $3; ret");
 
 /**********************************************************************
  *		DbgUserBreakPoint   (NTDLL.@)
  */
-void WINAPI DbgUserBreakPoint(void);
 __ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int $3; ret");
 
 #endif  /* __i386__ */

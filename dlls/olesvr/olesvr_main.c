@@ -7,10 +7,10 @@
 /*	At the moment, these are only empty stubs.
  */
 
-#include "winbase.h"
-#include "wingdi.h"
-#include "wtypes.h"
+#include "config.h"
+
 #include "ole.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);

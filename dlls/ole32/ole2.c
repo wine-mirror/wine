@@ -1,3 +1,4 @@
+
 /*
  *	OLE2 library
  *
@@ -6,26 +7,30 @@
  *      Copyright 1999  Noel Borthwick 
  */
 
+#include "config.h"
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "commctrl.h"
+#include "ole2.h"
+#include "ole2ver.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winerror.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winerror.h"
-#include "ole2.h"
-#include "commctrl.h"
+#include "winreg.h"
+
 #include "wine/obj_clientserver.h"
 #include "wine/winbase16.h"
 #include "wine/wingdi16.h"
 #include "wine/winuser16.h"
-#include "debugtools.h"
-#include "ole2ver.h"
-#include "winreg.h"
 #include "ole32_main.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
 DECLARE_DEBUG_CHANNEL(accel);

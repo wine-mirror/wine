@@ -13,18 +13,13 @@
 
 #include "msvcrt/stdlib.h"
 #include "msvcrt/string.h"
+#include "msvcrt/wctype.h"
 
 
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 unsigned char MSVCRT_mbctype[257];
 int MSVCRT___mb_cur_max = 1;
-
-int MSVCRT_isleadbyte(int);
-char *_strset(char *, int);
-char *_strnset(char *, int, unsigned int);
-extern unsigned int MSVCRT_current_lc_all_cp;
-
 
 /*********************************************************************
  *		__p__mbctype (MSVCRT.@)

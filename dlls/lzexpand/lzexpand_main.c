@@ -7,28 +7,22 @@
  * FIXME: return values might be wrong
  */
 
+#include "config.h"
+
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "windef.h"
+
 #include "winbase.h"
-#include "wine/winbase16.h"
-#include "wine/unicode.h"
 #include "lzexpand.h"
+
+#include "wine/unicode.h"
+#include "wine/winbase16.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(file);
-
-LONG     WINAPI CopyLZFile16(HFILE16,HFILE16);
-INT16    WINAPI GetExpandedName16(LPCSTR,LPSTR);
-void     WINAPI LZClose16(HFILE16);
-LONG     WINAPI LZCopy16(HFILE16,HFILE16);
-HFILE16  WINAPI LZInit16(HFILE16);
-HFILE16  WINAPI LZOpenFile16(LPCSTR,LPOFSTRUCT,UINT16);
-INT16    WINAPI LZRead16(HFILE16,LPVOID,UINT16);
-LONG     WINAPI LZSeek16(HFILE16,LONG,INT16);
-INT16    WINAPI LZStart16(void);
 
 /* The readahead length of the decompressor. Reading single bytes
  * using _lread() would be SLOW.

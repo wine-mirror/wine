@@ -21,7 +21,6 @@ static int MSVCRT_atexit_table_size = 0;
 static int MSVCRT_atexit_registered = 0; /* Points to free slot */
 
 extern int MSVCRT_app_type;
-void *MSVCRT_realloc(void *ptr, unsigned int size);
 
 /* INTERNAL: call atexit functions */
 void __MSVCRT__call_atexit(void)

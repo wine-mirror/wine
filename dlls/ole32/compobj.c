@@ -13,26 +13,29 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+
 #include "windef.h"
-#include "wtypes.h"
-#include "wingdi.h"
-#include "wine/winbase16.h"
-#include "winerror.h"
-#include "wownt32.h"
+#include "objbase.h"
+#include "ole2.h"
 #include "ole2ver.h"
-#include "debugtools.h"
-#include "heap.h"
-#include "winreg.h"
 #include "rpc.h"
+#include "wingdi.h"
+#include "winerror.h"
+#include "winreg.h"
+#include "wownt32.h"
+#include "wtypes.h"
 
 #include "wine/obj_base.h"
-#include "wine/obj_misc.h"
-#include "wine/obj_storage.h"
 #include "wine/obj_clientserver.h"
-
-#include "ole.h"
-#include "ifs.h"
+#include "wine/obj_misc.h"
+#include "wine/obj_marshal.h"
+#include "wine/obj_storage.h"
+#include "wine/winbase16.h"
 #include "compobj_private.h"
+#include "ifs.h"
+#include "heap.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -851,17 +854,17 @@ HRESULT WINAPI WriteClassStm(IStream *pStm,REFCLSID rclsid)
  *
  * This function read a CLSID from a stream
  */
-HRESULT WINAPI ReadClassStm(IStream *pStm,REFCLSID rclsid)
+HRESULT WINAPI ReadClassStm(IStream *pStm,CLSID *pclsid)
 {
     ULONG nbByte;
     HRESULT res;
     
-    TRACE("(%p,%p)\n",pStm,rclsid);
+    TRACE("(%p,%p)\n",pStm,pclsid);
 
-    if (rclsid==NULL)
+    if (pclsid==NULL)
         return E_INVALIDARG;
     
-    res = IStream_Read(pStm,(void*)rclsid,sizeof(CLSID),&nbByte);
+    res = IStream_Read(pStm,(void*)pclsid,sizeof(CLSID),&nbByte);
 
     if (FAILED(res))
         return res;
@@ -1285,7 +1288,7 @@ HRESULT WINAPI CoResumeClassObjects(void)
  *
  * This function supplies the CLSID associated with the given filename.
  */
-HRESULT WINAPI GetClassFile(LPOLESTR filePathName,CLSID *pclsid)
+HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
 {
     IStorage *pstg=0;
     HRESULT res;

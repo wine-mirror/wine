@@ -29,6 +29,9 @@ typedef struct __MSVCRT_thread_data
 #define SET_THREAD_VAR(x,y) \
   ((MSVCRT_thread_data*)TlsGetValue(MSVCRT_tls_index))->x = y
 
+extern int MSVCRT_current_lc_all_cp;
+
+void _purecall(void);
 void   MSVCRT__set_errno(int);
 char*  msvcrt_strndup(const char*,unsigned int);
 LPWSTR msvcrt_wstrndup(LPCWSTR, unsigned int);

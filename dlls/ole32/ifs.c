@@ -4,18 +4,23 @@
  *	Copyright 1997	Marcus Meissner
  */
 
+#include "config.h"
+
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "winerror.h"
-#include "heap.h"
-#include "wine/winbase16.h"
-#include "wine/obj_base.h"
-#include "debugtools.h"
 
-#include "ole.h"
+#include "ole2.h"
+#include "windef.h"
+#include "winerror.h"
+
+#include "wine/obj_base.h"
+#include "wine/winbase16.h"
+#include "heap.h"
 #include "ifs.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(relay);
 

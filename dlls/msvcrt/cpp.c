@@ -8,11 +8,8 @@
 #include "msvcrt/eh.h"
 #include "msvcrt/malloc.h"
 
-
 DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-
-void _purecall(void);
 
 typedef void (*v_table_ptr)();
 

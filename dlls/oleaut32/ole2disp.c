@@ -3,18 +3,23 @@
  *
  *	Copyright 1995	Martin von Loewis
  */
+
+#include "config.h"
+
 #include <string.h>
 
+#include "ole2.h"
+#include "oleauto.h"
 #include "windef.h"
 #include "winbase.h"
+#include "winerror.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winerror.h"
-#include "wine/windef16.h"
-#include "ole2.h"
-#include "olectl.h"
-#include "oleauto.h"
+
 #include "heap.h"
+#include "ole2disp.h"
+#include "olectl.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);

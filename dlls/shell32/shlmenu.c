@@ -16,8 +16,8 @@
 
 #include "pidl.h"
 
-BOOL WINAPI FileMenu_DeleteAllItems (HMENU hMenu);
-BOOL WINAPI FileMenu_AppendItemA(HMENU hMenu, LPCSTR lpText, UINT uID, int icon, HMENU hMenuPopup, int nItemHeight);
+static BOOL FileMenu_AppendItemA(HMENU hMenu, LPCSTR lpText, UINT uID, int icon,
+                                 HMENU hMenuPopup, int nItemHeight);
 
 typedef struct
 {
@@ -280,7 +280,7 @@ void WINAPI FileMenu_Destroy (HMENU hmenu)
  * FileMenu_AppendItem			[SHELL32.115]
  *
  */
-BOOL WINAPI FileMenu_AppendItemA(
+static BOOL FileMenu_AppendItemA(
 	HMENU hMenu,
 	LPCSTR lpText,
 	UINT uID,

@@ -41,18 +41,23 @@
  * 
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+
 #include "winerror.h"
-#include "winreg.h"         /* for HKEY_LOCAL_MACHINE */
 #include "winnls.h"         /* for PRIMARYLANGID */
-#include "ole.h"
-#include "heap.h"
+#include "winreg.h"         /* for HKEY_LOCAL_MACHINE */
+
 #include "wine/obj_base.h"
-#include "debugtools.h"
+#include "heap.h"
+#include "ole2disp.h"
 #include "typelib.h"
+
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
 DECLARE_DEBUG_CHANNEL(typelib);

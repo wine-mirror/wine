@@ -257,68 +257,6 @@ typedef struct _OLEOBJECT {
 	LPOLEOBJECTVTBL	lpvtbl;
 } OLEOBJECT;
 
-
-typedef struct IMalloc16 IMalloc16,*LPMALLOC16;
-
-#define ICOM_INTERFACE IMalloc16
-#define IMalloc16_METHODS \
-    ICOM_METHOD1 (LPVOID,Alloc,       DWORD,cb) \
-    ICOM_METHOD2 (LPVOID,Realloc,     LPVOID,pv, DWORD,cb) \
-    ICOM_VMETHOD1(       Free,        LPVOID,pv) \
-    ICOM_METHOD1(DWORD, GetSize,     LPVOID,pv) \
-    ICOM_METHOD1(INT16, DidAlloc,    LPVOID,pv) \
-    ICOM_METHOD  (LPVOID,HeapMinimize)
-#define IMalloc16_IMETHODS \
-    IUnknown_IMETHODS \
-    IMalloc16_METHODS
-ICOM_DEFINE(IMalloc16,IUnknown)
-#undef ICOM_INTERFACE
-
-/*** IUnknown methods ***/
-#define IMalloc16_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
-#define IMalloc16_AddRef(p)             ICOM_CALL (AddRef,p)
-#define IMalloc16_Release(p)            ICOM_CALL (Release,p)
-/*** IMalloc16 methods ***/
-#define IMalloc16_Alloc(p,a)      ICOM_CALL1(Alloc,p,a)
-#define IMalloc16_Realloc(p,a,b)  ICOM_CALL2(Realloc,p,a,b)
-#define IMalloc16_Free(p,a)       ICOM_CALL1(Free,p,a)
-#define IMalloc16_GetSize(p,a)    ICOM_CALL1(GetSize,p,a)
-#define IMalloc16_DidAlloc(p,a)   ICOM_CALL1(DidAlloc,p,a)
-#define IMalloc16_HeapMinimize(p) ICOM_CALL (HeapMinimize,p)
-
-
-HRESULT   WINAPI CoCreateStandardMalloc16(DWORD dwMemContext, LPMALLOC16* lpMalloc);
-HRESULT   WINAPI CoGetMalloc16(DWORD dwMemContext,LPMALLOC16* lpMalloc);
-HRESULT   WINAPI CoInitialize16(LPVOID lpReserved);
-HRESULT   WINAPI CoLockObjectExternal16(LPUNKNOWN,BOOL16,BOOL16);
-HRESULT   WINAPI CoRegisterClassObject16(REFCLSID,LPUNKNOWN,DWORD,DWORD,LPDWORD);
-void      WINAPI CoUninitialize16(void);
-HRESULT   WINAPI DoDragDrop16(LPDATAOBJECT,LPDROPSOURCE,DWORD,DWORD*);
-OLESTATUS WINAPI OleRegisterServer16(LPCSTR,LPOLESERVER,LHSERVER *,HINSTANCE16,OLE_SERVER_USE);
-OLESTATUS WINAPI OleUnblockServer16(LHSERVER,BOOL16 *);
-OLESTATUS WINAPI OleRegisterServerDoc16(LHSERVER,LPCSTR,LPOLESERVERDOC,LHSERVERDOC *);
-OLESTATUS WINAPI OleRegisterClientDoc16(LPCSTR,LPCSTR,LONG,LHCLIENTDOC *);
-OLESTATUS WINAPI OleRenameClientDoc16(LHCLIENTDOC,LPCSTR);
-OLESTATUS WINAPI OleRevokeServerDoc16(LHSERVERDOC);
-OLESTATUS WINAPI OleRevokeClientDoc16(LHCLIENTDOC);
-OLESTATUS WINAPI OleRevokeServer16(LHSERVER);
-OLESTATUS WINAPI OleRevertClientDoc16(LHCLIENTDOC hServerDoc);
-OLESTATUS WINAPI OleEnumObjects16(LHCLIENTDOC hServerDoc, SEGPTR data);
-OLESTATUS WINAPI OleCreateLinkFromClip16(LPCSTR,SEGPTR,LHCLIENTDOC,LPCSTR,SEGPTR,UINT16,UINT16);
-OLESTATUS WINAPI OleQueryLinkFromClip16(LPCSTR name, UINT16 render, UINT16 clipformat);
-OLESTATUS WINAPI OleQueryCreateFromClip16(LPCSTR name, UINT16 render, UINT16 clipformat);
-OLESTATUS WINAPI OleQueryType16(LPOLEOBJECT oleob,  SEGPTR xlong);
-OLESTATUS WINAPI OleCreateFromClip16(LPCSTR,SEGPTR,LHCLIENTDOC,LPCSTR,SEGPTR,UINT16,UINT16);
-HRESULT   WINAPI RegisterDragDrop16(HWND16,LPDROPTARGET);
-HRESULT   WINAPI RevokeDragDrop16(HWND16);
-
-BSTR16 WINAPI SysAllocString16(LPCOLESTR16);
-INT16  WINAPI SysReAllocString16(LPBSTR16,LPCOLESTR16);
-VOID   WINAPI SysFreeString16(BSTR16);
-BSTR16 WINAPI SysAllocStringLen16(const char*, int);
-int    WINAPI SysReAllocStringLen16(BSTR16*, const char*,  int);
-int    WINAPI SysStringLen16(BSTR16);
-
 #ifdef __cplusplus
 } /*extern*/
 #endif
