@@ -723,7 +723,6 @@ NTSTATUS WINAPI NtQuerySystemInformation(
     default:
 	FIXME("(0x%08x,%p,0x%08lx,%p) stub\n",
 	      SystemInformationClass,SystemInformation,Length,ResultLength);
-	memset(SystemInformation, 0, Length);
         ret = STATUS_NOT_IMPLEMENTED;
     }
     if (ResultLength) *ResultLength = len;
