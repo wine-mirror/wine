@@ -983,15 +983,14 @@ static LRESULT FILEDLG95_InitControls(HWND hwnd)
    {VIEW_LIST,         FCIDM_TB_SMALLICON,  TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
    {VIEW_DETAILS,      FCIDM_TB_REPORTVIEW, TBSTATE_ENABLED, TBSTYLE_BUTTON, {0, 0}, 0, 0 },
   };
-  TBADDBITMAP tba[] =
-  {
-   { HINST_COMMCTRL, IDB_VIEW_SMALL_COLOR },
-   { COMDLG32_hInstance, 800 } 			/* desktop icon */
-  };
-
+  TBADDBITMAP tba[2];
   RECT rectTB;
-
   FileOpenDlgInfos *fodInfos = (FileOpenDlgInfos *) GetPropA(hwnd,FileOpenDlgInfosStr);
+
+  tba[0].hInst = HINST_COMMCTRL;
+  tba[0].nID   = IDB_VIEW_SMALL_COLOR;
+  tba[1].hInst = COMDLG32_hInstance;
+  tba[1].nID   = 800;
 
   TRACE("%p\n", fodInfos);
 

@@ -133,7 +133,7 @@ static PROXYHANDLE gProxyHandle = {
   FALSE,
   FALSE,
   ERROR_LIBRARY_NOT_FOUND,
-  { },
+  { 0, 0, 0, 0 },
   "",
   "",
   "",

@@ -1114,7 +1114,11 @@ PAGER_HitTest (HWND hwnd, LPPOINT pt)
 static LRESULT
 PAGER_NCHitTest (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    POINT pt = { SLOWORD(lParam), SHIWORD(lParam) };
+    POINT pt;
+
+    pt.x = SLOWORD(lParam);
+    pt.y = SHIWORD(lParam);
+
     ScreenToClient (hwnd, &pt);
     return PAGER_HitTest(hwnd, &pt);
 }
@@ -1184,13 +1188,16 @@ static LRESULT
 PAGER_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
-    POINT clpt, pt = {SLOWORD(lParam), SHIWORD(lParam)};
+    POINT clpt, pt;
     RECT wnrect, TLbtnrect, BRbtnrect, *btnrect = NULL;
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     BOOL topLeft = FALSE;
     INT btnstate = 0;
     INT hit;
     HDC hdc;
+
+    pt.x = SLOWORD(lParam);
+    pt.y = SHIWORD(lParam);
 
     TRACE("[%08x] to (%ld,%ld)\n", hwnd, pt.x, pt.y);
     ClientToScreen(hwnd, &pt);
@@ -1272,8 +1279,11 @@ PAGER_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     PAGER_INFO *infoPtr = PAGER_GetInfoPtr (hwnd);
     BOOL repaintBtns = FALSE;
-    POINT pt = { SLOWORD(lParam), SHIWORD(lParam) };
+    POINT pt;
     INT hit;
+
+    pt.x = SLOWORD(lParam);
+    pt.y = SHIWORD(lParam);
 
     TRACE("[%08x] at (%d,%d)\n", hwnd, SLOWORD(lParam), SHIWORD(lParam));
 
@@ -1339,7 +1349,10 @@ PAGER_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 PAGER_NCLButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    POINT pt = {SLOWORD(lParam), SHIWORD(lParam)};
+    POINT pt;
+
+    pt.x = SLOWORD(lParam);
+    pt.y = SHIWORD(lParam);
 
     TRACE("[%08x] at (%d,%d)\n", hwnd, SLOWORD(lParam), SHIWORD(lParam));
     MapWindowPoints(0, hwnd, &pt, 1);
@@ -1592,4 +1605,3 @@ PAGER_Unregister (void)
 {
     UnregisterClassA (WC_PAGESCROLLERA, (HINSTANCE)NULL);
 }
-

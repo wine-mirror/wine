@@ -135,7 +135,11 @@ IDirectDrawSurface3Impl_EnumAttachedSurfaces(LPDIRECTDRAWSURFACE3 This,
 					     LPVOID context,
 					     LPDDENUMSURFACESCALLBACK callback)
 {
-    struct callback_info info = { callback, context };
+    struct callback_info info;
+
+    info.callback = callback;
+    info.context  = context;
+
     return IDirectDrawSurface7_EnumAttachedSurfaces(CONVERT(This), &info,
 						    EnumCallback);
 }
@@ -145,7 +149,11 @@ IDirectDrawSurface3Impl_EnumOverlayZOrders(LPDIRECTDRAWSURFACE3 This,
 					   DWORD dwFlags, LPVOID context,
 					   LPDDENUMSURFACESCALLBACK callback)
 {
-    struct callback_info info = { callback, context };
+    struct callback_info info;
+
+    info.callback = callback;
+    info.context  = context;
+
     return IDirectDrawSurface7_EnumOverlayZOrders(CONVERT(This), dwFlags,
 						  &info, EnumCallback);
 }
@@ -163,9 +171,14 @@ IDirectDrawSurface3Impl_GetAttachedSurface(LPDIRECTDRAWSURFACE3 This,
 					   LPDDSCAPS pCaps,
 					   LPDIRECTDRAWSURFACE3* ppAttached)
 {
-    DDSCAPS2 caps = { pCaps->dwCaps, 0, 0, 0 };
+    DDSCAPS2 caps;
     LPDIRECTDRAWSURFACE7 pAttached7;
     HRESULT hr;
+
+    caps.dwCaps  = pCaps->dwCaps;
+    caps.dwCaps2 = 0;
+    caps.dwCaps3 = 0;
+    caps.dwCaps4 = 0;
 
     hr = IDirectDrawSurface7_GetAttachedSurface(CONVERT(This), &caps,
 						&pAttached7);

@@ -336,7 +336,10 @@ IDirectDrawImpl_EnumDisplayModes(LPDIRECTDRAW This, DWORD dwFlags,
 				 LPDDSURFACEDESC pDDSD, LPVOID context,
 				 LPDDENUMMODESCALLBACK cb)
 {
-    struct displaymodescallback_context cbcontext = { cb, context };
+    struct displaymodescallback_context cbcontext;
+
+    cbcontext.func    = cb;
+    cbcontext.context = context;
 
     return IDirectDraw7_EnumDisplayModes(COM_INTERFACE_CAST(IDirectDrawImpl,
 							    IDirectDraw,
@@ -351,7 +354,10 @@ IDirectDraw2Impl_EnumDisplayModes(LPDIRECTDRAW2 This, DWORD dwFlags,
 				  LPDDSURFACEDESC pDDSD, LPVOID context,
 				  LPDDENUMMODESCALLBACK cb)
 {
-    struct displaymodescallback_context cbcontext = { cb, context };
+    struct displaymodescallback_context cbcontext;
+
+    cbcontext.func    = cb;
+    cbcontext.context = context;
 
     return IDirectDraw7_EnumDisplayModes(COM_INTERFACE_CAST(IDirectDrawImpl,
 							    IDirectDraw2,
@@ -399,7 +405,11 @@ IDirectDrawImpl_EnumSurfaces(LPDIRECTDRAW This, DWORD dwFlags,
 			     LPDDSURFACEDESC pDDSD, LPVOID context,
 			     LPDDENUMSURFACESCALLBACK cb)
 {
-    struct surfacescallback_context cbcontext = { cb, context };
+    struct surfacescallback_context cbcontext;
+
+    cbcontext.func    = cb;
+    cbcontext.context = context;
+
     return IDirectDraw7_EnumSurfaces(COM_INTERFACE_CAST(IDirectDrawImpl,
 							IDirectDraw,
 							IDirectDraw7, This),
@@ -412,7 +422,11 @@ IDirectDraw2Impl_EnumSurfaces(LPDIRECTDRAW2 This, DWORD dwFlags,
 			      LPDDSURFACEDESC pDDSD, LPVOID context,
 			      LPDDENUMSURFACESCALLBACK cb)
 {
-    struct surfacescallback_context cbcontext = { cb, context };
+    struct surfacescallback_context cbcontext;
+
+    cbcontext.func    = cb;
+    cbcontext.context = context;
+
     return IDirectDraw7_EnumSurfaces(COM_INTERFACE_CAST(IDirectDrawImpl,
 							IDirectDraw2,
 							IDirectDraw7, This),

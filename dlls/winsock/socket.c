@@ -2329,7 +2329,10 @@ INT16 WINAPI WINSOCK_listen16(SOCKET16 s, INT16 backlog)
 int WINAPI WS_recv(SOCKET s, char *buf, int len, int flags)
 {
     DWORD n, dwFlags = flags;
-    WSABUF wsabuf = { len, buf };
+    WSABUF wsabuf;
+
+    wsabuf.len = len;
+    wsabuf.buf = buf;
 
     if ( WSARecvFrom (s, &wsabuf, 1, &n, &dwFlags, NULL, NULL, NULL, NULL) == SOCKET_ERROR )
         return SOCKET_ERROR;
@@ -2353,7 +2356,10 @@ int WINAPI WS_recvfrom(SOCKET s, char *buf, INT len, int flags,
                                 struct WS_sockaddr *from, int *fromlen)
 {
     DWORD n, dwFlags = flags;
-    WSABUF wsabuf = { len, buf };
+    WSABUF wsabuf;
+
+    wsabuf.len = len;
+    wsabuf.buf = buf;
 
     if ( WSARecvFrom (s, &wsabuf, 1, &n, &dwFlags, from, fromlen, NULL, NULL) == SOCKET_ERROR )
         return SOCKET_ERROR;
@@ -2476,7 +2482,10 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
 int WINAPI WS_send(SOCKET s, const char *buf, int len, int flags)
 {
     DWORD n;
-    WSABUF wsabuf = { len, (char*) buf };
+    WSABUF wsabuf;
+
+    wsabuf.len = len;
+    wsabuf.buf = (char*) buf;
 
     if ( WSASendTo ( s, &wsabuf, 1, &n, flags, NULL, 0, NULL, NULL) == SOCKET_ERROR )
         return SOCKET_ERROR;
@@ -2622,7 +2631,10 @@ int WINAPI WS_sendto(SOCKET s, const char *buf, int len, int flags,
                               const struct WS_sockaddr *to, int tolen)
 {
     DWORD n;
-    WSABUF wsabuf = { len, (char*) buf };
+    WSABUF wsabuf;
+
+    wsabuf.len = len;
+    wsabuf.buf = (char*) buf;
 
     if ( WSASendTo (s, &wsabuf, 1, &n, flags, to, tolen, NULL, NULL) == SOCKET_ERROR )
         return SOCKET_ERROR;

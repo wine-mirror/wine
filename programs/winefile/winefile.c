@@ -809,7 +809,12 @@ static void resize_frame_rect(HWND hwnd, PRECT prect)
 
 static void resize_frame(HWND hwnd, int cx, int cy)
 {
-	RECT rect = {0, 0, cx, cy};
+	RECT rect;
+
+	rect.left   = 0;
+	rect.top    = 0;
+	rect.right  = cx;
+	rect.bottom = cy;
 
 	resize_frame_rect(hwnd, &rect);
 }
@@ -842,14 +847,18 @@ LRESULT CALLBACK CBTProc(int code, WPARAM wparam, LPARAM lparam)
 
 static HWND create_child_window(ChildWnd* child)
 {
-	MDICREATESTRUCT mcs = {
-		WINEFILETREE, (LPTSTR)child->path, Globals.hInstance,
-		child->pos.rcNormalPosition.left, child->pos.rcNormalPosition.top,
-		child->pos.rcNormalPosition.right-child->pos.rcNormalPosition.left,
-		child->pos.rcNormalPosition.bottom-child->pos.rcNormalPosition.top,
-		0/*style*/, 0/*lParam*/
-	};
+	MDICREATESTRUCT mcs;
 	int idx;
+
+	mcs.szClass = WINEFILETREE;
+	mcs.szTitle = (LPTSTR)child->path;
+	mcs.hOwner  = Globals.hInstance;
+	mcs.x       = child->pos.rcNormalPosition.left;
+	mcs.y       = child->pos.rcNormalPosition.top;
+	mcs.cx      = child->pos.rcNormalPosition.right-child->pos.rcNormalPosition.left;
+	mcs.cy      = child->pos.rcNormalPosition.bottom-child->pos.rcNormalPosition.top;
+	mcs.style   = 0;
+	mcs.lParam  = 0;
 
 	hcbthook = SetWindowsHookEx(WH_CBT, CBTProc, 0, GetCurrentThreadId());
 
@@ -1247,14 +1256,22 @@ const static int g_pos_align[] = {
 static void resize_tree(ChildWnd* child, int cx, int cy)
 {
 	HDWP hdwp = BeginDeferWindowPos(4);
-	RECT rt = {0, 0, cx, cy};
+	RECT rt;
+
+	rt.left   = 0;
+	rt.top    = 0;
+	rt.right  = cx;
+	rt.bottom = cy;
 
 	cx = child->split_pos + SPLIT_WIDTH/2;
 
 #ifndef _NO_EXTENSIONS
 	{
 		WINDOWPOS wp;
-		HD_LAYOUT hdl = {&rt, &wp};
+		HD_LAYOUT hdl;
+
+		hdl.prc   = &rt;
+		hdl.pwpos = &wp;
 
 		Header_Layout(child->left.hwndHeader, &hdl);
 
@@ -1345,9 +1362,15 @@ static BOOL calc_widths(Pane* pane, BOOL anyway)
 	for(cnt=0; cnt<entries; cnt++) {
 		Entry* entry = (Entry*) ListBox_GetItemData(pane->hwnd, cnt);
 
-		DRAWITEMSTRUCT dis = {0/*CtlType*/, 0/*CtlID*/,
-			0/*itemID*/, 0/*itemAction*/, 0/*itemState*/,
-			pane->hwnd/*hwndItem*/, hdc};
+		DRAWITEMSTRUCT dis;
+
+		dis.CtlType    = 0;
+		dis.CtlID      = 0;
+		dis.itemID     = 0;
+		dis.itemAction = 0;
+		dis.itemState  = 0;
+		dis.hwndItem   = pane->hwnd;
+		dis.hDC        = hdc;
 
 		draw_item(pane, &dis, entry, COLUMNS);
 	}
@@ -1412,7 +1435,15 @@ static void calc_single_width(Pane* pane, int col)
 
 	for(cnt=0; cnt<entries; cnt++) {
 		Entry* entry = (Entry*) ListBox_GetItemData(pane->hwnd, cnt);
-		DRAWITEMSTRUCT dis = {0, 0, 0, 0, 0, pane->hwnd, hdc};
+		DRAWITEMSTRUCT dis;
+
+		dis.CtlType    = 0;
+		dis.CtlID      = 0;
+		dis.itemID     = 0;
+		dis.itemAction = 0;
+		dis.itemState  = 0;
+		dis.hwndItem   = pane->hwnd;
+		dis.hDC        = hdc;
 
 		draw_item(pane, &dis, entry, col);
 	}
@@ -1586,7 +1617,12 @@ static void calc_tabbed_width(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR
 static void output_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str, DWORD flags)
 {
 	int x = dis->rcItem.left;
-	RECT rt = {x+pane->positions[col]+Globals.spaceSize.cx, dis->rcItem.top, x+pane->positions[col+1]-Globals.spaceSize.cx, dis->rcItem.bottom};
+	RECT rt;
+
+	rt.left   = x+pane->positions[col]+Globals.spaceSize.cx;
+	rt.top    = dis->rcItem.top;
+	rt.right  = x+pane->positions[col+1]-Globals.spaceSize.cx;
+	rt.bottom = dis->rcItem.bottom;
 
 	DrawText(dis->hDC, (LPTSTR)str, -1, &rt, DT_SINGLELINE|DT_NOPREFIX|flags);
 }
@@ -1594,7 +1630,12 @@ static void output_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str, 
 static void output_tabbed_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str)
 {
 	int x = dis->rcItem.left;
-	RECT rt = {x+pane->positions[col]+Globals.spaceSize.cx, dis->rcItem.top, x+pane->positions[col+1]-Globals.spaceSize.cx, dis->rcItem.bottom};
+	RECT rt;
+
+	rt.left   = x+pane->positions[col]+Globals.spaceSize.cx;
+	rt.top    = dis->rcItem.top;
+	rt.right  = x+pane->positions[col+1]-Globals.spaceSize.cx;
+	rt.bottom = dis->rcItem.bottom;
 
 /*	DRAWTEXTPARAMS dtp = {sizeof(DRAWTEXTPARAMS), 2};
 	DrawTextEx(dis->hDC, (LPTSTR)str, -1, &rt, DT_SINGLELINE|DT_NOPREFIX|DT_EXPANDTABS|DT_TABSTOP, &dtp);*/
@@ -1605,11 +1646,16 @@ static void output_tabbed_text(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTST
 static void output_number(Pane* pane, LPDRAWITEMSTRUCT dis, int col, LPCTSTR str)
 {
 	int x = dis->rcItem.left;
-	RECT rt = {x+pane->positions[col]+Globals.spaceSize.cx, dis->rcItem.top, x+pane->positions[col+1]-Globals.spaceSize.cx, dis->rcItem.bottom};
+	RECT rt;
 	LPCTSTR s = str;
 	TCHAR b[128];
 	LPTSTR d = b;
 	int pos;
+
+	rt.left   = x+pane->positions[col]+Globals.spaceSize.cx;
+	rt.top    = dis->rcItem.top;
+	rt.right  = x+pane->positions[col+1]-Globals.spaceSize.cx;
+	rt.bottom = dis->rcItem.bottom;
 
 	if (*s)
 		*d++ = *s++;
@@ -1726,9 +1772,16 @@ static void draw_item(Pane* pane, LPDRAWITEMSTRUCT dis, Entry* entry, int calcWi
 				int x;
 				int y = dis->rcItem.top + IMAGE_HEIGHT/2;
 				Entry* up;
-				RECT rt_clip = {dis->rcItem.left, dis->rcItem.top, dis->rcItem.left+pane->widths[col], dis->rcItem.bottom};
+				RECT rt_clip;
 				HRGN hrgn_org = CreateRectRgn(0, 0, 0, 0);
-				HRGN hrgn = CreateRectRgnIndirect(&rt_clip);
+				HRGN hrgn;
+
+				rt_clip.left   = dis->rcItem.left;
+				rt_clip.top    = dis->rcItem.top;
+				rt_clip.right  = dis->rcItem.left+pane->widths[col];
+				rt_clip.bottom = dis->rcItem.bottom;
+
+				hrgn = CreateRectRgnIndirect(&rt_clip);
 
 				if (!GetClipRgn(dis->hDC, hrgn_org)) {
 					DeleteObject(hrgn_org);
@@ -2100,8 +2153,18 @@ static LRESULT pane_notify(Pane* pane, NMHDR* pnmh)
 
 			{
 				int scroll_pos = GetScrollPos(pane->hwnd, SB_HORZ);
-				RECT rt_scr = {pane->positions[idx+1]-scroll_pos, 0, clnt.right, clnt.bottom};
-				RECT rt_clip = {pane->positions[idx]-scroll_pos, 0, clnt.right, clnt.bottom};
+				RECT rt_scr;
+				RECT rt_clip;
+
+				rt_scr.left   = pane->positions[idx+1]-scroll_pos;
+				rt_scr.top    = 0;
+				rt_scr.right  = clnt.right;
+				rt_scr.bottom = clnt.bottom;
+
+				rt_clip.left   = pane->positions[idx]-scroll_pos;
+				rt_clip.top    = 0;
+				rt_clip.right  = clnt.right;
+				rt_clip.bottom = clnt.bottom;
 
 				if (rt_scr.left < 0) rt_scr.left = 0;
 				if (rt_clip.left < 0) rt_clip.left = 0;
@@ -2636,49 +2699,14 @@ LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
 
 static void InitInstance(HINSTANCE hinstance)
 {
-	WNDCLASSEX wcFrame = {
-		sizeof(WNDCLASSEX),
-		0/*style*/,
-		FrameWndProc,
-		0/*cbClsExtra*/,
-		0/*cbWndExtra*/,
-		hinstance,
-		LoadIcon(hinstance, MAKEINTRESOURCE(IDI_WINEFILE)),
-		LoadCursor(0, IDC_ARROW),
-		0/*hbrBackground*/,
-		0/*lpszMenuName*/,
-		WINEFILEFRAME,
-		(HICON)LoadImage(hinstance, MAKEINTRESOURCE(IDI_WINEFILE), IMAGE_ICON,
-			GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED)
-	};
-
-	 // register frame window class
-	ATOM hframeClass = RegisterClassEx(&wcFrame);
-
-
-	WNDCLASS wcChild = {
-		CS_CLASSDC|CS_DBLCLKS|CS_VREDRAW,
-		ChildWndProc,
-		0/*cbClsExtra*/,
-		0/*cbWndExtra*/,
-		hinstance,
-		0/*hIcon*/,
-		LoadCursor(0, IDC_ARROW),
-		0/*hbrBackground*/,
-		0/*lpszMenuName*/,
-		WINEFILETREE
-	};
-
-	 // register tree windows class
-	WINE_UNUSED ATOM hChildClass = RegisterClass(&wcChild);
-
-
+	WNDCLASSEX wcFrame;
+	ATOM hframeClass;
+	WNDCLASS wcChild;
+	WINE_UNUSED ATOM hChildClass;
 	HMENU hMenuFrame = LoadMenu(hinstance, MAKEINTRESOURCE(IDM_WINEFILE));
 	HMENU hMenuWindow = GetSubMenu(hMenuFrame, GetMenuItemCount(hMenuFrame)-2);
 
-	CLIENTCREATESTRUCT ccs = {
-		hMenuWindow, IDW_FIRST_CHILD
-	};
+	CLIENTCREATESTRUCT ccs;
 
 	INITCOMMONCONTROLSEX icc = {
 		sizeof(INITCOMMONCONTROLSEX),
@@ -2689,6 +2717,46 @@ static void InitInstance(HINSTANCE hinstance)
 	TCHAR path[MAX_PATH];
 
 	HDC hdc = GetDC(0);
+
+
+	wcFrame.cbSize        = sizeof(WNDCLASSEX);
+	wcFrame.style         = 0;
+	wcFrame.lpfnWndProc   = FrameWndProc;
+	wcFrame.cbClsExtra    = 0;
+	wcFrame.cbWndExtra    = 0;
+	wcFrame.hInstance     = hinstance;
+	wcFrame.hIcon         = LoadIcon(hinstance,
+					 MAKEINTRESOURCE(IDI_WINEFILE));
+	wcFrame.hCursor       = LoadCursor(0, IDC_ARROW);
+	wcFrame.hbrBackground = 0;
+	wcFrame.lpszMenuName  = 0;
+	wcFrame.lpszClassName = WINEFILEFRAME;
+	wcFrame.hIconSm       = (HICON)LoadImage(hinstance,
+						 MAKEINTRESOURCE(IDI_WINEFILE),
+						 IMAGE_ICON,
+						 GetSystemMetrics(SM_CXSMICON),
+						 GetSystemMetrics(SM_CYSMICON),
+						 LR_SHARED);
+
+	/* register frame window class */
+	hframeClass = RegisterClassEx(&wcFrame);
+
+	wcChild.style         = CS_CLASSDC|CS_DBLCLKS|CS_VREDRAW;
+	wcChild.lpfnWndProc   = ChildWndProc;
+	wcChild.cbClsExtra    = 0;
+	wcChild.cbWndExtra    = 0;
+	wcChild.hInstance     = hinstance;
+	wcChild.hIcon         = 0;
+	wcChild.hCursor       = LoadCursor(0, IDC_ARROW);
+	wcChild.hbrBackground = 0;
+	wcChild.lpszMenuName  = 0;
+	wcChild.lpszClassName = WINEFILETREE;
+
+	/* register tree windows class */
+	hChildClass = RegisterClass(&wcChild);
+
+	ccs.hWindowMenu  = hMenuWindow;
+	ccs.idFirstChild = IDW_FIRST_CHILD;
 
 	Globals.hMenuFrame = hMenuFrame;
 	Globals.hMenuView = GetSubMenu(hMenuFrame, 3);
