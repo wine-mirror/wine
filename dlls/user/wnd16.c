@@ -24,6 +24,22 @@
 #include "task.h"
 #include "stackframe.h"
 
+/* handle --> handle16 conversions */
+#define HANDLE_16(h32)		(LOWORD(h32))
+#define HDC_16(h32)		(LOWORD(h32))
+#define HDWP_16(h32)		(LOWORD(h32))
+#define HMENU_16(h32)		(LOWORD(h32))
+
+/* handle16 --> handle conversions */
+#define HBITMAP_32(h16)		((HBITMAP)(ULONG_PTR)(h16))
+#define HDC_32(h16)		((HDC)(ULONG_PTR)(h16))
+#define HDWP_32(h16)		((HDWP)(ULONG_PTR)(h16))
+#define HFONT_32(h16)		((HFONT)(ULONG_PTR)(h16))
+#define HICON_32(h16)		((HICON)(ULONG_PTR)(h16))
+#define HINSTANCE_32(h16)	((HINSTANCE)(ULONG_PTR)(h16))
+#define HMENU_32(h16)		((HMENU)(ULONG_PTR)(h16))
+#define HRGN_32(h16)		((HRGN)(ULONG_PTR)(h16))
+
 static HWND16 hwndSysModal;
 
 /* ### start build ### */
@@ -110,7 +126,7 @@ HWND16 WINAPI GetFocus16(void)
  */
 HANDLE16 WINAPI RemoveProp16( HWND16 hwnd, LPCSTR str )
 {
-    return (HANDLE16)RemovePropA( WIN_Handle32(hwnd), str );
+    return HANDLE_16(RemovePropA( WIN_Handle32(hwnd), str ));
 }
 
 
@@ -119,7 +135,7 @@ HANDLE16 WINAPI RemoveProp16( HWND16 hwnd, LPCSTR str )
  */
 HANDLE16 WINAPI GetProp16( HWND16 hwnd, LPCSTR str )
 {
-    return (HANDLE16)GetPropA( WIN_Handle32(hwnd), str );
+    return HANDLE_16(GetPropA( WIN_Handle32(hwnd), str ));
 }
 
 
@@ -330,7 +346,7 @@ BOOL16 WINAPI IsWindow16( HWND16 hwnd )
 {
     CURRENT_STACK16->es = USER_HeapSel;
     /* don't use WIN_Handle32 here, we don't care about the full handle */
-    return IsWindow( (HWND)(ULONG_PTR)hwnd );
+    return IsWindow( WIN_Handle32(hwnd) );
 }
 
 
@@ -494,7 +510,7 @@ BOOL16 WINAPI GetScrollRange16( HWND16 hwnd, INT16 nBar, LPINT16 lpMin, LPINT16 
  */
 HDC16 WINAPI GetDC16( HWND16 hwnd )
 {
-    return (HDC16)GetDC( WIN_Handle32(hwnd) );
+    return HDC_16(GetDC( WIN_Handle32(hwnd) ));
 }
 
 
@@ -512,7 +528,7 @@ HDC16 WINAPI GetWindowDC16( HWND16 hwnd )
  */
 INT16 WINAPI ReleaseDC16( HWND16 hwnd, HDC16 hdc )
 {
-    return (INT16)ReleaseDC( WIN_Handle32(hwnd), hdc );
+    return (INT16)ReleaseDC( WIN_Handle32(hwnd), HDC_32(hdc) );
 }
 
 
@@ -679,7 +695,7 @@ BOOL16 WINAPI FlashWindow16( HWND16 hwnd, BOOL16 bInvert )
  */
 HWND16 WINAPI WindowFromDC16( HDC16 hDC )
 {
-    return HWND_16( WindowFromDC( hDC ) );
+    return HWND_16( WindowFromDC( HDC_32(hDC) ) );
 }
 
 
@@ -814,7 +830,7 @@ BOOL16 WINAPI ChangeClipboardChain16(HWND16 hwnd, HWND16 hwndNext)
  */
 HMENU16 WINAPI GetSystemMenu16( HWND16 hwnd, BOOL16 revert )
 {
-    return GetSystemMenu( WIN_Handle32(hwnd), revert );
+    return HMENU_16(GetSystemMenu( WIN_Handle32(hwnd), revert ));
 }
 
 
@@ -823,7 +839,7 @@ HMENU16 WINAPI GetSystemMenu16( HWND16 hwnd, BOOL16 revert )
  */
 HMENU16 WINAPI GetMenu16( HWND16 hwnd )
 {
-    return GetMenu( WIN_Handle32(hwnd) );
+    return HMENU_16(GetMenu( WIN_Handle32(hwnd) ));
 }
 
 
@@ -832,7 +848,7 @@ HMENU16 WINAPI GetMenu16( HWND16 hwnd )
  */
 BOOL16 WINAPI SetMenu16( HWND16 hwnd, HMENU16 hMenu )
 {
-    return SetMenu( WIN_Handle32(hwnd), hMenu );
+    return SetMenu( WIN_Handle32(hwnd), HMENU_32(hMenu) );
 }
 
 
@@ -850,7 +866,7 @@ void WINAPI DrawMenuBar16( HWND16 hwnd )
  */
 BOOL16 WINAPI HiliteMenuItem16( HWND16 hwnd, HMENU16 hMenu, UINT16 id, UINT16 wHilite )
 {
-    return HiliteMenuItem( WIN_Handle32(hwnd), hMenu, id, wHilite );
+    return HiliteMenuItem( WIN_Handle32(hwnd), HMENU_32(hMenu), id, wHilite );
 }
 
 
@@ -859,7 +875,7 @@ BOOL16 WINAPI HiliteMenuItem16( HWND16 hwnd, HMENU16 hMenu, UINT16 id, UINT16 wH
  */
 void WINAPI CreateCaret16( HWND16 hwnd, HBITMAP16 bitmap, INT16 width, INT16 height )
 {
-    CreateCaret( WIN_Handle32(hwnd), bitmap, width, height );
+    CreateCaret( WIN_Handle32(hwnd), HBITMAP_32(bitmap), width, height );
 }
 
 
@@ -1063,7 +1079,7 @@ HWND16 WINAPI GetCapture16(void)
  */
 INT16 WINAPI GetUpdateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 {
-    return GetUpdateRgn( WIN_Handle32(hwnd), hrgn, erase );
+    return GetUpdateRgn( WIN_Handle32(hwnd), HRGN_32(hrgn), erase );
 }
 
 
@@ -1072,7 +1088,7 @@ INT16 WINAPI GetUpdateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
  */
 INT16 WINAPI ExcludeUpdateRgn16( HDC16 hdc, HWND16 hwnd )
 {
-    return ExcludeUpdateRgn( hdc, WIN_Handle32(hwnd) );
+    return ExcludeUpdateRgn( HDC_32(hdc), WIN_Handle32(hwnd) );
 }
 
 
@@ -1101,8 +1117,8 @@ HDWP16 WINAPI DeferWindowPos16( HDWP16 hdwp, HWND16 hwnd, HWND16 hwndAfter,
                                 INT16 x, INT16 y, INT16 cx, INT16 cy,
                                 UINT16 flags )
 {
-    return DeferWindowPos( hdwp, WIN_Handle32(hwnd), full_insert_after_hwnd(hwndAfter),
-                           x, y, cx, cy, flags );
+    return HDWP_16(DeferWindowPos( HDWP_32(hdwp), WIN_Handle32(hwnd),
+		   full_insert_after_hwnd(hwndAfter), x, y, cx, cy, flags ));
 }
 
 
@@ -1111,7 +1127,7 @@ HDWP16 WINAPI DeferWindowPos16( HDWP16 hdwp, HWND16 hwnd, HWND16 hwndAfter,
  */
 BOOL16 WINAPI EndDeferWindowPos16( HDWP16 hdwp )
 {
-    return EndDeferWindowPos( hdwp );
+    return EndDeferWindowPos(HDWP_32(hdwp));
 }
 
 
@@ -1177,7 +1193,7 @@ HWND16 WINAPI GetDesktopHwnd16(void)
  */
 BOOL16 WINAPI SetSystemMenu16( HWND16 hwnd, HMENU16 hMenu )
 {
-    return SetSystemMenu( WIN_Handle32(hwnd), hMenu );
+    return SetSystemMenu( WIN_Handle32(hwnd), HMENU_32(hMenu) );
 }
 
 
@@ -1209,9 +1225,9 @@ BOOL16 WINAPI RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
     {
         RECT r;
         CONV_RECT16TO32( rectUpdate, &r );
-        return RedrawWindow( WIN_Handle32(hwnd), &r, hrgnUpdate, flags );
+        return RedrawWindow(WIN_Handle32(hwnd), &r, HRGN_32(hrgnUpdate), flags);
     }
-    return RedrawWindow( WIN_Handle32(hwnd), NULL, hrgnUpdate, flags );
+    return RedrawWindow(WIN_Handle32(hwnd), NULL, HRGN_32(hrgnUpdate), flags);
 }
 
 
@@ -1238,7 +1254,7 @@ INT16 WINAPI ScrollWindowEx16( HWND16 hwnd, INT16 dx, INT16 dy,
     if (rect) CONV_RECT16TO32( rect, &rect32 );
     if (clipRect) CONV_RECT16TO32( clipRect, &clipRect32 );
     ret = ScrollWindowEx( WIN_Handle32(hwnd), dx, dy, rect ? &rect32 : NULL,
-                          clipRect ? &clipRect32 : NULL, hrgnUpdate,
+                          clipRect ? &clipRect32 : NULL, HRGN_32(hrgnUpdate),
                           (rcUpdate) ? &rcUpdate32 : NULL, flags );
     if (rcUpdate) CONV_RECT32TO16( &rcUpdate32, rcUpdate );
     return ret;
@@ -1253,7 +1269,7 @@ void WINAPI FillWindow16( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc, HBRUSH16 hb
     RECT rect;
     RECT16 rc16;
     GetClientRect( WIN_Handle32(hwnd), &rect );
-    DPtoLP( hdc, (LPPOINT)&rect, 2 );
+    DPtoLP( HDC_32(hdc), (LPPOINT)&rect, 2 );
     CONV_RECT32TO16( &rect, &rc16 );
     PaintRect16( hwndParent, hwnd, hdc, hbrush, &rc16 );
 }
@@ -1300,7 +1316,7 @@ HBRUSH16 WINAPI GetControlBrush16( HWND16 hwnd, HDC16 hdc, UINT16 ctlType )
  */
 HDC16 WINAPI GetDCEx16( HWND16 hwnd, HRGN16 hrgnClip, DWORD flags )
 {
-    return (HDC16)GetDCEx( WIN_Handle32(hwnd), hrgnClip, flags );
+    return HDC_16(GetDCEx(WIN_Handle32(hwnd), HRGN_32(hrgnClip), flags));
 }
 
 
@@ -1378,7 +1394,7 @@ BOOL16 WINAPI TrackPopupMenu16( HMENU16 hMenu, UINT16 wFlags, INT16 x, INT16 y,
 {
     RECT r;
     if (lpRect) CONV_RECT16TO32( lpRect, &r );
-    return TrackPopupMenu( hMenu, wFlags, x, y, nReserved,
+    return TrackPopupMenu( HMENU_32(hMenu), wFlags, x, y, nReserved,
                            WIN_Handle32(hwnd), lpRect ? &r : NULL );
 }
 
@@ -1549,8 +1565,9 @@ BOOL16 WINAPI DrawCaptionTemp16( HWND16 hwnd, HDC16 hdc, const RECT16 *rect,
 
     if (rect) CONV_RECT16TO32(rect,&rect32);
 
-    return DrawCaptionTempA( WIN_Handle32(hwnd), hdc, rect ? &rect32 : NULL,
-                             hFont, hIcon, str, uFlags & 0x1f );
+    return DrawCaptionTempA( WIN_Handle32(hwnd), HDC_32(hdc),
+			     rect ? &rect32 : NULL, HFONT_32(hFont),
+			     HICON_32(hIcon), str, uFlags & 0x1f );
 }
 
 
@@ -1563,7 +1580,7 @@ BOOL16 WINAPI DrawCaption16( HWND16 hwnd, HDC16 hdc, const RECT16 *rect, UINT16 
 
     if (rect) CONV_RECT16TO32( rect, &rect32 );
 
-    return DrawCaption( WIN_Handle32(hwnd), hdc, rect ? &rect32 : NULL, flags );
+    return DrawCaption(WIN_Handle32(hwnd), HDC_32(hdc), rect ? &rect32 : NULL, flags);
 }
 
 
@@ -1576,7 +1593,7 @@ BOOL16 WINAPI GetMenuItemRect16( HWND16 hwnd, HMENU16 hMenu, UINT16 uItem,
      RECT r32;
      BOOL res;
      if (!rect) return FALSE;
-     res = GetMenuItemRect( WIN_Handle32(hwnd), hMenu, uItem, &r32 );
+     res = GetMenuItemRect( WIN_Handle32(hwnd), HMENU_32(hMenu), uItem, &r32 );
      CONV_RECT32TO16( &r32, rect );
      return res;
 }
@@ -1587,7 +1604,7 @@ BOOL16 WINAPI GetMenuItemRect16( HWND16 hwnd, HMENU16 hMenu, UINT16 uItem,
  */
 INT16 WINAPI SetWindowRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 redraw )
 {
-    return SetWindowRgn( WIN_Handle32(hwnd), hrgn, redraw );
+    return SetWindowRgn( WIN_Handle32(hwnd), HRGN_32(hrgn), redraw );
 }
 
 
@@ -1600,7 +1617,7 @@ INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
 
     msgbox32.cbSize             = msgbox->cbSize;
     msgbox32.hwndOwner          = WIN_Handle32( msgbox->hwndOwner );
-    msgbox32.hInstance          = msgbox->hInstance;
+    msgbox32.hInstance          = HINSTANCE_32(msgbox->hInstance);
     msgbox32.lpszText           = MapSL(msgbox->lpszText);
     msgbox32.lpszCaption        = MapSL(msgbox->lpszCaption);
     msgbox32.dwStyle            = msgbox->dwStyle;
