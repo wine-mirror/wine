@@ -165,6 +165,15 @@ static const char main_key_PT[MAIN_LEN][4] =
  "<>"
 };
 
+/*** Italian keyboard layout */
+static const char main_key_IT[MAIN_LEN][4] =
+{
+ "\\|","1!1","2\"2","3?3","4$","5%½","6&¾","7/{","8([","9)]","0=}","'?`","i^~",
+ "qQ@","wW","eE","rR?","tT","yY","uU","iI","oOo","pP?","ee[","+*]",
+ "aAae","sS?","dD?","fF","gG","hH","jJ","kK","lL","oc@","a?#","u?",
+ "zZ<","xX>","cC","vV","bB","nN","mM?",",;",".:*","-_","<>|"
+};
+
 /*** Finnish keyboard layout */
 static const char main_key_FI[MAIN_LEN][4] =
 {
@@ -225,6 +234,7 @@ static struct {
  {MAKELANGID(LANG_RUSSIAN,SUBLANG_DEFAULT),        1251, 866, &main_key_RU},
  {MAKELANGID(LANG_SPANISH,SUBLANG_DEFAULT),        1252, 850, &main_key_ES},
  {MAKELANGID(LANG_DUTCH,SUBLANG_DUTCH_BELGIAN),    1252, 850, &main_key_BE},
+ {MAKELANGID(LANG_ITALIAN,SUBLANG_DEFAULT),        1252, 850, &main_key_IT},
 
  {0} /* sentinel */
 };
