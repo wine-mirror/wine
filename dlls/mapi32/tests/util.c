@@ -34,6 +34,8 @@ static HMODULE hMapi32 = 0;
 static SCODE (WINAPI *pScInitMapiUtil)(ULONG);
 static void  (WINAPI *pSwapPword)(PUSHORT,ULONG);
 static void  (WINAPI *pSwapPlong)(PULONG,ULONG);
+static void  (WINAPI *pHexFromBin)(LPBYTE,int,LPWSTR);
+static void  (WINAPI *pFBinFromHex)(LPWSTR,LPBYTE);
 
 static void test_SwapPword(void)
 {
@@ -69,10 +71,47 @@ static void test_SwapPlong(void)
        longs[0], longs[1], longs[2]);
 }
 
+static void test_HexFromBin(void)
+{
+    static const char res[] = { "000102030405060708090A0B0C0D0E0F101112131415161"
+      "718191A1B1C1D1E1F202122232425262728292A2B2C2D2E2F303132333435363738393A3B"
+      "3C3D3E3F404142434445464748494A4B4C4D4E4F505152535455565758595A5B5C5D5E5F6"
+      "06162636465666768696A6B6C6D6E6F707172737475767778797A7B7C7D7E7F8081828384"
+      "85868788898A8B8C8D8E8F909192939495969798999A9B9C9D9E9FA0A1A2A3A4A5A6A7A8A"
+      "9AAABACADAEAFB0B1B2B3B4B5B6B7B8B9BABBBCBDBEBFC0C1C2C3C4C5C6C7C8C9CACBCCCD"
+      "CECFD0D1D2D3D4D5D6D7D8D9DADBDCDDDEDFE0E1E2E3E4E5E6E7E8E9EAEBECEDEEEFF0F1F"
+      "2F3F4F5F6F7F8F9FAFBFCFDFE\0X" };
+    BYTE data[255];
+    WCHAR strw[256];
+    BOOL bOk;
+    int i;
+
+    pHexFromBin = (void*)GetProcAddress(hMapi32, "HexFromBin@12");
+    pFBinFromHex = (void*)GetProcAddress(hMapi32, "FBinFromHex@8");
+    if (!pHexFromBin || !pFBinFromHex)
+        return;
+
+    for (i = 0; i < 255; i++)
+        data[i] = i;
+    memset(strw, 'X', sizeof(strw));
+    pHexFromBin(data, sizeof(data), strw);
+
+    ok(memcmp(strw, res, sizeof(res) - 1) == 0, "HexFromBin: Result differs\n");
+
+    memset(data, 0, sizeof(data));
+    pFBinFromHex((LPWSTR)res, data);
+    bOk = TRUE;
+    for (i = 0; i < 255; i++)
+        if (data[i] != i)
+            bOk = FALSE;
+    ok(bOk == TRUE, "FBinFromHex: Result differs\n");
+}
+
+
 START_TEST(util)
 {
     hMapi32 = LoadLibraryA("mapi32.dll");
-    
+
     pScInitMapiUtil = (void*)GetProcAddress(hMapi32, "ScInitMapiUtil@4");
     if (!pScInitMapiUtil)
         return;
@@ -80,4 +119,5 @@ START_TEST(util)
 
     test_SwapPword();
     test_SwapPlong();
+    test_HexFromBin();
 }

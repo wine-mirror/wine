@@ -29,8 +29,8 @@
  41 stub WrapProgress@20
  42 stdcall HrThisThreadAdviseSink@8(ptr ptr) HrThisThreadAdviseSink
  43 stub ScBinFromHexBounded@12
- 44 stub FBinFromHex@8
- 45 stub HexFromBin@12
+ 44 stdcall FBinFromHex@8(ptr ptr) FBinFromHex
+ 45 stdcall HexFromBin@12(ptr long ptr) HexFromBin
  46 stub BuildDisplayTable@40
  47 stdcall SwapPlong@8(ptr long) SwapPlong
  48 stdcall SwapPword@8(ptr long) SwapPword
@@ -51,7 +51,7 @@
  66 stdcall MNLS_MultiByteToWideChar@24(long long str long ptr long) kernel32.MultiByteToWideChar
  67 stdcall MNLS_WideCharToMultiByte@32(long long wstr long ptr long ptr ptr) kernel32.WideCharToMultiByte
  68 stdcall MNLS_IsBadStringPtrW@8(ptr long) kernel32.IsBadStringPtrW
- 72 stub FEqualNames@8
+ 72 stdcall FEqualNames@8(ptr ptr) FEqualNames
  73 stub WrapStoreEntryID@24
  74 stub IsBadBoundedStringPtr@8
  75 stub HrQueryAllRows@24
@@ -75,12 +75,12 @@
 131 stdcall SzFindLastCh@8(str str long) shlwapi.StrRChrA
 132 stdcall SzFindSz@8(str str) shlwapi.StrStrA
 133 stub UFromSz@4
-135 stub HrGetOneProp@12
-136 stub HrSetOneProp@8
-137 stub FPropExists@8
+135 stdcall HrGetOneProp@12(ptr long ptr) HrGetOneProp
+136 stdcall HrSetOneProp@8(ptr ptr) HrSetOneProp
+137 stdcall FPropExists@8(ptr long) FPropExists
 138 stdcall PpropFindProp@12(ptr long long) PpropFindProp
-139 stub FreePadrlist@4
-140 stub FreeProws@4
+139 stdcall FreePadrlist@4(ptr) FreePadrlist
+140 stdcall FreeProws@4(ptr) FreeProws
 141 stub HrSzFromEntryID@12
 142 stub HrEntryIDFromSz@12
 143 stub HrComposeEID@28
@@ -111,7 +111,7 @@
 171 stdcall ScCopyProps@16(long ptr ptr ptr) ScCopyProps
 172 stdcall ScRelocProps@20(long ptr ptr ptr ptr) ScRelocProps
 173 stdcall LpValFindProp@12(long long ptr) LpValFindProp
-174 stub ScDupPropset@16
+174 stdcall ScDupPropset@16(long ptr ptr ptr) ScDupPropset
 175 stdcall FBadRglpszA@8(ptr long) FBadRglpszA
 176 stdcall FBadRglpszW@8(ptr long) FBadRglpszW
 177 stdcall FBadRowSet@4(ptr) FBadRowSet

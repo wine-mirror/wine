@@ -154,7 +154,7 @@ SCODE WINAPI PropCopyMore(LPSPropValue lpDest, LPSPropValue lpSrc,
             {
                 WCHAR *lpNextStr = (WCHAR*)(lpDest->Value.MVszW.lppszW + 
                                             lpDest->Value.MVszW.cValues);
-                
+
                 for (i = 0; i < lpSrc->Value.MVszW.cValues; i++)
                 {
                     ULONG ulStrLen = strlenW(lpSrc->Value.MVszW.lppszW[i]) + 1u;
@@ -514,6 +514,107 @@ LONG WINAPI LPropCompareProp(LPSPropValue lpPropLeft, LPSPropValue lpPropRight)
 }
 
 /*************************************************************************
+ * HrGetOneProp@8 (MAPI32.135)
+ *
+ * Get a property value from an IMAPIProp object.
+ *
+ * PARAMS
+ *  lpIProp   [I] IMAPIProp object to get the property value in
+ *  ulPropTag [I] Property tag of the property to get
+ *  lppProp   [O] Destination for the returned property
+ *
+ * RETURNS
+ *  Success: S_OK. *lppProp contains the property value requested.
+ *  Failure: MAPI_E_NOT_FOUND, if no property value has the tag given by ulPropTag.
+ */
+HRESULT WINAPI HrGetOneProp(LPMAPIPROP lpIProp, ULONG ulPropTag, LPSPropValue *lppProp)
+{
+    SPropTagArray pta;
+    ULONG ulCount;
+    HRESULT hRet;
+
+    TRACE("(%p,%ld,%p)\n", lpIProp, ulPropTag, lppProp);
+
+    pta.cValues = 1u;
+    pta.aulPropTag[0] = ulPropTag;
+    hRet = IMAPIProp_GetProps(lpIProp, &pta, 0u, &ulCount, lppProp);
+    if (hRet == MAPI_W_ERRORS_RETURNED)
+    {
+        MAPIFreeBuffer(*lppProp);
+        *lppProp = NULL;
+        hRet = MAPI_E_NOT_FOUND;
+    }
+    return hRet;
+}
+
+/*************************************************************************
+ * HrSetOneProp@8 (MAPI32.136)
+ *
+ * Set a property value in an IMAPIProp object.
+ *
+ * PARAMS
+ *  lpIProp [I] IMAPIProp object to set the property value in
+ *  lpProp  [I] Property value to set
+ *
+ * RETURNS
+ *  Success: S_OK. The value in lpProp is set in lpIProp.
+ *  Failure: An error result from IMAPIProp_SetProps().
+ */
+HRESULT WINAPI HrSetOneProp(LPMAPIPROP lpIProp, LPSPropValue lpProp)
+{
+    TRACE("(%p,%p)\n", lpIProp, lpProp);
+
+    return IMAPIProp_SetProps(lpIProp, 1u, lpProp, NULL);
+}
+
+/*************************************************************************
+ * FPropExists@8 (MAPI32.137)
+ *
+ * Find a property with a given property tag in an IMAPIProp object.
+ *
+ * PARAMS
+ *  lpIProp   [I] IMAPIProp object to find the property tag in
+ *  ulPropTag [I] Property tag to find
+ *
+ * RETURNS
+ *  TRUE, if ulPropTag matches a property held in lpIProp,
+ *  FALSE, otherwise.
+ *
+ * NOTES
+ *  if ulPropTag has a property type of PT_UNSPECIFIED, then only the property
+ *  Ids need to match for a successful match to occur.
+ */
+ BOOL WINAPI FPropExists(LPMAPIPROP lpIProp, ULONG ulPropTag)
+ {
+    BOOL bRet = FALSE;
+
+    TRACE("(%p,%ld)\n", lpIProp, ulPropTag);
+
+    if (lpIProp)
+    {
+        LPSPropTagArray lpTags;
+        ULONG i;
+
+        if (FAILED(IMAPIProp_GetPropList(lpIProp, 0u, &lpTags)))
+            return FALSE;
+
+        for (i = 0; i < lpTags->cValues; i++)
+        {
+            if (!FBadPropTag(lpTags->aulPropTag[i]) &&
+                (lpTags->aulPropTag[i] == ulPropTag ||
+                 (PROP_TYPE(ulPropTag) == PT_UNSPECIFIED &&
+                  PROP_ID(lpTags->aulPropTag[i]) == lpTags->aulPropTag[i])))
+            {
+                bRet = TRUE;
+                break;
+            }
+        }
+        MAPIFreeBuffer(lpTags);
+    }
+    return bRet;
+}
+
+/*************************************************************************
  * PpropFindProp@12 (MAPI32.138)
  *
  * Find a property with a given property tag in a property array.
@@ -547,6 +648,51 @@ LPSPropValue WINAPI PpropFindProp(LPSPropValue lpProps, ULONG cValues, ULONG ulP
         }
     }
     return NULL;
+}
+
+/*************************************************************************
+ * FreePadrlist@4 (MAPI32.139)
+ *
+ * Free the memory used by an address book list.
+ *
+ * PARAMS
+ *  lpAddrs [I] Address book list to free
+ *
+ * RETURNS
+ *  Nothing.
+ */
+VOID WINAPI FreePadrlist(LPADRLIST lpAddrs)
+{
+    TRACE("(%p)\n", lpAddrs);
+
+    /* Structures are binary compatible; use the same implementation */
+    return FreeProws((LPSRowSet)lpAddrs);
+}
+
+/*************************************************************************
+ * FreeProws@4 (MAPI32.140)
+ *
+ * Free the memory used by a row set.
+ *
+ * PARAMS
+ *  lpRowSet [I] Row set to free
+ *
+ * RETURNS
+ *  Nothing.
+ */
+VOID WINAPI FreeProws(LPSRowSet lpRowSet)
+{
+    TRACE("(%p)\n", lpRowSet);
+
+    if (lpRowSet)
+    {
+        ULONG i;
+
+        for (i = 0; i < lpRowSet->cRows; i++)
+            MAPIFreeBuffer(lpRowSet->aRow[i].lpProps);
+
+        MAPIFreeBuffer(lpRowSet);
+    }
 }
 
 /*************************************************************************
@@ -623,7 +769,7 @@ SCODE WINAPI ScCountProps(INT iCount, LPSPropValue lpProps, ULONG *pcBytes)
     }
     if (pcBytes)
         *pcBytes = ulBytes;
-    
+
     return S_OK;
 }
 
@@ -649,16 +795,16 @@ SCODE WINAPI ScCopyProps(int cValues, LPSPropValue lpProps, LPVOID lpDst, ULONG 
 {
     LPSPropValue lpDest = (LPSPropValue)lpDst;
     char *lpDataDest = (char *)(lpDest + cValues);
-    ULONG ulLen, i;
-    
+    ULONG ulLen, i, iter;
+
     TRACE("(%d,%p,%p,%p)\n", cValues, lpProps, lpDst, lpCount);
-    
+
     if (!lpProps || cValues < 0 || !lpDest)
         return MAPI_E_INVALID_PARAMETER;
 
     memcpy(lpDst, lpProps, cValues * sizeof(SPropValue));
-    
-    for (i = 0; i < cValues; i++)
+
+    for (iter = 0; iter < cValues; iter++)
     {
         switch (PROP_TYPE(lpProps->ulPropTag))
         {
@@ -696,11 +842,11 @@ SCODE WINAPI ScCopyProps(int cValues, LPSPropValue lpProps, LPVOID lpDst, ULONG 
                 case PT_MV_STRING8:
                 {
                     lpDataDest += lpProps->Value.MVszA.cValues * sizeof(char *);
-                
+
                     for (i = 0; i < lpProps->Value.MVszA.cValues; i++)
                     {
                         ULONG ulStrLen = lstrlenA(lpProps->Value.MVszA.lppszA[i]) + 1u;
-                    
+
                         lpDest->Value.MVszA.lppszA[i] = lpDataDest;
                         memcpy(lpDataDest, lpProps->Value.MVszA.lppszA[i], ulStrLen);
                         lpDataDest += ulStrLen;
@@ -710,28 +856,28 @@ SCODE WINAPI ScCopyProps(int cValues, LPSPropValue lpProps, LPVOID lpDst, ULONG 
                 case PT_MV_UNICODE:
                 {
                     lpDataDest += lpProps->Value.MVszW.cValues * sizeof(WCHAR *);
-                
+
                     for (i = 0; i < lpProps->Value.MVszW.cValues; i++)
                     {
                         ULONG ulStrLen = (strlenW(lpProps->Value.MVszW.lppszW[i]) + 1u) * sizeof(WCHAR);
-                    
+
                         lpDest->Value.MVszW.lppszW[i] = (LPWSTR)lpDataDest;
                         memcpy(lpDataDest, lpProps->Value.MVszW.lppszW[i], ulStrLen);
                         lpDataDest += ulStrLen;
-                    }                    
+                    }
                     break;
                 }
                 case PT_MV_BINARY:
                 {
                     lpDataDest += lpProps->Value.MVszW.cValues * sizeof(SBinary);
-                
+
                     for (i = 0; i < lpProps->Value.MVszW.cValues; i++)
                     {
                         lpDest->Value.MVbin.lpbin[i].cb = lpProps->Value.MVbin.lpbin[i].cb;
                         lpDest->Value.MVbin.lpbin[i].lpb = (LPBYTE)lpDataDest;
                         memcpy(lpDataDest, lpProps->Value.MVbin.lpbin[i].lpb, lpDest->Value.MVbin.lpbin[i].cb);
                         lpDataDest += lpDest->Value.MVbin.lpbin[i].cb;
-                    }                    
+                    }
                     break;
                 }
                 default:
@@ -749,10 +895,10 @@ SCODE WINAPI ScCopyProps(int cValues, LPSPropValue lpProps, LPVOID lpDst, ULONG 
     }
     if (lpCount)
         *lpCount = lpDataDest - (char *)lpDst;
-        
+
     return S_OK;
 }
- 
+
 /*************************************************************************
  * ScRelocProps@20 (MAPI32.172)
  *
@@ -784,10 +930,10 @@ SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld,
     static const BOOL bBadPtr = TRUE; /* Windows bug - Assumes source is bad */
     LPSPropValue lpDest = (LPSPropValue)lpProps;
     ULONG ulCount = cValues * sizeof(SPropValue);    
-    ULONG ulLen, i;
-    
+    ULONG ulLen, i, iter;
+
     TRACE("(%d,%p,%p,%p,%p)\n", cValues, lpProps, lpOld, lpNew, lpCount);
-    
+
     if (!lpProps || cValues < 0 || !lpOld || !lpNew)
         return MAPI_E_INVALID_PARAMETER;
 
@@ -801,13 +947,13 @@ SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld,
      * The code below would handle both cases except that the design of this
      * function makes it impossible to know when the pointers in lpProps are
      * valid. If both lpOld and lpNew are non-NULL, native reads the pointers
-     * after converting them, so we must do the same. Its seems this 
+     * after converting them, so we must do the same. Its seems this
      * functionality was never tested by MS.
      */
- 
+
 #define RELOC_PTR(p) (((char*)(p)) - (char*)lpOld + (char*)lpNew)
-        
-    for (i = 0; i < cValues; i++)
+
+    for (iter = 0; iter < cValues; iter++)
     {
         switch (PROP_TYPE(lpDest->ulPropTag))
         {
@@ -841,7 +987,7 @@ SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld,
                  */
                 if (bBadPtr)
                     lpDest->Value.MVszA.lppszA = (LPSTR*)RELOC_PTR(lpDest->Value.MVszA.lppszA);
-                
+
                 switch (PROP_TYPE(lpProps->ulPropTag))
                 {
                 case PT_MV_STRING8:
@@ -851,7 +997,7 @@ SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld,
                     for (i = 0; i < lpDest->Value.MVszA.cValues; i++)
                     {
                         ULONG ulStrLen = bBadPtr ? 0 : lstrlenA(lpDest->Value.MVszA.lppszA[i]) + 1u;
-                        
+
                         lpDest->Value.MVszA.lppszA[i] = (LPSTR)RELOC_PTR(lpDest->Value.MVszA.lppszA[i]);
                         if (bBadPtr)
                             ulStrLen = lstrlenA(lpDest->Value.MVszA.lppszA[i]) + 1u;
@@ -862,27 +1008,27 @@ SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld,
                 case PT_MV_UNICODE:
                 {
                     ulCount += lpDest->Value.MVszW.cValues * sizeof(WCHAR *);
-                
+
                     for (i = 0; i < lpDest->Value.MVszW.cValues; i++)
                     {
                         ULONG ulStrLen = bBadPtr ? 0 : (strlenW(lpDest->Value.MVszW.lppszW[i]) + 1u) * sizeof(WCHAR);
-                    
+
                         lpDest->Value.MVszW.lppszW[i] = (LPWSTR)RELOC_PTR(lpDest->Value.MVszW.lppszW[i]);
                         if (bBadPtr)
                             ulStrLen = (strlenW(lpDest->Value.MVszW.lppszW[i]) + 1u) * sizeof(WCHAR);
                         ulCount += ulStrLen;
-                    }                    
+                    }
                     break;
                 }
                 case PT_MV_BINARY:
                 {
                     ulCount += lpDest->Value.MVszW.cValues * sizeof(SBinary);
-                
+
                     for (i = 0; i < lpDest->Value.MVszW.cValues; i++)
                     {
                         lpDest->Value.MVbin.lpbin[i].lpb = (LPBYTE)RELOC_PTR(lpDest->Value.MVbin.lpbin[i].lpb);
                         ulCount += lpDest->Value.MVbin.lpbin[i].cb;
-                    }                    
+                    }
                     break;
                 }
                 default:
@@ -898,7 +1044,7 @@ SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld,
     }
     if (lpCount)
         *lpCount = ulCount;
-        
+
     return S_OK;
 }
 
@@ -936,6 +1082,40 @@ LPSPropValue WINAPI LpValFindProp(ULONG ulPropTag, ULONG cValues, LPSPropValue l
 }
 
 /*************************************************************************
+ * ScDupPropset@16 (MAPI32.174)
+ *
+ * Duplicate a property value array into a contigous block of memory.
+ *
+ * PARAMS
+ *  cValues   [I] Number of properties in lpProps
+ *  lpProps   [I] Property array to duplicate
+ *  lpAlloc   [I] Memory allocation function, use MAPIAllocateBuffer()
+ *  lpNewProp [O] Destination for the newly duplicated property value array
+ *
+ * RETURNS
+ *  Success: S_OK. *lpNewProp contains the duplicated array.
+ *  Failure: MAPI_E_INVALID_PARAMETER, if any parameter is invalid,
+ *           MAPI_E_NOT_ENOUGH_MEMORY, if memory allocation fails.
+ */
+SCODE WINAPI ScDupPropset(int cValues, LPSPropValue lpProps,
+                          LPALLOCATEBUFFER lpAlloc, LPSPropValue *lpNewProp)
+{
+    ULONG ulCount;
+    SCODE sc;
+
+    TRACE("(%d,%p,%p,%p)\n", cValues, lpProps, lpAlloc, lpNewProp);
+
+    sc = ScCountProps(cValues, lpProps, &ulCount);
+    if (SUCCEEDED(sc))
+    {
+        sc = lpAlloc(ulCount, (LPVOID*)lpNewProp);
+        if (SUCCEEDED(sc))
+            sc = ScCopyProps(cValues, lpProps, *lpNewProp, &ulCount);
+    }
+    return sc;
+}
+
+/*************************************************************************
  * FBadRglpszA@8 (MAPI32.175)
  *
  * Determine if an array of strings is invalid
@@ -955,7 +1135,7 @@ BOOL WINAPI FBadRglpszA(LPSTR *lppszStrs, ULONG ulCount)
 
     if (!ulCount)
         return FALSE;
-        
+
     if (!lppszStrs || IsBadReadPtr(lppszStrs, ulCount * sizeof(LPWSTR)))
         return TRUE;
 
@@ -980,7 +1160,7 @@ BOOL WINAPI FBadRglpszW(LPWSTR *lppszStrs, ULONG ulCount)
 
     if (!ulCount)
         return FALSE;
- 
+
     if (!lppszStrs || IsBadReadPtr(lppszStrs, ulCount * sizeof(LPWSTR)))
         return TRUE;
 

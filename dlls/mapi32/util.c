@@ -228,6 +228,85 @@ HRESULT WINAPI HrThisThreadAdviseSink(LPMAPIADVISESINK lpSink, LPMAPIADVISESINK*
 }
 
 /*************************************************************************
+ * FBinFromHex (MAPI32.44)
+ *
+ * Create an array of binary data from a string.
+ *
+ * PARAMS
+ *  lpszHex [I] String to convert to binary data
+ *  lpOut   [O] Destination for resulting binary data
+ *
+ * RETURNS
+ *  Success: TRUE. lpOut contains the decoded binary data.
+ *  Failure: FALSE, if lpszHex does not represent a binary string.
+ *
+ * NOTES
+ *  - lpOut must be at least half the length of lpszHex in bytes.
+ *  - Although the Mapi headers prototype this function as both
+ *    Ascii and Unicode, there is only one (Ascii) implementation. This
+ *    means that lpszHex is treated as an Ascii string (i.e. a single NUL
+ *    character in the byte stream terminates the string).
+ */
+BOOL WINAPI FBinFromHex(LPWSTR lpszHex, LPBYTE lpOut)
+{
+    static const BYTE digitsToHex[] = {
+      0,1,2,3,4,5,6,7,8,9,0xff,0xff,0xff,0xff,0xff,0xff,0xff,10,11,12,13,14,15,
+      0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+      0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,10,11,12,13,
+      14,15 };
+    LPSTR lpStr = (LPSTR)lpszHex;
+
+    TRACE("(%p,%p)\n", lpszHex, lpOut);
+
+    while (*lpStr)
+    {
+        if (lpStr[0] < '0' || lpStr[0] > 'f' || digitsToHex[lpStr[0] - '0'] == 0xff ||
+            lpStr[1] < '0' || lpStr[1] > 'f' || digitsToHex[lpStr[1] - '0'] == 0xff)
+            return FALSE;
+
+        *lpOut++ = (digitsToHex[lpStr[0] - '0'] << 4) | digitsToHex[lpStr[1] - '0'];
+        lpStr += 2;
+    }
+    return TRUE;
+}
+
+/*************************************************************************
+ * HexFromBin (MAPI32.45)
+ *
+ * Create a string from an array of binary data.
+ *
+ * PARAMS
+ *  lpHex   [I] Binary data to convert to string
+ *  iCount  [I] Length of lpHex in bytes
+ *  lpszOut [O] Destination for resulting hex string
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
+ *  - lpszOut must be at least 2 * iCount + 1 bytes characters long.
+ *  - Although the Mapi headers prototype this function as both
+ *    Ascii and Unicode, there is only one (Ascii) implementation. This
+ *    means that the resulting string is not properly NUL terminated
+ *    if the caller expects it to be a Unicode string.
+ */
+void WINAPI HexFromBin(LPBYTE lpHex, int iCount, LPWSTR lpszOut)
+{
+    static const char hexDigits[] = { "0123456789ABCDEF" };
+    LPSTR lpStr = (LPSTR)lpszOut;
+
+    TRACE("(%p,%d,%p)\n", lpHex, iCount, lpszOut);
+
+    while (iCount-- > 0)
+    {
+        *lpStr++ = hexDigits[*lpHex >> 4];
+        *lpStr++ = hexDigits[*lpHex & 0xf];
+        lpHex++;
+    }
+    *lpStr = '\0';
+}
+
+/*************************************************************************
  * SwapPlong@8 (MAPI32.47)
  *
  * Swap the bytes in a ULONG array.
@@ -348,6 +427,33 @@ INT WINAPI MNLS_CompareStringW(DWORD dwCp, LPCWSTR lpszLeft, LPCWSTR lpszRight)
     return ret < 0 ? CSTR_LESS_THAN : ret ? CSTR_GREATER_THAN : CSTR_EQUAL;
 }
 
+/**************************************************************************
+ *  FEqualNames@8 (MAPI32.72)
+ *
+ * Compare two Mapi names.
+ *
+ * PARAMS
+ *  lpName1 [I] First name to compare to lpName2
+ *  lpName2 [I] Second name to compare to lpName1
+ *
+ * RETURNS
+ *  TRUE, if the names are the same,
+ *  FALSE, Otherwise.
+ */
+BOOL WINAPI FEqualNames(LPMAPINAMEID lpName1, LPMAPINAMEID lpName2)
+{
+    TRACE("(%p,%p)\n", lpName1, lpName2);
+
+    if (!lpName1 || !lpName2 ||
+        !IsEqualGUID(lpName1->lpguid, lpName2->lpguid) ||
+        lpName1->ulKind != lpName2->ulKind)
+        return FALSE;
+
+    if (lpName1->ulKind == MNID_STRING)
+        return !strcmpW(lpName1->Kind.lpwstrName, lpName2->Kind.lpwstrName);
+
+    return lpName1->Kind.lID == lpName2->Kind.lID ? TRUE : FALSE;
+}
 
 /**************************************************************************
  *  FtAddFt@16 (MAPI32.121)
@@ -364,7 +470,7 @@ INT WINAPI MNLS_CompareStringW(DWORD dwCp, LPCWSTR lpszLeft, LPCWSTR lpszRight)
 LONGLONG WINAPI MAPI32_FtAddFt(FILETIME ftLeft, FILETIME ftRight)
 {
     LONGLONG *pl = (LONGLONG*)&ftLeft, *pr = (LONGLONG*)&ftRight;
-    
+
     return *pl + *pr;
 }
 
@@ -374,7 +480,7 @@ LONGLONG WINAPI MAPI32_FtAddFt(FILETIME ftLeft, FILETIME ftRight)
  * Subtract two FILETIME's together.
  *
  * PARAMS
- *  ftLeft  [I] Initial FILETIME 
+ *  ftLeft  [I] Initial FILETIME
  *  ftRight [I] FILETIME to subtract from ftLeft
  *
  * RETURNS
@@ -383,7 +489,7 @@ LONGLONG WINAPI MAPI32_FtAddFt(FILETIME ftLeft, FILETIME ftRight)
 LONGLONG WINAPI MAPI32_FtSubFt(FILETIME ftLeft, FILETIME ftRight)
 {
     LONGLONG *pl = (LONGLONG*)&ftLeft, *pr = (LONGLONG*)&ftRight;
-    
+
     return *pr - *pl;
 }
 
@@ -402,10 +508,10 @@ LONGLONG WINAPI MAPI32_FtSubFt(FILETIME ftLeft, FILETIME ftRight)
 LONGLONG WINAPI MAPI32_FtMulDw(DWORD dwLeft, FILETIME ftRight)
 {
     LONGLONG *pr = (LONGLONG*)&ftRight;
-    
+
     return (LONGLONG)dwLeft * (*pr);
 }
- 
+
 /**************************************************************************
  *  FtMulDwDw@8 (MAPI32.125)
  *
