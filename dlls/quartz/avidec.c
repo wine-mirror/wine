@@ -68,6 +68,8 @@ typedef struct AVIDecImpl
     IPin ** ppPins;
 
     HIC hvid;
+    BITMAPINFOHEADER* pBihIn;
+    BITMAPINFOHEADER* pBihOut;
     int init;
 } AVIDecImpl;
 
@@ -75,7 +77,6 @@ static DWORD AVIDec_SendSampleData(AVIDecImpl* This, LPBYTE data, DWORD size)
 {
     VIDEOINFOHEADER* format;
     AM_MEDIA_TYPE amt;
-    BITMAPINFOHEADER bi;
     HRESULT hr;
     DWORD res;
     IMediaSample* pSample = NULL;
@@ -89,14 +90,8 @@ static DWORD AVIDec_SendSampleData(AVIDecImpl* This, LPBYTE data, DWORD size)
     }
     format = (VIDEOINFOHEADER*)amt.pbFormat;
 
-    /* Fill a bitmap header for output */
-    bi.biSize = sizeof(bi);
-    bi.biWidth = format->bmiHeader.biWidth;
-    bi.biHeight = format->bmiHeader.biHeight;
-    bi.biPlanes = 1;
-    bi.biBitCount = format->bmiHeader.biBitCount;
-    bi.biCompression = 0;
-    bi.biSizeImage = bi.biWidth * bi.biHeight * bi.biBitCount / 8;
+    /* Update input size to match sample size */
+    This->pBihIn->biSizeImage = size;
 
     hr = OutputPin_GetDeliveryBuffer((OutputPin*)This->ppPins[1], &pSample, NULL, NULL, 0);
     if (FAILED(hr)) {
@@ -113,16 +108,16 @@ static DWORD AVIDec_SendSampleData(AVIDecImpl* This, LPBYTE data, DWORD size)
 	goto error;
     }
     cbDstStream = IMediaSample_GetSize(pSample);
-    if (cbDstStream < bi.biSizeImage) {
-        ERR("Sample size is too small %ld < %ld\n", cbDstStream, bi.biSizeImage);
+    if (cbDstStream < This->pBihOut->biSizeImage) {
+        ERR("Sample size is too small %ld < %ld\n", cbDstStream, This->pBihOut->biSizeImage);
 	hr = E_FAIL;
 	goto error;
     }
 
-    res = ICDecompress(This->hvid, 0, &format->bmiHeader, data, &bi, pbDstStream);
+    res = ICDecompress(This->hvid, 0, This->pBihIn, data, This->pBihOut, pbDstStream);
     if (res != ICERR_OK)
         ERR("Error occurred during the decompression (%lx)\n", res);
-    
+
     hr = OutputPin_SendSample((OutputPin*)This->ppPins[1], pSample);
     if (hr != S_OK && hr != VFW_E_NOT_CONNECTED) {
         ERR("Error sending sample (%lx)\n", hr);
@@ -193,33 +188,63 @@ static HRESULT AVIDec_Input_QueryAccept(LPVOID iface, const AM_MEDIA_TYPE * pmt)
 
     if ((IsEqualIID(&pmt->majortype, &MEDIATYPE_Video)) &&
         (!memcmp(((char*)&pmt->subtype)+4, ((char*)&MEDIATYPE_Video)+4, sizeof(GUID)-4)) && /* Check root (GUID w/o FOURCC) */
-	(IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)))
+        (IsEqualIID(&pmt->formattype, &FORMAT_VideoInfo)))
     {
         HIC drv;
         VIDEOINFOHEADER* format = (VIDEOINFOHEADER*)pmt->pbFormat;
-	drv = ICLocate(pmt->majortype.Data1, pmt->subtype.Data1, &format->bmiHeader, NULL, ICMODE_DECOMPRESS);
-	if (drv)
-	{
-	    AM_MEDIA_TYPE* outpmt = &((OutputPin*)pAVIDec->ppPins[1])->pin.mtCurrent;
-	    const CLSID* outsubtype;
-	    switch(format->bmiHeader.biBitCount)
+        drv = ICLocate(pmt->majortype.Data1, pmt->subtype.Data1, &format->bmiHeader, NULL, ICMODE_DECOMPRESS);
+        if (drv)
+        {
+            AM_MEDIA_TYPE* outpmt = &((OutputPin*)pAVIDec->ppPins[1])->pin.mtCurrent;
+            const CLSID* outsubtype;
+            DWORD bih_size;
+
+            switch(format->bmiHeader.biBitCount)
             {
-                case 32: outsubtype = &MEDIATYPE_Video; break;
+                case 32: outsubtype = &MEDIASUBTYPE_RGB32; break;
                 case 24: outsubtype = &MEDIASUBTYPE_RGB24; break;
                 case 16: outsubtype = &MEDIASUBTYPE_RGB565; break;
                 case 8:  outsubtype = &MEDIASUBTYPE_RGB8; break;
                 default:
                     FIXME("Depth %d not supported\n", format->bmiHeader.biBitCount);
-		    ICClose(drv);
+                    ICClose(drv);
                     return S_FALSE;
             }
-	    CopyMediaType( outpmt, pmt);
-	    outpmt->subtype = *outsubtype;
+            CopyMediaType( outpmt, pmt);
+            outpmt->subtype = *outsubtype;
             pAVIDec->hvid = drv;
+
+            /* Copy bitmap header from media type to 1 for input and 1 for output */
+            if (pAVIDec->pBihIn) {
+                CoTaskMemFree(pAVIDec->pBihIn);
+                CoTaskMemFree(pAVIDec->pBihOut);
+            }
+            bih_size = format->bmiHeader.biSize + format->bmiHeader.biClrUsed * 4;
+            pAVIDec->pBihIn = (BITMAPINFOHEADER*)CoTaskMemAlloc(bih_size);
+            if (!pAVIDec->pBihIn)
+            {
+                ICClose(drv);
+                return E_OUTOFMEMORY;
+            }
+            pAVIDec->pBihOut = (BITMAPINFOHEADER*)CoTaskMemAlloc(bih_size);
+            if (!pAVIDec->pBihOut)
+            {
+                CoTaskMemFree(pAVIDec->pBihIn);
+                pAVIDec->pBihIn = NULL;
+                ICClose(drv);
+                return E_OUTOFMEMORY;
+            }
+            memcpy(pAVIDec->pBihIn, &format->bmiHeader, bih_size);
+            memcpy(pAVIDec->pBihOut, &format->bmiHeader, bih_size);
+
+            /* Update output format as non compressed bitmap */
+            pAVIDec->pBihOut->biCompression = 0;
+            pAVIDec->pBihOut->biSizeImage = pAVIDec->pBihOut->biWidth * pAVIDec->pBihOut->biHeight * pAVIDec->pBihOut->biBitCount / 8;
+
             pAVIDec->init = 1;
-	    TRACE("Connection accepted\n");
+            TRACE("Connection accepted\n");
             return S_OK;
-	}
+        }
         TRACE("Unable to find a suitable VFW decompressor\n");
     }
     
@@ -316,6 +341,8 @@ HRESULT AVIDec_create(IUnknown * pUnkOuter, LPVOID * ppv)
     InitializeCriticalSection(&pAVIDec->csFilter);
     pAVIDec->state = State_Stopped;
     pAVIDec->pClock = NULL;
+    pAVIDec->pBihIn = NULL;
+    pAVIDec->pBihOut = NULL;
     pAVIDec->init = 0;
     ZeroMemory(&pAVIDec->filterInfo, sizeof(FILTER_INFO));
 
@@ -404,6 +431,11 @@ static ULONG WINAPI AVIDec_Release(IBaseFilter * iface)
 	if (This->hvid)
             ICClose(This->hvid);
 	
+        if (This->pBihIn) {
+            CoTaskMemFree(This->pBihIn);
+            CoTaskMemFree(This->pBihOut);
+        }
+	    
         TRACE("Destroying AVI Decompressor\n");
         CoTaskMemFree(This);
         

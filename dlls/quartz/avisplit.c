@@ -563,6 +563,7 @@ static HRESULT AVISplitter_Sample(LPVOID iface, IMediaSample * pSample)
 		 *        This is not clean and the parser should be improved for that but it is enough for most AVI files. */
 		This->CurrentChunkOffset = MEDIATIME_FROM_BYTES(BYTES_FROM_MEDIATIME(This->CurrentChunkOffset) + sizeof(RIFFLIST));
 		This->CurrentChunk = *(RIFFCHUNK*) (pbSrcStream + BYTES_FROM_MEDIATIME(This->CurrentChunkOffset-tStart));
+            	offset_src = (long)BYTES_FROM_MEDIATIME(This->CurrentChunkOffset - tStart) + sizeof(RIFFCHUNK);
 	        break;
 	    }
 	    else if (S_FALSE == AVISplitter_NextChunk(&This->CurrentChunkOffset, &This->CurrentChunk, &tStart, &tStop, pbSrcStream))
