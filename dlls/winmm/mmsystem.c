@@ -634,7 +634,7 @@ static BOOL MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSo
         ResetEvent(iData->psStopEvent);
     }
 
-    wps->lpNext = iData->lpPlaySound;
+    if (wps) wps->lpNext = iData->lpPlaySound;
     iData->lpPlaySound = wps;
     LeaveCriticalSection(&iData->cs);
 
