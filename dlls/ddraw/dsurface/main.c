@@ -281,6 +281,8 @@ HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 	LPBYTE sbase;
 	int sx, xinc, sy, yinc;
 
+	if (!dstwidth || !dstheight) /* hmm... stupid program ? */
+	    goto release;
 	sbase = (BYTE*)sdesc.u1.lpSurface+(xsrc.top*sdesc.lPitch)+xsrc.left*bpp;
 	xinc = (srcwidth << 16) / dstwidth;
 	yinc = (srcheight << 16) / dstheight;
