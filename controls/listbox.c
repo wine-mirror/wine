@@ -1210,8 +1210,14 @@ static void LISTBOX_SetHorizontalPos( HWND hwnd, LB_DESCR *descr, INT pos )
     descr->horz_pos = pos;
     LISTBOX_UpdateScroll( hwnd, descr );
     if (abs(diff) < descr->width)
+    {
+        RECT rect;
+        /* Invalidate the focused item so it will be repainted correctly */
+        if (LISTBOX_GetItemRect( descr, descr->focus_item, &rect ) == 1)
+            InvalidateRect( hwnd, &rect, TRUE );
         ScrollWindowEx( hwnd, diff, 0, NULL, NULL, 0, NULL,
                           SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
+    }
     else
         InvalidateRect( hwnd, NULL, TRUE );
 }
