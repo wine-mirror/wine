@@ -1729,7 +1729,8 @@ LONG NC_HandleNCActivate( HWND hwnd, WPARAM wParam )
  */
 LONG NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-    if (hwnd != (HWND)wParam) return 0;  /* Don't set the cursor for child windows */
+    if (hwnd != WIN_GetFullHandle( (HWND)wParam ))
+        return 0;  /* Don't set the cursor for child windows */
 
     switch(LOWORD(lParam))
     {
