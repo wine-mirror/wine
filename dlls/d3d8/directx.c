@@ -26,8 +26,8 @@
 #define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
-#include "winuser.h"
 #include "wingdi.h"
+#include "winuser.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
@@ -42,39 +42,6 @@ enum x11drv_escape_codes
     X11DRV_GET_DISPLAY,   /* get X11 display for a DC */
     X11DRV_GET_DRAWABLE,  /* get current drawable for a DC */
     X11DRV_GET_FONT,      /* get current X font for a DC */
-};
-
-#define NUM_MODES 20
-static const int modes[NUM_MODES][4] = {
-    {640, 480, 85, 16},
-    {640, 480, 85, 32},
-
-    {800, 600, 85, 16},
-    {800, 600, 85, 32},
-
-    {1024, 768, 85, 16},
-    {1024, 768, 85, 32},
-
-    {1152, 864, 85, 16},
-    {1152, 864, 85, 32},
-
-    {1280, 768, 85, 16},
-    {1280, 768, 85, 32},
-
-    {1280, 960, 85, 16},
-    {1280, 960, 85, 32},
-
-    {1280, 1024, 85, 16},
-    {1280, 1024, 85, 32},
-
-    {1600, 900, 85, 16},
-    {1600, 900, 85, 32},
-
-    {1600, 1024, 85, 16},
-    {1600, 1024, 85, 32},
-
-    {1600, 1200, 85, 16},
-    {1600, 1200, 85, 32}
 };
 
 #define NUM_FORMATS 7
@@ -189,18 +156,14 @@ UINT     WINAPI  IDirect3D8Impl_GetAdapterModeCount        (LPDIRECT3D8 iface,
     }
 
     if (Adapter == 0) { /* Display */
-        int maxWidth        = GetSystemMetrics(SM_CXSCREEN);
-        int maxHeight       = GetSystemMetrics(SM_CYSCREEN);
-        int i;
+        DEVMODEW DevModeW;
+        int i = 0;
 
-        for (i = 0; i < NUM_MODES; i++) {
-            if (modes[i][0] > maxWidth || modes[i][1] > maxHeight) {
-  	        TRACE("(%p}->(Adapter: %d) => %d\n", This, Adapter, i + 1);
-                return i + 1;
-            }
+        while (EnumDisplaySettingsExW(NULL, i, &DevModeW, 0)) {
+            TRACE("(%p}->(Adapter: %d) => %d\n", This, Adapter, i);
+            i++;
         }
-	TRACE("(%p}->(Adapter: %d) => %d\n", This, Adapter, NUM_MODES);
-        return NUM_MODES + 1;
+        return i;
     } else {
         FIXME("Adapter not primary display\n");
     }
@@ -221,18 +184,17 @@ HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
     if (Adapter == 0) { /* Display */
         HDC hdc;
         int bpp = 0;
+        DEVMODEW DevModeW;
 
-        if (Mode == 0) {
-            pMode->Width        = GetSystemMetrics(SM_CXSCREEN);
-            pMode->Height       = GetSystemMetrics(SM_CYSCREEN);
-            pMode->RefreshRate  = 85; /*FIXME: How to identify? */
-	    bpp                 = 32;
-        } else if (Mode < (NUM_MODES + 1)) {
-            pMode->Width        = modes[Mode - 1][0];
-            pMode->Height       = modes[Mode - 1][1];
-            pMode->RefreshRate  = modes[Mode - 1][2];
-	    bpp                 = modes[Mode - 1][3];
-        } else {
+        if (EnumDisplaySettingsExW(NULL, Mode, &DevModeW, 0)) 
+        {
+            pMode->Width        = DevModeW.dmPelsWidth;
+            pMode->Height       = DevModeW.dmPelsHeight;
+            pMode->RefreshRate  = D3DADAPTER_DEFAULT;
+	    bpp                 = DevModeW.dmBitsPerPel;
+        }
+        else
+        {
             TRACE("Requested mode out of range %d\n", Mode);
             return D3DERR_INVALIDCALL;
         }
@@ -1044,7 +1006,7 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     /* If not windowed, need to go fullscreen, and resize the HWND to the appropriate  */
     /*        dimensions                                                               */
     if (!pPresentationParameters->Windowed) {
-#if 0
+#if 1
 	DEVMODEW devmode;
 	HDC hdc;
         int bpp = 0;
