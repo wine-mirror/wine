@@ -381,8 +381,9 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             break;
         }
     case 0x0501:  /* Allocate memory block */
-        if (!(ptr = (BYTE *)HeapAlloc( SystemHeap, 0,MAKELONG( CX_reg(context),
-                                                           BX_reg(context) ))))
+        if (!(ptr = (BYTE *)HeapAlloc( GetProcessHeap(), 0,
+                                       MAKELONG( CX_reg(context),
+                                                 BX_reg(context) ))))
         {
             AX_reg(context) = 0x8012;  /* linear memory not available */
             SET_CFLAG(context);
@@ -395,12 +396,12 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
 
     case 0x0502:  /* Free memory block */
-        HeapFree( SystemHeap, 0,
+        HeapFree( GetProcessHeap(), 0,
                   (void *)MAKELONG( DI_reg(context), SI_reg(context) ) );
         break;
 
     case 0x0503:  /* Resize memory block */
-        if (!(ptr = (BYTE *)HeapReAlloc( SystemHeap, 0,
+        if (!(ptr = (BYTE *)HeapReAlloc( GetProcessHeap(), 0,
                            (void *)MAKELONG(DI_reg(context),SI_reg(context)),
                                    MAKELONG(CX_reg(context),BX_reg(context)))))
         {

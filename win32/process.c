@@ -339,9 +339,8 @@ DWORD WINAPI WaitForSingleObjectEx(HANDLE32 h,DWORD timeout,BOOL32 bAlertable)
 	return 0;
 }
 
-
 /***********************************************************************
- *           WaitForMultipleObjects    (USER32.399)
+ *           MsgWaitForMultipleObjects    (USER32.399)
  */
 DWORD WINAPI MsgWaitForMultipleObjects(
 	DWORD nCount,HANDLE32 *pHandles,BOOL32 fWaitAll,DWORD dwMilliseconds,
@@ -354,6 +353,16 @@ DWORD WINAPI MsgWaitForMultipleObjects(
 	fprintf(stderr,"],%d,%ld,0x%08lx)\n",fWaitAll,dwMilliseconds,dwWakeMask);
 	return 0;
 }
+
+/***********************************************************************
+ *           WaitForMultipleObjects    (KERNEL32)
+ */
+DWORD WINAPI WaitForMultipleObjects(
+	DWORD nCount,HANDLE32 *pHandles,BOOL32 fWaitAll,DWORD dwMilliseconds
+) {
+	return MsgWaitForMultipleObjects(nCount,pHandles,fWaitAll,dwMilliseconds,0);
+}
+
 /***********************************************************************
  *           DuplicateHandle    (KERNEL32.78)
  */

@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winhelp hlp2sgml
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
-RCFLAGS   = -w32
+RCFLAGS   = -w32 -h
 
 LANGUAGES   = En Da De Fr Fi Ko Hu It Va
 
@@ -28,20 +28,21 @@ MOSTSRCS = \
 	macro.c
 
 # Some strings need addresses >= 0x10000
-STRINGSRCS = \
-	string.c
+STRINGSRCS = string.c
 
-GEN_C_SRCS = \
-	y.tab.c \
-	lex.yy.c \
-	$(LANGUAGES:%=%.c)
+EXTRA_SRCS = macro.yacc.y macro.lex.l
+EXTRA_OBJS = y.tab.o lex.yy.o
+
+RC_SRCS = $(LANGUAGES:%=%.rc)
 
 C_SRCS = $(MOSTSRCS) $(STRINGSRCS)
 
 MOSTOBJS = $(MOSTSRCS:.c=.o)
-STRINGOBJS = $(STRINGSRCS:.c=.o) $(GEN_C_SRCS:.c=.o)
+STRINGOBJS = $(STRINGSRCS:.c=.o) $(RC_SRCS:.rc=.o)
 
 all: check_winerc $(PROGRAMS)
+
+depend:: $(RC_SRCS:.rc=.h) y.tab.h
 
 @MAKE_RULES@
 
@@ -62,7 +63,7 @@ y.tab.c y.tab.h: macro.yacc.y
 lex.yy.c: macro.lex.l
 	$(LEX) -8 -i $(SRCDIR)/macro.lex.l
 
-$(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h): $(WINERC) Xx.rc
+$(RC_SRCS:.rc=.c) $(RC_SRCS:.rc=.h): $(WINERC)
 
 dummy:
 

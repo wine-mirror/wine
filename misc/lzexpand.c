@@ -478,7 +478,7 @@ LONG WINAPI LZCopy32( HFILE32 src, HFILE32 dest )
 	LONG	len;
 #define BUFLEN	1000
 	BYTE	buf[BUFLEN];
-	INT32	(*xread)(HFILE32,LPVOID,UINT32);
+	INT32	WINAPI (*xread)(HFILE32,LPVOID,UINT32);
 
 	dprintf_file(stddeb,"LZCopy(%d,%d)\n",src,dest);
 	for (i=0;i<nroflzstates;i++)

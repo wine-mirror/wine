@@ -600,63 +600,33 @@ WORD WINAPI GetAsyncKeyState16(INT16 nKey)
     return GetAsyncKeyState32(nKey);
 }
 
-
-
 /**********************************************************************
- *			TranslateAccelerator 	[USER.178]
+ *			TranslateAccelerator 	[USER.178][USER32.551..]
  *
  * FIXME: should send some WM_INITMENU or/and WM_INITMENUPOPUP  -messages
  */
-INT32 WINAPI TranslateAccelerator32(HWND32 hWnd, HACCEL32 hAccel, LPMSG32 msg)
+static BOOL32 KBD_translate_accelerator(HWND32 hWnd,LPMSG32 msg,
+                                        BYTE fVirt,WORD key,WORD cmd)
 {
-    MSG16	msg16;
+    BOOL32	sendmsg = FALSE;
 
-    STRUCT32_MSG32to16(msg,&msg16);
-    return TranslateAccelerator16(hWnd,hAccel,&msg16);
-}
-	
-INT16 WINAPI TranslateAccelerator16(HWND16 hWnd, HACCEL16 hAccel, LPMSG16 msg)
-{
-    ACCELHEADER	*lpAccelTbl;
-    int 	i;
-    BOOL32 sendmsg;
-    
-    if (hAccel == 0 || msg == NULL) return 0;
-    if (msg->message != WM_KEYDOWN &&
-    	msg->message != WM_KEYUP &&
-	msg->message != WM_SYSKEYDOWN &&
-	msg->message != WM_SYSKEYUP &&
-    	msg->message != WM_CHAR) return 0;
-
-    dprintf_accel(stddeb, "TranslateAccelerators hAccel=%04x, hWnd=%04x,\
-msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
-
-    lpAccelTbl = (LPACCELHEADER)GlobalLock16(hAccel);
-    for (sendmsg= i = 0; i < lpAccelTbl->wCount; i++) 
+    if(msg->wParam == key) 
     {
-     if(msg->wParam == lpAccelTbl->tbl[i].wEvent) 
-     {
-      if (msg->message == WM_CHAR) 
-      {
-        if ( !(lpAccelTbl->tbl[i].type & ALT_ACCEL) && 
-             !(lpAccelTbl->tbl[i].type & VIRTKEY_ACCEL) )
+    	if (msg->message == WM_CHAR) {
+        if ( !(fVirt & FALT) && !(fVirt & FVIRTKEY) )
         {
    	  dprintf_accel(stddeb,"found accel for WM_CHAR: ('%c')",msg->wParam&0xff);
    	  sendmsg=TRUE;
    	}  
-      }
-      else
-      {
-       if(lpAccelTbl->tbl[i].type & VIRTKEY_ACCEL) 
-       {
+      } else {
+       if(fVirt & FVIRTKEY) {
 	INT32 mask = 0;
         dprintf_accel(stddeb,"found accel for virt_key %04x (scan %04x)",
   	                       msg->wParam,0xff & HIWORD(msg->lParam));                
-	if(GetKeyState32(VK_SHIFT) & 0x8000) mask |= SHIFT_ACCEL;
-	if(GetKeyState32(VK_CONTROL) & 0x8000) mask |= CONTROL_ACCEL;
-	if(GetKeyState32(VK_MENU) & 0x8000) mask |= ALT_ACCEL;
-	if(mask == (lpAccelTbl->tbl[i].type &
-			    (SHIFT_ACCEL | CONTROL_ACCEL | ALT_ACCEL)))
+	if(GetKeyState32(VK_SHIFT) & 0x8000) mask |= FSHIFT;
+	if(GetKeyState32(VK_CONTROL) & 0x8000) mask |= FCONTROL;
+	if(GetKeyState32(VK_MENU) & 0x8000) mask |= FALT;
+	if(mask == (fVirt & (FSHIFT | FCONTROL | FALT)))
           sendmsg=TRUE;			    
         else
           dprintf_accel(stddeb,", but incorrect SHIFT/CTRL/ALT-state\n");
@@ -665,7 +635,7 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
        {
          if (!(msg->lParam & 0x01000000))  /* no special_key */
          {
-           if ((lpAccelTbl->tbl[i].type & ALT_ACCEL) && (msg->lParam & 0x20000000))
+           if ((fVirt & FALT) && (msg->lParam & 0x20000000))
            {                                                   /* ^^ ALT pressed */
 	    dprintf_accel(stddeb,"found accel for Alt-%c", msg->wParam&0xff);
 	    sendmsg=TRUE;	    
@@ -682,10 +652,10 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
         if (msg->message == WM_KEYUP || msg->message == WM_SYSKEYUP)
           mesg=1;
         else 
-         if (GetCapture16())
+         if (GetCapture32())
            mesg=2;
          else
-          if (!IsWindowEnabled16(hWnd))
+          if (!IsWindowEnabled32(hWnd))
             mesg=3;
           else
           {
@@ -693,9 +663,9 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
 
             hMenu = (wndPtr->dwStyle & WS_CHILD) ? 0 : (HMENU32)wndPtr->wIDmenu;
 	    iSysStat = (wndPtr->hSysMenu) ? GetMenuState32(GetSubMenu16(wndPtr->hSysMenu, 0),
-					    lpAccelTbl->tbl[i].wIDval, MF_BYCOMMAND) : -1 ;
+					    cmd, MF_BYCOMMAND) : -1 ;
 	    iStat = (hMenu) ? GetMenuState32(hMenu,
-					    lpAccelTbl->tbl[i].wIDval, MF_BYCOMMAND) : -1 ;
+					    cmd, MF_BYCOMMAND) : -1 ;
 
             if (iSysStat!=-1)
             {
@@ -726,8 +696,8 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
           {
               dprintf_accel(stddeb,", sending %s, wParam=%0x\n",
                   mesg==WM_COMMAND ? "WM_COMMAND" : "WM_SYSCOMMAND",
-                  lpAccelTbl->tbl[i].wIDval);
-	      SendMessage16(hWnd, mesg, lpAccelTbl->tbl[i].wIDval,0x00010000L);
+                  cmd);
+	      SendMessage32A(hWnd, mesg, cmd, 0x00010000L);
 	  }
 	  else
 	  {
@@ -742,12 +712,56 @@ msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
 	    */
 	    dprintf_accel(stddeb,", but won't send WM_{SYS}COMMAND, reason is #%d\n",mesg);
 	  }          
-          GlobalUnlock16(hAccel);
-          return 1;         
+          return TRUE;         
       }
-     }
     }
-    GlobalUnlock16(hAccel);
+    return FALSE;
+}
+
+INT32 WINAPI TranslateAccelerator32(HWND32 hWnd, HACCEL32 hAccel, LPMSG32 msg)
+{
+    LPACCEL32	lpAccelTbl = (LPACCEL32)LockResource32(hAccel);
+    int 	i;
+    
+    if (hAccel == 0 || msg == NULL) return 0;
+    if (msg->message != WM_KEYDOWN &&
+    	msg->message != WM_KEYUP &&
+	msg->message != WM_SYSKEYDOWN &&
+	msg->message != WM_SYSKEYUP &&
+    	msg->message != WM_CHAR) return 0;
+
+    dprintf_accel(stddeb, "TranslateAccelerators hAccel=%04x, hWnd=%04x,\
+msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
+
+    for (i = 0; lpAccelTbl[i].key ; i++)
+    	if (KBD_translate_accelerator(hWnd,msg,lpAccelTbl[i].fVirt,
+                                      lpAccelTbl[i].key,lpAccelTbl[i].cmd))
+		return 1;
+    return 0;
+}
+	
+INT16 WINAPI TranslateAccelerator16(HWND16 hWnd, HACCEL16 hAccel, LPMSG16 msg)
+{
+    LPACCEL16	lpAccelTbl = (LPACCEL16)LockResource16(hAccel);
+    int 	i;
+    MSG32	msg32;
+    
+    if (hAccel == 0 || msg == NULL) return 0;
+    if (msg->message != WM_KEYDOWN &&
+    	msg->message != WM_KEYUP &&
+	msg->message != WM_SYSKEYDOWN &&
+	msg->message != WM_SYSKEYUP &&
+    	msg->message != WM_CHAR) return 0;
+
+    dprintf_accel(stddeb, "TranslateAccelerators hAccel=%04x, hWnd=%04x,\
+msg->hwnd=%04x, msg->message=%04x\n", hAccel,hWnd,msg->hwnd,msg->message);
+    STRUCT32_MSG16to32(msg,&msg32);
+
+
+    for (i=0;lpAccelTbl[i].key;i++) 
+    	if (KBD_translate_accelerator(hWnd,&msg32,lpAccelTbl[i].fVirt,
+                                      lpAccelTbl[i].key,lpAccelTbl[i].cmd))
+		return 1;
     return 0;
 }
 

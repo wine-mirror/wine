@@ -6,29 +6,28 @@ VPATH     = @srcdir@
 MODULE    = resources
 RCFLAGS   = -w32
 
-SYSRES_SRCS = \
-	sysres_Cz.c \
-	sysres_Da.c \
-	sysres_De.c \
-	sysres_En.c \
-	sysres_Eo.c \
-	sysres_Es.c \
-	sysres_Fi.c \
-	sysres_Fr.c \
-	sysres_Hu.c \
-	sysres_It.c \
-	sysres_Ko.c \
-	sysres_No.c \
-	sysres_Pl.c \
-	sysres_Po.c
+RC_SRCS = \
+	sysres_Cz.rc \
+	sysres_Da.rc \
+	sysres_De.rc \
+	sysres_En.rc \
+	sysres_Eo.rc \
+	sysres_Es.rc \
+	sysres_Fi.rc \
+	sysres_Fr.rc \
+	sysres_Hu.rc \
+	sysres_It.rc \
+	sysres_Ko.rc \
+	sysres_No.rc \
+	sysres_Pl.rc \
+	sysres_Po.rc
 
 C_SRCS = sysres.c
-GEN_C_SRCS = $(SYSRES_SRCS)
 
 all: check_winerc $(MODULE).o
 
 @MAKE_RULES@
 
-$(SYSRES_SRCS): $(WINERC)
+$(RC_SRCS:.rc=.c): $(WINERC)
 
 ### Dependencies:

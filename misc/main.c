@@ -197,7 +197,7 @@ int desktopX = 0, desktopY = 0;  /* Desktop window position (if any) */
 
 /* Default version is the same as -winver win31 */
 static LONG getVersion16 = MAKELONG( WINVERSION, 0x0616 ); /* DOS 6.22 */
-static LONG getVersion32 = MAKELONG( 4, 0x1606 ); /* DOS 6.22 */
+static LONG getVersion32 = MAKELONG( WINVERSION, 0x8000 );
 static OSVERSIONINFO32A getVersionEx = { sizeof(OSVERSIONINFO32A), 3, 10, 0,
                                          VER_PLATFORM_WIN32s, "Win32s 1.3" };
 
@@ -824,7 +824,7 @@ LONG WINAPI GetVersion16(void)
 
 
 /***********************************************************************
- *      GetVersion32
+ *      GetVersion32   (KERNEL32.427)
  */
 LONG WINAPI GetVersion32(void)
 {
@@ -906,100 +906,6 @@ DWORD WINAPI GetWinFlags(void)
       result |= WF_WIN32WOW; /* undocumented WF_WINNT */
   return result;
 }
-
-/***********************************************************************
- *          SetEnvironment   (GDI.132)
- */
-INT16 WINAPI SetEnvironment(LPCSTR lpPortName, LPCSTR lpEnviron, UINT16 nCount)
-{
-    LPENVENTRY	lpNewEnv;
-    LPENVENTRY	lpEnv = lpEnvList;
-    dprintf_env(stddeb, "SetEnvironment('%s', '%s', %d) !\n", 
-		lpPortName, lpEnviron, nCount);
-    if (lpPortName == NULL) return -1;
-    while (lpEnv != NULL) {
-	if (lpEnv->Name != NULL && strcmp(lpEnv->Name, lpPortName) == 0) {
-	    if (nCount == 0 || lpEnviron == NULL) {
-		if (lpEnv->Prev != NULL) lpEnv->Prev->Next = lpEnv->Next;
-		if (lpEnv->Next != NULL) lpEnv->Next->Prev = lpEnv->Prev;
-		free(lpEnv->Value);
-		free(lpEnv->Name);
-		free(lpEnv);
-		dprintf_env(stddeb, "SetEnvironment() // entry deleted !\n");
-		return -1;
-	    }
-	    free(lpEnv->Value);
-	    lpEnv->Value = malloc(nCount);
-	    if (lpEnv->Value == NULL) {
-		dprintf_env(stddeb, "SetEnvironment() // Error allocating entry value !\n");
-		return 0;
-	    }
-	    memcpy(lpEnv->Value, lpEnviron, nCount);
-	    lpEnv->wSize = nCount;
-	    dprintf_env(stddeb, "SetEnvironment() // entry modified !\n");
-	    return nCount;
-	}
-	if (lpEnv->Next == NULL) break;
-	lpEnv = lpEnv->Next;
-    }
-    if (nCount == 0 || lpEnviron == NULL) return -1;
-    dprintf_env(stddeb, "SetEnvironment() // new entry !\n");
-    lpNewEnv = malloc(sizeof(ENVENTRY));
-    if (lpNewEnv == NULL) {
-	dprintf_env(stddeb, "SetEnvironment() // Error allocating new entry !\n");
-	return 0;
-    }
-    if (lpEnvList == NULL) {
-	lpEnvList = lpNewEnv;
-	lpNewEnv->Prev = NULL;
-    }
-    else 
-    {
-	lpEnv->Next = lpNewEnv;
-	lpNewEnv->Prev = lpEnv;
-    }
-    lpNewEnv->Next = NULL;
-    lpNewEnv->Name = malloc(strlen(lpPortName) + 1);
-    if (lpNewEnv->Name == NULL) {
-	dprintf_env(stddeb, "SetEnvironment() // Error allocating entry name !\n");
-	return 0;
-    }
-    strcpy(lpNewEnv->Name, lpPortName);
-    lpNewEnv->Value = malloc(nCount);
-    if (lpNewEnv->Value == NULL) {
-	dprintf_env(stddeb, "SetEnvironment() // Error allocating entry value !\n");
-	return 0;
-    }
-    memcpy(lpNewEnv->Value, lpEnviron, nCount);
-    lpNewEnv->wSize = nCount;
-    return nCount;
-}
-
-
-/***********************************************************************
- *           GetEnvironment   (GDI.134)
- */
-INT16 WINAPI GetEnvironment(LPCSTR lpPortName, LPSTR lpEnviron, UINT16 nMaxSiz)
-{
-    WORD       nCount;
-    LPENVENTRY lpEnv = lpEnvList;
-
-    dprintf_env(stddeb, "GetEnvironment('%s', '%s', %d) !\n",
-		lpPortName, lpEnviron, nMaxSiz);
-    while (lpEnv != NULL) {
-	if (lpEnv->Name != NULL && strcmp(lpEnv->Name, lpPortName) == 0) {
-	    if( lpEnviron == NULL ) return lpEnv->wSize;
-	    nCount = MIN(nMaxSiz, lpEnv->wSize);
-            memcpy(lpEnviron, lpEnv->Value, nCount);
-	    dprintf_env(stddeb, "GetEnvironment() // found '%s' !\n", lpEnv->Value);
-	    return nCount;
-	}
-	lpEnv = lpEnv->Next;
-    }
-    dprintf_env(stddeb, "GetEnvironment() // not found !\n");
-    return 0;
-}
-
 
 /***********************************************************************
  *	GetTimerResolution (USER.14)

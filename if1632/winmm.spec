@@ -1,7 +1,7 @@
 name winmm
 type win32
 
-0001 stub PlaySoundA
+0001 stdcall PlaySoundA(ptr long long) PlaySound32A
 0004 stub CloseDriver
 0005 stub DefDriverProc
 0006 stub DriverCallback
@@ -16,7 +16,7 @@ type win32
 0015 stub OpenDriver
 0016 stub OpenDriverA
 0017 stub PlaySound
-0018 stub PlaySoundW
+0018 stdcall PlaySoundW(ptr long long) PlaySound32W
 0019 stub SendDriverMessage
 0020 stub auxGetDevCapsA
 0021 stub auxGetDevCapsW
@@ -118,7 +118,7 @@ type win32
 0117 stub mmioFlush
 0118 stub mmioGetInfo
 0119 stub mmioInstallIOProc16
-0120 stub mmioInstallIOProcA
+0120 stdcall mmioInstallIOProcA(long ptr long) mmioInstallIOProc32A
 0121 stub mmioInstallIOProcW
 0122 stub mmioOpenA
 0123 stub mmioOpenW

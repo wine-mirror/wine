@@ -167,7 +167,9 @@ void WINSOCK_link_async_op(ws_async_op* p_aop)
       ws_async_op*	p = __async_op_list;
       __async_op_list->prev = p_aop;
 
-      /* traverse the list and reap dead ops */
+      /* traverse the list and retire dead ops created
+       * by the signal handler (see below). */
+
       while( p )
       {
 	  if( p->flags & WSMSG_DEAD_AOP )
@@ -213,7 +215,7 @@ void WINSOCK_unlink_async_op(ws_async_op* p_aop)
  * link_async_op/unlink_async_op allow to install generic
  * async IO handlers (provided that aop_control function is defined).
  *
- * Note: AsyncGetXbyY expilicitly raise it.
+ * Note: pipe-based handlers must raise explicit SIGIO with kill(2).
  */
 
 void WINSOCK_sigio(int signal)
@@ -233,7 +235,11 @@ void WINSOCK_sigio(int signal)
       if( FD_ISSET(p_aop->fd[0], &check_set) )
           if( p_aop->aop_control(p_aop, AOP_IO) == AOP_CONTROL_REMOVE )
 	  {
-	      p_aop->flags = WSMSG_DEAD_AOP;  /* can't free inside the signal */
+	     /* NOTE: memory management is signal-unsafe, therefore
+	      * we can only set a flag to remove this p_aop later on.
+	      */
+
+	      p_aop->flags = WSMSG_DEAD_AOP;
 	      close(p_aop->fd[0]);
 	      FD_CLR(p_aop->fd[0],&__async_io_fdset);
 	      if( p_aop->fd[0] == __async_io_max_fd )

@@ -24,7 +24,7 @@
 
 static WORD VXD_WinVersion(void)
 {
-    WORD version = GetVersion16();
+    WORD version = LOWORD(GetVersion16());
     return (version >> 8) | (version << 8);
 }
 

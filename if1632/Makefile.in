@@ -65,8 +65,7 @@ GEN_ASM_SRCS = \
 	$(SPEC_FILES) \
 	callfrom16.s \
 	callfrom32.s \
-	callto16.s \
-	callto32.s \
+	callto16.s
 
 .SUFFIXES: .spec
 
@@ -87,8 +86,5 @@ callfrom32.s: $(SPEC_FILES)
 
 callto16.s: $(TOPSRCDIR)/include/callback.h $(BUILD)
 	$(BUILD) -o $@ -callto16 `cat $(TOPSRCDIR)/include/callback.h | grep "extern.*CallTo16_" | sed 's/.*CallTo16_\(.*\)(.*/\1/' | sort | uniq`
-
-callto32.s: $(TOPSRCDIR)/include/callback.h $(BUILD)
-	$(BUILD) -o $@ -callto32 `cat $(TOPSRCDIR)/include/callback.h | grep "extern.*CallTo32_" | sed 's/.*CallTo32_\(.*\)(.*/\1/' | sort | uniq`
 
 ### Dependencies:

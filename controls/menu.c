@@ -3533,9 +3533,9 @@ HMENU16 WINAPI LoadMenu16( HINSTANCE16 instance, SEGPTR name )
     if (!name) return 0;
     
     /* check for Win32 module */
-    instance = MODULE_HANDLEtoHMODULE16( instance );
-    if (MODULE_GetPtr(instance)->flags & NE_FFLAGS_WIN32)
+    if (HIWORD(instance))
         return LoadMenu32A(instance,PTR_SEG_TO_LIN(name));
+    instance = GetExePtr( instance );
 
     if (!(hRsrc = FindResource16( instance, name, RT_MENU ))) return 0;
     if (!(handle = LoadResource16( instance, hRsrc ))) return 0;

@@ -23,6 +23,7 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include "queue.h"
 #include "syscolor.h"
 #include "sysmetrics.h"
+#include "callback.h"
 #include "file.h"
 #include "gdi.h"
 #include "heap.h"
@@ -180,10 +181,11 @@ int MAIN_Init(void)
 int main(int argc, char *argv[] )
 {
     extern BOOL32 MAIN_WineInit( int *argc, char *argv[] );
+    extern void *CALL32_Init(void);
     extern char * DEBUG_argv0;
 
     int i,loaded;
-    HINSTANCE16 handle;
+    HINSTANCE32 handle;
 
     __winelib = 0;  /* First of all, clear the Winelib flag */
 
@@ -195,6 +197,10 @@ int main(int argc, char *argv[] )
 
     if (!MAIN_WineInit( &argc, argv )) return 1;
     if (!MAIN_Init()) return 1;
+
+    /* Initialize CALL32 routines */
+    /* This needs to be done just before task-switching starts */
+    IF1632_CallLargeStack = (int (*)(int (*func)(), void *arg))CALL32_Init();
 
     loaded=0;
     for (i = 1; i < argc; i++)

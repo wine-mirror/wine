@@ -35,17 +35,14 @@
 /* Signal handler declaration */
 
 #ifdef linux
-#define HANDLER_DEF(name) void name (int signal, SIGCONTEXT context_struct)
-#define HANDLER_PROLOG SIGCONTEXT *context = &context_struct; {
-#define HANDLER_EPILOG }
+# define HANDLER_DEF(name) void name (int signal, SIGCONTEXT context)
+# define HANDLER_CONTEXT (&context)
 #elif defined(__svr4__) || defined(_SCO_DS)
-#define HANDLER_DEF(name) void name (int signal, void *siginfo, SIGCONTEXT *context)
-#define HANDLER_PROLOG  /* nothing */
-#define HANDLER_EPILOG  /* nothing */
+# define HANDLER_DEF(name) void name(int signal, void *siginfo, SIGCONTEXT *context)
+# define HANDLER_CONTEXT context
 #else
-#define HANDLER_DEF(name) void name (int signal, int code, SIGCONTEXT *context)
-#define HANDLER_PROLOG  /* nothing */
-#define HANDLER_EPILOG  /* nothing */
+# define HANDLER_DEF(name) void name(int signal, int code, SIGCONTEXT *context)
+# define HANDLER_CONTEXT context
 #endif
 
 extern void SIGNAL_SetHandler( int sig, void (*func)(), int flags );
@@ -59,10 +56,9 @@ extern BOOL32 INSTR_EmulateInstruction( SIGCONTEXT *context );
  */
 static HANDLER_DEF(SIGNAL_break)
 {
-    HANDLER_PROLOG;
-    if (Options.debug) wine_debug( signal, context );  /* Enter our debugger */
+    if (Options.debug)
+        wine_debug( signal, HANDLER_CONTEXT );  /* Enter our debugger */
     else exit(0);
-    HANDLER_EPILOG;
 }
 
 
@@ -73,9 +69,7 @@ static HANDLER_DEF(SIGNAL_break)
  */
 static HANDLER_DEF(SIGNAL_trap)
 {
-  HANDLER_PROLOG;
-  wine_debug( signal, context );  /* Enter our debugger */
-  HANDLER_EPILOG;
+    wine_debug( signal, HANDLER_CONTEXT );  /* Enter our debugger */
 }
 
 
@@ -86,21 +80,18 @@ static HANDLER_DEF(SIGNAL_trap)
  */
 static HANDLER_DEF(SIGNAL_fault)
 {
-    HANDLER_PROLOG;
-    if (CS_sig(context) == WINE_CODE_SELECTOR)
+    if (CS_sig(HANDLER_CONTEXT) == WINE_CODE_SELECTOR)
     {
-        fprintf( stderr, "Segmentation fault in Wine program (%04x:%08lx)."
-                         "  Please debug.\n",
-                 (unsigned short) CS_sig(context), EIP_sig(context));
+        fprintf( stderr, "Segmentation fault in 32-bit code (0x%08lx).\n",
+                 EIP_sig(HANDLER_CONTEXT) );
     }
     else
     {
-        if (INSTR_EmulateInstruction( context )) return;
-        fprintf( stderr, "Segmentation fault in Windows program %04x:%08lx.\n",
-                 (unsigned short) CS_sig(context), EIP_sig(context) );
+        if (INSTR_EmulateInstruction( HANDLER_CONTEXT )) return;
+        fprintf( stderr, "Segmentation fault in 16-bit code (%04x:%04lx).\n",
+                 (WORD)CS_sig(HANDLER_CONTEXT), EIP_sig(HANDLER_CONTEXT) );
     }
-    wine_debug( signal, context );
-    HANDLER_EPILOG;
+    wine_debug( signal, HANDLER_CONTEXT );
 }
 
 
@@ -205,12 +196,10 @@ void SIGNAL_InfoRegisters( CONTEXT *context )
  */
 static HANDLER_DEF(SIGNAL_tick)
 {
-    HANDLER_PROLOG
     CONTEXT nt_context;
-    SIGNAL_SetSigContext( context, &nt_context );
+    SIGNAL_SetSigContext( HANDLER_CONTEXT, &nt_context );
     if (THREAD_SwitchThread( &nt_context ))
-        SIGNAL_GetSigContext( context, &nt_context );
-    HANDLER_EPILOG
+        SIGNAL_GetSigContext( HANDLER_CONTEXT, &nt_context );
 }
 
 /**********************************************************************

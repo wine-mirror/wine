@@ -22,7 +22,7 @@ type	win16
 201    pascal  MIDIOUTGETNUMDEVS() midiOutGetNumDevs
 202    pascal  MIDIOUTGETDEVCAPS(word segptr word) midiOutGetDevCaps
 203    pascal  MIDIOUTGETERRORTEXT(word ptr word) midiOutGetErrorText
-204    pascal  MIDIOUTOPEN(ptr word ptr long long long) midiOutOpen
+204    pascal  MIDIOUTOPEN(ptr word ptr long long) midiOutOpen
 205    pascal  MIDIOUTCLOSE(word) midiOutClose
 206    pascal  MIDIOUTPREPAREHEADER(word segptr word) midiOutPrepareHeader
 207    pascal  MIDIOUTUNPREPAREHEADER(word segptr word) midiOutUnprepareHeader
@@ -120,7 +120,7 @@ type	win16
 1218   pascal  MMIOFLUSH(word word) mmioFlush
 1219   pascal  MMIOADVANCE(word ptr word) mmioAdvance
 1220   pascal  MMIOSTRINGTOFOURCC(ptr word) mmioStringToFOURCC
-1221   pascal  MMIOINSTALLIOPROC(long ptr long) mmioInstallIOProc
+1221   pascal  MMIOINSTALLIOPROC(long ptr long) mmioInstallIOProc16
 1222   pascal  MMIOSENDMESSAGE(word word long long) mmioSendMessage
 1223   pascal  MMIODESCEND(word ptr ptr word) mmioDescend
 1224   pascal  MMIOASCEND(word ptr word) mmioAscend

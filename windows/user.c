@@ -23,8 +23,6 @@
 
 WORD USER_HeapSel = 0;
 
-extern HGLOBAL16 LoadDIBCursorHandler( HGLOBAL16, HINSTANCE16, HRSRC16 );
-extern HGLOBAL16 LoadDIBIconHandler( HGLOBAL16, HINSTANCE16, HRSRC16 );
 extern BOOL32 MENU_PatchResidentPopup( HQUEUE16, WND* );
 extern void QUEUE_FlushMessages(HQUEUE16);
 

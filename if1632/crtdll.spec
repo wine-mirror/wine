@@ -456,7 +456,7 @@ type	win32
 452 cdecl setbuf(ptr ptr) CRTDLL_setbuf
 453 cdecl setlocale(long ptr) CRTDLL_setlocale
 454 stub setvbuf
-455 stub signal
+455 cdecl signal(long ptr) CRTDLL_signal
 456 cdecl sin(double) sin
 457 cdecl sinh(double) sinh
 458 varargs sprintf() wsprintf32A

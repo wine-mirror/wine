@@ -176,7 +176,7 @@ DECL_WINELIB_TYPE(SOCKET);
 #define WS_SO_LINGER       0x0080          /* linger on close if data present */
 #define WS_SO_OOBINLINE    0x0100          /* leave received OOB data in line */
 
-#define WS_SO_DONTLINGER   (UINT16)(~WS_SO_LINGER)
+#define WS_SO_DONTLINGER   (UINT32)(~WS_SO_LINGER)
 
 /*
  * Additional options.
@@ -235,7 +235,7 @@ DECL_WINELIB_TYPE(SOCKET);
 #define WS_FD_CONNECT      0x0010
 #define WS_FD_CLOSE        0x0020
 
-#define WS_FD_NONBLOCK	   0x10000000	/* internal per-socket flags */
+#define WS_FD_LISTENING	   0x10000000	/* internal per-socket flags */
 #define WS_FD_INACTIVE	   0x20000000
 #define WS_FD_CONNECTED	   0x40000000
 #define WS_FD_RAW	   0x80000000

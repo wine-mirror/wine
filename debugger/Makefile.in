@@ -21,11 +21,12 @@ C_SRCS = \
 	stack.c \
 	types.c
 
-GEN_C_SRCS = \
-	y.tab.c \
-	lex.yy.c
+EXTRA_SRCS = dbg.y debug.l
+EXTRA_OBJS = y.tab.o lex.yy.o
 
 all: $(MODULE).o
+
+depend:: y.tab.h
 
 #
 # This is a special test program that helps debug the internal debugger.
@@ -40,5 +41,8 @@ y.tab.c y.tab.h: dbg.y
 
 lex.yy.c: debug.l
 	$(LEX) -8 -I $(SRCDIR)/debug.l
+
+clean::
+	$(RM) y.tab.c y.tab.h lex.yy.c
 
 ### Dependencies:

@@ -52,8 +52,8 @@ file	krnl386.exe
 52  pascal16 FreeProcInstance(segptr) FreeProcInstance16
 53  stub CallProcInstance
 54  pascal16 GetInstanceData(word word word) GetInstanceData
-55  pascal16 Catch(ptr) Catch 
-56  pascal16 Throw(ptr word) Throw
+55  register Catch(segptr) Catch 
+56  register Throw(segptr word) Throw
 57  pascal16 GetProfileInt(str str s_word) GetProfileInt16
 58  pascal16 GetProfileString(str str str ptr word) GetProfileString16
 59  pascal16 WriteProfileString(str str str) WriteProfileString16
@@ -106,7 +106,7 @@ file	krnl386.exe
 106 pascal SetSwapAreaSize(word) SetSwapAreaSize
 107 pascal16 SetErrorMode(word) SetErrorMode16
 108 pascal16 SwitchStackTo(word word word) SwitchStackTo
-109 register SwitchStackBack() SwitchStackBack
+109 register SwitchStackBack(word word word) SwitchStackBack
 110 pascal16 PatchCodeHandle(word) PatchCodeHandle
 111 pascal   GlobalWire(word) GlobalWire16
 112 pascal16 GlobalUnWire(word) GlobalUnWire16
@@ -276,8 +276,8 @@ file	krnl386.exe
 355 pascal16 GetWinDebugInfo(ptr word) GetWinDebugInfo
 356 pascal16 SetWinDebugInfo(ptr) SetWinDebugInfo
 357 stub KERNEL_357
-358 stub KERNEL_358
-359 stub KERNEL_359
+358 pascal KERNEL_358(long) _KERNEL_358
+359 pascal KERNEL_359(long) _KERNEL_359
 360 stub OpenFileEx
 #361 PIGLET_361
 403 pascal16 FarSetOwner(word word) FarSetOwner
@@ -310,7 +310,7 @@ file	krnl386.exe
 454 stub KERNEL_454
 455 stub KERNEL_455
 471 stub KERNEL_471
-472 stub KERNEL_472
+472 register KERNEL_472() _KERNEL_472
 473 stub KERNEL_473
 482 stub KERNEL_482
 485 stub KERNEL_485
@@ -339,6 +339,6 @@ file	krnl386.exe
 621 stub KERNEL_621
 627 stub IsBadFlatReadWritePtr
 630 stub KERNEL_630
-631 stub FUNC004	# shell hook
+631 pascal FUNC004(word word long) FUNC004	# shell hook
 651 stub KERNEL_651
 700 pascal KERNEL_700() stub_KERNEL_700

@@ -1,8 +1,7 @@
 /*
  * structure definitions for ACCELERATORS
  *
- * Copyright  Martin Ayotte, 1994
- *
+ * taken straight from Win32 SDK includes
  */
 
 #ifndef __WINE_ACCEL_H
@@ -10,21 +9,28 @@
 
 #include "windows.h"
 
-typedef struct {
-	WORD		wEvent;
-	WORD		wIDval;
-	BYTE		type;
-	} ACCELENTRY, *LPACCELENTRY;
+#pragma pack(1)
 
-typedef struct {
-	WORD		wCount;
-	ACCELENTRY 	tbl[1];
-	} ACCELHEADER, *LPACCELHEADER;
+#define	FVIRTKEY	TRUE          /* Assumed to be == TRUE */
+#define	FNOINVERT	0x02
+#define	FSHIFT		0x04
+#define	FCONTROL	0x08
+#define	FALT		0x10
 
-#define VIRTKEY_ACCEL	0x01
-#define SHIFT_ACCEL	0x04
-#define CONTROL_ACCEL	0x08
-#define ALT_ACCEL       0x10
-#define SYSTEM_ACCEL	0x80
+typedef struct tagACCEL16 {
+	BYTE	fVirt;		/* Also called the flags field */
+	WORD	key;
+	WORD	cmd;
+} ACCEL16, *LPACCEL16;
+
+typedef struct tagACCEL32 {
+	BYTE	fVirt;		/* Also called the flags field */
+	BYTE	pad0;
+	WORD	key;
+	WORD	cmd;
+	WORD	pad1;
+} ACCEL32, *LPACCEL32;
+
+#pragma pack(4)
 
 #endif  /* __WINE_ACCEL_H */

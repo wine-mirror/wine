@@ -1098,11 +1098,15 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
 	strcat(fn,"/");
 	strcat(fn,filename);
 	if ((rtn = DEBUG_ProcessElfObject(fn,load_offset))) {
+		free(fn);
       		free(paths);
 		goto leave;
 	}
-	s = t+1;
+	free(fn);
+	if (t) s = t+1;
       }
+      if (!s || !*s)
+      	fprintf(stderr," %s not found",filename);
       free(paths);
       goto leave;
     }

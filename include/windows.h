@@ -5210,6 +5210,32 @@ typedef struct
 	UINT32	uiLengthDrawn;
 } DRAWTEXTPARAMS,*LPDRAWTEXTPARAMS;
 
+/* ifdef _x86_ ... */
+typedef struct _LDT_ENTRY {
+    WORD	LimitLow;
+    WORD	BaseLow;
+    union {
+	struct {
+	    BYTE	BaseMid;
+	    BYTE	Flags1;/*Declare as bytes to avoid alignment problems */
+	    BYTE	Flags2; 
+	    BYTE	BaseHi;
+	} Bytes;
+	struct {
+	    DWORD	BaseMid		: 8;
+	    DWORD	Type		: 5;
+	    DWORD	Dpl		: 2;
+	    DWORD	Pres		: 1;
+	    DWORD	LimitHi		: 4;
+	    DWORD	Sys		: 1;
+	    DWORD	Reserved_0	: 1;
+	    DWORD	Default_Big	: 1;
+	    DWORD	Granularity	: 1;
+	    DWORD	BaseHi		: 8;
+	} Bits;
+    } HighWord;
+} LDT_ENTRY, *LPLDT_ENTRY;
+
 #pragma pack(4)
 
 /* Declarations for functions that exist only in Win16 */
@@ -5219,7 +5245,6 @@ WORD        WINAPI AllocDStoCSAlias(WORD);
 WORD        WINAPI AllocSelector(WORD);
 WORD        WINAPI AllocSelectorArray(WORD);
 VOID        WINAPI CalcChildScroll(HWND16,WORD);
-INT16       WINAPI Catch(LPCATCHBUF);
 VOID        WINAPI CascadeChildWindows(HWND16,WORD);
 INT16       WINAPI CloseComm(INT16);
 HGLOBAL16   WINAPI CreateCursorIconIndirect(HINSTANCE16,CURSORICONINFO*,
@@ -5261,7 +5286,7 @@ DWORD       WINAPI GetDCOrg(HDC16);
 HDC16       WINAPI GetDCState(HDC16);
 HWND16      WINAPI GetDesktopHwnd(void);
 SEGPTR      WINAPI GetDOSEnvironment(void);
-INT16       WINAPI GetEnvironment(LPCSTR,LPSTR,UINT16);
+INT16       WINAPI GetEnvironment(LPCSTR,LPDEVMODE16,UINT16);
 HMODULE16   WINAPI GetExePtr(HANDLE16);
 WORD        WINAPI GetExeVersion(void);
 WORD        WINAPI GetExpWinVer(HMODULE16);
@@ -5341,7 +5366,7 @@ BOOL16      WINAPI SetDCHook(HDC16,FARPROC16,DWORD);
 DWORD       WINAPI SetDCOrg(HDC16,INT16,INT16);
 VOID        WINAPI SetDCState(HDC16,HDC16);
 BOOL16      WINAPI SetDeskPattern(void);
-INT16       WINAPI SetEnvironment(LPCSTR,LPCSTR,UINT16);
+INT16       WINAPI SetEnvironment(LPCSTR,LPDEVMODE16,UINT16);
 WORD        WINAPI SetHookFlags(HDC16,WORD);
 HMETAFILE16 WINAPI SetMetaFileBits(HGLOBAL16);
 VOID        WINAPI SetPriority(HTASK16,INT16);
@@ -5359,7 +5384,6 @@ DWORD       WINAPI SetWindowOrg(HDC16,INT16,INT16);
 VOID        WINAPI SwitchStackBack(void);
 VOID        WINAPI SwitchStackTo(WORD,WORD,WORD);
 VOID        WINAPI TileChildWindows(HWND16,WORD);
-INT16       WINAPI Throw(LPCATCHBUF,INT16);
 INT16       WINAPI UngetCommChar(INT16,CHAR);
 VOID        WINAPI UserYield(void);
 BOOL16      WINAPI WaitEvent(HTASK16);
@@ -5490,6 +5514,7 @@ BOOL32      WINAPI GetTextExtentExPoint32W(HDC32,LPCWSTR,INT32,INT32,
 #define     GetTextExtentExPoint WINELIB_NAME_AW(GetTextExtentExPoint)
 LCID        WINAPI GetThreadLocale();
 INT32       WINAPI GetThreadPriority(HANDLE32);
+BOOL32      WINAPI GetThreadSelectorEntry(HANDLE32,DWORD,LPLDT_ENTRY);
 BOOL32      WINAPI GetUserName32A(LPSTR,LPDWORD);
 BOOL32      WINAPI GetUserName32W(LPWSTR,LPDWORD);
 #define     GetUserName WINELIB_NAME_AW(GetUserName)

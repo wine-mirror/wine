@@ -484,14 +484,17 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC32 hdc,
                          "rect=%d,%d-%d,%d\n",
                          wnd->hwndSelf, index, item ? item->str : "", action,
                          rect->left, rect->top, rect->right, rect->bottom );
-        /* FIXME: check LBS_USETABSTOPS style */
-        if (item)
-            ExtTextOut32A( hdc, rect->left + 1, rect->top + 1,
-                           ETO_OPAQUE | ETO_CLIPPED, rect, item->str,
-                           strlen(item->str), NULL );
-        else
+        if (!item)
             ExtTextOut32A( hdc, rect->left + 1, rect->top + 1,
                            ETO_OPAQUE | ETO_CLIPPED, rect, NULL, 0, NULL );
+        else if (!(descr->style & LBS_USETABSTOPS)) 
+	    ExtTextOut32A( hdc, rect->left + 1, rect->top + 1,
+			   ETO_OPAQUE | ETO_CLIPPED, rect, item->str,
+			   strlen(item->str), NULL );
+        else
+	    TabbedTextOut32A( hdc, rect->left + 1 , rect->top + 1,
+			      item->str, strlen(item->str), 
+			      descr->nb_tabs, descr->tabs, 0);
         if (item && item->selected)
         {
             SetBkColor32( hdc, oldBk );
@@ -595,7 +598,12 @@ static BOOL32 LISTBOX_SetTabStops( WND *wnd, LB_DESCR *descr, INT32 count,
     {
         INT32 i;
         LPINT16 p = (LPINT16)tabs;
-        for (i = 0; i < descr->nb_tabs; i++) descr->tabs[i] = *p++;
+        dprintf_listbox( stddeb, "Listbox %04x: settabstops ", wnd->hwndSelf);
+        for (i = 0; i < descr->nb_tabs; i++) {
+            descr->tabs[i] = *p++<<1; /* FIXME */
+            dprintf_listbox( stddeb, "%hd ", descr->tabs[i]);
+	}
+	dprintf_listbox( stddeb, "\n");
     }
     else memcpy( descr->tabs, tabs, descr->nb_tabs * sizeof(INT32) );
     /* FIXME: repaint the window? */

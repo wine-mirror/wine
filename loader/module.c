@@ -639,7 +639,9 @@ static HMODULE32 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
                   ne_header.rname_tab_offset - ne_header.resource_tab_offset,
                   pData )) return (HMODULE32)11;  /* invalid exe */
         pData += ne_header.rname_tab_offset - ne_header.resource_tab_offset;
+#ifndef WINELIB
 	NE_InitResourceHandler( hModule );
+#endif
     }
     else pModule->res_table = 0;  /* No resource table */
 
@@ -1219,7 +1221,6 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 uFlags)
 	if (pModule->flags & NE_FFLAGS_SELFLOAD)
 	{
                 HFILE32 hf;
-                HGLOBAL16 hInitialStack32 = 0;
 		/* Handle self loading modules */
 		SEGTABLEENTRY * pSegTable = (SEGTABLEENTRY *) NE_SEG_TABLE(pModule);
 		SELFLOADHEADER *selfloadheader;
@@ -1259,44 +1260,14 @@ HINSTANCE16 MODULE_Load( LPCSTR name, LPVOID paramBlock, UINT16 uFlags)
                 stack16Top->ip = 0;
                 stack16Top->cs = 0;
 
-		if (!IF1632_Saved32_esp)
-                {
-		  STACK32FRAME* frame32;
-		  char *stack32Top;
-		  /* Setup an initial 32 bit stack frame */
-		  hInitialStack32 = GLOBAL_Alloc( GMEM_FIXED, 0x10000,
-						  hModule, FALSE, FALSE, 
-						  FALSE );
-
-		  /* Create the 32-bit stack frame */
-		  
-		  stack32Top = (char*)GlobalLock16(hInitialStack32) + 
-		    0x10000;
-		  frame32 = (STACK32FRAME *)stack32Top - 1;
-		  frame32->saved_esp = (DWORD)stack32Top;
-		  frame32->edi = 0;
-		  frame32->esi = 0;
-		  frame32->edx = 0;
-		  frame32->ecx = 0;
-		  frame32->ebx = 0;
-		  frame32->ebp = 0;
-		  frame32->restore_addr = 0;
-		  frame32->retaddr      = 0;
-		  frame32->codeselector = WINE_CODE_SELECTOR;
-		  /* pTask->esp = (DWORD)frame32; */
-		}
                 hf = FILE_DupUnixHandle( MODULE_OpenFile( hModule ) );
 		CallTo16_word_ww( selfloadheader->BootApp, hModule, hf );
                 _lclose32(hf);
 		/* some BootApp procs overwrite the selector of dgroup */
 		pSegTable[pModule->dgroup - 1].selector = saved_dgroup;
 		IF1632_Saved16_ss_sp = oldstack;
-		for (i = 2; i <= pModule->seg_count; i++) NE_LoadSegment( hModule, i );
-		if (hInitialStack32)
-                {
-		  GlobalFree16(hInitialStack32);
-		  hInitialStack32 = 0;
-		}
+		for (i = 2; i <= pModule->seg_count; i++)
+                    NE_LoadSegment( hModule, i );
 	} 
 	else
         {
@@ -1638,7 +1609,7 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
         return 2;  /* File not found */
     if (!(cmdShowHandle = GlobalAlloc16( 0, 2 * sizeof(WORD) )))
         return 8;  /* Out of memory */
-    if (!(cmdLineHandle = GlobalAlloc16( 0, 1024 )))
+    if (!(cmdLineHandle = GlobalAlloc16( 0, 256 )))
     {
         GlobalFree16( cmdShowHandle );
         return 8;  /* Out of memory */
@@ -1683,11 +1654,11 @@ HINSTANCE32 WINAPI WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
 	}
 
 	if (*p)
-	    lstrcpyn32A( cmdline + 1, p + 1, 1023 );
+	    lstrcpyn32A( cmdline + 1, p + 1, 255 );
 	else
 	    cmdline[1] = '\0';
 
-	cmdline[0] = strlen( cmdline + 1 ) + 1;
+	cmdline[0] = strlen( cmdline + 1 );
 	*p = '\0';
 
 	/* Now load the executable file */

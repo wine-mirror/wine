@@ -47,12 +47,6 @@ extern void PE_InitTls( PDB32 *pdb32 );
   /* Saved 16-bit stack for current process (Win16 only) */
 DWORD IF1632_Saved16_ss_sp = 0;
 
-  /* Saved 32-bit stack for current process (Win16 only) */
-DWORD IF1632_Saved32_esp = 0;
-
-  /* Original Unix stack */
-DWORD IF1632_Original32_esp = 0;
-
   /* Pointer to function to switch to a larger stack */
 int (*IF1632_CallLargeStack)( int (*func)(), void *arg ) = NULL;
 
@@ -412,7 +406,7 @@ static void TASK_CallToStart(void)
                       SELECTOROF(IF1632_Saved16_ss_sp),
                       OFFSETOF(IF1632_Saved16_ss_sp) );
 
-        CallTo16_regs_( &context );
+        CallTo16_regs_( &context, 0 );
         /* This should never return */
         fprintf( stderr, "TASK_CallToStart: Main program returned!\n" );
         TASK_KillCurrentTask( 1 );
@@ -436,7 +430,7 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     SEGTABLEENTRY *pSegTable;
     LPSTR name;
     char filename[256];
-    char *stack16Top, *stack32Top;
+    char *stack32Top;
     STACK16FRAME *frame16;
     STACK32FRAME *frame32;
 #ifndef WINELIB32
@@ -575,7 +569,6 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 
     stack32Top = (char*)pTask->thdb->teb.stack_top;
     frame32 = (STACK32FRAME *)stack32Top - 1;
-    frame32->saved_esp = (DWORD)stack32Top;
     frame32->edi = 0;
     frame32->esi = 0;
     frame32->edx = 0;
@@ -587,15 +580,14 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     frame32->retaddr = (DWORD)TASK_CallToStart;
     frame32->codeselector = WINE_CODE_SELECTOR;
 #endif
-    pTask->esp = (DWORD)frame32;
 
-      /* Create the 16-bit stack frame */
+    /* Create the 16-bit stack frame */
 
     pTask->ss_sp = PTR_SEG_OFF_TO_SEGPTR( hInstance,
                         ((pModule->sp != 0) ? pModule->sp :
                 pSegTable[pModule->ss-1].minsize + pModule->stack_size) & ~1 );
-    stack16Top = (char *)PTR_SEG_TO_LIN( pTask->ss_sp );
-    frame16 = (STACK16FRAME *)stack16Top - 1;
+    pTask->ss_sp -= sizeof(DWORD);  /* To store saved %%esp */
+    frame16 = (STACK16FRAME *)PTR_SEG_TO_LIN( pTask->ss_sp ) - 1;
     frame16->saved_ss_sp = 0;
     frame16->ebp = 0;
     frame16->ds = frame16->es = pTask->hInstance;
@@ -603,6 +595,8 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
     frame16->entry_ip = OFFSETOF(TASK_RescheduleProc) + 14;
     frame16->entry_cs = SELECTOROF(TASK_RescheduleProc);
     frame16->bp = 0;
+    frame16->args[0] = LOWORD(frame32);
+    frame16->args[1] = HIWORD(frame32);
 #ifndef WINELIB
     frame16->ip = LOWORD( CALLTO16_RetAddr_word );
     frame16->cs = HIWORD( CALLTO16_RetAddr_word );
@@ -631,7 +625,8 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
         }
         else
         {
-            DBG_ADDR addr = { NULL, pSegTable[pModule->cs-1].selector, pModule->ip };
+            DBG_ADDR addr = { NULL, pSegTable[pModule->cs-1].selector,
+                              pModule->ip };
             fprintf( stderr, "Win16 task '%s': ", name );
             DEBUG_AddBreakpoint( &addr );
         }
@@ -824,14 +819,9 @@ void TASK_Reschedule(void)
     dprintf_task( stddeb, "Switching to task %04x (%.8s)\n",
                   hTask, pNewTask->module_name );
 
-      /* Save the stacks of the previous task (if any) */
+      /* Save the stack of the previous task (if any) */
 
-    if (pOldTask)
-    {
-        pOldTask->ss_sp = IF1632_Saved16_ss_sp;
-        pOldTask->esp   = IF1632_Saved32_esp;
-    }
-    else IF1632_Original32_esp = IF1632_Saved32_esp;
+    if (pOldTask) pOldTask->ss_sp = IF1632_Saved16_ss_sp;
 
      /* Make the task the last in the linked list (round-robin scheduling) */
 
@@ -840,13 +830,12 @@ void TASK_Reschedule(void)
     TASK_LinkTask( hTask );
     pNewTask->priority--;
 
-      /* Switch to the new stack */
+    /* Switch to the new stack */
 
     hCurrentTask = hTask;
     pCurrentThread = pNewTask->thdb;
     pCurrentProcess = pCurrentThread->process;
     IF1632_Saved16_ss_sp = pNewTask->ss_sp;
-    IF1632_Saved32_esp   = pNewTask->esp;
 }
 
 
@@ -1051,13 +1040,13 @@ void WINAPI UserYield(void)
     TDB *pCurTask = (TDB *)GlobalLock16( hCurrentTask );
     MESSAGEQUEUE *queue = (MESSAGEQUEUE *)GlobalLock16( pCurTask->hQueue );
     /* Handle sent messages */
-    if (queue && (queue->wakeBits & QS_SENDMESSAGE))
+    while (queue && (queue->wakeBits & QS_SENDMESSAGE))
         QUEUE_ReceiveMessage( queue );
 
     OldYield();
 
     queue = (MESSAGEQUEUE *)GlobalLock16( pCurTask->hQueue );
-    if (queue && (queue->wakeBits & QS_SENDMESSAGE))
+    while (queue && (queue->wakeBits & QS_SENDMESSAGE))
         QUEUE_ReceiveMessage( queue );
 }
 
@@ -1191,7 +1180,7 @@ void WINAPI SwitchStackTo( WORD seg, WORD ptr, WORD top )
 
     /* Switch to the new stack */
 
-    IF1632_Saved16_ss_sp = pTask->ss_sp = PTR_SEG_OFF_TO_SEGPTR( seg,
+    IF1632_Saved16_ss_sp = PTR_SEG_OFF_TO_SEGPTR( seg,
                                                   ptr - sizeof(STACK16FRAME) );
     newFrame = CURRENT_STACK16;
 
@@ -1230,18 +1219,18 @@ void WINAPI SwitchStackBack(void)
 
     /* Switch back to the old stack */
 
-    IF1632_Saved16_ss_sp = pTask->ss_sp = pData->old_ss_sp;
+    IF1632_Saved16_ss_sp = pData->old_ss_sp;
     pData->old_ss_sp = 0;
 
     /* Build a stack frame for the return */
 
     newFrame = CURRENT_STACK16;
     newFrame->saved_ss_sp = oldFrame->saved_ss_sp;
-    newFrame->entry_ip    = oldFrame->entry_ip;
-    newFrame->entry_cs    = oldFrame->entry_cs;
-    newFrame->bp          = oldFrame->bp;
-    newFrame->ip          = oldFrame->ip;
-    newFrame->cs          = oldFrame->cs;
+    if (debugging_relay)
+    {
+        newFrame->entry_ip = oldFrame->entry_ip;
+        newFrame->entry_cs = oldFrame->entry_cs;
+    }
 }
 
 

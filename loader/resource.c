@@ -416,18 +416,10 @@ HGLOBAL16 WINAPI DirectResAlloc( HINSTANCE16 hInstance, WORD wType,
 
 /**********************************************************************
  *			LoadAccelerators16	[USER.177]
- *
- * FIXME: this code leaks memory because HACCEL must be a result of LoadResource()
- *        (see TWIN for hints).
  */
 HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
 {
-    HACCEL16 	hAccel;
-    HGLOBAL16 	rsc_mem;
-    HRSRC16 hRsrc;
-    BYTE 	*lp;
-    ACCELHEADER	*lpAccelTbl;
-    int 	i, n;
+    HRSRC16	hRsrc;
 
     if (HIWORD(lpTableName))
         dprintf_accel( stddeb, "LoadAccelerators: %04x '%s'\n",
@@ -438,30 +430,7 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
 
     if (!(hRsrc = FindResource16( instance, lpTableName, RT_ACCELERATOR )))
       return 0;
-    if (!(rsc_mem = LoadResource16( instance, hRsrc ))) return 0;
-
-    lp = (BYTE *)LockResource16(rsc_mem);
-    n = SizeofResource16(instance,hRsrc)/sizeof(ACCELENTRY);
-    hAccel = GlobalAlloc16(GMEM_MOVEABLE, 
-    	sizeof(ACCELHEADER) + (n + 1)*sizeof(ACCELENTRY));
-    lpAccelTbl = (LPACCELHEADER)GlobalLock16(hAccel);
-    lpAccelTbl->wCount = 0;
-    for (i = 0; i < n; i++) {
-	lpAccelTbl->tbl[i].type = *(lp++);
-	lpAccelTbl->tbl[i].wEvent = *((WORD *)lp);
-	lp += 2;
-	lpAccelTbl->tbl[i].wIDval = *((WORD *)lp);
-	lp += 2;
-    	if (lpAccelTbl->tbl[i].wEvent == 0) break;
-	dprintf_accel(stddeb,
-		"Accelerator #%u / event=%04X id=%04X type=%02X \n", 
-		i, lpAccelTbl->tbl[i].wEvent, lpAccelTbl->tbl[i].wIDval, 
-		lpAccelTbl->tbl[i].type);
-	lpAccelTbl->wCount++;
- 	}
-    GlobalUnlock16(hAccel);
-    FreeResource16( rsc_mem );
-    return hAccel;
+    return LoadResource16(instance,hRsrc);
 }
 
 /**********************************************************************
@@ -475,12 +444,7 @@ HACCEL16 WINAPI LoadAccelerators16(HINSTANCE16 instance, SEGPTR lpTableName)
  */
 HACCEL32 WINAPI LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
 {
-    HACCEL32 	hAccel;
-    HGLOBAL32 	rsc_mem;
     HRSRC32 hRsrc;
-    BYTE 	*lp;
-    ACCELHEADER	*lpAccelTbl;
-    int 	i, n;
 
     if (HIWORD(lpTableName))
         dprintf_accel( stddeb, "LoadAccelerators: %04x '%s'\n",
@@ -492,31 +456,7 @@ HACCEL32 WINAPI LoadAccelerators32W(HINSTANCE32 instance,LPCWSTR lpTableName)
     if (!(hRsrc = FindResource32W( instance, lpTableName, 
 		(LPCWSTR)RT_ACCELERATOR )))
       return 0;
-    if (!(rsc_mem = LoadResource32( instance, hRsrc ))) return 0;
-
-    lp = (BYTE *)LockResource32(rsc_mem);
-    n = SizeofResource32(instance,hRsrc)/sizeof(ACCELENTRY);
-    hAccel = GlobalAlloc16(GMEM_MOVEABLE, 
-    	sizeof(ACCELHEADER) + (n + 1)*sizeof(ACCELENTRY));
-    lpAccelTbl = (LPACCELHEADER)GlobalLock16(hAccel);
-    lpAccelTbl->wCount = 0;
-    for (i = 0; i < n; i++) {
-	lpAccelTbl->tbl[i].type = *lp;
-	lp += 2;
-	lpAccelTbl->tbl[i].wEvent = *((WORD *)lp);
-	lp += 2;
-	lpAccelTbl->tbl[i].wIDval = *((WORD *)lp);
-	lp += 4;
-    	if (lpAccelTbl->tbl[i].wEvent == 0) break;
-	dprintf_accel(stddeb,
-		"Accelerator #%u / event=%04X id=%04X type=%02X \n", 
-		i, lpAccelTbl->tbl[i].wEvent, lpAccelTbl->tbl[i].wIDval, 
-		lpAccelTbl->tbl[i].type);
-	lpAccelTbl->wCount++;
- 	}
-    GlobalUnlock16(hAccel);
-    FreeResource32(rsc_mem);
-    return hAccel;
+    return LoadResource32( instance, hRsrc );
 }
 
 HACCEL32 WINAPI LoadAccelerators32A(HINSTANCE32 instance,LPCSTR lpTableName)
@@ -759,7 +699,7 @@ INT32 LoadMessage32W( HINSTANCE32 instance, UINT32 id, WORD lang,
     return retval;
 }
 
-
+#ifndef WINELIB
 /**********************************************************************
  *	SetResourceHandler	(KERNEL.43)
  */
@@ -784,7 +724,6 @@ FARPROC16 WINAPI SetResourceHandler( HMODULE16 hModule, SEGPTR s,
     return NULL;
 }
 
-#ifndef WINELIB
 /**********************************************************************
  *	EnumResourceTypesA	(KERNEL32.90)
  */

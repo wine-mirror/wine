@@ -15,7 +15,10 @@
 #include "module.h"
 #include "winproc.h"
 #include "stackframe.h"
+#include "selectors.h"
+#include "task.h"
 #include "except.h"
+#include "win.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -117,20 +120,44 @@ static void THUNK_Free( THUNK *thunk )
 static LRESULT THUNK_CallWndProc16( WNDPROC16 proc, HWND16 hwnd, UINT16 msg,
                                     WPARAM16 wParam, LPARAM lParam )
 {
+    CONTEXT context;
+    LRESULT ret;
+    WORD *args;
+    WND *wndPtr = WIN_FindWndPtr( hwnd );
+    DWORD offset = 0;
+
+    /* Window procedures want ax = hInstance, ds = es = ss */
+
+    DS_reg(&context)  = SELECTOROF(IF1632_Saved16_ss_sp);
+    ES_reg(&context)  = DS_reg(&context);
+    EAX_reg(&context) = wndPtr ? wndPtr->hInstance : DS_reg(&context);
+    CS_reg(&context)  = SELECTOROF(proc);
+    EIP_reg(&context) = OFFSETOF(proc);
+    EBP_reg(&context) = OFFSETOF(IF1632_Saved16_ss_sp)
+                        + (WORD)&((STACK16FRAME*)0)->bp;
+
     if (((msg == WM_CREATE) || (msg == WM_NCCREATE)) && lParam)
     {
-        CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
         /* Build the CREATESTRUCT on the 16-bit stack. */
         /* This is really ugly, but some programs (notably the */
         /* "Undocumented Windows" examples) want it that way.  */
-        return CallTo16_wndp_lllllllwlwwwl( (FARPROC16)proc,
-                         cs->dwExStyle, cs->lpszClass, cs->lpszName, cs->style,
-                         MAKELONG( cs->y, cs->x ), MAKELONG( cs->cy, cs->cx ),
-                         MAKELONG( cs->hMenu, cs->hwndParent ), cs->hInstance,
-                         (LONG)cs->lpCreateParams, hwnd, msg, wParam,
-                         IF1632_Saved16_ss_sp - sizeof(CREATESTRUCT16) );
+        CREATESTRUCT16 *cs = (CREATESTRUCT16 *)PTR_SEG_TO_LIN(lParam);
+        offset = sizeof(*cs);
+        memcpy( (char *)CURRENT_STACK16 - offset, cs, offset );
+        IF1632_Saved16_ss_sp -= offset;
+        lParam = IF1632_Saved16_ss_sp;
     }
-    return CallTo16_wndp_wwwl( (FARPROC16)proc, hwnd, msg, wParam, lParam );
+    args = (WORD *)CURRENT_STACK16 - 7;
+    args[0] = LOWORD(lParam);
+    args[1] = HIWORD(lParam);
+    args[2] = wParam;
+    args[3] = msg;
+    args[4] = hwnd;
+    /* args[5] and args[6] are used by relay code to store the stack pointer */
+
+    ret = CallTo16_regs_( &context, -(5 * sizeof(WORD)) );
+    IF1632_Saved16_ss_sp += offset;
+    return ret;
 }
 
 
@@ -608,7 +635,6 @@ UINT32 WINAPI ThunkConnect32( struct thunkstruct *ths, LPSTR thunkfun16,
  *		sp:	
  *		
  */
-extern DWORD IF1632_Saved16_ss_sp;
 VOID WINAPI QT_Thunk(CONTEXT *context)
 {
 	CONTEXT	context16;
@@ -621,19 +647,16 @@ VOID WINAPI QT_Thunk(CONTEXT *context)
 	);
 	memcpy(&context16,context,sizeof(context16));
 
-	curstack = PTR_SEG_TO_LIN(IF1632_Saved16_ss_sp);
-	memcpy(curstack-0x40,(LPBYTE)EBP_reg(context),0x40);
+	curstack = (LPBYTE)CURRENT_STACK16;
+	memcpy(curstack-0x44,(LPBYTE)EBP_reg(context),0x40);
 	EBP_reg(&context16)	 = LOWORD(IF1632_Saved16_ss_sp)-0x40;
-	IF1632_Saved16_ss_sp	-= 0x3c;
-
 	CS_reg(&context16)	 = HIWORD(EDX_reg(context));
 	IP_reg(&context16)	 = LOWORD(EDX_reg(context));
 #ifndef WINELIB
-	ret = CallTo16_regs_(&context16);
+	ret = CallTo16_regs_(&context16,-0x40);
 #endif
 	fprintf(stderr,". returned %08lx\n",ret);
 	EAX_reg(context) 	 = ret;
-	IF1632_Saved16_ss_sp	+= 0x3c;
 }
 
 
@@ -651,17 +674,23 @@ DWORD WINAPI WOWCallback16(FARPROC16 fproc,DWORD arg)
 
 /***********************************************************************
  *           _KERNEL32_52    (KERNEL32.52)
- * FIXME: what does it really do?
+ * Returns a pointer to ThkBuf in the 16bit library SYSTHUNK.DLL.
  */
-VOID WINAPI _KERNEL32_52(DWORD arg1,CONTEXT *regs)
+LPVOID WINAPI _KERNEL32_52()
 {
-	fprintf(stderr,"_KERNE32_52(arg1=%08lx,%08lx)\n",arg1,EDI_reg(regs));
+	HMODULE32	hmod = LoadLibrary16("systhunk.dll");
+	DWORD		ret;
 
-	EAX_reg(regs) = (DWORD)WIN32_GetProcAddress16(EDI_reg(regs),"ThkBuf");
+	fprintf(stderr,"_KERNE32_52()\n");
+	if (hmod<=32)
+		return 0;
 
-	fprintf(stderr,"	GetProcAddress16(\"ThkBuf\") returns %08lx\n",
-			EAX_reg(regs)
+	ret = (DWORD)WIN32_GetProcAddress16(hmod,"ThkBuf");
+
+	fprintf(stderr,"	GetProcAddress16(0x%04x,\"ThkBuf\") returns %08lx\n",
+			hmod,ret
 	);
+	return PTR_SEG_TO_LIN(ret);
 }
 
 /***********************************************************************
@@ -674,7 +703,7 @@ VOID WINAPI _KERNEL32_52(DWORD arg1,CONTEXT *regs)
  * The pointer ptr is written into the first DWORD of 'thunk'.
  * (probably correct implemented)
  */
-BOOL32 WINAPI _KERNEL32_43(LPDWORD thunk,LPCSTR thkbuf,DWORD len,
+DWORD WINAPI _KERNEL32_43(LPDWORD thunk,LPCSTR thkbuf,DWORD len,
                            LPCSTR dll16,LPCSTR dll32)
 {
 	HINSTANCE16	hmod;
@@ -686,17 +715,17 @@ BOOL32 WINAPI _KERNEL32_43(LPDWORD thunk,LPCSTR thkbuf,DWORD len,
 	hmod = LoadLibrary16(dll16);
 	if (hmod<32) {
 		fprintf(stderr,"->failed to load 16bit DLL %s, error %d\n",dll16,hmod);
-		return NULL;
+		return 0;
 	}
 	segaddr = (DWORD)WIN32_GetProcAddress16(hmod,(LPSTR)thkbuf);
 	if (!segaddr) {
 		fprintf(stderr,"->no %s exported from %s!\n",thkbuf,dll16);
-		return NULL;
+		return 0;
 	}
 	addr = (LPDWORD)PTR_SEG_TO_LIN(segaddr);
 	if (addr[0] != len) {
 		fprintf(stderr,"->thkbuf length mismatch? %ld vs %ld\n",len,addr[0]);
-		return NULL;
+		return 0;
 	}
 	if (!addr[1])
 		return 0;
@@ -726,12 +755,10 @@ VOID WINAPI _KERNEL32_45(CONTEXT *context)
 
 	memcpy(&context16,context,sizeof(context16));
 
-	curstack = PTR_SEG_TO_LIN(IF1632_Saved16_ss_sp);
-	memcpy(curstack-stacksize,(LPBYTE)EBP_reg(context),stacksize);
+	curstack = (LPBYTE)CURRENT_STACK16;
+	memcpy(curstack-stacksize-4,(LPBYTE)EBP_reg(context),stacksize);
 	fprintf(stderr,"IF1632_Saved16_ss_sp is 0x%08lx\n",IF1632_Saved16_ss_sp);
 	EBP_reg(&context16)	 = LOWORD(IF1632_Saved16_ss_sp)-stacksize;
-	IF1632_Saved16_ss_sp	-= stacksize;
-
 	DI_reg(&context16)	 = CX_reg(context);
 	CS_reg(&context16)	 = HIWORD(EAX_reg(context));
 	IP_reg(&context16)	 = LOWORD(EAX_reg(context));
@@ -739,12 +766,10 @@ VOID WINAPI _KERNEL32_45(CONTEXT *context)
 	 * needed
 	 */
 #ifndef WINELIB
-	ret = CallTo16_regs_(&context16);
+	ret = CallTo16_regs_(&context16,-stacksize);
 #endif
 	fprintf(stderr,". returned %08lx\n",ret);
 	EAX_reg(context) 	 = ret;
-	IF1632_Saved16_ss_sp	+= stacksize;
-
 }
 
 /***********************************************************************
@@ -905,33 +930,32 @@ DWORD WINAPIV _KERNEL32_88( DWORD nr, DWORD flags, FARPROC32 fun, ... )
     fprintf(stderr,"KERNEL32_88(%ld,0x%08lx,%p,[ ",nr,flags,fun);
     for (i=0;i<nr/4;i++) fprintf(stderr,"0x%08lx,",args[i]);
     fprintf(stderr,"])");
-#ifndef WINELIB
     switch (nr) {
-    case 0:	ret = CallTo32_0(fun);
+    case 0:	ret = fun();
 		break;
-    case 4:	ret = CallTo32_1(fun,args[0]);
+    case 4:	ret = fun(args[0]);
 		break;
-    case 8:	ret = CallTo32_2(fun,args[0],args[1]);
+    case 8:	ret = fun(args[0],args[1]);
 		break;
-    case 12:	ret = CallTo32_3(fun,args[0],args[1],args[2]);
+    case 12:	ret = fun(args[0],args[1],args[2]);
 		break;
-    case 16:	ret = CallTo32_4(fun,args[0],args[1],args[2],args[3]);
+    case 16:	ret = fun(args[0],args[1],args[2],args[3]);
 		break;
-    case 20:	ret = CallTo32_5(fun,args[0],args[1],args[2],args[3],args[4]);
+    case 20:	ret = fun(args[0],args[1],args[2],args[3],args[4]);
 		break;
-    case 24:	ret = CallTo32_6(fun,args[0],args[1],args[2],args[3],args[4],args[5]);
+    case 24:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5]);
 		break;
-    case 28:	ret = CallTo32_7(fun,args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
+    case 28:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
 		break;
-    case 32:	ret = CallTo32_8(fun,args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
+    case 32:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
 		break;
-    case 36:	ret = CallTo32_9(fun,args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
+    case 36:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
 		break;
-    case 40:	ret = CallTo32_10(fun,args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
+    case 40:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9]);
 		break;
-    case 44:	ret = CallTo32_11(fun,args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10]);
+    case 44:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10]);
 		break;
-    case 48:	ret = CallTo32_12(fun,args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11]);
+    case 48:	ret = fun(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8],args[9],args[10],args[11]);
 		break;
     default:
 	fprintf(stderr,"    unsupported nr of arguments, %ld\n",nr);
@@ -939,7 +963,6 @@ DWORD WINAPIV _KERNEL32_88( DWORD nr, DWORD flags, FARPROC32 fun, ... )
 	break;
 
     }
-#endif
     fprintf(stderr," returning %ld ...\n",ret);
     return ret;
 }
@@ -952,4 +975,108 @@ WORD WINAPI _KERNEL_619(WORD x,DWORD y,DWORD z)
 {
     fprintf(stderr,"KERNEL_619(0x%04x,0x%08lx,0x%08lx)\n",x,y,z);
     return x;
+}
+
+/**********************************************************************
+ *			AllocSLCallback		(KERNEL32)
+ *
+ * Win95 uses some structchains for callbacks. It allocates them
+ * in blocks of 100 entries, size 32 bytes each, layout:
+ * blockstart:
+ * 	0:	PTR	nextblockstart
+ *	4:	entry	*first;
+ *	8:	WORD	sel ( start points to blockstart)
+ *	A:	WORD	unknown
+ * 100xentry:
+ *	00..17:		Code
+ *	18:	PDB	*owning_process;
+ *	1C:	PTR	blockstart
+ *
+ * We ignore this for now. (Just a note for further developers)
+ * FIXME: use this method, so we don't waste selectors...
+ *
+ * Following code is then generated by AllocSLCallback. The code is 16 bit, so
+ * the 0x66 prefix switches from word->long registers.
+ *
+ *	665A		pop	edx 
+ *	6668x arg2 x 	pushl	<arg2>
+ *	6652		push	edx
+ *	EAx arg1 x	jmpf	<arg1>
+ *
+ * returns the startaddress of this thunk.
+ *
+ * Note, that they look very similair to the ones allocates by THUNK_Alloc.
+ */
+DWORD WINAPI
+AllocSLCallback(DWORD finalizer,DWORD callback) {
+	LPBYTE	x,thunk = HeapAlloc( GetProcessHeap(), 0, 32 );
+	WORD	sel;
+
+	x=thunk;
+	*x++=0x66;*x++=0x5a;				/* popl edx */
+	*x++=0x66;*x++=0x68;*(DWORD*)x=finalizer;x+=4;	/* pushl finalizer */
+	*x++=0x66;*x++=0x52;				/* pushl edx */
+	*x++=0xea;*(DWORD*)x=callback;x+=4;		/* jmpf callback */
+
+	*(DWORD*)(thunk+18) = GetCurrentProcessId();
+
+	sel = SELECTOR_AllocBlock( thunk , 32, SEGMENT_CODE, FALSE, FALSE );
+	return (sel<<16)|0;
+}
+
+void WINAPI
+FreeSLCallback(DWORD x) {
+	fprintf(stderr,"FreeSLCallback(0x%08lx)\n",x);
+}
+
+/**********************************************************************
+ * 		KERNEL_358		(KERNEL)
+ * Allocates a code segment which starts at the address passed in x. limit
+ * 0xfffff, and returns the pointer to the start.
+ */
+DWORD WINAPI
+_KERNEL_358(DWORD x) {
+	WORD	sel;
+
+	fprintf(stderr,"_KERNEL_358(0x%08lx),stub\n",x);
+	if (!HIWORD(x))
+		return x;
+
+	sel = SELECTOR_AllocBlock( PTR_SEG_TO_LIN(x) , 0xffff, SEGMENT_CODE, FALSE, FALSE );
+	return (sel<<16)|(0x0000);
+}
+
+/**********************************************************************
+ * 		KERNEL_359		(KERNEL)
+ * Frees the code segment of the passed linear pointer (This has usually
+ * been allocated by _KERNEL_358).
+ */
+VOID WINAPI
+_KERNEL_359(DWORD x) {
+	DWORD	savedsssp;
+
+	fprintf(stderr,"_KERNEL_359(0x%08lx),stub\n",x);
+	if ((HIWORD(x) & 7)!=7)
+		return;
+	savedsssp = IF1632_Saved16_ss_sp;IF1632_Saved16_ss_sp = 0;
+	SELECTOR_FreeBlock(x>>16,1);
+	IF1632_Saved16_ss_sp = savedsssp;
+	return;
+}
+
+/**********************************************************************
+ * 		KERNEL_472		(KERNEL)
+ * something like GetCurrenthInstance.
+ */
+VOID WINAPI
+_KERNEL_472(CONTEXT *context) {
+	fprintf(stderr,"_KERNEL_472(0x%08lx),stub\n",EAX_reg(context));
+	if (!EAX_reg(context)) {
+		TDB *pTask = (TDB*)GlobalLock16(GetCurrentTask());
+		AX_reg(context)=pTask->hInstance;
+		return;
+	}
+	if (!HIWORD(EAX_reg(context)))
+		return; /* returns the passed value */
+	/* hmm ... fixme */
 }

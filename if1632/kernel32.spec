@@ -40,7 +40,7 @@ type	win32
  
  50 stdcall AddAtomA(ptr) AddAtom32A
 
- 52 register _KERNEL32_52(long) _KERNEL32_52
+ 52 stdcall _KERNEL32_52() _KERNEL32_52
 
 # WOW calls
  54 stdcall WOWCallback16(long long) WOWCallback16
@@ -85,15 +85,15 @@ type	win32
  93 stdcall GETPWIN16LOCK(ptr) GetPWinLock
  97 stub ENTERSYSLEVEL
  98 stub LEAVESYSLEVEL
- 99 stub _KERNEL32_98
-100 stub _KERNEL32_99
+ 99 stdcall _KERNEL32_98(long) _KERNEL32_98
+100 stdcall _KERNEL32_99(long long long) _KERNEL32_99
 101 stub _KERNEL32_100
 
 
 102 stdcall AddAtomW(ptr) AddAtom32W
 103 stub AllocConsole
 104 stub AllocLSCallback
-105 stub AllocSLCallback
+105 stdcall AllocSLCallback(ptr ptr) AllocSLCallback
 106 stdcall AreFileApisANSI() AreFileApisANSI
 107 stub BackupRead
 108 stub BackupSeek
@@ -262,7 +262,7 @@ type	win32
 272 stub FreeLibraryAndExitThread
 271 stdcall FreeLibrary(long) FreeLibrary32
 273 stdcall FreeResource(long) FreeResource32
-274 stub FreeSLCallback
+274 stdcall FreeSLCallback(long) FreeSLCallback
 275 stub GenerateConsoleCtrlEvent
 276 stdcall GetACP() GetACP
 277 stdcall GetAtomNameA(long ptr long) GetAtomName32A
@@ -591,15 +591,15 @@ type	win32
 600 register SMapLS_IP_EBP_40() SMapLS_IP_EBP_40
 601 register SMapLS_IP_EBP_8() SMapLS_IP_EBP_8
 602 stub SUnMapLS
-603 stub SUnMapLS_IP_EBP_12
-604 stub SUnMapLS_IP_EBP_16
-605 stub SUnMapLS_IP_EBP_20
-606 stub SUnMapLS_IP_EBP_24
-607 stub SUnMapLS_IP_EBP_28
-608 stub SUnMapLS_IP_EBP_32
-609 stub SUnMapLS_IP_EBP_36
-610 stub SUnMapLS_IP_EBP_40
-611 stub SUnMapLS_IP_EBP_8
+603 register SUnMapLS_IP_EBP_12() SUnMapLS_IP_EBP_12
+604 register SUnMapLS_IP_EBP_16() SUnMapLS_IP_EBP_16
+605 register SUnMapLS_IP_EBP_20() SUnMapLS_IP_EBP_20
+606 register SUnMapLS_IP_EBP_24() SUnMapLS_IP_EBP_24
+607 register SUnMapLS_IP_EBP_28() SUnMapLS_IP_EBP_28
+608 register SUnMapLS_IP_EBP_32() SUnMapLS_IP_EBP_32
+609 register SUnMapLS_IP_EBP_36() SUnMapLS_IP_EBP_36
+610 register SUnMapLS_IP_EBP_40() SUnMapLS_IP_EBP_40
+611 register SUnMapLS_IP_EBP_8() SUnMapLS_IP_EBP_8
 612 stub ScrollConsoleScreenBufferA
 613 stub ScrollConsoleScreenBufferW
 614 stdcall SearchPathA(ptr ptr ptr long ptr ptr) SearchPath32A
@@ -669,7 +669,7 @@ type	win32
 678 stdcall SizeofResource(long long) SizeofResource32
 679 stdcall Sleep(long) Sleep
 680 stub SleepEx
-681 stub SuspendThread
+681 stdcall SuspendThread(long) SuspendThread
 682 stdcall SystemTimeToFileTime(ptr ptr) SystemTimeToFileTime
 683 stub SystemTimeToTzSpecificLocalTime
 684 stub TerminateProcess
@@ -709,7 +709,7 @@ type	win32
 718 stdcall VirtualUnlock(ptr long) VirtualUnlock
 719 stub WaitCommEvent
 720 stub WaitForDebugEvent
-721 stub WaitForMultipleObjects
+721 stdcall WaitForMultipleObjects(long ptr long long) WaitForMultipleObjects
 722 stub WaitForMultipleObjectsEx
 723 stdcall WaitForSingleObject(long long) WaitForSingleObject
 724 stdcall WaitForSingleObjectEx(long long long) WaitForSingleObjectEx

@@ -257,6 +257,43 @@ static void output_include( FILE *file, INCL_FILE *pFile,
 
 
 /*******************************************************************
+ *         output_src
+ */
+static void output_src( FILE *file, INCL_FILE *pFile, int *column )
+{
+    char *name = strrchr( pFile->name, '/' );
+    char *obj = xstrdup( name ? name + 1 : pFile->name );
+    char *ext = strrchr( obj, '.' );
+    if (ext)
+    {
+        if (!strcmp( ext, ".y" ))  /* yacc file */
+        {
+            fprintf( file, "y.tab.o: ./y.tab.c" );
+            *column += 18;
+        }
+        else if (!strcmp( ext, ".l" ))  /* lex file */
+        {
+            fprintf( file, "lex.yy.o: ./lex.yy.c" );
+            *column += 20;
+        }
+        else if (!strcmp( ext, ".rc" ))  /* resource file */
+        {
+            *ext = '\0';
+            fprintf( file, "%s.c %s.h: %s", obj, obj, pFile->filename );
+            *column += 2 * strlen(obj) + strlen(pFile->filename) + 7;
+        }
+        else
+        {
+            strcpy( ext, ".o" );
+            fprintf( file, "%s: %s", obj, pFile->filename );
+            *column += strlen(obj) + strlen(pFile->filename) + 2;
+        }
+    }
+    free( obj );
+}
+
+
+/*******************************************************************
  *         output_dependencies
  */
 static void output_dependencies(void)
@@ -283,13 +320,8 @@ static void output_dependencies(void)
     }
     for( pFile = firstSrc; pFile; pFile = pFile->next)
     {
-        char *name = strrchr( pFile->name, '/' );
-        char *obj = xstrdup( name ? name + 1 : pFile->name );
-        char *ext = strrchr( obj, '.' );
-        if (ext) strcpy( ext, ".o" );
-        fprintf( file, "%s: %s", obj, pFile->filename );
-        column = strlen(obj) + strlen(pFile->filename) + 2;
-        free( obj );
+        column = 0;
+        output_src( file, pFile, &column );
         for (i = 0; i < MAX_INCLUDES; i++)
             if (pFile->files[i]) output_include( file, pFile->files[i],
                                                  pFile, &column );

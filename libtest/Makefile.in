@@ -3,6 +3,7 @@ TOPOBJDIR = ..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
+RCFLAGS   = -w16 -h
 PROGRAMS  = expand hello hello2 hello3 hello4 new rolex
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 
@@ -15,12 +16,16 @@ C_SRCS = \
 	new.c \
 	rolex.c
 
-GEN_C_SRCS = \
-	hello3res.c
+RC_SRCS = \
+	hello3res.rc
 
 all: check_winerc $(PROGRAMS)
 
+depend:: $(RC_SRCS:.rc=.h)
+
 @MAKE_RULES@
+
+$(RC_SRCS:.rc=.c) $(RC_SRCS:.rc=.h): $(WINERC)
 
 expand: expand.o
 	$(CC) -o expand expand.o $(LDOPTIONS) $(ALL_LIBS)
@@ -42,7 +47,5 @@ new: new.o
 
 rolex: rolex.o
 	$(CC) -o rolex rolex.o $(LDOPTIONS) $(ALL_LIBS)
-
-hello3res.c hello3res.h: $(WINERC)
 
 ### Dependencies:

@@ -9,20 +9,20 @@
 #include "options.h"
 #include "resource.h"
 
-#include "sysres_En.h"
-#include "sysres_Es.h"
-#include "sysres_De.h"
-#include "sysres_No.h"
-#include "sysres_Fr.h"
-#include "sysres_Fi.h"
-#include "sysres_Da.h"
-#include "sysres_Cz.h"
-#include "sysres_Eo.h"
-#include "sysres_It.h"
-#include "sysres_Ko.h"
-#include "sysres_Hu.h"
-#include "sysres_Pl.h"
-#include "sysres_Po.h"
+extern const struct resource * const sysres_En_Table[];
+extern const struct resource * const sysres_Es_Table[];
+extern const struct resource * const sysres_De_Table[];
+extern const struct resource * const sysres_No_Table[];
+extern const struct resource * const sysres_Fr_Table[];
+extern const struct resource * const sysres_Fi_Table[];
+extern const struct resource * const sysres_Da_Table[];
+extern const struct resource * const sysres_Cz_Table[];
+extern const struct resource * const sysres_Eo_Table[];
+extern const struct resource * const sysres_It_Table[];
+extern const struct resource * const sysres_Ko_Table[];
+extern const struct resource * const sysres_Hu_Table[];
+extern const struct resource * const sysres_Pl_Table[];
+extern const struct resource * const sysres_Po_Table[];
 
 static const struct resource * const * SYSRES_Resources[] =
 {

@@ -1,4 +1,70 @@
 ----------------------------------------------------------------------
+Sat Sep 27 12:36:56 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [if1632/relay.c]
+	Made Catch and Throw also save %si and %di (untested).
+
+	* [memory/selector.c]
+	Added check for %fs and %gs in SELECTOR_FreeBlock.
+
+	* [rc/winerc.c]
+	Generated files no longer depend on Wine includes.
+	Made .h generation optional.
+
+	* [tools/build.c] [loader/task.c]
+	Added CALL32_Init function.
+	Added possibility to pass arguments when using CALLTO16_regs_.
+	32-bit stack pointer is now saved on the 16-bit stack, instead of
+	using IF1632_Saved32_esp.
+	Removed CallTo32 callbacks.
+
+	* [tools/makedep.c] [*/Makefile.in]
+	Added support for directly generating dependencies for .y, .l and
+	.rc files. Modified the makefiles to use this feature.
+
+	* [windows/winproc.c] [if1632/thunk.c]
+	Use CALLTO16_regs to call window procedures.
+
+Thu Sep 25 12:18:57 1997  Kristian Nielsen <kristian.nielsen@risoe.dk>
+
+	* [if1632/kernel.spec]
+	Changed entry for SwitchStackBack to remove arguments from stack
+	upon return (arguments left over from previous SwitchStackTo()).
+	Borland C++ 4.0 now compiles "Hello World" (but crashes after
+	outputting the .exe).
+
+Wed Sep 24 13:54:44 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [files/directory.c]
+	SearchPath might get NULL buffer (empty LRU list in wordpad).
+
+	* [memory/selector.c]
+	Added SUnMapLS*.
+
+	* [loader/pe_image.c]
+	Be able to run executeables from non mmap()ble filesystems.
+	PE_LoadLibrary adds librarys loaded by another process to
+	its own modref list too.
+
+	* [windows/keyboard.c][include/accel.h][loader/resource.c]
+	Fixed accelerator leakage, use SDK defines/names.
+
+	* [graphics/env.c][misc/main.c]
+	Set/GetEnvironemnt have nothing to do with environment vars,
+	but with Printer Environment.
+
+	* [graphics/escape.c]
+	Escape32: map args back to segmented pointers.
+
+	* [windows/win.c]
+	WS_POPUP|WS_CHILD windows don't need a parent window (SDK).
+
+Tue Sep 16 14:40:16 1997  Robert Wilhelm  <robert@physiol.med.tu-muenchen.de>
+
+	* [if1632/crtdll.spec] [misc/crtdll.c]
+	Added signal().
+
+----------------------------------------------------------------------
 Thu Sep 11 18:24:56 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
 
 	* [objects/dc.c]

@@ -872,7 +872,7 @@ BOOL16 WINAPI GetCharWidth16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
 
     if( firstChar != lastChar )
     {
-	LPINT32	buf32 = (LPINT32)HeapAlloc(SystemHeap, 0,
+	LPINT32	buf32 = (LPINT32)HeapAlloc(GetProcessHeap(), 0,
 				 sizeof(INT32)*(1 + (lastChar - firstChar)));
 	if( buf32 )
 	{
@@ -885,7 +885,7 @@ BOOL16 WINAPI GetCharWidth16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
 		for (i = firstChar; i <= lastChar; i++)
 		    *buffer++ = *buf32++;
 	    }
-	    HeapFree(SystemHeap, 0, obuf32);
+	    HeapFree(GetProcessHeap(), 0, obuf32);
 	}
     }
     else /* happens quite often to warrant a special treatment */

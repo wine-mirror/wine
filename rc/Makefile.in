@@ -7,9 +7,12 @@ PROGRAMS  = winerc@PROGEXT@
 MODULE    = none
 
 C_SRCS     = winerc.c
-GEN_C_SRCS = y.tab.c lex.yy.c
+EXTRA_SRCS = parser.y parser.l
+EXTRA_OBJS = y.tab.o lex.yy.o
 
 all: $(PROGRAMS)
+
+depend:: y.tab.h
 
 @MAKE_RULES@
 

@@ -68,7 +68,7 @@ typedef struct _TDB
     WORD      unused1;                    /* 0a */
     HTASK16   hSelf;                      /* 0c Selector of this TDB */
     HANDLE16  hPrevInstance;              /* 0e Previous instance of module */
-    DWORD     esp;                        /* 10 32-bit stack pointer */
+    DWORD     unused2;                    /* 10 */
     WORD      ctrlword8087;               /* 14 80x87 control word */
     WORD      flags;                      /* 16 Task flags */
     UINT16    error_mode;                 /* 18 Error mode (see SetErrorMode)*/

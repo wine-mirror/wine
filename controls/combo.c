@@ -902,6 +902,7 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM32 wParam, HWND32 hWnd )
 	   case LBN_KILLFOCUS:
 		/* nothing to do here since ComboLBox always resets the focus to its
 		 * combo/edit counterpart */
+		 break;
        }
    }
    return 0;

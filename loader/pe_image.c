@@ -1,4 +1,3 @@
-#ifndef WINELIB
 /* 
  *  Copyright	1994	Eric Youndale & Erik Bos
  *  Copyright	1995	Martin von Löwis
@@ -12,6 +11,7 @@
  */
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,8 +33,10 @@
 #include "options.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "debugger.h"
 #include "xmalloc.h"
+#ifndef WINELIB
+#include "debugger.h"
+#endif
 
 static void PE_InitDLL(PE_MODREF* modref, DWORD type, LPVOID lpReserved);
 
@@ -43,6 +45,7 @@ static void PE_InitDLL(PE_MODREF* modref, DWORD type, LPVOID lpReserved);
 
 void dump_exports(IMAGE_EXPORT_DIRECTORY * pe_exports, unsigned int load_addr)
 { 
+#ifndef WINELIB
   char		*Module;
   int		i;
   u_short	*ordinal;
@@ -81,6 +84,7 @@ void dump_exports(IMAGE_EXPORT_DIRECTORY * pe_exports, unsigned int load_addr)
       }
       DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
   }
+#endif
 }
 
 /* Look up the specified function or ordinal in the exportlist:
@@ -428,11 +432,8 @@ static void do_relocations(PE_MODREF *pem)
 static PE_MODULE *PE_LoadImage( int fd )
 {
 	struct pe_data		*pe;
-	DBG_ADDR		daddr;
 	struct stat		stbuf;
 
-	daddr.seg=0;
-	daddr.type = NULL;
 	if (-1==fstat(fd,&stbuf)) {
 		perror("PE_LoadImage:fstat");
 		return NULL;
@@ -443,9 +444,33 @@ static PE_MODULE *PE_LoadImage( int fd )
 	/* map the PE image somewhere */
 	pe->mappeddll = (HMODULE32)mmap(NULL,stbuf.st_size,PROT_READ,MAP_SHARED,fd,0);
 	if (!pe->mappeddll || pe->mappeddll==-1) {
-		perror("PE_LoadImage:mmap");
-		free(pe);
-		return NULL;
+		if (errno==ENOEXEC) {
+			int	res=0,curread = 0;
+
+			lseek(fd,0,SEEK_SET);
+			/* linux: some filesystems don't support mmap (samba,
+			 * ntfs apparently) so we have to read the image the
+			 * hard way
+			 */
+			pe->mappeddll = xmalloc(stbuf.st_size);
+			while (curread < stbuf.st_size) {
+				res = read(fd,pe->mappeddll+curread,stbuf.st_size-curread);
+				if (res<=0) 
+					break;
+				curread+=res;
+			}
+			if (res == -1) {
+				perror("PE_LoadImage:mmap compat read");
+				free(pe->mappeddll);
+				free(pe);
+				return NULL;
+			}
+
+		} else {
+			perror("PE_LoadImage:mmap");
+			free(pe);
+			return NULL;
+		}
 	}
 	/* link PE header */
 	pe->pe_header = (IMAGE_NT_HEADERS*)(pe->mappeddll+(((IMAGE_DOS_HEADER*)pe->mappeddll)->e_lfanew));
@@ -499,7 +524,6 @@ PE_MapImage(PE_MODULE *pe,PDB32 *process, OFSTRUCT *ofs, DWORD flags) {
 	int			load_addr;
 	IMAGE_DATA_DIRECTORY	dir;
 	char			buffer[200];
-	DBG_ADDR		daddr;
 	char			*modname;
 	int			vma_size;
 	
@@ -604,6 +628,7 @@ PE_MapImage(PE_MODULE *pe,PDB32 *process, OFSTRUCT *ofs, DWORD flags) {
 		pem->pe_reloc = (void *) RVA(dir.VirtualAddress);
 	}
 
+#ifndef WINELIB
 	if(pe->pe_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_DEBUG].Size)
 	  {
@@ -611,6 +636,7 @@ PE_MapImage(PE_MODULE *pe,PDB32 *process, OFSTRUCT *ofs, DWORD flags) {
 			pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].VirtualAddress,
 			pe->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG].Size);
 	  }
+#endif
 
 	if(pe->pe_header->OptionalHeader.DataDirectory
 		[IMAGE_DIRECTORY_ENTRY_COPYRIGHT].Size)
@@ -657,19 +683,24 @@ PE_MapImage(PE_MODULE *pe,PDB32 *process, OFSTRUCT *ofs, DWORD flags) {
 			*s='\0';
 	}
 
-	/* add start of sections as debugsymbols */
-	for(i=0;i<pe->pe_header->FileHeader.NumberOfSections;i++) {
+#ifndef WINELIB
+        {
+            DBG_ADDR daddr = { NULL, 0, 0 };
+            /* add start of sections as debugsymbols */
+            for(i=0;i<pe->pe_header->FileHeader.NumberOfSections;i++) {
 		sprintf(buffer,"%s_%s",modname,pe->pe_seg[i].Name);
 		daddr.off= RVA(pe->pe_seg[i].VirtualAddress);
 		DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
-	}
-	/* add entry point */
-	sprintf(buffer,"%s_EntryPoint",modname);
-	daddr.off=RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint);
-	DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
-	/* add start of DLL */
-	daddr.off=load_addr;
-	DEBUG_AddSymbol(modname,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
+            }
+            /* add entry point */
+            sprintf(buffer,"%s_EntryPoint",modname);
+            daddr.off=RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint);
+            DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
+            /* add start of DLL */
+            daddr.off=load_addr;
+            DEBUG_AddSymbol(modname,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
+        }
+#endif
 }
 
 HINSTANCE16 MODULE_CreateInstance(HMODULE16 hModule,LOADPARAMS *params);
@@ -682,36 +713,47 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
 	OFSTRUCT	ofs;
 	HMODULE32	hModule;
 	NE_MODULE	*pModule;
+	PE_MODREF	*pem;
 
-	if ((hModule = MODULE_FindModule( name )))
-		return hModule;
+	if ((hModule = MODULE_FindModule( name ))) {
+		/* the .DLL is either loaded or internal */
+		hModule = MODULE_HANDLEtoHMODULE32(hModule);
+		if (!HIWORD(hModule)) /* internal (or bad) */
+			return hModule;
+		/* check if this module is already mapped */
+		pem 	= ((PDB32*)GetCurrentProcessId())->modref_list;
+		while (pem) {
+			if (pem->pe_module->mappeddll == hModule)
+				return hModule;
+			pem = pem->next;
+		}
+		pModule = MODULE_GetPtr(hModule);
+	} else {
 
-	/* try to load builtin, enabled modules first */
-	if ((hModule = BUILTIN_LoadModule( name, FALSE )))
-		return hModule;
+		/* try to load builtin, enabled modules first */
+		if ((hModule = BUILTIN_LoadModule( name, FALSE )))
+			return hModule;
 
-	/* try to open the specified file */
-	if (HFILE_ERROR32==(hFile=OpenFile32(name,&ofs,OF_READ))) {
-		/* Now try the built-in even if disabled */
-		if ((hModule = BUILTIN_LoadModule( name, TRUE ))) {
-			fprintf( stderr, "Warning: could not load Windows DLL '%s', using built-in module.\n", name );
+		/* try to open the specified file */
+		if (HFILE_ERROR32==(hFile=OpenFile32(name,&ofs,OF_READ))) {
+			/* Now try the built-in even if disabled */
+			if ((hModule = BUILTIN_LoadModule( name, TRUE ))) {
+				fprintf( stderr, "Warning: could not load Windows DLL '%s', using built-in module.\n", name );
+				return hModule;
+			}
+			return 1;
+		}
+		if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) {
+			_lclose32(hFile);
 			return hModule;
 		}
-		return 1;
-	}
-	if ((hModule = MODULE_CreateDummyModule( &ofs )) < 32) {
+		pModule		= (NE_MODULE *)GlobalLock16( hModule );
+		pModule->flags	= NE_FFLAGS_WIN32;
+		pModule->pe_module = PE_LoadImage( FILE_GetUnixHandle(hFile) );
 		_lclose32(hFile);
-		return hModule;
+		if (!pModule->pe_module)
+			return 21;
 	}
-
-	pModule		= (NE_MODULE *)GlobalLock16( hModule );
-	pModule->flags	= NE_FFLAGS_WIN32;
-
-	/* FIXME: check if pe image loaded already ... */
-	pModule->pe_module = PE_LoadImage( FILE_GetUnixHandle(hFile) );
-	_lclose32(hFile);
-	if (!pModule->pe_module)
-		return 21;
 	/* recurse */
 	PE_MapImage(pModule->pe_module,(PDB32*)GetCurrentProcessId(),&ofs,flags);
 	return pModule->pe_module->mappeddll;
@@ -864,4 +906,3 @@ BOOL32 WINAPI DisableThreadLibraryCalls(HMODULE32 hModule)
 	return TRUE;
 }
 
-#endif /* WINELIB */

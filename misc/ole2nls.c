@@ -2074,8 +2074,8 @@ INT32 WINAPI LCMapString32W(
 	if (!dstlen || !dststr) {
 		dststr = srcstr;
 	}
-	if (!srclen) srclen = strlen(srcstr);
-	if (!dstlen) dstlen = strlen(dststr);
+	if (!srclen) srclen = lstrlen32W(srcstr);
+	if (!dstlen) dstlen = lstrlen32W(dststr);
 	len = dstlen;
 	if (srclen < len)
 		len = srclen;

@@ -677,7 +677,8 @@ static int INT21_FindFirstFCB( CONTEXT *context )
     drive = DOS_GET_DRIVE( pFCB->drive );
     root = DRIVE_GetRoot( drive );
     cwd  = DRIVE_GetUnixCwd( drive );
-    pFCB->unixPath = HeapAlloc( SystemHeap, 0, strlen(root)+strlen(cwd)+2 );
+    pFCB->unixPath = HeapAlloc( GetProcessHeap(), 0,
+                                strlen(root)+strlen(cwd)+2 );
     if (!pFCB->unixPath) return 0;
     strcpy( pFCB->unixPath, root );
     strcat( pFCB->unixPath, "/" );
@@ -712,7 +713,7 @@ static int INT21_FindNextFCB( CONTEXT *context )
                                   DOS_GET_DRIVE( pFCB->drive ), attr,
                                   pFCB->count, &entry )))
     {
-        HeapFree( SystemHeap, 0, pFCB->unixPath );
+        HeapFree( GetProcessHeap(), 0, pFCB->unixPath );
         pFCB->unixPath = NULL;
         return 0;
     }
@@ -959,7 +960,8 @@ void WINAPI DOS3Call( CONTEXT *context )
         break;
             
     case 0x30: /* GET DOS VERSION */
-        AX_reg(context) = HIWORD(GetVersion16());
+        AX_reg(context) = (HIWORD(GetVersion16()) >> 8) |
+                          (HIWORD(GetVersion16()) << 8);
         BX_reg(context) = 0x0012;     /* 0x123456 is Wine's serial # */
         CX_reg(context) = 0x3456;
         break;
@@ -992,7 +994,8 @@ void WINAPI DOS3Call( CONTEXT *context )
 		break;
 				
 	      case 0x06: /* GET TRUE VERSION NUMBER */
-		BX_reg(context) = HIWORD(GetVersion16());
+		BX_reg(context) = (HIWORD(GetVersion16() >> 8)) |
+                                  (HIWORD(GetVersion16() << 8));
 		DX_reg(context) = 0x00;
 		break;
 

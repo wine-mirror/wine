@@ -9,9 +9,6 @@ As of Sept 1997 -
 
 General:
 
- * LoadAccelerators() must not create any objects apart
-   from loading the resource.
-
  * Catch/Throw() do not save SI and DI registers (quite fatal).
 
  * We need to do InsertMenuItem32[AW] and then code most of the other

@@ -775,6 +775,7 @@ static void EVENT_ConfigureNotify( HWND32 hwnd, XConfigureEvent *event )
 	/* Fill WINDOWPOS struct */
 	winpos.flags = SWP_NOACTIVATE | SWP_NOZORDER;
 	winpos.hwnd = hwnd;
+        /* FIXME: position should be relative to root window */
 	winpos.x = event->x;
 	winpos.y = event->y;
 	winpos.cx = event->width;

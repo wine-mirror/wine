@@ -34,10 +34,9 @@ VOID WINAPI GetPWinLock(CRITICAL_SECTION **lock)
 /**********************************************************************
  *           _KERNEL32_88
  */
-DWORD WINAPI WOW32_1(DWORD x,DWORD y)
+BOOL32 WINAPI WOW32_1(SEGPTR segptr,LPLDT_ENTRY ldtent)
 {
-    fprintf(stderr,"WOW32_1(0x%08lx,0x%08lx), stub!\n",x,y);
-    return 0;
+    return GetThreadSelectorEntry(GetCurrentThreadId(),segptr>>16,ldtent);
 }
 
 
@@ -128,4 +127,14 @@ DWORD WINAPI _KERNEL32_34()
 {
 	fprintf(stderr,"KERNEL32_34(), STUB returning 0\n");
 	return 0;
+}
+
+BOOL32 WINAPI _KERNEL32_99(HANDLE32 threadid,DWORD exitcode,DWORD x) {
+	fprintf(stderr,"KERNEL32_99(%d,%ld,0x%08lx),stub\n",threadid,exitcode,x);
+	return TRUE;
+}
+
+DWORD WINAPI _KERNEL32_98(DWORD x) {
+	fprintf(stderr,"KERNEL32_98(0x%08lx),stub\n",x);
+	return 1;
 }

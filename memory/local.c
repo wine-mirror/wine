@@ -1236,7 +1236,7 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
     if (!hmem)
     {
         /* Remove the block from the heap and try again */
-        LPSTR buffer = HeapAlloc( SystemHeap, 0, oldsize );
+        LPSTR buffer = HeapAlloc( GetProcessHeap(), 0, oldsize );
         if (!buffer) return 0;
         memcpy( buffer, ptr + arena + ARENA_HEADER_SIZE, oldsize );
         LOCAL_FreeArena( ds, arena );
@@ -1245,14 +1245,14 @@ HLOCAL16 LOCAL_ReAlloc( HANDLE16 ds, HLOCAL16 handle, WORD size, WORD flags )
             if (!(hmem = LOCAL_GetBlock( ds, oldsize, flags )))
             {
                 fprintf( stderr, "LocalRealloc: can't restore saved block\n" );
-                HeapFree( SystemHeap, 0, buffer );
+                HeapFree( GetProcessHeap(), 0, buffer );
                 return 0;
             }
             size = oldsize;
         }
         ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );  /* Reload ptr */
         memcpy( ptr + hmem, buffer, oldsize );
-        HeapFree( SystemHeap, 0, buffer );
+        HeapFree( GetProcessHeap(), 0, buffer );
     }
     else
     {

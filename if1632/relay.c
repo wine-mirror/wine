@@ -11,7 +11,6 @@
 #include "module.h"
 #include "stackframe.h"
 #include "task.h"
-#include "callback.h"
 #include "xmalloc.h"
 #include "stddebug.h"
 /* #define DEBUG_RELAY */
@@ -35,7 +34,6 @@ BOOL32 RELAY_Init(void)
 
     extern void CALLTO16_Start(), CALLTO16_End();
     extern void CALLTO16_Ret_word(), CALLTO16_Ret_long();
-    extern int CALLTO32_LargeStack();
     extern DWORD CALLTO16_RetAddr_word, CALLTO16_RetAddr_long;
 
     codesel = GLOBAL_CreateBlock( GMEM_FIXED, (void *)CALLTO16_Start,
@@ -49,10 +47,6 @@ BOOL32 RELAY_Init(void)
                                     codesel );
     CALLTO16_RetAddr_long=MAKELONG( (int)CALLTO16_Ret_long-(int)CALLTO16_Start,
                                     codesel );
-
-    /* Set the CallLargeStack function pointer */
-
-    IF1632_CallLargeStack = CALLTO32_LargeStack;
 
     /* Initialize thunking */
 
@@ -163,7 +157,7 @@ void RELAY_DebugCallFrom16Ret( int func_type, int ret_val, CONTEXT *context)
         break;
     case 2: /* regs */
         printf( "retval=none ret=%04x:%04x ds=%04x\n",
-                frame->cs, frame->ip, frame->ds );
+                (WORD)CS_reg(context), IP_reg(context), (WORD)DS_reg(context));
         printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x ES=%04x EFL=%08lx\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
@@ -197,8 +191,8 @@ void RELAY_Unimplemented16(void)
  * as 'stub' in the spec file).
  * (The args are the same than for RELAY_DebugCallFrom32).
  */
-void RELAY_Unimplemented32( int nb_args, void *relay_addr,
-                            void *entry_point, int ebp, int ret_addr )
+void RELAY_Unimplemented32( void *relay_addr, void *entry_point,
+                            int ebp, int ret_addr )
 {
     fprintf( stderr, "No handler for Win32 routine %s (called from %08x)\n",
              BUILTIN_GetEntryPoint32( relay_addr ), ret_addr );
@@ -222,9 +216,13 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
 
     if (nb_args == -1)  /* Register function */
     {
-        CONTEXT *context = *(CONTEXT **)stack;
-        printf( "CallTo16(func=%04lx:%04x,ds=%04lx)\n",
+        CONTEXT *context = (CONTEXT *)stack[0];
+        WORD *stack16 = (WORD *)CURRENT_STACK16 - 2 /* for saved %%esp */;
+        printf( "CallTo16(func=%04lx:%04x,ds=%04lx",
                 CS_reg(context), IP_reg(context), DS_reg(context) );
+        nb_args = -stack[1] / sizeof(WORD);
+        while (nb_args--) printf( ",0x%04x", *(--stack16) );
+        printf( ")\n" );
         printf( "     AX=%04x BX=%04x CX=%04x DX=%04x SI=%04x DI=%04x BP=%04x ES=%04x\n",
                 AX_reg(context), BX_reg(context), CX_reg(context),
                 DX_reg(context), SI_reg(context), DI_reg(context),
@@ -233,7 +231,8 @@ void RELAY_DebugCallTo16( int* stack, int nb_args )
     else
     {
         printf( "CallTo16(func=%04x:%04x,ds=%04x",
-                HIWORD(stack[0]), LOWORD(stack[0]), CURRENT_DS );
+                HIWORD(stack[0]), LOWORD(stack[0]),
+                SELECTOROF(IF1632_Saved16_ss_sp) );
         stack++;
         while (nb_args--) printf( ",0x%04x", *stack++ );
         printf( ")\n" );
@@ -312,28 +311,16 @@ void RELAY_DebugCallFrom32Ret( int *stack, int nb_args, int ret_val )
 }
 
 
-/***********************************************************************
- *           RELAY_DebugCallTo32
- */
-void RELAY_DebugCallTo32( unsigned int func, int nbargs, unsigned int arg1  )
-{
-    unsigned int *argptr;
-
-    if (!debugging_relay) return;
-
-    printf( "CallTo32(func=%08x", func );
-    for (argptr = &arg1; nbargs; nbargs--, argptr++)
-        printf( ",%08x", *argptr );
-    printf( ")\n" );
-}
-
-
 /**********************************************************************
  *	     Catch    (KERNEL.55)
+ *
+ * Real prototype is:
+ *   INT16 WINAPI Catch( LPCATCHBUF lpbuf );
  */
-INT16 WINAPI Catch( LPCATCHBUF lpbuf )
+void WINAPI Catch( CONTEXT *context )
 {
     STACK16FRAME *pFrame = CURRENT_STACK16;
+    LPCATCHBUF lpbuf = (LPCATCHBUF)PTR_SEG_TO_LIN(*(SEGPTR *)pFrame->args);
 
     /* Note: we don't save the current ss, as the catch buffer is */
     /* only 9 words long. Hopefully no one will have the silly    */
@@ -350,39 +337,44 @@ INT16 WINAPI Catch( LPCATCHBUF lpbuf )
      * lpbuf[7] = unused
      * lpbuf[8] = ss
      */
-    /* FIXME: we need to save %si and %di */
 
-    lpbuf[0] = pFrame->ip;
-    lpbuf[1] = pFrame->cs;
+    lpbuf[0] = IP_reg(context);
+    lpbuf[1] = CS_reg(context);
     lpbuf[2] = LOWORD(pFrame->saved_ss_sp);
-    lpbuf[3] = pFrame->bp;
-    lpbuf[4] = LOWORD(IF1632_Saved32_esp);
-    lpbuf[5] = HIWORD(IF1632_Saved32_esp);
-    lpbuf[6] = pFrame->ds;
+    lpbuf[3] = BP_reg(context);
+    lpbuf[4] = SI_reg(context);
+    lpbuf[5] = DI_reg(context);
+    lpbuf[6] = DS_reg(context);
     lpbuf[7] = OFFSETOF(IF1632_Saved16_ss_sp);
     lpbuf[8] = HIWORD(pFrame->saved_ss_sp);
-    return 0;
+    AX_reg(context) = 0;  /* Return 0 */
 }
 
 
 /**********************************************************************
  *	     Throw    (KERNEL.56)
+ *
+ * Real prototype is:
+ *   INT16 WINAPI Throw( LPCATCHBUF lpbuf, INT16 retval );
  */
-INT16 WINAPI Throw( LPCATCHBUF lpbuf, INT16 retval )
+void WINAPI Throw( CONTEXT *context )
 {
-    STACK16FRAME *pFrame;
-    WORD es = CURRENT_STACK16->es;
+    STACK16FRAME *pFrame = CURRENT_STACK16;
+    LPCATCHBUF lpbuf = (LPCATCHBUF)PTR_SEG_TO_LIN(*(SEGPTR *)&pFrame->args[1]);
+    WORD retval = pFrame->args[0];
 
     IF1632_Saved16_ss_sp = MAKELONG( lpbuf[7] - sizeof(WORD),
                                      HIWORD(IF1632_Saved16_ss_sp) );
-    IF1632_Saved32_esp = MAKELONG( lpbuf[4], lpbuf[5] );
     pFrame = CURRENT_STACK16;
     pFrame->saved_ss_sp = MAKELONG( lpbuf[2], lpbuf[8] );
-    pFrame->ds          = lpbuf[6];
-    pFrame->bp          = lpbuf[3];
-    pFrame->ip          = lpbuf[0];
-    pFrame->cs          = lpbuf[1];
-    pFrame->es          = es;
+    IP_reg(context) = lpbuf[0];
+    CS_reg(context) = lpbuf[1];
+    BP_reg(context) = lpbuf[3];
+    SI_reg(context) = lpbuf[4];
+    DI_reg(context) = lpbuf[5];
+    DS_reg(context) = lpbuf[6];
+    AX_reg(context) = retval;
+
     if (debugging_relay)  /* Make sure we have a valid entry point address */
     {
         static FARPROC16 entryPoint = NULL;
@@ -393,13 +385,12 @@ INT16 WINAPI Throw( LPCATCHBUF lpbuf, INT16 retval )
         pFrame->entry_cs = SELECTOROF(entryPoint);
         pFrame->entry_ip = OFFSETOF(entryPoint);
     }
-    return retval;
 }
 
 /**********************************************************************
- *	     CallProc32W    (KERNEL.56)
+ *	     CallProc32W    (KERNEL.517)
  */
-DWORD /*WINAPI*/ WIN16_CallProc32W()
+DWORD WINAPI WIN16_CallProc32W()
 {
 	DWORD *win_stack = (DWORD *)CURRENT_STACK16->args;
 	DWORD	nrofargs = win_stack[0];
@@ -422,21 +413,21 @@ DWORD /*WINAPI*/ WIN16_CallProc32W()
 	}
 	fprintf(stderr,"]) - ");
 	switch (nrofargs) {
-	case 0: ret = CallTo32_0(proc32);
+	case 0: ret = proc32();
 		break;
-	case 1:	ret = CallTo32_1(proc32,args[0]);
+	case 1:	ret = proc32(args[0]);
 		break;
-	case 2:	ret = CallTo32_2(proc32,args[0],args[1]);
+	case 2:	ret = proc32(args[0],args[1]);
 		break;
-	case 3:	ret = CallTo32_3(proc32,args[0],args[1],args[2]);
+	case 3:	ret = proc32(args[0],args[1],args[2]);
 		break;
-	case 4:	ret = CallTo32_4(proc32,args[0],args[1],args[2],args[3]);
+	case 4:	ret = proc32(args[0],args[1],args[2],args[3]);
 		break;
-	case 5:	ret = CallTo32_5(proc32,args[0],args[1],args[2],args[3],args[4]);
+	case 5:	ret = proc32(args[0],args[1],args[2],args[3],args[4]);
 		break;
-	case 6:	ret = CallTo32_6(proc32,args[0],args[1],args[2],args[3],args[4],args[5]);
+	case 6:	ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5]);
 		break;
-	case 7:	ret = CallTo32_7(proc32,args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
+	case 7:	ret = proc32(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
 		break;
 	default:
 		/* FIXME: should go up to 32  arguments */

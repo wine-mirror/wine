@@ -1453,3 +1453,13 @@ LPSTR  __cdecl CRTDLL__itoa(INT32 x,LPSTR buf,INT32 buflen)
     wsnprintf32A(buf,buflen,"%d",x);
     return buf;
 }
+
+typedef VOID (*sig_handler_type)(VOID);
+
+/*********************************************************************
+ *                  signal           (CRTDLL.455)
+ */
+VOID __cdecl CRTDLL_signal(int sig, sig_handler_type ptr)
+{
+    dprintf_crtdll(stddeb,"CRTDLL_signal %d %p: STUB!\n",sig,ptr);
+}

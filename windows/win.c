@@ -468,7 +468,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     if (HIWORD(cs->lpszClass)) dprintf_win( stddeb, "'%s' ", cs->lpszClass );
     else dprintf_win( stddeb, "#%04x ", LOWORD(cs->lpszClass) );
 
-    dprintf_win( stddeb, "%08lx %08lx %d,%d %dx%d %04x %04x %04x %p\n",
+    dprintf_win( stddeb, "%08lx %08lx %d,%d %dx%d %04x %04x %08x %p\n",
 		 cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
 		 cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams);
 
@@ -482,11 +482,9 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
             fprintf( stderr, "CreateWindowEx: bad parent %04x\n", cs->hwndParent );
 	    return 0;
 	}
-    }
-    else if (cs->style & WS_CHILD)
-    {
+    } else if ((cs->style & WS_CHILD) && !(cs->style & WS_POPUP)) {
         fprintf( stderr, "CreateWindowEx: no parent for child window\n" );
-        return 0;  /* WS_CHILD needs a parent */
+        return 0;  /* WS_CHILD needs a parent, but WS_POPUP doesn't */
     }
 
     /* Find the window class */
@@ -526,7 +524,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
     wndPtr->next  = NULL;
     wndPtr->child = NULL;
 
-    if (cs->style & WS_CHILD)
+    if ((cs->style & WS_CHILD) && cs->hwndParent)
     {
         wndPtr->parent = WIN_FindWndPtr( cs->hwndParent );
         wndPtr->owner  = NULL;

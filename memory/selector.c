@@ -138,6 +138,25 @@ void SELECTOR_FreeBlock( WORD sel, WORD count )
     dprintf_selector( stddeb, "SELECTOR_FreeBlock(%04x,%d)\n", sel, count );
     sel &= ~(__AHINCR - 1);  /* clear bottom bits of selector */
     nextsel = sel + (count << __AHSHIFT);
+
+#ifdef __i386__
+    {
+        /* Check if we are freeing current %fs or %gs selector */
+
+        WORD fs, gs;
+
+        __asm__("movw %%fs,%w0":"=r" (fs));
+        if ((fs >= sel) && (fs < nextsel))
+        {
+            fprintf( stderr, "SELECTOR_FreeBlock: freeing %%fs selector (%04x), not good.\n", fs );
+            __asm__("movw %w0,%%fs"::"r" (0));
+        }
+        __asm__("movw %%gs,%w0":"=r" (gs));
+        if ((gs >= sel) && (gs < nextsel))
+            __asm__("movw %w0,%%gs"::"r" (0));
+    }
+#endif  /* __i386__ */
+
     memset( &entry, 0, sizeof(entry) );  /* clear the LDT entries */
     for (i = SELECTOR_TO_ENTRY(sel); count; i++, count--)
     {
@@ -563,7 +582,7 @@ void WINAPI SMapLS_IP_EBP_32(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,32);}
 void WINAPI SMapLS_IP_EBP_36(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,36);}
 void WINAPI SMapLS_IP_EBP_40(CONTEXT *context) {x_SMapLS_IP_EBP_x(context,40);}
 
-void WINAPI SMapLS(CONTEXT *context,int argoff)
+void WINAPI SMapLS(CONTEXT *context)
 {
     if (EAX_reg(context)>=0x10000) {
 	EAX_reg(context) = MapLS((LPVOID)EAX_reg(context));
@@ -572,6 +591,28 @@ void WINAPI SMapLS(CONTEXT *context,int argoff)
 	EDX_reg(context) = 0;
     }
 }
+
+void WINAPI SUnMapLS(CONTEXT *context)
+{
+    if (EAX_reg(context)>=0x10000)
+	UnMapLS((SEGPTR)EAX_reg(context));
+}
+
+static void
+x_SUnMapLS_IP_EBP_x(CONTEXT *context,int argoff) {
+	if (*(DWORD*)(EBP_reg(context)+argoff))
+		UnMapLS(*(DWORD*)(EBP_reg(context)+argoff));
+	*(DWORD*)(EBP_reg(context)+argoff)=0;
+}
+void WINAPI SUnMapLS_IP_EBP_8(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,12); }
+void WINAPI SUnMapLS_IP_EBP_12(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,12); }
+void WINAPI SUnMapLS_IP_EBP_16(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,16); }
+void WINAPI SUnMapLS_IP_EBP_20(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,20); }
+void WINAPI SUnMapLS_IP_EBP_24(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,24); }
+void WINAPI SUnMapLS_IP_EBP_28(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,28); }
+void WINAPI SUnMapLS_IP_EBP_32(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,32); }
+void WINAPI SUnMapLS_IP_EBP_36(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,36); }
+void WINAPI SUnMapLS_IP_EBP_40(CONTEXT *context) { x_SUnMapLS_IP_EBP_x(context,40); }
 
 /**********************************************************************
  *           WOWGetVDMPointer	(KERNEL32.55)

@@ -131,6 +131,9 @@ typedef void (CALLBACK *LPDRVCALLBACK) (HDRVR16 h, UINT16 uMessage, DWORD dwUser
 
 WORD WINAPI mmsystemGetVersion(void);
 BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags);
+BOOL32 WINAPI PlaySound32A(LPCSTR pszSound, HMODULE32 hmod, DWORD fdwSound);
+BOOL32 WINAPI PlaySound32W(LPCWSTR pszSound, HMODULE32 hmod, DWORD fdwSound);
+#define PlaySound WINELIB_NAME_AW(PlaySound)
 
 #define SND_SYNC            0x0000  /* play synchronously (default) */
 #define SND_ASYNC           0x0001  /* play asynchronously */
@@ -138,6 +141,12 @@ BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags);
 #define SND_MEMORY          0x0004  /* lpszSoundName points to a memory file */
 #define SND_LOOP            0x0008  /* loop the sound until next sndPlaySound */
 #define SND_NOSTOP          0x0010  /* don't stop any currently playing sound */
+
+#define SND_NOWAIT	0x00002000L /* don't wait if the driver is busy */
+#define SND_ALIAS       0x00010000L /* name is a registry alias */
+#define SND_ALIAS_ID	0x00110000L /* alias is a predefined ID */
+#define SND_FILENAME    0x00020000L /* name is file name */
+#define SND_RESOURCE    0x00040004L /* name is resource name or atom */
 
 /* waveform audio error return values */
 #define WAVERR_BADFORMAT      (WAVERR_BASE + 0)    /* unsupported wave format */
@@ -527,13 +536,16 @@ UINT16 WINAPI joySetThreshold(UINT16 uJoyID, UINT16 uThreshold);
 #define CFSEPCHAR       '+'             /* compound file name separator char. */
 
 typedef DWORD           FOURCC;         /* a four character code */
-typedef LONG (CALLBACK *LPMMIOPROC)(LPSTR lpmmioinfo, UINT16 uMessage,
-                                    LPARAM lParam1, LPARAM lParam2);
+typedef LONG (CALLBACK *LPMMIOPROC16)(LPSTR lpmmioinfo, UINT16 uMessage,
+                                      LPARAM lParam1, LPARAM lParam2);
+typedef LONG (CALLBACK *LPMMIOPROC32)(LPSTR lpmmioinfo, UINT32 uMessage,
+                                      LPARAM lParam1, LPARAM lParam2);
+DECL_WINELIB_TYPE(LPMMIOPROC);
 
 typedef struct {
         DWORD           dwFlags;        /* general status flags */
         FOURCC          fccIOProc;      /* pointer to I/O procedure */
-        LPMMIOPROC      pIOProc;        /* pointer to I/O procedure */
+        LPMMIOPROC16    pIOProc;        /* pointer to I/O procedure */
         UINT16            wErrorRet;      /* place for error to be returned */
         HTASK16         htask;          /* alternate local task */
         /* fields maintained by MMIO functions during buffered I/O */
@@ -623,9 +635,12 @@ typedef struct _MMCKINFO
                 ( (DWORD)(BYTE)(ch0) | ( (DWORD)(BYTE)(ch1) << 8 ) |    \
                 ( (DWORD)(BYTE)(ch2) << 16 ) | ( (DWORD)(BYTE)(ch3) << 24 ) )
 
+LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC,LPMMIOPROC16,DWORD);
+LPMMIOPROC32 WINAPI mmioInstallIOProc32A(FOURCC,LPMMIOPROC32,DWORD);
+LPMMIOPROC32 WINAPI mmioInstallIOProc32W(FOURCC,LPMMIOPROC32,DWORD);
+#define      mmioInstallIOPro WINELIB_NAME_AW(mmioInstallIOProc)
+
 FOURCC WINAPI mmioStringToFOURCC(LPCSTR sz, UINT16 uFlags);
-LPMMIOPROC WINAPI mmioInstallIOProc(FOURCC fccIOProc, LPMMIOPROC pIOProc,
-    DWORD dwFlags);
 HMMIO16 WINAPI mmioOpen(LPSTR szFileName, MMIOINFO * lpmmioinfo,
     DWORD dwOpenFlags);
 

@@ -406,3 +406,11 @@ BOOL32 WINAPI ResumeThread(DWORD threadid)
     return TRUE;
 }
 
+/**********************************************************************
+ *           SuspendThread   (KERNEL32)
+ */
+BOOL32 WINAPI SuspendThread(DWORD threadid)
+{
+    fprintf(stdnimp,"SuspendThread(0x%08lx), STUB!\n",threadid);
+    return TRUE;
+}

@@ -837,7 +837,7 @@ SEGPTR WINAPI SetCommEventMask(INT16 fd,UINT16 fuEvtMask)
         stol += msr;    
 	repid = ioctl(fd,TIOCMGET,&mstat);
 	dprintf_comm(stddeb,
-	" ioctl  %d, msr %x at %lx %lx\n",repid,mstat,stol,unknown[act]);
+	" ioctl  %d, msr %x at %p %p\n",repid,mstat,stol,unknown[act]);
 	if ((mstat&TIOCM_CAR)) {*stol |= 0x80;}
 	     else {*stol &=0x7f;}
 	dprintf_comm(stddeb," modem dcd construct %x\n",*stol);

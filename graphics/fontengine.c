@@ -10,7 +10,7 @@
 /* GDI 300 */
 WORD WINAPI EngineEnumerateFont(LPSTR fontname, FARPROC16 proc, DWORD data )
 {
-    fprintf(stderr,"EngineEnumerateFont(%s,%p,%d),stub\n",fontname,proc,data);
+    fprintf(stderr,"EngineEnumerateFont(%s,%p,%lx),stub\n",fontname,proc,data);
     return 0;
 }
 #ifdef NOTDEF

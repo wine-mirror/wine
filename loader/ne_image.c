@@ -520,7 +520,7 @@ static BOOL32 NE_InitDLL( TDB* pTask, HMODULE16 hModule )
     dprintf_dll( stddeb, "Calling LibMain, cs:ip=%04lx:%04x ds=%04lx di=%04x cx=%04x\n", 
                  CS_reg(&context), IP_reg(&context), DS_reg(&context),
                  DI_reg(&context), CX_reg(&context) );
-    CallTo16_regs_( &context );
+    CallTo16_regs_( &context, 0 );
     return TRUE;
 }
 

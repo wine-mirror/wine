@@ -106,6 +106,36 @@ int WINAPI MMSYSTEM_WEP(HINSTANCE16 hInstance, WORD wDataSeg,
 }
 
 /**************************************************************************
+* 				PlaySoundA		[WINMM.1]
+*/
+BOOL32 WINAPI PlaySound32A(LPCSTR pszSound, HMODULE32 hmod, DWORD fdwSound)
+{
+  dprintf_mmsys(stddeb, "PlaySoundA: pszSound='%s' hmod=%04X fdwSound=%08lX\n",
+		pszSound, hmod, fdwSound);
+  if(hmod != 0 || !(fdwSound & SND_FILENAME)) {
+    fprintf(stderr, "PlaySoundA: only disk sound files are supported\n");
+    return FALSE;
+  } else {
+    BOOL16 bSound;
+    bSound = sndPlaySound(pszSound, (UINT16) fdwSound);
+    return (BOOL32) bSound;
+  }
+}
+
+/**************************************************************************
+* 				PlaySoundW		[WINMM.18]
+*/
+BOOL32 WINAPI PlaySound32W(LPCWSTR pszSound, HMODULE32 hmod, DWORD fdwSound)
+{
+  LPSTR pszSoundA = xmalloc((lstrlen32W(pszSound)+1)*sizeof(WCHAR));
+  BOOL32 bSound;
+  lstrcpyWtoA(pszSoundA, pszSound);
+  bSound = PlaySound32A(pszSoundA, hmod, fdwSound);
+  free(pszSoundA);
+  return bSound;
+}
+
+/**************************************************************************
 * 				sndPlaySound		[MMSYSTEM.2]
 */
 BOOL16 WINAPI sndPlaySound(LPCSTR lpszSoundName, UINT16 uFlags)
@@ -2278,12 +2308,27 @@ FOURCC WINAPI mmioStringToFOURCC(LPCSTR sz, UINT16 uFlags)
 }
 
 /**************************************************************************
-* 				mmioInstallIOProc	[MMSYSTEM.1221]
+* 				mmioInstallIOProc16	[MMSYSTEM.1221]
 */
-LPMMIOPROC WINAPI mmioInstallIOProc(FOURCC fccIOProc, 
-                                    LPMMIOPROC pIOProc, DWORD dwFlags)
+LPMMIOPROC16 WINAPI mmioInstallIOProc16(FOURCC fccIOProc, 
+                                        LPMMIOPROC16 pIOProc, DWORD dwFlags)
 {
 	dprintf_mmio(stddeb, "mmioInstallIOProc // empty stub \n");
+	return 0;
+}
+
+/**************************************************************************
+ * 				mmioInstallIOProc32A   [WINMM.120]
+ */
+LPMMIOPROC32 WINAPI mmioInstallIOProc32A(FOURCC fccIOProc, 
+                                         LPMMIOPROC32 pIOProc, DWORD dwFlags)
+{
+	dprintf_mmio(stddeb, "mmioInstallIOProcA (%c%c%c%c,%p,0x%08lx)// empty stub \n",
+                     (char)((fccIOProc&0xff000000)>>24),
+                     (char)((fccIOProc&0x00ff0000)>>16),
+                     (char)((fccIOProc&0x0000ff00)>> 8),
+                     (char)(fccIOProc&0x000000ff),
+                     pIOProc, dwFlags );
 	return 0;
 }
 

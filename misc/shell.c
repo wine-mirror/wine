@@ -46,8 +46,8 @@ typedef struct
 
 #pragma pack(4)
 
-extern HICON16   LoadIconHandler( HGLOBAL16 hResource, BOOL16 bNew );
-extern WORD 	 GetIconID( HGLOBAL16 hResource, DWORD resType );
+extern HICON16   WINAPI LoadIconHandler( HGLOBAL16 hResource, BOOL16 bNew );
+extern WORD 	 WINAPI GetIconID( HGLOBAL16 hResource, DWORD resType );
 
 static const char*	lpstrMsgWndCreated = "OTHERWINDOWCREATED";
 static const char*	lpstrMsgWndDestroyed = "OTHERWINDOWDESTROYED";
@@ -933,6 +933,12 @@ LRESULT WINAPI ShellHookProc(INT16 code, WPARAM16 wParam, LPARAM lParam)
 	PostMessage16( SHELL_hWnd, uMsg, wParam, 0 );
     }
     return CallNextHookEx16( WH_SHELL, code, wParam, lParam );
+}
+
+LRESULT WINAPI FUNC004(INT16 code, WPARAM16 wParam, LPARAM lParam)
+{
+	fprintf(stderr,"FUNC004(%d,%d,%ld),STUB!\n",code,wParam,lParam);
+	return ShellHookProc(code,wParam,lParam);
 }
 
 /*************************************************************************

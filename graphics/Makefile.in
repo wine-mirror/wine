@@ -8,6 +8,7 @@ MODULE    = graphics
 C_SRCS = \
 	bitblt.c \
 	driver.c \
+	env.c \
 	escape.c \
 	fontengine.c \
 	mapping.c \

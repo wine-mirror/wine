@@ -6,7 +6,7 @@ MODULE    = none
 PROGRAMS  = progman
 ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 DEFS      = -I$(SRCDIR)
-RCFLAGS   = -w32
+RCFLAGS   = -w32 -h
 
 LANGUAGES   = En Da De Fr Fi Ko Hu It Va
 LICENSELANG = En
@@ -37,16 +37,18 @@ STRINGSRCS = \
 	string.c \
 	$(LICENSELANG:%=License_%.c)
 
-GEN_C_SRCS = \
-	accel.c \
-	$(LANGUAGES:%=%.c) \
+RC_SRCS = \
+	accel.rc \
+	$(LANGUAGES:%=%.rc)
 
 C_SRCS = $(MOSTSRCS) $(STRINGSRCS)
 
 MOSTOBJS = $(MOSTSRCS:.c=.o)
-STRINGOBJS = $(STRINGSRCS:.c=.o) $(GEN_C_SRCS:.c=.o)
+STRINGOBJS = $(STRINGSRCS:.c=.o) $(RC_SRCS:.rc=.o)
 
 all: check_winerc $(PROGRAMS)
+
+depend:: $(RC_SRCS:.rc=.h)
 
 @MAKE_RULES@
 
@@ -56,9 +58,7 @@ progman: $(MOSTOBJS) $(STRINGOBJS)
 install: dummy
 	$(INSTALL_PROGRAM) progman $(bindir)/progman
 
-accel.c accel.h: $(WINERC) Xx.rc
-
-$(LANGUAGES:%=%.c) $(LANGUAGES:%=%.h): $(WINERC) Xx.rc
+$(RC_SRCS:.rc=.c) $(RC_SRCS:.rc=.h): $(WINERC)
 
 dummy:
 

@@ -502,10 +502,16 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
     {
           /* The font height must be negative as it is a point size */
           /* (see CreateFont() documentation in the Windows SDK).   */
-	hFont = CreateFont16( -template.pointSize, 0, 0, 0, FW_DONTCARE,
+	if (win32Template)
+	    hFont = CreateFont16( -template.pointSize, 0, 0, 0, FW_DONTCARE,
 			    FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
 			    PROOF_QUALITY, FF_DONTCARE,
-                            template.faceName );  /* FIXME: win32 */
+                            template.faceName );
+	else
+	    hFont = CreateFont32W( -template.pointSize, 0, 0, 0, FW_DONTCARE,
+			    FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
+			    PROOF_QUALITY, FF_DONTCARE,
+                            template.faceName );
 	if (hFont)
 	{
 	    TEXTMETRIC16 tm;
@@ -562,17 +568,18 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
         }
     }
 
-    if (procType != WIN_PROC_16)
+    if (procType == WIN_PROC_16)
+        hwnd = CreateWindowEx16(template.exStyle, template.className,
+                                template.caption, template.style & ~WS_VISIBLE,
+                                rect.left, rect.top, rect.right, rect.bottom,
+                                owner, hMenu, hInst, NULL );
+    else
         hwnd = CreateWindowEx32W(template.exStyle, (LPCWSTR)template.className,
                                  (LPCWSTR)template.caption,
                                  template.style & ~WS_VISIBLE,
                                  rect.left, rect.top, rect.right, rect.bottom,
                                  owner, hMenu, hInst, NULL );
-    else
-        hwnd = CreateWindowEx32A(template.exStyle, template.className,
-                                template.caption, template.style & ~WS_VISIBLE,
-                                rect.left, rect.top, rect.right, rect.bottom,
-                                owner, hMenu, hInst, NULL );
+	
     if (!hwnd)
     {
 	if (hFont) DeleteObject32( hFont );

@@ -279,6 +279,10 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 		   dc->w.DCOrgX + x + info.width, dc->w.DCOrgY + y - lineAscent );
     }
 
-    if (flags & ETO_CLIPPED) SelectClipRgn32( dc->hSelf, hRgnClip );
+    if (flags & ETO_CLIPPED) 
+    {
+      SelectClipRgn32( dc->hSelf, hRgnClip );
+      DeleteObject32( hRgnClip );
+    }
     return TRUE;
 }

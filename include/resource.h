@@ -42,6 +42,7 @@ extern void LIBRES_RegisterResources(const struct resource* const * Res);
 #define HAVE_WINE_CONSTRUCTOR
 #else
 #define WINE_CONSTRUCTOR
+#undef HAVE_WINE_CONSTRUCTOR
 #endif
 
 typedef HGLOBAL16 (CALLBACK *RESOURCEHANDLER16)(HGLOBAL16, HMODULE16, HRSRC16 );

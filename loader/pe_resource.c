@@ -1,4 +1,3 @@
-#ifndef WINELIB
 /*
  * PE (Portable Execute) File Resources
  *
@@ -149,48 +148,12 @@ HANDLE32 PE_LoadResource32( HINSTANCE32 hModule, HANDLE32 hRsrc )
 /**********************************************************************
  *	    PE_SizeofResource32
  */
-void
-_check_ptr(DWORD x,DWORD start,LPDWORD lastmax) {
-	if ((x>start) && (x<*lastmax))
-		*lastmax=x;
-}
-
-static void
-walk_resdir(DWORD loadaddr,DWORD rootresdir,DWORD xres,DWORD data,DWORD lvl,LPDWORD max){
-    LPIMAGE_RESOURCE_DIRECTORY		resdir;
-    LPIMAGE_RESOURCE_DATA_ENTRY		dataent;
-    LPIMAGE_RESOURCE_DIRECTORY_ENTRY	et;
-    int	i;
-
-    if (lvl==3) {
-    	dataent = (LPIMAGE_RESOURCE_DATA_ENTRY)(rootresdir+xres);
-	_check_ptr(loadaddr+dataent->OffsetToData,data,max);
-	return;
-    }
-    resdir = (LPIMAGE_RESOURCE_DIRECTORY)(rootresdir+xres);
-    et =(LPIMAGE_RESOURCE_DIRECTORY_ENTRY)((LPBYTE)resdir+sizeof(IMAGE_RESOURCE_DIRECTORY));
-    for (i=0;i<resdir->NumberOfNamedEntries+resdir->NumberOfIdEntries;i++)
-	walk_resdir(loadaddr,rootresdir,(lvl==2)?et[i].u2.OffsetToData:et[i].u2.s.OffsetToDirectory,data,lvl+1,max);
-}
-
 DWORD PE_SizeofResource32( HINSTANCE32 hModule, HANDLE32 hRsrc )
 {
-    PE_MODREF	*pem = HMODULE32toPE_MODREF(hModule);
-    DWORD	max,data;
-    IMAGE_DATA_DIRECTORY	dir;
-
-    if (!pem || !pem->pe_resource)
-    	return 0;
-    if (!hRsrc) return 0;
-
-    max=(DWORD)-1;
-    dir=pem->pe_module->pe_header->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE];
-    if(dir.Size)
-    	max=(DWORD)pem->pe_resource+dir.Size;
-
-    data=((DWORD)pem->load_addr+((LPIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->OffsetToData);
-    walk_resdir(pem->load_addr,(DWORD)pem->pe_resource,0,data,0,&max);
-    return max-data;
+    /* we don't need hModule */
+    if (!hRsrc)
+   	 return 0;
+    return ((LPIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->Size;
 }
 
 /**********************************************************************
@@ -419,4 +382,3 @@ PE_EnumResourceLanguages32W(
     }
     return ret;
 }
-#endif

@@ -210,7 +210,6 @@ COLORREF WINAPI GetSysColor32( INT32 nIndex )
 /*************************************************************************
  *             SetSysColors16   (USER.181)
  */
-/* FIXME -- check return type and insert comment if correct.  */
 VOID WINAPI SetSysColors16( INT16 nChanges, const INT16 *lpSysColor,
 			    const COLORREF *lpColorValues )
 {

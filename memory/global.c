@@ -395,7 +395,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16( HGLOBAL16 handle, DWORD size, UINT16 flags )
  */
 HGLOBAL16 WINAPI GlobalFree16( HGLOBAL16 handle )
 {
-    void *ptr = GlobalLock16( handle );
+    void *ptr = (void *)GET_ARENA_PTR(handle)->base;
 
     dprintf_global( stddeb, "GlobalFree16: %04x\n", handle );
     if (!GLOBAL_FreeBlock( handle )) return handle;  /* failed */
@@ -426,6 +426,7 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 #endif  /* CONFIG_IPC */
 
 	if (!GET_ARENA_PTR(handle)->base) return (SEGPTR)0;
+        GET_ARENA_PTR(handle)->lockCount++;
 	return PTR_SEG_OFF_TO_SEGPTR( GlobalHandleToSel(handle), 0 );
 	/* FIXME: put segment value in CX as well */
     }
@@ -441,6 +442,7 @@ SEGPTR WINAPI WIN16_GlobalLock16( HGLOBAL16 handle )
 LPVOID WINAPI GlobalLock16( HGLOBAL16 handle )
 {
     if (!handle) return 0;
+    GET_ARENA_PTR(handle)->lockCount++;
 #ifdef CONFIG_IPC
     if (is_dde_handle(handle)) return DDE_AttachHandle(handle, NULL);
 #endif
@@ -453,8 +455,10 @@ LPVOID WINAPI GlobalLock16( HGLOBAL16 handle )
  */
 BOOL16 WINAPI GlobalUnlock16( HGLOBAL16 handle )
 {
+    GLOBALARENA *pArena = GET_ARENA_PTR(handle);
     dprintf_global( stddeb, "GlobalUnlock16: %04x\n", handle );
-    return 0;
+    if (pArena->lockCount) pArena->lockCount--;
+    return pArena->lockCount;
 }
 
 
@@ -558,7 +562,7 @@ SEGPTR WINAPI GlobalWire16( HGLOBAL16 handle )
  */
 BOOL16 WINAPI GlobalUnWire16( HGLOBAL16 handle )
 {
-    return GlobalUnlock16( handle );
+    return !GlobalUnlock16( handle );
 }
 
 

@@ -32,17 +32,18 @@ static HBITMAP32 DESKTOP_LoadBitmap( HDC32 hdc, const char *filename )
     if ((file = _lopen32( filename, OF_READ )) == HFILE_ERROR32)
     {
         UINT32 len = GetWindowsDirectory32A( NULL, 0 );
-        if (!(buffer = HeapAlloc( SystemHeap, 0, len + strlen(filename) + 2 )))
+        if (!(buffer = HeapAlloc( GetProcessHeap(), 0,
+                                  len + strlen(filename) + 2 )))
             return 0;
         GetWindowsDirectory32A( buffer, len + 1 );
         strcat( buffer, "\\" );
         strcat( buffer, filename );
         file = _lopen32( buffer, OF_READ );
-        HeapFree( SystemHeap, 0, buffer );
+        HeapFree( GetProcessHeap(), 0, buffer );
     }
     if (file == HFILE_ERROR32) return 0;
     size = _llseek32( file, 0, 2 );
-    if (!(buffer = HeapAlloc( SystemHeap, 0, size )))
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size )))
     {
 	_lclose32( file );
 	return 0;
@@ -56,13 +57,13 @@ static HBITMAP32 DESKTOP_LoadBitmap( HDC32 hdc, const char *filename )
       /* Check header content */
     if ((fileHeader->bfType != 0x4d42) || (size < fileHeader->bfSize))
     {
-	HeapFree( SystemHeap, 0, buffer );
+	HeapFree( GetProcessHeap(), 0, buffer );
 	return 0;
     }
     hbitmap = CreateDIBitmap32( hdc, &bitmapInfo->bmiHeader, CBM_INIT,
                                 buffer + fileHeader->bfOffBits,
                                 bitmapInfo, DIB_RGB_COLORS );
-    HeapFree( SystemHeap, 0, buffer );
+    HeapFree( GetProcessHeap(), 0, buffer );
     return hbitmap;
 }
 

@@ -17,7 +17,6 @@
 #include "windows.h"
 #include "hook.h"
 #include "queue.h"
-#include "stackframe.h"
 #include "user.h"
 #include "heap.h"
 #include "struct32.h"
@@ -696,7 +695,7 @@ static void HOOK_Map32ATo32W(INT32 id, INT32 code, WPARAM32 *pwParam,
 	}
 	else
 	  lpcbtcwW->lpcs->lpszClass = (LPCWSTR)lpcbtcwA->lpcs->lpszClass;
-	*plParam = lpcbtcwW;
+	*plParam = (LPARAM)lpcbtcwW;
     }
     return;
 }
@@ -750,7 +749,7 @@ static void HOOK_Map32WTo32A(INT32 id, INT32 code, WPARAM32 *pwParam,
                                                    lpcbtcwW->lpcs->lpszClass );
 	else
 	  lpcbtcwA->lpcs->lpszClass = (LPSTR)lpcbtcwW->lpcs->lpszClass;
-	*plParam = lpcbtcwA;
+	*plParam = (LPARAM)lpcbtcwA;
     }
     return;
 }
@@ -963,7 +962,6 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
     HANDLE16 prevHook;
     HOOKDATA *data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook);
     LRESULT ret;
-    WORD old_ds;
 
     WPARAM32 wParamOrig = wParam;
     LPARAM lParamOrig = lParam;
@@ -986,11 +984,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
     dprintf_hook( stddeb, "Calling hook %04x: %d %08x %08lx\n",
                   hook, code, wParam, lParam );
 
-    /* Set DS = SS to call hook procedure */
-    old_ds = CURRENT_DS;
-    CURRENT_DS = SELECTOROF(IF1632_Saved16_ss_sp);
     ret = data->proc(code, wParam, lParam);
-    CURRENT_DS = old_ds;
 
     dprintf_hook( stddeb, "Ret hook %04x = %08lx\n", hook, ret );
 

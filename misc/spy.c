@@ -765,6 +765,8 @@ int SPY_Init(void)
     int i;
     char buffer[1024];
 
+    if (!debugging_message) return TRUE;
+
     PROFILE_GetWineIniString( "Spy", "Include", "", buffer, sizeof(buffer) );
     if (buffer[0] && strcmp( buffer, "INCLUDEALL" ))
     {

@@ -281,7 +281,7 @@ LPSTR WINAPI lstrcpyn32A( LPSTR dst, LPCSTR src, INT32 n )
     dprintf_string(stddeb,"strcpyn '%s' for %d chars\n",
 		 (src)?src:"NULL",n);
     while ((n-- > 1) && *src) *p++ = *src++;
-    *p = 0;
+    if (n >= 0) *p = 0;
     return dst;
 }
 
@@ -293,7 +293,7 @@ LPWSTR WINAPI lstrcpyn32W( LPWSTR dst, LPCWSTR src, INT32 n )
 {
     LPWSTR p = dst;
     while ((n-- > 1) && *src) *p++ = *src++;
-    *p = 0;
+    if (n >= 0) *p = 0;
     return dst;
 }
 
@@ -421,7 +421,7 @@ LPWSTR WINAPI lstrcpynAtoW( LPWSTR dst, LPCSTR src, INT32 n )
 {
     LPWSTR p = dst;
     while ((n-- > 1) && *src) *p++ = (WCHAR)(unsigned char)*src++;
-    *p = 0;
+    if (n >= 0) *p = 0;
     return dst;
 }
 
@@ -433,7 +433,7 @@ LPSTR WINAPI lstrcpynWtoA( LPSTR dst, LPCWSTR src, INT32 n )
 {
     LPSTR p = dst;
     while ((n-- > 1) && *src) *p++ = (CHAR)*src++;
-    *p = 0;
+    if (n >= 0) *p = 0;
     return dst;
 }
 
@@ -560,9 +560,10 @@ BOOL32 WINAPI CharToOem32W( LPCWSTR s, LPSTR d )
  */
 BOOL32 WINAPI OemToChar32A( LPCSTR s, LPSTR d )
 {
+    LPSTR oldd = d;
     dprintf_string(stddeb,"OemToChar '%s'\n", (s)?s:"NULL");
     while ((*d++ = OEM_TO_ANSI(*s++)));
-    dprintf_string(stddeb," to '%s'\n", (d)?d:"NULL");
+    dprintf_string(stddeb," to '%s'\n", oldd);
     return TRUE;
 }
 
