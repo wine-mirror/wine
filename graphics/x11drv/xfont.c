@@ -1634,6 +1634,7 @@ static void XFONT_LoadAliases(void)
 	XFONT_LoadAlias( lfd, "Helv", FALSE);
 	XFONT_LoadAlias( lfd, "MS Sans Serif", FALSE);
 	XFONT_LoadAlias( lfd, "MS Shell Dlg", FALSE);
+	XFONT_LoadAlias( lfd, "System", FALSE);
 	XFONT_LoadAlias( lfd, "Arial", FALSE);
 
 	XFONT_LoadDefaultLFD( lfd, "sans serif ");
