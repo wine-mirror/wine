@@ -247,19 +247,25 @@ HRESULT WINAPI IPinImpl_Disconnect(IPin * iface)
 
 HRESULT WINAPI IPinImpl_ConnectedTo(IPin * iface, IPin ** ppPin)
 {
+    HRESULT hr;
     ICOM_THIS(IPinImpl, iface);
 
 /*  TRACE("(%p)\n", ppPin);*/
 
-    *ppPin = This->pConnectedTo;
-
-    if (*ppPin)
+    EnterCriticalSection(This->pCritSec);
     {
-        IPin_AddRef(*ppPin);
-        return S_OK;
+        if (This->pConnectedTo)
+        {
+            *ppPin = This->pConnectedTo;
+            IPin_AddRef(*ppPin);
+            hr = S_OK;
+        }
+        else
+            hr = VFW_E_NOT_CONNECTED;
     }
-    else
-        return VFW_E_NOT_CONNECTED;
+    LeaveCriticalSection(This->pCritSec);
+
+    return hr;
 }
 
 HRESULT WINAPI IPinImpl_ConnectionMediaType(IPin * iface, AM_MEDIA_TYPE * pmt)
