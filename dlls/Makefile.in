@@ -718,7 +718,8 @@ twain/twain_32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
 url/url.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd url && $(MAKE) url.dll$(DLLEXT)
 
-urlmon/urlmon.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+urlmon/urlmon.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
+  ntdll.dll$(DLLEXT)
 	@cd urlmon && $(MAKE) urlmon.dll$(DLLEXT)
 
 user/user32.dll$(DLLEXT): dummy gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
