@@ -2944,7 +2944,7 @@ static UINT ACTION_InstallFiles(MSIPACKAGE *package)
                 }
                 else if (rc == ERROR_FILE_NOT_FOUND)
                 {
-                    ERR("Source File Not Found!  Continueing\n");
+                    ERR("Source File Not Found!  Continuing\n");
                     rc = 0;
                 }
                 else
