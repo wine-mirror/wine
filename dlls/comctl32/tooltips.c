@@ -2093,6 +2093,8 @@ TOOLTIPS_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     if(!GetObjectW((HFONT)wParam, sizeof lf, &lf))
         return 0;
+
+    if(infoPtr->hFont) DeleteObject (infoPtr->hFont);
     infoPtr->hFont = CreateFontIndirectW(&lf);
 
     if ((LOWORD(lParam)) & (infoPtr->nCurrentTool != -1)) {
