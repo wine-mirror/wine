@@ -447,7 +447,7 @@ static BOOL UPDOWN_SetBuddy (UPDOWN_INFO* infoPtr, HWND bud)
     DWORD dwStyle = GetWindowLongW (infoPtr->Self, GWL_STYLE);
     RECT  budRect;  /* new coord for the buddy */
     int   x, width;  /* new x position and width for the up-down */
-    WNDPROC baseWndProc, currWndProc;
+    WNDPROC baseWndProc;
     CHAR buddyClass[40];
 
     /* Is it a valid bud? */
@@ -477,8 +477,7 @@ static BOOL UPDOWN_SetBuddy (UPDOWN_INFO* infoPtr, HWND bud)
         /* Note that I don't clear the BUDDY_SUPERCLASS_WNDPROC property
            when we reset the upDown ctrl buddy to another buddy because it is not
            good to break the window proc chain. */
-	currWndProc = (WNDPROC) GetWindowLongW(bud, GWL_WNDPROC);
-	if (currWndProc != UPDOWN_Buddy_SubclassProc) {
+	if (!GetPropA(bud, BUDDY_SUPERCLASS_WNDPROC)) {
 	    baseWndProc = (WNDPROC)SetWindowLongW(bud, GWL_WNDPROC, (LPARAM)UPDOWN_Buddy_SubclassProc);
  	    SetPropA(bud, BUDDY_SUPERCLASS_WNDPROC, (HANDLE)baseWndProc);
 	}
@@ -939,7 +938,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 	    return temp;
 
 	default:
-	    if (message >= WM_USER)
+	    if ((message >= WM_USER) && (message < WM_APP))
 	     	ERR("unknown msg %04x wp=%04x lp=%08lx\n", message, wParam, lParam);
 	    return DefWindowProcW (hwnd, message, wParam, lParam);
     }
