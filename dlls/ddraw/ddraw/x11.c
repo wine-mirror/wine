@@ -426,7 +426,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_CreateSurface(
 		SDDSCAPS(dsurf) |= DDSCAPS_FRONTBUFFER;
 		SDDSCAPS(back) |= DDSCAPS_BACKBUFFER|DDSCAPS_VIDEOMEMORY|DDSCAPS_FLIP;
 		back->s.surface_desc.dwFlags &= ~DDSD_BACKBUFFERCOUNT;
-		SDDSCAPS(back) &= ~DDSCAPS_VISIBLE;
+		SDDSCAPS(back) &= ~(DDSCAPS_VISIBLE|DDSCAPS_PRIMARYSURFACE);
 		TRACE("attaching surface %p to %p\n",back,*lpdsf);
 		IDirectDrawSurface4_AddAttachedSurface((LPDIRECTDRAWSURFACE4)(*lpdsf),(LPDIRECTDRAWSURFACE4)back);
 	    }
