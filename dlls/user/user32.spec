@@ -609,7 +609,7 @@ debug_channels (accel caret class clipboard combo cursor dc ddeml dialog driver
 @ stdcall EnumDisplaySettingsA(str long ptr) EnumDisplaySettingsA
 @ stdcall EnumDisplaySettingsW(wstr long ptr ) EnumDisplaySettingsW
 @ stdcall GetWindowRgn(long long) GetWindowRgn
-@ stub MapVirtualKeyExW
+@ stdcall MapVirtualKeyExW(long long long) MapVirtualKeyExW
 @ stub RegisterServicesProcess
 @ stdcall SetWindowRgn(long long long) SetWindowRgn
 @ stdcall ToUnicodeEx(long long ptr wstr long long long) ToUnicodeEx
