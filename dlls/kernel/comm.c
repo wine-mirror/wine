@@ -50,6 +50,7 @@
 #endif
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <sys/poll.h>
 
 #include "windef.h"
 #ifdef HAVE_SYS_MODEM_H
@@ -2814,19 +2815,102 @@ BOOL WINAPI GetCommModemStatus(
 #endif
 }
 
-VOID COMM_WaitCommEventService(void **args)
+/***********************************************************************
+ *             COMM_WaitCommEventService      (INTERNAL)
+ *
+ *  This function is called while the client is waiting on the
+ *  server, so we can't make any server calls here.
+ */
+static void COMM_WaitCommEventService(async_private *ovp, int events)
 {
-    LPOVERLAPPED lpOverlapped = (LPOVERLAPPED)args[0];
-    LPDWORD buffer = (LPDWORD)args[1];
-    DWORD events = (DWORD)args[2];
+    LPOVERLAPPED lpOverlapped = ovp->lpOverlapped;
 
-    TRACE("overlapped %p wait complete %p <- %lx\n",lpOverlapped,buffer,events);
-    if(buffer)
-        *buffer = events;
+    TRACE("overlapped %p wait complete %p <- %x\n",lpOverlapped,ovp->buffer,events);
+    if(events&POLLNVAL)
+    {
+        lpOverlapped->Internal = STATUS_HANDLES_CLOSED;
+        return;
+    }
+    if(ovp->buffer)
+    {
+        if(events&POLLIN)
+            *ovp->buffer = EV_RXCHAR;
+    }
  
     lpOverlapped->Internal = STATUS_SUCCESS;
-    SetEvent( lpOverlapped->hEvent);
-    CloseHandle(lpOverlapped->InternalHigh);
+}
+
+
+
+/***********************************************************************
+ *             COMM_WaitCommEvent         (INTERNAL)
+ *
+ *  This function must have an lpOverlapped.
+ */
+static BOOL COMM_WaitCommEvent(
+    HANDLE hFile,              /* [in] handle of comm port to wait for */
+    LPDWORD lpdwEvents,        /* [out] event(s) that were detected */
+    LPOVERLAPPED lpOverlapped) /* [in/out] for Asynchronous waiting */
+{
+    int fd,ret;
+    async_private *ovp;
+
+    if(!lpOverlapped)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if(NtResetEvent(lpOverlapped->hEvent,NULL))
+        return FALSE;
+
+    lpOverlapped->Internal = STATUS_PENDING;
+    lpOverlapped->InternalHigh = 0;
+    lpOverlapped->Offset = 0;
+    lpOverlapped->OffsetHigh = 0;
+
+    /* start an ASYNCHRONOUS WaitCommEvent */
+    SERVER_START_REQ( create_async )
+    {
+        req->file_handle = hFile;
+        req->count = 0;
+        req->type = ASYNC_TYPE_WAIT;
+
+        ret=SERVER_CALL_ERR();
+    }
+    SERVER_END_REQ;
+
+    if (ret)
+        return FALSE;
+  
+    fd = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
+    if(fd<0)
+	return FALSE;
+
+    ovp = (async_private *) HeapAlloc(GetProcessHeap(), 0, sizeof (async_private));
+    if(!ovp)
+    {
+        close(fd);
+        return FALSE;
+    }
+    ovp->lpOverlapped = lpOverlapped;
+    ovp->timeout = 0;
+    ovp->tv.tv_sec = 0;
+    ovp->tv.tv_usec = 0;
+    ovp->event = POLLIN;
+    ovp->func = COMM_WaitCommEventService;
+    ovp->buffer = (char *)lpdwEvents;
+    ovp->fd = fd;
+  
+    ovp->next = NtCurrentTeb()->pending_list;
+    ovp->prev = NULL;
+    if(ovp->next)
+        ovp->next->prev=ovp;
+    NtCurrentTeb()->pending_list = ovp;
+  
+    SetLastError(ERROR_IO_PENDING);
+
+    return FALSE;
 }
 
 /***********************************************************************
@@ -2852,79 +2936,31 @@ BOOL WINAPI WaitCommEvent(
     LPOVERLAPPED lpOverlapped) /* [in/out] for Asynchronous waiting */
 {
     OVERLAPPED ov;
-    LPOVERLAPPED lpov;
     int ret;
 
     TRACE("(%x %p %p )\n",hFile, lpdwEvents,lpOverlapped);
 
+    if(lpOverlapped)
+        return COMM_WaitCommEvent(hFile, lpdwEvents, lpOverlapped);
+
     /* if there is no overlapped structure, create our own */
-    if(!lpOverlapped)
-    {
-        ov.hEvent = CreateEventA(NULL,FALSE,FALSE,NULL);
-        lpov = &ov;
-    }
-    else
-        lpov = lpOverlapped;
+    ov.hEvent = CreateEventA(NULL,FALSE,FALSE,NULL);
 
-    /* check that the overlapped structure has a valid event flag */
-    if ( (lpov->hEvent==0) || (lpov->hEvent == INVALID_HANDLE_VALUE) )
+    COMM_WaitCommEvent(hFile, lpdwEvents, &ov);
+
+    if(GetLastError()!=STATUS_PENDING)
     {
-        ERR("Couldn't create Event flag for Overlapped structure\n");
-        SetLastError(ERROR_INVALID_PARAMETER);
+        CloseHandle(ov.hEvent);
         return FALSE;
     }
 
-    ResetEvent(lpov->hEvent);
+    /* wait for the overlapped to complete */
+    ret = GetOverlappedResult(hFile, &ov, NULL, TRUE);
+    CloseHandle(ov.hEvent);
 
-    lpov->Internal = STATUS_PENDING;
-    lpov->InternalHigh = 0;
-    lpov->Offset = 0;
-    lpov->OffsetHigh = 0;
-
-    /* start an ASYNCHRONOUS WaitCommEvent */
-    SERVER_START_REQ( create_async )
-    {
-        req->file_handle = hFile;
-        req->overlapped  = lpov;
-        req->buffer = lpdwEvents;
-        req->count = 0;
-        req->func = COMM_WaitCommEventService;
-        req->type = ASYNC_TYPE_WAIT;
-
-        ret=SERVER_CALL_ERR();
-
-        lpov->InternalHigh = req->ov_handle;
-    }
-    SERVER_END_REQ;
-
-    if(ret)
-    {
-        if(!lpOverlapped)
-            CloseHandle(lpov->hEvent);
-        TRACE("server call failed.\n");
-        return FALSE;
-    }
-
-    /* activate the overlapped operation */
-    lpov->Internal = STATUS_PENDING;
-
-    /* wait ourselves if the caller didn't give us an overlapped struct */
-    if(!lpOverlapped)
-    {
-        GetOverlappedResult(hFile, lpov, NULL, TRUE);
-        CloseHandle(lpov->hEvent);
-        lpov->hEvent=0;
-    }
-    else
-    {
-        /* caller wants overlapped I/O using GetOverlapped result */
-        SetLastError(ERROR_IO_PENDING);
-        return FALSE;
-    }
-
-    return TRUE;
+    return ret;
 }
-
+  
 /***********************************************************************
  *           GetCommProperties   (KERNEL32.286)
  *

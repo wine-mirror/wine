@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -35,6 +36,125 @@ inline static void get_timeout( struct timeval *when, int timeout )
     }
 }
 
+#define MAX_NUMBER_OF_FDS 20
+
+static inline int time_before( struct timeval *t1, struct timeval *t2 )
+{
+    return ((t1->tv_sec < t2->tv_sec) ||
+            ((t1->tv_sec == t2->tv_sec) && (t1->tv_usec < t2->tv_usec)));
+}
+
+static void finish_async(async_private *ovp)
+{
+    /* remove it from the active list */
+    if(ovp->prev)
+        ovp->prev->next = ovp->next;
+    else
+        NtCurrentTeb()->pending_list = ovp->next;
+
+    if(ovp->next)
+        ovp->next->prev = ovp->prev;
+
+    ovp->next=NULL;
+    ovp->prev=NULL;
+
+    close(ovp->fd);
+    NtSetEvent(ovp->lpOverlapped->hEvent,NULL);
+    HeapFree(GetProcessHeap(), 0, ovp);
+}
+
+/***********************************************************************
+ *           check_async_list
+ *
+ *  Create a list of fds for poll to check while waiting on the server
+ *  FIXME: this loop is too large, cut into smaller functions
+ *         perhaps we could share/steal some of the code in server/select.c?
+ */
+static void check_async_list(void)
+{
+    /* FIXME: should really malloc these two arrays */
+    struct pollfd fds[MAX_NUMBER_OF_FDS];
+    async_private *user[MAX_NUMBER_OF_FDS], *tmp;
+    int i, n, r, timeout;
+    async_private *ovp, *timeout_user;
+    struct timeval now;
+
+    while(1)
+    {
+        /* the first fd belongs to the server connection */
+        fds[0].events=POLLIN;
+        fds[0].revents=0;
+        fds[0].fd = NtCurrentTeb()->wait_fd[0];
+
+        ovp = NtCurrentTeb()->pending_list;
+        timeout = -1;
+        timeout_user = NULL;
+        gettimeofday(&now,NULL);
+        for(n=1; ovp && (n<MAX_NUMBER_OF_FDS); ovp = tmp)
+        {
+            tmp = ovp->next;
+
+            if(ovp->lpOverlapped->Internal!=STATUS_PENDING)
+            {
+                ovp->lpOverlapped->Internal=STATUS_UNSUCCESSFUL;
+                finish_async(ovp);
+                continue;
+            }
+
+            if(ovp->timeout && time_before(&ovp->tv,&now))
+            {
+                ovp->lpOverlapped->Internal=STATUS_TIMEOUT;
+                finish_async(ovp);
+                continue;
+            }
+
+            fds[n].fd=ovp->fd;
+            fds[n].events=ovp->event;
+            fds[n].revents=0;
+            user[n] = ovp;
+
+            if(ovp->timeout && ( (!timeout_user) || time_before(&ovp->tv,&timeout_user->tv)))
+            {
+                timeout = (ovp->tv.tv_sec - now.tv_sec) * 1000
+                        + (ovp->tv.tv_usec - now.tv_usec) / 1000;
+                timeout_user = ovp;
+            }
+
+            n++;
+        }
+
+        /* if there aren't any active asyncs return */
+        if(n==1)
+            return;
+
+        r = poll(fds, n, timeout);
+
+        /* if there were any errors, return immediately */
+        if( (r<0) || (fds[0].revents==POLLNVAL) )
+            return;
+
+        if( r==0 )
+        {
+            timeout_user->lpOverlapped->Internal = STATUS_TIMEOUT;
+            finish_async(timeout_user);
+            continue;
+        }
+
+        /* search for async operations that are ready */
+        for( i=1; i<n; i++)
+        {
+            if (fds[i].revents)
+                user[i]->func(user[i],fds[i].revents);
+
+            if(user[i]->lpOverlapped->Internal!=STATUS_PENDING)
+                finish_async(user[i]);
+        }
+
+        if(fds[0].revents == POLLIN)
+            return;
+    }
+}
+
 
 /***********************************************************************
  *              wait_reply
@@ -47,7 +167,9 @@ static int wait_reply( void *cookie )
     struct wake_up_reply reply;
     for (;;)
     {
-        int ret = read( NtCurrentTeb()->wait_fd[0], &reply, sizeof(reply) );
+        int ret;
+        if (NtCurrentTeb()->pending_list) check_async_list();
+        ret = read( NtCurrentTeb()->wait_fd[0], &reply, sizeof(reply) );
         if (ret == sizeof(reply))
         {
             if (!reply.cookie) break;  /* thread got killed */
@@ -105,7 +227,6 @@ static void call_apcs( BOOL alertable )
         case APC_NONE:
             return;  /* no more APCs */
         case APC_ASYNC:
-            proc( &args[0] );
             break;
         case APC_USER:
             proc( args[0] );

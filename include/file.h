@@ -8,6 +8,7 @@
 #define __WINE_FILE_H
 
 #include <time.h> /* time_t */
+#include <sys/time.h>
 #include "winbase.h"
 #include "wine/windef16.h"  /* HFILE16 */
 
@@ -29,6 +30,22 @@ typedef struct
     char *name;
     int flags;
 } DOS_DEVICE;
+
+/* overlapped private structure */
+struct async_private;
+typedef void (*async_handler)(struct async_private *ovp, int revents);
+typedef struct async_private
+{
+     LPOVERLAPPED  lpOverlapped;
+     int           fd;
+     int           timeout;
+     struct timeval tv;
+     int           event;
+     char         *buffer;
+     async_handler func;
+     struct async_private *next;
+     struct async_private *prev;
+} async_private;
 
 /* locale-independent case conversion */
 inline static char FILE_tolower( char c )

@@ -27,6 +27,7 @@
 #include <sys/mman.h>
 #endif
 #include <sys/time.h>
+#include <sys/poll.h>
 #include <time.h>
 #include <unistd.h>
 #include <utime.h>
@@ -1196,60 +1197,43 @@ BOOL WINAPI GetOverlappedResult(
         *lpTransferred = lpOverlapped->InternalHigh;
 
     SetLastError(lpOverlapped->Internal);
- 
+
     return (r==WAIT_OBJECT_0);
 }
 
-/***********************************************************************
- *             FILE_AsyncResult           (INTERNAL)
- */
-static int FILE_AsyncResult(HANDLE hAsync, int result)
-{
-    int r;
-
-    SERVER_START_REQ( async_result )
-    {
-        req->ov_handle = hAsync;
-        req->result    = result;
-        r = SERVER_CALL_ERR();
-    }
-    SERVER_END_REQ;
-    return !r;
-}
 
 /***********************************************************************
  *             FILE_AsyncReadService      (INTERNAL)
+ *
+ *  This function is called while the client is waiting on the
+ *  server, so we can't make any server calls here.
  */
-static void FILE_AsyncReadService(void **args)
+static void FILE_AsyncReadService(async_private *ovp, int events)
 {
-    LPOVERLAPPED lpOverlapped = (LPOVERLAPPED)args[0];
-    LPDWORD buffer = (LPDWORD)args[1];
-    DWORD events = (DWORD)args[2];
-    int fd, result, r;
+    LPOVERLAPPED lpOverlapped = ovp->lpOverlapped;
+    int result, r;
 
-    TRACE("%p %p %08lx\n", lpOverlapped, buffer, events );
+    TRACE("%p %p %08x\n", lpOverlapped, ovp->buffer, events );
+
+    /* if POLLNVAL, then our fd was closed or we have the wrong fd */
+    if(events&POLLNVAL)
+    {
+        ERR("fd %d invalid for %p\n",ovp->fd,ovp);
+        r = STATUS_UNSUCCESSFUL;
+        goto async_end;
+    }
 
     /* if there are no events, it must be a timeout */
     if(events==0)
     {
         TRACE("read timed out\n");
-        /* r = STATUS_TIMEOUT; */
-        r = STATUS_SUCCESS;
-        goto async_end;
-    }
-
-    fd = FILE_GetUnixHandle(lpOverlapped->Offset, GENERIC_READ);
-    if(fd<0)
-    {
-        TRACE("FILE_GetUnixHandle(%ld) failed \n",lpOverlapped->Offset);
-        r = STATUS_UNSUCCESSFUL;
+        r = STATUS_TIMEOUT;
         goto async_end;
     }
 
     /* check to see if the data is ready (non-blocking) */
-    result = read(fd, &buffer[lpOverlapped->InternalHigh],
+    result = read(ovp->fd, &ovp->buffer[lpOverlapped->InternalHigh],
                   lpOverlapped->OffsetHigh - lpOverlapped->InternalHigh);
-    close(fd);
 
     if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
     {
@@ -1276,49 +1260,90 @@ static void FILE_AsyncReadService(void **args)
 
 async_end:
     lpOverlapped->Internal = r;
-    if ( (r!=STATUS_PENDING)
-        || (!FILE_AsyncResult( lpOverlapped->InternalHigh, r)))
-    {
-        /* close the handle to the async operation */
-        if(lpOverlapped->Offset)
-            CloseHandle(lpOverlapped->Offset);
-        lpOverlapped->Offset = 0;
+}
 
-        NtSetEvent( lpOverlapped->hEvent, NULL );
-        TRACE("set event flag\n");
+/* flogged from wineserver */
+/* add a timeout in milliseconds to an absolute time */
+static void add_timeout( struct timeval *when, int timeout )
+{
+    if (timeout)
+    {
+        long sec = timeout / 1000;
+        if ((when->tv_usec += (timeout - 1000*sec) * 1000) >= 1000000)
+        {
+            when->tv_usec -= 1000000;
+            when->tv_sec++;
+        }
+        when->tv_sec += sec;
     }
 }
 
 /***********************************************************************
  *             FILE_StartAsyncRead      (INTERNAL)
+ *
+ * Don't need thread safety, because the list of asyncs 
+ * will only be modified in this thread.
  */
 static BOOL FILE_StartAsyncRead( HANDLE hFile, LPOVERLAPPED overlapped, LPVOID buffer, DWORD count)
 {
-    int r;
+    async_private *ovp;
+    int fd, timeout, ret;
 
-    SERVER_START_REQ( create_async )
+    /* 
+     * Although the overlapped transfer will be done in this thread
+     * we still need to register the operation with the server, in
+     * case it is cancelled and to get a file handle and the timeout info.
+     */
+    SERVER_START_REQ(create_async)
     {
-        req->file_handle = hFile;
-        req->overlapped = overlapped;
-        req->buffer = buffer;
         req->count = count;
-        req->func = FILE_AsyncReadService;
         req->type = ASYNC_TYPE_READ;
-
-        r=SERVER_CALL_ERR();
-
-        overlapped->Offset = req->ov_handle;
+        req->file_handle = hFile;
+        ret = SERVER_CALL();
+        timeout = req->timeout;
     }
     SERVER_END_REQ;
-
-    if(!r)
+    if (ret)
     {
-        TRACE("ov=%ld IO is pending!!!\n",overlapped->Offset);
-        SetLastError(ERROR_IO_PENDING);
+        TRACE("server call failed\n");
+        return FALSE;
     }
 
-    return !r;
+    fd = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
+    if(fd<0)
+    {
+        TRACE("Couldn't get FD\n");
+        return FALSE;
+    }
+
+    ovp = (async_private *) HeapAlloc(GetProcessHeap(), 0, sizeof (async_private));
+    if(!ovp)
+    {
+        TRACE("HeapAlloc Failed\n");
+        close(fd);
+        return FALSE;
+    }
+    ovp->lpOverlapped = overlapped;
+    ovp->timeout = timeout;
+    gettimeofday(&ovp->tv,NULL);
+    add_timeout(&ovp->tv,timeout);
+    ovp->event = POLLIN;
+    ovp->func = FILE_AsyncReadService;
+    ovp->buffer = buffer;
+    ovp->fd = fd;
+
+    /* hook this overlap into the pending async operation list */
+    ovp->next = NtCurrentTeb()->pending_list;
+    ovp->prev = NULL;
+    if(ovp->next)
+        ovp->next->prev = ovp;
+    NtCurrentTeb()->pending_list = ovp;
+
+    SetLastError(ERROR_IO_PENDING);
+
+    return TRUE;
 }
+
 
 /***********************************************************************
  *              ReadFile                (KERNEL32.577)
@@ -1341,20 +1366,18 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
         if ( (overlapped->hEvent == 0) ||
            (overlapped->hEvent == INVALID_HANDLE_VALUE) )
         {
+            SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
 
         overlapped->Offset       = 0;
         overlapped->OffsetHigh   = bytesToRead;
-        overlapped->Internal     = 0;
+        overlapped->Internal = STATUS_PENDING;
         overlapped->InternalHigh = 0;
 
         NtResetEvent( overlapped->hEvent, NULL );
 
-        if(FILE_StartAsyncRead(hFile, overlapped, buffer, bytesToRead))
-        {
-            overlapped->Internal = STATUS_PENDING;
-        }
+        FILE_StartAsyncRead(hFile, overlapped, buffer, bytesToRead);
 
         /* always fail on return, either ERROR_IO_PENDING or other error */
         return FALSE;
@@ -1377,17 +1400,27 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     return TRUE;
 }
 
+
 /***********************************************************************
  *             FILE_AsyncWriteService      (INTERNAL)
+ *
+ *  This function is called while the client is waiting on the
+ *  server, so we can't make any server calls here.
  */
-static void FILE_AsyncWriteService(void **args)
+static void FILE_AsyncWriteService(struct async_private *ovp, int events)
 {
-    LPOVERLAPPED lpOverlapped = (LPOVERLAPPED)args[0];
-    LPDWORD buffer = (LPDWORD)args[1];
-    DWORD events = (DWORD)args[2];
-    int fd, result, r;
+    LPOVERLAPPED lpOverlapped = ovp->lpOverlapped;
+    int result, r;
 
-    TRACE("(%p %p %lx)\n",lpOverlapped,buffer,events);
+    TRACE("(%p %p %08x)\n",lpOverlapped,ovp->buffer,events);
+
+    /* if POLLNVAL, then our fd was closed or we have the wrong fd */
+    if(events&POLLNVAL)
+    {
+        ERR("fd %d invalid for %p\n",ovp->fd,ovp);
+        r = STATUS_UNSUCCESSFUL;
+        goto async_end;
+    }
 
     /* if there are no events, it must be a timeout */
     if(events==0)
@@ -1397,18 +1430,9 @@ static void FILE_AsyncWriteService(void **args)
         goto async_end;
     }
 
-    fd = FILE_GetUnixHandle(lpOverlapped->Offset, GENERIC_WRITE);
-    if(fd<0)
-    {
-        ERR("FILE_GetUnixHandle(%ld) failed \n",lpOverlapped->Offset);
-        r = STATUS_UNSUCCESSFUL;
-        goto async_end;
-    }
-
     /* write some data (non-blocking) */
-    result = write(fd, &buffer[lpOverlapped->InternalHigh],
+    result = write(ovp->fd, &ovp->buffer[lpOverlapped->InternalHigh],
                   lpOverlapped->OffsetHigh-lpOverlapped->InternalHigh);
-    close(fd);
 
     if ( (result<0) && ((errno == EAGAIN) || (errno == EINTR)))
     {
@@ -1425,6 +1449,8 @@ static void FILE_AsyncWriteService(void **args)
 
     lpOverlapped->InternalHigh += result;
 
+    TRACE("wrote %d more bytes %ld/%ld so far\n",result,lpOverlapped->InternalHigh,lpOverlapped->OffsetHigh);
+
     if(lpOverlapped->InternalHigh < lpOverlapped->OffsetHigh)
         r = STATUS_PENDING;
     else
@@ -1432,15 +1458,6 @@ static void FILE_AsyncWriteService(void **args)
 
 async_end:
     lpOverlapped->Internal = r;
-    if ( (r!=STATUS_PENDING)
-        || (!FILE_AsyncResult( lpOverlapped->Offset, r)))
-    {
-        /* close the handle to the async operation */
-        CloseHandle(lpOverlapped->Offset);
-        lpOverlapped->Offset = 0;
-
-        NtSetEvent( lpOverlapped->hEvent, NULL );
-    }
 }
 
 /***********************************************************************
@@ -1448,30 +1465,49 @@ async_end:
  */
 static BOOL FILE_StartAsyncWrite(HANDLE hFile, LPOVERLAPPED overlapped, LPCVOID buffer,DWORD count)
 {
-    int r;
+    /* don't need thread safety, because the list will only be modified in this thread */
+    async_private *ovp = (async_private*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_private));
+    int timeout,ret;
 
-    SERVER_START_REQ( create_async )
+    SERVER_START_REQ(create_async)
     {
-        req->file_handle = hFile;
-        req->buffer = (LPVOID)buffer;
-        req->overlapped = overlapped;
-        req->count = 0;
-        req->func = FILE_AsyncWriteService;
+        req->count = count;
         req->type = ASYNC_TYPE_WRITE;
-
-        r = SERVER_CALL_ERR();
-
-        overlapped->Offset = req->ov_handle;
+        req->file_handle = hFile;
+        ret = SERVER_CALL();
+        timeout = req->timeout;
     }
     SERVER_END_REQ;
+    if (ret)
+        return FALSE;
 
-    if(!r)
+    /* need to register the overlapped with the server, get a file handle and the timeout info */
+    ovp->lpOverlapped = overlapped;
+    ovp->timeout = timeout;
+    gettimeofday(&ovp->tv,NULL);
+    add_timeout(&ovp->tv,timeout);
+    ovp->event = POLLOUT;
+    ovp->func = FILE_AsyncWriteService;
+    ovp->buffer = (LPVOID) buffer;
+    ovp->fd = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
+    if(ovp->fd <0)
     {
-        SetLastError(ERROR_IO_PENDING);
+        HeapFree(GetProcessHeap(), 0, ovp);
+        return FALSE;
     }
 
-    return !r;
+    /* hook this overlap into the pending async operation list */
+    ovp->next = NtCurrentTeb()->pending_list;
+    ovp->prev = NULL;
+    if(ovp->next)
+        ovp->next->prev = ovp;
+    NtCurrentTeb()->pending_list = ovp;
+
+    SetLastError(ERROR_IO_PENDING);
+
+    return TRUE;
 }
+
 
 /***********************************************************************
  *             WriteFile               (KERNEL32.738)
@@ -1492,19 +1528,19 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     {
         if ( (overlapped->hEvent == 0) ||
              (overlapped->hEvent == INVALID_HANDLE_VALUE) )
+        {
+            SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
+        }
 
         overlapped->Offset       = 0;
         overlapped->OffsetHigh   = bytesToWrite;
-        overlapped->Internal     = 0;
+        overlapped->Internal = STATUS_PENDING;
         overlapped->InternalHigh = 0;
 
         NtResetEvent( overlapped->hEvent, NULL );
 
-        if (FILE_StartAsyncWrite(hFile, overlapped, buffer, bytesToWrite))
-        {
-            overlapped->Internal = STATUS_PENDING;
-        }
+        FILE_StartAsyncWrite(hFile, overlapped, buffer, bytesToWrite);
 
         /* always fail on return, either ERROR_IO_PENDING or other error */
         return FALSE;
@@ -1530,7 +1566,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     return TRUE;
 }
 
-
+  
 /***********************************************************************
  *           WIN16_hread
  */

@@ -176,7 +176,6 @@ DECL_HANDLER(create_serial);
 DECL_HANDLER(get_serial_info);
 DECL_HANDLER(set_serial_info);
 DECL_HANDLER(create_async);
-DECL_HANDLER(async_result);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -291,7 +290,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_get_serial_info,
     (req_handler)req_set_serial_info,
     (req_handler)req_create_async,
-    (req_handler)req_async_result,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

@@ -100,10 +100,11 @@ typedef struct _TEB
     int          wait_fd[2];     /* --3 214 fd for sleeping server requests */
     void        *debug_info;     /* --3 21c Info for debugstr functions */
     void        *pthread_data;   /* --3 220 Data for pthread emulation */
+    struct async_private *pending_list;   /* --3 224 list of pending async operations */
     /* here is plenty space for wine specific fields (don't forget to change pad6!!) */
 
     /* the following are nt specific fields */
-    DWORD        pad6[629];                  /* --n 224 */
+    DWORD        pad6[628];                  /* --n 228 */
     UNICODE_STRING StaticUnicodeString;      /* -2- bf8 used by advapi32 */
     USHORT       StaticUnicodeBuffer[261];   /* -2- c00 used by advapi32 */
     DWORD        pad7;                       /* --n e0c */

@@ -153,19 +153,9 @@ extern int create_anonymous_file(void);
 extern struct file *create_temp_file( int access );
 extern void file_set_error(void);
 
-/* async functions */
-
-void async_add_timeout(struct async *ov, int timeout);
-int async_count(struct async *ov);
-int async_type(struct async *ov);
-int async_get_eventmask(struct async *ov);
-int async_set_eventmask(struct async *ov, int eventmask);
-
 /* serial functions */
 
-int serial_async_setup(struct object *obj, struct async *ov);
-int serial_async_get_poll_events( struct async *ov );
-int serial_async_poll_event(struct object *obj, int event);
+int get_serial_async_timeout(struct object *obj, int type, int count);
 
 /* console functions */
 
