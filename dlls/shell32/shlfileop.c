@@ -52,14 +52,14 @@ WCHAR wWildcardFile[] = {'*','.','*',0};
 WCHAR wWildcardChars[] = {'*','?',0};
 WCHAR wBackslash[] = {'\\',0};
 
-static BOOL SHNotifyCreateDirectoryA(LPCSTR path, LPSECURITY_ATTRIBUTES sec);
-static BOOL SHNotifyCreateDirectoryW(LPCWSTR path, LPSECURITY_ATTRIBUTES sec);
-static BOOL SHNotifyRemoveDirectoryA(LPCSTR path);
-static BOOL SHNotifyRemoveDirectoryW(LPCWSTR path);
-static BOOL SHNotifyDeleteFileA(LPCSTR path);
-static BOOL SHNotifyDeleteFileW(LPCWSTR path);
-static BOOL SHNotifyMoveFileW(LPCWSTR src, LPCWSTR dest);
-static BOOL SHNotifyCopyFileW(LPCWSTR src, LPCWSTR dest, BOOL bRenameIfExists);
+static DWORD SHNotifyCreateDirectoryA(LPCSTR path, LPSECURITY_ATTRIBUTES sec);
+static DWORD SHNotifyCreateDirectoryW(LPCWSTR path, LPSECURITY_ATTRIBUTES sec);
+static DWORD SHNotifyRemoveDirectoryA(LPCSTR path);
+static DWORD SHNotifyRemoveDirectoryW(LPCWSTR path);
+static DWORD SHNotifyDeleteFileA(LPCSTR path);
+static DWORD SHNotifyDeleteFileW(LPCWSTR path);
+static DWORD SHNotifyMoveFileW(LPCWSTR src, LPCWSTR dest, BOOL bRenameIfExists);
+static DWORD SHNotifyCopyFileW(LPCWSTR src, LPCWSTR dest, BOOL bRenameIfExists);
 
 typedef struct
 {
@@ -156,12 +156,12 @@ BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI)
 	    if (FILE_ATTRIBUTE_DIRECTORY & wfd.dwFileAttributes)
 	      ret = SHELL_DeleteDirectoryA(szTemp, FALSE);
 	    else
-	      ret = SHNotifyDeleteFileA(szTemp);
+	      ret = (SHNotifyDeleteFileA(szTemp) == ERROR_SUCCESS);
 	  } while (ret && FindNextFileA(hFind, &wfd));
 	}
 	FindClose(hFind);
 	if (ret)
-	  ret = SHNotifyRemoveDirectoryA(pszDir);
+	  ret = (SHNotifyRemoveDirectoryA(pszDir) == ERROR_SUCCESS);
 	return ret;
 }
 
@@ -191,12 +191,12 @@ BOOL SHELL_DeleteDirectoryW(LPCWSTR pszDir, BOOL bShowUI)
 	    if (FILE_ATTRIBUTE_DIRECTORY & wfd.dwFileAttributes)
 	      ret = SHELL_DeleteDirectoryW(szTemp, FALSE);
 	    else
-	      ret = SHNotifyDeleteFileW(szTemp);
+	      ret = (SHNotifyDeleteFileW(szTemp) == ERROR_SUCCESS);
 	  } while (ret && FindNextFileW(hFind, &wfd));
 	}
 	FindClose(hFind);
 	if (ret)
-	  ret = SHNotifyRemoveDirectoryW(pszDir);
+	  ret = (SHNotifyRemoveDirectoryW(pszDir) == ERROR_SUCCESS);
 	return ret;
 }
 
@@ -208,7 +208,7 @@ BOOL SHELL_DeleteFileA(LPCSTR pszFile, BOOL bShowUI)
 	if (bShowUI && !SHELL_ConfirmDialog(ASK_DELETE_FILE, pszFile))
 	  return FALSE;
 
-	return SHNotifyDeleteFileA(pszFile);
+	return (SHNotifyDeleteFileA(pszFile) == ERROR_SUCCESS);
 }
 
 BOOL SHELL_DeleteFileW(LPCWSTR pszFile, BOOL bShowUI)
@@ -216,7 +216,7 @@ BOOL SHELL_DeleteFileW(LPCWSTR pszFile, BOOL bShowUI)
 	if (bShowUI && !SHELL_ConfirmDialogW(ASK_DELETE_FILE, pszFile))
 	  return FALSE;
 
-	return SHNotifyDeleteFileW(pszFile);
+	return (SHNotifyDeleteFileW(pszFile) == ERROR_SUCCESS);
 }
 
 /**************************************************************************
@@ -234,37 +234,41 @@ BOOL SHELL_DeleteFileW(LPCWSTR pszFile, BOOL bShowUI)
  *  Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be ANSI.
  *  This is Unicode on NT/2000
  */
-static BOOL SHNotifyCreateDirectoryA(LPCSTR path, LPSECURITY_ATTRIBUTES sec)
+static DWORD SHNotifyCreateDirectoryA(LPCSTR path, LPSECURITY_ATTRIBUTES sec)
 {
-	BOOL ret;
+	WCHAR wPath[MAX_PATH];
 	TRACE("(%s, %p)\n", debugstr_a(path), sec);
 
-	ret = CreateDirectoryA(path, sec);
-	if (ret)
-	{
-	  SHChangeNotify(SHCNE_MKDIR, SHCNF_PATHA, path, NULL);
-	}
-	return ret;
+	MultiByteToWideChar(CP_ACP, 0, path, -1, wPath, MAX_PATH);
+	return SHNotifyCreateDirectoryW(wPath, sec);
 }
 
-static BOOL SHNotifyCreateDirectoryW(LPCWSTR path, LPSECURITY_ATTRIBUTES sec)
+static DWORD SHNotifyCreateDirectoryW(LPCWSTR path, LPSECURITY_ATTRIBUTES sec)
 {
-	BOOL ret;
 	TRACE("(%s, %p)\n", debugstr_w(path), sec);
 
-	ret = CreateDirectoryW(path, sec);
-	if (ret)
+	if (StrPBrkW(path, wWildcardChars))
+	{
+	  /* FIXME: This test is currently necessary since our CreateDirectory
+	     implementation does create directories with wildcard characters
+	     without objection!! Once this is fixed, this here can go away. */
+	  SetLastError(ERROR_INVALID_NAME);
+	  return ERROR_INVALID_NAME;
+	}
+
+	if (CreateDirectoryW(path, sec))
 	{
 	  SHChangeNotify(SHCNE_MKDIR, SHCNF_PATHW, path, NULL);
+	  return ERROR_SUCCESS;
 	}
-	return ret;
+	return GetLastError();
 }
 
 BOOL WINAPI Win32CreateDirectoryAW(LPCVOID path, LPSECURITY_ATTRIBUTES sec)
 {
 	if (SHELL_OsIsUnicode())
-	  return SHNotifyCreateDirectoryW(path, sec);
-	return SHNotifyCreateDirectoryA(path, sec);
+	  return (SHNotifyCreateDirectoryW(path, sec) == ERROR_SUCCESS);
+	return (SHNotifyCreateDirectoryA(path, sec) == ERROR_SUCCESS);
 }
 
 /************************************************************************
@@ -283,28 +287,18 @@ BOOL WINAPI Win32CreateDirectoryAW(LPCVOID path, LPSECURITY_ATTRIBUTES sec)
  *  This is Unicode on NT/2000
  */
 
-static BOOL SHNotifyRemoveDirectoryA(LPCSTR path)
+static DWORD SHNotifyRemoveDirectoryA(LPCSTR path)
 {
-	BOOL ret;
+	WCHAR wPath[MAX_PATH];
 	TRACE("(%s)\n", debugstr_a(path));
 
-	ret = RemoveDirectoryA(path);
-	if (!ret)
-	{
-	  /* Directory may be write protected */
-	  DWORD dwAttr = GetFileAttributesA(path);
-	  if (dwAttr != -1 && dwAttr & FILE_ATTRIBUTE_READONLY)
-	    if (SetFileAttributesA(path, dwAttr & ~FILE_ATTRIBUTE_READONLY))
-	      ret = RemoveDirectoryA(path);
-	}
-	if (ret)
-	  SHChangeNotify(SHCNE_RMDIR, SHCNF_PATHA, path, NULL);
-	return ret;
+	MultiByteToWideChar(CP_ACP, 0, path, -1, wPath, MAX_PATH);
+	return SHNotifyRemoveDirectoryW(wPath);
 }
 
 /***********************************************************************/
 
-static BOOL SHNotifyRemoveDirectoryW(LPCWSTR path)
+static DWORD SHNotifyRemoveDirectoryW(LPCWSTR path)
 {
 	BOOL ret;
 	TRACE("(%s)\n", debugstr_w(path));
@@ -319,8 +313,11 @@ static BOOL SHNotifyRemoveDirectoryW(LPCWSTR path)
 	      ret = RemoveDirectoryW(path);
 	}
 	if (ret)
+	{
 	  SHChangeNotify(SHCNE_RMDIR, SHCNF_PATHW, path, NULL);
-	return ret;
+	  return ERROR_SUCCESS;
+	}
+	return GetLastError();
 }
 
 /***********************************************************************/
@@ -328,8 +325,8 @@ static BOOL SHNotifyRemoveDirectoryW(LPCWSTR path)
 BOOL WINAPI Win32RemoveDirectoryAW(LPCVOID path)
 {
 	if (SHELL_OsIsUnicode())
-	  return SHNotifyRemoveDirectoryW(path);
-	return SHNotifyRemoveDirectoryA(path);
+	  return (SHNotifyRemoveDirectoryW(path) == ERROR_SUCCESS);
+	return (SHNotifyRemoveDirectoryA(path) == ERROR_SUCCESS);
 }
 
 /************************************************************************
@@ -348,29 +345,18 @@ BOOL WINAPI Win32RemoveDirectoryAW(LPCVOID path)
  *  This is Unicode on NT/2000
  */
 
-static BOOL SHNotifyDeleteFileA(LPCSTR path)
+static DWORD SHNotifyDeleteFileA(LPCSTR path)
 {
-	BOOL ret;
-
+	WCHAR wPath[MAX_PATH];
 	TRACE("(%s)\n", debugstr_a(path));
 
-	ret = DeleteFileA(path);
-	if (!ret)
-	{
-	  /* File may be write protected or a system file */
-	  DWORD dwAttr = GetFileAttributesA(path);
-	  if ((dwAttr != -1) && (dwAttr & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_SYSTEM)))
-	    if (SetFileAttributesA(path, dwAttr & ~(FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_SYSTEM)))
-	      ret = DeleteFileA(path);
-	}
-	if (ret)
-	  SHChangeNotify(SHCNE_DELETE, SHCNF_PATHA, path, NULL);
-	return ret;
+	MultiByteToWideChar(CP_ACP, 0, path, -1, wPath, MAX_PATH);
+	return SHNotifyDeleteFileW(wPath);
 }
 
 /***********************************************************************/
 
-static BOOL SHNotifyDeleteFileW(LPCWSTR path)
+static DWORD SHNotifyDeleteFileW(LPCWSTR path)
 {
 	BOOL ret;
 
@@ -386,8 +372,11 @@ static BOOL SHNotifyDeleteFileW(LPCWSTR path)
 	      ret = DeleteFileW(path);
 	}
 	if (ret)
+	{
 	  SHChangeNotify(SHCNE_DELETE, SHCNF_PATHW, path, NULL);
-	return ret;
+	  return ERROR_SUCCESS;
+	}
+	return GetLastError();
 }
 
 /***********************************************************************/
@@ -395,8 +384,8 @@ static BOOL SHNotifyDeleteFileW(LPCWSTR path)
 DWORD WINAPI Win32DeleteFileAW(LPCVOID path)
 {
 	if (SHELL_OsIsUnicode())
-	  return SHNotifyDeleteFileW(path);
-	return SHNotifyDeleteFileA(path);
+	  return (SHNotifyDeleteFileW(path) == ERROR_SUCCESS);
+	return (SHNotifyDeleteFileA(path) == ERROR_SUCCESS);
 }
 
 /************************************************************************
@@ -407,15 +396,17 @@ DWORD WINAPI Win32DeleteFileAW(LPCVOID path)
  * PARAMS
  *  src        [I]   path to source file to move
  *  dest       [I]   path to target file to move to
+ *  bRename    [I]   if TRUE, the target file will be renamed if a
+ *                   file with this name already exists
  *
  * RETURNS
- *  TRUE if successful, FALSE otherwise
+ *  ERORR_SUCCESS if successful
  */
-static BOOL SHNotifyMoveFileW(LPCWSTR src, LPCWSTR dest)
+static DWORD SHNotifyMoveFileW(LPCWSTR src, LPCWSTR dest, BOOL bRename)
 {
 	BOOL ret;
 
-	TRACE("(%s %s)\n", debugstr_w(src), debugstr_w(dest));
+	TRACE("(%s %s %s)\n", debugstr_w(src), debugstr_w(dest), bRename ? "renameIfExists" : "");
 
 	ret = MoveFileW(src, dest);
 	if (!ret)
@@ -425,10 +416,23 @@ static BOOL SHNotifyMoveFileW(LPCWSTR src, LPCWSTR dest)
 	  if ((dwAttr != -1) && (dwAttr & (FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_SYSTEM)))
 	    if (SetFileAttributesW(src, dwAttr & ~(FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_SYSTEM)))
 	      ret = MoveFileW(src, dest);
+
+	  if (!ret && bRename)
+	  {
+	    /* Destination file probably exists */
+	    dwAttr = GetFileAttributesW(dest);
+	    if (dwAttr != -1)
+	    {
+	      FIXME("Rename on move to existing file not implemented!");
+	    }
+	  }
 	}
 	if (ret)
+	{
 	  SHChangeNotify(SHCNE_RENAMEITEM, SHCNF_PATHW, src, dest);
-	return ret;
+	  return ERROR_SUCCESS;
+	}
+	return GetLastError();
 }
 
 /************************************************************************
@@ -443,9 +447,9 @@ static BOOL SHNotifyMoveFileW(LPCWSTR src, LPCWSTR dest)
  *                   file with this name already exists
  *
  * RETURNS
- *  TRUE if successful, FALSE otherwise
+ *  ERROR_SUCCESS if successful
  */
-static BOOL SHNotifyCopyFileW(LPCWSTR src, LPCWSTR dest, BOOL bRename)
+static DWORD SHNotifyCopyFileW(LPCWSTR src, LPCWSTR dest, BOOL bRename)
 {
 	BOOL ret;
 
@@ -462,8 +466,11 @@ static BOOL SHNotifyCopyFileW(LPCWSTR src, LPCWSTR dest, BOOL bRename)
 	  }
 	}
 	if (ret)
+	{
 	  SHChangeNotify(SHCNE_CREATE, SHCNF_PATHW, dest, NULL);
-	return ret;
+	  return ERROR_SUCCESS;
+	}
+	return GetLastError();
 }
 
 /*************************************************************************
@@ -507,6 +514,7 @@ DWORD WINAPI SHCreateDirectory(HWND hWnd, LPCVOID path)
  * RETURNS
  *  ERRROR_SUCCESS or one of the following values:
  *  ERROR_BAD_PATHNAME if the path is relative
+ *  ERORO_INVALID_NAME if the path contains invalid chars
  *  ERROR_FILE_EXISTS when a file with that name exists
  *  ERROR_ALREADY_EXISTS when the directory already exists
  *  ERROR_FILENAME_EXCED_RANGE if the filename was to long to process
@@ -525,28 +533,24 @@ DWORD WINAPI SHCreateDirectoryExA(HWND hWnd, LPCSTR path, LPSECURITY_ATTRIBUTES 
  */
 DWORD WINAPI SHCreateDirectoryExW(HWND hWnd, LPCWSTR path, LPSECURITY_ATTRIBUTES sec)
 {
-	DWORD ret = ERROR_SUCCESS;
+	DWORD ret = ERROR_BAD_PATHNAME;
 	TRACE("(%p, %s, %p)\n",hWnd, debugstr_w(path), sec);
 
 	if (PathIsRelativeW(path))
 	{
-	  ret = ERROR_BAD_PATHNAME;
-	  SetLastError(ERROR_BAD_PATHNAME);
+	  SetLastError(ret);
 	}
 	else
 	{
-	  if (!SHNotifyCreateDirectoryW(path, sec))
+	  ret = SHNotifyCreateDirectoryW(path, sec);
+	  if (ret != ERROR_FILE_EXISTS &&
+	      ret != ERROR_ALREADY_EXISTS &&
+	      ret != ERROR_FILENAME_EXCED_RANGE)
 	  {
-	    ret = GetLastError();
-	    if (ret != ERROR_FILE_EXISTS &&
-	        ret != ERROR_ALREADY_EXISTS &&
-	        ret != ERROR_FILENAME_EXCED_RANGE)
-	    {
-	    /* handling network file names?
-	      lstrcpynW(pathName, path, MAX_PATH);
-	      lpStr = PathAddBackslashW(pathName);*/
-	      FIXME("Semi-stub, non zero hWnd should be used somehow?");
-	    }
+	  /* handling network file names?
+	    lstrcpynW(pathName, path, MAX_PATH);
+	    lpStr = PathAddBackslashW(pathName);*/
+	    FIXME("Semi-stub, non zero hWnd should be used somehow?");
 	  }
 	}
 	return ret;
@@ -988,7 +992,7 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
                     /* TODO: Check the SHELL_DeleteFileOrDirectoryW() function in shell32.dll */
                     if (IsAttribFile(wfd.dwFileAttributes))
                     {
-                        nFileOp.fAnyOperationsAborted = (!SHNotifyDeleteFileW(pTempFrom));
+                        nFileOp.fAnyOperationsAborted = (SHNotifyDeleteFileW(pTempFrom) != ERROR_SUCCESS);
                         retCode = 0x78; /* value unknown */
                     }
                     else
@@ -1042,7 +1046,7 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
                     goto shfileop_error;
                 }
                 /* we use SHNotifyMoveFile() instead MoveFileW */
-                if (!SHNotifyMoveFileW(pTempFrom, pTempTo))
+                if (SHNotifyMoveFileW(pTempFrom, pTempTo, nFileOp.fFlags & FOF_RENAMEONCOLLISION) != ERROR_SUCCESS)
                 {
                     /* we need still the value for the returncode, we use the mostly assumed */
                     retCode = 0xb7;
@@ -1214,7 +1218,7 @@ DWORD WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
                         retCode = 0x73;
                         goto shfileop_error;
                     }
-                    if (!(SHNotifyCopyFileW(pTempFrom, pTempTo, nFileOp.fFlags & FOF_RENAMEONCOLLISION)))
+                    if (SHNotifyCopyFileW(pTempFrom, pTempTo, nFileOp.fFlags & FOF_RENAMEONCOLLISION) != ERROR_SUCCESS)
                     {
                         retCode = 0x77; /* value unknown */
                         goto shfileop_error;
