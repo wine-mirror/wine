@@ -138,6 +138,9 @@ static WCHAR *wstrdupa(const char *str)
   return wstr;
 }
 
+extern int __wine_get_main_args(char*** argv);
+extern int __wine_get_wmain_args(WCHAR*** argv);
+
 /* INTERNAL: Since we can't rely on Winelib startup code calling w/getmainargs,
  * we initialise data values during DLL loading. When called by a native
  * program we simply return the data we've already initialised. This also means
@@ -145,19 +148,18 @@ static WCHAR *wstrdupa(const char *str)
  */
 void msvcrt_init_args(void)
 {
-  char *cmdline, **xargv = NULL, *ptr;
-  WCHAR *wcmdline, **wxargv = NULL, *wptr;
-  int xargc,end,last_arg,afterlastspace,count;
+  char *ptr;
+  WCHAR *wptr;
+  int count;
   DWORD version;
 
   MSVCRT__acmdln = _strdup( GetCommandLineA() );
-  MSVCRT__wcmdln = wcmdline = wstrdupa(MSVCRT__acmdln);
+  MSVCRT__wcmdln = wstrdupa(MSVCRT__acmdln);
+  MSVCRT___argc = __wine_get_main_args(&MSVCRT___argv);
+  __wine_get_wmain_args(&MSVCRT___wargv);
 
-  /* Make a copy of MSVCRT__acmdln to be able modify it.
-     We will free it at the end of processing. */
-  cmdline = _strdup(MSVCRT__acmdln);
-
-  TRACE("got '%s', wide = %s\n", cmdline, debugstr_w(wcmdline));
+  TRACE("got '%s', wide = %s argc=%d\n", MSVCRT__acmdln,
+        debugstr_w(MSVCRT__wcmdln),MSVCRT___argc);
 
   version = GetVersion();
   MSVCRT__osver       = version >> 16;
@@ -177,53 +179,6 @@ void msvcrt_init_args(void)
   MSVCRT_timezone = 0;
 
   /* FIXME: set app type for Winelib apps */
-
-  end = last_arg = xargc = afterlastspace = 0;
-  while (1)
-  {
-    if ((cmdline[end]==' ') || (cmdline[end]=='\0'))
-    {
-      if (cmdline[end]=='\0')
-        last_arg=1;
-      else
-        cmdline[end]='\0';
-      /* alloc xargc + NULL entry */
-      xargv=(char**)HeapReAlloc( GetProcessHeap(), 0, xargv,
-                                sizeof(char*)*(xargc+1));
-      wxargv=(WCHAR**)HeapReAlloc( GetProcessHeap(), 0, wxargv,
-                                  sizeof(WCHAR*)*(xargc+1));
-
-      if (strlen(cmdline+afterlastspace))
-      {
-        xargv[xargc] = _strdup(cmdline+afterlastspace);
-        wxargv[xargc] = wstrdupa(xargv[xargc]);
-        xargc++;
-        if (!last_arg) /* need to seek to the next arg ? */
-        {
-          end++;
-          while (cmdline[end]==' ')
-            end++;
-        }
-        afterlastspace=end;
-      }
-      else
-      {
-        xargv[xargc] = NULL;
-        wxargv[xargc] = NULL; /* the last entry is NULL */
-        break;
-      }
-    }
-    else
-      end++;
-  }
-  MSVCRT___argc = xargc;
-  MSVCRT___argv = xargv;
-  MSVCRT___wargv = wxargv;
-
-  /* Free a no more needed copy of the command line */
-  MSVCRT_free( cmdline );
-
-  TRACE("found %d arguments\n",MSVCRT___argc);
 
   environ_strings = GetEnvironmentStringsA();
   count = 1; /* for NULL sentinel */
