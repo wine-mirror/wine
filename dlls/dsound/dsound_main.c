@@ -603,7 +603,7 @@ static int DSOUND_Create3DBuffer(IDirectSoundBufferImpl* dsb)
 			if (wTbuf == NULL)
 				return DSERR_OUTOFMEMORY;
 			for (i = 0; i < iSize; i++)
-				wTbuf[i] = (dsb->buffer[i] + dsb->buffer[(i * 2) + 1]) / 2;
+				wTbuf[i] = (dsb->buffer[i * 2] + dsb->buffer[(i * 2) + 1]) / 2;
 			wIbuf = wTbuf;
 		} else {
 			iSize = dsb->buflen / 2;
@@ -611,7 +611,7 @@ static int DSOUND_Create3DBuffer(IDirectSoundBufferImpl* dsb)
 			if (bTbuf == NULL)
 				return DSERR_OUTOFMEMORY;
 			for (i = 0; i < iSize; i++)
-				bTbuf[i] = (dsb->buffer[i] + dsb->buffer[(i * 2) + 1]) / 2;
+				bTbuf[i] = (dsb->buffer[i * 2] + dsb->buffer[(i * 2) + 1]) / 2;
 			bIbuf = bTbuf;
 		}
 	} else {
