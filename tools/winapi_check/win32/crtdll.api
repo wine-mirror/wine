@@ -11,6 +11,7 @@ HANDLE
 HFILE
 INT
 LONG
+ULONG
 UINT
 WCHAR
 clock_t
@@ -32,6 +33,7 @@ LPCVOID
 LPDWORD
 LPDWORD *
 LPINT
+LPUINT
 LPSTR *
 LPSTR **
 LPVOID
@@ -44,10 +46,13 @@ WCHAR *
 _INITTERMFUN *
 char *
 jmp_buf
-struct find_t *
-struct stat *
+find_t *
+struct _stat *
 struct win_stat *
+struct _timeb *
 time_t *
+fpos_t *
+diskfree_t *
 unsigned char *
 va_list
 void *
@@ -71,3 +76,7 @@ LPWSTR
 
 new_handler_type
 sig_handler_type
+comp_func
+struct complex
+atexit_function
+

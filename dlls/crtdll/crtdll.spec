@@ -33,47 +33,47 @@ debug_channels (crtdll)
 @ extern __argc_dll CRTDLL_argc_dll
 @ extern __argv_dll CRTDLL_argv_dll
 @ cdecl __dllonexit() CRTDLL___dllonexit
-@ stub __doserrno
+@ cdecl __doserrno() CRTDLL___doserrno
 @ stub __fpecode
-@ stub __isascii
-@ stub __iscsym
-@ stub __iscsymf
+@ cdecl __isascii(long) CRTDLL___isascii
+@ cdecl __iscsym(long) CRTDLL___iscsym
+@ cdecl __iscsymf(long) CRTDLL___iscsymf
 @ stub __mb_cur_max_dll
 @ stub __pxcptinfoptrs
 @ cdecl __threadhandle() GetCurrentThread
 @ cdecl __threadid() GetCurrentThreadId
-@ stub __toascii
+@ cdecl __toascii(long) CRTDLL___toascii
 @ cdecl _abnormal_termination() CRTDLL__abnormal_termination
 @ cdecl _access(str long) CRTDLL__access
 @ extern _acmdln_dll CRTDLL_acmdln_dll
 @ stub _aexit_rtn_dll
-@ stub _amsg_exit
-@ stub _assert
+@ cdecl _amsg_exit(long) CRTDLL__amsg_exit
+@ cdecl _assert(ptr ptr long) CRTDLL__assert
 @ extern _basemajor_dll CRTDLL_basemajor_dll
 @ extern _baseminor_dll CRTDLL_baseminor_dll
 @ extern _baseversion_dll CRTDLL_baseversion_dll
-@ stub _beep
+@ cdecl _beep(long long) CRTDLL__beep
 @ stub _beginthread
-@ stub _c_exit
-@ stub _cabs
-@ cdecl _cexit(long) CRTDLL__cexit
+@ cdecl _c_exit() CRTDLL__c_exit
+@ cdecl _cabs(long) CRTDLL__cabs
+@ cdecl _cexit() CRTDLL__cexit
 @ stub _cgets
 @ cdecl _chdir(str) CRTDLL__chdir
 @ cdecl _chdrive(long) CRTDLL__chdrive
-@ stub _chgsign
+@ cdecl _chgsign(double) CRTDLL__chgsign
 @ stub _chmod
 @ stub _chsize
 @ stub _clearfp
 @ cdecl _close(long) CRTDLL__close
-@ stub _commit
+@ cdecl _commit(long) CRTDLL__commit
 @ extern _commode_dll CRTDLL_commode_dll
-@ stub _control87
-@ stub _controlfp
-@ stub _copysign
+@ cdecl _control87(long long) CRTDLL__control87
+@ cdecl _controlfp(long long) CRTDLL__controlfp
+@ cdecl _copysign(double double) CRTDLL__copysign
 @ stub _cprintf
 @ stub _cpumode_dll
 @ stub _cputs
-@ stub _creat
+@ cdecl _creat(str long) CTRDLL__creat
 @ stub _cscanf
 @ stub _ctype
 @ stub _cwait
@@ -83,7 +83,7 @@ debug_channels (crtdll)
 @ stub _ecvt
 @ stub _endthread
 @ extern _environ_dll CRTDLL_environ_dll
-@ stub _eof
+@ cdecl _eof(long) CRTDLL__eof
 @ cdecl _errno() CRTDLL__errno
 @ cdecl _except_handler2(ptr ptr ptr ptr) CRTDLL__except_handler2
 @ stub _execl
@@ -94,45 +94,45 @@ debug_channels (crtdll)
 @ stub _execve
 @ stub _execvp
 @ stub _execvpe
-@ stub _exit
-@ stub _expand
-@ stub _fcloseall
+@ cdecl _exit(long) CRTDLL__exit
+@ cdecl _expand(ptr long) CRTDLL__expand
+@ cdecl _fcloseall() CRTDLL__fcloseall
 @ stub _fcvt
 @ cdecl _fdopen(long ptr) CRTDLL__fdopen
-@ stub _fgetchar
+@ cdecl _fgetchar() CRTDLL__fgetchar
 @ stub _fgetwchar
-@ stub _filbuf
+@ cdecl _filbuf(ptr) CRTDLL__filbuf
 @ stub _fileinfo_dll
 @ stub _filelength
-@ stub _fileno
-@ stub _findclose
+@ cdecl _fileno(ptr) CRTDLL__fileno
+@ cdecl _findclose(long) CRTDLL__findclose
 @ cdecl _findfirst(str ptr) CRTDLL__findfirst
 @ cdecl _findnext(long ptr) CRTDLL__findnext
-@ stub _finite
-@ stub _flsbuf
-@ stub _flushall
+@ cdecl _finite(double) CRTDLL__finite
+@ cdecl _flsbuf(long ptr) CRTDLL__flsbuf
+@ cdecl _flushall() CRTDLL__flushall
 @ extern _fmode_dll CRTDLL_fmode_dll
 @ stub _fpclass
 @ stub _fpieee_flt
 @ cdecl _fpreset() CRTDLL__fpreset
-@ stub _fputchar
+@ cdecl _fputchar(long) CRTDLL__fputchar
 @ stub _fputwchar
 @ cdecl _fsopen(str str long) CRTDLL__fsopen
 @ cdecl _fstat(long ptr) CRTDLL__fstat
-@ stub _ftime
+@ cdecl _ftime(ptr) CRTDLL__ftime
 @ forward _ftol ntdll._ftol
 @ cdecl _fullpath(ptr str long) CRTDLL__fullpath
 @ stub _futime
 @ stub _gcvt
-@ stub _get_osfhandle
+@ cdecl _get_osfhandle(long) CRTDLL__get_osfhandle
 @ stub _getch
 @ stub _getche
 @ cdecl _getcwd(ptr long) CRTDLL__getcwd
 @ cdecl _getdcwd(long ptr long) CRTDLL__getdcwd
-@ stub _getdiskfree
-@ stub _getdllprocaddr
+@ cdecl _getdiskfree(long ptr) CRTDLL__getdiskfree
+@ forward _getdllprocaddr kernel32.GetProcAddress
 @ cdecl _getdrive() CRTDLL__getdrive
-@ stub _getdrives
+@ forward _getdrives kernel32.GetLogicalDrives
 @ stub _getpid
 @ stub _getsystime
 @ stub _getw
@@ -143,7 +143,7 @@ debug_channels (crtdll)
 @ stub _heapwalk
 @ cdecl _hypot(double double) hypot
 @ cdecl _initterm(ptr ptr) CRTDLL__initterm
-@ extern _iob CRTDLL_iob
+@ extern _iob __CRTDLL_iob
 @ cdecl _isatty(long) CRTDLL__isatty
 @ cdecl _isctype(long long) CRTDLL__isctype
 @ stub _ismbbalnum
@@ -171,29 +171,29 @@ debug_channels (crtdll)
 @ stub _ismbcupper
 @ stub _ismbslead
 @ stub _ismbstrail
-@ stub _isnan
+@ cdecl _isnan(double) CRTDLL__isnan
 @ forward _itoa ntdll._itoa
-@ stub _itow
-@ cdecl _j0(double) j0
-@ cdecl _j1(double) j1
-@ cdecl _jn(long double) jn
+@ cdecl _itow(long str long) CRTDLL__itow
+@ cdecl _j0(double) CRTDLL__j0
+@ cdecl _j1(double) CRTDLL__j1
+@ cdecl _jn(long double) CRTDLL__jn
 @ stub _kbhit
 @ stub _lfind
-@ stub _loaddll
+@ cdecl _loaddll(str) CRTDLL__loaddll
 @ cdecl _local_unwind2(ptr long) CRTDLL__local_unwind2
 @ stub _locking
 @ stub _logb
 @ cdecl _lrotl (long long) CRTDLL__lrotl
-@ stub _lrotr
-@ stub _lsearch
+@ cdecl _lrotr (long long) CRTDLL__lrotr
+@ cdecl _lsearch(ptr ptr long long ptr) CRTDLL__lsearch
 @ cdecl _lseek(long long long) CRTDLL__lseek
 @ forward _ltoa ntdll._ltoa
-@ stub _ltow
+@ cdecl _ltow(long str long) CRTDLL__ltow
 @ cdecl _makepath (ptr str str str str) CRTDLL__makepath
 @ stub _matherr
 @ stub _mbbtombc
 @ stub _mbbtype
-@ stub _mbccpy
+@ cdecl _mbccpy (str str) CRTDLL__mbccpy
 @ stub _mbcjistojms
 @ stub _mbcjmstojis
 @ stub _mbclen
@@ -239,13 +239,13 @@ debug_channels (crtdll)
 @ stub _mbstok
 @ stub _mbstrlen
 @ stub _mbsupr
-@ stub _memccpy
+@ cdecl _memccpy(ptr ptr long long) memccpy
 @ forward _memicmp ntdll._memicmp
 @ cdecl _mkdir(str) CRTDLL__mkdir
 @ stub _mktemp
-@ stub _msize
+@ cdecl _msize(ptr) CRTDLL__msize
 @ stub _nextafter
-@ stub _onexit
+@ cdecl _onexit(ptr) CRTDLL__onexit
 @ cdecl _open(str long) CRTDLL__open
 @ cdecl _open_osfhandle(long long) CRTDLL__open_osfhandle
 @ extern _osmajor_dll CRTDLL_osmajor_dll
@@ -264,10 +264,10 @@ debug_channels (crtdll)
 @ stub _putw
 @ stub _pwctype_dll
 @ cdecl _read(long ptr long) CRTDLL__read
-@ stub _rmdir
+@ cdecl _rmdir(str) CRTDLL__rmdir
 @ stub _rmtmp
 @ cdecl _rotl (long long) CRTDLL__rotl
-@ stub _rotr
+@ cdecl _rotr (long long) CRTDLL__rotr
 @ stub _scalb
 @ stub _searchenv
 @ stub _seterrormode
@@ -283,7 +283,7 @@ debug_channels (crtdll)
 @ stub _spawnlp
 @ stub _spawnlpe
 @ stub _spawnv
-@ stub _spawnve
+@ cdecl _spawnve(long str ptr ptr) CRTDLL__spawnve
 @ stub _spawnvp
 @ stub _spawnvpe
 @ cdecl _splitpath (str ptr ptr ptr ptr) CRTDLL__splitpath
@@ -291,39 +291,39 @@ debug_channels (crtdll)
 @ stub _statusfp
 @ cdecl _strcmpi(str str) strcasecmp
 @ cdecl _strdate(str) CRTDLL__strdate
-@ stub _strdec
+@ cdecl _strdec(str str) CRTDLL__strdec
 @ cdecl _strdup(str) CRTDLL__strdup
-@ stub _strerror
+@ cdecl _strerror(long) CRTDLL__strerror
 @ cdecl _stricmp(str str) strcasecmp
 @ stub _stricoll
-@ stub _strinc
+@ cdecl _strinc(str) CRTDLL__strinc
 @ forward _strlwr ntdll._strlwr
-@ stub _strncnt
+@ cdecl _strncnt(str long) CRTDLL__strncnt
 @ stub _strnextc
 @ cdecl _strnicmp(str str long) strncasecmp
-@ stub _strninc
-@ stub _strnset
-@ stub _strrev
-@ stub _strset
-@ stub _strspnp
+@ cdecl _strninc(str long) CRTDLL__strninc
+@ cdecl _strnset(str long long) CRTDLL__strnset
+@ cdecl _strrev(str) CRTDLL__strrev
+@ cdecl _strset(str long) CRTDLL__strset
+@ cdecl _strspnp(str str) CRTDLL__strspnp
 @ cdecl _strtime(str) CRTDLL__strtime
 @ forward _strupr ntdll._strupr
-@ stub _swab
-@ stub _sys_errlist
-@ stub _sys_nerr_dll
-@ stub _tell
+@ cdecl _swab(str str long) CRTDLL__swab
+@ extern _sys_errlist sys_errlist
+@ extern _sys_nerr_dll CRTDLL__sys_nerr
+@ cdecl _tell(long) CRTDLL__tell
 @ cdecl _tempnam(str ptr) CRTDLL__tempnam
 @ stub _timezone_dll
-@ stub _tolower
-@ stub _toupper
+@ cdecl _tolower(long) CRTDLL__toupper
+@ cdecl _toupper(long) CRTDLL__tolower
 @ stub _tzname
 @ stub _tzset
 @ forward _ultoa ntdll._ultoa
-@ stub _ultow
-@ stub _umask
+@ cdecl _ultow(long str long) CRTDLL__ultow
+@ cdecl _umask(long) CRTDLL__umask
 @ stub _ungetch
 @ cdecl _unlink(str) CRTDLL__unlink
-@ stub _unloaddll
+@ cdecl _unloaddll(long) CRTDLL__unloaddll
 @ stub _utime
 @ cdecl _vsnprintf(ptr long ptr ptr) vsnprintf
 @ stub _vsnwprintf
@@ -345,7 +345,7 @@ debug_channels (crtdll)
 @ cdecl _y0(double) y0
 @ cdecl _y1(double) y1
 @ cdecl _yn(long double) yn
-@ stub abort
+@ cdecl abort() CRTDLL_abort
 @ cdecl abs(long) abs
 @ cdecl acos(double) acos
 @ cdecl asctime(ptr) asctime
@@ -359,7 +359,7 @@ debug_channels (crtdll)
 @ cdecl bsearch(ptr ptr long long ptr) bsearch
 @ cdecl calloc(long long) CRTDLL_calloc
 @ cdecl ceil(double) ceil
-@ stub clearerr
+@ cdecl clearerr(ptr) CRTDLL_clearerr
 @ cdecl clock() CRTDLL_clock
 @ cdecl cos(double) cos
 @ cdecl cosh(double) cosh
@@ -371,10 +371,10 @@ debug_channels (crtdll)
 @ cdecl fabs(double) fabs
 @ cdecl fclose(ptr) CRTDLL_fclose
 @ cdecl feof(ptr) CRTDLL_feof
-@ stub ferror
+@ cdecl ferror(ptr) CRTDLL_ferror
 @ cdecl fflush(ptr) CRTDLL_fflush
 @ cdecl fgetc(ptr) CRTDLL_fgetc
-@ stub fgetpos
+@ cdecl fgetpos(ptr ptr) CRTDLL_fgetpos
 @ cdecl fgets(ptr long ptr) CRTDLL_fgets
 @ stub fgetwc
 @ cdecl floor(double) floor
@@ -396,11 +396,11 @@ debug_channels (crtdll)
 @ cdecl fwrite(ptr long long ptr) CRTDLL_fwrite 
 @ stub fwscanf
 @ cdecl getc(ptr) CRTDLL_getc
-@ stub getchar
+@ cdecl getchar() CRTDLL_getchar
 @ cdecl getenv (str) CRTDLL_getenv
 @ cdecl gets(ptr) CRTDLL_gets
 @ cdecl gmtime(ptr) gmtime
-@ stub is_wctype
+@ forward is_wctype ntdll.iswctype
 @ cdecl isalnum(long) isalnum
 @ cdecl isalpha(long) isalpha
 @ cdecl iscntrl(long) iscntrl
@@ -414,7 +414,7 @@ debug_channels (crtdll)
 @ cdecl isupper(long) isupper
 @ cdecl iswalnum(long) CRTDLL_iswalnum
 @ forward iswalpha ntdll.iswalpha
-@ stub iswascii
+@ cdecl iswascii(long) CRTDLL_iswascii
 @ cdecl iswcntrl(long) CRTDLL_iswcntrl
 @ forward iswctype ntdll.iswctype
 @ cdecl iswdigit(long) CRTDLL_iswdigit
@@ -445,7 +445,7 @@ debug_channels (crtdll)
 @ cdecl memset(ptr long long) memset 
 @ cdecl mktime(ptr) mktime
 @ cdecl modf(double ptr) modf
-@ stub perror
+@ cdecl perror(str) CRTDLL_perror
 @ cdecl pow(double double) pow
 @ varargs printf() printf
 @ cdecl putc(long ptr) CRTDLL_putc
@@ -457,7 +457,7 @@ debug_channels (crtdll)
 @ cdecl realloc(ptr long) CRTDLL_realloc
 @ cdecl remove(str) CRTDLL_remove
 @ cdecl rename(str str) CRTDLL_rename
-@ stub rewind
+@ cdecl rewind(ptr) CRTDLL_rewind
 @ stub scanf
 @ cdecl setbuf(ptr ptr) CRTDLL_setbuf
 @ cdecl setlocale(long ptr) CRTDLL_setlocale
@@ -475,7 +475,7 @@ debug_channels (crtdll)
 @ cdecl strcoll(str str) strcoll
 @ cdecl strcpy(ptr str) strcpy
 @ cdecl strcspn(str str) strcspn
-@ cdecl strerror(long) strerror
+@ cdecl strerror(long) CRTDLL_strerror
 @ cdecl strftime(ptr long str ptr) strftime
 @ cdecl strlen(str) strlen
 @ cdecl strncat(str str long) strncat

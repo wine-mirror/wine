@@ -4,10 +4,29 @@
  * Copyright 1999 Alexandre Julliard
  */
 
-#include "windef.h"
-#include "winbase.h"
-#include "winnls.h"
 #include "crtdll.h"
+
+
+DEFAULT_DEBUG_CHANNEL(crtdll);
+
+
+/*********************************************************************
+ *                  _mbsicmp      (CRTDLL.204)
+ */
+int __cdecl CRTDLL__mbsicmp(unsigned char *x,unsigned char *y)
+{
+    do {
+	if (!*x)
+	    return !!*y;
+	if (!*y)
+	    return !!*x;
+	/* FIXME: MBCS handling... */
+	if (*x!=*y)
+	    return 1;
+        x++;
+        y++;
+    } while (1);
+}
 
 
 /*********************************************************************
@@ -31,6 +50,17 @@ INT __cdecl CRTDLL__mbslen( LPCSTR str )
 }
 
 
+
+/*********************************************************************
+ *                  _mbsrchr           (CRTDLL.223)
+ */
+LPSTR __cdecl CRTDLL__mbsrchr(LPSTR s,CHAR x)
+{
+    /* FIXME: handle multibyte strings */
+    return strrchr(s,x);
+}
+
+
 /*********************************************************************
  *           CRTDLL_mbtowc    (CRTDLL.430)
  */
@@ -44,3 +74,16 @@ INT __cdecl CRTDLL_mbtowc( WCHAR *dst, LPCSTR str, INT n )
     if (n >= 2 && IsDBCSLeadByte(*str) && str[1]) return 2;
     return 1;
 }
+
+
+/*********************************************************************
+ *                  _mbccpy           (CRTDLL.??)
+ *
+ * Copy one multibyte character to another
+ */
+VOID __cdecl CRTDLL__mbccpy(LPSTR dest, LPSTR src)
+{
+  FIXME("MBCS copy treated as ASCII\n");
+  *dest = *src;
+}
+

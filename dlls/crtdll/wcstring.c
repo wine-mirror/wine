@@ -4,18 +4,13 @@
  * Copyright 1999 Alexandre Julliard
  */
 
-#include "config.h"
-
+#include "crtdll.h"
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "windef.h"
-#include "winbase.h"
 #include "winnls.h"
 #include "wine/unicode.h"
-#include "crtdll.h"
-#include "debugtools.h"
+
 
 DEFAULT_DEBUG_CHANNEL(crtdll);
 

@@ -8,7 +8,14 @@ IMPORTS   = kernel32 ntdll
 
 C_SRCS = \
 	crtdll_main.c \
+	dir.c \
+	exit.c \
+	file.c \
 	mbstring.c \
+	memory.c \
+	spawn.c \
+	string.c \
+	time.c \
 	wcstring.c
 
 @MAKE_DLL_RULES@
