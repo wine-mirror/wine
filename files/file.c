@@ -379,7 +379,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
             }
             goto done;
         }
-        else if (!RtlIsDosDeviceName_U( filename ))
+        else if (!RtlIsDosDeviceName_U( filename + 4 ))
         {
             ret = VXD_Open( filename+4, access, sa );
             goto done;
