@@ -2,7 +2,8 @@
  * IDirect3DTexture9 implementation
  *
  * Copyright 2002-2005 Jason Edmeades
- *                     Raphael Junqueira
+ * Copyright 2002-2005 Raphael Junqueira
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -57,11 +58,21 @@ ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface) {
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
         int i;
+
         for (i = 0; i < This->baseTexture.levels; i++) {
             if (This->surfaces[i] != NULL) {
-                TRACE("(%p) : Releasing surface %p\n", This, This->surfaces[i]);
-                IWineD3DSurface_Release((IWineD3DSurface *) This->surfaces[i]);
+                /* Because the surfaces were created using a callback we need to release there parent otehrwise we leave the parent hanging */
+                IUnknown* surfaceParent;
+                IWineD3DSurface_GetParent(This->surfaces[i], &surfaceParent);
+                IUnknown_Release(surfaceParent);
+                IUnknown_Release(surfaceParent);
             }
+        }
+        if (This->baseTexture.textureName != 0) {
+            ENTER_GL();
+            TRACE("Deleting texture %d\n", This->baseTexture.textureName);
+            glDeleteTextures(1, &This->baseTexture.textureName);
+            LEAVE_GL();
         }
         IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);
@@ -107,31 +118,41 @@ void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
 
     ENTER_GL();
 
-    for (i = 0; i < This->baseTexture.levels; i++) {
-      if (i == 0 && This->surfaces[i]->textureName != 0 && This->baseTexture.dirty == FALSE) {
-        glBindTexture(GL_TEXTURE_2D, This->surfaces[i]->textureName);
-        checkGLcall("glBindTexture");
-        TRACE("Texture %p (level %d) given name %d\n", This->surfaces[i], i, This->surfaces[i]->textureName);
-        /* No need to walk through all mip-map levels, since already all assigned */
-        i = This->baseTexture.levels;
-
-      } else {
-        if (i == 0) {
-          if (This->surfaces[i]->textureName == 0) {
-            glGenTextures(1, &This->surfaces[i]->textureName);
-            checkGLcall("glGenTextures");
-            TRACE("Texture %p (level %d) given name %d\n", This->surfaces[i], i, This->surfaces[i]->textureName);
-          }
-          
-          glBindTexture(GL_TEXTURE_2D, This->surfaces[i]->textureName);
-          checkGLcall("glBindTexture");
-        }
-        IWineD3DSurface_LoadTexture((IWineD3DSurface *) This->surfaces[i], GL_TEXTURE_2D, i); 
-      }
+#if 0 /* TODO: context manager support */
+     IWineD3DContextManager_PushState(This->contextManager, GL_TEXTURE_2D, ENABLED, NOW /* make sure the state is applied now */);
+#endif
+    
+    /* Generate a texture name if we don't already have one */    
+    if (This->baseTexture.textureName == 0) {
+        glGenTextures(1, &This->baseTexture.textureName);
+        checkGLcall("glGenTextures");
+        TRACE("Generated texture %d\n", This->baseTexture.textureName);
+         if (This->baseTexture.pool == D3DPOOL_DEFAULT) {
+            /* Tell opengl to try and keep this texture in video ram (well mostly) */
+            GLclampf tmp;
+            tmp = 0.9f;
+            glPrioritizeTextures(1, &This->baseTexture.textureName, &tmp);
+         }        
     }
 
-    /* No longer dirty */
-    This->baseTexture.dirty = FALSE;
+    /* Bind the texture */    
+    if (This->baseTexture.textureName != 0) {
+        glBindTexture(GL_TEXTURE_2D, This->baseTexture.textureName);
+        checkGLcall("glBindTexture");
+    } else { /* this only happened if we've run out of openGL textures */
+        WARN("This texture doesn't have an openGL texture assigned to it\n");
+        return;
+    }
+
+    /* If were dirty then reload the surfaces */
+    if(This->baseTexture.dirty != FALSE) {
+        for (i = 0; i < This->baseTexture.levels; i++) {
+             IWineD3DSurface_LoadTexture(This->surfaces[i], GL_TEXTURE_2D, i);
+        }
+        
+        /* No longer dirty */
+        This->baseTexture.dirty = FALSE;        
+    }
 
     /* Always need to reset the number of mipmap levels when rebinding as it is
        a property of the active texture unit, and another texture may have set it
@@ -139,6 +160,11 @@ void WINAPI IWineD3DTextureImpl_PreLoad(IWineD3DTexture *iface) {
     TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);   
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
     checkGLcall("glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, This->levels)");
+    /* TODO: disable texture support, if it wastn't enabled when we entered. */
+#if 0 /* TODO: context manager support */
+     IWineD3DContextManager_PopState(This->contextManager, GL_TEXTURE_2D, DISABLED,DELAYED
+              /* we don't care when the state is disabled(if atall) */);
+#endif    
 
     LEAVE_GL();
 
@@ -188,6 +214,45 @@ BOOL WINAPI IWineD3DTextureImpl_SetDirty(IWineD3DTexture *iface, BOOL dirty) {
 BOOL WINAPI IWineD3DTextureImpl_GetDirty(IWineD3DTexture *iface) {
     return IWineD3DBaseTextureImpl_GetDirty((IWineD3DBaseTexture *)iface);
 }
+
+HRESULT WINAPI IWineD3DTextureImpl_BindTexture(IWineD3DTexture *iface) {
+    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
+    TRACE("(%p) : %d \n", This, This->baseTexture.textureName);
+#if 0 /* TODO: context manager support */
+     IWineD3DContextManager_PushState(This->contextManager, GL_TEXTURE_2D, ENABLED, NOW /* make sure the state is applied now */);
+#endif
+    ENTER_GL();
+    IWineD3DTexture_PreLoad(iface); /* make sure the textures is preloaded */
+#if 1 /* TODO: context manager support */
+    glEnable(GL_TEXTURE_2D);    /* all this enable disable stuff is a bit of a mess */
+#endif
+    glBindTexture(GL_TEXTURE_2D, This->baseTexture.textureName);
+    LEAVE_GL();
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DTextureImpl_UnBindTexture(IWineD3DTexture *iface) {
+    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
+    TRACE("(%p) \n", This);
+#if 0 /* TODO: context manager support */
+    IWineD3DContextManager_PopState(This->contextManager, GL_TEXTURE_2D, DISABLED, DELAYED);
+#endif
+    ENTER_GL();
+#if 1 /* TODO: context manager support */
+    glBindTexture(GL_TEXTURE_2D, 0);
+#endif
+    glDisable(GL_TEXTURE_2D); /* This should be queued! so that we don't keep enabling and disabling states. */
+    LEAVE_GL();
+    return D3D_OK;
+}
+
+UINT WINAPI IWineD3DTextureImpl_GetTextureDimensions(IWineD3DTexture *iface) {
+    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
+    TRACE("(%p) \n", This);
+
+    return GL_TEXTURE_2D;
+}
+
 
 /* *******************************************
    IWineD3DTexture IWineD3DTexture parts follow
@@ -250,9 +315,11 @@ HRESULT WINAPI IWineD3DTextureImpl_AddDirtyRect(IWineD3DTexture *iface, CONST RE
 
 IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
 {
+    /* IUnknown */
     IWineD3DTextureImpl_QueryInterface,
     IWineD3DTextureImpl_AddRef,
     IWineD3DTextureImpl_Release,
+    /* IWineD3DResource */    
     IWineD3DTextureImpl_GetParent,
     IWineD3DTextureImpl_GetDevice,
     IWineD3DTextureImpl_SetPrivateData,
@@ -262,6 +329,7 @@ IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_GetPriority,
     IWineD3DTextureImpl_PreLoad,
     IWineD3DTextureImpl_GetType,
+    /* IWineD3DBaseTexture */    
     IWineD3DTextureImpl_SetLOD,
     IWineD3DTextureImpl_GetLOD,
     IWineD3DTextureImpl_GetLevelCount,
@@ -270,6 +338,10 @@ IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_GenerateMipSubLevels,
     IWineD3DTextureImpl_SetDirty,
     IWineD3DTextureImpl_GetDirty,
+    IWineD3DTextureImpl_BindTexture,
+    IWineD3DTextureImpl_UnBindTexture,
+    IWineD3DTextureImpl_GetTextureDimensions,    
+    /* IWineD3DTexture */    
     IWineD3DTextureImpl_GetLevelDesc,
     IWineD3DTextureImpl_GetSurfaceLevel,
     IWineD3DTextureImpl_LockRect,

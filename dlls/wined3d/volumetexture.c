@@ -1,8 +1,9 @@
 /*
- * IDirect3DVolumeTexture9 implementation
+ * IWineD3DVolumeTexture implementation
  *
  * Copyright 2002-2005 Jason Edmeades
- *                     Raphael Junqueira
+ * Copyright 2002-2005 Raphael Junqueira
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -63,7 +64,12 @@ ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DVolumeTexture *iface) {
                 IWineD3DVolume_Release((IWineD3DSurface *) This->volumes[i]);
             }
         }
-        IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
+        if(This->baseTexture.textureName != 0){
+            ENTER_GL();
+            TRACE("Deleting texture %d\n", This->baseTexture.textureName);
+            glDeleteTextures(1, &This->baseTexture.textureName);
+            LEAVE_GL(); 
+        }
         HeapFree(GetProcessHeap(), 0, This);
     } else {
         IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
@@ -100,66 +106,53 @@ DWORD WINAPI IWineD3DVolumeTextureImpl_GetPriority(IWineD3DVolumeTexture *iface)
 
 void WINAPI IWineD3DVolumeTextureImpl_PreLoad(IWineD3DVolumeTexture *iface) {
     /* Overrider the IWineD3DResource Preload method */
-    unsigned int i;
+    UINT i;
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     
     TRACE("(%p) : About to load texture\n", This);
 
     ENTER_GL();
+#if 0 /* TODO: context manager support */
+     IWineD3DContextManager_PushState(This->contextManager, GL_TEXTURE_3D, ENABLED, NOW /* make sure the state is applied now */);
+#endif
+    glEnable(GL_TEXTURE_3D); /* make sure texture support is enabled in this context */
 
-    for (i = 0; i < This->baseTexture.levels; i++) {
-
-      if (i == 0 && This->volumes[i]->textureName != 0 && This->baseTexture.dirty == FALSE) {
-        glBindTexture(GL_TEXTURE_3D, This->volumes[i]->textureName);
-        checkGLcall("glBindTexture");
-        TRACE("Texture %p (level %d) given name %d\n", This->volumes[i], i, This->volumes[i]->textureName);
-        /* No need to walk through all mip-map levels, since already all assigned */
-        i = This->baseTexture.levels;
-
-      } else {
-
-        if (i == 0) {
-          if (This->volumes[i]->textureName == 0) {
-            glGenTextures(1, &This->volumes[i]->textureName);
-            checkGLcall("glGenTextures");
-            TRACE("Texture %p (level %d) given name %d\n", This->volumes[i], i, This->volumes[i]->textureName);
-          }
-          
-          glBindTexture(GL_TEXTURE_3D, This->volumes[i]->textureName);
-          checkGLcall("glBindTexture");
-          
-          TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
-          glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1); 
-          checkGLcall("glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, This->levels - 1)");
-        }
-
-        TRACE("Calling glTexImage3D %x i=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%x, Mem=%p\n",
-              GL_TEXTURE_3D, 
-              i, 
-              D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->volumes[i]->currentDesc.Format), 
-              This->volumes[i]->currentDesc.Width, 
-              This->volumes[i]->currentDesc.Height, 
-              This->volumes[i]->currentDesc.Depth,
-              0, 
-              D3DFmt2GLFmt(This->resource.wineD3DDevice, This->volumes[i]->currentDesc.Format), 
-              D3DFmt2GLType(This->resource.wineD3DDevice, This->volumes[i]->currentDesc.Format),
-              This->volumes[i]->allocatedMemory);
-        glTexImage3D(GL_TEXTURE_3D, 
-                     i,
-                     D3DFmt2GLIntFmt(This->resource.wineD3DDevice, This->volumes[i]->currentDesc.Format),
-                     This->volumes[i]->currentDesc.Width,
-                     This->volumes[i]->currentDesc.Height,
-                     This->volumes[i]->currentDesc.Depth,
-                     0,
-                     D3DFmt2GLFmt(This->resource.wineD3DDevice, This->volumes[i]->currentDesc.Format),
-                     D3DFmt2GLType(This->resource.wineD3DDevice, This->volumes[i]->currentDesc.Format),
-                     This->volumes[i]->allocatedMemory);
-        checkGLcall("glTexImage3D");
-
-        This->baseTexture.dirty = FALSE;
-      }
+    /* Generate a texture name if we don't already have one */
+    if (This->baseTexture.textureName == 0) {
+        glGenTextures(1, &This->baseTexture.textureName);
+        checkGLcall("glGenTextures");
+        TRACE("Generated texture %d\n", This->baseTexture.textureName);
+         if (This->baseTexture.pool == D3DPOOL_DEFAULT) {
+            /* Tell opengl to try and keep this texture in video ram (well mostly) */
+            GLclampf tmp;
+            tmp = 0.9f;
+            glPrioritizeTextures(1, &This->baseTexture.textureName, &tmp);
+         }        
     }
 
+   /* Bind the texture */
+    if (This->baseTexture.textureName != 0) {
+        glBindTexture(GL_TEXTURE_3D, This->baseTexture.textureName);
+        checkGLcall("glBindTexture");
+    } else { /* this only happened if we've run out of openGL textures */
+        WARN("This texture doesn't have an openGL texture assigned to it\n");
+        return;
+    }
+    
+    /* If were dirty then reload the volumes */
+    if(This->baseTexture.dirty != FALSE) {
+        for (i = 0; i < This->baseTexture.levels; i++) {
+            IWineD3DVolume_LoadTexture(This->volumes[i], i);
+        }
+        
+        /* No longer dirty */
+        This->baseTexture.dirty = FALSE;        
+    }
+    
+
+    TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
+    checkGLcall("glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, This->levels - 1)");
     LEAVE_GL();
 
     return ;
@@ -202,11 +195,40 @@ void WINAPI IWineD3DVolumeTextureImpl_GenerateMipSubLevels(IWineD3DVolumeTexture
 
 /* Internal function, No d3d mapping */
 BOOL WINAPI IWineD3DVolumeTextureImpl_SetDirty(IWineD3DVolumeTexture *iface, BOOL dirty) {
-    return IWineD3DBaseTextureImpl_SetDirty((IWineD3DBaseTexture *)iface, TRUE);
+    return IWineD3DBaseTextureImpl_SetDirty((IWineD3DBaseTexture *)iface, dirty);
 }
 
 BOOL WINAPI IWineD3DVolumeTextureImpl_GetDirty(IWineD3DVolumeTexture *iface) {
     return IWineD3DBaseTextureImpl_GetDirty((IWineD3DBaseTexture *)iface);
+}
+
+HRESULT WINAPI IWineD3DVolumeTextureImpl_BindTexture(IWineD3DVolumeTexture *iface) {
+    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
+    TRACE("(%p) : %d \n", This, This->baseTexture.textureName);    
+    /* make sure that there is a texture to bind */
+    IWineD3DVolumeTexture_PreLoad(iface);
+    ENTER_GL();    
+    glEnable(GL_TEXTURE_3D);    /* all this enable disable stuff is a bit of a mess */
+    /* FIXME: change to use this->textureName */
+    glBindTexture(GL_TEXTURE_3D, This->baseTexture.textureName);
+    LEAVE_GL();    
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DVolumeTextureImpl_UnBindTexture(IWineD3DVolumeTexture *iface) {
+    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
+    TRACE("(%p) \n", This);    
+    ENTER_GL();    
+    glBindTexture(GL_TEXTURE_3D, 0);
+    glDisable(GL_TEXTURE_3D);
+    LEAVE_GL();    
+    return D3D_OK;
+}
+
+UINT WINAPI IWineD3DVolumeTextureImpl_GetTextureDimensions(IWineD3DVolumeTexture *iface) {
+    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
+    TRACE("(%p) \n", This);    
+    return GL_TEXTURE_3D;
 }
 
 /* *******************************************
@@ -272,12 +294,13 @@ HRESULT WINAPI IWineD3DVolumeTextureImpl_AddDirtyBox(IWineD3DVolumeTexture *ifac
     return IWineD3DVolume_AddDirtyBox((IWineD3DVolume *) This->volumes[0], pDirtyBox);
 }
 
-
 IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
 {
+    /* IUnknown */
     IWineD3DVolumeTextureImpl_QueryInterface,
     IWineD3DVolumeTextureImpl_AddRef,
     IWineD3DVolumeTextureImpl_Release,
+    /* resource */
     IWineD3DVolumeTextureImpl_GetParent,
     IWineD3DVolumeTextureImpl_GetDevice,
     IWineD3DVolumeTextureImpl_SetPrivateData,
@@ -287,6 +310,7 @@ IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_GetPriority,
     IWineD3DVolumeTextureImpl_PreLoad,
     IWineD3DVolumeTextureImpl_GetType,
+    /* BaseTexture */
     IWineD3DVolumeTextureImpl_SetLOD,
     IWineD3DVolumeTextureImpl_GetLOD,
     IWineD3DVolumeTextureImpl_GetLevelCount,
@@ -295,6 +319,11 @@ IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_GenerateMipSubLevels,
     IWineD3DVolumeTextureImpl_SetDirty,
     IWineD3DVolumeTextureImpl_GetDirty,
+    /* not in d3d */
+    IWineD3DVolumeTextureImpl_BindTexture,
+    IWineD3DVolumeTextureImpl_UnBindTexture,
+    IWineD3DVolumeTextureImpl_GetTextureDimensions,
+    /* volume texture */
     IWineD3DVolumeTextureImpl_GetLevelDesc,
     IWineD3DVolumeTextureImpl_GetVolumeLevel,
     IWineD3DVolumeTextureImpl_LockBox,

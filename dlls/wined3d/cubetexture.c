@@ -1,5 +1,5 @@
 /*
- * IDirect3DCubeTexture9 implementation
+ * IWineD3DCubeTexture implementation
  *
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2002-2005 Raphael Junqueira
@@ -79,12 +79,17 @@ ULONG WINAPI IWineD3DCubeTextureImpl_Release(IWineD3DCubeTexture *iface) {
         for (i = 0; i < This->baseTexture.levels; i++) {
           for (j = 0; j < 6; j++) { 
             if (This->surfaces[j][i] != NULL) {
-              TRACE("(%p) : Releasing surface %p\n", This, This->surfaces[j][i]);
+              TRACE("(%p) : Releasing surface%d %d  %p\n", This, j, i, This->surfaces[j][i]);
               IWineD3DSurface_Release((IWineD3DSurface *) This->surfaces[j][i]);
             }
           }
         }
-        IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
+        if(This->baseTexture.textureName != 0){
+            ENTER_GL();
+            TRACE("Deleting texture %d\n", This->baseTexture.textureName);
+            glDeleteTextures(1, &This->baseTexture.textureName);
+            LEAVE_GL(); 
+        }
         HeapFree(GetProcessHeap(), 0, This);
     } else {
         IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
@@ -127,47 +132,56 @@ void WINAPI IWineD3DCubeTextureImpl_PreLoad(IWineD3DCubeTexture *iface) {
     TRACE("(%p) : About to load texture: dirtified(%d)\n", This, This->baseTexture.dirty);
 
     ENTER_GL();
-
-    for (i = 0; i < This->baseTexture.levels; i++) {
-      if (i == 0 && This->surfaces[0][0]->textureName != 0 && This->baseTexture.dirty == FALSE) {
-        glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-        glBindTexture(GLTEXTURECUBEMAP, This->surfaces[0][0]->textureName);
-        checkGLcall("glBindTexture");
-        TRACE("Texture %p (level %d) given name %d\n", This->surfaces[0][0], i, This->surfaces[0][0]->textureName);
-        /* No need to walk through all mip-map levels, since already all assigned */
-        i = This->baseTexture.levels;
-
-      } else {
-        if (i == 0) {
-          if (This->surfaces[0][0]->textureName == 0) {
-            glGenTextures(1, &This->surfaces[0][0]->textureName);
-            checkGLcall("glGenTextures");
-            TRACE("Texture %p (level %d) given name %d\n", This->surfaces[0][i], i, This->surfaces[0][0]->textureName);
-          }
-
-          glBindTexture(GLTEXTURECUBEMAP, This->surfaces[0][0]->textureName);
-          checkGLcall("glBindTexture");
-
-          TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
-          glTexParameteri(GLTEXTURECUBEMAP, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1); 
-          checkGLcall("glTexParameteri(GL_TEXTURE_CUBE, GL_TEXTURE_MAX_LEVEL, This->levels - 1)");
-        }
-        
-        for (j = 0; j < 6; j++) {
-          IWineD3DSurface_LoadTexture((IWineD3DSurface *) This->surfaces[j][i], cube_targets[j], i); 
-#if 0
-          static int gen = 0;
-          char buffer[4096];
-          snprintf(buffer, sizeof(buffer), "/tmp/cube%d_face%d_level%d_%d.png", This->surfaces[0][0]->textureName, j, i, ++gen);
-          IWineD3DSurfaceImpl_SaveSnapshot((IWineD3DSurface *) This->surfaces[j][i], buffer);
+#if 0 /* TODO: context manager support */
+     IWineD3DContextManager_PushState(This->contextManager, GL_TEXTURE_CUBE_MAP_ARB, ENABLED, NOW /* make sure the state is applied now */);
+#else    
+    glEnable(GL_TEXTURE_CUBE_MAP_ARB);
 #endif
-        }
-        /* Removed glTexParameterf now TextureStageStates are initialized at startup */
-        This->baseTexture.dirty = FALSE;
-      }
+
+    /* Generate a texture name if we don't already have one */    
+    if (This->baseTexture.textureName == 0) {
+        glGenTextures(1, &This->baseTexture.textureName);
+        checkGLcall("glGenTextures");
+        TRACE("Generated texture %d\n", This->baseTexture.textureName);
+         if (This->baseTexture.pool == D3DPOOL_DEFAULT) {
+            /* Tell opengl to try and keep this texture in video ram (well mostly) */
+            GLclampf tmp;
+            tmp = 0.9f;
+            glPrioritizeTextures(1, &This->baseTexture.textureName, &tmp);
+         }        
     }
 
-    LEAVE_GL();
+    /* Bind the texture */
+    if (This->baseTexture.textureName != 0) {
+        glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, This->baseTexture.textureName);
+        checkGLcall("glBindTexture");
+    } else { /* this only happened if we've run out of openGL textures */
+        WARN("This texture doesn't have an openGL texture assigned to it\n");
+        return;
+    }
+    
+    /* If were dirty then reload the surfaces */
+    if(This->baseTexture.dirty != FALSE) {
+        for (i = 0; i < This->baseTexture.levels; i++) {
+          for (j = 0; j < 6; j++)
+              IWineD3DSurface_LoadTexture((IWineD3DSurface *) This->surfaces[j][i], cube_targets[j], i);
+        }
+        /* No longer dirty */
+        This->baseTexture.dirty = FALSE;        
+       
+    }
+
+    /* Always need to reset the number of mipmap levels when rebinding as it is
+       a property of the active texture unit, and another texture may have set it
+       to a different value                                                       */
+    TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
+    checkGLcall("glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");
+    
+#if 0 /* TODO: context manager support */
+     IWineD3DContextManager_PopState(This->contextManager, GL_TEXTURE_CUBE_MAP_ARB, DISABLED, DELAYED);
+#endif
+    LEAVE_GL();    
 
     return ;
 }
@@ -209,11 +223,49 @@ void WINAPI IWineD3DCubeTextureImpl_GenerateMipSubLevels(IWineD3DCubeTexture *if
 
 /* Internal function, No d3d mapping */
 BOOL WINAPI IWineD3DCubeTextureImpl_SetDirty(IWineD3DCubeTexture *iface, BOOL dirty) {
-    return IWineD3DBaseTextureImpl_SetDirty((IWineD3DBaseTexture *)iface, TRUE);
+    return IWineD3DBaseTextureImpl_SetDirty((IWineD3DBaseTexture *)iface, dirty);
 }
 
+/* Internal function, No d3d mapping */
 BOOL WINAPI IWineD3DCubeTextureImpl_GetDirty(IWineD3DCubeTexture *iface) {
     return IWineD3DBaseTextureImpl_GetDirty((IWineD3DBaseTexture *)iface);
+}
+
+HRESULT WINAPI IWineD3DCubeTextureImpl_BindTexture(IWineD3DCubeTexture *iface) {
+    IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
+    TRACE("(%p) : %d \n", This, This->baseTexture.textureName);
+    ENTER_GL();
+#if 0 /* TODO: context manager support */
+     IWineD3DContextManager_PushState(This->contextManager, GL_TEXTURE_CUBE_MAP_ARB, ENABLED, NOW /* make sure the state is applied now */);
+#else    
+    glEnable(GL_TEXTURE_CUBE_MAP_ARB);
+#endif 
+    glBindTexture(GLTEXTURECUBEMAP, This->baseTexture.textureName);
+    LEAVE_GL();
+    return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DCubeTextureImpl_UnBindTexture(IWineD3DCubeTexture *iface) {
+    IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
+    TRACE("(%p) \n", This);    
+    ENTER_GL();
+    
+    glBindTexture(GLTEXTURECUBEMAP, 0);
+#if 0 /* TODO: context manager support */
+     IWineD3DContextManager_PopState(This->contextManager, GL_TEXTURE_CUBE_MAP_ARB, ENABLED, NOW /* make sure the state is applied now */);
+#else    
+    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+#endif     
+
+    LEAVE_GL();
+    return D3D_OK;
+}
+
+UINT WINAPI IWineD3DCubeTextureImpl_GetTextureDimensions(IWineD3DCubeTexture *iface){
+    IWineD3DCubeTextureImpl *This = (IWineD3DCubeTextureImpl *)iface;
+    TRACE("(%p) \n", This);
+    
+    return GLTEXTURECUBEMAP;
 }
 
 /* *******************************************
@@ -281,9 +333,11 @@ HRESULT  WINAPI IWineD3DCubeTextureImpl_AddDirtyRect(IWineD3DCubeTexture *iface,
 
 IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
 {
+    /* IUnknown */
     IWineD3DCubeTextureImpl_QueryInterface,
     IWineD3DCubeTextureImpl_AddRef,
     IWineD3DCubeTextureImpl_Release,
+    /* IWineD3DResource */
     IWineD3DCubeTextureImpl_GetParent,
     IWineD3DCubeTextureImpl_GetDevice,
     IWineD3DCubeTextureImpl_SetPrivateData,
@@ -293,6 +347,7 @@ IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
     IWineD3DCubeTextureImpl_GetPriority,
     IWineD3DCubeTextureImpl_PreLoad,
     IWineD3DCubeTextureImpl_GetType,
+    /*base texture */
     IWineD3DCubeTextureImpl_SetLOD,
     IWineD3DCubeTextureImpl_GetLOD,
     IWineD3DCubeTextureImpl_GetLevelCount,
@@ -301,6 +356,10 @@ IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl =
     IWineD3DCubeTextureImpl_GenerateMipSubLevels,
     IWineD3DCubeTextureImpl_SetDirty,
     IWineD3DCubeTextureImpl_GetDirty,
+    IWineD3DCubeTextureImpl_BindTexture,
+    IWineD3DCubeTextureImpl_UnBindTexture,
+    IWineD3DCubeTextureImpl_GetTextureDimensions,    
+    /* cube texture */    
     IWineD3DCubeTextureImpl_GetLevelDesc,
     IWineD3DCubeTextureImpl_GetCubeMapSurface,
     IWineD3DCubeTextureImpl_LockRect,

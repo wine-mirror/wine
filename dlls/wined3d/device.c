@@ -54,6 +54,15 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
     *pp##type = (IWineD3D##type *) object; \
 }
 
+#define D3DINITILIZEBASETEXTURE(_basetexture) { \
+    _basetexture.usage      = Usage; \
+    _basetexture.levels     = Levels; \
+    _basetexture.format     = Format; \
+    _basetexture.pool       = Pool; \
+    _basetexture.filterType = (Usage & D3DUSAGE_AUTOGENMIPMAP) ? D3DTEXF_LINEAR : D3DTEXF_NONE; \
+    _basetexture.LOD        = 0; \
+}
+
 /**********************************************************
  * Global variable / Constants follow
  **********************************************************/
@@ -524,12 +533,10 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
 
     TRACE("(%p), Width(%d) Height(%d) Levels(%d) Usage(%ld) .... \n", This, Width, Height, Levels, Usage);
 
-    D3DCREATERESOURCEOBJECTINSTANCE(object, Texture, D3DRTYPE_TEXTURE)
+    D3DCREATERESOURCEOBJECTINSTANCE(object, Texture, D3DRTYPE_TEXTURE);
+    D3DINITILIZEBASETEXTURE(object->baseTexture);    
     object->width  = Width;
     object->height = Height;
-    object->usage  = Usage;
-    object->baseTexture.format = Format;
-    object->baseTexture.levels = Levels;
     
     /* Calculate levels for mip mapping */
     if (Levels == 0) {
@@ -551,13 +558,13 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
     for (i = 0; i < object->baseTexture.levels; i++) 
     {
         /* use the callback to create the texture surface */
-        hr = D3DCB_CreateSurface(This->parent, tmpW, tmpH, Format, Usage, Pool, i, (IWineD3DSurface **)&object->surfaces[i],NULL);
+        hr = D3DCB_CreateSurface(This->parent, tmpW, tmpH, Format, Usage, Pool, i, &object->surfaces[i],NULL);
         if(hr!= D3D_OK){
             int j;
             FIXME("Failed to create surface  %p \n",object);
             /* clean up */
             for(j=0;j<i;j++){
-                IWineD3DSurface_Release((IWineD3DSurface *)object->surfaces[j]);
+                IWineD3DSurface_Release(object->surfaces[j]);
             }
             /* heap free object */
             HeapFree(GetProcessHeap(),0,object);
@@ -566,7 +573,7 @@ HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, UINT Wid
             return hr;
         }
         
-        object->surfaces[i]->container = (IUnknown*) object;
+        IWineD3DSurface_SetContainer(object->surfaces[i], (IUnknown *)object);
         TRACE("Created surface level %d @ %p\n", i, object->surfaces[i]);
         /* calculate the next mipmap level */
         tmpW = max(1, tmpW >> 1);
@@ -592,13 +599,8 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
     UINT                       tmpH;
     UINT                       tmpD;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DVolumeTextureImpl));
-    if (NULL == object) {
-        *ppVolumeTexture = NULL;
-        return D3DERR_OUTOFVIDEOMEMORY;
-    }
-
     D3DCREATERESOURCEOBJECTINSTANCE(object, VolumeTexture, D3DRTYPE_VOLUMETEXTURE);
+    D3DINITILIZEBASETEXTURE(object->baseTexture);
     
     TRACE("(%p) : W(%d) H(%d) D(%d), Lvl(%d) Usage(%ld), Fmt(%u,%s), Pool(%s)\n", This, Width, Height,
           Depth, Levels, Usage, Format, debug_d3dformat(Format), debug_d3dpool(Pool));
@@ -606,9 +608,6 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
     object->width  = Width;
     object->height = Height;
     object->depth  = Depth;
-    object->usage  = Usage;
-    object->baseTexture.levels = Levels;
-    object->baseTexture.format = Format;
 
     /* Calculate levels for mip mapping */
     if (Levels == 0) {
@@ -617,9 +616,9 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
         tmpH = Height;
         tmpD = Depth;
         while (tmpW > 1 && tmpH > 1 && tmpD > 1) {
-            tmpW = max(1, tmpW / 2);
-            tmpH = max(1, tmpH / 2);
-            tmpD = max(1, tmpD / 2);
+            tmpW = max(1, tmpW >> 1);
+            tmpH = max(1, tmpH >> 1);
+            tmpD = max(1, tmpD >> 1);
             object->baseTexture.levels++;
         }
         TRACE("Calculated levels = %d\n", object->baseTexture.levels);
@@ -632,14 +631,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *iface,
 
     for (i = 0; i < object->baseTexture.levels; i++) 
     {
-        /* Create the volume - No entry point for this seperately?? */
+        /* Create the volume */
         D3DCB_CreateVolume(This->parent, Width, Height, Depth, Format, Pool, Usage, 
                            (IWineD3DVolume **)&object->volumes[i], pSharedHandle);
-        object->volumes[i]->container = (IUnknown*) object;
+        IWineD3DVolume_SetContainer(object->volumes[i], (IUnknown *)object);
 
-        tmpW = max(1, tmpW / 2);
-        tmpH = max(1, tmpH / 2);
-        tmpD = max(1, tmpD / 2);
+        tmpW = max(1, tmpW >> 1);
+        tmpH = max(1, tmpH >> 1);
+        tmpD = max(1, tmpD >> 1);
     }
 
     *ppVolumeTexture = (IWineD3DVolumeTexture *) object;
@@ -693,17 +692,15 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
    IWineD3DCubeTextureImpl *object; /** NOTE: impl ref allowed since this is a create function **/
    unsigned int             i,j;
    UINT                     tmpW;
-   HRESULT                  hr;   
+   HRESULT                  hr;
 
    D3DCREATERESOURCEOBJECTINSTANCE(object, CubeTexture, D3DRTYPE_CUBETEXTURE);
-   
+   D3DINITILIZEBASETEXTURE(object->baseTexture);
+
    TRACE("(%p) Create Cube Texture \n", This);
    
-   object->edgeLength           = EdgeLength;    
-   object->baseTexture.format   = Format;    
-   object->baseTexture.levels   = Levels;
-   object->usage                = Usage;    
-   
+   object->edgeLength           = EdgeLength;
+
    /* Calculate levels for mip mapping */
    if (Levels == 0) {
        object->baseTexture.levels++;
@@ -723,30 +720,30 @@ HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface, UINT 
         for (j = 0; j < 6; j++) {
                             
             hr=D3DCB_CreateSurface(This->parent, tmpW, tmpW, Format, Usage, Pool,
-                                   i /* Level */, (IWineD3DSurface **)&object->surfaces[j][i],pSharedHandle);
+                                   i /* Level */, &object->surfaces[j][i],pSharedHandle);
         
             if(hr!= D3D_OK){
                 /* clean up */
                 int k;
-                int l;                
-                for(l=0;l<j;l++){
-                    IWineD3DSurface_Release((IWineD3DSurface *)object->surfaces[j][i]);
-                }                
-                for(k=0;k<i;k++){
-                    for(l=0;l<6;l++){
-                    IWineD3DSurface_Release((IWineD3DSurface *)object->surfaces[l][j]);
+                int l;
+                for (l=0;l<j;l++) {
+                    IWineD3DSurface_Release(object->surfaces[j][i]);
+                }
+                for (k=0;k<i;k++) {
+                    for (l=0;l<6;l++) {
+                    IWineD3DSurface_Release(object->surfaces[l][j]);
                     }
                 }
-                    
+
                 FIXME("(%p) Failed to create surface\n",object);
                 HeapFree(GetProcessHeap(),0,object);
                 *ppCubeTexture = NULL;
                 return hr;
-            }  
-            object->surfaces[j][i]->container = (IUnknown*) object;
+            }
+            IWineD3DSurface_SetContainer(object->surfaces[j][i], (IUnknown *)object);
             TRACE("Created surface level %d @ %p, \n", i, object->surfaces[j][i]);
         }
-        tmpW = max(1, tmpW / 2);
+        tmpW = max(1, tmpW >> 1);
     }
 
     TRACE("(%p) : Created Cube Texture %p\n", This, object);
@@ -1809,10 +1806,10 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONST WINED
 
     glDepthRange(pViewport->MinZ, pViewport->MaxZ);
     checkGLcall("glDepthRange");
-
     /* Note: GL requires lower left, DirectX supplies upper left */
-    glViewport(pViewport->X, (This->renderTarget->currentDesc.Height - (pViewport->Y + pViewport->Height)), 
-               pViewport->Width, pViewport->Height);
+    /* TODO: replace usage of renderTarget with context management */
+    glViewport(pViewport->X, (((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Height - (pViewport->Y + pViewport->Height)), 
+		    pViewport->Width, pViewport->Height);
     checkGLcall("glViewport");
 
     LEAVE_GL();
@@ -2714,14 +2711,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_GetRenderState(IWineD3DDevice *iface, D3DRENDE
     return D3D_OK;
 }
 
-HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD Sampler,  D3DSAMPLERSTATETYPE Type, DWORD Value){
+HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD Value){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     FIXME("(%p) : stub\n", This);
     return D3D_OK;
 }
 
-HRESULT WINAPI IWineD3DDeviceImpl_GetSamplerState(IWineD3DDevice *iface, DWORD Sampler,  D3DSAMPLERSTATETYPE Type, DWORD* Value){
+HRESULT WINAPI IWineD3DDeviceImpl_GetSamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD* Value){
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     FIXME("(%p) : stub\n", This);
@@ -3495,13 +3492,24 @@ HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD Stage,
         FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
     }
 
-    /* Decrement the count of the previous texture */
+    /** NOTE: MSDN says that setTexture increases the reference count,
+    * and the the application nust set the texture back to null (or have a leaky application),
+    * This means we should pass the refcount upto the parent
+     *******************************/
     if (NULL != oldTexture) {
-        IWineD3DBaseTexture_Release(oldTexture);
+
+        IUnknown *textureParent;
+        IWineD3DBaseTexture_GetParent(oldTexture, (IUnknown **)&textureParent);
+        IUnknown_Release(textureParent);
+        IUnknown_Release(textureParent); /** NOTE: Twice because GetParent adds a ref **/
+        oldTexture = NULL;
     }
+    
 
     if (NULL != pTexture) {
-        IWineD3DBaseTexture_AddRef((IWineD3DBaseTexture *) This->updateStateBlock->textures[Stage]);
+        IUnknown *textureParent;
+        IWineD3DBaseTexture_GetParent(This->updateStateBlock->textures[Stage], (IUnknown **)&textureParent);
+        /** NOTE: GetParent will increase the ref count for me, I won't clean up untill the texture is set to NULL **/
 
         /* Now setup the texture appropraitly */
         textureType = IWineD3DBaseTexture_GetType(pTexture);
@@ -3726,27 +3734,29 @@ HRESULT WINAPI IWineD3DDeviceImpl_BeginScene(IWineD3DDevice *iface) {
 HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p)\n", This);
-
     ENTER_GL();
-
+    /* We only have to do this if we need to read the, swapbuffers performs a flush for us */
     glFlush();
     checkGLcall("glFlush");
 
-    if ((This->frontBuffer != This->renderTarget) && (This->backBuffer != This->renderTarget)) {
+    TRACE("End Scene\n");
+    if(This->renderTarget != NULL){
 
-        /* If we are rendering to a texture (surface) then flag it as dirty.
-           A surfaces container is either the appropriate texture or the device itself
-              depending on how the surface was created.                                */
-        if (This->renderTarget != NULL && ((IWineD3DDeviceImpl *)This->renderTarget->container != This)) {
-
-            IWineD3DBaseTexture *cont = (IWineD3DBaseTexture *)This->renderTarget->container;
-            /** always dirtify for now. we must find a better way to see that surface have been modified */
-            This->renderTarget->inPBuffer = TRUE;
-            This->renderTarget->inTexture = FALSE;
-            IWineD3DBaseTexture_SetDirty(cont, TRUE);
-            IWineD3DBaseTexture_PreLoad(cont);
-            This->renderTarget->inPBuffer = FALSE;
+        /* If the container of the rendertarget is a texture then we need to save the data from the pbuffer */
+        IUnknown *targetContainer = NULL;
+        if (D3D_OK == IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DBaseTexture, (void **)&targetContainer)) {
+            TRACE("RenderTarget is either standalone of a texture.\n");
+            /** always dirtify for now. we must find a better way to see that surface have been modified
+            (Modifications should will only occur via draw-primitive, but we do need better locking
+            switching to render-to-texture should remove the overhead though.
+            */
+            IWineD3DSurface_SetPBufferState(This->renderTarget, TRUE /* inPBuffer */, FALSE /* inTexture */);
+            IWineD3DBaseTexture_SetDirty((IWineD3DBaseTexture *)targetContainer, TRUE);
+            IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *)targetContainer);
+            IWineD3DSurface_SetPBufferState(This->renderTarget, FALSE /* inPBuffer */, FALSE /* inTexture */);
+            IUnknown_Release(targetContainer);
         }
+
     }
 
     LEAVE_GL();
@@ -3899,14 +3909,14 @@ HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Count, CONS
             /* Note gl uses lower left, width/height */
             TRACE("(%p) %p Rect=(%ld,%ld)->(%ld,%ld) glRect=(%ld,%ld), len=%ld, hei=%ld\n", This, curRect,
                   curRect->x1, curRect->y1, curRect->x2, curRect->y2,
-                  curRect->x1, (This->renderTarget->currentDesc.Height - curRect->y2), 
+                  curRect->x1, (((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Height - curRect->y2), 
                   curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
-            glScissor(curRect->x1, (This->renderTarget->currentDesc.Height - curRect->y2), 
+            glScissor(curRect->x1, (((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Height - curRect->y2), 
                       curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
             checkGLcall("glScissor");
         } else {
             glScissor(This->stateBlock->viewport.X, 
-                      (This->renderTarget->currentDesc.Height - (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)), 
+                      (((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Height - (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)), 
                       This->stateBlock->viewport.Width, 
                       This->stateBlock->viewport.Height);
             checkGLcall("glScissor");

@@ -4,6 +4,7 @@
  * Copyright 2002-2005 Jason Edmeades
  * Copyright 2002-2003 Raphael Junqueira
  * Copyright 2004 Christian Costa
+ * Copyright 2005 Oliver Stieber 
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -32,7 +33,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_surface);
 HRESULT WINAPI IWineD3DSurfaceImpl_QueryInterface(IWineD3DSurface *iface, REFIID riid, LPVOID *ppobj)
 {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-    WARN("(%p)->(%s,%p) should not be called\n",This,debugstr_guid(riid),ppobj);
+    /* Warn ,but be nice about things */
+    TRACE("(%p)->(%s,%p) \n", This,debugstr_guid(riid),ppobj);
+    if (riid == NULL) {
+        ERR("Probably FIXME: Calling query interface with NULL riid\n");
+    }
+    if (IsEqualGUID(riid, &IID_IUnknown)
+        || IsEqualGUID(riid, &IID_IWineD3DResource)
+        || IsEqualGUID(riid, &IID_IWineD3DSurface)) {
+        IUnknown_AddRef((IUnknown*)iface);
+        *ppobj = This;
+        return D3D_OK;
+    }
     return E_NOINTERFACE;
 }
 
@@ -40,7 +52,6 @@ ULONG WINAPI IWineD3DSurfaceImpl_AddRef(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     ULONG ref = InterlockedIncrement(&This->resource.ref);
     TRACE("(%p) : AddRef increasing from %ld\n", This,ref - 1);
-    IUnknown_AddRef(This->resource.parent);
     return ref;
 }
 
@@ -49,11 +60,16 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
     ULONG ref = InterlockedDecrement(&This->resource.ref);
     TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
     if (ref == 0) {
+        if (This->textureName != 0) { /* release the openGL texture.. */
+            ENTER_GL();
+            TRACE("Deleting texture %d\n", This->textureName);
+            glDeleteTextures(1, &This->textureName);
+            LEAVE_GL();
+        }
         HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
         IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);
-    } else {
-        IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
+
     }
     return ref;
 }
@@ -86,7 +102,57 @@ DWORD    WINAPI        IWineD3DSurfaceImpl_GetPriority(IWineD3DSurface *iface) {
 }
 
 void     WINAPI        IWineD3DSurfaceImpl_PreLoad(IWineD3DSurface *iface) {
-    return IWineD3DResourceImpl_PreLoad((IWineD3DResource *)iface);
+    /* TODO: re-write the way textures and managed,
+    *  use a 'opengl context manager' to manage RenderTarget surfaces
+    ** *********************************************************/
+    
+    /* TODO: check for locks */
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    IWineD3DBaseTexture *baseTexture = NULL;
+    TRACE("(%p)Checking to see if the container is a base textuer\n", This);
+    if (IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&baseTexture) == D3D_OK) {
+        TRACE("Passing to conatiner\n");
+        IWineD3DBaseTexture_PreLoad(baseTexture);
+        IWineD3DBaseTexture_Release(baseTexture);
+    } else{
+    TRACE("(%p) : About to load surface\n", This);
+    ENTER_GL();
+#if 0 /* TODO: context manager support */
+     IWineD3DContextManager_PushState(This->contextManager, GL_TEXTURE_2D, ENABLED, NOW /* make sure the state is applied now */);
+#endif
+    glEnable(GL_TEXTURE_2D); /* make sure texture support is enabled in this context */
+    if (This->currentDesc.Level == 0 &&  This->textureName == 0) {
+          glGenTextures(1, &This->textureName);
+          checkGLcall("glGenTextures");
+          TRACE("Surface %p given name %d\n", This, This->textureName);
+          glBindTexture(GL_TEXTURE_2D, This->textureName);
+          checkGLcall("glBindTexture");
+          IWineD3DSurface_LoadTexture((IWineD3DSurface *) This, GL_TEXTURE_2D, This->currentDesc.Level);
+          /* This is where we should be reducing the amount of GLMemoryUsed */
+    }else {
+        if (This->currentDesc.Level == 0) {
+          glBindTexture(GL_TEXTURE_2D, This->textureName);
+          checkGLcall("glBindTexture");
+          IWineD3DSurface_LoadTexture((IWineD3DSurface *) This, GL_TEXTURE_2D, This->currentDesc.Level);
+        } else  if (This->textureName != 0) { /* NOTE: the level 0 surface of a mpmapped texture must be loaded first! */
+            /* assume this is a coding error not a real error for now */
+            FIXME("Mipmap surface has a glTexture bound to it!\n");
+        }
+    }
+    if (This->currentDesc.Pool == D3DPOOL_DEFAULT) {
+       /* Tell opengl to try and keep this texture in video ram (well mostly) */
+       GLclampf tmp;
+       tmp = 0.9f;
+        glPrioritizeTextures(1, &This->textureName, &tmp);
+    }
+    /* TODO: disable texture support, if it wastn't enabled when we entered. */
+#if 0 /* TODO: context manager support */
+     IWineD3DContextManager_PopState(This->contextManager, GL_TEXTURE_2D, DISABLED,DELAYED
+              /* we don't care when the state is disabled(if atall) */);
+#endif
+    LEAVE_GL();
+    }
+    return;
 }
 
 D3DRESOURCETYPE WINAPI IWineD3DSurfaceImpl_GetType(IWineD3DSurface *iface) {
@@ -101,19 +167,21 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetParent(IWineD3DSurface *iface, IUnknown **
    IWineD3DSurface IWineD3DSurface parts follow
    ****************************************************** */
 
-HRESULT WINAPI IWineD3DSurfaceImpl_GetContainer(IWineD3DSurface *iface, REFIID riid, void** ppContainer) {
+HRESULT WINAPI IWineD3DSurfaceImpl_GetContainer(IWineD3DSurface* iface, REFIID riid, void** ppContainer) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-
+    HRESULT hr;
+    if (ppContainer == NULL) {
+            ERR("Get container called witout a null ppContainer\n");
+        return E_NOINTERFACE;
+    }
+    TRACE("(%p) : Relaying to queryInterface %p %p\n", This, ppContainer, *ppContainer);
     /** From MSDN:
-     * If the surface is created using CreateImageSurface/CreateOffscreenPlainSurface, CreateRenderTarget, 
-     * or CreateDepthStencilSurface, the surface is considered stand alone. In this case, 
-     * GetContainer will return the Direct3D device used to create the surface. 
+     * If the surface is created using CreateImageSurface/CreateOffscreenPlainSurface, CreateRenderTarget,
+     * or CreateDepthStencilSurface, the surface is considered stand alone. In this case,
+     * GetContainer will return the Direct3D device used to create the surface.
      */
-    WARN("Query of container implementation currently ignores riid\n");
-    *ppContainer = This->container;
-    IUnknown_AddRef((IUnknown *)*ppContainer);
-    TRACE("(%p) : returning %p\n", This, *ppContainer);
-    return D3D_OK;
+    hr = IUnknown_QueryInterface(This->container, riid, ppContainer);
+    return hr;
 }
 
 HRESULT WINAPI IWineD3DSurfaceImpl_GetDesc(IWineD3DSurface *iface, WINED3DSURFACE_DESC *pDesc) {
@@ -150,14 +218,15 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
         /*return D3DERR_INVALIDCALL; */
     }
 
-    if (This == This->resource.wineD3DDevice->backBuffer || This == This->resource.wineD3DDevice->renderTarget || This == This->resource.wineD3DDevice->frontBuffer || This->resource.wineD3DDevice->depthStencilBuffer) {
-        if (This == This->resource.wineD3DDevice->backBuffer) {
+    if (iface == This->resource.wineD3DDevice->backBuffer || iface == This->resource.wineD3DDevice->renderTarget || 
+		    iface == This->resource.wineD3DDevice->frontBuffer || iface == This->resource.wineD3DDevice->depthStencilBuffer) {
+        if (iface == This->resource.wineD3DDevice->backBuffer) {
             TRACE("(%p, backBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
-        } else if (This == This->resource.wineD3DDevice->frontBuffer) {
+        } else if (iface == This->resource.wineD3DDevice->frontBuffer) {
             TRACE("(%p, frontBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
-        } else if (This == This->resource.wineD3DDevice->renderTarget) {
+        } else if (iface == This->resource.wineD3DDevice->renderTarget) {
             TRACE("(%p, renderTarget) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
-        } else if (This == This->resource.wineD3DDevice->depthStencilBuffer) {
+        } else if (iface == This->resource.wineD3DDevice->depthStencilBuffer) {
             TRACE("(%p, stencilBuffer) : rect@%p flags(%08lx), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->allocatedMemory);
         }
     } else {
@@ -202,7 +271,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
 
     } else if (D3DUSAGE_RENDERTARGET & This->currentDesc.Usage && !(Flags&D3DLOCK_DISCARD)) { /* render surfaces */
 
-        if (This == This->resource.wineD3DDevice->backBuffer || This == This->resource.wineD3DDevice->renderTarget || This == This->resource.wineD3DDevice->frontBuffer) {
+        if (iface == This->resource.wineD3DDevice->backBuffer || iface == This->resource.wineD3DDevice->renderTarget || iface == This->resource.wineD3DDevice->frontBuffer) {
             GLint  prev_store;
             GLenum prev_read;
 
@@ -221,11 +290,11 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
             glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
             vcheckGLcall("glIntegerv");
 
-            if (This == This->resource.wineD3DDevice->backBuffer) {
+            if (iface == This->resource.wineD3DDevice->backBuffer) {
                 glReadBuffer(GL_BACK);
-            } else if (This == This->resource.wineD3DDevice->frontBuffer || This == This->resource.wineD3DDevice->renderTarget) {
+            } else if (iface == This->resource.wineD3DDevice->frontBuffer || iface == This->resource.wineD3DDevice->renderTarget) {
                 glReadBuffer(GL_FRONT);
-            } else if (This == This->resource.wineD3DDevice->depthStencilBuffer) {
+            } else if (iface == This->resource.wineD3DDevice->depthStencilBuffer) {
                 ERR("Stencil Buffer lock unsupported for now\n");
             }
             vcheckGLcall("glReadBuffer");
@@ -266,15 +335,20 @@ HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, D3DLOCKED_RE
     if (Flags & (D3DLOCK_NO_DIRTY_UPDATE | D3DLOCK_READONLY)) {
         /* Don't dirtify */
     } else {
+        IWineD3DBaseTexture *pBaseTexture;
         /**
          * Dirtify on lock
          * as seen in msdn docs
          */
         IWineD3DSurface_AddDirtyRect(iface, &This->lockedRect);
 
-        /** Dirtify Container if needed */
-        if ((NULL != This->container) && ((IWineD3DDeviceImpl *)This->container != This->resource.wineD3DDevice)) {
-            IWineD3DBaseTexture_SetDirty((IWineD3DBaseTexture *)This->container, TRUE);
+        /** Dirtify Container if needed */        
+        if (D3D_OK == IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&pBaseTexture) && pBaseTexture != NULL) {
+            TRACE("Making container dirty\n");
+            IWineD3DBaseTexture_SetDirty(pBaseTexture, TRUE);            
+            IWineD3DBaseTexture_Release(pBaseTexture);
+        }else{
+            TRACE("Surface is standalone, no need to dirty the container\n");
         }
     }
 
@@ -293,14 +367,15 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         return D3DERR_INVALIDCALL;
     }
 
-    if (This == This->resource.wineD3DDevice->backBuffer || This == This->resource.wineD3DDevice->frontBuffer || This->resource.wineD3DDevice->depthStencilBuffer || This == This->resource.wineD3DDevice->renderTarget) {
-        if (This == This->resource.wineD3DDevice->backBuffer) {
+    if (iface== This->resource.wineD3DDevice->backBuffer || iface == This->resource.wineD3DDevice->frontBuffer || 
+		    iface == This->resource.wineD3DDevice->depthStencilBuffer || iface == This->resource.wineD3DDevice->renderTarget) {
+        if (iface == This->resource.wineD3DDevice->backBuffer) {
             TRACE("(%p, backBuffer) : dirtyfied(%d)\n", This, This->Dirty);
-        } else if (This == This->resource.wineD3DDevice->frontBuffer) {
+        } else if (iface == This->resource.wineD3DDevice->frontBuffer) {
             TRACE("(%p, frontBuffer) : dirtyfied(%d)\n", This, This->Dirty);
-        } else if (This == This->resource.wineD3DDevice->depthStencilBuffer) {
+        } else if (iface == This->resource.wineD3DDevice->depthStencilBuffer) {
             TRACE("(%p, stencilBuffer) : dirtyfied(%d)\n", This, This->Dirty);
-        } else if (This == This->resource.wineD3DDevice->renderTarget) {
+        } else if (iface == This->resource.wineD3DDevice->renderTarget) {
             TRACE("(%p, renderTarget) : dirtyfied(%d)\n", This, This->Dirty);
         }
     } else {
@@ -319,7 +394,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
          */
     } else if (D3DUSAGE_RENDERTARGET & This->currentDesc.Usage) { /* render surfaces */
 
-        if (This == This->resource.wineD3DDevice->backBuffer || This == This->resource.wineD3DDevice->frontBuffer || This == This->resource.wineD3DDevice->renderTarget) {
+        if (iface == This->resource.wineD3DDevice->backBuffer || iface == This->resource.wineD3DDevice->frontBuffer || iface == This->resource.wineD3DDevice->renderTarget) {
             GLint  prev_store;
             GLenum prev_draw;
             GLint  prev_rasterpos[4];
@@ -375,9 +450,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                 checkGLcall("glTranslatef(0.5, 0.5, 0)");
             }
 
-            if (This == This->resource.wineD3DDevice->backBuffer) {
+            if (iface == This->resource.wineD3DDevice->backBuffer) {
                 glDrawBuffer(GL_BACK);
-            } else if (This == This->resource.wineD3DDevice->frontBuffer || This == This->resource.wineD3DDevice->renderTarget) {
+            } else if (iface == This->resource.wineD3DDevice->frontBuffer || iface == This->resource.wineD3DDevice->renderTarget) {
                 glDrawBuffer(GL_FRONT);
             }
             vcheckGLcall("glDrawBuffer");
@@ -406,6 +481,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                     vcheckGLcall("glDrawPixels");
                 }
                 break;
+            case WINED3DFMT_X8R8G8B8: /* FIXME: there's no alpha change with D3DFMT_X8R8G8B8 but were using GL_BGRA */
             case WINED3DFMT_A8R8G8B8:
                 {
                     glPixelStorei(GL_PACK_SWAP_BYTES, TRUE);
@@ -443,7 +519,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
     } else if (D3DUSAGE_DEPTHSTENCIL & This->currentDesc.Usage) { /* stencil surfaces */
 
-        if (This == This->resource.wineD3DDevice->depthStencilBuffer) {
+        if (iface == This->resource.wineD3DDevice->depthStencilBuffer) {
             FIXME("TODO stencil depth surface unlocking surf@%p usage(%lu)\n", This, This->currentDesc.Usage);
         } else {
             FIXME("unsupported unlocking to StencilDepth surface surf@%p usage(%lu)\n", This, This->currentDesc.Usage);
@@ -755,11 +831,29 @@ extern HRESULT WINAPI IWineD3DSurfaceImpl_AddDirtyRect(IWineD3DSurface *iface, C
     return D3D_OK;
 }
 
+HRESULT WINAPI IWineD3DSurfaceImpl_SetContainer(IWineD3DSurface *iface, IUnknown *container) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    TRACE("Setting container to %p from %p\n", container, This->container);
+    This->container = container;
+    return D3D_OK;    
+}
+
+/* TODO: replace this function with context management routines */
+HRESULT WINAPI IWineD3DSurfaceImpl_SetPBufferState(IWineD3DSurface *iface, BOOL inPBuffer, BOOL  inTexture) {
+    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+    
+    This->inPBuffer = inPBuffer;
+    This->inTexture = inTexture;
+    return D3D_OK;
+}
+
 IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
 {
+    /* IUnknown */
     IWineD3DSurfaceImpl_QueryInterface,
     IWineD3DSurfaceImpl_AddRef,
     IWineD3DSurfaceImpl_Release,
+    /* IWineD3DResource */    
     IWineD3DSurfaceImpl_GetParent,
     IWineD3DSurfaceImpl_GetDevice,
     IWineD3DSurfaceImpl_SetPrivateData,
@@ -769,6 +863,7 @@ IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_GetPriority,
     IWineD3DSurfaceImpl_PreLoad,
     IWineD3DSurfaceImpl_GetType,
+    /* IWineD3DSurface */    
     IWineD3DSurfaceImpl_GetContainer,
     IWineD3DSurfaceImpl_GetDesc,
     IWineD3DSurfaceImpl_LockRect,
@@ -779,5 +874,7 @@ IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_CleanDirtyRect,
     IWineD3DSurfaceImpl_AddDirtyRect,
     IWineD3DSurfaceImpl_LoadTexture,
-    IWineD3DSurfaceImpl_SaveSnapshot
+    IWineD3DSurfaceImpl_SaveSnapshot,
+    IWineD3DSurfaceImpl_SetContainer,
+    IWineD3DSurfaceImpl_SetPBufferState    
 };

@@ -54,8 +54,7 @@ ULONG WINAPI IWineD3DVolumeImpl_Release(IWineD3DVolume *iface) {
     TRACE("(%p) : Releasing from %ld\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This->allocatedMemory);
-        IWineD3DDevice_Release((IWineD3DDevice *)This->wineD3DDevice);
+        HeapFree(GetProcessHeap(), 0, This->allocatedMemory);        
         HeapFree(GetProcessHeap(), 0, This);
     } else {
         IUnknown_Release(This->parent);  /* Released the reference to the d3dx object */
@@ -232,11 +231,50 @@ HRESULT WINAPI IWineD3DVolumeImpl_AddDirtyBox(IWineD3DVolume *iface, CONST D3DBO
   return D3D_OK;
 }
 
+HRESULT WINAPI IWineD3DVolumeImpl_SetContainer(IWineD3DVolume *iface, IUnknown* container){
+  IWineD3DVolumeImpl *This = (IWineD3DVolumeImpl *)iface;
+  
+  This->container = container;
+  return D3D_OK;
+}
+
+HRESULT WINAPI IWineD3DVolumeImpl_LoadTexture(IWineD3DVolume *iface, GLenum gl_level) {
+    IWineD3DVolumeImpl *This     = (IWineD3DVolumeImpl *)iface;
+    IWineD3DDeviceImpl  *myDevice = This->wineD3DDevice;
+
+    TRACE("Calling glTexImage3D %x level=%d, intfmt=%x, w=%d, h=%d,d=%d, 0=%d, glFmt=%x, glType=%x, Mem=%p\n",
+            GL_TEXTURE_3D,
+            gl_level,
+            D3DFmt2GLIntFmt(myDevice, This->currentDesc.Format),
+            This->currentDesc.Width,
+            This->currentDesc.Height,
+            This->currentDesc.Depth,
+            0,
+            D3DFmt2GLFmt(myDevice, This->currentDesc.Format),
+            D3DFmt2GLType(myDevice, This->currentDesc.Format),
+            This->allocatedMemory);
+    glTexImage3D(GL_TEXTURE_3D,
+                    gl_level,
+                    D3DFmt2GLIntFmt(myDevice, This->currentDesc.Format),
+                    This->currentDesc.Width,
+                    This->currentDesc.Height,
+                    This->currentDesc.Depth,
+                    0,
+                    D3DFmt2GLFmt(myDevice, This->currentDesc.Format),
+                    D3DFmt2GLType(myDevice, This->currentDesc.Format),
+                    This->allocatedMemory);
+    checkGLcall("glTexImage3D");
+    return D3D_OK;
+    
+}
+
 IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
 {
+    /* IUnknown */
     IWineD3DVolumeImpl_QueryInterface,
     IWineD3DVolumeImpl_AddRef,
     IWineD3DVolumeImpl_Release,
+    /* IWineD3DVolume */
     IWineD3DVolumeImpl_GetParent,
     IWineD3DVolumeImpl_GetDevice,
     IWineD3DVolumeImpl_SetPrivateData,
@@ -246,6 +284,9 @@ IWineD3DVolumeVtbl IWineD3DVolume_Vtbl =
     IWineD3DVolumeImpl_GetDesc,
     IWineD3DVolumeImpl_LockBox,
     IWineD3DVolumeImpl_UnlockBox,
+    /* Internal interface */    
     IWineD3DVolumeImpl_AddDirtyBox,
-    IWineD3DVolumeImpl_CleanDirtyBox
+    IWineD3DVolumeImpl_CleanDirtyBox,
+    IWineD3DVolumeImpl_LoadTexture,
+    IWineD3DVolumeImpl_SetContainer
 };

@@ -377,19 +377,19 @@ typedef struct IWineD3DDeviceImpl
     D3DDEVTYPE                      devType;
 
     /* Render Target Support */
-    IWineD3DSurfaceImpl    *frontBuffer;
-    IWineD3DSurfaceImpl    *backBuffer;
-    IWineD3DSurfaceImpl    *depthStencilBuffer;
+    IWineD3DSurface        *frontBuffer;
+    IWineD3DSurface        *backBuffer;
+    IWineD3DSurface        *depthStencilBuffer;
 
-    IWineD3DSurfaceImpl    *renderTarget;
-    IWineD3DSurfaceImpl    *stencilBufferTarget;
+    IWineD3DSurface        *renderTarget;
+    IWineD3DSurface        *stencilBufferTarget;
 
     /* palettes texture management */
-    PALETTEENTRY                  palettes[MAX_PALETTES][256];
-    UINT                          currentPalette;
+    PALETTEENTRY            palettes[MAX_PALETTES][256];
+    UINT                    currentPalette;
 
     /* For rendering to a texture using glCopyTexImage */
-    BOOL                          renderUpsideDown;
+    BOOL                    renderUpsideDown;
 
     /* Cursor management */
     BOOL                    bCursorVisible;
@@ -474,6 +474,11 @@ typedef struct IWineD3DBaseTextureClass
     UINT                    levels;
     BOOL                    dirty;
     D3DFORMAT               format;
+    D3DPOOL                 pool;
+    DWORD                   usage;
+    UINT                    textureName;    
+    UINT                    LOD;
+    D3DTEXTUREFILTERTYPE    filterType;
 
 } IWineD3DBaseTextureClass;
 
@@ -499,11 +504,10 @@ typedef struct IWineD3DTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
     /* IWineD3DTexture */
-    IWineD3DSurfaceImpl      *surfaces[MAX_LEVELS];
+    IWineD3DSurface          *surfaces[MAX_LEVELS];
     
     UINT                      width;
     UINT                      height;
-    DWORD                     usage;
 
 } IWineD3DTextureImpl;
 
@@ -520,10 +524,10 @@ typedef struct IWineD3DCubeTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
     /* IWineD3DCubeTexture */
-    IWineD3DSurfaceImpl      *surfaces[6][MAX_LEVELS];
+    IWineD3DSurface          *surfaces[6][MAX_LEVELS];
 
     UINT                      edgeLength;
-    DWORD                     usage;
+
 } IWineD3DCubeTextureImpl;
 
 extern IWineD3DCubeTextureVtbl IWineD3DCubeTexture_Vtbl;
@@ -543,7 +547,6 @@ typedef struct IWineD3DVolumeImpl
     IWineD3DDeviceImpl     *wineD3DDevice;
 
     D3DVOLUME_DESC          currentDesc;
-    UINT                    textureName;
     BYTE                   *allocatedMemory;
     IUnknown               *container;
     UINT                    bytesPerPixel;
@@ -570,12 +573,11 @@ typedef struct IWineD3DVolumeTextureImpl
     IWineD3DBaseTextureClass  baseTexture;
 
     /* IWineD3DVolumeTexture */
-    IWineD3DVolumeImpl       *volumes[MAX_LEVELS];
+    IWineD3DVolume           *volumes[MAX_LEVELS];
 
     UINT                      width;
     UINT                      height;
     UINT                      depth;
-    DWORD                     usage;
 } IWineD3DVolumeTextureImpl;
 
 extern IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl;

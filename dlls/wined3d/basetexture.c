@@ -2,7 +2,8 @@
  * IWineD3DBaseTexture Implementation
  *
  * Copyright 2002-2004 Jason Edmeades
- *                     Raphael Junqueira
+ * Copyright 2002-2004 Raphael Junqueira
+ * Copyright 2005 Oliver Stieber
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -57,7 +58,6 @@ ULONG WINAPI IWineD3DBaseTextureImpl_Release(IWineD3DBaseTexture *iface) {
     ULONG ref = InterlockedDecrement(&This->resource.ref);
     TRACE("(%p) : Releasing from %ld\n", This, ref + 1);
     if (ref == 0) {
-        IWineD3DDevice_Release((IWineD3DDevice *)This->resource.wineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This);
     } else {
         IUnknown_Release(This->resource.parent);  /* Released the reference to the d3dx object */
@@ -107,16 +107,35 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_GetParent(IWineD3DBaseTexture *iface, IUn
 /* ******************************************************
    IWineD3DBaseTexture IWineD3DBaseTexture parts follow
    ****************************************************** */
+
+/* There is no OpenGL equivilent of setLOD, getLOD, all they do it priortise testure loading
+ * so just pretend that they work unless something really needs a failure. */
 DWORD WINAPI IWineD3DBaseTextureImpl_SetLOD(IWineD3DBaseTexture *iface, DWORD LODNew) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return 0;
+    
+    if (This->baseTexture.pool != D3DPOOL_MANAGED) {
+        return  D3DERR_INVALIDCALL;
+    }    
+    
+    if(LODNew >= This->baseTexture.levels)
+        LODNew = This->baseTexture.levels - 1;
+     This->baseTexture.LOD = LODNew;
+    
+    TRACE("(%p) : set bogus LOD to %d \n", This, This->baseTexture.LOD);
+    
+    return This->baseTexture.LOD;
 }
 
 DWORD WINAPI IWineD3DBaseTextureImpl_GetLOD(IWineD3DBaseTexture *iface) {
     IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-    FIXME("(%p) : stub\n", This);
-    return 0;
+    
+    if (This->baseTexture.pool != D3DPOOL_MANAGED) {
+        return  D3DERR_INVALIDCALL;
+    }
+    
+    TRACE("(%p) : returning %d \n", This, This->baseTexture.LOD);
+    
+    return This->baseTexture.LOD;
 }
 
 DWORD WINAPI IWineD3DBaseTextureImpl_GetLevelCount(IWineD3DBaseTexture *iface) {
@@ -127,18 +146,29 @@ DWORD WINAPI IWineD3DBaseTextureImpl_GetLevelCount(IWineD3DBaseTexture *iface) {
 
 HRESULT WINAPI IWineD3DBaseTextureImpl_SetAutoGenFilterType(IWineD3DBaseTexture *iface, D3DTEXTUREFILTERTYPE FilterType) {
   IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
-  FIXME("(%p) : stub\n", This);
+
+  if (!(This->baseTexture.usage & D3DUSAGE_AUTOGENMIPMAP)) {
+      TRACE("(%p) : returning invalid call\n", This);
+      return D3DERR_INVALIDCALL;
+  }
+  This->baseTexture.filterType = FilterType;
+  TRACE("(%p) : \n", This);
   return D3D_OK;
 }
 
 D3DTEXTUREFILTERTYPE WINAPI IWineD3DBaseTextureImpl_GetAutoGenFilterType(IWineD3DBaseTexture *iface) {
   IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
   FIXME("(%p) : stub\n", This);
-  return D3DTEXF_NONE;
+  if (!(This->baseTexture.usage & D3DUSAGE_AUTOGENMIPMAP)) {
+     return D3DTEXF_NONE;
+  }
+  return This->baseTexture.filterType;
+  return D3DTEXF_LINEAR; /* default */
 }
 
 void WINAPI IWineD3DBaseTextureImpl_GenerateMipSubLevels(IWineD3DBaseTexture *iface) {
   IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+  /* TODO: implement filters using GL_SGI_generate_mipmaps http://oss.sgi.com/projects/ogl-sample/registry/SGIS/generate_mipmap.txt */  
   FIXME("(%p) : stub\n", This);
   return ;
 }
@@ -157,11 +187,29 @@ BOOL WINAPI IWineD3DBaseTextureImpl_GetDirty(IWineD3DBaseTexture *iface) {
     return This->baseTexture.dirty;
 }
 
+HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    FIXME("(%p) : This shouldn't be called\n", This);
+    return D3D_OK;
+}
+HRESULT WINAPI IWineD3DBaseTextureImpl_UnBindTexture(IWineD3DBaseTexture *iface) {
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    FIXME("(%p) : This shouldn't be called\n", This);
+    return D3D_OK;
+}
+
+UINT WINAPI IWineD3DBaseTextureImpl_GetTextureDimensions(IWineD3DBaseTexture *iface){
+    IWineD3DBaseTextureImpl *This = (IWineD3DBaseTextureImpl *)iface;
+    FIXME("(%p) : This shouldn't be called\n", This);
+    return D3D_OK;
+}
+
 IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
 {
     IWineD3DBaseTextureImpl_QueryInterface,
     IWineD3DBaseTextureImpl_AddRef,
     IWineD3DBaseTextureImpl_Release,
+    /* IWineD3DResource */
     IWineD3DBaseTextureImpl_GetParent,
     IWineD3DBaseTextureImpl_GetDevice,
     IWineD3DBaseTextureImpl_SetPrivateData,
@@ -171,6 +219,8 @@ IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
     IWineD3DBaseTextureImpl_GetPriority,
     IWineD3DBaseTextureImpl_PreLoad,
     IWineD3DBaseTextureImpl_GetType,
+    
+    /*IWineD3DBaseTexture*/
     IWineD3DBaseTextureImpl_SetLOD,
     IWineD3DBaseTextureImpl_GetLOD,
     IWineD3DBaseTextureImpl_GetLevelCount,
@@ -178,5 +228,10 @@ IWineD3DBaseTextureVtbl IWineD3DBaseTexture_Vtbl =
     IWineD3DBaseTextureImpl_GetAutoGenFilterType,
     IWineD3DBaseTextureImpl_GenerateMipSubLevels,
     IWineD3DBaseTextureImpl_SetDirty,
-    IWineD3DBaseTextureImpl_GetDirty
+    IWineD3DBaseTextureImpl_GetDirty,
+    /* internal */
+    IWineD3DBaseTextureImpl_BindTexture,
+    IWineD3DBaseTextureImpl_UnBindTexture,
+    IWineD3DBaseTextureImpl_GetTextureDimensions
+
 };
