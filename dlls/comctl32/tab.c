@@ -774,7 +774,7 @@ static void TAB_DrawItem(
 
   if (isVisible)
   {
-    HBRUSH hbr       = CreateSolidBrush (GetSysColor(COLOR_BACKGROUND));    
+    HBRUSH hbr       = CreateSolidBrush (GetSysColor(COLOR_BTNFACE));    
     HPEN   hwPen     = GetSysColorPen (COLOR_3DHILIGHT);
     HPEN   hbPen     = GetSysColorPen (COLOR_BTNSHADOW);
     HPEN   hsdPen    = GetSysColorPen (COLOR_BTNTEXT);
@@ -847,7 +847,7 @@ static void TAB_DrawItem(
       /* 
        * Background color. 
        */
-      hbr = CreateSolidBrush(GetSysColor(COLOR_BACKGROUND));    
+      hbr = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));    
 
       /*
        * We draw a rectangle of different sizes depending on the selection
@@ -1086,7 +1086,7 @@ static LRESULT TAB_EraseBackground(
   HDC  hdc;
   RECT clientRect;
 
-  HBRUSH brush = CreateSolidBrush(GetSysColor(COLOR_BACKGROUND));
+  HBRUSH brush = CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
 
   hdc = givenDC ? givenDC : GetDC(hwnd);
 
