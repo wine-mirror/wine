@@ -1062,6 +1062,10 @@ LONG WINAPI RegSaveKeyA( HKEY hkey, LPCSTR file, LPSECURITY_ATTRIBUTES sa )
                             CREATE_NEW, FILE_ATTRIBUTE_NORMAL, -1 );
         if (handle != INVALID_HANDLE_VALUE) break;
         if ((ret = GetLastError()) != ERROR_ALREADY_EXISTS) goto done;
+
+        /* Something gone haywire ? Please report if this happens abnormally */
+        if (count >= 100)
+            MESSAGE("Wow, we are already fiddling with a temp file %s with an ordinal as high as %d !\nYou might want to delete all corresponding temp files in that directory.\n", buffer, count);
     }
 
     req->hkey = hkey;
