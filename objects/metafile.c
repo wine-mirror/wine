@@ -1352,9 +1352,18 @@ UINT WINAPI GetWinMetaFileBits(HENHMETAFILE hemf,
                                 UINT cbBuffer, LPBYTE lpbBuffer,
                                 INT fnMapMode, HDC hdcRef)
 {
+    HDC hdcmf;
+    HMETAFILE hmf;
+    UINT ret;
+
     FIXME("(%d,%d,%p,%d,%d): stub\n",
 	  hemf, cbBuffer, lpbBuffer, fnMapMode, hdcRef);
-    return 0;
+    hdcmf = CreateMetaFileA(NULL);
+/*  PlayEnhMetaFile(hdcmf, hemf, lpRect); where does the bounding rect come from? */
+    hmf = CloseMetaFile(hdcmf);
+    ret = GetMetaFileBitsEx(hmf, cbBuffer, lpbBuffer);
+    DeleteMetaFile(hmf);
+    return ret;
 }
 
 /******************************************************************
@@ -1442,14 +1451,15 @@ static BOOL MF_Play_MetaExtTextOut(HDC16 hdc, METARECORD *mr)
     LPSTR sot;
     DWORD len;
     WORD s1;
+    BOOL isrect = mr->rdParm[3] & (ETO_OPAQUE | ETO_CLIPPED);
 
     s1 = mr->rdParm[2];                              /* String length */
     len = sizeof(METARECORD) + (((s1 + 1) >> 1) * 2) + 2 * sizeof(short)
-      + sizeof(UINT16) +  (mr->rdParm[3] ? sizeof(RECT16) : 0);
+      + sizeof(UINT16) + (isrect ? sizeof(RECT16) : 0);
                                            /* rec len without dx array */
 
     sot = (LPSTR)&mr->rdParm[4];		      /* start_of_text */
-    if (mr->rdParm[3])
+    if (isrect)
         sot += sizeof(RECT16);  /* there is a rectangle, so add offset */
 
     if (mr->rdSize == len / 2)
