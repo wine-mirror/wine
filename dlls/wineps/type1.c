@@ -34,7 +34,6 @@ struct tagTYPE1 {
     DWORD glyph_sent_size;
     BOOL *glyph_sent;
     DWORD emsize;
-    HFONT unscaled_font;
 };
 
 #define GLYPH_SENT_INC 128
@@ -55,8 +54,6 @@ TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
 {
     char *buf;
     TYPE1 *t1;
-    LOGFONTW lf;
-    RECT rc;
 
     char dict[] = /* name, emsquare, fontbbox */
       "25 dict begin\n"
@@ -85,12 +82,6 @@ TYPE1 *T1_download_header(PSDRV_PDEVICE *physDev, LPOUTLINETEXTMETRICA potm,
     t1 = HeapAlloc(GetProcessHeap(), 0, sizeof(*t1));
     t1->emsize = potm->otmEMSquare;
 
-    GetObjectW(GetCurrentObject(physDev->hdc, OBJ_FONT), sizeof(lf), &lf);
-    rc.left = rc.right = rc.bottom = 0;
-    rc.top = t1->emsize;
-    DPtoLP(physDev->hdc, (POINT*)&rc, 2);
-    lf.lfHeight = -abs(rc.top - rc.bottom);
-    t1->unscaled_font = CreateFontIndirectW(&lf);
     t1->glyph_sent_size = GLYPH_SENT_INC;
     t1->glyph_sent = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 			       t1->glyph_sent_size *
@@ -189,12 +180,15 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
     TYPE1 *t1;
     STR *charstring;
     BYTE *bytes;
-    HFONT old_font;
+    HFONT old_font, unscaled_font;
     GLYPHMETRICS gm;
     char *glyph_buf;
     POINT curpos;
     TTPOLYGONHEADER *pph;
     TTPOLYCURVE *ppc;
+    LOGFONTW lf;
+    RECT rc;
+
     char glyph_def_begin[] =
       "/%s findfont dup\n"
       "/Private get begin\n"
@@ -218,7 +212,13 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 				      t1->glyph_sent_size * sizeof(*(t1->glyph_sent)));
     }
 
-    old_font = SelectObject(physDev->hdc, t1->unscaled_font);
+    GetObjectW(GetCurrentObject(physDev->hdc, OBJ_FONT), sizeof(lf), &lf);
+    rc.left = rc.right = rc.bottom = 0;
+    rc.top = t1->emsize;
+    DPtoLP(physDev->hdc, (POINT*)&rc, 2);
+    lf.lfHeight = -abs(rc.top - rc.bottom);
+    unscaled_font = CreateFontIndirectW(&lf);
+    old_font = SelectObject(physDev->hdc, unscaled_font);
     len = GetGlyphOutlineW(physDev->hdc, index, GGO_GLYPH_INDEX | GGO_BEZIER,
 			   &gm, 0, NULL, NULL);
     if(len == GDI_ERROR) return FALSE;
@@ -227,6 +227,7 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 		     &gm, len, glyph_buf, NULL);
 
     SelectObject(physDev->hdc, old_font);
+    DeleteObject(unscaled_font);
 
     charstring = str_init(100);
 
@@ -297,7 +298,6 @@ BOOL T1_download_glyph(PSDRV_PDEVICE *physDev, DOWNLOAD *pdl, DWORD index,
 void T1_free(TYPE1 *t1)
 {
     HeapFree(GetProcessHeap(), 0, t1->glyph_sent);
-    DeleteObject(t1->unscaled_font);
     HeapFree(GetProcessHeap(), 0, t1);
     return;
 }
