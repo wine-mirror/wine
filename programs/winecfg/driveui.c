@@ -365,6 +365,8 @@ static void update_controls(HWND dialog)
     type = current_drive->type;
     if (type)
     {
+        SendDlgItemMessage(dialog, IDC_COMBO_TYPE, CB_RESETCONTENT, 0, 0);
+        
         for (i = 0; i < sizeof(type_pairs) / sizeof(struct drive_typemap); i++)
         {
             SendDlgItemMessage(dialog, IDC_COMBO_TYPE, CB_ADDSTRING, 0, (LPARAM) type_pairs[i].sDesc);
