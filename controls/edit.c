@@ -2154,6 +2154,13 @@ static void EDIT_SetRectNP(WND *wnd, EDITSTATE *es, LPRECT rc)
  */
 static void EDIT_UnlockBuffer(WND *wnd, EDITSTATE *es, BOOL force)
 {
+    /* Edit window might be already destroyed */
+    if(!IsWindow(wnd->hwndSelf))
+    {
+	WARN("edit wnd %04x already destroyed\n", wnd->hwndSelf);
+	return;
+    }
+
 	if (!es) {
 		ERR("no EDITSTATE ... please report\n");
 		return;
