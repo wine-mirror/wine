@@ -19,6 +19,7 @@ static int MSVCRT_atexit_table_size = 0;
 static int MSVCRT_atexit_registered = 0; /* Points to free slot */
 
 extern int MSVCRT_app_type;
+void *__cdecl MSVCRT_realloc(void *ptr, unsigned int size);
 
 /* INTERNAL: call atexit functions */
 void __MSVCRT__call_atexit(void)
@@ -39,11 +40,36 @@ void __MSVCRT__call_atexit(void)
 /*********************************************************************
  *		__dllonexit (MSVCRT.@)
  */
-void __cdecl MSVCRT___dllonexit (MSVCRT_atexit_func func, MSVCRT_atexit_func **start,
-                                 MSVCRT_atexit_func **end)
+MSVCRT_atexit_func __cdecl MSVCRT___dllonexit(MSVCRT_atexit_func func,
+                                              MSVCRT_atexit_func **start,
+                                              MSVCRT_atexit_func **end)
 {
-  FIXME("(%p,%p,%p)stub\n", func, start,end);
-  /* FIXME: How do we know when to increase the table? */
+  MSVCRT_atexit_func *tmp;
+  int len;
+
+  TRACE("(%p,%p,%p)\n", func, start, end);
+
+  if (!start || !*start || !end || !*end)
+  {
+   FIXME("bad table\n");
+   return NULL;
+  }
+
+  len = (*end - *start);
+
+  TRACE("table start %p-%p, %d entries\n", *start, *end, len);
+
+  if (++len <= 0)
+    return NULL;
+
+  tmp = (MSVCRT_atexit_func *)MSVCRT_realloc(*start, len * sizeof(tmp));
+  if (!tmp)
+    return NULL;
+  *start = tmp;
+  *end = tmp + len;
+  tmp[len - 1] = func;
+  TRACE("new table start %p-%p, %d entries\n", *start, *end, len);
+  return func;
 }
 
 /*********************************************************************
