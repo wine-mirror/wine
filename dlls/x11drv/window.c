@@ -116,11 +116,12 @@ static int get_window_attributes( Display *display, WND *win, XSetWindowAttribut
     attr->colormap          = X11DRV_PALETTE_PaletteXColormap;
     attr->save_under        = ((win->clsStyle & CS_SAVEBITS) != 0);
     attr->cursor            = x11drv_thread_data()->cursor;
-    attr->event_mask        = (ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
+    attr->event_mask        = (ExposureMask | PointerMotionMask |
                                ButtonPressMask | ButtonReleaseMask | EnterWindowMask);
 
     if (is_window_top_level( win ))
-        attr->event_mask |= StructureNotifyMask | FocusChangeMask | KeymapStateMask;
+        attr->event_mask |= (KeyPressMask | KeyReleaseMask | StructureNotifyMask |
+                             FocusChangeMask | KeymapStateMask);
 
     return (CWOverrideRedirect | CWSaveUnder | CWEventMask | CWColormap | CWCursor);
 }
@@ -717,7 +718,7 @@ static Window create_client_window( Display *display, WND *win )
     OffsetRect( &rect, -data->whole_rect.left, -data->whole_rect.top );
     data->client_rect = rect;
 
-    attr.event_mask = (ExposureMask | KeyPressMask | KeyReleaseMask | PointerMotionMask |
+    attr.event_mask = (ExposureMask | PointerMotionMask |
                        ButtonPressMask | ButtonReleaseMask | EnterWindowMask);
     attr.bit_gravity = (win->clsStyle & (CS_VREDRAW | CS_HREDRAW)) ?
                        ForgetGravity : NorthWestGravity;

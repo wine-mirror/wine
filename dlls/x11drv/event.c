@@ -399,6 +399,7 @@ static void set_focus( HWND hwnd, Time time )
     SetForegroundWindow( hwnd );
 
     focus = GetFocus();
+    if (focus) focus = GetAncestor( focus, GA_ROOT );
     win = X11DRV_get_whole_window(focus);
 
     if (win)
@@ -451,6 +452,7 @@ static void handle_wm_protocols_message( HWND hwnd, XClientMessageEvent *event )
         else
         {
             hwnd = GetFocus();
+            if (hwnd) hwnd = GetAncestor( hwnd, GA_ROOT );
             if (!hwnd) hwnd = GetActiveWindow();
             if (!hwnd) hwnd = last_focus;
             if (hwnd && can_activate_window(hwnd)) set_focus( hwnd, event_time );
@@ -486,6 +488,7 @@ static void EVENT_FocusIn( HWND hwnd, XFocusChangeEvent *event )
     if (!can_activate_window(hwnd))
     {
         HWND hwnd = GetFocus();
+        if (hwnd) hwnd = GetAncestor( hwnd, GA_ROOT );
         if (!hwnd) hwnd = GetActiveWindow();
         if (!hwnd) hwnd = x11drv_thread_data()->last_focus;
         if (hwnd && can_activate_window(hwnd)) set_focus( hwnd, CurrentTime );
