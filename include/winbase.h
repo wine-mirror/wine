@@ -183,7 +183,7 @@ typedef struct _OFSTRUCT
 #define DRIVE_CDROM                5
 #define DRIVE_RAMDISK              6
 
-#define MAX_COMPUTERNAME_LENGTH    31
+#define MAX_COMPUTERNAME_LENGTH    15
 
 /* The security attributes structure */
 typedef struct _SECURITY_ATTRIBUTES
