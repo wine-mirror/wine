@@ -3392,7 +3392,7 @@ typedef struct tagCOMBOBOXEXITEMA
     int iIndent;
     LPARAM lParam;
 } COMBOBOXEXITEMA, *PCOMBOBOXEXITEMA;
-typedef COMBOBOXEXITEMA CONST *PCCOMBOEXITEMA; /* Yes, there's a BOX missing */
+typedef COMBOBOXEXITEMA const *PCCOMBOEXITEMA; /* Yes, there's a BOX missing */
 
 typedef struct tagCOMBOBOXEXITEMW
 {
@@ -3406,7 +3406,7 @@ typedef struct tagCOMBOBOXEXITEMW
     int iIndent;
     LPARAM lParam;
 } COMBOBOXEXITEMW, *PCOMBOBOXEXITEMW;
-typedef COMBOBOXEXITEMW CONST *PCCOMBOEXITEMW; /* Yes, there's a BOX missing */
+typedef COMBOBOXEXITEMW const *PCCOMBOEXITEMW; /* Yes, there's a BOX missing */
 
 #define COMBOBOXEXITEM WINELIB_NAME_AW(COMBOBOXEXITEM)
 #define PCOMBOBOXEXITEM WINELIB_NAME_AW(PCOMBOBOXEXITEM)
