@@ -500,12 +500,12 @@ type	win32
 497 stdcall RtlSubAuthoritySid(ptr long) RtlSubAuthoritySid
 498 stub RtlSubtreePredecessor
 499 stub RtlSubtreeSuccessor
-500 stub RtlSystemTimeToLocalTime
+500 stdcall RtlSystemTimeToLocalTime (long long) RtlSystemTimeToLocalTime
 501 stub RtlTimeFieldsToTime
 502 stdcall RtlTimeToElapsedTimeFields(long long) RtlTimeToElapsedTimeFields
 503 stdcall RtlTimeToSecondsSince1970(ptr ptr) RtlTimeToSecondsSince1970
 504 stdcall RtlTimeToSecondsSince1980(ptr ptr) RtlTimeToSecondsSince1980
-505 stub RtlTimeToTimeFields
+505 stdcall RtlTimeToTimeFields (long long) RtlTimeToTimeFields
 506 stub RtlUnicodeStringToAnsiSize
 507 stdcall RtlUnicodeStringToAnsiString(ptr ptr long) RtlUnicodeStringToAnsiString
 508 stub RtlUnicodeStringToCountedOemString

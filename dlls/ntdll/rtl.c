@@ -814,3 +814,17 @@ DWORD WINAPI RtlIntegerToChar(DWORD x1,DWORD x2,DWORD x3,DWORD x4) {
 	FIXME(ntdll,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx),stub!\n",x1,x2,x3,x4);
 	return 0;
 }
+/******************************************************************************
+ *  RtlSystemTimeToLocalTime 	[NTDLL] 
+ */
+DWORD WINAPI RtlSystemTimeToLocalTime(DWORD x1,DWORD x2) {
+	FIXME(ntdll,"(0x%08lx,0x%08lx),stub!\n",x1,x2);
+	return 0;
+}
+/******************************************************************************
+ *  RtlTimeToTimeFields 	[NTDLL] 
+ */
+DWORD WINAPI RtlTimeToTimeFields(DWORD x1,DWORD x2) {
+	FIXME(ntdll,"(0x%08lx,0x%08lx),stub!\n",x1,x2);
+	return 0;
+}

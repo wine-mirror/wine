@@ -177,8 +177,8 @@ type	win32
 0173 stdcall RegUnLoadKeyW(long wstr) RegUnLoadKey32W
 0174 stdcall RegisterEventSourceA(ptr ptr) RegisterEventSource32A
 0175 stdcall RegisterEventSourceW(ptr ptr) RegisterEventSource32W
-0176 stub RegisterServiceCtrlHandlerA
-0177 stub RegisterServiceCtrlHandlerW
+0176 stdcall RegisterServiceCtrlHandlerA (ptr ptr) RegisterServiceCtrlHandlerA
+0177 stdcall RegisterServiceCtrlHandlerW (ptr ptr) RegisterServiceCtrlHandlerW
 0178 stub ReportEventA
 0179 stub ReportEventW
 0180 stub RevertToSelf
@@ -193,7 +193,7 @@ type	win32
 0189 stub SetSecurityDescriptorSacl
 0190 stub SetServiceBits
 0191 stub SetServiceObjectSecurity
-0192 stub SetServiceStatus
+0192 stdcall SetServiceStatus(long long)SetServiceStatus
 0193 stub SetThreadToken
 0194 stub SetTokenInformation
 0195 stdcall StartServiceA(long long ptr) StartService32A

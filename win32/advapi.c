@@ -16,8 +16,12 @@
  *           StartServiceCtrlDispatcherA   [ADVAPI32.196]
  */
 BOOL32 WINAPI StartServiceCtrlDispatcher32A(LPSERVICE_TABLE_ENTRY32A servent)
-{
-	FIXME(advapi,"(%p '%s'): STUB.\n",servent,servent->lpServiceName);
+{	LPSERVICE_TABLE_ENTRY32A ptr = servent;
+
+	while (ptr->lpServiceName)
+	{ FIXME(advapi,"%s at %p\n", ptr->lpServiceName, ptr);
+	  ptr++;
+	}
 	return TRUE;
 }
 
@@ -25,15 +29,48 @@ BOOL32 WINAPI StartServiceCtrlDispatcher32A(LPSERVICE_TABLE_ENTRY32A servent)
  *           StartServiceCtrlDispatcherW   [ADVAPI32.197]
  */
 BOOL32 WINAPI StartServiceCtrlDispatcher32W(LPSERVICE_TABLE_ENTRY32W servent)
-{
-	char	buffer[200];
-
-	lstrcpynWtoA(buffer,servent->lpServiceName,200);
-	FIXME(advapi,"(%p '%s'): STUB.\n",servent,buffer);
+{	LPSERVICE_TABLE_ENTRY32W ptr = servent;
+	LPSERVICE_MAIN_FUNCTION32W fpMain;
+	
+	while (ptr->lpServiceName)
+	{ FIXME(advapi,"%s at %p): STUB.\n", debugstr_w(ptr->lpServiceName),ptr);
+	  fpMain = ptr->lpServiceProc;
+	  fpMain(0,NULL);	/* try to start the service */
+	  ptr++;
+	}
 	return TRUE;
 }
 
-
+typedef DWORD       SERVICE_STATUS_HANDLE; 
+typedef VOID (WINAPI *LPHANDLER_FUNCTION)( DWORD    dwControl);
+ /***********************************************************************
+ *           RegisterServiceCtrlHandlerA   [ADVAPI32.176]
+ */
+SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerA (LPSTR lpServiceName, LPHANDLER_FUNCTION lpfHandler)
+{	FIXME(advapi,"%s %p\n", lpServiceName, lpfHandler);
+	return 0xcacacafe;	
+}
+ /***********************************************************************
+ *           RegisterServiceCtrlHandlerW   [ADVAPI32.177]
+ */
+SERVICE_STATUS_HANDLE WINAPI RegisterServiceCtrlHandlerW (LPWSTR lpServiceName, LPHANDLER_FUNCTION lpfHandler)
+{	FIXME(advapi,"%s %p\n", debugstr_w(lpServiceName), lpfHandler);
+	return 0xcacacafe;	
+}
+ /***********************************************************************
+ *           SetServiceStatus   [ADVAPI32.192]
+ */
+BOOL32 WINAPI SetServiceStatus(SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus)
+{	FIXME(advapi,"%lx %p\n",hService, lpStatus);
+	TRACE(advapi,"\tType:%lx\n",lpStatus->dwServiceType);
+	TRACE(advapi,"\tState:%lx\n",lpStatus->dwCurrentState);
+	TRACE(advapi,"\tControlAccepted:%lx\n",lpStatus->dwControlsAccepted);
+	TRACE(advapi,"\tExitCode:%lx\n",lpStatus->dwWin32ExitCode);
+	TRACE(advapi,"\tServiceExitCode:%lx\n",lpStatus->dwServiceSpecificExitCode);
+	TRACE(advapi,"\tCheckPoint:%lx\n",lpStatus->dwCheckPoint);
+	TRACE(advapi,"\tWaitHint:%lx\n",lpStatus->dwWaitHint);
+	return TRUE;
+}
 /******************************************************************************
  * OpenProcessToken [ADVAPI32.109]
  * Opens the access token associated with a process
