@@ -27,7 +27,7 @@
 @ stub GetSetFileTimestamp
 @ stub GetVersionInfoFromImage
 @ stub InfIsFromOemLocation
-@ stub InstallHinfSection
+@ stdcall InstallHinfSection(long long str long)
 @ stub InstallHinfSectionA
 @ stub InstallHinfSectionW
 @ stub InstallStop
@@ -68,6 +68,7 @@
 @ stdcall SetupCommitFileQueueW(long long ptr ptr)
 @ stub SetupCopyErrorA
 @ stub SetupCopyErrorW
+@ stdcall SetupCopyOEMInfA(str str long long ptr long ptr ptr)
 @ stub SetupCopyOEMInfW
 @ stub SetupCreateDiskSpaceListA
 @ stub SetupCreateDiskSpaceListW

@@ -161,3 +161,23 @@ DWORD WINAPI CM_Disconnect_Machine(DWORD handle)
   return  CR_SUCCESS;
 
 }
+
+/***********************************************************************
+ *		SetupCopyOEMInfA  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupCopyOEMInfA(LPCSTR sourceinffile, LPCSTR sourcemedialoc,
+			    DWORD mediatype, DWORD copystyle, LPSTR destinfname,
+			    DWORD destnamesize, PDWORD required,
+			    LPSTR destinfnamecomponent)
+{
+  FIXME("stub: source %s location %s ...\n",sourceinffile, sourcemedialoc);
+  return FALSE;
+}
+
+/***********************************************************************
+ *		InstallHinfSection  (SETUPAPI.@)
+ */
+void WINAPI InstallHinfSection(HWND hwnd, HINSTANCE handle, LPCSTR cmdline, INT show)
+{
+    FIXME("stub, hwnd %p, handle %p, cmdline %s\n", hwnd, handle, debugstr_a(cmdline));
+}
