@@ -15,6 +15,7 @@ dnl **** Command-line arguments ****
 dnl Default values
 MAIN_TARGET=emu
 LIB_TARGET=libwine.a
+ALT_LINK=" "
 TRACE_MSGS=yes	# the TRACE() macro
 DEBUG_MSGS=yes	# the TRACE(), WARN(), and FIXME() macros.
 
@@ -28,7 +29,7 @@ AC_ARG_ENABLE(dll,
 
 AC_ARG_ENABLE(lib,
 [  --disable-lib           build the Wine without building libwine.a],
-[if test "$enableval" = "no"; then LIB_TARGET="\$(LIBOBJS)"; fi])
+[if test "$enableval" = "no"; then ALT_LINK="\$(LIBOBJS)"; LIB_TARGET=""; fi])
 
 dnl AC_ARG_WITH(ipc,
 dnl [  --enable-ipc            use inter-process communication for DDE],
@@ -47,6 +48,7 @@ AC_ARG_WITH(reentrant-x,
 
 AC_SUBST(MAIN_TARGET)
 AC_SUBST(LIB_TARGET)
+AC_SUBST(ALT_LINK)
 AC_SUBST(OPTIONS)
 
 if test "$DEBUG_MSGS" = "no"

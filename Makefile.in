@@ -117,6 +117,8 @@ EMUOBJS = \
 
 LIB_TARGET  = @LIB_TARGET@
 
+ALT_LINK    = @ALT_LINK@
+
 all: $(MAIN_TARGET)
 
 @MAKE_RULES@
@@ -130,7 +132,7 @@ emu: wine
 lib: $(LIBSUBDIRS) $(LIB_TARGET)
 
 wine wine.sym: $(LIBSUBDIRS) $(LIB_TARGET) $(EMUSUBDIRS) dummy
-	$(CC) -o wine $(EMUOBJS) $(LIB_TARGET) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
+	$(CC) -o wine $(EMUOBJS) $(LIB_TARGET) $(ALT_LINK) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 	nm -n wine | grep -v _compiled >wine.sym
 
 libwine.a: $(LIBOBJS)
@@ -151,7 +153,7 @@ uninstall_emu: uninstall_lib
 
 install_lib: install_includes
 	[ -d $(libdir) ] || $(MKDIR) $(libdir)
-	$(INSTALL_DATA) $(LIB_TARGET) $(libdir)
+	if [ $(LIB_TARGET) ]; then $(INSTALL_DATA) $(LIB_TARGET) $(libdir); fi
 	$(INSTALL_DATA) wine.sym $(libdir)/wine.sym
 
 uninstall_lib: uninstall_includes
