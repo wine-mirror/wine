@@ -294,7 +294,7 @@
 @ stdcall GetPropA(long str)
 @ stdcall GetPropW(long wstr)
 @ stdcall GetQueueStatus(long)
-@ stdcall GetScrollBarInfo(long long ptr)
+@ stub GetScrollBarInfo
 @ stdcall GetScrollInfo(long long ptr)
 @ stdcall GetScrollPos(long long)
 @ stdcall GetScrollRange(long long ptr ptr)
