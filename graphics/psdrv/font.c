@@ -188,6 +188,7 @@ BOOL PSDRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
 
     TRACE(psdrv, "first = %d last = %d\n", firstChar, lastChar);
 
+    if(lastChar > 0xff) return FALSE;
     for( i = firstChar; i <= lastChar; i++ )
         *buffer++ = physDev->font.afm->CharWidths[i] * physDev->font.scale;
 
