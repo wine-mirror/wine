@@ -287,8 +287,8 @@ extern INT X11DRV_CoerceDIBSection2(HBITMAP bmp,INT,BOOL);
 extern INT X11DRV_LockDIBSection2(HBITMAP bmp,INT,BOOL);
 extern void X11DRV_UnlockDIBSection2(HBITMAP bmp,BOOL);
 
-extern HBITMAP X11DRV_DIB_CreateDIBSection(X11DRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage,
-					   LPVOID *bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
+extern HBITMAP X11DRV_DIB_CreateDIBSection(X11DRV_PDEVICE *physDev, const BITMAPINFO *bmi, UINT usage,
+                                           VOID **bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
 extern void X11DRV_DIB_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
 extern INT X11DRV_DIB_Coerce(struct tagBITMAPOBJ *,INT,BOOL);
 extern INT X11DRV_DIB_Lock(struct tagBITMAPOBJ *,INT,BOOL);

@@ -4505,8 +4505,8 @@ static XImage *X11DRV_XShmCreateImage( int width, int height, int bpp,
  *           X11DRV_DIB_CreateDIBSection
  */
 HBITMAP X11DRV_DIB_CreateDIBSection(
-  X11DRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage,
-  LPVOID *bits, HANDLE section,
+  X11DRV_PDEVICE *physDev, const BITMAPINFO *bmi, UINT usage,
+  VOID **bits, HANDLE section,
   DWORD offset, DWORD ovr_pitch)
 {
   HBITMAP res = 0;
@@ -4516,7 +4516,7 @@ HBITMAP X11DRV_DIB_CreateDIBSection(
   int nColorMap;
 
   /* Fill BITMAP32 structure with DIB data */
-  BITMAPINFOHEADER *bi = &bmi->bmiHeader;
+  const BITMAPINFOHEADER *bi = &bmi->bmiHeader;
   INT effHeight, totalSize;
   BITMAP bm;
   LPVOID mapBits = NULL;

@@ -36,7 +36,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 /* FIXME */
-extern HBITMAP DIB_CreateDIBSection( HDC hdc, BITMAPINFO *bmi, UINT usage, LPVOID *bits,
+extern HBITMAP DIB_CreateDIBSection( HDC hdc, const BITMAPINFO *bmi, UINT usage, VOID **bits,
                                      HANDLE section, DWORD offset, DWORD ovr_pitch );
 
 static ICOM_VTABLE(IDirectDrawSurface7) DIB_IDirectDrawSurface7_VTable;

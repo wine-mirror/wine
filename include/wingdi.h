@@ -3167,8 +3167,8 @@ HBITMAP   WINAPI CreateDIBitmap(HDC,const BITMAPINFOHEADER*,DWORD,
                                     LPCVOID,const BITMAPINFO*,UINT);
 HBRUSH    WINAPI CreateDIBPatternBrush(HGLOBAL,UINT);
 HBRUSH    WINAPI CreateDIBPatternBrushPt(const void*,UINT);
-HBITMAP   WINAPI CreateDIBSection (HDC, BITMAPINFO *, UINT,
-				       LPVOID *, HANDLE, DWORD offset);
+HBITMAP   WINAPI CreateDIBSection(HDC, CONST BITMAPINFO *, UINT,
+                                  VOID **, HANDLE, DWORD offset);
 HBITMAP   WINAPI CreateDiscardableBitmap(HDC,INT,INT);
 HRGN      WINAPI CreateEllipticRgn(INT,INT,INT,INT);
 HRGN      WINAPI CreateEllipticRgnIndirect(const RECT *);

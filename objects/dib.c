@@ -841,7 +841,7 @@ HBITMAP WINAPI CreateDIBitmap( HDC hdc, const BITMAPINFOHEADER *header,
 /***********************************************************************
  *           CreateDIBSection    (GDI.489)
  */
-HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
+HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, const BITMAPINFO *bmi, UINT16 usage,
                                      SEGPTR *bits16, HANDLE section, DWORD offset)
 {
     LPVOID bits32;
@@ -853,7 +853,7 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
         BITMAPOBJ *bmp = (BITMAPOBJ *) GDI_GetObjPtr(hbitmap, BITMAP_MAGIC);
         if (bmp && bmp->dib && bits32)
         {
-            BITMAPINFOHEADER *bi = &bmi->bmiHeader;
+            const BITMAPINFOHEADER *bi = &bmi->bmiHeader;
             INT height = bi->biHeight >= 0 ? bi->biHeight : -bi->biHeight;
             INT width_bytes = DIB_GetDIBWidthBytes(bi->biWidth, bi->biBitCount);
             INT size  = (bi->biSizeImage && bi->biCompression != BI_RGB) ?
@@ -881,8 +881,8 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, BITMAPINFO *bmi, UINT16 usage,
 /***********************************************************************
  *           DIB_CreateDIBSection
  */
-HBITMAP DIB_CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
-			     LPVOID *bits, HANDLE section,
+HBITMAP DIB_CreateDIBSection(HDC hdc, const BITMAPINFO *bmi, UINT usage,
+			     VOID **bits, HANDLE section,
 			     DWORD offset, DWORD ovr_pitch)
 {
     HBITMAP hbitmap = 0;
@@ -895,12 +895,6 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
         hdc = CreateCompatibleDC(0);
         bDesktopDC = TRUE;
     }
-
-    /* Windows ignores the supplied values of biClrUsed and biClrImportant thus: */
-    if (bmi->bmiHeader.biBitCount >= 1 && bmi->bmiHeader.biBitCount <= 8)
-        bmi->bmiHeader.biClrUsed = bmi->bmiHeader.biClrImportant = 1L << bmi->bmiHeader.biBitCount;
-    else
-        bmi->bmiHeader.biClrUsed = bmi->bmiHeader.biClrImportant = 0;
 
     if ((dc = DC_GetDCPtr( hdc )))
     {
@@ -918,8 +912,8 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
 /***********************************************************************
  *           CreateDIBSection    (GDI32.@)
  */
-HBITMAP WINAPI CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
-				LPVOID *bits, HANDLE section,
+HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
+				VOID **bits, HANDLE section,
 				DWORD offset)
 {
     return DIB_CreateDIBSection(hdc, bmi, usage, bits, section, offset, 0);

@@ -62,7 +62,7 @@ typedef struct tagDC_FUNCS
     BOOL     (*pCloseFigure)(PHYSDEV);
     BOOL     (*pCreateBitmap)(PHYSDEV,HBITMAP);
     BOOL     (*pCreateDC)(HDC,PHYSDEV *,LPCWSTR,LPCWSTR,LPCWSTR,const DEVMODEW*);
-    HBITMAP  (*pCreateDIBSection)(PHYSDEV,BITMAPINFO *,UINT,LPVOID *,HANDLE,DWORD,DWORD);
+    HBITMAP  (*pCreateDIBSection)(PHYSDEV,const BITMAPINFO *,UINT,VOID **,HANDLE,DWORD,DWORD);
     BOOL     (*pDeleteBitmap)(HBITMAP);
     BOOL     (*pDeleteDC)(PHYSDEV);
     BOOL     (*pDeleteObject)(PHYSDEV,HGDIOBJ);
