@@ -110,7 +110,13 @@ HBITMAP WINAPI CreateBitmap( INT width, INT height, UINT planes,
 
 
       /* Check parameters */
-    if (!height || !width) return 0;
+    if (!height || !width)
+    {
+        height = 1;
+        width  = 1;
+        planes = 1;
+        bpp    = 1;
+    }
     if (planes != 1) {
         FIXME("planes = %d\n", planes);
 	return 0;
