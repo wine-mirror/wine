@@ -221,8 +221,8 @@ IMalloc16_Constructor() {
             VTENT(DidAlloc);
             VTENT(HeapMinimize);
 #undef VTENT
-            ICOM_VTBL(This) = (ICOM_VTABLE(IMalloc16)*)SEGPTR_GET(msegvt16);
 	}
+        ICOM_VTBL(This) = (ICOM_VTABLE(IMalloc16)*)SEGPTR_GET(msegvt16);
 	This->ref = 1;
 	/* FIXME: implement multiple heaps */
 	This->heap = GlobalAlloc16(GMEM_MOVEABLE,64000);
