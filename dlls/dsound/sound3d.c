@@ -3,6 +3,7 @@
  * Copyright 1998 Marcus Meissner
  * Copyright 1998 Rob Riggs
  * Copyright 2000-2001 TransGaming Technologies, Inc.
+ * Copyright 2002 Rok Mandeljc <rok.mandeljc@gimb.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -64,6 +65,97 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dsound);
 
+/*******************************************************************************
+ *              Auxiliary functions
+ */
+
+/* scalar product (i believe it's called dot product in english) */
+static inline D3DVALUE ScalarProduct (LPD3DVECTOR a, LPD3DVECTOR b)
+{
+	D3DVALUE c;
+	c = (a->u1.x*b->u1.x) + (a->u2.y*b->u2.y) + (a->u3.z*b->u3.z);
+	TRACE("(%f,%f,%f) * (%f,%f,%f) = %f)\n", a->u1.x, a->u2.y, a->u3.z, b->u1.x, b->u2.y, \
+	      b->u3.z, c);
+	return c;
+}
+
+/* vector product (i believe it's called cross product in english */
+static inline LPD3DVECTOR VectorProduct (LPD3DVECTOR a, LPD3DVECTOR b)
+{
+	LPD3DVECTOR c;
+	c->u1.x = (a->u2.y*b->u3.z) - (a->u3.z*b->u2.y);
+	c->u2.y = (a->u3.z*b->u1.x) - (a->u1.x*b->u3.z);
+	c->u3.z = (a->u1.x*b->u2.y) - (a->u2.y*b->u1.x);
+	TRACE("(%f,%f,%f) x (%f,%f,%f) = (%f,%f,%f)\n", a->u1.x, a->u2.y, a->u3.z, b->u1.x, b->u2.y, \
+	      b->u3.z, c->u1.x, c->u2.y, c->u3.z);
+	return c;
+}
+
+/* magnitude (lenght) of vector */
+static inline D3DVALUE VectorMagnitude (LPD3DVECTOR a)
+{
+	D3DVALUE l;
+	l = sqrt (ScalarProduct (a, a));
+	TRACE("|(%f,%f,%f)| = %f\n", a->u1.x, a->u2.y, a->u3.z, l);
+	return l;
+}
+
+/* conversion between radians and degrees */
+static inline LONG RadToDeg (LONG angle)
+{
+	LONG newangle;
+	newangle = angle * (360/(2*M_PI));
+	TRACE("%ld rad = %ld deg\n", angle, newangle);
+	return newangle;
+}
+
+/* conversion between degrees and radians */
+static inline LONG DegToRad (LONG angle)
+{
+	LONG newangle;
+	newangle = angle * (2*M_PI/360);
+	TRACE("%ld deg = %ld rad\n", angle, newangle);
+	return newangle;
+}
+
+/* angle between vectors */
+static inline LONG AngleBetweenVectorsDeg (LPD3DVECTOR a, LPD3DVECTOR b)
+{
+	LONG angle;
+	LONG cos;
+	D3DVALUE la, lb, product;
+	/* definition of scalar product: a*b = |a|*|b|*cos...therefore: */
+	product = ScalarProduct (a,b);
+	la = VectorMagnitude (a);
+	lb = VectorMagnitude (b);
+	cos = product/(la*lb);
+	/* we now have angle in radians */
+	angle = DegToRad(cos);
+	TRACE("angle between (%f,%f,%f) and (%f,%f,%f) = %ld degrees\n",  a->u1.x, a->u2.y, a->u3.z, b->u1.x, \
+	b->u2.y, b->u3.z, angle);
+	return angle;	
+}
+
+/*******************************************************************************
+ *              3D Buffer and Listener mixing
+ */
+ 
+static void WINAPI DSOUND_Mix3DBuffer(IDirectSound3DBufferImpl *ds3db)
+{
+	FIXME("Procedure not ready yet\n");
+}
+
+static void WINAPI DSOUND_ChangeListener(IDirectSound3DListenerImpl *ds3dl)
+{
+	IDirectSoundImpl *dsound = ds3dl->dsb->dsound;
+	int i;
+	
+	/* if listener changes, we need to recalculate all 3d buffers */ 
+	for(i = 0; i > dsound->nrofbuffers; i++)
+	{
+		DSOUND_Mix3DBuffer(dsound->buffers[i]->ds3db);
+	}
+}
 
 /*******************************************************************************
  *              IDirectSound3DBuffer
@@ -223,11 +315,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetAllParameters(
 	This->ds3db = *lpcDs3dBuffer;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		DSOUND_Mix3DBuffer(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -243,11 +333,9 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeAngles(
 	This->ds3db.dwOutsideConeAngle = dwOutsideConeAngle;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		DSOUND_Mix3DBuffer(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -263,11 +351,10 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOrientation(
 	This->ds3db.vConeOrientation.u3.z = z;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_Mix3DBuffer(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -281,11 +368,10 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetConeOutsideVolume(
 	This->ds3db.lConeOutsideVolume = lConeOutsideVolume;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_Mix3DBuffer(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -299,11 +385,10 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMaxDistance(
 	This->ds3db.flMaxDistance = fMaxDistance;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_Mix3DBuffer(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -317,11 +402,10 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMinDistance(
 	This->ds3db.flMinDistance = fMinDistance;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_Mix3DBuffer(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -335,11 +419,10 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetMode(
 	This->ds3db.dwMode = dwMode;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_Mix3DBuffer(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -355,11 +438,10 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetPosition(
 	This->ds3db.vPosition.u3.z = z;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_Mix3DBuffer(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -375,11 +457,10 @@ static HRESULT WINAPI IDirectSound3DBufferImpl_SetVelocity(
 	This->ds3db.vVelocity.u3.z = z;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_Mix3DBuffer(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -569,11 +650,10 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetAllParameters(
 	This->ds3dl = *lpcDS3DL;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_ChangeListener(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -587,11 +667,10 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetDistanceFactor(
 	This->ds3dl.flDistanceFactor = fDistanceFactor;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_ChangeListener(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -605,11 +684,10 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetDopplerFactor(
 	This->ds3dl.flDopplerFactor = fDopplerFactor;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_ChangeListener(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -630,11 +708,10 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetOrientation(
 	This->ds3dl.vOrientTop.u3.z = zTop;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_ChangeListener(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -650,11 +727,10 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetPosition(
 	This->ds3dl.vPosition.u3.z = z;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_ChangeListener(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -668,11 +744,10 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetRolloffFactor(
 	This->ds3dl.flRolloffFactor = fRolloffFactor;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_ChangeListener(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -688,11 +763,10 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetVelocity(
 	This->ds3dl.vVelocity.u3.z = z;
 	if (dwApply == DS3D_IMMEDIATE)
 	{
-		FIXME("nothing happens yet...\n");
-		/* TRACE("recalculating...\n"); */
-		/* place function for recalculation here */
+		This->need_recalc = FALSE;
+		DSOUND_ChangeListener(This);
 	}
-	FIXME("DS3D_DEFERRED flag not supported yet\n");
+	This->need_recalc = TRUE;
 	return DS_OK;
 }
 
@@ -700,7 +774,9 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_CommitDeferredSettings(
 	LPDIRECTSOUND3DLISTENER iface)
 
 {
-	FIXME("stub; deferred settings not used yet\n");
+	ICOM_THIS(IDirectSound3DListenerImpl,iface);
+	TRACE("\n");
+	DSOUND_ChangeListener(This);
 	return DS_OK;
 }
 
