@@ -178,13 +178,12 @@ struct thread *create_process( int fd )
     if ((process->next = first_process) != NULL) process->next->prev = process;
     first_process = process;
 
-    /* create the main thread */
-    if (!(thread = create_thread( fd, process ))) goto error;
-
     /* create the init done event */
     if (!(process->init_event = create_event( NULL, 0, 1, 0 ))) goto error;
 
-    add_process_thread( process, thread );
+    /* create the main thread */
+    if (!(thread = create_thread( fd, process ))) goto error;
+
     release_object( process );
     return thread;
 

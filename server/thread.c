@@ -91,7 +91,11 @@ static int alloc_client_buffer( struct thread *thread )
     struct get_thread_buffer_request *req;
     int fd, fd_pipe[2];
 
-    if (pipe( fd_pipe ) == -1) return -1;
+    if (pipe( fd_pipe ) == -1)
+    {
+        file_set_error();
+        return 0;
+    }
     if ((fd = create_anonymous_file()) == -1) goto error;
     if (ftruncate( fd, MAX_REQUEST_LENGTH ) == -1) goto error;
     if ((thread->buffer = mmap( 0, MAX_REQUEST_LENGTH, PROT_READ | PROT_WRITE,
@@ -105,6 +109,9 @@ static int alloc_client_buffer( struct thread *thread )
     req->tid  = get_thread_id( thread );
     req->boot = (thread == booting_thread);
     req->version = SERVER_PROTOCOL_VERSION;
+
+    /* add it here since send_client_fd may call kill_thread */
+    add_process_thread( thread->process, thread );
 
     send_client_fd( thread, fd_pipe[0], -1 );
     send_client_fd( thread, fd, -1 );
@@ -695,10 +702,9 @@ DECL_HANDLER(new_thread)
                 send_client_fd( current, sock[1], req->handle );
                 close( sock[1] );
                 /* thread object will be released when the thread gets killed */
-                add_process_thread( current->process, thread );
                 return;
             }
-            release_object( thread );
+            kill_thread( thread, 1 );
         }
         close( sock[1] );
     }
