@@ -442,9 +442,8 @@ void PROFILE_DeleteAllKeys( LPCSTR section_name)
  *
  * Find a key in a profile tree, optionally creating it.
  */
-static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
-                                 const char *section_name,
-                                 const char *key_name, int create )
+static PROFILEKEY *PROFILE_Find( PROFILESECTION **section, const char *section_name,
+                                 const char *key_name, BOOL create, BOOL create_always )
 {
     const char *p;
     int seclen, keylen;
@@ -462,15 +461,23 @@ static PROFILEKEY *PROFILE_Find( PROFILESECTION **section,
     while (*section)
     {
         if ( ((*section)->name[0])
-	  && (!(strncasecmp( (*section)->name, section_name, seclen )))
-	  && (((*section)->name)[seclen] == '\0') )
+             && (!(strncasecmp( (*section)->name, section_name, seclen )))
+             && (((*section)->name)[seclen] == '\0') )
         {
             PROFILEKEY **key = &(*section)->key;
+
             while (*key)
             {
-                if ( (!(strncasecmp( (*key)->name, key_name, keylen )))
-		  && (((*key)->name)[keylen] == '\0') )
-		    return *key;
+                /* If create_always is FALSE then we check if the keyname already exists.
+                 * Otherwise we add it regardless of its existence, to allow
+                 * keys to be added more then once in some cases.
+                 */
+                if(!create_always)
+                {
+                    if ( (!(strncasecmp( (*key)->name, key_name, keylen )))
+                         && (((*key)->name)[keylen] == '\0') )
+                        return *key;
+                }
                 key = &(*key)->next;
             }
             if (!create) return NULL;
@@ -827,7 +834,7 @@ static INT PROFILE_GetString( LPCSTR section, LPCSTR key_name,
     if (!def_val) def_val = "";
     if (key_name && key_name[0])
     {
-        key = PROFILE_Find( &CurProfile->section, section, key_name, FALSE );
+        key = PROFILE_Find( &CurProfile->section, section, key_name, FALSE, FALSE);
         PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def_val,
                            len, FALSE );
         TRACE("('%s','%s','%s'): returning '%s'\n",
@@ -851,7 +858,7 @@ static INT PROFILE_GetString( LPCSTR section, LPCSTR key_name,
  * Set a profile string.
  */
 static BOOL PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
-			       LPCSTR value )
+                               LPCSTR value, BOOL create_always )
 {
     if (!key_name)  /* Delete a whole section */
     {
@@ -871,8 +878,8 @@ static BOOL PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
     }
     else  /* Set the key value */
     {
-        PROFILEKEY *key = PROFILE_Find( &CurProfile->section, section_name,
-                                        key_name, TRUE );
+        PROFILEKEY *key = PROFILE_Find(&CurProfile->section, section_name,
+                                        key_name, TRUE, create_always );
         TRACE("('%s','%s','%s'): \n",
                          section_name, key_name, value );
         if (!key) return FALSE;
@@ -1484,7 +1491,7 @@ BOOL WINAPI WritePrivateProfileStringA( LPCSTR section, LPCSTR entry,
 	    if (!section) {
 		FIXME("(NULL?,%s,%s,%s)? \n",entry,string,filename);
 	    } else {
-		ret = PROFILE_SetString( section, entry, string );
+		ret = PROFILE_SetString( section, entry, string, FALSE);
 	    }
 	}
     }
@@ -1536,7 +1543,7 @@ BOOL WINAPI WritePrivateProfileSectionA( LPCSTR section,
         if (!section && !string)
             PROFILE_ReleaseFile();  /* always return FALSE in this case */
         else if (!string) /* delete the named section*/
-	    ret = PROFILE_SetString(section,NULL,NULL);
+	    ret = PROFILE_SetString(section,NULL,NULL, FALSE);
         else {
 	    PROFILE_DeleteAllKeys(section);
 	    ret = TRUE;
@@ -1545,13 +1552,11 @@ BOOL WINAPI WritePrivateProfileSectionA( LPCSTR section,
                 strcpy( buf, string );
                 if((p=strchr( buf, '='))){
                     *p='\0';
-                    ret = PROFILE_SetString( section, buf, p+1 );
-                    
+                    ret = PROFILE_SetString( section, buf, p+1, TRUE);
                 }
                 HeapFree( GetProcessHeap(), 0, buf );
                 string += strlen(string)+1;
             }
-            
         }
     }
 
@@ -1716,7 +1721,7 @@ BOOL WINAPI GetPrivateProfileStructA (LPCSTR section, LPCSTR key,
     EnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename )) {
-        PROFILEKEY *k = PROFILE_Find ( &CurProfile->section, section, key, FALSE);
+        PROFILEKEY *k = PROFILE_Find ( &CurProfile->section, section, key, FALSE, FALSE);
 	if (k) {
 	    TRACE("value (at %p): '%s'\n", k->value, k->value);
 	    if (((strlen(k->value) - 2) / 2) == len)
@@ -1842,7 +1847,7 @@ BOOL WINAPI WritePrivateProfileStructA (LPCSTR section, LPCSTR key,
     EnterCriticalSection( &PROFILE_CritSect );
 
     if (PROFILE_Open( filename )) 
-        ret = PROFILE_SetString( section, key, outstring );
+        ret = PROFILE_SetString( section, key, outstring, FALSE);
 
     LeaveCriticalSection( &PROFILE_CritSect );
 
