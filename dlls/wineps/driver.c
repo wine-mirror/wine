@@ -253,8 +253,8 @@ BOOL WINAPI PSDRV_PaperDlgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 
 
 static void (WINAPI *pInitCommonControls) (void);
-static HPROPSHEETPAGE (WINAPI *pCreatePropertySheetPage) (LPCPROPSHEETPAGEA);
-static int (WINAPI *pPropertySheet) (LPCPROPSHEETHEADERA);
+static HPROPSHEETPAGE (WINAPI *pCreatePropertySheetPage) (LPCPROPSHEETPAGEW);
+static int (WINAPI *pPropertySheet) (LPCPROPSHEETHEADERW);
 
 /***************************************************************
  *	ExtDeviceMode	[WINEPS16.90]
@@ -284,17 +284,19 @@ fwMode);
   if(fwMode & DM_PROMPT) {
     HINSTANCE hinstComctl32, hinstWineps32 = LoadLibraryA("WINEPS");
     HPROPSHEETPAGE hpsp[1];
-    PROPSHEETPAGEA psp;
-    PROPSHEETHEADERA psh;
+    PROPSHEETPAGEW psp;
+    PROPSHEETHEADERW psh;
     PSDRV_DLGINFO *di;
     PSDRV_DEVMODEA *dlgdm;
+    static const WCHAR PAPERW[] = {'P','A','P','E','R','\0'};
+    static const WCHAR SetupW[] = {'S','e','t','u','p','\0'};
 
     hinstComctl32 = LoadLibraryA("comctl32.dll");
     pInitCommonControls = (void*)GetProcAddress(hinstComctl32,
 						"InitCommonControls");
     pCreatePropertySheetPage = (void*)GetProcAddress(hinstComctl32,
-						    "CreatePropertySheetPage");
-    pPropertySheet = (void*)GetProcAddress(hinstComctl32, "PropertySheet"); 
+						    "CreatePropertySheetPageW");
+    pPropertySheet = (void*)GetProcAddress(hinstComctl32, "PropertySheetW"); 
     memset(&psp,0,sizeof(psp));
     dlgdm = HeapAlloc( PSDRV_Heap, 0, sizeof(*dlgdm) );
     memcpy(dlgdm, pi->Devmode, sizeof(*dlgdm));
@@ -303,7 +305,7 @@ fwMode);
     di->dlgdm = dlgdm;
     psp.dwSize = sizeof(psp);
     psp.hInstance = hinstWineps32;
-    psp.u.pszTemplate = "PAPER";
+    psp.u.pszTemplate = PAPERW;
     psp.u2.pszIcon = NULL;
     psp.pfnDlgProc = PSDRV_PaperDlgProc;
     psp.lParam = (LPARAM)di;
@@ -311,7 +313,7 @@ fwMode);
 
     memset(&psh, 0, sizeof(psh));
     psh.dwSize = sizeof(psh);
-    psh.pszCaption = "Setup";
+    psh.pszCaption = SetupW;
     psh.nPages = 1;
     psh.hwndParent = hwnd;
     psh.u3.phpage = hpsp;
