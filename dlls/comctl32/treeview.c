@@ -7,7 +7,7 @@
  *
  * TODO:
  *   Using DPA to store the item ptr would be good.
- *   Node label edition is implemented but something appened in wine in the 
+ *   Node label edition is implemented but something happened in wine in the
  *   two last weeks of march 99 that broke it.
  *   refreshtreeview: 	
 		-small array containing info about positions.
@@ -88,7 +88,10 @@ static LRESULT CALLBACK
 TREEVIEW_Edit_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, 
 							LPARAM lParam);
 
-LRESULT WINAPI
+static LRESULT
+TREEVIEW_EditLabelA (HWND hwnd, WPARAM wParam, LPARAM lParam);
+
+static LRESULT
 TREEVIEW_EndEditLabelNow (HWND hwnd, WPARAM wParam, LPARAM lParam);
 
 
@@ -2926,107 +2929,220 @@ done:
   return (LRESULT) wineItem->hItem;
 }
 
-LRESULT WINAPI
+static LRESULT
+TREEVIEW_EditLabelA (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+  TREEVIEW_INFO *infoPtr      = TREEVIEW_GetInfoPtr(hwnd);
+  TREEVIEW_ITEM *wineItem;
+
+  /*
+   * If the style allow editing...
+   */
+  if ( GetWindowLongA( hwnd, GWL_STYLE) & TVS_EDITLABELS )
+  {
+
+    if ( infoPtr->editItem == 0 ) /* If we are not curently editing */
+    {
+      wineItem = TREEVIEW_ValidItem(infoPtr,(HTREEITEM) lParam);
+      if ( wineItem == NULL )
+        {
+        ERR("Cannot get valid TREEVIEW_ITEM for lParam\n");
+        return NULL;
+        }
+
+      TRACE("Edit started for %s.\n", wineItem->pszText);
+      infoPtr->editItem = wineItem->hItem;
+
+
+      /*
+       * It is common practice for a windows program to get this
+       * edit control and then subclass it. It is assumed that a
+       * new edit control is given every time.
+       *
+       * As a result some programs really mess up the edit control
+       * so we need to destory our old edit control and create a new
+       * one. Recycling would be nice but we would need to reset
+       * everything. So recreating may just be easyier
+       *
+       */
+	  DestroyWindow(infoPtr->hwndEdit);
+ 	  infoPtr->hwndEdit = CreateWindowExA (
+                          WS_EX_LEFT,
+                          "EDIT",
+                          0,
+                          WS_CHILD | WS_BORDER | ES_AUTOHSCROLL |
+                          ES_WANTRETURN | ES_LEFT,
+                          0, 0, 0, 0,
+                          hwnd,
+                          0,0,0); /* FIXME: (HMENU)IDTVEDIT,pcs->hInstance,0);*/
+
+ 	  SetWindowLongA (
+      infoPtr->hwndEdit,
+      GWL_WNDPROC,
+      (LONG) TREEVIEW_Edit_SubclassProc);
+
+
+      SendMessageA ( infoPtr->hwndEdit, WM_SETFONT, infoPtr->hFont, FALSE);
+
+      SetWindowTextA( infoPtr->hwndEdit, wineItem->pszText );
+      SendMessageA  ( infoPtr->hwndEdit, EM_SETSEL, 0, -1 );
+
+      /*
+      ** NOTE: this must be after the edit control is created
+      ** (according to TVN_BEGINLABELEDITA docs), before position is set.
+      */
+      if ( TREEVIEW_SendDispInfoNotify(  /* Return true to cancel edition */
+              hwnd,
+              wineItem,
+              TVN_BEGINLABELEDITA,
+              0))
+      {
+        /*
+        ** FIXME: Is this right, should we return a handle even though edit was cancelled?
+        */
+        TRACE("Edit cancelled by TVN_BEGINLABELEDITA for %s.\n", wineItem->pszText);
+
+        TREEVIEW_EndEditLabelNow(hwnd, (WPARAM)TRUE, 0);
+
+        return NULL;
+      }
+
+      SetWindowPos (
+        infoPtr->hwndEdit,
+        HWND_TOP,
+        wineItem->text.left - 2,
+        wineItem->text.top  - 1,
+        wineItem->text.right  - wineItem->text.left + 20 ,
+        wineItem->text.bottom - wineItem->text.top  + 3,
+        SWP_DRAWFRAME );
+
+      SetFocus      ( infoPtr->hwndEdit);
+      ShowWindow    ( infoPtr->hwndEdit, SW_SHOW);
+    }
+  }
+  else
+  {
+  /*
+  ** return NULL since we cannot edit this.
+  */
+
+  return NULL;
+  }
+
+  return infoPtr->hwndEdit;
+}
+
+static LRESULT
 TREEVIEW_EndEditLabelNow (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   TREEVIEW_INFO *infoPtr    = TREEVIEW_GetInfoPtr(hwnd);
   TREEVIEW_ITEM *editedItem = TREEVIEW_ValidItem (infoPtr, infoPtr->editItem);
   BOOL          bRevert     = (BOOL)wParam;
-  BOOL          bReturn     = ! bRevert;
   NMTVDISPINFOA tvdi;
   RECT          itemRect;
-  
+  LPSTR         oldText;
+  LPSTR         newText;
+  int           iLength;
 
-  if ( ! (BOOL)wParam ) /* wParam is set to true to cancel the edition */
+  /*
+  ** NOTE: we have to get the new text before calling TVN_ENDLABELEDITA
+  ** since some apps(eg regedit, win98) validate the text in TVN_ENDLABELEDITA.
+  */
+
+  oldText = editedItem->pszText;
+
+  if ( !bRevert ) /* wParam is set to true to cancel the edition */
   {
-	if ( TREEVIEW_SendDispInfoNotify(  /* return true to cancel edition */
-           hwnd, 
-           editedItem,
-           TVN_ENDLABELEDITA, 
-           0))
+
+    iLength = GetWindowTextLengthA( infoPtr->hwndEdit );
+    if (iLength == 0)
     {
-      bRevert = TRUE;
-      bReturn = FALSE; 
+      WARN("Zero length string for new label(not changing).");
+      bRevert=TRUE;
     }
+
+    newText = COMCTL32_Alloc( iLength+1 );
+    if( newText == NULL )
+      {
+      ERR("OutOfMemory, cannot allocate space for label");
+      return FALSE;
+      }
+    GetWindowTextA( infoPtr->hwndEdit, newText, iLength+1);
+  }
+  else
+  {
+  newText=NULL;
   }
 
-  if (bRevert == FALSE) /* Apply the changes */
-  {
-    char tmpText[1024];
-    int  iLength = GetWindowTextA(infoPtr->hwndEdit, tmpText, 1023);
-    bReturn      = FALSE;
 
-    if (iLength == 0) 
+  /*
+  * notify our parent with the new string(or NULL if wParam==TRUE)
+  */
+  tvdi.hdr.hwndFrom	= hwnd;
+  tvdi.hdr.idFrom	= GetWindowLongA( hwnd, GWL_ID);
+  tvdi.hdr.code     = TVN_ENDLABELEDITA;
+  tvdi.item.hItem 	= editedItem->hItem;
+  tvdi.item.lParam 	= editedItem->lParam;
+  tvdi.item.mask	= TVIF_TEXT|TVIF_HANDLE|TVIF_PARAM;
+  tvdi.item.pszText	= newText;
+
+  if(!SendMessageA (                /* return false to cancel edition */
+              GetParent(hwnd),
+              WM_NOTIFY,
+              (WPARAM)tvdi.hdr.idFrom,
+              (LPARAM)&tvdi))
+  {
+  if( newText == NULL )  /*we are supposed to ignore the return if (and pszText==NULL), MSDOCs */
+    bRevert=TRUE;
+  }
+
+  if (oldText != LPSTR_TEXTCALLBACKA)
+  {
+
+    if( bRevert )
     {
-      ERR("Problem retreiving new item label.");
-    }
-    else if (iLength >= 1023)
-    {
-      ERR(
-        "Insuficient space to retrieve new item label, new label ignored.");
+    if( newText != NULL )
+      COMCTL32_Free(newText);
+
+    editedItem->pszText=oldText; /* revert back to the old label */
     }
     else
     {
-      /*
-       * notify our parent with the new string
-       */
-      tvdi.hdr.hwndFrom	= hwnd;
-      tvdi.hdr.idFrom	= GetWindowLongA( hwnd, GWL_ID);
-      tvdi.hdr.code	= TVN_ENDLABELEDITA;
-      tvdi.item.hItem 	= editedItem->hItem;
-      tvdi.item.lParam 	= editedItem->lParam;
-      tvdi.item.mask	= TVIF_TEXT|TVIF_HANDLE|TVIF_PARAM;
-      tvdi.item.pszText	= tmpText;
+    COMCTL32_Free(oldText);
 
-      SendMessageA (
-              GetParent(hwnd), 
-              WM_NOTIFY,
-              (WPARAM)tvdi.hdr.idFrom, 
-              (LPARAM)&tvdi);
-
-      if (editedItem->pszText != LPSTR_TEXTCALLBACKA)
-      {
-          if (strcmp( tmpText, editedItem->pszText ) == 0)
-            /* Do nothing if the label has not changed */
-            bReturn = TRUE;
-          else
-          {
-            LPSTR tmpLabel = COMCTL32_Alloc( iLength+1 );
-  
-            if ( tmpLabel == NULL )
-              ERR(
-                "OutOfMemory, cannot allocate space for label");
-            else
-            {
-              COMCTL32_Free(editedItem->pszText);
-              editedItem->pszText = tmpLabel;
-              lstrcpyA( editedItem->pszText, tmpText);
-              bReturn = TRUE;
-            }
-          }
-       }
-       else
-       {
-           /*
-            * This is a callback string so we need
-            * to inform the parent that the string
-            * has changed
-            *
-            */
-           tvdi.hdr.hwndFrom	= hwnd;
-           tvdi.hdr.idFrom	= GetWindowLongA( hwnd, GWL_ID);
-           tvdi.hdr.code	= TVN_SETDISPINFOA;
-           tvdi.item.mask	= TVIF_TEXT;
-           tvdi.item.pszText	= tmpText;
-
-           SendMessageA (
-                  GetParent(hwnd), 
-                  WM_NOTIFY,
-                  (WPARAM)tvdi.hdr.idFrom, 
-                  (LPARAM)&tvdi);
-       }
+    editedItem->pszText=newText; /* use the new label */
     }
   }
+  else if( newText!=NULL )
+  {
+    /*
+    ** Is really this necasery? shouldnt an app update its internal data in TVN_ENDLABELEDITA?
+    */
+    if( !bRevert )
+    {
+      /*
+      * This is a callback string so we need
+      * to inform the parent that the string
+      * has changed
+      *
+      */
+      tvdi.hdr.hwndFrom	= hwnd;
+      tvdi.hdr.idFrom	= GetWindowLongA( hwnd, GWL_ID);
+      tvdi.hdr.code	    = TVN_SETDISPINFOA;
+      tvdi.item.mask	= TVIF_TEXT;
+      tvdi.item.pszText	= newText;
+
+      SendMessageA (
+              GetParent(hwnd),
+              WM_NOTIFY,
+              (WPARAM)tvdi.hdr.idFrom,
+              (LPARAM)&tvdi);
+
+    }
+
+  COMCTL32_Free(newText);
+  }
+	
 
   ShowWindow(infoPtr->hwndEdit, SW_HIDE);
   EnableWindow(infoPtr->hwndEdit, FALSE);
@@ -3037,7 +3153,7 @@ TREEVIEW_EndEditLabelNow (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   infoPtr->editItem = 0;
 
-  return bReturn;
+  return !bRevert; /* return true if label edit succesful, otherwise false */
 }
 
 
@@ -3126,61 +3242,8 @@ TREEVIEW_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
   {
     if ( infoPtr->editItem == 0 ) /* If we are not curently editing */
     {
-  		if ( TREEVIEW_SendDispInfoNotify(  /* Return true to cancel edition */
-              hwnd, 
-              wineItem, 
-              TVN_BEGINLABELEDITA, 
-              0))
-      {
-        return 0; 
-      }
-  
-  		TRACE("Edit started for %s.\n", wineItem->pszText);
-  		infoPtr->editItem = wineItem->hItem;
-
-      /* 
-       * It is common practice for a windows program to get this
-       * edit control and then subclass it. It is assumed that a
-       * new edit control is given every time.
-       *
-       * As a result some programs really mess up the edit control
-       * so we need to destory our old edit control and create a new
-       * one. Recycling would be nice but we would need to reset
-       * everything. So recreating may just be easyier
-       *
-       */
-	    DestroyWindow(infoPtr->hwndEdit);
- 	    infoPtr->hwndEdit = CreateWindowExA ( 
-                          WS_EX_LEFT, 
-                          "EDIT",
-                          0,
-                          WS_CHILD | WS_BORDER | ES_AUTOHSCROLL | 
-                          ES_WANTRETURN | ES_LEFT,
-                          0, 0, 0, 0,
-                          hwnd, 
-                          0,0,0); /* FIXME: (HMENU)IDTVEDIT,pcs->hInstance,0);*/
-
- 	    SetWindowLongA (
-        infoPtr->hwndEdit,
-        GWL_WNDPROC, 
-      	(LONG) TREEVIEW_Edit_SubclassProc);
-
- 
-      SendMessageA ( infoPtr->hwndEdit, WM_SETFONT, infoPtr->hFont, FALSE);
-
-  		SetWindowPos ( 
-        infoPtr->hwndEdit, 
-        HWND_TOP, 
-        wineItem->text.left - 2, 
-        wineItem->text.top  - 1,
-        wineItem->text.right  - wineItem->text.left + 20 ,
-        wineItem->text.bottom - wineItem->text.top  + 3,
-        SWP_DRAWFRAME );
-  
-  		SetWindowTextA( infoPtr->hwndEdit, wineItem->pszText );
-      SendMessageA  ( infoPtr->hwndEdit, EM_SETSEL, 0, -1 );
-  		SetFocus      ( infoPtr->hwndEdit); 
-      ShowWindow    ( infoPtr->hwndEdit, SW_SHOW); 
+    if( SendMessageA(hwnd, TVM_EDITLABELA, 0, (LPARAM)iItem) == NULL)
+        return 0;
     }
   }
   else if ( infoPtr->editItem != 0 ) /* If we are curently editing */
@@ -3859,8 +3922,7 @@ TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       		return 0;
 
     	case TVM_EDITLABELA:
-      		FIXME("Unimplemented msg TVM_EDITLABELA \n");
-      		return 0;
+    	    return TREEVIEW_EditLabelA(hwnd, wParam, lParam);
 
     	case TVM_EDITLABELW:
       		FIXME("Unimplemented msg TVM_EDITLABELW \n");
