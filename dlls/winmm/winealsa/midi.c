@@ -647,6 +647,7 @@ static DWORD modClose(WORD wDevID)
     switch (MidiOutDev[wDevID].caps.wTechnology) {
     case MOD_FMSYNTH:
     case MOD_MIDIPORT:
+    case MOD_SYNTH:
         snd_seq_disconnect_to(midiSeq, port_out, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
 	midiCloseSeq();
 	break;
@@ -695,6 +696,9 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 	    int handled = 1; /* Assume event is handled */
             snd_seq_event_t event;
             snd_seq_ev_clear(&event);
+            snd_seq_ev_set_direct(&event);
+            snd_seq_ev_set_source(&event, port_out);
+            snd_seq_ev_set_dest(&event, MidiOutDev[wDevID].addr.client, MidiOutDev[wDevID].addr.port);
 	    
 	    switch (evt & 0xF0) {
 	    case MIDI_CMD_NOTE_OFF:
@@ -755,6 +759,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 			buf[1] = d1;
 			snd_seq_ev_set_sysex(&event, sizeof(buf), buf);
 	            }
+	            break;
 		case 0x02:	/* Song Position Pointer. */
 		    {
 			BYTE buf[3];
@@ -763,6 +768,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 			buf[2] = d2;
 			snd_seq_ev_set_sysex(&event, sizeof(buf), buf);
 	            }
+		    break;
 		}
 		break;
 	    }
