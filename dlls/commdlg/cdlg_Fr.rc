@@ -237,7 +237,7 @@ FONT 8, "helv"
     LTEXT	"&Type du fichier",IDC_FILETYPESTATIC,5,128,42,8, SS_NOTIFY
     COMBOBOX	IDC_FILETYPE,54,126,155,53,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP
 
-    CONTROL	"&Schreibgeschützt",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,145,100,10
+    CONTROL	"&Protection écriture",IDC_OPENREADONLY,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,54,145,100,10
 
 
     DEFPUSHBUTTON	"Ouvrir",		 IDOK,242,110,50,14
@@ -300,13 +300,13 @@ BEGIN
     LTEXT           "&Nom:",          stc6,  16, 20,  36,8
     COMBOBOX                          cmb1,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
     LTEXT           "Etat:",          stc8,  16, 36,  36,10, SS_NOPREFIX
-    LTEXT           "[aucun]",        stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "[aucun]",        stc12, 60, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Type:",          stc7,  16, 48,  36,10, SS_NOPREFIX
-    LTEXT           "[keiner]",       stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "[aucun]",       stc11, 60, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Emplacement:",   stc10, 16, 60,  36,10, SS_NOPREFIX
-    LTEXT           "[aucun]",        stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "[aucun]",        stc14, 60, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Commentaire:",   stc9,  16, 72,  36,10, SS_NOPREFIX
-    LTEXT           "[aucun]",        stc13, 52, 72, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "[aucun]",        stc13, 60, 72, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
 
     GROUPBOX        "Papier",         grp2,   8, 92, 164,56, WS_GROUP
     LTEXT           "&Taille:",       stc2,  16,108,  36, 8
@@ -314,7 +314,7 @@ BEGIN
     LTEXT           "Source:",        stc3,  16,128,  36, 8
     COMBOBOX                          cmb3,  52,126, 112,112,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
     
-    GROUPBOX        "Orientattion",   grp1, 180, 92, 100,56, WS_GROUP
+    GROUPBOX        "Orientation",   grp1, 180, 92, 100,56, WS_GROUP
     ICON            "",               ico1, 195,112,  18,20, WS_GROUP
     CONTROL         "&Portrait",      rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP |WS_TABSTOP,224,106,52,12
     CONTROL         "&Paysage",       rad2,"Button",BS_AUTORADIOBUTTON,224,126,52,12
@@ -326,8 +326,8 @@ STRINGTABLE DISCARDABLE
     IDS_DOCUMENTFOLDERS     "Répertoire Documents"
     IDS_PERSONAL            "Mes Documents"
     IDS_FAVORITES           "Mes Favoris"
-    IDS_PATH                "System Directory"
-    IDS_DESKTOP             "Desktop"
+    IDS_PATH                "Répertoire systême"
+    IDS_DESKTOP             "Bureau"
     IDS_FONTS               "Polices"
     IDS_MYCOMPUTER          "Poste de travail"
 }
@@ -341,7 +341,7 @@ STRINGTABLE DISCARDABLE
     IDS_CREATEFILE          "Ce fichier n'existe pas.\nSouhaitez-vous le créer ?"
     IDL_OVERWRITEFILE       "Ce fichier existe déjà.\nVoulez-vous le remplacer ?"
     IDS_INVALID_FILENAME_TITLE "Le chemin d'accès contient des caractères invalides"
-    IDS_INVALID_FILENAME    "Une nom de fichier ne peut contenir un des caractères suivants : \n                          / : < > |"
+    IDS_INVALID_FILENAME    "Un nom de fichier ne peut contenir un des caractères suivants : \n                          / : < > |"
     IDS_PATHNOTEXISTING     "Le chemin d'accès n'existe pas"
     IDS_FILENOTEXISTING     "Le fichier n'existe pas"
 }
@@ -352,7 +352,7 @@ STRINGTABLE DISCARDABLE
     IDS_NEWFOLDER        "Créer un nouveau dossier"
     IDS_LISTVIEW         "Liste"
     IDS_REPORTVIEW       "Détails"
-    IDS_TODESKTOP        "Browse to Desktop"
+    IDS_TODESKTOP        "Voir le bureau"
 }
 
 STRINGTABLE DISCARDABLE
