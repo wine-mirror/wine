@@ -938,13 +938,22 @@ struct wait_debug_event_request
 };
 
 
-/* Send an exception event */
-struct exception_event_request
+/* Queue an exception event */
+struct queue_exception_event_request
 {
     REQUEST_HEADER;                /* request header */
     IN  int              first;    /* first chance exception? */
-    OUT int              status;   /* event continuation status */
+    OUT handle_t         handle;   /* handle to the queued event */
     IN  VARARG(record,exc_event);  /* thread context followed by exception record */
+};
+
+
+/* Retrieve the status of an exception event */
+struct get_exception_status_request
+{
+    REQUEST_HEADER;                /* request header */
+    OUT handle_t         handle;   /* handle to the queued event */
+    OUT int              status;   /* event continuation status */
     OUT VARARG(context,context);   /* modified thread context */
 };
 
@@ -1426,7 +1435,8 @@ enum request
     REQ_NEXT_THREAD,
     REQ_NEXT_MODULE,
     REQ_WAIT_DEBUG_EVENT,
-    REQ_EXCEPTION_EVENT,
+    REQ_QUEUE_EXCEPTION_EVENT,
+    REQ_GET_EXCEPTION_STATUS,
     REQ_OUTPUT_DEBUG_STRING,
     REQ_CONTINUE_DEBUG_EVENT,
     REQ_DEBUG_PROCESS,
@@ -1541,7 +1551,8 @@ union generic_request
     struct next_thread_request next_thread;
     struct next_module_request next_module;
     struct wait_debug_event_request wait_debug_event;
-    struct exception_event_request exception_event;
+    struct queue_exception_event_request queue_exception_event;
+    struct get_exception_status_request get_exception_status;
     struct output_debug_string_request output_debug_string;
     struct continue_debug_event_request continue_debug_event;
     struct debug_process_request debug_process;
@@ -1581,7 +1592,7 @@ union generic_request
     struct async_result_request async_result;
 };
 
-#define SERVER_PROTOCOL_VERSION 35
+#define SERVER_PROTOCOL_VERSION 36
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

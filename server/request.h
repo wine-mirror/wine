@@ -140,7 +140,8 @@ DECL_HANDLER(next_process);
 DECL_HANDLER(next_thread);
 DECL_HANDLER(next_module);
 DECL_HANDLER(wait_debug_event);
-DECL_HANDLER(exception_event);
+DECL_HANDLER(queue_exception_event);
+DECL_HANDLER(get_exception_status);
 DECL_HANDLER(output_debug_string);
 DECL_HANDLER(continue_debug_event);
 DECL_HANDLER(debug_process);
@@ -254,7 +255,8 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_next_thread,
     (req_handler)req_next_module,
     (req_handler)req_wait_debug_event,
-    (req_handler)req_exception_event,
+    (req_handler)req_queue_exception_event,
+    (req_handler)req_get_exception_status,
     (req_handler)req_output_debug_string,
     (req_handler)req_continue_debug_event,
     (req_handler)req_debug_process,

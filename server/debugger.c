@@ -28,6 +28,7 @@ struct debug_event
     enum debug_event_state state;     /* event state */
     int                    status;    /* continuation status */
     debug_event_t          data;      /* event data */
+    CONTEXT                context;   /* register context */
 };
 
 /* debug context */
@@ -180,10 +181,8 @@ static int fill_unload_dll_event( struct debug_event *event, void *arg )
 
 static int fill_output_debug_string_event( struct debug_event *event, void *arg )
 {
-    struct output_debug_string_request *req = arg;
-    event->data.info.output_string.string  = req->string;
-    event->data.info.output_string.unicode = req->unicode;
-    event->data.info.output_string.length  = req->length;
+    struct debug_event_output_string *data = arg;
+    event->data.info.output_string = *data;
     return 1;
 }
 
@@ -217,8 +216,11 @@ static void unlink_event( struct debug_ctx *debug_ctx, struct debug_event *event
 }
 
 /* link an event at the end of the queue */
-static void link_event( struct debug_ctx *debug_ctx, struct debug_event *event )
+static void link_event( struct debug_event *event )
 {
+    struct debug_ctx *debug_ctx = event->debugger->debug_ctx;
+
+    assert( debug_ctx );
     grab_object( event );
     event->next = NULL;
     event->prev = debug_ctx->event_tail;
@@ -239,16 +241,6 @@ static struct debug_event *find_event_to_send( struct debug_ctx *debug_ctx )
         break;
     }
     return event;
-}
-
-/* build a reply for the send_event request */
-static void build_exception_event_reply( struct thread *thread, struct object *obj, int signaled )
-{
-    struct exception_event_request *req = get_req_ptr( thread );
-    struct debug_event *event = (struct debug_event *)obj;
-    assert( obj->ops == &debug_event_ops );
-    req->status = event->status;
-    thread->context = NULL;
 }
 
 static void debug_event_dump( struct object *obj, int verbose )
@@ -297,6 +289,7 @@ static void debug_event_destroy( struct object *obj )
             break;
         }
     }
+    if (event->sender->context == &event->context) event->sender->context = NULL;
     release_object( event->sender );
     release_object( event->debugger );
 }
@@ -357,15 +350,14 @@ static int continue_debug_event( struct process *process, struct thread *thread,
     return 0;
 }
 
-/* queue a debug event for a debugger */
-static struct debug_event *queue_debug_event( struct thread *thread, int code, void *arg )
+/* alloc a debug event for a debugger */
+static struct debug_event *alloc_debug_event( struct thread *thread, int code,
+                                              void *arg, CONTEXT *context )
 {
     struct thread *debugger = thread->process->debugger;
-    struct debug_ctx *debug_ctx = debugger->debug_ctx;
     struct debug_event *event;
 
     assert( code > 0 && code <= NB_DEBUG_EVENTS );
-    assert( debug_ctx );
     /* cannot queue a debug event for myself */
     assert( debugger->process != thread->process );
 
@@ -384,9 +376,11 @@ static struct debug_event *queue_debug_event( struct thread *thread, int code, v
         release_object( event );
         return NULL;
     }
-
-    link_event( debug_ctx, event );
-    suspend_process( thread->process );
+    if (context)
+    {
+        memcpy( &event->context, context, sizeof(event->context) );
+        thread->context = &event->context;
+    }
     return event;
 }
 
@@ -395,8 +389,13 @@ void generate_debug_event( struct thread *thread, int code, void *arg )
 {
     if (thread->process->debugger)
     {
-        struct debug_event *event = queue_debug_event( thread, code, arg );
-        if (event) release_object( event );
+        struct debug_event *event = alloc_debug_event( thread, code, arg, NULL );
+        if (event)
+        {
+            link_event( event );
+            suspend_process( thread->process );
+            release_object( event );
+        }
     }
 }
 
@@ -535,7 +534,6 @@ DECL_HANDLER(continue_debug_event)
 DECL_HANDLER(debug_process)
 {
     struct debug_event_exception data;
-    struct debug_event *event;
     struct process *process = get_process_from_id( req->pid );
     if (!process) return;
 
@@ -550,16 +548,15 @@ DECL_HANDLER(debug_process)
         data.record.ExceptionAddress = get_thread_ip( process->thread_list );
         data.record.NumberParameters = 0;
         data.first = 1;
-        if ((event = queue_debug_event( process->thread_list, EXCEPTION_DEBUG_EVENT, &data )))
-            release_object( event );
+        generate_debug_event( process->thread_list, EXCEPTION_DEBUG_EVENT, &data );
     }
     release_object( process );
 }
 
-/* send an exception event */
-DECL_HANDLER(exception_event)
+/* queue an exception event */
+DECL_HANDLER(queue_exception_event)
 {
-    req->status = 0;
+    req->handle = 0;
     if (current->process->debugger)
     {
         struct debug_event_exception data;
@@ -574,22 +571,51 @@ DECL_HANDLER(exception_event)
         }
         data.record = *rec;
         data.first  = req->first;
-        if ((event = queue_debug_event( current, EXCEPTION_DEBUG_EVENT, &data )))
+        if ((event = alloc_debug_event( current, EXCEPTION_DEBUG_EVENT, &data, context )))
         {
-            struct object *obj = &event->obj;
-            current->context = context;
-            sleep_on( 1, &obj, 0, 0, 0, build_exception_event_reply );
+            if ((req->handle = alloc_handle( current->process, event, SYNCHRONIZE, FALSE )))
+            {
+                link_event( event );
+                suspend_process( current->process );
+            }
             release_object( event );
         }
     }
 }
 
+/* retrieve the status of an exception event */
+DECL_HANDLER(get_exception_status)
+{
+    struct debug_event *event;
+    size_t size = 0;
+
+    req->status = 0;
+    if ((event = (struct debug_event *)get_handle_obj( current->process, req->handle,
+                                                       0, &debug_event_ops )))
+    {
+        if (event->state == EVENT_CONTINUED)
+        {
+            req->status = event->status;
+            if (current->context == &event->context)
+            {
+                size = min( sizeof(CONTEXT), get_req_data_size(req) );
+                memcpy( get_req_data(req), &event->context, size );
+                current->context = NULL;
+            }
+        }
+        else set_error( STATUS_PENDING );
+        release_object( event );
+    }
+    set_req_data_size( req, size );
+}
+
 /* send an output string to the debugger */
 DECL_HANDLER(output_debug_string)
 {
-    if (current->process->debugger)
-    {
-        struct debug_event *event = queue_debug_event( current, OUTPUT_DEBUG_STRING_EVENT, req );
-        if (event) release_object( event );
-    }
+    struct debug_event_output_string data;
+
+    data.string  = req->string;
+    data.unicode = req->unicode;
+    data.length  = req->length;
+    generate_debug_event( current, OUTPUT_DEBUG_STRING_EVENT, &data );
 }

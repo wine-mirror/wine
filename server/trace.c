@@ -1066,15 +1066,25 @@ static void dump_wait_debug_event_reply( const struct wait_debug_event_request *
     cur_pos += dump_varargs_debug_event( req );
 }
 
-static void dump_exception_event_request( const struct exception_event_request *req )
+static void dump_queue_exception_event_request( const struct queue_exception_event_request *req )
 {
     fprintf( stderr, " first=%d,", req->first );
     fprintf( stderr, " record=" );
     cur_pos += dump_varargs_exc_event( req );
 }
 
-static void dump_exception_event_reply( const struct exception_event_request *req )
+static void dump_queue_exception_event_reply( const struct queue_exception_event_request *req )
 {
+    fprintf( stderr, " handle=%d", req->handle );
+}
+
+static void dump_get_exception_status_request( const struct get_exception_status_request *req )
+{
+}
+
+static void dump_get_exception_status_reply( const struct get_exception_status_request *req )
+{
+    fprintf( stderr, " handle=%d,", req->handle );
     fprintf( stderr, " status=%d,", req->status );
     fprintf( stderr, " context=" );
     cur_pos += dump_varargs_context( req );
@@ -1548,7 +1558,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_next_thread_request,
     (dump_func)dump_next_module_request,
     (dump_func)dump_wait_debug_event_request,
-    (dump_func)dump_exception_event_request,
+    (dump_func)dump_queue_exception_event_request,
+    (dump_func)dump_get_exception_status_request,
     (dump_func)dump_output_debug_string_request,
     (dump_func)dump_continue_debug_event_request,
     (dump_func)dump_debug_process_request,
@@ -1659,7 +1670,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_next_thread_reply,
     (dump_func)dump_next_module_reply,
     (dump_func)dump_wait_debug_event_reply,
-    (dump_func)dump_exception_event_reply,
+    (dump_func)dump_queue_exception_event_reply,
+    (dump_func)dump_get_exception_status_reply,
     (dump_func)0,
     (dump_func)0,
     (dump_func)0,
@@ -1770,7 +1782,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "next_thread",
     "next_module",
     "wait_debug_event",
-    "exception_event",
+    "queue_exception_event",
+    "get_exception_status",
     "output_debug_string",
     "continue_debug_event",
     "debug_process",
