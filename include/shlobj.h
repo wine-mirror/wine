@@ -38,7 +38,6 @@ BOOL WINAPI SHGetPathFromIDListA (LPCITEMIDLIST pidl,LPSTR pszPath);
 BOOL WINAPI SHGetPathFromIDListW (LPCITEMIDLIST pidl,LPWSTR pszPath);
 #define     SHGetPathFromIDList WINELIB_NAME_AW(SHGetPathFromIDList)
 
-
 /*****************************************************************************
  * Predeclare interfaces
  */
@@ -650,6 +649,84 @@ typedef struct _DROPFILES
 } DROPFILES, *LPDROPFILES;
 
 #include <poppack.h> 
+
+/*****************************************************************************
+ * IFileSystemBindData interface
+ */
+#ifndef __IFileSystemBindData_FWD_DEFINED__
+#define __IFileSystemBindData_FWD_DEFINED__
+typedef struct IFileSystemBindData IFileSystemBindData;
+#endif
+
+typedef IFileSystemBindData *LPFILESYSTEMBINDDATA;
+
+#ifndef __IFileSystemBindData_INTERFACE_DEFINED__
+#define __IFileSystemBindData_INTERFACE_DEFINED__
+
+DEFINE_GUID(IID_IFileSystemBindData, 0x01e18d10, 0x4d8b, 0x11d2, 0x85,0x5d, 0x00,0x60,0x08,0x05,0x93,0x67);
+#if defined(__cplusplus) && !defined(CINTERFACE)
+struct IFileSystemBindData : public IUnknown
+{
+    virtual HRESULT STDMETHODCALLTYPE GetFindData(
+        WIN32_FIND_DATAW* pfd) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE SetFindData(
+        const WIN32_FIND_DATAW* pfd) = 0;
+
+};
+#else
+typedef struct IFileSystemBindDataVtbl IFileSystemBindDataVtbl;
+struct IFileSystemBindData {
+    const IFileSystemBindDataVtbl* lpVtbl;
+};
+struct IFileSystemBindDataVtbl {
+    ICOM_MSVTABLE_COMPAT_FIELDS
+
+    /*** IUnknown methods ***/
+    HRESULT (STDMETHODCALLTYPE *QueryInterface)(
+        IFileSystemBindData* This,
+        REFIID riid,
+        void** ppvObject);
+
+    ULONG (STDMETHODCALLTYPE *AddRef)(
+        IFileSystemBindData* This);
+
+    ULONG (STDMETHODCALLTYPE *Release)(
+        IFileSystemBindData* This);
+
+    /*** IFileSystemBindData methods ***/
+    HRESULT (STDMETHODCALLTYPE *GetFindData)(
+        IFileSystemBindData* This,
+        WIN32_FIND_DATAW* pfd);
+
+    HRESULT (STDMETHODCALLTYPE *SetFindData)(
+        IFileSystemBindData* This,
+        const WIN32_FIND_DATAW* pfd);
+
+};
+
+/*** IUnknown methods ***/
+#define IFileSystemBindData_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IFileSystemBindData_AddRef(p) (p)->lpVtbl->AddRef(p)
+#define IFileSystemBindData_Release(p) (p)->lpVtbl->Release(p)
+/*** IFileSystemBindData methods ***/
+#define IFileSystemBindData_GetFindData(p,a) (p)->lpVtbl->GetFindData(p,a)
+#define IFileSystemBindData_SetFindData(p,a) (p)->lpVtbl->SetFindData(p,a)
+
+#endif
+
+#define IFileSystemBindData_METHODS \
+    ICOM_MSVTABLE_COMPAT_FIELDS \
+    /*** IUnknown methods ***/ \
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE; \
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE; \
+    STDMETHOD_(ULONG,Release)(THIS) PURE; \
+    /*** IFileSystemBindData methods ***/ \
+    STDMETHOD_(HRESULT,GetFindData)(THIS_ WIN32_FIND_DATAW* pfd) PURE; \
+    STDMETHOD_(HRESULT,SetFindData)(THIS_ const WIN32_FIND_DATAW* pfd) PURE;
+
+#endif  /* __IFileSystemBindData_INTERFACE_DEFINED__ */
+
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -43,6 +43,7 @@ C_SRCS = \
 	shlexec.c \
 	shlfileop.c \
 	shlfolder.c \
+	shlfsbind.c \
 	shlmenu.c \
 	shlview.c \
 	shpolicy.c \
