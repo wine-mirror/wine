@@ -438,11 +438,10 @@ extern void X11DRV_MONITOR_SetScreenSaveTimeout(struct tagMONITOR *pMonitor, int
 
 extern struct tagMOUSE_DRIVER X11DRV_MOUSE_Driver;
 
-extern BOOL X11DRV_MOUSE_DisableWarpPointer;
 extern void X11DRV_MOUSE_Init();
 extern void X11DRV_MOUSE_SetCursor(struct tagCURSORICONINFO *lpCursor);
 extern void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
-extern BOOL X11DRV_MOUSE_EnableWarpPointer(BOOL bEnable);
+extern LONG X11DRV_MOUSE_EnableWarpPointer(BOOL bEnable);
 
 /* X11 windows driver */
 

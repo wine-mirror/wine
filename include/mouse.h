@@ -38,7 +38,7 @@ typedef struct tagMOUSE_DRIVER {
   VOID (*pInit)(VOID);
   VOID (*pSetCursor)(struct tagCURSORICONINFO *);
   VOID (*pMoveCursor)(WORD, WORD);
-  BOOL (*pEnableWarpPointer)(BOOL);
+  LONG (*pEnableWarpPointer)(BOOL);
 } MOUSE_DRIVER;
 
 extern MOUSE_DRIVER *MOUSE_Driver;

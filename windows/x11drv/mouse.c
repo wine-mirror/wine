@@ -23,7 +23,7 @@ DEFAULT_DEBUG_CHANNEL(cursor)
 
 Cursor X11DRV_MOUSE_XCursor = None;    /* Current X cursor */
 
-static BOOL X11DRV_MOUSE_WarpPointer = TRUE;  /* hack; see DISPLAY_MoveCursor */
+static LONG X11DRV_MOUSE_WarpPointer = 0;  /* hack; see DISPLAY_MoveCursor */
 
 /***********************************************************************
  *		X11DRV_MOUSE_DoSetCursor
@@ -226,7 +226,7 @@ void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY)
   int rootX, rootY, winX, winY;
   unsigned int xstate;
   
-  if (!X11DRV_MOUSE_WarpPointer) return;
+  if (X11DRV_MOUSE_WarpPointer < 0) return;
 
   if (!TSXQueryPointer( display, X11DRV_GetXRootWindow(), &root, &child,
 			&rootX, &rootY, &winX, &winY, &xstate ))
@@ -244,13 +244,12 @@ void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY)
 /***********************************************************************
  *           X11DRV_MOUSE_EnableWarpPointer
  */
-BOOL X11DRV_MOUSE_EnableWarpPointer(BOOL bEnable)
+LONG X11DRV_MOUSE_EnableWarpPointer(BOOL bEnable)
 {
-  BOOL bOldEnable = X11DRV_MOUSE_WarpPointer;
-
-  X11DRV_MOUSE_WarpPointer = bEnable;
-
-  return bOldEnable;
+  if (bEnable)
+    return InterlockedIncrement( &X11DRV_MOUSE_WarpPointer );
+  else
+    return InterlockedDecrement( &X11DRV_MOUSE_WarpPointer );
 }
 
 /***********************************************************************

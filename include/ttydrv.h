@@ -217,7 +217,7 @@ extern struct tagMOUSE_DRIVER TTYDRV_MOUSE_Driver;
 extern void TTYDRV_MOUSE_Init();
 extern void TTYDRV_MOUSE_SetCursor(struct tagCURSORICONINFO *lpCursor);
 extern void TTYDRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY);
-extern BOOL TTYDRV_MOUSE_EnableWarpPointer(BOOL bEnable);
+extern LONG TTYDRV_MOUSE_EnableWarpPointer(BOOL bEnable);
 
 /* TTY windows driver */
 
