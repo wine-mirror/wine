@@ -444,6 +444,7 @@ typedef void (*voidProcp)();
 /* Note the parameter order is different from the X11 equivalents */
 
 static void REGION_CopyRegion(WINEREGION *d, WINEREGION *s);
+static void REGION_OffsetRegion(WINEREGION *d, WINEREGION *s, INT x, INT y);
 static void REGION_IntersectRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2);
 static void REGION_UnionRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2);
 static void REGION_SubtractRegion(WINEREGION *d, WINEREGION *s1, WINEREGION *s2);
@@ -558,6 +559,35 @@ static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
 
 
 /***********************************************************************
+ *           REGION_OffsetRegion
+ *           Offset a WINEREGION by x,y
+ */
+static void REGION_OffsetRegion( WINEREGION *rgn, WINEREGION *srcrgn,
+                                INT x, INT y )
+{
+    if( rgn != srcrgn)
+        REGION_CopyRegion( rgn, srcrgn);
+    if(x || y) {
+	int nbox = rgn->numRects;
+	RECT *pbox = rgn->rects;
+
+	if(nbox) {
+	    while(nbox--) {
+	        pbox->left += x;
+		pbox->right += x;
+		pbox->top += y;
+		pbox->bottom += y;
+		pbox++;
+	    }
+	    rgn->extents.left += x;
+	    rgn->extents.right += x;
+	    rgn->extents.top += y;
+	    rgn->extents.bottom += y;
+	}
+    }
+}
+
+/***********************************************************************
  *           OffsetRgn   (GDI32.@)
  *
  * Moves a region by the specified X- and Y-axis offsets.
@@ -585,24 +615,8 @@ INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
     if (!obj)
         return ERROR;
 
-    if(x || y) {
-	int nbox = obj->rgn->numRects;
-	RECT *pbox = obj->rgn->rects;
+    REGION_OffsetRegion( obj->rgn, obj->rgn, x, y);
 
-	if(nbox) {
-	    while(nbox--) {
-	        pbox->left += x;
-		pbox->right += x;
-		pbox->top += y;
-		pbox->bottom += y;
-		pbox++;
-	    }
-	    obj->rgn->extents.left += x;
-	    obj->rgn->extents.right += x;
-	    obj->rgn->extents.top += y;
-	    obj->rgn->extents.bottom += y;
-	}
-    }
     ret = get_region_type( obj );
     GDI_ReleaseObj( hrgn );
     return ret;
@@ -1191,7 +1205,9 @@ static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
  *           REGION_CreateFrameRgn
  *
  * Create a region that is a frame around another region.
- * Expand all rectangles by +/- x and y, then subtract original region.
+ * Compute the intersection of the region moved in all 4 directions
+ * ( +x, -x, +y, -y) and subtract from the original.
+ * The result looks slightly better then in Windows :)
  */
 BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
 {
@@ -1201,22 +1217,19 @@ BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
     if (!srcObj) return FALSE;
     if (srcObj->rgn->numRects != 0)
     {
-	RGNOBJ* destObj = (RGNOBJ*) GDI_GetObjPtr( hDest, REGION_MAGIC );
-	RECT *pRect, *pEndRect;
-	RECT tempRect;
+        RGNOBJ* destObj = (RGNOBJ*) GDI_GetObjPtr( hDest, REGION_MAGIC );
+        WINEREGION *tmprgn = REGION_AllocWineRegion( srcObj->rgn->numRects);
 
-	EMPTY_REGION( destObj->rgn );
+        REGION_OffsetRegion( destObj->rgn, srcObj->rgn, -x, 0);
+        REGION_OffsetRegion( tmprgn, srcObj->rgn, x, 0);
+        REGION_IntersectRegion( destObj->rgn, destObj->rgn, tmprgn);
+        REGION_OffsetRegion( tmprgn, srcObj->rgn, 0, -y);
+        REGION_IntersectRegion( destObj->rgn, destObj->rgn, tmprgn);
+        REGION_OffsetRegion( tmprgn, srcObj->rgn, 0, y);
+        REGION_IntersectRegion( destObj->rgn, destObj->rgn, tmprgn);
+        REGION_SubtractRegion( destObj->rgn, srcObj->rgn, destObj->rgn);
 
-	pEndRect = srcObj->rgn->rects + srcObj->rgn->numRects;
-	for(pRect = srcObj->rgn->rects; pRect < pEndRect; pRect++)
-	{
-	    tempRect.left = pRect->left - x;
-	    tempRect.top = pRect->top - y;
-	    tempRect.right = pRect->right + x;
-	    tempRect.bottom = pRect->bottom + y;
-	    REGION_UnionRectWithRegion( &tempRect, destObj->rgn );
-	}
-	REGION_SubtractRegion( destObj->rgn, destObj->rgn, srcObj->rgn );
+        REGION_DestroyWineRegion(tmprgn);
 	GDI_ReleaseObj ( hDest );
 	bRet = TRUE;
     }
