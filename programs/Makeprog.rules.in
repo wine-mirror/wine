@@ -49,7 +49,7 @@ checklink:: $(MODULE).so
 
 # Rules for testing
 
-$(TESTRESULTS): $(MODULE)$(DLLEXT)
+$(TESTRESULTS): $(MODULE)$(DLLEXT) $(BASEMODULE)$(EXEEXT)
 
 # Rules for installation
 
