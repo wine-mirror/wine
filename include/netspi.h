@@ -131,5 +131,5 @@ DWORD  WINAPI NPSNotifyRegisterA(enum NOTIFYTYPE,NOTIFYCALLBACK);
 LPVOID WINAPI NPSNotifyGetContextA(NOTIFYCALLBACK);
 #define       NPSNotifyGetContext WINELIB_NAME_AW(NPSNotifyGetContext)
 
-#endif _NETSPI_H_
+#endif /* _NETSPI_H_ */
 

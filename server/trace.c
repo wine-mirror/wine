@@ -1902,7 +1902,7 @@ void trace_request( struct thread *thread, const union generic_request *request 
         req_dumpers[req]( request );
         fprintf( stderr, " )\n" );
     }
-    else fprintf( stderr, "%08x: %d(???)\n", (unsigned int)thread, req );
+    else fprintf( stderr, "%08x: %d(?)\n", (unsigned int)thread, req );
 }
 
 void trace_reply( struct thread *thread, const union generic_request *request )

@@ -360,8 +360,10 @@ HRESULT WINAPI IDirect3DTexture2Impl_Load(
   DDSURFACEDESC	*src_d, *dst_d;
   static void (*ptr_ColorTableEXT) (GLenum target, GLenum internalformat,
 				    GLsizei width, GLenum format, GLenum type, const GLvoid *table) = NULL;
+#if 0
   static BOOL color_table_queried = FALSE;
-  
+#endif
+
   TRACE("(%p)->(%p)\n", This, ilpD3DTexture2);
   TRACE("Copied surface %p to surface %p\n", ilpD3DTexture2->surface, This->surface);
 

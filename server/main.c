@@ -113,5 +113,6 @@ int main( int argc, char *argv[] )
     close_atom_table();
     dump_objects();  /* dump any remaining objects */
 #endif
-    exit(0);
+
+    return 0;
 }

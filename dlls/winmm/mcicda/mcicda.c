@@ -706,7 +706,8 @@ static DWORD MCICDA_Seek(UINT wDevID, DWORD dwFlags, LPMCI_SEEK_PARMS lpParms)
 	at = lpParms->dwTo;
 	break;
     default:
-	TRACE("Seeking to ??=%lu\n", dwFlags);
+	TRACE("Unknown seek action %08lX\n",
+	      (dwFlags & ~(MCI_NOTIFY|MCI_WAIT)));
 	return MCIERR_UNSUPPORTED_FUNCTION;
     }
     if (CDROM_Audio_Seek(&wmcda->wcda, at, -1) == -1) {
