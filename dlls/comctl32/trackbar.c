@@ -143,12 +143,12 @@ TRACKBAR_ConvertPlaceToPosition (TRACKBAR_INFO *infoPtr, int place,
 
     range = infoPtr->lRangeMax - infoPtr->lRangeMin;
     if (vertical) {
-        offsetthumb = (infoPtr->rcThumb.bottom - infoPtr->rcThumb.top)/2 + 1;
-    	width = infoPtr->rcChannel.bottom - infoPtr->rcChannel.top - (offsetthumb * 2);
+        offsetthumb = (infoPtr->rcThumb.bottom - infoPtr->rcThumb.top)/2;
+        width = infoPtr->rcChannel.bottom - infoPtr->rcChannel.top - (offsetthumb * 2) - 1;
         pos = (range*(place - infoPtr->rcChannel.top - offsetthumb)) / width;
     } else {
-        offsetthumb = (infoPtr->rcThumb.right - infoPtr->rcThumb.left)/2 + 1;
-    	width = infoPtr->rcChannel.right - infoPtr->rcChannel.left - (offsetthumb * 2);
+        offsetthumb = (infoPtr->rcThumb.right - infoPtr->rcThumb.left)/2;
+        width = infoPtr->rcChannel.right - infoPtr->rcChannel.left - (offsetthumb * 2) - 1;
         pos = (range*(place - infoPtr->rcChannel.left - offsetthumb)) / width;
     }
     pos += infoPtr->lRangeMin;
@@ -228,11 +228,14 @@ TRACKBAR_CalcChannel (TRACKBAR_INFO *infoPtr)
 
     offsetthumb = infoPtr->uThumbLen / 4;
     offsetedge  = offsetthumb + 3;
-    cyChannel   = (dwStyle & TBS_ENABLESELRANGE) ? (offsetthumb+1)*3 : 4;
+    cyChannel   = (dwStyle & TBS_ENABLESELRANGE) ? offsetthumb*3 : 4;
     if (dwStyle & TBS_VERT) {
         channel->top    = lpRect.top + offsetedge;
         channel->bottom = lpRect.bottom - offsetedge;
-        channel->left = lpRect.left + (infoPtr->uThumbLen / 2) - 1;
+        if (dwStyle & TBS_ENABLESELRANGE)
+            channel->left = lpRect.left + ((infoPtr->uThumbLen - cyChannel + 2) / 2);
+        else
+            channel->left = lpRect.left + (infoPtr->uThumbLen / 2) - 1;
         if (dwStyle & TBS_BOTH) {
             if (dwStyle & TBS_NOTICKS)
                 channel->left += 1;
@@ -249,7 +252,10 @@ TRACKBAR_CalcChannel (TRACKBAR_INFO *infoPtr)
     } else {
         channel->left = lpRect.left + offsetedge;
         channel->right = lpRect.right - offsetedge;
-        channel->top = lpRect.top + (infoPtr->uThumbLen / 2) - 1;
+        if (dwStyle & TBS_ENABLESELRANGE)
+            channel->top = lpRect.top + ((infoPtr->uThumbLen - cyChannel + 2) / 2);
+        else
+            channel->top = lpRect.top + (infoPtr->uThumbLen / 2) - 1;
         if (dwStyle & TBS_BOTH) {
             if (dwStyle & TBS_NOTICKS)
                 channel->top += 1;
@@ -281,7 +287,7 @@ TRACKBAR_CalcThumb (TRACKBAR_INFO *infoPtr, LONG lPos, RECT *thumb)
     GetClientRect(infoPtr->hwndSelf, &lpRect);
     if (dwStyle & TBS_VERT)
     {
-    	height = infoPtr->rcChannel.bottom - infoPtr->rcChannel.top - thumbwidth - 1;
+    	height = infoPtr->rcChannel.bottom - infoPtr->rcChannel.top - thumbwidth;
 
         if ((dwStyle & (TBS_BOTH | TBS_LEFT)) && !(dwStyle & TBS_NOTICKS))
             thumb->left = 10;
@@ -294,7 +300,7 @@ TRACKBAR_CalcThumb (TRACKBAR_INFO *infoPtr, LONG lPos, RECT *thumb)
     }
     else
     {
-    	width = infoPtr->rcChannel.right - infoPtr->rcChannel.left - thumbwidth - 1;
+    	width = infoPtr->rcChannel.right - infoPtr->rcChannel.left - thumbwidth;
 
         thumb->left = infoPtr->rcChannel.left +
                       (width*(lPos - infoPtr->lRangeMin))/range;
@@ -348,23 +354,26 @@ TRACKBAR_CalcSelection (TRACKBAR_INFO *infoPtr)
 {
     RECT *selection = &infoPtr->rcSelection;
     int range = infoPtr->lRangeMax - infoPtr->lRangeMin;
+    int offsetthumb, height, width;
 
     if (range <= 0) {
         SetRectEmpty (selection);
     } else {
         if (GetWindowLongW (infoPtr->hwndSelf, GWL_STYLE) & TBS_VERT) {
-            int height = infoPtr->rcChannel.right - infoPtr->rcChannel.left;
-            selection->top    = infoPtr->rcChannel.top +
+            offsetthumb = (infoPtr->rcThumb.bottom - infoPtr->rcThumb.top)/2;
+            height = infoPtr->rcChannel.bottom - infoPtr->rcChannel.top - offsetthumb*2;
+            selection->top    = infoPtr->rcChannel.top + offsetthumb +
                 (height*infoPtr->lSelMin)/range;
-            selection->bottom = infoPtr->rcChannel.top +
+            selection->bottom = infoPtr->rcChannel.top + offsetthumb +
                 (height*infoPtr->lSelMax)/range;
             selection->left   = infoPtr->rcChannel.left + 3;
             selection->right  = infoPtr->rcChannel.right - 3;
         } else {
-            int width = infoPtr->rcChannel.right - infoPtr->rcChannel.left;
-            selection->left   = infoPtr->rcChannel.left +
+            offsetthumb = (infoPtr->rcThumb.right - infoPtr->rcThumb.left)/2;
+            width = infoPtr->rcChannel.right - infoPtr->rcChannel.left - offsetthumb*2;
+            selection->left   = infoPtr->rcChannel.left + offsetthumb +
                 (width*infoPtr->lSelMin)/range;
-            selection->right  = infoPtr->rcChannel.left +
+            selection->right  = infoPtr->rcChannel.left + offsetthumb +
                 (width*infoPtr->lSelMax)/range;
             selection->top    = infoPtr->rcChannel.top + 3;
             selection->bottom = infoPtr->rcChannel.bottom - 3;
@@ -418,14 +427,14 @@ TRACKBAR_DrawOneTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
     RECT rcTics;
 
     if (flags & TBS_VERT) {
-        offsetthumb = (infoPtr->rcThumb.bottom - infoPtr->rcThumb.top)/2 + 1;
+        offsetthumb = (infoPtr->rcThumb.bottom - infoPtr->rcThumb.top)/2;
 	rcTics.left = infoPtr->rcThumb.left - 2;
 	rcTics.right = infoPtr->rcThumb.right + 2;
-	rcTics.top    = infoPtr->rcChannel.top + offsetthumb;
+	rcTics.top    = infoPtr->rcChannel.top + offsetthumb + 1;
 	rcTics.bottom = infoPtr->rcChannel.bottom - offsetthumb;
     } else {
-        offsetthumb = (infoPtr->rcThumb.right - infoPtr->rcThumb.left)/2 + 1;
-	rcTics.left   = infoPtr->rcChannel.left + offsetthumb;
+        offsetthumb = (infoPtr->rcThumb.right - infoPtr->rcThumb.left)/2;
+	rcTics.left   = infoPtr->rcChannel.left + offsetthumb + 1;
 	rcTics.right  = infoPtr->rcChannel.right - offsetthumb;
 	rcTics.top = infoPtr->rcThumb.top - 2;
 	rcTics.bottom = infoPtr->rcThumb.bottom + 2;
@@ -454,13 +463,9 @@ TRACKBAR_DrawOneTic (TRACKBAR_INFO *infoPtr, HDC hdc, LONG ticPos, int flags)
     if (flags & TBS_VERT) {
 	int height = rcTics.bottom - rcTics.top;
 	y = rcTics.top + (height*(ticPos - infoPtr->lRangeMin))/range;
-/*	x -= (offset + 2) * side;
-	y += indent;*/
     } else {
         int width = rcTics.right - rcTics.left;
         x = rcTics.left + (width*(ticPos - infoPtr->lRangeMin))/range;
-/*	x += indent;
-	y -= (offset + 2) * side;*/
     }
 
     ox = x;
@@ -960,6 +965,7 @@ static LONG inline
 TRACKBAR_GetTicPos (TRACKBAR_INFO *infoPtr, INT iTic)
 {
     LONG range, width, pos, tic;
+    int offsetthumb;
 
     if ((iTic < 0) || (iTic >= infoPtr->uNumTics) || !infoPtr->tics)
 	return -1;
@@ -967,8 +973,9 @@ TRACKBAR_GetTicPos (TRACKBAR_INFO *infoPtr, INT iTic)
     tic   = TRACKBAR_GetTic (infoPtr, iTic);
     range = infoPtr->lRangeMax - infoPtr->lRangeMin;
     if (range <= 0) range = 1;
-    width = infoPtr->rcChannel.right - infoPtr->rcChannel.left;
-    pos   = infoPtr->rcChannel.left + (width * tic) / range;
+    offsetthumb = (infoPtr->rcThumb.right - infoPtr->rcThumb.left)/2;
+    width = infoPtr->rcChannel.right - infoPtr->rcChannel.left - offsetthumb*2;
+    pos   = infoPtr->rcChannel.left + offsetthumb + (width * tic) / range;
 
     return pos;
 }
@@ -1247,15 +1254,15 @@ TRACKBAR_InitializeThumb (TRACKBAR_INFO *infoPtr)
     int clientWidth, clientMetric;
 
     /* initial thumb length */
-    clientMetric = GetSystemMetrics(SM_CYCAPTION);
+    clientMetric = (dwStyle & TBS_ENABLESELRANGE) ? 23 : 21;
     GetClientRect(infoPtr->hwndSelf,&rect);
     if (dwStyle & TBS_VERT) {
 	clientWidth = rect.right - rect.left;
     } else {
 	clientWidth = rect.bottom - rect.top;
     }
-    if (clientWidth > clientMetric)
-        infoPtr->uThumbLen = clientMetric + 1;
+    if (clientWidth >= clientMetric)
+        infoPtr->uThumbLen = clientMetric;
     else
         infoPtr->uThumbLen = clientWidth > 9 ? clientWidth - 6 : 4;
 
