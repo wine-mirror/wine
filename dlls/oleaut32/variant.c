@@ -5492,6 +5492,9 @@ HRESULT WINAPI VarFormat(LPVARIANT varIn, LPOLESTR format,
     TRACE("varIn:\n");
     dump_Variant(varIn);
 
+    /* Note: Must Handle references type Variants (contain ptrs
+          to values rather than values */
+
     /* Get format string */
     pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, format );
 
@@ -5500,7 +5503,15 @@ HRESULT WINAPI VarFormat(LPVARIANT varIn, LPOLESTR format,
 
         /* Can't use VarBstrFromCy as it does not put currency sign on nor decimal places */
         double curVal;
-        rc = VarR8FromCy(V_UNION(varIn,cyVal), &curVal);
+
+
+        /* Handle references type Variants (contain ptrs to values rather than values */
+        if (V_VT(varIn)&VT_BYREF) {
+            rc = VarR8FromCy(*(CY *)V_UNION(varIn,byref), &curVal);
+        } else {
+            rc = VarR8FromCy(V_UNION(varIn,cyVal), &curVal);
+        }
+
         if (rc == S_OK) {
             char tmpStr[BUFFER_MAX];
             sprintf(tmpStr, "%f", curVal);
@@ -5522,14 +5533,40 @@ HRESULT WINAPI VarFormat(LPVARIANT varIn, LPOLESTR format,
             rc = VarFormatFromTokens(varIn, format, pBuffer, dwFlags, pbstrOut, GetUserDefaultLCID());
         }
 
+    } else if ((V_VT(varIn)&VT_TYPEMASK) == VT_R8) {
+        if (V_VT(varIn)&VT_BYREF) {
+            sprintf(pBuffer, "%f", *(double *)V_UNION(varIn,byref));
+        } else {
+            sprintf(pBuffer, "%f", V_UNION(varIn,dblVal));
+        }
+
+        *pbstrOut = StringDupAtoBstr( pBuffer );
 
     } else {
-        FIXME("Unsupported format!\n");
+        FIXME("VarFormat: Unsupported format %d!\n", V_VT(varIn)&VT_TYPEMASK);
         *pbstrOut = StringDupAtoBstr( "??" );
     }
 
     /* Free allocated storage */
     HeapFree( GetProcessHeap(), 0, pNewString );
     TRACE("result: '%s'\n", debugstr_w(*pbstrOut));
+    return rc;
+}
+
+/**********************************************************************
+ *              VarCyMulI4 [OLEAUT32.304]
+ * Multiply currency value by integer
+ */
+HRESULT WINAPI VarCyMulI4(CY cyIn, LONG mulBy, CY *pcyOut) {
+
+    double cyVal = 0;
+    HRESULT rc = S_OK;
+
+    rc = VarR8FromCy(cyIn, &cyVal);
+    if (rc == S_OK) {
+        rc = VarCyFromR8((cyVal * (double) mulBy), pcyOut);
+        TRACE("Multiply %f by %ld = %f [%ld,%lu]\n", cyVal, mulBy, (cyVal * (double) mulBy),
+                    pcyOut->s.Hi, pcyOut->s.Lo);
+    }
     return rc;
 }

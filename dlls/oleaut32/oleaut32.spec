@@ -296,7 +296,7 @@
 298 stub VarDecCmpR8 # stdcall (ptr double)
 299 stub VarCyAdd
 303 stub VarCyMul
-304 stub VarCyMulI4
+304 stdcall VarCyMulI4(double long ptr) VarCyMulI4
 305 stub VarCySub
 306 stub VarCyAbs
 307 stub VarCyFix
