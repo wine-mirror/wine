@@ -211,11 +211,11 @@ void volume_effect8(void *bufin, void* bufout, int length, int left,
   for(i = 0; i < length; i+=(nChannels))
   {
     v = (char) ((*(d_in++) * left) / 100);
-    *(d_out++) = (v>127) ? 127 : ((v<-128) ? -128 : v);
+    *(d_out++) = (v>255) ? 255 : ((v<0) ? 0 : v);
     if(nChannels == 2)
     {
       v = (char) ((*(d_in++) * right) / 100);
-      *(d_out++) = (v>127) ? 127 : ((v<-128) ? -128 : v);
+      *(d_out++) = (v>255) ? 255 : ((v<0) ? 0 : v);
     }
   }
 }
