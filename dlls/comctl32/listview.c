@@ -226,6 +226,7 @@ typedef struct tagLISTVIEW_INFO
   HIMAGELIST himlState;
   BOOL bLButtonDown;
   BOOL bRButtonDown;
+  BOOL bNoItemMetrics;		/* flags if item metrics are not yet computed */
   INT nItemHeight;
   INT nItemWidth;
   RANGES selectionRanges;
@@ -7034,6 +7035,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->nHotItem = -1;
   infoPtr->bRedraw = TRUE;
   infoPtr->bFirstPaint = TRUE;
+  infoPtr->bNoItemMetrics = TRUE;
   infoPtr->iconSpacing.cx = GetSystemMetrics(SM_CXICONSPACING);
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
   infoPtr->nEditLabelItem = -1;
@@ -7852,11 +7854,12 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
 {
     TRACE("(hdc=%p)\n", hdc);
 
-    if (infoPtr->bFirstPaint && infoPtr->nItemCount)
+    infoPtr->bFirstPaint = FALSE;
+    if (infoPtr->bNoItemMetrics && infoPtr->nItemCount)
     {
 	UINT uView =  infoPtr->dwStyle & LVS_TYPEMASK;
 	
-	infoPtr->bFirstPaint = FALSE;
+	infoPtr->bNoItemMetrics = FALSE;
 	LISTVIEW_UpdateItemSize(infoPtr);
 	if (uView == LVS_ICON || uView == LVS_SMALLICON)
 	    LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
