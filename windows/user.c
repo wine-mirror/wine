@@ -571,7 +571,7 @@ HDESK WINAPI CreateDesktopA(
 		lpszDesktop,lpszDevice,pDevmode,
 		dwFlags,dwDesiredAccess,lpsa
 	);
-	return 0xcafedead;
+	return (HDESK)0xcafedead;
 }
 
 /***********************************************************************
@@ -585,7 +585,7 @@ HDESK WINAPI CreateDesktopW(
 		debugstr_w(lpszDesktop),debugstr_w(lpszDevice),pDevmode,
 		dwFlags,dwDesiredAccess,lpsa
 	);
-	return 0xcafedead;
+	return (HDESK)0xcafedead;
 }
 
 /***********************************************************************
