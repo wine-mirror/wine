@@ -520,7 +520,9 @@ UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
                GetWindowRect(data->hWnd, &(data->rc));
                return TRUE;
           case ABM_REMOVE:
-               CloseHandle(data->hWnd);
+               FIXME("ABM_REMOVE broken\n");
+               /* FIXME: this is wrong; should it be DestroyWindow instead? */
+               /*CloseHandle(data->hWnd);*/
                return TRUE;
           case ABM_SETAUTOHIDEBAR:
                SetWindowPos(data->hWnd,HWND_TOP,rec.left+1000,rec.top,

@@ -829,7 +829,7 @@ static Atom EVENT_SelectionRequest_PIXMAP( Display *display, Window requestor,
         /* For convert from packed DIB to Pixmap */
         pixmap = X11DRV_DIB_CreatePixmapFromDIB(hClipData, hdc);
         
-        ReleaseDC(hdc, hwnd);
+        ReleaseDC(hwnd, hdc);
     }
     else if (wFormat == CF_BITMAP)
     {
@@ -838,7 +838,7 @@ static Atom EVENT_SelectionRequest_PIXMAP( Display *display, Window requestor,
         
         pixmap = X11DRV_BITMAP_CreatePixmapFromBitmap(hClipData, hdc);
 
-        ReleaseDC(hdc, hwnd);
+        ReleaseDC(hwnd, hdc);
     }
     else
     {

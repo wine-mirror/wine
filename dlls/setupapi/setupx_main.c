@@ -285,7 +285,6 @@ static LPSTR SETUPX_GetSectionEntries(LPCSTR filename, LPCSTR section)
  *
  * nCmdShow = nCmdShow of CreateProcess
  */
-typedef INT WINAPI (*MSGBOX_PROC)( HWND, LPCSTR, LPCSTR, UINT );
 RETERR16 WINAPI InstallHinfSection16( HWND16 hwnd, HINSTANCE16 hinst, LPCSTR lpszCmdLine, INT16 nCmdShow)
 {
     LPSTR *pSub;
@@ -294,8 +293,6 @@ RETERR16 WINAPI InstallHinfSection16( HWND16 hwnd, HINSTANCE16 hinst, LPCSTR lps
     RETERR16 res = OK, tmp;
     WORD wFlags;
     BOOL reboot = FALSE;
-    HMODULE hMod;
-    MSGBOX_PROC pMessageBoxA;
 
     TRACE("(%04x, %04x, %s, %d);\n", hwnd, hinst, lpszCmdLine, nCmdShow);
 
@@ -322,15 +319,8 @@ RETERR16 WINAPI InstallHinfSection16( HWND16 hwnd, HINSTANCE16 hinst, LPCSTR lps
 	    break;
 	case HOW_ALWAYS_PROMPT_REBOOT:
 	case HOW_PROMPT_REBOOT:
-	    if ((hMod = GetModuleHandleA("user32.dll")))
-	    {
-	      if ((pMessageBoxA = (MSGBOX_PROC)GetProcAddress( hMod, "MessageBoxA" )))
-	      {
-
-	        if (pMessageBoxA(hwnd, "You must restart Wine before the new settings will take effect.\n\nDo you want to exit Wine now ?", "Systems Settings Change", MB_YESNO|MB_ICONQUESTION) == IDYES)
-		  reboot = TRUE;
-	      }
-	    }
+            if (MessageBoxA(hwnd, "You must restart Wine before the new settings will take effect.\n\nDo you want to exit Wine now ?", "Systems Settings Change", MB_YESNO|MB_ICONQUESTION) == IDYES)
+                reboot = TRUE;
 	    break;
 	default:
 	    ERR("invalid flags %d !\n", wFlags);

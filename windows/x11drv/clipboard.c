@@ -615,7 +615,7 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
         /* For CF_DIB requests we must return an HGLOBAL storing a packed DIB */
         hTargetImage = X11DRV_DIB_CreateDIBFromPixmap(*pPixmap, hdc, TRUE);
         
-        ReleaseDC(hdc, hwnd);
+        ReleaseDC(hwnd, hdc);
       }
 
       if (!hTargetImage)
