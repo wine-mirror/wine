@@ -678,7 +678,7 @@ static const WCHAR *get_locale_value_name( DWORD lctype )
     static const WCHAR sYearMonthW[] = {'s','Y','e','a','r','M','o','n','t','h',0};
     static const WCHAR NumShapeW[] = {'N','u','m','s','h','a','p','e',0};
 
-    switch (lctype & ~LOCALE_LOCALEINFOFLAGSMASK)
+    switch (lctype)
     {
     /* These values are used by SetLocaleInfo and GetLocaleInfo, and
      * the values are stored in the registry, confirmed under Windows.
@@ -893,7 +893,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     lcid = ConvertDefaultLocale(lcid);
 
     lcflags = lctype & LOCALE_LOCALEINFOFLAGSMASK;
-    lctype &= ~LOCALE_LOCALEINFOFLAGSMASK;
+    lctype &= 0xffff;
 
     /* first check for overrides in the registry */
 
@@ -1029,7 +1029,7 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
 
     lcid = ConvertDefaultLocale(lcid);
 
-    lctype &= ~LOCALE_LOCALEINFOFLAGSMASK;
+    lctype &= 0xffff;
     value = get_locale_value_name( lctype );
 
     if (!data || !value)
