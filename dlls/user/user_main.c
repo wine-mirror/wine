@@ -55,22 +55,32 @@ extern void WDML_NotifyThreadDetach(void);
 /* load the graphics driver */
 static BOOL load_driver(void)
 {
-    char buffer[MAX_PATH];
+    char buffer[MAX_PATH], *name, *next;
     HKEY hkey;
-    DWORD type, count;
 
-    strcpy( buffer, "x11drv" );  /* default value */
+    strcpy( buffer, "x11drv,ttydrv" );  /* default value */
     if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Wine", &hkey ))
     {
-        count = sizeof(buffer);
+        DWORD type, count = sizeof(buffer);
         RegQueryValueExA( hkey, "GraphicsDriver", 0, &type, buffer, &count );
         RegCloseKey( hkey );
     }
 
-    if (!(graphics_driver = LoadLibraryA( buffer )))
+    name = buffer;
+    while (name)
     {
-        MESSAGE( "Could not load graphics driver '%s'\n", buffer );
-        return FALSE;
+        next = strchr( name, ',' );
+        if (next) *next++ = 0;
+
+        if ((graphics_driver = LoadLibraryA( name )) != 0) break;
+        name = next;
+    }
+    if (!graphics_driver)
+    {
+        MESSAGE( "wine: Could not load graphics driver '%s'.\n", buffer );
+        if (!strcasecmp( buffer, "x11drv" ))
+            MESSAGE( "Make sure that your X server is running and that $DISPLAY is set correctly.\n" );
+        ExitProcess(1);
     }
 
     GET_USER_FUNC(InitKeyboard);

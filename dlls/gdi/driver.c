@@ -209,8 +209,8 @@ static struct graphics_driver *create_driver( HMODULE module )
  */
 static struct graphics_driver *load_display_driver(void)
 {
-    char buffer[MAX_PATH];
-    HMODULE module;
+    char buffer[MAX_PATH], *name, *next;
+    HMODULE module = 0;
     HKEY hkey;
 
     if (display_driver)  /* already loaded */
@@ -219,7 +219,7 @@ static struct graphics_driver *load_display_driver(void)
         return display_driver;
     }
 
-    strcpy( buffer, "x11drv" );  /* default value */
+    strcpy( buffer, "x11drv,ttydrv" );  /* default value */
     if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Wine", &hkey ))
     {
         DWORD type, count = sizeof(buffer);
@@ -227,17 +227,28 @@ static struct graphics_driver *load_display_driver(void)
         RegCloseKey( hkey );
     }
 
-    if (!(module = LoadLibraryA( buffer )))
+    name = buffer;
+    while (name)
     {
-        MESSAGE( "Could not load graphics driver '%s'\n", buffer );
-        return NULL;
+        next = strchr( name, ',' );
+        if (next) *next++ = 0;
+
+        if ((module = LoadLibraryA( name )) != 0) break;
+        name = next;
+    }
+    if (!module)
+    {
+        MESSAGE( "wine: Could not load graphics driver '%s'.\n", buffer );
+        if (!strcasecmp( buffer, "x11drv" ))
+            MESSAGE( "Make sure that your X server is running and that $DISPLAY is set correctly.\n" );
+        ExitProcess(1);
     }
 
     if (!(display_driver = create_driver( module )))
     {
         MESSAGE( "Could not create graphics driver '%s'\n", buffer );
         FreeLibrary( module );
-        return NULL;
+        ExitProcess(1);
     }
 
     display_driver->count++;  /* we don't want to free it */
