@@ -176,11 +176,7 @@ VOID WINAPI MD5Final( MD5_CTX *ctx )
 
     MD5Transform( ctx->buf, (unsigned int *)ctx->in );
     byteReverse( (unsigned char *)ctx->buf, 4 );
-
-    if ( ctx->digest != NULL )
-        memcpy( ctx->digest, ctx->buf, 16 );
-
-    memset( ctx, 0, sizeof(ctx) );      /* In case it's sensitive */
+    memcpy( ctx->digest, ctx->buf, 16 );
 }
 
 /* The four core functions - F1 is optimized somewhat */
