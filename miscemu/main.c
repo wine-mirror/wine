@@ -34,6 +34,9 @@ int WINAPI wine_initial_task( HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, INT
     HINSTANCE16 instance;
     HMODULE user32;
 
+    /* some programs assume mmsystem is always present */
+    LoadLibrary16( "mmsystem.dll" );
+
     if ((instance = NE_StartMain( main_exe_name, main_exe_file )) < 32)
     {
         if (instance == 11)  /* try DOS format */
