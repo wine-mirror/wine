@@ -9,6 +9,7 @@ CTESTS = \
 	class.c \
 	generated.c \
 	listbox.c \
+	msg.c \
 	sysparams.c \
 	win.c \
 	wsprintf.c

@@ -2,6 +2,7 @@ Makefile
 class.ok
 generated.ok
 listbox.ok
+msg.ok
 sysparams.ok
 testlist.c
 user32_test.exe.spec.c
