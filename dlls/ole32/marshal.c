@@ -107,22 +107,6 @@ void MARSHAL_Invalidate_Stub_From_MID(wine_marshal_id *mid) {
 }
 
 HRESULT
-MARSHAL_Find_Stub_Server(wine_marshal_id *mid,LPUNKNOWN *punk) {
-    int i;
-
-    for (i=0;i<nrofstubs;i++) {
-       if (!stubs[i].valid) continue;
-
-	if (MARSHAL_Compare_Mids_NoInterface(mid,&(stubs[i].mid))) {
-	    *punk = stubs[i].pUnkServer;
-	    IUnknown_AddRef((*punk));
-	    return S_OK;
-	}
-    }
-    return E_FAIL;
-}
-
-HRESULT
 MARSHAL_Find_Stub_Buffer(wine_marshal_id *mid,IRpcStubBuffer **stub) {
     int i;
 
@@ -138,7 +122,7 @@ MARSHAL_Find_Stub_Buffer(wine_marshal_id *mid,IRpcStubBuffer **stub) {
     return E_FAIL;
 }
 
-HRESULT
+static HRESULT
 MARSHAL_Find_Stub(wine_marshal_id *mid,LPUNKNOWN *pUnk) {
     int i;
 
@@ -154,7 +138,7 @@ MARSHAL_Find_Stub(wine_marshal_id *mid,LPUNKNOWN *pUnk) {
     return E_FAIL;
 }
 
-HRESULT
+static HRESULT
 MARSHAL_Register_Stub(wine_marshal_id *mid,LPUNKNOWN pUnk,IRpcStubBuffer *stub) {
     LPUNKNOWN	xPunk;
     if (!MARSHAL_Find_Stub(mid,&xPunk)) {
@@ -175,19 +159,6 @@ MARSHAL_Register_Stub(wine_marshal_id *mid,LPUNKNOWN pUnk,IRpcStubBuffer *stub) 
 }
 
 HRESULT
-MARSHAL_Find_Proxy(wine_marshal_id *mid,LPUNKNOWN *punk) {
-    int i;
-
-    for (i=0;i<nrofproxies;i++)
-	if (MARSHAL_Compare_Mids(mid,&(proxies[i].mid))) {
-	    *punk = proxies[i].pUnk;
-	    IUnknown_AddRef((*punk));
-	    return S_OK;
-	}
-    return E_FAIL;
-}
-
-HRESULT
 MARSHAL_Disconnect_Proxies() {
     int i;
 
@@ -199,20 +170,7 @@ MARSHAL_Disconnect_Proxies() {
     return S_OK;
 }
 
-HRESULT
-MARSHAL_Find_Proxy_Object(wine_marshal_id *mid,LPUNKNOWN *punk) {
-    int i;
-
-    for (i=0;i<nrofproxies;i++)
-	if (MARSHAL_Compare_Mids_NoInterface(mid,&(proxies[i].mid))) {
-	    *punk = proxies[i].pUnk;
-	    IUnknown_AddRef((*punk));
-	    return S_OK;
-	}
-    return E_FAIL;
-}
-
-HRESULT
+static HRESULT
 MARSHAL_Register_Proxy(wine_marshal_id *mid,LPUNKNOWN punk) {
     int i;
 
@@ -244,7 +202,7 @@ typedef struct _StdMarshalImpl {
   DWORD			mshlflags;
 } StdMarshalImpl;
 
-HRESULT WINAPI
+static HRESULT WINAPI
 StdMarshalImpl_QueryInterface(LPMARSHAL iface,REFIID riid,LPVOID *ppv) {
   *ppv = NULL;
   if (IsEqualIID(&IID_IUnknown,riid) || IsEqualIID(&IID_IMarshal,riid)) {
@@ -256,14 +214,14 @@ StdMarshalImpl_QueryInterface(LPMARSHAL iface,REFIID riid,LPVOID *ppv) {
   return E_NOINTERFACE;
 }
 
-ULONG WINAPI
+static ULONG WINAPI
 StdMarshalImpl_AddRef(LPMARSHAL iface) {
   ICOM_THIS(StdMarshalImpl,iface);
   This->ref++;
   return This->ref;
 }
 
-ULONG WINAPI
+static ULONG WINAPI
 StdMarshalImpl_Release(LPMARSHAL iface) {
   ICOM_THIS(StdMarshalImpl,iface);
   This->ref--;
@@ -274,7 +232,7 @@ StdMarshalImpl_Release(LPMARSHAL iface) {
   return 0;
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 StdMarshalImpl_GetUnmarshalClass(
   LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext,
   void* pvDestContext, DWORD mshlflags, CLSID* pCid
@@ -283,7 +241,7 @@ StdMarshalImpl_GetUnmarshalClass(
   return S_OK;
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 StdMarshalImpl_GetMarshalSizeMax(
   LPMARSHAL iface, REFIID riid, void* pv, DWORD dwDestContext,
   void* pvDestContext, DWORD mshlflags, DWORD* pSize
@@ -292,7 +250,7 @@ StdMarshalImpl_GetMarshalSizeMax(
   return S_OK;
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 StdMarshalImpl_MarshalInterface(
   LPMARSHAL iface, IStream *pStm,REFIID riid, void* pv, DWORD dwDestContext,
   void* pvDestContext, DWORD mshlflags
@@ -339,7 +297,7 @@ StdMarshalImpl_MarshalInterface(
   return S_OK;
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 StdMarshalImpl_UnmarshalInterface(
   LPMARSHAL iface, IStream *pStm, REFIID riid, void **ppv
 ) {
@@ -392,7 +350,7 @@ StdMarshalImpl_UnmarshalInterface(
   return hres;
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
   wine_marshal_id       mid;
   ULONG                 res;
@@ -427,7 +385,7 @@ StdMarshalImpl_ReleaseMarshalData(LPMARSHAL iface, IStream *pStm) {
   return S_OK;
 }
 
-HRESULT WINAPI
+static HRESULT WINAPI
 StdMarshalImpl_DisconnectObject(LPMARSHAL iface, DWORD dwReserved) {
   FIXME("(), stub!\n");
   return S_OK;

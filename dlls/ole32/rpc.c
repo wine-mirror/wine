@@ -117,7 +117,7 @@ typedef struct _PipeBuf {
 } PipeBuf;
 
 static HRESULT WINAPI
-_xread(HANDLE hf, LPVOID ptr, DWORD size) {
+read_pipe(HANDLE hf, LPVOID ptr, DWORD size) {
     DWORD res;
     if (!ReadFile(hf,ptr,size,&res,NULL)) {
 	FIXME("Failed to read from %p, le is %lx\n",hf,GetLastError());
@@ -157,7 +157,7 @@ drs(LPCSTR where) {
 }
 
 static HRESULT WINAPI
-_xwrite(HANDLE hf, LPVOID ptr, DWORD size) {
+write_pipe(HANDLE hf, LPVOID ptr, DWORD size) {
     DWORD res;
     if (!WriteFile(hf,ptr,size,&res,NULL)) {
 	FIXME("Failed to write to %p, le is %lx\n",hf,GetLastError());
@@ -307,8 +307,8 @@ PipeBuf_Release(LPRPCCHANNELBUFFER iface) {
 
     pipe = PIPE_FindByMID(&This->mid);
 
-    _xwrite(pipe, &reqtype, sizeof(reqtype));
-    _xwrite(pipe, &header, sizeof(wine_rpc_disconnect_header));
+    write_pipe(pipe, &reqtype, sizeof(reqtype));
+    write_pipe(pipe, &header, sizeof(wine_rpc_disconnect_header));
 
     TRACE("written disconnect packet\n");
 
@@ -330,7 +330,7 @@ PipeBuf_GetBuffer(
 }
 
 static HRESULT
-_invoke_onereq(wine_rpc_request *req) {
+COM_InvokeAndRpcSend(wine_rpc_request *req) {
     IRpcStubBuffer	*stub;
     RPCOLEMESSAGE	msg;
     HRESULT		hres;
@@ -351,18 +351,18 @@ _invoke_onereq(wine_rpc_request *req) {
     req->Buffer		= msg.Buffer;
     req->resph.cbBuffer	= msg.cbBuffer;
     reqtype 		= REQTYPE_RESPONSE;
-    hres = _xwrite(req->hPipe,&reqtype,sizeof(reqtype));
+    hres = write_pipe(req->hPipe,&reqtype,sizeof(reqtype));
     if (hres) return hres;
-    hres = _xwrite(req->hPipe,&(req->resph),sizeof(req->resph));
+    hres = write_pipe(req->hPipe,&(req->resph),sizeof(req->resph));
     if (hres) return hres;
-    hres = _xwrite(req->hPipe,req->Buffer,req->resph.cbBuffer);
+    hres = write_pipe(req->hPipe,req->Buffer,req->resph.cbBuffer);
     if (hres) return hres;
     req->state = REQSTATE_DONE;
     drs("invoke");
     return S_OK;
 }
 
-static HRESULT _read_one(wine_pipe *xpipe);
+static HRESULT COM_RpcReceive(wine_pipe *xpipe);
 
 static HRESULT
 RPC_QueueRequestAndWait(wine_rpc_request *req) {
@@ -383,23 +383,23 @@ RPC_QueueRequestAndWait(wine_rpc_request *req) {
     req->hPipe = xpipe->hPipe;
     req->state = REQSTATE_REQ_WAITING_FOR_REPLY;
     reqtype = REQTYPE_REQUEST;
-    hres = _xwrite(req->hPipe,&reqtype,sizeof(reqtype));
+    hres = write_pipe(req->hPipe,&reqtype,sizeof(reqtype));
     if (hres) return hres;
-    hres = _xwrite(req->hPipe,&(req->reqh),sizeof(req->reqh));
+    hres = write_pipe(req->hPipe,&(req->reqh),sizeof(req->reqh));
     if (hres) return hres;
-    hres = _xwrite(req->hPipe,req->Buffer,req->reqh.cbBuffer);
+    hres = write_pipe(req->hPipe,req->Buffer,req->reqh.cbBuffer);
     if (hres) return hres;
 
     /* This loop is about allowing re-entrancy. While waiting for the
      * response to one RPC we may receive a request starting another. */
     while (!hres) {
-	hres = _read_one(xpipe);
+	hres = COM_RpcReceive(xpipe);
 	if (hres) break;
 
 	for (i=0;i<nrofreqs;i++) {
 	    xreq = reqs[i];
 	    if ((xreq->state==REQSTATE_REQ_GOT) && (xreq->hPipe==req->hPipe)) {
-		hres = _invoke_onereq(xreq);
+		hres = COM_InvokeAndRpcSend(xreq);
 		if (hres) break;
 	    }
 	}
@@ -637,7 +637,7 @@ PIPE_StartRequestThread(HANDLE xhPipe) {
     wine_marshal_id	remoteid;
     HRESULT		hres;
 
-    hres = _xread(xhPipe,&remoteid,sizeof(remoteid));
+    hres = read_pipe(xhPipe,&remoteid,sizeof(remoteid));
     if (hres) {
 	ERR("Failed to read remote mid!\n");
 	return;
@@ -646,13 +646,13 @@ PIPE_StartRequestThread(HANDLE xhPipe) {
 }
 
 static HRESULT
-_read_one(wine_pipe *xpipe) {
+COM_RpcReceive(wine_pipe *xpipe) {
     DWORD	reqtype;
     HRESULT	hres = S_OK;
     HANDLE	xhPipe = xpipe->hPipe;
 
     /*FIXME("%lx %d reading reqtype\n",GetCurrentProcessId(),xhPipe);*/
-    hres = _xread(xhPipe,&reqtype,sizeof(reqtype));
+    hres = read_pipe(xhPipe,&reqtype,sizeof(reqtype));
     if (hres) goto end;
     EnterCriticalSection(&(xpipe->crit));
     /*FIXME("%lx got reqtype %ld\n",GetCurrentProcessId(),reqtype);*/
@@ -662,7 +662,7 @@ _read_one(wine_pipe *xpipe) {
         IRpcStubBuffer *stub;
         ULONG ret;
 
-        hres = _xread(xhPipe, &header, sizeof(header));
+        hres = read_pipe(xhPipe, &header, sizeof(header));
         if (hres) {
             ERR("could not read disconnect header\n");
             goto end;
@@ -689,11 +689,11 @@ _read_one(wine_pipe *xpipe) {
 	wine_rpc_request	*xreq;
 	RPC_GetRequest(&xreq);
 	xreq->hPipe = xhPipe;
-	hres = _xread(xhPipe,&(xreq->reqh),sizeof(xreq->reqh));
+	hres = read_pipe(xhPipe,&(xreq->reqh),sizeof(xreq->reqh));
 	if (hres) goto end;
 	xreq->resph.reqid = xreq->reqh.reqid;
 	xreq->Buffer = HeapAlloc(GetProcessHeap(),0, xreq->reqh.cbBuffer);
-	hres = _xread(xhPipe,xreq->Buffer,xreq->reqh.cbBuffer);
+	hres = read_pipe(xhPipe,xreq->Buffer,xreq->reqh.cbBuffer);
 	if (hres) goto end;
 	xreq->state = REQSTATE_REQ_GOT;
 	goto end;
@@ -701,7 +701,7 @@ _read_one(wine_pipe *xpipe) {
 	wine_rpc_response_header	resph;
 	int i;
 
-	hres = _xread(xhPipe,&resph,sizeof(resph));
+	hres = read_pipe(xhPipe,&resph,sizeof(resph));
 	if (hres) goto end;
 	for (i=nrofreqs;i--;) {
 	    wine_rpc_request *xreq = reqs[i];
@@ -715,7 +715,7 @@ _read_one(wine_pipe *xpipe) {
 		else
 		    xreq->Buffer = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,xreq->resph.cbBuffer);
 
-		hres = _xread(xhPipe,xreq->Buffer,xreq->resph.cbBuffer);
+		hres = read_pipe(xhPipe,xreq->Buffer,xreq->resph.cbBuffer);
 		if (hres) goto end;
 		xreq->state = REQSTATE_RESP_GOT;
 		/*PulseEvent(hRpcChanged);*/
@@ -742,13 +742,13 @@ _StubReaderThread(LPVOID param) {
     TRACE("STUB reader thread %lx\n",GetCurrentProcessId());
     while (!hres) {
 	int i;
-	hres = _read_one(xpipe);
+	hres = COM_RpcReceive(xpipe);
 	if (hres) break;
 
 	for (i=nrofreqs;i--;) {
 	    wine_rpc_request *xreq = reqs[i];
 	    if ((xreq->state == REQSTATE_REQ_GOT) && (xreq->hPipe == xhPipe)) {
-		hres = _invoke_onereq(xreq);
+		hres = COM_InvokeAndRpcSend(xreq);
 		if (!hres) break;
 	    }
 	}
