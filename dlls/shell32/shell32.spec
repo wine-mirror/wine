@@ -38,8 +38,8 @@ debug_channels (exec pidl shell)
   23 stdcall ILIsParent (long long long) ILIsParent
   24 stdcall ILFindChild (long long) ILFindChild
   25 stdcall ILCombine(ptr ptr) ILCombine
-  26 stdcall ILLoadFromStream (long long) ILLoadFromStream
-  27 stub ILSaveToStream@8
+  26 stdcall ILLoadFromStream (ptr ptr) ILLoadFromStream
+  27 stdcall ILSaveToStream(ptr ptr) ILSaveToStream
   28 stdcall SHILCreateFromPath (long long long) SHILCreateFromPathAW
   29 stdcall PathIsRoot(ptr) PathIsRootAW
   30 stdcall PathBuildRoot(ptr long) PathBuildRootAW
@@ -75,7 +75,7 @@ debug_channels (exec pidl shell)
   63 stdcall GetFileNameFromBrowse(long long long long str str str) GetFileNameFromBrowse
   64 stdcall DriveType (long) DriveType
   65 stub InvalidateDriveType
-  66 stub IsNetDrive
+  66 stdcall IsNetDrive(long) IsNetDrive
   67 stdcall Shell_MergeMenus (long long long long long long) Shell_MergeMenus
   68 stdcall SHGetSetSettings(long long long) SHGetSetSettings
   69 stub SHGetNetResource

@@ -163,3 +163,13 @@ HRESULT WINAPI SheChangeDirW(LPWSTR u)
 	return 0;
 }
 
+/*************************************************************************
+ * IsNetDrive			[SHELL32.66]
+ */
+BOOL WINAPI IsNetDrive(DWORD drive)
+{
+	char root[4];
+	strcpy(root, "A:\\");
+	root[0] += drive;
+	return (GetDriveTypeA(root) == DRIVE_REMOTE);
+}

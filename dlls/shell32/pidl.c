@@ -108,8 +108,9 @@ BOOL pcheck (LPCITEMIDLIST pidl)
 	      case PT_WORKGRP:
 	      case PT_COMP:
 	      case PT_NETWORK:
+	      case PT_IESPECIAL1:
+	      case PT_IESPECIAL2:
 	      case PT_SHARE:
-	      case PT_IESPECIAL:
 		break;
 	      default:
 	      {
@@ -233,6 +234,7 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
 
 	return pidlNew;
 }
+
 /*************************************************************************
  * ILLoadFromStream
  *
@@ -265,7 +267,7 @@ HRESULT WINAPI ILLoadFromStream (IStream * pStream, LPITEMIDLIST * ppPidl)
 	  }
 	}
 	
-	/* we are not jet fully compatible */
+	/* we are not yet fully compatible */
 	if (!pcheck(*ppPidl))
 	{ SHFree(*ppPidl);
 	  *ppPidl = NULL;
@@ -276,6 +278,43 @@ HRESULT WINAPI ILLoadFromStream (IStream * pStream, LPITEMIDLIST * ppPidl)
 
 	return ret;
 }
+
+/*************************************************************************
+ * ILSaveToStream
+ *
+ * NOTES
+ *   the first two bytes are the len, the pidl is following then
+ */
+HRESULT WINAPI ILSaveToStream (IStream * pStream, LPCITEMIDLIST pPidl)
+{
+	LPITEMIDLIST	pidl;
+	WORD		wLen = 0;
+	HRESULT		ret = E_FAIL;
+	
+	TRACE_(shell)("%p %p\n", pStream, pPidl);
+
+	IStream_AddRef (pStream);
+
+	pidl = pPidl;
+        while (pidl->mkid.cb)
+        {
+          wLen += sizeof(WORD) + pidl->mkid.cb;
+          pidl = ILGetNext(pidl);
+        }
+
+	if (SUCCEEDED(IStream_Write(pStream, (LPVOID)&wLen, 2, NULL)))
+	{
+	  if (SUCCEEDED(IStream_Write(pStream, pPidl, wLen, NULL)))
+	  { ret = S_OK;
+	  }
+	}
+	
+
+	IStream_Release (pStream);
+
+	return ret;
+}
+
 /*************************************************************************
  * SHILCreateFromPath	[SHELL32.28]
  *
@@ -1508,7 +1547,8 @@ LPSTR _ILGetTextPointer(LPCITEMIDLIST pidl)
 	    case PT_FOLDER:
 	    case PT_FOLDER1:
 	    case PT_VALUE:
-	    case PT_IESPECIAL:
+	    case PT_IESPECIAL1:
+	    case PT_IESPECIAL2:
 	      return (LPSTR)&(pdata->u.file.szNames);
 
 	    case PT_WORKGRP:
@@ -1536,7 +1576,8 @@ LPSTR _ILGetSTextPointer(LPCITEMIDLIST pidl)
 	  {
 	    case PT_FOLDER:
 	    case PT_VALUE:
-	    case PT_IESPECIAL:
+	    case PT_IESPECIAL1:
+	    case PT_IESPECIAL2:
 	      return (LPSTR)(pdata->u.file.szNames + strlen (pdata->u.file.szNames) + 1);
 
 	    case PT_WORKGRP:

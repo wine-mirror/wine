@@ -74,7 +74,8 @@
 #define PT_WORKGRP	0x41
 #define PT_COMP		0x42
 #define PT_NETWORK	0x47
-#define PT_IESPECIAL	0xb1
+#define PT_IESPECIAL1	0x61
+#define PT_IESPECIAL2	0xb1
 #define PT_SHARE	0xc3
 
 #include "pshpack1.h"
