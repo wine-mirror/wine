@@ -5211,7 +5211,7 @@ HRESULT WINAPI DirectPlayEnumerateA( LPDPENUMDPCALLBACKA lpEnumCallback,
   {
     /* Hmmm. Does this mean that there are no service providers? */
     ERR(": no service providers?\n");
-    return DP_OK;
+    return DPERR_NOSERVICEPROVIDER;
   }
 
   /* Traverse all the service providers we have available */
