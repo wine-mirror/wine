@@ -757,6 +757,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
 	SelectObject( hdc, GetStockObject(BLACK_PEN) );
 	SelectObject( hdc, GetStockObject(WHITE_BRUSH) );
 	SelectObject( hdc, GetStockObject(SYSTEM_FONT) );
+        SelectObject( hdc, GetStockObject(DEFAULT_BITMAP) );
         funcs = dc->funcs;
         if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc);
     }

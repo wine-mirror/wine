@@ -145,6 +145,48 @@ static HFONT create_stock_font( char const *fontName, const LOGFONTW *font, HKEY
 
 
 /***********************************************************************
+ *           inc_ref_count
+ *
+ * Increment the reference count of a GDI object.
+ */
+inline static void inc_ref_count( HGDIOBJ handle )
+{
+    GDIOBJHDR *header;
+
+    if ((header = GDI_GetObjPtr( handle, MAGIC_DONTCARE )))
+    {
+        header->dwCount++;
+        GDI_ReleaseObj( handle );
+    }
+}
+
+
+/***********************************************************************
+ *           dec_ref_count
+ *
+ * Decrement the reference count of a GDI object.
+ */
+inline static void dec_ref_count( HGDIOBJ handle )
+{
+    GDIOBJHDR *header;
+
+    if ((header = GDI_GetObjPtr( handle, MAGIC_DONTCARE )))
+    {
+        if (header->dwCount) header->dwCount--;
+        if (header->dwCount != 0x80000000) GDI_ReleaseObj( handle );
+        else
+        {
+            /* handle delayed DeleteObject*/
+            header->dwCount = 0;
+            GDI_ReleaseObj( handle );
+            TRACE( "executing delayed DeleteObject for %04x\n", handle );
+            DeleteObject( handle );
+        }
+    }
+}
+
+
+/***********************************************************************
  *           GDI_Init
  *
  * GDI initialization.
@@ -243,7 +285,6 @@ inline static GDIOBJHDR *alloc_large_heap( WORD size, HGDIOBJ *handle )
  */
 void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle )
 {
-    static DWORD count = 0;
     GDIOBJHDR *obj;
 
     _EnterSysLevel( &GDI_level );
@@ -269,7 +310,7 @@ void *GDI_AllocObject( WORD size, WORD magic, HGDIOBJ *handle )
 
     obj->hNext   = 0;
     obj->wMagic  = magic|OBJECT_NOSYSTEM;
-    obj->dwCount = ++count;
+    obj->dwCount = 0;
 
     TRACE_SEC( *handle, "enter" );
     return obj;
@@ -427,7 +468,15 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
         GDI_ReleaseObj( obj );
 	return TRUE;
     }
-	
+
+    if (header->dwCount)
+    {
+        TRACE("delayed for %04x because object in use, count %ld\n", obj, header->dwCount );
+        header->dwCount |= 0x80000000; /* mark for delete */
+        GDI_ReleaseObj( obj );
+        return TRUE;
+    }
+
     TRACE("%04x\n", obj );
 
       /* Delete object */
@@ -701,6 +750,12 @@ HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
     if (dc->funcs->pSelectObject)
         ret = dc->funcs->pSelectObject( dc, handle );
     GDI_ReleaseObj( hdc );
+
+    if (ret && ret != handle)
+    {
+        inc_ref_count( handle );
+        dec_ref_count( ret );
+    }
     return ret;
 }
 
