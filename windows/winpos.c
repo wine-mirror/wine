@@ -2829,8 +2829,14 @@ Pos:  /* -----------------------------------------------------------------------
     if( winpos.flags & SWP_HIDEWINDOW )
     {
 	wndPtr->dwStyle &= ~WS_VISIBLE;
+    }
 
-	if (hwnd == CARET_GetHwnd()) DestroyCaret();
+    if (hwnd == CARET_GetHwnd())
+    {
+        if( winpos.flags & SWP_HIDEWINDOW )
+            HideCaret(hwnd); 
+	else if (winpos.flags & SWP_SHOWWINDOW)
+	    ShowCaret(hwnd);
     }
 
     /* ------------------------------------------------------------------------ FINAL */
