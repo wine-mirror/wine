@@ -28,7 +28,6 @@
 #include "wine/server.h"
 #include "controls.h"
 #include "user.h"
-#include "region.h"
 #include "win.h"
 #include "hook.h"
 #include "message.h"

@@ -22,7 +22,6 @@
 
 #include "gdi.h"
 #include "ttydrv.h"
-#include "region.h"
 #include "win.h"
 #include "winpos.h"
 #include "wine/debug.h"
@@ -203,6 +202,7 @@ static void DCE_AddClipRects( HWND parent, HWND end, HRGN hrgnClip, LPRECT lpRec
     WND *pWnd;
     int i;
     HWND *list = WIN_ListChildren( parent );
+    HRGN hrgn = 0;
 
     if (!list) return;
     for (i = 0; list[i]; i++)
@@ -217,15 +217,14 @@ static void DCE_AddClipRects( HWND parent, HWND end, HRGN hrgnClip, LPRECT lpRec
             rect.bottom = pWnd->rectWindow.bottom + y;
             if( IntersectRect( &rect, &rect, lpRect ))
             {
-                if(!REGION_UnionRectWithRgn( hrgnClip, &rect ))
-                {
-                    WIN_ReleaseWndPtr( pWnd );
-                    break;
-                }
+                if (!hrgn) hrgn = CreateRectRgnIndirect( &rect );
+                else SetRectRgn( hrgn, rect.left, rect.top, rect.right, rect.bottom );
+                CombineRgn( hrgnClip, hrgnClip, hrgn, RGN_OR );
             }
         }
         WIN_ReleaseWndPtr( pWnd );
     }
+    if (hrgn) DeleteObject( hrgn );
     HeapFree( GetProcessHeap(), 0, list );
 }
 

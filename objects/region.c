@@ -104,6 +104,21 @@ SOFTWARE.
 
 WINE_DEFAULT_DEBUG_CHANNEL(region);
 
+typedef struct {
+    INT size;
+    INT numRects;
+    RECT *rects;
+    RECT extents;
+} WINEREGION;
+
+  /* GDI logical region object */
+typedef struct _RGNOBJ
+{
+    GDIOBJHDR   header;
+    WINEREGION  *rgn;
+} RGNOBJ;
+
+
 /*  1 if two RECTs overlap.
  *  0 if two RECTs do not overlap.
  */
@@ -134,7 +149,6 @@ static inline int xmemcheck(WINEREGION *reg, LPRECT *rect, LPRECT *firstrect ) {
     (pReg)->numRects = 0; \
     (pReg)->extents.left = (pReg)->extents.top = 0; \
     (pReg)->extents.right = (pReg)->extents.bottom = 0; \
-    (pReg)->type = NULLREGION; \
  }
 
 #define REGION_NOT_EMPTY(pReg) pReg->numRects
@@ -423,6 +437,21 @@ static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn);
 
 #define RGN_DEFAULT_RECTS	2
 
+
+/***********************************************************************
+ *            get_region_type
+ */
+inline static INT get_region_type( const RGNOBJ *obj )
+{
+    switch(obj->rgn->numRects)
+    {
+    case 0:  return NULLREGION;
+    case 1:  return SIMPLEREGION;
+    default: return COMPLEXREGION;
+    }
+}
+
+
 /***********************************************************************
  *            REGION_DumpRegion
  *            Outputs the contents of a WINEREGION
@@ -542,7 +571,7 @@ INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
 	    obj->rgn->extents.bottom += y;
 	}
     }
-    ret = obj->rgn->type;
+    ret = get_region_type( obj );
     GDI_ReleaseObj( hrgn );
     return ret;
 }
@@ -573,7 +602,7 @@ INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
 	rect->top = obj->rgn->extents.top;
 	rect->right = obj->rgn->extents.right;
 	rect->bottom = obj->rgn->extents.bottom;
-	ret = obj->rgn->type;
+	ret = get_region_type( obj );
 	GDI_ReleaseObj(hrgn);
 	return ret;
     }
@@ -671,8 +700,7 @@ BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
         obj->rgn->rects->top = obj->rgn->extents.top = top;
         obj->rgn->rects->right = obj->rgn->extents.right = right;
         obj->rgn->rects->bottom = obj->rgn->extents.bottom = bottom;
-	obj->rgn->numRects = 1;
-	obj->rgn->type = SIMPLEREGION;
+        obj->rgn->numRects = 1;
     }
     else
 	EMPTY_REGION(obj->rgn);
@@ -804,7 +832,6 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 	rect.bottom = bottom;
 	REGION_UnionRectWithRegion( &rect, obj->rgn );
     }
-    obj->rgn->type = SIMPLEREGION; /* FIXME? */
     GDI_ReleaseObj( hrgn );
     return hrgn;
 }
@@ -1091,10 +1118,10 @@ BOOL WINAPI EqualRgn( HRGN hrgn1, HRGN hrgn2 )
     }
     return ret;
 }
+
 /***********************************************************************
  *           REGION_UnionRectWithRegion
  *           Adds a rectangle to a WINEREGION
- *           See below for REGION_UnionRectWithRgn
  */
 static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
 {
@@ -1103,26 +1130,10 @@ static void REGION_UnionRectWithRegion(const RECT *rect, WINEREGION *rgn)
     region.rects = &region.extents;
     region.numRects = 1;
     region.size = 1;
-    region.type = SIMPLEREGION;
     region.extents = *rect;
     REGION_UnionRegion(rgn, rgn, &region);
-    return;
 }
 
-/***********************************************************************
- *           REGION_UnionRectWithRgn
- *           Adds a rectangle to a HRGN
- *           A helper used by scroll.c
- */
-BOOL REGION_UnionRectWithRgn( HRGN hrgn, const RECT *lpRect )
-{
-    RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr( hrgn, REGION_MAGIC );
-
-    if(!obj) return FALSE;
-    REGION_UnionRectWithRegion( lpRect, obj->rgn );
-    GDI_ReleaseObj(hrgn);
-    return TRUE;
-}
 
 /***********************************************************************
  *           REGION_CreateFrameRgn
@@ -1163,66 +1174,7 @@ BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
     return bRet;
 }
 
-/***********************************************************************
- *           REGION_LPTODP
- *
- * Convert region to device co-ords for the supplied dc. 
- */
-BOOL REGION_LPTODP( HDC hdc, HRGN hDest, HRGN hSrc )
-{
-    RECT *pCurRect, *pEndRect;
-    RGNOBJ *srcObj, *destObj;
-    DC * dc = DC_GetDCPtr( hdc );
-    RECT tmpRect;
-    BOOL ret = FALSE;
 
-    TRACE(" hdc=%04x dest=%04x src=%04x\n",
-	  hdc, hDest, hSrc) ;
-    if (!dc) return ret;
-    
-    if (dc->MapMode == MM_TEXT) /* Requires only a translation */
-    {
-        if( CombineRgn( hDest, hSrc, 0, RGN_COPY ) == ERROR ) goto done;
-	OffsetRgn( hDest, dc->vportOrgX - dc->wndOrgX, 
-		     dc->vportOrgY - dc->wndOrgY );
-	ret = TRUE;
-        goto done;
-    }
-
-    if(!( srcObj = (RGNOBJ *) GDI_GetObjPtr( hSrc, REGION_MAGIC) ))
-        goto done;
-    if(!( destObj = (RGNOBJ *) GDI_GetObjPtr( hDest, REGION_MAGIC) ))
-    {
-        GDI_ReleaseObj( hSrc );
-        goto done;
-    }
-    EMPTY_REGION( destObj->rgn );
-
-    pEndRect = srcObj->rgn->rects + srcObj->rgn->numRects;
-    for(pCurRect = srcObj->rgn->rects; pCurRect < pEndRect; pCurRect++)
-    {
-        tmpRect = *pCurRect;
-	tmpRect.left = XLPTODP( dc, tmpRect.left );
-	tmpRect.top = YLPTODP( dc, tmpRect.top );
-	tmpRect.right = XLPTODP( dc, tmpRect.right );
-	tmpRect.bottom = YLPTODP( dc, tmpRect.bottom );
-
-        if (tmpRect.left > tmpRect.right) 
-        { INT tmp = tmpRect.left; tmpRect.left = tmpRect.right; tmpRect.right = tmp; }
-        if (tmpRect.top > tmpRect.bottom) 
-        { INT tmp = tmpRect.top; tmpRect.top = tmpRect.bottom; tmpRect.bottom = tmp; }
-
-	REGION_UnionRectWithRegion( &tmpRect, destObj->rgn );
-    }
-    ret = TRUE;
-    
-    GDI_ReleaseObj( hDest );
-    GDI_ReleaseObj( hSrc );
- done:
-    GDI_ReleaseObj( hdc );
-    return ret;
-}
-    
 /***********************************************************************
  *           CombineRgn    (GDI.47)
  */
@@ -1256,7 +1208,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 	    if (mode == RGN_COPY)
 	    {
 		REGION_CopyRegion( destObj->rgn, src1Obj->rgn );
-		result = destObj->rgn->type;
+		result = get_region_type( destObj );
 	    }
 	    else
 	    {
@@ -1282,7 +1234,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 			REGION_SubtractRegion( destObj->rgn, src1Obj->rgn, src2Obj->rgn );
 			break;
 		    }
-		    result = destObj->rgn->type;
+		    result = get_region_type( destObj );
 		    GDI_ReleaseObj( hSrc2 );
 		}
 	    }
@@ -1361,8 +1313,6 @@ static void REGION_CopyRegion(WINEREGION *dst, WINEREGION *src)
 	dst->extents.top = src->extents.top;
 	dst->extents.right = src->extents.right;
 	dst->extents.bottom = src->extents.bottom;
-	dst->type = src->type;
-
 	memcpy((char *) dst->rects, (char *) src->rects,
 	       (int) (src->numRects * sizeof(RECT)));
     }
@@ -1892,10 +1842,6 @@ static void REGION_IntersectRegion(WINEREGION *newReg, WINEREGION *reg1,
      * due to coalescing, so we have to examine fewer rectangles.
      */
     REGION_SetExtents(newReg);
-    newReg->type = (newReg->numRects) ?
-                       ((newReg->numRects > 1) ? COMPLEXREGION : SIMPLEREGION)
-                       : NULLREGION ;
-    return;
 }
 
 /***********************************************************************
@@ -2071,10 +2017,6 @@ static void REGION_UnionRegion(WINEREGION *newReg, WINEREGION *reg1,
     newReg->extents.top = min(reg1->extents.top, reg2->extents.top);
     newReg->extents.right = max(reg1->extents.right, reg2->extents.right);
     newReg->extents.bottom = max(reg1->extents.bottom, reg2->extents.bottom);
-    newReg->type = (newReg->numRects) ?
-                        ((newReg->numRects > 1) ? COMPLEXREGION : SIMPLEREGION)
-                        : NULLREGION ;
-    return;
 }
 
 /***********************************************************************
@@ -2279,10 +2221,6 @@ static void REGION_SubtractRegion(WINEREGION *regD, WINEREGION *regM,
      * due to coalescing, so we have to examine fewer rectangles.
      */
     REGION_SetExtents (regD);
-    regD->type = (regD->numRects) ?
-                       ((regD->numRects > 1) ? COMPLEXREGION : SIMPLEREGION)
-                       : NULLREGION ;
-    return;
 }
 
 /***********************************************************************
@@ -2876,9 +2814,6 @@ HRGN WINAPI CreatePolyPolygonRgn(const POINT *Pts, const INT *Count,
     }
     REGION_FreeStorage(SLLBlock.next);	
     REGION_PtsToRegion(numFullPtBlocks, iPts, &FirstPtBlock, region);
-    region->type = (region->numRects) ?
-                        ((region->numRects > 1) ? COMPLEXREGION : SIMPLEREGION)
-                        : NULLREGION;
 
     for (curPtBlock = FirstPtBlock.next; --numFullPtBlocks >= 0;) {
 	tmpPtBlock = curPtBlock->next;
@@ -3119,8 +3054,6 @@ empty:
 
 	rgnDst->extents.top = rgnDst->rects[0].top;
 	rgnDst->extents.bottom = rgnDst->rects[j].bottom;
-
-	rgnDst->type = (j >= 1) ? COMPLEXREGION : SIMPLEREGION;
 
 	if( TRACE_ON(region) )
 	{

@@ -580,16 +580,7 @@ extern DC * DC_GetDCUpdate( HDC hdc );
 extern void DC_InitDC( DC * dc );
 extern void DC_UpdateXforms( DC * dc );
 
-
-#define CLIP_INTERSECT 0x0001
-#define CLIP_EXCLUDE   0x0002
-#define CLIP_KEEPRGN   0x0004
-
 /* objects/clipping.c */
-INT CLIPPING_IntersectClipRect( DC * dc, INT left, INT top,
-                                INT right, INT bottom, UINT flags );
-INT CLIPPING_IntersectVisRect( DC * dc, INT left, INT top,
-                               INT right, INT bottom, BOOL exclude );
 extern void CLIPPING_UpdateGCRegion( DC * dc );
 
 /* objects/enhmetafile.c */

@@ -45,7 +45,6 @@
 #include "bitmap.h"
 #include "gdi.h"
 #include "palette.h"
-#include "region.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(graphics);
@@ -940,48 +939,29 @@ X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y )
 BOOL
 X11DRV_PaintRgn( X11DRV_PDEVICE *physDev, HRGN hrgn )
 {
-    RECT box;
-    HRGN tmpVisRgn, prevVisRgn;
     DC *dc = physDev->dc;
-    HDC hdc = physDev->hdc; /* FIXME: should not mix dc/hdc this way */
 
-    if (!(tmpVisRgn = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
-
-      /* Transform region into device co-ords */
-    if (  !REGION_LPTODP( hdc, tmpVisRgn, hrgn )
-        || OffsetRgn( tmpVisRgn, dc->DCOrgX, dc->DCOrgY ) == ERROR) {
-        DeleteObject( tmpVisRgn );
-	return FALSE;
-    }
-
-      /* Modify visible region */
-    if (!(prevVisRgn = SaveVisRgn16( hdc ))) {
-        DeleteObject( tmpVisRgn );
-	return FALSE;
-    }
-    CombineRgn( tmpVisRgn, prevVisRgn, tmpVisRgn, RGN_AND );
-    SelectVisRgn16( hdc, tmpVisRgn );
-    DeleteObject( tmpVisRgn );
-
-      /* Fill the region */
-
-    GetRgnBox( dc->hGCClipRgn, &box );
     if (X11DRV_SetupGCForBrush( physDev ))
     {
-	/* Update the pixmap from the DIB section */
-    	X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
+        int i;
+        XRectangle *rect;
+        RGNDATA *data = X11DRV_GetRegionData( hrgn, physDev->hdc );
 
-        TSXFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-		          box.left, box.top,
-		          box.right-box.left, box.bottom-box.top );
-    
-	/* Update the DIBSection from the pixmap */
-    	X11DRV_UnlockDIBSection(physDev, TRUE);
+        if (!data) return FALSE;
+        rect = (XRectangle *)data->Buffer;
+        for (i = 0; i < data->rdh.nCount; i++)
+        {
+            rect[i].x += dc->DCOrgX;
+            rect[i].y += dc->DCOrgY;
+        }
+
+        X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
+        wine_tsx11_lock();
+        XFillRectangles( gdi_display, physDev->drawable, physDev->gc, rect, data->rdh.nCount );
+        wine_tsx11_unlock();
+        X11DRV_UnlockDIBSection(physDev, TRUE);
+        HeapFree( GetProcessHeap(), 0, data );
     }
-
-      /* Restore the visible region */
-
-    RestoreVisRgn16( hdc );
     return TRUE;
 }
 

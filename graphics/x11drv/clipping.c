@@ -26,62 +26,100 @@
 
 #include "gdi.h"
 #include "x11drv.h"
-#include "region.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 /***********************************************************************
- *           X11DRV_SetDeviceClipping
- *           Copy RECT32s to a temporary buffer of XRectangles and call
- *           TSXSetClipRectangles().
+ *           X11DRV_GetRegionData
  *
- *           Could write using GetRegionData but this would be slower.
+ * Calls GetRegionData on the given region and converts the rectangle
+ * array to XRectangle format. The returned buffer must be freed by
+ * caller using HeapFree(GetProcessHeap(),...).
+ * If hdc_lptodp is not 0, the rectangles are converted through LPtoDP.
  */
-void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN hrgn )
+RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp )
 {
-    XRectangle *pXrect;
+    RGNDATA *data;
+    DWORD size;
+    int i;
+    RECT *rect, tmp;
+    XRectangle *xrect;
 
-    RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr(hrgn, REGION_MAGIC);
-    if (!obj)
+    if (!(size = GetRegionData( hrgn, 0, NULL ))) return NULL;
+    if (sizeof(XRectangle) > sizeof(RECT))
     {
-        ERR("Rgn is 0. Please report this.\n");
-	return;
+        /* add extra size for XRectangle array */
+        int count = (size - sizeof(RGNDATAHEADER)) / sizeof(RECT);
+        size += count * (sizeof(XRectangle) - sizeof(RECT));
     }
-    
-    if (obj->rgn->numRects > 0)
+    if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
+    if (!GetRegionData( hrgn, size, data ))
     {
-        XRectangle *pXr;
-        RECT *pRect = obj->rgn->rects;
-        RECT *pEndRect = obj->rgn->rects + obj->rgn->numRects;
+        HeapFree( GetProcessHeap(), 0, data );
+        return NULL;
+    }
 
-        pXrect = HeapAlloc( GetProcessHeap(), 0, 
-			    sizeof(*pXrect) * obj->rgn->numRects );
-	if(!pXrect)
-	{
-	    WARN("Can't alloc buffer\n");
-	    GDI_ReleaseObj( hrgn );
-	    return;
-	}
-
-        for(pXr = pXrect; pRect < pEndRect; pRect++, pXr++)
+    rect = (RECT *)data->Buffer;
+    xrect = (XRectangle *)data->Buffer;
+    if (hdc_lptodp)  /* map to device coordinates */
+    {
+        LPtoDP( hdc_lptodp, (POINT *)rect, data->rdh.nCount * 2 );
+        for (i = 0; i < data->rdh.nCount; i++)
         {
-            pXr->x = pRect->left;
-            pXr->y = pRect->top;
-            pXr->width = pRect->right - pRect->left;
-            pXr->height = pRect->bottom - pRect->top;
+            if (rect[i].right < rect[i].left)
+            {
+                INT tmp = rect[i].right;
+                rect[i].right = rect[i].left;
+                rect[i].left = tmp;
+            }
+            if (rect[i].bottom < rect[i].top)
+            {
+                INT tmp = rect[i].bottom;
+                rect[i].bottom = rect[i].top;
+                rect[i].top = tmp;
+            }
+        }
+    }
+
+    if (sizeof(XRectangle) > sizeof(RECT))
+    {
+        /* need to start from the end */
+        for (i = data->rdh.nCount-1; i >=0; i--)
+        {
+            tmp = rect[i];
+            xrect[i].x      = tmp.left;
+            xrect[i].y      = tmp.top;
+            xrect[i].width  = tmp.right - tmp.left;
+            xrect[i].height = tmp.bottom - tmp.top;
         }
     }
     else
-        pXrect = NULL;
+    {
+        for (i = 0; i < data->rdh.nCount; i++)
+        {
+            tmp = rect[i];
+            xrect[i].x      = tmp.left;
+            xrect[i].y      = tmp.top;
+            xrect[i].width  = tmp.right - tmp.left;
+            xrect[i].height = tmp.bottom - tmp.top;
+        }
+    }
+    return data;
+}
 
+
+/***********************************************************************
+ *           X11DRV_SetDeviceClipping
+ */
+void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN hrgn )
+{
+    RGNDATA *data;
+
+    if (!(data = X11DRV_GetRegionData( hrgn, 0 ))) return;
     TSXSetClipRectangles( gdi_display, physDev->gc, 0, 0,
-                          pXrect, obj->rgn->numRects, YXBanded );
-
-    if(pXrect)
-        HeapFree( GetProcessHeap(), 0, pXrect );
-
-    GDI_ReleaseObj( hrgn );
+                          (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );
+    HeapFree( GetProcessHeap(), 0, data );
 }
 
 

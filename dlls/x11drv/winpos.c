@@ -34,7 +34,6 @@
 #include "hook.h"
 #include "win.h"
 #include "winpos.h"
-#include "region.h"
 #include "dce.h"
 #include "cursoricon.h"
 #include "nonclient.h"

@@ -198,6 +198,7 @@ extern HBITMAP X11DRV_BITMAP_CreateBitmapFromPixmap(Pixmap pixmap, BOOL bDeleteP
 extern Pixmap X11DRV_DIB_CreatePixmapFromDIB( HGLOBAL hPackedDIB, HDC hdc );
 extern Pixmap X11DRV_BITMAP_CreatePixmapFromBitmap( HBITMAP hBmp, HDC hdc );
 
+extern RGNDATA *X11DRV_GetRegionData( HRGN hrgn, HDC hdc_lptodp );
 extern void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, int org_x, int org_y );
 extern void X11DRV_StartGraphicsExposures( HDC hdc );
 extern void X11DRV_EndGraphicsExposures( HDC hdc, HRGN hrgn );

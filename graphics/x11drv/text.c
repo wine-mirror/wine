@@ -151,7 +151,10 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     {
         SIZE sz;
         if (!X11DRV_GetTextExtentPoint( physDev, wstr, count, &sz ))
-	    return FALSE;
+        {
+            result = FALSE;
+            goto END;
+        }
 	width = INTERNAL_XWSTODS(dc, sz.cx);
     }
     ascent = pfo->lpX11Trans ? pfo->lpX11Trans->ascent : font->ascent;
@@ -206,8 +209,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
     if (flags & ETO_CLIPPED)
     {
         SaveVisRgn16( dc->hSelf );
-        CLIPPING_IntersectVisRect( dc, rect.left, rect.top, rect.right,
-                                   rect.bottom, FALSE );
+        IntersectVisRect16( dc->hSelf, lprect->left, lprect->top, lprect->right, lprect->bottom );
     }
 
       /* Draw the text background if necessary */
@@ -395,9 +397,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 		   dc->DCOrgX + x + width, dc->DCOrgY + y - lineAscent );
     }
 
-    if (flags & ETO_CLIPPED) 
-        RestoreVisRgn16( dc->hSelf );
-
+    if (flags & ETO_CLIPPED) RestoreVisRgn16( dc->hSelf );
     goto END;
 	    
 FAIL:

@@ -27,7 +27,6 @@
 #include "winnt.h"
 #include "x11drv.h"
 #include "bitmap.h"
-#include "region.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
@@ -563,8 +562,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     XRenderColor col;
     int idx;
     TEXTMETRICW tm;
-    RGNOBJ *obj;
-    XRectangle *pXrect;
+    RGNDATA *data;
     SIZE sz;
     RECT rc;
     BOOL done_extents = FALSE;
@@ -713,11 +711,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     if (flags & ETO_CLIPPED)
     {
         SaveVisRgn16( hdc );
-        CLIPPING_IntersectVisRect( dc, rc.left, rc.top, rc.right,
-                                   rc.bottom, FALSE );
+        IntersectVisRect16( dc->hSelf, lprect->left, lprect->top, lprect->right, lprect->bottom );
     }
-
-
 
     if(!physDev->xrender->pict) {
         XRenderPictureAttributes pa;
@@ -736,52 +731,14 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	TRACE("using existing pict = %lx dc = %p\n", physDev->xrender->pict, dc);
     }
 
-    obj = (RGNOBJ *) GDI_GetObjPtr(dc->hGCClipRgn, REGION_MAGIC);
-    if (!obj)
+    if ((data = X11DRV_GetRegionData( dc->hGCClipRgn, 0 )))
     {
-        ERR("Rgn is 0. Please report this.\n");
-	return FALSE;
+        wine_tsx11_lock();
+        pXRenderSetPictureClipRectangles( gdi_display, physDev->xrender->pict,
+                                          0, 0, (XRectangle *)data->Buffer, data->rdh.nCount );
+        wine_tsx11_unlock();
+        HeapFree( GetProcessHeap(), 0, data );
     }
-    
-    if (obj->rgn->numRects > 0)
-    {
-        XRectangle *pXr;
-        RECT *pRect = obj->rgn->rects;
-        RECT *pEndRect = obj->rgn->rects + obj->rgn->numRects;
-
-        pXrect = HeapAlloc( GetProcessHeap(), 0, 
-			    sizeof(*pXrect) * obj->rgn->numRects );
-	if(!pXrect)
-	{
-	    WARN("Can't alloc buffer\n");
-	    GDI_ReleaseObj( dc->hGCClipRgn );
-	    return FALSE;
-	}
-
-        for(pXr = pXrect; pRect < pEndRect; pRect++, pXr++)
-        {
-            pXr->x = pRect->left;
-            pXr->y = pRect->top;
-            pXr->width = pRect->right - pRect->left;
-            pXr->height = pRect->bottom - pRect->top;
-	    TRACE("Adding clip rect %d,%d - %d,%d\n", pRect->left, pRect->top,
-		  pRect->right, pRect->bottom);
-        }
-    }
-    else {
-        TRACE("no clip rgn\n");
-        pXrect = NULL;
-    }
-
-    wine_tsx11_lock();
-    pXRenderSetPictureClipRectangles( gdi_display, physDev->xrender->pict,
-                                      0, 0, pXrect, obj->rgn->numRects );
-    wine_tsx11_unlock();
-
-    if(pXrect)
-        HeapFree( GetProcessHeap(), 0, pXrect );
-
-    GDI_ReleaseObj( dc->hGCClipRgn );
 
     if(GetBkMode(hdc) != TRANSPARENT) {
         if(!((flags & ETO_CLIPPED) && (flags & ETO_OPAQUE))) {

@@ -897,7 +897,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
       case FONT_MAGIC:    return FONT_DeleteObject( obj, (FONTOBJ*)header );
       case PALETTE_MAGIC: return PALETTE_DeleteObject(obj,(PALETTEOBJ*)header);
       case BITMAP_MAGIC:  return BITMAP_DeleteObject( obj, (BITMAPOBJ*)header);
-      case REGION_MAGIC:  return REGION_DeleteObject( obj, (RGNOBJ*)header );
+      case REGION_MAGIC:  return REGION_DeleteObject( obj, (struct _RGNOBJ*)header );
       case DC_MAGIC:
           GDI_ReleaseObj( obj );
           return DeleteDC(obj);
