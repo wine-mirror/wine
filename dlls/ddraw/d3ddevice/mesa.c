@@ -610,7 +610,7 @@ GL_IDirect3DDeviceImpl_7_3T_2T_SetTransform(LPDIRECT3DDEVICE7 iface,
     return DD_OK;
 }
 
-inline static void draw_primitive_start_GL(D3DPRIMITIVETYPE d3dpt)
+static void draw_primitive_start_GL(D3DPRIMITIVETYPE d3dpt)
 {
     switch (d3dpt) {
         case D3DPT_POINTLIST:
@@ -649,83 +649,68 @@ inline static void draw_primitive_start_GL(D3DPRIMITIVETYPE d3dpt)
     }
 }
 
+static void draw_primitive_handle_GL_state(IDirect3DDeviceGLImpl *glThis,
+					   BOOLEAN vertex_transformed,
+					   BOOLEAN vertex_lit) {
+    /* Puts GL in the correct lighting / transformation mode */
+    if ((glThis->last_vertices_transformed == TRUE) && (vertex_transformed == FALSE)) {
+        /* Need to put the correct transformation again if we go from Transformed
+	   vertices to non-transformed ones.
+	*/
+        glMatrixMode(GL_MODELVIEW);
+	glLoadMatrixf((float *) glThis->view_mat);
+	glMultMatrixf((float *) glThis->world_mat);
+	glMatrixMode(GL_PROJECTION);
+	glLoadMatrixf((float *) glThis->proj_mat);
+    } else if ((glThis->last_vertices_transformed == FALSE) && (vertex_transformed == TRUE)) {
+        GLdouble height, width, minZ, maxZ;
+      
+        glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	
+	if (glThis->parent.current_viewport == NULL) {
+	    ERR("No current viewport !\n");
+	    /* Using standard values */
+	    height = 640.0;
+	    width = 480.0;
+	    minZ = -10.0;
+	    maxZ = 10.0;
+	} else {
+	    if (glThis->parent.current_viewport->use_vp2 == 1) {
+	        height = (GLdouble) glThis->parent.current_viewport->viewports.vp2.dwHeight;
+		width  = (GLdouble) glThis->parent.current_viewport->viewports.vp2.dwWidth;
+		minZ   = (GLdouble) glThis->parent.current_viewport->viewports.vp2.dvMinZ;
+		maxZ   = (GLdouble) glThis->parent.current_viewport->viewports.vp2.dvMaxZ;
+	    } else {
+	        height = (GLdouble) glThis->parent.current_viewport->viewports.vp1.dwHeight;
+		width  = (GLdouble) glThis->parent.current_viewport->viewports.vp1.dwWidth;
+		minZ   = (GLdouble) glThis->parent.current_viewport->viewports.vp1.dvMinZ;
+		maxZ   = (GLdouble) glThis->parent.current_viewport->viewports.vp1.dvMaxZ;
+	    }
+	}
+	glOrtho(0.0, width, height, 0.0, -minZ, -maxZ);
+    }
+    
+    if ((glThis->last_vertices_lit == TRUE) && (vertex_lit == FALSE)) {
+        glEnable(GL_LIGHTING);
+    } else if ((glThis->last_vertices_lit == TRUE) && (vertex_lit == TRUE)) {
+        glDisable(GL_LIGHTING);
+    }
+
+    /* And save the current state */
+    glThis->last_vertices_transformed = vertex_transformed;
+    glThis->last_vertices_lit = vertex_lit;
+}
+
+
 inline static void draw_primitive(IDirect3DDeviceGLImpl *glThis, DWORD maxvert, WORD *index,
 				  D3DVERTEXTYPE d3dvt, D3DPRIMITIVETYPE d3dpt, void *lpvertex)
 {
     DWORD vx_index;
   
-    /* Puts GL in the correct lighting mode */
-    if (glThis->vertex_type != d3dvt) {
-        if ((glThis->vertex_type == D3DVT_TLVERTEX) &&
-	     (d3dvt != D3DVT_TLVERTEX)) {
-	    /* Need to put the correct transformation again if we go from Transformed / Lighted
-	       vertices to non-transformed ones.
-	    */
-	    glMatrixMode(GL_MODELVIEW);
-	    glLoadMatrixf((float *) glThis->view_mat);
-	    glMultMatrixf((float *) glThis->world_mat);
-	    glMatrixMode(GL_PROJECTION);
-	    glLoadMatrixf((float *) glThis->proj_mat);
-	}
-
-	switch (d3dvt) {
-	    case D3DVT_VERTEX:
-	        TRACE("Standard Vertex\n");
-		glEnable(GL_LIGHTING);
-		break;
-
-	    case D3DVT_LVERTEX:
-		TRACE("Lighted Vertex\n");
-		glDisable(GL_LIGHTING);
-		break;
-
-	    case D3DVT_TLVERTEX: {
-	        GLdouble height, width, minZ, maxZ;
-
-		TRACE("Transformed - Lighted Vertex\n");
-		if (glThis->vertex_type != D3DVT_TLVERTEX) {
-		    /* First, disable lighting */
-		    glDisable(GL_LIGHTING);
-
-		    /* Then do not put any transformation matrixes */
-		    glMatrixMode(GL_MODELVIEW);
-		    glLoadIdentity();
-		    glMatrixMode(GL_PROJECTION);
-		    glLoadIdentity();
-		}
-
-		if (glThis->parent.current_viewport == NULL) {
-		    ERR("No current viewport !\n");
-		    /* Using standard values */
-		    height = 640.0;
-		    width = 480.0;
-		    minZ = -10.0;
-		    maxZ = 10.0;
-		} else {
-		    if (glThis->parent.current_viewport->use_vp2 == 1) {
-		        height = (GLdouble) glThis->parent.current_viewport->viewports.vp2.dwHeight;
-			width  = (GLdouble) glThis->parent.current_viewport->viewports.vp2.dwWidth;
-			minZ   = (GLdouble) glThis->parent.current_viewport->viewports.vp2.dvMinZ;
-			maxZ   = (GLdouble) glThis->parent.current_viewport->viewports.vp2.dvMaxZ;
-		    } else {
-		        height = (GLdouble) glThis->parent.current_viewport->viewports.vp1.dwHeight;
-			width  = (GLdouble) glThis->parent.current_viewport->viewports.vp1.dwWidth;
-			minZ   = (GLdouble) glThis->parent.current_viewport->viewports.vp1.dvMinZ;
-			maxZ   = (GLdouble) glThis->parent.current_viewport->viewports.vp1.dvMaxZ;
-		    }
-		}
-
-		glOrtho(0.0, width, height, 0.0, -minZ, -maxZ);
-	    } break;
-
-	    default:
-		ERR("Unhandled vertex type\n");
-		break;
-	}
-
-	glThis->vertex_type = d3dvt;
-    }
-
+    draw_primitive_handle_GL_state(glThis, d3dvt == D3DVT_TLVERTEX, d3dvt != D3DVT_VERTEX);
     draw_primitive_start_GL(d3dpt);
     
     /* Draw the primitives */
@@ -886,6 +871,13 @@ typedef struct {
     float tu1, tv1;
 } D3DFVF_VERTEX_1;
 
+typedef struct {
+    float x, y, z, rhw;
+    DWORD diffuse;
+    DWORD specular;
+    float tu1, tv1;
+} D3DFVF_TLVERTEX_1;
+
 static void draw_primitive_7(IDirect3DDeviceImpl *This,
 			     D3DPRIMITIVETYPE d3dptPrimitiveType,
 			     DWORD d3dvtVertexType,
@@ -895,19 +887,21 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
 			     DWORD dwIndexCount,
 			     DWORD dwFlags)
 {
+    IDirect3DDeviceGLImpl* glThis = (IDirect3DDeviceGLImpl*) This;
     if (TRACE_ON(ddraw)) {
         TRACE(" Vertex format : "); dump_flexible_vertex(d3dvtVertexType);
     }
 
     ENTER_GL();
+    draw_primitive_handle_GL_state(glThis,
+				   (d3dvtVertexType & D3DFVF_POSITION_MASK) != D3DFVF_XYZ,
+				   (d3dvtVertexType & D3DFVF_NORMAL) == 0);
     draw_primitive_start_GL(d3dptPrimitiveType);
 
     /* Some fast paths first before the generic case.... */
     if (d3dvtVertexType == D3DFVF_VERTEX) {
         D3DFVF_VERTEX_1 *vertices = (D3DFVF_VERTEX_1 *) lpvVertices;
 	int index;
-
-	glEnable(GL_LIGHTING);
 	
 	for (index = 0; index < dwIndexCount; index++) {
 	    int i = (dwIndices == NULL) ? index : dwIndices[index];
@@ -920,6 +914,38 @@ static void draw_primitive_7(IDirect3DDeviceImpl *This,
 		  vertices[i].nx, vertices[i].ny, vertices[i].nz,
 		  vertices[i].tu1, vertices[i].tv1);
 	}
+    } else if (d3dvtVertexType == D3DFVF_TLVERTEX) {
+        D3DFVF_TLVERTEX_1 *vertices = (D3DFVF_TLVERTEX_1 *) lpvVertices;
+	int index;
+	
+	for (index = 0; index < dwIndexCount; index++) {
+	    int i = (dwIndices == NULL) ? index : dwIndices[index];
+	    
+	    glColor4ub((vertices[i].diffuse >> 24) & 0xFF,
+		       (vertices[i].diffuse >> 16) & 0xFF,
+		       (vertices[i].diffuse >>  8) & 0xFF,
+		       (vertices[i].diffuse >>  0) & 0xFF);
+	    /* Todo : handle specular... */
+	    glTexCoord2f(vertices[i].tu1, vertices[i].tv1);
+	    if (vertices[i].rhw < 0.00001)
+	        glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
+	    else
+	        glVertex4f(vertices[i].x / vertices[i].rhw,
+			   vertices[i].y / vertices[i].rhw,
+			   vertices[i].z / vertices[i].rhw,
+			   1.0 / vertices[i].rhw);
+	    TRACE(" %f %f %f %f / %02lx %02lx %02lx %02lx - %02lx %02lx %02lx %02lx (%f %f)\n",
+		  vertices[i].x, vertices[i].y, vertices[i].z, vertices[i].rhw,
+		  (vertices[i].diffuse >> 24) & 0xFF,
+		  (vertices[i].diffuse >> 16) & 0xFF,
+		  (vertices[i].diffuse >>  8) & 0xFF,
+		  (vertices[i].diffuse >>  0) & 0xFF,
+		  (vertices[i].specular >> 24) & 0xFF,
+		  (vertices[i].specular >> 16) & 0xFF,
+		  (vertices[i].specular >>  8) & 0xFF,
+		  (vertices[i].specular >>  0) & 0xFF,
+		  vertices[i].tu1, vertices[i].tv1);
+	} 
     }
     
     glEnd();
@@ -1176,6 +1202,7 @@ ICOM_VTABLE(IDirect3DDevice) VTABLE_IDirect3DDevice =
       by other OpenGL code in D3D
     - handle the case where no 'Begin / EndScene' was done between two locks
     - handle the rectangles in the unlock too
+    - handle pitch correctly...
 */
 static void d3ddevice_lock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect, DWORD dwFlags)
 {
@@ -1255,6 +1282,7 @@ static void d3ddevice_unlock_update(IDirectDrawSurfaceImpl* This, LPCRECT pRect)
 	    return;
 	}
 
+	glRasterPos2f(0.0, 0.0);
 	glDrawPixels(This->surface_desc.dwWidth, This->surface_desc.dwHeight, 
 		     GL_RGB, buffer_type, This->surface_desc.lpSurface);
 	glDrawBuffer(prev_draw);
@@ -1350,7 +1378,6 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     gl_object->render_state.dst = GL_ZERO;
     gl_object->render_state.mag = GL_NEAREST;
     gl_object->render_state.min = GL_NEAREST;
-    gl_object->vertex_type = 0;
 
     /* Allocate memory for the matrices */
     gl_object->world_mat = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));
@@ -1371,6 +1398,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     glColor3f(1.0, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     glDrawBuffer(buffer);
+    glReadBuffer(buffer);
     /* glDisable(GL_DEPTH_TEST); Need here to check for the presence of a ZBuffer and to reenable it when the ZBuffer is attached */
     LEAVE_GL();
 

@@ -101,7 +101,8 @@ typedef struct IDirect3DDeviceGLImpl
     RenderState render_state;
 
     /* The last type of vertex drawn */
-    D3DVERTEXTYPE vertex_type;
+    BOOLEAN last_vertices_transformed;
+    BOOLEAN last_vertices_lit;
 
     D3DMATRIX *world_mat;
     D3DMATRIX *view_mat;
