@@ -18,13 +18,13 @@ C_SRCS = \
 all: $(PROGRAMS:%=%$(DLLEXT)) $(PROGRAMS:.exe=$(EXEEXT))
 
 aviinfo.exe.spec.c: aviinfo.o $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --exe aviinfo.exe --exe-mode gui aviinfo.o -L$(DLLDIR) -lavifil32 -lkernel32
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --exe aviinfo.exe --mode gui aviinfo.o -L$(DLLDIR) -lavifil32 -lkernel32
 
 aviplay.exe.spec.c: aviplay.o $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --exe aviplay.exe --exe-mode gui aviplay.o -L$(DLLDIR) -lavifil32 -lddraw -lkernel32
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --exe aviplay.exe --mode gui aviplay.o -L$(DLLDIR) -lavifil32 -lddraw -lkernel32
 
 icinfo.exe.spec.c: icinfo.o $(WINEBUILD)
-	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --exe icinfo.exe --exe-mode gui icinfo.o -L$(DLLDIR) -lmsvfw32 -lkernel32
+	$(WINEBUILD) $(DEFS) $(DLLFLAGS) -o $@ --exe icinfo.exe --mode gui icinfo.o -L$(DLLDIR) -lmsvfw32 -lkernel32
 
 aviinfo.exe.so: aviinfo.o aviinfo.exe.spec.o
 	$(LDDLL) -o $@ aviinfo.o aviinfo.exe.spec.o $(ALL_LIBS) -lc

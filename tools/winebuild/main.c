@@ -118,7 +118,7 @@ static const char usage_str[] =
 "    -K FLAGS                Compiler flags (only -KPIC is supported)\n"
 "    -l --library=LIB        Import the specified library\n"
 "    -L --library-path=DIR   Look for imports libraries in DIR\n"
-"    -m --exe-mode=MODE      Set the executable mode (cui|gui|cuiw|guiw)\n"
+"    -m --mode=MODE          Set the binary mode (cui|gui|cuiw|guiw|native)\n"
 "    -M --main-module=MODULE Set the name of the main module for a Win16 dll\n"
 "    -N --dll-name=DLLNAME   Set the DLL name (default: from input file name)\n"
 "    -o --output=NAME        Set the output file name (default: stdout)\n"
@@ -167,7 +167,8 @@ static const struct option long_options[] =
     { "kill-at",       0, 0, 'k' },
     { "library",       1, 0, 'l' },
     { "library-path",  1, 0, 'L' },
-    { "exe-mode",      1, 0, 'm' },
+    { "mode",          1, 0, 'm' },
+    { "exe-mode",      1, 0, 'm' },  /* for backwards compatibility */
     { "main-module",   1, 0, 'M' },
     { "dll-name",      1, 0, 'N' },
     { "output",        1, 0, 'o' },
