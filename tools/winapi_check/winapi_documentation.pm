@@ -125,13 +125,20 @@ sub check_documentation {
 
     if(!$documentation_error && $options->documentation_wrong) {
 	foreach (split(/\n/, $documentation)) {
-	    if(/^\s*\*\s*(\S+)\s*[\(\[]\s*(\w+)\s*\.\s*([^\s\)\]]*)\s*[\)\]].*?$/) {
+	    if (/^\s*\*\s*(\S+)\s*[\(\[]\s*(\w+(?:\.(?:DRV|VXD))?)\s*\.\s*([^\s\)\]]*)\s*[\)\]].*?$/) {
 		my $external_name = $1;
 		my $module = $2;
 		my $ordinal = $3;
 
-		if(!$options->documentation_pedantic && $ordinal ne "@") {
+		if ($ordinal eq "@") {
+		    # Nothing
+		} elsif ($ordinal =~ /^\d+$/) {
 		    $ordinal = int($ordinal);
+		} elsif ($ordinal eq "init") {
+		    $ordinal = 0;
+		} else {
+		    $output->write("documentation: $external_name (\U$module\E.$ordinal) wrong\n");
+		    next;
 		}
 
 		my $found = 0;
@@ -156,7 +163,8 @@ sub check_documentation {
 
 
 		}
-		if(!$found) {
+
+		if (!$found && $external_name ne "DllMain" && $ordinal !~ /^0$/) {
 		    $output->write("documentation: $external_name (\U$module\E.$ordinal) wrong\n");
 		}
 	    }

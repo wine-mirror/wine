@@ -147,7 +147,7 @@ sub _check_function {
 	}
     }
 
-    my $declared_calling_convention = $winapi->function_internal_calling_convention($internal_name);
+    my $declared_calling_convention = $winapi->function_internal_calling_convention($internal_name) || "";
     my @declared_argument_kinds = split(/\s+/, $winapi->function_internal_arguments($internal_name));
 
     my $declared_register = 0;
@@ -171,16 +171,22 @@ sub _check_function {
     }
 
     if($declared_calling_convention eq "varargs") {
-	if($#argument_types != -1 && $argument_types[$#argument_types] eq "...") {
+	if ($#argument_types != -1 &&
+            (($winapi->name eq "win32" && $argument_types[$#argument_types] eq "...") ||
+            ($winapi->name eq "win16" && $argument_types[$#argument_types] eq "VA_LIST16")))
+	{
 	    pop @argument_types;
 	} else {
-	    $output->write("function not implemented as vararg\n");
+	    $output->write("function not implemented as varargs\n");
 	}
-    } elsif($#argument_types != -1 && $argument_types[$#argument_types] eq "...") {
-	if($#argument_types == 0 || $winapi->name eq "win16") {
+    } elsif ($#argument_types != -1 &&
+        (($winapi->name eq "win32" && $argument_types[$#argument_types] eq "...") ||
+        ($winapi->name eq "win16" && $argument_types[$#argument_types] eq "VA_LIST16")))
+    {
+	if($#argument_types == 0) {
 	    pop @argument_types;
 	} else {
-	    $output->write("function not declared as vararg\n");
+	    $output->write("function not declared as varargs\n");
 	}
     }
 

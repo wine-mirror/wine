@@ -244,6 +244,30 @@ VOID
 BOOL16
 WORD
 
+%%display.drv
+
+%long
+
+DWORD
+
+%ptr
+
+LPCURSORINFO16
+struct tagCURSORICONINFO *
+
+%str
+
+LPSTR
+
+%void
+
+VOID
+
+%word
+
+BOOL16
+WORD
+
 %%gdi.exe
 
 %long
@@ -453,6 +477,40 @@ INT16
 UINT16
 WORD
 
+%%keyboard.drv
+
+%long
+
+DWORD
+LONG
+
+%ptr
+
+LPBYTE
+LPKBINFO
+LPVOID
+
+%segptr
+
+FARPROC16
+
+%str
+
+LPCSTR
+LPSTR
+
+%void
+
+VOID
+void
+
+%word
+
+CHAR
+INT16
+UINT16
+WORD
+
 %%lzexpand.dll
 
 %long
@@ -477,6 +535,24 @@ void
 HFILE16
 INT16
 UINT16
+
+%%mouse.drv
+
+%ptr
+
+LPMOUSEINFO
+
+%segptr
+
+FARPROC16
+
+%void
+
+VOID
+
+%word
+
+WORD
 
 %%mmsystem.dll
 
@@ -995,7 +1071,7 @@ BOOL16
 INT16
 UINT16
 
-%%system.dll
+%%system.drv
 
 %long
 
@@ -1133,6 +1209,7 @@ RECT16 *
 SCROLLINFO *
 SEGPTR *
 UINT16 *
+VA_LIST16
 WINDOWPLACEMENT16 *
 WNDCLASS16 *
 WNDCLASSEX16 *
@@ -1427,6 +1504,7 @@ INT16 *
 LPWSADATA16
 ULONG *
 char *
+struct WS_in_addr
 struct WS_sockaddr *
 struct WS_timeval *
 ws_fd_set16 *
@@ -1439,10 +1517,6 @@ SEGPTR
 %str
 
 LPCSTR
-
-%unknown
-
-struct in_addr
 
 %void
 

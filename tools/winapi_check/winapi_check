@@ -538,9 +538,10 @@ foreach my $file (@c_files) {
 			} else {
 			    $include = "$header";
 			}
-		    } elsif($header =~ /^(?:\.\.\/kernel\/(kernel_private\.h))$/) { # FIXME: Kludge
-			my $header2 = $1;
-			$include = "dlls/kernel/$header2";
+		    } elsif($header =~ /^(?:kernel_private\.h)$/) { # FIXME: Kludge
+			$include = "dlls/kernel/$header";
+		    } elsif($header =~ /^(?:gdi_private\.h)$/) { # FIXME: Kludge
+			$include = "dlls/gdi/$header";
 		    } elsif($header =~ /^(?:ntdll_misc\.h)$/) { # FIXME: Kludge
 			$include = "dlls/ntdll/$header";
 		    } elsif($header =~ /^(?:controls\.h|message\.h)$/) { # FIXME: Kludge
@@ -618,10 +619,14 @@ foreach my $file (@c_files) {
 				$include2info{$name}{used}++;
 			    }
 			}
-		    } elsif($header =~ /^(?:\.\.\/kernel\/(kernel_private\.h))$/) { # FIXME: Kludge
-			my $header2 = $1;
-			$include2info{"dlls/kernel/$header2"}{used}++;
-			foreach my $name (keys(%{$include2info{"dlls/kernel/$header2"}{includes}})) {
+		    } elsif($header =~ /^(?:kernel_private\.h)$/) { # FIXME: Kludge
+			$include2info{"dlls/kernel/$header"}{used}++;
+			foreach my $name (keys(%{$include2info{"dlls/kernel/$header"}{includes}})) {
+			    $include2info{$name}{used}++;
+			}
+		    } elsif($header =~ /^(?:gdi_private\.h)$/) { # FIXME: Kludge
+			$include2info{"dlls/gdi/$header"}{used}++;
+			foreach my $name (keys(%{$include2info{"dlls/gdi/$header"}{includes}})) {
 			    $include2info{$name}{used}++;
 			}
 		    } elsif($header =~ /^(?:ntdll_misc\.h)$/) { # FIXME: Kludge
@@ -629,7 +634,6 @@ foreach my $file (@c_files) {
 			foreach my $name (keys(%{$include2info{"dlls/ntdll/$header"}{includes}})) {
 			    $include2info{$name}{used}++;
 			}
-
 		    } elsif($header =~ /^(?:controls\.h|message\.h)$/) { # FIXME: Kludge
 			$include2info{"dlls/user/$header"}{used}++;
 			foreach my $name (keys(%{$include2info{"dlls/user/$header"}{includes}})) {
