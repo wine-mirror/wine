@@ -122,6 +122,8 @@ struct SysMouseAImpl
         DWORD				win_centerX, win_centerY;
         LPDIDEVICEOBJECTDATA 		data_queue;
         int				queue_head, queue_tail, queue_len;
+	/* warping: whether we need to move mouse back to middle once we
+	 * reach window borders (for e.g. shooters, "surface movement" games) */
         WARP_STATUS		        need_warp;
         int				acquired;
         HANDLE				hEvent;
@@ -145,7 +147,7 @@ static IDirectInputDevice2A* current_lock = NULL;
 static BOOL mousedev_enum_device(DWORD dwDevType, DWORD dwFlags, LPCDIDEVICEINSTANCEA lpddi)
 {
   if ((dwDevType == 0) || (dwDevType == DIDEVTYPE_MOUSE)) {
-    TRACE("Enumerating the Mouse device\n");
+    TRACE("Enumerating the mouse device\n");
 
     /* Return mouse */
     lpddi->guidInstance = GUID_SysMouse;/* DInput's GUID */
@@ -363,7 +365,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 	      GEN_EVENT(This->offset_array[WINE_MOUSE_Y_POSITION], hook->pt.y - This->prevY, hook->time, (This->dinput->evsequence)++);
 	  } else {
 	    /* This is the first time the event handler has been called after a
-	       GetData of GetState. */
+	       GetDeviceData or GetDeviceState. */
 	    if (hook->pt.x != This->mapped_center.x) {
 	      GEN_EVENT(This->offset_array[WINE_MOUSE_X_POSITION], hook->pt.x - This->mapped_center.x, hook->time, (This->dinput->evsequence)++);
 	      This->need_warp = WARP_NEEDED;
@@ -388,8 +390,8 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 	}
     }
 
-    TRACE(" msg %x pt %ld %ld (W=%d)",
-          wparam, hook->pt.x, hook->pt.y, This->absolute && This->need_warp );
+    TRACE(" msg %x pt %ld %ld (W=%d)\n",
+          wparam, hook->pt.x, hook->pt.y, (!This->absolute) && This->need_warp );
 
     switch(wparam)
     {
@@ -670,7 +672,7 @@ static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE2A iface,
     case (DWORD) DIPROP_AXISMODE: {
       LPCDIPROPDWORD    pd = (LPCDIPROPDWORD)ph;
       This->absolute = !(pd->dwData);
-      TRACE("absolute mode: %d\n", This->absolute);
+      TRACE("Using %s coordinates mode now\n", This->absolute ? "absolute" : "relative");
       break;
     }
     default:
@@ -714,7 +716,7 @@ static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE2A iface,
 	  ((pdiph->dwObj == (DIDFT_MAKEINSTANCE(WINE_MOUSE_X_AXIS_INSTANCE) | DIDFT_RELAXIS)) ||
 	   (pdiph->dwObj == (DIDFT_MAKEINSTANCE(WINE_MOUSE_Y_AXIS_INSTANCE) | DIDFT_RELAXIS)))) {
 	/* Querying the range of either the X or the Y axis.  As I do
-	   not know the range, do as if the range where
+	   not know the range, do as if the range were
 	   unrestricted...*/
 	pr->lMin = DIPROPRANGE_NOMIN;
 	pr->lMax = DIPROPRANGE_NOMAX;
