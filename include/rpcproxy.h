@@ -21,6 +21,8 @@
 
 #include "basetsd.h"
 #include "guiddef.h"
+#include "rpc.h"
+#include "rpcndr.h"
 
 typedef struct tagCInterfaceStubVtbl *PCInterfaceStubVtblList;
 typedef struct tagCInterfaceProxyVtbl *PCInterfaceProxyVtblList;
@@ -44,9 +46,6 @@ typedef struct tagProxyFileInfo
 } ProxyFileInfo;
 
 typedef ProxyFileInfo ExtendedProxyFileInfo;
-
-#include "rpc.h"
-#include "rpcndr.h"
 
 typedef struct tagCInterfaceProxyHeader
 {
