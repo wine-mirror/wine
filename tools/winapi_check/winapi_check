@@ -530,6 +530,8 @@ foreach my $file (@c_files) {
 		    my $include;
 		    if(-e "$wine_dir/include/$header") {
 			$include = "include/$header";
+		    } elsif(-e "$wine_dir/include/msvcrt/$header") {
+			$include = "include/msvcrt/$header";
 		    } elsif(-e "$file_dir/$header") {
 			$include = "$file_dir/$header";
 		    } elsif(-e "$file_dir/../$header") {
@@ -538,16 +540,8 @@ foreach my $file (@c_files) {
 			} else {
 			    $include = "$header";
 			}
-		    } elsif($header =~ /^(?:kernel_private\.h)$/) { # FIXME: Kludge
-			$include = "dlls/kernel/$header";
-		    } elsif($header =~ /^(?:gdi_private\.h)$/) { # FIXME: Kludge
-			$include = "dlls/gdi/$header";
-		    } elsif($header =~ /^(?:ntdll_misc\.h)$/) { # FIXME: Kludge
-			$include = "dlls/ntdll/$header";
-		    } elsif($header =~ /^(?:controls\.h|message\.h)$/) { # FIXME: Kludge
+		    } elsif($header =~ /^(?:controls|message|winproc)\.h$/) { # FIXME: Kludge
 			$include = "dlls/user/$header";
-		    } elsif($header =~ /^(?:ts_xlib\.h|winproc\.h|x11drv\.h|x11font\.h)$/) { # FIXME: Kludge
-			$include = "dlls/x11drv/$header";
 		    } elsif($check_local && $header ne "config.h") {
 			$output->write("$file: #include \"$header\": file not found\n");
 		    }
@@ -619,34 +613,19 @@ foreach my $file (@c_files) {
 				$include2info{$name}{used}++;
 			    }
 			}
-		    } elsif($header =~ /^(?:kernel_private\.h)$/) { # FIXME: Kludge
-			$include2info{"dlls/kernel/$header"}{used}++;
-			foreach my $name (keys(%{$include2info{"dlls/kernel/$header"}{includes}})) {
-			    $include2info{$name}{used}++;
-			}
-		    } elsif($header =~ /^(?:gdi_private\.h)$/) { # FIXME: Kludge
-			$include2info{"dlls/gdi/$header"}{used}++;
-			foreach my $name (keys(%{$include2info{"dlls/gdi/$header"}{includes}})) {
-			    $include2info{$name}{used}++;
-			}
-		    } elsif($header =~ /^(?:ntdll_misc\.h)$/) { # FIXME: Kludge
-			$include2info{"dlls/ntdll/$header"}{used}++;
-			foreach my $name (keys(%{$include2info{"dlls/ntdll/$header"}{includes}})) {
-			    $include2info{$name}{used}++;
-			}
-		    } elsif($header =~ /^(?:controls\.h|message\.h)$/) { # FIXME: Kludge
+		    } elsif($header =~ /^(?:controls|message|winproc)\.h$/) { # FIXME: Kludge
 			$include2info{"dlls/user/$header"}{used}++;
 			foreach my $name (keys(%{$include2info{"dlls/user/$header"}{includes}})) {
-			    $include2info{$name}{used}++;
-			}
-		    } elsif($header =~ /^(?:ts_xlib\.h|winproc\.h|x11drv\.h|x11font\.h)$/) { # FIXME: Kludge
-			$include2info{"dlls/x11drv/$header"}{used}++;
-			foreach my $name (keys(%{$include2info{"dlls/x11drv/$header"}{includes}})) {
 			    $include2info{$name}{used}++;
 			}
 		    } elsif(-e "$wine_dir/include/$header") {
 			$include2info{"include/$header"}{used}++;
 			foreach my $name (keys(%{$include2info{"include/$header"}{includes}})) {
+			    $include2info{$name}{used}++;
+			}
+		    } elsif(-e "$wine_dir/include/msvcrt/$header") {
+			$include2info{"include/msvcrt/$header"}{used}++;
+			foreach my $name (keys(%{$include2info{"include/msvcrt/$header"}{includes}})) {
 			    $include2info{$name}{used}++;
 			}
 		    } elsif ($header ne "config.h") {
