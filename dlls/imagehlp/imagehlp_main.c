@@ -61,12 +61,17 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 /***********************************************************************
  *           TouchFileTimes (IMAGEHLP.@)
  */
-BOOL WINAPI TouchFileTimes(
-  HANDLE FileHandle, LPSYSTEMTIME lpSystemTime)
+BOOL WINAPI TouchFileTimes(HANDLE FileHandle, LPSYSTEMTIME lpSystemTime)
 {
-  FIXME("(%p, %p): stub\n",
-    FileHandle, lpSystemTime
-  );
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+  FILETIME FileTime;
+  SYSTEMTIME SystemTime;
+
+  if(lpSystemTime == NULL)
+  {
+    GetSystemTime(&SystemTime);
+    lpSystemTime = &SystemTime;
+  }
+
+  return (SystemTimeToFileTime(lpSystemTime, &FileTime) &&
+          SetFileTime(FileHandle, NULL, NULL, &FileTime));
 }
