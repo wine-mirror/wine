@@ -205,6 +205,17 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
         return 0;
 
     case WM_ERASEBKGND:
+        if (btn_type == BS_OWNERDRAW)
+        {
+            HDC hdc = (HDC)wParam;
+            RECT rc;
+            HBRUSH hBrush = (HBRUSH)SendMessageW(GetParent(hWnd), WM_CTLCOLORBTN, (WPARAM)hdc, (LPARAM)hWnd);
+            if (!hBrush) /* did the app forget to call defwindowproc ? */
+                hBrush = (HBRUSH)DefWindowProcW(GetParent(hWnd), WM_CTLCOLORBTN,
+                                                (WPARAM)hdc, (LPARAM)hWnd);
+            GetClientRect(hWnd, &rc);
+            FillRect(hdc, &rc, hBrush);
+        }
         return 1;
 
     case WM_PAINT:
