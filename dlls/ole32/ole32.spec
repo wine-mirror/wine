@@ -163,7 +163,7 @@ init	OLE32_DllEntryPoint
 161 stub WriteOleStg
 162 stub WriteStringStream
 163 stdcall CoInitializeEx(ptr long) CoInitializeEx
-164 stub CoInitializeSecurity       # stdcall (ptr long ptr ptr long long ptr long ptr) return 0,ERR_NOTIMPLEMENTED
+164 stdcall CoInitializeSecurity(ptr long ptr ptr long long ptr long ptr) CoInitializeSecurity
 165 stdcall CoCreateInstanceEx(ptr ptr long ptr long ptr) CoCreateInstanceEx
 166 stdcall PropVariantClear(ptr) PropVariantClear
 167 stub CoCopyProxy                # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED

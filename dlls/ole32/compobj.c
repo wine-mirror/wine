@@ -2233,3 +2233,19 @@ BOOL WINAPI IsEqualGUID(
 {
     return !memcmp(rguid1,rguid2,sizeof(GUID));
 }
+
+/***********************************************************************
+ *           CoInitializeSecurity [OLE32.@]
+ */
+HRESULT WINAPI CoInitializeSecurity(PSECURITY_DESCRIPTOR pSecDesc, LONG cAuthSvc,
+                                    SOLE_AUTHENTICATION_SERVICE* asAuthSvc,
+                                    void* pReserved1, DWORD dwAuthnLevel,
+                                    DWORD dwImpLevel, void* pReserved2,
+                                    DWORD dwCapabilities, void* pReserved3)
+{
+  FIXME("(%p,%ld,%p,%p,%ld,%ld,%p,%ld,%p) - stub!\n", pSecDesc, cAuthSvc,
+        asAuthSvc, pReserved1, dwAuthnLevel, dwImpLevel, pReserved2,
+        dwCapabilities, pReserved3);
+  return S_OK;
+}
+
