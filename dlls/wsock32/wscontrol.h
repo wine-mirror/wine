@@ -119,9 +119,13 @@ typedef struct IPAddrEntry
    ushort         iae_pad;
 } IPAddrEntry;
 
-#ifdef __NetBSD__
+#ifdef if_type
 #undef if_type
+#endif
+#ifdef if_mtu
 #undef if_mtu
+#endif
+#ifdef if_lastchange
 #undef if_lastchange
 #endif
 
