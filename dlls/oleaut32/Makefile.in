@@ -8,6 +8,7 @@ ALTNAMES  = ole2disp typelib
 IMPORTS   = ole32 comctl32
 
 C_SRCS = \
+	connpt.c \
 	ole2disp.c \
 	oleaut.c \
 	olefont.c \
