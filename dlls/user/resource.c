@@ -100,9 +100,11 @@ HACCEL WINAPI LoadAcceleratorsW(HINSTANCE instance,LPCWSTR lpTableName)
 	hRetval = GlobalAlloc16(0,sizeof(ACCEL16)*nrofaccells);
 	accel16 = (LPACCEL16)GlobalLock16(hRetval);
 	for (i=0;i<nrofaccells;i++) {
-		accel16[i].fVirt = accel_table[i].fVirt;
-		accel16[i].key = accel_table[i].key;
-		accel16[i].cmd = accel_table[i].cmd;
+          accel16[i].fVirt = accel_table[i].fVirt & 0x7f;
+          accel16[i].key = accel_table[i].key;
+          if( !(accel16[i].fVirt & FVIRTKEY) )
+            accel16[i].key &= 0x00ff;
+          accel16[i].cmd = accel_table[i].cmd;
 	}
 	accel16[i-1].fVirt |= 0x80;
       }
@@ -177,9 +179,8 @@ INT WINAPI CopyAcceleratorTableW(HACCEL src, LPACCEL dst,
 
       /* Check if we've reached the end of the application supplied
          accelerator table. */
-      if(i+1 == entries) {
+      if(i+1 == entries)
 	done = TRUE;
-      }
     }
 
     /* The highest order bit seems to mark the end of the accelerator
@@ -211,9 +212,6 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
     SetLastError(ERROR_INVALID_PARAMETER);
     return NULL;
   }
-  FIXME_(accel)("should check that the accelerator descriptions are valid,"
-	" return NULL and SetLastError() if not.\n");
-
 
   /* Allocate memory and copy the table. */
   hAccel = HACCEL_32(GlobalAlloc16(0,cEntries*sizeof(ACCEL16)));
@@ -226,9 +224,11 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
   }
   accel = GlobalLock16(HACCEL_16(hAccel));
   for (i=0;i<cEntries;i++) {
-      accel[i].fVirt = lpaccel[i].fVirt & ~0x80;
-      accel[i].key = lpaccel[i].key;
-      accel[i].cmd = lpaccel[i].cmd;
+    accel[i].fVirt = lpaccel[i].fVirt&0x7f;
+    accel[i].key = lpaccel[i].key;
+    if( !(accel[i].fVirt & FVIRTKEY) )
+      accel[i].key &= 0x00ff;
+    accel[i].cmd = lpaccel[i].cmd;
   }
   /* Set the end-of-table terminator. */
   accel[cEntries-1].fVirt |= 0x80;
@@ -257,9 +257,6 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
     SetLastError(ERROR_INVALID_PARAMETER);
     return NULL;
   }
-  FIXME_(accel)("should check that the accelerator descriptions are valid,"
-	" return NULL and SetLastError() if not.\n");
-
 
   /* Allocate memory and copy the table. */
   hAccel = HACCEL_32(GlobalAlloc16(0,cEntries*sizeof(ACCEL16)));
@@ -274,7 +271,7 @@ HACCEL WINAPI CreateAcceleratorTableW(LPACCEL lpaccel, INT cEntries)
 
 
   for (i=0;i<cEntries;i++) {
-       accel[i].fVirt = lpaccel[i].fVirt;
+       accel[i].fVirt = lpaccel[i].fVirt&0x7f;
        if( !(accel[i].fVirt & FVIRTKEY) ) {
 	  ckey = (char) lpaccel[i].key;
          if(!MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, &ckey, 1, &accel[i].key, 1))
