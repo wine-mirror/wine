@@ -1279,6 +1279,20 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
 	    case 1: STRETCH_ROW(BYTE)
 	    case 2: STRETCH_ROW(WORD)
 	    case 4: STRETCH_ROW(DWORD)
+	    case 3: {
+		LPBYTE s,d;
+		for (x = sx = 0; x < dstwidth; x++, sx+= xinc) {
+			DWORD pixel;
+
+			s = sbuf+3*(sx>>16);
+			d = dbuf+3*x;
+			pixel = (s[0]<<16)|(s[1]<<8)|s[2];
+			d[0] = (pixel>>16)&0xff;
+			d[1] = (pixel>> 8)&0xff;
+			d[2] = (pixel    )&0xff;
+		}
+		break;
+	    }
 	    default:
 	      FIXME("Stretched blit not implemented for bpp %d!\n", bpp*8);
 	      ret = DDERR_UNSUPPORTED;
