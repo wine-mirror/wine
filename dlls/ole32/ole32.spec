@@ -174,7 +174,7 @@
 174 stub CoRevertToSelf             # stdcall () return 0,ERR_NOTIMPLEMENTED
 175 stub CoSetProxyBlanket          # stdcall (ptr long long wstr long long ptr long) return 0,ERR_NOTIMPLEMENTED
 176 stub CoSuspendClassObjects      # stdcall () return 0,ERR_NOTIMPLEMENTED
-177 stub CreateClassMoniker         # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
+177 stdcall CreateClassMoniker(ptr ptr)
 178 stub CLIPFORMAT_UserFree
 179 stub CLIPFORMAT_UserMarshal
 180 stub CLIPFORMAT_UserSize
