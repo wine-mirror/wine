@@ -22,13 +22,14 @@
  *
  *  TODO:
  *    - Fix ImageList_DrawIndirect (rgbFg, rgbBk, dwRop).
- *    - Fix ImageList_GetIcon.
  *    - Fix ImageList_SetFilter (undocumented).
  *      BTW does anybody know anything about this function???
  *        - It removes 12 Bytes from the stack (3 Parameters).
  *        - First parameter SHOULD be a HIMAGELIST.
  *        - Second parameter COULD be an index?????
  *        - Third parameter.... ?????????????????????
+ *    - Add support for ILD_PRESERVEALPHA, ILD_SCALE, ILD_DPISCALE
+ *    - Add support for ILS_GLOW, ILS_SHADOW, ILS_SATURATE, ILS_ALPHA
  *
  *  Comments:
  *    - ImageList_Draw, ImageList_DrawEx and ImageList_GetIcon use
@@ -1526,10 +1527,7 @@ ImageList_EndDrag (void)
 COLORREF WINAPI
 ImageList_GetBkColor (HIMAGELIST himl)
 {
-    if (himl == NULL)
-	return CLR_NONE;
-
-    return himl->clrBk;
+    return himl ? himl->clrBk : CLR_NONE;
 }
 
 
@@ -1600,50 +1598,38 @@ HICON WINAPI
 ImageList_GetIcon (HIMAGELIST himl, INT i, UINT fStyle)
 {
     ICONINFO ii;
-    HICON  hIcon;
-    HBITMAP hOldSrcBitmap,hOldDstBitmap;
-    HDC    hdcSrc, hdcDst;
+    HICON hIcon;
+    HBITMAP hOldDstBitmap;
+    HDC hdcDst;
 
-    if ((himl == NULL) || (i < 0) || (i >= himl->cCurImage)) {
-	return 0;
-   }
+    if ((himl == NULL) || (i < 0) || (i >= himl->cCurImage)) return 0;
 
-    hdcSrc = CreateCompatibleDC(0);
     hdcDst = CreateCompatibleDC(0);
 
     ii.fIcon = TRUE;
-    ii.hbmMask  = CreateCompatibleBitmap (hdcDst, himl->cx, himl->cy);
 
     /* draw mask*/
+    ii.hbmMask  = CreateCompatibleBitmap (hdcDst, himl->cx, himl->cy);
     hOldDstBitmap = (HBITMAP)SelectObject (hdcDst, ii.hbmMask);
-    if (himl->hbmMask) {
-	SelectObject (hdcSrc, himl->hbmMask);
-	BitBlt (hdcDst, 0, 0, himl->cx, himl->cy,
-		  hdcSrc, i * himl->cx, 0, SRCCOPY);
-    }
-    else
-	PatBlt (hdcDst, 0, 0, himl->cx, himl->cy, BLACKNESS);
+    ImageList_Draw(himl, i, hdcDst, 0, 0, ILD_MASK);
 
     /* draw image*/
-    hOldSrcBitmap = (HBITMAP)SelectObject (hdcSrc, himl->hbmImage);
-    ii.hbmColor = CreateCompatibleBitmap (hdcSrc, himl->cx, himl->cy);
+    SelectObject (hdcDst, himl->hbmImage);
+    ii.hbmColor = CreateCompatibleBitmap (hdcDst, himl->cx, himl->cy);
     SelectObject (hdcDst, ii.hbmColor);
-    BitBlt (hdcDst, 0, 0, himl->cx, himl->cy,
-	      hdcSrc, i * himl->cx, 0, SRCCOPY);
+    ImageList_Draw(himl, i, hdcDst, 0, 0, fStyle);
 
     /*
      * CreateIconIndirect requires us to deselect the bitmaps from
      * the DCs before calling
      */
-    SelectObject(hdcSrc, hOldSrcBitmap);
     SelectObject(hdcDst, hOldDstBitmap);
 
     hIcon = CreateIconIndirect (&ii);
 
-    DeleteDC (hdcSrc);
-    DeleteDC (hdcDst);
     DeleteObject (ii.hbmMask);
     DeleteObject (ii.hbmColor);
+    DeleteDC (hdcDst);
 
     return hIcon;
 }
