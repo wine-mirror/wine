@@ -1071,12 +1071,17 @@ static Atom EVENT_SelectionRequest_TARGETS( Window requestor, Atom target, Atom 
  */
 static Atom EVENT_SelectionRequest_STRING( Window requestor, Atom target, Atom rprop )
 {
-    HANDLE16 hText;
+    static UINT text_cp = (UINT)-1;
+    HANDLE hUnicodeText;
+    LPWSTR uni_text;
     LPSTR  text;
     int    size,i,j;
     char* lpstr = 0;
     char *itemFmtName;
     int xRc;
+
+    if(text_cp == (UINT)-1)
+	text_cp = PROFILE_GetWineIniInt("x11drv", "TextCP", CP_ACP);
 
     /*
      * Map the requested X selection property type atom name to a
@@ -1084,16 +1089,22 @@ static Atom EVENT_SelectionRequest_STRING( Window requestor, Atom target, Atom r
      */
     itemFmtName = TSXGetAtomName(display, target);
     TRACE("Request for %s (wFormat=%x %s)\n",
-                  itemFmtName, CF_TEXT, CLIPBOARD_GetFormatName(CF_TEXT));
+	itemFmtName, CF_UNICODETEXT, CLIPBOARD_GetFormatName(CF_UNICODETEXT));
     TSXFree(itemFmtName);
 
-    hText = GetClipboardData16(CF_TEXT);
-    if ( !hText )
+    hUnicodeText = GetClipboardData(CF_UNICODETEXT);
+    if(!hUnicodeText)
        return None;
-    text = GlobalLock16(hText);
+    uni_text = GlobalLock(hUnicodeText);
+    if(!uni_text)
+       return None;
+
+    size = WideCharToMultiByte(text_cp, 0, uni_text, -1, NULL, 0, NULL, NULL);
+    text = HeapAlloc(GetProcessHeap(), 0, size);
     if (!text)
        return None;
-    size = GlobalSize16(hText);
+    WideCharToMultiByte(text_cp, 0, uni_text, -1, text, size, NULL, NULL);
+
     /* remove carriage returns */
     
     lpstr = (char*)HeapAlloc( GetProcessHeap(), 0, size-- );
@@ -1113,7 +1124,8 @@ static Atom EVENT_SelectionRequest_STRING( Window requestor, Atom target, Atom r
                             lpstr, j);
     TRACE("(Rc=%d)\n", xRc);
 
-    GlobalUnlock16(hText);
+    GlobalUnlock(hUnicodeText);
+    HeapFree(GetProcessHeap(), 0, text);
     HeapFree( GetProcessHeap(), 0, lpstr );
 
     return rprop;

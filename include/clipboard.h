@@ -7,9 +7,9 @@
 struct tagWND;
 
 typedef struct tagWINE_CLIPFORMAT {
-    WORD	wFormatID;
-    WORD	wRefCount;
-    WORD	wDataPresent;
+    UINT	wFormatID;
+    UINT	wRefCount;
+    BOOL	wDataPresent;
     LPSTR	Name;
     HANDLE16    hData16;
     HANDLE	hDataSrc32;

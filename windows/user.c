@@ -15,7 +15,6 @@
 #include "task.h"
 #include "queue.h"
 #include "win.h"
-#include "clipboard.h"
 #include "controls.h"
 #include "cursoricon.h"
 #include "hook.h"

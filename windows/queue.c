@@ -14,7 +14,6 @@
 #include "queue.h"
 #include "task.h"
 #include "win.h"
-#include "clipboard.h"
 #include "hook.h"
 #include "heap.h"
 #include "thread.h"

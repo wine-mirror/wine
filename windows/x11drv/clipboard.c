@@ -107,7 +107,7 @@ UINT X11DRV_CLIPBOARD_MapPropertyToFormat(char *itemFmtName)
     else if ( 0 == strncmp(itemFmtName, FMT_PREFIX, strlen(FMT_PREFIX)) )
         return RegisterClipboardFormatA(itemFmtName + strlen(FMT_PREFIX));
     else if ( 0 == strcmp(itemFmtName, "STRING") )
-        return CF_OEMTEXT;
+        return CF_UNICODETEXT;
     else if ( 0 == strcmp(itemFmtName, "PIXMAP")
                 ||  0 == strcmp(itemFmtName, "BITMAP") )
     {
@@ -139,8 +139,12 @@ Atom X11DRV_CLIPBOARD_MapFormatToProperty(UINT wFormat)
     
     switch (wFormat)
     {
+	/* We support only CF_UNICODETEXT, other formats are synthesized */
         case CF_OEMTEXT:
         case CF_TEXT:
+	    return None;
+
+        case CF_UNICODETEXT:
             prop = XA_STRING;
             break;
 
@@ -516,9 +520,9 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
      * format, if possible.
      */
     if ( (reqType == XA_STRING)
-         && (atype == XA_STRING) && (aformat == 8) ) /* treat Unix text as CF_OEMTEXT */
+         && (atype == XA_STRING) && (aformat == 8) )
+    /* convert Unix text to CF_UNICODETEXT */
     {
-      HANDLE16   hText = 0;
       int 	   i,inlcount = 0;
       char*      lpstr;
  
@@ -527,37 +531,32 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
       for(i=0; i <= nitems; i++)
           if( val[i] == '\n' ) inlcount++;
  
-        hText=GlobalAlloc16(GMEM_MOVEABLE, nitems + inlcount + 1);
-        if( (lpstr = (char*)GlobalLock16(hText)) )
-        {
-		  ZeroMemory(lpstr, nitems + inlcount + 1);
+      if( (lpstr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nitems + inlcount + 1)) )
+      {
+	  static UINT text_cp = (UINT)-1;
+	  UINT count;
+	  HANDLE hUnicodeText;
+
           for(i=0,inlcount=0; i <= nitems; i++)
           {
              if( val[i] == '\n' ) lpstr[inlcount++]='\r';
              lpstr[inlcount++]=val[i];
           }
-          GlobalUnlock16(hText);
-        }
-        else
-            hText = 0;
-      
-      if( hText )
-      {
-          /* delete previous CF_TEXT and CF_OEMTEXT data */
-          lpFormat = CLIPBOARD_LookupFormat(CF_TEXT);
-          if (lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32) 
-              CLIPBOARD_DeleteRecord(lpFormat, !(hWndClipWindow));
-          
-          lpFormat = CLIPBOARD_LookupFormat(CF_OEMTEXT);
-          if (lpFormat->wDataPresent || lpFormat->hData16 || lpFormat->hData32)  
-              CLIPBOARD_DeleteRecord(lpFormat, !(hWndClipWindow));
- 
-          /* Update the CF_OEMTEXT record */
-          lpFormat->wDataPresent = 1;
-          lpFormat->hData32 = 0;
-          lpFormat->hData16 = hText;
- 
-          bRet = TRUE;
+
+	  if(text_cp == (UINT)-1)
+	      text_cp = PROFILE_GetWineIniInt("x11drv", "TextCP", CP_ACP);
+
+	  count = MultiByteToWideChar(text_cp, 0, lpstr, -1, NULL, 0);
+	  hUnicodeText = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, count * sizeof(WCHAR));
+	  if(hUnicodeText)
+	  {
+	      WCHAR *textW = GlobalLock(hUnicodeText);
+	      MultiByteToWideChar(text_cp, 0, lpstr, -1, textW, count);
+	      GlobalUnlock(hUnicodeText);
+	      SetClipboardData(CF_UNICODETEXT, hUnicodeText);
+	      bRet = TRUE;
+	  }
+	  HeapFree(GetProcessHeap(), 0, lpstr);
       }
     }
     else if ( reqType == XA_PIXMAP || reqType == XA_BITMAP ) /* treat PIXMAP as CF_DIB or CF_BITMAP */
@@ -594,7 +593,7 @@ static BOOL X11DRV_CLIPBOARD_ReadSelection(UINT wFormat, Window w, Atom prop, At
           WARN("PIXMAP conversion failed!\n" );
           goto END;
       }
-      
+
       /* Delete previous clipboard data */
       lpFormat = CLIPBOARD_LookupFormat(wFormat);
       if (lpFormat->wDataPresent && (lpFormat->hData16 || lpFormat->hData32))
@@ -891,6 +890,8 @@ BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
     Window ownerPrimary = TSXGetSelectionOwner(display,XA_PRIMARY);
     Window ownerClipboard = TSXGetSelectionOwner(display,xaClipboard);
 
+    TRACE("%d\n", wFormat);
+
     /*
      * If the selection has not been previously cached, or the selection has changed,
      * try and cache the list of available selection targets from the current selection.
@@ -913,14 +914,10 @@ BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
 
     /* Exit if there is no selection */
     if ( !ownerClipboard && !ownerPrimary )
+    {
+	TRACE("There is no selection\n");
         return FALSE;
-
-    if ( wFormat == CF_TEXT )
-        wFormat = CF_OEMTEXT;
-    
-    /* Check if the format is available in the clipboard cache */
-    if ( CLIPBOARD_IsPresent(wFormat) )
-        return TRUE;
+    }
 
     /*
      * Many X client apps (such as XTerminal) don't support being queried
@@ -930,6 +927,7 @@ BOOL X11DRV_IsClipboardFormatAvailable(UINT wFormat)
     if ( !cSelectionTargets )
         return X11DRV_GetClipboardData( wFormat );
         
+    TRACE("There is no selection\n");
     return FALSE;
 }
 
@@ -987,8 +985,7 @@ void X11DRV_SetClipboardData(UINT wFormat)
  *
  * This method is invoked only when we DO NOT own the X selection
  *
- * NOTE: Clipboard driver doesn't get requests for CF_TEXT data, only
- * for CF_OEMTEXT.
+ * NOTE: Clipboard driver get requests only for CF_UNICODETEXT data.
  * We always get the data from the selection client each time,
  * since we have no way of determining if the data in our cache is stale.
  */
@@ -999,6 +996,8 @@ BOOL X11DRV_GetClipboardData(UINT wFormat)
     HWND hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow();
     WND* wnd = NULL;
     LPWINE_CLIPFORMAT lpFormat;
+
+    TRACE("%d\n", wFormat);
 
     if( !selectionAcquired && (wnd = WIN_FindWndPtr(hWnd)) )
     {
@@ -1054,6 +1053,8 @@ BOOL X11DRV_GetClipboardData(UINT wFormat)
 
         TRACE("\tpresent %s = %i\n", CLIPBOARD_GetFormatName(wFormat), bRet );
     }
+
+    TRACE("Returning %d\n", bRet);
     
     return bRet;
 }
