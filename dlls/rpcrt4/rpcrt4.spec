@@ -253,10 +253,10 @@ init	RPCRT4_LibMain
 @ stub NdrPipesDone
 @ stub NdrPipesInitialize
 @ stub NdrProxyErrorHandler
-@ stub NdrProxyFreeBuffer
-@ stub NdrProxyGetBuffer
-@ stub NdrProxyInitialize
-@ stub NdrProxySendReceive
+@ stdcall NdrProxyFreeBuffer(ptr ptr) NdrProxyFreeBuffer
+@ stdcall NdrProxyGetBuffer(ptr ptr) NdrProxyGetBuffer
+@ stdcall NdrProxyInitialize(ptr ptr ptr ptr long) NdrProxyInitialize
+@ stdcall NdrProxySendReceive(ptr ptr) NdrProxySendReceive
 @ stub NdrRangeUnmarshall
 @ stub NdrRpcSmClientAllocate
 @ stub NdrRpcSmClientFree
@@ -271,7 +271,9 @@ init	RPCRT4_LibMain
 @ stub NdrStubCall
 @ stub NdrStubCall2
 @ stub NdrStubForwardingFunction
-@ stub NdrStubGetBuffer
+@ stdcall NdrStubGetBuffer(ptr ptr ptr) NdrStubGetBuffer
+@ stdcall NdrStubInitialize(ptr ptr ptr ptr) NdrStubInitialize
+@ stub NdrStubInitializeMarshall
 @ stub NdrpSetRpcSsDefaults
 
 @ stub NdrByteCountPointerBufferSize
@@ -358,8 +360,6 @@ init	RPCRT4_LibMain
 @ stub NdrSimpleStructUnmarshall
 @ stub NdrSimpleTypeMarshall
 @ stub NdrSimpleTypeUnmarshall
-@ stub NdrStubInitialize
-@ stub NdrStubInitializeMarshall
 @ stub NdrUserMarshalBufferSize
 @ stub NdrUserMarshalFree
 @ stub NdrUserMarshalMarshall

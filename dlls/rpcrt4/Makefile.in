@@ -13,6 +13,7 @@ SYMBOLFILE = $(MODULE).tmp.o
 C_SRCS = \
 	cproxy.c \
 	cstub.c \
+	ndr_midl.c \
 	ndr_stubless.c \
 	rpc_binding.c \
 	rpc_message.c \

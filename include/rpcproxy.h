@@ -16,13 +16,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#ifndef __RPCPROXY_H_VERSION__
+/* FIXME: Find an appropriate version number.  I guess something is better than nothing */
+#define __RPCPROXY_H_VERSION__ ( 399 )
+#endif
+
 #ifndef __WINE_RPCPROXY_H
 #define __WINE_RPCPROXY_H
-
-#ifndef __RPCPROXY_H_VERSION__
-/* FIXME: I'm not sure what version though */
-#define __RPCPROXY_H_VERSION__
-#endif
 
 #include "basetsd.h"
 #include "guiddef.h"
