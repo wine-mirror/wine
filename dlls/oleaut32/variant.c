@@ -2484,6 +2484,7 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         case VT_UI2  : lVal = V_UNION(left,uiVal); resT=VT_I4; break;
         case VT_UI4  : lVal = V_UNION(left,ulVal); resT=VT_I4; break;
         case VT_UINT : lVal = V_UNION(left,ulVal); resT=VT_I4; break;
+        case VT_BOOL : rVal = V_UNION(left,boolVal); resT=VT_I4; break;
         default: lOk = FALSE;
         }
 
@@ -2497,6 +2498,7 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         case VT_UI2  : rVal = V_UNION(right,uiVal); resT=VT_I4; break;
         case VT_UI4  : rVal = V_UNION(right,ulVal); resT=VT_I4; break;
         case VT_UINT : rVal = V_UNION(right,ulVal); resT=VT_I4; break;
+        case VT_BOOL : rVal = V_UNION(right,boolVal); resT=VT_I4; break;
         default: rOk = FALSE;
         }
 
@@ -2931,6 +2933,7 @@ HRESULT WINAPI VarOr(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         case VT_UI2  : lVal = V_UNION(left,uiVal); resT=VT_I4; break;
         case VT_UI4  : lVal = V_UNION(left,ulVal); resT=VT_I4; break;
         case VT_UINT : lVal = V_UNION(left,ulVal); resT=VT_I4; break;
+        case VT_BOOL : lVal = V_UNION(left,boolVal); resT=VT_I4; break;
         default: lOk = FALSE;
         }
 
@@ -2944,6 +2947,7 @@ HRESULT WINAPI VarOr(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         case VT_UI2  : rVal = V_UNION(right,uiVal); resT=VT_I4; break;
         case VT_UI4  : rVal = V_UNION(right,ulVal); resT=VT_I4; break;
         case VT_UINT : rVal = V_UNION(right,ulVal); resT=VT_I4; break;
+        case VT_BOOL : rVal = V_UNION(right,boolVal); resT=VT_I4; break;
         default: rOk = FALSE;
         }
 
