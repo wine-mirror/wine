@@ -143,6 +143,7 @@ INSTALLED_INCLUDES = \
 	wine/obj_cache.h \
 	wine/obj_channel.h \
 	wine/obj_clientserver.h \
+	wine/obj_comcat.h \
 	wine/obj_commdlgbrowser.h \
 	wine/obj_connection.h \
 	wine/obj_contextmenu.h \
@@ -150,6 +151,7 @@ INSTALLED_INCLUDES = \
 	wine/obj_dataobject.h \
 	wine/obj_dockingwindowframe.h \
 	wine/obj_dragdrop.h \
+	wine/obj_enumguid.h \
 	wine/obj_enumidlist.h \
 	wine/obj_errorinfo.h \
 	wine/obj_extracticon.h \

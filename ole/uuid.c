@@ -47,6 +47,8 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "wine/obj_queryassociations.h"
 #include "wine/obj_channel.h"
 
+#include "comcat.h"
+
 /* FIXME: cguids declares GUIDs but does not define their values */
 
 

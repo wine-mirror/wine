@@ -28,9 +28,8 @@
 #ifndef __WINE_COMCAT_H
 #define __WINE_COMCAT_H
 
-#include "unknwn.h"
-
-typedef GUID CATID;
-typedef REFGUID REFCATID;
+#include "wine/obj_base.h"
+#include "wine/obj_enumguid.h"
+#include "wine/obj_comcat.h"
 
 #endif /*__WINE_COMCAT_H */
