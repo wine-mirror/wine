@@ -5,16 +5,19 @@
 #ifndef __WINE_MMSYSTEM_H
 #define __WINE_MMSYSTEM_H
 
+#include "windef.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif 
-#include "windef.h"
 
 typedef LPSTR		HPSTR;          /* a huge version of LPSTR */
 typedef LPCSTR		HPCSTR;         /* a huge version of LPCSTR */
    
 #include "pshpack1.h"
    
+typedef LRESULT CALLBACK (*DRIVERPROC)(DWORD,HDRVR,UINT,LPARAM,LPARAM);
+
 #define MAXWAVEDRIVERS	10
 #define MAXMIDIDRIVERS	10
 #define MAXAUXDRIVERS	10

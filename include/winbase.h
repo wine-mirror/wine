@@ -804,13 +804,6 @@ typedef struct _SYSTEM_POWER_STATUS
 } SYSTEM_POWER_STATUS, *LPSYSTEM_POWER_STATUS;
 
 
-typedef BOOL CALLBACK (*CODEPAGE_ENUMPROCA)(LPSTR);
-typedef BOOL CALLBACK (*CODEPAGE_ENUMPROCW)(LPWSTR);
-DECL_WINELIB_TYPE_AW(CODEPAGE_ENUMPROC)
-typedef BOOL CALLBACK (*LOCALE_ENUMPROCA)(LPSTR);
-typedef BOOL CALLBACK (*LOCALE_ENUMPROCW)(LPWSTR);
-DECL_WINELIB_TYPE_AW(LOCALE_ENUMPROC)
-
 typedef struct tagSYSTEM_INFO
 {
     union {
@@ -1288,9 +1281,6 @@ BOOL        WINAPI DeregisterEventSource(HANDLE);
 BOOL        WINAPI DisableThreadLibraryCalls(HMODULE);
 BOOL        WINAPI DosDateTimeToFileTime(WORD,WORD,LPFILETIME);
 BOOL        WINAPI DuplicateHandle(HANDLE,HANDLE,HANDLE,HANDLE*,DWORD,BOOL,DWORD);
-BOOL        WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA lpDateFmtEnumProc, LCID Locale, DWORD dwFlags);
-BOOL        WINAPI EnumDateFormatsW(DATEFMT_ENUMPROCW lpDateFmtEnumProc, LCID Locale, DWORD dwFlags);
-#define     EnumDateFormats WINELIB_NAME_AW(EnumDateFormats)
 BOOL      WINAPI EnumResourceLanguagesA(HMODULE,LPCSTR,LPCSTR,
                                             ENUMRESLANGPROCA,LONG);
 BOOL      WINAPI EnumResourceLanguagesW(HMODULE,LPCWSTR,LPCWSTR,
@@ -1304,15 +1294,6 @@ BOOL      WINAPI EnumResourceNamesW(HMODULE,LPCWSTR,ENUMRESNAMEPROCW,
 BOOL      WINAPI EnumResourceTypesA(HMODULE,ENUMRESTYPEPROCA,LONG);
 BOOL      WINAPI EnumResourceTypesW(HMODULE,ENUMRESTYPEPROCW,LONG);
 #define     EnumResourceTypes WINELIB_NAME_AW(EnumResourceTypes)
-BOOL      WINAPI EnumSystemCodePagesA(CODEPAGE_ENUMPROCA,DWORD);
-BOOL      WINAPI EnumSystemCodePagesW(CODEPAGE_ENUMPROCW,DWORD);
-#define     EnumSystemCodePages WINELIB_NAME_AW(EnumSystemCodePages)
-BOOL      WINAPI EnumSystemLocalesA(LOCALE_ENUMPROCA,DWORD);
-BOOL      WINAPI EnumSystemLocalesW(LOCALE_ENUMPROCW,DWORD);
-#define     EnumSystemLocales WINELIB_NAME_AW(EnumSystemLocales)
-BOOL      WINAPI EnumTimeFormatsA(TIMEFMT_ENUMPROCA lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags);
-BOOL      WINAPI EnumTimeFormatsW(TIMEFMT_ENUMPROCW lpTimeFmtEnumProc, LCID Locale, DWORD dwFlags);
-#define     EnumTimeFormats WINELIB_NAME_AW(EnumTimeFormats)
 BOOL        WINAPI EqualSid(PSID, PSID);
 BOOL        WINAPI EqualPrefixSid(PSID,PSID);
 DWORD       WINAPI EraseTape(HANDLE,DWORD,BOOL);
