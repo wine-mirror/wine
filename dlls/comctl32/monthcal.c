@@ -342,27 +342,23 @@ static void MONTHCAL_Refresh(HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
   const char *thisMonthtxt;
   COLORREF oldTextColor, oldBkColor;
   DWORD dwStyle = GetWindowLongA(hwnd, GWL_STYLE);
-  BOOL prssed;
   RECT rcTemp;
   RECT rcDay; /* used in MONTHCAL_CalcDayRect() */
 
   oldTextColor = SetTextColor(hdc, GetSysColor(COLOR_WINDOWTEXT));
 
-  /* draw control edge */
-  if(EqualRect(&(ps->rcPaint), rcClient))
-  {
-    hbr = CreateSolidBrush(RGB(255, 255, 255));
-    FillRect(hdc, rcClient, hbr);
-    DrawEdge(hdc, rcClient, EDGE_SUNKEN, BF_RECT);
-    DeleteObject(hbr);
-    prssed = FALSE;
-  }
+
+  /* fill background */
+  hbr = CreateSolidBrush (infoPtr->bk);
+  FillRect(hdc, rcClient, hbr);
+  DeleteObject(hbr);       
 
   /* draw header */
   if(IntersectRect(&rcTemp, &(ps->rcPaint), title))
   {
     hbr =  CreateSolidBrush(infoPtr->titlebk);
     FillRect(hdc, title, hbr);
+    DeleteObject(hbr);
   }
 	
   /* if the previous button is pressed draw it depressed */
@@ -419,7 +415,6 @@ static void MONTHCAL_Refresh(HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
   titlemonth->right = titlemonth->left + size.cx;
   titleyear->right = titlemonth->right;
  
-   
 /* draw line under day abbreviatons */
 
    if(dwStyle & MCS_WEEKNUMBERS) 
@@ -428,7 +423,7 @@ static void MONTHCAL_Refresh(HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
      MoveToEx(hdc, rcDraw->left + 3, title->bottom + textHeight + 2, NULL);
      
   LineTo(hdc, rcDraw->right - 3, title->bottom + textHeight + 2);
-
+   
 /* draw day abbreviations */
 
   SetBkColor(hdc, infoPtr->monthbk);
@@ -1530,10 +1525,6 @@ static void MONTHCAL_UpdateSize(HWND hwnd)
   rcDraw->top = rcClient->top;
   rcDraw->bottom = rcClient->bottom;
 
-  /* use DrawEdge to adjust the size of rcClient such that we */
-  /* do not overwrite the border when drawing the control */
-  DrawEdge((HDC)NULL, rcDraw, EDGE_SUNKEN, BF_RECT | BF_ADJUST);
-  
   /* this is correct, the control does NOT expand vertically */
   /* like it does horizontally */
   /* make sure we don't move the controls bottom out of the client */
@@ -1543,10 +1534,10 @@ static void MONTHCAL_UpdateSize(HWND hwnd)
   }
    
   /* calculate title area */
-  title->top    = rcClient->top + 1;
+  title->top    = rcClient->top;
   title->bottom = title->top + 2 * infoPtr->textHeight + 4;
-  title->left   = rcClient->left + 1;
-  title->right  = rcClient->right - 1;
+  title->left   = rcClient->left;
+  title->right  = rcClient->right;
 
   /* recalculate the height and width increments and offsets */
   infoPtr->width_increment = (infoPtr->rcDraw.right - infoPtr->rcDraw.left) / 7.0; 
