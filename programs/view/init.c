@@ -48,7 +48,7 @@ BOOL InitApplication(HINSTANCE hInstance)
 			 0);
 
   wc.style         = CS_HREDRAW | CS_VREDRAW;             /* Class style(s) */
-  wc.lpfnWndProc   = (WNDPROC)WndProc;                  /* Window Procedure */
+  wc.lpfnWndProc   = WndProc;                             /* Window Procedure */
   wc.cbClsExtra    = 0;                          /* No per-class extra data */
   wc.cbWndExtra    = 0;                         /* No per-window extra data */
   wc.hInstance     = hInstance;                      /* Owner of this class */

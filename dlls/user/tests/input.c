@@ -344,7 +344,7 @@ START_TEST(input)
 
     wclass.lpszClassName = "InputSysKeyTestClass";
     wclass.style         = CS_HREDRAW | CS_VREDRAW;
-    wclass.lpfnWndProc   = (WNDPROC)WndProc;
+    wclass.lpfnWndProc   = WndProc;
     wclass.hInstance     = hInstance;
     wclass.hIcon         = LoadIconA( 0, (LPSTR)IDI_APPLICATION );
     wclass.hCursor       = LoadCursorA( NULL, IDC_ARROW);

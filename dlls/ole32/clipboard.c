@@ -736,7 +736,7 @@ static HWND OLEClipbrd_CreateWindow()
      * We don't bother doing this since the FindClassByAtom code
      * would have to be changed to deal with this idiosyncrasy. */
     wcex.style          = CS_GLOBALCLASS;
-    wcex.lpfnWndProc    = (WNDPROC)OLEClipbrd_WndProc;
+    wcex.lpfnWndProc    = OLEClipbrd_WndProc;
     wcex.hInstance      = 0;
     wcex.lpszClassName  = OLEClipbrd_WNDCLASS;
 

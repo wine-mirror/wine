@@ -1602,7 +1602,7 @@ static void OLEDD_Initialize()
 
     ZeroMemory (&wndClass, sizeof(WNDCLASSA));
     wndClass.style         = CS_GLOBALCLASS;
-    wndClass.lpfnWndProc   = (WNDPROC)OLEDD_DragTrackerWindowProc;
+    wndClass.lpfnWndProc   = OLEDD_DragTrackerWindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(TrackerWindowInfo*);
     wndClass.hCursor       = 0;
