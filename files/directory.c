@@ -435,7 +435,7 @@ static BOOL DIR_TryPath( const DOS_FULL_NAME *dir, LPCSTR name,
     }
     if (!DOSFS_FindUnixName( dir->long_name, name, p_l,
                    sizeof(full_name->long_name) - (p_l - full_name->long_name),
-                   p_s, DRIVE_GetFlags( dir->drive ) ))
+                   p_s, !(DRIVE_GetFlags(dir->drive) & DRIVE_CASE_SENSITIVE) ))
         return FALSE;
     strcpy( full_name->long_name, dir->long_name );
     p_l[-1] = '/';
