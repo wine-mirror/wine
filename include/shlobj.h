@@ -498,6 +498,13 @@ VOID WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask);
 void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID dwItem2);
 
 /****************************************************************************
+* SHCreateDirectory API
+*/
+DWORD WINAPI SHCreateDirectory(HWND, LPCVOID);
+DWORD WINAPI SHCreateDirectoryExA(HWND, LPCSTR, LPSECURITY_ATTRIBUTES);
+DWORD WINAPI SHCreateDirectoryExW(HWND, LPCWSTR, LPSECURITY_ATTRIBUTES);
+
+/****************************************************************************
 * SHGetSpecialFolderLocation API
 */
 HRESULT WINAPI SHGetSpecialFolderLocation(HWND, INT, LPITEMIDLIST *);

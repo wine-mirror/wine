@@ -129,39 +129,83 @@ BOOL SHELL_DeleteFileA(LPCSTR pszFile, BOOL bShowUI)
 }
 
 /*************************************************************************
- * SHCreateDirectory				[SHELL32.165]
+ * SHCreateDirectory                       [SHELL32.165]
  *
  * NOTES
  *  exported by ordinal
- *  not sure about LPSECURITY_ATTRIBUTES
+ *  WinNT/2000 exports Unicode
  */
-DWORD WINAPI SHCreateDirectory(LPSECURITY_ATTRIBUTES sec,LPCSTR path)
+DWORD WINAPI SHCreateDirectory(HWND hWnd, LPCVOID path)
+{
+	if (SHELL_OsIsUnicode())
+	  return SHCreateDirectoryExW(hWnd, path, NULL);
+	return SHCreateDirectoryExA(hWnd, path, NULL);
+}
+
+/*************************************************************************
+ * SHCreateDirectoryExA                     [SHELL32.@]
+ */
+DWORD WINAPI SHCreateDirectoryExA(HWND hWnd, LPCSTR path, LPSECURITY_ATTRIBUTES sec)
 {
 	DWORD ret;
-	TRACE("(%p,%s)\n",sec,path);
-	if ((ret = CreateDirectoryA(path,sec)))
+	TRACE("(%p, %s, %p)\n",hWnd, path, sec);
+	if ((ret = CreateDirectoryA(path, sec)))
 	{
 	  SHChangeNotify(SHCNE_MKDIR, SHCNF_PATHA, path, NULL);
 	}
+	else if (hWnd)
+	  FIXME("Semi-stub, non zero hWnd should be used as parent for error dialog!");
+	return ret;
+}
+
+/*************************************************************************
+ * SHCreateDirectoryExW                     [SHELL32.@]
+ */
+DWORD WINAPI SHCreateDirectoryExW(HWND hWnd, LPCWSTR path, LPSECURITY_ATTRIBUTES sec)
+{
+	DWORD ret;
+	TRACE("(%p, %s, %p)\n",hWnd, debugstr_w(path), sec);
+	if ((ret = CreateDirectoryW(path, sec)))
+	{
+	  SHChangeNotify(SHCNE_MKDIR, SHCNF_PATHW, path, NULL);
+	}
+	else if (hWnd)
+	  FIXME("Semi-stub, non zero hWnd should be used as parent for error dialog!");
 	return ret;
 }
 
 /************************************************************************
- *      Win32DeleteFile                         [SHELL32.164]
+ * Win32DeleteFile                         [SHELL32.164]
  *
- * Deletes a file.  Also triggers a change notify if one exists.
+ * Deletes a file. Also triggers a change notify if one exists.
  *
- * FIXME:
- * Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be ANSI.
- * This is Unicode on NT/2000
+ * NOTES:
+ *  Verified on Win98 / IE 5 (SHELL32 4.72, March 1999 build) to be ANSI.
+ *  This is Unicode on NT/2000
  */
-BOOL WINAPI Win32DeleteFile(LPSTR fName)
+static BOOL Win32DeleteFileA(LPCSTR fName)
 {
 	TRACE("%p(%s)\n", fName, fName);
 
 	DeleteFileA(fName);
 	SHChangeNotify(SHCNE_DELETE, SHCNF_PATHA, fName, NULL);
 	return TRUE;
+}
+
+static BOOL Win32DeleteFileW(LPCWSTR fName)
+{
+	TRACE("%p(%s)\n", fName, debugstr_w(fName));
+
+	DeleteFileW(fName);
+	SHChangeNotify(SHCNE_DELETE, SHCNF_PATHW, fName, NULL);
+	return TRUE;
+}
+
+DWORD WINAPI Win32DeleteFileAW(LPCVOID fName)
+{
+	if (SHELL_OsIsUnicode())
+	  return Win32DeleteFileW(fName);
+	return Win32DeleteFileA(fName);
 }
 
 /**************************************************************************
@@ -269,8 +313,8 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
                     char *fromfile;
                     int lenPTo;
                     if ( ! destisdir) {
-                        TRACE("   creating directory %s\n",pTo);
-                        SHCreateDirectory(NULL,pTo);
+                      TRACE("   creating directory %s\n",pTo);
+                      SHCreateDirectoryExA(NULL, pTo, NULL);
                     }
                     lenPTo = strlen(pTo);
                     while(1) {
@@ -308,7 +352,7 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
                                           {
                                               SHFILEOPSTRUCTA shfo;
 
-                                              SHCreateDirectory(NULL,pTempTo);
+                                              SHCreateDirectoryExA(NULL, pTempTo, NULL);
                                               PathAddBackslashA(szTempFrom);
                                               strcat(szTempFrom, "*.*");
                                               szTempFrom[strlen(szTempFrom) + 1] = '\0';
@@ -343,7 +387,7 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
                         pFrom += strlen(pFrom) + 1;
                     }
                 } else {
-                    while(1) {
+                    while (1) {
                             if(!pFrom[0]) break;
                             if(!pTo[0]) break;
                             TRACE("   From='%s' To='%s'\n", pFrom, pTo);
@@ -354,7 +398,7 @@ DWORD WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp)
                                 strcpy( pTempTo, pTo );
                                 PathRemoveFileSpecA(pTempTo);
                                 TRACE("   Creating Directory '%s'\n", pTempTo);
-                                SHCreateDirectory(NULL,pTempTo);
+                                SHCreateDirectoryExA(NULL, pTempTo, NULL);
                                 HeapFree(GetProcessHeap(), 0, pTempTo);
                             }
                             if (lpFileOp->wFunc == FO_COPY)
@@ -480,6 +524,6 @@ BOOL WINAPI IsNetDrive(DWORD drive)
 {
 	char root[4];
 	strcpy(root, "A:\\");
-	root[0] += drive;
+	root[0] += (char)drive;
 	return (GetDriveTypeA(root) == DRIVE_REMOTE);
 }

@@ -151,8 +151,8 @@
  161 stdcall SHRunControlPanel (long long) SHRunControlPanel
  162 stdcall SHSimpleIDListFromPath (ptr) SHSimpleIDListFromPathAW
  163 stdcall StrToOleStr (wstr str) StrToOleStrAW
- 164 stdcall Win32DeleteFile(str) Win32DeleteFile
- 165 stdcall SHCreateDirectory(long long) SHCreateDirectory
+ 164 stdcall Win32DeleteFile(str) Win32DeleteFileAW
+ 165 stdcall SHCreateDirectory(long ptr) SHCreateDirectory
  166 stdcall CallCPLEntry16(long long long long long long) CallCPLEntry16
  167 stdcall SHAddFromPropSheetExtArray(long long long) SHAddFromPropSheetExtArray
  168 stdcall SHCreatePropSheetExtArray(long str long) SHCreatePropSheetExtArray
@@ -355,6 +355,8 @@
 @ stdcall SHBrowseForFolderA(ptr) SHBrowseForFolderA
 @ stdcall SHBrowseForFolderW(ptr) SHBrowseForFolderW
 @ stdcall SHChangeNotify (long long ptr ptr) SHChangeNotify
+@ stdcall SHCreateDirectoryExA(long str ptr) SHCreateDirectoryExA
+@ stdcall SHCreateDirectoryExW(long wstr ptr) SHCreateDirectoryExW
 @ stub ShellHookProc
 @ stub SHEmptyRecycleBinA@12
 @ stub SHEmptyRecycleBinW@12
