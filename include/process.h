@@ -112,10 +112,12 @@ extern PDB *PROCESS_Current(void);
 extern BOOL PROCESS_IsCurrent( HANDLE handle );
 extern PDB *PROCESS_Initial(void);
 extern PDB *PROCESS_IdToPDB( DWORD id );
-extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, LPCSTR cmd_line,
-                              LPCSTR env, HINSTANCE16 hInstance,
-                              HINSTANCE16 hPrevInstance, BOOL inherit,
-                              STARTUPINFOA *startup, PROCESS_INFORMATION *info );
+extern PDB *PROCESS_Create( struct _NE_MODULE *pModule, 
+                            LPCSTR cmd_line, LPCSTR env, 
+                            HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance, 
+                            LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                            BOOL inherit,
+                            STARTUPINFOA *startup, PROCESS_INFORMATION *info );
 extern void PROCESS_FreePDB( PDB *pdb );
 extern void PROCESS_SuspendOtherThreads(void);
 extern void PROCESS_ResumeOtherThreads(void);

@@ -116,8 +116,9 @@ extern THDB *pCurrentThread;
 
 /* scheduler/thread.c */
 extern THDB *THREAD_CreateInitialThread( struct _PDB *pdb );
-extern THDB *THREAD_Create( struct _PDB *pdb, DWORD stack_size,
-                            BOOL alloc_stack16,
+extern THDB *THREAD_Create( struct _PDB *pdb, DWORD flags, 
+                            DWORD stack_size, BOOL alloc_stack16,
+                            LPSECURITY_ATTRIBUTES tsa, LPSECURITY_ATTRIBUTES psa,
                             int *server_thandle, int *server_phandle,
                             LPTHREAD_START_ROUTINE start_addr, LPVOID param );
 extern THDB *THREAD_Current(void);

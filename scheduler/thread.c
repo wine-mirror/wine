@@ -94,7 +94,8 @@ THDB *THREAD_IdToTHDB( DWORD id )
  * Initialization of a newly created THDB.
  */
 static BOOL THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL alloc_stack16,
-                               int *server_thandle, int *server_phandle )
+                             LPSECURITY_ATTRIBUTES tsa, LPSECURITY_ATTRIBUTES psa,
+                             int *server_thandle, int *server_phandle )
 {
     DWORD old_prot;
 
@@ -137,7 +138,8 @@ static BOOL THREAD_InitTHDB( THDB *thdb, DWORD stack_size, BOOL alloc_stack16,
 
     /* Create the thread socket */
 
-    if (CLIENT_NewThread( thdb, server_thandle, server_phandle )) goto error;
+    if (CLIENT_NewThread( thdb, tsa, psa, server_thandle, server_phandle )) 
+        goto error;
 
     /* Create the thread event */
 
@@ -246,7 +248,8 @@ THDB *THREAD_CreateInitialThread( PDB *pdb )
 
     /* Now proceed with normal initialization */
 
-    if (!THREAD_InitTHDB( &initial_thdb, 0, TRUE, NULL, NULL )) return NULL;
+    if (!THREAD_InitTHDB( &initial_thdb, 0, TRUE, 
+                          NULL, NULL, NULL, NULL )) return NULL;
     return &initial_thdb;
 }
 
@@ -254,7 +257,8 @@ THDB *THREAD_CreateInitialThread( PDB *pdb )
 /***********************************************************************
  *           THREAD_Create
  */
-THDB *THREAD_Create( PDB *pdb, DWORD stack_size, BOOL alloc_stack16,
+THDB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
+                     LPSECURITY_ATTRIBUTES tsa, LPSECURITY_ATTRIBUTES psa,
                      int *server_thandle, int *server_phandle,
                      LPTHREAD_START_ROUTINE start_addr, LPVOID param )
 {
@@ -268,6 +272,7 @@ THDB *THREAD_Create( PDB *pdb, DWORD stack_size, BOOL alloc_stack16,
     thdb->teb.tls_ptr     = thdb->tls_array;
     thdb->teb.process     = pdb;
     thdb->exit_code       = 0x103; /* STILL_ACTIVE */
+    thdb->flags           = flags;
     thdb->entry_point     = start_addr;
     thdb->entry_arg       = param;
     thdb->socket          = -1;
@@ -280,7 +285,8 @@ THDB *THREAD_Create( PDB *pdb, DWORD stack_size, BOOL alloc_stack16,
 
     /* Do the rest of the initialization */
 
-    if (!THREAD_InitTHDB( thdb, stack_size, alloc_stack16, server_thandle, server_phandle ))
+    if (!THREAD_InitTHDB( thdb, stack_size, alloc_stack16, 
+                                tsa, psa, server_thandle, server_phandle ))
         goto error;
     thdb->next = THREAD_First;
     THREAD_First = thdb;
@@ -313,13 +319,12 @@ void THREAD_Start( THDB *thdb )
  *           CreateThread   (KERNEL32.63)
  */
 HANDLE WINAPI CreateThread( SECURITY_ATTRIBUTES *sa, DWORD stack,
-                              LPTHREAD_START_ROUTINE start, LPVOID param,
-                              DWORD flags, LPDWORD id )
+                            LPTHREAD_START_ROUTINE start, LPVOID param,
+                            DWORD flags, LPDWORD id )
 {
     int handle = -1;
-    BOOL inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-    THDB *thread = THREAD_Create( PROCESS_Current(), stack,
-                                  TRUE, &handle, NULL, start, param );
+    THDB *thread = THREAD_Create( PROCESS_Current(), flags, stack,
+                                  TRUE, sa, NULL, &handle, NULL, start, param );
     if (!thread) return INVALID_HANDLE_VALUE;
     if (SYSDEPS_SpawnThread( thread ) == -1)
     {

@@ -285,9 +285,10 @@ BOOL PROCESS_Init(void)
  * Create a new process database and associated info.
  */
 PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
-                       HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
-                       BOOL inherit, STARTUPINFOA *startup,
-                       PROCESS_INFORMATION *info )
+                     HINSTANCE16 hInstance, HINSTANCE16 hPrevInstance,
+                     LPSECURITY_ATTRIBUTES psa, LPSECURITY_ATTRIBUTES tsa,
+                     BOOL inherit, STARTUPINFOA *startup,
+                     PROCESS_INFORMATION *info )
 {
     DWORD size, commit;
     int server_thandle, server_phandle;
@@ -326,8 +327,9 @@ PDB *PROCESS_Create( NE_MODULE *pModule, LPCSTR cmd_line, LPCSTR env,
         size = PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve;
     else
         size = 0;
-    if (!(thdb = THREAD_Create( pdb, size, hInstance == 0, 
-                                &server_thandle, &server_phandle, NULL, NULL ))) 
+    if (!(thdb = THREAD_Create( pdb, 0L, size, hInstance == 0, 
+                                tsa, psa, &server_thandle, &server_phandle, 
+                                NULL, NULL ))) 
         goto error;
     info->hThread     = server_thandle;
     info->hProcess    = server_phandle;
