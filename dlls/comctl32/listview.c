@@ -1825,34 +1825,38 @@ static INT LISTVIEW_GetItemHeight(LISTVIEW_INFO *infoPtr)
 }
 
 #if 0
-static void LISTVIEW_PrintSelectionRanges(LISTVIEW_INFO *infoPtr)
+static void ranges_dump(HDPA ranges)
 {
     INT i;
 
     ERR("Selections are:\n");
-    for (i = 0; i < infoPtr->hdpaSelectionRanges->nItemCount; i++)
+    for (i = 0; i < ranges->nItemCount; i++)
     {
-    	RANGE *selection = DPA_GetPtr(infoPtr->hdpaSelectionRanges, i);
+    	RANGE *selection = DPA_GetPtr(ranges, i);
     	ERR("   [%d - %d]\n", selection->lower, selection->upper);
     }
+}
+static void LISTVIEW_PrintSelectionRanges(LISTVIEW_INFO *infoPtr)
+{
+    ranges_dump(infoPtr->hdpaSelectionRanges);
 }
 #endif
 
 /***
  * DESCRIPTION:
- * A compare function for selection ranges
+ * A compare function for ranges
  *
- *PARAMETER(S)
- * [I] range1 : pointer to selection range 1;
- * [I] range2 : pointer to selection range 2;
+ * PARAMETER(S)
+ * [I] range1 : pointer to range 1;
+ * [I] range2 : pointer to range 2;
  * [I] flags : flags
  *
- *RETURNS:
+ * RETURNS:
  * >0 : if Item 1 > Item 2
  * <0 : if Item 2 > Item 1
  * 0 : if Item 1 == Item 2
  */
-static INT CALLBACK LISTVIEW_CompareSelectionRanges(LPVOID range1, LPVOID range2, LPARAM flags)
+static INT CALLBACK ranges_cmp(LPVOID range1, LPVOID range2, LPARAM flags)
 {
     if (((RANGE*)range1)->upper < ((RANGE*)range2)->lower) 
 	return -1;
@@ -1861,66 +1865,88 @@ static INT CALLBACK LISTVIEW_CompareSelectionRanges(LPVOID range1, LPVOID range2
     return 0;
 }
 
-/***
- * Helper function for LISTVIEW_AddSelectionRange, and LISTVIEW_SetItem.
- */
-static BOOL add_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper, BOOL adj_sel_only)
+static inline BOOL ranges_contain(HDPA ranges, INT nItem)
 {
-    RANGE selection;
-    LVITEMW lvItem;
-    INT index, i;
+  RANGE srchrng = { nItem, nItem };
+
+  return DPA_Search(ranges, &srchrng, 0, ranges_cmp, 0, DPAS_SORTED) != -1;
+}
+
+static BOOL ranges_shift(HDPA ranges, INT nItem, INT delta)
+{
+    RANGE srchrng, *chkrng;
+    INT index;
+
+    srchrng.upper = nItem;
+    srchrng.lower = nItem;
+
+    index = DPA_Search(ranges, &srchrng, 0, ranges_cmp, 0, DPAS_SORTED | DPAS_INSERTAFTER);
+    if (index == -1) return TRUE;
+
+    for (;index < ranges->nItemCount; index++)
+    {
+	chkrng = DPA_GetPtr(ranges, index);
+    	if (chkrng->lower >= nItem && chkrng->lower + delta >= 0)
+            chkrng->lower += delta;
+        if (chkrng->upper >= nItem && chkrng->upper + delta >= 0)
+            chkrng->upper += delta;
+    }
+    return TRUE;
+}
+
+static BOOL ranges_add(HDPA ranges, INT lower, INT upper)
+{
+    RANGE srchrgn;
+    INT index;
 
     TRACE("range (%i - %i)\n", lower, upper);
 
-    /* try find overlapping selections first */
-    selection.lower = lower - 1;
-    selection.upper = upper + 1;
-    index = DPA_Search(infoPtr->hdpaSelectionRanges, &selection, 0,
-		       LISTVIEW_CompareSelectionRanges, 0, 0);
+    /* try find overlapping regions first */
+    srchrgn.lower = lower - 1;
+    srchrgn.upper = upper + 1;
+    index = DPA_Search(ranges, &srchrgn, 0, ranges_cmp, 0, 0);
    
     if (index == -1)
     {
-	RANGE *newsel;
+	RANGE *newrgn;
 
-	/* create the brand new selection to insert */	
-        newsel = (RANGE *)COMCTL32_Alloc(sizeof(RANGE));
-	if(!newsel) return FALSE;
-	newsel->lower = lower;
-	newsel->upper = upper;
+	/* create the brand new range to insert */	
+        newrgn = (RANGE *)COMCTL32_Alloc(sizeof(RANGE));
+	if(!newrgn) return FALSE;
+	newrgn->lower = lower;
+	newrgn->upper = upper;
 	
 	/* figure out where to insert it */
-	index = DPA_Search(infoPtr->hdpaSelectionRanges, newsel, 0,
-			   LISTVIEW_CompareSelectionRanges, 0, DPAS_INSERTAFTER);
+	index = DPA_Search(ranges, newrgn, 0, ranges_cmp, 0, DPAS_INSERTAFTER);
 	if (index == -1) index = 0;
 	
 	/* and get it over with */
-	DPA_InsertPtr(infoPtr->hdpaSelectionRanges, index, newsel);
+	DPA_InsertPtr(ranges, index, newrgn);
     }
     else
     {
-	RANGE *chksel, *mrgsel;
+	RANGE *chkrgn, *mrgrgn;
 	INT fromindex, mergeindex;
 
-	chksel = DPA_GetPtr(infoPtr->hdpaSelectionRanges, index);
-	if (!chksel) return FALSE;
+	chkrgn = DPA_GetPtr(ranges, index);
+	if (!chkrgn) return FALSE;
 	TRACE("Merge with index %i (%d - %d)\n",
-	      index, chksel->lower, chksel->upper);
+	      index, chkrgn->lower, chkrgn->upper);
 
-	chksel->lower = min(lower, chksel->lower);
-	chksel->upper = max(upper, chksel->upper);
+	chkrgn->lower = min(lower, chkrgn->lower);
+	chkrgn->upper = max(upper, chkrgn->upper);
 	
 	TRACE("New range %i (%d - %d)\n",
-	      index, chksel->lower, chksel->upper);
+	      index, chkrgn->lower, chkrgn->upper);
 
-        /* merge now common selection ranges */
+        /* merge now common anges */
 	fromindex = 0;
-	selection.lower = chksel->lower - 1;
-	selection.upper = chksel->upper + 1;
+	srchrgn.lower = chkrgn->lower - 1;
+	srchrgn.upper = chkrgn->upper + 1;
 	    
 	do
 	{
-	    mergeindex = DPA_Search(infoPtr->hdpaSelectionRanges, &selection, fromindex,
-				    LISTVIEW_CompareSelectionRanges, 0, 0);
+	    mergeindex = DPA_Search(ranges, &srchrgn, fromindex, ranges_cmp, 0, 0);
 	    if (mergeindex == -1) break;
 	    if (mergeindex == index) 
 	    {
@@ -1930,19 +1956,113 @@ static BOOL add_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper, BO
 	  
 	    TRACE("Merge with index %i\n", mergeindex);
 	    
-	    mrgsel = DPA_GetPtr(infoPtr->hdpaSelectionRanges, mergeindex);
-	    if (!mrgsel) return FALSE;
+	    mrgrgn = DPA_GetPtr(ranges, mergeindex);
+	    if (!mrgrgn) return FALSE;
 	    
-	    chksel->lower = min(chksel->lower, mrgsel->lower);
-	    chksel->upper = max(chksel->upper, mrgsel->upper);
-	    COMCTL32_Free(mrgsel);
-	    DPA_DeletePtr(infoPtr->hdpaSelectionRanges, mergeindex);
+	    chkrgn->lower = min(chkrgn->lower, mrgrgn->lower);
+	    chkrgn->upper = max(chkrgn->upper, mrgrgn->upper);
+	    COMCTL32_Free(mrgrgn);
+	    DPA_DeletePtr(ranges, mergeindex);
 	    if (mergeindex < index) index --;
 	} while(1);
     }
 
-    /*DPA_Sort(infoPtr->hdpaSelectionRanges, LISTVIEW_CompareSelectionRanges, 0);*/
+    return TRUE;
+}
+
+static BOOL ranges_del(HDPA ranges, INT lower, INT upper)
+{
+    RANGE remrgn, tmprgn, *chkrgn;
+    BOOL done = FALSE;
+    INT index;
+
+    remrgn.lower = lower;
+    remrgn.upper = upper;
+
+    TRACE("range: (%d - %d)\n", remrgn.lower, remrgn.upper);
+
+    do 
+    {
+	index = DPA_Search(ranges, &remrgn, 0, ranges_cmp, 0, 0);
+	if (index == -1) return TRUE;
+
+	chkrgn = DPA_GetPtr(ranges, index);
+	if (!chkrgn) return FALSE;
+	
+        TRACE("Matches range index %i (%d - %d)\n", 
+	      index, chkrgn->lower, chkrgn->upper);
+
+	/* case 1: Same range */
+	if ( (chkrgn->upper == remrgn.upper) &&
+	     (chkrgn->lower == remrgn.lower) )
+	{
+	    DPA_DeletePtr(ranges, index);
+	    done = TRUE;
+	}
+	/* case 2: engulf */
+	else if ( (chkrgn->upper <= remrgn.upper) &&
+		  (chkrgn->lower >= remrgn.lower) ) 
+	{
+	    DPA_DeletePtr(ranges, index);
+	}
+	/* case 3: overlap upper */
+	else if ( (chkrgn->upper < remrgn.upper) &&
+		  (chkrgn->lower < remrgn.lower) )
+	{
+	    chkrgn->upper = remrgn.lower - 1;
+	}
+	/* case 4: overlap lower */
+	else if ( (chkrgn->upper > remrgn.upper) &&
+		  (chkrgn->lower > remrgn.lower) )
+	{
+	    chkrgn->lower = remrgn.upper + 1;
+	}
+	/* case 5: fully internal */
+	else
+	{
+	    RANGE *newrgn = (RANGE *)COMCTL32_Alloc(sizeof(RANGE));
+	    if (!newrgn) return FALSE;
+	    tmprgn = *chkrgn;
+	    newrgn->lower = chkrgn->lower;
+	    newrgn->upper = remrgn.lower - 1;
+	    chkrgn->lower = remrgn.upper + 1;
+	    DPA_InsertPtr(ranges, index, newrgn);
+	    chkrgn = &tmprgn;
+	}
+    }
+    while(!done);
+
+    return TRUE;
+}
+
+/***
+ * Helper function for LISTVIEW_RemoveSelectionRange, and LISTVIEW_SetItem.
+ */
+static BOOL remove_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper, BOOL adj_sel_only)
+{
+    LVITEMW lvItem;
+    INT i;
+
+    if (!ranges_del(infoPtr->hdpaSelectionRanges, lower, upper)) return FALSE;
+    if (adj_sel_only) return TRUE;
    
+    /* reset the selection on items */
+    lvItem.state = 0;
+    lvItem.stateMask = LVIS_SELECTED;
+    for(i = lower; i <= upper; i++)
+	LISTVIEW_SetItemState(infoPtr, i, &lvItem);
+
+    return TRUE;
+}
+/***
+ * Helper function for LISTVIEW_AddSelectionRange, and LISTVIEW_SetItem.
+ */
+static BOOL add_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper, BOOL adj_sel_only)
+{
+    LVITEMW lvItem;
+    INT i;
+
+    if (!ranges_add(infoPtr->hdpaSelectionRanges, lower, upper)) return FALSE;
     if (adj_sel_only) return TRUE;
    
     /* set the selection on items */
@@ -1954,87 +2074,6 @@ static BOOL add_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper, BO
     return TRUE;
 }
    
-/***
- * Helper function for LISTVIEW_RemoveSelectionRange, and LISTVIEW_SetItem.
- */
-static BOOL remove_selection_range(LISTVIEW_INFO *infoPtr, INT lower, INT upper, BOOL adj_sel_only)
-{
-    RANGE remsel, tmpsel, *chksel;
-    BOOL done = FALSE;
-    LVITEMW lvItem;
-    INT index, i;
-
-    lvItem.state = 0;
-    lvItem.stateMask = LVIS_SELECTED;
-    
-    remsel.lower = lower;
-    remsel.upper = upper;
-
-    TRACE("range: (%d - %d)\n", remsel.lower, remsel.upper);
-
-    do 
-    {
-	index = DPA_Search(infoPtr->hdpaSelectionRanges, &remsel, 0,
-			   LISTVIEW_CompareSelectionRanges, 0, 0);
-	if (index == -1) return TRUE;
-
-	chksel = DPA_GetPtr(infoPtr->hdpaSelectionRanges, index);
-	if (!chksel) return FALSE;
-	
-        TRACE("Matches range index %i (%d - %d)\n", 
-	      index, chksel->lower, chksel->upper);
-
-	/* case 1: Same range */
-	if ( (chksel->upper == remsel.upper) &&
-	     (chksel->lower == remsel.lower) )
-	{
-	    DPA_DeletePtr(infoPtr->hdpaSelectionRanges, index);
-	    done = TRUE;
-	}
-	/* case 2: engulf */
-	else if ( (chksel->upper <= remsel.upper) &&
-		  (chksel->lower >= remsel.lower) ) 
-	{
-	    DPA_DeletePtr(infoPtr->hdpaSelectionRanges, index);
-	}
-	/* case 3: overlap upper */
-	else if ( (chksel->upper < remsel.upper) &&
-		  (chksel->lower < remsel.lower) )
-	{
-	    chksel->upper = remsel.lower - 1;
-	}
-	/* case 4: overlap lower */
-	else if ( (chksel->upper > remsel.upper) &&
-		  (chksel->lower > remsel.lower) )
-	{
-	    chksel->lower = remsel.upper + 1;
-	}
-	/* case 5: fully internal */
-	else
-	{
-	    RANGE *newsel = 
-		(RANGE *)COMCTL32_Alloc(sizeof(RANGE));
-	    if (!newsel) return FALSE;
-	    tmpsel = *chksel;
-	    newsel->lower = chksel->lower;
-	    newsel->upper = remsel.lower - 1;
-	    chksel->lower = remsel.upper + 1;
-	    DPA_InsertPtr(infoPtr->hdpaSelectionRanges, index, newsel);
-	    /*DPA_Sort(infoPtr->hdpaSelectionRanges, LISTVIEW_CompareSelectionRanges, 0);*/
-	    chksel = &tmpsel;
-	}
-
-	if (adj_sel_only) continue;
-	
-	/* here, chksel holds the selection to delete */
-	for (i = chksel->lower; i <= chksel->upper; i++)
-	    LISTVIEW_SetItemState(infoPtr, i, &lvItem);
-    }
-    while(!done);
-
-    return TRUE;
-}
-
 /**
 * DESCRIPTION:
 * Adds a selection range.
@@ -2178,29 +2217,9 @@ static inline BOOL LISTVIEW_SetItemFocus(LISTVIEW_INFO *infoPtr, INT nItem)
 */
 static void LISTVIEW_ShiftIndices(LISTVIEW_INFO *infoPtr, INT nItem, INT direction)
 {
-  RANGE selection,*checkselection;
-  INT index;
+  TRACE("Shifting %iu, %i steps\n", nItem, direction);
 
-  TRACE("Shifting %iu, %i steps\n",nItem,direction);
-
-  selection.upper = nItem;
-  selection.lower = nItem;
-
-  index = DPA_Search(infoPtr->hdpaSelectionRanges, &selection, 0,
-                     LISTVIEW_CompareSelectionRanges,
-                     0,DPAS_SORTED|DPAS_INSERTAFTER);
-
-  while ((index < infoPtr->hdpaSelectionRanges->nItemCount)&&(index != -1))
-  {
-    checkselection = DPA_GetPtr(infoPtr->hdpaSelectionRanges,index);
-    if ((checkselection->lower >= nItem)&&
-       ((int)(checkselection->lower + direction) >= 0))
-        checkselection->lower += direction;
-    if ((checkselection->upper >= nItem)&&
-       ((int)(checkselection->upper + direction) >= 0))
-        checkselection->upper += direction;
-    index ++;
-  }
+  ranges_shift(infoPtr->hdpaSelectionRanges, nItem, direction);
 
   /* Note that the following will fail if direction != +1 and -1 */
   if (infoPtr->nSelectionMark > nItem)
@@ -4750,18 +4769,6 @@ static LRESULT LISTVIEW_GetImageList(LISTVIEW_INFO *infoPtr, INT nImageList)
 /* LISTVIEW_GetISearchString */
 
 /***
- * Helper function for LISTVIEW_GetItemT *only*. Tests if an item is selected.
- * It is important that no other functions call this because of callbacks.
- */
-static inline BOOL is_item_selected(LISTVIEW_INFO *infoPtr, INT nItem)
-{
-  RANGE selection = { nItem, nItem };
-
-  return DPA_Search(infoPtr->hdpaSelectionRanges, &selection, 0,
-                    LISTVIEW_CompareSelectionRanges, 0, DPAS_SORTED) != -1;
-}
-
-/***
  * DESCRIPTION:
  * Retrieves item attributes.
  *
@@ -4863,7 +4870,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	if ( lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_SELECTED ) 
 	{
 	    lpLVItem->state &= ~LVIS_SELECTED;
-	    if (is_item_selected(infoPtr, lpLVItem->iItem))
+	    if (ranges_contain(infoPtr->hdpaSelectionRanges, lpLVItem->iItem))
 		lpLVItem->state |= LVIS_SELECTED;
 	}
 	
@@ -4972,7 +4979,7 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	if ( lpLVItem->stateMask & ~infoPtr->uCallbackMask & LVIS_SELECTED ) 
 	{
 	    lpLVItem->state &= ~LVIS_SELECTED;
-	    if (is_item_selected(infoPtr, lpLVItem->iItem))
+	    if (ranges_contain(infoPtr->hdpaSelectionRanges, lpLVItem->iItem))
 		lpLVItem->state |= LVIS_SELECTED;
 	}	    
     }
