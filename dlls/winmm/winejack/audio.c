@@ -1231,22 +1231,17 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
       return MMSYSERR_ALLOCATED;
     }
 
-    /* make sure we aren't being opened in 8 bit mode */
-    if(lpDesc->lpFormat->wBitsPerSample == 8)
-    {
-      TRACE("8bits per sample unsupported, returning WAVERR_BADFORMAT\n");
-      return WAVERR_BADFORMAT;
-    }
-
-    /* only PCM format is supported so far... */
+    /* Only the PCM format is supported so far...
+     * Also we only support 16 bit mode.
+     */
     if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
       lpDesc->lpFormat->nChannels == 0 ||
       lpDesc->lpFormat->nSamplesPerSec == 0 ||
-      (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16))
+      lpDesc->lpFormat->wBitsPerSample != 16)
     {
-      WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+      WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld wBitsPerSample=%d !\n",
        lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
-       lpDesc->lpFormat->nSamplesPerSec);
+       lpDesc->lpFormat->nSamplesPerSec, lpDesc->lpFormat->wBitsPerSample);
       return WAVERR_BADFORMAT;
     }
 
@@ -2104,22 +2099,17 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
       return MMSYSERR_ALLOCATED;
     }
 
-    /* make sure we aren't being opened in 8 bit mode */
-    if(lpDesc->lpFormat->wBitsPerSample == 8)
-    {
-      TRACE("8bits per sample unsupported, returning WAVERR_BADFORMAT\n");
-      return WAVERR_BADFORMAT;
-    }
-
-    /* only PCM format is supported so far... */
+    /* Only the PCM format is supported so far...
+     * Also we only support 16 bit mode.
+     */
     if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
       lpDesc->lpFormat->nChannels == 0 ||
       lpDesc->lpFormat->nSamplesPerSec == 0 ||
-      (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16))
+      lpDesc->lpFormat->wBitsPerSample!=16)
     {
-      WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+      WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld wBitsPerSample=%d !\n",
        lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
-       lpDesc->lpFormat->nSamplesPerSec);
+       lpDesc->lpFormat->nSamplesPerSec, lpDesc->lpFormat->wBitsPerSample);
       return WAVERR_BADFORMAT;
     }
 
