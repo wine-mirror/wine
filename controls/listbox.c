@@ -73,6 +73,7 @@ typedef struct
     INT        *tabs;           /* Array of tabs */
     BOOL        caret_on;       /* Is caret on? */
     BOOL        captured;       /* Is mouse captured? */
+    BOOL	in_focus;
     HFONT       font;           /* Current font */
     LCID          locale;         /* Current locale for string comparisons */
     LPHEADCOMBO   lphc;		  /* ComboLBox */
@@ -500,7 +501,7 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
         if (item && item->selected) dis.itemState |= ODS_SELECTED;
         if ((descr->focus_item == index) &&
             (descr->caret_on) &&
-            (GetFocus() == wnd->hwndSelf)) dis.itemState |= ODS_FOCUS;
+            (descr->in_focus)) dis.itemState |= ODS_FOCUS;
         if (wnd->dwStyle & WS_DISABLED) dis.itemState |= ODS_DISABLED;
         dis.itemData     = item ? item->data : 0;
         dis.rcItem       = *rect;
@@ -553,7 +554,7 @@ static void LISTBOX_PaintItem( WND *wnd, LB_DESCR *descr, HDC hdc,
         }
         if ((descr->focus_item == index) &&
             (descr->caret_on) &&
-            (GetFocus() == wnd->hwndSelf)) DrawFocusRect( hdc, rect );
+            (descr->in_focus)) DrawFocusRect( hdc, rect );
     }
 }
 
@@ -913,7 +914,7 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC hdc )
         SetTextColor( hdc, GetSysColor( COLOR_GRAYTEXT ) );
 
     if (!descr->nb_items && (descr->focus_item != -1) && descr->caret_on &&
-        (GetFocus() == wnd->hwndSelf))
+        (descr->in_focus))
     {
         /* Special case for empty listbox: paint focus rect */
         rect.bottom = rect.top + descr->item_height;
@@ -1235,11 +1236,11 @@ static LRESULT LISTBOX_SetCaretIndex( WND *wnd, LB_DESCR *descr, INT index,
     if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
     if (index == oldfocus) return LB_OKAY;
     descr->focus_item = index;
-    if ((oldfocus != -1) && descr->caret_on && (GetFocus() == wnd->hwndSelf))
+    if ((oldfocus != -1) && descr->caret_on && (descr->in_focus))
         LISTBOX_RepaintItem( wnd, descr, oldfocus, ODA_FOCUS );
 
     LISTBOX_MakeItemVisible( wnd, descr, index, fully_visible );
-    if (descr->caret_on && (GetFocus() == wnd->hwndSelf))
+    if (descr->caret_on && (descr->in_focus))
         LISTBOX_RepaintItem( wnd, descr, index, ODA_FOCUS );
 
     return LB_OKAY;
@@ -1794,7 +1795,7 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
     INT index = LISTBOX_GetItemFromPoint( wnd, descr, x, y );
     TRACE("[%04x]: lbuttondown %d,%d item %d\n",
 		 wnd->hwndSelf, x, y, index );
-    if (!descr->caret_on && (GetFocus() == wnd->hwndSelf)) return 0;
+    if (!descr->caret_on && (descr->in_focus)) return 0;
     if (index != -1)
     {
         if (descr->style & LBS_EXTENDEDSEL)
@@ -1819,14 +1820,12 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
         }
     }
 
-    if( !descr->lphc )
+    if(!descr->in_focus)
     {
-	HWND hwndFocus = GetFocus();
-        if ((hwndFocus != wnd->hwndSelf) && (hwndFocus != descr->owner))
-		SetFocus( wnd->hwndSelf );
+	if( !descr->lphc ) SetFocus( wnd->hwndSelf );
+	else SetFocus( (descr->lphc->hWndEdit) ? descr->lphc->hWndEdit
+                                             : descr->lphc->self->hwndSelf );
     }
-    else SetFocus( (descr->lphc->hWndEdit) ? descr->lphc->hWndEdit
-                                             : descr->lphc->self->hwndSelf ) ;
 
     descr->captured = TRUE;
     SetCapture( wnd->hwndSelf );
@@ -2246,6 +2245,7 @@ static BOOL LISTBOX_Create( WND *wnd, LPHEADCOMBO lphc )
     descr->nb_tabs       = 0;
     descr->tabs          = NULL;
     descr->caret_on      = TRUE;
+    descr->in_focus 	 = FALSE;
     descr->captured      = FALSE;
     descr->font          = 0;
     descr->locale        = 0;  /* FIXME */
@@ -2634,7 +2634,7 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         if (descr->caret_on)
             return LB_OKAY;
         descr->caret_on = TRUE;
-        if ((descr->focus_item != -1) && (GetFocus() == wnd->hwndSelf))
+        if ((descr->focus_item != -1) && (descr->in_focus))
             LISTBOX_RepaintItem( wnd, descr, descr->focus_item, ODA_FOCUS );
         return LB_OKAY;
 
@@ -2643,13 +2643,9 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         if (!descr->caret_on)
             return LB_OKAY;
         descr->caret_on = FALSE;
-        if ((descr->focus_item != -1) && (GetFocus() == wnd->hwndSelf))
+        if ((descr->focus_item != -1) && (descr->in_focus))
             LISTBOX_RepaintItem( wnd, descr, descr->focus_item, ODA_FOCUS );
         return LB_OKAY;
-
-    case WM_MOUSEACTIVATE:
-    case WM_ACTIVATE:
-        return MA_NOACTIVATE; 
 	
     case WM_DESTROY:
         return LISTBOX_Destroy( wnd, descr );
@@ -2684,12 +2680,14 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         if (lParam) InvalidateRect( wnd->hwndSelf, 0, TRUE );
         return 0;
     case WM_SETFOCUS:
+        descr->in_focus = TRUE;
         descr->caret_on = TRUE;
         if (descr->focus_item != -1)
             LISTBOX_RepaintItem( wnd, descr, descr->focus_item, ODA_FOCUS );
         SEND_NOTIFICATION( wnd, descr, LBN_SETFOCUS );
         return 0;
     case WM_KILLFOCUS:
+        descr->in_focus = FALSE;
         if ((descr->focus_item != -1) && descr->caret_on)
             LISTBOX_RepaintItem( wnd, descr, descr->focus_item, ODA_FOCUS );
         SEND_NOTIFICATION( wnd, descr, LBN_KILLFOCUS );
@@ -2698,6 +2696,8 @@ static inline LRESULT WINAPI ListBoxWndProc_locked( WND* wnd, UINT msg,
         return LISTBOX_HandleHScroll( wnd, descr, wParam, lParam );
     case WM_VSCROLL:
         return LISTBOX_HandleVScroll( wnd, descr, wParam, lParam );
+    case WM_MOUSEACTIVATE:
+        return MA_NOACTIVATE;
     case WM_MOUSEWHEEL:
         if (wParam & (MK_SHIFT | MK_CONTROL))
             return DefWindowProcA( hwnd, msg, wParam, lParam );
