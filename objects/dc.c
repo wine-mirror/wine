@@ -41,7 +41,6 @@ static void DC_Init_DC_INFO( WIN_DC_INFO *win_dc_info )
     win_dc_info->hBrush              = STOCK_WHITE_BRUSH;
     win_dc_info->hFont               = STOCK_SYSTEM_FONT;
     win_dc_info->hBitmap             = 0;
-    win_dc_info->hFirstBitmap        = 0;
     win_dc_info->hDevice             = 0;
     win_dc_info->hPalette            = STOCK_DEFAULT_PALETTE;
     win_dc_info->ROPmode             = R2_COPYPEN;
@@ -238,7 +237,6 @@ HDC16 WINAPI GetDCState16( HDC16 hdc )
     newdc->w.hBrush           = dc->w.hBrush;     
     newdc->w.hFont            = dc->w.hFont;      
     newdc->w.hBitmap          = dc->w.hBitmap;    
-    newdc->w.hFirstBitmap     = dc->w.hFirstBitmap;
     newdc->w.hDevice          = dc->w.hDevice;
     newdc->w.hPalette         = dc->w.hPalette;   
     newdc->w.totalExtent      = dc->w.totalExtent;
@@ -327,7 +325,6 @@ void WINAPI SetDCState16( HDC16 hdc, HDC16 hdcs )
 
     dc->w.flags            = dcs->w.flags & ~DC_SAVED;
     dc->w.devCaps          = dcs->w.devCaps;
-    dc->w.hFirstBitmap     = dcs->w.hFirstBitmap;
     dc->w.hDevice          = dcs->w.hDevice;
     dc->w.totalExtent      = dcs->w.totalExtent;
     dc->w.ROPmode          = dcs->w.ROPmode;
@@ -629,16 +626,9 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
     TRACE("(%04x): returning %04x\n",
                hdc, dc->hSelf );
 
-      /* Create default bitmap */
-    if (!(hbitmap = CreateBitmap( 1, 1, 1, 1, NULL )))
-    {
-	GDI_HEAP_FREE( dc->hSelf );
-	return 0;
-    }
     dc->w.flags        = DC_MEMORY;
     dc->w.bitsPerPixel = 1;
-    dc->w.hBitmap      = hbitmap;
-    dc->w.hFirstBitmap = hbitmap;
+    dc->w.hBitmap      = hPseudoStockBitmap;
 
     /* Copy the driver-specific physical device info into
      * the new DC. The driver may use this read-only info
@@ -703,7 +693,6 @@ BOOL WINAPI DeleteDC( HDC hdc )
 	SelectObject( hdc, STOCK_BLACK_PEN );
 	SelectObject( hdc, STOCK_WHITE_BRUSH );
 	SelectObject( hdc, STOCK_SYSTEM_FONT );
-        if (dc->w.flags & DC_MEMORY) DeleteObject( dc->w.hFirstBitmap );
         if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc);
     }
 

@@ -179,6 +179,8 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
     (GDIOBJHDR *) &DefaultGuiFont
 };
 
+HBITMAP hPseudoStockBitmap; /* 1x1 bitmap for memory DCs */
+
 /******************************************************************************
  *
  *   void  ReadFontInformation(
@@ -359,6 +361,7 @@ BOOL GDI_Init(void)
     StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *)GDI_HEAP_LOCK( hpalette );
     }
 
+    hPseudoStockBitmap = CreateBitmap( 1, 1, 1, 1, NULL ); 
     return TRUE;
 }
 
@@ -452,6 +455,7 @@ BOOL WINAPI DeleteObject( HGDIOBJ obj )
     if (HIWORD(obj)) return FALSE;
     if ((obj >= FIRST_STOCK_HANDLE) && (obj <= LAST_STOCK_HANDLE))
         return TRUE;
+    if (obj == hPseudoStockBitmap) return TRUE;
     if (!(header = (GDIOBJHDR *) GDI_HEAP_LOCK( obj ))) return FALSE;
 
     TRACE("%04x\n", obj );

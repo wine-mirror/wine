@@ -97,7 +97,6 @@ typedef struct
     HBRUSH16      hBrush;
     HFONT16       hFont;
     HBITMAP16     hBitmap;
-    HBITMAP16     hFirstBitmap; /* Bitmap selected at creation of the DC */
     HANDLE16      hDevice;
     HPALETTE16    hPalette;
     
@@ -319,6 +318,8 @@ typedef struct tagDC_FUNCS
 #define LAST_STOCK_FONT         STOCK_DEFAULT_GUI_FONT
 
 #define LAST_STOCK_HANDLE       ((DWORD)STOCK_DEFAULT_GUI_FONT)
+
+extern HBITMAP hPseudoStockBitmap; 
 
   /* Device <-> logical coords conversion */
 
