@@ -399,7 +399,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
            psfi->iIcon = iIndex;
 
 	    if(uFlags != GIL_NOTFILENAME)
-             strcpy (psfi->szDisplayName, szLocation);
+	      strcpy (psfi->szDisplayName, szLocation);
 	    else
 	      ret = FALSE;
 
@@ -417,7 +417,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	    char * szExt;
 	    DWORD dwNr=0;
 
-           lstrcpynA(sTemp, szFullPath, MAX_PATH);
+	    lstrcpynA(sTemp, szFullPath, MAX_PATH);
 
             if (dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                psfi->iIcon = 2;
@@ -430,12 +430,12 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
                {
                   if (!strcmp("%1",sTemp))            /* icon is in the file */
                      strcpy(sTemp, szFullPath);
-          
+
                   if (flags & SHGFI_SYSICONINDEX) 
-                  {    
+                  {
                       psfi->iIcon = SIC_GetIconIndex(sTemp,dwNr);
                       if (psfi->iIcon == -1) psfi->iIcon = 0;
-                  } 
+                  }
                   else 
                   {
                       IconNotYetLoaded=FALSE;
@@ -450,7 +450,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  }
 	  else
 	  {
-           if (!(PidlToSicIndex(psfParent, pidlLast, !(flags & SHGFI_SMALLICON),
+	    if (!(PidlToSicIndex(psfParent, pidlLast, !(flags & SHGFI_SMALLICON),
 	      (flags & SHGFI_OPENICON)? GIL_OPENICON : 0, &(psfi->iIcon))))
 	    {
 	      ret = FALSE;
@@ -458,13 +458,13 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  }
 	  if (ret)
 	  {
-           ret = (DWORD) ((flags & SHGFI_SMALLICON) ? ShellSmallIconList : ShellBigIconList);
+	    ret = (DWORD) ((flags & SHGFI_SMALLICON) ? ShellSmallIconList : ShellBigIconList);
 	  }
 	}
 
 	/* icon handle */
 	if (SUCCEEDED(hr) && (flags & SHGFI_ICON) && IconNotYetLoaded)
-         psfi->hIcon = ImageList_GetIcon((flags & SHGFI_SMALLICON) ? ShellSmallIconList:ShellBigIconList, psfi->iIcon, ILD_NORMAL);
+	  psfi->hIcon = ImageList_GetIcon((flags & SHGFI_SMALLICON) ? ShellSmallIconList:ShellBigIconList, psfi->iIcon, ILD_NORMAL);
 
 	if (flags & (SHGFI_UNKNOWN1 | SHGFI_UNKNOWN2 | SHGFI_UNKNOWN3))
 	  FIXME("unknown attribute!\n");
@@ -505,7 +505,7 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 	  WideCharToMultiByte(CP_ACP, 0, path, -1, temppath, len, NULL, NULL);
 	}
 
-       if(psfi && (flags & SHGFI_ATTR_SPECIFIED))
+	if(psfi && (flags & SHGFI_ATTR_SPECIFIED))
                temppsfi.dwAttributes=psfi->dwAttributes;
 
 	ret = SHGetFileInfoA(temppath, dwFileAttributes, (psfi == NULL)? NULL : &temppsfi, sizeof(temppsfi), flags);
@@ -592,7 +592,7 @@ HICON WINAPI ExtractIconW(HINSTANCE hInstance, LPCWSTR lpszFile, UINT nIconIndex
 
 	TRACE("%p %s %d\n", hInstance, debugstr_w(lpszFile), nIconIndex);
 
-	if (nIconIndex == -1) {
+	if (nIconIndex == 0xFFFFFFFF) {
 	  ret = PrivateExtractIconsW(lpszFile, 0, cx, cy, NULL, NULL, 0, LR_DEFAULTCOLOR);
 	  if (ret != 0xFFFFFFFF && ret)
 	    return (HICON)ret;

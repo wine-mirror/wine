@@ -1111,7 +1111,7 @@ BOOL WINAPI ReadCabinetState(CABINETSTATE *cs, int length)
 
 	TRACE("%p %d \n",cs,length);
 
-	if( (cs == NULL) || (length < sizeof(*cs))  )
+	if( (cs == NULL) || (length < (int)sizeof(*cs))  )
 		return FALSE;
 
 	r = RegOpenKeyW( HKEY_CURRENT_USER, szwCabLocation, &hkey );
