@@ -212,7 +212,7 @@ ISF_MyComputer_fnParseDisplayName (IShellFolder2 * iface,
 	szNext = GetNextElementW (lpszDisplayName, szElement, MAX_PATH);
 	TRACE ("-- element: %s\n", debugstr_w (szElement));
 	SHCLSIDFromStringW (szElement + 2, &clsid);
-	pidlTemp = _ILCreate (PT_MYCOMP, &clsid, sizeof (clsid));
+	pidlTemp = _ILCreate (PT_GUID, &clsid, sizeof (clsid));
     }
     /* do we have an absolute path name ? */
     else if (PathGetDriveNumberW (lpszDisplayName) >= 0 && lpszDisplayName[2] == (WCHAR) '\\') {

@@ -1531,12 +1531,12 @@ LPITEMIDLIST _ILCreateDesktop()
 
 LPITEMIDLIST _ILCreateMyComputer()
 {	TRACE("()\n");
-	return _ILCreate(PT_MYCOMP, &CLSID_MyComputer, sizeof(GUID));
+	return _ILCreate(PT_GUID, &CLSID_MyComputer, sizeof(GUID));
 }
 
 LPITEMIDLIST _ILCreateIExplore()
 {	TRACE("()\n");
-	return _ILCreate(PT_MYCOMP, &CLSID_Internet, sizeof(GUID));
+	return _ILCreate(PT_GUID, &CLSID_Internet, sizeof(GUID));
 }
 
 LPITEMIDLIST _ILCreateControl()
@@ -1551,12 +1551,12 @@ LPITEMIDLIST _ILCreatePrinter()
 
 LPITEMIDLIST _ILCreateNetwork()
 {	TRACE("()\n");
-	return _ILCreate(PT_MYCOMP, &CLSID_NetworkPlaces, sizeof(GUID));
+	return _ILCreate(PT_GUID, &CLSID_NetworkPlaces, sizeof(GUID));
 }
 
 LPITEMIDLIST _ILCreateBitBucket()
 {	TRACE("()\n");
-	return _ILCreate(PT_MYCOMP, &CLSID_RecycleBin, sizeof(GUID));
+	return _ILCreate(PT_GUID, &CLSID_RecycleBin, sizeof(GUID));
 }
 
 LPITEMIDLIST _ILCreateDrive( LPCSTR lpszNew)
@@ -1659,7 +1659,7 @@ LPITEMIDLIST _ILCreateSpecial(LPCSTR szGUID)
 	  ERR("%s is not a GUID\n", szGUID);
 	  return NULL;
 	}
-	return _ILCreate(PT_MYCOMP, &iid, sizeof(IID));
+	return _ILCreate(PT_GUID, &iid, sizeof(IID));
 }
 
 LPITEMIDLIST _ILCreateCPanel(LPCSTR name, LPCSTR displayName, LPCSTR comment, int iconIdx)
@@ -1728,7 +1728,7 @@ LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT uInSize)
 	    uSize = 0;
 	    break;
 	  case PT_SPECIAL:
-	  case PT_MYCOMP:
+	  case PT_GUID:
 	    uSize = 2 + 2 + sizeof(GUID);
 	    break;
 	  case PT_DRIVE:
@@ -1754,11 +1754,11 @@ LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT uInSize)
 	    break;
 
 	  case PT_SPECIAL:
-	  case PT_MYCOMP:
+	  case PT_GUID:
 	    pData = _ILGetDataPointer(pidlOut);
 	    pData->type = type;
-	    memcpy(&(pData->u.mycomp.guid), pIn, uInSize);
-	    TRACE("-- create GUID-pidl %s\n", debugstr_guid(&(pData->u.mycomp.guid)));
+	    memcpy(&(pData->u.guid.guid), pIn, uInSize);
+	    TRACE("-- create GUID-pidl %s\n", debugstr_guid(&(pData->u.guid.guid)));
 	    break;
 
 	  case PT_DRIVE:
@@ -1840,7 +1840,7 @@ BOOL _ILIsSpecialFolder (LPCITEMIDLIST pidl)
 {
 	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
 	TRACE("(%p)\n",pidl);
-	return (pidl && ( (lpPData && (PT_MYCOMP== lpPData->type || PT_SPECIAL== lpPData->type)) ||
+	return (pidl && ( (lpPData && (PT_GUID== lpPData->type || PT_SPECIAL== lpPData->type)) ||
 			  (pidl && pidl->mkid.cb == 0x00)
 			));
 }
@@ -2006,7 +2006,7 @@ LPSTR _ILGetTextPointer(LPCITEMIDLIST pidl)
 	{
 	  switch (pdata->type)
 	  {
-	    case PT_MYCOMP:
+	    case PT_GUID:
 	    case PT_SPECIAL:
 	      return NULL;
 
@@ -2079,8 +2079,8 @@ REFIID _ILGetGUIDPointer(LPCITEMIDLIST pidl)
 	  switch (pdata->type)
 	  {
 	    case PT_SPECIAL:
-	    case PT_MYCOMP:
-	      return (REFIID) &(pdata->u.mycomp.guid);
+	    case PT_GUID:
+	      return (REFIID) &(pdata->u.guid.guid);
 
 	    default:
 		TRACE("Unknown pidl type 0x%04x\n", pdata->type);
