@@ -3221,3 +3221,33 @@ UINT16 wsaHerrno(int loc_errno)
 		return WSAEOPNOTSUPP;
     }
 }
+
+
+/***********************************************************************
+ *              WSARecvFrom             (WSOCK32.69)
+ */
+INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+                        LPDWORD lpNumberOfBytesRecvd, LPDWORD lpFlags, struct sockaddr *lpFrom,
+                        LPINT lpFromlen, LPWSAOVERLAPPED lpOverlapped,
+                        LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
+{
+  DWORD dwCount;
+  INT   rc;
+
+  FIXME( "(%i,%p,%lu,%p,%p,%p,%p,%p,%p: stub\n",
+         s, lpBuffers, dwBufferCount, lpNumberOfBytesRecvd, lpFlags,
+         lpFrom, lpFromlen, lpOverlapped, lpCompletionRoutine );
+
+  for( dwCount = 0, rc = 0; dwCount < dwBufferCount; dwCount++ )
+  {
+
+    if( ( rc = WSOCK32_recvfrom(s, lpBuffers[ dwCount ].buf, (INT)lpBuffers[ dwCount ].len,
+                                (INT)*lpFlags, lpFrom, lpFromlen ) ) != 0 )
+    {
+       break;
+    }
+
+  }
+
+  return rc;
+}

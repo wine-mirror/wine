@@ -212,14 +212,18 @@ typedef void CALLBACK (*LPWSAOVERLAPPED_COMPLETION_ROUTINE)
 
 
 /* Function declarations */
-int WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEventObject, LPWSANETWORKEVENTS lpNetworkEvents);
-int WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEventObject, long lNetworkEvents);
+int      WINAPI WSAEnumNetworkEvents(SOCKET s, WSAEVENT hEventObject, LPWSANETWORKEVENTS lpNetworkEvents);
+int      WINAPI WSAEventSelect(SOCKET s, WSAEVENT hEventObject, long lNetworkEvents);
 WSAEVENT WINAPI WSACreateEvent(void);
-BOOL WINAPI WSACloseEvent(WSAEVENT event);
-SOCKET WINAPI WSASocketA(int af, int type, int protocol,
-                         LPWSAPROTOCOL_INFOA lpProtocolInfo,
-                         GROUP g, DWORD dwFlags);
-extern INT WINAPI ioctlsocket(SOCKET s, LONG cmd, ULONG *argp);
+BOOL     WINAPI WSACloseEvent(WSAEVENT event);
+INT      WINAPI WSARecvFrom(SOCKET,LPWSABUF,DWORD,LPDWORD,LPDWORD,struct sockaddr*,LPINT,
+                            LPWSAOVERLAPPED,LPWSAOVERLAPPED_COMPLETION_ROUTINE);
+INT      WINAPI WSASend(SOCKET,LPWSABUF,DWORD,LPDWORD,DWORD,LPWSAOVERLAPPED,
+                        LPWSAOVERLAPPED_COMPLETION_ROUTINE);
+SOCKET   WINAPI WSASocketA(int af, int type, int protocol,
+                           LPWSAPROTOCOL_INFOA lpProtocolInfo,
+                           GROUP g, DWORD dwFlags);
+INT      WINAPI ioctlsocket(SOCKET s, LONG cmd, ULONG *argp);
 
 #include "poppack.h"
 
