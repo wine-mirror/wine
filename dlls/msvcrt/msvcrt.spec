@@ -718,7 +718,7 @@
 @ cdecl strtol(str ptr long)
 @ cdecl strtoul(str ptr long)
 @ cdecl strxfrm(ptr str long)
-@ varargs swprintf(wstr wstr) ntdll.swprintf
+@ varargs swprintf(wstr wstr) MSVCRT_swprintf
 @ varargs swscanf(wstr wstr) MSVCRT_swscanf
 @ cdecl system(str) MSVCRT_system
 @ cdecl tan(double)

@@ -184,13 +184,184 @@ double MSVCRT_wcstod(const MSVCRT_wchar_t* lpszStr, MSVCRT_wchar_t** end)
   return ret;
 }
 
+static int MSVCRT_vsnprintfW(WCHAR *str, size_t len, const WCHAR *format, va_list valist)
+{
+    unsigned int written = 0;
+    const WCHAR *iter = format;
+    char bufa[256], fmtbufa[64], *fmta;
+
+    while (*iter)
+    {
+        while (*iter && *iter != '%')
+        {
+            if (written++ >= len)
+                return -1;
+            *str++ = *iter++;
+        }
+        if (*iter == '%')
+        {
+            if (iter[1] == '%')
+            {
+                if (written++ >= len)
+                    return -1;
+                *str++ = '%'; /* "%%"->'%' */
+                iter += 2;
+                continue;
+            }
+
+            fmta = fmtbufa;
+            *fmta++ = *iter++;
+            while (*iter == '0' ||
+                   *iter == '+' ||
+                   *iter == '-' ||
+                   *iter == ' ' ||
+                   *iter == '*' ||
+                   *iter == '#')
+            {
+                if (*iter == '*')
+                {
+                    char *buffiter = bufa;
+                    int fieldlen = va_arg(valist, int);
+                    sprintf(buffiter, "%d", fieldlen);
+                    while (*buffiter)
+                        *fmta++ = *buffiter++;
+                }
+                else
+                    *fmta++ = *iter;
+                iter++;
+            }
+
+            while (isdigit(*iter))
+                *fmta++ = *iter++;
+
+            if (*iter == '.')
+            {
+                *fmta++ = *iter++;
+                if (*iter == '*')
+                {
+                    char *buffiter = bufa;
+                    int fieldlen = va_arg(valist, int);
+                    sprintf(buffiter, "%d", fieldlen);
+                    while (*buffiter)
+                        *fmta++ = *buffiter++;
+                }
+                else
+                    while (isdigit(*iter))
+                        *fmta++ = *iter++;
+            }
+            if (*iter == 'h' || *iter == 'l')
+                *fmta++ = *iter++;
+
+            switch (*iter)
+            {
+            case 'S':
+            {
+                static const char *none = "(null)";
+                const char *astr = va_arg(valist, const char *);
+                const char *striter = astr ? astr : none;
+                int r, n;
+                while (*striter)
+                {
+                    if (written >= len)
+                        return -1;
+                    n = 1;
+                    if( IsDBCSLeadByte( *striter ) )
+                        n++;
+                    r = MultiByteToWideChar( CP_ACP, 0,
+                               striter, n, str, len - written );
+                    striter += n;
+                    str += r;
+                    written += r;
+                }
+                iter++;
+                break;
+            }
+
+            case 's':
+            {
+                static const WCHAR none[] = { '(','n','u','l','l',')',0 };
+                const WCHAR *wstr = va_arg(valist, const WCHAR *);
+                const WCHAR *striter = wstr ? wstr : none;
+                while (*striter)
+                {
+                    if (written++ >= len)
+                        return -1;
+                    *str++ = *striter++;
+                }
+                iter++;
+                break;
+            }
+
+            case 'c':
+                if (written++ >= len)
+                    return -1;
+                *str++ = (WCHAR)va_arg(valist, int);
+                iter++;
+                break;
+
+            default:
+            {
+                /* For non wc types, use system sprintf and append to wide char output */
+                /* FIXME: for unrecognised types, should ignore % when printing */
+                char *bufaiter = bufa;
+                if (*iter == 'p')
+                    sprintf(bufaiter, "%08lX", va_arg(valist, long));
+                else
+                {
+                    *fmta++ = *iter;
+                    *fmta = '\0';
+                    if (*iter == 'a' || *iter == 'A' ||
+                        *iter == 'e' || *iter == 'E' ||
+                        *iter == 'f' || *iter == 'F' || 
+                        *iter == 'g' || *iter == 'G')
+                        sprintf(bufaiter, fmtbufa, va_arg(valist, double));
+                    else
+                    {
+                        /* FIXME: On 32 bit systems this doesn't handle int 64's.
+                         *        on 64 bit systems this doesn't work for 32 bit types
+			 */
+                        sprintf(bufaiter, fmtbufa, va_arg(valist, void *));
+                    }
+                }
+                while (*bufaiter)
+                {
+                    if (written++ >= len)
+                        return -1;
+                    *str++ = *bufaiter++;
+                }
+                iter++;
+                break;
+            }
+            }
+        }
+    }
+    if (written >= len)
+        return -1;
+    *str++ = 0;
+    return (int)written;
+}
+
+/*********************************************************************
+ *		swprintf (MSVCRT.@)
+ */
+int MSVCRT_swprintf( MSVCRT_wchar_t *str, const MSVCRT_wchar_t *format, ... )
+{
+    va_list ap;
+    int r;
+
+    va_start( ap, format );
+    r = MSVCRT_vsnprintfW( str, INT_MAX, format, ap );
+    va_end( ap );
+    return r;
+}
+
 /*********************************************************************
  *		_vsnwprintf (MSVCRT.@)
  */
 int _vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,
                 const MSVCRT_wchar_t *format, va_list valist)
 {
-    return vsnprintfW(str, len, format, valist);
+    return MSVCRT_vsnprintfW(str, len, format, valist);
 }
 
 /*********************************************************************
@@ -198,7 +369,7 @@ int _vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,
  */
 int MSVCRT_vswprintf( MSVCRT_wchar_t* str, const MSVCRT_wchar_t* format, va_list args )
 {
-    return vsnprintfW( str, INT_MAX, format, args );
+    return MSVCRT_vsnprintfW( str, INT_MAX, format, args );
 }
 
 /*********************************************************************
