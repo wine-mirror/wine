@@ -2703,7 +2703,7 @@ Event log file changed
 MessageId=1601
 SymbolicName=ERROR_INSTALL_SERVICE_FAILURE
 Language=ENU
-
+ERROR_INSTALL_SERVICE_FAILURE
 .
 MessageId=1602
 SymbolicName=ERROR_INSTALL_USEREXIT
