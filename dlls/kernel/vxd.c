@@ -193,6 +193,7 @@ HANDLE VXD_Open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa )
     {
         FIXME( "Unknown/unsupported VxD %s. Try setting Windows version to 'nt40' or 'win31'.\n",
                debugstr_w(name) );
+        SetLastError( ERROR_FILE_NOT_FOUND );
         return 0;
     }
 
