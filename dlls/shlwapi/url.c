@@ -459,7 +459,8 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
     HRESULT hr = S_OK;
     DWORD EscapeFlags;
     LPWSTR lpszUrlCpy, wk1, wk2, mp, root;
-    INT nLen, nByteLen, state;
+    INT nByteLen, state;
+    DWORD nLen;
 
     TRACE("(%s %p %p 0x%08lx)\n", debugstr_w(pszUrl), pszCanonicalized,
 	  pcchCanonicalized, dwFlags);

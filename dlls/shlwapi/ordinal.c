@@ -576,8 +576,8 @@ HRESULT WINAPI GetAcceptLanguagesW( LPWSTR langbuf, LPDWORD buflen)
     }
     memcpy( langbuf, mystr, min(*buflen,strlenW(mystr)+1)*sizeof(WCHAR) );
 
-    if(*buflen > lstrlenW(mystr)) {
-	*buflen = lstrlenW(mystr);
+    if(*buflen > strlenW(mystr)) {
+	*buflen = strlenW(mystr);
 	retval = S_OK;
     } else {
 	*buflen = 0;
