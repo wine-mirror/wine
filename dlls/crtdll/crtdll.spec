@@ -322,7 +322,7 @@ import	ntdll
 @ cdecl _unlink(str) CRTDLL__unlink
 @ stub _unloaddll
 @ stub _utime
-@ stub _vsnprintf
+@ cdecl _vsnprintf(ptr long ptr ptr) CRTDLL__vsnprintf
 @ stub _vsnwprintf
 @ cdecl _wcsdup(wstr) CRTDLL__wcsdup
 @ forward _wcsicmp ntdll._wcsicmp
