@@ -45,7 +45,7 @@ HENHMETAFILE32 WINAPI GetEnhMetaFile32W(
              LPCWSTR lpszMetaFile)  /* filename of enhanced metafile */ 
 {
   FIXME(metafile, "(%p): stub\n", lpszMetaFile);
-  return NULL;
+  return 0;
 }
 
 /*****************************************************************************

@@ -7252,6 +7252,9 @@ VOID        WINAPI WaitMessage(VOID);
 
 /* Declarations for functions that change between Win16 and Win32 */
 
+INT16       WINAPI AbortDoc16(HDC16);
+INT32       WINAPI AbortDoc32(HDC32);
+#define     AbortDoc WINELIB_NAME(AbortDoc)
 BOOL16      WINAPI AbortPath16(HDC16);
 BOOL32      WINAPI AbortPath32(HDC32);
 #define     AbortPath WINELIB_NAME(AbortPath)

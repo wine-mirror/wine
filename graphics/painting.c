@@ -1182,31 +1182,11 @@ BOOL32 WINAPI PolyBezierTo32( HDC32 hdc, const POINT32* lppt, DWORD cPoints )
 }
 
 
-/*************************************************************************
- * StartDoc32W [GDI32.348]
- * 
- */
-INT32 WINAPI 
-StartDoc32W(HDC32 hdc ,const DOCINFO32W* doc) {
-  FIXME(gdi,"stub\n");
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
-  return 0; /* failure*/
-}
-
 /******************************************************************************
  *                 PolylineTo32      [GDI32.277]
  */
 BOOL32 WINAPI PolylineTo32(HDC32 hdc, const POINT32 *lppt, DWORD cCount)
 {
     FIXME(gdi, "(%d,%p,%ld): stub\n", hdc, lppt, cCount);
-    return 1;
-}
-
-/******************************************************************************
- *                 AbortDoc32        [GDI32.0]
- */
-INT32 WINAPI AbortDoc32(HDC32 hdc)
-{
-    FIXME(gdi, "(%d): stub\n", hdc);
     return 1;
 }

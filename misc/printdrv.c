@@ -51,6 +51,16 @@ INT32 WINAPI StartDoc32A(HDC32 hdc ,const DOCINFO32A* doc)
   return 0; /* failure*/
 }
 
+/*************************************************************************
+ *                  StartDoc32W [GDI32.348]
+ * 
+ */
+INT32 WINAPI StartDoc32W(HDC32 hdc, const DOCINFO32W* doc) {
+  FIXME(gdi,"stub\n");
+  SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
+  return 0; /* failure*/
+}
+
 /******************************************************************
  *                  StartPage32  [GDI32.349]
  *
@@ -91,6 +101,23 @@ INT32 WINAPI EndDoc32(HDC32 hdc)
   FIXME(gdi,"stub\n");
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED); 
   return 0; /* failure*/
+}
+
+/******************************************************************************
+ *                 AbortDoc16  [GDI.382]
+ */
+INT16 WINAPI AbortDoc16(HDC16 hdc)
+{
+  return Escape16(hdc, ABORTDOC, 0, 0, 0);
+}
+
+/******************************************************************************
+ *                 AbortDoc32  [GDI32.0]
+ */
+INT32 WINAPI AbortDoc32(HDC32 hdc)
+{
+    FIXME(gdi, "(%d): stub\n", hdc);
+    return 1;
 }
 
 /******************************************************************
@@ -329,7 +356,8 @@ LONG WINAPI DocumentProperties32W(HWND32 hWnd, HANDLE32 hPrinter,
                                   LPDEVMODE32W pDevModeInput, DWORD fMode)
 {
     FIXME(print,"(%d,%d,%s,%p,%p,%ld): stub\n",
-          hWnd,hPrinter,pDeviceName,pDevModeOutput,pDevModeInput,fMode);
+          hWnd,hPrinter,debugstr_w(pDeviceName),pDevModeOutput,pDevModeInput,
+	  fMode);
     return -1;
 }
 
@@ -516,7 +544,7 @@ BOOL32 WINAPI AddJob32W(HANDLE32 hPrinter, DWORD Level, LPBYTE pData, DWORD cbBu
 HANDLE32 WINAPI AddPrinter32A(LPSTR pName, DWORD Level, LPBYTE pPrinter)
 {
     FIXME(print, "(%s,%ld,%p): stub\n", pName, Level, pPrinter);
-    return NULL;
+    return 0;
 }
 
 /*****************************************************************************
@@ -552,7 +580,7 @@ BOOL32 WINAPI DeleteForm32A(HANDLE32 hPrinter, LPSTR pFormName)
  */
 BOOL32 WINAPI DeleteForm32W(HANDLE32 hPrinter, LPWSTR pFormName)
 {
-    FIXME(print, "(%d,%s): stub\n", hPrinter, pFormName);
+    FIXME(print, "(%d,%s): stub\n", hPrinter, debugstr_w(pFormName));
     return 1;
 }
 
@@ -614,8 +642,8 @@ BOOL32 WINAPI GetForm32A(HANDLE32 hPrinter, LPSTR pFormName, DWORD Level,
 BOOL32 WINAPI GetForm32W(HANDLE32 hPrinter, LPWSTR pFormName, DWORD Level,
                  LPBYTE pForm, DWORD cbBuf, LPDWORD pcbNeeded)
 {
-    FIXME(print, "(%d,%s,%ld,%p,%ld,%p): stub\n",hPrinter,pFormName,
-         Level,pForm,cbBuf,pcbNeeded);
+    FIXME(print, "(%d,%s,%ld,%p,%ld,%p): stub\n",hPrinter,
+	  debugstr_w(pFormName),Level,pForm,cbBuf,pcbNeeded);
     return FALSE;
 }
 
