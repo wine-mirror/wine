@@ -5,7 +5,7 @@
  *
  * Copyright 1996,1998 Marcus Meissner
  * Copyright 1996 Jukka Iivonen
- * Copyright 1997 Uwe Bonnes
+ * Copyright 1997,2000 Uwe Bonnes
  */
 
 /*
@@ -19,6 +19,8 @@ Unresolved issues Uwe Bonnes 970904:
 AJ 990101:
 - needs a proper stdio emulation based on Win32 file handles
 - should set CRTDLL errno from GetLastError() in every function
+UB 000416:
+- probably not thread safe
 */
 
 /* NOTE: This file also implements the wcs* functions. They _ARE_ in 
@@ -845,7 +847,11 @@ CHAR* __cdecl CRTDLL_fgets( LPSTR s, INT size, CRTDLL_FILE *file )
             if (--size <= 0) break;
             *s++ = (char)cc;
         }
-
+    if ((cc == EOF) &&(s == buf_start)) /* If nothing read, return 0*/
+      return 0;
+    if (cc == '\n')
+      if (--size > 0)
+	*s++ = '\n';
     *s = '\0';
 
     TRACE("got '%s'\n", buf_start);
@@ -1258,11 +1264,19 @@ INT __cdecl CRTDLL__close(HFILE fd)
 
 /*********************************************************************
  *                  feof           (CRTDLL.363)
+ * FIXME: Care for large files
+ * FIXME: Check errors
  */
 INT __cdecl CRTDLL_feof( CRTDLL_FILE *file )
 {
-    FIXME("stub\n" );
-    return 0;
+  DWORD curpos=SetFilePointer( file->handle, 0, NULL, SEEK_CUR );
+  DWORD endpos=SetFilePointer( file->handle, 0, NULL, FILE_END );
+  
+  if (curpos==endpos)
+    return TRUE;
+  else
+    SetFilePointer( file->handle, curpos,0,FILE_BEGIN);
+  return FALSE;
 }
 
 /*********************************************************************
@@ -1715,9 +1729,10 @@ typedef VOID (*sig_handler_type)(VOID);
 /*********************************************************************
  *                  signal           (CRTDLL.455)
  */
-VOID __cdecl CRTDLL_signal(int sig, sig_handler_type ptr)
+void * __cdecl CRTDLL_signal(int sig, sig_handler_type ptr)
 {
     FIXME("(%d %p):stub.\n", sig, ptr);
+    return (void*)-1;
 }
 
 /*********************************************************************
