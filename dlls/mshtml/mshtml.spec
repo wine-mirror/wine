@@ -2,8 +2,8 @@
 @ stdcall -private DllCanUnloadNow() MSHTML_DllCanUnloadNow
 @ stub DllEnumClassObjects
 @ stdcall -private DllGetClassObject(ptr ptr ptr) MSHTML_DllGetClassObject
-@ stub DllInstall
-@ stub DllRegisterServer
+@ stdcall DllInstall(long wstr) MSHTML_DllInstall
+@ stdcall -private DllRegisterServer() MSHTML_DllRegisterServer
 @ stub DllUnregisterServer
 @ stub MatchExactGetIDsOfNames
 @ stub PrintHTML

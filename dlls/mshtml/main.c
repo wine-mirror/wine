@@ -160,3 +160,21 @@ INT WINAPI RunHTMLApplication( HINSTANCE hinst, HINSTANCE hPrevInst,
     FIXME("%p %p %s %d\n", hinst, hPrevInst, debugstr_a(szCmdLine), nCmdShow );
     return 0;
 }
+
+/***********************************************************************
+ *          DllInstall (MSHTML.@)
+ */
+HRESULT WINAPI MSHTML_DllInstall(BOOL bInstall, LPCWSTR cmdline)
+{
+    FIXME("stub %d %s: returning S_OK\n", bInstall, debugstr_w(cmdline));
+    return S_OK;
+}
+
+/***********************************************************************
+ *          DllRegisterServer (MSHTML.@)
+ */
+HRESULT WINAPI MSHTML_DllRegisterServer(void)
+{
+    FIXME("stub: returning S_OK\n");
+    return S_OK;
+}
