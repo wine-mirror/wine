@@ -462,6 +462,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateTexture(LPDIRECT3DDEVICE8 iface, UIN
     }
 
     *ppTexture = (LPDIRECT3DTEXTURE8) object;
+    TRACE("(%p) : Created texture %p\n", This, object);
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 iface, 
@@ -552,6 +553,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVolumeTexture(LPDIRECT3DDEVICE8 ifac
     }
 
     *ppVolumeTexture = (LPDIRECT3DVOLUMETEXTURE8) object;
+    TRACE("(%p) : Created volume texture %p\n", This, object);
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_CreateCubeTexture(LPDIRECT3DDEVICE8 iface, UINT EdgeLength, UINT Levels, DWORD Usage, 
@@ -809,7 +811,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CopyRects(LPDIRECT3DDEVICE8 iface,
 	IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) dst, &lrDst, NULL, 0L);
         TRACE("Locked src and dst, Direct copy as surfaces are equal, w=%d, h=%d\n", dst->myDesc.Width, dst->myDesc.Height);
 
-	/*memcpy(dst->allocatedMemory, src->allocatedMemory, src->myDesc.Size);*/
 	memcpy(lrDst.pBits, lrSrc.pBits, src->myDesc.Size);
  
         IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) src);
@@ -917,7 +918,11 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_UpdateTexture(LPDIRECT3DDEVICE8 iface, IDi
 	    IDirect3DSurface8* dstSur = NULL;
 	    hr = IDirect3DTexture8Impl_GetSurfaceLevel((LPDIRECT3DTEXTURE8) src, i, &srcSur);
 	    hr = IDirect3DTexture8Impl_GetSurfaceLevel((LPDIRECT3DTEXTURE8) dst, i - skipLevels, &dstSur);
-	    /*IDirect3DDevice8_CopyRects*/
+
+            /* Fixme: Work out how to just do the dirty regions (src or dst dirty region, and what
+                        about dst with less levels than the source?)                               */
+	    IDirect3DDevice8Impl_CopyRects(iface, srcSur, NULL, 0, dstSur, NULL);
+
 	    IDirect3DSurface8Impl_Release(srcSur);
 	    IDirect3DSurface8Impl_Release(dstSur);
 	  }
@@ -934,7 +939,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_UpdateTexture(LPDIRECT3DDEVICE8 iface, IDi
 	    for (j = 0; j < 5; ++j) {
 	      hr = IDirect3DCubeTexture8Impl_GetCubeMapSurface((LPDIRECT3DCUBETEXTURE8) src, j, i, &srcSur);
 	      hr = IDirect3DCubeTexture8Impl_GetCubeMapSurface((LPDIRECT3DCUBETEXTURE8) dst, j, i - skipLevels, &srcSur);
-	      /*IDirect3DDevice8_CopyRects*/
+	      FIXME("D3DRTYPE_CUBETEXTURE does not support UpdateTexture yet\n");
 	      IDirect3DSurface8Impl_Release(srcSur);
 	      IDirect3DSurface8Impl_Release(dstSur);
 	    }
@@ -2999,16 +3004,14 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
     case D3DTSS_COLOROP               :
         {
 
-            if (Value == D3DTOP_DISABLE) {
+            if ((Value == D3DTOP_DISABLE) && (Type == D3DTSS_COLOROP)) {
                 /* TODO: Disable by making this and all later levels disabled */
-                if (Type == D3DTSS_COLOROP) {
-                    glDisable(GL_TEXTURE_1D);
-                    checkGLcall("Disable GL_TEXTURE_1D");
-                    glDisable(GL_TEXTURE_2D);
-                    checkGLcall("Disable GL_TEXTURE_2D");
-                    glDisable(GL_TEXTURE_3D);
-                    checkGLcall("Disable GL_TEXTURE_3D");
-                }
+                glDisable(GL_TEXTURE_1D);
+                checkGLcall("Disable GL_TEXTURE_1D");
+                glDisable(GL_TEXTURE_2D);
+                checkGLcall("Disable GL_TEXTURE_2D");
+                glDisable(GL_TEXTURE_3D);
+                checkGLcall("Disable GL_TEXTURE_3D");
                 break; /* Dont bother setting the texture operations */
             } else {
                 /* Enable only the appropriate texture dimension */

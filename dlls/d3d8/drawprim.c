@@ -1343,10 +1343,26 @@ void drawPrimitive(LPDIRECT3DDEVICE8 iface,
             D3DLOCKED_RECT r;
             char buffer[80];
             IDirect3DSurface8Impl_LockRect((LPDIRECT3DSURFACE8) This->backBuffer, &r, NULL, D3DLOCK_READONLY);
-            sprintf(buffer, "/tmp/backbuffer_%ld.ppm", primCounter++);
+            sprintf(buffer, "/tmp/backbuffer_%ld.ppm", primCounter);
             TRACE("Saving screenshot %s\n", buffer);
             IDirect3DSurface8Impl_SaveSnapshot((LPDIRECT3DSURFACE8) This->backBuffer, buffer);
             IDirect3DSurface8Impl_UnlockRect((LPDIRECT3DSURFACE8) This->backBuffer);
+
+#if defined(SHOW_TEXTURE_MAKEUP)
+           {
+            LPDIRECT3DSURFACE8 pSur;
+            int textureNo;
+            for (textureNo = 0; textureNo < GL_LIMITS(textures); ++textureNo) {
+                if (This->StateBlock->textures[textureNo] != NULL) {
+                    sprintf(buffer, "/tmp/texture_%ld_%d.ppm", primCounter, textureNo);
+                    TRACE("Saving texture %s\n", buffer);
+                    IDirect3DTexture8Impl_GetSurfaceLevel((LPDIRECT3DTEXTURE8) This->StateBlock->textures[textureNo], 0, &pSur);
+                    IDirect3DSurface8Impl_SaveSnapshot(pSur, buffer);
+                }
+            }
+           }
+#endif
+           primCounter = primCounter + 1; 
         }
     }
 #endif

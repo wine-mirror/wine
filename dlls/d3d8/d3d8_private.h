@@ -1274,15 +1274,22 @@ const char *debug_d3dtexturestate(DWORD State);
 # define FRAME_DEBUGGING
   /*  Adding in the SINGLE_FRAME_DEBUGGING gives a trace of just what makes up a single frame, before
       the file is deleted                                                                            */
-# if 1
+# if 1 /* NOTE: Must be 1 in cvs, as this is mostly more useful than a trace from program start */
 #  define SINGLE_FRAME_DEBUGGING
 # endif  
   /* The following, when enabled, lets you see the makeup of the frame, by drawprimitive calls.
-     A check is made for the existence of C:\D3DSHOWFRAME, and if it exists will write the
-     contents of the back buffer into /tmp/backbuffer_* after each primitive array is drawn
-     for a single frame. At the end of the frame, the file is deleted.                         */
-# if 1
+     It can only be enabled when FRAME_DEBUGGING is also enabled                               
+     The contents of the back buffer are written into /tmp/backbuffer_* after each primitive 
+     array is drawn.                                                                            */
+# if 0 /* NOTE: Must be 0 in cvs, as this give a lot of ppm files when compiled in */                                                                                       
 #  define SHOW_FRAME_MAKEUP 1
+# endif  
+  /* The following, when enabled, lets you see the makeup of the all the textures used during each
+     of the drawprimitive calls. It can only be enabled when SHOW_FRAME_MAKEUP is also enabled.
+     The contents of the textures assigned to each stage are written into 
+     /tmp/texture_*_<Stage>.ppm after each primitive array is drawn.                            */
+# if 0 /* NOTE: Must be 0 in cvs, as this give a lot of ppm files when compiled in */
+#  define SHOW_TEXTURE_MAKEUP 0
 # endif  
 extern BOOL isOn;
 extern BOOL isDumpingFrames;

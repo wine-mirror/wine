@@ -120,8 +120,11 @@ HRESULT WINAPI IDirect3DSurface8Impl_LockRect(LPDIRECT3DSURFACE8 iface, D3DLOCKE
     /* fixme: should we really lock as such? */
 
     if (FALSE == This->lockable) {
-      ERR("trying to lock unlockable surf@%p\n", This);  
-      return D3DERR_INVALIDCALL;
+      /* Note: UpdateTextures calls CopyRects which calls this routine to populate the 
+            texture regions, and since the destination is an unlockable region we need
+            to tolerate this                                                           */
+      TRACE("Warning: trying to lock unlockable surf@%p\n", This);  
+      /*return D3DERR_INVALIDCALL; */
     }
 
     if (This == This->Device->backBuffer || This == This->Device->renderTarget || This == This->Device->frontBuffer || This->Device->depthStencilBuffer) {

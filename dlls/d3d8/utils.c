@@ -689,7 +689,6 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
         ICOM_THIS(IDirect3DDevice8Impl,iface);
 
         TRACE("Alpha?(%d), Stage:%d Op(%d), a1(%ld), a2(%ld), a3(%ld)\n", isAlpha, Stage, op, arg1, arg2, arg3);
-        if (op == D3DTOP_DISABLE) return;
 
 	ENTER_GL();
 
@@ -741,6 +740,16 @@ void set_tex_op(LPDIRECT3DDEVICE8 iface, BOOL isAlpha, int Stage, D3DTEXTUREOP o
 
         Handled = TRUE; /* Assume will be handled */
 	switch (op) {
+        case D3DTOP_DISABLE: /* Only for alpha */
+                glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_REPLACE);
+                checkGLcall("GL_TEXTURE_ENV, comb_target, GL_REPLACE");
+                glTexEnvi(GL_TEXTURE_ENV, src0_target, GL_PREVIOUS_EXT);
+                checkGLcall("GL_TEXTURE_ENV, src0_target, src1");
+                glTexEnvi(GL_TEXTURE_ENV, opr0_target, GL_SRC_ALPHA);
+                checkGLcall("GL_TEXTURE_ENV, opr0_target, opr1");
+                glTexEnvi(GL_TEXTURE_ENV, scal_target, 1);
+                checkGLcall("GL_TEXTURE_ENV, scal_target, 1");
+                break;
 	case D3DTOP_SELECTARG1:
 		glTexEnvi(GL_TEXTURE_ENV, comb_target, GL_REPLACE);
 		checkGLcall("GL_TEXTURE_ENV, comb_target, GL_REPLACE");
