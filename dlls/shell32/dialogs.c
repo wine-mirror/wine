@@ -142,7 +142,7 @@ INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                     HWND htxt = NULL ;
                     if ((ic = GetWindowTextLengthA (htxt = GetDlgItem (hwnd, 12298))))
                         {
-                        psz = malloc (ic + 2) ;
+                        psz = HeapAlloc( GetProcessHeap, 0, (ic + 2) );
                         GetWindowTextA (htxt, psz, ic + 1) ;
 
                         if (ShellExecuteA(NULL, "open", psz, NULL, NULL, SW_SHOWNORMAL) < (HINSTANCE)33)
@@ -160,12 +160,12 @@ INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                             LocalFree ((HLOCAL)pszSysMsg) ;
                             MessageBoxA (hwnd, szMsg, "Nix", MB_OK | MB_ICONEXCLAMATION) ;
 
-                            free (psz) ;
+                            HeapFree(GetProcessHeap(), 0, psz);
                             SendMessageA (htxt, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
                             return TRUE ;
                             }
                         FillList (htxt, psz) ;
-                        free (psz) ;
+                        HeapFree(GetProcessHeap(), 0, psz);
                         EndDialog (hwnd, 0) ;
                         }
                     }
@@ -254,13 +254,14 @@ void FillList (HWND hCb, char *pszLatest)
 
     if (icList > 0)
         {
-        pszList = malloc (icList) ;
+        pszList = HeapAlloc( GetProcessHeap(), 0, icList) ;
         if (ERROR_SUCCESS != RegQueryValueExA (hkey, "MRUList", NULL, NULL, pszList, &icList))
             MessageBoxA (hCb, "Unable to grab MRUList !", "Nix", MB_OK) ;
         }
     else
         {
-        pszList = malloc (icList = 1) ;
+        icList = 1 ;
+        pszList = HeapAlloc( GetProcessHeap(), 0, icList) ;
         pszList[0] = 0 ;
         }
 
@@ -273,7 +274,10 @@ void FillList (HWND hCb, char *pszLatest)
 
         if (ERROR_SUCCESS != RegQueryValueExA (hkey, szIndex, NULL, NULL, NULL, &icCmd))
             MessageBoxA (hCb, "Unable to grab size of index", "Nix", MB_OK) ;
-        pszCmd = realloc (pszCmd, icCmd) ;
+        if( pszCmd )
+            pszCmd = HeapReAlloc(GetProcessHeap(), 0, pszCmd, icCmd) ;
+        else
+            pszCmd = HeapAlloc(GetProcessHeap(), 0, icCmd) ;
         if (ERROR_SUCCESS != RegQueryValueExA (hkey, szIndex, NULL, NULL, pszCmd, &icCmd))
             MessageBoxA (hCb, "Unable to grab index", "Nix", MB_OK) ;
 
@@ -339,7 +343,10 @@ void FillList (HWND hCb, char *pszLatest)
         SendMessageA (hCb, CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
 
         cMatch = ++cMax ;
-        pszList = realloc (pszList, ++icList) ;
+        if( pszList )
+            pszList = HeapReAlloc(GetProcessHeap(), 0, pszList, ++icList) ;
+        else
+            pszList = HeapAlloc(GetProcessHeap(), 0, ++icList) ;
         memmove (&pszList[1], pszList, icList - 1) ;
         pszList[0] = cMatch ;
         szIndex[0] = cMatch ;
@@ -348,8 +355,8 @@ void FillList (HWND hCb, char *pszLatest)
 
     RegSetValueExA (hkey, "MRUList", 0, REG_SZ, pszList, strlen (pszList) + 1) ;
 
-    free (pszCmd) ;
-    free (pszList) ;
+    HeapFree( GetProcessHeap(), 0, pszCmd) ;
+    HeapFree( GetProcessHeap(), 0, pszList) ;
     }
 
 

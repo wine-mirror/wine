@@ -28,7 +28,6 @@
 # include <unistd.h>
 #endif
 #include <stdarg.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "windef.h"
@@ -289,7 +288,7 @@ static BOOL SYSTRAY_Add(PNOTIFYICONDATAA pnid)
     ptrayItem = &((*ptrayItem)->nextTrayItem);
   }
   /* Allocate SystrayItem for element and add to end of list. */
-  (*ptrayItem) = ( SystrayItem *)malloc( sizeof(SystrayItem) );
+  (*ptrayItem) = HeapAlloc(GetProcessHeap(),0,sizeof(SystrayItem));
 
   /* Initialize and set data for the tray element. */
   SYSTRAY_ItemInit( (*ptrayItem) );
@@ -337,7 +336,7 @@ static BOOL SYSTRAY_Delete(PNOTIFYICONDATAA pnid)
       TRACE("%p: %p %s\n", *ptrayItem, (*ptrayItem)->notifyIcon.hWnd, (*ptrayItem)->notifyIcon.szTip);
       SYSTRAY_ItemTerm(*ptrayItem);
 
-      free(*ptrayItem);
+      HeapFree(GetProcessHeap(),0,*ptrayItem);
       *ptrayItem = next;
 
       return TRUE;
