@@ -559,6 +559,21 @@ static HGDIOBJ REGION_SelectObject( HGDIOBJ handle, void *obj, HDC hdc )
 
 /***********************************************************************
  *           OffsetRgn   (GDI32.@)
+ *
+ * Moves a region by the specified X- and Y-axis offsets.
+ *
+ * PARAMS
+ *   hrgn [I] Region to offset.
+ *   x    [I] Offset right if positive or left if negative.
+ *   y    [I] Offset down if positive or up if negative.
+ *
+ * RETURNS
+ *   Success:
+ *     NULLREGION - The new region is empty.
+ *     SIMPLEREGION - The new region can be represented by one rectangle.
+ *     COMPLEXREGION - The new region can only be represented by more than
+ *                     one rectangle.
+ *   Failure: ERROR
  */
 INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
 {
@@ -596,6 +611,20 @@ INT WINAPI OffsetRgn( HRGN hrgn, INT x, INT y )
 
 /***********************************************************************
  *           GetRgnBox    (GDI32.@)
+ *
+ * Retrieves the bounding rectangle of the region. The bounding rectangle
+ * is the smallest rectangle that contains the entire region.
+ *
+ * PARAMS
+ *   hrgn [I] Region to retrieve bounding rectangle from.
+ *   rect [O] Rectangle that will receive the coordinates of the bounding
+ *            rectangle.
+ *
+ * RETURNS
+ *     NULLREGION - The new region is empty.
+ *     SIMPLEREGION - The new region can be represented by one rectangle.
+ *     COMPLEXREGION - The new region can only be represented by more than
+ *                     one rectangle.
  */
 INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
 {
@@ -619,6 +648,18 @@ INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
 
 /***********************************************************************
  *           CreateRectRgn   (GDI32.@)
+ *
+ * Creates a simple rectangular region.
+ *
+ * PARAMS
+ *   left   [I] Left coordinate of rectangle.
+ *   top    [I] Top coordinate of rectangle.
+ *   right  [I] Right coordinate of rectangle.
+ *   bottom [I] Bottom coordinate of rectangle.
+ *
+ * RETURNS
+ *   Success: Handle to region.
+ *   Failure: NULL.
  */
 HRGN WINAPI CreateRectRgn(INT left, INT top, INT right, INT bottom)
 {
@@ -636,6 +677,15 @@ HRGN WINAPI CreateRectRgn(INT left, INT top, INT right, INT bottom)
 
 /***********************************************************************
  *           CreateRectRgnIndirect    (GDI32.@)
+ *
+ * Creates a simple rectangular region.
+ *
+ * PARAMS
+ *   rect [I] Coordinates of rectangular region.
+ *
+ * RETURNS
+ *   Success: Handle to region.
+ *   Failure: NULL.
  */
 HRGN WINAPI CreateRectRgnIndirect( const RECT* rect )
 {
@@ -646,7 +696,21 @@ HRGN WINAPI CreateRectRgnIndirect( const RECT* rect )
 /***********************************************************************
  *           SetRectRgn    (GDI32.@)
  *
- * Allows either or both left and top to be greater than right or bottom.
+ * Sets a region to a simple rectangular region.
+ *
+ * PARAMS
+ *   hrgn   [I] Region to convert.
+ *   left   [I] Left coordinate of rectangle.
+ *   top    [I] Top coordinate of rectangle.
+ *   right  [I] Right coordinate of rectangle.
+ *   bottom [I] Bottom coordinate of rectangle.
+ *
+ * RETURNS
+ *   Success: Non-zero.
+ *   Failure: Zero.
+ *
+ * NOTES
+ *   Allows either or both left and top to be greater than right or bottom.
  */
 BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
 			  INT right, INT bottom )
@@ -678,6 +742,24 @@ BOOL WINAPI SetRectRgn( HRGN hrgn, INT left, INT top,
 
 /***********************************************************************
  *           CreateRoundRectRgn    (GDI32.@)
+ *
+ * Creates a rectangular region with rounded corners.
+ *
+ * PARAMS
+ *   left           [I] Left coordinate of rectangle.
+ *   top            [I] Top coordinate of rectangle.
+ *   right          [I] Right coordinate of rectangle.
+ *   bottom         [I] Bottom coordinate of rectangle.
+ *   ellipse_width  [I] Width of the ellipse at each corner.
+ *   ellipse_height [I] Height of the ellipse at each corner.
+ *
+ * RETURNS
+ *   Success: Handle to region.
+ *   Failure: NULL.
+ *
+ * NOTES
+ *   If ellipse_width or ellipse_height is less than 2 logical units then
+ *   it is treated as though CreateRectRgn() was called instead.
  */
 HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 				    INT right, INT bottom,
@@ -786,6 +868,23 @@ HRGN WINAPI CreateRoundRectRgn( INT left, INT top,
 
 /***********************************************************************
  *           CreateEllipticRgn    (GDI32.@)
+ *
+ * Creates an elliptical region.
+ *
+ * PARAMS
+ *   left   [I] Left coordinate of bounding rectangle.
+ *   top    [I] Top coordinate of bounding rectangle.
+ *   right  [I] Right coordinate of bounding rectangle.
+ *   bottom [I] Bottom coordinate of bounding rectangle.
+ *
+ * RETURNS
+ *   Success: Handle to region.
+ *   Failure: NULL.
+ *
+ * NOTES
+ *   This is a special case of CreateRoundRectRgn() where the width of the
+ *   ellipse at each corner is equal to the width the the rectangle and
+ *   the same for the height.
  */
 HRGN WINAPI CreateEllipticRgn( INT left, INT top,
 				   INT right, INT bottom )
@@ -797,6 +896,20 @@ HRGN WINAPI CreateEllipticRgn( INT left, INT top,
 
 /***********************************************************************
  *           CreateEllipticRgnIndirect    (GDI32.@)
+ *
+ * Creates an elliptical region.
+ *
+ * PARAMS
+ *   rect [I] Pointer to bounding rectangle of the ellipse.
+ *
+ * RETURNS
+ *   Success: Handle to region.
+ *   Failure: NULL.
+ *
+ * NOTES
+ *   This is a special case of CreateRoundRectRgn() where the width of the
+ *   ellipse at each corner is equal to the width the the rectangle and
+ *   the same for the height.
  */
 HRGN WINAPI CreateEllipticRgnIndirect( const RECT *rect )
 {
@@ -808,14 +921,24 @@ HRGN WINAPI CreateEllipticRgnIndirect( const RECT *rect )
 /***********************************************************************
  *           GetRegionData   (GDI32.@)
  *
- * MSDN: GetRegionData, Return Values:
+ * Retrieves the data that specifies the region.
  *
- * "If the function succeeds and dwCount specifies an adequate number of bytes,
- * the return value is always dwCount. If dwCount is too small or the function
- * fails, the return value is 0. If lpRgnData is NULL, the return value is the
- * required number of bytes.
+ * PARAMS
+ *   hrgn    [I] Region to retrieve the region data from.
+ *   count   [I] The size of the buffer pointed to by rgndata in bytes.
+ *   rgndata [I] The buffer to receive data about the region.
  *
- * If the function fails, the return value is zero."
+ * RETURNS
+ *   Success: If rgndata is NULL then the required number of bytes. Otherwise,
+ *            the number of bytes copied to the output buffer.
+ *   Failure: 0.
+ *
+ * NOTES
+ *   The format of the Buffer member of RGNDATA is determined by the iType
+ *   member of the region data header.
+ *   Currently this is always RDH_RECTANGLES, which specifies that the format
+ *   is the array of RECT's that specify the region. The length of the array
+ *   is specified by the nCount member of the region data header.
  */
 DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
 {
@@ -855,6 +978,19 @@ DWORD WINAPI GetRegionData(HRGN hrgn, DWORD count, LPRGNDATA rgndata)
 /***********************************************************************
  *           ExtCreateRegion   (GDI32.@)
  *
+ * Creates a region as specified by the transformation data and region data.
+ *
+ * PARAMS
+ *   lpXform [I] World-space to logical-space transformation data.
+ *   dwCount [I] Size of the data pointed to by rgndata, in bytes.
+ *   rgndata [I] Data that specifes the region.
+ *
+ * RETURNS
+ *   Success: Handle to region.
+ *   Failure: NULL.
+ *
+ * NOTES
+ *   See GetRegionData().
  */
 HRGN WINAPI ExtCreateRegion( const XFORM* lpXform, DWORD dwCount, const RGNDATA* rgndata)
 {
@@ -898,6 +1034,16 @@ fail:
 
 /***********************************************************************
  *           PtInRegion    (GDI32.@)
+ *
+ * Tests whether the specified point is inside a region.
+ *
+ * PARAMS
+ *   hrgn [I] Region to test.
+ *   x    [I] X-coordinate of point to test.
+ *   y    [I] Y-coordinate of point to test.
+ *
+ * RETURNS
+ *   Non-zero if the point is inside the region or zero otherwise.
  */
 BOOL WINAPI PtInRegion( HRGN hrgn, INT x, INT y )
 {
@@ -924,7 +1070,15 @@ BOOL WINAPI PtInRegion( HRGN hrgn, INT x, INT y )
 /***********************************************************************
  *           RectInRegion    (GDI32.@)
  *
- * Returns TRUE if rect is at least partly inside hrgn
+ * Tests if a rectangle is at least partly inside the specified region.
+ *
+ * PARAMS
+ *   hrgn [I] Region to test.
+ *   rect [I] Rectangle to test.
+ *
+ * RETURNS
+ *   Non-zero if the rectangle is partially inside the region or
+ *   zero otherwise.
  */
 BOOL WINAPI RectInRegion( HRGN hrgn, const RECT *rect )
 {
@@ -966,6 +1120,15 @@ BOOL WINAPI RectInRegion( HRGN hrgn, const RECT *rect )
 
 /***********************************************************************
  *           EqualRgn    (GDI32.@)
+ *
+ * Tests whether one region is identical to another.
+ *
+ * PARAMS
+ *   hrgn1 [I] The first region to compare.
+ *   hrgn2 [I] The second region to compare.
+ *
+ * RETURNS
+ *   Non-zero if both regions are identical or zero otherwise.
  */
 BOOL WINAPI EqualRgn( HRGN hrgn1, HRGN hrgn2 )
 {
@@ -1064,7 +1227,30 @@ BOOL REGION_FrameRgn( HRGN hDest, HRGN hSrc, INT x, INT y )
 /***********************************************************************
  *           CombineRgn   (GDI32.@)
  *
- * Note: The behavior is correct even if src and dest regions are the same.
+ * Combines two regions with the specifed operation and stores the result
+ * in the specified destination region.
+ *
+ * PARAMS
+ *   hDest [I] The region that receives the combined result.
+ *   hSrc1 [I] The first source region.
+ *   hSrc2 [I] The second source region.
+ *   mode  [I] The way in which the source regions will be combined. See notes.
+ *
+ * RETURNS
+ *   Success:
+ *     NULLREGION - The new region is empty.
+ *     SIMPLEREGION - The new region can be represented by one rectangle.
+ *     COMPLEXREGION - The new region can only be represented by more than
+ *                     one rectangle.
+ *   Failure: ERROR
+ *
+ * NOTES
+ *   The two source regions can be the same region.
+ *   The mode can be one of the following:
+ *|  RGN_AND - Intersection of the regions
+ *|  RGN_OR - Union of the regions
+ *|  RGN_XOR - Unions of the regions minus any intersection.
+ *|  RGN_DIFF - Difference (subtraction) of the regions.
  */
 INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 {
