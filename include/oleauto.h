@@ -30,6 +30,14 @@ int WINAPI SysStringLen16(BSTR16);
 int WINAPI SysStringLen(BSTR);
 
 /*****************************************************************
+ *  ErrorInfo API
+ */
+
+HRESULT WINAPI SetErrorInfo(ULONG dwReserved, IErrorInfo *perrinfo);
+HRESULT WINAPI GetErrorInfo(ULONG dwReserved, IErrorInfo **pperrinfo);
+HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **pperrinfo);
+
+/*****************************************************************
  *  SafeArray API
  */
 

@@ -192,11 +192,11 @@ type	win32
 189 stub CoRegisterChannelHook
 190 stub CoRegisterSurrogate
 191 stub CoSwitchCallContext
-192 stub CreateErrorInfo
+192 stdcall CreateErrorInfo(ptr) CreateErrorInfo
 193 stub CreateObjrefMoniker
 194 stub DllRegisterServer
 195 stdcall FreePropVariantArray(long ptr) FreePropVariantArray
-196 stub GetErrorInfo
+196 stdcall GetErrorInfo(long ptr) GetErrorInfo
 197 stub HACCEL_UserFree
 198 stub HACCEL_UserMarshal
 199 stub HACCEL_UserSize
