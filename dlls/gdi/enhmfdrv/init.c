@@ -273,9 +273,11 @@ HDC WINAPI CreateEnhMetaFileW(
     LPCWSTR       description /* [in] optional description */
     )
 {
+    static const WCHAR displayW[] = {'D','I','S','P','L','A','Y',0};
     HDC ret;
     DC *dc;
-    HDC hRefDC = hdc ? hdc : CreateDCA("DISPLAY",NULL,NULL,NULL); /* If no ref, use current display */
+    HDC hRefDC = hdc ? hdc : CreateDCW(displayW,NULL,NULL,NULL); 
+        /* If no ref, use current display */
     EMFDRV_PDEVICE *physDev;
     HANDLE hFile;
     DWORD size = 0, length = 0;
