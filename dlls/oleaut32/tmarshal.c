@@ -369,10 +369,17 @@ marshall_param(
     case VT_NULL:
 	return S_OK;
     case VT_BSTR: {	/* DWORD size, string data */
-	    DWORD *bstr = ((DWORD*)(*arg))-1;
 
-	    if (relaydeb) MESSAGE("%s",debugstr_w((LPWSTR)(bstr+1)));
-	    return xbuf_add(buf,(LPBYTE)bstr,bstr[0]+4);
+	    if (*arg) {
+		DWORD *bstr = ((DWORD*)(*arg))-1;
+
+		if (relaydeb) MESSAGE("%s",debugstr_w((LPWSTR)(bstr+1)));
+		return xbuf_add(buf,(LPBYTE)bstr,bstr[0]+4);
+	    } else {
+		DWORD xnull = 0;
+
+		return xbuf_add(buf,(LPBYTE)&xnull,sizeof(xnull));
+	    }
 	}
     case VT_BOOL:
     case VT_I4:
