@@ -40,6 +40,7 @@ typedef struct __MSVCRT_thread_data
     terminate_function       terminate_handler;
     unexpected_function      unexpected_handler;
     _se_translator_function  se_translator;
+    EXCEPTION_RECORD        *exc_record;
 } MSVCRT_thread_data;
 
 extern MSVCRT_thread_data *msvcrt_get_thread_data(void);

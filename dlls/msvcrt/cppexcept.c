@@ -47,8 +47,7 @@ typedef struct __type_info
 /* the exception frame used by CxxFrameHandler */
 typedef struct __cxx_exception_frame
 {
-    EXCEPTION_FRAME *prev;
-    void           (*handler)(PEXCEPTION_RECORD, PEXCEPTION_FRAME, PCONTEXT, PEXCEPTION_RECORD);
+    EXCEPTION_FRAME  frame;    /* the standard exception frame */
     int              trylevel;
     DWORD            ebp;
 } cxx_exception_frame;
@@ -116,8 +115,8 @@ typedef struct __cxx_type_info_table
 
 typedef DWORD (*cxx_exc_custom_handler)( PEXCEPTION_RECORD, cxx_exception_frame*,
                                          PCONTEXT, struct __EXCEPTION_FRAME**,
-                                         cxx_function_descr*, DWORD unknown1,
-                                         DWORD unknown2, DWORD unknown3 );
+                                         cxx_function_descr*, int nested_trylevel,
+                                         EXCEPTION_FRAME *nested_frame, DWORD unknown3 );
 
 /* type information for an exception object */
 typedef struct __cxx_exception_type
@@ -130,6 +129,11 @@ typedef struct __cxx_exception_type
 
 
 #ifdef __i386__  /* CxxFrameHandler is not supported on non-i386 */
+
+static DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
+                                PCONTEXT exc_context, EXCEPTION_FRAME** dispatch,
+                                cxx_function_descr *descr, EXCEPTION_FRAME* nested_frame,
+                                int nested_trylevel, CONTEXT86 *context );
 
 /* call a function with a given ebp */
 inline static void *call_ebp_func( void *func, void *ebp )
@@ -311,15 +315,47 @@ static void cxx_local_unwind( cxx_exception_frame* frame, cxx_function_descr *de
     frame->trylevel = last_level;
 }
 
+/* exception frame for nested exceptions in catch block */
+struct catch_func_nested_frame
+{
+    EXCEPTION_FRAME      frame;     /* standard exception frame */
+    EXCEPTION_RECORD    *prev_rec;  /* previous record to restore in thread data */
+    cxx_exception_frame *cxx_frame; /* frame of parent exception */
+    cxx_function_descr  *descr;     /* descriptor of parent exception */
+    int                  trylevel;  /* current try level */
+};
+
+/* handler for exceptions happening while calling a catch function */
+static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_FRAME *frame,
+                                            CONTEXT *context, EXCEPTION_FRAME **dispatcher )
+{
+    struct catch_func_nested_frame *nested_frame = (struct catch_func_nested_frame *)frame;
+
+    if (rec->ExceptionFlags & (EH_UNWINDING | EH_EXIT_UNWIND))
+    {
+        msvcrt_get_thread_data()->exc_record = nested_frame->prev_rec;
+        return ExceptionContinueSearch;
+    }
+    else
+    {
+        TRACE( "got nested exception in catch function\n" );
+        return cxx_frame_handler( rec, nested_frame->cxx_frame, context,
+                                  NULL, nested_frame->descr, &nested_frame->frame,
+                                  nested_frame->trylevel, context );
+    }
+}
+
 /* find and call the appropriate catch block for an exception */
 /* returns the address to continue execution to after the catch block was called */
 inline static void *call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame *frame,
-                                      EXCEPTION_FRAME *unwind_frame,
-                                      cxx_function_descr *descr, int trylevel,
+                                      cxx_function_descr *descr, int nested_trylevel,
                                       cxx_exception_type *info )
 {
     int i, j;
     void *addr, *object = (void *)rec->ExceptionInformation[1];
+    struct catch_func_nested_frame nested_frame;
+    int trylevel = frame->trylevel;
+    MSVCRT_thread_data *thread_data = msvcrt_get_thread_data();
 
     for (i = 0; i < descr->tryblock_count; i++)
     {
@@ -341,14 +377,28 @@ inline static void *call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame
             copy_exception( object, frame, catchblock, type );
 
             /* unwind the stack */
-            RtlUnwind( unwind_frame, 0, rec, 0 );
+            RtlUnwind( frame, 0, rec, 0 );
             cxx_local_unwind( frame, descr, tryblock->start_level );
             frame->trylevel = tryblock->end_level + 1;
 
             /* call the catch block */
             TRACE( "calling catch block %p for type %p addr %p ebp %p\n",
                    catchblock, type, catchblock->handler, &frame->ebp );
+
+            /* setup an exception block for nested exceptions */
+
+            nested_frame.frame.Handler = catch_function_nested_handler;
+            nested_frame.prev_rec  = thread_data->exc_record;
+            nested_frame.cxx_frame = frame;
+            nested_frame.descr     = descr;
+            nested_frame.trylevel  = nested_trylevel + 1;
+
+            __wine_push_frame( &nested_frame.frame );
+            thread_data->exc_record = rec;
             addr = call_ebp_func( catchblock->handler, &frame->ebp );
+            thread_data->exc_record = nested_frame.prev_rec;
+            __wine_pop_frame( &nested_frame.frame );
+
             if (info->destructor) call_dtor( info->destructor, object );
             TRACE( "done, continuing at %p\n", addr );
             return addr;
@@ -365,7 +415,8 @@ inline static void *call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame
  */
 static DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
                                 PCONTEXT exc_context, EXCEPTION_FRAME** dispatch,
-                                cxx_function_descr *descr, CONTEXT86 *context )
+                                cxx_function_descr *descr, EXCEPTION_FRAME* nested_frame,
+                                int nested_trylevel, CONTEXT86 *context )
 {
     cxx_exception_type *exc_type;
     void *next_ip;
@@ -377,30 +428,38 @@ static DWORD cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* fram
     }
     if (rec->ExceptionFlags & (EH_UNWINDING|EH_EXIT_UNWIND))
     {
-        if (descr->unwind_count) cxx_local_unwind( frame, descr, -1 );
+        if (descr->unwind_count && !nested_trylevel) cxx_local_unwind( frame, descr, -1 );
         return ExceptionContinueSearch;
     }
     if (!descr->tryblock_count) return ExceptionContinueSearch;
 
     exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
-    if (rec->ExceptionCode != CXX_EXCEPTION) goto normal_handler;
-    if (rec->ExceptionInformation[0] != CXX_FRAME_MAGIC) goto normal_handler;
-    if (exc_type->custom_handler)
-        return exc_type->custom_handler( rec, frame, exc_context, dispatch, descr, 0, 0, 0 );
+    if (rec->ExceptionCode == CXX_EXCEPTION &&
+        rec->ExceptionInformation[0] > CXX_FRAME_MAGIC &&
+        exc_type->custom_handler)
+    {
+        return exc_type->custom_handler( rec, frame, exc_context, dispatch,
+                                         descr, nested_trylevel, nested_frame, 0 );
+    }
 
- normal_handler:
+    if (!exc_type)  /* nested exception, fetch info from original exception */
+    {
+        rec = msvcrt_get_thread_data()->exc_record;
+        exc_type = (cxx_exception_type *)rec->ExceptionInformation[2];
+    }
+
     if (TRACE_ON(seh))
     {
-        TRACE("handling C++ exception rec %p frame %p trylevel %d descr %p\n",
-              rec, frame, frame->trylevel, descr );
+        TRACE("handling C++ exception rec %p frame %p trylevel %d descr %p nested_frame %p\n",
+              rec, frame, frame->trylevel, descr, nested_frame );
         dump_exception_type( exc_type );
         dump_function_descr( descr, exc_type );
     }
 
-    next_ip = call_catch_block( rec, frame, (EXCEPTION_FRAME *)frame,
-                                descr, frame->trylevel, exc_type );
+    next_ip = call_catch_block( rec, frame, descr, frame->trylevel, exc_type );
 
     if (!next_ip) return ExceptionContinueSearch;
+    rec->ExceptionFlags &= ~EH_NONCONTINUABLE;
     context->Eip = (DWORD)next_ip;
     context->Ebp = (DWORD)&frame->ebp;
     context->Esp = ((DWORD*)frame)[-1];
@@ -417,7 +476,7 @@ void __CxxFrameHandler( PEXCEPTION_RECORD rec, EXCEPTION_FRAME* frame,
 {
     cxx_function_descr *descr = (cxx_function_descr *)context->Eax;
     context->Eax = cxx_frame_handler( rec, (cxx_exception_frame *)frame,
-                                      exc_context, dispatch, descr, context );
+                                      exc_context, dispatch, descr, NULL, 0, context );
 }
 
 #endif  /* __i386__ */
