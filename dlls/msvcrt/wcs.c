@@ -201,7 +201,10 @@ int _vsnwprintf(WCHAR *str, unsigned int len,
           {
             *fmta++ = *iter;
             *fmta = '\0';
-            sprintf(bufaiter, fmtbufa, va_arg(valist, void *));
+            if (*iter == (WCHAR)L'f')
+              sprintf(bufaiter, fmtbufa, va_arg(valist, double));
+            else
+              sprintf(bufaiter, fmtbufa, va_arg(valist, void *));
           }
           while (*bufaiter)
           {
