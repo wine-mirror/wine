@@ -312,6 +312,13 @@ BOOL  WINAPI GetFileDialog95A(LPOPENFILENAMEA ofn,UINT iDlgType)
 
   ofn->nFileOffset = fodInfos->ofnInfos.nFileOffset;
   ofn->nFileExtension = fodInfos->ofnInfos.nFileExtension;
+
+  /*
+     Transfer the combo index in the OPENFILENAME structure;
+     No support for custom filters, so nFilterIndex must be one-based.
+  */
+  ofn->nFilterIndex = fodInfos->ofnInfos.nFilterIndex + 1;
+
   if (fodInfos->ofnInfos.lpstrFilter)
       MemFree((LPVOID)(fodInfos->ofnInfos.lpstrFilter));
   if (fodInfos->ofnInfos.lpTemplateName)
@@ -458,6 +465,13 @@ BOOL  WINAPI GetFileDialog95W(LPOPENFILENAMEW ofn,UINT iDlgType)
   /* Cleaning */
   ofn->nFileOffset = fodInfos->ofnInfos.nFileOffset;
   ofn->nFileExtension = fodInfos->ofnInfos.nFileExtension;
+
+  /*
+     Transfer the combo index in the OPENFILENAME structure;
+     No support for custom filters, so nFilterIndex must be one-based.
+  */
+  ofn->nFilterIndex = fodInfos->ofnInfos.nFilterIndex + 1;
+
   if (fodInfos->ofnInfos.lpstrFilter)
     MemFree((LPVOID)(fodInfos->ofnInfos.lpstrFilter));
   if (fodInfos->ofnInfos.lpTemplateName)
@@ -491,7 +505,7 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
 {
 
 	HWND hwndChild,hwndStc32;
-	RECT rectParent,rectChild,rectCtrl,rectStc32;
+	RECT rectParent, rectChild, rectCtrl, rectStc32, rectTemp;
 	POINT ptMoveCtl;
 	HDWP handle;
 	POINT ptParentClient;
@@ -502,13 +516,13 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
 	GetClientRect(hwndChildDlg,&rectChild);
 	if(hwndStc32)
 	{
-		RECT rectTemp;
 		GetWindowRect(hwndStc32,&rectStc32);
 		MapWindowPoints(0, hwndChildDlg,(LPPOINT)&rectStc32,2);
 		CopyRect(&rectTemp,&rectStc32);
 
 		SetRect(&rectStc32,rectStc32.left,rectStc32.top,rectStc32.left + (rectParent.right-rectParent.left),rectStc32.top+(rectParent.bottom-rectParent.top));
 		SetWindowPos(hwndStc32,0,rectStc32.left,rectStc32.top,rectStc32.right-rectStc32.left,rectStc32.bottom-rectStc32.top,SWP_NOMOVE|SWP_NOZORDER | SWP_NOACTIVATE);
+
 		if(rectStc32.right < rectTemp.right)
 		{
 			ptParentClient.x = max((rectParent.right-rectParent.left),(rectChild.right-rectChild.left));
@@ -556,6 +570,7 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
 	}
 	else
 		SetRect(&rectStc32,0,0,0,0);
+
 	if (hwndChild && handle)
 	{
 		do
@@ -566,24 +581,33 @@ void ArrangeCtrlPositions( HWND hwndChildDlg, HWND hwndParentDlg)
 				continue;
 			GetWindowRect(hwndChild,&rectCtrl);
 			MapWindowPoints( 0, hwndParentDlg,(LPPOINT)&rectCtrl,2);
-			if(rectCtrl.top > rectStc32.top)
-			{
                                   
-				if(ptMoveCtl.x > 0)
+				/*
+				   Check the initial position of the controls relative to the initial
+				   position and size of stc32 (before it is expanded).
+				*/
+                if (rectCtrl.left > rectTemp.right && rectCtrl.top > rectTemp.bottom)
+				{
 					rectCtrl.left += ptMoveCtl.x;
 				rectCtrl.top  += ptMoveCtl.y;
+				}
+				else if (rectCtrl.left > rectTemp.right)
+					rectCtrl.left += ptMoveCtl.x;
+				else if (rectCtrl.top > rectTemp.bottom)
+					rectCtrl.top  += ptMoveCtl.y;
+					
 				handle = DeferWindowPos(handle, hwndChild, 0, rectCtrl.left, rectCtrl.top, 
 				rectCtrl.right-rectCtrl.left,rectCtrl.bottom-rectCtrl.top,
 				SWP_NOSIZE | SWP_NOZORDER );
 				}
 			}
-		}
 		while ((hwndChild=GetWindow( hwndChild, GW_HWNDNEXT )) != (HWND)NULL && handle);
 	}		
 	if(handle)
 		EndDeferWindowPos( handle );
 	handle = BeginDeferWindowPos( 1 );
 	hwndChild = GetWindow(hwndParentDlg,GW_CHILD);
+	
 	if(hwndStc32)
 	{
 		GetWindowRect(hwndStc32,&rectStc32);
@@ -1088,6 +1112,9 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
       strcpy(lpstrPathSpec,lpstrSpecifiedByUser);
       COMDLG32_PathRemoveFileSpecA(lpstrPathSpec);
       
+      /* Get the index of the selected item in the filetype combo box */
+      fodInfos->ofnInfos.nFilterIndex = (DWORD) CBGetCurSel(fodInfos->DlgInfos.hwndFileTypeCB);
+
       /* Get the current directory name */
       COMDLG32_SHGetPathFromIDListA(fodInfos->ShellInfos.pidlAbsCurrent,
 				    lpstrCurrentDir);
@@ -1214,11 +1241,27 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
 				       lpstrFileSpec)))
     {
           ULONG  ulAttr = SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
+	  int    nMsgBoxRet;
+	  char   lpstrFileExist[MAX_PATH + 50];
+
           IShellFolder_GetAttributesOf(fodInfos->Shell.FOIShellFolder, 
 				       1, 
 				       &browsePidl, 
 				       &ulAttr);
 
+	  /* The file does exist, so ask the user if we should overwrite it */
+	  if(fodInfos->ofnInfos.Flags & OFN_OVERWRITEPROMPT)
+	  {
+		strcpy(lpstrFileExist, lpstrFileSpec);
+		strcat(lpstrFileExist, " already exists.\nDo you want to replace it?");
+
+		nMsgBoxRet = MessageBoxA(hwnd,
+			    		lpstrFileExist,
+			    		fodInfos->ofnInfos.lpstrTitle,
+			    		MB_YESNO | MB_ICONEXCLAMATION);
+		if(nMsgBoxRet == IDNO) return FALSE;
+	  }
+	
 	  /* Browse to directory */
 	  if(ulAttr)
         {
@@ -1585,7 +1628,7 @@ static BOOL FILEDLG95_FILETYPE_OnCommand(HWND hwnd, WORD wNotifyCode)
 
       lpstrFilter = (LPSTR) CBGetItemDataPtr(fodInfos->DlgInfos.hwndFileTypeCB,
                                              iItem);
-      if((INT)lpstrFilter != CB_ERR)
+      if(lpstrFilter)
       {
         fodInfos->ShellInfos.lpstrCurrentFilter = MemAlloc((strlen(lpstrFilter)+1)*2);
         lstrcpyAtoW(fodInfos->ShellInfos.lpstrCurrentFilter,(LPSTR)strlwr((LPSTR)lpstrFilter));
