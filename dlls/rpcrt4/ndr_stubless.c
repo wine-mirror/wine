@@ -39,7 +39,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 
-LONG_PTR RPCRT4_NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat, va_list args)
+LONG_PTR /* CLIENT_CALL_RETURN */ RPCRT4_NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat, va_list args)
 {
   FIXME("(%p,%p,...)\n", pStubDesc, pFormat);
   return 0;
@@ -48,17 +48,16 @@ LONG_PTR RPCRT4_NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pFormat
 /***********************************************************************
  *           NdrClientCall2 [RPCRT4.@]
  */
-CLIENT_CALL_RETURN WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc,
-                                         PFORMAT_STRING pFormat,
-                                         ...)
+LONG_PTR /* CLIENT_CALL_RETURN */ WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc,
+  PFORMAT_STRING pFormat, ...)
 {
-    CLIENT_CALL_RETURN ret;
+    LONG_PTR ret;
     va_list args;
 
     TRACE("(%p,%p,...)\n", pStubDesc, pFormat);
 
     va_start(args, pFormat);
-    ret = (CLIENT_CALL_RETURN)RPCRT4_NdrClientCall2(pStubDesc, pFormat, args);
+    ret = RPCRT4_NdrClientCall2(pStubDesc, pFormat, args);
     va_end(args);
     return ret;
 }
