@@ -124,7 +124,8 @@ static const char main_key_CF[MAIN_LEN][4] =
  "#|\\","1!±","2\"@","3/£","4$¢","5%¤","6?¬","7&¦","8*²","9(³","0)³","-_½","=+¾",
  "qQ","wW","eE","rR","tT","yY","uU","iI","oO§","pP¶","^^[","¨]",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL",";:~","``{","<>}",
- "zZ","xX","cC","vV","bB","nN","mM",",'_",".","éÉ'"
+ "zZ","xX","cC","vV","bB","nN","mM",",'_",".","éÉ",
+ "«»°"
 };
 
 /*** Portuguese keyboard layout */
