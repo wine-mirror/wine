@@ -2040,6 +2040,8 @@ static BOOL PROPSHEET_CanSetCurSel(HWND hwndDlg)
   HWND hwndPage;
   PSHNOTIFY psn;
   BOOL res = FALSE;
+  HWND hwndTabControl;
+  RECT rect;
 
   TRACE("active_page %d\n", psInfo->active_page);
   if (!psInfo)
@@ -2064,6 +2066,16 @@ static BOOL PROPSHEET_CanSetCurSel(HWND hwndDlg)
   psn.lParam       = 0;
 
   res = !SendMessageA(hwndPage, WM_NOTIFY, 0, (LPARAM) &psn);
+
+  /*
+   *  Re-adjust the tab control's contents
+   */
+  hwndTabControl = GetDlgItem(hwndDlg, IDC_TABCONTROL);
+  memset( &rect, 0, sizeof rect );
+  GetClientRect( hwndTabControl, &rect );
+  SendMessageW( hwndTabControl, TCM_ADJUSTRECT, 0, (LPARAM) &rect );
+  SetWindowPos( hwndPage, NULL, rect.left, rect.top,
+                rect.right - rect.left, rect.bottom - rect.top, 0 );
 
 end:
   TRACE("<-- %d\n", res);
