@@ -572,7 +572,12 @@ unsigned int _control87(unsigned int newval, unsigned int mask)
  */
 unsigned int _controlfp(unsigned int newval, unsigned int mask)
 {
+#ifdef __i386__
   return _control87( newval, mask & ~_EM_DENORMAL );
+#else
+  FIXME(":Not Implemented!\n");
+  return 0;
+#endif
 }
 
 /*********************************************************************
@@ -699,7 +704,13 @@ LONGLONG MSVCRT_div(int num, int denom)
  */
 MSVCRT_div_t MSVCRT_div(int num, int denom)
 {
-  return div(num,denom);
+  div_t dt = div(num,denom);
+  MSVCRT_div_t     ret;
+  ret.quot = dt.quot;
+  ret.rem = dt.rem;
+
+  return ret;
+
 }
 #endif /* ifdef __i386__ */
 
@@ -725,7 +736,13 @@ ULONGLONG MSVCRT_ldiv(long num, long denom)
  */
 MSVCRT_ldiv_t MSVCRT_ldiv(long num, long denom)
 {
-  return ldiv(num,denom);
+  ldiv_t result = ldiv(num,denom);
+
+  MSVCRT_ldiv_t ret;
+  ret.quot = result.quot;
+  ret.rem = result.rem;
+
+  return ret;
 }
 #endif /* ifdef __i386__ */
 

@@ -410,7 +410,7 @@ __ASM_GLOBAL_FUNC( SNOOP_Return,
                    ".long " __ASM_NAME("SNOOP_DoReturn") ",0" );
 
 #else	/* !__i386__ */
-void SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD nrofordinals) {
+void SNOOP_RegisterDLL(HMODULE hmod,LPCSTR name,DWORD nrofordinals, DWORD dw) {
 	if (!TRACE_ON(snoop)) return;
 	FIXME("snooping works only on i386 for now.\n");
 }

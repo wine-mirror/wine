@@ -65,12 +65,12 @@ typedef struct _MSVCRT_EXCEPTION_FRAME
 #define TRYLEVEL_END 0xffffffff /* End of trylevel list */
 
 #if defined(__GNUC__) && defined(__i386__)
-
 inline static void call_finally_block( void *code_block, void *base_ptr )
 {
     __asm__ __volatile__ ("movl %1,%%ebp; call *%%eax" \
                           : : "a" (code_block), "g" (base_ptr));
 }
+#endif
 
 static DWORD MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
                                    struct __EXCEPTION_FRAME* frame,
@@ -82,7 +82,6 @@ static DWORD MSVCRT_nested_handler(PEXCEPTION_RECORD rec,
   *dispatch = frame;
   return ExceptionCollidedUnwind;
 }
-#endif
 
 
 /*********************************************************************
