@@ -381,7 +381,6 @@ static int truncate_file( handle_t handle )
         release_object( file );
         return 0;
     }
-    fprintf(stderr,"server:truncated to %Ld\n",result);
     release_object( file );
     return 1;
 }
