@@ -3,6 +3,9 @@
  * defined in the 'configure' script.
  */
 
+/* Define if .type asm directive must be inside a .def directive */
+#undef NEED_TYPE_IN_DEF
+
 /* Define if symbols declared in assembly code need an underscore prefix */
 #undef NEED_UNDERSCORE_PREFIX
 

@@ -454,6 +454,25 @@ int main(void) {
   fi
 fi
 
+dnl **** Check if we need to place .type inside a .def directive ****
+
+AC_CACHE_CHECK("whether .type must sit inside a .def directive",
+	       ac_cv_c_type_in_def,
+[saved_libs=$LIBS
+LIBS="conftest_asm.s $LIBS"
+cat > conftest_asm.s <<EOF
+	.globl _ac_test
+	.def _ac_test; .scl 2; .type 32; .endef
+_ac_test:
+	.long 0
+EOF
+AC_TRY_LINK(,,ac_cv_c_type_in_def="yes",ac_cv_c_type_in_def="no")
+LIBS=$saved_libs])
+if test "$ac_cv_c_type_in_def" = "yes"
+then
+  AC_DEFINE(NEED_TYPE_IN_DEF)
+fi
+ 
 dnl **** Check for underscore on external symbols ****
 
 AC_CACHE_CHECK("whether external symbols need an underscore prefix",
