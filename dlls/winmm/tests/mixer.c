@@ -432,11 +432,13 @@ void mixer_test_deviceA(int device)
             mixerlineA.dwDestination=d;
             rc=mixerGetLineInfoA((HMIXEROBJ)mix,&mixerlineA,
                                   MIXER_GETLINEINFOF_DESTINATION);
-            ok(rc==MMSYSERR_NOERROR,
+            ok(rc==MMSYSERR_NOERROR||rc==MMSYSERR_NODRIVER,
                "mixerGetLineInfoA(MIXER_GETLINEINFOF_DESTINATION): "
                "MMSYSERR_NOERROR expected, got %s\n",
                mmsys_error(rc));
-            if (rc==MMSYSERR_NOERROR && winetest_interactive) {
+            if (rc==MMSYSERR_NODRIVER)
+                trace("  No Driver\n");
+            else if (rc==MMSYSERR_NOERROR && winetest_interactive) {
                 trace("    %ld: \"%s\" (%s) Destination=%ld Source=%ld\n",
                       d,mixerlineA.szShortName, mixerlineA.szName,
                       mixerlineA.dwDestination,mixerlineA.dwSource);
@@ -464,11 +466,13 @@ void mixer_test_deviceA(int device)
                 mixerlineA.dwSource=s;
                 rc=mixerGetLineInfoA((HMIXEROBJ)mix,&mixerlineA,
                                      MIXER_GETLINEINFOF_SOURCE);
-                ok(rc==MMSYSERR_NOERROR,
+                ok(rc==MMSYSERR_NOERROR||rc==MMSYSERR_NODRIVER,
                    "mixerGetLineInfoA(MIXER_GETLINEINFOF_SOURCE): "
                    "MMSYSERR_NOERROR expected, got %s\n",
                    mmsys_error(rc));
-                if (rc==MMSYSERR_NOERROR) {
+                if (rc==MMSYSERR_NODRIVER)
+                    trace("  No Driver\n");
+                else if (rc==MMSYSERR_NOERROR) {
                     LPMIXERCONTROLA    array;
                     MIXERLINECONTROLSA controls;
                     if (winetest_interactive) {
@@ -809,11 +813,13 @@ void mixer_test_deviceW(int device)
             mixerlineW.dwDestination=d;
             rc=mixerGetLineInfoW((HMIXEROBJ)mix,&mixerlineW,
                                   MIXER_GETLINEINFOF_DESTINATION);
-            ok(rc==MMSYSERR_NOERROR,
+            ok(rc==MMSYSERR_NOERROR||rc==MMSYSERR_NODRIVER,
                "mixerGetLineInfoW(MIXER_GETLINEINFOF_DESTINATION): "
                "MMSYSERR_NOERROR expected, got %s\n",
                mmsys_error(rc));
-            if (rc==MMSYSERR_NOERROR && winetest_interactive) {
+            if (rc==MMSYSERR_NODRIVER)
+                trace("  No Driver\n");
+            else if (rc==MMSYSERR_NOERROR && winetest_interactive) {
                 WideCharToMultiByte(CP_ACP,0,mixerlineW.szShortName,
                     MIXER_SHORT_NAME_CHARS,szShortName,
                     MIXER_SHORT_NAME_CHARS,NULL,NULL);
@@ -849,11 +855,13 @@ void mixer_test_deviceW(int device)
                 mixerlineW.dwSource=s;
                 rc=mixerGetLineInfoW((HMIXEROBJ)mix,&mixerlineW,
                                      MIXER_GETLINEINFOF_SOURCE);
-                ok(rc==MMSYSERR_NOERROR,
+                ok(rc==MMSYSERR_NOERROR||rc==MMSYSERR_NODRIVER,
                    "mixerGetLineInfoW(MIXER_GETLINEINFOF_SOURCE): "
                    "MMSYSERR_NOERROR expected, got %s\n",
                    mmsys_error(rc));
-                if (rc==MMSYSERR_NOERROR) {
+                if (rc==MMSYSERR_NODRIVER)
+                    trace("  No Driver\n");
+                else if (rc==MMSYSERR_NOERROR) {
                     LPMIXERCONTROLW    array;
                     MIXERLINECONTROLSW controls;
                     if (winetest_interactive) {
