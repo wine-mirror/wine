@@ -568,7 +568,7 @@ static void X11DRV_PALETTE_FillDefaultColors(void)
 	   XColor color = { color.pixel = (X11DRV_PALETTE_PaletteToXPixel)? X11DRV_PALETTE_PaletteToXPixel[idx] : idx ,
 	                    COLOR_sysPal[idx].peRed << 8,
 			    COLOR_sysPal[idx].peGreen << 8,
-			    COLOR_sysPal[idx].peGreen << 8,
+			    COLOR_sysPal[idx].peBlue << 8,
 			    (DoRed | DoGreen | DoBlue) };
 	   TSXStoreColor(display, X11DRV_PALETTE_PaletteXColormap, &color);
 	 }
