@@ -481,6 +481,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     DWORD load_addr = 0, aoep, reloc = 0;
     struct get_read_fd_request *req = get_req_buffer();
     int unix_handle = -1;
+    int page_size = VIRTUAL_GetPageSize();
 
     /* Retrieve file size */
     if ( GetFileInformationByHandle( hFile, &bhfi ) ) 
@@ -658,7 +659,7 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     /* Map the header */
     if (FILE_dommap( unix_handle, (void *)load_addr, 0, nt->OptionalHeader.SizeOfHeaders,
                      0, 0, PROT_EXEC | PROT_WRITE | PROT_READ,
-                     MAP_PRIVATE | MAP_FIXED ) != load_addr)
+                     MAP_PRIVATE | MAP_FIXED ) != (void*)load_addr)
     {
         ERR_(win32)( "Critical Error: failed to map PE header to necessary address.\n");	
         goto error;
@@ -668,18 +669,29 @@ HMODULE PE_LoadImage( HANDLE hFile, LPCSTR filename, WORD *version )
     pe_sec = PE_SECTIONS( hModule );
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++, pe_sec++)
     {
-        if (!pe_sec->SizeOfRawData) continue;
-        TRACE("%s: mmaping section %s at %p off %lx\n",
+        if (!pe_sec->SizeOfRawData || !pe_sec->PointerToRawData) continue;
+        TRACE("%s: mmaping section %s at %p off %lx size %lx/%lx\n",
               filename, pe_sec->Name, (void*)RVA(pe_sec->VirtualAddress),
-              pe_sec->PointerToRawData);
+              pe_sec->PointerToRawData, pe_sec->SizeOfRawData, pe_sec->Misc.VirtualSize );
         if (FILE_dommap( unix_handle, (void*)RVA(pe_sec->VirtualAddress),
-                         0, min(pe_sec->Misc.VirtualSize, pe_sec->SizeOfRawData), 
-                         0, pe_sec->PointerToRawData, PROT_EXEC | PROT_WRITE | PROT_READ,
+                         0, pe_sec->SizeOfRawData, 0, pe_sec->PointerToRawData,
+                         PROT_EXEC | PROT_WRITE | PROT_READ,
                          MAP_PRIVATE | MAP_FIXED ) != (void*)RVA(pe_sec->VirtualAddress))
         {
             /* We failed to map to the right place (huh?) */
             ERR_(win32)( "Critical Error: failed to map PE section to necessary address.\n");
             goto error;
+        }
+        if ((pe_sec->SizeOfRawData < pe_sec->Misc.VirtualSize) &&
+            (pe_sec->SizeOfRawData & (page_size-1)))
+        {
+            DWORD end = (pe_sec->SizeOfRawData & ~(page_size-1)) + page_size;
+            if (end > pe_sec->Misc.VirtualSize) end = pe_sec->Misc.VirtualSize;
+            TRACE("clearing %p - %p\n",
+                  RVA(pe_sec->VirtualAddress) + pe_sec->SizeOfRawData,
+                  RVA(pe_sec->VirtualAddress) + end );
+            memset( (char*)RVA(pe_sec->VirtualAddress) + pe_sec->SizeOfRawData, 0,
+                    end - pe_sec->SizeOfRawData );
         }
     }
 
@@ -965,7 +977,7 @@ WINE_MODREF *PE_LoadLibraryExA (LPCSTR name, DWORD flags)
 void PE_UnloadLibrary(WINE_MODREF *wm)
 {
     TRACE(" unloading %s\n", wm->filename);
-    VirtualFree( (LPVOID)wm->module, 0, MEM_RELEASE );
+/*    VirtualFree( (LPVOID)wm->module, 0, MEM_RELEASE ); */  /* FIXME */
     HeapFree( GetProcessHeap(), 0, wm->filename );
     HeapFree( GetProcessHeap(), 0, wm->short_filename );
     HeapFree( GetProcessHeap(), 0, wm );
