@@ -848,7 +848,7 @@ BOOL X11DRV_DestroyWindow( HWND hwnd )
     if (data->hWMIconBitmap) DeleteObject( data->hWMIconBitmap );
     if (data->hWMIconMask) DeleteObject( data->hWMIconMask);
     wine_tsx11_lock();
-    XDeleteContext( gdi_display, (XID)hwnd, win_data_context );
+    XDeleteContext( display, (XID)hwnd, win_data_context );
     wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, data );
 
@@ -902,10 +902,9 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     data->hWMIconBitmap = 0;
     data->hWMIconMask   = 0;
 
-    /* use gdi_display so that it's available from all threads (FIXME) */
     wine_tsx11_lock();
     if (!win_data_context) win_data_context = XUniqueContext();
-    XSaveContext( gdi_display, (XID)hwnd, win_data_context, (char *)data );
+    XSaveContext( display, (XID)hwnd, win_data_context, (char *)data );
     wine_tsx11_unlock();
 
     /* initialize the dimensions before sending WM_GETMINMAXINFO */
@@ -1058,7 +1057,8 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
 struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd )
 {
     char *data;
-    if (XFindContext( gdi_display, (XID)hwnd, win_data_context, &data )) data = NULL;
+
+    if (!hwnd || XFindContext( thread_display(), (XID)hwnd, win_data_context, &data )) data = NULL;
     return (struct x11drv_win_data *)data;
 }
 

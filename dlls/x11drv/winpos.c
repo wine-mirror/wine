@@ -176,12 +176,13 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
 {
     HWND top = get_top_clipping_window( hwnd );
     struct x11drv_escape_set_drawable escape;
+    struct x11drv_win_data *data;
 
     escape.mode = IncludeInferiors;
     /* don't clip siblings if using parent clip region */
     if (flags & DCX_PARENTCLIP) flags &= ~DCX_CLIPSIBLINGS;
 
-    if (top != hwnd)
+    if (top != hwnd || !(data = X11DRV_get_win_data( hwnd )))
     {
         POINT client_offset;
 
@@ -213,16 +214,13 @@ BOOL X11DRV_GetDC( HWND hwnd, HDC hdc, HRGN hrgn, DWORD flags )
     }
     else
     {
-        struct x11drv_win_data *data;
-
-        if (!(data = X11DRV_get_win_data( hwnd ))) return FALSE;
-
         if (IsIconic( hwnd ))
         {
             escape.drawable = data->icon_window ? data->icon_window : data->whole_window;
             escape.org.x = 0;
             escape.org.y = 0;
             escape.drawable_org = escape.org;
+            MapWindowPoints( hwnd, 0, &escape.drawable_org, 1 );
         }
         else
         {
@@ -1521,7 +1519,7 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
     if (!(data = X11DRV_get_win_data( hwnd )))
     {
         if (IsWindow( hwnd ))
-            FIXME( "not supported on other process window %p\n", hwnd );
+            FIXME( "not supported on other thread window %p\n", hwnd );
         SetLastError( ERROR_INVALID_WINDOW_HANDLE );
         return FALSE;
     }
