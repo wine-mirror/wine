@@ -182,6 +182,42 @@ DECL_WINELIB_TYPE_AW(PRINTER_INFO_2)
 DECL_WINELIB_TYPE_AW(PPRINTER_INFO_2)
 DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_2)
 
+typedef struct _PRINTER_INFO_4A {
+  LPSTR     pPrinterName;
+  LPSTR     pServerName;
+  DWORD     Attributes;
+} PRINTER_INFO_4A, *PPRINTER_INFO_4A, *LPPRINTER_INFO_4A;
+
+typedef struct _PRINTER_INFO_4W {
+  LPWSTR     pPrinterName;
+  LPWSTR     pServerName;
+  DWORD     Attributes;
+} PRINTER_INFO_4W, *PPRINTER_INFO_4W, *LPPRINTER_INFO_4W;
+
+DECL_WINELIB_TYPE_AW(PRINTER_INFO_4)
+DECL_WINELIB_TYPE_AW(PPRINTER_INFO_4)
+DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_4)
+
+typedef struct _PRINTER_INFO_5A {
+  LPSTR     pPrinterName;
+  LPSTR     pPortName;
+  DWORD     Attributes;
+  DWORD     DeviceNotSelectedTimeOut;
+  DWORD     TransmissionRetryTimeout;
+} PRINTER_INFO_5A, *PPRINTER_INFO_5A, *LPPRINTER_INFO_5A;
+
+typedef struct _PRINTER_INFO_5W {
+  LPWSTR    pPrinterName;
+  LPWSTR    pPortName;
+  DWORD     Attributes;
+  DWORD     DeviceNotSelectedTimeOut;
+  DWORD     TransmissionRetryTimeout;
+} PRINTER_INFO_5W, *PPRINTER_INFO_5W, *LPPRINTER_INFO_5W;
+
+DECL_WINELIB_TYPE_AW(PRINTER_INFO_5)
+DECL_WINELIB_TYPE_AW(PPRINTER_INFO_5)
+DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_5)
+
 #endif /* Status */
 
 /* DECLARATIONS */
@@ -224,6 +260,17 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter,
 #define OpenPrinter WINELIB_NAME_AW(OpenPrinter)
 
 BOOL WINAPI ClosePrinter (HANDLE phPrinter);
+
+BOOL  WINAPI EnumPrintersA(DWORD dwType, LPSTR lpszName,
+			       DWORD dwLevel, LPBYTE lpbPrinters,
+			       DWORD cbBuf, LPDWORD lpdwNeeded,
+			       LPDWORD lpdwReturned);
+BOOL  WINAPI EnumPrintersW(DWORD dwType, LPWSTR lpszName,
+			       DWORD dwLevel, LPBYTE lpbPrinters,
+			       DWORD cbBuf, LPDWORD lpdwNeeded,
+			       LPDWORD lpdwReturned);
+#define EnumPrinters WINELIB_NAME_AW(EnumPrinters)
+
 
 
 #ifdef __cplusplus
