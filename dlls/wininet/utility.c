@@ -29,7 +29,7 @@ time_t ConvertTimeString(LPCSTR asctime)
 {
     char tmpChar[TIME_STRING_LEN];
     char *tmpChar2;
-    struct tm SystemTime;
+    struct tm t;
     int timelen = strlen(asctime);
 
     if(!asctime || !timelen)
@@ -56,11 +56,11 @@ time_t ConvertTimeString(LPCSTR asctime)
     tmpChar[22]='\0';
     tmpChar[25]='\0';
 
-    SystemTime.tm_year = atoi(tmpChar+12) - 1900;
-    SystemTime.tm_mday = atoi(tmpChar+5);
-    SystemTime.tm_hour = atoi(tmpChar+17);
-    SystemTime.tm_min = atoi(tmpChar+20);
-    SystemTime.tm_sec = atoi(tmpChar+23);
+    t.tm_year = atoi(tmpChar+12) - 1900;
+    t.tm_mday = atoi(tmpChar+5);
+    t.tm_hour = atoi(tmpChar+17);
+    t.tm_min = atoi(tmpChar+20);
+    t.tm_sec = atoi(tmpChar+23);
 	
     /* and month */
     tmpChar2 = tmpChar + 8;
@@ -68,45 +68,45 @@ time_t ConvertTimeString(LPCSTR asctime)
     {
         case 'n':
             if(tmpChar2[1]=='a')
-                SystemTime.tm_mon = 0;
+                t.tm_mon = 0;
             else
-                SystemTime.tm_mon = 5;
+                t.tm_mon = 5;
             break;
         case 'b':
-            SystemTime.tm_mon = 1;
+            t.tm_mon = 1;
             break;
         case 'r':
             if(tmpChar2[1]=='a')
-                SystemTime.tm_mon = 2;
+                t.tm_mon = 2;
             else
-                SystemTime.tm_mon = 3;
+                t.tm_mon = 3;
             break;
         case 'y':
-            SystemTime.tm_mon = 4;
+            t.tm_mon = 4;
             break;
         case 'l':
-            SystemTime.tm_mon = 6;
+            t.tm_mon = 6;
             break;
         case 'g':
-            SystemTime.tm_mon = 7;
+            t.tm_mon = 7;
             break;
         case 'p':
-            SystemTime.tm_mon = 8;
+            t.tm_mon = 8;
             break;
         case 't':
-            SystemTime.tm_mon = 9;
+            t.tm_mon = 9;
             break;
         case 'v':
-            SystemTime.tm_mon = 10;
+            t.tm_mon = 10;
             break;
         case 'c':
-            SystemTime.tm_mon = 11;
+            t.tm_mon = 11;
             break;
         default:
             FIXME("\n");
     }
 
-    return mktime(&SystemTime);
+    return mktime(&t);
 }
 
 
