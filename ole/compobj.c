@@ -1155,7 +1155,7 @@ HRESULT WINAPI CoRevokeClassObject32(
  *           CoGetClassObject [COMPOBJ.7]
  */
 HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
-                        LPVOID pvReserved, const REFIID iid, LPVOID *ppv)
+                        LPVOID pvReserved, REFIID iid, LPVOID *ppv)
 {
     LPUNKNOWN regClassObject;
     char xclsid[50],xiid[50];
