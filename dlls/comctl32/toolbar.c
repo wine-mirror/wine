@@ -104,6 +104,7 @@ typedef struct
     HWND     hwndNotify;      /* handle to the window that gets notifications */
     HWND     hwndSelf;        /* my own handle */
     BOOL     bTransparent;    /* background transparency flag */
+    BOOL     bBtnTranspnt;    /* button transparency flag */
     BOOL     bAutoSize;       /* auto size deadlock indicator */
     BOOL     bAnchor;         /* anchor highlight enabled */
     BOOL     bNtfUnicode;     /* TRUE if NOTIFYs use {W} */
@@ -198,8 +199,6 @@ TOOLBAR_CheckStyle (HWND hwnd, DWORD dwStyle)
 	FIXME("[%04x] TBSTYLE_ALTDRAG not implemented\n", hwnd);
     if (dwStyle & TBSTYLE_REGISTERDROP)
 	FIXME("[%04x] TBSTYLE_REGISTERDROP not implemented\n", hwnd);
-    if (dwStyle & TBSTYLE_TRANSPARENT)
-	FIXME("[%04x] TBSTYLE_TRANSPARENT not implemented\n", hwnd);
 }
 
 
@@ -459,7 +458,7 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 		    rcText.left += (infoPtr->nBitmapWidth + 2);
 		}
 		else {
-		    rcText.top += infoPtr->nBitmapHeight;
+		    rcText.top += infoPtr->nBitmapHeight + 1;
 		}
 	}
 	else {
@@ -572,7 +571,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     CopyRect (&rcArrow, &rc);
     CopyRect(&rcBitmap, &rc);
 
-    if (!infoPtr->bTransparent)
+    if (!infoPtr->bBtnTranspnt)
 	FillRect( hdc, &rc, GetSysColorBrush(COLOR_BTNFACE));
 
     if (hasDropDownArrow)
@@ -773,7 +772,7 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
 
     TOOLBAR_DumpToolbar (infoPtr, __LINE__);
 
-    if (infoPtr->bTransparent)
+    if (infoPtr->bBtnTranspnt)
 	oldBKmode = SetBkMode (hdc, TRANSPARENT);
 
     /* redraw necessary buttons */
@@ -784,7 +783,7 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
             TOOLBAR_DrawButton (hwnd, btnPtr, hdc);
     }
 
-    if (infoPtr->bTransparent && (oldBKmode != TRANSPARENT))
+    if (infoPtr->bBtnTranspnt && (oldBKmode != TRANSPARENT))
 	SetBkMode (hdc, oldBKmode);
 }
 
@@ -1078,8 +1077,19 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 
     if (dwStyle & TBSTYLE_LIST)
     {
-	infoPtr->nButtonHeight = max(infoPtr->nBitmapHeight, sizeString.cy) + 6;
-	infoPtr->nButtonWidth = infoPtr->nBitmapWidth + sizeString.cx + 6;
+        for (i = 0; i < infoPtr->nNumButtons && !usesBitmaps; i++)
+        {
+	    if (infoPtr->buttons[i].iBitmap >= 0)
+	        usesBitmaps = TRUE;
+        }
+	infoPtr->nButtonHeight = max((usesBitmaps) ? infoPtr->nBitmapHeight :
+				     0, sizeString.cy) + 6;
+	infoPtr->nButtonWidth = ((usesBitmaps) ? infoPtr->nBitmapWidth :
+				 0) + sizeString.cx + 6;
+	TRACE("LIST style, But w=%d h=%d, useBitmaps=%d, Bit w=%d h=%d\n",
+	      infoPtr->nButtonWidth, infoPtr->nButtonHeight, usesBitmaps,
+	      infoPtr->nBitmapWidth, infoPtr->nBitmapHeight);
+	TOOLBAR_DumpToolbar (infoPtr, __LINE__);
     }
     else {
         for (i = 0; i < infoPtr->nNumButtons && !usesBitmaps; i++)
@@ -1091,7 +1101,8 @@ TOOLBAR_CalcToolbar (HWND hwnd)
         if (sizeString.cy > 0)
         {
             if (usesBitmaps)
-	      infoPtr->nButtonHeight = sizeString.cy +
+		infoPtr->nButtonHeight = sizeString.cy + 
+		    2 + /* this is the space to separate text from bitmap */
                   infoPtr->nBitmapHeight + 6;
             else 
                 infoPtr->nButtonHeight = sizeString.cy + 6;
@@ -1107,13 +1118,13 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 
     if ( infoPtr->cxMin >= 0 && infoPtr->nButtonWidth < infoPtr->cxMin )
         infoPtr->nButtonWidth = infoPtr->cxMin;
-    if ( infoPtr->cxMax >= 0 && infoPtr->nButtonWidth > infoPtr->cxMax )
+    if ( infoPtr->cxMax > 0 && infoPtr->nButtonWidth > infoPtr->cxMax )
         infoPtr->nButtonWidth = infoPtr->cxMax;
 
     TOOLBAR_WrapToolbar( hwnd, dwStyle );
 
     x  = infoPtr->nIndent;
-    y  = (dwStyle & TBSTYLE_FLAT) ? 0 : TOP_BORDER;
+    y  = 0;
 
    /*
     * We will set the height below, and we set the width on entry 
@@ -2759,8 +2770,11 @@ TOOLBAR_GetButtonSize (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
-    return MAKELONG((WORD)infoPtr->nButtonWidth,
-		    (WORD)infoPtr->nButtonHeight);
+    if (infoPtr->nNumButtons > 0)
+	return MAKELONG((WORD)infoPtr->nButtonWidth,
+			(WORD)infoPtr->nButtonHeight);
+    else
+	return MAKELONG(8,7);
 }
 
 
@@ -4012,7 +4026,8 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nOldHit = -1;
     infoPtr->nHotItem = -2; /* It has to be initially different from nOldHit */
     infoPtr->hwndNotify = GetParent (hwnd);
-    infoPtr->bTransparent = (dwStyle & (TBSTYLE_FLAT | TBSTYLE_TRANSPARENT));
+    infoPtr->bTransparent = (dwStyle & TBSTYLE_TRANSPARENT);
+    infoPtr->bBtnTranspnt = (dwStyle & (TBSTYLE_FLAT | TBSTYLE_LIST));
     infoPtr->dwDTFlags = (dwStyle & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE : DT_CENTER;
     infoPtr->bAnchor = FALSE; /* no anchor highlighting */
     infoPtr->iVersion = 0;
@@ -4094,15 +4109,15 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     NMTBCUSTOMDRAW tbcd;
-    INT ret;
+    INT ret, ntfret;
 
     if (dwStyle & TBSTYLE_CUSTOMERASE) {
 	ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
 	tbcd.nmcd.dwDrawStage = CDDS_PREERASE;
 	tbcd.nmcd.hdc = (HDC)wParam;
-	ret = TOOLBAR_SendNotify ((NMHDR *)&tbcd, infoPtr, NM_CUSTOMDRAW);
+	ntfret = TOOLBAR_SendNotify ((NMHDR *)&tbcd, infoPtr, NM_CUSTOMDRAW);
 	/* FIXME: in general the return flags *can* be or'ed together */
-	switch (ret) 
+	switch (ntfret) 
 	    {
 	    case CDRF_DODEFAULT:
 		break;
@@ -4110,7 +4125,7 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		return TRUE;
 	    default:
 		FIXME("[%04x] response %d not handled to NM_CUSTOMDRAW (CDDS_PREERASE)\n",
-		      hwnd, ret);
+		      hwnd, ntfret);
 	    }
     }
 
@@ -4131,13 +4146,14 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	SetWindowOrgEx (hdc, ptorig.x, ptorig.y, 0);
 	return TRUE;
     }
+    ret = DefWindowProcA (hwnd, WM_ERASEBKGND, wParam, lParam);
 
     if (dwStyle & TBSTYLE_CUSTOMERASE) {
 	ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
 	tbcd.nmcd.dwDrawStage = CDDS_POSTERASE;
 	tbcd.nmcd.hdc = (HDC)wParam;
-	ret = TOOLBAR_SendNotify ((NMHDR *)&tbcd, infoPtr, NM_CUSTOMDRAW);
-	switch (ret) 
+	ntfret = TOOLBAR_SendNotify ((NMHDR *)&tbcd, infoPtr, NM_CUSTOMDRAW);
+	switch (ntfret) 
 	    {
 	    case CDRF_DODEFAULT:
 		break;
@@ -4145,10 +4161,10 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
 		return TRUE;
 	    default:
 		FIXME("[%04x] response %d not handled to NM_CUSTOMDRAW (CDDS_PREERASE)\n",
-		      hwnd, ret);
+		      hwnd, ntfret);
 	    }
     }
-    return DefWindowProcA (hwnd, WM_ERASEBKGND, wParam, lParam);
+    return ret;
 }
 
 
@@ -4549,6 +4565,8 @@ static LRESULT
 TOOLBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr;
+    LPCREATESTRUCTA cs = (LPCREATESTRUCTA)lParam;
+    DWORD styleadd = 0;
 
     /* allocate memory for info structure */
     infoPtr = (TOOLBAR_INFO *)COMCTL32_Alloc (sizeof(TOOLBAR_INFO));
@@ -4561,6 +4579,58 @@ TOOLBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (!GetWindowLongA (hwnd, GWL_HINSTANCE)) {
         HINSTANCE hInst = (HINSTANCE)GetWindowLongA (GetParent (hwnd), GWL_HINSTANCE);
 	SetWindowLongA (hwnd, GWL_HINSTANCE, (DWORD)hInst);
+    }
+
+    /* native control does:
+     *    Get a lot of colors and brushes
+     *    WM_NOTIFYFORMAT
+     *    SystemParametersInfoA(0x1f, 0x3c, adr1, 0)
+     *    CreateFontIndirectA(adr1)
+     *    CreateBitmap(0x27, 0x24, 1, 1, 0)
+     *    hdc = GetDC(toolbar)
+     *    GetSystemMetrics(0x48)
+     *    fnt2=CreateFontA(0xe, 0, 0, 0, 0x190, 0, 0, 0, 0, 2, 
+     *                     0, 0, 0, 0, "MARLETT")
+     *    oldfnt = SelectObject(hdc, fnt2)
+     *    GetCharWidthA(hdc, 0x36, 0x36, adr2)
+     *    GetTextMetricsA(hdc, adr3)
+     *    SelectObject(hdc, oldfnt)
+     *    DeleteObject(fnt2)
+     *    ReleaseDC(hdc)
+     *    InvalidateRect(toolbar, 0, 1)
+     *    SetWindowLongA(toolbar, 0, addr)
+     *    SetWindowLongA(toolbar, -16, xxx)  **sometimes**
+     *                                          WM_STYLECHANGING
+     *                             CallWinEx   old         new
+     *                       ie 1  0x56000a4c  0x46000a4c  0x56008a4d
+     *                       ie 2  0x4600094c  0x4600094c  0x4600894d
+     *                       ie 3  0x56000b4c  0x46000b4c  0x56008b4d
+     *                      rebar  0x50008844  0x40008844  0x50008845
+     *                      pager  0x50000844  0x40000844  0x50008845
+     *                    IC35mgr  0x5400084e  **nochange**
+     *           on entry to _NCCREATE         0x5400084e
+     *                    rowlist  0x5400004e  **nochange**
+     *           on entry to _NCCREATE         0x5400004e
+     *
+     */
+
+    /* I think the code below is a bug, but it is the way that the native
+     * controls seem to work. The effect is that if the user of TBSTYLE_FLAT
+     * forgets to specify TBSTYLE_TRANSPARENT but does specify either
+     * CCS_TOP or CCS_BOTTOM (_NOMOVEY and _TOP), then the control
+     * does *not* set TBSTYLE_TRANSPARENT even though it should!!!!
+     * Some how, the only cases of this seem to be MFC programs.
+     *
+     * Note also that the addition of _TRANSPARENT occurs *only* here. It
+     * does not occur in the WM_STYLECHANGING routine.
+     *    (Guy Albertelli   9/2001)
+     *
+     */
+    if ((cs->style & TBSTYLE_FLAT) && !(cs->style & TBSTYLE_TRANSPARENT))
+	styleadd |= TBSTYLE_TRANSPARENT;
+    if (!(cs->style & (CCS_TOP | CCS_NOMOVEY))) {
+	styleadd |= CCS_TOP;   /* default to top */
+	SetWindowLongA (hwnd, GWL_STYLE, cs->style | styleadd);
     }
 
     return DefWindowProcA (hwnd, WM_NCCREATE, wParam, lParam);
@@ -4767,6 +4837,9 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
 	else {
 	    infoPtr->dwDTFlags = DT_CENTER;
 	}
+	infoPtr->bTransparent = (lpStyle->styleNew & TBSTYLE_TRANSPARENT);
+	infoPtr->bBtnTranspnt = (lpStyle->styleNew & 
+				 (TBSTYLE_FLAT | TBSTYLE_LIST));
 	TOOLBAR_CheckStyle (hwnd, lpStyle->styleNew);
     }
 
