@@ -228,14 +228,14 @@ HACCEL WINAPI CreateAcceleratorTableA(LPACCEL lpaccel, INT cEntries)
   }
   accel = GlobalLock16(HACCEL_16(hAccel));
   for (i=0;i<cEntries;i++) {
-  	accel[i].fVirt = lpaccel[i].fVirt;
-  	accel[i].key = lpaccel[i].key;
-  	accel[i].cmd = lpaccel[i].cmd;
+      accel[i].fVirt = lpaccel[i].fVirt & ~0x80;
+      accel[i].key = lpaccel[i].key;
+      accel[i].cmd = lpaccel[i].cmd;
   }
   /* Set the end-of-table terminator. */
   accel[cEntries-1].fVirt |= 0x80;
 
-  TRACE_(accel)("Allocated accelerator handle %p\n", hAccel);
+  TRACE_(accel)("Allocated accelerator handle %p with %d entries\n", hAccel,cEntries);
   return hAccel;
 }
 
