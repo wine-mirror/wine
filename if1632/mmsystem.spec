@@ -3,8 +3,8 @@ type	win16
 init	MMSYSTEM_LibMain
 
 #1      pascal  MMSYSTEM_WEP(word word word ptr) MMSYSTEM_WEP
-2      pascal  SNDPLAYSOUND(ptr word) sndPlaySoundA
-3      stub    PLAYSOUND
+2      pascal  sndPlaySound(ptr word) sndPlaySound16
+3      pascal  PlaySound(ptr word long) PlaySound16
 5      pascal  mmsystemGetVersion() mmsystemGetVersion16
 6      pascal  DriverProc(long word word long long) DriverProc16
 8      stub    WMMMIDIRUNONCE

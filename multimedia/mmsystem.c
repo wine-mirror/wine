@@ -30,6 +30,7 @@
 #include "user.h"
 #include "driver.h"
 #include "multimedia.h"
+#include "syslevel.h"
 #include "callback.h"
 #include "module.h"
 #include "selectors.h"
@@ -381,9 +382,23 @@ BOOL WINAPI PlaySoundW(LPCWSTR pszSound, HMODULE hmod, DWORD fdwSound)
 }
 
 /**************************************************************************
- * 				sndPlaySoundA		[MMSYSTEM.2][WINMM135]
+ * 				PlaySound16		[MMSYSTEM.3]
  */
-BOOL16 WINAPI sndPlaySoundA(LPCSTR lpszSoundName, UINT16 uFlags)
+BOOL16 WINAPI PlaySound16(LPCSTR pszSound, HMODULE16 hmod, DWORD fdwSound)
+{
+    BOOL16 retv;
+
+    SYSLEVEL_ReleaseWin16Lock();
+    retv = PlaySoundA( pszSound, hmod, fdwSound );
+    SYSLEVEL_RestoreWin16Lock();
+
+    return retv;
+}
+
+/**************************************************************************
+ * 				sndPlaySoundA		[WINMM135]
+ */
+BOOL WINAPI sndPlaySoundA(LPCSTR lpszSoundName, UINT uFlags)
 {
     PlaySound_SearchMode = 1;
     return PlaySoundA(lpszSoundName, 0, uFlags);
@@ -392,11 +407,26 @@ BOOL16 WINAPI sndPlaySoundA(LPCSTR lpszSoundName, UINT16 uFlags)
 /**************************************************************************
  * 				sndPlaySoundW		[WINMM.136]
  */
-BOOL16 WINAPI sndPlaySoundW(LPCWSTR lpszSoundName, UINT16 uFlags)
+BOOL WINAPI sndPlaySoundW(LPCWSTR lpszSoundName, UINT uFlags)
 {
     PlaySound_SearchMode = 1;
     return PlaySoundW(lpszSoundName, 0, uFlags);
 }
+
+/**************************************************************************
+ * 				sndPlaySound16		[MMSYSTEM.2]
+ */
+BOOL16 WINAPI sndPlaySound16(LPCSTR lpszSoundName, UINT16 uFlags)
+{
+    BOOL16 retv;
+
+    SYSLEVEL_ReleaseWin16Lock();
+    retv = sndPlaySoundA( lpszSoundName, uFlags );
+    SYSLEVEL_RestoreWin16Lock();
+
+    return retv;
+}
+
 
 /**************************************************************************
  * 				mmsystemGetVersion	[WINMM.134]
