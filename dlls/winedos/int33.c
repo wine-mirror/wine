@@ -22,6 +22,7 @@ static struct
   WORD lbcount, rbcount, rlastx, rlasty, llastx, llasty;
   FARPROC16 callback;
   WORD callmask;
+  WORD VMPratio, HMPratio, oldx, oldy;
 } mouse_info;
 
 /**********************************************************************
@@ -37,6 +38,9 @@ void WINAPI DOSVM_Int33Handler( CONTEXT86 *context )
     AX_reg(context) = 0xFFFF; /* installed */
     BX_reg(context) = 3;      /* # of buttons */
     memset( &mouse_info, 0, sizeof(mouse_info) );
+    /* Set the default mickey/pixel ratio */
+    mouse_info.HMPratio = 8;
+    mouse_info.VMPratio = 16;
     break;
   case 0x01:
     FIXME("Show mouse cursor\n");
@@ -81,10 +85,22 @@ void WINAPI DOSVM_Int33Handler( CONTEXT86 *context )
   case 0x0A:
     FIXME("Define text mouse cursor\n");
     break;
+  case 0x0B:
+    TRACE("Read Mouse motion counters\n");
+    CX_reg(context) = (mouse_info.x - mouse_info.oldx) * (mouse_info.HMPratio / 8);
+    DX_reg(context) = (mouse_info.y - mouse_info.oldy) * (mouse_info.VMPratio / 8);
+    mouse_info.oldx = mouse_info.x;
+    mouse_info.oldy = mouse_info.y;
+    break;
   case 0x0C:
     TRACE("Define mouse interrupt subroutine\n");
     mouse_info.callmask = CX_reg(context);
     mouse_info.callback = (FARPROC16)MAKESEGPTR(context->SegEs, LOWORD(context->Edx));
+    break;
+  case 0x0F:
+    TRACE("Set mickey/pixel ratio\n");
+    mouse_info.HMPratio = CX_reg(context);
+    mouse_info.VMPratio = DX_reg(context);
     break;
   case 0x10:
     FIXME("Define screen region for update\n");
