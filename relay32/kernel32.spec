@@ -918,6 +918,10 @@ import  ntdll.dll
 900 stub VirtualFreeEx
 901 stub WriteFileGather
 
+#Win98 and higher
+902 stdcall GetLongPathNameA (str long long) GetLongPathNameA
+903 stdcall GetLongPathNameW (wstr long long) GetLongPathNameW
+
 1346 stdcall PrivateLoadLibrary(str) PrivateLoadLibrary
 1545 stdcall PrivateFreeLibrary(long) PrivateFreeLibrary
 
