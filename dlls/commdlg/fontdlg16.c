@@ -59,6 +59,14 @@ static void FONT_LogFont16To32A( const LPLOGFONT16 font16, LPLOGFONTA font32 )
     lstrcpynA( font32->lfFaceName, font16->lfFaceName, LF_FACESIZE );
 };
 
+static void FONT_Metrics16To32A( const TEXTMETRIC16 *pm16, TEXTMETRICA *pm32a)
+{
+    ZeroMemory( pm32a, sizeof(TEXTMETRICA));
+    /* NOTE: only the fields used by AddFontStyle() are filled in */
+    pm32a->tmHeight = pm16->tmHeight;
+    pm32a->tmExternalLeading = pm16->tmExternalLeading;
+};
+
 static void CFn_CHOOSEFONT16to32A(LPCHOOSEFONT16 chf16, LPCHOOSEFONTA chf32a)
 {
   chf32a->lStructSize=sizeof(CHOOSEFONTA);
@@ -117,10 +125,13 @@ INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics,
   HWND hDlg=GetParent(hcmb3);
   LPCHOOSEFONT16 lpcf=(LPCHOOSEFONT16)GetWindowLongA(hDlg, DWL_USER);
   LOGFONT16 *lplf = MapSL(logfont);
+  TEXTMETRIC16 *lpmtrx16 = MapSL(metrics);
   ENUMLOGFONTEXA elf32a;
+  TEXTMETRICA mtrx32a;
   FONT_LogFont16To32A(lplf, &(elf32a.elfLogFont));
-  return AddFontStyle(&elf32a, nFontType, (LPCHOOSEFONTA)lpcf->lpTemplateName,
-                      hcmb2, hcmb3, hDlg, TRUE);
+  FONT_Metrics16To32A(lpmtrx16, &mtrx32a);
+  return AddFontStyle(&elf32a, &mtrx32a, nFontType,
+          (LPCHOOSEFONTA)lpcf->lpTemplateName, hcmb2, hcmb3, hDlg, TRUE);
 }
 
 /***********************************************************************
