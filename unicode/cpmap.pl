@@ -166,6 +166,7 @@ $DEF_CHAR = ord '?';
 
 READ_DEFAULTS();
 DUMP_CASE_MAPPINGS();
+DUMP_COMPOSE_TABLES();
 DUMP_CTYPE_TABLES();
 
 foreach $file (@allfiles) { HANDLE_FILE( @$file ); }
@@ -185,6 +186,8 @@ sub READ_DEFAULTS
     @toupper_table = ();
     @category_table = ();
     @direction_table = ();
+    @decomp_table = ();
+    @compose_table = ();
 
     # first setup a few default mappings
 
@@ -285,6 +288,12 @@ sub READ_DEFAULTS
             # decomposition contains only char values without prefix -> use first char
             $dst = hex $1;
             $category_table[$src] |= $category_table[$dst];
+            # store decomposition if it contains two chars
+            if ($decomp =~ /^([0-9a-fA-F]+)\s+([0-9a-fA-F]+)$/)
+            {
+                $decomp_table[$src] = [ hex $1, hex $2 ];
+                push @compose_table, [ hex $1, hex $2, $src ];
+            }
         }
         else
         {
@@ -465,7 +474,7 @@ sub DUMP_SBCS_TABLE
         next unless defined $uni2cp[$i];
         $filled[$i >> 8] = 1;
         $subtables++;
-        $i = ($i & ~255) + 256;
+        $i |= 255;
     }
 
     # output all the subtables into a single array
@@ -572,7 +581,7 @@ sub DUMP_DBCS_TABLE
         next unless defined $uni2cp[$i];
         $filled[$i >> 8] = 1;
         $subtables++;
-        $i = ($i & ~255) + 256;
+        $i |= 255;
     }
 
     # output all the subtables into a single array
@@ -669,7 +678,7 @@ sub DUMP_CASE_TABLE
         next unless defined $table[$i];
         $filled[$i >> 8] = $pos;
         $pos += 256;
-        $i = ($i & ~255) + 256;
+        $i |= 255;
     }
     for ($i = 0; $i < 65536; $i++)
     {
@@ -736,6 +745,144 @@ sub DUMP_CTYPE_TABLES
 
     close OUTPUT;
 }
+
+
+################################################################
+# dump the char composition tables
+sub DUMP_COMPOSE_TABLES
+{
+    open OUTPUT,">compose.c" or die "Cannot create compose.c";
+    printf "Building compose.c\n";
+    printf OUTPUT "/* Unicode char composition */\n";
+    printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
+    printf OUTPUT "#include \"wine/unicode.h\"\n\n";
+
+    ######### composition table
+
+    my @filled = ();
+    foreach $i (@compose_table)
+    {
+        my @comp = @$i;
+        push @{$filled[$comp[1]]}, [ $comp[0], $comp[2] ];
+    }
+
+    # count how many different second chars we have
+
+    for ($i = $count = 0; $i < 65536; $i++)
+    {
+        next unless defined $filled[$i];
+        $count++;
+    }
+
+    # build the table of second chars and offsets
+
+    my $pos = $count + 1;
+    for ($i = 0; $i < 65536; $i++)
+    {
+        next unless defined $filled[$i];
+        push @table, $i, $pos;
+        $pos += @{$filled[$i]};
+    }
+    # terminator with last position
+    push @table, 0, $pos;
+    printf OUTPUT "const WCHAR unicode_compose_table[0x%x] =\n{\n", 2*$pos;
+    printf OUTPUT "    /* second chars + offsets */\n%s", DUMP_ARRAY( "0x%04x", 0, @table );
+
+    # build the table of first chars and mappings
+
+    for ($i = 0; $i < 65536; $i++)
+    {
+        next unless defined $filled[$i];
+        my @table = ();
+        my @list = sort { $a->[0] <=> $b->[0] } @{$filled[$i]};
+        for ($j = 0; $j <= $#list; $j++)
+        {
+            push @table, $list[$j][0], $list[$j][1];
+        }
+        printf OUTPUT ",\n    /* 0x%04x */\n%s", $i, DUMP_ARRAY( "0x%04x", 0, @table );
+    }
+    printf OUTPUT "\n};\n\nconst unsigned int unicode_compose_table_size = %d;\n\n", $count;
+
+    ######### decomposition table
+
+    # first determine all the 16-char subsets that contain something
+
+    my @filled = (0) x 4096;
+    my $pos = 16*2;  # for the null subset
+    for ($i = 0; $i < 65536; $i++)
+    {
+        next unless defined $decomp_table[$i];
+        $filled[$i >> 4] = $pos;
+        $pos += 16*2;
+        $i |= 15;
+    }
+    my $total = $pos;
+
+    # now count the 256-char subsets that contain something
+
+    my @filled_idx = (256) x 256;
+    $pos = 256 + 16;
+    for ($i = 0; $i < 4096; $i++)
+    {
+        next unless $filled[$i];
+        $filled_idx[$i >> 4] = $pos;
+        $pos += 16;
+        $i |= 15;
+    }
+    my $null_offset = $pos;  # null mapping
+    $total += $pos;
+
+    # add the index offsets to the subsets positions
+
+    for ($i = 0; $i < 4096; $i++)
+    {
+        next unless $filled[$i];
+        $filled[$i] += $null_offset;
+    }
+
+    # dump the main index
+
+    printf OUTPUT "const WCHAR unicode_decompose_table[%d] =\n", $total;
+    printf OUTPUT "{\n    /* index */\n";
+    printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @filled_idx );
+    printf OUTPUT ",\n    /* null sub-index */\n%s", DUMP_ARRAY( "0x%04x", 0, ($null_offset) x 16 );
+
+    # dump the second-level indexes
+
+    for ($i = 0; $i < 256; $i++)
+    {
+        next unless ($filled_idx[$i] > 256);
+        my @table = @filled[($i<<4)..($i<<4)+15];
+        for ($j = 0; $j < 16; $j++) { $table[$j] ||= $null_offset; }
+        printf OUTPUT ",\n    /* sub-index %02x */\n", $i;
+        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @table );
+    }
+
+    # dump the 16-char subsets
+
+    printf OUTPUT ",\n    /* null mapping */\n";
+    printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, (0) x 32 );
+
+    for ($i = 0; $i < 4096; $i++)
+    {
+        next unless $filled[$i];
+        my @table = (0) x 32;
+        for ($j = 0; $j < 16; $j++)
+        {
+            if (defined $decomp_table[($i<<4) + $j])
+            {
+                $table[2 * $j] = ${$decomp_table[($i << 4) + $j]}[0];
+                $table[2 * $j + 1] = ${$decomp_table[($i << 4) + $j]}[1];
+            }
+        }
+        printf OUTPUT ",\n    /* 0x%03x0 .. 0x%03xf */\n", $i, $i;
+        printf OUTPUT "%s", DUMP_ARRAY( "0x%04x", 0, @table );
+    }
+
+    printf OUTPUT "\n};\n";
+    close OUTPUT;
+}
+
 
 ################################################################
 # read an input file and generate the corresponding .c file

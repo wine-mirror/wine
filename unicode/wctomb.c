@@ -9,6 +9,90 @@
 #include "winnls.h"
 #include "wine/unicode.h"
 
+/* search for a character in the unicode_compose_table; helper for compose() */
+static inline int binary_search( WCHAR ch, int low, int high )
+{
+    extern const WCHAR unicode_compose_table[];
+    while (low <= high)
+    {
+        int pos = (low + high) / 2;
+        if (unicode_compose_table[2*pos] < ch)
+        {
+            low = pos + 1;
+            continue;
+        }
+        if (unicode_compose_table[2*pos] > ch)
+        {
+            high = pos - 1;
+            continue;
+        }
+        return pos;
+    }
+    return -1;
+}
+
+/* return the result of the composition of two Unicode chars, or 0 if none */
+static WCHAR compose( const WCHAR *str )
+{
+    extern const WCHAR unicode_compose_table[];
+    extern const unsigned int unicode_compose_table_size;
+
+    int idx = 1, low = 0, high = unicode_compose_table_size - 1;
+    for (;;)
+    {
+        int pos = binary_search( str[idx], low, high );
+        if (pos == -1) return 0;
+        if (!idx--) return unicode_compose_table[2*pos+1];
+        low = unicode_compose_table[2*pos+1];
+        high = unicode_compose_table[2*pos+3] - 1;
+    }
+}
+
+
+/****************************************************************/
+/* sbcs support */
+
+/* check if 'ch' is an acceptable sbcs mapping for 'wch' */
+static inline int is_valid_sbcs_mapping( const struct sbcs_table *table, int flags,
+                                         WCHAR wch, unsigned char ch )
+{
+    if (flags & WC_NO_BEST_FIT_CHARS) return (table->cp2uni[ch] == wch);
+    if (ch != (unsigned char)table->info.def_char) return 1;
+    return (wch == table->info.def_unicode_char);
+}
+
+/* query necessary dst length for src string */
+static inline int get_length_sbcs( const struct sbcs_table *table, int flags,
+                                   const WCHAR *src, unsigned int srclen )
+{
+    unsigned int ret = srclen;
+
+    if (flags & WC_COMPOSITECHECK)
+    {
+        const unsigned char  * const uni2cp_low = table->uni2cp_low;
+        const unsigned short * const uni2cp_high = table->uni2cp_high;
+        WCHAR composed;
+
+        for (ret = 0; srclen > 1; ret++, srclen--, src++)
+        {
+            if (!(composed = compose(src))) continue;
+            /* check if we should skip the next char */
+
+            /* in WC_DEFAULTCHAR and WC_DISCARDNS mode, we always skip */
+            /* the next char no matter if the composition is valid or not */
+            if (!(flags & (WC_DEFAULTCHAR|WC_DISCARDNS)))
+            {
+                unsigned char ch = uni2cp_low[uni2cp_high[composed >> 8] + (composed & 0xff)];
+                if (!is_valid_sbcs_mapping( table, flags, composed, ch )) continue;
+            }
+            src++;
+            srclen--;
+        }
+        if (srclen) ret++;  /* last char */
+    }
+    return ret;
+}
+
 /* wcstombs for single-byte code page */
 static inline int wcstombs_sbcs( const struct sbcs_table *table,
                                  const WCHAR *src, unsigned int srclen,
@@ -61,49 +145,139 @@ static int wcstombs_sbcs_slow( const struct sbcs_table *table, int flags,
                                char *dst, unsigned int dstlen,
                                const char *defchar, int *used )
 {
-    const WCHAR * const cp2uni = table->cp2uni;
     const unsigned char  * const uni2cp_low = table->uni2cp_low;
     const unsigned short * const uni2cp_high = table->uni2cp_high;
     const unsigned char table_default = table->info.def_char & 0xff;
-    int ret = srclen, tmp;
-
-    if (dstlen < srclen)
-    {
-        /* buffer too small: fill it up to dstlen and return error */
-        srclen = dstlen;
-        ret = -1;
-    }
+    unsigned int len;
+    int tmp;
+    WCHAR composed;
 
     if (!defchar) defchar = &table_default;
     if (!used) used = &tmp;  /* avoid checking on every char */
 
-    while (srclen)
+    for (len = dstlen; srclen && len; dst++, len--, src++, srclen--)
     {
-        unsigned char ch = uni2cp_low[uni2cp_high[*src >> 8] + (*src & 0xff)];
-        if (((flags & WC_NO_BEST_FIT_CHARS) && (cp2uni[ch] != *src)) ||
-            (ch == table_default && *src != table->info.def_unicode_char))
+        WCHAR wch = *src;
+
+        if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = compose(src)))
         {
-            ch = *defchar;
+            /* now check if we can use the composed char */
+            *dst = uni2cp_low[uni2cp_high[composed >> 8] + (composed & 0xff)];
+            if (is_valid_sbcs_mapping( table, flags, composed, *dst ))
+            {
+                /* we have a good mapping, use it */
+                src++;
+                srclen--;
+                continue;
+            }
+            /* no mapping for the composed char, check the other flags */
+            if (flags & WC_DEFAULTCHAR) /* use the default char instead */
+            {
+                *dst = *defchar;
+                *used = 1;
+                src++;  /* skip the non-spacing char */
+                srclen--;
+                continue;
+            }
+            if (flags & WC_DISCARDNS) /* skip the second char of the composition */
+            {
+                src++;
+                srclen--;
+            }
+            /* WC_SEPCHARS is the default */
+        }
+
+        *dst = uni2cp_low[uni2cp_high[wch >> 8] + (wch & 0xff)];
+        if (!is_valid_sbcs_mapping( table, flags, wch, *dst ))
+        {
+            *dst = *defchar;
             *used = 1;
         }
-        *dst++ = ch;
-        src++;
-        srclen--;
     }
-    return ret;
+    if (srclen) return -1;  /* overflow */
+    return dstlen - len;
+}
+
+
+/****************************************************************/
+/* dbcs support */
+
+/* check if 'ch' is an acceptable dbcs mapping for 'wch' */
+static inline int is_valid_dbcs_mapping( const struct dbcs_table *table, int flags,
+                                         WCHAR wch, unsigned short ch )
+{
+    if (ch == table->info.def_char && wch != table->info.def_unicode_char) return 0;
+    if (flags & WC_NO_BEST_FIT_CHARS)
+    {
+        /* check if char maps back to the same Unicode value */
+        if (ch & 0xff00)
+        {
+            unsigned char off = table->cp2uni_leadbytes[ch >> 8];
+            return (table->cp2uni[(off << 8) + (ch & 0xff)] == wch);
+        }
+        return (table->cp2uni[ch & 0xff] == wch);
+    }
+    return 1;
 }
 
 /* query necessary dst length for src string */
-static inline int get_length_dbcs( const struct dbcs_table *table,
-                                   const WCHAR *src, unsigned int srclen )
+static int get_length_dbcs( const struct dbcs_table *table, int flags,
+                            const WCHAR *src, unsigned int srclen,
+                            const char *defchar )
 {
     const unsigned short * const uni2cp_low = table->uni2cp_low;
     const unsigned short * const uni2cp_high = table->uni2cp_high;
+    WCHAR defchar_value = table->info.def_char;
+    WCHAR composed;
     int len;
 
-    for (len = 0; srclen; srclen--, src++, len++)
+    if (!defchar && !(flags & WC_COMPOSITECHECK))
     {
-        if (uni2cp_low[uni2cp_high[*src >> 8] + (*src & 0xff)] & 0xff00) len++;
+        for (len = 0; srclen; srclen--, src++, len++)
+        {
+            if (uni2cp_low[uni2cp_high[*src >> 8] + (*src & 0xff)] & 0xff00) len++;
+        }
+        return len;
+    }
+
+    if (defchar) defchar_value = defchar[1] ? ((defchar[0] << 8) | defchar[1]) : defchar[0];
+    for (len = 0; srclen; len++, srclen--, src++)
+    {
+        unsigned short res;
+        WCHAR wch = *src;
+
+        if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = compose(src)))
+        {
+            /* now check if we can use the composed char */
+            res = uni2cp_low[uni2cp_high[composed >> 8] + (composed & 0xff)];
+
+            if (is_valid_dbcs_mapping( table, flags, composed, res ))
+            {
+                /* we have a good mapping for the composed char, use it */
+                if (res & 0xff00) len++;
+                src++;
+                srclen--;
+                continue;
+            }
+            /* no mapping for the composed char, check the other flags */
+            if (flags & WC_DEFAULTCHAR) /* use the default char instead */
+            {
+                if (defchar_value & 0xff00) len++;
+                src++;  /* skip the non-spacing char */
+                srclen--;
+                continue;
+            }
+            if (flags & WC_DISCARDNS) /* skip the second char of the composition */
+            {
+                src++;
+                srclen--;
+            }
+            /* WC_SEPCHARS is the default */
+        }
+
+        res = uni2cp_low[uni2cp_high[wch >> 8] + (wch & 0xff)];
+        if (!is_valid_dbcs_mapping( table, flags, wch, res )) res = defchar_value;
+        if (res & 0xff00) len++;
     }
     return len;
 }
@@ -138,11 +312,10 @@ static int wcstombs_dbcs_slow( const struct dbcs_table *table, int flags,
                                char *dst, unsigned int dstlen,
                                const char *defchar, int *used )
 {
-    const WCHAR * const cp2uni = table->cp2uni;
     const unsigned short * const uni2cp_low = table->uni2cp_low;
     const unsigned short * const uni2cp_high = table->uni2cp_high;
-    const unsigned char  * const cp2uni_lb = table->cp2uni_leadbytes;
     WCHAR defchar_value = table->info.def_char;
+    WCHAR composed;
     int len, tmp;
 
     if (defchar) defchar_value = defchar[1] ? ((defchar[0] << 8) | defchar[1]) : defchar[0];
@@ -150,32 +323,46 @@ static int wcstombs_dbcs_slow( const struct dbcs_table *table, int flags,
 
     for (len = dstlen; srclen && len; len--, srclen--, src++)
     {
-        unsigned short res = uni2cp_low[uni2cp_high[*src >> 8] + (*src & 0xff)];
+        unsigned short res;
+        WCHAR wch = *src;
 
-        if (res == table->info.def_char && *src != table->info.def_unicode_char)
+        if ((flags & WC_COMPOSITECHECK) && (srclen > 1) && (composed = compose(src)))
+        {
+            /* now check if we can use the composed char */
+            res = uni2cp_low[uni2cp_high[composed >> 8] + (composed & 0xff)];
+
+            if (is_valid_dbcs_mapping( table, flags, composed, res ))
+            {
+                /* we have a good mapping for the composed char, use it */
+                src++;
+                srclen--;
+                goto output_char;
+            }
+            /* no mapping for the composed char, check the other flags */
+            if (flags & WC_DEFAULTCHAR) /* use the default char instead */
+            {
+                res = defchar_value;
+                *used = 1;
+                src++;  /* skip the non-spacing char */
+                srclen--;
+                goto output_char;
+            }
+            if (flags & WC_DISCARDNS) /* skip the second char of the composition */
+            {
+                src++;
+                srclen--;
+            }
+            /* WC_SEPCHARS is the default */
+        }
+
+        res = uni2cp_low[uni2cp_high[wch >> 8] + (wch & 0xff)];
+        if (!is_valid_dbcs_mapping( table, flags, wch, res ))
         {
             res = defchar_value;
             *used = 1;
         }
-        else if (flags & WC_NO_BEST_FIT_CHARS)
-        {
-            /* check if char maps back to the same Unicode value */
-            if (res & 0xff00)
-            {
-                unsigned char off = cp2uni_lb[res >> 8];
-                if (cp2uni[(off << 8) + (res & 0xff)] != *src)
-                {
-                    res = defchar_value;
-                    *used = 1;
-                }
-            }
-            else if (cp2uni[res & 0xff] != *src)
-            {
-                res = defchar_value;
-                *used = 1;
-            }
-        }
 
+    output_char:
         if (res & 0xff00)
         {
             if (len == 1) break;  /* do not output a partial char */
@@ -196,7 +383,7 @@ int cp_wcstombs( const union cptable *table, int flags,
 {
     if (table->info.char_size == 1)
     {
-        if (!dstlen) return srclen;
+        if (!dstlen) return get_length_sbcs( &table->sbcs, flags, src, srclen );
         if (flags || defchar || used)
             return wcstombs_sbcs_slow( &table->sbcs, flags, src, srclen,
                                        dst, dstlen, defchar, used );
@@ -204,7 +391,7 @@ int cp_wcstombs( const union cptable *table, int flags,
     }
     else /* mbcs */
     {
-        if (!dstlen) return get_length_dbcs( &table->dbcs, src, srclen );
+        if (!dstlen) return get_length_dbcs( &table->dbcs, flags, src, srclen, defchar );
         if (flags || defchar || used)
             return wcstombs_dbcs_slow( &table->dbcs, flags, src, srclen,
                                        dst, dstlen, defchar, used );

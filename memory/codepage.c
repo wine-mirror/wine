@@ -254,7 +254,6 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
 
     if (srclen == -1) srclen = strlen(src) + 1;
 
-    if (flags & MB_COMPOSITE) FIXME("MB_COMPOSITE not supported\n");
     if (flags & MB_USEGLYPHCHARS) FIXME("MB_USEGLYPHCHARS not supported\n");
 
     switch(page)
@@ -329,8 +328,6 @@ INT WINAPI WideCharToMultiByte( UINT page, DWORD flags, LPCWSTR src, INT srclen,
     }
 
     if (srclen == -1) srclen = strlenW(src) + 1;
-
-/*    if (flags & WC_COMPOSITECHECK) FIXME( "WC_COMPOSITECHECK (%lx) not supported\n", flags );*/
 
     switch(page)
     {

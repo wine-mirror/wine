@@ -70,6 +70,7 @@ CODEPAGES = \
 
 C_SRCS = \
 	casemap.c \
+	compose.c \
 	cptable.c \
 	mbtowc.c \
 	string.c \
