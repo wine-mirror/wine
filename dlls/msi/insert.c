@@ -102,7 +102,10 @@ static UINT INSERT_execute( struct tagMSIVIEW *view, MSIHANDLE record )
             val = msi_addstringW( iv->db->strings, 0, str, -1, 1 );
         }
         else
-            val = MsiRecordGetInteger( record, n++ );
+        {
+            val = MsiRecordGetInteger( record, n );
+            val |= 0x8000;
+        }
         r = sv->ops->set_int( sv, row, n, val );
         if( r )
             break;
