@@ -1221,7 +1221,6 @@ static void SCROLL_CreateScrollBar(
 HWND hwnd /* [in] Handle of window with scrollbar(s) */,
 LPCREATESTRUCTW lpCreate /* [in] The style and place of the scroll bar */)
 {
-    POINT pos, size;
     LPSCROLLBAR_INFO info = SCROLL_GetScrollBarInfo(hwnd, SB_CTL);
     if (!info) return;
 
@@ -1233,23 +1232,28 @@ LPCREATESTRUCTW lpCreate /* [in] The style and place of the scroll bar */)
         TRACE("Created WS_DISABLED scrollbar\n");
     }
 
-    /* copy the desired positions and size */
-    pos.x = lpCreate->x; pos.y = lpCreate->y;
-    size.x = lpCreate->cx; size.y = lpCreate->cy;
-
-    /* move position based on style */
-    if (lpCreate->style & SBS_RIGHTALIGN)
-        pos.x += size.x - GetSystemMetrics(SM_CXVSCROLL) - 1;
-    else if (lpCreate->style & SBS_BOTTOMALIGN)
-        pos.y += size.y - GetSystemMetrics(SM_CYHSCROLL) - 1;
-
-    /* change size based on style */
     if (lpCreate->style & SBS_VERT)
-        size.x = GetSystemMetrics(SM_CXVSCROLL) + 1;
-    else
-        size.y = GetSystemMetrics(SM_CYHSCROLL) + 1;
-
-    MoveWindow(hwnd, pos.x, pos.y, size.x, size.y, FALSE);
+    {
+        if (lpCreate->style & SBS_LEFTALIGN)
+            MoveWindow( hwnd, lpCreate->x, lpCreate->y,
+                        GetSystemMetrics(SM_CXVSCROLL)+1, lpCreate->cy, FALSE );
+        else if (lpCreate->style & SBS_RIGHTALIGN)
+            MoveWindow( hwnd,
+                        lpCreate->x+lpCreate->cx-GetSystemMetrics(SM_CXVSCROLL)-1,
+                        lpCreate->y,
+                        GetSystemMetrics(SM_CXVSCROLL)+1, lpCreate->cy, FALSE );
+    }
+    else  /* SBS_HORZ */
+    {
+        if (lpCreate->style & SBS_TOPALIGN)
+            MoveWindow( hwnd, lpCreate->x, lpCreate->y,
+                        lpCreate->cx, GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
+        else if (lpCreate->style & SBS_BOTTOMALIGN)
+            MoveWindow( hwnd,
+                        lpCreate->x,
+                        lpCreate->y+lpCreate->cy-GetSystemMetrics(SM_CYHSCROLL)-1,
+                        lpCreate->cx, GetSystemMetrics(SM_CYHSCROLL)+1, FALSE );
+    }
 }
 
 
