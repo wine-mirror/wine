@@ -86,14 +86,14 @@ static WCHAR wszFakeDocumentText[1024];
  */
 BOOL PRINTDLG_OpenDefaultPrinter(HANDLE *hprn)
 {
-    char buf[260];
-    DWORD dwBufLen = sizeof(buf);
+    WCHAR buf[260];
+    DWORD dwBufLen = sizeof(buf) / sizeof(buf[0]);
     BOOL res;
-    if(!GetDefaultPrinterA(buf, &dwBufLen))
+    if(!GetDefaultPrinterW(buf, &dwBufLen))
         return FALSE;
-    res = OpenPrinterA(buf, hprn, NULL);
+    res = OpenPrinterW(buf, hprn, NULL);
     if (!res)
-	FIXME("Could not open printer %s?!\n",buf);
+        WARN("Could not open printer %s\n", debugstr_w(buf));
     return res;
 }
 
