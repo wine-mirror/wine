@@ -36,7 +36,7 @@
 #define FOURCC_RLE8  mmioFOURCC('R','L','E','8')
 #define FOURCC_MRLE  mmioFOURCC('M','R','L','E')
 
-#define WIDTHBYTES(i)     ((WORD)((i+31)&(~31))/8) /* ULONG aligned ! */
+#define WIDTHBYTES(i)     ((WORD)((i+31u)&(~31u))/8u) /* ULONG aligned ! */
 #define DIBWIDTHBYTES(bi) WIDTHBYTES((WORD)(bi).biWidth * (WORD)(bi).biBitCount)
 
 typedef struct _CodecInfo {
