@@ -405,13 +405,13 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
 static void write_char_attribute_at_cursor(char output, char page_num, 
        char attribute, short times)
 {
-    /* !NOTE!: */
-    /* It appears that the cursor should not be advanced if times > 1 */
-    /* I will triple check this later but bzork.exe definately points this */
-    /* way */
+    /* Contrary to the interrupt list, this routine should not advance
+       the cursor. To keep this logic simple, we won't use the
+       CONSOLE_Put() routine. 
+    */
+
     int wattribute, fg_color, bg_color;
     char x, y;
-    int must_reset = 0;
 
     if (page_num) /* Only support one text page right now */
     {
@@ -423,11 +423,7 @@ static void write_char_attribute_at_cursor(char output, char page_num,
     fg_color = conv_text_mode_attribute_fg_color(attribute);
     bg_color = conv_text_mode_attribute_bg_color(attribute);
 
-    if (times > 1)
-    {
-       must_reset = 1;
-       CONSOLE_GetCursorPosition(&x, &y);
-    }
+    CONSOLE_GetCursorPosition(&x, &y);
 
     while (times)
     {
@@ -435,8 +431,7 @@ static void write_char_attribute_at_cursor(char output, char page_num,
        times--;
     }
   
-    if (must_reset)
-       CONSOLE_MoveCursor(x, y);
+    CONSOLE_MoveCursor(x, y);
 }
 
 static int conv_text_mode_attribute_fg_color(char attribute)
