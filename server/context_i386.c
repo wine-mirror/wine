@@ -150,11 +150,10 @@ static void set_thread_context( struct thread *thread, unsigned int flags, CONTE
     if (flags & CONTEXT_FULL)
     {
         struct kernel_user_regs_struct regs;
-        if (((flags | CONTEXT_i386) & CONTEXT_FULL) != CONTEXT_FULL)
-        {
-            /* need to preserve some registers */
-            if (ptrace( PTRACE_GETREGS, pid, 0, &regs ) == -1) goto error;
-        }
+
+        /* need to preserve some registers (at a minimum orig_eax must always be preserved) */
+        if (ptrace( PTRACE_GETREGS, pid, 0, &regs ) == -1) goto error;
+
         if (flags & CONTEXT_INTEGER)
         {
             regs.eax = context->Eax;

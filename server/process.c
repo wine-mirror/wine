@@ -491,6 +491,21 @@ void suspend_process( struct process *process )
     }
 }
 
+/* suspend all the threads of a process to allow using ptrace on it*/
+void suspend_process_for_ptrace( struct process *process )
+{
+    if (!process->suspend++)
+    {
+        struct thread *thread = process->thread_list;
+        for (; thread; thread = thread->proc_next)
+        {
+            if (thread->suspend) continue;
+            if (suspend_for_ptrace( thread ))
+                thread->suspend--;  /* since the process is suspended, not the thread */
+        }
+    }
+}
+
 /* resume all the threads of a process */
 void resume_process( struct process *process )
 {
