@@ -17,6 +17,7 @@
          Until that happens we need this hack.
 */
 #define socket  linux_socket
+#define recv    linux_recv
 /* */
 
 #include "config.h"
@@ -49,7 +50,9 @@
 /* FIXME: The rest of the socket() cdecl<->stdapi stack corruption problem
           discussed above. */
 #undef socket
+#undef recv
 extern SOCKET WINAPI socket(INT af, INT type, INT protocol);
+extern SOCKET WINAPI recv(SOCKET,char*,int,int);
 /* */
 
 
