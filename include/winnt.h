@@ -2485,6 +2485,8 @@ typedef enum tagSID_NAME_USE {
 
 /* Access rights */
 
+/* DELETE may be already defined via /usr/include/arpa/nameser_compat.h */
+#undef  DELETE
 #define DELETE                     0x00010000
 #define READ_CONTROL               0x00020000
 #define WRITE_DAC                  0x00040000
