@@ -26,6 +26,7 @@
 #include "dsurface/main.h"
 #include "dsurface/dib.h"
 #include "dsurface/user.h"
+#include "options.h"
 
 #include "win.h"
 
