@@ -56,7 +56,6 @@ struct file
 {
     struct object       obj;        /* object header */
     struct fd          *fd;         /* file descriptor for this file */
-    char               *name;       /* file name */
     unsigned int        access;     /* file access (GENERIC_READ/WRITE) */
     unsigned int        options;    /* file options (FILE_DELETE_ON_CLOSE, FILE_SYNCHRONOUS...) */
     int                 removable;  /* is file on removable media? */
@@ -108,7 +107,6 @@ static struct file *create_file_for_fd( int fd, unsigned int access, unsigned in
 
     if ((file = alloc_object( &file_ops )))
     {
-        file->name       = NULL;
         file->access     = access;
         file->options    = FILE_SYNCHRONOUS_IO_NONALERT;
         file->removable  = 0;
@@ -163,7 +161,6 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
     file->access     = access;
     file->options    = options;
     file->removable  = removable;
-    file->name       = name;
     if (is_overlapped( file ))
     {
         init_async_queue (&file->read_q);
@@ -173,11 +170,15 @@ static struct object *create_file( const char *nameptr, size_t len, unsigned int
     /* FIXME: should set error to STATUS_OBJECT_NAME_COLLISION if file existed before */
     if (!(file->fd = alloc_fd( &file_fd_ops, &file->obj )) ||
         !(file->fd = open_fd( file->fd, name, flags | O_NONBLOCK | O_LARGEFILE,
-                              &mode, access, sharing)))
+                              &mode, access, sharing,
+                              (options & FILE_DELETE_ON_CLOSE) ? name : "" )))
     {
+        free( name );
         release_object( file );
         return NULL;
     }
+    free( name );
+
     /* refuse to open a directory */
     if (S_ISDIR(mode) && !(options & FILE_OPEN_FOR_BACKUP_INTENT))
     {
@@ -233,7 +234,7 @@ static void file_dump( struct object *obj, int verbose )
 {
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
-    fprintf( stderr, "File fd=%p options=%08x name='%s'\n", file->fd, file->options, file->name );
+    fprintf( stderr, "File fd=%p options=%08x\n", file->fd, file->options );
 }
 
 static int file_get_poll_events( struct fd *fd )
@@ -386,11 +387,6 @@ static void file_destroy( struct object *obj )
     struct file *file = (struct file *)obj;
     assert( obj->ops == &file_ops );
 
-    if (file->name)
-    {
-        if (file->options & FILE_DELETE_ON_CLOSE) unlink( file->name );
-        free( file->name );
-    }
     if (is_overlapped( file ))
     {
         destroy_async_queue (&file->read_q);

@@ -53,8 +53,9 @@
 /* closed_fd is used to keep track of the unix fd belonging to a closed fd object */
 struct closed_fd
 {
-    struct closed_fd *next;   /* next fd in close list */
-    int               fd;     /* the unix file descriptor */
+    struct list entry;       /* entry in inode closed list */
+    int         fd;          /* the unix file descriptor */
+    char        unlink[1];   /* name to unlink on close (if any) */
 };
 
 struct fd
@@ -99,7 +100,7 @@ struct inode
     ino_t               ino;        /* inode number */
     struct list         open;       /* list of open file descriptors */
     struct list         locks;      /* list of file locks */
-    struct closed_fd   *closed;     /* list of file descriptors to close at destroy time */
+    struct list         closed;     /* list of file descriptors to close at destroy time */
 };
 
 static void inode_dump( struct object *obj, int verbose );
@@ -362,12 +363,24 @@ static struct list inode_hash[HASH_SIZE];
 /* close all pending file descriptors in the closed list */
 static void inode_close_pending( struct inode *inode )
 {
-    while (inode->closed)
+    struct list *ptr = list_head( &inode->closed );
+
+    while (ptr)
     {
-        struct closed_fd *fd = inode->closed;
-        inode->closed = fd->next;
-        close( fd->fd );
-        free( fd );
+        struct closed_fd *fd = LIST_ENTRY( ptr, struct closed_fd, entry );
+        struct list *next = list_next( &inode->closed, ptr );
+
+        if (fd->fd != -1)
+        {
+            close( fd->fd );
+            fd->fd = -1;
+        }
+        if (!fd->unlink)  /* get rid of it unless there's an unlink pending on that file */
+        {
+            list_remove( ptr );
+            free( fd );
+        }
+        ptr = next;
     }
 }
 
@@ -385,12 +398,27 @@ static void inode_dump( struct object *obj, int verbose )
 static void inode_destroy( struct object *obj )
 {
     struct inode *inode = (struct inode *)obj;
+    struct list *ptr;
 
     assert( list_empty(&inode->open) );
     assert( list_empty(&inode->locks) );
 
     list_remove( &inode->entry );
-    inode_close_pending( inode );
+
+    while ((ptr = list_head( &inode->closed )))
+    {
+        struct closed_fd *fd = LIST_ENTRY( ptr, struct closed_fd, entry );
+        list_remove( ptr );
+        if (fd->fd != -1) close( fd->fd );
+        if (fd->unlink[0])
+        {
+            /* make sure it is still the same file */
+            struct stat st;
+            if (!stat( fd->unlink, &st ) && st.st_dev == inode->dev && st.st_ino == inode->ino)
+                unlink( fd->unlink );
+        }
+        free( fd );
+    }
 }
 
 /* retrieve the inode object for a given fd, creating it if needed */
@@ -417,9 +445,9 @@ static struct inode *get_inode( dev_t dev, ino_t ino )
         inode->hash   = hash;
         inode->dev    = dev;
         inode->ino    = ino;
-        inode->closed = NULL;
         list_init( &inode->open );
         list_init( &inode->locks );
+        list_init( &inode->closed );
         list_add_head( &inode_hash[hash], &inode->entry );
     }
     return inode;
@@ -430,10 +458,15 @@ static void inode_add_closed_fd( struct inode *inode, struct closed_fd *fd )
 {
     if (!list_empty( &inode->locks ))
     {
-        fd->next = inode->closed;
-        inode->closed = fd;
+        list_add_head( &inode->closed, &fd->entry );
     }
-    else  /* no locks on this inode, we can close the fd right away */
+    else if (fd->unlink[0])  /* close the fd but keep the structure around for unlink */
+    {
+        close( fd->fd );
+        fd->fd = -1;
+        list_add_head( &inode->closed, &fd->entry );
+    }
+    else  /* no locks on this inode and no unlink, get rid of the fd */
     {
         close( fd->fd );
         free( fd );
@@ -769,7 +802,8 @@ void unlock_fd( struct fd *fd, file_pos_t start, file_pos_t count )
 static void fd_dump( struct object *obj, int verbose )
 {
     struct fd *fd = (struct fd *)obj;
-    fprintf( stderr, "Fd unix_fd=%d user=%p\n", fd->unix_fd, fd->user );
+    fprintf( stderr, "Fd unix_fd=%d user=%p unlink='%s'\n",
+             fd->unix_fd, fd->user, fd->closed->unlink );
 }
 
 static void fd_destroy( struct object *obj )
@@ -839,12 +873,13 @@ struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user )
 /* the sharing mode of other opens of the same file */
 static int check_sharing( struct fd *fd, unsigned int access, unsigned int sharing )
 {
-    unsigned int existing_sharing = FILE_SHARE_READ | FILE_SHARE_WRITE;
+    unsigned int existing_sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
     unsigned int existing_access = 0;
+    int unlink = 0;
     struct list *ptr;
 
     /* if access mode is 0, sharing mode is ignored */
-    if (!access) sharing = FILE_SHARE_READ|FILE_SHARE_WRITE;
+    if (!access) sharing = existing_sharing;
     fd->access = access;
     fd->sharing = sharing;
 
@@ -855,6 +890,7 @@ static int check_sharing( struct fd *fd, unsigned int access, unsigned int shari
         {
             existing_sharing &= fd_ptr->sharing;
             existing_access  |= fd_ptr->access;
+            if (fd_ptr->closed->unlink[0]) unlink = 1;
         }
     }
 
@@ -862,6 +898,8 @@ static int check_sharing( struct fd *fd, unsigned int access, unsigned int shari
     if ((access & GENERIC_WRITE) && !(existing_sharing & FILE_SHARE_WRITE)) return 0;
     if ((existing_access & GENERIC_READ) && !(sharing & FILE_SHARE_READ)) return 0;
     if ((existing_access & GENERIC_WRITE) && !(sharing & FILE_SHARE_WRITE)) return 0;
+    if (fd->closed->unlink[0] && !(existing_sharing & FILE_SHARE_DELETE)) return 0;
+    if (unlink && !(sharing & FILE_SHARE_DELETE)) return 0;
     return 1;
 }
 
@@ -869,14 +907,14 @@ static int check_sharing( struct fd *fd, unsigned int access, unsigned int shari
 /* the fd must have been created with alloc_fd */
 /* on error the fd object is released */
 struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
-                    unsigned int access, unsigned int sharing )
+                    unsigned int access, unsigned int sharing, const char *unlink_name )
 {
     struct stat st;
     struct closed_fd *closed_fd;
 
     assert( fd->unix_fd == -1 );
 
-    if (!(closed_fd = mem_alloc( sizeof(*closed_fd) )))
+    if (!(closed_fd = mem_alloc( sizeof(*closed_fd) + strlen(unlink_name) )))
     {
         release_object( fd );
         return NULL;
@@ -889,6 +927,7 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
         return NULL;
     }
     closed_fd->fd = fd->unix_fd;
+    closed_fd->unlink[0] = 0;
     fstat( fd->unix_fd, &st );
     *mode = st.st_mode;
 
@@ -914,10 +953,17 @@ struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
             set_error( STATUS_SHARING_VIOLATION );
             return NULL;
         }
+        strcpy( closed_fd->unlink, unlink_name );
     }
     else
     {
         free( closed_fd );
+        if (unlink_name[0])  /* we can't unlink special files */
+        {
+            release_object( fd );
+            set_error( STATUS_INVALID_PARAMETER );
+            return NULL;
+        }
     }
     return fd;
 }

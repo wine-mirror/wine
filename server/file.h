@@ -46,7 +46,7 @@ struct fd_ops
 
 extern struct fd *alloc_fd( const struct fd_ops *fd_user_ops, struct object *user );
 extern struct fd *open_fd( struct fd *fd, const char *name, int flags, mode_t *mode,
-                           unsigned int access, unsigned int sharing );
+                           unsigned int access, unsigned int sharing, const char *unlink_name );
 extern struct fd *create_anonymous_fd( const struct fd_ops *fd_user_ops,
                                        int unix_fd, struct object *user );
 extern void *get_fd_user( struct fd *fd );
