@@ -506,8 +506,7 @@ static void start_server( const char *oldcwd )
                     sprintf( path, "%s/%s", oldcwd, p );
                     p = path;
                 }
-                argv[0] = p;
-                execv( argv[0], argv );
+                wine_exec_wine_binary( p, argv, NULL, FALSE );
                 fatal_perror( "could not exec the server '%s'\n"
                               "    specified in the WINESERVER environment variable", p );
             }
