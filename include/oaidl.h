@@ -8,10 +8,26 @@
 extern "C" {
 #endif
 #include "objidl.h"
+#ifndef __IDispatch_FWD_DEFINED__
+#define __IDispatch_FWD_DEFINED__
 typedef struct IDispatch IDispatch;
+#endif
+
+#ifndef __ITypeInfo_FWD_DEFINED__
+#define __ITypeInfo_FWD_DEFINED__
 typedef struct ITypeInfo ITypeInfo;
+#endif
+
+#ifndef __ITypeLib_FWD_DEFINED__
+#define __ITypeLib_FWD_DEFINED__
 typedef struct ITypeLib ITypeLib;
+#endif
+
+#ifndef __IRecordInfo_FWD_DEFINED__
+#define __IRecordInfo_FWD_DEFINED__
 typedef struct IRecordInfo IRecordInfo;
+#endif
+
 typedef CY CURRENCY;
 
 typedef struct tagSAFEARRAYBOUND {
@@ -581,6 +597,9 @@ typedef IDispatch *LPDISPATCH;
 /*****************************************************************************
  * IDispatch interface
  */
+#ifndef __IDispatch_INTERFACE_DEFINED__
+#define __IDispatch_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IDispatch, 0x00020400, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IDispatch : public IUnknown
@@ -759,12 +778,21 @@ HRESULT __RPC_STUB IDispatch_Invoke_Stub(
     UINT* rgVarRefIdx,
     VARIANTARG* rgVarRef);
 
+#endif  /* __IDispatch_INTERFACE_DEFINED__ */
+
+#ifndef __IEnumVARIANT_FWD_DEFINED__
+#define __IEnumVARIANT_FWD_DEFINED__
 typedef struct IEnumVARIANT IEnumVARIANT;
+#endif
+
 typedef IEnumVARIANT *LPENUMVARIANT;
 
 /*****************************************************************************
  * IEnumVARIANT interface
  */
+#ifndef __IEnumVARIANT_INTERFACE_DEFINED__
+#define __IEnumVARIANT_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IEnumVARIANT, 0x00020404, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumVARIANT : public IUnknown
@@ -892,7 +920,13 @@ void __RPC_STUB IEnumVARIANT_Clone_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IEnumVARIANT_INTERFACE_DEFINED__ */
+
+#ifndef __ITypeComp_FWD_DEFINED__
+#define __ITypeComp_FWD_DEFINED__
 typedef struct ITypeComp ITypeComp;
+#endif
+
 typedef ITypeComp *LPTYPECOMP;
 
 typedef enum tagDESCKIND {
@@ -913,6 +947,9 @@ typedef union tagBINDPTR {
 /*****************************************************************************
  * ITypeComp interface
  */
+#ifndef __ITypeComp_INTERFACE_DEFINED__
+#define __ITypeComp_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ITypeComp, 0x00020403, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeComp : public IUnknown
@@ -1048,11 +1085,16 @@ HRESULT __RPC_STUB ITypeComp_BindType_Stub(
     ULONG lHashVal,
     ITypeInfo** ppTInfo);
 
+#endif  /* __ITypeComp_INTERFACE_DEFINED__ */
+
 typedef ITypeInfo *LPTYPEINFO;
 
 /*****************************************************************************
  * ITypeInfo interface
  */
+#ifndef __ITypeInfo_INTERFACE_DEFINED__
+#define __ITypeInfo_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ITypeInfo, 0x00020401, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeInfo : public IUnknown
@@ -1623,12 +1665,21 @@ void CALLBACK ITypeInfo_ReleaseVarDesc_Proxy(
 HRESULT __RPC_STUB ITypeInfo_ReleaseVarDesc_Stub(
     ITypeInfo* This);
 
+#endif  /* __ITypeInfo_INTERFACE_DEFINED__ */
+
+#ifndef __ITypeInfo2_FWD_DEFINED__
+#define __ITypeInfo2_FWD_DEFINED__
 typedef struct ITypeInfo2 ITypeInfo2;
+#endif
+
 typedef ITypeInfo2 *LPTYPEINFO2;
 
 /*****************************************************************************
  * ITypeInfo2 interface
  */
+#ifndef __ITypeInfo2_INTERFACE_DEFINED__
+#define __ITypeInfo2_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ITypeInfo2, 0x00020412, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeInfo2 : public ITypeInfo
@@ -2158,6 +2209,8 @@ void __RPC_STUB ITypeInfo2_GetAllImplTypeCustData_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __ITypeInfo2_INTERFACE_DEFINED__ */
+
 typedef ITypeLib *LPTYPELIB;
 
 typedef enum tagSYSKIND {
@@ -2185,6 +2238,9 @@ typedef struct tagTLIBATTR {
 /*****************************************************************************
  * ITypeLib interface
  */
+#ifndef __ITypeLib_INTERFACE_DEFINED__
+#define __ITypeLib_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ITypeLib, 0x00020402, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeLib : public IUnknown
@@ -2499,12 +2555,21 @@ void CALLBACK ITypeLib_ReleaseTLibAttr_Proxy(
 HRESULT __RPC_STUB ITypeLib_ReleaseTLibAttr_Stub(
     ITypeLib* This);
 
+#endif  /* __ITypeLib_INTERFACE_DEFINED__ */
+
+#ifndef __ITypeLib2_FWD_DEFINED__
+#define __ITypeLib2_FWD_DEFINED__
 typedef struct ITypeLib2 ITypeLib2;
+#endif
+
 typedef ITypeLib2 *LPTYPELIB2;
 
 /*****************************************************************************
  * ITypeLib2 interface
  */
+#ifndef __ITypeLib2_INTERFACE_DEFINED__
+#define __ITypeLib2_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ITypeLib2, 0x00020411, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeLib2 : public ITypeLib
@@ -2735,7 +2800,13 @@ void __RPC_STUB ITypeLib2_GetAllCustData_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __ITypeLib2_INTERFACE_DEFINED__ */
+
+#ifndef __ITypeChangeEvents_FWD_DEFINED__
+#define __ITypeChangeEvents_FWD_DEFINED__
 typedef struct ITypeChangeEvents ITypeChangeEvents;
+#endif
+
 typedef ITypeChangeEvents *LPTYPECHANGEEVENTS;
 
 typedef enum tagCHANGEKIND {
@@ -2752,6 +2823,9 @@ typedef enum tagCHANGEKIND {
 /*****************************************************************************
  * ITypeChangeEvents interface
  */
+#ifndef __ITypeChangeEvents_INTERFACE_DEFINED__
+#define __ITypeChangeEvents_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ITypeChangeEvents, 0x00020410, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeChangeEvents : public IUnknown
@@ -2846,12 +2920,21 @@ void __RPC_STUB ITypeChangeEvents_AfterTypeChange_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __ITypeChangeEvents_INTERFACE_DEFINED__ */
+
+#ifndef __IErrorInfo_FWD_DEFINED__
+#define __IErrorInfo_FWD_DEFINED__
 typedef struct IErrorInfo IErrorInfo;
+#endif
+
 typedef IErrorInfo *LPERRORINFO;
 
 /*****************************************************************************
  * IErrorInfo interface
  */
+#ifndef __IErrorInfo_INTERFACE_DEFINED__
+#define __IErrorInfo_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IErrorInfo, 0x1cf2b120, 0x547d, 0x101b, 0x8e,0x65, 0x08,0x00,0x2b,0x2b,0xd1,0x19);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IErrorInfo : public IUnknown
@@ -2982,12 +3065,21 @@ void __RPC_STUB IErrorInfo_GetHelpContext_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IErrorInfo_INTERFACE_DEFINED__ */
+
+#ifndef __ICreateErrorInfo_FWD_DEFINED__
+#define __ICreateErrorInfo_FWD_DEFINED__
 typedef struct ICreateErrorInfo ICreateErrorInfo;
+#endif
+
 typedef ICreateErrorInfo *LPCREATEERRORINFO;
 
 /*****************************************************************************
  * ICreateErrorInfo interface
  */
+#ifndef __ICreateErrorInfo_INTERFACE_DEFINED__
+#define __ICreateErrorInfo_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ICreateErrorInfo, 0x22f03340, 0x547d, 0x101b, 0x8e,0x65, 0x08,0x00,0x2b,0x2b,0xd1,0x19);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ICreateErrorInfo : public IUnknown
@@ -3118,12 +3210,21 @@ void __RPC_STUB ICreateErrorInfo_SetHelpContext_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __ICreateErrorInfo_INTERFACE_DEFINED__ */
+
+#ifndef __ISupportErrorInfo_FWD_DEFINED__
+#define __ISupportErrorInfo_FWD_DEFINED__
 typedef struct ISupportErrorInfo ISupportErrorInfo;
+#endif
+
 typedef ISupportErrorInfo *LPSUPPORTERRORINFO;
 
 /*****************************************************************************
  * ISupportErrorInfo interface
  */
+#ifndef __ISupportErrorInfo_INTERFACE_DEFINED__
+#define __ISupportErrorInfo_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ISupportErrorInfo, 0xdf0b3d60, 0x548f, 0x101b, 0x8e,0x65, 0x08,0x00,0x2b,0x2b,0xd1,0x19);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ISupportErrorInfo : public IUnknown
@@ -3186,10 +3287,19 @@ void __RPC_STUB ISupportErrorInfo_InterfaceSupportsErrorInfo_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __ISupportErrorInfo_INTERFACE_DEFINED__ */
+
+#ifndef __ITypeFactory_FWD_DEFINED__
+#define __ITypeFactory_FWD_DEFINED__
 typedef struct ITypeFactory ITypeFactory;
+#endif
+
 /*****************************************************************************
  * ITypeFactory interface
  */
+#ifndef __ITypeFactory_INTERFACE_DEFINED__
+#define __ITypeFactory_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ITypeFactory, 0x0000002e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeFactory : public IUnknown
@@ -3258,10 +3368,19 @@ void __RPC_STUB ITypeFactory_CreateFromTypeInfo_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __ITypeFactory_INTERFACE_DEFINED__ */
+
+#ifndef __ITypeMarshal_FWD_DEFINED__
+#define __ITypeMarshal_FWD_DEFINED__
 typedef struct ITypeMarshal ITypeMarshal;
+#endif
+
 /*****************************************************************************
  * ITypeMarshal interface
  */
+#ifndef __ITypeMarshal_INTERFACE_DEFINED__
+#define __ITypeMarshal_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ITypeMarshal, 0x0000002d, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ITypeMarshal : public IUnknown
@@ -3411,11 +3530,16 @@ void __RPC_STUB ITypeMarshal_Free_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __ITypeMarshal_INTERFACE_DEFINED__ */
+
 typedef IRecordInfo *LPRECORDINFO;
 
 /*****************************************************************************
  * IRecordInfo interface
  */
+#ifndef __IRecordInfo_INTERFACE_DEFINED__
+#define __IRecordInfo_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IRecordInfo, 0x0000002f, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRecordInfo : public IUnknown
@@ -3773,12 +3897,21 @@ void __RPC_STUB IRecordInfo_RecordDestroy_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IRecordInfo_INTERFACE_DEFINED__ */
+
+#ifndef __ICreateTypeInfo_FWD_DEFINED__
+#define __ICreateTypeInfo_FWD_DEFINED__
 typedef struct ICreateTypeInfo ICreateTypeInfo;
+#endif
+
 typedef ICreateTypeInfo *LPCREATETYPEINFO;
 
 /*****************************************************************************
  * ICreateTypeInfo interface
  */
+#ifndef __ICreateTypeInfo_INTERFACE_DEFINED__
+#define __ICreateTypeInfo_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ICreateTypeInfo, 0x00020405, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ICreateTypeInfo : public IUnknown
@@ -4261,12 +4394,21 @@ void __RPC_STUB ICreateTypeInfo_LayOut_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __ICreateTypeInfo_INTERFACE_DEFINED__ */
+
+#ifndef __ICreateTypeInfo2_FWD_DEFINED__
+#define __ICreateTypeInfo2_FWD_DEFINED__
 typedef struct ICreateTypeInfo2 ICreateTypeInfo2;
+#endif
+
 typedef ICreateTypeInfo2 *LPCREATETYPEINFO2;
 
 /*****************************************************************************
  * ICreateTypeInfo2 interface
  */
+#ifndef __ICreateTypeInfo2_INTERFACE_DEFINED__
+#define __ICreateTypeInfo2_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ICreateTypeInfo2, 0x0002040e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ICreateTypeInfo2 : public ICreateTypeInfo
@@ -4760,12 +4902,21 @@ void __RPC_STUB ICreateTypeInfo2_SetName_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __ICreateTypeInfo2_INTERFACE_DEFINED__ */
+
+#ifndef __ICreateTypeLib_FWD_DEFINED__
+#define __ICreateTypeLib_FWD_DEFINED__
 typedef struct ICreateTypeLib ICreateTypeLib;
+#endif
+
 typedef ICreateTypeLib *LPCREATETYPELIB;
 
 /*****************************************************************************
  * ICreateTypeLib interface
  */
+#ifndef __ICreateTypeLib_INTERFACE_DEFINED__
+#define __ICreateTypeLib_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ICreateTypeLib, 0x00020406, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ICreateTypeLib : public IUnknown
@@ -4988,12 +5139,21 @@ void __RPC_STUB ICreateTypeLib_SaveAllChanges_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __ICreateTypeLib_INTERFACE_DEFINED__ */
+
+#ifndef __ICreateTypeLib2_FWD_DEFINED__
+#define __ICreateTypeLib2_FWD_DEFINED__
 typedef struct ICreateTypeLib2 ICreateTypeLib2;
+#endif
+
 typedef ICreateTypeLib2 *LPCREATETYPELIB2;
 
 /*****************************************************************************
  * ICreateTypeLib2 interface
  */
+#ifndef __ICreateTypeLib2_INTERFACE_DEFINED__
+#define __ICreateTypeLib2_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ICreateTypeLib2, 0x0002040f, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ICreateTypeLib2 : public ICreateTypeLib
@@ -5174,6 +5334,8 @@ void __RPC_STUB ICreateTypeLib2_SetHelpStringDll_Stub(
     struct IRpcChannelBuffer* pRpcChannelBuffer,
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
+
+#endif  /* __ICreateTypeLib2_INTERFACE_DEFINED__ */
 
 #ifdef __cplusplus
 }

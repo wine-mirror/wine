@@ -15,12 +15,19 @@ extern "C" {
 # define ICOM_MSVTABLE_COMPAT_FIELDS
 # define ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
 #endif
+#ifndef __IUnknown_FWD_DEFINED__
+#define __IUnknown_FWD_DEFINED__
 typedef struct IUnknown IUnknown;
+#endif
+
 typedef IUnknown *LPUNKNOWN;
 
 /*****************************************************************************
  * IUnknown interface
  */
+#ifndef __IUnknown_INTERFACE_DEFINED__
+#define __IUnknown_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IUnknown, 0x00000000, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 #ifdef ICOM_USE_COM_INTERFACE_ATTRIBUTE
@@ -100,12 +107,21 @@ void __RPC_STUB IUnknown_Release_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IUnknown_INTERFACE_DEFINED__ */
+
+#ifndef __IClassFactory_FWD_DEFINED__
+#define __IClassFactory_FWD_DEFINED__
 typedef struct IClassFactory IClassFactory;
+#endif
+
 typedef IClassFactory *LPCLASSFACTORY;
 
 /*****************************************************************************
  * IClassFactory interface
  */
+#ifndef __IClassFactory_INTERFACE_DEFINED__
+#define __IClassFactory_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IClassFactory, 0x00000001, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IClassFactory : public IUnknown
@@ -204,6 +220,8 @@ HRESULT CALLBACK IClassFactory_LockServer_Proxy(
 HRESULT __RPC_STUB IClassFactory_LockServer_Stub(
     IClassFactory* This,
     BOOL fLock);
+
+#endif  /* __IClassFactory_INTERFACE_DEFINED__ */
 
 #ifdef __cplusplus
 }

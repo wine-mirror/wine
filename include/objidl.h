@@ -8,19 +8,54 @@
 extern "C" {
 #endif
 #include "unknwn.h"
+#ifndef __IStream_FWD_DEFINED__
+#define __IStream_FWD_DEFINED__
 typedef struct IStream IStream;
+#endif
+
+#ifndef __IStream16_FWD_DEFINED__
+#define __IStream16_FWD_DEFINED__
 typedef struct IStream16 IStream16;
+#endif
+
+#ifndef __IEnumString_FWD_DEFINED__
+#define __IEnumString_FWD_DEFINED__
 typedef struct IEnumString IEnumString;
+#endif
+
+#ifndef __IRunningObjectTable_FWD_DEFINED__
+#define __IRunningObjectTable_FWD_DEFINED__
 typedef struct IRunningObjectTable IRunningObjectTable;
+#endif
+
+#ifndef __IMoniker_FWD_DEFINED__
+#define __IMoniker_FWD_DEFINED__
 typedef struct IMoniker IMoniker;
+#endif
+
+#ifndef __IAdviseSink_FWD_DEFINED__
+#define __IAdviseSink_FWD_DEFINED__
 typedef struct IAdviseSink IAdviseSink;
+#endif
+
+#ifndef __IAsyncManager_FWD_DEFINED__
+#define __IAsyncManager_FWD_DEFINED__
 typedef struct IAsyncManager IAsyncManager;
+#endif
+
+#ifndef __IMarshal_FWD_DEFINED__
+#define __IMarshal_FWD_DEFINED__
 typedef struct IMarshal IMarshal;
+#endif
+
 typedef IMarshal *LPMARSHAL;
 
 /*****************************************************************************
  * IMarshal interface
  */
+#ifndef __IMarshal_INTERFACE_DEFINED__
+#define __IMarshal_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IMarshal, 0x00000003, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IMarshal : public IUnknown
@@ -219,12 +254,21 @@ void __RPC_STUB IMarshal_DisconnectObject_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IMarshal_INTERFACE_DEFINED__ */
+
+#ifndef __IStdMarshalInfo_FWD_DEFINED__
+#define __IStdMarshalInfo_FWD_DEFINED__
 typedef struct IStdMarshalInfo IStdMarshalInfo;
+#endif
+
 typedef IStdMarshalInfo *LPSTDMARSHALINFO;
 
 /*****************************************************************************
  * IStdMarshalInfo interface
  */
+#ifndef __IStdMarshalInfo_INTERFACE_DEFINED__
+#define __IStdMarshalInfo_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IStdMarshalInfo, 0x00000018, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IStdMarshalInfo : public IUnknown
@@ -293,7 +337,13 @@ void __RPC_STUB IStdMarshalInfo_GetClassForHandler_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IStdMarshalInfo_INTERFACE_DEFINED__ */
+
+#ifndef __IExternalConnection_FWD_DEFINED__
+#define __IExternalConnection_FWD_DEFINED__
 typedef struct IExternalConnection IExternalConnection;
+#endif
+
 typedef IExternalConnection *LPEXTERNALCONNECTION;
 
 typedef enum tagEXTCONN {
@@ -305,6 +355,9 @@ typedef enum tagEXTCONN {
 /*****************************************************************************
  * IExternalConnection interface
  */
+#ifndef __IExternalConnection_INTERFACE_DEFINED__
+#define __IExternalConnection_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IExternalConnection, 0x00000019, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IExternalConnection : public IUnknown
@@ -393,7 +446,13 @@ void __RPC_STUB IExternalConnection_ReleaseConnection_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IExternalConnection_INTERFACE_DEFINED__ */
+
+#ifndef __IMultiQI_FWD_DEFINED__
+#define __IMultiQI_FWD_DEFINED__
 typedef struct IMultiQI IMultiQI;
+#endif
+
 typedef IMultiQI *LPMULTIQI;
 
 typedef struct tagMULTI_QI {
@@ -405,6 +464,9 @@ typedef struct tagMULTI_QI {
 /*****************************************************************************
  * IMultiQI interface
  */
+#ifndef __IMultiQI_INTERFACE_DEFINED__
+#define __IMultiQI_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IMultiQI, 0x00000020, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IMultiQI : public IUnknown
@@ -470,12 +532,21 @@ void __RPC_STUB IMultiQI_QueryMultipleInterfaces_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IMultiQI_INTERFACE_DEFINED__ */
+
+#ifndef __IMalloc_FWD_DEFINED__
+#define __IMalloc_FWD_DEFINED__
 typedef struct IMalloc IMalloc;
+#endif
+
 typedef IMalloc *LPMALLOC;
 
 /*****************************************************************************
  * IMalloc interface
  */
+#ifndef __IMalloc_INTERFACE_DEFINED__
+#define __IMalloc_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IMalloc, 0x00000002, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IMalloc : public IUnknown
@@ -624,12 +695,21 @@ void __RPC_STUB IMalloc_HeapMinimize_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IMalloc_INTERFACE_DEFINED__ */
+
+#ifndef __IMallocSpy_FWD_DEFINED__
+#define __IMallocSpy_FWD_DEFINED__
 typedef struct IMallocSpy IMallocSpy;
+#endif
+
 typedef IMallocSpy *LPMALLOCSPY;
 
 /*****************************************************************************
  * IMallocSpy interface
  */
+#ifndef __IMallocSpy_INTERFACE_DEFINED__
+#define __IMallocSpy_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IMallocSpy, 0x0000001d, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IMallocSpy : public IUnknown
@@ -905,12 +985,21 @@ void __RPC_STUB IMallocSpy_PostHeapMinimize_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IMallocSpy_INTERFACE_DEFINED__ */
+
+#ifndef __IEnumUnknown_FWD_DEFINED__
+#define __IEnumUnknown_FWD_DEFINED__
 typedef struct IEnumUnknown IEnumUnknown;
+#endif
+
 typedef IEnumUnknown *LPENUMUNKNOWN;
 
 /*****************************************************************************
  * IEnumUnknown interface
  */
+#ifndef __IEnumUnknown_INTERFACE_DEFINED__
+#define __IEnumUnknown_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IEnumUnknown, 0x00000100, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumUnknown : public IUnknown
@@ -1038,12 +1127,21 @@ void __RPC_STUB IEnumUnknown_Clone_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IEnumUnknown_INTERFACE_DEFINED__ */
+
+#ifndef __ISurrogate_FWD_DEFINED__
+#define __ISurrogate_FWD_DEFINED__
 typedef struct ISurrogate ISurrogate;
+#endif
+
 typedef ISurrogate *LPSURROGATE;
 
 /*****************************************************************************
  * ISurrogate interface
  */
+#ifndef __ISurrogate_INTERFACE_DEFINED__
+#define __ISurrogate_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ISurrogate, 0x00000022, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ISurrogate : public IUnknown
@@ -1121,12 +1219,21 @@ void __RPC_STUB ISurrogate_FreeSurrogate_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __ISurrogate_INTERFACE_DEFINED__ */
+
+#ifndef __IGlobalInterfaceTable_FWD_DEFINED__
+#define __IGlobalInterfaceTable_FWD_DEFINED__
 typedef struct IGlobalInterfaceTable IGlobalInterfaceTable;
+#endif
+
 typedef IGlobalInterfaceTable *LPGLOBALINTERFACETABLE;
 
 /*****************************************************************************
  * IGlobalInterfaceTable interface
  */
+#ifndef __IGlobalInterfaceTable_INTERFACE_DEFINED__
+#define __IGlobalInterfaceTable_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IGlobalInterfaceTable, 0x00000146, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IGlobalInterfaceTable : public IUnknown
@@ -1235,7 +1342,13 @@ void __RPC_STUB IGlobalInterfaceTable_GetInterfaceFromGlobal_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IGlobalInterfaceTable_INTERFACE_DEFINED__ */
+
+#ifndef __IBindCtx_FWD_DEFINED__
+#define __IBindCtx_FWD_DEFINED__
 typedef struct IBindCtx IBindCtx;
+#endif
+
 typedef IBindCtx *LPBINDCTX;
 
 typedef IBindCtx *LPBC;
@@ -1266,6 +1379,9 @@ typedef enum tagBIND_FLAGS {
 /*****************************************************************************
  * IBindCtx interface
  */
+#ifndef __IBindCtx_INTERFACE_DEFINED__
+#define __IBindCtx_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IBindCtx, 0x0000000e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IBindCtx : public IUnknown
@@ -1497,12 +1613,21 @@ void __RPC_STUB IBindCtx_RevokeObjectParam_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IBindCtx_INTERFACE_DEFINED__ */
+
+#ifndef __IEnumMoniker_FWD_DEFINED__
+#define __IEnumMoniker_FWD_DEFINED__
 typedef struct IEnumMoniker IEnumMoniker;
+#endif
+
 typedef IEnumMoniker *LPENUMMONIKER;
 
 /*****************************************************************************
  * IEnumMoniker interface
  */
+#ifndef __IEnumMoniker_INTERFACE_DEFINED__
+#define __IEnumMoniker_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IEnumMoniker, 0x00000102, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumMoniker : public IUnknown
@@ -1630,12 +1755,21 @@ void __RPC_STUB IEnumMoniker_Clone_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IEnumMoniker_INTERFACE_DEFINED__ */
+
+#ifndef __IRunnableObject_FWD_DEFINED__
+#define __IRunnableObject_FWD_DEFINED__
 typedef struct IRunnableObject IRunnableObject;
+#endif
+
 typedef IRunnableObject *LPRUNNABLEOBJECT;
 
 /*****************************************************************************
  * IRunnableObject interface
  */
+#ifndef __IRunnableObject_INTERFACE_DEFINED__
+#define __IRunnableObject_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IRunnableObject, 0x00000126, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRunnableObject : public IUnknown
@@ -1771,6 +1905,8 @@ void __RPC_STUB IRunnableObject_SetContainedObject_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IRunnableObject_INTERFACE_DEFINED__ */
+
 #ifdef __WINESRC__
 #undef GetObject
 #endif
@@ -1779,6 +1915,9 @@ typedef IRunningObjectTable *LPRUNNINGOBJECTTABLE;
 /*****************************************************************************
  * IRunningObjectTable interface
  */
+#ifndef __IRunningObjectTable_INTERFACE_DEFINED__
+#define __IRunningObjectTable_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IRunningObjectTable, 0x00000010, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRunningObjectTable : public IUnknown
@@ -1961,12 +2100,21 @@ void __RPC_STUB IRunningObjectTable_EnumRunning_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IRunningObjectTable_INTERFACE_DEFINED__ */
+
+#ifndef __IPersist_FWD_DEFINED__
+#define __IPersist_FWD_DEFINED__
 typedef struct IPersist IPersist;
+#endif
+
 typedef IPersist *LPPERSIST;
 
 /*****************************************************************************
  * IPersist interface
  */
+#ifndef __IPersist_INTERFACE_DEFINED__
+#define __IPersist_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IPersist, 0x0000010c, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPersist : public IUnknown
@@ -2029,12 +2177,21 @@ void __RPC_STUB IPersist_GetClassID_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IPersist_INTERFACE_DEFINED__ */
+
+#ifndef __IPersistStream_FWD_DEFINED__
+#define __IPersistStream_FWD_DEFINED__
 typedef struct IPersistStream IPersistStream;
+#endif
+
 typedef IPersistStream *LPPERSISTSTREAM;
 
 /*****************************************************************************
  * IPersistStream interface
  */
+#ifndef __IPersistStream_INTERFACE_DEFINED__
+#define __IPersistStream_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IPersistStream, 0x00000109, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPersistStream : public IPersist
@@ -2158,6 +2315,8 @@ void __RPC_STUB IPersistStream_GetSizeMax_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IPersistStream_INTERFACE_DEFINED__ */
+
 typedef IMoniker *LPMONIKER;
 
 typedef enum tagMKSYS {
@@ -2180,6 +2339,9 @@ typedef enum tagMKREDUCE {
 /*****************************************************************************
  * IMoniker interface
  */
+#ifndef __IMoniker_INTERFACE_DEFINED__
+#define __IMoniker_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IMoniker, 0x0000000f, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IMoniker : public IPersistStream
@@ -2612,10 +2774,19 @@ void __RPC_STUB IMoniker_IsSystemMoniker_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IMoniker_INTERFACE_DEFINED__ */
+
+#ifndef __IROTData_FWD_DEFINED__
+#define __IROTData_FWD_DEFINED__
 typedef struct IROTData IROTData;
+#endif
+
 /*****************************************************************************
  * IROTData interface
  */
+#ifndef __IROTData_INTERFACE_DEFINED__
+#define __IROTData_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IROTData, 0xf29f6bc0, 0x5021, 0x11ce, 0xaa,0x15, 0x00,0x00,0x69,0x01,0x29,0x3f);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IROTData : public IUnknown
@@ -2684,11 +2855,16 @@ void __RPC_STUB IROTData_GetComparisonData_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IROTData_INTERFACE_DEFINED__ */
+
 typedef IEnumString *LPENUMSTRING;
 
 /*****************************************************************************
  * IEnumString interface
  */
+#ifndef __IEnumString_INTERFACE_DEFINED__
+#define __IEnumString_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IEnumString, 0x00000101, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumString : public IUnknown
@@ -2816,10 +2992,19 @@ void __RPC_STUB IEnumString_Clone_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IEnumString_INTERFACE_DEFINED__ */
+
+#ifndef __IClassActivator_FWD_DEFINED__
+#define __IClassActivator_FWD_DEFINED__
 typedef struct IClassActivator IClassActivator;
+#endif
+
 /*****************************************************************************
  * IClassActivator interface
  */
+#ifndef __IClassActivator_INTERFACE_DEFINED__
+#define __IClassActivator_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IClassActivator, 0x00000140, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IClassActivator : public IUnknown
@@ -2894,10 +3079,19 @@ void __RPC_STUB IClassActivator_GetClassObject_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IClassActivator_INTERFACE_DEFINED__ */
+
+#ifndef __ISequentialStream_FWD_DEFINED__
+#define __ISequentialStream_FWD_DEFINED__
 typedef struct ISequentialStream ISequentialStream;
+#endif
+
 /*****************************************************************************
  * ISequentialStream interface
  */
+#ifndef __ISequentialStream_INTERFACE_DEFINED__
+#define __ISequentialStream_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ISequentialStream, 0x0c733a30, 0x2a1c, 0x11ce, 0xad,0xe5, 0x00,0xaa,0x00,0x44,0x77,0x3d);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ISequentialStream : public IUnknown
@@ -3009,6 +3203,8 @@ HRESULT __RPC_STUB ISequentialStream_Write_Stub(
     ULONG cb,
     ULONG* pcbWritten);
 
+#endif  /* __ISequentialStream_INTERFACE_DEFINED__ */
+
 typedef IStream *LPSTREAM;
 
 typedef struct tagSTATSTG {
@@ -3051,6 +3247,9 @@ typedef enum tagLOCKTYPE {
 /*****************************************************************************
  * IStream interface
  */
+#ifndef __IStream_INTERFACE_DEFINED__
+#define __IStream_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IStream, 0x0000000c, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IStream : public ISequentialStream
@@ -3318,6 +3517,8 @@ void __RPC_STUB IStream_Clone_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IStream_INTERFACE_DEFINED__ */
+
 typedef IStream16 *LPSTREAM16;
 
 typedef struct tagSTATSTG16 {
@@ -3337,6 +3538,9 @@ typedef struct tagSTATSTG16 {
 /*****************************************************************************
  * IStream16 interface
  */
+#ifndef __IStream16_INTERFACE_DEFINED__
+#define __IStream16_INTERFACE_DEFINED__
+
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IStream16 : public ISequentialStream
 {
@@ -3603,12 +3807,21 @@ void __RPC_STUB IStream16_Clone_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IStream16_INTERFACE_DEFINED__ */
+
+#ifndef __IEnumSTATSTG_FWD_DEFINED__
+#define __IEnumSTATSTG_FWD_DEFINED__
 typedef struct IEnumSTATSTG IEnumSTATSTG;
+#endif
+
 typedef IEnumSTATSTG *LPENUMSTATSTG;
 
 /*****************************************************************************
  * IEnumSTATSTG interface
  */
+#ifndef __IEnumSTATSTG_INTERFACE_DEFINED__
+#define __IEnumSTATSTG_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IEnumSTATSTG, 0x0000000d, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumSTATSTG : public IUnknown
@@ -3736,7 +3949,13 @@ void __RPC_STUB IEnumSTATSTG_Clone_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IEnumSTATSTG_INTERFACE_DEFINED__ */
+
+#ifndef __IStorage_FWD_DEFINED__
+#define __IStorage_FWD_DEFINED__
 typedef struct IStorage IStorage;
+#endif
+
 typedef IStorage *LPSTORAGE;
 
 typedef struct tagRemSNB {
@@ -3756,6 +3975,9 @@ void            __RPC_USER SNB_UserFree     (unsigned long *, SNB *);
 /*****************************************************************************
  * IStorage interface
  */
+#ifndef __IStorage_INTERFACE_DEFINED__
+#define __IStorage_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IStorage, 0x0000000b, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IStorage : public IUnknown
@@ -4180,7 +4402,13 @@ void __RPC_STUB IStorage_Stat_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IStorage_INTERFACE_DEFINED__ */
+
+#ifndef __IStorage16_FWD_DEFINED__
+#define __IStorage16_FWD_DEFINED__
 typedef struct IStorage16 IStorage16;
+#endif
+
 typedef IStorage16 *LPSTORAGE16;
 
 typedef struct tagRemSNB16 {
@@ -4200,6 +4428,9 @@ void            __RPC_USER SNB16_UserFree     (unsigned long *, SNB16 *);
 /*****************************************************************************
  * IStorage16 interface
  */
+#ifndef __IStorage16_INTERFACE_DEFINED__
+#define __IStorage16_INTERFACE_DEFINED__
+
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IStorage16 : public IUnknown
 {
@@ -4623,12 +4854,21 @@ void __RPC_STUB IStorage16_Stat_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IStorage16_INTERFACE_DEFINED__ */
+
+#ifndef __IPersistFile_FWD_DEFINED__
+#define __IPersistFile_FWD_DEFINED__
 typedef struct IPersistFile IPersistFile;
+#endif
+
 typedef IPersistFile *LPPERSISTFILE;
 
 /*****************************************************************************
  * IPersistFile interface
  */
+#ifndef __IPersistFile_INTERFACE_DEFINED__
+#define __IPersistFile_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IPersistFile, 0x0000010b, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPersistFile : public IPersist
@@ -4772,12 +5012,21 @@ void __RPC_STUB IPersistFile_GetCurFile_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IPersistFile_INTERFACE_DEFINED__ */
+
+#ifndef __IPersistStorage_FWD_DEFINED__
+#define __IPersistStorage_FWD_DEFINED__
 typedef struct IPersistStorage IPersistStorage;
+#endif
+
 typedef IPersistStorage *LPPERSISTSTORAGE;
 
 /*****************************************************************************
  * IPersistStorage interface
  */
+#ifndef __IPersistStorage_INTERFACE_DEFINED__
+#define __IPersistStorage_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IPersistStorage, 0x0000010a, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPersistStorage : public IPersist
@@ -4933,12 +5182,21 @@ void __RPC_STUB IPersistStorage_HandsOffStorage_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IPersistStorage_INTERFACE_DEFINED__ */
+
+#ifndef __IRootStorage_FWD_DEFINED__
+#define __IRootStorage_FWD_DEFINED__
 typedef struct IRootStorage IRootStorage;
+#endif
+
 typedef IRootStorage *LPROOTSTORAGE;
 
 /*****************************************************************************
  * IRootStorage interface
  */
+#ifndef __IRootStorage_INTERFACE_DEFINED__
+#define __IRootStorage_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IRootStorage, 0x00000012, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRootStorage : public IUnknown
@@ -5001,12 +5259,21 @@ void __RPC_STUB IRootStorage_SwitchToFile_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IRootStorage_INTERFACE_DEFINED__ */
+
+#ifndef __ILockBytes_FWD_DEFINED__
+#define __ILockBytes_FWD_DEFINED__
 typedef struct ILockBytes ILockBytes;
+#endif
+
 typedef ILockBytes *LPLOCKBYTES;
 
 /*****************************************************************************
  * ILockBytes interface
  */
+#ifndef __ILockBytes_INTERFACE_DEFINED__
+#define __ILockBytes_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ILockBytes, 0x0000000a, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ILockBytes : public IUnknown
@@ -5226,10 +5493,19 @@ void __RPC_STUB ILockBytes_Stat_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __ILockBytes_INTERFACE_DEFINED__ */
+
+#ifndef __IFillLockBytes_FWD_DEFINED__
+#define __IFillLockBytes_FWD_DEFINED__
 typedef struct IFillLockBytes IFillLockBytes;
+#endif
+
 /*****************************************************************************
  * IFillLockBytes interface
  */
+#ifndef __IFillLockBytes_INTERFACE_DEFINED__
+#define __IFillLockBytes_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IFillLockBytes, 0x99caf010, 0x415e, 0x11cf, 0x88,0x14, 0x00,0xaa,0x00,0xb5,0x69,0xf5);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IFillLockBytes : public IUnknown
@@ -5380,10 +5656,19 @@ void __RPC_STUB IFillLockBytes_Terminate_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IFillLockBytes_INTERFACE_DEFINED__ */
+
+#ifndef __IProgressNotify_FWD_DEFINED__
+#define __IProgressNotify_FWD_DEFINED__
 typedef struct IProgressNotify IProgressNotify;
+#endif
+
 /*****************************************************************************
  * IProgressNotify interface
  */
+#ifndef __IProgressNotify_INTERFACE_DEFINED__
+#define __IProgressNotify_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IProgressNotify, 0xa9d758a0, 0x4617, 0x11cf, 0x95,0xfc, 0x00,0xaa,0x00,0x68,0x0d,0xb4);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IProgressNotify : public IUnknown
@@ -5455,7 +5740,13 @@ void __RPC_STUB IProgressNotify_OnProgress_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IProgressNotify_INTERFACE_DEFINED__ */
+
+#ifndef __ILayoutStorage_FWD_DEFINED__
+#define __ILayoutStorage_FWD_DEFINED__
 typedef struct ILayoutStorage ILayoutStorage;
+#endif
+
 typedef struct tagStorageLayout {
     DWORD LayoutType;
     OLECHAR *pwcsElementName;
@@ -5466,6 +5757,9 @@ typedef struct tagStorageLayout {
 /*****************************************************************************
  * ILayoutStorage interface
  */
+#ifndef __ILayoutStorage_INTERFACE_DEFINED__
+#define __ILayoutStorage_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_ILayoutStorage, 0x0e6d4d90, 0x6738, 0x11cf, 0x96,0x08, 0x00,0xaa,0x00,0x68,0x0d,0xb4);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct ILayoutStorage : public IUnknown
@@ -5598,7 +5892,13 @@ void __RPC_STUB ILayoutStorage_ReLayoutDocfileOnILockBytes_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __ILayoutStorage_INTERFACE_DEFINED__ */
+
+#ifndef __IEnumFORMATETC_FWD_DEFINED__
+#define __IEnumFORMATETC_FWD_DEFINED__
 typedef struct IEnumFORMATETC IEnumFORMATETC;
+#endif
+
 typedef IEnumFORMATETC *LPENUMFORMATETC;
 
 typedef struct tagDVTARGETDEVICE {
@@ -5623,6 +5923,9 @@ typedef struct tagFORMATETC {
 /*****************************************************************************
  * IEnumFORMATETC interface
  */
+#ifndef __IEnumFORMATETC_INTERFACE_DEFINED__
+#define __IEnumFORMATETC_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IEnumFORMATETC, 0x00000103, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumFORMATETC : public IUnknown
@@ -5750,7 +6053,13 @@ void __RPC_STUB IEnumFORMATETC_Clone_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IEnumFORMATETC_INTERFACE_DEFINED__ */
+
+#ifndef __IEnumSTATDATA_FWD_DEFINED__
+#define __IEnumSTATDATA_FWD_DEFINED__
 typedef struct IEnumSTATDATA IEnumSTATDATA;
+#endif
+
 typedef IEnumSTATDATA *LPENUMSTATDATA;
 
 typedef enum tagADVF {
@@ -5773,6 +6082,9 @@ typedef struct tagSTATDATA {
 /*****************************************************************************
  * IEnumSTATDATA interface
  */
+#ifndef __IEnumSTATDATA_INTERFACE_DEFINED__
+#define __IEnumSTATDATA_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IEnumSTATDATA, 0x00000105, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumSTATDATA : public IUnknown
@@ -5900,6 +6212,8 @@ void __RPC_STUB IEnumSTATDATA_Clone_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IEnumSTATDATA_INTERFACE_DEFINED__ */
+
 typedef IAdviseSink *LPADVISESINK;
 
 typedef enum tagTYMED {
@@ -6000,6 +6314,9 @@ void            __RPC_USER FLAG_STGMEDIUM_UserFree     (unsigned long *, FLAG_ST
 /*****************************************************************************
  * IAdviseSink interface
  */
+#ifndef __IAdviseSink_INTERFACE_DEFINED__
+#define __IAdviseSink_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IAdviseSink, 0x0000010f, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IAdviseSink : public IUnknown
@@ -6170,12 +6487,21 @@ void CALLBACK IAdviseSink_OnClose_Proxy(
 HRESULT __RPC_STUB IAdviseSink_OnClose_Stub(
     IAdviseSink* This);
 
+#endif  /* __IAdviseSink_INTERFACE_DEFINED__ */
+
+#ifndef __IAdviseSink2_FWD_DEFINED__
+#define __IAdviseSink2_FWD_DEFINED__
 typedef struct IAdviseSink2 IAdviseSink2;
+#endif
+
 typedef IAdviseSink2 *LPADVISESINK2;
 
 /*****************************************************************************
  * IAdviseSink2 interface
  */
+#ifndef __IAdviseSink2_INTERFACE_DEFINED__
+#define __IAdviseSink2_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IAdviseSink2, 0x00000125, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IAdviseSink2 : public IAdviseSink
@@ -6279,7 +6605,13 @@ HRESULT __RPC_STUB IAdviseSink2_OnLinkSrcChange_Stub(
     IAsyncManager** ppIAM,
     IMoniker* pmk);
 
+#endif  /* __IAdviseSink2_INTERFACE_DEFINED__ */
+
+#ifndef __IDataObject_FWD_DEFINED__
+#define __IDataObject_FWD_DEFINED__
 typedef struct IDataObject IDataObject;
+#endif
+
 typedef IDataObject *LPDATAOBJECT;
 
 typedef enum tagDATADIR {
@@ -6290,6 +6622,9 @@ typedef enum tagDATADIR {
 /*****************************************************************************
  * IDataObject interface
  */
+#ifndef __IDataObject_INTERFACE_DEFINED__
+#define __IDataObject_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IDataObject, 0x0000010e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IDataObject : public IUnknown
@@ -6541,12 +6876,21 @@ void __RPC_STUB IDataObject_EnumDAdvise_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IDataObject_INTERFACE_DEFINED__ */
+
+#ifndef __IDataAdviseHolder_FWD_DEFINED__
+#define __IDataAdviseHolder_FWD_DEFINED__
 typedef struct IDataAdviseHolder IDataAdviseHolder;
+#endif
+
 typedef IDataAdviseHolder *LPDATAADVISEHOLDER;
 
 /*****************************************************************************
  * IDataAdviseHolder interface
  */
+#ifndef __IDataAdviseHolder_INTERFACE_DEFINED__
+#define __IDataAdviseHolder_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IDataAdviseHolder, 0x00000110, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IDataAdviseHolder : public IUnknown
@@ -6678,7 +7022,13 @@ void __RPC_STUB IDataAdviseHolder_SendOnDataChange_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IDataAdviseHolder_INTERFACE_DEFINED__ */
+
+#ifndef __IMessageFilter_FWD_DEFINED__
+#define __IMessageFilter_FWD_DEFINED__
 typedef struct IMessageFilter IMessageFilter;
+#endif
+
 typedef IMessageFilter *LPMESSAGEFILTER;
 
 typedef enum tagCALLTYPE {
@@ -6715,6 +7065,9 @@ typedef struct tagINTERFACEINFO {
 /*****************************************************************************
  * IMessageFilter interface
  */
+#ifndef __IMessageFilter_INTERFACE_DEFINED__
+#define __IMessageFilter_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IMessageFilter, 0x00000016, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IMessageFilter : public IUnknown
@@ -6832,7 +7185,13 @@ void __RPC_STUB IMessageFilter_MessagePending_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IMessageFilter_INTERFACE_DEFINED__ */
+
+#ifndef __IRpcChannelBuffer_FWD_DEFINED__
+#define __IRpcChannelBuffer_FWD_DEFINED__
 typedef struct IRpcChannelBuffer IRpcChannelBuffer;
+#endif
+
 typedef IRpcChannelBuffer *LPRPCCHANNELBUFFER;
 
 typedef unsigned long RPCOLEDATAREP;
@@ -6852,6 +7211,9 @@ typedef RPCOLEMESSAGE *PRPCOLEMESSAGE;
 /*****************************************************************************
  * IRpcChannelBuffer interface
  */
+#ifndef __IRpcChannelBuffer_INTERFACE_DEFINED__
+#define __IRpcChannelBuffer_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IRpcChannelBuffer, 0xd5f56b60, 0x593b, 0x101a, 0xb5,0x69, 0x08,0x00,0x2b,0x2d,0xbf,0x7a);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRpcChannelBuffer : public IUnknown
@@ -6989,12 +7351,21 @@ void __RPC_STUB IRpcChannelBuffer_IsConnected_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IRpcChannelBuffer_INTERFACE_DEFINED__ */
+
+#ifndef __IRpcChannelBuffer2_FWD_DEFINED__
+#define __IRpcChannelBuffer2_FWD_DEFINED__
 typedef struct IRpcChannelBuffer2 IRpcChannelBuffer2;
+#endif
+
 typedef IRpcChannelBuffer2 *LPRPCCHANNELBUFFER2;
 
 /*****************************************************************************
  * IRpcChannelBuffer2 interface
  */
+#ifndef __IRpcChannelBuffer2_INTERFACE_DEFINED__
+#define __IRpcChannelBuffer2_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IRpcChannelBuffer2, 0x594f31d0, 0x7f19, 0x11d0, 0xb1,0x94, 0x00,0xa0,0xc9,0x0d,0xc8,0xbf);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRpcChannelBuffer2 : public IRpcChannelBuffer
@@ -7092,12 +7463,21 @@ void __RPC_STUB IRpcChannelBuffer2_GetProtocolVersion_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IRpcChannelBuffer2_INTERFACE_DEFINED__ */
+
+#ifndef __IRpcChannelBuffer3_FWD_DEFINED__
+#define __IRpcChannelBuffer3_FWD_DEFINED__
 typedef struct IRpcChannelBuffer3 IRpcChannelBuffer3;
+#endif
+
 typedef IRpcChannelBuffer3 *LPRPCCHANNELBUFFER3;
 
 /*****************************************************************************
  * IRpcChannelBuffer3 interface
  */
+#ifndef __IRpcChannelBuffer3_INTERFACE_DEFINED__
+#define __IRpcChannelBuffer3_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IRpcChannelBuffer3, 0x25b15600, 0x0115, 0x11d0, 0xbf,0x0d, 0x00,0xaa,0x00,0xb8,0xdf,0xd2);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRpcChannelBuffer3 : public IRpcChannelBuffer2
@@ -7333,12 +7713,21 @@ void __RPC_STUB IRpcChannelBuffer3_RegisterAsync_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IRpcChannelBuffer3_INTERFACE_DEFINED__ */
+
+#ifndef __IRpcProxyBuffer_FWD_DEFINED__
+#define __IRpcProxyBuffer_FWD_DEFINED__
 typedef struct IRpcProxyBuffer IRpcProxyBuffer;
+#endif
+
 typedef IRpcProxyBuffer *LPRPCPROXYBUFFER;
 
 /*****************************************************************************
  * IRpcProxyBuffer interface
  */
+#ifndef __IRpcProxyBuffer_INTERFACE_DEFINED__
+#define __IRpcProxyBuffer_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IRpcProxyBuffer, 0xd5f56a34, 0x593b, 0x101a, 0xb5,0x69, 0x08,0x00,0x2b,0x2d,0xbf,0x7a);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRpcProxyBuffer : public IUnknown
@@ -7416,12 +7805,21 @@ void __RPC_STUB IRpcProxyBuffer_Disconnect_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IRpcProxyBuffer_INTERFACE_DEFINED__ */
+
+#ifndef __IRpcStubBuffer_FWD_DEFINED__
+#define __IRpcStubBuffer_FWD_DEFINED__
 typedef struct IRpcStubBuffer IRpcStubBuffer;
+#endif
+
 typedef IRpcStubBuffer *LPRPCSTUBBUFFER;
 
 /*****************************************************************************
  * IRpcStubBuffer interface
  */
+#ifndef __IRpcStubBuffer_INTERFACE_DEFINED__
+#define __IRpcStubBuffer_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IRpcStubBuffer, 0xd5f56afc, 0x593b, 0x101a, 0xb5,0x69, 0x08,0x00,0x2b,0x2d,0xbf,0x7a);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IRpcStubBuffer : public IUnknown
@@ -7585,12 +7983,21 @@ void __RPC_STUB IRpcStubBuffer_DebugServerRelease_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IRpcStubBuffer_INTERFACE_DEFINED__ */
+
+#ifndef __IPSFactoryBuffer_FWD_DEFINED__
+#define __IPSFactoryBuffer_FWD_DEFINED__
 typedef struct IPSFactoryBuffer IPSFactoryBuffer;
+#endif
+
 typedef IPSFactoryBuffer *LPPSFACTORYBUFFER;
 
 /*****************************************************************************
  * IPSFactoryBuffer interface
  */
+#ifndef __IPSFactoryBuffer_INTERFACE_DEFINED__
+#define __IPSFactoryBuffer_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IPSFactoryBuffer, 0xd5f569d0, 0x593b, 0x101a, 0xb5,0x69, 0x08,0x00,0x2b,0x2d,0xbf,0x7a);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPSFactoryBuffer : public IUnknown
@@ -7685,7 +8092,13 @@ void __RPC_STUB IPSFactoryBuffer_CreateStub_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IPSFactoryBuffer_INTERFACE_DEFINED__ */
+
+#ifndef __IChannelHook_FWD_DEFINED__
+#define __IChannelHook_FWD_DEFINED__
 typedef struct IChannelHook IChannelHook;
+#endif
+
 typedef IChannelHook *LPCHANNELHOOK;
 
 typedef struct SChannelHookCallInfo {
@@ -7700,6 +8113,9 @@ typedef struct SChannelHookCallInfo {
 /*****************************************************************************
  * IChannelHook interface
  */
+#ifndef __IChannelHook_INTERFACE_DEFINED__
+#define __IChannelHook_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IChannelHook, 0x1008c4a0, 0x7613, 0x11cf, 0x9a,0xf1, 0x00,0x20,0xaf,0x6e,0x72,0xf4);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IChannelHook : public IUnknown
@@ -7910,9 +8326,23 @@ void __RPC_STUB IChannelHook_ServerFillBuffer_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IChannelHook_INTERFACE_DEFINED__ */
+
+#ifndef __IEnumSTATPROPSTG_FWD_DEFINED__
+#define __IEnumSTATPROPSTG_FWD_DEFINED__
 typedef struct IEnumSTATPROPSTG IEnumSTATPROPSTG;
+#endif
+
+#ifndef __IEnumSTATPROPSETSTG_FWD_DEFINED__
+#define __IEnumSTATPROPSETSTG_FWD_DEFINED__
 typedef struct IEnumSTATPROPSETSTG IEnumSTATPROPSETSTG;
+#endif
+
+#ifndef __IPropertyStorage_FWD_DEFINED__
+#define __IPropertyStorage_FWD_DEFINED__
 typedef struct IPropertyStorage IPropertyStorage;
+#endif
+
 typedef IPropertyStorage *LPPROPERTYSTORAGE;
 
 extern const FMTID FMTID_SummaryInformation;
@@ -8125,6 +8555,9 @@ typedef struct tagSTATPROPSETSTG {
 /*****************************************************************************
  * IPropertyStorage interface
  */
+#ifndef __IPropertyStorage_INTERFACE_DEFINED__
+#define __IPropertyStorage_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IPropertyStorage, 0x00000138, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPropertyStorage : public IUnknown
@@ -8411,12 +8844,21 @@ void __RPC_STUB IPropertyStorage_Stat_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IPropertyStorage_INTERFACE_DEFINED__ */
+
+#ifndef __IPropertySetStorage_FWD_DEFINED__
+#define __IPropertySetStorage_FWD_DEFINED__
 typedef struct IPropertySetStorage IPropertySetStorage;
+#endif
+
 typedef IPropertySetStorage *LPPROPERTYSETSTORAGE;
 
 /*****************************************************************************
  * IPropertySetStorage interface
  */
+#ifndef __IPropertySetStorage_INTERFACE_DEFINED__
+#define __IPropertySetStorage_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IPropertySetStorage, 0x0000013a, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IPropertySetStorage : public IUnknown
@@ -8548,11 +8990,16 @@ void __RPC_STUB IPropertySetStorage_Enum_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IPropertySetStorage_INTERFACE_DEFINED__ */
+
 typedef IEnumSTATPROPSTG *LPENUMSTATPROPSTG;
 
 /*****************************************************************************
  * IEnumSTATPROPSTG interface
  */
+#ifndef __IEnumSTATPROPSTG_INTERFACE_DEFINED__
+#define __IEnumSTATPROPSTG_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IEnumSTATPROPSTG, 0x00000139, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumSTATPROPSTG : public IUnknown
@@ -8680,11 +9127,16 @@ void __RPC_STUB IEnumSTATPROPSTG_Clone_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IEnumSTATPROPSTG_INTERFACE_DEFINED__ */
+
 typedef IEnumSTATPROPSETSTG *LPENUMSTATPROPSETSTG;
 
 /*****************************************************************************
  * IEnumSTATPROPSETSTG interface
  */
+#ifndef __IEnumSTATPROPSETSTG_INTERFACE_DEFINED__
+#define __IEnumSTATPROPSETSTG_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IEnumSTATPROPSETSTG, 0x0000013b, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IEnumSTATPROPSETSTG : public IUnknown
@@ -8812,7 +9264,13 @@ void __RPC_STUB IEnumSTATPROPSETSTG_Clone_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IEnumSTATPROPSETSTG_INTERFACE_DEFINED__ */
+
+#ifndef __IClientSecurity_FWD_DEFINED__
+#define __IClientSecurity_FWD_DEFINED__
 typedef struct IClientSecurity IClientSecurity;
+#endif
+
 typedef struct tagSOLE_AUTHENTICATION_SERVICE {
     DWORD dwAuthnSvc;
     DWORD dwAuthzSvc;
@@ -8834,6 +9292,9 @@ typedef enum tagEOLE_AUTHENTICATION_CAPABILITIES {
 /*****************************************************************************
  * IClientSecurity interface
  */
+#ifndef __IClientSecurity_INTERFACE_DEFINED__
+#define __IClientSecurity_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IClientSecurity, 0x0000013d, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IClientSecurity : public IUnknown
@@ -8975,10 +9436,19 @@ void __RPC_STUB IClientSecurity_CopyProxy_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IClientSecurity_INTERFACE_DEFINED__ */
+
+#ifndef __IServerSecurity_FWD_DEFINED__
+#define __IServerSecurity_FWD_DEFINED__
 typedef struct IServerSecurity IServerSecurity;
+#endif
+
 /*****************************************************************************
  * IServerSecurity interface
  */
+#ifndef __IServerSecurity_INTERFACE_DEFINED__
+#define __IServerSecurity_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IServerSecurity, 0x0000013e, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IServerSecurity : public IUnknown
@@ -9104,10 +9574,19 @@ void __RPC_STUB IServerSecurity_IsImpersonating_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IServerSecurity_INTERFACE_DEFINED__ */
+
+#ifndef __IAsyncSetup_FWD_DEFINED__
+#define __IAsyncSetup_FWD_DEFINED__
 typedef struct IAsyncSetup IAsyncSetup;
+#endif
+
 /*****************************************************************************
  * IAsyncSetup interface
  */
+#ifndef __IAsyncSetup_INTERFACE_DEFINED__
+#define __IAsyncSetup_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IAsyncSetup, 0x00000024, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IAsyncSetup : public IUnknown
@@ -9182,6 +9661,8 @@ void __RPC_STUB IAsyncSetup_GetAsyncManager_Stub(
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
 
+#endif  /* __IAsyncSetup_INTERFACE_DEFINED__ */
+
 typedef enum tagDCOM_CALL_STATE {
     DCOM_NONE = 0,
     DCOM_CALL_COMPLETE = 1,
@@ -9191,6 +9672,9 @@ typedef enum tagDCOM_CALL_STATE {
 /*****************************************************************************
  * IAsyncManager interface
  */
+#ifndef __IAsyncManager_INTERFACE_DEFINED__
+#define __IAsyncManager_INTERFACE_DEFINED__
+
 DEFINE_GUID(IID_IAsyncManager, 0x0000002a, 0x0000, 0x0000, 0xc0,0x00, 0x00,0x00,0x00,0x00,0x00,0x46);
 #if defined(__cplusplus) && !defined(CINTERFACE)
 struct IAsyncManager : public IUnknown
@@ -9289,6 +9773,8 @@ void __RPC_STUB IAsyncManager_GetState_Stub(
     struct IRpcChannelBuffer* pRpcChannelBuffer,
     PRPC_MESSAGE pRpcMessage,
     DWORD* pdwStubPhase);
+
+#endif  /* __IAsyncManager_INTERFACE_DEFINED__ */
 
 #ifdef __cplusplus
 }

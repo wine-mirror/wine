@@ -660,7 +660,10 @@ void write_forward(type_t *iface)
    * (i.e. this is an IDL forward), then we also assume that it is an object
    * interface, since non-object interfaces shouldn't need forwards */
   if ((!iface->defined || is_object(iface->attrs)) && !iface->written) {
+    fprintf(header,"#ifndef __%s_FWD_DEFINED__\n", iface->name);
+    fprintf(header,"#define __%s_FWD_DEFINED__\n", iface->name);
     fprintf(header, "typedef struct %s %s;\n", iface->name, iface->name);
+    fprintf(header, "#endif\n\n" );
     iface->written = TRUE;
   }
 }
@@ -684,6 +687,8 @@ void write_com_interface(type_t *iface)
   fprintf(header, "/*****************************************************************************\n");
   fprintf(header, " * %s interface\n", iface->name);
   fprintf(header, " */\n");
+  fprintf(header,"#ifndef __%s_INTERFACE_DEFINED__\n", iface->name);
+  fprintf(header,"#define __%s_INTERFACE_DEFINED__\n\n", iface->name);
   write_guid(iface);
   write_forward(iface);
   /* C++ interface */
@@ -732,6 +737,7 @@ void write_com_interface(type_t *iface)
 
   if (!is_local(iface->attrs))
     write_proxy(iface);
+  fprintf(header,"#endif  /* __%s_INTERFACE_DEFINED__ */\n\n", iface->name);
 }
 
 void write_rpc_interface(type_t *iface)
