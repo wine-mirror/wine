@@ -15,6 +15,7 @@
 #include "message.h"
 #include "queue.h"
 #include "options.h"
+#include "task.h"
 #include "winpos.h"
 #include "dce.h"
 #include "nonclient.h"
@@ -409,7 +410,7 @@ hittest:
         if (!*ppWnd) *ppWnd = wndScope;
 
         /* Send the WM_NCHITTEST message (only if to the same task) */
-        if ((*ppWnd)->hmemTaskQ == GetTaskQueue(0))
+        if ((*ppWnd)->hmemTaskQ == GetFastQueue())
 	{
             hittest = (INT16)SendMessage16( (*ppWnd)->hwndSelf, WM_NCHITTEST, 
 						 0, MAKELONG( pt.x, pt.y ) );
@@ -1449,7 +1450,7 @@ BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse, BOOL32 fChangeFocus)
     /* paranoid checks */
     if( hWnd == GetDesktopWindow32() || hWnd == hwndActive ) return 0;
 
-/*  if (wndPtr && (GetTaskQueue(0) != wndPtr->hmemTaskQ))
+/*  if (wndPtr && (GetFastQueue() != wndPtr->hmemTaskQ))
  *	return 0;
  */
     wndPtr = WIN_FindWndPtr(hWnd);

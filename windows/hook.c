@@ -17,6 +17,7 @@
 #include "windows.h"
 #include "hook.h"
 #include "queue.h"
+#include "task.h"
 #include "user.h"
 #include "heap.h"
 #include "struct32.h"
@@ -976,7 +977,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT32 fromtype, INT32 code,
 
     /* Now call it */
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetThreadQueue(0) ))) return 0;
     prevHook = queue->hCurHook;
     queue->hCurHook = hook;
     data->flags |= HOOK_INUSE;
@@ -1025,7 +1026,7 @@ HOOKPROC16 HOOK_GetProc16( HHOOK hhook )
  */
 BOOL32 HOOK_IsHooked( INT16 id )
 {
-    return HOOK_GetHook( id, GetTaskQueue(0) ) != 0;
+    return HOOK_GetHook( id, GetThreadQueue(0) ) != 0;
 }
 
 
@@ -1039,7 +1040,7 @@ LRESULT HOOK_CallHooks16( INT16 id, INT16 code, WPARAM16 wParam,
 {
     HANDLE16 hook; 
 
-    if (!(hook = HOOK_GetHook( id , GetTaskQueue(0) ))) return 0;
+    if (!(hook = HOOK_GetHook( id , GetThreadQueue(0) ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
     return HOOK_CallHook( hook, HOOK_WIN16, code, wParam, lParam );
 }
@@ -1054,7 +1055,7 @@ LRESULT HOOK_CallHooks32A( INT32 id, INT32 code, WPARAM32 wParam,
 {
     HANDLE16 hook; 
 
-    if (!(hook = HOOK_GetHook( id , GetTaskQueue(0) ))) return 0;
+    if (!(hook = HOOK_GetHook( id , GetThreadQueue(0) ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
     return HOOK_CallHook( hook, HOOK_WIN32A, code, wParam, lParam );
 }
@@ -1069,7 +1070,7 @@ LRESULT HOOK_CallHooks32W( INT32 id, INT32 code, WPARAM32 wParam,
 {
     HANDLE16 hook; 
 
-    if (!(hook = HOOK_GetHook( id , GetTaskQueue(0) ))) return 0;
+    if (!(hook = HOOK_GetHook( id , GetThreadQueue(0) ))) return 0;
     if (!(hook = HOOK_FindValidHook(hook))) return 0;
     return HOOK_CallHook( hook, HOOK_WIN32W, code, wParam,
 			  lParam );
@@ -1268,7 +1269,7 @@ HHOOK WINAPI SetWindowsHookEx32W( INT32 id, HOOKPROC32 proc, HINSTANCE32 hInst,
  */
 BOOL16 WINAPI UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
 {
-    HANDLE16 hook = HOOK_GetHook( id , GetTaskQueue(0) );
+    HANDLE16 hook = HOOK_GetHook( id, GetThreadQueue(0) );
 
     TRACE(hook, "%d %08lx\n", id, (DWORD)proc );
 
@@ -1288,7 +1289,7 @@ BOOL16 WINAPI UnhookWindowsHook16( INT16 id, HOOKPROC16 proc )
  */
 BOOL32 WINAPI UnhookWindowsHook32( INT32 id, HOOKPROC32 proc )
 {
-    HANDLE16 hook = HOOK_GetHook( id , GetTaskQueue(0) );
+    HANDLE16 hook = HOOK_GetHook( id, GetThreadQueue(0) );
 
     TRACE(hook, "%d %08lx\n", id, (DWORD)proc );
 
@@ -1375,7 +1376,7 @@ LRESULT WINAPI DefHookProc16( INT16 code, WPARAM16 wParam, LPARAM lParam,
      * current hook value from the task queue to find the next hook. */
     MESSAGEQUEUE *queue;
 
-    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetTaskQueue(0) ))) return 0;
+    if (!(queue = (MESSAGEQUEUE *)GlobalLock16( GetThreadQueue(0) ))) return 0;
     return CallNextHookEx16( queue->hCurHook, code, wParam, lParam );
 }
 

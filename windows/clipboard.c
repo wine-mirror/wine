@@ -16,6 +16,8 @@
 #include "win.h"
 #include "heap.h"
 #include "message.h"
+#include "queue.h"
+#include "task.h"
 #include "clipboard.h"
 #include "xmalloc.h"
 #include "debug.h"
@@ -183,7 +185,7 @@ BOOL32 WINAPI OpenClipboard32( HWND32 hWnd )
 
     if (!hqClipLock)
     {
-	 hqClipLock = GetTaskQueue(0);
+	 hqClipLock = GetFastQueue();
     	 hWndClipWindow = hWnd;
 	 bCBHasChanged = FALSE;
 	 bRet = TRUE;
@@ -211,7 +213,7 @@ BOOL32 WINAPI CloseClipboard32(void)
 {
     TRACE(clipboard,"!\n");
 
-    if (hqClipLock == GetTaskQueue(0))
+    if (hqClipLock == GetFastQueue())
     {
 	hWndClipWindow = 0;
 
@@ -241,7 +243,7 @@ BOOL32 WINAPI EmptyClipboard32(void)
 
     TRACE(clipboard,"(void)\n");
 
-    if (hqClipLock != GetTaskQueue(0)) return FALSE;
+    if (hqClipLock != GetFastQueue()) return FALSE;
 
     /* destroy private objects */
 
@@ -298,7 +300,7 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
      *  adding new data).
      */
 
-    if( (hqClipLock != GetTaskQueue(0)) || !lpFormat ||
+    if( (hqClipLock != GetFastQueue()) || !lpFormat ||
 	(!hData && (!hWndClipOwner || (hWndClipOwner != hWndClipWindow))) ) return 0; 
 
     CLIPBOARD_GetDriver()->pSetClipboardData(wFormat);
@@ -346,7 +348,7 @@ HANDLE32 WINAPI SetClipboardData32( UINT32 wFormat, HANDLE32 hData )
      *  adding new data).
      */
 
-    if( (hqClipLock != GetTaskQueue(0)) || !lpFormat ||
+    if( (hqClipLock != GetFastQueue()) || !lpFormat ||
 	(!hData && (!hWndClipOwner || (hWndClipOwner != hWndClipWindow))) ) return 0; 
 
     CLIPBOARD_GetDriver()->pSetClipboardData(wFormat);
@@ -459,7 +461,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
     LPCLIPFORMAT lpRender = ClipFormats; 
     LPCLIPFORMAT lpUpdate = NULL;
 
-    if (hqClipLock != GetTaskQueue(0)) return 0;
+    if (hqClipLock != GetFastQueue()) return 0;
 
     TRACE(clipboard,"(%04X)\n", wFormat);
 
@@ -535,7 +537,7 @@ HANDLE32 WINAPI GetClipboardData32( UINT32 wFormat )
     LPCLIPFORMAT lpRender = ClipFormats; 
     LPCLIPFORMAT lpUpdate = NULL;
 
-    if (hqClipLock != GetTaskQueue(0)) return 0;
+    if (hqClipLock != GetFastQueue()) return 0;
 
     TRACE(clipboard,"(%08X)\n", wFormat);
 
@@ -656,7 +658,7 @@ UINT32 WINAPI EnumClipboardFormats32( UINT32 wFormat )
 
     TRACE(clipboard,"(%04X)\n", wFormat);
 
-    if( hqClipLock != GetTaskQueue(0) ) return 0;
+    if( hqClipLock != GetFastQueue() ) return 0;
 
     if( (!wFormat || wFormat == CF_TEXT || wFormat == CF_OEMTEXT) ) 
         CLIPBOARD_GetDriver()->pRequestSelection();

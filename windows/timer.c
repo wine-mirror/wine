@@ -6,6 +6,7 @@
 
 #include "windows.h"
 #include "queue.h"
+#include "task.h"
 #include "winproc.h"
 #include "debug.h"
 
@@ -254,8 +255,8 @@ static UINT32 TIMER_SetTimer( HWND32 hwnd, UINT32 id, UINT32 timeout,
       /* Add the timer */
 
     pTimer->hwnd    = hwnd;
-    pTimer->hq	    = (hwnd) ? GetTaskQueue( GetWindowTask16( hwnd ) )
-			     : GetTaskQueue( 0 );
+    pTimer->hq	    = (hwnd) ? GetThreadQueue( GetWindowThreadProcessId( hwnd, NULL ) )
+			     : GetFastQueue( );
     pTimer->msg     = sys ? WM_SYSTIMER : WM_TIMER;
     pTimer->id      = id;
     pTimer->timeout = timeout;
