@@ -178,7 +178,7 @@ extern void CARET_GetRect(LPRECT lprc);  /* windows/caret.c */
 extern BOOL16 DRAG_QueryUpdate( HWND, SEGPTR, BOOL );
 extern void DEFWND_SetTextA( WND *wndPtr, LPCSTR text );
 extern void DEFWND_SetTextW( WND *wndPtr, LPCWSTR text );
-extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT16 ctlType );     /* windows/defwnd.c */
+extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType );  /* windows/defwnd.c */
 
 extern void PROPERTY_RemoveWindowProps( WND *pWnd );  		      /* windows/property.c */
 
