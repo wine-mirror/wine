@@ -543,7 +543,7 @@ unsigned long        elf_read_wine_loader_dbg_info(struct process* pcs)
     elf_info.flags = ELF_INFO_DEBUG_HEADER;
     /* All binaries are loaded with WINELOADER (if run from tree) or by the
      * main executable (either wine-kthread or wine-pthread)
-     * Note: the heuristic use to know wether we need to load wine-pthread or 
+     * Note: the heuristic use to know whether we need to load wine-pthread or
      * wine-kthread is not 100% safe
      */
     if ((ptr = getenv("WINELOADER")))

@@ -356,7 +356,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
 	    }
 	}
         frame->AddrFrame.Offset &= ~1;
-        /* we "pop" paramaters as 16 bit entities... of course, this won't
+        /* we "pop" parameters as 16 bit entities... of course, this won't
          * work if the parameter is in fact bigger than 16bit, but
          * there's no way to know that here
          */

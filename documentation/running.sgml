@@ -638,7 +638,7 @@ Options:
 		    on the screen, and the window which displays a
 		    given area of this screen buffer. Note that the
 		    window is always smaller or of the same size than
-		    the screen buffer. Having a stricly smaller window
+		    the screen buffer. Having a strictly smaller window
 		    size will put on scrollbars on the window so that
 		    you can see the whole screenbuffer's content.
 		  </entry>

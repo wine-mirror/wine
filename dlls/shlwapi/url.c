@@ -855,7 +855,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	break;
 
     case 3:  /*
-	      * Return the pszBase scheme with pszRelative. Basicly
+	      * Return the pszBase scheme with pszRelative. Basically
 	      * keeps the scheme and replaces the domain and following.
 	      */
 	len = base.sizep1 + 1 + relative.sizep2 + 1;

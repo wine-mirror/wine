@@ -39,7 +39,7 @@ extern HINSTANCE DEVENUM_hInstance;
 
 const WCHAR wszInstanceKeyName[] ={'I','n','s','t','a','n','c','e',0};
 
-static const WCHAR wszRegSeperator[] =   {'\\', 0 };
+static const WCHAR wszRegSeparator[] =   {'\\', 0 };
 static const WCHAR wszActiveMovieKey[] = {'S','o','f','t','w','a','r','e','\\',
                                    'M','i','c','r','o','s','o','f','t','\\',
                                    'A','c','t','i','v','e','M','o','v','i','e','\\',
@@ -141,12 +141,12 @@ HRESULT WINAPI DEVENUM_ICreateDevEnum_CreateClassEnumerator(
     {
         hbasekey = HKEY_CLASSES_ROOT;
         strcpyW(wszRegKey, clsid_keyname);
-        strcatW(wszRegKey, wszRegSeperator);
+        strcatW(wszRegKey, wszRegSeparator);
 
         if (!StringFromGUID2(clsidDeviceClass, wszRegKey + CLSID_STR_LEN, MAX_PATH - CLSID_STR_LEN))
             return E_OUTOFMEMORY;
 
-        strcatW(wszRegKey, wszRegSeperator);
+        strcatW(wszRegKey, wszRegSeparator);
         strcatW(wszRegKey, wszInstanceKeyName);
     }
 

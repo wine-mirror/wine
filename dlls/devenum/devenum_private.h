@@ -103,7 +103,6 @@ extern ParseDisplayNameImpl DEVENUM_ParseDisplayName;
  */
 extern const WCHAR clsid_keyname[6];
 extern const WCHAR wszInstanceKeyName[];
-extern const WCHAR wszRegSeperator[];
 #define CLSID_STR_LEN (sizeof(clsid_keyname) / sizeof(WCHAR))
 
 /**********************************************************************

@@ -347,8 +347,8 @@ DECL_WINELIB_TYPE_AW(PPRINTER_INFO_1)
 DECL_WINELIB_TYPE_AW(LPPRINTER_INFO_1)
 
 /* FIXME: winspool.h declares some structure members with the name Status.
- * unfortunatly <X11/ICE/ICElib.h> #defines Status to the type 'int'
- * therfore the following hack */
+ * unfortunately <X11/ICE/ICElib.h> #defines Status to the type 'int'
+ * therefore the following hack */
 #ifndef Status
 
 typedef struct _PRINTER_INFO_2A {
