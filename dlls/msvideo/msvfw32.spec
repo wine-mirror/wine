@@ -47,5 +47,5 @@
 @ cdecl   MCIWndCreate (long long long str) MCIWndCreateA
 @ cdecl   MCIWndCreateA (long long long str)
 @ cdecl   MCIWndCreateW (long long long wstr)
-@ cdecl   MCIWndRegisterClass (long)
+@ cdecl   MCIWndRegisterClass()
 @ stub    StretchDIB
