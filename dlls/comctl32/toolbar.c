@@ -903,8 +903,9 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
             if (dwStyle & TBSTYLE_LIST)
                 rcText.left += LIST_IMAGE_ABSENT_WIDTH + TOOLBAR_GetListTextOffset(infoPtr, infoPtr->iListGap);
 
-        if (btnPtr->fsState & (TBSTATE_PRESSED | TBSTATE_CHECKED))
-            OffsetRect (&rcText, 1, 1);
+        if (!(infoPtr->dwItemCDFlag & TBCDRF_NOOFFSET) &&
+          (btnPtr->fsState & (TBSTATE_PRESSED | TBSTATE_CHECKED)))
+            OffsetRect(&rcText, 1, 1);
     }
 
     /* Initialize fields in all cases, because we use these later
@@ -4281,8 +4282,7 @@ TOOLBAR_SetAnchorHighlight (HWND hwnd, WPARAM wParam)
 
     infoPtr->bAnchor = (BOOL)wParam;
 
-    if (!infoPtr->bAnchor)
-        TOOLBAR_SetHotItemEx(infoPtr, TOOLBAR_NOWHERE, HICF_OTHER);
+    /* Native does not remove the hot effect from an already hot button */
 
     return (LRESULT)bOldAnchor;
 }
@@ -4626,9 +4626,6 @@ TOOLBAR_SetHotItemEx (TOOLBAR_INFO *infoPtr, INT nHit, DWORD dwReason)
         TBUTTON_INFO *btnPtr = NULL, *oldBtnPtr = NULL;
         LRESULT no_highlight;
 
-        if (nHit == TOOLBAR_NOWHERE && infoPtr->bAnchor)
-            return;
-
         /* Remove the effect of an old hot button if the button was
            drawn with the hot button effect */
         if(infoPtr->nHotItem >= 0)
@@ -4672,14 +4669,19 @@ TOOLBAR_SetHotItem (HWND hwnd, WPARAM wParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
     INT nOldHotItem = infoPtr->nHotItem;
 
+    TRACE("hwnd = %p, nHit = %d\n", hwnd, (INT)wParam);
+
     if ((INT) wParam < 0 || (INT)wParam > infoPtr->nNumButtons)
-        wParam = -2;
+        wParam = -1;
+
+    /* NOTE: an application can still remove the hot item even if anchor
+     * highlighting is enabled */
 
     if (infoPtr->dwStyle & TBSTYLE_FLAT)
         TOOLBAR_SetHotItemEx(infoPtr, wParam, HICF_OTHER);
 
     if (nOldHotItem < 0)
-	return -1;
+        return -1;
 
     return (LRESULT)nOldHotItem;
 }
@@ -5063,6 +5065,9 @@ TOOLBAR_Unkwn45E (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if ((INT) wParam < 0 || (INT)wParam > infoPtr->nNumButtons)
         wParam = -1;
 
+    /* NOTE: an application can still remove the hot item even if anchor
+     * highlighting is enabled */
+
     TOOLBAR_SetHotItemEx(infoPtr, wParam, lParam);
 
     GetFocus();
@@ -5084,7 +5089,6 @@ static LRESULT TOOLBAR_Unkwn460(HWND hwnd, WPARAM wParam, LPARAM lParam)
     
     infoPtr->iListGap = (INT)wParam;
 
-    TOOLBAR_CalcToolbar(hwnd);
     InvalidateRect(hwnd, NULL, TRUE);
 
     return 0;
@@ -5297,6 +5301,10 @@ TOOLBAR_EraseBackground (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT ret = FALSE;
     DWORD ntfret;
 
+    /* the app has told us not to redraw the toolbar */
+    if (!infoPtr->bDoRedraw)
+        return FALSE;
+
     if (infoPtr->dwStyle & TBSTYLE_CUSTOMERASE) {
 	ZeroMemory (&tbcd, sizeof(NMTBCUSTOMDRAW));
 	tbcd.nmcd.dwDrawStage = CDDS_PREERASE;
@@ -5475,7 +5483,8 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
                 GetCursorPos(&pt);
                 ScreenToClient(hwnd, &pt);
                 nHit = TOOLBAR_InternalHitTest(hwnd, &pt);
-                TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
+                if (!infoPtr->bAnchor || (nHit >= 0))
+                    TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
                 
                 /* remove any left mouse button down or double-click messages
                  * so that we can get a toggle effect on the button */
@@ -5556,7 +5565,8 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     pt.y = (INT)HIWORD(lParam);
     nHit = TOOLBAR_InternalHitTest (hwnd, &pt);
 
-    TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
+    if (!infoPtr->bAnchor || (nHit >= 0))
+        TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
 
     if (infoPtr->nButtonDrag >= 0) {
         RECT rcClient;
@@ -5773,8 +5783,9 @@ TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     hotBtnPtr = &infoPtr->buttons[infoPtr->nOldHit];
 
-    /* don't remove hot effects when in drop-down */
-    if (infoPtr->nOldHit < 0 || !hotBtnPtr->bDropDownPressed)
+    /* don't remove hot effects when in anchor highlighting mode or when a
+     * drop-down button is pressed */
+    if (!infoPtr->bAnchor && (infoPtr->nOldHit < 0 || !hotBtnPtr->bDropDownPressed))
         TOOLBAR_SetHotItemEx(infoPtr, TOOLBAR_NOWHERE, HICF_MOUSE);
 
     if (infoPtr->nOldHit < 0)
@@ -5846,7 +5857,8 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     nHit = TOOLBAR_InternalHitTest (hwnd, &pt);
 
-    TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE);
+    if (!infoPtr->bAnchor || (nHit >= 0))
+        TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE);
 
     if (infoPtr->nOldHit != nHit)
     {
