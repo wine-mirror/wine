@@ -31,13 +31,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 /**********************************************************************/
 
-PALETTE_DRIVER TTYDRV_PALETTE_Driver = 
-{
-  TTYDRV_PALETTE_SetMapping,
-  TTYDRV_PALETTE_UpdateMapping,
-  TTYDRV_PALETTE_IsDark
-};
-
 const DC_FUNCTIONS *TTYDRV_DC_Funcs = NULL;  /* hack */
 
 /**********************************************************************
@@ -45,8 +38,6 @@ const DC_FUNCTIONS *TTYDRV_DC_Funcs = NULL;  /* hack */
  */
 BOOL TTYDRV_GDI_Initialize(void)
 {
-  PALETTE_Driver = &TTYDRV_PALETTE_Driver;
-
   return TTYDRV_PALETTE_Initialize();
 }
 

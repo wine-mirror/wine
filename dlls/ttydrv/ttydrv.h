@@ -113,12 +113,7 @@ INT TTYDRV_DC_SetDIBitsToDevice(TTYDRV_PDEVICE *physDev, INT xDest, INT yDest, D
 
 /* TTY GDI palette driver */
 
-extern struct tagPALETTE_DRIVER TTYDRV_PALETTE_Driver;
-
 extern BOOL TTYDRV_PALETTE_Initialize(void);
-extern int TTYDRV_PALETTE_SetMapping(struct tagPALETTEOBJ *palPtr, UINT uStart, UINT uNum, BOOL mapOnly);
-extern int TTYDRV_PALETTE_UpdateMapping(struct tagPALETTEOBJ *palPtr);
-extern BOOL TTYDRV_PALETTE_IsDark(int pixel);
 
 /**************************************************************************
  * TTY USER driver

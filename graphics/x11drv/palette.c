@@ -53,12 +53,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(palette);
  */
 
 extern PALETTEENTRY *COLOR_sysPal;
-extern int COLOR_gapStart;
-extern int COLOR_gapEnd;
-extern int COLOR_gapFilled;
-extern int COLOR_max;
+extern const PALETTEENTRY COLOR_sysPalTemplate[NB_RESERVED_COLORS];
 
-extern const PALETTEENTRY COLOR_sysPalTemplate[NB_RESERVED_COLORS]; 
+static int COLOR_gapStart = 256;
+static int COLOR_gapEnd = -1;
+static int COLOR_gapFilled = 0;
+static int COLOR_max = 256;
 
 Colormap X11DRV_PALETTE_PaletteXColormap = 0;
 UINT16   X11DRV_PALETTE_PaletteFlags     = 0;
@@ -710,6 +710,31 @@ static void X11DRV_PALETTE_FillDefaultColors(void)
 	}
     COLOR_gapFilled = idx - COLOR_gapStart;    
   }
+}
+
+
+/***********************************************************************
+ *           X11DRV_IsSolidColor
+ *
+ * Check whether 'color' can be represented with a solid color.
+ */
+BOOL X11DRV_IsSolidColor( COLORREF color )
+{
+    int i;
+    const PALETTEENTRY *pEntry = COLOR_sysPal;
+
+    if (color & 0xff000000) return TRUE;  /* indexed color */
+
+    if (!color || (color == 0xffffff)) return TRUE;  /* black or white */
+
+    for (i = 0; i < 256 ; i++, pEntry++)
+    {
+        if( i < COLOR_gapStart || i > COLOR_gapEnd )
+            if ((GetRValue(color) == pEntry->peRed) &&
+                (GetGValue(color) == pEntry->peGreen) &&
+                (GetBValue(color) == pEntry->peBlue)) return TRUE;
+    }
+    return FALSE;
 }
 
 

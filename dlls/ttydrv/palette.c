@@ -33,10 +33,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 /**********************************************************************/
 
 extern PALETTEENTRY *COLOR_sysPal;
-extern int COLOR_gapStart;
-extern int COLOR_gapEnd;
-extern int COLOR_gapFilled;
-extern int COLOR_max;
 
 static int palette_size = 256;  /* FIXME */
 
@@ -83,39 +79,5 @@ BOOL TTYDRV_PALETTE_Initialize(void)
     }    
   }
 
-  COLOR_gapStart = NB_RESERVED_COLORS/2;
-  COLOR_gapEnd = NB_RESERVED_COLORS/2;
-
   return TRUE;
-}
-
-/***********************************************************************
- *           TTYDRV_PALETTE_SetMapping
- */
-int TTYDRV_PALETTE_SetMapping(
-  PALETTEOBJ *palPtr, UINT uStart, UINT uNum, BOOL mapOnly)
-{
-  FIXME("(%p, %u, %u, %d): stub\n", palPtr, uStart, uNum, mapOnly);
-
-  return 0;
-}
-
-/***********************************************************************
- *           TTYDRV_PALETTE_UpdateMapping
- */
-int TTYDRV_PALETTE_UpdateMapping(PALETTEOBJ *palPtr)
-{
-  TRACE("(%p)\n", palPtr);
-
-  return 0;
-}
-
-/***********************************************************************
- *           TTYDRV_PALETTE_IsDark
- */
-int TTYDRV_PALETTE_IsDark(int pixel)
-{
-  FIXME("(%d): stub\n", pixel);
-
-  return 0;
 }

@@ -1027,7 +1027,7 @@ HCURSOR16 CURSORICON_IconToCursor(HICON16 hIcon, BOOL bSemiTransparent)
 
 		  unsigned *psc = (unsigned*)(psPtr + (ix * bpp)/8);
                   unsigned  val = ((*psc) >> (ix * bpp)%8) & val_base;
-		  if(!PALETTE_Driver->pIsDark(val))
+		  if(PALETTE_Driver && !PALETTE_Driver->pIsDark(val))
                   {
                     pbc = pxbPtr + ix/8;
                    *pbc |= 0x80 >> (ix%8);

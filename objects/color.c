@@ -37,11 +37,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(palette);
 
 PALETTEENTRY *COLOR_sysPal = NULL; /* current system palette */
 
-int COLOR_gapStart = 256;
-int COLOR_gapEnd = -1;
-int COLOR_gapFilled = 0;
-int COLOR_max = 256;
-
 const PALETTEENTRY COLOR_sysPalTemplate[NB_RESERVED_COLORS] = 
 {
     /* first 10 entries in the system palette */
@@ -90,30 +85,6 @@ const PALETTEENTRY* COLOR_GetSystemPaletteTemplate(void)
 COLORREF COLOR_GetSystemPaletteEntry(UINT i)
 {
     return *(COLORREF*)(COLOR_sysPal + i) & 0x00ffffff;
-}
-
-/***********************************************************************
- *           COLOR_IsSolid
- *
- * Check whether 'color' can be represented with a solid color.
- */
-BOOL COLOR_IsSolid( COLORREF color )
-{
-    int i;
-    const PALETTEENTRY *pEntry = COLOR_sysPal;
-
-    if (color & 0xff000000) return TRUE;		/* indexed color */
-
-    if (!color || (color == 0xffffff)) return TRUE;	/* black or white */
-
-    for (i = 0; i < 256 ; i++, pEntry++)
-    {
-      if( i < COLOR_gapStart || i > COLOR_gapEnd )
-	if ((GetRValue(color) == pEntry->peRed) &&
-	    (GetGValue(color) == pEntry->peGreen) &&
-	    (GetBValue(color) == pEntry->peBlue)) return TRUE;
-    }
-    return FALSE;
 }
 
 /***********************************************************************

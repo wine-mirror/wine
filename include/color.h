@@ -28,8 +28,6 @@
 #define PC_SYS_RESERVED 0x40		/* system palentry is not to be mapped to */
 #define PC_SYS_MAPPED   0x10		/* logical palentry is a direct alias for system palentry */
 
-extern BOOL  COLOR_IsSolid(COLORREF color);
-
 extern COLORREF            COLOR_GetSystemPaletteEntry(UINT);
 extern const PALETTEENTRY *COLOR_GetSystemPaletteTemplate(void);
 

@@ -466,9 +466,8 @@ BOOL WINAPI AnimatePalette(
 	    UINT u;
 	    for( u = 0; u < NumEntries; u++ )
 		palPtr->logpalette.palPalEntry[u + StartIndex] = PaletteColors[u];
-	    PALETTE_Driver->
-	      pSetMapping(palPtr, StartIndex, NumEntries,
-			  hPal != hPrimaryPalette );
+            if (PALETTE_Driver) PALETTE_Driver->pSetMapping(palPtr, StartIndex, NumEntries,
+                                                            hPal != hPrimaryPalette );
             GDI_ReleaseObj( hPal );
 	    return TRUE;
 	}
@@ -746,11 +745,10 @@ UINT16 WINAPI GDIRealizePalette16( HDC16 hdc )
             FIXME("invalid selected palette %04x\n",dc->hPalette);
             return 0;
 	}
-        
-        realized = PALETTE_Driver->
-	  pSetMapping(palPtr,0,palPtr->logpalette.palNumEntries,
-		      (dc->hPalette != hPrimaryPalette) ||
-		      (dc->hPalette == GetStockObject( DEFAULT_PALETTE )));
+        if (PALETTE_Driver)
+            realized = PALETTE_Driver->pSetMapping(palPtr,0,palPtr->logpalette.palNumEntries,
+                                        (dc->hPalette != hPrimaryPalette) ||
+                                        (dc->hPalette == GetStockObject( DEFAULT_PALETTE )));
 	hLastRealizedPalette = dc->hPalette;
 	GDI_ReleaseObj( dc->hPalette );
     }
@@ -782,7 +780,7 @@ UINT16 WINAPI RealizeDefaultPalette16( HDC16 hdc )
         if (palPtr)
         {
             /* lookup is needed to account for SetSystemPaletteUse() stuff */
-            ret = PALETTE_Driver->pUpdateMapping(palPtr);
+            if (PALETTE_Driver) ret = PALETTE_Driver->pUpdateMapping(palPtr);
             GDI_ReleaseObj( GetStockObject(DEFAULT_PALETTE) );
         }
     }

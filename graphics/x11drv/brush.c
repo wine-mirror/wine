@@ -158,7 +158,7 @@ static void BRUSH_SelectSolidBrush( X11DRV_PDEVICE *physDev, COLORREF color )
 {
     DC *dc = physDev->dc;
 
-    if ((dc->bitsPerPixel > 1) && (screen_depth <= 8) && !COLOR_IsSolid( color ))
+    if ((dc->bitsPerPixel > 1) && (screen_depth <= 8) && !X11DRV_IsSolidColor( color ))
     {
 	  /* Dithered brush */
 	physDev->brush.pixmap = BRUSH_DitherColor( dc, color );
