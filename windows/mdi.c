@@ -282,13 +282,16 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
         ci->hWindowMenu = hmenuWindow;
     } 
 
-    if( hmenuFrame && hmenuFrame!=oldFrameMenu)
+    if (hmenuFrame)
     {
         SetMenu(hwndFrame, hmenuFrame);
-        if( ci->hwndChildMaximized )
-            MDI_AugmentFrameMenu(ci, w->parent, ci->hwndChildMaximized );
-        WIN_ReleaseWndPtr(w);
-        return oldFrameMenu;
+        if( hmenuFrame!=oldFrameMenu )
+        {
+            if( ci->hwndChildMaximized )
+                MDI_AugmentFrameMenu(ci, w->parent, ci->hwndChildMaximized );
+            WIN_ReleaseWndPtr(w);
+            return oldFrameMenu;
+        }
     }
     WIN_ReleaseWndPtr(w);
     return 0;
