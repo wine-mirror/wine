@@ -1825,7 +1825,9 @@ void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
   WND *pWnd = WIN_FindWndPtr(hWnd);
   if (pWnd->flags & WIN_MANAGED)
   {
+      DCE_InvalidateDCE( pWnd, &pWnd->rectWindow );
       pWnd->dwStyle &= ~WS_MINIMIZE;
+      pWnd->dwStyle |=  WS_VISIBLE;
       ShowOwnedPopups(hWnd,TRUE);
   }
   WIN_ReleaseWndPtr(pWnd);
@@ -1850,7 +1852,8 @@ void EVENT_UnmapNotify( HWND hWnd, XUnmapEvent *event )
       EndMenu();
       if( pWnd->dwStyle & WS_VISIBLE )
       {
-	  pWnd->dwStyle |= WS_MINIMIZE;
+	  pWnd->dwStyle |=  WS_MINIMIZE;
+	  pWnd->dwStyle &= ~WS_VISIBLE;
           ShowOwnedPopups(hWnd,FALSE);
       }
   }

@@ -251,11 +251,11 @@ static INT DCE_ReleaseDC( DCE* dce )
 /***********************************************************************
  *   DCE_InvalidateDCE
  *
- * It is called from SetWindowPos() - we have to mark as dirty all busy
- * DCEs for windows that have pWnd->parent as an ansector and whose client 
- * rect intersects with specified update rectangle. In addition, pWnd->parent
- * DCEs may need to be updated if DCX_CLIPCHILDREN flag is set.
- */
+ * It is called from SetWindowPos() and EVENT_MapNotify - we have to
+ * mark as dirty all busy DCEs for windows that have pWnd->parent as
+ * an ansector and whose client rect intersects with specified update
+ * rectangle. In addition, pWnd->parent DCEs may need to be updated if
+ * DCX_CLIPCHILDREN flag is set.  */
 BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
 {
     WND* wndScope = WIN_LockWndPtr(pWnd->parent);
