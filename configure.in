@@ -898,6 +898,7 @@ AC_CHECK_HEADERS(\
 	sys/file.h \
 	sys/filio.h \
 	sys/ipc.h \
+	sys/link.h \
 	sys/lwp.h \
 	sys/mman.h \
 	sys/modem.h \

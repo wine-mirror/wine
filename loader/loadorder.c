@@ -372,10 +372,11 @@ void MODULE_InitLoadOrder(void)
 static BOOL get_list_load_order( const char *module, const struct loadorder_list *list,
                                  enum loadorder_type lo[] )
 {
-    module_loadorder_t tmp, *res;
+    module_loadorder_t tmp, *res = NULL;
 
     tmp.modulename = module;
-    if ((res = bsearch(&tmp, list->order, list->count, sizeof(list->order[0]), cmp_sort_func)))
+    /* some bsearch implementations (Solaris) are buggy when the number of items is 0 */
+    if (list->count && (res = bsearch(&tmp, list->order, list->count, sizeof(list->order[0]), cmp_sort_func)))
         memcpy( lo, res->loadorder, sizeof(res->loadorder) );
     return (res != NULL);
 }

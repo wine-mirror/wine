@@ -36,6 +36,9 @@
 #ifdef HAVE_LINK_H
 # include <link.h>
 #endif
+#ifdef HAVE_SYS_LINK_H
+# include <sys/link.h>
+#endif
 #endif
 
 #ifndef N_UNDF
