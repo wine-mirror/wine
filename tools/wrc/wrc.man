@@ -79,7 +79,7 @@ in the directories explicitly specified with the \fI\-I\fR option.
 .I \fB\-\-no\-use\-temp\-file\fR
 Ignored for compatibility with \fIwindres\fR.
 .TP
-.I \fB\-o\fR, \fB\-\-output\fR=\fIfile\fR
+.I \fB\-o\fR, \fB\-fo\fR, \fB\-\-output\fR=\fIfile\fR
 Write output to \fIfile\fR. Default is \fBinputfile.res\fR
 with \fB.rc\fR stripped or \fBwrc.tab.res\fR if input is read
 from standard input.

@@ -58,37 +58,37 @@ static char usage[] =
 	"Usage: wrc [options...] [infile[.rc|.res]] [outfile]\n"
 	"   -D id[=val] Define preprocessor identifier id=val\n"
 	"   -E          Preprocess only\n"
-	"   -F target	Ignored for compatibility with windres\n"
-	"   -h		Prints this summary\n"
-	"   -i file	The name of the input file\n"
+	"   -F target   Ignored for compatibility with windres\n"
+	"   -h          Prints this summary\n"
+	"   -i file     The name of the input file\n"
 	"   -I path     Set include search dir to path (multiple -I allowed)\n"
-	"   -J format	The input format (either `rc' or `rc16')\n"
+	"   -J format   The input format (either `rc' or `rc16')\n"
 	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
 	"   -o file     Output to file (default is infile.res)\n"
-	"   -O format	The output format (either `res' or `res16`)\n"
-	"   -r		Ignored for compatibility with rc\n"
+	"   -O format   The output format (either `res' or `res16`)\n"
+	"   -r          Ignored for compatibility with rc\n"
 	"   -U id       Undefine preprocessor identifier id\n"
 	"   -v          Enable verbose mode\n"
 	"The following long options are supported:\n"
 	"   --debug=nn          Set debug level to 'nn'\n"
-	"   --define		Synonym for -D\n"
+	"   --define            Synonym for -D\n"
 	"   --endianess=e       Set output byte-order e={n[ative], l[ittle], b[ig]}\n"
 	"                       (win32 only; default is " ENDIAN "-endian)\n"
-	"   --help		Synonym for -h\n"
-	"   --include-dir	Synonym for -I\n"
-	"   --input		Synonym for -i\n"
-	"   --input-format	Synonym for -J\n"
-	"   --language		Synonym for -l\n"
-	"   --no-use-temp-file	Ignored for compatibility with windres\n"
-	"   --nostdinc		Disables searching the standard include path\n"
-	"   --output		Synonym for -o\n"
-	"   --output-format	Synonym for -O\n"
+	"   --help              Synonym for -h\n"
+	"   --include-dir       Synonym for -I\n"
+	"   --input             Synonym for -i\n"
+	"   --input-format      Synonym for -J\n"
+	"   --language          Synonym for -l\n"
+	"   --no-use-temp-file  Ignored for compatibility with windres\n"
+	"   --nostdinc          Disables searching the standard include path\n"
+	"   --output -fo        Synonym for -o\n"
+	"   --output-format     Synonym for -O\n"
 	"   --pedantic          Enable pedantic warnings\n"
-	"   --preprocessor	Specifies the preprocessor to use, including arguments\n"
-	"   --target		Synonym for -F\n"
-	"   --undefine		Synonym for -U\n"
-	"   --use-temp-file	Ignored for compatibility with windres\n"
-	"   --version		Print version and exit\n"
+	"   --preprocessor      Specifies the preprocessor to use, including arguments\n"
+	"   --target            Synonym for -F\n"
+	"   --undefine          Synonym for -U\n"
+	"   --use-temp-file     Ignored for compatibility with windres\n"
+	"   --version           Print version and exit\n"
 	"Input is taken from stdin if no sourcefile specified.\n"
 	"Debug level 'n' is a bitmask with following meaning:\n"
 	"    * 0x01 Tell which resource is parsed (verbose mode)\n"
@@ -174,7 +174,7 @@ static void rm_tempfile(void);
 static void segvhandler(int sig);
 
 static const char* short_options = 
-	"D:EF:hi:I:J:l:o:O:rU:v";
+	"D:Ef:F:hi:I:J:l:o:O:rU:v";
 static struct option long_options[] = {
 	{ "debug", 1, 0, 6 },
 	{ "define", 1, 0, 'D' },
@@ -306,17 +306,21 @@ int main(int argc,char *argv[])
 			break;
 		case 'J':
 			if (strcmp(optarg, "rc16") == 0)  extensions = 0;
-			else if (strcmp(optarg, "rc")) error("Output format %s not supported.", optarg);
+			else if (strcmp(optarg, "rc")) error("Output format %s not supported.\n", optarg);
 			break;
 		case 'l':
 			{
 				int lan;
 				lan = strtol(optarg, NULL, 0);
 				if (get_language_codepage(PRIMARYLANGID(lan), SUBLANGID(lan)) == -1)
-					error("Language %04x is not supported",lan);
+					error("Language %04x is not supported\n", lan);
 				currentlanguage = new_language(PRIMARYLANGID(lan), SUBLANGID(lan));
 			}
 			break;
+		case 'f':
+			if (*optarg != 'o') error("Unknown option: -f%s\n",  optarg);
+			optarg++;
+			/* fall through */
 		case 'o':
 			if (!output_name) output_name = strdup(optarg);
 			else error("Too many output files.\n");
@@ -328,7 +332,7 @@ int main(int argc,char *argv[])
 				wpp_del_define("__WIN32__");
 				wpp_del_define("__FLAT__");
 			}
-			else if (strcmp(optarg, "res")) warning("Output format %s not supported.", optarg);
+			else if (strcmp(optarg, "res")) warning("Output format %s not supported.\n", optarg);
 			break;
 		case 'r':
 			/* ignored for compatibility with rc */
