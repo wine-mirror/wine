@@ -66,6 +66,7 @@ extern void VIRTUAL_Dump(void);  /* memory/virtual.c */
 %token <string> tIDENTIFIER tSTRING tDEBUGSTR
 %token <integer> tNUM tFORMAT
 %token <reg> tREG
+%token tSYMBOLFILE
 
 %token tCHAR tSHORT tINT tLONG tFLOAT tDOUBLE tUNSIGNED tSIGNED 
 %token tSTRUCT tUNION tENUM
@@ -156,6 +157,7 @@ command:
     | tCOND tNUM tEOL          { DEBUG_AddBPCondition($2, NULL); }
     | tCOND tNUM expr tEOL     { DEBUG_AddBPCondition($2, $3); }
     | tDEBUGMSG tDEBUGSTR tEOL { MAIN_ParseDebugOptions($2); }
+    | tSYMBOLFILE pathname tEOL{ DEBUG_ReadSymbolTable($2); }
     | list_command
     | disassemble_command
     | set_command

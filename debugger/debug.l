@@ -142,6 +142,7 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 
 <INITIAL>mode				{ BEGIN(NOCMD); return tMODE; }
 <INITIAL>show|sho|sh			{ BEGIN(SHOW_CMD); return tSHOW; }
+<INITIAL>symbolfile|symbols|symbol|sf   { BEGIN(PATH_EXPECTED); return tSYMBOLFILE; }
 
 <INITIAL,INFO_CMD,DEL_CMD>break|brea|bre|br|b	{ BEGIN(PATH_EXPECTED); return tBREAK; }
 
