@@ -11,12 +11,17 @@
 #include "winversion.h"
 #include "winreg.h"
 #include "crtdll.h"
+#include "tchar.h"
 
 #include "shlobj.h"
 #include "shell32_main.h"
 #include "windef.h"
+#include "options.h"
 
 DEFAULT_DEBUG_CHANNEL(shell)
+
+/* Supported protocols for PathIsURL */
+LPSTR SupportedProtocol[] = {"http","https","ftp","gopher","file","mailto",""};
 
 /*************************************************************************
  * PathIsRoot [SHELL32.29]
@@ -1040,6 +1045,38 @@ LPWSTR WINAPI PathRemoveBackslashW( LPWSTR lpPath )
 */
    
  /* SHGetValue: Gets a value from the registry */
+
+
+BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
+{
+  LPSTR lpstrRes;
+  char lpstrFileType[10] = "";
+  int iSize;
+  int i = 0;
+  /* sanity check */
+  if(!lpstrPath)
+    return FALSE;
+
+  /* get protocol        */
+  /* protocol://location */
+  if(!(lpstrRes = strchr(lpstrPath,':')))
+  {
+    return FALSE;
+  }
+  iSize = lpstrRes - lpstrPath;
+  if(iSize > sizeof(lpstrFileType))
+    return FALSE;
+
+  strncpy(lpstrFileType,lpstrPath,iSize);
+
+  while(strlen(SupportedProtocol[i]))
+  {
+    if(!_stricmp(lpstrFileType,SupportedProtocol[i++]))
+      return TRUE;
+  }
+
+  return FALSE;
+}  
 
 DWORD WINAPI SHGetValueA(
     HKEY     hkey,

@@ -27,6 +27,7 @@
 #include "winreg.h"
 #include "syslevel.h"
 #include "imagelist.h"
+#include "tchar.h"
 
 DEFAULT_DEBUG_CHANNEL(shell)
 DECLARE_DEBUG_CHANNEL(exec)
@@ -334,7 +335,7 @@ HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
     HINSTANCE retval=31;  /* default - 'No association was found' */
     char *tok;              /* token pointer */
     int i;                  /* random counter */
-    char xlpFile[256];      /* result of SearchPath */
+    char xlpFile[256] = ""; /* result of SearchPath */
 
   TRACE("%s\n", (lpFile != NULL?lpFile:"-") );
 
@@ -408,7 +409,7 @@ HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
                          &filetypelen ) == ERROR_SUCCESS )
     {
 	filetype[filetypelen]='\0';
-  TRACE("File type: %s\n", filetype);
+	TRACE("File type: %s\n", filetype);
 
 	/* Looking for ...buffer\shell\lpOperation\command */
 	strcat( filetype, "\\shell\\" );
@@ -418,6 +419,24 @@ HINSTANCE SHELL_FindExecutable( LPCSTR lpFile,
 	if (RegQueryValue16( HKEY_CLASSES_ROOT, filetype, command,
                              &commandlen ) == ERROR_SUCCESS )
 	{
+            LPSTR tmp;
+            char param[256];
+	    LONG paramlen = 256;
+
+
+	    /* Get the parameters needed by the application 
+	       from the associated ddeexec key */ 
+	    tmp = strstr(filetype,"command");
+	    tmp[0] = '\0';
+	    strcat(filetype,"ddeexec");
+
+	    if(RegQueryValue16( HKEY_CLASSES_ROOT, filetype, param,&paramlen ) == ERROR_SUCCESS)
+	    {
+	      strcat(command," ");
+	      strcat(command,param);
+	      commandlen += paramlen;
+	    }
+
 	    /* Is there a replace() function anywhere? */
 	    command[commandlen]='\0';
 	    strcpy( lpResult, command );
@@ -473,7 +492,7 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
                                    LPCSTR lpDirectory, INT16 iShowCmd )
 {   HINSTANCE16 retval=31;
     char old_dir[1024];
-    char cmd[256];
+    char cmd[1024] = "";
 
     TRACE("(%04x,'%s','%s','%s','%s',%x)\n",
 		hWnd, lpOperation ? lpOperation:"<null>", lpFile ? lpFile:"<null>",
@@ -489,20 +508,108 @@ HINSTANCE16 WINAPI ShellExecute16( HWND16 hWnd, LPCSTR lpOperation,
         SetCurrentDirectoryA( lpDirectory );
     }
 
-    retval = SHELL_FindExecutable( lpFile, lpOperation, cmd );
+    /* First try to execute lpFile with lpParameters directly */ 
+    strcpy(cmd,lpFile);
+    strcat(cmd,lpParameters ? lpParameters : "");
 
-    if (retval > 32)  /* Found */
-    {
+    SYSLEVEL_ReleaseWin16Lock();
+    retval = WinExec( cmd, iShowCmd );
+    SYSLEVEL_RestoreWin16Lock();
+
+    /* Unable to execute lpFile directly
+       Check if we can match an application to lpFile */
+    if(retval < 31)
+    { 
+      cmd[0] = '\0';
+      retval = SHELL_FindExecutable( lpFile, lpOperation, cmd );
+
+      if (retval > 32)  /* Found */
+      {
         if (lpParameters)
         {
             strcat(cmd," ");
             strcat(cmd,lpParameters);
         }
-
-        TRACE("starting %s\n",cmd);
         SYSLEVEL_ReleaseWin16Lock();
         retval = WinExec( cmd, iShowCmd );
         SYSLEVEL_RestoreWin16Lock();
+      }
+      else if(PathIsURLA((LPSTR)lpFile))    /* File not found, check for URL */
+      {
+        char lpstrProtocol[256];
+        LONG cmdlen = 512;
+        LPSTR lpstrRes;
+        INT iSize;
+      
+	lpstrRes = strchr(lpFile,':');
+        iSize = lpstrRes - lpFile;
+	
+        /* Looking for ...protocol\shell\lpOperation\command */
+	strncpy(lpstrProtocol,lpFile,iSize);
+	lpstrProtocol[iSize]='\0';
+        strcat( lpstrProtocol, "\\shell\\" );
+	strcat( lpstrProtocol, lpOperation );
+	strcat( lpstrProtocol, "\\command" );
+	
+	/* Remove File Protocol from lpFile */
+	/* In the case file://path/file     */
+	if(!_strnicmp(lpFile,"file",iSize))
+	{
+	  lpFile += iSize;
+	  while(*lpFile == ':') lpFile++;
+	}
+	
+
+	/* Get the application for the protocol and execute it */
+	if (RegQueryValue16( HKEY_CLASSES_ROOT, lpstrProtocol, cmd,
+                             &cmdlen ) == ERROR_SUCCESS )
+	{
+	    LPSTR tok;
+            LPSTR tmp;
+            char param[256] = "";
+	    LONG paramlen = 256;
+
+	    /* Get the parameters needed by the application 
+	       from the associated ddeexec key */ 
+	    tmp = strstr(lpstrProtocol,"command");
+	    tmp[0] = '\0';
+	    strcat(lpstrProtocol,"ddeexec");
+
+	    if(RegQueryValue16( HKEY_CLASSES_ROOT, lpstrProtocol, param,&paramlen ) == ERROR_SUCCESS)
+	    {
+	      strcat(cmd," ");
+	      strcat(cmd,param);
+	      cmdlen += paramlen;
+	    }
+	    
+	    /* Is there a replace() function anywhere? */
+	    cmd[cmdlen]='\0';
+
+	    tok=strstr( cmd, "%1" );
+	    if (tok != NULL)
+	    {
+		tok[0]='\0'; /* truncate string at the percent */
+		strcat( cmd, lpFile ); /* what if no dir in xlpFile? */
+		tok=strstr( cmd, "%1" );
+		if ((tok!=NULL) && (strlen(tok)>2))
+		{
+		    strcat( cmd, &tok[2] );
+		}
+	    }
+ 
+	    SYSLEVEL_ReleaseWin16Lock();
+	    retval = WinExec( cmd, iShowCmd );
+	    SYSLEVEL_RestoreWin16Lock();
+	}
+      }
+    /* Check if file specified is in the form www.??????.*** */
+      else if(!_strnicmp(lpFile,"www",3))
+      {
+	/* if so, append lpFile http:// and call ShellExecute */ 
+        char lpstrTmpFile[256] = "http://" ;
+	strcat(lpstrTmpFile,lpFile);
+	retval = ShellExecuteA(hWnd,lpOperation,lpstrTmpFile,NULL,NULL,0);
+      }
     }
     if (lpDirectory)
       SetCurrentDirectoryA( old_dir );
