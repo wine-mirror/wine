@@ -5,16 +5,18 @@
 
 #include "config.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <sys/time.h>
+#include <unistd.h>
+
 #include "windef.h"
 #include "wine/windef16.h"
 #include "winerror.h"
 #include "winbase.h"
 #include "rpc.h"
-
-#include <time.h>
-#include <sys/time.h>
-#include <unistd.h>
-#include <stdlib.h>
 
 #ifdef HAVE_SYS_FILE_H
 # include <sys/file.h>
@@ -264,4 +266,51 @@ sizeof((i).ifr_name)+(i).ifr_addr.sa_len)
    TRACE("%s", debugstr_guid(Uuid));
    
    return S_OK;
+}
+
+/*************************************************************************
+ *           RpcStringFreeA   [RPCRT4.436]
+ *
+ * Frees a character string allocated by the RPC run-time library.
+ *
+ * RETURNS
+ *
+ *  S_OK if successful.
+ */
+RPC_STATUS WINAPI RpcStringFreeA(unsigned char** String)
+{
+  HeapFree( GetProcessHeap(), 0, *String);
+
+  return S_OK;
+}
+
+/*************************************************************************
+ *           UuidToStringA   [RPCRT4.450]
+ *
+ * Converts a UUID to a string.
+ *
+ * UUID format is 8 hex digits, followed by a hyphen then three groups of
+ * 4 hex digits each followed by a hyphen and then 12 hex digits
+ *
+ * RETURNS
+ *
+ *  S_OK if successful.
+ *  S_OUT_OF_MEMORY if unsucessful.
+ */
+RPC_STATUS WINAPI UuidToStringA(UUID *Uuid, unsigned char** StringUuid)
+{
+  *StringUuid = HeapAlloc( GetProcessHeap(), 0, sizeof(char) * 37);
+
+
+  /* FIXME: this should be RPC_S_OUT_OF_MEMORY */
+  if(!(*StringUuid))
+    return ERROR_OUTOFMEMORY;
+
+       sprintf(*StringUuid, "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                 Uuid->Data1, Uuid->Data2, Uuid->Data3,
+                 Uuid->Data4[0], Uuid->Data4[1], Uuid->Data4[2],
+                 Uuid->Data4[3], Uuid->Data4[4], Uuid->Data4[5],
+                 Uuid->Data4[6], Uuid->Data4[7] );
+
+  return S_OK; /*FIXME: this should be RPC_S_OK */
 }
