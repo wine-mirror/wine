@@ -11,6 +11,7 @@ C_SRCS = \
 	break.c \
 	db_disasm.c \
 	display.c \
+	elf.c \
 	expr.c \
 	ext_debugger.c \
 	gdbproxy.c \
@@ -19,6 +20,7 @@ C_SRCS = \
 	memory.c \
 	module.c \
 	msc.c \
+	pe.c \
 	registers.c \
 	source.c \
 	stabs.c	\

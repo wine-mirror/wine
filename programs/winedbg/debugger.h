@@ -267,20 +267,20 @@ extern  HANDLE          DEBUG_hParserOutput;
 #define DEBUG_WRITE_MEM_VERBOSE(addr, buf, len) \
       (DEBUG_WRITE_MEM((addr), (buf), (len)) || (DEBUG_InvalLinAddr( addr ),0))
 
-enum DbgInfoLoad {DIL_DEFERRED, DIL_LOADED, DIL_NOINFO, DIL_ERROR};
+enum DbgInfoLoad {DIL_DEFERRED, DIL_LOADED, DIL_NOINFO, DIL_NOT_SUPPORTED, DIL_ERROR};
 enum DbgModuleType {DMT_UNKNOWN, DMT_ELF, DMT_NE, DMT_PE};
 
 typedef struct tagDBG_MODULE {
    void*			load_addr;
    unsigned long		size;
-   char*			module_name;
+   const char*  		module_name;
    enum DbgInfoLoad		dil;
    enum DbgModuleType		type;
    unsigned short		main : 1;
    short int			dbg_index;
    HMODULE                      handle;
-   struct tagMSC_DBG_INFO*	msc_info;
-   struct tagELF_DBG_INFO*	elf_info;
+   struct tagMSC_DBG_INFO*	msc_dbg_info;
+   struct tagELF_DBG_INFO*	elf_dbg_info;
 } DBG_MODULE;
 
 typedef struct {
@@ -334,6 +334,26 @@ extern int DEBUG_AddDisplay(struct expr * exp, int count, char format, int local
 extern int DEBUG_DelDisplay(int displaynum);
 extern int DEBUG_InfoDisplay(void);
 extern int DEBUG_EnableDisplay(int displaynum, int enable);
+
+  /* debugger/elf.c */
+#define ELF_INFO_PATH           0x0001
+#define ELF_INFO_DEBUG_HEADER   0x0002
+#define ELF_INFO_SEGMENTS       0x0004
+#define ELF_INFO_MODULE         0x0008
+
+struct elf_info
+{
+    unsigned            flags;
+    char*               elf_path;       /* path to unix elf path, if ELF_INFO_PATH is set */
+    size_t              elf_path_len;
+    void*               load_addr;      /* 32 bit linear addr, where ELF module is loaded */
+    unsigned long       size;           /* size of elf module (guessed) */
+    unsigned long       dbg_hdr_addr;   /* address of debug header (if ELF_INFO_DEBUG_HEADER is set) */
+    unsigned long       segments[3];    /* addresses of .text, .data and .bss segments (not filled yet) */
+};
+
+extern enum DbgInfoLoad DEBUG_ReadWineLoaderDbgInfo(HANDLE hProcess, struct elf_info* elf_info);
+extern BOOL             DEBUG_SetElfSoLoadBreakpoint(const struct elf_info* elf_info);
 
   /* debugger/expr.c */
 extern void DEBUG_FreeExprMem(void);
@@ -432,27 +452,34 @@ extern int  DEBUG_PrintStringA(const DBG_ADDR* address, int len);
 extern int  DEBUG_PrintStringW(const DBG_ADDR* address, int len);
 
   /* debugger/module.c */
+extern DBG_MODULE* DEBUG_AddModule(const char* name, enum DbgModuleType type,
+                                   void* mod_addr, unsigned long size, HMODULE hmodule);
 extern int  DEBUG_LoadEntryPoints( const char * prefix );
-extern void DEBUG_LoadModule32( const char* name, HANDLE hFile, void *base );
 extern DBG_MODULE* DEBUG_FindModuleByName(const char* name, enum DbgModuleType type);
 extern DBG_MODULE* DEBUG_FindModuleByHandle(HANDLE handle, enum DbgModuleType type);
 extern DBG_MODULE* DEBUG_FindModuleByAddr(void* addr, enum DbgModuleType type);
 extern DBG_MODULE* DEBUG_GetProcessMainModule(DBG_PROCESS* process);
-extern DBG_MODULE* DEBUG_RegisterELFModule(void *load_addr, unsigned long size,
-					   const char* name);
-extern enum DbgInfoLoad DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
-						  void* _nth, unsigned long nth_ofs);
 extern void DEBUG_ReportDIL(enum DbgInfoLoad dil, const char* pfx,
 			    const char* filename, void *load_addr);
 extern void DEBUG_InfoShare(void);
 
   /* debugger/msc.c */
+extern void DEBUG_InitCVDataTypes(void);
+extern enum DbgInfoLoad DEBUG_ProcessDebugDirectory( DBG_MODULE *module, const BYTE* file_map,
+                                                     PIMAGE_DEBUG_DIRECTORY dbg, int nDbg );
+
+  /* debugger/pe.c */
+extern void* DEBUG_MapDebugInfoFile(const char* name, DWORD offset, DWORD size,
+                                    HANDLE* hFile, HANDLE* hMap);
+extern void DEBUG_UnmapDebugInfoFile(HANDLE hFile, HANDLE hMap, const void* addr);
+extern void DEBUG_LoadPEModule( const char* name, HANDLE hFile, void *base );
 extern enum DbgInfoLoad DEBUG_RegisterMSCDebugInfo(DBG_MODULE* module, HANDLE hFile,
 						   void* nth, unsigned long nth_ofs);
 extern enum DbgInfoLoad DEBUG_RegisterStabsDebugInfo(DBG_MODULE* module,
 						     HANDLE hFile, void* nth,
 						     unsigned long nth_ofs);
-extern void DEBUG_InitCVDataTypes(void);
+extern enum DbgInfoLoad DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
+						  void* _nth, unsigned long nth_ofs);
 
   /* debugger/registers.c */
 extern void DEBUG_InfoRegisters(const CONTEXT* ctx);
@@ -477,8 +504,7 @@ extern int  DEBUG_GetCurrentFrame(struct name_hash ** name,
 				  unsigned int * ebp);
 
   /* debugger/stabs.c */
-extern enum DbgInfoLoad DEBUG_ReadExecutableDbgInfo(const char* exe_name);
-extern enum DbgInfoLoad DEBUG_ParseStabs(char * addr, void *load_offset,
+extern enum DbgInfoLoad DEBUG_ParseStabs(const char* addr, void *load_offset,
 					 unsigned int staboff, int stablen,
 					 unsigned int strtaboff, int strtablen);
 

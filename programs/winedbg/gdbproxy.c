@@ -102,8 +102,6 @@ struct gdb_context
     unsigned long               wine_segs[3];   /* load addresses of the ELF wine exec segments (text, bss and data) */
 };
 
-extern int read_elf_info(const char* filename, unsigned long tab[]);
-
 /* =============================================== *
  *       B A S I C   M A N I P U L A T I O N S     *
  * =============================================== *
@@ -620,29 +618,6 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
                         de->u.CreateProcessInfo.hThread,
                         de->u.CreateProcessInfo.lpStartAddress,
                         de->u.CreateProcessInfo.lpThreadLocalBase);
-#if 0
-        DEBUG_LoadModule32(DEBUG_CurrProcess->imageName, de->u.CreateProcessInfo.hFile,
-                           de->u.CreateProcessInfo.lpBaseOfImage);
-
-        if (buffer[0])  /* we got a process name */
-        {
-            DWORD type;
-            if (!GetBinaryTypeA( buffer, &type ))
-            {
-                /* not a Windows binary, assume it's a Unix executable then */
-                char unixname[MAX_PATH];
-                /* HACK!! should fix DEBUG_ReadExecutableDbgInfo to accept DOS filenames */
-                if (wine_get_unix_file_name( buffer, unixname, sizeof(unixname) ))
-                {
-                    DEBUG_ReadExecutableDbgInfo( unixname );
-                    break;
-                }
-            }
-        }
-        /* if it is a Windows binary, or an invalid or missing file name,
-         * we use wine itself as the main executable */
-        DEBUG_ReadExecutableDbgInfo( "wine" );
-#endif
         break;
 
     case LOAD_DLL_DEBUG_EVENT:
@@ -1980,7 +1955,7 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
     int                 s_len = sizeof(s_addrs);
     struct pollfd       pollfd;
     char                wine_path[MAX_PATH];
-    char*               ptr;
+    struct elf_info     elf_info;
 
     /* step 1: create socket for gdb connection request */
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
@@ -1995,11 +1970,16 @@ static BOOL gdb_startup(struct gdb_context* gdbctx, DEBUG_EVENT* de, unsigned fl
         return FALSE;
 
     /* step 2: find out wine executable location (as a Unix filename) */
-    ptr = getenv("WINELOADER");
-    strcpy(wine_path, ptr ? ptr : "wine");
+    elf_info.flags = ELF_INFO_PATH | ELF_INFO_SEGMENTS;
+    elf_info.elf_path = wine_path;
+    elf_info.elf_path_len = sizeof(wine_path);
+    if (DEBUG_ReadWineLoaderDbgInfo(de->u.CreateProcessInfo.hProcess, &elf_info) == DIL_ERROR)
+        return FALSE;
+    gdbctx->wine_segs[0] = elf_info.segments[0];
+    gdbctx->wine_segs[1] = elf_info.segments[1];
+    gdbctx->wine_segs[2] = elf_info.segments[2];
 
     fprintf(stderr, "Using wine_path: %s\n", wine_path);
-    read_elf_info(wine_path, gdbctx->wine_segs);
 
     /* step 3: fire up gdb (if requested) */
     if (flags & 1)

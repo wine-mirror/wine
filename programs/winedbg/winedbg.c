@@ -674,8 +674,8 @@ static DWORD DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOO
 
 static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
 {
-    char		buffer[256];
-    DWORD cont = DBG_CONTINUE;
+    char	buffer[256];
+    DWORD       cont = DBG_CONTINUE;
 
     DEBUG_CurrPid = de->dwProcessId;
     DEBUG_CurrTid = de->dwThreadId;
@@ -782,24 +782,30 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
             WINE_ERR("Couldn't create thread\n");
             break;
         }
-
-        DEBUG_InitCurrProcess();
-        DEBUG_InitCurrThread();
-
-        /* module is either PE, NE or ELF module (for WineLib), but all
-         * are loaded with wine, so load its symbols, then the main module
-         */
-        do
+        else
         {
-            char*   ptr = getenv("WINELOADER");
+            struct elf_info     elf_info;
 
-            if (!ptr || DEBUG_ReadExecutableDbgInfo( ptr ) == DIL_ERROR)
-                DEBUG_ReadExecutableDbgInfo( "wine" );
-        } while (0);
+            DEBUG_InitCurrProcess();
+            DEBUG_InitCurrThread();
 
-        DEBUG_LoadModule32(DEBUG_CurrProcess->imageName, de->u.CreateProcessInfo.hFile,
-                           de->u.CreateProcessInfo.lpBaseOfImage);
+            elf_info.flags = ELF_INFO_MODULE;
 
+            if (DEBUG_ReadWineLoaderDbgInfo(DEBUG_CurrProcess->handle, &elf_info) != DIL_ERROR &&
+                DEBUG_SetElfSoLoadBreakpoint(&elf_info))
+            {
+                /* then load the main module's symbols */
+                DEBUG_LoadPEModule(DEBUG_CurrProcess->imageName, 
+                                   de->u.CreateProcessInfo.hFile,
+                                   de->u.CreateProcessInfo.lpBaseOfImage);
+            }
+            else
+            {
+                DEBUG_DelThread(DEBUG_CurrProcess->threads);
+                DEBUG_DelProcess(DEBUG_CurrProcess);
+                DEBUG_Printf("Couldn't load process\n");
+            }
+        }
         break;
 
     case EXIT_THREAD_DEBUG_EVENT:
@@ -850,7 +856,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de)
                    de->u.LoadDll.dwDebugInfoFileOffset,
                    de->u.LoadDll.nDebugInfoSize);
         _strupr(buffer);
-        DEBUG_LoadModule32(buffer, de->u.LoadDll.hFile, de->u.LoadDll.lpBaseOfDll);
+        DEBUG_LoadPEModule(buffer, de->u.LoadDll.hFile, de->u.LoadDll.lpBaseOfDll);
         DEBUG_CheckDelayedBP();
         if (DBG_IVAR(BreakOnDllLoad))
         {

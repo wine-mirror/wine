@@ -704,7 +704,7 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 
     module = DEBUG_FindModuleByAddr((void*)DEBUG_ToLinear(addr), DMT_UNKNOWN);
     if (module) {
-        char *p, *name = module->module_name;
+        const char *p, *name = module->module_name;
         if ((p = strrchr(name, '/'))) name = p + 1;
         if ((p = strrchr(name, '\\'))) name = p + 1;
         snprintf( modbuf, sizeof(modbuf), " in %s", name);

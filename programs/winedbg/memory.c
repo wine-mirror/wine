@@ -140,7 +140,7 @@ void DEBUG_GetCurrentAddress( DBG_ADDR *addr )
 void	DEBUG_InvalAddr( const DBG_ADDR* addr )
 {
    DEBUG_Printf("*** Invalid address ");
-   DEBUG_PrintAddress(addr, DEBUG_CurrThread->dbg_mode, FALSE);
+   DEBUG_PrintAddress(addr, DEBUG_CurrThread ? DEBUG_CurrThread->dbg_mode : MODE_32, FALSE);
    DEBUG_Printf("\n");
    if (DBG_IVAR(ExtDbgOnInvalidAddress)) DEBUG_ExternalDebugger();
 }
