@@ -36,6 +36,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winreg.h"
 #include "wine/debug.h"
 #include "wine/library.h"
 
@@ -161,6 +162,295 @@ SQLRETURN SQLDummyFunc()
 }
 
 /***********************************************************************
+ * ODBC_ReplicateODBCInstToRegistry
+ *
+ * PARAMS
+ *
+ * RETURNS
+ *
+ * Utility to ODBC_ReplicateToRegistry to replicate the drivers of the
+ * ODBCINST.INI settings
+ *
+ * The driver settings are not replicated to the registry.  If we were to 
+ * replicate them we would need to decide whether to replicate all settings
+ * or to do some translation; whether to remove any entries present only in
+ * the windows registry, etc.
+ */
+
+static void ODBC_ReplicateODBCInstToRegistry (SQLHENV hEnv)
+{
+    HKEY hODBCInst;
+    LONG reg_ret;
+    int success;
+
+    success = 0;
+    TRACE ("Driver settings are not currently replicated to the registry\n");
+    if ((reg_ret = RegCreateKeyExA (HKEY_LOCAL_MACHINE,
+            "Software\\ODBC\\ODBCINST.INI", 0, NULL,
+            REG_OPTION_NON_VOLATILE,
+            KEY_ALL_ACCESS /* a couple more than we need */, NULL,
+            &hODBCInst, NULL)) == ERROR_SUCCESS)
+    {
+        HKEY hDrivers;
+        if ((reg_ret = RegCreateKeyExA (hODBCInst, "ODBC Drivers", 0,
+                NULL, REG_OPTION_NON_VOLATILE,
+                KEY_ALL_ACCESS /* overkill */, NULL, &hDrivers, NULL))
+                == ERROR_SUCCESS)
+        {
+            SQLRETURN sql_ret;
+            SQLUSMALLINT dirn;
+            SQLCHAR desc [256];
+            SQLSMALLINT sizedesc;
+
+            success = 1;
+            dirn = SQL_FETCH_FIRST;
+            while ((sql_ret = SQLDrivers (hEnv, dirn, desc, sizeof(desc),
+                    &sizedesc, NULL, 0, NULL)) == SQL_SUCCESS ||
+                    sql_ret == SQL_SUCCESS_WITH_INFO)
+            {
+                /* FIXME Do some proper handling of the SUCCESS_WITH_INFO */
+                dirn = SQL_FETCH_NEXT;
+                if (sizedesc == strlen(desc))
+                {
+                    HKEY hThis;
+                    if ((reg_ret = RegQueryValueExA (hDrivers, desc, NULL,
+                            NULL, NULL, NULL)) == ERROR_FILE_NOT_FOUND)
+                    {
+                        if ((reg_ret = RegSetValueExA (hDrivers, desc, 0,
+                                REG_SZ, "Installed", 10)) != ERROR_SUCCESS)
+                        {
+                            TRACE ("Error %ld replicating driver %s\n",
+                                    reg_ret, desc);
+                            success = 0;
+                        }
+                    }
+                    else if (reg_ret != ERROR_SUCCESS)
+                    {
+                        TRACE ("Error %ld checking for %s in drivers\n",
+                                reg_ret, desc);
+                        success = 0;
+                    }
+                    if ((reg_ret = RegCreateKeyExA (hODBCInst, desc, 0,
+                            NULL, REG_OPTION_NON_VOLATILE,
+                            KEY_ALL_ACCESS, NULL, &hThis, NULL))
+                            == ERROR_SUCCESS)
+                    {
+                        /* FIXME This is where the settings go.
+                         * I suggest that if the disposition says it 
+                         * exists then we leave it alone.  Alternatively
+                         * include an extra value to flag that it is 
+                         * a replication of the unixODBC/iODBC/...
+                         */
+                        if ((reg_ret = RegCloseKey (hThis)) !=
+                                ERROR_SUCCESS)
+                            TRACE ("Error %ld closing %s key\n", reg_ret,
+                                    desc);
+                    }
+                    else
+                    {
+                        TRACE ("Error %ld ensuring driver key %s\n",
+                                reg_ret, desc);
+                        success = 0;
+                    }
+                }
+                else
+                {
+                    WARN ("Unusually long driver name %s not replicated\n",
+                            desc);
+                    success = 0;
+                }
+            }
+            if (sql_ret != SQL_NO_DATA)
+            {
+                TRACE ("Error %d enumerating drivers\n", (int)sql_ret);
+                success = 0;
+            }
+            if ((reg_ret = RegCloseKey (hDrivers)) != ERROR_SUCCESS)
+            {
+                TRACE ("Error %ld closing hDrivers\n", reg_ret);
+            }
+        }
+        else
+        {
+            TRACE ("Error %ld opening HKLM\\S\\O\\OI\\Drivers\n", reg_ret);
+        }
+        if ((reg_ret = RegCloseKey (hODBCInst)) != ERROR_SUCCESS)
+        {
+            TRACE ("Error %ld closing HKLM\\S\\O\\ODBCINST.INI\n", reg_ret);
+        }
+    }
+    else
+    {
+        TRACE ("Error %ld opening HKLM\\S\\O\\ODBCINST.INI\n", reg_ret);
+    }
+    if (!success)
+    {
+        WARN ("May not have replicated all ODBC drivers to the registry\n");
+    }
+}
+
+/***********************************************************************
+ * ODBC_ReplicateODBCToRegistry
+ *
+ * PARAMS
+ *
+ * RETURNS
+ *
+ * Utility to ODBC_ReplicateToRegistry to replicate either the USER or 
+ * SYSTEM dsns
+ *
+ * For now simply place the "Driver description" (as returned by SQLDataSources)
+ * into the registry as the driver.  This is enough to satisfy Crystal's 
+ * requirement that there be a driver entry.  (It doesn't seem to care what
+ * the setting is).
+ * A slightly more accurate setting would be to access the registry to find
+ * the actual driver library for the given description (which appears to map
+ * to one of the HKLM/Software/ODBC/ODBCINST.INI keys).  (If you do this note
+ * that this will add a requirement that this function be called after
+ * ODBC_ReplicateODBCInstToRegistry)
+ */
+static void ODBC_ReplicateODBCToRegistry (int is_user, SQLHENV hEnv)
+{
+    HKEY hODBC;
+    LONG reg_ret;
+    SQLRETURN sql_ret;
+    SQLUSMALLINT dirn;
+    SQLCHAR dsn [SQL_MAX_DSN_LENGTH + 1];
+    SQLSMALLINT sizedsn;
+    SQLCHAR desc [256];
+    SQLSMALLINT sizedesc;
+    int success;
+    const char *which = is_user ? "user" : "system";
+
+    success = 0;
+    if ((reg_ret = RegCreateKeyExA (
+            is_user ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE,
+            "Software\\ODBC\\ODBC.INI", 0, NULL, REG_OPTION_NON_VOLATILE,
+            KEY_ALL_ACCESS /* a couple more than we need */, NULL, &hODBC,
+            NULL)) == ERROR_SUCCESS)
+    {
+        success = 1;
+        dirn = is_user ? SQL_FETCH_FIRST_USER : SQL_FETCH_FIRST_SYSTEM;
+        while ((sql_ret = SQLDataSources (hEnv, dirn,
+                dsn, sizeof(dsn), &sizedsn,
+                desc, sizeof(desc), &sizedesc)) == SQL_SUCCESS
+                || sql_ret == SQL_SUCCESS_WITH_INFO)
+        {
+            /* FIXME Do some proper handling of the SUCCESS_WITH_INFO */
+            dirn = SQL_FETCH_NEXT;
+            if (sizedsn == strlen(dsn) && sizedesc == strlen(desc))
+            {
+                HKEY hDSN;
+                if ((reg_ret = RegCreateKeyExA (hODBC, dsn, 0,
+                        NULL, REG_OPTION_NON_VOLATILE,
+                        KEY_ALL_ACCESS, NULL, &hDSN, NULL))
+                        == ERROR_SUCCESS)
+                {
+                    static const char *DRIVERKEY = "Driver";
+                    if ((reg_ret = RegQueryValueExA (hDSN, DRIVERKEY,
+                            NULL, NULL, NULL, NULL))
+                            == ERROR_FILE_NOT_FOUND)
+                    {
+                        if ((reg_ret = RegSetValueExA (hDSN, DRIVERKEY, 0,
+                                REG_SZ, desc, sizedesc)) != ERROR_SUCCESS)
+                        {
+                            TRACE ("Error %ld replicating description of "
+                                    "%s(%s)\n", reg_ret, dsn, desc);
+                            success = 0;
+                        }
+                    }
+                    else if (reg_ret != ERROR_SUCCESS)
+                    {
+                        TRACE ("Error %ld checking for description of %s\n",
+                                reg_ret, dsn);
+                        success = 0;
+                    }
+                    if ((reg_ret = RegCloseKey (hDSN)) != ERROR_SUCCESS)
+                    {
+                        TRACE ("Error %ld closing %s DSN key %s\n",
+                                reg_ret, which, dsn);
+                    }
+                }
+                else
+                {
+                    TRACE ("Error %ld opening %s DSN key %s\n",
+                            reg_ret, which, dsn);
+                    success = 0;
+                }
+            }
+            else
+            {
+                WARN ("Unusually long %s data source name %s (%s) not "
+                        "replicated\n", which, dsn, desc);
+                success = 0;
+            }
+        }
+        if (sql_ret != SQL_NO_DATA)
+        {
+            TRACE ("Error %d enumerating %s datasources\n",
+                    (int)sql_ret, which);
+            success = 0;
+        }
+        if ((reg_ret = RegCloseKey (hODBC)) != ERROR_SUCCESS)
+        {
+            TRACE ("Error %ld closing %s ODBC.INI registry key\n", reg_ret,
+                    which);
+        }
+    }
+    else
+    {
+        TRACE ("Error %ld creating/opening %s ODBC.INI registry key\n",
+                reg_ret, which);
+    }
+    if (!success)
+    {
+        WARN ("May not have replicated all %s ODBC DSNs to the registry\n",
+                which);
+    }
+}
+
+/***********************************************************************
+ * ODBC_ReplicateToRegistry
+ *
+ * PARAMS
+ *
+ * RETURNS
+ *
+ * Unfortunately some of the functions that Windows documents as being part
+ * of the ODBC API it implements directly during compilation or something
+ * in terms of registry access functions.
+ * e.g. SQLGetInstalledDrivers queries the list at
+ * HKEY_LOCAL_MACHINE\Software\ODBC\ODBCINST.INI\ODBC Drivers
+ *
+ * This function is called when the driver manager is loaded and is used
+ * to replicate the appropriate details into the Wine registry
+ */
+
+static void ODBC_ReplicateToRegistry (void)
+{
+    SQLRETURN sql_ret;
+    SQLHENV hEnv;
+
+    if ((sql_ret = SQLAllocEnv (&hEnv)) == SQL_SUCCESS)
+    {
+        ODBC_ReplicateODBCInstToRegistry (hEnv);
+        ODBC_ReplicateODBCToRegistry (0 /* system dsns */, hEnv);
+        ODBC_ReplicateODBCToRegistry (1 /* user dsns */, hEnv);
+
+        if ((sql_ret = SQLFreeEnv (hEnv)) != SQL_SUCCESS)
+        {
+            TRACE ("Error %d freeing the SQL environment.\n", (int)sql_ret);
+        }
+    }
+    else
+    {
+        TRACE ("Error %d opening an SQL environment.\n", (int)sql_ret);
+        WARN ("The external ODBC settings have not been replicated to the"
+                " Wine registry\n");
+    }
+}
+
+/***********************************************************************
  * DllMain [Internal] Initializes the internal 'ODBC32.DLL'.
  *
  * PARAMS
@@ -183,7 +473,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
        TRACE("Loading ODBC...\n");
        DisableThreadLibraryCalls(hinstDLL);
        if (ODBC_LoadDriverManager())
+       {
           ODBC_LoadDMFunctions();
+          ODBC_ReplicateToRegistry();
+       }
     }
     else if (fdwReason == DLL_PROCESS_DETACH)
     {
@@ -205,7 +498,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
     return TRUE;
 }
-
 
 /***********************************************************************
  * ODBC_LoadDriverManager [Internal] Load ODBC library.
