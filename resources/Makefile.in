@@ -24,6 +24,7 @@ RC_SRCS = \
 	sysres_No.rc \
 	sysres_Pl.rc \
 	sysres_Po.rc \
+	sysres_Ru.rc \
 	sysres_Sw.rc
 
 C_SRCS = sysres.c

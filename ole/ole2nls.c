@@ -236,6 +236,10 @@ LANG_BEGIN (LANG_THAI, SUBLANG_DEFAULT)	/*0x41e*/
 #include "nls/tha.nls"
 LANG_END
 
+LANG_BEGIN (LANG_RUSSIAN, SUBLANG_DEFAULT)	/*0x419*/
+#include "nls/rus.nls"
+LANG_END
+
 LANG_BEGIN (LANG_ESPERANTO, SUBLANG_DEFAULT)	/*0x048f*/
 #include "nls/esperanto.nls"
 LANG_END

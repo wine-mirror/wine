@@ -32,7 +32,9 @@ typedef enum
     LANG_Pt,  /* Portuguese */
     LANG_Sv,  /* Swedish */
     LANG_Ca,  /* Catalan */
-    LANG_Nl   /* Dutch */
+    LANG_Nl,   /* Dutch */
+    LANG_Ru   /* Russian */
+
 } WINE_LANGUAGE;
 
 typedef struct
