@@ -35,9 +35,6 @@
 DEFAULT_DEBUG_CHANNEL(imagelist);
 
 
-#define _MAX(a,b) (((a)>(b))?(a):(b))
-#define _MIN(a,b) (((a)>(b))?(b):(a))
-
 #define MAX_OVERLAYIMAGE 15
 
 
@@ -1852,33 +1849,33 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
     }
 
     if (dx > 0) {
-        cxDst = _MAX (himl1->cx, dx + himl2->cx);
+        cxDst = max (himl1->cx, dx + himl2->cx);
         xOff1 = 0;
         xOff2 = dx;
     }
     else if (dx < 0) {
-        cxDst = _MAX (himl2->cx, himl1->cx - dx);
+        cxDst = max (himl2->cx, himl1->cx - dx);
         xOff1 = -dx;
         xOff2 = 0;
     }
     else {
-        cxDst = _MAX (himl1->cx, himl2->cx);
+        cxDst = max (himl1->cx, himl2->cx);
         xOff1 = 0;
         xOff2 = 0;
     }
 
     if (dy > 0) {
-        cyDst = _MAX (himl1->cy, dy + himl2->cy);
+        cyDst = max (himl1->cy, dy + himl2->cy);
         yOff1 = 0;
         yOff2 = dy;
     }
     else if (dy < 0) {
-        cyDst = _MAX (himl2->cy, himl1->cy - dy);
+        cyDst = max (himl2->cy, himl1->cy - dy);
         yOff1 = -dy;
         yOff2 = 0;
     }
     else {
-        cyDst = _MAX (himl1->cy, himl2->cy);
+        cyDst = max (himl1->cy, himl2->cy);
         yOff1 = 0;
         yOff2 = 0;
     }
@@ -2611,7 +2608,7 @@ ImageList_SetImageCount (HIMAGELIST himl, INT iImageCount)
 	return TRUE;
 
     nNewCount = iImageCount + himl->cGrow;
-    nCopyCount = _MIN(himl->cCurImage, iImageCount);
+    nCopyCount = min(himl->cCurImage, iImageCount);
 
     hdcImageList = CreateCompatibleDC (0);
     hdcBitmap = CreateCompatibleDC (0);

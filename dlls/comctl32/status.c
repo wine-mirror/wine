@@ -51,10 +51,6 @@ typedef struct
  * simple.exe, getparts.exe, setparts.exe, statwnd.exe
  */
 
-
-#define _MAX(a,b) (((a)>(b))?(a):(b))
-#define _MIN(a,b) (((a)>(b))?(b):(a))
-
 #define HORZ_BORDER 0
 #define VERT_BORDER 2
 #define HORZ_GAP    2
