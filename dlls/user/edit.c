@@ -1330,11 +1330,7 @@ static void EDIT_CalcLineWidth_SL(EDITSTATE *es)
  */
 static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count, INT action)
 {
-    INT ret, iWndsLocks;
-
-    /* To avoid any deadlocks, all the locks on the window structures
-       must be suspended before the control is passed to the application */
-    iWndsLocks = WIN_SuspendWndsLock();
+	INT ret;
 
 	if (es->word_break_proc16) {
 	    HGLOBAL16 hglob16;
@@ -1385,8 +1381,7 @@ static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count
 	else
             ret = EDIT_WordBreakProc(es->text + start, index, count, action);
 
-    WIN_RestoreWndsLock(iWndsLocks);
-    return ret;
+	return ret;
 }
 
 

@@ -1743,7 +1743,6 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     DWORD     dwPoint = GetMessagePos ();
     BOOL DragFullWindows = FALSE;
     BOOL grab;
-    int iWndsLocks;
     Display *old_gdi_display = NULL;
     Display *display = thread_display();
 
@@ -1953,16 +1952,11 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                 {
                     if(!DragFullWindows)
                         draw_moving_frame( hdc, &newRect, thickframe );
-                    else {
-                        /* To avoid any deadlocks, all the locks on the windows
-			   structures must be suspended before the SetWindowPos */
-                        iWndsLocks = WIN_SuspendWndsLock();
+                    else
                         SetWindowPos( hwnd, 0, newRect.left, newRect.top,
                                       newRect.right - newRect.left,
                                       newRect.bottom - newRect.top,
                                       ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
-                        WIN_RestoreWndsLock(iWndsLocks);
-                    }
                 }
                 sizingRect = newRect;
             }
@@ -2003,10 +1997,6 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     /* window moved or resized */
     if (moved)
     {
-        /* To avoid any deadlocks, all the locks on the windows
-	   structures must be suspended before the SetWindowPos */
-        iWndsLocks = WIN_SuspendWndsLock();
-
         /* if the moving/resizing isn't canceled call SetWindowPos
          * with the new position or the new size of the window
          */
@@ -2027,8 +2017,6 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
                               origRect.bottom - origRect.top,
                               ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
         }
-
-        WIN_RestoreWndsLock(iWndsLocks);
     }
 
     if (IsIconic(hwnd))
