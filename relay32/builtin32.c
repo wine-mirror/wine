@@ -87,6 +87,7 @@ extern const BUILTIN32_DESCRIPTOR TAPI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR USER32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR VERSION_Descriptor;
 extern const BUILTIN32_DESCRIPTOR W32SKRNL_Descriptor;
+extern const BUILTIN32_DESCRIPTOR WINEOSS_Descriptor;
 extern const BUILTIN32_DESCRIPTOR WINMM_Descriptor;
 extern const BUILTIN32_DESCRIPTOR WINSPOOL_Descriptor;
 extern const BUILTIN32_DESCRIPTOR WNASPI32_Descriptor;
@@ -142,6 +143,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &W32SKRNL_Descriptor, 0, 0, NULL },
     { &WINMM_Descriptor,    0, 0, &winmm_ResourceDescriptor },
     { &WINSPOOL_Descriptor, 0, 0, NULL },
+    { &WINEOSS_Descriptor,  0, 0, NULL },
     { &WNASPI32_Descriptor, 0, 0, NULL },
     { &WOW32_Descriptor,    0, 0, NULL },
     { &WSOCK32_Descriptor,  0, 0, NULL },
