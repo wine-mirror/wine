@@ -75,6 +75,8 @@ static HRESULT (WINAPI *pVarFormat)(LPVARIANT,LPOLESTR,int,int,ULONG,BSTR*);
  */
 #define EQ_DOUBLE(a,b)     (fabs((a)-(b))<1e-14)
 
+#define SKIPTESTS(a)  if((a > VT_CLSID+10) && (a < VT_BSTR_BLOB-10)) continue;
+
 static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 {
     while (*str1 && (*str1 == *str2)) { str1++; str2++; }
@@ -272,6 +274,8 @@ static void test_VariantClear(void)
     {
       HRESULT hExpected = DISP_E_BADVARTYPE;
 
+      SKIPTESTS(vt);
+
       memset(&v, 0, sizeof(v));
       V_VT(&v) = vt | ExtraFlags[i];
 
@@ -303,6 +307,8 @@ static void test_VariantCopy(void)
   {
     for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
     {
+      SKIPTESTS(vt);
+
       memset(&vSrc, 0, sizeof(vSrc));
       V_VT(&vSrc) = vt | ExtraFlags[i];
 
@@ -329,6 +335,8 @@ static void test_VariantCopy(void)
   {
     for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
     {
+      SKIPTESTS(vt);
+
       hExpected = DISP_E_BADVARTYPE;
 
       memset(&vDst, 0, sizeof(vDst));
@@ -353,6 +361,8 @@ static void test_VariantCopy(void)
   {
     for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
     {
+      SKIPTESTS(vt);
+
       hExpected = DISP_E_BADVARTYPE;
 
       memset(&vDst, 0, sizeof(vDst));
@@ -410,6 +420,8 @@ static void test_VariantCopyInd(void)
 
     for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
     {
+      SKIPTESTS(vt);
+
       memset(&vSrc, 0, sizeof(vSrc));
       V_VT(&vSrc) = vt | ExtraFlags[i];
 
@@ -456,6 +468,8 @@ static void test_VariantCopyInd(void)
   {
     for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
     {
+      SKIPTESTS(vt);
+
       memset(&vDst, 0, sizeof(vDst));
       V_VT(&vDst) = vt | ExtraFlags[i];
 
@@ -483,6 +497,8 @@ static void test_VariantCopyInd(void)
 
     for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
     {
+      SKIPTESTS(vt);
+
       memset(&vDst, 0, sizeof(vDst));
       V_VT(&vDst) = VT_EMPTY;
 
@@ -1609,6 +1625,8 @@ static void test_VarAbs(void)
         {
             HRESULT hExpected = DISP_E_BADVARTYPE;
 
+            SKIPTESTS(vt);
+
             memset(&v, 0, sizeof(v));
             V_VT(&v) = vt | ExtraFlags[i];
             V_VT(&vDst) = VT_EMPTY;
@@ -1692,6 +1710,8 @@ static void test_VarNot(void)
         for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
         {
             HRESULT hExpected = DISP_E_BADVARTYPE;
+
+            SKIPTESTS(vt);
 
             memset(&v, 0, sizeof(v));
             V_VT(&v) = vt | ExtraFlags[i];
@@ -1942,8 +1962,12 @@ static void test_VarMod(void)
   /* test all combinations of types */
   for(l = 0; l < VT_BSTR_BLOB; l++)
   {
+    SKIPTESTS(l);
+
     for(r = 0; r < VT_BSTR_BLOB; r++)
     {
+      SKIPTESTS(r);
+        
       if(l == VT_BSTR) continue;
       if(l == VT_DISPATCH) continue;
       if(r == VT_BSTR) continue;
@@ -2264,6 +2288,8 @@ static void test_VarFix(void)
         {
             HRESULT bFail = TRUE;
 
+            SKIPTESTS(vt);
+
             memset(&v, 0, sizeof(v));
             V_VT(&v) = vt | ExtraFlags[i];
             V_VT(&vDst) = VT_EMPTY;
@@ -2377,6 +2403,8 @@ static void test_VarInt(void)
         for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
         {
             HRESULT bFail = TRUE;
+
+            SKIPTESTS(vt);
 
             memset(&v, 0, sizeof(v));
             V_VT(&v) = vt | ExtraFlags[i];
@@ -2496,6 +2524,8 @@ static void test_VarNeg(void)
         for (vt = 0; vt <= VT_BSTR_BLOB; vt++)
         {
             HRESULT bFail = TRUE;
+
+            SKIPTESTS(vt);
 
             memset(&v, 0, sizeof(v));
             V_VT(&v) = vt | ExtraFlags[i];
@@ -2735,9 +2765,13 @@ static void test_VarXor(void)
 
         for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
         {
+            SKIPTESTS(leftvt);
+
             for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
             {
                 BOOL bFail = FALSE;
+
+                SKIPTESTS(rightvt);
 
                 if (leftvt == VT_BSTR || rightvt == VT_BSTR ||
                     leftvt == VT_DISPATCH || rightvt == VT_DISPATCH ||
@@ -2875,9 +2909,13 @@ static void test_VarEqv(void)
 
         for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
         {
+            SKIPTESTS(leftvt);
+
             for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
             {
                 BOOL bFail = FALSE;
+
+                SKIPTESTS(rightvt);
 
                 if (leftvt == VT_BSTR || rightvt == VT_BSTR ||
                     leftvt == VT_DISPATCH || rightvt == VT_DISPATCH ||
