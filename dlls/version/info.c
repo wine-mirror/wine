@@ -267,7 +267,7 @@ void ConvertVersionInfo32To16( VS_VERSION_INFO_STRUCT32 *info32,
  *    in the case if file exists, but VERSION_INFO not found.
  *    FIXME: handle is not used.
  */
-static DWORD WINAPI VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD handle,
+static DWORD VERSION_GetFileVersionInfo_PE( LPCSTR filename, LPDWORD handle,
                                     DWORD datasize, LPVOID data )
 {
     VS_FIXEDFILEINFO *vffi;
@@ -346,7 +346,7 @@ END:
  *    in the case if file exists, but VERSION_INFO not found.
  *    FIXME: handle is not used.
  */
-static DWORD WINAPI VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD handle,
+static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, LPDWORD handle,
                                     DWORD datasize, LPVOID data )
 {
     VS_FIXEDFILEINFO *vffi;
