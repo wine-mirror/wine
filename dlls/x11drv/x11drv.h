@@ -651,7 +651,6 @@ struct x11drv_win_data
 };
 
 extern struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd );
-extern POINT X11DRV_get_client_area_offset( HWND hwnd );
 extern Window X11DRV_get_whole_window( HWND hwnd );
 extern BOOL X11DRV_is_window_rect_mapped( const RECT *rect );
 extern XIC X11DRV_get_ic( HWND hwnd );

@@ -107,7 +107,6 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
 
 static LPCSTR whole_window_atom;
 static LPCSTR icon_window_atom;
-static LPCSTR client_offset_atom;
 static LPCSTR managed_atom;
 
 /***********************************************************************
@@ -606,8 +605,6 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
 
     data->client_rect = *new_client_rect;
     OffsetRect( &data->client_rect, -data->whole_rect.left, -data->whole_rect.top );
-    SetPropA( data->hwnd, client_offset_atom,
-              (HANDLE)MAKELONG( data->client_rect.left, data->client_rect.top ));
 
     if (!data->whole_window) return;
     if (swp_flags & SWP_WINE_NOHOSTMOVE) return;
@@ -675,7 +672,6 @@ static void create_desktop( Display *display, struct x11drv_win_data *data )
 
     whole_window_atom  = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_whole_window" ));
     icon_window_atom   = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_icon_window" ));
-    client_offset_atom = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_client_area_offset" ));
     managed_atom       = MAKEINTATOMA( GlobalAddAtomA( "__wine_x11_managed" ));
 
     data->whole_window = root_window;
@@ -1067,31 +1063,6 @@ struct x11drv_win_data *X11DRV_get_win_data( HWND hwnd )
 
     if (!hwnd || XFindContext( thread_display(), (XID)hwnd, win_data_context, &data )) data = NULL;
     return (struct x11drv_win_data *)data;
-}
-
-
-/***********************************************************************
- *		X11DRV_get_client_area_offset
- *
- * Return the offset of the client area relative to the x11 window.
- */
-POINT X11DRV_get_client_area_offset( HWND hwnd )
-{
-    POINT pt;
-    struct x11drv_win_data *data = X11DRV_get_win_data( hwnd );
-
-    if (data)
-    {
-        pt.x = data->client_rect.left;
-        pt.y = data->client_rect.top;
-    }
-    else
-    {
-        ULONG_PTR offset = (ULONG_PTR)GetPropA( hwnd, client_offset_atom );
-        pt.x = (SHORT)LOWORD(offset);
-        pt.y = (SHORT)HIWORD(offset);
-    }
-    return pt;
 }
 
 
