@@ -44,7 +44,7 @@ typedef struct {
 extern	BOOL		MMDRV_Init(void);
 extern	UINT		MMDRV_GetNum(UINT);
 extern	LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags, 
-				   DWORD* dwCallback, DWORD* dwInstance, BOOL bFrom32);
+				    DWORD* dwCallback, DWORD* dwInstance, BOOL bFrom32);
 extern	void		MMDRV_Free(HANDLE hndl, LPWINE_MLD mld);
 extern	DWORD		MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD dwParam1, DWORD dwParam2);
 extern	DWORD		MMDRV_Close(LPWINE_MLD mld, UINT wMsg);
@@ -99,7 +99,7 @@ typedef struct tagWINE_MCIDRIVER {
 
 #define WINE_TIMER_IS32	0x80
 
-typedef struct tagTIMERENTRY {
+typedef struct tagWINE_TIMERENTRY {
     UINT			wDelay;
     UINT			wResol;
     FARPROC16 			lpFunc;
@@ -107,8 +107,17 @@ typedef struct tagTIMERENTRY {
     UINT16			wFlags;
     UINT16			wTimerID;
     UINT			uCurTime;
-    struct tagTIMERENTRY*	lpNext;
+    struct tagWINE_TIMERENTRY*	lpNext;
 } WINE_TIMERENTRY, *LPWINE_TIMERENTRY;
+
+typedef struct tagWINE_MMIO {
+    MMIOINFO			info;
+    struct IOProcList*		ioProc;
+    BOOL			bTmpIOProc;
+    HANDLE			hMem;
+    SEGPTR			buffer16;
+    struct tagWINE_MMIO*	lpNext;
+} WINE_MMIO, *LPWINE_MMIO;
 
 typedef struct tagWINE_MM_IDATA {
     /* iData reference */
@@ -131,6 +140,8 @@ typedef struct tagWINE_MM_IDATA {
     /* LPWINE_WAVE		lpWave; */
     /* LPWINE_MIDI		lpMidi; */
     /* LPWINE_MIXER		lpMixer; */
+    /* mmio part */
+    LPWINE_MMIO			lpMMIO;
 } WINE_MM_IDATA, *LPWINE_MM_IDATA;
 
 /* function prototypes */

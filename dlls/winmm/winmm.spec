@@ -126,7 +126,7 @@ rsrc winmm
 @ stdcall mmioGetInfo(long ptr long) mmioGetInfo
 @ stub mmioInstallIOProc16
 @ stdcall mmioInstallIOProcA(long ptr long) mmioInstallIOProcA
-@ stub mmioInstallIOProcW
+@ stdcall mmioInstallIOProcW(long ptr long) mmioInstallIOProcW
 @ stdcall mmioOpenA(str ptr long) mmioOpenA
 @ stdcall mmioOpenW(wstr ptr long) mmioOpenW
 @ stdcall mmioRead(long ptr long) mmioRead

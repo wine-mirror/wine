@@ -1498,7 +1498,7 @@ typedef struct {
         FOURCC		fccIOProc;	/* pointer to I/O procedure */
         LPMMIOPROC16	pIOProc;	/* pointer to I/O procedure */
         UINT16		wErrorRet;	/* place for error to be returned */
-        HTASK16		htask;		/* alternate local task */
+        HTASK16		hTask;		/* alternate local task */
         /* fields maintained by MMIO functions during buffered I/O */
         LONG		cchBuffer;	/* size of I/O buffer (or 0L) */
         HPSTR		pchBuffer;	/* start of I/O buffer (or NULL) */
@@ -1520,7 +1520,7 @@ typedef struct {
         FOURCC		fccIOProc;
         LPMMIOPROC	pIOProc;
         UINT		wErrorRet;
-        HTASK		htask;
+        HTASK		hTask;
         /* fields maintained by MMIO functions during buffered I/O */
         LONG		cchBuffer;
         HPSTR		pchBuffer;
@@ -1618,8 +1618,8 @@ FOURCC 		WINAPI	mmioStringToFOURCC16(LPCSTR,UINT16);
 FOURCC 		WINAPI	mmioStringToFOURCCA(LPCSTR,UINT);
 FOURCC 		WINAPI	mmioStringToFOURCCW(LPCWSTR,UINT);
 #define 		mmioStringToFOURCC WINELIB_NAME_AW(mmioStringToFOURCC)
-HMMIO16		WINAPI	mmioOpen16 (LPSTR ,MMIOINFO16*,DWORD);
-HMMIO		WINAPI	mmioOpenA(LPSTR ,MMIOINFO*,DWORD);
+HMMIO16		WINAPI	mmioOpen16(LPSTR,MMIOINFO16*,DWORD);
+HMMIO		WINAPI	mmioOpenA(LPSTR,MMIOINFO*,DWORD);
 HMMIO		WINAPI	mmioOpenW(LPWSTR,MMIOINFO*,DWORD);
 #define			mmioOpen WINELIB_NAME_AW(mmioOpen)
 
@@ -1649,9 +1649,10 @@ UINT16 		WINAPI	mmioFlush16(HMMIO16,UINT16);
 UINT 		WINAPI	mmioFlush(HMMIO,UINT);
 UINT16 		WINAPI	mmioAdvance16(HMMIO16,MMIOINFO16*,UINT16);
 UINT 		WINAPI	mmioAdvance(HMMIO,MMIOINFO*,UINT);
-LONG 		WINAPI	mmioSendMessage(HMMIO16,UINT16,LPARAM,LPARAM);
-UINT16		WINAPI	mmioDescend(HMMIO16,MMCKINFO*,const MMCKINFO*,UINT16);
-
+LONG 		WINAPI	mmioSendMessage16(HMMIO16,UINT16,LPARAM,LPARAM);
+LONG 		WINAPI	mmioSendMessage(HMMIO,UINT,LPARAM,LPARAM);
+UINT16		WINAPI	mmioDescend16(HMMIO16,MMCKINFO*,const MMCKINFO*,UINT16);
+UINT		WINAPI	mmioDescend(HMMIO,MMCKINFO*,const MMCKINFO*,UINT);
 UINT16		WINAPI	mmioAscend16(HMMIO16,MMCKINFO*,UINT16);
 UINT		WINAPI	mmioAscend(HMMIO,MMCKINFO*,UINT);
 UINT16		WINAPI 	mmioCreateChunk16(HMMIO16,MMCKINFO*,UINT16);
