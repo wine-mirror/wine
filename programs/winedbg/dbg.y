@@ -52,6 +52,8 @@ int yyerror(char *);
 
 %token tCONT tPASS tSTEP tLIST tNEXT tQUIT tHELP tBACKTRACE tINFO tWALK tUP tDOWN
 %token tENABLE tDISABLE tBREAK tWATCH tDELETE tSET tMODE tPRINT tEXAM tABORT tVM86
+%token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tSYMBOL tREGS tWND tLOCAL tEXCEPTION
+%token tPROCESS tTHREAD tEOL tEOF
 %token tCLASS tMAPS tMODULE tSTACK tSEGMENTS tSYMBOL tREGS tWND tQUEUE tLOCAL tEXCEPTION
 %token tPROCESS tTHREAD tMODREF tEOL tEOF
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
@@ -104,7 +106,7 @@ line: command
     ;
 
 command:
-      tQUIT tEOL		{ /*DEBUG_Quit();*/ return 1; }
+      tQUIT tEOL                { /*DEBUG_Quit();*/ return 1; }
     | tHELP tEOL                { DEBUG_Help(); }
     | tHELP tINFO tEOL          { DEBUG_HelpInfo(); }
     | tPASS tEOL                { DEBUG_WaitNextException(DBG_EXCEPTION_NOT_HANDLED, 0, 0); }
@@ -122,8 +124,8 @@ command:
     | tABORT tEOL              	{ kill(getpid(), SIGABRT); }
     | tMODE tNUM tEOL          	{ mode_command($2); }
     | tMODE tVM86 tEOL         	{ DEBUG_CurrThread->dbg_mode = MODE_VM86; }
-    | tENABLE tNUM tEOL        	{ DEBUG_EnableBreakpoint( $2, TRUE ); }
-    | tDISABLE tNUM tEOL       	{ DEBUG_EnableBreakpoint( $2, FALSE ); }
+    | tENABLE tNUM tEOL         { DEBUG_EnableBreakpoint( $2, TRUE ); }
+    | tDISABLE tNUM tEOL        { DEBUG_EnableBreakpoint( $2, FALSE ); }
     | tDELETE tBREAK tNUM tEOL 	{ DEBUG_DelBreakpoint( $3 ); }
     | tBACKTRACE tEOL	       	{ DEBUG_BackTrace(DEBUG_CurrTid, TRUE); }
     | tBACKTRACE tNUM tEOL     	{ DEBUG_BackTrace($2, TRUE); }
@@ -165,28 +167,28 @@ command:
 
 set_command:
       tSET lval_addr '=' expr_value tEOL { DEBUG_WriteMemory(&$2, $4); DEBUG_FreeExprMem(); }
-    | tSET '+' tIDENTIFIER tEOL {DEBUG_DbgChannel(TRUE, NULL, $3);}
-    | tSET '-' tIDENTIFIER tEOL {DEBUG_DbgChannel(FALSE, NULL, $3);}
-    | tSET tIDENTIFIER '+' tIDENTIFIER tEOL {DEBUG_DbgChannel(TRUE, $2, $4);}
-    | tSET tIDENTIFIER '-' tIDENTIFIER tEOL {DEBUG_DbgChannel(FALSE, $2, $4);}
+    | tSET '+' tIDENTIFIER tEOL { DEBUG_DbgChannel(TRUE, NULL, $3); }
+    | tSET '-' tIDENTIFIER tEOL { DEBUG_DbgChannel(FALSE, NULL, $3); }
+    | tSET tIDENTIFIER '+' tIDENTIFIER tEOL { DEBUG_DbgChannel(TRUE, $2, $4); }
+    | tSET tIDENTIFIER '-' tIDENTIFIER tEOL { DEBUG_DbgChannel(FALSE, $2, $4); }
     ;
 
 pathname:
-      tIDENTIFIER              { $$ = $1; }
-    | tPATH		       { $$ = $1; }
+      tIDENTIFIER               { $$ = $1; }
+    | tPATH                     { $$ = $1; }
     ;
 
 disassemble_command:
-      tDISASSEMBLE tEOL              { DEBUG_Disassemble( NULL, NULL, 10 ); }
-    | tDISASSEMBLE expr_addr tEOL    { DEBUG_Disassemble( & $2, NULL, 10 ); }
+      tDISASSEMBLE tEOL         { DEBUG_Disassemble( NULL, NULL, 10 ); }
+    | tDISASSEMBLE expr_addr tEOL       { DEBUG_Disassemble( & $2, NULL, 10 ); }
     | tDISASSEMBLE expr_addr ',' expr_addr tEOL { DEBUG_Disassemble( & $2, & $4, 0 ); }
     ;
 
 list_command:
-      tLIST tEOL               { DEBUG_List( NULL, NULL, 10 ); }
-    | tLIST '-' tEOL	       { DEBUG_List( NULL, NULL, -10 ); }
-    | tLIST list_arg tEOL      { DEBUG_List( & $2, NULL, 10 ); }
-    | tLIST ',' list_arg tEOL  { DEBUG_List( NULL, & $3, -10 ); }
+      tLIST tEOL                { DEBUG_List( NULL, NULL, 10 ); }
+    | tLIST '-' tEOL            { DEBUG_List( NULL, NULL, -10 ); }
+    | tLIST list_arg tEOL       { DEBUG_List( & $2, NULL, 10 ); }
+    | tLIST ',' list_arg tEOL   { DEBUG_List( NULL, & $3, -10 ); }
     | tLIST list_arg ',' list_arg tEOL { DEBUG_List( & $2, & $4, 0 ); }
     ;
 
@@ -229,13 +231,11 @@ info_command:
     | tINFO tCLASS tSTRING tEOL	{ DEBUG_InfoClass( $3 ); }
     | tINFO tSHARE tEOL		{ DEBUG_InfoShare(); }
     | tINFO tMODULE expr_value tEOL   { DEBUG_DumpModule( $3 ); DEBUG_FreeExprMem(); }
-    | tINFO tQUEUE expr_value tEOL    { DEBUG_DumpQueue( $3 ); DEBUG_FreeExprMem(); }
     | tINFO tREGS tEOL          { DEBUG_InfoRegisters(&DEBUG_context); }
     | tINFO tSEGMENTS expr_value tEOL { DEBUG_InfoSegments( $3, 1 ); DEBUG_FreeExprMem(); }
     | tINFO tSEGMENTS tEOL      { DEBUG_InfoSegments( 0, -1 ); }
     | tINFO tSTACK tEOL         { DEBUG_InfoStack(); }
-    | tINFO tSYMBOL tSTRING     { DEBUG_InfoSymbols($3); }
-    | tINFO tMAPS tEOL          { DEBUG_InfoVirtual(); }
+    | tINFO tSYMBOL tSTRING tEOL{ DEBUG_InfoSymbols($3); }
     | tINFO tWND expr_value tEOL{ DEBUG_InfoWindow( (HWND)$3 ); DEBUG_FreeExprMem(); }
     | tINFO tLOCAL tEOL         { DEBUG_InfoLocals(); }
     | tINFO tDISPLAY tEOL       { DEBUG_InfoDisplay(); }
@@ -244,14 +244,14 @@ info_command:
 walk_command:
       tWALK tCLASS tEOL         { DEBUG_WalkClasses(); }
     | tWALK tMODULE tEOL        { DEBUG_WalkModules(); }
-    | tWALK tQUEUE tEOL         { DEBUG_WalkQueues(); }
     | tWALK tWND tEOL           { DEBUG_WalkWindows( 0, 0 ); }
-    | tWALK tWND tNUM tEOL      { DEBUG_WalkWindows( (HWND)$3, 0 ); }
+    | tWALK tWND expr_value tEOL{ DEBUG_WalkWindows( (HWND)$3, 0 ); DEBUG_FreeExprMem(); }
+    | tWALK tMAPS tEOL          { DEBUG_InfoVirtual(0); }
+    | tWALK tMAPS expr_value tEOL { DEBUG_InfoVirtual($3); DEBUG_FreeExprMem(); }
     | tWALK tPROCESS tEOL       { DEBUG_WalkProcess(); }
     | tWALK tTHREAD tEOL        { DEBUG_WalkThreads(); }
-    | tWALK tEXCEPTION tEOL           { DEBUG_WalkExceptions(DEBUG_CurrTid); }
-    | tWALK tEXCEPTION tNUM tEOL      { DEBUG_WalkExceptions($3); }
-    | tWALK tMODREF expr_value tEOL   { DEBUG_WalkModref( $3 ); DEBUG_FreeExprMem(); }
+    | tWALK tEXCEPTION tEOL     { DEBUG_WalkExceptions(DEBUG_CurrTid); }
+    | tWALK tEXCEPTION expr_value tEOL{ DEBUG_WalkExceptions($3); DEBUG_FreeExprMem(); }
     ;
 
 run_command:

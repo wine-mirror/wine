@@ -220,8 +220,8 @@ void DEBUG_Help(void)
 "  list <lines>                           disassemble [<addr>][,<addr>]",
 "  show dir                               dir <path>",
 "  set <reg> = <expr>                     set *<addr> = <expr>",
-"  mode [16,32,vm86]                      walk [wnd,class,queue,module,",
-"  whatis                                       process,modref <pid>]",
+"  mode [16,32,vm86]                      walk [wnd,class,module,maps,",
+"  whatis                                       process,thread,exception]",
 "  info (see 'help info' for options)     debugmsg <class>[-+]<type>\n",
 
 "The 'x' command accepts repeat counts and formats (including 'i') in the",
@@ -255,9 +255,7 @@ void DEBUG_HelpInfo(void)
 "  info break           Dumps information about breakpoints",
 "  info display         Shows auto-display expressions in use",
 "  info locals          Displays values of all local vars for current frame",
-"  info maps            Dumps all virtual memory mappings",
 "  info module <handle> Displays internal module state",
-"  info queue <handle>  Displays internal queue state",
 "  info reg             Displays values in all registers at top of stack",
 "  info segments        Dumps information about all known segments",
 "  info share           Dumps information about shared libraries",
@@ -373,16 +371,6 @@ void DEBUG_WalkClasses(void)
    cw.used = cw.alloc = 0;
    DEBUG_WalkClassesHelper(GetDesktopWindow(), &cw);
    DBG_free(cw.table);
-}
-
-void DEBUG_DumpQueue(DWORD q)
-{
-   DEBUG_Printf(DBG_CHN_MESG, "No longer doing info queue '0x%08lx'\n", q);
-}
-
-void DEBUG_WalkQueues(void)
-{
-   DEBUG_Printf(DBG_CHN_MESG, "No longer walking queues list\n");
 }
 
 void DEBUG_InfoWindow(HWND hWnd)
@@ -538,11 +526,6 @@ void DEBUG_WalkThreads(void)
     }
 }
 
-void DEBUG_WalkModref(DWORD p)
-{
-   DEBUG_Printf(DBG_CHN_MESG, "No longer walking module references list\n");
-}
-
 /***********************************************************************
  *           DEBUG_WalkExceptions
  *
@@ -552,6 +535,13 @@ void DEBUG_WalkExceptions(DWORD tid)
 {
     DBG_THREAD * thread;
     void *next_frame;
+
+    if (!DEBUG_CurrProcess || !DEBUG_CurrThread)
+    {
+        DEBUG_Printf(DBG_CHN_MESG, 
+                     "Cannot walk exceptions while no process is loaded\n");
+        return;
+    }
 
     DEBUG_Printf( DBG_CHN_MESG, "Exception frames:\n" );
 
@@ -606,8 +596,8 @@ void DEBUG_InfoSegments(DWORD start, int length)
 
     for (i = start; i < start + length; i++)
     {
-       if (!GetThreadSelectorEntry(DEBUG_CurrThread->handle, (i << 3)|7, &le))
-	  continue;
+        if (!GetThreadSelectorEntry(DEBUG_CurrThread->handle, (i << 3) | 7, &le))
+            continue;
 
         if (le.HighWord.Bits.Type & 0x08)
         {
@@ -633,20 +623,38 @@ void DEBUG_InfoSegments(DWORD start, int length)
     }
 }
 
-void DEBUG_InfoVirtual(void)
+void DEBUG_InfoVirtual(DWORD pid)
 {
     MEMORY_BASIC_INFORMATION    mbi;
     char*                       addr = 0;
     char*                       state;
     char*                       type;
     char                        prot[3+1];
+    HANDLE                      hProc;
 
-    if (DEBUG_CurrProcess == NULL)
-        return;
+    if (pid == 0)
+    {
+        if (DEBUG_CurrProcess == NULL)
+        {
+            DEBUG_Printf(DBG_CHN_MESG, 
+                         "Cannot look at mapping of current process, while no process is loaded\n");
+            return;
+        }
+        hProc = DEBUG_CurrProcess->handle;
+    }
+    else
+    {
+        hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+        if (hProc == NULL)
+        {
+            DEBUG_Printf(DBG_CHN_MESG, "Cannot open process <%lu>\n", pid);
+            return;
+        }
+    }
 
     DEBUG_Printf(DBG_CHN_MESG, "Address  Size     State   Type    RWX\n");
 
-    while (VirtualQueryEx(DEBUG_CurrProcess->handle, addr, &mbi, sizeof(mbi)) >= sizeof(mbi))
+    while (VirtualQueryEx(hProc, addr, &mbi, sizeof(mbi)) >= sizeof(mbi))
     {
         switch (mbi.State)
         {
@@ -687,6 +695,7 @@ void DEBUG_InfoVirtual(void)
             break;
         addr += mbi.RegionSize;
     }
+    if (hProc != DEBUG_CurrProcess->handle) CloseHandle(hProc);
 }
 
 struct dll_option_layout

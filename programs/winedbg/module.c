@@ -622,6 +622,13 @@ void DEBUG_WalkModules(void)
     DBG_MODULE**	amod;
     int			i;
 
+    if (!DEBUG_CurrProcess)
+    {
+        DEBUG_Printf(DBG_CHN_MESG, 
+                     "Cannot walk classes while no process is loaded\n");
+        return;
+    }
+
     DEBUG_Printf(DBG_CHN_MESG, "Address\t\t\tModule\tName\n");
 
     amod = DBG_alloc(sizeof(DBG_MODULE*) * DEBUG_CurrProcess->num_modules);

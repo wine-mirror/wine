@@ -1455,28 +1455,26 @@ disas &lt;expr&gt;,&lt;expr&gt;disassembles code between addresses specified by
         <title>Information on Wine's internals</title>
 
         <screen>
-info class &lt;id&gt;	prints information on Windows's class &lt;id&gt;
+info class &lt;id&gt; prints information on Windows's class &lt;id&gt;
 walk class	lists all Windows' class registered in Wine
 info share	lists all the dynamic libraries loaded the debugged
 		program (including .so files, NE and PE DLLs)
-info module N	prints information on module of handle N
+info module &lt;N&gt; prints information on module of handle &lt;N&gt;
 walk module	lists all modules loaded by debugged program
-info queue N	prints information on Wine's queue N
-walk queue	lists all queues allocated in Wine
 info regs	prints the value of CPU register
-info segment N	prints information on segment N
+info segment &lt;N&gt;prints information on segment &lt;N&gt;
 info segment	lists all allocated segments
 info stack	prints the values on top of the stack
-info map	lists all virtual mappings used by the debugged
+walk map	lists all virtual mappings used by the debugged
 		program
-info wnd N	prints information of Window of handle N
+walk map &lt;N&gt;    lists all virtual mappings used by the program of pid &lt;N&gt;
+info wnd &lt;N&gt;    prints information of Window of handle &lt;N&gt;
 walk wnd	lists all the window hierarchy starting from the
 		desktop window
-walk wnd N	lists all the window hierarchy starting from the
-		window of handle N
+walk wnd &lt;N&gt;    lists all the window hierarchy starting from the
+		window of handle &lt;N&gt;
 walk process	lists all w-processes in Wine session
 walk thread	lists all w-threads in Wine session
-walk modref	(no longer avail)
 walk exception  lists the exception frames (starting from current
                 stack frame)
         </screen>

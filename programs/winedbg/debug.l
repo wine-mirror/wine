@@ -144,16 +144,14 @@ STRING     \"[^\n"]+\"
 <INFO_CMD>locals|local|loca|loc		{ return tLOCAL; }
 <INFO_CMD,WALK_CMD>class|clas|cla       { return tCLASS; }
 <INFO_CMD,WALK_CMD>module|modul|modu|mod { return tMODULE; }
-<INFO_CMD,WALK_CMD>queue|queu|que	{ return tQUEUE; }
 <INFO_CMD,WALK_CMD>process|proces|proce|proc   		{ return tPROCESS; }
 <INFO_CMD,WALK_CMD>threads|thread|threa|thre|thr|th { return tTHREAD; }
-<INFO_CMD,WALK_CMD>modref|modre|modr	{ return tMODREF; }
 <WALK_CMD>exception|except|exc|ex	{ return tEXCEPTION; }
 <INFO_CMD>registers|regs|reg|re		{ return tREGS; }
 <INFO_CMD>segments|segment|segm|seg|se	{ return tSEGMENTS; }
 <INFO_CMD>stack|stac|sta|st     	{ return tSTACK; }
 <INFO_CMD>symbol|sym                    { BEGIN(ASTRING_EXPECTED); return tSYMBOL; }
-<INFO_CMD>maps|map			{ return tMAPS; }
+<WALK_CMD>maps|map			{ return tMAPS; }
 <INFO_CMD,WALK_CMD>window|windo|wind|win|wnd	{ return tWND; }
 <HELP_CMD>info|inf|in                   { return tINFO; }
 <MODE_CMD>vm86                          { return tVM86; }
