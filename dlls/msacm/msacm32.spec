@@ -1,6 +1,7 @@
 name msacm32
 type win32
 init MSACM32_LibMain
+rsrc msacm
 
 import winmm.dll
 import kernel32.dll

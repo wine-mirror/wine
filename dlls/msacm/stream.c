@@ -165,6 +165,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 	    goto errCleanUp;
 	}
 	
+	was->obj.dwType = WINE_ACMOBJ_STREAM;
 	was->obj.pACMDriverID = wad->obj.pACMDriverID;
 	was->pDrv = wad;
 	was->hAcmDriver = 0; /* not to close it in acmStreamClose */
@@ -180,6 +181,7 @@ MMRESULT WINAPI acmStreamOpen(PHACMSTREAM phas, HACMDRIVER had, PWAVEFORMATEX pw
 	    ret = acmDriverOpen(&had, (HACMDRIVERID)wadi, 0L);
 	    if (ret == MMSYSERR_NOERROR) {
 		if ((wad = MSACM_GetDriver(had)) != 0) {
+		    was->obj.dwType = WINE_ACMOBJ_STREAM;
 		    was->obj.pACMDriverID = wad->obj.pACMDriverID;
 		    was->pDrv = wad;
 		    was->hAcmDriver = had;

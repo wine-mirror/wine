@@ -30,7 +30,7 @@ PWINE_ACMDRIVERID MSACM_pFirstACMDriverID = NULL;
 PWINE_ACMDRIVERID MSACM_pLastACMDriverID = NULL;
 
 /***********************************************************************
- *           MSACM_RegisterDriver32() 
+ *           MSACM_RegisterDriver() 
  */
 PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
 				       HINSTANCE hinstModule)
@@ -40,6 +40,8 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
     TRACE("('%s', '%s', 0x%08x)\n", pszDriverAlias, pszFileName, hinstModule);
 
     padid = (PWINE_ACMDRIVERID) HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMDRIVERID));
+    padid->obj.dwType = WINE_ACMOBJ_DRIVERID;
+    padid->obj.pACMDriverID = padid;
     padid->pszDriverAlias = HEAP_strdupA(MSACM_hHeap, 0, pszDriverAlias);
     padid->pszFileName = HEAP_strdupA(MSACM_hHeap, 0, pszFileName);
     padid->hInstModule = hinstModule;
@@ -57,7 +59,7 @@ PWINE_ACMDRIVERID MSACM_RegisterDriver(LPSTR pszDriverAlias, LPSTR pszFileName,
 }
 
 /***********************************************************************
- *           MSACM_RegisterAllDrivers32() 
+ *           MSACM_RegisterAllDrivers() 
  */
 void MSACM_RegisterAllDrivers(void)
 {
@@ -95,7 +97,7 @@ void MSACM_RegisterAllDrivers(void)
 }
 
 /***********************************************************************
- *           MSACM_UnregisterDriver32()
+ *           MSACM_UnregisterDriver()
  */
 PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
 {
@@ -127,7 +129,7 @@ PWINE_ACMDRIVERID MSACM_UnregisterDriver(PWINE_ACMDRIVERID p)
 }
 
 /***********************************************************************
- *           MSACM_UnregisterAllDrivers32()
+ *           MSACM_UnregisterAllDrivers()
  * FIXME
  *   Where should this function be called?
  */
@@ -139,27 +141,40 @@ void MSACM_UnregisterAllDrivers(void)
 }
 
 /***********************************************************************
- *           MSACM_GetDriverID32() 
+ *           MSACM_GetObj()
+ */
+PWINE_ACMOBJ MSACM_GetObj(HACMOBJ hObj, DWORD type)
+{
+    PWINE_ACMOBJ	pao = (PWINE_ACMOBJ)hObj;
+
+    if (IsBadReadPtr(pao, sizeof(WINE_ACMOBJ)) ||
+	((type != WINE_ACMOBJ_DONTCARE) && (type != pao->dwType)))
+	return NULL;
+    return pao;
+}
+
+/***********************************************************************
+ *           MSACM_GetDriverID() 
  */
 PWINE_ACMDRIVERID MSACM_GetDriverID(HACMDRIVERID hDriverID)
 {
-    return (PWINE_ACMDRIVERID)hDriverID;
+    return (PWINE_ACMDRIVERID)MSACM_GetObj((HACMOBJ)hDriverID, WINE_ACMOBJ_DRIVERID);
 }
 
 /***********************************************************************
- *           MSACM_GetDriver32()
+ *           MSACM_GetDriver()
  */
 PWINE_ACMDRIVER MSACM_GetDriver(HACMDRIVER hDriver)
 {
-    return (PWINE_ACMDRIVER)hDriver;
+    return (PWINE_ACMDRIVER)MSACM_GetObj((HACMOBJ)hDriver, WINE_ACMOBJ_DRIVER);
 }
 
 /***********************************************************************
- *           MSACM_GetObj32()
+ *           MSACM_Message()
  */
-PWINE_ACMOBJ MSACM_GetObj(HACMOBJ hObj)
+MMRESULT MSACM_Message(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARAM lParam2)
 {
-    return (PWINE_ACMOBJ)hObj;
+    PWINE_ACMDRIVER	pad = MSACM_GetDriver(had);
+
+    return pad ? SendDriverMessage(pad->hDrvr, uMsg, lParam1, lParam2) : MMSYSERR_INVALHANDLE;
 }
-
-

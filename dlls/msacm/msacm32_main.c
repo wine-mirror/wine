@@ -20,6 +20,7 @@ DEFAULT_DEBUG_CHANNEL(msacm);
 /**********************************************************************/
 	
 static DWORD MSACM_dwProcessesAttached = 0;
+HINSTANCE	MSACM_hInstance32 = 0;
 
 /***********************************************************************
  *           MSACM_LibMain (MSACM32.init) 
@@ -32,6 +33,7 @@ BOOL WINAPI MSACM32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReser
     case DLL_PROCESS_ATTACH:
 	if (MSACM_dwProcessesAttached == 0) {
 	    MSACM_hHeap = HeapCreate(0, 0x10000, 0);
+	    MSACM_hInstance32 = hInstDLL;
 	    MSACM_RegisterAllDrivers();
 	}
 	MSACM_dwProcessesAttached++;
@@ -42,6 +44,7 @@ BOOL WINAPI MSACM32_LibMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpvReser
 	    MSACM_UnregisterAllDrivers();
 	    HeapDestroy(MSACM_hHeap);
 	    MSACM_hHeap = (HANDLE) NULL;
+	    MSACM_hInstance32 = (HINSTANCE)NULL;
 	}
 	break;
     case DLL_THREAD_ATTACH:
@@ -87,14 +90,15 @@ DWORD WINAPI acmGetVersion(void)
 /***********************************************************************
  *           acmMetrics (MSACM32.36)
  */
-MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID  pMetric)
+MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID pMetric)
 {
-    PWINE_ACMOBJ 	pao = MSACM_GetObj(hao);
+    PWINE_ACMOBJ 	pao = MSACM_GetObj(hao, WINE_ACMOBJ_DONTCARE);
     BOOL 		bLocal = TRUE;
     PWINE_ACMDRIVERID	padid;
     DWORD		val = 0;
+    MMRESULT		mmr = MMSYSERR_NOERROR;
 
-    FIXME("(0x%08x, %d, %p): stub\n", hao, uMetric, pMetric);
+    TRACE("(0x%08x, %d, %p);\n", hao, uMetric, pMetric);
     
     switch (uMetric) {
     case ACM_METRIC_COUNT_DRIVERS:
@@ -107,7 +111,7 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID  pMetric)
 	    if (padid->bEnabled /* && (local(padid) || !bLocal) */)
 		val++;
 	*(LPDWORD)pMetric = val;
-	return 0;
+	break;
 
     case ACM_METRIC_COUNT_CODECS:
 	if (!pao)
@@ -120,7 +124,7 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID  pMetric)
 	    if (padid->bEnabled /* && (local(padid) || !bLocal) */)
 		val++;
 	*(LPDWORD)pMetric = val;
-	return 0;
+	break;
 
     case ACM_METRIC_COUNT_CONVERTERS:
 	bLocal = FALSE;
@@ -131,7 +135,7 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID  pMetric)
 	    if (padid->bEnabled /* && (local(padid) || !bLocal) */)
 		val++;
 	*(LPDWORD)pMetric = val;
-	return 0;
+	break;
 
     case ACM_METRIC_COUNT_FILTERS:
 	bLocal = FALSE;
@@ -142,7 +146,7 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID  pMetric)
 	    if (padid->bEnabled /* && (local(padid) || !bLocal) */)
 		val++;
 	*(LPDWORD)pMetric = val;
-	return 0;
+	break;
 
     case ACM_METRIC_COUNT_DISABLED:
 	bLocal = FALSE;
@@ -154,14 +158,33 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID  pMetric)
 	    if (!padid->bEnabled /* && (local(padid) || !bLocal) */)
 		val++;
 	*(LPDWORD)pMetric = val;
-	return 0;
+	break;
     
     case ACM_METRIC_MAX_SIZE_FORMAT:
-        /* FIXME: According to MSDN, this should return the size of the largest WAVEFORMATEX
-           structure in the system. How is this calculated? */
-        *(LPDWORD)pMetric = sizeof (WAVEFORMATEX);   
-        return 0;
-        
+	{
+	    ACMFORMATTAGDETAILSW	aftd;
+
+	    aftd.cbStruct = sizeof(aftd);
+	    aftd.dwFormatTag = WAVE_FORMAT_UNKNOWN;
+
+	    if (hao == (HACMOBJ)NULL) {
+		mmr = acmFormatTagDetailsW((HACMDRIVER)NULL, &aftd, ACM_FORMATTAGDETAILSF_LARGESTSIZE);
+	    } else if (MSACM_GetObj(hao, WINE_ACMOBJ_DRIVER)) {
+		mmr = acmFormatTagDetailsW((HACMDRIVER)hao, &aftd, ACM_FORMATTAGDETAILSF_LARGESTSIZE);
+	    } else if (MSACM_GetObj(hao, WINE_ACMOBJ_DRIVERID)) {
+		HACMDRIVER	had;
+		
+		if (acmDriverOpen(&had, (HACMDRIVERID)hao, 0) == 0) {
+		    mmr = acmFormatTagDetailsW((HACMDRIVER)hao, &aftd, ACM_FORMATTAGDETAILSF_LARGESTSIZE);
+		    acmDriverClose(had, 0);
+		}
+	    } else {
+		mmr = MMSYSERR_INVALHANDLE;
+	    }
+	    if (mmr == MMSYSERR_NOERROR) *(LPDWORD)pMetric = aftd.cbFormatSize;
+	}
+        break;
+
     case ACM_METRIC_COUNT_HARDWARE:
     case ACM_METRIC_HARDWARE_WAVE_INPUT:
     case ACM_METRIC_HARDWARE_WAVE_OUTPUT:
@@ -169,7 +192,8 @@ MMRESULT WINAPI acmMetrics(HACMOBJ hao, UINT uMetric, LPVOID  pMetric)
     case ACM_METRIC_DRIVER_SUPPORT:
     case ACM_METRIC_DRIVER_PRIORITY:
     default:
-	return MMSYSERR_NOTSUPPORTED;
+	FIXME("(0x%08x, %d, %p): stub\n", hao, uMetric, pMetric);
+	mmr = MMSYSERR_NOTSUPPORTED;
     }
-    return MMSYSERR_NOERROR;
+    return mmr;
 }

@@ -16,6 +16,9 @@ C_SRCS = \
 	msacm_main.c \
 	stream.c
 
+RC_SRCS = \
+	msacm.rc
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:

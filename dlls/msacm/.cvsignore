@@ -3,3 +3,4 @@
 Makefile
 libmsacm.so.1.0
 libmsacm32.so.1.0
+msacm.s

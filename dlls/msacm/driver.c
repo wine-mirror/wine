@@ -142,8 +142,8 @@ MMRESULT WINAPI acmDriverDetailsW(HACMDRIVERID hadid, PACMDRIVERDETAILSW padd, D
 	return MMSYSERR_INVALFLAG;
     
     mmr = acmDriverOpen(&acmDrvr, hadid, 0);
-    if (mmr == 0) {
-	mmr = (MMRESULT)acmDriverMessage(acmDrvr, ACMDM_DRIVER_DETAILS, (LPARAM) padd,  0);
+    if (mmr == MMSYSERR_NOERROR) {
+	mmr = (MMRESULT)MSACM_Message(acmDrvr, ACMDM_DRIVER_DETAILS, (LPARAM)padd,  0);
     
 	acmDriverClose(acmDrvr, 0);
     }
@@ -157,25 +157,25 @@ MMRESULT WINAPI acmDriverDetailsW(HACMDRIVERID hadid, PACMDRIVERDETAILSW padd, D
 MMRESULT WINAPI acmDriverEnum(ACMDRIVERENUMCB fnCallback, DWORD dwInstance, DWORD fdwEnum)
 {
     PWINE_ACMDRIVERID	p;
-    DWORD		fdwSupport;
+    ACMDRIVERDETAILSW	add;
 
-    if (!fnCallback) {
-	return MMSYSERR_INVALPARAM;
-    }
+    if (!fnCallback) return MMSYSERR_INVALPARAM;
     
-    if (fdwEnum && ~(ACM_DRIVERENUMF_NOLOCAL|ACM_DRIVERENUMF_DISABLED)) {
+    if (fdwEnum && ~(ACM_DRIVERENUMF_NOLOCAL|ACM_DRIVERENUMF_DISABLED))
 	return MMSYSERR_INVALFLAG;
-    }
     
+    add.cbStruct = sizeof(add);
     for (p = MSACM_pFirstACMDriverID; p; p = p->pNextACMDriverID) {
-	fdwSupport = ACMDRIVERDETAILS_SUPPORTF_CODEC;
+	if (acmDriverDetailsW((HACMDRIVERID)p, &add, 0) != MMSYSERR_NOERROR)
+	    continue;
 	if (!p->bEnabled) {
 	    if (fdwEnum & ACM_DRIVERENUMF_DISABLED)
-		fdwSupport |= ACMDRIVERDETAILS_SUPPORTF_DISABLED;
+		add.fdwSupport |= ACMDRIVERDETAILS_SUPPORTF_DISABLED;
 	    else
 		continue;
 	}
-	(*fnCallback)((HACMDRIVERID) p, dwInstance, fdwSupport);
+	if (!(*fnCallback)((HACMDRIVERID)p, dwInstance, add.fdwSupport))
+	    break;
     }
     
     return MMSYSERR_NOERROR;
@@ -188,15 +188,15 @@ MMRESULT WINAPI acmDriverID(HACMOBJ hao, PHACMDRIVERID phadid, DWORD fdwDriverID
 {
     PWINE_ACMOBJ pao;
     
-    pao = MSACM_GetObj(hao);
-    if (!pao)
-	return MMSYSERR_INVALHANDLE;
-    
     if (!phadid)
 	return MMSYSERR_INVALPARAM;
     
     if (fdwDriverID)
 	return MMSYSERR_INVALFLAG;
+    
+    pao = MSACM_GetObj(hao, WINE_ACMOBJ_DONTCARE);
+    if (!pao)
+	return MMSYSERR_INVALHANDLE;
     
     *phadid = (HACMDRIVERID) pao->pACMDriverID;
     
@@ -205,21 +205,16 @@ MMRESULT WINAPI acmDriverID(HACMOBJ hao, PHACMDRIVERID phadid, DWORD fdwDriverID
 
 /***********************************************************************
  *           acmDriverMessage (MSACM32.9)
- * FIXME
- *   Not implemented
+ *
  */
 LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARAM lParam2)
 {
-    PWINE_ACMDRIVER pad = MSACM_GetDriver(had);
-    if (!pad)
-	return MMSYSERR_INVALPARAM;
-    
-    /* FIXME: Check if uMsg legal */
-    
-    if (!SendDriverMessage(pad->hDrvr, uMsg, lParam1, lParam2))
-	return MMSYSERR_NOTSUPPORTED;
-    
-    return MMSYSERR_NOERROR;
+    if ((uMsg >= ACMDM_USER && uMsg < ACMDM_RESERVED_LOW) ||
+	uMsg == ACMDM_DRIVER_ABOUT ||
+	uMsg == DRV_QUERYCONFIGURE ||
+	uMsg == DRV_CONFIGURE)
+	return MSACM_Message(had, uMsg, lParam1, lParam2);
+    return MMSYSERR_INVALPARAM;
 }
 
 
@@ -246,6 +241,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
     pad = HeapAlloc(MSACM_hHeap, 0, sizeof(WINE_ACMDRIVER));
     if (!pad) return MMSYSERR_NOMEM;
 
+    pad->obj.dwType = WINE_ACMOBJ_DRIVER;
     pad->obj.pACMDriverID = padid;
     
     if (!padid->hInstModule)
