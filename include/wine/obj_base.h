@@ -652,8 +652,8 @@ BOOL32 WINAPI IsEqualGUID32(REFGUID rguid1,REFGUID rguid2);
 #define ICOM_CALL8(xfn, p,a,b,c,d,e,f,g,h) (p)->lpvtbl->fn##xfn(p,a,b,c,d,e,f,g,h)
 
 
-#define ICOM_THIS(iface,me)          struct _##iface* this=(struct _##iface*)me
-#define ICOM_CTHIS(iface,me)         const _##iface* this=(const _##iface*)me
+#define ICOM_THIS(impl,iface)          impl* const This=(impl*)iface
+#define ICOM_CTHIS(impl,iface)         const impl* const This=(const impl*)iface
 
 #endif
 

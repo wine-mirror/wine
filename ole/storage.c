@@ -664,7 +664,8 @@ STORAGE_get_free_pps_entry(HFILE32 hf) {
 
 /* --- IStream16 implementation */
 
-typedef struct _IStream16 {
+typedef struct
+{
         /* IUnknown fields */
         ICOM_VTABLE(IStream16)*         lpvtbl;
         DWORD                           ref;
@@ -674,7 +675,7 @@ typedef struct _IStream16 {
         int                             ppsent;
         HFILE32                         hf;
         ULARGE_INTEGER                  offset;
-} _IStream16;
+} IStream16Impl;
 
 /******************************************************************************
  *		IStream16_QueryInterface	[STORAGE.518]
@@ -682,12 +683,12 @@ typedef struct _IStream16 {
 HRESULT WINAPI IStream16_fnQueryInterface(
 	LPUNKNOWN iface,REFIID refiid,LPVOID *obj
 ) {
-	ICOM_THIS(IStream16,iface);
+	ICOM_THIS(IStream16Impl,iface);
 	char    xrefiid[50];
 	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE(relay,"(%p)->(%s,%p)\n",this,xrefiid,obj);
+	TRACE(relay,"(%p)->(%s,%p)\n",This,xrefiid,obj);
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
-		*obj = this;
+		*obj = This;
 		return 0;
 	}
 	return OLE_E_ENUM_NOMORE;
@@ -698,23 +699,23 @@ HRESULT WINAPI IStream16_fnQueryInterface(
  * IStream16_AddRef [STORAGE.519]
  */
 ULONG WINAPI IStream16_fnAddRef(LPUNKNOWN iface) {
-	ICOM_THIS(IStream16,iface);
-	return ++(this->ref);
+	ICOM_THIS(IStream16Impl,iface);
+	return ++(This->ref);
 }
 
 /******************************************************************************
  * IStream16_Release [STORAGE.520]
  */
 ULONG WINAPI IStream16_fnRelease(LPUNKNOWN iface) {
-	ICOM_THIS(IStream16,iface);
-	FlushFileBuffers(this->hf);
-	this->ref--;
-	if (!this->ref) {
-		CloseHandle(this->hf);
-		SEGPTR_FREE(this);
+	ICOM_THIS(IStream16Impl,iface);
+	FlushFileBuffers(This->hf);
+	This->ref--;
+	if (!This->ref) {
+		CloseHandle(This->hf);
+		SEGPTR_FREE(This);
 		return 0;
 	}
-	return this->ref;
+	return This->ref;
 }
 
 /******************************************************************************
@@ -724,10 +725,10 @@ ULONG WINAPI IStream16_fnRelease(LPUNKNOWN iface) {
  *    Does not handle 64 bits
  */
 HRESULT WINAPI IStream16_fnSeek(
-	LPSTREAM16 iface,LARGE_INTEGER offset,DWORD whence,ULARGE_INTEGER *newpos
+	IStream16* iface,LARGE_INTEGER offset,DWORD whence,ULARGE_INTEGER *newpos
 ) {
-	ICOM_THIS(IStream16,iface);
-	TRACE(relay,"(%p)->([%ld.%ld],%ld,%p)\n",this,offset.HighPart,offset.LowPart,whence,newpos);
+	ICOM_THIS(IStream16Impl,iface);
+	TRACE(relay,"(%p)->([%ld.%ld],%ld,%p)\n",This,offset.HighPart,offset.LowPart,whence,newpos);
 
 	switch (whence) {
 	/* unix SEEK_xx should be the same as win95 ones */
@@ -736,8 +737,8 @@ HRESULT WINAPI IStream16_fnSeek(
 		 * right now.
 		 */
 		assert(offset.HighPart==0);
-		this->offset.HighPart = offset.HighPart;
-		this->offset.LowPart = offset.LowPart;
+		This->offset.HighPart = offset.HighPart;
+		This->offset.LowPart = offset.LowPart;
 		break;
 	case SEEK_CUR:
 		if (offset.HighPart < 0) {
@@ -746,21 +747,21 @@ HRESULT WINAPI IStream16_fnSeek(
 			offset.LowPart = (0xffffffff ^ offset.LowPart)+1;
 
 			assert(offset.HighPart==0);
-			assert(this->offset.LowPart >= offset.LowPart);
-			this->offset.LowPart -= offset.LowPart;
+			assert(This->offset.LowPart >= offset.LowPart);
+			This->offset.LowPart -= offset.LowPart;
 		} else {
 			assert(offset.HighPart==0);
-			this->offset.LowPart+= offset.LowPart;
+			This->offset.LowPart+= offset.LowPart;
 		}
 		break;
 	case SEEK_END:
 		assert(offset.HighPart==0);
-		this->offset.LowPart = this->stde.pps_size-offset.LowPart;
+		This->offset.LowPart = This->stde.pps_size-offset.LowPart;
 		break;
 	}
-	if (this->offset.LowPart>this->stde.pps_size)
-		this->offset.LowPart=this->stde.pps_size;
-	if (newpos) *newpos = this->offset;
+	if (This->offset.LowPart>This->stde.pps_size)
+		This->offset.LowPart=This->stde.pps_size;
+	if (newpos) *newpos = This->offset;
 	return S_OK;
 }
 
@@ -770,56 +771,56 @@ HRESULT WINAPI IStream16_fnSeek(
 HRESULT WINAPI IStream16_fnRead(
         LPSEQUENTIALSTREAM iface,void  *pv,ULONG cb,ULONG  *pcbRead
 ) {
-	ICOM_THIS(IStream16,iface);
+	ICOM_THIS(IStream16Impl,iface);
 	BYTE	block[BIGSIZE];
 	ULONG	*bytesread=pcbRead,xxread;
 	int	blocknr;
 
-	TRACE(relay,"(%p)->(%p,%ld,%p)\n",this,pv,cb,pcbRead);
+	TRACE(relay,"(%p)->(%p,%ld,%p)\n",This,pv,cb,pcbRead);
 	if (!pcbRead) bytesread=&xxread;
 	*bytesread = 0;
 
-	if (cb>this->stde.pps_size-this->offset.LowPart)
-		cb=this->stde.pps_size-this->offset.LowPart;
-	if (this->stde.pps_size < 0x1000) {
+	if (cb>This->stde.pps_size-This->offset.LowPart)
+		cb=This->stde.pps_size-This->offset.LowPart;
+	if (This->stde.pps_size < 0x1000) {
 		/* use small block reader */
-		blocknr = STORAGE_get_nth_next_small_blocknr(this->hf,this->stde.pps_sb,this->offset.LowPart/SMALLSIZE);
+		blocknr = STORAGE_get_nth_next_small_blocknr(This->hf,This->stde.pps_sb,This->offset.LowPart/SMALLSIZE);
 		while (cb) {
 			int	cc;
 
-			if (!STORAGE_get_small_block(this->hf,blocknr,block)) {
+			if (!STORAGE_get_small_block(This->hf,blocknr,block)) {
 			   WARN(ole,"small block read failed!!!\n");
 				return E_FAIL;
 			}
 			cc = cb; 
-			if (cc>SMALLSIZE-(this->offset.LowPart&(SMALLSIZE-1)))
-				cc=SMALLSIZE-(this->offset.LowPart&(SMALLSIZE-1));
-			memcpy((LPBYTE)pv,block+(this->offset.LowPart&(SMALLSIZE-1)),cc);
-			this->offset.LowPart+=cc;
+			if (cc>SMALLSIZE-(This->offset.LowPart&(SMALLSIZE-1)))
+				cc=SMALLSIZE-(This->offset.LowPart&(SMALLSIZE-1));
+			memcpy((LPBYTE)pv,block+(This->offset.LowPart&(SMALLSIZE-1)),cc);
+			This->offset.LowPart+=cc;
 			(LPBYTE)pv+=cc;
 			*bytesread+=cc;
 			cb-=cc;
-			blocknr = STORAGE_get_next_small_blocknr(this->hf,blocknr);
+			blocknr = STORAGE_get_next_small_blocknr(This->hf,blocknr);
 		}
 	} else {
 		/* use big block reader */
-		blocknr = STORAGE_get_nth_next_big_blocknr(this->hf,this->stde.pps_sb,this->offset.LowPart/BIGSIZE);
+		blocknr = STORAGE_get_nth_next_big_blocknr(This->hf,This->stde.pps_sb,This->offset.LowPart/BIGSIZE);
 		while (cb) {
 			int	cc;
 
-			if (!STORAGE_get_big_block(this->hf,blocknr,block)) {
+			if (!STORAGE_get_big_block(This->hf,blocknr,block)) {
 				WARN(ole,"big block read failed!!!\n");
 				return E_FAIL;
 			}
 			cc = cb; 
-			if (cc>BIGSIZE-(this->offset.LowPart&(BIGSIZE-1)))
-				cc=BIGSIZE-(this->offset.LowPart&(BIGSIZE-1));
-			memcpy((LPBYTE)pv,block+(this->offset.LowPart&(BIGSIZE-1)),cc);
-			this->offset.LowPart+=cc;
+			if (cc>BIGSIZE-(This->offset.LowPart&(BIGSIZE-1)))
+				cc=BIGSIZE-(This->offset.LowPart&(BIGSIZE-1));
+			memcpy((LPBYTE)pv,block+(This->offset.LowPart&(BIGSIZE-1)),cc);
+			This->offset.LowPart+=cc;
 			(LPBYTE)pv+=cc;
 			*bytesread+=cc;
 			cb-=cc;
-			blocknr=STORAGE_get_next_big_blocknr(this->hf,blocknr);
+			blocknr=STORAGE_get_next_big_blocknr(This->hf,blocknr);
 		}
 	}
 	return S_OK;
@@ -831,23 +832,23 @@ HRESULT WINAPI IStream16_fnRead(
 HRESULT WINAPI IStream16_fnWrite(
         LPSEQUENTIALSTREAM iface,const void *pv,ULONG cb,ULONG *pcbWrite
 ) {
-	ICOM_THIS(IStream16,iface);
+	ICOM_THIS(IStream16Impl,iface);
 	BYTE	block[BIGSIZE];
 	ULONG	*byteswritten=pcbWrite,xxwritten;
 	int	oldsize,newsize,i,curoffset=0,lastblocknr,blocknr,cc;
-	HFILE32	hf = this->hf;
+	HFILE32	hf = This->hf;
 
 	if (!pcbWrite) byteswritten=&xxwritten;
 	*byteswritten = 0;
 
-	TRACE(relay,"(%p)->(%p,%ld,%p)\n",this,pv,cb,pcbWrite);
+	TRACE(relay,"(%p)->(%p,%ld,%p)\n",This,pv,cb,pcbWrite);
 	/* do we need to junk some blocks? */
-	newsize	= this->offset.LowPart+cb;
-	oldsize	= this->stde.pps_size;
+	newsize	= This->offset.LowPart+cb;
+	oldsize	= This->stde.pps_size;
 	if (newsize < oldsize) {
 		if (oldsize < 0x1000) {
 			/* only small blocks */
-			blocknr=STORAGE_get_nth_next_small_blocknr(hf,this->stde.pps_sb,newsize/SMALLSIZE);
+			blocknr=STORAGE_get_nth_next_small_blocknr(hf,This->stde.pps_sb,newsize/SMALLSIZE);
 
 			assert(blocknr>=0);
 
@@ -856,7 +857,7 @@ HRESULT WINAPI IStream16_fnWrite(
 				return E_FAIL;
 		} else {
 			if (newsize >= 0x1000) {
-				blocknr=STORAGE_get_nth_next_big_blocknr(hf,this->stde.pps_sb,newsize/BIGSIZE);
+				blocknr=STORAGE_get_nth_next_big_blocknr(hf,This->stde.pps_sb,newsize/BIGSIZE);
 				assert(blocknr>=0);
 
 				/* will set the rest of the chain to 'free' */
@@ -868,7 +869,7 @@ HRESULT WINAPI IStream16_fnWrite(
 				 */
 				LPBYTE	curdata,data = HeapAlloc(GetProcessHeap(),0,newsize+BIGSIZE);
 				cc	= newsize;
-				blocknr = this->stde.pps_sb;
+				blocknr = This->stde.pps_sb;
 				curdata = data;
 				while (cc>0) {
 					if (!STORAGE_get_big_block(hf,blocknr,curdata)) {
@@ -880,10 +881,10 @@ HRESULT WINAPI IStream16_fnWrite(
 					blocknr	 = STORAGE_get_next_big_blocknr(hf,blocknr);
 				}
 				/* frees complete chain for this stream */
-				if (!STORAGE_set_big_chain(hf,this->stde.pps_sb,STORAGE_CHAINENTRY_FREE))
+				if (!STORAGE_set_big_chain(hf,This->stde.pps_sb,STORAGE_CHAINENTRY_FREE))
 					return E_FAIL;
 				curdata	= data;
-				blocknr = this->stde.pps_sb = STORAGE_get_free_small_blocknr(hf);
+				blocknr = This->stde.pps_sb = STORAGE_get_free_small_blocknr(hf);
 				if (blocknr<0)
 					return E_FAIL;
 				cc	= newsize;
@@ -908,13 +909,13 @@ HRESULT WINAPI IStream16_fnWrite(
 				HeapFree(GetProcessHeap(),0,data);
 			}
 		}
-		this->stde.pps_size = newsize;
+		This->stde.pps_size = newsize;
 	}
 
 	if (newsize > oldsize) {
 		if (oldsize >= 0x1000) {
 			/* should return the block right before the 'endofchain' */
-			blocknr = STORAGE_get_nth_next_big_blocknr(hf,this->stde.pps_sb,this->stde.pps_size/BIGSIZE);
+			blocknr = STORAGE_get_nth_next_big_blocknr(hf,This->stde.pps_sb,This->stde.pps_size/BIGSIZE);
 			assert(blocknr>=0);
 			lastblocknr	= blocknr;
 			for (i=oldsize/BIGSIZE;i<newsize/BIGSIZE;i++) {
@@ -931,9 +932,9 @@ HRESULT WINAPI IStream16_fnWrite(
 			if (newsize < 0x1000) {
 				/* find startblock */
 				if (!oldsize)
-					this->stde.pps_sb = blocknr = STORAGE_get_free_small_blocknr(hf);
+					This->stde.pps_sb = blocknr = STORAGE_get_free_small_blocknr(hf);
 				else
-					blocknr = STORAGE_get_nth_next_small_blocknr(hf,this->stde.pps_sb,this->stde.pps_size/SMALLSIZE);
+					blocknr = STORAGE_get_nth_next_small_blocknr(hf,This->stde.pps_sb,This->stde.pps_size/SMALLSIZE);
 				if (blocknr<0)
 					return E_FAIL;
 
@@ -956,12 +957,12 @@ HRESULT WINAPI IStream16_fnWrite(
 					blocknr=STORAGE_get_free_big_blocknr(hf);
 					if (blocknr<0)
 						return E_FAIL;
-					this->stde.pps_sb = blocknr;
+					This->stde.pps_sb = blocknr;
 				} else {
 					/* Migrate small blocks to big blocks */
 					LPBYTE	curdata,data = HeapAlloc(GetProcessHeap(),0,oldsize+BIGSIZE);
 					cc	= oldsize;
-					blocknr = this->stde.pps_sb;
+					blocknr = This->stde.pps_sb;
 					curdata = data;
 					/* slurp in */
 					while (cc>0) {
@@ -974,14 +975,14 @@ HRESULT WINAPI IStream16_fnWrite(
 						blocknr	 = STORAGE_get_next_small_blocknr(hf,blocknr);
 					}
 					/* free small block chain */
-					if (!STORAGE_set_small_chain(hf,this->stde.pps_sb,STORAGE_CHAINENTRY_FREE))
+					if (!STORAGE_set_small_chain(hf,This->stde.pps_sb,STORAGE_CHAINENTRY_FREE))
 						return E_FAIL;
 					curdata	= data;
-					blocknr = this->stde.pps_sb = STORAGE_get_free_big_blocknr(hf);
+					blocknr = This->stde.pps_sb = STORAGE_get_free_big_blocknr(hf);
 					if (blocknr<0)
 						return E_FAIL;
 					/* put the data into the big blocks */
-					cc	= this->stde.pps_size;
+					cc	= This->stde.pps_size;
 					while (cc>0) {
 						if (!STORAGE_put_big_block(hf,blocknr,curdata))
 							return E_FAIL;
@@ -1017,18 +1018,18 @@ HRESULT WINAPI IStream16_fnWrite(
 					return E_FAIL;
 			}
 		}
-		this->stde.pps_size = newsize;
+		This->stde.pps_size = newsize;
 	}
 
 	/* There are just some cases where we didn't modify it, we write it out
 	 * everytime
 	 */
-	if (!STORAGE_put_pps_entry(hf,this->ppsent,&(this->stde)))
+	if (!STORAGE_put_pps_entry(hf,This->ppsent,&(This->stde)))
 		return E_FAIL;
 
 	/* finally the write pass */
-	if (this->stde.pps_size < 0x1000) {
-		blocknr = STORAGE_get_nth_next_small_blocknr(hf,this->stde.pps_sb,this->offset.LowPart/SMALLSIZE);
+	if (This->stde.pps_size < 0x1000) {
+		blocknr = STORAGE_get_nth_next_small_blocknr(hf,This->stde.pps_sb,This->offset.LowPart/SMALLSIZE);
 		assert(blocknr>=0);
 		while (cb>0) {
 			/* we ensured that it is allocated above */
@@ -1039,10 +1040,10 @@ HRESULT WINAPI IStream16_fnWrite(
 			if (!STORAGE_get_small_block(hf,blocknr,block))
 				return E_FAIL;
 
-			cc = SMALLSIZE-(this->offset.LowPart&(SMALLSIZE-1));
+			cc = SMALLSIZE-(This->offset.LowPart&(SMALLSIZE-1));
 			if (cc>cb)
 				cc=cb;
-			memcpy(	((LPBYTE)block)+(this->offset.LowPart&(SMALLSIZE-1)),
+			memcpy(	((LPBYTE)block)+(This->offset.LowPart&(SMALLSIZE-1)),
 				(LPBYTE)(pv+curoffset),
 				cc
 			);
@@ -1051,12 +1052,12 @@ HRESULT WINAPI IStream16_fnWrite(
 			cb			-= cc;
 			curoffset		+= cc;
 			(LPBYTE)pv		+= cc;
-			this->offset.LowPart	+= cc;
+			This->offset.LowPart	+= cc;
 			*byteswritten		+= cc;
 			blocknr = STORAGE_get_next_small_blocknr(hf,blocknr);
 		}
 	} else {
-		blocknr = STORAGE_get_nth_next_big_blocknr(hf,this->stde.pps_sb,this->offset.LowPart/BIGSIZE);
+		blocknr = STORAGE_get_nth_next_big_blocknr(hf,This->stde.pps_sb,This->offset.LowPart/BIGSIZE);
 		assert(blocknr>=0);
 		while (cb>0) {
 			/* we ensured that it is allocated above, so it better is */
@@ -1067,10 +1068,10 @@ HRESULT WINAPI IStream16_fnWrite(
 			if (!STORAGE_get_big_block(hf,blocknr,block))
 				return E_FAIL;
 
-			cc = BIGSIZE-(this->offset.LowPart&(BIGSIZE-1));
+			cc = BIGSIZE-(This->offset.LowPart&(BIGSIZE-1));
 			if (cc>cb)
 				cc=cb;
-			memcpy(	((LPBYTE)block)+(this->offset.LowPart&(BIGSIZE-1)),
+			memcpy(	((LPBYTE)block)+(This->offset.LowPart&(BIGSIZE-1)),
 				(LPBYTE)(pv+curoffset),
 				cc
 			);
@@ -1079,7 +1080,7 @@ HRESULT WINAPI IStream16_fnWrite(
 			cb			-= cc;
 			curoffset		+= cc;
 			(LPBYTE)pv		+= cc;
-			this->offset.LowPart	+= cc;
+			This->offset.LowPart	+= cc;
 			*byteswritten		+= cc;
 			blocknr = STORAGE_get_next_big_blocknr(hf,blocknr);
 		}
@@ -1091,7 +1092,7 @@ HRESULT WINAPI IStream16_fnWrite(
  *		_create_istream16	[Internal]
  */
 static void _create_istream16(LPSTREAM16 *str) {
-	_IStream16*	lpst;
+	IStream16Impl*	lpst;
 
 	if (!strvt16.bvt.bvt.fnQueryInterface) {
 		HMODULE16	wp = GetModuleHandle16("STORAGE");
@@ -1146,7 +1147,7 @@ static void _create_istream16(LPSTREAM16 *str) {
 			segstrvt16 = &strvt16;
 		}
 	}
-	lpst = SEGPTR_NEW(_IStream16);
+	lpst = SEGPTR_NEW(IStream16Impl);
 	lpst->lpvtbl	= segstrvt16;
 	lpst->ref	= 1;
 	lpst->thisptr	= SEGPTR_GET(lpst);
@@ -1156,7 +1157,8 @@ static void _create_istream16(LPSTREAM16 *str) {
 
 /* --- IStream32 implementation */
 
-typedef struct _IStream32 {
+typedef struct
+{
         /* IUnknown fields */
         ICOM_VTABLE(IStream32)*         lpvtbl;
         DWORD                           ref;
@@ -1165,7 +1167,7 @@ typedef struct _IStream32 {
         int                             ppsent;
         HFILE32                         hf;
         ULARGE_INTEGER                  offset;
-} _IStream32;
+} IStream32Impl;
 
 /*****************************************************************************
  *		IStream32_QueryInterface	[VTABLE]
@@ -1173,13 +1175,13 @@ typedef struct _IStream32 {
 HRESULT WINAPI IStream32_fnQueryInterface(
 	LPUNKNOWN iface,REFIID refiid,LPVOID *obj
 ) {
-	ICOM_THIS(IStream32,iface);
+	ICOM_THIS(IStream32Impl,iface);
 	char    xrefiid[50];
 
 	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE(relay,"(%p)->(%s,%p)\n",this,xrefiid,obj);
+	TRACE(relay,"(%p)->(%s,%p)\n",This,xrefiid,obj);
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
-		*obj = this;
+		*obj = This;
 		return 0;
 	}
 	return OLE_E_ENUM_NOMORE;
@@ -1190,28 +1192,29 @@ HRESULT WINAPI IStream32_fnQueryInterface(
  * IStream32_AddRef [VTABLE]
  */
 ULONG WINAPI IStream32_fnAddRef(LPUNKNOWN iface) {
-	ICOM_THIS(IStream32,iface);
-	return ++(this->ref);
+	ICOM_THIS(IStream32Impl,iface);
+	return ++(This->ref);
 }
 
 /******************************************************************************
  * IStream32_Release [VTABLE]
  */
 ULONG WINAPI IStream32_fnRelease(LPUNKNOWN iface) {
-	ICOM_THIS(IStream32,iface);
-	FlushFileBuffers(this->hf);
-	this->ref--;
-	if (!this->ref) {
-		CloseHandle(this->hf);
-		SEGPTR_FREE(this);
+	ICOM_THIS(IStream32Impl,iface);
+	FlushFileBuffers(This->hf);
+	This->ref--;
+	if (!This->ref) {
+		CloseHandle(This->hf);
+		SEGPTR_FREE(This);
 		return 0;
 	}
-	return this->ref;
+	return This->ref;
 }
 
 /* --- IStorage16 implementation */
 
-typedef struct _IStorage16 {
+typedef struct
+{
         /* IUnknown fields */
         ICOM_VTABLE(IStorage16)*        lpvtbl;
         DWORD                           ref;
@@ -1220,7 +1223,7 @@ typedef struct _IStorage16 {
         struct storage_pps_entry        stde;
         int                             ppsent;
         HFILE32                         hf;
-} _IStorage16;
+} IStorage16Impl;
 
 /******************************************************************************
  *		IStorage16_QueryInterface	[STORAGE.500]
@@ -1228,14 +1231,14 @@ typedef struct _IStorage16 {
 HRESULT WINAPI IStorage16_fnQueryInterface(
 	LPUNKNOWN iface,REFIID refiid,LPVOID *obj
 ) {
-	ICOM_THIS(IStorage16,iface);
+	ICOM_THIS(IStorage16Impl,iface);
 	char    xrefiid[50];
 
 	WINE_StringFromCLSID((LPCLSID)refiid,xrefiid);
-	TRACE(relay,"(%p)->(%s,%p)\n",this,xrefiid,obj);
+	TRACE(relay,"(%p)->(%s,%p)\n",This,xrefiid,obj);
 
 	if (!memcmp(&IID_IUnknown,refiid,sizeof(IID_IUnknown))) {
-		*obj = this;
+		*obj = This;
 		return 0;
 	}
 	return OLE_E_ENUM_NOMORE;
@@ -1245,19 +1248,19 @@ HRESULT WINAPI IStorage16_fnQueryInterface(
  * IStorage16_AddRef [STORAGE.501]
  */
 ULONG WINAPI IStorage16_fnAddRef(LPUNKNOWN iface) {
-	ICOM_THIS(IStorage16,iface);
-	return ++(this->ref);
+	ICOM_THIS(IStorage16Impl,iface);
+	return ++(This->ref);
 }
 
 /******************************************************************************
  * IStorage16_Release [STORAGE.502]
  */
 ULONG WINAPI IStorage16_fnRelease(LPUNKNOWN iface) {
-	ICOM_THIS(IStorage16,iface);
-	this->ref--;
-	if (this->ref)
-		return this->ref;
-	SEGPTR_FREE(this);
+	ICOM_THIS(IStorage16Impl,iface);
+	This->ref--;
+	if (This->ref)
+		return This->ref;
+	SEGPTR_FREE(This);
 	return 0;
 }
 
@@ -1267,19 +1270,19 @@ ULONG WINAPI IStorage16_fnRelease(LPUNKNOWN iface) {
 HRESULT WINAPI IStorage16_fnStat(
         LPSTORAGE16 iface,STATSTG *pstatstg, DWORD grfStatFlag
 ) {
-	ICOM_THIS(IStorage16,iface);
+	ICOM_THIS(IStorage16Impl,iface);
 	TRACE(ole,"(%p)->(%p,0x%08lx)\n",
-		this,pstatstg,grfStatFlag
+		This,pstatstg,grfStatFlag
 	);
-	pstatstg->pwcsName=(LPOLESTR16)SEGPTR_GET(SEGPTR_STRDUP_WtoA(this->stde.pps_rawname));
-	pstatstg->type = this->stde.pps_type;
-	pstatstg->cbSize.LowPart = this->stde.pps_size;
-	pstatstg->mtime = this->stde.pps_ft1; /* FIXME */ /* why? */
-	pstatstg->atime = this->stde.pps_ft2; /* FIXME */
-	pstatstg->ctime = this->stde.pps_ft2; /* FIXME */
+	pstatstg->pwcsName=(LPOLESTR16)SEGPTR_GET(SEGPTR_STRDUP_WtoA(This->stde.pps_rawname));
+	pstatstg->type = This->stde.pps_type;
+	pstatstg->cbSize.LowPart = This->stde.pps_size;
+	pstatstg->mtime = This->stde.pps_ft1; /* FIXME */ /* why? */
+	pstatstg->atime = This->stde.pps_ft2; /* FIXME */
+	pstatstg->ctime = This->stde.pps_ft2; /* FIXME */
 	pstatstg->grfMode	= 0; /* FIXME */
 	pstatstg->grfLocksSupported = 0; /* FIXME */
-	pstatstg->clsid		= this->stde.pps_guid;
+	pstatstg->clsid		= This->stde.pps_guid;
 	pstatstg->grfStateBits	= 0; /* FIXME */
 	pstatstg->reserved	= 0;
 	return S_OK;
@@ -1291,9 +1294,9 @@ HRESULT WINAPI IStorage16_fnStat(
 HRESULT WINAPI IStorage16_fnCommit(
         LPSTORAGE16 iface,DWORD commitflags
 ) {
-	ICOM_THIS(IStorage16,iface);
+	ICOM_THIS(IStorage16Impl,iface);
 	FIXME(ole,"(%p)->(0x%08lx),STUB!\n",
-		this,commitflags
+		This,commitflags
 	);
 	return S_OK;
 }
@@ -1302,7 +1305,7 @@ HRESULT WINAPI IStorage16_fnCommit(
  * IStorage16_CopyTo [STORAGE.507]
  */
 HRESULT WINAPI IStorage16_fnCopyTo(LPSTORAGE16 iface,DWORD ciidExclude,const IID *rgiidExclude,SNB16 SNB16Exclude,IStorage16 *pstgDest) {
-	ICOM_THIS(IStorage16,iface);
+	ICOM_THIS(IStorage16Impl,iface);
 	char	xguid[50];
 
 	if (rgiidExclude)
@@ -1310,7 +1313,7 @@ HRESULT WINAPI IStorage16_fnCopyTo(LPSTORAGE16 iface,DWORD ciidExclude,const IID
 	else
 		strcpy(xguid,"<no guid>");
 	FIXME(ole,"IStorage16(%p)->(0x%08lx,%s,%p,%p),stub!\n",
-		this,ciidExclude,xguid,SNB16Exclude,pstgDest
+		This,ciidExclude,xguid,SNB16Exclude,pstgDest
 	);
 	return S_OK;
 }
@@ -1322,31 +1325,31 @@ HRESULT WINAPI IStorage16_fnCopyTo(LPSTORAGE16 iface,DWORD ciidExclude,const IID
 HRESULT WINAPI IStorage16_fnCreateStorage(
 	LPSTORAGE16 iface,LPCOLESTR16 pwcsName,DWORD grfMode,DWORD dwStgFormat,DWORD reserved2, IStorage16 **ppstg
 ) {
-	ICOM_THIS(IStorage16,iface);
-	_IStorage16*	lpstg;
+	ICOM_THIS(IStorage16Impl,iface);
+	IStorage16Impl*	lpstg;
 	int		ppsent,x;
 	struct storage_pps_entry	stde;
 	struct storage_header sth;
-	HFILE32		hf=this->hf;
+	HFILE32		hf=This->hf;
 
 	READ_HEADER;
 
 	TRACE(ole,"(%p)->(%s,0x%08lx,0x%08lx,0x%08lx,%p)\n",
-		this,pwcsName,grfMode,dwStgFormat,reserved2,ppstg
+		This,pwcsName,grfMode,dwStgFormat,reserved2,ppstg
 	);
 	if (grfMode & STGM_TRANSACTED)
 		FIXME(ole,"We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istorage16(ppstg);
-	lpstg = (_IStorage16*)PTR_SEG_TO_LIN(*ppstg);
-	lpstg->hf		= this->hf;
+	lpstg = (IStorage16Impl*)PTR_SEG_TO_LIN(*ppstg);
+	lpstg->hf		= This->hf;
 
 	ppsent=STORAGE_get_free_pps_entry(lpstg->hf);
 	if (ppsent<0)
 		return E_FAIL;
-	stde=this->stde;
+	stde=This->stde;
 	if (stde.pps_dir==-1) {
 		stde.pps_dir = ppsent;
-		x = this->ppsent;
+		x = This->ppsent;
 	} else {
 		FIXME(ole," use prev chain too ?\n");
 		x=stde.pps_dir;
@@ -1382,19 +1385,19 @@ HRESULT WINAPI IStorage16_fnCreateStorage(
 HRESULT WINAPI IStorage16_fnCreateStream(
 	LPSTORAGE16 iface,LPCOLESTR16 pwcsName,DWORD grfMode,DWORD reserved1,DWORD reserved2, IStream16 **ppstm
 ) {
-	ICOM_THIS(IStorage16,iface);
-	_IStream16*	lpstr;
+	ICOM_THIS(IStorage16Impl,iface);
+	IStream16Impl*	lpstr;
 	int		ppsent,x;
 	struct storage_pps_entry	stde;
 
 	TRACE(ole,"(%p)->(%s,0x%08lx,0x%08lx,0x%08lx,%p)\n",
-		this,pwcsName,grfMode,reserved1,reserved2,ppstm
+		This,pwcsName,grfMode,reserved1,reserved2,ppstm
 	);
 	if (grfMode & STGM_TRANSACTED)
 		FIXME(ole,"We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istream16(ppstm);
-	lpstr = (_IStream16*)PTR_SEG_TO_LIN(*ppstm);
-        DuplicateHandle( GetCurrentProcess(), this->hf, GetCurrentProcess(),
+	lpstr = (IStream16Impl*)PTR_SEG_TO_LIN(*ppstm);
+        DuplicateHandle( GetCurrentProcess(), This->hf, GetCurrentProcess(),
                          &lpstr->hf, 0, TRUE, DUPLICATE_SAME_ACCESS );
 	lpstr->offset.LowPart	= 0;
 	lpstr->offset.HighPart	= 0;
@@ -1402,9 +1405,9 @@ HRESULT WINAPI IStorage16_fnCreateStream(
 	ppsent=STORAGE_get_free_pps_entry(lpstr->hf);
 	if (ppsent<0)
 		return E_FAIL;
-	stde=this->stde;
+	stde=This->stde;
 	if (stde.pps_next==-1)
-		x=this->ppsent;
+		x=This->ppsent;
 	else
 		while (stde.pps_next!=-1) {
 			x=stde.pps_next;
@@ -1435,22 +1438,22 @@ HRESULT WINAPI IStorage16_fnCreateStream(
 HRESULT WINAPI IStorage16_fnOpenStorage(
 	LPSTORAGE16 iface,LPCOLESTR16 pwcsName, IStorage16 *pstgPrio, DWORD grfMode, SNB16 snbExclude, DWORD reserved, IStorage16 **ppstg
 ) {
-	ICOM_THIS(IStorage16,iface);
-	_IStream16*	lpstg;
+	ICOM_THIS(IStorage16Impl,iface);
+	IStream16Impl*	lpstg;
 	WCHAR		name[33];
 	int		newpps;
 
 	TRACE(relay,"(%p)->(%s,%p,0x%08lx,%p,0x%08lx,%p)\n",
-		this,pwcsName,pstgPrio,grfMode,snbExclude,reserved,ppstg
+		This,pwcsName,pstgPrio,grfMode,snbExclude,reserved,ppstg
 	);
 	if (grfMode & STGM_TRANSACTED)
 		FIXME(ole,"We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istorage16(ppstg);
-	lpstg = (_IStream16*)PTR_SEG_TO_LIN(*ppstg);
-        DuplicateHandle( GetCurrentProcess(), this->hf, GetCurrentProcess(),
+	lpstg = (IStream16Impl*)PTR_SEG_TO_LIN(*ppstg);
+        DuplicateHandle( GetCurrentProcess(), This->hf, GetCurrentProcess(),
                          &lpstg->hf, 0, TRUE, DUPLICATE_SAME_ACCESS );
 	lstrcpyAtoW(name,pwcsName);
-	newpps = STORAGE_look_for_named_pps(lpstg->hf,this->stde.pps_dir,name);
+	newpps = STORAGE_look_for_named_pps(lpstg->hf,This->stde.pps_dir,name);
 	if (newpps==-1) {
 		IStream16_fnRelease((IUnknown*)lpstg);
 		return E_FAIL;
@@ -1470,22 +1473,22 @@ HRESULT WINAPI IStorage16_fnOpenStorage(
 HRESULT WINAPI IStorage16_fnOpenStream(
 	LPSTORAGE16 iface,LPCOLESTR16 pwcsName, void *reserved1, DWORD grfMode, DWORD reserved2, IStream16 **ppstm
 ) {
-	ICOM_THIS(IStorage16,iface);
-	_IStream16*	lpstr;
+	ICOM_THIS(IStorage16Impl,iface);
+	IStream16Impl*	lpstr;
 	WCHAR		name[33];
 	int		newpps;
 
 	TRACE(relay,"(%p)->(%s,%p,0x%08lx,0x%08lx,%p)\n",
-		this,pwcsName,reserved1,grfMode,reserved2,ppstm
+		This,pwcsName,reserved1,grfMode,reserved2,ppstm
 	);
 	if (grfMode & STGM_TRANSACTED)
 		FIXME(ole,"We do not support transacted Compound Storage. Using direct mode.\n");
 	_create_istream16(ppstm);
-	lpstr = (_IStream16*)PTR_SEG_TO_LIN(*ppstm);
-        DuplicateHandle( GetCurrentProcess(), this->hf, GetCurrentProcess(),
+	lpstr = (IStream16Impl*)PTR_SEG_TO_LIN(*ppstm);
+        DuplicateHandle( GetCurrentProcess(), This->hf, GetCurrentProcess(),
                          &lpstr->hf, 0, TRUE, DUPLICATE_SAME_ACCESS );
 	lstrcpyAtoW(name,pwcsName);
-	newpps = STORAGE_look_for_named_pps(lpstr->hf,this->stde.pps_dir,name);
+	newpps = STORAGE_look_for_named_pps(lpstr->hf,This->stde.pps_dir,name);
 	if (newpps==-1) {
 		IStream16_fnRelease((IUnknown*)lpstr);
 		return E_FAIL;
@@ -1505,7 +1508,7 @@ HRESULT WINAPI IStorage16_fnOpenStream(
  * _create_istorage16 [INTERNAL]
  */
 static void _create_istorage16(LPSTORAGE16 *stg) {
-	_IStorage16*	lpst;
+	IStorage16Impl*	lpst;
 
 	if (!stvt16.bvt.fnQueryInterface) {
 		HMODULE16	wp = GetModuleHandle16("STORAGE");
@@ -1563,7 +1566,7 @@ static void _create_istorage16(LPSTORAGE16 *stg) {
 			segstvt16 = &stvt16;
 		}
 	}
-	lpst = SEGPTR_NEW(_IStorage16);
+	lpst = SEGPTR_NEW(IStorage16Impl);
 	lpst->lpvtbl	= segstvt16;
 	lpst->ref	= 1;
 	lpst->thisptr	= SEGPTR_GET(lpst);
@@ -1582,7 +1585,7 @@ HRESULT WINAPI StgCreateDocFile16(
 ) {
 	HFILE32		hf;
 	int		i,ret;
-	_IStorage16*	lpstg;
+	IStorage16Impl*	lpstg;
 	struct storage_pps_entry	stde;
 
 	TRACE(ole,"(%s,0x%08lx,0x%08lx,%p)\n",
@@ -1594,7 +1597,7 @@ HRESULT WINAPI StgCreateDocFile16(
 		WARN(ole,"couldn't open file for storage:%ld\n",GetLastError());
 		return E_FAIL;
 	}
-	lpstg = (_IStorage16*)PTR_SEG_TO_LIN(*ppstgOpen);
+	lpstg = (IStorage16Impl*)PTR_SEG_TO_LIN(*ppstgOpen);
 	lpstg->hf = hf;
 	/* FIXME: check for existance before overwriting? */
 	if (!STORAGE_init_storage(hf)) {
@@ -1679,7 +1682,7 @@ HRESULT WINAPI StgOpenStorage16(
 ) {
 	HFILE32		hf;
 	int		ret,i;
-	_IStorage16*	lpstg;
+	IStorage16Impl*	lpstg;
 	struct storage_pps_entry	stde;
 
 	TRACE(ole,"(%s,%p,0x%08lx,%p,%ld,%p)\n",
@@ -1691,7 +1694,7 @@ HRESULT WINAPI StgOpenStorage16(
 		WARN(ole,"Couldn't open file for storage\n");
 		return E_FAIL;
 	}
-	lpstg = (_IStorage16*)PTR_SEG_TO_LIN(*ppstgOpen);
+	lpstg = (IStorage16Impl*)PTR_SEG_TO_LIN(*ppstgOpen);
 	lpstg->hf = hf;
 
 	i=0;ret=0;

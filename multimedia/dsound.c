@@ -2158,39 +2158,46 @@ HRESULT WINAPI DirectSoundCreate(LPGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUn
 /*******************************************************************************
  * DirectSound ClassFactory
  */
+typedef struct
+{
+    /* IUnknown fields */
+    ICOM_VTABLE(IClassFactory)* lpvtbl;
+    DWORD                       ref;
+} IClassFactoryImpl;
+
 static HRESULT WINAPI 
 DSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj) {
-	ICOM_THIS(IClassFactory,iface);
+	ICOM_THIS(IClassFactoryImpl,iface);
 	char buf[80];
 
 	if (HIWORD(riid))
 	    WINE_StringFromCLSID(riid,buf);
 	else
 	    sprintf(buf,"<guid-0x%04x>",LOWORD(riid));
-	FIXME(dsound,"(%p)->(%s,%p),stub!\n",this,buf,ppobj);
+	FIXME(dsound,"(%p)->(%s,%p),stub!\n",This,buf,ppobj);
 	return E_NOINTERFACE;
 }
 
 static ULONG WINAPI
 DSCF_AddRef(LPCLASSFACTORY iface) {
-	ICOM_THIS(IClassFactory,iface);
-	return ++(this->ref);
+	ICOM_THIS(IClassFactoryImpl,iface);
+	return ++(This->ref);
 }
 
 static ULONG WINAPI DSCF_Release(LPCLASSFACTORY iface) {
-	ICOM_THIS(IClassFactory,iface);
+	ICOM_THIS(IClassFactoryImpl,iface);
 	/* static class, won't be  freed */
-	return --(this->ref);
+	return --(This->ref);
 }
 
 static HRESULT WINAPI DSCF_CreateInstance(
 	LPCLASSFACTORY iface,LPUNKNOWN pOuter,REFIID riid,LPVOID *ppobj
 ) {
-	ICOM_THIS(IClassFactory,iface);
+	ICOM_THIS(IClassFactoryImpl,iface);
 	char buf[80];
 
 	WINE_StringFromCLSID(riid,buf);
-	TRACE(dsound,"(%p)->(%p,%s,%p)\n",this,pOuter,buf,ppobj);
+	TRACE(dsound,"(%p)->(%p,%s,%p)\n",This,pOuter,buf,ppobj);
 	if (!memcmp(riid,&IID_IDirectSound,sizeof(IID_IDirectSound))) {
 		/* FIXME: reuse already created dsound if present? */
 		return DirectSoundCreate(riid,(LPDIRECTSOUND*)ppobj,pOuter);
@@ -2199,19 +2206,19 @@ static HRESULT WINAPI DSCF_CreateInstance(
 }
 
 static HRESULT WINAPI DSCF_LockServer(LPCLASSFACTORY iface,BOOL32 dolock) {
-	ICOM_THIS(IClassFactory,iface);
-	FIXME(dsound,"(%p)->(%d),stub!\n",this,dolock);
+	ICOM_THIS(IClassFactoryImpl,iface);
+	FIXME(dsound,"(%p)->(%d),stub!\n",This,dolock);
 	return S_OK;
 }
 
-static ICOM_VTABLE(IClassFactory) DSCF_VTable = {
+static ICOM_VTABLE(IClassFactory) DSCF_Vtbl = {
 	DSCF_QueryInterface,
 	DSCF_AddRef,
 	DSCF_Release,
 	DSCF_CreateInstance,
 	DSCF_LockServer
 };
-static _IClassFactory DSOUND_CF = {&DSCF_VTable, 1 };
+static IClassFactoryImpl DSOUND_CF = {&DSCF_Vtbl, 1 };
 
 /*******************************************************************************
  * DllGetClassObject [DSOUND.4]
@@ -2246,7 +2253,7 @@ DWORD WINAPI DSOUND_DllGetClassObject(REFCLSID rclsid,REFIID riid,LPVOID *ppv)
     TRACE(dsound, "(%p,%p,%p)\n", xbuf, buf, ppv);
     if (!memcmp(riid,&IID_IClassFactory,sizeof(IID_IClassFactory))) {
     	*ppv = (LPVOID)&DSOUND_CF;
-	IClassFactory_AddRef(&DSOUND_CF);
+	IClassFactory_AddRef((IClassFactory*)*ppv);
     return S_OK;
     }
     FIXME(dsound, "(%p,%p,%p): no interface found.\n", xbuf, buf, ppv);

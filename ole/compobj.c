@@ -45,6 +45,8 @@
 
 #include "objbase.h"
 
+#include "ifs.h"
+
 /****************************************************************************
  *  COM External Lock structures and methods declaration
  *
@@ -1283,7 +1285,7 @@ HRESULT WINAPI CoCreateInstance(
   hres = CoGetClassObject(rclsid,
 			  dwClsContext,
 			  NULL,
-			  (const REFIID) &IID_IClassFactory,
+			  &IID_IClassFactory,
 			  (LPVOID)&lpclf);
 
   if (FAILED(hres))

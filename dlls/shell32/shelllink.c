@@ -18,11 +18,12 @@
 #include "shlguid.h"
 
 /* IPersistFile Implementation */
-typedef struct _IPersistFile {
+typedef struct
+{
     /* IUnknown fields */
     ICOM_VTABLE(IPersistFile)* lpvtbl;
     DWORD                       ref;
-} _IPersistFile;
+} IPersistFileImpl;
 
 static struct ICOM_VTABLE(IPersistFile) pfvt;
 
@@ -32,9 +33,9 @@ static struct ICOM_VTABLE(IPersistFile) pfvt;
  */
 LPPERSISTFILE IPersistFile_Constructor(void) 
 {
-	_IPersistFile* sl;
+	IPersistFileImpl* sl;
 
-	sl = (_IPersistFile*)HeapAlloc(GetProcessHeap(),0,sizeof(_IPersistFile));
+	sl = (IPersistFileImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IPersistFileImpl));
 	sl->ref = 1;
 	sl->lpvtbl = &pfvt;
 
@@ -49,18 +50,18 @@ LPPERSISTFILE IPersistFile_Constructor(void)
 static HRESULT WINAPI IPersistFile_fnQueryInterface(
   LPUNKNOWN iface, REFIID riid, LPVOID *ppvObj)
 {
-	ICOM_THIS(IPersistFile,iface);
+	ICOM_THIS(IPersistFileImpl,iface);
 	char    xriid[50];
 	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE(shell,"(%p)->(\n\tIID:\t%s)\n",this,xriid);
+	TRACE(shell,"(%p)->(\n\tIID:\t%s)\n",This,xriid);
 
 	*ppvObj = NULL;
 
 	if(IsEqualIID(riid, &IID_IUnknown))          /*IUnknown*/
-	{ *ppvObj = this; 
+	{ *ppvObj = This; 
 	}
 	else if(IsEqualIID(riid, &IID_IPersistFile))  /*IPersistFile*/
-	{    *ppvObj = (LPPERSISTFILE)this;
+	{    *ppvObj = (LPPERSISTFILE)This;
 	}   
 
 	if(*ppvObj)
@@ -76,64 +77,64 @@ static HRESULT WINAPI IPersistFile_fnQueryInterface(
  */
 static ULONG WINAPI IPersistFile_fnAddRef(LPUNKNOWN iface)
 {
-	ICOM_THIS(IPersistFile,iface);
-	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+	ICOM_THIS(IPersistFileImpl,iface);
+	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
 
 	shell32_ObjCount++;
-	return ++(this->ref);
+	return ++(This->ref);
 }
 /******************************************************************************
  * IPersistFile_Release
  */
 static ULONG WINAPI IPersistFile_fnRelease(LPUNKNOWN iface)
 {
-	ICOM_THIS(IPersistFile,iface);
-	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+	ICOM_THIS(IPersistFileImpl,iface);
+	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
 
 	shell32_ObjCount--;
 
-	if (!--(this->ref)) 
-	{ TRACE(shell,"-- destroying IPersistFile(%p)\n",this);
-	  HeapFree(GetProcessHeap(),0,this);
+	if (!--(This->ref)) 
+	{ TRACE(shell,"-- destroying IPersistFile(%p)\n",This);
+	  HeapFree(GetProcessHeap(),0,This);
 	  return 0;
 	}
-	return this->ref;
+	return This->ref;
 }
 
 static HRESULT WINAPI IPersistFile_fnGetClassID(const IPersist* iface, CLSID *pClassID)
 {
 	ICOM_CTHIS(IPersistFile,iface);
-	FIXME(shell,"(%p)\n",this);
+	FIXME(shell,"(%p)\n",This);
 	return NOERROR;
 }
 static HRESULT WINAPI IPersistFile_fnIsDirty(const IPersistFile* iface)
 {
 	ICOM_CTHIS(IPersistFile,iface);
-	FIXME(shell,"(%p)\n",this);
+	FIXME(shell,"(%p)\n",This);
 	return NOERROR;
 }
-static HRESULT WINAPI IPersistFile_fnLoad(LPPERSISTFILE iface, LPCOLESTR32 pszFileName, DWORD dwMode)
+static HRESULT WINAPI IPersistFile_fnLoad(IPersistFile* iface, LPCOLESTR32 pszFileName, DWORD dwMode)
 {
-	ICOM_THIS(IPersistFile,iface);
-	FIXME(shell,"(%p)->(%s)\n",this,debugstr_w(pszFileName)); 
+	ICOM_THIS(IPersistFileImpl,iface);
+	FIXME(shell,"(%p)->(%s)\n",This,debugstr_w(pszFileName)); 
 	return E_FAIL;
 }
-static HRESULT WINAPI IPersistFile_fnSave(LPPERSISTFILE iface, LPCOLESTR32 pszFileName, BOOL32 fRemember)
+static HRESULT WINAPI IPersistFile_fnSave(IPersistFile* iface, LPCOLESTR32 pszFileName, BOOL32 fRemember)
 {
-	ICOM_THIS(IPersistFile,iface);
-	FIXME(shell,"(%p)->(%s)\n",this,debugstr_w(pszFileName));
+	ICOM_THIS(IPersistFileImpl,iface);
+	FIXME(shell,"(%p)->(%s)\n",This,debugstr_w(pszFileName));
        	return NOERROR;
 }
-static HRESULT WINAPI IPersistFile_fnSaveCompleted(LPPERSISTFILE iface, LPCOLESTR32 pszFileName)
+static HRESULT WINAPI IPersistFile_fnSaveCompleted(IPersistFile* iface, LPCOLESTR32 pszFileName)
 {
-	ICOM_THIS(IPersistFile,iface);
-	FIXME(shell,"(%p)->(%s)\n",this,debugstr_w(pszFileName));
+	ICOM_THIS(IPersistFileImpl,iface);
+	FIXME(shell,"(%p)->(%s)\n",This,debugstr_w(pszFileName));
         return NOERROR;
 }
 static HRESULT WINAPI IPersistFile_fnGetCurFile(const IPersistFile* iface, LPOLESTR32 *ppszFileName)
 {
-	ICOM_CTHIS(IPersistFile,iface);
-	FIXME(shell,"(%p)\n",this);
+	ICOM_CTHIS(IPersistFileImpl,iface);
+	FIXME(shell,"(%p)\n",This);
 	return NOERROR;
 }
   
@@ -158,6 +159,12 @@ static struct ICOM_VTABLE(IPersistFile) pfvt =
 /**************************************************************************
 *  IShellLink's IClassFactory implementation
  */
+typedef struct
+{
+    /* IUnknown fields */
+    ICOM_VTABLE(IClassFactory)* lpvtbl;
+    DWORD                       ref;
+} IClassFactoryImpl;
 
 static ICOM_VTABLE(IClassFactory) slcfvt;
 
@@ -167,9 +174,9 @@ static ICOM_VTABLE(IClassFactory) slcfvt;
 
 LPCLASSFACTORY IShellLink_CF_Constructor(void)
 {
-	_IClassFactory* lpclf;
+	IClassFactoryImpl* lpclf;
 
-	lpclf= (_IClassFactory*)HeapAlloc(GetProcessHeap(),0,sizeof(_IClassFactory));
+	lpclf= (IClassFactoryImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IClassFactoryImpl));
 	lpclf->ref = 1;
 	lpclf->lpvtbl = &slcfvt;
 	TRACE(shell,"(%p)->()\n",lpclf);
@@ -180,20 +187,20 @@ LPCLASSFACTORY IShellLink_CF_Constructor(void)
  *  IShellLink_CF_QueryInterface
  */
 static HRESULT WINAPI IShellLink_CF_QueryInterface(
-  LPCLASSFACTORY iface, REFIID riid, LPVOID *ppvObj)
+  IClassFactory* iface, REFIID riid, LPVOID *ppvObj)
 {
-	ICOM_THIS(IClassFactory,iface);
+	ICOM_THIS(IClassFactoryImpl,iface);
 	char	xriid[50];
 	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE(shell,"(%p)->(\n\tIID:\t%s)\n",this,xriid);
+	TRACE(shell,"(%p)->(\n\tIID:\t%s)\n",This,xriid);
 
 	*ppvObj = NULL;
 
 	if(IsEqualIID(riid, &IID_IUnknown))          	/*IUnknown*/
-	{ *ppvObj = (LPUNKNOWN)this; 
+	{ *ppvObj = (LPUNKNOWN)This; 
 	}
 	else if(IsEqualIID(riid, &IID_IClassFactory))  /*IClassFactory*/
-	{ *ppvObj = (LPCLASSFACTORY)this;
+	{ *ppvObj = (LPCLASSFACTORY)This;
 	}   
 
 	if(*ppvObj)
@@ -207,43 +214,43 @@ static HRESULT WINAPI IShellLink_CF_QueryInterface(
 /******************************************************************************
  * IShellLink_CF_AddRef
  */
-static ULONG WINAPI IShellLink_CF_AddRef(LPCLASSFACTORY iface)
+static ULONG WINAPI IShellLink_CF_AddRef(IClassFactory* iface)
 {
-	ICOM_THIS(IClassFactory,iface);
-	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+	ICOM_THIS(IClassFactoryImpl,iface);
+	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
 
 	shell32_ObjCount++;
-	return ++(this->ref);
+	return ++(This->ref);
 }
 /******************************************************************************
  * IShellLink_CF_Release
  */
-static ULONG WINAPI IShellLink_CF_Release(LPCLASSFACTORY iface)
+static ULONG WINAPI IShellLink_CF_Release(IClassFactory* iface)
 {
-	ICOM_THIS(IClassFactory,iface);
-	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+	ICOM_THIS(IClassFactoryImpl,iface);
+	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
 
 	shell32_ObjCount--;
-	if (!--(this->ref)) 
-	{ TRACE(shell,"-- destroying IClassFactory(%p)\n",this);
-		HeapFree(GetProcessHeap(),0,this);
+	if (!--(This->ref)) 
+	{ TRACE(shell,"-- destroying IClassFactory(%p)\n",This);
+		HeapFree(GetProcessHeap(),0,This);
 		return 0;
 	}
-	return this->ref;
+	return This->ref;
 }
 /******************************************************************************
  * IShellLink_CF_CreateInstance
  */
 static HRESULT WINAPI IShellLink_CF_CreateInstance(
-  LPCLASSFACTORY iface, LPUNKNOWN pUnknown, REFIID riid, LPVOID *ppObject)
+  IClassFactory* iface, LPUNKNOWN pUnknown, REFIID riid, LPVOID *ppObject)
 {
-	ICOM_THIS(IClassFactory,iface);
+	ICOM_THIS(IClassFactoryImpl,iface);
 	IUnknown *pObj = NULL;
 	HRESULT hres;
 	char	xriid[50];
 
 	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE(shell,"%p->(%p,\n\tIID:\t%s,%p)\n",this,pUnknown,xriid,ppObject);
+	TRACE(shell,"%p->(%p,\n\tIID:\t%s,%p)\n",This,pUnknown,xriid,ppObject);
 
 	*ppObject = NULL;
 		
@@ -265,17 +272,17 @@ static HRESULT WINAPI IShellLink_CF_CreateInstance(
 	 
 	hres = IUnknown_QueryInterface(pObj,riid, ppObject);
 	IUnknown_Release(pObj);
-	TRACE(shell,"-- Object created: (%p)->%p\n",this,*ppObject);
+	TRACE(shell,"-- Object created: (%p)->%p\n",This,*ppObject);
 
 	return hres;
 }
 /******************************************************************************
  * IShellLink_CF_LockServer
  */
-static HRESULT WINAPI IShellLink_CF_LockServer(LPCLASSFACTORY iface, BOOL32 fLock)
+static HRESULT WINAPI IShellLink_CF_LockServer(IClassFactory* iface, BOOL32 fLock)
 {
-	ICOM_THIS(IClassFactory,iface);
-	TRACE(shell,"%p->(0x%x), not implemented\n",this, fLock);
+	ICOM_THIS(IClassFactoryImpl,iface);
+	TRACE(shell,"%p->(0x%x), not implemented\n",This, fLock);
 	return E_NOTIMPL;
 }
 static ICOM_VTABLE(IClassFactory) slcfvt = 
@@ -504,9 +511,9 @@ static ICOM_VTABLE(IClassFactory) slwcfvt;
 
 LPCLASSFACTORY IShellLinkW_CF_Constructor(void)
 {
-	_IClassFactory* lpclf;
+	IClassFactoryImpl* lpclf;
 
-	lpclf= (_IClassFactory*)HeapAlloc(GetProcessHeap(),0,sizeof(_IClassFactory));
+	lpclf= (IClassFactoryImpl*)HeapAlloc(GetProcessHeap(),0,sizeof(IClassFactoryImpl));
 	lpclf->ref = 1;
 	lpclf->lpvtbl = &slwcfvt;
 	TRACE(shell,"(%p)->()\n",lpclf);
@@ -519,18 +526,18 @@ LPCLASSFACTORY IShellLinkW_CF_Constructor(void)
 static HRESULT WINAPI IShellLinkW_CF_QueryInterface(
   LPCLASSFACTORY iface, REFIID riid, LPVOID *ppvObj)
 {
-	ICOM_THIS(IClassFactory,iface);
+	ICOM_THIS(IClassFactoryImpl,iface);
 	char	xriid[50];
 	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE(shell,"(%p)->(\n\tIID:\t%s)\n",this,xriid);
+	TRACE(shell,"(%p)->(\n\tIID:\t%s)\n",This,xriid);
 
 	*ppvObj = NULL;
 
 	if(IsEqualIID(riid, &IID_IUnknown))          	/*IUnknown*/
-	{ *ppvObj = (LPUNKNOWN)this; 
+	{ *ppvObj = (LPUNKNOWN)This; 
 	}
 	else if(IsEqualIID(riid, &IID_IClassFactory))  /*IClassFactory*/
-	{ *ppvObj = (LPCLASSFACTORY)this;
+	{ *ppvObj = (LPCLASSFACTORY)This;
 	}   
 
 	if(*ppvObj) {
@@ -546,27 +553,27 @@ static HRESULT WINAPI IShellLinkW_CF_QueryInterface(
  */
 static ULONG WINAPI IShellLinkW_CF_AddRef(LPCLASSFACTORY iface)
 {
-	ICOM_THIS(IClassFactory,iface);
-	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+	ICOM_THIS(IClassFactoryImpl,iface);
+	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
 
 	shell32_ObjCount++;
-	return ++(this->ref);
+	return ++(This->ref);
 }
 /******************************************************************************
  * IShellLinkW_CF_Release
  */
 static ULONG WINAPI IShellLinkW_CF_Release(LPCLASSFACTORY iface)
 {
-	ICOM_THIS(IClassFactory,iface);
-	TRACE(shell,"(%p)->(count=%lu)\n",this,this->ref);
+	ICOM_THIS(IClassFactoryImpl,iface);
+	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
 
 	shell32_ObjCount--;
-	if (!--(this->ref)) 
-	{ TRACE(shell,"-- destroying IClassFactory(%p)\n",this);
-		HeapFree(GetProcessHeap(),0,this);
+	if (!--(This->ref)) 
+	{ TRACE(shell,"-- destroying IClassFactory(%p)\n",This);
+		HeapFree(GetProcessHeap(),0,This);
 		return 0;
 	}
-	return this->ref;
+	return This->ref;
 }
 /******************************************************************************
  * IShellLinkW_CF_CreateInstance
@@ -574,13 +581,13 @@ static ULONG WINAPI IShellLinkW_CF_Release(LPCLASSFACTORY iface)
 static HRESULT WINAPI IShellLinkW_CF_CreateInstance(
   LPCLASSFACTORY iface, LPUNKNOWN pUnknown, REFIID riid, LPVOID *ppObject)
 {
-	ICOM_THIS(IClassFactory,iface);
+	ICOM_THIS(IClassFactoryImpl,iface);
 	IUnknown *pObj = NULL;
 	HRESULT hres;
 	char	xriid[50];
 
 	WINE_StringFromCLSID((LPCLSID)riid,xriid);
-	TRACE(shell,"%p->(%p,\n\tIID:\t%s,%p)\n",this,pUnknown,xriid,ppObject);
+	TRACE(shell,"%p->(%p,\n\tIID:\t%s,%p)\n",This,pUnknown,xriid,ppObject);
 
 	*ppObject = NULL;
 		
@@ -602,7 +609,7 @@ static HRESULT WINAPI IShellLinkW_CF_CreateInstance(
 	 
 	hres = pObj->lpvtbl->fnQueryInterface(pObj,riid, ppObject);
 	pObj->lpvtbl->fnRelease(pObj);
-	TRACE(shell,"-- Object created: (%p)->%p\n",this,*ppObject);
+	TRACE(shell,"-- Object created: (%p)->%p\n",This,*ppObject);
 
 	return hres;
 }
@@ -612,8 +619,8 @@ static HRESULT WINAPI IShellLinkW_CF_CreateInstance(
 
 static HRESULT WINAPI IShellLinkW_CF_LockServer(LPCLASSFACTORY iface, BOOL32 fLock)
 {
-	ICOM_THIS(IClassFactory,iface);
-	TRACE(shell,"%p->(0x%x), not implemented\n",this, fLock);
+	ICOM_THIS(IClassFactoryImpl,iface);
+	TRACE(shell,"%p->(0x%x), not implemented\n",This, fLock);
 	return E_NOTIMPL;
 }
 
@@ -695,7 +702,7 @@ LPSHELLLINKW IShellLinkW_Constructor(void)
 }
 
 /**************************************************************************
- *  IShellLinkW::QueryInterface
+ *  IShellLinkW_QueryInterface
  */
 static HRESULT WINAPI IShellLinkW_QueryInterface(
   LPSHELLLINKW this, REFIID riid, LPVOID *ppvObj)

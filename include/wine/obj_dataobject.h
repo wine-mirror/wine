@@ -80,7 +80,8 @@ struct FORMATETC32
  * STGMEDIUM structure
  */
 typedef enum tagTYMED
-{	TYMED_HGLOBAL   = 1,
+{
+    TYMED_HGLOBAL   = 1,
 	TYMED_FILE      = 2,
 	TYMED_ISTREAM   = 4,
 	TYMED_ISTORAGE  = 8,
@@ -110,47 +111,117 @@ struct STGMEDIUM32
 /*****************************************************************************
  * IAdviseSink interface
  */
-/* FIXME: not implemented */
 #define ICOM_INTERFACE IAdviseSink
-ICOM_BEGIN(IAdviseSink,IUnknown)
-ICOM_END(IAdviseSink)
+#define IAdviseSink_METHODS \
+    ICOM_VMETHOD2(OnDataChange, FORMATETC32*,pFormatetc, STGMEDIUM32*,pStgmed) \
+    ICOM_VMETHOD2(OnViewChange, DWORD,dwAspect, LONG,lindex) \
+    ICOM_VMETHOD1(OnRename,     IMoniker*,pmk) \
+    ICOM_VMETHOD (OnSave) \
+    ICOM_VMETHOD (OnClose)
+#define IAdviseSink_IMETHODS \
+    IUnknown_IMETHODS \
+    IAdviseSink_METHODS
+ICOM_DEFINE(IAdviseSink,IUnknown)
 #undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IAdviseSink_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IAdviseSink_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IAdviseSink_Release(p)            ICOM_CALL (Release,p)
+/*** IAdviseSink methods ***/
+#define IAdviseSink_OnDataChange(p,a,b) ICOM_CALL2(OnDataChange,p,a,b)
+#define IAdviseSink_OnViewChange(p,a,b) ICOM_CALL2(OnViewChange,p,a,b)
+#define IAdviseSink_OnRename(p,a)       ICOM_CALL1(OnRename,p,a)
+#define IAdviseSink_OnSave(p)           ICOM_CALL (OnSave,p)
+#define IAdviseSink_OnClose(p)          ICOM_CALL (OnClose,p)
+#endif
 
 
 /*****************************************************************************
  * IAdviseSink2 interface
  */
-/* FIXME: not implemented */
+#define ICOM_INTERFACE IAdviseSink2
+#define IAdviseSink2_METHODS \
+    ICOM_VMETHOD1(OnLinkSrcChange, IMoniker*,pmk)
+#define IAdviseSink2_IMETHODS \
+    IAdviseSink_IMETHODS \
+    IAdviseSink2_METHODS
+ICOM_DEFINE(IAdviseSink2,IAdviseSink)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IAdviseSink2_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IAdviseSink2_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IAdviseSink2_Release(p)            ICOM_CALL (Release,p)
+/*** IAdviseSink methods ***/
+#define IAdviseSink2_OnDataChange(p,a,b) ICOM_CALL2(IAdviseSink,OnDataChange,p,a,b)
+#define IAdviseSink2_OnViewChange(p,a,b) ICOM_CALL2(IAdviseSink,OnViewChange,p,a,b)
+#define IAdviseSink2_OnRename(p,a)       ICOM_CALL1(IAdviseSink,OnRename,p,a)
+#define IAdviseSink2_OnSave(p)           ICOM_CALL (IAdviseSink,OnSave,p)
+#define IAdviseSink2_OnClose(p)          ICOM_CALL (IAdviseSink,OnClose,p)
+/*** IAdviseSink2 methods ***/
+#define IAdviseSink2_OnLinkSrcChange(p,a) ICOM_CALL(OnLinkSrcChange,p,a)
+#endif
 
 
 /*****************************************************************************
  * IDataAdviseHolder interface
  */
+#define ICOM_INTERFACE IDataAdviseHolder
+#define IDataAdviseHolder_METHODS \
+    ICOM_METHOD5(HRESULT,Advise,           IDataObject*,pDataObject, FORMATETC32*,pFetc, DWORD,advf, IAdviseSink*,pAdvise, DWORD*,pdwConnection) \
+    ICOM_METHOD1(HRESULT,Unadvise,         DWORD,dwConnection) \
+    ICOM_METHOD1(HRESULT,EnumAdvise,       IEnumSTATDATA**,ppenumAdvise) \
+    ICOM_METHOD3(HRESULT,SendOnDataChange, IDataObject*,pDataObject, DWORD,dwReserved, DWORD,advf)
+#define IDataAdviseHolder_IMETHODS \
+    IUnknown_IMETHODS \
+    IDataAdviseHolder_METHODS
+ICOM_DEFINE(IDataAdviseHolder,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IDataAdviseHolder_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDataAdviseHolder_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDataAdviseHolder_Release(p)            ICOM_CALL (Release,p)
+/*** IDataAdviseHolder methods ***/
+#define IDataAdviseHolder_Advise(p,a,b,c,d,e)       ICOM_CALL5(Advise,p,a,b,c,d,e)
+#define IDataAdviseHolder_Unadvise(p,a)             ICOM_CALL1(Unadvise,p,a)
+#define IDataAdviseHolder_EnumAdvise(p,a)           ICOM_CALL1(EnumAdvise,p,a)
+#define IDataAdviseHolder_SendOnDataChange(p,a,b,c) ICOM_CALL3(SendOnDataChange,p,a,b,c)
+#endif
+
 /* FIXME: not implemented */
+HRESULT WINAPI CreateDataAdviseHolder(LPDATAADVISEHOLDER* ppDAHolder);
 
 
 /*****************************************************************************
  * IDataObject interface
  */
 #define ICOM_INTERFACE IDataObject
-ICOM_BEGIN(IDataObject,IUnknown)
-    ICOM_METHOD2(HRESULT,GetData,               LPFORMATETC32,pformatetcIn, STGMEDIUM32*,pmedium);
-    ICOM_METHOD2(HRESULT,GetDataHere,           LPFORMATETC32,pformatetc, STGMEDIUM32*,pmedium);
-    ICOM_METHOD1(HRESULT,QueryGetData,          LPFORMATETC32,pformatetc);
-    ICOM_METHOD2(HRESULT,GetCanonicalFormatEtc, LPFORMATETC32,pformatectIn, LPFORMATETC32,pformatetcOut);
-    ICOM_METHOD3(HRESULT,SetData,               LPFORMATETC32,pformatetc, STGMEDIUM32*,pmedium, BOOL32,fRelease);
-    ICOM_METHOD2(HRESULT,EnumFormatEtc,         DWORD,dwDirection, IEnumFORMATETC**,ppenumFormatEtc);
-    ICOM_METHOD4(HRESULT,DAdvise,               LPFORMATETC32*,pformatetc, DWORD,advf, IAdviseSink*,pAdvSink, DWORD*,pdwConnection);
-    ICOM_METHOD1(HRESULT,DUnadvise,             DWORD,dwConnection);
-    ICOM_METHOD1(HRESULT,EnumDAdvise,           IEnumSTATDATA**,ppenumAdvise);
-ICOM_END(IDataObject)
+#define IDataObject_METHODS \
+    ICOM_METHOD2(HRESULT,GetData,               LPFORMATETC32,pformatetcIn, STGMEDIUM32*,pmedium) \
+    ICOM_METHOD2(HRESULT,GetDataHere,           LPFORMATETC32,pformatetc, STGMEDIUM32*,pmedium) \
+    ICOM_METHOD1(HRESULT,QueryGetData,          LPFORMATETC32,pformatetc) \
+    ICOM_METHOD2(HRESULT,GetCanonicalFormatEtc, LPFORMATETC32,pformatectIn, LPFORMATETC32,pformatetcOut) \
+    ICOM_METHOD3(HRESULT,SetData,               LPFORMATETC32,pformatetc, STGMEDIUM32*,pmedium, BOOL32,fRelease) \
+    ICOM_METHOD2(HRESULT,EnumFormatEtc,         DWORD,dwDirection, IEnumFORMATETC**,ppenumFormatEtc) \
+    ICOM_METHOD4(HRESULT,DAdvise,               LPFORMATETC32*,pformatetc, DWORD,advf, IAdviseSink*,pAdvSink, DWORD*,pdwConnection) \
+    ICOM_METHOD1(HRESULT,DUnadvise,             DWORD,dwConnection) \
+    ICOM_METHOD1(HRESULT,EnumDAdvise,           IEnumSTATDATA**,ppenumAdvise)
+#define IDataObject_IMETHODS \
+    IUnknown_IMETHODS \
+    IDataObject_METHODS
+ICOM_DEFINE(IDataObject,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IDataObject_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IDataObject_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IDataObject_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IDataObject_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IDataObject_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IDataObject_Release(p)            ICOM_CALL (Release,p)
 /*** IDataObject methods ***/
 #define IDataObject_GetData(p,a,b)               ICOM_CALL2(GetData,p,a,b)
 #define IDataObject_GetDataHere(p,a,b)           ICOM_CALL2(GetDataHere,p,a,b)
@@ -168,19 +239,22 @@ ICOM_END(IDataObject)
  * IEnumFORMATETC interface
  */
 #define ICOM_INTERFACE IEnumFORMATETC
-ICOM_BEGIN(IEnumFORMATETC,IUnknown)
-    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, FORMATETC32*,rgelt, ULONG*,pceltFethed);
-    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt);
-    ICOM_METHOD (HRESULT,Reset);
-    ICOM_METHOD1(HRESULT,Clone, IEnumFORMATETC**,ppenum);
-ICOM_END(IEnumFORMATETC)
+#define IEnumFORMATETC_METHODS \
+    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, FORMATETC32*,rgelt, ULONG*,pceltFethed) \
+    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt) \
+    ICOM_METHOD (HRESULT,Reset) \
+    ICOM_METHOD1(HRESULT,Clone, IEnumFORMATETC**,ppenum)
+#define IEnumFORMATETC_IMETHODS \
+    IUnknown_IMETHODS \
+    IEnumFORMATETC_METHODS
+ICOM_DEFINE(IEnumFORMATETC,IUnknown)
 #undef ICOM_INTERFACE
 
-#if !defined(__cplusplus) || defined(CINTERFACE)
+#ifdef ICOM_CINTERFACE
 /*** IUnknown methods ***/
-#define IEnumFORMATETC_QueryInterface(p,a,b) ICOM_ICALL2(IUnknown,QueryInterface,p,a,b)
-#define IEnumFORMATETC_AddRef(p)             ICOM_ICALL (IUnknown,AddRef,p)
-#define IEnumFORMATETC_Release(p)            ICOM_ICALL (IUnknown,Release,p)
+#define IEnumFORMATETC_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IEnumFORMATETC_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IEnumFORMATETC_Release(p)            ICOM_CALL (Release,p)
 /*** IEnumFORMATETC methods ***/
 #define IEnumFORMATETC_Next(p,a,b,c) ICOM_CALL3(Next,p,a,b,c)
 #define IEnumFORMATETC_Skip(p,a)     ICOM_CALL1(Skip,p,a)
@@ -192,7 +266,45 @@ ICOM_END(IEnumFORMATETC)
 /*****************************************************************************
  * IEnumSTATDATA interface
  */
+typedef struct tagSTATDATA
+{
+    FORMATETC32 formatetc;
+    DWORD advf;
+    IAdviseSink* pAdvSink;
+    DWORD dwConnection;
+} STATDATA32;
+
+#define ICOM_INTERFACE IEnumSTATDATA
+#define IEnumSTATDATA_METHODS \
+    ICOM_METHOD3(HRESULT,Next,  ULONG,celt, STATDATA32*,rgelt, ULONG*,pceltFethed) \
+    ICOM_METHOD1(HRESULT,Skip,  ULONG,celt) \
+    ICOM_METHOD (HRESULT,Reset) \
+    ICOM_METHOD1(HRESULT,Clone, IEnumSTATDATA**,ppenum)
+#define IEnumSTATDATA_IMETHODS \
+    IUnknown_IMETHODS \
+    IEnumSTATDATA_METHODS
+ICOM_DEFINE(IEnumSTATDATA,IUnknown)
+#undef ICOM_INTERFACE
+
+#ifdef ICOM_CINTERFACE
+/*** IUnknown methods ***/
+#define IEnumSTATDATA_QueryInterface(p,a,b) ICOM_CALL2(QueryInterface,p,a,b)
+#define IEnumSTATDATA_AddRef(p)             ICOM_CALL (AddRef,p)
+#define IEnumSTATDATA_Release(p)            ICOM_CALL (Release,p)
+/*** IEnumSTATDATA methods ***/
+#define IEnumSTATDATA_Next(p,a,b,c) ICOM_CALL3(Next,p,a,b,c)
+#define IEnumSTATDATA_Skip(p,a)     ICOM_CALL1(Skip,p,a)
+#define IEnumSTATDATA_Reset(p)      ICOM_CALL (Reset,p)
+#define IEnumSTATDATA_Clone(p,a)    ICOM_CALL1(Clone,p,a)
+#endif
+
+
+/*****************************************************************************
+ * Additional API
+ */
+
 /* FIXME: not implemented */
+HRESULT WINAPI CreateDataCache(LPUNKNOWN pUnkOuter, REFCLSID rclsid, REFIID iid, LPVOID* ppv);
 
 
 #endif /* __WINE_WINE_OBJ_DATAOBJECT_H */
