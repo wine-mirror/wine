@@ -330,13 +330,15 @@ TOOLBAR_DrawImageList (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HIMAGELIST h
     if (!himl) return FALSE;
 
     if (!TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap)) {
+	if (btnPtr->iBitmap == I_IMAGENONE) return FALSE;
 	ERR("index %d is not valid, max %d\n", 
 	    btnPtr->iBitmap, infoPtr->nNumBitmaps);
 	return FALSE;
     }
 
     if ((index = TOOLBAR_GetBitmapIndex(infoPtr, btnPtr)) < 0) {
-	if (index == -1) return FALSE;
+	if ((index == I_IMAGECALLBACK) ||
+	    (index == I_IMAGENONE)) return FALSE;
 	ERR("TBN_GETDISPINFO returned invalid index %d\n",
 	    index);
 	return FALSE;
@@ -363,13 +365,15 @@ TOOLBAR_TestImageExist (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HIMAGELIST 
     if (!himl) return FALSE;
 
     if (!TOOLBAR_IsValidBitmapIndex(infoPtr,btnPtr->iBitmap)) {
+	if (btnPtr->iBitmap == I_IMAGENONE) return FALSE;
 	ERR("index %d is not valid, max %d\n", 
 	    btnPtr->iBitmap, infoPtr->nNumBitmaps);
 	return FALSE;
     }
 
     if ((index = TOOLBAR_GetBitmapIndex(infoPtr, btnPtr)) < 0) {
-	if (index == -1) return FALSE;
+	if ((index == I_IMAGECALLBACK) ||
+	    (index == I_IMAGENONE)) return FALSE;
 	ERR("TBN_GETDISPINFO returned invalid index %d\n",
 	    index);
 	return FALSE;
@@ -4870,11 +4874,12 @@ TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TBUTTON_INFO *btnPtr, *oldBtnPtr;
+    TBUTTON_INFO *btnPtr = NULL, *oldBtnPtr = NULL;
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     POINT pt;
     INT   nHit;
     TRACKMOUSEEVENT trackinfo;
+    NMTBHOTITEM nmhotitem;
 
     /* fill in the TRACKMOUSEEVENT struct */
     trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
@@ -4912,10 +4917,7 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	{
 	    oldBtnPtr = &infoPtr->buttons[infoPtr->nOldHit];
 	    oldBtnPtr->bHot = FALSE;
-		    
-	    InvalidateRect (hwnd, &oldBtnPtr->rect,
-                TOOLBAR_HasText(infoPtr, oldBtnPtr));
-	}
+      	}
 
 	/* It's not a separator or in nowhere. It's a hot button. */
 	if (nHit >= 0)
@@ -4928,13 +4930,29 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
             if(infoPtr->buttons[nHit].fsState & TBSTATE_ENABLED)
             {
                 btnPtr->bHot = TRUE;
-                InvalidateRect(hwnd, &btnPtr->rect,
-                    TOOLBAR_HasText(infoPtr, btnPtr));
             }
-
 	}
 
-    if (infoPtr->bCaptured) {
+	nmhotitem.dwFlags = HICF_MOUSE;
+	if (oldBtnPtr)
+	    nmhotitem.idOld = oldBtnPtr->idCommand;
+	else
+	    nmhotitem.dwFlags |= HICF_ENTERING;
+	if (btnPtr)
+	    nmhotitem.idNew = btnPtr->idCommand;
+	else
+	    nmhotitem.dwFlags |= HICF_LEAVING;
+	TOOLBAR_SendNotify((NMHDR*)&nmhotitem, infoPtr, TBN_HOTITEMCHANGE);
+
+	/* now invalidate the old and new buttons so they will be painted */
+	if (oldBtnPtr)
+	    InvalidateRect (hwnd, &oldBtnPtr->rect,
+			    TOOLBAR_HasText(infoPtr, oldBtnPtr));
+	if (btnPtr && (btnPtr->fsState & TBSTATE_ENABLED))
+	    InvalidateRect(hwnd, &btnPtr->rect,
+			   TOOLBAR_HasText(infoPtr, btnPtr));
+
+	if (infoPtr->bCaptured) {
 	    btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
 	    if (infoPtr->nOldHit == infoPtr->nButtonDown) {
 		btnPtr->fsState &= ~TBSTATE_PRESSED;
