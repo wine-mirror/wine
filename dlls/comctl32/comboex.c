@@ -21,7 +21,6 @@
  *
  * FIXME:
  *  1. Implement following extended styles:
- *	     CBES_EX_PATHWORDBREAKPROC
  *	     CBES_EX_NOSIZELIMIT
  *  2. Notify CBEN_DRAGBEGIN is not implemented.
  *
@@ -119,6 +118,8 @@ static LRESULT WINAPI
 COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 static LRESULT WINAPI
 COMBOEX_ComboWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static int CALLBACK
+COMBOEX_PathWordBreakProc(LPWSTR lpch, int ichCurrent, int cch, int code);
 static LRESULT COMBOEX_Destroy (COMBOEX_INFO *infoPtr);
 typedef INT (WINAPI *cmp_func_t)(LPCWSTR, LPCWSTR);
 
@@ -622,14 +623,20 @@ COMBOEX_SetExtendedStyle (COMBOEX_INFO *infoPtr, DWORD mask, DWORD style)
 
     dwTemp = infoPtr->dwExtStyle;
 
-    if (style &  (CBES_EX_PATHWORDBREAKPROC |
-		  CBES_EX_NOSIZELIMIT))
-	FIXME("Extended style not implemented %08lx\n", style);
+    if (style & CBES_EX_NOSIZELIMIT)
+	FIXME("Extended style CBES_EX_NOSIZELIMIT implemented\n");
 
     if (mask)
 	infoPtr->dwExtStyle = (infoPtr->dwExtStyle & ~mask) | style;
     else
 	infoPtr->dwExtStyle = style;
+
+    /* see if we need to change the word break proc on the edit */
+    if ((infoPtr->dwExtStyle ^ dwTemp) & CBES_EX_PATHWORDBREAKPROC) {
+	SendMessageW(infoPtr->hwndEdit, EM_SETWORDBREAKPROC, 0,
+		     (infoPtr->dwExtStyle & CBES_EX_PATHWORDBREAKPROC) ?
+		         (LPARAM)COMBOEX_PathWordBreakProc : 0);
+    }
 
     /* test if the control's appearance has changed */
     mask = CBES_EX_NOEDITIMAGE | CBES_EX_NOEDITIMAGEINDENT;
@@ -1598,6 +1605,29 @@ static LRESULT COMBOEX_WindowPosChanging (COMBOEX_INFO *infoPtr, WINDOWPOS *wp)
     return 0;
 }
 
+static inline int is_delimiter(WCHAR c)
+{
+    switch(c) {
+	case '/':
+	case '\\':
+	case '.':
+	    return TRUE;
+    }
+    return FALSE;
+}
+
+static int CALLBACK
+COMBOEX_PathWordBreakProc(LPWSTR lpch, int ichCurrent, int cch, int code)
+{
+    if (code == WB_ISDELIMITER) {
+	return is_delimiter(lpch[ichCurrent]);
+    } else {
+	int dir = (code == WB_LEFT) ? -1 : 1;
+        for(; 0 <= ichCurrent && ichCurrent < cch; ichCurrent += dir)
+	    if (is_delimiter(lpch[ichCurrent])) return ichCurrent;
+    }
+    return ichCurrent;
+}
 
 static LRESULT WINAPI
 COMBOEX_EditWndProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
