@@ -486,10 +486,10 @@ static const char main_key_JA_pc98x1[MAIN_LEN][4] =
 /*** Brazilian ABNT-2 keyboard layout (contributed by Raul Gomes Fernandes) */
 static const char main_key_PT_br[MAIN_LEN][4] =
 {
- "'\"","1!","2@","3#","4$","5%","6\"","7&","8*","9(","0)","-_","=+",
- "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","'`","[{",
+ "'\"","1!","2@","3#","4$","5%","6¨","7&","8*","9(","0)","-_","=+",
+ "qQ","wW","eE","rR","tT","yY","uU","iI","oO","pP","´`","[{",
  "aA","sS","dD","fF","gG","hH","jJ","kK","lL","çÇ","~^","]}",
- "zZ","xX","cC","vV","bB","nN","mM",",<",".>","/?"
+ "zZ","xX","cC","vV","bB","nN","mM",",<",".>",";:","/?"
 };
 
 /*** US international keyboard layout (contributed by Gustavo Noronha (kov@debian.org)) */
@@ -570,6 +570,18 @@ static const char main_key_IL[MAIN_LEN][4] =
  "zZæ","xXñ","cCá","vVä","bBð","nNî","mMö",",<ú",".>õ","/?."
 };
 
+/*** Greek keyboard layout (contributed by Kriton Kyrimis <kyrimis@cti.gr>)
+  Greek characters for "wW" and "sS" are omitted to not produce a mismatch
+  message since they have different characters in gr and el XFree86 layouts. */
+static const char main_key_EL[MAIN_LEN][4] =
+{
+ "`~","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQ;:","wW","eEåÅ","rRñÑ","tTôÔ","yYõÕ","uUèÈ","iIéÉ","oOïÏ","pPðÐ","[{","]}",
+ "aAáÁ","sS","dDäÄ","fFöÖ","gGãÃ","hHçÇ","jJîÎ","kKêÊ","lLëË",";:´¨","'\"","\\|",
+ "zZæÆ","xX÷×","cCøØ","vVùÙ","bBâÂ","nNíÍ","mMìÌ",",<",".>","/?",
+ "<>"
+};
+
 /*** VNC keyboard layout */
 static const WORD main_key_scan_vnc[MAIN_LEN] =
 {
@@ -644,6 +656,7 @@ static const struct {
  {"Turkish keyboard layout", 28599, &main_key_TK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Israeli keyboard layout", 28598, &main_key_IL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"VNC keyboard layout", 28591, &main_key_vnc, &main_key_scan_vnc, &main_key_vkey_vnc},
+ {"Greek keyboard layout", 28597, &main_key_EL, &main_key_scan_qwerty, &main_key_vkey_qwerty},
 
  {NULL, 0, NULL, NULL, NULL} /* sentinel */
 };
