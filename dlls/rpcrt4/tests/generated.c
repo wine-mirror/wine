@@ -413,7 +413,6 @@ static void test_pack_MIDL_STUB_MESSAGE(void)
     TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char *, PointerBufferMark, 52, 4, 4);
     TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char, fBufferValid, 56, 1, 1);
     TEST_FIELD(MIDL_STUB_MESSAGE, unsigned char, uFlags, 57, 1, 1);
-    TEST_FIELD(MIDL_STUB_MESSAGE, unsigned short, UniquePtrCount, 58, 2, 2);
     TEST_FIELD(MIDL_STUB_MESSAGE, ULONG_PTR, MaxCount, 60, 4, 4);
     TEST_FIELD(MIDL_STUB_MESSAGE, unsigned long, Offset, 64, 4, 4);
     TEST_FIELD(MIDL_STUB_MESSAGE, unsigned long, ActualCount, 68, 4, 4);
