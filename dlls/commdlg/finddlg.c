@@ -15,7 +15,6 @@
 #include "ldt.h"
 #include "module.h"
 #include "debugtools.h"
-#include "winproc.h"
 #include "cderr.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg)

@@ -21,7 +21,6 @@
 #include "dlgs.h"
 #include "module.h"
 #include "debugtools.h"
-#include "winproc.h"
 #include "cderr.h"
 #include "winspool.h"
 #include "winerror.h"

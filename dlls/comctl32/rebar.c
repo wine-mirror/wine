@@ -43,7 +43,6 @@
 #include "class.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "win.h"
 #include "wine/unicode.h"
 #include "wine/winestring.h"
 #include "commctrl.h"
@@ -1091,15 +1090,14 @@ REBAR_InternalEraseBkGnd (HWND hwnd, WPARAM wParam, LPARAM lParam, RECT *clip)
      /*  default brush, then with any band that has a different   */
      /*  background color.                                        */
 {
-    WND * wndPtr = WIN_FindWndPtr( hwnd );
+    HBRUSH hbrBackground = GetClassWord(hwnd, GCW_HBRBACKGROUND);
     REBAR_INFO *infoPtr = REBAR_GetInfoPtr (hwnd);
     RECT eraserect;
     REBAR_BAND *lpBand;
     INT i;
 
-    if (wndPtr->class->hbrBackground)
-        FillRect( (HDC) wParam, clip, wndPtr->class->hbrBackground);
-    WIN_ReleaseWndPtr(wndPtr);
+    if (hbrBackground)
+        FillRect( (HDC) wParam, clip, hbrBackground);
 
     for(i=0; i<infoPtr->uNumBands; i++) {
         lpBand = &infoPtr->bands[i];

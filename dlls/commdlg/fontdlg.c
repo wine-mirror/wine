@@ -23,7 +23,6 @@
 #include "module.h"
 #include "debugtools.h"
 #include "font.h"
-#include "winproc.h"
 #include "cderr.h"
 
 DEFAULT_DEBUG_CHANNEL(commdlg);
