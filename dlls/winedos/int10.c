@@ -436,36 +436,58 @@ static BOOL INT10_FillModeInformation( struct _ModeInfoBlock *mib, WORD mode )
     mib->Reserved1 = 0x01;
 
     /* 
-     * 31 - BYTE: red mask size 
-     * Size of red color component in bits.
-     * Used only when memory model is direct color, otherwise set to zero.
+     * 31,33,35 - BYTE: red/green/blue mask size 
+     * Size of red/green/blue color component in bits.
+     * 32,34,36 - BYTE: red/green/blue field position 
+     * Bit position of the least significant bit of red/green/blue color
+     * component.
+     * Both should be only used when memory model is direct color or YUV but
+     * "Imperium Romanum" uses this fields even when memory model is planar.
+     * So always fill this fields when we have a depth bigger then 8, otherwise
+     * set them to zero.
      */
-    mib->RedMaskSize = 0; /* FIXME */
-
-    /*
-     * 32 - BYTE: red field position 
-     * Bit position of the least significant bit of red color component.
-     * Used only when memory model is direct color, otherwise set to zero.
-     */
-    mib->RedFieldPosition = 0; /* FIXME */
-
-    /* 33 - BYTE: green mask size */
-    mib->GreenMaskSize = 0; /* FIXME */
-
-    /* 34 - BYTE: green field position */
-    mib->GreenFieldPosition = 0; /* FIXME */
-
-    /* 35 - BYTE: blue mask size */
-    mib->BlueMaskSize = 0; /* FIXME */
-    
-    /* 36 - BYTE: blue field position */
-    mib->BlueFieldPosition = 0;
-
-    /* 37 - BYTE: reserved mask size */
-    mib->RsvdMaskSize = 0;
-
-    /* 38 - BYTE: reserved mask position */
-    mib->RsvdFieldPosition = 0;
+    switch (ptr->Depth) {
+        case 24:
+            mib->RedMaskSize = 8;
+            mib->GreenMaskSize = 8;
+            mib->BlueMaskSize = 8;
+            mib->RsvdMaskSize = 0;
+            mib->RedFieldPosition = 16;
+            mib->GreenFieldPosition = 8;
+            mib->BlueFieldPosition = 0;
+            mib->RsvdFieldPosition = 0;
+            break;
+        case 16:
+            mib->RedMaskSize = 5;
+            mib->GreenMaskSize = 6;
+            mib->BlueMaskSize = 5;
+            mib->RsvdMaskSize = 0;
+            mib->RedFieldPosition = 11;
+            mib->GreenFieldPosition = 5;
+            mib->BlueFieldPosition = 0;
+            mib->RsvdFieldPosition = 0;
+            break;
+        case 15:
+            mib->RedMaskSize = 5;
+            mib->GreenMaskSize = 5;
+            mib->BlueMaskSize = 5;
+            mib->RsvdMaskSize = 1;
+            mib->RedFieldPosition = 10;
+            mib->GreenFieldPosition = 5;
+            mib->BlueFieldPosition = 0;
+            mib->RsvdFieldPosition = 15;
+            break;
+        default:
+            mib->RedMaskSize = 0;
+            mib->GreenMaskSize = 0;
+            mib->BlueMaskSize = 0;
+            mib->RsvdMaskSize = 0;
+            mib->RedFieldPosition = 0;
+            mib->GreenFieldPosition = 0;
+            mib->BlueFieldPosition = 0;
+            mib->RsvdFieldPosition = 0;
+            break;
+    }
 
     /*
      * 39 - BYTE: direct color mode info 
