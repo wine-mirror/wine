@@ -577,7 +577,7 @@ int	CDROM_SetDoor(WINE_CDAUDIO* wcda, int open, int parentdev)
     if (open) {
 	ret = ioctl(dev, CDROMEJECT);
     } else {
-	ret = ioctl(dev, CDROMEJECT, 1);
+ 	ret = ioctl(dev, CDROMCLOSETRAY);
     }
 #else
     ret = (ioctl(dev, CDIOCALLOW, NULL)) || 

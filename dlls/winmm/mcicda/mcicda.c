@@ -256,12 +256,10 @@ static DWORD MCICDA_Open(UINT wDevID, DWORD dwFlags, LPMCI_OPEN_PARMSA lpOpenPar
     
     dev = CDROM_OpenDev(&wmcda->wcda);
     if (!CDROM_Audio_GetTracksInfo(&wmcda->wcda, dev)) {
-	WARN("error reading TracksInfo !\n");
-	CDROM_CloseDev(dev);
-	return MCIERR_INTERNAL;
+	wmcda->mciMode = MCI_MODE_OPEN;
+    } else {
+	MCICDA_Seek(wDevID, MCI_SEEK_TO_START, &seekParms);
     }
-    
-    MCICDA_Seek(wDevID, MCI_SEEK_TO_START, &seekParms);
     CDROM_CloseDev(dev);
 
     return 0;
@@ -466,8 +464,7 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 	    TRACE("LENGTH=%lu !\n", lpParms->dwReturn);
 	    break;
 	case MCI_STATUS_MODE:
-	    if (!CDROM_Audio_GetCDStatus(&wmcda->wcda, -1))
-		return MCICDA_GetError(wmcda);
+	    CDROM_Audio_GetCDStatus(&wmcda->wcda, -1);
 	    lpParms->dwReturn = MCICDA_Mode(wmcda->wcda.cdaMode);
 	    if (!lpParms->dwReturn) lpParms->dwReturn = wmcda->mciMode;
 	    TRACE("MCI_STATUS_MODE=%08lX !\n", lpParms->dwReturn);
@@ -475,9 +472,9 @@ static DWORD MCICDA_Status(UINT wDevID, DWORD dwFlags, LPMCI_STATUS_PARMS lpParm
 	    ret = MCI_RESOURCE_RETURNED;
 	    break;
 	case MCI_STATUS_MEDIA_PRESENT:
-	    if(!CDROM_Audio_GetCDStatus(&wmcda->wcda, -1))
-		return MCICDA_GetError(wmcda);
-	    lpParms->dwReturn = (wmcda->wcda.nTracks == 0) ?
+	    CDROM_Audio_GetCDStatus(&wmcda->wcda, -1);
+	    lpParms->dwReturn = (wmcda->wcda.nTracks == 0 || 
+				 wmcda->wcda.cdaMode == WINE_CDA_OPEN) ?
 		MAKEMCIRESOURCE(FALSE, MCI_FALSE) : MAKEMCIRESOURCE(TRUE, MCI_TRUE);
 	    TRACE("MCI_STATUS_MEDIA_PRESENT =%c!\n", LOWORD(lpParms->dwReturn) ? 'Y' : 'N');
 	    ret = MCI_RESOURCE_RETURNED;
