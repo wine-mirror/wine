@@ -352,6 +352,14 @@ DWORD WINAPI UnhandledExceptionFilter( PEXCEPTION_POINTERS epointers );
 LPTOP_LEVEL_EXCEPTION_FILTER
 WINAPI SetUnhandledExceptionFilter( LPTOP_LEVEL_EXCEPTION_FILTER filter );
 
+/* status values for ContinueDebugEvent */
+#define DBG_CONTINUE                0x00010002
+#define DBG_TERMINATE_THREAD        0x40010003
+#define DBG_TERMINATE_PROCESS       0x40010004
+#define DBG_CONTROL_C               0x40010005
+#define DBG_CONTROL_BREAK           0x40010008
+#define DBG_EXCEPTION_NOT_HANDLED   0x80010001
+
 /*
  * Here follows typedefs for security and tokens.
  */ 

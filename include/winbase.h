@@ -22,19 +22,19 @@ typedef struct tagCOORD {
 
 typedef DWORD (CALLBACK *LPTHREAD_START_ROUTINE)(LPVOID);
 
-/* This is also defined in winnt.h */
-/* typedef struct _EXCEPTION_RECORD {
-    DWORD   ExceptionCode;
-    DWORD   ExceptionFlags;
-    struct  _EXCEPTION_RECORD *ExceptionRecord;
-    LPVOID  ExceptionAddress;
-    DWORD   NumberParameters;
-    DWORD   ExceptionInformation[15];
-} EXCEPTION_RECORD; */
+#define EXCEPTION_DEBUG_EVENT       1
+#define CREATE_THREAD_DEBUG_EVENT   2
+#define CREATE_PROCESS_DEBUG_EVENT  3
+#define EXIT_THREAD_DEBUG_EVENT     4
+#define EXIT_PROCESS_DEBUG_EVENT    5
+#define LOAD_DLL_DEBUG_EVENT        6
+#define UNLOAD_DLL_DEBUG_EVENT      7
+#define OUTPUT_DEBUG_STRING_EVENT   8
+#define RIP_EVENT                   9
 
 typedef struct _EXCEPTION_DEBUG_INFO {
-/*    EXCEPTION_RECORD ExceptionRecord; */
-    DWORD dwFirstChange;
+    EXCEPTION_RECORD ExceptionRecord;
+    DWORD dwFirstChance;
 } EXCEPTION_DEBUG_INFO;
 
 typedef struct _CREATE_THREAD_DEBUG_INFO {
