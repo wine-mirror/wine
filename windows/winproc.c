@@ -777,7 +777,7 @@ INT WINPROC_MapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM *pwparam, LPARAM *plpara
                 xs->lpszClass = xs->cs.lpszClass = usBuffer.Buffer;
             }
 
-            if (GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
+            if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
             {
                 MDICREATESTRUCTW *mdi_cs = (MDICREATESTRUCTW *)HeapAlloc(GetProcessHeap(), 0,
                                                                          sizeof(*mdi_cs));
@@ -962,7 +962,7 @@ LRESULT WINPROC_UnmapMsg32ATo32W( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             if (xs->lpszName)  HeapFree( GetProcessHeap(), 0, xs->lpszName );
             if (xs->lpszClass) HeapFree( GetProcessHeap(), 0, xs->lpszClass );
 
-            if (GetWindowLongA(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
+            if (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
             {
                 MDICREATESTRUCTW *mdi_cs = (MDICREATESTRUCTW *)xs->cs.lpCreateParams;
                 if (HIWORD(mdi_cs->szTitle))

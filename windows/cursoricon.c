@@ -127,7 +127,7 @@ static void *map_fileW( LPCWSTR name )
                          OPEN_EXISTING, FILE_FLAG_RANDOM_ACCESS, 0 );
     if (hFile != INVALID_HANDLE_VALUE)
     {
-        hMapping = CreateFileMappingA( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
+        hMapping = CreateFileMappingW( hFile, NULL, PAGE_READONLY, 0, 0, NULL );
         CloseHandle( hFile );
         if (hMapping)
         {

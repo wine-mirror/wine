@@ -2281,7 +2281,7 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
     /* need to fill the window handle for WM_PAINT message */
     if (msg.message == WM_PAINT)
     {
-        if (IsIconic( msg.hwnd ) && GetClassLongA( msg.hwnd, GCL_HICON ))
+        if (IsIconic( msg.hwnd ) && GetClassLongW( msg.hwnd, GCL_HICON ))
         {
             msg.message = WM_PAINTICON;
             msg.wParam = 1;
