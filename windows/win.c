@@ -3137,6 +3137,14 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
     }
 }
 
+/*******************************************************************
+ *		FlashWindowEx (USER32.@)
+ */
+BOOL WINAPI FlashWindowEx( PFLASHWINFO pfwi )
+{
+    FIXME("%p\n", pfwi);
+    return TRUE;
+}
 
 /*******************************************************************
  *		GetWindowContextHelpId (USER32.@)

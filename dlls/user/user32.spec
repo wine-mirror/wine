@@ -203,7 +203,7 @@
 @ stdcall FindWindowExW(long long wstr wstr)
 @ stdcall FindWindowW(wstr wstr)
 @ stdcall FlashWindow(long long)
-# @ stub FlashWindowEx
+@ stdcall FlashWindowEx(ptr)
 @ stdcall FrameRect(long ptr long)
 @ stdcall FreeDDElParam(long long)
 @ stdcall GetActiveWindow()

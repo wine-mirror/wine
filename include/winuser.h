@@ -2943,6 +2943,22 @@ typedef struct tagMINIMIZEDMETRICS {
 #define AW_VER_POSITIVE 0x00000004
 #define AW_VER_NEGATIVE 0x00000008
 
+/* FlashWindowEx() flags */
+#define FLASHW_STOP      0x00000000
+#define FLASHW_CAPTION   0x00000001
+#define FLASHW_TRAY      0x00000002
+#define FLASHW_ALL       (FLASHW_CAPTION|FLASHW_TRAY)
+#define FLASHW_TIMER     0x00000004
+#define FLASHW_TIMERNOFG 0x0000000C
+
+typedef struct {
+    UINT cbSize;
+    HWND hwnd;
+    DWORD dwFlags;
+    UINT uCount;
+    DWORD dwTimeout;
+} FLASHWINFO, *PFLASHWINFO;
+
 /* WM_SHOWWINDOW wParam codes */
 #define SW_PARENTCLOSING    1
 #define SW_OTHERMAXIMIZED   2
@@ -4077,6 +4093,7 @@ HWND      WINAPI FindWindowExA(HWND,HWND,LPCSTR,LPCSTR);
 HWND      WINAPI FindWindowExW(HWND,HWND,LPCWSTR,LPCWSTR);
 #define     FindWindowEx WINELIB_NAME_AW(FindWindowEx)
 BOOL        WINAPI FlashWindow(HWND,BOOL);
+BOOL        WINAPI FlashWindowEx(PFLASHWINFO);
 INT         WINAPI FrameRect(HDC,const RECT*,HBRUSH);
 HWND        WINAPI GetActiveWindow(void);
 HWND        WINAPI GetAncestor(HWND,UINT);
