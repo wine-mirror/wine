@@ -125,6 +125,36 @@ INT_PTR CALLBACK modify_dlgproc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM l
     return FALSE;
 }
 
+static LPTSTR read_value(HWND hwnd, HKEY hKey, LPCTSTR valueName, DWORD *lpType, LONG *len)
+{
+    DWORD valueDataLen;
+    LPTSTR buffer = NULL;
+    LONG lRet;
+
+    lRet = RegQueryValueEx(hKey, valueName, 0, lpType, 0, &valueDataLen);
+    if (lRet != ERROR_SUCCESS) {
+        error(hwnd, IDS_BAD_VALUE, valueName);
+        goto done;
+    }
+    if ( *lpType == REG_DWORD ) valueDataLen = sizeof(DWORD);
+    if (!(buffer = HeapAlloc(GetProcessHeap(), 0, valueDataLen))) {
+        error(hwnd, IDS_TOO_BIG_VALUE, valueDataLen);
+        goto done;
+    }
+    lRet = RegQueryValueEx(hKey, valueName, 0, 0, buffer, &valueDataLen);
+    if (lRet != ERROR_SUCCESS) {
+        error(hwnd, IDS_BAD_VALUE, valueName);
+        goto done;
+    }
+
+    if(len) *len = valueDataLen;
+    return buffer;
+
+done:
+    HeapFree(GetProcessHeap(), 0, buffer);
+    return NULL;
+}
+
 BOOL CreateKey(HKEY hKey)
 {
     LONG lRet = ERROR_SUCCESS;
@@ -156,7 +186,6 @@ BOOL CreateKey(HKEY hKey)
 
 BOOL ModifyValue(HWND hwnd, HKEY hKey, LPCTSTR valueName)
 {
-    DWORD valueDataLen;
     DWORD type;
     LONG lRet;
     BOOL result = FALSE;
@@ -164,22 +193,7 @@ BOOL ModifyValue(HWND hwnd, HKEY hKey, LPCTSTR valueName)
     if (!hKey || !valueName) return FALSE;
 
     editValueName = valueName;
-
-    lRet = RegQueryValueEx(hKey, valueName, 0, &type, 0, &valueDataLen);
-    if (lRet != ERROR_SUCCESS) {
-        error(hwnd, IDS_BAD_VALUE, valueName);
-        goto done;
-    }
-    if ( type == REG_DWORD ) valueDataLen = 128;
-    if (!(stringValueData = HeapAlloc(GetProcessHeap(), 0, valueDataLen))) {
-        error(hwnd, IDS_TOO_BIG_VALUE, valueDataLen);
-        goto done;
-    }
-    lRet = RegQueryValueEx(hKey, valueName, 0, 0, stringValueData, &valueDataLen);
-    if (lRet != ERROR_SUCCESS) {
-        error(hwnd, IDS_BAD_VALUE, valueName);
-        goto done;
-    }
+    if(!(stringValueData = read_value(hwnd, hKey, valueName, &type, 0))) goto done;
 
     if ( (type == REG_SZ) || (type == REG_EXPAND_SZ) ) {
         if (DialogBox(0, MAKEINTRESOURCE(IDD_EDIT_STRING), hwnd, modify_dlgproc) == IDOK) {
@@ -247,4 +261,30 @@ BOOL CreateValue(HWND hwnd, HKEY hKey, DWORD valueType)
     if (lRet != ERROR_SUCCESS) return FALSE;
 
     return TRUE;
+}
+
+BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR oldName, LPCTSTR newName)
+{
+    LPTSTR value = NULL;
+    DWORD type;
+    LONG len, lRet;
+    BOOL result = FALSE;
+    HKEY hKey;
+
+    lRet = RegOpenKeyEx(hRootKey, keyPath, 0, KEY_ALL_ACCESS, &hKey);
+    if (lRet != ERROR_SUCCESS) goto done;
+    value = read_value(hwnd, hKey, oldName, &type, &len);
+    if(!value) goto done;
+    lRet = RegSetValueEx(hKey, newName, 0, type, (BYTE*)value, len);
+    if (lRet != ERROR_SUCCESS) goto done;
+    lRet = RegDeleteValue(hKey, oldName);
+    if (lRet != ERROR_SUCCESS) {
+	RegDeleteValue(hKey, newName);
+	goto done;
+    }
+    result = TRUE;
+
+done:
+    HeapFree(GetProcessHeap(), 0, value);
+    return result;
 }

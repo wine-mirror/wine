@@ -85,6 +85,7 @@ extern void UpdateStatusBar(void);
 /* listview.c */
 extern HWND CreateListView(HWND hwndParent, int id);
 extern BOOL RefreshListView(HWND hwndLV, HKEY hKey, LPCTSTR keyPath);
+extern BOOL StartValueRename(HWND hwndLV, HKEY hKey, LPCTSTR keyPath);
 extern LPCTSTR GetValueName(HWND hwndLV);
 
 /* treeview.c */
@@ -97,5 +98,6 @@ extern BOOL CreateKey(HKEY hKey);
 extern BOOL CreateValue(HWND hwnd, HKEY hKey, DWORD valueType);
 extern BOOL ModifyValue(HWND hwnd, HKEY hKey, LPCTSTR valueName);
 extern BOOL DeleteValue(HWND hwnd, HKEY hKey, LPCTSTR valueName);
+extern BOOL RenameValue(HWND hwnd, HKEY hRootKey, LPCTSTR keyPath, LPCTSTR oldName, LPCTSTR newName);
 
 #endif /* __MAIN_H__ */

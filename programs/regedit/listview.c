@@ -44,6 +44,9 @@ static WNDPROC g_orgListWndProc;
 static DWORD g_columnToSort = ~0UL;
 static BOOL  g_invertSort = FALSE;
 static LPTSTR g_valueName;
+static LPCTSTR g_currentValue;
+static LPTSTR g_currentPath;
+static HKEY g_currentRootKey;
 
 #define MAX_LIST_COLUMNS (IDS_LIST_COLUMN_LAST - IDS_LIST_COLUMN_FIRST + 1)
 static int default_column_widths[MAX_LIST_COLUMNS] = { 200, 175, 400 };
@@ -238,7 +241,24 @@ static int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSor
 }
 
 static void ListViewPopUpMenu(HWND hWnd, POINT pt)
-{}
+{
+}
+
+BOOL StartValueRename(HWND hwndLV, HKEY hRootKey, LPCTSTR path)
+{
+    int item;
+
+    item = ListView_GetNextItem(hwndLV, -1, LVNI_FOCUSED);
+    if (item == -1) return FALSE;
+    if (!(g_currentValue = GetValueName(hwndLV))) return FALSE;
+    g_currentRootKey = hRootKey;
+    HeapFree(GetProcessHeap(), 0, g_currentPath);
+    g_currentPath = HeapAlloc(GetProcessHeap(), 0, (lstrlen(path) + 1) * sizeof(TCHAR));
+    if (!g_currentPath) return FALSE;
+    lstrcpy(g_currentPath, path);
+    if (!ListView_EditLabel(hwndLV, item)) return FALSE;
+    return TRUE;
+}
 
 static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -274,6 +294,8 @@ static LRESULT CALLBACK ListWndProc(HWND hWnd, UINT message, WPARAM wParam, LPAR
                     
             ListView_SortItems(hWnd, CompareFunc, hWnd);
             break;
+	case LVN_ENDLABELEDIT:
+	    return RenameValue(hWnd, g_currentRootKey, g_currentPath, g_currentValue, ((LPNMLVDISPINFO)lParam)->item.pszText);
         case NM_DBLCLK: {
                 NMITEMACTIVATE* nmitem = (LPNMITEMACTIVATE)lParam;
                 LVHITTESTINFO info;
@@ -346,7 +368,7 @@ HWND CreateListView(HWND hwndParent, int id)
     /* Get the dimensions of the parent window's client area, and create the list view control.  */
     GetClientRect(hwndParent, &rcClient);
     hwndLV = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, _T("List View"),
-                            WS_VISIBLE | WS_CHILD | LVS_REPORT,
+                            WS_VISIBLE | WS_CHILD | LVS_REPORT | LVS_EDITLABELS,
                             0, 0, rcClient.right, rcClient.bottom,
                             hwndParent, (HMENU)id, hInst, NULL);
     if (!hwndLV) return NULL;

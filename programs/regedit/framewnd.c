@@ -488,6 +488,9 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     create_value:
 	if (CreateValue(hWnd, hKey, valueType))
 	    RefreshListView(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
+    case ID_EDIT_RENAME:
+	StartValueRename(g_pChildWnd->hListWnd, hKeyRoot, keyPath);
+	break;
     break;
     case ID_REGISTRY_PRINTERSETUP:
         /*PRINTDLG pd;*/
