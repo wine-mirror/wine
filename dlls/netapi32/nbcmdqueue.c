@@ -27,8 +27,8 @@ struct NBCmdQueue
     PNCB             head;
 };
 
-#define CANCEL_EVENT_PTR(ncb) (PHANDLE)((ncb)->ncb_reserved)
-#define NEXT_PTR(ncb) (PNCB *)((ncb)->ncb_reserved + sizeof(HANDLE))
+#define CANCEL_EVENT_PTR(ncb) (PHANDLE)((ncb)->ncb_reserve)
+#define NEXT_PTR(ncb) (PNCB *)((ncb)->ncb_reserve + sizeof(HANDLE))
 
 /* The reserved area of an ncb will be used for the following data:
  * - a cancelled flag (BOOL, 4 bytes??)

@@ -132,7 +132,7 @@ typedef void (*NetBIOSCleanup)(void);
  * some calls (recv) will block indefinitely, so a reset, shutdown, etc. will
  * never occur.
  */
-#define NCB_CANCELLED(pncb) *(PBOOL)((pncb)->ncb_reserved)
+#define NCB_CANCELLED(pncb) *(PBOOL)((pncb)->ncb_reserve)
 
 typedef UCHAR (*NetBIOSAstat)(void *adapter, PNCB ncb);
 typedef UCHAR (*NetBIOSFindName)(void *adapter, PNCB ncb);

@@ -838,7 +838,7 @@ static UCHAR NetBTAstat(void *adapt, PNCB ncb)
                 astat->adapter_type = 0xff;
             else
                 astat->adapter_type = 0xfe; /* for Ethernet */
-            astat->max_sess_pktsize = 0xffff;
+            astat->max_sess_pkt_size = 0xffff;
             astat->xmit_success = adapter->xmit_success;
             astat->recv_success = adapter->recv_success;
         }

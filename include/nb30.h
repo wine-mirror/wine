@@ -70,7 +70,11 @@ typedef struct _NCB
 	VOID	(CALLBACK *ncb_post)(struct _NCB *);
 	UCHAR	ncb_lana_num;
 	UCHAR	ncb_cmd_cplt;
-	UCHAR	ncb_reserved[10];
+#ifdef _WIN64
+	UCHAR	ncb_reserve[18];
+#else
+	UCHAR	ncb_reserve[10];
+#endif
 	HANDLE	ncb_event;
 } NCB, *PNCB;
 
@@ -101,7 +105,7 @@ typedef struct _ADAPTER_STATUS
 	WORD	pending_sess;
 	WORD	max_cfg_sess;
 	WORD	max_sess;
-	WORD	max_sess_pktsize;
+	WORD	max_sess_pkt_size;
 	WORD	name_count;
 } ADAPTER_STATUS, *PADAPTER_STATUS;
 
