@@ -96,10 +96,6 @@ LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl)
 { DWORD    len;
   LPITEMIDLIST  newpidl;
 
-  TRACE(pidl,"%p\n",pidl);
-
-  pdump(pidl);
-
   if (!pidl)
     return NULL;
     
@@ -107,6 +103,10 @@ LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl)
   newpidl = (LPITEMIDLIST)SHAlloc(len);
   if (newpidl)
     memcpy(newpidl,pidl,len);
+
+  TRACE(pidl,"pidl=%p newpidl=%p\n",pidl, newpidl);
+  pdump(pidl);
+
   return newpidl;
 }
 /*************************************************************************
@@ -118,7 +118,6 @@ LPITEMIDLIST WINAPI ILClone (LPCITEMIDLIST pidl)
 LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
 {	DWORD len;
 	LPITEMIDLIST newpidl=NULL;
-	TRACE(pidl,"pidl=%p\n",pidl);
 	
 	if (pidl)
 	{ len = pidl->mkid.cb;	
@@ -128,6 +127,7 @@ LPITEMIDLIST WINAPI ILCloneFirst(LPCITEMIDLIST pidl)
    	    ILGetNext(newpidl)->mkid.cb = 0x00;
 	  }
 	 }
+	TRACE(pidl,"pidl=%p newpidl=%p\n",pidl, newpidl);
 
   	return newpidl;
 }
@@ -224,8 +224,6 @@ DWORD WINAPI ILGetSize(LPITEMIDLIST pidl)
 {	LPSHITEMID si = &(pidl->mkid);
 	DWORD  len=0;
 
-	/*TRACE(pidl,"pidl=%p\n",pidl);*/
-
 	if (pidl)
 	{ while (si->cb) 
 	  { len += si->cb;
@@ -233,7 +231,7 @@ DWORD WINAPI ILGetSize(LPITEMIDLIST pidl)
 	  }
 	  len += 2;
 	}
-	/*TRACE(pidl,"-- size=%lu\n",len);*/
+	TRACE(pidl,"pidl=%p size=%lu\n",pidl, len);
 	return len;
 }
 /*************************************************************************
@@ -250,7 +248,7 @@ DWORD WINAPI ILGetSize(LPITEMIDLIST pidl)
 LPITEMIDLIST WINAPI ILGetNext(LPITEMIDLIST pidl)
 {	LPITEMIDLIST nextpidl;
 
-/*	TRACE(pidl,"(pidl=%p)\n",pidl);*/
+	TRACE(pidl,"(pidl=%p)\n",pidl);
 	if(pidl)
 	{ nextpidl = (LPITEMIDLIST)(LPBYTE)(((LPBYTE)pidl) + pidl->mkid.cb);
 	  return nextpidl;
@@ -467,7 +465,7 @@ DWORD WINAPI _ILGetFolderText(LPCITEMIDLIST pidl,LPSTR lpszPath, DWORD dwSize)
 	DWORD		dwCopied = 0;
 	LPSTR		pText;
  
-	TRACE(pidl,"(%p)\n",pidl);
+	TRACE(pidl,"(%p path=%p)\n",pidl, lpszPath);
  
 	if(!pidl)
 	{ return 0;
@@ -679,7 +677,7 @@ LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE type, LPVOID pIn, UINT16 uInSize)
 	/* the sizes of: cb(2), pidldata-1, szText+1, next cb(2) */
 	switch (type)
 	{ case PT_DRIVE:
-	    uSize = 4 + 10;
+	    uSize = 4 + 9;
 	    break;
 	  default:
 	    uSize = 4 + (sizeof(PIDLDATA)) + uInSize; 
@@ -798,3 +796,118 @@ LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
 	}
 	return NULL;
 }
+
+/**************************************************************************
+ *  IDLList "Item ID List List"
+ * 
+ */
+static UINT32 IDLList_GetState(LPIDLLIST this);
+static LPITEMIDLIST IDLList_GetElement(LPIDLLIST this, UINT32 nIndex);
+static UINT32 IDLList_GetCount(LPIDLLIST this);
+static BOOL32 IDLList_StoreItem(LPIDLLIST this, LPITEMIDLIST pidl);
+static BOOL32 IDLList_AddItems(LPIDLLIST this, LPITEMIDLIST *apidl, UINT32 cidl);
+static BOOL32 IDLList_InitList(LPIDLLIST this);
+static void IDLList_CleanList(LPIDLLIST this);
+
+static IDLList_VTable idllvt = 
+{	IDLList_GetState,
+	IDLList_GetElement,
+	IDLList_GetCount,
+	IDLList_StoreItem,
+	IDLList_AddItems,
+	IDLList_InitList,
+	IDLList_CleanList
+};
+
+LPIDLLIST IDLList_Constructor (UINT32 uStep)
+{	LPIDLLIST lpidll;
+	if (!(lpidll = (LPIDLLIST)HeapAlloc(GetProcessHeap(),0,sizeof(IDLList))))
+	  return NULL;
+
+	lpidll->lpvtbl=&idllvt;
+	lpidll->uStep=uStep;
+	lpidll->dpa=NULL;
+
+	TRACE (shell,"(%p)\n",lpidll);
+	return lpidll;
+}
+void IDLList_Destructor(LPIDLLIST this)
+{	TRACE (shell,"(%p)\n",this);
+	IDLList_CleanList(this);
+}
+ 
+static UINT32 IDLList_GetState(LPIDLLIST this)
+{	TRACE (shell,"(%p)->(uStep=%u dpa=%p)\n",this, this->uStep, this->dpa);
+
+	if (this->uStep == 0)
+	{ if (this->dpa)
+	    return(State_Init);
+          return(State_OutOfMem);
+        }
+        return(State_UnInit);
+}
+static LPITEMIDLIST IDLList_GetElement(LPIDLLIST this, UINT32 nIndex)
+{	TRACE (shell,"(%p)->(index=%u)\n",this, nIndex);
+	return((LPITEMIDLIST)DPA_GetPtr(this->dpa, nIndex));
+}
+static UINT32 IDLList_GetCount(LPIDLLIST this)
+{	TRACE (shell,"(%p)\n",this);
+	return(IDLList_GetState(this)==State_Init ? DPA_GetPtrCount(this->dpa) : 0);
+}
+static BOOL32 IDLList_StoreItem(LPIDLLIST this, LPITEMIDLIST pidl)
+{	TRACE (shell,"(%p)->(pidl=%p)\n",this, pidl);
+	if (pidl)
+        { if (IDLList_InitList(this) && DPA_InsertPtr(this->dpa, 0x7fff, (LPSTR)pidl)>=0)
+	    return(TRUE);
+	  ILFree(pidl);
+        }
+        IDLList_CleanList(this);
+        return(FALSE);
+}
+static BOOL32 IDLList_AddItems(LPIDLLIST this, LPITEMIDLIST *apidl, UINT32 cidl)
+{	INT32 i;
+	TRACE (shell,"(%p)->(apidl=%p cidl=%u)\n",this, apidl, cidl);
+
+	for (i=0; i<cidl; ++i)
+        { if (!IDLList_StoreItem(this, ILClone((LPCITEMIDLIST)apidl[i])))
+	    return(FALSE);
+        }
+        return(TRUE);
+}
+static BOOL32 IDLList_InitList(LPIDLLIST this)
+{	TRACE (shell,"(%p)\n",this);
+	switch (IDLList_GetState(this))
+        { case State_Init:
+	    return(TRUE);
+
+	  case State_OutOfMem:
+	    return(FALSE);
+
+	  case State_UnInit:
+	  default:
+	    this->dpa = DPA_Create(this->uStep);
+	    this->uStep = 0;
+	    return(IDLList_InitList(this));
+        }
+}
+static void IDLList_CleanList(LPIDLLIST this)
+{	INT32 i;
+	TRACE (shell,"(%p)\n",this);
+
+	if (this->uStep != 0)
+        { this->dpa = NULL;
+	  this->uStep = 0;
+	  return;
+        }
+
+        if (!this->dpa)
+        { return;
+        }
+
+        for (i=DPA_GetPtrCount(this->dpa)-1; i>=0; --i)
+        { ILFree(IDLList_GetElement(this,i));
+        }
+
+        DPA_Destroy(this->dpa);
+        this->dpa=NULL;
+}        
