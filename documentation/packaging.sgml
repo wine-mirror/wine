@@ -1442,7 +1442,9 @@
           This is the sample config file provided with wine 20030115. You can edit this file
           to best suit the needs of your intended user.
         </para>
-        <para>
+
+        <programlisting>
+    
 WINE REGISTRY Version 2
 ;; All keys relative to \\Machine\\Software\\Wine\\Wine\\Config
 
@@ -1511,6 +1513,8 @@ WINE REGISTRY Version 2
 ;"ShowDirSymlinks" = "1"
 ;"ShowDotFiles" = "1"
 "ShellLinker" = "wineshelllink"
+
+# &lt;wineconf&gt;
 
 [Version]
 ; Windows version to imitate (win95,win98,winme,nt351,nt40,win2k,winxp,win20,win30,win31)
@@ -1720,6 +1724,20 @@ WINE REGISTRY Version 2
 ;"UseDnsComputerName" = "N"
 
 ;; sample AppDefaults entries
+
+; 3 InstallShield versions who like to put their full screen window in front,
+; without any chance to switch to another X11 application.
+; So just catch them in a desktop window.
+
+[AppDefaults\\_INS5576._MP\\x11drv]
+"Desktop" = "640x480"
+
+[AppDefaults\\_INS5176._MP\\x11drv]
+"Desktop" = "640x480"
+
+[AppDefaults\\_INS0466._MP\\x11drv]
+"Desktop" = "640x480"
+
 ;[AppDefaults\\iexplore.exe\\DllOverrides]
 ;"shlwapi" = "native"
 ;"rpcrt4" = "native"
@@ -1742,7 +1760,9 @@ WINE REGISTRY Version 2
 ;[AppDefaults\\pickygame.exe\\dsound]
 ;"EmulDriver" = "N"
 
-        </para>
+# &lt;/wineconf&gt;
+
+ </programlisting>      
         </sect1>
 
     </chapter>
