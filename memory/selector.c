@@ -857,27 +857,6 @@ void WINAPI FreeMappedBuffer( CONTEXT86 *context )
     }
 }
 
-
-/***********************************************************************
- *           UTSelectorOffsetToLinear       (WIN32S16.48)
- *
- * rough guesswork, but seems to work (I had no "reasonable" docu)
- */
-LPVOID WINAPI UTSelectorOffsetToLinear16(SEGPTR sptr)
-{
-        return PTR_SEG_TO_LIN(sptr);
-}
-
-/***********************************************************************
- *           UTLinearToSelectorOffset       (WIN32S16.49)
- *
- * FIXME: I don't know if that's the right way to do linear -> segmented
- */
-SEGPTR WINAPI UTLinearToSelectorOffset16(LPVOID lptr)
-{
-    return (SEGPTR)lptr;
-}
-
 #ifdef __i386__
 __ASM_GLOBAL_FUNC( __get_cs, "movw %cs,%ax\n\tret" )
 __ASM_GLOBAL_FUNC( __get_ds, "movw %ds,%ax\n\tret" )
