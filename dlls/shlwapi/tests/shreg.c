@@ -271,6 +271,41 @@ static void test_SHCopyKey(void)
 	RegCloseKey(hKeyDst);
 }
 
+static void test_SHDeleteKey()
+{
+    HKEY hKeyTest;
+    int sysfail=1;
+    if (!RegOpenKeyA(HKEY_CURRENT_USER, REG_TEST_KEY, &hKeyTest))
+    {
+        HKEY hKeyS;
+        if (!RegCreateKey(hKeyTest, "ODBC", &hKeyS))
+        {
+            HKEY hKeyO;
+            if (!RegCreateKey(hKeyS, "ODBC.INI", &hKeyO))
+            {
+                RegCloseKey (hKeyO);
+                if (!RegCreateKey(hKeyS, "ODBCINST.INI", &hKeyO))
+                {
+                    RegCloseKey (hKeyO);
+                    sysfail = 0;
+                }
+            }
+            RegCloseKey (hKeyS);
+        }
+        RegCloseKey (hKeyTest);
+    }
+    if (!sysfail)
+    {
+        HKEY hKeyS;
+        DWORD dwRet;
+        ok (!SHDeleteKey(HKEY_CURRENT_USER, REG_TEST_KEY "\\ODBC"), "SHDeleteKey failed\n");
+        ok ((dwRet = RegOpenKey(HKEY_CURRENT_USER, REG_TEST_KEY "\\ODBC", &hKeyS)) == ERROR_FILE_NOT_FOUND, "SHDeleteKey did not delete\n");
+        if (dwRet == ERROR_SUCCESS)
+            RegCloseKey (hKeyS);
+    }
+    else
+        ok (0, "Could not set up SHDeleteKey test\n");
+}
 
 START_TEST(shreg)
 {
@@ -285,5 +320,6 @@ START_TEST(shreg)
 	test_SHQUeryValueEx();
 	test_SHGetRegPath();
 	test_SHCopyKey();
+        test_SHDeleteKey();
         delete_key( hkey );
 }
