@@ -188,7 +188,13 @@ static void LISTBOX_UpdateScroll( WND *wnd, LB_DESCR *descr )
 {
     SCROLLINFO info;
 
-    if (!(descr->style & WS_VSCROLL)) return; 
+    /* Check the listbox scroll bar flags individually before we call
+       SetScrollInfo otherwise when the listbox style is WS_HSCROLL and
+       no WS_VSCROLL, we end up with an uninitialized, visible horizontal
+       scroll bar when we do not need one.
+    if (!(descr->style & WS_VSCROLL)) return;
+    */	
+
     /*   It is important that we check descr->style, and not wnd->dwStyle, 
        for WS_VSCROLL, as the former is exactly the one passed in 
        argument to CreateWindow.  
@@ -210,10 +216,12 @@ static void LISTBOX_UpdateScroll( WND *wnd, LB_DESCR *descr )
         info.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
         if (descr->style & LBS_DISABLENOSCROLL)
             info.fMask |= SIF_DISABLENOSCROLL;
-        SetScrollInfo( wnd->hwndSelf, SB_HORZ, &info, TRUE );
+        if (descr->style & WS_HSCROLL)
+            SetScrollInfo( wnd->hwndSelf, SB_HORZ, &info, TRUE );
         info.nMax = 0;
         info.fMask = SIF_RANGE;
-        SetScrollInfo( wnd->hwndSelf, SB_VERT, &info, TRUE );
+        if (descr->style & WS_VSCROLL)
+            SetScrollInfo( wnd->hwndSelf, SB_VERT, &info, TRUE );
     }
     else
     {
@@ -224,7 +232,8 @@ static void LISTBOX_UpdateScroll( WND *wnd, LB_DESCR *descr )
         info.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
         if (descr->style & LBS_DISABLENOSCROLL)
             info.fMask |= SIF_DISABLENOSCROLL;
-        SetScrollInfo( wnd->hwndSelf, SB_VERT, &info, TRUE );
+        if (descr->style & WS_VSCROLL)
+            SetScrollInfo( wnd->hwndSelf, SB_VERT, &info, TRUE );
 
         if (descr->horz_extent)
         {
@@ -235,7 +244,9 @@ static void LISTBOX_UpdateScroll( WND *wnd, LB_DESCR *descr )
             info.fMask = SIF_RANGE | SIF_POS | SIF_PAGE;
             if (descr->style & LBS_DISABLENOSCROLL)
                 info.fMask |= SIF_DISABLENOSCROLL;
-            SetScrollInfo( wnd->hwndSelf, SB_HORZ, &info, TRUE );
+            if (descr->style & WS_HSCROLL)
+                SetScrollInfo( wnd->hwndSelf, SB_HORZ, &info, TRUE );
+            
         }
     }
 }
@@ -1093,7 +1104,6 @@ static LRESULT LISTBOX_SetHorizontalExtent( WND *wnd, LB_DESCR *descr,
  */
 static LRESULT LISTBOX_SetColumnWidth( WND *wnd, LB_DESCR *descr, UINT width)
 {
-    width += 2;  /* For left and right margin */
     if (width == descr->column_width) return LB_OKAY;
     TRACE("[%04x]: new column width = %d\n",
 		 wnd->hwndSelf, width );
@@ -1459,6 +1469,10 @@ static LRESULT LISTBOX_RemoveItem( WND *wnd, LB_DESCR *descr, INT index )
 
     if (index == -1) index = descr->nb_items - 1;
     else if ((index < 0) || (index >= descr->nb_items)) return LB_ERR;
+
+    /* We need to invalidate the original rect instead of the updated one. */
+    LISTBOX_InvalidateItems( wnd, descr, index );
+
     LISTBOX_DeleteItem( wnd, descr, index );
 
     /* Remove the item */
@@ -1500,7 +1514,7 @@ static LRESULT LISTBOX_RemoveItem( WND *wnd, LB_DESCR *descr, INT index )
                LISTBOX_SetSelection( wnd, descr, descr->selected_item + 1, TRUE, FALSE);
     }
     }
-    LISTBOX_InvalidateItems( wnd, descr, index );
+
     if (descr->focus_item >= descr->nb_items)
     {
           descr->focus_item = descr->nb_items - 1;
