@@ -135,7 +135,7 @@ static BOOL HEAP_IsRealArena( HEAP *heapPtr, DWORD flags, LPCVOID block, BOOL qu
 /* SetLastError for ntdll */
 inline static void set_status( NTSTATUS status )
 {
-    NtCurrentTeb()->last_error = RtlNtStatusToDosError( status );
+    NtCurrentTeb()->LastErrorValue = RtlNtStatusToDosError( status );
 }
 
 /* mark a block of memory as free for debugging purposes */

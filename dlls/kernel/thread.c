@@ -623,7 +623,7 @@ HANDLE WINAPI GetCurrentThread(void)
 __ASM_GLOBAL_FUNC( SetLastError,
                    "movl 4(%esp),%eax\n\t"
                    ".byte 0x64\n\t"
-                   "movl %eax,0x60\n\t"
+                   "movl %eax,0x34\n\t"
                    "ret $4" );
 
 /***********************************************************************
@@ -631,7 +631,7 @@ __ASM_GLOBAL_FUNC( SetLastError,
  *		GetLastError (KERNEL32.@)
  */
 /* DWORD WINAPI GetLastError(void); */
-__ASM_GLOBAL_FUNC( GetLastError, ".byte 0x64\n\tmovl 0x60,%eax\n\tret" );
+__ASM_GLOBAL_FUNC( GetLastError, ".byte 0x64\n\tmovl 0x34,%eax\n\tret" );
 
 /***********************************************************************
  *		GetCurrentProcessId (KERNEL.471)
@@ -657,7 +657,7 @@ __ASM_GLOBAL_FUNC( GetCurrentThreadId, ".byte 0x64\n\tmovl 0x24,%eax\n\tret" );
  */
 void WINAPI SetLastError( DWORD error ) /* [in] Per-thread error code */
 {
-    NtCurrentTeb()->last_error = error;
+    NtCurrentTeb()->LastErrorValue = error;
 }
 
 /**********************************************************************
@@ -668,7 +668,7 @@ void WINAPI SetLastError( DWORD error ) /* [in] Per-thread error code */
  */
 DWORD WINAPI GetLastError(void)
 {
-    return NtCurrentTeb()->last_error;
+    return NtCurrentTeb()->LastErrorValue;
 }
 
 /***********************************************************************

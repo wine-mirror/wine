@@ -68,7 +68,7 @@ typedef struct _TEB
     WORD         pad1;           /* --n  2a */
     PVOID        ThreadLocalStoragePointer; /* 1--  2c Pointer to TLS array */
     PEB         *Peb;            /* 12-  30 owning process PEB */
-    DWORD	 flags;	         /* 1-n  34 */
+    DWORD        LastErrorValue; /* -2-  34 Last error code */
     DWORD        exit_code;      /* 1--  38 Termination status */
     WORD         teb_sel;        /* 1--  3c Selector to TEB */
     WORD         emu_sel;        /* 1-n  3e 80387 emulator selector */

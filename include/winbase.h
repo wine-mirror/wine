@@ -1903,7 +1903,7 @@ extern inline DWORD WINAPI GetLastError(void);
 extern inline DWORD WINAPI GetLastError(void)
 {
     DWORD ret;
-    __asm__ __volatile__( ".byte 0x64\n\tmovl 0x60,%0" : "=r" (ret) );
+    __asm__ __volatile__( ".byte 0x64\n\tmovl 0x34,%0" : "=r" (ret) );
     return ret;
 }
 
@@ -1926,7 +1926,7 @@ extern inline DWORD WINAPI GetCurrentThreadId(void)
 extern inline void WINAPI SetLastError( DWORD err );
 extern inline void WINAPI SetLastError( DWORD err )
 {
-    __asm__ __volatile__( ".byte 0x64\n\tmovl %0,0x60" : : "r" (err) : "memory" );
+    __asm__ __volatile__( ".byte 0x64\n\tmovl %0,0x34" : : "r" (err) : "memory" );
 }
 
 extern inline HANDLE WINAPI GetProcessHeap(void);
