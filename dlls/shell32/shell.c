@@ -199,7 +199,7 @@ HINSTANCE16 WINAPI FindExecutable16( LPCSTR lpFile, LPCSTR lpDirectory,
  */
 BOOL16 WINAPI AboutDlgProc16( HWND16 hWnd, UINT16 msg, WPARAM16 wParam,
                                LPARAM lParam )
-{ return AboutDlgProc( HWND_32(hWnd), msg, wParam, lParam );
+{ return (BOOL16)AboutDlgProc( HWND_32(hWnd), msg, wParam, lParam );
 }
 
 
@@ -222,64 +222,43 @@ HGLOBAL16 WINAPI InternalExtractIcon16(HINSTANCE16 hInstance,
     HGLOBAL16 hRet = 0;
     HICON16 *RetPtr = NULL;
     OFSTRUCT ofs;
-    HFILE hFile;
 
 	TRACE("(%04x,file %s,start %d,extract %d\n",
 		       hInstance, lpszExeFileName, nIconIndex, n);
 
-	if( !n )
+	if (!n)
 	  return 0;
 
-	hFile = OpenFile( lpszExeFileName, &ofs, OF_READ|OF_EXIST );
-
-	hRet = GlobalAlloc16( GMEM_FIXED | GMEM_ZEROINIT, sizeof(HICON16)*n);
+	hRet = GlobalAlloc16(GMEM_FIXED | GMEM_ZEROINIT, sizeof(*RetPtr) * n);
 	RetPtr = (HICON16*)GlobalLock16(hRet);
 
-	if (hFile == HFILE_ERROR)
-	{ /* not found - load from builtin module if available */
-	  HINSTANCE hInst = HINSTANCE_32(LoadLibrary16(lpszExeFileName));
+	if (nIconIndex == (UINT16)-1)  /* get number of icons */
+	{
+	  RetPtr[0] = PrivateExtractIconsA(ofs.szPathName, 0, 0, 0, NULL, NULL, 0, LR_DEFAULTCOLOR);
+	}
+	else
+	{
+	  UINT ret;
+	  HICON *icons;
 
-	  if ((int)hInst < 32) /* hmm, no Win16 module - try Win32 :-) */
-	    hInst = LoadLibraryA(lpszExeFileName);
-	  if (hInst)
+	  icons = HeapAlloc(GetProcessHeap(), 0, n * sizeof(*icons));
+	  ret = PrivateExtractIconsA(ofs.szPathName, nIconIndex,
+	                             GetSystemMetrics(SM_CXICON),
+	                             GetSystemMetrics(SM_CYICON),
+	                             icons, NULL, n, LR_DEFAULTCOLOR);
+	  if ((ret != 0xffffffff) && ret)
 	  {
 	    int i;
-	    for (i=nIconIndex; i < nIconIndex + n; i++)
-	      RetPtr[i-nIconIndex] =
-		      HICON_16(LoadIconA(hInst, (LPCSTR)(DWORD)i));
-	    FreeLibrary(hInst);
-	    return hRet;
+	    for (i = 0; i < n; i++) RetPtr[i] = HICON_16(icons[i]);
 	  }
-          GlobalFree16( hRet );
-	  return 0;
+	  else
+	  {
+	    GlobalFree16(hRet);
+	    hRet = 0;
+	  }
+	  HeapFree(GetProcessHeap(), 0, icons);
 	}
-
-        if (nIconIndex == (UINT16)-1)  /* get number of icons */
-        {
-            RetPtr[0] = PrivateExtractIconsA( ofs.szPathName, -1, 0, 0, NULL, 0, 0, 0 );
-        }
-        else
-        {
-            HRESULT res;
-            HICON *icons;
-            icons = HeapAlloc( GetProcessHeap(), 0, n * sizeof(*icons) );
-            res = PrivateExtractIconsA( ofs.szPathName, nIconIndex,
-                                        GetSystemMetrics(SM_CXICON),
-                                        GetSystemMetrics(SM_CYICON),
-                                        icons, 0, n, 0 );
-            if (!res)
-            {
-                int i;
-                for (i = 0; i < n; i++) RetPtr[i] = HICON_16(icons[i]);
-            }
-            else
-            {
-                GlobalFree16( hRet );
-                hRet = 0;
-            }
-            HeapFree( GetProcessHeap(), 0, icons );
-        }
-        return hRet;
+	return hRet;
 }
 
 /*************************************************************************
