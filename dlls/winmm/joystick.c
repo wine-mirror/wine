@@ -35,7 +35,6 @@
 #endif
 
 #include "mmsystem.h"
-#include "winbase.h"
 #include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"
@@ -44,7 +43,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(mmsys);
+WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 
 #define MAXJOYSTICK	(JOYSTICKID2 + 1)
 #define JOY_PERIOD_MIN	(10)	/* min Capture time period */
@@ -135,14 +134,6 @@ UINT WINAPI joyGetNumDevs(void)
 }
 
 /**************************************************************************
- * 				joyGetNumDevs		[MMSYSTEM.101]
- */
-UINT16 WINAPI joyGetNumDevs16(void)
-{
-    return joyGetNumDevs();
-}
-
-/**************************************************************************
  * 				joyGetDevCapsA		[WINMM.@]
  */
 MMRESULT WINAPI joyGetDevCapsA(UINT wID, LPJOYCAPSA lpCaps, UINT wSize)
@@ -200,46 +191,6 @@ MMRESULT WINAPI joyGetDevCapsW(UINT wID, LPJOYCAPSW lpCaps, UINT wSize)
 }
 
 /**************************************************************************
- * 				joyGetDevCaps		[MMSYSTEM.102]
- */
-MMRESULT16 WINAPI joyGetDevCaps16(UINT16 wID, LPJOYCAPS16 lpCaps, UINT16 wSize)
-{
-    JOYCAPSA	jca;
-    MMRESULT	ret = joyGetDevCapsA(wID, &jca, sizeof(jca));
-
-    if (ret != JOYERR_NOERROR) return ret;
-    lpCaps->wMid = jca.wMid;
-    lpCaps->wPid = jca.wPid;
-    strcpy(lpCaps->szPname, jca.szPname);
-    lpCaps->wXmin = jca.wXmin;
-    lpCaps->wXmax = jca.wXmax;
-    lpCaps->wYmin = jca.wYmin;
-    lpCaps->wYmax = jca.wYmax;
-    lpCaps->wZmin = jca.wZmin;
-    lpCaps->wZmax = jca.wZmax;
-    lpCaps->wNumButtons = jca.wNumButtons;
-    lpCaps->wPeriodMin = jca.wPeriodMin;
-    lpCaps->wPeriodMax = jca.wPeriodMax;
-
-    if (wSize >= sizeof(JOYCAPS16)) { /* Win95 extensions ? */
-	lpCaps->wRmin = jca.wRmin;
-	lpCaps->wRmax = jca.wRmax;
-	lpCaps->wUmin = jca.wUmin;
-	lpCaps->wUmax = jca.wUmax;
-	lpCaps->wVmin = jca.wVmin;
-	lpCaps->wVmax = jca.wVmax;
-	lpCaps->wCaps = jca.wCaps;
-	lpCaps->wMaxAxes = jca.wMaxAxes;
-	lpCaps->wNumAxes = jca.wNumAxes;
-	lpCaps->wMaxButtons = jca.wMaxButtons;
-	strcpy(lpCaps->szRegKey, jca.szRegKey);
-	strcpy(lpCaps->szOEMVxD, jca.szOEMVxD);
-    }
-
-    return ret;
-}
-
-/**************************************************************************
  *                              joyGetPosEx             [WINMM.@]
  */
 MMRESULT WINAPI joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
@@ -265,14 +216,6 @@ MMRESULT WINAPI joyGetPosEx(UINT wID, LPJOYINFOEX lpInfo)
 }
 
 /**************************************************************************
- *                              joyGetPosEx           [MMSYSTEM.110]
- */
-MMRESULT16 WINAPI joyGetPosEx16(UINT16 wID, LPJOYINFOEX lpInfo)
-{
-    return joyGetPosEx(wID, lpInfo);
-}
-
-/**************************************************************************
  * 				joyGetPos	       	[WINMM.@]
  */
 MMRESULT WINAPI joyGetPos(UINT wID, LPJOYINFO lpInfo)
@@ -291,41 +234,9 @@ MMRESULT WINAPI joyGetPos(UINT wID, LPJOYINFO lpInfo)
 }
 
 /**************************************************************************
- * 				joyGetPos	       	[MMSYSTEM.103]
- */
-MMRESULT16 WINAPI joyGetPos16(UINT16 wID, LPJOYINFO16 lpInfo)
-{
-    JOYINFO	ji;
-    MMRESULT	ret;
-
-    TRACE("(%d, %p);\n", wID, lpInfo);
-
-    if ((ret = joyGetPos(wID, &ji)) == JOYERR_NOERROR) {
-	lpInfo->wXpos = ji.wXpos;
-	lpInfo->wYpos = ji.wYpos;
-	lpInfo->wZpos = ji.wZpos;
-	lpInfo->wButtons = ji.wButtons;
-    }
-    return ret;
-}
-
-/**************************************************************************
  * 				joyGetThreshold		[WINMM.@]
  */
 MMRESULT WINAPI joyGetThreshold(UINT wID, LPUINT lpThreshold)
-{
-    TRACE("(%04X, %p);\n", wID, lpThreshold);
-
-    if (wID >= MAXJOYSTICK)	return JOYERR_PARMS;
-
-    *lpThreshold = JOY_Sticks[wID].threshold;
-    return JOYERR_NOERROR;
-}
-
-/**************************************************************************
- * 				joyGetThreshold		[MMSYSTEM.104]
- */
-MMRESULT16 WINAPI joyGetThreshold16(UINT16 wID, LPUINT16 lpThreshold)
 {
     TRACE("(%04X, %p);\n", wID, lpThreshold);
 
@@ -351,14 +262,6 @@ MMRESULT WINAPI joyReleaseCapture(UINT wID)
     JOY_Sticks[wID].wTimer = 0;
 
     return JOYERR_NOERROR;
-}
-
-/**************************************************************************
- * 				joyReleaseCapture	[MMSYSTEM.105]
- */
-MMRESULT16 WINAPI joyReleaseCapture16(UINT16 wID)
-{
-    return joyReleaseCapture(wID);
 }
 
 /**************************************************************************
@@ -388,14 +291,6 @@ MMRESULT WINAPI joySetCapture(HWND hWnd, UINT wID, UINT wPeriod, BOOL bChanged)
 }
 
 /**************************************************************************
- * 				joySetCapture		[MMSYSTEM.106]
- */
-MMRESULT16 WINAPI joySetCapture16(HWND16 hWnd, UINT16 wID, UINT16 wPeriod, BOOL16 bChanged)
-{
-    return joySetCapture16(hWnd, wID, wPeriod, bChanged);
-}
-
-/**************************************************************************
  * 				joySetThreshold		[WINMM.@]
  */
 MMRESULT WINAPI joySetThreshold(UINT wID, UINT wThreshold)
@@ -407,21 +302,4 @@ MMRESULT WINAPI joySetThreshold(UINT wID, UINT wThreshold)
     JOY_Sticks[wID].threshold = wThreshold;
 
     return JOYERR_NOERROR;
-}
-
-/**************************************************************************
- * 				joySetThreshold		[MMSYSTEM.107]
- */
-MMRESULT16 WINAPI joySetThreshold16(UINT16 wID, UINT16 wThreshold)
-{
-    return joySetThreshold16(wID,wThreshold);
-}
-
-/**************************************************************************
- * 				joySetCalibration	[MMSYSTEM.109]
- */
-MMRESULT16 WINAPI joySetCalibration16(UINT16 wID)
-{
-    FIXME("(%04X): stub.\n", wID);
-    return JOYERR_NOCANDO;
 }
