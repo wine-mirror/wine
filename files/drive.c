@@ -51,6 +51,7 @@
 #include "wine/port.h"
 #include "task.h"
 #include "debugtools.h"
+#include "wine/server.h"
 
 DEFAULT_DEBUG_CHANNEL(dosfs);
 DECLARE_DEBUG_CHANNEL(file);
@@ -171,23 +172,37 @@ int DRIVE_Init(void)
         if (path[0])
         {
             p = path + strlen(path) - 1;
-            while ((p > path) && ((*p == '/') || (*p == '\\'))) *p-- = '\0';
-            if (!path[0]) strcpy( path, "/" );
+            while ((p > path) && (*p == '/')) *p-- = '\0';
 
-            if (stat( path, &drive_stat_buffer ))
+            if (path[0] == '/')
+            {
+                drive->root = heap_strdup( path );
+            }
+            else
+            {
+                /* relative paths are relative to config dir */
+                const char *config = get_config_dir();
+                drive->root = HeapAlloc( GetProcessHeap(), 0, strlen(config) + strlen(path) + 2 );
+                sprintf( drive->root, "%s/%s", config, path );
+            }
+
+            if (stat( drive->root, &drive_stat_buffer ))
             {
                 MESSAGE("Could not stat %s (%s), ignoring drive %c:\n",
-                    path, strerror(errno), 'A' + i);
+                        drive->root, strerror(errno), 'A' + i);
+                HeapFree( GetProcessHeap(), 0, drive->root );
+                drive->root = NULL;
                 continue;
             }
             if (!S_ISDIR(drive_stat_buffer.st_mode))
             {
                 MESSAGE("%s is not a directory, ignoring drive %c:\n",
-		    path, 'A' + i );
+                        drive->root, 'A' + i );
+                HeapFree( GetProcessHeap(), 0, drive->root );
+                drive->root = NULL;
                 continue;
             }
 
-            drive->root     = heap_strdup( path );
             drive->dos_cwd  = heap_strdup( "" );
             drive->unix_cwd = heap_strdup( "" );
             drive->type     = DRIVE_GetDriveType( name );
@@ -236,7 +251,7 @@ int DRIVE_Init(void)
             count++;
             TRACE("%s: path=%s type=%s label='%s' serial=%08lx "
                   "flags=%08x dev=%x ino=%x\n",
-                  name, path, DRIVE_Types[drive->type],
+                  name, drive->root, DRIVE_Types[drive->type],
                   drive->label_conf, drive->serial_conf, drive->flags,
                   (int)drive->dev, (int)drive->ino );
         }
