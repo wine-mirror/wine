@@ -122,11 +122,11 @@ void TestMines( BOARD *p_board, POINT pt, int msg );
 
 void TestFace( BOARD *p_board, POINT pt, int msg );
 
-void DrawBoard( HDC hdc, PAINTSTRUCT *ps, BOARD *p_board );
+void DrawBoard( HDC hdc, HDC hMemDC, PAINTSTRUCT *ps, BOARD *p_board );
 
-void DrawMines( HDC hdc, BOARD *p_board );
+void DrawMines( HDC hdc, HDC hMemDC, BOARD *p_board );
 
-void DrawMine( HDC hdc, BOARD *p_board, unsigned col, unsigned row, BOOL IsPressed );
+void DrawMine( HDC hdc, HDC hMemDC, BOARD *p_board, unsigned col, unsigned row, BOOL IsPressed );
 
 void AddFlag( BOARD *p_board, unsigned col, unsigned row );
 
@@ -144,9 +144,9 @@ void UnpressBoxes( BOARD *p_board, unsigned col, unsigned row );
 
 void UpdateTimer( BOARD *p_board );
 
-void DrawLeds( HDC hdc, BOARD *p_board, int number, int x, int y);
+void DrawLeds( HDC hdc, HDC hMemDC, BOARD *p_board, int number, int x, int y);
 
-void DrawFace( HDC hdc, BOARD *p_board );
+void DrawFace( HDC hdc, HDC hMemDC, BOARD *p_board );
 
 LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 

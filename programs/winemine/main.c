@@ -14,6 +14,19 @@
 #include "dialog.h"
 #include "resource.h"
 
+/* Work around a Wine bug which defines handles as UINT rather than LPVOID */
+#ifdef WINE_STRICT
+#define NULL_HANDLE NULL
+#else
+#define NULL_HANDLE 0
+#endif
+
+#ifdef DUMB_DEBUG
+#include <stdio.h>
+#define DEBUG(x) fprintf(stderr,x)
+#else
+#define DEBUG(x) 
+#endif
 
 int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmdshow )
 { 
@@ -31,7 +44,7 @@ int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     wc.cbWndExtra = 0;
     wc.hInstance = hInst;
     wc.hIcon = LoadIcon( hInst, appname );
-    wc.hCursor = LoadCursor( NULL, IDI_APPLICATION );
+    wc.hCursor = LoadCursor( NULL_HANDLE, IDI_APPLICATION );
     wc.hbrBackground = (HBRUSH) GetStockObject( BLACK_BRUSH );
     wc.lpszMenuName = "MENU_WINEMINE";
     wc.lpszClassName = appname;
@@ -40,17 +53,17 @@ int WINAPI WinMain( HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR cmdline, int cmd
     hWnd = CreateWindow( appname, appname, 
         WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, 
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 
-        NULL, NULL, hInst, NULL );
+        NULL_HANDLE, NULL_HANDLE, hInst, NULL );
     
     if (!hWnd) exit(1);
     
     ShowWindow( hWnd, cmdshow );
     UpdateWindow( hWnd );
 
-    SetTimer( hWnd, ID_TIMER, 1000, NULL );
     haccel = LoadAccelerators( hInst, appname );
+    SetTimer( hWnd, ID_TIMER, 1000, NULL );
 
-    while( GetMessage(&msg, NULL, 0, 0) ) {
+    while( GetMessage(&msg, NULL_HANDLE, 0, 0) ) {
         if (!TranslateAccelerator( hWnd, haccel, &msg ))
             TranslateMessage( &msg );
         
@@ -75,12 +88,23 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_PAINT:
+      {
+        HDC hMemDC;
+
+        DEBUG("WM_PAINT\n");
         hdc = BeginPaint( hWnd, &ps );
-        DrawBoard( hdc, &ps, &board );
+        hMemDC = CreateCompatibleDC( hdc );
+
+        DrawBoard( hdc, hMemDC, &ps, &board );
+
+        DeleteDC( hMemDC );
         EndPaint( hWnd, &ps );
+
         return 0;
+      }
 
     case WM_MOVE:
+        DEBUG("WM_MOVE\n");
         board.pos.x = (unsigned) LOWORD(lParam);
         board.pos.y = (unsigned) HIWORD(lParam);    
         return 0;
@@ -93,12 +117,13 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_TIMER:
         if( board.status == PLAYING ) {
             board.time++;
-                  RedrawWindow( hWnd, &board.timer_rect, NULL, 
+                  RedrawWindow( hWnd, &board.timer_rect, NULL_HANDLE, 
                     RDW_INVALIDATE | RDW_UPDATENOW );      
         }
         return 0;
 
     case WM_LBUTTONDOWN:
+        DEBUG("WM_LBUTTONDOWN\n");
         if( wParam & MK_RBUTTON )
             msg = WM_MBUTTONDOWN;        
         TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
@@ -106,6 +131,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_LBUTTONUP:
+        DEBUG("WM_LBUTTONUP\n");
         if( wParam & MK_RBUTTON )
             msg = WM_MBUTTONUP;    
         TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
@@ -113,6 +139,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_RBUTTONDOWN:
+        DEBUG("WM_RBUTTONDOWN\n");
         if( wParam & MK_LBUTTON ) {    
             board.press.x = 0;
             board.press.y = 0;    
@@ -122,17 +149,28 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_RBUTTONUP:
+        DEBUG("WM_RBUTTONUP\n");
         if( wParam & MK_LBUTTON ) 
             msg = WM_MBUTTONUP;    
         TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
         return 0;
 
     case WM_MOUSEMOVE:
-        if( wParam & MK_LBUTTON )
-            TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam),  WM_LBUTTONDOWN );
-        if( (wParam & MK_LBUTTON) && (wParam & MK_RBUTTON) )
-            TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam),  WM_MBUTTONDOWN );
+    {
+        if( (wParam & MK_LBUTTON) && (wParam & MK_RBUTTON) ) {
+            msg = WM_MBUTTONDOWN;
+        }
+        else if( wParam & MK_LBUTTON ) {
+            msg = WM_LBUTTONDOWN;
+        }
+        else {
+            return 0;
+        }
+
+        TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam),  msg );
+
         return 0;    
+    } 
 
     case WM_COMMAND:
         switch(LOWORD(wParam)) {
@@ -181,8 +219,10 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         case IDM_ABOUT:
             DialogBox( board.hInst, "DLG_ABOUT", hWnd, AboutDlgProc );
             return 0;
+        default:
+            DEBUG("Unknown WM_COMMAND command message received\n");
+            break;
         }
-        break;
     } 
     return( DefWindowProc( hWnd, msg, wParam, lParam ));
 }
@@ -471,7 +511,7 @@ void CreateBoard( BOARD *p_board )
     p_board->time = 0;
 
     MoveWindow( p_board->hWnd, wnd_x, wnd_y, wnd_width, wnd_height, TRUE );
-    RedrawWindow( p_board->hWnd, NULL, NULL, 
+    RedrawWindow( p_board->hWnd, NULL, NULL_HANDLE, 
             RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE );
 }
 
@@ -511,12 +551,12 @@ void CreateBoxes( BOARD *p_board )
      */
     
     for( col = 0; col <= p_board->cols + 1; col++ )
-    for( row = 0; row <= p_board->rows + 1; row++ ) {
+      for( row = 0; row <= p_board->rows + 1; row++ ) {
         p_board->box[col][row].IsPressed = FALSE;  
         p_board->box[col][row].IsMine = FALSE;
         p_board->box[col][row].FlagType = NORMAL;
         p_board->box[col][row].NumMines = 0;
-    }
+      }
 
     /* create mines */
     i = 0;
@@ -546,22 +586,22 @@ void CreateBoxes( BOARD *p_board )
     }
 }
 
-void DrawMines ( HDC hdc, BOARD *p_board )
+void DrawMines ( HDC hdc, HDC hMemDC, BOARD *p_board )
 {
     unsigned col, row;
 
-    for( row = 1; row < p_board->rows + 1; row++ )
-    for( col = 1; col < p_board->cols + 1; col++ )
-        DrawMine( hdc, p_board, col, row, FALSE );    
+    for( row = 1; row <= p_board->rows; row++ ) { 
+      for( col = 1; col <= p_board->cols; col++ ) {
+        DrawMine( hdc, hMemDC, p_board, col, row, FALSE );    
+      }
+    }
+
 }
 
-void DrawMine( HDC hdc, BOARD *p_board, unsigned col, unsigned row, BOOL IsPressed )
+void DrawMine( HDC hdc, HDC hMemDC, BOARD *p_board, unsigned col, unsigned row, BOOL IsPressed )
 {
-    BITMAP bm ;
-    HDC    hMemDC ;
     MINEBMP_OFFSET offset = BOX_BMP;
 
-    
     if( col == 0 || col > p_board->cols || row == 0 || row > p_board->rows )
            return;    
 
@@ -577,8 +617,7 @@ void DrawMine( HDC hdc, BOARD *p_board, unsigned col, unsigned row, BOOL IsPress
             case NORMAL:
                 offset = MINE_BMP;
             }
-        }
-        else {
+        } else {
             switch( p_board->box[col][row].FlagType ) {    
             case QUESTION:
                 offset = QUESTION_BMP;     
@@ -588,10 +627,16 @@ void DrawMine( HDC hdc, BOARD *p_board, unsigned col, unsigned row, BOOL IsPress
                 break;
             case NORMAL:    
                 offset = BOX_BMP;
+                break;
+            case COMPLETE:
+                /* Do nothing */
+                break;
+            default:
+                DEBUG("Unknown FlagType during game over in DrawMine\n"); 
+                break;
             }
         } 
-    } 
-    else {    /* WAITING or PLAYING */
+    } else {    /* WAITING or PLAYING */
         switch( p_board->box[col][row].FlagType ) {
         case QUESTION:
             if( !IsPressed )    
@@ -607,30 +652,33 @@ void DrawMine( HDC hdc, BOARD *p_board, unsigned col, unsigned row, BOOL IsPress
                 offset = BOX_BMP;
             else 
                 offset = MPRESS_BMP;
+            break;
+        case COMPLETE:
+            /* Do nothing */
+            break;
+        default:
+            DEBUG("Unknown FlagType while playing in DrawMine\n"); 
+            break;
         }
     } 
 
     if( p_board->box[col][row].FlagType == COMPLETE  
-    && !p_board->box[col][row].IsMine )
+        && !p_board->box[col][row].IsMine )
           offset = (MINEBMP_OFFSET) p_board->box[col][row].NumMines;
     
-    hMemDC = CreateCompatibleDC( hdc );
+
     SelectObject (hMemDC, p_board->hMinesBMP);
-    GetObject (p_board->hMinesBMP, sizeof (BITMAP), (PSTR) &bm);
 
     BitBlt( hdc,
-        (col - 1) * MINE_WIDTH + p_board->mines_rect.left,
-        (row - 1) * MINE_HEIGHT + p_board->mines_rect.top,
-        MINE_WIDTH, MINE_HEIGHT,
-        hMemDC, 0, offset * MINE_HEIGHT, SRCCOPY);
+            (col - 1) * MINE_WIDTH + p_board->mines_rect.left,
+            (row - 1) * MINE_HEIGHT + p_board->mines_rect.top,
+            MINE_WIDTH, MINE_HEIGHT,
+            hMemDC, 0, offset * MINE_HEIGHT, SRCCOPY );
 
-    DeleteDC( hMemDC );
 }
 
-void DrawLeds( HDC hdc, BOARD *p_board, int number, int x, int y )
+void DrawLeds( HDC hdc, HDC hMemDC, BOARD *p_board, int number, int x, int y )
 {
-    HDC hMemDC;
-    BITMAP bm ;
     unsigned led[3], i;
     int count;     
 
@@ -658,10 +706,8 @@ void DrawLeds( HDC hdc, BOARD *p_board, int number, int x, int y )
         for( i = 0; i < 3; i++ )
             led[i] = 11;  
     
-    hMemDC = CreateCompatibleDC( hdc );
     SelectObject (hMemDC, p_board->hLedsBMP);
-    GetObject (p_board->hLedsBMP, sizeof (BITMAP), (PSTR) &bm);
-    
+
     for( i = 0; i < 3; i++ ) {
         BitBlt( hdc,
             i * LED_WIDTH + x,
@@ -673,18 +719,12 @@ void DrawLeds( HDC hdc, BOARD *p_board, int number, int x, int y )
             led[i] * LED_HEIGHT, 
             SRCCOPY);
     }
-    DeleteDC( hMemDC );
 }
 
 
-void DrawFace( HDC hdc, BOARD *p_board )
+void DrawFace( HDC hdc, HDC hMemDC, BOARD *p_board )
 {
-    BITMAP bm ;
-    HDC    hMemDC ;
-    
-    hMemDC = CreateCompatibleDC( hdc );
     SelectObject (hMemDC, p_board->hFacesBMP);
-    GetObject (p_board->hFacesBMP, sizeof (BITMAP), (PSTR) &bm);
 
     BitBlt( hdc,
         p_board->face_rect.left,
@@ -692,37 +732,34 @@ void DrawFace( HDC hdc, BOARD *p_board )
         FACE_WIDTH,
         FACE_HEIGHT,
         hMemDC, 0, p_board->face_bmp * FACE_HEIGHT, SRCCOPY);
-
-    DeleteDC( hMemDC );
 }
 
 
-void DrawBoard( HDC hdc, PAINTSTRUCT *ps, BOARD *p_board )
+void DrawBoard( HDC hdc, HDC hMemDC, PAINTSTRUCT *ps, BOARD *p_board )
 {
     RECT tmp_rect;    
     
     if( IntersectRect( &tmp_rect, &ps->rcPaint, &p_board->counter_rect ) )    
-        DrawLeds( hdc, p_board, p_board->mines - p_board->num_flags,
-                p_board->counter_rect.left,
-                       p_board->counter_rect.top );
+        DrawLeds( hdc, hMemDC, p_board, p_board->mines - p_board->num_flags,
+                  p_board->counter_rect.left,
+                  p_board->counter_rect.top );
 
     if( IntersectRect( &tmp_rect, &ps->rcPaint, &p_board->timer_rect ) )    
-        DrawLeds( hdc, p_board, p_board->time,
-                p_board->timer_rect.left, 
-                p_board->timer_rect.top );
+        DrawLeds( hdc, hMemDC, p_board, p_board->time,
+                  p_board->timer_rect.left, 
+                  p_board->timer_rect.top );
     
     if( IntersectRect( &tmp_rect, &ps->rcPaint, &p_board->face_rect ) )    
-        DrawFace( hdc, p_board );
+        DrawFace( hdc, hMemDC, p_board );
     
     if( IntersectRect( &tmp_rect, &ps->rcPaint, &p_board->mines_rect ) )    
-        DrawMines( hdc, p_board );
+        DrawMines( hdc, hMemDC, p_board );
 }    
 
 
 void TestBoard( HWND hWnd, BOARD *p_board, unsigned x, unsigned y, int msg )
 {
     POINT pt;
-    
     
     pt.x = x;
     pt.y = y;
@@ -788,7 +825,7 @@ void TestMines( BOARD *p_board, POINT pt, int msg )
 
     case WM_MBUTTONDOWN:
         PressBoxes( p_board, col, row );
-        draw = FALSE;    
+        draw = FALSE;
         break;
 
     case WM_MBUTTONUP:
@@ -802,11 +839,16 @@ void TestMines( BOARD *p_board, POINT pt, int msg )
 
     case WM_RBUTTONDOWN:
         AddFlag( p_board, col, row );
+        p_board->status = PLAYING;    
+        break;
+    default:
+        DEBUG("Unknown message type received in TestMines\n");
         break;
     }
+
     if( draw )
     {
-        RedrawWindow( p_board->hWnd, NULL, NULL, 
+        RedrawWindow( p_board->hWnd, NULL, NULL_HANDLE, 
             RDW_INVALIDATE | RDW_UPDATENOW );
     }
 }    
@@ -819,11 +861,9 @@ void TestFace( BOARD *p_board, POINT pt, int msg )
             p_board->face_bmp = OOH_BMP;
         else p_board->face_bmp = SMILE_BMP;
     }
-
-    if( p_board->status == GAMEOVER ) 
+    else if( p_board->status == GAMEOVER ) 
         p_board->face_bmp = DEAD_BMP;
-
-    if( p_board->status == WON ) 
+    else if( p_board->status == WON ) 
             p_board->face_bmp = COOL_BMP;
 
     if( PtInRect( &p_board->face_rect, pt ) ) {        
@@ -833,7 +873,8 @@ void TestFace( BOARD *p_board, POINT pt, int msg )
         if( msg == WM_LBUTTONUP )     
             CreateBoard( p_board );    
     }
-    RedrawWindow( p_board->hWnd, &p_board->face_rect, NULL, 
+
+    RedrawWindow( p_board->hWnd, &p_board->face_rect, NULL_HANDLE, 
         RDW_INVALIDATE | RDW_UPDATENOW );
 }
 
@@ -872,17 +913,17 @@ void CompleteBoxes( BOARD *p_board, unsigned col, unsigned row )
 
     if( p_board->box[col][row].FlagType == COMPLETE ) {
         for( i = -1; i <= 1; i++ )
-        for( j = -1; j <= 1; j++ ) {
+          for( j = -1; j <= 1; j++ ) {
             if( p_board->box[col+i][row+j].FlagType == FLAG ) 
                 numFlags++;
-        }
+          }
     
         if( numFlags == p_board->box[col][row].NumMines ) {
             for( i = -1; i <= 1; i++ )
-            for( j = -1; j <= 1; j++ ) {
+              for( j = -1; j <= 1; j++ ) {
                 if( p_board->box[col+i][row+j].FlagType != FLAG ) 
                     CompleteBox( p_board, col+i, row+j );
-            }
+              }
         }
     }
 }
@@ -915,9 +956,14 @@ void AddFlag( BOARD *p_board, unsigned col, unsigned row )
 void PressBox( BOARD *p_board, unsigned col, unsigned row )
 {
     HDC hdc;      
+    HDC hMemDC;
 
     hdc = GetDC( p_board->hWnd );
-        DrawMine( hdc, p_board, col, row, TRUE );
+    hMemDC = CreateCompatibleDC( hdc );
+
+    DrawMine( hdc, hMemDC, p_board, col, row, TRUE );
+
+    DeleteDC( hMemDC );
     ReleaseDC( p_board->hWnd, hdc );
 }
 
@@ -927,19 +973,19 @@ void PressBoxes( BOARD *p_board, unsigned col, unsigned row )
     int i, j;
 
     for( i = -1; i <= 1; i++ )
-    for( j = -1; j <= 1; j++ ) {
+      for( j = -1; j <= 1; j++ ) {
         p_board->box[col + i][row + j].IsPressed = TRUE;    
         PressBox( p_board, col + i, row + j );
     }
 
     for( i = -1; i <= 1; i++ )
-    for( j = -1; j <= 1; j++ ) {
+      for( j = -1; j <= 1; j++ ) {
         if( !p_board->box[p_board->press.x + i][p_board->press.y + j].IsPressed )    
             UnpressBox( p_board, p_board->press.x + i, p_board->press.y + j );
     }
 
     for( i = -1; i <= 1; i++ )
-    for( j = -1; j <= 1; j++ ) {
+      for( j = -1; j <= 1; j++ ) {
         p_board->box[col + i][row + j].IsPressed = FALSE;    
         PressBox( p_board, col + i, row + j );
     }
@@ -952,9 +998,14 @@ void PressBoxes( BOARD *p_board, unsigned col, unsigned row )
 void UnpressBox( BOARD *p_board, unsigned col, unsigned row )
 {
     HDC hdc; 
+    HDC hMemDC;
 
     hdc = GetDC( p_board->hWnd );
-        DrawMine( hdc, p_board, col, row, FALSE );
+    hMemDC = CreateCompatibleDC( hdc );
+
+    DrawMine( hdc, hMemDC, p_board, col, row, FALSE );
+
+    DeleteDC( hMemDC );
     ReleaseDC( p_board->hWnd, hdc );
 }
 
@@ -964,7 +1015,7 @@ void UnpressBoxes( BOARD *p_board, unsigned col, unsigned row )
     int i, j;    
     
     for( i = -1; i <= 1; i++ )
-    for( j = -1; j <= 1; j++ ) {
+      for( j = -1; j <= 1; j++ ) {
         UnpressBox( p_board, col + i, row + j );
-    }
+      }
 }

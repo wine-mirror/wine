@@ -14,5 +14,8 @@ KNOWN BUGS:
   
     No help file.
 
+    Starting a new game causes the window to drop one pixel (Peter Hunnisett)
+    I don't know if it's a window manager problem (KDE)
+
 UNKNOWN BUGS:
-    ??? 
+    ???
