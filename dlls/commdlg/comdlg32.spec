@@ -5,7 +5,9 @@ rsrc	comdlg32
 import   winspool.drv
 
 import	shell32.dll
+import shlwapi.dll
 import	comctl32.dll
+import user32.dll
 import	winspool.drv
 
  0 stub ArrowBtnWndProc
@@ -33,3 +35,5 @@ import	winspool.drv
 22 stub dwLBSubclass
 23 stub dwOKSubclass
 
+@ stdcall PrintDlgExA(ptr)PrintDlgExA
+@ stdcall PrintDlgExW(ptr)PrintDlgExW

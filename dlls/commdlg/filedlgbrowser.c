@@ -18,16 +18,6 @@
 
 DEFAULT_DEBUG_CHANNEL(commdlg)
 
-#define SETDefFormatEtc(fe,cf,med) \
-{ \
-    (fe).cfFormat = cf;\
-    (fe).dwAspect = DVASPECT_CONTENT; \
-    (fe).ptd =NULL;\
-    (fe).tymed = med;\
-    (fe).lindex = -1;\
-};
-
-
 /**************************************************************************
 *   Structure
 */
@@ -196,7 +186,7 @@ ULONG WINAPI IShellBrowserImpl_Release(IShellBrowser * iface)
 
     if (!--(This->ref)) 
     { 
-      COMDLG32_SHFree(This);
+      HeapFree(GetProcessHeap(),0, This);
       return 0;
     }
     return This->ref;
@@ -270,7 +260,7 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
 
     ICOM_THIS(IShellBrowserImpl, iface);
 
-    TRACE("(%p)\n", This);
+    TRACE("(%p)(%p,0x%08x)\n", This, pidl, wFlags);
 
     fodInfos = (FileOpenDlgInfos *) GetPropA(This->hwndOwner,FileOpenDlgInfosStr);
 
@@ -301,12 +291,13 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
         psfTmp = GetShellFolderFromPidl(pidlTmp);
 
     }
-    else
+    else /* SBSP_ABSOLUTE is 0x0000 */
     {
         /* An absolute pidl (relative from the desktop) */
         pidlTmp =  COMDLG32_PIDL_ILClone((LPITEMIDLIST)pidl);
         psfTmp = GetShellFolderFromPidl(pidlTmp);
     }
+    
 
     
     /* Retrieve the IShellFolder interface of the pidl specified folder */
@@ -322,8 +313,16 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
         return NOERROR;
     }
 
+    /* Release the current DataObject */
+    if (fodInfos->Shell.FOIDataObject)
+    {
+      IDataObject_Release(fodInfos->Shell.FOIDataObject);
+      fodInfos->Shell.FOIDataObject = NULL;
+    }
+
     /* Release the current fodInfos->Shell.FOIShellFolder and update its value */
-    IShellFolder_Release(fodInfos->Shell.FOIShellFolder);
+    if (fodInfos->Shell.FOIShellFolder)
+      IShellFolder_Release(fodInfos->Shell.FOIShellFolder);
     fodInfos->Shell.FOIShellFolder = psfTmp;
 
     /* Create the associated view */
@@ -334,6 +333,11 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
     {
         HWND hwndView;
         HWND hDlgWnd;
+	BOOL bViewHasFocus;
+
+	/* Check if listview has focus */
+	bViewHasFocus = IsChild(fodInfos->ShellInfos.hwndView,GetFocus());
+
         /* Get the foldersettings from the old view */
         if(fodInfos->Shell.FOIShellView)
         { 
@@ -382,6 +386,10 @@ HRESULT WINAPI IShellBrowserImpl_BrowseObject(IShellBrowser *iface,
             hDlgWnd = GetDlgItem(GetParent(hwndView), IDC_LOOKIN); 
             SetWindowPos(hwndView, hDlgWnd, 0,0,0,0, SWP_NOMOVE | SWP_NOSIZE);
 
+            /* Since we destroyed the old view if it had focus set focus 
+               to the newly created view */
+	    if (bViewHasFocus)
+                SetFocus(fodInfos->ShellInfos.hwndView);
             
             return NOERROR;
         }
@@ -650,18 +658,20 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnDefaultCommand(ICommDlgBrowse
     fodInfos = (FileOpenDlgInfos *) GetPropA(This->hwndOwner,FileOpenDlgInfosStr);  
     
     /* If the selected object is not a folder, send a IDOK command to parent window */
-    if((pidl = GetSelectedPidl(ppshv)))
+    if((pidl = GetPidlFromDataObject(fodInfos->Shell.FOIDataObject, 1)))
     {
         HRESULT hRes;
 
         ULONG  ulAttr = SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
         IShellFolder_GetAttributesOf(fodInfos->Shell.FOIShellFolder, 1, &pidl, &ulAttr);
-	if (ulAttr)
-            hRes = IShellBrowser_BrowseObject((IShellBrowser *)This,pidl,SBSP_RELATIVE);
-        /* Tell the dialog that the user selected a file */
+	if (ulAttr & (SFGAO_FOLDER | SFGAO_HASSUBFOLDER) )
+	{
+          hRes = IShellBrowser_BrowseObject((IShellBrowser *)This,pidl,SBSP_RELATIVE);
+	}
         else
 	{
-	    hRes = PostMessageA(This->hwndOwner, WM_COMMAND, IDOK, 0L);
+          /* Tell the dialog that the user selected a file */
+	  hRes = PostMessageA(This->hwndOwner, WM_COMMAND, IDOK, 0L);
 	}
 
         /* Free memory used by pidl */
@@ -688,6 +698,12 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnStateChange(ICommDlgBrowser *
     switch (uChange)
     {
         case CDBOSC_SETFOCUS:
+             /* FIXME: Reset the default button.
+	        This should be taken care of by defdlg. If control
+	        other than button receives focus the default button
+	        should be restored. */
+             SendMessageA(This->hwndOwner, DM_SETDEFID, IDOK, 0);
+
             break;
         case CDBOSC_KILLFOCUS: 
 	    {
@@ -699,6 +715,7 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_OnStateChange(ICommDlgBrowser *
         case CDBOSC_SELCHANGE:
             return IShellBrowserImpl_ICommDlgBrowser_OnSelChange(iface,ppshv);
         case CDBOSC_RENAME:
+	    /* nothing to do */
             break;
     }
 
@@ -758,20 +775,21 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBrowser *
     ulAttr = SFGAO_HIDDEN | SFGAO_FOLDER | SFGAO_FILESYSTEM | SFGAO_FILESYSANCESTOR | SFGAO_LINK;
     IShellFolder_GetAttributesOf(fodInfos->Shell.FOIShellFolder, 1, &pidl, &ulAttr);
     
-
-    if( (ulAttr & SFGAO_HIDDEN)						/* hidden */
-      | !(ulAttr & (SFGAO_FILESYSTEM | SFGAO_FILESYSANCESTOR)))	/* special folder */
+    if( (ulAttr & SFGAO_HIDDEN)                                         /* hidden */
+      | !(ulAttr & (SFGAO_FILESYSTEM | SFGAO_FILESYSANCESTOR))) /* special folder */
         return S_FALSE;
+
     /* always include directorys and links */
     if(ulAttr & (SFGAO_FOLDER | SFGAO_LINK)) 
         return S_OK;
+
     /* Check if there is a mask to apply if not */
-    if(!fodInfos->ShellInfos.lpstrCurrentFilter ||
-       !lstrlenW(fodInfos->ShellInfos.lpstrCurrentFilter))
+    if(!fodInfos->ShellInfos.lpstrCurrentFilter || !lstrlenW(fodInfos->ShellInfos.lpstrCurrentFilter))
         return S_OK;
 
-    if (SUCCEEDED(IShellFolder_GetDisplayNameOf(fodInfos->Shell.FOIShellFolder, pidl, SHGDN_FORPARSING, &str)))
-    { if (SUCCEEDED(COMDLG32_StrRetToStrNW(szPathW, MAX_PATH, &str, pidl)))
+    if (SUCCEEDED(IShellFolder_GetDisplayNameOf(fodInfos->Shell.FOIShellFolder, pidl, SHGDN_INFOLDER | SHGDN_FORPARSING, &str)))
+    {
+      if (SUCCEEDED(COMDLG32_StrRetToStrNW(szPathW, MAX_PATH, &str, pidl)))
       {
 	  if (COMDLG32_PathMatchSpecW(szPathW, fodInfos->ShellInfos.lpstrCurrentFilter))
           return S_OK;
@@ -787,244 +805,30 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBrowser *
 HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IShellView *ppshv)
 {
     FileOpenDlgInfos *fodInfos;
-    UINT nFileSelected;
-    UINT nFileToOpen;
-    UINT nFiles = 0;
-    char   lpstrFileList[MAX_PATH];
-    char   lpstrTemp[MAX_PATH];
-    LPSTR  lpstrCurrFile = lpstrFileList;
+
     _ICOM_THIS_FromICommDlgBrowser(IShellBrowserImpl,iface);
 
     fodInfos = (FileOpenDlgInfos *) GetPropA(This->hwndOwner,FileOpenDlgInfosStr);
     TRACE("(%p)\n", This);
 
-    nFileSelected = GetNumSelected( fodInfos->Shell.FOIShellView );
-    /* Count how many files we have */
-    for ( nFileToOpen = 0; nFileToOpen < nFileSelected; nFileToOpen++ )
-    {
-        LPITEMIDLIST pidlSelection;
-        ULONG        uAttr = SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
+    /* release old selections */
+    if (fodInfos->Shell.FOIDataObject)
+      IDataObject_Release(fodInfos->Shell.FOIDataObject);
     
-        /* get the file selected */
-        EnumSelectedPidls( fodInfos->Shell.FOIShellView, nFileToOpen, &pidlSelection );
-        IShellFolder_GetAttributesOf( fodInfos->Shell.FOIShellFolder, 1, &pidlSelection, &uAttr );
-    
-        if (!uAttr)
-           nFiles++;
-
-        COMDLG32_SHFree( (LPVOID) pidlSelection );
-    }
-
-    /* Generate the string for the edit control */
-    ZeroMemory(lpstrFileList, MAX_PATH);
-    if (nFiles)
-    {
-      for ( nFileToOpen = 0; nFileToOpen < nFileSelected; nFileToOpen++ )
-      {
-        LPITEMIDLIST pidlSelection;
-        ULONG        uAttr = SFGAO_FOLDER | SFGAO_HASSUBFOLDER;
-        
-        memset( lpstrTemp, 0x0, MAX_PATH * sizeof(char) );
-  
-        /* get the file selected */
-        EnumSelectedPidls( fodInfos->Shell.FOIShellView, nFileToOpen, &pidlSelection );
-        GetName( fodInfos->Shell.FOIShellFolder, pidlSelection, SHGDN_NORMAL, lpstrTemp );
-  
-        IShellFolder_GetAttributesOf( fodInfos->Shell.FOIShellFolder, 1, &pidlSelection, &uAttr );
-        
-        if ( uAttr & SFGAO_FOLDER ) /* Ignore folders */
-  	  continue;
-  
-        if (nFiles > 1) /* Quote files if we have more than one */
-        {
-            *lpstrCurrFile++ =  '\"';
-            lstrcpyA( lpstrCurrFile, lpstrTemp );
-            lpstrCurrFile += lstrlenA( lpstrTemp );
-            lstrcpyA( lpstrCurrFile, "\" " );
-            lpstrCurrFile += 2;
-        }
-        else
-        {
-            lstrcpyA( lpstrCurrFile, lpstrTemp );
-        }
-  
-        COMDLG32_SHFree( (LPVOID) pidlSelection );
-      }
-
-      SetWindowTextA(fodInfos->DlgInfos.hwndFileName,lpstrFileList);
-	    if(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
-		    SetDlgItemTextA(fodInfos->ShellInfos.hwndOwner,IDOK,"&Save");
-	else
-	    SetDlgItemTextA(fodInfos->ShellInfos.hwndOwner,IDOK,"&Open");
-
-	fodInfos->DlgInfos.dwDlgProp |= FODPROP_USEVIEW;
-        SendCustomDlgNotificationMessage(This->hwndOwner, CDN_SELCHANGE);
-      return S_OK;
-    }
+    /* get a new DataObject from the ShellView */
+    if(FAILED(IShellView_GetItemObject(fodInfos->Shell.FOIShellView, SVGIO_SELECTION,
+                              &IID_IDataObject, (LPVOID*)&fodInfos->Shell.FOIDataObject)))
+      return E_FAIL;
+					  
+    FILEDLG95_FILENAME_FillFromSelection(This->hwndOwner);
 
     if(fodInfos->DlgInfos.dwDlgProp & FODPROP_SAVEDLG)
-	SetDlgItemTextA(fodInfos->ShellInfos.hwndOwner,IDOK,"&Save");
+      SetDlgItemTextA(fodInfos->ShellInfos.hwndOwner,IDOK,"&Save");
+    else
+      SetDlgItemTextA(fodInfos->ShellInfos.hwndOwner,IDOK,"&Open");
 
-    fodInfos->DlgInfos.dwDlgProp &= ~FODPROP_USEVIEW;
-
-    return nFileSelected ? S_OK : E_FAIL;
+/*      fodInfos->DlgInfos.dwDlgProp |= FODPROP_USEVIEW; */
+    SendCustomDlgNotificationMessage(This->hwndOwner, CDN_SELCHANGE);
+    return S_OK;
 }
-
-/***********************************************************************
- *          GetSelectedPidl
- *
- * Return the pidl of the first selected item in the view
- */
-LPITEMIDLIST GetSelectedPidl(IShellView *ppshv)
-{
-
-    IDataObject *doSelected;
-    LPITEMIDLIST pidlSelected = NULL;
-
-    TRACE("sv=%p\n", ppshv);
-
-    /* Get an IDataObject from the view */
-    if(SUCCEEDED(IShellView_GetItemObject(ppshv,
-                                          SVGIO_SELECTION,
-                                          &IID_IDataObject,
-                                          (LPVOID *)&doSelected)))
-    {
-        STGMEDIUM medium;
-        FORMATETC formatetc;
-        
-        /* Set the FORMATETC structure*/
-        SETDefFormatEtc(formatetc,
-                        RegisterClipboardFormatA(CFSTR_SHELLIDLIST),
-                        TYMED_HGLOBAL);
-
-        /* Get the pidl from IDataObject */
-        if(SUCCEEDED(IDataObject_GetData(doSelected,&formatetc,&medium)))
-        {
-            LPIDA cida = GlobalLock(medium.u.hGlobal);
-	    TRACE("cida=%p\n", cida);
-            pidlSelected =  COMDLG32_PIDL_ILClone((LPITEMIDLIST)(&((LPBYTE)cida)[cida->aoffset[1]]));
-
-            if(medium.pUnkForRelease)
-                IUnknown_Release(medium.pUnkForRelease);
-            else
-	    {
-	      GlobalUnlock(medium.u.hGlobal);
-	      GlobalFree(medium.u.hGlobal);
-	    }
-        }
-        IDataObject_Release(doSelected);
-        return pidlSelected;
-    }
-
-    return NULL;
-}
-
-/***********************************************************************
- *          EnumSelectedPidls
- *
- * Return the pidl(s) of the selected item(s) in the view.
- *
-*/
-BOOL EnumSelectedPidls( IShellView *ppshv,  /*[in]*/ 
-                        UINT nPidlIndex,  /*[in]*/ 
-			LPITEMIDLIST *pidlSelected /*[out]*/ )
-{
-     
-    IDataObject *doSelected;
-    BOOL retVal = TRUE;
-
-    /* Get an IDataObject from the view */
-    if(SUCCEEDED(IShellView_GetItemObject(ppshv,
-                                          SVGIO_SELECTION,
-                                          &IID_IDataObject,
-                                          (LPVOID *)&doSelected)))
-    {
-        STGMEDIUM medium;
-        FORMATETC formatetc;
-
-        /* Set the FORMATETC structure*/
-        SETDefFormatEtc(formatetc,
-                        RegisterClipboardFormatA(CFSTR_SHELLIDLIST),
-                        TYMED_HGLOBAL);
-
-        /* Get the pidls from IDataObject */
-        if(SUCCEEDED(IDataObject_GetData(doSelected,&formatetc,&medium)))
-        {
-            LPIDA cida = GlobalLock(medium.u.hGlobal);
-            if(nPidlIndex < cida->cidl)
-            {
-		*pidlSelected = COMDLG32_PIDL_ILClone((LPITEMIDLIST)(&((LPBYTE)cida)[cida->aoffset[nPidlIndex + 1]]));
-	    }
-            else
-	    {
-	    	retVal = FALSE;
-	    }
-
-            if(medium.pUnkForRelease)
-            {
-	        IUnknown_Release(medium.pUnkForRelease);
-	    }
-            else
-            {
-		GlobalUnlock(medium.u.hGlobal);
-		GlobalFree(medium.u.hGlobal);
-	    }
-	}
-        IDataObject_Release(doSelected);
-        return retVal;
-    }
-    return FALSE;
-}
-
-/***********************************************************************
- *          GetNumSelected
- *
- * Return the number of selected items in the view.
- *
-*/
-UINT GetNumSelected( IShellView *ppshv )
-{
-    IDataObject *doSelected;
-    UINT retVal = 0;
-
-       /* Get an IDataObject from the view */
-    if(SUCCEEDED(IShellView_GetItemObject(ppshv,
-                                          SVGIO_SELECTION,
-                                          &IID_IDataObject,
-                                          (LPVOID *)&doSelected)))
-    {
-        STGMEDIUM medium;
-        FORMATETC formatetc;
-
-        /* Set the FORMATETC structure*/
-        SETDefFormatEtc(formatetc,
-                        RegisterClipboardFormatA(CFSTR_SHELLIDLIST),
-                        TYMED_HGLOBAL);
-
-        /* Get the pidls from IDataObject */
-        if(SUCCEEDED(IDataObject_GetData(doSelected,&formatetc,&medium)))
-        {
-            LPIDA cida = GlobalLock(medium.u.hGlobal);
-            retVal = cida->cidl;
-
-            if(medium.pUnkForRelease)
-            {
-	        IUnknown_Release(medium.pUnkForRelease);
-	    }
-            else
-	    {
-		GlobalUnlock(medium.u.hGlobal);
-		GlobalFree(medium.u.hGlobal);
-	    }
-	}
-	IDataObject_Release(doSelected);
-	return retVal;
-    }
-
-    return 0;
-}
-				 
-
-
-
 

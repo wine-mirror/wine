@@ -46,6 +46,7 @@ typedef struct
         IShellBrowser *FOIShellBrowser; 
         IShellFolder *FOIShellFolder;
         IShellView *FOIShellView;
+	IDataObject *FOIDataObject;
     } Shell;
 
     struct {
@@ -87,6 +88,11 @@ typedef struct
 #define IDS_CREATEFILE                  116
 #define IDS_CREATEFOLDER_DENIED         117
 #define IDS_FILEOPEN_CAPTION            118
+#define IDL_OVERWRITEFILE		119
+#define IDS_INVALID_FILENAME_TITLE	120
+#define IDS_INVALID_FILENAME		121
+#define IDS_PATHNOTEXISTING		122
+#define IDS_FILENOTEXISTING		123
 
 /* File Dialog Tooltips string IDs */
 
@@ -212,9 +218,14 @@ HRESULT WINAPI IShellBrowserImpl_ICommDlgBrowser_IncludeObject(ICommDlgBrowser *
                                                                LPCITEMIDLIST pidl);
 
 
+LPITEMIDLIST GetPidlFromDataObject ( IDataObject *doSelected, UINT nPidlIndex);
+UINT GetNumSelected(IDataObject *doSelected);
 
-LPITEMIDLIST GetSelectedPidl(IShellView *ppshv);
-BOOL EnumSelectedPidls(IShellView *ppshv, UINT nPidlIndex, LPITEMIDLIST *pidlSelected);
-UINT GetNumSelected(IShellView *ppshv);
+/* pidl handling */
+BOOL IsPidlFolder (LPSHELLFOLDER psf, LPITEMIDLIST pidl);
+
+/* Functions used by the EDIT box */
+void FILEDLG95_FILENAME_FillFromSelection (HWND hwnd);
+int FILEDLG95_FILENAME_GetFileNames (HWND hwnd, LPSTR * lpstrFileList, UINT * sizeUsed);
 
 #endif /*SHBROWSER_H*/

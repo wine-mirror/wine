@@ -424,6 +424,7 @@ static void PRINTDLG_UpdatePrinterInfoTexts(HWND hDlg, LPPRINTER_INFO_2A pi)
     return;
 }
 
+
 /*******************************************************************
  *
  *                 PRINTDLG_ChangePrinter
@@ -1195,3 +1196,19 @@ BOOL16 WINAPI PrintDlg16( LPPRINTDLG16 lpPrint )
     return ret;
 }
 
+/***********************************************************************
+ *	PrintDlgExA
+ */
+HRESULT WINAPI PrintDlgExA(/*LPPRINTDLGEXA*/ LPVOID lpPrintDlgExA)
+{
+	FIXME("stub\n");
+	return E_NOTIMPL;
+}
+/***********************************************************************
+ *	PrintDlgExW
+ */
+HRESULT WINAPI PrintDlgExW(/*LPPRINTDLGEXW*/ LPVOID lpPrintDlgExW)
+{
+	FIXME("stub\n");
+	return E_NOTIMPL;
+}

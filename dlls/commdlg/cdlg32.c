@@ -40,18 +40,27 @@ BOOL (WINAPI *COMDLG32_PIDL_ILIsEqual)(LPCITEMIDLIST, LPCITEMIDLIST);
 BOOL (WINAPI *COMDLG32_SHGetPathFromIDListA) (LPCITEMIDLIST,LPSTR);
 HRESULT (WINAPI *COMDLG32_SHGetSpecialFolderLocation)(HWND,INT,LPITEMIDLIST *);
 DWORD (WINAPI *COMDLG32_SHGetDesktopFolder)(IShellFolder **);
-DWORD	(WINAPI *COMDLG32_SHGetFileInfoA)(LPCSTR,DWORD,SHFILEINFOA*,UINT,UINT);
+DWORD (WINAPI *COMDLG32_SHGetFileInfoA)(LPCSTR,DWORD,SHFILEINFOA*,UINT,UINT);
 LPVOID (WINAPI *COMDLG32_SHAlloc)(DWORD);
 DWORD (WINAPI *COMDLG32_SHFree)(LPVOID);
+HRESULT (WINAPI *COMDLG32_SHGetDataFromIDListA)(LPSHELLFOLDER psf, LPCITEMIDLIST pidl, int nFormat, LPVOID dest, int len);
 HRESULT (WINAPI *COMDLG32_StrRetToBufA)(LPSTRRET,LPITEMIDLIST,LPSTR,DWORD);
 HRESULT (WINAPI *COMDLG32_StrRetToBufW)(LPSTRRET,LPITEMIDLIST,LPWSTR,DWORD);
+BOOL (WINAPI *COMDLG32_SHGetSpecialFolderPathA)(HWND hwndOwner,LPSTR szPath,DWORD csidl,BOOL bCreate);
 
 /* PATH */
 BOOL (WINAPI *COMDLG32_PathIsRootA)(LPCSTR x);
-LPCSTR (WINAPI *COMDLG32_PathFindFilenameA)(LPCSTR path);
+LPSTR (WINAPI *COMDLG32_PathFindFileNameA)(LPCSTR path);
 DWORD (WINAPI *COMDLG32_PathRemoveFileSpecA)(LPSTR fn);
 BOOL (WINAPI *COMDLG32_PathMatchSpecW)(LPCWSTR x, LPCWSTR y);
 LPSTR (WINAPI *COMDLG32_PathAddBackslashA)(LPSTR path);
+BOOL (WINAPI *COMDLG32_PathCanonicalizeA)(LPSTR pszBuf, LPCSTR pszPath);
+int (WINAPI *COMDLG32_PathGetDriveNumberA)(LPCSTR lpszPath);
+BOOL (WINAPI *COMDLG32_PathIsRelativeA) (LPCSTR lpszPath);
+LPSTR (WINAPI *COMDLG32_PathFindNextComponentA)(LPCSTR pszPath);
+LPWSTR (WINAPI *COMDLG32_PathAddBackslashW)(LPWSTR lpszPath);
+LPVOID (WINAPI *COMDLG32_PathFindExtensionA)(LPCVOID lpszPath);
+BOOL (WINAPI *COMDLG32_PathAddExtensionA)(LPSTR  pszPath,LPCSTR pszExtension);
 
 /***********************************************************************
  *	COMDLG32_DllEntryPoint			(COMDLG32.entry)
@@ -95,9 +104,9 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 
 		COMDLG32_TlsIndex = 0xffffffff;
 
-		COMCTL32_hInstance = LoadLibraryA("COMCTL32.DLL");	
-		SHELL32_hInstance = LoadLibraryA("SHELL32.DLL");
-		SHLWAPI_hInstance = LoadLibraryA("SHLWAPI.DLL");
+		COMCTL32_hInstance = GetModuleHandleA("COMCTL32.DLL");	
+		SHELL32_hInstance = GetModuleHandleA("SHELL32.DLL");
+		SHLWAPI_hInstance = GetModuleHandleA("SHLWAPI.DLL");
 		
 		if (!COMCTL32_hInstance || !SHELL32_hInstance || !SHLWAPI_hInstance)
 		{
@@ -124,6 +133,10 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		COMDLG32_SHGetPathFromIDListA = (void*)GetProcAddress(SHELL32_hInstance,"SHGetPathFromIDListA");
 		COMDLG32_SHGetDesktopFolder = (void*)GetProcAddress(SHELL32_hInstance,"SHGetDesktopFolder");
 		COMDLG32_SHGetFileInfoA = (void*)GetProcAddress(SHELL32_hInstance,"SHGetFileInfoA");
+	        COMDLG32_SHGetDataFromIDListA = (void*)GetProcAddress(SHELL32_hInstance,"SHGetDataFromIDListA");
+
+		/* FIXME: we cant import SHGetSpecialFolderPathA from all versions of shell32 */
+		COMDLG32_SHGetSpecialFolderPathA = (void*)GetProcAddress(SHELL32_hInstance,"SHGetSpecialFolderPathA");
 
 		/* ### WARINIG ### 
 		We can't do a GetProcAddress to link to  StrRetToBuf[A|W] sine not all 
@@ -136,8 +149,15 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 		COMDLG32_PathMatchSpecW = (void*)GetProcAddress(SHLWAPI_hInstance,"PathMatchSpecW");
 		COMDLG32_PathIsRootA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathIsRootA");
 		COMDLG32_PathRemoveFileSpecA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathRemoveFileSpecA");
-		COMDLG32_PathFindFilenameA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathFindFileNameA");
+		COMDLG32_PathFindFileNameA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathFindFileNameA");
 		COMDLG32_PathAddBackslashA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathAddBackslashA");
+		COMDLG32_PathCanonicalizeA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathCanonicalizeA");
+		COMDLG32_PathGetDriveNumberA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathGetDriveNumberA");
+		COMDLG32_PathIsRelativeA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathIsRelativeA");
+		COMDLG32_PathFindNextComponentA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathFindNextComponentA");
+		COMDLG32_PathAddBackslashW = (void*)GetProcAddress(SHLWAPI_hInstance,"PathAddBackslashW");
+		COMDLG32_PathFindExtensionA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathFindExtensionA");
+	        COMDLG32_PathAddExtensionA = (void*)GetProcAddress(SHLWAPI_hInstance,"PathAddExtensionA");
 		break;
 
 	case DLL_PROCESS_DETACH:
@@ -151,9 +171,6 @@ BOOL WINAPI COMDLG32_DllEntryPoint(HINSTANCE hInstance, DWORD Reason, LPVOID Res
 				FreeLibrary16(COMDLG32_hInstance16);
 
 		}
-		FreeLibrary(COMCTL32_hInstance);
-		FreeLibrary(SHELL32_hInstance);
-		FreeLibrary(SHLWAPI_hInstance);
 		break;
 	}
 	return TRUE;
