@@ -37,17 +37,12 @@
 
 DEFAULT_DEBUG_CHANNEL(toolbar)
 
-/* #define __NEW_WRAP_CODE__ */
-
 #define SEPARATOR_WIDTH    8
-#define SEPARATOR_HEIGHT   5
 #define TOP_BORDER         2
 #define BOTTOM_BORDER      2
 
 
-
 #define TOOLBAR_GetInfoPtr(wndPtr) ((TOOLBAR_INFO *)GetWindowLongA(hwnd,0))
-
 
 static void
 TOOLBAR_DrawFlatSeparator (LPRECT lpRect, HDC hdc)
@@ -328,24 +323,174 @@ TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
     TRACE (toolbar, "string size %d x %d!\n", lpSize->cx, lpSize->cy);
 }
 
+/***********************************************************************
+* 		TOOLBAR_WrapToolbar
+*
+* This function walks through the buttons and seperators in the 
+* toolbar, and sets the TBSTATE_WRAP flag only on those items where 
+* wrapping should occur based on the width of the toolbar window.  
+* It does *not* calculate button placement itself.  That task 
+* takes place in TOOLBAR_CalcToolbar. If the program wants to manage 
+* the toolbar wrapping on it's own, it can use the TBSTYLE_WRAPPABLE 
+* flag, and set the TBSTATE_WRAP flags manually on the appropriate items.
+*/ 
+
+static void
+TOOLBAR_WrapToolbar( HWND hwnd )
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    TBUTTON_INFO *btnPtr;
+    DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
+    INT x, cx, i, j;
+    RECT rc;
+    BOOL bWrap, bButtonWrap;
+
+    /* 	When the toolbar window style is not TBSTYLE_WRAPABLE,	*/ 
+    /*	no layout is necessary. Applications may use this style */
+    /*	to perform their own layout on the toolbar. 		*/
+    if( !(dwStyle & TBSTYLE_WRAPABLE) )
+	return;
+
+    btnPtr = infoPtr->buttons;
+    x  = infoPtr->nIndent;
+
+    GetClientRect( GetParent(hwnd), &rc );
+    infoPtr->nWidth = rc.right - rc.left;
+    bButtonWrap = FALSE;
+
+    for (i = 0; i < infoPtr->nNumButtons; i++ )
+    {
+	bWrap = FALSE;
+	btnPtr[i].fsState &= ~TBSTATE_WRAP;
+	
+	if (btnPtr[i].fsState & TBSTATE_HIDDEN)
+	    continue;
+
+	/* UNDOCUMENTED: If a separator has a non zero bitmap index, */
+	/* it is the actual width of the separator. This is used for */
+	/* custom controls in toolbars.                              */
+	if (btnPtr[i].fsStyle & TBSTYLE_SEP)
+	    cx = (btnPtr[i].iBitmap > 0) ?  
+			btnPtr[i].iBitmap : SEPARATOR_WIDTH;
+	else
+	    cx = infoPtr->nButtonWidth;
+
+	/* Two or more adjacent separators form a separator group.   */ 
+	/* The first separator in a group should be wrapped to the   */
+	/* next row if the previous wrapping is on a button.	     */
+	if( bButtonWrap &&
+		(btnPtr[i].fsStyle & TBSTYLE_SEP) && 
+		(i + 1 < infoPtr->nNumButtons ) &&
+		(btnPtr[i + 1].fsStyle & TBSTYLE_SEP) ) 
+	{
+	    btnPtr[i].fsState |= TBSTATE_WRAP;
+	    x = infoPtr->nIndent;
+	    i++;
+	    bButtonWrap = FALSE;
+	    continue;
+	}
+
+	/* The layout makes sure the bitmap is visible, but not the button. */
+	if ( x + cx - (infoPtr->nButtonWidth - infoPtr->nBitmapWidth) / 2 
+		 > infoPtr->nWidth ) 
+	{
+	    BOOL bFound = FALSE;
+
+	    /* 	If the current button is a separator and not hidden,  */ 
+	    /*	go to the next until it reaches a non separator.      */
+	    /*	Wrap the last separator if it is before a button.     */
+	    while( ( (btnPtr[i].fsStyle & TBSTYLE_SEP) || 
+			(btnPtr[i].fsState & TBSTATE_HIDDEN) ) && 
+			i < infoPtr->nNumButtons )
+	    {
+		i++;
+		bFound = TRUE;
+	    }
+    
+	    if( bFound && i < infoPtr->nNumButtons )
+	    {
+		i--;
+		btnPtr[i].fsState |= TBSTATE_WRAP;
+		x = infoPtr->nIndent;
+		bButtonWrap = FALSE;
+		continue;
+	    }
+	    else if ( i >= infoPtr->nNumButtons)
+		break;
+
+	    /* 	If the current button is not a separator, find the last  */ 
+	    /*	separator and wrap it.   				 */
+	    for ( j = i - 1; j >= 0  &&  !(btnPtr[j].fsState & TBSTATE_WRAP); j--)
+	    {
+		if ((btnPtr[j].fsStyle & TBSTYLE_SEP) &&
+			!(btnPtr[j].fsState & TBSTATE_HIDDEN))
+		{
+		    bFound = TRUE; 
+		    i = j; 
+		    x = infoPtr->nIndent;
+		    btnPtr[j].fsState |= TBSTATE_WRAP;
+		    bButtonWrap = FALSE; 
+		    break;
+		}
+	    }
+
+	    /* 	If no separator available for wrapping, wrap one of 	*/
+	    /*  non-hidden previous button.  			     	*/
+	    if (!bFound)
+	    {
+		for ( j = i - 1; 
+			j >= 0 && !(btnPtr[j].fsState & TBSTATE_WRAP); j--)
+		{
+		    if (btnPtr[j].fsState & TBSTATE_HIDDEN) 
+			continue;
+
+		    bFound = TRUE; 
+		    i = j; 
+		    x = infoPtr->nIndent;
+		    btnPtr[j].fsState |= TBSTATE_WRAP;
+		    bButtonWrap = TRUE;
+		    break;
+		}
+	    }
+
+	    /* If all above failed, wrap the current button. */
+	    if (!bFound)  
+	    {
+		btnPtr[i].fsState |= TBSTATE_WRAP;
+		bFound = TRUE;
+		x = infoPtr->nIndent;
+		if (btnPtr[i].fsState & TBSTYLE_SEP )
+		    bButtonWrap = FALSE;
+		else
+		    bButtonWrap = TRUE;
+	    }		    
+	}
+	else
+	    x += cx;
+    }
+}
+											
+/***********************************************************************
+* 		TOOLBAR_CalcToolbar
+*
+* This function calculates button and separator placement. It first 
+* calculates the button sizes, gets the toolbar window width and then 
+* calls TOOLBAR_WrapToolbar to determine which buttons we need to wrap 
+* on. It assigns a new location to each item and sends this location to
+* the tooltip window if appropriate. Finally, it updates the rcBound 
+* rect and calculates the new required toolbar window height. 
+*/  
 
 static void
 TOOLBAR_CalcToolbar (HWND hwnd)
 {
-    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
     TBUTTON_INFO *btnPtr;
-    INT i, nRows;
+    INT i, nRows, nSepRows;
     INT x, y, cx, cy;
-    BOOL bWrap;
     SIZE  sizeString;
-/* --- new --- */
-#ifdef __NEW_WRAP_CODE__
-    INT  nGrpCount = 0;
-    INT  grpX,j;
-    TBUTTON_INFO *grpPtr;
-#endif
-/* --- end new --- */
+    RECT rc;
+    BOOL bWrap;
 
     TOOLBAR_CalcStrings (hwnd, &sizeString);
 
@@ -359,14 +504,13 @@ TOOLBAR_CalcToolbar (HWND hwnd)
     else if (infoPtr->nButtonWidth < infoPtr->nBitmapWidth + 6)
 	infoPtr->nButtonWidth = infoPtr->nBitmapWidth + 6;
 
+    TOOLBAR_WrapToolbar( hwnd );
+
     x  = infoPtr->nIndent;
     y  = TOP_BORDER;
     cx = infoPtr->nButtonWidth;
     cy = infoPtr->nButtonHeight;
-    nRows = 0;
-
-    /* calculate the size of each button according to it's style */
-/*     TOOLBAR_CalcButtons (hwnd); */
+    nRows = nSepRows = 0;
 
     infoPtr->rcBound.top = y;
     infoPtr->rcBound.left = x;
@@ -374,114 +518,31 @@ TOOLBAR_CalcToolbar (HWND hwnd)
     infoPtr->rcBound.right = x;
 
     btnPtr = infoPtr->buttons;
-    for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++) {
-	bWrap = FALSE;
+    GetClientRect( GetParent(hwnd), &rc );
+    infoPtr->nWidth = rc.right - rc.left;
 
-	if (btnPtr->fsState & TBSTATE_HIDDEN) {
+    for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++ )
+    {
+	bWrap = FALSE;
+	if (btnPtr->fsState & TBSTATE_HIDDEN)
+	{
 	    SetRectEmpty (&btnPtr->rect);
 	    continue;
 	}
 
-#ifdef __NEW_WRAP_CODE__
-/*#if 0 */
-	if (btnPtr->fsStyle & TBSTYLE_SEP) {
 	    /* UNDOCUMENTED: If a separator has a non zero bitmap index, */
 	    /* it is the actual width of the separator. This is used for */
 	    /* custom controls in toolbars.                              */
-	    if ((dwStyle & TBSTYLE_WRAPABLE) &&
-		(btnPtr->fsState & TBSTATE_WRAP)) {
-		x = 0;
-		y += cy;
-		cx = infoPtr->nWidth;
-		cy = ((btnPtr->iBitmap > 0) ?
-		     btnPtr->iBitmap : SEPARATOR_WIDTH) * 2 / 3;
-/*		nRows++; */
-/*		bWrap = TRUE; */
-	    }
-	    else
+	if (btnPtr->fsStyle & TBSTYLE_SEP)
 		cx = (btnPtr->iBitmap > 0) ?
 		     btnPtr->iBitmap : SEPARATOR_WIDTH;
-	}
-	else {
-	    /* this must be a button */
+	else
 	    cx = infoPtr->nButtonWidth;
-	}
-/*#endif */
 
-/* --- begin test --- */
-	if ((i >= nGrpCount) && (btnPtr->fsStyle & TBSTYLE_GROUP)) {
-	    for (j = i, grpX = x, nGrpCount = 0; j < infoPtr->nNumButtons; j++) {
-		grpPtr = &infoPtr->buttons[j];
-		if (grpPtr->fsState & TBSTATE_HIDDEN)
-		    continue;
-
-		grpX += cx;
-
-		if ((grpPtr->fsStyle & TBSTYLE_SEP) ||
-		    !(grpPtr->fsStyle & TBSTYLE_GROUP) ||
-		    (grpX > infoPtr->nWidth)) {
-		    nGrpCount = j;
-		    break;
-		}
-		else if (grpX + x > infoPtr->nWidth) {
+	if (btnPtr->fsState & TBSTATE_WRAP )
 		    bWrap = TRUE;
-		    nGrpCount = j;
-		    break;
-		}
-	    }
-	}
-
-	bWrap = ((bWrap || (x + cx > infoPtr->nWidth)) &&
-		 (dwStyle & TBSTYLE_WRAPABLE));
-	if (bWrap) {
-	    nRows++;
-	    y += cy;
-	    x  = infoPtr->nIndent;
-	    bWrap = FALSE;
-	}
 
 	SetRect (&btnPtr->rect, x, y, x + cx, y + cy);
-
-	btnPtr->nRow = nRows;
-	x += cx;
-
-	if (btnPtr->fsState & TBSTATE_WRAP) {
-	    nRows++;
-	    y += (cy + SEPARATOR_HEIGHT);
-	    x  = infoPtr->nIndent;
-	}
-
-	infoPtr->nRows = nRows + 1;
-
-/* --- end test --- */
-#else
-	if (btnPtr->fsStyle & TBSTYLE_SEP) {
-	    /* UNDOCUMENTED: If a separator has a non zero bitmap index, */
-	    /* it is the actual width of the separator. This is used for */
-	    /* custom controls in toolbars.                              */
-	    if ((dwStyle & TBSTYLE_WRAPABLE) &&
-		(btnPtr->fsState & TBSTATE_WRAP)) {
-		x = 0;
-		y += cy;
-		cx = infoPtr->nWidth;
-		cy = ((btnPtr->iBitmap > 0) ?
-		     btnPtr->iBitmap : SEPARATOR_WIDTH) * 2 / 3;
-		nRows++;
-		bWrap = TRUE;
-	    }
-	    else
-		cx = (btnPtr->iBitmap > 0) ?
-		     btnPtr->iBitmap : SEPARATOR_WIDTH;
-	}
-	else {
-	    /* this must be a button */
-	    cx = infoPtr->nButtonWidth;
-	}
-
-	btnPtr->rect.left   = x;
-	btnPtr->rect.top    = y;
-	btnPtr->rect.right  = x + cx;
-	btnPtr->rect.bottom = y + cy;
 
 	if (infoPtr->rcBound.left > x)
 	    infoPtr->rcBound.left = x;
@@ -490,7 +551,9 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 	if (infoPtr->rcBound.bottom < y + cy)
 	    infoPtr->rcBound.bottom = y + cy;
 
-	if (infoPtr->hwndToolTip) {
+	/* Set the toolTip only for non-hidden, non-separator button */
+	if (infoPtr->hwndToolTip && !(btnPtr->fsStyle & TBSTYLE_SEP )) 
+	{
 	    TTTOOLINFOA ti;
 
 	    ZeroMemory (&ti, sizeof(TTTOOLINFOA));
@@ -502,18 +565,41 @@ TOOLBAR_CalcToolbar (HWND hwnd)
 			    0, (LPARAM)&ti);
 	}
 
-	if (bWrap) {
-	    x = 0;
+	/* btnPtr->nRow is zero based. The space between the rows is 	*/
+	/* also considered as a row. 					*/
+	btnPtr->nRow = nRows + nSepRows;
+	if( bWrap )
+	{
+	    if ( !(btnPtr->fsStyle & TBSTYLE_SEP) )
 	    y += cy;
-	    if (i < infoPtr->nNumButtons)
+	    else 
+	    {   
+		/* UNDOCUMENTED: If a separator has a non zero bitmap index, */
+		/* it is the actual width of the separator. This is used for */
+		/* custom controls in toolbars. 			     */
+		y += cy + ( (btnPtr->iBitmap > 0 ) ? 
+			btnPtr->iBitmap : SEPARATOR_WIDTH) * 2 /3; 
+	     
+		/* nSepRows is used to calculate the extra height follwoing  */ 	 
+		/* the last row.					     */
+		nSepRows++;
+	    }
+	    x = infoPtr->nIndent;
 		nRows++;
 	}
 	else
 	    x += cx;
-#endif
     }
 
-    infoPtr->nHeight = y + cy + BOTTOM_BORDER;
+    /* infoPtr->nRows is the number of rows on the toolbar */
+    infoPtr->nRows = nRows + nSepRows + 1;
+
+    /* nSepRows * (infoPtr->nBitmapHeight + 1) is the space following 	*/
+    /* the last row. 							*/
+    infoPtr->nHeight = TOP_BORDER + (nRows + 1) * infoPtr->nButtonHeight + 
+		       	nSepRows * SEPARATOR_WIDTH * 2 / 3 +
+			nSepRows * (infoPtr->nBitmapHeight + 1) + 
+			BOTTOM_BORDER; 
     TRACE (toolbar, "toolbar height %d\n", infoPtr->nHeight);
 }
 
@@ -946,6 +1032,7 @@ TOOLBAR_AutoSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else {
 	infoPtr->nWidth = parent_rect.right - parent_rect.left;
 	TOOLBAR_CalcToolbar (hwnd);
+	InvalidateRect( hwnd, NULL, TRUE );
 	cy = infoPtr->nHeight;
 	cx = infoPtr->nWidth;
     }
@@ -1365,6 +1452,8 @@ TOOLBAR_GetItemRect (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	return FALSE;
     if (btnPtr->fsState & TBSTATE_HIDDEN)
 	return FALSE;
+    
+    TOOLBAR_CalcToolbar( hwnd );
     
     lpRect->left   = btnPtr->rect.left;
     lpRect->right  = btnPtr->rect.right;
@@ -2583,6 +2672,7 @@ TOOLBAR_Paint (HWND hwnd, WPARAM wParam)
     HDC hdc;
     PAINTSTRUCT ps;
 
+    TOOLBAR_CalcToolbar( hwnd );
     hdc = wParam==0 ? BeginPaint (hwnd, &ps) : (HDC)wParam;
     TOOLBAR_Refresh (hwnd, hdc);
     if (!wParam)
