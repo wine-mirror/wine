@@ -487,7 +487,7 @@ FreeMRUListA (HANDLE hMRUList)
 /**************************************************************************
  *              AddMRUData [COMCTL32.167]
  * 
- * Add item to MRU binary list.  If item already exists in list them it is
+ * Add item to MRU binary list.  If item already exists in list then it is
  * simply moved up to the top of the list and not added again.  If list is
  * full then the least recently used item is removed to make room.
  *
@@ -541,7 +541,7 @@ AddMRUStringA(HANDLE hList, LPCSTR lpszString)
  *    nItemPos [I] item position to remove 0 -> MRU
  *
  * RETURNS
- *    TRUE is successful, FALSE if nItemPos is out of range.
+ *    TRUE if successful, FALSE if nItemPos is out of range.
  */
 BOOL WINAPI
 DelMRUString(HANDLE hList, INT nItemPos)
@@ -1311,7 +1311,7 @@ DPA_Destroy (const HDPA hdpa)
  *
  * PARAMS
  *     hdpa  [I] handle (pointer) to the existing (source) pointer array
- *     nGrow [I] number of items, the array grows, when it's too small
+ *     nGrow [I] number of items by which the array grows when it's too small
  *
  * RETURNS
  *     Success: TRUE

@@ -583,7 +583,7 @@ static int _w95_dump_dkv(_w95dkh *dkh,int nrLS,int nrMS,FILE *f)
     /* first value block */
     dkv = (_w95dkv*)((char*)dkh+dkh->keynamelen+0x14);
 
-    /* loop trought the values */
+    /* loop through the values */
     for (i=0; i< dkh->values; i++) {
         struct key_value value;
         WCHAR *pdata;
@@ -1378,7 +1378,7 @@ error1:
     return ret;
 }
 
-/* convert native native registry to wine format and load it via server call [Internal] */
+/* convert native registry to wine format and load it via server call [Internal] */
 static void _convert_and_load_native_registry(LPCSTR fn,HKEY hkey,int reg_type,int level)
 {
     LPSTR tmp = NULL;
@@ -1401,10 +1401,10 @@ static void _convert_and_load_native_registry(LPCSTR fn,HKEY hkey,int reg_type,i
 
     if (tmp != NULL) {
         load_wine_registry(hkey,tmp);
-        TRACE("File %s successfuly converted to %s and loaded to registry.\n",fn,tmp);
+        TRACE("File %s successfully converted to %s and loaded to registry.\n",fn,tmp);
         unlink(tmp);
     }
-    else WARN("Unable to convert %s (not exist?)\n",fn);
+    else WARN("Unable to convert %s (doesn't exist?)\n",fn);
     free(tmp);
 }
 

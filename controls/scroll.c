@@ -834,7 +834,7 @@ void SCROLL_DrawScrollBar( HWND hwnd, HDC hdc, INT nBar,
         (SCROLL_TrackingBar == nBar))
         SCROLL_DrawMovingThumb( hdc, &rect, vertical, arrowSize, thumbSize );
 
-    /* if scroll bar has focus, reposition the caret*/
+    /* if scroll bar has focus, reposition the caret */
     if(hwnd==GetFocus() && (nBar==SB_CTL))
     {
         if (!vertical)
@@ -938,7 +938,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
     switch(msg)
     {
       case WM_LBUTTONDOWN:  /* Initialise mouse tracking */
-          HideCaret(hwnd);  /* hide caret while holding down LBUTTON*/
+          HideCaret(hwnd);  /* hide caret while holding down LBUTTON */
           SCROLL_trackVertical = vertical;
           SCROLL_trackHitTest  = hittest = SCROLL_HitTest( hwnd, nBar, pt, FALSE );
           lastClickPos  = vertical ? (pt.y - rect.top) : (pt.x - rect.left);
@@ -1174,7 +1174,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         }
         break;
 
-    /* if key event is received, the scrollbar has the focus*/
+    /* if key event is received, the scrollbar has the focus */
     case WM_KEYDOWN:
         /* hide caret on first KEYDOWN to prevent flicker */
         if ((lParam & 0x40000000)==0)
@@ -1188,7 +1188,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
 
     case WM_SETFOCUS:
         {
-            /* Create a caret when a ScrollBar get focus*/
+            /* Create a caret when a ScrollBar get focus */
             RECT rect;
             int arrowSize, thumbSize, thumbPos, vertical;
             vertical = SCROLL_GetScrollBarRect( hwnd, SB_CTL, &rect,
