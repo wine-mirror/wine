@@ -311,7 +311,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
     strcpy(gSysContext.lcName, "Wine Tablet Context");
     strcpy(gSysDevice.NAME,"Wine Tablet Device");
 
-    gSysContext.lcOptions = CXO_SYSTEM | CXO_MESSAGES | CXO_CSRMESSAGES;
+    gSysContext.lcOptions = CXO_SYSTEM;
     gSysContext.lcLocks = CXL_INSIZE | CXL_INASPECT | CXL_MARGIN |
                                CXL_SENSITIVITY | CXL_SYSOUT;
 
@@ -408,7 +408,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
             cursor->NPBUTTON = 1;
             cursor->NPBTNMARKS[0] = 0 ;
             cursor->NPBTNMARKS[1] = 1 ;
-            cursor->CAPABILITIES = 1;
+            cursor->CAPABILITIES = CRC_MULTIMODE;
             if (strcasecmp(cursor->NAME,"stylus")==0)
                 cursor->TYPE = 0x4825;
             if (strcasecmp(cursor->NAME,"eraser")==0)
@@ -433,7 +433,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                                 /* Axis 1 is X */
                                 gSysDevice.X.axMin = Axis->min_value;
                                 gSysDevice.X.axMax= Axis->max_value;
-                                gSysDevice.X.axUnits = 1;
+                                gSysDevice.X.axUnits = TU_INCHES;
                                 gSysDevice.X.axResolution = Axis->resolution;
                                 gSysContext.lcInOrgX = Axis->min_value;
                                 gSysContext.lcSysOrgX = Axis->min_value;
@@ -446,7 +446,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                                 /* Axis 2 is Y */
                                 gSysDevice.Y.axMin = Axis->min_value;
                                 gSysDevice.Y.axMax= Axis->max_value;
-                                gSysDevice.Y.axUnits = 1;
+                                gSysDevice.Y.axUnits = TU_INCHES;
                                 gSysDevice.Y.axResolution = Axis->resolution;
                                 gSysContext.lcInOrgY = Axis->min_value;
                                 gSysContext.lcSysOrgY = Axis->min_value;
@@ -459,7 +459,7 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                                 /* Axis 3 is Normal Pressure */
                                 gSysDevice.NPRESSURE.axMin = Axis->min_value;
                                 gSysDevice.NPRESSURE.axMax= Axis->max_value;
-                                gSysDevice.NPRESSURE.axUnits = 1;
+                                gSysDevice.NPRESSURE.axUnits = TU_INCHES;
                                 gSysDevice.NPRESSURE.axResolution =
                                                         Axis->resolution;
                                 Axis++;
@@ -474,14 +474,14 @@ void X11DRV_LoadTabletInfo(HWND hwnddefault)
                                 {
                                     gSysDevice.ORIENTATION[0].axMin = 0;
                                     gSysDevice.ORIENTATION[0].axMax = 3600;
-                                    gSysDevice.ORIENTATION[0].axUnits = 1;
-                                    gSysDevice.ORIENTATION[0].axResolution =
-                                                                     235929600;
+                                    gSysDevice.ORIENTATION[0].axUnits = TU_CIRCLE;
+                                    gSysDevice.ORIENTATION[0].axResolution
+                                                                = CASTFIX32(3600);
                                     gSysDevice.ORIENTATION[1].axMin = -1000;
                                     gSysDevice.ORIENTATION[1].axMax = 1000;
-                                    gSysDevice.ORIENTATION[1].axUnits = 1;
-                                    gSysDevice.ORIENTATION[1].axResolution =
-                                                                     235929600;
+                                    gSysDevice.ORIENTATION[1].axUnits = TU_CIRCLE;
+                                    gSysDevice.ORIENTATION[1].axResolution
+                                                                = CASTFIX32(3600);
                                     Axis++;
                                 }
                             }
