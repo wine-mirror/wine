@@ -136,6 +136,11 @@ extern struct DPMI_segments *DOSVM_dpmi_segments;
              LOWORD((context)->Ecx), LOWORD((context)->Edx), LOWORD((context)->Esi), \
              LOWORD((context)->Edi), (WORD)(context)->SegDs, (WORD)(context)->SegEs )
 
+/* pushing on stack in 16 bit needs segment wrap around */
+#define PUSH_WORD16(context,val) \
+    *((WORD*)CTX_SEG_OFF_TO_LIN((context), \
+        (context)->SegSs, ADD_LOWORD( context->Esp, -2 ) )) = (val)
+
 /* Macros for easier access to i386 context registers */
 
 #define AX_reg(context)      ((WORD)(context)->Eax)

@@ -392,8 +392,6 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
         }
         else
         {
-            WORD *stack;
-            
             TRACE( "invoking hooked interrupt %02x at %04x:%04x\n", 
                    intnum, SELECTOROF(addr), OFFSETOF(addr) );
 
@@ -401,11 +399,9 @@ void DOSVM_HardwareInterruptPM( CONTEXT86 *context, BYTE intnum )
                 DOSVM_PrepareIRQ( context, FALSE );
 
             /* Push the flags and return address on the stack */
-            stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
-            *(--stack) = LOWORD(context->EFlags);
-            *(--stack) = context->SegCs;
-            *(--stack) = LOWORD(context->Eip);
-            ADD_LOWORD( context->Esp, -6 );
+            PUSH_WORD16( context, LOWORD(context->EFlags) );
+            PUSH_WORD16( context, context->SegCs );
+            PUSH_WORD16( context, LOWORD(context->Eip) );
 
             /* Jump to the interrupt handler */
             context->SegCs =  HIWORD(addr);
@@ -506,7 +502,6 @@ void DOSVM_HardwareInterruptRM( CONTEXT86 *context, BYTE intnum )
      else 
      {
          /* the interrupt is hooked, simulate interrupt in DOS space */ 
-         WORD* stack = PTR_REAL_TO_LIN( context->SegSs, context->Esp );
          WORD  flag  = LOWORD( context->EFlags );
 
          TRACE( "invoking hooked interrupt %02x at %04x:%04x\n", 
@@ -518,10 +513,10 @@ void DOSVM_HardwareInterruptRM( CONTEXT86 *context, BYTE intnum )
          else 
              flag &= ~IF_MASK;
 
-         *(--stack) = flag;
-         *(--stack) = context->SegCs;
-         *(--stack) = LOWORD( context->Eip );
-         context->Esp -= 6;
+         PUSH_WORD16( context, flag );
+         PUSH_WORD16( context, context->SegCs );
+         PUSH_WORD16( context, LOWORD( context->Eip ));
+         
          context->SegCs = SELECTOROF( handler );
          context->Eip   = OFFSETOF( handler );
 

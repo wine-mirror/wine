@@ -168,7 +168,6 @@ void DOSVM_RelayHandler( CONTEXT86 *context )
  */
 void DOSVM_BuildCallFrame( CONTEXT86 *context, DOSRELAY relay, LPVOID data )
 {
-    WORD *stack;
     WORD  code_sel = DOSVM_dpmi_segments->relay_code_sel;
 
     /*
@@ -177,32 +176,26 @@ void DOSVM_BuildCallFrame( CONTEXT86 *context, DOSRELAY relay, LPVOID data )
     RELAY_MakeShortContext( context );
 
     /*
-     * Get stack pointer after RELAY_MakeShortContext.
-     */
-    stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
-
-    /*
      * Build call frame.
      */
-    *(--stack) = HIWORD(data);            /* argument.hiword */ 
-    *(--stack) = LOWORD(data);            /* argument.loword */
-    *(--stack) = context->SegCs;          /* STACK16FRAME.cs */
-    *(--stack) = LOWORD(context->Eip);    /* STACK16FRAME.ip */
-    *(--stack) = LOWORD(context->Ebp);    /* STACK16FRAME.bp */
-    *(--stack) = HIWORD(relay);           /* STACK16FRAME.entry_point.hiword */
-    *(--stack) = LOWORD(relay);           /* STACK16FRAME.entry_point.loword */
-    *(--stack) = 0;                       /* STACK16FRAME.entry_ip */
-    *(--stack) = HIWORD(RELAY_RelayStub); /* STACK16FRAME.relay.hiword */
-    *(--stack) = LOWORD(RELAY_RelayStub); /* STACK16FRAME.relay.loword */
-    *(--stack) = 0;                       /* STACK16FRAME.module_cs.hiword */
-    *(--stack) = code_sel;                /* STACK16FRAME.module_cs.loword */
-    *(--stack) = 0;                       /* STACK16FRAME.callfrom_ip.hiword */
-    *(--stack) = 0;                       /* STACK16FRAME.callfrom_ip.loword */
+    PUSH_WORD16( context, HIWORD(data) );            /* argument.hiword */ 
+    PUSH_WORD16( context, LOWORD(data) );            /* argument.loword */
+    PUSH_WORD16( context, context->SegCs );          /* STACK16FRAME.cs */
+    PUSH_WORD16( context, LOWORD(context->Eip) );    /* STACK16FRAME.ip */
+    PUSH_WORD16( context, LOWORD(context->Ebp) );    /* STACK16FRAME.bp */
+    PUSH_WORD16( context, HIWORD(relay) );           /* STACK16FRAME.entry_point.hiword */
+    PUSH_WORD16( context, LOWORD(relay) );           /* STACK16FRAME.entry_point.loword */
+    PUSH_WORD16( context, 0 );                       /* STACK16FRAME.entry_ip */
+    PUSH_WORD16( context, HIWORD(RELAY_RelayStub) ); /* STACK16FRAME.relay.hiword */
+    PUSH_WORD16( context, LOWORD(RELAY_RelayStub) ); /* STACK16FRAME.relay.loword */
+    PUSH_WORD16( context, 0 );                       /* STACK16FRAME.module_cs.hiword */
+    PUSH_WORD16( context, code_sel );                /* STACK16FRAME.module_cs.loword */
+    PUSH_WORD16( context, 0 );                       /* STACK16FRAME.callfrom_ip.hiword */
+    PUSH_WORD16( context, 0 );                       /* STACK16FRAME.callfrom_ip.loword */
 
     /*
-     * Adjust stack and code pointers.
+     * Adjust code pointer.
      */
-    ADD_LOWORD( context->Esp, -28 );
     context->SegCs = wine_get_cs();
     context->Eip = (DWORD)__wine_call_from_16_regs;
 }
