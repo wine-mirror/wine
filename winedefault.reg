@@ -60,7 +60,7 @@
 #
 # Configuration for unhandled exceptions
 #
-[MACHINE\Software\Microsoft\Windows NT\CurrentVersionAeDebug]
+[MACHINE\Software\Microsoft\Windows NT\CurrentVersion\AeDebug]
 # command line to start a debugger when an exception occurs
 "Debugger"="debugger/winedbg %ld %ld"
 # to 1 if no message box has to be presented before running the debugger
