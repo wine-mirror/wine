@@ -1159,7 +1159,7 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
     WCHAR dllName[MAX_PATH+1];
     DWORD dllNameLen = sizeof(dllName);
     HINSTANCE hLibrary;
-    typedef HRESULT (CALLBACK *DllGetClassObjectFunc)(REFCLSID clsid, 
+    typedef HRESULT CALLBACK (*DllGetClassObjectFunc)(REFCLSID clsid, 
 			     REFIID iid, LPVOID *ppv);
     DllGetClassObjectFunc DllGetClassObject;
 

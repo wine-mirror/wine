@@ -835,18 +835,18 @@ HRESULT WINAPI SHELL32_DllGetVersion (DLLVERSIONINFO *pdvi)
  * all are once per process
  *
  */
-void	(WINAPI* pDLLInitComctl)(LPVOID);
+void	WINAPI (*pDLLInitComctl)(LPVOID);
 
-LPVOID	(WINAPI* pCOMCTL32_Alloc) (INT);  
-BOOL	(WINAPI* pCOMCTL32_Free) (LPVOID);  
+LPVOID	WINAPI (*pCOMCTL32_Alloc) (INT);  
+BOOL	WINAPI (*pCOMCTL32_Free) (LPVOID);  
 
-HDPA	(WINAPI* pDPA_Create) (INT);  
-INT	(WINAPI* pDPA_InsertPtr) (const HDPA, INT, LPVOID); 
-BOOL	(WINAPI* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
-LPVOID	(WINAPI* pDPA_GetPtr) (const HDPA, INT);   
-BOOL	(WINAPI* pDPA_Destroy) (const HDPA); 
-INT	(WINAPI *pDPA_Search) (const HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
-LPVOID	(WINAPI *pDPA_DeletePtr) (const HDPA hdpa, INT i);
+HDPA	WINAPI (*pDPA_Create) (INT);  
+INT	WINAPI (*pDPA_InsertPtr) (const HDPA, INT, LPVOID); 
+BOOL	WINAPI (*pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
+LPVOID	WINAPI (*pDPA_GetPtr) (const HDPA, INT);   
+BOOL	WINAPI (*pDPA_Destroy) (const HDPA); 
+INT	WINAPI (*pDPA_Search) (const HDPA, LPVOID, INT, PFNDPACOMPARE, LPARAM, UINT);
+LPVOID	WINAPI (*pDPA_DeletePtr) (const HDPA hdpa, INT i);
 
 static HINSTANCE	hComctl32;
 

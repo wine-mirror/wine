@@ -48,18 +48,18 @@ int PASCAL WinMain(HINSTANCE hInstance, HINSTANCE prev, LPSTR cmdline, int show)
     PALETTEENTRY	palent[256];
 
 
-void	(WINAPI *fnAVIFileInit)(void);
-void	(WINAPI *fnAVIFileExit)(void);
-ULONG	(WINAPI *fnAVIFileRelease)(PAVIFILE);
-ULONG	(WINAPI *fnAVIStreamRelease)(PAVISTREAM);
-HRESULT (WINAPI *fnAVIFileOpen)(PAVIFILE * ppfile,LPCTSTR szFile,UINT uMode,LPCLSID lpHandler);
-HRESULT (WINAPI *fnAVIFileInfo)(PAVIFILE ppfile,AVIFILEINFO *afi,LONG size);
-HRESULT (WINAPI *fnAVIFileGetStream)(PAVIFILE ppfile,PAVISTREAM *afi,DWORD fccType,LONG lParam);
-HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size);
-HRESULT (WINAPI *fnAVIStreamReadFormat)(PAVISTREAM iface,LONG pos,LPVOID format,LPLONG size);
-PGETFRAME (WINAPI *fnAVIStreamGetFrameOpen)(PAVISTREAM iface,LPBITMAPINFOHEADER wanted);
-LPVOID (WINAPI *fnAVIStreamGetFrame)(PGETFRAME pg,LONG pos);
-HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
+void	WINAPI (*fnAVIFileInit)(void);
+void	WINAPI (*fnAVIFileExit)(void);
+ULONG	WINAPI (*fnAVIFileRelease)(PAVIFILE);
+ULONG	WINAPI (*fnAVIStreamRelease)(PAVISTREAM);
+HRESULT WINAPI (*fnAVIFileOpen)(PAVIFILE * ppfile,LPCTSTR szFile,UINT uMode,LPCLSID lpHandler);
+HRESULT WINAPI (*fnAVIFileInfo)(PAVIFILE ppfile,AVIFILEINFO *afi,LONG size);
+HRESULT WINAPI (*fnAVIFileGetStream)(PAVIFILE ppfile,PAVISTREAM *afi,DWORD fccType,LONG lParam);
+HRESULT WINAPI (*fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size);
+HRESULT WINAPI (*fnAVIStreamReadFormat)(PAVISTREAM iface,LONG pos,LPVOID format,LPLONG size);
+PGETFRAME WINAPI (*fnAVIStreamGetFrameOpen)(PAVISTREAM iface,LPBITMAPINFOHEADER wanted);
+LPVOID WINAPI (*fnAVIStreamGetFrame)(PGETFRAME pg,LONG pos);
+HRESULT WINAPI (*fnAVIStreamGetFrameClose)(PGETFRAME pg);
 
 #define XX(x) fn##x = (void*)GetProcAddress(avifil32,#x);assert(fn##x);
 #ifdef UNICODE

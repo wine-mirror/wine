@@ -222,7 +222,7 @@ static void DEFWND_Print(
 static HWND DEFWND_ImmGetDefaultIMEWnd( HWND hwnd )
 {
     HINSTANCE hInstIMM = GetModuleHandleA( "imm32" );
-    HWND (WINAPI* pFunc)(HWND);
+    HWND WINAPI (*pFunc)(HWND);
     HWND hwndRet = 0;
 
     if (!hInstIMM)
@@ -241,7 +241,7 @@ static HWND DEFWND_ImmGetDefaultIMEWnd( HWND hwnd )
 static BOOL DEFWND_ImmIsUIMessageA( HWND hwndIME, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     HINSTANCE hInstIMM = GetModuleHandleA( "imm32" );
-    BOOL (WINAPI* pFunc)(HWND,UINT,WPARAM,LPARAM);
+    BOOL WINAPI (*pFunc)(HWND,UINT,WPARAM,LPARAM);
     BOOL fRet = FALSE;
 
     if (!hInstIMM)
@@ -260,7 +260,7 @@ static BOOL DEFWND_ImmIsUIMessageA( HWND hwndIME, UINT msg, WPARAM wParam, LPARA
 static BOOL DEFWND_ImmIsUIMessageW( HWND hwndIME, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     HINSTANCE hInstIMM = GetModuleHandleA( "imm32" );
-    BOOL (WINAPI* pFunc)(HWND,UINT,WPARAM,LPARAM);
+    BOOL WINAPI (*pFunc)(HWND,UINT,WPARAM,LPARAM);
     BOOL fRet = FALSE;
 
     if (!hInstIMM)

@@ -11,9 +11,9 @@
 DEFAULT_DEBUG_CHANNEL(winspool);
 
 HINSTANCE hcomctl32 = 0;
-HDPA   (WINAPI* WINSPOOL_DPA_CreateEx)(INT, HANDLE);
-LPVOID (WINAPI* WINSPOOL_DPA_GetPtr)(const HDPA, INT);
-INT    (WINAPI* WINSPOOL_DPA_InsertPtr)(const HDPA, INT, LPVOID);
+HDPA   WINAPI (*WINSPOOL_DPA_CreateEx)(INT, HANDLE);
+LPVOID WINAPI (*WINSPOOL_DPA_GetPtr)(const HDPA, INT);
+INT    WINAPI (*WINSPOOL_DPA_InsertPtr)(const HDPA, INT, LPVOID);
 
 /******************************************************************************
  *  WINSPOOL_EntryPoint

@@ -34,14 +34,14 @@ typedef struct _OPENEDPRINTER
 /* The OpenedPrinter Table dynamic array */
 static HDPA pOpenedPrinterDPA = NULL;
 
-extern HDPA   (WINAPI* WINSPOOL_DPA_CreateEx) (INT, HANDLE);
-extern LPVOID (WINAPI* WINSPOOL_DPA_GetPtr) (const HDPA, INT);
-extern INT    (WINAPI* WINSPOOL_DPA_InsertPtr) (const HDPA, INT, LPVOID);
+extern HDPA   WINAPI (*WINSPOOL_DPA_CreateEx) (INT, HANDLE);
+extern LPVOID WINAPI (*WINSPOOL_DPA_GetPtr) (const HDPA, INT);
+extern INT    WINAPI (*WINSPOOL_DPA_InsertPtr) (const HDPA, INT, LPVOID);
 
-static DWORD (WINAPI *GDI_CallDeviceCapabilities16)( LPCSTR lpszDevice, LPCSTR lpszPort,
+static DWORD WINAPI (*GDI_CallDeviceCapabilities16)( LPCSTR lpszDevice, LPCSTR lpszPort,
                                                      WORD fwCapability, LPSTR lpszOutput,
                                                      LPDEVMODEA lpdm );
-static INT (WINAPI *GDI_CallExtDeviceMode16)( HWND hwnd, LPDEVMODEA lpdmOutput,
+static INT WINAPI (*GDI_CallExtDeviceMode16)( HWND hwnd, LPDEVMODEA lpdmOutput,
                                               LPSTR lpszDevice, LPSTR lpszPort,
                                               LPDEVMODEA lpdmInput, LPSTR lpszProfile,
                                               DWORD fwMode );

@@ -344,7 +344,7 @@ static ICOM_VTABLE(IClassFactory) clfvt =
  *  a generic classfactory is returned
  *  when the CreateInstance of the cf is called the callback is executed
  */
-typedef HRESULT (CALLBACK * LPFNCREATEINSTANCE)(IUnknown* pUnkOuter, REFIID riid, LPVOID* ppvObject);
+typedef HRESULT CALLBACK (*LPFNCREATEINSTANCE)(IUnknown* pUnkOuter, REFIID riid, LPVOID* ppvObject);
 
 typedef struct
 {

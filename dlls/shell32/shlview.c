@@ -136,7 +136,7 @@ MYTOOLINFO Tools[] =
 { -1, 0, 0, 0, 0, 0}
 };
 
-typedef void (CALLBACK *PFNSHGETSETTINGSPROC)(LPSHELLFLAGSTATE lpsfs, DWORD dwMask);
+typedef void CALLBACK (*PFNSHGETSETTINGSPROC)(LPSHELLFLAGSTATE lpsfs, DWORD dwMask);
 
 /**********************************************************
  *	IShellView_Constructor
