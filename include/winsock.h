@@ -558,7 +558,6 @@ typedef struct _WSINFO
   struct _WSINFO*       prev,*next;
 
   unsigned		flags;
-  INT			err;			/* WSAGetLastError() return value */
   INT16			num_startup;		/* reference counter */
   INT16			num_async_rq;
   INT16			last_free;		/* entry in the socket table */

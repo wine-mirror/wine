@@ -507,23 +507,14 @@ INT WINAPI WSACleanup(void)
  */
 INT WINAPI WSAGetLastError(void)
 {
-    LPWSINFO pwsi = wsi_find(GetCurrentTask());
-    INT16    ret = (pwsi) ? pwsi->err : WSANOTINITIALISED;
-
-    TRACE(winsock, "(%08x) = %i\n", 
-		    (unsigned)pwsi, (int)ret);
-    return ret;
+	return GetLastError();
 }
 
 /***********************************************************************
  *      WSASetLastError32()		(WSOCK32.112)
  */
-void WINAPI WSASetLastError(INT iError)
-{
-    LPWSINFO      pwsi = wsi_find(GetCurrentTask());
-
-    TRACE(winsock, "(%08x): %d\n", (unsigned)pwsi, (int)iError);
-    if( pwsi ) pwsi->err = iError;
+void WINAPI WSASetLastError(INT iError) {
+    SetLastError(iError);
 }
 
 /***********************************************************************
@@ -538,9 +529,9 @@ int _check_ws(LPWSINFO pwsi, ws_socket* pws)
 {
     if( pwsi )
     {
-	if( pwsi->flags & WSI_BLOCKINGCALL ) pwsi->err = WSAEINPROGRESS;
+	if( pwsi->flags & WSI_BLOCKINGCALL ) SetLastError(WSAEINPROGRESS);
 	else if( WSI_CHECK_RANGE(pwsi, pws) ) return 1;
-		 else pwsi->err = WSAENOTSOCK;
+		 else SetLastError(WSAENOTSOCK);
     }
     return 0;
 }
@@ -633,9 +624,8 @@ SOCKET WINAPI WINSOCK_accept(SOCKET s, struct sockaddr *addr,
 #endif
 		return s;
             } 
-	    else pwsi->err = WSAENOBUFS;
-	} 
-	else pwsi->err = wsaErrno();
+	    else SetLastError(WSAENOBUFS);
+	} else SetLastError(wsaErrno());
     }
 #ifdef HAVE_IPX
     if (addr && ((struct sockaddr_ipx *)addr)->sipx_family == AF_IPX) {
@@ -716,9 +706,9 @@ INT WINAPI WINSOCK_bind(SOCKET s, struct sockaddr *name, INT namelen)
 	     errno = loc_errno;
 	     switch(errno)
 	     {
-		case EBADF: pwsi->err = WSAENOTSOCK; break;
-		case EADDRNOTAVAIL: pwsi->err = WSAEINVAL; break;
-		default: pwsi->err = wsaErrno();
+		case EBADF: SetLastError(WSAENOTSOCK); break;
+		case EADDRNOTAVAIL: SetLastError(WSAEINVAL); break;
+		default: SetLastError(wsaErrno());break;
 	     }
 	  }
 	  else {
@@ -728,10 +718,8 @@ INT WINAPI WINSOCK_bind(SOCKET s, struct sockaddr *name, INT namelen)
 #endif
 	    return 0; /* success */
 	  }
-        }
-	else pwsi->err = WSAEAFNOSUPPORT;
-      }
-      else pwsi->err = WSAEFAULT;
+        } else SetLastError(WSAEAFNOSUPPORT);
+      } else SetLastError(WSAEFAULT);
 #ifdef HAVE_IPX
       if (name && ((struct sockaddr_ipx *)name)->sipx_family == AF_IPX)
 	free(name);
@@ -770,7 +758,7 @@ INT WINAPI WINSOCK_closesocket(SOCKET s)
 
 	if( close(fd) == 0 ) 
 	    return 0;
-	pwsi->err = (errno == EBADF) ? WSAENOTSOCK : wsaErrno();
+	SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
     }
     return SOCKET_ERROR;
 }
@@ -849,7 +837,7 @@ INT WINAPI WINSOCK_connect(SOCKET s, struct sockaddr *name, INT namelen)
 #endif
         return 0; 
     }
-    pwsi->err = (errno == EINPROGRESS) ? WSAEWOULDBLOCK : wsaErrno();
+    SetLastError((errno == EINPROGRESS) ? WSAEWOULDBLOCK : wsaErrno());
   }
 #ifdef HAVE_IPX
   if (name && ((struct sockaddr_ipx *)name)->sipx_family == AF_IPX)
@@ -898,7 +886,7 @@ INT WINAPI WINSOCK_getpeername(SOCKET s, struct sockaddr *name,
 #endif
 	    return 0; 
 	}
-	pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+	SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
     }
 #ifdef HAVE_IPX
     if (name && ((struct ws_sockaddr_ipx *)name)->sipx_family == AF_IPX) {
@@ -964,7 +952,7 @@ INT WINAPI WINSOCK_getsockname(SOCKET s, struct sockaddr *name,
 #endif
 	    return 0; 
 	}
-	pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+	SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
     }
 #ifdef HAVE_IPX
     if (name && ((struct ws_sockaddr_ipx *)name)->sipx_family == AF_IPX) {
@@ -1021,7 +1009,7 @@ INT WINAPI WINSOCK_getsockopt(SOCKET s, INT level,
 	convert_sockopt(&level, &optname);
 	if (getsockopt(pws->fd, (int) level, optname, optval, optlen) == 0 )
 	    return 0;
-	pwsi->err = (errno == EBADF) ? WSAENOTSOCK : wsaErrno();
+	SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
     }
     return SOCKET_ERROR;
 }
@@ -1082,13 +1070,13 @@ char* WINAPI WINSOCK_inet_ntoa(struct in_addr in)
 	    if( pwsi->dbuffer == NULL )
 		if((pwsi->dbuffer = (char*) SEGPTR_ALLOC(32)) == NULL )
 		{
-		    pwsi->err = WSAENOBUFS;
+		    SetLastError(WSAENOBUFS);
 		    return NULL;
 		}
 	    strncpy(pwsi->dbuffer, s, 32 );
 	    return pwsi->dbuffer; 
 	}
-	pwsi->err = wsaErrno();
+	SetLastError(wsaErrno());
     }
     return NULL;
 }
@@ -1124,7 +1112,7 @@ INT WINAPI WINSOCK_ioctlsocket(SOCKET s, UINT cmd, UINT *argp)
 		if( pws->psop && *argp == 0 ) 
 		{
 		    /* AsyncSelect()'ed sockets are always nonblocking */
-		    pwsi->err = WSAEINVAL; 
+		    SetLastError(WSAEINVAL); 
 		    return SOCKET_ERROR; 
 		}
 		break;
@@ -1135,7 +1123,7 @@ INT WINAPI WINSOCK_ioctlsocket(SOCKET s, UINT cmd, UINT *argp)
 
 	case WS_IOW('f',125,u_long): 
 		WARN(winsock,"Warning: WS1.1 shouldn't be using async I/O\n");
-		pwsi->err = WSAEINVAL; 
+		SetLastError(WSAEINVAL); 
 		return SOCKET_ERROR;
 
 	default:	  
@@ -1143,7 +1131,7 @@ INT WINAPI WINSOCK_ioctlsocket(SOCKET s, UINT cmd, UINT *argp)
 		WARN(winsock, "\tunknown WS_IOCTL cmd (%08x)\n", cmd);
     }
     if( ioctl(pws->fd, newcmd, (char*)argp ) == 0 ) return 0;
-    pwsi->err = (errno == EBADF) ? WSAENOTSOCK : wsaErrno(); 
+    SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno()); 
   }
   return SOCKET_ERROR;
 }
@@ -1180,9 +1168,9 @@ INT WINAPI WINSOCK_listen(SOCKET s, INT backlog)
 	    pws->flags &= ~(WS_FD_INACTIVE | WS_FD_CONNECT | WS_FD_CONNECTED); /* just in case */
 	    return 0;
 	}
-	pwsi->err = wsaErrno();
+	SetLastError(wsaErrno());
     }
-    else if( pwsi ) pwsi->err = WSAENOTSOCK;
+    else SetLastError(WSAENOTSOCK);
     return SOCKET_ERROR;
 }
 
@@ -1218,9 +1206,9 @@ INT WINAPI WINSOCK_recv(SOCKET s, char *buf, INT len, INT flags)
 
 	    return length;
 	}
-	pwsi->err = wsaErrno();
+	SetLastError(wsaErrno());
     }
-    else if( pwsi ) pwsi->err = WSAENOTSOCK;
+    else SetLastError(WSAENOTSOCK);
     WARN(winsock, " -> ERROR\n");
     return SOCKET_ERROR;
 }
@@ -1280,9 +1268,9 @@ INT WINAPI WINSOCK_recvfrom(SOCKET s, char *buf, INT len, INT flags,
 #endif
 	    return (INT16)length;
 	}
-	pwsi->err = wsaErrno();
+	SetLastError(wsaErrno());
     }
-    else if( pwsi ) pwsi->err = WSAENOTSOCK;
+    else SetLastError(WSAENOTSOCK);
     WARN(winsock, " -> ERROR\n");
 #ifdef HAVE_IPX
     if (from && ((struct sockaddr_ipx *)from)->sipx_family == AF_IPX) {
@@ -1374,7 +1362,7 @@ static INT __ws_select( BOOL b32, void *ws_readfds, void *ws_writefds, void *ws_
 	if( ws_exceptfds ) ((ws_fd_set32*)ws_exceptfds)->fd_count = 0;
 
         if( highfd == 0 ) return 0;
-	pwsi->err = wsaErrno();
+	SetLastError(wsaErrno());
     } 
     return SOCKET_ERROR;
 }
@@ -1411,14 +1399,14 @@ INT WINAPI WINSOCK_send(SOCKET s, char *buf, INT len, INT flags)
 
 	if ((length = send(pws->fd, buf, len, flags)) < 0 ) 
 	{
-	    pwsi->err = wsaErrno();
-	    if( pwsi->err == WSAEWOULDBLOCK && 
+	    SetLastError(wsaErrno());
+	    if( GetLastError() == WSAEWOULDBLOCK && 
 		pws->psop && pws->flags & WS_FD_WRITE )
 		EVENT_AddIO( pws->fd, EVENT_IO_WRITE );	/* reenabler */
 	}
 	else return (INT16)length;
     }
-    else if( pwsi ) pwsi->err = WSAENOTSOCK;
+    else SetLastError(WSAENOTSOCK);
     return SOCKET_ERROR;
 }
 
@@ -1466,8 +1454,8 @@ INT WINAPI WINSOCK_sendto(SOCKET s, char *buf, INT len, INT flags,
 #endif
 	if ((length = sendto(pws->fd, buf, len, flags, to, tolen)) < 0 )
 	{
-	    pwsi->err = wsaErrno();
-	    if( pwsi->err == WSAEWOULDBLOCK &&
+	    SetLastError(wsaErrno());
+	    if( GetLastError() == WSAEWOULDBLOCK &&
 		pws->psop && pws->flags & WS_FD_WRITE )
 		EVENT_AddIO( pws->fd, EVENT_IO_WRITE ); /* reenabler */
 	} 
@@ -1480,7 +1468,7 @@ INT WINAPI WINSOCK_sendto(SOCKET s, char *buf, INT len, INT flags,
 	  return length;
 	}
     }
-    else if( pwsi ) pwsi->err = WSAENOTSOCK;
+    else SetLastError(WSAENOTSOCK);
 #ifdef HAVE_IPX
     if (to && ((struct sockaddr_ipx *)to)->sipx_family == AF_IPX) {
 	free(to);
@@ -1524,9 +1512,9 @@ INT WINAPI WINSOCK_setsockopt(SOCKET16 s, INT level, INT optname,
 		optlen = sizeof(struct linger);
 	}
 	if (setsockopt(pws->fd, level, optname, optval, optlen) == 0) return 0;
-	pwsi->err = wsaErrno();
+	SetLastError(wsaErrno());
     }
-    else if( pwsi ) pwsi->err = WSAENOTSOCK;
+    else SetLastError(WSAENOTSOCK);
     return SOCKET_ERROR;
 }
 
@@ -1592,9 +1580,9 @@ INT WINAPI WINSOCK_shutdown(SOCKET s, INT how)
 	    }
 	    return 0;
 	}
-	pwsi->err = wsaErrno();
+	SetLastError(wsaErrno());
     } 
-    else if( pwsi ) pwsi->err = WSAENOTSOCK;
+    else SetLastError(WSAENOTSOCK);
     return SOCKET_ERROR;
 }
 
@@ -1629,7 +1617,7 @@ SOCKET WINAPI WINSOCK_socket(INT af, INT type, INT protocol)
 #endif
 	case AF_INET:
 	case AF_UNSPEC: break;
-	default:        pwsi->err = WSAEAFNOSUPPORT; 
+	default:        SetLastError(WSAEAFNOSUPPORT); 
 			return INVALID_SOCKET;
     }
 
@@ -1639,13 +1627,13 @@ SOCKET WINAPI WINSOCK_socket(INT af, INT type, INT protocol)
 	case SOCK_STREAM:
 	case SOCK_DGRAM:
 	case SOCK_RAW:  break;
-	default:        pwsi->err = WSAESOCKTNOSUPPORT; 
+	default:        SetLastError(WSAESOCKTNOSUPPORT); 
 			return INVALID_SOCKET;
     }
 
     /* check the protocol type */
     if ( protocol < 0 )  /* don't support negative values */
-    { pwsi->err = WSAEPROTONOSUPPORT; return INVALID_SOCKET; }
+    { SetLastError(WSAEPROTONOSUPPORT); return INVALID_SOCKET; }
 
     if ( af == AF_UNSPEC)  /* did they not specify the address family? */
         switch(protocol) 
@@ -1654,7 +1642,7 @@ SOCKET WINAPI WINSOCK_socket(INT af, INT type, INT protocol)
              if (type == SOCK_STREAM) { af = AF_INET; break; }
           case IPPROTO_UDP:
              if (type == SOCK_DGRAM)  { af = AF_INET; break; }
-          default: pwsi->err = WSAEPROTOTYPE; return INVALID_SOCKET;
+          default: SetLastError(WSAEPROTOTYPE); return INVALID_SOCKET;
         }
 
     if ((sock = socket(af, type, protocol)) >= 0) 
@@ -1670,15 +1658,15 @@ SOCKET WINAPI WINSOCK_socket(INT af, INT type, INT protocol)
 	}
 	
         close(sock);
-        pwsi->err = WSAENOBUFS;
+        SetLastError(WSAENOBUFS);
         return INVALID_SOCKET;
     }
 
     if (errno == EPERM) /* raw socket denied */
     {
         WARN(winsock, "WS_SOCKET: not enough privileges\n");
-        pwsi->err = WSAESOCKTNOSUPPORT;
-    } else pwsi->err = wsaErrno();
+        SetLastError(WSAESOCKTNOSUPPORT);
+    } else SetLastError(wsaErrno());
   }
  
   WARN(winsock, "\t\tfailed!\n");
@@ -1718,9 +1706,9 @@ static struct WIN_hostent* __ws_gethostbyaddr(const char *addr, int len, int typ
 	    if( WS_dup_he(pwsi, host, dup_flag) )
 		return (struct WIN_hostent*)(pwsi->he);
 	    else 
-		pwsi->err = WSAENOBUFS;
+		SetLastError(WSAENOBUFS);
 	else 
-	    pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+	    SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
     }
     return NULL;
 }
@@ -1755,8 +1743,8 @@ static struct WIN_hostent * __ws_gethostbyname(const char *name, int dup_flag)
 	if( (host = gethostbyname(name)) != NULL )
 	     if( WS_dup_he(pwsi, host, dup_flag) )
 		 return (struct WIN_hostent*)(pwsi->he);
-	     else pwsi->err = WSAENOBUFS;
-	else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+	     else SetLastError(WSAENOBUFS);
+	else SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
     }
     return NULL;
 }
@@ -1789,8 +1777,8 @@ static struct WIN_protoent* __ws_getprotobyname(const char *name, int dup_flag)
 	if( (proto = getprotobyname(name)) != NULL )
 	    if( WS_dup_pe(pwsi, proto, dup_flag) )
 		return (struct WIN_protoent*)(pwsi->pe);
-	    else pwsi->err = WSAENOBUFS;
-	else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
+	    else SetLastError(WSAENOBUFS);
+	else SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
     }
     return NULL;
 }
@@ -1823,8 +1811,8 @@ static struct WIN_protoent* __ws_getprotobynumber(int number, int dup_flag)
 	if( (proto = getprotobynumber(number)) != NULL )
 	    if( WS_dup_pe(pwsi, proto, dup_flag) )
 		return (struct WIN_protoent*)(pwsi->pe);
-	    else pwsi->err = WSAENOBUFS;
-	else pwsi->err = WSANO_DATA;
+	    else SetLastError(WSAENOBUFS);
+	else SetLastError(WSANO_DATA);
     }
     return NULL;
 }
@@ -1860,9 +1848,9 @@ struct WIN_servent* __ws_getservbyname(const char *name, const char *proto, int 
 	    if( (serv = getservbyname(pwsi->buffer, pwsi->buffer + i)) != NULL )
 		if( WS_dup_se(pwsi, serv, dup_flag) )
 		    return (struct WIN_servent*)(pwsi->se);
-		else pwsi->err = WSAENOBUFS;
-	    else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
-	else pwsi->err = WSAENOBUFS;
+		else SetLastError(WSAENOBUFS);
+	    else SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
+	else SetLastError(WSAENOBUFS);
     }
     return NULL;
 }
@@ -1900,9 +1888,9 @@ static struct WIN_servent* __ws_getservbyport(int port, const char* proto, int d
 	    if( (serv = getservbyport(port, pwsi->buffer)) != NULL )
 		if( WS_dup_se(pwsi, serv, dup_flag) )
 		    return (struct WIN_servent*)(pwsi->se);
-		else pwsi->err = WSAENOBUFS;
-	    else pwsi->err = (h_errno < 0) ? wsaErrno() : wsaHerrno();
-	else pwsi->err = WSAENOBUFS;
+		else SetLastError(WSAENOBUFS);
+	    else SetLastError((h_errno < 0) ? wsaErrno() : wsaHerrno());
+	else SetLastError(WSAENOBUFS);
     }
     return NULL;
 }
@@ -1936,7 +1924,7 @@ INT WINAPI WINSOCK_gethostname(char *name, INT namelen)
     if( pwsi )
     {
 	if (gethostname(name, namelen) == 0) return 0;
-	pwsi->err = (errno == EINVAL) ? WSAEFAULT : wsaErrno();
+	SetLastError((errno == EINVAL) ? WSAEFAULT : wsaErrno());
     }
     return SOCKET_ERROR;
 }
@@ -2211,11 +2199,11 @@ INT WINAPI WSAAsyncSelect(SOCKET s, HWND hWnd, UINT uMsg, UINT lEvent)
 
 		return 0; /* success */
 	    }
-	    else pwsi->err = WSAENOBUFS;
+	    else SetLastError(WSAENOBUFS);
 	} 
 	else return 0;
     } 
-    else if( pwsi ) pwsi->err = WSAEINVAL;
+    else SetLastError(WSAEINVAL);
     return SOCKET_ERROR; 
 }
 
