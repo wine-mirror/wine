@@ -1408,7 +1408,8 @@ static RTL_USER_PROCESS_PARAMETERS *create_user_params( LPCWSTR filename, LPCWST
     if (startup->lpTitle) RtlInitUnicodeString( &title, startup->lpTitle );
     if (startup->lpReserved2 && startup->cbReserved2)
     {
-        runtime.Length = runtime.MaximumLength = startup->cbReserved2;
+        runtime.Length = 0;
+        runtime.MaximumLength = startup->cbReserved2;
         runtime.Buffer = (WCHAR*)startup->lpReserved2;
     }
 

@@ -418,6 +418,7 @@ NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result
 {
     static const WCHAR empty[] = {0};
     static const UNICODE_STRING empty_str = { 0, sizeof(empty), (WCHAR *)empty };
+    static const UNICODE_STRING null_str = { 0, 0, NULL };
 
     const RTL_USER_PROCESS_PARAMETERS *cur_params;
     ULONG size, total_size;
@@ -433,7 +434,7 @@ NTSTATUS WINAPI RtlCreateProcessParameters( RTL_USER_PROCESS_PARAMETERS **result
     if (!WindowTitle) WindowTitle = &empty_str;
     if (!Desktop) Desktop = &empty_str;
     if (!ShellInfo) ShellInfo = &empty_str;
-    if (!RuntimeInfo) RuntimeInfo = &empty_str;
+    if (!RuntimeInfo) RuntimeInfo = &null_str;
 
     size = (sizeof(RTL_USER_PROCESS_PARAMETERS)
             + ImagePathName->MaximumLength
