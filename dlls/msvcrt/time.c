@@ -71,11 +71,12 @@ MSVCRT_time_t MSVCRT_mktime(struct MSVCRT_tm *t)
   FILETIME lft, uft;
   ULONGLONG time;
 
+  st.wMilliseconds = 0;
   st.wSecond = t->tm_sec;
   st.wMinute = t->tm_min;
   st.wHour   = t->tm_hour;
-  st.wDay    = t->tm_mday - 1;
-  st.wMonth  = t->tm_mon;
+  st.wDay    = t->tm_mday;
+  st.wMonth  = t->tm_mon + 1;
   st.wYear   = t->tm_year + 1900;
 
   SystemTimeToFileTime(&st, &lft);
@@ -114,14 +115,14 @@ struct MSVCRT_tm* MSVCRT_localtime(const MSVCRT_time_t* secs)
   tm.tm_hour = st.wHour;
   tm.tm_mday = st.wDay;
   tm.tm_year = st.wYear - 1900;
-  tm.tm_mon  = st.wMonth + 1;
+  tm.tm_mon  = st.wMonth  - 1;
   tm.tm_wday = st.wDayOfWeek;
 
-  for (i = 0; i < st.wMonth; i++) {
+  for (i = tm.tm_yday = 0; i < st.wMonth - 1; i++) {
     tm.tm_yday += MonthLengths[IsLeapYear(st.wYear)][i];
   }
 
-  tm.tm_yday += st.wDay;
+  tm.tm_yday += st.wDay - 1;
  
   tzid = GetTimeZoneInformation(&tzinfo);
 
@@ -138,7 +139,7 @@ struct MSVCRT_tm* MSVCRT_gmtime(const MSVCRT_time_t* secs)
 {
   int i;
 
-  FILETIME ft, lft;
+  FILETIME ft;
   SYSTEMTIME st;
 
   ULONGLONG time = *secs * (ULONGLONG)TICKSPERSEC + TICKS_1601_TO_1970;
@@ -146,7 +147,7 @@ struct MSVCRT_tm* MSVCRT_gmtime(const MSVCRT_time_t* secs)
   ft.dwHighDateTime = (UINT)(time >> 32);
   ft.dwLowDateTime  = (UINT)time;
 
-  FileTimeToSystemTime(&lft, &st);
+  FileTimeToSystemTime(&ft, &st);
 
   if (st.wYear < 1970) return NULL;
 
@@ -155,14 +156,13 @@ struct MSVCRT_tm* MSVCRT_gmtime(const MSVCRT_time_t* secs)
   tm.tm_hour = st.wHour;
   tm.tm_mday = st.wDay;
   tm.tm_year = st.wYear - 1900;
-  tm.tm_mon  = st.wMonth + 1;
+  tm.tm_mon  = st.wMonth - 1;
   tm.tm_wday = st.wDayOfWeek;
-
-  for (i = 0; i < st.wMonth; i++) {
+  for (i = tm.tm_yday = 0; i < st.wMonth - 1; i++) {
     tm.tm_yday += MonthLengths[IsLeapYear(st.wYear)][i];
   }
 
-  tm.tm_yday += st.wDay;
+  tm.tm_yday += st.wDay - 1;
   tm.tm_isdst = 0;
 
   return &tm;

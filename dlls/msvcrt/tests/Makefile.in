@@ -11,7 +11,8 @@ CTESTS = \
 	file.c \
 	heap.c \
 	scanf.c \
-	string.c 
+	string.c \
+	time.c
 
 @MAKE_TEST_RULES@
 
