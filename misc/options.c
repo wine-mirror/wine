@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 #include "winbase.h"
+#include "winnls.h"
 #include "wine/library.h"
 #include "options.h"
 #include "version.h"
@@ -42,6 +43,7 @@ static char *inherit_str;  /* options to pass to child processes */
 
 static int app_argc;       /* argc/argv to pass to application */
 static char **app_argv;
+static WCHAR **app_wargv;
 
 static void out_of_memory(void) WINE_NORETURN;
 static void out_of_memory(void)
@@ -358,3 +360,35 @@ int __wine_get_main_args( char ***argv )
     return app_argc;
 }
 
+
+/***********************************************************************
+ *              __wine_get_wmain_args
+ *
+ * Same as __wine_get_main_args but for Unicode.
+ */
+int __wine_get_wmain_args( WCHAR ***argv )
+{
+    if (!app_wargv)
+    {
+        int i;
+        WCHAR *p;
+        DWORD total = 0;
+
+        for (i = 0; i < app_argc; i++)
+            total += MultiByteToWideChar( CP_ACP, 0, app_argv[i], -1, NULL, 0 );
+
+        app_wargv = HeapAlloc( GetProcessHeap(), 0,
+                               total * sizeof(WCHAR) + (app_argc + 1) * sizeof(*app_wargv) );
+        p = (WCHAR *)(app_wargv + app_argc + 1);
+        for (i = 0; i < app_argc; i++)
+        {
+            DWORD len = MultiByteToWideChar( CP_ACP, 0, app_argv[i], -1, p, total );
+            app_wargv[i] = p;
+            p += len;
+            total -= len;
+        }
+        app_wargv[app_argc] = NULL;
+    }
+    *argv = app_wargv;
+    return app_argc;
+}

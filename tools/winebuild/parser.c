@@ -560,9 +560,9 @@ SPEC_TYPE ParseTopLevel( FILE *file )
             if (!strcmp(token, "dll" )) SpecMode = SPEC_MODE_DLL;
             else if (!strcmp(token, "guiexe" )) SpecMode = SPEC_MODE_GUIEXE;
             else if (!strcmp(token, "cuiexe" )) SpecMode = SPEC_MODE_CUIEXE;
-            else if (!strcmp(token, "guiexe_no_main" )) SpecMode = SPEC_MODE_GUIEXE_NO_MAIN;
-            else if (!strcmp(token, "cuiexe_no_main" )) SpecMode = SPEC_MODE_CUIEXE_NO_MAIN;
-            else fatal_error( "Mode must be 'dll', 'guiexe', 'cuiexe', 'guiexe_no_main' or 'cuiexe_no_main'\n" );
+            else if (!strcmp(token, "guiexe_unicode" )) SpecMode = SPEC_MODE_GUIEXE_UNICODE;
+            else if (!strcmp(token, "cuiexe_unicode" )) SpecMode = SPEC_MODE_CUIEXE_UNICODE;
+            else fatal_error( "Mode must be 'dll', 'guiexe', 'cuiexe', 'guiexe_unicode' or 'cuiexe_unicode'\n" );
         }
 	else if (strcmp(token, "heap") == 0)
 	{

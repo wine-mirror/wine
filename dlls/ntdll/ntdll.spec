@@ -1027,6 +1027,7 @@ debug_channels (aspi atom cdrom console ddraw debug delayhlp dll dosfs dosmem
 
 # Command-line
 @ cdecl __wine_get_main_args(ptr) __wine_get_main_args
+@ cdecl __wine_get_wmain_args(ptr) __wine_get_wmain_args
 
 # Server interface
 @ cdecl -norelay wine_server_call(long) wine_server_call

@@ -18,11 +18,10 @@ extern void PROCESS_InitWine( int argc, char *argv[] ) WINE_NORETURN;
 /***********************************************************************
  *           Main loop of initial task
  */
-void wine_initial_task(void)
+int WINAPI wine_initial_task( HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, INT show )
 {
     MSG msg;
     HINSTANCE16 instance;
-    STARTUPINFOA info;
 
     if (!LoadLibraryA( "user32.dll" ))
     {
@@ -31,10 +30,7 @@ void wine_initial_task(void)
     }
     THUNK_InitCallout();
 
-    GetStartupInfoA( &info );
-    if (!(info.dwFlags & STARTF_USESHOWWINDOW)) info.wShowWindow = SW_SHOWNORMAL;
-
-    if ((instance = WinExec16( GetCommandLineA(), info.wShowWindow )) < 32)
+    if ((instance = WinExec16( GetCommandLineA(), show )) < 32)
     {
         if (instance == 11)  /* try DOS format */
         {

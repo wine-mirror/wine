@@ -341,15 +341,16 @@ static void output_stub_funcs( FILE *outfile )
         if (odp->type != TYPE_STUB) continue;
         fprintf( outfile, "#ifdef __GNUC__\n" );
         fprintf( outfile, "static void __wine_unimplemented( const char *func ) __attribute__((noreturn));\n" );
-        fprintf( outfile, "#endif\n" );
+        fprintf( outfile, "#endif\n\n" );
+        fprintf( outfile, "struct exc_record {\n" );
+        fprintf( outfile, "  unsigned int code, flags;\n" );
+        fprintf( outfile, "  void *rec, *addr;\n" );
+        fprintf( outfile, "  unsigned int params;\n" );
+        fprintf( outfile, "  const void *info[15];\n" );
+        fprintf( outfile, "};\n\n" );
+        fprintf( outfile, "extern void __stdcall RtlRaiseException( struct exc_record * );\n\n" );
         fprintf( outfile, "static void __wine_unimplemented( const char *func )\n{\n" );
-        fprintf( outfile, "  struct exc_record {\n" );
-        fprintf( outfile, "    unsigned int code, flags;\n" );
-        fprintf( outfile, "    void *rec, *addr;\n" );
-        fprintf( outfile, "    unsigned int params;\n" );
-        fprintf( outfile, "    const void *info[15];\n" );
-        fprintf( outfile, "  } rec;\n" );
-        fprintf( outfile, "  extern void __stdcall RtlRaiseException( struct exc_record * );\n\n" );
+        fprintf( outfile, "  struct exc_record rec;\n" );
         fprintf( outfile, "  rec.code    = 0x%08x;\n", EXCEPTION_WINE_STUB );
         fprintf( outfile, "  rec.flags   = %d;\n", EH_NONCONTINUABLE );
         fprintf( outfile, "  rec.rec     = 0;\n" );
@@ -414,7 +415,7 @@ void BuildSpec32File( FILE *outfile )
 {
     int exports_size = 0;
     int nr_exports, nr_imports, nr_resources, nr_debug;
-    int characteristics, subsystem, has_imports;
+    int characteristics, subsystem;
     const char *init_func;
     DWORD page_size;
 
@@ -431,7 +432,7 @@ void BuildSpec32File( FILE *outfile )
     AssignOrdinals();
     nr_exports = Base <= Limit ? Limit - Base + 1 : 0;
 
-    has_imports = resolve_imports( outfile );
+    resolve_imports( outfile );
 
     fprintf( outfile, "/* File generated automatically from %s; do not edit! */\n\n",
              input_file_name );
@@ -503,9 +504,9 @@ void BuildSpec32File( FILE *outfile )
                  "\n#include <winbase.h>\n"
                  "int _ARGC;\n"
                  "char **_ARGV;\n"
+                 "extern int __stdcall %s(HINSTANCE,HINSTANCE,LPSTR,INT);\n"
                  "static void __wine_exe_main(void)\n"
                  "{\n"
-                 "    extern int PASCAL %s(HINSTANCE,HINSTANCE,LPSTR,INT);\n"
                  "    extern int __wine_get_main_args( char ***argv );\n"
                  "    STARTUPINFOA info;\n"
                  "    LPSTR cmdline = GetCommandLineA();\n"
@@ -516,47 +517,62 @@ void BuildSpec32File( FILE *outfile )
                  "    _ARGC = __wine_get_main_args( &_ARGV );\n"
                  "    ExitProcess( %s( GetModuleHandleA(0), 0, cmdline, info.wShowWindow ) );\n"
                  "}\n\n", init_func, init_func );
-        if (!has_imports)
-            fprintf( outfile,
-                     "int main( int argc, char *argv[] )\n"
-                     "{\n"
-                     "    extern void PROCESS_InitWinelib( int, char ** );\n"
-                     "    PROCESS_InitWinelib( argc, argv );\n"
-                     "    return 1;\n"
-                     "}\n\n" );
+        init_func = "__wine_exe_main";
+        subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
+        break;
+    case SPEC_MODE_GUIEXE_UNICODE:
+        if (!init_func) init_func = "WinMain";
+        fprintf( outfile,
+                 "\n#include <winbase.h>\n"
+                 "int _ARGC;\n"
+                 "WCHAR **_ARGV;\n"
+                 "extern int __stdcall %s(HINSTANCE,HINSTANCE,LPSTR,INT);\n"
+                 "static void __wine_exe_main(void)\n"
+                 "{\n"
+                 "    extern int __wine_get_wmain_args( WCHAR ***argv );\n"
+                 "    STARTUPINFOA info;\n"
+                 "    LPSTR cmdline = GetCommandLineA();\n"
+                 "    while (*cmdline && *cmdline != ' ') cmdline++;\n"
+                 "    if (*cmdline) cmdline++;\n"
+                 "    GetStartupInfoA( &info );\n"
+                 "    if (!(info.dwFlags & STARTF_USESHOWWINDOW)) info.wShowWindow = 1;\n"
+                 "    _ARGC = __wine_get_wmain_args( &_ARGV );\n"
+                 "    ExitProcess( %s( GetModuleHandleA(0), 0, cmdline, info.wShowWindow ) );\n"
+                 "}\n\n", init_func, init_func );
         init_func = "__wine_exe_main";
         subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
         break;
     case SPEC_MODE_CUIEXE:
-        if (!init_func) init_func = has_imports ? "main" : "wine_main";
+        if (!init_func) init_func = "main";
         fprintf( outfile,
                  "\nint _ARGC;\n"
                  "char **_ARGV;\n"
+                 "extern void __stdcall ExitProcess(int);\n"
                  "static void __wine_exe_main(void)\n"
                  "{\n"
                  "    extern int %s( int argc, char *argv[] );\n"
                  "    extern int __wine_get_main_args( char ***argv );\n"
-                 "    extern void __stdcall ExitProcess(int);\n"
                  "    _ARGC = __wine_get_main_args( &_ARGV );\n"
                  "    ExitProcess( %s( _ARGC, _ARGV ) );\n"
                  "}\n\n", init_func, init_func );
-        if (!has_imports)
-            fprintf( outfile,
-                     "int main( int argc, char *argv[] )\n"
-                     "{\n"
-                     "    extern void PROCESS_InitWinelib( int, char ** );\n"
-                     "    PROCESS_InitWinelib( argc, argv );\n"
-                     "    return 1;\n"
-                     "}\n\n" );
         init_func = "__wine_exe_main";
         subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
         break;
-    case SPEC_MODE_GUIEXE_NO_MAIN:
-        if (init_func) fprintf( outfile, "extern void %s();\n", init_func );
-        subsystem = IMAGE_SUBSYSTEM_WINDOWS_GUI;
-        break;
-    case SPEC_MODE_CUIEXE_NO_MAIN:
-        if (init_func) fprintf( outfile, "extern void %s();\n", init_func );
+    case SPEC_MODE_CUIEXE_UNICODE:
+        if (!init_func) init_func = "wmain";
+        fprintf( outfile,
+                 "\ntypedef unsigned short WCHAR;\n"
+                 "int _ARGC;\n"
+                 "WCHAR **_ARGV;\n"
+                 "extern void __stdcall ExitProcess(int);\n"
+                 "static void __wine_exe_main(void)\n"
+                 "{\n"
+                 "    extern int %s( int argc, WCHAR *argv[] );\n"
+                 "    extern int __wine_get_wmain_args( WCHAR ***argv );\n"
+                 "    _ARGC = __wine_get_wmain_args( &_ARGV );\n"
+                 "    ExitProcess( %s( _ARGC, _ARGV ) );\n"
+                 "}\n\n", init_func, init_func );
+        init_func = "__wine_exe_main";
         subsystem = IMAGE_SUBSYSTEM_WINDOWS_CUI;
         break;
     }

@@ -4,11 +4,13 @@
 name	NAME
 type    win16|win32
 [file   WINFILENAME]
-[mode	dll|cuiexe|guiexe]
+[mode	dll|cuiexe|guiexe|cuiexe_unicode|guiexe_unicode]
 [heap   SIZE]
 [init	FUNCTION]
 [import DLL]
 [rsrc	RESFILE]
+[debug_channels ([CHANNEL [CHANNEL...]])]
+[ignore ([SYMBOL [SYMBOL...]])]
 
 ORDINAL FUNCTYPE [FLAGS] EXPORTNAME([ARGTYPE [ARGTYPE [...]]]) HANDLERNAME
 
@@ -50,6 +52,11 @@ modules at the present). The import declaration can be present several
 times.
 
 "rsrc" specifies the path of the compiled resource file.
+
+"debug_channels" specifies the list of debug channels used by the dll.
+
+"ignore" specifies a list of symbols that should be ignored when
+resolving undefined symbols against the imported libraries.
 
 "ORDINAL" specified the ordinal number corresponding to the entry
 point, or "@" for automatic ordinal allocation (Win32 only).

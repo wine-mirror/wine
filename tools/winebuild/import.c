@@ -205,6 +205,8 @@ static void add_extra_undef_symbols(void)
     /* add symbols that will be contained in the spec file itself */
     switch (SpecMode)
     {
+    case SPEC_MODE_DLL:
+        break;
     case SPEC_MODE_GUIEXE:
         ADD_SYM( "GetCommandLineA" );
         ADD_SYM( "GetStartupInfoA" );
@@ -213,13 +215,19 @@ static void add_extra_undef_symbols(void)
     case SPEC_MODE_CUIEXE:
         ADD_SYM( "__wine_get_main_args" );
         ADD_SYM( "ExitProcess" );
+        break;
+    case SPEC_MODE_GUIEXE_UNICODE:
+        ADD_SYM( "GetCommandLineA" );
+        ADD_SYM( "GetStartupInfoA" );
+        ADD_SYM( "GetModuleHandleA" );
         /* fall through */
-    case SPEC_MODE_DLL:
-    case SPEC_MODE_GUIEXE_NO_MAIN:
-    case SPEC_MODE_CUIEXE_NO_MAIN:
-        ADD_SYM( "RtlRaiseException" );
+    case SPEC_MODE_CUIEXE_UNICODE:
+        ADD_SYM( "__wine_get_wmain_args" );
+        ADD_SYM( "ExitProcess" );
         break;
     }
+    ADD_SYM( "RtlRaiseException" );
+
     if (count)
     {
         for (i = 0; i < count; i++) add_undef_symbol( extras[i] );
