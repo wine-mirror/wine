@@ -50,7 +50,7 @@ void CLIPPING_UpdateGCRegion( DC * dc )
         CombineRgn( dc->hGCClipRgn, dc->hVisRgn, 0, RGN_COPY );
     else
         CombineRgn(dc->hGCClipRgn, dc->hClipRgn, dc->hVisRgn, RGN_AND);
-    if (dc->funcs->pSetDeviceClipping) dc->funcs->pSetDeviceClipping( dc );
+    if (dc->funcs->pSetDeviceClipping) dc->funcs->pSetDeviceClipping( dc->physDev );
 }
 
 
@@ -170,7 +170,7 @@ INT WINAPI OffsetClipRgn( HDC hdc, INT x, INT y )
     TRACE("%04x %d,%d\n", hdc, x, y );
 
     if(dc->funcs->pOffsetClipRgn)
-        ret = dc->funcs->pOffsetClipRgn( dc, x, y );
+        ret = dc->funcs->pOffsetClipRgn( dc->physDev, x, y );
     else if (dc->hClipRgn) {
         ret = OffsetRgn( dc->hClipRgn, XLSTODS(dc,x), YLSTODS(dc,y));
 	CLIPPING_UpdateGCRegion( dc );
@@ -267,7 +267,7 @@ INT WINAPI ExcludeClipRect( HDC hdc, INT left, INT top,
     TRACE("%04x %dx%d,%dx%d\n", hdc, left, top, right, bottom );
 
     if(dc->funcs->pExcludeClipRect)
-        ret = dc->funcs->pExcludeClipRect( dc, left, top, right, bottom );
+        ret = dc->funcs->pExcludeClipRect( dc->physDev, left, top, right, bottom );
     else {
         left   = XLPTODP( dc, left );
 	right  = XLPTODP( dc, right );
@@ -304,7 +304,7 @@ INT WINAPI IntersectClipRect( HDC hdc, INT left, INT top,
     TRACE("%04x %dx%d,%dx%d\n", hdc, left, top, right, bottom );
 
     if(dc->funcs->pIntersectClipRect)
-        ret = dc->funcs->pIntersectClipRect( dc, left, top, right, bottom );
+        ret = dc->funcs->pIntersectClipRect( dc->physDev, left, top, right, bottom );
     else {
         left   = XLPTODP( dc, left );
 	right  = XLPTODP( dc, right );

@@ -48,7 +48,7 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top,
     if (dc->funcs->pPatBlt)
     {
         TRACE("%04x %d,%d %dx%d %06lx\n", hdc, left, top, width, height, rop );
-        bRet = dc->funcs->pPatBlt( dc, left, top, width, height, rop );
+        bRet = dc->funcs->pPatBlt( dc->physDev, left, top, width, height, rop );
     }
     GDI_ReleaseObj( hdc );
     return bRet;
@@ -84,8 +84,8 @@ BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
               hdcSrc, xSrc, ySrc, dcSrc ? dcSrc->bitsPerPixel : 0,
               hdcDst, xDst, yDst, width, height, dcDst->bitsPerPixel, rop);
         if (dcDst->funcs->pBitBlt)
-            ret = dcDst->funcs->pBitBlt( dcDst, xDst, yDst, width, height,
-                                         dcSrc, xSrc, ySrc, rop );
+            ret = dcDst->funcs->pBitBlt( dcDst->physDev, xDst, yDst, width, height,
+                                         dcSrc->physDev, xSrc, ySrc, rop );
         if (dcSrc) GDI_ReleaseObj( hdcSrc );
         GDI_ReleaseObj( hdcDst );
     }
@@ -131,8 +131,9 @@ BOOL WINAPI StretchBlt( HDC hdcDst, INT xDst, INT yDst,
 
 	if (dcSrc) {
 	    if (dcDst->funcs->pStretchBlt)
-		ret = dcDst->funcs->pStretchBlt( dcDst, xDst, yDst, widthDst, heightDst,
-						 dcSrc, xSrc, ySrc, widthSrc, heightSrc, rop );
+		ret = dcDst->funcs->pStretchBlt( dcDst->physDev, xDst, yDst, widthDst, heightDst,
+                                                 dcSrc->physDev, xSrc, ySrc, widthSrc, heightSrc,
+                                                 rop );
 	    GDI_ReleaseObj( hdcSrc );
 	}
         GDI_ReleaseObj( hdcDst );

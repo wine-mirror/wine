@@ -451,7 +451,7 @@ INT WINAPI SaveDC( HDC hdc )
 
     if(dc->funcs->pSaveDC)
     {
-        ret = dc->funcs->pSaveDC( dc );
+        ret = dc->funcs->pSaveDC( dc->physDev );
         GDI_ReleaseObj( hdc );
         return ret;
     }
@@ -509,7 +509,7 @@ BOOL WINAPI RestoreDC( HDC hdc, INT level )
     if(!dc) return FALSE;
     if(dc->funcs->pRestoreDC)
     {
-        success = dc->funcs->pRestoreDC( dc, level );
+        success = dc->funcs->pRestoreDC( dc->physDev, level );
         GDI_ReleaseObj( hdc );
         return success;
     }
@@ -781,7 +781,7 @@ BOOL WINAPI DeleteDC( HDC hdc )
 	SelectObject( hdc, GetStockObject(SYSTEM_FONT) );
         SelectObject( hdc, GetStockObject(DEFAULT_BITMAP) );
         funcs = dc->funcs;
-        if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc);
+        if (dc->funcs->pDeleteDC) dc->funcs->pDeleteDC(dc->physDev);
     }
 
     if (dc->hClipRgn) DeleteObject( dc->hClipRgn );
@@ -847,7 +847,7 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
 
     if ((dc = DC_GetDCPtr( hdc )))
     {
-        if (dc->funcs->pGetDeviceCaps) ret = dc->funcs->pGetDeviceCaps( dc, cap );
+        if (dc->funcs->pGetDeviceCaps) ret = dc->funcs->pGetDeviceCaps( dc->physDev, cap );
         GDI_ReleaseObj( hdc );
     }
     return ret;
@@ -870,14 +870,19 @@ COLORREF WINAPI SetBkColor( HDC hdc, COLORREF color )
 {
     COLORREF oldColor;
     DC * dc = DC_GetDCPtr( hdc );
-  
-    if (!dc) return 0x80000000;
+
+    if (!dc) return CLR_INVALID;
+    oldColor = dc->backgroundColor;
     if (dc->funcs->pSetBkColor)
-        oldColor = dc->funcs->pSetBkColor(dc, color);
-    else {
-	oldColor = dc->backgroundColor;
-	dc->backgroundColor = color;
+    {
+        color = dc->funcs->pSetBkColor(dc->physDev, color);
+        if (color == CLR_INVALID)  /* don't change it */
+        {
+            color = oldColor;
+            oldColor = CLR_INVALID;
+        }
     }
+    dc->backgroundColor = color;
     GDI_ReleaseObj( hdc );
     return oldColor;
 }
@@ -899,14 +904,19 @@ COLORREF WINAPI SetTextColor( HDC hdc, COLORREF color )
 {
     COLORREF oldColor;
     DC * dc = DC_GetDCPtr( hdc );
-  
-    if (!dc) return 0x80000000;
+
+    if (!dc) return CLR_INVALID;
+    oldColor = dc->textColor;
     if (dc->funcs->pSetTextColor)
-        oldColor = dc->funcs->pSetTextColor(dc, color);
-    else {
-	oldColor = dc->textColor;
-	dc->textColor = color;
+    {
+        color = dc->funcs->pSetTextColor(dc->physDev, color);
+        if (color == CLR_INVALID)  /* don't change it */
+        {
+            color = oldColor;
+            oldColor = CLR_INVALID;
+        }
     }
+    dc->textColor = color;
     GDI_ReleaseObj( hdc );
     return oldColor;
 }
@@ -929,7 +939,7 @@ UINT WINAPI SetTextAlign( HDC hdc, UINT align )
     DC *dc = DC_GetDCPtr( hdc );
     if (!dc) return 0x0;
     if (dc->funcs->pSetTextAlign)
-        prevAlign = dc->funcs->pSetTextAlign(dc, align);
+        prevAlign = dc->funcs->pSetTextAlign(dc->physDev, align);
     else {
 	prevAlign = dc->textAlign;
 	dc->textAlign = align;
@@ -949,7 +959,7 @@ BOOL WINAPI GetDCOrgEx( HDC hDC, LPPOINT lpp )
     if (!(dc = DC_GetDCPtr( hDC ))) return FALSE;
 
     lpp->x = lpp->y = 0;
-    if (dc->funcs->pGetDCOrgEx) dc->funcs->pGetDCOrgEx( dc, lpp );
+    if (dc->funcs->pGetDCOrgEx) dc->funcs->pGetDCOrgEx( dc->physDev, lpp );
     lpp->x += dc->DCOrgX;
     lpp->y += dc->DCOrgY;
     GDI_ReleaseObj( hDC );
@@ -1296,7 +1306,7 @@ BOOL WINAPI GetDeviceGammaRamp(HDC hDC, LPVOID ptr)
     if( dc )
     {
 	if (dc->funcs->pGetDeviceGammaRamp)
-	    ret = dc->funcs->pGetDeviceGammaRamp(dc, ptr);
+	    ret = dc->funcs->pGetDeviceGammaRamp(dc->physDev, ptr);
 	GDI_ReleaseObj( hDC );
     }
     return ret;
@@ -1313,7 +1323,7 @@ BOOL WINAPI SetDeviceGammaRamp(HDC hDC, LPVOID ptr)
     if( dc )
     {
 	if (dc->funcs->pSetDeviceGammaRamp)
-	    ret = dc->funcs->pSetDeviceGammaRamp(dc, ptr);
+	    ret = dc->funcs->pSetDeviceGammaRamp(dc->physDev, ptr);
 	GDI_ReleaseObj( hDC );
     }
     return ret;

@@ -36,17 +36,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
 const DC_FUNCTIONS *X11DRV_DC_Funcs = NULL;  /* hack */
 
-BITMAP_DRIVER X11DRV_BITMAP_Driver =
-{
-  X11DRV_DIB_SetDIBits,
-  X11DRV_DIB_GetDIBits,
-  X11DRV_DIB_DeleteDIBSection,
-  X11DRV_DIB_SetDIBColorTable,
-  X11DRV_DIB_GetDIBColorTable,
-  X11DRV_DIB_Lock,
-  X11DRV_DIB_Unlock
-};
-
 PALETTE_DRIVER X11DRV_PALETTE_Driver =
 {
   X11DRV_PALETTE_SetMapping,
@@ -74,7 +63,6 @@ BOOL X11DRV_GDI_Initialize( Display *display )
     Screen *screen = DefaultScreenOfDisplay(display);
 
     gdi_display = display;
-    BITMAP_Driver = &X11DRV_BITMAP_Driver;
     PALETTE_Driver = &X11DRV_PALETTE_Driver;
 
     palette_size = X11DRV_PALETTE_Init();
@@ -114,12 +102,14 @@ BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 
     if (!X11DRV_DC_Funcs) X11DRV_DC_Funcs = dc->funcs;  /* hack */
 
-    dc->physDev = physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-				       sizeof(*physDev) );
+    physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) );
     if(!physDev) {
         ERR("Can't allocate physDev\n");
 	return FALSE;
     }
+    dc->physDev = (PHYSDEV)physDev;
+    physDev->hdc = dc->hSelf;
+    physDev->dc  = dc;  /* FIXME */
 
     if (dc->flags & DC_MEMORY)
     {
@@ -172,12 +162,12 @@ BOOL X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 /**********************************************************************
  *	     X11DRV_DeleteDC
  */
-BOOL X11DRV_DeleteDC( DC *dc )
+BOOL X11DRV_DeleteDC( X11DRV_PDEVICE *physDev )
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
 
     if(physDev->xrender)
-      X11DRV_XRender_DeleteDC(dc);
+      X11DRV_XRender_DeleteDC( physDev );
     wine_tsx11_lock();
     XFreeGC( gdi_display, physDev->gc );
     while (physDev->used_visuals-- > 0)
@@ -192,7 +182,7 @@ BOOL X11DRV_DeleteDC( DC *dc )
 /***********************************************************************
  *           GetDeviceCaps    (X11DRV.@)
  */
-INT X11DRV_GetDeviceCaps( DC *dc, INT cap )
+INT X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
 {
     switch(cap)
     {
@@ -254,7 +244,7 @@ INT X11DRV_GetDeviceCaps( DC *dc, INT cap )
     case LOGPIXELSY:
         return log_pixels_y;
     case CAPS1:
-        FIXME("(%04x): CAPS1 is unimplemented, will return 0\n", dc->hSelf );
+        FIXME("(%04x): CAPS1 is unimplemented, will return 0\n", physDev->hdc );
         /* please see wingdi.h for the possible bit-flag values that need
            to be returned. also, see 
            http://msdn.microsoft.com/library/ddkdoc/win95ddk/graphcnt_1m0p.htm */
@@ -275,7 +265,7 @@ INT X11DRV_GetDeviceCaps( DC *dc, INT cap )
     case BTLALIGNMENT:
         return 0;
     default:
-        FIXME("(%04x): unsupported capability %d, will return 0\n", dc->hSelf, cap );
+        FIXME("(%04x): unsupported capability %d, will return 0\n", physDev->hdc, cap );
         return 0;
     }
 }
@@ -284,11 +274,9 @@ INT X11DRV_GetDeviceCaps( DC *dc, INT cap )
 /**********************************************************************
  *           ExtEscape  (X11DRV.@)
  */
-INT X11DRV_ExtEscape( DC *dc, INT escape, INT in_count, LPCVOID in_data,
+INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID in_data,
                       INT out_count, LPVOID out_data )
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-
     switch(escape)
     {
     case QUERYESCSUPPORT:

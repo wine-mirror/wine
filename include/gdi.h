@@ -62,12 +62,14 @@ typedef struct tagGDIOBJHDR
 
 typedef struct tagGdiFont *GdiFont;
 
+typedef struct { int opaque; } *PHYSDEV;  /* PHYSDEV is an opaque pointer */
+
 typedef struct tagDC
 {
     GDIOBJHDR    header;
     HDC          hSelf;            /* Handle to this DC */
     const struct tagDC_FUNCS *funcs; /* DC function table */
-    void         *physDev;         /* Physical device (driver-specific) */
+    PHYSDEV      physDev;         /* Physical device (driver-specific) */
     INT          saveLevel;
     DWORD        dwHookData;
     FARPROC16    hookProc;         /* the original SEGPTR ... */
@@ -138,108 +140,113 @@ typedef INT (*DEVICEFONTENUMPROC)(LPENUMLOGFONTEXW,LPNEWTEXTMETRICEXW,DWORD,
 
 typedef struct tagDC_FUNCS
 {
-    INT      (*pAbortDoc)(DC*);
-    BOOL     (*pAbortPath)(DC*);
-    BOOL     (*pAngleArc)(DC*,INT,INT,DWORD,FLOAT,FLOAT);
-    BOOL     (*pArc)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
-    BOOL     (*pArcTo)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);    
-    BOOL     (*pBeginPath)(DC*);
-    BOOL     (*pBitBlt)(DC*,INT,INT,INT,INT,DC*,INT,INT,DWORD);
+    INT      (*pAbortDoc)(PHYSDEV);
+    BOOL     (*pAbortPath)(PHYSDEV);
+    BOOL     (*pAngleArc)(PHYSDEV,INT,INT,DWORD,FLOAT,FLOAT);
+    BOOL     (*pArc)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pArcTo)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pBeginPath)(PHYSDEV);
+    BOOL     (*pBitBlt)(PHYSDEV,INT,INT,INT,INT,PHYSDEV,INT,INT,DWORD);
     LONG     (*pBitmapBits)(HBITMAP,void*,LONG,WORD);
-    INT      (*pChoosePixelFormat)(DC*,const PIXELFORMATDESCRIPTOR *);
-    BOOL     (*pChord)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
-    BOOL     (*pCloseFigure)(DC*);
-    BOOL     (*pCreateBitmap)(HBITMAP); 
-    BOOL     (*pCreateDC)(DC*,LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
-    HBITMAP  (*pCreateDIBSection)(DC *,BITMAPINFO *,UINT,LPVOID *,HANDLE,
-				  DWORD,DWORD);
-    BOOL     (*pDeleteDC)(DC*);
+    INT      (*pChoosePixelFormat)(PHYSDEV,const PIXELFORMATDESCRIPTOR *);
+    BOOL     (*pChord)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pCloseFigure)(PHYSDEV);
+    BOOL     (*pCreateBitmap)(HBITMAP);
+    BOOL     (*pCreateDC)(DC *,LPCSTR,LPCSTR,LPCSTR,const DEVMODEA*);
+    HBITMAP  (*pCreateDIBSection)(PHYSDEV,BITMAPINFO *,UINT,LPVOID *,HANDLE,DWORD,DWORD);
+    BOOL     (*pDeleteDC)(PHYSDEV);
     BOOL     (*pDeleteObject)(HGDIOBJ);
-    INT      (*pDescribePixelFormat)(DC *,INT,UINT,PIXELFORMATDESCRIPTOR *);
+    INT      (*pDescribePixelFormat)(PHYSDEV,INT,UINT,PIXELFORMATDESCRIPTOR *);
     DWORD    (*pDeviceCapabilities)(LPSTR,LPCSTR,LPCSTR,WORD,LPSTR,LPDEVMODEA);
-    BOOL     (*pEllipse)(DC*,INT,INT,INT,INT);
-    INT      (*pEndDoc)(DC*);
-    INT      (*pEndPage)(DC*);
-    BOOL     (*pEndPath)(DC*);
+    BOOL     (*pEllipse)(PHYSDEV,INT,INT,INT,INT);
+    INT      (*pEndDoc)(PHYSDEV);
+    INT      (*pEndPage)(PHYSDEV);
+    BOOL     (*pEndPath)(PHYSDEV);
     BOOL     (*pEnumDeviceFonts)(HDC,LPLOGFONTW,DEVICEFONTENUMPROC,LPARAM);
-    INT      (*pExcludeClipRect)(DC*,INT,INT,INT,INT);
+    INT      (*pExcludeClipRect)(PHYSDEV,INT,INT,INT,INT);
     INT      (*pExtDeviceMode)(LPSTR,HWND,LPDEVMODEA,LPSTR,LPSTR,LPDEVMODEA,LPSTR,DWORD);
-    INT      (*pExtEscape)(DC*,INT,INT,LPCVOID,INT,LPVOID);
-    BOOL     (*pExtFloodFill)(DC*,INT,INT,COLORREF,UINT);
-    BOOL     (*pExtTextOut)(DC*,INT,INT,UINT,const RECT*,LPCWSTR,UINT,
-			    const INT*);
-    BOOL     (*pFillPath)(DC*);
-    BOOL     (*pFillRgn)(DC*,HRGN,HBRUSH);
-    BOOL     (*pFlattenPath)(DC*);
-    BOOL     (*pFrameRgn)(DC*,HRGN,HBRUSH,INT,INT);
-    BOOL     (*pGetCharWidth)(DC*,UINT,UINT,LPINT);
-    BOOL     (*pGetDCOrgEx)(DC*,LPPOINT);
-    INT      (*pGetDeviceCaps)(DC*,INT);
-    BOOL     (*pGetDeviceGammaRamp)(DC*,LPVOID);
-    COLORREF (*pGetPixel)(DC*,INT,INT);
-    INT      (*pGetPixelFormat)(DC*);
-    BOOL     (*pGetTextExtentPoint)(DC*,LPCWSTR,INT,LPSIZE);
-    BOOL     (*pGetTextMetrics)(DC*,TEXTMETRICW*);
-    INT      (*pIntersectClipRect)(DC*,INT,INT,INT,INT);
-    BOOL     (*pInvertRgn)(DC*,HRGN);    
-    BOOL     (*pLineTo)(DC*,INT,INT);
-    BOOL     (*pMoveTo)(DC*,INT,INT);
-    INT      (*pOffsetClipRgn)(DC*,INT,INT);
-    BOOL     (*pOffsetViewportOrg)(DC*,INT,INT);
-    BOOL     (*pOffsetWindowOrg)(DC*,INT,INT);
-    BOOL     (*pPaintRgn)(DC*,HRGN);
-    BOOL     (*pPatBlt)(DC*,INT,INT,INT,INT,DWORD);
-    BOOL     (*pPie)(DC*,INT,INT,INT,INT,INT,INT,INT,INT);
-    BOOL     (*pPolyBezier)(DC*,const POINT*,DWORD);
-    BOOL     (*pPolyBezierTo)(DC*,const POINT*,DWORD);
-    BOOL     (*pPolyDraw)(DC*,const POINT*,const BYTE *,DWORD);
-    BOOL     (*pPolyPolygon)(DC*,const POINT*,const INT*,UINT);
-    BOOL     (*pPolyPolyline)(DC*,const POINT*,const DWORD*,DWORD);
-    BOOL     (*pPolygon)(DC*,const POINT*,INT);
-    BOOL     (*pPolyline)(DC*,const POINT*,INT);
-    BOOL     (*pPolylineTo)(DC*,const POINT*,INT);
-    UINT     (*pRealizePalette)(DC*);
-    BOOL     (*pRectangle)(DC*,INT,INT,INT,INT);
-    BOOL     (*pRestoreDC)(DC*,INT);
-    BOOL     (*pRoundRect)(DC*,INT,INT,INT,INT,INT,INT);
-    INT      (*pSaveDC)(DC*);
-    BOOL     (*pScaleViewportExt)(DC*,INT,INT,INT,INT);
-    BOOL     (*pScaleWindowExt)(DC*,INT,INT,INT,INT);
-    BOOL     (*pSelectClipPath)(DC*,INT);
-    INT      (*pSelectClipRgn)(DC*,HRGN);
-    HANDLE   (*pSelectObject)(DC*,HANDLE);
-    HPALETTE (*pSelectPalette)(DC*,HPALETTE,BOOL);
-    COLORREF (*pSetBkColor)(DC*,COLORREF);
-    INT      (*pSetBkMode)(DC*,INT);
-    VOID     (*pSetDeviceClipping)(DC*);
-    BOOL     (*pSetDeviceGammaRamp)(DC*,LPVOID);
-    INT      (*pSetDIBitsToDevice)(DC*,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,
-				   LPCVOID,const BITMAPINFO*,UINT);
-    INT      (*pSetMapMode)(DC*,INT);
-    DWORD    (*pSetMapperFlags)(DC*,DWORD);
-    COLORREF (*pSetPixel)(DC*,INT,INT,COLORREF);
-    BOOL     (*pSetPixelFormat)(DC*,INT,const PIXELFORMATDESCRIPTOR *);
-    INT      (*pSetPolyFillMode)(DC*,INT);
-    INT      (*pSetROP2)(DC*,INT);
-    INT      (*pSetRelAbs)(DC*,INT);
-    INT      (*pSetStretchBltMode)(DC*,INT);
-    UINT     (*pSetTextAlign)(DC*,UINT);
-    INT      (*pSetTextCharacterExtra)(DC*,INT);
-    DWORD    (*pSetTextColor)(DC*,DWORD);
-    INT      (*pSetTextJustification)(DC*,INT,INT);
-    BOOL     (*pSetViewportExt)(DC*,INT,INT);
-    BOOL     (*pSetViewportOrg)(DC*,INT,INT);
-    BOOL     (*pSetWindowExt)(DC*,INT,INT);
-    BOOL     (*pSetWindowOrg)(DC*,INT,INT);
-    INT      (*pStartDoc)(DC*,const DOCINFOA*);
-    INT      (*pStartPage)(DC*);
-    BOOL     (*pStretchBlt)(DC*,INT,INT,INT,INT,DC*,INT,INT,INT,INT,DWORD);
-    INT      (*pStretchDIBits)(DC*,INT,INT,INT,INT,INT,INT,INT,INT,
-			       const void *,const BITMAPINFO *,UINT,DWORD);
-    BOOL     (*pStrokeAndFillPath)(DC*);
-    BOOL     (*pStrokePath)(DC*);
-    BOOL     (*pSwapBuffers)(DC*);
-    BOOL     (*pWidenPath)(DC*);
+    INT      (*pExtEscape)(PHYSDEV,INT,INT,LPCVOID,INT,LPVOID);
+    BOOL     (*pExtFloodFill)(PHYSDEV,INT,INT,COLORREF,UINT);
+    BOOL     (*pExtTextOut)(PHYSDEV,INT,INT,UINT,const RECT*,LPCWSTR,UINT,const INT*);
+    BOOL     (*pFillPath)(PHYSDEV);
+    BOOL     (*pFillRgn)(PHYSDEV,HRGN,HBRUSH);
+    BOOL     (*pFlattenPath)(PHYSDEV);
+    BOOL     (*pFrameRgn)(PHYSDEV,HRGN,HBRUSH,INT,INT);
+    BOOL     (*pGetCharWidth)(PHYSDEV,UINT,UINT,LPINT);
+    BOOL     (*pGetDCOrgEx)(PHYSDEV,LPPOINT);
+    UINT     (*pGetDIBColorTable)(PHYSDEV,UINT,UINT,RGBQUAD*);
+    INT      (*pGetDIBits)(PHYSDEV,HBITMAP,UINT,UINT,LPVOID,BITMAPINFO*,UINT);
+    INT      (*pGetDeviceCaps)(PHYSDEV,INT);
+    BOOL     (*pGetDeviceGammaRamp)(PHYSDEV,LPVOID);
+    COLORREF (*pGetPixel)(PHYSDEV,INT,INT);
+    INT      (*pGetPixelFormat)(PHYSDEV);
+    BOOL     (*pGetTextExtentPoint)(PHYSDEV,LPCWSTR,INT,LPSIZE);
+    BOOL     (*pGetTextMetrics)(PHYSDEV,TEXTMETRICW*);
+    INT      (*pIntersectClipRect)(PHYSDEV,INT,INT,INT,INT);
+    BOOL     (*pInvertRgn)(PHYSDEV,HRGN);
+    BOOL     (*pLineTo)(PHYSDEV,INT,INT);
+    BOOL     (*pMoveTo)(PHYSDEV,INT,INT);
+    INT      (*pOffsetClipRgn)(PHYSDEV,INT,INT);
+    BOOL     (*pOffsetViewportOrg)(PHYSDEV,INT,INT);
+    BOOL     (*pOffsetWindowOrg)(PHYSDEV,INT,INT);
+    BOOL     (*pPaintRgn)(PHYSDEV,HRGN);
+    BOOL     (*pPatBlt)(PHYSDEV,INT,INT,INT,INT,DWORD);
+    BOOL     (*pPie)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT);
+    BOOL     (*pPolyBezier)(PHYSDEV,const POINT*,DWORD);
+    BOOL     (*pPolyBezierTo)(PHYSDEV,const POINT*,DWORD);
+    BOOL     (*pPolyDraw)(PHYSDEV,const POINT*,const BYTE *,DWORD);
+    BOOL     (*pPolyPolygon)(PHYSDEV,const POINT*,const INT*,UINT);
+    BOOL     (*pPolyPolyline)(PHYSDEV,const POINT*,const DWORD*,DWORD);
+    BOOL     (*pPolygon)(PHYSDEV,const POINT*,INT);
+    BOOL     (*pPolyline)(PHYSDEV,const POINT*,INT);
+    BOOL     (*pPolylineTo)(PHYSDEV,const POINT*,INT);
+    UINT     (*pRealizePalette)(PHYSDEV);
+    BOOL     (*pRectangle)(PHYSDEV,INT,INT,INT,INT);
+    BOOL     (*pRestoreDC)(PHYSDEV,INT);
+    BOOL     (*pRoundRect)(PHYSDEV,INT,INT,INT,INT,INT,INT);
+    INT      (*pSaveDC)(PHYSDEV);
+    BOOL     (*pScaleViewportExt)(PHYSDEV,INT,INT,INT,INT);
+    BOOL     (*pScaleWindowExt)(PHYSDEV,INT,INT,INT,INT);
+    HBITMAP  (*pSelectBitmap)(PHYSDEV,HBITMAP);
+    HBRUSH   (*pSelectBrush)(PHYSDEV,HBRUSH);
+    BOOL     (*pSelectClipPath)(PHYSDEV,INT);
+    INT      (*pSelectClipRgn)(PHYSDEV,HRGN);
+    HFONT    (*pSelectFont)(PHYSDEV,HFONT);
+    HPALETTE (*pSelectPalette)(PHYSDEV,HPALETTE,BOOL);
+    HPEN     (*pSelectPen)(PHYSDEV,HPEN);
+    COLORREF (*pSetBkColor)(PHYSDEV,COLORREF);
+    INT      (*pSetBkMode)(PHYSDEV,INT);
+    UINT     (*pSetDIBColorTable)(PHYSDEV,UINT,UINT,const RGBQUAD*);
+    INT      (*pSetDIBits)(PHYSDEV,HBITMAP,UINT,UINT,LPCVOID,const BITMAPINFO*,UINT);
+    INT      (*pSetDIBitsToDevice)(PHYSDEV,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,LPCVOID,
+                                   const BITMAPINFO*,UINT);
+    VOID     (*pSetDeviceClipping)(PHYSDEV);
+    BOOL     (*pSetDeviceGammaRamp)(PHYSDEV,LPVOID);
+    INT      (*pSetMapMode)(PHYSDEV,INT);
+    DWORD    (*pSetMapperFlags)(PHYSDEV,DWORD);
+    COLORREF (*pSetPixel)(PHYSDEV,INT,INT,COLORREF);
+    BOOL     (*pSetPixelFormat)(PHYSDEV,INT,const PIXELFORMATDESCRIPTOR *);
+    INT      (*pSetPolyFillMode)(PHYSDEV,INT);
+    INT      (*pSetROP2)(PHYSDEV,INT);
+    INT      (*pSetRelAbs)(PHYSDEV,INT);
+    INT      (*pSetStretchBltMode)(PHYSDEV,INT);
+    UINT     (*pSetTextAlign)(PHYSDEV,UINT);
+    INT      (*pSetTextCharacterExtra)(PHYSDEV,INT);
+    DWORD    (*pSetTextColor)(PHYSDEV,DWORD);
+    INT      (*pSetTextJustification)(PHYSDEV,INT,INT);
+    BOOL     (*pSetViewportExt)(PHYSDEV,INT,INT);
+    BOOL     (*pSetViewportOrg)(PHYSDEV,INT,INT);
+    BOOL     (*pSetWindowExt)(PHYSDEV,INT,INT);
+    BOOL     (*pSetWindowOrg)(PHYSDEV,INT,INT);
+    INT      (*pStartDoc)(PHYSDEV,const DOCINFOA*);
+    INT      (*pStartPage)(PHYSDEV);
+    BOOL     (*pStretchBlt)(PHYSDEV,INT,INT,INT,INT,PHYSDEV,INT,INT,INT,INT,DWORD);
+    INT      (*pStretchDIBits)(PHYSDEV,INT,INT,INT,INT,INT,INT,INT,INT,const void *,
+                               const BITMAPINFO*,UINT,DWORD);
+    BOOL     (*pStrokeAndFillPath)(PHYSDEV);
+    BOOL     (*pStrokePath)(PHYSDEV);
+    BOOL     (*pSwapBuffers)(PHYSDEV);
+    BOOL     (*pWidenPath)(PHYSDEV);
 } DC_FUNCTIONS;
 
   /* DC hook codes */

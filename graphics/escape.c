@@ -348,7 +348,7 @@ INT WINAPI ExtEscape( HDC hdc, INT nEscape, INT cbInput, LPCSTR lpszInData,
     if (dc)
     {
         if (dc->funcs->pExtEscape)
-            ret = dc->funcs->pExtEscape( dc, nEscape, cbInput, lpszInData, cbOutput, lpszOutData );
+            ret = dc->funcs->pExtEscape( dc->physDev, nEscape, cbInput, lpszInData, cbOutput, lpszOutData );
         GDI_ReleaseObj( hdc );
     }
     return ret;

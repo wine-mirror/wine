@@ -30,11 +30,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /**********************************************************************
  *           ExtEscape  (WINEPS.@)
  */
-INT PSDRV_ExtEscape( DC *dc, INT nEscape, INT cbInput, LPCVOID in_data,
+INT PSDRV_ExtEscape( PSDRV_PDEVICE *physDev, INT nEscape, INT cbInput, LPCVOID in_data,
                      INT cbOutput, LPVOID out_data )
 {
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-
     switch(nEscape)
     {
     case QUERYESCSUPPORT:
@@ -84,7 +82,7 @@ INT PSDRV_ExtEscape( DC *dc, INT nEscape, INT cbInput, LPCVOID in_data,
         r->bottom = 0;
 	TRACE("NEXTBAND rect to 0,0 - 0,0\n" );
 	physDev->job.banding = FALSE;
-        return EndPage( dc->hSelf );
+        return EndPage( physDev->hdc );
     }
 
     case SETCOPYCOUNT:
@@ -223,16 +221,14 @@ INT PSDRV_ExtEscape( DC *dc, INT nEscape, INT cbInput, LPCVOID in_data,
 /************************************************************************
  *           PSDRV_StartPage
  */
-INT PSDRV_StartPage( DC *dc )
+INT PSDRV_StartPage( PSDRV_PDEVICE *physDev )
 {
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-
     if(!physDev->job.OutOfPage) {
         FIXME("Already started a page?\n");
 	return 1;
     }
     physDev->job.PageNo++;
-    if(!PSDRV_WriteNewPage( dc ))
+    if(!PSDRV_WriteNewPage( physDev ))
         return 0;
     physDev->job.OutOfPage = FALSE;
     return 1;
@@ -242,15 +238,13 @@ INT PSDRV_StartPage( DC *dc )
 /************************************************************************
  *           PSDRV_EndPage
  */
-INT PSDRV_EndPage( DC *dc )
+INT PSDRV_EndPage( PSDRV_PDEVICE *physDev )
 {
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-
     if(physDev->job.OutOfPage) {
         FIXME("Already ended a page?\n");
 	return 1;
     }
-    if(!PSDRV_WriteEndPage( dc ))
+    if(!PSDRV_WriteEndPage( physDev ))
         return 0;
     physDev->job.OutOfPage = TRUE;
     return 1;
@@ -260,10 +254,8 @@ INT PSDRV_EndPage( DC *dc )
 /************************************************************************
  *           PSDRV_StartDoc
  */
-INT PSDRV_StartDoc( DC *dc, const DOCINFOA *doc )
+INT PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOA *doc )
 {
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-
     if(physDev->job.hJob) {
         FIXME("hJob != 0. Now what?\n");
 	return 0;
@@ -274,8 +266,7 @@ INT PSDRV_StartDoc( DC *dc, const DOCINFOA *doc )
 	physDev->job.output = HeapAlloc( PSDRV_Heap, 0, strlen(doc->lpszOutput)+1 );
 	strcpy( physDev->job.output, doc->lpszOutput );
     }
-    physDev->job.hJob = OpenJob16(physDev->job.output,  doc->lpszDocName,
-				  dc->hSelf);
+    physDev->job.hJob = OpenJob16(physDev->job.output,  doc->lpszDocName, physDev->hdc );
     if(!physDev->job.hJob) {
         WARN("OpenJob failed\n");
 	return 0;
@@ -283,7 +274,7 @@ INT PSDRV_StartDoc( DC *dc, const DOCINFOA *doc )
     physDev->job.banding = FALSE;
     physDev->job.OutOfPage = TRUE;
     physDev->job.PageNo = 0;
-    if(!PSDRV_WriteHeader( dc, doc->lpszDocName ))
+    if(!PSDRV_WriteHeader( physDev, doc->lpszDocName ))
         return 0;
 
     return physDev->job.hJob;
@@ -293,10 +284,8 @@ INT PSDRV_StartDoc( DC *dc, const DOCINFOA *doc )
 /************************************************************************
  *           PSDRV_EndDoc
  */
-INT PSDRV_EndDoc( DC *dc )
+INT PSDRV_EndDoc( PSDRV_PDEVICE *physDev )
 {
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-
     if(!physDev->job.hJob) {
         FIXME("hJob == 0. Now what?\n");
 	return 0;
@@ -304,9 +293,9 @@ INT PSDRV_EndDoc( DC *dc )
 
     if(!physDev->job.OutOfPage) {
         WARN("Somebody forgot a EndPage\n");
-	PSDRV_EndPage( dc );
+	PSDRV_EndPage( physDev );
     }
-    if(!PSDRV_WriteFooter( dc ))
+    if(!PSDRV_WriteFooter( physDev ))
         return 0;
 
     if( CloseJob16( physDev->job.hJob ) == SP_ERROR ) {

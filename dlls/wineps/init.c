@@ -171,7 +171,9 @@ BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
     physDev = (PSDRV_PDEVICE *)HeapAlloc( PSDRV_Heap, HEAP_ZERO_MEMORY,
 					             sizeof(*physDev) );
     if (!physDev) return FALSE;
-    dc->physDev = physDev;
+    dc->physDev = (PHYSDEV)physDev;
+    physDev->hdc = dc->hSelf;
+    physDev->dc = dc;
 
     physDev->pi = pi;
 
@@ -251,16 +253,14 @@ BOOL PSDRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
 /**********************************************************************
  *	     PSDRV_DeleteDC
  */
-BOOL PSDRV_DeleteDC( DC *dc )
+BOOL PSDRV_DeleteDC( PSDRV_PDEVICE *physDev )
 {
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    
     TRACE("\n");
 
     HeapFree( PSDRV_Heap, 0, physDev->Devmode );
     HeapFree( PSDRV_Heap, 0, physDev->job.output );
+    physDev->dc->physDev = NULL;
     HeapFree( PSDRV_Heap, 0, physDev );
-    dc->physDev = NULL;
 
     return TRUE;
 }
@@ -342,9 +342,8 @@ static void get_phys_page_size( const PSDRV_PDEVICE *pdev, POINT *p )
 /***********************************************************************
  *           GetDeviceCaps    (WINEPS.@)
  */
-INT PSDRV_GetDeviceCaps( DC *dc, INT cap )
+INT PSDRV_GetDeviceCaps( PSDRV_PDEVICE *physDev, INT cap )
 {
-    PSDRV_PDEVICE *physDev = dc->physDev;
     POINT pt;
 
     switch(cap)
@@ -427,7 +426,7 @@ INT PSDRV_GetDeviceCaps( DC *dc, INT cap )
     case BTLALIGNMENT:
         return 0;
     default:
-        FIXME("(%04x): unsupported capability %d, will return 0\n", dc->hSelf, cap );
+        FIXME("(%04x): unsupported capability %d, will return 0\n", physDev->hdc, cap );
         return 0;
     }
 }

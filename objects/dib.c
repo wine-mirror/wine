@@ -173,7 +173,7 @@ INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst,
 
     if(dc->funcs->pStretchDIBits)
     {
-        heightSrc = dc->funcs->pStretchDIBits(dc, xDst, yDst, widthDst,
+        heightSrc = dc->funcs->pStretchDIBits(dc->physDev, xDst, yDst, widthDst,
                                               heightDst, xSrc, ySrc, widthSrc,
                                               heightSrc, bits, info, wUsage, dwRop);
         GDI_ReleaseObj( hdc );
@@ -264,25 +264,15 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 		      UINT coloruse )
 {
     DC *dc;
-    BITMAPOBJ *bitmap;
-    INT result;
+    INT result = 0;
 
     /* Check parameters */
     if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
 
-    if (!(bitmap = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
-    {
-        GDI_ReleaseObj( hdc );
-        return 0;
-    }
+    if (dc->funcs->pSetDIBits)
+        result = dc->funcs->pSetDIBits(dc->physDev, hbitmap, startscan, lines, bits, info, coloruse);
 
-    result = BITMAP_Driver->pSetDIBits(bitmap, dc, startscan, 
-				       lines, bits, info, 
-				       coloruse, hbitmap);
-
-    GDI_ReleaseObj( hbitmap );
     GDI_ReleaseObj( hdc );
-
     return result;
 }
 
@@ -314,7 +304,7 @@ INT WINAPI SetDIBitsToDevice(HDC hdc, INT xDest, INT yDest, DWORD cx,
     if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
 
     if(dc->funcs->pSetDIBitsToDevice)
-        ret = dc->funcs->pSetDIBitsToDevice( dc, xDest, yDest, cx, cy, xSrc,
+        ret = dc->funcs->pSetDIBitsToDevice( dc->physDev, xDest, yDest, cx, cy, xSrc,
 					     ySrc, startscan, lines, bits,
 					     info, coloruse );
     else {
@@ -338,24 +328,16 @@ UINT16 WINAPI SetDIBColorTable16( HDC16 hdc, UINT16 startpos, UINT16 entries,
 /***********************************************************************
  *           SetDIBColorTable    (GDI32.@)
  */
-UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
-				  RGBQUAD *colors )
+UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *colors )
 {
     DC * dc;
-    BITMAPOBJ * bmp;
-    UINT result;
+    UINT result = 0;
 
     if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
 
-    if (!(bmp = (BITMAPOBJ*)GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC )))
-    {
-        GDI_ReleaseObj( hdc );
-        return 0;
-    }
+    if (dc->funcs->pSetDIBColorTable)
+        result = dc->funcs->pSetDIBColorTable(dc->physDev, startpos, entries, colors);
 
-    result = BITMAP_Driver->pSetDIBColorTable(bmp, dc, startpos, entries, colors);
-
-    GDI_ReleaseObj( dc->hBitmap );
     GDI_ReleaseObj( hdc );
     return result;
 }
@@ -372,24 +354,16 @@ UINT16 WINAPI GetDIBColorTable16( HDC16 hdc, UINT16 startpos, UINT16 entries,
 /***********************************************************************
  *           GetDIBColorTable    (GDI32.@)
  */
-UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries,
-				  RGBQUAD *colors )
+UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *colors )
 {
     DC * dc;
-    BITMAPOBJ * bmp;
-    UINT result;
+    UINT result = 0;
 
     if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
 
-    if (!(bmp = (BITMAPOBJ*)GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC )))
-    {
-        GDI_ReleaseObj( hdc );
-        return 0;
-    }
+    if (dc->funcs->pGetDIBColorTable)
+        result = dc->funcs->pGetDIBColorTable(dc->physDev, startpos, entries, colors);
 
-    result = BITMAP_Driver->pGetDIBColorTable(bmp, dc, startpos, entries, colors);
-
-    GDI_ReleaseObj( dc->hBitmap );
     GDI_ReleaseObj( hdc );
     return result;
 }
@@ -747,7 +721,8 @@ INT WINAPI GetDIBits(
             }
         }
         /* Otherwise, get bits from the XImage */
-        else if(!BITMAP_Driver->pGetDIBits(bmp, dc, startscan, lines, bits, info, coloruse, hbitmap))
+        else if (!dc->funcs->pGetDIBits ||
+                 !dc->funcs->pGetDIBits(dc->physDev, hbitmap, startscan, lines, bits, info, coloruse))
         {
 	    GDI_ReleaseObj( hdc );
 	    GDI_ReleaseObj( hbitmap );
@@ -949,7 +924,7 @@ HBITMAP DIB_CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
 
     if ((dc = DC_GetDCPtr( hdc )))
     {
-        hbitmap = dc->funcs->pCreateDIBSection(dc, bmi, usage, bits, section, offset, ovr_pitch);
+        hbitmap = dc->funcs->pCreateDIBSection(dc->physDev, bmi, usage, bits, section, offset, ovr_pitch);
         GDI_ReleaseObj(hdc);
     }
 
@@ -967,36 +942,6 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, BITMAPINFO *bmi, UINT usage,
 				DWORD offset)
 {
     return DIB_CreateDIBSection(hdc, bmi, usage, bits, section, offset, 0);
-}
-
-/***********************************************************************
- *           DIB_DeleteDIBSection
- */
-void DIB_DeleteDIBSection( BITMAPOBJ *bmp )
-{
-    if (bmp && bmp->dib)
-    {
-        DIBSECTION *dib = bmp->dib;
-
-        if (dib->dsBm.bmBits)
-        {
-            if (dib->dshSection)
-	    {
-		SYSTEM_INFO SystemInfo;
-		GetSystemInfo( &SystemInfo );
-		UnmapViewOfFile( (char *)dib->dsBm.bmBits -
-				 (dib->dsOffset % SystemInfo.dwAllocationGranularity) );
-	    }
-            else if (!dib->dsOffset)
-                VirtualFree(dib->dsBm.bmBits, 0L, MEM_RELEASE );
-        }
-
-	BITMAP_Driver->pDeleteDIBSection(bmp);
-
-        HeapFree(GetProcessHeap(), 0, dib);
-        bmp->dib = NULL;
-        if (bmp->segptr_bits) SELECTOR_FreeBlock( SELECTOROF(bmp->segptr_bits) );
-    }
 }
 
 /***********************************************************************

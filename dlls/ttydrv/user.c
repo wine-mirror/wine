@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include "dinput.h"
+#include "gdi.h"
 #include "ttydrv.h"
 #include "wine/debug.h"
 

@@ -39,7 +39,10 @@ debug_channels (psdrv)
 @ cdecl Polyline(ptr ptr long) PSDRV_Polyline
 @ cdecl Rectangle(ptr long long long long) PSDRV_Rectangle
 @ cdecl RoundRect(ptr long long long long long long) PSDRV_RoundRect
-@ cdecl SelectObject(ptr long) PSDRV_SelectObject
+@ cdecl SelectBitmap(ptr long) PSDRV_SelectBitmap
+@ cdecl SelectBrush(ptr long) PSDRV_SelectBrush
+@ cdecl SelectFont(ptr long) PSDRV_SelectFont
+@ cdecl SelectPen(ptr long) PSDRV_SelectPen
 @ cdecl SetBkColor(ptr long) PSDRV_SetBkColor
 @ cdecl SetDeviceClipping(ptr) PSDRV_SetDeviceClipping
 @ cdecl SetPixel(ptr long long long) PSDRV_SetPixel

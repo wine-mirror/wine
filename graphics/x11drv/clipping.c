@@ -38,11 +38,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
  *
  *           Could write using GetRegionData but this would be slower.
  */
-void X11DRV_SetDeviceClipping( DC * dc )
+void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev )
 {
     XRectangle *pXrect;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-    
+    DC *dc = physDev->dc;
+
     RGNOBJ *obj = (RGNOBJ *) GDI_GetObjPtr(dc->hGCClipRgn, REGION_MAGIC);
     if (!obj)
     {
@@ -96,7 +96,7 @@ void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, int org_x, int or
     DC *dc = DC_GetDCPtr( hdc );
     if (dc)
     {
-        X11DRV_PDEVICE *physDev = dc->physDev;
+        X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
         /*
          * This function change the coordinate system (DCOrgX,DCOrgY)
          * values. When it moves the origin, other data like the current clipping
@@ -114,7 +114,7 @@ void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, int org_x, int or
         physDev->drawable = drawable;
         TSXSetSubwindowMode( gdi_display, physDev->gc, mode );
 	if(physDev->xrender)
-	  X11DRV_XRender_UpdateDrawable(dc);
+	  X11DRV_XRender_UpdateDrawable( physDev );
         GDI_ReleaseObj( hdc );
     }
 }
@@ -130,7 +130,7 @@ void X11DRV_StartGraphicsExposures( HDC hdc )
     DC *dc = DC_GetDCPtr( hdc );
     if (dc)
     {
-        X11DRV_PDEVICE *physDev = dc->physDev;
+        X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
         TSXSetGraphicsExposures( gdi_display, physDev->gc, True );
         physDev->exposures = 0;
         GDI_ReleaseObj( hdc );
@@ -151,7 +151,7 @@ void X11DRV_EndGraphicsExposures( HDC hdc, HRGN hrgn )
     if (dc)
     {
         XEvent event;
-        X11DRV_PDEVICE *physDev = dc->physDev;
+        X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
         SetRectRgn( hrgn, 0, 0, 0, 0 );
         wine_tsx11_lock();

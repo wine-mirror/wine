@@ -31,21 +31,70 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdi);
 
 
 /***********************************************************************
- *           WIN16DRV_SelectObject
+ *           WIN16DRV_SelectBitmap
  */
-HGDIOBJ WIN16DRV_SelectObject( DC *dc, HGDIOBJ handle )
+HBITMAP WIN16DRV_SelectBitmap( PHYSDEV dev, HBITMAP bitmap )
 {
-    TRACE("hdc=%04x %04x\n", dc->hSelf, handle );
+    FIXME("BITMAP not implemented\n");
+    return 1;
+}
 
-    switch(GetObjectType( handle ))
+
+/***********************************************************************
+ *           WIN16DRV_SelectBrush
+ */
+HBRUSH WIN16DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
+{
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
+    int          nSize;
+    LOGBRUSH16 lBrush16;
+
+    if (!GetObject16( hbrush, sizeof(lBrush16), &lBrush16 )) return 0;
+
+    if ( physDev->BrushInfo )
     {
-    case OBJ_PEN:    return WIN16DRV_PEN_SelectObject( dc, handle );
-    case OBJ_BRUSH:  return WIN16DRV_BRUSH_SelectObject( dc, handle );
-    case OBJ_FONT:   return WIN16DRV_FONT_SelectObject( dc, handle );
-    case OBJ_REGION: return (HGDIOBJ)SelectClipRgn( dc->hSelf, handle );
-    case OBJ_BITMAP:
-        FIXME("BITMAP not implemented\n");
-        return 1;
+        TRACE("UnRealizing BrushInfo\n");
+        nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, -DRVOBJ_BRUSH,
+                                      physDev->BrushInfo,
+                                      physDev->BrushInfo, 0);
     }
-    return 0;
+    else
+    {
+        nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, DRVOBJ_BRUSH, &lBrush16, 0, 0);
+        physDev->BrushInfo = HeapAlloc( GetProcessHeap(), 0, nSize );
+    }
+
+    nSize = PRTDRV_RealizeObject(physDev->segptrPDEVICE, DRVOBJ_BRUSH,
+                                 &lBrush16, physDev->BrushInfo, win16drv_SegPtr_TextXForm);
+    return hbrush;
+}
+
+
+/***********************************************************************
+ *           WIN16DRV_SelectPen
+ */
+HPEN WIN16DRV_SelectPen( PHYSDEV dev, HPEN hpen )
+{
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
+    int          nSize;
+    LOGPEN16     lPen16;
+
+    if (!GetObject16( hpen, sizeof(lPen16), &lPen16 )) return 0;
+
+    if ( physDev->PenInfo )
+    {
+        TRACE("UnRealizing PenInfo\n");
+        nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, -DRVOBJ_PEN,
+                                      physDev->PenInfo,
+                                      physDev->PenInfo, 0);
+    }
+    else
+    {
+        nSize = PRTDRV_RealizeObject (physDev->segptrPDEVICE, DRVOBJ_PEN, &lPen16, 0, 0);
+        physDev->PenInfo = HeapAlloc( GetProcessHeap(), 0, nSize );
+    }
+
+    nSize = PRTDRV_RealizeObject(physDev->segptrPDEVICE, DRVOBJ_PEN,
+                                 &lPen16, physDev->PenInfo, 0);
+    return hpen;
 }

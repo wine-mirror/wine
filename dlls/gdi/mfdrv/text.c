@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 /******************************************************************
  *         MFDRV_MetaExtTextOut
  */
-static BOOL MFDRV_MetaExtTextOut(DC*dc, short x, short y, UINT16 flags,
+static BOOL MFDRV_MetaExtTextOut( PHYSDEV dev, short x, short y, UINT16 flags,
 				 const RECT16 *rect, LPCSTR str, short count,
 				 const INT16 *lpDx)
 {
@@ -60,7 +60,7 @@ static BOOL MFDRV_MetaExtTextOut(DC*dc, short x, short y, UINT16 flags,
     if (lpDx)
      memcpy(mr->rdParm + (rect ? 8 : 4) + ((count + 1) >> 1),lpDx,
       count*sizeof(INT16));
-    ret = MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+    ret = MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
     HeapFree( GetProcessHeap(), 0, mr);
     return ret;
 }
@@ -71,7 +71,7 @@ static BOOL MFDRV_MetaExtTextOut(DC*dc, short x, short y, UINT16 flags,
  *           MFDRV_ExtTextOut
  */
 BOOL
-MFDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
+MFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                   const RECT *lprect, LPCWSTR str, UINT count,
                   const INT *lpDx )
 {
@@ -91,8 +91,7 @@ MFDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     len = WideCharToMultiByte( CP_ACP, 0, str, count, NULL, 0, NULL, NULL );
     ascii = HeapAlloc( GetProcessHeap(), 0, len );
     WideCharToMultiByte( CP_ACP, 0, str, count, ascii, len, NULL, NULL );
-    ret = MFDRV_MetaExtTextOut(dc,x,y,flags,lprect?&rect16:NULL,ascii,len,
-			       lpdx16);
+    ret = MFDRV_MetaExtTextOut(dev,x,y,flags,lprect?&rect16:NULL,ascii,len,lpdx16);
     HeapFree( GetProcessHeap(), 0, ascii );
     if (lpdx16)	HeapFree( GetProcessHeap(), 0, lpdx16 );
     return ret;

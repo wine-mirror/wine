@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(text);
  *           X11DRV_ExtTextOut
  */
 BOOL
-X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
+X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
                    const RECT *lprect, LPCWSTR wstr, UINT count,
                    const INT *lpDx )
 {
@@ -55,18 +55,17 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     RECT 		rect;
     char		dfBreakChar, lfUnderline, lfStrikeOut;
     BOOL		rotated = FALSE;
-    X11DRV_PDEVICE      *physDev = (X11DRV_PDEVICE *)dc->physDev;
     XChar2b		*str2b = NULL;
     BOOL		dibUpdateFlag = FALSE;
     BOOL                result = TRUE; 
-
+    DC *dc = physDev->dc;
 
     if(dc->gdiFont)
-        return X11DRV_XRender_ExtTextOut(dc, x, y, flags, lprect, wstr, count,
+        return X11DRV_XRender_ExtTextOut(physDev, x, y, flags, lprect, wstr, count,
 					 lpDx);
 
 
-    if (!X11DRV_SetupGCForText( dc )) return TRUE;
+    if (!X11DRV_SetupGCForText( physDev )) return TRUE;
 
     pfo = XFONT_GetFontObject( physDev->font );
     font = pfo->fs;
@@ -104,7 +103,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
             SIZE sz;
             if (flags & ETO_CLIPPED)  /* Can't clip with no rectangle */
 	      return FALSE;
-	    if (!X11DRV_GetTextExtentPoint( dc, wstr, count, &sz ))
+	    if (!X11DRV_GetTextExtentPoint( physDev, wstr, count, &sz ))
 	      return FALSE;
 	    rect.left   = INTERNAL_XWPTODP( dc, x, y );
 	    rect.right  = INTERNAL_XWPTODP( dc, x+sz.cx, y+sz.cy );
@@ -132,7 +131,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
     if (flags & ETO_OPAQUE)
     {
-        X11DRV_LockDIBSection( dc, DIB_Status_GdiMod, FALSE );
+        X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod, FALSE );
         dibUpdateFlag = TRUE;
         TSXSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
         TSXFillRectangle( gdi_display, physDev->drawable, physDev->gc,
@@ -151,7 +150,7 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     else
     {
         SIZE sz;
-        if (!X11DRV_GetTextExtentPoint( dc, wstr, count, &sz ))
+        if (!X11DRV_GetTextExtentPoint( physDev, wstr, count, &sz ))
 	    return FALSE;
 	width = INTERNAL_XWSTODS(dc, sz.cx);
     }
@@ -215,11 +214,11 @@ X11DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
     if (!dibUpdateFlag)
     {
-        X11DRV_LockDIBSection( dc, DIB_Status_GdiMod, FALSE );
+        X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod, FALSE );
         dibUpdateFlag = TRUE;
     }
 
-    if (dc->backgroundMode != TRANSPARENT)
+    if (GetBkMode( physDev->hdc ) != TRANSPARENT)
     {
           /* If rectangle is opaque and clipped, do nothing */
         if (!(flags & ETO_CLIPPED) || !(flags & ETO_OPAQUE))
@@ -406,7 +405,7 @@ FAIL:
     result = FALSE;
     
 END:
-    if (dibUpdateFlag) X11DRV_UnlockDIBSection( dc, TRUE );
+    if (dibUpdateFlag) X11DRV_UnlockDIBSection( physDev, TRUE );
     return result;
 }
 
@@ -414,10 +413,10 @@ END:
 /***********************************************************************
  *           X11DRV_GetTextExtentPoint
  */
-BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
+BOOL X11DRV_GetTextExtentPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
                                   LPSIZE size )
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
     fontObject* pfo = XFONT_GetFontObject( physDev->font );
 
     TRACE("%s %d\n", debugstr_wn(str,count), count);

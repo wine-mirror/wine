@@ -30,11 +30,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 /***********************************************************************
  *           MFDRV_PatBlt
  */
-BOOL MFDRV_PatBlt( DC *dc, INT left, INT top,
-                     INT width, INT height, DWORD rop )
+BOOL MFDRV_PatBlt( PHYSDEV dev, INT left, INT top, INT width, INT height, DWORD rop )
 {
-    MFDRV_MetaParam6( dc, META_PATBLT, left, top, width, height,
-		      HIWORD(rop), LOWORD(rop) );
+    MFDRV_MetaParam6( dev, META_PATBLT, left, top, width, height, HIWORD(rop), LOWORD(rop) );
     return TRUE;
 }
 
@@ -42,13 +40,15 @@ BOOL MFDRV_PatBlt( DC *dc, INT left, INT top,
 /***********************************************************************
  *           MFDRV_BitBlt
  */
-BOOL MFDRV_BitBlt( DC *dcDst, INT xDst, INT yDst, INT width, INT height,
-		   DC *dcSrc, INT xSrc, INT ySrc, DWORD rop )
+BOOL MFDRV_BitBlt( PHYSDEV devDst, INT xDst, INT yDst, INT width, INT height,
+		   PHYSDEV devSrc, INT xSrc, INT ySrc, DWORD rop )
 {
     BOOL ret;
     DWORD len;
     METARECORD *mr;
     BITMAP16  BM;
+    METAFILEDRV_PDEVICE *physDevSrc = (METAFILEDRV_PDEVICE *)devSrc;
+    DC *dcSrc = physDevSrc->dc;
 
     GetObject16(dcSrc->hBitmap, sizeof(BITMAP16), &BM);
     len = sizeof(METARECORD) + 12 * sizeof(INT16) + BM.bmWidthBytes * BM.bmHeight;
@@ -72,7 +72,7 @@ BOOL MFDRV_BitBlt( DC *dcDst, INT xDst, INT yDst, INT width, INT height,
       *(mr->rdParm + 4) = width;
       *(mr->rdParm + 5) = yDst;
       *(mr->rdParm + 6) = xDst;
-      ret = MFDRV_WriteRecord( dcDst, mr, mr->rdSize * 2);
+      ret = MFDRV_WriteRecord( devDst, mr, mr->rdSize * 2);
     } 
     else
         ret = FALSE;
@@ -91,14 +91,16 @@ BOOL MFDRV_BitBlt( DC *dcDst, INT xDst, INT yDst, INT width, INT height,
 #define STRETCH_VIA_DIB
 #undef  STRETCH_VIA_DIB
 
-BOOL MFDRV_StretchBlt( DC *dcDst, INT xDst, INT yDst, INT widthDst,
-		       INT heightDst, DC *dcSrc, INT xSrc, INT ySrc,
+BOOL MFDRV_StretchBlt( PHYSDEV devDst, INT xDst, INT yDst, INT widthDst,
+		       INT heightDst, PHYSDEV devSrc, INT xSrc, INT ySrc,
 		       INT widthSrc, INT heightSrc, DWORD rop )
 {
     BOOL ret;
     DWORD len;
     METARECORD *mr;
     BITMAP16  BM;
+    METAFILEDRV_PDEVICE *physDevSrc = (METAFILEDRV_PDEVICE *)devSrc;
+    DC *dcSrc = physDevSrc->dc;
 #ifdef STRETCH_VIA_DIB    
     LPBITMAPINFOHEADER lpBMI;
     WORD nBPP;
@@ -157,7 +159,7 @@ BOOL MFDRV_StretchBlt( DC *dcDst, INT xDst, INT yDst, INT widthDst,
       *(mr->rdParm + 7) = widthDst;
       *(mr->rdParm + 8) = yDst;
       *(mr->rdParm + 9) = xDst;
-      ret = MFDRV_WriteRecord( dcDst, mr, mr->rdSize * 2);
+      ret = MFDRV_WriteRecord( devDst, mr, mr->rdSize * 2);
     }  
     else
         ret = FALSE;
@@ -169,7 +171,7 @@ BOOL MFDRV_StretchBlt( DC *dcDst, INT xDst, INT yDst, INT widthDst,
 /***********************************************************************
  *           MFDRV_StretchDIBits
  */
-INT MFDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
+INT MFDRV_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst,
 			 INT heightDst, INT xSrc, INT ySrc, INT widthSrc,
 			 INT heightSrc, const void *bits,
 			 const BITMAPINFO *info, UINT wUsage, DWORD dwRop )
@@ -201,7 +203,7 @@ INT MFDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
     mr->rdParm[10] = (INT16)xDst;
     memcpy(mr->rdParm + 11, info, infosize);
     memcpy(mr->rdParm + 11 + infosize / 2, bits, imagesize);
-    MFDRV_WriteRecord( dc, mr, mr->rdSize * 2 );
+    MFDRV_WriteRecord( dev, mr, mr->rdSize * 2 );
     HeapFree( GetProcessHeap(), 0, mr );
     return heightSrc;
 }
@@ -210,7 +212,7 @@ INT MFDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 /***********************************************************************
  *           MFDRV_SetDIBitsToDeivce
  */
-INT MFDRV_SetDIBitsToDevice( DC *dc, INT xDst, INT yDst, DWORD cx,
+INT MFDRV_SetDIBitsToDevice( PHYSDEV dev, INT xDst, INT yDst, DWORD cx,
 			     DWORD cy, INT xSrc, INT ySrc, UINT startscan,
 			     UINT lines, LPCVOID bits, const BITMAPINFO *info,
 			     UINT coloruse )
@@ -241,7 +243,7 @@ INT MFDRV_SetDIBitsToDevice( DC *dc, INT xDst, INT yDst, DWORD cx,
     mr->rdParm[8] = (INT16)xDst;
     memcpy(mr->rdParm + 9, info, infosize);
     memcpy(mr->rdParm + 9 + infosize / 2, bits, imagesize);
-    MFDRV_WriteRecord( dc, mr, mr->rdSize * 2 );
+    MFDRV_WriteRecord( dev, mr, mr->rdSize * 2 );
     HeapFree( GetProcessHeap(), 0, mr );
     return lines;
 }

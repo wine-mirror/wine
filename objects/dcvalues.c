@@ -40,7 +40,7 @@ INT WINAPI SetBkMode( HDC hdc, INT mode )
     }
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
     if (dc->funcs->pSetBkMode)
-        ret = dc->funcs->pSetBkMode( dc, mode );
+        ret = dc->funcs->pSetBkMode( dc->physDev, mode );
     else
     {
         ret = dc->backgroundMode;
@@ -65,7 +65,7 @@ INT WINAPI SetROP2( HDC hdc, INT mode )
     }
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
     if (dc->funcs->pSetROP2)
-        ret = dc->funcs->pSetROP2( dc, mode );
+        ret = dc->funcs->pSetROP2( dc->physDev, mode );
     else
     {
         ret = dc->ROPmode;
@@ -90,7 +90,7 @@ INT WINAPI SetRelAbs( HDC hdc, INT mode )
     }
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
     if (dc->funcs->pSetRelAbs)
-        ret = dc->funcs->pSetRelAbs( dc, mode );
+        ret = dc->funcs->pSetRelAbs( dc->physDev, mode );
     else
     {
         ret = dc->relAbsMode;
@@ -115,7 +115,7 @@ INT WINAPI SetPolyFillMode( HDC hdc, INT mode )
     }
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
     if (dc->funcs->pSetPolyFillMode)
-        ret = dc->funcs->pSetPolyFillMode( dc, mode );
+        ret = dc->funcs->pSetPolyFillMode( dc->physDev, mode );
     else
     {
         ret = dc->polyFillMode;
@@ -140,7 +140,7 @@ INT WINAPI SetStretchBltMode( HDC hdc, INT mode )
     }
     if (!(dc = DC_GetDCPtr( hdc ))) return 0;
     if (dc->funcs->pSetStretchBltMode)
-        ret = dc->funcs->pSetStretchBltMode( dc, mode );
+        ret = dc->funcs->pSetStretchBltMode( dc->physDev, mode );
     else
     {
         ret = dc->stretchBltMode;

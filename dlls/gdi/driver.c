@@ -96,6 +96,8 @@ static struct graphics_driver *create_driver( HMODULE module )
     GET_FUNC(FrameRgn);
     GET_FUNC(GetCharWidth);
     GET_FUNC(GetDCOrgEx);
+    GET_FUNC(GetDIBColorTable);
+    GET_FUNC(GetDIBits);
     GET_FUNC(GetDeviceCaps);
     GET_FUNC(GetDeviceGammaRamp);
     GET_FUNC(GetPixel);
@@ -127,12 +129,17 @@ static struct graphics_driver *create_driver( HMODULE module )
     GET_FUNC(SaveDC);
     GET_FUNC(ScaleViewportExt);
     GET_FUNC(ScaleWindowExt);
+    GET_FUNC(SelectBitmap);
+    GET_FUNC(SelectBrush);
     GET_FUNC(SelectClipPath);
     GET_FUNC(SelectClipRgn);
-    GET_FUNC(SelectObject);
+    GET_FUNC(SelectFont);
     GET_FUNC(SelectPalette);
+    GET_FUNC(SelectPen);
     GET_FUNC(SetBkColor);
     GET_FUNC(SetBkMode);
+    GET_FUNC(SetDIBColorTable);
+    GET_FUNC(SetDIBits);
     GET_FUNC(SetDIBitsToDevice);
     GET_FUNC(SetDeviceClipping);
     GET_FUNC(SetDeviceGammaRamp);

@@ -94,7 +94,7 @@ INT WINAPI StartDocA(HDC hdc, const DOCINFOA* doc)
 
     if(!dc) return SP_ERROR;
 
-    if (dc->funcs->pStartDoc) ret = dc->funcs->pStartDoc( dc, doc );
+    if (dc->funcs->pStartDoc) ret = dc->funcs->pStartDoc( dc->physDev, doc );
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -148,7 +148,7 @@ INT WINAPI EndDoc(HDC hdc)
     DC *dc = DC_GetDCPtr( hdc );
     if(!dc) return SP_ERROR;
 
-    if (dc->funcs->pEndDoc) ret = dc->funcs->pEndDoc( dc );
+    if (dc->funcs->pEndDoc) ret = dc->funcs->pEndDoc( dc->physDev );
     GDI_ReleaseObj( hdc );
     return ret;
 }
@@ -173,7 +173,7 @@ INT WINAPI StartPage(HDC hdc)
     if(!dc) return SP_ERROR;
 
     if(dc->funcs->pStartPage)
-        ret = dc->funcs->pStartPage( dc );
+        ret = dc->funcs->pStartPage( dc->physDev );
     else
         FIXME("stub\n");
     GDI_ReleaseObj( hdc );
@@ -199,7 +199,7 @@ INT WINAPI EndPage(HDC hdc)
     DC *dc = DC_GetDCPtr( hdc );
     if(!dc) return SP_ERROR;
 
-    if (dc->funcs->pEndPage) ret = dc->funcs->pEndPage( dc );
+    if (dc->funcs->pEndPage) ret = dc->funcs->pEndPage( dc->physDev );
     GDI_ReleaseObj( hdc );
     if (!QueryAbort16( hdc, 0 ))
     {
@@ -226,7 +226,7 @@ INT WINAPI AbortDoc(HDC hdc)
     DC *dc = DC_GetDCPtr( hdc );
     if(!dc) return SP_ERROR;
 
-    if (dc->funcs->pAbortDoc) ret = dc->funcs->pAbortDoc( dc );
+    if (dc->funcs->pAbortDoc) ret = dc->funcs->pAbortDoc( dc->physDev );
     GDI_ReleaseObj( hdc );
     return ret;
 }

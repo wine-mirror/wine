@@ -45,8 +45,6 @@
 
 struct tagBITMAPOBJ;
 struct tagCURSORICONINFO;
-struct tagDC;
-struct tagDeviceCaps;
 struct tagPALETTEOBJ;
 struct tagWINDOWPOS;
 
@@ -80,6 +78,8 @@ typedef struct tagXRENDERINFO *XRENDERINFO;
   /* X physical device */
 typedef struct
 {
+    HDC           hdc;
+    DC           *dc;          /* direct pointer to DC, should go away */
     GC            gc;          /* X Window GC */
     Drawable      drawable;
     X_PHYSFONT    font;
@@ -105,77 +105,75 @@ extern unsigned int X11DRV_server_startticks;
 
 /* Wine driver X11 functions */
 
-extern BOOL X11DRV_BitBlt( struct tagDC *dcDst, INT xDst, INT yDst,
-                             INT width, INT height, struct tagDC *dcSrc,
+extern BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
+                             INT width, INT height, X11DRV_PDEVICE *physDevSrc,
                              INT xSrc, INT ySrc, DWORD rop );
 extern BOOL X11DRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf,
 				    DEVICEFONTENUMPROC dfeproc, LPARAM lp );
-extern BOOL X11DRV_GetCharWidth( struct tagDC *dc, UINT firstChar,
+extern BOOL X11DRV_GetCharWidth( X11DRV_PDEVICE *physDev, UINT firstChar,
                                    UINT lastChar, LPINT buffer );
-extern BOOL X11DRV_GetDCOrgEx( struct tagDC *dc, LPPOINT lpp );
-extern BOOL X11DRV_GetTextExtentPoint( struct tagDC *dc, LPCWSTR str,
+extern BOOL X11DRV_GetDCOrgEx( X11DRV_PDEVICE *physDev, LPPOINT lpp );
+extern BOOL X11DRV_GetTextExtentPoint( X11DRV_PDEVICE *physDev, LPCWSTR str,
                                          INT count, LPSIZE size );
-extern BOOL X11DRV_GetTextMetrics(struct tagDC *dc, TEXTMETRICW *metrics);
-extern BOOL X11DRV_PatBlt( struct tagDC *dc, INT left, INT top,
+extern BOOL X11DRV_GetTextMetrics(X11DRV_PDEVICE *physDev, TEXTMETRICW *metrics);
+extern BOOL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT left, INT top,
                              INT width, INT height, DWORD rop );
-extern VOID   X11DRV_SetDeviceClipping(struct tagDC *dc);
-extern BOOL X11DRV_StretchBlt( struct tagDC *dcDst, INT xDst, INT yDst,
+extern VOID   X11DRV_SetDeviceClipping(X11DRV_PDEVICE *physDev);
+extern BOOL X11DRV_StretchBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
                                  INT widthDst, INT heightDst,
-                                 struct tagDC *dcSrc, INT xSrc, INT ySrc,
+                                 X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
                                  INT widthSrc, INT heightSrc, DWORD rop );
-extern BOOL X11DRV_LineTo( struct tagDC *dc, INT x, INT y);
-extern BOOL X11DRV_Arc( struct tagDC *dc, INT left, INT top, INT right,
+extern BOOL X11DRV_LineTo( X11DRV_PDEVICE *physDev, INT x, INT y);
+extern BOOL X11DRV_Arc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
 			  INT bottom, INT xstart, INT ystart, INT xend,
 			  INT yend );
-extern BOOL X11DRV_Pie( struct tagDC *dc, INT left, INT top, INT right,
+extern BOOL X11DRV_Pie( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
 			  INT bottom, INT xstart, INT ystart, INT xend,
 			  INT yend );
-extern BOOL X11DRV_Chord( struct tagDC *dc, INT left, INT top,
+extern BOOL X11DRV_Chord( X11DRV_PDEVICE *physDev, INT left, INT top,
 			    INT right, INT bottom, INT xstart,
 			    INT ystart, INT xend, INT yend );
-extern BOOL X11DRV_Ellipse( struct tagDC *dc, INT left, INT top,
+extern BOOL X11DRV_Ellipse( X11DRV_PDEVICE *physDev, INT left, INT top,
 			      INT right, INT bottom );
-extern BOOL X11DRV_Rectangle(struct tagDC *dc, INT left, INT top,
+extern BOOL X11DRV_Rectangle(X11DRV_PDEVICE *physDev, INT left, INT top,
 			      INT right, INT bottom);
-extern BOOL X11DRV_RoundRect( struct tagDC *dc, INT left, INT top,
+extern BOOL X11DRV_RoundRect( X11DRV_PDEVICE *physDev, INT left, INT top,
 				INT right, INT bottom, INT ell_width,
 				INT ell_height );
-extern COLORREF X11DRV_SetPixel( struct tagDC *dc, INT x, INT y,
+extern COLORREF X11DRV_SetPixel( X11DRV_PDEVICE *physDev, INT x, INT y,
 				 COLORREF color );
-extern COLORREF X11DRV_GetPixel( struct tagDC *dc, INT x, INT y);
-extern BOOL X11DRV_PaintRgn( struct tagDC *dc, HRGN hrgn );
-extern BOOL X11DRV_Polyline( struct tagDC *dc,const POINT* pt,INT count);
-extern BOOL X11DRV_Polygon( struct tagDC *dc, const POINT* pt, INT count );
-extern BOOL X11DRV_PolyPolygon( struct tagDC *dc, const POINT* pt, 
+extern COLORREF X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y);
+extern BOOL X11DRV_PaintRgn( X11DRV_PDEVICE *physDev, HRGN hrgn );
+extern BOOL X11DRV_Polyline( X11DRV_PDEVICE *physDev,const POINT* pt,INT count);
+extern BOOL X11DRV_Polygon( X11DRV_PDEVICE *physDev, const POINT* pt, INT count );
+extern BOOL X11DRV_PolyPolygon( X11DRV_PDEVICE *physDev, const POINT* pt, 
 				  const INT* counts, UINT polygons);
-extern BOOL X11DRV_PolyPolyline( struct tagDC *dc, const POINT* pt, 
+extern BOOL X11DRV_PolyPolyline( X11DRV_PDEVICE *physDev, const POINT* pt, 
 				  const DWORD* counts, DWORD polylines);
 
-extern HGDIOBJ X11DRV_SelectObject( struct tagDC *dc, HGDIOBJ handle );
-
-extern COLORREF X11DRV_SetBkColor( struct tagDC *dc, COLORREF color );
-extern COLORREF X11DRV_SetTextColor( struct tagDC *dc, COLORREF color );
-extern BOOL X11DRV_ExtFloodFill( struct tagDC *dc, INT x, INT y,
+extern COLORREF X11DRV_SetBkColor( X11DRV_PDEVICE *physDev, COLORREF color );
+extern COLORREF X11DRV_SetTextColor( X11DRV_PDEVICE *physDev, COLORREF color );
+extern BOOL X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y,
 				   COLORREF color, UINT fillType );
-extern BOOL X11DRV_ExtTextOut( struct tagDC *dc, INT x, INT y,
+extern BOOL X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y,
 				 UINT flags, const RECT *lprect,
 				 LPCWSTR str, UINT count, const INT *lpDx );
 extern BOOL X11DRV_CreateBitmap( HBITMAP hbitmap );
 extern BOOL X11DRV_DeleteObject( HGDIOBJ handle );
 extern LONG X11DRV_BitmapBits( HBITMAP hbitmap, void *bits, LONG count,
 			       WORD flags );
-extern INT X11DRV_SetDIBitsToDevice( struct tagDC *dc, INT xDest,
+extern INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest,
 				       INT yDest, DWORD cx, DWORD cy,
 				       INT xSrc, INT ySrc,
 				       UINT startscan, UINT lines,
 				       LPCVOID bits, const BITMAPINFO *info,
 				       UINT coloruse );
-extern INT X11DRV_DeviceBitmapBits( struct tagDC *dc, HBITMAP hbitmap,
+extern INT X11DRV_DeviceBitmapBits( X11DRV_PDEVICE *physDev, HBITMAP hbitmap,
 				      WORD fGet, UINT startscan,
 				      UINT lines, LPSTR bits,
 				      LPBITMAPINFO info, UINT coloruse );
-extern BOOL X11DRV_GetDeviceGammaRamp( struct tagDC *dc, LPVOID ramp );
-extern BOOL X11DRV_SetDeviceGammaRamp( struct tagDC *dc, LPVOID ramp );
+extern BOOL X11DRV_GetDeviceGammaRamp( X11DRV_PDEVICE *physDev, LPVOID ramp );
+extern BOOL X11DRV_SetDeviceGammaRamp( X11DRV_PDEVICE *physDev, LPVOID ramp );
 
 /* OpenGL / X11 driver functions */
 extern int X11DRV_ChoosePixelFormat(DC *dc, const PIXELFORMATDESCRIPTOR *pppfd) ;
@@ -188,10 +186,6 @@ extern BOOL X11DRV_SwapBuffers(DC *dc) ;
 
 extern BOOL X11DRV_BITMAP_Init(void);
 extern int X11DRV_FONT_Init( int *log_pixels_x, int *log_pixels_y );
-extern HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush );
-extern HFONT X11DRV_FONT_SelectObject( DC * dc, HFONT hfont );
-extern HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen );
-extern HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap );
 extern BOOL X11DRV_BITMAP_DeleteObject( HBITMAP hbitmap );
 
 struct tagBITMAPOBJ;
@@ -207,10 +201,10 @@ extern void X11DRV_SetDrawable( HDC hdc, Drawable drawable, int mode, int org_x,
 extern void X11DRV_StartGraphicsExposures( HDC hdc );
 extern void X11DRV_EndGraphicsExposures( HDC hdc, HRGN hrgn );
 
-extern BOOL X11DRV_SetupGCForPatBlt( struct tagDC *dc, GC gc, BOOL fMapColors );
-extern BOOL X11DRV_SetupGCForBrush( struct tagDC *dc );
-extern BOOL X11DRV_SetupGCForPen( struct tagDC *dc );
-extern BOOL X11DRV_SetupGCForText( struct tagDC *dc );
+extern BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapColors );
+extern BOOL X11DRV_SetupGCForBrush( X11DRV_PDEVICE *physDev );
+extern BOOL X11DRV_SetupGCForPen( X11DRV_PDEVICE *physDev );
+extern BOOL X11DRV_SetupGCForText( X11DRV_PDEVICE *physDev );
 
 extern const int X11DRV_XROPfunction[];
 
@@ -219,12 +213,12 @@ extern void _XInitImageFuncPtrs(XImage *);
 extern BOOL X11DRV_XRender_Installed;
 extern void X11DRV_XRender_Init(void);
 extern void X11DRV_XRender_Finalize(void);
-extern BOOL X11DRV_XRender_SelectFont(struct tagDC*, HFONT);
-extern void X11DRV_XRender_DeleteDC(struct tagDC*);
-extern BOOL X11DRV_XRender_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
+extern BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE*, HFONT);
+extern void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE*);
+extern BOOL X11DRV_XRender_ExtTextOut(X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 				      const RECT *lprect, LPCWSTR wstr,
 				      UINT count, const INT *lpDx);
-extern void X11DRV_XRender_UpdateDrawable(DC *dc);
+extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev);
 
 /* exported dib functions for now */
 
@@ -258,37 +252,25 @@ typedef struct
 
 } X11DRV_DIBSECTION;
 
-extern int *X11DRV_DIB_BuildColorMap( struct tagDC *dc, WORD coloruse,
+extern int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse,
 				      WORD depth, const BITMAPINFO *info,
 				      int *nColors );
-extern INT X11DRV_CoerceDIBSection(struct tagDC *dc,INT,BOOL);
-extern INT X11DRV_LockDIBSection(struct tagDC *dc,INT,BOOL);
-extern void X11DRV_UnlockDIBSection(struct tagDC *dc,BOOL);
+extern INT X11DRV_CoerceDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
+extern INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
+extern void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev,BOOL);
 extern INT X11DRV_CoerceDIBSection2(HBITMAP bmp,INT,BOOL);
 extern INT X11DRV_LockDIBSection2(HBITMAP bmp,INT,BOOL);
 extern void X11DRV_UnlockDIBSection2(HBITMAP bmp,BOOL);
 
-extern HBITMAP X11DRV_DIB_CreateDIBSection(struct tagDC *dc, BITMAPINFO *bmi, UINT usage,
+extern HBITMAP X11DRV_DIB_CreateDIBSection(X11DRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage,
 					   LPVOID *bits, HANDLE section, DWORD offset, DWORD ovr_pitch);
-
-extern struct tagBITMAP_DRIVER X11DRV_BITMAP_Driver;
-
-extern INT X11DRV_DIB_SetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, UINT startscan,
-				UINT lines, LPCVOID bits, const BITMAPINFO *info,
-				UINT coloruse, HBITMAP hbitmap);
-extern INT X11DRV_DIB_GetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, UINT startscan,
-				UINT lines, LPVOID bits, BITMAPINFO *info,
-				UINT coloruse, HBITMAP hbitmap);
 extern void X11DRV_DIB_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
-extern UINT X11DRV_DIB_SetDIBColorTable(struct tagBITMAPOBJ *,struct tagDC*,UINT,UINT,const RGBQUAD *);
-extern UINT X11DRV_DIB_GetDIBColorTable(struct tagBITMAPOBJ *,struct tagDC*,UINT,UINT,RGBQUAD *);
 extern INT X11DRV_DIB_Coerce(struct tagBITMAPOBJ *,INT,BOOL);
 extern INT X11DRV_DIB_Lock(struct tagBITMAPOBJ *,INT,BOOL);
 extern void X11DRV_DIB_Unlock(struct tagBITMAPOBJ *,BOOL);
-void X11DRV_DIB_CopyDIBSection(DC *dcSrc, DC *dcDst,     
-			       DWORD xSrc, DWORD ySrc,   
-			       DWORD xDest, DWORD yDest, 
-			       DWORD width, DWORD height);
+void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
+                               DWORD xSrc, DWORD ySrc, DWORD xDest, DWORD yDest,
+                               DWORD width, DWORD height);
 struct _DCICMD;
 extern INT X11DRV_DCICommand(INT cbInput, const struct _DCICMD *lpCmd, LPVOID lpOutData);
 
@@ -321,7 +303,7 @@ extern int X11DRV_PALETTE_Init(void);
 extern void X11DRV_PALETTE_Cleanup(void);
 
 extern COLORREF X11DRV_PALETTE_ToLogical(int pixel);
-extern int X11DRV_PALETTE_ToPhysical(struct tagDC *dc, COLORREF color);
+extern int X11DRV_PALETTE_ToPhysical(X11DRV_PDEVICE *physDev, COLORREF color);
 
 extern struct tagPALETTE_DRIVER X11DRV_PALETTE_Driver;
 

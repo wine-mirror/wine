@@ -29,9 +29,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
 
 /***********************************************************************
- *           EMFDRV_BITMAP_SelectObject
+ *           EMFDRV_SelectBitmap
  */
-static HBITMAP EMFDRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap )
+HBITMAP EMFDRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
     return 0;
 }
@@ -40,7 +40,7 @@ static HBITMAP EMFDRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap )
 /***********************************************************************
  *           EMFDRV_CreateBrushIndirect
  */
-DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
+DWORD EMFDRV_CreateBrushIndirect( PHYSDEV dev, HBRUSH hBrush )
 {
     DWORD index = 0;
     LOGBRUSH logbrush;
@@ -55,10 +55,10 @@ DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
 	EMRCREATEBRUSHINDIRECT emr;
 	emr.emr.iType = EMR_CREATEBRUSHINDIRECT;
 	emr.emr.nSize = sizeof(emr);
-	emr.ihBrush = index = EMFDRV_AddHandleDC( dc );
+	emr.ihBrush = index = EMFDRV_AddHandleDC( dev );
 	emr.lb = logbrush;
 
-	if(!EMFDRV_WriteRecord( dc, &emr.emr ))
+	if(!EMFDRV_WriteRecord( dev, &emr.emr ))
 	    index = 0;
       }
       break;
@@ -80,7 +80,7 @@ DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
 	if(!emr) break;
 	emr->emr.iType = EMR_CREATEDIBPATTERNBRUSHPT;
 	emr->emr.nSize = size;
-	emr->ihBrush = index = EMFDRV_AddHandleDC( dc );
+	emr->ihBrush = index = EMFDRV_AddHandleDC( dev );
 	emr->iUsage = LOWORD(logbrush.lbColor);
 	emr->offBmi = sizeof(EMRCREATEDIBPATTERNBRUSHPT);
 	emr->cbBmi = biSize;
@@ -88,7 +88,7 @@ DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
 	memcpy((char *)emr + sizeof(EMRCREATEDIBPATTERNBRUSHPT), info,
 	       biSize + bmSize ); 
 
-	if(!EMFDRV_WriteRecord( dc, &emr->emr ))
+	if(!EMFDRV_WriteRecord( dev, &emr->emr ))
 	    index = 0;
 	HeapFree( GetProcessHeap(), 0, emr );
 	GlobalUnlock16(logbrush.lbHatch);
@@ -108,13 +108,12 @@ DWORD EMFDRV_CreateBrushIndirect( DC *dc, HBRUSH hBrush )
 
 
 /***********************************************************************
- *           EMFDRV_BRUSH_SelectObject
+ *           EMFDRV_SelectBrush
  */
-static HBRUSH EMFDRV_BRUSH_SelectObject(DC *dc, HBRUSH hBrush )
+HBRUSH EMFDRV_SelectBrush(PHYSDEV dev, HBRUSH hBrush )
 {
     EMRSELECTOBJECT emr;
     DWORD index;
-    HBRUSH hOldBrush;
     int i;
 
     /* If the object is a stock brush object, do not need to create it.
@@ -130,25 +129,20 @@ static HBRUSH EMFDRV_BRUSH_SelectObject(DC *dc, HBRUSH hBrush )
             goto found;
         }
     }
-    if (!(index = EMFDRV_CreateBrushIndirect(dc, hBrush ))) return 0;
+    if (!(index = EMFDRV_CreateBrushIndirect(dev, hBrush ))) return 0;
 
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
-    if(!EMFDRV_WriteRecord( dc, &emr.emr ))
-        return FALSE;
-
-    hOldBrush = dc->hBrush;
-    dc->hBrush = hBrush;
-    return hOldBrush;
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? hBrush : 0;
 }
 
 
 /******************************************************************
  *         EMFDRV_CreateFontIndirect
  */
-static BOOL EMFDRV_CreateFontIndirect(DC *dc, HFONT hFont )
+static BOOL EMFDRV_CreateFontIndirect(PHYSDEV dev, HFONT hFont )
 {
     DWORD index = 0;
     EMREXTCREATEFONTINDIRECTW emr;
@@ -158,7 +152,7 @@ static BOOL EMFDRV_CreateFontIndirect(DC *dc, HFONT hFont )
 
     emr.emr.iType = EMR_EXTCREATEFONTINDIRECTW;
     emr.emr.nSize = (sizeof(emr) + 3) / 4 * 4;
-    emr.ihFont = index = EMFDRV_AddHandleDC( dc );
+    emr.ihFont = index = EMFDRV_AddHandleDC( dev );
     emr.elfw.elfFullName[0] = '\0';
     emr.elfw.elfStyle[0]    = '\0';
     emr.elfw.elfVersion     = 0;
@@ -179,16 +173,16 @@ static BOOL EMFDRV_CreateFontIndirect(DC *dc, HFONT hFont )
     emr.elfw.elfPanose.bMidline         = PAN_NO_FIT;
     emr.elfw.elfPanose.bXHeight         = PAN_NO_FIT;
 
-    if(!EMFDRV_WriteRecord( dc, &emr.emr ))
+    if(!EMFDRV_WriteRecord( dev, &emr.emr ))
         index = 0;
     return index;
 }
 
 
 /***********************************************************************
- *           EMFDRV_FONT_SelectObject
+ *           EMFDRV_SelectFont
  */
-static HFONT EMFDRV_FONT_SelectObject( DC * dc, HFONT hFont )
+HFONT EMFDRV_SelectFont( PHYSDEV dev, HFONT hFont )
 {
     EMRSELECTOBJECT emr;
     DWORD index;
@@ -208,15 +202,14 @@ static HFONT EMFDRV_FONT_SelectObject( DC * dc, HFONT hFont )
             goto found;
         }
     }
-    if (!(index = EMFDRV_CreateFontIndirect(dc, hFont ))) return GDI_ERROR;
+    if (!(index = EMFDRV_CreateFontIndirect(dev, hFont ))) return GDI_ERROR;
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
-    if(!EMFDRV_WriteRecord( dc, &emr.emr ))
+    if(!EMFDRV_WriteRecord( dev, &emr.emr ))
         return GDI_ERROR;
-
-    return FALSE;
+    return 0;
 }
 
 
@@ -224,7 +217,7 @@ static HFONT EMFDRV_FONT_SelectObject( DC * dc, HFONT hFont )
 /******************************************************************
  *         EMFDRV_CreatePenIndirect
  */
-static HPEN EMFDRV_CreatePenIndirect(DC *dc, HPEN hPen )
+static HPEN EMFDRV_CreatePenIndirect(PHYSDEV dev, HPEN hPen )
 {
     EMRCREATEPEN emr;
     DWORD index = 0;
@@ -233,21 +226,20 @@ static HPEN EMFDRV_CreatePenIndirect(DC *dc, HPEN hPen )
 
     emr.emr.iType = EMR_CREATEPEN;
     emr.emr.nSize = sizeof(emr);
-    emr.ihPen = index = EMFDRV_AddHandleDC( dc );
+    emr.ihPen = index = EMFDRV_AddHandleDC( dev );
 
-    if(!EMFDRV_WriteRecord( dc, &emr.emr ))
+    if(!EMFDRV_WriteRecord( dev, &emr.emr ))
         index = 0;
     return index;
 }
 
 /******************************************************************
- *         EMFDRV_PEN_SelectObject
+ *         EMFDRV_SelectPen
  */
-static HPEN EMFDRV_PEN_SelectObject(DC *dc, HPEN hPen )
+HPEN EMFDRV_SelectPen(PHYSDEV dev, HPEN hPen )
 {
     EMRSELECTOBJECT emr;
     DWORD index;
-    HPEN hOldPen;
     int i;
 
     /* If the object is a stock pen object, do not need to create it.
@@ -264,48 +256,10 @@ static HPEN EMFDRV_PEN_SelectObject(DC *dc, HPEN hPen )
             goto found;
         }
     }
-    if (!(index = EMFDRV_CreatePenIndirect(dc, hPen ))) return 0;
+    if (!(index = EMFDRV_CreatePenIndirect(dev, hPen ))) return 0;
  found:
     emr.emr.iType = EMR_SELECTOBJECT;
     emr.emr.nSize = sizeof(emr);
     emr.ihObject = index;
-    if(!EMFDRV_WriteRecord( dc, &emr.emr ))
-        return FALSE;
-
-    hOldPen = dc->hPen;
-    dc->hPen = hPen;
-    return hOldPen; 
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? hPen : 0;
 }
-
-
-/***********************************************************************
- *           EMFDRV_SelectObject
- */
-HGDIOBJ EMFDRV_SelectObject( DC *dc, HGDIOBJ handle )
-{
-    GDIOBJHDR * ptr = GDI_GetObjPtr( handle, MAGIC_DONTCARE );
-    HGDIOBJ ret = 0;
-
-    if (!ptr) return 0;
-    TRACE("hdc=%04x %04x\n", dc->hSelf, handle );
-    
-    switch(GDIMAGIC(ptr->wMagic))
-    {
-      case PEN_MAGIC:
-	  ret = EMFDRV_PEN_SelectObject( dc, handle );
-	  break;
-      case BRUSH_MAGIC:
-	  ret = EMFDRV_BRUSH_SelectObject( dc, handle );
-	  break;
-      case FONT_MAGIC:
-	  ret = EMFDRV_FONT_SelectObject( dc, handle );
-	  break;
-      case BITMAP_MAGIC:
-	  ret = EMFDRV_BITMAP_SelectObject( dc, handle );
-	  break;
-    }
-    GDI_ReleaseObj( handle );
-    return ret;
-}
-
-

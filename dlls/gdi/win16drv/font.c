@@ -33,15 +33,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(win16drv);
 /***********************************************************************
  *           WIN16DRV_GetTextExtentPoint
  */
-BOOL WIN16DRV_GetTextExtentPoint( DC *dc, LPCWSTR wstr, INT count,
+BOOL WIN16DRV_GetTextExtentPoint( PHYSDEV dev, LPCWSTR wstr, INT count,
 				  LPSIZE size )
 {
-    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
     DWORD dwRet, len;
     char *str;
 
-    TRACE("%04x %s %d %p\n",
-	  dc->hSelf, debugstr_wn(wstr, count), count, size);
+    TRACE("%04x %s %d %p\n", physDev->hdc, debugstr_wn(wstr, count), count, size);
 
 
     len = WideCharToMultiByte( CP_ACP, 0, wstr, count, NULL, 0, NULL, NULL );
@@ -63,11 +63,11 @@ BOOL WIN16DRV_GetTextExtentPoint( DC *dc, LPCWSTR wstr, INT count,
 /***********************************************************************
  *           WIN16DRV_GetTextMetrics
  */
-BOOL WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRICW *metrics )
+BOOL WIN16DRV_GetTextMetrics( PHYSDEV dev, TEXTMETRICW *metrics )
 {
-    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
 
-    TRACE("%04x \n", dc->hSelf);
+    TRACE("%04x \n", physDev->hdc);
 
     FONT_TextMetric16ToW( &physDev->tm, metrics );
 
@@ -85,9 +85,13 @@ BOOL WIN16DRV_GetTextMetrics( DC *dc, TEXTMETRICW *metrics )
     return TRUE;
 }
 
-HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont)
+/***********************************************************************
+ *           WIN16DRV_SelectFont
+ */
+HFONT WIN16DRV_SelectFont( PHYSDEV dev, HFONT hfont)
 {
-    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
     int	nSize;
 
     if (!GetObject16( hfont, sizeof(physDev->lf), &physDev->lf ))
@@ -163,16 +167,14 @@ HFONT WIN16DRV_FONT_SelectObject( DC * dc, HFONT hfont)
 /***********************************************************************
  *           WIN16DRV_GetCharWidth
  */
-BOOL WIN16DRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
+BOOL WIN16DRV_GetCharWidth( PHYSDEV dev, UINT firstChar, UINT lastChar,
 			    LPINT buffer )
 {
     int i;
     WORD wRet;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
 
-    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
-    
-    TRACE("%d - %d into %p\n",
-		      firstChar, lastChar, buffer );
+    TRACE("%d - %d into %p\n", firstChar, lastChar, buffer );
 
     wRet = PRTDRV_GetCharWidth( physDev->segptrPDEVICE, buffer, firstChar, 
 				lastChar, physDev->FontInfo, 

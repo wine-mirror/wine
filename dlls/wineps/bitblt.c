@@ -30,16 +30,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
  *
  *                    PSDRV_PatBlt
  */
-BOOL PSDRV_PatBlt(DC *dc, INT x, INT y, INT width, INT height, DWORD dwRop)
+BOOL PSDRV_PatBlt(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, INT height, DWORD dwRop)
 {
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
+
     switch(dwRop) {
     case PATCOPY:
-        PSDRV_WriteGSave(dc);
-	PSDRV_WriteRectangle(dc, XLPTODP(dc, x), YLPTODP(dc, y),
+        PSDRV_WriteGSave(physDev);
+	PSDRV_WriteRectangle(physDev, XLPTODP(dc, x), YLPTODP(dc, y),
 			     XLSTODS(dc, width), YLSTODS(dc, height));
-	PSDRV_Brush(dc, FALSE);
-	PSDRV_WriteGRestore(dc);
+	PSDRV_Brush(physDev, FALSE);
+	PSDRV_WriteGRestore(physDev);
 	return TRUE;
 
     case BLACKNESS:
@@ -47,14 +48,14 @@ BOOL PSDRV_PatBlt(DC *dc, INT x, INT y, INT width, INT height, DWORD dwRop)
       {
 	PSCOLOR pscol;
 
-        PSDRV_WriteGSave(dc);
-	PSDRV_WriteRectangle(dc, XLPTODP(dc, x), YLPTODP(dc, y),
+        PSDRV_WriteGSave(physDev);
+	PSDRV_WriteRectangle(physDev, XLPTODP(dc, x), YLPTODP(dc, y),
 			     XLSTODS(dc, width), YLSTODS(dc, height));
 	PSDRV_CreateColor( physDev, &pscol, (dwRop == BLACKNESS) ?
 			   RGB(0,0,0) : RGB(0xff,0xff,0xff) );
-	PSDRV_WriteSetColor(dc, &pscol);
-	PSDRV_WriteFill(dc);
-	PSDRV_WriteGRestore(dc);
+	PSDRV_WriteSetColor(physDev, &pscol);
+	PSDRV_WriteFill(physDev);
+	PSDRV_WriteGRestore(physDev);
 	return TRUE;
       }
     default:

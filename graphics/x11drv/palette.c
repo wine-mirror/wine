@@ -765,8 +765,9 @@ COLORREF X11DRV_PALETTE_ToLogical(int pixel)
  *
  * Return the physical color closest to 'color'.
  */
-int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
+int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 {
+    DC *dc = physDev ? physDev->dc : NULL;
     WORD 		 index = 0;
     HPALETTE16		 hPal = (dc)? dc->hPalette: GetStockObject(DEFAULT_PALETTE);
     unsigned char	 spec_type = color >> 24;

@@ -1156,8 +1156,8 @@ static HGDIOBJ FONT_SelectObject(DC *dc, HGDIOBJ hFont)
 	    dc->gdiFont = WineEngCreateFontInstance(hFont);
     }
 
-    if(dc->funcs->pSelectObject)
-        ret = dc->funcs->pSelectObject(dc, hFont);
+    if(dc->funcs->pSelectFont)
+        ret = dc->funcs->pSelectFont(dc->physDev, hFont);
 
     if(ret && dc->gdiFont) {
 	dc->gdiFont = 0;
@@ -1188,16 +1188,39 @@ HGDIOBJ16 WINAPI SelectObject16( HDC16 hdc, HGDIOBJ16 handle )
 HGDIOBJ WINAPI SelectObject( HDC hdc, HGDIOBJ handle )
 {
     HGDIOBJ ret = 0;
-    DC * dc = DC_GetDCUpdate( hdc );
+    DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
     TRACE("hdc=%04x %04x\n", hdc, handle );
 
     /* Fonts get a rather different treatment so we'll handle them
        separately */
-    if(GetObjectType(handle) == OBJ_FONT)
+    switch(GetObjectType( handle ))
+    {
+    case OBJ_BITMAP:
+        ret = dc->hBitmap;
+        if (dc->funcs->pSelectBitmap) handle = dc->funcs->pSelectBitmap( dc->physDev, handle );
+        if (handle) dc->hBitmap = handle;
+        else ret = 0;
+        break;
+    case OBJ_BRUSH:
+        ret = dc->hBrush;
+        if (dc->funcs->pSelectBrush) handle = dc->funcs->pSelectBrush( dc->physDev, handle );
+        if (handle) dc->hBrush = handle;
+        else ret = 0;
+        break;
+    case OBJ_PEN:
+        ret = dc->hPen;
+        if (dc->funcs->pSelectPen) handle = dc->funcs->pSelectPen( dc->physDev, handle );
+        if (handle) dc->hPen = handle;
+        else ret = 0;
+        break;
+    case OBJ_FONT:
         ret = FONT_SelectObject(dc, handle);
-    else if (dc->funcs->pSelectObject)
-        ret = dc->funcs->pSelectObject( dc, handle );
+        break;
+    case OBJ_REGION:
+        GDI_ReleaseObj( hdc );
+        return (HGDIOBJ)SelectClipRgn( hdc, handle );
+    }
     GDI_ReleaseObj( hdc );
 
     if (ret && ret != handle)

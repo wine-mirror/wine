@@ -31,7 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(enhmetafile);
  *	     EMFDRV_MoveTo
  */
 BOOL
-EMFDRV_MoveTo(DC *dc, INT x, INT y)
+EMFDRV_MoveTo(PHYSDEV dev, INT x, INT y)
 {
     EMRMOVETOEX emr;
 
@@ -40,24 +40,26 @@ EMFDRV_MoveTo(DC *dc, INT x, INT y)
     emr.ptl.x = x;
     emr.ptl.y = y;
 
-    return EMFDRV_WriteRecord( dc, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
 /***********************************************************************
  *           EMFDRV_LineTo
  */
 BOOL
-EMFDRV_LineTo( DC *dc, INT x, INT y )
+EMFDRV_LineTo( PHYSDEV dev, INT x, INT y )
 {
     EMRLINETO emr;
     RECTL bounds;
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
 
     emr.emr.iType = EMR_LINETO;
     emr.emr.nSize = sizeof(emr);
     emr.ptl.x = x;
     emr.ptl.y = y;
 
-    if(!EMFDRV_WriteRecord( dc, &emr.emr ))
+    if(!EMFDRV_WriteRecord( dev, &emr.emr ))
     	return FALSE;
 
     bounds.left   = min(x, dc->CursPosX);
@@ -65,7 +67,7 @@ EMFDRV_LineTo( DC *dc, INT x, INT y )
     bounds.right  = max(x, dc->CursPosX);
     bounds.bottom = max(y, dc->CursPosY);
 
-    EMFDRV_UpdateBBox( dc, &bounds );
+    EMFDRV_UpdateBBox( dev, &bounds );
 
     return TRUE;
 }
@@ -75,7 +77,7 @@ EMFDRV_LineTo( DC *dc, INT x, INT y )
  *           EMFDRV_ArcChordPie
  */
 static BOOL
-EMFDRV_ArcChordPie( DC *dc, INT left, INT top, INT right, INT bottom,
+EMFDRV_ArcChordPie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 		    INT xstart, INT ystart, INT xend, INT yend, DWORD iType )
 {
     INT temp, xCentre, yCentre, i;
@@ -83,6 +85,8 @@ EMFDRV_ArcChordPie( DC *dc, INT left, INT top, INT right, INT bottom,
     double xinterStart, yinterStart, xinterEnd, yinterEnd;
     EMRARC emr;
     RECTL bounds;
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
 
     if(left == right || top == bottom) return FALSE;
 
@@ -167,9 +171,9 @@ EMFDRV_ArcChordPie( DC *dc, INT left, INT top, INT right, INT bottom,
 	if(bounds.top > yCentre) bounds.top = yCentre;
 	else if(bounds.bottom < yCentre) bounds.right = yCentre;
     }
-    if(!EMFDRV_WriteRecord( dc, &emr.emr ))
+    if(!EMFDRV_WriteRecord( dev, &emr.emr ))
         return FALSE;
-    EMFDRV_UpdateBBox( dc, &bounds );
+    EMFDRV_UpdateBBox( dev, &bounds );
     return TRUE;
 }
 
@@ -178,10 +182,10 @@ EMFDRV_ArcChordPie( DC *dc, INT left, INT top, INT right, INT bottom,
  *           EMFDRV_Arc
  */
 BOOL
-EMFDRV_Arc( DC *dc, INT left, INT top, INT right, INT bottom,
+EMFDRV_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 	    INT xstart, INT ystart, INT xend, INT yend )
 {
-    return EMFDRV_ArcChordPie( dc, left, top, right, bottom, xstart, ystart,
+    return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
 			       xend, yend, EMR_ARC );
 }
 
@@ -189,10 +193,10 @@ EMFDRV_Arc( DC *dc, INT left, INT top, INT right, INT bottom,
  *           EMFDRV_Pie
  */
 BOOL
-EMFDRV_Pie( DC *dc, INT left, INT top, INT right, INT bottom,
+EMFDRV_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
 	    INT xstart, INT ystart, INT xend, INT yend )
 {
-    return EMFDRV_ArcChordPie( dc, left, top, right, bottom, xstart, ystart,
+    return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
 			       xend, yend, EMR_PIE );
 }
 
@@ -201,10 +205,10 @@ EMFDRV_Pie( DC *dc, INT left, INT top, INT right, INT bottom,
  *           EMFDRV_Chord
  */
 BOOL
-EMFDRV_Chord( DC *dc, INT left, INT top, INT right, INT bottom,
+EMFDRV_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
              INT xstart, INT ystart, INT xend, INT yend )
 {
-    return EMFDRV_ArcChordPie( dc, left, top, right, bottom, xstart, ystart,
+    return EMFDRV_ArcChordPie( dev, left, top, right, bottom, xstart, ystart,
 			       xend, yend, EMR_CHORD );
 }
 
@@ -212,10 +216,12 @@ EMFDRV_Chord( DC *dc, INT left, INT top, INT right, INT bottom,
  *           EMFDRV_Ellipse
  */
 BOOL
-EMFDRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom )
+EMFDRV_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT bottom )
 {
     EMRELLIPSE emr;
     INT temp;
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
 
     TRACE("%d,%d - %d,%d\n", left, top, right, bottom);
 
@@ -236,18 +242,20 @@ EMFDRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom )
     emr.rclBox.right  = right;
     emr.rclBox.bottom = bottom;
 
-    EMFDRV_UpdateBBox( dc, &emr.rclBox );
-    return EMFDRV_WriteRecord( dc, &emr.emr );
+    EMFDRV_UpdateBBox( dev, &emr.rclBox );
+    return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
 /***********************************************************************
  *           EMFDRV_Rectangle
  */
 BOOL
-EMFDRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
+EMFDRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 {
     EMRRECTANGLE emr;
     INT temp;
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
 
     TRACE("%d,%d - %d,%d\n", left, top, right, bottom);
 
@@ -268,19 +276,21 @@ EMFDRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
     emr.rclBox.right  = right;
     emr.rclBox.bottom = bottom;
 
-    EMFDRV_UpdateBBox( dc, &emr.rclBox );
-    return EMFDRV_WriteRecord( dc, &emr.emr );
+    EMFDRV_UpdateBBox( dev, &emr.rclBox );
+    return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
 /***********************************************************************
  *           EMFDRV_RoundRect
  */
 BOOL 
-EMFDRV_RoundRect( DC *dc, INT left, INT top, INT right,
+EMFDRV_RoundRect( PHYSDEV dev, INT left, INT top, INT right,
 		  INT bottom, INT ell_width, INT ell_height )
 {
     EMRROUNDRECT emr;
     INT temp;
+    EMFDRV_PDEVICE *physDev = (EMFDRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
 
     if(left == right || top == bottom) return FALSE;
 
@@ -301,15 +311,15 @@ EMFDRV_RoundRect( DC *dc, INT left, INT top, INT right,
     emr.szlCorner.cx  = ell_width;
     emr.szlCorner.cy  = ell_height;
 
-    EMFDRV_UpdateBBox( dc, &emr.rclBox );
-    return EMFDRV_WriteRecord( dc, &emr.emr );
+    EMFDRV_UpdateBBox( dev, &emr.rclBox );
+    return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
 /***********************************************************************
  *           EMFDRV_SetPixel
  */
 COLORREF
-EMFDRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
+EMFDRV_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
 {
   return TRUE;
 }
@@ -321,7 +331,7 @@ EMFDRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
  * Helper for EMFDRV_Poly{line|gon}
  */
 static BOOL
-EMFDRV_Polylinegon( DC *dc, const POINT* pt, INT count, DWORD iType )
+EMFDRV_Polylinegon( PHYSDEV dev, const POINT* pt, INT count, DWORD iType )
 {
     EMRPOLYLINE *emr;
     DWORD size;
@@ -351,9 +361,9 @@ EMFDRV_Polylinegon( DC *dc, const POINT* pt, INT count, DWORD iType )
     emr->cptl = count;
     memcpy(emr->aptl, pt, count * sizeof(POINTL));
 
-    ret = EMFDRV_WriteRecord( dc, &emr->emr );
+    ret = EMFDRV_WriteRecord( dev, &emr->emr );
     if(ret)
-        EMFDRV_UpdateBBox( dc, &emr->rclBounds );
+        EMFDRV_UpdateBBox( dev, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
@@ -363,19 +373,19 @@ EMFDRV_Polylinegon( DC *dc, const POINT* pt, INT count, DWORD iType )
  *          EMFDRV_Polyline
  */
 BOOL
-EMFDRV_Polyline( DC *dc, const POINT* pt, INT count )
+EMFDRV_Polyline( PHYSDEV dev, const POINT* pt, INT count )
 {
-    return EMFDRV_Polylinegon( dc, pt, count, EMR_POLYLINE );
+    return EMFDRV_Polylinegon( dev, pt, count, EMR_POLYLINE );
 }
 
 /**********************************************************************
  *          EMFDRV_Polygon
  */
 BOOL
-EMFDRV_Polygon( DC *dc, const POINT* pt, INT count )
+EMFDRV_Polygon( PHYSDEV dev, const POINT* pt, INT count )
 {
     if(count < 2) return FALSE;
-    return EMFDRV_Polylinegon( dc, pt, count, EMR_POLYGON );
+    return EMFDRV_Polylinegon( dev, pt, count, EMR_POLYGON );
 }
 
 
@@ -385,7 +395,7 @@ EMFDRV_Polygon( DC *dc, const POINT* pt, INT count )
  * Helper for EMFDRV_PolyPoly{line|gon}
  */
 static BOOL 
-EMFDRV_PolyPolylinegon( DC *dc, const POINT* pt, const INT* counts, UINT polys,
+EMFDRV_PolyPolylinegon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polys,
 			DWORD iType)
 {
     EMRPOLYPOLYLINE *emr;
@@ -421,9 +431,9 @@ EMFDRV_PolyPolylinegon( DC *dc, const POINT* pt, const INT* counts, UINT polys,
     emr->cptl = cptl;
     memcpy(emr->aPolyCounts, counts, polys * sizeof(DWORD));
     memcpy(emr->aPolyCounts + polys, pt, cptl * sizeof(POINTL));
-    ret = EMFDRV_WriteRecord( dc, &emr->emr );
+    ret = EMFDRV_WriteRecord( dev, &emr->emr );
     if(ret)
-        EMFDRV_UpdateBBox( dc, &emr->rclBounds );
+        EMFDRV_UpdateBBox( dev, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
@@ -432,9 +442,9 @@ EMFDRV_PolyPolylinegon( DC *dc, const POINT* pt, const INT* counts, UINT polys,
  *          EMFDRV_PolyPolyline
  */
 BOOL 
-EMFDRV_PolyPolyline(DC *dc, const POINT* pt, const DWORD* counts, DWORD polys)
+EMFDRV_PolyPolyline(PHYSDEV dev, const POINT* pt, const DWORD* counts, DWORD polys)
 {
-    return EMFDRV_PolyPolylinegon( dc, pt, (INT *)counts, polys,
+    return EMFDRV_PolyPolylinegon( dev, pt, (INT *)counts, polys,
 				   EMR_POLYPOLYLINE );
 }
 
@@ -442,9 +452,9 @@ EMFDRV_PolyPolyline(DC *dc, const POINT* pt, const DWORD* counts, DWORD polys)
  *          EMFDRV_PolyPolygon
  */
 BOOL 
-EMFDRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts, UINT polys )
+EMFDRV_PolyPolygon( PHYSDEV dev, const POINT* pt, const INT* counts, UINT polys )
 {
-    return EMFDRV_PolyPolylinegon( dc, pt, counts, polys, EMR_POLYPOLYGON );
+    return EMFDRV_PolyPolylinegon( dev, pt, counts, polys, EMR_POLYPOLYGON );
 }
 
 
@@ -452,7 +462,7 @@ EMFDRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts, UINT polys )
  *          EMFDRV_ExtFloodFill
  */
 BOOL 
-EMFDRV_ExtFloodFill( DC *dc, INT x, INT y, COLORREF color, UINT fillType )
+EMFDRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT fillType )
 {
     EMREXTFLOODFILL emr;
 
@@ -463,20 +473,20 @@ EMFDRV_ExtFloodFill( DC *dc, INT x, INT y, COLORREF color, UINT fillType )
     emr.crColor = color;
     emr.iMode = fillType;
 
-    return EMFDRV_WriteRecord( dc, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
 
 /*********************************************************************
  *          EMFDRV_FillRgn
  */
-BOOL EMFDRV_FillRgn( DC *dc, HRGN hrgn, HBRUSH hbrush )
+BOOL EMFDRV_FillRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush )
 {
     EMRFILLRGN *emr;
     DWORD size, rgnsize, index;
     BOOL ret;
 
-    index = EMFDRV_CreateBrushIndirect( dc, hbrush );
+    index = EMFDRV_CreateBrushIndirect( dev, hbrush );
     if(!index) return FALSE;
 
     rgnsize = GetRegionData( hrgn, 0, NULL );
@@ -494,22 +504,22 @@ BOOL EMFDRV_FillRgn( DC *dc, HRGN hrgn, HBRUSH hbrush )
     emr->cbRgnData = rgnsize;
     emr->ihBrush = index;
     
-    ret = EMFDRV_WriteRecord( dc, &emr->emr );
+    ret = EMFDRV_WriteRecord( dev, &emr->emr );
     if(ret)
-        EMFDRV_UpdateBBox( dc, &emr->rclBounds );
+        EMFDRV_UpdateBBox( dev, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
 /*********************************************************************
  *          EMFDRV_FrameRgn
  */
-BOOL EMFDRV_FrameRgn( DC *dc, HRGN hrgn, HBRUSH hbrush, INT width, INT height )
+BOOL EMFDRV_FrameRgn( PHYSDEV dev, HRGN hrgn, HBRUSH hbrush, INT width, INT height )
 {
     EMRFRAMERGN *emr;
     DWORD size, rgnsize, index;
     BOOL ret;
 
-    index = EMFDRV_CreateBrushIndirect( dc, hbrush );
+    index = EMFDRV_CreateBrushIndirect( dev, hbrush );
     if(!index) return FALSE;
 
     rgnsize = GetRegionData( hrgn, 0, NULL );
@@ -529,9 +539,9 @@ BOOL EMFDRV_FrameRgn( DC *dc, HRGN hrgn, HBRUSH hbrush, INT width, INT height )
     emr->szlStroke.cx = width;
     emr->szlStroke.cy = height;
 
-    ret = EMFDRV_WriteRecord( dc, &emr->emr );
+    ret = EMFDRV_WriteRecord( dev, &emr->emr );
     if(ret)
-        EMFDRV_UpdateBBox( dc, &emr->rclBounds );
+        EMFDRV_UpdateBBox( dev, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
@@ -541,7 +551,7 @@ BOOL EMFDRV_FrameRgn( DC *dc, HRGN hrgn, HBRUSH hbrush, INT width, INT height )
  *
  * Helper for EMFDRV_{Paint|Invert}Rgn
  */
-static BOOL EMFDRV_PaintInvertRgn( DC *dc, HRGN hrgn, DWORD iType )
+static BOOL EMFDRV_PaintInvertRgn( PHYSDEV dev, HRGN hrgn, DWORD iType )
 {
     EMRINVERTRGN *emr;
     DWORD size, rgnsize;
@@ -562,9 +572,9 @@ static BOOL EMFDRV_PaintInvertRgn( DC *dc, HRGN hrgn, DWORD iType )
     emr->rclBounds.bottom = ((RGNDATA *)&emr->RgnData)->rdh.rcBound.bottom - 1;
     emr->cbRgnData = rgnsize;
     
-    ret = EMFDRV_WriteRecord( dc, &emr->emr );
+    ret = EMFDRV_WriteRecord( dev, &emr->emr );
     if(ret)
-        EMFDRV_UpdateBBox( dc, &emr->rclBounds );
+        EMFDRV_UpdateBBox( dev, &emr->rclBounds );
     HeapFree( GetProcessHeap(), 0, emr );
     return ret;
 }
@@ -573,25 +583,25 @@ static BOOL EMFDRV_PaintInvertRgn( DC *dc, HRGN hrgn, DWORD iType )
  *          EMFDRV_PaintRgn
  */
 BOOL
-EMFDRV_PaintRgn( DC *dc, HRGN hrgn )
+EMFDRV_PaintRgn( PHYSDEV dev, HRGN hrgn )
 {
-    return EMFDRV_PaintInvertRgn( dc, hrgn, EMR_PAINTRGN );
+    return EMFDRV_PaintInvertRgn( dev, hrgn, EMR_PAINTRGN );
 }
 
 /**********************************************************************
  *          EMFDRV_InvertRgn
  */
 BOOL
-EMFDRV_InvertRgn( DC *dc, HRGN hrgn )
+EMFDRV_InvertRgn( PHYSDEV dev, HRGN hrgn )
 {
-    return EMFDRV_PaintInvertRgn( dc, hrgn, EMR_INVERTRGN );
+    return EMFDRV_PaintInvertRgn( dev, hrgn, EMR_INVERTRGN );
 }
 
 /**********************************************************************
  *          EMFDRV_SetBkColor
  */
 COLORREF
-EMFDRV_SetBkColor( DC *dc, COLORREF color )
+EMFDRV_SetBkColor( PHYSDEV dev, COLORREF color )
 {
     EMRSETBKCOLOR emr;
 
@@ -599,7 +609,7 @@ EMFDRV_SetBkColor( DC *dc, COLORREF color )
     emr.emr.nSize = sizeof(emr);
     emr.crColor = color;
 
-    return EMFDRV_WriteRecord( dc, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? color : CLR_INVALID;
 }
 
 
@@ -607,7 +617,7 @@ EMFDRV_SetBkColor( DC *dc, COLORREF color )
  *          EMFDRV_SetTextColor
  */
 COLORREF
-EMFDRV_SetTextColor( DC *dc, COLORREF color )
+EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color )
 {
     EMRSETTEXTCOLOR emr;
 
@@ -615,5 +625,5 @@ EMFDRV_SetTextColor( DC *dc, COLORREF color )
     emr.emr.nSize = sizeof(emr);
     emr.crColor = color;
 
-    return EMFDRV_WriteRecord( dc, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr ) ? color : CLR_INVALID;
 }

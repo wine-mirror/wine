@@ -32,17 +32,15 @@ static const char PEN_dashdotdot[] = { 12,4,4,4,4,4 };
 static const char PEN_alternate[]  = { 1,1 };
 
 /***********************************************************************
- *           PEN_SelectObject
+ *           X11DRV_SelectPen   (X11DRV.@)
  */
-HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen )
+HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
 {
     LOGPEN logpen;
-    HPEN prevHandle = dc->hPen;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
 
     if (!GetObjectA( hpen, sizeof(logpen), &logpen )) return 0;
 
-    dc->hPen = hpen;
     physDev->pen.style = logpen.lopnStyle & PS_STYLE_MASK;
     physDev->pen.type = logpen.lopnStyle & PS_TYPE_MASK;
     physDev->pen.endcap = logpen.lopnStyle & PS_ENDCAP_MASK;
@@ -52,7 +50,7 @@ HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen )
                                    dc->xformWorld2Vport.eM11 * 0.5);
     if (physDev->pen.width < 0) physDev->pen.width = -physDev->pen.width;
     if (physDev->pen.width == 1) physDev->pen.width = 0;  /* Faster */
-    physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( dc, logpen.lopnColor );
+    physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( physDev, logpen.lopnColor );
     switch(logpen.lopnStyle & PS_STYLE_MASK)
     {
       case PS_DASH:
@@ -79,6 +77,5 @@ HPEN X11DRV_PEN_SelectObject( DC * dc, HPEN hpen )
         FIXME("PS_USERSTYLE is not supported\n");
 	break;
     }
-    
-    return prevHandle;
+    return hpen;
 }

@@ -267,6 +267,8 @@ typedef struct {
 } JOB;
 
 typedef struct {
+    HDC                 hdc;
+    DC                 *dc;
     PSFONT		font;		/* Current PS font */
     PSPEN		pen;
     PSBRUSH		brush;
@@ -327,13 +329,10 @@ extern BOOL PSDRV_AddAFMtoList(FONTFAMILY **head, const AFM *afm,
 extern void PSDRV_FreeAFMList( FONTFAMILY *head );
 
 extern BOOL WINAPI PSDRV_Init(HINSTANCE hinst, DWORD reason, LPVOID reserved);
-extern HFONT PSDRV_FONT_SelectObject( DC *dc, HFONT hfont );
-extern HPEN PSDRV_PEN_SelectObject( DC * dc, HPEN hpen );
-extern HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush );
 
-extern BOOL PSDRV_Brush(DC *dc, BOOL EO);
-extern BOOL PSDRV_SetFont( DC *dc );
-extern BOOL PSDRV_SetPen( DC *dc );
+extern BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO);
+extern BOOL PSDRV_SetFont( PSDRV_PDEVICE *physDev );
+extern BOOL PSDRV_SetPen( PSDRV_PDEVICE *physDev );
 
 extern BOOL PSDRV_CmpColor(PSCOLOR *col1, PSCOLOR *col2);
 extern BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2);
@@ -341,98 +340,95 @@ extern void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
 		     COLORREF wincolor );
 extern char PSDRV_UnicodeToANSI(int u);
 
-extern INT PSDRV_WriteHeader( DC *dc, LPCSTR title );
-extern INT PSDRV_WriteFooter( DC *dc );
-extern INT PSDRV_WriteNewPage( DC *dc );
-extern INT PSDRV_WriteEndPage( DC *dc );
-extern BOOL PSDRV_WriteMoveTo(DC *dc, INT x, INT y);
-extern BOOL PSDRV_WriteLineTo(DC *dc, INT x, INT y);
-extern BOOL PSDRV_WriteStroke(DC *dc);
-extern BOOL PSDRV_WriteRectangle(DC *dc, INT x, INT y, INT width, 
+extern INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title );
+extern INT PSDRV_WriteFooter( PSDRV_PDEVICE *physDev );
+extern INT PSDRV_WriteNewPage( PSDRV_PDEVICE *physDev );
+extern INT PSDRV_WriteEndPage( PSDRV_PDEVICE *physDev );
+extern BOOL PSDRV_WriteMoveTo(PSDRV_PDEVICE *physDev, INT x, INT y);
+extern BOOL PSDRV_WriteLineTo(PSDRV_PDEVICE *physDev, INT x, INT y);
+extern BOOL PSDRV_WriteStroke(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, 
 			INT height);
-extern BOOL PSDRV_WriteRRectangle(DC *dc, INT x, INT y, INT width, 
+extern BOOL PSDRV_WriteRRectangle(PSDRV_PDEVICE *physDev, INT x, INT y, INT width, 
 			INT height);
-extern BOOL PSDRV_WriteSetFont(DC *dc);
-extern BOOL PSDRV_WriteGlyphShow(DC *dc, LPCWSTR str, INT count);
-extern BOOL PSDRV_WriteSetPen(DC *dc);
-extern BOOL PSDRV_WriteArc(DC *dc, INT x, INT y, INT w, INT h,
+extern BOOL PSDRV_WriteSetFont(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteGlyphShow(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count);
+extern BOOL PSDRV_WriteSetPen(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteArc(PSDRV_PDEVICE *physDev, INT x, INT y, INT w, INT h,
 			     double ang1, double ang2);
-extern BOOL PSDRV_WriteSetColor(DC *dc, PSCOLOR *color);
-extern BOOL PSDRV_WriteSetBrush(DC *dc);
-extern BOOL PSDRV_WriteFill(DC *dc);
-extern BOOL PSDRV_WriteEOFill(DC *dc);
-extern BOOL PSDRV_WriteGSave(DC *dc);
-extern BOOL PSDRV_WriteGRestore(DC *dc);
-extern BOOL PSDRV_WriteNewPath(DC *dc);
-extern BOOL PSDRV_WriteClosePath(DC *dc);
-extern BOOL PSDRV_WriteInitClip(DC *dc);
-extern BOOL PSDRV_WriteClip(DC *dc);
-extern BOOL PSDRV_WriteRectClip(DC *dc, INT x, INT y, INT w, INT h);
-extern BOOL PSDRV_WriteRectClip2(DC *dc, CHAR *pszArrayName);
-extern BOOL PSDRV_WriteEOClip(DC *dc);
-extern BOOL PSDRV_WriteHatch(DC *dc);
-extern BOOL PSDRV_WriteRotate(DC *dc, float ang);
-extern BOOL PSDRV_WriteIndexColorSpaceBegin(DC *dc, int size);
-extern BOOL PSDRV_WriteIndexColorSpaceEnd(DC *dc);
-extern BOOL PSDRV_WriteRGB(DC *dc, COLORREF *map, int number);
-extern BOOL PSDRV_WriteImageDict(DC *dc, WORD depth, INT xDst, INT yDst,
+extern BOOL PSDRV_WriteSetColor(PSDRV_PDEVICE *physDev, PSCOLOR *color);
+extern BOOL PSDRV_WriteSetBrush(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteFill(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteEOFill(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteGSave(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteGRestore(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteNewPath(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteClosePath(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteInitClip(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteClip(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteRectClip(PSDRV_PDEVICE *physDev, INT x, INT y, INT w, INT h);
+extern BOOL PSDRV_WriteRectClip2(PSDRV_PDEVICE *physDev, CHAR *pszArrayName);
+extern BOOL PSDRV_WriteEOClip(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteHatch(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteRotate(PSDRV_PDEVICE *physDev, float ang);
+extern BOOL PSDRV_WriteIndexColorSpaceBegin(PSDRV_PDEVICE *physDev, int size);
+extern BOOL PSDRV_WriteIndexColorSpaceEnd(PSDRV_PDEVICE *physDev);
+extern BOOL PSDRV_WriteRGB(PSDRV_PDEVICE *physDev, COLORREF *map, int number);
+extern BOOL PSDRV_WriteImageDict(PSDRV_PDEVICE *physDev, WORD depth, INT xDst, INT yDst,
 				 INT widthDst, INT heightDst, INT widthSrc,
 				 INT heightSrc, char *bits);
-extern BOOL PSDRV_WriteBytes(DC *dc, const BYTE *bytes, int number);
-extern BOOL PSDRV_WriteDIBits16(DC *dc, const WORD *words, int number);
-extern BOOL PSDRV_WriteDIBits24(DC *dc, const BYTE *bits, int number);
-extern BOOL PSDRV_WriteDIBits32(DC *dc, const BYTE *bits, int number);
-extern int PSDRV_WriteSpool(DC *dc, LPSTR lpData, WORD cch);
-extern BOOL PSDRV_WritePatternDict(DC *dc, BITMAP *bm, BYTE *bits);
-extern BOOL PSDRV_WriteArrayPut(DC *dc, CHAR *pszArrayName, INT nIndex, LONG lCoord);
-extern BOOL PSDRV_WriteArrayDef(DC *dc, CHAR *pszArrayName, INT nSize);
+extern BOOL PSDRV_WriteBytes(PSDRV_PDEVICE *physDev, const BYTE *bytes, int number);
+extern BOOL PSDRV_WriteDIBits16(PSDRV_PDEVICE *physDev, const WORD *words, int number);
+extern BOOL PSDRV_WriteDIBits24(PSDRV_PDEVICE *physDev, const BYTE *bits, int number);
+extern BOOL PSDRV_WriteDIBits32(PSDRV_PDEVICE *physDev, const BYTE *bits, int number);
+extern int PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPSTR lpData, WORD cch);
+extern BOOL PSDRV_WritePatternDict(PSDRV_PDEVICE *physDev, BITMAP *bm, BYTE *bits);
+extern BOOL PSDRV_WriteArrayPut(PSDRV_PDEVICE *physDev, CHAR *pszArrayName, INT nIndex, LONG lCoord);
+extern BOOL PSDRV_WriteArrayDef(PSDRV_PDEVICE *physDev, CHAR *pszArrayName, INT nSize);
 
-extern BOOL PSDRV_Arc( DC *dc, INT left, INT top, INT right,
+extern BOOL PSDRV_Arc( PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
 			 INT bottom, INT xstart, INT ystart,
 			 INT xend, INT yend );
-extern BOOL PSDRV_Chord( DC *dc, INT left, INT top, INT right,
+extern BOOL PSDRV_Chord( PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
 			   INT bottom, INT xstart, INT ystart,
 			   INT xend, INT yend );
-extern BOOL PSDRV_Ellipse( DC *dc, INT left, INT top, INT right,
+extern BOOL PSDRV_Ellipse( PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
 			     INT bottom );
-extern INT PSDRV_EndDoc( DC *dc );
-extern INT PSDRV_EndPage( DC *dc );
+extern INT PSDRV_EndDoc( PSDRV_PDEVICE *physDev );
+extern INT PSDRV_EndPage( PSDRV_PDEVICE *physDev );
 extern BOOL PSDRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf, 
 				   DEVICEFONTENUMPROC proc, LPARAM lp );
-extern INT PSDRV_Escape( DC *dc, INT nEscape, INT cbInput, 
-			   SEGPTR lpInData, SEGPTR lpOutData );
-extern BOOL PSDRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
+extern BOOL PSDRV_ExtTextOut( PSDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 				const RECT *lprect, LPCWSTR str, UINT count,
 				const INT *lpDx );
-extern BOOL PSDRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
+extern BOOL PSDRV_GetCharWidth( PSDRV_PDEVICE *physDev, UINT firstChar, UINT lastChar,
 				  LPINT buffer );
-extern BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
+extern BOOL PSDRV_GetTextExtentPoint( PSDRV_PDEVICE *physDev, LPCWSTR str, INT count,
 					LPSIZE size );
-extern BOOL PSDRV_GetTextMetrics( DC *dc, TEXTMETRICW *metrics );
-extern BOOL PSDRV_LineTo( DC *dc, INT x, INT y );
-extern BOOL PSDRV_PatBlt( DC *dc, INT x, INT y, INT width, INT height, DWORD
+extern BOOL PSDRV_GetTextMetrics( PSDRV_PDEVICE *physDev, TEXTMETRICW *metrics );
+extern BOOL PSDRV_LineTo( PSDRV_PDEVICE *physDev, INT x, INT y );
+extern BOOL PSDRV_PatBlt( PSDRV_PDEVICE *physDev, INT x, INT y, INT width, INT height, DWORD
 			  dwRop);
-extern BOOL PSDRV_Pie( DC *dc, INT left, INT top, INT right,
+extern BOOL PSDRV_Pie( PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
 			 INT bottom, INT xstart, INT ystart,
 			 INT xend, INT yend );
-extern BOOL PSDRV_Polygon( DC *dc, const POINT* pt, INT count );
-extern BOOL PSDRV_Polyline( DC *dc, const POINT* pt, INT count );
-extern BOOL PSDRV_PolyPolygon( DC *dc, const POINT* pts, const INT* counts,
+extern BOOL PSDRV_Polygon( PSDRV_PDEVICE *physDev, const POINT* pt, INT count );
+extern BOOL PSDRV_Polyline( PSDRV_PDEVICE *physDev, const POINT* pt, INT count );
+extern BOOL PSDRV_PolyPolygon( PSDRV_PDEVICE *physDev, const POINT* pts, const INT* counts,
 				 UINT polygons );
-extern BOOL PSDRV_PolyPolyline( DC *dc, const POINT* pts, const DWORD* counts,
+extern BOOL PSDRV_PolyPolyline( PSDRV_PDEVICE *physDev, const POINT* pts, const DWORD* counts,
 				  DWORD polylines );
-extern BOOL PSDRV_Rectangle( DC *dc, INT left, INT top, INT right,
+extern BOOL PSDRV_Rectangle( PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
 			      INT bottom );
-extern BOOL PSDRV_RoundRect(DC *dc, INT left, INT top, INT right,
+extern BOOL PSDRV_RoundRect(PSDRV_PDEVICE *physDev, INT left, INT top, INT right,
 			      INT bottom, INT ell_width, INT ell_height);
-extern HGDIOBJ PSDRV_SelectObject( DC *dc, HGDIOBJ handle );
-extern COLORREF PSDRV_SetBkColor( DC *dc, COLORREF color );
-extern VOID PSDRV_SetDeviceClipping( DC *dc );
-extern COLORREF PSDRV_SetPixel( DC *dc, INT x, INT y, COLORREF color );
-extern COLORREF PSDRV_SetTextColor( DC *dc, COLORREF color );
-extern INT PSDRV_StartDoc( DC *dc, const DOCINFOA *doc );
-extern INT PSDRV_StartPage( DC *dc );
-extern INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst,
+extern COLORREF PSDRV_SetBkColor( PSDRV_PDEVICE *physDev, COLORREF color );
+extern VOID PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev );
+extern COLORREF PSDRV_SetPixel( PSDRV_PDEVICE *physDev, INT x, INT y, COLORREF color );
+extern COLORREF PSDRV_SetTextColor( PSDRV_PDEVICE *physDev, COLORREF color );
+extern INT PSDRV_StartDoc( PSDRV_PDEVICE *physDev, const DOCINFOA *doc );
+extern INT PSDRV_StartPage( PSDRV_PDEVICE *physDev );
+extern INT PSDRV_StretchDIBits( PSDRV_PDEVICE *physDev, INT xDst, INT yDst,
 				INT widthDst, INT heightDst, INT xSrc,
 				INT ySrc, INT widthSrc, INT heightSrc,
 				const void *bits, const BITMAPINFO *info,
@@ -447,7 +443,7 @@ extern DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice,
 				      LPCSTR lpszPort,
 				      WORD fwCapability, LPSTR lpszOutput,
 				      LPDEVMODEA lpdm);
-VOID PSDRV_DrawLine( DC *dc );
+VOID PSDRV_DrawLine( PSDRV_PDEVICE *physDev );
 INT PSDRV_GlyphListInit(void);
 const GLYPHNAME *PSDRV_GlyphName(LPCSTR szName);
 VOID PSDRV_IndexGlyphList(void);

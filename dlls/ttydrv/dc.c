@@ -31,17 +31,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 
 /**********************************************************************/
 
-BITMAP_DRIVER TTYDRV_BITMAP_Driver =
-{
-  TTYDRV_BITMAP_SetDIBits,
-  TTYDRV_BITMAP_GetDIBits,
-  TTYDRV_BITMAP_DeleteDIBSection,
-  TTYDRV_BITMAP_SetDIBColorTable,
-  TTYDRV_BITMAP_GetDIBColorTable,
-  TTYDRV_BITMAP_Lock,
-  TTYDRV_BITMAP_Unlock
-};
-
 PALETTE_DRIVER TTYDRV_PALETTE_Driver = 
 {
   TTYDRV_PALETTE_SetMapping,
@@ -56,7 +45,6 @@ const DC_FUNCTIONS *TTYDRV_DC_Funcs = NULL;  /* hack */
  */
 BOOL TTYDRV_GDI_Initialize(void)
 {
-  BITMAP_Driver = &TTYDRV_BITMAP_Driver;
   PALETTE_Driver = &TTYDRV_PALETTE_Driver;
 
   return TTYDRV_PALETTE_Initialize();
@@ -84,7 +72,9 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
     return FALSE;
   }
   physDev = (TTYDRV_PDEVICE *) dc->physDev;
-  
+  physDev->hdc = dc->hSelf;
+  physDev->dc = dc;
+
   if(dc->flags & DC_MEMORY){
     physDev->window = NULL;
     physDev->cellWidth = 1;
@@ -121,21 +111,20 @@ BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device,
 /***********************************************************************
  *	     TTYDRV_DC_DeleteDC
  */
-BOOL TTYDRV_DC_DeleteDC(DC *dc)
+BOOL TTYDRV_DC_DeleteDC(TTYDRV_PDEVICE *physDev)
 {
-  TRACE("(%p)\n", dc);
+    TRACE("(%x)\n", physDev->hdc);
 
-  HeapFree( GetProcessHeap(), 0, dc->physDev );
-  dc->physDev = NULL;
-  
-  return TRUE;
+    physDev->dc->physDev = NULL;
+    HeapFree( GetProcessHeap(), 0, physDev );
+    return TRUE;
 }
 
 
 /***********************************************************************
  *           GetDeviceCaps    (TTYDRV.@)
  */
-INT TTYDRV_GetDeviceCaps( DC *dc, INT cap )
+INT TTYDRV_GetDeviceCaps( TTYDRV_PDEVICE *physDev, INT cap )
 {
     switch(cap)
     {
@@ -209,7 +198,7 @@ INT TTYDRV_GetDeviceCaps( DC *dc, INT cap )
     case BTLALIGNMENT:
         return 0;
     default:
-        FIXME("(%04x): unsupported capability %d, will return 0\n", dc->hSelf, cap );
+        FIXME("(%04x): unsupported capability %d, will return 0\n", physDev->hdc, cap );
         return 0;
     }
 }
@@ -218,7 +207,7 @@ INT TTYDRV_GetDeviceCaps( DC *dc, INT cap )
 /***********************************************************************
  *		TTYDRV_DC_SetDeviceClipping
  */
-void TTYDRV_DC_SetDeviceClipping(DC *dc)
+void TTYDRV_DC_SetDeviceClipping(TTYDRV_PDEVICE *physDev)
 {
-  TRACE("(%p)\n", dc);
+    TRACE("(%x)\n", physDev->hdc);
 }

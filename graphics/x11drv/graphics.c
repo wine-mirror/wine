@@ -81,12 +81,12 @@ const int X11DRV_XROPfunction[16] =
  * If fMapColors is TRUE, X pixels are mapped to Windows colors.
  * Return FALSE if brush is BS_NULL, TRUE otherwise.
  */
-BOOL X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
+BOOL X11DRV_SetupGCForPatBlt( X11DRV_PDEVICE *physDev, GC gc, BOOL fMapColors )
 {
     XGCValues val;
     unsigned long mask;
     Pixmap pixmap = 0;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
 
     if (physDev->brush.style == BS_NULL) return FALSE;
     if (physDev->brush.pixel == -1)
@@ -126,7 +126,7 @@ BOOL X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
     {
     case FillStippled:
     case FillOpaqueStippled:
-	if (dc->backgroundMode==OPAQUE) val.fill_style = FillOpaqueStippled;
+	if (GetBkMode(dc->hSelf)==OPAQUE) val.fill_style = FillOpaqueStippled;
 	val.stipple = physDev->brush.pixmap;
 	mask = GCStipple;
         break;
@@ -159,7 +159,7 @@ BOOL X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
     }
     val.ts_x_origin = dc->DCOrgX + dc->brushOrgX;
     val.ts_y_origin = dc->DCOrgY + dc->brushOrgY;
-    val.fill_rule = (dc->polyFillMode==WINDING) ? WindingRule : EvenOddRule;
+    val.fill_rule = (GetPolyFillMode(physDev->hdc) == WINDING) ? WindingRule : EvenOddRule;
     TSXChangeGC( gdi_display, gc,
 	       GCFunction | GCForeground | GCBackground | GCFillStyle |
 	       GCFillRule | GCTileStipXOrigin | GCTileStipYOrigin | mask,
@@ -175,10 +175,9 @@ BOOL X11DRV_SetupGCForPatBlt( DC * dc, GC gc, BOOL fMapColors )
  * Setup physDev->gc for drawing operations using current brush.
  * Return FALSE if brush is BS_NULL, TRUE otherwise.
  */
-BOOL X11DRV_SetupGCForBrush( DC * dc )
+BOOL X11DRV_SetupGCForBrush( X11DRV_PDEVICE *physDev )
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-    return X11DRV_SetupGCForPatBlt( dc, physDev->gc, FALSE );
+    return X11DRV_SetupGCForPatBlt( physDev, physDev->gc, FALSE );
 }
 
 
@@ -188,10 +187,10 @@ BOOL X11DRV_SetupGCForBrush( DC * dc )
  * Setup physDev->gc for drawing operations using current pen.
  * Return FALSE if pen is PS_NULL, TRUE otherwise.
  */
-BOOL X11DRV_SetupGCForPen( DC * dc )
+BOOL X11DRV_SetupGCForPen( X11DRV_PDEVICE *physDev )
 {
     XGCValues val;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
 
     if (physDev->pen.style == PS_NULL) return FALSE;
 
@@ -225,8 +224,7 @@ BOOL X11DRV_SetupGCForPen( DC * dc )
         (physDev->pen.style != PS_INSIDEFRAME))
     {
         TSXSetDashes( gdi_display, physDev->gc, 0, physDev->pen.dashes, physDev->pen.dash_len );
-	val.line_style = (dc->backgroundMode == OPAQUE) ?
-	                      LineDoubleDash : LineOnOffDash;
+        val.line_style = (GetBkMode(dc->hSelf) == OPAQUE) ? LineDoubleDash : LineOnOffDash;
     }
     else val.line_style = LineSolid;
     val.line_width = physDev->pen.width;
@@ -271,9 +269,8 @@ BOOL X11DRV_SetupGCForPen( DC * dc )
  * Setup physDev->gc for text drawing operations.
  * Return FALSE if the font is null, TRUE otherwise.
  */
-BOOL X11DRV_SetupGCForText( DC * dc )
+BOOL X11DRV_SetupGCForText( X11DRV_PDEVICE *physDev )
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     XFontStruct* xfs = XFONT_GetFontStruct( physDev->font );
 
     if( xfs )
@@ -299,15 +296,15 @@ BOOL X11DRV_SetupGCForText( DC * dc )
  *           X11DRV_LineTo
  */
 BOOL
-X11DRV_LineTo( DC *dc, INT x, INT y )
+X11DRV_LineTo( X11DRV_PDEVICE *physDev, INT x, INT y )
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
     POINT start;
     POINT end;
 
-    if (X11DRV_SetupGCForPen( dc )) {
+    if (X11DRV_SetupGCForPen( physDev )) {
 	/* Update the pixmap from the DIB section */
-	X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+	X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
 
 	start.x = dc->CursPosX;
 	start.y = dc->CursPosY;
@@ -323,7 +320,7 @@ X11DRV_LineTo( DC *dc, INT x, INT y )
 		  dc->DCOrgY + end.y);
 
 	/* Update the DIBSection from the pixmap */
-	X11DRV_UnlockDIBSection(dc, TRUE); 
+	X11DRV_UnlockDIBSection(physDev, TRUE); 
     }
     return TRUE;
 }
@@ -338,7 +335,7 @@ X11DRV_LineTo( DC *dc, INT x, INT y )
  *
  */
 static BOOL
-X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
+X11DRV_DrawArc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
                 INT bottom, INT xstart, INT ystart,
                 INT xend, INT yend, INT lines )
 {
@@ -346,7 +343,7 @@ X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
     INT width, oldwidth, oldendcap;
     double start_angle, end_angle;
     XPoint points[4];
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
     BOOL update = FALSE;
 
     left   = XLPTODP( dc, left );
@@ -407,11 +404,11 @@ X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
     if (idiff_angle <= 0) idiff_angle += 360 * 64;
 
     /* Update the pixmap from the DIB section */
-    X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+    X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
 
       /* Fill arc with brush if Chord() or Pie() */
 
-    if ((lines > 0) && X11DRV_SetupGCForBrush( dc )) {
+    if ((lines > 0) && X11DRV_SetupGCForBrush( physDev )) {
         TSXSetArcMode( gdi_display, physDev->gc, (lines==1) ? ArcChord : ArcPieSlice);
         TSXFillArc( gdi_display, physDev->drawable, physDev->gc,
                  dc->DCOrgX + left, dc->DCOrgY + top,
@@ -421,7 +418,7 @@ X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
 
       /* Draw arc and lines */
 
-    if (X11DRV_SetupGCForPen( dc )){
+    if (X11DRV_SetupGCForPen( physDev )){
         TSXDrawArc( gdi_display, physDev->drawable, physDev->gc,
                     dc->DCOrgX + left, dc->DCOrgY + top,
                     right-left-1, bottom-top-1, istart_angle, idiff_angle );
@@ -485,7 +482,7 @@ X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
     }
 
     /* Update the DIBSection of the pixmap */
-    X11DRV_UnlockDIBSection(dc, update);
+    X11DRV_UnlockDIBSection(physDev, update);
 
     physDev->pen.width = oldwidth;
     physDev->pen.endcap = oldendcap;
@@ -497,10 +494,10 @@ X11DRV_DrawArc( DC *dc, INT left, INT top, INT right,
  *           X11DRV_Arc
  */
 BOOL
-X11DRV_Arc( DC *dc, INT left, INT top, INT right, INT bottom,
+X11DRV_Arc( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
             INT xstart, INT ystart, INT xend, INT yend )
 {
-    return X11DRV_DrawArc( dc, left, top, right, bottom,
+    return X11DRV_DrawArc( physDev, left, top, right, bottom,
 			   xstart, ystart, xend, yend, 0 );
 }
 
@@ -509,10 +506,10 @@ X11DRV_Arc( DC *dc, INT left, INT top, INT right, INT bottom,
  *           X11DRV_Pie
  */
 BOOL
-X11DRV_Pie( DC *dc, INT left, INT top, INT right, INT bottom,
+X11DRV_Pie( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
             INT xstart, INT ystart, INT xend, INT yend )
 {
-    return X11DRV_DrawArc( dc, left, top, right, bottom,
+    return X11DRV_DrawArc( physDev, left, top, right, bottom,
 			   xstart, ystart, xend, yend, 2 );
 }
 
@@ -520,10 +517,10 @@ X11DRV_Pie( DC *dc, INT left, INT top, INT right, INT bottom,
  *           X11DRV_Chord
  */
 BOOL
-X11DRV_Chord( DC *dc, INT left, INT top, INT right, INT bottom,
+X11DRV_Chord( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
               INT xstart, INT ystart, INT xend, INT yend )
 {
-    return X11DRV_DrawArc( dc, left, top, right, bottom,
+    return X11DRV_DrawArc( physDev, left, top, right, bottom,
 		  	   xstart, ystart, xend, yend, 1 );
 }
 
@@ -532,10 +529,10 @@ X11DRV_Chord( DC *dc, INT left, INT top, INT right, INT bottom,
  *           X11DRV_Ellipse
  */
 BOOL
-X11DRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom )
+X11DRV_Ellipse( X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom )
 {
     INT width, oldwidth;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
     BOOL update = FALSE;
 
     left   = XLPTODP( dc, left );
@@ -564,16 +561,16 @@ X11DRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom )
     physDev->pen.width = width;
 
     /* Update the pixmap from the DIB section */
-    X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+    X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
 
-    if (X11DRV_SetupGCForBrush( dc ))
+    if (X11DRV_SetupGCForBrush( physDev ))
     {
         TSXFillArc( gdi_display, physDev->drawable, physDev->gc,
                     dc->DCOrgX + left, dc->DCOrgY + top,
                     right-left-1, bottom-top-1, 0, 360*64 );
 	update = TRUE;
     }
-    if (X11DRV_SetupGCForPen( dc ))
+    if (X11DRV_SetupGCForPen( physDev ))
     {
         TSXDrawArc( gdi_display, physDev->drawable, physDev->gc,
                     dc->DCOrgX + left, dc->DCOrgY + top,
@@ -582,7 +579,7 @@ X11DRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom )
     }
 
     /* Update the DIBSection from the pixmap */
-    X11DRV_UnlockDIBSection(dc, update);
+    X11DRV_UnlockDIBSection(physDev, update);
     
     physDev->pen.width = oldwidth;
     return TRUE;
@@ -593,10 +590,10 @@ X11DRV_Ellipse( DC *dc, INT left, INT top, INT right, INT bottom )
  *           X11DRV_Rectangle
  */
 BOOL
-X11DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
+X11DRV_Rectangle(X11DRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom)
 {
     INT width, oldwidth, oldjoinstyle;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
     BOOL update = FALSE;
 
     TRACE("(%d %d %d %d)\n", 
@@ -632,10 +629,10 @@ X11DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
         physDev->pen.linejoin = PS_JOIN_MITER;
 
     /* Update the pixmap from the DIB section */
-    X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+    X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
     
     if ((right > left + width) && (bottom > top + width))
-        if (X11DRV_SetupGCForBrush( dc ))
+        if (X11DRV_SetupGCForBrush( physDev ))
 	{
             TSXFillRectangle( gdi_display, physDev->drawable, physDev->gc,
                               dc->DCOrgX + left + (width + 1) / 2,
@@ -643,7 +640,7 @@ X11DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
                               right-left-width-1, bottom-top-width-1);
 	    update = TRUE;
 	}
-    if (X11DRV_SetupGCForPen( dc ))
+    if (X11DRV_SetupGCForPen( physDev ))
     {
         TSXDrawRectangle( gdi_display, physDev->drawable, physDev->gc,
                           dc->DCOrgX + left, dc->DCOrgY + top,
@@ -652,7 +649,7 @@ X11DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
     }
 
     /* Update the DIBSection from the pixmap */
-    X11DRV_UnlockDIBSection(dc, update);
+    X11DRV_UnlockDIBSection(physDev, update);
    
     physDev->pen.width = oldwidth;
     physDev->pen.linejoin = oldjoinstyle;
@@ -663,11 +660,11 @@ X11DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
  *           X11DRV_RoundRect
  */
 BOOL
-X11DRV_RoundRect( DC *dc, INT left, INT top, INT right,
+X11DRV_RoundRect( X11DRV_PDEVICE *physDev, INT left, INT top, INT right,
                   INT bottom, INT ell_width, INT ell_height )
 {
     INT width, oldwidth, oldendcap;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
     BOOL update = FALSE;
 
     TRACE("(%d %d %d %d  %d %d\n", 
@@ -710,10 +707,10 @@ X11DRV_RoundRect( DC *dc, INT left, INT top, INT right,
     physDev->pen.endcap = PS_ENDCAP_SQUARE;
 
     /* Update the pixmap from the DIB section */
-    X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+    X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
 
     wine_tsx11_lock();
-    if (X11DRV_SetupGCForBrush( dc ))
+    if (X11DRV_SetupGCForBrush( physDev ))
     {
         if (ell_width > (right-left) )
             if (ell_height > (bottom-top) )
@@ -787,7 +784,8 @@ X11DRV_RoundRect( DC *dc, INT left, INT top, INT right,
      * BTW this stuff is optimized for an Xfree86 server
      * read the comments inside the X11DRV_DrawArc function
      */
-    if (X11DRV_SetupGCForPen(dc)) {
+    if (X11DRV_SetupGCForPen( physDev ))
+    {
         if (ell_width > (right-left) )
             if (ell_height > (bottom-top) )
                 XDrawArc( gdi_display, physDev->drawable, physDev->gc,
@@ -855,7 +853,7 @@ X11DRV_RoundRect( DC *dc, INT left, INT top, INT right,
     }
     wine_tsx11_unlock();
     /* Update the DIBSection from the pixmap */
-    X11DRV_UnlockDIBSection(dc, update);
+    X11DRV_UnlockDIBSection(physDev, update);
 
     physDev->pen.width = oldwidth;
     physDev->pen.endcap = oldendcap;
@@ -867,17 +865,17 @@ X11DRV_RoundRect( DC *dc, INT left, INT top, INT right,
  *           X11DRV_SetPixel
  */
 COLORREF
-X11DRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
+X11DRV_SetPixel( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color )
 {
     Pixel pixel;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
     
     x = dc->DCOrgX + INTERNAL_XWPTODP( dc, x, y );
     y = dc->DCOrgY + INTERNAL_YWPTODP( dc, x, y );
-    pixel = X11DRV_PALETTE_ToPhysical( dc, color );
+    pixel = X11DRV_PALETTE_ToPhysical( physDev, color );
 
     /* Update the pixmap from the DIB section */
-    X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+    X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
 
     /* inefficient but simple... */
     wine_tsx11_lock();
@@ -887,7 +885,7 @@ X11DRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
     wine_tsx11_unlock();
 
     /* Update the DIBSection from the pixmap */
-    X11DRV_UnlockDIBSection(dc, TRUE);
+    X11DRV_UnlockDIBSection(physDev, TRUE);
 
     return X11DRV_PALETTE_ToLogical(pixel);
 }
@@ -897,15 +895,15 @@ X11DRV_SetPixel( DC *dc, INT x, INT y, COLORREF color )
  *           X11DRV_GetPixel
  */
 COLORREF
-X11DRV_GetPixel( DC *dc, INT x, INT y )
+X11DRV_GetPixel( X11DRV_PDEVICE *physDev, INT x, INT y )
 {
     static Pixmap pixmap = 0;
     XImage * image;
     int pixel;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
 
     /* Update the pixmap from the DIB section */
-    X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+    X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
 
     x = dc->DCOrgX + INTERNAL_XWPTODP( dc, x, y );
     y = dc->DCOrgY + INTERNAL_YWPTODP( dc, x, y );
@@ -930,7 +928,7 @@ X11DRV_GetPixel( DC *dc, INT x, INT y )
     wine_tsx11_unlock();
 
     /* Update the DIBSection from the pixmap */
-    X11DRV_UnlockDIBSection(dc, FALSE);
+    X11DRV_UnlockDIBSection(physDev, FALSE);
 
     return X11DRV_PALETTE_ToLogical(pixel);
 }
@@ -940,12 +938,12 @@ X11DRV_GetPixel( DC *dc, INT x, INT y )
  *           X11DRV_PaintRgn
  */
 BOOL
-X11DRV_PaintRgn( DC *dc, HRGN hrgn )
+X11DRV_PaintRgn( X11DRV_PDEVICE *physDev, HRGN hrgn )
 {
     RECT box;
     HRGN tmpVisRgn, prevVisRgn;
-    HDC  hdc = dc->hSelf; /* FIXME: should not mix dc/hdc this way */
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
+    HDC hdc = physDev->hdc; /* FIXME: should not mix dc/hdc this way */
 
     if (!(tmpVisRgn = CreateRectRgn( 0, 0, 0, 0 ))) return FALSE;
 
@@ -968,17 +966,17 @@ X11DRV_PaintRgn( DC *dc, HRGN hrgn )
       /* Fill the region */
 
     GetRgnBox( dc->hGCClipRgn, &box );
-    if (X11DRV_SetupGCForBrush( dc ))
+    if (X11DRV_SetupGCForBrush( physDev ))
     {
 	/* Update the pixmap from the DIB section */
-    	X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+    	X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
 
         TSXFillRectangle( gdi_display, physDev->drawable, physDev->gc,
 		          box.left, box.top,
 		          box.right-box.left, box.bottom-box.top );
     
 	/* Update the DIBSection from the pixmap */
-    	X11DRV_UnlockDIBSection(dc, TRUE);
+    	X11DRV_UnlockDIBSection(physDev, TRUE);
     }
 
       /* Restore the visible region */
@@ -991,12 +989,12 @@ X11DRV_PaintRgn( DC *dc, HRGN hrgn )
  *          X11DRV_Polyline
  */
 BOOL
-X11DRV_Polyline( DC *dc, const POINT* pt, INT count )
+X11DRV_Polyline( X11DRV_PDEVICE *physDev, const POINT* pt, INT count )
 {
     INT oldwidth;
     register int i;
     XPoint *points;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
 
     if((oldwidth = physDev->pen.width) == 0) physDev->pen.width = 1;
 
@@ -1011,16 +1009,16 @@ X11DRV_Polyline( DC *dc, const POINT* pt, INT count )
 	points[i].y = dc->DCOrgY + INTERNAL_YWPTODP( dc, pt[i].x, pt[i].y );
     }
 
-    if (X11DRV_SetupGCForPen ( dc ))
+    if (X11DRV_SetupGCForPen ( physDev ))
     {
 	/* Update the pixmap from the DIB section */
-	X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+	X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
  
         TSXDrawLines( gdi_display, physDev->drawable, physDev->gc,
                       points, count, CoordModeOrigin );
 
 	/* Update the DIBSection from the pixmap */
-    	X11DRV_UnlockDIBSection(dc, TRUE);
+    	X11DRV_UnlockDIBSection(physDev, TRUE);
     }
 
     HeapFree( GetProcessHeap(), 0, points );
@@ -1033,11 +1031,11 @@ X11DRV_Polyline( DC *dc, const POINT* pt, INT count )
  *          X11DRV_Polygon
  */
 BOOL
-X11DRV_Polygon( DC *dc, const POINT* pt, INT count )
+X11DRV_Polygon( X11DRV_PDEVICE *physDev, const POINT* pt, INT count )
 {
     register int i;
     XPoint *points;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
     BOOL update = FALSE;
 
     if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * (count+1) )))
@@ -1053,15 +1051,15 @@ X11DRV_Polygon( DC *dc, const POINT* pt, INT count )
     points[count] = points[0];
 
     /* Update the pixmap from the DIB section */
-    X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+    X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
  
-    if (X11DRV_SetupGCForBrush( dc ))
+    if (X11DRV_SetupGCForBrush( physDev ))
     {
         TSXFillPolygon( gdi_display, physDev->drawable, physDev->gc,
                         points, count+1, Complex, CoordModeOrigin);
 	update = TRUE;
     }
-    if (X11DRV_SetupGCForPen ( dc ))
+    if (X11DRV_SetupGCForPen ( physDev ))
     {
         TSXDrawLines( gdi_display, physDev->drawable, physDev->gc,
                       points, count+1, CoordModeOrigin );
@@ -1069,7 +1067,7 @@ X11DRV_Polygon( DC *dc, const POINT* pt, INT count )
     }
    
     /* Update the DIBSection from the pixmap */
-    X11DRV_UnlockDIBSection(dc, update);
+    X11DRV_UnlockDIBSection(physDev, update);
 
     HeapFree( GetProcessHeap(), 0, points );
     return TRUE;
@@ -1080,27 +1078,27 @@ X11DRV_Polygon( DC *dc, const POINT* pt, INT count )
  *          X11DRV_PolyPolygon
  */
 BOOL 
-X11DRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts, UINT polygons)
+X11DRV_PolyPolygon( X11DRV_PDEVICE *physDev, const POINT* pt, const INT* counts, UINT polygons)
 {
     HRGN hrgn;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
 
     /* FIXME: The points should be converted to device coords before */
     /* creating the region. */
 
-    hrgn = CreatePolyPolygonRgn( pt, counts, polygons, dc->polyFillMode );
-    X11DRV_PaintRgn( dc, hrgn );
+    hrgn = CreatePolyPolygonRgn( pt, counts, polygons, GetPolyFillMode( physDev->hdc ) );
+    X11DRV_PaintRgn( physDev, hrgn );
     DeleteObject( hrgn );
 
       /* Draw the outline of the polygons */
 
-    if (X11DRV_SetupGCForPen ( dc ))
+    if (X11DRV_SetupGCForPen ( physDev ))
     {
 	int i, j, max = 0;
 	XPoint *points;
 
 	/* Update the pixmap from the DIB section */
-	X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+	X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
  
 	for (i = 0; i < polygons; i++) if (counts[i] > max) max = counts[i];
         if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * (max+1) )))
@@ -1122,7 +1120,7 @@ X11DRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts, UINT polygons)
 	}
 	
 	/* Update the DIBSection of the dc's bitmap */
-	X11DRV_UnlockDIBSection(dc, TRUE);
+	X11DRV_UnlockDIBSection(physDev, TRUE);
 
 	HeapFree( GetProcessHeap(), 0, points );
     }
@@ -1134,17 +1132,17 @@ X11DRV_PolyPolygon( DC *dc, const POINT* pt, const INT* counts, UINT polygons)
  *          X11DRV_PolyPolyline
  */
 BOOL 
-X11DRV_PolyPolyline( DC *dc, const POINT* pt, const DWORD* counts, DWORD polylines )
+X11DRV_PolyPolyline( X11DRV_PDEVICE *physDev, const POINT* pt, const DWORD* counts, DWORD polylines )
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
     
-    if (X11DRV_SetupGCForPen ( dc ))
+    if (X11DRV_SetupGCForPen ( physDev ))
     {
         int i, j, max = 0;
         XPoint *points;
 
 	/* Update the pixmap from the DIB section */
-    	X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+    	X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
  
         for (i = 0; i < polylines; i++) if (counts[i] > max) max = counts[i];
         if (!(points = HeapAlloc( GetProcessHeap(), 0, sizeof(XPoint) * max )))
@@ -1165,7 +1163,7 @@ X11DRV_PolyPolyline( DC *dc, const POINT* pt, const DWORD* counts, DWORD polylin
         }
 	
 	/* Update the DIBSection of the dc's bitmap */
-    	X11DRV_UnlockDIBSection(dc, TRUE);
+    	X11DRV_UnlockDIBSection(physDev, TRUE);
 
 	HeapFree( GetProcessHeap(), 0, points );
     }
@@ -1180,12 +1178,11 @@ X11DRV_PolyPolyline( DC *dc, const POINT* pt, const DWORD* counts, DWORD polylin
  * (xorg,yorg) is the origin of the X image relative to the drawable.
  * (x,y) is relative to the origin of the X image.
  */
-static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
+static void X11DRV_InternalFloodFill(XImage *image, X11DRV_PDEVICE *physDev,
                                      int x, int y,
                                      int xOrg, int yOrg,
                                      Pixel pixel, WORD fillType )
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     int left, right;
 
 #define TO_FLOOD(x,y)  ((fillType == FLOODFILLBORDER) ? \
@@ -1220,7 +1217,7 @@ static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
             while ((x < right) && !TO_FLOOD(x,y)) x++;
             if (x >= right) break;
             while ((x < right) && TO_FLOOD(x,y)) x++;
-            X11DRV_InternalFloodFill(image, dc, x-1, y,
+            X11DRV_InternalFloodFill(image, physDev, x-1, y,
                                      xOrg, yOrg, pixel, fillType );
         }
     }
@@ -1235,7 +1232,7 @@ static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
             while ((x < right) && !TO_FLOOD(x,y)) x++;
             if (x >= right) break;
             while ((x < right) && TO_FLOOD(x,y)) x++;
-            X11DRV_InternalFloodFill(image, dc, x-1, y,
+            X11DRV_InternalFloodFill(image, physDev, x-1, y,
                                      xOrg, yOrg, pixel, fillType );
         }
     }
@@ -1247,12 +1244,12 @@ static void X11DRV_InternalFloodFill(XImage *image, DC *dc,
  *          X11DRV_ExtFloodFill
  */
 BOOL
-X11DRV_ExtFloodFill( DC *dc, INT x, INT y, COLORREF color,
+X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color,
                      UINT fillType )
 {
     XImage *image;
     RECT rect;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
 
     TRACE("X11DRV_ExtFloodFill %d,%d %06lx %d\n", x, y, color, fillType );
 
@@ -1266,23 +1263,23 @@ X11DRV_ExtFloodFill( DC *dc, INT x, INT y, COLORREF color,
                                rect.bottom - rect.top,
                                AllPlanes, ZPixmap ))) return FALSE;
 
-    if (X11DRV_SetupGCForBrush( dc ))
+    if (X11DRV_SetupGCForBrush( physDev ))
     {
 	/* Update the pixmap from the DIB section */
-	X11DRV_LockDIBSection(dc, DIB_Status_GdiMod, FALSE);
+	X11DRV_LockDIBSection(physDev, DIB_Status_GdiMod, FALSE);
 
           /* ROP mode is always GXcopy for flood-fill */
         wine_tsx11_lock();
         XSetFunction( gdi_display, physDev->gc, GXcopy );
-        X11DRV_InternalFloodFill(image, dc,
+        X11DRV_InternalFloodFill(image, physDev,
                                  XLPTODP(dc,x) + dc->DCOrgX - rect.left,
                                  YLPTODP(dc,y) + dc->DCOrgY - rect.top,
                                  rect.left, rect.top,
-                                 X11DRV_PALETTE_ToPhysical( dc, color ),
+                                 X11DRV_PALETTE_ToPhysical( physDev, color ),
                                  fillType );
         wine_tsx11_unlock();
         /* Update the DIBSection of the dc's bitmap */
-        X11DRV_UnlockDIBSection(dc, TRUE);
+        X11DRV_UnlockDIBSection(physDev, TRUE);
     }
 
     TSXDestroyImage( image );
@@ -1293,44 +1290,29 @@ X11DRV_ExtFloodFill( DC *dc, INT x, INT y, COLORREF color,
  *          X11DRV_SetBkColor
  */
 COLORREF
-X11DRV_SetBkColor( DC *dc, COLORREF color )
+X11DRV_SetBkColor( X11DRV_PDEVICE *physDev, COLORREF color )
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-    COLORREF oldColor;
-
-    oldColor = dc->backgroundColor;
-    dc->backgroundColor = color;
-
-    physDev->backgroundPixel = X11DRV_PALETTE_ToPhysical( dc, color );
-
-    return oldColor;
+    physDev->backgroundPixel = X11DRV_PALETTE_ToPhysical( physDev, color );
+    return color;
 }
 
 /**********************************************************************
  *          X11DRV_SetTextColor
  */
 COLORREF
-X11DRV_SetTextColor( DC *dc, COLORREF color )
+X11DRV_SetTextColor( X11DRV_PDEVICE *physDev, COLORREF color )
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-    COLORREF oldColor;
-
-    oldColor = dc->textColor;
-    dc->textColor = color;
-
-    physDev->textPixel = X11DRV_PALETTE_ToPhysical( dc, color );
-
-    return oldColor;
+    physDev->textPixel = X11DRV_PALETTE_ToPhysical( physDev, color );
+    return color;
 }
 
 /***********************************************************************
  *           X11DRV_GetDCOrgEx
  */
-BOOL X11DRV_GetDCOrgEx( DC *dc, LPPOINT lpp )
+BOOL X11DRV_GetDCOrgEx( X11DRV_PDEVICE *physDev, LPPOINT lpp )
 {
-    if (!(dc->flags & DC_MEMORY))
+    if (!(physDev->dc->flags & DC_MEMORY))
     {
-       X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *) dc->physDev;
        Window root;
        int x, y, w, h, border, depth;
 

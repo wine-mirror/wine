@@ -138,12 +138,11 @@ static VOID ScaleFont(const AFM *afm, LONG lfHeight, PSFONT *font,
 }
 
 /***********************************************************************
- *           PSDRV_FONT_SelectObject
+ *           PSDRV_SelectFont   (WINEPS.@)
  */
-HFONT PSDRV_FONT_SelectObject( DC * dc, HFONT hfont )
+HFONT PSDRV_SelectFont( PSDRV_PDEVICE *physDev, HFONT hfont )
 {
     LOGFONTW lf;
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
     BOOL bd = FALSE, it = FALSE;
     AFMLISTENTRY *afmle;
     FONTFAMILY *family;
@@ -257,7 +256,7 @@ HFONT PSDRV_FONT_SelectObject( DC * dc, HFONT hfont )
     
     physDev->font.afm = afmle->afm;
     /* stock fonts ignore the mapping mode */
-    if (!is_stock_font( hfont )) lf.lfHeight = INTERNAL_YWSTODS(dc, lf.lfHeight);
+    if (!is_stock_font( hfont )) lf.lfHeight = INTERNAL_YWSTODS(physDev->dc, lf.lfHeight);
     ScaleFont(physDev->font.afm, lf.lfHeight,
     	    &(physDev->font), &(physDev->font.tm));
     
@@ -274,10 +273,8 @@ HFONT PSDRV_FONT_SelectObject( DC * dc, HFONT hfont )
 /***********************************************************************
  *           PSDRV_GetTextMetrics
  */
-BOOL PSDRV_GetTextMetrics(DC *dc, TEXTMETRICW *metrics)
+BOOL PSDRV_GetTextMetrics(PSDRV_PDEVICE *physDev, TEXTMETRICW *metrics)
 {
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-
     memcpy(metrics, &(physDev->font.tm), sizeof(physDev->font.tm));
     return TRUE;
 }
@@ -324,9 +321,9 @@ const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm)
 /***********************************************************************
  *           PSDRV_GetTextExtentPoint
  */
-BOOL PSDRV_GetTextExtentPoint(DC *dc, LPCWSTR str, INT count, LPSIZE size)
+BOOL PSDRV_GetTextExtentPoint(PSDRV_PDEVICE *physDev, LPCWSTR str, INT count, LPSIZE size)
 {
-    PSDRV_PDEVICE   *physDev = (PSDRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
     int     	    i;
     float   	    width = 0.0;
     
@@ -349,9 +346,8 @@ BOOL PSDRV_GetTextExtentPoint(DC *dc, LPCWSTR str, INT count, LPSIZE size)
 /***********************************************************************
  *           PSDRV_GetCharWidth
  */
-BOOL PSDRV_GetCharWidth(DC *dc, UINT firstChar, UINT lastChar, LPINT buffer)
+BOOL PSDRV_GetCharWidth(PSDRV_PDEVICE *physDev, UINT firstChar, UINT lastChar, LPINT buffer)
 {
-    PSDRV_PDEVICE   *physDev = (PSDRV_PDEVICE *)dc->physDev;
     UINT    	    i;
     
     TRACE("U+%.4X U+%.4X\n", firstChar, lastChar);
@@ -376,14 +372,12 @@ BOOL PSDRV_GetCharWidth(DC *dc, UINT firstChar, UINT lastChar, LPINT buffer)
 /***********************************************************************
  *           PSDRV_SetFont
  */
-BOOL PSDRV_SetFont( DC *dc )
+BOOL PSDRV_SetFont( PSDRV_PDEVICE *physDev )
 {
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-
-    PSDRV_WriteSetColor(dc, &physDev->font.color);
+    PSDRV_WriteSetColor(physDev, &physDev->font.color);
     if(physDev->font.set) return TRUE;
 
-    PSDRV_WriteSetFont(dc);
+    PSDRV_WriteSetFont(physDev);
     physDev->font.set = TRUE;
     return TRUE;
 }

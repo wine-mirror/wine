@@ -27,12 +27,10 @@ C_SRCS = \
 	mfdrv/objects.c \
 	mfdrv/text.c \
 	printdrv.c \
-	win16drv/brush.c \
 	win16drv/font.c \
 	win16drv/graphics.c \
 	win16drv/init.c \
 	win16drv/objects.c \
-	win16drv/pen.c \
 	win16drv/prtdrv.c \
 	win16drv/text.c \
 	wing.c

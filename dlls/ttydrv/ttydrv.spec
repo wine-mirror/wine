@@ -37,12 +37,11 @@ debug_channels (ttydrv)
 @ cdecl Polyline(ptr ptr long) TTYDRV_DC_Polyline
 @ cdecl Rectangle(ptr long long long long) TTYDRV_DC_Rectangle
 @ cdecl RoundRect(ptr long long long long long long) TTYDRV_DC_RoundRect
-@ cdecl SelectObject(ptr long) TTYDRV_DC_SelectObject
-@ cdecl SetBkColor(ptr long) TTYDRV_DC_SetBkColor
-@ cdecl SetDeviceClipping(ptr) TTYDRV_DC_SetDeviceClipping
+@ cdecl SelectBitmap(ptr long) TTYDRV_SelectBitmap
+@ cdecl SelectFont(ptr long) TTYDRV_SelectFont
 @ cdecl SetDIBitsToDevice(ptr long long long long long long long long ptr ptr long) TTYDRV_DC_SetDIBitsToDevice
+@ cdecl SetDeviceClipping(ptr) TTYDRV_DC_SetDeviceClipping
 @ cdecl SetPixel(ptr long long long) TTYDRV_DC_SetPixel
-@ cdecl SetTextColor(ptr long) TTYDRV_DC_SetTextColor
 @ cdecl StretchBlt(ptr long long long long ptr long long long long long) TTYDRV_DC_StretchBlt
 
 # USER driver

@@ -154,9 +154,9 @@ static Pixmap BRUSH_DitherColor( DC *dc, COLORREF color )
 /***********************************************************************
  *           BRUSH_SelectSolidBrush
  */
-static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
+static void BRUSH_SelectSolidBrush( X11DRV_PDEVICE *physDev, COLORREF color )
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
 
     if ((dc->bitsPerPixel > 1) && (screen_depth <= 8) && !COLOR_IsSolid( color ))
     {
@@ -168,7 +168,7 @@ static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
     else
     {
 	  /* Solid brush */
-	physDev->brush.pixel = X11DRV_PALETTE_ToPhysical( dc, color );
+	physDev->brush.pixel = X11DRV_PALETTE_ToPhysical( physDev, color );
 	physDev->brush.fillStyle = FillSolid;
     }
 }
@@ -177,10 +177,10 @@ static void BRUSH_SelectSolidBrush( DC *dc, COLORREF color )
 /***********************************************************************
  *           BRUSH_SelectPatternBrush
  */
-static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
+static BOOL BRUSH_SelectPatternBrush( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 {
     BOOL ret = FALSE;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
 
@@ -229,21 +229,17 @@ static BOOL BRUSH_SelectPatternBrush( DC * dc, HBITMAP hbitmap )
 
 
 /***********************************************************************
- *           BRUSH_SelectObject
+ *           X11DRV_SelectBrush   (X11DRV.@)
  */
-HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush )
+HBRUSH X11DRV_SelectBrush( X11DRV_PDEVICE *physDev, HBRUSH hbrush )
 {
     LOGBRUSH logbrush;
     HBITMAP16 hBitmap;
     BITMAPINFO * bmpInfo;
-    HBRUSH16 prevHandle = dc->hBrush;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
 
     if (!GetObjectA( hbrush, sizeof(logbrush), &logbrush )) return 0;
 
-    TRACE("hdc=%04x hbrush=%04x\n", dc->hSelf,hbrush);
-
-    dc->hBrush = hbrush;
+    TRACE("hdc=%04x hbrush=%04x\n", physDev->hdc,hbrush);
 
     if (physDev->brush.pixmap)
     {
@@ -260,12 +256,12 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush )
 
       case BS_SOLID:
         TRACE("BS_SOLID\n" );
-	BRUSH_SelectSolidBrush( dc, logbrush.lbColor );
+	BRUSH_SelectSolidBrush( physDev, logbrush.lbColor );
 	break;
 	
       case BS_HATCHED:
 	TRACE("BS_HATCHED\n" );
-	physDev->brush.pixel = X11DRV_PALETTE_ToPhysical( dc, logbrush.lbColor );
+	physDev->brush.pixel = X11DRV_PALETTE_ToPhysical( physDev, logbrush.lbColor );
 	physDev->brush.pixmap = TSXCreateBitmapFromData( gdi_display, root_window,
 				 HatchBrushes[logbrush.lbHatch], 8, 8 );
 	physDev->brush.fillStyle = FillStippled;
@@ -273,7 +269,7 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush )
 	
       case BS_PATTERN:
 	TRACE("BS_PATTERN\n");
-	BRUSH_SelectPatternBrush( dc, (HBRUSH16)logbrush.lbHatch );
+	BRUSH_SelectPatternBrush( physDev, (HBRUSH16)logbrush.lbHatch );
 	break;
 
       case BS_DIBPATTERN:
@@ -281,17 +277,16 @@ HBRUSH X11DRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush )
 	if ((bmpInfo = (BITMAPINFO *) GlobalLock16( (HGLOBAL16)logbrush.lbHatch )))
 	{
 	    int size = DIB_BitmapInfoSize( bmpInfo, logbrush.lbColor );
-	    hBitmap = CreateDIBitmap( dc->hSelf, &bmpInfo->bmiHeader,
+	    hBitmap = CreateDIBitmap( physDev->hdc, &bmpInfo->bmiHeader,
                                         CBM_INIT, ((char *)bmpInfo) + size,
                                         bmpInfo,
                                         (WORD)logbrush.lbColor );
-	    BRUSH_SelectPatternBrush( dc, hBitmap );
+	    BRUSH_SelectPatternBrush( physDev, hBitmap );
 	    DeleteObject( hBitmap );
 	    GlobalUnlock16( (HGLOBAL16)logbrush.lbHatch );	    
 	}
 	
 	break;
     }
-    
-    return prevHandle;
+    return hbrush;
 }

@@ -20,7 +20,7 @@
 
 #include "enhmfdrv/enhmetafiledrv.h"
 
-BOOL EMFDRV_SetViewportExt( DC *dc, INT cx, INT cy )
+BOOL EMFDRV_SetViewportExt( PHYSDEV dev, INT cx, INT cy )
 {
     EMRSETVIEWPORTEXTEX emr;
 
@@ -29,10 +29,10 @@ BOOL EMFDRV_SetViewportExt( DC *dc, INT cx, INT cy )
     emr.szlExtent.cx = cx;
     emr.szlExtent.cy = cy;
 
-    return EMFDRV_WriteRecord( dc, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL EMFDRV_SetWindowExt( DC *dc, INT cx, INT cy )
+BOOL EMFDRV_SetWindowExt( PHYSDEV dev, INT cx, INT cy )
 {
     EMRSETWINDOWEXTEX emr;
 
@@ -41,10 +41,10 @@ BOOL EMFDRV_SetWindowExt( DC *dc, INT cx, INT cy )
     emr.szlExtent.cx = cx;
     emr.szlExtent.cy = cy;
 
-    return EMFDRV_WriteRecord( dc, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL EMFDRV_SetViewportOrg( DC *dc, INT x, INT y )
+BOOL EMFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y )
 {
     EMRSETVIEWPORTORGEX emr;
 
@@ -53,10 +53,10 @@ BOOL EMFDRV_SetViewportOrg( DC *dc, INT x, INT y )
     emr.ptlOrigin.x = x;
     emr.ptlOrigin.y = y;
 
-    return EMFDRV_WriteRecord( dc, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL EMFDRV_SetWindowOrg( DC *dc, INT x, INT y )
+BOOL EMFDRV_SetWindowOrg( PHYSDEV dev, INT x, INT y )
 {
     EMRSETWINDOWORGEX emr;
 
@@ -65,10 +65,10 @@ BOOL EMFDRV_SetWindowOrg( DC *dc, INT x, INT y )
     emr.ptlOrigin.x = x;
     emr.ptlOrigin.y = y;
 
-    return EMFDRV_WriteRecord( dc, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL EMFDRV_ScaleViewportExt( DC *dc, INT xNum, INT xDenom, INT yNum,
+BOOL EMFDRV_ScaleViewportExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
 			      INT yDenom )
 {
     EMRSCALEVIEWPORTEXTEX emr;
@@ -80,10 +80,10 @@ BOOL EMFDRV_ScaleViewportExt( DC *dc, INT xNum, INT xDenom, INT yNum,
     emr.yNum      = yNum;
     emr.yDenom    = yDenom;
 
-    return EMFDRV_WriteRecord( dc, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
-BOOL EMFDRV_ScaleWindowExt( DC *dc, INT xNum, INT xDenom, INT yNum,
+BOOL EMFDRV_ScaleWindowExt( PHYSDEV dev, INT xNum, INT xDenom, INT yNum,
 			    INT yDenom )
 {
     EMRSCALEWINDOWEXTEX emr;
@@ -95,7 +95,7 @@ BOOL EMFDRV_ScaleWindowExt( DC *dc, INT xNum, INT xDenom, INT yNum,
     emr.yNum      = yNum;
     emr.yDenom    = yDenom;
 
-    return EMFDRV_WriteRecord( dc, &emr.emr );
+    return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
 

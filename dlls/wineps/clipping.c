@@ -28,13 +28,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 /***********************************************************************
  *           PSDRV_SetDeviceClipping
  */
-VOID PSDRV_SetDeviceClipping( DC *dc )
+VOID PSDRV_SetDeviceClipping( PSDRV_PDEVICE *physDev )
 {
     CHAR szArrayName[] = "clippath";
     DWORD size;
     RGNDATA *rgndata;
+    DC *dc = physDev->dc;
 
-    TRACE("hdc=%04x\n", dc->hSelf);
+    TRACE("hdc=%04x\n", physDev->hdc);
 
     if (dc->hGCClipRgn == 0) {
         ERR("Rgn is 0. Please report this.\n");
@@ -55,20 +56,20 @@ VOID PSDRV_SetDeviceClipping( DC *dc )
 
     GetRegionData(dc->hGCClipRgn, size, rgndata);
 
-    PSDRV_WriteInitClip(dc);
+    PSDRV_WriteInitClip(physDev);
 
     /* check for NULL region */
     if (rgndata->rdh.nCount == 0)
     {
         /* set an empty clip path. */
-        PSDRV_WriteRectClip(dc, 0, 0, 0, 0);
+        PSDRV_WriteRectClip(physDev, 0, 0, 0, 0);
     }
     /* optimize when it is a simple region */
     else if (rgndata->rdh.nCount == 1)
     {
         RECT *pRect = (RECT *)rgndata->Buffer;
 
-        PSDRV_WriteRectClip(dc, pRect->left, pRect->top, 
+        PSDRV_WriteRectClip(physDev, pRect->left, pRect->top, 
                             pRect->right - pRect->left, 
                             pRect->bottom - pRect->top);        
     }
@@ -77,21 +78,21 @@ VOID PSDRV_SetDeviceClipping( DC *dc )
         INT i;
         RECT *pRect = (RECT *)rgndata->Buffer;
 
-        PSDRV_WriteArrayDef(dc, szArrayName, rgndata->rdh.nCount * 4);
+        PSDRV_WriteArrayDef(physDev, szArrayName, rgndata->rdh.nCount * 4);
 
         for (i = 0; i < rgndata->rdh.nCount; i++, pRect++)
         {
-            PSDRV_WriteArrayPut(dc, szArrayName, i * 4,
+            PSDRV_WriteArrayPut(physDev, szArrayName, i * 4,
                                 pRect->left);
-            PSDRV_WriteArrayPut(dc, szArrayName, i * 4 + 1,
+            PSDRV_WriteArrayPut(physDev, szArrayName, i * 4 + 1,
                                 pRect->top);
-            PSDRV_WriteArrayPut(dc, szArrayName, i * 4 + 2, 
+            PSDRV_WriteArrayPut(physDev, szArrayName, i * 4 + 2, 
                                 pRect->right - pRect->left);
-            PSDRV_WriteArrayPut(dc, szArrayName, i * 4 + 3, 
+            PSDRV_WriteArrayPut(physDev, szArrayName, i * 4 + 3, 
                                 pRect->bottom - pRect->top);
         }
 
-        PSDRV_WriteRectClip2(dc, szArrayName);
+        PSDRV_WriteRectClip2(physDev, szArrayName);
     }
     
     HeapFree( GetProcessHeap(), 0, rgndata );

@@ -52,8 +52,8 @@ LPDRAWMODE 	win16drv_DrawModeP;
 
 static BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                  LPCSTR output, const DEVMODEA* initData );
-static INT WIN16DRV_GetDeviceCaps( DC *dc, INT cap );
-static INT WIN16DRV_ExtEscape( DC *dc, INT escape, INT in_count, LPCVOID in_data,
+static INT WIN16DRV_GetDeviceCaps( PHYSDEV dev, INT cap );
+static INT WIN16DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_data,
                                INT out_count, LPVOID out_data );
 
 static const DC_FUNCTIONS WIN16DRV_Funcs =
@@ -92,6 +92,8 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pFrameRgn */
     WIN16DRV_GetCharWidth,           /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
+    NULL,                            /* pGetDIBColorTable */
+    NULL,                            /* pGetDIBits */
     WIN16DRV_GetDeviceCaps,          /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
     NULL,                            /* pGetPixel */
@@ -123,15 +125,20 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pSaveDC */
     NULL,                            /* pScaleViewportExtEx */
     NULL,                            /* pScaleWindowExtEx */
+    WIN16DRV_SelectBitmap,           /* pSelectBitmap */
+    WIN16DRV_SelectBrush,            /* pSelectBrush */
     NULL,                            /* pSelectClipPath */
     NULL,                            /* pSelectClipRgn */
-    WIN16DRV_SelectObject,           /* pSelectObject */
+    WIN16DRV_SelectFont,             /* pSelectFont */
     NULL,                            /* pSelectPalette */
+    WIN16DRV_SelectPen,              /* pSelectPen */
     NULL,                            /* pSetBkColor */
     NULL,                            /* pSetBkMode */
+    NULL,                            /* pSetDIBColorTable */
+    NULL,                            /* pSetDIBits */
+    NULL,                            /* pSetDIBitsToDevice */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDeviceGammaRamp */
-    NULL,                            /* pSetDIBitsToDevice */
     NULL,                            /* pSetMapMode */
     NULL,                            /* pSetMapperFlags */
     NULL,                            /* pSetPixel */
@@ -242,7 +249,9 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 
     physDev = (WIN16DRV_PDEVICE *)HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev) );
     if (!physDev) return FALSE;
-    dc->physDev = physDev;
+    dc->physDev = (PHYSDEV)physDev;
+    physDev->hdc = dc->hSelf;
+    physDev->dc = dc;
 
     pLPD = LoadPrinterDriver(driver);
     if (pLPD == NULL)
@@ -305,11 +314,10 @@ BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     return TRUE;
 }
 
-BOOL WIN16DRV_PatBlt( struct tagDC *dc, INT left, INT top,
-			INT width, INT height, DWORD rop )
+BOOL WIN16DRV_PatBlt( PHYSDEV dev, INT left, INT top, INT width, INT height, DWORD rop )
 {
   
-    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
     BOOL bRet = 0;
 
     bRet = PRTDRV_StretchBlt( physDev->segptrPDEVICE, left, top, width, height, (SEGPTR)NULL, 0, 0, width, height,
@@ -322,12 +330,12 @@ BOOL WIN16DRV_PatBlt( struct tagDC *dc, INT left, INT top,
 /***********************************************************************
  *           WIN16DRV_GetDeviceCaps
  */
-static INT WIN16DRV_GetDeviceCaps( DC *dc, INT cap )
+static INT WIN16DRV_GetDeviceCaps( PHYSDEV dev, INT cap )
 {
-    WIN16DRV_PDEVICE *physDev = dc->physDev;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
     if (cap >= PHYSICALWIDTH || (cap % 2))
     {
-        FIXME("(%04x): unsupported capability %d, will return 0\n", dc->hSelf, cap );
+        FIXME("(%04x): unsupported capability %d, will return 0\n", physDev->hdc, cap );
         return 0;
     }
     return *((WORD *)&physDev->DevCaps + (cap / 2));
@@ -337,7 +345,7 @@ static INT WIN16DRV_GetDeviceCaps( DC *dc, INT cap )
 /***********************************************************************
  *           WIN16DRV_ExtEscape
  */
-static INT WIN16DRV_ExtEscape( DC *dc, INT escape, INT in_count, LPCVOID in_data,
+static INT WIN16DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOID in_data,
                                INT out_count, LPVOID out_data )
 {
 #if 0

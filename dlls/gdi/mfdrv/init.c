@@ -38,14 +38,14 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pArcTo */
     MFDRV_BeginPath,                 /* pBeginPath */
     MFDRV_BitBlt,                    /* pBitBlt */
-    NULL,                            /* pBitmapBits */	
+    NULL,                            /* pBitmapBits */
     NULL,                            /* pChoosePixelFormat */
     MFDRV_Chord,                     /* pChord */
     MFDRV_CloseFigure,               /* pCloseFigure */
     NULL,                            /* pCreateBitmap */
-    NULL, /* no implementation */    /* pCreateDC */
+    NULL,                            /* pCreateDC */
     NULL,                            /* pCreateDIBSection */
-    NULL, /* no implementation */    /* pDeleteDC */
+    NULL,                            /* pDeleteDC */
     NULL,                            /* pDeleteObject */
     NULL,                            /* pDescribePixelFormat */
     NULL,                            /* pDeviceCapabilities */
@@ -65,9 +65,11 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_FrameRgn,                  /* pFrameRgn */
     NULL,                            /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
+    NULL,                            /* pGetDIBColorTable */
+    NULL,                            /* pGetDIBits */
     NULL,                            /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
-    NULL, /* no implementation */    /* pGetPixel */
+    NULL,                            /* pGetPixel */
     NULL,                            /* pGetPixelFormat */
     NULL,                            /* pGetTextExtentPoint */
     NULL,                            /* pGetTextMetrics */
@@ -96,15 +98,20 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SaveDC,                    /* pSaveDC */
     MFDRV_ScaleViewportExt,          /* pScaleViewportExt */
     MFDRV_ScaleWindowExt,            /* pScaleWindowExt */
+    MFDRV_SelectBitmap,              /* pSelectBitmap */
+    MFDRV_SelectBrush,               /* pSelectBrush */
     MFDRV_SelectClipPath,            /* pSelectClipPath */
     NULL,                            /* pSelectClipRgn */
-    MFDRV_SelectObject,              /* pSelectObject */
+    MFDRV_SelectFont,                /* pSelectFont */
     NULL,                            /* pSelectPalette */
+    MFDRV_SelectPen,                 /* pSelectPen */
     MFDRV_SetBkColor,                /* pSetBkColor */
     MFDRV_SetBkMode,                 /* pSetBkMode */
+    NULL,                            /* pSetDIBColorTable */
+    NULL,                            /* pSetDIBits */
+    MFDRV_SetDIBitsToDevice,         /* pSetDIBitsToDevice */
     NULL,                            /* pSetDeviceClipping */
     NULL,                            /* pSetDeviceGammaRamp */
-    MFDRV_SetDIBitsToDevice,         /* pSetDIBitsToDevice */
     MFDRV_SetMapMode,                /* pSetMapMode */
     MFDRV_SetMapperFlags,            /* pSetMapperFlags */
     MFDRV_SetPixel,                  /* pSetPixel */
@@ -150,7 +157,9 @@ static DC *MFDRV_AllocMetaFile(void)
         GDI_FreeObject( dc->hSelf, dc );
         return NULL;
     }
-    dc->physDev = physDev;
+    dc->physDev = (PHYSDEV)physDev;
+    physDev->hdc = dc->hSelf;
+    physDev->dc = dc;
 
     if (!(physDev->mh = HeapAlloc( GetProcessHeap(), 0, sizeof(*physDev->mh) )))
     {
@@ -176,10 +185,11 @@ static DC *MFDRV_AllocMetaFile(void)
 /**********************************************************************
  *	     MFDRV_DeleteDC
  */
-static BOOL MFDRV_DeleteDC( DC *dc )
+static BOOL MFDRV_DeleteDC( PHYSDEV dev )
 {
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
-    
+    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
+
     if (physDev->mh) HeapFree( GetProcessHeap(), 0, physDev->mh );
     HeapFree( GetProcessHeap(), 0, physDev );
     dc->physDev = NULL;
@@ -216,12 +226,12 @@ HDC16 WINAPI CreateMetaFile16(
         physDev->mh->mtType = METAFILE_DISK;
         if ((hFile = CreateFileA(filename, GENERIC_WRITE, 0, NULL,
 				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
-            MFDRV_DeleteDC( dc );
+            MFDRV_DeleteDC( dc->physDev );
             return 0;
         }
         if (!WriteFile( hFile, (LPSTR)physDev->mh, sizeof(*physDev->mh), NULL,
 			NULL )) {
-            MFDRV_DeleteDC( dc );
+            MFDRV_DeleteDC( dc->physDev );
             return 0;
 	}
 	physDev->hFile = hFile;
@@ -286,23 +296,23 @@ static DC *MFDRV_CloseMetaFile( HDC hdc )
      * in SDK Knowledgebase Q99334.
      */
 
-    if (!MFDRV_MetaParam0(dc, META_EOF))
+    if (!MFDRV_MetaParam0(dc->physDev, META_EOF))
     {
-        MFDRV_DeleteDC( dc );
+        MFDRV_DeleteDC( dc->physDev );
 	return 0;
     }	
 
     if (physDev->mh->mtType == METAFILE_DISK)  /* disk based metafile */
     {
         if (SetFilePointer(physDev->hFile, 0, NULL, FILE_BEGIN) != 0) {
-            MFDRV_DeleteDC( dc );
+            MFDRV_DeleteDC( dc->physDev );
             return 0;
         }
 
 	physDev->mh->mtType = METAFILE_MEMORY; /* This is what windows does */
         if (!WriteFile(physDev->hFile, (LPSTR)physDev->mh,
                        sizeof(*physDev->mh), NULL, NULL)) {
-            MFDRV_DeleteDC( dc );
+            MFDRV_DeleteDC( dc->physDev );
             return 0;
         }
         CloseHandle(physDev->hFile);
@@ -331,7 +341,7 @@ HMETAFILE16 WINAPI CloseMetaFile16(
     hmf = MF_Create_HMETAFILE16( physDev->mh );
 
     physDev->mh = NULL;  /* So it won't be deleted */
-    MFDRV_DeleteDC( dc );
+    MFDRV_DeleteDC( dc->physDev );
     return hmf;
 }
 
@@ -359,7 +369,7 @@ HMETAFILE WINAPI CloseMetaFile(
     hmf = MF_Create_HMETAFILE( physDev->mh );
 
     physDev->mh = NULL;  /* So it won't be deleted */
-    MFDRV_DeleteDC( dc );
+    MFDRV_DeleteDC( dc->physDev );
     return hmf;
 }
 
@@ -369,11 +379,11 @@ HMETAFILE WINAPI CloseMetaFile(
  *
  * Warning: this function can change the pointer to the metafile header.
  */
-BOOL MFDRV_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
+BOOL MFDRV_WriteRecord( PHYSDEV dev, METARECORD *mr, DWORD rlen)
 {
     DWORD len;
     METAHEADER *mh;
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
+    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
 
     switch(physDev->mh->mtType)
     {
@@ -404,21 +414,21 @@ BOOL MFDRV_WriteRecord( DC *dc, METARECORD *mr, DWORD rlen)
  *         MFDRV_MetaParam0
  */
 
-BOOL MFDRV_MetaParam0(DC *dc, short func)
+BOOL MFDRV_MetaParam0(PHYSDEV dev, short func)
 {
     char buffer[8];
     METARECORD *mr = (METARECORD *)&buffer;
     
     mr->rdSize = 3;
     mr->rdFunction = func;
-    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
 
 /******************************************************************
  *         MFDRV_MetaParam1
  */
-BOOL MFDRV_MetaParam1(DC *dc, short func, short param1)
+BOOL MFDRV_MetaParam1(PHYSDEV dev, short func, short param1)
 {
     char buffer[8];
     METARECORD *mr = (METARECORD *)&buffer;
@@ -426,14 +436,14 @@ BOOL MFDRV_MetaParam1(DC *dc, short func, short param1)
     mr->rdSize = 4;
     mr->rdFunction = func;
     *(mr->rdParm) = param1;
-    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
 
 /******************************************************************
  *         MFDRV_MetaParam2
  */
-BOOL MFDRV_MetaParam2(DC *dc, short func, short param1, short param2)
+BOOL MFDRV_MetaParam2(PHYSDEV dev, short func, short param1, short param2)
 {
     char buffer[10];
     METARECORD *mr = (METARECORD *)&buffer;
@@ -442,7 +452,7 @@ BOOL MFDRV_MetaParam2(DC *dc, short func, short param1, short param2)
     mr->rdFunction = func;
     *(mr->rdParm) = param2;
     *(mr->rdParm + 1) = param1;
-    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
 
@@ -450,7 +460,7 @@ BOOL MFDRV_MetaParam2(DC *dc, short func, short param1, short param2)
  *         MFDRV_MetaParam4
  */
 
-BOOL MFDRV_MetaParam4(DC *dc, short func, short param1, short param2, 
+BOOL MFDRV_MetaParam4(PHYSDEV dev, short func, short param1, short param2, 
 		      short param3, short param4)
 {
     char buffer[14];
@@ -462,7 +472,7 @@ BOOL MFDRV_MetaParam4(DC *dc, short func, short param1, short param2,
     *(mr->rdParm + 1) = param3;
     *(mr->rdParm + 2) = param2;
     *(mr->rdParm + 3) = param1;
-    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
 
@@ -470,7 +480,7 @@ BOOL MFDRV_MetaParam4(DC *dc, short func, short param1, short param2,
  *         MFDRV_MetaParam6
  */
 
-BOOL MFDRV_MetaParam6(DC *dc, short func, short param1, short param2, 
+BOOL MFDRV_MetaParam6(PHYSDEV dev, short func, short param1, short param2, 
 		      short param3, short param4, short param5, short param6)
 {
     char buffer[18];
@@ -484,14 +494,14 @@ BOOL MFDRV_MetaParam6(DC *dc, short func, short param1, short param2,
     *(mr->rdParm + 3) = param3;
     *(mr->rdParm + 4) = param2;
     *(mr->rdParm + 5) = param1;
-    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
 
 /******************************************************************
  *         MFDRV_MetaParam8
  */
-BOOL MFDRV_MetaParam8(DC *dc, short func, short param1, short param2, 
+BOOL MFDRV_MetaParam8(PHYSDEV dev, short func, short param1, short param2, 
 		      short param3, short param4, short param5,
 		      short param6, short param7, short param8)
 {
@@ -508,7 +518,7 @@ BOOL MFDRV_MetaParam8(DC *dc, short func, short param1, short param2,
     *(mr->rdParm + 5) = param3;
     *(mr->rdParm + 6) = param2;
     *(mr->rdParm + 7) = param1;
-    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
 
@@ -519,9 +529,9 @@ BOOL MFDRV_MetaParam8(DC *dc, short func, short param1, short param2,
  * If we do someday, we'll need to maintain a table to re-use deleted
  * handles.
  */
-int MFDRV_AddHandleDC( DC *dc )
+int MFDRV_AddHandleDC( PHYSDEV dev )
 {
-    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dc->physDev;
+    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
     physDev->mh->mtNoObjects++;
     return physDev->nextHandle++;
 }

@@ -169,7 +169,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     if (dc)
     {
 	if(dc->funcs->pExtTextOut)
-	    ret = dc->funcs->pExtTextOut(dc,x,y,flags,lprect,str,count,lpDx);
+	    ret = dc->funcs->pExtTextOut(dc->physDev,x,y,flags,lprect,str,count,lpDx);
 	GDI_ReleaseObj( hdc );
     }
     return ret;

@@ -40,7 +40,6 @@
 
 struct tagBITMAPOBJ;
 struct tagCLASS;
-struct tagDC;
 struct tagDESKTOP;
 struct tagPALETTEOBJ;
 struct tagWND;
@@ -56,24 +55,9 @@ struct tagWINDOWPOS;
  * TTY GDI driver
  */
 
-extern BOOL TTYDRV_GDI_Initialize(void);
-
-/* TTY GDI bitmap driver */
-
-extern HBITMAP TTYDRV_BITMAP_CreateDIBSection(struct tagDC *dc, BITMAPINFO *bmi, UINT usage, LPVOID *bits, HANDLE section, DWORD offset);
-extern INT TTYDRV_BITMAP_SetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, UINT startscan, UINT lines, LPCVOID bits, const BITMAPINFO *info, UINT coloruse, HBITMAP hbitmap);
-extern INT TTYDRV_BITMAP_GetDIBits(struct tagBITMAPOBJ *bmp, struct tagDC *dc, UINT startscan, UINT lines, LPVOID bits, BITMAPINFO *info, UINT coloruse, HBITMAP hbitmap);
-extern void TTYDRV_BITMAP_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
-extern UINT TTYDRV_BITMAP_SetDIBColorTable(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,const RGBQUAD *);
-extern UINT TTYDRV_BITMAP_GetDIBColorTable(struct tagBITMAPOBJ *,struct tagDC *,UINT,UINT,RGBQUAD *);
-extern INT TTYDRV_BITMAP_Lock(struct tagBITMAPOBJ *,INT,BOOL);
-extern void TTYDRV_BITMAP_Unlock(struct tagBITMAPOBJ *,BOOL);
-
-#ifndef WINE_CURSES
-typedef struct { int dummy; } WINDOW;
-#endif
-
 typedef struct {
+  HDC hdc;
+  DC *dc;
   WINDOW *window;
   int cellWidth;
   int cellHeight;
@@ -83,42 +67,50 @@ typedef struct {
   int dummy; /* FIXME: Remove later */
 } TTYDRV_PHYSBITMAP;
 
+extern BOOL TTYDRV_GDI_Initialize(void);
+
+/* TTY GDI bitmap driver */
+
+extern HBITMAP TTYDRV_BITMAP_CreateDIBSection(TTYDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage, LPVOID *bits, HANDLE section, DWORD offset);
+extern void TTYDRV_BITMAP_DeleteDIBSection(struct tagBITMAPOBJ *bmp);
+
+#ifndef WINE_CURSES
+typedef struct { int dummy; } WINDOW;
+#endif
+
 extern BOOL TTYDRV_DC_CreateBitmap(HBITMAP hbitmap);
 
-extern BOOL TTYDRV_DC_Arc(struct tagDC *dc, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
+extern BOOL TTYDRV_DC_Arc(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
 extern LONG TTYDRV_DC_BitmapBits(HBITMAP hbitmap, void *bits, LONG count, WORD flags);
 extern BOOL TTYDRV_DC_CreateBitmap(HBITMAP hbitmap);
-extern BOOL TTYDRV_DC_CreateDC(struct tagDC *dc, LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODEA *initData);
-extern BOOL TTYDRV_DC_DeleteDC(struct tagDC *dc);
+extern BOOL TTYDRV_DC_CreateDC(DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output, const DEVMODEA *initData);
+extern BOOL TTYDRV_DC_DeleteDC(TTYDRV_PDEVICE *physDev);
 extern BOOL TTYDRV_DC_DeleteObject(HGDIOBJ handle);
-extern BOOL TTYDRV_DC_BitBlt(struct tagDC *dcDst, INT xDst, INT yDst, INT width, INT height, struct tagDC *dcSrc, INT xSrc, INT ySrc, DWORD rop);
-extern BOOL TTYDRV_DC_Chord(struct tagDC *dc, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
-extern BOOL TTYDRV_DC_Ellipse(struct tagDC *dc, INT left, INT top, INT right, INT bottom);
-extern INT TTYDRV_DC_Escape(struct tagDC *dc, INT nEscape, INT cbInput, SEGPTR lpInData, SEGPTR lpOutData);
-extern BOOL TTYDRV_DC_ExtFloodFill(struct tagDC *dc, INT x, INT y, COLORREF color, UINT fillType);
-extern BOOL TTYDRV_DC_ExtTextOut(struct tagDC *dc, INT x, INT y, UINT flags, const RECT *lpRect, LPCWSTR str, UINT count, const INT *lpDx);
-extern BOOL TTYDRV_DC_GetCharWidth(struct tagDC *dc, UINT firstChar, UINT lastChar, LPINT buffer);
-extern COLORREF TTYDRV_DC_GetPixel(struct tagDC *dc, INT x, INT y);
+extern BOOL TTYDRV_DC_BitBlt(TTYDRV_PDEVICE *physDevDst, INT xDst, INT yDst, INT width, INT height, TTYDRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc, DWORD rop);
+extern BOOL TTYDRV_DC_Chord(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
+extern BOOL TTYDRV_DC_Ellipse(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom);
+extern INT TTYDRV_DC_Escape(TTYDRV_PDEVICE *physDev, INT nEscape, INT cbInput, SEGPTR lpInData, SEGPTR lpOutData);
+extern BOOL TTYDRV_DC_ExtFloodFill(TTYDRV_PDEVICE *physDev, INT x, INT y, COLORREF color, UINT fillType);
+extern BOOL TTYDRV_DC_ExtTextOut(TTYDRV_PDEVICE *physDev, INT x, INT y, UINT flags, const RECT *lpRect, LPCWSTR str, UINT count, const INT *lpDx);
+extern BOOL TTYDRV_DC_GetCharWidth(TTYDRV_PDEVICE *physDev, UINT firstChar, UINT lastChar, LPINT buffer);
+extern COLORREF TTYDRV_DC_GetPixel(TTYDRV_PDEVICE *physDev, INT x, INT y);
 
-extern BOOL TTYDRV_DC_GetTextExtentPoint(struct tagDC *dc, LPCWSTR str, INT count, LPSIZE size);
-extern BOOL TTYDRV_DC_GetTextMetrics(struct tagDC *dc, TEXTMETRICW *metrics);
-extern BOOL TTYDRV_DC_LineTo(struct tagDC *dc, INT x, INT y);
-extern BOOL TTYDRV_DC_PaintRgn(struct tagDC *dc, HRGN hrgn);
-extern BOOL TTYDRV_DC_PatBlt(struct tagDC *dc, INT left, INT top, INT width, INT height, DWORD rop);
-extern BOOL TTYDRV_DC_Pie(struct tagDC *dc, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
-extern BOOL TTYDRV_DC_Polygon(struct tagDC *dc, const POINT* pt, INT count);
-extern BOOL TTYDRV_DC_Polyline(struct tagDC *dc, const POINT* pt, INT count);
-extern BOOL TTYDRV_DC_PolyPolygon(struct tagDC *dc, const POINT* pt, const INT* counts, UINT polygons);
-extern BOOL TTYDRV_DC_PolyPolyline(struct tagDC *dc, const POINT* pt, const DWORD* counts, DWORD polylines);
-extern BOOL TTYDRV_DC_Rectangle(struct tagDC *dc, INT left, INT top, INT right, INT bottom);
-extern BOOL TTYDRV_DC_RoundRect(struct tagDC *dc, INT left, INT top, INT right, INT bottom, INT ell_width, INT ell_height);
-extern void TTYDRV_DC_SetDeviceClipping(struct tagDC *dc);
-extern HGDIOBJ TTYDRV_DC_SelectObject(struct tagDC *dc, HGDIOBJ handle);
-extern COLORREF TTYDRV_DC_SetBkColor(struct tagDC *dc, COLORREF color);
-extern COLORREF TTYDRV_DC_SetPixel(struct tagDC *dc, INT x, INT y, COLORREF color);
-extern COLORREF TTYDRV_DC_SetTextColor(struct tagDC *dc, COLORREF color);
-extern BOOL TTYDRV_DC_StretchBlt(struct tagDC *dcDst, INT xDst, INT yDst, INT widthDst, INT heightDst, struct tagDC *dcSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop);
-INT TTYDRV_DC_SetDIBitsToDevice(struct tagDC *dc, INT xDest, INT yDest, DWORD cx, DWORD cy, INT xSrc, INT ySrc, UINT startscan, UINT lines, LPCVOID bits, const BITMAPINFO *info, UINT coloruse);
+extern BOOL TTYDRV_DC_GetTextExtentPoint(TTYDRV_PDEVICE *physDev, LPCWSTR str, INT count, LPSIZE size);
+extern BOOL TTYDRV_DC_GetTextMetrics(TTYDRV_PDEVICE *physDev, TEXTMETRICW *metrics);
+extern BOOL TTYDRV_DC_LineTo(TTYDRV_PDEVICE *physDev, INT x, INT y);
+extern BOOL TTYDRV_DC_PaintRgn(TTYDRV_PDEVICE *physDev, HRGN hrgn);
+extern BOOL TTYDRV_DC_PatBlt(TTYDRV_PDEVICE *physDev, INT left, INT top, INT width, INT height, DWORD rop);
+extern BOOL TTYDRV_DC_Pie(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
+extern BOOL TTYDRV_DC_Polygon(TTYDRV_PDEVICE *physDev, const POINT* pt, INT count);
+extern BOOL TTYDRV_DC_Polyline(TTYDRV_PDEVICE *physDev, const POINT* pt, INT count);
+extern BOOL TTYDRV_DC_PolyPolygon(TTYDRV_PDEVICE *physDev, const POINT* pt, const INT* counts, UINT polygons);
+extern BOOL TTYDRV_DC_PolyPolyline(TTYDRV_PDEVICE *physDev, const POINT* pt, const DWORD* counts, DWORD polylines);
+extern BOOL TTYDRV_DC_Rectangle(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom);
+extern BOOL TTYDRV_DC_RoundRect(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom, INT ell_width, INT ell_height);
+extern void TTYDRV_DC_SetDeviceClipping(TTYDRV_PDEVICE *physDev);
+extern COLORREF TTYDRV_DC_SetPixel(TTYDRV_PDEVICE *physDev, INT x, INT y, COLORREF color);
+extern BOOL TTYDRV_DC_StretchBlt(TTYDRV_PDEVICE *physDevDst, INT xDst, INT yDst, INT widthDst, INT heightDst, TTYDRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, DWORD rop);
+INT TTYDRV_DC_SetDIBitsToDevice(TTYDRV_PDEVICE *physDev, INT xDest, INT yDest, DWORD cx, DWORD cy, INT xSrc, INT ySrc, UINT startscan, UINT lines, LPCVOID bits, const BITMAPINFO *info, UINT coloruse);
 
 /* TTY GDI palette driver */
 

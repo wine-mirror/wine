@@ -25,18 +25,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
 /***********************************************************************
- *           PSDRV_BRUSH_SelectObject
+ *           PSDRV_SelectBrush   (WINEPS.@)
  */
-HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush )
+HBRUSH PSDRV_SelectBrush( PSDRV_PDEVICE *physDev, HBRUSH hbrush )
 {
     LOGBRUSH logbrush;
-    HBRUSH prevbrush = dc->hBrush;
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 
     if (!GetObjectA( hbrush, sizeof(logbrush), &logbrush )) return 0;
 
     TRACE("hbrush = %08x\n", hbrush);
-    dc->hBrush = hbrush;
 
     switch(logbrush.lbStyle) {
 
@@ -61,7 +58,7 @@ HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush )
     }
 
     physDev->brush.set = FALSE;
-    return prevbrush;
+    return hbrush;
 }
 
 
@@ -70,13 +67,12 @@ HBRUSH PSDRV_BRUSH_SelectObject( DC * dc, HBRUSH hbrush )
  *	PSDRV_SetBrush
  *
  */
-static BOOL PSDRV_SetBrush(DC *dc)
+static BOOL PSDRV_SetBrush(PSDRV_PDEVICE *physDev)
 {
     LOGBRUSH logbrush;
     BOOL ret = TRUE;
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
 
-    if (!GetObjectA( dc->hBrush, sizeof(logbrush), &logbrush ))
+    if (!GetObjectA( GetCurrentObject(physDev->hdc,OBJ_BRUSH), sizeof(logbrush), &logbrush ))
     {
         ERR("Can't get BRUSHOBJ\n");
 	return FALSE;
@@ -85,7 +81,7 @@ static BOOL PSDRV_SetBrush(DC *dc)
     switch (logbrush.lbStyle) {
     case BS_SOLID:
     case BS_HATCHED:
-        PSDRV_WriteSetColor(dc, &physDev->brush.color);
+        PSDRV_WriteSetColor(physDev, &physDev->brush.color);
 	break;
 
     case BS_NULL:
@@ -106,12 +102,12 @@ static BOOL PSDRV_SetBrush(DC *dc)
  *	PSDRV_Fill
  *
  */
-static BOOL PSDRV_Fill(DC *dc, BOOL EO)
+static BOOL PSDRV_Fill(PSDRV_PDEVICE *physDev, BOOL EO)
 {
     if(!EO)
-        return PSDRV_WriteFill(dc);
+        return PSDRV_WriteFill(physDev);
     else
-      return PSDRV_WriteEOFill(dc);
+        return PSDRV_WriteEOFill(physDev);
 }
 
 
@@ -120,12 +116,12 @@ static BOOL PSDRV_Fill(DC *dc, BOOL EO)
  *	PSDRV_Clip
  *
  */
-static BOOL PSDRV_Clip(DC *dc, BOOL EO)
+static BOOL PSDRV_Clip(PSDRV_PDEVICE *physDev, BOOL EO)
 {
     if(!EO)
-        return PSDRV_WriteClip(dc);
+        return PSDRV_WriteClip(physDev);
     else
-        return PSDRV_WriteEOClip(dc);
+        return PSDRV_WriteEOClip(physDev);
 }
 
 /**********************************************************************
@@ -133,13 +129,12 @@ static BOOL PSDRV_Clip(DC *dc, BOOL EO)
  *	PSDRV_Brush
  *
  */
-BOOL PSDRV_Brush(DC *dc, BOOL EO)
+BOOL PSDRV_Brush(PSDRV_PDEVICE *physDev, BOOL EO)
 {
     LOGBRUSH logbrush;
     BOOL ret = TRUE;
-    PSDRV_PDEVICE *physDev = dc->physDev;
 
-    if (!GetObjectA( dc->hBrush, sizeof(logbrush), &logbrush ))
+    if (!GetObjectA( GetCurrentObject(physDev->hdc,OBJ_BRUSH), sizeof(logbrush), &logbrush ))
     {
         ERR("Can't get BRUSHOBJ\n");
 	return FALSE;
@@ -147,55 +142,55 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
 
     switch (logbrush.lbStyle) {
     case BS_SOLID:
-        PSDRV_SetBrush(dc);
-	PSDRV_WriteGSave(dc);
-        PSDRV_Fill(dc, EO);
-	PSDRV_WriteGRestore(dc);
+        PSDRV_SetBrush(physDev);
+	PSDRV_WriteGSave(physDev);
+        PSDRV_Fill(physDev, EO);
+	PSDRV_WriteGRestore(physDev);
 	break;
 
     case BS_HATCHED:
-        PSDRV_SetBrush(dc);
+        PSDRV_SetBrush(physDev);
 
 	switch(logbrush.lbHatch) {
 	case HS_VERTICAL:
 	case HS_CROSS:
-	    PSDRV_WriteGSave(dc);
-	    PSDRV_Clip(dc, EO);
-	    PSDRV_WriteHatch(dc);
-	    PSDRV_WriteStroke(dc);
-	    PSDRV_WriteGRestore(dc);
+	    PSDRV_WriteGSave(physDev);
+	    PSDRV_Clip(physDev, EO);
+	    PSDRV_WriteHatch(physDev);
+	    PSDRV_WriteStroke(physDev);
+	    PSDRV_WriteGRestore(physDev);
 	    if(logbrush.lbHatch == HS_VERTICAL)
 	        break;
 	    /* else fallthrough for HS_CROSS */
 
 	case HS_HORIZONTAL:
-	    PSDRV_WriteGSave(dc);
-	    PSDRV_Clip(dc, EO);
-	    PSDRV_WriteRotate(dc, 90.0);
-	    PSDRV_WriteHatch(dc);
-	    PSDRV_WriteStroke(dc);
-	    PSDRV_WriteGRestore(dc);
+	    PSDRV_WriteGSave(physDev);
+	    PSDRV_Clip(physDev, EO);
+	    PSDRV_WriteRotate(physDev, 90.0);
+	    PSDRV_WriteHatch(physDev);
+	    PSDRV_WriteStroke(physDev);
+	    PSDRV_WriteGRestore(physDev);
 	    break;
 
 	case HS_FDIAGONAL:
 	case HS_DIAGCROSS:
-	    PSDRV_WriteGSave(dc);
-	    PSDRV_Clip(dc, EO);
-	    PSDRV_WriteRotate(dc, -45.0);
-	    PSDRV_WriteHatch(dc);
-	    PSDRV_WriteStroke(dc);
-	    PSDRV_WriteGRestore(dc);
+	    PSDRV_WriteGSave(physDev);
+	    PSDRV_Clip(physDev, EO);
+	    PSDRV_WriteRotate(physDev, -45.0);
+	    PSDRV_WriteHatch(physDev);
+	    PSDRV_WriteStroke(physDev);
+	    PSDRV_WriteGRestore(physDev);
 	    if(logbrush.lbHatch == HS_FDIAGONAL)
 	        break;
 	    /* else fallthrough for HS_DIAGCROSS */
 	    
 	case HS_BDIAGONAL:
-	    PSDRV_WriteGSave(dc);
-	    PSDRV_Clip(dc, EO);
-	    PSDRV_WriteRotate(dc, 45.0);
-	    PSDRV_WriteHatch(dc);
-	    PSDRV_WriteStroke(dc);
-	    PSDRV_WriteGRestore(dc);
+	    PSDRV_WriteGSave(physDev);
+	    PSDRV_Clip(physDev, EO);
+	    PSDRV_WriteRotate(physDev, 45.0);
+	    PSDRV_WriteHatch(physDev);
+	    PSDRV_WriteStroke(physDev);
+	    PSDRV_WriteGRestore(physDev);
 	    break;
 
 	default:
@@ -219,10 +214,10 @@ BOOL PSDRV_Brush(DC *dc, BOOL EO)
 	    GetBitmapBits(logbrush.lbHatch, bm.bmWidthBytes * bm.bmHeight, bits);
 
 	    if(physDev->pi->ppd->LanguageLevel > 1) {
-	        PSDRV_WriteGSave(dc);
-	        PSDRV_WritePatternDict(dc, &bm, bits);
-		PSDRV_Fill(dc, EO);
-		PSDRV_WriteGRestore(dc);
+	        PSDRV_WriteGSave(physDev);
+	        PSDRV_WritePatternDict(physDev, &bm, bits);
+		PSDRV_Fill(physDev, EO);
+		PSDRV_WriteGRestore(physDev);
 	    } else {
 	        FIXME("Trying to set a pattern brush on a level 1 printer\n");
 		ret = FALSE;

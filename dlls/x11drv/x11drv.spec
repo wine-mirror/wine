@@ -26,11 +26,13 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl DescribePixelFormat(ptr long long ptr) X11DRV_DescribePixelFormat
 @ cdecl Ellipse(ptr long long long long) X11DRV_Ellipse
 @ cdecl EnumDeviceFonts(long ptr ptr long) X11DRV_EnumDeviceFonts
-@ cdecl ExtFloodFill(ptr long long long long) X11DRV_ExtFloodFill
 @ cdecl ExtEscape(ptr long long ptr long ptr) X11DRV_ExtEscape
+@ cdecl ExtFloodFill(ptr long long long long) X11DRV_ExtFloodFill
 @ cdecl ExtTextOut(ptr long long long ptr ptr long ptr) X11DRV_ExtTextOut
 @ cdecl GetCharWidth(ptr long long ptr) X11DRV_GetCharWidth
 @ cdecl GetDCOrgEx(ptr ptr) X11DRV_GetDCOrgEx
+@ cdecl GetDIBColorTable(ptr long long ptr) X11DRV_GetDIBColorTable
+@ cdecl GetDIBits(ptr long long long ptr ptr long) X11DRV_GetDIBits
 @ cdecl GetDeviceCaps(ptr long) X11DRV_GetDeviceCaps
 @ cdecl GetDeviceGammaRamp(ptr ptr) X11DRV_GetDeviceGammaRamp
 @ cdecl GetPixel(ptr long long) X11DRV_GetPixel
@@ -47,8 +49,13 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl Polyline(ptr ptr long) X11DRV_Polyline
 @ cdecl Rectangle(ptr long long long long) X11DRV_Rectangle
 @ cdecl RoundRect(ptr long long long long long long) X11DRV_RoundRect
-@ cdecl SelectObject(ptr long) X11DRV_SelectObject
+@ cdecl SelectBitmap(ptr long) X11DRV_SelectBitmap
+@ cdecl SelectBrush(ptr long) X11DRV_SelectBrush
+@ cdecl SelectFont(ptr long) X11DRV_SelectFont
+@ cdecl SelectPen(ptr long) X11DRV_SelectPen
 @ cdecl SetBkColor(ptr long) X11DRV_SetBkColor
+@ cdecl SetDIBColorTable(ptr long long ptr) X11DRV_SetDIBColorTable
+@ cdecl SetDIBits(ptr long long long ptr ptr long) X11DRV_SetDIBits
 @ cdecl SetDIBitsToDevice(ptr long long long long long long long long ptr ptr long) X11DRV_SetDIBitsToDevice
 @ cdecl SetDeviceClipping(ptr) X11DRV_SetDeviceClipping
 @ cdecl SetDeviceGammaRamp(ptr ptr) X11DRV_SetDeviceGammaRamp

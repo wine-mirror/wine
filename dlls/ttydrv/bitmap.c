@@ -136,23 +136,29 @@ static LONG TTYDRV_DC_GetBitmapBits(BITMAPOBJ *bitmap, void *bits, LONG count)
 }
 
 /***********************************************************************
- *		TTYDRV_DC_BITMAP_SelectObject
+ *		TTYDRV_SelectBitmap   (TTYDRV.@)
  */
-HBITMAP TTYDRV_DC_BITMAP_SelectObject(DC *dc, HBITMAP hbitmap, BITMAPOBJ *bitmap)
+HBITMAP TTYDRV_SelectBitmap(TTYDRV_PDEVICE *physDev, HBITMAP hbitmap)
 {
-  HBITMAP hPreviousBitmap;
+  DC *dc = physDev->dc;
+  BITMAPOBJ *bitmap;
 
-  TRACE("(%p, 0x%04x, %p)\n", dc, hbitmap, bitmap);
+  TRACE("(%p, 0x%04x)\n", dc, hbitmap);
 
   if(!(dc->flags & DC_MEMORY)) 
     return 0;
 
+  if (!(bitmap = GDI_GetObjPtr( hbitmap, BITMAP_MAGIC ))) return 0;
   /* Assure that the bitmap device dependent */
   if(!bitmap->physBitmap && !TTYDRV_DC_CreateBitmap(hbitmap))
-    return 0;
+  {
+      GDI_ReleaseObj( hbitmap );
+      return 0;
+  }
 
   if(bitmap->funcs != dc->funcs) {
     ERR("Trying to select a non-TTY DDB into a TTY DC\n");
+    GDI_ReleaseObj( hbitmap );
     return 0;
   }
 
@@ -169,15 +175,14 @@ HBITMAP TTYDRV_DC_BITMAP_SelectObject(DC *dc, HBITMAP hbitmap, BITMAPOBJ *bitmap
     HRGN hrgn;
 
     if(!(hrgn = CreateRectRgn(0, 0, bitmap->bitmap.bmWidth, bitmap->bitmap.bmHeight)))
-      return 0;
-
+    {
+        GDI_ReleaseObj( hbitmap );
+        return 0;
+    }
     dc->hVisRgn = hrgn;
   }
-
-  hPreviousBitmap = dc->hBitmap;
-  dc->hBitmap = hbitmap;
-
-  return hPreviousBitmap;
+  GDI_ReleaseObj( hbitmap );
+  return hbitmap;
 }
 
 /***********************************************************************
@@ -194,95 +199,25 @@ static LONG TTYDRV_DC_SetBitmapBits(BITMAPOBJ *bitmap, void *bits, LONG count)
  *		TTYDRV_BITMAP_CreateDIBSection
  */
 HBITMAP TTYDRV_BITMAP_CreateDIBSection(
-  DC *dc, BITMAPINFO *bmi, UINT usage,
+  TTYDRV_PDEVICE *physDev, BITMAPINFO *bmi, UINT usage,
   LPVOID *bits, HANDLE section, DWORD offset)
 {
-  FIXME("(%p, %p, %u, %p, 0x%04x, %ld): stub\n",
-	dc, bmi, usage, bits, section, offset);
+  FIXME("(%x, %p, %u, %p, 0x%04x, %ld): stub\n",
+	physDev->hdc, bmi, usage, bits, section, offset);
 
   return (HBITMAP) NULL;
 }
 
 /***********************************************************************
- *		TTYDRV_BITMAP_DeleteDIBSection
- */
-void TTYDRV_BITMAP_DeleteDIBSection(BITMAPOBJ *bmp)
-{
-  FIXME("(%p): stub\n", bmp);
-}
-
-/***********************************************************************
- *		TTYDRV_BITMAP_SetDIBColorTable
- */
-UINT TTYDRV_BITMAP_SetDIBColorTable(BITMAPOBJ *bmp, DC *dc, UINT start, UINT count, const RGBQUAD *colors)
-{
-  FIXME("(%p): stub\n", bmp);
-  return 0;
-}
-
-/***********************************************************************
- *		TTYDRV_BITMAP_GetDIBColorTable
- */
-UINT TTYDRV_BITMAP_GetDIBColorTable(BITMAPOBJ *bmp, DC *dc, UINT start, UINT count, RGBQUAD *colors)
-{
-  FIXME("(%p): stub\n", bmp);
-  return 0;
-}
-
-/***********************************************************************
- *		TTYDRV_BITMAP_Lock
- */
-INT TTYDRV_BITMAP_Lock(BITMAPOBJ *bmp, INT req, BOOL lossy)
-{
-  FIXME("(%p): stub\n", bmp);
-  return DIB_Status_None;
-}
-
-/***********************************************************************
- *		TTYDRV_BITMAP_Unlock
- */
-void TTYDRV_BITMAP_Unlock(BITMAPOBJ *bmp, BOOL commit)
-{
-  FIXME("(%p): stub\n", bmp);
-}
-
-/***********************************************************************
- *		TTYDRV_BITMAP_GetDIBits
- */
-INT TTYDRV_BITMAP_GetDIBits(
-  BITMAPOBJ *bmp, DC *dc, UINT startscan, UINT lines, 
-  LPVOID bits, BITMAPINFO *info, UINT coloruse, HBITMAP hbitmap)
-{
-  FIXME("(%p, %p, %u, %u, %p, %p, %u, 0x%04x): stub\n",
-	bmp, dc, startscan, lines, bits, info, coloruse, hbitmap);
-
-  return 0;
-}
-
-
-/***********************************************************************
- *		TTYDRV_BITMAP_SetDIBits
- */
-INT TTYDRV_BITMAP_SetDIBits(
-  BITMAPOBJ *bmp, DC *dc, UINT startscan, UINT lines, 
-  LPCVOID bits, const BITMAPINFO *info, UINT coloruse, HBITMAP hbitmap)
-{
-  FIXME("(%p, %p, %u, %u, %p, %p, %u, 0x%04x): stub\n",
-	bmp, dc, startscan, lines, bits, info, coloruse, hbitmap);
-
-  return 0;
-}
-
-/***********************************************************************
  *		TTYDRV_DC_SetDIBitsToDevice
  */
-INT TTYDRV_DC_SetDIBitsToDevice(DC *dc, INT xDest, INT yDest, DWORD cx,
+INT TTYDRV_DC_SetDIBitsToDevice(TTYDRV_PDEVICE *physDev, INT xDest, INT yDest, DWORD cx,
 				DWORD cy, INT xSrc, INT ySrc,
 				UINT startscan, UINT lines, LPCVOID bits,
 				const BITMAPINFO *info, UINT coloruse)
 {
-  FIXME("(%p, %d, %d, %ld, %ld, %d, %d, %u, %u, %p, %p, %u): stub\n",
-	dc, xDest, yDest, cx, cy, xSrc, ySrc, startscan, lines, bits, info, coloruse);
+  FIXME("(%x, %d, %d, %ld, %ld, %d, %d, %u, %u, %p, %p, %u): stub\n",
+	physDev->hdc, xDest, yDest, cx, cy, xSrc, ySrc, startscan, lines, bits, info, coloruse);
 
   return 0;
 }

@@ -31,9 +31,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(metafile);
 
 
 /***********************************************************************
- *           MFDRV_BITMAP_SelectObject
+ *           MFDRV_SelectBitmap
  */
-static HBITMAP MFDRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap )
+HBITMAP MFDRV_SelectBitmap( PHYSDEV dev, HBITMAP hbitmap )
 {
     return 0;
 }
@@ -43,12 +43,13 @@ static HBITMAP MFDRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap )
  *         MFDRV_CreateBrushIndirect
  */
 
-INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
+INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 {
     INT16 index = -1;
     DWORD size;
     METARECORD *mr;
     LOGBRUSH logbrush;
+    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
 
     if (!GetObjectA( hBrush, sizeof(logbrush), &logbrush )) return -1;
 
@@ -103,7 +104,7 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 	    info->bmiHeader.biBitCount = 1;
 	    bits = ((BYTE *)info) + sizeof(BITMAPINFO) + sizeof(RGBQUAD);
 
-	    GetDIBits(dc->hSelf, logbrush.lbHatch, 0, bm.bmHeight,
+	    GetDIBits(physDev->hdc, logbrush.lbHatch, 0, bm.bmHeight,
 		      bits, info, DIB_RGB_COLORS);
 	    *(DWORD *)info->bmiColors = 0;
 	    *(DWORD *)(info->bmiColors + 1) = 0xffffff;
@@ -137,8 +138,8 @@ INT16 MFDRV_CreateBrushIndirect(DC *dc, HBRUSH hBrush )
 	    FIXME("Unkonwn brush style %x\n", logbrush.lbStyle);
 	    return -1;
     }
-    index = MFDRV_AddHandleDC( dc );
-    if(!MFDRV_WriteRecord( dc, mr, mr->rdSize * 2))
+    index = MFDRV_AddHandleDC( dev );
+    if(!MFDRV_WriteRecord( dev, mr, mr->rdSize * 2))
         index = -1;
     HeapFree(GetProcessHeap(), 0, mr);
 done:
@@ -147,27 +148,27 @@ done:
 
 
 /***********************************************************************
- *           MFDRV_BRUSH_SelectObject
+ *           MFDRV_SelectBrush
  */
-static HBRUSH MFDRV_BRUSH_SelectObject( DC *dc, HBRUSH hbrush )
+HBRUSH MFDRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush )
 {
     INT16 index;
     METARECORD mr;
 
-    index = MFDRV_CreateBrushIndirect( dc, hbrush );
+    index = MFDRV_CreateBrushIndirect( dev, hbrush );
     if(index == -1) return 0;
 
     mr.rdSize = sizeof(mr) / 2;
     mr.rdFunction = META_SELECTOBJECT;
     mr.rdParm[0] = index;
-    return MFDRV_WriteRecord( dc, &mr, mr.rdSize * 2);
+    return MFDRV_WriteRecord( dev, &mr, mr.rdSize * 2) ? hbrush : 0;
 }
 
 /******************************************************************
  *         MFDRV_CreateFontIndirect
  */
 
-static BOOL MFDRV_CreateFontIndirect(DC *dc, HFONT16 hFont, LOGFONT16 *logfont)
+static BOOL MFDRV_CreateFontIndirect(PHYSDEV dev, HFONT16 hFont, LOGFONT16 *logfont)
 {
     int index;
     char buffer[sizeof(METARECORD) - 2 + sizeof(LOGFONT16)];
@@ -176,34 +177,33 @@ static BOOL MFDRV_CreateFontIndirect(DC *dc, HFONT16 hFont, LOGFONT16 *logfont)
     mr->rdSize = (sizeof(METARECORD) + sizeof(LOGFONT16) - 2) / 2;
     mr->rdFunction = META_CREATEFONTINDIRECT;
     memcpy(&(mr->rdParm), logfont, sizeof(LOGFONT16));
-    if (!(MFDRV_WriteRecord( dc, mr, mr->rdSize * 2))) return FALSE;
+    if (!(MFDRV_WriteRecord( dev, mr, mr->rdSize * 2))) return FALSE;
 
     mr->rdSize = sizeof(METARECORD) / 2;
     mr->rdFunction = META_SELECTOBJECT;
 
-    if ((index = MFDRV_AddHandleDC( dc )) == -1) return FALSE;
+    if ((index = MFDRV_AddHandleDC( dev )) == -1) return FALSE;
     *(mr->rdParm) = index;
-    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
 
 /***********************************************************************
- *           MFDRV_FONT_SelectObject
+ *           MFDRV_SelectFont
  */
-static HFONT MFDRV_FONT_SelectObject( DC * dc, HFONT hfont )
+HFONT MFDRV_SelectFont( PHYSDEV dev, HFONT hfont )
 {
     LOGFONT16 lf16;
 
     if (!GetObject16( hfont, sizeof(lf16), &lf16 )) return GDI_ERROR;
-    if (MFDRV_CreateFontIndirect(dc, hfont, &lf16))
-        return FALSE;
+    if (MFDRV_CreateFontIndirect(dev, hfont, &lf16)) return 0;
     return GDI_ERROR;
 }
 
 /******************************************************************
  *         MFDRV_CreatePenIndirect
  */
-static BOOL MFDRV_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
+static BOOL MFDRV_CreatePenIndirect(PHYSDEV dev, HPEN16 hPen, LOGPEN16 *logpen)
 {
     int index;
     char buffer[sizeof(METARECORD) - 2 + sizeof(*logpen)];
@@ -212,45 +212,25 @@ static BOOL MFDRV_CreatePenIndirect(DC *dc, HPEN16 hPen, LOGPEN16 *logpen)
     mr->rdSize = (sizeof(METARECORD) + sizeof(*logpen) - 2) / 2;
     mr->rdFunction = META_CREATEPENINDIRECT;
     memcpy(&(mr->rdParm), logpen, sizeof(*logpen));
-    if (!(MFDRV_WriteRecord( dc, mr, mr->rdSize * 2))) return FALSE;
+    if (!(MFDRV_WriteRecord( dev, mr, mr->rdSize * 2))) return FALSE;
 
     mr->rdSize = sizeof(METARECORD) / 2;
     mr->rdFunction = META_SELECTOBJECT;
 
-    if ((index = MFDRV_AddHandleDC( dc )) == -1) return FALSE;
+    if ((index = MFDRV_AddHandleDC( dev )) == -1) return FALSE;
     *(mr->rdParm) = index;
-    return MFDRV_WriteRecord( dc, mr, mr->rdSize * 2);
+    return MFDRV_WriteRecord( dev, mr, mr->rdSize * 2);
 }
 
 
 /***********************************************************************
- *           MFDRV_PEN_SelectObject
+ *           MFDRV_SelectPen
  */
-static HPEN MFDRV_PEN_SelectObject( DC * dc, HPEN hpen )
+HPEN MFDRV_SelectPen( PHYSDEV dev, HPEN hpen )
 {
     LOGPEN16 logpen;
-    HPEN prevHandle = dc->hPen;
 
     if (!GetObject16( hpen, sizeof(logpen), &logpen )) return 0;
-    if (MFDRV_CreatePenIndirect( dc, hpen, &logpen )) return prevHandle;
-    return 0;
-}
-
-
-/***********************************************************************
- *           MFDRV_SelectObject
- */
-HGDIOBJ MFDRV_SelectObject( DC *dc, HGDIOBJ handle )
-{
-    TRACE("hdc=%04x %04x\n", dc->hSelf, handle );
-
-    switch(GetObjectType( handle ))
-    {
-    case OBJ_PEN:    return MFDRV_PEN_SelectObject( dc, handle );
-    case OBJ_BRUSH:  return MFDRV_BRUSH_SelectObject( dc, handle );
-    case OBJ_BITMAP: return MFDRV_BITMAP_SelectObject( dc, handle );
-    case OBJ_FONT:   return MFDRV_FONT_SelectObject( dc, handle );
-    case OBJ_REGION: return (HGDIOBJ)SelectClipRgn( dc->hSelf, handle );
-    }
+    if (MFDRV_CreatePenIndirect( dev, hpen, &logpen )) return hpen;
     return 0;
 }

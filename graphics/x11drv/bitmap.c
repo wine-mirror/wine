@@ -74,14 +74,13 @@ BOOL X11DRV_BITMAP_Init(void)
 }
 
 /***********************************************************************
- *           X11DRV_BITMAP_SelectObject
+ *           X11DRV_SelectBitmap   (X11DRV.@)
  */
-HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap )
+HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 {
     BITMAPOBJ *bmp;
     HRGN hrgn;
-    HBITMAP prevHandle = dc->hBitmap;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
 
     if (!(dc->flags & DC_MEMORY)) return 0;
     if (hbitmap == dc->hBitmap) return hbitmap;  /* nothing to do */
@@ -141,7 +140,7 @@ HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap )
         DC_InitDC( dc );
     }
     GDI_ReleaseObj( hbitmap );
-    return prevHandle;
+    return hbitmap;
 }
 
 
@@ -481,6 +480,7 @@ BOOL X11DRV_BITMAP_DeleteObject( HBITMAP hbitmap )
         TSXFreePixmap( gdi_display, (Pixmap)bmp->physBitmap );
         bmp->physBitmap = NULL;
         bmp->funcs = NULL;
+        if (bmp->dib) X11DRV_DIB_DeleteDIBSection( bmp );
         GDI_ReleaseObj( hbitmap );
     }
     return TRUE;

@@ -144,7 +144,7 @@ INT WINAPI SetMapMode( HDC hdc, INT mode )
     if (!dc) return 0;
     if (dc->funcs->pSetMapMode)
     {
-        prevMode = dc->funcs->pSetMapMode( dc, mode );
+        prevMode = dc->funcs->pSetMapMode( dc->physDev, mode );
         goto done;
     }
 
@@ -240,7 +240,7 @@ BOOL WINAPI SetViewportExtEx( HDC hdc, INT x, INT y, LPSIZE size )
     if (!dc) return FALSE;
     if (dc->funcs->pSetViewportExt)
     {
-        ret = dc->funcs->pSetViewportExt( dc, x, y );
+        ret = dc->funcs->pSetViewportExt( dc->physDev, x, y );
         goto done;
     }
     if (size)
@@ -297,7 +297,7 @@ BOOL WINAPI SetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
     if (dc->funcs->pSetViewportOrg)
-        ret = dc->funcs->pSetViewportOrg( dc, x, y );
+        ret = dc->funcs->pSetViewportOrg( dc->physDev, x, y );
     else
     {
         if (pt)
@@ -347,7 +347,7 @@ BOOL WINAPI SetWindowExtEx( HDC hdc, INT x, INT y, LPSIZE size )
     if (!dc) return FALSE;
     if (dc->funcs->pSetWindowExt)
     {
-        ret = dc->funcs->pSetWindowExt( dc, x, y );
+        ret = dc->funcs->pSetWindowExt( dc->physDev, x, y );
         goto done;
     }
     if (size)
@@ -403,7 +403,7 @@ BOOL WINAPI SetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
     BOOL ret = TRUE;
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
-    if (dc->funcs->pSetWindowOrg) ret = dc->funcs->pSetWindowOrg( dc, x, y );
+    if (dc->funcs->pSetWindowOrg) ret = dc->funcs->pSetWindowOrg( dc->physDev, x, y );
     else
     {
         if (pt)
@@ -452,7 +452,7 @@ BOOL WINAPI OffsetViewportOrgEx( HDC hdc, INT x, INT y, LPPOINT pt)
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
     if (dc->funcs->pOffsetViewportOrg)
-        ret = dc->funcs->pOffsetViewportOrg( dc, x, y );
+        ret = dc->funcs->pOffsetViewportOrg( dc->physDev, x, y );
     else
     {
         if (pt)
@@ -501,7 +501,7 @@ BOOL WINAPI OffsetWindowOrgEx( HDC hdc, INT x, INT y, LPPOINT pt )
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
     if (dc->funcs->pOffsetWindowOrg)
-        ret = dc->funcs->pOffsetWindowOrg( dc, x, y );
+        ret = dc->funcs->pOffsetWindowOrg( dc->physDev, x, y );
     else
     {
         if (pt)
@@ -556,7 +556,7 @@ BOOL WINAPI ScaleViewportExtEx( HDC hdc, INT xNum, INT xDenom,
     if (!dc) return FALSE;
     if (dc->funcs->pScaleViewportExt)
     {
-        ret = dc->funcs->pScaleViewportExt( dc, xNum, xDenom, yNum, yDenom );
+        ret = dc->funcs->pScaleViewportExt( dc->physDev, xNum, xDenom, yNum, yDenom );
         goto done;
     }
     if (size)
@@ -621,7 +621,7 @@ BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT xNum, INT xDenom,
     if (!dc) return FALSE;
     if (dc->funcs->pScaleWindowExt)
     {
-        ret = dc->funcs->pScaleWindowExt( dc, xNum, xDenom, yNum, yDenom );
+        ret = dc->funcs->pScaleWindowExt( dc->physDev, xNum, xDenom, yNum, yDenom );
         goto done;
     }
     if (size)

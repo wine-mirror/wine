@@ -29,11 +29,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(win16drv);
  *           WIN16DRV_LineTo
  */
 BOOL
-WIN16DRV_LineTo( DC *dc, INT x, INT y )
+WIN16DRV_LineTo( PHYSDEV dev, INT x, INT y )
 {
     BOOL bRet ;
-    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
     POINT16 points[2];
+
     points[0].x = dc->DCOrgX + XLPTODP( dc, dc->CursPosX );
     points[0].y = dc->DCOrgY + YLPTODP( dc, dc->CursPosY );
     points[1].x = dc->DCOrgX + XLPTODP( dc, x );
@@ -54,9 +56,10 @@ WIN16DRV_LineTo( DC *dc, INT x, INT y )
  *           WIN16DRV_Rectangle
  */
 BOOL
-WIN16DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
+WIN16DRV_Rectangle(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 {
-    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
     BOOL bRet = 0;
     POINT16 points[2];
 
@@ -84,9 +87,10 @@ WIN16DRV_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
  *           WIN16DRV_Polygon
  */
 BOOL
-WIN16DRV_Polygon(DC *dc, const POINT* pt, INT count )
+WIN16DRV_Polygon(PHYSDEV dev, const POINT* pt, INT count )
 {
-    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
     BOOL bRet = 0;
     LPPOINT16 points;
     int i;
@@ -119,9 +123,10 @@ WIN16DRV_Polygon(DC *dc, const POINT* pt, INT count )
  *           WIN16DRV_Polyline
  */
 BOOL
-WIN16DRV_Polyline(DC *dc, const POINT* pt, INT count )
+WIN16DRV_Polyline(PHYSDEV dev, const POINT* pt, INT count )
 {
-    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
     BOOL bRet = 0;
     LPPOINT16 points;
     int i;
@@ -151,15 +156,15 @@ WIN16DRV_Polyline(DC *dc, const POINT* pt, INT count )
  *           WIN16DRV_Ellipse
  */
 BOOL
-WIN16DRV_Ellipse(DC *dc, INT left, INT top, INT right, INT bottom)
+WIN16DRV_Ellipse(PHYSDEV dev, INT left, INT top, INT right, INT bottom)
 {
-    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
     BOOL bRet = 0;
     POINT16 points[2];
-    TRACE("In WIN16DRV_Ellipse, x %d y %d DCOrgX %d y %d\n",
-           left, top, dc->DCOrgX, dc->DCOrgY);
-    TRACE("In WIN16DRV_Ellipse, VPortOrgX %d y %d\n",
-           dc->vportOrgX, dc->vportOrgY);
+
+    TRACE("In WIN16DRV_Ellipse, x %d y %d DCOrgX %d y %d\n", left, top, dc->DCOrgX, dc->DCOrgY);
+    TRACE("In WIN16DRV_Ellipse, VPortOrgX %d y %d\n", dc->vportOrgX, dc->vportOrgY);
     points[0].x = XLPTODP(dc, left);
     points[0].y = YLPTODP(dc, top);
 

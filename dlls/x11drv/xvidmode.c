@@ -365,7 +365,7 @@ BOOL X11DRV_XF86VM_SetGammaRamp(LPDDGAMMARAMP ramp)
  * the stuff in graphics/x11drv/ has been moved to dlls/x11drv, so that
  * they can include xvidmode.h directly
  */
-BOOL X11DRV_GetDeviceGammaRamp(DC *dc, LPVOID ramp)
+BOOL X11DRV_GetDeviceGammaRamp(X11DRV_PDEVICE *physDev, LPVOID ramp)
 {
 #ifdef HAVE_LIBXXF86VM
   return X11DRV_XF86VM_GetGammaRamp(ramp);
@@ -381,7 +381,7 @@ BOOL X11DRV_GetDeviceGammaRamp(DC *dc, LPVOID ramp)
  * the stuff in graphics/x11drv/ has been moved to dlls/x11drv, so that
  * they can include xvidmode.h directly
  */
-BOOL X11DRV_SetDeviceGammaRamp(DC *dc, LPVOID ramp)
+BOOL X11DRV_SetDeviceGammaRamp(X11DRV_PDEVICE *physDev, LPVOID ramp)
 {
 #ifdef HAVE_LIBXXF86VM
   return X11DRV_XF86VM_SetGammaRamp(ramp);

@@ -301,16 +301,15 @@ void X11DRV_XRender_Finalize(void)
 /***********************************************************************
  *   X11DRV_XRender_SelectFont
  */
-BOOL X11DRV_XRender_SelectFont(DC *dc, HFONT hfont)
+BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     LFANDSIZE lfsz;
 
     GetObjectW(hfont, sizeof(lfsz.lf), &lfsz.lf);
     TRACE("h=%ld w=%ld weight=%ld it=%d charset=%d name=%s\n",
 	  lfsz.lf.lfHeight, lfsz.lf.lfWidth, lfsz.lf.lfWeight,
 	  lfsz.lf.lfItalic, lfsz.lf.lfCharSet, debugstr_w(lfsz.lf.lfFaceName));
-    lfsz.xform = dc->xformWorld2Vport;
+    lfsz.xform = physDev->dc->xformWorld2Vport;
     lfsz_calc_hash(&lfsz);
 
     if(!physDev->xrender)
@@ -326,10 +325,8 @@ BOOL X11DRV_XRender_SelectFont(DC *dc, HFONT hfont)
 /***********************************************************************
  *   X11DRV_XRender_DeleteDC
  */
-void X11DRV_XRender_DeleteDC(DC *dc)
+void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-    
     if(physDev->xrender->tile_pict)
         TSXRenderFreePicture(gdi_display, physDev->xrender->tile_pict);
 
@@ -337,7 +334,7 @@ void X11DRV_XRender_DeleteDC(DC *dc)
         TSXFreePixmap(gdi_display, physDev->xrender->tile_xpm);
 
     if(physDev->xrender->pict) {
-	TRACE("freeing pict = %lx dc = %p\n", physDev->xrender->pict, dc);
+	TRACE("freeing pict = %lx dc = %p\n", physDev->xrender->pict, physDev->dc);
         TSXRenderFreePicture(gdi_display, physDev->xrender->pict);
     }
 
@@ -356,21 +353,18 @@ void X11DRV_XRender_DeleteDC(DC *dc)
  * drawable changes.  However at the moment we delete the pict at the end of
  * every ExtTextOut so this is basically a NOP.
  */
-void X11DRV_XRender_UpdateDrawable(DC *dc)
+void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
-
     if(physDev->xrender->pict) {
-        TRACE("freeing pict %08lx from dc %p\n", physDev->xrender->pict, dc);
+        TRACE("freeing pict %08lx from dc %p\n", physDev->xrender->pict, physDev->dc);
         TSXRenderFreePicture(gdi_display, physDev->xrender->pict);
     }
     physDev->xrender->pict = 0;
     return;
 }
 
-static BOOL UploadGlyph(DC *dc, WCHAR glyph)
+static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, WCHAR glyph)
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     int buflen;
     char *buf;
     Glyph gid;
@@ -397,13 +391,13 @@ static BOOL UploadGlyph(DC *dc, WCHAR glyph)
 	ggo_format = GGO_BITMAP;
     }
 
-    buflen = GetGlyphOutlineW(dc->hSelf, glyph, ggo_format, &gm, 0, NULL,
+    buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
 			      NULL);
     if(buflen == GDI_ERROR)
         return FALSE;
 
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buflen);
-    GetGlyphOutlineW(dc->hSelf, glyph, ggo_format, &gm, buflen, buf, NULL);
+    GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, buflen, buf, NULL);
 
     TRACE("buflen = %d. Got metrics: %dx%d adv=%d,%d origin=%ld,%ld\n",
 	  buflen,
@@ -477,14 +471,13 @@ static BOOL UploadGlyph(DC *dc, WCHAR glyph)
 /***********************************************************************
  *   X11DRV_XRender_ExtTextOut
  */
-BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
+BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 				const RECT *lprect, LPCWSTR wstr, UINT count,
 				const INT *lpDx )
 {
     XRenderColor col;
     int idx;
     TEXTMETRICW tm;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     RGNOBJ *obj;
     XRectangle *pXrect;
     SIZE sz;
@@ -495,22 +488,22 @@ BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     XGCValues xgcval;
     LOGFONTW lf;
     int render_op = PictOpOver;
+    HDC hdc = physDev->hdc;
+    DC *dc = physDev->dc;
 
-    TRACE("%04x, %d, %d, %08x, %p, %s, %d, %p)\n", dc->hSelf, x, y, flags,
+    TRACE("%04x, %d, %d, %08x, %p, %s, %d, %p)\n", hdc, x, y, flags,
 	  lprect, debugstr_wn(wstr, count), count, lpDx);
     if(lprect)
       TRACE("rect: %d,%d - %d,%d\n", lprect->left, lprect->top, lprect->right,
 	    lprect->bottom);
-    TRACE("align = %x bkmode = %x mapmode = %x\n", dc->textAlign,
-	  dc->backgroundMode,
-	  dc->MapMode);
+    TRACE("align = %x bkmode = %x mapmode = %x\n", dc->textAlign, GetBkMode(hdc), dc->MapMode);
 
     if(dc->textAlign & TA_UPDATECP) {
         x = dc->CursPosX;
 	y = dc->CursPosY;
     }
 
-    GetObjectW(GetCurrentObject(dc->hSelf, OBJ_FONT), sizeof(lf), &lf);
+    GetObjectW(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf);
     if(lf.lfEscapement != 0) {
         cosEsc = cos(lf.lfEscapement * M_PI / 1800);
 	sinEsc = sin(lf.lfEscapement * M_PI / 1800);
@@ -522,7 +515,7 @@ BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     if(flags & (ETO_CLIPPED | ETO_OPAQUE)) {
         if(!lprect) {
 	    if(flags & ETO_CLIPPED) return FALSE;
-	        GetTextExtentPointW(dc->hSelf, wstr, count, &sz);
+	        GetTextExtentPointW(hdc, wstr, count, &sz);
 		done_extents = TRUE;
 		rc.left = x;
 		rc.top = y;
@@ -547,7 +540,7 @@ BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     TSXChangeGC( gdi_display, physDev->gc,
 		 GCFunction | GCBackground | GCFillStyle, &xgcval );
 
-    X11DRV_LockDIBSection( dc, DIB_Status_GdiMod, FALSE );
+    X11DRV_LockDIBSection( physDev, DIB_Status_GdiMod, FALSE );
 
     if(flags & ETO_OPAQUE) {
         TSXSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
@@ -557,7 +550,7 @@ BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     }
 
     if(count == 0) {
-        X11DRV_UnlockDIBSection( dc, TRUE );
+        X11DRV_UnlockDIBSection( physDev, TRUE );
 	return TRUE;
     }
 
@@ -572,7 +565,7 @@ BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 	    width += lpDx[idx];
     } else {
 	if(!done_extents) {
-	    GetTextExtentPointW(dc->hSelf, wstr, count, &sz);
+	    GetTextExtentPointW(hdc, wstr, count, &sz);
 	    done_extents = TRUE;
 	}
 	width = sz.cx;
@@ -581,7 +574,7 @@ BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     xwidth = width * cosEsc;
     ywidth = width * sinEsc;
 
-    GetTextMetricsW(dc->hSelf, &tm);
+    GetTextMetricsW(hdc, &tm);
 
     switch( dc->textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) ) {
     case TA_LEFT:
@@ -623,7 +616,7 @@ BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
     if (flags & ETO_CLIPPED)
     {
-        SaveVisRgn16( dc->hSelf );
+        SaveVisRgn16( hdc );
         CLIPPING_IntersectVisRect( dc, rc.left, rc.top, rc.right,
                                    rc.bottom, FALSE );
     }
@@ -691,7 +684,7 @@ BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
     GDI_ReleaseObj( dc->hGCClipRgn );
 
-    if(dc->backgroundMode != TRANSPARENT) {
+    if(GetBkMode(hdc) != TRANSPARENT) {
         if(!((flags & ETO_CLIPPED) && (flags & ETO_OPAQUE))) {
 	    if(!(flags & ETO_OPAQUE) || x < rc.left || x + width >= rc.right ||
 	       y - tm.tmAscent < rc.top || y + tm.tmDescent >= rc.bottom) {
@@ -751,7 +744,7 @@ BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
     for(idx = 0; idx < count; idx++) {
         if(wstr[idx] >= physDev->xrender->cacheEntry->nrealized ||
 	   physDev->xrender->cacheEntry->realized[wstr[idx]] == FALSE) {
-	    UploadGlyph(dc, wstr[idx]);
+	    UploadGlyph(physDev, wstr[idx]);
 	}
     }
 
@@ -764,7 +757,7 @@ BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 				   physDev->xrender->pict,
 				   physDev->xrender->cacheEntry->font_format,
 				   physDev->xrender->cacheEntry->glyphset,
-				   0, 0, dc->DCOrgX + x, dc->DCOrgY + y, wstr,
+				   0, 0, dc->DCOrgX + x, dc->DCOrgY + y, (unsigned short *)wstr,
 				   count);
 
     else {
@@ -777,7 +770,7 @@ BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 				       physDev->xrender->cacheEntry->glyphset,
 				       0, 0, dc->DCOrgX + x + xoff,
 				       dc->DCOrgY + y + yoff,
-				       wstr + idx, 1);
+				       (unsigned short *)wstr + idx, 1);
 	    offset += INTERNAL_XWSTODS(dc, lpDx[idx]);
 	    xoff = offset * cosEsc;
 	    yoff = offset * sinEsc;
@@ -791,9 +784,9 @@ BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
 
 
     if (flags & ETO_CLIPPED) 
-        RestoreVisRgn16( dc->hSelf );
+        RestoreVisRgn16( hdc );
 
-    X11DRV_UnlockDIBSection( dc, TRUE );
+    X11DRV_UnlockDIBSection( physDev, TRUE );
     return TRUE;
 }
 
@@ -811,19 +804,19 @@ void X11DRV_XRender_Finalize(void)
   return;
 }
 
-BOOL X11DRV_XRender_SelectFont(DC *dc, HFONT hfont)
+BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
 {
   assert(0);
   return FALSE;
 }
 
-void X11DRV_XRender_DeleteDC(DC *dc)
+void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
 {
   assert(0);
   return;
 }
 
-BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
+BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 				const RECT *lprect, LPCWSTR wstr, UINT count,
 				const INT *lpDx )
 {
@@ -831,7 +824,7 @@ BOOL X11DRV_XRender_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
   return FALSE;
 }
 
-void X11DRV_XRender_UpdateDrawable(DC *dc)
+void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
 {
   assert(0);
   return;

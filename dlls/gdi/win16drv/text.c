@@ -31,11 +31,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(win16drv);
 /***********************************************************************
  *           WIN16DRV_ExtTextOut
  */
-BOOL WIN16DRV_ExtTextOut( DC *dc, INT x, INT y, UINT flags,
+BOOL WIN16DRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                            const RECT *lprect, LPCWSTR wstr, UINT count,
                            const INT *lpDx )
 {
-    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dev;
+    DC *dc = physDev->dc;
     BOOL bRet = 1;
     RECT16	 clipRect;
     RECT16 	 opaqueRect;

@@ -3182,13 +3182,13 @@ LPIFONTINFO16 XFONT_GetFontInfo( X_PHYSFONT pFont )
  *                                                                     *
  ***********************************************************************/
 /***********************************************************************
- *           X11DRV_FONT_SelectObject
+ *           X11DRV_SelectFont   (X11DRV.@)
  */
-HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont )
+HFONT X11DRV_SelectFont( X11DRV_PDEVICE *physDev, HFONT hfont )
 {
     LOGFONTW logfont;
     LOGFONT16 lf;
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = physDev->dc;
 
     TRACE("dc=%p, hfont=%04x\n", dc, hfont);
 
@@ -3197,7 +3197,7 @@ HFONT X11DRV_FONT_SelectObject( DC* dc, HFONT hfont )
     TRACE("dc->gdiFont = %p\n", dc->gdiFont);
 
     if(dc->gdiFont && X11DRV_XRender_Installed) {
-        X11DRV_XRender_SelectFont(dc, hfont);
+        X11DRV_XRender_SelectFont(physDev, hfont);
 	return FALSE;
     }
 
@@ -3326,9 +3326,8 @@ BOOL X11DRV_EnumDeviceFonts( HDC hdc, LPLOGFONTW plf,
 /***********************************************************************
  *           X11DRV_GetTextMetrics
  */
-BOOL X11DRV_GetTextMetrics(DC *dc, TEXTMETRICW *metrics)
+BOOL X11DRV_GetTextMetrics(X11DRV_PDEVICE *physDev, TEXTMETRICW *metrics)
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     TEXTMETRICA tmA;
 
     if( CHECK_PFONT(physDev->font) )
@@ -3345,10 +3344,9 @@ BOOL X11DRV_GetTextMetrics(DC *dc, TEXTMETRICW *metrics)
 /***********************************************************************
  *           X11DRV_GetCharWidth
  */
-BOOL X11DRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
+BOOL X11DRV_GetCharWidth( X11DRV_PDEVICE *physDev, UINT firstChar, UINT lastChar,
                             LPINT buffer )
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
     fontObject* pfo = XFONT_GetFontObject( physDev->font );
 
     if( pfo )

@@ -25,12 +25,11 @@
 #include "wine/winbase16.h"
 #include "gdi.h"
 #include "bitmap.h"
+#include "selectors.h"
 #include "wine/debug.h"
 #include "wine/winuser16.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bitmap);
-
-BITMAP_DRIVER *BITMAP_Driver = NULL;
 
 
 /***********************************************************************
@@ -426,12 +425,30 @@ BOOL BITMAP_DeleteObject( HBITMAP16 hbitmap, BITMAPOBJ * bmp )
     if( bmp->bitmap.bmBits )
         HeapFree( GetProcessHeap(), 0, bmp->bitmap.bmBits );
 
-    DIB_DeleteDIBSection( bmp );
+    if (bmp->dib)
+    {
+        DIBSECTION *dib = bmp->dib;
 
+        if (dib->dsBm.bmBits)
+        {
+            if (dib->dshSection)
+            {
+                SYSTEM_INFO SystemInfo;
+                GetSystemInfo( &SystemInfo );
+                UnmapViewOfFile( (char *)dib->dsBm.bmBits -
+                                 (dib->dsOffset % SystemInfo.dwAllocationGranularity) );
+            }
+            else if (!dib->dsOffset)
+                VirtualFree(dib->dsBm.bmBits, 0L, MEM_RELEASE );
+        }
+        HeapFree(GetProcessHeap(), 0, dib);
+        bmp->dib = NULL;
+        if (bmp->segptr_bits) SELECTOR_FreeBlock( SELECTOROF(bmp->segptr_bits) );
+    }
     return GDI_FreeObject( hbitmap, bmp );
 }
 
-	
+
 /***********************************************************************
  *           BITMAP_GetObject16
  */

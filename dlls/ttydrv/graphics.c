@@ -30,69 +30,63 @@ WINE_DEFAULT_DEBUG_CHANNEL(ttydrv);
 /***********************************************************************
  *		TTYDRV_DC_Arc
  */
-BOOL TTYDRV_DC_Arc(DC *dc, INT left, INT top, INT right, INT bottom,
+BOOL TTYDRV_DC_Arc(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
 		   INT xstart, INT ystart, INT xend, INT yend)
 {
-  FIXME("(%p, %d, %d, %d, %d, %d, %d, %d, %d): stub\n",
-	dc, left, top, right, bottom, xstart, ystart, xend, yend);
-
+  FIXME("(%x, %d, %d, %d, %d, %d, %d, %d, %d): stub\n",
+        physDev->hdc, left, top, right, bottom, xstart, ystart, xend, yend);
   return TRUE;
 }
 
 /***********************************************************************
  *		TTYDRV_DC_Chord
  */
-BOOL TTYDRV_DC_Chord(DC *dc, INT left, INT top, INT right, INT bottom,
+BOOL TTYDRV_DC_Chord(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
 		     INT xstart, INT ystart, INT xend, INT yend)
 {
-  FIXME("(%p, %d, %d, %d, %d, %d, %d, %d, %d): stub\n",
-	dc, left, top, right, bottom, xstart, ystart, xend, yend);
-
+  FIXME("(%x, %d, %d, %d, %d, %d, %d, %d, %d): stub\n",
+        physDev->hdc, left, top, right, bottom, xstart, ystart, xend, yend);
   return TRUE;
 }
 
 /***********************************************************************
  *		TTYDRV_DC_Ellipse
  */
-BOOL TTYDRV_DC_Ellipse(DC *dc, INT left, INT top, INT right, INT bottom)
+BOOL TTYDRV_DC_Ellipse(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom)
 {
-  FIXME("(%p, %d, %d, %d, %d): stub\n",
-	dc, left, top, right, bottom);
-
+  FIXME("(%x, %d, %d, %d, %d): stub\n", physDev->hdc, left, top, right, bottom);
   return TRUE;
 }
 
 /***********************************************************************
  *		TTYDRV_DC_ExtFloodFill
  */
-BOOL TTYDRV_DC_ExtFloodFill(DC *dc, INT x, INT y,
+BOOL TTYDRV_DC_ExtFloodFill(TTYDRV_PDEVICE *physDev, INT x, INT y,
 			    COLORREF color, UINT fillType)
 {
-  FIXME("(%p, %d, %d, 0x%08lx, %u): stub\n", dc, x, y, color, fillType);
-
+  FIXME("(%x, %d, %d, 0x%08lx, %u): stub\n", physDev->hdc, x, y, color, fillType);
   return TRUE;
 }
 
 /***********************************************************************
  *		TTYDRV_DC_GetPixel
  */
-COLORREF TTYDRV_DC_GetPixel(DC *dc, INT x, INT y)
+COLORREF TTYDRV_DC_GetPixel(TTYDRV_PDEVICE *physDev, INT x, INT y)
 {
-  FIXME("(%p, %d, %d): stub\n", dc, x, y);
-
+  FIXME("(%x, %d, %d): stub\n", physDev->hdc, x, y);
   return RGB(0,0,0); /* FIXME: Always returns black */
 }
 
 /***********************************************************************
  *		TTYDRV_DC_LineTo
  */
-BOOL TTYDRV_DC_LineTo(DC *dc, INT x, INT y)
+BOOL TTYDRV_DC_LineTo(TTYDRV_PDEVICE *physDev, INT x, INT y)
 {
 #ifdef WINE_CURSES
-  TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
   INT row1, col1, row2, col2;
+  DC *dc = physDev->dc;
 
-  TRACE("(%p, %d, %d)\n", dc, x, y);
+  TRACE("(%x, %d, %d)\n", physDev->hdc, x, y);
 
   if(!physDev->window)
     return FALSE;
@@ -126,7 +120,7 @@ BOOL TTYDRV_DC_LineTo(DC *dc, INT x, INT y)
 
   return TRUE;
 #else /* defined(WINE_CURSES) */
-  FIXME("(%p, %d, %d): stub\n", dc, x, y);
+  FIXME("(%x, %d, %d): stub\n", physDev->hdc, x, y);
 
   return TRUE;
 #endif /* defined(WINE_CURSES) */
@@ -135,61 +129,56 @@ BOOL TTYDRV_DC_LineTo(DC *dc, INT x, INT y)
 /***********************************************************************
  *		TTYDRV_DC_PaintRgn
  */
-BOOL TTYDRV_DC_PaintRgn(DC *dc, HRGN hrgn)
+BOOL TTYDRV_DC_PaintRgn(TTYDRV_PDEVICE *physDev, HRGN hrgn)
 {
-  FIXME("(%p, 0x%04x): stub\n", dc, hrgn);
-
+  FIXME("(%x, 0x%04x): stub\n", physDev->hdc, hrgn);
   return TRUE;
 }
 
 /***********************************************************************
  *		TTYDRV_DC_Pie
  */
-BOOL TTYDRV_DC_Pie(DC *dc, INT left, INT top, INT right, INT bottom,
+BOOL TTYDRV_DC_Pie(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom,
 		   INT xstart, INT ystart, INT xend, INT yend)
 {
-  FIXME("(%p, %d, %d, %d, %d, %d, %d, %d, %d): stub\n",
-	dc, left, top, right, bottom, xstart, ystart, xend, yend);
-
+  FIXME("(%x, %d, %d, %d, %d, %d, %d, %d, %d): stub\n",
+	physDev->hdc, left, top, right, bottom, xstart, ystart, xend, yend);
   return TRUE;
 }
 
 /***********************************************************************
  *		TTYDRV_DC_Polygon
  */
-BOOL TTYDRV_DC_Polygon(DC *dc, const POINT* pt, INT count)
+BOOL TTYDRV_DC_Polygon(TTYDRV_PDEVICE *physDev, const POINT* pt, INT count)
 {
-  FIXME("(%p, %p, %d): stub\n", dc, pt, count);
-
+  FIXME("(%x, %p, %d): stub\n", physDev->hdc, pt, count);
   return TRUE;
 }
 
 /***********************************************************************
  *		TTYDRV_DC_Polyline
  */
-BOOL TTYDRV_DC_Polyline(DC *dc, const POINT* pt, INT count)
+BOOL TTYDRV_DC_Polyline(TTYDRV_PDEVICE *physDev, const POINT* pt, INT count)
 {
-  FIXME("(%p, %p, %d): stub\n", dc, pt, count);
-
+  FIXME("(%x, %p, %d): stub\n", physDev->hdc, pt, count);
   return TRUE;
 }
 
 /***********************************************************************
  *		TTYDRV_DC_PolyPolygon
  */
-BOOL TTYDRV_DC_PolyPolygon(DC *dc, const POINT* pt, const INT* counts, UINT polygons)
+BOOL TTYDRV_DC_PolyPolygon(TTYDRV_PDEVICE *physDev, const POINT* pt, const INT* counts, UINT polygons)
 {
-  FIXME("(%p, %p, %p, %u): stub\n", dc, pt, counts, polygons);
-
+  FIXME("(%x, %p, %p, %u): stub\n", physDev->hdc, pt, counts, polygons);
   return TRUE;
 }
 
 /***********************************************************************
  *		TTYDRV_DC_PolyPolyline
  */
-BOOL TTYDRV_DC_PolyPolyline(DC *dc, const POINT* pt, const DWORD* counts, DWORD polylines)
+BOOL TTYDRV_DC_PolyPolyline(TTYDRV_PDEVICE *physDev, const POINT* pt, const DWORD* counts, DWORD polylines)
 {
-  FIXME("(%p, %p, %p, %lu): stub\n", dc, pt, counts, polylines);
+  FIXME("(%x, %p, %p, %lu): stub\n", physDev->hdc, pt, counts, polylines);
   
   return TRUE;
 }
@@ -197,13 +186,13 @@ BOOL TTYDRV_DC_PolyPolyline(DC *dc, const POINT* pt, const DWORD* counts, DWORD 
 /***********************************************************************
  *		TTYDRV_DC_Rectangle
  */
-BOOL TTYDRV_DC_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
+BOOL TTYDRV_DC_Rectangle(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right, INT bottom)
 {
 #ifdef WINE_CURSES
-  TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
   INT row1, col1, row2, col2;
+  DC *dc = physDev->dc;
 
-  TRACE("(%p, %d, %d, %d, %d)\n", dc, left, top, right, bottom);
+  TRACE("(%x, %d, %d, %d, %d)\n", physDev->hdc, left, top, right, bottom);
 
   if(!physDev->window)
     return FALSE;
@@ -245,7 +234,7 @@ BOOL TTYDRV_DC_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
 
   return TRUE;
 #else /* defined(WINE_CURSES) */
-  FIXME("(%p, %d, %d, %d, %d): stub\n", dc, left, top, right, bottom);
+  FIXME("(%x, %d, %d, %d, %d): stub\n", physDev->hdc, left, top, right, bottom);
 
   return TRUE;
 #endif /* defined(WINE_CURSES) */
@@ -254,40 +243,25 @@ BOOL TTYDRV_DC_Rectangle(DC *dc, INT left, INT top, INT right, INT bottom)
 /***********************************************************************
  *		TTYDRV_DC_RoundRect
  */
-BOOL TTYDRV_DC_RoundRect(DC *dc, INT left, INT top, INT right,
+BOOL TTYDRV_DC_RoundRect(TTYDRV_PDEVICE *physDev, INT left, INT top, INT right,
 			 INT bottom, INT ell_width, INT ell_height)
 {
-  FIXME("(%p, %d, %d, %d, %d, %d, %d): stub\n", 
-	dc, left, top, right, bottom, ell_width, ell_height);
+  FIXME("(%x, %d, %d, %d, %d, %d, %d): stub\n", 
+	physDev->hdc, left, top, right, bottom, ell_width, ell_height);
   
   return TRUE;
 }
 
 /***********************************************************************
- *		TTYDRV_DC_SetBkColor
- */
-COLORREF TTYDRV_DC_SetBkColor(DC *dc, COLORREF color)
-{
-  COLORREF oldColor;
-
-  TRACE("(%p, 0x%08lx)\n", dc, color);  
-
-  oldColor = dc->backgroundColor;
-  dc->backgroundColor = color;
-
-  return oldColor;
-}
-
-/***********************************************************************
  *		TTYDRV_DC_SetPixel
  */
-COLORREF TTYDRV_DC_SetPixel(DC *dc, INT x, INT y, COLORREF color)
+COLORREF TTYDRV_DC_SetPixel(TTYDRV_PDEVICE *physDev, INT x, INT y, COLORREF color)
 {
 #ifdef WINE_CURSES
-  TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
   INT row, col;
+  DC *dc = physDev->dc;
 
-  TRACE("(%p, %d, %d, 0x%08lx)\n", dc, x, y, color);
+  TRACE("(%x, %d, %d, 0x%08lx)\n", physDev->hdc, x, y, color);
 
   if(!physDev->window)
     return FALSE;
@@ -300,69 +274,45 @@ COLORREF TTYDRV_DC_SetPixel(DC *dc, INT x, INT y, COLORREF color)
 
   return RGB(0,0,0); /* FIXME: Always returns black */
 #else /* defined(WINE_CURSES) */
-  FIXME("(%p, %d, %d, 0x%08lx): stub\n", dc, x, y, color);
+  FIXME("(%x, %d, %d, 0x%08lx): stub\n", physDev->hdc, x, y, color);
 
   return RGB(0,0,0); /* FIXME: Always returns black */
 #endif /* defined(WINE_CURSES) */
 }
 
 /***********************************************************************
- *		TTYDRV_DC_SetTextColor
- */
-COLORREF TTYDRV_DC_SetTextColor(DC *dc, COLORREF color)
-{
-  COLORREF oldColor;
-
-  TRACE("(%p, 0x%08lx)\n", dc, color);
-  
-  oldColor = dc->textColor;
-  dc->textColor = color;
-  
-  return oldColor;
-}
-
-
-/***********************************************************************
  *		TTYDRV_DC_BitBlt
  */
-BOOL TTYDRV_DC_BitBlt(DC *dcDst, INT xDst, INT yDst,
-		      INT width, INT height, DC *dcSrc,
+BOOL TTYDRV_DC_BitBlt(TTYDRV_PDEVICE *physDevDst, INT xDst, INT yDst,
+		      INT width, INT height, TTYDRV_PDEVICE *physDevSrc,
 		      INT xSrc, INT ySrc, DWORD rop)
 {
-  FIXME("(%p, %d, %d, %d, %d, %p, %d, %d, %lu): stub\n",
-	dcDst, xDst, yDst, width, height, 
-        dcSrc, xSrc, ySrc, rop
-  );
-
+  FIXME("(%x, %d, %d, %d, %d, %x, %d, %d, %lu): stub\n",
+        physDevDst->hdc, xDst, yDst, width, height, physDevSrc->hdc, xSrc, ySrc, rop );
   return TRUE;
 }
 
 /***********************************************************************
  *		TTYDRV_DC_PatBlt
  */
-BOOL TTYDRV_DC_PatBlt(DC *dc, INT left, INT top,
+BOOL TTYDRV_DC_PatBlt(TTYDRV_PDEVICE *physDev, INT left, INT top,
 		      INT width, INT height, DWORD rop)
 {
-  FIXME("(%p, %d, %d, %d, %d, %lu): stub\n",
-	dc, left, top, width, height, rop
-  );
-
-
+  FIXME("(%x, %d, %d, %d, %d, %lu): stub\n", physDev->hdc, left, top, width, height, rop );
   return TRUE;
 }
 
 /***********************************************************************
  *		TTYDRV_DC_StretchBlt
  */
-BOOL TTYDRV_DC_StretchBlt(DC *dcDst, INT xDst, INT yDst,
+BOOL TTYDRV_DC_StretchBlt(TTYDRV_PDEVICE *physDevDst, INT xDst, INT yDst,
 			  INT widthDst, INT heightDst,
-			  DC *dcSrc, INT xSrc, INT ySrc,
+			  TTYDRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
 			  INT widthSrc, INT heightSrc, DWORD rop)
 {
-  FIXME("(%p, %d, %d, %d, %d, %p, %d, %d, %d, %d, %lu): stub\n",
-	dcDst, xDst, yDst, widthDst, heightDst,
-	dcSrc, xSrc, ySrc, widthSrc, heightSrc, rop
-  );
+  FIXME("(%x, %d, %d, %d, %d, %x, %d, %d, %d, %d, %lu): stub\n",
+        physDevDst->hdc, xDst, yDst, widthDst, heightDst,
+        physDevSrc->hdc, xSrc, ySrc, widthSrc, heightSrc, rop );
 
   return TRUE;
 }
@@ -370,18 +320,18 @@ BOOL TTYDRV_DC_StretchBlt(DC *dcDst, INT xDst, INT yDst,
 /***********************************************************************
  *		TTYDRV_DC_ExtTextOut
  */
-BOOL TTYDRV_DC_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
+BOOL TTYDRV_DC_ExtTextOut(TTYDRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 			  const RECT *lpRect, LPCWSTR str, UINT count,
 			  const INT *lpDx)
 {
 #ifdef WINE_CURSES
-  TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
   INT row, col;
   LPSTR ascii;
   DWORD len;
+  DC *dc = physDev->dc;
 
-  TRACE("(%p, %d, %d, 0x%08x, %p, %s, %d, %p)\n",
-	dc, x, y, flags, lpRect, debugstr_wn(str, count), count, lpDx);
+  TRACE("(%x, %d, %d, 0x%08x, %p, %s, %d, %p)\n",
+        physDev->hdc, x, y, flags, lpRect, debugstr_wn(str, count), count, lpDx);
 
   if(!physDev->window)
     return FALSE;
@@ -411,8 +361,8 @@ BOOL TTYDRV_DC_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
 
   return TRUE;
 #else /* defined(WINE_CURSES) */
-  FIXME("(%p, %d, %d, 0x%08x, %p, %s, %d, %p): stub\n",
-	dc, x, y, flags, lpRect, debugstr_wn(str,count), count, lpDx);
+  FIXME("(%x, %d, %d, 0x%08x, %p, %s, %d, %p): stub\n",
+        physDev->hdc, x, y, flags, lpRect, debugstr_wn(str,count), count, lpDx);
 
   return TRUE;
 #endif /* defined(WINE_CURSES) */
@@ -421,13 +371,12 @@ BOOL TTYDRV_DC_ExtTextOut(DC *dc, INT x, INT y, UINT flags,
 /***********************************************************************
  *		TTYDRV_DC_GetCharWidth
  */
-BOOL TTYDRV_DC_GetCharWidth(DC *dc, UINT firstChar, UINT lastChar,
+BOOL TTYDRV_DC_GetCharWidth(TTYDRV_PDEVICE *physDev, UINT firstChar, UINT lastChar,
 			    LPINT buffer)
 {
   UINT c;
-  TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
 
-  FIXME("(%p, %u, %u, %p): semistub\n", dc, firstChar, lastChar, buffer);
+  FIXME("(%x, %u, %u, %p): semistub\n", physDev->hdc, firstChar, lastChar, buffer);
 
   for(c=firstChar; c<=lastChar; c++) {
     buffer[c-firstChar] = physDev->cellWidth;
@@ -439,12 +388,10 @@ BOOL TTYDRV_DC_GetCharWidth(DC *dc, UINT firstChar, UINT lastChar,
 /***********************************************************************
  *		TTYDRV_DC_GetTextExtentPoint
  */
-BOOL TTYDRV_DC_GetTextExtentPoint(DC *dc, LPCWSTR str, INT count,
+BOOL TTYDRV_DC_GetTextExtentPoint(TTYDRV_PDEVICE *physDev, LPCWSTR str, INT count,
 				  LPSIZE size)
 {
-  TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
-
-  TRACE("(%p, %s, %d, %p)\n", dc, debugstr_wn(str, count), count, size);
+  TRACE("(%x, %s, %d, %p)\n", physDev->hdc, debugstr_wn(str, count), count, size);
 
   size->cx = count * physDev->cellWidth;
   size->cy = physDev->cellHeight;
@@ -455,11 +402,9 @@ BOOL TTYDRV_DC_GetTextExtentPoint(DC *dc, LPCWSTR str, INT count,
 /***********************************************************************
  *		TTYDRV_DC_GetTextMetrics
  */
-BOOL TTYDRV_DC_GetTextMetrics(DC *dc, LPTEXTMETRICW lptm)
+BOOL TTYDRV_DC_GetTextMetrics(TTYDRV_PDEVICE *physDev, LPTEXTMETRICW lptm)
 {
-  TTYDRV_PDEVICE *physDev = (TTYDRV_PDEVICE *) dc->physDev;
-
-  TRACE("(%p, %p)\n", dc, lptm);
+  TRACE("(%x, %p)\n", physDev->hdc, lptm);
 
   lptm->tmHeight = physDev->cellHeight;
   lptm->tmAscent = 0;

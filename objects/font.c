@@ -901,7 +901,7 @@ INT WINAPI SetTextCharacterExtra( HDC hdc, INT extra )
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return 0;
     if (dc->funcs->pSetTextCharacterExtra)
-        prev = dc->funcs->pSetTextCharacterExtra( dc, extra );
+        prev = dc->funcs->pSetTextCharacterExtra( dc->physDev, extra );
     else
     {
         extra = (extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX;
@@ -931,7 +931,7 @@ BOOL WINAPI SetTextJustification( HDC hdc, INT extra, INT breaks )
     DC * dc = DC_GetDCPtr( hdc );
     if (!dc) return FALSE;
     if (dc->funcs->pSetTextJustification)
-        ret = dc->funcs->pSetTextJustification( dc, extra, breaks );
+        ret = dc->funcs->pSetTextJustification( dc->physDev, extra, breaks );
     else
     {
         extra = abs((extra * dc->vportExtX + dc->wndExtX / 2) / dc->wndExtX);
@@ -1080,7 +1080,7 @@ BOOL WINAPI GetTextExtentPoint32W(
     if(dc->gdiFont)
         ret = WineEngGetTextExtentPoint(dc->gdiFont, str, count, size);
     else if(dc->funcs->pGetTextExtentPoint)
-        ret = dc->funcs->pGetTextExtentPoint( dc, str, count, size );
+        ret = dc->funcs->pGetTextExtentPoint( dc->physDev, str, count, size );
 
     GDI_ReleaseObj( hdc );
 
@@ -1233,7 +1233,7 @@ BOOL WINAPI GetTextMetricsW( HDC hdc, TEXTMETRICW *metrics )
     if (dc->gdiFont)
         ret = WineEngGetTextMetrics(dc->gdiFont, metrics);
     else if (dc->funcs->pGetTextMetrics)
-        ret = dc->funcs->pGetTextMetrics( dc, metrics );
+        ret = dc->funcs->pGetTextMetrics( dc->physDev, metrics );
 
     if (ret)
     {
@@ -1533,7 +1533,7 @@ BOOL WINAPI GetCharWidth32W( HDC hdc, UINT firstChar, UINT lastChar,
     if (dc->gdiFont)
         ret = WineEngGetCharWidth( dc->gdiFont, firstChar, lastChar, buffer );
     else if (dc->funcs->pGetCharWidth)
-        ret = dc->funcs->pGetCharWidth( dc, firstChar, lastChar, buffer);
+        ret = dc->funcs->pGetCharWidth( dc->physDev, firstChar, lastChar, buffer);
 
     if (ret)
     {
@@ -1607,7 +1607,7 @@ DWORD WINAPI SetMapperFlags( HDC hDC, DWORD dwFlag )
     DWORD ret = 0; 
     if(!dc) return 0;
     if(dc->funcs->pSetMapperFlags)
-        ret = dc->funcs->pSetMapperFlags( dc, dwFlag );
+        ret = dc->funcs->pSetMapperFlags( dc->physDev, dwFlag );
     else
         FIXME("(0x%04x, 0x%08lx): stub - harmless\n", hDC, dwFlag);
     GDI_ReleaseObj( hDC );

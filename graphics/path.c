@@ -115,7 +115,7 @@ BOOL WINAPI BeginPath(HDC hdc)
     if(!dc) return FALSE;
 
     if(dc->funcs->pBeginPath)
-        ret = dc->funcs->pBeginPath(dc);
+        ret = dc->funcs->pBeginPath(dc->physDev);
     else
     {
         /* If path is already open, do nothing */
@@ -154,7 +154,7 @@ BOOL WINAPI EndPath(HDC hdc)
     if(!dc) return FALSE;
 
     if(dc->funcs->pEndPath)
-        ret = dc->funcs->pEndPath(dc);
+        ret = dc->funcs->pEndPath(dc->physDev);
     else
     {
         /* Check that path is currently being constructed */
@@ -200,7 +200,7 @@ BOOL WINAPI AbortPath( HDC hdc )
     if(!dc) return FALSE;
 
     if(dc->funcs->pAbortPath)
-        ret = dc->funcs->pAbortPath(dc);
+        ret = dc->funcs->pAbortPath(dc->physDev);
     else /* Remove all entries from the path */
         PATH_EmptyPath( &dc->path );
     GDI_ReleaseObj( hdc );
@@ -230,7 +230,7 @@ BOOL WINAPI CloseFigure(HDC hdc)
     if(!dc) return FALSE;
 
     if(dc->funcs->pCloseFigure)
-        ret = dc->funcs->pCloseFigure(dc);
+        ret = dc->funcs->pCloseFigure(dc->physDev);
     else
     {
         /* Check that path is open */
@@ -366,7 +366,7 @@ static BOOL PATH_FillPath(DC *dc, GdiPath *pPath)
    HRGN  hrgn;
 
    if(dc->funcs->pFillPath)
-       return dc->funcs->pFillPath(dc);
+       return dc->funcs->pFillPath(dc->physDev);
 
    /* Check that path is closed */
    if(pPath->state!=PATH_Closed)
@@ -448,7 +448,7 @@ BOOL WINAPI FillPath(HDC hdc)
     if(!dc) return FALSE;
 
     if(dc->funcs->pFillPath)
-        bRet = dc->funcs->pFillPath(dc);
+        bRet = dc->funcs->pFillPath(dc->physDev);
     else
     {
         bRet = PATH_FillPath(dc, &dc->path);
@@ -486,7 +486,7 @@ BOOL WINAPI SelectClipPath(HDC hdc, INT iMode)
    if(!dc) return FALSE;
 
    if(dc->funcs->pSelectClipPath)
-     success = dc->funcs->pSelectClipPath(dc, iMode);
+     success = dc->funcs->pSelectClipPath(dc->physDev, iMode);
    else
    {
        pPath = &dc->path;
@@ -1464,7 +1464,7 @@ BOOL WINAPI FlattenPath(HDC hdc)
 
     if(!dc) return FALSE;
 
-    if(dc->funcs->pFlattenPath) ret = dc->funcs->pFlattenPath(dc);
+    if(dc->funcs->pFlattenPath) ret = dc->funcs->pFlattenPath(dc->physDev);
     else 
     {
 	GdiPath *pPath = &dc->path;
@@ -1487,7 +1487,7 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     BOOL ret = TRUE;
 
     if(dc->funcs->pStrokePath)
-        return dc->funcs->pStrokePath(dc);
+        return dc->funcs->pStrokePath(dc->physDev);
 
     if(pPath->state != PATH_Closed)
         return FALSE;
@@ -1581,7 +1581,7 @@ BOOL WINAPI StrokeAndFillPath(HDC hdc)
    if(!dc) return FALSE;
 
    if(dc->funcs->pStrokeAndFillPath)
-       bRet = dc->funcs->pStrokeAndFillPath(dc);
+       bRet = dc->funcs->pStrokeAndFillPath(dc->physDev);
    else
    {
        bRet = PATH_FillPath(dc, &dc->path);
@@ -1617,7 +1617,7 @@ BOOL WINAPI StrokePath(HDC hdc)
     if(!dc) return FALSE;
 
     if(dc->funcs->pStrokePath)
-        bRet = dc->funcs->pStrokePath(dc);
+        bRet = dc->funcs->pStrokePath(dc->physDev);
     else
     {
         pPath = &dc->path;
@@ -1651,7 +1651,7 @@ BOOL WINAPI WidenPath(HDC hdc)
    if(!dc) return FALSE;
 
    if(dc->funcs->pWidenPath)
-     ret = dc->funcs->pWidenPath(dc);
+     ret = dc->funcs->pWidenPath(dc->physDev);
 
    FIXME("stub\n");
    GDI_ReleaseObj( hdc );
