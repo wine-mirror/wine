@@ -136,16 +136,19 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
  */
 HMODULE16 BUILTIN_LoadModule( LPCSTR name )
 {
-    char dllname[16], *p;
+    char dllname[20], *p;
     void *handle;
     int i;
 
     /* Fix the name in case we have a full path and extension */
 
     if ((p = strrchr( name, '\\' ))) name = p + 1;
-    lstrcpynA( dllname, name, sizeof(dllname) );
+    if ((p = strrchr( name, '/' ))) name = p + 1;
+
+    if (strlen(name) >= sizeof(dllname)-4) return (HMODULE16)2;
+
+    strcpy( dllname, name );
     p = strrchr( dllname, '.' );
-	 
     if (!p) strcat( dllname, ".dll" );
 
     for (i = 0; i < nb_dlls; i++)

@@ -264,15 +264,19 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
 {
     HMODULE module;
     WINE_MODREF   *wm;
-    char           dllname[MAX_PATH], *p;
+    char dllname[20], *p;
+    LPCSTR name;
     void *handle;
     int i;
 
     /* Fix the name in case we have a full path and extension */
-    if ((p = strrchr( path, '\\' ))) p++;
-    else p = (char *)path; 
-    lstrcpynA( dllname, p, sizeof(dllname) );
+    name = path;
+    if ((p = strrchr( name, '\\' ))) name = p + 1;
+    if ((p = strrchr( name, '/' ))) name = p + 1;
 
+    if (strlen(name) >= sizeof(dllname)-4) goto error;
+
+    strcpy( dllname, name );
     p = strrchr( dllname, '.' );
     if (!p) strcat( dllname, ".dll" );
 
@@ -288,6 +292,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
         BUILTIN32_dlclose( handle );
     }
 
+ error:
     SetLastError( ERROR_FILE_NOT_FOUND );
     return NULL;
 
