@@ -1148,15 +1148,16 @@ static HRESULT WINAPI IShellFolder_fnGetDisplayNameOf(
 	  _ILSimpleGetText(pidl, szPath + len, MAX_PATH - len);	/* append my own path */
 
           /* MSDN also mentions SHGDN_FOREDITING, which isn't defined in wine */
-          if(!(dwFlags & SHGDN_FORPARSING) &&
+          if(!_ILIsFolder(pidl) && !(dwFlags & SHGDN_FORPARSING) &&
              ((dwFlags & SHGDN_INFOLDER) || (dwFlags == SHGDN_NORMAL)))
           {
               HKEY hKey;
               DWORD dwData;
               DWORD dwDataSize = sizeof(DWORD);
-              BOOL  doHide = TRUE; /* assume the default value is TRUE */
+              BOOL  doHide = 0; /* The default value is FALSE (win98 at least) */
 
               /* XXX should it do this only for known file types? -- that would make it even slower! */
+			  /* XXX That's what the prompt says!! */
               if(!RegCreateKeyExA(HKEY_CURRENT_USER,
                                   "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
                                   0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
@@ -2416,7 +2417,7 @@ static HRESULT WINAPI ISF_MyComputer_fnGetDisplayNameOf(
 	  {
 	    DWORD dwVolumeSerialNumber,dwMaximumComponetLength,dwFileSystemFlags;
 
-	    GetVolumeInformationA(szPath,szDrive,12,&dwVolumeSerialNumber,&dwMaximumComponetLength,&dwFileSystemFlags,NULL,0);
+	    GetVolumeInformationA(szPath,szDrive,sizeof(szDrive)-6,&dwVolumeSerialNumber,&dwMaximumComponetLength,&dwFileSystemFlags,NULL,0);
 	    strcat (szDrive," (");
 	    strncat (szDrive, szPath, 2);
 	    strcat (szDrive,")");
