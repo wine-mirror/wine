@@ -301,7 +301,7 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
                                              CURDIR* cd)
 {
     static const WCHAR LongFileNamePfxW[4] = {'\\','\\','?','\\'};
-    ULONG sz, ptr_sz, offset;
+    ULONG sz, offset;
     WCHAR local[MAX_PATH];
     LPWSTR ptr;
 
@@ -316,20 +316,21 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
 
     if (!dos_path || !*dos_path) return FALSE;
 
-    if (!memcmp(dos_path, LongFileNamePfxW, sizeof(LongFileNamePfxW)))
+    if (!strncmpW(dos_path, LongFileNamePfxW, 4))
     {
-        dos_path += sizeof(LongFileNamePfxW) / sizeof(WCHAR);
-        ptr = NULL;
-        ptr_sz = 0;
+        ntpath->Length = strlenW(dos_path) * sizeof(WCHAR);
+        ntpath->MaximumLength = ntpath->Length + sizeof(WCHAR);
+        ntpath->Buffer = RtlAllocateHeap(GetProcessHeap(), 0, ntpath->MaximumLength);
+        if (!ntpath->Buffer) return FALSE;
+        memcpy( ntpath->Buffer, dos_path, ntpath->MaximumLength );
+        ntpath->Buffer[1] = '?';  /* change \\?\ to \??\ */
+        return TRUE;
     }
-    else
-    {
-        ptr = local;
-        ptr_sz = sizeof(local);
-    }
-    sz = RtlGetFullPathName_U(dos_path, ptr_sz, ptr, file_part);
+
+    ptr = local;
+    sz = RtlGetFullPathName_U(dos_path, sizeof(local), ptr, file_part);
     if (sz == 0) return FALSE;
-    if (sz > ptr_sz)
+    if (sz > sizeof(local))
     {
         ptr = RtlAllocateHeap(GetProcessHeap(), 0, sz);
         sz = RtlGetFullPathName_U(dos_path, sz, ptr, file_part);
@@ -348,16 +349,14 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
     switch (RtlDetermineDosPathNameType_U(ptr))
     {
     case UNC_PATH: /* \\foo */
-        if (ptr[2] != '?')
-        {
-            offset = 2;
-            strcatW(ntpath->Buffer, UncPfxW);
-        }
+        offset = 2;
+        strcatW(ntpath->Buffer, UncPfxW);
         break;
     case DEVICE_PATH: /* \\.\foo */
         offset = 4;
         break;
-    default: break; /* needed to keep gcc quiet */
+    default:
+        break; /* needed to keep gcc quiet */
     }
 
     strcatW(ntpath->Buffer, ptr + offset);
@@ -508,6 +507,23 @@ static inline void collapse_path( WCHAR *path, UINT mark )
     }
 }
 
+
+/******************************************************************
+ *		skip_unc_prefix
+ *
+ * Skip the \\share\dir\ part of a file name. Helper for RtlGetFullPathName_U.
+ */
+static const WCHAR *skip_unc_prefix( const WCHAR *ptr )
+{
+    ptr += 2;
+    while (*ptr && !IS_SEPARATOR(*ptr)) ptr++;  /* share name */
+    while (IS_SEPARATOR(*ptr)) ptr++;
+    while (*ptr && !IS_SEPARATOR(*ptr)) ptr++;  /* dir name */
+    while (IS_SEPARATOR(*ptr)) ptr++;
+    return ptr;
+}
+
+
 /******************************************************************
  *		get_full_path_helper
  *
@@ -530,10 +546,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
     switch (type = RtlDetermineDosPathNameType_U(name))
     {
     case UNC_PATH:              /* \\foo   */
-        ptr = name + 2;
-        while (*ptr && !IS_SEPARATOR(*ptr)) ptr++;  /* share name */
-        while (*ptr && IS_SEPARATOR(*ptr)) ptr++;
-        while (*ptr && !IS_SEPARATOR(*ptr)) ptr++;  /* dir name */
+        ptr = skip_unc_prefix( name );
         mark = (ptr - name);
         break;
 
@@ -601,9 +614,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         ins_str = cd->Buffer;
         if (cd->Buffer[1] != ':')
         {
-            ptr = strchrW(cd->Buffer + 2, '\\');
-            if (ptr) ptr = strchrW(ptr + 1, '\\');
-            if (!ptr) ptr = cd->Buffer + strlenW(cd->Buffer);
+            ptr = skip_unc_prefix( cd->Buffer );
             mark = ptr - cd->Buffer;
         }
         else mark = 3;
@@ -636,9 +647,7 @@ static ULONG get_full_path_helper(LPCWSTR name, LPWSTR buffer, ULONG size)
         }
         else
         {
-            ptr = strchrW(cd->Buffer + 2, '\\');
-            if (ptr) ptr = strchrW(ptr + 1, '\\');
-            if (!ptr) ptr = cd->Buffer + strlenW(cd->Buffer);
+            ptr = skip_unc_prefix( cd->Buffer );
             reqsize = (ptr - cd->Buffer) * sizeof(WCHAR);
             mark = reqsize / sizeof(WCHAR);
             ins_str = cd->Buffer;
