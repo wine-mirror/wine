@@ -105,20 +105,18 @@ For more information on debugging messages, see the file
 in the source distribution (FIXME: outdated).
 .RE
 .TP
-.I --dll name[,name[,...]]={native|so|builtin}[,{n|s|b}[,...]]
+.I --dll name[,name[,...]]={native|builtin}[,{n|b}[,...]]
 Selects the override type and load order of dll used in the loading
 process for any dll. The default is set in the configuration
 file. There are currently three types of libraries that can be loaded
 into a process' address space: Native windows dlls (
 .I native
-), native ELF libraries (
-.I so
-)and 
+), 
 .B wine 
 internal dlls (
 .I builtin
 ). The type may be abbreviated with the first letter of the type (
-.I n, s, b
+.I n, b
 ). Each sequence of orders must be separated by commas.
 .br
 Each dll may have its own specific load order. The load order

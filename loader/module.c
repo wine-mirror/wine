@@ -1279,12 +1279,6 @@ WINE_MODREF *MODULE_LoadLibraryExA( LPCSTR libname, HANDLE hfile, DWORD flags )
                         filetype = "native";
 			break;
 
-		case LOADORDER_SO:
-			TRACE("Trying so-library '%s'\n", filename);
-                        pwm = ELF_LoadLibraryExA(filename, flags);
-                        filetype = "so";
-			break;
-
 		case LOADORDER_BI:
 			TRACE("Trying built-in '%s'\n", filename);
 			pwm = BUILTIN32_LoadLibraryExA(filename, flags);

@@ -538,7 +538,7 @@ And here is a setup for Drive A, a generic floppy drive:
                 <varlistentry>
                   <term>so</term>
                   <listitem><para>
-                      Native ELF libraries. Will not work yet.
+                      Native ELF libraries. Has been deprecated, ignored.
                     </para></listitem>
                 </varlistentry>
                 <varlistentry>
@@ -559,7 +559,7 @@ And here is a setup for Drive A, a generic floppy drive:
             These settings provide wine's default handling of DLL loading.
           </para>
           <para>
-            <programlisting>"DefaultLoadOrder" =" native, so, builtin"</programlisting>
+            <programlisting>"DefaultLoadOrder" =" native, builtin"</programlisting>
           </para>
           <para>
             This setting is a comma-delimited list of the order in
@@ -1615,16 +1615,6 @@ OPTIONAL:
                   part of <filename>libwine.so</filename>, or more
                   recently, in a special <filename>.so</filename> file
                   that Wine is able to load on demand.
-                </para> </listitem>
-            </varlistentry>
-            <varlistentry>
-              <term>so</term>
-              <listitem> <para>
-                  A native Unix <filename>.so</filename> file, with
-                  calling convention conversion thunks generated on the
-                  fly as the library is loaded. This is mostly useful
-                  for libraries such as "glide" that have exactly the
-                  same API on both Windows and Unix.
                 </para> </listitem>
             </varlistentry>
           </variablelist>

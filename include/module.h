@@ -175,7 +175,6 @@ enum loadorder_type
 {
     LOADORDER_INVALID = 0, /* Must be 0 */
     LOADORDER_DLL,         /* Native DLLs */
-    LOADORDER_SO,          /* Native .so libraries */
     LOADORDER_BI,          /* Built-in modules */
     LOADORDER_NTYPES
 };

@@ -192,14 +192,14 @@ Also valid as an AppDefaults setting (recommended/preferred use).
 .PP
 .B [DllOverrides]
 .br
-.I format: """modulename""=""native,so,builtin"""
+.I format: """modulename""=""native,builtin"""
 .br
 .I modulename
 can be any valid DLL module name. If no extension is specified .dll is
 assumed. The specified value is a comma separated list of module-types
 to try to load in that specific order. Case is not important and only
-the first letter of each type is enough to identify the type n[ative],
-s[o], b[uiltin]. Also whitespace is ignored. See also commandline
+the first letter of each type is enough to identify the type n[ative]
+or b[uiltin]. Also whitespace is ignored. See also commandline
 option
 .I --dll
 for details about the allowable types.
@@ -208,7 +208,7 @@ The wildcard entry
 .I """*"""
 specifies the load order to use for modules not explicitly
 mentioned. If the wildcard entry is not found, then the order
-"native,builtin,so" is used.
+"native,builtin" is used.
 .br
 Examples:
 .br

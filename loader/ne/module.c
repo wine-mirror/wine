@@ -957,7 +957,6 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
                         filetype = "builtin";
 			break;
 
-		case LOADORDER_SO: /* This is not supported for NE modules */
                 default:
 			hinst = 2;
 			break;

@@ -55,39 +55,36 @@ struct loadorder_list
 /* the list must remain sorted by dll name */
 static module_loadorder_t default_order_list[] =
 {
-    { "display",      { LOADORDER_BI,  0,             0, 0 } },
-    { "gdi.exe",      { LOADORDER_BI,  0,             0, 0 } },
-    { "gdi32",        { LOADORDER_BI,  0,             0, 0 } },
-    { "glide2x",      { LOADORDER_SO,  LOADORDER_DLL, 0, 0 } },
-    { "glide3x",      { LOADORDER_SO,  LOADORDER_DLL, 0, 0 } },
-    { "icmp",         { LOADORDER_BI,  0,             0, 0 } },
-    { "kernel",       { LOADORDER_BI,  0,             0, 0 } },
-    { "kernel32",     { LOADORDER_BI,  0,             0, 0 } },
-    { "keyboard",     { LOADORDER_BI,  0,             0, 0 } },
-    { "krnl386.exe",  { LOADORDER_BI,  0,             0, 0 } },
-    { "mmsystem",     { LOADORDER_BI,  0,             0, 0 } },
-    { "mouse",        { LOADORDER_BI,  0,             0, 0 } },
-    { "ntdll",        { LOADORDER_BI,  0,             0, 0 } },
-    { "odbc32",       { LOADORDER_BI,  0,             0, 0 } },
-    { "system",       { LOADORDER_BI,  0,             0, 0 } },
-    { "toolhelp",     { LOADORDER_BI,  0,             0, 0 } },
-    { "ttydrv",       { LOADORDER_BI,  0,             0, 0 } },
-    { "user.exe",     { LOADORDER_BI,  0,             0, 0 } },
-    { "user32",       { LOADORDER_BI,  0,             0, 0 } },
-    { "w32skrnl",     { LOADORDER_BI,  0,             0, 0 } },
-    { "winaspi",      { LOADORDER_BI,  0,             0, 0 } },
-    { "windebug",     { LOADORDER_DLL, LOADORDER_BI,  0, 0 } },
-    { "winedos",      { LOADORDER_BI,  0,             0, 0 } },
-    { "wineps",       { LOADORDER_BI,  0,             0, 0 } },
-    { "wing",         { LOADORDER_BI,  0,             0, 0 } },
-    { "winmm",        { LOADORDER_BI,  0,             0, 0 } },
-    { "winsock",      { LOADORDER_BI,  0,             0, 0 } },
-    { "wnaspi32",     { LOADORDER_BI,  0,             0, 0 } },
-    { "wow32",        { LOADORDER_BI,  0,             0, 0 } },
-    { "wprocs",       { LOADORDER_BI,  0,             0, 0 } },
-    { "ws2_32",       { LOADORDER_BI,  0,             0, 0 } },
-    { "wsock32",      { LOADORDER_BI,  0,             0, 0 } },
-    { "x11drv",       { LOADORDER_BI,  0,             0, 0 } }
+    { "display",      { LOADORDER_BI, 0, 0 } },
+    { "gdi.exe",      { LOADORDER_BI, 0, 0 } },
+    { "gdi32",        { LOADORDER_BI, 0, 0 } },
+    { "icmp",         { LOADORDER_BI, 0, 0 } },
+    { "kernel",       { LOADORDER_BI, 0, 0 } },
+    { "kernel32",     { LOADORDER_BI, 0, 0 } },
+    { "keyboard",     { LOADORDER_BI, 0, 0 } },
+    { "krnl386.exe",  { LOADORDER_BI, 0, 0 } },
+    { "mmsystem",     { LOADORDER_BI, 0, 0 } },
+    { "mouse",        { LOADORDER_BI, 0, 0 } },
+    { "ntdll",        { LOADORDER_BI, 0, 0 } },
+    { "odbc32",       { LOADORDER_BI, 0, 0 } },
+    { "system",       { LOADORDER_BI, 0, 0 } },
+    { "toolhelp",     { LOADORDER_BI, 0, 0 } },
+    { "ttydrv",       { LOADORDER_BI, 0, 0 } },
+    { "user.exe",     { LOADORDER_BI, 0, 0 } },
+    { "user32",       { LOADORDER_BI, 0, 0 } },
+    { "w32skrnl",     { LOADORDER_BI, 0, 0 } },
+    { "winaspi",      { LOADORDER_BI, 0, 0 } },
+    { "winedos",      { LOADORDER_BI, 0, 0 } },
+    { "wineps",       { LOADORDER_BI, 0, 0 } },
+    { "wing",         { LOADORDER_BI, 0, 0 } },
+    { "winmm",        { LOADORDER_BI, 0, 0 } },
+    { "winsock",      { LOADORDER_BI, 0, 0 } },
+    { "wnaspi32",     { LOADORDER_BI, 0, 0 } },
+    { "wow32",        { LOADORDER_BI, 0, 0 } },
+    { "wprocs",       { LOADORDER_BI, 0, 0 } },
+    { "ws2_32",       { LOADORDER_BI, 0, 0 } },
+    { "wsock32",      { LOADORDER_BI, 0, 0 } },
+    { "x11drv",       { LOADORDER_BI, 0, 0 } }
 };
 
 static const struct loadorder_list default_list =
@@ -100,13 +97,13 @@ static const struct loadorder_list default_list =
 /* default if nothing else specified */
 static const enum loadorder_type default_loadorder[LOADORDER_NTYPES] =
 {
-    LOADORDER_BI, LOADORDER_DLL, 0, 0
+    LOADORDER_BI, LOADORDER_DLL, 0
 };
 
 /* default for modules with an explicit path */
 static const enum loadorder_type default_path_loadorder[LOADORDER_NTYPES] =
 {
-    LOADORDER_DLL, LOADORDER_BI, 0, 0
+    LOADORDER_DLL, LOADORDER_BI, 0
 };
 
 static struct loadorder_list cmdline_list;
@@ -198,7 +195,6 @@ static const char *debugstr_loadorder( enum loadorder_type lo[] )
         switch(lo[i])
         {
         case LOADORDER_DLL: strcat( buffer, "n," ); break;
-        case LOADORDER_SO:  strcat( buffer, "s," ); break;
         case LOADORDER_BI:  strcat( buffer, "b," ); break;
         default:            strcat( buffer, "?," ); break;
         }
@@ -236,12 +232,10 @@ static BOOL ParseLoadOrder(char *order, enum loadorder_type lo[])
 		case 'N':	/* Native */
 		case 'n': type = LOADORDER_DLL; break;
 
-		case 'E':	/* Elfdll */
-		case 'e':
-                    if (!warn++) MESSAGE("Load order 'elfdll' no longer supported, ignored\n");
-                    break;
 		case 'S':	/* So */
-		case 's': type = LOADORDER_SO; break;
+		case 's':
+                    if (!warn++) MESSAGE("Load order 'so' no longer supported, ignored\n");
+                    break;
 
 		case 'B':	/* Builtin */
 		case 'b': type = LOADORDER_BI; break;
@@ -458,7 +452,6 @@ static BOOL get_registry_value( HKEY hkey, const char *module, enum loadorder_ty
             switch(tolowerW(*str))
             {
             case 'n': type = LOADORDER_DLL; break;
-            case 's': type = LOADORDER_SO; break;
             case 'b': type = LOADORDER_BI; break;
             case 0:   break;  /* end of string */
             default:
