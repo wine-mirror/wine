@@ -59,6 +59,7 @@ typedef struct tagPropSheetInfo
   int y;
   int width;
   int height;
+  HIMAGELIST hImageList;
 } PropSheetInfo;
 
 typedef struct
@@ -152,6 +153,7 @@ static BOOL PROPSHEET_CollectSheetInfo(LPCPROPSHEETHEADERA lppsh,
 
   psInfo->restartWindows = FALSE;
   psInfo->rebootSystem = FALSE;
+  psInfo->hImageList = 0;
 
   return TRUE;
 }
@@ -270,6 +272,27 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEA lppsp,
   psInfo->proppage[index].pszText = (LPCWSTR)p;
   TRACE("Tab %d %s\n",index,debugstr_w((LPCWSTR)p));
   p += lstrlenW((LPCWSTR)p) + 1;
+
+  /*
+   * Build the image list for icons
+   */
+  if ((dwFlags & PSP_USEHICON) || (dwFlags & PSP_USEICONID))
+  {
+    HICON hIcon;
+    int icon_cx = GetSystemMetrics(SM_CXSMICON);
+    int icon_cy = GetSystemMetrics(SM_CYSMICON);
+
+    if (dwFlags & PSP_USEICONID)
+      hIcon = LoadImageA(lppsp->hInstance, lppsp->u2.pszIcon, IMAGE_ICON, 
+                         icon_cx, icon_cy, LR_DEFAULTCOLOR);
+    else
+      hIcon = lppsp->u2.hIcon;
+
+    if (psInfo->hImageList == 0)
+      psInfo->hImageList = ImageList_Create(icon_cx, icon_cy, ILC_COLOR, 1, 1);
+
+    ImageList_AddIcon(psInfo->hImageList, hIcon);
+  }
 
   return TRUE;
 }
@@ -546,8 +569,19 @@ static BOOL PROPSHEET_CreateTabControl(HWND hwndParent,
 
   nTabs = psInfo->ppshheader->nPages;
 
+  /*
+   * Set the image list for icons.
+   */
+  if (psInfo->hImageList)
+  {
+    item.mask |= TCIF_IMAGE;
+    SendMessageA(hwndTabCtrl, TCM_SETIMAGELIST, 0, (LPARAM)psInfo->hImageList);
+  }
+
   for (i = 0; i < nTabs; i++)
   {
+    item.iImage = i;
+
     WideCharToMultiByte(CP_ACP, 0,
                         (LPCWSTR)psInfo->proppage[i].pszText,
                         -1, tabtext, MAX_TABTEXT_LENGTH, NULL, NULL);
@@ -1159,8 +1193,11 @@ static void PROPSHEET_CleanUp(HWND hwndDlg)
 {
   PropSheetInfo* psInfo = (PropSheetInfo*) RemovePropA(hwndDlg,
                                                        PropSheetInfoStr);
+
+  TRACE("\n");
   COMCTL32_Free(psInfo->proppage);
   COMCTL32_Free(psInfo->strPropertiesFor);
+  ImageList_Destroy(psInfo->hImageList);
 
   GlobalFree((HGLOBAL)psInfo);
 }
