@@ -182,7 +182,7 @@ static WORD MZ_InitEnvironment( LPDOSTASK lpDosTask, LPCSTR env, LPCSTR name )
  return seg;
 }
 
-static BOOL MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
+static BOOL MZ_InitMemory( LPDOSTASK lpDosTask )
 {
  int x;
 
@@ -210,7 +210,6 @@ static BOOL MZ_InitMemory( LPDOSTASK lpDosTask, NE_MODULE *pModule )
   return FALSE;
  }
  TRACE("DOS VM86 image mapped at %08lx\n",(DWORD)lpDosTask->img);
- pModule->dos_image=lpDosTask->img;
 
  /* initialize the memory */
  TRACE("Initializing DOS memory structures\n");
@@ -253,7 +252,7 @@ static BOOL MZ_LoadImage( HANDLE hFile, LPCSTR filename, LPCSTR cmdline,
   max_size=image_size+((DWORD)mz_header.e_maxalloc<<4)+(PSP_SIZE<<4);
  }
 
- MZ_InitMemory(lpDosTask,pModule);
+ MZ_InitMemory(lpDosTask);
 
  /* allocate environment block */
  env_seg=MZ_InitEnvironment(lpDosTask,env,filename);
@@ -308,22 +307,14 @@ static BOOL MZ_LoadImage( HANDLE hFile, LPCSTR filename, LPCSTR cmdline,
  return TRUE;
 }
 
-LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule )
+LPDOSTASK MZ_AllocDPMITask( void )
 {
  LPDOSTASK lpDosTask = calloc(1, sizeof(DOSTASK));
- NE_MODULE *pModule;
 
  if (lpDosTask) {
-  lpDosTask->hModule = hModule;
-
-  pModule = (NE_MODULE *)GlobalLock16(hModule);
-  pModule->lpDosTask = lpDosTask;
- 
   lpDosTask->img=NULL; lpDosTask->mm_name[0]=0; lpDosTask->mm_fd=-1;
 
-  MZ_InitMemory(lpDosTask, pModule);
-
-  GlobalUnlock16(hModule);
+  MZ_InitMemory(lpDosTask);
  }
  return lpDosTask;
 }
@@ -497,7 +488,7 @@ BOOL MZ_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmdline, LPCSTR env
  if (alloc) {
   pModule->dos_image = lpDosTask->img;
   if (!MZ_InitTask( lpDosTask )) {
-   MZ_KillModule( lpDosTask );
+   MZ_KillTask( lpDosTask );
    /* FIXME: cleanup hModule */
    SetLastError(ERROR_GEN_FAILURE);
    return FALSE;
@@ -511,7 +502,7 @@ BOOL MZ_CreateProcess( HANDLE hFile, LPCSTR filename, LPCSTR cmdline, LPCSTR env
 }
 #endif
 
-void MZ_KillModule( LPDOSTASK lpDosTask )
+void MZ_KillTask( LPDOSTASK lpDosTask )
 {
   DOSEVENT *event,*p_event;
   DOSSYSTEM *sys,*p_sys;

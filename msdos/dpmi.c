@@ -357,7 +357,7 @@ callrmproc_again:
 #ifdef MZ_SUPPORTED
         FIXME("DPMI real-mode call using DOS VM task system, not fully tested!\n");
         TRACE("creating VM86 task\n");
-        if (!MZ_InitTask( MZ_AllocDPMITask( pModule->self ) )) {
+        if (!MZ_InitTask( MZ_AllocDPMITask() )) {
             ERR("could not setup VM86 task\n");
             return 1;
         }

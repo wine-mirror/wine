@@ -55,8 +55,8 @@ typedef struct _DOSEVENT {
 #define MZ_SUPPORTED
 
 extern BOOL MZ_InitTask( LPDOSTASK lpDosTask );
-extern void MZ_KillModule( LPDOSTASK lpDosTask );
-extern LPDOSTASK MZ_AllocDPMITask( HMODULE16 hModule );
+extern void MZ_KillTask( LPDOSTASK lpDosTask );
+extern LPDOSTASK MZ_AllocDPMITask( void );
 
 #endif /* linux-i386 */
 
