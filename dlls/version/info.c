@@ -427,8 +427,19 @@ DWORD WINAPI VerQueryValueA( LPVOID pBlock, LPCSTR lpSubBlock,
     VS_VERSION_INFO_STRUCT16 *info = (VS_VERSION_INFO_STRUCT16 *)pBlock;
     if ( !VersionInfoIs16( info ) )
     {
-        ERR("called on PE resource!\n" );
-        return FALSE;
+        INT len;
+        LPWSTR wide_str;
+        DWORD give;
+
+        /* <lawson_whitney@juno.com> Feb 2001 */
+        /* AOL 5.0 does this, expecting to get this: */
+        len = MultiByteToWideChar(CP_ACP, 0, lpSubBlock, -1, NULL, 0);
+        wide_str = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpSubBlock, -1, wide_str, len);
+
+        give = VerQueryValueW(pBlock, wide_str, lplpBuffer, puLen);
+        HeapFree(GetProcessHeap(), 0, wide_str);
+        return give;
     }
 
     TRACE("(%p,%s,%p,%p)\n",
