@@ -307,6 +307,22 @@ static const char * getMessage(UINT msg)
     return unknown;
 }
 
+static const char * getFormat(WORD wFormatTag)
+{
+    static char unknown[32];
+#define FMT_TO_STR(x) case x: return #x
+    switch(wFormatTag) {
+    FMT_TO_STR(WAVE_FORMAT_PCM);
+    FMT_TO_STR(WAVE_FORMAT_EXTENSIBLE);
+    FMT_TO_STR(WAVE_FORMAT_MULAW);
+    FMT_TO_STR(WAVE_FORMAT_ALAW);
+    FMT_TO_STR(WAVE_FORMAT_ADPCM);
+    }
+#undef FMT_TO_STR
+    sprintf(unknown, "UNKNOWN(0x%04x)", wFormatTag);
+    return unknown;
+}
+
 static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
                              WAVEFORMATPCMEX* format)
 {
@@ -1793,6 +1809,12 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     memcpy(&wwo->waveDesc, lpDesc, sizeof(WAVEOPENDESC));
     copy_format(lpDesc->lpFormat, &wwo->format);
 
+    TRACE("Requested this format: %ldx%dx%d %s\n",
+          wwo->format.Format.nSamplesPerSec,
+          wwo->format.Format.wBitsPerSample,
+          wwo->format.Format.nChannels,
+          getFormat(wwo->format.Format.wFormatTag));
+
     if (wwo->format.Format.wBitsPerSample == 0) {
 	WARN("Resetting zeroed wBitsPerSample\n");
 	wwo->format.Format.wBitsPerSample = 8 *
@@ -1824,7 +1846,22 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     else
 	wwo->write = snd_pcm_mmap_writei;
 
-    EXIT_ON_ERROR( snd_pcm_hw_params_set_channels(pcm, hw_params, wwo->format.Format.nChannels), MMSYSERR_INVALPARAM, "unable to set required channels");
+    if ((err = snd_pcm_hw_params_set_channels(pcm, hw_params, wwo->format.Format.nChannels)) < 0) {
+        WARN("unable to set required channels: %d\n", wwo->format.Format.nChannels);
+        if (dwFlags & WAVE_DIRECTSOUND) {
+            if (wwo->format.Format.nChannels > 2)
+                wwo->format.Format.nChannels = 2;
+            else if (wwo->format.Format.nChannels == 2)
+                wwo->format.Format.nChannels = 1;
+            else if (wwo->format.Format.nChannels == 1)
+                wwo->format.Format.nChannels = 2;
+            /* recalculate block align and bytes per second */
+            wwo->format.Format.nBlockAlign = (wwo->format.Format.wBitsPerSample * wwo->format.Format.nChannels) / 8;
+            wwo->format.Format.nAvgBytesPerSec = wwo->format.Format.nSamplesPerSec * wwo->format.Format.nBlockAlign;
+            WARN("changed number of channels from %d to %d\n", lpDesc->lpFormat->nChannels, wwo->format.Format.nChannels);
+        }
+        EXIT_ON_ERROR( snd_pcm_hw_params_set_channels(pcm, hw_params, wwo->format.Format.nChannels ), MMSYSERR_INVALPARAM, "unable to set required channels" );
+    }
 
     if ((wwo->format.Format.wFormatTag == WAVE_FORMAT_PCM) ||
         ((wwo->format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE) &&
@@ -1854,7 +1891,27 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return WAVERR_BADFORMAT;
     }
 
-    EXIT_ON_ERROR( snd_pcm_hw_params_set_format(pcm, hw_params, format), MMSYSERR_INVALPARAM, "unable to set required format");
+    if ((err = snd_pcm_hw_params_set_format(pcm, hw_params, format)) < 0) {
+        WARN("unable to set required format: %s\n", snd_pcm_format_name(format));
+        if (dwFlags & WAVE_DIRECTSOUND) {
+            if ((wwo->format.Format.wFormatTag == WAVE_FORMAT_PCM) ||
+               ((wwo->format.Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE) &&
+               IsEqualGUID(&wwo->format.SubFormat, & KSDATAFORMAT_SUBTYPE_PCM))) {
+                if (wwo->format.Format.wBitsPerSample != 16) {
+                    wwo->format.Format.wBitsPerSample = 16;
+                    format = SND_PCM_FORMAT_S16_LE;
+                } else {
+                    wwo->format.Format.wBitsPerSample = 8;
+                    format = SND_PCM_FORMAT_U8;
+                }
+                /* recalculate block align and bytes per second */
+                wwo->format.Format.nBlockAlign = (wwo->format.Format.wBitsPerSample * wwo->format.Format.nChannels) / 8;
+                wwo->format.Format.nAvgBytesPerSec = wwo->format.Format.nSamplesPerSec * wwo->format.Format.nBlockAlign;
+                WARN("changed bits per sample from %d to %d\n", lpDesc->lpFormat->wBitsPerSample, wwo->format.Format.wBitsPerSample);
+            }
+        }
+        EXIT_ON_ERROR( snd_pcm_hw_params_set_format(pcm, hw_params, format), MMSYSERR_INVALPARAM, "unable to set required format" );
+    }
 
     rate = wwo->format.Format.nSamplesPerSec;
     dir=0;
@@ -1865,10 +1922,34 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return WAVERR_BADFORMAT;
     }
     if (rate != wwo->format.Format.nSamplesPerSec) {
-	ERR("Rate doesn't match (requested %ld Hz, got %d Hz)\n", wwo->format.Format.nSamplesPerSec, rate);
-	snd_pcm_close(pcm);
-        return WAVERR_BADFORMAT;
+        if (dwFlags & WAVE_DIRECTSOUND) {
+            WARN("changed sample rate from %ld Hz to %d Hz\n", wwo->format.Format.nSamplesPerSec, rate);
+            wwo->format.Format.nSamplesPerSec = rate;
+            /* recalculate bytes per second */
+            wwo->format.Format.nAvgBytesPerSec = wwo->format.Format.nSamplesPerSec * wwo->format.Format.nBlockAlign;
+        } else {
+            ERR("Rate doesn't match (requested %ld Hz, got %d Hz)\n", wwo->format.Format.nSamplesPerSec, rate);
+            snd_pcm_close(pcm);
+            return WAVERR_BADFORMAT;
+        }
     }
+
+    /* give the new format back to direct sound */
+    if (dwFlags & WAVE_DIRECTSOUND) {
+        lpDesc->lpFormat->wFormatTag = wwo->format.Format.wFormatTag;
+        lpDesc->lpFormat->nChannels = wwo->format.Format.nChannels;
+        lpDesc->lpFormat->nSamplesPerSec = wwo->format.Format.nSamplesPerSec;
+        lpDesc->lpFormat->wBitsPerSample = wwo->format.Format.wBitsPerSample;
+        lpDesc->lpFormat->nBlockAlign = wwo->format.Format.nBlockAlign;
+        lpDesc->lpFormat->nAvgBytesPerSec = wwo->format.Format.nAvgBytesPerSec;
+    }
+
+    TRACE("Got this format: %ldx%dx%d %s\n",
+          wwo->format.Format.nSamplesPerSec,
+          wwo->format.Format.wBitsPerSample,
+          wwo->format.Format.nChannels,
+          getFormat(wwo->format.Format.wFormatTag));
+
     dir=0; 
     EXIT_ON_ERROR( snd_pcm_hw_params_set_buffer_time_near(pcm, hw_params, &buffer_time, &dir), MMSYSERR_INVALPARAM, "unable to set buffer time");
     dir=0; 
