@@ -53,7 +53,7 @@ static BOOL process_attach(void)
 #define SET_ENTRY_POINT( num, addr ) \
     NE_SetEntryPoint( hModule, (num), GLOBAL_CreateBlock( GMEM_FIXED, \
                       DOSMEM_MapDosToLinear(addr), 0x10000, hModule, \
-                      FALSE, FALSE, FALSE, NULL ))
+                      FALSE, FALSE, FALSE ))
 
     SET_ENTRY_POINT( 183, 0x00000 );  /* KERNEL.183: __0000H */
     SET_ENTRY_POINT( 174, 0xa0000 );  /* KERNEL.174: __A000H */

@@ -96,8 +96,7 @@ void debug_handles(void)
  */
 HGLOBAL16 GLOBAL_CreateBlock( WORD flags, const void *ptr, DWORD size,
                               HGLOBAL16 hOwner, BOOL16 isCode,
-                              BOOL16 is32Bit, BOOL16 isReadOnly,
-                              SHMDATA *shmdata  )
+                              BOOL16 is32Bit, BOOL16 isReadOnly )
 {
     WORD sel, selcount;
     GLOBALARENA *pArena;
@@ -193,14 +192,13 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
 {
     void *ptr;
     HGLOBAL16 handle;
-    SHMDATA shmdata;
 
     TRACE("%ld flags=%04x\n", size, flags );
 
     /* If size is 0, create a discarded block */
 
     if (size == 0) return GLOBAL_CreateBlock( flags, NULL, 1, hOwner, isCode,
-                                              is32Bit, isReadOnly, NULL );
+                                              is32Bit, isReadOnly );
 
     /* Fixup the size */
 
@@ -215,7 +213,7 @@ HGLOBAL16 GLOBAL_Alloc( UINT16 flags, DWORD size, HGLOBAL16 hOwner,
       /* Allocate the selector(s) */
 
     handle = GLOBAL_CreateBlock( flags, ptr, size, hOwner,
-				isCode, is32Bit, isReadOnly, &shmdata);
+				isCode, is32Bit, isReadOnly );
     if (!handle)
     {
         HeapFree( GetProcessHeap(), 0, ptr );
@@ -685,7 +683,7 @@ DWORD WINAPI GlobalDOSAlloc16(
        WORD	 wSelector;
    
        wSelector = GLOBAL_CreateBlock(GMEM_FIXED, lpBlock, size, 
-				      hModule, 0, 0, 0, NULL );
+				      hModule, 0, 0, 0 );
        return MAKELONG(wSelector,uParagraph);
    }
    return 0;

@@ -9,18 +9,10 @@
 
 #include "windef.h"
 
-typedef struct
-{
-    HGLOBAL16 handle;
-    WORD sel;
-    int shmid;
-} SHMDATA;
-
 /* memory/global.c */
 extern HGLOBAL16 GLOBAL_CreateBlock( UINT16 flags, const void *ptr, DWORD size,
                                      HGLOBAL16 hOwner, BOOL16 isCode,
-                                     BOOL16 is32Bit, BOOL16 isReadOnly,
-                                     SHMDATA *shmdata);
+                                     BOOL16 is32Bit, BOOL16 isReadOnly);
 extern BOOL16 GLOBAL_FreeBlock( HGLOBAL16 handle );
 extern BOOL16 GLOBAL_MoveBlock( HGLOBAL16 handle, const void *ptr, DWORD size );
 extern HGLOBAL16 GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL16 hOwner,

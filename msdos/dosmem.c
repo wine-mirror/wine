@@ -413,9 +413,9 @@ BOOL DOSMEM_Init(BOOL dos_init)
             return FALSE;
         }
         DOSMEM_BiosDataSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0x400,
-                                     0x100, 0, FALSE, FALSE, FALSE, NULL );
+                                     0x100, 0, FALSE, FALSE, FALSE );
         DOSMEM_BiosSysSeg = GLOBAL_CreateBlock(GMEM_FIXED,DOSMEM_dosmem+0xf0000,
-                                     0x10000, 0, FALSE, FALSE, FALSE, NULL );
+                                     0x10000, 0, FALSE, FALSE, FALSE );
         base = DOSMEM_dosmem;
         do_init = TRUE;
     }
@@ -734,8 +734,7 @@ WORD DOSMEM_AllocSelector(WORD realsel)
 
 	sel=GLOBAL_CreateBlock(
 		GMEM_FIXED,DOSMEM_dosmem+realsel*16,0x10000,
-		hModule,FALSE,FALSE,FALSE,NULL
-	);
+		hModule,FALSE,FALSE,FALSE );
 	TRACE_(selector)("(0x%04x) returns 0x%04x.\n", realsel,sel);
 	return sel;
 }

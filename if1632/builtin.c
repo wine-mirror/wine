@@ -18,7 +18,6 @@
 #include "module.h"
 #include "miscemu.h"
 #include "stackframe.h"
-#include "process.h"
 #include "task.h"
 #include "debugtools.h"
 #include "toolhelp.h"
@@ -58,7 +57,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
     {
         hModule = GLOBAL_CreateBlock( GMEM_MOVEABLE, descr->module_start,
                                       descr->module_size, 0,
-                                            FALSE, FALSE, FALSE, NULL );
+                                      FALSE, FALSE, FALSE );
         if (!hModule) return 0;
         FarSetOwner16( hModule, hModule );
 
@@ -104,8 +103,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
 
     pSegTable = NE_SEG_TABLE( pModule );
     pSegTable->hSeg = GLOBAL_CreateBlock( GMEM_FIXED, descr->code_start,
-                                              pSegTable->minsize, hModule,
-                                              TRUE, TRUE, FALSE, NULL );
+                                          pSegTable->minsize, hModule, TRUE, TRUE, FALSE );
     if (!pSegTable->hSeg) return 0;
     pSegTable++;
 
