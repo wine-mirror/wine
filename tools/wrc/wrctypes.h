@@ -126,8 +126,8 @@ typedef struct font_id {
 enum res_e {
 	res_0 = 0,
 	res_cur,
-	res_ico,
 	res_bmp,
+	res_ico,
 	res_men,
 	res_dlg,
 	res_stt,

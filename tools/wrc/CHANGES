@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------
+Version 1.0.9 (01-Feb-1999)
+
+Albert den Haan <albertd@corel.ca>:
+- Fixed wrong order of res_ico and res_bmp which must be in RT_xxx order.
+
+---------------------------------------------------------------------------
 Version 1.0.8 (10-Jan-1999)
 
 Albert den Haan <albertd@corel.ca>:
