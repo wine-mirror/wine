@@ -685,6 +685,27 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
     return 1;
 }
 
+/*
+ *       DRIVE_GetCurrentDirectory
+ * Returns "X:\\path\\etc\\".
+ *
+ * Despite the API description, return required length including the 
+ * terminating null when buffer too small. This is the real behaviour.
+*/
+
+static UINT DRIVE_GetCurrentDirectory( UINT buflen, LPSTR buf )
+{
+    UINT ret;
+    const char *s = DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() );
+
+    assert(s);
+    ret = strlen(s) + 3; /* length of WHOLE current directory */
+    if (ret >= buflen) return ret + 1;
+    lstrcpynA( buf, "A:\\", MIN( 4, buflen ) );
+    if (buflen) buf[0] += DRIVE_GetCurrentDrive();
+    if (buflen > 3) lstrcpynA( buf + 3, s, buflen - 3 );
+    return ret;
+}
 
 /***********************************************************************
  *           GetDiskFreeSpace16   (KERNEL.422)
@@ -1000,32 +1021,24 @@ UINT WINAPI GetDriveTypeW( LPCWSTR root )
  */
 UINT16 WINAPI GetCurrentDirectory16( UINT16 buflen, LPSTR buf )
 {
-    return (UINT16)GetCurrentDirectoryA( buflen, buf );
+    return (UINT16)DRIVE_GetCurrentDirectory(buflen, buf);
 }
 
 
 /***********************************************************************
  *           GetCurrentDirectory32A   (KERNEL32.196)
- *
- * Returns "X:\\path\\etc\\".
- *
- * Despite the API description, return required length including the 
- * terminating null when buffer too small. This is the real behaviour.
  */
 UINT WINAPI GetCurrentDirectoryA( UINT buflen, LPSTR buf )
 {
     UINT ret;
-    const char *s = DRIVE_GetDosCwd( DRIVE_GetCurrentDrive() );
+    char longname[MAX_PATHNAME_LEN];
 
-    assert(s);
-    ret = strlen(s) + 3; /* length of WHOLE current directory */
-    if (ret >= buflen) return ret + 1;
-    lstrcpynA( buf, "A:\\", MIN( 4, buflen ) );
-    if (buflen) buf[0] += DRIVE_GetCurrentDrive();
-    if (buflen > 3) lstrcpynA( buf + 3, s, buflen - 3 );
+    ret = DRIVE_GetCurrentDirectory(buflen, buf);
+    GetLongPathNameA(buf, longname, buflen);
+    lstrcpyA(buf, longname);
+
     return ret;
 }
-
 
 /***********************************************************************
  *           GetCurrentDirectory32W   (KERNEL32.197)
