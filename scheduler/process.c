@@ -202,10 +202,12 @@ void PROCESS_CallUserSignalProc( UINT uCode, DWORD dwThreadOrProcessId, HMODULE 
     /* Get thread or process ID */
 
     if ( dwThreadOrProcessId == 0 )
+    {
         if ( uCode == USIG_THREAD_INIT || uCode == USIG_THREAD_EXIT )
             dwThreadOrProcessId = GetCurrentThreadId();
         else
             dwThreadOrProcessId = GetCurrentProcessId();
+    }
 
     /* Convert module handle to 16-bit */
 

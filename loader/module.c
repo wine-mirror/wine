@@ -116,16 +116,20 @@ static void MODULE_DoInitializeDLLs( WINE_MODREF *wm,
         skip = TRUE;
 
     if ( type == DLL_PROCESS_ATTACH )
+    {
         if ( wm->flags & WINE_MODREF_PROCESS_ATTACHED )
             skip = TRUE;
         else
             wm->flags |= WINE_MODREF_PROCESS_ATTACHED;
+    }
 
     if ( type == DLL_PROCESS_DETACH )
+    {
         if ( wm->flags & WINE_MODREF_PROCESS_DETACHED )
             skip = TRUE;
         else
             wm->flags |= WINE_MODREF_PROCESS_DETACHED;
+    }
 
     if ( !skip )
     {
