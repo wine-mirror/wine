@@ -1354,45 +1354,42 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
     UNICODE_STRING nt_name;
-    WCHAR *file_part, *ext;
+    WCHAR *file_part, *ext, *dllname;
     ULONG len;
+
+    /* first append .dll if needed */
+
+    dllname = NULL;
+    if (!(ext = strrchrW( libname, '.')) || strchrW( ext, '/' ) || strchrW( ext, '\\'))
+    {
+        if (!(dllname = RtlAllocateHeap( GetProcessHeap(), 0,
+                                         (strlenW(libname) * sizeof(WCHAR)) + sizeof(dllW) )))
+            return STATUS_NO_MEMORY;
+        strcpyW( dllname, libname );
+        strcatW( dllname, dllW );
+        libname = dllname;
+    }
 
     nt_name.Buffer = NULL;
     if (RtlDetermineDosPathNameType_U( libname ) == RELATIVE_PATH)
     {
         /* we need to search for it */
-        /* but first append .dll because RtlDosSearchPath extension handling is broken */
-        if (!(ext = strrchrW( libname, '.')) || strchrW( ext, '/' ) || strchrW( ext, '\\'))
-        {
-            WCHAR *dllname;
-
-            if (!(dllname = RtlAllocateHeap( GetProcessHeap(), 0,
-                                             (strlenW(libname) * sizeof(WCHAR)) + sizeof(dllW) )))
-                return STATUS_NO_MEMORY;
-            strcpyW( dllname, libname );
-            strcatW( dllname, dllW );
-            len = RtlDosSearchPath_U( load_path, dllname, NULL, *size, filename, &file_part );
-            RtlFreeHeap( GetProcessHeap(), 0, dllname );
-        }
-        else len = RtlDosSearchPath_U( load_path, libname, NULL, *size, filename, &file_part );
-
+        len = RtlDosSearchPath_U( load_path, libname, NULL, *size, filename, &file_part );
         if (len)
         {
-            if (len >= *size)
-            {
-                *size = len + sizeof(WCHAR);
-                return STATUS_BUFFER_TOO_SMALL;
-            }
-            if ((*pwm = find_fullname_module( filename )) != NULL) return STATUS_SUCCESS;
+            if (len >= *size) goto overflow;
+            if ((*pwm = find_fullname_module( filename )) != NULL) goto found;
 
             /* check for already loaded module in a different path */
             if (!contains_path( libname ))
             {
-                if ((*pwm = find_basename_module( file_part )) != NULL) return STATUS_SUCCESS;
+                if ((*pwm = find_basename_module( file_part )) != NULL) goto found;
             }
             if (!RtlDosPathNameToNtPathName_U( filename, &nt_name, NULL, NULL ))
+            {
+                RtlFreeHeap( GetProcessHeap(), 0, dllname );
                 return STATUS_NO_MEMORY;
-
+            }
             attr.Length = sizeof(attr);
             attr.RootDirectory = 0;
             attr.Attributes = OBJ_CASE_INSENSITIVE;
@@ -1400,8 +1397,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
             attr.SecurityDescriptor = NULL;
             attr.SecurityQualityOfService = NULL;
             if (NtOpenFile( handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_DELETE, 0 )) *handle = 0;
-            RtlFreeUnicodeString( &nt_name );
-            return STATUS_SUCCESS;
+            goto found;
         }
 
         /* not found */
@@ -1413,31 +1409,21 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
             len = strlenW(libname) * sizeof(WCHAR);
             if (len >= *size) goto overflow;
             strcpyW( filename, libname );
-            if (!strchrW( filename, '.' ))
-            {
-                len += sizeof(dllW) - sizeof(WCHAR);
-                if (len >= *size) goto overflow;
-                strcatW( filename, dllW );
-            }
             *pwm = find_basename_module( filename );
-            return STATUS_SUCCESS;
+            goto found;
         }
     }
 
     /* absolute path name, or relative path name but not found above */
 
     if (!RtlDosPathNameToNtPathName_U( libname, &nt_name, &file_part, NULL ))
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, dllname );
         return STATUS_NO_MEMORY;
-
+    }
     len = nt_name.Length - 4*sizeof(WCHAR);  /* for \??\ prefix */
     if (len >= *size) goto overflow;
     memcpy( filename, nt_name.Buffer + 4, len + sizeof(WCHAR) );
-    if (file_part && !strchrW( file_part, '.' ))
-    {
-        len += sizeof(dllW) - sizeof(WCHAR);
-        if (len >= *size) goto overflow;
-        strcatW( filename, dllW );
-    }
     if (!(*pwm = find_fullname_module( filename )))
     {
         attr.Length = sizeof(attr);
@@ -1448,11 +1434,14 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
         attr.SecurityQualityOfService = NULL;
         if (NtOpenFile( handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_DELETE, 0 )) *handle = 0;
     }
+found:
     RtlFreeUnicodeString( &nt_name );
+    RtlFreeHeap( GetProcessHeap(), 0, dllname );
     return STATUS_SUCCESS;
 
 overflow:
     RtlFreeUnicodeString( &nt_name );
+    RtlFreeHeap( GetProcessHeap(), 0, dllname );
     *size = len + sizeof(WCHAR);
     return STATUS_BUFFER_TOO_SMALL;
 }
