@@ -59,9 +59,9 @@
 
 
 #ifdef _SHELL_FOLDERS
-#define	DEFAULT_SPLIT_POS	300;
+#define	DEFAULT_SPLIT_POS	300
 #else
-#define	DEFAULT_SPLIT_POS	200;
+#define	DEFAULT_SPLIT_POS	200
 #endif
 
 
@@ -177,6 +177,7 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam
 LRESULT CALLBACK TreeWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam);
 
 
+/* display error message for the specified WIN32 error code */
 static void display_error(HWND hwnd, DWORD error)
 {
 	PTSTR msg;
@@ -190,6 +191,7 @@ static void display_error(HWND hwnd, DWORD error)
 	LocalFree(msg);
 }
 
+/* allocate and initialise a directory entry */
 static Entry* alloc_entry()
 {
 	Entry* entry = (Entry*) malloc(sizeof(Entry));
@@ -383,7 +385,7 @@ static Entry* read_tree_win(Root* root, LPCTSTR path, SORT_ORDER sortOrder, HWND
 
 #if !defined(_NO_EXTENSIONS) && defined(__WINE__)
 
-BOOL time_to_filetime(const time_t* t, FILETIME* ftime)
+static BOOL time_to_filetime(const time_t* t, FILETIME* ftime)
 {
 	struct tm* tm = gmtime(t);
 	SYSTEMTIME stime;
