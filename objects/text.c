@@ -157,9 +157,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
             FIXME("called on an open path\n");
 		else if(dc->funcs->pExtTextOut)
 		{
-			DWORD fontLangInfo=0;
-			if( !(flags&(ETO_GLYPH_INDEX|ETO_IGNORELANGUAGE)) &&
-			   ((fontLangInfo=GetFontLanguageInfo( hdc ))&(GCP_REORDER|GCP_GLYPHSHAPE)) )
+			if( !(flags&(ETO_GLYPH_INDEX|ETO_IGNORELANGUAGE)) )
 			{
 				/* The caller did not specify that language processing was already done,
 				 * and the font idetifies iteself as requiring language processing.
