@@ -24,8 +24,8 @@ int current_line = 0;
 static SPEC_TYPE SpecType = SPEC_INVALID;
 
 static char ParseBuffer[512];
+static char TokenBuffer[512];
 static char *ParseNext = ParseBuffer;
-static char ParseSaveChar;
 static FILE *input_file;
 
 static const char * const TypeNames[TYPE_NBTYPES] =
@@ -53,7 +53,7 @@ static const char * const FlagNames[] =
     NULL
 };
 
-static int IsNumberString(char *s)
+static int IsNumberString(const char *s)
 {
     while (*s) if (!isdigit(*s++)) return 0;
     return 1;
@@ -64,60 +64,49 @@ inline static int is_token_separator( char ch )
     return (ch == '(' || ch == ')' || ch == '-');
 }
 
-static char * GetTokenInLine(void)
+static const char * GetTokenInLine(void)
 {
-    char *p;
-    char *token;
+    char *p = ParseNext;
+    char *token = TokenBuffer;
 
-    if (ParseNext != ParseBuffer)
-    {
-	if (ParseSaveChar == '\0')
-	    return NULL;
-	*ParseNext = ParseSaveChar;
-    }
-    
     /*
      * Remove initial white space.
      */
-    for (p = ParseNext; isspace(*p); p++)
-	;
-    
-    if ((*p == '\0') || (*p == '#'))
-	return NULL;
-    
+    while (isspace(*p)) p++;
+
+    if ((*p == '\0') || (*p == '#')) return NULL;
+
     /*
      * Find end of token.
      */
-    token = p++;
-    if (!is_token_separator(*token))
-        while (*p != '\0' && !is_token_separator(*p) && !isspace(*p))
-	    p++;
-    
-    ParseSaveChar = *p;
+    if (is_token_separator(*p))
+    {
+        /* a separator is always a complete token */
+        *token++ = *p++;
+    }
+    else while (*p != '\0' && !is_token_separator(*p) && !isspace(*p))
+    {
+        if (*p == '\\') p++;
+        if (*p) *token++ = *p++;
+    }
+    *token = '\0';
     ParseNext = p;
-    *p = '\0';
-
-    return token;
+    return TokenBuffer;
 }
 
-static char * GetToken( int allow_eof )
+static const char * GetToken( int allow_eof )
 {
-    char *token;
+    const char *token;
 
     while ((token = GetTokenInLine()) == NULL)
     {
 	ParseNext = ParseBuffer;
-	while (1)
-	{
-            current_line++;
-	    if (fgets(ParseBuffer, sizeof(ParseBuffer), input_file) == NULL)
-            {
-                if (!allow_eof) fatal_error( "Unexpected end of file\n" );
-                return NULL;
-            }
-	    if (ParseBuffer[0] != '#')
-		break;
-	}
+        current_line++;
+        if (fgets(ParseBuffer, sizeof(ParseBuffer), input_file) == NULL)
+        {
+            if (!allow_eof) fatal_error( "Unexpected end of file\n" );
+            return NULL;
+        }
     }
     return token;
 }
@@ -130,7 +119,7 @@ static char * GetToken( int allow_eof )
  */
 static void ParseDebug(void)
 {
-    char *token = GetToken(0);
+    const char *token = GetToken(0);
     if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
     for (;;)
     {
@@ -150,7 +139,7 @@ static void ParseDebug(void)
  */
 static void ParseIgnore(void)
 {
-    char *token = GetToken(0);
+    const char *token = GetToken(0);
     if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
     for (;;)
     {
@@ -172,8 +161,8 @@ static void ParseVariable( ORDDEF *odp )
     int *value_array;
     int n_values;
     int value_array_size;
-    
-    char *token = GetToken(0);
+
+    const char *token = GetToken(0);
     if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
 
     n_values = 0;
@@ -210,7 +199,7 @@ static void ParseVariable( ORDDEF *odp )
  */
 static void ParseExportFunction( ORDDEF *odp )
 {
-    char *token;
+    const char *token;
     unsigned int i;
 
     switch(SpecType)
@@ -291,8 +280,8 @@ static void ParseExportFunction( ORDDEF *odp )
 static void ParseEquate( ORDDEF *odp )
 {
     char *endptr;
-    
-    char *token = GetToken(0);
+
+    const char *token = GetToken(0);
     int value = strtol(token, &endptr, 0);
     if (endptr == NULL || *endptr != '\0')
 	fatal_error( "Expected number value, got '%s'\n", token );
@@ -321,7 +310,7 @@ static void ParseStub( ORDDEF *odp )
  */
 static void ParseInterrupt( ORDDEF *odp )
 {
-    char *token;
+    const char *token;
 
     if (SpecType == SPEC_WIN32)
         fatal_error( "'interrupt' not supported for Win32\n" );
@@ -368,10 +357,10 @@ static void ParseForward( ORDDEF *odp )
  *
  * Parse the optional flags for an entry point
  */
-static char *ParseFlags( ORDDEF *odp )
+static const char *ParseFlags( ORDDEF *odp )
 {
     unsigned int i;
-    char *token;
+    const char *token;
 
     do
     {
@@ -407,7 +396,7 @@ static void fix_export_name( char *name )
  */
 static void ParseOrdinal(int ordinal)
 {
-    char *token;
+    const char *token;
 
     ORDDEF *odp = xmalloc( sizeof(*odp) );
     memset( odp, 0, sizeof(*odp) );
@@ -534,7 +523,7 @@ static void sort_names(void)
  */
 SPEC_TYPE ParseTopLevel( FILE *file )
 {
-    char *token;
+    const char *token;
 
     input_file = file;
     current_line = 1;
