@@ -1748,7 +1748,7 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
   CHAR szDispText[DISP_TEXT_SIZE];
   LVITEMA lvItem;
 
-  TRACE("(hwnd=%x, hdc=%x, nItem=%d, nSubItem=%d\n", hwnd, hdc, 
+  TRACE("(hwnd=%x, hdc=%x, nItem=%d, nSubItem=%d)\n", hwnd, hdc, 
         nItem, nSubItem);
 
   /* get information needed for drawing the item */
@@ -1792,7 +1792,7 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem)
   DWORD dwBkColor;
   DWORD dwTextColor;
 
-  TRACE("(hwnd=%x, hdc=%x, nItem=%d\n", hwnd, hdc, nItem);
+  TRACE("(hwnd=%x, hdc=%x, nItem=%d)\n", hwnd, hdc, nItem);
 
   /* get information needed for drawing the item */
   ZeroMemory(&lvItem, sizeof(LVITEMA));
@@ -3604,8 +3604,8 @@ static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
     lpSubItem = LISTVIEW_GetSubItemPtr(hdpaSubItems, lpLVItem->iSubItem);
     if (lpSubItem != NULL)
     {
-      piImage=&lpItem->iImage;
-      ppszText=&lpItem->pszText;
+      piImage=&lpSubItem->iImage;
+      ppszText=&lpSubItem->pszText;
     }
     else
     {
