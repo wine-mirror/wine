@@ -2520,16 +2520,16 @@ typedef struct _FPO_DATA {
   DWORD cbProcSize;
   DWORD cdwLocals;
   WORD  cdwParams;
-  unsigned cbProlog : 8;
-  unsigned cbRegs   : 3;
-  unsigned fHasSEH  : 1;
-  unsigned fUseBP   : 1;
-  unsigned reserved : 1;
-  unsigned cbFrame  : 2;
+  WORD  cbProlog : 8;
+  WORD  cbRegs   : 3;
+  WORD  fHasSEH  : 1;
+  WORD  fUseBP   : 1;
+  WORD  reserved : 1;
+  WORD  cbFrame  : 2;
 } FPO_DATA, *PFPO_DATA;
 
 typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY {
-  DWORD Characteristics;
+  DWORD Size;
   DWORD TimeDateStamp;
   WORD  MajorVersion;
   WORD  MinorVersion;
@@ -2546,7 +2546,9 @@ typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY {
   WORD  CSDVersion;
   WORD  Reserved1;
   PVOID EditList;
-  DWORD Reserved[1];
+  DWORD SecurityCookie;
+  DWORD SEHandlerTable;
+  DWORD SEHandlerCount;
 } IMAGE_LOAD_CONFIG_DIRECTORY, *PIMAGE_LOAD_CONFIG_DIRECTORY;
 
 typedef struct _IMAGE_FUNCTION_ENTRY {

@@ -397,6 +397,16 @@ static void test_pack_FLOATING_SAVE_AREA(void)
     TEST_FIELD(FLOATING_SAVE_AREA, DWORD, Cr0NpxState, 108, 4, 4);
 }
 
+static void test_pack_FPO_DATA(void)
+{
+    /* FPO_DATA (pack 4) */
+    TEST_TYPE(FPO_DATA, 16, 4);
+    TEST_FIELD(FPO_DATA, DWORD, ulOffStart, 0, 4, 4);
+    TEST_FIELD(FPO_DATA, DWORD, cbProcSize, 4, 4, 4);
+    TEST_FIELD(FPO_DATA, DWORD, cdwLocals, 8, 4, 4);
+    TEST_FIELD(FPO_DATA, WORD, cdwParams, 12, 2, 2);
+}
+
 static void test_pack_GENERIC_MAPPING(void)
 {
     /* GENERIC_MAPPING (pack 4) */
@@ -584,8 +594,8 @@ static void test_pack_IMAGE_IMPORT_DESCRIPTOR(void)
 static void test_pack_IMAGE_LOAD_CONFIG_DIRECTORY(void)
 {
     /* IMAGE_LOAD_CONFIG_DIRECTORY (pack 4) */
-    TEST_TYPE(IMAGE_LOAD_CONFIG_DIRECTORY, 64, 4);
-    TEST_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY, DWORD, Characteristics, 0, 4, 4);
+    TEST_TYPE(IMAGE_LOAD_CONFIG_DIRECTORY, 72, 4);
+    TEST_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY, DWORD, Size, 0, 4, 4);
     TEST_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY, DWORD, TimeDateStamp, 4, 4, 4);
     TEST_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY, WORD, MajorVersion, 8, 2, 2);
     TEST_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY, WORD, MinorVersion, 10, 2, 2);
@@ -602,7 +612,9 @@ static void test_pack_IMAGE_LOAD_CONFIG_DIRECTORY(void)
     TEST_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY, WORD, CSDVersion, 52, 2, 2);
     TEST_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY, WORD, Reserved1, 54, 2, 2);
     TEST_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY, PVOID, EditList, 56, 4, 4);
-    TEST_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY, DWORD[1], Reserved, 60, 4, 4);
+    TEST_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY, DWORD, SecurityCookie, 60, 4, 4);
+    TEST_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY, DWORD, SEHandlerTable, 64, 4, 4);
+    TEST_FIELD(IMAGE_LOAD_CONFIG_DIRECTORY, DWORD, SEHandlerCount, 68, 4, 4);
 }
 
 static void test_pack_IMAGE_NT_HEADERS(void)
@@ -1034,6 +1046,13 @@ static void test_pack_PFLOATING_SAVE_AREA(void)
     TEST_TYPE_POINTER(PFLOATING_SAVE_AREA, 112, 4);
 }
 
+static void test_pack_PFPO_DATA(void)
+{
+    /* PFPO_DATA */
+    TEST_TYPE(PFPO_DATA, 4, 4);
+    TEST_TYPE_POINTER(PFPO_DATA, 16, 4);
+}
+
 static void test_pack_PGENERIC_MAPPING(void)
 {
     /* PGENERIC_MAPPING */
@@ -1155,7 +1174,7 @@ static void test_pack_PIMAGE_LOAD_CONFIG_DIRECTORY(void)
 {
     /* PIMAGE_LOAD_CONFIG_DIRECTORY */
     TEST_TYPE(PIMAGE_LOAD_CONFIG_DIRECTORY, 4, 4);
-    TEST_TYPE_POINTER(PIMAGE_LOAD_CONFIG_DIRECTORY, 64, 4);
+    TEST_TYPE_POINTER(PIMAGE_LOAD_CONFIG_DIRECTORY, 72, 4);
 }
 
 static void test_pack_PIMAGE_NT_HEADERS(void)
@@ -2065,6 +2084,7 @@ static void test_pack(void)
     test_pack_FARPROC();
     test_pack_FLOAT();
     test_pack_FLOATING_SAVE_AREA();
+    test_pack_FPO_DATA();
     test_pack_GENERIC_MAPPING();
     test_pack_GLOBALHANDLE();
     test_pack_HALF_PTR();
@@ -2151,6 +2171,7 @@ static void test_pack(void)
     test_pack_PEXCEPTION_POINTERS();
     test_pack_PEXCEPTION_RECORD();
     test_pack_PFLOATING_SAVE_AREA();
+    test_pack_PFPO_DATA();
     test_pack_PGENERIC_MAPPING();
     test_pack_PHANDLE();
     test_pack_PIMAGE_ARCHIVE_MEMBER_HEADER();
