@@ -1100,7 +1100,9 @@ LONG MCICDAUDIO_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case DRV_INSTALL:		return DRVCNF_RESTART;
     case DRV_REMOVE:		return DRVCNF_RESTART;
 
-    case MCI_OPEN_DRIVER:	return CDAUDIO_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMS32A)dwParam2); 
+    case MCI_OPEN:
+    case MCI_OPEN_DRIVER:	return CDAUDIO_mciOpen(dwDevID, dwParam1, (LPMCI_OPEN_PARMS32A)dwParam2);
+    case MCI_CLOSE:
     case MCI_CLOSE_DRIVER:	return CDAUDIO_mciClose(dwDevID, dwParam1, (LPMCI_GENERIC_PARMS)dwParam2);
     case MCI_GETDEVCAPS:	return CDAUDIO_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)dwParam2);
     case MCI_INFO:		return CDAUDIO_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS16)dwParam2);
@@ -1132,10 +1134,15 @@ LONG MCICDAUDIO_DriverProc32(DWORD dwDevID, HDRVR16 hDriv, DWORD wMsg,
     case MCI_PASTE:		
 	WARN(cdaudio, "Unsupported command=%s\n", MCI_CommandToString(wMsg));
 	break;
+/*
+ *	This is incorrect according to Microsoft...
+ *	http://support.microsoft.com/support/kb/articles/q137/5/79.asp
+ *
     case MCI_OPEN:
     case MCI_CLOSE:
 	FIXME(cdaudio, "Shouldn't receive a MCI_OPEN or CLOSE message\n");
 	break;
+ */
     default:
 	TRACE(cdaudio, "Sending msg=%s to default driver proc\n", MCI_CommandToString(wMsg));
 	return DefDriverProc32(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
