@@ -1142,9 +1142,15 @@ typedef CONTEXT *PCONTEXT;
 static DWORD __builtin_return_address(int p_iDepth)
 {
   asm("ta      3");
+  asm("tst     %i0");
+  asm("be      End");
   asm("mov     %fp, %l0");
-  while (p_iDepth--)
-    asm("ld      [%l0+56], %l0");
+  asm("Start:");
+  asm("sub     %i0, 1, %i0");
+  asm("tst     %i0");
+  asm("bne     Start");
+  asm("ld      [%l0+56], %l0");
+  asm("End:");
   asm("ld      [%l0+60], %i0");
 }
 #endif
