@@ -118,7 +118,7 @@ const WCHAR PropSheetInfoStr[] =
 /******************************************************************************
  * Prototypes
  */
-static BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo);
+static int PROPSHEET_CreateDialog(PropSheetInfo* psInfo);
 static BOOL PROPSHEET_SizeMismatch(HWND hwndDlg, PropSheetInfo* psInfo);
 static BOOL PROPSHEET_AdjustSize(HWND hwndDlg, PropSheetInfo* psInfo);
 static BOOL PROPSHEET_AdjustButtons(HWND hwndParent, PropSheetInfo* psInfo);
@@ -552,7 +552,7 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEW lppsp,
  *
  * Creates the actual property sheet.
  */
-BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
+int PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
 {
   LRESULT ret;
   LPCVOID template;
@@ -568,10 +568,10 @@ BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
   if(!(hRes = FindResourceW(COMCTL32_hModule,
                             MAKEINTRESOURCEW(resID),
                             RT_DIALOGW)))
-    return FALSE;
+    return -1;
 
   if(!(template = (LPVOID)LoadResource(COMCTL32_hModule, hRes)))
-    return FALSE;
+    return -1;
 
   /*
    * Make a copy of the dialog template.
@@ -581,7 +581,7 @@ BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
   temp = COMCTL32_Alloc(resSize);
 
   if (!temp)
-    return FALSE;
+    return -1;
 
   memcpy(temp, template, resSize);
 
@@ -595,11 +595,14 @@ BOOL PROPSHEET_CreateDialog(PropSheetInfo* psInfo)
                                     PROPSHEET_DialogProc,
                                     (LPARAM)psInfo);
   else
-      ret = CreateDialogIndirectParamW(psInfo->ppshheader.hInstance,
-                                       (LPDLGTEMPLATEW) temp,
-                                       psInfo->ppshheader.hwndParent,
-                                       PROPSHEET_DialogProc,
-                                       (LPARAM)psInfo) ? TRUE : FALSE;
+  {
+      ret = (int)CreateDialogIndirectParamW(psInfo->ppshheader.hInstance,
+                                            (LPDLGTEMPLATEW) temp,
+                                            psInfo->ppshheader.hwndParent,
+                                            PROPSHEET_DialogProc,
+                                            (LPARAM)psInfo);
+      if ( !ret ) ret = -1;
+  }
 
   COMCTL32_Free(temp);
 
