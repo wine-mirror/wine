@@ -80,17 +80,9 @@ BOOL RELAY_Init(void)
  */
 #ifndef __i386__
 /***********************************************************************
- *		wine_call_to_16_word (KERNEL32.@)
+ *		wine_call_to_16 (KERNEL32.@)
  */
-WORD WINAPI wine_call_to_16_word( FARPROC16 target, INT nArgs )
-{
-    assert( FALSE );
-}
-
-/***********************************************************************
- *		wine_call_to_16_long (KERNEL32.@)
- */
-LONG WINAPI wine_call_to_16_long( FARPROC16 target, INT nArgs )
+LONG WINAPI wine_call_to_16( FARPROC16 target, INT nArgs )
 {
     assert( FALSE );
 }

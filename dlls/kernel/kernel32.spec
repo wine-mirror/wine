@@ -1026,8 +1026,7 @@ init	MAIN_KernelInit
 @ varargs __wine_call_from_16_word() __wine_call_from_16_word
 @ varargs __wine_call_from_16_long() __wine_call_from_16_long
 @ varargs __wine_call_from_16_regs() __wine_call_from_16_regs
-@ stdcall wine_call_to_16_word(ptr long) wine_call_to_16_word
-@ stdcall wine_call_to_16_long(ptr long) wine_call_to_16_long
+@ stdcall wine_call_to_16(ptr long) wine_call_to_16
 @ stdcall wine_call_to_16_regs_short(ptr long) wine_call_to_16_regs_short
 @ stdcall wine_call_to_16_regs_long (ptr long) wine_call_to_16_regs_long
 

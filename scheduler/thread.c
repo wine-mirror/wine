@@ -337,7 +337,7 @@ static DWORD CALLBACK THREAD_StartThread16( LPVOID threadArgs )
     HeapFree( GetProcessHeap(), 0, threadArgs );
 
     ((LPDWORD)CURRENT_STACK16)[-1] = param;
-    return wine_call_to_16_long( start, sizeof(DWORD) );
+    return wine_call_to_16( start, sizeof(DWORD) );
 }
 HANDLE WINAPI CreateThread16( SECURITY_ATTRIBUTES *sa, DWORD stack,
                               FARPROC16 start, SEGPTR param,

@@ -285,7 +285,7 @@ BOOL WINAPI K32WOWCallback16Ex( DWORD vpfn16, DWORD dwFlags,
      * stack pointer is always reset to the position it had before.
      */
 
-    ret = wine_call_to_16_long( (FARPROC16)vpfn16, cbArgs );
+    ret = wine_call_to_16( (FARPROC16)vpfn16, cbArgs );
 
     if ( pdwRetCode )
         *pdwRetCode = ret;

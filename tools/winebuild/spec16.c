@@ -505,8 +505,7 @@ static void BuildCallTo16Func( FILE *outfile, const char *profile, const char *p
         fprintf( outfile, " *)args = arg%d;\n", i+1 );
     }
 
-    fprintf( outfile, "    return wine_call_to_16_%s( proc, %d );\n}\n\n",
-             short_ret? "word" : "long", argsize );
+    fprintf( outfile, "    return wine_call_to_16( proc, %d );\n}\n\n", argsize );
 #else  /* __i386__ */
     fprintf( outfile, "    assert(0);\n}\n\n" );
 #endif  /* __i386__ */
@@ -914,8 +913,7 @@ void BuildGlue( FILE *outfile, const char *srcdir, char **argv )
     output_file_header( outfile );
 
 #ifdef __i386__
-    fprintf( outfile, "extern unsigned short __stdcall wine_call_to_16_word( void (*target)(), int args );\n" );
-    fprintf( outfile, "extern unsigned int __stdcall wine_call_to_16_long( void (*target)(), int args );\n\n" );
+    fprintf( outfile, "extern unsigned int __stdcall wine_call_to_16( void (*target)(), int args );\n\n" );
 #else
     fprintf( outfile, "#include <assert.h>\n\n" );
 #endif
