@@ -1130,7 +1130,7 @@ HRESULT WINAPI Xlib_IDirectDraw2Impl_GetFourCCCodes(
   XvImageFormatValues *fo;
   int array_size = *lpNumCodes;
 
-  TRACE("(%p,%p,%p) - %d slots available\n",This, lpNumCodes, lpCodes, *lpNumCodes);
+  TRACE("(%p,%p,%p) - %ld slots available\n",This, lpNumCodes, lpCodes, *lpNumCodes);
   
   fo = TSXvListImageFormats(display, ddpriv->port_id, lpNumCodes);
   if (fo == NULL) *lpNumCodes = 0; /* I am not sure if X is clean in this case... */
