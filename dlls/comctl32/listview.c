@@ -1220,6 +1220,7 @@ static void LISTVIEW_UpdateScroll(LISTVIEW_INFO *infoPtr)
  */
 static void LISTVIEW_ShowFocusRect(LISTVIEW_INFO *infoPtr, BOOL fShow)
 {
+    UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
     HDC hdc;
 
     TRACE("fShow=%d, nItem=%d\n", fShow, infoPtr->nFocusedItem);
@@ -1242,7 +1243,8 @@ static void LISTVIEW_ShowFocusRect(LISTVIEW_INFO *infoPtr, BOOL fShow)
 
     if (!(hdc = GetDC(infoPtr->hwndSelf))) return;
 
-    if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
+    /* for some reason, owner draw should work only in report mode */
+    if ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (uView == LVS_REPORT))
     {
 	DRAWITEMSTRUCT dis;
 	LVITEMW item;
@@ -1415,8 +1417,7 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
 	if (!(lpLVItem->mask & LVIF_STATE) || 
 	    !(lpLVItem->stateMask & LVIS_FOCUSED)) 
 	    return FALSE;
-	if ((lpLVItem->state & LVIS_FOCUSED) &&
-	    !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED))
+	if (lpLVItem->state & LVIS_FOCUSED)
 	    oversizedBox = doLabel = TRUE;
     }
     if (lprcLabel) doLabel = TRUE;
@@ -1501,15 +1502,15 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
     {
 	SIZE labelSize = { 0, 0 };
 
-	/* we need the text in non owner draw mode */
-	if (!(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && !(lpLVItem->mask & LVIF_TEXT)) return FALSE;
-	
-	if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
+	if ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (uView == LVS_REPORT))
 	{
 	   labelSize.cx = infoPtr->nItemWidth;
 	   labelSize.cy = infoPtr->nItemHeight;
+	   goto calc_label;
 	}
-	else if (is_textT(lpLVItem->pszText, TRUE))
+	/* we need the text in non owner draw mode */
+	if (!(lpLVItem->mask & LVIF_TEXT)) return FALSE;
+	if (is_textT(lpLVItem->pszText, TRUE))
         {
     	    HFONT hFont = infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont;
     	    HDC hdc = GetDC(infoPtr->hwndSelf);
@@ -1539,25 +1540,22 @@ static BOOL LISTVIEW_GetItemMetrics(LISTVIEW_INFO *infoPtr, LVITEMW *lpLVItem,
     	    ReleaseDC(infoPtr->hwndSelf, hdc);
 	}
 
+calc_label:
 	if (uView == LVS_ICON)
 	{
 	    Label.left = Box.left + (infoPtr->iconSpacing.cx - labelSize.cx) / 2;
 	    Label.top  = Box.top + ICON_TOP_PADDING_HITABLE +
 		         infoPtr->iconSize.cy + ICON_BOTTOM_PADDING;
 	    Label.right = Label.left + labelSize.cx;
-	    if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
-	        Label.bottom = Label.top + infoPtr->nItemHeight;
-	    else
+	    Label.bottom = Label.top + infoPtr->nItemHeight;
+	    if (!oversizedBox && labelSize.cy > infoPtr->ntmHeight)
 	    {
-		if (!oversizedBox && labelSize.cy > infoPtr->ntmHeight)
-		{
-		    labelSize.cy = min(Box.bottom - Label.top, labelSize.cy);
-		    labelSize.cy /= infoPtr->ntmHeight;
-		    labelSize.cy = max(labelSize.cy, 1);
-		    labelSize.cy *= infoPtr->ntmHeight;
-		}
-	        Label.bottom = Label.top + labelSize.cy + HEIGHT_PADDING;
-	    }
+		labelSize.cy = min(Box.bottom - Label.top, labelSize.cy);
+		labelSize.cy /= infoPtr->ntmHeight;
+		labelSize.cy = max(labelSize.cy, 1);
+		labelSize.cy *= infoPtr->ntmHeight;
+	     }
+	     Label.bottom = Label.top + labelSize.cy + HEIGHT_PADDING;
 	}
 	else /* LVS_SMALLICON, LVS_LIST or LVS_REPORT */
 	{
@@ -1637,8 +1635,7 @@ static BOOL LISTVIEW_GetItemMeasures(LISTVIEW_INFO *infoPtr, INT nItem,
         else doLabel = TRUE;
     }
     if (uView == LVS_ICON && (lprcBox || lprcBounds || lprcLabel) &&
-	infoPtr->bFocus && !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) &&
-	LISTVIEW_GetItemState(infoPtr, nItem, LVIS_FOCUSED))
+	infoPtr->bFocus && LISTVIEW_GetItemState(infoPtr, nItem, LVIS_FOCUSED))
 	oversizedBox = doLabel = TRUE;
     if (lprcLabel) doLabel = TRUE;
     if (doLabel || lprcIcon) doIcon = TRUE;
@@ -3637,22 +3634,22 @@ static void LISTVIEW_Refresh(LISTVIEW_INFO *infoPtr, HDC hdc)
     /* nothing to draw */
     if(infoPtr->nItemCount == 0) goto enddraw;
 
-    if (uView == LVS_ICON)
-	LISTVIEW_RefreshIcon(infoPtr, hdc, cdmode);
-    else if (uView == LVS_REPORT)
+    if ((infoPtr->dwStyle & LVS_OWNERDRAWFIXED) && (uView == LVS_REPORT))
+	LISTVIEW_RefreshOwnerDraw(infoPtr, hdc);
+    else
     {
-        if (infoPtr->dwStyle & LVS_OWNERDRAWFIXED)
-            LISTVIEW_RefreshOwnerDraw(infoPtr, hdc);
-        else
+	if (uView == LVS_ICON)
+	    LISTVIEW_RefreshIcon(infoPtr, hdc, cdmode);
+    	else if (uView == LVS_REPORT)
             LISTVIEW_RefreshReport(infoPtr, hdc, cdmode);
+	else /* LVS_LIST or LVS_SMALLICON */
+	    LISTVIEW_RefreshList(infoPtr, hdc, cdmode);
+
+	/* if we have a focus rect, draw it */
+	if (infoPtr->bFocus)
+	    DrawFocusRect(hdc, &infoPtr->rcFocus);
     }
-    else /* LVS_LIST or LVS_SMALLICON */
-	LISTVIEW_RefreshList(infoPtr, hdc, cdmode);
-
-    /* if we have a focus rect, draw it */
-    if (infoPtr->bFocus && !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED))
-	DrawFocusRect(hdc, &infoPtr->rcFocus);
-
+    
 enddraw:
     if (cdmode & CDRF_NOTIFYPOSTPAINT)
 	notify_customdraw(infoPtr, CDDS_POSTPAINT, &nmlvcd);
@@ -5527,8 +5524,7 @@ static LRESULT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BO
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return -1;
    
     /* first deal with the large items */
-    if (uView == LVS_ICON && !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) &&
-	PtInRect (&infoPtr->rcFocus, lpht->pt))
+    if (uView == LVS_ICON && PtInRect (&infoPtr->rcFocus, lpht->pt))
     {
 	lpht->iItem = infoPtr->nFocusedItem;
     }
@@ -5873,6 +5869,7 @@ static LRESULT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, 
 	nItem = DPA_InsertPtr(hdpaSubItems, 0, lpItem);
     if (nItem == -1) goto fail;
 
+    /* FIXME: is the handling of this LVS_OWNERDRAWFIXED correct? */
     is_sorted = (lStyle & (LVS_SORTASCENDING | LVS_SORTDESCENDING)) &&
 	        !(lStyle & LVS_OWNERDRAWFIXED) && (LPSTR_TEXTCALLBACKW != lpLVItem->pszText);
 
