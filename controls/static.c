@@ -299,7 +299,10 @@ LRESULT WINAPI StaticWndProc( HWND hWnd, UINT uMsg, WPARAM wParam,
         goto END;
 
     case WM_NCHITTEST:
-        lResult = HTTRANSPARENT;
+        if (wndPtr->dwStyle & SS_NOTIFY)
+           lResult = HTCLIENT;
+        else
+           lResult = HTTRANSPARENT;
         goto END;
 
     case WM_GETDLGCODE:
