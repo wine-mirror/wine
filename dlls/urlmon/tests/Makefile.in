@@ -3,7 +3,8 @@ TOPOBJDIR = ../../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = urlmon.dll
-IMPORTS   = urlmon
+IMPORTS   = urlmon user32
+EXTRALIBS = -luuid
 
 CTESTS = \
 	generated.c \

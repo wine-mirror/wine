@@ -29,8 +29,18 @@
 
 #include "wine/test.h"
 
+#ifdef NONAMELESSUNION
+# define U(x)  (x).u
+#else
+# define U(x)  (x)
+#endif
+
 static const WCHAR TEST_URL_1[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.','o','r','g','/','\0'};
 static const WCHAR TEST_PART_URL_1[] = {'/','t','e','s','t','/','\0'};
+
+static const WCHAR WINE_ABOUT_URL[] = {'h','t','t','p',':','/','/','w','w','w','.','w','i','n','e','h','q','.',
+                                       'o','r','g','/','s','i','t','e','/','a','b','o','u','t',0};
+static BOOL stopped_binding = FALSE;
 
 static void test_CreateURLMoniker(LPCWSTR url1, LPCWSTR url2)
 {
@@ -56,6 +66,8 @@ static void test_create()
 typedef struct {
     IBindStatusCallbackVtbl *lpVtbl;
     ULONG ref;
+    IBinding *pbind;
+    IStream *pstr;
 } statusclb;
 
 static HRESULT WINAPI statusclb_QueryInterface(IBindStatusCallback *iface, REFIID riid, void **ppvObject)
@@ -78,12 +90,19 @@ static ULONG WINAPI statusclb_Release(IBindStatusCallback *iface)
     return ref;
 }
 
-static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallback *iface,DWORD dwReserved, IBinding * pib)
+static HRESULT WINAPI statusclb_OnStartBinding(IBindStatusCallback *iface, DWORD dwReserved, IBinding *pib)
 {
-    return E_NOTIMPL;
+    statusclb *This = (statusclb*)iface;
+
+    This->pbind = pib;
+    ok(pib != NULL, "pib should not be NULL\n");
+    if(pib)
+        IBinding_AddRef(pib);
+
+    return S_OK;
 }
 
-static HRESULT WINAPI statusclb_GetPriority(IBindStatusCallback *iface, LONG * pnPriority)
+static HRESULT WINAPI statusclb_GetPriority(IBindStatusCallback *iface, LONG *pnPriority)
 {
     return E_NOTIMPL;
 }
@@ -96,26 +115,58 @@ static HRESULT WINAPI statusclb_OnLowResource(IBindStatusCallback *iface, DWORD 
 static HRESULT WINAPI statusclb_OnProgress(IBindStatusCallback *iface, ULONG ulProgress, ULONG ulProgressMax,
                            ULONG ulStatusCode, LPCWSTR szStatusText)
 {
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI statusclb_OnStopBinding(IBindStatusCallback *iface, HRESULT hresult, LPCWSTR szError)
 {
-    return E_NOTIMPL;
+    statusclb *This = (statusclb*)iface;
+
+    ok(SUCCEEDED(hresult), "Download failed: %08lx\n", hresult);
+    ok(szError == NULL, "szError should be NULL\n");
+    stopped_binding = TRUE;
+    IBinding_Release(This->pbind);
+    ok(This->pstr != NULL, "pstr should not be NULL here\n");
+    if(This->pstr)
+        IStream_Release(This->pstr);
+
+    return S_OK;
 }
 
-static HRESULT WINAPI statusclb_GetBindInfo(IBindStatusCallback *iface, DWORD *grfBINDF, BINDINFO * pbindinfo)
+static HRESULT WINAPI statusclb_GetBindInfo(IBindStatusCallback *iface, DWORD *grfBINDF, BINDINFO *pbindinfo)
 {
-    return E_NOTIMPL;
+    DWORD cbSize;
+
+    *grfBINDF = BINDF_ASYNCHRONOUS | BINDF_ASYNCSTORAGE | BINDF_PULLDATA;
+    cbSize = pbindinfo->cbSize;
+    memset(pbindinfo, 0, cbSize);
+    pbindinfo->cbSize = cbSize;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI statusclb_OnDataAvailable(IBindStatusCallback *iface, DWORD grfBSCF, DWORD dwSize,
-                           FORMATETC* pformatetc, STGMEDIUM* pstgmed)
+                                                FORMATETC* pformatetc, STGMEDIUM* pstgmed)
 {
-    return E_NOTIMPL;
+    statusclb *This = (statusclb*)iface;
+    HRESULT hres;
+    DWORD readed;
+    BYTE buf[512];
+    if(!This->pstr) {
+        ok(grfBSCF & BSCF_FIRSTDATANOTIFICATION, "pstr should be set when BSCF_FIRSTDATANOTIFICATION\n");
+        This->pstr = U(*pstgmed).pstm;
+        IStream_AddRef(This->pstr);
+        ok(This->pstr != NULL, "pstr should not be NULL here\n");
+    }
+
+    do hres = IStream_Read(This->pstr, buf, 512, &readed);
+    while(hres == S_OK);
+    ok(hres == S_FALSE || hres == E_PENDING, "IStream_Read returned %08lx\n", hres);
+
+    return S_OK;
 }
 
-static HRESULT WINAPI statusclb_OnObjectAvailable(IBindStatusCallback *iface, REFIID riid, IUnknown* punk)
+static HRESULT WINAPI statusclb_OnObjectAvailable(IBindStatusCallback *iface, REFIID riid, IUnknown *punk)
 {
     return E_NOTIMPL;
 }
@@ -139,6 +190,8 @@ static IBindStatusCallback* statusclb_create()
     statusclb *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(statusclb));
     ret->lpVtbl = &statusclbVtbl;
     ret->ref = 1;
+    ret->pbind = NULL;
+    ret->pstr = NULL;
     return (IBindStatusCallback*)ret;
 }
 
@@ -180,8 +233,67 @@ static void test_CreateAsyncBindCtx()
     ok(ref == 0, "bsc should be destroyed here\n");
 }
 
+static void test_BindToStorage()
+{
+    IMoniker *mon;
+    HRESULT hres;
+    LPOLESTR display_name;
+    IBindCtx *bctx;
+    MSG msg;
+    IBindStatusCallback *previousclb, *sclb = statusclb_create();
+    IUnknown *unk = (IUnknown*)0x00ff00ff;
+
+    hres = CreateAsyncBindCtx(0, sclb, NULL, &bctx);
+    ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08lx\n\n", hres);
+    if(FAILED(hres)) {
+        IBindStatusCallback_Release(sclb);
+        return;
+    }
+
+    hres = RegisterBindStatusCallback(bctx, sclb, &previousclb, 0);
+    ok(SUCCEEDED(hres), "RegisterBindStatusCallback failed: %08lx\n", hres);
+    ok(previousclb == sclb, "previousclb(%p) != sclb(%p)\n", previousclb, sclb);
+    if(previousclb)
+        IBindStatusCallback_Release(previousclb);
+
+    hres = CreateURLMoniker(NULL, WINE_ABOUT_URL, &mon);
+    ok(SUCCEEDED(hres), "failed to create moniker: %08lx\n", hres);
+    if(FAILED(hres)) {
+        IBindStatusCallback_Release(sclb);
+        IBindCtx_Release(bctx);
+        return;
+    }
+
+    hres = IMoniker_GetDisplayName(mon, bctx, NULL, &display_name);
+    ok(SUCCEEDED(hres), "GetDisplayName failed %08lx\n", hres);
+    ok(!lstrcmpW(display_name, WINE_ABOUT_URL), "GetDisplayName got wrong name\n");
+
+    hres = IMoniker_BindToStorage(mon, bctx, NULL, &IID_IStream, (void**)&unk);
+    ok(SUCCEEDED(hres), "IMoniker_BindToStorage failed: %08lx\n", hres);
+    todo_wine {
+        ok(unk == NULL, "istr should be NULL\n");
+    }
+    if(FAILED(hres)) {
+        IBindStatusCallback_Release(sclb);
+        IMoniker_Release(mon);
+        return;
+    }
+    if(unk)
+        IUnknown_Release(unk);
+
+    while(!stopped_binding && GetMessage(&msg,NULL,0,0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    ok(IMoniker_Release(mon) == 0, "mon should be destroyed here\n");
+    ok(IBindCtx_Release(bctx) == 0, "bctx should be destroyed here\n");
+    ok(IBindStatusCallback_Release(sclb) == 0, "scbl should be destroyed here\n");
+}
+
 START_TEST(url)
 {
     test_create();
     test_CreateAsyncBindCtx();
+    test_BindToStorage();
 }
