@@ -205,6 +205,7 @@ static type_t std_uhyper = { "MIDL_uhyper" };
 %type <str> libraryhdr
 
 %left ','
+%right COND
 %left '|'
 %left '&'
 %left '-' '+'
@@ -460,7 +461,7 @@ m_expr:						{ $$ = make_expr(EXPR_VOID); }
 expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| aHEXNUM				{ $$ = make_exprl(EXPR_HEXNUM, $1); }
 	| aIDENTIFIER				{ $$ = make_exprs(EXPR_IDENTIFIER, $1); }
-	| expr '?' expr ':' expr		{ $$ = make_expr3(EXPR_COND, $1, $3, $5); }
+	| expr '?' expr ':' expr %prec COND	{ $$ = make_expr3(EXPR_COND, $1, $3, $5); }
 	| expr '|' expr				{ $$ = make_expr2(EXPR_OR , $1, $3); }
 	| expr '&' expr				{ $$ = make_expr2(EXPR_AND, $1, $3); }
 	| expr '+' expr				{ $$ = make_expr2(EXPR_ADD, $1, $3); }
