@@ -1865,6 +1865,74 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wParam,
 
 
 /***********************************************************************
+ *		SendNotifyMessageA (USER32.@)
+ */
+BOOL WINAPI SendNotifyMessageA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    return SendNotifyMessageW( hwnd, msg, map_wparam_AtoW( msg, wParam ), lParam );
+}
+
+
+/***********************************************************************
+ *		SendNotifyMessageW (USER32.@)
+ */
+BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
+{
+    if (is_pointer_message(msg))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    return MSG_SendMessage( hwnd, msg, wParam, lParam, INFINITE, QMSG_WIN32W, NULL );
+}
+
+
+/***********************************************************************
+ *		SendMessageCallbackA (USER32.@)
+ */
+BOOL WINAPI SendMessageCallbackA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                                  SENDASYNCPROC callback, ULONG_PTR data )
+{
+    return SendMessageCallbackW( hwnd, msg, map_wparam_AtoW( msg, wParam ),
+                                 lParam, callback, data );
+}
+
+
+/***********************************************************************
+ *		SendMessageCallbackW (USER32.@)
+ *
+ * FIXME: It's like PostMessage. The callback gets called when the message
+ * is processed. We have to modify the message processing for an exact
+ * implementation...
+ * The callback is only called when the thread that called us calls one of
+ * Get/Peek/WaitMessage.
+ */
+BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
+                                  SENDASYNCPROC callback, ULONG_PTR data )
+{
+    LRESULT result;
+
+    if (is_pointer_message(msg))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    FIXME( "(0x%04x,0x%04x,0x%08x,0x%08lx,%p,0x%08x),stub!\n",
+           hwnd, msg, wParam, lParam, callback, data );
+
+    if (hwnd == HWND_BROADCAST)
+    {
+        PostMessageW( hwnd, msg, wParam, lParam );
+        FIXME("Broadcast: Callback will not be called!\n");
+        return TRUE;
+    }
+    result = SendMessageW( hwnd, msg, wParam, lParam );
+    callback( hwnd, msg, data, result );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *		WaitMessage (USER.112) Suspend thread pending messages
  *		WaitMessage (USER32.@) Suspend thread pending messages
  *
@@ -2530,61 +2598,4 @@ LONG WINAPI BroadcastSystemMessage(
 	      dwFlags,*recipients,uMessage,wParam,lParam
 	);
 	return 0;
-}
-
-/***********************************************************************
- *		SendNotifyMessageA (USER32.@)
- */
-BOOL WINAPI SendNotifyMessageA(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
-{
-   return MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE, QMSG_WIN32A, NULL);
-}
-
-/***********************************************************************
- *		SendNotifyMessageW (USER32.@)
- */
-BOOL WINAPI SendNotifyMessageW(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
-{
-   return MSG_SendMessage(hwnd, msg, wParam, lParam, INFINITE, QMSG_WIN32W, NULL);
-}
-
-/***********************************************************************
- *		SendMessageCallbackA (USER32.@)
- * FIXME: It's like PostMessage. The callback gets called when the message
- * is processed. We have to modify the message processing for an exact
- * implementation...
- * The callback is only called when the thread that called us calls one of
- * Get/Peek/WaitMessage.
- */
-BOOL WINAPI SendMessageCallbackA(
-	HWND hWnd,UINT Msg,WPARAM wParam,LPARAM lParam,
-	FARPROC lpResultCallBack,DWORD dwData)
-{	
-	FIXME("(0x%04x,0x%04x,0x%08x,0x%08lx,%p,0x%08lx),stub!\n",
-              hWnd,Msg,wParam,lParam,lpResultCallBack,dwData);
-	if ( hWnd == HWND_BROADCAST)
-	{	PostMessageA( hWnd, Msg, wParam, lParam);
-		FIXME("Broadcast: Callback will not be called!\n");
-		return TRUE;
-	}
-	(lpResultCallBack)( hWnd, Msg, dwData, SendMessageA ( hWnd, Msg, wParam, lParam ));
-		return TRUE;
-}
-/***********************************************************************
- *		SendMessageCallbackW (USER32.@)
- * FIXME: see SendMessageCallbackA.
- */
-BOOL WINAPI SendMessageCallbackW(
-	HWND hWnd,UINT Msg,WPARAM wParam,LPARAM lParam,
-	FARPROC lpResultCallBack,DWORD dwData)
-{	
-	FIXME("(0x%04x,0x%04x,0x%08x,0x%08lx,%p,0x%08lx),stub!\n",
-              hWnd,Msg,wParam,lParam,lpResultCallBack,dwData);
-	if ( hWnd == HWND_BROADCAST)
-	{	PostMessageW( hWnd, Msg, wParam, lParam);
-		FIXME("Broadcast: Callback will not be called!\n");
-		return TRUE;
-	}
-	(lpResultCallBack)( hWnd, Msg, dwData, SendMessageA ( hWnd, Msg, wParam, lParam ));
-		return TRUE;
 }
