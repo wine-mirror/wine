@@ -924,7 +924,3 @@ import  ntdll.dll
 #1599 wrong ordinal (249 in Win32s's W32SCOMB.DLL) !
 1599 stdcall Get16DLLAddress(long str) Get16DLLAddress
 
-# Wine internal functions
-1600 register SNOOP_Entry() SNOOP_Entry
-1601 register SNOOP_Return() SNOOP_Return
-1602 register RELAY_CallFrom32Regs() RELAY_CallFrom32Regs

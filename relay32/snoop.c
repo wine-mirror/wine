@@ -24,10 +24,10 @@ DEFAULT_DEBUG_CHANNEL(snoop)
 
 char **debug_snoop_excludelist = NULL, **debug_snoop_includelist = NULL;
 
+#ifdef __i386__
+
 extern void WINAPI SNOOP_Entry();
 extern void WINAPI SNOOP_Return();
-
-#ifdef __i386__
 
 #ifdef NEED_UNDERSCORE_PREFIX
 # define PREFIX "_"
@@ -251,7 +251,10 @@ SNOOP_PrintArg(DWORD x) {
 }
 
 #define CALLER1REF (*(DWORD*)ESP_reg(context))
-void WINAPI SNOOP_Entry( CONTEXT86 *context )
+
+void WINAPI SNOOP_DoEntry( CONTEXT86 *context );
+DEFINE_REGS_ENTRYPOINT_0( SNOOP_Entry, SNOOP_DoEntry );
+void WINAPI SNOOP_DoEntry( CONTEXT86 *context )
 {
 	DWORD		ordinal=0,entry = EIP_reg(context)-5;
 	SNOOP_DLL	*dll = firstdll;
@@ -331,7 +334,9 @@ void WINAPI SNOOP_Entry( CONTEXT86 *context )
 	DPRINTF(") ret=%08lx fs=%04lx\n",(DWORD)ret->origreturn,FS_reg(context));
 }
 
-void WINAPI SNOOP_Return( CONTEXT86 *context )
+void WINAPI SNOOP_DoReturn( CONTEXT86 *context );
+DEFINE_REGS_ENTRYPOINT_0( SNOOP_Return, SNOOP_DoReturn );
+void WINAPI SNOOP_DoReturn( CONTEXT86 *context )
 {
 	SNOOP_RETURNENTRY	*ret = (SNOOP_RETURNENTRY*)(EIP_reg(context)-5);
 

@@ -61,6 +61,8 @@ int RELAY_ShowDebugmsgRelay(const char *func) {
 }
 
 
+#ifdef __i386__
+
 /***********************************************************************
  *           RELAY_PrintArgs
  */
@@ -222,7 +224,9 @@ int RELAY_CallFrom32( int ret_addr, ... )
  *  ...    >128 bytes space free to be modified (ensured by the assembly glue)
  */
 
-void WINAPI RELAY_CallFrom32Regs( CONTEXT86 *context )
+void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context );
+DEFINE_REGS_ENTRYPOINT_0( RELAY_CallFrom32Regs, RELAY_DoCallFrom32Regs )
+void WINAPI RELAY_DoCallFrom32Regs( CONTEXT86 *context )
 {
     unsigned int typemask;
     char buffer[80];
@@ -301,4 +305,5 @@ void WINAPI RELAY_CallFrom32Regs( CONTEXT86 *context )
 
     SYSLEVEL_CheckNotLevel( 2 );
 }
+#endif /* __i386__ */
 
