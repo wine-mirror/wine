@@ -166,13 +166,13 @@ typedef struct tagBLOB
 
 typedef union tagCY {
     struct {
-#ifdef BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
         LONG  Hi;
         ULONG Lo;
-#else /* defined(BIG_ENDIAN) */
+#else
         ULONG Lo;
         LONG  Hi;
-#endif /* defined(BIG_ENDIAN) */
+#endif
     } DUMMYSTRUCTNAME;
     LONGLONG int64;
 } CY;
@@ -191,13 +191,13 @@ typedef struct tagDEC {
     ULONG Hi32;
     union {
         struct {
-#ifdef BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
             ULONG Mid32;
             ULONG Lo32;
-#else /* defined(BIG_ENDIAN) */
+#else
             ULONG Lo32;
             ULONG Mid32;
-#endif /* defined(BIG_ENDIAN) */
+#endif
         } DUMMYSTRUCTNAME2;
         ULONGLONG Lo64;
     } DUMMYUNIONNAME2;

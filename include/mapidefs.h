@@ -41,12 +41,12 @@ typedef unsigned long           LHANDLE, *LPLHANDLE;
 typedef union tagCY
 {
    struct {
-#ifdef BIG_ENDIAN
-        long Hi;
-        long Lo;
+#ifdef WORDS_BIGENDIAN
+       LONG Hi;
+       ULONG Lo;
 #else
-      unsigned long Lo;
-      long Hi;
+       ULONG Lo;
+       LONG Hi;
 #endif
    } u;
    LONGLONG int64;
