@@ -2073,7 +2073,7 @@ static DWORD WINAPI DSOUND_thread(LPVOID arg)
 
 #endif /* HAVE_OSS */
 
-HRESULT WINAPI DirectSoundCreate(LPGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUnkOuter )
+HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND *ppDS,IUnknown *pUnkOuter )
 {
 	if (lpGUID)
 		TRACE(dsound,"(%p,%p,%p)\n",lpGUID,ppDS,pUnkOuter);
