@@ -521,8 +521,8 @@ avifil32/avifil32.dll$(DLLEXT): dummy msvfw32.dll$(DLLEXT) kernel32.dll$(DLLEXT)
   ntdll.dll$(DLLEXT)
 	@cd avifil32 && $(MAKE) avifil32.dll$(DLLEXT)
 
-comctl32/comctl32.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+comctl32/comctl32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
+  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT) winmm.dll$(DLLEXT)
 	@cd comctl32 && $(MAKE) comctl32.dll$(DLLEXT)
 
 commdlg/comdlg32.dll$(DLLEXT): dummy shell32.dll$(DLLEXT) shlwapi.dll$(DLLEXT) \
@@ -560,8 +560,8 @@ dplayx/dplayx.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) ole32.dll$(DLLEXT) \
   user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd dplayx && $(MAKE) dplayx.dll$(DLLEXT)
 
-dsound/dsound.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+dsound/dsound.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
+  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd dsound && $(MAKE) dsound.dll$(DLLEXT)
 
 gdi/gdi32.dll$(DLLEXT): dummy advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
@@ -600,8 +600,7 @@ msacm/msacm32.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
   advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd msacm && $(MAKE) msacm32.dll$(DLLEXT)
 
-msacm/msg711/msg711.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+msacm/msg711/msg711.drv$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd msacm/msg711 && $(MAKE) msg711.drv$(DLLEXT)
 
 msdmo/msdmo.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
@@ -616,8 +615,7 @@ msisys/msisys.ocx$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 msnet32/msnet32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd msnet32 && $(MAKE) msnet32.dll$(DLLEXT)
 
-msrle32/msrle32.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+msrle32/msrle32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd msrle32 && $(MAKE) msrle32.dll$(DLLEXT)
 
 msvcrt/msvcrt.dll$(DLLEXT): dummy kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
@@ -631,8 +629,7 @@ msvideo/msvfw32.dll$(DLLEXT): dummy winmm.dll$(DLLEXT) comctl32.dll$(DLLEXT) \
   ntdll.dll$(DLLEXT)
 	@cd msvideo && $(MAKE) msvfw32.dll$(DLLEXT)
 
-netapi32/netapi32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+netapi32/netapi32.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd netapi32 && $(MAKE) netapi32.dll$(DLLEXT)
 
 ntdll/ntdll.dll$(DLLEXT): dummy
@@ -645,9 +642,9 @@ ole32/ole32.dll$(DLLEXT): dummy advapi32.dll$(DLLEXT) user32.dll$(DLLEXT) \
   gdi32.dll$(DLLEXT) rpcrt4.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd ole32 && $(MAKE) ole32.dll$(DLLEXT)
 
-oleaut32/oleaut32.dll$(DLLEXT): dummy comctl32.dll$(DLLEXT) ole32.dll$(DLLEXT) \
-  user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+oleaut32/oleaut32.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) user32.dll$(DLLEXT) \
+  gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT) \
+  comctl32.dll$(DLLEXT)
 	@cd oleaut32 && $(MAKE) oleaut32.dll$(DLLEXT)
 
 olecli/olecli32.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
@@ -706,8 +703,8 @@ shell32/shell32.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) shlwapi.dll$(DLLEXT) \
 shfolder/shfolder.dll$(DLLEXT): dummy shell32.dll$(DLLEXT)
 	@cd shfolder && $(MAKE) shfolder.dll$(DLLEXT)
 
-shlwapi/shlwapi.dll$(DLLEXT): dummy advapi32.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+shlwapi/shlwapi.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
+  advapi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd shlwapi && $(MAKE) shlwapi.dll$(DLLEXT)
 
 snmpapi/snmpapi.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
@@ -731,8 +728,7 @@ twain/twain_32.dll$(DLLEXT): dummy user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) \
 url/url.dll$(DLLEXT): dummy ntdll.dll$(DLLEXT)
 	@cd url && $(MAKE) url.dll$(DLLEXT)
 
-urlmon/urlmon.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
-  ntdll.dll$(DLLEXT)
+urlmon/urlmon.dll$(DLLEXT): dummy ole32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd urlmon && $(MAKE) urlmon.dll$(DLLEXT)
 
 user/user32.dll$(DLLEXT): dummy gdi32.dll$(DLLEXT) advapi32.dll$(DLLEXT) \
@@ -775,16 +771,16 @@ winmm/mciavi/mciavi.drv$(DLLEXT): dummy msvfw32.dll$(DLLEXT) winmm.dll$(DLLEXT) 
   user32.dll$(DLLEXT) gdi32.dll$(DLLEXT) kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
 	@cd winmm/mciavi && $(MAKE) mciavi.drv$(DLLEXT)
 
-winmm/mcicda/mcicda.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+winmm/mcicda/mcicda.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
+  ntdll.dll$(DLLEXT) user32.dll$(DLLEXT)
 	@cd winmm/mcicda && $(MAKE) mcicda.drv$(DLLEXT)
 
-winmm/mciseq/mciseq.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+winmm/mciseq/mciseq.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
+  ntdll.dll$(DLLEXT) user32.dll$(DLLEXT)
 	@cd winmm/mciseq && $(MAKE) mciseq.drv$(DLLEXT)
 
-winmm/mciwave/mciwave.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
-  kernel32.dll$(DLLEXT) ntdll.dll$(DLLEXT)
+winmm/mciwave/mciwave.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) kernel32.dll$(DLLEXT) \
+  ntdll.dll$(DLLEXT) user32.dll$(DLLEXT)
 	@cd winmm/mciwave && $(MAKE) mciwave.drv$(DLLEXT)
 
 winmm/midimap/midimap.drv$(DLLEXT): dummy winmm.dll$(DLLEXT) user32.dll$(DLLEXT) \
@@ -852,9 +848,6 @@ libkernel32.dll.$(LIBEXT): kernel/kernel32.dll$(DLLEXT)
 $(SUBDIRS:%=%/__checklink__): dummy
 	@cd `dirname $@` && $(MAKE) checklink
 
-$(SUBDIRS:%=%/__debug_channels__): dummy
-	@cd `dirname $@` && $(MAKE) debug_channels
-
 install:: $(SUBDIRS:%=%/__install__)
 
 uninstall:: $(SUBDIRS:%=%/__uninstall__)
@@ -863,5 +856,3 @@ uninstall:: $(SUBDIRS:%=%/__uninstall__)
 check test:: $(SUBDIRS:%=%/__test__)
 
 checklink:: $(SUBDIRS:%=%/__checklink__)
-
-debug_channels:: $(SUBDIRS:%=%/__debug_channels__)

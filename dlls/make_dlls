@@ -45,6 +45,7 @@ foreach $i (split(/\s/,$makefiles))
         if (/^MODULE\s*=\s*([a-zA-Z0-9_.]+)/)
         {
             $module = $1;
+            $imports{$module} = [ ];
             ($directories{$module} = $i) =~ s/^\.\/(.*)\/[^\/]+$/$1/;
             next;
         }
@@ -54,35 +55,16 @@ foreach $i (split(/\s/,$makefiles))
             $altnames{$module} = \@list;
             next;
         }
-        if (/^IMPORTS\s*=\s*(.*)/)
+        if (/^(DELAYIMPORTS|IMPORTS)\s*=\s*(.*)/)
         {
-            my @list = split(/\s/,$1);
+            my @list = map { /\./ ? $_ : $_ . ".dll"; } split(/\s/,$2);
+            push @{$imports{$module}}, @list;
+            next;
+        }
+        if (/^LDIMPORTS\s*=\s*(.*)/)
+        {
+            my @list = map { /\./ ? $_ : $_ . ".dll"; } split(/\s/,$1);
             $linked_dlls{$module} = \@list;
-            next;
-        }
-    }
-}
-
-foreach $mod (sort keys %directories)
-{
-    my $dll = $mod;
-    $dll =~ s/\.dll$//;
-    my $spec = sprintf("%s/%s.spec", $directories{$mod}, $dll);
-    open SPEC,$spec or die "cannot open $spec";
-    $imports{$mod} = [ ];
-    while (<SPEC>)
-    {
-        if (/^\#?import\s+(-delay\s+)?([a-zA-Z0-9_]+)\.dll/)
-        {
-            my $imp = $2 . ".dll";
-            push @{$imports{$mod}}, $imp;
-            next;
-        }
-        if (/^\#?import\s+(-delay\s+)?([a-zA-Z0-9_.]+)/)
-        {
-            my $imp = $2;
-            $imp .= ".dll" unless ($imp =~ /\./);
-            push @{$imports{$mod}}, $imp;
             next;
         }
     }
@@ -249,9 +231,6 @@ print NEWMAKE <<EOF;
 \$(SUBDIRS:%=%/__checklink__): dummy
 	\@cd `dirname \$\@` && \$(MAKE) checklink
 
-\$(SUBDIRS:%=%/__debug_channels__): dummy
-	\@cd `dirname \$\@` && \$(MAKE) debug_channels
-
 install:: \$(SUBDIRS:%=%/__install__)
 
 uninstall:: \$(SUBDIRS:%=%/__uninstall__)
@@ -260,8 +239,6 @@ uninstall:: \$(SUBDIRS:%=%/__uninstall__)
 check test:: \$(SUBDIRS:%=%/__test__)
 
 checklink:: \$(SUBDIRS:%=%/__checklink__)
-
-debug_channels:: \$(SUBDIRS:%=%/__debug_channels__)
 EOF
 
 close NEWMAKE;
