@@ -4017,8 +4017,8 @@ static HRESULT WINAPI ITypeInfo_fnGetNames( ITypeInfo2 *iface, MEMBERID memid,
       }
       else
       {
-        if(This->TypeAttr.typekind==TKIND_INTERFACE && This->TypeAttr.cImplTypes )
-        {
+        if(This->TypeAttr.cImplTypes &&
+	   (This->TypeAttr.typekind==TKIND_INTERFACE || This->TypeAttr.typekind==TKIND_DISPATCH)) {
           /* recursive search */
           ITypeInfo *pTInfo;
           HRESULT result;
@@ -4162,8 +4162,8 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
         }
     }
     /* not found, see if this is and interface with an inheritance */
-    if(This->TypeAttr.typekind==TKIND_INTERFACE &&
-            This->TypeAttr.cImplTypes ){
+    if(This->TypeAttr.cImplTypes &&
+       (This->TypeAttr.typekind==TKIND_INTERFACE || This->TypeAttr.typekind==TKIND_DISPATCH)) {
         /* recursive search */
         ITypeInfo *pTInfo;
         ret=ITypeInfo_GetRefTypeInfo(iface,
@@ -4613,7 +4613,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 	}
     }
     /* not found, look for it in inherited interfaces */
-    if (This->TypeAttr.typekind==TKIND_INTERFACE && This->TypeAttr.cImplTypes) {
+    if (This->TypeAttr.cImplTypes &&
+	(This->TypeAttr.typekind==TKIND_INTERFACE || This->TypeAttr.typekind==TKIND_DISPATCH)) {
         /* recursive search */
         ITypeInfo *pTInfo;
         HRESULT hr;
@@ -5511,7 +5512,8 @@ static HRESULT WINAPI ITypeComp_fnBind(
         }
     }
     /* not found, look for it in inherited interfaces */
-    if ((This->TypeAttr.typekind == TKIND_INTERFACE) && This->TypeAttr.cImplTypes) {
+    if (This->TypeAttr.cImplTypes &&
+	(This->TypeAttr.typekind == TKIND_INTERFACE || This->TypeAttr.typekind == TKIND_DISPATCH)) {
         /* recursive search */
         ITypeInfo *pTInfo;
         ITypeComp *pTComp;
