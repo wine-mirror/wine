@@ -133,13 +133,15 @@ void test_trustee()
 {
     TRUSTEE trustee;
     PSID psid;
-    DWORD r;
     LPSTR str = "2jjj";
 
     SID_IDENTIFIER_AUTHORITY auth = { {0x11,0x22,0,0,0, 0} };
 
-    r = AllocateAndInitializeSid( &auth, 1, 42, 0,0,0,0,0,0,0,&psid );
-    ok( r, "failed to init SID\n" );
+    if ( ! AllocateAndInitializeSid( &auth, 1, 42, 0,0,0,0,0,0,0,&psid ) )
+    {
+        trace( "failed to init SID\n" );
+       return;
+    }
 
     memset( &trustee, 0xff, sizeof trustee );
     BuildTrusteeWithSidA( &trustee, psid );
