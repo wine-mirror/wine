@@ -35,6 +35,7 @@
 #include "mmsystem.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winreg.h"
 
 #include "digitalv.h"
 #include "winemm.h"
@@ -185,13 +186,17 @@ const char* MCI_MessageToString(UINT16 wMsg)
 static	DWORD	MCI_GetDevTypeFromFileName(LPCSTR fileName, LPSTR buf, UINT len)
 {
     LPSTR	tmp;
+    HKEY	hKey;
 
     if ((tmp = strrchr(fileName, '.'))) {
-	GetProfileStringA("mci extensions", tmp + 1, "*", buf, len);
-	if (strcmp(buf, "*") != 0) {
-	    return 0;
-	}
-	TRACE("No [mci extensions] entry for '%s' found.\n", tmp);
+	if (RegOpenKeyExA( HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\MCI Extensions",
+			   0, KEY_QUERY_VALUE, &hKey ) == ERROR_SUCCESS) {
+	    DWORD dwLen = len;
+	    LONG lRet = RegQueryValueExA( hKey, tmp + 1, 0, 0, buf, &dwLen ); 
+	    RegCloseKey( hKey );
+	    if (lRet == ERROR_SUCCESS) return 0;
+        }
+	TRACE("No ...\\MCI Extensions entry for '%s' found.\n", tmp);
     }
     return MCIERR_EXTENSION_NOT_FOUND;
 }
