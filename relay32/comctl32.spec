@@ -18,21 +18,21 @@ init	COMCTL32_LibMain
  10 stub COMCTL32_10
  11 stdcall DPA_Merge(ptr ptr long ptr ptr long) DPA_Merge
 #12 stub Cctl1632_ThunkData32
- 13 stub MakeDragList
- 14 stub LBItemFromPt
- 15 stub DrawInsert
+ 13 stdcall MakeDragList(long) MakeDragList
+ 14 stdcall LBItemFromPt(long long long) LBItemFromPt
+ 15 stdcall DrawInsert(long long long) DrawInsert
  16 stdcall CreateUpDownControl(long long long long long long long long long long long long) CreateUpDownControl
  17 stdcall InitCommonControls() InitCommonControls
- 18 stdcall CreatePropertySheetPage(ptr) CreatePropertySheetPage32AW
+ 18 stdcall CreatePropertySheetPage(ptr) CreatePropertySheetPage32A
  19 stdcall CreatePropertySheetPageA(ptr) CreatePropertySheetPage32A
  20 stdcall CreatePropertySheetPageW(ptr) CreatePropertySheetPage32W
- 21 stdcall CreateStatusWindow(long str long long) CreateStatusWindow32AW
+ 21 stdcall CreateStatusWindow(long str long long) CreateStatusWindow32A
  22 stdcall CreateStatusWindowW(long wstr long long) CreateStatusWindow32W
  23 stdcall CreateToolbarEx(long long long long long long ptr long long long long long long) CreateToolbarEx
  24 stdcall DestroyPropertySheetPage(long) DestroyPropertySheetPage32
  25 stdcall DllGetVersion(ptr) COMCTL32_DllGetVersion
  26 stub DllInstall
- 27 stdcall DrawStatusText(long ptr ptr long) DrawStatusText32AW
+ 27 stdcall DrawStatusText(long ptr ptr long) DrawStatusText32A
  28 stdcall DrawStatusTextW(long ptr wstr long) DrawStatusText32W
  29 stdcall FlatSB_EnableScrollBar (long long long) FlatSB_EnableScrollBar
  30 stdcall FlatSB_GetScrollInfo (long long ptr) FlatSB_GetScrollInfo
@@ -67,7 +67,7 @@ init	COMCTL32_LibMain
  59 stdcall ImageList_GetImageCount(ptr) ImageList_GetImageCount
  60 stdcall ImageList_GetImageInfo(ptr long ptr) ImageList_GetImageInfo
  61 stdcall ImageList_GetImageRect(ptr long ptr) ImageList_GetImageRect
- 62 stdcall ImageList_LoadImage(long str long long long long long) ImageList_LoadImage32AW
+ 62 stdcall ImageList_LoadImage(long str long long long long long) ImageList_LoadImage32A
  63 stdcall ImageList_LoadImageA(long str long long long long long) ImageList_LoadImage32A
  64 stdcall ImageList_LoadImageW(long wstr long long long long long) ImageList_LoadImage32W
  65 stdcall ImageList_Merge(ptr long ptr long long long) ImageList_Merge
@@ -88,7 +88,7 @@ init	COMCTL32_LibMain
  80 stdcall ImageList_Write(ptr ptr) ImageList_Write
  81 stdcall InitCommonControlsEx(ptr) InitCommonControlsEx
  82 stdcall InitializeFlatSB(long) InitializeFlatSB
- 83 stdcall PropertySheet(ptr) PropertySheet32AW
+ 83 stdcall PropertySheet(ptr) PropertySheet32A
  84 stdcall PropertySheetA(ptr) PropertySheet32A
  85 stdcall PropertySheetW(ptr) PropertySheet32W
  86 stdcall UninitializeFlatSB(long) UninitializeFlatSB

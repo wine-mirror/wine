@@ -11,6 +11,7 @@ C_SRCS = \
 	comctl32undoc.c \
 	commctrl.c \
 	datetime.c \
+	draglist.c \
 	flatsb.c \
 	header.c \
 	hotkey.c \

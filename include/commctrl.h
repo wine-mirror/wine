@@ -115,6 +115,8 @@ typedef struct tagNMTOOLTIPSCREATED
     sizeof(((name*)0)->member))
 #endif
 
+
+/* This is only for Winelib applications. DON't use it wine itself!!! */
 #define SNDMSG WINELIB_NAME_AW(SendMessage)
 
 
@@ -171,8 +173,8 @@ typedef struct tagNMCUSTOMDRAWINFO
 
 typedef struct tagNMTTCUSTOMDRAW
 {
-	NMCUSTOMDRAW nmcd;
-	UINT32		 uDrawFlags;
+    NMCUSTOMDRAW nmcd;
+    UINT32       uDrawFlags;
 } NMTTCUSTOMDRAW, *LPNMTTCUSTOMDRAW;
 
 
@@ -234,12 +236,15 @@ VOID WINAPI DrawStatusText32W (HDC32, LPRECT32, LPCWSTR, UINT32);
 VOID WINAPI MenuHelp (UINT32, WPARAM32, LPARAM, HMENU32,
                       HINSTANCE32, HWND32, LPUINT32);
 
-/* Drag List */
+/**************************************************************************
+ *  Drag List control
+ */
 
-typedef struct tagDRAGLISTINFO {
-	UINT32 uNotification;
-	HWND32 hWnd;
-	POINT32 ptCursor;
+typedef struct tagDRAGLISTINFO
+{
+    UINT32  uNotification;
+    HWND32  hWnd;
+    POINT32 ptCursor;
 } DRAGLISTINFO, *LPDRAGLISTINFO;
 
 #define DL_BEGINDRAG            (WM_USER+133)
@@ -254,9 +259,10 @@ typedef struct tagDRAGLISTINFO {
 
 #define DRAGLISTMSGSTRING       TEXT("commctrl_DragListMsg")
 
-BOOL32 WINAPI MakeDragList(HWND32 hLB);
-void WINAPI DrawInsert(HWND32 handParent, HWND32 hLB, int nItem);
-int WINAPI LBItemFromPt(HWND32 hLB, POINT32 pt, BOOL32 bAutoScroll);
+BOOL32 WINAPI MakeDragList (HWND32);
+VOID   WINAPI DrawInsert (HWND32, HWND32, INT32);
+INT32  WINAPI LBItemFromPt (HWND32, POINT32, BOOL32);
+
   
 /* UpDown */
 
@@ -475,7 +481,6 @@ INT32   WINAPI FlatSB_SetScrollRange(HWND32, INT32, INT32, INT32, BOOL32);
 BOOL32  WINAPI FlatSB_SetScrollProp(HWND32, UINT32, INT32, BOOL32);
 BOOL32  WINAPI InitializeFlatSB(HWND32);
 HRESULT WINAPI UninitializeFlatSB(HWND32);
-
 
 
 /* Header control */
@@ -1200,6 +1205,7 @@ typedef struct tagNMTTDISPINFOW
 #define LPTOOLTIPTEXTA  LPNMTTDISPINFOA
 #define LPTOOLTIPTEXT   LPNMTTDISPINFO
 
+
 /* Rebar control */
 
 #define REBARCLASSNAME16        "ReBarWindow"
@@ -1283,7 +1289,7 @@ typedef struct tagNMTTDISPINFOW
 #define RB_GETBANDINFO          WINELIB_NAME_AW(RB_GETBANDINFO)
 #define RB_MINIMIZEBAND         (WM_USER+30)
 #define RB_MAXIMIZEBAND         (WM_USER+31)
-#define RB_GETBANDORDERS        (WM_USER+34)
+#define RB_GETBANDBORDERS       (WM_USER+34)
 #define RB_SHOWBAND             (WM_USER+35)
 #define RB_SETPALETTE           (WM_USER+37)
 #define RB_GETPALETTE           (WM_USER+38)
@@ -1613,6 +1619,8 @@ typedef struct
 #define TVM_GETTEXTCOLOR        (TV_FIRST+32)
 #define TVM_SETSCROLLTIME       (TV_FIRST+33)
 #define TVM_GETSCROLLTIME       (TV_FIRST+34)
+#define TVM_UNKNOWN35           (TV_FIRST+35)
+#define TVM_UNKNOWN36           (TV_FIRST+36)
 #define TVM_SETINSERTMARKCOLOR  (TV_FIRST+37)
 #define TVM_GETINSERTMARKCOLOR  (TV_FIRST+38)
 #define TVM_SETUNICODEFORMAT    CCM_SETUNICODEFORMAT
@@ -1741,11 +1749,11 @@ typedef struct {
       HTREEITEM hItem;
       UINT32 state;
       UINT32 stateMask;
-      LPSTR pszText;
-      int cchTextMax;
-      int iImage;
-      int iSelectedImage;
-      int cChildren;
+      LPSTR  pszText;
+      INT32  cchTextMax;
+      INT32  iImage;
+      INT32  iSelectedImage;
+      INT32  cChildren;
       LPARAM lParam;
 } TV_ITEM, *LPTVITEM;
 
@@ -1754,13 +1762,13 @@ typedef struct {
       HTREEITEM hItem;
       UINT32 state;
       UINT32 stateMask;
-      LPSTR pszText;
-      int cchTextMax;
-      int iImage;
-      int iSelectedImage;
-      int cChildren;
+      LPSTR  pszText;
+      INT32  cchTextMax;
+      INT32  iImage;
+      INT32  iSelectedImage;
+      INT32  cChildren;
       LPARAM lParam;
-      int iIntegral;
+      INT32  iIntegral;
 } TV_ITEMEX, *LPTVITEMEX;
 
 #define TVITEM TV_ITEM
@@ -2437,8 +2445,8 @@ typedef struct tagTCITEM32A {
     UINT32 dwState;
     UINT32 dwStateMask;
     LPSTR  pszText;
-    int    cchTextMax;
-    int    iImage;
+    INT32  cchTextMax;
+    INT32  iImage;
     LPARAM lParam;
 } TCITEM32A, *LPTCITEM32A;
 
@@ -2667,113 +2675,13 @@ typedef struct tagNMIPADDRESS
 
 
 
-/**************************************************************************
- *  UNDOCUMENTED functions
- */
-
-/* private heap memory functions */
-
-LPVOID WINAPI COMCTL32_Alloc (DWORD);
-LPVOID WINAPI COMCTL32_ReAlloc (LPVOID, DWORD);
-BOOL32 WINAPI COMCTL32_Free (LPVOID);
-DWORD  WINAPI COMCTL32_GetSize (LPVOID);
-
-
-INT32  WINAPI Str_GetPtr32A (LPCSTR, LPSTR, INT32);
-BOOL32 WINAPI Str_SetPtr32A (LPSTR *, LPCSTR);
-INT32  WINAPI Str_GetPtr32W (LPCWSTR, LPWSTR, INT32);
-BOOL32 WINAPI Str_SetPtr32W (LPWSTR *, LPCWSTR);
-#define Str_GetPtr WINELIB_NAME_AW(Str_GetPtr)
-#define Str_SetPtr WINELIB_NAME_AW(Str_SetPtr)
-
-
-/* Dynamic Storage Array */
-
-typedef struct _DSA
-{
-    INT32  nItemCount;
-    LPVOID pData;
-    INT32  nMaxCount;
-    INT32  nItemSize;
-    INT32  nGrow;
-} DSA, *HDSA;
-
-HDSA   WINAPI DSA_Create (INT32, INT32);
-BOOL32 WINAPI DSA_DeleteAllItems (const HDSA);
-INT32  WINAPI DSA_DeleteItem (const HDSA, INT32);
-BOOL32 WINAPI DSA_Destroy (const HDSA);
-BOOL32 WINAPI DSA_GetItem (const HDSA, INT32, LPVOID);
-LPVOID WINAPI DSA_GetItemPtr (const HDSA, INT32);
-INT32  WINAPI DSA_InsertItem (const HDSA, INT32, LPVOID);
-BOOL32 WINAPI DSA_SetItem (const HDSA, INT32, LPVOID);
-
-typedef INT32 (CALLBACK *DSAENUMPROC)(LPVOID, DWORD);
-VOID   WINAPI DSA_EnumCallback (const HDSA, DSAENUMPROC, LPARAM);
-BOOL32 WINAPI DSA_DestroyCallback (const HDSA, DSAENUMPROC, LPARAM);
-
-
-/* Dynamic Pointer Array */
-
-typedef struct _DPA
-{
-    INT32    nItemCount;
-    LPVOID   *ptrs; 
-    HANDLE32 hHeap;
-    INT32    nGrow;
-    INT32    nMaxCount;
-} DPA, *HDPA;
-
-HDPA   WINAPI DPA_Create (INT32);
-HDPA   WINAPI DPA_CreateEx (INT32, HANDLE32);
-BOOL32 WINAPI DPA_Destroy (const HDPA);
-HDPA   WINAPI DPA_Clone (const HDPA, const HDPA);
-LPVOID WINAPI DPA_GetPtr (const HDPA, INT32);
-INT32  WINAPI DPA_GetPtrIndex (const HDPA, LPVOID);
-BOOL32 WINAPI DPA_Grow (const HDPA, INT32);
-BOOL32 WINAPI DPA_SetPtr (const HDPA, INT32, LPVOID);
-INT32  WINAPI DPA_InsertPtr (const HDPA, INT32, LPVOID);
-LPVOID WINAPI DPA_DeletePtr (const HDPA, INT32);
-BOOL32 WINAPI DPA_DeleteAllPtrs (const HDPA);
-
-typedef INT32 (CALLBACK *PFNDPACOMPARE)(LPVOID, LPVOID, LPARAM);
-BOOL32 WINAPI DPA_Sort (const HDPA, PFNDPACOMPARE, LPARAM);
-
-#define DPAS_SORTED             0x0001
-#define DPAS_INSERTBEFORE       0x0002
-#define DPAS_INSERTAFTER        0x0004
- 
-INT32  WINAPI DPA_Search (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
-
-#define DPAM_SORT               0x0001
-
-BOOL32 WINAPI DPA_Merge (const HDPA, const HDPA, DWORD, PFNDPACOMPARE, LPVOID, LPARAM);
-
-typedef INT32 (CALLBACK *DPAENUMPROC)(LPVOID, DWORD);
-VOID   WINAPI DPA_EnumCallback (const HDPA, DPAENUMPROC, LPARAM);
-BOOL32 WINAPI DPA_DestroyCallback (const HDPA, DPAENUMPROC, LPARAM);
-
-
-#define DPA_GetPtrCount(hdpa)  (*(INT32*)(hdpa))
-#define DPA_GetPtrPtr(hdpa)    (*((LPVOID**)((BYTE*)(hdpa)+sizeof(INT32))))
-#define DPA_FastGetPtr(hdpa,i) (DPA_GetPtrPtr(hdpa)[i])
-
-
-/* notification helper functions */
-
-LRESULT WINAPI COMCTL32_SendNotify (HWND32, HWND32, UINT32, LPNMHDR);
-
-/* type and functionality of last parameter is still unknown */
-LRESULT WINAPI COMCTL32_SendNotifyEx (HWND32, HWND32, UINT32, LPNMHDR, DWORD);
-
 /*
  * Property sheet support (callback procs)
  */
 
-
-#define WC_PROPSHEET32A      "SysPager"
-#define WC_PROPSHEET32W      L"SysPager"
+#define WC_PROPSHEET32A      "SysPropertySheet"
+#define WC_PROPSHEET32W      L"SysPropertySheet"
 #define WC_PROPSHEET         WINELIB_NAME_AW(WC_PROPSHEET)
-
 
 struct _PROPSHEETPAGE32A;  /** need to forward declare those structs **/
 struct _PROPSHEETPAGE32W;
@@ -2945,7 +2853,7 @@ INT32 WINAPI PropertySheet32A(LPCPROPSHEETHEADER32A);
 INT32 WINAPI PropertySheet32W(LPCPROPSHEETHEADER32W);
 #define PropertySheet WINELIB_NAME_AW(PropertySheet)
 HPROPSHEETPAGE WINAPI CreatePropertySheetPage32A(LPCPROPSHEETPAGE32A);
-HPROPSHEETPAGE WINAPI  CreatePropertySheetPage32W(LPCPROPSHEETPAGE32W);
+HPROPSHEETPAGE WINAPI CreatePropertySheetPage32W(LPCPROPSHEETPAGE32W);
 #define CreatePropertySheetPage WINELIB_NAME_AW(CreatePropertySheetPage)
 BOOL32 WINAPI DestroyPropertySheetPage32(HPROPSHEETPAGE hPropPage);
 #define DestroyPropertySheetPage WINELIB_NAME(DestroyPropertySheetPage)
@@ -2953,6 +2861,7 @@ BOOL32 WINAPI DestroyPropertySheetPage32(HPROPSHEETPAGE hPropPage);
 /*
  * Property sheet support (UNICODE-WineLib)
  */
+
 DECL_WINELIB_TYPE_AW(PROPSHEETPAGE) 
 DECL_WINELIB_TYPE_AW(LPPROPSHEETPAGE) 
 DECL_WINELIB_TYPE_AW(LPCPROPSHEETPAGE) 
@@ -2961,6 +2870,7 @@ DECL_WINELIB_TYPE_AW(LPPROPSHEETHEADER)
 DECL_WINELIB_TYPE_AW(LPCPROPSHEETHEADER) 
 DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK) 
 DECL_WINELIB_TYPE(PFNPROPSHEETCALLBACK) 
+
 
 /*
  * Property sheet support (defines)
@@ -3080,7 +2990,7 @@ DECL_WINELIB_TYPE(PFNPROPSHEETCALLBACK)
  */
 
 #define PropSheet_SetCurSel(hDlg, hpage, index) \
-	SNDMSG(hDlg, PSM_SETCURSEL, (WPARAM)index, (LPARAM)hpage)
+	SeandMessage32A(hDlg, PSM_SETCURSEL, (WPARAM32)index, (LPARAM)hpage)
 	 
 #define PropSheet_RemovePage(hDlg, index, hpage) \
 	SNDMSG(hDlg, PSM_REMOVEPAGE, index, (LPARAM)hpage)
@@ -3133,6 +3043,104 @@ DECL_WINELIB_TYPE(PFNPROPSHEETCALLBACK)
 #define PropSheet_GetCurrentPageHwnd(hDlg) \
 	(HWND)SNDMSG(hDlg, PSM_GETCURRENTPAGEHWND, 0, 0L)
 	 
+
+/**************************************************************************
+ *  UNDOCUMENTED functions
+ */
+
+/* private heap memory functions */
+
+LPVOID WINAPI COMCTL32_Alloc (DWORD);
+LPVOID WINAPI COMCTL32_ReAlloc (LPVOID, DWORD);
+BOOL32 WINAPI COMCTL32_Free (LPVOID);
+DWORD  WINAPI COMCTL32_GetSize (LPVOID);
+
+
+INT32  WINAPI Str_GetPtr32A (LPCSTR, LPSTR, INT32);
+BOOL32 WINAPI Str_SetPtr32A (LPSTR *, LPCSTR);
+INT32  WINAPI Str_GetPtr32W (LPCWSTR, LPWSTR, INT32);
+BOOL32 WINAPI Str_SetPtr32W (LPWSTR *, LPCWSTR);
+#define Str_GetPtr WINELIB_NAME_AW(Str_GetPtr)
+#define Str_SetPtr WINELIB_NAME_AW(Str_SetPtr)
+
+
+/* Dynamic Storage Array */
+
+typedef struct _DSA
+{
+    INT32  nItemCount;
+    LPVOID pData;
+    INT32  nMaxCount;
+    INT32  nItemSize;
+    INT32  nGrow;
+} DSA, *HDSA;
+
+HDSA   WINAPI DSA_Create (INT32, INT32);
+BOOL32 WINAPI DSA_DeleteAllItems (const HDSA);
+INT32  WINAPI DSA_DeleteItem (const HDSA, INT32);
+BOOL32 WINAPI DSA_Destroy (const HDSA);
+BOOL32 WINAPI DSA_GetItem (const HDSA, INT32, LPVOID);
+LPVOID WINAPI DSA_GetItemPtr (const HDSA, INT32);
+INT32  WINAPI DSA_InsertItem (const HDSA, INT32, LPVOID);
+BOOL32 WINAPI DSA_SetItem (const HDSA, INT32, LPVOID);
+
+typedef INT32 (CALLBACK *DSAENUMPROC)(LPVOID, DWORD);
+VOID   WINAPI DSA_EnumCallback (const HDSA, DSAENUMPROC, LPARAM);
+BOOL32 WINAPI DSA_DestroyCallback (const HDSA, DSAENUMPROC, LPARAM);
+
+
+/* Dynamic Pointer Array */
+
+typedef struct _DPA
+{
+    INT32    nItemCount;
+    LPVOID   *ptrs; 
+    HANDLE32 hHeap;
+    INT32    nGrow;
+    INT32    nMaxCount;
+} DPA, *HDPA;
+
+HDPA   WINAPI DPA_Create (INT32);
+HDPA   WINAPI DPA_CreateEx (INT32, HANDLE32);
+BOOL32 WINAPI DPA_Destroy (const HDPA);
+HDPA   WINAPI DPA_Clone (const HDPA, const HDPA);
+LPVOID WINAPI DPA_GetPtr (const HDPA, INT32);
+INT32  WINAPI DPA_GetPtrIndex (const HDPA, LPVOID);
+BOOL32 WINAPI DPA_Grow (const HDPA, INT32);
+BOOL32 WINAPI DPA_SetPtr (const HDPA, INT32, LPVOID);
+INT32  WINAPI DPA_InsertPtr (const HDPA, INT32, LPVOID);
+LPVOID WINAPI DPA_DeletePtr (const HDPA, INT32);
+BOOL32 WINAPI DPA_DeleteAllPtrs (const HDPA);
+
+typedef INT32 (CALLBACK *PFNDPACOMPARE)(LPVOID, LPVOID, LPARAM);
+BOOL32 WINAPI DPA_Sort (const HDPA, PFNDPACOMPARE, LPARAM);
+
+#define DPAS_SORTED             0x0001
+#define DPAS_INSERTBEFORE       0x0002
+#define DPAS_INSERTAFTER        0x0004
+ 
+INT32  WINAPI DPA_Search (const HDPA, LPVOID, INT32, PFNDPACOMPARE, LPARAM, UINT32);
+
+#define DPAM_SORT               0x0001
+
+BOOL32 WINAPI DPA_Merge (const HDPA, const HDPA, DWORD, PFNDPACOMPARE, LPVOID, LPARAM);
+
+typedef INT32 (CALLBACK *DPAENUMPROC)(LPVOID, DWORD);
+VOID   WINAPI DPA_EnumCallback (const HDPA, DPAENUMPROC, LPARAM);
+BOOL32 WINAPI DPA_DestroyCallback (const HDPA, DPAENUMPROC, LPARAM);
+
+
+#define DPA_GetPtrCount(hdpa)  (*(INT32*)(hdpa))
+#define DPA_GetPtrPtr(hdpa)    (*((LPVOID**)((BYTE*)(hdpa)+sizeof(INT32))))
+#define DPA_FastGetPtr(hdpa,i) (DPA_GetPtrPtr(hdpa)[i])
+
+
+/* notification helper functions */
+
+LRESULT WINAPI COMCTL32_SendNotify (HWND32, HWND32, UINT32, LPNMHDR);
+
+/* type and functionality of last parameter is still unknown */
+LRESULT WINAPI COMCTL32_SendNotifyEx (HWND32, HWND32, UINT32, LPNMHDR, DWORD);
 
 #ifdef __cplusplus
 }
