@@ -51,9 +51,6 @@
  * these differences cause problems):
  *   LVM_INSERTITEM issues LVM_SETITEMSTATE and LVM_SETITEM in certain cases.
  *   LVM_SETITEM does not always issue LVN_ITEMCHANGING/LVN_ITEMCHANGED.
- *   WM_PAINT does LVN_GETDISPINFO in item order 0->n, native does n->0.
- *   WM_SETREDRAW(True) native does LVN_GETDISPINFO for all items and
- *     does *not* invoke DefWindowProc
  *   WM_CREATE does not issue WM_QUERYUISTATE and associated registry
  *     processing for "USEDOUBLECLICKTIME".
  */
@@ -112,6 +109,7 @@ typedef struct tagRANGE
 typedef struct tagITERATOR
 {
   INT nItem;
+  INT nSpecial;
   RANGE range;
   HDPA ranges;
   INT index;
@@ -712,25 +710,141 @@ static BOOL ranges_add(HDPA ranges, RANGE range);
 static BOOL ranges_del(HDPA ranges, RANGE range);
 static void ranges_dump(HDPA ranges);
 
+/***
+ * ITERATOR DOCUMENTATION
+ *
+ * The iterator functions allow for easy, and convenient iteration
+ * over items of iterest in the list. Typically, you create a
+ * iterator, use it, and destroy it, as such:
+ *   ITERATOR i;
+ *
+ *   iterator_xxxitems(&i, ...);
+ *   while (iterator_{prev,next}(&i)
+ *   {
+ *       //code which uses i.nItem
+ *   }
+ *   iterator_destroy(&i);
+ *
+ *   where xxx is either: framed, or visible.
+ * Note that it is important that the code destroys the iterator
+ * after it's done with it, as the creation of the iterator may
+ * allocate memory, which thus needs to be freed.
+ * 
+ * You can iterate both forwards, and backwards through the list,
+ * by using iterator_next or iterator_prev respectively.
+ * 
+ * Lower numbered items are draw on top of higher number items in
+ * LVS_ICON, and LVS_SMALLICON (which are the only modes where
+ * items may overlap). So, to test items, you should use
+ *    iterator_next
+ * which lists the items top to bottom (in Z-order).
+ * For drawing items, you should use
+ *    iterator_prev
+ * which lists the items bottom to top (in Z-order).
+ * If you keep iterating over the items after the end-of-items
+ * marker (-1) is returned, the iterator will start from the
+ * beginning. Typically, you don't need to test for -1,
+ * because iterator_{next,prev} will return TRUE if more items
+ * are to be iterated over, or FALSE otherwise.
+ *
+ * Note: the iterator is defined to be bidirectional. That is,
+ *       any number of prev followed by any number of next, or
+ *       five versa, should leave the iterator at the same item:
+ *           prev * n, next * n = next * n, prev * n
+ *
+ * The iterator has a notion of a out-of-order, special item,
+ * which sits at the start of the list. This is used in
+ * LVS_ICON, and LVS_SMALLICON mode to handle the focused item,
+ * which needs to be first, as it may overlap other items.
+ *           
+ * The code is a bit messy because we have:
+ *   - a special item to deal with
+ *   - simple range, or composite range
+ *   - empty range.
+ * If find bugs, or want to add features, please make sure you
+ * always check/modify *both* iterator_prev, and iterator_next.
+ */
+
+/****
+ * This function iterates through the items in increasing order,
+ * but prefixed by the special item, then -1. That is:
+ *    special, 1, 2, 3, ..., n, -1.
+ * Each item is listed only once.
+ */
 static inline BOOL iterator_next(ITERATOR* i)
 {
     if (i->nItem == -1)
     {
-	if (i->ranges) goto pickarange;
-	return (i->nItem = i->range.lower) != -1;
+	i->nItem = i->nSpecial;
+	if (i->nItem != -1) return TRUE;
     }
+    if (i->nItem == i->nSpecial)
+    {
+	if (i->ranges) i->index = 0;
+	goto pickarange;
+    }
+
     i->nItem++;
-    if (i->nItem <= i->range.upper)
-	return TRUE;
+testitem:
+    if (i->nItem == i->nSpecial) i->nItem++;
+    if (i->nItem <= i->range.upper) return TRUE;
 
 pickarange:
-    if (i->ranges && i->index < i->ranges->nItemCount)
+    if (i->ranges)
     {
-	i->range = *(RANGE*)DPA_GetPtr(i->ranges, i->index++);
-	return (i->nItem = i->range.lower) != -1;
+	if (i->index < i->ranges->nItemCount)
+	    i->range = *(RANGE*)DPA_GetPtr(i->ranges, i->index++);
+	else goto end;
     }
-    i->nItem = i->range.lower = i->range.upper = -1;
+    else if (i->nItem > i->range.upper) goto end;
+
+    i->nItem = i->range.lower;
+    if (i->nItem >= 0) goto testitem;
+end:
+    i->nItem = -1;
     return FALSE;
+}
+
+/****
+ * This function iterates through the items in decreasing order,
+ * followed by the special item, then -1. That is:
+ *    n, n-1, ..., 3, 2, 1, special, -1.
+ * Each item is listed only once.
+ */
+static inline BOOL iterator_prev(ITERATOR* i)
+{
+    BOOL start = FALSE;
+
+    if (i->nItem == -1)
+    {
+	start = TRUE;
+	if (i->ranges) i->index = i->ranges->nItemCount;
+	goto pickarange;
+    }
+    if (i->nItem == i->nSpecial)
+    {
+	i->nItem = -1;
+	return FALSE;
+    }
+
+    i->nItem--;
+testitem:
+    if (i->nItem == i->nSpecial) i->nItem--;
+    if (i->nItem >= i->range.lower) return TRUE;
+
+pickarange:
+    if (i->ranges)
+    {
+	if (i->index > 0)
+	    i->range = *(RANGE*)DPA_GetPtr(i->ranges, --i->index);
+	else goto end;
+    }
+    else if (!start && i->nItem < i->range.lower) goto end;
+
+    i->nItem = i->range.upper;
+    if (i->nItem >= 0) goto testitem;
+end:
+    return (i->nItem = i->nSpecial) != -1;
 }
 
 static RANGE iterator_range(ITERATOR* i)
@@ -744,18 +858,27 @@ static RANGE iterator_range(ITERATOR* i)
     return range;
 }
 
+/***
+ * Releases resources associated with this ierator.
+ */
 static inline void iterator_destroy(ITERATOR* i)
 {
     if (i->ranges) DPA_Destroy(i->ranges);
 }
 
+/***
+ * Create an empty iterator.
+ */
 static inline BOOL iterator_empty(ITERATOR* i)
 {
     ZeroMemory(i, sizeof(*i));
-    i->nItem = i->range.lower = i->range.upper = -1;
+    i->nItem = i->nSpecial = i->range.lower = i->range.upper = -1;
     return TRUE;
 }
 
+/***
+ * Creates an iterator over the items which intersect lprc.
+ */
 static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT* lprc)
 {
     UINT uView = infoPtr->dwStyle & LVS_TYPEMASK;
@@ -803,7 +926,10 @@ static BOOL iterator_frameditems(ITERATOR* i, LISTVIEW_INFO* infoPtr, const RECT
     return TRUE;
 }
 
-static BOOL iterator_clippeditems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
+/***
+ * Creates an iterator over the items which intersect the visible region of hdc.
+ */
+static BOOL iterator_visibleitems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
 {
     POINT Origin, Position;
     RECT rcItem, rcClip;
@@ -814,7 +940,7 @@ static BOOL iterator_clippeditems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
     if (!iterator_frameditems(i, infoPtr, &rcClip)) return FALSE;
     if (rgntype == SIMPLEREGION) return TRUE;
  
-    /* if we can't deal with the region, we'll  just go with the simple range */
+    /* if we can't deal with the region, we'll just go with the simple range */
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return TRUE;
     if (!(i->ranges = DPA_Create(10))) return TRUE;
     if (!ranges_add(i->ranges, i->range))
@@ -824,7 +950,7 @@ static BOOL iterator_clippeditems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
 	return TRUE;
     }
 
-    /* no delete the invisible items from the list */
+    /* now delete the invisible items from the list */
     for (nItem = i->range.lower; nItem <= i->range.upper; nItem++)
     {
 	if (!LISTVIEW_GetItemListOrigin(infoPtr, nItem, &Position)) continue;
@@ -840,11 +966,6 @@ static BOOL iterator_clippeditems(ITERATOR* i, LISTVIEW_INFO *infoPtr, HDC  hdc)
     }
     
     return TRUE;
-}
-
-static inline BOOL iterator_visibleitems(ITERATOR* i, LISTVIEW_INFO *infoPtr)
-{
-    return iterator_frameditems(i, infoPtr, &infoPtr->rcList);
 }
 
 /******** Misc helper functions ************************************/
@@ -1281,7 +1402,7 @@ static void LISTVIEW_InvalidateSelectedItems(LISTVIEW_INFO *infoPtr)
 {
     ITERATOR i; 
    
-    iterator_visibleitems(&i, infoPtr); 
+    iterator_frameditems(&i, infoPtr, &infoPtr->rcList); 
     while(iterator_next(&i))
     {
 	if (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_SELECTED))
@@ -3238,7 +3359,7 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
 
     /* figure out what we need to draw */
-    iterator_clippeditems(&i, infoPtr, hdc);
+    iterator_visibleitems(&i, infoPtr, hdc);
     
     /* send cache hint notification */
     if (infoPtr->dwStyle & LVS_OWNERDATA)
@@ -3252,7 +3373,7 @@ static void LISTVIEW_RefreshOwnerDraw(LISTVIEW_INFO *infoPtr, HDC hdc)
     }
 
     /* iterate through the invalidated rows */
-    while(iterator_next(&i))
+    while(iterator_prev(&i))
     {
 	item.iItem = i.nItem;
 	item.iSubItem = 0;
@@ -3344,13 +3465,13 @@ static void LISTVIEW_RefreshReport(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode
     }
 
     /* figure out what we need to draw */
-    iterator_clippeditems(&i, infoPtr, hdc);
+    iterator_visibleitems(&i, infoPtr, hdc);
     
     /* a last few bits before we start drawing */
     TRACE("Colums=(%di - %d)\n", nFirstCol, nLastCol);
 
     /* iterate through the invalidated rows */
-    while(iterator_next(&i))
+    while(iterator_prev(&i))
     {
 	nDrawPosY = i.nItem * infoPtr->nItemHeight;
 
@@ -3404,9 +3525,9 @@ static void LISTVIEW_RefreshList(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
     
     /* figure out what we need to draw */
-    iterator_clippeditems(&i, infoPtr, hdc);
+    iterator_visibleitems(&i, infoPtr, hdc);
     
-    while(iterator_next(&i))
+    while(iterator_prev(&i))
     {
 	if (!LISTVIEW_GetItemListOrigin(infoPtr, i.nItem, &Position)) continue;
 	Position.x += Origin.x;
@@ -3439,9 +3560,9 @@ static void LISTVIEW_RefreshIcon(LISTVIEW_INFO *infoPtr, HDC hdc, DWORD cdmode)
     if (!LISTVIEW_GetOrigin(infoPtr, &Origin)) return;
     
     /* figure out what we need to draw */
-    iterator_clippeditems(&i, infoPtr, hdc);
+    iterator_visibleitems(&i, infoPtr, hdc);
     
-    while(iterator_next(&i))
+    while(iterator_prev(&i))
     {
 	if (LISTVIEW_GetItemState(infoPtr, i.nItem, LVIS_FOCUSED))
 	    continue;
