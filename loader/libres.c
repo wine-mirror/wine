@@ -37,56 +37,56 @@ void LIBRES_RegisterResources(const wrc_resource32_t * const * Res)
 /**********************************************************************
  *	    LIBRES_FindResource
  */
+typedef int (*CmpFunc_t)(LPCWSTR a, LPCWSTR b, int c);
+
+int CompareOrdinal(LPCWSTR ordinal, LPCWSTR resstr, int resid)
+{
+    return !resstr && (resid == LOWORD(ordinal));
+} 
+	
+int CompareName(LPCWSTR name, LPCWSTR resstr, int resid)
+{
+    return resstr && !CRTDLL__wcsnicmp(resstr+1, name, *(resstr));
+}
+
 HRSRC LIBRES_FindResource( HINSTANCE hModule, LPCWSTR name, LPCWSTR type )
 {
-  int nameid=0,typeid;
+  LPCWSTR nameid = name, typeid = type;
   ResListE* ResBlock;
   const wrc_resource32_t* const * Res;
+  CmpFunc_t EqualNames = CompareOrdinal;
+  CmpFunc_t EqualTypes = CompareOrdinal;
 
   if(HIWORD(name))
   {
     if(*name=='#')
     {
         LPSTR nameA = HEAP_strdupWtoA( GetProcessHeap(), 0, name );
-        nameid = atoi(nameA+1);
+        nameid = (LPCWSTR) atoi(nameA+1);
         HeapFree( GetProcessHeap(), 0, nameA );
-        name=NULL;
     }
-  }
   else
-  {
-    nameid=LOWORD(name);
-    name=NULL;
+	EqualNames = CompareName;
   }
+
   if(HIWORD(type))
   {
     if(*type=='#')
     {
         LPSTR typeA = HEAP_strdupWtoA( GetProcessHeap(), 0, type );
-        typeid=atoi(typeA+1);
+        typeid= (LPCWSTR) atoi(typeA+1);
         HeapFree( GetProcessHeap(), 0, typeA );
     }
     else
-    {
-      TRACE("(*,*,type=string): Returning 0\n");
-      return 0;
-    }
+	EqualTypes = CompareName;
   }
-  else
-    typeid=LOWORD(type);
   
-  /* FIXME: types can be strings */
   for(ResBlock=ResourceList; ResBlock; ResBlock=ResBlock->next)
     for(Res=ResBlock->Resources; *Res; Res++)
-      if(name)
-      {
-	if((*Res)->restype==typeid &&
-           !CRTDLL__wcsnicmp((LPCWSTR)((*Res)->resname+1), name, *((*Res)->resname)))
+	if (EqualNames(nameid, (*Res)->resname, (*Res)->resid) && 
+		EqualTypes(typeid, (*Res)->restypename, (*Res)->restype))
 	  return (HRSRC)*Res;
-      }
-      else
-	if((*Res)->restype==typeid && (*Res)->resid==nameid)
-	  return (HRSRC)*Res;
+
   return 0;
 }
 
