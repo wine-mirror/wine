@@ -1016,24 +1016,112 @@ BOOL WINAPI PolyBezierTo( HDC hdc, const POINT* lppt, DWORD cPoints )
 
 /***********************************************************************
  *      AngleArc (GDI32.5)
- *
+ *	
  */
 BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius,
                        FLOAT eStartAngle, FLOAT eSweepAngle)
 {
-        FIXME("AngleArc, stub\n");
-        return 0;
+    int x1,y1,x2,y2;
+    BOOL result;
+    DC *dc;
+
+    if( (signed int)dwRadius < 0 ) 
+	return FALSE;
+
+    dc = DC_GetDCUpdate( hdc );
+    if(!dc) return FALSE; 
+    
+    if(dc->funcs->pAngleArc)
+    {
+        result = dc->funcs->pAngleArc( dc, x, y, dwRadius, eStartAngle, eSweepAngle );
+        GDI_ReleaseObj( hdc );
+        return result;
+    }
+    GDI_ReleaseObj( hdc );
+ 
+    x1 = x + cos(eStartAngle*M_PI/180) * dwRadius;
+    y1 = y - sin(eStartAngle*M_PI/180) * dwRadius;
+    x2 = x + cos((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius;
+    y2 = x - sin((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius;
+ 
+    LineTo( hdc, x1, y1 );
+    if( eSweepAngle >= 0 )
+        result = Arc( hdc, x-dwRadius, y-dwRadius, x+dwRadius, y+dwRadius, 
+		      x1, y1, x2, y2 );
+    else
+	result = Arc( hdc, x-dwRadius, y-dwRadius, x+dwRadius, y+dwRadius, 
+		      x2, y2, x1, y1 );
+ 
+    if( result ) MoveToEx( hdc, x2, y2, NULL );
+    return result; 
 }
 
 /***********************************************************************
  *      PolyDraw (GDI32.270)
- *
+ *	
  */
 BOOL WINAPI PolyDraw(HDC hdc, const POINT *lppt, const BYTE *lpbTypes,
                        DWORD cCount)
 {
-        FIXME("PolyDraw, stub\n");
-        return 0;
+    DC *dc;
+    BOOL result;
+    POINT lastmove;
+    int i;
+
+    dc = DC_GetDCUpdate( hdc );
+    if(!dc) return FALSE; 
+
+    if(dc->funcs->pPolyDraw)
+    {
+        result = dc->funcs->pPolyDraw( dc, lppt, lpbTypes, cCount );
+        GDI_ReleaseObj( hdc );
+        return result;
+    }
+    GDI_ReleaseObj( hdc );
+
+    /* check for each bezierto if there are two more points */
+    for( i = 0; i < cCount; i++ )
+	if( lpbTypes[i] != PT_MOVETO &&
+	    lpbTypes[i] & PT_BEZIERTO )
+	{
+	    if( cCount < i+3 )
+		return FALSE;
+	    else
+		i += 2;
+	}
+
+    /* if no moveto occurs, we will close the figure here */
+    lastmove.x = dc->w.CursPosX;
+    lastmove.y = dc->w.CursPosY;
+
+    /* now let's draw */
+    for( i = 0; i < cCount; i++ )
+	if( lpbTypes[i] == PT_MOVETO )
+	{
+	    MoveToEx( hdc, lppt[i].x, lppt[i].y, NULL ); 				
+	    lastmove.x = dc->w.CursPosX;
+	    lastmove.y = dc->w.CursPosY; 
+	}
+	else if( lpbTypes[i] & PT_LINETO )
+	{
+	    LineTo( hdc, lppt[i].x, lppt[i].y );
+	    if( lpbTypes[i] & PT_CLOSEFIGURE )
+	        LineTo( hdc, lastmove.x, lastmove.y );
+	} 
+	else if( lpbTypes[i] & PT_BEZIERTO )
+	{
+	    /* optimizeme: multiple BezierTo's with one PolyBezierTo call */ 
+	    PolyBezierTo( hdc, &lppt[i], 3 );    
+
+	    i += 2;
+
+	    if( lpbTypes[i] & PT_CLOSEFIGURE ) 
+	    	LineTo( hdc, lastmove.x, lastmove.y ); 
+	}
+	else 
+	    return FALSE; 
+
+    return TRUE; 
 }
 
 /******************************************************************
