@@ -1530,10 +1530,79 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
 BOOL WINAPI InternetSetOptionA(HINTERNET hInternet, DWORD dwOption,
                            LPVOID lpBuffer, DWORD dwBufferLength)
 {
-    /* FIXME!!! implement if lpBuffer is a string, dwBufferLength is
-       in TCHARs */
-    return InternetSetOptionW(hInternet,dwOption, lpBuffer,
-                              dwBufferLength);
+    LPVOID wbuffer;
+    DWORD wlen;
+    BOOL r;
+
+    switch( dwOption )
+    {
+    case INTERNET_OPTION_PROXY:
+        {
+        LPINTERNET_PROXY_INFOA pi = (LPINTERNET_PROXY_INFOA) lpBuffer;
+        LPINTERNET_PROXY_INFOW piw;
+        DWORD proxlen, prbylen;
+        LPWSTR prox, prby;
+
+        proxlen = MultiByteToWideChar( CP_ACP, 0, pi->lpszProxy, -1, NULL, 0);
+        prbylen= MultiByteToWideChar( CP_ACP, 0, pi->lpszProxyBypass, -1, NULL, 0);
+        wlen = sizeof *piw + proxlen + prbylen;
+        wbuffer = HeapAlloc( GetProcessHeap(), 0, wlen );
+        piw = (LPINTERNET_PROXY_INFOW) wbuffer;
+        piw->dwAccessType = pi->dwAccessType;
+        prox = (LPWSTR) &piw[1];
+        prby = &prox[proxlen+1];
+        MultiByteToWideChar( CP_ACP, 0, pi->lpszProxy, -1, prox, proxlen);
+        MultiByteToWideChar( CP_ACP, 0, pi->lpszProxyBypass, -1, prby, prbylen);
+        piw->lpszProxy = prox;
+        piw->lpszProxyBypass = prby;
+        }
+        break;
+    case INTERNET_OPTION_USER_AGENT:
+    case INTERNET_OPTION_USERNAME:
+    case INTERNET_OPTION_PASSWORD:
+        wlen = MultiByteToWideChar( CP_ACP, 0, lpBuffer, dwBufferLength,
+                                   NULL, 0 );
+        wbuffer = HeapAlloc( GetProcessHeap(), 0, wlen );
+        MultiByteToWideChar( CP_ACP, 0, lpBuffer, dwBufferLength,
+                                   wbuffer, wlen );
+        break;
+    default:
+        wbuffer = lpBuffer;
+        wlen = dwBufferLength;
+    }
+
+    r = InternetSetOptionW(hInternet,dwOption, wbuffer, wlen);
+
+    if( lpBuffer != wbuffer )
+        HeapFree( GetProcessHeap(), 0, wbuffer );
+
+    return r;
+}
+
+
+/***********************************************************************
+ *           InternetSetOptionExA (WININET.@)
+ */
+BOOL WINAPI InternetSetOptionExA(HINTERNET hInternet, DWORD dwOption,
+                           LPVOID lpBuffer, DWORD dwBufferLength, DWORD dwFlags)
+{
+    FIXME("Flags %08lx ignored\n", dwFlags);
+    return InternetSetOptionA( hInternet, dwOption, lpBuffer, dwBufferLength );
+}
+
+/***********************************************************************
+ *           InternetSetOptionExW (WININET.@)
+ */
+BOOL WINAPI InternetSetOptionExW(HINTERNET hInternet, DWORD dwOption,
+                           LPVOID lpBuffer, DWORD dwBufferLength, DWORD dwFlags)
+{
+    FIXME("Flags %08lx ignored\n", dwFlags);
+    if( dwFlags & ~ISO_VALID_FLAGS )
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    return InternetSetOptionW( hInternet, dwOption, lpBuffer, dwBufferLength );
 }
 
 

@@ -11,7 +11,7 @@
 @ stub DeleteUrlCacheContainerA
 @ stub DeleteUrlCacheContainerW
 @ stdcall DeleteUrlCacheEntry(str)
-@ stdcall DeleteUrlCacheGroup(double long ptr) DeleteUrlCacheGroup
+@ stdcall DeleteUrlCacheGroup(double long ptr)
 @ stdcall DetectAutoProxyUrl(str long long)
 @ stdcall DllInstall(long ptr) WININET_DllInstall
 @ stub FindCloseUrlCache
@@ -131,8 +131,8 @@
 @ stub InternetSetFilePointer
 @ stdcall InternetSetOptionA(ptr long ptr long)
 @ stdcall InternetSetOptionW(ptr long ptr long)
-@ stub InternetSetOptionExA
-@ stub InternetSetOptionExW
+@ stdcall InternetSetOptionExA(ptr long ptr long long)
+@ stdcall InternetSetOptionExW(ptr long ptr long long)
 @ stdcall InternetSetStatusCallback(ptr ptr) InternetSetStatusCallbackA
 @ stdcall InternetSetStatusCallbackA(ptr ptr)
 @ stub InternetSetStatusCallbackW
