@@ -429,7 +429,8 @@ DWORD WINAPI GetLargestConsoleWindowSize( HANDLE hConsoleOutput )
  */
 BOOL WINAPI FreeConsole(VOID)
 {
-    CLIENT_SendRequest( REQ_FREE_CONSOLE, -1, 0 );
+    struct free_console_request req;
+    CLIENT_SendRequest( REQ_FREE_CONSOLE, -1, 1, &req, sizeof(req) );
     return !CLIENT_WaitReply( NULL, NULL, 0 );
 }
 
@@ -550,7 +551,7 @@ BOOL WINAPI AllocConsole(VOID)
 	DWORD	ret;
 
 	TRACE(console,"()\n");
-        CLIENT_SendRequest( REQ_ALLOC_CONSOLE, -1, 0 );
+        CLIENT_SendRequest( REQ_ALLOC_CONSOLE, -1, 1, &req, sizeof(req) );
 	ret = CLIENT_WaitReply( NULL, NULL, 0 );
         if (ret != ERROR_SUCCESS) {
 		/* Hmm, error returned by server when we already have an
