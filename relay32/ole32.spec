@@ -58,8 +58,8 @@ type	win32
  55 stdcall CreateFileMoniker(ptr ptr) CreateFileMoniker32
  56 stub CreateGenericComposite
  57 stub CreateILockBytesOnHGlobal
- 58 stub CreateItemMoniker
- 59 stub CreateOleAdviseHolder
+ 58 stdcall CreateItemMoniker(ptr ptr ptr) CreateItemMoniker32
+ 59 stdcall CreateOleAdviseHolder(ptr) CreateOleAdviseHolder32
  60 stub CreatePointerMoniker
  61 stub CreateStreamOnHGlobal
  62 stub DllDebugObjectRPCHook
@@ -153,7 +153,7 @@ type	win32
 150 stub StgSetTimes
 151 stdcall StringFromCLSID(ptr ptr) StringFromCLSID32
 152 stdcall StringFromGUID2(ptr ptr long) StringFromGUID2
-153 stub StringFromIID
+153 stdcall StringFromIID(ptr ptr) StringFromCLSID32
 154 stub UtConvertDvtd16toDvtd32
 155 stub UtConvertDvtd32toDvtd16
 156 stub UtGetDvtd16Info

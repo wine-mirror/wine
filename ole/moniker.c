@@ -46,3 +46,19 @@ CreateFileMoniker32(
 	*ppmk = NULL;
 	return E_FAIL;
 }
+
+/******************************************************************************
+ *		CreateItemMoniker32	[OLE32.58]
+ */
+HRESULT WINAPI
+CreateItemMoniker32(
+	LPCOLESTR32 lpszDelim,	/* [in] */
+	LPCOLESTR32 lpszItem,	/* [in] */
+	LPMONIKER * ppmk	/* [out] new moniker object */
+)
+{
+    FIXME (ole,"(%s %s %p),stub!\n",
+	   debugstr_w(lpszDelim), debugstr_w(lpszItem), ppmk);
+    return E_FAIL;
+}
+
