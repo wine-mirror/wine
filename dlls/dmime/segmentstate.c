@@ -39,14 +39,17 @@ HRESULT WINAPI IDirectMusicSegmentState8Impl_QueryInterface (LPDIRECTMUSICSEGMEN
 
 ULONG WINAPI IDirectMusicSegmentState8Impl_AddRef (LPDIRECTMUSICSEGMENTSTATE8 iface) {
 	IDirectMusicSegmentState8Impl *This = (IDirectMusicSegmentState8Impl *)iface;
-	TRACE("(%p): AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
+        ULONG ref = InterlockedIncrement(&This->ref);
+
+	TRACE("(%p): AddRef from %ld\n", This, ref - 1);
+
+	return ref;
 }
 
 ULONG WINAPI IDirectMusicSegmentState8Impl_Release (LPDIRECTMUSICSEGMENTSTATE8 iface) {
 	IDirectMusicSegmentState8Impl *This = (IDirectMusicSegmentState8Impl *)iface;
-	ULONG ref = --This->ref;
-	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
+	ULONG ref = InterlockedDecrement(&This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}

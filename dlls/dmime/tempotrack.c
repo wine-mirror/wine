@@ -52,14 +52,17 @@ HRESULT WINAPI IDirectMusicTempoTrack_IUnknown_QueryInterface (LPUNKNOWN iface, 
 
 ULONG WINAPI IDirectMusicTempoTrack_IUnknown_AddRef (LPUNKNOWN iface) {
   ICOM_THIS_MULTI(IDirectMusicTempoTrack, UnknownVtbl, iface);
-  TRACE("(%p): AddRef from %ld\n", This, This->ref);
-  return ++(This->ref);
+  ULONG ref = InterlockedIncrement(&This->ref);
+
+  TRACE("(%p): AddRef from %ld\n", This, ref - 1);
+
+  return ref;
 }
 
 ULONG WINAPI IDirectMusicTempoTrack_IUnknown_Release (LPUNKNOWN iface) {
   ICOM_THIS_MULTI(IDirectMusicTempoTrack, UnknownVtbl, iface);
-  ULONG ref = --This->ref;
-  TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
+  ULONG ref = InterlockedDecrement(&This->ref);
+  TRACE("(%p): ReleaseRef to %ld\n", This, ref);
   if (ref == 0) {
     HeapFree(GetProcessHeap(), 0, This);
   }

@@ -54,14 +54,17 @@ HRESULT WINAPI IDirectMusicAudioPathImpl_IUnknown_QueryInterface (LPUNKNOWN ifac
 
 ULONG WINAPI IDirectMusicAudioPathImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, UnknownVtbl, iface);
-	TRACE("(%p): AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
+        ULONG ref = InterlockedIncrement(&This->ref);
+
+	TRACE("(%p): AddRef from %ld\n", This, ref - 1);
+
+	return ref;
 }
 
 ULONG WINAPI IDirectMusicAudioPathImpl_IUnknown_Release (LPUNKNOWN iface) {
   ICOM_THIS_MULTI(IDirectMusicAudioPathImpl, UnknownVtbl, iface);
-  ULONG ref = --This->ref;
-  TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
+  ULONG ref = InterlockedDecrement(&This->ref);
+  TRACE("(%p): ReleaseRef to %ld\n", This, ref);
   if (ref == 0) {
     if (This->pDSBuffer) {
       IDirectSoundBuffer8_Release(This->pDSBuffer);

@@ -54,14 +54,17 @@ HRESULT WINAPI IDirectMusicGraphImpl_IUnknown_QueryInterface (LPUNKNOWN iface, R
 
 ULONG WINAPI IDirectMusicGraphImpl_IUnknown_AddRef (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, UnknownVtbl, iface);
-	TRACE("(%p): AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
+        ULONG ref = InterlockedIncrement(&This->ref);
+
+	TRACE("(%p): AddRef from %ld\n", This, ref - 1);
+
+	return ref;
 }
 
 ULONG WINAPI IDirectMusicGraphImpl_IUnknown_Release (LPUNKNOWN iface) {
 	ICOM_THIS_MULTI(IDirectMusicGraphImpl, UnknownVtbl, iface);
-	ULONG ref = --This->ref;
-	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
+	ULONG ref = InterlockedDecrement(&This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}

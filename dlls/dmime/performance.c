@@ -182,14 +182,17 @@ HRESULT WINAPI IDirectMusicPerformance8Impl_QueryInterface (LPDIRECTMUSICPERFORM
 
 ULONG WINAPI IDirectMusicPerformance8Impl_AddRef (LPDIRECTMUSICPERFORMANCE8 iface) {
   IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-  TRACE("(%p): AddRef from %ld\n", This, This->ref);
-  return ++(This->ref);
+  ULONG ref = InterlockedIncrement(&This->ref);
+
+  TRACE("(%p): AddRef from %ld\n", This, ref - 1);
+
+  return ref;
 }
 
 ULONG WINAPI IDirectMusicPerformance8Impl_Release (LPDIRECTMUSICPERFORMANCE8 iface) {
   IDirectMusicPerformance8Impl *This = (IDirectMusicPerformance8Impl *)iface;
-  ULONG ref = --This->ref;
-  TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
+  ULONG ref = InterlockedDecrement(&This->ref);
+  TRACE("(%p): ReleaseRef to %ld\n", This, ref);
   if (ref == 0) {
     DeleteCriticalSection(&This->safe);
     HeapFree(GetProcessHeap(), 0, This);

@@ -39,14 +39,17 @@ HRESULT WINAPI IDirectMusicPatternTrackImpl_QueryInterface (LPDIRECTMUSICPATTERN
 
 ULONG WINAPI IDirectMusicPatternTrackImpl_AddRef (LPDIRECTMUSICPATTERNTRACK iface) {
 	IDirectMusicPatternTrackImpl *This = (IDirectMusicPatternTrackImpl *)iface;
-	TRACE("(%p): AddRef from %ld\n", This, This->ref);
-	return ++(This->ref);
+        ULONG ref = InterlockedIncrement(&This->ref);
+
+	TRACE("(%p): AddRef from %ld\n", This, ref - 1);
+
+	return ref;
 }
 
 ULONG WINAPI IDirectMusicPatternTrackImpl_Release (LPDIRECTMUSICPATTERNTRACK iface) {
 	IDirectMusicPatternTrackImpl *This = (IDirectMusicPatternTrackImpl *)iface;
-	ULONG ref = --This->ref;
-	TRACE("(%p): ReleaseRef to %ld\n", This, This->ref);
+	ULONG ref = InterlockedDecrement(&This->ref);
+	TRACE("(%p): ReleaseRef to %ld\n", This, ref);
 	if (ref == 0) {
 		HeapFree(GetProcessHeap(), 0, This);
 	}
