@@ -260,12 +260,18 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
  *  Perform wordbreak processing on the given string
  *
  * Assumes that DT_WORDBREAK has been specified and not all the characters
- * fit.  Note that this function should be called when the first character that
- * doesn't fit is a space or tab, so that it can swallow the space(s)
+ * fit.  Note that this function should even be called when the first character
+ * that doesn't fit is known to be a space or tab, so that it can swallow them.
  *
- * Note that the Windows processing has some strange properties.  In particular
- * leading and trailing spaces are not stripped except for the first space of a
- * line created by a wordbreak.
+ * Note that the Windows processing has some strange properties.
+ * 1. If the text is left-justified and there is room for some of the spaces
+ *    that follow the last word on the line then those that fit are included on
+ *    the line.
+ * 2. If the text is centred or right-justified and there is room for some of
+ *    the spaces that follow the last word on the line then all but one of those
+ *    that fit are included on the line.
+ * 3. (Reasonable behaviour) If the word breaking causes a space to be the first
+ *    character of a new line it will be skipped.
  *
  * Arguments
  *   hdc        [in] The handle to the DC that defines the font.
@@ -290,7 +296,9 @@ static void TEXT_PathEllipsify (HDC hdc, WCHAR *str, unsigned int max_len,
  * Work back from the last character that did fit to either a space or the last
  * character of a word, whichever is met first.
  * If there was one or the first character didn't fit then
- *     break the line after that character
+ *     If the text is centred or right justified and that one character was a
+ *     space then break the line before that character
+ *     Otherwise break the line after that character
  *     and if the next character is a space then discard it.
  * Suppose there was none (and the first character did fit).
  *     If Break Within Word is permitted
@@ -334,8 +342,9 @@ static void TEXT_WordBreak (HDC hdc, WCHAR *str, unsigned int max_str,
     /* If there was one or the first character didn't fit then */
     if (word_fits)
     {
-        /* break the line after that character */
-        p++;
+        /* break the line before/after that character */
+        if (!(format & (DT_RIGHT | DT_CENTER)) || *p != SPACE)
+            p++;
         *len_str = p - str;
         /* and if the next character is a space then discard it. */
         *chars_used = *len_str;
