@@ -131,6 +131,7 @@ longjmp
 lseek
 malloc
 mblen
+memccpy
 memchr
 memcmp
 memcpy

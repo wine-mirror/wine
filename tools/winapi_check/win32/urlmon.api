@@ -2,6 +2,7 @@
 
 BOOL
 HRESULT
+long
 
 %ptr
 

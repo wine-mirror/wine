@@ -346,7 +346,7 @@ foreach my $file ($options->c_files) {
 			    }
 			}
 		    }
-		    if(!$match) {
+		    if(!$match && $file ne "library/port.c" && !$nativeapi->is_function($internal_name)) {
 			$output->write("is misplaced\n");
 		    }
 		}
@@ -360,7 +360,7 @@ foreach my $file ($options->c_files) {
 			    }
 			}
 		    }
-		    if(!$match) {
+		    if(!$match && $file ne "library/port.c" && !$nativeapi->is_function($internal_name)) {
 			$output->write("is misplaced\n");
 		    }
 		}
@@ -692,10 +692,12 @@ if($options->global) {
 	}
     }
 
-    foreach my $name (sort(keys(%includes))) {
-	if(!$includes{$name}{used}) {
-	    if($options->include) {
-		$output->write("*.c: $name: include file is never used\n");
+    if($options->headers) {
+	foreach my $name (sort(keys(%includes))) {
+	    if(!$includes{$name}{used}) {
+		if($options->include) {
+		    $output->write("*.c: $name: include file is never used\n");
+		}
 	    }
 	}
     }

@@ -143,6 +143,10 @@ struct ThunkDataCommon *
 va_list
 va_list *
 
+%ptr --extension
+
+BUILTIN16_DESCRIPTOR *
+
 %ptr # --forbidden
 
 FARPROC16

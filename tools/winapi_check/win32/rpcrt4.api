@@ -1,8 +1,12 @@
 %long
 
+HMODULE
+HRESULT
 RPC_STATUS
 
 %ptr
 
+CLSID *
 UUID *
 unsigned char **
+void **

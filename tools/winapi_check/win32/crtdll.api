@@ -8,7 +8,6 @@ BOOL
 CHAR
 DWORD
 HANDLE
-HFILE
 INT
 LONG
 ULONG
@@ -28,7 +27,6 @@ unsigned long
 
 CHAR *
 CRTDLL_FILE *
-INT *
 LPCVOID
 LPDWORD
 LPDWORD *
@@ -48,10 +46,10 @@ char *
 jmp_buf
 find_t *
 struct _stat *
-struct win_stat *
 struct _timeb *
 time_t *
 struct _heapinfo *
+struct _utimbuf *
 fpos_t *
 diskfree_t *
 unsigned char *

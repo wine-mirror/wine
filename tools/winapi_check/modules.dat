@@ -25,7 +25,6 @@ dlls/commdlg
 % dlls/crtdll/crtdll.spec
 
 dlls/crtdll
-library
 
 % dlls/dciman32/dciman32.spec
 
@@ -102,6 +101,7 @@ win32
 
 dlls/kernel
 files
+if1632
 loader/ne
 loader
 memory
@@ -173,6 +173,7 @@ dlls/msvideo
 % dlls/ntdll/ntdll.spec
 
 dlls/ntdll
+misc
 scheduler
 
 % dlls/odbc32/odbc32.spec
@@ -441,7 +442,6 @@ dlls/winsock
 
 dlls/winsock
 dlls/wsock32
-library
 
 % dlls/winspool/winspool.drv.spec
 

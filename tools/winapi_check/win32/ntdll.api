@@ -101,6 +101,15 @@ VOID *
 struct _TEB *
 void *
 
+%ptr --extension
+
+GUID *
+WCHAR *
+char *
+char ***
+enum __DEBUG_CLASS
+va_list
+
 %str
 
 LPSTR
