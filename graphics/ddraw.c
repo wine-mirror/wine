@@ -69,9 +69,6 @@ typedef int INT32;
 
 DEFAULT_DEBUG_CHANNEL(ddraw)
 
-/* define this if you want to play Diablo using XF86DGA. (bug workaround) */
-#undef DIABLO_HACK
-
 /* Restore signal handlers overwritten by XF86DGA 
  */
 #define RESTORE_SIGNALS
@@ -2257,6 +2254,7 @@ static HRESULT WINAPI Xlib_IDirectDrawPaletteImpl_SetEntries(
 	}
 
 	/* Now, if we are in 'depth conversion mode', update the screen palette */
+	/* FIXME: we need to update the image or we won't get palette fading. */
 	if (This->ddraw->d.palette_convert != NULL)
 	  This->ddraw->d.palette_convert(palent, This->screen_palents, start, count);
 	  
@@ -3383,11 +3381,7 @@ static HRESULT WINAPI DGA_IDirectDrawImpl_SetDisplayMode(
 	 * it works for the library too?
 	 */
 	TSXF86DGADirectVideo(display,DefaultScreen(display),XF86DGADirectGraphics);
-#ifdef DIABLO_HACK
-	TSXF86DGASetViewPort(display,DefaultScreen(display),0,This->e.dga.fb_height);
-#else
 	TSXF86DGASetViewPort(display,DefaultScreen(display),0,0);
-#endif
 
 #ifdef RESTORE_SIGNALS
 	SIGNAL_InitHandlers();
@@ -3616,9 +3610,11 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_GetCaps(
 #ifdef HAVE_LIBXXF86DGA
         ICOM_THIS(IDirectDraw2Impl,iface);
 	TRACE(ddraw,"(%p)->GetCaps(%p,%p)\n",This,caps1,caps2);
-	caps1->dwVidMemTotal = This->e.dga.fb_memsize;
-	caps1->dwCaps = 0xffffffff&~(DDCAPS_BANKSWITCHED);		/* we can do anything */
-	caps1->ddsCaps.dwCaps = 0xffffffff;	/* we can do anything */
+	if (caps1) {
+		caps1->dwVidMemTotal = This->e.dga.fb_memsize;
+		caps1->dwCaps = 0xffffffff&~(DDCAPS_BANKSWITCHED);		/* we can do anything */
+		caps1->ddsCaps.dwCaps = 0xffffffff;	/* we can do anything */
+	}
 	if (caps2) {
 		caps2->dwVidMemTotal = This->e.dga.fb_memsize;
 		caps2->dwCaps = 0xffffffff&~(DDCAPS_BANKSWITCHED);		/* we can do anything */
@@ -4730,12 +4726,7 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 	(*ilplpDD)->e.dga.fb_addr = addr;
 	(*ilplpDD)->e.dga.fb_memsize = memsize;
 	(*ilplpDD)->e.dga.fb_banksize = banksize;
-
-#ifdef DIABLO_HACK
-	(*ilplpDD)->e.dga.vpmask = 1;
-#else
 	(*ilplpDD)->e.dga.vpmask = 0;
-#endif
 
 	/* just assume the default depth is the DGA depth too */
 	depth = DefaultDepthOfScreen(X11DRV_GetXScreen());
