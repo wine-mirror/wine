@@ -454,16 +454,16 @@ void file_set_error(void)
     case EROFS:     set_error( STATUS_MEDIA_WRITE_PROTECTED ); break;
     case EBUSY:     set_error( STATUS_FILE_LOCK_CONFLICT ); break;
     case ENOENT:    set_error( STATUS_NO_SUCH_FILE ); break;
-    case EISDIR:    set_error( 0xc0010000 | ERROR_CANNOT_MAKE /* FIXME */ ); break;
+    case EISDIR:    set_win32_error( ERROR_CANNOT_MAKE ); break;
     case ENFILE:
     case EMFILE:    set_error( STATUS_NO_MORE_FILES ); break;
     case EEXIST:    set_error( STATUS_OBJECT_NAME_COLLISION ); break;
     case EINVAL:    set_error( STATUS_INVALID_PARAMETER ); break;
-    case ESPIPE:    set_error( 0xc0010000 | ERROR_SEEK /* FIXME */ ); break;
+    case ESPIPE:    set_win32_error( ERROR_SEEK ); break;
     case ENOTEMPTY: set_error( STATUS_DIRECTORY_NOT_EMPTY ); break;
     case EIO:       set_error( STATUS_ACCESS_VIOLATION ); break;
     case EOVERFLOW: set_error( STATUS_INVALID_PARAMETER ); break;
-    default:        perror("file_set_error"); set_error( ERROR_UNKNOWN /* FIXME */ ); break;
+    default:        perror("file_set_error"); set_win32_error( ERROR_UNKNOWN ); break;
     }
 }
 

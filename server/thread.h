@@ -144,7 +144,8 @@ extern unsigned int global_error;  /* global error code for when no thread is cu
 
 static inline unsigned int get_error(void)       { return current ? current->error : global_error; }
 static inline void set_error( unsigned int err ) { global_error = err; if (current) current->error = err; }
-static inline void clear_error(void)    { set_error(0); }
+static inline void clear_error(void)             { set_error(0); }
+static inline void set_win32_error( unsigned int err ) { set_error( 0xc0010000 | err ); }
 
 static inline thread_id_t get_thread_id( struct thread *thread ) { return thread->id; }
 
