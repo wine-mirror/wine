@@ -5,134 +5,8 @@
  */
 
 #include "config.h"
-#include <stdio.h>
 #include <string.h>
 #include "debugger.h"
-
-/***********************************************************************
- *           DEBUG_SetRegister
- *
- * Set a register value.
- */
-void DEBUG_SetRegister( enum debug_regs reg, int val )
-{
-#ifdef __i386__
-    switch(reg)
-    {
-        case REG_EAX: DEBUG_context.Eax = val; break;
-        case REG_EBX: DEBUG_context.Ebx = val; break;
-        case REG_ECX: DEBUG_context.Ecx = val; break;
-        case REG_EDX: DEBUG_context.Edx = val; break;
-        case REG_ESI: DEBUG_context.Esi = val; break;
-        case REG_EDI: DEBUG_context.Edi = val; break;
-        case REG_EBP: DEBUG_context.Ebp = val; break;
-        case REG_EFL: DEBUG_context.EFlags = val; break;
-        case REG_EIP: DEBUG_context.Eip = val; break;
-        case REG_ESP: DEBUG_context.Esp = val; break;
-        case REG_CS:  DEBUG_context.SegCs = val; break;
-        case REG_DS:  DEBUG_context.SegDs = val; break;
-        case REG_ES:  DEBUG_context.SegEs = val; break;
-        case REG_SS:  DEBUG_context.SegSs = val; break;
-        case REG_FS:  DEBUG_context.SegFs = val; break;
-        case REG_GS:  DEBUG_context.SegGs = val; break;
-#define SET_LOW_WORD(dw,lw)	((dw) = ((dw) & 0xFFFF0000) | LOWORD(lw))
-        case REG_AX:  SET_LOW_WORD(DEBUG_context.Eax,val); break;
-        case REG_BX:  SET_LOW_WORD(DEBUG_context.Ebx,val); break;
-        case REG_CX:  SET_LOW_WORD(DEBUG_context.Ecx,val); break;
-        case REG_DX:  SET_LOW_WORD(DEBUG_context.Edx,val); break;
-        case REG_SI:  SET_LOW_WORD(DEBUG_context.Esi,val); break;
-        case REG_DI:  SET_LOW_WORD(DEBUG_context.Edi,val); break;
-        case REG_BP:  SET_LOW_WORD(DEBUG_context.Ebp,val); break;
-        case REG_FL:  SET_LOW_WORD(DEBUG_context.EFlags,val); break;
-        case REG_IP:  SET_LOW_WORD(DEBUG_context.Eip,val); break;
-        case REG_SP:  SET_LOW_WORD(DEBUG_context.Esp,val); break;
-#undef SET_LOWORD
-    }
-#endif
-}
-
-
-int DEBUG_PrintRegister(enum debug_regs reg)
-{
-#ifdef __i386__
-    char* 	val = NULL;
-    switch(reg)
-    {
-        case REG_EAX: val = "%%eax"; break;
-        case REG_EBX: val = "%%ebx"; break;
-        case REG_ECX: val = "%%ecx"; break;
-        case REG_EDX: val = "%%edx"; break;
-        case REG_ESI: val = "%%esi"; break;
-        case REG_EDI: val = "%%edi"; break;
-        case REG_EBP: val = "%%ebp"; break;
-        case REG_EFL: val = "%%efl"; break;
-        case REG_EIP: val = "%%eip"; break;
-        case REG_ESP: val = "%%esp"; break;
-        case REG_AX:  val = "%%ax";  break;
-        case REG_BX:  val = "%%bx";  break;
-        case REG_CX:  val = "%%cx";  break;
-        case REG_DX:  val = "%%dx";  break;
-        case REG_SI:  val = "%%si";  break;
-        case REG_DI:  val = "%%di";  break;
-        case REG_BP:  val = "%%bp";  break;
-        case REG_FL:  val = "%%fl";  break;
-        case REG_IP:  val = "%%ip";  break;
-        case REG_SP:  val = "%%sp";  break;
-        case REG_CS:  val = "%%cs";  break;
-        case REG_DS:  val = "%%ds";  break;
-        case REG_ES:  val = "%%es";  break;
-        case REG_SS:  val = "%%ss";  break;
-        case REG_FS:  val = "%%fs";  break;
-        case REG_GS:  val = "%%gs";  break;
-    }
-    if (val) DEBUG_Printf(DBG_CHN_MESG, val);
-    return TRUE;
-#else
-    return FALSE;
-#endif
-}
-
-/***********************************************************************
- *           DEBUG_GetRegister
- *
- * Get a register value.
- */
-int DEBUG_GetRegister( enum debug_regs reg )
-{
-#ifdef __i386__
-    switch(reg)
-    {
-        case REG_EAX: return DEBUG_context.Eax;
-        case REG_EBX: return DEBUG_context.Ebx;
-        case REG_ECX: return DEBUG_context.Ecx;
-        case REG_EDX: return DEBUG_context.Edx;
-        case REG_ESI: return DEBUG_context.Esi;
-        case REG_EDI: return DEBUG_context.Edi;
-        case REG_EBP: return DEBUG_context.Ebp;
-        case REG_EFL: return DEBUG_context.EFlags;
-        case REG_EIP: return DEBUG_context.Eip;
-        case REG_ESP: return DEBUG_context.Esp;
-        case REG_CS:  return DEBUG_context.SegCs;
-        case REG_DS:  return DEBUG_context.SegDs;
-        case REG_ES:  return DEBUG_context.SegEs;
-        case REG_SS:  return DEBUG_context.SegSs;
-        case REG_FS:  return DEBUG_context.SegFs;
-        case REG_GS:  return DEBUG_context.SegGs;
-        case REG_AX:  return LOWORD(DEBUG_context.Eax);
-        case REG_BX:  return LOWORD(DEBUG_context.Ebx);
-        case REG_CX:  return LOWORD(DEBUG_context.Ecx);
-        case REG_DX:  return LOWORD(DEBUG_context.Edx);
-        case REG_SI:  return LOWORD(DEBUG_context.Esi);
-        case REG_DI:  return LOWORD(DEBUG_context.Edi);
-        case REG_BP:  return LOWORD(DEBUG_context.Ebp);
-        case REG_FL:  return LOWORD(DEBUG_context.EFlags);
-        case REG_IP:  return LOWORD(DEBUG_context.Eip);
-        case REG_SP:  return LOWORD(DEBUG_context.Esp);
-    }
-#endif
-    return 0;  /* should not happen */
-}
-
 
 /***********************************************************************
  *           DEBUG_Flags
@@ -141,6 +15,7 @@ int DEBUG_GetRegister( enum debug_regs reg )
  */
 char *DEBUG_Flags( DWORD flag, char *buf )
 {
+#ifdef __i386__
     char *pt;
 
     strcpy( buf, "   - 00      - - - " );
@@ -185,6 +60,10 @@ char *DEBUG_Flags( DWORD flag, char *buf )
     if ( flag & 0x00040000 ) *pt = 'a'; /* Alignment Check Flag */
     if ( buf >= pt-- ) return( buf );
     return( buf );
+#else
+    strcpy(buf, "unknown CPU");
+    return buf;
+#endif
 }
 
 

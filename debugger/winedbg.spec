@@ -1,5 +1,5 @@
 name	winedbg
-mode	guiexe
+mode	cuiexe
 type	win32
-init	WinMain
+init	DEBUG_main
 

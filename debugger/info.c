@@ -6,7 +6,6 @@
  */
 
 #include "config.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "winbase.h"
@@ -92,22 +91,21 @@ void DEBUG_PrintBasic( const DBG_VALUE* value, int count, char format )
 			    char*	str = (char*)(long)res;
 
 			    for (; DEBUG_READ_MEM(str, &ch, 1) && ch; str++) {
-			       fputc(ch, stderr);
+			       DEBUG_Output(DBG_CHN_MESG, &ch, 1);
 			       DEBUG_nchar++;
 			    }
 			 }
 		       else 
 			 {
 			    /* shouldn't happen */
-			    fputc('%', stderr);
-			    fputc(*ptr, stderr);
+			    DEBUG_Printf(DBG_CHN_MESG, "%%%c", *ptr);
 			    DEBUG_nchar += 2;
 			 }
 		       state = 0;
 		    }
 		  else
 		    {
-		       fputc(*ptr, stderr);
+		       DEBUG_Output(DBG_CHN_MESG, ptr, 1);
 		       DEBUG_nchar++;
 		    }
 	       }

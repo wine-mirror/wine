@@ -183,11 +183,12 @@ DEBUG_DisplaySource(char * sourcefile, int start, int end)
 	  
 	  if( sl == NULL )
 	    {
+	      char	zbuf[256];
 	      /*
 	       * Still couldn't find it.  Ask user for path to add.
 	       */
-	      DEBUG_Printf(DBG_CHN_MESG,"Enter path to file %s: ", sourcefile);
-	      fgets(tmppath, sizeof(tmppath), stdin);
+	      sprintf(zbuf, "Enter path to file %s: ", sourcefile);
+	      lstrcpynA(tmppath, readline(zbuf), sizeof(tmppath));
 	      
 	      if( tmppath[strlen(tmppath)-1] == '\n' )
 		{

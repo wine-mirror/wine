@@ -27,12 +27,7 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include "windef.h"
 #include "debugger.h"
@@ -136,94 +131,29 @@ int		rl_meta_chars = 1;
 **  Declarations.
 */
 static CHAR	*editinput();
-extern int	read();
-extern int	write();
-#if	defined(USE_TERMCAP)
-extern char	*getenv();
-extern char	*tgetstr();
-extern int	tgetent();
-#endif	/* defined(USE_TERMCAP) */
 
 /*
 **  TTY input/output functions.
 */
 
-#ifdef HAVE_TCGETATTR
-#include <termios.h>
-
 static void
 rl_ttyset(int Reset)
 {
-    static struct termios	old;
-    struct termios		new;
+   static	DWORD	old_mode;
 
-    if (Reset == 0) {
-	(void)tcgetattr(0, &old);
-	rl_erase = old.c_cc[VERASE];
-	rl_kill = old.c_cc[VKILL];
-	rl_eof = old.c_cc[VEOF];
-	rl_intr = old.c_cc[VINTR];
-	rl_quit = old.c_cc[VQUIT];
-
-	new = old;
-	new.c_cc[VINTR] = -1;
-	new.c_cc[VQUIT] = -1;
-	new.c_lflag &= ~(ECHO | ICANON);
-	new.c_iflag &= ~(ISTRIP | INPCK);
-	new.c_cc[VMIN] = 1;
-	new.c_cc[VTIME] = 0;
-	(void)tcsetattr(0, TCSANOW, &new);
-    }
-    else
-	(void)tcsetattr(0, TCSANOW, &old);
+   if (Reset == 0) {
+      GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &old_mode);
+      SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), 0 /*ENABLE_PROCESSED_INPUT|ENABLE_WINDOW_INPUT|ENABLE_MOUSE_INPUT*/);
+   } else {
+      SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), old_mode);
+   }
 }
-
-#else  /* HAVE_TCGETATTR */
-
-static void
-rl_ttyset(int Reset)
-{
-    static struct sgttyb	old_sgttyb;
-    static struct tchars	old_tchars;
-    struct sgttyb		new_sgttyb;
-    struct tchars		new_tchars;
-
-    if (Reset == 0) {
-	(void)ioctl(0, TIOCGETP, &old_sgttyb);
-	rl_erase = old_sgttyb.sg_erase;
-	rl_kill = old_sgttyb.sg_kill;
-
-	(void)ioctl(0, TIOCGETC, &old_tchars);
-	rl_eof = old_tchars.t_eofc;
-	rl_intr = old_tchars.t_intrc;
-	rl_quit = old_tchars.t_quitc;
-
-	new_sgttyb = old_sgttyb;
-	new_sgttyb.sg_flags &= ~ECHO;
-	new_sgttyb.sg_flags |= RAW;
-#if	defined(PASS8)
-	new_sgttyb.sg_flags |= PASS8;
-#endif	/* defined(PASS8) */
-	(void)ioctl(0, TIOCSETP, &new_sgttyb);
-
-	new_tchars = old_tchars;
-	new_tchars.t_intrc = -1;
-	new_tchars.t_quitc = -1;
-	(void)ioctl(0, TIOCSETC, &new_tchars);
-    }
-    else {
-	(void)ioctl(0, TIOCSETP, &old_sgttyb);
-	(void)ioctl(0, TIOCSETC, &old_tchars);
-    }
-}
-
-#endif	/* HAVE_TCGETATTR */
 
 static void
 TTYflush(void)
 {
     if (ScreenCount) {
-	(void)write(1, Screen, ScreenCount);
+	DEBUG_Output(DBG_CHN_MESG, Screen, ScreenCount);
 	ScreenCount = 0;
     }
 }
@@ -276,7 +206,7 @@ static unsigned int
 TTYget(void)
 {
     CHAR	c;
-    int retv;
+    DWORD	retv;
 
     TTYflush();
     if (Pushed) {
@@ -286,16 +216,22 @@ TTYget(void)
     if (*Input)
 	return *Input++;
 
-    while ( ( retv = read( 0, &c, (size_t)1 ) ) == -1 )
-    {
-        if ( errno != EINTR )
-        {
-            perror( "read" );
-            return EOF;
-        }
+    for (;;) {
+       /* data available ? */
+       if (ReadConsole(GetStdHandle(STD_INPUT_HANDLE), &c, 1, &retv, NULL) &&
+	   retv == 1)
+	  return c;
+       switch (WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), INFINITE)) {
+       case WAIT_OBJECT_0:
+	  break;
+       default:
+	  DEBUG_Printf(DBG_CHN_FIXME, "shouldn't happen\n");
+	  /* fall thru */
+       case WAIT_ABANDONED:
+       case WAIT_TIMEOUT:
+	  return EOF;
+       }
     }
-
-    return retv == 1 ? c : EOF;
 }
 
 #define TTYback()	(backspace ? TTYputs((CHAR *)backspace) : TTYput('\b'))
@@ -310,55 +246,9 @@ TTYbackn(int n)
 static void
 TTYinfo(void)
 {
-    static int		init;
-#if	defined(USE_TERMCAP)
-    char		*term;
-    char		buff[2048];
-    char		*bp;
-#endif	/* defined(USE_TERMCAP) */
-#if	defined(TIOCGWINSZ)
-    struct winsize	W;
-#endif	/* defined(TIOCGWINSZ) */
-
-    if (init) {
-#if	defined(TIOCGWINSZ)
-	/* Perhaps we got resized. */
-	if (ioctl(0, TIOCGWINSZ, &W) >= 0
-	 && W.ws_col > 0 && W.ws_row > 0) {
-	    TTYwidth = (int)W.ws_col;
-	    TTYrows = (int)W.ws_row;
-	}
-#endif	/* defined(TIOCGWINSZ) */
-	return;
-    }
-    init++;
-
-    TTYwidth = TTYrows = 0;
-#if	defined(USE_TERMCAP)
-    bp = &buff[0];
-    if ((term = getenv("TERM")) == NULL)
-	term = "dumb";
-    if (tgetent(buff, term) < 0) {
-       TTYwidth = SCREEN_WIDTH;
-       TTYrows = SCREEN_ROWS;
-       return;
-    }
-    backspace = tgetstr("le", &bp);
-    TTYwidth = tgetnum("co");
-    TTYrows = tgetnum("li");
-#endif	/* defined(USE_TERMCAP) */
-
-#if	defined(TIOCGWINSZ)
-    if (ioctl(0, TIOCGWINSZ, &W) >= 0) {
-	TTYwidth = (int)W.ws_col;
-	TTYrows = (int)W.ws_row;
-    }
-#endif	/* defined(TIOCGWINSZ) */
-
-    if (TTYwidth <= 0 || TTYrows <= 0) {
-	TTYwidth = SCREEN_WIDTH;
-	TTYrows = SCREEN_ROWS;
-    }
+   COORD	c = GetLargestConsoleWindowSize(GetStdHandle(STD_INPUT_HANDLE));
+   TTYwidth = c.x;
+   TTYrows = c.y;
 }
 
 

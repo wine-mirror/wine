@@ -8,7 +8,6 @@
  */
 
 #include "config.h"
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <fcntl.h>
@@ -113,7 +112,7 @@ struct datatype * DEBUG_TypeInt = NULL;
 struct datatype * DEBUG_TypeIntConst = NULL;
 struct datatype * DEBUG_TypeUSInt = NULL;
 struct datatype * DEBUG_TypeString = NULL;
-
+struct datatype * DEBUG_TypeShortUInt = NULL;
 /*
  * All of the types that have been defined so far.
  */
@@ -319,7 +318,7 @@ DEBUG_InitTypes(void)
   DEBUG_InitBasic(BASIC_LONGLONG,"long long int",8,1,"%ld");
   DEBUG_InitBasic(BASIC_ULONGLONGI,"long long unsigned int",8,0,"%ld");
   DEBUG_InitBasic(BASIC_SHORT,"short int",2,1,"%d");
-  DEBUG_InitBasic(BASIC_SHORTUI,"short unsigned int",2,0,"%d");
+  DEBUG_TypeShortUInt = DEBUG_InitBasic(BASIC_SHORTUI,"short unsigned int",2,0,"%d");
   DEBUG_InitBasic(BASIC_SCHAR,"signed char",1,1,"'%c'");
   DEBUG_InitBasic(BASIC_UCHAR,"unsigned char",1,0,"'%c'");
   DEBUG_InitBasic(BASIC_FLT,"float",4,0,"%f");
@@ -865,7 +864,7 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
 	  DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "\"");
 	  for( i=value->type->un.array.start; i < value->type->un.array.end; i++ )
 	    {
-	      fputc(*pnt++, stderr);
+	      DEBUG_Output(DBG_CHN_MESG, pnt++, 1);
 	      DEBUG_nchar++;
 	      if( DEBUG_nchar > DEBUG_maxchar )
 		{

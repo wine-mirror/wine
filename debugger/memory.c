@@ -7,7 +7,6 @@
  */
 
 #include "config.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -140,16 +139,30 @@ void	DEBUG_InvalLinAddr( void* addr )
  *
  * Read a memory value.
  */
-int DEBUG_ReadMemory( const DBG_ADDR *address )
+/* FIXME: this function is now getting closer and closer to 
+ * DEBUG_ExprGetValue. They should be merged...
+ */
+int DEBUG_ReadMemory( const DBG_VALUE* val )
 {
-    DBG_ADDR	addr = *address;
-    void*	lin;
-    int		value;
-	
-    DEBUG_FixAddress( &addr, DEBUG_context.SegDs );
-    lin = (void*)DEBUG_ToLinear( &addr );
-    if (!DEBUG_READ_MEM_VERBOSE(lin, &value, sizeof(value)))
-       value = 0;
+    int		value = 0; /* to clear any unused byte */
+    int		os = DEBUG_GetObjectSize(val->type);
+
+    assert(sizeof(value) >= os);
+
+    /* FIXME: only works on little endian systems */
+
+    if (val->cookie == DV_TARGET) {
+       DBG_ADDR	addr = val->addr;
+       void*	lin;
+
+       DEBUG_FixAddress( &addr, DEBUG_context.SegDs );
+       lin = (void*)DEBUG_ToLinear( &addr );
+       
+       DEBUG_READ_MEM_VERBOSE(lin, &value, os);
+    } else {
+       if (val->addr.off)
+	  memcpy(&value, (void*)val->addr.off, os);
+    }
     return value;
 }
 
@@ -159,14 +172,24 @@ int DEBUG_ReadMemory( const DBG_ADDR *address )
  *
  * Store a value in memory.
  */
-void DEBUG_WriteMemory( const DBG_ADDR *address, int value )
+void DEBUG_WriteMemory( const DBG_VALUE* val, int value )
 {
-    DBG_ADDR 	addr = *address;
-    void*	lin;
+    int		os = DEBUG_GetObjectSize(val->type);
 
-    DEBUG_FixAddress( &addr, DEBUG_context.SegDs );
-    lin = (void*)DEBUG_ToLinear( &addr );
-    DEBUG_WRITE_MEM_VERBOSE(lin, &value, sizeof(value));
+    assert(sizeof(value) >= os);
+
+    /* FIXME: only works on little endian systems */
+
+    if (val->cookie == DV_TARGET) {
+       DBG_ADDR addr = val->addr;
+       void*	lin;
+
+       DEBUG_FixAddress( &addr, DEBUG_context.SegDs );
+       lin = (void*)DEBUG_ToLinear( &addr );
+       DEBUG_WRITE_MEM_VERBOSE(lin, &value, os);
+    } else {
+       memcpy((void*)val->addr.off, &value, os);
+    }
 }
 
 
@@ -242,7 +265,7 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
 		    if (!DEBUG_READ_MEM_VERBOSE(pnt, &wch, sizeof(wch)))
 		       break;
                     pnt += sizeof(wch);
-                    fputc( (char)wch, stderr );
+                    DEBUG_Printf(DBG_CHN_MESG, "%c", (char)wch);
                 }
 		DEBUG_Printf(DBG_CHN_MESG,"\n");
 		return;
@@ -256,7 +279,7 @@ void DEBUG_ExamineMemory( const DBG_VALUE *_value, int count, char format )
                     if (!DEBUG_READ_MEM_VERBOSE(pnt, &ch, sizeof(ch)))
 		       break;
                     pnt++;
-                    fputc( ch, stderr );
+                    DEBUG_Output(DBG_CHN_MESG, &ch, 1);
                 }
 		DEBUG_Printf(DBG_CHN_MESG,"\n");
 		return;

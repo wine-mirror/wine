@@ -7,7 +7,6 @@
  */
 
 #include "config.h"
-#include <stdio.h>
 #include "debugger.h"
 
 #ifdef __i386__
@@ -40,7 +39,7 @@
 
 #define MAX_BREAKPOINTS 100
 
-static BREAKPOINT breakpoints[MAX_BREAKPOINTS];
+static DBG_BREAKPOINT breakpoints[MAX_BREAKPOINTS];
 
 static int next_bp = 1;  /* breakpoint 0 is reserved for step-over */
 

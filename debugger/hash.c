@@ -1138,6 +1138,7 @@ BOOL DEBUG_GetStackSymbolValue( const char * name, DBG_VALUE *value )
 	      /*
 	       * Register variable.  Point to DEBUG_context field.
 	       */
+	      assert(curr_func->local_vars[i].regno - 1 < sizeof(reg_ofs)/sizeof(reg_ofs[0]));
 	      value->addr.off = ((DWORD)&DEBUG_context) + 
 		 reg_ofs[curr_func->local_vars[i].regno - 1];
 	      value->cookie = DV_HOST;

@@ -5,7 +5,6 @@
  */
 
 %{
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "debugger.h"
@@ -23,11 +22,8 @@
 	if ( (result = dbg_read((char *) buf, max_size )) < 0 ) \
 	    YY_FATAL_ERROR( "read() in flex scanner failed" );
 
-extern char * readline(const char *);
-extern void add_history(char *);
 static int dbg_read(char * buf, int size);
 static char * make_symbol(char *);
-void flush_symbols();
 
 #endif  /* DONT_USE_READLINE */
 
@@ -86,33 +82,6 @@ STRING     \"[^\n"]+\"
 {STRING} { yylval.string = make_symbol(yytext); return tSTRING; }
 <DEBUGSTR>[a-z+\-,]* { yylval.string = yytext; return tDEBUGSTR; }
 
-$pc     { yylval.reg = REG_EIP; return tREG; }
-$flags  { yylval.reg = REG_EFL; return tREG; }
-$eip    { yylval.reg = REG_EIP; return tREG; }
-$ip     { yylval.reg = REG_IP;  return tREG; }
-$esp    { yylval.reg = REG_ESP; return tREG; }
-$sp     { yylval.reg = REG_SP;  return tREG; }
-$eax    { yylval.reg = REG_EAX; return tREG; }
-$ebx    { yylval.reg = REG_EBX; return tREG; }
-$ecx    { yylval.reg = REG_ECX; return tREG; }
-$edx    { yylval.reg = REG_EDX; return tREG; }
-$esi    { yylval.reg = REG_ESI; return tREG; }
-$edi    { yylval.reg = REG_EDI; return tREG; }
-$ebp    { yylval.reg = REG_EBP; return tREG; }
-$ax     { yylval.reg = REG_AX;  return tREG; }
-$bx     { yylval.reg = REG_BX;  return tREG; }
-$cx     { yylval.reg = REG_CX;  return tREG; }
-$dx     { yylval.reg = REG_DX;  return tREG; }
-$si     { yylval.reg = REG_SI;  return tREG; }
-$di     { yylval.reg = REG_DI;  return tREG; }
-$bp     { yylval.reg = REG_BP;  return tREG; }
-$es     { yylval.reg = REG_ES;  return tREG; }
-$ds     { yylval.reg = REG_DS;  return tREG; }
-$cs     { yylval.reg = REG_CS;  return tREG; }
-$ss     { yylval.reg = REG_SS;  return tREG; }
-$fs     { yylval.reg = REG_FS;  return tREG; }
-$gs     { yylval.reg = REG_GS;  return tREG; }
-
 <INITIAL>info|inf|in			{ BEGIN(INFO_CMD); return tINFO; }
 <INITIAL>up				{ BEGIN(NOCMD); return tUP; }
 <INITIAL>down|dow|do			{ BEGIN(NOCMD); return tDOWN; }
@@ -155,7 +124,7 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 
 <INFO_CMD>share|shar|sha		{ return tSHARE; }
 <INFO_CMD>locals|local|loca|loc		{ return tLOCAL; }
-<INFO_CMD,WALK_CMD>class|clas|cla                  { return tCLASS; }
+<INFO_CMD,WALK_CMD>class|clas|cla       { return tCLASS; }
 <INFO_CMD,WALK_CMD>module|modul|modu|mod  { return tMODULE; }
 <INFO_CMD,WALK_CMD>queue|queu|que	{ return tQUEUE; }
 <INFO_CMD,WALK_CMD>process|proces|proce|proc   		{ return tPROCESS; }
@@ -163,7 +132,7 @@ $gs     { yylval.reg = REG_GS;  return tREG; }
 <INFO_CMD,WALK_CMD>modref|modre|modr	{ return tMODREF; }
 <INFO_CMD>registers|regs|reg|re		{ return tREGS; }
 <INFO_CMD>segments|segment|segm|seg|se	{ return tSEGMENTS; }
-<INFO_CMD>stack|stac|sta|st     		{ return tSTACK; }
+<INFO_CMD>stack|stac|sta|st     	{ return tSTACK; }
 <INFO_CMD>maps|map			{ return tMAPS; }
 <INFO_CMD,WALK_CMD>window|windo|wind|win|wnd	{ return tWND; }
 <HELP_CMD>info|inf|in                   { return tINFO; }
@@ -184,6 +153,7 @@ union					{ return tUNION; }
 enum					{ return tENUM; }
 
 {IDENTIFIER}	{ yylval.string = make_symbol(yytext); return tIDENTIFIER; }
+"$"{IDENTIFIER}	{ yylval.string = make_symbol(yytext+1); return tINTVAR; }
 
 <PATH_EXPECTED>{PATHNAME}	{ yylval.string = make_symbol(yytext); return tPATH; }
 
@@ -279,11 +249,12 @@ static int dbg_read(char * buf, int size)
 static char *local_symbols[30];
 static int next_symbol;
 
-char * make_symbol(char * symbol){
+static char * make_symbol(char * symbol)
+{
         return local_symbols[next_symbol++] = DBG_strdup(symbol);
 }
 
-void flush_symbols()
+void flush_symbols(void)
 {
 	while(--next_symbol>= 0) DBG_free(local_symbols[next_symbol]);
 	next_symbol = 0;

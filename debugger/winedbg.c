@@ -26,46 +26,79 @@ DBG_THREAD*	DEBUG_CurrThread = NULL;
 CONTEXT		DEBUG_context;
 
 static DBG_PROCESS* proc = NULL;
+DBG_INTVAR DEBUG_IntVars[DBG_IV_LAST];
 
-/* build internal vars table */
-#define  INTERNAL_VAR(_var,_val) int DBG_IVAR(_var) = _val;
-#include "intvar.h"
-#undef   INTERNAL_VAR
+void	DEBUG_Output(int chn, const char* buffer, int len)
+{
+    if (DBG_IVAR(ConChannelMask) & chn)
+	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buffer, len, NULL, NULL);
+    if (DBG_IVAR(StdChannelMask) & chn)
+	fwrite(buffer, len, 1, stderr);
+}
 
 int	DEBUG_Printf(int chn, const char* format, ...)
 {
     char	buf[1024];
     va_list 	valist;
+    int		len;
 
     va_start(valist, format);
-    vsprintf(buf, format, valist);
+    len = vsprintf(buf, format, valist);
     va_end(valist);
-#if 0
-    if (DBG_IVAR(ChannelMask) & chn)
-	WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buf, strlen(buf), NULL, NULL);
-    if (chn == DBG_CHN_MESG) fwrite(buf, strlen(buf), 1, stderr);
-#else
-    if (DBG_IVAR(ChannelMask) & chn) fwrite(buf, strlen(buf), 1, stderr); 
-#endif
-    return strlen(buf);
+    DEBUG_Output(chn, buf, len);
+    return len;
 }
 
-static	BOOL DEBUG_Init(void)
+static	BOOL DEBUG_IntVarsRW(int read)
 {
     HKEY	hkey;
-    DWORD 	type;
+    DWORD 	type = REG_DWORD;
     DWORD	val;
     DWORD 	count = sizeof(val);
+    int		i;
+    DBG_INTVAR* div = DEBUG_IntVars;
 
-    if (!RegOpenKey(HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &hkey)) {
-#define  INTERNAL_VAR(_var,_val) \
- 	if (!RegQueryValueEx(hkey, #_var, 0, &type, (LPSTR)&val, &count)) \
-	    DBG_IVAR(_var) = val;
+    if (read) {
+/* initializes internal vars table */
+#define  INTERNAL_VAR(_var,_val,_ref,_typ) 			\
+        div->val = _val; div->name = #_var; div->pval = _ref;	\
+        div->type = _typ; div++;
 #include "intvar.h"
 #undef   INTERNAL_VAR
+    }
+
+    if (!RegOpenKey(HKEY_CURRENT_USER, "Software\\Wine\\WineDbg", &hkey)) {
+	for (i = 0; i < DBG_IV_LAST; i++) {
+	    if (read) {
+		if (!DEBUG_IntVars[i].pval) {
+		    if (!RegQueryValueEx(hkey, DEBUG_IntVars[i].name, 0, 
+					 &type, (LPSTR)&val, &count))
+			DEBUG_IntVars[i].val = val;
+		    DEBUG_IntVars[i].pval = &DEBUG_IntVars[i].val;
+		} else {
+		    *DEBUG_IntVars[i].pval = 0;
+		}
+	    } else {
+		/* FIXME: type should be infered from basic type -if any- of intvar */
+		if (DEBUG_IntVars[i].pval == &DEBUG_IntVars[i].val)
+		    RegSetValueEx(hkey, DEBUG_IntVars[i].name, 0, 
+				  type, (LPCVOID)DEBUG_IntVars[i].pval, count);
+	    }
+	}
 	RegCloseKey(hkey);
     }
     return TRUE;
+}
+
+DBG_INTVAR*	DEBUG_GetIntVar(const char* name)
+{
+    int		i;
+
+    for (i = 0; i < DBG_IV_LAST; i++) {
+	if (!strcmp(DEBUG_IntVars[i].name, name))
+	    return &DEBUG_IntVars[i];
+    }
+    return NULL;
 }
 		       
 static WINE_EXCEPTION_FILTER(wine_dbg)
@@ -119,18 +152,6 @@ static	void			DEBUG_DelProcess(DBG_PROCESS* p)
 
 static	void			DEBUG_InitCurrProcess(void)
 {
-#ifdef DBG_need_heap
-    /*
-     * Initialize the debugger heap.
-     */
-    dbg_heap = HeapCreate(HEAP_NO_SERIALIZE, 0x1000, 0x8000000); /* 128MB */
-#endif
-    
-    /*
-     * Initialize the type handling stuff.
-     */
-    DEBUG_InitTypes();
-    DEBUG_InitCVDataTypes();    
 }
 
 static BOOL DEBUG_ProcessGetString(char* buffer, int size, HANDLE hp, LPSTR addr)
@@ -277,12 +298,16 @@ static	BOOL	DEBUG_HandleException( EXCEPTION_RECORD *rec, BOOL first_chance, BOO
         case EXCEPTION_CRITICAL_SECTION_WAIT:
             DEBUG_Printf( DBG_CHN_MESG, "critical section %08lx wait failed", 
 			  rec->ExceptionInformation[0] );
+	    if (!DBG_IVAR(BreakOnCritSectTimeOut))
+		return DBG_CONTINUE;
             break;
         default:
             DEBUG_Printf( DBG_CHN_MESG, "%08lx", rec->ExceptionCode );
             break;
         }
     }
+
+    DEBUG_Printf(DBG_CHN_MESG, "\n");
 
     DEBUG_Printf(DBG_CHN_TRACE, 
 		 "Entering debugger 	PC=%lx EFL=%08lx mode=%d count=%d\n",
@@ -503,7 +528,7 @@ static	BOOL	DEBUG_HandleDebugEvent(DEBUG_EVENT* de, LPDWORD cont)
     return ret;
 }
 
-static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
+static	DWORD	DEBUG_MainLoop(DWORD pid)
 {
     DEBUG_EVENT		de;
     DWORD		cont;
@@ -511,87 +536,85 @@ static	DWORD	CALLBACK	DEBUG_MainLoop(DWORD pid)
 
     DEBUG_Printf(DBG_CHN_MESG, " on pid %ld\n", pid);
     
-    DEBUG_Init();
-
     while (ret && WaitForDebugEvent(&de, INFINITE)) {
 	ret = DEBUG_HandleDebugEvent(&de, &cont);
 	ContinueDebugEvent(de.dwProcessId, de.dwThreadId, cont);
     }
     
     DEBUG_Printf(DBG_CHN_MESG, "WineDbg terminated on pid %ld\n", pid);
-    
-    ExitProcess(0);
+
+    return 0;
 }
 
-int PASCAL WinMain(HINSTANCE hInst, HINSTANCE prev, LPSTR _cmdline, int show)
+int DEBUG_main(int argc, char** argv)
 {
-    char*		argv[5];
-    char*		cmdline = strdup(_cmdline);
-    char*		ptr = cmdline;
-    int			instr = FALSE;
-    int			argc = 0;
+    DWORD	pid = 0, retv = 0;
+    int		i;
 
-    while ((*ptr == ' ' || *ptr == '\t') && *ptr != 0) ptr++;
-    argv[argc++] = ptr;
-    for (; *ptr; ptr++) {
-	if ((*ptr == ' ' || *ptr == '\t') && !instr) {
-	    *ptr++ = 0;
-	    while (*ptr == ' ' || *ptr == '\t') ptr++;
-	    if (*ptr) argv[argc++] = ptr;
-	    if (argc >= sizeof(argv) / sizeof(argv[0])) return 0;
-	} else if (*ptr == '"') {
-	    instr = !instr;
-	}
-    }
+    for  (i = 0; i < argc; i++) fprintf(stderr, "argv[%d]=%s\n", i, argv[i]);
+#ifdef DBG_need_heap
+    /* Initialize the debugger heap. */
+    dbg_heap = HeapCreate(HEAP_NO_SERIALIZE, 0x1000, 0x8000000); /* 128MB */
+#endif
+    
+    /* Initialize the type handling stuff. */
+    DEBUG_InitTypes();
+    DEBUG_InitCVDataTypes();    
 
-#if 0
-    /* would require to change .spec with a cuiexe type */
+    /* Initialize internal vars */
+    DEBUG_IntVarsRW(TRUE);
+
     /* keep it as a guiexe for now, so that Wine won't touch the Unix stdin, 
      * stdout and stderr streams
      */
-    if (1 /*DBG_IVAR(UseXterm)*/) {
+    if (DBG_IVAR(UseXTerm)) {
 	COORD		pos;
 	
 	/* This is a hack: it forces creation of an xterm, not done by default */
 	pos.x = 0; pos.y = 1;
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
     }
-#endif
 
     DEBUG_Printf(DBG_CHN_MESG, "Starting WineDbg... ");
-    if (argc == 2) {
-	DWORD	pid = atoi(argv[0]);
-	HANDLE	hEvent = atoi(argv[1]);
+    if (argc == 3) {
+	HANDLE	hEvent;
 
-	if (pid != 0 && hEvent != 0) {
-	    free(cmdline);
-
+	if ((pid = atoi(argv[1])) != 0 && (hEvent = atoi(argv[2])) != 0) {
 	    if (!DebugActiveProcess(pid)) {
 		DEBUG_Printf(DBG_CHN_ERR, "Can't attach process %ld: %ld\n", 
 			     pid, GetLastError());
-		return 0;
+		SetEvent(hEvent);
+		goto leave;
 	    }
 	    SetEvent(hEvent);
-	    return DEBUG_MainLoop(pid);
+	} else {
+	    pid = 0;
 	}
     }
-    do {
+
+    if (pid == 0) {
 	PROCESS_INFORMATION	info;
 	STARTUPINFOA		startup;
-
-	free(cmdline);
 
 	memset(&startup, 0, sizeof(startup));
 	startup.cb = sizeof(startup);
 	startup.dwFlags = STARTF_USESHOWWINDOW;
 	startup.wShowWindow = SW_SHOWNORMAL;
 
-	if (CreateProcess(NULL, _cmdline, NULL, NULL, 
-			  FALSE, DEBUG_PROCESS, NULL, NULL, &startup, &info)) {
-	    return DEBUG_MainLoop(info.dwProcessId);
+	if (!CreateProcess(NULL, argv[1], NULL, NULL, 
+			   FALSE, DEBUG_PROCESS, NULL, NULL, &startup, &info)) {
+	    DEBUG_Printf(DBG_CHN_MESG, "Couldn't start process '%s'\n", argv[1]);
+	    goto leave;
 	}
-	DEBUG_Printf(DBG_CHN_MESG, "Couldn't start process '%s'\n", _cmdline);
-    } while (0);
-    return 0;
+	pid = info.dwProcessId;
+    }
+
+    if (pid) retv = DEBUG_MainLoop(pid);
+ leave:
+    /* saves modified variables */
+    DEBUG_IntVarsRW(FALSE);
+
+    return retv;
 }
+
 

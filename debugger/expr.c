@@ -7,7 +7,6 @@
 
 #include "config.h"
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include "winbase.h"
 #include "wine/winbase16.h"
@@ -45,9 +44,8 @@ struct expr
 
     struct
     {
-      enum debug_regs reg;
-      int	      result;
-    } rgister;
+      const char * name;
+    } intvar;
 
     struct
     {
@@ -97,7 +95,7 @@ struct expr
 #define EXPR_TYPE_CONST		0
 #define EXPR_TYPE_US_CONST	1
 #define EXPR_TYPE_SYMBOL	2
-#define EXPR_TYPE_REGISTER	3
+#define EXPR_TYPE_INTVAR	3
 #define EXPR_TYPE_BINOP		4
 #define EXPR_TYPE_UNOP		5
 #define EXPR_TYPE_STRUCT	6
@@ -151,14 +149,14 @@ DEBUG_TypeCastExpr(struct datatype * dt, struct expr * exp)
 }
 
 struct expr *
-DEBUG_RegisterExpr(enum debug_regs regno)
+DEBUG_IntVarExpr(const char* name)
 {
   struct expr * ex;
 
   ex = DEBUG_GetFreeExpr();
 
-  ex->type        = EXPR_TYPE_REGISTER;
-  ex->un.rgister.reg = regno;
+  ex->type        = EXPR_TYPE_INTVAR;
+  ex->un.intvar.name = name;
   return ex;
 }
 
@@ -429,18 +427,17 @@ DBG_VALUE DEBUG_EvalExpr(struct expr * exp)
       rtn.addr.off = (unsigned int) &exp->un.call.result;
 
       break;
-    case EXPR_TYPE_REGISTER:
-      rtn.type = DEBUG_TypeIntConst;
-      rtn.cookie = DV_HOST;
-      exp->un.rgister.result = DEBUG_GetRegister(exp->un.rgister.reg);
-      rtn.addr.off = (unsigned int) &exp->un.rgister.result;
-#ifdef __i386__
-      if( exp->un.rgister.reg == REG_EIP )
-	  rtn.addr.seg = DEBUG_context.SegCs;
-      else
-	  rtn.addr.seg = DEBUG_context.SegDs;
-#endif
-      DEBUG_FixAddress( &rtn.addr, 0 );
+    case EXPR_TYPE_INTVAR:
+      {
+
+	 DBG_INTVAR*	div = DEBUG_GetIntVar(exp->un.intvar.name);
+
+	 if (!div) RaiseException(DEBUG_STATUS_NO_SYMBOL, 0, 0, NULL);
+	 rtn.cookie = DV_HOST;
+	 rtn.type = div->type;
+	 rtn.addr.off = (unsigned int)div->pval;
+	 /* EPP FIXME rtn.addr.seg = ?? */
+      }
       break;
     case EXPR_TYPE_BINOP:
       exp1 = DEBUG_EvalExpr(exp->un.binop.exp1);
@@ -662,8 +659,8 @@ DEBUG_DisplayExpr(const struct expr * exp)
       DEBUG_DisplayExpr(exp->un.cast.expr);
       DEBUG_Printf(DBG_CHN_MESG, ")");
       break;
-    case EXPR_TYPE_REGISTER:
-      DEBUG_PrintRegister(exp->un.rgister.reg);
+    case EXPR_TYPE_INTVAR:
+      DEBUG_Printf(DBG_CHN_MESG, "$%s", exp->un.intvar.name);
       break;
     case EXPR_TYPE_US_CONST:
       DEBUG_Printf(DBG_CHN_MESG, "%ud", exp->un.u_const.value);
@@ -821,7 +818,9 @@ DEBUG_CloneExpr(const struct expr * exp)
     case EXPR_TYPE_CAST:
       rtn->un.cast.expr = DEBUG_CloneExpr(exp->un.cast.expr);
       break;
-    case EXPR_TYPE_REGISTER:
+    case EXPR_TYPE_INTVAR:
+      rtn->un.intvar.name = DBG_strdup(exp->un.intvar.name);
+      break;
     case EXPR_TYPE_US_CONST:
     case EXPR_TYPE_CONST:
       break;
@@ -874,7 +873,9 @@ DEBUG_FreeExpr(struct expr * exp)
     case EXPR_TYPE_CAST:
       DEBUG_FreeExpr(exp->un.cast.expr);
       break;
-    case EXPR_TYPE_REGISTER:
+    case EXPR_TYPE_INTVAR:
+      DBG_free((char *) exp->un.intvar.name);
+      break;
     case EXPR_TYPE_US_CONST:
     case EXPR_TYPE_CONST:
       break;

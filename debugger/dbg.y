@@ -25,7 +25,6 @@ int curr_frame = 0;
 
 static void issue_prompt(void);
 static void mode_command(int);
-void flush_symbols(void);
 int yylex(void);
 int yyerror(char *);
 
@@ -34,7 +33,6 @@ int yyerror(char *);
 %union
 {
     DBG_VALUE        value;
-    enum debug_regs  reg;
     char *           string;
     int              integer;
     struct list_id   listing;
@@ -50,9 +48,8 @@ int yyerror(char *);
 %token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
 %token tSTEPI tNEXTI tFINISH tSHOW tDIR tWHATIS
 %token <string> tPATH
-%token <string> tIDENTIFIER tSTRING tDEBUGSTR
+%token <string> tIDENTIFIER tSTRING tDEBUGSTR tINTVAR
 %token <integer> tNUM tFORMAT
-%token <reg> tREG
 %token tSYMBOLFILE
 
 %token tCHAR tSHORT tINT tLONG tFLOAT tDOUBLE tUNSIGNED tSIGNED 
@@ -159,9 +156,7 @@ command:
     | walk_command
 
 set_command:
-      tSET tREG '=' expr_value tEOL	   { DEBUG_SetRegister( $2, $4 ); 
-					     DEBUG_FreeExprMem(); }
-    | tSET lval_addr '=' expr_value tEOL   { DEBUG_WriteMemory( &$2.addr, $4 ); 
+      tSET lval_addr '=' expr_value tEOL   { DEBUG_WriteMemory( &$2, $4 );
  					     DEBUG_FreeExprMem(); }
 
 pathname:
@@ -313,11 +308,10 @@ expr_addr:
       expr			{ $$ = DEBUG_EvalExpr($1); }
 
 expr_value:
-      expr        { DBG_VALUE	value = DEBUG_EvalExpr($1); 
-                    /* expr_value is typed as an integer */
-		    if (!value.addr.off || 
-			!DEBUG_READ_MEM((void*)value.addr.off, &$$, sizeof($$)))
-		       $$ = 0; }
+      expr        		{ DBG_VALUE	value = DEBUG_EvalExpr($1); 
+                                  /* expr_value is typed as an integer */
+                                  $$ = DEBUG_ReadMemory(&value); }
+
 /*
  * The expr rule builds an expression tree.  When we are done, we call
  * EvalExpr to evaluate the value of the expression.  The advantage of
@@ -327,7 +321,7 @@ expr_value:
 expr:
       tNUM                       { $$ = DEBUG_ConstExpr($1); }
     | tSTRING			 { $$ = DEBUG_StringExpr($1); }
-    | tREG                       { $$ = DEBUG_RegisterExpr($1); }
+    | tINTVAR                    { $$ = DEBUG_IntVarExpr($1); }
     | tIDENTIFIER		 { $$ = DEBUG_SymbolExpr($1); }
     | expr OP_DRF tIDENTIFIER	 { $$ = DEBUG_StructPExpr($1, $3); } 
     | expr '.' tIDENTIFIER	 { $$ = DEBUG_StructExpr($1, $3); } 
@@ -335,8 +329,8 @@ expr:
     | tIDENTIFIER '(' expr ')'	 { $$ = DEBUG_CallExpr($1, 1, $3); } 
     | tIDENTIFIER '(' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 2, $3, $5); } 
     | tIDENTIFIER '(' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 3, $3, $5, $7); } 
-    | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 3, $3, $5, $7, $9); } 
-    | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 3, $3, $5, $7, $9, $11); } 
+    | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 4, $3, $5, $7, $9); } 
+    | tIDENTIFIER '(' expr ',' expr ',' expr ',' expr ',' expr ')'	 { $$ = DEBUG_CallExpr($1, 5, $3, $5, $7, $9, $11); } 
     | expr '[' expr ']'		 { $$ = DEBUG_BinopExpr(EXP_OP_ARR, $1, $3); } 
     | expr ':' expr		 { $$ = DEBUG_BinopExpr(EXP_OP_SEG, $1, $3); } 
     | expr OP_LOR expr           { $$ = DEBUG_BinopExpr(EXP_OP_LOR, $1, $3); }
@@ -379,7 +373,7 @@ lval:
 	
 lvalue:
       tNUM                       { $$ = DEBUG_ConstExpr($1); }
-    | tREG                       { $$ = DEBUG_RegisterExpr($1); }
+    | tINTVAR                    { $$ = DEBUG_IntVarExpr($1); }
     | tIDENTIFIER		 { $$ = DEBUG_SymbolExpr($1); }
     | lvalue OP_DRF tIDENTIFIER	 { $$ = DEBUG_StructPExpr($1, $3); } 
     | lvalue '.' tIDENTIFIER	 { $$ = DEBUG_StructExpr($1, $3); } 

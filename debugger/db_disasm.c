@@ -62,7 +62,6 @@
  * Instruction disassembler.
  */
 
-#include <stdio.h>
 #include "debugger.h"
 
 #ifdef __i386__

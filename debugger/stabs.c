@@ -16,7 +16,6 @@
 #include <sys/mman.h>
 #endif
 #include <limits.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -1318,17 +1317,14 @@ DEBUG_ReadExecutableDbgInfo(const char* exe_name)
   /*
    * Make sure we can stat and open this file.
    */
-  if( exe_name == NULL )
-      goto leave;
-
-  fprintf( stderr, "Loading symbols: %s", exe_name );
+  if (exe_name == NULL) goto leave;
   DEBUG_ProcessElfObject(exe_name, 0);
 
   /* previous step should have loaded symbol _DYNAMIC if it exists inside 
    * the main executable
    */
   if (!DEBUG_GetSymbolValue("_DYNAMIC", -1, &val, FALSE)) {
-    fprintf(stderr, "Can't find symbol _DYNAMIC\n");
+    DEBUG_Printf(DBG_CHN_WARN, "Can't find symbol _DYNAMIC\n");
     goto leave;
   }
 
@@ -1380,7 +1376,7 @@ DEBUG_ProcessElfObject(const char * filename, unsigned int load_offset)
 }
 
 int
-DEBUG_ReadExecutableDbgInfo(void)
+DEBUG_ReadExecutableDbgInfo(const char* exe_name)
 {
   return FALSE;
 }
