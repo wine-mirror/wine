@@ -773,7 +773,7 @@ HINSTANCE16 WINAPI WinExec16( LPCSTR lpCmdLine, UINT16 nCmdShow )
 	cmdline[0] = cmdline[1] = 0;
     }
 
-    TRACE("name: %s, cmdline: %.*s\n", name, cmdline[0], &cmdline[1]);
+    TRACE("name: '%s', cmdline: '%.*s'\n", name, cmdline[0], &cmdline[1]);
 
     if (SearchPathA( NULL, name, ".exe", sizeof(buffer), buffer, NULL ))
     {
@@ -1500,6 +1500,8 @@ static void MODULE_FlushModrefs(void)
                 TRACE(" unloading %s\n", wm->filename);
                 /* VirtualFree( (LPVOID)wm->module, 0, MEM_RELEASE ); */  /* FIXME */
                 /* if (wm->dlhandle) dlclose( wm->dlhandle ); */  /* FIXME */
+                FreeLibrary16(wm->hDummyMod);
+                HeapFree( GetProcessHeap(), 0, wm->deps );
                 HeapFree( GetProcessHeap(), 0, wm->filename );
                 HeapFree( GetProcessHeap(), 0, wm->short_filename );
                 HeapFree( GetProcessHeap(), 0, wm );

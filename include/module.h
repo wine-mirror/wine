@@ -124,6 +124,7 @@ typedef struct _wine_modref
 	struct _wine_modref *next;
 	struct _wine_modref *prev;
 	HMODULE              module;
+	HMODULE16            hDummyMod; /* Win16 dummy module */
 	void                *dlhandle;  /* handle returned by dlopen() */
 	int                  tlsindex;  /* TLS index or -1 if none */
 

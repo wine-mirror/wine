@@ -620,6 +620,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
         FreeLibrary16( hModule16 );
         return NULL;
     }
+    wm->hDummyMod = hModule16;
 
     if ( builtin ) 
     {
