@@ -93,13 +93,6 @@ char IO_pp_init(void)
 	    WARN("Rejecting configuration item\n");
 	    continue;
 	  }
-	if (ioctl (fd,PPEXCL,0)) 
-	  {
-	    ERR("PPEXCL IOCTL rejected for device %s\n",buffer);
-	    ERR("Check that PPDEV module is loaded!\n");
-	    ERR("Perhaps the device is already in use or non-existant\n");
-	    continue;
-	  }
 	if (ioctl (fd,PPCLAIM,0)) 
 	  {
 	    ERR("PPCLAIM rejected %s\n",buffer);
@@ -127,6 +120,12 @@ char IO_pp_init(void)
 	    (ioctl(fd,PPRCONTROL,&res)))
 	  {
 	    ERR("PPUSER IOCTL not available for parport device %s\n",temp);
+	    continue;
+	  }
+	if (ioctl (fd,PPRELEASE,0)) 
+	  {
+	    ERR("PPRELEASE rejected %s\n",buffer);
+	    ERR("Perhaps the device is already in use or non-existant\n");
 	    continue;
 	  }
 	PPDeviceList[nports].devicename = malloc(sizeof(buffer)+1);
@@ -181,20 +180,22 @@ char IO_pp_init(void)
  */
 static int IO_pp_do_access(int idx,int ppctl, DWORD* res)
 {
-    if (!PPDeviceList[idx].lastaccess)
-      /* TIMER callback has released the device after some time of inactivity
-          Reclaim the device
-          !!!!!!THIS MAY UNINTERRUPTIPLE BLOCK IF SOME OTHER DEVICE
-           !!!!!! HAS CLAIMED THE SAME PORT
-      */
-      if (ioctl(PPDeviceList[idx].fd,PPCLAIM,0))
-       {
-         ERR("Can't reclaim device %s, PPUSER/PPDEV handling confused\n",
-             PPDeviceList[idx].devicename);
-         return 1;
-       }
-    PPDeviceList[idx].lastaccess=GetTickCount();
-    return ioctl(PPDeviceList[idx].fd,ppctl,res);
+  int ret;
+  if (ioctl(PPDeviceList[idx].fd,PPCLAIM,0))
+    {
+      ERR("Can't reclaim device %s, PPUSER/PPDEV handling confused\n",
+	  PPDeviceList[idx].devicename);
+      return 1;
+    }
+  ret = ioctl(PPDeviceList[idx].fd,ppctl,res);
+  if (ioctl(PPDeviceList[idx].fd,PPRELEASE,0))
+    {
+      ERR("Can't release device %s, PPUSER/PPDEV handling confused\n",
+	  PPDeviceList[idx].devicename);
+      return 1;
+    }
+  return ret;
+
 }
 
 /* IO_pp_inp
