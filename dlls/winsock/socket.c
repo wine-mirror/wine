@@ -245,6 +245,13 @@ inline static int _get_sock_fd(SOCKET s)
     return fd;
 }
 
+inline static int _get_sock_fd_type( SOCKET s, enum fd_type *type, int *flags )
+{
+    int fd;
+    if (set_error( wine_server_handle_to_fd( s, GENERIC_READ, &fd, type, flags ) )) return -1;
+    return fd;
+}
+
 static void _enable_event(SOCKET s, unsigned int event,
 			  unsigned int sstate, unsigned int cstate)
 {
@@ -1975,15 +1982,16 @@ INT WINAPI WSASendTo( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
                       LPWSAOVERLAPPED lpOverlapped,
                       LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
 {
-    int i, n, fd, err = WSAENOTSOCK;
+    int i, n, fd, err = WSAENOTSOCK, flags;
     struct iovec* iovec;
     struct msghdr msghdr;
+    enum fd_type type;
 
     TRACE ("socket %04x, wsabuf %p, nbufs %ld, flags %ld, to %p, tolen %d, ovl %p, func %p\n",
            s, lpBuffers, dwBufferCount, dwFlags,
            to, tolen, lpOverlapped, lpCompletionRoutine);
 
-    fd = _get_sock_fd(s);
+    fd = _get_sock_fd_type( s, &type, &flags );
 
     if ( fd == -1 )
         goto error;
@@ -3268,14 +3276,15 @@ INT WINAPI WSARecvFrom( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
 
     struct iovec* iovec;
     struct msghdr msghdr;
-    int fd, i, length, err = WSAENOTSOCK;
+    int fd, i, length, err = WSAENOTSOCK, flags;
+    enum fd_type type;
 
     TRACE("socket %04x, wsabuf %p, nbufs %ld, flags %ld, from %p, fromlen %ld, ovl %p, func %p\n",
           s, lpBuffers, dwBufferCount, *lpFlags, lpFrom,
           (lpFromlen ? *lpFromlen : -1L),
           lpOverlapped, lpCompletionRoutine);
 
-    fd = _get_sock_fd(s);
+    fd = _get_sock_fd_type( s, &type, &flags );
 
     if (fd == -1)
     {
