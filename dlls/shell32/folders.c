@@ -192,7 +192,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 
 	  if (HCR_GetDefaultIconA(xriid, sTemp, MAX_PATH, &dwNr))
 	  {
-	    MultiByteToWideChar(CP_ACP, 0, sTemp, MAX_PATH, szIconFile, cchMax);
+	    MultiByteToWideChar(CP_ACP, 0, sTemp, -1, szIconFile, cchMax);
 	    *piIndex = dwNr;
 	  }
 	  else
@@ -206,7 +206,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	{
 	  if (HCR_GetDefaultIconA("Drive", sTemp, MAX_PATH, &dwNr))
 	  {
-	    MultiByteToWideChar(CP_ACP, 0, sTemp, MAX_PATH, szIconFile, cchMax);
+	    MultiByteToWideChar(CP_ACP, 0, sTemp, -1, szIconFile, cchMax);
 	    *piIndex = dwNr;
 	  }
 	  else
@@ -219,7 +219,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	{
 	  if (HCR_GetDefaultIconA("Folder", sTemp, MAX_PATH, &dwNr))
 	  {
-	    MultiByteToWideChar(CP_ACP, 0, sTemp, MAX_PATH, szIconFile, cchMax);
+	    MultiByteToWideChar(CP_ACP, 0, sTemp, -1, szIconFile, cchMax);
 	  }
 	  else
 	  {
@@ -241,7 +241,7 @@ static HRESULT WINAPI IExtractIconW_fnGetIconLocation(
 	    }
 	    else
 	    {
-	      MultiByteToWideChar(CP_ACP, 0, sTemp, MAX_PATH, szIconFile, cchMax);
+	      MultiByteToWideChar(CP_ACP, 0, sTemp, -1, szIconFile, cchMax);
 	      *piIndex = dwNr;
 	    }
 	  }
