@@ -266,10 +266,19 @@ static UINT ICO_ExtractIconExW(
 	HANDLE		fmapping;
 	ULONG		uSize;
 	DWORD		fsizeh,fsizel;
+        WCHAR		szExePath[MAX_PATH];
+        DWORD		dwSearchReturn;
 
 	TRACE("%s, %d, %d %p 0x%08x\n", debugstr_w(lpszExeFileName), nIconIndex, nIcons, pIconId, flags);
 
-	hFile = CreateFileW(lpszExeFileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+        dwSearchReturn = SearchPathW(NULL, lpszExeFileName, NULL, sizeof(szExePath) / sizeof(szExePath[0]), szExePath, NULL);
+        if ((dwSearchReturn == 0) || (dwSearchReturn > sizeof(szExePath) / sizeof(szExePath[0])))
+        {
+            WARN("File %s not found or path too long\n", debugstr_w(lpszExeFileName));
+            return -1;
+        }
+
+	hFile = CreateFileW(szExePath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
 	if (hFile == INVALID_HANDLE_VALUE) return ret;
 	fsizel = GetFileSize(hFile,&fsizeh);
 
