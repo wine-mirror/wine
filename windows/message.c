@@ -1848,7 +1848,8 @@ DWORD WINAPI GetTickCount(void)
 {
     struct timeval t;
     gettimeofday( &t, NULL );
-    return ((t.tv_sec * 1000) + (t.tv_usec / 1000)) - MSG_WineStartTicks;
+    /* make extremely compatible: granularity is 25 msec */
+    return ((t.tv_sec * 1000) + (t.tv_usec / 25000) * 25) - MSG_WineStartTicks;
 }
 
 
