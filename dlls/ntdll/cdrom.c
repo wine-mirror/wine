@@ -134,7 +134,7 @@ static int CDROM_GetIdeInterface(int dev, int* iface, int* device)
             case IDE6_MAJOR: *iface = 6; break;
             case IDE7_MAJOR: *iface = 7; break;
             default:
-                             FIXME("major %d not supported\n", major(st.st_rdev));
+                             FIXME("CD-ROM device with major ID %d not supported\n", major(st.st_rdev));
         }
         *device = (minor(st.st_rdev) == 63 ? 1 : 0);
         return 1;
@@ -304,7 +304,7 @@ static int CDROM_Open(HANDLE hDevice, DWORD clientID)
         cdrom_cache[dev].fd = open(DRIVE_GetDevice(dev), O_RDONLY|O_NONBLOCK);
         if (cdrom_cache[dev].fd == -1)
         {
-            FIXME("Can't open %s: %s\n", root, strerror(errno));
+            FIXME("Can't open configured CD-ROM drive at %s (device %s): %s\n", root, DRIVE_GetDevice(dev), strerror(errno));
             return -1;
         }
     }
@@ -341,6 +341,8 @@ static DWORD CDROM_GetStatusCode(int io)
     case ENOMEDIUM:
 #endif
 	    return STATUS_NO_MEDIA_IN_DEVICE;
+    case EPERM:
+	    return STATUS_ACCESS_DENIED;
     }
     FIXME("Unmapped error code %d: %s\n", errno, strerror(errno));
     return STATUS_IO_DEVICE_ERROR;
