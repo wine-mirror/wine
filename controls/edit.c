@@ -1274,7 +1274,7 @@ static void EDIT_BuildLineDefs_ML(HWND hwnd, EDITSTATE *es, INT istart, INT iend
 			if (current_line->index == nstart_index && istart > current_line->index + prev)
 				istart = current_line->index + prev;
 			/* else if we are updating the previous line before the first line we
-			 * are re-caulculating and it expanded */
+			 * are re-calculating and it expanded */
 			else if (current_line == start_line && 
 					current_line->index != nstart_index && orig_net_length < prev)
 			{ 
@@ -1312,7 +1312,7 @@ static void EDIT_BuildLineDefs_ML(HWND hwnd, EDITSTATE *es, INT istart, INT iend
 		line_index++;
 	} while (previous_line->ending != END_0);
 
-	/* Finish adjusting line index's by delta or remove hanging lines */
+	/* Finish adjusting line indexes by delta or remove hanging lines */
 	if (previous_line->ending == END_0)
 	{
 		LINEDEF *pnext = NULL;
@@ -1394,7 +1394,7 @@ static void EDIT_CalcLineWidth_SL(HWND hwnd, EDITSTATE *es)
  *
  *	Call appropriate WordBreakProc (internal or external).
  *
- *	Note: The "start" argument should always be an index refering
+ *	Note: The "start" argument should always be an index referring
  *		to es->text.  The actual wordbreak proc might be
  *		16 bit, so we can't always pass any 32 bit LPSTR.
  *		Hence we assume that es->text is the buffer that holds
@@ -1408,7 +1408,7 @@ static INT EDIT_CallWordBreakProc(EDITSTATE *es, INT start, INT index, INT count
 {
     INT ret, iWndsLocks;
 
-    /* To avoid any deadlocks, all the locks on the windows structures
+    /* To avoid any deadlocks, all the locks on the window structures
        must be suspended before the control is passed to the application */
     iWndsLocks = WIN_SuspendWndsLock();
 
@@ -2820,15 +2820,16 @@ static INT EDIT_EM_LineLength(EDITSTATE *es, INT index)
 
 	if (index == -1) {
 		/* get the number of remaining non-selected chars of selected lines */
-		INT32 li;
+		INT32 l; /* line number */
+		INT32 li; /* index of first char in line */
 		INT32 count;
-		li = EDIT_EM_LineFromChar(es, es->selection_start);
+		l = EDIT_EM_LineFromChar(es, es->selection_start);
 		/* # chars before start of selection area */
-		count = es->selection_start - EDIT_EM_LineIndex(es, li);
-		li = EDIT_EM_LineFromChar(es, es->selection_end);
+		count = es->selection_start - EDIT_EM_LineIndex(es, l);
+		l = EDIT_EM_LineFromChar(es, es->selection_end);
 		/* # chars after end of selection */
-		count += EDIT_EM_LineIndex(es, li) +
-			EDIT_EM_LineLength(es, li) - es->selection_end;
+		li = EDIT_EM_LineIndex(es, l);
+		count += li + EDIT_EM_LineLength(es, li) - es->selection_end;
 		return count;
 	}
 	line_def = es->first_line_def;
@@ -3011,6 +3012,7 @@ static void EDIT_EM_ReplaceSel(HWND hwnd, EDITSTATE *es, BOOL can_undo, LPCWSTR 
 
 	if (e != s) {
 		/* there is something to be deleted */
+		TRACE("deleting stuff.\n");
 		if (can_undo) {
 			utl = strlenW(es->undo_text);
 			if (!es->undo_insert_count && (*es->undo_text && (s == es->undo_position))) {
@@ -3064,6 +3066,7 @@ static void EDIT_EM_ReplaceSel(HWND hwnd, EDITSTATE *es, BOOL can_undo, LPCWSTR 
 
 		/* now insert */
 		tl = strlenW(es->text);
+		TRACE("inserting stuff (tl %d, strl %d, selstart %d ('%s'), text '%s')\n", tl, strl, s, debugstr_w(es->text + s), debugstr_w(es->text));
 		for (p = es->text + tl ; p >= es->text + s ; p--)
 			p[strl] = p[0];
 		for (i = 0 , p = es->text + s ; i < strl ; i++)
