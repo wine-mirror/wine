@@ -134,7 +134,7 @@ typedef struct _TEB
 #define TEBF_TRAP   0x0002
 
 /* The per-thread signal stack size */
-#define SIGNAL_STACK_SIZE  16384
+#define SIGNAL_STACK_SIZE  0x100000  /* 1Mb  FIXME: should be much smaller than that */
 
 
 /* scheduler/thread.c */
