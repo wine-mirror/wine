@@ -270,6 +270,117 @@ BOOL WINAPI ChooseFontA(LPCHOOSEFONTA lpChFont)
 
 /***********************************************************************
  *           ChooseFontW   (COMDLG32.4)
+ *
+ *  NOTES:
+ *
+ *  	The LOGFONT conversion functions will break if the structure ever
+ *  	grows beyond the lfFaceName element.
+ *
+ *  	The CHOOSEFONT conversion functions assume that both versions of
+ *  	lpLogFont and lpszStyle (if used) point to pre-allocated objects.
+ *
+ *  	The ASCII version of lpTemplateName is created by ChooseFontAtoW
+ *  	and freed by ChooseFontWtoA.
+ */
+inline static VOID LogFontWtoA(const LOGFONTW *lfw, LOGFONTA *lfa)
+{
+    memcpy(lfa, lfw, sizeof(LOGFONTA));
+    WideCharToMultiByte(CP_ACP, 0, lfw->lfFaceName, -1, lfa->lfFaceName,
+    	    LF_FACESIZE, NULL, NULL);
+    lfa->lfFaceName[LF_FACESIZE - 1] = '\0';
+}
+
+inline static VOID LogFontAtoW(const LOGFONTA *lfa, LOGFONTW *lfw)
+{
+    memcpy(lfw, lfa, sizeof(LOGFONTA));
+    MultiByteToWideChar(CP_ACP, 0, lfa->lfFaceName, -1, lfw->lfFaceName,
+    	    LF_FACESIZE);
+    lfw->lfFaceName[LF_FACESIZE - 1] = 0;
+}
+
+static BOOL ChooseFontWtoA(const CHOOSEFONTW *cfw, CHOOSEFONTA *cfa)
+{
+    LOGFONTA	*lpLogFont = cfa->lpLogFont;
+    LPSTR   	lpszStyle = cfa->lpszStyle;
+
+    memcpy(cfa, cfw, sizeof(CHOOSEFONTA));
+    cfa->lpLogFont = lpLogFont;
+    cfa->lpszStyle = lpszStyle;
+    
+    LogFontWtoA(cfw->lpLogFont, lpLogFont);
+    
+    if (cfw->lpTemplateName != NULL)
+    {
+    	cfa->lpTemplateName = HEAP_strdupWtoA(GetProcessHeap(), 0,
+    	    	cfw->lpTemplateName);
+    	if (cfa->lpTemplateName == NULL)
+    	    return FALSE;
+    }
+	
+    if ((cfw->Flags & CF_USESTYLE) != 0 && cfw->lpszStyle != NULL)
+    {
+    	WideCharToMultiByte(CP_ACP, 0, cfw->lpszStyle, -1, cfa->lpszStyle,
+    	    	LF_FACESIZE, NULL, NULL);
+    	cfa->lpszStyle[LF_FACESIZE - 1] = '\0';
+    }
+    
+    return TRUE;
+}
+
+static VOID ChooseFontAtoW(const CHOOSEFONTA *cfa, CHOOSEFONTW *cfw)
+{
+    LOGFONTW	*lpLogFont = cfw->lpLogFont;
+    LPWSTR  	lpszStyle = cfw->lpszStyle;
+    LPCWSTR 	lpTemplateName = cfw->lpTemplateName;
+
+    memcpy(cfw, cfa, sizeof(CHOOSEFONTA));
+    cfw->lpLogFont = lpLogFont;
+    cfw->lpszStyle = lpszStyle;
+    cfw->lpTemplateName = lpTemplateName;
+    
+    LogFontAtoW(cfa->lpLogFont, lpLogFont);
+    
+    if (cfa->lpTemplateName != NULL)
+    	HeapFree(GetProcessHeap(), 0, (LPSTR)(cfa->lpTemplateName));
+    
+    if ((cfa->Flags & CF_USESTYLE) != 0 && cfa->lpszStyle != NULL)
+    {
+    	MultiByteToWideChar(CP_ACP, 0, cfa->lpszStyle, -1, cfw->lpszStyle,
+	    	LF_FACESIZE);
+	cfw->lpszStyle[LF_FACESIZE - 1] = 0;
+    }
+}
+
+BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
+{
+    CHOOSEFONTA     cf_a;
+    LOGFONTA	    lf_a;
+    CHAR    	    style_a[LF_FACESIZE];
+    
+    cf_a.lpLogFont = &lf_a;
+    cf_a.lpszStyle = style_a;
+    
+    if (ChooseFontWtoA(lpChFont, &cf_a) == FALSE)
+    {
+    	COMDLG32_SetCommDlgExtendedError(CDERR_MEMALLOCFAILURE);
+	return FALSE;
+    }
+    
+    if (ChooseFontA(&cf_a) == FALSE)
+    {
+    	if (cf_a.lpTemplateName != NULL)
+    	    HeapFree(GetProcessHeap(), 0, (LPSTR)(cf_a.lpTemplateName));
+	return FALSE;
+    }
+    
+    ChooseFontAtoW(&cf_a, lpChFont);
+    
+    return TRUE;
+}
+
+#if 0
+/***********************************************************************
+ *           ChooseFontW   (COMDLG32.4)
  */
 BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
 {
@@ -315,7 +426,7 @@ BOOL WINAPI ChooseFontW(LPCHOOSEFONTW lpChFont)
   lpChFont->lpLogFont->lfFaceName[LF_FACESIZE-1] = 0;
   return bRet;
 }
-
+#endif
 
 #define TEXT_EXTRAS 4
 #define TEXT_COLORS 16
