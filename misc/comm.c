@@ -1013,6 +1013,7 @@ INT16 WINAPI SetCommState16(LPDCB16 lpdcb)
  */
 INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 {
+	int speed;
 	struct DosDeviceStruct *ptr;
 	struct termios port;
 
@@ -1027,10 +1028,11 @@ INT16 WINAPI GetCommState16(INT16 cid, LPDCB16 lpdcb)
 	lpdcb->Id = cid;
 #ifndef __EMX__
 #ifdef CBAUD
-        switch (port.c_cflag & CBAUD) {
+        speed = port.c_cflag & CBAUD;
 #else
-        switch (port.c_ospeed) {
+        speed = port.c_ospeed;
 #endif
+        switch(speed) {
 		case B110:
 			lpdcb->BaudRate = 110;
 			break;
