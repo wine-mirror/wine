@@ -1585,7 +1585,7 @@ u_short WINAPI WS_htons(u_short hostshort)
 /***********************************************************************
  *		WSAHtonl		(WS2_32.46)
  */
-int WINAPI WSAHtonl(SOCKET s, u_long hostlong, ulong *lpnetlong)
+int WINAPI WSAHtonl(SOCKET s, u_long hostlong, u_long *lpnetlong)
 {
     FIXME("stub.\n");
     return INVALID_SOCKET;
@@ -1594,7 +1594,7 @@ int WINAPI WSAHtonl(SOCKET s, u_long hostlong, ulong *lpnetlong)
 /***********************************************************************
  *		WSAHtons		(WS2_32.47)
  */
-int WINAPI WSAHtons(SOCKET s, u_short hostshort, ushort *lpnetshort)
+int WINAPI WSAHtons(SOCKET s, u_short hostshort, u_short *lpnetshort)
 {
     FIXME("stub.\n");
     return INVALID_SOCKET;
