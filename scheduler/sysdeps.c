@@ -298,8 +298,10 @@ void SYSDEPS_SwitchToThreadStack( void (*func)(void) )
     teb->stack_top = (LPVOID) cur_stack;
     teb->stack_low = (LPVOID)(cur_stack - rl.rlim_cur);
 
+#if 0
     SYSDEPS_LargeStackTop = (LPVOID)(cur_stack - 2*page_size);
     SYSDEPS_LargeStackLow = (LPVOID)(cur_stack - rl.rlim_cur);
+#endif
 
     SYSDEPS_CallOnStack( stackTop, stackLow, 
                          (int (*)(void *))func, NULL );
