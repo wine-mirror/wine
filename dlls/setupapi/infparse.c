@@ -1,7 +1,12 @@
 /*
  * SetupX .inf file parsing functions
  *
- * FIXME: return values ???
+ * FIXME:
+ * - return values ???
+ * - this should be reimplemented at some point to have its own
+ *   file parsing instead of using profile functions,
+ *   as some SETUPX exports probably demand that
+ *   (IpSaveRestorePosition, IpFindNextMatchLine, ...).
  */
 
 #include "debugtools.h"
@@ -10,6 +15,7 @@
 #include "heap.h"
 #include "wine/winbase16.h"
 #include "setupx16.h"
+#include "setupx_private.h"
 
 DEFAULT_DEBUG_CHANNEL(setupx);
 
