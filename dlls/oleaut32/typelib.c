@@ -3917,7 +3917,8 @@ static HRESULT WINAPI ITypeInfo_fnGetIDsOfNames( ITypeInfo2 *iface,
  * Invokes a method, or accesses a property of an object, that implements the
  * interface described by the type description.
  */
-static DWORD _invoke(LPVOID func,CALLCONV callconv, int nrargs, DWORD *args) {
+DWORD
+_invoke(LPVOID func,CALLCONV callconv, int nrargs, DWORD *args) {
     DWORD res;
 
     if (TRACE_ON(ole)) {
@@ -3949,6 +3950,26 @@ static DWORD _invoke(LPVOID func,CALLCONV callconv, int nrargs, DWORD *args) {
 	case 3: {
 		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD) = func;
 		res = xfunc(args[0],args[1],args[2]);
+		break;
+	}
+	case 4: {
+		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD,DWORD) = func;
+		res = xfunc(args[0],args[1],args[2],args[3]);
+		break;
+	}
+	case 5: {
+		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD,DWORD,DWORD) = func;
+		res = xfunc(args[0],args[1],args[2],args[3],args[4]);
+		break;
+	}
+	case 6: {
+		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD,DWORD,DWORD,DWORD) = func;
+		res = xfunc(args[0],args[1],args[2],args[3],args[4],args[5]);
+		break;
+	}
+	case 7: {
+		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD) = func;
+		res = xfunc(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
 		break;
 	}
 	default:

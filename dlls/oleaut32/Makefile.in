@@ -21,6 +21,7 @@ C_SRCS = \
 	propertyframe.c \
 	safearray.c \
 	stubs.c \
+	tmarshal.c \
 	typelib.c \
 	variant.c
 

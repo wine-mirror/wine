@@ -30,7 +30,7 @@ debug_channels (accel ole relay storage)
  16 stdcall CoGetClassObject(ptr long ptr ptr ptr) CoGetClassObject
  17 stub CoGetCurrentLogicalThreadId
  18 stdcall CoGetCurrentProcess() CoGetCurrentProcess
- 19 stub CoGetInterfaceAndReleaseStream # stdcall (ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
+ 19 stdcall CoGetInterfaceAndReleaseStream(ptr ptr ptr) CoGetInterfaceAndReleaseStream
  20 stdcall CoGetMalloc(long ptr) CoGetMalloc
  21 stub CoGetMarshalSizeMax        # stdcall (ptr ptr ptr long ptr long) return 0,ERR_NOTIMPLEMENTED
  22 stdcall CoGetPSClsid(ptr ptr) CoGetPSClsid 
@@ -44,8 +44,8 @@ debug_channels (accel ole relay storage)
  30 stdcall CoLoadLibrary(wstr long) CoLoadLibrary
  31 stdcall CoLockObjectExternal(ptr long long) CoLockObjectExternal
  32 stub CoMarshalHresult           # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
- 33 stub CoMarshalInterThreadInterfaceInStream # stdcall (ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
- 34 stub CoMarshalInterface         # stdcall (ptr ptr ptr long ptr long) return 0,ERR_NOTIMPLEMENTED
+ 33 stdcall CoMarshalInterThreadInterfaceInStream(ptr ptr ptr) CoMarshalInterThreadInterfaceInStream
+ 34 stdcall CoMarshalInterface(ptr ptr ptr long ptr long) CoMarshalInterface
  35 stub CoQueryReleaseObject
  36 stdcall CoRegisterClassObject(ptr ptr long long ptr) CoRegisterClassObject
  37 stub CoRegisterMallocSpy        # stdcall (ptr) return 0,ERR_NOTIMPLEMENTED
@@ -61,7 +61,7 @@ debug_channels (accel ole relay storage)
  47 stdcall CoUninitialize() CoUninitialize
  48 stub CoUnloadingWOW
  49 stub CoUnmarshalHresult         # stdcall (ptr ptr) return 0,ERR_NOTIMPLEMENTED
- 50 stub CoUnmarshalInterface       # stdcall (ptr ptr ptr) return 0,ERR_NOTIMPLEMENTED
+ 50 stdcall CoUnmarshalInterface(ptr ptr ptr) CoUnmarshalInterface
  51 stdcall CreateAntiMoniker(ptr)  CreateAntiMoniker
  52 stdcall CreateBindCtx(long ptr) CreateBindCtx
  53 stdcall CreateDataAdviseHolder(ptr) CreateDataAdviseHolder

@@ -22,6 +22,7 @@ C_SRCS = \
 	hglobalstream.c \
 	ifs.c \
 	itemmoniker.c \
+	marshal.c \
 	memlockbytes.c \
 	moniker.c \
 	ole2.c \
@@ -30,6 +31,8 @@ C_SRCS = \
 	ole2nls.c \
 	ole32_main.c \
 	oleobj.c \
+	oleproxy.c \
+	rpc.c \
 	stg_bigblockfile.c \
 	stg_stream.c \
 	storage.c \

@@ -5,6 +5,7 @@
  *	Copyright 1998	Justin Bradford
  *      Copyright 1999  Francis Beaudet
  *  Copyright 1999  Sylvain St-Germain
+ *  Copyright 2002  Marcus Meissner
  */
 
 #include "config.h"
@@ -29,6 +30,7 @@
 #include "wine/obj_misc.h"
 #include "wine/obj_marshal.h"
 #include "wine/obj_storage.h"
+#include "wine/obj_channel.h"
 #include "wine/winbase16.h"
 #include "compobj_private.h"
 #include "ifs.h"
@@ -138,6 +140,7 @@ typedef struct tagRegisteredClass
   DWORD     runContext;
   DWORD     connectFlags;
   DWORD     dwCookie;
+  HANDLE    hThread; /* only for localserver */
   struct tagRegisteredClass* nextClass;
 } RegisteredClass;
 
@@ -559,7 +562,7 @@ HRESULT WINAPI CLSIDFromString(
  * RETURNS
  *	the string representation and HRESULT
  */
-static HRESULT WINE_StringFromCLSID(
+HRESULT WINE_StringFromCLSID(
 	const CLSID *id,	/* [in] GUID to be converted */
 	LPSTR idstr		/* [out] pointer to buffer to contain converted guid */
 ) {
@@ -1060,6 +1063,83 @@ end:
   return hr;
 }
 
+static DWORD WINAPI
+_LocalServerThread(LPVOID param) {
+    HANDLE		hPipe;
+    char 		pipefn[200];
+    RegisteredClass *newClass = (RegisteredClass*)param;
+    HRESULT		hres;
+    IStream		*pStm;
+    STATSTG		ststg;
+    unsigned char	*buffer;
+    int 		buflen;
+    IClassFactory	*classfac;
+    LARGE_INTEGER	seekto;
+    ULARGE_INTEGER	newpos;
+    ULONG		res;
+
+    TRACE("Starting threader for %s.\n",debugstr_guid(&newClass->classIdentifier));
+    strcpy(pipefn,PIPEPREF);
+    WINE_StringFromCLSID(&newClass->classIdentifier,pipefn+strlen(PIPEPREF));
+
+    hres = IUnknown_QueryInterface(newClass->classObject,&IID_IClassFactory,(LPVOID*)&classfac);
+    if (hres) return hres;
+
+    hres = CreateStreamOnHGlobal(0,TRUE,&pStm);
+    if (hres) {
+	FIXME("Failed to create stream on hglobal.\n");
+	return hres;
+    }
+    hres = CoMarshalInterface(pStm,&IID_IClassFactory,(LPVOID)classfac,0,NULL,0);
+    if (hres) {
+	FIXME("CoMarshalInterface failed, %lx!\n",hres);
+	return hres;
+    }
+    hres = IStream_Stat(pStm,&ststg,0);
+    if (hres) return hres;
+
+    buflen = ststg.cbSize.s.LowPart;
+    buffer = HeapAlloc(GetProcessHeap(),0,buflen);
+    seekto.s.LowPart = 0;
+    seekto.s.HighPart = 0;
+    hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
+    if (hres) {
+	FIXME("IStream_Seek failed, %lx\n",hres);
+	return hres;
+    }
+    hres = IStream_Read(pStm,buffer,buflen,&res);
+    if (hres) {
+	FIXME("Stream Read failed, %lx\n",hres);
+	return hres;
+    }
+    IStream_Release(pStm);
+
+    while (1) {
+	hPipe = CreateNamedPipeA(
+	    pipefn,
+	    PIPE_ACCESS_DUPLEX,
+	    PIPE_TYPE_BYTE|PIPE_WAIT,
+	    PIPE_UNLIMITED_INSTANCES,
+	    4096,
+	    4096,
+	    NMPWAIT_USE_DEFAULT_WAIT,
+	    NULL
+	);
+	if (hPipe == INVALID_HANDLE_VALUE) {
+	    FIXME("pipe creation failed for %s, le is %lx\n",pipefn,GetLastError());
+	    return 1;
+	}
+	if (!ConnectNamedPipe(hPipe,NULL)) {
+	    ERR("Failure during ConnectNamedPipe %lx, ABORT!\n",GetLastError());
+	    CloseHandle(hPipe);
+	    continue;
+	}
+	WriteFile(hPipe,buffer,buflen,&res,NULL);
+	CloseHandle(hPipe);
+    }
+    return 0;
+}
+
 /******************************************************************************
  *		CoRegisterClassObject	[OLE32.36]
  *
@@ -1078,24 +1158,13 @@ HRESULT WINAPI CoRegisterClassObject(
   RegisteredClass* newClass;
   LPUNKNOWN        foundObject;
   HRESULT          hr;
-    char buf[80];
-
-    WINE_StringFromCLSID(rclsid,buf);
 
   TRACE("(%s,%p,0x%08lx,0x%08lx,%p)\n",
-	buf,pUnk,dwClsContext,flags,lpdwRegister);
+	debugstr_guid(rclsid),pUnk,dwClsContext,flags,lpdwRegister);
 
-  /*
-   * Perform a sanity check on the parameters
-   */
   if ( (lpdwRegister==0) || (pUnk==0) )
-  {
     return E_INVALIDARG;
-  }
 
-  /*
-   * Initialize the cookie (out parameter)
-   */
   *lpdwRegister = 0;
 
   /*
@@ -1103,35 +1172,24 @@ HRESULT WINAPI CoRegisterClassObject(
    * If it is, this should cause an error.
    */
   hr = COM_GetRegisteredClassObject(rclsid, dwClsContext, &foundObject);
-
-  if (hr == S_OK)
-  {
-    /*
-     * The COM_GetRegisteredClassObject increased the reference count on the
-     * object so it has to be released.
-     */
+  if (hr == S_OK) {
     IUnknown_Release(foundObject);
-
     return CO_E_OBJISREG;
   }
 
-  /*
-   * If it is not registered, we must create a new entry for this class and
-   * append it to the registered class list.
-   * We use the address of the chain node as the cookie since we are sure it's
-   * unique.
-   */
   newClass = HeapAlloc(GetProcessHeap(), 0, sizeof(RegisteredClass));
   if ( newClass == NULL )
     return E_OUTOFMEMORY;
 
   EnterCriticalSection( &csRegisteredClassList );
-  /*
-   * Initialize the node.
-   */
+
   newClass->classIdentifier = *rclsid;
   newClass->runContext      = dwClsContext;
   newClass->connectFlags    = flags;
+  /*
+   * Use the address of the chain node as the cookie since we are sure it's
+   * unique.
+   */
   newClass->dwCookie        = (DWORD)newClass;
   newClass->nextClass       = firstRegisteredClass;
 
@@ -1143,17 +1201,16 @@ HRESULT WINAPI CoRegisterClassObject(
   IUnknown_AddRef(newClass->classObject);
 
   firstRegisteredClass = newClass;
-
   LeaveCriticalSection( &csRegisteredClassList );
 
-  /*
-   * Assign the out parameter (cookie)
-   */
   *lpdwRegister = newClass->dwCookie;
 
-  /*
-   * We're successful Yippee!
-   */
+  if (dwClsContext & CLSCTX_LOCAL_SERVER) {
+      DWORD tid;
+
+      STUBMGR_Start();
+      newClass->hThread=CreateThread(NULL,0,_LocalServerThread,newClass,0,&tid);
+  }
   return S_OK;
 }
 
@@ -1222,6 +1279,42 @@ end:
   return hr;
 }
 
+static HRESULT WINAPI Remote_CoGetClassObject(
+    REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo,
+    REFIID iid, LPVOID *ppv
+) {
+  HKEY		key;
+  char 		buf[200];
+  HRESULT	hres = E_UNEXPECTED;
+  char		xclsid[80];
+  WCHAR 	dllName[MAX_PATH+1];
+  DWORD 	dllNameLen = sizeof(dllName);
+  STARTUPINFOW	sinfo;
+  PROCESS_INFORMATION	pinfo;
+
+  WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
+
+  sprintf(buf,"CLSID\\%s\\LocalServer32",xclsid);
+  hres = RegOpenKeyExA(HKEY_CLASSES_ROOT, buf, 0, KEY_READ, &key);
+
+  if (hres != ERROR_SUCCESS)
+      return REGDB_E_CLASSNOTREG;
+
+  memset(dllName,0,sizeof(dllName));
+  hres= RegQueryValueExW(key,NULL,NULL,NULL,(LPBYTE)dllName,&dllNameLen);
+  if (hres)
+	  return REGDB_E_CLASSNOTREG; /* FIXME: check retval */
+  RegCloseKey(key);
+
+  TRACE("found LocalServer32 exe %s\n", debugstr_w(dllName));
+
+  memset(&sinfo,0,sizeof(sinfo));
+  sinfo.cb = sizeof(sinfo);
+  if (!CreateProcessW(NULL,dllName,NULL,NULL,FALSE,0,NULL,NULL,&sinfo,&pinfo))
+      return E_FAIL;
+  return create_marshalled_proxy(rclsid,iid,ppv);
+}
+
 /***********************************************************************
  *           CoGetClassObject [COMPOBJ.7]
  *           CoGetClassObject [OLE32.16]
@@ -1280,9 +1373,22 @@ HRESULT WINAPI CoGetClassObject(
       return hres;
     }
 
-    /* Then try for in-process */
-    if ((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext)
-    {
+    if (((CLSCTX_LOCAL_SERVER) & dwClsContext)
+        && !((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext))
+	return Remote_CoGetClassObject(rclsid,dwClsContext,pServerInfo,iid,ppv);
+
+    /* remote servers not supported yet */
+    if (     ((CLSCTX_REMOTE_SERVER) & dwClsContext)
+        && !((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext)
+    ){
+        FIXME("CLSCTX_REMOTE_SERVER not supported!\n");
+	return E_NOINTERFACE;
+    }
+
+    if ((CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER) & dwClsContext) {
+        HKEY key;
+	char buf[200];
+
 	memset(ProviderName,0,sizeof(ProviderName));
 	sprintf(buf,"CLSID\\%s\\InprocServer32",xclsid);
         if (((hres = RegOpenKeyExA(HKEY_CLASSES_ROOT, buf, 0, KEY_READ, &key)) != ERROR_SUCCESS) ||
@@ -1854,18 +1960,6 @@ HRESULT WINAPI CoCreateFreeThreadedMarshaler (LPUNKNOWN punkOuter, LPUNKNOWN* pp
 
    return S_OK;
 }
-
-
-/***********************************************************************
- *           DllGetClassObject [OLE32.63]
- */
-HRESULT WINAPI OLE32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
-{
-	FIXME("\n\tCLSID:\t%s,\n\tIID:\t%s\n",debugstr_guid(rclsid),debugstr_guid(iid));
-	*ppv = NULL;
-	return CLASS_E_CLASSNOTAVAILABLE;
-}
-
 
 /***
  * COM_RevokeAllClasses

@@ -10,7 +10,7 @@ import advapi32.dll
 import kernel32.dll
 import ntdll.dll
 
-debug_channels (ole typelib)
+debug_channels (ole olerelay typelib)
 
 1 stdcall DllGetClassObject(ptr ptr ptr) OLEAUT32_DllGetClassObject
 2 stdcall SysAllocString(wstr) SysAllocString

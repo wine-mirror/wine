@@ -14,6 +14,9 @@
 #include "olectl.h"
 #include "wine/obj_oleaut.h"
 #include "wine/obj_olefont.h"
+
+#include "tmarshal.h"
+
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole);
@@ -161,6 +164,11 @@ HRESULT WINAPI OLEAUT32_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *pp
 	    IClassFactory_AddRef((IClassFactory*)*ppv);
 	    return S_OK;
 	}
+    }
+    if (IsEqualGUID(rclsid,&CLSID_PSOAInterface)) {
+	if (S_OK==TypeLibFac_DllGetClassObject(rclsid,iid,ppv))
+	    return S_OK;
+	/*FALLTHROUGH*/
     }
     FIXME("\n\tCLSID:\t%s,\n\tIID:\t%s\n",debugstr_guid(rclsid),debugstr_guid(iid));
     return CLASS_E_CLASSNOTAVAILABLE;

@@ -542,6 +542,8 @@ WORD offset from start of block to SAFEARRAY
 WORD typeofarray
 */
 
+extern DWORD _invoke(LPVOID func,CALLCONV callconv, int nrargs, DWORD *args);
+
 #include "poppack.h"
 
 /*---------------------------END--------------------------------------------*/
