@@ -826,7 +826,7 @@ static HMETAFILE DataCache_ReadPresMetafile(
 	   &presStream);
 
   if (FAILED(hres))
-    return hres;
+    return (HMETAFILE)hres;
 
   /*
    * Get the size of the stream.

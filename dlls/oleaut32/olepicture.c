@@ -412,13 +412,13 @@ static HRESULT WINAPI OLEPictureImpl_get_Handle(IPicture *iface,
     *phandle = This->desc.u.bmp.hbitmap;
     break;
   case PICTYPE_METAFILE:
-    *phandle = This->desc.u.wmf.hmeta;
+    *phandle = (OLE_HANDLE)This->desc.u.wmf.hmeta;
     break;
   case PICTYPE_ICON:
     *phandle = This->desc.u.icon.hicon;
     break;
   case PICTYPE_ENHMETAFILE:
-    *phandle = This->desc.u.emf.hemf;
+    *phandle = (OLE_HANDLE)This->desc.u.emf.hemf;
     break;
   default:
     FIXME("Unimplemented type %d\n", This->desc.picType);
