@@ -89,7 +89,7 @@
 @ stub NtCreateIoCompletion
 @ stdcall NtCreateKey(ptr long ptr long ptr long long)
 @ stdcall NtCreateMailslotFile(long long long long long long long long)
-@ stub NtCreateMutant
+@ stdcall NtCreateMutant(ptr long ptr long)
 @ stdcall NtCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr)
 @ stdcall NtCreatePagingFile(long long long long)
 @ stdcall NtCreatePort(ptr ptr long long long)
@@ -143,7 +143,7 @@
 @ stdcall NtOpenFile(ptr long ptr ptr long long)
 @ stub NtOpenIoCompletion
 @ stdcall NtOpenKey(ptr long ptr)
-@ stub NtOpenMutant
+@ stdcall NtOpenMutant(ptr long ptr)
 @ stub NtOpenObjectAuditAlarm
 @ stub NtOpenProcess
 @ stdcall NtOpenProcessToken(long long long)
@@ -176,7 +176,7 @@
 @ stub NtQueryIntervalProfile
 @ stub NtQueryIoCompletion
 @ stdcall NtQueryKey (long long ptr long ptr)
-@ stub NtQueryMutant
+@ stdcall NtQueryMutant(long long ptr long ptr)
 @ stdcall NtQueryObject(long long long long long)
 @ stub NtQueryOpenSubKeys
 @ stdcall NtQueryPerformanceCounter (long long)
@@ -200,7 +200,7 @@
 @ stdcall NtReadVirtualMemory(long ptr ptr long ptr)
 @ stub NtRegisterNewDevice
 @ stdcall NtRegisterThreadTerminatePort(ptr)
-@ stub NtReleaseMutant
+@ stdcall NtReleaseMutant(long ptr)
 @ stub NtReleaseProcessMutant
 @ stdcall NtReleaseSemaphore(long long ptr)
 @ stub NtRemoveIoCompletion
@@ -674,8 +674,8 @@
 @ stub ZwCreateIoCompletion
 @ stdcall ZwCreateKey(ptr long ptr long ptr long long) NtCreateKey
 @ stdcall ZwCreateMailslotFile(long long long long long long long long) NtCreateMailslotFile
-@ stub ZwCreateMutant
-@ stub ZwCreateNamedPipeFile
+@ stdcall ZwCreateMutant(ptr long ptr long) NtCreateMutant
+@ stdcall ZwCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr) NtCreateNamedPipeFile
 @ stdcall ZwCreatePagingFile(long long long long) NtCreatePagingFile
 @ stdcall ZwCreatePort(ptr ptr long long long) NtCreatePort
 @ stub ZwCreateProcess
@@ -726,7 +726,7 @@
 @ stdcall ZwOpenFile(ptr long ptr ptr long long) NtOpenFile
 @ stub ZwOpenIoCompletion
 @ stdcall ZwOpenKey(ptr long ptr) NtOpenKey
-@ stub ZwOpenMutant
+@ stdcall ZwOpenMutant(ptr long ptr) NtOpenMutant
 @ stub ZwOpenObjectAuditAlarm
 @ stub ZwOpenProcess
 @ stdcall ZwOpenProcessToken(long long long) NtOpenProcessToken
@@ -758,7 +758,7 @@
 @ stub ZwQueryIntervalProfile
 @ stub ZwQueryIoCompletion
 @ stdcall ZwQueryKey(long long ptr long ptr) NtQueryKey
-@ stub ZwQueryMutant
+@ stdcall ZwQueryMutant(long long ptr long ptr) NtQueryMutant
 @ stdcall ZwQueryObject(long long long long long) NtQueryObject
 @ stub ZwQueryOpenSubKeys
 @ stdcall ZwQueryPerformanceCounter (long long) NtQueryPerformanceCounter
@@ -781,7 +781,7 @@
 @ stdcall ZwReadVirtualMemory(long ptr ptr long ptr) NtReadVirtualMemory
 @ stub ZwRegisterNewDevice
 @ stdcall ZwRegisterThreadTerminatePort(ptr) NtRegisterThreadTerminatePort
-@ stub ZwReleaseMutant
+@ stdcall ZwReleaseMutant(long ptr) NtReleaseMutant
 @ stub ZwReleaseProcessMutant
 @ stdcall ZwReleaseSemaphore(long long ptr) NtReleaseSemaphore
 @ stub ZwRemoveIoCompletion

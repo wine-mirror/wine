@@ -491,6 +491,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC, APC_ASYNC_IO };
 
 /* Create an event */
 @REQ(create_event)
+    unsigned int access;        /* wanted access rights */
     int          manual_reset;  /* manual reset event */
     int          initial_state; /* initial state of the event */
     int          inherit;       /* inherit flag */
@@ -519,6 +520,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 
 /* Create a mutex */
 @REQ(create_mutex)
+    unsigned int access;        /* wanted access rights */
     int          owned;         /* initially owned? */
     int          inherit;       /* inherit flag */
     VARARG(name,unicode_str);   /* object name */
@@ -530,6 +532,8 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Release a mutex */
 @REQ(release_mutex)
     obj_handle_t handle;        /* handle to the mutex */
+@REPLY
+    unsigned int prev_count;    /* value of internal counter, before release */
 @END
 
 
@@ -545,6 +549,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 
 /* Create a semaphore */
 @REQ(create_semaphore)
+    unsigned int access;        /* wanted access rights */
     unsigned int initial;       /* initial count */
     unsigned int max;           /* maximum count */
     int          inherit;       /* inherit flag */
@@ -1337,6 +1342,7 @@ enum char_info_mode
 
 /* Create a waitable timer */
 @REQ(create_timer)
+    unsigned int access;        /* wanted access rights */
     int          inherit;       /* inherit flag */
     int          manual;        /* manual reset */
     VARARG(name,unicode_str);   /* object name */

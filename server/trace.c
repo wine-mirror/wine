@@ -752,6 +752,7 @@ static void dump_select_request( const struct select_request *req )
 
 static void dump_create_event_request( const struct create_event_request *req )
 {
+    fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " manual_reset=%d,", req->manual_reset );
     fprintf( stderr, " initial_state=%d,", req->initial_state );
     fprintf( stderr, " inherit=%d,", req->inherit );
@@ -785,6 +786,7 @@ static void dump_open_event_reply( const struct open_event_reply *req )
 
 static void dump_create_mutex_request( const struct create_mutex_request *req )
 {
+    fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " owned=%d,", req->owned );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " name=" );
@@ -799,6 +801,11 @@ static void dump_create_mutex_reply( const struct create_mutex_reply *req )
 static void dump_release_mutex_request( const struct release_mutex_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_release_mutex_reply( const struct release_mutex_reply *req )
+{
+    fprintf( stderr, " prev_count=%08x", req->prev_count );
 }
 
 static void dump_open_mutex_request( const struct open_mutex_request *req )
@@ -816,6 +823,7 @@ static void dump_open_mutex_reply( const struct open_mutex_reply *req )
 
 static void dump_create_semaphore_request( const struct create_semaphore_request *req )
 {
+    fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " initial=%08x,", req->initial );
     fprintf( stderr, " max=%08x,", req->max );
     fprintf( stderr, " inherit=%d,", req->inherit );
@@ -1633,6 +1641,7 @@ static void dump_set_registry_notification_request( const struct set_registry_no
 
 static void dump_create_timer_request( const struct create_timer_request *req )
 {
+    fprintf( stderr, " access=%08x,", req->access );
     fprintf( stderr, " inherit=%d,", req->inherit );
     fprintf( stderr, " manual=%d,", req->manual );
     fprintf( stderr, " name=" );
@@ -2765,7 +2774,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_open_event_reply,
     (dump_func)dump_create_mutex_reply,
-    (dump_func)0,
+    (dump_func)dump_release_mutex_reply,
     (dump_func)dump_open_mutex_reply,
     (dump_func)dump_create_semaphore_reply,
     (dump_func)dump_release_semaphore_reply,

@@ -403,12 +403,10 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
                             BOOL initial_state, LPCWSTR name )
 {
     HANDLE ret;
-    DWORD len = name ? strlenW(name) : 0;
-    if (len >= MAX_PATH)
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
     /* one buggy program needs this
      * ("Van Dale Groot woordenboek der Nederlandse taal")
      */
@@ -418,17 +416,21 @@ HANDLE WINAPI CreateEventW( SECURITY_ATTRIBUTES *sa, BOOL manual_reset,
         SetLastError( ERROR_INVALID_PARAMETER);
         return 0;
     }
-    SERVER_START_REQ( create_event )
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
+    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
+    attr.SecurityQualityOfService = NULL;
+    if (name)
     {
-        req->manual_reset = manual_reset;
-        req->initial_state = initial_state;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        SetLastError(0);
-        wine_server_call_err( req );
-        ret = reply->handle;
+        RtlInitUnicodeString( &nameW, name );
+        attr.ObjectName = &nameW;
     }
-    SERVER_END_REQ;
+
+    status = NtCreateEvent( &ret, EVENT_ALL_ACCESS, &attr, manual_reset, initial_state );
+    SetLastError( RtlNtStatusToDosError(status) );
     return ret;
 }
 
@@ -466,23 +468,30 @@ HANDLE WINAPI OpenEventA( DWORD access, BOOL inherit, LPCSTR name )
 HANDLE WINAPI OpenEventW( DWORD access, BOOL inherit, LPCWSTR name )
 {
     HANDLE ret;
-    DWORD len = name ? strlenW(name) : 0;
-    if (len >= MAX_PATH)
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
     if (!is_version_nt()) access = EVENT_ALL_ACCESS;
 
-    SERVER_START_REQ( open_event )
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = inherit ? OBJ_INHERIT : 0;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+    if (name)
     {
-        req->access  = access;
-        req->inherit = inherit;
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        wine_server_call_err( req );
-        ret = reply->handle;
+        RtlInitUnicodeString( &nameW, name );
+        attr.ObjectName = &nameW;
     }
-    SERVER_END_REQ;
+
+    status = NtOpenEvent( &ret, access, &attr );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return 0;
+    }
     return ret;
 }
 
@@ -598,22 +607,24 @@ HANDLE WINAPI CreateMutexA( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCSTR name )
 HANDLE WINAPI CreateMutexW( SECURITY_ATTRIBUTES *sa, BOOL owner, LPCWSTR name )
 {
     HANDLE ret;
-    DWORD len = name ? strlenW(name) : 0;
-    if (len >= MAX_PATH)
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
+    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
+    attr.SecurityQualityOfService = NULL;
+    if (name)
     {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
+        RtlInitUnicodeString( &nameW, name );
+        attr.ObjectName = &nameW;
     }
-    SERVER_START_REQ( create_mutex )
-    {
-        req->owned   = owner;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        SetLastError(0);
-        wine_server_call_err( req );
-        ret = reply->handle;
-    }
-    SERVER_END_REQ;
+
+    status = NtCreateMutant( &ret, MUTEX_ALL_ACCESS, &attr, owner );
+    SetLastError( RtlNtStatusToDosError(status) );
     return ret;
 }
 
@@ -642,23 +653,30 @@ HANDLE WINAPI OpenMutexA( DWORD access, BOOL inherit, LPCSTR name )
 HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
 {
     HANDLE ret;
-    DWORD len = name ? strlenW(name) : 0;
-    if (len >= MAX_PATH)
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
     if (!is_version_nt()) access = MUTEX_ALL_ACCESS;
 
-    SERVER_START_REQ( open_mutex )
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = inherit ? OBJ_INHERIT : 0;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+    if (name)
     {
-        req->access  = access;
-        req->inherit = inherit;
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        wine_server_call_err( req );
-        ret = reply->handle;
+        RtlInitUnicodeString( &nameW, name );
+        attr.ObjectName = &nameW;
     }
-    SERVER_END_REQ;
+
+    status = NtOpenMutant( &ret, access, &attr );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return 0;
+    }
     return ret;
 }
 
@@ -668,14 +686,15 @@ HANDLE WINAPI OpenMutexW( DWORD access, BOOL inherit, LPCWSTR name )
  */
 BOOL WINAPI ReleaseMutex( HANDLE handle )
 {
-    BOOL ret;
-    SERVER_START_REQ( release_mutex )
+    NTSTATUS    status;
+
+    status = NtReleaseMutant(handle, NULL);
+    if (status != STATUS_SUCCESS)
     {
-        req->handle = handle;
-        ret = !wine_server_call_err( req );
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
     }
-    SERVER_END_REQ;
-    return ret;
+    return TRUE;
 }
 
 
@@ -706,35 +725,27 @@ HANDLE WINAPI CreateSemaphoreA( SECURITY_ATTRIBUTES *sa, LONG initial, LONG max,
  *           CreateSemaphoreW   (KERNEL32.@)
  */
 HANDLE WINAPI CreateSemaphoreW( SECURITY_ATTRIBUTES *sa, LONG initial,
-                                    LONG max, LPCWSTR name )
+                                LONG max, LPCWSTR name )
 {
     HANDLE ret;
-    DWORD len = name ? strlenW(name) : 0;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
 
-    /* Check parameters */
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
+    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
+    attr.SecurityQualityOfService = NULL;
+    if (name)
+    {
+        RtlInitUnicodeString( &nameW, name );
+        attr.ObjectName = &nameW;
+    }
 
-    if ((max <= 0) || (initial < 0) || (initial > max))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-    if (len >= MAX_PATH)
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
-
-    SERVER_START_REQ( create_semaphore )
-    {
-        req->initial = (unsigned int)initial;
-        req->max     = (unsigned int)max;
-        req->inherit = (sa && (sa->nLength>=sizeof(*sa)) && sa->bInheritHandle);
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        SetLastError(0);
-        wine_server_call_err( req );
-        ret = reply->handle;
-    }
-    SERVER_END_REQ;
+    status = NtCreateSemaphore( &ret, SEMAPHORE_ALL_ACCESS, &attr, initial, max );
+    SetLastError( RtlNtStatusToDosError(status) );
     return ret;
 }
 
@@ -763,23 +774,30 @@ HANDLE WINAPI OpenSemaphoreA( DWORD access, BOOL inherit, LPCSTR name )
 HANDLE WINAPI OpenSemaphoreW( DWORD access, BOOL inherit, LPCWSTR name )
 {
     HANDLE ret;
-    DWORD len = name ? strlenW(name) : 0;
-    if (len >= MAX_PATH)
-    {
-        SetLastError( ERROR_FILENAME_EXCED_RANGE );
-        return 0;
-    }
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+
     if (!is_version_nt()) access = SEMAPHORE_ALL_ACCESS;
 
-    SERVER_START_REQ( open_semaphore )
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = inherit ? OBJ_INHERIT : 0;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+    if (name)
     {
-        req->access  = access;
-        req->inherit = inherit;
-        wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        wine_server_call_err( req );
-        ret = reply->handle;
+        RtlInitUnicodeString( &nameW, name );
+        attr.ObjectName = &nameW;
     }
-    SERVER_END_REQ;
+
+    status = NtOpenSemaphore( &ret, access, &attr );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return 0;
+    }
     return ret;
 }
 
@@ -823,25 +841,26 @@ HANDLE WINAPI CreateWaitableTimerA( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCSTR
  */
 HANDLE WINAPI CreateWaitableTimerW( SECURITY_ATTRIBUTES *sa, BOOL manual, LPCWSTR name )
 {
-    HANDLE              handle;
-    NTSTATUS            status;
-    UNICODE_STRING      us;
-    DWORD               attr = 0;
-    OBJECT_ATTRIBUTES   oa;
+    HANDLE handle;
+    NTSTATUS status;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
 
-    if (name) RtlInitUnicodeString(&us, name);
-    if (sa && (sa->nLength >= sizeof(*sa)) && sa->bInheritHandle)
-        attr |= OBJ_INHERIT;
-    InitializeObjectAttributes(&oa, name ? &us : NULL, attr,
-                               NULL /* FIXME */, NULL /* FIXME */);
-    status = NtCreateTimer(&handle, TIMER_ALL_ACCESS, &oa,
-                           manual ? NotificationTimer : SynchronizationTimer);
-
-    if (status != STATUS_SUCCESS)
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = (sa && sa->bInheritHandle) ? OBJ_INHERIT : 0;
+    attr.SecurityDescriptor       = sa ? sa->lpSecurityDescriptor : NULL;
+    attr.SecurityQualityOfService = NULL;
+    if (name)
     {
-        SetLastError( RtlNtStatusToDosError(status) );
-        return 0;
+        RtlInitUnicodeString( &nameW, name );
+        attr.ObjectName = &nameW;
     }
+
+    status = NtCreateTimer(&handle, TIMER_ALL_ACCESS, &attr,
+                           manual ? NotificationTimer : SynchronizationTimer);
+    SetLastError( RtlNtStatusToDosError(status) );
     return handle;
 }
 
@@ -869,17 +888,26 @@ HANDLE WINAPI OpenWaitableTimerA( DWORD access, BOOL inherit, LPCSTR name )
  */
 HANDLE WINAPI OpenWaitableTimerW( DWORD access, BOOL inherit, LPCWSTR name )
 {
-    NTSTATUS            status;
-    ULONG               attr = 0;
-    UNICODE_STRING      us;
-    HANDLE              handle;
-    OBJECT_ATTRIBUTES   oa;
+    HANDLE handle;
+    UNICODE_STRING nameW;
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
 
-    if (inherit) attr |= OBJ_INHERIT;
+    if (!is_version_nt()) access = SEMAPHORE_ALL_ACCESS;
 
-    if (name) RtlInitUnicodeString(&us, name);
-    InitializeObjectAttributes(&oa, name ? &us : NULL, attr, NULL /* FIXME */, NULL /* FIXME */);
-    status = NtOpenTimer(&handle, access, &oa);
+    attr.Length                   = sizeof(attr);
+    attr.RootDirectory            = 0;
+    attr.ObjectName               = NULL;
+    attr.Attributes               = inherit ? OBJ_INHERIT : 0;
+    attr.SecurityDescriptor       = NULL;
+    attr.SecurityQualityOfService = NULL;
+    if (name)
+    {
+        RtlInitUnicodeString( &nameW, name );
+        attr.ObjectName = &nameW;
+    }
+
+    status = NtOpenTimer(&handle, access, &attr);
     if (status != STATUS_SUCCESS)
     {
         SetLastError( RtlNtStatusToDosError(status) );

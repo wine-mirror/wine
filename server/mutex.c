@@ -156,7 +156,7 @@ DECL_HANDLER(create_mutex)
     reply->handle = 0;
     if ((mutex = create_mutex( get_req_data(), get_req_data_size(), req->owned )))
     {
-        reply->handle = alloc_handle( current->process, mutex, MUTEX_ALL_ACCESS, req->inherit );
+        reply->handle = alloc_handle( current->process, mutex, req->access, req->inherit );
         release_object( mutex );
     }
 }
@@ -177,7 +177,11 @@ DECL_HANDLER(release_mutex)
                                                  MUTEX_MODIFY_STATE, &mutex_ops )))
     {
         if (!mutex->count || (mutex->owner != current)) set_error( STATUS_MUTANT_NOT_OWNED );
-        else if (!--mutex->count) do_release( mutex );
+        else
+        {
+            reply->prev_count = mutex->count;
+            if (!--mutex->count) do_release( mutex );
+        }
         release_object( mutex );
     }
 }

@@ -204,7 +204,7 @@ DECL_HANDLER(create_timer)
     reply->handle = 0;
     if ((timer = create_timer( get_req_data(), get_req_data_size(), req->manual )))
     {
-        reply->handle = alloc_handle( current->process, timer, TIMER_ALL_ACCESS, req->inherit );
+        reply->handle = alloc_handle( current->process, timer, req->access, req->inherit );
         release_object( timer );
     }
 }

@@ -132,7 +132,7 @@ DECL_HANDLER(create_event)
     if ((event = create_event( get_req_data(), get_req_data_size(),
                                req->manual_reset, req->initial_state )))
     {
-        reply->handle = alloc_handle( current->process, event, EVENT_ALL_ACCESS, req->inherit );
+        reply->handle = alloc_handle( current->process, event, req->access, req->inherit );
         release_object( event );
     }
 }

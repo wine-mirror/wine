@@ -71,17 +71,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
                                    IN ACCESS_MASK access,
                                    IN const OBJECT_ATTRIBUTES *attr OPTIONAL,
-                                   IN ULONG InitialCount,
-                                   IN ULONG MaximumCount )
+                                   IN LONG InitialCount,
+                                   IN LONG MaximumCount )
 {
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
-    if ((MaximumCount <= 0) || (InitialCount > MaximumCount))
+    if (MaximumCount <= 0 || InitialCount < 0 || InitialCount > MaximumCount)
         return STATUS_INVALID_PARAMETER;
+    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
     SERVER_START_REQ( create_semaphore )
     {
+        req->access  = access;
         req->initial = InitialCount;
         req->max     = MaximumCount;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
@@ -102,6 +104,8 @@ NTSTATUS WINAPI NtOpenSemaphore( OUT PHANDLE SemaphoreHandle,
 {
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
+
+    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
     SERVER_START_REQ( open_semaphore )
     {
@@ -167,8 +171,11 @@ NTSTATUS WINAPI NtCreateEvent(
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
 
+    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
+
     SERVER_START_REQ( create_event )
     {
+        req->access = DesiredAccess;
         req->manual_reset = ManualReset;
         req->initial_state = InitialState;
         req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
@@ -191,6 +198,8 @@ NTSTATUS WINAPI NtOpenEvent(
 {
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
+
+    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
     SERVER_START_REQ( open_event )
     {
@@ -293,6 +302,94 @@ NTSTATUS WINAPI NtQueryEvent (
 	return STATUS_SUCCESS;
 }
 
+/*
+ *	Mutants (known as Mutexes in Kernel32)
+ */
+
+/******************************************************************************
+ *              NtCreateMutant                          [NTDLL.@]
+ *              ZwCreateMutant                          [NTDLL.@]
+ */
+NTSTATUS WINAPI NtCreateMutant(OUT HANDLE* MutantHandle,
+                               IN ACCESS_MASK access,
+                               IN const OBJECT_ATTRIBUTES* attr OPTIONAL,
+                               IN BOOLEAN InitialOwner)
+{
+    NTSTATUS    status;
+    DWORD       len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
+
+    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
+
+    SERVER_START_REQ( create_mutex )
+    {
+        req->access  = access;
+        req->owned   = InitialOwner;
+        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        status = wine_server_call( req );
+        *MutantHandle = reply->handle;
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
+/**************************************************************************
+ *		NtOpenMutant				[NTDLL.@]
+ *		ZwOpenMutant				[NTDLL.@]
+ */
+NTSTATUS WINAPI NtOpenMutant(OUT HANDLE* MutantHandle, 
+                             IN ACCESS_MASK access, 
+                             IN const OBJECT_ATTRIBUTES* attr )
+{
+    NTSTATUS    status;
+    DWORD       len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
+
+    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
+
+    SERVER_START_REQ( open_mutex )
+    {
+        req->access  = access;
+        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        status = wine_server_call( req );
+        *MutantHandle = reply->handle;
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
+/**************************************************************************
+ *		NtReleaseMutant				[NTDLL.@]
+ *		ZwReleaseMutant				[NTDLL.@]
+ */
+NTSTATUS WINAPI NtReleaseMutant( IN HANDLE handle, OUT PLONG prev_count OPTIONAL)
+{
+    NTSTATUS    status;
+
+    SERVER_START_REQ( release_mutex )
+    {
+        req->handle = handle;
+        status = wine_server_call( req );
+        if (prev_count) *prev_count = reply->prev_count;
+    }
+    SERVER_END_REQ;
+    return status;
+}
+
+/******************************************************************
+ *		NtQueryMutant                   [NTDLL.@]
+ *		ZwQueryMutant                   [NTDLL.@]
+ */
+NTSTATUS WINAPI NtQueryMutant(IN HANDLE handle, 
+                              IN MUTANT_INFORMATION_CLASS MutantInformationClass, 
+                              OUT PVOID MutantInformation, 
+                              IN ULONG MutantInformationLength, 
+                              OUT PULONG ResultLength OPTIONAL )
+{
+    FIXME("(%p %u %p %lu %p): stub!\n", 
+          handle, MutantInformationClass, MutantInformation, MutantInformationLength, ResultLength);
+    return STATUS_NOT_IMPLEMENTED;
+}
 
 /*
  *	Timers
@@ -304,20 +401,23 @@ NTSTATUS WINAPI NtQueryEvent (
  */
 NTSTATUS WINAPI NtCreateTimer(OUT HANDLE *handle,
                               IN ACCESS_MASK access,
-                              IN const OBJECT_ATTRIBUTES *oa OPTIONAL,
+                              IN const OBJECT_ATTRIBUTES *attr OPTIONAL,
                               IN TIMER_TYPE timer_type)
 {
-    DWORD len = (oa && oa->ObjectName) ? oa->ObjectName->Length : 0;
+    DWORD       len = (attr && attr->ObjectName) ? attr->ObjectName->Length : 0;
     NTSTATUS    status;
+
+    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
     if (timer_type != NotificationTimer && timer_type != SynchronizationTimer)
         return STATUS_INVALID_PARAMETER;
 
     SERVER_START_REQ( create_timer )
     {
+        req->access  = access;
         req->manual  = (timer_type == NotificationTimer) ? TRUE : FALSE;
-        req->inherit = oa && (oa->Attributes & OBJ_INHERIT);
-        if (len) wine_server_add_data( req, oa->ObjectName->Buffer, len );
+        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         status = wine_server_call( req );
         *handle = reply->handle;
     }
@@ -332,19 +432,18 @@ NTSTATUS WINAPI NtCreateTimer(OUT HANDLE *handle,
  */
 NTSTATUS WINAPI NtOpenTimer(OUT PHANDLE handle,
                             IN ACCESS_MASK access,
-                            IN const OBJECT_ATTRIBUTES* oa )
+                            IN const OBJECT_ATTRIBUTES* attr )
 {
-    DWORD len = (oa && oa->ObjectName) ? oa->ObjectName->Length : 0;
-    NTSTATUS status;
+    DWORD       len = (attr && attr->ObjectName) ? attr->ObjectName->Length : 0;
+    NTSTATUS    status;
 
-    if (oa && oa->Length >= MAX_PATH * sizeof(WCHAR))
-        return STATUS_NAME_TOO_LONG;
+    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
     SERVER_START_REQ( open_timer )
     {
         req->access  = access;
-        req->inherit = oa && (oa->Attributes & OBJ_INHERIT);
-        if (len) wine_server_add_data( req, oa->ObjectName->Buffer, len );
+        req->inherit = attr && (attr->Attributes & OBJ_INHERIT);
+        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
         status = wine_server_call( req );
         *handle = reply->handle;
     }

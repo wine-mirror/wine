@@ -620,6 +620,7 @@ struct select_reply
 struct create_event_request
 {
     struct request_header __header;
+    unsigned int access;
     int          manual_reset;
     int          initial_state;
     int          inherit;
@@ -664,6 +665,7 @@ struct open_event_reply
 struct create_mutex_request
 {
     struct request_header __header;
+    unsigned int access;
     int          owned;
     int          inherit;
     /* VARARG(name,unicode_str); */
@@ -684,6 +686,7 @@ struct release_mutex_request
 struct release_mutex_reply
 {
     struct reply_header __header;
+    unsigned int prev_count;
 };
 
 
@@ -706,6 +709,7 @@ struct open_mutex_reply
 struct create_semaphore_request
 {
     struct request_header __header;
+    unsigned int access;
     unsigned int initial;
     unsigned int max;
     int          inherit;
@@ -1869,6 +1873,7 @@ struct set_registry_notification_reply
 struct create_timer_request
 {
     struct request_header __header;
+    unsigned int access;
     int          inherit;
     int          manual;
     /* VARARG(name,unicode_str); */
@@ -3643,6 +3648,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 150
+#define SERVER_PROTOCOL_VERSION 151
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

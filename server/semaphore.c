@@ -139,7 +139,7 @@ DECL_HANDLER(create_semaphore)
     if ((sem = create_semaphore( get_req_data(), get_req_data_size(),
                                  req->initial, req->max )))
     {
-        reply->handle = alloc_handle( current->process, sem, SEMAPHORE_ALL_ACCESS, req->inherit );
+        reply->handle = alloc_handle( current->process, sem, req->access, req->inherit );
         release_object( sem );
     }
 }
