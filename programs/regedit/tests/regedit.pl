@@ -29,14 +29,14 @@ test_regedit();
 
 # Imitation of test framework "ok".
 # Uncomment when running on Windows without testing framework
-#sub ok($;$)
-#{
-#    my ($condition, $message) = @_;
-#    if (!$condition)
-#    {
-#	die $message;
-#    }
-#}
+#  sub ok($;$)
+#  {
+#      my ($condition, $message) = @_;
+#      if (!$condition)
+#      {
+#  	die $message;
+#      }
+#  }
 
 # Checks if the files are equal regardless of the end-of-line encoding.
 # Returns 0 if the files are different, otherwise returns 1

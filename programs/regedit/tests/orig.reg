@@ -27,6 +27,9 @@ REGEDIT4
 "v1"="\" \\,=[]"
 
 [HKEY_CURRENT_USER\Test Regapi\New Key #1\New Key #2]
+"Empty Value1"=hex(7):00
+"Empty Value2"=hex(7):00,00
+"Empty Value3"=hex(7):00,00,00
 
 [HKEY_CURRENT_USER\Test Regapi\New Key #1\New Key #2\New Key #3]
 

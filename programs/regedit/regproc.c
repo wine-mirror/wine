@@ -294,7 +294,6 @@ DWORD getDataType(LPSTR *lpValue, DWORD* parse_type)
         { "\"",        1,   REG_SZ,              REG_SZ },
         { "str:\"",    5,   REG_SZ,              REG_SZ },
         { "str(2):\"", 8,   REG_EXPAND_SZ,       REG_SZ },
-        { "str(7):\"", 8,   REG_MULTI_SZ,        REG_SZ },
         { "hex:",      4,   REG_BINARY,          REG_BINARY },
         { "dword:",    6,   REG_DWORD,           REG_DWORD },
         { "hex(",      4,   -1,                  REG_BINARY },
@@ -316,7 +315,6 @@ DWORD getDataType(LPSTR *lpValue, DWORD* parse_type)
         if (type == -1) {
             char* end;
             /* "hex(xx):" is special */
-            *lpValue += 4;
             type = (int)strtoul( *lpValue , &end, 16 );
             if (**lpValue=='\0' || *end!=')' || *(end+1)!=':') {
                 type=REG_NONE;
@@ -597,7 +595,7 @@ void closeKey()
 }
 
 /******************************************************************************
- * This funtion is the main entry point to the setValue type of action.  It
+ * This function is the main entry point to the setValue type of action.  It
  * receives the currently read line and dispatch the work depending on the
  * context.
  */
@@ -1145,7 +1143,7 @@ void REGPROC_resize_char_buffer(CHAR **buffer, DWORD *len, DWORD required_len)
 }
 
 /******************************************************************************
- * Prints string str to stream file in Windows regedit format.
+ * Prints string str to file
  */
 void REGPROC_export_string(FILE *file, CHAR *str)
 {
@@ -1173,7 +1171,6 @@ void REGPROC_export_string(FILE *file, CHAR *str)
         }
     }
 }
-
 
 /******************************************************************************
  * Writes contents of the registry key to the specified file stream.
@@ -1274,14 +1271,32 @@ void export_hkey(FILE *file, HKEY key,
                 printf("%s: warning - unsupported registry format '%ld', "
                        "treat as binary\n",
                        getAppName(), value_type);
-                       /* falls through */
+                printf("key name: \"%s\"\n", *reg_key_name_buf);
+                printf("value name:\"%s\"\n\n", *val_name_buf);
+                /* falls through */
+            case REG_MULTI_SZ:
+                /* falls through */
             case REG_BINARY:
             {
                 DWORD i1;
-                /* position of where the next character will be printed*/
-                int cur_pos = strlen("\"\"=hex:") + strlen(*val_name_buf);
+                CHAR *hex_prefix;
+                CHAR buf[20];
+                int cur_pos;
 
-                fputs("hex:", file);
+                if (value_type == REG_BINARY) 
+                {
+                    hex_prefix = "hex:";
+                } else {
+                    hex_prefix = buf;
+                    sprintf(buf, "hex(%ld):", value_type);
+                }
+
+                /* position of where the next character will be printed */
+                /* NOTE: yes, strlen("hex:") is used even for hex(x): */
+                cur_pos = strlen("\"\"=") + strlen("hex:") +
+                    strlen(*val_name_buf);
+
+                fputs(hex_prefix, file);
                 for (i1 = 0; i1 < val_size1; i1++)
                 {
                     fprintf(file, "%02x", (unsigned int)(*val_buf)[i1]);
@@ -1304,8 +1319,6 @@ void export_hkey(FILE *file, HKEY key,
             }
         }
     }
-
-    /*fputs("\n", file);*/
 
     i = 0;
     more_data = TRUE;
@@ -1433,11 +1446,17 @@ void export_registry_key(CHAR *file_name, CHAR *reg_key_name)
         file = REGPROC_open_export_file(file_name);
         for (i = 0; i < REG_CLASS_NUMBER; i++)
         {
-            strcpy(reg_key_name_buf, reg_class_names[i]);
-            export_hkey(file, reg_class_keys[i],
-                        &reg_key_name_buf, &reg_key_name_len,
-                        &val_name_buf, &val_name_len,
-                        &val_buf, &val_size);
+            /* do not export HKEY_CLASSES_ROOT */
+            if (reg_class_keys[i] != HKEY_CLASSES_ROOT &&
+                reg_class_keys[i] != HKEY_CURRENT_USER &&
+                reg_class_keys[i] != HKEY_CURRENT_CONFIG)
+            {
+                strcpy(reg_key_name_buf, reg_class_names[i]);
+                export_hkey(file, reg_class_keys[i],
+                            &reg_key_name_buf, &reg_key_name_len,
+                            &val_name_buf, &val_name_len,
+                            &val_buf, &val_size);
+            }
         }
     }
 
