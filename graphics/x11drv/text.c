@@ -421,10 +421,10 @@ BOOL X11DRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
 	    size->cx = fabs((x + dc->w.breakRem + count * dc->w.charExtra) *
 			     dc->wndExtX / dc->vportExtX);
 	    size->cy = fabs(y * dc->wndExtY / dc->vportExtY);
-	    HeapFree( GetProcessHeap(), 0, p );
 	}
 	size->cx *= pfo->rescale;
 	size->cy *= pfo->rescale;
+	HeapFree( GetProcessHeap(), 0, p );
 	return TRUE;
     }
     return FALSE;
