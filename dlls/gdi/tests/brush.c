@@ -29,7 +29,7 @@
 typedef struct _STOCK_BRUSH {
     COLORREF color;
     int stockobj;
-    char *name;
+    const char *name;
 } STOCK_BRUSH;
 
 static void test_solidbrush()
