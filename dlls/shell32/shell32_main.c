@@ -108,7 +108,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	int iIndex;
 	DWORD ret = TRUE, dwAttributes = 0;
 	IShellFolder * psfParent = NULL;
-	IExtractIcon * pei = NULL;
+	IExtractIconA * pei = NULL;
 	LPITEMIDLIST	pidlLast, pidl = NULL;
 	HRESULT hr = S_OK;
 
@@ -179,9 +179,6 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	if (flags & SHGFI_LINKOVERLAY)
 	  FIXME("set icon to link, stub\n");
 
-	if (flags & SHGFI_OPENICON)
-	  FIXME("set to open icon, stub\n");
-
 	if (flags & SHGFI_SELECTED)
 	  FIXME("set icon to selected, stub\n");
 
@@ -196,7 +193,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 
 	  if (SUCCEEDED(hr))
 	  {
-	    hr = IExtractIconA_GetIconLocation(pei, 0, szLoaction, MAX_PATH, &iIndex, &uFlags);
+	    hr = IExtractIconA_GetIconLocation(pei, (flags & SHGFI_OPENICON)? GIL_OPENICON : 0,szLoaction, MAX_PATH, &iIndex, &uFlags);
 	    /* fixme what to do with the index? */
 
 	    if(uFlags != GIL_NOTFILENAME)
@@ -238,20 +235,21 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  }
 	  else
 	  {
-	    if (!(PidlToSicIndex(psfParent, pidlLast, (flags && SHGFI_LARGEICON), &(psfi->iIcon))))
+	    if (!(PidlToSicIndex(psfParent, pidlLast, (flags & SHGFI_LARGEICON), 
+	      (flags & SHGFI_OPENICON)? GIL_OPENICON : 0, &(psfi->iIcon))))
 	    {
 	      ret = FALSE;
 	    }
 	  }
 	  if (ret) 
 	  {
-	    ret = (DWORD) ((flags && SHGFI_LARGEICON) ? ShellBigIconList : ShellSmallIconList);
+	    ret = (DWORD) ((flags & SHGFI_LARGEICON) ? ShellBigIconList : ShellSmallIconList);
 	  }
 	}
 
 	/* icon handle */
 	if (SUCCEEDED(hr) && (flags & SHGFI_ICON))
-	  psfi->hIcon = pImageList_GetIcon((flags && SHGFI_LARGEICON) ? ShellBigIconList:ShellSmallIconList, psfi->iIcon, ILD_NORMAL);
+	  psfi->hIcon = pImageList_GetIcon((flags & SHGFI_LARGEICON) ? ShellBigIconList:ShellSmallIconList, psfi->iIcon, ILD_NORMAL);
 
 
 	if (flags & SHGFI_EXETYPE)
@@ -267,8 +265,8 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  ret = FALSE;
 
 #ifdef MORE_DEBUG
-	TRACE ("icon=0x%08x index=0x%08x attr=0x%08lx name=%s type=%s\n", 
-		psfi->hIcon, psfi->iIcon, psfi->dwAttributes, psfi->szDisplayName, psfi->szTypeName);
+	TRACE ("icon=0x%08x index=0x%08x attr=0x%08lx name=%s type=%s ret=0x%08lx\n", 
+		psfi->hIcon, psfi->iIcon, psfi->dwAttributes, psfi->szDisplayName, psfi->szTypeName, ret);
 #endif
 	return ret;
 }
@@ -782,11 +780,7 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    if (shell32_hInstance)
 	    {
 	      ERR("shell32.dll instantiated twice in one address space!\n"); 
-	    }
-	    else
-	    {
-	      /* we only want to call this the first time shell32 is instantiated */
-	      SHInitRestricted(NULL, NULL);
+	      break;
 	    }
 
 	    shell32_hInstance = hinstDLL;
@@ -830,7 +824,8 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 
 	    SIC_Initialize();
 	    SYSTRAY_Init();
-	    
+	    InitChangeNotifications();
+	    SHInitRestricted(NULL, NULL);
 	    break;
 
 	  case DLL_THREAD_ATTACH:
@@ -855,7 +850,8 @@ BOOL WINAPI Shell32LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	      }
 
 	      SIC_Destroy();
-
+	      FreeChangeNotifications();
+	      
 	      /* this one is here to check if AddRef/Release is balanced */
 	      if (shell32_ObjCount)
 	      {

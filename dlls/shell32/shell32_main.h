@@ -71,7 +71,7 @@ HRESULT WINAPI StrRetToStrN (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIST 
 #define INVALID_INDEX -1
 BOOL SIC_Initialize(void);
 void SIC_Destroy(void);
-BOOL PidlToSicIndex (IShellFolder * sh, LPITEMIDLIST pidl, BOOL bBigIcon, UINT * pIndex);
+BOOL PidlToSicIndex (IShellFolder * sh, LPITEMIDLIST pidl, BOOL bBigIcon, UINT uFlags, UINT * pIndex);
 
 /* Classes Root */
 BOOL HCR_MapTypeToValue ( LPCSTR szExtension, LPSTR szFileType, DWORD len, BOOL bPrependDot);
@@ -167,4 +167,7 @@ HGLOBAL RenderPREFEREDDROPEFFECT (DWORD dwFlags);
 /* Change Notification */
 void InitChangeNotifications(void);
 void FreeChangeNotifications(void);
+
+/* file operation */
+BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir);
 #endif

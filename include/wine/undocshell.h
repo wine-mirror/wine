@@ -52,6 +52,43 @@ HRESULT WINAPI StrRetToStrNAW (LPVOID dest, DWORD len, LPSTRRET src, LPITEMIDLIS
 
 HRESULT WINAPI StrRetToBufA (LPSTRRET src, LPITEMIDLIST pidl, LPSTR dest, DWORD len);
 HRESULT WINAPI StrRetToBufW (LPSTRRET src, LPITEMIDLIST pidl, LPWSTR dest, DWORD len);
+
+
+
+/****************************************************************************
+* SHChangeNotifyRegister API
+*/
+#define SHCNF_ACCEPT_INTERRUPTS		0x0001
+#define SHCNF_ACCEPT_NON_INTERRUPTS	0x0002
+#define SHCNF_NO_PROXY			0x8001
+
+typedef struct
+{
+        LPCITEMIDLIST pidlPath;
+        BOOL bWatchSubtree;
+} NOTIFYREGISTER, *LPNOTIFYREGISTER;
+
+typedef const LPNOTIFYREGISTER LPCNOTIFYREGISTER;
+
+typedef struct
+{
+	USHORT	cb;
+	DWORD	dwItem1;
+	DWORD	dwItem2;
+} DWORDITEMID;
+
+HANDLE WINAPI SHChangeNotifyRegister(
+    HWND hwnd,
+    LONG dwFlags,
+    LONG wEventMask,
+    DWORD uMsg,
+    int cItems,
+    LPCNOTIFYREGISTER lpItems);
+
+BOOL WINAPI SHChangeNotifyDeregister( HANDLE hNotify);
+
+
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif /* defined(__cplusplus) */
