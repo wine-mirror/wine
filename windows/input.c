@@ -595,30 +595,30 @@ BOOL WINAPI SetKeyboardState(LPBYTE lpKeyState)
  */
 WORD WINAPI GetAsyncKeyState(INT nKey)
 {
-    short retval;	
+    WORD retval;
 
     switch (nKey) {
      case VK_LBUTTON:
-	retval = (AsyncMouseButtonsStates[0] ? 0x0001 : 0) | 
+         retval = (AsyncMouseButtonsStates[0] ? 0x0001 : 0) |
                  (MouseButtonsStates[0] ? 0x8000 : 0);
-	break;
+        AsyncMouseButtonsStates[0] = 0;
+        break;
      case VK_MBUTTON:
-	retval = (AsyncMouseButtonsStates[1] ? 0x0001 : 0) | 
+         retval = (AsyncMouseButtonsStates[1] ? 0x0001 : 0) |
                  (MouseButtonsStates[1] ? 0x8000 : 0);
-	break;
+        AsyncMouseButtonsStates[1] = 0;
+        break;
      case VK_RBUTTON:
-	retval = (AsyncMouseButtonsStates[2] ? 0x0001 : 0) | 
+         retval = (AsyncMouseButtonsStates[2] ? 0x0001 : 0) |
                  (MouseButtonsStates[2] ? 0x8000 : 0);
-	break;
+        AsyncMouseButtonsStates[2] = 0;
+        break;
      default:
-	retval = AsyncKeyStateTable[nKey] | 
-	  	((InputKeyStateTable[nKey] & 0x80) ? 0x8000 : 0); 
-	break;
+         retval = AsyncKeyStateTable[nKey] |
+                  ((InputKeyStateTable[nKey] & 0x80) ? 0x8000 : 0);
+        AsyncKeyStateTable[nKey] = 0;
+        break;
     }
-
-    /* all states to false */
-    memset( AsyncMouseButtonsStates, 0, sizeof(AsyncMouseButtonsStates) );
-    memset( AsyncKeyStateTable, 0, sizeof(AsyncKeyStateTable) );
 
     TRACE_(key)("(%x) -> %x\n", nKey, retval);
     return retval;
