@@ -37,6 +37,7 @@
 #include "module.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ver);
 
@@ -444,51 +445,64 @@ static DWORD VERSION_GetSystemDLLVersion( HMODULE hmod )
  */
 static DWORD VERSION_GetLinkedDllVersion(void)
 {
-	WINE_MODREF *wm;
 	DWORD WinVersion = NB_WINDOWS_VERSIONS;
 	PIMAGE_OPTIONAL_HEADER ophd;
         IMAGE_NT_HEADERS *nt;
+        ULONG       count, required;
+        SYSTEM_MODULE_INFORMATION*  smi;
 
 	/* First check the native dlls provided. These have to be
 	from one windows version */
-	for ( wm = MODULE_modref_list; wm; wm=wm->next )
-	{
-          nt = RtlImageNtHeader(wm->ldr.BaseAddress);
-          ophd = &nt->OptionalHeader;
+        smi = (SYSTEM_MODULE_INFORMATION*)&count;
+        LdrQueryProcessModuleInformation(smi, sizeof(count), &required);
+        smi = RtlAllocateHeap(ntdll_get_process_heap(), 0, required);
+        if (smi)
+        {
+            if (LdrQueryProcessModuleInformation(smi, required, NULL) == STATUS_SUCCESS)
+            {
+                int k;
+                for (k = 0; k < smi->ModulesCount; k++)
+                {
+                    nt = RtlImageNtHeader(smi->Modules[k].ImageBaseAddress);
+                    ophd = &nt->OptionalHeader;
+                    
+                    TRACE("%s: %02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
+                          &smi->Modules[k].Name[smi->Modules[k].NameOffset],
+                          ophd->MajorLinkerVersion, ophd->MinorLinkerVersion,
+                          ophd->MajorOperatingSystemVersion, ophd->MinorOperatingSystemVersion,
+                          ophd->MajorImageVersion, ophd->MinorImageVersion,
+                          ophd->MajorSubsystemVersion, ophd->MinorSubsystemVersion);
+                }
 
-	  TRACE("%s: %02x.%02x/%02x.%02x/%02x.%02x/%02x.%02x\n",
-	    wm->modname,
-	    ophd->MajorLinkerVersion, ophd->MinorLinkerVersion,
-	    ophd->MajorOperatingSystemVersion, ophd->MinorOperatingSystemVersion,
-	    ophd->MajorImageVersion, ophd->MinorImageVersion,
-	    ophd->MajorSubsystemVersion, ophd->MinorSubsystemVersion);
-
-	  /* test if it is an external (native) dll */
-	  if (!(wm->ldr.Flags & LDR_WINE_INTERNAL))
-	  {
-	    int i;
-	    for (i = 0; special_dlls[i]; i++)
-	    {
-	      /* test if it is a special dll */
-	      if (!strcasecmp(wm->modname, special_dlls[i]))
-	      {
-	        DWORD DllVersion = VERSION_GetSystemDLLVersion(wm->ldr.BaseAddress);
-	        if (WinVersion == NB_WINDOWS_VERSIONS)
-	          WinVersion = DllVersion;
-	        else {
-	          if (WinVersion != DllVersion) {
-	            ERR("You mixed system DLLs from different windows versions! Expect a crash! (%s: expected version '%s', but is '%s')\n",
-			wm->modname,
-			VersionData[WinVersion].getVersionEx.szCSDVersion,
-			VersionData[DllVersion].getVersionEx.szCSDVersion);
-	            return WIN20; /* this may let the exe exiting */
-	          }
-	        }
-	        break;
-	      }
-	    }
-	  }
-	}
+                /* test if it is an external (native) dll */
+                if (!(smi->Modules[k].Flags & LDR_WINE_INTERNAL))
+                {
+                    int i;
+                    for (i = 0; special_dlls[i]; i++)
+                    {
+                        /* test if it is a special dll */
+                        if (!strcasecmp(&smi->Modules[k].Name[smi->Modules[k].NameOffset], special_dlls[i]))
+                        {
+                            DWORD DllVersion = VERSION_GetSystemDLLVersion(smi->Modules[k].ImageBaseAddress);
+                            if (WinVersion == NB_WINDOWS_VERSIONS)
+                                WinVersion = DllVersion;
+                            else 
+                            {
+                                if (WinVersion != DllVersion) {
+                                    ERR("You mixed system DLLs from different windows versions! Expect a crash! (%s: expected version '%s', but is '%s')\n",
+                                        &smi->Modules[k].Name[smi->Modules[k].NameOffset],
+                                        VersionData[WinVersion].getVersionEx.szCSDVersion,
+                                        VersionData[DllVersion].getVersionEx.szCSDVersion);
+                                    return WIN20; /* this may let the exe exiting */
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            RtlFreeHeap(ntdll_get_process_heap(), 0, smi);
+        }
 
 	if(WinVersion != NB_WINDOWS_VERSIONS) return WinVersion;
 

@@ -759,6 +759,55 @@ NTSTATUS WINAPI LdrLoadDll(LPCWSTR path_name, DWORD flags, PUNICODE_STRING libna
 }
 
 /******************************************************************
+ *		LdrQueryProcessModuleInformation
+ *
+ */
+NTSTATUS WINAPI LdrQueryProcessModuleInformation(PSYSTEM_MODULE_INFORMATION smi, 
+                                                 ULONG buf_size, ULONG* req_size)
+{
+    SYSTEM_MODULE*      sm = &smi->Modules[0];
+    ULONG               size = sizeof(ULONG);
+    NTSTATUS            nts = STATUS_SUCCESS;
+    ANSI_STRING         str;
+    char*               ptr;
+    WINE_MODREF*        wm;
+
+    smi->ModulesCount = 0;
+
+    RtlEnterCriticalSection( &loader_section );
+    for ( wm = MODULE_modref_list; wm; wm = wm->next )
+    {
+        size += sizeof(*sm);
+        if (size <= buf_size)
+        {
+            sm->Reserved1 = 0; /* FIXME */
+            sm->Reserved2 = 0; /* FIXME */
+            sm->ImageBaseAddress = wm->ldr.BaseAddress;
+            sm->ImageSize = wm->ldr.SizeOfImage;
+            sm->Flags = wm->ldr.Flags;
+            sm->Id = 0; /* FIXME */
+            sm->Rank = 0; /* FIXME */
+            sm->Unknown = 0; /* FIXME */
+            str.Length = 0;
+            str.MaximumLength = MAXIMUM_FILENAME_LENGTH;
+            str.Buffer = sm->Name;
+            RtlUnicodeStringToAnsiString(&str, &wm->ldr.FullDllName, FALSE);
+            ptr = strrchr(sm->Name, '\\');
+            sm->NameOffset = (ptr != NULL) ? (ptr - (char*)sm->Name + 1) : 0;
+
+            smi->ModulesCount++;
+            sm++;
+        }
+        else nts = STATUS_INFO_LENGTH_MISMATCH;
+    }
+    RtlLeaveCriticalSection( &loader_section );
+
+    if (req_size) *req_size = size;
+
+    return nts;
+}
+
+/******************************************************************
  *		LdrShutdownProcess (NTDLL.@)
  *
  */

@@ -46,7 +46,7 @@
 @ stdcall LdrLockLoaderLock(long ptr ptr)
 @ stub LdrProcessRelocationBlock
 @ stub LdrQueryImageFileExecutionOptions
-@ stub LdrQueryProcessModuleInformation
+@ stdcall LdrQueryProcessModuleInformation(ptr long ptr)
 @ stdcall LdrShutdownProcess()
 @ stdcall LdrShutdownThread()
 @ stdcall LdrUnloadDll(ptr)
