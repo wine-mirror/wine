@@ -123,7 +123,7 @@ struct apartment
   DWORD tid;               /* thread id (RO) */
   HANDLE thread;           /* thread handle (RO) */
   OXID oxid;               /* object exporter ID (RO) */
-  DWORD ipidc;             /* interface pointer ID counter, starts at 1 (CS cs) */
+  DWORD ipidc;             /* interface pointer ID counter, starts at 1 (LOCK) */
   HWND win;                /* message window (RO) */
   CRITICAL_SECTION cs;     /* thread safety */
   LPMESSAGEFILTER filter;  /* message filter (CS cs) */

@@ -54,7 +54,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 #define REQTYPE_REQUEST		0
 #define REQTYPE_RESPONSE	1
-#define REQTYPE_DISCONNECT	2
 
 struct request_header
 {
@@ -69,13 +68,6 @@ struct response_header
     DWORD		reqid;
     DWORD		cbBuffer;
     DWORD		retval;
-};
-
-/* used when shutting down a pipe, e.g. at the end of a process */
-struct disconnect_header
-{
-  DWORD reqid;
-  wine_marshal_id mid; /* mid of stub to delete */
 };
 
 
@@ -291,33 +283,10 @@ static ULONG WINAPI
 PipeBuf_Release(LPRPCCHANNELBUFFER iface) {
     PipeBuf *This = (PipeBuf *)iface;
     ULONG ref;
-#if 0
-    struct disconnect_header header;
-    HANDLE pipe;
-    DWORD reqtype = REQTYPE_DISCONNECT;
-    DWORD magic;
-#endif
 
     ref = InterlockedDecrement(&This->ref);
     if (ref)
 	return ref;
-
-#if 0 /* no longer needed now we've got IRemUnknown ref counting */
-    memcpy(&header.mid, &This->mid, sizeof(wine_marshal_id));
-
-    pipe = PIPE_FindByMID(&This->mid);
-
-    write_pipe(pipe, &reqtype, sizeof(reqtype));
-    write_pipe(pipe, &header, sizeof(struct disconnect_header));
-
-    TRACE("written disconnect packet\n");
-
-    /* prevent a disconnect race with the other side: this isn't
-     * necessary for real dcom but the test suite needs it */
-    
-    read_pipe(pipe, &magic, sizeof(magic));
-    if (magic != 0xcafebabe) ERR("bad disconnection magic: expecting 0xcafebabe but got 0x%lx\n", magic);
-#endif
 
     HeapFree(GetProcessHeap(),0,This);
     return 0;
@@ -771,42 +740,7 @@ COM_RpcReceive(struct pipe *xpipe) {
     EnterCriticalSection(&(xpipe->crit));
 
     /* only received by servers */
-    if (reqtype == REQTYPE_DISCONNECT) { 
-        struct disconnect_header header;
-        struct stub_manager *stubmgr;
-        DWORD magic = 0xcafebabe;
-        APARTMENT *apt;
-
-        hres = read_pipe(xhPipe, &header, sizeof(header));
-        if (hres) {
-            ERR("could not read disconnect header\n");
-            goto disconnect_end;
-        }
-
-        TRACE("read disconnect header\n");
-
-        if (!(apt = COM_ApartmentFromOXID(header.mid.oxid, TRUE)))
-        {
-            ERR("Could not map OXID %s to apartment object in disconnect\n", wine_dbgstr_longlong(header.mid.oxid));
-            goto disconnect_end;
-        }
-
-        if (!(stubmgr = get_stub_manager(apt, header.mid.oid)))
-        {
-            ERR("could not locate stub to disconnect, mid.oid=%s\n", wine_dbgstr_longlong(header.mid.oid));
-            COM_ApartmentRelease(apt);
-            goto disconnect_end;
-        }
-
-        stub_manager_ext_release(stubmgr, 1);
-
-        stub_manager_int_release(stubmgr);
-        COM_ApartmentRelease(apt);
-
-disconnect_end:
-        write_pipe(xhPipe, &magic, sizeof(magic));
-        goto end;
-    } else if (reqtype == REQTYPE_REQUEST) {
+    if (reqtype == REQTYPE_REQUEST) {
 	struct rpc *xreq;
         
 	RPC_GetRequest(&xreq);

@@ -334,9 +334,7 @@ static inline HRESULT generate_ipid(struct stub_manager *m, IPID *ipid)
         return hr;
     }
 
-    EnterCriticalSection(&m->apt->cs);
-    ipid->Data1 = m->apt->ipidc++;
-    LeaveCriticalSection(&m->apt->cs);
+    ipid->Data1 = InterlockedIncrement(&m->apt->ipidc);
     ipid->Data2 = (USHORT)m->apt->tid;
     ipid->Data3 = (USHORT)GetCurrentProcessId();
     return S_OK;

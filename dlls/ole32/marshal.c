@@ -349,7 +349,6 @@ static HRESULT proxy_manager_construct(
     This->oid = oid;
 
     This->refs = 1;
-    This->sorflags = sorflags;
 
     /* the DCOM draft specification states that the SORF_NOPING flag is
      * proxy manager specific, not ifproxy specific, so this implies that we

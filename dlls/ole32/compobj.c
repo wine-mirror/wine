@@ -246,7 +246,7 @@ APARTMENT* COM_CreateApartment(DWORD model)
 
         list_init(&apt->proxies);
         list_init(&apt->stubmgrs);
-        apt->ipidc = 1;
+        apt->ipidc = 0;
         apt->refs = 1;
         apt->remunk_exported = FALSE;
         apt->oidc = 1;

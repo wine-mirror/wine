@@ -509,6 +509,8 @@ static void WINAPI RemUnkStub_Disconnect(LPRPCSTUBBUFFER iface)
 {
   RemUnkStub *This = (RemUnkStub *)iface;
   TRACE("(%p)->Disconnect()\n",This);
+  IUnknown_Release(This->iface);
+  This->iface = NULL;
 }
 
 static HRESULT WINAPI RemUnkStub_Invoke(LPRPCSTUBBUFFER iface,
