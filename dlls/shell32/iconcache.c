@@ -568,10 +568,10 @@ BOOL32 SIC_Initialize(void)
 	{ return(FALSE);
 	}
 
-	GetWindowsDirectory32A(szShellPath,MAX_PATH);
+	GetSystemDirectory32A(szShellPath,MAX_PATH);
 	PathAddBackslash32A(szShellPath);
-	strcat(szShellPath,"system\\shell32.dll");
-       
+	strcat(szShellPath,"shell32.dll");
+
 	hSmRet = GlobalAlloc32( GMEM_FIXED | GMEM_ZEROINIT, sizeof(HICON32)*40);
 	hLgRet = GlobalAlloc32( GMEM_FIXED | GMEM_ZEROINIT, sizeof(HICON32)*40);
 
