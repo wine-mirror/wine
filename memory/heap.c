@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <string.h>
 #include "wine/winbase16.h"
-#include "wine/winestring.h"
 #include "wine/unicode.h"
 #include "selectors.h"
 #include "global.h"
@@ -1660,74 +1659,6 @@ DWORD WINAPI GetProcessHeaps( DWORD count, HANDLE *heaps )
     LeaveCriticalSection( &processHeap->critSection );
     return total;
 }
-
-
-/***********************************************************************
- *           HEAP_strdupA
- */
-LPSTR HEAP_strdupA( HANDLE heap, DWORD flags, LPCSTR str )
-{
-    LPSTR p = HeapAlloc( heap, flags, strlen(str) + 1 );
-    if(p) {
-        SET_EIP(p);
-        strcpy( p, str );
-    }
-    return p;
-}
-
-
-/***********************************************************************
- *           HEAP_strdupW
- */
-LPWSTR HEAP_strdupW( HANDLE heap, DWORD flags, LPCWSTR str )
-{
-    INT len = strlenW(str) + 1;
-    LPWSTR p = HeapAlloc( heap, flags, len * sizeof(WCHAR) );
-    if(p) {
-        SET_EIP(p);
-        strcpyW( p, str );
-    }
-    return p;
-}
-
-
-/***********************************************************************
- *           HEAP_strdupAtoW
- */
-LPWSTR HEAP_strdupAtoW( HANDLE heap, DWORD flags, LPCSTR str )
-{
-    LPWSTR ret;
-    INT len;
-
-    if (!str) return NULL;
-    len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-    ret = HeapAlloc( heap, flags, len * sizeof(WCHAR) );
-    if (ret) {
-        SET_EIP(ret);
-        MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
-    }
-    return ret;
-}
-
-
-/***********************************************************************
- *           HEAP_strdupWtoA
- */
-LPSTR HEAP_strdupWtoA( HANDLE heap, DWORD flags, LPCWSTR str )
-{
-    LPSTR ret;
-    INT len;
-
-    if (!str) return NULL;
-    len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
-    ret = HeapAlloc( heap, flags, len );
-    if(ret) {
-        SET_EIP(ret);
-        WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
-    }
-    return ret;
-}
-
 
 
 /***********************************************************************
