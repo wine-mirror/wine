@@ -1159,11 +1159,12 @@ BOOL WINAPI GetClassInfoA( HINSTANCE hInstance, LPCSTR name,
     if (!(atom=GlobalFindAtomA(name)) || !(classPtr=CLASS_FindClassByAtom(atom,hInstance)))
         return FALSE;
 
-    if  (classPtr->hInstance && (hInstance != classPtr->hInstance))
+    if (!(classPtr->style & CS_GLOBALCLASS) &&
+        classPtr->hInstance &&
+        (hInstance != classPtr->hInstance))
     {
         if (hInstance) return FALSE;
-        else    
-            WARN("systemclass %s (hInst=0) demanded but only class with hInst!=0 found\n",name);
+        WARN("systemclass %s (hInst=0) demanded but only class with hInst!=0 found\n",name);
     }
 
     wc->style         = classPtr->style;
@@ -1171,7 +1172,7 @@ BOOL WINAPI GetClassInfoA( HINSTANCE hInstance, LPCSTR name,
                                                     WIN_PROC_32A );
     wc->cbClsExtra    = classPtr->cbClsExtra;
     wc->cbWndExtra    = classPtr->cbWndExtra;
-    wc->hInstance     = classPtr->hInstance;
+    wc->hInstance     = hInstance;
     wc->hIcon         = (HICON)classPtr->hIcon;
     wc->hCursor       = (HCURSOR)classPtr->hCursor;
     wc->hbrBackground = (HBRUSH)classPtr->hbrBackground;
@@ -1197,18 +1198,19 @@ BOOL WINAPI GetClassInfoW( HINSTANCE hInstance, LPCWSTR name,
     )
         return FALSE;
 
-    if  (classPtr->hInstance && (hInstance != classPtr->hInstance)) {
-        if (hInstance)
-		return FALSE;
-        else    
-            WARN("systemclass %s (hInst=0) demanded but only class with hInst!=0 found\n",debugstr_w(name));
+    if (!(classPtr->style & CS_GLOBALCLASS) &&
+        classPtr->hInstance &&
+        (hInstance != classPtr->hInstance))
+    {
+        if (hInstance) return FALSE;
+        WARN("systemclass %s (hInst=0) demanded but only class with hInst!=0 found\n",debugstr_w(name));
     }
     wc->style         = classPtr->style;
     wc->lpfnWndProc   = (WNDPROC)WINPROC_GetProc( classPtr->winproc,
                                                     WIN_PROC_32W );
     wc->cbClsExtra    = classPtr->cbClsExtra;
     wc->cbWndExtra    = classPtr->cbWndExtra;
-    wc->hInstance     = classPtr->hInstance;
+    wc->hInstance     = hInstance;
     wc->hIcon         = (HICON)classPtr->hIcon;
     wc->hCursor       = (HCURSOR)classPtr->hCursor;
     wc->hbrBackground = (HBRUSH)classPtr->hbrBackground;
