@@ -61,7 +61,7 @@ static WINE_EXCEPTION_FILTER(page_fault)
  *  RtlAllocateAndInitializeSid		[NTDLL.@]
  *
  */
-BOOLEAN WINAPI RtlAllocateAndInitializeSid (
+NTSTATUS WINAPI RtlAllocateAndInitializeSid (
 	PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
 	BYTE nSubAuthorityCount,
 	DWORD nSubAuthority0, DWORD nSubAuthority1,
@@ -78,7 +78,7 @@ BOOLEAN WINAPI RtlAllocateAndInitializeSid (
 
 	if (!(*pSid = RtlAllocateHeap( GetProcessHeap(), 0,
                                        RtlLengthRequiredSid(nSubAuthorityCount))))
-	  return FALSE;
+	    return STATUS_NO_MEMORY;
 
 	((SID*)*pSid)->Revision = SID_REVISION;
 
@@ -1147,12 +1147,12 @@ NtAccessCheck(
 	OUT PPRIVILEGE_SET PrivilegeSet,
 	OUT PULONG ReturnLength,
 	OUT PULONG GrantedAccess,
-	OUT PBOOLEAN AccessStatus)
+	OUT NTSTATUS *AccessStatus)
 {
 	FIXME("(%p, %p, %08lx, %p, %p, %p, %p, %p), stub\n",
           SecurityDescriptor, ClientToken, DesiredAccess, GenericMapping,
           PrivilegeSet, ReturnLength, GrantedAccess, AccessStatus);
-	*AccessStatus = TRUE;
+	*AccessStatus = STATUS_SUCCESS;
 	return STATUS_SUCCESS;
 }
 

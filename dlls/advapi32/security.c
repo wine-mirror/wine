@@ -92,13 +92,13 @@ static const WCHAR SDDL_INHERITED[]          = {'I','D',0};
 static const WCHAR SDDL_AUDIT_SUCCESS[]      = {'S','A',0};
 static const WCHAR SDDL_AUDIT_FAILURE[]      = {'F','A',0};
 
-#define CallWin32ToNt(func) \
-	{ NTSTATUS ret; \
-	  ret = (func); \
-	  if (ret !=STATUS_SUCCESS) \
-	  { SetLastError (RtlNtStatusToDosError(ret)); return FALSE; } \
-	  return TRUE; \
-	}
+/* set last error code from NT status and get the proper boolean return value */
+/* used for functions that are a simple wrapper around the corresponding ntdll API */
+static inline BOOL set_ntstatus( NTSTATUS status )
+{
+    if (status) SetLastError( RtlNtStatusToDosError( status ));
+    return !status;
+}
 
 static void dumpLsaAttributes( PLSA_OBJECT_ATTRIBUTES oa )
 {
@@ -176,7 +176,7 @@ BOOL WINAPI
 OpenProcessToken( HANDLE ProcessHandle, DWORD DesiredAccess,
                   HANDLE *TokenHandle )
 {
-	CallWin32ToNt(NtOpenProcessToken( ProcessHandle, DesiredAccess, TokenHandle ));
+	return set_ntstatus(NtOpenProcessToken( ProcessHandle, DesiredAccess, TokenHandle ));
 }
 
 /******************************************************************************
@@ -201,15 +201,15 @@ BOOL WINAPI
 OpenThreadToken( HANDLE ThreadHandle, DWORD DesiredAccess,
 		 BOOL OpenAsSelf, HANDLE *TokenHandle)
 {
-	CallWin32ToNt (NtOpenThreadToken(ThreadHandle, DesiredAccess, OpenAsSelf, TokenHandle));
+	return set_ntstatus( NtOpenThreadToken(ThreadHandle, DesiredAccess, OpenAsSelf, TokenHandle));
 }
 
 BOOL WINAPI
 AdjustTokenGroups( HANDLE TokenHandle, BOOL ResetToDefault, PTOKEN_GROUPS NewState,
                    DWORD BufferLength, PTOKEN_GROUPS PreviousState, PDWORD ReturnLength )
 {
-    CallWin32ToNt(NtAdjustGroupsToken(TokenHandle, ResetToDefault, NewState, BufferLength,
-                                       PreviousState, ReturnLength));
+    return set_ntstatus( NtAdjustGroupsToken(TokenHandle, ResetToDefault, NewState, BufferLength,
+                                             PreviousState, ReturnLength));
 }
 
 /******************************************************************************
@@ -238,7 +238,9 @@ AdjustTokenPrivileges( HANDLE TokenHandle, BOOL DisableAllPrivileges,
                        LPVOID NewState, DWORD BufferLength,
                        LPVOID PreviousState, LPDWORD ReturnLength )
 {
-	CallWin32ToNt(NtAdjustPrivilegesToken(TokenHandle, DisableAllPrivileges, NewState, BufferLength, PreviousState, ReturnLength));
+	return set_ntstatus( NtAdjustPrivilegesToken(TokenHandle, DisableAllPrivileges,
+                                                     NewState, BufferLength, PreviousState,
+                                                     ReturnLength));
 }
 
 /******************************************************************************
@@ -305,7 +307,8 @@ GetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
           (tokeninfoclass == TokenSandBoxInert) ? "TokenSandBoxInert" :
           "Unknown",
           tokeninfo, tokeninfolength, retlen);
-    CallWin32ToNt (NtQueryInformationToken( token, tokeninfoclass, tokeninfo, tokeninfolength, retlen));
+    return set_ntstatus( NtQueryInformationToken( token, tokeninfoclass, tokeninfo,
+                                                  tokeninfolength, retlen));
 }
 
 /******************************************************************************
@@ -347,7 +350,7 @@ SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
           "Unknown",
           tokeninfo, tokeninfolength);
 
-    CallWin32ToNt (NtSetInformationToken( token, tokeninfoclass, tokeninfo, tokeninfolength ));
+    return set_ntstatus( NtSetInformationToken( token, tokeninfoclass, tokeninfo, tokeninfolength ));
 }
 
 /*************************************************************************
@@ -371,8 +374,8 @@ SetTokenInformation( HANDLE token, TOKEN_INFORMATION_CLASS tokeninfoclass,
  */
 BOOL WINAPI SetThreadToken(PHANDLE thread, HANDLE token)
 {
-    CallWin32ToNt (NtSetInformationThread( thread ? *thread : GetCurrentThread(),
-                                           ThreadImpersonationToken, &token, sizeof token ));
+    return set_ntstatus( NtSetInformationThread( thread ? *thread : GetCurrentThread(),
+                                                 ThreadImpersonationToken, &token, sizeof token ));
 }
 
 /*	##############################
@@ -405,11 +408,11 @@ AllocateAndInitializeSid( PSID_IDENTIFIER_AUTHORITY pIdentifierAuthority,
                           DWORD nSubAuthority6, DWORD nSubAuthority7,
                           PSID *pSid )
 {
-	return RtlAllocateAndInitializeSid(
-		pIdentifierAuthority, nSubAuthorityCount,
-		nSubAuthority0, nSubAuthority1,	nSubAuthority2, nSubAuthority3,
-		nSubAuthority4, nSubAuthority5, nSubAuthority6, nSubAuthority7,
-		pSid );
+    return set_ntstatus( RtlAllocateAndInitializeSid(
+                             pIdentifierAuthority, nSubAuthorityCount,
+                             nSubAuthority0, nSubAuthority1, nSubAuthority2, nSubAuthority3,
+                             nSubAuthority4, nSubAuthority5, nSubAuthority6, nSubAuthority7,
+                             pSid ));
 }
 
 /******************************************************************************
@@ -579,7 +582,7 @@ GetLengthSid (PSID pSid)
 BOOL WINAPI
 InitializeSecurityDescriptor( PSECURITY_DESCRIPTOR pDescr, DWORD revision )
 {
-	CallWin32ToNt (RtlCreateSecurityDescriptor(pDescr, revision ));
+	return set_ntstatus( RtlCreateSecurityDescriptor(pDescr, revision ));
 }
 
 
@@ -599,10 +602,12 @@ BOOL WINAPI MakeAbsoluteSD (
 	OUT PSID pPrimaryGroup,
 	OUT LPDWORD lpdwPrimaryGroupSize)
 {
-	CallWin32ToNt (RtlSelfRelativeToAbsoluteSD(pSelfRelativeSecurityDescriptor,
-            pAbsoluteSecurityDescriptor, lpdwAbsoluteSecurityDescriptorSize,
-	    pDacl, lpdwDaclSize, pSacl, lpdwSaclSize, pOwner, lpdwOwnerSize,
-	    pPrimaryGroup, lpdwPrimaryGroupSize));
+    return set_ntstatus( RtlSelfRelativeToAbsoluteSD(pSelfRelativeSecurityDescriptor,
+                                                     pAbsoluteSecurityDescriptor,
+                                                     lpdwAbsoluteSecurityDescriptorSize,
+                                                     pDacl, lpdwDaclSize, pSacl, lpdwSaclSize,
+                                                     pOwner, lpdwOwnerSize,
+                                                     pPrimaryGroup, lpdwPrimaryGroupSize));
 }
 
 
@@ -625,7 +630,10 @@ BOOL WINAPI
 GetSecurityDescriptorOwner( PSECURITY_DESCRIPTOR pDescr, PSID *pOwner,
 			    LPBOOL lpbOwnerDefaulted )
 {
-	CallWin32ToNt (RtlGetOwnerSecurityDescriptor( pDescr, pOwner, (PBOOLEAN)lpbOwnerDefaulted ));
+    BOOLEAN defaulted;
+    BOOL ret = set_ntstatus( RtlGetOwnerSecurityDescriptor( pDescr, pOwner, &defaulted ));
+    *lpbOwnerDefaulted = defaulted;
+    return ret;
 }
 
 /******************************************************************************
@@ -636,7 +644,7 @@ GetSecurityDescriptorOwner( PSECURITY_DESCRIPTOR pDescr, PSID *pOwner,
 BOOL WINAPI SetSecurityDescriptorOwner( PSECURITY_DESCRIPTOR pSecurityDescriptor,
 				   PSID pOwner, BOOL bOwnerDefaulted)
 {
-	CallWin32ToNt (RtlSetOwnerSecurityDescriptor(pSecurityDescriptor, pOwner, bOwnerDefaulted));
+    return set_ntstatus( RtlSetOwnerSecurityDescriptor(pSecurityDescriptor, pOwner, bOwnerDefaulted));
 }
 /******************************************************************************
  * GetSecurityDescriptorGroup			[ADVAPI32.@]
@@ -646,7 +654,10 @@ BOOL WINAPI GetSecurityDescriptorGroup(
 	PSID *Group,
 	LPBOOL GroupDefaulted)
 {
-	CallWin32ToNt (RtlGetGroupSecurityDescriptor(SecurityDescriptor, Group, (PBOOLEAN)GroupDefaulted));
+    BOOLEAN defaulted;
+    BOOL ret = set_ntstatus( RtlGetGroupSecurityDescriptor(SecurityDescriptor, Group, &defaulted ));
+    *GroupDefaulted = defaulted;
+    return ret;
 }
 /******************************************************************************
  * SetSecurityDescriptorGroup [ADVAPI32.@]
@@ -654,7 +665,7 @@ BOOL WINAPI GetSecurityDescriptorGroup(
 BOOL WINAPI SetSecurityDescriptorGroup ( PSECURITY_DESCRIPTOR SecurityDescriptor,
 					   PSID Group, BOOL GroupDefaulted)
 {
-	CallWin32ToNt (RtlSetGroupSecurityDescriptor( SecurityDescriptor, Group, GroupDefaulted));
+    return set_ntstatus( RtlSetGroupSecurityDescriptor( SecurityDescriptor, Group, GroupDefaulted));
 }
 
 /******************************************************************************
@@ -666,7 +677,7 @@ BOOL WINAPI SetSecurityDescriptorGroup ( PSECURITY_DESCRIPTOR SecurityDescriptor
 BOOL WINAPI
 IsValidSecurityDescriptor( PSECURITY_DESCRIPTOR SecurityDescriptor )
 {
-	CallWin32ToNt (RtlValidSecurityDescriptor(SecurityDescriptor));
+    return set_ntstatus( RtlValidSecurityDescriptor(SecurityDescriptor));
 }
 
 /******************************************************************************
@@ -678,8 +689,11 @@ BOOL WINAPI GetSecurityDescriptorDacl(
 	OUT PACL *pDacl,
 	OUT LPBOOL lpbDaclDefaulted)
 {
-	CallWin32ToNt (RtlGetDaclSecurityDescriptor(pSecurityDescriptor, (PBOOLEAN)lpbDaclPresent,
-					       pDacl, (PBOOLEAN)lpbDaclDefaulted));
+    BOOLEAN present, defaulted;
+    BOOL ret = set_ntstatus( RtlGetDaclSecurityDescriptor(pSecurityDescriptor, &present, pDacl, &defaulted));
+    *lpbDaclPresent = present;
+    *lpbDaclDefaulted = defaulted;
+    return ret;
 }
 
 /******************************************************************************
@@ -692,7 +706,7 @@ SetSecurityDescriptorDacl (
 	PACL dacl,
 	BOOL dacldefaulted )
 {
-	CallWin32ToNt (RtlSetDaclSecurityDescriptor (lpsd, daclpresent, dacl, dacldefaulted ));
+    return set_ntstatus( RtlSetDaclSecurityDescriptor (lpsd, daclpresent, dacl, dacldefaulted ) );
 }
 /******************************************************************************
  *  GetSecurityDescriptorSacl			[ADVAPI32.@]
@@ -703,8 +717,11 @@ BOOL WINAPI GetSecurityDescriptorSacl(
 	OUT PACL *pSacl,
 	OUT LPBOOL lpbSaclDefaulted)
 {
-	CallWin32ToNt (RtlGetSaclSecurityDescriptor(lpsd,
-	   (PBOOLEAN)lpbSaclPresent, pSacl, (PBOOLEAN)lpbSaclDefaulted));
+    BOOLEAN present, defaulted;
+    BOOL ret = set_ntstatus( RtlGetSaclSecurityDescriptor(lpsd, &present, pSacl, &defaulted) );
+    *lpbSaclPresent = present;
+    *lpbSaclDefaulted = defaulted;
+    return ret;
 }
 
 /**************************************************************************
@@ -716,7 +733,7 @@ BOOL WINAPI SetSecurityDescriptorSacl (
 	PACL lpsacl,
 	BOOL sacldefaulted)
 {
-	CallWin32ToNt (RtlSetSaclSecurityDescriptor(lpsd, saclpresent, lpsacl, sacldefaulted));
+    return set_ntstatus (RtlSetSaclSecurityDescriptor(lpsd, saclpresent, lpsacl, sacldefaulted));
 }
 /******************************************************************************
  * MakeSelfRelativeSD [ADVAPI32.@]
@@ -732,7 +749,8 @@ MakeSelfRelativeSD(
 	IN PSECURITY_DESCRIPTOR pSelfRelativeSecurityDescriptor,
 	IN OUT LPDWORD lpdwBufferLength)
 {
-	CallWin32ToNt (RtlMakeSelfRelativeSD(pAbsoluteSecurityDescriptor,pSelfRelativeSecurityDescriptor, lpdwBufferLength));
+    return set_ntstatus( RtlMakeSelfRelativeSD( pAbsoluteSecurityDescriptor,
+                                                pSelfRelativeSecurityDescriptor, lpdwBufferLength));
 }
 
 /******************************************************************************
@@ -742,7 +760,7 @@ MakeSelfRelativeSD(
 BOOL WINAPI GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescriptor,
 		 PSECURITY_DESCRIPTOR_CONTROL pControl, LPDWORD lpdwRevision)
 {
-	CallWin32ToNt (RtlGetControlSecurityDescriptor(pSecurityDescriptor,pControl,lpdwRevision));
+    return set_ntstatus( RtlGetControlSecurityDescriptor(pSecurityDescriptor,pControl,lpdwRevision));
 }
 
 /*	##############################
@@ -755,7 +773,7 @@ BOOL WINAPI GetSecurityDescriptorControl ( PSECURITY_DESCRIPTOR  pSecurityDescri
  */
 BOOL WINAPI InitializeAcl(PACL acl, DWORD size, DWORD rev)
 {
-	CallWin32ToNt (RtlCreateAcl(acl, size, rev));
+    return set_ntstatus( RtlCreateAcl(acl, size, rev));
 }
 
 /******************************************************************************
@@ -767,7 +785,7 @@ BOOL WINAPI AddAccessAllowedAce(
         IN DWORD AccessMask,
         IN PSID pSid)
 {
-	CallWin32ToNt(RtlAddAccessAllowedAce(pAcl, dwAceRevision, AccessMask, pSid));
+    return set_ntstatus(RtlAddAccessAllowedAce(pAcl, dwAceRevision, AccessMask, pSid));
 }
 
 /******************************************************************************
@@ -780,7 +798,7 @@ BOOL WINAPI AddAccessAllowedAceEx(
         IN DWORD AccessMask,
         IN PSID pSid)
 {
-	CallWin32ToNt(RtlAddAccessAllowedAceEx(pAcl, dwAceRevision, AceFlags, AccessMask, pSid));
+    return set_ntstatus(RtlAddAccessAllowedAceEx(pAcl, dwAceRevision, AceFlags, AccessMask, pSid));
 }
 
 /******************************************************************************
@@ -792,7 +810,7 @@ BOOL WINAPI AddAccessDeniedAce(
         IN DWORD AccessMask,
         IN PSID pSid)
 {
-	CallWin32ToNt(RtlAddAccessDeniedAce(pAcl, dwAceRevision, AccessMask, pSid));
+    return set_ntstatus(RtlAddAccessDeniedAce(pAcl, dwAceRevision, AccessMask, pSid));
 }
 
 /******************************************************************************
@@ -805,7 +823,7 @@ BOOL WINAPI AddAccessDeniedAceEx(
         IN DWORD AccessMask,
         IN PSID pSid)
 {
-	CallWin32ToNt(RtlAddAccessDeniedAceEx(pAcl, dwAceRevision, AceFlags, AccessMask, pSid));
+    return set_ntstatus(RtlAddAccessDeniedAceEx(pAcl, dwAceRevision, AceFlags, AccessMask, pSid));
 }
 
 /******************************************************************************
@@ -818,7 +836,7 @@ BOOL WINAPI AddAce(
         LPVOID pAceList,
         DWORD nAceListLength)
 {
-	CallWin32ToNt(RtlAddAce(pAcl, dwAceRevision, dwStartingAceIndex, pAceList, nAceListLength));
+    return set_ntstatus(RtlAddAce(pAcl, dwAceRevision, dwStartingAceIndex, pAceList, nAceListLength));
 }
 
 /******************************************************************************
@@ -826,7 +844,7 @@ BOOL WINAPI AddAce(
  */
 BOOL WINAPI DeleteAce(PACL pAcl, DWORD dwAceIndex)
 {
-    CallWin32ToNt(RtlDeleteAce(pAcl, dwAceIndex));
+    return set_ntstatus(RtlDeleteAce(pAcl, dwAceIndex));
 }
 
 /******************************************************************************
@@ -842,7 +860,7 @@ BOOL WINAPI FindFirstFreeAce(IN PACL pAcl, LPVOID * pAce)
  */
 BOOL WINAPI GetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 {
-    CallWin32ToNt(RtlGetAce(pAcl, dwAceIndex, pAce));
+    return set_ntstatus(RtlGetAce(pAcl, dwAceIndex, pAce));
 }
 
 /******************************************************************************
@@ -854,8 +872,8 @@ BOOL WINAPI GetAclInformation(
   DWORD nAclInformationLength,
   ACL_INFORMATION_CLASS dwAclInformationClass)
 {
-	CallWin32ToNt(RtlQueryInformationAcl(pAcl, pAclInformation,
-		nAclInformationLength, dwAclInformationClass));
+    return set_ntstatus(RtlQueryInformationAcl(pAcl, pAclInformation,
+                                               nAclInformationLength, dwAclInformationClass));
 }
 
 /******************************************************************************
@@ -879,7 +897,7 @@ BOOL WINAPI IsValidAcl(IN PACL pAcl)
  */
 BOOL WINAPI AllocateLocallyUniqueId( PLUID lpLuid )
 {
-	CallWin32ToNt(NtAllocateLocallyUniqueId(lpLuid));
+    return set_ntstatus(NtAllocateLocallyUniqueId(lpLuid));
 }
 
 static const WCHAR SE_CREATE_TOKEN_NAME_W[] =
@@ -1598,8 +1616,6 @@ BOOL WINAPI ImpersonateLoggedOnUser(HANDLE hToken)
 
 /******************************************************************************
  * AccessCheck [ADVAPI32.@]
- *
- * FIXME check cast LPBOOL to PBOOLEAN
  */
 BOOL WINAPI
 AccessCheck(
@@ -1612,8 +1628,12 @@ AccessCheck(
 	LPDWORD GrantedAccess,
 	LPBOOL AccessStatus)
 {
-	CallWin32ToNt (NtAccessCheck(SecurityDescriptor, ClientToken, DesiredAccess,
-	  GenericMapping, PrivilegeSet, PrivilegeSetLength, GrantedAccess, (PBOOLEAN)AccessStatus));
+    NTSTATUS access_status;
+    BOOL ret = set_ntstatus( NtAccessCheck(SecurityDescriptor, ClientToken, DesiredAccess,
+                                           GenericMapping, PrivilegeSet, PrivilegeSetLength,
+                                           GrantedAccess, &access_status) );
+    if (ret) *AccessStatus = set_ntstatus( access_status );
+    return ret;
 }
 
 
@@ -1649,7 +1669,7 @@ BOOL WINAPI SetKernelObjectSecurity (
 	IN SECURITY_INFORMATION SecurityInformation,
 	IN PSECURITY_DESCRIPTOR SecurityDescriptor )
 {
-	CallWin32ToNt (NtSetSecurityObject (Handle, SecurityInformation, SecurityDescriptor));
+    return set_ntstatus (NtSetSecurityObject (Handle, SecurityInformation, SecurityDescriptor));
 }
 
 
