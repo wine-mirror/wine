@@ -764,8 +764,7 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
 
 	if (hres != ERROR_SUCCESS)
 	        return REGDB_E_READREGDB;
-        hres = RegOpenKeyEx32A(HKEY_CLASSES_ROOT,xclsid,0,KEY_QUERY_VALUE,
-		&key);
+        hres = RegOpenKeyEx32A(CLSIDkey,xclsid,0,KEY_QUERY_VALUE,&key);
 	if (hres != ERROR_SUCCESS) {
 	    RegCloseKey(CLSIDkey);
 	    return REGDB_E_CLASSNOTREG;
@@ -789,6 +788,9 @@ HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext,
 	    TRACE(ole,"couldn't find function DllGetClassObject in %s\n", dllName);
 	    return E_ACCESSDENIED;
 	}
+	/* FIXME: Shouldn't we get a classfactory and use this to create 
+	 * the required object?
+	 */
 	return DllGetClassObject(rclsid, iid, ppv);
     }
     return hres;
