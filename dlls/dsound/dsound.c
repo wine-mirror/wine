@@ -612,7 +612,10 @@ static HRESULT WINAPI IDirectSoundImpl_VerifyCertification(
     ICOM_THIS(IDirectSoundImpl,iface);
     TRACE("(%p, %p)\n",This,pdwCertified);
 
-    *pdwCertified = DS_CERTIFIED;
+    if (This->drvcaps.dwFlags & DSCAPS_CERTIFIED)
+        *pdwCertified = DS_CERTIFIED;
+    else
+        *pdwCertified = DS_UNCERTIFIED;
     return DS_OK;
 }
 

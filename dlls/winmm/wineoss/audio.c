@@ -253,6 +253,54 @@ static int getEnables(OSS_DEVICE *ossdev)
              (ossdev->bInputEnabled  ? PCM_ENABLE_INPUT  : 0) );
 }
 
+static const char * getMessage(UINT msg)
+{
+    static char unknown[32];
+#define MSG_TO_STR(x) case x: return #x
+    switch(msg) {
+    MSG_TO_STR(DRVM_INIT);
+    MSG_TO_STR(DRVM_EXIT);
+    MSG_TO_STR(DRVM_ENABLE);
+    MSG_TO_STR(DRVM_DISABLE);
+    MSG_TO_STR(WIDM_OPEN);
+    MSG_TO_STR(WIDM_CLOSE);
+    MSG_TO_STR(WIDM_ADDBUFFER);
+    MSG_TO_STR(WIDM_PREPARE);
+    MSG_TO_STR(WIDM_UNPREPARE);
+    MSG_TO_STR(WIDM_GETDEVCAPS);
+    MSG_TO_STR(WIDM_GETNUMDEVS);
+    MSG_TO_STR(WIDM_GETPOS);
+    MSG_TO_STR(WIDM_RESET);
+    MSG_TO_STR(WIDM_START);
+    MSG_TO_STR(WIDM_STOP);
+    MSG_TO_STR(WODM_OPEN);
+    MSG_TO_STR(WODM_CLOSE);
+    MSG_TO_STR(WODM_WRITE);
+    MSG_TO_STR(WODM_PAUSE);
+    MSG_TO_STR(WODM_GETPOS);
+    MSG_TO_STR(WODM_BREAKLOOP);
+    MSG_TO_STR(WODM_PREPARE);
+    MSG_TO_STR(WODM_UNPREPARE);
+    MSG_TO_STR(WODM_GETDEVCAPS);
+    MSG_TO_STR(WODM_GETNUMDEVS);
+    MSG_TO_STR(WODM_GETPITCH);
+    MSG_TO_STR(WODM_SETPITCH);
+    MSG_TO_STR(WODM_GETPLAYBACKRATE);
+    MSG_TO_STR(WODM_SETPLAYBACKRATE);
+    MSG_TO_STR(WODM_GETVOLUME);
+    MSG_TO_STR(WODM_SETVOLUME);
+    MSG_TO_STR(WODM_RESTART);
+    MSG_TO_STR(WODM_RESET);
+    MSG_TO_STR(DRV_QUERYDEVICEINTERFACESIZE);
+    MSG_TO_STR(DRV_QUERYDEVICEINTERFACE);
+    MSG_TO_STR(DRV_QUERYDSOUNDIFACE);
+    MSG_TO_STR(DRV_QUERYDSOUNDDESC);
+    MSG_TO_STR(DRV_QUERYDSOUNDGUID);
+    }
+    sprintf(unknown, "UNKNOWN(0x%04x)", msg);
+    return unknown;
+}
+
 static DWORD wdDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
 {
     TRACE("(%u, %p)\n", wDevID, dwParam1);
@@ -713,7 +761,7 @@ static BOOL OSS_WaveOutInit(OSS_DEVICE* ossdev)
     ossdev->out_caps.dwSupport = WAVECAPS_VOLUME;
 
     /* direct sound caps */
-    ossdev->ds_caps.dwFlags = 0;
+    ossdev->ds_caps.dwFlags = DSCAPS_CERTIFIED;
     ossdev->ds_caps.dwPrimaryBuffers = 1;
     ossdev->ds_caps.dwMinSecondarySampleRate = DSBFREQUENCY_MIN;
     ossdev->ds_caps.dwMaxSecondarySampleRate = DSBFREQUENCY_MAX;
@@ -2196,8 +2244,8 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 DWORD WINAPI OSS_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
-	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    TRACE("(%u, %s, %08lX, %08lX, %08lX);\n",
+	  wDevID, getMessage(wMsg), dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
     case DRVM_INIT:
@@ -3889,8 +3937,8 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 DWORD WINAPI OSS_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
-	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    TRACE("(%u, %s, %08lX, %08lX, %08lX);\n",
+	  wDevID, getMessage(wMsg), dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
     case DRVM_INIT:
