@@ -1111,7 +1111,7 @@ STATUSBAR_SendNotify (HWND hwnd, UINT code)
 
 
 
-LRESULT WINAPI
+static LRESULT WINAPI
 StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {

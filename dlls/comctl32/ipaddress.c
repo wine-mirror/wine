@@ -590,7 +590,7 @@ IPADDRESS_SubclassProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 
-LRESULT WINAPI
+static LRESULT WINAPI
 IPADDRESS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
   switch (uMsg)

@@ -1442,7 +1442,7 @@ HEADER_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-LRESULT WINAPI
+static LRESULT WINAPI
 HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch (msg) {

@@ -19,6 +19,41 @@
 
 DEFAULT_DEBUG_CHANNEL(shell)
 
+static HRESULT WINAPI IStream_fnQueryInterface(IStream *iface, REFIID riid, LPVOID *ppvObj);
+static ULONG WINAPI IStream_fnAddRef(IStream *iface);
+static ULONG WINAPI IStream_fnRelease(IStream *iface);
+static HRESULT WINAPI IStream_fnRead (IStream * iface, void* pv, ULONG cb, ULONG* pcbRead);
+static HRESULT WINAPI IStream_fnWrite (IStream * iface, const void* pv, ULONG cb, ULONG* pcbWritten);
+static HRESULT WINAPI IStream_fnSeek (IStream * iface, LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER* plibNewPosition);
+static HRESULT WINAPI IStream_fnSetSize (IStream * iface, ULARGE_INTEGER libNewSize);
+static HRESULT WINAPI IStream_fnCopyTo (IStream * iface, IStream* pstm, ULARGE_INTEGER cb, ULARGE_INTEGER* pcbRead, ULARGE_INTEGER* pcbWritten);
+static HRESULT WINAPI IStream_fnCommit (IStream * iface, DWORD grfCommitFlags);
+static HRESULT WINAPI IStream_fnRevert (IStream * iface);
+static HRESULT WINAPI IStream_fnLockRegion (IStream * iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType);
+static HRESULT WINAPI IStream_fnUnlockRegion (IStream * iface, ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType);
+static HRESULT WINAPI IStream_fnStat (IStream * iface, STATSTG*   pstatstg, DWORD grfStatFlag);
+static HRESULT WINAPI IStream_fnClone (IStream * iface, IStream** ppstm);
+
+static ICOM_VTABLE(IStream) stvt = 
+{	
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IStream_fnQueryInterface,
+	IStream_fnAddRef,
+	IStream_fnRelease,
+	IStream_fnRead,
+	IStream_fnWrite,
+	IStream_fnSeek,
+	IStream_fnSetSize,
+	IStream_fnCopyTo,
+	IStream_fnCommit,
+	IStream_fnRevert,
+	IStream_fnLockRegion,
+	IStream_fnUnlockRegion,
+	IStream_fnStat,
+	IStream_fnClone
+	
+};
+
 typedef struct 
 {	ICOM_VTABLE(IStream)	*lpvtst;
 	DWORD		ref;
@@ -27,8 +62,6 @@ typedef struct
 	DWORD		dwLength;
 	DWORD		dwPos;
 } ISHFileStream;
-
-static ICOM_VTABLE(IStream)		stvt;
 
 /**************************************************************************
  *   CreateStreamOnFile()
@@ -246,23 +279,3 @@ static HRESULT WINAPI IStream_fnClone (IStream * iface, IStream** ppstm)
 
 	return E_NOTIMPL;
 }
-
-static struct ICOM_VTABLE(IStream) stvt = 
-{	
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IStream_fnQueryInterface,
-	IStream_fnAddRef,
-	IStream_fnRelease,
-	IStream_fnRead,
-	IStream_fnWrite,
-	IStream_fnSeek,
-	IStream_fnSetSize,
-	IStream_fnCopyTo,
-	IStream_fnCommit,
-	IStream_fnRevert,
-	IStream_fnLockRegion,
-	IStream_fnUnlockRegion,
-	IStream_fnStat,
-	IStream_fnClone
-	
-};

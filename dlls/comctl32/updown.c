@@ -706,7 +706,7 @@ static void UPDOWN_HandleMouseEvent (HWND hwnd, UINT msg, POINT pt)
 /***********************************************************************
  *           UpDownWndProc
  */
-LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
+static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam,
 				LPARAM lParam)
 {
   UPDOWN_INFO *infoPtr = UPDOWN_GetInfoPtr (hwnd);

@@ -1446,7 +1446,7 @@ static INT WINAPI TREEVIEW_SortOnName (
  *         application decide what that means. See also TVM_SORTCHILDRENCB.
  */
 
-LRESULT WINAPI TREEVIEW_Sort (
+static LRESULT WINAPI TREEVIEW_Sort (
   HWND   hwnd, 
   BOOL   fRecurse, 
   HTREEITEM parent,
@@ -1556,7 +1556,7 @@ LRESULT WINAPI TREEVIEW_Sort (
  * Setup the treeview structure with regards of the sort method
  * and sort the children of the TV item specified in lParam
  */
-LRESULT WINAPI TREEVIEW_SortChildrenCB(
+static LRESULT WINAPI TREEVIEW_SortChildrenCB(
   HWND   hwnd, 
   WPARAM wParam, 
   LPARAM lParam
@@ -1571,7 +1571,7 @@ LRESULT WINAPI TREEVIEW_SortChildrenCB(
 /***************************************************************************
  * Sort the children of the TV item specified in lParam.
  */
-LRESULT WINAPI TREEVIEW_SortChildren (
+static LRESULT WINAPI TREEVIEW_SortChildren (
   HWND   hwnd, 
   WPARAM wParam, 
   LPARAM lParam)
@@ -2000,7 +2000,7 @@ TREEVIEW_SetToolTips (HWND hwnd, WPARAM wParam)
 }
 
 
-LRESULT CALLBACK
+static LRESULT CALLBACK
 TREEVIEW_GetEditControl (HWND hwnd)
 
 {
@@ -2575,7 +2575,6 @@ TREEVIEW_Expand (HWND hwnd, WPARAM wParam, LPARAM lParam)
   		TRACE("For (%s) item:%d, flags %x, state:%d\n", 
                 wineItem->pszText, flag, expand, wineItem->state);
 
-
   if (wineItem->cChildren==I_CHILDRENCALLBACK) {
     FIXME("we don't handle I_CHILDRENCALLBACK yet\n");
     return 0;
@@ -2837,7 +2836,7 @@ TREEVIEW_EndEditLabelNow (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 
-LRESULT
+static LRESULT
 TREEVIEW_LButtonDoubleClick (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
   TREEVIEW_ITEM *wineItem;
@@ -3521,7 +3520,7 @@ TREEVIEW_SetScrollTime (HWND hwnd, UINT uScrollTime)
 }
 
 
-LRESULT WINAPI
+static LRESULT WINAPI
 TREEVIEW_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg) {

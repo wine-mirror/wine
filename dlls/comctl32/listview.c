@@ -6606,7 +6606,7 @@ static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType,
  * Window procedure of the listview control.
  *
  */
-LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
+static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                                    LPARAM lParam)
 {
   switch (uMsg)

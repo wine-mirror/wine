@@ -1656,7 +1656,7 @@ TAB_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
   return 0;
 }
 
-LRESULT WINAPI
+static LRESULT WINAPI
 TAB_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)

@@ -20,6 +20,32 @@
 DEFAULT_DEBUG_CHANNEL(shell)
 
 /**************************************************************************
+* IContextMenu VTable
+* 
+*/
+
+static HRESULT WINAPI IContextMenu_fnQueryInterface(IContextMenu *iface, REFIID riid, LPVOID *ppvObj);
+static ULONG WINAPI IContextMenu_fnAddRef(IContextMenu *iface);
+static ULONG WINAPI IContextMenu_fnRelease(IContextMenu *iface);
+static HRESULT WINAPI IContextMenu_fnQueryContextMenu(IContextMenu *iface, HMENU hmenu, UINT indexMenu, UINT idCmdFirst, UINT idCmdLast, UINT uFlags);
+static HRESULT WINAPI IContextMenu_fnInvokeCommand(IContextMenu *iface, LPCMINVOKECOMMANDINFO lpcmi);
+static HRESULT WINAPI IContextMenu_fnGetCommandString(IContextMenu *iface, UINT idCommand, UINT uFlags, LPUINT lpReserved, LPSTR lpszName, UINT uMaxNameLen);
+static HRESULT WINAPI IContextMenu_fnHandleMenuMsg(IContextMenu *iface, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
+static struct ICOM_VTABLE(IContextMenu) cmvt = 
+{	
+	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+	IContextMenu_fnQueryInterface,
+	IContextMenu_fnAddRef,
+	IContextMenu_fnRelease,
+	IContextMenu_fnQueryContextMenu,
+	IContextMenu_fnInvokeCommand,
+	IContextMenu_fnGetCommandString,
+	IContextMenu_fnHandleMenuMsg,
+	(void *) 0xdeadbabe	/* just paranoia */
+};
+
+/**************************************************************************
 *  IContextMenu Implementation
 */
 typedef struct 
@@ -37,7 +63,7 @@ static struct ICOM_VTABLE(IContextMenu) cmvt;
 /**************************************************************************
 *  IContextMenu_AllocPidlTable()
 */
-BOOL IContextMenu_AllocPidlTable(IContextMenuImpl *This, DWORD dwEntries)
+static BOOL IContextMenu_AllocPidlTable(IContextMenuImpl *This, DWORD dwEntries)
 {
 	TRACE("(%p)->(entrys=%lu)\n",This, dwEntries);
 
@@ -55,7 +81,7 @@ BOOL IContextMenu_AllocPidlTable(IContextMenuImpl *This, DWORD dwEntries)
 /**************************************************************************
 * IContextMenu_FreePidlTable()
 */
-void IContextMenu_FreePidlTable(IContextMenuImpl *This)
+static void IContextMenu_FreePidlTable(IContextMenuImpl *This)
 {
 	int   i;
 
@@ -74,7 +100,7 @@ void IContextMenu_FreePidlTable(IContextMenuImpl *This)
 /**************************************************************************
 * IContextMenu_FillPidlTable()
 */
-BOOL IContextMenu_FillPidlTable(IContextMenuImpl *This, LPCITEMIDLIST *aPidls, UINT uItemCount)
+static BOOL IContextMenu_FillPidlTable(IContextMenuImpl *This, LPCITEMIDLIST *aPidls, UINT uItemCount)
 {
 	UINT  i;
 
@@ -92,7 +118,7 @@ BOOL IContextMenu_FillPidlTable(IContextMenuImpl *This, LPCITEMIDLIST *aPidls, U
 /**************************************************************************
 * IContextMenu_CanRenameItems()
 */
-BOOL IContextMenu_CanRenameItems(IContextMenuImpl *This)
+static BOOL IContextMenu_CanRenameItems(IContextMenuImpl *This)
 {	UINT  i;
 	DWORD dwAttributes;
 
@@ -426,21 +452,4 @@ static HRESULT WINAPI IContextMenu_fnHandleMenuMsg(
 
 	return E_NOTIMPL;
 }
-
-/**************************************************************************
-* IContextMenu VTable
-* 
-*/
-static struct ICOM_VTABLE(IContextMenu) cmvt = 
-{	
-	ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-	IContextMenu_fnQueryInterface,
-	IContextMenu_fnAddRef,
-	IContextMenu_fnRelease,
-	IContextMenu_fnQueryContextMenu,
-	IContextMenu_fnInvokeCommand,
-	IContextMenu_fnGetCommandString,
-	IContextMenu_fnHandleMenuMsg,
-	(void *) 0xdeadbabe	/* just paranoia */
-};
 

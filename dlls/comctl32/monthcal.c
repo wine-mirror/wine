@@ -1471,7 +1471,7 @@ MONTHCAL_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
 
 
-LRESULT WINAPI
+static LRESULT WINAPI
 MONTHCAL_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 

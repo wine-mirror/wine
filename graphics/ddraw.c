@@ -158,7 +158,7 @@ static XF86VidModeModeInfo *orig_mode = NULL;
 static int XShmErrorFlag = 0;
 #endif
 
-BOOL
+static BOOL
 DDRAW_DGA_Available(void)
 {
 #ifdef HAVE_LIBXXF86DGA
@@ -4830,7 +4830,7 @@ static ICOM_VTABLE(IDirectDraw4) xlib_dd4vt =
  * 				DirectDrawCreate
  */
 
-LRESULT WINAPI Xlib_DDWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
+static LRESULT WINAPI Xlib_DDWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 {
    LRESULT ret;
    IDirectDrawImpl* ddraw = NULL;
@@ -4893,7 +4893,7 @@ LRESULT WINAPI Xlib_DDWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
     return ret;
 }
 
-HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) {
+static HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) {
 #ifdef HAVE_LIBXXF86DGA
         IDirectDrawImpl** ilplpDD=(IDirectDrawImpl**)lplpDD;
 	int	memsize,banksize,width,major,minor,flags,height;
@@ -4958,7 +4958,7 @@ HRESULT WINAPI DGA_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) 
 #endif /* defined(HAVE_LIBXXF86DGA) */
 }
 
-BOOL
+static BOOL
 DDRAW_XSHM_Available(void)
    {
 #ifdef HAVE_LIBXXSHM
@@ -4980,7 +4980,7 @@ DDRAW_XSHM_Available(void)
 #endif
 }
 
-HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) {
+static HRESULT WINAPI Xlib_DirectDrawCreate( LPDIRECTDRAW *lplpDD, LPUNKNOWN pUnkOuter) {
         IDirectDrawImpl** ilplpDD=(IDirectDrawImpl**)lplpDD;
 	int depth;
 

@@ -18,6 +18,64 @@ DECLARE_DEBUG_CHANNEL(avifile)
 DECLARE_DEBUG_CHANNEL(msvideo)
 DECLARE_DEBUG_CHANNEL(relay)
 
+static HRESULT WINAPI IAVIFile_fnQueryInterface(IAVIFile* iface,REFIID refiid,LPVOID *obj);
+static ULONG WINAPI IAVIFile_fnAddRef(IAVIFile* iface);
+static ULONG WINAPI IAVIFile_fnRelease(IAVIFile* iface);
+static HRESULT WINAPI IAVIFile_fnInfo(IAVIFile*iface,AVIFILEINFOW*afi,LONG size);
+static HRESULT WINAPI IAVIFile_fnGetStream(IAVIFile*iface,PAVISTREAM*avis,DWORD fccType,LONG lParam);
+static HRESULT WINAPI IAVIFile_fnCreateStream(IAVIFile*iface,PAVISTREAM*avis,AVISTREAMINFOW*asi);
+static HRESULT WINAPI IAVIFile_fnWriteData(IAVIFile*iface,DWORD ckid,LPVOID lpData,LONG size);
+static HRESULT WINAPI IAVIFile_fnReadData(IAVIFile*iface,DWORD ckid,LPVOID lpData,LONG *size);
+static HRESULT WINAPI IAVIFile_fnEndRecord(IAVIFile*iface);
+static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile*iface,DWORD fccType,LONG lParam);
+
+struct ICOM_VTABLE(IAVIFile) iavift = {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IAVIFile_fnQueryInterface,
+    IAVIFile_fnAddRef,
+    IAVIFile_fnRelease,
+    IAVIFile_fnInfo,
+    IAVIFile_fnGetStream,
+    IAVIFile_fnCreateStream,
+    IAVIFile_fnWriteData,
+    IAVIFile_fnReadData,
+    IAVIFile_fnEndRecord,
+    IAVIFile_fnDeleteStream
+};
+
+static HRESULT WINAPI IAVIStream_fnQueryInterface(IAVIStream*iface,REFIID refiid,LPVOID *obj);
+static ULONG WINAPI IAVIStream_fnAddRef(IAVIStream*iface);
+static ULONG WINAPI IAVIStream_fnRelease(IAVIStream* iface);
+static HRESULT WINAPI IAVIStream_fnCreate(IAVIStream*iface,LPARAM lParam1,LPARAM lParam2);
+static HRESULT WINAPI IAVIStream_fnInfo(IAVIStream*iface,AVISTREAMINFOW *psi,LONG size);
+static LONG WINAPI IAVIStream_fnFindSample(IAVIStream*iface,LONG pos,LONG flags);
+static HRESULT WINAPI IAVIStream_fnReadFormat(IAVIStream*iface,LONG pos,LPVOID format,LONG *formatsize);
+static HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream*iface,LONG pos,LPVOID format,LONG formatsize);
+static HRESULT WINAPI IAVIStream_fnRead(IAVIStream*iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,LONG *bytesread,LONG *samplesread);
+static HRESULT WINAPI IAVIStream_fnWrite(IAVIStream*iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,DWORD flags,LONG *sampwritten,LONG *byteswritten);
+static HRESULT WINAPI IAVIStream_fnDelete(IAVIStream*iface,LONG start,LONG samples);
+static HRESULT WINAPI IAVIStream_fnReadData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG *lpread);
+static HRESULT WINAPI IAVIStream_fnWriteData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG size);
+static HRESULT WINAPI IAVIStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG infolen);
+
+struct ICOM_VTABLE(IAVIStream) iavist = {
+    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
+    IAVIStream_fnQueryInterface,
+    IAVIStream_fnAddRef,
+    IAVIStream_fnRelease,
+    IAVIStream_fnCreate,
+    IAVIStream_fnInfo,
+    IAVIStream_fnFindSample,
+    IAVIStream_fnReadFormat,
+    IAVIStream_fnSetFormat,
+    IAVIStream_fnRead,
+    IAVIStream_fnWrite,
+    IAVIStream_fnDelete,
+    IAVIStream_fnReadData,
+    IAVIStream_fnWriteData,
+    IAVIStream_fnSetInfo
+};
+
 typedef struct IAVIStreamImpl {
 	/* IUnknown stuff */
 	ICOM_VTABLE(IAVIStream)*	lpvtbl;
@@ -55,8 +113,6 @@ typedef struct IAVIFileImpl {
 	DWORD				ref;
 	/* IAVIFile stuff... */
 } IAVIFileImpl;
-
-struct ICOM_VTABLE(IAVIStream) iavist;
 
 static HRESULT WINAPI IAVIFile_fnQueryInterface(IAVIFile* iface,REFIID refiid,LPVOID *obj) {
 	ICOM_THIS(IAVIFileImpl,iface);
@@ -151,20 +207,6 @@ static HRESULT WINAPI IAVIFile_fnDeleteStream(IAVIFile*iface,DWORD fccType,LONG 
 	return E_FAIL;
 }
 
-struct ICOM_VTABLE(IAVIFile) iavift = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    IAVIFile_fnQueryInterface,
-    IAVIFile_fnAddRef,
-    IAVIFile_fnRelease,
-    IAVIFile_fnInfo,
-    IAVIFile_fnGetStream,
-    IAVIFile_fnCreateStream,
-    IAVIFile_fnWriteData,
-    IAVIFile_fnReadData,
-    IAVIFile_fnEndRecord,
-    IAVIFile_fnDeleteStream
-};
-
 HRESULT WINAPI AVIFileOpenA(
 	PAVIFILE * ppfile,LPCSTR szFile,UINT uMode,LPCLSID lpHandler
 ) {
@@ -219,22 +261,22 @@ static ULONG WINAPI IAVIStream_fnRelease(IAVIStream* iface) {
 	return This->ref;
 }
 
-HRESULT WINAPI IAVIStream_fnCreate(IAVIStream*iface,LPARAM lParam1,LPARAM lParam2) {
+static HRESULT WINAPI IAVIStream_fnCreate(IAVIStream*iface,LPARAM lParam1,LPARAM lParam2) {
 	FIXME_(avifile)("(%p)->Create(0x%08lx,0x%08lx)\n",iface,lParam1,lParam2);
 	return E_FAIL;
 }
 
-HRESULT WINAPI IAVIStream_fnInfo(IAVIStream*iface,AVISTREAMINFOW *psi,LONG size) {
+static HRESULT WINAPI IAVIStream_fnInfo(IAVIStream*iface,AVISTREAMINFOW *psi,LONG size) {
 	FIXME_(avifile)("(%p)->Info(%p,%ld)\n",iface,psi,size);
 	return E_FAIL;
 }
 
-LONG WINAPI IAVIStream_fnFindSample(IAVIStream*iface,LONG pos,LONG flags) {
+static LONG WINAPI IAVIStream_fnFindSample(IAVIStream*iface,LONG pos,LONG flags) {
 	FIXME_(avifile)("(%p)->FindSample(%ld,0x%08lx)\n",iface,pos,flags);
 	return E_FAIL;
 }
 
-HRESULT WINAPI IAVIStream_fnReadFormat(IAVIStream*iface,LONG pos,LPVOID format,LONG *formatsize) {
+static HRESULT WINAPI IAVIStream_fnReadFormat(IAVIStream*iface,LONG pos,LPVOID format,LONG *formatsize) {
 	FIXME_(avifile)("(%p)->ReadFormat(%ld,%p,%p)\n",iface,pos,format,formatsize);
 	return E_FAIL;
 }
@@ -242,7 +284,7 @@ HRESULT WINAPI IAVIStream_fnReadFormat(IAVIStream*iface,LONG pos,LPVOID format,L
 /*****************************************************************************
  *						[IAVIStream::SetFormat]
  */
-HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream*iface,LONG pos,LPVOID format,LONG formatsize) {
+static HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream*iface,LONG pos,LPVOID format,LONG formatsize) {
 	IAVIStreamImpl	*as = (IAVIStreamImpl*)iface;
 
 	FIXME_(avifile)("(%p)->SetFormat(%ld,%p,%ld)\n",iface,pos,format,formatsize);
@@ -276,12 +318,12 @@ HRESULT WINAPI IAVIStream_fnSetFormat(IAVIStream*iface,LONG pos,LPVOID format,LO
 	return S_OK;
 }
 
-HRESULT WINAPI IAVIStream_fnRead(IAVIStream*iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,LONG *bytesread,LONG *samplesread) {
+static HRESULT WINAPI IAVIStream_fnRead(IAVIStream*iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,LONG *bytesread,LONG *samplesread) {
 	FIXME_(avifile)("(%p)->Read(%ld,%ld,%p,%ld,%p,%p)\n",iface,start,samples,buffer,buffersize,bytesread,samplesread);
 	return E_FAIL;
 }
 
-HRESULT WINAPI IAVIStream_fnWrite(IAVIStream*iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,DWORD flags,LONG *sampwritten,LONG *byteswritten) {
+static HRESULT WINAPI IAVIStream_fnWrite(IAVIStream*iface,LONG start,LONG samples,LPVOID buffer,LONG buffersize,DWORD flags,LONG *sampwritten,LONG *byteswritten) {
 	IAVIStreamImpl	*as = (IAVIStreamImpl*)iface;
 	DWORD		ckid,xflags;
 
@@ -310,43 +352,24 @@ HRESULT WINAPI IAVIStream_fnWrite(IAVIStream*iface,LONG start,LONG samples,LPVOI
 	return S_OK;
 }
 
-HRESULT WINAPI IAVIStream_fnDelete(IAVIStream*iface,LONG start,LONG samples) {
+static HRESULT WINAPI IAVIStream_fnDelete(IAVIStream*iface,LONG start,LONG samples) {
 	FIXME_(avifile)("(%p)->Delete(%ld,%ld)\n",iface,start,samples);
 	return E_FAIL;
 }
-
-HRESULT WINAPI IAVIStream_fnReadData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG *lpread) {
+static HRESULT WINAPI IAVIStream_fnReadData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG *lpread) {
 	FIXME_(avifile)("(%p)->ReadData(0x%08lx,%p,%p)\n",iface,fcc,lp,lpread);
 	return E_FAIL;
 }
 
-HRESULT WINAPI IAVIStream_fnWriteData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG size) {
+static HRESULT WINAPI IAVIStream_fnWriteData(IAVIStream*iface,DWORD fcc,LPVOID lp,LONG size) {
 	FIXME_(avifile)("(%p)->WriteData(0x%08lx,%p,%ld)\n",iface,fcc,lp,size);
 	return E_FAIL;
 }
 
-HRESULT WINAPI IAVIStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG infolen) {
+static HRESULT WINAPI IAVIStream_fnSetInfo(IAVIStream*iface,AVISTREAMINFOW*info,LONG infolen) {
 	FIXME_(avifile)("(%p)->SetInfo(%p,%ld)\n",iface,info,infolen);
 	return E_FAIL;
 }
-
-struct ICOM_VTABLE(IAVIStream) iavist = {
-    ICOM_MSVTABLE_COMPAT_DummyRTTIVALUE
-    IAVIStream_fnQueryInterface,
-    IAVIStream_fnAddRef,
-    IAVIStream_fnRelease,
-    IAVIStream_fnCreate,
-    IAVIStream_fnInfo,
-    IAVIStream_fnFindSample,
-    IAVIStream_fnReadFormat,
-    IAVIStream_fnSetFormat,
-    IAVIStream_fnRead,
-    IAVIStream_fnWrite,
-    IAVIStream_fnDelete,
-    IAVIStream_fnReadData,
-    IAVIStream_fnWriteData,
-    IAVIStream_fnSetInfo
-};
 
 HRESULT WINAPI AVIFileCreateStreamA(PAVIFILE iface,PAVISTREAM *ppavi,AVISTREAMINFOA * psi) {
 	AVISTREAMINFOW	psiw;

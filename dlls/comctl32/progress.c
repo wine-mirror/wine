@@ -193,7 +193,7 @@ PROGRESS_SetFont (HWND hwnd, WPARAM wParam, LPARAM lParam)
 /***********************************************************************
  *           ProgressWindowProc
  */
-LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message, 
+static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message, 
                                   WPARAM wParam, LPARAM lParam)
 {
     PROGRESS_INFO *infoPtr = PROGRESS_GetInfoPtr(hwnd); 

@@ -56,7 +56,7 @@ DEFAULT_DEBUG_CHANNEL(trackbar)
 
 static BOOL TRACKBAR_SendNotify (HWND hwnd, UINT code);
 
-void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
+static void TRACKBAR_RecalculateTics (TRACKBAR_INFO *infoPtr)
 {
     int i,tic,nrTics;
 
@@ -1462,7 +1462,7 @@ TRACKBAR_KeyUp (HWND hwnd, WPARAM wParam)
 }
 
 
-LRESULT WINAPI
+static LRESULT WINAPI
 TRACKBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)

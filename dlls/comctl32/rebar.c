@@ -1859,7 +1859,7 @@ REBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 }
 
 
-LRESULT WINAPI
+static LRESULT WINAPI
 REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)

@@ -227,8 +227,8 @@ static LRESULT MsgNotify(HWND hWnd,  UINT CtlID, LPNMHDR lpnmh)
 /*************************************************************************
  *             BrsFolderDlgProc32  (not an exported API function)
  */
-BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
-                               LPARAM lParam )
+static BOOL WINAPI BrsFolderDlgProc( HWND hWnd, UINT msg, WPARAM wParam,
+				     LPARAM lParam )
 {    TRACE("hwnd=%i msg=%i 0x%08x 0x%08lx\n", hWnd,  msg, wParam, lParam );
 
 	switch(msg)

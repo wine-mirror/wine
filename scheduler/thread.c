@@ -491,7 +491,7 @@ BOOL WINAPI TlsSetValue(
  */
 BOOL WINAPI SetThreadContext(
     HANDLE handle,  /* [in]  Handle to thread with context */
-    CONTEXT *context) /* [out] Address of context structure */
+    const CONTEXT *context) /* [out] Address of context structure */
 {
     FIXME("not implemented\n" );
     return TRUE;
