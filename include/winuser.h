@@ -1344,13 +1344,15 @@ typedef struct {
 #define WC_DIALOG  WINELIB_NAME_AW(WC_DIALOG)
 
   /* Offsets for GetWindowLong() and GetWindowWord() */
-#define GWL_USERDATA        (-21)
 #define GWL_EXSTYLE         (-20)
 #define GWL_STYLE           (-16)
-#define GWL_ID              (-12)
-#define GWL_HWNDPARENT      (-8)
-#define GWL_HINSTANCE       (-6)
-#define GWL_WNDPROC         (-4)
+#ifndef __WINESRC__
+# define GWL_USERDATA        (-21)
+# define GWL_ID              (-12)
+# define GWL_HWNDPARENT      (-8)
+# define GWL_HINSTANCE       (-6)
+# define GWL_WNDPROC         (-4)
+#endif /* __WINESRC__ */
 #define DWL_MSGRESULT	    0
 #define DWL_DLGPROC	    4
 #define DWL_USER	    8

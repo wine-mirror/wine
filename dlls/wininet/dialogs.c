@@ -248,7 +248,7 @@ static INT_PTR WINAPI WININET_ProxyPasswordDialog(
 
         /* save the parameter list */
         params = (struct WININET_ErrorDlgParams*) lParam;
-        SetWindowLongW( hdlg, GWL_USERDATA, lParam );
+        SetWindowLongPtrW( hdlg, GWLP_USERDATA, lParam );
 
         /* extract the Realm from the proxy response and show it */
         if( WININET_GetAuthRealm( params->hRequest,
@@ -272,7 +272,7 @@ static INT_PTR WINAPI WININET_ProxyPasswordDialog(
     }
 
     params = (struct WININET_ErrorDlgParams*)
-                 GetWindowLongW( hdlg, GWL_USERDATA );
+                 GetWindowLongPtrW( hdlg, GWLP_USERDATA );
 
     switch( uMsg )
     {

@@ -2438,7 +2438,7 @@ HWND WINAPI SHCreateWorkerWindowA(LONG wndProc, HWND hWndParent, DWORD dwExStyle
     SetWindowLongA(hWnd, DWL_MSGRESULT, z);
 
     if (wndProc)
-      SetWindowLongA(hWnd, GWL_WNDPROC, wndProc);
+      SetWindowLongPtrA(hWnd, GWLP_WNDPROC, wndProc);
   }
   return hWnd;
 }
@@ -2725,7 +2725,7 @@ HWND WINAPI SHCreateWorkerWindowW(LONG wndProc, HWND hWndParent, DWORD dwExStyle
     SetWindowLongA(hWnd, DWL_MSGRESULT, z);
 
     if (wndProc)
-      SetWindowLongA(hWnd, GWL_WNDPROC, wndProc);
+      SetWindowLongPtrA(hWnd, GWLP_WNDPROC, wndProc);
   }
   return hWnd;
 }
