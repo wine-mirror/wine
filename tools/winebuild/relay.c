@@ -1069,12 +1069,12 @@ void BuildPendingEventCheck( FILE *outfile )
     
     fprintf( outfile, "\t.byte 0x64\n\ttestl $0xffffffff,(%d)\n", 
              STRUCTOFFSET(TEB,vm86_pending) );
-    fprintf( outfile, "\tje DPMI_PendingEventCheck_Cleanup\n" );
+    fprintf( outfile, "\tje " __ASM_NAME("DPMI_PendingEventCheck_Cleanup") "\n" );
 
     fprintf( outfile, "\t.byte 0x64\n\ttestl $0xffffffff,(%d)\n", 
              STRUCTOFFSET(TEB,dpmi_vif) );
 
-    fprintf( outfile, "\tje DPMI_PendingEventCheck_Cleanup\n" );
+    fprintf( outfile, "\tje " __ASM_NAME("DPMI_PendingEventCheck_Cleanup") "\n" );
 
     /* Process pending events. */
 
@@ -1082,14 +1082,14 @@ void BuildPendingEventCheck( FILE *outfile )
    
     /* Start cleanup. Restore fs register. */
 
-    fprintf( outfile, ".globl DPMI_PendingEventCheck_Cleanup\n" );
-    fprintf( outfile, "DPMI_PendingEventCheck_Cleanup:\n" );
+    fprintf( outfile, ".globl " __ASM_NAME("DPMI_PendingEventCheck_Cleanup") "\n" );
+    fprintf( outfile, __ASM_NAME("DPMI_PendingEventCheck_Cleanup") ":\n" );
     fprintf( outfile, "\tpopw %%fs\n" );
 
     /* Return from function. */
 
-    fprintf( outfile, ".globl DPMI_PendingEventCheck_Return\n" );
-    fprintf( outfile, "DPMI_PendingEventCheck_Return:\n" );
+    fprintf( outfile, ".globl " __ASM_NAME("DPMI_PendingEventCheck_Return") "\n" );
+    fprintf( outfile, __ASM_NAME("DPMI_PendingEventCheck_Return") ":\n" );
     fprintf( outfile, "\tiret\n" );
 }
 
