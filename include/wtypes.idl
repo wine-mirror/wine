@@ -1,0 +1,388 @@
+/*
+ * Basic types used by COM interfaces
+ *
+ * Copyright 2002 Ove Kaaven
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+
+[
+  uuid(D3980A60-910C-1068-9341-00DD010F2F1C),
+  version(0.1),
+  pointer_default(unique)
+]
+interface IWinTypes
+{
+
+/******************** WINE STUFF ********************/
+
+cpp_quote("#include \"basetsd.h\"")
+cpp_quote("#include \"guiddef.h\"")
+cpp_quote("#include \"rpc.h\"")
+cpp_quote("#include \"rpcndr.h\"")
+
+/* from Wine's pre-WIDL wtypes.h */
+/* FIXME: does not belong here */
+cpp_quote("typedef CHAR OLECHAR16;")
+cpp_quote("typedef LPSTR LPOLESTR16;")
+cpp_quote("typedef LPCSTR LPCOLESTR16;")
+cpp_quote("typedef OLECHAR16 *BSTR16;")
+cpp_quote("typedef BSTR16 *LPBSTR16;")
+cpp_quote("#define OLESTR16(x) x")
+
+/******************** BASIC WIN32 TYPES ********************/
+cpp_quote("#if 0 /* winnt.h */") /* don't redefine these */
+
+typedef unsigned char BYTE;
+typedef unsigned short WORD;
+typedef unsigned long DWORD;
+typedef long BOOL;
+typedef unsigned char UCHAR;
+typedef int INT;
+typedef unsigned int UINT;
+typedef short SHORT;
+typedef unsigned short USHORT;
+typedef long LONG;
+typedef unsigned long ULONG;
+typedef float FLOAT;
+typedef double DOUBLE;
+
+typedef void *PVOID, *LPVOID;
+
+typedef char CHAR;
+typedef [string] CHAR *LPSTR;
+typedef [string] const CHAR *LPCSTR;
+
+typedef wchar_t WCHAR;
+typedef [string] WCHAR *LPWSTR;
+typedef [string] const WCHAR *LPCWSTR;
+
+typedef boolean BOOLEAN;
+
+typedef void *HANDLE;
+#define DECLARE_HANDLE(name) typedef void *name
+#define DECLARE_WIREM_HANDLE(name) typedef [wire_marshal(wire##name)] void*name
+
+typedef double DATE;
+typedef LONG HRESULT;
+typedef DWORD LCID;
+
+typedef unsigned __int64 DWORDLONG;
+typedef __int64 LONGLONG;
+typedef unsigned __int64 ULONGLONG;
+
+typedef struct _SID_IDENTIFIER_AUTHORITY {
+  UCHAR Value[6];
+} SID_IDENTIFIER_AUTHORITY, *PSID_IDENTIFIER_AUTHORITY;
+
+typedef struct _SID {
+  UCHAR Revision;
+  UCHAR SubAuthorityCount;
+  SID_IDENTIFIER_AUTHORITY IdentifierAuthority;
+  [size_is(SubAuthorityCount)] ULONG SubAuthority[*];
+} SID, *PSID;
+
+typedef USHORT SECURITY_DESCRIPTOR_CONTROL, *PSECURITY_DESCRIPTOR_CONTROL;
+
+typedef struct _ACL {
+  UCHAR AclRevision;
+  UCHAR Sbz1;
+  USHORT AclSize;
+  USHORT AceCount;
+  USHORT Sbz2;
+} ACL;
+typedef ACL *PACL;
+
+typedef struct _SECURITY_DESCRIPTOR {
+  UCHAR Revision;
+  UCHAR Sbz1;
+  SECURITY_DESCRIPTOR_CONTROL Control;
+  PSID Owner;
+  PSID Group;
+  PACL Sacl;
+  PACL Dacl;
+} SECURITY_DESCRIPTOR, *PSECURITY_DESCRIPTOR;
+
+cpp_quote("#endif /* winnt.h */")
+
+cpp_quote("#ifndef _FILETIME_")
+cpp_quote("#define _FILETIME_")
+typedef struct _FILETIME {
+  DWORD dwLowDateTime;
+  DWORD dwHighDateTime;
+} FILETIME, *PFILETIME, *LPFILETIME;
+cpp_quote("#endif")
+
+/******************** BASIC COM/OLE TYPES ********************/
+
+typedef WCHAR OLECHAR;
+typedef [string] OLECHAR *LPOLESTR;
+typedef [string] const OLECHAR *LPCOLESTR;
+cpp_quote("#ifndef __WINE__")
+cpp_quote("#define OLESTR(str) WINE_UNICODE_TEXT(str)")
+cpp_quote("#endif")
+
+typedef LONG SCODE;
+
+typedef struct _COAUTHIDENTITY {
+  [size_is(UserLength+1)] USHORT *User;
+  ULONG UserLength;
+  [size_is(DomainLength+1)] USHORT *Domain;
+  ULONG DomainLength;
+  [size_is(PasswordLength+1)] USHORT *Password;
+  ULONG PasswordLength;
+  ULONG Flags;
+} COAUTHIDENTITY;
+
+typedef struct _COAUTHINFO {
+  DWORD dwAuthnSvc;
+  DWORD dwAuthzSvc;
+  LPWSTR pwszServerPrincName;
+  DWORD dwAuthnLevel;
+  DWORD dwImpersonationLevel;
+  COAUTHIDENTITY *pAuthIdentityData;
+  DWORD dwCapabilities;
+} COAUTHINFO;
+
+/* FIXME: COSERVERINFO was in Wine's pre-WIDL wtypes.h, but should be in objidl.idl */
+typedef struct _COSERVERINFO {
+  DWORD dwReserved1;
+  LPWSTR pwszName;
+  COAUTHINFO *pAuthInfo;
+  DWORD dwReserved2;
+} COSERVERINFO;
+
+cpp_quote("#ifndef _ROTFLAGS_DEFINED")
+cpp_quote("#define _ROTFLAGS_DEFINED")
+cpp_quote("#define ROTFLAGS_REGISTRATIONKEEPSALIVE 0x1")
+cpp_quote("#define ROTFLAGS_ALLOWANYCLIENT 0x2")
+cpp_quote("#endif")
+
+typedef enum tagCLSCTX
+{
+  CLSCTX_INPROC_SERVER        = 0x1,
+  CLSCTX_INPROC_HANDLER       = 0x2,
+  CLSCTX_LOCAL_SERVER         = 0x4,
+  CLSCTX_INPROC_SERVER16      = 0x8,
+  CLSCTX_REMOTE_SERVER        = 0x10,
+  CLSCTX_INPROC_HANDLER16     = 0x20,
+  CLSCTX_INPROC_SERVERX86     = 0x40,
+  CLSCTX_INPROC_HANDLERX86    = 0x80,
+  CLSCTX_ESERVER_HANDLER      = 0x100,
+  CLSCTX_NO_CODE_DOWNLOAD     = 0x400,
+  CLSCTX_NO_CUSTOM_MARSHAL    = 0x1000,
+  CLSCTX_ENABLE_CODE_DOWNLOAD = 0x2000,
+  CLSCTX_NO_FAILURE_LOG       = 0x4000,
+  CLSCTX_DISABLE_AAA          = 0x8000,
+  CLSCTX_ENABLE_AAA           = 0x10000,
+  CLSCTX_FROM_DEFAULT_CONTEXT = 0x20000
+} CLSCTX;
+
+cpp_quote("#define CLSCTX_INPROC (CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER)")
+cpp_quote("#define CLSCTX_ALL (CLSCTX_INPROC_SERVER | CLSCTX_INPROC_HANDLER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER)")
+cpp_quote("#define CLSCTX_SERVER (CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER)")
+
+typedef enum tagMSHLFLAGS
+{
+  MSHLFLAGS_NORMAL      = 0,
+  MSHLFLAGS_TABLESTRONG = 1,
+  MSHLFLAGS_TABLEWEAK   = 2,
+  MSHLFLAGS_NOPING      = 4
+} MSHLFLAGS;
+
+typedef enum tagMSHCTX
+{
+  MSHCTX_LOCAL            = 0,
+  MSHCTX_NOSHAREDMEM      = 1,
+  MSHCTX_DIFFERENTMACHINE = 2,
+  MSHCTX_INPROC           = 3,
+  MSHCTX_CROSSCTX         = 4
+} MSHCTX;
+
+/******************** BLOB TYPES ********************/
+
+typedef struct _BYTE_BLOB {
+  unsigned long clSize;
+  [size_is(clSize)] byte abData[];
+} BYTE_BLOB;
+typedef [unique] BYTE_BLOB *UP_BYTE_BLOB;
+
+typedef struct _FLAGGED_WORD_BLOB {
+  unsigned long fFlags;
+  unsigned long clSize;
+  [size_is(clSize)] unsigned short asData[];
+} FLAGGED_WORD_BLOB;
+typedef [unique] FLAGGED_WORD_BLOB *UP_FLAGGED_WORD_BLOB;
+
+/******************** GDI TYPES ********************/
+
+const unsigned long WDT_INPROC_CALL = 0x48746457;
+const unsigned long WDT_REMOTE_CALL = 0x52746457;
+
+typedef union _userCLIPFORMAT switch(long fContext) {
+  case WDT_INPROC_CALL: DWORD dwValue;
+  case WDT_REMOTE_CALL: [string] WCHAR *pwszName;
+} userCLIPFORMAT;
+
+typedef [unique] userCLIPFORMAT *wireCLIPFORMAT;
+typedef [wire_marshal(wireCLIPFORMAT)] WORD CLIPFORMAT;
+
+typedef struct tagRemHMETAFILEPICT {
+  long mm;
+  long xExt;
+  long yExt;
+  unsigned long cbData;
+  [size_is(cbData)] byte data[];
+} RemHMETAFILEPICT;
+
+typedef union _userHMETAFILE switch(long fContext) {
+  case WDT_INPROC_CALL: long       hInproc;
+  case WDT_REMOTE_CALL: BYTE_BLOB *hRemote;
+  default:              long       hGlobal;
+} userHMETAFILE;
+
+typedef [unique] userHMETAFILE *wireHMETAFILE;
+
+typedef struct _remoteMETAFILEPICT {
+  long mm;
+  long xExt;
+  long yExt;
+  userHMETAFILE *hMF;
+} remoteMETAFILEPICT;
+
+typedef union _userHMETAFILEPICT switch(long fContext) {
+  case WDT_INPROC_CALL: long                hInproc;
+  case WDT_REMOTE_CALL: remoteMETAFILEPICT *hRemote;
+  default:              long                hGlobal;
+} userHMETAFILEPICT;
+
+typedef [unique] userHMETAFILEPICT *wireHMETAFILEPICT;
+
+cpp_quote("#if 0")
+DECLARE_WIREM_HANDLE(HMETAFILE);
+cpp_quote("#endif")
+DECLARE_WIREM_HANDLE(HMETAFILEPICT);
+
+/******************** GUID TYPES ********************/
+
+cpp_quote("#ifndef GUID_DEFINED")
+cpp_quote("#define GUID_DEFINED")
+typedef struct _GUID {
+  DWORD Data1;
+  WORD  Data2;
+  WORD  Data3;
+  BYTE  Data4[8];
+} GUID;
+cpp_quote("#endif")
+
+cpp_quote("#if 0 /* guiddef.h */")
+typedef GUID *LPGUID;
+typedef GUID IID;
+typedef IID *LPIID;
+
+cpp_quote("#if 0") /* for IDL only (C/C++ defs are in guiddef.h) */
+typedef GUID *REFGUID;
+typedef IID *REFIID;
+cpp_quote("#endif")
+
+cpp_quote("#endif /* guiddef.h */")
+
+/******************** MISC TYPES ********************/
+
+typedef enum tagDVASPECT
+{
+  DVASPECT_CONTENT   = 1,
+  DVASPECT_THUMBNAIL = 2,
+  DVASPECT_ICON      = 4,
+  DVASPECT_DOCPRINT  = 8
+} DVASPECT;
+
+typedef enum tagSTGC
+{
+  STGC_DEFAULT = 0,
+  STGC_OVERWRITE = 1,
+  STGC_ONLYIFCURRENT = 2,
+  STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE = 4,
+  STGC_CONSOLIDATE = 8
+} STGC;
+
+typedef enum tagSTGMOVE
+{
+  STGMOVE_MOVE = 0,
+  STGMOVE_COPY = 1,
+  STGMOVE_SHALLOWCOPY = 2
+} STGMOVE;
+
+/******************** OLE Automation ********************/
+
+cpp_quote("#if 0") /* for IDL only */
+typedef struct tagCY {
+  LONGLONG int64;
+} CY;
+cpp_quote("#else") /* C/C++ defs */
+cpp_quote("typedef union tagCY {")
+cpp_quote("    struct {")
+cpp_quote("#ifdef WORDS_BIGENDIAN")
+cpp_quote("        LONG  Hi;")
+cpp_quote("        ULONG Lo;")
+cpp_quote("#else")
+cpp_quote("        ULONG Lo;")
+cpp_quote("        LONG  Hi;")
+cpp_quote("#endif")
+cpp_quote("    } DUMMYSTRUCTNAME;")
+cpp_quote("    LONGLONG int64;")
+cpp_quote("} CY;")
+cpp_quote("#endif")
+
+typedef CY *LPCY;
+
+typedef struct tagDEC {
+  USHORT wReserved;
+  BYTE scale;
+  BYTE sign;
+  ULONG Hi32;
+  ULONGLONG Lo64;
+} DECIMAL;
+typedef DECIMAL *LPDECIMAL;
+
+typedef [unique] FLAGGED_WORD_BLOB *wireBSTR;
+typedef [wire_marshal(wireBSTR)] OLECHAR *BSTR;
+typedef BSTR *LPBSTR;
+
+typedef short VARIANT_BOOL;
+typedef VARIANT_BOOL _VARIANT_BOOL;
+cpp_quote("#define VARIANT_TRUE  ((VARIANT_BOOL)0xFFFF)")
+cpp_quote("#define VARIANT_FALSE ((VARIANT_BOOL)0x0000)")
+
+typedef struct tagBLOB {
+  ULONG cbSize;
+  [size_is(cbSize)] BYTE *pBlobData;
+} BLOB, *LPBLOB;
+
+typedef struct tagCLIPDATA {
+  ULONG cbSize;
+  long ulClipFmt;
+  [size_is(cbSize-4)] BYTE *pClipData;
+} CLIPDATA;
+cpp_quote("#define CBPCLIPDATA(cb) ((cb).cbSize - sizeof((cb).ulClipFmt))")
+
+typedef ULONG PROPID;
+
+/******************** VARTYPE ********************/
+
+typedef unsigned short VARTYPE;
+/* FIXME: enum VARENUM */
+
+} /* interface IWinTypes */
