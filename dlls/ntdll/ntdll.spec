@@ -36,7 +36,7 @@
 @ stub LdrAccessResource
 @ stdcall LdrDisableThreadCalloutsForDll(long) LdrDisableThreadCalloutsForDll
 @ stub LdrEnumResources
-@ stub LdrFindEntryForAddress
+@ stdcall LdrFindEntryForAddress(ptr ptr) LdrFindEntryForAddress
 @ stub LdrFindResourceDirectory_U
 @ stub LdrFindResource_U
 @ stdcall LdrGetDllHandle(long long ptr ptr) LdrGetDllHandle

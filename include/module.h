@@ -134,7 +134,7 @@ typedef struct _wine_modref
 	HMODULE16            hDummyMod; /* Win16 dummy module */
 	void                *dlhandle;  /* handle returned by dlopen() */
 	int                  tlsindex;  /* TLS index or -1 if none */
-
+        LDR_MODULE           ldr;
 	FARPROC            (*find_export)( struct _wine_modref *wm, LPCSTR func,
                                            int hint, BOOL snoop );
 
@@ -210,7 +210,6 @@ extern WINE_MODREF *exe_modref;
 extern CRITICAL_SECTION loader_section;
 extern int process_detaching;
 extern BOOL MODULE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved );
-extern WINE_MODREF* MODULE32_LookupHMODULE( HMODULE );
 
 /* loader/ne/module.c */
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );

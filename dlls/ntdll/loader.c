@@ -16,6 +16,8 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <assert.h>
+
 #include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
@@ -33,7 +35,7 @@ WINE_DECLARE_DEBUG_CHANNEL(module);
 WINE_DECLARE_DEBUG_CHANNEL(module);
 WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 
-static int free_lib_count;   /* recursion depth of FreeLibrary calls */
+static int free_lib_count;   /* recursion depth of LdrUnloadDll calls */
 
 /* filter for page-fault exceptions */
 static WINE_EXCEPTION_FILTER(page_fault)
@@ -43,6 +45,29 @@ static WINE_EXCEPTION_FILTER(page_fault)
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
+CRITICAL_SECTION loader_section = CRITICAL_SECTION_INIT( "loader_section" );
+
+/*************************************************************************
+ *		MODULE32_LookupHMODULE
+ * looks for the referenced HMODULE in the current process
+ * NOTE: Assumes that the process critical section is held!
+ */
+static WINE_MODREF *MODULE32_LookupHMODULE( HMODULE hmod )
+{
+    WINE_MODREF	*wm;
+
+    if (!hmod)
+    	return exe_modref;
+
+    if (!HIWORD(hmod)) {
+    	ERR("tried to lookup %p in win32 module handler!\n",hmod);
+	return NULL;
+    }
+    for ( wm = MODULE_modref_list; wm; wm=wm->next )
+	if (wm->module == hmod)
+	    return wm;
+    return NULL;
+}
 
 /*************************************************************************
  *		MODULE_AllocModRef
@@ -53,6 +78,7 @@ static WINE_EXCEPTION_FILTER(page_fault)
 WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
 {
     WINE_MODREF *wm;
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader(hModule);
 
     DWORD long_len = strlen( filename );
     DWORD short_len = GetShortPathNameA( filename, NULL, 0 );
@@ -77,7 +103,26 @@ WINE_MODREF *MODULE_AllocModRef( HMODULE hModule, LPCSTR filename )
         if (wm->next) wm->next->prev = wm;
         MODULE_modref_list = wm;
 
-        if (!(RtlImageNtHeader(hModule)->FileHeader.Characteristics & IMAGE_FILE_DLL))
+        wm->ldr.InLoadOrderModuleList.Flink = NULL;
+        wm->ldr.InLoadOrderModuleList.Blink = NULL;
+        wm->ldr.InMemoryOrderModuleList.Flink = NULL;
+        wm->ldr.InMemoryOrderModuleList.Blink = NULL;
+        wm->ldr.InInitializationOrderModuleList.Flink = NULL;
+        wm->ldr.InInitializationOrderModuleList.Blink = NULL;
+        wm->ldr.BaseAddress = hModule;
+        wm->ldr.EntryPoint = (nt->OptionalHeader.AddressOfEntryPoint) ?
+                             ((char *)hModule + nt->OptionalHeader.AddressOfEntryPoint) : 0;
+        wm->ldr.SizeOfImage = nt->OptionalHeader.SizeOfImage;
+        RtlCreateUnicodeStringFromAsciiz( &wm->ldr.FullDllName, wm->filename);
+        RtlCreateUnicodeStringFromAsciiz( &wm->ldr.BaseDllName, wm->modname);
+        wm->ldr.Flags = 0;
+        wm->ldr.LoadCount = 0;
+        wm->ldr.TlsIndex = 0;
+        wm->ldr.SectionHandle = NULL;
+        wm->ldr.CheckSum = 0;
+        wm->ldr.TimeDateStamp = 0;
+
+        if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL))
         {
             if (!exe_modref) exe_modref = wm;
             else FIXME( "Trying to load second .EXE file: %s\n", filename );
@@ -106,6 +151,27 @@ NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HMODULE hModule)
     RtlLeaveCriticalSection( &loader_section );
 
     return ret;
+}
+
+/******************************************************************
+ *              LdrFindEntryForAddress (NTDLL.@)
+ *
+ * The loader_section must be locked while calling this function
+ */
+NTSTATUS WINAPI LdrFindEntryForAddress(const void* addr, PLDR_MODULE* mod)
+{
+    WINE_MODREF*        wm;
+
+    for ( wm = MODULE_modref_list; wm; wm = wm->next )
+    {
+        if ((const void *)wm->module <= addr &&
+            (char *)addr < (char*)wm->module + wm->ldr.SizeOfImage)
+        {
+            *mod = &wm->ldr;
+            return STATUS_SUCCESS;
+        }
+    }
+    return STATUS_NO_MORE_ENTRIES;
 }
 
 /**********************************************************************
