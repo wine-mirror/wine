@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
+use strict;
 
-# Copyright 2000 Francois Gouget for CodeWeavers
+# Copyright 2000-2002 Francois Gouget for CodeWeavers
 # fgouget@codeweavers.com
 #
 # This library is free software; you can redistribute it and/or
@@ -236,7 +237,7 @@ my $TF_MFC=4;
 # Initialize a target:
 # - set the target type to TT_SETTINGS, i.e. no real target will
 #   be generated.
-sub target_init
+sub target_init($)
 {
   my $target=$_[0];
 
@@ -256,7 +257,7 @@ sub target_init
   @$target[$T_DEPENDS]=[];
 }
 
-sub get_default_init
+sub get_default_init($)
 {
   my $type=$_[0];
   if ($type == $TT_GUIEXE) {
@@ -303,7 +304,7 @@ my $P_TARGETS=2;
 # - set the project's path
 # - initialize the target list
 # - create a default target (will be removed later if unnecessary)
-sub project_init
+sub project_init($$)
 {
   my $project=$_[0];
   my $path=$_[1];
@@ -363,7 +364,7 @@ my $needs_mfc=0;
 ##
 # Cleans up a name to make it an acceptable Makefile
 # variable name.
-sub canonize
+sub canonize($)
 {
   my $name=$_[0];
 
@@ -375,7 +376,7 @@ sub canonize
 # Returns true is the specified pathname is absolute.
 # Note: pathnames that start with a variable '$' or
 # '~' are considered absolute.
-sub is_absolute
+sub is_absolute($)
 {
   my $path=$_[0];
 
@@ -384,7 +385,7 @@ sub is_absolute
 
 ##
 # Performs a binary search looking for the specified item
-sub bsearch
+sub bsearch($$)
 {
   my $array=$_[0];
   my $item=$_[1];
@@ -416,13 +417,13 @@ sub bsearch
 # Allows the user to specify makefile and target specific options
 # - target: the structure in which to store the results
 # - options: the string containing the options
-sub source_set_options
+sub source_set_options($$)
 {
   my $target=$_[0];
   my $options=$_[1];
 
   #FIXME: we must deal with escaping of stuff and all
-  foreach $option (split / /,$options) {
+  foreach my $option (split / /,$options) {
     if (@$target[$T_TYPE] == $TT_SETTINGS and $option =~ /^-D/) {
       push @{@$target[$T_DEFINES]},$option;
     } elsif (@$target[$T_TYPE] == $TT_SETTINGS and $option =~ /^-I/) {
@@ -461,7 +462,8 @@ sub source_set_options
 #   so if we find a project file and sources
 # - get a list of targets for this directory
 # - get the list of source files
-sub source_scan_directory
+sub source_scan_directory($$$$);
+sub source_scan_directory($$$$)
 {
   # a reference to the parent's project
   my $parent_project=$_[0];
@@ -506,7 +508,7 @@ sub source_scan_directory
   # First find out what this directory contains:
   # collect all sources, targets and subdirectories
   my $directory=get_directory_contents($path);
-  foreach $dentry (@$directory) {
+  foreach my $dentry (@$directory) {
     if ($dentry =~ /^\./) {
       next;
     }
@@ -516,7 +518,7 @@ sub source_scan_directory
 	# These directories are often used to store the object files and the
 	# resulting executable/library. They should not contain anything else.
 	my @candidates=grep /\.(exe|dll)$/i, @{get_directory_contents("$fullentry")};
-	foreach $candidate (@candidates) {
+	foreach my $candidate (@candidates) {
 	  if ($candidate =~ s/\.exe$//i) {
 	    $targets{$candidate}=1;
 	  } elsif ($candidate =~ s/^(.*)\.dll$/lib$1.so/i) {
@@ -619,7 +621,7 @@ sub source_scan_directory
       } else {
 	$prj_list=\@mak_files;
       }
-      foreach $filename (@$prj_list) {
+      foreach my $filename (@$prj_list) {
 	$filename =~ s/\.(dsp|mak)$//i;
 	if ($opt_target_type == $TT_DLL) {
 	  $filename = "lib$filename.so";
@@ -679,7 +681,7 @@ sub source_scan_directory
 	return;
       } else {
 	undef %targets;
-	foreach $target (split /,/,$target_list) {
+	foreach my $target (split /,/,$target_list) {
 	  $target =~ s+^\s*++;
 	  $target =~ s+\s*$++;
 	  # Also accept .exe and .dll as a courtesy
@@ -753,7 +755,7 @@ sub source_scan_directory
   my @local_dlls=();
   my @local_depends=();
   my @exe_list=();
-  foreach $target_name (sort { $b cmp $a } keys %targets) {
+  foreach my $target_name (sort { $b cmp $a } keys %targets) {
     # Create the target...
     my $basename;
     my $target=[];
@@ -841,25 +843,25 @@ sub source_scan_directory
       @$project_settings[$T_SOURCES_MISC]=[];
       @sources_misc=();
     } else {
-      foreach $source (@sources_c) {
+      foreach my $source (@sources_c) {
 	if ($source =~ /^$basename/i) {
 	  push @{@$target[$T_SOURCES_C]},$source;
 	  $source="";
 	}
       }
-      foreach $source (@sources_cxx) {
+      foreach my $source (@sources_cxx) {
 	if ($source =~ /^$basename/i) {
 	  push @{@$target[$T_SOURCES_CXX]},$source;
 	  $source="";
 	}
       }
-      foreach $source (@sources_rc) {
+      foreach my $source (@sources_rc) {
 	if ($source =~ /^$basename/i) {
 	  push @{@$target[$T_SOURCES_RC]},$source;
 	  $source="";
 	}
       }
-      foreach $source (@sources_misc) {
+      foreach my $source (@sources_misc) {
 	if ($source =~ /^$basename/i) {
 	  push @{@$target[$T_SOURCES_MISC]},$source;
 	  $source="";
@@ -880,25 +882,25 @@ sub source_scan_directory
   }
   # The sources that did not match, if any, go to the extra
   # source list of the project settings
-  foreach $source (@sources_c) {
+  foreach my $source (@sources_c) {
     if ($source ne "") {
       push @{@$project_settings[$T_SOURCES_C]},$source;
     }
   }
   @$project_settings[$T_SOURCES_C]=[sort @{@$project_settings[$T_SOURCES_C]}];
-  foreach $source (@sources_cxx) {
+  foreach my $source (@sources_cxx) {
     if ($source ne "") {
       push @{@$project_settings[$T_SOURCES_CXX]},$source;
     }
   }
   @$project_settings[$T_SOURCES_CXX]=[sort @{@$project_settings[$T_SOURCES_CXX]}];
-  foreach $source (@sources_rc) {
+  foreach my $source (@sources_rc) {
     if ($source ne "") {
       push @{@$project_settings[$T_SOURCES_RC]},$source;
     }
   }
   @$project_settings[$T_SOURCES_RC]=[sort @{@$project_settings[$T_SOURCES_RC]}];
-  foreach $source (@sources_misc) {
+  foreach my $source (@sources_misc) {
     if ($source ne "") {
       push @{@$project_settings[$T_SOURCES_MISC]},$source;
     }
@@ -909,7 +911,7 @@ sub source_scan_directory
   # this directory, then the programs should be linked with all
   # the libraries
   if (@local_dlls > 0 and @exe_list > 0) {
-    foreach $target (@exe_list) {
+    foreach my $target (@exe_list) {
       push @{@$target[$T_DLL_PATH]},"-L.";
       push @{@$target[$T_DLLS]},map { "$_.dll" } @local_dlls;
       # Also link in the Unix sense since none of the functions
@@ -923,7 +925,7 @@ sub source_scan_directory
 
 ##
 # Scan the source directories in search of things to build
-sub source_scan
+sub source_scan()
 {
   # If there's a single target then this is going to be the default target
   if (defined $opt_single_target) {
@@ -972,10 +974,10 @@ sub source_scan
 #
 #####
 
-sub postprocess_targets
+sub postprocess_targets()
 {
-  foreach $project (@projects) {
-    foreach $target (@{@$project[$P_TARGETS]}) {
+  foreach my $project (@projects) {
+    foreach my $target (@{@$project[$P_TARGETS]}) {
       if ((@$target[$T_FLAGS] & $TF_WRAP) != 0) {
 	my $wrapper=[];
 	target_init($wrapper);
@@ -1016,12 +1018,13 @@ sub postprocess_targets
 # - they have the case desired by the user
 # - their extension is of the appropriate case
 # - they don't contain annoying characters like ' ', '$', '#', ...
-sub fix_file_and_directory_names
+sub fix_file_and_directory_names($);
+sub fix_file_and_directory_names($)
 {
   my $dirname=$_[0];
 
   if (opendir(DIRECTORY, "$dirname")) {
-    foreach $dentry (readdir DIRECTORY) {
+    foreach my $dentry (readdir DIRECTORY) {
       if ($dentry =~ /^\./ or $dentry eq "CVS") {
 	next;
       }
@@ -1097,7 +1100,7 @@ my %directories;
 # We either get it from the directories hashtable which acts as a
 # cache, or use opendir, readdir, closedir and store the result
 # in the hashtable.
-sub get_directory_contents
+sub get_directory_contents($)
 {
   my $dirname=$_[0];
   my $directory;
@@ -1135,7 +1138,7 @@ sub get_directory_contents
 # Try to find a file for the specified filename. The attempt is
 # case-insensitive which is why it's not trivial. If a match is
 # found then we return the pathname with the correct case.
-sub search_from
+sub search_from($$)
 {
   my $dirname=$_[0];
   my $path=$_[1];
@@ -1150,7 +1153,7 @@ sub search_from
     $dirname.="/";
   }
 
-  foreach $component (@$path) {
+  foreach my $component (@$path) {
     #print "    looking for $component in \"$dirname\"\n";
     if ($component eq ".") {
       # Pass it as is
@@ -1170,7 +1173,7 @@ sub search_from
 
       my $directory=get_directory_contents $dirname;
       my $found;
-      foreach $dentry (@$directory) {
+      foreach my $dentry (@$directory) {
 	if ($dentry =~ /^$component$/i or
             (defined $renamed and $dentry =~ /^$renamed$/i)
            ) {
@@ -1200,7 +1203,7 @@ sub search_from
 # $dirname is the directory of the file containing the '#include' directive
 #    if '"' was used, it is an empty string otherwise
 # $project and $target specify part of the include path
-sub get_real_include_name
+sub get_real_include_name($$$$$)
 {
   my $line=$_[0];
   my $filename=$_[1];
@@ -1237,7 +1240,7 @@ sub get_real_include_name
       }
     }
     my $project_settings=@$project[$P_SETTINGS];
-    foreach $include (@{@$target[$T_INCLUDE_PATH]}, @{@$project_settings[$T_INCLUDE_PATH]}) {
+    foreach my $include (@{@$target[$T_INCLUDE_PATH]}, @{@$project_settings[$T_INCLUDE_PATH]}) {
       my $dirname=$include;
       $dirname=~ s+^-I++;
       if (!is_absolute($dirname)) {
@@ -1254,7 +1257,7 @@ sub get_real_include_name
     }
     my $dotdotpath=@$project[$P_PATH];
     $dotdotpath =~ s/[^\/]+/../g;
-    foreach $include (@{$global_settings[$T_INCLUDE_PATH]}) {
+    foreach my $include (@{$global_settings[$T_INCLUDE_PATH]}) {
       my $dirname=$include;
       $dirname=~ s+^-I++;
       $dirname=~ s+^\$\(TOPSRCDIR\)\/++;
@@ -1274,7 +1277,7 @@ sub get_real_include_name
   return $filename;
 }
 
-sub print_pack
+sub print_pack($$$)
 {
   my $indent=$_[0];
   my $size=$_[1];
@@ -1297,7 +1300,7 @@ sub print_pack
 # include path is used.
 # Also note that the include path is relative to the directory in which the
 # compiler is run, i.e. that of the project, not to that of the file.
-sub fix_file
+sub fix_file($$$)
 {
   my $filename=$_[0];
   my $project=$_[1];
@@ -1563,15 +1566,15 @@ sub fix_file
 ##
 # Analyzes each source file in turn to find and correct issues
 # that would cause it not to compile.
-sub fix_source
+sub fix_source()
 {
   print "Fixing the source files...\n";
-  foreach $project (@projects) {
-    foreach $target (@$project[$P_SETTINGS],@{@$project[$P_TARGETS]}) {
+  foreach my $project (@projects) {
+    foreach my $target (@$project[$P_SETTINGS],@{@$project[$P_TARGETS]}) {
       if (@$target[$T_FLAGS] & $TF_WRAPPER) {
 	next;
       }
-      foreach $source (@{@$target[$T_SOURCES_C]}, @{@$target[$T_SOURCES_CXX]}, @{@$target[$T_SOURCES_RC]}, @{@$target[$T_SOURCES_MISC]}) {
+      foreach my $source (@{@$target[$T_SOURCES_C]}, @{@$target[$T_SOURCES_CXX]}, @{@$target[$T_SOURCES_RC]}, @{@$target[$T_SOURCES_MISC]}) {
 	fix_file($source,$project,$target);
       }
     }
@@ -1588,7 +1591,7 @@ sub fix_source
 
 ##
 # Generates a target's .spec file
-sub generate_spec_file
+sub generate_spec_file($$$)
 {
   if ($opt_no_generated_specs) {
     return;
@@ -1636,7 +1639,7 @@ sub generate_spec_file
 
 ##
 # Generates a target's wrapper file
-sub generate_wrapper_file
+sub generate_wrapper_file($$)
 {
   my $path=$_[0];
   my $target=$_[1];
@@ -1647,15 +1650,15 @@ sub generate_wrapper_file
   }
 
   if (!open(FILEO,">$path@$target[$T_NAME]_wrapper.c")) {
-    print STDERR "error: unable to open \"$path$basename.c\" for writing:\n";
+    print STDERR "error: unable to open \"$path@$target[$T_NAME]_wrapper.c\" for writing:\n";
     print STDERR "       $!\n";
     return;
   }
   my $app_name="\"@$target[$T_NAME]\"";
   my $app_type=(@$target[$T_TYPE]==$TT_GUIEXE?"GUIEXE":"CUIEXE");
   my $app_init=(@$target[$T_TYPE]==$TT_GUIEXE?"\"WinMain\"":"\"main\"");
-  my $app_mfc=(@$target[$T_FLAGS] & $TF_MFC?"\"mfc\"":NULL);
-  foreach $line (@{$templates{"wrapper.c"}}) {
+  my $app_mfc=(@$target[$T_FLAGS] & $TF_MFC?"\"mfc\"":"NULL");
+  foreach my $line (@{$templates{"wrapper.c"}}) {
     my $l=$line;
     $l =~ s/\#\#WINEMAKER_APP_NAME\#\#/$app_name/;
     $l =~ s/\#\#WINEMAKER_APP_TYPE\#\#/$app_type/;
@@ -1669,7 +1672,7 @@ sub generate_wrapper_file
 ##
 # A convenience function to generate all the lists (defines,
 # C sources, C++ source, etc.) in the Makefile
-sub generate_list
+sub generate_list($$$;$)
 {
   my $name=$_[0];
   my $last=$_[1];
@@ -1681,7 +1684,7 @@ sub generate_list
     printf FILEO "%-22s=",$name;
   }
   if (defined $list) {
-    foreach $item (@$list) {
+    foreach my $item (@$list) {
       my $value;
       if (defined $data) {
 	$value=&$data($item);
@@ -1705,7 +1708,7 @@ sub generate_list
 
 ##
 # Generates a project's Makefile.in and all the target files
-sub generate_project_files
+sub generate_project_files($)
 {
   my $project=$_[0];
   my $project_settings=@$project[$P_SETTINGS];
@@ -1713,7 +1716,7 @@ sub generate_project_files
   my @exe_list=();
 
   # Then sort the targets and separate the libraries from the programs
-  foreach $target (sort { @$a[$T_NAME] cmp @$b[$T_NAME] } @{@$project[$P_TARGETS]}) {
+  foreach my $target (sort { @$a[$T_NAME] cmp @$b[$T_NAME] } @{@$project[$P_TARGETS]}) {
     if (@$target[$T_TYPE] == $TT_DLL) {
       push @dll_list,$target;
     } else {
@@ -1765,6 +1768,9 @@ sub generate_project_files
 
     print FILEO "### Global settings\n\n";
     # Make it so that the project-wide settings override the global settings
+    # FIXME: We should be setting no_extra for each list but this does not
+    # really matter since global settings will very soon move to Make.rules
+    my $no_extra;
     generate_list("DEFINES",0,@$project_settings[$T_DEFINES]);
     generate_list("",1,$global_settings[$T_DEFINES]);
     generate_list("INCLUDE_PATH",$no_extra,@$project_settings[$T_INCLUDE_PATH]);
@@ -1798,7 +1804,7 @@ sub generate_project_files
     my $extra_source_count=@{@$project_settings[$T_SOURCES_C]}+
                            @{@$project_settings[$T_SOURCES_CXX]}+
                            @{@$project_settings[$T_SOURCES_RC]};
-    my $no_extra=($extra_source_count == 0);
+    $no_extra=($extra_source_count == 0);
     if (!$no_extra) {
       print FILEO "### Extra source lists\n\n";
       generate_list("EXTRA_C_SRCS",1,@$project_settings[$T_SOURCES_C]);
@@ -1810,7 +1816,7 @@ sub generate_project_files
     }
 
     # Iterate over all the targets...
-    foreach $target (@{@$project[$P_TARGETS]}) {
+    foreach my $target (@{@$project[$P_TARGETS]}) {
       print FILEO "### @$target[$T_NAME] sources and settings\n\n";
       my $canon=canonize("@$target[$T_NAME]");
       $canon =~ s+_so$++;
@@ -1926,7 +1932,7 @@ sub generate_project_files
 
   if (@{@$project[$P_TARGETS]} > 0) {
     print FILEO "### Target specific build rules\n\n";
-    foreach $target (@{@$project[$P_TARGETS]}) {
+    foreach my $target (@{@$project[$P_TARGETS]}) {
       my $canon=canonize("@$target[$T_NAME]");
       my $mode;
 
@@ -1961,7 +1967,7 @@ sub generate_project_files
   }
   close(FILEO);
 
-  foreach $target (@{@$project[$P_TARGETS]}) {
+  foreach my $target (@{@$project[$P_TARGETS]}) {
     generate_spec_file(@$project[$P_PATH],$target,$project_settings);
     if (@$target[$T_FLAGS] & $TF_WRAPPER) {
       generate_wrapper_file(@$project[$P_PATH],$target);
@@ -1972,7 +1978,7 @@ sub generate_project_files
 ##
 # Perform the replacements in the template configure files
 # Return 1 for success, 0 for failure
-sub generate_configure
+sub generate_configure($$)
 {
   my $filename=$_[0];
   my $a_source_file=$_[1];
@@ -1989,9 +1995,9 @@ sub generate_configure
     print STDERR "       $!\n";
     return 0;
   }
-  foreach $line (@{$templates{$filename}}) {
+  foreach my $line (@{$templates{$filename}}) {
     if ($line =~ /^\#\#WINEMAKER_PROJECTS\#\#$/) {
-      foreach $project (@projects) {
+      foreach my $project (@projects) {
 	print FILEO "@$project[$P_PATH]Makefile\n";
       }
     } else {
@@ -2004,7 +2010,7 @@ sub generate_configure
   return 1;
 }
 
-sub generate_generic
+sub generate_generic($)
 {
   my $filename=$_[0];
 
@@ -2017,7 +2023,7 @@ sub generate_generic
     print STDERR "       $!\n";
     return;
   }
-  foreach $line (@{$templates{$filename}}) {
+  foreach my $line (@{$templates{$filename}}) {
     print FILEO $line;
   }
   close(FILEO);
@@ -2029,15 +2035,15 @@ sub generate_generic
 # configure.in
 # Make.rules.in
 # wineapploader.in
-sub generate_global_files
+sub generate_global_files()
 {
   generate_generic("Make.rules.in");
   generate_generic("wineapploader.in");
 
   # Get the name of a source file for configure.in
   my $a_source_file;
-  search_a_file: foreach $project (@projects) {
-    foreach $target (@{@$project[$P_TARGETS]}, @$project[$P_SETTINGS]) {
+  search_a_file: foreach my $project (@projects) {
+    foreach my $target (@{@$project[$P_TARGETS]}, @$project[$P_SETTINGS]) {
       $a_source_file=@{@$target[$T_SOURCES_C]}[0];
       if (!defined $a_source_file) {
 	$a_source_file=@{@$target[$T_SOURCES_CXX]}[0];
@@ -2073,7 +2079,7 @@ sub generate_global_files
 
 ##
 #
-sub generate_read_templates
+sub generate_read_templates()
 {
   my $file;
 
@@ -2096,13 +2102,13 @@ sub generate_read_templates
 ##
 # This is where we finally generate files. In fact this method does not
 # do anything itself but calls the methods that do the actual work.
-sub generate
+sub generate()
 {
   print "Generating project files...\n";
   generate_read_templates();
   generate_global_files();
 
-  foreach $project (@projects) {
+  foreach my $project (@projects) {
     my $path=@$project[$P_PATH];
     if ($path eq "") {
       $path=".";
@@ -2146,13 +2152,13 @@ $opt_no_banner=0;
 #
 #####
 
-sub print_banner
+sub print_banner()
 {
   print "Winemaker $version\n";
   print "Copyright 2000 Francois Gouget <fgouget\@codeweavers.com> for CodeWeavers\n";
 }
 
-sub usage
+sub usage()
 {
   print_banner();
   print STDERR "Usage: winemaker [--nobanner] [--backup|--nobackup] [--nosource-fix]\n";
