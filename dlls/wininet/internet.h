@@ -45,8 +45,11 @@
 # include <sys/socket.h>
 #endif
 
-#ifdef __MINGW32__
+#if defined(__MINGW32__) || defined (_MSC_VER)
 #include "winsock2.h"
+#ifndef MSG_WAITALL
+#define MSG_WAITALL 0
+#endif
 #else
 #define closesocket close
 #endif /* __MINGW32__ */
