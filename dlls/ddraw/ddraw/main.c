@@ -84,7 +84,7 @@ void _common_IDirectDrawImpl_SetDisplayMode(IDirectDrawImpl* This) {
 	    0,
 	    "WINE_DirectDraw",
 	    "WINE_DirectDraw",
-	    WS_VISIBLE|WS_SYSMENU|WS_THICKFRAME|WS_BORDER,
+	    WS_POPUP,
 	    0,0,
 	    This->d.width,
 	    This->d.height,
