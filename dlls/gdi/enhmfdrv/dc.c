@@ -62,6 +62,16 @@ UINT EMFDRV_SetTextAlign( PHYSDEV dev, UINT align )
     return EMFDRV_WriteRecord( dev, &emr.emr );
 }
 
+BOOL EMFDRV_SetTextJustification(PHYSDEV dev, INT nBreakExtra, INT nBreakCount)
+{
+    EMRSETTEXTJUSTIFICATION emr;
+    emr.emr.iType = EMR_SETTEXTJUSTIFICATION;
+    emr.emr.nSize = sizeof(emr);
+    emr.nBreakExtra = nBreakExtra;
+    emr.nBreakCount = nBreakCount;
+    return EMFDRV_WriteRecord(dev, &emr.emr);
+}
+
 INT EMFDRV_SetBkMode( PHYSDEV dev, INT mode )
 {
     EMRSETBKMODE emr;

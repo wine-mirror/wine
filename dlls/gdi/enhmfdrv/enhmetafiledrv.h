@@ -135,6 +135,8 @@ extern INT      EMFDRV_SetROP2( PHYSDEV dev, INT rop );
 extern INT      EMFDRV_SetStretchBltMode( PHYSDEV dev, INT mode );
 extern UINT     EMFDRV_SetTextAlign( PHYSDEV dev, UINT align );
 extern COLORREF EMFDRV_SetTextColor( PHYSDEV dev, COLORREF color );
+extern BOOL     EMFDRV_SetTextJustification( PHYSDEV dev, INT nBreakExtra, 
+                                             INT nBreakCount );
 extern INT      EMFDRV_SetViewportExt( PHYSDEV dev, INT x, INT y );
 extern INT      EMFDRV_SetViewportOrg( PHYSDEV dev, INT x, INT y );
 extern INT      EMFDRV_SetWindowExt( PHYSDEV dev, INT x, INT y );

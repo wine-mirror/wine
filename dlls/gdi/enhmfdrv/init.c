@@ -133,7 +133,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_SetTextAlign,             /* pSetTextAlign */
     NULL,                            /* pSetTextCharacterExtra */
     EMFDRV_SetTextColor,             /* pSetTextColor */
-    NULL,                            /* pSetTextJustification */
+    EMFDRV_SetTextJustification,     /* pSetTextJustification */ 
     EMFDRV_SetViewportExt,           /* pSetViewportExt */
     EMFDRV_SetViewportOrg,           /* pSetViewportOrg */
     EMFDRV_SetWindowExt,             /* pSetWindowExt */
