@@ -16,6 +16,9 @@ static DWORD DPLAYX_dwProcessesAttached = 0;
 
 BOOL WINAPI DPLAYX_LibMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved )
 {
+
+  FIXME( "(%p,0x%08lx,%p) & 0x%08lx\n", hinstDLL, fdwReason, lpvReserved, DPLAYX_dwProcessesAttached );
+
   switch ( fdwReason ) 
   {
     case DLL_PROCESS_ATTACH:
@@ -24,6 +27,7 @@ BOOL WINAPI DPLAYX_LibMain( HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReser
       if ( DPLAYX_dwProcessesAttached == 0 )
       {
         /* First instance perform construction of global processor data */ 
+        FIXME( "DPLAYX_dwProcessesAttached = 0x%08lx\n", DPLAYX_dwProcessesAttached );
         DPLAYX_ConstructData();
       } 
 

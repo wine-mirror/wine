@@ -1986,11 +1986,18 @@ HRESULT WINAPI DirectPlayLobbyCreateW( LPGUID lpGUIDDSP,
   /* Parameter Check: lpGUIDSP, lpUnk & lpData must be NULL. dwDataSize must 
    * equal 0. These fields are mostly for future expansion.
    */
-  if ( lpGUIDDSP || lpUnk || lpData || dwDataSize )
+  if ( lpGUIDDSP || lpData || dwDataSize )
   {
      *lplpDPL = NULL;
      ERR("Bad parameters!\n" );
      return DPERR_INVALIDPARAMS;
+  }
+
+  if( lpUnk )
+  {
+     *lplpDPL = NULL;
+     ERR("Bad parameters!\n" );
+     return CLASS_E_NOAGGREGATION;
   }
 
   return directPlayLobby_QueryInterface( &IID_IDirectPlayLobby, (void**)lplpDPL );  

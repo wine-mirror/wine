@@ -18,6 +18,7 @@
 #include "dpinit.h"
 #include "dplayx_global.h"
 #include "name_server.h"
+#include "dplayx_queue.h"
 
 /* FIXME: This stuff shouldn't really be here. It indicates a poor architectural coupling */
 #include "dplobby.h"
@@ -56,12 +57,54 @@ typedef struct tagDirectPlayIUnknownData
   CRITICAL_SECTION  DP_lock;
 } DirectPlayIUnknownData;
 
-typedef struct _enumSessionAsyncCallbackData
+typedef struct tagEnumSessionAsyncCallbackData
 {
   LPDPENUMSESSIONSCALLBACK2 cb;
   LPVOID lpContext;
   DWORD dwTimeout;
 } EnumSessionAsyncCallbackData;
+
+
+struct PlayerData
+{
+  /* Individual player information */
+  DPID dpid;
+  
+  DPNAME name;
+  HANDLE hEvent;
+  LPVOID lpData;
+  DWORD  dwDataSize;
+};
+typedef struct PlayerData* lpPlayerData;
+
+struct PlayerList
+{
+  TAILQ_ENTRY(PlayerList) players;
+
+  struct PlayerData playerData;
+};
+typedef struct PlayerList* lpPlayerList;
+
+struct GroupData
+{
+  TAILQ_ENTRY(GroupList)  groups;  /* A group has [0..n] groups */
+  TAILQ_ENTRY(PlayerList) players; /* A group has [0..n] players */
+
+  /* Individual group information */
+  DPID   dpid;
+  DPNAME name;
+  LPVOID lpData;
+  DWORD  dwDataSize;
+};
+typedef struct GroupData* lpGroupData;
+
+struct GroupList
+{
+  TAILQ_ENTRY(GroupList) groups;
+
+  struct GroupData groupData;
+};
+typedef struct GroupList* lpGroupList;
 
 /* Contains all dp1 and dp2 data members */
 typedef struct tagDirectPlay2Data
@@ -72,7 +115,12 @@ typedef struct tagDirectPlay2Data
 
   EnumSessionAsyncCallbackData enumSessionAsyncCallbackData;
 
-  LPVOID lpNameServerData; /* DPlay interface doesn't know type */
+  LPVOID lpNameServerData; /* DPlay interface doesn't know contents */
+
+  BOOL bHostInterface; /* Did this interface create the session */
+
+  TAILQ_HEAD( ,PlayerList) players;
+  TAILQ_HEAD( ,GroupList)  groups;
 } DirectPlay2Data;
 
 typedef struct tagDirectPlay3Data
@@ -117,6 +165,30 @@ static ICOM_VTABLE(IDirectPlay4) directPlay4AVT;
 static ICOM_VTABLE(IDirectPlay2) directPlay2WVT;
 static ICOM_VTABLE(IDirectPlay3) directPlay3WVT;
 static ICOM_VTABLE(IDirectPlay4) directPlay4WVT;
+
+/* Local function prototypes */
+static lpPlayerData DP_FindPlayer( IDirectPlay2AImpl* This, DPID dpid );
+static lpPlayerData DP_CreatePlayer( IDirectPlay2* iface, LPDPID lpid, 
+                                     LPDPNAME lpName, HANDLE hEvent, 
+                                     BOOL bAnsi );
+static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, LPDPNAME lpSrc, BOOL bAnsi );
+static void DP_SetPlayerData( lpPlayerData lpPData, LPVOID lpData, 
+                              DWORD dwDataSize );
+
+static lpGroupData DP_FindGroup( IDirectPlay2AImpl* This, DPID dpid );
+static lpGroupData DP_CreateGroup( IDirectPlay2* iface, LPDPID lpid,
+                                   LPDPNAME lpName, BOOL bAnsi );
+static void DP_SetGroupData( lpGroupData lpGData, LPVOID lpData,
+                             DWORD dwDataSize );
+
+
+
+
+static DWORD kludgePlayerGroupId = 100;
+
+
+/* ------------------------------------------------------------------ */
+
 
 BOOL DP_CreateIUnknown( LPVOID lpDP )
 {
@@ -165,6 +237,11 @@ BOOL DP_CreateDirectPlay2( LPVOID lpDP )
   This->dp2->enumSessionAsyncCallbackData.lpContext = NULL;
   This->dp2->enumSessionAsyncCallbackData.dwTimeout = INFINITE;
 
+  This->dp2->bHostInterface = FALSE;
+
+  TAILQ_INIT(&This->dp2->players);
+  TAILQ_INIT(&This->dp2->groups);
+
   if( !NS_InitializeSessionCache( &This->dp2->lpNameServerData ) )
   {
     return FALSE;
@@ -177,11 +254,15 @@ BOOL DP_DestroyDirectPlay2( LPVOID lpDP )
 {
   ICOM_THIS(IDirectPlay2AImpl,lpDP);
 
+  FIXME( ": memory leak\n" );
+
   if( This->dp2->hEnumSessionThread != INVALID_HANDLE_VALUE )
   {
     TerminateThread( This->dp2->hEnumSessionThread, 0 );
     CloseHandle( This->dp2->hEnumSessionThread );
   }
+
+  /* Delete the player and group lists */
 
   NS_DeleteSessionCache( This->dp2->lpNameServerData );
   
@@ -624,13 +705,109 @@ static HRESULT WINAPI DirectPlay2WImpl_Close
   return DP_OK;
 }
 
+static
+lpGroupData DP_CreateGroup( IDirectPlay2* iface, LPDPID lpid,
+                            LPDPNAME lpName, BOOL bAnsi )
+{
+  ICOM_THIS(IDirectPlay2Impl,iface);
+  lpGroupList lpGroup;
+
+  TRACE( "(%p)->(%p,%p,%u)\n", This, lpid, lpName, bAnsi );
+
+  /* Allocate the new space and add to end of interface player list */
+  lpGroup = (lpGroupList) HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                     sizeof( *lpGroup ) );
+
+  if( lpGroup == NULL )
+  {
+    return NULL;
+  }
+
+  TAILQ_INSERT_TAIL(&This->dp2->groups,lpGroup,groups);
+
+  if( *lpid == DPID_UNKNOWN )
+  {
+    /* Assign the next available player ID - FIXME crap solution */
+    lpGroup->groupData.dpid = kludgePlayerGroupId++;
+  }
+  else
+  {
+    /* Set the desired player ID - no sanity checking to see if it exists */
+    lpGroup->groupData.dpid = *lpid;
+  }
+
+  DP_CopyDPNAMEStruct( &lpGroup->groupData.name, lpName, bAnsi );
+
+  return &lpGroup->groupData;
+}
+
+static lpGroupData DP_FindGroup( IDirectPlay2AImpl* This, DPID dpid )
+{
+  lpGroupList lpGroups;
+
+  TRACE( "(%p)->(0x%08lx)\n", This, dpid );
+
+  TAILQ_FIND_ENTRY( &This->dp2->groups, groups, groupData.dpid, dpid, lpGroups );
+
+  if( lpGroups )
+  {
+    return &lpGroups->groupData;
+  }
+  else
+  {
+    return NULL;
+  }
+}
+
+
 static HRESULT WINAPI DirectPlay2AImpl_CreateGroup
           ( LPDIRECTPLAY2A iface, LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags )
 {
+  lpGroupData lpGData;
+
   ICOM_THIS(IDirectPlay2Impl,iface);
+
   FIXME("(%p)->(%p,%p,%p,0x%08lx,0x%08lx): stub\n", This, lpidGroup, lpGroupName, lpData, dwDataSize, dwFlags );
+
+  lpGData = DP_CreateGroup( iface, lpidGroup, lpGroupName, TRUE /* Ansi */ );
+
+  if( lpGData == NULL )
+  {
+    return DPERR_CANTADDPLAYER; /* yes player not group */
+  }
+ 
+  DP_SetGroupData( lpGData, lpData, dwDataSize );
+
+  /* FIXME: Should send DPMSG_CREATEPLAYERORGROUP message to everyone,
+            local and remote, that belongs to this session. This will not
+            be done by calling SetPlayerData */
+  FIXME( "Should broadcast group creation to everything in session\n" );
+
   return DP_OK;
 }
+
+static void
+DP_SetGroupData( lpGroupData lpGData, LPVOID lpData, DWORD dwDataSize )
+{
+  /* Clear out the data with this player */
+  if( lpGData->dwDataSize != 0 )
+  {
+        HeapFree( GetProcessHeap(), 0, lpGData->lpData );
+        lpGData->lpData = NULL;
+        lpGData->dwDataSize = 0;
+  }
+
+  /* Reallocate for new data */
+  if( lpData )
+  {
+    lpGData->lpData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                 sizeof( dwDataSize ) );
+    memcpy( lpGData->lpData, lpData, dwDataSize );
+    lpGData->dwDataSize = dwDataSize;
+  }
+
+}
+
 
 static HRESULT WINAPI DirectPlay2WImpl_CreateGroup
           ( LPDIRECTPLAY2 iface, LPDPID lpidGroup, LPDPNAME lpGroupName, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags )
@@ -640,15 +817,218 @@ static HRESULT WINAPI DirectPlay2WImpl_CreateGroup
   return DP_OK;
 }
 
-static HRESULT WINAPI DirectPlay2AImpl_CreatePlayer
-          ( LPDIRECTPLAY2A iface, LPDPID lpidPlayer, LPDPNAME lpPlayerName, HANDLE hEvent, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags )
+/* This function will just create the storage for the new player.
+ * In the future it may want to intialize, but for the time being
+ * that will be done seperately. 
+ * 
+ * If *lpid == DPID_UNKNOWN then assign the next available player
+ */
+static 
+lpPlayerData DP_CreatePlayer( IDirectPlay2* iface, LPDPID lpid, 
+                              LPDPNAME lpName, HANDLE hEvent, BOOL bAnsi )
 {
   ICOM_THIS(IDirectPlay2Impl,iface);
+  lpPlayerList lpPlayer;
 
-  FIXME("(%p)->(%p,%p,%d,%p,0x%08lx,0x%08lx): stub\n", This, lpidPlayer, lpPlayerName, hEvent, lpData, dwDataSize, dwFlags );
+  TRACE( "(%p)->(%p,%p,%u)\n", This, lpid, lpName, bAnsi );
 
-  /* FIXME: Should send DPMSG_CREATEPLAYERORGROUP message to everyone, local and remote, that
-            belongs to this session */
+  /* Allocate the new space and add to end of interface player list */
+  lpPlayer = (lpPlayerList) HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                       sizeof( *lpPlayer ) );
+
+  if( lpPlayer == NULL )
+  {
+    return NULL;
+  }
+
+  TAILQ_INSERT_TAIL(&This->dp2->players,lpPlayer,players);
+
+  if( *lpid == DPID_UNKNOWN )
+  {
+    /* Assign the next available player ID - FIXME crap solution */
+    lpPlayer->playerData.dpid = kludgePlayerGroupId++; 
+  }
+  else 
+  {
+    /* Set the desired player ID - no sanity checking to see if it exists */
+    lpPlayer->playerData.dpid = *lpid;
+  }
+
+  DP_CopyDPNAMEStruct( &lpPlayer->playerData.name, lpName, bAnsi );
+
+  lpPlayer->playerData.hEvent = hEvent;
+
+  return &lpPlayer->playerData;
+}
+
+static lpPlayerData DP_FindPlayer( IDirectPlay2AImpl* This, DPID dpid )
+{
+  lpPlayerList lpPlayers;
+
+  TRACE( "(%p)->(0x%08lx)\n", This, dpid );
+
+  TAILQ_FIND_ENTRY( &This->dp2->players, players, playerData.dpid, dpid, lpPlayers );
+
+  if( lpPlayers )
+  {
+    return &lpPlayers->playerData;
+  }
+  else
+  {
+    return NULL;
+  }
+}
+
+/* Basic area for Dst must already be allocated */
+static BOOL DP_CopyDPNAMEStruct( LPDPNAME lpDst, LPDPNAME lpSrc, BOOL bAnsi )
+{
+  if( lpSrc == NULL )
+  {
+    ZeroMemory( lpDst, sizeof( *lpDst ) );
+    lpDst->dwSize = sizeof( *lpDst );
+    return TRUE;
+  }
+
+  if( lpSrc->dwSize != sizeof( *lpSrc) )   
+  {
+    return FALSE;
+  }
+
+  /* Delete any existing pointers */
+  if( lpDst->psn.lpszShortNameA )
+  {
+    HeapFree( GetProcessHeap(), 0, lpDst->psn.lpszShortNameA );
+  }
+
+  if( lpDst->pln.lpszLongNameA )
+  {
+    HeapFree( GetProcessHeap(), 0, lpDst->psn.lpszShortNameA );
+  }
+
+  /* Copy as required */
+  memcpy( lpDst, lpSrc, lpSrc->dwSize ); 
+
+  if( bAnsi )
+  {
+    if( lpSrc->psn.lpszShortNameA )
+    {
+      lpDst->psn.lpszShortNameA = 
+        HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY, 
+                        lpSrc->psn.lpszShortNameA );
+    }
+    if( lpSrc->pln.lpszLongNameA )
+    {
+      lpDst->pln.lpszLongNameA =
+        HEAP_strdupA( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                        lpSrc->pln.lpszLongNameA );
+    }
+  }
+  else
+  {
+    if( lpSrc->psn.lpszShortNameA )
+    {
+      lpDst->psn.lpszShortName = 
+        HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                        lpSrc->psn.lpszShortName );
+    }
+    if( lpSrc->pln.lpszLongNameA )
+    {
+      lpDst->pln.lpszLongName =
+        HEAP_strdupW( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                        lpSrc->pln.lpszLongName );
+    }
+  }
+
+  return TRUE;
+}
+
+static void 
+DP_SetPlayerData( lpPlayerData lpPData, LPVOID lpData, DWORD dwDataSize )
+{
+  /* Clear out the data with this player */
+  if( lpPData->dwDataSize != 0 )
+  {
+        HeapFree( GetProcessHeap(), 0, lpPData->lpData );
+        lpPData->lpData = NULL;
+        lpPData->dwDataSize = 0;
+  }
+
+  /* Reallocate for new data */
+  if( lpData )
+  {
+    lpPData->lpData = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                   sizeof( dwDataSize ) );
+    memcpy( lpPData->lpData, lpData, dwDataSize );
+    lpPData->dwDataSize = dwDataSize;
+  }
+  
+}
+
+static HRESULT WINAPI DirectPlay2AImpl_CreatePlayer 
+( LPDIRECTPLAY2A iface, 
+  LPDPID lpidPlayer, 
+  LPDPNAME lpPlayerName, 
+  HANDLE hEvent, 
+  LPVOID lpData, 
+  DWORD dwDataSize, 
+  DWORD dwFlags )
+{
+  lpPlayerData lpPData;
+  ICOM_THIS(IDirectPlay2Impl,iface);
+
+  TRACE("(%p)->(%p,%p,%d,%p,0x%08lx,0x%08lx)\n", This, lpidPlayer, lpPlayerName, hEvent, lpData, dwDataSize, dwFlags );
+
+  if( dwFlags == 0 ) 
+  {
+    dwFlags = DPPLAYER_SPECTATOR;
+  }
+
+  /* Verify we know how to handle all the flags */
+  if( !( ( dwFlags & DPPLAYER_SERVERPLAYER ) ||
+         ( dwFlags & DPPLAYER_SPECTATOR )
+       )
+    )
+  {
+    /* Assume non fatal failure */
+    ERR( "unknown dwFlags = 0x%08lx\n", dwFlags );
+  }
+
+  if ( dwFlags & DPPLAYER_SERVERPLAYER )
+  {
+    /* We have a request to create the "master" of the session.
+     * This computer needs to be the session host and the server
+     * player can't have been created yet. 
+     */
+    if( ( !This->dp2->bHostInterface ) ||
+        ( DP_FindPlayer( This, DPID_SERVERPLAYER ) )
+      )
+    {
+      return DPERR_CANTCREATEPLAYER;
+    }
+
+    *lpidPlayer = DPID_SERVERPLAYER;
+  }
+  else
+  {
+    *lpidPlayer = DPID_UNKNOWN;
+  }
+
+  lpPData = DP_CreatePlayer( iface, lpidPlayer, 
+                             lpPlayerName, hEvent, TRUE /*Ansi*/ );
+
+  if( lpPData == NULL )
+  {
+    return DPERR_CANTADDPLAYER;
+  }
+
+  /* Update the information and send it to all players in the session */
+  DP_SetPlayerData( lpPData, lpData, dwDataSize );  
+
+
+  /* FIXME: Should send DPMSG_CREATEPLAYERORGROUP message to everyone, 
+            local and remote, that belongs to this session. This will not 
+            be done by calling SetPlayerData */
+  FIXME( "Should broadcast player creation to everything in session\n" );
 
   return DP_OK;
 }
@@ -747,7 +1127,9 @@ static HRESULT WINAPI DirectPlay2AImpl_EnumPlayers
           ( LPDIRECTPLAY2A iface, LPGUID lpguidInstance, LPDPENUMPLAYERSCALLBACK2 lpEnumPlayersCallback2, LPVOID lpContext, DWORD dwFlags )
 {
   ICOM_THIS(IDirectPlay2Impl,iface);
+
   FIXME("(%p)->(%p,%p,%p,0x%08lx): stub\n", This, lpguidInstance, lpEnumPlayersCallback2, lpContext, dwFlags );
+
   return DP_OK;
 }
 
@@ -1098,6 +1480,7 @@ static HRESULT WINAPI DirectPlay2AImpl_Open
        the name server so that others can join this session */
     NS_SetLocalComputerAsNameServer( lpsd );
 
+    This->dp2->bHostInterface = TRUE;
   }
 
   if( dwFlags )
@@ -1151,8 +1534,28 @@ static HRESULT WINAPI DirectPlay2WImpl_Send
 static HRESULT WINAPI DirectPlay2AImpl_SetGroupData
           ( LPDIRECTPLAY2A iface, DPID idGroup, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags )
 {
+  lpGroupData lpGData;
   ICOM_THIS(IDirectPlay2Impl,iface);
-  FIXME("(%p)->(0x%08lx,%p,0x%08lx,0x%08lx): stub\n", This, idGroup, lpData, dwDataSize, dwFlags );
+
+  FIXME("(%p)->(0x%08lx,%p,0x%08lx,0x%08lx): dwFlags ignored\n", This, idGroup, lpData, dwDataSize, dwFlags );
+
+  /* Parameter check */
+  if( lpData == NULL )
+  {
+    if( dwDataSize != 0 )
+    {
+      return DPERR_INVALIDPARAMS;
+    }
+  }
+
+  /* Find the pointer to the data for this player */
+  if( ( lpGData = DP_FindGroup( This, idGroup ) ) == NULL )
+  {
+    return DPERR_INVALIDOBJECT;
+  }
+
+  DP_SetGroupData( lpGData, lpData, dwDataSize );
+
   return DP_OK;
 }
 
@@ -1183,8 +1586,33 @@ static HRESULT WINAPI DirectPlay2WImpl_SetGroupName
 static HRESULT WINAPI DirectPlay2AImpl_SetPlayerData
           ( LPDIRECTPLAY2A iface, DPID idPlayer, LPVOID lpData, DWORD dwDataSize, DWORD dwFlags )
 {
+  lpPlayerData lpPData;
   ICOM_THIS(IDirectPlay2Impl,iface);
-  FIXME("(%p)->(0x%08lx,%p,0x%08lx,0x%08lx): stub\n", This, idPlayer, lpData, dwDataSize, dwFlags );
+
+  TRACE("(%p)->(0x%08lx,%p,0x%08lx,0x%08lx)\n", This, idPlayer, lpData, dwDataSize, dwFlags );
+
+  /* Parameter check */
+  if( lpData == NULL )
+  {
+    if( dwDataSize != 0 )
+    {
+      return DPERR_INVALIDPARAMS;
+    }
+  }
+
+  /* Find the pointer to the data for this player */
+  if( ( lpPData = DP_FindPlayer( This, idPlayer ) ) == NULL )
+  {
+    return DPERR_INVALIDOBJECT;
+  }
+
+  DP_SetPlayerData( lpPData, lpData, dwDataSize );
+
+  if( !(dwFlags & DPSET_LOCAL ) ) /* Is DPSET_REMOTE? */
+  {
+    FIXME( "Change not propagated to all players in the session\n" );
+  }
+
   return DP_OK;
 }
 
@@ -1200,7 +1628,9 @@ static HRESULT WINAPI DirectPlay2AImpl_SetPlayerName
           ( LPDIRECTPLAY2A iface, DPID idPlayer, LPDPNAME lpPlayerName, DWORD dwFlags )
 {
   ICOM_THIS(IDirectPlay2Impl,iface);
+
   FIXME("(%p)->(0x%08lx,%p,0x%08lx): stub\n", This, idPlayer, lpPlayerName, dwFlags );
+
   return DP_OK;
 }
 
@@ -1645,7 +2075,9 @@ static HRESULT WINAPI DirectPlay3AImpl_SecureOpen
        the name server so that others can join this session */
     NS_SetLocalComputerAsNameServer( lpsd );
 
+    This->dp2->bHostInterface = TRUE;
   }
+
   if( dwFlags )
   {
     ERR( ": ignored dwFlags 0x%08lx\n", dwFlags );
