@@ -754,12 +754,8 @@ static HRESULT WINAPI PrimaryBufferImpl_GetCaps(
 	ICOM_THIS(PrimaryBufferImpl,iface);
   	TRACE("(%p)->(%p)\n",This,caps);
 
-	if (caps == NULL)
+	if (caps == NULL || caps->dwSize!=sizeof(*caps))
 		return DSERR_INVALIDPARAM;
-
-	/* I think we should check this value, not set it. See */
-	/* Inside DirectX, p215. That should apply here, too. */
-	caps->dwSize = sizeof(*caps);
 
 	caps->dwFlags = This->dsbd.dwFlags;
 	if (This->dsound->hwbuf) caps->dwFlags |= DSBCAPS_LOCHARDWARE;
