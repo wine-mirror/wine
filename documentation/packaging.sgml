@@ -14,6 +14,9 @@
         <para>
           Updated by &name-andreas-mohr; <email>&email-andreas-mohr;</email>
         </para>
+        <para>
+          Updated by &name-tom-wickline; <email>&email-tom-wickline;</email>
+        </para>
     </sect1>
 
     <sect1 id="pkg-date"> <title>Document Revision Date</title>
@@ -31,7 +34,7 @@
       documentation to include info about new features they implemented).
       </para>
       <para>
-      This document was last revised on November 14, 2001.</para>
+      This document was last revised on January 16, 2003.</para>
 
       </sect1>
 
@@ -55,11 +58,11 @@
             <listitem id=PREFIX><para id=prefix.id><EnVar>PREFIX</EnVar></para>
                 <para>
                 <envar>PREFIX</envar> is the prefix used when selecting
-                an installation target.  The current default is /usr.
+                an installation target.  The current default is /usr/local.
                 This results in binary installation into /usr/bin,
                 library installation into /usr/wine/lib, and so forth.
                 This value can be overridden by the packager.
-                In fact, <ulink url="http://www.pathname.com/fhs/">FHS 2.1</ulink>
+                In fact, <ulink url="http://www.pathname.com/fhs/">FHS 2.2</ulink>
                 specifications suggest that a better
                 prefix is /opt/wine.  Ideally, a packager would also
                 allow the installer to override this value.
@@ -71,7 +74,7 @@
                 <envar>ETCDIR</envar> is the prefix that Wine uses
                 to find the global configuration directory.
                 This can be changed by the configure option sysconfdir.
-                The current default is /etc.
+                The current default is $prefix/etc.
                 </para>
             </listitem>
 
@@ -219,11 +222,10 @@
           A configuration file
           </para>
           <para>
-          Wine will not run without a configuration file.  Further,
-          no default is currently provided by Wine.  Some packagers may attempt
-          to provide (or dynamically generate) a default configuration
-          file.  Some packagers may wish to
-          rely on winesetup to generate the configuration file.
+          Wine will not run without a configuration file.  Wine provides a
+          a sample config file and it can be found in /usr/share/doc/wine/samples.
+          Some packagers may attempt to provide (or dynamically generate) a default configuration
+          file.  Some packagers may wish to rely on winesetup to generate the configuration file.
           </para>
         </listitem>
 
@@ -246,11 +248,13 @@
                 An initial set of registry entries.
               </para>
                 <para>
-                The current Wine standard is to use the regapi tool
+                The current Wine standard is to use the regedit tool
                 against the 'winedefault.reg' file to generate
                 a default registry.
                 </para>
-                <para>
+                <para> 
+                The current preferred method of configuring/installing
+                Wine is to run /toos/wineinstall.
                 There are several other choices that could be made;
                 registries can be imported from a Windows partition.
                 At this time, Wine does not completely support
