@@ -82,6 +82,17 @@ static INT mru = -1;
 
 static int antialias = 1;
 
+/* some default values just in case */
+#ifndef SONAME_LIBX11
+#define SONAME_LIBX11 "libX11.so"
+#endif
+#ifndef SONAME_LIBXEXT
+#define SONAME_LIBXEXT "libXext.so"
+#endif
+#ifndef SONAME_LIBXRENDER
+#define SONAME_LIBXRENDER "libXrender.so"
+#endif
+
 static void *xrender_handle;
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f;
@@ -111,10 +122,9 @@ void X11DRV_XRender_Init(void)
     int error_base, event_base, i;
     XRenderPictFormat pf;
 
-    /* FIXME: should find correct soname at compile time */
-    if (!wine_dlopen("libX11.so", RTLD_NOW|RTLD_GLOBAL, NULL, 0)) return;
-    if (!wine_dlopen("libXext.so", RTLD_NOW|RTLD_GLOBAL, NULL, 0)) return;
-    xrender_handle = wine_dlopen("libXrender.so", RTLD_NOW, NULL, 0);
+    if (!wine_dlopen(SONAME_LIBX11, RTLD_NOW|RTLD_GLOBAL, NULL, 0)) return;
+    if (!wine_dlopen(SONAME_LIBXEXT, RTLD_NOW|RTLD_GLOBAL, NULL, 0)) return;
+    xrender_handle = wine_dlopen(SONAME_LIBXRENDER, RTLD_NOW, NULL, 0);
     if(!xrender_handle) return;
 
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(xrender_handle, #f, NULL, 0)) == NULL) goto sym_not_found;

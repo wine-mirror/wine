@@ -73,6 +73,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(font);
 #include <freetype/fttrigon.h>
 #endif
 
+#ifndef SONAME_LIBFREETYPE
+#define SONAME_LIBFREETYPE "libfreetype.so"
+#endif
+
 static FT_Library library = 0;
 
 static void *ft_handle = NULL;
@@ -242,7 +246,7 @@ static BOOL AddFontFileToList(char *file)
     for(insertface = &family->FirstFace; *insertface;
 	insertface = &(*insertface)->next) {
         if(!strcmpW((*insertface)->StyleName, StyleW)) {
-	    ERR("Already loaded font %s %s\n", debugstr_w(family->FamilyName),
+	    WARN("Already loaded font %s %s\n", debugstr_w(family->FamilyName),
 		debugstr_w(StyleW));
 	    HeapFree(GetProcessHeap(), 0, StyleW);
 	    pFT_Done_Face(ft_face);
@@ -449,7 +453,7 @@ BOOL WineEngInit(void)
 
     TRACE("\n");
 
-    ft_handle = wine_dlopen("libfreetype.so", RTLD_NOW, NULL, 0);
+    ft_handle = wine_dlopen(SONAME_LIBFREETYPE, RTLD_NOW, NULL, 0);
     if(!ft_handle) {
         WINE_MESSAGE(
       "Wine cannot find the FreeType font library.  To enable Wine to\n"

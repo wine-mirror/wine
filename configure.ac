@@ -622,13 +622,9 @@ int main(void) {
   fi
 
   dnl Check for -mpreferred-stack-boundary
-  AC_CACHE_CHECK([for gcc -mpreferred-stack-boundary=2 support],
-                 ac_cv_c_gcc_stack_boundary,
-  [saved_cflags=$CFLAGS
-  CFLAGS="$CFLAGS -mpreferred-stack-boundary=2"
-  AC_TRY_COMPILE(,[return 0],ac_cv_c_gcc_stack_boundary="yes",ac_cv_c_gcc_stack_boundary="no")
-  CFLAGS=$saved_cflags
-  ])
+  AC_CACHE_CHECK([for gcc -mpreferred-stack-boundary=2 support], ac_cv_c_gcc_stack_boundary,
+      [WINE_TRY_CFLAGS([-mpreferred-stack-boundary=2],
+                      ac_cv_c_gcc_stack_boundary="yes",ac_cv_c_gcc_stack_boundary="no")])
   if test "$ac_cv_c_gcc_stack_boundary" = "yes"
   then
     CFLAGS="$CFLAGS -mpreferred-stack-boundary=2"
@@ -637,18 +633,13 @@ fi
 
 dnl **** Check if we need to place .type inside a .def directive ****
 
-AC_CACHE_CHECK([whether .type must sit inside a .def directive],
-	       ac_cv_c_type_in_def,
-[saved_libs=$LIBS
-LIBS="conftest_asm.s $LIBS"
-cat > conftest_asm.s <<EOF
-	.globl _ac_test
+AC_CACHE_CHECK([whether .type must sit inside a .def directive], ac_cv_c_type_in_def,
+    WINE_TRY_ASM_LINK(
+[	.globl _ac_test
 	.def _ac_test; .scl 2; .type 32; .endef
 _ac_test:
-	.long 0
-EOF
-AC_TRY_LINK(,,ac_cv_c_type_in_def="yes",ac_cv_c_type_in_def="no")
-LIBS=$saved_libs])
+	.long 0],,,
+    ac_cv_c_type_in_def="yes",ac_cv_c_type_in_def="no"))
 if test "$ac_cv_c_type_in_def" = "yes"
 then
   AC_DEFINE(NEED_TYPE_IN_DEF, 1, [Define if .type asm directive must be inside a .def directive])
@@ -656,18 +647,14 @@ fi
  
 dnl **** Check for underscore on external symbols ****
 
-AC_CACHE_CHECK([whether external symbols need an underscore prefix],
-               ac_cv_c_extern_prefix,
-[saved_libs=$LIBS
-LIBS="conftest_asm.s $LIBS"
-cat > conftest_asm.s <<EOF
-	.globl _ac_test
+AC_CACHE_CHECK([whether external symbols need an underscore prefix], ac_cv_c_extern_prefix,
+    WINE_TRY_ASM_LINK(
+[	.globl _ac_test
 _ac_test:
-	.long 0
-EOF
-AC_TRY_LINK([extern int ac_test;],[if (ac_test) return 1],
-            ac_cv_c_extern_prefix="yes",ac_cv_c_extern_prefix="no")
-LIBS=$saved_libs])
+	.long 0],
+[extern int ac_test;],
+[if (ac_test) return 1],
+    ac_cv_c_extern_prefix="yes",ac_cv_c_extern_prefix="no"))
 if test "$ac_cv_c_extern_prefix" = "yes"
 then
   AC_DEFINE(NEED_UNDERSCORE_PREFIX, 1,
@@ -676,43 +663,25 @@ fi
 
 dnl **** Check whether stdcall symbols need to be decorated ****
 
-AC_CACHE_CHECK([whether stdcall symbols need to be decorated],
-               ac_cv_c_stdcall_decoration,
-[saved_libs=$LIBS
-LIBS="conftest_asm.s $LIBS"
-if test "$ac_cv_c_extern_prefix" = "yes"
-then
-cat > conftest_asm.s <<EOF
-	.globl _ac_test@0
+AC_CACHE_CHECK([whether stdcall symbols need to be decorated], ac_cv_c_stdcall_decoration,
+    WINE_TRY_ASM_LINK(
+[	.globl _ac_test@0
 _ac_test@0:
-EOF
-else
-cat > conftest_asm.s <<EOF
 	.globl ac_test@0
-ac_test@0:
-EOF
-fi
-AC_TRY_LINK([extern void __attribute__((__stdcall__)) ac_test(void);],
-            [ac_test(); return 0],
-            ac_cv_c_stdcall_decoration="yes",ac_cv_c_stdcall_decoration="no")
-LIBS=$saved_libs])
+ac_test@0:],
+[extern void __attribute__((__stdcall__)) ac_test(void);],
+[ac_test()],
+    ac_cv_c_stdcall_decoration="yes",ac_cv_c_stdcall_decoration="no"))
 if test "$ac_cv_c_stdcall_decoration" = "yes"
 then
-  AC_DEFINE(NEED_STDCALL_DECORATION, 1,
-            [Define if stdcall symbols need to be decorated])
+  AC_DEFINE(NEED_STDCALL_DECORATION, 1, [Define if stdcall symbols need to be decorated])
 fi
 
 dnl **** Check for .string in assembler ****
 
-AC_CACHE_CHECK([whether assembler accepts .string],
-               ac_cv_c_asm_string,
-[saved_libs=$LIBS
-LIBS="conftest_asm.s $LIBS"
-cat > conftest_asm.s <<EOF
-	.string "test"
-EOF
-AC_TRY_LINK(,,ac_cv_c_asm_string="yes",ac_cv_c_asm_string="no")
-LIBS=$saved_libs])
+AC_CACHE_CHECK([whether assembler accepts .string], ac_cv_c_asm_string,
+    WINE_TRY_ASM_LINK(
+[	.string "test"],,,ac_cv_c_asm_string="yes",ac_cv_c_asm_string="no"))
 if test "$ac_cv_c_asm_string" = "yes"
 then
   AC_DEFINE(HAVE_ASM_STRING, 1, [Define to use .string instead of .ascii])
@@ -745,24 +714,17 @@ case $host_os in
 
     if test "$LIBEXT" = "so"
     then
-      AC_CACHE_CHECK([whether we can build a GNU style ELF dll],ac_cv_c_dll_gnuelf,
-      [saved_cflags=$CFLAGS
-      CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic"
-      AC_TRY_LINK(,[return 1],ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")
-      CFLAGS=$saved_cflags
-      ])
+      AC_CACHE_CHECK([whether we can build a GNU style ELF dll], ac_cv_c_dll_gnuelf,
+          [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic],
+                           ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")])
       if test "$ac_cv_c_dll_gnuelf" = "yes"
       then
         LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
         LDDLLFLAGS="-Wl,-Bsymbolic"
       else
-        AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll,
-                     ac_cv_c_dll_unixware,
-        [saved_cflags=$CFLAGS
-        CFLAGS="$CFLAGS -fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic"
-        AC_TRY_LINK(,[return 1],ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")
-        CFLAGS=$saved_cflags
-        ])
+        AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll, ac_cv_c_dll_unixware,
+            [WINE_TRY_CFLAGS([-fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic],
+                             ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")])
         if test "$ac_cv_c_dll_unixware" = "yes"
         then
           LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
@@ -807,38 +769,31 @@ AC_SUBST(LDDLLFLAGS)
 AC_SUBST(LIBEXT)
 AC_SUBST(LDPATH)
 
-dnl **** Check for reentrant libc ****
-dnl
-dnl For cross-compiling we blindly assume that libc is reentrant. This is
-dnl ok since non-reentrant libc is quite rare (mostly old libc5 versions).
+dnl **** Get the soname for libraries that we load dynamically ****
 
-AC_DEFUN([WINE_CHECK_ERRNO],
-[
-  AC_CACHE_CHECK(for reentrant libc: $1, wine_cv_libc_r_$1,
-  [AC_TRY_RUN([int myerrno = 0;
-char buf[256];
-int *$1(){return &myerrno;}
-main(){connect(0,buf,255); exit(!myerrno);}],
-  wine_cv_libc_r_$1=yes, wine_cv_libc_r_$1=no,
-  wine_cv_libc_r_$1=yes )
-])
-if test "$wine_cv_libc_r_$1" = "yes"
+if test "$LIBEXT" = "so"
 then
-    wine_cv_libc_reentrant=$1 
+  WINE_GET_SONAME(X11,XCreateWindow,[$X_LIBS $X_EXTRA_LIBS])
+  WINE_GET_SONAME(Xext,XextCreateExtension,[$X_LIBS -lX11 $X_EXTRA_LIBS])
+  WINE_GET_SONAME(Xrender,XRenderQueryExtension,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
+  WINE_GET_SONAME(freetype,FT_Init_FreeType,[$X_LIBS])
 fi
-])
+
+
+dnl **** Check for reentrant libc ****
 
 wine_cv_libc_reentrant=no 
 dnl Linux style errno location
-WINE_CHECK_ERRNO(__errno_location)
-dnl FreeBSD style errno location
-WINE_CHECK_ERRNO(__error)
-dnl Solaris style errno location
-WINE_CHECK_ERRNO(___errno)
-dnl UnixWare style errno location
-WINE_CHECK_ERRNO(__thr_errno)
-dnl NetBSD style errno location
-WINE_CHECK_ERRNO(__errno)
+WINE_CHECK_ERRNO([__errno_location], [wine_cv_libc_reentrant=__errno_location],
+  dnl FreeBSD style errno location
+  WINE_CHECK_ERRNO([__error], [wine_cv_libc_reentrant=__error],
+    dnl Solaris style errno location
+    WINE_CHECK_ERRNO([___errno], [wine_cv_libc_reentrant=___errno],
+      dnl UnixWare style errno location
+      WINE_CHECK_ERRNO([__thr_errno], [wine_cv_libc_reentrant=__thr_errno],
+        dnl NetBSD style errno location
+        WINE_CHECK_ERRNO([__errno], [wine_cv_libc_reentrant=__errno])
+))))
 
 if test "$wine_cv_libc_reentrant" != "no" 
 then
@@ -1151,17 +1106,6 @@ then
     fi
 fi
 
-dnl *** Check for some structure members
-
-dnl Macro to check if a structure contains a specified member
-dnl Usage: WINE_CHECK_STRUCT_MEMBER(struct,member,[includes,[action-if-found,[action-if-not-found]]])
-
-AC_DEFUN([WINE_CHECK_STRUCT_MEMBER],
-[AC_CACHE_CHECK([for $2 in struct $1], ac_cv_c_$1_$2,
- AC_TRY_COMPILE([$3],[struct $1 s; s.$2 = 0],ac_cv_c_$1_$2="yes",ac_cv_c_$1_$2="no"))
-AS_IF([ test "x$ac_cv_c_$1_$2" = "xyes"],[$4],[$5])
-])
-
 dnl **** FIXME: what about mixed cases, where we need two of them? ***
 
 WINE_CHECK_STRUCT_MEMBER(statfs,f_bfree,
@@ -1237,11 +1181,6 @@ then
 fi
 
 dnl **** Generate output files ****
-
-dnl Macro to create non-existent directories from config.status
-dnl Usage: WINE_CONFIG_EXTRA_DIR(dirname)
-AC_DEFUN([WINE_CONFIG_EXTRA_DIR],
-[AC_CONFIG_COMMANDS([$1],[test -d "$1" || (AC_MSG_NOTICE([creating $1]) && mkdir "$1")])])
 
 AH_TOP([#define __WINE_CONFIG_H])
 

@@ -638,6 +638,18 @@
 /* The size of a `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
 
+/* Define to the soname of the libfreetype library. */
+#undef SONAME_LIBFREETYPE
+
+/* Define to the soname of the libX11 library. */
+#undef SONAME_LIBX11
+
+/* Define to the soname of the libXext library. */
+#undef SONAME_LIBXEXT
+
+/* Define to the soname of the libXrender library. */
+#undef SONAME_LIBXRENDER
+
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
    automatically deduced at run-time.

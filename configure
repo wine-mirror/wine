@@ -9293,9 +9293,9 @@ echo $ECHO_N "checking for gcc -mpreferred-stack-boundary=2 support... $ECHO_C" 
 if test "${ac_cv_c_gcc_stack_boundary+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  saved_cflags=$CFLAGS
-  CFLAGS="$CFLAGS -mpreferred-stack-boundary=2"
-  cat >conftest.$ac_ext <<_ACEOF
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -mpreferred-stack-boundary=2"
+cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 
@@ -9308,18 +9308,18 @@ else
 int
 main ()
 {
-return 0
+
   ;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>&5
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } &&
-         { ac_try='test -s conftest.$ac_objext'
+         { ac_try='test -s conftest$ac_exeext'
   { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
@@ -9331,9 +9331,8 @@ else
 cat conftest.$ac_ext >&5
 ac_cv_c_gcc_stack_boundary="no"
 fi
-rm -f conftest.$ac_objext conftest.$ac_ext
-  CFLAGS=$saved_cflags
-
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_gcc_stack_boundary" >&5
 echo "${ECHO_T}$ac_cv_c_gcc_stack_boundary" >&6
@@ -9349,7 +9348,7 @@ echo $ECHO_N "checking whether .type must sit inside a .def directive... $ECHO_C
 if test "${ac_cv_c_type_in_def+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  saved_libs=$LIBS
+  ac_try_asm_link_saved_libs=$LIBS
 LIBS="conftest_asm.s $LIBS"
 cat > conftest_asm.s <<EOF
 	.globl _ac_test
@@ -9394,7 +9393,8 @@ cat conftest.$ac_ext >&5
 ac_cv_c_type_in_def="no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-LIBS=$saved_libs
+rm -f conftest_asm.s
+LIBS=$ac_try_asm_link_saved_libs
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_type_in_def" >&5
 echo "${ECHO_T}$ac_cv_c_type_in_def" >&6
@@ -9413,7 +9413,7 @@ echo $ECHO_N "checking whether external symbols need an underscore prefix... $EC
 if test "${ac_cv_c_extern_prefix+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  saved_libs=$LIBS
+  ac_try_asm_link_saved_libs=$LIBS
 LIBS="conftest_asm.s $LIBS"
 cat > conftest_asm.s <<EOF
 	.globl _ac_test
@@ -9457,7 +9457,8 @@ cat conftest.$ac_ext >&5
 ac_cv_c_extern_prefix="no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-LIBS=$saved_libs
+rm -f conftest_asm.s
+LIBS=$ac_try_asm_link_saved_libs
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_extern_prefix" >&5
 echo "${ECHO_T}$ac_cv_c_extern_prefix" >&6
@@ -9476,20 +9477,14 @@ echo $ECHO_N "checking whether stdcall symbols need to be decorated... $ECHO_C" 
 if test "${ac_cv_c_stdcall_decoration+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  saved_libs=$LIBS
+  ac_try_asm_link_saved_libs=$LIBS
 LIBS="conftest_asm.s $LIBS"
-if test "$ac_cv_c_extern_prefix" = "yes"
-then
 cat > conftest_asm.s <<EOF
 	.globl _ac_test@0
 _ac_test@0:
-EOF
-else
-cat > conftest_asm.s <<EOF
 	.globl ac_test@0
 ac_test@0:
 EOF
-fi
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
@@ -9503,7 +9498,7 @@ extern void __attribute__((__stdcall__)) ac_test(void);
 int
 main ()
 {
-ac_test(); return 0
+ac_test()
   ;
   return 0;
 }
@@ -9527,7 +9522,8 @@ cat conftest.$ac_ext >&5
 ac_cv_c_stdcall_decoration="no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-LIBS=$saved_libs
+rm -f conftest_asm.s
+LIBS=$ac_try_asm_link_saved_libs
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_stdcall_decoration" >&5
 echo "${ECHO_T}$ac_cv_c_stdcall_decoration" >&6
@@ -9546,7 +9542,7 @@ echo $ECHO_N "checking whether assembler accepts .string... $ECHO_C" >&6
 if test "${ac_cv_c_asm_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  saved_libs=$LIBS
+  ac_try_asm_link_saved_libs=$LIBS
 LIBS="conftest_asm.s $LIBS"
 cat > conftest_asm.s <<EOF
 	.string "test"
@@ -9588,7 +9584,8 @@ cat conftest.$ac_ext >&5
 ac_cv_c_asm_string="no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-LIBS=$saved_libs
+rm -f conftest_asm.s
+LIBS=$ac_try_asm_link_saved_libs
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_asm_string" >&5
 echo "${ECHO_T}$ac_cv_c_asm_string" >&6
@@ -9961,9 +9958,9 @@ echo $ECHO_N "checking whether we can build a GNU style ELF dll... $ECHO_C" >&6
 if test "${ac_cv_c_dll_gnuelf+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  saved_cflags=$CFLAGS
-      CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic"
-      cat >conftest.$ac_ext <<_ACEOF
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic"
+cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 
@@ -9976,7 +9973,7 @@ else
 int
 main ()
 {
-return 1
+
   ;
   return 0;
 }
@@ -10000,8 +9997,7 @@ cat conftest.$ac_ext >&5
 ac_cv_c_dll_gnuelf="no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-      CFLAGS=$saved_cflags
-
+CFLAGS=$ac_wine_try_cflags_saved
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_dll_gnuelf" >&5
 echo "${ECHO_T}$ac_cv_c_dll_gnuelf" >&6
@@ -10015,9 +10011,9 @@ echo $ECHO_N "checking whether we can build a UnixWare (Solaris) dll... $ECHO_C"
 if test "${ac_cv_c_dll_unixware+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  saved_cflags=$CFLAGS
-        CFLAGS="$CFLAGS -fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic"
-        cat >conftest.$ac_ext <<_ACEOF
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic"
+cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 
@@ -10030,7 +10026,7 @@ else
 int
 main ()
 {
-return 1
+
   ;
   return 0;
 }
@@ -10054,8 +10050,7 @@ cat conftest.$ac_ext >&5
 ac_cv_c_dll_unixware="no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-        CFLAGS=$saved_cflags
-
+CFLAGS=$ac_wine_try_cflags_saved
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_dll_unixware" >&5
 echo "${ECHO_T}$ac_cv_c_dll_unixware" >&6
@@ -10109,11 +10104,318 @@ esac
 
 
 
+if test "$LIBEXT" = "so"
+then
+  # Extract the first word of "ldd", so it can be a program name with args.
+set dummy ldd; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_LDD+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $LDD in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_LDD="$LDD" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in /sbin:/usr/sbin:$PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_LDD="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_LDD" && ac_cv_path_LDD="true"
+  ;;
+esac
+fi
+LDD=$ac_cv_path_LDD
+
+if test -n "$LDD"; then
+  echo "$as_me:$LINENO: result: $LDD" >&5
+echo "${ECHO_T}$LDD" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+
+echo "$as_me:$LINENO: checking for -lX11 soname" >&5
+echo $ECHO_N "checking for -lX11 soname... $ECHO_C" >&6
+if test "${ac_cv_lib_soname_X11+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_get_soname_save_LIBS=$LIBS
+LIBS="-lX11 $X_LIBS $X_EXTRA_LIBS $LIBS"
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XCreateWindow ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+XCreateWindow ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_soname_X11=`$ac_cv_path_LDD conftest$ac_exeext | grep libX11\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  if test "x$ac_cv_lib_soname_X11" = "x"
+  then
+     ac_cv_lib_soname_X11="libX11.so"
+  fi
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_soname_X11="libX11.so"
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_get_soname_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_soname_X11" >&5
+echo "${ECHO_T}$ac_cv_lib_soname_X11" >&6
+if test "x$ac_cv_lib_soname_X11" != xNONE
+then
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBX11 "$ac_cv_lib_soname_X11"
+_ACEOF
+fi
+
+echo "$as_me:$LINENO: checking for -lXext soname" >&5
+echo $ECHO_N "checking for -lXext soname... $ECHO_C" >&6
+if test "${ac_cv_lib_soname_Xext+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_get_soname_save_LIBS=$LIBS
+LIBS="-lXext $X_LIBS -lX11 $X_EXTRA_LIBS $LIBS"
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XextCreateExtension ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+XextCreateExtension ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_soname_Xext=`$ac_cv_path_LDD conftest$ac_exeext | grep libXext\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  if test "x$ac_cv_lib_soname_Xext" = "x"
+  then
+     ac_cv_lib_soname_Xext="libXext.so"
+  fi
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_soname_Xext="libXext.so"
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_get_soname_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_soname_Xext" >&5
+echo "${ECHO_T}$ac_cv_lib_soname_Xext" >&6
+if test "x$ac_cv_lib_soname_Xext" != xNONE
+then
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBXEXT "$ac_cv_lib_soname_Xext"
+_ACEOF
+fi
+
+echo "$as_me:$LINENO: checking for -lXrender soname" >&5
+echo $ECHO_N "checking for -lXrender soname... $ECHO_C" >&6
+if test "${ac_cv_lib_soname_Xrender+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_get_soname_save_LIBS=$LIBS
+LIBS="-lXrender $X_LIBS -lXext -lX11 $X_EXTRA_LIBS $LIBS"
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XRenderQueryExtension ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+XRenderQueryExtension ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_soname_Xrender=`$ac_cv_path_LDD conftest$ac_exeext | grep libXrender\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  if test "x$ac_cv_lib_soname_Xrender" = "x"
+  then
+     ac_cv_lib_soname_Xrender="libXrender.so"
+  fi
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_soname_Xrender="libXrender.so"
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_get_soname_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_soname_Xrender" >&5
+echo "${ECHO_T}$ac_cv_lib_soname_Xrender" >&6
+if test "x$ac_cv_lib_soname_Xrender" != xNONE
+then
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBXRENDER "$ac_cv_lib_soname_Xrender"
+_ACEOF
+fi
+
+echo "$as_me:$LINENO: checking for -lfreetype soname" >&5
+echo $ECHO_N "checking for -lfreetype soname... $ECHO_C" >&6
+if test "${ac_cv_lib_soname_freetype+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_get_soname_save_LIBS=$LIBS
+LIBS="-lfreetype $X_LIBS $LIBS"
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char FT_Init_FreeType ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+FT_Init_FreeType ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_soname_freetype=`$ac_cv_path_LDD conftest$ac_exeext | grep libfreetype\\.so | sed 's/^[ 	]*\([^ 	]*\)[ 	]*=>.*$/\1/'`
+  if test "x$ac_cv_lib_soname_freetype" = "x"
+  then
+     ac_cv_lib_soname_freetype="libfreetype.so"
+  fi
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_soname_freetype="libfreetype.so"
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+  LIBS=$ac_get_soname_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_soname_freetype" >&5
+echo "${ECHO_T}$ac_cv_lib_soname_freetype" >&6
+if test "x$ac_cv_lib_soname_freetype" != xNONE
+then
+cat >>confdefs.h <<_ACEOF
+#define SONAME_LIBFREETYPE "$ac_cv_lib_soname_freetype"
+_ACEOF
+fi
+fi
+
 
 
 wine_cv_libc_reentrant=no
-
-  echo "$as_me:$LINENO: checking for reentrant libc: __errno_location" >&5
+echo "$as_me:$LINENO: checking for reentrant libc: __errno_location" >&5
 echo $ECHO_N "checking for reentrant libc: __errno_location... $ECHO_C" >&6
 if test "${wine_cv_libc_r___errno_location+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -10150,17 +10452,13 @@ wine_cv_libc_r___errno_location=no
 fi
 rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
-
 fi
 echo "$as_me:$LINENO: result: $wine_cv_libc_r___errno_location" >&5
 echo "${ECHO_T}$wine_cv_libc_r___errno_location" >&6
-if test "$wine_cv_libc_r___errno_location" = "yes"
-then
-    wine_cv_libc_reentrant=__errno_location
-fi
-
-
-  echo "$as_me:$LINENO: checking for reentrant libc: __error" >&5
+if test "$wine_cv_libc_r___errno_location" = "yes"; then
+  wine_cv_libc_reentrant=__errno_location
+else
+    echo "$as_me:$LINENO: checking for reentrant libc: __error" >&5
 echo $ECHO_N "checking for reentrant libc: __error... $ECHO_C" >&6
 if test "${wine_cv_libc_r___error+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -10172,7 +10470,7 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 int myerrno = 0;
-char buf[256];
+char buf256;
 int *__error(){return &myerrno;}
 main(){connect(0,buf,255); exit(!myerrno);}
 _ACEOF
@@ -10197,17 +10495,13 @@ wine_cv_libc_r___error=no
 fi
 rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
-
 fi
 echo "$as_me:$LINENO: result: $wine_cv_libc_r___error" >&5
 echo "${ECHO_T}$wine_cv_libc_r___error" >&6
-if test "$wine_cv_libc_r___error" = "yes"
-then
-    wine_cv_libc_reentrant=__error
-fi
-
-
-  echo "$as_me:$LINENO: checking for reentrant libc: ___errno" >&5
+if test "$wine_cv_libc_r___error" = "yes"; then
+  wine_cv_libc_reentrant=__error
+else
+      echo "$as_me:$LINENO: checking for reentrant libc: ___errno" >&5
 echo $ECHO_N "checking for reentrant libc: ___errno... $ECHO_C" >&6
 if test "${wine_cv_libc_r____errno+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -10219,7 +10513,7 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 int myerrno = 0;
-char buf[256];
+char buf256;
 int *___errno(){return &myerrno;}
 main(){connect(0,buf,255); exit(!myerrno);}
 _ACEOF
@@ -10244,17 +10538,13 @@ wine_cv_libc_r____errno=no
 fi
 rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
-
 fi
 echo "$as_me:$LINENO: result: $wine_cv_libc_r____errno" >&5
 echo "${ECHO_T}$wine_cv_libc_r____errno" >&6
-if test "$wine_cv_libc_r____errno" = "yes"
-then
-    wine_cv_libc_reentrant=___errno
-fi
-
-
-  echo "$as_me:$LINENO: checking for reentrant libc: __thr_errno" >&5
+if test "$wine_cv_libc_r____errno" = "yes"; then
+  wine_cv_libc_reentrant=___errno
+else
+        echo "$as_me:$LINENO: checking for reentrant libc: __thr_errno" >&5
 echo $ECHO_N "checking for reentrant libc: __thr_errno... $ECHO_C" >&6
 if test "${wine_cv_libc_r___thr_errno+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -10266,7 +10556,7 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 int myerrno = 0;
-char buf[256];
+char buf256;
 int *__thr_errno(){return &myerrno;}
 main(){connect(0,buf,255); exit(!myerrno);}
 _ACEOF
@@ -10291,17 +10581,13 @@ wine_cv_libc_r___thr_errno=no
 fi
 rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
-
 fi
 echo "$as_me:$LINENO: result: $wine_cv_libc_r___thr_errno" >&5
 echo "${ECHO_T}$wine_cv_libc_r___thr_errno" >&6
-if test "$wine_cv_libc_r___thr_errno" = "yes"
-then
-    wine_cv_libc_reentrant=__thr_errno
-fi
-
-
-  echo "$as_me:$LINENO: checking for reentrant libc: __errno" >&5
+if test "$wine_cv_libc_r___thr_errno" = "yes"; then
+  wine_cv_libc_reentrant=__thr_errno
+else
+          echo "$as_me:$LINENO: checking for reentrant libc: __errno" >&5
 echo $ECHO_N "checking for reentrant libc: __errno... $ECHO_C" >&6
 if test "${wine_cv_libc_r___errno+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -10313,7 +10599,7 @@ else
 #line $LINENO "configure"
 #include "confdefs.h"
 int myerrno = 0;
-char buf[256];
+char buf256;
 int *__errno(){return &myerrno;}
 main(){connect(0,buf,255); exit(!myerrno);}
 _ACEOF
@@ -10338,13 +10624,20 @@ wine_cv_libc_r___errno=no
 fi
 rm -f core core.* *.core conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
 fi
-
 fi
 echo "$as_me:$LINENO: result: $wine_cv_libc_r___errno" >&5
 echo "${ECHO_T}$wine_cv_libc_r___errno" >&6
-if test "$wine_cv_libc_r___errno" = "yes"
-then
-    wine_cv_libc_reentrant=__errno
+if test "$wine_cv_libc_r___errno" = "yes"; then
+  wine_cv_libc_reentrant=__errno
+fi
+
+
+fi
+
+fi
+
+fi
+
 fi
 
 
@@ -12468,10 +12761,6 @@ _ACEOF
 fi
 
 
-
-
-
-
 echo "$as_me:$LINENO: checking for f_bfree in struct statfs" >&5
 echo $ECHO_N "checking for f_bfree in struct statfs... $ECHO_C" >&6
 if test "${ac_cv_c_statfs_f_bfree+set}" = set; then
@@ -12812,8 +13101,6 @@ then
     CFLAGS="$CFLAGS -D__i386__"
     LINTFLAGS="$LINTFLAGS -D__i386__"
 fi
-
-
 
 
 
@@ -13709,6 +13996,7 @@ s,@LDSHARED@,$LDSHARED,;t t
 s,@LDDLLFLAGS@,$LDDLLFLAGS,;t t
 s,@LIBEXT@,$LIBEXT,;t t
 s,@LDPATH@,$LDPATH,;t t
+s,@LDD@,$LDD,;t t
 s,@ALLOCA@,$ALLOCA,;t t
 /@MAKE_RULES@/r $MAKE_RULES
 s,@MAKE_RULES@,,;t t
