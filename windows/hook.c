@@ -17,6 +17,7 @@
 #include "winuser.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
+#include "callback.h"
 #include "hook.h"
 #include "win.h"
 #include "queue.h"
@@ -35,11 +36,12 @@ DEFAULT_DEBUG_CHANNEL(hook)
 typedef struct
 {
     HANDLE16   next;               /* 00 Next hook in chain */
-    HOOKPROC proc WINE_PACKED;   /* 02 Hook procedure */
+    HOOKPROC   proc;               /* 02 Hook procedure (original) */
     INT16      id;                 /* 06 Hook id (WH_xxx) */
     HQUEUE16   ownerQueue;         /* 08 Owner queue (0 for system hook) */
     HMODULE16  ownerModule;        /* 0a Owner module */
     WORD       flags;              /* 0c flags */
+    HOOKPROC   thunk;              /* 0e Hook procedure (CallTo16 thunk) */
 } HOOKDATA;
 
 #include "poppack.h"
@@ -850,6 +852,9 @@ static HANDLE16 HOOK_GetHook( INT16 id, HQUEUE16 hQueue )
  *
  * Install a given hook.
  */
+/* ### start build ### */
+extern LONG CALLBACK HOOK_CallTo16_long_wwl(FARPROC16,WORD,WORD,LONG);
+/* ### stop build ### */
 static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT type,
 		           HMODULE16 hModule, DWORD dwThreadId )
 {
@@ -884,6 +889,20 @@ static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT type,
     data->ownerQueue  = hQueue;
     data->ownerModule = hModule;
     data->flags       = type;
+
+    /* Create CallTo16 thunk for 16-bit hooks */
+
+    if ( (data->flags & HOOK_MAPTYPE) == HOOK_WIN16 )
+        data->thunk = (HOOKPROC)THUNK_Alloc( (FARPROC16)data->proc, 
+                                             (RELAY)HOOK_CallTo16_long_wwl );
+    else
+        data->thunk = data->proc;
+
+    if ( !data->thunk && data->proc )
+    {
+        USER_HEAP_FREE( handle );
+        return 0;
+    }
 
     /* Insert it in the correct linked list */
 
@@ -945,6 +964,10 @@ static BOOL HOOK_RemoveHook( HANDLE16 hook )
 
     if (!*prevHook) return FALSE;
     *prevHook = data->next;
+
+    if ( (data->flags & HOOK_MAPTYPE) == HOOK_WIN16 )
+        THUNK_Free( (FARPROC)data->thunk );
+
     USER_HEAP_FREE( hook );
     return TRUE;
 }
@@ -1004,7 +1027,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
     /* Suspend window structure locks before calling user code */
     iWndsLocks = WIN_SuspendWndsLock();
 
-    ret = data->proc(code, wParam, lParam);
+    ret = data->thunk(code, wParam, lParam);
 
     /* Grrr. While the hook procedure is supposed to have an LRESULT return
        value even in Win16, it seems that for those hook types where the 
@@ -1035,21 +1058,6 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
 /***********************************************************************
  *           Exported Functions & APIs
  */
-
-/***********************************************************************
- *           HOOK_GetProc16
- *
- * Don't call this unless you are the if1632/thunk.c.
- */
-HOOKPROC16 HOOK_GetProc16( HHOOK hhook )
-{
-    HOOKDATA *data;
-    if (HIWORD(hhook) != HOOK_MAGIC) return NULL;
-    if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR( LOWORD(hhook) ))) return NULL;
-    if ((data->flags & HOOK_MAPTYPE) != HOOK_WIN16) return NULL;
-    return (HOOKPROC16)data->proc;
-}
-
 
 /***********************************************************************
  *           HOOK_IsHooked

@@ -122,7 +122,7 @@ file	user.exe
 117 pascal16 WindowFromDC(word) WindowFromDC16
 119 pascal   GetMessagePos() GetMessagePos
 120 pascal   GetMessageTime() GetMessageTime
-121 pascal   SetWindowsHook(s_word segptr) THUNK_SetWindowsHook16
+121 pascal   SetWindowsHook(s_word segptr) SetWindowsHook16
 122 pascal   CallWindowProc(segptr word word word long) CallWindowProc16
 123 pascal16 CallMsgFilter(segptr s_word) CallMsgFilter16
 124 pascal16 UpdateWindow(word) UpdateWindow16
@@ -236,7 +236,7 @@ file	user.exe
 231 pascal16 GetSystemDebugState() GetSystemDebugState16
 232 pascal16 SetWindowPos(word word word word word word word) SetWindowPos16
 233 pascal16 SetParent(word word) SetParent16
-234 pascal16 UnhookWindowsHook(s_word segptr) THUNK_UnhookWindowsHook16
+234 pascal16 UnhookWindowsHook(s_word segptr) UnhookWindowsHook16
 235 pascal   DefHookProc(s_word word long ptr) DefHookProc16
 236 pascal16 GetCapture() GetCapture16
 237 pascal16 GetUpdateRgn(word word word) GetUpdateRgn16
@@ -296,8 +296,8 @@ file	user.exe
 288 pascal   GetMessageExtraInfo() GetMessageExtraInfo
 289 register keybd_event() WIN16_keybd_event
 290 pascal16 RedrawWindow(word ptr word word) RedrawWindow16
-291 pascal   SetWindowsHookEx(s_word segptr word word) THUNK_SetWindowsHookEx16
-292 pascal16 UnhookWindowsHookEx(segptr) THUNK_UnhookWindowsHookEx16
+291 pascal   SetWindowsHookEx(s_word segptr word word) SetWindowsHookEx16
+292 pascal16 UnhookWindowsHookEx(segptr) UnhookWindowsHookEx16
 293 pascal   CallNextHookEx(segptr s_word word long) CallNextHookEx16
 294 pascal16 LockWindowUpdate(word) LockWindowUpdate16
 299 register mouse_event() WIN16_mouse_event

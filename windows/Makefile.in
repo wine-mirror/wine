@@ -41,6 +41,8 @@ C_SRCS = \
 	winpos.c \
 	winproc.c
 
+GLUE = hook.c
+
 all: $(MODULE).o
 
 @MAKE_RULES@

@@ -1154,30 +1154,34 @@ LRESULT WINAPI ShellHookProc16(INT16 code, WPARAM16 wParam, LPARAM lParam)
  *				RegisterShellHook	[SHELL.102]
  */
 BOOL WINAPI RegisterShellHook16(HWND16 hWnd, UINT16 uAction)
-{ TRACE_(shell)("%04x [%u]\n", hWnd, uAction );
+{ 
+    TRACE_(shell)("%04x [%u]\n", hWnd, uAction );
 
     switch( uAction )
-  { case 2:  /* register hWnd as a shell window */
-	     if( !SHELL_hHook )
-      { HMODULE16 hShell = GetModuleHandle16( "SHELL" );
-        SHELL_hHook = SetWindowsHookEx16( WH_SHELL, ShellHookProc16, hShell, 0 );
-		if( SHELL_hHook )
-        { uMsgWndCreated = RegisterWindowMessageA( lpstrMsgWndCreated );
-		    uMsgWndDestroyed = RegisterWindowMessageA( lpstrMsgWndDestroyed );
-		    uMsgShellActivate = RegisterWindowMessageA( lpstrMsgShellActivate );
-		} 
-        else 
-          WARN_(shell)("-- unable to install ShellHookProc()!\n");
-	     }
+    { 
+    case 2:  /* register hWnd as a shell window */
+        if( !SHELL_hHook )
+        { 
+            HMODULE16 hShell = GetModuleHandle16( "SHELL" );
+            HOOKPROC16 hookProc = (HOOKPROC16)NE_GetEntryPoint( hShell, 103 );
+            SHELL_hHook = SetWindowsHookEx16( WH_SHELL, hookProc, hShell, 0 );
+            if ( SHELL_hHook )
+            { 
+                uMsgWndCreated = RegisterWindowMessageA( lpstrMsgWndCreated );
+                uMsgWndDestroyed = RegisterWindowMessageA( lpstrMsgWndDestroyed );
+                uMsgShellActivate = RegisterWindowMessageA( lpstrMsgShellActivate );
+            } 
+            else 
+                WARN_(shell)("-- unable to install ShellHookProc()!\n");
+        }
 
-      if( SHELL_hHook )
-        return ((SHELL_hWnd = hWnd) != 0);
-	     break;
+        if ( SHELL_hHook )
+            return ((SHELL_hWnd = hWnd) != 0);
+        break;
 
-	default:
-    WARN_(shell)("-- unknown code %i\n", uAction );
-	     /* just in case */
-	     SHELL_hWnd = 0;
+    default:
+        WARN_(shell)("-- unknown code %i\n", uAction );
+        SHELL_hWnd = 0; /* just in case */
     }
     return FALSE;
 }
