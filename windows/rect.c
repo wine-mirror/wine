@@ -69,6 +69,8 @@ BOOL16 WINAPI CopyRect16( RECT16 *dest, const RECT16 *src )
  */
 BOOL WINAPI CopyRect( RECT *dest, const RECT *src )
 {
+    if (!dest || !src)
+	return FALSE;
     *dest = *src;
     return TRUE;
 }
