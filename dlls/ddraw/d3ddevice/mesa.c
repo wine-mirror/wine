@@ -212,8 +212,8 @@ inline static Drawable get_drawable( HDC hdc )
 
 #ifdef COMPUTE_FPS
 
-#define MEASUREMENT_WINDOW 20
-#define NUMBER_OF_WINDOWS 4
+#define MEASUREMENT_WINDOW 5
+#define NUMBER_OF_WINDOWS 10
 
 static LONGLONG perf_freq;
 static LONGLONG perf_storage[NUMBER_OF_WINDOWS];
@@ -279,6 +279,7 @@ static BOOL opengl_flip( LPVOID dev, LPVOID drawable)
 		    current_window = 0;
 		}
 		perf_storage[current_window] = 0;
+		measurements_in_window = 0;
 	    }
 	} else {
 	    prev_time = current_time;

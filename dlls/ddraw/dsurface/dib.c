@@ -816,7 +816,7 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
     HRESULT		ret = DD_OK;
     LPBYTE		sbuf, dbuf;
     RECT		rsrc2;
-
+    RECT                lock_src, lock_dst;
 
     if (TRACE_ON(ddraw)) {
 	TRACE("(%p)->(%ld,%ld,%p,%p,%08lx)\n",
@@ -836,35 +836,49 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
         if (This->aux_bltfast(This, dstx, dsty, src, rsrc, trans) == DD_OK) return DD_OK;
     }
 
-    /* We need to lock the surfaces, or we won't get refreshes when done. */
-    sdesc.dwSize = sizeof(sdesc);
-    IDirectDrawSurface7_Lock(src, NULL,&sdesc,DDLOCK_READONLY, 0);
-    ddesc.dwSize = sizeof(ddesc);
-    IDirectDrawSurface7_Lock(iface,NULL,&ddesc,DDLOCK_WRITEONLY,0);
-
-   if (!rsrc) {
-	   WARN("rsrc is NULL!\n");
-	   rsrc = &rsrc2;
-	   rsrc->left = rsrc->top = 0;
-	   rsrc->right = sdesc.dwWidth;
-	   rsrc->bottom = sdesc.dwHeight;
-   }
-
-    bpp = GET_BPP(This->surface_desc);
-    sbuf = (BYTE *)sdesc.lpSurface+(rsrc->top*sdesc.u1.lPitch)+rsrc->left*bpp;
-    dbuf = (BYTE *)ddesc.lpSurface+(dsty*ddesc.u1.lPitch)+dstx* bpp;
-
+    /* Get the surface description without locking to first compute the width / height */
+    ddesc = This->surface_desc;
+    sdesc = (ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, src))->surface_desc;
+    
+    if (!rsrc) {
+	WARN("rsrc is NULL!\n");
+	rsrc = &rsrc2;
+	rsrc->left = rsrc->top = 0;
+	rsrc->right = sdesc.dwWidth;
+	rsrc->bottom = sdesc.dwHeight;
+    }
 
     h=rsrc->bottom-rsrc->top;
     if (h>ddesc.dwHeight-dsty) h=ddesc.dwHeight-dsty;
     if (h>sdesc.dwHeight-rsrc->top) h=sdesc.dwHeight-rsrc->top;
-    if (h<0) h=0;
+    if (h<=0) return DDERR_INVALIDRECT;
 
     w=rsrc->right-rsrc->left;
     if (w>ddesc.dwWidth-dstx) w=ddesc.dwWidth-dstx;
     if (w>sdesc.dwWidth-rsrc->left) w=sdesc.dwWidth-rsrc->left;
-    if (w<0) w=0;
+    if (w<=0) return DDERR_INVALIDRECT;
 
+    /* Now compute the locking rectangle... */
+    lock_src.left = rsrc->left;
+    lock_src.top = rsrc->top;
+    lock_src.right = lock_src.left + w;
+    lock_src.bottom = lock_src.top + h;
+
+    lock_dst.left = dstx;
+    lock_dst.top = dsty;
+    lock_dst.right = dstx + w;
+    lock_dst.bottom = dsty + h;
+    
+    /* We need to lock the surfaces, or we won't get refreshes when done. */
+    sdesc.dwSize = sizeof(sdesc);
+    IDirectDrawSurface7_Lock(src, &lock_src, &sdesc, DDLOCK_READONLY, 0);
+    ddesc.dwSize = sizeof(ddesc);
+    IDirectDrawSurface7_Lock(iface, &lock_dst, &ddesc, DDLOCK_WRITEONLY, 0);
+
+    bpp = GET_BPP(This->surface_desc);
+    sbuf = (BYTE *) sdesc.lpSurface;
+    dbuf = (BYTE *) ddesc.lpSurface;
+    
     if (trans & (DDBLTFAST_SRCCOLORKEY | DDBLTFAST_DESTCOLORKEY)) {
 	DWORD keylow, keyhigh;
 	if (trans & DDBLTFAST_SRCCOLORKEY) {
@@ -878,28 +892,28 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 	}
 
 #define COPYBOX_COLORKEY(type) { \
-    type *d = (type *)dbuf, *s = (type *)sbuf, tmp; \
-    s = (type *) ((BYTE *) sdesc.lpSurface + (rsrc->top * sdesc.u1.lPitch) + rsrc->left * bpp); \
-    d = (type *) ((BYTE *) ddesc.lpSurface + (dsty * ddesc.u1.lPitch) + dstx * bpp); \
-    for (y = 0; y < h; y++) { \
-	for (x = 0; x < w; x++) { \
-	    tmp = s[x]; \
-	    if (tmp < keylow || tmp > keyhigh) d[x] = tmp; \
-	} \
-	(LPBYTE)s += sdesc.u1.lPitch; \
-	(LPBYTE)d += ddesc.u1.lPitch; \
-    } \
-    break; \
-}
+            type *d, *s, tmp; \
+            s = (type *) sdesc.lpSurface; \
+            d = (type *) ddesc.lpSurface; \
+            for (y = 0; y < h; y++) { \
+	        for (x = 0; x < w; x++) { \
+	            tmp = s[x]; \
+	            if (tmp < keylow || tmp > keyhigh) d[x] = tmp; \
+	        } \
+	        (LPBYTE)s += sdesc.u1.lPitch; \
+	        (LPBYTE)d += ddesc.u1.lPitch; \
+            } \
+            break; \
+        }
 
-	switch (bpp) {
-	case 1: COPYBOX_COLORKEY(BYTE)
-	case 2: COPYBOX_COLORKEY(WORD)
-	case 4: COPYBOX_COLORKEY(DWORD)
-	default:
-	    FIXME("Source color key blitting not supported for bpp %d\n",bpp*8);
-	    ret = DDERR_UNSUPPORTED;
-	    goto error;
+        switch (bpp) {
+	    case 1: COPYBOX_COLORKEY(BYTE)
+	    case 2: COPYBOX_COLORKEY(WORD)
+	    case 4: COPYBOX_COLORKEY(DWORD)
+	    default:
+		FIXME("Source color key blitting not supported for bpp %d\n",bpp*8);
+	        ret = DDERR_UNSUPPORTED;
+	        goto error;
 	}
 #undef COPYBOX_COLORKEY
     } else {
@@ -911,9 +925,10 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 	    dbuf += ddesc.u1.lPitch;
 	}
     }
+    
 error:
-    IDirectDrawSurface7_Unlock(iface, NULL);
-    IDirectDrawSurface7_Unlock(src, NULL);
+    IDirectDrawSurface7_Unlock(iface, &lock_dst);
+    IDirectDrawSurface7_Unlock(src, &lock_src);
     return ret;
 }
 

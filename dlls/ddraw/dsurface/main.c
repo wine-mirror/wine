@@ -1015,7 +1015,7 @@ Main_DirectDrawSurface_Lock(LPDIRECTDRAWSURFACE7 iface, LPRECT prect,
      * (Not documented.) */
     if (prect != NULL) {
 	TRACE("	lprect: %ldx%ld-%ldx%ld\n",
-		prect->top,prect->left,prect->bottom,prect->right);
+		prect->left,prect->top,prect->right,prect->bottom);
 	/* First do some sanity checkings on the rectangle we receive.
 	   DungeonSiege seems to gives us once a very bad rectangle for example */
 	if ((prect->top < 0) ||

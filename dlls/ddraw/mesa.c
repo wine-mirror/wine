@@ -106,6 +106,11 @@ void set_render_state(IDirect3DDeviceImpl* This,
 					    0, 
 					    ICOM_INTERFACE(tex, IDirectDrawSurface7));
 	    } break;
+
+	    case D3DRENDERSTATE_ANTIALIAS:        /*  2 */
+	        if (dwRenderState)
+		    ERR("D3DRENDERSTATE_ANTIALIAS not supported yet !\n");
+	        break;
 	      
 	    case D3DRENDERSTATE_TEXTUREADDRESSU:  /* 44 */
 	    case D3DRENDERSTATE_TEXTUREADDRESSV:  /* 45 */
