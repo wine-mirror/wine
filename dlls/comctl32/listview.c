@@ -48,12 +48,10 @@
  *   -- LISTVIEW_GetNextItem is very inefficient
  *   -- LISTVIEW_SetColumnWidth ignores header images & bitmap
  *   -- LISTVIEW_SetIconSpacing is incomplete
- *   -- LVSICF_NOINVALIDATEALL, LVSICF_NOSCROLL not implemented
  *   -- LISTVIEW_SortItems is broken
  *   -- LISTVIEW_StyleChanged doesn't handle some changes too well
  *
  * Speedups
- *   -- LISTVIEW_Size invalidates too much
  *   -- in sorted mode, LISTVIEW_InsertItemT sorts the array,
  *      instead of inserting in the right spot
  *   -- we should keep an ordered array of coordinates in iconic mode
@@ -8074,7 +8072,11 @@ static LRESULT LISTVIEW_Size(LISTVIEW_INFO *infoPtr, int Width, int Height)
 
     LISTVIEW_UpdateScroll(infoPtr);
 
-    LISTVIEW_InvalidateList(infoPtr); /* FIXME: optimize */
+    /* refresh all only for lists whose height changed significantly */
+    if ((infoPtr->dwStyle & LVS_TYPEMASK) == LVS_LIST && 
+	(rcOld.bottom - rcOld.top) / infoPtr->nItemHeight !=
+	(infoPtr->rcList.bottom - infoPtr->rcList.top) / infoPtr->nItemHeight)
+	LISTVIEW_InvalidateList(infoPtr);
 
   return 0;
 }
