@@ -3186,25 +3186,12 @@ static BOOL X11DRV_DIB_FaultHandler( LPVOID res, LPCVOID addr )
 }
 
 /***********************************************************************
- *           X11DRV_DIB_UpdateDIBSection
+ *           X11DRV_DIB_CmnUpdateDIBSection
  */
-void X11DRV_DIB_UpdateDIBSection(DC *dc, BOOL toDIB)
+static void X11DRV_DIB_CmnUpdateDIBSection(BITMAPOBJ *bmp, BOOL toDIB)
 {
-  BITMAPOBJ *bmp;
-  
-  /* Ensure this is a Compatible DC that has a DIB section selected */
-  
-  if (!dc) return;
-  if (!(dc->w.flags & DC_MEMORY)) return;
-  
-  bmp = (BITMAPOBJ *)GDI_GetObjPtr( dc->w.hBitmap, BITMAP_MAGIC );
   if (!bmp) return;
-  
-  if (!bmp->dib)
-    {
-      GDI_HEAP_UNLOCK(dc->w.hBitmap);
-      return;
-    }
+  if (!bmp->dib) return;
   
   if (!toDIB)
     {
@@ -3263,8 +3250,34 @@ void X11DRV_DIB_UpdateDIBSection(DC *dc, BOOL toDIB)
 	  break;
         }
     }
+}
 
-    GDI_HEAP_UNLOCK(dc->w.hBitmap);
+/***********************************************************************
+ *           X11DRV_DIB_UpdateDIBSection2
+ */
+void X11DRV_DIB_UpdateDIBSection2(HBITMAP hbmp, BOOL toDIB)
+{
+  BITMAPOBJ *bmp;
+  
+  bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbmp, BITMAP_MAGIC );
+  if (!bmp) return;
+
+  X11DRV_DIB_CmnUpdateDIBSection(bmp, toDIB);
+
+  GDI_HEAP_UNLOCK(hbmp);
+}
+
+/***********************************************************************
+ *           X11DRV_DIB_UpdateDIBSection
+ */
+void X11DRV_DIB_UpdateDIBSection(DC *dc, BOOL toDIB)
+{
+  /* Ensure this is a Compatible DC that has a DIB section selected */
+  
+  if (!dc) return;
+  if (!(dc->w.flags & DC_MEMORY)) return;
+  
+  X11DRV_DIB_UpdateDIBSection2(dc->w.hBitmap, toDIB);
 }
 
 /***********************************************************************
