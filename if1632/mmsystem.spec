@@ -20,17 +20,17 @@ type	win16
 106    pascal  joySetCapture(word word word word) joySetCapture16
 107    pascal  joySetThreshold(word word) joySetThreshold16
 109    pascal  joySetCalibration(word) joySetCalibration16
-110    stub    JOYGETPOSEX
+110    pascal  joyGetPosEx(word ptr) joyGetPosEx16
 111    stub    JOYCONFIGCHANGED
 201    pascal  midiOutGetNumDevs() midiOutGetNumDevs16
-202    pascal  midiOutGetDevCaps(word str word) midiOutGetDevCaps16
+202    pascal  midiOutGetDevCaps(word ptr word) midiOutGetDevCaps16
 203    pascal  midiOutGetErrorText(word ptr word) midiOutGetErrorText16
 204    pascal  midiOutOpen(ptr word long long long) midiOutOpen16
 205    pascal  midiOutClose(word) midiOutClose16
-206    pascal  midiOutPrepareHeader(word long word) midiOutPrepareHeader16
-207    pascal  midiOutUnprepareHeader(word ptr word) midiOutUnprepareHeader16
+206    pascal  midiOutPrepareHeader(word segptr word) midiOutPrepareHeader16
+207    pascal  midiOutUnprepareHeader(word segptr word) midiOutUnprepareHeader16
 208    pascal  midiOutShortMsg(word long) midiOutShortMsg16
-209    pascal  midiOutLongMsg(word ptr word) midiOutLongMsg16
+209    pascal  midiOutLongMsg(word segptr word) midiOutLongMsg16
 210    pascal  midiOutReset(word) midiOutReset16
 211    pascal  midiOutGetVolume(word ptr) midiOutGetVolume16
 212    pascal  midiOutSetVolume(word long) midiOutSetVolume16
@@ -51,9 +51,9 @@ type	win16
 303    pascal  midiInGetErrorText(word ptr word) midiInGetErrorText16
 304    pascal  midiInOpen(ptr word long long long) midiInOpen16
 305    pascal  midiInClose(word) midiInClose16
-306    pascal  midiInPrepareHeader(word long word) midiInPrepareHeader16
-307    pascal  midiInUnprepareHeader(word ptr word) midiInUnprepareHeader16
-308    pascal  midiInAddBuffer(word ptr word) midiInAddBuffer16
+306    pascal  midiInPrepareHeader(word segptr word) midiInPrepareHeader16
+307    pascal  midiInUnprepareHeader(word segptr word) midiInUnprepareHeader16
+308    pascal  midiInAddBuffer(word segptr word) midiInAddBuffer16
 309    pascal  midiInStart(word) midiInStart16
 310    pascal  midiInStop(word) midiInStop16
 311    pascal  midiInReset(word) midiInReset16
@@ -69,9 +69,9 @@ type	win16
 403    pascal  waveOutGetErrorText(word ptr word) waveOutGetErrorText16
 404    pascal  waveOutOpen(ptr word ptr long long long) waveOutOpen16
 405    pascal  waveOutClose(word) waveOutClose16
-406    pascal  waveOutPrepareHeader(word long word) waveOutPrepareHeader16
-407    pascal  waveOutUnprepareHeader(word ptr word) waveOutUnprepareHeader16
-408    pascal  waveOutWrite(word ptr word) waveOutWrite16
+406    pascal  waveOutPrepareHeader(word segptr word) waveOutPrepareHeader16
+407    pascal  waveOutUnprepareHeader(word segptr word) waveOutUnprepareHeader16
+408    pascal  waveOutWrite(word segptr word) waveOutWrite16
 409    pascal  waveOutPause(word) waveOutPause16
 410    pascal  waveOutRestart(word) waveOutRestart16
 411    pascal  waveOutReset(word) waveOutReset16
@@ -90,9 +90,9 @@ type	win16
 503    pascal  waveInGetErrorText(word ptr word) waveInGetErrorText16
 504    pascal  waveInOpen(ptr word ptr long long long) waveInOpen16
 505    pascal  waveInClose(word) waveInClose16
-506    pascal  waveInPrepareHeader(word long word) waveInPrepareHeader16
-507    pascal  waveInUnprepareHeader(word ptr word) waveInUnprepareHeader16
-508    pascal  waveInAddBuffer(word ptr word) waveInAddBuffer16
+506    pascal  waveInPrepareHeader(word segptr word) waveInPrepareHeader16
+507    pascal  waveInUnprepareHeader(word segptr word) waveInUnprepareHeader16
+508    pascal  waveInAddBuffer(word segptr word) waveInAddBuffer16
 509    pascal  waveInStart(word) waveInStart16
 510    pascal  waveInStop(word) waveInStop16
 511    pascal  waveInReset(word) waveInReset16
@@ -160,9 +160,9 @@ type	win16
 1218   pascal  mmioFlush(word word) mmioFlush16
 1219   pascal  mmioAdvance(word ptr word) mmioAdvance16
 1220   pascal  mmioStringToFOURCC(str word) mmioStringToFOURCC16
-1221   pascal  MMIOINSTALLIOPROC(long ptr long) mmioInstallIOProc16
-1222   pascal  MMIOSENDMESSAGE(word word long long) mmioSendMessage
-1223   pascal  MMIODESCEND(word ptr ptr word) mmioDescend
+1221   pascal  mmioInstallIOProc(long ptr long) mmioInstallIOProc16
+1222   pascal  mmioSendMessage(word word long long) mmioSendMessage
+1223   pascal  mmioDescend(word ptr ptr word) mmioDescend
 1224   pascal  mmioAscend(word ptr word) mmioAscend16
 1225   pascal  mmioCreateChunk(word ptr word) mmioCreateChunk16
 1226   pascal  mmioRename(ptr ptr ptr long) mmioRename16
