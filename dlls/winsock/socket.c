@@ -1864,6 +1864,53 @@ INT WINAPI WSOCK32_send(SOCKET s, char *buf, INT len, INT flags)
 }
 
 /***********************************************************************
+ *		WSASend			(WSOCK32.72)
+ */
+INT WINAPI WSASend( SOCKET s, LPWSABUF lpBuffers, DWORD dwBufferCount,
+                    LPDWORD lpNumberOfBytesSent, DWORD dwFlags,
+                    LPWSAOVERLAPPED lpOverlapped,
+                    LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine )
+{
+  INT iFlags = 0;
+  INT rc = 0;
+  DWORD dwCount;
+
+  /* Overlapped is not supported or checked for */
+  FIXME( "(%u,%p,0x%lx,%p,0x%lx,%p,%p): semi stub\n", 
+           s, lpBuffers, dwBufferCount, lpNumberOfBytesSent,
+           dwFlags, lpOverlapped, lpCompletionRoutine );
+
+  /* Convert setup flags */
+  if( dwFlags & MSG_DONTROUTE )
+  {
+    iFlags |= MSG_DONTROUTE;
+  }
+
+  if( dwFlags & MSG_OOB )
+  {
+    iFlags |= MSG_OOB;
+  }
+
+  /* Indicate nothing yet sent */
+  *lpNumberOfBytesSent = 0;
+
+  /* Send all buffers with the same flags */
+  for(dwCount = 0; dwCount < dwBufferCount; dwCount++ )
+  {
+    if( ( rc = WSOCK32_send( s, lpBuffers[ dwCount ].buf, 
+                             lpBuffers[ dwCount ].len, iFlags ) ) != 0 )
+    {
+      break;
+    }
+
+    /* Indicate that we've sent something */
+    *lpNumberOfBytesSent += lpBuffers[ dwCount ].len;
+  }
+
+  return rc;
+}
+
+/***********************************************************************
  *              send()			(WINSOCK.19)
  */
 INT16 WINAPI WINSOCK_send16(SOCKET16 s, char *buf, INT16 len, INT16 flags)

@@ -84,7 +84,7 @@ debug_channels (winsock)
 69  stub     WSARecvFrom
 70  stub     WSARemoveServiceClass
 71  forward  WSAResetEvent KERNEL32.ResetEvent
-72  stub     WSASend
+72  stdcall  WSASend(long ptr long ptr long ptr ptr) WSASend
 73  stub     WSASendDisconnect
 74  stub     WSASendTo
 75  stub     WSASetEvent

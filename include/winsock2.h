@@ -192,6 +192,12 @@ typedef struct _WSANETWORKEVENTS
   int iErrorCode[FD_MAX_EVENTS];
 } WSANETWORKEVENTS, *LPWSANETWORKEVENTS;
 
+typedef struct _WSABUF 
+{
+    ULONG len;
+    CHAR* buf;
+} WSABUF, *LPWSABUF;
+
 typedef struct _OVERLAPPED *  LPWSAOVERLAPPED;
 typedef HANDLE WSAEVENT;
 typedef unsigned int   GROUP;
