@@ -1,9 +1,9 @@
 WINE REGISTRY Version 2
 ;; All keys relative to \\Machine\\Software\\Wine\\Wine\\Config
 
-;; If you think it is nescessary to show others your complete config for a 
+;; If you think it is necessary to show others your complete config for a
 ;; bug report, filter out empty lines and comments with
-;; grep -v "^;" ~/.wine/config | grep '.' 
+;; grep -v "^;" ~/.wine/config | grep '.'
 ;;
 ;; MS-DOS drives configuration
 ;;
@@ -119,7 +119,7 @@ WINE REGISTRY Version 2
 ; you can specify applications too
 "notepad.exe"  = "native, builtin"
 ; default for all other dlls
-"*" = "native, builtin, so"
+"*" = "native, builtin"
 
 [x11drv]
 ; Number of colors to allocate from the system palette
@@ -151,7 +151,7 @@ WINE REGISTRY Version 2
 ; Code page used for captions in managed mode
 ; 0 means default ANSI code page (CP_ACP == 0)
 "TextCP" = "0"
-; Use this if you have more than one port for video on your setup 
+; Use this if you have more than one port for video on your setup
 ; (Wine uses for now the first 'input image' it finds).
 ;; "XVideoPort" = "43"
 ; Run in synchronous mode (useful for debugging X11 problems)
