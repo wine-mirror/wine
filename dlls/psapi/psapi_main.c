@@ -1,7 +1,8 @@
 /*
  *      PSAPI library
  *
- *      Copyright 1998  Patrik Stridvall
+ * Copyright 1998 Patrik Stridvall
+ * Copyright 2003 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,52 +24,30 @@
 #include "winerror.h"
 #include "wine/server.h"
 #include "wine/debug.h"
-#include "tlhelp32.h"
+#include "winnls.h"
 #include "psapi.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psapi);
-
-#include <string.h>
-
-
-/***********************************************************************
- *	get pid from hProcess (internal)
- */
-static DWORD get_pid_from_process_handle(HANDLE hProcess)
-{
-	DWORD ret = 0;
-
-	SERVER_START_REQ( get_process_info )
-	{
-		req->handle = hProcess;
-		if ( !wine_server_call_err( req ) )
-			ret = (DWORD)reply->pid;
-	}
-	SERVER_END_REQ;
-
-	return ret;
-}
 
 /***********************************************************************
  *           EmptyWorkingSet (PSAPI.@)
  */
 BOOL WINAPI EmptyWorkingSet(HANDLE hProcess)
 {
-  return SetProcessWorkingSetSize(hProcess, 0xFFFFFFFF, 0xFFFFFFFF);
+    return SetProcessWorkingSetSize(hProcess, 0xFFFFFFFF, 0xFFFFFFFF);
 }
 
 /***********************************************************************
  *           EnumDeviceDrivers (PSAPI.@)
  */
-BOOL WINAPI EnumDeviceDrivers(
-  LPVOID *lpImageBase, DWORD cb, LPDWORD lpcbNeeded)
+BOOL WINAPI EnumDeviceDrivers(LPVOID *lpImageBase, DWORD cb, LPDWORD lpcbNeeded)
 {
-  FIXME("(%p, %ld, %p): stub\n", lpImageBase, cb, lpcbNeeded);
+    FIXME("(%p, %ld, %p): stub\n", lpImageBase, cb, lpcbNeeded);
 
-  if(lpcbNeeded)
-    *lpcbNeeded = 0;
+    if (lpcbNeeded)
+        *lpcbNeeded = 0;
 
-  return TRUE;
+    return TRUE;
 }
 
 
@@ -77,315 +56,409 @@ BOOL WINAPI EnumDeviceDrivers(
  */
 BOOL WINAPI EnumProcesses(DWORD *lpidProcess, DWORD cb, DWORD *lpcbNeeded)
 {
-	PROCESSENTRY32	pe;
-	HANDLE	hSnapshot;
-	BOOL	res;
-	DWORD	count;
-	DWORD	countMax;
+    HANDLE	hSnapshot;
+    DWORD	count;
+    DWORD	countMax;
+    DWORD       pid;
+    int         ret;
 
-	FIXME("(%p, %ld, %p)\n", lpidProcess,cb, lpcbNeeded);
+    TRACE("(%p, %ld, %p)\n", lpidProcess,cb, lpcbNeeded);
 
-	if ( lpidProcess == NULL )
-		cb = 0;
-	if ( lpcbNeeded != NULL )
-		*lpcbNeeded = 0;
+    if ( lpidProcess == NULL )
+        cb = 0;
+    if ( lpcbNeeded != NULL )
+        *lpcbNeeded = 0;
 
-	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
-	if ( hSnapshot == INVALID_HANDLE_VALUE )
-	{
-		FIXME("cannot create snapshot\n");
-		return FALSE;
-	}
-	count = 0;
-	countMax = cb / sizeof(DWORD);
-	while (1)
-	{
-		ZeroMemory( &pe, sizeof(PROCESSENTRY32) );
-		pe.dwSize = sizeof(PROCESSENTRY32);
-		res = (count == 0) ? Process32First( hSnapshot, &pe ) : Process32Next( hSnapshot, &pe );
-		if ( !res )
-			break;
-		TRACE("process 0x%08lx\n",(long)pe.th32ProcessID);
-		if ( count < countMax )
-			lpidProcess[count] = pe.th32ProcessID;
-		count ++;
-	}
-	CloseHandle( hSnapshot );
+    SERVER_START_REQ( create_snapshot )
+    {
+        req->flags   = SNAP_PROCESS;
+        req->inherit = FALSE;
+        req->pid     = 0;
+        wine_server_call_err( req );
+        hSnapshot = reply->handle;
+    }
+    SERVER_END_REQ;
 
-	if ( lpcbNeeded != NULL )
-		*lpcbNeeded = sizeof(DWORD) * count;
+    if ( hSnapshot == 0 )
+    {
+        FIXME("cannot create snapshot\n");
+        return FALSE;
+    }
+    count = 0;
+    countMax = cb / sizeof(DWORD);
+    for (;;)
+    {
+        SERVER_START_REQ( next_process )
+        {
+            req->handle = hSnapshot;
+            req->reset = (count == 0);
+            wine_server_set_reply( req, NULL, 0);
+            if ((ret = !wine_server_call_err( req )))
+                pid = reply->pid;
+        }
+        SERVER_END_REQ;
+        if (!ret) break;
+        TRACE("process 0x%08lx\n", pid);
+        if ( count < countMax )
+            lpidProcess[count] = pid;
+        count++;
+    }
+    CloseHandle( hSnapshot );
 
-	TRACE("return %lu processes\n",count);
+    if ( lpcbNeeded != NULL )
+        *lpcbNeeded = sizeof(DWORD) * count;
 
-	return TRUE;
+    TRACE("return %lu processes\n", count);
+
+    return TRUE;
 }
 
 /***********************************************************************
  *           EnumProcessModules (PSAPI.@)
  */
-BOOL WINAPI EnumProcessModules(
-  HANDLE hProcess, HMODULE *lphModule, DWORD cb, LPDWORD lpcbNeeded)
+BOOL WINAPI EnumProcessModules(HANDLE hProcess, HMODULE *lphModule, 
+                               DWORD cb, LPDWORD lpcbNeeded)
 {
-	MODULEENTRY32	me;
-	HANDLE	hSnapshot;
-	BOOL	res;
-	DWORD	pid;
-	DWORD	count;
-	DWORD	countMax;
+    HANDLE	hSnapshot;
+    DWORD	pid;
+    DWORD	count;
+    DWORD	countMax;
+    int         ret;
+    HMODULE     hModule;
 
-	FIXME("(hProcess=%p, %p, %ld, %p)\n",
-		hProcess, lphModule, cb, lpcbNeeded );
+    TRACE("(hProcess=%p, %p, %ld, %p)\n",
+          hProcess, lphModule, cb, lpcbNeeded );
 
-	if ( lphModule == NULL )
-		cb = 0;
-	if ( lpcbNeeded != NULL )
-		*lpcbNeeded = 0;
+    if ( lphModule == NULL )
+        cb = 0;
+    if ( lpcbNeeded != NULL )
+        *lpcbNeeded = 0;
 
-	pid = get_pid_from_process_handle(hProcess);
-	if ( pid == 0 )
-	{
-		FIXME("no pid for hProcess %p\n",hProcess);
-		return FALSE;
-	}
+    SERVER_START_REQ( get_process_info )
+    {
+        req->handle = hProcess;
+        if ( !wine_server_call_err( req ) )
+            pid = (DWORD)reply->pid;
+        else
+            pid = 0;
+    }
+    SERVER_END_REQ;
 
-	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE,pid);
-	if ( hSnapshot == INVALID_HANDLE_VALUE )
-	{
-		FIXME("cannot create snapshot\n");
-		return FALSE;
-	}
-	count = 0;
-	countMax = cb / sizeof(HMODULE);
-	while (1)
-	{
-		ZeroMemory( &me, sizeof(MODULEENTRY32) );
-		me.dwSize = sizeof(MODULEENTRY32);
-		res = (count == 0) ? Module32First( hSnapshot, &me ) : Module32Next( hSnapshot, &me );
-		if ( !res )
-			break;
-		TRACE("module 0x%08lx\n",(long)me.hModule);
-		if ( count < countMax )
-			lphModule[count] = me.hModule;
-		count ++;
-	}
-	CloseHandle( hSnapshot );
+    if ( pid == 0 )
+    {
+        FIXME("no pid for hProcess %p\n" ,hProcess);
+        return FALSE;
+    }
 
-	if ( lpcbNeeded != NULL )
-		*lpcbNeeded = sizeof(HMODULE) * count;
+    SERVER_START_REQ( create_snapshot )
+    {
+        req->flags   = SNAP_MODULE;
+        req->inherit = FALSE;
+        req->pid     = pid;
+        wine_server_call_err( req );
+        hSnapshot = reply->handle;
+    }
+    SERVER_END_REQ;
+    if ( hSnapshot == 0 )
+    {
+        FIXME("cannot create snapshot\n");
+        return FALSE;
+    }
+    count = 0;
+    countMax = cb / sizeof(HMODULE);
+    for (;;)
+    {
+        SERVER_START_REQ( next_module )
+        {
+            req->handle = hSnapshot;
+            req->reset = (count == 0);
+            wine_server_set_reply( req, NULL, 0 );
+            if ((ret = !wine_server_call_err( req )))
+            {
+                hModule = (HMODULE)reply->base;
+            }
+        }
+        SERVER_END_REQ;
+        if ( !ret ) break;
+        TRACE("module 0x%p\n", hModule);
+        if ( count < countMax )
+            lphModule[count] = hModule;
+        count++;
+    }
+    CloseHandle( hSnapshot );
 
-	TRACE("return %lu modules\n",count);
+    if ( lpcbNeeded != NULL )
+        *lpcbNeeded = sizeof(HMODULE) * count;
 
-	return TRUE;
+    TRACE("return %lu modules\n", count);
+
+    return TRUE;
 }
 
 /***********************************************************************
  *          GetDeviceDriverBaseNameA (PSAPI.@)
  */
-DWORD WINAPI GetDeviceDriverBaseNameA(
-  LPVOID ImageBase, LPSTR lpBaseName, DWORD nSize)
+DWORD WINAPI GetDeviceDriverBaseNameA(LPVOID ImageBase, LPSTR lpBaseName, 
+                                      DWORD nSize)
 {
-  FIXME("(%p, %s, %ld): stub\n",
-    ImageBase, debugstr_a(lpBaseName), nSize
-  );
+    FIXME("(%p, %s, %ld): stub\n",
+          ImageBase, debugstr_a(lpBaseName), nSize);
 
-  if(lpBaseName && nSize)
-    lpBaseName[0] = '\0';
+    if (lpBaseName && nSize)
+        lpBaseName[0] = '\0';
 
-  return 0;
+    return 0;
 }
 
 /***********************************************************************
  *           GetDeviceDriverBaseNameW (PSAPI.@)
  */
-DWORD WINAPI GetDeviceDriverBaseNameW(
-  LPVOID ImageBase, LPWSTR lpBaseName, DWORD nSize)
+DWORD WINAPI GetDeviceDriverBaseNameW(LPVOID ImageBase, LPWSTR lpBaseName, 
+                                      DWORD nSize)
 {
-  FIXME("(%p, %s, %ld): stub\n",
-    ImageBase, debugstr_w(lpBaseName), nSize
-  );
+    FIXME("(%p, %s, %ld): stub\n",
+          ImageBase, debugstr_w(lpBaseName), nSize);
 
-  if(lpBaseName && nSize)
-    lpBaseName[0] = '\0';
+    if (lpBaseName && nSize)
+        lpBaseName[0] = '\0';
 
-  return 0;
+    return 0;
 }
 
 /***********************************************************************
  *           GetDeviceDriverFileNameA (PSAPI.@)
  */
-DWORD WINAPI GetDeviceDriverFileNameA(
-  LPVOID ImageBase, LPSTR lpFilename, DWORD nSize)
+DWORD WINAPI GetDeviceDriverFileNameA(LPVOID ImageBase, LPSTR lpFilename, 
+                                      DWORD nSize)
 {
-  FIXME("(%p, %s, %ld): stub\n",
-    ImageBase, debugstr_a(lpFilename), nSize
-  );
+    FIXME("(%p, %s, %ld): stub\n",
+          ImageBase, debugstr_a(lpFilename), nSize);
 
-  if(lpFilename && nSize)
-    lpFilename[0] = '\0';
+    if (lpFilename && nSize)
+        lpFilename[0] = '\0';
 
-  return 0;
+    return 0;
 }
 
 /***********************************************************************
  *           GetDeviceDriverFileNameW (PSAPI.@)
  */
-DWORD WINAPI GetDeviceDriverFileNameW(
-  LPVOID ImageBase, LPWSTR lpFilename, DWORD nSize)
+DWORD WINAPI GetDeviceDriverFileNameW(LPVOID ImageBase, LPWSTR lpFilename, 
+                                      DWORD nSize)
 {
-  FIXME("(%p, %s, %ld): stub\n",
-    ImageBase, debugstr_w(lpFilename), nSize
-  );
+    FIXME("(%p, %s, %ld): stub\n",
+          ImageBase, debugstr_w(lpFilename), nSize);
 
-  if(lpFilename && nSize)
-    lpFilename[0] = '\0';
+    if (lpFilename && nSize)
+        lpFilename[0] = '\0';
 
-  return 0;
+    return 0;
 }
 
 /***********************************************************************
  *           GetMappedFileNameA (PSAPI.@)
  */
-DWORD WINAPI GetMappedFileNameA(
-  HANDLE hProcess, LPVOID lpv, LPSTR lpFilename, DWORD nSize)
+DWORD WINAPI GetMappedFileNameA(HANDLE hProcess, LPVOID lpv, LPSTR lpFilename, 
+                                DWORD nSize)
 {
-  FIXME("(hProcess=%p, %p, %s, %ld): stub\n",
-    hProcess, lpv, debugstr_a(lpFilename), nSize
-  );
+    FIXME("(hProcess=%p, %p, %s, %ld): stub\n",
+          hProcess, lpv, debugstr_a(lpFilename), nSize);
 
-  if(lpFilename && nSize)
-    lpFilename[0] = '\0';
+    if (lpFilename && nSize)
+        lpFilename[0] = '\0';
 
-  return 0;
+    return 0;
 }
 
 /***********************************************************************
  *           GetMappedFileNameW (PSAPI.@)
  */
-DWORD WINAPI GetMappedFileNameW(
-  HANDLE hProcess, LPVOID lpv, LPWSTR lpFilename, DWORD nSize)
+DWORD WINAPI GetMappedFileNameW(HANDLE hProcess, LPVOID lpv, LPWSTR lpFilename, 
+                                DWORD nSize)
 {
-  FIXME("(hProcess=%p, %p, %s, %ld): stub\n",
-    hProcess, lpv, debugstr_w(lpFilename), nSize
-  );
+    FIXME("(hProcess=%p, %p, %s, %ld): stub\n",
+          hProcess, lpv, debugstr_w(lpFilename), nSize);
 
-  if(lpFilename && nSize)
-    lpFilename[0] = '\0';
+    if (lpFilename && nSize)
+        lpFilename[0] = '\0';
 
-  return 0;
+    return 0;
 }
 
 /***********************************************************************
  *           GetModuleBaseNameA (PSAPI.@)
  */
-DWORD WINAPI GetModuleBaseNameA(
-  HANDLE hProcess, HMODULE hModule, LPSTR lpBaseName, DWORD nSize)
+DWORD WINAPI GetModuleBaseNameA(HANDLE hProcess, HMODULE hModule, 
+                                LPSTR lpBaseName, DWORD nSize)
 {
-  FIXME("(hProcess=%p, hModule=%p, %s, %ld): stub\n",
-    hProcess, hModule, debugstr_a(lpBaseName), nSize
-  );
+    char        tmp[MAX_PATH];
+    char*       ptr;
 
-  if(lpBaseName && nSize)
-    lpBaseName[0] = '\0';
-
-  return 0;
+    if (!GetModuleFileNameExA(hProcess, hModule, tmp, sizeof(tmp)))
+        return 0;
+    if ((ptr = strrchr(tmp, '\\')) != NULL) ptr++; else ptr = tmp;
+    strncpy(lpBaseName, ptr, nSize);
+    lpBaseName[nSize - 1] = '\0';
+    return strlen(lpBaseName);
 }
 
 /***********************************************************************
  *           GetModuleBaseNameW (PSAPI.@)
  */
-DWORD WINAPI GetModuleBaseNameW(
-  HANDLE hProcess, HMODULE hModule, LPWSTR lpBaseName, DWORD nSize)
+DWORD WINAPI GetModuleBaseNameW(HANDLE hProcess, HMODULE hModule, 
+                                LPWSTR lpBaseName, DWORD nSize)
 {
-  FIXME("(hProcess=%p, hModule=%p, %s, %ld): stub\n",
-    hProcess, hModule, debugstr_w(lpBaseName), nSize);
+    char*       ptr;
+    DWORD       len;
 
-  if(lpBaseName && nSize)
-    lpBaseName[0] = '\0';
+    TRACE("(hProcess=%p, hModule=%p, %p, %ld)\n",
+          hProcess, hModule, lpBaseName, nSize);
+   
+    if (!lpBaseName || !nSize) return 0;
 
-  return 0;
+    ptr = HeapAlloc(GetProcessHeap(), 0, nSize / 2);
+    if (!ptr) return 0;
+
+    len = GetModuleBaseNameA(hProcess, hModule, ptr, nSize / 2);
+    if (len == 0)
+    {
+        lpBaseName[0] = '\0';
+    }
+    else
+    {
+        if (!MultiByteToWideChar( CP_ACP, 0, ptr, -1, lpBaseName, nSize / 2 ))
+            lpBaseName[nSize / 2 - 1] = 0;
+    }
+
+    return len;
 }
 
 /***********************************************************************
  *           GetModuleFileNameExA (PSAPI.@)
  */
-DWORD WINAPI GetModuleFileNameExA(
-  HANDLE hProcess, HMODULE hModule, LPSTR lpFilename, DWORD nSize)
+DWORD WINAPI GetModuleFileNameExA(HANDLE hProcess, HMODULE hModule, 
+                                  LPSTR lpFileName, DWORD nSize)
 {
-  FIXME("(hProcess=%p,hModule=%p, %s, %ld): stub\n",
-    hProcess, hModule, debugstr_a(lpFilename), nSize
-  );
+    DWORD	len = 0;
 
-	if ( get_pid_from_process_handle(hProcess) == GetCurrentProcessId() )
-		return GetModuleFileNameA( hModule, lpFilename, nSize );
+    TRACE("(hProcess=%p, hModule=%p, %p, %ld)\n",
+          hProcess, hModule, lpFileName, nSize);
 
-  if(lpFilename&&nSize)
-    lpFilename[0]='\0';
+    if (!lpFileName || !nSize) return 0;
 
-  return 0;
+    if ( hProcess == GetCurrentProcess() )
+        return GetModuleFileNameA( hModule, lpFileName, nSize );
+
+    lpFileName[0] = 0;
+
+    SERVER_START_REQ( get_dll_info )
+    {
+        req->handle       = hProcess;
+        req->base_address = (void*)hModule;
+        wine_server_set_reply( req, lpFileName, nSize - 1);
+        if (!wine_server_call_err( req ))
+        {
+            len = wine_server_reply_size(reply);
+            lpFileName[len] = 0;
+        }
+    }
+    SERVER_END_REQ;
+
+    TRACE("return %s (%lu)\n", lpFileName, len);
+
+    return len;
 }
 
 /***********************************************************************
  *           GetModuleFileNameExW (PSAPI.@)
  */
-DWORD WINAPI GetModuleFileNameExW(
-  HANDLE hProcess, HMODULE hModule, LPWSTR lpFilename, DWORD nSize)
+DWORD WINAPI GetModuleFileNameExW(HANDLE hProcess, HMODULE hModule, 
+                                  LPWSTR lpFileName, DWORD nSize)
 {
-  FIXME("(hProcess=%p,hModule=%p, %s, %ld): stub\n",
-    hProcess, hModule, debugstr_w(lpFilename), nSize
-  );
+    char*       ptr;
+    DWORD       len;
 
-	if ( get_pid_from_process_handle(hProcess) == GetCurrentProcessId() )
-		return GetModuleFileNameW( hModule, lpFilename, nSize );
+    TRACE("(hProcess=%p,hModule=%p, %p, %ld)\n",
+          hProcess, hModule, lpFileName, nSize);
 
-  if(lpFilename && nSize)
-    lpFilename[0] = '\0';
+    if (!lpFileName || !nSize) return 0;
 
-  return 0;
+    if ( hProcess == GetCurrentProcess() )
+        return GetModuleFileNameW( hModule, lpFileName, nSize );
+
+    ptr = HeapAlloc(GetProcessHeap(), 0, nSize / 2);
+    if (!ptr) return 0;
+
+    len = GetModuleFileNameExA(hProcess, hModule, ptr, nSize / 2);
+    if (len == 0)
+    {
+        lpFileName[0] = '\0';
+    }
+    else
+    {
+        if (!MultiByteToWideChar( CP_ACP, 0, ptr, -1, lpFileName, nSize / 2 ))
+            lpFileName[nSize / 2 - 1] = 0;
+    }
+
+    return len;
 }
 
 /***********************************************************************
  *           GetModuleInformation (PSAPI.@)
  */
-BOOL WINAPI GetModuleInformation(
-  HANDLE hProcess, HMODULE hModule, LPMODULEINFO lpmodinfo, DWORD cb)
+BOOL WINAPI GetModuleInformation(HANDLE hProcess, HMODULE hModule, 
+                                 LPMODULEINFO lpmodinfo, DWORD cb)
 {
-  FIXME("(hProcess=%p, hModule=%p, %p, %ld): stub\n",
-    hProcess, hModule, lpmodinfo, cb
-  );
+    BOOL ret = FALSE;
 
-  memset(lpmodinfo, 0, cb);
+    TRACE("(hProcess=%p, hModule=%p, %p, %ld)\n",
+          hProcess, hModule, lpmodinfo, cb);
 
-  return TRUE;
+    if (cb < sizeof(MODULEINFO)) return FALSE;
+
+    SERVER_START_REQ( get_dll_info )
+    {
+        req->handle       = hProcess;
+        req->base_address = (void*)hModule;
+        if (!wine_server_call_err( req ))
+        {
+            ret = TRUE;
+            lpmodinfo->lpBaseOfDll = (void*)hModule;
+            lpmodinfo->SizeOfImage = reply->size;
+            lpmodinfo->EntryPoint  = reply->entry_point;
+        }
+    }
+    SERVER_END_REQ;
+
+    return TRUE;
 }
 
 /***********************************************************************
  *           GetProcessMemoryInfo (PSAPI.@)
  */
-BOOL WINAPI GetProcessMemoryInfo(
-  HANDLE Process, PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb)
+BOOL WINAPI GetProcessMemoryInfo(HANDLE Process, 
+                                 PPROCESS_MEMORY_COUNTERS ppsmemCounters, DWORD cb)
 {
-  FIXME("(hProcess=%p, %p, %ld): stub\n",
-    Process, ppsmemCounters, cb
-  );
+    FIXME("(hProcess=%p, %p, %ld): stub\n",
+          Process, ppsmemCounters, cb);
+    
+    memset(ppsmemCounters, 0, cb);
 
-  memset(ppsmemCounters, 0, cb);
-
-  return TRUE;
+    return TRUE;
 }
 
 /***********************************************************************
  *           GetWsChanges (PSAPI.@)
  */
-BOOL WINAPI GetWsChanges(
-  HANDLE hProcess, PPSAPI_WS_WATCH_INFORMATION lpWatchInfo, DWORD cb)
+BOOL WINAPI GetWsChanges(HANDLE hProcess, 
+                         PPSAPI_WS_WATCH_INFORMATION lpWatchInfo, DWORD cb)
 {
-  FIXME("(hProcess=%p, %p, %ld): stub\n",
-    hProcess, lpWatchInfo, cb
-  );
+    FIXME("(hProcess=%p, %p, %ld): stub\n",
+          hProcess, lpWatchInfo, cb);
 
-  memset(lpWatchInfo, 0, cb);
+    memset(lpWatchInfo, 0, cb);
 
-  return TRUE;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -393,9 +466,9 @@ BOOL WINAPI GetWsChanges(
  */
 BOOL WINAPI InitializeProcessForWsWatch(HANDLE hProcess)
 {
-  FIXME("(hProcess=%p): stub\n", hProcess);
+    FIXME("(hProcess=%p): stub\n", hProcess);
 
-  return TRUE;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -406,10 +479,10 @@ BOOL WINAPI InitializeProcessForWsWatch(HANDLE hProcess)
  */
 BOOL WINAPI QueryWorkingSet(HANDLE hProcess, LPVOID pv, DWORD cb)
 {
-  FIXME("(hProcess=%p, %p, %ld)\n", hProcess, pv, cb);
+    FIXME("(hProcess=%p, %p, %ld)\n", hProcess, pv, cb);
 
-  if(pv && cb)
-    ((DWORD *) pv)[0] = 0; /* Empty WorkingSet */
+    if (pv && cb)
+        ((DWORD *) pv)[0] = 0; /* Empty WorkingSet */
 
-  return TRUE;
+    return TRUE;
 }
