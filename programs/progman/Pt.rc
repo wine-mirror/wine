@@ -4,6 +4,7 @@
  *
  * Copyright 1999 Gustavo Junior Alves <alves@correionet.com.br>
  * Copyright 2003 Marcelo Duarte
+ * Copyright 2004 Américo José Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,7 +21,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 /* Menu */
 MAIN_MENU MENU 
@@ -64,7 +65,54 @@ POPUP "Aj&uda" {
  }
 }
 
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+/* Menu */
+MAIN_MENU MENU 
+{
+ POPUP "&Ficheiro" {
+   MENUITEM "&Novo...",              PM_NEW
+   MENUITEM "A&brir\tEnter",             PM_OPEN
+   MENUITEM "&Mover...\tF7",             PM_MOVE,      GRAYED
+   MENUITEM "&Copiar...\tF8",             PM_COPY,      GRAYED
+   MENUITEM "&Excluir\tEntf",           PM_DELETE
+   MENUITEM "&Atributos...\tAlt+Enter",       PM_ATTRIBUTES
+   MENUITEM SEPARATOR
+   MENUITEM "&Executar...",          PM_EXECUTE
+   MENUITEM SEPARATOR
+   MENUITEM "Sai&r do Windows...",             PM_EXIT
+ }
+ POPUP "&Opções" {
+   MENUITEM "&Auto organizar",  PM_AUTO_ARRANGE
+   MENUITEM "&Minimizar na execução",    PM_MIN_ON_RUN
+   MENUITEM "&Gravar alterações ao sair", PM_SAVE_SETTINGS
+ }
+ POPUP "&Janelas" {
+   MENUITEM "&Cascata\tShift+F5",       PM_OVERLAP
+   MENUITEM "&Lado a lado \tShift+F4",  PM_SIDE_BY_SIDE
+   MENUITEM "&Organizar ícones",       PM_ARRANGE
+ }
+ 
+POPUP "Aj&uda" {
+   MENUITEM "&Conteúdo",         PM_CONTENTS
+   MENUITEM "&Pesquisa...",           PM_SEARCH
+   MENUITEM SEPARATOR
+   MENUITEM "&Ajuda da ajuda",     PM_HELPONHELP
+   MENUITEM "&Tutorial",         PM_TUTORIAL
+   MENUITEM SEPARATOR
+
+   POPUP "&Informações..." {
+     MENUITEM "&Licença",        PM_LICENSE
+     MENUITEM "&SEM GARANTIA",    PM_NO_WARRANTY
+     MENUITEM "&Acerca do WINE",     PM_ABOUT_WINE
+   }
+ }
+}
+
+
 /* Dialog `New' */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 DIALOG_NEW DIALOG 0, 0, 170, 65
 STYLE DS_MODALFRAME
@@ -79,7 +127,10 @@ PUSHBUTTON    "Cancelar",      IDCANCEL,       105, 25,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Aj&uda",        PM_HELP,        105, 45,  60, 15, WS_TABSTOP
 }
 
+
 /* Dialog `Move' */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 DIALOG_MOVE DIALOG 0, 0, 250, 65
 STYLE DS_MODALFRAME
@@ -96,7 +147,10 @@ PUSHBUTTON    "Cancelar",          IDCANCEL,          185, 25,  60, 15, WS_TABST
 PUSHBUTTON    "Aj&uda",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
 }
 
+
 /* Dialog `Copy' */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 DIALOG_COPY DIALOG 0, 0, 250, 65
 STYLE DS_MODALFRAME
@@ -113,7 +167,10 @@ PUSHBUTTON    "Cancelar",          IDCANCEL,          185, 25,  60, 15, WS_TABST
 PUSHBUTTON    "Aj&uda",            PM_HELP,           185, 45,  60, 15, WS_TABSTOP
 }
 
+
 /* Dialog `Group attributes' */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 DIALOG_GROUP DIALOG 0, 0, 230, 65
 STYLE DS_MODALFRAME
@@ -128,7 +185,25 @@ PUSHBUTTON    "Cancelar",        IDCANCEL,            155, 25,  60, 15, WS_TABST
 PUSHBUTTON    "Aj&uda",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
 }
 
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+DIALOG_GROUP DIALOG 0, 0, 230, 65
+STYLE DS_MODALFRAME
+CAPTION "Atributos do grupo de programas"
+{
+LTEXT     "&Descrição:", PM_DESCRIPTION_TXT,   05, 18,  50, 10
+EDITTEXT                            PM_DESCRIPTION,       60, 18,  90, 15, WS_TABSTOP
+LTEXT     "&Grupo de ficheiro:",        PM_FILE_TXT,          05, 38,  50, 10
+EDITTEXT                            PM_FILE,              60, 38,  90, 15, WS_TABSTOP
+DEFPUSHBUTTON "OK",            IDOK,                155,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancelar",        IDCANCEL,            155, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Aj&uda",          PM_HELP,             155, 45,  60, 15, WS_TABSTOP
+}
+
+
 /* Dialog `Program attributes' */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 DIALOG_PROGRAM DIALOG 0, 0, 250, 105
 STYLE DS_MODALFRAME
@@ -152,7 +227,10 @@ PUSHBUTTON    "Alt&erar ícone...", PM_OTHER_SYMBOL,     185, 65,  60, 15, WS_TAB
 PUSHBUTTON    "Aj&uda",                 PM_HELP,             185, 85,  60, 15, WS_TABSTOP
 }
 
+
 /* Dialog `Symbol' */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 DIALOG_SYMBOL DIALOG 0, 0, 200, 85
 STYLE DS_MODALFRAME
@@ -169,7 +247,27 @@ PUSHBUTTON    "&Procurar...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Aj&uda",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
 }
 
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+DIALOG_SYMBOL DIALOG 0, 0, 200, 85
+STYLE DS_MODALFRAME
+CAPTION "Alterar ícone"
+{
+LTEXT     "&Nome do ficheiro:",    PM_ICON_FILE_TXT,    5, 15,  40, 10
+EDITTEXT                         PM_ICON_FILE,       45, 15,  85, 15, WS_TABSTOP
+LTEXT     "Ícone &actual:", PM_SYMBOL_LIST_TXT,  5, 30, 125, 10
+COMBOBOX                         PM_SYMBOL_LIST,      5, 40, 125, 50,
+   CBS_DROPDOWNLIST | CBS_AUTOHSCROLL | CBS_OWNERDRAWFIXED | WS_TABSTOP
+DEFPUSHBUTTON "OK",         IDOK,              135,  5,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Cancelar",     IDCANCEL,          135, 25,  60, 15, WS_TABSTOP
+PUSHBUTTON    "&Procurar...",    PM_BROWSE,         135, 45,  60, 15, WS_TABSTOP
+PUSHBUTTON    "Aj&uda",       PM_HELP,           135, 65,  60, 15, WS_TABSTOP
+}
+
+
 /* Dialog `Execute' */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 DIALOG_EXECUTE DIALOG 0, 0, 200, 85
 STYLE DS_MODALFRAME
@@ -185,7 +283,10 @@ PUSHBUTTON    "&Procurar...",          PM_BROWSE, 135, 45,  60, 15, WS_TABSTOP
 PUSHBUTTON    "Aj&uda",             PM_HELP,   135, 65,  60, 15, WS_TABSTOP
 }
 
+
 /* Strings */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE DISCARDABLE
 {
@@ -210,5 +311,33 @@ IDS_ALL_FILES,			"Todos os arquivos (*.*)"
 IDS_PROGRAMS,			"Programas"
 IDS_LIBRARIES_DLL,		"Bibliotecas (*.dll)"
 IDS_SYMBOL_FILES,		"Arquivos de ícones"
+IDS_SYMBOLS_ICO,		"Ícones (*.ico)"
+}
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+STRINGTABLE DISCARDABLE
+{
+IDS_PROGRAM_MANAGER,		"Gerenciador de programas"
+IDS_ERROR,			"ERRO"
+IDS_WARNING,			"AVISO"
+IDS_INFO,			"Informação"
+IDS_DELETE,			"Excluir"
+IDS_DELETE_GROUP_s,		"Excluir grupo '%s' ?"
+IDS_DELETE_PROGRAM_s,		"Excluir programa '%s' ?"
+IDS_NOT_IMPLEMENTED,		"Não implementado"
+IDS_FILE_READ_ERROR_s,		"Erro ao ler '%s'."
+IDS_FILE_WRITE_ERROR_s,		"Erro ao escrever '%s'."
+IDS_GRPFILE_READ_ERROR_s,	"O ficheiro de grupo '%s' não pode ser aberto.\nDeverá tentar outras vezes?"
+IDS_OUT_OF_MEMORY,		"Sem memória."
+IDS_WINHELP_ERROR,		"Ajuda não disponível."
+IDS_UNKNOWN_FEATURE_s,		"Recurso desconhecido em %s"
+IDS_FILE_NOT_OVERWRITTEN_s,	"Ficheiro '%s' existe. Não sobreescrever."
+IDS_SAVE_GROUP_AS_s,		"Gravar grupo como '%s' para prevenir a sobreescrita dos ficheiros originais."
+IDS_NO_HOT_KEY,			"Nenhuma"
+IDS_ALL_FILES,			"Todos os ficheiros (*.*)"
+IDS_PROGRAMS,			"Programas"
+IDS_LIBRARIES_DLL,		"Bibliotecas (*.dll)"
+IDS_SYMBOL_FILES,		"Ficheiros de ícones"
 IDS_SYMBOLS_ICO,		"Ícones (*.ico)"
 }

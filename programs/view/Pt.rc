@@ -3,6 +3,7 @@
  * Portuguese Language Support
  *
  * Copyright 2003 Marcelo Duarte
+ * Copyright 2004 Américo José Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,13 +20,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
-
 /*
  *
  * Menu
  *
  */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 VIEW MENU
 BEGIN
@@ -49,12 +50,38 @@ BEGIN
     END
 END
 
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+VIEW MENU
+BEGIN
+    POPUP "&Ficheiro"
+    BEGIN
+	MENUITEM "&Abrir",			IDM_OPEN
+        MENUITEM "Sai&r",                       IDM_EXIT
+    END
+    POPUP "&Pan"
+    BEGIN
+      MENUITEM "Ajustar a &janela",              IDM_SET_EXT_TO_WIN
+      MENUITEM SEPARATOR
+      MENUITEM "&Esquerda",				IDM_LEFT
+      MENUITEM "&Direita",			IDM_RIGHT
+      MENUITEM "&Acima",				IDM_UP
+      MENUITEM "A&baixo",				IDM_DOWN
+    END
+    POPUP "&Informações"
+    BEGIN
+	MENUITEM "&Olá",			IDM_HELLO
+    END
+END
+
 
 /*
  *
  * Accelerator
  *
  */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 VIEW ACCELERATORS
 BEGIN
@@ -68,8 +95,18 @@ END
  *
  */
 
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
 STRINGTABLE DISCARDABLE
 BEGIN
     IDS_APPNAME             "View"
     IDS_DESCRIPTION         "Regular Metafile Viewer"
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_APPNAME             "Ver"
+    IDS_DESCRIPTION         "Visualizador Regular de Ficheiros Meta"
 END

@@ -5,6 +5,7 @@
  * Copyright 1999 Gustavo Junior Alves <alves@correionet.com.br>
  * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  * Copyright 2003 Marcelo Duarte
+ * Copyright 2004 Américo José Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,7 +22,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 MAIN_MENU MENU 
 {
@@ -44,6 +45,33 @@ MAIN_MENU MENU
   MENUITEM "&Sobre Clock...", IDM_ABOUT
  }
 }
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+MAIN_MENU MENU 
+{
+ POPUP "&Propriedades" {
+  MENUITEM "&Analógico", IDM_ANALOG
+  MENUITEM "Digi&tal", IDM_DIGITAL
+  MENUITEM SEPARATOR
+  MENUITEM "Tipo de &Letra...", IDM_FONT
+  MENUITEM SEPARATOR
+  MENUITEM "&Sem barra de título", IDM_NOTITLE
+  MENUITEM SEPARATOR
+  MENUITEM "&Segundos", IDM_SECONDS
+  MENUITEM "&Data", IDM_DATE
+  MENUITEM SEPARATOR
+  MENUITEM "&Sempre visível", IDM_ONTOP
+ }
+ POPUP "&Informações" {
+  MENUITEM "&Licença...", IDM_LICENSE
+  MENUITEM "&SEM GARANTIA...", IDM_NOWARRANTY
+  MENUITEM "&Acerca do Clock...", IDM_ABOUT
+ }
+}
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 STRINGTABLE DISCARDABLE
 {

@@ -5,6 +5,7 @@
  * Copyright 1999 Marcel Baur <alves@correionet.com.br>
  * Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
  * Copyright 2003 Marcelo Duarte
+ * Copyright 2004 Américo José Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,7 +22,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_DEFAULT
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 MAIN_MENU MENU
 {
@@ -68,7 +69,57 @@ POPUP "&Ajuda" {
  }
 }
 
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+MAIN_MENU MENU
+{
+ POPUP "&Ficheiro" {
+  MENUITEM "&Novo...",		CMD_NEW
+  MENUITEM "A&brir",		CMD_OPEN
+  MENUITEM "&Gravar",		CMD_SAVE
+  MENUITEM "gravar &como...",	CMD_SAVE_AS
+  MENUITEM SEPARATOR
+  MENUITEM "&Imprimir",		CMD_PRINT
+  MENUITEM "C&onfigurar página...",	CMD_PAGE_SETUP
+  MENUITEM "Configurar i&mpressora...", CMD_PRINTER_SETUP
+  MENUITEM SEPARATOR
+  MENUITEM "Sai&r",		CMD_EXIT
+ }
+POPUP "&Editar" {
+  MENUITEM "&Desfazer\tCtrl+Z", CMD_UNDO
+  MENUITEM SEPARATOR
+  MENUITEM "&Recortar\tCtrl+X",	CMD_CUT
+  MENUITEM "&Copiar\tCtrl+C",	CMD_COPY
+  MENUITEM "C&olar\tCtrl+V",	CMD_PASTE
+  MENUITEM "E&xcluir\tDel",	CMD_DELETE
+  MENUITEM SEPARATOR
+  MENUITEM "Selecionar &tudo",	CMD_SELECT_ALL
+  MENUITEM "&Data/Hora\tF5",	CMD_TIME_DATE
+  MENUITEM SEPARATOR
+  MENUITEM "&Quebrar automática de linha",	CMD_WRAP
+  MENUITEM "&Tipo de Letra...",          CMD_FONT
+ }
+POPUP "&Pesquisa" {
+  MENUITEM "&Localizar...",	CMD_SEARCH
+  MENUITEM "Localizar &próxima\tF3",	CMD_SEARCH_NEXT
+ }
+POPUP "&Ajuda" {
+  MENUITEM "&Conteúdo",		CMD_HELP_CONTENTS
+  MENUITEM "&Procurar...",	CMD_HELP_SEARCH
+  MENUITEM "&Ajuda na ajuda",	CMD_HELP_ON_HELP
+  MENUITEM SEPARATOR
+  POPUP "&Informações..." {
+   MENUITEM "&Licença",		CMD_LICENSE
+   MENUITEM "&SEM GARANTIA",	CMD_NO_WARRANTY
+   MENUITEM "&Acerca do Wine",	CMD_ABOUT_WINE
+  }
+ }
+}
+
+
 /* Dialog `Page setup' */
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
 
 DIALOG_PAGESETUP DIALOG 0, 0, 225, 95
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
@@ -94,6 +145,9 @@ DEFPUSHBUTTON "OK",         0x151,                   180,  3, 40, 15, WS_TABSTOP
 PUSHBUTTON    "Cancelar",     0x152,               180, 21, 40, 15, WS_TABSTOP
 PUSHBUTTON    "&Ajuda",       0x153,                180, 39, 40, 15, WS_TABSTOP
 }
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE DISCARDABLE
 {
@@ -125,5 +179,38 @@ Gostaria de salvar as alteraçÕes?"
 STRING_NOTFOUND,					"'%s' não pode ser encontrado."
 STRING_OUT_OF_MEMORY,			"Não há memória suficiente para completar essa \
 tarefa. \nFeche uma ou mais aplicações para aumentar a quantidade de memória livre."
+}
 
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+STRINGTABLE DISCARDABLE
+{
+ STRING_PAGESETUP_HEADERVALUE,	"&n"        /* FIXME */
+ STRING_PAGESETUP_FOOTERVALUE,	"Página &s" /* FIXME */
+ STRING_PAGESETUP_LEFTVALUE,	"20 mm"     /* FIXME */
+ STRING_PAGESETUP_RIGHTVALUE,	"20 mm"     /* FIXME */
+ STRING_PAGESETUP_TOPVALUE,	"25 mm"     /* FIXME */
+ STRING_PAGESETUP_BOTTOMVALUE,	"25 mm"     /* FIXME */
+
+ STRING_NOTEPAD,		"Notepad"
+ STRING_ERROR,			"ERRO"
+ STRING_WARNING,		"AVISO"
+ STRING_INFO,			"Informação"
+
+ STRING_UNTITLED,		"(sem nome)"
+
+ STRING_ALL_FILES,		"Todos os arquivos (*.*)"
+ STRING_TEXT_FILES_TXT,		"Ficheiros de texto (*.txt)"
+
+ STRING_TOOLARGE,		"Ficheiros '%s' é muito longo para o notepad.\n \
+ Por favor use um editor diferente."
+ STRING_NOTEXT,			"Não digitou nenhum texto. \
+ \nPor favor digite alguma coisa e tente novamente"
+ STRING_DOESNOTEXIST,		"Ficheiro '%s'\nnão existe\n\n \
+Deseja criar um novo ficheiro?"
+ STRING_NOTSAVED,		"Ficheiro '%s'\nfoi modificado\n\n \
+Gostaria de gravar as alteraçÕes?"
+ STRING_NOTFOUND,		"'%s' não pode ser encontrado."
+ STRING_OUT_OF_MEMORY,		"Não há memória suficiente para completar esta \
+tarefa. \nFeche uma ou mais aplicações para aumentar a quantidade de memória livre."
 }
