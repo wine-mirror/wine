@@ -411,7 +411,7 @@ BOOL TASK_Create( THDB *thdb, NE_MODULE *pModule, HINSTANCE16 hInstance,
     pTask->thdb->teb.htask16 = pTask->thdb->process->task = hTask;
      TRACE_(task)("module='%s' cmdline='%s' task=%04x\n", name, cmd_line, hTask );
 
-    if (pTask->flags & TDBF_WIN32) return;
+    if (pTask->flags & TDBF_WIN32) return TRUE;
 
     /* If we have a DGROUP/hInstance, use it for 16-bit stack */
  

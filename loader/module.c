@@ -864,6 +864,10 @@ HINSTANCE WINAPI LoadModule( LPCSTR name, LPVOID paramBlock )
     pdb = PROCESS_IdToPDB( info.dwProcessId );
     tdb = pdb? (TDB *)GlobalLock16( pdb->task ) : NULL;
     hInstance = tdb && tdb->hInstance? tdb->hInstance : pdb? pdb->task : 0;
+    /* If there is no hInstance (32-bit process) return a dummy value
+     * that must be > 31
+     * FIXME: should do this in all cases and fix Win16 callers */
+    if (!hInstance) hInstance = 33;
 
     /* Close off the handles */
     CloseHandle( info.hThread );
