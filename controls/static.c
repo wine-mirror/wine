@@ -218,10 +218,18 @@ LRESULT WINAPI StaticWndProc( HWND32 hWnd, UINT32 uMsg, WPARAM32 wParam,
         break;
 
     case WM_NCDESTROY:
-        if (style == SS_ICON)
-            DestroyIcon32( STATIC_SetIcon( wndPtr, 0 ) );
-        else
+        if (style == SS_ICON) {
+/*
+ * FIXME
+ *           DestroyIcon32( STATIC_SetIcon( wndPtr, 0 ) );
+ * 
+ * We don't want to do this yet because DestroyIcon32 is broken. If the icon
+ * had already been loaded by the application the last thing we want to do is
+ * GlobalFree16 the handle.
+ */
+        } else {
             lResult = DefWindowProc32A( hWnd, uMsg, wParam, lParam );
+	}
         break;
 
     case WM_PAINT:
