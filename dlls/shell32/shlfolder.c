@@ -329,20 +329,32 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPITEMIDLIST pidl, LPDWOR
 {
     GUID const *clsid;
     DWORD dwAttributes;
-
+    DWORD dwSupportedAttr=SFGAO_CANLINK |           /*0x00000004 */
+                          SFGAO_CANRENAME |         /*0x00000010 */
+                          SFGAO_HASPROPSHEET |      /*0x00000040 */
+                          SFGAO_DROPTARGET |        /*0x00000100 */
+                          SFGAO_READONLY |          /*0x00040000 */
+                          SFGAO_HIDDEN |            /*0x00080000 */
+                          SFGAO_FILESYSANCESTOR |   /*0x10000000 */
+                          SFGAO_FOLDER |            /*0x20000000 */
+                          SFGAO_FILESYSTEM |        /*0x40000000 */
+                          SFGAO_HASSUBFOLDER;       /*0x80000000 */
+    
     TRACE ("0x%08lx\n", *pdwAttributes);
 
-    if (*pdwAttributes & (0xcff3fe88))
-	WARN ("attribute 0x%08lx not implemented\n", *pdwAttributes);
-    *pdwAttributes &= ~SFGAO_LINK;	/* FIXME: for native filedialogs */
+    if (*pdwAttributes & ~dwSupportedAttr)
+    {
+        WARN ("attributes 0x%08lx not implemented\n", (*pdwAttributes & ~dwSupportedAttr));
+        *pdwAttributes &= dwSupportedAttr;
+    }
 
     if (_ILIsDrive (pidl)) {
-	*pdwAttributes &= 0xf0000144;
+        *pdwAttributes &= SFGAO_HASSUBFOLDER|SFGAO_FILESYSTEM|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|SFGAO_DROPTARGET|SFGAO_HASPROPSHEET|SFGAO_CANLINK;
     } else if ((clsid = _ILGetGUIDPointer (pidl))) {
 	if (HCR_GetFolderAttributes (clsid, &dwAttributes)) {
 	    *pdwAttributes &= dwAttributes;
 	} else {
-	    *pdwAttributes &= 0xb0000154;
+	    *pdwAttributes &= SFGAO_HASSUBFOLDER|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|SFGAO_DROPTARGET|SFGAO_HASPROPSHEET|SFGAO_CANRENAME|SFGAO_CANLINK;
 	}
     } else if (_ILGetDataPointer (pidl)) {
 	dwAttributes = _ILGetFileAttributes (pidl, NULL, 0);
@@ -357,7 +369,7 @@ HRESULT SHELL32_GetItemAttributes (IShellFolder * psf, LPITEMIDLIST pidl, LPDWOR
 	if ((SFGAO_READONLY & *pdwAttributes) && !(dwAttributes & FILE_ATTRIBUTE_READONLY))
 	    *pdwAttributes &= ~SFGAO_READONLY;
     } else {
-	*pdwAttributes &= 0xb0000154;
+	*pdwAttributes &= SFGAO_HASSUBFOLDER|SFGAO_FOLDER|SFGAO_FILESYSANCESTOR|SFGAO_DROPTARGET|SFGAO_HASPROPSHEET|SFGAO_CANRENAME|SFGAO_CANLINK;
     }
     TRACE ("-- 0x%08lx\n", *pdwAttributes);
     return S_OK;
