@@ -436,21 +436,21 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
   
   TRACE("Enumerating GL_RGBA unpacked (32)\n");
   pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-  pformat->x.dwRGBBitCount = 32;
-  pformat->y.dwRBitMask =         0xFF000000;
-  pformat->z.dwGBitMask =         0x00FF0000;
-  pformat->xx.dwBBitMask =        0x0000FF00;
-  pformat->xy.dwRGBAlphaBitMask = 0x000000FF;
+  pformat->u.dwRGBBitCount = 32;
+  pformat->u1.dwRBitMask =         0xFF000000;
+  pformat->u2.dwGBitMask =         0x00FF0000;
+  pformat->u3.dwBBitMask =        0x0000FF00;
+  pformat->u4.dwRGBAlphaBitMask = 0x000000FF;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 
   TRACE("Enumerating GL_RGB unpacked (24)\n");
   pformat->dwFlags = DDPF_RGB;
-  pformat->x.dwRGBBitCount = 24;
-  pformat->y.dwRBitMask =  0x00FF0000;
-  pformat->z.dwGBitMask =  0x0000FF00;
-  pformat->xx.dwBBitMask = 0x000000FF;
-  pformat->xy.dwRGBAlphaBitMask = 0x00000000;
+  pformat->u.dwRGBBitCount = 24;
+  pformat->u1.dwRBitMask =  0x00FF0000;
+  pformat->u2.dwGBitMask =  0x0000FF00;
+  pformat->u3.dwBBitMask = 0x000000FF;
+  pformat->u4.dwRGBAlphaBitMask = 0x00000000;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 
@@ -459,52 +459,52 @@ static HRESULT enum_texture_format_OpenGL(LPD3DENUMTEXTUREFORMATSCALLBACK cb,
      so that future version will work great. */
   TRACE("Enumerating GL_RGB packed GL_UNSIGNED_SHORT_5_6_5 (16)\n");
   pformat->dwFlags = DDPF_RGB;
-  pformat->x.dwRGBBitCount = 16;
-  pformat->y.dwRBitMask =  0x0000F800;
-  pformat->z.dwGBitMask =  0x000007E0;
-  pformat->xx.dwBBitMask = 0x0000001F;
-  pformat->xy.dwRGBAlphaBitMask = 0x00000000;
+  pformat->u.dwRGBBitCount = 16;
+  pformat->u1.dwRBitMask =  0x0000F800;
+  pformat->u2.dwGBitMask =  0x000007E0;
+  pformat->u3.dwBBitMask = 0x0000001F;
+  pformat->u4.dwRGBAlphaBitMask = 0x00000000;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 
   TRACE("Enumerating GL_RGBA packed GL_UNSIGNED_SHORT_5_5_5_1 (16)\n");
   pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-  pformat->x.dwRGBBitCount = 16;
-  pformat->y.dwRBitMask =         0x0000F800;
-  pformat->z.dwGBitMask =         0x000007C0;
-  pformat->xx.dwBBitMask =        0x0000003E;
-  pformat->xy.dwRGBAlphaBitMask = 0x00000001;
+  pformat->u.dwRGBBitCount = 16;
+  pformat->u1.dwRBitMask =         0x0000F800;
+  pformat->u2.dwGBitMask =         0x000007C0;
+  pformat->u3.dwBBitMask =        0x0000003E;
+  pformat->u4.dwRGBAlphaBitMask = 0x00000001;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 
   TRACE("Enumerating GL_RGBA packed GL_UNSIGNED_SHORT_4_4_4_4 (16)\n");
   pformat->dwFlags = DDPF_RGB | DDPF_ALPHAPIXELS;
-  pformat->x.dwRGBBitCount = 16;
-  pformat->y.dwRBitMask =         0x0000F000;
-  pformat->z.dwGBitMask =         0x00000F00;
-  pformat->xx.dwBBitMask =        0x000000F0;
-  pformat->xy.dwRGBAlphaBitMask = 0x0000000F;
+  pformat->u.dwRGBBitCount = 16;
+  pformat->u1.dwRBitMask =         0x0000F000;
+  pformat->u2.dwGBitMask =         0x00000F00;
+  pformat->u3.dwBBitMask =        0x000000F0;
+  pformat->u4.dwRGBAlphaBitMask = 0x0000000F;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 
   TRACE("Enumerating GL_RGB packed GL_UNSIGNED_BYTE_3_3_2 (8)\n");
   pformat->dwFlags = DDPF_RGB;
-  pformat->x.dwRGBBitCount = 8;
-  pformat->y.dwRBitMask =         0x0000F800;
-  pformat->z.dwGBitMask =         0x000007C0;
-  pformat->xx.dwBBitMask =        0x0000003E;
-  pformat->xy.dwRGBAlphaBitMask = 0x00000001;
+  pformat->u.dwRGBBitCount = 8;
+  pformat->u1.dwRBitMask =         0x0000F800;
+  pformat->u2.dwGBitMask =         0x000007C0;
+  pformat->u3.dwBBitMask =        0x0000003E;
+  pformat->u4.dwRGBAlphaBitMask = 0x00000001;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
 #endif
   
   TRACE("Enumerating Paletted (8)\n");
   pformat->dwFlags = DDPF_PALETTEINDEXED8;
-  pformat->x.dwRGBBitCount = 8;
-  pformat->y.dwRBitMask =  0x00000000;
-  pformat->z.dwGBitMask =  0x00000000;
-  pformat->xx.dwBBitMask = 0x00000000;
-  pformat->xy.dwRGBAlphaBitMask = 0x00000000;
+  pformat->u.dwRGBBitCount = 8;
+  pformat->u1.dwRBitMask =  0x00000000;
+  pformat->u2.dwGBitMask =  0x00000000;
+  pformat->u3.dwBBitMask = 0x00000000;
+  pformat->u4.dwRGBAlphaBitMask = 0x00000000;
   if (cb(&sdesc, context) == 0)
     return DD_OK;
   

@@ -1051,8 +1051,8 @@ static HRESULT WINAPI IDirectDrawSurface4Impl_Blt(
     GLboolean ztest;
     
     /* Clears the screen */
-    TRACE("	Filling depth buffer with %ld\n", lpbltfx->b.dwFillDepth);
-    glClearDepth(lpbltfx->b.dwFillDepth / 65535.0); /* We suppose a 16 bit Z Buffer */
+    TRACE("	Filling depth buffer with %ld\n", lpbltfx->u4.dwFillDepth);
+    glClearDepth(lpbltfx->u4.dwFillDepth / 65535.0); /* We suppose a 16 bit Z Buffer */
     glGetBooleanv(GL_DEPTH_TEST, &ztest);
     glDepthMask(GL_TRUE); /* Enables Z writing to be sure to delete also the Z buffer */
     glClear(GL_DEPTH_BUFFER_BIT);

@@ -139,7 +139,7 @@ HRESULT WINAPI  SetColorKey_cb(IDirect3DTexture2Impl *texture, DWORD dwFlags, LP
   tex_d = &(texture->surface->s.surface_desc);
   bpp = (tex_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8 ?
 	 1 /* 8 bit of palette index */:
-	 tex_d->ddpfPixelFormat.x.dwRGBBitCount / 8 /* RGB bits for each colors */ );
+	 tex_d->ddpfPixelFormat.u.dwRGBBitCount / 8 /* RGB bits for each colors */ );
   
   /* Now, save the current texture */
   ENTER_GL();
@@ -156,15 +156,15 @@ HRESULT WINAPI  SetColorKey_cb(IDirect3DTexture2Impl *texture, DWORD dwFlags, LP
   if (tex_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8) {
     FIXME("Todo Paletted\n");
   } else if (tex_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
-    if (tex_d->ddpfPixelFormat.x.dwRGBBitCount == 8) {
+    if (tex_d->ddpfPixelFormat.u.dwRGBBitCount == 8) {
       FIXME("Todo 3_3_2_0\n");
-    } else if (tex_d->ddpfPixelFormat.x.dwRGBBitCount == 16) {
-      if (tex_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x00000000) {
+    } else if (tex_d->ddpfPixelFormat.u.dwRGBBitCount == 16) {
+      if (tex_d->ddpfPixelFormat.u4.dwRGBAlphaBitMask == 0x00000000) {
 	/* Now transform the 5_6_5 into a 5_5_5_1 surface to support color keying */
 	unsigned short *dest = (unsigned short *) HeapAlloc(GetProcessHeap(),
 							    HEAP_ZERO_MEMORY,
 							    tex_d->dwWidth * tex_d->dwHeight * bpp);
-	unsigned short *src = (unsigned short *) tex_d->y.lpSurface;
+	unsigned short *src = (unsigned short *) tex_d->u1.lpSurface;
 	int x, y;
 
 	for (y = 0; y < tex_d->dwHeight; y++) {
@@ -191,16 +191,16 @@ HRESULT WINAPI  SetColorKey_cb(IDirect3DTexture2Impl *texture, DWORD dwFlags, LP
 
 	/* Frees the temporary surface */
 	HeapFree(GetProcessHeap(),0,dest);
-      } else if (tex_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x00000001) {
+      } else if (tex_d->ddpfPixelFormat.u4.dwRGBAlphaBitMask == 0x00000001) {
 	FIXME("Todo 5_5_5_1\n");
-      } else if (tex_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x0000000F) {
+      } else if (tex_d->ddpfPixelFormat.u4.dwRGBAlphaBitMask == 0x0000000F) {
 	FIXME("Todo 4_4_4_4\n");
       } else {
 	ERR("Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
       }
-    } else if (tex_d->ddpfPixelFormat.x.dwRGBBitCount == 24) {
+    } else if (tex_d->ddpfPixelFormat.u.dwRGBBitCount == 24) {
       FIXME("Todo 8_8_8_0\n");
-    } else if (tex_d->ddpfPixelFormat.x.dwRGBBitCount == 32) {
+    } else if (tex_d->ddpfPixelFormat.u.dwRGBBitCount == 32) {
       FIXME("Todo 8_8_8_8\n");
     } else {
       ERR("Unhandled texture format (bad RGB count)\n");
@@ -373,12 +373,12 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
     /* I should put a macro for the calculus of bpp */
     int bpp = (src_d->ddpfPixelFormat.dwFlags & DDPF_PALETTEINDEXED8 ?
 	       1 /* 8 bit of palette index */:
-	       src_d->ddpfPixelFormat.x.dwRGBBitCount / 8 /* RGB bits for each colors */ );
+	       src_d->ddpfPixelFormat.u.dwRGBBitCount / 8 /* RGB bits for each colors */ );
     GLuint current_texture;
 
     /* Copy the main memry texture into the surface that corresponds to the OpenGL
        texture object. */
-    memcpy(dst_d->y.lpSurface, src_d->y.lpSurface, src_d->dwWidth * src_d->dwHeight * bpp);
+    memcpy(dst_d->u1.lpSurface, src_d->u1.lpSurface, src_d->dwWidth * src_d->dwHeight * bpp);
 
     ENTER_GL();
     
@@ -436,12 +436,12 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 		   0,                   /* border */
 		   GL_COLOR_INDEX,      /* texture format */
 		   GL_UNSIGNED_BYTE,    /* texture type */
-		   src_d->y.lpSurface); /* the texture */
+		   src_d->u1.lpSurface); /* the texture */
     } else if (src_d->ddpfPixelFormat.dwFlags & DDPF_RGB) {
       /* ************
 	 RGB Textures
 	 ************ */
-      if (src_d->ddpfPixelFormat.x.dwRGBBitCount == 8) {
+      if (src_d->ddpfPixelFormat.u.dwRGBBitCount == 8) {
 	/* **********************
 	   GL_UNSIGNED_BYTE_3_3_2 
 	   ********************** */
@@ -452,9 +452,9 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 		     0,
 		     GL_RGB,
 		     GL_UNSIGNED_BYTE_3_3_2,
-		     src_d->y.lpSurface);
-      } else if (src_d->ddpfPixelFormat.x.dwRGBBitCount == 16) {
-	if (src_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x00000000) {
+		     src_d->u1.lpSurface);
+      } else if (src_d->ddpfPixelFormat.u.dwRGBBitCount == 16) {
+	if (src_d->ddpfPixelFormat.u4.dwRGBAlphaBitMask == 0x00000000) {
 	    
 	  /* Texture snooping */
 	  SNOOP_5650();
@@ -466,8 +466,8 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 		       0,
 		       GL_RGB,
 		       GL_UNSIGNED_SHORT_5_6_5,
-		       src_d->y.lpSurface);
-	} else if (src_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x00000001) {
+		       src_d->u1.lpSurface);
+	} else if (src_d->ddpfPixelFormat.u4.dwRGBAlphaBitMask == 0x00000001) {
 	  /* Texture snooping */
 	  SNOOP_5551();
 	  
@@ -478,8 +478,8 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 		       0,
 		       GL_RGBA,
 		       GL_UNSIGNED_SHORT_5_5_5_1,
-		       src_d->y.lpSurface);
-	} else if (src_d->ddpfPixelFormat.xy.dwRGBAlphaBitMask == 0x0000000F) {
+		       src_d->u1.lpSurface);
+	} else if (src_d->ddpfPixelFormat.u4.dwRGBAlphaBitMask == 0x0000000F) {
 	  glTexImage2D(GL_TEXTURE_2D,
 		       0,
 		       GL_RGBA,
@@ -487,11 +487,11 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 		       0,
 		       GL_RGBA,
 		       GL_UNSIGNED_SHORT_4_4_4_4,
-		       src_d->y.lpSurface);
+		       src_d->u1.lpSurface);
 	} else {
 	  ERR("Unhandled texture format (bad Aplha channel for a 16 bit texture)\n");
 	}
-      } else if (src_d->ddpfPixelFormat.x.dwRGBBitCount == 24) {
+      } else if (src_d->ddpfPixelFormat.u.dwRGBBitCount == 24) {
 	glTexImage2D(GL_TEXTURE_2D,
 		     0,
 		     GL_RGB,
@@ -499,8 +499,8 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 		     0,
 		     GL_RGB,
 		     GL_UNSIGNED_BYTE,
-		     src_d->y.lpSurface);
-      } else if (src_d->ddpfPixelFormat.x.dwRGBBitCount == 32) {
+		     src_d->u1.lpSurface);
+      } else if (src_d->ddpfPixelFormat.u.dwRGBBitCount == 32) {
 	glTexImage2D(GL_TEXTURE_2D,
 		     0,
 		     GL_RGBA,
@@ -508,7 +508,7 @@ static HRESULT WINAPI IDirect3DTexture2Impl_Load(LPDIRECT3DTEXTURE2 iface,
 		     0,
 		     GL_RGBA,
 		     GL_UNSIGNED_BYTE,
-		     src_d->y.lpSurface);
+		     src_d->u1.lpSurface);
       } else {
 	ERR("Unhandled texture format (bad RGB count)\n");
       }
