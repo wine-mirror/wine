@@ -257,6 +257,7 @@ static DWORD PROGRESS_SetRange (PROGRESS_INFO *infoPtr, int low, int high)
     infoPtr->MinVal = low;
     infoPtr->MaxVal = high;
     PROGRESS_CoercePos(infoPtr);
+    InvalidateRect(infoPtr->Self, NULL, TRUE);
     return res;
 }
 
