@@ -542,8 +542,8 @@ init	MAIN_KernelInit
 524 stdcall MapSLFix(long) MapSLFix
 525 stdcall MapViewOfFile(long long long long long) MapViewOfFile
 526 stdcall MapViewOfFileEx(long long long long long ptr) MapViewOfFileEx
-527 stub Module32First
-528 stub Module32Next
+527 stdcall Module32First(long ptr) Module32First
+528 stdcall Module32Next(long ptr) Module32Next
 529 stdcall MoveFileA(str str) MoveFileA
 530 stdcall MoveFileExA(str str long) MoveFileExA
 531 stdcall MoveFileExW(wstr wstr long) MoveFileExW

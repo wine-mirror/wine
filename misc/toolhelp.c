@@ -187,3 +187,25 @@ BOOL WINAPI Process32Next(HANDLE hSnapshot, LPPROCESSENTRY lppe)
 {
     return TOOLHELP_Process32Next( hSnapshot, lppe, FALSE );
 }
+
+/***********************************************************************
+ *		Module32First   (KERNEL32.527)
+ *
+ * Return info about the "first" module in a toolhelp32 snapshot
+ */
+BOOL WINAPI Module32First(HANDLE hSnapshot, LPMODULEENTRY lpme)
+{
+    FIXME(toolhelp,"(%d,%p),stub!\n",hSnapshot,lpme);
+    return FALSE;
+}
+
+/***********************************************************************
+ *		Module32Next   (KERNEL32.528)
+ *
+ * Return info about the "next" module in a toolhelp32 snapshot
+ */
+BOOL WINAPI Module32Next(HANDLE hSnapshot, LPMODULEENTRY lpme)
+{
+    FIXME(toolhelp,"(%d,%p),stub!\n",hSnapshot,lpme);
+    return FALSE;
+}
