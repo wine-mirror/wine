@@ -861,8 +861,18 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
             if (!PtInRect16( &rect, pt ))
             {
                 /* Check system menu */
-                if ((wndPtr->dwStyle & WS_SYSMENU) && (!(wndPtr->dwStyle & DS_MODALFRAME)))
-                    rect.left += GetSystemMetrics(SM_CYCAPTION) - 1;
+		if(wndPtr->dwStyle & WS_SYSMENU)
+		{
+		    /* Check if there is an user icon */
+		    HICON hIcon = (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICONSM);
+		    if(!hIcon) hIcon = (HICON) GetClassLongA(wndPtr->hwndSelf, GCL_HICON);
+		    
+		    /* If there is an icon associated with the window OR              */
+		    /* If there is no hIcon specified and this is not a modal dialog, */ 
+		    /* there is a system menu icon.                                   */
+		    if((hIcon != 0) || (!(wndPtr->dwStyle & DS_MODALFRAME)))
+			rect.left += GetSystemMetrics(SM_CYCAPTION) - 1;
+		}
                 if (pt.x < rect.left) return HTSYSMENU;
 
                 /* Check close button */
