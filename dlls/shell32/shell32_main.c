@@ -392,7 +392,7 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  if (SUCCEEDED(hr))
 	  {
            hr = IExtractIconA_GetIconLocation(pei, (flags & SHGFI_OPENICON)? GIL_OPENICON : 0,szLocation, MAX_PATH, &iIndex, &uFlags);
-	    /* FIXME what to do with the index? */
+           psfi->iIcon = iIndex;
 
 	    if(uFlags != GIL_NOTFILENAME)
              strcpy (psfi->szDisplayName, szLocation);
@@ -1007,12 +1007,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	    SYSTRAY_Init();
 	    InitChangeNotifications();
 	    SHInitRestricted(NULL, NULL);
-	    break;
-
-	  case DLL_THREAD_ATTACH:
-	    break;
-
-	  case DLL_THREAD_DETACH:
 	    break;
 
 	  case DLL_PROCESS_DETACH:
