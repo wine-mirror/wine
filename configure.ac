@@ -1074,6 +1074,7 @@ AC_CHECK_FUNCS(\
 	clone \
 	epoll_create \
 	finite \
+	fork \
 	fpclass \
 	fstatfs \
 	fstatvfs \

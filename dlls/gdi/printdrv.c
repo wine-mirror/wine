@@ -481,6 +481,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
             return -1;
     }
     TRACE("command: '%s'\n", psCmdP);
+#ifdef HAVE_FORK
     if (*psCmdP == '|')
     {
         int fds[2];
@@ -510,6 +511,7 @@ static int CreateSpoolFile(LPCSTR pszOutput)
         TRACE("Need to execute a cmnd and pipe the output to it\n");
     }
     else
+#endif
     {
         char *buffer;
         WCHAR psCmdPW[MAX_PATH];
