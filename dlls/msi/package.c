@@ -203,6 +203,8 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 {'A','p','p','D','a','t','a','F','o','l','d','e','r',0};
     static const WCHAR SF[] = 
 {'S','y','s','t','e','m','F','o','l','d','e','r',0};
+    static const WCHAR SF16[] = 
+{'S','y','s','t','e','m','1','6','F','o','l','d','e','r',0};
     static const WCHAR LADF[] = 
 {'L','o','c','a','l','A','p','p','D','a','t','a','F','o','l','d','e','r',0};
     static const WCHAR MPF[] = 
@@ -318,6 +320,7 @@ Privileged
     SHGetFolderPathW(NULL,CSIDL_SYSTEM,NULL,0,pth);
     strcatW(pth,cszbs);
     MSI_SetPropertyW(package, SF, pth);
+    MSI_SetPropertyW(package, SF16, pth);
 
     SHGetFolderPathW(NULL,CSIDL_LOCAL_APPDATA,NULL,0,pth);
     strcatW(pth,cszbs);
