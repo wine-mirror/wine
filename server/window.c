@@ -174,15 +174,20 @@ DECL_HANDLER(link_window)
     if (req->parent && !(parent = get_window( req->parent ))) return;
     if (parent && req->previous)
     {
-        if (req->previous == 1)  /* special case: HWND_BOTTOM */
-            previous = parent->last_child;
-        else
-            if (!(previous = get_window( req->previous ))) return;
-
-        if (previous && previous->parent != parent)  /* previous must be a child of parent */
+        if (req->previous == (user_handle_t)1)  /* special case: HWND_BOTTOM */
         {
-            set_error( STATUS_INVALID_PARAMETER );
-            return;
+            previous = parent->last_child;
+            if (previous == win) return;  /* nothing to do */
+        }
+        else
+        {
+            if (!(previous = get_window( req->previous ))) return;
+            /* previous must be a child of parent, and not win itself */
+            if (previous->parent != parent || previous == win)
+            {
+                set_error( STATUS_INVALID_PARAMETER );
+                return;
+            }
         }
     }
     link_window( win, parent, previous );
