@@ -684,8 +684,11 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
-    BOOL hasDropDownArrow = TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) &&
-	                    (btnPtr->fsStyle & BTNS_DROPDOWN);
+    BOOL hasDropDownArrow = (TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) &&
+                            (btnPtr->fsStyle & BTNS_DROPDOWN)) ||
+                            (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN);
+    BOOL drawSepDropDownArrow = hasDropDownArrow && 
+                            (~btnPtr->fsStyle & BTNS_WHOLEDROPDOWN);
     RECT rc, rcArrow, rcBitmap, rcText, rcFill;
     LPWSTR lpText = NULL;
     NMTBCUSTOMDRAW tbcd;
@@ -705,11 +708,17 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
     if (hasDropDownArrow)
     {
+        int right;
+
 	if (dwStyle & TBSTYLE_FLAT)
-            rc.right = max(rc.left, rc.right - DDARROW_WIDTH);
+            right = max(rc.left, rc.right - DDARROW_WIDTH);
 	else
-            rc.right = max(rc.left, rc.right - DDARROW_WIDTH - 2);
-	rcArrow.left = rc.right;
+            right = max(rc.left, rc.right - DDARROW_WIDTH - 2);
+
+        if (drawSepDropDownArrow)
+           rc.right = right;
+
+	rcArrow.left = right;
     }
 
     /* copy text rect after adjusting for drop-down arrow
@@ -870,7 +879,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	{
 	    DrawEdge (hdc, &rc, EDGE_RAISED,
 		      BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
-            if (hasDropDownArrow)
+            if (drawSepDropDownArrow)
             DrawEdge (hdc, &rcArrow, EDGE_RAISED,
 		      BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 	}
@@ -899,13 +908,13 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	    if (dwStyle & TBSTYLE_FLAT)
 	    {
 		DrawEdge (hdc, &rc, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
-		if (hasDropDownArrow)
+		if (drawSepDropDownArrow)
 		    DrawEdge (hdc, &rcArrow, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST);
 	    }
 	    else
 	    {
 		DrawEdge (hdc, &rc, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
-		if (hasDropDownArrow)
+		if (drawSepDropDownArrow)
 		    DrawEdge (hdc, &rcArrow, EDGE_SUNKEN, BF_RECT | BF_MIDDLE | BF_ADJUST);
 	    }
 	}
@@ -989,7 +998,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
         if (hasDropDownArrow)
 	{
-	    if (!(infoPtr->dwItemCDFlag & TBCDRF_NOEDGES))
+	    if (drawSepDropDownArrow && !(infoPtr->dwItemCDFlag & TBCDRF_NOEDGES))
 		DrawEdge (hdc, &rcArrow, EDGE_RAISED,
 			  BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 	    TOOLBAR_DrawArrow(hdc, rcArrow.left, rcArrow.top + (rcArrow.bottom - rcArrow.top - ARROW_HEIGHT) / 2, COLOR_WINDOWFRAME);
@@ -5012,9 +5021,11 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	arrowRect.left = max(btnPtr->rect.left, btnPtr->rect.right - DDARROW_WIDTH);
 
 	/* for EX_DRAWDDARROWS style,  click must be in the drop-down arrow rect */
-	if ((btnPtr->fsState & TBSTATE_ENABLED) && (btnPtr->fsStyle & BTNS_DROPDOWN) &&
-	     ((TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) && PtInRect(&arrowRect, pt)) ||
-	      (!TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle))))
+	if ((btnPtr->fsState & TBSTATE_ENABLED) && 
+	     ((btnPtr->fsStyle & BTNS_WHOLEDROPDOWN) ||
+	      ((btnPtr->fsStyle & BTNS_DROPDOWN) &&
+	       ((TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) && PtInRect(&arrowRect, pt)) ||
+	       (!TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle))))))
 	{
 	    LRESULT res;
 	    /*
@@ -5028,7 +5039,7 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    memset(&nmtb.tbButton, 0, sizeof(TBBUTTON));
 	    nmtb.cchText = 0;
 	    nmtb.pszText = 0;
-	    memset(&nmtb.rcButton, 0, sizeof(RECT));
+	    CopyRect(&nmtb.rcButton, &btnPtr->rect);
 	    res = TOOLBAR_SendNotify ((NMHDR *) &nmtb, infoPtr,
 				  TBN_DROPDOWN);
 	    if (res != TBDDRET_TREATPRESSED)
