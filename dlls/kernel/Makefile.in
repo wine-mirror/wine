@@ -23,7 +23,6 @@ C_SRCS = \
 	$(TOPOBJDIR)/files/drive.c \
 	$(TOPOBJDIR)/files/file.c \
 	$(TOPOBJDIR)/files/smb.c \
-	$(TOPOBJDIR)/loader/module.c \
 	$(TOPOBJDIR)/memory/environ.c \
 	$(TOPOBJDIR)/memory/virtual.c \
 	$(TOPOBJDIR)/misc/cpu.c \
@@ -52,6 +51,7 @@ C_SRCS = \
 	lcformat.c \
 	local16.c \
 	locale.c \
+	module.c \
 	ne_module.c \
 	ne_segment.c \
 	powermgnt.c \
@@ -99,7 +99,6 @@ EXTRA_OBJS   = $(ASM_SRCS:.s=.o)
 SUBDIRS      = tests
 EXTRASUBDIRS = \
 	$(TOPOBJDIR)/files \
-	$(TOPOBJDIR)/loader \
 	$(TOPOBJDIR)/memory \
 	$(TOPOBJDIR)/misc \
 	$(TOPOBJDIR)/msdos \
