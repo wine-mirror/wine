@@ -594,8 +594,8 @@
 @ stdcall SHRegQueryInfoUSKeyW ( long ptr ptr ptr ptr long ) SHRegQueryInfoUSKeyW
 @ stdcall SHRegQueryUSValueA ( long str ptr ptr ptr long ptr long ) SHRegQueryUSValueA
 @ stdcall SHRegQueryUSValueW ( long wstr ptr ptr ptr long ptr long ) SHRegQueryUSValueW
-@ stub    SHRegSetUSValueA
-@ stub    SHRegSetUSValueW
+@ stdcall SHRegSetUSValueA ( str str long ptr long long) SHRegSetUSValueA
+@ stdcall SHRegSetUSValueW ( wstr wstr long ptr long long) SHRegSetUSValueW
 @ stdcall SHRegWriteUSValueA (long str long ptr long long) SHRegWriteUSValueA
 @ stdcall SHRegWriteUSValueW (long str long ptr long long) SHRegWriteUSValueW
 @ stdcall SHSetValueA (long  str  str long ptr long) SHSetValueA

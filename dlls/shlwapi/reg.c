@@ -396,7 +396,67 @@ LONG WINAPI SHRegGetUSValueW(
 	if (ret == ERROR_SUCCESS) {
 	    ret = SHRegQueryUSValueW(myhuskey, pValue, pwType, pvData,
 				     pcbData, flagIgnoreHKCU, pDefaultData,
-				     wDefaultDataSize);
+				     wDefaultDataSize);	    
+	    SHRegCloseUSKey(myhuskey);
+	}
+	return ret;
+}
+
+/*************************************************************************
+ * SHRegSetUSValueA   [SHLWAPI.@]
+ */
+LONG WINAPI SHRegSetUSValueA(
+	LPCSTR pszSubKey,
+	LPCSTR pszValue,
+	DWORD   dwType,
+	LPVOID  pvData,
+	DWORD   cbData,
+	DWORD   dwFlags)
+{
+        HUSKEY myhuskey;
+	LONG   ret;
+	BOOL   ignoreHKCU;
+
+        if (!pvData) return ERROR_INVALID_FUNCTION;
+	TRACE("key '%s', value '%s', datalen %ld\n",
+	      debugstr_a(pszSubKey), debugstr_a(pszValue), cbData);
+	
+	ignoreHKCU = ((dwFlags == SHREGSET_HKLM) || (dwFlags == SHREGSET_FORCE_HKLM));
+
+	ret = SHRegOpenUSKeyA(pszSubKey, 0x1, 0, &myhuskey, ignoreHKCU);
+	if (ret == ERROR_SUCCESS) {
+ 	  ret = SHRegWriteUSValueA(myhuskey, pszValue, dwType, pvData, 
+				   cbData, dwFlags);
+	    SHRegCloseUSKey(myhuskey);
+	}
+	return ret;
+}
+
+/*************************************************************************
+ * SHRegSetUSValueW   [SHLWAPI.@]
+ */
+LONG WINAPI SHRegSetUSValueW(
+	LPCWSTR pszSubKey,
+	LPCWSTR pszValue,
+	DWORD   dwType,
+	LPVOID  pvData,
+	DWORD   cbData,
+	DWORD   dwFlags)
+{
+        HUSKEY myhuskey;
+	LONG   ret;
+	BOOL   ignoreHKCU;
+
+        if (!pvData) return ERROR_INVALID_FUNCTION;
+	TRACE("key '%s', value '%s', datalen %ld\n",
+	      debugstr_w(pszSubKey), debugstr_w(pszValue), cbData);
+	
+	ignoreHKCU = ((dwFlags == SHREGSET_HKLM) || (dwFlags == SHREGSET_FORCE_HKLM));
+
+	ret = SHRegOpenUSKeyW(pszSubKey, 0x1, 0, &myhuskey, ignoreHKCU);
+	if (ret == ERROR_SUCCESS) {
+ 	  ret = SHRegWriteUSValueW(myhuskey, pszValue, dwType, pvData, 
+				   cbData, dwFlags);
 	    SHRegCloseUSKey(myhuskey);
 	}
 	return ret;
