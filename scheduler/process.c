@@ -338,6 +338,7 @@ static void start_process(void)
     /* Signal the parent process to continue */
     req->module = (void *)module;
     req->entry  = entry;
+    req->name   = &pdb->exe_modref->filename;
     req->gui    = !console_app;
     server_call( REQ_INIT_PROCESS_DONE );
     debugged = req->debugged;
@@ -386,25 +387,38 @@ static void start_process(void)
  *           PROCESS_Start
  *
  * Startup routine of a new Win32 process once the main module has been loaded.
+ * The filename is free'd by this routine.
  */
-static void PROCESS_Start( HMODULE main_module, LPCSTR filename ) WINE_NORETURN;
-static void PROCESS_Start( HMODULE main_module, LPCSTR filename )
+static void PROCESS_Start( HMODULE main_module, LPSTR filename ) WINE_NORETURN;
+static void PROCESS_Start( HMODULE main_module, LPSTR filename )
 {
+    if (!filename)
+    {
+        /* if no explicit filename, use argv[0] */
+        if (!(filename = malloc( MAX_PATH ))) ExitProcess(1);
+        if (!GetFullPathNameA( argv0, MAX_PATH, filename, NULL ))
+            lstrcpynA( filename, argv0, MAX_PATH );
+    }
+
     /* load main module */
     if (PE_HEADER(main_module)->FileHeader.Characteristics & IMAGE_FILE_DLL)
         ExitProcess( ERROR_BAD_EXE_FORMAT );
 
     /* Create 32-bit MODREF */
     if (!PE_CreateModule( main_module, filename, 0, FALSE ))
-        ExitProcess( GetLastError() );
+        goto error;
+    free( filename );
 
     /* allocate main thread stack */
     if (!THREAD_InitStack( NtCurrentTeb(),
                            PE_HEADER(main_module)->OptionalHeader.SizeOfStackReserve, TRUE ))
-        ExitProcess( GetLastError() );
+        goto error;
 
     /* switch to the new stack */
     SYSDEPS_SwitchToThreadStack( start_process );
+
+ error:
+    ExitProcess( GetLastError() );
 }
 
 
@@ -469,13 +483,12 @@ void PROCESS_InitWine( int argc, char *argv[] )
     case SCS_WOW_BINARY:
         {
             HMODULE main_module;
-            LPCSTR filename;
             /* create 32-bit module for main exe */
-            if (!(main_module = BUILTIN32_LoadExeModule( &filename ))) goto error;
+            if (!(main_module = BUILTIN32_LoadExeModule())) goto error;
             NtCurrentTeb()->tibflags &= ~TEBF_WIN32;
             PROCESS_Current()->flags |= PDB32_WIN16_PROC;
             SYSLEVEL_EnterWin16Lock();
-            PROCESS_Start( main_module, filename );
+            PROCESS_Start( main_module, NULL );
         }
         break;
 
@@ -505,16 +518,14 @@ void PROCESS_InitWine( int argc, char *argv[] )
 void PROCESS_InitWinelib( int argc, char *argv[] )
 {
     HMODULE main_module;
-    LPCSTR filename;
 
     if (!MAIN_MainInit( argv )) exit(1);
 
-    main_exe_argv = argv;
-
     /* create 32-bit module for main exe */
-    if (!(main_module = BUILTIN32_LoadExeModule( &filename ))) ExitProcess( GetLastError() );
+    if (!(main_module = BUILTIN32_LoadExeModule())) ExitProcess( GetLastError() );
 
-    PROCESS_Start( main_module, filename );
+    main_exe_argv = argv;
+    PROCESS_Start( main_module, NULL );
 }
 
 

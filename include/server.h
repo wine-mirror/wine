@@ -170,6 +170,7 @@ struct init_process_done_request
 {
     IN  void*        module;       /* main module base address */
     IN  void*        entry;        /* process entry point */
+    IN  void*        name;         /* ptr to ptr to name (in process addr space) */
     IN  int          gui;          /* is it a GUI process? */
     OUT int          debugged;     /* being debugged? */
 };
@@ -1297,7 +1298,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 14
+#define SERVER_PROTOCOL_VERSION 15
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */

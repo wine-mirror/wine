@@ -285,6 +285,7 @@ static void dump_init_process_done_request( const struct init_process_done_reque
 {
     fprintf( stderr, " module=%p,", req->module );
     fprintf( stderr, " entry=%p,", req->entry );
+    fprintf( stderr, " name=%p,", req->name );
     fprintf( stderr, " gui=%d", req->gui );
 }
 

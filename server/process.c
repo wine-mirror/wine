@@ -817,6 +817,7 @@ DECL_HANDLER(init_process_done)
         return;
     }
     process->exe.base = req->module;
+    process->exe.name = req->name;
     generate_startup_debug_events( current->process, req->entry );
     set_event( process->init_event );
     release_object( process->init_event );

@@ -389,7 +389,7 @@ WINE_MODREF *BUILTIN32_LoadLibraryExA(LPCSTR path, DWORD flags)
 /***********************************************************************
  *           BUILTIN32_LoadExeModule
  */
-HMODULE BUILTIN32_LoadExeModule( LPCSTR *filename )
+HMODULE BUILTIN32_LoadExeModule(void)
 {
     int i, exe = -1;
 
@@ -416,8 +416,6 @@ HMODULE BUILTIN32_LoadExeModule( LPCSTR *filename )
     if ( !dll_modules[exe] )
         if ( !(dll_modules[exe] = BUILTIN32_DoLoadImage( builtin_dlls[exe] )) )
             return 0;
-
-    *filename = builtin_dlls[exe]->filename;
     return dll_modules[exe];
 }
 

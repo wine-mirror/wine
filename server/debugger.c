@@ -140,7 +140,7 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     event->data.info.create_process.start      = arg;
     event->data.info.create_process.dbg_offset = process->exe.dbg_offset;
     event->data.info.create_process.dbg_size   = process->exe.dbg_size;
-    event->data.info.create_process.name       = 0;
+    event->data.info.create_process.name       = process->exe.name;
     event->data.info.create_process.unicode    = 0;
     return 1;
 }
