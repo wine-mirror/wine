@@ -6,9 +6,9 @@
  */
 
 #include "win.h"
-#include "syscolor.h"
 #include "graphics.h"
 #include "button.h"
+#include "windows.h"
 
 static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action );
 static void PB_PaintGrayOnGray(HDC32 hDC,HFONT32 hFont,RECT32 *rc,char *text);
@@ -266,8 +266,8 @@ static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
       /* Send WM_CTLCOLOR to allow changing the font (the colors are fixed) */
     if (infoPtr->hFont) SelectObject32( hDC, infoPtr->hFont );
     BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
-    hOldPen = (HPEN32)SelectObject32(hDC, sysColorObjects.hpenWindowFrame);
-    hOldBrush = (HBRUSH32)SelectObject32(hDC, sysColorObjects.hbrushBtnFace);
+    hOldPen = (HPEN32)SelectObject32(hDC, GetSysColorPen32(COLOR_WINDOWFRAME));
+    hOldBrush =(HBRUSH32)SelectObject32(hDC,GetSysColorBrush32(COLOR_BTNFACE));
     SetBkMode32(hDC, TRANSPARENT);
     Rectangle32(hDC, rc.left, rc.top, rc.right, rc.bottom);
     if (action == ODA_DRAWENTIRE)
@@ -288,7 +288,7 @@ static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
     if (infoPtr->state & BUTTON_HIGHLIGHTED)
     {
         /* draw button shadow: */
-        SelectObject32(hDC, sysColorObjects.hbrushBtnShadow );
+        SelectObject32(hDC, GetSysColorBrush32(COLOR_BTNSHADOW));
         PatBlt32(hDC, rc.left, rc.top, 1, rc.bottom-rc.top, PATCOPY );
         PatBlt32(hDC, rc.left, rc.top, rc.right-rc.left, 1, PATCOPY );
         rc.left += 2;  /* To position the text down and right */
@@ -300,7 +300,7 @@ static void PB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
     if (wndPtr->text && wndPtr->text[0])
     {
         LOGBRUSH16 lb;
-        GetObject16( sysColorObjects.hbrushBtnFace, sizeof(lb), &lb );
+        GetObject16( GetSysColorBrush32(COLOR_BTNFACE), sizeof(lb), &lb );
         if (wndPtr->dwStyle & WS_DISABLED &&
             GetSysColor32(COLOR_GRAYTEXT)==lb.lbColor)
             /* don't write gray text on gray bkg */
@@ -494,7 +494,7 @@ static void GB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 
     GetClientRect16( wndPtr->hwndSelf, &rc);
     GRAPH_DrawRectangle( hDC, rc.left, rc.top + 2, rc.right - 1, rc.bottom - 1,
-					     sysColorObjects.hpenWindowFrame );
+			 GetSysColorPen32(COLOR_WINDOWFRAME) );
     if (wndPtr->text)
     {
 	if (infoPtr->hFont) SelectObject32( hDC, infoPtr->hFont );

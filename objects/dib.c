@@ -240,13 +240,16 @@ static int *DIB_BuildColorMap( DC *dc, WORD coloruse, WORD depth,
  *
  * Handles a single line of 1 bit data.
  */
-static void DIB_SetImageBits_1_Line(DWORD dstwidth, int *colors,
+static void DIB_SetImageBits_1_Line(DWORD dstwidth, int left, int *colors,
 				    XImage *bmpImage, int h, const BYTE *bits)
 {
     BYTE pix;
     DWORD i, x;
 
-    for (i = dstwidth/8, x = 0; (i > 0); i--)
+    dstwidth += left; bits += left >> 3;
+
+    /* FIXME: should avoid putting x<left pixels (minor speed issue) */
+    for (i = dstwidth/8, x = left&~7; (i > 0); i--)
     {
 	pix = *bits++;
 	XPutPixel( bmpImage, x++, h, colors[pix >> 7] );
@@ -277,7 +280,7 @@ static void DIB_SetImageBits_1_Line(DWORD dstwidth, int *colors,
  * SetDIBits for a 1-bit deep DIB.
  */
 static void DIB_SetImageBits_1( int lines, const BYTE *srcbits,
-                                DWORD srcwidth, DWORD dstwidth,
+                                DWORD srcwidth, DWORD dstwidth, int left,
                                 int *colors, XImage *bmpImage )
 {
     int h;
@@ -287,13 +290,13 @@ static void DIB_SetImageBits_1( int lines, const BYTE *srcbits,
 
     if (lines > 0) {
 	for (h = lines-1; h >=0; h--) {
-	    DIB_SetImageBits_1_Line(dstwidth, colors, bmpImage, h, srcbits);
+	    DIB_SetImageBits_1_Line(dstwidth, left, colors, bmpImage, h, srcbits);
 	    srcbits += linebytes;
 	}
     } else {
 	lines = -lines;
 	for (h = 0; h < lines; h++) {
-	    DIB_SetImageBits_1_Line(dstwidth, colors, bmpImage, h, srcbits);
+	    DIB_SetImageBits_1_Line(dstwidth, left, colors, bmpImage, h, srcbits);
 	    srcbits += linebytes;
 	}
     }
@@ -306,38 +309,41 @@ static void DIB_SetImageBits_1( int lines, const BYTE *srcbits,
  * SetDIBits for a 4-bit deep DIB.
  */
 static void DIB_SetImageBits_4( int lines, const BYTE *srcbits,
-                                DWORD srcwidth, DWORD dstwidth,
+                                DWORD srcwidth, DWORD dstwidth, int left,
                                 int *colors, XImage *bmpImage )
 {
     DWORD i, x;
     int h;
-    const BYTE *bits = srcbits;
+    const BYTE *bits = srcbits + (left >> 1);
   
     /* 32 bit aligned */
     DWORD linebytes = ((srcwidth+7)&~7)/2;
 
+    dstwidth += left;
+
+    /* FIXME: should avoid putting x<left pixels (minor speed issue) */
     if (lines > 0) {
 	for (h = lines-1; h >= 0; h--) {
-	    for (i = dstwidth/2, x = 0; i > 0; i--) {
+	    for (i = dstwidth/2, x = left&~1; i > 0; i--) {
 		BYTE pix = *bits++;
 		XPutPixel( bmpImage, x++, h, colors[pix >> 4] );
 		XPutPixel( bmpImage, x++, h, colors[pix & 0x0f] );
 	    }
 	    if (dstwidth & 1) XPutPixel( bmpImage, x, h, colors[*bits >> 4] );
 	    srcbits += linebytes;
-	    bits	 = srcbits;
+	    bits	 = srcbits + (left >> 1);
 	}
     } else {
 	lines = -lines;
 	for (h = 0; h < lines; h++) {
-	    for (i = dstwidth/2, x = 0; i > 0; i--) {
+	    for (i = dstwidth/2, x = left&~1; i > 0; i--) {
 		BYTE pix = *bits++;
 		XPutPixel( bmpImage, x++, h, colors[pix >> 4] );
 		XPutPixel( bmpImage, x++, h, colors[pix & 0x0f] );
 	    }
 	    if (dstwidth & 1) XPutPixel( bmpImage, x, h, colors[*bits >> 4] );
 	    srcbits += linebytes;
-	    bits	 = srcbits;
+	    bits	 = srcbits + (left >> 1);
 	}
     }
 }
@@ -355,10 +361,12 @@ static void DIB_SetImageBits_4( int lines, const BYTE *srcbits,
  * SetDIBits for a 4-bit deep compressed DIB.
  */
 static void DIB_SetImageBits_RLE4( int lines, const BYTE *bits, DWORD width,
-                                DWORD dstwidth, int *colors, XImage *bmpImage )
+                                DWORD dstwidth, int left, int *colors, XImage *bmpImage )
 {
 	int x = 0, c, length;
 	const BYTE *begin = bits;
+
+        dstwidth += left; /* FIXME: avoid putting x<left pixels */
 
         lines--;
 	while ((int)lines >= 0)
@@ -415,30 +423,32 @@ static void DIB_SetImageBits_RLE4( int lines, const BYTE *bits, DWORD width,
  * SetDIBits for an 8-bit deep DIB.
  */
 static void DIB_SetImageBits_8( int lines, const BYTE *srcbits,
-				DWORD srcwidth, DWORD dstwidth,
+				DWORD srcwidth, DWORD dstwidth, int left,
                                 int *colors, XImage *bmpImage )
 {
     DWORD x;
     int h;
-    const BYTE *bits = srcbits;
+    const BYTE *bits = srcbits + left;
 
     /* align to 32 bit */
     DWORD linebytes = (srcwidth + 3) & ~3;
 
+    dstwidth+=left;
+
     if (lines > 0) {
 	for (h = lines - 1; h >= 0; h--) {
-	    for (x = 0; x < dstwidth; x++, bits++) {
+	    for (x = left; x < dstwidth; x++, bits++) {
 		XPutPixel( bmpImage, x, h, colors[*bits] );
 	    }
-	    bits = (srcbits += linebytes);
+	    bits = (srcbits += linebytes) + left;
 	}
     } else {
 	lines = -lines;
 	for (h = 0; h < lines; h++) {
-	    for (x = 0; x < dstwidth; x++, bits++) {
+	    for (x = left; x < dstwidth; x++, bits++) {
 		XPutPixel( bmpImage, x, h, colors[*bits] );
 	    }
-	    bits = (srcbits += linebytes);
+	    bits = (srcbits += linebytes) + left;
 	}
     }
 }
@@ -475,7 +485,7 @@ enum Rle8_EscapeCodes
 };
   
 static void DIB_SetImageBits_RLE8( int lines, const BYTE *bits, DWORD width,
-                                DWORD dstwidth, int *colors, XImage *bmpImage )
+                                DWORD dstwidth, int left, int *colors, XImage *bmpImage )
 {
     int x;			/* X-positon on each line.  Increases. */
     int line;			/* Line #.  Starts at lines-1, decreases */
@@ -488,6 +498,8 @@ static void DIB_SetImageBits_RLE8( int lines, const BYTE *bits, DWORD width,
     if (lines == 0)		/* Let's hope this doesn't happen. */
       return;
     
+    dstwidth += left; /* FIXME: avoid putting x<left pixels */
+
     /*
      * Note that the bitmap data is stored by Windows starting at the
      * bottom line of the bitmap and going upwards.  Within each line,
@@ -628,7 +640,7 @@ static void DIB_SetImageBits_RLE8( int lines, const BYTE *bits, DWORD width,
  * SetDIBits for a 16-bit deep DIB.
  */
 static void DIB_SetImageBits_16( int lines, const BYTE *srcbits,
-                                 DWORD srcwidth, DWORD dstwidth,
+                                 DWORD srcwidth, DWORD dstwidth, int left,
 				 DC *dc, XImage *bmpImage )
 {
     DWORD x;
@@ -640,10 +652,12 @@ static void DIB_SetImageBits_16( int lines, const BYTE *srcbits,
     /* align to 32 bit */
     DWORD linebytes = (srcwidth * 2 + 3) & ~3;
 
-    ptr = (LPWORD) srcbits;
+    dstwidth += left;
+
+    ptr = (LPWORD) srcbits + left;
     if (lines > 0) {
 	for (h = lines - 1; h >= 0; h--) {
-	    for (x = 0; x < dstwidth; x++, ptr++) {
+	    for (x = left; x < dstwidth; x++, ptr++) {
 		val = *ptr;
 		r = (BYTE) ((val & 0x7c00) >> 7);
 		g = (BYTE) ((val & 0x03e0) >> 2);
@@ -651,12 +665,12 @@ static void DIB_SetImageBits_16( int lines, const BYTE *srcbits,
 		XPutPixel( bmpImage, x, h,
 			   COLOR_ToPhysical(dc, RGB(r,g,b)) );
 	    }
-	    ptr = (LPWORD) (srcbits += linebytes);
+	    ptr = (LPWORD) (srcbits += linebytes) + left;
 	}
     } else {
 	lines = -lines;
 	for (h = 0; h < lines; h++) {
-	    for (x = 0; x < dstwidth; x++, ptr++) {
+	    for (x = left; x < dstwidth; x++, ptr++) {
 		val = *ptr;
 		r = (BYTE) ((val & 0x7c00) >> 7);
 		g = (BYTE) ((val & 0x03e0) >> 2);
@@ -664,7 +678,7 @@ static void DIB_SetImageBits_16( int lines, const BYTE *srcbits,
 		XPutPixel( bmpImage, x, h,
 			   COLOR_ToPhysical(dc, RGB(r,g,b)) );
 	    }
-	    ptr = (LPWORD) (srcbits += linebytes);
+	    ptr = (LPWORD) (srcbits += linebytes) + left;
 	}
     }
 }
@@ -676,34 +690,36 @@ static void DIB_SetImageBits_16( int lines, const BYTE *srcbits,
  * SetDIBits for a 24-bit deep DIB.
  */
 static void DIB_SetImageBits_24( int lines, const BYTE *srcbits,
-                                 DWORD srcwidth, DWORD dstwidth,
+                                 DWORD srcwidth, DWORD dstwidth, int left,
 				 DC *dc, XImage *bmpImage )
 {
     DWORD x;
-    const BYTE *bits = srcbits;
+    const BYTE *bits = srcbits + left * 3;
     int h;
   
     /* align to 32 bit */
     DWORD linebytes = (srcwidth * 3 + 3) & ~3;
 
+    dstwidth += left;
+
     /* "bits" order is reversed for some reason */
 
     if (lines > 0) {
 	for (h = lines - 1; h >= 0; h--) {
-	    for (x = 0; x < dstwidth; x++, bits += 3) {
+	    for (x = left; x < dstwidth; x++, bits += 3) {
 		XPutPixel( bmpImage, x, h, 
 			   COLOR_ToPhysical(dc, RGB(bits[2],bits[1],bits[0])));
 	    }
-	    bits = (srcbits += linebytes);
+	    bits = (srcbits += linebytes) + left * 3;
 	}
     } else {
 	lines = -lines;
 	for (h = 0; h < lines; h++) {
-	    for (x = 0; x < dstwidth; x++, bits += 3) {
+	    for (x = left; x < dstwidth; x++, bits += 3) {
 		XPutPixel( bmpImage, x, h,
 			   COLOR_ToPhysical(dc, RGB(bits[2],bits[1],bits[0])));
 	    }
-	    bits = (srcbits += linebytes);
+	    bits = (srcbits += linebytes) + left * 3;
 	}
     }
 }
@@ -715,31 +731,33 @@ static void DIB_SetImageBits_24( int lines, const BYTE *srcbits,
  * SetDIBits for a 32-bit deep DIB.
  */
 static void DIB_SetImageBits_32( int lines, const BYTE *srcbits,
-                                 DWORD srcwidth, DWORD dstwidth,
+                                 DWORD srcwidth, DWORD dstwidth, int left,
 				 DC *dc, XImage *bmpImage )
 {
     DWORD x;
-    const BYTE *bits = srcbits;
+    const BYTE *bits = srcbits + left * 4;
     int h;
   
     DWORD linebytes = (srcwidth * 4);
 
+    dstwidth += left;
+
     if (lines > 0) {
 	for (h = lines - 1; h >= 0; h--) {
-	    for (x = 0; x < dstwidth; x++, bits += 4) {
+	    for (x = left; x < dstwidth; x++, bits += 4) {
 		XPutPixel( bmpImage, x, h, 
 			   COLOR_ToPhysical(dc, RGB(bits[2],bits[1],bits[0])));
 	    }
-	    bits = (srcbits += linebytes);
+	    bits = (srcbits += linebytes) + left * 4;
 	}
     } else {
 	lines = -lines;
 	for (h = 0; h < lines; h++) {
-	    for (x = 0; x < dstwidth; x++, bits += 4) {
+	    for (x = left; x < dstwidth; x++, bits += 4) {
 		XPutPixel( bmpImage, x, h,
 			   COLOR_ToPhysical(dc, RGB(bits[2],bits[1],bits[0])));
 	    }
-	    bits = (srcbits += linebytes);
+	    bits = (srcbits += linebytes) + left * 4;
 	}
     }
 }
@@ -779,34 +797,34 @@ static int DIB_SetImageBits( const DIB_SETIMAGEBITS_DESCR *descr )
     {
     case 1:
 	DIB_SetImageBits_1( descr->lines, descr->bits, descr->infoWidth,
-			    descr->width, colorMapping, bmpImage );
+			    descr->width, descr->xSrc, colorMapping, bmpImage );
 	break;
     case 4:
 	if (compression) DIB_SetImageBits_RLE4( descr->lines, descr->bits,
-                                                descr->infoWidth, descr->width,
+                                                descr->infoWidth, descr->width, descr->xSrc,
                                                 colorMapping, bmpImage );
 	else DIB_SetImageBits_4( descr->lines, descr->bits, descr->infoWidth,
-                                 descr->width, colorMapping, bmpImage );
+                                 descr->width, descr->xSrc, colorMapping, bmpImage );
 	break;
     case 8:
 	if (compression) DIB_SetImageBits_RLE8( descr->lines, descr->bits,
-                                                descr->infoWidth, descr->width,
+                                                descr->infoWidth, descr->width, descr->xSrc,
                                                 colorMapping, bmpImage );
 	else DIB_SetImageBits_8( descr->lines, descr->bits, descr->infoWidth,
-                                 descr->width, colorMapping, bmpImage );
+                                 descr->width, descr->xSrc, colorMapping, bmpImage );
 	break;
     case 15:
     case 16:
 	DIB_SetImageBits_16( descr->lines, descr->bits, descr->infoWidth,
-			     descr->width, descr->dc, bmpImage);
+			     descr->width, descr->xSrc, descr->dc, bmpImage);
 	break;
     case 24:
 	DIB_SetImageBits_24( descr->lines, descr->bits, descr->infoWidth,
-                             descr->width, descr->dc, bmpImage );
+                             descr->width, descr->xSrc, descr->dc, bmpImage );
 	break;
     case 32:
 	DIB_SetImageBits_32( descr->lines, descr->bits, descr->infoWidth,
-                             descr->width, descr->dc, bmpImage);
+                             descr->width, descr->xSrc, descr->dc, bmpImage);
 	break;
     default:
         fprintf( stderr, "Invalid depth %d for SetDIBits!\n", descr->infoBpp );
@@ -956,7 +974,7 @@ INT32 WINAPI SetDIBitsToDevice32(HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
 {
     DIB_SETIMAGEBITS_DESCR descr;
     DC * dc;
-    DWORD width;
+    DWORD width, oldcy = cy;
     int height, tmpheight;
 
       /* Check parameters */
@@ -994,9 +1012,9 @@ INT32 WINAPI SetDIBitsToDevice32(HDC32 hdc, INT32 xDest, INT32 yDest, DWORD cx,
     descr.drawable  = dc->u.x.drawable;
     descr.gc        = dc->u.x.gc;
     descr.xSrc      = xSrc;
-    descr.ySrc      = ySrc - startscan;
+    descr.ySrc      = tmpheight >= 0 ? lines-(ySrc-startscan)-cy+(oldcy-cy) : ySrc - startscan;
     descr.xDest     = dc->w.DCOrgX + XLPTODP( dc, xDest );
-    descr.yDest     = dc->w.DCOrgY + YLPTODP( dc, yDest );
+    descr.yDest     = dc->w.DCOrgY + YLPTODP( dc, yDest ) + (tmpheight >= 0 ? oldcy-cy : 0);
     descr.width     = cx;
     descr.height    = cy;
 
@@ -1409,13 +1427,14 @@ HBITMAP32 WINAPI CreateDIBSection32 (HDC32 hdc, BITMAPINFO *bmi, UINT32 usage,
       BITMAP32 bmp;
       if (GetObject32A (res, sizeof (bmp), &bmp))
 	{
-	  *bits = bmp.bmBits;
-	  return res;
+            /* FIXME: this is wrong! (bmBits is always NULL) */
+            if (bits) *bits = bmp.bmBits;
+            return res;
 	}
     }
 
   /* Error.  */
   if (res) DeleteObject32 (res);
-  *bits = NULL;
-	return 0;
+  if (bits) *bits = NULL;
+  return 0;
 }

@@ -321,10 +321,13 @@ void WINAPI Throw( CONTEXT *context )
     }
 }
 
+
 /**********************************************************************
- *	     CallProc32W    (KERNEL.517)
+ *	     RELAY_CallProc32W
+ *
+ * Helper for CallProc[Ex]32W
  */
-DWORD WINAPI WIN16_CallProc32W()
+static DWORD RELAY_CallProc32W(int Ex)
 {
 	DWORD nrofargs, argconvmask;
 	FARPROC32 proc32;
@@ -336,7 +339,7 @@ DWORD WINAPI WIN16_CallProc32W()
         nrofargs    = VA_ARG16( valist, DWORD );
         argconvmask = VA_ARG16( valist, DWORD );
         proc32      = VA_ARG16( valist, FARPROC32 );
-	fprintf(stderr,"CallProc32W(%ld,%ld,%p,args[",nrofargs,argconvmask,proc32);
+	fprintf(stderr,"CallProc32W(%ld,%ld,%p, Ex%d args[",nrofargs,argconvmask,proc32,Ex);
 	args = (DWORD*)HEAP_xalloc( GetProcessHeap(), 0,
                                     sizeof(DWORD)*nrofargs );
 	for (i=0;i<nrofargs;i++) {
@@ -379,9 +382,29 @@ DWORD WINAPI WIN16_CallProc32W()
 		break;
 	}
 	/* POP nrofargs DWORD arguments and 3 DWORD parameters */
-        STACK16_POP( (3 + nrofargs) * sizeof(DWORD) );
+        if (!Ex) STACK16_POP( (3 + nrofargs) * sizeof(DWORD) );
 
 	fprintf(stderr,"returns %08lx\n",ret);
 	HeapFree( GetProcessHeap(), 0, args );
 	return ret;
+}
+
+
+/**********************************************************************
+ *	     CallProc32W    (KERNEL.517)
+ */
+DWORD WINAPI WIN16_CallProc32W()
+{
+        return RELAY_CallProc32W(0);
+}
+
+
+/**********************************************************************
+*           CallProcEx32W()   (KERNEL.518)        
+*
+*      C - style linkage to CallProc32W - caller pops stack.
+*/ 
+DWORD WINAPI WIN16_CallProcEx32W()
+{
+	return RELAY_CallProc32W(TRUE);
 }

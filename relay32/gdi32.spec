@@ -221,7 +221,7 @@ type	win32
 214 stdcall GetROP2(long) GetROP232
 215 stub GetRandomRgn
 216 stdcall GetRasterizerCaps(ptr long) GetRasterizerCaps32
-217 stub GetRegionData
+217 stdcall GetRegionData(long long ptr) GetRegionData
 218 stdcall GetRelAbs(long) GetRelAbs32
 219 stdcall GetRgnBox(long ptr) GetRgnBox32
 220 stdcall GetStockObject(long) GetStockObject32

@@ -97,6 +97,12 @@ int main(int argc,char *argv[])
 		ret=yyparse();
 	if (header) fclose(header);
 	fclose(code);
+        if (ret) /* There was an error */
+        {
+            if (header) unlink( output_name );
+            output_name[strlen(output_name)-1] = 'c';
+            unlink( output_name );
+        }
 	return ret;
 }
 

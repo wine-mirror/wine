@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <wctype.h>
 
 #include "windows.h"
 #include "winnt.h"	/* HEAP_ macros */
@@ -22,6 +21,16 @@
 #include "stddebug.h"
 #include "debug.h"
 
+#ifdef HAVE_WCTYPE_H
+# include <wctype.h>
+#else
+# define towlower(c) tolower(c)
+# define towupper(c) toupper(c)
+# define iswalnum(c) isalnum(c)
+# define iswalpha(c) isalpha(c)
+# define iswupper(c) isupper(c)
+# define iswlower(c) islower(c)
+#endif  /* HAVE_WCTYPE_H */
 
 /* Funny to divide them between user and kernel. */
 

@@ -106,7 +106,7 @@ emu: wine
 lib: $(LIBSUBDIRS) $(LIB_TARGET)
 
 wine wine.sym: $(LIBSUBDIRS) $(LIB_TARGET) $(EMUSUBDIRS) dummy
-	$(CC) -o wine $(EMUOBJS) $(LIB_TARGET) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+	$(CC) -o wine $(EMUOBJS) $(LIB_TARGET) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 	nm -n wine | grep -v _compiled >wine.sym
 
 libwine.a: $(LIBOBJS)
@@ -115,7 +115,7 @@ libwine.a: $(LIBOBJS)
 	$(RANLIB) $@
 
 libwine.so.1.0: $(LIBOBJS)
-	$(CC) -shared -Wl,-soname,libwine.so -o$@ $(LIBOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+	$(CC) -shared -Wl,-soname,libwine.so -o$@ $(LIBOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 
 install_emu: dummy
 	$(INSTALL_PROGRAM) wine $(bindir)/wine

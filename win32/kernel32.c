@@ -12,6 +12,7 @@
 #include "user.h"
 #include "heap.h"
 #include "module.h"
+#include "process.h"
 #include "stackframe.h"
 #include "selectors.h"
 #include "task.h"
@@ -568,7 +569,7 @@ AllocSLCallback(DWORD finalizer,DWORD callback) {
 	*x++=0x66;*x++=0x52;				/* pushl edx */
 	*x++=0xea;*(DWORD*)x=callback;x+=4;		/* jmpf callback */
 
-	*(DWORD*)(thunk+18) = GetCurrentProcessId();
+	*(PDB32**)(thunk+18) = pCurrentProcess;
 
 	sel = SELECTOR_AllocBlock( thunk , 32, SEGMENT_CODE, FALSE, FALSE );
 	return (sel<<16)|0;

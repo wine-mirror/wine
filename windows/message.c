@@ -391,16 +391,22 @@ static int MSG_JournalPlayBackMsg(void)
     {
      switch (tmpMsg->message)
      {
-      case WM_LBUTTONDOWN:MouseButtonsStates[0]=AsyncMouseButtonsStates[0]=1;break;
-      case WM_LBUTTONUP:  MouseButtonsStates[0]=AsyncMouseButtonsStates[0]=0;break;
-      case WM_MBUTTONDOWN:MouseButtonsStates[1]=AsyncMouseButtonsStates[1]=1;break;
-      case WM_MBUTTONUP:  MouseButtonsStates[1]=AsyncMouseButtonsStates[1]=0;break;
-      case WM_RBUTTONDOWN:MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=1;break;
-      case WM_RBUTTONUP:  MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=0;break;      
+      case WM_LBUTTONDOWN:
+          MouseButtonsStates[0]=AsyncMouseButtonsStates[0]=TRUE;break;
+      case WM_LBUTTONUP:
+          MouseButtonsStates[0]=AsyncMouseButtonsStates[0]=FALSE;break;
+      case WM_MBUTTONDOWN:
+          MouseButtonsStates[1]=AsyncMouseButtonsStates[1]=TRUE;break;
+      case WM_MBUTTONUP:
+          MouseButtonsStates[1]=AsyncMouseButtonsStates[1]=FALSE;break;
+      case WM_RBUTTONDOWN:
+          MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=TRUE;break;
+      case WM_RBUTTONUP:
+          MouseButtonsStates[2]=AsyncMouseButtonsStates[2]=FALSE;break;      
      }
-     AsyncKeyStateTable[VK_LBUTTON]= InputKeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] << 8;
-     AsyncKeyStateTable[VK_MBUTTON]= InputKeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] << 8;
-     AsyncKeyStateTable[VK_RBUTTON]= InputKeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] << 8;
+     AsyncKeyStateTable[VK_LBUTTON]= InputKeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] ? 0x80 : 0;
+     AsyncKeyStateTable[VK_MBUTTON]= InputKeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] ? 0x80 : 0;
+     AsyncKeyStateTable[VK_RBUTTON]= InputKeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] ? 0x80 : 0;
      SetCursorPos32(tmpMsg->paramL,tmpMsg->paramH);
      lParam=MAKELONG(tmpMsg->paramL,tmpMsg->paramH);
      wParam=0;             
@@ -1704,6 +1710,17 @@ LONG WINAPI BroadcastSystemMessage(
 ) {
 	fprintf(stdnimp,"BroadcastSystemMessage(%08lx,%08lx,%08x,%08x,%08lx),stub!\n",
 		dwFlags,*recipients,uMessage,wParam,lParam
+	);
+	return 0;
+}
+
+/***********************************************************************
+ *           SendNotifyMessageA    (USER32.460)
+ */
+LONG WINAPI SendNotifyMessage32A(HWND32 hwnd,UINT32 msg,WPARAM32 wParam,LPARAM lParam)
+{
+	fprintf(stderr,"SendNotifyMessage32A(%04x,%08lx,%08lx,%08lx),stub!\n",
+		hwnd,(long)msg,(long)wParam,lParam
 	);
 	return 0;
 }

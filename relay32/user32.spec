@@ -462,7 +462,7 @@ type	win32
 457 stdcall SendMessageTimeoutA(long long long long ptr ptr) SendMessageTimeout32A
 458 stdcall SendMessageTimeoutW(long long long long ptr ptr) SendMessageTimeout32W
 459 stdcall SendMessageW(long long long long) SendMessage32W
-460 stub SendNotifyMessageA
+460 stdcall SendNotifyMessageA(long long long long) SendNotifyMessage32A
 461 stub SendNotifyMessageW
 462 stub ServerSetFunctionPointers
 463 stdcall SetActiveWindow(long) SetActiveWindow32

@@ -45,11 +45,13 @@ static HRESULT WINAPI IEnumIDList_Next(
 }
 
 static IEnumIDList_VTable eidlvt = {
-	1,
+	(void *)1,
 	IEnumIDList_AddRef,
 	IEnumIDList_Release,
 	IEnumIDList_Next,
-	5,6,7
+	(void *)5,
+        (void *)6,
+        (void *)7
 };
 
 LPENUMIDLIST IEnumIDList_Constructor() {
@@ -109,7 +111,7 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	fprintf(stderr,"IShellFolder(%p)->ParseDisplayName(%08x,%p,%s,%p,%p,%p),stub!\n",
 		this,hwndOwner,pbcReserved,lpszDisplayName,pchEaten,ppidl,pdwAttributes
 	);
-	*(DWORD*)pbcReserved = NULL;
+	*(DWORD*)pbcReserved = 0;
 	return 0;
 }
 
@@ -133,22 +135,25 @@ static HRESULT WINAPI IShellFolder_CreateViewObject(
 	fprintf(stderr,"IShellFolder(%p)->CreateViewObject(0x%04x,%s,%p),stub!\n",
 		this,hwndOwner,xclsid,ppv
 	);
-	*(DWORD*)ppv = NULL;
+	*(DWORD*)ppv = 0;
 	return 0;
 }
 
 
 static struct IShellFolder_VTable sfvt = {
-	1,
+        (void *)1,
 	IShellFolder_AddRef,
 	IShellFolder_Release,
 	IShellFolder_ParseDisplayName,
 	IShellFolder_EnumObjects,
 	IShellFolder_BindToObject,
-	7,8,
+        (void *)7,
+        (void *)8,
 	IShellFolder_CreateViewObject,
 	IShellFolder_GetAttributesOf,
-	11,12,13
+        (void *)11,
+        (void *)12,
+        (void *)13
 };
 
 LPSHELLFOLDER IShellFolder_Constructor() {
@@ -161,7 +166,27 @@ LPSHELLFOLDER IShellFolder_Constructor() {
 }
 
 static struct IShellLink_VTable slvt = {
-	1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21
+    (void *)1,
+    (void *)2,
+    (void *)3,
+    (void *)4,
+    (void *)5,
+    (void *)6,
+    (void *)7,
+    (void *)8,
+    (void *)9,
+    (void *)10,
+    (void *)11,
+    (void *)12,
+    (void *)13,
+    (void *)14,
+    (void *)15,
+    (void *)16,
+    (void *)17,
+    (void *)18,
+    (void *)19,
+    (void *)20,
+    (void *)21
 };
 
 LPSHELLLINK IShellLink_Constructor() {

@@ -149,6 +149,8 @@ extern void WINSOCK_sigio(int a);
  */
 BOOL32 SIGNAL_Init(void)
 {
+    extern void SYNC_SetupSignals(void);
+
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined (__svr4__) || defined(_SCO_DS)
     struct sigaltstack ss;
     ss.ss_sp    = SIGNAL_Stack;
@@ -168,6 +170,7 @@ BOOL32 SIGNAL_Init(void)
 #ifdef SIGIO
     SIGNAL_SetHandler( SIGIO,   (void (*)())WINSOCK_sigio, 0); 
 #endif
+    SYNC_SetupSignals();
     return TRUE;
 }
 

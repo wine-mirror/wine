@@ -33,7 +33,6 @@
 #include "graphics.h"
 #include "options.h"
 #include "stackframe.h"
-#include "syscolor.h"
 #include "tweak.h"
 #include "windows.h"
 

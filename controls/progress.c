@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "windows.h"
-#include "syscolor.h"
 #include "sysmetrics.h"
 #include "progress.h"
 #include "graphics.h"

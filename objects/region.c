@@ -796,3 +796,13 @@ done:
     return result;
 }
 
+/***********************************************************************
+ *           GetRegionData   (GDI32.217)
+ * 
+ * This seems to be rather impossible with the current region implementation
+ * for it seems you cannot query X regions.
+ */
+DWORD WINAPI GetRegionData(HRGN32 hrgn,DWORD x,LPRGNDATA rgndata) {
+	fprintf(stderr,"GetRegionData(%04x,%08lx,%p), STUB!\n",hrgn,x,rgndata);
+	return 0;
+}

@@ -1,7 +1,7 @@
 name	wow32
 type	win32
 
-#  1
+  1 stub    WOW_1
   2 stub    WOWCallback16
   3 stub    WOWCallback16Ex
   4 stub    WOWDirectedYield16

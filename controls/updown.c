@@ -30,7 +30,6 @@
 #include <string.h>
 #include "windows.h"
 #include "winnls.h"
-#include "syscolor.h"
 #include "sysmetrics.h"
 #include "updown.h"
 #include "graphics.h"
@@ -269,77 +268,6 @@ static BOOL32 UPDOWN_SetBuddyInt(WND *wndPtr)
 } 
 
 /***********************************************************************
- *           UPDOWN_DrawArraw
- * Draw the arrows for the up-down control. The arrows are drawn with the
- * current pen and filled with the current brush.
- * Input:
- * hdc      - the DC to draw on
- * rect     - rectangle holding the arrow
- * incr     - TRUE  if we draw the "increment" arrow
- *            FALSE if we draw the "decrement" arrow
- * pressed  - TRUE  if the arrow is pressed (clicked)
- *            FALSE if the arrow is not pressed (clicked)
- * horz     - TRUE  if the arrow is horizontal
- *            FLASE if the arrow is vertical
- */
-static void UPDOWN_DrawArrow(HDC32 hdc, RECT32 *rect, BOOL32 incr, 
-			     BOOL32 pressed, BOOL32 horz)
-{
-  const int rw = rect->right - rect->left;
-  const int rh = rect->bottom - rect->top;
-  int offset = pressed ? 1 : 0;
-  int th, x, y, len;
-
-  /* compute max extents of the triangle */
-  if(horz){ /* horizontal arrows */
-    th = (3*rh)/5-2*4;
-    if(th > rw/2)
-      th = rw/2;
-    if(th < 2)
-      th = 2;
-
-    /* compute the position of the tip */
-    y = (rect->top+rect->bottom+1)/2 + offset; 
-    if(incr)
-      x = (rect->left+rect->right+1)/2 + (2*th)/3 + offset;
-    else
-      x = (rect->left+rect->right)/2 + th/3 + offset;
-
-    for(len=1; th>0; th--, len+=2){
-      MoveToEx32(hdc, x, y, 0);
-      LineTo32(hdc, x, y+len);
-      if(incr) x--;
-      else     x++;
-      y++;
-    }  
-  }
-  else{                   /* vertical arrows */
-    th = (3*rw)/5-2*4;
-    if(th > rh/2)
-      th = rh/2;
-    if(th < 2)
-      th = 2;
-
-    /* compute the position of the tip */
-    x = (rect->left+rect->right+1)/2 + offset;
-    if(incr)
-      y = (rect->top+rect->bottom+1)/2 - th/3 + offset;
-    else
-      y = (rect->top+rect->bottom)/2 + (2*th)/3 + offset;
-
-    for(len=1; th>0; th--, len+=2){
-      MoveToEx32(hdc, x, y, 0);
-      LineTo32(hdc, x+len, y);
-      if(incr) y++;
-      else     y--;
-      x--;
-    }
-    
-  }
-
-}
-
-/***********************************************************************
  *           UPDOWN_Paint
  * Draw the arrows. The background need not be erased.
  */
@@ -350,19 +278,17 @@ static void UPDOWN_Paint(WND *wndPtr)
   BOOL32 prssed;
   RECT32 rect;
   HDC32 hdc;
-  HBRUSH32 oldBrush;
-
+  
+  /* start painting the button */
   hdc = BeginPaint32( wndPtr->hwndSelf, &ps );
-
-  /* First select the proper brush */
-  oldBrush = wndPtr->dwStyle & WS_DISABLED ? GRAY_BRUSH : BLACK_BRUSH;
-  oldBrush = SelectObject32(hdc, GetStockObject32(oldBrush));
 
   /* Draw the incr button */
   UPDOWN_GetArrowRect(wndPtr, &rect, TRUE);
   prssed = (infoPtr->Flags & FLAG_INCR) && (infoPtr->Flags & FLAG_MOUSEIN);
-  DrawEdge32(hdc, &rect, prssed?EDGE_SUNKEN:EDGE_RAISED, BF_RECT|BF_MIDDLE);
-  UPDOWN_DrawArrow(hdc, &rect, TRUE, prssed, wndPtr->dwStyle & UDS_HORZ);
+  DrawFrameControl32(hdc, &rect, DFC_SCROLL, 
+	(wndPtr->dwStyle & UDS_HORZ ? DFCS_SCROLLLEFT : DFCS_SCROLLUP) |
+	(prssed ? DFCS_PUSHED : 0) |
+	(wndPtr->dwStyle&WS_DISABLED ? DFCS_INACTIVE : 0) );
 
   /* Draw the space between the buttons */
   rect.top = rect.bottom; rect.bottom++;
@@ -371,12 +297,13 @@ static void UPDOWN_Paint(WND *wndPtr)
   /* Draw the decr button */
   UPDOWN_GetArrowRect(wndPtr, &rect, FALSE);
   prssed = (infoPtr->Flags & FLAG_DECR) && (infoPtr->Flags & FLAG_MOUSEIN);
-  DrawEdge32(hdc, &rect, prssed ? EDGE_SUNKEN : EDGE_RAISED, 
-	   BF_RECT | BF_SOFT | BF_MIDDLE);
-  UPDOWN_DrawArrow(hdc, &rect, FALSE, prssed, wndPtr->dwStyle & UDS_HORZ);
+  DrawFrameControl32(hdc, &rect, DFC_SCROLL, 
+	(wndPtr->dwStyle & UDS_HORZ ? DFCS_SCROLLRIGHT : DFCS_SCROLLDOWN) |
+	(prssed ? DFCS_PUSHED : 0) |
+	(wndPtr->dwStyle&WS_DISABLED ? DFCS_INACTIVE : 0) );
+
 
   /* clean-up */  
-  SelectObject32(hdc, oldBrush);
   EndPaint32( wndPtr->hwndSelf, &ps );
 }
 

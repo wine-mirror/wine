@@ -170,6 +170,10 @@ static fd_set* fd_set_import( fd_set* fds, LPWSINFO pwsi, void* wsfds, int* high
 		    FD_SET(pws->fd, fds);
 	     }
 	}
+	if (b32)
+	     wsfds32->fd_count = 0;
+	else
+	     wsfds16->fd_count = 0;
 #undef wsfds32
 #undef wsfds16
 	return fds;
@@ -791,7 +795,7 @@ INT16 WINAPI WINSOCK_getsockopt16(SOCKET16 s, INT16 level,
     INT32 *p = &optlen32;
     INT32 retVal;
     if( optlen ) optlen32 = *optlen; else p = NULL;
-    retVal = WINSOCK_getsockopt32( s, level, optname, optval, p );
+    retVal = WINSOCK_getsockopt32( s, (UINT16)level, optname, optval, p );
     if( optlen ) *optlen = optlen32;
     return (INT16)retVal;
 }
@@ -1226,7 +1230,7 @@ INT16 WINAPI WINSOCK_setsockopt16(SOCKET16 s, INT16 level, INT16 optname,
 	optval = (char*)&linger32;
 	optlen = sizeof(linger32);
     }
-    return (INT16)WINSOCK_setsockopt32( s, level, optname, optval, optlen );
+    return (INT16)WINSOCK_setsockopt32( s, (UINT16)level, optname, optval, optlen );
 }
 
 

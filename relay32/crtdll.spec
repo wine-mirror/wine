@@ -354,7 +354,7 @@ type	win32
 350 cdecl calloc(long long) CRTDLL_calloc
 351 stub ceil
 352 stub clearerr
-353 cdecl clock() clock
+353 cdecl clock() CRTDLL_clock
 354 cdecl cos(double) cos
 355 cdecl cosh(double) cosh
 356 cdecl ctime(ptr) ctime

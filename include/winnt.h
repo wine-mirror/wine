@@ -194,6 +194,10 @@ typedef struct
 #define EXCEPTION_PRIV_INSTRUCTION      STATUS_PRIVILEGED_INSTRUCTION
 #define EXCEPTION_IN_PAGE_ERROR         STATUS_IN_PAGE_ERROR
 
+#define MAXIMUM_WAIT_OBJECTS 64
+#define MAXIMUM_SUSPEND_COUNT 127
+
+
 /*
  * Return values from the actual exception handlers
  */

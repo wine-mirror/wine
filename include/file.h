@@ -9,7 +9,7 @@
 
 #include <time.h>
 #include "windows.h"
-#include "handle32.h"
+#include "k32obj.h"
 
 #define MAX_PATHNAME_LEN   1024
 
@@ -35,7 +35,6 @@ typedef struct
 
 
 /* files/file.c */
-extern void FILE_Destroy( K32OBJ *ptr );
 extern void FILE_SetDosError(void);
 extern HFILE32 FILE_DupUnixHandle( int fd );
 extern BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info );

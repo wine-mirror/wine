@@ -9,7 +9,6 @@
 #include <unistd.h>
 #include "windows.h"
 #include "sysmetrics.h"
-#include "syscolor.h"
 #include "win.h"
 #include "desktop.h"
 #include "graphics.h"
@@ -128,7 +127,7 @@ static BOOL32 ICONTITLE_Paint( WND* wnd, HDC32 hDC, BOOL32 bActive )
 
     if( bActive )
     {
-	hBrush = sysColorObjects.hbrushActiveCaption;
+	hBrush = GetSysColorBrush32(COLOR_ACTIVECAPTION);
 	textColor = GetSysColor32(COLOR_CAPTIONTEXT);
     }
     else 

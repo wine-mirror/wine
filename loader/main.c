@@ -21,7 +21,6 @@
 #include "dialog.h"
 #include "drive.h"
 #include "queue.h"
-#include "syscolor.h"
 #include "sysmetrics.h"
 #include "file.h"
 #include "gdi.h"
@@ -42,10 +41,6 @@
 
 
 int __winelib = 1;  /* Winelib run-time flag */
-
-HANDLE32 SystemHeap = 0;
-HANDLE32 SegptrHeap = 0;
-
 
 /***********************************************************************
  *           Kernel initialisation routine

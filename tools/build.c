@@ -1240,7 +1240,7 @@ static int BuildSpec16File( char * specfile, FILE *outfile )
     /* Output the DLL descriptor */
 
     fprintf( outfile, "\t.text\n" );
-    fprintf( outfile, "DLLName:\t.ascii \"%s\\0\"\n", DLLName );
+    fprintf( outfile, "DLLName:\t.string \"%s\\0\"\n", DLLName );
     fprintf( outfile, "\t.align 4\n" );
     fprintf( outfile, "\t.globl " PREFIX "%s_Descriptor\n", DLLName );
     fprintf( outfile, PREFIX "%s_Descriptor:\n", DLLName );
@@ -1459,9 +1459,9 @@ static void RestoreContext16( FILE *outfile )
              CONTEXTOFFSET(SegCs) - sizeof(CONTEXT) );
     fprintf( outfile, "\tpushw %d(%%ebx)\n",  /* Push new ip */
              CONTEXTOFFSET(Eip) - sizeof(CONTEXT) );
-    fprintf( outfile, "\tpushw %d(%%ebx)\n",  /* Push new ds */
+    fprintf( outfile, "\tpushl %d(%%ebx)\n",  /* Push new ds */
              CONTEXTOFFSET(SegDs) - sizeof(CONTEXT) );
-    fprintf( outfile, "\tpushw %d(%%ebx)\n",  /* Push new es */
+    fprintf( outfile, "\tpushl %d(%%ebx)\n",  /* Push new es */
              CONTEXTOFFSET(SegEs) - sizeof(CONTEXT) );
     fprintf( outfile, "\tpushl %d(%%ebx)\n",
              CONTEXTOFFSET(EFlags) - sizeof(CONTEXT) );
@@ -1470,8 +1470,8 @@ static void RestoreContext16( FILE *outfile )
              CONTEXTOFFSET(Eax) - sizeof(CONTEXT) );
     fprintf( outfile, "\tmovl %d(%%ebx),%%ebx\n",
              CONTEXTOFFSET(Ebx) - sizeof(CONTEXT) );
-    fprintf( outfile, "\tpopw %%es\n" );  /* Set es */
-    fprintf( outfile, "\tpopw %%ds\n" );  /* Set ds */
+    fprintf( outfile, "\tpopl %%es\n" );  /* Set es */
+    fprintf( outfile, "\tpopl %%ds\n" );  /* Set ds */
 }
 
 
@@ -1547,8 +1547,8 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     /* Restore 32-bit ds and es */
 
     fprintf( outfile, "\tpushl $0x%04x%04x\n", Data_Selector, Data_Selector );
-    fprintf( outfile, "\tpopw %%ds\n" );
-    fprintf( outfile, "\tpopw %%es\n" );
+    fprintf( outfile, "\t.byte 0x66\n\tpopl %%ds\n" );
+    fprintf( outfile, "\t.byte 0x66\n\tpopl %%es\n" );
 
 
     /* Save the 16-bit stack */
@@ -1577,8 +1577,8 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
     /* Switch to the 32-bit stack */
 
     fprintf( outfile, "\tmovl " PREFIX "CALLTO16_Saved32_esp,%%ebp\n" );
-    fprintf( outfile, "\tpushw %%ds\n" );
-    fprintf( outfile, "\tpopw %%ss\n" );
+    fprintf( outfile, "\tpushl %%ds\n" );
+    fprintf( outfile, "\tpopl %%ss\n" );
     fprintf( outfile, "\tleal -%d(%%ebp),%%esp\n",
              reg_func ? sizeof(CONTEXT) : 4 * strlen(args) );
     if (reg_func)  /* Push the address of the context struct */
@@ -1603,7 +1603,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
 
     /* Call the entry point */
 
-    fprintf( outfile, "\tcall %%eax\n" );
+    fprintf( outfile, "\tcall *%%eax\n" );
 
     /* Print the debug information after the call */
 
@@ -1675,7 +1675,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
         fprintf( outfile, "\tincl %%esp\n" );
         fprintf( outfile, "\tpopl %%edx\n" );      /* Remove cs and ds */
         fprintf( outfile, "\tmovw %%dx,%%ds\n" );  /* and restore ds */
-        fprintf( outfile, "\tpopw %%es\n" );       /* Restore es */
+        fprintf( outfile, "\t.byte 0x66\n\tpopl %%es\n" );       /* Restore es */
 
         if (short_ret) fprintf( outfile, "\tpopl %%edx\n" );  /* Restore edx */
         else
@@ -1757,8 +1757,7 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
 
     /* Call the actual CallTo16 routine (simulate a lcall) */
 
-    fprintf( outfile, "\tpushw $0\n" );
-    fprintf( outfile, "\tpushw %%cs\n" );
+    fprintf( outfile, "\tpushl %%cs\n" );
     fprintf( outfile, "\tcall do_callto16_%s\n", profile );
 
     /* Exit code */
@@ -1850,10 +1849,10 @@ static void BuildCallTo16Func( FILE *outfile, char *profile )
 
         /* Get the 16-bit ds */
 
-        fprintf( outfile, "\tpushw %d(%%ebx)\n", CONTEXTOFFSET(SegDs) );
+        fprintf( outfile, "\tpushl %d(%%ebx)\n", CONTEXTOFFSET(SegDs) );
         /* Get ebx from the 32-bit stack */
         fprintf( outfile, "\tmovl %d(%%ebx),%%ebx\n", CONTEXTOFFSET(Ebx) );
-        fprintf( outfile, "\tpopw %%ds\n" );
+        fprintf( outfile, "\tpopl %%ds\n" );
     }
     else  /* not a register function */
     {
@@ -2046,7 +2045,7 @@ static void BuildCallTo32LargeStack( FILE *outfile )
     /* Transfer the argument and call the function */
 
     fprintf( outfile, "\tpushl 12(%%ebp)\n" );
-    fprintf( outfile, "\tcall 8(%%ebp)\n" );
+    fprintf( outfile, "\tcall *8(%%ebp)\n" );
 
     /* Restore registers and return */
 
@@ -2088,11 +2087,11 @@ static void BuildCallFrom32Regs( FILE *outfile )
     /* Build the context structure */
 
     fprintf( outfile, "\tpushw $0\n" );
-    fprintf( outfile, "\tpushw %%ss\n" );
+    fprintf( outfile, "\t.byte 0x66\n\tpushl %%ss\n" );
     fprintf( outfile, "\tpushl %%eax\n" );  /* %esp place holder */
     fprintf( outfile, "\tpushfl\n" );
     fprintf( outfile, "\tpushw $0\n" );
-    fprintf( outfile, "\tpushw %%cs\n" );
+    fprintf( outfile, "\t.byte 0x66\n\tpushl %%cs\n" );
     fprintf( outfile, "\tpushl 20(%%esp)\n" );  /* %eip at time of call */
     fprintf( outfile, "\tpushl %%ebp\n" );
 
@@ -2218,7 +2217,7 @@ static int BuildCallFrom16( FILE *outfile, char * outname, int argc, char *argv[
         for (i = 2; i < argc; i++)
         {
             fprintf( outfile, "Profile_%s:\n", argv[i] );
-            fprintf( outfile, "\t.ascii \"%s\\0\"\n", argv[i] + 5 );
+            fprintf( outfile, "\t.string \"%s\\0\"\n", argv[i] + 5 );
         }
     }
 

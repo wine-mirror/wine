@@ -843,8 +843,13 @@ DWORD WINAPI VerFindFile32A(
 	LPSTR curdir,UINT32 *pcurdirlen,LPSTR destdir,UINT32 *pdestdirlen )
 {
     UINT16 curdirlen, destdirlen;
-    DWORD ret = VerFindFile16(flags,filename,windir,appdir,
-                              curdir,&curdirlen,destdir,&destdirlen);
+    DWORD ret;
+    
+    curdirlen = (UINT16)*pcurdirlen;
+    destdirlen= (UINT16)*pdestdirlen;
+
+    ret = VerFindFile16(flags,filename,windir,appdir,
+                        curdir,&curdirlen,destdir,&destdirlen);
     *pcurdirlen = curdirlen;
     *pdestdirlen = destdirlen;
     return ret;

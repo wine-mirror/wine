@@ -6,16 +6,11 @@
  *
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "gdi.h"
-#include "syscolor.h"
-#include "stddebug.h"
 #include "tweak.h"
-/* #define DEBUG_SYSCOLOR */
-#include "debug.h"
-
-struct SysColorObjects sysColorObjects;
 
 static const char * const DefSysColors[] =
 {
@@ -79,6 +74,8 @@ static const char * const DefSysColors95[] =
 #define NUM_SYS_COLORS     (COLOR_INFOBK+1)
 
 static COLORREF SysColors[NUM_SYS_COLORS];
+static HBRUSH32 SysColorBrushes[NUM_SYS_COLORS];
+static HPEN32   SysColorPens[NUM_SYS_COLORS];
 
 #define MAKE_SOLID(color) \
        (PALETTEINDEX(GetNearestPaletteIndex32(STOCK_DEFAULT_PALETTE,(color))))
@@ -90,114 +87,10 @@ static void SYSCOLOR_SetColor( int index, COLORREF color )
 {
     if (index < 0 || index >= NUM_SYS_COLORS) return;
     SysColors[index] = color;
-    switch(index)
-    {
-    case COLOR_SCROLLBAR:
-	DeleteObject32( sysColorObjects.hbrushScrollbar );
-	sysColorObjects.hbrushScrollbar = CreateSolidBrush32( color );
-	break;
-    case COLOR_BACKGROUND:
-	DeleteObject32( sysColorObjects.hbrushBackground );
-	sysColorObjects.hbrushBackground = CreateSolidBrush32( color );
-	break;
-    case COLOR_ACTIVECAPTION:
-	DeleteObject32( sysColorObjects.hbrushActiveCaption );
-	sysColorObjects.hbrushActiveCaption = CreateSolidBrush32( color );
-	break;
-    case COLOR_INACTIVECAPTION:
-	DeleteObject32( sysColorObjects.hbrushInactiveCaption );
-	sysColorObjects.hbrushInactiveCaption = CreateSolidBrush32( color );
-	break;
-    case COLOR_MENU:
-	DeleteObject32( sysColorObjects.hbrushMenu );
-	sysColorObjects.hbrushMenu = CreateSolidBrush32( MAKE_SOLID(color) );
-	break;
-    case COLOR_WINDOW:
-	DeleteObject32( sysColorObjects.hbrushWindow );
-	sysColorObjects.hbrushWindow = CreateSolidBrush32( color );
-	break;
-    case COLOR_WINDOWFRAME:
-	DeleteObject32( sysColorObjects.hbrushWindowFrame );
-	sysColorObjects.hbrushWindowFrame = CreateSolidBrush32( color );
-	/* FIXME: we should not need this pen */
-	DeleteObject32( sysColorObjects.hpenWindowFrame ); 
-	sysColorObjects.hpenWindowFrame = CreatePen32( PS_SOLID, 1, color );
-	break;
-    case COLOR_MENUTEXT:
-	DeleteObject32( sysColorObjects.hbrushMenuText );
-	sysColorObjects.hbrushMenuText = CreateSolidBrush32( color );
-	break;
-    case COLOR_WINDOWTEXT:
-	DeleteObject32( sysColorObjects.hbrushWindowText );
-	sysColorObjects.hbrushWindowText = CreateSolidBrush32( color );
-	/* FIXME: we should not need this pen */
-	DeleteObject32( sysColorObjects.hpenWindowText );
-	sysColorObjects.hpenWindowText = CreatePen32( PS_DOT, 1, color );
-	break;
-    case COLOR_CAPTIONTEXT:
-	DeleteObject32( sysColorObjects.hbrushCaptionText );
-	sysColorObjects.hbrushCaptionText = CreateSolidBrush32( color );
-	break;
-    case COLOR_ACTIVEBORDER:
-	DeleteObject32( sysColorObjects.hbrushActiveBorder );
-	sysColorObjects.hbrushActiveBorder = CreateSolidBrush32( color );
-	break;
-    case COLOR_INACTIVEBORDER:
-	DeleteObject32( sysColorObjects.hbrushInactiveBorder );
-	sysColorObjects.hbrushInactiveBorder = CreateSolidBrush32( color );
-	break;
-    case COLOR_APPWORKSPACE:
-	DeleteObject32( sysColorObjects.hbrushAppWorkspace );
-	sysColorObjects.hbrushAppWorkspace = CreateSolidBrush32( color );
-	break;
-    case COLOR_HIGHLIGHT:
-	DeleteObject32( sysColorObjects.hbrushHighlight );
-	sysColorObjects.hbrushHighlight = CreateSolidBrush32( color );
-	break;
-    case COLOR_HIGHLIGHTTEXT:
-	DeleteObject32( sysColorObjects.hbrushHighlightText );
-	sysColorObjects.hbrushHighlightText = CreateSolidBrush32( color );
-	break;
-    case COLOR_BTNFACE:
-	DeleteObject32( sysColorObjects.hbrushBtnFace );
-	sysColorObjects.hbrushBtnFace = CreateSolidBrush32( color );
-	break;
-    case COLOR_BTNSHADOW:
-	DeleteObject32( sysColorObjects.hbrushBtnShadow );
-	sysColorObjects.hbrushBtnShadow = CreateSolidBrush32( color );
-	break;
-    case COLOR_GRAYTEXT:
-	DeleteObject32( sysColorObjects.hbrushGrayText );
-	sysColorObjects.hbrushGrayText = CreateSolidBrush32( color );
-    case COLOR_BTNTEXT:
-	DeleteObject32( sysColorObjects.hbrushBtnText );
-	sysColorObjects.hbrushBtnText = CreateSolidBrush32( color );
-	break;
-    case COLOR_INACTIVECAPTIONTEXT:
-	DeleteObject32( sysColorObjects.hbrushInactiveCaptionText );
-	sysColorObjects.hbrushInactiveCaptionText = CreateSolidBrush32(color);
-	break;
-    case COLOR_BTNHIGHLIGHT:
-	DeleteObject32( sysColorObjects.hbrushBtnHighlight );
-	sysColorObjects.hbrushBtnHighlight = CreateSolidBrush32( color );
-	break;
-    case COLOR_3DDKSHADOW:
-	DeleteObject32( sysColorObjects.hbrush3DDkShadow );
-	sysColorObjects.hbrush3DDkShadow = CreateSolidBrush32( color );
-	break;
-    case COLOR_3DLIGHT:
-	DeleteObject32( sysColorObjects.hbrush3DLight );
-	sysColorObjects.hbrush3DLight = CreateSolidBrush32( color );
-	break;
-    case COLOR_INFOTEXT:
-	DeleteObject32( sysColorObjects.hbrushInfoText );
-	sysColorObjects.hbrushInfoText = CreateSolidBrush32( color );
-	break;
-    case COLOR_INFOBK:
-	DeleteObject32( sysColorObjects.hbrushInfoBk );
-	sysColorObjects.hbrushInfoBk = CreateSolidBrush32( color );
-	break;
-    }
+    if (SysColorBrushes[index]) DeleteObject32( SysColorBrushes[index] );
+    SysColorBrushes[index] = CreateSolidBrush32( color );
+    if (SysColorPens[index]) DeleteObject32( SysColorPens[index] ); 
+    SysColorPens[index] = CreatePen32( PS_SOLID, 1, color );
 }
 
 
@@ -287,4 +180,50 @@ BOOL32 WINAPI SetSysColors32( INT32 nChanges, const INT32 *lpSysColor,
     RedrawWindow32( GetDesktopWindow32(), NULL, 0,
                 RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN );
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           GetSysColorBrush16    (USER.281)
+ */
+HBRUSH16 WINAPI GetSysColorBrush16( INT16 index )
+{
+    return (HBRUSH16)GetSysColorBrush32(index);
+}
+
+
+/***********************************************************************
+ *           GetSysColorBrush32    (USER32.289)
+ */
+HBRUSH32 WINAPI GetSysColorBrush32( INT32 index )
+{
+    if (0 <= index && index < NUM_SYS_COLORS)
+        return SysColorBrushes[index];
+    fprintf( stderr, "GetSysColorBrush32: Unknown index(%d)\n", index );
+    return GetStockObject32(LTGRAY_BRUSH);
+}
+
+
+/***********************************************************************
+ *           GetSysColorPen16    (Not a Windows API)
+ */
+HPEN16 WINAPI GetSysColorPen16( INT16 index )
+{
+    return (HPEN16)GetSysColorPen32(index);
+}
+
+
+/***********************************************************************
+ *           GetSysColorPen32    (Not a Windows API)
+ *
+ * This function is new to the Wine lib -- it does not exist in 
+ * Windows. However, it is a natural complement for GetSysColorBrush
+ * in the Win32 API and is needed quite a bit inside Wine.
+ */
+HPEN32 WINAPI GetSysColorPen32( INT32 index )
+{
+    /* We can assert here, because this function is internal to Wine */
+    assert (0 <= index && index < NUM_SYS_COLORS);
+    return SysColorPens[index];
+
 }

@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include "windows.h"
 #include "winerror.h"
-#include "handle32.h"
 #include "except.h"
 #include "heap.h"
 #include "task.h"

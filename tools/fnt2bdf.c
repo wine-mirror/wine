@@ -191,7 +191,8 @@ int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
       return ERROR_FILE;
     }
 
-    dump_bdf_hdr(fp, cpe_font_struct, file_buffer);
+    ic = dump_bdf_hdr(fp, cpe_font_struct, file_buffer);
+    if (ic) return (ic);
 
     /* NOW, convert all chars to UNIX (lton) notation... */
 
@@ -563,47 +564,66 @@ int main(int argc, char **argv)
 		    if( !(lpfont = (unsigned char*) realloc( lpfont, length )) )
 		    {
 			fprintf(stderr, errorMemory );
-			free(lpdata);
-			return -1;
+			exit(1);
 		    }
 
 		    lseek( fd, offset, SEEK_SET );
 		    if( read(fd, lpfont, length) != length )
 		    {
 			fprintf(stderr, errorDLLRead );
-			free(lpdata); free(lpfont);
-			return -1;
+			exit(1);
 		    }
 
 		    if( (i = parse_fnt_data( lpfont, length )) )
+		    {
 			fprintf(stderr, "%s%d\n", errorFontData, i );
+			exit(1);
+		    }
 		 }
 		 free(lpfont); free(lpdata);
-		 return 0;
+		 exit(0);
 	       }
-	       else fprintf(stderr, errorEmpty );
+	       else
+	       {
+		 fprintf(stderr, errorEmpty );
+		 exit(1);
+	       }
 	       free( lpdata );
 	     }
-	     else fprintf(stderr, errorDLLRead);
+	     else
+	     {
+	       fprintf(stderr, errorDLLRead);
+	       exit(1);
+	     }
 	     break;
 
 	case FILE_FNT:
 	     if( lpdata )
 	     {
 	       if( (i = parse_fnt_data( lpdata, file_stat.st_size )) )
+	       {
 		   fprintf(stderr, "%s%d\n", errorFontData, i );
-
+		   exit(1);
+	       }
 	       free( lpdata );
 	     }
-	     else fprintf(stderr, errorFNTRead);
+	     else
+	     {
+	       fprintf(stderr, errorFNTRead);
+	       exit(1);
+	     }
 	     break;
 
 	case FILE_ERROR:
 	     fprintf(stderr, errorFile );
- 
+	     exit(1);
     }
     close(fd);
+    exit(0);
   }
-  else fprintf(stderr, errorOpenFile );
-  return -1;
+  else
+  {
+    fprintf(stderr, errorOpenFile );
+    exit(1);
+  }
 }

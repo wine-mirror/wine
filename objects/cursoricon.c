@@ -761,7 +761,8 @@ HCURSOR32 WINAPI CreateCursor32( HINSTANCE32 hInstance,
 
     dprintf_cursor( stddeb, "CreateCursor: %dx%d spot=%d,%d xor=%p and=%p\n",
                     nWidth, nHeight, xHotSpot, yHotSpot, lpXORbits, lpANDbits);
-    return CreateCursorIconIndirect( hInstance, &info, lpANDbits, lpXORbits );
+    return CreateCursorIconIndirect( MODULE_HANDLEtoHMODULE16( hInstance ),
+                                     &info, lpANDbits, lpXORbits );
 }
 
 
@@ -791,7 +792,8 @@ HICON32 WINAPI CreateIcon32( HINSTANCE32 hInstance, INT32 nWidth,
 
     dprintf_icon( stddeb, "CreateIcon: %dx%dx%d, xor=%p, and=%p\n",
                   nWidth, nHeight, bPlanes * bBitsPixel, lpXORbits, lpANDbits);
-    return CreateCursorIconIndirect( hInstance, &info, lpANDbits, lpXORbits );
+    return CreateCursorIconIndirect( MODULE_HANDLEtoHMODULE16( hInstance ),
+                                     &info, lpANDbits, lpXORbits );
 }
 
 
@@ -892,7 +894,7 @@ BOOL32 WINAPI DestroyCursor32( HCURSOR32 hCursor )
 {
     dprintf_cursor( stddeb, "DestroyCursor: %04x\n", hCursor );
     /* FIXME: should check for OEM cursor here */
-    return (FreeResource16( hCursor ) != 0);
+    return (FreeResource16( hCursor ) == 0);
 }
 
 

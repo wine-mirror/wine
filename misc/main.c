@@ -522,6 +522,8 @@ static void called_at_exit(void)
     MAIN_RestoreSetup();
     COLOR_Cleanup();
     WINSOCK_Shutdown();
+    /* FIXME: should check for other processes or threads */
+    DeleteCriticalSection( HEAP_SystemLock );
 }
 
 /***********************************************************************

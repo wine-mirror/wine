@@ -994,7 +994,7 @@ HGLOBAL32 WINAPI GlobalReAlloc32(HGLOBAL32 hmem, DWORD size, UINT32 flags)
    HGLOBAL32            hnew;
    PGLOBAL32_INTERN     pintern;
 
-   hnew=NULL;
+   hnew = 0;
    /* HeapLock(GetProcessHeap()); */
    if(flags & GMEM_MODIFY) /* modify flags */
    {
@@ -1020,7 +1020,7 @@ HGLOBAL32 WINAPI GlobalReAlloc32(HGLOBAL32 hmem, DWORD size, UINT32 flags)
       else
       {
 	 SetLastError(ERROR_INVALID_PARAMETER);
-	 hnew=NULL;
+	 hnew = 0;
       }
    }
    else
@@ -1074,12 +1074,11 @@ HGLOBAL32 WINAPI GlobalReAlloc32(HGLOBAL32 hmem, DWORD size, UINT32 flags)
 HGLOBAL32 WINAPI GlobalFree32(HGLOBAL32 hmem)
 {
    PGLOBAL32_INTERN pintern;
-   HGLOBAL32        hreturned=NULL;
+   HGLOBAL32        hreturned = 0;
    
    if(ISPOINTER(hmem)) /* POINTER */
    {
-      if(!HeapFree(GetProcessHeap(), 0, (LPVOID) hmem))
-         hmem=NULL;
+      if(!HeapFree(GetProcessHeap(), 0, (LPVOID) hmem)) hmem = 0;
    }
    else  /* HANDLE */
    {

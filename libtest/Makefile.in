@@ -5,7 +5,7 @@ VPATH     = @srcdir@
 MODULE    = none
 RCFLAGS   = -w16 -h
 PROGRAMS  = expand hello hello2 hello3 hello4 new rolex
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 
 C_SRCS = \
 	expand.c \

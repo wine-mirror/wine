@@ -1,4 +1,155 @@
 ----------------------------------------------------------------------
+Sat Jan  3 17:15:56 1998  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [debugger/db_disasm.c]
+	Added cpuid and cmpxchg instructions.
+
+	* [if1632/builtin.c] [relay32/builtin32.c]
+	Fixed broken -dll option with Win32 DLLs.
+
+	* [include/heap.h]
+	Added SYSTEM_LOCK/SYSTEM_UNLOCK macros.
+
+	* [configure.in] [misc/lstr.c]
+	Added check for wctype.h.
+	Commented out --enable-ipc option (IPC code has been broken for a
+	long time anyway).
+
+	* [scheduler/critsection.c] [scheduler/event.c]
+	  [scheduler/mutex.c] [scheduler/semaphore.c]
+	Implemented Win32 synchronization objects.
+
+	* [scheduler/synchro.c]
+	Implemented WaitForMultipleObjects and related functions.
+
+	* [scheduler/thread.c]
+	If possible, use clone() in CreateThread().
+
+	* [scheduler/thread.c] [scheduler/process.c]
+	Made thread and process waitable objects.
+	Thread and process id values are now different from the pointers
+	they represent.
+
+	* [win32/k32obj.c]
+	Moved to scheduler directory.
+	Added function table for waiting operations on objects.
+
+	* [files/file.c] [memory/virtual.c]
+	Added new K32OBJ function table.
+
+Sun Jan  1 16:48:23 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [files/file.c]
+	Fixed my patch for GetTempFileName16() as needed.
+	It was ...Name32A() that didn't work properly, not ...Name16().
+
+	* [graphics/x11drv/brush.c]
+	Fixed a BadMatch error.
+
+	* [msdos/int21.c]
+	Fixed INT21_FindNextFCB() to get correct volume labels e.g.
+	in "file open" dialog.
+
+	* [multimedia/joystick.c] [relay32/winmm.spec]
+	Stub JoyGetPosEx().
+
+	* [scheduler/process.c] [relay32/kernel32.spec]
+	Implemented RegisterServiceProcess().
+
+Wed Dec 31 11:14:43 1997  Lawson Whitney  <lawson_whitney@juno.com>
+
+	* [if1632/kernel.spec] [if1632/relay.c]
+	Define CallProcEx32w - Thanks to Marcus Meissner for his excellent
+	CallProc32W.
+
+	* [loader/module.c]
+	Take a shot at defining FreeLibrary32W.
+
+Sun Dec 28 12:44:04 1997  Kai Morich <kai.morich@rhein-neckar.netsurf.de>
+
+	* [controls/menu.c]
+	Menu modification from WM_INITMENUPOPUP message fixed.
+	Menu items now can have different wID and hSubMenu (Win95 behavior).
+
+	* [misc/cpu.c]
+	Improved IsProcessorFeaturePresent.
+
+Sun Dec 28 03:21:08 1997  Ove Kaaven <ovek@main.arcticnet.no>
+
+	* [include/winsock.h] [misc/winsock.c]
+	Fixed WS_SOL_SOCKET for setsockopt(), and made select() return
+	empty fd_sets if timeout.
+
+	* [objects/palette.c]
+	AnimatePalette() bailed out if entire palette is animated. Fixed.
+
+	* [objects/dib.c]
+	Added some code to SetDIBitsToDevice() and its helpers to fix
+	some offseting problems.
+
+	* [objects/cursoricon.c]
+	Made CreateCursor32() convert the instance handle properly. Made
+	DestroyCursor() return correct success status.
+
+Wed Dec 24 17:56:34 1997  Dimitrie O. Paun  <dimi@cs.toronto.edu>
+
+	* [windows/syscolor.c]
+	Added definition of GetSysColorPen16/32. This function does not
+	exist in the Win32 API but is a very close (and natural) relative
+	to GetSysColorBrush function. Moreover, it is *very* much used 
+	within Wine since there are a lot of places where we need to draw
+	lines with the standard colors.
+
+	* [controls/button.c] [controls/combo.c] [controls/icontitle.c]
+	  [controls/menu.c] [controls/progress.c] [controls/scroll.c]
+	  [controls/updown.c] [graphics/painting.c] [misc/tweak.c]
+	  [windows/defwnd.c] [windows/graphics.c] [windows/nonclient.c]
+	Replaced references to sysColorObjects with the appropriate
+	call to GetSysColorBrush32/GetSysColorPen32. There is no need to
+	expose the implementation of these functions, even within Wine.
+	This makes the code easier to understand, debug, maintain.
+
+	* [controls/uitools.c]
+	Modified most of the functions in this file to use the now
+	standard pens (i.e. GetSysColorPen32). These functions made
+	*heavy* use of standard pens so I expect a lot less
+	CreatePen/DeleteObject calls can do only good...:)
+	Plus some minor modifications (*no* functional changes though).
+
+	* [controls/updown.c]
+	Used the new DrawFrameControl32 function to paint the control.
+	I also deleted UDDOWN_DrawArrow since it was no longer required.
+
+Tue Dec 23 00:03:33 1997  Steinar Hamre  <steinarh@stud.fim.ntnu.no>
+
+	* [configure.in]
+	Added check for -lw.
+
+	* [include/wintypes.h] [tools/build.c]
+	Changes to make the assembly understandable for even sun as.
+	".ascii" -> ".string", "call %foo" -> "call *%foo",
+	"pushw/popw %[cdes]s" written out to ".byte 0x66\npushl/popl %[cdes]s".
+
+	* [memory/ldt.c]
+	#ifdef added so <sys/seg.h> will not be included on Solaris.
+
+Mon Dec 22 18:55:19 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [configure.in]
+	Added XF86DGA check.
+
+	* [multimedia/dsound.c][relay32/dsound.spec][include/dsound.h]
+	Started DirectSound. Only stubs for now.
+
+	* [graphics/ddraw.c][include/ddraw.h][relay32/ddraw.spec]
+	Started to implement DirectDraw. Mostly stubs, some
+	testcases work. Requires the XF86DGA extension to XFree86.
+	(check demo/blizdemo.exe from the Diablo CD-ROM).
+
+	* [files/drive.c]
+	Return correct "CDFS" fsname so Diablo is a bit happier.
+
+----------------------------------------------------------------------
 Fri Dec 19 10:50:46 1997  Douglas Ridgway  <ridgway@winehq.com>
 
 	* [Make.rules.in] [Makefile.in] [documentation/Makefile.in]

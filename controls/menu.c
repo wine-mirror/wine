@@ -20,7 +20,6 @@
 #include "windows.h"
 #include "bitmap.h"
 #include "gdi.h"
-#include "syscolor.h"
 #include "sysmetrics.h"
 #include "task.h"
 #include "win.h"
@@ -879,7 +878,7 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 	r.bottom += MENU_HighlightBottomNudge;
 	r.left += MENU_HighlightLeftNudge;
 	r.right += MENU_HighlightRightNudge;
-	FillRect32( hdc, &r, sysColorObjects.hbrushHighlight );
+	FillRect32( hdc, &r, GetSysColorBrush32(COLOR_HIGHLIGHT) );
     }
     else {
 	RECT32  r = rect;
@@ -887,7 +886,7 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 	r.bottom += MENU_HighlightBottomNudge;
 	r.left += MENU_HighlightLeftNudge;
 	r.right += MENU_HighlightRightNudge;
-	FillRect32( hdc, &r, sysColorObjects.hbrushMenu );
+	FillRect32( hdc, &r, GetSysColorBrush32(COLOR_MENU) );
     }
 
     SetBkMode32( hdc, TRANSPARENT );
@@ -899,7 +898,7 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 	if(TWEAK_Win95Look)
 	    TWEAK_DrawMenuSeparatorVert95(hdc, rect.left - 1, 3, height - 3);
 	else {
-	    SelectObject32( hdc, sysColorObjects.hpenWindowFrame );
+	    SelectObject32( hdc, GetSysColorPen32(COLOR_WINDOWFRAME) );
 	    MoveTo( hdc, rect.left, 0 );
 	    LineTo32( hdc, rect.left, height );
 	}
@@ -911,7 +910,7 @@ static void MENU_DrawMenuItem( HWND32 hwnd, HDC32 hdc, MENUITEM *lpitem,
 					   rect.top + SEPARATOR_HEIGHT / 2 + 1,
 					   rect.right - 1);
 	else {
-	    SelectObject32( hdc, sysColorObjects.hpenWindowFrame );
+	    SelectObject32( hdc, GetSysColorPen32(COLOR_WINDOWFRAME) );
 	    MoveTo( hdc, rect.left, rect.top + SEPARATOR_HEIGHT/2 );
 	    LineTo32( hdc, rect.right, rect.top + SEPARATOR_HEIGHT/2 );
 	}
@@ -1067,7 +1066,7 @@ static void MENU_DrawPopupMenu( HWND32 hwnd, HDC32 hdc, HMENU32 hmenu )
 	rect.right -= POPUP_XSHADE * SYSMETRICS_CXBORDER;
 /*    } */
 
-    if((hPrevBrush = SelectObject32( hdc, sysColorObjects.hbrushMenu )))
+    if((hPrevBrush = SelectObject32( hdc, GetSysColorBrush32(COLOR_MENU) )))
     {
 	HPEN32 hPrevPen;
 	
@@ -1141,10 +1140,10 @@ UINT32 MENU_DrawMenuBar( HDC32 hDC, LPRECT32 lprect, HWND32 hwnd,
     if(TWEAK_Win95Look)
 	++lprect->bottom;
 
-    FillRect32(hDC, lprect, sysColorObjects.hbrushMenu );
+    FillRect32(hDC, lprect, GetSysColorBrush32(COLOR_MENU) );
 
     if(!TWEAK_Win95Look) {
-	SelectObject32( hDC, sysColorObjects.hpenWindowFrame );
+	SelectObject32( hDC, GetSysColorPen32(COLOR_WINDOWFRAME) );
 	MoveTo( hDC, lprect->left, lprect->bottom );
 	LineTo32( hDC, lprect->right, lprect->bottom );
     }
@@ -1228,9 +1227,6 @@ static BOOL32 MENU_ShowPopup( HWND32 hwndOwner, HMENU32 hmenu, UINT32 id,
 	menu->items[menu->FocusedItem].fState &= ~(MF_HILITE|MF_MOUSESELECT);
 	menu->FocusedItem = NO_SELECTED_ITEM;
     }
-
-    SendMessage16( hwndOwner, WM_INITMENUPOPUP, (WPARAM16)hmenu,
-                   MAKELONG( id, (menu->wFlags & MF_SYSMENU) ? 1 : 0 ));
 
     if( (wndOwner = WIN_FindWndPtr( hwndOwner )) )
     {
@@ -1438,7 +1434,7 @@ static BOOL32 MENU_SetItemData( MENUITEM *item, UINT32 flags, UINT32 id,
     else if (flags & MF_OWNERDRAW) item->text = (LPSTR)str;
     else item->text = NULL;
 
-    if (item->fType & MF_POPUP && item->hSubMenu != id )
+    if ((item->fType & MF_POPUP) && (flags & MF_POPUP) && (item->hSubMenu != id) )
 	DestroyMenu32( item->hSubMenu );   /* ModifyMenu() spec */
 
     if (flags & MF_POPUP)
@@ -1453,12 +1449,18 @@ static BOOL32 MENU_SetItemData( MENUITEM *item, UINT32 flags, UINT32 id,
             item->fState = 0;
 	    return FALSE;
         }
-    }
+    } 
+
+    item->wID = id;
+    if (flags & MF_POPUP)
+      item->hSubMenu = id;
+
+    if ((item->fType & MF_POPUP) && !(flags & MF_POPUP) )
+      flags |= MF_POPUP; /* keep popup */
 
     item->fType = flags & TYPE_MASK;
     item->fState = (flags & STATE_MASK) &
         ~(MF_HILITE | MF_MOUSESELECT | MF_BYPOSITION);
-    item->wID = item->hSubMenu = id;
 
     SetRectEmpty32( &item->rect );
     if (prevText) HeapFree( SystemHeap, 0, prevText );
@@ -1713,6 +1715,7 @@ static HMENU32 MENU_ShowSubPopup( HWND32 hwndOwner, HMENU32 hmenu,
     POPUPMENU *menu;
     MENUITEM *item;
     WND *wndPtr;
+    HDC32 hdc;
 
     if (!(menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu ))) return hmenu;
 
@@ -1722,6 +1725,25 @@ static HMENU32 MENU_ShowSubPopup( HWND32 hwndOwner, HMENU32 hmenu,
     item = &menu->items[menu->FocusedItem];
     if (!(item->fType & MF_POPUP) ||
          (item->fState & (MF_GRAYED | MF_DISABLED))) return hmenu;
+
+    /* message must be send before using item,
+       because nearly everything may by changed by the application ! */
+    rect = item->rect;
+    SendMessage16( hwndOwner, WM_INITMENUPOPUP, (WPARAM16)item->hSubMenu,
+		   MAKELONG( menu->FocusedItem, IS_SYSTEM_MENU(menu) ));
+
+    /* correct item if modified as a reaction to WM_INITMENUPOPUP-message */
+    if (!(item->fState & MF_HILITE)) 
+    {
+        if (menu->wFlags & MF_POPUP) hdc = GetDC32( menu->hWnd );
+        else hdc = GetDCEx32( menu->hWnd, 0, DCX_CACHE | DCX_WINDOW);
+        item->fState |= MF_HILITE;
+        MENU_DrawMenuItem( menu->hWnd, hdc, item, menu->Height, !(menu->wFlags & MF_POPUP) ); 
+	ReleaseDC32( menu->hWnd, hdc );
+    }
+    if (!item->rect.top && !item->rect.left && !item->rect.bottom && !item->rect.right)
+      item->rect = rect;
+
     item->fState |= MF_MOUSESELECT;
 
     if (IS_SYSTEM_MENU(menu))
@@ -2524,6 +2546,7 @@ BOOL32 WINAPI TrackPopupMenu32( HMENU32 hMenu, UINT32 wFlags, INT32 x, INT32 y,
     BOOL32 ret = FALSE;
 
     HideCaret32(0);
+    SendMessage16( hWnd, WM_INITMENUPOPUP, (WPARAM16)hMenu, 0);
     if (MENU_ShowPopup( hWnd, hMenu, 0, x, y, 0, 0 )) 
 	ret = MENU_TrackMenu( hMenu, wFlags & ~TPM_INTERNAL, 0, 0, hWnd, lpRect );
     ShowCaret32(0);
@@ -2947,8 +2970,6 @@ UINT32 WINAPI GetMenuItemID32( HMENU32 hMenu, INT32 nPos )
 
     if (!(menu = (LPPOPUPMENU) USER_HEAP_LIN_ADDR(hMenu))) return -1;
     if ((nPos < 0) || (nPos >= menu->nItems)) return -1;
-    /* FIXME: Now that submenus can have ids, is this still right?  */
-    if (menu->items[nPos].fType & MF_POPUP) return -1;
     return menu->items[nPos].wID;
 }
 

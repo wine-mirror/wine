@@ -11,7 +11,6 @@
 
 #include "windows.h"
 #include "sysmetrics.h"
-#include "syscolor.h"
 #include "win.h"
 #include "spy.h"
 #include "user.h"
@@ -366,7 +365,7 @@ static void CBPaintButton(LPHEADCOMBO lphc, HDC16 hdc)
     if( lphc->wState & CBF_NOREDRAW )
         return;
 
-    hPrevBrush = (HBRUSH32)SelectObject32(hdc, sysColorObjects.hbrushBtnFace);
+    hPrevBrush=(HBRUSH32)SelectObject32(hdc,GetSysColorBrush32(COLOR_BTNFACE));
     CONV_RECT16TO32( &lphc->RectButton, &r );
 
     Rectangle32(hdc, r.left, r.top, r.right, r.bottom );
@@ -459,7 +458,7 @@ static void CBPaintText(LPHEADCOMBO lphc, HDC16 hdc)
 	    {
 		/* highlight */
 
-		FillRect32( hDC, &rect, sysColorObjects.hbrushHighlight );
+		FillRect32( hDC, &rect, GetSysColorBrush32(COLOR_HIGHLIGHT) );
                 SetBkColor32( hDC, GetSysColor32( COLOR_HIGHLIGHT ) );
                 SetTextColor32( hDC, GetSysColor32( COLOR_HIGHLIGHTTEXT ) );
 		itemState = ODS_SELECTED | ODS_FOCUS;
@@ -538,9 +537,9 @@ static LRESULT COMBO_Paint(LPHEADCOMBO lphc, HDC16 hParamDC)
 	  /* paint text field */
 
 	  GRAPH_DrawRectangle( hDC, lphc->RectEdit.left, lphc->RectEdit.top,
-				    lphc->RectEdit.right - lphc->RectEdit.left, 
-				    lphc->RectButton.bottom - lphc->RectButton.top,
-				    sysColorObjects.hpenWindowFrame ); 
+			       lphc->RectEdit.right - lphc->RectEdit.left, 
+			       lphc->RectButton.bottom - lphc->RectButton.top,
+			       GetSysColorPen32(COLOR_WINDOWFRAME) ); 
 	  CBPaintText( lphc, hDC );
       }
       if( hPrevBrush ) SelectObject32( hDC, hPrevBrush );

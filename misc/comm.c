@@ -36,7 +36,6 @@
 #include "options.h"
 #include "stddebug.h"
 #include "debug.h"
-#include "handle32.h"
 
 #ifndef TIOCINQ
 #define	TIOCINQ FIONREAD

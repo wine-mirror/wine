@@ -370,7 +370,9 @@ BOOL32 BUILTIN_ParseDLLOptions( const char *str )
                 break;
             }
         }
-        if (!dll->descr) return FALSE;
+        if (!dll->descr)
+            if (!BUILTIN32_EnableDLL( str, (int)(p - str), (str[-1] == '+') ))
+                return FALSE;
         str = p;
         while (*str && (isspace(*str) || (*str == ','))) str++;
     }
@@ -389,7 +391,7 @@ void BUILTIN_PrintDLLs(void)
     BUILTIN16_DLL *dll;
 
     fprintf(stderr,"Example: -dll -ole2    Do not use emulated OLE2.DLL\n");
-    fprintf(stderr,"Available DLLs:\n");
+    fprintf(stderr,"Available Win16 DLLs:\n");
     for (i = 0, dll = BuiltinDLLs; dll->descr; dll++)
     {
         if (!(dll->flags & DLL_FLAG_ALWAYS_USED))
@@ -397,4 +399,5 @@ void BUILTIN_PrintDLLs(void)
                      ((++i) % 8) ? ' ' : '\n' );
     }
     fprintf(stderr,"\n");
+    BUILTIN32_PrintDLLs();
 }

@@ -89,7 +89,7 @@ type	win32
 086 stub NtCreateThread
 087 stub NtCreateTimer
 088 stub NtCreateToken
-089 register NtCurrentTeb() NtCurrentTeb
+089 stdcall NtCurrentTeb() NtCurrentTeb
 090 stub NtDelayExecution
 091 stub NtDeleteFile
 092 stub NtDeleteKey
@@ -327,7 +327,7 @@ type	win32
 324 stub RtlDecompressFragment
 325 stub RtlDelete
 326 stub RtlDeleteAce
-327 stub RtlDeleteCriticalSection
+327 stdcall RtlDeleteCriticalSection(ptr) DeleteCriticalSection
 328 stub RtlDeleteElementGenericTable
 329 stub RtlDeleteRegistryValue
 330 stub RtlDeleteResource
@@ -971,3 +971,4 @@ type	win32
 966 stub RtlIsValidHandle
 967 stub RtlLookupAtomInAtomTable
 968 stub RtlQueryAtomInAtomTable
+969 stdcall RtlTryEnterCriticalSection(ptr) TryEnterCriticalSection

@@ -18,6 +18,8 @@
 #include "compobj.h"
 #include "interfaces.h"
 #include "shlobj.h"
+#include "ddraw.h"
+#include "dsound.h"
 
 DWORD currentMalloc=0;
 

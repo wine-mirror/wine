@@ -2,6 +2,10 @@
  * 	Registry Functions
  *
  * Copyright 1996 Marcus Meissner
+ *
+ * December 21, 1997 - Kevin Cozens
+ * Fixed bugs in the _w95_loadreg() function. Added extra information
+ * regarding the format of the Windows '95 registry files.
  */
 
 #include <stdlib.h>
@@ -24,6 +28,8 @@
 #include "debug.h"
 #include "xmalloc.h"
 #include "winreg.h"
+
+#define	DEBUG_W95_LOADREG	0
 
 /* FIXME: following defines should be configured global ... */
 
@@ -894,12 +900,19 @@ _copy_registry(LPKEYSTRUCT from,LPKEYSTRUCT to) {
  * 0 :	"CREG"	- magic
  * 4 :	DWORD version
  * 8 :	DWORD offset_of_RGDB_part
- * 0C..1F:	? (someone fill in please)
+ * 0C..0F:	? (someone fill in please)
+ * 10:  WORD	number of RGDB blocks
+ * 12:  WORD	?
+ * 14:  WORD	always 0000?
+ * 16:  WORD	always 0001?
+ * 18..1F:	? (someone fill in please)
  *
  * 20: RGKN_section:
  *   header:
  * 	0 :		"RGKN"	- magic
- * 	4..0x1B: 	? (fill in)
+ *      4 : DWORD	offset to first RGDB section
+ *      8 : DWORD	offset to ?
+ * 	C..0x1B: 	? (fill in)
  *      0x20 ... offset_of_RGDB_part: Disk Key Entry structures
  *
  *   Disk Key Entry Structure:
@@ -928,8 +941,12 @@ _copy_registry(LPKEYSTRUCT from,LPKEYSTRUCT to) {
  *
  * RGDB_section:
  * 	00:		"RGDB"	- magic
- *	04: DWORD	offset to next RGDB section (perhaps WORD)
- *	08...1F:	?
+ *	04: DWORD	offset to next RGDB section
+ *	08: DWORD	?
+ *	0C: WORD	always 000d?
+ *	0E: WORD	RGDB block number
+ *	10:	DWORD	? (equals value at offset 4 - value at offset 8)
+ *	14..1F:		?
  *	20.....:	disk keys
  *
  * disk key:
@@ -956,6 +973,10 @@ _copy_registry(LPKEYSTRUCT from,LPKEYSTRUCT to) {
  * 0xFFFF, which means skipping over nextkeyoffset bytes (including this
  * structure) and reading another RGDB_section.
  * repeat until end of file.
+ *
+ * An interesting relationship exists in RGDB_section. The value at offset
+ * 10 equals the value at offset 4 minus the value at offset 8. I have no
+ * idea at the moment what this means.  (Kevin Cozens)
  *
  * FIXME: this description needs some serious help, yes.
  */
@@ -984,9 +1005,10 @@ struct 	_w95key {
 };
 
 /* fast lookup table dkeaddr->nr */
-struct	_w95nr2da {
+struct 	_w95nr2da {
 	unsigned long		dkeaddr;
 	unsigned long		nr;
+	struct _w95key		*key;
 };
 
 
@@ -1069,27 +1091,27 @@ _w95dkecomp(struct _w95nr2da *a,struct _w95nr2da *b){return a->dkeaddr-b->dkeadd
 
 static struct _w95key*
 _w95dkelookup(unsigned long dkeaddr,int n,struct _w95nr2da *nr2da,struct _w95key *keys) {
-	int	i;
-        int     left, right;
+int	i;
+int left, right;
 
 	if (dkeaddr == 0xFFFFFFFF)
 		return NULL;
 	if (dkeaddr<0x20)
 		return NULL;
 	dkeaddr=_w95_adj_da(dkeaddr+0x1c);
-        left=0;
-        right=n-1;
-        while(left<=right)
-        {
-           i=(left+right)/2;
-           
-           if(nr2da[i].dkeaddr == dkeaddr)
-              return keys+nr2da[i].nr;
-           else if(nr2da[i].dkeaddr < dkeaddr)
-              left=i+1;
-           else
-              right=i-1;
-        }
+	left=0;
+	right=n-1;
+	while(left<=right)
+	{
+		i=(left+right)/2;
+
+		if(nr2da[i].dkeaddr == dkeaddr)
+			return nr2da[i].key;
+		else if(nr2da[i].dkeaddr < dkeaddr)
+			left=i+1;
+		else
+			right=i-1;
+	}
 	/* 0x3C happens often, just report unusual values */
 	if (dkeaddr!=0x3c)
 		dprintf_reg(stddeb,"search hasn't found dkeaddr %lx?\n",dkeaddr);
@@ -1129,13 +1151,13 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 		unsigned short		valdatalen;
 		/* valname, valdata */
 	};
-	struct	_w95nr2da 	*nr2da;
+    struct  _w95nr2da   *nr2da;
 
 	HFILE32		hfd;
 	int		lastmodified;
 	char		magic[5];
-	unsigned long	nr,pos,i,where,version,rgdbsection,end,off_next_rgdb;
-	struct	_w95key	*keys;
+	unsigned long	nr,pos,i,j,where,version,rgdbsection,end,off_next_rgdb;
+	struct	_w95key	*keys,*key;
 	int		nrofdkes;
 	unsigned char	*data,*curdata,*nextrgdb;
 	OFSTRUCT	ofs;
@@ -1171,7 +1193,13 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	where	= 0x40;
 	end	= rgdbsection;
 
-	nrofdkes = (end-where)/sizeof(struct dke)+100;
+	/* I removed the '+100' that was here. The adjustments to dkeaddr   */
+	/* imply alignments to the data in 'data' which would mean it is    */
+	/* larger than the number of dke entries it holds therefore nrofdkes*/
+	/* would be equal to or larger than it needs to be without the need */
+	/* for the +100 - kc                                                */
+	nrofdkes = (end-where)/sizeof(struct dke);
+
 	data = (char*)xmalloc(end-where);
 	if ((end-where)!=_lread32(hfd,data,end-where))
 		return;
@@ -1179,9 +1207,12 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 
 	keys = (struct _w95key*)xmalloc(nrofdkes * sizeof(struct _w95key));
 	memset(keys,'\0',nrofdkes*sizeof(struct _w95key));
-	nr2da= (struct _w95nr2da*)xmalloc(nrofdkes * sizeof(struct _w95nr2da));
-	memset(nr2da,'\0',nrofdkes*sizeof(struct _w95nr2da));
+    nr2da= (struct _w95nr2da*)xmalloc(nrofdkes * sizeof(struct _w95nr2da));
+    memset(nr2da,'\0',nrofdkes*sizeof(struct _w95nr2da));
 
+#if DEBUG_W95_LOADREG
+	dprintf_reg(stddeb,"nrofdkes = %d\n", nrofdkes);
+#endif
 	for (i=0;i<nrofdkes;i++) {
 		struct	dke	dke;
 		unsigned long 	dkeaddr;
@@ -1190,6 +1221,10 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 		memcpy(&dke,curdata,sizeof(dke));
 		curdata+=sizeof(dke);
 		nr = dke.nrLS + (dke.nrMS<<8);
+#if DEBUG_W95_LOADREG
+		dprintf_reg(stddeb,"%ld: nr = %ld, nrMS:nrLS = %04X:%X\n",
+					i,nr,dke.nrMS,dke.nrLS);
+#endif
 		dkeaddr=pos-4;
 		if ((dkeaddr&0xFFF)<0x018) {
 			int	diff;
@@ -1199,6 +1234,10 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 			curdata+=diff-sizeof(dke);
 			memcpy(&dke,curdata,sizeof(dke));
 			nr = dke.nrLS + (dke.nrMS<<8);
+#if DEBUG_W95_LOADREG
+			dprintf_reg(stddeb,"> nr = %lu, nrMS:nrLS = %04X:%X\n",
+						nr,dke.nrMS,dke.nrLS);
+#endif
 			curdata+=sizeof(dke);
 		}
 		if (((dkeaddr+0x1C)&0xFFF)<0x1C) {
@@ -1206,46 +1245,63 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 			 * but ONLY if we are >0x1000 already
 			 */
 			if (dkeaddr & ~0xFFF)
-				dkeaddr = dkeaddr & ~0xFFF;
+				dkeaddr &= ~0xFFF;
 		}
-		if (nr>nrofdkes) {
-			/* 0xFFFFFFFF happens often, just report unusual values */
-			if (nr!=0xFFFFFFFF)
-				dprintf_reg(stddeb,"nr %ld exceeds nrofdkes %d, skipping.\n",nr,nrofdkes);
+		/* For the time being we will assume that all values of */
+		/* nr are valid unless the following condition is true. */
+		/* This value is obtained when dke.nrLS and dke.nrMS are*/
+		/* both FFFF as dke.nrMS is only shifted by 8 before the*/
+		/* add and not 16. -kc                                  */
+		if (nr==0x0100FEFF)
 			continue;
+		for (j = 0; j < i; ++j) {
+			if (nr2da[j].nr == nr)
+				break;
 		}
-		if (keys[nr].dkeaddr) {
-			int	x;
+		if (j < i) {
+			key = nr2da[j].key;
+			if (key && key->dkeaddr) {
+				int	x;
 
-			for (x=sizeof(dke);x--;)
-				if (((char*)&dke)[x])
-					break;
-			if (x==-1)
-				break; /* finished reading if we got only 0 */
-			if (nr) {
-				if (	(dke.next!=(long)keys[nr].next)	||
-					(dke.nextsub!=(long)keys[nr].nextsub)	||
-					(dke.prevlvl!=(long)keys[nr].prevlvl) 
-				)
-					dprintf_reg(stddeb,"key doubled? nr=%ld,key->dkeaddr=%lx,dkeaddr=%lx\n",nr,keys[nr].dkeaddr,dkeaddr);
+				for (x=sizeof(dke);x--;)
+					if (((char*)&dke)[x])
+						break;
+				if (x==-1)
+					break;	/* finished reading if we got only 0 */
+				if (nr) {
+					if ((dke.next!=(long)key->next) ||
+						(dke.nextsub!=(long)key->nextsub) ||
+						(dke.prevlvl!=(long)key->prevlvl) 
+					)
+						dprintf_reg(stddeb,"key doubled? nr=%lu,key->dkeaddr=%lx,dkeaddr=%lx\n",nr,key->dkeaddr,dkeaddr);
+				}
+				continue;
 			}
-			continue;
 		}
-		nr2da[i].nr	 = nr;
+#if DEBUG_W95_LOADREG
+		dprintf_reg(stddeb,"- nr=%lu,dkeaddr=%lx\n",nr,dkeaddr);
+#endif
+		nr2da[i].nr = nr;
 		nr2da[i].dkeaddr = dkeaddr;
+		nr2da[i].key = &keys[i];
 
-		keys[nr].dkeaddr = dkeaddr;
-		keys[nr].x1 = dke.x1;
-		keys[nr].x2 = dke.x2;
-		keys[nr].x3 = dke.x3;
-		keys[nr].prevlvl= (struct _w95key*)dke.prevlvl;
-		keys[nr].nextsub= (struct _w95key*)dke.nextsub;
-		keys[nr].next 	= (struct _w95key*)dke.next;
+		keys[i].dkeaddr = dkeaddr;
+		keys[i].x1 = dke.x1;
+		keys[i].x2 = dke.x2;
+		keys[i].x3 = dke.x3;
+		keys[i].prevlvl= (struct _w95key*)dke.prevlvl;
+		keys[i].nextsub= (struct _w95key*)dke.nextsub;
+		keys[i].next 	= (struct _w95key*)dke.next;
 	}
 	free(data);
 
+	nrofdkes = i;	/* This is the real number of dke entries */
+#if DEBUG_W95_LOADREG
+	dprintf_reg(stddeb,"nrofdkes = %d\n", nrofdkes);
+#endif
+
 	qsort(nr2da,nrofdkes,sizeof(nr2da[0]),
-              (int(*)(const void *,const void*))_w95dkecomp);
+              (int(*)(const void *,const void *))_w95dkecomp);
 
 	/* STEP 2: keydata & values */
 	if (!GetFileInformationByHandle(hfd,&hfdinfo))
@@ -1267,11 +1323,12 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 		dprintf_reg(stddeb,"third IFF header not RGDB, but %s\n",magic);
 		return;
 	}
+
 	curdata=data+0x20;
 	while (1) {
 		struct	dkh dkh;
-		int	bytesread;
-		struct	_w95key	*key,xkey;
+		int		bytesread;
+		struct	_w95key	xkey;	/* Used inside second main loop */
 
 		bytesread = 0;
 		if (curdata>=nextrgdb) {
@@ -1294,19 +1351,26 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 
 		XREAD(&dkh,sizeof(dkh));
 		nr = dkh.nrLS + (dkh.nrMS<<8);
-		if ((nr>nrofdkes) || (dkh.nrLS == 0xFFFF)) {
-			if (dkh.nrLS == 0xFFFF) {
+		if (dkh.nrLS == 0xFFFF) {
 				/* skip over key using nextkeyoff */
  				curdata+=dkh.nextkeyoff-sizeof(struct dkh);
 				continue;
+		} 
+		for (i = 0; i < nrofdkes; ++i) {
+			if (nr2da[i].nr == nr && nr2da[i].dkeaddr) {
+				key = nr2da[i].key;
+				break;
 			}
-			dprintf_reg(stddeb,"haven't found nr %ld.\n",nr);
+		}
+		if (i >= nrofdkes) {
+			/* Move the next statement to just before the previous for */
+			/* loop to prevent the compiler from issuing a warning -kc */
 			key = &xkey;
 			memset(key,'\0',sizeof(xkey));
+			dprintf_reg(stddeb,"haven't found nr %lu.\n",nr);
 		} else {
-			key = keys+nr;
 			if (!key->dkeaddr)
-				dprintf_reg(stddeb,"key with nr=%ld has no dkeaddr?\n",nr);
+				dprintf_reg(stddeb,"key with nr=%lu has no dkeaddr?\n",nr);
 		}
 		key->nrofvals	= dkh.values;
 		key->name	= (char*)xmalloc(dkh.keynamelen+1);
@@ -1340,7 +1404,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 		if (bytesread != dkh.nextkeyoff) {
 			if (dkh.bytesused != bytesread)
 				dprintf_reg(stddeb,
-					"read has difference in read bytes (%d) and nextoffset (%ld) (bytesused=%ld)\n",bytesread,dkh.nextkeyoff,
+					"read has difference in read bytes (%d) and nextoffset (%lu) (bytesused=%lu)\n",bytesread,dkh.nextkeyoff,
 					dkh.bytesused
 				);
 			curdata += dkh.nextkeyoff-bytesread;
@@ -1353,6 +1417,7 @@ _w95_loadreg(char* fn,LPKEYSTRUCT lpkey) {
 	}
 	free(data);
 	_w95_walk_tree(lpkey,keys);
+	free(nr2da);
 	free(keys);
 }
 

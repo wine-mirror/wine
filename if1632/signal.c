@@ -180,44 +180,20 @@ void SIGNAL_InfoRegisters( CONTEXT *context )
 
 
 /**********************************************************************
- *		SIGNAL_tick
- *
- * Tick handler.
- */
-static HANDLER_DEF(SIGNAL_tick)
-{
-    CONTEXT nt_context;
-    SIGNAL_SetSigContext( HANDLER_CONTEXT, &nt_context );
-    if (THREAD_SwitchThread( &nt_context ))
-        SIGNAL_GetSigContext( HANDLER_CONTEXT, &nt_context );
-}
-
-/**********************************************************************
  *		SIGNAL_InitEmulator
  *
  * Initialize emulator signals.
  */
 BOOL32 SIGNAL_InitEmulator(void)
 {
-    struct itimerval vt_timer;
-
     SIGNAL_SetHandler( SIGINT,  (void (*)())SIGNAL_break, 1);
     SIGNAL_SetHandler( SIGSEGV, (void (*)())SIGNAL_fault, 1);
     SIGNAL_SetHandler( SIGILL,  (void (*)())SIGNAL_fault, 1);
     SIGNAL_SetHandler( SIGFPE,  (void (*)())SIGNAL_fault, 1);
-    SIGNAL_SetHandler( SIGVTALRM, (void (*)())SIGNAL_tick,  0);
     SIGNAL_SetHandler( SIGTRAP, (void (*)())SIGNAL_trap,  1); /* debugger */
     SIGNAL_SetHandler( SIGHUP,  (void (*)())SIGNAL_trap,  1); /* forced break*/
 #ifdef SIGBUS
     SIGNAL_SetHandler( SIGBUS,  (void (*)())SIGNAL_fault, 1);
-#endif
-
-    /* Start the tick timer */
-#if 0
-    vt_timer.it_interval.tv_sec = 0;
-    vt_timer.it_interval.tv_usec = 10000;
-    vt_timer.it_value = vt_timer.it_interval;
-    setitimer( ITIMER_VIRTUAL, &vt_timer, NULL );
 #endif
     return TRUE;
 }

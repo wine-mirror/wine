@@ -2,6 +2,15 @@
  * joystick functions
  *
  * Copyright 1997 Andreas Mohr
+ *
+ * nearly all joystick functions can be regarded as obsolete,
+ * as Linux (2.1.x) now supports extended joysticks
+ * with a completely new joystick driver interface
+ * new driver's docu says:
+ * "For backward compatibility the old interface is still included,
+ * but will be dropped in the future."
+ * Thus we should implement the new interface and at most keep the old
+ * routines for backward compatibility.
  */
 
 #include <unistd.h>
@@ -247,6 +256,15 @@ MMRESULT16 WINAPI joyGetDevCaps16(UINT16 wID, LPJOYCAPS16 lpCaps, UINT16 wSize)
     }
     else
     return MMSYSERR_NODRIVER;
+}
+
+/**************************************************************************
+ *                              JoyGetPosEx             [WINMM.31]
+ */
+MMRESULT32 WINAPI joyGetPosEx(UINT32 wID, LPJOYINFO32 lpInfo)
+{
+	/* FIXME: implement it */
+	return MMSYSERR_NODRIVER;
 }
 
 /**************************************************************************

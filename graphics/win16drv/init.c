@@ -604,7 +604,7 @@ static int CreateSpoolFile(LPSTR pszOutput)
 
     PROFILE_GetWineIniString( "spooler", pszOutput, "",
                               psCmd, sizeof(psCmd) );
-    printf("Got printerSpoolCOmmand \"%s\"\n",psCmd);
+    printf("Got printerSpoolCommand \"%s\"\n",psCmd);
     if (!*psCmd)
         psCmdP = pszOutput;
     else
@@ -635,7 +635,7 @@ static int CreateSpoolFile(LPSTR pszOutput)
         }
         close (fds[0]);
         fd = fds[1];
-        printf("Need to execut a command and pipe the output to it\n");
+        printf("Need to execute a command and pipe the output to it\n");
     }
     else
     {

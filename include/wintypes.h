@@ -59,7 +59,7 @@
 # if defined(__GNUC__) && (__GNUC__ == 2) && (__GNUC_MINOR__ >= 7)
 #  define __stdcall __attribute__((__stdcall__))
 #  define __cdecl   __attribute__((__cdecl__))
-#  define __RESTORE_ES  __asm__ __volatile__("pushw %ds\n\tpopw %es")
+#  define __RESTORE_ES  __asm__ __volatile__("pushl %ds\n\tpopl %es")
 # else
 #  error You need gcc >= 2.7 to build Wine on a 386
 # endif  /* __GNUC__ */

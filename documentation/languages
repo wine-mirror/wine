@@ -24,7 +24,7 @@ you must...
 3.  Edit include/options.h enum "WINE_LANGUAGE" to have a member called
     LANG_XX where XX is the new abbreviation.
 
-4.  Edit misc/ole2nls.c function "GetUserDefaultLCID" to contain a
+4.  Edit ole/ole2nls.c function "GetUserDefaultLCID" to contain a
     case for your language by uncommenting the return value of it.
 
 5.  Edit resources/sysrec.c to include "sysres_XX.h" where XX is the
@@ -47,7 +47,7 @@ you must...
 7.  Edit resources/Makefile.in to add the name of the new file to the
     SYSRES_SRCS variable.
 
-8.  Edit misc/ole2nls.c function "GetLocaleInfoA" to contain a case for
+8.  Edit ole/ole2nls.c function "GetLocaleInfoA" to contain a case for
     your language.
 
 9.  Re-configure, re-make dependencies, and re-make Wine.

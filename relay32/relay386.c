@@ -10,6 +10,7 @@
 #include "winnt.h"
 #include "windows.h"
 #include "builtin32.h"
+#include "selectors.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -30,6 +31,7 @@ int RELAY_CallFrom32( int ret_addr, ... )
     char buffer[80];
     FARPROC32 func;
     unsigned int mask, typemask;
+    WORD fs;
 
     int *args = &ret_addr;
     /* Relay addr is the return address for this function */
@@ -56,7 +58,8 @@ int RELAY_CallFrom32( int ret_addr, ... )
 	}
         else printf( "%08x", args[i] );
     }
-    printf( ") ret=%08x\n", ret_addr );
+    GET_FS( fs );
+    printf( ") ret=%08x fs=%04x\n", ret_addr, fs );
     if (*relay_addr == 0xc3) /* cdecl */
     {
         LRESULT (*cfunc)() = (LRESULT(*)())func;
@@ -138,7 +141,8 @@ int RELAY_CallFrom32( int ret_addr, ... )
             assert(FALSE);
         }
     }
-    printf( "Ret  %s() retval=%08x ret=%08x\n", buffer, ret, ret_addr );
+    printf( "Ret  %s() retval=%08x ret=%08x fs=%04x\n",
+            buffer, ret, ret_addr, fs );
     return ret;
 }
 

@@ -15,7 +15,6 @@
 #include "bitmap.h"
 #include "gdi.h"
 #include "dc.h"
-#include "syscolor.h"
 
 #define MAX_DRAWLINES 8
 
@@ -129,12 +128,12 @@ void GRAPH_DrawReliefRect( HDC32 hdc, const RECT32 *rect, INT32 highlight_size,
 {
     if(pressed)
 	GRAPH_DrawGenericReliefRect(hdc, rect, highlight_size, shadow_size,
-				    sysColorObjects.hbrushBtnShadow,
-				    sysColorObjects.hbrushBtnHighlight);
+				    GetSysColorBrush32(COLOR_BTNSHADOW),
+				    GetSysColorBrush32(COLOR_BTNHIGHLIGHT));
     else
 	GRAPH_DrawGenericReliefRect(hdc, rect, highlight_size, shadow_size,
-				    sysColorObjects.hbrushBtnHighlight,
-				    sysColorObjects.hbrushBtnShadow);
+				    GetSysColorBrush32(COLOR_BTNHIGHLIGHT),
+				    GetSysColorBrush32(COLOR_BTNSHADOW));
 
     return;
 }

@@ -265,7 +265,7 @@ static const struct inst db_inst_0f9x[] = {
 static const struct inst db_inst_0fax[] = {
 /*a0*/	{ "push",  FALSE, NONE,  op1(Si),     0 },
 /*a1*/	{ "pop",   FALSE, NONE,  op1(Si),     0 },
-/*a2*/	{ "",      FALSE, NONE,  0,	      0 },
+/*a2*/	{ "cpuid", FALSE, NONE,  0,	      0 },
 /*a3*/	{ "bt",    TRUE,  LONG,  op2(E,R),    0 },
 /*a4*/	{ "shld",  TRUE,  LONG,  op3(Ib,E,R), 0 },
 /*a5*/	{ "shld",  TRUE,  LONG,  op3(CL,E,R), 0 },
@@ -283,8 +283,8 @@ static const struct inst db_inst_0fax[] = {
 };
 
 static const struct inst db_inst_0fbx[] = {
-/*b0*/	{ "",      FALSE, NONE,  0,	      0 },
-/*b1*/	{ "",      FALSE, NONE,  0,	      0 },
+/*b0*/	{ "cmpxchg",TRUE, BYTE,  op2(E, R),   0 },
+/*b1*/	{ "cmpxchg",TRUE, LONG,  op2(E, R),   0 },
 /*b2*/	{ "lss",   TRUE,  LONG,  op2(E, R),   0 },
 /*b3*/	{ "bts",   TRUE,  LONG,  op2(R, E),   0 },
 /*b4*/	{ "lfs",   TRUE,  LONG,  op2(E, R),   0 },

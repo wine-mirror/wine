@@ -11,6 +11,9 @@
 #include "windows.h"
 #include "winnt.h"
 
+/***********************************************************************
+ * 			GetSystemInfo            	[KERNELL32.404]
+ */
 VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 {
 	static int cache = 0;
@@ -101,23 +104,48 @@ VOID WINAPI GetSystemInfo(LPSYSTEM_INFO si)
 #endif  /* linux */
 }
 
+/***********************************************************************
+ *          CPU_TestProcessorFeature
+ */
+static BOOL32 CPU_TestProcessorFeature(const char* query_info, const char* query_value)
+{
+    BOOL32 flag=FALSE;
+#ifdef linux
+    char line[200],info[200],value[200],junk[200];
+    FILE *f = fopen ("/proc/cpuinfo", "r");
+    
+    if (!f)
+      return 0;
+    while (fgets(line,200,f)!=NULL) {
+      if (sscanf(line,"%s%[ \t:]%s",info,junk,value)!=3)
+	continue;
+      if (strcmp(info,query_info)==0)
+	flag = strstr(value,query_value)!=NULL;
+    }
+    fclose (f);
+#else  /* linux */
+    /* FIXME: how do we do this on other systems? */
+#endif  /* linux */
+    return flag;
+}
 
-/* IsProcessorFeaturePresent [KERNEL32.880] */
+/***********************************************************************
+ * 			IsProcessorFeaturePresent	[KERNELL32.880]
+ */
 BOOL32 WINAPI IsProcessorFeaturePresent (DWORD feature)
 {
   SYSTEM_INFO si;
   GetSystemInfo (&si);
-  /* FIXME: these are relatively stupid approximations.  */
   switch (feature)
     {
-    case PF_FLOATING_POINT_PRECISION_ERRATA:
+    case PF_FLOATING_POINT_PRECISION_ERRATA: 
       return si.wProcessorLevel == 5;
     case PF_FLOATING_POINT_EMULATED:
-      return FALSE;
+      return CPU_TestProcessorFeature("fpu","no"); break;
     case PF_COMPARE_EXCHANGE_DOUBLE:
       return si.wProcessorLevel >= 5;
     case PF_MMX_INSTRUCTIONS_AVAILABLE:
-      return FALSE;
+      return CPU_TestProcessorFeature("flags","mmx"); break;
     default:
       return FALSE;
     }

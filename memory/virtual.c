@@ -95,6 +95,17 @@ static UINT32 granularity_mask;  /* Allocation granularity (usually 64k) */
 #define ROUND_SIZE(addr,size) \
    (((UINT32)(size) + ((UINT32)(addr) & page_mask) + page_mask) & ~page_mask)
 
+static void VIRTUAL_DestroyMapping( K32OBJ *obj );
+
+const K32OBJ_OPS MEM_MAPPED_FILE_Ops =
+{
+    /* Object cannot be waited upon, so we don't need these (except destroy) */
+    NULL,                      /* signaled */
+    NULL,                      /* satisfied */
+    NULL,                      /* add_wait */
+    NULL,                      /* remove_wait */
+    VIRTUAL_DestroyMapping     /* destroy */
+};
 
 /***********************************************************************
  *           VIRTUAL_GetProtStr
@@ -864,10 +875,15 @@ HANDLE32 WINAPI CreateFileMapping32A(HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
         if (obj->type == K32OBJ_MEM_MAPPED_FILE)
         {
             SetLastError( ERROR_ALREADY_EXISTS );
-            return PROCESS_AllocHandle( obj, 0 );
+            handle = PROCESS_AllocHandle( obj, 0 );
         }
-        SetLastError( ERROR_DUP_NAME );
-        return 0;
+        else
+        {
+            SetLastError( ERROR_DUP_NAME );
+            handle = 0;
+        }
+        K32OBJ_DecCount( obj );
+        return handle;
     }
 
     /* Check parameters */
@@ -924,15 +940,17 @@ HANDLE32 WINAPI CreateFileMapping32A(HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
     /* Allocate the mapping object */
 
     if (!(mapping = HeapAlloc( SystemHeap, 0, sizeof(*mapping) ))) goto error;
-    mapping->header.type = K32OBJ_MEM_MAPPED_FILE;
+    mapping->header.type     = K32OBJ_MEM_MAPPED_FILE;
     mapping->header.refcount = 1;
-    mapping->protect   = vprot;
-    mapping->size_high = size_high;
-    mapping->size_low  = ROUND_SIZE( 0, size_low );
-    mapping->file      = (FILE_OBJECT *)obj;
+    mapping->protect         = vprot;
+    mapping->size_high       = size_high;
+    mapping->size_low        = ROUND_SIZE( 0, size_low );
+    mapping->file            = (FILE_OBJECT *)obj;
 
-    handle = PROCESS_AllocHandle( &mapping->header, 0 );
-    if (handle != INVALID_HANDLE_VALUE32) return handle;
+    if (!K32OBJ_AddName( &mapping->header, name )) handle = 0;
+    else handle = PROCESS_AllocHandle( &mapping->header, 0 );
+    K32OBJ_DecCount( &mapping->header );
+    return handle;
 
 error:
     if (obj) K32OBJ_DecCount( obj );
@@ -961,9 +979,16 @@ HANDLE32 WINAPI CreateFileMapping32W(HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
  */
 HANDLE32 WINAPI OpenFileMapping32A( DWORD access, BOOL32 inherit, LPCSTR name )
 {
-    K32OBJ *obj = K32OBJ_FindNameType( name, K32OBJ_MEM_MAPPED_FILE );
-    if (!obj) return 0;
-    return PROCESS_AllocHandle( obj, 0 );
+    HANDLE32 handle = 0;
+    K32OBJ *obj;
+    SYSTEM_LOCK();
+    if ((obj = K32OBJ_FindNameType( name, K32OBJ_MEM_MAPPED_FILE )))
+    {
+        handle = PROCESS_AllocHandle( obj, 0 );
+        K32OBJ_DecCount( obj );
+    }
+    SYSTEM_UNLOCK();
+    return handle;
 }
 
 
@@ -984,7 +1009,7 @@ HANDLE32 WINAPI OpenFileMapping32W( DWORD access, BOOL32 inherit, LPCWSTR name)
  *
  * Destroy a FILE_MAPPING object.
  */
-void VIRTUAL_DestroyMapping( K32OBJ *ptr )
+static void VIRTUAL_DestroyMapping( K32OBJ *ptr )
 {
     FILE_MAPPING *mapping = (FILE_MAPPING *)ptr;
     assert( ptr->type == K32OBJ_MEM_MAPPED_FILE );

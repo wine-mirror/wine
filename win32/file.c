@@ -19,7 +19,6 @@
 #include "winerror.h"
 #include "file.h"
 #include "heap.h"
-#include "handle32.h"
 #include "stddebug.h"
 #define DEBUG_WIN32
 #include "debug.h"

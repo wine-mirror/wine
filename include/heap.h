@@ -12,6 +12,7 @@
 
 extern HANDLE32 SystemHeap;
 extern HANDLE32 SegptrHeap;
+extern CRITICAL_SECTION *HEAP_SystemLock;
 
 extern int HEAP_IsInsideHeap( HANDLE32 heap, DWORD flags, LPCVOID ptr );
 extern SEGPTR HEAP_GetSegptr( HANDLE32 heap, DWORD flags, LPCVOID ptr );
@@ -35,5 +36,12 @@ extern LPSTR HEAP_strdupWtoA( HANDLE32 heap, DWORD flags, LPCWSTR str );
          (HIWORD(ptr) ? HEAP_GetSegptr( SegptrHeap, 0, (ptr) ) : (SEGPTR)(ptr))
 #define SEGPTR_FREE(ptr) \
          (HIWORD(ptr) ? HeapFree( SegptrHeap, 0, (ptr) ) : 0)
+
+/* System heap locking macros */
+
+#define SYSTEM_LOCK()       (EnterCriticalSection(HEAP_SystemLock))
+#define SYSTEM_UNLOCK()     (LeaveCriticalSection(HEAP_SystemLock))
+/* Use this one only when you own the lock! */
+#define SYSTEM_LOCK_COUNT() (HEAP_SystemLock->RecursionCount)
 
 #endif  /* __WINE_HEAP_H */

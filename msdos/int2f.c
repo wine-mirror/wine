@@ -57,6 +57,9 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
     case 0xb7:  /* append */
         AL_reg(context) = 0; /* not installed */
         break;
+    case 0xbd:  /* some Novell network install check ??? */
+        AX_reg(context) = 0xa5a5; /* pretend to have Novell IPX installed */
+	break;
     default:
         INT_BARF( context, 0x2f );
         break;

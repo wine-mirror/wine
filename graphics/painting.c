@@ -19,7 +19,6 @@
 #include "callback.h"
 #include "heap.h"
 #include "metafile.h"
-#include "syscolor.h"
 #include "palette.h"
 #include "cache.h"
 #include "color.h"
@@ -513,7 +512,7 @@ void WINAPI DrawFocusRect16( HDC16 hdc, const RECT16* rc )
  */
 void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
 {
-    HPEN32 hOldPen;
+    HPEN32 hOldPen, hnewPen;
     INT32 oldDrawMode, oldBkMode;
     INT32 left, top, right, bottom;
 
@@ -525,7 +524,8 @@ void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
     right  = XLPTODP( dc, rc->right );
     bottom = YLPTODP( dc, rc->bottom );
     
-    hOldPen = SelectObject32( hdc, sysColorObjects.hpenWindowText );
+    hnewPen = CreatePen32(PS_DOT, 1, GetSysColor32(COLOR_WINDOWTEXT) );
+    hOldPen = SelectObject32( hdc, hnewPen );
     oldDrawMode = SetROP232(hdc, R2_XORPEN);
     oldBkMode = SetBkMode32(hdc, TRANSPARENT);
 
@@ -540,6 +540,7 @@ void WINAPI DrawFocusRect32( HDC32 hdc, const RECT32* rc )
     SetBkMode32(hdc, oldBkMode);
     SetROP232(hdc, oldDrawMode);
     SelectObject32(hdc, hOldPen);
+    DeleteObject32(hnewPen);
 }
 
 

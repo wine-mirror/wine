@@ -164,10 +164,22 @@ static BOOL32 BRUSH_SelectPatternBrush( DC * dc, HBITMAP32 hbitmap )
 {
     BITMAPOBJ * bmp = (BITMAPOBJ *) GDI_GetObjPtr( hbitmap, BITMAP_MAGIC );
     if (!bmp) return FALSE;
-    dc->u.x.brush.pixmap = XCreatePixmap( display, rootWindow,
-					  8, 8, bmp->bitmap.bmBitsPixel );
-    XCopyArea( display, bmp->pixmap, dc->u.x.brush.pixmap,
-	       BITMAP_GC(bmp), 0, 0, 8, 8, 0, 0 );
+
+    if ((dc->w.bitsPerPixel == 1) && (bmp->bitmap.bmBitsPixel != 1))
+    {
+        /* Special case: a color pattern on a monochrome DC */
+        dc->u.x.brush.pixmap = XCreatePixmap( display, rootWindow, 8, 8, 1 );
+        /* FIXME: should probably convert to monochrome instead */
+        XCopyPlane( display, bmp->pixmap, dc->u.x.brush.pixmap,
+                    BITMAP_monoGC, 0, 0, 8, 8, 0, 0, 1 );
+    }
+    else
+    {
+        dc->u.x.brush.pixmap = XCreatePixmap( display, rootWindow,
+                                              8, 8, bmp->bitmap.bmBitsPixel );
+        XCopyArea( display, bmp->pixmap, dc->u.x.brush.pixmap,
+                   BITMAP_GC(bmp), 0, 0, 8, 8, 0, 0 );
+    }
     
     if (bmp->bitmap.bmBitsPixel > 1)
     {

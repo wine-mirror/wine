@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = notepad
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 RCFLAGS   = -w32 -h
 
 LANGUAGES   = En De
@@ -13,15 +13,13 @@ LICENSELANG = En
 
 MOSTSRCS = \
 	license.c \
-	notepad.c
+	main.c
 
 # Some strings need addresses >= 0x10000
 STRINGSRCS = \
 	$(LICENSELANG:%=License_%.c)
 
-RC_SRCS = \
-	notepad.rc \
-	$(LANGUAGES:%=%.rc)
+RC_SRCS = $(LANGUAGES:%=%.rc)
 
 C_SRCS = $(MOSTSRCS) $(STRINGSRCS)
 

@@ -44,6 +44,8 @@ extern const BUILTIN32_DESCRIPTOR COMCTL32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR COMDLG32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR CRTDLL_Descriptor;
 extern const BUILTIN32_DESCRIPTOR DCIMAN32_Descriptor;
+extern const BUILTIN32_DESCRIPTOR DDRAW_Descriptor;
+extern const BUILTIN32_DESCRIPTOR DSOUND_Descriptor;
 extern const BUILTIN32_DESCRIPTOR GDI32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR KERNEL32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR LZ32_Descriptor;
@@ -70,6 +72,8 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &COMDLG32_Descriptor, NULL, TRUE  },
     { &CRTDLL_Descriptor,   NULL, TRUE  },
     { &DCIMAN32_Descriptor, NULL, TRUE  },
+    { &DDRAW_Descriptor,    NULL, TRUE  },
+    { &DSOUND_Descriptor,   NULL, TRUE  },
     { &GDI32_Descriptor,    NULL, TRUE  },
     { &KERNEL32_Descriptor, NULL, TRUE  },
     { &LZ32_Descriptor,     NULL, TRUE  },
@@ -376,4 +380,44 @@ void BUILTIN32_Unimplemented( const BUILTIN32_DESCRIPTOR *descr, int ordinal )
 #endif
     fprintf( stderr, "\n" );
     TASK_KillCurrentTask(1);
+}
+
+
+/***********************************************************************
+ *           BUILTIN32_EnableDLL
+ *
+ * Enable or disable a built-in DLL.
+ */
+int BUILTIN32_EnableDLL( const char *name, int len, int enable )
+{
+    int i;
+    BUILTIN32_DLL *dll;
+
+    for (i = 0, dll = BuiltinDLLs; dll->descr; dll++)
+    {
+        if (!lstrncmpi32A( name, dll->descr->name, len ))
+        {
+            dll->used = enable;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *           BUILTIN32_PrintDLLs
+ *
+ * Print the list of built-in DLLs that can be disabled.
+ */
+void BUILTIN32_PrintDLLs(void)
+{
+    int i;
+    BUILTIN32_DLL *dll;
+
+    fprintf(stderr,"Available Win32 DLLs:\n");
+    for (i = 0, dll = BuiltinDLLs; dll->descr; dll++)
+        fprintf( stderr, "%-9s%c", dll->descr->name,
+                 ((++i) % 8) ? ' ' : '\n' );
+    fprintf(stderr,"\n");
 }

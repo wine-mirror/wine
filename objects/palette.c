@@ -284,7 +284,7 @@ BOOL32 WINAPI AnimatePalette32( HPALETTE32 hPal, UINT32 StartIndex,
     {
         PALETTEOBJ* palPtr = (PALETTEOBJ *)GDI_GetObjPtr(hPal, PALETTE_MAGIC);
 
-	if( (StartIndex + NumEntries) < palPtr->logpalette.palNumEntries )
+	if( (StartIndex + NumEntries) <= palPtr->logpalette.palNumEntries )
 	{
 	    UINT32 u;
 	    for( u = 0; u < NumEntries; u++ )

@@ -5,7 +5,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = none
 PROGRAMS  = winhelp hlp2sgml
-ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
+ALL_LIBS  = $(WINELIB) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LIBS)
 RCFLAGS   = -w32 -h
 
 LANGUAGES   = En Da De Fr Fi Ko Hu It Va
@@ -25,7 +25,7 @@ RC_SRCS = $(LANGUAGES:%=%.rc)
 
 C_SRCS = $(MOSTSRCS) $(STRINGSRCS)
 
-MOSTOBJS = $(MOSTSRCS:.c=.o)
+MOSTOBJS = $(MOSTSRCS:.c=.o) $(EXTRA_OBJS)
 STRINGOBJS = $(STRINGSRCS:.c=.o) $(RC_SRCS:.rc=.o)
 
 all: check_winerc $(PROGRAMS)

@@ -511,13 +511,13 @@ WORD WINAPI GetKeyState32(INT32 vkey)
     switch (vkey)
 	{
 	case VK_LBUTTON : /* VK_LBUTTON is 1 */
-	    retval = MouseButtonsStates[0];
+	    retval = MouseButtonsStates[0] ? 0x8000 : 0;
 	    break;
 	case VK_MBUTTON : /* VK_MBUTTON is 4 */
-	    retval = MouseButtonsStates[1];
+	    retval = MouseButtonsStates[1] ? 0x8000 : 0;
 	    break;
 	case VK_RBUTTON : /* VK_RBUTTON is 2 */
-	    retval = MouseButtonsStates[2];
+	    retval = MouseButtonsStates[2] ? 0x8000 : 0;
 	    break;
 	default :
 	    if (vkey >= 'a' && vkey <= 'z')
@@ -539,9 +539,9 @@ VOID WINAPI GetKeyboardState(LPBYTE lpKeyState)
 {
     dprintf_key(stddeb, "GetKeyboardState()\n");
     if (lpKeyState != NULL) {
-	QueueKeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] >> 8;
-	QueueKeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] >> 8;
-	QueueKeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] >> 8;
+	QueueKeyStateTable[VK_LBUTTON] = MouseButtonsStates[0] ? 0x80 : 0;
+	QueueKeyStateTable[VK_MBUTTON] = MouseButtonsStates[1] ? 0x80 : 0;
+	QueueKeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] ? 0x80 : 0;
 	memcpy(lpKeyState, QueueKeyStateTable, 256);
     }
 }
@@ -554,9 +554,9 @@ VOID WINAPI SetKeyboardState(LPBYTE lpKeyState)
     dprintf_key(stddeb, "SetKeyboardState()\n");
     if (lpKeyState != NULL) {
 	memcpy(QueueKeyStateTable, lpKeyState, 256);
-	MouseButtonsStates[0] = QueueKeyStateTable[VK_LBUTTON]? 0x8000: 0;
-	MouseButtonsStates[1] = QueueKeyStateTable[VK_MBUTTON]? 0x8000: 0;
-	MouseButtonsStates[2] = QueueKeyStateTable[VK_RBUTTON]? 0x8000: 0;
+	MouseButtonsStates[0] = (QueueKeyStateTable[VK_LBUTTON] != 0);
+	MouseButtonsStates[1] = (QueueKeyStateTable[VK_MBUTTON] != 0);
+	MouseButtonsStates[2] = (QueueKeyStateTable[VK_RBUTTON] != 0);
     }
 }
 
@@ -579,16 +579,16 @@ WORD WINAPI GetAsyncKeyState32(INT32 nKey)
 
     switch (nKey) {
      case VK_LBUTTON:
-	retval = AsyncMouseButtonsStates[0] | 
-	MouseButtonsStates[0]? 0x0001: 0;
+	retval = (AsyncMouseButtonsStates[0] ? 0x0001 : 0) | 
+                 (MouseButtonsStates[0] ? 0x8000 : 0);
 	break;
      case VK_MBUTTON:
-	retval = AsyncMouseButtonsStates[1] |
-	MouseButtonsStates[1]? 0x0001: 0;
+	retval = (AsyncMouseButtonsStates[1] ? 0x0001 : 0) | 
+                 (MouseButtonsStates[1] ? 0x8000 : 0);
 	break;
      case VK_RBUTTON:
-	retval = AsyncMouseButtonsStates[2] |
-	MouseButtonsStates[2]? 0x0001: 0;
+	retval = (AsyncMouseButtonsStates[2] ? 0x0001 : 0) | 
+                 (MouseButtonsStates[2] ? 0x8000 : 0);
 	break;
      default:
 	retval = AsyncKeyStateTable[nKey] | 
@@ -596,8 +596,9 @@ WORD WINAPI GetAsyncKeyState32(INT32 nKey)
 	break;
     }
 
-    memset( AsyncMouseButtonsStates, 0, 3 );  /* all states to false */
-    memset( AsyncKeyStateTable, 0, 256 );
+    /* all states to false */
+    memset( AsyncMouseButtonsStates, 0, sizeof(AsyncMouseButtonsStates) );
+    memset( AsyncKeyStateTable, 0, sizeof(AsyncKeyStateTable) );
 
     dprintf_key(stddeb, "GetAsyncKeyState(%x) -> %x\n", nKey, retval);
     return retval;

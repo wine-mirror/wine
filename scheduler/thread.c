@@ -6,7 +6,10 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <signal.h>
+#include <unistd.h>
 #include "thread.h"
+#include "process.h"
 #include "winerror.h"
 #include "heap.h"
 #include "selectors.h"
@@ -15,8 +18,40 @@
 #include "debug.h"
 #include "stddebug.h"
 
-THDB *pCurrentThread = NULL;
-static K32OBJ_LIST THREAD_List;
+#ifdef HAVE_CLONE
+# ifdef HAVE_SCHED_H
+#  include <sched.h>
+# endif
+# ifndef CLONE_VM
+#  define CLONE_VM      0x00000100
+#  define CLONE_FS      0x00000200
+#  define CLONE_FILES   0x00000400
+#  define CLONE_SIGHAND 0x00000800
+#  define CLONE_PID     0x00001000
+/* If we didn't get the flags, we probably didn't get the prototype either */
+extern int clone( int (*fn)(void *arg), void *stack, int flags, void *arg );
+# endif  /* CLONE_VM */
+#endif  /* HAVE_CLONE */
+
+#ifndef __i386__
+THDB *pCurrentThread;
+#endif
+
+static BOOL32 THREAD_Signaled( K32OBJ *obj, DWORD thread_id );
+static void THREAD_Satisfied( K32OBJ *obj, DWORD thread_id );
+static void THREAD_AddWait( K32OBJ *obj, DWORD thread_id );
+static void THREAD_RemoveWait( K32OBJ *obj, DWORD thread_id );
+static void THREAD_Destroy( K32OBJ *obj );
+
+const K32OBJ_OPS THREAD_Ops =
+{
+    THREAD_Signaled,    /* signaled */
+    THREAD_Satisfied,   /* satisfied */
+    THREAD_AddWait,     /* add_wait */
+    THREAD_RemoveWait,  /* remove_wait */
+    THREAD_Destroy      /* destroy */
+};
+
 
 /***********************************************************************
  *           THREAD_GetPtr
@@ -38,6 +73,28 @@ static THDB *THREAD_GetPtr( HANDLE32 handle )
 }
 
 
+/**********************************************************************
+ *           NtCurrentTeb   (NTDLL.89)
+ */
+TEB * WINAPI NtCurrentTeb(void)
+{
+#ifdef __i386__
+    TEB *teb;
+    WORD ds, fs;
+
+    /* Check if we have a current thread */
+    GET_DS( ds );
+    GET_FS( fs );
+    if (fs == ds) return NULL; /* FIXME: should be an assert */
+    __asm__( "movl %%fs:(24),%0" : "=r" (teb) );
+    return teb;
+#else
+    if (!pCurrentThread) return NULL;
+    return &pCurrentThread->teb;
+#endif  /* __i386__ */
+}
+
+
 /***********************************************************************
  *           THREAD_Current
  *
@@ -45,9 +102,62 @@ static THDB *THREAD_GetPtr( HANDLE32 handle )
  */
 THDB *THREAD_Current(void)
 {
-    /* FIXME: should probably use %fs register here */
-    assert( pCurrentThread );
-    return pCurrentThread;
+    TEB *teb = NtCurrentTeb();
+    if (!teb) return NULL;
+    return (THDB *)((char *)teb - (int)&((THDB *)0)->teb);
+}
+
+
+/***********************************************************************
+ *           THREAD_AddQueue
+ *
+ * Add a thread to a queue.
+ */
+void THREAD_AddQueue( THREAD_QUEUE *queue, THDB *thread )
+{
+    THREAD_ENTRY *entry = HeapAlloc( SystemHeap, HEAP_NO_SERIALIZE,
+                                     sizeof(*entry) );
+    assert(entry);
+    SYSTEM_LOCK();
+    entry->thread = thread;
+    if (*queue)
+    {
+        entry->next = (*queue)->next;
+        (*queue)->next = entry;
+    }
+    else entry->next = entry;
+    *queue = entry;
+    SYSTEM_UNLOCK();
+}
+
+/***********************************************************************
+ *           THREAD_RemoveQueue
+ *
+ * Remove a thread from a queue.
+ */
+void THREAD_RemoveQueue( THREAD_QUEUE *queue, THDB *thread )
+{
+    THREAD_ENTRY *entry = *queue;
+    SYSTEM_LOCK();
+    if (entry->next == entry)  /* Only one element in the queue */
+    {
+        assert( entry->thread == thread );
+        *queue = NULL;
+    }
+    else
+    {
+        THREAD_ENTRY *next;
+        while (entry->next->thread != thread)
+        {
+            entry = entry->next;
+            assert( entry != *queue );  /* Have we come all the way around? */
+        }
+        if ((next = entry->next) == *queue) *queue = entry;
+        entry->next = entry->next->next;
+        entry = next;  /* This is the one we want to free */
+    }
+    HeapFree( SystemHeap, 0, entry );
+    SYSTEM_UNLOCK();
 }
 
 
@@ -55,10 +165,11 @@ THDB *THREAD_Current(void)
  *           THREAD_Create
  */
 THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
-                     LPTHREAD_START_ROUTINE start_addr )
+                     LPTHREAD_START_ROUTINE start_addr, LPVOID param )
 {
     DWORD old_prot;
     WORD cs, ds;
+
     THDB *thdb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(THDB) );
     if (!thdb) return NULL;
     thdb->header.type     = K32OBJ_THREAD;
@@ -69,8 +180,11 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
     thdb->teb.stack_sel   = 0; /* FIXME */
     thdb->teb.self        = &thdb->teb;
     thdb->teb.tls_ptr     = thdb->tls_array;
+    thdb->wait_list       = &thdb->wait_struct;
     thdb->process2        = pdb;
     thdb->exit_code       = 0x103; /* STILL_ACTIVE */
+    thdb->entry_point     = start_addr;
+    thdb->entry_arg       = param;
 
     /* Allocate the stack */
 
@@ -91,6 +205,10 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
                                          TRUE, FALSE );
     if (!thdb->teb_sel) goto error;
 
+    /* Allocate the event */
+
+    if (!(thdb->event = EVENT_Create( TRUE, FALSE ))) goto error;
+
     /* Initialize the thread context */
 
     GET_CS(cs);
@@ -104,14 +222,10 @@ THDB *THREAD_Create( PDB32 *pdb, DWORD stack_size,
     thdb->context.SegFs   = thdb->teb_sel;
     thdb->context.Eip     = (DWORD)start_addr;
     thdb->context.Esp     = (DWORD)thdb->teb.stack_top;
-
-    /* Add the thread to the linked list */
-
-    K32OBJ_AddTail( &THREAD_List, &thdb->header );
-
     return thdb;
 
 error:
+    if (thdb->event) K32OBJ_DecCount( thdb->event );
     if (thdb->teb_sel) SELECTOR_FreeBlock( thdb->teb_sel, 1 );
     if (thdb->stack_base) VirtualFree( thdb->stack_base, 0, MEM_RELEASE );
     HeapFree( SystemHeap, 0, thdb );
@@ -120,17 +234,78 @@ error:
 
 
 /***********************************************************************
+ *           THREAD_Start
+ *
+ * Startup routine for a new thread.
+ */
+static void THREAD_Start( THDB *thdb )
+{
+    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)thdb->entry_point;
+    thdb->unix_pid = getpid();
+    SET_FS( thdb->teb_sel );
+    ExitThread( func( thdb->entry_arg ) );
+}
+
+
+/***********************************************************************
+ *           THREAD_Signaled
+ */
+static BOOL32 THREAD_Signaled( K32OBJ *obj, DWORD thread_id )
+{
+    THDB *thdb = (THDB *)obj;
+    assert( obj->type == K32OBJ_THREAD );
+    return K32OBJ_OPS( thdb->event )->signaled( thdb->event, thread_id );
+}
+
+
+/***********************************************************************
+ *           THREAD_Satisfied
+ *
+ * Wait on this object has been satisfied.
+ */
+static void THREAD_Satisfied( K32OBJ *obj, DWORD thread_id )
+{
+    THDB *thdb = (THDB *)obj;
+    assert( obj->type == K32OBJ_THREAD );
+    return K32OBJ_OPS( thdb->event )->satisfied( thdb->event, thread_id );
+}
+
+
+/***********************************************************************
+ *           THREAD_AddWait
+ *
+ * Add thread to object wait queue.
+ */
+static void THREAD_AddWait( K32OBJ *obj, DWORD thread_id )
+{
+    THDB *thdb = (THDB *)obj;
+    assert( obj->type == K32OBJ_THREAD );
+    return K32OBJ_OPS( thdb->event )->add_wait( thdb->event, thread_id );
+}
+
+
+/***********************************************************************
+ *           THREAD_RemoveWait
+ *
+ * Remove thread from object wait queue.
+ */
+static void THREAD_RemoveWait( K32OBJ *obj, DWORD thread_id )
+{
+    THDB *thdb = (THDB *)obj;
+    assert( obj->type == K32OBJ_THREAD );
+    return K32OBJ_OPS( thdb->event )->remove_wait( thdb->event, thread_id );
+}
+
+
+/***********************************************************************
  *           THREAD_Destroy
  */
-void THREAD_Destroy( K32OBJ *ptr )
+static void THREAD_Destroy( K32OBJ *ptr )
 {
     THDB *thdb = (THDB *)ptr;
 
     assert( ptr->type == K32OBJ_THREAD );
     ptr->type = K32OBJ_UNKNOWN;
-
-    /* Note: when we get here, the thread has already been removed */
-    /* from the thread list */
 
     /* Free the associated memory */
 
@@ -146,6 +321,7 @@ void THREAD_Destroy( K32OBJ *ptr )
         }
     }
 #endif
+    K32OBJ_DecCount( thdb->event );
     SELECTOR_FreeBlock( thdb->teb_sel, 1 );
     HeapFree( SystemHeap, 0, thdb );
 
@@ -153,50 +329,53 @@ void THREAD_Destroy( K32OBJ *ptr )
 
 
 /***********************************************************************
- *           THREAD_SwitchThread
- *
- * Return the thread we want to switch to, and switch the contexts.
- */
-THDB *THREAD_SwitchThread( CONTEXT *context )
-{
-    K32OBJ *cur;
-    THDB *next;
-    if (!pCurrentThread) return NULL;
-    cur = K32OBJ_RemoveHead( &THREAD_List );
-    K32OBJ_AddTail( &THREAD_List, cur );
-    K32OBJ_DecCount( cur );
-    next = (THDB *)THREAD_List.head;
-    if (next != pCurrentThread)
-    {
-        pCurrentThread->context = *context;
-        pCurrentThread = next;
-        *context = pCurrentThread->context;
-    }
-    return pCurrentThread;
-}
-
-
-/***********************************************************************
  *           CreateThread   (KERNEL32.63)
- *
- * The only thing missing here is actually getting the thread to run ;-)
  */
 HANDLE32 WINAPI CreateThread( LPSECURITY_ATTRIBUTES attribs, DWORD stack,
                               LPTHREAD_START_ROUTINE start, LPVOID param,
                               DWORD flags, LPDWORD id )
 {
     HANDLE32 handle;
-    THDB *thread = THREAD_Create( pCurrentProcess, stack, start );
+    THDB *thread = THREAD_Create( pCurrentProcess, stack, start, param );
     if (!thread) return INVALID_HANDLE_VALUE32;
     handle = PROCESS_AllocHandle( &thread->header, 0 );
     if (handle == INVALID_HANDLE_VALUE32)
     {
-        THREAD_Destroy( &thread->header );
+        K32OBJ_DecCount( &thread->header );
         return INVALID_HANDLE_VALUE32;
     }
-    *id = (DWORD)thread;
+#ifdef HAVE_CLONE
+    if (clone( (int (*)(void *))THREAD_Start, thread->teb.stack_top,
+               CLONE_VM | CLONE_FS | CLONE_FILES | SIGCHLD, thread ) < 0)
+    {
+        K32OBJ_DecCount( &thread->header );
+        return INVALID_HANDLE_VALUE32;
+    }
+#else
     fprintf( stderr, "CreateThread: stub\n" );
+#endif  /* __linux__ */
+    *id = THDB_TO_THREAD_ID( thread );
     return handle;
+}
+
+
+/***********************************************************************
+ *           ExitThread   (KERNEL32.215)
+ */
+void WINAPI ExitThread( DWORD code )
+{
+    THDB *thdb = THREAD_Current();
+    LONG count;
+
+    SYSTEM_LOCK();
+    thdb->exit_code = code;
+    EVENT_Set( thdb->event );
+    /* FIXME: should free the stack somehow */
+    K32OBJ_DecCount( &thdb->header );
+    /* Completely unlock the system lock just in case */
+    count = SYSTEM_LOCK_COUNT();
+    while (count--) SYSTEM_UNLOCK();
+    _exit( 0 );
 }
 
 
@@ -211,11 +390,10 @@ HANDLE32 WINAPI GetCurrentThread(void)
 
 /***********************************************************************
  *           GetCurrentThreadId   (KERNEL32.201)
- * Returns crypted (xor'ed) pointer to THDB in Win95.
  */
 DWORD WINAPI GetCurrentThreadId(void)
 {
-    return (DWORD)THREAD_Current();
+    return THDB_TO_THREAD_ID( THREAD_Current() );
 }
 
 
@@ -234,10 +412,9 @@ DWORD WINAPI GetLastError(void)
  */
 void WINAPI SetLastError( DWORD error )
 {
-    THDB *thread;
-    if (!pCurrentThread) return;  /* FIXME */
-    thread = THREAD_Current();
-    thread->last_error = error;
+    THDB *thread = THREAD_Current();
+    /* This one must work before we have a thread (FIXME) */
+    if (thread) thread->last_error = error;
 }
 
 
@@ -354,15 +531,6 @@ BOOL32 WINAPI GetThreadContext( HANDLE32 handle, CONTEXT *context )
 
 
 /**********************************************************************
- *           NtCurrentTeb   (NTDLL.89)
- */
-void WINAPI NtCurrentTeb( CONTEXT *context )
-{
-    EAX_reg(context) = GetSelectorBase( FS_reg(context) );
-}
-
-
-/**********************************************************************
  *           GetThreadPriority   (KERNEL32.296)
  */
 INT32 WINAPI GetThreadPriority(HANDLE32 hthread)
@@ -393,9 +561,9 @@ BOOL32 WINAPI SetThreadPriority(HANDLE32 hthread,INT32 priority)
 /**********************************************************************
  *           TerminateThread   (KERNEL32)
  */
-BOOL32 WINAPI TerminateThread(DWORD threadid,DWORD exitcode)
+BOOL32 WINAPI TerminateThread(HANDLE32 handle,DWORD exitcode)
 {
-    fprintf(stdnimp,"TerminateThread(0x%08lx,%ld), STUB!\n",threadid,exitcode);
+    fprintf(stdnimp,"TerminateThread(0x%08x,%ld), STUB!\n",handle,exitcode);
     return TRUE;
 }
 
@@ -415,17 +583,17 @@ BOOL32 WINAPI GetExitCodeThread(HANDLE32 hthread,LPDWORD exitcode)
 /**********************************************************************
  *           ResumeThread   (KERNEL32)
  */
-BOOL32 WINAPI ResumeThread(DWORD threadid)
+BOOL32 WINAPI ResumeThread( HANDLE32 handle )
 {
-    fprintf(stdnimp,"ResumeThread(0x%08lx), STUB!\n",threadid);
+    fprintf(stdnimp,"ResumeThread(0x%08x), STUB!\n",handle);
     return TRUE;
 }
 
 /**********************************************************************
  *           SuspendThread   (KERNEL32)
  */
-BOOL32 WINAPI SuspendThread(DWORD threadid)
+BOOL32 WINAPI SuspendThread( HANDLE32 handle )
 {
-    fprintf(stdnimp,"SuspendThread(0x%08lx), STUB!\n",threadid);
+    fprintf(stdnimp,"SuspendThread(0x%08x), STUB!\n",handle);
     return TRUE;
 }

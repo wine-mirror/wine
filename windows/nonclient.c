@@ -13,7 +13,6 @@
 #include "heap.h"
 #include "cursoricon.h"
 #include "dialog.h"
-#include "syscolor.h"
 #include "menu.h"
 #include "winpos.h"
 #include "hook.h"
@@ -678,15 +677,15 @@ static void NC_DrawFrame( HDC32 hdc, RECT32 *rect, BOOL32 dlgFrame,
     {
 	width = SYSMETRICS_CXDLGFRAME - 1;
 	height = SYSMETRICS_CYDLGFRAME - 1;
-        SelectObject32( hdc, active ? sysColorObjects.hbrushActiveCaption :
-                                      sysColorObjects.hbrushInactiveCaption );
+        SelectObject32( hdc, GetSysColorBrush32(active ? COLOR_ACTIVECAPTION :
+						COLOR_INACTIVECAPTION) );
     }
     else
     {
 	width = SYSMETRICS_CXFRAME - 1;
 	height = SYSMETRICS_CYFRAME - 1;
-        SelectObject32( hdc, active ? sysColorObjects.hbrushActiveBorder :
-                                      sysColorObjects.hbrushInactiveBorder );
+        SelectObject32( hdc, GetSysColorBrush32(active ? COLOR_ACTIVEBORDER :
+						COLOR_INACTIVEBORDER) );
     }
 
       /* Draw frame */
@@ -783,15 +782,15 @@ static void  NC_DrawFrame95(
     {
 	width = SYSMETRICS_CXDLGFRAME - 1;
 	height = SYSMETRICS_CYDLGFRAME - 1;
-        SelectObject32( hdc, active ? sysColorObjects.hbrushActiveCaption :
-                                      sysColorObjects.hbrushInactiveCaption );
+        SelectObject32( hdc, GetSysColorBrush32(active ? COLOR_ACTIVECAPTION :
+						COLOR_INACTIVECAPTION) );
     }
     else
     {
 	width = sysMetrics[SM_CXFRAME] - sysMetrics[SM_CXEDGE] - 1;
 	height = sysMetrics[SM_CYFRAME] - sysMetrics[SM_CYEDGE] - 1;
-        SelectObject32( hdc, active ? sysColorObjects.hbrushActiveBorder :
-                                      sysColorObjects.hbrushInactiveBorder );
+        SelectObject32( hdc, GetSysColorBrush32(active ? COLOR_ACTIVEBORDER :
+						COLOR_INACTIVEBORDER) );
     }
 
     /* Draw frame */
@@ -868,7 +867,7 @@ static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
     
     if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
     {
-	HBRUSH32 hbrushOld = SelectObject32(hdc, sysColorObjects.hbrushWindow);
+        HBRUSH32 hbrushOld = SelectObject32(hdc, GetSysColorBrush32(COLOR_WINDOW) );
 	PatBlt32( hdc, r.left, r.top, 1, r.bottom-r.top+1,PATCOPY );
 	PatBlt32( hdc, r.right-1, r.top, 1, r.bottom-r.top+1, PATCOPY );
 	PatBlt32( hdc, r.left, r.top-1, r.right-r.left, 1, PATCOPY );
@@ -898,8 +897,8 @@ static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
 	r.right -= SYSMETRICS_CXSIZE + 1;
     }
 
-    FillRect32( hdc, &r, active ? sysColorObjects.hbrushActiveCaption : 
-	                          sysColorObjects.hbrushInactiveCaption );
+    FillRect32( hdc, &r, GetSysColorBrush32(active ? COLOR_ACTIVECAPTION :
+					    COLOR_INACTIVECAPTION) );
 
     if (GetWindowText32A( hwnd, buffer, sizeof(buffer) ))
     {
@@ -948,8 +947,8 @@ static void  NC_DrawCaption95(
 
     if (wndPtr->flags & WIN_MANAGED) return;
 
-    FillRect32( hdc, &r, active ? sysColorObjects.hbrushActiveCaption : 
-	                          sysColorObjects.hbrushInactiveCaption );
+    FillRect32( hdc, &r, GetSysColorBrush32(active ? COLOR_ACTIVECAPTION :
+					    COLOR_INACTIVECAPTION) );
 
     if (!hbitmapClose) {
 	if (!(hbitmapClose = LoadBitmap16( 0, MAKEINTRESOURCE(OBM_CLOSE) )))
@@ -963,7 +962,7 @@ static void  NC_DrawCaption95(
     }
     
     if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME) {
-	HBRUSH32 hbrushOld = SelectObject32(hdc, sysColorObjects.hbrushWindow);
+	HBRUSH32 hbrushOld = SelectObject32(hdc, GetSysColorBrush32(COLOR_WINDOW) );
 	PatBlt32( hdc, r.left, r.top, 1, r.bottom-r.top+1,PATCOPY );
 	PatBlt32( hdc, r.right-1, r.top, 1, r.bottom-r.top+1, PATCOPY );
 	PatBlt32( hdc, r.left, r.top-1, r.right-r.left, 1, PATCOPY );
@@ -1032,7 +1031,7 @@ void NC_DoNCPaint( WND* wndPtr, HRGN32 clip, BOOL32 suppress_menupaint )
     rect.right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-    SelectObject32( hdc, sysColorObjects.hpenWindowFrame );
+    SelectObject32( hdc, GetSysColorPen32(COLOR_WINDOWFRAME) );
 
     if (!(wndPtr->flags & WIN_MANAGED))
     {
@@ -1079,7 +1078,7 @@ void NC_DoNCPaint( WND* wndPtr, HRGN32 clip, BOOL32 suppress_menupaint )
         RECT32 r = rect;
         r.left = r.right - SYSMETRICS_CXVSCROLL + 1;
         r.top  = r.bottom - SYSMETRICS_CYHSCROLL + 1;
-        FillRect32( hdc, &r, sysColorObjects.hbrushScrollbar );
+        FillRect32( hdc, &r, GetSysColorBrush32(COLOR_SCROLLBAR) );
     }    
 
     ReleaseDC32( hwnd, hdc );
@@ -1139,7 +1138,7 @@ void  NC_DoNCPaint95(
     rect.right  = wndPtr->rectWindow.right - wndPtr->rectWindow.left;
     rect.bottom = wndPtr->rectWindow.bottom - wndPtr->rectWindow.top;
 
-    SelectObject32( hdc, sysColorObjects.hpenWindowFrame );
+    SelectObject32( hdc, GetSysColorPen32(COLOR_WINDOWFRAME) );
 
     if(!(wndPtr->flags & WIN_MANAGED)) {
         if((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) ||
@@ -1206,7 +1205,7 @@ void  NC_DoNCPaint95(
         RECT32 r = rect;
         r.left = r.right - SYSMETRICS_CXVSCROLL + 1;
         r.top  = r.bottom - SYSMETRICS_CYHSCROLL + 1;
-        FillRect32( hdc, &r, sysColorObjects.hbrushScrollbar );
+        FillRect32( hdc, &r,  GetSysColorBrush32(COLOR_SCROLLBAR) );
     }    
 
     ReleaseDC32( hwnd, hdc );

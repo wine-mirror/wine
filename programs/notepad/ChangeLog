@@ -1,3 +1,8 @@
+Tue Dec 23 23:35:04 1997  Marcel Baur <mbaur@g26.ethz.ch>
+       * Fixed lots of bugs w/ resources in *.rc
+       * moved [notepad.c] into [main.c]
+       * moved [notepad.h] into [main.h]
+       
 Fri Dec 05 20:51:55 1997  Marcel Baur <mbaur@g26.ethz.ch>
        * [notepad.c] [notepad.h] [notepad.rc] [En.rc] [De.rc]
          [license.c] [license.h] [License_En.c]

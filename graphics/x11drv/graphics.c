@@ -25,7 +25,6 @@
 #include "bitmap.h"
 #include "callback.h"
 #include "metafile.h"
-#include "syscolor.h"
 #include "stddebug.h"
 #include "palette.h"
 #include "color.h"

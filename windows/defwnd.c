@@ -13,7 +13,6 @@
 #include "nonclient.h"
 #include "winpos.h"
 #include "dce.h"
-#include "syscolor.h"
 #include "sysmetrics.h"
 #include "stddebug.h"
 #include "debug.h"
@@ -79,15 +78,16 @@ HBRUSH32 DEFWND_ControlColor( HDC32 hDC, UINT16 ctlType )
 {
     if( ctlType == CTLCOLOR_SCROLLBAR)
     {
+        HBRUSH32 hb = GetSysColorBrush32(COLOR_SCROLLBAR);
 	SetBkColor32( hDC, RGB(255, 255, 255) );
 	SetTextColor32( hDC, RGB(0, 0, 0) );
-	UnrealizeObject32( sysColorObjects.hbrushScrollbar );
-        return sysColorObjects.hbrushScrollbar;
+	UnrealizeObject32( hb );
+        return hb;
     }
 
     SetBkColor32( hDC, GetSysColor32(COLOR_WINDOW) );
     SetTextColor32( hDC, GetSysColor32(COLOR_WINDOWTEXT));
-    return sysColorObjects.hbrushWindow;
+    return GetSysColorBrush32(COLOR_WINDOW);
 }
 
 

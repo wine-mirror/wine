@@ -129,7 +129,9 @@
 #define SYSMETRICS_MIDEASTENABLED       sysMetrics[SM_MIDEASTENABLED]       /* 74 */
 #define SYSMETRICS_MOUSEWHEELPRESENT    sysMetrics[SM_MOUSEWHEELPRESENT]    /* 75 */
 
-extern void SYSMETRICS_Init(void);
+extern void SYSMETRICS_Init(void);  /* sysmetrics.c */
 extern short sysMetrics[SM_CMETRICS+1];
+
+extern void SYSCOLOR_Init(void);  /* syscolor.c */
 
 #endif  /* __WINE_SYSMETRICS_H */

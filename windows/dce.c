@@ -774,11 +774,12 @@ HDC32 WINAPI GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
             WND*    wnd = wndPtr->parent->child;
 	    RECT32  rect;
 	
-	    for( ; wnd != wndPtr; wnd = wnd->next )
+	    for( ; wnd && (wnd != wndPtr); wnd = wnd->next ) {
 		if( wnd->class->style & CS_SAVEBITS && 
 		    wnd->dwStyle & WS_VISIBLE &&
 		    IntersectRect32(&rect, &wndPtr->rectClient, &wnd->rectClient) )
                     wnd->flags |= WIN_SAVEUNDER_OVERRIDE;
+	    }
 	}
 	dc->w.flags &= ~DC_DIRTY;
 	dce->DCXflags &= ~DCX_DCEDIRTY;

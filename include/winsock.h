@@ -176,7 +176,7 @@ DECL_WINELIB_TYPE(SOCKET);
 #define WS_SOCK_RDM        4               /* reliably-delivered message */
 #define WS_SOCK_SEQPACKET  5               /* sequenced packet stream */
 
-#define WS_SOL_SOCKET		(-1)
+#define WS_SOL_SOCKET		0xffff
 #define WS_IPPROTO_TCP		6
 
 /*

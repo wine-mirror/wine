@@ -666,8 +666,8 @@ static void EVENT_ButtonPress( WND *pWnd, XButtonEvent *event )
 
     if (buttonNum >= NB_BUTTONS) return;
     if (SwappedButtons) buttonNum = NB_BUTTONS - 1 - buttonNum;
-    MouseButtonsStates[buttonNum] = 0x8000;
-    AsyncMouseButtonsStates[buttonNum] = 0x8000;
+    MouseButtonsStates[buttonNum] = TRUE;
+    AsyncMouseButtonsStates[buttonNum] = TRUE;
     hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
                     pWnd->rectWindow.left + event->x,
@@ -687,7 +687,7 @@ static void EVENT_ButtonRelease( WND *pWnd, XButtonEvent *event )
 
     if (buttonNum >= NB_BUTTONS) return;    
     if (SwappedButtons) buttonNum = NB_BUTTONS - 1 - buttonNum;
-    MouseButtonsStates[buttonNum] = 0;
+    MouseButtonsStates[buttonNum] = FALSE;
     hardware_event( messages[buttonNum],
 		    EVENT_XStateToKeyState( event->state ), 0L,
                     pWnd->rectWindow.left + event->x,

@@ -25,6 +25,21 @@ PDB32 *pCurrentProcess = NULL;
 
 #define BOOT_HTABLE_SIZE  10
 
+static BOOL32 PROCESS_Signaled( K32OBJ *obj, DWORD thread_id );
+static void PROCESS_Satisfied( K32OBJ *obj, DWORD thread_id );
+static void PROCESS_AddWait( K32OBJ *obj, DWORD thread_id );
+static void PROCESS_RemoveWait( K32OBJ *obj, DWORD thread_id );
+static void PROCESS_Destroy( K32OBJ *obj );
+
+const K32OBJ_OPS PROCESS_Ops =
+{
+    PROCESS_Signaled,    /* signaled */
+    PROCESS_Satisfied,   /* satisfied */
+    PROCESS_AddWait,     /* add_wait */
+    PROCESS_RemoveWait,  /* remove_wait */
+    PROCESS_Destroy      /* destroy */
+};
+
 static HANDLE_ENTRY boot_handles[BOOT_HTABLE_SIZE];
 
 /***********************************************************************
@@ -46,14 +61,20 @@ static HANDLE_TABLE *PROCESS_AllocHandleTable( PDB32 *process )
  */
 static BOOL32 PROCESS_GrowHandleTable( PDB32 *process )
 {
-    HANDLE_TABLE *table = process->handle_table;
-    table = HeapReAlloc( process->system_heap, HEAP_ZERO_MEMORY, table,
+    HANDLE_TABLE *table;
+    SYSTEM_LOCK();
+    table = process->handle_table;
+    table = HeapReAlloc( process->system_heap,
+                         HEAP_ZERO_MEMORY | HEAP_NO_SERIALIZE, table,
                          sizeof(HANDLE_TABLE) +
                          (table->count+HTABLE_INC-1) * sizeof(HANDLE_ENTRY) );
-    if (!table) return FALSE;
-    table->count += HTABLE_INC;
-    process->handle_table = table;
-    return TRUE;
+    if (table)
+    {
+        table->count += HTABLE_INC;
+        process->handle_table = table;
+    }
+    SYSTEM_UNLOCK();
+    return (table != NULL);
 }
 
 
@@ -65,12 +86,14 @@ static BOOL32 PROCESS_GrowHandleTable( PDB32 *process )
 static HANDLE32 PROCESS_AllocBootHandle( K32OBJ *ptr, DWORD flags )
 {
     HANDLE32 h;
+    SYSTEM_LOCK();
     for (h = 0; h < BOOT_HTABLE_SIZE; h++)
         if (!boot_handles[h].ptr) break;
     assert( h < BOOT_HTABLE_SIZE );
     K32OBJ_IncCount( ptr );
     boot_handles[h].flags = flags;
     boot_handles[h].ptr   = ptr;
+    SYSTEM_UNLOCK();
     return h + 1;  /* Avoid handle 0 */
 }
 
@@ -82,12 +105,16 @@ static HANDLE32 PROCESS_AllocBootHandle( K32OBJ *ptr, DWORD flags )
  */
 static BOOL32 PROCESS_CloseBootHandle( HANDLE32 handle )
 {
+    K32OBJ *ptr;
     HANDLE_ENTRY *entry = &boot_handles[handle - 1];
     assert( (handle > 0) && (handle <= BOOT_HTABLE_SIZE) );
+    SYSTEM_LOCK();
     assert( entry->ptr );
-    K32OBJ_DecCount( entry->ptr );
+    ptr = entry->ptr;
     entry->flags = 0;
     entry->ptr   = NULL;
+    K32OBJ_DecCount( ptr );
+    SYSTEM_UNLOCK();
     return TRUE;
 }
 
@@ -102,9 +129,11 @@ static K32OBJ *PROCESS_GetBootObjPtr( HANDLE32 handle, K32OBJ_TYPE type )
     K32OBJ *ptr;
 
     assert( (handle > 0) && (handle <= BOOT_HTABLE_SIZE) );
+    SYSTEM_LOCK();
     ptr = boot_handles[handle - 1].ptr;
     assert (ptr && (ptr->type == type));
     K32OBJ_IncCount( ptr );
+    SYSTEM_UNLOCK();
     return ptr;
 }
 
@@ -119,10 +148,13 @@ static BOOL32 PROCESS_SetBootObjPtr( HANDLE32 handle, K32OBJ *ptr, DWORD flags)
     K32OBJ *old_ptr;
 
     assert( (handle > 0) && (handle <= BOOT_HTABLE_SIZE) );
+    SYSTEM_LOCK();
     K32OBJ_IncCount( ptr );
-    if ((old_ptr = boot_handles[handle - 1].ptr)) K32OBJ_DecCount( old_ptr );
+    old_ptr = boot_handles[handle - 1].ptr;
     boot_handles[handle - 1].flags = flags;
     boot_handles[handle - 1].ptr   = ptr;
+    if (old_ptr) K32OBJ_DecCount( old_ptr );
+    SYSTEM_UNLOCK();
     return TRUE;
 }
 
@@ -139,7 +171,7 @@ HANDLE32 PROCESS_AllocHandle( K32OBJ *ptr, DWORD flags )
 
     assert( ptr );
     if (!pCurrentProcess) return PROCESS_AllocBootHandle( ptr, flags );
-    EnterCriticalSection( &pCurrentProcess->crit_section );
+    SYSTEM_LOCK();
     K32OBJ_IncCount( ptr );
     entry = pCurrentProcess->handle_table->entries;
     for (h = 0; h < pCurrentProcess->handle_table->count; h++, entry++)
@@ -150,12 +182,12 @@ HANDLE32 PROCESS_AllocHandle( K32OBJ *ptr, DWORD flags )
         entry = &pCurrentProcess->handle_table->entries[h];
         entry->flags = flags;
         entry->ptr   = ptr;
-        LeaveCriticalSection( &pCurrentProcess->crit_section );
+        SYSTEM_UNLOCK();
         return h + 1;  /* Avoid handle 0 */
     }
-    LeaveCriticalSection( &pCurrentProcess->crit_section );
-    SetLastError( ERROR_OUTOFMEMORY );
     K32OBJ_DecCount( ptr );
+    SYSTEM_UNLOCK();
+    SetLastError( ERROR_OUTOFMEMORY );
     return INVALID_HANDLE_VALUE32;
 }
 
@@ -170,7 +202,7 @@ K32OBJ *PROCESS_GetObjPtr( HANDLE32 handle, K32OBJ_TYPE type )
 {
     K32OBJ *ptr = NULL;
     if (!pCurrentProcess) return PROCESS_GetBootObjPtr( handle, type );
-    EnterCriticalSection( &pCurrentProcess->crit_section );
+    SYSTEM_LOCK();
 
     if ((handle > 0) && (handle <= pCurrentProcess->handle_table->count))
         ptr = pCurrentProcess->handle_table->entries[handle - 1].ptr;
@@ -180,7 +212,7 @@ K32OBJ *PROCESS_GetObjPtr( HANDLE32 handle, K32OBJ_TYPE type )
         K32OBJ_IncCount( ptr );
     else ptr = NULL;
 
-    LeaveCriticalSection( &pCurrentProcess->crit_section );
+    SYSTEM_UNLOCK();
     if (!ptr) SetLastError( ERROR_INVALID_HANDLE );
     return ptr;
 }
@@ -198,7 +230,7 @@ BOOL32 PROCESS_SetObjPtr( HANDLE32 handle, K32OBJ *ptr, DWORD flags )
     K32OBJ *old_ptr = NULL;
 
     if (!pCurrentProcess) return PROCESS_SetBootObjPtr( handle, ptr, flags );
-    EnterCriticalSection( &pCurrentProcess->crit_section );
+    SYSTEM_LOCK();
     if ((handle > 0) && (handle <= pCurrentProcess->handle_table->count))
     {
         HANDLE_ENTRY*entry = &pCurrentProcess->handle_table->entries[handle-1];
@@ -212,8 +244,8 @@ BOOL32 PROCESS_SetObjPtr( HANDLE32 handle, K32OBJ *ptr, DWORD flags )
         SetLastError( ERROR_INVALID_HANDLE );
         ret = FALSE;
     }
-    LeaveCriticalSection( &pCurrentProcess->crit_section );
     if (old_ptr) K32OBJ_DecCount( old_ptr );
+    SYSTEM_UNLOCK();
     return ret;
 }
 
@@ -227,7 +259,7 @@ BOOL32 WINAPI CloseHandle( HANDLE32 handle )
     K32OBJ *ptr = NULL;
 
     if (!pCurrentProcess) return PROCESS_CloseBootHandle( handle );
-    EnterCriticalSection( &pCurrentProcess->crit_section );
+    SYSTEM_LOCK();
     if ((handle > 0) && (handle <= pCurrentProcess->handle_table->count))
     {
         HANDLE_ENTRY*entry = &pCurrentProcess->handle_table->entries[handle-1];
@@ -238,9 +270,9 @@ BOOL32 WINAPI CloseHandle( HANDLE32 handle )
             ret = TRUE;
         }
     }
-    LeaveCriticalSection( &pCurrentProcess->crit_section );
-    if (!ret) SetLastError( ERROR_INVALID_HANDLE );
     if (ptr) K32OBJ_DecCount( ptr );
+    SYSTEM_UNLOCK();
+    if (!ret) SetLastError( ERROR_INVALID_HANDLE );
     return ret;
 }
 
@@ -323,9 +355,13 @@ PDB32 *PROCESS_Create( TDB *pTask, LPCSTR cmd_line )
     pdb->parent          = pCurrentProcess;
     pdb->group           = pdb;
     pdb->priority        = 8;  /* Normal */
-    pdb->heap_list       = pdb->heap;
 
     InitializeCriticalSection( &pdb->crit_section );
+
+    /* Allocate the events */
+
+    if (!(pdb->event = EVENT_Create( TRUE, FALSE ))) goto error;
+    if (!(pdb->load_done_evt = EVENT_Create( TRUE, FALSE ))) goto error;
 
     /* Create the heap */
 
@@ -340,6 +376,7 @@ PDB32 *PROCESS_Create( TDB *pTask, LPCSTR cmd_line )
 	commit = 0;
     }
     if (!(pdb->heap = HeapCreate( HEAP_GROWABLE, size, commit ))) goto error;
+    pdb->heap_list = pdb->heap;
 
     if (!(pdb->env_db = HeapAlloc(pdb->heap, HEAP_ZERO_MEMORY, sizeof(ENVDB))))
         goto error;
@@ -351,6 +388,8 @@ error:
     if (pdb->env_db) HeapFree( pdb->heap, 0, pdb->env_db );
     if (pdb->handle_table) HeapFree( pdb->system_heap, 0, pdb->handle_table );
     if (pdb->heap) HeapDestroy( pdb->heap );
+    if (pdb->load_done_evt) K32OBJ_DecCount( pdb->load_done_evt );
+    if (pdb->event) K32OBJ_DecCount( pdb->event );
     DeleteCriticalSection( &pdb->crit_section );
     HeapFree( SystemHeap, 0, pdb );
     return NULL;
@@ -358,9 +397,59 @@ error:
 
 
 /***********************************************************************
+ *           PROCESS_Signaled
+ */
+static BOOL32 PROCESS_Signaled( K32OBJ *obj, DWORD thread_id )
+{
+    PDB32 *pdb = (PDB32 *)obj;
+    assert( obj->type == K32OBJ_PROCESS );
+    return K32OBJ_OPS( pdb->event )->signaled( pdb->event, thread_id );
+}
+
+
+/***********************************************************************
+ *           PROCESS_Satisfied
+ *
+ * Wait on this object has been satisfied.
+ */
+static void PROCESS_Satisfied( K32OBJ *obj, DWORD thread_id )
+{
+    PDB32 *pdb = (PDB32 *)obj;
+    assert( obj->type == K32OBJ_PROCESS );
+    return K32OBJ_OPS( pdb->event )->satisfied( pdb->event, thread_id );
+}
+
+
+/***********************************************************************
+ *           PROCESS_AddWait
+ *
+ * Add thread to object wait queue.
+ */
+static void PROCESS_AddWait( K32OBJ *obj, DWORD thread_id )
+{
+    PDB32 *pdb = (PDB32 *)obj;
+    assert( obj->type == K32OBJ_PROCESS );
+    return K32OBJ_OPS( pdb->event )->add_wait( pdb->event, thread_id );
+}
+
+
+/***********************************************************************
+ *           PROCESS_RemoveWait
+ *
+ * Remove thread from object wait queue.
+ */
+static void PROCESS_RemoveWait( K32OBJ *obj, DWORD thread_id )
+{
+    PDB32 *pdb = (PDB32 *)obj;
+    assert( obj->type == K32OBJ_PROCESS );
+    return K32OBJ_OPS( pdb->event )->remove_wait( pdb->event, thread_id );
+}
+
+
+/***********************************************************************
  *           PROCESS_Destroy
  */
-void PROCESS_Destroy( K32OBJ *ptr )
+static void PROCESS_Destroy( K32OBJ *ptr )
 {
     PDB32 *pdb = (PDB32 *)ptr;
     HANDLE32 handle;
@@ -376,6 +465,8 @@ void PROCESS_Destroy( K32OBJ *ptr )
     HeapFree( pdb->heap, 0, pdb->env_db );
     HeapFree( pdb->system_heap, 0, pdb->handle_table );
     HeapDestroy( pdb->heap );
+    K32OBJ_DecCount( pdb->load_done_evt );
+    K32OBJ_DecCount( pdb->event );
     DeleteCriticalSection( &pdb->crit_section );
     HeapFree( SystemHeap, 0, pdb );
 }
@@ -387,6 +478,9 @@ void PROCESS_Destroy( K32OBJ *ptr )
 void WINAPI ExitProcess( DWORD status )
 {
     __RESTORE_ES;  /* Necessary for Pietrek's showseh example program */
+    /* FIXME: should kill all running threads of this process */
+    pCurrentProcess->exit_code = status;
+    EVENT_Set( pCurrentProcess->event );
     TASK_KillCurrentTask( status );
 }
 
@@ -401,26 +495,26 @@ HANDLE32 WINAPI GetCurrentProcess(void)
 
 
 /*********************************************************************
- *	OpenProcess				[KERNEL32.543]
- *
+ *           OpenProcess   (KERNEL32.543)
  */
-HANDLE32 WINAPI OpenProcess32(DWORD fdwAccess,BOOL32 bInherit,DWORD IDProcess)
+HANDLE32 WINAPI OpenProcess( DWORD access, BOOL32 inherit, DWORD id )
 {
-	if (IDProcess != (DWORD)pCurrentProcess) {
-		fprintf(stderr,"OpenProcess32(%ld,%d,%ld)\n",fdwAccess,bInherit,IDProcess);
-		/* XXX: might not be the correct error value */
-		SetLastError( ERROR_INVALID_HANDLE );
-		return 0;
-	}
-	return GetCurrentProcess();
+    PDB32 *pdb = PROCESS_ID_TO_PDB(id);
+    if (!K32OBJ_IsValid( &pdb->header, K32OBJ_PROCESS ))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return 0;
+    }
+    return PROCESS_AllocHandle( &pdb->header, 0 );
 }			      
+
 
 /***********************************************************************
  *           GetCurrentProcessId   (KERNEL32.199)
  */
 DWORD WINAPI GetCurrentProcessId(void)
 {
-    return (DWORD)pCurrentProcess;
+    return PDB_TO_PROCESS_ID(pCurrentProcess);
 }
 
 
@@ -859,20 +953,25 @@ BOOL32 WINAPI SetStdHandle( DWORD std_handle, HANDLE32 handle )
 /***********************************************************************
  *           GetProcessVersion    (KERNEL32)
  */
-DWORD WINAPI GetProcessVersion(DWORD processid)
+DWORD WINAPI GetProcessVersion( DWORD processid )
 {
-	PDB32	*process;
-	TDB	*pTask;
+    PDB32 *process;
+    TDB *pTask;
 
-	if (!processid) {
-		process=pCurrentProcess;
-		/* check if valid process */
-	} else
-		process=(PDB32*)pCurrentProcess; /* decrypt too, if needed */
-	pTask = (TDB*)GlobalLock16(process->task);
-	if (!pTask)
-		return 0;
-	return (pTask->version&0xff) | (((pTask->version >>8) & 0xff)<<16);
+    if (!processid) process = pCurrentProcess;
+    else
+    {
+        process = PROCESS_ID_TO_PDB(processid);
+        if (!K32OBJ_IsValid( &process->header, K32OBJ_PROCESS ))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+    }
+    pTask = (TDB*)GlobalLock16(process->task);
+    if (!pTask)
+        return 0;
+    return (pTask->version&0xff) | (((pTask->version >>8) & 0xff)<<16);
 }
 
 /***********************************************************************
@@ -880,14 +979,19 @@ DWORD WINAPI GetProcessVersion(DWORD processid)
  */
 DWORD WINAPI GetProcessFlags(DWORD processid)
 {
-	PDB32	*process;
+    PDB32 *process;
 
-	if (!processid) {
-		process=pCurrentProcess;
-		/* check if valid process */
-	} else
-		process=(PDB32*)pCurrentProcess; /* decrypt too, if needed */
-	return process->flags;
+    if (!processid) process = pCurrentProcess;
+    else
+    {
+        process = PROCESS_ID_TO_PDB(processid);
+        if (!K32OBJ_IsValid( &process->header, K32OBJ_PROCESS ))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+    }
+    return process->flags;
 }
 
 /***********************************************************************
@@ -950,4 +1054,16 @@ HANDLE32 WINAPI ConvertToGlobalHandle(HANDLE32 h)
 {
 	fprintf(stderr,"ConvertToGlobalHandle(%d),stub!\n",h);
 	return h;
+}
+
+/***********************************************************************
+ *           RegisterServiceProcess             (KERNEL32)
+ *
+ * A service process calls this function to ensure that it continues to run
+ * even after a user logged off.
+ */
+DWORD RegisterServiceProcess(DWORD dwProcessId, DWORD dwType)
+{
+	/* I don't think that Wine needs to do anything in that function */
+	return 1; /* success */
 }

@@ -38,6 +38,18 @@
 #define MAP_ANON MAP_ANONYMOUS
 #endif
 
+static void FILE_Destroy( K32OBJ *obj );
+
+const K32OBJ_OPS FILE_Ops =
+{
+    /* Object cannot be waited upon (FIXME: for now) */
+    NULL,              /* signaled */
+    NULL,              /* satisfied */
+    NULL,              /* add_wait */
+    NULL,              /* remove_wait */
+    FILE_Destroy       /* destroy */
+};
+
 struct DOS_FILE_LOCK {
   struct DOS_FILE_LOCK *	next;
   DWORD				base;
@@ -73,6 +85,7 @@ static HFILE32 FILE_Alloc( FILE_OBJECT **file )
     (*file)->type = FILE_TYPE_DISK;
 
     handle = PROCESS_AllocHandle( &(*file)->header, 0 );
+    /* If the allocation failed, the object is already destroyed */
     if (handle == INVALID_HANDLE_VALUE32) *file = NULL;
     return handle;
 }
@@ -83,7 +96,7 @@ static HFILE32 FILE_Alloc( FILE_OBJECT **file )
  *
  * Destroy a DOS file.
  */
-void FILE_Destroy( K32OBJ *ptr )
+static void FILE_Destroy( K32OBJ *ptr )
 {
     FILE_OBJECT *file = (FILE_OBJECT *)ptr;
     assert( ptr->type == K32OBJ_FILE );
@@ -542,17 +555,12 @@ UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
     }
 
     if (drive & TF_FORCEDRIVE)
-    {
-        sprintf( temppath, "%c:\\", drive & ~TF_FORCEDRIVE );
-	lstrcpyn32A( temppath + 3,
-                     DRIVE_GetDosCwd( toupper(drive & ~TF_FORCEDRIVE) - 'A'),
-                     129 );
-    }
+        sprintf(temppath,"%c:", drive & ~TF_FORCEDRIVE );
     else
     {
         GetTempPath32A( 132, temppath );
+        strcat( temppath, "\\" );
     }
-    strcat( temppath, "\\" );
     return (UINT16)GetTempFileName32A( temppath, prefix, unique, buffer );
 }
 
@@ -572,8 +580,11 @@ UINT32 WINAPI GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
 
     strcpy( buffer, path );
     p = buffer + strlen(buffer);
-    /* add a \, if there isn't one ... */
-    if ((p == buffer) || (p[-1] != '\\')) *p++ = '\\';
+
+    /* add a \, if there isn't one and path is more than just the drive letter ... */
+    if ( !((strlen(buffer) == 2) && (buffer[1] == ':')) 
+	&& ((p == buffer) || (p[-1] != '\\'))) *p++ = '\\';
+
     *p++ = '~';
     for (i = 3; (i > 0) && (*prefix); i--) *p++ = *prefix++;
     sprintf( p, "%04x.tmp", num );

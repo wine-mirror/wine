@@ -83,7 +83,7 @@ BOOL32 WINAPI SHELL32_29(LPCSTR x) {
  *	 		 SHELL32_30   			[SHELL32.30]
  * get_rootdir(char*path,int drive)
  */
-DWORD WINAPI SHELL32_30(LPSTR root,BYTE drive) {
+LPSTR WINAPI SHELL32_30(LPSTR root,BYTE drive) {
 	strcpy(root,"A:\\");
 	root[0]+=drive;
 	return root;

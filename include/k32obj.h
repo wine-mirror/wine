@@ -1,11 +1,11 @@
 /*
  * KERNEL32 objects
  *
- * Copyright 1996 Alexandre Julliard
+ * Copyright 1996, 1998 Alexandre Julliard
  */
 
-#ifndef __WINE_HANDLE32_H
-#define __WINE_HANDLE32_H
+#ifndef __WINE_K32OBJ_H
+#define __WINE_K32OBJ_H
 
 #include "wintypes.h"
 
@@ -37,32 +37,30 @@ typedef enum
 typedef struct
 {
     K32OBJ_TYPE   type;
-    DWORD         refcount;
+    LONG          refcount;
 } K32OBJ;
 
-/* Kernel object list entry */
-typedef struct _K32OBJ_ENTRY
-{
-    K32OBJ               *obj;
-    struct _K32OBJ_ENTRY *next;
-    struct _K32OBJ_ENTRY *prev;
-} K32OBJ_ENTRY;
-
-/* Kernel object list */
+/* Kernel object operations */
 typedef struct
 {
-    K32OBJ_ENTRY *head;
-    K32OBJ_ENTRY *tail;
-} K32OBJ_LIST;
+    BOOL32 (*signaled)(K32OBJ*,DWORD);    /* Is object signaled? */
+    void   (*satisfied)(K32OBJ*,DWORD);   /* Wait on object is satisfied */
+    void   (*add_wait)(K32OBJ*,DWORD);    /* Add thread to wait queue */
+    void   (*remove_wait)(K32OBJ*,DWORD); /* Remove thread from wait queue */
+    void   (*destroy)(K32OBJ *);          /* Destroy object on refcount==0 */
+} K32OBJ_OPS;
+
+extern const K32OBJ_OPS * const K32OBJ_Ops[K32OBJ_NBOBJECTS];
+
+#define K32OBJ_OPS(obj) (K32OBJ_Ops[(obj)->type])
 
 extern void K32OBJ_IncCount( K32OBJ *ptr );
 extern void K32OBJ_DecCount( K32OBJ *ptr );
-extern void K32OBJ_AddHead( K32OBJ_LIST *list, K32OBJ *ptr );
-extern void K32OBJ_AddTail( K32OBJ_LIST *list, K32OBJ *ptr );
-extern void K32OBJ_Remove( K32OBJ_LIST *list, K32OBJ *ptr );
-extern K32OBJ *K32OBJ_RemoveHead( K32OBJ_LIST *list );
+extern BOOL32 K32OBJ_IsValid( K32OBJ *ptr, K32OBJ_TYPE type );
 extern BOOL32 K32OBJ_AddName( K32OBJ *obj, LPCSTR name );
+extern K32OBJ *K32OBJ_Create( K32OBJ_TYPE type, DWORD size, LPCSTR name,
+                              HANDLE32 *handle );
 extern K32OBJ *K32OBJ_FindName( LPCSTR name );
 extern K32OBJ *K32OBJ_FindNameType( LPCSTR name, K32OBJ_TYPE type );
 
-#endif /* __WINE_HANDLE32_H */
+#endif /* __WINE_K32OBJ_H */

@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include "brush.h"
 #include "bitmap.h"
-#include "syscolor.h"
 #include "metafile.h"
 #include "color.h"
 #include "stddebug.h"
@@ -243,80 +242,6 @@ BOOL32 WINAPI SetBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
 BOOL32 WINAPI FixBrushOrgEx( HDC32 hdc, INT32 x, INT32 y, LPPOINT32 oldorg )
 {
     return SetBrushOrgEx(hdc,x,y,oldorg);
-}
-
-
-/***********************************************************************
- *           GetSysColorBrush16    (USER.281)
- */
-HBRUSH16 WINAPI GetSysColorBrush16( INT16 index )
-{
-    return (HBRUSH16)GetSysColorBrush32(index);
-}
-
-
-/***********************************************************************
- *           GetSysColorBrush32    (USER32.289)
- */
-HBRUSH32 WINAPI GetSysColorBrush32( INT32 index )
-{
-  switch(index){
-  case COLOR_SCROLLBAR:
-    return sysColorObjects.hbrushScrollbar;
-  case COLOR_BACKGROUND: 
-    return sysColorObjects.hbrushBackground; 
-  case COLOR_ACTIVECAPTION:
-    return sysColorObjects.hbrushActiveCaption;
-  case COLOR_INACTIVECAPTION:
-    return sysColorObjects.hbrushInactiveCaption;
-  case COLOR_MENU:
-    return sysColorObjects.hbrushMenu;
-  case COLOR_WINDOW:
-    return sysColorObjects.hbrushWindow;
-  case COLOR_WINDOWFRAME:
-    return sysColorObjects.hbrushWindowFrame;
-  case COLOR_MENUTEXT:
-    return sysColorObjects.hbrushMenuText;
-  case COLOR_WINDOWTEXT:
-    return sysColorObjects.hbrushWindowText;
-  case COLOR_CAPTIONTEXT:
-    return sysColorObjects.hbrushCaptionText;
-  case COLOR_ACTIVEBORDER:
-    return sysColorObjects.hbrushActiveBorder;
-  case COLOR_INACTIVEBORDER:
-    return sysColorObjects.hbrushInactiveBorder;
-  case COLOR_APPWORKSPACE:
-    return sysColorObjects.hbrushAppWorkspace; 
-  case COLOR_HIGHLIGHT:
-    return sysColorObjects.hbrushHighlight;
-  case COLOR_HIGHLIGHTTEXT:
-    return sysColorObjects.hbrushHighlightText;
-  case COLOR_BTNFACE: /* same as COLOR_3DFACE */
-    return sysColorObjects.hbrushBtnFace;
-  case COLOR_BTNSHADOW: /* same as COLOR_3DSHADOW */
-    return sysColorObjects.hbrushBtnShadow;
-  case COLOR_GRAYTEXT:
-    return sysColorObjects.hbrushGrayText;
-  case COLOR_BTNTEXT:
-    return sysColorObjects.hbrushBtnText;
-  case COLOR_INACTIVECAPTIONTEXT:
-    return sysColorObjects.hbrushInactiveCaptionText;
-  case COLOR_BTNHIGHLIGHT: /* same as COLOR_(3DHIGH|3DHI|BTNHI)LIGHT */
-    return sysColorObjects.hbrushBtnHighlight;
-  case COLOR_3DDKSHADOW:
-    return sysColorObjects.hbrush3DDkShadow;
-  case COLOR_3DLIGHT:
-    return sysColorObjects.hbrush3DLight;
-  case COLOR_INFOTEXT:
-    return sysColorObjects.hbrushInfoText;
-  case COLOR_INFOBK:
-    return sysColorObjects.hbrushInfoBk;
-  default:
-    fprintf( stderr, "GetSysColorBrush32: Unknown index(%d)\n", index );
-  }
-
-  return GetStockObject32(LTGRAY_BRUSH);
-
 }
 
 

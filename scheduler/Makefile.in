@@ -6,7 +6,13 @@ VPATH     = @srcdir@
 MODULE    = scheduler
 
 C_SRCS = \
+	critsection.c \
+	event.c \
+	k32obj.c \
+	mutex.c \
 	process.c \
+	semaphore.c \
+	synchro.c \
 	thread.c
 
 all: $(MODULE).o

@@ -623,9 +623,16 @@ BOOL32 WINAPI GetDiskFreeSpace32A( LPCSTR root, LPDWORD cluster_sectors,
     if (size > 0x7fffffff) size = 0x7fffffff;
     if (available > 0x7fffffff) available = 0x7fffffff;
 
-    *sector_bytes    = 512;
-    size            /= 512;
-    available       /= 512;
+    if (DRIVE_GetType(drive)==TYPE_CDROM) {
+	*sector_bytes    = 2048;
+	size            /= 2048;
+	available       /= 2048;
+    } else {
+	*sector_bytes    = 512;
+	size            /= 512;
+	available       /= 512;
+    }
+    /* fixme: probably have to adjust those variables too for CDFS */
     *cluster_sectors = 1;
     while (*cluster_sectors * 65530 < size) *cluster_sectors *= 2;
     *free_clusters   = available/ *cluster_sectors;
@@ -921,7 +928,7 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
     if (!root) drive = DRIVE_GetCurrentDrive();
     else
     {
-        if ((root[1]) &&((root[1] != ':') || (root[2] != '\\')))
+        if ((root[1]) && (root[1] != ':'))
         {
             fprintf( stderr, "GetVolumeInformation: invalid root '%s'\n",root);
             return FALSE;
@@ -937,7 +944,13 @@ BOOL32 WINAPI GetVolumeInformation32A( LPCSTR root, LPSTR label,
 
     if (filename_len) *filename_len = 12;
     if (flags) *flags = 0;
-    if (fsname) lstrcpyn32A( fsname, "FAT16", fsname_len );
+    if (fsname) {
+    	/* Diablo checks that return code ... */
+    	if (DRIVE_GetType(drive)==TYPE_CDROM)
+	    lstrcpyn32A( fsname, "CDFS", fsname_len );
+	else
+	    lstrcpyn32A( fsname, "FAT16", fsname_len );
+    }
     return TRUE;
 }
 

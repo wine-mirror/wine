@@ -166,8 +166,8 @@ static BOOL32 UITOOLS_DrawDiagEdge(HDC32 hdc, LPRECT32 rc, UINT32 uType, UINT32 
         }
     }
 
-    if(InnerI != -1) InnerPen = CreatePen32(PS_SOLID, 0, GetSysColor32((int)InnerI));
-    if(OuterI != -1) OuterPen = CreatePen32(PS_SOLID, 0, GetSysColor32((int)OuterI));
+    if(InnerI != -1) InnerPen = GetSysColorPen32(InnerI);
+    if(OuterI != -1) OuterPen = GetSysColorPen32(OuterI);
 
     MoveToEx32(hdc, 0, 0, &SavePoint);
 
@@ -315,17 +315,16 @@ static BOOL32 UITOOLS_DrawDiagEdge(HDC32 hdc, LPRECT32 rc, UINT32 uType, UINT32 
     if((uFlags & BF_MIDDLE) && retval)
     {
         HBRUSH32 hbsave;
-        HBRUSH32 hb = uFlags & BF_MONO ? GetSysColorBrush32(COLOR_WINDOW)
-                                       : GetSysColorBrush32(COLOR_BTNFACE);
+        HBRUSH32 hb = GetSysColorBrush32(uFlags & BF_MONO ? COLOR_WINDOW
+					 :COLOR_BTNFACE);
         HPEN32 hpsave;
-        HPEN32 hp = CreatePen32(PS_SOLID, 0, uFlags & BF_MONO ? GetSysColor32(COLOR_WINDOW)
-                                                              : GetSysColor32(COLOR_BTNFACE));
+        HPEN32 hp = GetSysColorPen32(uFlags & BF_MONO ? COLOR_WINDOW
+				     : COLOR_BTNFACE);
         hbsave = (HBRUSH32)SelectObject32(hdc, hb);
         hpsave = (HPEN32)SelectObject32(hdc, hp);
         Polygon32(hdc, Points, 4);
         SelectObject32(hdc, hbsave);
         SelectObject32(hdc, hpsave);
-        DeleteObject32(hp);
     }
 
     /* Adjust rectangle if asked */
@@ -339,8 +338,6 @@ static BOOL32 UITOOLS_DrawDiagEdge(HDC32 hdc, LPRECT32 rc, UINT32 uType, UINT32 
 
     /* Cleanup */
     SelectObject32(hdc, SavePen);
-    if(InnerI != -1) DeleteObject32(InnerPen);
-    if(OuterI != -1) DeleteObject32(OuterPen);
     MoveToEx32(hdc, SavePoint.x, SavePoint.y, NULL);
 
     return retval;
@@ -479,15 +476,15 @@ static BOOL32 UITOOLS_DrawRectEdge(HDC32 hdc, LPRECT32 rc, UINT32 uType, UINT32 
     if((uFlags & BF_BOTTOMRIGHT) == BF_BOTTOMRIGHT) RBpenplus = 1;
     if((uFlags & BF_TOPLEFT) == BF_TOPLEFT)         LTpenplus = 1;
 
-    if(LTInnerI != -1) LTInnerPen = CreatePen32(PS_SOLID, 0, GetSysColor32((int)LTInnerI));
-    if(LTOuterI != -1) LTOuterPen = CreatePen32(PS_SOLID, 0, GetSysColor32((int)LTOuterI));
-    if(RBInnerI != -1) RBInnerPen = CreatePen32(PS_SOLID, 0, GetSysColor32((int)RBInnerI));
-    if(RBOuterI != -1) RBOuterPen = CreatePen32(PS_SOLID, 0, GetSysColor32((int)RBOuterI));
+    if(LTInnerI != -1) LTInnerPen = GetSysColorPen32(LTInnerI);
+    if(LTOuterI != -1) LTOuterPen = GetSysColorPen32(LTOuterI);
+    if(RBInnerI != -1) RBInnerPen = GetSysColorPen32(RBInnerI);
+    if(RBOuterI != -1) RBOuterPen = GetSysColorPen32(RBOuterI);
 
     if((uFlags & BF_MIDDLE) && retval)
     {
-        FillRect32(hdc, &InnerRect, (uFlags & BF_MONO) ? GetSysColorBrush32(COLOR_WINDOW)
-                                                       : GetSysColorBrush32(COLOR_BTNFACE));
+        FillRect32(hdc, &InnerRect, GetSysColorBrush32(uFlags & BF_MONO ? 
+					    COLOR_WINDOW : COLOR_BTNFACE));
     }
 
     MoveToEx32(hdc, 0, 0, &SavePoint);
@@ -553,10 +550,6 @@ static BOOL32 UITOOLS_DrawRectEdge(HDC32 hdc, LPRECT32 rc, UINT32 uType, UINT32 
 
     /* Cleanup */
     SelectObject32(hdc, SavePen);
-    if(LTInnerI != -1) DeleteObject32(LTInnerPen);
-    if(LTOuterI != -1) DeleteObject32(LTOuterPen);
-    if(RBInnerI != -1) DeleteObject32(RBInnerPen);
-    if(RBOuterI != -1) DeleteObject32(RBOuterPen);
     MoveToEx32(hdc, SavePoint.x, SavePoint.y, NULL);
     return retval;
 }
@@ -771,7 +764,7 @@ static BOOL32 UITOOLS_DFC_ButtonCheck(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         POINT32 CheckPoints[DFC_CHECKPOINTSMAX];
         int i;
         HBRUSH32 hbsave;
-        HPEN32 hp, hpsave;
+        HPEN32 hpsave;
 
         /* FIXME: This comes very close to M$'s checkmark, but not */
         /* exactly... When small or large there is a few pixels */
@@ -792,12 +785,10 @@ static BOOL32 UITOOLS_DFC_ButtonCheck(HDC32 dc, LPRECT32 r, UINT32 uFlags)
 
         i = (uFlags & DFCS_INACTIVE) || (uFlags & 0xff) == DFCS_BUTTON3STATE ? COLOR_BTNSHADOW : COLOR_WINDOWTEXT;
         hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(i));
-        hp = CreatePen32(PS_SOLID, 0, GetSysColor32(i));
-        hpsave = (HPEN32)SelectObject32(dc, hp);
+        hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(i));
         Polygon32(dc, CheckPoints, DFC_CHECKPOINTSMAX);
         SelectObject32(dc, hpsave);
         SelectObject32(dc, hbsave);
-        DeleteObject32(hp);
     }
     return TRUE;
 }
@@ -818,7 +809,7 @@ static BOOL32 UITOOLS_DFC_ButtonRadio(HDC32 dc, LPRECT32 r, UINT32 uFlags)
     int i;
     int SmallDiam = UITOOLS_MakeSquareRect(r, &myr);
     int BorderShrink = SmallDiam / 16;
-    HPEN32 hpsave, hp;
+    HPEN32 hpsave;
     HBRUSH32 hbsave;
     int xe, ye;
     int xc, yc;
@@ -853,52 +844,36 @@ static BOOL32 UITOOLS_DFC_ButtonRadio(HDC32 dc, LPRECT32 r, UINT32 uFlags)
     {
         if(uFlags & (DFCS_FLAT|DFCS_MONO))
         {
-            hp = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_WINDOWFRAME));
-            hpsave = (HPEN32)SelectObject32(dc, hp);
+            hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(COLOR_WINDOWFRAME));
             hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_WINDOWFRAME));
             Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
             SelectObject32(dc, hbsave);
             SelectObject32(dc, hpsave);
-            DeleteObject32(hp);
         }
         else
         {
-            hp = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_BTNHIGHLIGHT));
-            hpsave = (HPEN32)SelectObject32(dc, hp);
+            hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(COLOR_BTNHIGHLIGHT));
             hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_BTNHIGHLIGHT));
             Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, myr.left-1, myr.bottom, myr.right-1, myr.top);
-            SelectObject32(dc, hbsave);
-            SelectObject32(dc, hpsave);
-            DeleteObject32(hp);
 
-            hp = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_BTNSHADOW));
-            hpsave = (HPEN32)SelectObject32(dc, hp);
-            hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_BTNSHADOW));
+            SelectObject32(dc, GetSysColorPen32(COLOR_BTNSHADOW));
+            SelectObject32(dc, GetSysColorBrush32(COLOR_BTNSHADOW));
             Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, myr.right+1, myr.top, myr.left+1, myr.bottom);
-            SelectObject32(dc, hbsave);
-            SelectObject32(dc, hpsave);
-            DeleteObject32(hp);
 
             myr.left   += BorderShrink;
             myr.right  -= BorderShrink;
             myr.top    += BorderShrink;
             myr.bottom -= BorderShrink;
 
-            hp = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_3DLIGHT));
-            hpsave = (HPEN32)SelectObject32(dc, hp);
-            hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_3DLIGHT));
+            SelectObject32(dc, GetSysColorPen32(COLOR_3DLIGHT));
+            SelectObject32(dc, GetSysColorBrush32(COLOR_3DLIGHT));
             Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, myr.left-1, myr.bottom, myr.right-1, myr.top);
-            SelectObject32(dc, hbsave);
-            SelectObject32(dc, hpsave);
-            DeleteObject32(hp);
 
-            hp = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_3DDKSHADOW));
-            hpsave = (HPEN32)SelectObject32(dc, hp);
-            hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_3DDKSHADOW));
+            SelectObject32(dc, GetSysColorPen32(COLOR_3DDKSHADOW));
+            SelectObject32(dc, GetSysColorBrush32(COLOR_3DDKSHADOW));
             Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, myr.right+1, myr.top, myr.left+1, myr.bottom);
             SelectObject32(dc, hbsave);
             SelectObject32(dc, hpsave);
-            DeleteObject32(hp);
         }
 
         i = 10*SmallDiam/16;
@@ -907,13 +882,11 @@ static BOOL32 UITOOLS_DFC_ButtonRadio(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         myr.top    = yc - i+i/2;
         myr.bottom = yc + i/2;
         i= !(uFlags & (DFCS_INACTIVE|DFCS_PUSHED)) ? COLOR_WINDOW : COLOR_BTNFACE;
-        hp = CreatePen32(PS_SOLID, 0, GetSysColor32(i));
-        hpsave = (HPEN32)SelectObject32(dc, hp);
+        hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(i));
         hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(i));
         Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
         SelectObject32(dc, hbsave);
         SelectObject32(dc, hpsave);
-        DeleteObject32(hp);
     }
 
     if(uFlags & DFCS_CHECKED)
@@ -927,12 +900,10 @@ static BOOL32 UITOOLS_DFC_ButtonRadio(HDC32 dc, LPRECT32 r, UINT32 uFlags)
 
         i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_WINDOWTEXT;
         hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(i));
-        hp = CreatePen32(PS_SOLID, 0, GetSysColor32(i));
-        hpsave = (HPEN32)SelectObject32(dc, hp);
+        hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(i));
         Pie32(dc, myr.left, myr.top, myr.right, myr.bottom, xe, ye, xe, ye);
         SelectObject32(dc, hpsave);
         SelectObject32(dc, hbsave);
-        DeleteObject32(hp);
     }
 
     /* FIXME: M$ has a polygon in the center at relative points: */
@@ -992,7 +963,7 @@ static BOOL32 UITOOLS_DrawFrameCaption(HDC32 dc, LPRECT32 r, UINT32 uFlags)
     int SmallDiam = UITOOLS_MakeSquareRect(r, &myr)-2;
     int i;
     HBRUSH32 hbsave;
-    HPEN32 hpsave, hp;
+    HPEN32 hpsave;
     HFONT32 hfsave, hf;
     int xc = (myr.left+myr.right)/2;
     int yc = (myr.top+myr.bottom)/2;
@@ -1115,14 +1086,12 @@ static BOOL32 UITOOLS_DrawFrameCaption(HDC32 dc, LPRECT32 r, UINT32 uFlags)
     {
         /* If we have an inactive button, then you see a shadow */
         hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_BTNHIGHLIGHT));
-        hp = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_BTNHIGHLIGHT));
-        hpsave = (HPEN32)SelectObject32(dc, hp);
+        hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(COLOR_BTNHIGHLIGHT));
         Polygon32(dc, Line1, Line1N);
         if(Line2N > 0)
             Polygon32(dc, Line2, Line2N);
         SelectObject32(dc, hpsave);
         SelectObject32(dc, hbsave);
-        DeleteObject32(hp);
     }
 
     /* Correct for the shadow shift */
@@ -1138,23 +1107,15 @@ static BOOL32 UITOOLS_DrawFrameCaption(HDC32 dc, LPRECT32 r, UINT32 uFlags)
     }
 
     /* Make the final picture */
-    if(uFlags & DFCS_INACTIVE)
-    {
-        hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_BTNSHADOW));
-        hp = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_BTNSHADOW));
-    }
-    else
-    {
-        hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_BTNTEXT));
-        hp = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_BTNTEXT));
-    }
-    hpsave = (HPEN32)SelectObject32(dc, hp);
+    i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT;
+    hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(i));
+    hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(i));
+
     Polygon32(dc, Line1, Line1N);
     if(Line2N > 0)
         Polygon32(dc, Line2, Line2N);
     SelectObject32(dc, hpsave);
     SelectObject32(dc, hbsave);
-    DeleteObject32(hp);
 
     return TRUE;
 }
@@ -1218,13 +1179,13 @@ static BOOL32 UITOOLS_DrawFrameScroll(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         hbsave = (HBRUSH32)SelectObject32(dc, GetStockObject32(NULL_BRUSH));
         if(uFlags & (DFCS_MONO|DFCS_FLAT))
         {
-            hp = hp2 = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_WINDOWFRAME));
+            hp = hp2 = GetSysColorPen32(COLOR_WINDOWFRAME);
             hb = hb2 = GetSysColorBrush32(COLOR_WINDOWFRAME);
         }
         else
         {
-            hp  = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_BTNHIGHLIGHT));
-            hp2 = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_BTNSHADOW));
+            hp  = GetSysColorPen32(COLOR_BTNHIGHLIGHT);
+            hp2 = GetSysColorPen32(COLOR_BTNSHADOW);
             hb  = GetSysColorBrush32(COLOR_BTNHIGHLIGHT);
             hb2 = GetSysColorBrush32(COLOR_BTNSHADOW);
         }
@@ -1283,8 +1244,6 @@ static BOOL32 UITOOLS_DrawFrameScroll(HDC32 dc, LPRECT32 r, UINT32 uFlags)
 
         SelectObject32(dc, hpsave);
         SelectObject32(dc, hbsave);
-        DeleteObject32(hp);
-        DeleteObject32(hp2);
         return TRUE;
 
     default:
@@ -1298,12 +1257,10 @@ static BOOL32 UITOOLS_DrawFrameScroll(HDC32 dc, LPRECT32 r, UINT32 uFlags)
     if(uFlags & DFCS_INACTIVE)
     {
         hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_BTNHIGHLIGHT));
-        hp = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_BTNHIGHLIGHT));
-        hpsave = (HPEN32)SelectObject32(dc, hp);
+        hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(COLOR_BTNHIGHLIGHT));
         Polygon32(dc, Line, 3);
         SelectObject32(dc, hpsave);
         SelectObject32(dc, hbsave);
-        DeleteObject32(hp);
     }
 
     for(i = 0; i < 3; i++)
@@ -1312,21 +1269,12 @@ static BOOL32 UITOOLS_DrawFrameScroll(HDC32 dc, LPRECT32 r, UINT32 uFlags)
         Line[i].y--;
     }
 
-    if(uFlags & DFCS_INACTIVE)
-    {
-        hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_BTNSHADOW));
-        hp = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_BTNSHADOW));
-    }
-    else
-    {
-        hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(COLOR_BTNTEXT));
-        hp = CreatePen32(PS_SOLID, 0, GetSysColor32(COLOR_BTNTEXT));
-    }
-    hpsave = (HPEN32)SelectObject32(dc, hp);
+    i = uFlags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT;
+    hbsave = (HBRUSH32)SelectObject32(dc, GetSysColorBrush32(i));
+    hpsave = (HPEN32)SelectObject32(dc, GetSysColorPen32(i));
     Polygon32(dc, Line, 3);
     SelectObject32(dc, hpsave);
     SelectObject32(dc, hbsave);
-    DeleteObject32(hp);
 
     return TRUE;
 }

@@ -11,6 +11,7 @@
 #include "selectors.h"
 #include "miscemu.h"
 #include "winnt.h"
+#include "process.h"
 #include "module.h"
 #include "callback.h"
 #include "debug.h"
@@ -75,7 +76,7 @@ DWORD WINAPI _KERNEL32_18(DWORD processid,DWORD action)
 			return 0;
 		return pTask->version;
 	case 16:/* return uncrypted pointer to current thread */
-		return (DWORD)pCurrentThread;
+		return (DWORD)THREAD_Current();
 	case 20:/* return uncrypted pointer to process */
 		return (DWORD)process;
 	case 24:/* return stdoutput handle from startupinfo */

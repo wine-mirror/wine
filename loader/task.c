@@ -340,7 +340,7 @@ static void TASK_CallToStart(void)
     SEGTABLEENTRY *pSegTable = NE_SEG_TABLE( pModule );
 
     IF1632_Saved16_ss_sp = pTask->ss_sp;
-    SET_FS( pCurrentThread->teb_sel );
+    SET_CUR_THREAD( pTask->thdb );
     if (pModule->flags & NE_FFLAGS_WIN32)
     {
         /* FIXME: all this is an ugly hack */
@@ -526,15 +526,16 @@ HTASK16 TASK_CreateTask( HMODULE16 hModule, HINSTANCE16 hInstance,
 		pCurrentProcess->exe_modref->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint);
      */
         pTask->thdb = THREAD_Create( pdb32,
-          PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve, 0 );
+          PE_HEADER(pModule->module32)->OptionalHeader.SizeOfStackReserve,
+                                     NULL, NULL );
         /* FIXME: should not be done here */
-        pCurrentThread = pTask->thdb;
         PE_InitTls( pdb32 );
     }
     else
-        pTask->thdb = THREAD_Create( pdb32, 0, NULL );
+        pTask->thdb = THREAD_Create( pdb32, 0, NULL, NULL );
 
     /* FIXME: check for pTask->thdb == NULL.  */
+    SET_CUR_THREAD( pTask->thdb );
 
     /* Create the 32-bit stack frame */
 
@@ -596,8 +597,8 @@ static void TASK_DeleteTask( HTASK16 hTask )
 
     /* Delete the Win32 part of the task */
 
-    PROCESS_Destroy( &pTask->thdb->process->header );
-    THREAD_Destroy( &pTask->thdb->header );
+    K32OBJ_DecCount( &pTask->thdb->process->header );
+    K32OBJ_DecCount( &pTask->thdb->header );
 
     /* Free the task module */
 
@@ -788,8 +789,8 @@ void TASK_Reschedule(void)
     /* Switch to the new stack */
 
     hCurrentTask = hTask;
-    pCurrentThread = pNewTask->thdb;
-    pCurrentProcess = pCurrentThread->process;
+    SET_CUR_THREAD( pNewTask->thdb );
+    pCurrentProcess = pNewTask->thdb->process;
     IF1632_Saved16_ss_sp = pNewTask->ss_sp;
 }
 

@@ -3,12 +3,12 @@
  *
  * Copyright 1996 Ulrich Schmid
  *
- * Rumantsch Ladin (Vallader) added by mbaur@g26.ethz.ch
+ * Rumantsch Ladin (Vallader) added by Marcel Baur <mbaur@g26.ethz.ch>
  *
  */
 
-#define LANGUAGE_ID                  Rl
-#define LANGUAGE_NUMBER              2
+#define LANGUAGE_ID                  Va
+#define LANGUAGE_NUMBER              C
 #define LANGUAGE_MENU_ITEM           "&Vallader"
 
 /* Menu */

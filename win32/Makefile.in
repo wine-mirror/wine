@@ -14,7 +14,6 @@ C_SRCS = \
 	except.c \
 	file.c \
 	init.c \
-	k32obj.c \
 	kernel32.c \
 	newfns.c \
 	ordinals.c \

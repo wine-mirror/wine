@@ -24,21 +24,34 @@ typedef struct tagPROPERTY
  */
 static PROPERTY *PROP_FindProp( HWND32 hwnd, LPCSTR str )
 {
+    ATOM atom;
     PROPERTY *prop;
     WND *pWnd = WIN_FindWndPtr( hwnd );
 
     if (!pWnd) return NULL;
     if (HIWORD(str))
     {
+        atom = GlobalFindAtom32A( str );
         for (prop = pWnd->pProp; prop; prop = prop->next)
-            if (HIWORD(prop->string) && !lstrcmpi32A( prop->string, str ))
-                return prop;
+        {
+            if (HIWORD(prop->string))
+            {
+                if (!lstrcmpi32A( prop->string, str )) return prop;
+            }
+            else if (LOWORD(prop->string) == atom) return prop;
+        }
     }
     else  /* atom */
     {
+        atom = LOWORD(str);
         for (prop = pWnd->pProp; (prop); prop = prop->next)
-            if (!HIWORD(prop->string) && (LOWORD(prop->string) == LOWORD(str)))
-                return prop;
+        {
+            if (HIWORD(prop->string))
+            {
+                if (GlobalFindAtom32A( prop->string ) == atom) return prop;
+            }
+            else if (LOWORD(prop->string) == atom) return prop;
+        }
     }
     return NULL;
 }
@@ -159,6 +172,7 @@ HANDLE16 WINAPI RemoveProp16( HWND16 hwnd, LPCSTR str )
  */
 HANDLE32 WINAPI RemoveProp32A( HWND32 hwnd, LPCSTR str )
 {
+    ATOM atom;
     HANDLE32 handle;
     PROPERTY **pprop, *prop;
     WND *pWnd = WIN_FindWndPtr( hwnd );
@@ -172,15 +186,27 @@ HANDLE32 WINAPI RemoveProp32A( HWND32 hwnd, LPCSTR str )
     if (!pWnd) return NULL;
     if (HIWORD(str))
     {
+        atom = GlobalFindAtom32A( str );
         for (pprop=(PROPERTY**)&pWnd->pProp; (*pprop); pprop = &(*pprop)->next)
-            if (HIWORD((*pprop)->string) &&
-                !lstrcmpi32A( (*pprop)->string, str )) break;
+        {
+            if (HIWORD((*pprop)->string))
+            {
+                if (!lstrcmpi32A( (*pprop)->string, str )) break;
+            }
+            else if (LOWORD((*pprop)->string) == atom) break;
+        }
     }
     else  /* atom */
     {
+        atom = LOWORD(str);
         for (pprop=(PROPERTY**)&pWnd->pProp; (*pprop); pprop = &(*pprop)->next)
-            if (!HIWORD((*pprop)->string) &&
-                (LOWORD((*pprop)->string) == LOWORD(str))) break;
+        {
+            if (HIWORD((*pprop)->string))
+            {
+                if (GlobalFindAtom32A( (*pprop)->string ) == atom) break;
+            }
+            else if (LOWORD((*pprop)->string) == atom) break;
+        }
     }
     if (!*pprop) return 0;
     prop   = *pprop;

@@ -327,7 +327,7 @@ file	krnl386.exe
 515 pascal   GetProcAddress32W(long str) GetProcAddress32
 516 pascal GetVDMPointer32W(segptr long) GetVDMPointer32W
 517 pascal CallProc32W() WIN16_CallProc32W
-518 stub CallProcEx32W
+518 pascal CallProcEx32W() WIN16_CallProcEx32W 
 519 stub KERNEL_519
 522 stub KERNEL_522
 523 stub KERNEL_523

@@ -61,7 +61,9 @@ static __inline__ int modify_ldt( int func, struct modify_ldt_s *ptr,
 
 #if defined(__svr4__) || defined(_SCO_DS)
 #include <sys/sysi86.h>
+#ifndef __sun__
 #include <sys/seg.h>
+#endif
 #endif
 
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)

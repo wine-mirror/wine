@@ -40,6 +40,8 @@ typedef struct
     WPRINTF_TYPE   type;
 } WPRINTF_FORMAT;
 
+static const CHAR null_stringA[] = "(null)";
+static const WCHAR null_stringW[] = { '(', 'n', 'u', 'l', 'l', ')', 0 };
 
 /***********************************************************************
  *           WPRINTF_ParseFormatA
@@ -201,11 +203,13 @@ static UINT32 WPRINTF_GetLen( WPRINTF_FORMAT *format, LPCVOID arg,
     case WPR_WCHAR:
         return (format->precision = 1);
     case WPR_STRING:
+        if (!*(LPCSTR *)arg) *(LPCSTR *)arg = null_stringA;
         for (len = 0; !format->precision || (len < format->precision); len++)
             if (!*(*(LPCSTR *)arg + len)) break;
         if (len > maxlen) len = maxlen;
         return (format->precision = len);
     case WPR_WSTRING:
+        if (!*(LPCWSTR *)arg) *(LPCWSTR *)arg = null_stringW;
         for (len = 0; !format->precision || (len < format->precision); len++)
             if (!*(*(LPCWSTR *)arg + len)) break;
         if (len > maxlen) len = maxlen;

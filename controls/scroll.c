@@ -10,7 +10,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "windows.h"
-#include "syscolor.h"
 #include "sysmetrics.h"
 #include "scroll.h"
 #include "graphics.h"
@@ -388,11 +387,11 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
 
       /* Select the correct brush and pen */
 
-    SelectObject32( hdc, sysColorObjects.hpenWindowFrame );
+    SelectObject32( hdc, GetSysColorPen32(COLOR_WINDOWFRAME) );
     if ((flags & ESB_DISABLE_BOTH) == ESB_DISABLE_BOTH)
     {
           /* This ought to be the color of the parent window */
-        SelectObject32( hdc, sysColorObjects.hbrushWindow );
+        SelectObject32( hdc, GetSysColorBrush32(COLOR_WINDOW) );
     }
     else
     {
@@ -402,7 +401,7 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
                                              WM_CTLCOLORSCROLLBAR, hdc, hwnd );
             SelectObject32( hdc, hbrush );
         }
-        else SelectObject32( hdc, sysColorObjects.hbrushScrollbar );
+        else SelectObject32( hdc, GetSysColorBrush32(COLOR_SCROLLBAR) );
     }
 
       /* Calculate the scroll rectangle */
@@ -463,7 +462,7 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
 
       /* Draw the thumb */
 
-    SelectObject32( hdc, sysColorObjects.hbrushBtnFace );
+    SelectObject32( hdc, GetSysColorBrush32(COLOR_BTNFACE) );
     Rectangle32( hdc, r.left, r.top, r.right, r.bottom );
     InflateRect32( &r, -1, -1 );
     GRAPH_DrawReliefRect( hdc, &r, 1, 2, FALSE );
@@ -903,7 +902,7 @@ INT16 WINAPI SetScrollInfo16( HWND16 hwnd, INT16 nBar, const SCROLLINFO *info,
 
 
 /*************************************************************************
- *           SetScrollInfo32   (USER32.500)
+ *           SetScrollInfo32   (USER32.501)
  */
 INT32 WINAPI SetScrollInfo32( HWND32 hwnd, INT32 nBar, const SCROLLINFO *info,
                               BOOL32 bRedraw )
@@ -1051,7 +1050,7 @@ INT16 WINAPI SetScrollPos16( HWND16 hwnd, INT16 nBar, INT16 nPos,
 
 
 /*************************************************************************
- *           SetScrollPos32   (USER32.501)
+ *           SetScrollPos32   (USER32.502)
  */
 INT32 WINAPI SetScrollPos32( HWND32 hwnd, INT32 nBar, INT32 nPos,
                              BOOL32 bRedraw )
@@ -1104,7 +1103,7 @@ void WINAPI SetScrollRange16( HWND16 hwnd, INT16 nBar,
 
 
 /*************************************************************************
- *           SetScrollRange32   (USER32.502)
+ *           SetScrollRange32   (USER32.503)
  */
 BOOL32 WINAPI SetScrollRange32( HWND32 hwnd, INT32 nBar,
                                 INT32 MinVal, INT32 MaxVal, BOOL32 bRedraw )

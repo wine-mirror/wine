@@ -19,6 +19,7 @@
 #include "hook.h"
 #include "module.h"
 #include "neexe.h"
+#include "process.h"
 #include "resource.h"
 #include "selectors.h"
 #include "stackframe.h"
@@ -1436,7 +1437,7 @@ HMODULE32 WINAPI LoadLibraryEx32A(LPCSTR libname,HFILE32 hfile,DWORD flags)
 	hmod = PE_LoadLibraryEx32A(buffer,hfile,flags);
     }
     /* initialize all DLLs, which haven't been initialized yet. */
-    PE_InitializeDLLs( GetCurrentProcessId(), DLL_PROCESS_ATTACH, NULL);
+    PE_InitializeDLLs( pCurrentProcess, DLL_PROCESS_ATTACH, NULL);
     return hmod;
 }
 
@@ -1472,8 +1473,9 @@ HMODULE32 WINAPI LoadLibraryEx32W(LPCWSTR libnameW,HFILE32 hfile,DWORD flags)
  */
 BOOL32 WINAPI FreeLibrary32(HINSTANCE32 hLibModule)
 {
-	fprintf(stderr,"FreeLibrary: empty stub\n");
-	return TRUE;
+	dprintf_module(stddeb,"FreeLibrary: hLibModule: %08x\n", hLibModule);
+	return MODULE_FreeModule(hLibModule, 
+	                         GlobalLock16(GetCurrentTask()) );
 }
 
 

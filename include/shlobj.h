@@ -197,7 +197,7 @@ typedef enum {
 typedef struct IShellLink IShellLink,*LPSHELLLINK;
 typedef struct IShellLink_VTable
 {
-    // *** IUnknown methods ***
+    /* *** IUnknown methods *** */
     STDMETHOD(QueryInterface) (THIS_ REFIID riid, LPVOID * ppvObj) PURE;
     STDMETHOD_(ULONG,AddRef) (THIS)  PURE;
     STDMETHOD_(ULONG,Release) (THIS) PURE;

@@ -97,7 +97,7 @@ FARPROC32 PE_FindExportedFunction( HMODULE32 hModule, LPCSTR funcName)
 	u_long				* function;
 	u_char				** name, *ename;
 	int				i;
-	PDB32				*process=(PDB32*)GetCurrentProcessId();
+	PDB32				*process=pCurrentProcess;
 	PE_MODREF			*pem;
 	u_long				rva_start, rva_end, addr;
 	char				* forward;
@@ -690,14 +690,14 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
 		if (!HIWORD(hModule)) /* internal (or bad) */
 			return hModule;
 		/* check if this module is already mapped */
-		pem 	= ((PDB32*)GetCurrentProcessId())->modref_list;
+		pem 	= pCurrentProcess->modref_list;
 		while (pem) {
 			if (pem->module == hModule) return hModule;
 			pem = pem->next;
 		}
 		pModule = MODULE_GetPtr(hModule);
 		if (pModule->flags & NE_FFLAGS_BUILTIN) {
-			PDB32	*process = (PDB32*)GetCurrentProcessId();
+			PDB32	*process = pCurrentProcess;
 			IMAGE_DOS_HEADER	*dh;
 			IMAGE_NT_HEADERS	*nh;
 			IMAGE_SECTION_HEADER	*sh;
@@ -743,8 +743,7 @@ HMODULE32 PE_LoadLibraryEx32A (LPCSTR name, HFILE32 hFile, DWORD flags) {
 		if (pModule->module32 < 32) return 21;
 	}
 	/* recurse */
-	pModule->module32 = PE_MapImage( pModule->module32,
-                                         (PDB32*)GetCurrentProcessId(),
+	pModule->module32 = PE_MapImage( pModule->module32, pCurrentProcess,
                                          &ofs,flags);
 	return pModule->module32;
 }
@@ -777,8 +776,7 @@ HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LOADPARAMS* params )
                          (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
                          *((WORD*)PTR_SEG_TO_LIN(params->showCmd) + 1) );
     }
-    pModule->module32 = PE_MapImage( hModule32, (PDB32*)GetCurrentProcessId(),
-                                     ofs, 0 );
+    pModule->module32 = PE_MapImage( hModule32, pCurrentProcess, ofs, 0 );
     return hInstance;
 }
 
@@ -812,7 +810,7 @@ static void PE_InitDLL(PE_MODREF *pem, DWORD type,LPVOID lpReserved)
     ) {
         FARPROC32 entry = (FARPROC32)RVA_PTR( pem->module,
                                           OptionalHeader.AddressOfEntryPoint );
-        dprintf_relay( stddeb, "CallTo32(entryproc=%p,module=%d,type=%ld,res=%p)\n",
+        dprintf_relay( stddeb, "CallTo32(entryproc=%p,module=%08x,type=%ld,res=%p)\n",
                        entry, pem->module, type, lpReserved );
         entry( pem->module, type, lpReserved );
     }
@@ -877,7 +875,7 @@ void PE_InitTls(PDB32 *pdb)
  */
 BOOL32 WINAPI DisableThreadLibraryCalls(HMODULE32 hModule)
 {
-	PDB32	*process = (PDB32*)GetCurrentProcessId();
+	PDB32	*process = pCurrentProcess;
 	PE_MODREF	*pem = process->modref_list;
 
 	while (pem) {

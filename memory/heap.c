@@ -13,6 +13,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "winnt.h"
+#include "heap.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -91,6 +92,10 @@ typedef struct tagHEAP
 
 #define HEAP_DEF_SIZE        0x110000   /* Default heap size = 1Mb + 64Kb */
 #define HEAP_MIN_BLOCK_SIZE  (8+sizeof(ARENA_FREE))  /* Min. heap block size */
+
+HANDLE32 SystemHeap = 0;
+HANDLE32 SegptrHeap = 0;
+CRITICAL_SECTION *HEAP_SystemLock = NULL;
 
 
 /***********************************************************************
@@ -808,7 +813,6 @@ HANDLE32 WINAPI HeapCreate( DWORD flags, DWORD initialSize, DWORD maxSize )
     heap->next          = NULL;
     heap->flags         = flags;
     heap->magic         = HEAP_MAGIC;
-    InitializeCriticalSection( &heap->critSection );
 
     /* Build the free lists */
 
@@ -828,9 +832,13 @@ HANDLE32 WINAPI HeapCreate( DWORD flags, DWORD initialSize, DWORD maxSize )
 
     HEAP_CreateFreeBlock( subheap, heap + 1, subheap->size - sizeof(*heap) );
 
+    /* Initialize critical section */
+
+    InitializeCriticalSection( &heap->critSection );
+    if (!SystemHeap) HEAP_SystemLock = &heap->critSection;
+
     /* We are done */
 
-    SetLastError( 0 );
     return (HANDLE32)heap;
 }
 
@@ -1088,7 +1096,6 @@ DWORD WINAPI HeapCompact( HANDLE32 heap, DWORD flags )
 BOOL32 WINAPI HeapLock( HANDLE32 heap )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
-
     if (!heapPtr) return FALSE;
     EnterCriticalSection( &heapPtr->critSection );
     return TRUE;
@@ -1101,7 +1108,6 @@ BOOL32 WINAPI HeapLock( HANDLE32 heap )
 BOOL32 WINAPI HeapUnlock( HANDLE32 heap )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
-
     if (!heapPtr) return FALSE;
     LeaveCriticalSection( &heapPtr->critSection );
     return TRUE;

@@ -25,6 +25,7 @@ Unresolved issues Uwe Bonnes 970904:
 #include <stdarg.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/times.h>
 #include <unistd.h>
 #include <time.h>
 #include <ctype.h>
@@ -418,6 +419,25 @@ time_t __cdecl CRTDLL_time(time_t *timeptr)
 	if (timeptr)
 		*timeptr = curtime;
 	return curtime;
+}
+
+/*********************************************************************
+ *                            (CRTDLL.350)
+ */
+clock_t __cdecl CRTDLL_clock(void)
+{
+	struct tms alltimes;
+	clock_t res;
+
+	times(&alltimes);
+	res = alltimes.tms_utime + alltimes.tms_stime+
+               alltimes.tms_cutime + alltimes.tms_cstime;
+	/* Fixme: We need some symbolic representation
+	   for (Hostsystem_)CLOCKS_PER_SEC 
+	   and (Emulated_system_)CLOCKS_PER_SEC
+	   10 holds only for Windows/Linux_i86)
+	   */
+	return 10*res;
 }
 
 /*********************************************************************

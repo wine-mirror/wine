@@ -696,7 +696,7 @@ static int INT21_FindNextFCB( CONTEXT *context )
     BYTE attr;
     int count;
 
-    if (*fcb == 0xff)
+    if (*fcb == 0xff) /* extended FCB ? */
     {
         attr = fcb[6];
         pFCB = (FINDFILE_FCB *)(fcb + 7);
@@ -718,6 +718,14 @@ static int INT21_FindNextFCB( CONTEXT *context )
     }
     pFCB->count += count;
 
+    if (*fcb == 0xff) { /* place extended FCB header before pResult if called with extended FCB */
+	*(BYTE *)pResult = 0xff;
+	(BYTE *)pResult +=6; /* leave reserved field behind */
+	*(BYTE *)pResult = entry.dwFileAttributes;
+	((BYTE *)pResult)++;
+    }
+    *(BYTE *)pResult = DOS_GET_DRIVE( pFCB->drive ); /* DOS_DIRENTRY_LAYOUT after current drive number */
+    ((BYTE *)pResult)++;
     pResult->fileattr = entry.dwFileAttributes;
     pResult->cluster  = 0;  /* what else? */
     pResult->filesize = entry.nFileSizeLow;

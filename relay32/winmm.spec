@@ -31,7 +31,7 @@ type win32
  28 stdcall joyGetDevCapsW(long ptr long) joyGetDevCaps32W
  29 stdcall joyGetNumDevs() joyGetNumDevs32
  30 stdcall joyGetPos(long ptr) joyGetPos32
- 31 stub joyGetPosEx
+ 31 stdcall joyGetPosEx(long ptr) joyGetPosEx
  32 stdcall joyGetThreshold(long ptr) joyGetThreshold32
  33 stub joyReleaseCapture
  34 stub joySetCapture
