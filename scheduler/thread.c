@@ -163,7 +163,7 @@ void CALLBACK THREAD_FreeTEB( ULONG_PTR arg )
     close( teb->socket );
     if (teb->buffer) munmap( teb->buffer, teb->buffer_size );
     VirtualFree( teb->stack_base, 0, MEM_RELEASE );
-    HeapFree( SystemHeap, 0, teb );
+    VirtualFree( teb, 0, MEM_FREE );
 }
 
 
@@ -202,6 +202,12 @@ TEB *THREAD_CreateInitialThread( PDB *pdb, int server_fd )
 
 /***********************************************************************
  *           THREAD_Create
+ *
+ * NOTES:
+ * 	Native NT dlls are using the space left on the allocated page
+ *	the first allocated TEB on NT is at 0x7ffde000, since we can't
+ *	allocate in this area and don't support a granularity of 4kb
+ *	yet we leave it to VirtualAlloc to choose an address.
  */
 TEB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
                      LPSECURITY_ATTRIBUTES sa, int *server_handle )
@@ -210,7 +216,7 @@ TEB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
     int fd[2];
     HANDLE cleanup_object;
 
-    TEB *teb = HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, sizeof(TEB) );
+    TEB *teb = VirtualAlloc(0, 0x1000, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     if (!teb) return NULL;
     teb->except      = (void *)-1;
     teb->htask16     = pdb->task;
@@ -258,13 +264,14 @@ TEB *THREAD_Create( PDB *pdb, DWORD flags, DWORD stack_size, BOOL alloc_stack16,
 			   0, FALSE, DUPLICATE_SAME_ACCESS ) ) goto error;
     teb->cleanup = SERVICE_AddObject( cleanup_object, THREAD_FreeTEB, (ULONG_PTR)teb );
 
+    TRACE("(%p) succeeded\n", teb);
     return teb;
 
 error:
     if (*server_handle != -1) CloseHandle( *server_handle );
     if (teb->teb_sel) SELECTOR_FreeBlock( teb->teb_sel, 1 );
     if (teb->socket != -1) close( teb->socket );
-    HeapFree( SystemHeap, 0, teb );
+    VirtualFree( teb, 0, MEM_FREE );
     return NULL;
 }
 
