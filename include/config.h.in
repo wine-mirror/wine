@@ -403,6 +403,9 @@
 /* Define if you have the <sys/filio.h> header file. */
 #undef HAVE_SYS_FILIO_H
 
+/* Define if you have the <sys/inttypes.h> header file. */
+#undef HAVE_SYS_INTTYPES_H
+
 /* Define if you have the <sys/ipc.h> header file. */
 #undef HAVE_SYS_IPC_H
 

@@ -33,6 +33,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#ifdef HAVE_SYS_INTTYPES_H
+# include <sys/inttypes.h>
+#endif
 #ifdef HAVE_SYS_TIME_h
 # include <sys/time.h>
 #endif

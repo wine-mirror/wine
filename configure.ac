@@ -969,6 +969,7 @@ AC_CHECK_HEADERS(\
 	sys/errno.h \
 	sys/file.h \
 	sys/filio.h \
+	sys/inttypes.h \
 	sys/ipc.h \
 	sys/link.h \
 	sys/lwp.h \
