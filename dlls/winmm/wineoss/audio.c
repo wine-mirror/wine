@@ -240,7 +240,7 @@ static const char *wodPlayerCmdString[] = {
  */
 static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int* frag)
 {
-    int fd, val;
+    int fd, val, err;
 
     if ((fd = open(ossdev->dev_name, ossdev->open_access|O_NDELAY, 0)) == -1)
     {
@@ -262,25 +262,38 @@ static DWORD      OSS_RawOpenDevice(OSS_DEVICE* ossdev, int* frag)
     {
         val = ossdev->format;
         ioctl(fd, SNDCTL_DSP_SETFMT, &val);
-        if (val != ossdev->format)
-            ERR("Can't set format to %d (%d)\n", ossdev->format, val);
+        if (val != ossdev->format) {
+            ERR("Can't set format to %d (returned %d)\n", val, ossdev->format);
+            err=WAVERR_BADFORMAT;
+            goto error;
+        }
     }
     if (ossdev->stereo)
     {
         val = ossdev->stereo;
         ioctl(fd, SNDCTL_DSP_STEREO, &val);
-        if (val != ossdev->stereo)
-            ERR("Can't set stereo to %u (%d)\n", ossdev->stereo, val);
+        if (val != ossdev->stereo) {
+            ERR("Can't set stereo to %u (returned %d)\n", val, ossdev->stereo);
+            err=WAVERR_BADFORMAT;
+            goto error;
+        }
     }
     if (ossdev->sample_rate)
     {
         val = ossdev->sample_rate;
         ioctl(fd, SNDCTL_DSP_SPEED, &ossdev->sample_rate);
-        if (!NEAR_MATCH(val, ossdev->sample_rate))
-            ERR("Can't set sample_rate to %u (%d)\n", ossdev->sample_rate, val);
+        if (!NEAR_MATCH(val, ossdev->sample_rate)) {
+            ERR("Can't set sample_rate to %u (returned %d)\n", val, ossdev->sample_rate);
+            err=WAVERR_BADFORMAT;
+            goto error;
+        }
     }
     ossdev->fd = fd;
     return MMSYSERR_NOERROR;
+
+error:
+    close(fd);
+    return err;
 }
 
 /******************************************************************
