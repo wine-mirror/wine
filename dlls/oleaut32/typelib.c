@@ -2365,11 +2365,19 @@ static void SLTG_DoRefs(SLTG_RefInfo *pRef, ITypeInfoImpl *pTI,
     dump_TLBRefType(pTI->reflist);
 }
 
-static char *SLTG_DoImpls(SLTG_ImplInfo *info, ITypeInfoImpl *pTI,
+static char *SLTG_DoImpls(char *pBlk, ITypeInfoImpl *pTI,
 			  BOOL OneOnly)
 {
+    SLTG_ImplInfo *info;
     TLBImplType **ppImplType = &pTI->impltypelist;
+    /* I don't really get this structure, usually it's 0x16 bytes
+       long, but iuser.tlb contains some that are 0x18 bytes long.
+       That's ok because we can use the next ptr to jump to the next
+       one. But how do we know the length of the last one?  The WORD
+       at offs 0x8 might be the clue.  For now I'm just assuming that
+       the last one is the regular 0x16 bytes. */
 
+    info = (SLTG_ImplInfo*)pBlk;
     while(1) {
 	*ppImplType = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 				sizeof(**ppImplType));
@@ -2382,9 +2390,9 @@ static char *SLTG_DoImpls(SLTG_ImplInfo *info, ITypeInfoImpl *pTI,
 	    break;
 	if(OneOnly)
 	    FIXME("Interface inheriting more than one interface\n");
-	info++;
+	info = (SLTG_ImplInfo*)(pBlk + info->next);
     }
-    info++;
+    info++; /* see comment at top of function */
     return (char*)info;
 }
 
@@ -2406,7 +2414,7 @@ static SLTG_TypeInfoTail *SLTG_ProcessCoClass(char *pBlk, ITypeInfoImpl *pTI,
     pFirstItem = pNextItem = (char*)(pMemHeader + 1);
 
     if(*(WORD*)pFirstItem == SLTG_IMPL_MAGIC) {
-        pNextItem = SLTG_DoImpls((SLTG_ImplInfo*)pFirstItem, pTI, FALSE);
+        pNextItem = SLTG_DoImpls(pFirstItem, pTI, FALSE);
     }
 
     return (SLTG_TypeInfoTail*)(pFirstItem + pMemHeader->cbExtra);
@@ -2433,7 +2441,7 @@ static SLTG_TypeInfoTail *SLTG_ProcessInterface(char *pBlk, ITypeInfoImpl *pTI,
     pFirstItem = pNextItem = (char*)(pMemHeader + 1);
 
     if(*(WORD*)pFirstItem == SLTG_IMPL_MAGIC) {
-        pNextItem = SLTG_DoImpls((SLTG_ImplInfo*)pFirstItem, pTI, TRUE);
+        pNextItem = SLTG_DoImpls(pFirstItem, pTI, TRUE);
     }
 
     for(pFunc = (SLTG_Function*)pNextItem, num = 1; 1;
