@@ -1567,15 +1567,23 @@ HICON32 WINAPI LoadIcon32A(HINSTANCE32 hInstance, LPCSTR name)
 /**********************************************************************
  *          GetIconInfo16       (USER.395)
  */
-BOOL16 WINAPI GetIconInfo16(HICON16 hIcon,LPICONINFO iconinfo)
+BOOL16 WINAPI GetIconInfo16(HICON16 hIcon,LPICONINFO16 iconinfo)
 {
-    return (BOOL16)GetIconInfo32((HICON32)hIcon, iconinfo);
+    ICONINFO32	ii32;
+    BOOL16	ret = GetIconInfo32((HICON32)hIcon, &ii32);
+
+    iconinfo->fIcon = ii32.fIcon;
+    iconinfo->xHotspot = ii32.xHotspot;
+    iconinfo->yHotspot = ii32.yHotspot;
+    iconinfo->hbmMask = ii32.hbmMask;
+    iconinfo->hbmColor = ii32.hbmColor;
+    return ret;
 }
 
 /**********************************************************************
  *          GetIconInfo32		(USER32.242)
  */
-BOOL32 WINAPI GetIconInfo32(HICON32 hIcon,LPICONINFO iconinfo) {
+BOOL32 WINAPI GetIconInfo32(HICON32 hIcon,LPICONINFO32 iconinfo) {
     CURSORICONINFO	*ciconinfo;
 
     ciconinfo = GlobalLock16(hIcon);
@@ -1601,7 +1609,7 @@ BOOL32 WINAPI GetIconInfo32(HICON32 hIcon,LPICONINFO iconinfo) {
 /**********************************************************************
  *          CreateIconIndirect		(USER32.78)
  */
-HICON32 WINAPI CreateIconIndirect(LPICONINFO iconinfo) {
+HICON32 WINAPI CreateIconIndirect(LPICONINFO32 iconinfo) {
     BITMAPOBJ *bmpXor,*bmpAnd;
     HICON32 hObj;
     int	sizeXor,sizeAnd;

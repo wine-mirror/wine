@@ -117,7 +117,10 @@ typedef struct {
 	DWORD		yHotspot;
 	HBITMAP32	hbmMask;
 	HBITMAP32	hbmColor;
-} ICONINFO,*LPICONINFO;
+} ICONINFO32,*LPICONINFO32;
+
+DECL_WINELIB_TYPE(ICONINFO);
+DECL_WINELIB_TYPE(LPICONINFO);
 
 /* this is the 6 byte accel struct used in Win32 when presented to the user */
 typedef struct
@@ -638,7 +641,7 @@ WORD        WINAPI CascadeWindows (HWND32, UINT32, const LPRECT32,
 INT32       WINAPI CopyAcceleratorTable32A(HACCEL32,LPACCEL32,INT32);
 INT32       WINAPI CopyAcceleratorTable32W(HACCEL32,LPACCEL32,INT32);
 #define     CopyAcceleratorTable WINELIB_NAME_AW(CopyAcceleratorTable)
-HICON32     WINAPI CreateIconIndirect(LPICONINFO);
+HICON32     WINAPI CreateIconIndirect(LPICONINFO32);
 BOOL32      WINAPI DestroyAcceleratorTable(HACCEL32);
 BOOL32      WINAPI EnumDisplayMonitors(HDC32,LPRECT32,MONITORENUMPROC,LPARAM);
 INT32       WINAPI EnumPropsEx32A(HWND32,PROPENUMPROCEX32A,LPARAM);
@@ -646,7 +649,7 @@ INT32       WINAPI EnumPropsEx32W(HWND32,PROPENUMPROCEX32W,LPARAM);
 #define     EnumPropsEx WINELIB_NAME_AW(EnumPropsEx)
 BOOL32      WINAPI EnumThreadWindows(DWORD,WNDENUMPROC32,LPARAM);
 BOOL32      WINAPI ExitWindowsEx(UINT32,DWORD);
-BOOL32      WINAPI GetIconInfo32(HICON32,LPICONINFO);
+BOOL32      WINAPI GetIconInfo32(HICON32,LPICONINFO32);
 #define     GetIconInfo WINELIB_NAME(GetIconInfo)
 DWORD       WINAPI GetMenuContextHelpId32(HMENU32);
 #define     GetMenuContextHelpId WINELIB_NAME(GetMenuContextHelpId)

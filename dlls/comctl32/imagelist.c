@@ -1206,7 +1206,7 @@ ImageList_GetDragImage (POINT32 *ppt, POINT32 *pptHotspot)
 HICON32 WINAPI
 ImageList_GetIcon (HIMAGELIST himl, INT32 i, UINT32 fStyle)
 {
-    ICONINFO ii;
+    ICONINFO32 ii;
     HICON32  hIcon;
     HDC32    hdcSrc, hdcDst;
     INT32    nWidth, nHeight;
@@ -1428,7 +1428,7 @@ ImageList_LoadImage32A (HINSTANCE32 hi, LPCSTR lpbmp, INT32 cx,	INT32 cGrow,
         ImageList_AddMasked (himl, (HBITMAP32)handle, clrMask);
     }
     else if ((uType == IMAGE_ICON) || (uType == IMAGE_CURSOR)) {
-        ICONINFO ii;
+        ICONINFO32 ii;
         BITMAP32 bmp;
 
         GetIconInfo32 (handle, &ii);
@@ -1492,7 +1492,7 @@ ImageList_LoadImage32W (HINSTANCE32 hi, LPCWSTR lpbmp, INT32 cx, INT32 cGrow,
         ImageList_AddMasked (himl, (HBITMAP32)handle, clrMask);
     }
     else if ((uType == IMAGE_ICON) || (uType == IMAGE_CURSOR)) {
-        ICONINFO ii;
+        ICONINFO32 ii;
         BITMAP32 bmp;
 
         GetIconInfo32 (handle, &ii);
@@ -1866,7 +1866,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT32 i, HICON32 hIcon)
     HDC32     hdcImageList, hdcImage;
     INT32     nIndex;
     HBITMAP32 hbmOldSrc, hbmOldDst;
-    ICONINFO  ii;
+    ICONINFO32  ii;
     BITMAP32  bmp;
 
     TRACE (imagelist, "(0x%lx 0x%x 0x%x)\n", (DWORD)himl, i, hIcon);
