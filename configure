@@ -9461,14 +9461,59 @@ LDSHARED=""
 LDDLLFLAGS=""
 if test "$LIBEXT" = "so"
 then
-  echo "$as_me:$LINENO: checking whether we can build a GNU style ELF dll" >&5
+  case $target_os in
+    *cygwin*)
+      # Extract the first word of "dllwrap", so it can be a program name with args.
+set dummy dllwrap; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_DLLWRAP+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$DLLWRAP"; then
+  ac_cv_prog_DLLWRAP="$DLLWRAP" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_DLLWRAP="dllwrap"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_prog_DLLWRAP" && ac_cv_prog_DLLWRAP="false"
+fi
+fi
+DLLWRAP=$ac_cv_prog_DLLWRAP
+if test -n "$DLLWRAP"; then
+  echo "$as_me:$LINENO: result: $DLLWRAP" >&5
+echo "${ECHO_T}$DLLWRAP" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+      if test "$DLLWRAP" = "dllwrap"; then
+                LIBEXT="dll"
+      else
+        LIBEXT="a"
+      fi
+      ;;
+    *)
+      echo "$as_me:$LINENO: checking whether we can build a GNU style ELF dll" >&5
 echo $ECHO_N "checking whether we can build a GNU style ELF dll... $ECHO_C" >&6
 if test "${ac_cv_c_dll_gnuelf+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   saved_cflags=$CFLAGS
-  CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic"
-  cat >conftest.$ac_ext <<_ACEOF
+      CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic"
+      cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 
@@ -9505,24 +9550,24 @@ cat conftest.$ac_ext >&5
 ac_cv_c_dll_gnuelf="no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-  CFLAGS=$saved_cflags
+      CFLAGS=$saved_cflags
 
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_dll_gnuelf" >&5
 echo "${ECHO_T}$ac_cv_c_dll_gnuelf" >&6
-  if test "$ac_cv_c_dll_gnuelf" = "yes"
-  then
-    LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
-    LDDLLFLAGS="-Wl,-Bsymbolic"
-  else
-    echo "$as_me:$LINENO: checking whether we can build a UnixWare (Solaris) dll" >&5
+      if test "$ac_cv_c_dll_gnuelf" = "yes"
+      then
+        LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
+        LDDLLFLAGS="-Wl,-Bsymbolic"
+      else
+        echo "$as_me:$LINENO: checking whether we can build a UnixWare (Solaris) dll" >&5
 echo $ECHO_N "checking whether we can build a UnixWare (Solaris) dll... $ECHO_C" >&6
 if test "${ac_cv_c_dll_unixware+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   saved_cflags=$CFLAGS
-    CFLAGS="$CFLAGS -fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic"
-    cat >conftest.$ac_ext <<_ACEOF
+        CFLAGS="$CFLAGS -fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic"
+        cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
 
@@ -9559,64 +9604,19 @@ cat conftest.$ac_ext >&5
 ac_cv_c_dll_unixware="no"
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-    CFLAGS=$saved_cflags
+        CFLAGS=$saved_cflags
 
 fi
 echo "$as_me:$LINENO: result: $ac_cv_c_dll_unixware" >&5
 echo "${ECHO_T}$ac_cv_c_dll_unixware" >&6
-    if test "$ac_cv_c_dll_unixware" = "yes"
-    then
-      LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
-      LDDLLFLAGS="-Wl,-B,symbolic"
-    fi
-  fi
-  if test "$ac_cv_c_dll_gnuelf" = "no" -a "$ac_cv_c_dll_unixware" = "no"
-  then
-    LIBEXT="a"
-    # Extract the first word of "dllwrap", so it can be a program name with args.
-set dummy dllwrap; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_DLLWRAP+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$DLLWRAP"; then
-  ac_cv_prog_DLLWRAP="$DLLWRAP" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_DLLWRAP="dllwrap"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  test -z "$ac_cv_prog_DLLWRAP" && ac_cv_prog_DLLWRAP="false"
-fi
-fi
-DLLWRAP=$ac_cv_prog_DLLWRAP
-if test -n "$DLLWRAP"; then
-  echo "$as_me:$LINENO: result: $DLLWRAP" >&5
-echo "${ECHO_T}$DLLWRAP" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-    if test "$DLLWRAP" = "dllwrap"; then
-            case $host_os in
-        *cygwin*)
-            LIBEXT="dll"
-            ;;
-      esac
-    fi
-  fi
+        if test "$ac_cv_c_dll_unixware" = "yes"
+        then
+          LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
+          LDDLLFLAGS="-Wl,-B,symbolic"
+        fi
+      fi
+      ;;
+  esac
 fi
 
 if test "$LIBEXT" = "a"; then

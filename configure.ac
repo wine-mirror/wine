@@ -712,44 +712,43 @@ LDSHARED=""
 LDDLLFLAGS=""
 if test "$LIBEXT" = "so"
 then
-  AC_CACHE_CHECK([whether we can build a GNU style ELF dll],
-                 ac_cv_c_dll_gnuelf,
-  [saved_cflags=$CFLAGS
-  CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic"
-  AC_TRY_LINK(,[return 1],ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")
-  CFLAGS=$saved_cflags
-  ])
-  if test "$ac_cv_c_dll_gnuelf" = "yes"
-  then
-    LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
-    LDDLLFLAGS="-Wl,-Bsymbolic"
-  else
-    AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll,
-                 ac_cv_c_dll_unixware,
-    [saved_cflags=$CFLAGS
-    CFLAGS="$CFLAGS -fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic"
-    AC_TRY_LINK(,[return 1],ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")
-    CFLAGS=$saved_cflags
-    ])
-    if test "$ac_cv_c_dll_unixware" = "yes"
-    then
-      LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
-      LDDLLFLAGS="-Wl,-B,symbolic"
-    fi
-  fi
-  if test "$ac_cv_c_dll_gnuelf" = "no" -a "$ac_cv_c_dll_unixware" = "no"
-  then
-    LIBEXT="a"
-    AC_CHECK_PROG(DLLWRAP,dllwrap,dllwrap,false)
-    if test "$DLLWRAP" = "dllwrap"; then
-      dnl FIXME - check whether dllwrap works correctly...
-      case $host_os in
-        *cygwin*)
-            LIBEXT="dll"
-            ;;
-      esac
-    fi
-  fi
+  case $target_os in
+    *cygwin*)
+      AC_CHECK_PROG(DLLWRAP,dllwrap,dllwrap,false)
+      if test "$DLLWRAP" = "dllwrap"; then
+        dnl FIXME - check whether dllwrap works correctly...
+        LIBEXT="dll"
+      else
+        LIBEXT="a"
+      fi
+      ;;
+    *)
+      AC_CACHE_CHECK([whether we can build a GNU style ELF dll],ac_cv_c_dll_gnuelf,
+      [saved_cflags=$CFLAGS
+      CFLAGS="$CFLAGS -fPIC -shared -Wl,-soname,conftest.so.1.0,-Bsymbolic"
+      AC_TRY_LINK(,[return 1],ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")
+      CFLAGS=$saved_cflags
+      ])
+      if test "$ac_cv_c_dll_gnuelf" = "yes"
+      then
+        LDSHARED="\$(CC) -shared \$(SONAME:%=-Wl,-soname,%)"
+        LDDLLFLAGS="-Wl,-Bsymbolic"
+      else
+        AC_CACHE_CHECK(whether we can build a UnixWare (Solaris) dll,
+                     ac_cv_c_dll_unixware,
+        [saved_cflags=$CFLAGS
+        CFLAGS="$CFLAGS -fPIC -Wl,-G,-h,conftest.so.1.0,-B,symbolic"
+        AC_TRY_LINK(,[return 1],ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")
+        CFLAGS=$saved_cflags
+        ])
+        if test "$ac_cv_c_dll_unixware" = "yes"
+        then
+          LDSHARED="\$(CC) -Wl,-G \$(SONAME:%=-Wl,-h,%)"
+          LDDLLFLAGS="-Wl,-B,symbolic"
+        fi
+      fi
+      ;;
+  esac
 fi
 
 if test "$LIBEXT" = "a"; then
