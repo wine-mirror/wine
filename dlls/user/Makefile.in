@@ -4,11 +4,12 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = user32
 SOVERSION = 1.0
-ALTNAMES  = user keyboard
+ALTNAMES  = user keyboard ddeml
 
-SPEC_SRCS = user32.spec user.spec keyboard.spec
+SPEC_SRCS = user32.spec user.spec keyboard.spec ddeml.spec
 
 C_SRCS = \
+	ddeml.c \
 	user_main.c \
 	thunk.c
 

@@ -73,6 +73,7 @@ EXTRADLLNAMES = \
 	avifile \
 	commdlg \
 	compobj \
+	ddeml \
 	dplay \
 	gdi \
 	keyboard \
@@ -284,7 +285,7 @@ libttydrv.@LIBEXT@: ttydrv/libttydrv.@LIBEXT@
 liburlmon.@LIBEXT@: urlmon/liburlmon.@LIBEXT@
 	$(RM) $@ && $(LN_S) urlmon/liburlmon.@LIBEXT@ $@
 
-libuser32.@LIBEXT@ libuser.@LIBEXT@ libkeyboard.@LIBEXT@: user/libuser32.@LIBEXT@
+libuser32.@LIBEXT@ libuser.@LIBEXT@ libkeyboard.@LIBEXT@ libddeml.@LIBEXT@: user/libuser32.@LIBEXT@
 	$(RM) $@ && $(LN_S) user/libuser32.@LIBEXT@ $@
 
 libversion.@LIBEXT@ libver.@LIBEXT@: version/libversion.@LIBEXT@

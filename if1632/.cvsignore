@@ -1,11 +1,9 @@
 Makefile
 call16.s
 comm.spec.c
-ddeml.spec.c
 dispdib.spec.c
 kernel.spec.c
 ole2conv.spec.c
-ole2nls.spec.c
 ole2prox.spec.c
 ole2thk.spec.c
 system.spec.c

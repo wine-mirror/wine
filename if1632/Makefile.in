@@ -7,7 +7,6 @@ MODULE    = if1632
 
 SPEC_SRCS = \
 	comm.spec \
-	ddeml.spec \
 	dispdib.spec \
 	kernel.spec \
 	ole2conv.spec \
