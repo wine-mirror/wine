@@ -707,7 +707,7 @@ TOOLBAR_DrawImage(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, INT left, INT top
     BOOL draw_masked = FALSE;
     INT index;
     INT offset = 0;
-    UINT draw_flags = ILD_NORMAL;
+    UINT draw_flags = ILD_TRANSPARENT;
 
     if (tbcd->nmcd.uItemState & (CDIS_DISABLED | CDIS_INDETERMINATE))
     {
@@ -5370,7 +5370,6 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->nOldHit = -1;
     infoPtr->nHotItem = -1;
     infoPtr->hwndNotify = ((LPCREATESTRUCTW)lParam)->hwndParent;
-    infoPtr->bUnicode = IsWindowUnicode (infoPtr->hwndNotify);
     infoPtr->bBtnTranspnt = (dwStyle & (TBSTYLE_FLAT | TBSTYLE_LIST));
     infoPtr->dwDTFlags = (dwStyle & TBSTYLE_LIST) ? DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS: DT_CENTER | DT_END_ELLIPSIS;
     infoPtr->bAnchor = FALSE; /* no anchor highlighting */
@@ -5388,7 +5387,8 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->dwStyle = dwStyle;
     infoPtr->tbim.iButton = -1;
     GetClientRect(hwnd, &infoPtr->client_rect);
-    TOOLBAR_NotifyFormat(infoPtr, (WPARAM)hwnd, (LPARAM)NF_REQUERY);
+    infoPtr->bUnicode = infoPtr->hwndNotify && 
+        (NFR_UNICODE == SendMessageW(hwnd, WM_NOTIFYFORMAT, (WPARAM)hwnd, (LPARAM)NF_REQUERY));
 
     SystemParametersInfoA (SPI_GETICONTITLELOGFONT, 0, &logFont, 0);
     infoPtr->hFont = infoPtr->hDefaultFont = CreateFontIndirectA (&logFont);
@@ -6385,25 +6385,24 @@ TOOLBAR_NotifyFormatFake(HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 TOOLBAR_NotifyFormat(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    INT i;
+    LRESULT format;
 
     TRACE("wParam = 0x%x, lParam = 0x%08lx\n", wParam, lParam);
 
-    if ((lParam == NF_QUERY) && ((HWND)wParam == infoPtr->hwndToolTip))
+    if (lParam == NF_QUERY)
         return NFR_UNICODE;
 
     if (lParam == NF_REQUERY) {
-	i = SendMessageW(infoPtr->hwndNotify,
+	format = SendMessageW(infoPtr->hwndNotify,
 			 WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwndSelf, NF_QUERY);
-	if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
-	    ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n",
-		i);
-	    i = NFR_ANSI;
+	if ((format != NFR_ANSI) && (format != NFR_UNICODE)) {
+	    ERR("wrong response to WM_NOTIFYFORMAT (%ld), assuming ANSI\n",
+		format);
+	    format = NFR_ANSI;
 	}
-	infoPtr->bNtfUnicode = (i == NFR_UNICODE) ? 1 : 0;
-	return (LRESULT)i;
+	return format;
     }
-    return (LRESULT)((infoPtr->bUnicode) ? NFR_UNICODE : NFR_ANSI);
+    return 0;
 }
 
 
