@@ -622,44 +622,56 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
     case EMR_STRETCHDIBITS:
       {
-	LONG xDest = mr->dParm[4];
-	LONG yDest = mr->dParm[5];
-	LONG xSrc = mr->dParm[6];
-	LONG ySrc = mr->dParm[7];
-	LONG cxSrc = mr->dParm[8];
-	LONG cySrc = mr->dParm[9];
-	DWORD offBmiSrc = mr->dParm[10];
-	DWORD offBitsSrc = mr->dParm[12];
-	DWORD iUsageSrc = mr->dParm[14];
-	DWORD dwRop = mr->dParm[15];
-	LONG cxDest = mr->dParm[16];
-	LONG cyDest = mr->dParm[17];
+	EMRSTRETCHDIBITS *pStretchDIBits = (EMRSTRETCHDIBITS *)mr;
 
-	StretchDIBits(hdc,xDest,yDest,cxDest,cyDest,
-			    xSrc,ySrc,cxSrc,cySrc,
-			    ((char *)mr)+offBitsSrc,
-			    (const BITMAPINFO *)(((char *)mr)+offBmiSrc),
-			    iUsageSrc,dwRop);
+	StretchDIBits(hdc,
+		      pStretchDIBits->xDest,
+		      pStretchDIBits->yDest,
+		      pStretchDIBits->cxDest,
+		      pStretchDIBits->cyDest,
+		      pStretchDIBits->xSrc,
+		      pStretchDIBits->ySrc,
+		      pStretchDIBits->cxSrc,
+		      pStretchDIBits->cySrc,
+		      (BYTE *)mr + pStretchDIBits->offBitsSrc,
+		      (const BITMAPINFO *)((BYTE *)mr + pStretchDIBits->offBmiSrc),
+		      pStretchDIBits->iUsageSrc,
+		      pStretchDIBits->dwRop);
 	break;
       }
+
+    case EMR_EXTTEXTOUTA:
+    {
+	PEMREXTTEXTOUTA pExtTextOutA = (PEMREXTTEXTOUTA)mr;
+	RECT rc;
+
+	rc.left = pExtTextOutA->emrtext.rcl.left;
+	rc.top = pExtTextOutA->emrtext.rcl.top;
+	rc.right = pExtTextOutA->emrtext.rcl.right;
+	rc.bottom = pExtTextOutA->emrtext.rcl.bottom;
+	ExtTextOutA(hdc, pExtTextOutA->emrtext.ptlReference.x, pExtTextOutA->emrtext.ptlReference.y,
+	    pExtTextOutA->emrtext.fOptions, &rc,
+	    (LPSTR)((BYTE *)mr + pExtTextOutA->emrtext.offString), pExtTextOutA->emrtext.nChars,
+	    (INT *)((BYTE *)mr + pExtTextOutA->emrtext.offDx));
+	break;
+    }
+
     case EMR_EXTTEXTOUTW:
-      {
-	/* 0-3: rect ??? */
-	DWORD flags = mr->dParm[4];
-	/* 5, 6: ??? */
-	DWORD x = mr->dParm[7], y = mr->dParm[8];
-	DWORD count = mr->dParm[9];
-	LPWSTR str = (LPWSTR)((char *)mr + mr->dParm[10]);
-	/* 11: ??? */
-	/* 12-15: rect ???*/
-	LPINT lpDx = (LPINT)((char *)mr + mr->dParm[16]);
+    {
+	PEMREXTTEXTOUTW pExtTextOutW = (PEMREXTTEXTOUTW)mr;
+	RECT rc;
 
-	FIXME("Some ExtTextOut args not handled\n");
-	ExtTextOutW(hdc, x, y, flags, NULL,
-		      str, count, lpDx);
+	rc.left = pExtTextOutW->emrtext.rcl.left;
+	rc.top = pExtTextOutW->emrtext.rcl.top;
+	rc.right = pExtTextOutW->emrtext.rcl.right;
+	rc.bottom = pExtTextOutW->emrtext.rcl.bottom;
+	ExtTextOutW(hdc, pExtTextOutW->emrtext.ptlReference.x, pExtTextOutW->emrtext.ptlReference.y,
+	    pExtTextOutW->emrtext.fOptions, &rc,
+	    (LPWSTR)((BYTE *)mr + pExtTextOutW->emrtext.offString), pExtTextOutW->emrtext.nChars,
+	    (INT *)((BYTE *)mr + pExtTextOutW->emrtext.offDx));
 	break;
-      }
- 
+    }
+
     case EMR_CREATEPALETTE:
       {
 	PEMRCREATEPALETTE lpCreatePal = (PEMRCREATEPALETTE)mr;
@@ -1168,14 +1180,24 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         break; 
       }
 
+    case EMR_CREATEMONOBRUSH:
+    {
+	PEMRCREATEMONOBRUSH pCreateMonoBrush = (PEMRCREATEMONOBRUSH)mr;
+	BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pCreateMonoBrush->offBmi);
+	HBITMAP hBmp = CreateDIBitmap(0, (BITMAPINFOHEADER *)pbi, CBM_INIT,
+		(BYTE *)mr + pCreateMonoBrush->offBits, pbi, 0);
+	(handletable->objectHandle)[pCreateMonoBrush->ihBrush] = CreatePatternBrush(hBmp);
+	/* CreatePatternBrush created a copy of the bitmap */
+	DeleteObject(hBmp);
+	break;
+    }
+
     case EMR_BITBLT:
     case EMR_STRETCHBLT:
     case EMR_MASKBLT:
     case EMR_PLGBLT:
     case EMR_SETDIBITSTODEVICE:
-    case EMR_EXTTEXTOUTA:
     case EMR_POLYDRAW16:
-    case EMR_CREATEMONOBRUSH:
     case EMR_POLYTEXTOUTA:
     case EMR_POLYTEXTOUTW:
     case EMR_FILLRGN:
