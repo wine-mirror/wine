@@ -2234,7 +2234,7 @@ static LRESULT CALLBACK
 TOOLTIPS_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     TRACE("hwnd=%x msg=%x wparam=%x lParam=%lx\n", hwnd, uMsg, wParam, lParam);
-    if (!(TOOLTIPS_GetInfoPtr(hwnd) && (uMsg != WM_CREATE)))
+    if (!TOOLTIPS_GetInfoPtr(hwnd) && (uMsg != WM_CREATE) && (uMsg != WM_NCCREATE))
         return DefWindowProcA (hwnd, uMsg, wParam, lParam);
     switch (uMsg)
     {
