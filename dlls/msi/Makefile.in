@@ -9,7 +9,9 @@ EXTRALIBS = -luuid $(LIBUNICODE)
 C_SRCS = \
 	action.c \
 	create.c \
+	custom.c \
 	distinct.c \
+	format.c \
 	handle.c \
 	insert.c \
 	msi.c \

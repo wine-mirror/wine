@@ -520,18 +520,6 @@ UINT WINAPI MsiRecordSetStringW( MSIHANDLE handle, unsigned int iField, LPCWSTR 
     return ret;
 }
 
-UINT WINAPI MsiFormatRecordA(MSIHANDLE hInstall, MSIHANDLE hRecord, LPSTR szResult, DWORD *sz)
-{
-    FIXME("%ld %ld %p %p\n", hInstall, hRecord, szResult, sz);
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
-UINT WINAPI MsiFormatRecordW(MSIHANDLE hInstall, MSIHANDLE hRecord, LPWSTR szResult, DWORD *sz)
-{
-    FIXME("%ld %ld %p %p\n", hInstall, hRecord, szResult, sz);
-    return ERROR_CALL_NOT_IMPLEMENTED;
-}
-
 /* read the data in a file into an IStream */
 UINT RECORD_StreamFromFile(LPCWSTR szFile, IStream **pstm)
 {

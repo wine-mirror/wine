@@ -203,6 +203,9 @@ typedef struct tagMSIPACKAGE
     LPWSTR *CommitAction;
     UINT CommitActionCount;
 
+    struct tagMSIRUNNINGACTION *RunningAction;
+    UINT RunningActionCount;
+
     LPWSTR PackagePath;
 } MSIPACKAGE;
 
@@ -329,6 +332,10 @@ extern UINT MSI_SetPropertyW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern UINT MSI_GetComponentStateW(MSIPACKAGE *, LPWSTR, INSTALLSTATE *, INSTALLSTATE *);
 extern UINT MSI_GetFeatureStateW(MSIPACKAGE *, LPWSTR, INSTALLSTATE *, INSTALLSTATE *);
 
+/* for deformating */
+extern UINT MSI_FormatRecordW(MSIPACKAGE* package, MSIRECORD* record, 
+                              LPWSTR buffer, DWORD *size);
+    
 /* registry data encoding/decoding functions */
 BOOL unsquash_guid(LPCWSTR in, LPWSTR out);
 BOOL squash_guid(LPCWSTR in, LPWSTR out);

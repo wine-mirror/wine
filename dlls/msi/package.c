@@ -53,7 +53,6 @@ void MSI_FreePackage( MSIOBJECTHDR *arg)
 {
     MSIPACKAGE *package= (MSIPACKAGE*) arg;
 
-    ACTION_remove_tracked_tempfiles(package);
     ACTION_free_package_structures(package);
 
     msiobj_release( &package->db->hdr );
