@@ -58,6 +58,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pFrameRgn */
     PSDRV_GetCharWidth,              /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
+    NULL,                            /* pGetDeviceGammaRamp */
     NULL,                            /* pGetPixel */
     NULL,                            /* pGetPixelFormat */
     PSDRV_GetTextExtentPoint,        /* pGetTextExtentPoint */
@@ -94,6 +95,7 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     PSDRV_SetBkColor,                /* pSetBkColor */
     NULL,                            /* pSetBkMode */
     PSDRV_SetDeviceClipping,         /* pSetDeviceClipping */
+    NULL,                            /* pSetDeviceGammaRamp */
     NULL,                            /* pSetDIBitsToDevice */
     NULL,                            /* pSetMapMode (optional) */
     NULL,                            /* pSetMapperFlags */

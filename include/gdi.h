@@ -199,6 +199,7 @@ typedef struct tagDC_FUNCS
     BOOL     (*pFrameRgn)(DC*,HRGN,HBRUSH,INT,INT);
     BOOL     (*pGetCharWidth)(DC*,UINT,UINT,LPINT);
     BOOL     (*pGetDCOrgEx)(DC*,LPPOINT);
+    BOOL     (*pGetDeviceGammaRamp)(DC*,LPVOID);
     COLORREF (*pGetPixel)(DC*,INT,INT);
     INT      (*pGetPixelFormat)(DC*);
     BOOL     (*pGetTextExtentPoint)(DC*,LPCWSTR,INT,LPSIZE);
@@ -235,6 +236,7 @@ typedef struct tagDC_FUNCS
     COLORREF (*pSetBkColor)(DC*,COLORREF);
     INT      (*pSetBkMode)(DC*,INT);
     VOID     (*pSetDeviceClipping)(DC*);
+    BOOL     (*pSetDeviceGammaRamp)(DC*,LPVOID);
     INT      (*pSetDIBitsToDevice)(DC*,INT,INT,DWORD,DWORD,INT,INT,UINT,UINT,
 				   LPCVOID,const BITMAPINFO*,UINT);
     INT      (*pSetMapMode)(DC*,INT);

@@ -62,6 +62,7 @@ const DC_FUNCTIONS X11DRV_DC_Funcs =
     NULL,                            /* pFrameRgn */
     X11DRV_GetCharWidth,             /* pGetCharWidth */
     X11DRV_GetDCOrgEx,               /* pGetDCOrgEx */
+    X11DRV_GetDeviceGammaRamp,       /* pGetDeviceGammaRamp */
     X11DRV_GetPixel,                 /* pGetPixel */
     X11DRV_GetPixelFormat,           /* pGetPixelFormat */
     X11DRV_GetTextExtentPoint,       /* pGetTextExtentPoint */
@@ -98,6 +99,7 @@ const DC_FUNCTIONS X11DRV_DC_Funcs =
     X11DRV_SetBkColor,               /* pSetBkColor */
     NULL,                            /* pSetBkMode */
     X11DRV_SetDeviceClipping,        /* pSetDeviceClipping */
+    X11DRV_SetDeviceGammaRamp,       /* pSetDeviceGammaRamp */
     X11DRV_SetDIBitsToDevice,        /* pSetDIBitsToDevice */
     NULL,                            /* pSetMapMode (optional) */
     NULL,                            /* pSetMapperFlags */

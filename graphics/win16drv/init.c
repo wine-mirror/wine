@@ -79,6 +79,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pFrameRgn */
     WIN16DRV_GetCharWidth,           /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
+    NULL,                            /* pGetDeviceGammaRamp */
     NULL,                            /* pGetPixel */
     NULL,                            /* pGetPixelFormat */
     WIN16DRV_GetTextExtentPoint,     /* pGetTextExtentPoint */
@@ -115,6 +116,7 @@ static const DC_FUNCTIONS WIN16DRV_Funcs =
     NULL,                            /* pSetBkColor */
     NULL,                            /* pSetBkMode */
     NULL,                            /* pSetDeviceClipping */
+    NULL,                            /* pSetDeviceGammaRamp */
     NULL,                            /* pSetDIBitsToDevice */
     NULL,                            /* pSetMapMode */
     NULL,                            /* pSetMapperFlags */

@@ -1285,9 +1285,35 @@ INT WINAPI SetICMMode(HDC hdc, INT iEnableICM)
 /***********************************************************************
  *           GetDeviceGammaRamp    (GDI32.@)
  */
-BOOL WINAPI GetDeviceGammaRamp(HDC hdc,LPVOID ptr) {
-    FIXME("(%x,%p), empty stub!\n",hdc,ptr);
-    return FALSE;
+BOOL WINAPI GetDeviceGammaRamp(HDC hDC, LPVOID ptr)
+{
+    BOOL ret = FALSE;
+    DC *dc = DC_GetDCPtr( hDC );
+
+    if( dc )
+    {
+	if (dc->funcs->pGetDeviceGammaRamp)
+	    ret = dc->funcs->pGetDeviceGammaRamp(dc, ptr);
+	GDI_ReleaseObj( hDC );
+    }
+    return ret;
+}
+
+/***********************************************************************
+ *           SetDeviceGammaRamp    (GDI32.@)
+ */
+BOOL WINAPI SetDeviceGammaRamp(HDC hDC, LPVOID ptr)
+{
+    BOOL ret = FALSE;
+    DC *dc = DC_GetDCPtr( hDC );
+
+    if( dc )
+    {
+	if (dc->funcs->pSetDeviceGammaRamp)
+	    ret = dc->funcs->pSetDeviceGammaRamp(dc, ptr);
+	GDI_ReleaseObj( hDC );
+    }
+    return ret;
 }
 
 /***********************************************************************

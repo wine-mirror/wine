@@ -53,6 +53,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_FrameRgn,                 /* pFrameRgn */
     NULL,                            /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
+    NULL,                            /* pGetDeviceGammaRamp */
     NULL, /* no implementation */    /* pGetPixel */
     NULL,                            /* pGetPixelFormat */
     NULL,                            /* pGetTextExtentPoint */
@@ -89,6 +90,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_SetBkColor,               /* pSetBkColor */
     EMFDRV_SetBkMode,                /* pSetBkMode */
     NULL,                            /* pSetDeviceClipping */
+    NULL,                            /* pSetDeviceGammaRamp */
     NULL,                            /* pSetDIBitsToDevice */
     EMFDRV_SetMapMode,               /* pSetMapMode */
     EMFDRV_SetMapperFlags,           /* pSetMapperFlags */

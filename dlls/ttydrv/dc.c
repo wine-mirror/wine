@@ -54,6 +54,7 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   NULL,                /* pFrameRgn */
   TTYDRV_DC_GetCharWidth, /* pGetCharWidth */
   NULL,                /* pGetDCOrgEx */
+  NULL,                /* pGetDeviceGammaRamp */
   TTYDRV_DC_GetPixel,  /* pGetPixel */
   NULL,                /* pGetPixelFormat */
   TTYDRV_DC_GetTextExtentPoint, /* pGetTextExtentPoint */
@@ -90,6 +91,7 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   TTYDRV_DC_SetBkColor, /* pSetBkColor */
   NULL,                /* pSetBkMode */
   TTYDRV_DC_SetDeviceClipping, /* pSetDeviceClipping */
+  NULL,                /* pSetDeviceGammaRamp */
   TTYDRV_DC_SetDIBitsToDevice, /* pSetDIBitsToDevice */
   NULL,                /* pSetMapMode (optional) */
   NULL,                /* pSetMapperFlags */

@@ -53,6 +53,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_FrameRgn,                  /* pFrameRgn */
     NULL,                            /* pGetCharWidth */
     NULL,                            /* pGetDCOrgEx */
+    NULL,                            /* pGetDeviceGammaRamp */
     NULL, /* no implementation */    /* pGetPixel */
     NULL,                            /* pGetPixelFormat */
     NULL,                            /* pGetTextExtentPoint */
@@ -89,6 +90,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_SetBkColor,                /* pSetBkColor */
     MFDRV_SetBkMode,                 /* pSetBkMode */
     NULL,                            /* pSetDeviceClipping */
+    NULL,                            /* pSetDeviceGammaRamp */
     MFDRV_SetDIBitsToDevice,         /* pSetDIBitsToDevice */
     MFDRV_SetMapMode,                /* pSetMapMode */
     MFDRV_SetMapperFlags,            /* pSetMapperFlags */
