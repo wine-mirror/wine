@@ -153,6 +153,7 @@ typedef struct tagLISTVIEW_INFO
   PFNLVCOMPARE pfnCompare;
   LPARAM lParamSort;
   HWND hwndEdit;
+  BOOL Editing;
   INT nEditLabelItem;
   EDITLABEL_ITEM *pedititem;
   DWORD dwHoverTime;
@@ -3247,7 +3248,7 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
   }
 
   /* Don't bother painting item being edited */
-  if (infoPtr->hwndEdit && lvItem.state & LVIS_FOCUSED && !FullSelect)
+  if (infoPtr->Editing && lvItem.state & LVIS_FOCUSED && !FullSelect)
       return;
 
   if ((lvItem.state & LVIS_SELECTED) && (infoPtr->bFocus != FALSE))
@@ -3457,7 +3458,7 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
   /* Draw the text below the icon */
 
   /* Don't bother painting item being edited */
-  if ((infoPtr->hwndEdit && (lvItem.state & LVIS_FOCUSED)) ||
+  if ((infoPtr->Editing && (lvItem.state & LVIS_FOCUSED)) ||
       !lstrlenW(lvItem.pszText))
   {
     SetRectEmpty(SuggestedFocus);
@@ -4451,7 +4452,7 @@ static BOOL LISTVIEW_EndEditLabelT(HWND hwnd, LPWSTR pszText, DWORD nItem, BOOL 
   dispInfo.item.cchTextMax = textlenT(pszText, isW);
   dispInfo.item.iImage = lpItem->iImage;
   dispInfo.item.lParam = lpItem->lParam;
-  infoPtr->hwndEdit = 0;
+  infoPtr->Editing = FALSE;
 
   /* Do we need to update the Item Text */
   if(dispinfo_notifyT(hwnd, LVN_ENDLABELEDITW, &dispInfo, isW))
@@ -4529,7 +4530,10 @@ static HWND LISTVIEW_EditLabelT(HWND hwnd, INT nItem, BOOL isW)
 
   /* Is the EditBox still there, if so remove it */
   if(infoPtr->hwndEdit != 0)
+  {
       SetFocus(hwnd);
+      infoPtr->hwndEdit = 0;
+  }
 
   LISTVIEW_SetSelection(hwnd, nItem);
   LISTVIEW_SetItemFocus(hwnd, nItem);
@@ -4591,10 +4595,12 @@ static HWND LISTVIEW_EditLabelT(HWND hwnd, INT nItem, BOOL isW)
 	 return 0;
 
   infoPtr->hwndEdit = hedit;
-  SetFocus(hedit);
-  SendMessageW(hedit, EM_SETSEL, 0, -1);
 
-  return hedit;
+  ShowWindow(infoPtr->hwndEdit,SW_NORMAL);
+  infoPtr->Editing = TRUE;
+  SetFocus(infoPtr->hwndEdit);
+  SendMessageW(infoPtr->hwndEdit, EM_SETSEL, 0, -1);
+  return infoPtr->hwndEdit;
 }
 
 
@@ -8220,6 +8226,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, LPCREATESTRUCTW lpcs)
   infoPtr->iconSpacing.cy = GetSystemMetrics(SM_CYICONSPACING);
   ZeroMemory(&infoPtr->rcList, sizeof(RECT));
   infoPtr->hwndEdit = 0;
+  infoPtr->Editing = FALSE;
   infoPtr->pedititem = NULL;
   infoPtr->nEditLabelItem = -1;
   infoPtr->bIsDrawing = FALSE;
@@ -9643,7 +9650,7 @@ static INT LISTVIEW_StyleChanged(HWND hwnd, WPARAM wStyleType,
      we will need to kill the control since the redraw will
      misplace the edit control.
    */
-  if (infoPtr->hwndEdit &&
+  if (infoPtr->Editing &&
         ((uNewView & (LVS_ICON|LVS_LIST|LVS_SMALLICON)) !=
         ((LVS_ICON|LVS_LIST|LVS_SMALLICON) & uOldView)))
   {
