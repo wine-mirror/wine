@@ -1,0 +1,4 @@
+Makefile
+rsrc.res
+winefile.exe.dbg.c
+winefile.exe.spec.c

@@ -22,6 +22,7 @@ SUBDIRS = \
 	view \
 	wcmd \
 	wineconsole \
+	winefile \
 	winemine \
 	winepath \
 	winetest \
@@ -40,6 +41,7 @@ INSTALLPROGS = \
 	wcmd \
 	wineconsole \
 	winedbg \
+	winefile \
 	winemine \
 	winepath \
 	winhelp

@@ -1,0 +1,18 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = winefile.exe
+APPMODE   = gui
+IMPORTS   = shell32 comctl32 user32 gdi32 kernel32
+
+C_SRCS = \
+	license.c \
+	splitpath.c \
+	winefile.c
+
+RC_SRCS = rsrc.rc
+
+@MAKE_PROG_RULES@
+
+### Dependencies:
