@@ -5768,6 +5768,7 @@ static INT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL s
     POINT Origin, Position, opt;
     LVITEMW lvItem;
     ITERATOR i;
+    INT iItem;
     
     TRACE("(pt=%s, subitem=%d, select=%d)\n", debugpoint(&lpht->pt), subitem, select);
     
@@ -5800,17 +5801,17 @@ static INT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL s
     
     iterator_frameditems(&i, infoPtr, &rcSearch);
     iterator_next(&i); /* go to first item in the sequence */
-    lpht->iItem = i.nItem;
+    iItem = i.nItem;
     iterator_destroy(&i);
    
-    TRACE("lpht->iItem=%d\n", lpht->iItem); 
-    if (lpht->iItem == -1) return -1;
+    TRACE("lpht->iItem=%d\n", iItem); 
+    if (iItem == -1) return -1;
 
     lvItem.mask = LVIF_STATE | LVIF_TEXT;
     if (uView == LVS_REPORT) lvItem.mask |= LVIF_INDENT;
     lvItem.stateMask = LVIS_STATEIMAGEMASK;
     if (uView == LVS_ICON) lvItem.stateMask |= LVIS_FOCUSED;
-    lvItem.iItem = lpht->iItem;
+    lvItem.iItem = iItem;
     lvItem.iSubItem = 0;
     lvItem.pszText = szDispText;
     lvItem.cchTextMax = DISP_TEXT_SIZE;
@@ -5818,11 +5819,11 @@ static INT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL s
     if (!infoPtr->bFocus) lvItem.state &= ~LVIS_FOCUSED; 
     
     LISTVIEW_GetItemMetrics(infoPtr, &lvItem, &rcBox, &rcState, &rcIcon, &rcLabel);
-    LISTVIEW_GetItemOrigin(infoPtr, lpht->iItem, &Position);
+    LISTVIEW_GetItemOrigin(infoPtr, iItem, &Position);
     opt.x = lpht->pt.x - Position.x - Origin.x;
     opt.y = lpht->pt.y - Position.y - Origin.y;
     
-    if (uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT))
+    if (uView == LVS_REPORT)
 	rcBounds = rcBox;
     else
 	UnionRect(&rcBounds, &rcIcon, &rcLabel);
@@ -5839,7 +5840,7 @@ static INT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL s
 	lpht->flags &= ~LVHT_NOWHERE;
    
     TRACE("lpht->flags=0x%x\n", lpht->flags); 
-    if (uView == LVS_REPORT && lpht->iItem != -1 && subitem)
+    if (uView == LVS_REPORT && subitem)
     {
   	INT j;
 
@@ -5856,12 +5857,12 @@ static INT LISTVIEW_HitTest(LISTVIEW_INFO *infoPtr, LPLVHITTESTINFO lpht, BOOL s
 	}
     }
 
-    if (!select || lpht->iItem == -1) return lpht->iItem;
-
-    if (uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)) return lpht->iItem;
-    
-    if (uView == LVS_REPORT) UnionRect(&rcBounds, &rcIcon, &rcLabel);
-    return PtInRect(&rcBounds, opt) ? lpht->iItem : -1;
+    if (select && !(uView == LVS_REPORT && (infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT)))
+    {
+        if (uView == LVS_REPORT) UnionRect(&rcBounds, &rcIcon, &rcLabel);
+        if (!PtInRect(&rcBounds, opt)) iItem = -1;
+    }
+    return lpht->iItem = iItem;
 }
 
 
