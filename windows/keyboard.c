@@ -715,16 +715,6 @@ INT16 WINAPI GetKBCodePage16(void)
 }
 
 /****************************************************************************
- *	GetKeyboardLayoutName16   (USER.477)
- */
-INT16 WINAPI GetKeyboardLayoutName16(LPSTR pwszKLID)
-{
-	FIXME(keyboard,"always returns primary U.S. English layout\n");
-	strcpy(pwszKLID,"00000409");
-	return 1;
-}
-
-/****************************************************************************
  *	GetKeyNameText16   (KEYBOARD.133)
  */
 INT16 WINAPI GetKeyNameText16(LONG lParam, LPSTR lpBuffer, INT16 nSize)

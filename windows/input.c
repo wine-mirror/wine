@@ -719,11 +719,21 @@ UINT32 WINAPI GetKBCodePage32(void)
 }
 
 /****************************************************************************
+ *      GetKeyboardLayoutName16   (USER.477)
+ */
+INT16 WINAPI GetKeyboardLayoutName16(LPSTR pwszKLID)
+{
+	return GetKeyboardLayoutName32A(pwszKLID);
+}
+
+/****************************************************************************
  *	GetKeyboardLayoutName32A   (USER32.252)
  */
 INT32 WINAPI GetKeyboardLayoutName32A(LPSTR pwszKLID)
 {
-	return GetKeyboardLayoutName16(pwszKLID);
+        FIXME(keyboard,"always returns primary U.S. English layout\n");
+        strcpy(pwszKLID,"00000409");
+        return 1;
 }
 
 /****************************************************************************
