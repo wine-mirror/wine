@@ -213,6 +213,9 @@ static BOOL initialize(void)
 static void cleanup(void)
 {
     DDHAL_DESTROYDRIVERDATA data;
+
+    if (!dd_cbs.HALDD.DestroyDriver) return;
+
     data.lpDD = NULL;
     data.ddRVal = 0;
     data.DestroyDriver = dd_cbs.HALDD.DestroyDriver;

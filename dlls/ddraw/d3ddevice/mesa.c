@@ -4212,6 +4212,12 @@ d3ddevice_init_at_startup(void *gl_handle)
     int major, minor, patch, num_parsed;
     
     TRACE("Initializing GL...\n");
+
+    if (!drawable)
+    {
+        WARN("x11drv not loaded - D3D support disabled!\n");
+        return FALSE;
+    }
     
     /* Get a default rendering context to have the 'caps' function query some info from GL */    
     device_context = GetDC(0);
