@@ -50,6 +50,7 @@ extern int (*__wine_dbg_vlog)( int cls, const char *channel,
                                const char *function, const char *format, va_list args );
 
 extern void wine_dbg_add_option( const char *name, unsigned char set, unsigned char clear );
+extern int wine_dbg_parse_options( const char *str );
 
 /* portability */
 

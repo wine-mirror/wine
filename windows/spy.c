@@ -2292,44 +2292,37 @@ int SPY_Init(void)
     if (!TRACE_ON(message)) return TRUE;
 
     indent_tls_index = TlsAlloc();
-    buffer[0] = 0;
-    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Spy", &hkey))
+    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Debug", &hkey))
     {
-	DWORD type, count = sizeof(buffer);
-	RegQueryValueExA(hkey, "Include", 0, &type, buffer, &count);
-	RegCloseKey(hkey);
-    }
-    if (buffer[0] && strcmp( buffer, "INCLUDEALL" ))
-    {
-        TRACE("Include=%s\n", buffer );
-        for (i = 0; i <= SPY_MAX_MSGNUM; i++)
-            SPY_Exclude[i] = (MessageTypeNames[i] && !strstr(buffer,MessageTypeNames[i]));
-    }
+        DWORD type, count = sizeof(buffer);
 
-    buffer[0] = 0;
-    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Spy", &hkey))
-    {
-	DWORD type, count = sizeof(buffer);
-	RegQueryValueExA(hkey, "Exclude", 0, &type, buffer, &count);
-	RegCloseKey(hkey);
-    }
-    if (buffer[0])
-    {
-        TRACE("Exclude=%s\n", buffer );
-        if (!strcmp( buffer, "EXCLUDEALL" ))
-            for (i = 0; i <= SPY_MAX_MSGNUM; i++) SPY_Exclude[i] = TRUE;
-        else
+        buffer[0] = 0;
+        if (!RegQueryValueExA(hkey, "SpyInclude", 0, &type, buffer, &count) &&
+            strcmp( buffer, "INCLUDEALL" ))
+        {
+            TRACE("Include=%s\n", buffer );
             for (i = 0; i <= SPY_MAX_MSGNUM; i++)
-                SPY_Exclude[i] = (MessageTypeNames[i] && strstr(buffer,MessageTypeNames[i]));
-    }
+                SPY_Exclude[i] = (MessageTypeNames[i] && !strstr(buffer,MessageTypeNames[i]));
+        }
 
-    SPY_ExcludeDWP = 0;
-    if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Spy", &hkey))
-    {
-	DWORD type, count = sizeof(buffer);
-	if(!RegQueryValueExA(hkey, "ExcludeDWP", 0, &type, buffer, &count))
-	    SPY_ExcludeDWP = atoi(buffer);
-	RegCloseKey(hkey);
+        count = sizeof(buffer);
+        buffer[0] = 0;
+        if (!RegQueryValueExA(hkey, "SpyExclude", 0, &type, buffer, &count))
+        {
+            TRACE("Exclude=%s\n", buffer );
+            if (!strcmp( buffer, "EXCLUDEALL" ))
+                for (i = 0; i <= SPY_MAX_MSGNUM; i++) SPY_Exclude[i] = TRUE;
+            else
+                for (i = 0; i <= SPY_MAX_MSGNUM; i++)
+                    SPY_Exclude[i] = (MessageTypeNames[i] && strstr(buffer,MessageTypeNames[i]));
+        }
+
+        SPY_ExcludeDWP = 0;
+        count = sizeof(buffer);
+        if(!RegQueryValueExA(hkey, "SpyExcludeDWP", 0, &type, buffer, &count))
+            SPY_ExcludeDWP = atoi(buffer);
+
+        RegCloseKey(hkey);
     }
 
     /* find last good entry in spy notify array and save addr for b-search */

@@ -83,104 +83,14 @@ static void do_version( const char *arg )
 
 static void do_debugmsg( const char *arg )
 {
-    static const char * const debug_class_names[__WINE_DBCL_COUNT] = { "fixme", "err", "warn", "trace" };
-
-    char *opt, *options = strdup(arg);
-    int i;
-    /* defined in relay32/relay386.c */
-    extern char **debug_relay_includelist;
-    extern char **debug_relay_excludelist;
-    /* defined in relay32/snoop.c */
-    extern char **debug_snoop_includelist;
-    extern char **debug_snoop_excludelist;
-
-    if (!(opt = strtok( options, "," ))) goto error;
-    do
+    if (wine_dbg_parse_options( arg ))
     {
-        unsigned char set = 0, clear = 0;
-        char *p = strchr( opt, '+' );
-        if (!p) p = strchr( opt, '-' );
-        if (!p || !p[1]) goto error;
-        if (p > opt)
-        {
-            for (i = 0; i < __WINE_DBCL_COUNT; i++)
-            {
-                int len = strlen(debug_class_names[i]);
-                if (len != (p - opt)) continue;
-                if (!memcmp( opt, debug_class_names[i], len ))  /* found it */
-                {
-                    if (*p == '+') set |= 1 << i;
-                    else clear |= 1 << i;
-                    break;
-                }
-            }
-            if (i == __WINE_DBCL_COUNT) goto error;  /* class name not found */
-        }
-        else
-        {
-            if (*p == '+') set = ~0;
-            else clear = ~0;
-	    if (!strncasecmp(p+1, "relay=", 6) ||
-		!strncasecmp(p+1, "snoop=", 6))
-		{
-		    int i, l;
-		    char *s, *s2, ***output, c;
-
-		    if (strchr(p,','))
-			l=strchr(p,',')-p;
-		    else
-			l=strlen(p);
-		    set = ~0;
-		    clear = 0;
-		    output = (*p == '+') ?
-			((*(p+1) == 'r') ?
-			 &debug_relay_includelist :
-			 &debug_snoop_includelist) :
-			((*(p+1) == 'r') ?
-			 &debug_relay_excludelist :
-			 &debug_snoop_excludelist);
-		    s = p + 7;
-		    /* if there are n ':', there are n+1 modules, and we need
-                       n+2 slots, last one being for the sentinel (NULL) */
-		    i = 2;
-		    while((s = strchr(s, ':'))) i++, s++;
-		    *output = malloc(sizeof(char **) * i);
-		    i = 0;
-		    s = p + 7;
-		    while((s2 = strchr(s, ':'))) {
-			c = *s2;
-			*s2 = '\0';
-			*((*output)+i) = _strupr(strdup(s));
-			*s2 = c;
-			s = s2 + 1;
-			i++;
-		    }
-		    c = *(p + l);
-		    *(p + l) = '\0';
-		    *((*output)+i) = _strupr(strdup(s));
-		    *(p + l) = c;
-		    *((*output)+i+1) = NULL;
-		    *(p + 6) = '\0';
-		}
-        }
-        p++;
-        if (!strcmp( p, "all" )) p = "";  /* empty string means all */
-        wine_dbg_add_option( p, set, clear );
-        opt = strtok( NULL, "," );
-    } while(opt);
-
-    free( options );
-    return;
-
- error:
-    MESSAGE("wine: Syntax: --debugmsg [class]+xxx,...  or "
-            "-debugmsg [class]-xxx,...\n");
-    MESSAGE("Example: --debugmsg +all,warn-heap\n"
-            "  turn on all messages except warning heap messages\n");
-    MESSAGE("Available message classes:\n");
-    for( i = 0; i < __WINE_DBCL_COUNT; i++) MESSAGE( "%-9s", debug_class_names[i] );
-    MESSAGE("\n\n");
-    ExitProcess(1);
+        MESSAGE("%s: Syntax: --debugmsg [class]+xxx,...  or -debugmsg [class]-xxx,...\n", argv0);
+        MESSAGE("Example: --debugmsg +all,warn-heap\n"
+                "  turn on all messages except warning heap messages\n");
+        MESSAGE("Available message classes: err, warn, fixme, trace\n\n");
+        ExitProcess(1);
+    }
 }
 
 

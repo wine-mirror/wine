@@ -53,6 +53,7 @@ struct debug_option
 static struct debug_option *first_option;
 static struct debug_option *last_option;
 
+static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
 
 static int cmp_name( const void *p1, const void *p2 )
 {
@@ -140,6 +141,57 @@ void wine_dbg_add_option( const char *name, unsigned char set, unsigned char cle
     }
 }
 
+/* parse a set of debugging option specifications and add them to the option list */
+int wine_dbg_parse_options( const char *str )
+{
+    char *p, *opt, *next, *options;
+    int i, errors = 0;
+
+    if (!(options = strdup(str))) return -1;
+    for (opt = options; opt; opt = next)
+    {
+        unsigned char set = 0, clear = 0;
+
+        if ((next = strchr( opt, ',' ))) *next++ = 0;
+
+        p = opt + strcspn( opt, "+-" );
+        if (!p[0] || !p[1])  /* bad option, skip it */
+        {
+            errors++;
+            continue;
+        }
+
+        if (p > opt)
+        {
+            for (i = 0; i < sizeof(debug_classes)/sizeof(debug_classes[0]); i++)
+            {
+                int len = strlen(debug_classes[i]);
+                if (len != (p - opt)) continue;
+                if (!memcmp( opt, debug_classes[i], len ))  /* found it */
+                {
+                    if (*p == '+') set |= 1 << i;
+                    else clear |= 1 << i;
+                    break;
+                }
+            }
+            if (i == sizeof(debug_classes)/sizeof(debug_classes[0])) /* bad class name, skip it */
+            {
+                errors++;
+                continue;
+            }
+        }
+        else
+        {
+            if (*p == '+') set = ~0;
+            else clear = ~0;
+        }
+        p++;
+        if (!strcmp( p, "all" )) p = "";  /* empty string means all */
+        wine_dbg_add_option( p, set, clear );
+    }
+    free( options );
+    return errors;
+}
 
 /* varargs wrapper for __wine_dbg_vprintf */
 int wine_dbg_printf( const char *format, ... )
@@ -318,11 +370,10 @@ static int default_dbg_vprintf( const char *format, va_list args )
 static int default_dbg_vlog( int cls, const char *channel, const char *func,
                              const char *format, va_list args )
 {
-    static const char * const classes[] = { "fixme", "err", "warn", "trace" };
     int ret = 0;
 
-    if (cls < sizeof(classes)/sizeof(classes[0]))
-        ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel + 1, func );
+    if (cls < sizeof(debug_classes)/sizeof(debug_classes[0]))
+        ret += wine_dbg_printf( "%s:%s:%s ", debug_classes[cls], channel + 1, func );
     if (format)
         ret += __wine_dbg_vprintf( format, args );
     return ret;

@@ -42,7 +42,8 @@ static WINE_EXCEPTION_FILTER(page_fault)
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
-char **debug_snoop_excludelist = NULL, **debug_snoop_includelist = NULL;
+extern const char **debug_snoop_excludelist;
+extern const char **debug_snoop_includelist;
 
 #ifdef __i386__
 
@@ -113,7 +114,7 @@ static	SNOOP_RETURNENTRIES 	*firstrets = NULL;
 int SNOOP_ShowDebugmsgSnoop(const char *dll, int ord, const char *fname) {
 
   if(debug_snoop_excludelist || debug_snoop_includelist) {
-    char **listitem;
+    const char **listitem;
     char buf[80];
     int len, len2, itemlen, show;
 

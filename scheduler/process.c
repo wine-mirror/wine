@@ -46,6 +46,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(process);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
+WINE_DECLARE_DEBUG_CHANNEL(snoop);
 WINE_DECLARE_DEBUG_CHANNEL(win32);
 
 struct _ENVDB;
@@ -126,6 +127,7 @@ extern STARTUPINFOA current_startupinfo;
 /* scheduler/pthread.c */
 extern void PTHREAD_init_done(void);
 
+extern void RELAY_InitDebugLists(void);
 extern BOOL MAIN_MainInit(void);
 
 typedef WORD (WINAPI *pUserSignalProc)( UINT, DWORD, DWORD, HMODULE16 );
@@ -430,6 +432,7 @@ static BOOL process_init( char *argv[] )
     OPTIONS_ParseOptions( !info_size ? argv : NULL );
 
     ret = MAIN_MainInit();
+    if (TRACE_ON(relay) || TRACE_ON(snoop)) RELAY_InitDebugLists();
 
     return ret;
 }

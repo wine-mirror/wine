@@ -140,9 +140,48 @@ DWORD WINAPI CALL32_CBClientEx( FARPROC proc, LPWORD args, DWORD *esi, INT *nArg
 #endif
 
 
-/* from relay32/relay386.c */
-extern char **debug_relay_excludelist,**debug_relay_includelist;
-extern int RELAY_ShowDebugmsgRelay(const char *func);
+/***********************************************************************
+ *           RELAY_ShowDebugmsgRelay
+ *
+ * Simple function to decide if a particular debugging message is
+ * wanted.
+ */
+static int RELAY_ShowDebugmsgRelay(const char *func)
+{
+  /* from relay32/relay386.c */
+  extern const char **debug_relay_excludelist,**debug_relay_includelist;
+
+  if(debug_relay_excludelist || debug_relay_includelist) {
+    const char *term = strchr(func, ':');
+    const char **listitem;
+    int len, len2, itemlen, show;
+
+    if(debug_relay_excludelist) {
+      show = 1;
+      listitem = debug_relay_excludelist;
+    } else {
+      show = 0;
+      listitem = debug_relay_includelist;
+    }
+    assert(term);
+    assert(strlen(term) > 2);
+    len = term - func;
+    len2 = strchr(func, '.') - func;
+    assert(len2 && len2 > 0 && len2 < 64);
+    term += 2;
+    for(; *listitem; listitem++) {
+      itemlen = strlen(*listitem);
+      if((itemlen == len && !strncasecmp(*listitem, func, len)) ||
+         (itemlen == len2 && !strncasecmp(*listitem, func, len2)) ||
+         !strcasecmp(*listitem, term)) {
+        show = !show;
+       break;
+      }
+    }
+    return show;
+  }
+  return 1;
+}
 
 
 /***********************************************************************

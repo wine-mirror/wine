@@ -201,8 +201,11 @@ WINE REGISTRY Version 2
 ;"read"  = "0x779,0x379,0x280-0x2a0"
 ;"write" = "0x779,0x379,0x280-0x2a0"
 
-[spy]
-"Exclude" = "WM_SIZE;WM_TIMER;"
+[Debug]
+;"RelayExclude" = "RtlEnterCriticalSection;RtlLeaveCriticalSection"
+;"RelayInclude" = "user32.CreateWindowA"
+;"SnoopExclude" = "RtlEnterCriticalSection;RtlLeaveCriticalSection"
+;"SpyExclude" = "WM_SIZE;WM_TIMER;"
 
 [registry]
 ;These are all booleans.  Y/y/T/t/1 are true, N/n/F/f/0 are false.

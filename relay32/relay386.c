@@ -26,52 +26,97 @@
 #include <stdio.h>
 
 #include "winnt.h"
+#include "winreg.h"
 #include "stackframe.h"
 #include "module.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
+WINE_DECLARE_DEBUG_CHANNEL(snoop);
 
-char **debug_relay_excludelist = NULL, **debug_relay_includelist = NULL;
+const char **debug_relay_excludelist = NULL;
+const char **debug_relay_includelist = NULL;
+const char **debug_snoop_excludelist = NULL;
+const char **debug_snoop_includelist = NULL;
 
 /***********************************************************************
- *           RELAY_ShowDebugmsgRelay
+ *           build_list
  *
- * Simple function to decide if a particular debugging message is
- * wanted.  Called from RELAY_CallFrom32 and from in if1632/relay.c
+ * Build a function list from a ';'-separated string.
  */
-int RELAY_ShowDebugmsgRelay(const char *func) {
+static const char **build_list( const char *buffer )
+{
+    int count = 1;
+    const char *p = buffer;
+    const char **ret;
 
-  if(debug_relay_excludelist || debug_relay_includelist) {
-    const char *term = strchr(func, ':');
-    char **listitem;
-    int len, len2, itemlen, show;
+    while ((p = strchr( p, ';' )))
+    {
+        count++;
+        p++;
+    }
+    /* allocate count+1 pointers, plus the space for a copy of the string */
+    if ((ret = HeapAlloc( GetProcessHeap(), 0, (count+1) * sizeof(char*) + strlen(buffer) + 1 )))
+    {
+        char *str = (char *)(ret + count + 1);
+        char *p = str;
 
-    if(debug_relay_excludelist) {
-      show = 1;
-      listitem = debug_relay_excludelist;
-    } else {
-      show = 0;
-      listitem = debug_relay_includelist;
+        strcpy( str, buffer );
+        count = 0;
+        for (;;)
+        {
+            ret[count++] = p;
+            if (!(p = strchr( p, ';' ))) break;
+            *p++ = 0;
+        }
+        ret[count++] = NULL;
     }
-    assert(term);
-    assert(strlen(term) > 2);
-    len = term - func;
-    len2 = strchr(func, '.') - func;
-    assert(len2 && len2 > 0 && len2 < 64);
-    term += 2;
-    for(; *listitem; listitem++) {
-      itemlen = strlen(*listitem);
-      if((itemlen == len && !strncasecmp(*listitem, func, len)) ||
-         (itemlen == len2 && !strncasecmp(*listitem, func, len2)) ||
-         !strcasecmp(*listitem, term)) {
-        show = !show;
-       break;
-      }
+    return ret;
+}
+
+
+/***********************************************************************
+ *           RELAY_InitDebugLists
+ *
+ * Build the relay include/exclude function lists.
+ */
+void RELAY_InitDebugLists(void)
+{
+    char buffer[1024];
+    HKEY hkey;
+    DWORD count, type;
+
+    if (RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\Debug", &hkey )) return;
+
+    count = sizeof(buffer);
+    if (!RegQueryValueExA( hkey, "RelayInclude", NULL, &type, buffer, &count ))
+    {
+        TRACE("RelayInclude = %s\n", buffer );
+        debug_relay_includelist = build_list( buffer );
     }
-    return show;
-  }
-  return 1;
+
+    count = sizeof(buffer);
+    if (!RegQueryValueExA( hkey, "RelayExclude", NULL, &type, buffer, &count ))
+    {
+        TRACE( "RelayExclude = %s\n", buffer );
+        debug_relay_excludelist = build_list( buffer );
+    }
+
+    count = sizeof(buffer);
+    if (!RegQueryValueExA( hkey, "SnoopInclude", NULL, &type, buffer, &count ))
+    {
+        TRACE_(snoop)( "SnoopInclude = %s\n", buffer );
+        debug_snoop_includelist = build_list( buffer );
+    }
+
+    count = sizeof(buffer);
+    if (!RegQueryValueExA( hkey, "SnoopExclude", NULL, &type, buffer, &count ))
+    {
+        TRACE_(snoop)( "SnoopExclude = %s\n", buffer );
+        debug_snoop_excludelist = build_list( buffer );
+    }
+
+    RegCloseKey( hkey );
 }
 
 
@@ -86,6 +131,45 @@ typedef struct
     void         *orig;                    /* original entry point */
     DWORD         argtypes;                /* argument types */
 } DEBUG_ENTRY_POINT;
+
+
+/***********************************************************************
+ *           check_relay_include
+ *
+ * Check if a given function must be included in the relay output.
+ */
+static BOOL check_relay_include( const char *module, const char *func )
+{
+    const char **listitem;
+    BOOL show;
+
+    if (!debug_relay_excludelist && !debug_relay_includelist) return TRUE;
+    if (debug_relay_excludelist)
+    {
+        show = TRUE;
+        listitem = debug_relay_excludelist;
+    }
+    else
+    {
+        show = FALSE;
+        listitem = debug_relay_includelist;
+    }
+    for(; *listitem; listitem++)
+    {
+        char *p = strchr( *listitem, '.' );
+        if (p && p > *listitem)  /* check module and function */
+        {
+            int len = p - *listitem;
+            if (strncasecmp( *listitem, module, len-1 ) || module[len]) continue;
+            if (!strcmp( p + 1, func )) return !show;
+        }
+        else  /* function only */
+        {
+            if (!strcmp( *listitem, func )) return !show;
+        }
+    }
+    return show;
+}
 
 
 /***********************************************************************
@@ -430,11 +514,7 @@ void RELAY_SetupDLL( const char *module )
         if (debug->call != 0xe8 && debug->call != 0xe9) break; /* not a debug thunk at all */
 
         if ((name = find_exported_name( module, exports, i + exports->Base )))
-        {
-            char buffer[200];
-            sprintf( buffer, "%s.%d: %s", dllname, i, name );
-            on = RELAY_ShowDebugmsgRelay(buffer);
-        }
+            on = check_relay_include( dllname, name );
 
         if (on)
         {
