@@ -1855,7 +1855,7 @@ static BOOL MENU_SetItemData( MENUITEM *item, UINT flags, UINT id,
 
     if (IS_STRING_ITEM(flags))
     {
-        if (!str || !*str)
+        if (!str)
         {
             flags |= MF_SEPARATOR;
             item->text = NULL;
