@@ -670,18 +670,16 @@ static void _wine_loadreg( HKEY hkey, char *fn )
 #define MAP_FAILED ((LPVOID)-1)
 #endif
 
-#define LONG_DUMP 1
+#define  NT_REG_BLOCK_SIZE		0x1000
 
-#define  REG_BLOCK_SIZE		0x1000
-
-#define  REG_HEADER_BLOCK_ID	0x66676572	/* regf */
-#define  REG_POOL_BLOCK_ID	0x6E696268	/* hbin */
-#define  REG_KEY_BLOCK_ID	0x6b6e
-#define	 REG_VALUE_BLOCK_ID	0x6b76
-#define	 REG_HASH_BLOCK_ID	0x666c
-#define  REG_NOHASH_BLOCK_ID	0x696c
-#define  REG_KEY_BLOCK_TYPE	0x20
-#define  REG_ROOT_KEY_BLOCK_TYPE	0x2c
+#define NT_REG_HEADER_BLOCK_ID       0x66676572	/* regf */
+#define NT_REG_POOL_BLOCK_ID         0x6E696268	/* hbin */
+#define NT_REG_KEY_BLOCK_ID          0x6b6e
+#define NT_REG_VALUE_BLOCK_ID        0x6b76
+#define NT_REG_HASH_BLOCK_ID         0x666c
+#define NT_REG_NOHASH_BLOCK_ID       0x696c
+#define NT_REG_KEY_BLOCK_TYPE        0x20
+#define NT_REG_ROOT_KEY_BLOCK_TYPE   0x2c
 
 typedef struct 
 {
@@ -778,14 +776,6 @@ typedef struct
 	char	name[1];
 } nt_vk;
 
-#define vk_sz		0x0001
-#define	vk_expsz	0x0002
-#define	vk_bin		0x0003
-#define vk_dword	0x0004
-#define vk_multisz	0x0007
-#define vk_u2		0x0008
-#define vk_u1		0x000a
-
 LPSTR _strdupnA( LPCSTR str, int len )
 {
     LPSTR ret;
@@ -797,9 +787,9 @@ LPSTR _strdupnA( LPCSTR str, int len )
     return ret;
 }
 
-int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level);
-int _nt_parse_vk(HKEY hkey, char * base, nt_vk * vk, int level);
-int _nt_parse_lf(HKEY hkey, char * base, nt_lf * lf, int level);
+static int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level);
+static int _nt_parse_vk(HKEY hkey, char * base, nt_vk * vk);
+static int _nt_parse_lf(HKEY hkey, char * base, nt_lf * lf, int level);
 
 
 /*
@@ -816,13 +806,13 @@ int _nt_parse_lf(HKEY hkey, char * base, nt_lf * lf, int level);
  *  - reg_dword, reg_binary:
  *    if highest bit of data_len is set data_off contains the value
  */
-int _nt_parse_vk(HKEY hkey, char * base, nt_vk * vk, int level)
+static int _nt_parse_vk(HKEY hkey, char * base, nt_vk * vk)
 {
 	WCHAR name [256];
 	DWORD ret;
 	BYTE * pdata = (BYTE *)(base+vk->data_off+4); /* start of data */
 
-	if(vk->id != REG_VALUE_BLOCK_ID) goto error;
+	if(vk->id != NT_REG_VALUE_BLOCK_ID) goto error;
 
 	lstrcpynAtoW(name, vk->name, vk->nam_len+1);
 
@@ -845,11 +835,11 @@ error:
  * exception: if the id is 'il' there are no hash values and every 
  * dword is a offset
  */
-int _nt_parse_lf(HKEY hkey, char * base, nt_lf * lf, int level)
+static int _nt_parse_lf(HKEY hkey, char * base, nt_lf * lf, int level)
 {
 	int i;
 
-	if (lf->id == REG_HASH_BLOCK_ID)
+	if (lf->id == NT_REG_HASH_BLOCK_ID)
 	{
 	  for (i=0; i<lf->nr_keys; i++)
 	  {
@@ -857,7 +847,7 @@ int _nt_parse_lf(HKEY hkey, char * base, nt_lf * lf, int level)
 	  }
 	  
 	}
-	else if (lf->id == REG_NOHASH_BLOCK_ID)
+	else if (lf->id == NT_REG_NOHASH_BLOCK_ID)
 	{
 	  for (i=0; i<lf->nr_keys; i++)
 	  {
@@ -870,28 +860,31 @@ error:	ERR_(reg)("error reading lf block\n");
 	return FALSE;
 }
 
-int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level)
+static int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level)
 {
 	char * name;
 	int i;
 	DWORD * vl;
-	HKEY subkey;
+	HKEY subkey = hkey;
 
-	if(nk->SubBlockId != REG_KEY_BLOCK_ID) goto error;
-	if((nk->Type!=REG_ROOT_KEY_BLOCK_TYPE) &&
-	   (((nt_nk*)(base+nk->parent_off+4))->SubBlockId != REG_KEY_BLOCK_ID)) goto error;
+	if(nk->SubBlockId != NT_REG_KEY_BLOCK_ID) goto error;
+	if((nk->Type!=NT_REG_ROOT_KEY_BLOCK_TYPE) &&
+	   (((nt_nk*)(base+nk->parent_off+4))->SubBlockId != NT_REG_KEY_BLOCK_ID)) goto error;
 
 	/* create the new key */
-	name = _strdupnA( nk->name, nk->name_len+1);
-	if(RegCreateKeyA( hkey, name, &subkey )) { free(name); goto error; }
-	free(name);
+	if(level <= 0)
+	{
+	  name = _strdupnA( nk->name, nk->name_len+1);
+	  if(RegCreateKeyA( hkey, name, &subkey )) { free(name); goto error; }
+	  free(name);
+	}
 
 	/* loop through the subkeys */
 	if (nk->nr_subkeys)
 	{
 	  nt_lf * lf = (nt_lf*)(base+nk->lf_off+4);
 	  if (nk->nr_subkeys != lf->nr_keys) goto error1;
-	  if (!_nt_parse_lf(subkey, base, lf, level+1)) goto error1;
+	  if (!_nt_parse_lf(subkey, base, lf, level-1)) goto error1;
 	}
 
 	/* loop trough the value list */
@@ -899,7 +892,7 @@ int _nt_parse_nk(HKEY hkey, char * base, nt_nk * nk, int level)
 	for (i=0; i<nk->nr_values; i++)
 	{
 	  nt_vk * vk = (nt_vk*)(base+vl[i]+4);
-	  if (!_nt_parse_vk(subkey, base, vk, level+1 )) goto error1;
+	  if (!_nt_parse_vk(subkey, base, vk)) goto error1;
 	}
 
 	RegCloseKey(subkey);
@@ -910,421 +903,353 @@ error:	ERR_(reg)("error reading nk block\n");
 	return FALSE;
 }
 
-/*
- * this function intentionally uses unix file functions to make it possible
- * to move it to a seperate registry helper programm
- */
-static int _nt_loadreg( HKEY hkey, char* fn )
-{
-	void * base;
-	int len, fd;
-	struct stat st;
-	nt_regf * regf;
-	nt_hbin * hbin;
-	nt_hbin_sub * hbin_sub;
-	nt_nk* nk;
-	DOS_FULL_NAME full_name;
-	
-	if (!DOSFS_GetFullName( fn, 0, &full_name ));
-
-	TRACE_(reg)("Loading NT registry database '%s' '%s'\n",fn, full_name.long_name);
-
-	if ((fd = open(full_name.long_name, O_RDONLY | O_NONBLOCK)) == -1) return FALSE;
-	if (fstat(fd, &st ) == -1) goto error1;
-	len = st.st_size;
-	if ((base=mmap(NULL, len, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) goto error1;
-
-	/* start block */
-	regf = base;
-	if(regf->id != REG_HEADER_BLOCK_ID)	/* 'regf' */
-	{
-	  ERR( "%s is not a nt-registry\n", fn);
-	  goto error;
-	}
-	TRACE_(reg)( "%p [regf] offset=%lx size=%lx\n", regf, regf->RootKeyBlock, regf->BlockSize);
-	
-	/* hbin block */
-	hbin = base + 0x1000;
-	if (hbin->id != REG_POOL_BLOCK_ID)
-	{
-	  ERR_(reg)( "%s hbin block invalid\n", fn);
-	  goto error;
-	}
-	TRACE_(reg)( "%p [hbin]  prev=%lx next=%lx size=%lx\n", hbin, hbin->off_prev, hbin->off_next, hbin->size);
-
-	/* hbin_sub block */
-	hbin_sub = (nt_hbin_sub*)&(hbin->hbin_sub);
-	if ((hbin_sub->data[0] != 'n') || (hbin_sub->data[1] != 'k'))
-	{
-	  ERR_(reg)( "%s hbin_sub block invalid\n", fn);
-	  goto error;
-	}
- 	TRACE_(reg)( "%p [hbin sub] size=%lx\n", hbin_sub, hbin_sub->blocksize);
-            	
-	/* nk block */
-	nk = (nt_nk*)&(hbin_sub->data[0]);
-	if (nk->Type != REG_ROOT_KEY_BLOCK_TYPE)
-	{
-	  ERR_(reg)( "%s special nk block not found\n", fn);
-	  goto error;
-	}
-
-	_nt_parse_nk (hkey, base+0x1000, nk, 0);
-
-	munmap(base, len);
-	close(fd);
-	return 1;
-
-error:	munmap(base, len);
-error1:	close(fd);
-	ERR_(reg)("error reading registry file\n");
-	return 0;
-}
 /* end nt loader */
 
-/* WINDOWS 95 REGISTRY LOADER */
-/* 
- * Structure of a win95 registry database.
- * main header:
- * 0 :	"CREG"	- magic
- * 4 :	DWORD version
- * 8 :	DWORD offset_of_RGDB_part
- * 0C..0F:	? (someone fill in please)
- * 10:  WORD	number of RGDB blocks
- * 12:  WORD	?
- * 14:  WORD	always 0000?
- * 16:  WORD	always 0001?
- * 18..1F:	? (someone fill in please)
+/* windows 95 registry loader */
+
+/* SECTION 1: main header
  *
- * 20: RGKN_section:
- *   header:
- * 	0 :		"RGKN"	- magic
- *      4 : DWORD	offset to first RGDB section
- *      8 : DWORD	offset to the root record
- * 	C..0x1B: 	? (fill in)
- *      0x20 ... offset_of_RGDB_part: Disk Key Entry structures
+ * once at offset 0
+ */
+#define	W95_REG_CREG_ID	0x47455243
+
+typedef struct 
+{
+	DWORD	id;		/* "CREG" = W95_REG_CREG_ID */
+	DWORD	version;	/* ???? 0x00010000 */
+	DWORD	rgdb_off;	/* 0x08 Offset of 1st RGDB-block */
+	DWORD	uk2;		/* 0x0c */
+	WORD	rgdb_num;	/* 0x10 # of RGDB-blocks */
+	WORD	uk3;
+	DWORD	uk[3];
+	/* rgkn */
+} _w95creg;
+
+/* SECTION 2: Directory information (tree structure)
  *
- *   Disk Key Entry Structure:
- *	00: DWORD	- Free entry indicator(?)
- *	04: DWORD	- Hash = sum of bytes of keyname
- *	08: DWORD	- Root key indicator? unknown, but usually 0xFFFFFFFF on win95 systems
- *	0C: DWORD	- disk address of PreviousLevel Key.
- *	10: DWORD	- disk address of Next Sublevel Key.
- *	14: DWORD	- disk address of Next Key (on same level).
- * DKEP>18: WORD	- Nr, Low Significant part.
- *	1A: WORD	- Nr, High Significant part.
+ * once on offset 0x20
  *
- * The disk address always points to the nr part of the previous key entry 
- * of the referenced key. Don't ask me why, or even if I got this correct
- * from staring at 1kg of hexdumps. (DKEP)
+ * structure: [rgkn][dke]*	(repeat till rgkn->size is reached)
+ */
+#define	W95_REG_RGKN_ID	0x4e4b4752
+
+typedef struct
+{
+	DWORD	id;		/*"RGKN" = W95_REG_RGKN_ID */
+	DWORD	size;		/* Size of the RGKN-block */
+	DWORD	root_off;	/* Rel. Offset of the root-record */
+	DWORD	uk[5];
+} _w95rgkn;
+
+/* Disk Key Entry Structure
  *
- * The High significant part of the structure seems to equal the number
- * of the RGDB section. The low significant part is a unique ID within
- * that RGDB section
+ * the 1st entry in a "usual" registry file is a nul-entry with subkeys: the
+ * hive itself. It looks the same like other keys. Even the ID-number can
+ * be any value.
  *
- * There are two minor corrections to the position of that structure.
- * 1. If the address is xxx014 or xxx018 it will be aligned to xxx01c AND 
- *    the DKE reread from there.
- * 2. If the address is xxxFFx it will be aligned to (xxx+1)000.
- * CPS - I have not experienced the above phenomenon in my registry files
+ * The "hash"-value is a value representing the key's name. Windows will not
+ * search for the name, but for a matching hash-value. if it finds one, it
+ * will compare the actual string info, otherwise continue with the next key.
+ * To calculate the hash initialize a D-Word with 0 and add all ASCII-values 
+ * of the string which are smaller than 0x80 (128) to this D-Word.   
  *
- * RGDB_section:
- * 	00:		"RGDB"	- magic
- *	04: DWORD	offset to next RGDB section
- *	08: DWORD	?
- *	0C: WORD	always 000d?
- *	0E: WORD	RGDB block number
- *	10:	DWORD	? (equals value at offset 4 - value at offset 8)
- *	14..1F:		?
- *	20.....:	disk keys
- *
- * disk key:
- * 	00: 	DWORD	nextkeyoffset	- offset to the next disk key structure
- *	08: 	WORD	nrLS		- low significant part of NR
- *	0A: 	WORD	nrHS		- high significant part of NR
- *	0C: 	DWORD	bytesused	- bytes used in this structure.
- *	10: 	WORD	name_len	- length of name in bytes. without \0
- *	12: 	WORD	nr_of_values	- number of values.
- *	14: 	char	name[name_len]	- name string. No \0.
- *	14+name_len: disk values
- *	nextkeyoffset: ... next disk key
- *
- * disk value:
- *	00:	DWORD	type		- value type (hmm, could be WORD too)
- *	04:	DWORD			- unknown, usually 0
- *	08:	WORD	namelen		- length of Name. 0 means name=NULL
- *	0C:	WORD	datalen		- length of Data.
- *	10:	char	name[namelen]	- name, no \0
- *	10+namelen: BYTE	data[datalen] - data, without \0 if string
- *	10+namelen+datalen: next values or disk key
+ * If you want to modify key names, also modify the hash-values, since they
+ * cannot be found again (although they would be displayed in REGEDIT)
+ * End of list-pointers are filled with 0xFFFFFFFF
  *
  * Disk keys are layed out flat ... But, sometimes, nrLS and nrHS are both
  * 0xFFFF, which means skipping over nextkeyoffset bytes (including this
  * structure) and reading another RGDB_section.
- * repeat until end of file.
+ *
+ * there is a one to one relationship between dke and dkh
+ */
+ /* key struct, once per key */
+typedef struct
+{
+	DWORD	x1;		/* Free entry indicator(?) */
+	DWORD	hash;		/* sum of bytes of keyname */
+	DWORD	x3;		/* Root key indicator? usually 0xFFFFFFFF */
+	DWORD	prevlvl;	/* offset of previous key */
+	DWORD	nextsub;	/* offset of child key */
+	DWORD	next;		/* offset of sibling key */
+	WORD	nrLS;		/* id inside the rgdb block */
+	WORD	nrMS;		/* number of the rgdb block */
+} _w95dke;
+
+/* SECTION 3: key information, values and data
+ *
+ * structure:
+ *  section:	[blocks]*		(repeat creg->rgdb_num times)
+ *  blocks:	[rgdb] [subblocks]* 	(repeat till block size reached )
+ *  subblocks:	[dkh] [dkv]*		(repeat dkh->values times )
  *
  * An interesting relationship exists in RGDB_section. The value at offset
  * 10 equals the value at offset 4 minus the value at offset 8. I have no
  * idea at the moment what this means.  (Kevin Cozens)
+ */
+
+/* block header, once per block */
+#define W95_REG_RGDB_ID	0x42444752
+
+typedef struct
+{
+	DWORD	id;	/* 0x00 'rgdb' = W95_REG_RGDB_ID */
+	DWORD	size;	/* 0x04 */
+	DWORD	uk1;	/* 0x08 */
+	DWORD	uk2;	/* 0x0c */
+	DWORD	uk3;	/* 0x10 */
+	DWORD	uk4;	/* 0x14 */
+	DWORD	uk5;	/* 0x18 */
+	DWORD	uk6;	/* 0x1c */
+	/* dkh */
+} _w95rgdb;
+
+/* Disk Key Header structure (RGDB part), once per key */
+typedef	struct 
+{
+	DWORD	nextkeyoff; 	/* 0x00 offset to next dkh*/
+	WORD	nrLS;		/* 0x04 id inside the rgdb block */
+	WORD	nrMS;		/* 0x06 number of the rgdb block */
+	DWORD	bytesused;	/* 0x08 */
+	WORD	keynamelen;	/* 0x0c len of name */
+	WORD	values;		/* 0x0e number of values */
+	DWORD	xx1;		/* 0x10 */
+	char	name[1];	/* 0x14 */
+	/* dkv */		/* 0x14 + keynamelen */
+} _w95dkh;
+
+/* Disk Key Value structure, once per value */
+typedef	struct
+{
+	DWORD	type;		/* 0x00 */
+	DWORD	x1;		/* 0x04 */
+	WORD	valnamelen;	/* 0x08 length of name, 0 is default key */
+	WORD	valdatalen;	/* 0x0A length of data */
+	char	name[1];	/* 0x0c */
+	/* raw data */		/* 0x0c + valnamelen */
+} _w95dkv;
+
+/******************************************************************************
+ * _w95_lookup_dkh [Internal]
  *
- * FIXME: this description needs some serious help, yes.
+ * seeks the dkh belonging to a dke
  */
-
-struct	_w95keyvalue {
-	unsigned long		type;
-	unsigned short		datalen;
-	char			*name;
-	unsigned char		*data;
-	unsigned long		x1;
-	int			lastmodified;
-};
-
-struct 	_w95key {
-	char			*name;
-	int			nrofvals;
-	struct	_w95keyvalue	*values;
-	struct _w95key		*prevlvl;
-	struct _w95key		*nextsub;
-	struct _w95key		*next;
-};
-
-
-struct _w95_info {
-  char *rgknbuffer;
-  int  rgknsize;
-  char *rgdbbuffer;
-  int  rgdbsize;
-  int  depth;
-  int  lastmodified;
-};
-
-
-/******************************************************************************
- * _w95_processKey [Internal]
- */
-static HKEY _w95_processKey ( HKEY hkey, int nrLS, int nrMS, struct _w95_info *info )
-
+static _w95dkh * _w95_lookup_dkh (_w95creg *creg, int nrLS, int nrMS)
 {
-  /* Disk Key Header structure (RGDB part) */
-	struct	dkh {
-                unsigned long		nextkeyoff; 
-		unsigned short		nrLS;
-		unsigned short		nrMS;
-		unsigned long		bytesused;
-		unsigned short		keynamelen;
-		unsigned short		values;
-		unsigned long		xx1;
-		/* keyname */
-		/* disk key values or nothing */
-	};
-	/* Disk Key Value structure */
-	struct	dkv {
-		unsigned long		type;
-		unsigned long		x1;
-		unsigned short		valnamelen;
-		unsigned short		valdatalen;
-		/* valname, valdata */
-	};
-
+	_w95rgdb * rgdb;
+	_w95dkh * dkh;
+	int i;
 	
-	struct	dkh dkh;
-	int	bytesread = 0;
-	char    *rgdbdata = info->rgdbbuffer;
-	int     nbytes = info->rgdbsize;
-	char    *curdata = rgdbdata;
-	char    *end = rgdbdata + nbytes;
-	int     off_next_rgdb;
-	char    *next = rgdbdata;
-	int     nrgdb, i;
-        HKEY subkey;
+	rgdb = (_w95rgdb*)((char*)creg+creg->rgdb_off);		/* get the beginning of the rgdb datastore */
+	assert (creg->rgdb_num > nrMS);				/* check: requested block < last_block) */
 	
-	do {
-	  curdata = next;
-	  if (strncmp(curdata, "RGDB", 4)) return 0;
-	    
-	  memcpy(&off_next_rgdb,curdata+4,4);
-	  next = curdata + off_next_rgdb;
-	  nrgdb = (int) *((short *)curdata + 7);
-
-	} while (nrgdb != nrMS && (next < end));
-
-	/* curdata now points to the start of the right RGDB section */
-	curdata += 0x20;
-
-#define XREAD(whereto,len) \
-	if ((curdata + len) <= end) {\
-		memcpy(whereto,curdata,len);\
-		curdata+=len;\
-		bytesread+=len;\
+	/* find the right block */
+	for(i=0; i<nrMS ;i++)
+	{
+	  assert(rgdb->id == W95_REG_RGDB_ID);				/* check the magic */
+	  rgdb = (_w95rgdb*) ((char*)rgdb+rgdb->size);		/* find next block */
 	}
 
-	while (curdata < next) {
-	  struct	dkh *xdkh = (struct dkh*)curdata;
+	dkh = (_w95dkh*)(rgdb + 1);				/* first sub block within the rgdb */
 
-	  bytesread += sizeof(dkh); /* FIXME... nextkeyoff? */
-	  if (xdkh->nrLS == nrLS) {
-	  	memcpy(&dkh,xdkh,sizeof(dkh));
-	  	curdata += sizeof(dkh);
-	  	break;
-	  }
-	  curdata += xdkh->nextkeyoff;
-	};
+	do
+	{
+	  if(nrLS==dkh->nrLS ) return dkh;
+	  dkh = (_w95dkh*)((char*)dkh + dkh->nextkeyoff);	/* find next subblock */
+	} while ((char *)dkh < ((char*)rgdb+rgdb->size));
 
-	if (dkh.nrLS != nrLS) return 0;
+	return NULL;
+}	
+ 
+/******************************************************************************
+ * _w95_parse_dkv [Internal]
+ */
+static int _w95_parse_dkv (
+	HKEY hkey,
+	_w95dkh * dkh,
+	int nrLS,
+	int nrMS )
+{
+	_w95dkv * dkv;
+	int i;
+	DWORD ret;
+	char * name;
+			
+	/* first value block */
+	dkv = (_w95dkv*)((char*)dkh+dkh->keynamelen+0x14);
 
-	if (nrgdb != dkh.nrMS)
-	  return 0;
+	/* loop trought the values */
+	for (i=0; i< dkh->values; i++)
+	{
+	  name = _strdupnA(dkv->name, dkv->valnamelen+1);
+	  ret = RegSetValueExA(hkey, name, 0, dkv->type, &(dkv->name[dkv->valnamelen]),dkv->valdatalen); 
+	  if (ret) ERR("RegSetValueEx failed (0x%08lx)\n", ret);
+	  free (name);
 
-        assert((dkh.keynamelen<2) || curdata[0]);
-	subkey=_find_or_add_key(hkey,strcvtA2W(curdata, dkh.keynamelen));
-	curdata += dkh.keynamelen;
-
-	for (i=0;i< dkh.values; i++) {
-	  struct dkv dkv;
-	  LPBYTE data;
-	  int len;
-	  LPWSTR name;
-
-	  XREAD(&dkv,sizeof(dkv));
-
-	  name = strcvtA2W(curdata, dkv.valnamelen);
-	  curdata += dkv.valnamelen;
-
-	  if ((1 << dkv.type) & UNICONVMASK) {
-	    data = (LPBYTE) strcvtA2W(curdata, dkv.valdatalen);
-	    len = 2*(dkv.valdatalen + 1);
-	  } else {
-	    /* I don't think we want to NULL terminate all data */
-	    data = xmalloc(dkv.valdatalen);
-	    memcpy (data, curdata, dkv.valdatalen);
-	    len = dkv.valdatalen;
-	  }
-
-	  curdata += dkv.valdatalen;
-	  
-	  _find_or_add_value( subkey, name, dkv.type, data, len );
+	  /* next value */
+	  dkv = (_w95dkv*)((char*)dkv+dkv->valnamelen+dkv->valdatalen+0x0c);
 	}
-	return subkey;
+	return TRUE;
 }
 
 /******************************************************************************
- * _w95_walkrgkn [Internal]
+ * _w95_parse_dke [Internal]
  */
-static void _w95_walkrgkn( HKEY prevkey, char *off, 
-                           struct _w95_info *info )
-
+static int _w95_parse_dke( 
+	HKEY hkey,
+	_w95creg * creg,
+	_w95rgkn *rgkn,
+	_w95dke * dke,
+	int level )
 {
-  /* Disk Key Entry structure (RGKN part) */
-  struct	dke {
-    unsigned long		x1;
-    unsigned long		x2;
-    unsigned long		x3;/*usually 0xFFFFFFFF */
-    unsigned long		prevlvl;
-    unsigned long		nextsub;
-    unsigned long		next;
-    unsigned short		nrLS;
-    unsigned short		nrMS;
-  } *dke = (struct dke *)off;
-  HKEY subkey;
+	_w95dkh * dkh;
+	HKEY hsubkey = hkey;
+	char * name;
+	int ret = FALSE;
 
-  if (dke == NULL) {
-    dke = (struct dke *) ((char *)info->rgknbuffer);
-  }
+	/* get start address of root key block */
+	if (!dke) dke = (_w95dke*)((char*)rgkn + rgkn->root_off);
+	
+	/* create key */
+	if (dke->nrLS != 0xffff && dke->nrMS!=0xffff)		/* eg. the root key has no name */
+	{
+	  if (!(dkh = _w95_lookup_dkh(creg, dke->nrLS, dke->nrMS)))
+	  {
+	    fprintf(stderr, "dke pointing to missing dkh !\n");
+	    goto error;
+	  }
+	  /* subblock found */
+	  if ( level <= 0 )
+	  {
+	    name = _strdupnA( dkh->name, dkh->keynamelen+1);
+	    if (RegCreateKeyA(hkey, name, &hsubkey)) { free(name); goto error; }
+	    free(name);
+	  }
+	  _w95_parse_dkv(hsubkey, dkh, dke->nrLS, dke->nrMS);
+	}
+	else 
+	{
+	  level++; /* we have to skip the root-block anyway */
+	}
+	
+	/* walk sibling keys */
+	if (dke->next != 0xffffffff )
+	{
+    	  _w95_parse_dke(hkey, creg, rgkn, (_w95dke*)((char*)rgkn+dke->next), level);
+	}
 
-  subkey = _w95_processKey(prevkey, dke->nrLS, dke->nrMS, info);
-
-  if (dke->nextsub != -1 && 
-      ((dke->nextsub - 0x20) < info->rgknsize) 
-      && (dke->nextsub > 0x20)) {
-    
-    _w95_walkrgkn(subkey ? subkey : prevkey, /* XXX <-- This is a hack*/
-		  info->rgknbuffer + dke->nextsub - 0x20, 
-		  info);
-  }
-  if (subkey) RegCloseKey( subkey );
-
-  if (dke->next != -1 && 
-      ((dke->next - 0x20) < info->rgknsize) && 
-      (dke->next > 0x20)) {
-    _w95_walkrgkn(prevkey,  
-		  info->rgknbuffer + dke->next - 0x20,
-		  info);
-  }
+	/* next sub key */
+	if (dke->nextsub != 0xffffffff) 
+	{
+    	  _w95_parse_dke(hsubkey, creg, rgkn, (_w95dke*)((char*)rgkn+dke->nextsub), level-1);
+	}
+  
+	ret = TRUE;
+	if (hsubkey != hkey) RegCloseKey(hsubkey);
+error:	return ret;
 }
-
+/* end windows 95 loader */
 
 /******************************************************************************
- * _w95_loadreg [Internal]
+ *	NativeRegLoadKey [Internal]
+ *
+ * Loads a native registry file (win95/nt)
+ * 	hkey	root key
+ *	fn	filename
+ *	level	number of levels to cut away (eg. ".Default" in user.dat)
+ *
+ * this function intentionally uses unix file functions to make it possible
+ * to move it to a seperate registry helper programm
  */
-static void _w95_loadreg( char* fn, HKEY hkey )
+static int NativeRegLoadKey( HKEY hkey, char* fn, int level )
 {
-	HFILE		hfd;
-	char		magic[5];
-	unsigned long	where,version,rgdbsection,end;
-	struct          _w95_info info;
-	OFSTRUCT	ofs;
-	BY_HANDLE_FILE_INFORMATION hfdinfo;
+	int fd = 0;
+	struct stat st;
+        DOS_FULL_NAME full_name;
+	int ret = FALSE;
+	void * base;
+			
+        if (!DOSFS_GetFullName( fn, 0, &full_name )) return FALSE;
+	
+	/* map the registry into the memory */
+	if ((fd = open(full_name.long_name, O_RDONLY | O_NONBLOCK)) == -1) return FALSE;
+	if ((fstat(fd, &st) == -1)) goto error;
+	if ((base = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED) goto error;
 
-	TRACE("Loading Win95 registry database '%s'\n",fn);
-	hfd=OpenFile(fn,&ofs,OF_READ);
-	if (hfd==HFILE_ERROR)
-		return;
-	magic[4]=0;
-	if (4!=_lread(hfd,magic,4))
-		return;
-	if (strcmp(magic,"CREG")) {
-		WARN("%s is not a w95 registry.\n",fn);
-		return;
+	switch (*(LPDWORD)base)
+	{
+	  /* windows 95 'creg' */
+	  case W95_REG_CREG_ID:
+	    {
+	      _w95creg * creg;
+	      _w95rgkn * rgkn;
+	      creg = base;
+	      TRACE_(reg)("Loading win95 registry '%s' '%s'\n",fn, full_name.long_name);
+
+	      /* load the header (rgkn) */
+	      rgkn = (_w95rgkn*)(creg + 1);
+	      if (rgkn->id != W95_REG_RGKN_ID) 
+	      {
+		ERR("second IFF header not RGKN, but %lx\n", rgkn->id);
+		goto error1;
+	      }
+
+	      ret = _w95_parse_dke(hkey, creg, rgkn, NULL, level);
+	    }
+	    break;
+	  /* nt 'regf'*/
+	  case NT_REG_HEADER_BLOCK_ID:
+	    {
+	      nt_regf * regf;
+	      nt_hbin * hbin;
+	      nt_hbin_sub * hbin_sub;
+	      nt_nk* nk;
+
+	      TRACE_(reg)("Loading nt registry '%s' '%s'\n",fn, full_name.long_name);
+
+	      /* start block */
+	      regf = base;
+
+	      /* hbin block */
+	      hbin = base + 0x1000;
+	      if (hbin->id != NT_REG_POOL_BLOCK_ID)
+	      {
+	        ERR_(reg)( "%s hbin block invalid\n", fn);
+	        goto error1;
+	      }
+
+	      /* hbin_sub block */
+	      hbin_sub = (nt_hbin_sub*)&(hbin->hbin_sub);
+	      if ((hbin_sub->data[0] != 'n') || (hbin_sub->data[1] != 'k'))
+	      {
+	        ERR_(reg)( "%s hbin_sub block invalid\n", fn);
+	        goto error1;
+	      }
+
+	      /* nk block */
+	      nk = (nt_nk*)&(hbin_sub->data[0]);
+	      if (nk->Type != NT_REG_ROOT_KEY_BLOCK_TYPE)
+	      {
+	        ERR_(reg)( "%s special nk block not found\n", fn);
+	        goto error1;
+	      }
+
+	      ret = _nt_parse_nk (hkey, base+0x1000, nk, level);
+	    }
+	    break;
+	  default:
+	    {
+	      ERR("unknown signature in registry file %s.\n",fn);
+	      goto error1;
+	    }
 	}
-	if (4!=_lread(hfd,&version,4))
-		return;
-	if (4!=_lread(hfd,&rgdbsection,4))
-		return;
-	if (-1==_llseek(hfd,0x20,SEEK_SET))
-		return;
-	if (4!=_lread(hfd,magic,4))
-		return;
-	if (strcmp(magic,"RGKN")) {
-		WARN("second IFF header not RGKN, but %s\n", magic);
-		return;
-	}
 
-	/* STEP 1: Keylink structures */
-	if (-1==_llseek(hfd,0x40,SEEK_SET))
-		return;
-	where	= 0x40;
-	end	= rgdbsection;
-
-	info.rgknsize = end - where;
-	info.rgknbuffer = (char*)xmalloc(info.rgknsize);
-	if (info.rgknsize != _lread(hfd,info.rgknbuffer,info.rgknsize))
-		return;
-
-	if (!GetFileInformationByHandle(hfd,&hfdinfo))
-		return;
-
-	end = hfdinfo.nFileSizeLow;
-	info.lastmodified = DOSFS_FileTimeToUnixTime(&hfdinfo.ftLastWriteTime,NULL);
-
-	if (-1==_llseek(hfd,rgdbsection,SEEK_SET))
-		return;
-
-	info.rgdbbuffer = (char*)xmalloc(end-rgdbsection);
-	info.rgdbsize = end - rgdbsection;
-
-	if (info.rgdbsize !=_lread(hfd,info.rgdbbuffer,info.rgdbsize))
-		return;
-	_lclose(hfd);
-
-	_w95_walkrgkn(hkey, NULL, &info);
-
-	free (info.rgdbbuffer);
-	free (info.rgknbuffer);
+error1:	munmap(base, st.st_size);
+error:	close(fd);
+	return ret;	
 }
-
 
 /* WINDOWS 31 REGISTRY LOADER, supplied by Tor Sjøwall, tor@sn.no */
-
 /*
     reghack - windows 3.11 registry data format demo program.
 
@@ -1529,26 +1454,35 @@ void _w31_loadreg(void) {
 	return;
 }
 
+/**********************************************************************************
+ * SetLoadLevel [Internal]
+ *
+ * set level to 0 for loading system files
+ * set level to 1 for loading user files
+ */
+static void SetLoadLevel(int level)
+{
+	struct set_registry_levels_request *req = get_req_buffer();
+
+	req->current = level;
+	req->saving  = 0;
+	req->version = 1;
+	server_call( REQ_SET_REGISTRY_LEVELS );
+}
 
 /**********************************************************************************
  * SHELL_LoadRegistry [Internal]
  */
 void SHELL_LoadRegistry( void )
 {
-  struct set_registry_levels_request *req = get_req_buffer();
-  int save_timeout;
-  char	      *fn, *home;
-  HKEY		    hkey;
+  int	save_timeout;
+  char	*fn, *home;
+  HKEY	hkey;
 
   TRACE("(void)\n");
 
   REGISTRY_Init();
-
-  /* set level to 0 for loading system files */
-  req->current = 0;
-  req->saving  = 0;
-  req->version = 1;
-  server_call( REQ_SET_REGISTRY_LEVELS );
+  SetLoadLevel(0);
 
   if (PROFILE_GetWineIniBool ("registry", "LoadWin311RegistryFiles", 1)) 
   { 
@@ -1558,9 +1492,9 @@ void SHELL_LoadRegistry( void )
   if (PROFILE_GetWineIniBool ("registry", "LoadWin95RegistryFiles", 1)) 
   { 
       /* Load windows 95 entries */
-      _w95_loadreg("C:\\system.1st", HKEY_LOCAL_MACHINE);
-      _w95_loadreg("system.dat", HKEY_LOCAL_MACHINE);
-      _w95_loadreg("user.dat", HKEY_USERS);
+      NativeRegLoadKey(HKEY_LOCAL_MACHINE, "C:\\system.1st", 0);
+      NativeRegLoadKey(HKEY_LOCAL_MACHINE, "system.dat", 0);
+      NativeRegLoadKey(HKEY_CURRENT_USER, "user.dat", 1);
   }
   if (PROFILE_GetWineIniBool ("registry", "LoadWinNTRegistryFiles", 1)) 
   { 
@@ -1572,7 +1506,7 @@ void SHELL_LoadRegistry( void )
 	 strncat(fn, "\\Profiles\\", MAX_PATHNAME_LEN - strlen(fn) - 1);
 	 strncat(fn, home, MAX_PATHNAME_LEN - strlen(fn) - 1);
 	 strncat(fn, "\\ntuser.dat", MAX_PATHNAME_LEN - strlen(fn) - 1);
-         _nt_loadreg( HKEY_USERS, fn );
+         NativeRegLoadKey( HKEY_CURRENT_USER, fn, 1 );
       }     
       /*
       * FIXME
@@ -1582,19 +1516,19 @@ void SHELL_LoadRegistry( void )
 
       strcpy(home, fn);
       strncat(home, "\\config\\system", MAX_PATHNAME_LEN - strlen(home) - 1);
-      _nt_loadreg(HKEY_LOCAL_MACHINE, home);
+      NativeRegLoadKey(HKEY_LOCAL_MACHINE, home, 0);
 
       strcpy(home, fn);
       strncat(home, "\\config\\software", MAX_PATHNAME_LEN - strlen(home) - 1);
-      _nt_loadreg(HKEY_LOCAL_MACHINE, home);
+      NativeRegLoadKey(HKEY_LOCAL_MACHINE, home, 0);
 
       strcpy(home, fn);
       strncat(home, "\\config\\sam", MAX_PATHNAME_LEN - strlen(home) - 1);
-      _nt_loadreg(HKEY_LOCAL_MACHINE, home);
+      NativeRegLoadKey(HKEY_LOCAL_MACHINE, home, 0);
 
       strcpy(home, fn);
       strncat(home, "\\config\\security", MAX_PATHNAME_LEN - strlen(home) - 1);
-      _nt_loadreg(HKEY_LOCAL_MACHINE, home);
+      NativeRegLoadKey(HKEY_LOCAL_MACHINE, home, 0);
 
       free (home);
       free (fn);
@@ -1616,11 +1550,7 @@ void SHELL_LoadRegistry( void )
       _wine_loadreg( HKEY_LOCAL_MACHINE, SAVE_LOCAL_MACHINE_DEFAULT );
   }
 
-  /* set level to 1 for loading user files */
-  req->current = 1;
-  req->saving  = 0;
-  req->version = 1;
-  server_call( REQ_SET_REGISTRY_LEVELS );
+  SetLoadLevel(1);
 
   /*
    * Load the user saved registries 
