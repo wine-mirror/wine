@@ -3,6 +3,7 @@
  *
  *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
  *  Proofread 1998 by David Lee Lambert <lamber45@egr.msu.edu>
+ *  Proofread 1999 by Jose Marcos Lopez <jose.lopez@upcnet.upc.es>
  */
 
 #define LANGUAGE_ID                     Es
@@ -13,28 +14,28 @@
 /* Menu */
 
 #define MENU_FILE                       "&Archivo"
-#define MENU_FILE_NEW                   "&Nuevo..."
-#define MENU_FILE_OPEN                  "A&brir"
+#define MENU_FILE_NEW                   "&Nuevo"
+#define MENU_FILE_OPEN                  "&Abrir"
 #define MENU_FILE_SAVE                  "&Guardar"
-#define MENU_FILE_SAVEAS                "Guardar &como..."
+#define MENU_FILE_SAVEAS                "Guardar co&mo..."
+#define MENU_FILE_PAGESETUP             "&Configurar página..."
 #define MENU_FILE_PRINT                 "&Imprimir"
-#define MENU_FILE_PAGESETUP             "Ajuste &página..."
 #define MENU_FILE_PRINTSETUP            "&Configuración impresora..."
 #define MENU_FILE_EXIT                  "&Salir"
 
 #define MENU_EDIT                       "&Editar"
-#define MENU_EDIT_UNDO                  "&Undo\tCtrl+Z"
+#define MENU_EDIT_UNDO                  "&Deshacer\tCtrl+Z"
 #define MENU_EDIT_CUT                   "Cor&tar\tCtrl+X"
 #define MENU_EDIT_COPY                  "&Copiar\tCtrl+C"
 #define MENU_EDIT_PASTE                 "&Pegar\tCtrl+V"
 #define MENU_EDIT_DELETE                "&Borrar\tDel"
 #define MENU_EDIT_SELECTALL             "Seleccionar t&odo"
-#define MENU_EDIT_TIMEDATE              "&Hora/Fecha\tF5"
-#define MENU_EDIT_WRAP                  "&Vuelta a la linea automática"
+#define MENU_EDIT_TIMEDATE              "&Hora y Fecha\tF5"
+#define MENU_EDIT_WRAP                  "&Ajuste de línea automático"
 
 #define MENU_SEARCH                     "&Buscar"
-#define MENU_SEARCH_SEARCH              "Buscar..."
-#define MENU_SEARCH_NEXT                "Buscar &siquiente\tF3"
+#define MENU_SEARCH_SEARCH              "&Buscar..."
+#define MENU_SEARCH_NEXT                "Buscar &siguiente\tF3"
 
 #define MENU_LANGUAGE                   "&Idioma"
 
@@ -43,7 +44,7 @@
 #define MENU_HELP_SEARCH                "&Buscar..."
 #define MENU_HELP_HELP_ON_HELP          "&Ayuda sobre la ayuda"
 
-#define MENU_INFO                       "Inf&o..."
+#define MENU_INFO                       "Inf&ormación..."
 #define MENU_INFO_LICENSE               "&Licencia"
 #define MENU_INFO_NO_WARRANTY           "SIN &GARANTÍA"
 #define MENU_INFO_ABOUT_WINE            "&Acerca de Wine"
@@ -52,7 +53,7 @@
 /* Dialogs */
 
 #define DIALOG_OK                       "OK"
-#define DIALOG_CANCEL                   "Anular"
+#define DIALOG_CANCEL                   "Cancelar"
 #define DIALOG_BROWSE                   "&Buscar..."
 #define DIALOG_HELP                     "&Ayuda"
 
@@ -83,18 +84,18 @@
 #define STRING_UNTITLED                 "(sin título)"
 
 #define STRING_ALL_FILES                "Todos los archivos (*.*)"
-#define STRING_TEXT_FILES_TXT           "Archviso de texto (*.txt)"
+#define STRING_TEXT_FILES_TXT           "Documentos de texto (*.txt)"
 
 #define STRING_TOOLARGE         "El archivo '%s' es demasiado grande para el bloc de notas.\n \
 Use otro editor."
 
-#define STRING_NOTEXT           "Vd. no escribió nada. \
-\nPor favor escriba algo y pruebe de vuelta"
+#define STRING_NOTEXT           "Ud. no escribió nada. \
+\nPor favor escriba algo y pruebe de nuevo"
 
 /* FIXME */
 
-#define STRING_NOTSAVED         "El archivo '%s'\n has been changed\n\n \
-Would you like to save your changes ?"
+#define STRING_NOTSAVED         "El texto en el archivo '%s' ha cambiado\n\n \
+¿Desea guardar los cambios?"
 
 #define STRING_NOTFOUND         "no se encontró '%s'."
 
