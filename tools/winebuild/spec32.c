@@ -36,6 +36,12 @@
 #include "build.h"
 
 
+#ifdef __APPLE__
+# define __ASM_SKIP ".space"
+#else
+# define __ASM_SKIP ".skip"
+#endif
+
 static int string_compare( const void *ptr1, const void *ptr2 )
 {
     const char * const *str1 = ptr1;
@@ -434,7 +440,24 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
         fprintf( outfile, "    \"\\tnop\\n\"\n" );
         fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
-#elif defined(__PPC__)
+#elif defined(__powerpc__)
+# ifdef __APPLE__
+/* Mach-O doesn't have an init section */
+    if (constructor)
+    {
+        fprintf( outfile, "asm(\"\\t.mod_init_func\\n\"\n" );
+        fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
+        fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", constructor );
+        fprintf( outfile, "    \"\\t.text\\n\");\n" );
+    }
+    if (destructor)
+    {
+        fprintf( outfile, "asm(\"\\t.mod_term_func\\n\"\n" );
+        fprintf( outfile, "    \"\\t.align 2\\n\"\n" );
+        fprintf( outfile, "    \"\\t.long " __ASM_NAME("%s") "\\n\"\n", destructor );
+        fprintf( outfile, "    \"\\t.text\\n\");\n" );
+    }
+# else /* __APPLE__ */
     if (constructor)
     {
         fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
@@ -447,6 +470,7 @@ void output_dll_init( FILE *outfile, const char *constructor, const char *destru
         fprintf( outfile, "    \"\\tbl " __ASM_NAME("%s") "\\n\"\n", destructor );
         fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
     }
+# endif /* __APPLE__ */
 #else
 #error You need to define the DLL constructor for your architecture
 #endif
@@ -495,9 +519,9 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "static void __asm__dummy_header(void) {\n" );
     fprintf( outfile, "#endif\n" );
-    fprintf( outfile, "asm(\".section \\\".text\\\"\\n\\t\"\n" );
+    fprintf( outfile, "asm(\".text\\n\\t\"\n" );
     fprintf( outfile, "    \".align %d\\n\"\n", get_alignment(page_size) );
-    fprintf( outfile, "    \"" __ASM_NAME("pe_header") ":\\t.skip 65536\\n\\t\");\n" );
+    fprintf( outfile, "    \"" __ASM_NAME("pe_header") ":\\t" __ASM_SKIP " 65536\\n\\t\");\n" );
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif\n" );
@@ -551,7 +575,11 @@ void BuildSpec32File( FILE *outfile )
         else
         {
             fprintf( outfile, "#ifdef __GNUC__\n" );
+            fprintf( outfile, "# ifdef __APPLE__\n" );
+            fprintf( outfile, "extern void DllMain() __attribute__((weak_import));\n" );
+            fprintf( outfile, "# else\n" );
             fprintf( outfile, "extern void DllMain() __attribute__((weak));\n" );
+            fprintf( outfile, "# endif\n" );
             fprintf( outfile, "#else\n" );
             fprintf( outfile, "extern void DllMain();\n" );
             fprintf( outfile, "static void __asm__dummy_dllmain(void)" );
@@ -741,8 +769,13 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "  } OptionalHeader;\n" );
     fprintf( outfile, "} nt_header = {\n" );
     fprintf( outfile, "  0x%04x,\n", IMAGE_NT_SIGNATURE );   /* Signature */
-
+#ifdef __i386__
     fprintf( outfile, "  { 0x%04x,\n", IMAGE_FILE_MACHINE_I386 );  /* Machine */
+#elif defined(__powerpc__)
+    fprintf( outfile, "  { 0x%04x,\n", IMAGE_FILE_MACHINE_POWERPC ); /* Machine */
+#else
+    fprintf( outfile, "  { 0x%04x,\n", IMAGE_FILE_MACHINE_UNKNOWN );  /* Machine */
+#endif
     fprintf( outfile, "    0, 0, 0, 0,\n" );
     fprintf( outfile, "    sizeof(nt_header.OptionalHeader),\n" ); /* SizeOfOptionalHeader */
     fprintf( outfile, "    0x%04x },\n", characteristics );        /* Characteristics */
@@ -923,12 +956,12 @@ void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv )
     fprintf( outfile, "    \"\\tcall " __ASM_NAME("__wine_dbg_%s_fini") "\\n\"\n", prefix );
     fprintf( outfile, "    \"\\tnop\\n\"\n" );
     fprintf( outfile, "    \"\\t.section\t\\\".text\\\"\\n\");\n" );
-#elif defined(__PPC__)
+#elif defined(__powerpc__)
     fprintf( outfile, "asm(\"\\t.section\\t\\\".init\\\" ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tbl " __ASM_NAME("__wine_dbg_%s_init") "\\n\"\n", prefix );
     fprintf( outfile, "    \"\\t.section\\t\\\".fini\\\" ,\\\"ax\\\"\\n\"\n" );
     fprintf( outfile, "    \"\\tbl " __ASM_NAME("__wine_dbg_%s_fini") "\\n\"\n", prefix );
-    fprintf( outfile, "    \"\\t.section\\t\\\".text\\\"\\n\");\n" );
+    fprintf( outfile, "    \"\\t.text\\n\");\n" );
 #else
 #error You need to define the DLL constructor for your architecture
 #endif

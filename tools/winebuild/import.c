@@ -852,7 +852,7 @@ static int output_immediate_imports( FILE *outfile )
             fprintf(outfile, "\t\"\\tlis %s, " ppc_high(__ASM_NAME("imports") "+ %d")  "\\n\"\n", ppc_reg[9], pos);
             fprintf(outfile, "\t\"\\tla  %s, " ppc_low (__ASM_NAME("imports") "+ %d") "(%s)\\n\"\n", ppc_reg[8], pos, ppc_reg[9]);
             fprintf(outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n", ppc_reg[7], ppc_reg[8]);
-            fprintf(outfile, "\t\"\\tmctr %s\\n\"\n", ppc_reg[7]);
+            fprintf(outfile, "\t\"\\tmtctr %s\\n\"\n", ppc_reg[7]);
 
             fprintf(outfile, "\t\"\\tlwz  %s, 0(%s)\\n\"\n",   ppc_reg[7], ppc_reg[1]);
             fprintf(outfile, "\t\"\\taddi %s, %s, 0x4\\n\"\n", ppc_reg[1], ppc_reg[1]);
@@ -868,7 +868,7 @@ static int output_immediate_imports( FILE *outfile )
         }
         pos += 4;
     }
-    fprintf( outfile, "\".section\\t\\\".text\\\"\");\n#ifndef __GNUC__\n}\n#endif\n\n" );
+    fprintf( outfile, "\".text\");\n#ifndef __GNUC__\n}\n#endif\n\n" );
 
  done:
     return nb_imm;
@@ -1142,7 +1142,7 @@ static int output_delayed_imports( FILE *outfile )
             fprintf( outfile, "\n" );
         }
     }
-    fprintf( outfile, "\".section \\\".text\\\"\");\n" );
+    fprintf( outfile, "\".text\");\n" );
     fprintf( outfile, "#ifndef __GNUC__\n" );
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif\n" );
