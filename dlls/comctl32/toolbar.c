@@ -3801,7 +3801,8 @@ TOOLBAR_PressButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
     return TRUE;
 }
 
-
+/* FIXME: there might still be some confusion her between number of buttons
+ * and number of bitmaps */
 static LRESULT
 TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
@@ -3809,6 +3810,7 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
     LPTBREPLACEBITMAP lpReplace = (LPTBREPLACEBITMAP) lParam;
     HBITMAP hBitmap;
     int i = 0, nOldButtons = 0, pos = 0;
+    int nOldBitmaps, nNewBitmaps;
     HIMAGELIST himlDef = 0;
 
     TRACE("hInstOld %p nIDOld %x hInstNew %p nIDNew %x nButtons %x\n",
@@ -3852,16 +3854,14 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
         WARN("No hinst/bitmap found! hInst %p nID %x\n", lpReplace->hInstOld, lpReplace->nIDOld);
         return FALSE;
     }
-
-    infoPtr->nNumBitmaps = infoPtr->nNumBitmaps - nOldButtons + lpReplace->nButtons;
+    
+    himlDef = GETDEFIMAGELIST(infoPtr, 0); /* fixme: correct? */
+    nOldBitmaps = ImageList_GetImageCount(himlDef);
 
     /* ImageList_Replace(GETDEFIMAGELIST(), pos, hBitmap, NULL); */
 
-
-    himlDef = GETDEFIMAGELIST(infoPtr, 0);
-    for (i = pos + nOldButtons - 1; i >= pos; i--) {
+    for (i = pos + nOldBitmaps - 1; i >= pos; i--)
         ImageList_Remove(himlDef, i);
-    }
 
     {
        BITMAP  bmp;
@@ -3891,8 +3891,14 @@ TOOLBAR_ReplaceBitmap (HWND hwnd, WPARAM wParam, LPARAM lParam)
        DeleteDC (hdcBitmap);
 
        ImageList_AddMasked (himlDef, hbmLoad, CLR_DEFAULT);
+       nNewBitmaps = ImageList_GetImageCount(himlDef);
        DeleteObject (hbmLoad);
     }
+
+    infoPtr->nNumBitmaps = infoPtr->nNumBitmaps - nOldBitmaps + nNewBitmaps;
+
+    TRACE(" pos %d  %d old bitmaps replaced by %d new ones.\n",
+            pos, nOldBitmaps, nNewBitmaps);
 
     InvalidateRect(hwnd, NULL, FALSE);
 
