@@ -6,7 +6,7 @@
  */
 
 #define LANGUAGE_ID                  Wa
-#define LANGUAGE_NUMBER              0x90
+#define LANGUAGE_NUMBER              90
 #define LANGUAGE_MENU_ITEM           "&Walon"
 
 /* Menu */

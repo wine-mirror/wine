@@ -7,7 +7,7 @@
  */
 
 #define LANGUAGE_ID                  Wa
-#define LANGUAGE_NUMBER              0x90
+#define LANGUAGE_NUMBER              90
 
 
 /* System Menu */

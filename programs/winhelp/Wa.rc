@@ -8,7 +8,7 @@
 /* This file is not yet complete !! */
 
 #define LANGUAGE_ID                  Wa
-#define LANGUAGE_NUMBER              0x90
+#define LANGUAGE_NUMBER              90
 
 /* Menu */
 

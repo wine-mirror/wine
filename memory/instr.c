@@ -43,9 +43,7 @@ DECLARE_DEBUG_CHANNEL(io)
      (PTR_SEG_OFF_TO_LIN(SS_sig(context),STACK_sig(context)))))
 
 /* For invalid registers fixup */
-extern DWORD CallFrom16_Start,CallFrom16_End;
-extern DWORD CALLTO16_Start,CALLTO16_End;
-
+int (*INSTR_IsRelay)( const void *addr ) = NULL;
 
 /***********************************************************************
  *           INSTR_ReplaceSelector
@@ -60,11 +58,8 @@ extern DWORD CALLTO16_Start,CALLTO16_End;
  */
 static BOOL INSTR_ReplaceSelector( SIGCONTEXT *context, WORD *sel )
 {
-    if ( IS_SELECTOR_SYSTEM(CS_sig(context)) )
-        if (    ( EIP_sig(context) >= (DWORD)&CallFrom16_Start &&
-                  EIP_sig(context) <  (DWORD)&CallFrom16_End )
-             || ( EIP_sig(context) >= (DWORD)&CALLTO16_Start &&
-                  EIP_sig(context) <  (DWORD)&CALLTO16_End ) )
+    if (IS_SELECTOR_SYSTEM(CS_sig(context)))
+        if (INSTR_IsRelay && INSTR_IsRelay( (void *)EIP_sig(context) ))
         {
             /* Saved selector may have become invalid when the relay code */
             /* tries to restore it. We simply clear it. */
