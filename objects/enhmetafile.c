@@ -322,42 +322,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
   switch(type) 
     {
     case EMR_HEADER:
-      {
-#if 0
-	ENHMETAHEADER* h = (LPENHMETAHEADER)mr;
-        XFORM dcTransform;
-
-        /* Scale the enhanced metafile according to the reference hdc
-           it was created with */
-        if( h->szlDevice.cx )
-        {
-          dcTransform.eM11 = (FLOAT)( (DOUBLE)GetDeviceCaps( hdc, HORZRES ) /  
-                                      (DOUBLE)h->szlDevice.cx );
-        }
-        else 
-        {
-          ERR( "Invalid szlDevice.cx in header\n" ); 
-          dcTransform.eM11 = (FLOAT)1.0;
-        }
-
-        if( h->szlDevice.cy )
-        { 
-          dcTransform.eM22 = (FLOAT)( (DOUBLE)GetDeviceCaps( hdc, VERTRES ) /
-                                      (DOUBLE)h->szlDevice.cy );
-        }
-        else 
-        {
-          ERR( "Invalid szlDevice.cy in header\n" ); 
-          dcTransform.eM22 = (FLOAT)1.0;
-        }
-
-        dcTransform.eM12 = dcTransform.eM21 = (FLOAT)0;
-        dcTransform.eDx = dcTransform.eDy = (FLOAT)0;
-
-        ModifyWorldTransform( hdc, &dcTransform, MWT_RIGHTMULTIPLY ); 
-#endif
-	break;
-      }
+      break;
     case EMR_EOF:
       break;
     case EMR_GDICOMMENT:
@@ -369,50 +334,50 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       } 
     case EMR_SETMAPMODE:
       {
-	DWORD mode = mr->dParm[0];
-	SetMapMode(hdc, mode);
+	PEMRSETMAPMODE pSetMapMode = (PEMRSETMAPMODE) mr;
+	SetMapMode(hdc, pSetMapMode->iMode);
 	break;
       }
     case EMR_SETBKMODE:
       {
-	DWORD mode = mr->dParm[0];
-	SetBkMode(hdc, mode);
+	PEMRSETBKMODE pSetBkMode = (PEMRSETBKMODE) mr;
+	SetBkMode(hdc, pSetBkMode->iMode);
 	break;
       }
     case EMR_SETBKCOLOR:
       {
-	DWORD mode = mr->dParm[0];
-	SetBkColor(hdc, mode);
+       	PEMRSETBKCOLOR pSetBkColor = (PEMRSETBKCOLOR) mr;
+	SetBkColor(hdc, pSetBkColor->crColor);
 	break;
       }
     case EMR_SETPOLYFILLMODE:
       {
-	DWORD mode = mr->dParm[0];
-	SetPolyFillMode(hdc, mode);
+	PEMRSETPOLYFILLMODE pSetPolyFillMode = (PEMRSETPOLYFILLMODE) mr;
+	SetPolyFillMode(hdc, pSetPolyFillMode->iMode);
 	break;
       }
     case EMR_SETROP2:
       {
-	DWORD mode = mr->dParm[0];
-	SetROP2(hdc, mode);
+	PEMRSETROP2 pSetROP2 = (PEMRSETROP2) mr;
+	SetROP2(hdc, pSetROP2->iMode);
 	break;
       }
     case EMR_SETSTRETCHBLTMODE:
       {
-	DWORD mode = mr->dParm[0];
-	SetStretchBltMode(hdc, mode);
+	PEMRSETSTRETCHBLTMODE pSetStretchBltMode = (PEMRSETSTRETCHBLTMODE) mr;
+	SetStretchBltMode(hdc, pSetStretchBltMode->iMode);
 	break;
       }
     case EMR_SETTEXTALIGN:
       {
-	DWORD align = mr->dParm[0];
-	SetTextAlign(hdc, align);
+	PEMRSETTEXTALIGN pSetTextAlign = (PEMRSETTEXTALIGN) mr;
+	SetTextAlign(hdc, pSetTextAlign->iMode);
 	break;
       }
     case EMR_SETTEXTCOLOR:
       {
-	DWORD color = mr->dParm[0];
-	SetTextColor(hdc, color);
+	PEMRSETTEXTCOLOR pSetTextColor = (PEMRSETTEXTCOLOR) mr;
+	SetTextColor(hdc, pSetTextColor->crColor);
 	break;
       }
     case EMR_SAVEDC:
@@ -422,139 +387,178 @@ BOOL WINAPI PlayEnhMetaFileRecord(
       }
     case EMR_RESTOREDC:
       {
-	RestoreDC(hdc, mr->dParm[0]);
+	PEMRRESTOREDC pRestoreDC = (PEMRRESTOREDC) mr;
+	RestoreDC(hdc, pRestoreDC->iRelative);
 	break;
       }
     case EMR_INTERSECTCLIPRECT:
       {
-	INT left = mr->dParm[0], top = mr->dParm[1], right = mr->dParm[2],
-	      bottom = mr->dParm[3];
-	IntersectClipRect(hdc, left, top, right, bottom);
+	PEMRINTERSECTCLIPRECT pClipRect = (PEMRINTERSECTCLIPRECT) mr;
+	IntersectClipRect(hdc, pClipRect->rclClip.left, pClipRect->rclClip.top,
+			  pClipRect->rclClip.right, pClipRect->rclClip.bottom);
 	break;
       }
     case EMR_SELECTOBJECT:
       {
-	DWORD obj = mr->dParm[0];
-	SelectObject(hdc, (handletable->objectHandle)[obj]);
+	PEMRSELECTOBJECT pSelectObject = (PEMRSELECTOBJECT) mr;
+	if( pSelectObject->ihObject & 0x80000000 ) {
+	  /* High order bit is set - it's a stock object
+	   * Strip the high bit to get the index.
+	   * See MSDN article Q142319
+	   */
+	  SelectObject( hdc, GetStockObject( pSelectObject->ihObject &
+					     0x7fffffff ) );
+	} else {
+	  /* High order bit wasn't set - not a stock object
+	   */
+	      SelectObject( hdc,
+			(handletable->objectHandle)[pSelectObject->ihObject] );
+	}
 	break;
       }
     case EMR_DELETEOBJECT:
       {
-	DWORD obj = mr->dParm[0];
-	DeleteObject( (handletable->objectHandle)[obj]);
-	(handletable->objectHandle)[obj] = 0;
+	PEMRDELETEOBJECT pDeleteObject = (PEMRDELETEOBJECT) mr;
+	DeleteObject( (handletable->objectHandle)[pDeleteObject->ihObject]);
+	(handletable->objectHandle)[pDeleteObject->ihObject] = 0;
 	break;
       }
     case EMR_SETWINDOWORGEX:
       {
-	DWORD x = mr->dParm[0], y = mr->dParm[1];
-	SetWindowOrgEx(hdc, x, y, NULL);
+	PEMRSETWINDOWORGEX pSetWindowOrgEx = (PEMRSETWINDOWORGEX) mr;
+	SetWindowOrgEx(hdc, pSetWindowOrgEx->ptlOrigin.x,
+		       pSetWindowOrgEx->ptlOrigin.y, NULL);
 	break;
       }
     case EMR_SETWINDOWEXTEX:
       {
-	DWORD x = mr->dParm[0], y = mr->dParm[1];
-	SetWindowExtEx(hdc, x, y, NULL);
+	PEMRSETWINDOWEXTEX pSetWindowExtEx = (PEMRSETWINDOWEXTEX) mr;
+	SetWindowExtEx(hdc, pSetWindowExtEx->szlExtent.cx,
+		       pSetWindowExtEx->szlExtent.cy, NULL);
 	break;
       }
     case EMR_SETVIEWPORTORGEX:
       {
-	DWORD x = mr->dParm[0], y = mr->dParm[1];
-	SetViewportOrgEx(hdc, x, y, NULL);
+	PEMRSETVIEWPORTORGEX pSetViewportOrgEx = (PEMRSETVIEWPORTORGEX) mr;
+	SetViewportOrgEx(hdc, pSetViewportOrgEx->ptlOrigin.x,
+			 pSetViewportOrgEx->ptlOrigin.y, NULL);
 	break;
       }
     case EMR_SETVIEWPORTEXTEX:
       {
-	DWORD x = mr->dParm[0], y = mr->dParm[1];
-	SetViewportExtEx(hdc, x, y, NULL);
+	PEMRSETVIEWPORTEXTEX pSetViewportExtEx = (PEMRSETVIEWPORTEXTEX) mr;
+	SetViewportExtEx(hdc, pSetViewportExtEx->szlExtent.cx,
+			 pSetViewportExtEx->szlExtent.cy, NULL);
 	break;
       }
     case EMR_CREATEPEN:
       {
-	DWORD obj = mr->dParm[0];
-	(handletable->objectHandle)[obj] = 
-	  CreatePenIndirect((LOGPEN *) &(mr->dParm[1]));
+	PEMRCREATEPEN pCreatePen = (PEMRCREATEPEN) mr;
+	(handletable->objectHandle)[pCreatePen->ihPen] = 
+	  CreatePenIndirect(&pCreatePen->lopn);
 	break;
       }
     case EMR_EXTCREATEPEN:
       {
-	DWORD obj = mr->dParm[0];
-	DWORD style = mr->dParm[1], brush = mr->dParm[2];
-	LOGBRUSH *b = (LOGBRUSH *) &mr->dParm[3];
-	FIXME("Some ExtCreatePen args not handled\n");
-	(handletable->objectHandle)[obj] = 
-	  ExtCreatePen(style, brush, b, 0, NULL);
+	PEMREXTCREATEPEN pPen = (PEMREXTCREATEPEN) mr;
+	LOGBRUSH lb;
+	lb.lbStyle = pPen->elp.elpBrushStyle;
+	lb.lbColor = pPen->elp.elpColor;
+	lb.lbHatch = pPen->elp.elpHatch;
+
+	if(pPen->offBmi || pPen->offBits)
+	  FIXME("EMR_EXTCREATEPEN: Need to copy brush bitmap\n");
+
+	(handletable->objectHandle)[pPen->ihPen] = 
+	  ExtCreatePen(pPen->elp.elpPenStyle, pPen->elp.elpWidth, &lb, 
+		       pPen->elp.elpNumEntries, pPen->elp.elpStyleEntry);
 	break;
       }
     case EMR_CREATEBRUSHINDIRECT:
       {
-	DWORD obj = mr->dParm[0];
-	(handletable->objectHandle)[obj] = 
-	  CreateBrushIndirect((LOGBRUSH *) &(mr->dParm[1]));
+	PEMRCREATEBRUSHINDIRECT pBrush = (PEMRCREATEBRUSHINDIRECT) mr;
+	(handletable->objectHandle)[pBrush->ihBrush] = 
+	  CreateBrushIndirect(&pBrush->lb);
 	break;
       }
     case EMR_EXTCREATEFONTINDIRECTW:
-	{
-	DWORD obj = mr->dParm[0];
-	(handletable->objectHandle)[obj] = 
-	  CreateFontIndirectW((LOGFONTW *) &(mr->dParm[1]));
+      {
+	PEMREXTCREATEFONTINDIRECTW pFont = (PEMREXTCREATEFONTINDIRECTW) mr;
+	(handletable->objectHandle)[pFont->ihFont] = 
+	  CreateFontIndirectW(&pFont->elfw.elfLogFont);
 	break;
-	}
+      }
     case EMR_MOVETOEX:
       {
-	DWORD x = mr->dParm[0], y = mr->dParm[1];
-	MoveToEx(hdc, x, y, NULL);
+	PEMRMOVETOEX pMoveToEx = (PEMRMOVETOEX) mr;
+	MoveToEx(hdc, pMoveToEx->ptl.x, pMoveToEx->ptl.y, NULL);
 	break;
       }
     case EMR_LINETO:
       {
-	DWORD x = mr->dParm[0], y = mr->dParm[1];
-        LineTo(hdc, x, y);
+	PEMRLINETO pLineTo = (PEMRLINETO) mr;
+        LineTo(hdc, pLineTo->ptl.x, pLineTo->ptl.y);
 	break;
       }
     case EMR_RECTANGLE:
       {
-	INT left = mr->dParm[0], top = mr->dParm[1], right = mr->dParm[2],
-	      bottom = mr->dParm[3];
-	Rectangle(hdc, left, top, right, bottom);
+	PEMRRECTANGLE pRect = (PEMRRECTANGLE) mr;
+	Rectangle(hdc, pRect->rclBox.left, pRect->rclBox.top,
+		  pRect->rclBox.right, pRect->rclBox.bottom);
 	break;
       }
     case EMR_ELLIPSE:
       {
-	INT left = mr->dParm[0], top = mr->dParm[1], right = mr->dParm[2],
-	      bottom = mr->dParm[3];
-	Ellipse(hdc, left, top, right, bottom);
+	PEMRELLIPSE pEllipse = (PEMRELLIPSE) mr;
+	Ellipse(hdc, pEllipse->rclBox.left, pEllipse->rclBox.top,
+		pEllipse->rclBox.right, pEllipse->rclBox.bottom);
 	break;
       }
     case EMR_POLYGON16:
       {
-	/* 0-3 : a bounding rectangle? */
-	INT count = mr->dParm[4];
-	FIXME("Some Polygon16 args not handled\n");
-	Polygon16(hdc, (POINT16 *)&mr->dParm[5], count);
+	PEMRPOLYGON16 pPoly = (PEMRPOLYGON16) mr;
+	/* Shouldn't use Polygon16 since pPoly->cpts is DWORD */
+	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
+				pPoly->cpts * sizeof(POINT) );
+	DWORD i;
+	for(i = 0; i < pPoly->cpts; i++)
+	  CONV_POINT16TO32(pPoly->apts + i, pts + i);
+	Polygon(hdc, pts, pPoly->cpts);
+	HeapFree( GetProcessHeap(), 0, pts );
 	break;
       }
     case EMR_POLYLINE16:
       {
-	/* 0-3 : a bounding rectangle? */
-	INT count = mr->dParm[4];
-	FIXME("Some Polyline16 args not handled\n");
-	Polyline16(hdc, (POINT16 *)&mr->dParm[5], count);
+	PEMRPOLYLINE16 pPoly = (PEMRPOLYLINE16) mr;
+	/* Shouldn't use Polyline16 since pPoly->cpts is DWORD */
+	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
+				pPoly->cpts * sizeof(POINT) );
+	DWORD i;
+	for(i = 0; i < pPoly->cpts; i++)
+	  CONV_POINT16TO32(pPoly->apts + i, pts + i);
+	Polyline(hdc, pts, pPoly->cpts);
+	HeapFree( GetProcessHeap(), 0, pts );
 	break;
       }
-#if 0
+
     case EMR_POLYPOLYGON16:
       {
-        PEMRPOLYPOLYGON16 lpPolyPoly16 = (PEMRPOLYPOLYGON16)mr;
+        PEMRPOLYPOLYGON16 pPolyPoly = (PEMRPOLYPOLYGON16) mr;
+	/* NB POINTS array doesn't start at pPolyPoly->apts it's actually
+	   pPolyPoly->aPolyCounts + pPolyPoly->nPolys */
 
-	PolyPolygon16( hdc, 
-                       lpPolyPoly16->apts, 
-                       lpPolyPoly16->aPolyCounts,
-                       lpPolyPoly16->nPolys );
+	POINT *pts = HeapAlloc( GetProcessHeap(), 0,
+				pPolyPoly->cpts * sizeof(POINT) );
+	DWORD i;
+	for(i = 0; i < pPolyPoly->cpts; i++)
+	  CONV_POINT16TO32((POINTS*) (pPolyPoly->aPolyCounts +
+				      pPolyPoly->nPolys) + i, pts + i);
 
+	PolyPolygon(hdc, pts, (INT*)pPolyPoly->aPolyCounts, pPolyPoly->nPolys);
+	HeapFree( GetProcessHeap(), 0, pts );
 	break;
       }
-#endif
+
     case EMR_STRETCHDIBITS:
       {
 	LONG xDest = mr->dParm[4];
@@ -648,88 +652,62 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_POLYBEZIER:
       {
         PEMRPOLYBEZIER lpPolyBez = (PEMRPOLYBEZIER)mr; 
-
-        FIXME( "Bounding rectangle ignored for EMR_POLYBEZIER\n" );
-        PolyBezier( hdc, (const LPPOINT)lpPolyBez->aptl, (UINT)lpPolyBez->cptl ); 
-
+        PolyBezier(hdc, (const LPPOINT)lpPolyBez->aptl, (UINT)lpPolyBez->cptl);
         break;
       }
 
     case EMR_POLYGON:
       {
         PEMRPOLYGON lpPoly = (PEMRPOLYGON)mr;
-     
-        FIXME( "Bounding rectangle ignored for EMR_POLYGON\n" );
         Polygon( hdc, (const LPPOINT)lpPoly->aptl, (UINT)lpPoly->cptl );
-
         break;
       }
 
     case EMR_POLYLINE:
       {
         PEMRPOLYLINE lpPolyLine = (PEMRPOLYLINE)mr;
- 
-        FIXME( "Bounding rectangle ignored for EMR_POLYLINE\n" ); 
-        Polyline( hdc, (const LPPOINT)lpPolyLine->aptl, (UINT)lpPolyLine->cptl );
-
+        Polyline(hdc, (const LPPOINT)lpPolyLine->aptl, (UINT)lpPolyLine->cptl);
         break; 
       }
 
     case EMR_POLYBEZIERTO:
       {
         PEMRPOLYBEZIERTO lpPolyBezierTo = (PEMRPOLYBEZIERTO)mr;
-
-        FIXME( "Bounding rectangle ignored for EMR_POLYBEZIERTO\n" );
-        PolyBezierTo( hdc, (const LPPOINT)lpPolyBezierTo->aptl, (UINT)lpPolyBezierTo->cptl );
-
+        PolyBezierTo( hdc, (const LPPOINT)lpPolyBezierTo->aptl,
+		      (UINT)lpPolyBezierTo->cptl );
         break; 
       }
 
     case EMR_POLYLINETO:
       {
         PEMRPOLYLINETO lpPolyLineTo = (PEMRPOLYLINETO)mr;
-
-        FIXME( "Bounding rectangle ignored for EMR_POLYLINETO\n" );
-        PolylineTo( hdc, (const LPPOINT)lpPolyLineTo->aptl, (UINT)lpPolyLineTo->cptl );
-
+        PolylineTo( hdc, (const LPPOINT)lpPolyLineTo->aptl,
+		    (UINT)lpPolyLineTo->cptl );
         break;
       }
 
     case EMR_POLYPOLYLINE:
       {
-        PEMRPOLYPOLYLINE lpPolyPolyLine = (PEMRPOLYPOLYLINE)mr;
+        PEMRPOLYPOLYLINE pPolyPolyline = (PEMRPOLYPOLYLINE) mr;
+	/* NB Points at pPolyPolyline->aPolyCounts + pPolyPolyline->nPolys */
 
-        FIXME( "Bounding rectangle ignored for EMR_POLYPOLYLINE\n" );
-        PolyPolyline( hdc, 
-                      (const LPPOINT)lpPolyPolyLine->aptl, 
-                      lpPolyPolyLine->aPolyCounts, 
-                      lpPolyPolyLine->nPolys ); 
+        PolyPolyline(hdc, (LPPOINT)(pPolyPolyline->aPolyCounts +
+				    pPolyPolyline->nPolys), 
+		     pPolyPolyline->aPolyCounts, 
+		     pPolyPolyline->nPolys ); 
 
         break;
       }
 
     case EMR_POLYPOLYGON:
       {
-        PEMRPOLYPOLYGON lpPolyPolygon = (PEMRPOLYPOLYGON)mr;
-        INT* lpPolyCounts;
-        UINT i;
+        PEMRPOLYPOLYGON pPolyPolygon = (PEMRPOLYPOLYGON) mr;
 
-        /* We get the polygon point counts in a dword struct. Transform
-           this into an INT struct */ 
-        lpPolyCounts = (INT*)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                        sizeof(INT)*lpPolyPolygon->cptl ); 
+	/* NB Points at pPolyPolygon->aPolyCounts + pPolyPolygon->nPolys */
 
-        for( i=0; i<lpPolyPolygon->cptl; i++ )
-        {
-          lpPolyCounts[i] = (INT)lpPolyPolygon->aPolyCounts[i];
-        }
-
-        FIXME( "Bounding rectangle ignored for EMR_POLYPOLYGON\n" );
-        PolyPolygon( hdc, (const LPPOINT)lpPolyPolygon->aptl,
-                     lpPolyCounts, lpPolyPolygon->nPolys );
-
-        HeapFree( GetProcessHeap(), 0, lpPolyCounts ); 
-
+        PolyPolygon(hdc, (LPPOINT)(pPolyPolygon->aPolyCounts +
+				   pPolyPolygon->nPolys),
+		    (INT*)pPolyPolygon->aPolyCounts, pPolyPolygon->nPolys );
         break;
       }
 
@@ -948,8 +926,6 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_POLYDRAW:
       {
         PEMRPOLYDRAW lpPolyDraw = (PEMRPOLYDRAW)mr;
-
-        FIXME( "Bounding rectangle ignored for EMR_POLYDRAW\n" );
         PolyDraw( hdc, 
                   (const LPPOINT)lpPolyDraw->aptl,
                   lpPolyDraw->abTypes,
@@ -961,18 +937,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_SETARCDIRECTION:
       {
         PEMRSETARCDIRECTION lpSetArcDirection = (PEMRSETARCDIRECTION)mr;
-
         SetArcDirection( hdc, (INT)lpSetArcDirection->iArcDirection );
-
         break;
       }
 
     case EMR_SETMITERLIMIT:
       {
         PEMRSETMITERLIMIT lpSetMiterLimit = (PEMRSETMITERLIMIT)mr;
-
         SetMiterLimit( hdc, lpSetMiterLimit->eMiterLimit, NULL );
-
         break;
       } 
 
@@ -997,30 +969,21 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_FILLPATH:
       {
         /*PEMRFILLPATH lpFillPath = (PEMRFILLPATH)mr;*/
-
-        FIXME( "Bounding rectangle ignored for EMR_FILLPATH\n" );
         FillPath( hdc );
-
         break;
       }
 
     case EMR_STROKEANDFILLPATH:
       {
         /*PEMRSTROKEANDFILLPATH lpStrokeAndFillPath = (PEMRSTROKEANDFILLPATH)mr;*/
-
-        FIXME( "Bounding rectangle ignored for EMR_STROKEANDFILLPATH\n" );
         StrokeAndFillPath( hdc );
-
         break;
       }
 
     case EMR_STROKEPATH:
       {
         /*PEMRSTROKEPATH lpStrokePath = (PEMRSTROKEPATH)mr;*/
-
-        FIXME( "Bounding rectangle ignored for EMR_STROKEPATH\n" );  
         StrokePath( hdc );
-
         break;
       }
 
@@ -1039,9 +1002,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_SELECTCLIPPATH:
       {
         PEMRSELECTCLIPPATH lpSelectClipPath = (PEMRSELECTCLIPPATH)mr;
-
         SelectClipPath( hdc, (INT)lpSelectClipPath->iMode );
-
         break;
       }
  
@@ -1054,39 +1015,30 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_CREATECOLORSPACE:
       {
         PEMRCREATECOLORSPACE lpCreateColorSpace = (PEMRCREATECOLORSPACE)mr;
-
         (handletable->objectHandle)[lpCreateColorSpace->ihCS] = 
            CreateColorSpaceA( &lpCreateColorSpace->lcs ); 
-
         break;
       }
 
     case EMR_SETCOLORSPACE:
       {
         PEMRSETCOLORSPACE lpSetColorSpace = (PEMRSETCOLORSPACE)mr; 
-
         SetColorSpace( hdc, 
                        (handletable->objectHandle)[lpSetColorSpace->ihCS] );
-
         break;
       }
 
     case EMR_DELETECOLORSPACE:
       {
         PEMRDELETECOLORSPACE lpDeleteColorSpace = (PEMRDELETECOLORSPACE)mr;
-
         DeleteColorSpace( (handletable->objectHandle)[lpDeleteColorSpace->ihCS] );
-   
         break; 
       }
 
     case EMR_SETICMMODE:
       {
         PERMSETICMMODE lpSetICMMode = (PERMSETICMMODE)mr;
-
-        SetICMMode( hdc,
-                    (INT)lpSetICMMode->iMode );
-
+        SetICMMode( hdc, (INT)lpSetICMMode->iMode );
         break;
       }
 
@@ -1156,7 +1108,6 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_POLYBEZIERTO16:
     case EMR_POLYLINETO16:
     case EMR_POLYPOLYLINE16:
-    case EMR_POLYPOLYGON16:
     case EMR_POLYDRAW16:
     case EMR_CREATEMONOBRUSH:
     case EMR_POLYTEXTOUTA:
