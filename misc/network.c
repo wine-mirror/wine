@@ -743,16 +743,6 @@ DWORD WINAPI MultinetGetConnectionPerformanceA(
 
 
 /*****************************************************************
- *  [MPR.22]
- */
-
-DWORD WINAPI _MPR_22(DWORD x)
-{
-	FIXME_(mpr)("(%lx): stub\n",x);
-	return 0;
-}
-
-/*****************************************************************
  *  MultinetGetErrorTextA [MPR.28]
  */
 
@@ -837,3 +827,39 @@ DWORD WINAPI WNetGetUserW(
        SetLastError(WN_NO_NETWORK);
   return WN_NO_NETWORK;
 }
+
+
+ /* 
+  * FIXME: The following routines should use a private heap ...
+  */
+
+/*****************************************************************
+ *  MPR_Alloc  [MPR.22]
+ */
+LPVOID WINAPI MPR_Alloc( DWORD dwSize )
+{
+    return HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, dwSize );
+}
+
+/*****************************************************************
+ *  MPR_ReAlloc  [MPR.23]
+ */
+LPVOID WINAPI MPR_ReAlloc( LPVOID lpSrc, DWORD dwSize )
+{
+    if ( lpSrc )
+        return HeapReAlloc( SystemHeap, HEAP_ZERO_MEMORY, lpSrc, dwSize );
+    else
+        return HeapAlloc( SystemHeap, HEAP_ZERO_MEMORY, dwSize );
+}
+
+/*****************************************************************
+ *  MPR_Free  [MPR.24]
+ */
+BOOL WINAPI MPR_Free( LPVOID lpMem )
+{
+    if ( lpMem )
+        return HeapFree( SystemHeap, 0, lpMem );
+    else
+        return FALSE;
+}
+
