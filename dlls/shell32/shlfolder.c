@@ -503,7 +503,7 @@ static HRESULT InitializeGenericSF(IGenericSFImpl * sf, LPITEMIDLIST pidlRoot, L
 	        sPos = sNewPath;
 	    }
 	    _ILSimpleGetText(pidlFolder, sPos, MAX_PATH - (sPos - sNewPath));
-	    if(!((sf->sPathRoot = SHAlloc(strlen(sNewPath+1))))) return E_OUTOFMEMORY;
+	    if(!((sf->sPathRoot = SHAlloc(strlen(sNewPath)+1)))) return E_OUTOFMEMORY;
 	    strcpy(sf->sPathRoot, sNewPath);
 	    TRACE("-- %s\n", sNewPath);
 	}
