@@ -151,6 +151,14 @@ typedef struct {
     FT_Short internal_leading;
 } Bitmap_Size;
 
+/* FT_Bitmap_Size gained 3 new elements between FreeType 2.1.4 and 2.1.5
+   So to let this compile on older versions of FreeType we'll define the
+   new structure here. */
+typedef struct {
+    FT_Short height, width;
+    FT_Pos size, x_ppem, y_ppem;
+} My_FT_Bitmap_Size;
+
 typedef struct tagFace {
     WCHAR *StyleName;
     char *file;
@@ -234,9 +242,9 @@ static const WCHAR System_Value[] = {'F','O','N','T','S','.','F','O','N','\0'};
 static const WCHAR OEMFont_Value[] = {'O','E','M','F','O','N','T','.','F','O','N','\0'};
 
 static const WCHAR *SystemFontValues[4] = {
-    FixedSys_Value,
     System_Value,
     OEMFont_Value,
+    FixedSys_Value,
     NULL
 };
 
@@ -415,6 +423,11 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
 
         bitmap_num = 0;
         do {
+            My_FT_Bitmap_Size *size = NULL;
+
+            if(!FT_IS_SCALABLE(ft_face))
+                size = (My_FT_Bitmap_Size *)ft_face->available_sizes + bitmap_num;
+
             len = MultiByteToWideChar(CP_ACP, 0, family_name, -1, NULL, 0);
             FamilyW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
             MultiByteToWideChar(CP_ACP, 0, family_name, -1, FamilyW, len);
@@ -441,10 +454,10 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
             next = NULL;
             for(insertface = &(*pfamily)->FirstFace; *insertface;
                 insertface = &(*insertface)->next) {
-                if(!strcmpW((*insertface)->StyleName, StyleW) && FT_IS_SCALABLE(ft_face)) {
+                if(!strcmpW((*insertface)->StyleName, StyleW) && (FT_IS_SCALABLE(ft_face) || (size->y_ppem == (*insertface)->size.y_ppem))) {
                     TRACE("Already loaded font %s %s original version is %lx, this version is %lx\n",
                           debugstr_w((*pfamily)->FamilyName), debugstr_w(StyleW),
-                          (*insertface)->font_version,  pHeader->Font_Revision);
+                          (*insertface)->font_version,  pHeader ? pHeader->Font_Revision : 0);
 
                     if(fake_family) {
                         TRACE("This font is a replacement but the original really exists, so we'll skip the replacement\n");
@@ -452,7 +465,7 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
                         pFT_Done_Face(ft_face);
                         return FALSE;
                     }
-                    if(pHeader->Font_Revision <= (*insertface)->font_version) {
+                    if(!pHeader || pHeader->Font_Revision <= (*insertface)->font_version) {
                         TRACE("Original font is newer so skipping this one\n");
                         HeapFree(GetProcessHeap(), 0, StyleW);
                         pFT_Done_Face(ft_face);
@@ -483,16 +496,6 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
                 memset(&(*insertface)->size, 0, sizeof((*insertface)->size));
                 (*insertface)->scalable = TRUE;
             } else {
-                /* FT_Bitmap_Size gained 3 new elements between FreeType 2.1.4 and 2.1.5
-                   So to let this compile on older versions of FreeType we'll define the
-                   new structure here.  Note that this code is never executed when run with
-                   earlier versions of the library because of the version check above */
-                struct my_bitmap_size {
-                    FT_Short height, width;
-                    FT_Pos size, x_ppem, y_ppem;
-                } *size;
-
-                size = (struct my_bitmap_size *)ft_face->available_sizes + bitmap_num;
                 TRACE("Adding bitmap size h %d w %d size %ld x_ppem %ld y_ppem %ld\n",
                       size->height, size->width, size->size >> 6,
                       size->x_ppem >> 6, size->y_ppem >> 6);
@@ -737,7 +740,7 @@ static void LoadReplaceList(void)
                         TRACE("mapping %s %s to %s\n", debugstr_w(family->FamilyName),
                               debugstr_w(face->StyleName), value);
                         /* Now add a new entry with the new family name */
-                        AddFontFileToList(face->file, value, face->external ? ADDFONT_EXTERNAL_FONT : 0);
+                        AddFontFileToList(face->file, value, ADDFONT_FORCE_BITMAP | (face->external ? ADDFONT_EXTERNAL_FONT : 0));
                     }
                     break;
                 }
@@ -1104,6 +1107,9 @@ BOOL WineEngInit(void)
     }
     WaitForSingleObject(font_mutex, INFINITE);
 
+    /* load the system fonts */
+    load_system_fonts();
+
     /* load in the fonts from %WINDOWSDIR%\\Fonts first of all */
     GetWindowsDirectoryW(windowsdir, sizeof(windowsdir) / sizeof(WCHAR));
     strcatW(windowsdir, fontsW);
@@ -1112,9 +1118,6 @@ BOOL WineEngInit(void)
         ReadFontDir(unixname, FALSE);
         HeapFree(GetProcessHeap(), 0, unixname);
     }
-
-    /* now load the system fonts */
-    load_system_fonts();
 
     /* now look under HKLM\Software\Microsoft\Windows[ NT]\CurrentVersion\Fonts
        for any fonts not installed in %WINDOWSDIR%\Fonts.  They will have their
