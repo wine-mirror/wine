@@ -208,7 +208,7 @@ static BOOL WINECON_SetEditionMode(HANDLE hConIn, int edition_mode)
 int	WINECON_GrabChanges(struct inner_data* data)
 {
     struct console_renderer_event	evts[256];
-    int	i, num, curs = -1;
+    int	i, num, ev_found;
     HANDLE h;
 
     SERVER_START_REQ( get_console_renderer_events )
@@ -223,40 +223,37 @@ int	WINECON_GrabChanges(struct inner_data* data)
 
     /* FIXME: should do some event compression here (cursor pos, update) */
     /* step 1: keep only last cursor pos event */
+    ev_found = -1;
     for (i = num - 1; i >= 0; i--)
     {
         if (evts[i].event == CONSOLE_RENDERER_CURSOR_POS_EVENT)
         {
-            if (curs == -1)
-                curs = i;
-            else
-            {
-                memmove(&evts[i], &evts[i+1], (num - i - 1) * sizeof(evts[0]));
-                num--;
-            }
+            if (ev_found != -1) evts[ev_found].event = CONSOLE_RENDERER_NONE_EVENT;
+	    ev_found = i;
         }
     }
     /* step 2: manage update events */
+    ev_found = -1;
     for (i = 0; i < num - 1; i++)
     {
-        if (evts[i].event == CONSOLE_RENDERER_UPDATE_EVENT &&
-            evts[i+1].event == CONSOLE_RENDERER_UPDATE_EVENT)
+	if (evts[i].event == CONSOLE_RENDERER_NONE_EVENT) continue;
+	if (evts[i].event != CONSOLE_RENDERER_UPDATE_EVENT)
         {
-            /* contiguous */
-            if (evts[i].u.update.bottom + 1 == evts[i+1].u.update.top)
-            {
-                evts[i].u.update.bottom = evts[i+1].u.update.bottom;
-                memmove(&evts[i+1], &evts[i+2], (num - i - 2) * sizeof(evts[0]));
-                num--; i--;
+	    ev_found = -1;
+	    continue;
             }
-            /* already handled cases */
-            else if (evts[i].u.update.top <= evts[i+1].u.update.top &&
-                     evts[i].u.update.bottom >= evts[i+1].u.update.bottom)
-            {
-                memmove(&evts[i+1], &evts[i+2], (num - i - 2) * sizeof(evts[0]));
-                num--; i--;
-            }
+
+	if (ev_found != -1 &&
+	    !(evts[i       ].u.update.bottom + 1 < evts[ev_found].u.update.top ||
+	      evts[ev_found].u.update.bottom + 1 < evts[i       ].u.update.top))
+	{
+	    evts[i].u.update.top    = min(evts[i       ].u.update.top,
+					  evts[ev_found].u.update.top);
+	    evts[i].u.update.bottom = max(evts[i       ].u.update.bottom,
+					  evts[ev_found].u.update.bottom);
+	    evts[ev_found].event = CONSOLE_RENDERER_NONE_EVENT;
         }
+	ev_found = i;
     }
 
     WINE_TRACE("Events:");
@@ -264,6 +261,8 @@ int	WINECON_GrabChanges(struct inner_data* data)
     {
 	switch (evts[i].event)
 	{
+	case CONSOLE_RENDERER_NONE_EVENT:
+	    break;
 	case CONSOLE_RENDERER_TITLE_EVENT:
 	    data->fnSetTitle(data);
 	    break;
