@@ -835,6 +835,26 @@ HRESULT WINAPI AVIStreamOpenFromFileW(PAVISTREAM *ppavi, LPCWSTR szFile,
 }
 
 /***********************************************************************
+ *		AVIStreamBeginStreaming	(AVIFIL32.@)
+ */
+LONG WINAPI AVIStreamBeginStreaming(PAVISTREAM pavi, LONG lStart, LONG lEnd, LONG lRate)
+{
+  FIXME("(%p)->(%ld,%ld,%ld)\n", pavi, lStart, lEnd, lRate);
+
+  return AVIERR_OK;
+}
+
+/***********************************************************************
+ *		AVIStreamEndStreaming	(AVIFIL32.@)
+ */
+LONG WINAPI AVIStreamEndStreaming(PAVISTREAM pavi)
+{
+  FIXME("(%p)\n", pavi);
+
+  return AVIERR_OK;
+}
+
+/***********************************************************************
  *		AVIStreamStart		(AVIFILE.130)
  *		AVIStreamStart		(AVIFIL32.@)
  */

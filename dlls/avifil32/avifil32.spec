@@ -33,9 +33,9 @@
 @ stdcall AVISaveVW(wstr ptr ptr long ptr ptr)
 @ stub    AVISaveW
 @ stdcall AVIStreamAddRef(ptr)
-@ stub    AVIStreamBeginStreaming
+@ stdcall AVIStreamBeginStreaming(ptr long long long)
 @ stdcall AVIStreamCreate(ptr long long ptr)
-@ stub    AVIStreamEndStreaming
+@ stdcall AVIStreamEndStreaming(ptr) 
 @ stdcall AVIStreamFindSample(ptr long long)
 @ stdcall AVIStreamGetFrame(ptr long)
 @ stdcall AVIStreamGetFrameClose(ptr)
