@@ -3,6 +3,7 @@
  *
  * Copyright 1998, 1999 Eric Kohl
  * Copyright 2002 Gyorgy 'Nog' Jeney
+ * Copyright 2004 Robert Shearman
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,11 +26,6 @@
  * the specification mentioned above.
  * If you discover missing features or bugs please note them below.
  *
- * TODO:
- *   Styles:
- *     WS_DISABLED
- *   Notifications:
- *     EN_CHANGED
  */
 
 #include <stdarg.h>
@@ -110,8 +106,16 @@ HOTKEY_DrawHotKey(HOTKEY_INFO *infoPtr, LPCWSTR KeyName, WORD NameLen, HDC hdc)
     nYStart = GetSystemMetrics(SM_CYBORDER);
 
     hFontOld = SelectObject(hdc, infoPtr->hFont);
-    clrOldText = SetTextColor(hdc, comctl32_color.clrWindowText);
-    clrOldBk = SetBkColor(hdc, comctl32_color.clrWindow);
+    if (GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & WS_DISABLED)
+    {
+        clrOldText = SetTextColor(hdc, comctl32_color.clrGrayText);
+        clrOldBk = SetBkColor(hdc, comctl32_color.clrBtnFace);
+    }
+    else
+    {
+        clrOldText = SetTextColor(hdc, comctl32_color.clrWindowText);
+        clrOldBk = SetBkColor(hdc, comctl32_color.clrWindow);
+    }
 
     TextOutW(hdc, nXStart, nYStart, KeyName, NameLen);
 
@@ -248,17 +252,25 @@ HOTKEY_Destroy (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT
 HOTKEY_EraseBackground (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    HBRUSH hBrush;
+    HBRUSH hBrush, hSolidBrush = NULL;
     RECT   rc;
 
-    hBrush =
-	(HBRUSH)SendMessageW (infoPtr->hwndNotify, WM_CTLCOLOREDIT,
-				wParam, (LPARAM)infoPtr->hwndSelf);
-    if (hBrush)
-	hBrush = (HBRUSH)GetStockObject (WHITE_BRUSH);
+    if (GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & WS_DISABLED)
+        hBrush = hSolidBrush = CreateSolidBrush(comctl32_color.clrBtnFace);
+    else
+    {
+        hBrush = (HBRUSH)SendMessageW(infoPtr->hwndNotify, WM_CTLCOLOREDIT,
+            wParam, (LPARAM)infoPtr->hwndSelf);
+        if (!hBrush)
+            hBrush = hSolidBrush = CreateSolidBrush(comctl32_color.clrWindow);
+    }
+
     GetClientRect (infoPtr->hwndSelf, &rc);
 
     FillRect ((HDC)wParam, &rc, hBrush);
+
+    if (hSolidBrush)
+        DeleteObject(hSolidBrush);
 
     return -1;
 }
@@ -273,11 +285,22 @@ HOTKEY_GetFont (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT
 HOTKEY_KeyDown (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
+    WORD wOldHotKey;
+    BYTE bOldMod;
+
+    if (GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & WS_DISABLED)
+        return 0;
+
     TRACE("() Key: %d\n", wParam);
+
+    wOldHotKey = infoPtr->HotKey;
+    bOldMod = infoPtr->CurrMod;
+
     /* If any key is Pressed, we have to reset the hotkey in the control */
     infoPtr->HotKey = 0;
 
-    switch (wParam) {
+    switch (wParam)
+    {
 	case VK_RETURN:
 	case VK_TAB:
 	case VK_SPACE:
@@ -307,7 +330,16 @@ HOTKEY_KeyDown (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	    break;
     }
 
-    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
+    if ((wOldHotKey != infoPtr->HotKey) || (bOldMod != infoPtr->CurrMod))
+    {
+        InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
+
+        /* send EN_CHANGE notification */
+        SendMessageW(infoPtr->hwndNotify, WM_COMMAND,
+            MAKEWPARAM(GetDlgCtrlID(infoPtr->hwndSelf), EN_CHANGE),
+            (LPARAM)infoPtr->hwndSelf);
+    }
+
     return 0;
 }
 
@@ -315,8 +347,17 @@ HOTKEY_KeyDown (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT
 HOTKEY_KeyUp (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
+    BYTE bOldMod;
+
+    if (GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & WS_DISABLED)
+        return 0;
+
     TRACE("() Key: %d\n", wParam);
-    switch (wParam) {
+
+    bOldMod = infoPtr->CurrMod;
+
+    switch (wParam)
+    {
 	case VK_SHIFT:
 	    infoPtr->CurrMod &= ~HOTKEYF_SHIFT;
 	    break;
@@ -330,7 +371,15 @@ HOTKEY_KeyUp (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	    return 1;
     }
 
-    InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
+    if (bOldMod != infoPtr->CurrMod)
+    {
+        InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
+
+        /* send EN_CHANGE notification */
+        SendMessageW(infoPtr->hwndNotify, WM_COMMAND,
+            MAKEWPARAM(GetDlgCtrlID(infoPtr->hwndSelf), EN_CHANGE),
+            (LPARAM)infoPtr->hwndSelf);
+    }
 
     return 0;
 }
@@ -349,7 +398,8 @@ HOTKEY_KillFocus (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT
 HOTKEY_LButtonDown (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    SetFocus (infoPtr->hwndSelf);
+    if (!(GetWindowLongW(infoPtr->hwndSelf, GWL_STYLE) & WS_DISABLED))
+        SetFocus (infoPtr->hwndSelf);
 
     return 0;
 }
@@ -369,10 +419,9 @@ HOTKEY_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* initialize info structure */
     infoPtr->HotKey = infoPtr->InvComb = infoPtr->InvMod = infoPtr->CurrMod = 0;
-    infoPtr->CaretPos = 2;
+    infoPtr->CaretPos = GetSystemMetrics(SM_CXBORDER);
     infoPtr->hwndSelf = hwnd;
     LoadStringW(COMCTL32_hModule, HKY_NONE, infoPtr->strNone, 15);
-
 
     return DefWindowProcW (infoPtr->hwndSelf, WM_NCCREATE, wParam, lParam);
 }
@@ -382,13 +431,9 @@ HOTKEY_SetFocus (HOTKEY_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     infoPtr->bFocus = TRUE;
 
-
     CreateCaret (infoPtr->hwndSelf, NULL, 1, infoPtr->nHeight);
-
     SetCaretPos (infoPtr->CaretPos, GetSystemMetrics(SM_CYBORDER));
-
     ShowCaret (infoPtr->hwndSelf);
-
 
     return 0;
 }
@@ -501,7 +546,7 @@ HOTKEY_Register (void)
 
     ZeroMemory (&wndClass, sizeof(WNDCLASSW));
     wndClass.style         = CS_GLOBALCLASS;
-    wndClass.lpfnWndProc   = (WNDPROC)HOTKEY_WindowProc;
+    wndClass.lpfnWndProc   = HOTKEY_WindowProc;
     wndClass.cbClsExtra    = 0;
     wndClass.cbWndExtra    = sizeof(HOTKEY_INFO *);
     wndClass.hCursor       = 0;
