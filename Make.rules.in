@@ -66,6 +66,7 @@ WRC       = $(TOPOBJDIR)/tools/wrc/wrc
 WMC       = $(TOPOBJDIR)/tools/wmc/wmc
 LDPATH    = @LDPATH@
 DLLDIR    = $(TOPOBJDIR)/dlls
+MAINSPEC  = $(MODULE:%.dll=%).spec
 LIBWINE   = -L$(TOPOBJDIR)/library -lwine
 LIBTSX11  = -L$(TOPOBJDIR)/tsx11 -lwine_tsx11
 LIBUNICODE= -L$(TOPOBJDIR)/unicode -lwine_unicode
@@ -160,8 +161,8 @@ $(MODULE).tmp.o: $(OBJS) Makefile.in
 
 # Rule for main module spec file
 
-$(MODULE).spec.c: $(MODULE).spec $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L$(DLLDIR) $(SYMBOLFILE:%=-sym %) -o $@ -spec $(SRCDIR)/$(MODULE).spec
+$(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(WINEBUILD)
+	$(LDPATH) $(WINEBUILD) @DLLFLAGS@ -L$(DLLDIR) $(SYMBOLFILE:%=-sym %) -o $@ -spec $(SRCDIR)/$(MAINSPEC)
 
 # Rule to rebuild the resource compiler
 

@@ -41,7 +41,7 @@ $(TESTRESULTS): $(MODULE)$(DLLEXT)
 # Rules for debug channels
 
 debug_channels: dummy
-	$(TOPSRCDIR)/tools/make_debug $(MODULE).spec $(C_SRCS) $(SUBDIRS:%=%/*.c)
+	$(TOPSRCDIR)/tools/make_debug $(MAINSPEC) $(C_SRCS) $(SUBDIRS:%=%/*.c)
 
 # Sanity check
 
