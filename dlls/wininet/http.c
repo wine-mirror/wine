@@ -508,7 +508,7 @@ BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr,
         'P','r','o','x','y','-','A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
 
     hdr.lpszValue = HTTP_EncodeBasicAuth( username, password );
-    hdr.lpszField = szProxyAuthorization;
+    hdr.lpszField = (WCHAR *)szProxyAuthorization;
     hdr.wFlags = HDR_ISREQUEST;
     hdr.wCount = 0;
     if( !hdr.lpszValue )
