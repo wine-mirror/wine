@@ -266,7 +266,7 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
 ) {
     WORD selcount;
     DWORD oldsize;
-    void *ptr;
+    void *ptr, *newptr;
     GLOBALARENA *pArena, *pNewArena;
     WORD sel = GlobalHandleToSel16( handle );
 
@@ -318,19 +318,28 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
 
     ptr = (void *)pArena->base;
     oldsize = pArena->size;
-    TRACE("oldsize %08lx\n",oldsize);
+    TRACE("oldbase %p oldsize %08lx newsize %08lx\n", ptr,oldsize,size);
     if (ptr && (size == oldsize)) return handle;  /* Nothing to do */
 
     if (pArena->flags & GA_DOSMEM)
-        ptr = DOSMEM_ResizeBlock(ptr, size, NULL);
+        newptr = DOSMEM_ResizeBlock(ptr, size, NULL);
     else
-        ptr = HeapReAlloc( GetProcessHeap(), 0, ptr, size );
-    if (!ptr)
+        /* if more then one reader (e.g. some pointer has been given out by GetVDMPointer32W16),
+	   only try to realloc in place */
+        newptr = HeapReAlloc( GetProcessHeap(),
+                              (pArena->pageLockCount > 0)?HEAP_REALLOC_IN_PLACE_ONLY:0, ptr, size );
+    if (!newptr)
     {
-        SELECTOR_FreeBlock( sel );
-        memset( pArena, 0, sizeof(GLOBALARENA) );
+        FIXME("Realloc failed lock %d\n",pArena->pageLockCount);
+        if (pArena->pageLockCount <1)
+        {
+            HeapFree( GetProcessHeap(), 0, ptr );
+            SELECTOR_FreeBlock( sel );
+            memset( pArena, 0, sizeof(GLOBALARENA) );
+        }
         return 0;
     }
+    ptr = newptr;
 
       /* Reallocate the selector(s) */
 
@@ -350,9 +359,10 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
         return 0;
     }
 
-      /* Fill the new arena block */
+      /* Fill the new arena block 
+         As we may have used HEAP_REALLOC_IN_PLACE_ONLY, areas may overlap*/
 
-    if (pNewArena != pArena) memcpy( pNewArena, pArena, sizeof(GLOBALARENA) );
+    if (pNewArena != pArena) memmove( pNewArena, pArena, sizeof(GLOBALARENA) );
     pNewArena->base = (DWORD)ptr;
     pNewArena->size = GetSelectorLimit16(sel) + 1;
     pNewArena->selCount = selcount;
