@@ -402,8 +402,12 @@ static void EVENT_ProcessEvent( XEvent *event )
     }
   }
   
-  TRACE(event, "Got event %s for hwnd %04x\n",
-	event_names[event->type], pWnd? pWnd->hwndSelf : 0 );
+  if ( !pWnd && event->xany.window != X11DRV_GetXRootWindow() )
+      ERR( event, "Got event %s for unknown Window %08lx\n",
+           event_names[event->type], event->xany.window );
+  else
+      TRACE( event, "Got event %s for hwnd %04x\n",
+	     event_names[event->type], pWnd? pWnd->hwndSelf : 0 );
   
   switch(event->type)
     {

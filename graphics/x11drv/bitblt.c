@@ -1242,27 +1242,29 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
     case SRCCOPY:  /* 0xcc */
         if (dcSrc->w.bitsPerPixel == dcDst->w.bitsPerPixel)
         {
-            XSetGraphicsExposures( display, physDevDst->gc, True );
+            BOOL expose = !(dcSrc->w.flags & DC_MEMORY) && !(dcDst->w.flags & DC_MEMORY);
+            if ( expose ) XSetGraphicsExposures( display, physDevDst->gc, True );
             XSetFunction( display, physDevDst->gc, GXcopy );
 	    XCopyArea( display, physDevSrc->drawable,
                        physDevDst->drawable, physDevDst->gc,
                        visRectSrc.left, visRectSrc.top,
                        width, height, visRectDst.left, visRectDst.top );
-            XSetGraphicsExposures( display, physDevDst->gc, False );
+            if ( expose ) XSetGraphicsExposures( display, physDevDst->gc, False );
             return TRUE;
         }
         if (dcSrc->w.bitsPerPixel == 1)
         {
+            BOOL expose = !(dcSrc->w.flags & DC_MEMORY) && !(dcDst->w.flags & DC_MEMORY);
             XSetBackground( display, physDevDst->gc, physDevDst->textPixel );
             XSetForeground( display, physDevDst->gc, 
 			    physDevDst->backgroundPixel );
             XSetFunction( display, physDevDst->gc, GXcopy );
-            XSetGraphicsExposures( display, physDevDst->gc, True );
+            if ( expose ) XSetGraphicsExposures( display, physDevDst->gc, True );
 	    XCopyPlane( display, physDevSrc->drawable,
                         physDevDst->drawable, physDevDst->gc,
                         visRectSrc.left, visRectSrc.top,
                         width, height, visRectDst.left, visRectDst.top, 1 );
-            XSetGraphicsExposures( display, physDevDst->gc, False );
+            if ( expose ) XSetGraphicsExposures( display, physDevDst->gc, False );
             return TRUE;
         }
         break;
@@ -1290,6 +1292,7 @@ static BOOL BITBLT_InternalStretchBlt( DC *dcDst, INT xDst, INT yDst,
     }
 
     tmpGC = XCreateGC( display, physDevDst->drawable, 0, NULL );
+    XSetGraphicsExposures( display, tmpGC, False );
     pixmaps[DST] = XCreatePixmap( display, X11DRV_GetXRootWindow(), width, height,
                                   dcDst->w.bitsPerPixel );
     if (useSrc)

@@ -112,6 +112,7 @@ HBITMAP X11DRV_BITMAP_SelectObject( DC * dc, HBITMAP hbitmap,
     {
 	TSXFreeGC( display, physDev->gc );
 	physDev->gc = TSXCreateGC( display, physDev->drawable, 0, NULL );
+	TSXSetGraphicsExposures( display, physDev->gc, False );
 	dc->w.bitsPerPixel = bmp->bitmap.bmBitsPixel;
         DC_InitDC( dc );
     }
