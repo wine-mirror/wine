@@ -401,18 +401,23 @@ void *open_winelib_app( char *argv[] )
     }
     else
     {
-        /* if argv[0] is "wine", don't try to load anything */
-        if (!(name = strrchr( argv[0], '/' ))) name = argv[0];
-        else name++;
-        if (!strcmp( name, "wine" )) return NULL;
+        const char *argv0 = main_exe_name;
+        if (!*argv0)
+        {
+            /* if argv[0] is "wine", don't try to load anything */
+            argv0 = argv[0];
+            if (!(name = strrchr( argv0, '/' ))) name = argv0;
+            else name++;
+            if (!strcmp( name, "wine" )) return NULL;
+        }
 
         /* now try argv[0] with ".so" appended */
-        if ((tmp = HeapAlloc( GetProcessHeap(), 0, strlen(argv[0]) + 4 )))
+        if ((tmp = HeapAlloc( GetProcessHeap(), 0, strlen(argv0) + 4 )))
         {
-            strcpy( tmp, argv[0] );
+            strcpy( tmp, argv0 );
             strcat( tmp, ".so" );
             /* search in PATH only if there was no '/' in argv[0] */
-            ret = wine_dll_load_main_exe( tmp, (name == argv[0]) );
+            ret = wine_dll_load_main_exe( tmp, (name == argv0) );
             if (!ret && !argv[1])
             {
                 /* if no argv[1], this will be better than displaying usage */
@@ -735,23 +740,23 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
     int pid;
     const char *unixfilename = NULL;
     const char *unixdir = NULL;
-    DOS_FULL_NAME full_name;
+    DOS_FULL_NAME full_dir, full_name;
     HANDLE load_done_evt = (HANDLE)-1;
 
     info->hThread = info->hProcess = INVALID_HANDLE_VALUE;
 
     if (lpCurrentDirectory)
     {
-        if (DOSFS_GetFullName( lpCurrentDirectory, TRUE, &full_name ))
-            unixdir = full_name.long_name;
+        if (DOSFS_GetFullName( lpCurrentDirectory, TRUE, &full_dir ))
+            unixdir = full_dir.long_name;
     }
     else
     {
         char buf[MAX_PATH];
         if (GetCurrentDirectoryA(sizeof(buf),buf))
         {
-            if (DOSFS_GetFullName( buf, TRUE, &full_name ))
-                unixdir = full_name.long_name;
+            if (DOSFS_GetFullName( buf, TRUE, &full_dir ))
+                unixdir = full_dir.long_name;
         }
     }
 
@@ -759,8 +764,7 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
 
     SERVER_START_REQ
     {
-        size_t len = (hFile == -1) ? 0 : MAX_PATH;
-        struct new_process_request *req = server_alloc_req( sizeof(*req), len );
+        struct new_process_request *req = server_alloc_req( sizeof(*req), MAX_PATH );
         req->inherit_all  = inherit;
         req->create_flags = flags;
         req->start_flags  = startup->dwFlags;
@@ -784,6 +788,7 @@ BOOL PROCESS_Create( HFILE hFile, LPCSTR filename, LPSTR cmd_line, LPCSTR env,
             unixfilename = filename;
             if (DOSFS_GetFullName( filename, TRUE, &full_name ))
                 unixfilename = full_name.long_name;
+            lstrcpynA( server_data_ptr(req), unixfilename, MAX_PATH );
         }
         else  /* new wine process */
         {
