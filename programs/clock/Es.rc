@@ -1,0 +1,40 @@
+/*
+ * Clock (English resources)
+ *
+ * Copyright 1998 Marcel Baur <mbaur@g26.ethz.ch>
+ * Spanish translation by Pablo Saratxaga <srtxg@chanae.alphanet.ch>
+ *
+ */
+
+#define LANGUAGE_ID                  Es
+#define LANGUAGE_NUMBER              d
+
+
+/* System Menu */
+
+#define MENU_ON_TOP                  "Siempre &visible"
+
+/* Window Menu */
+
+#define MENU_PROPERTIES              "&Propepiedades"
+#define MENU_ANALOG                  "Ana&lógico"
+#define MENU_DIGITAL                 "Digi&tal"
+#define MENU_FONT                    "&Fuente..."
+#define MENU_WITHOUT_TITLE           "Sin barra de &título"
+
+#define MENU_SECONDS                 "&Segundos"
+#define MENU_DATE                    "Fe&cha"
+
+#define MENU_LANGUAGE                "&Idioma"
+#define LANGUAGE_MENU_ITEM           "Castellano"
+
+#define MENU_INFO                    "Inf&o..."
+#define MENU_INFO_LICENSE            "&Licencia"
+#define MENU_INFO_NO_WARRANTY        "SIN &GARANTÍA"
+#define MENU_INFO_ABOUT_WINE         "&Acerca del Reloj..."
+
+/* Window Caption */
+#define STRING_CLOCK                 "Reloj"
+
+
+#include "clock.rc"
