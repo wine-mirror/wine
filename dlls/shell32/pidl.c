@@ -1162,17 +1162,14 @@ LPITEMIDLIST _ILCreateValue(WIN32_FIND_DATAA * stffile)
 
 LPITEMIDLIST _ILCreateSpecial(LPCSTR szGUID)
 {
-    IID iid;
-    WCHAR buffer[40];
+	IID iid;
 
-    if (!MultiByteToWideChar( CP_ACP, 0, szGUID, -1, buffer, sizeof(buffer)/sizeof(WCHAR) ))
-        return NULL;
-
-    if (! SUCCEEDED (CLSIDFromString( buffer, &iid ))) {
-	ERR("%s is not a GUID\n", szGUID);
-	return NULL;
-    }
-    return _ILCreate(PT_MYCOMP, &iid, sizeof(IID));
+	if (!SUCCEEDED(SHCLSIDFromStringA(szGUID, &iid)))
+	{
+	  ERR("%s is not a GUID\n", szGUID);
+	  return NULL;
+	}
+	return _ILCreate(PT_MYCOMP, &iid, sizeof(IID));
 }
 
 /**************************************************************************

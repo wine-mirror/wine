@@ -42,7 +42,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
-DWORD WINAPI SHCLSIDFromStringA (LPCSTR clsid, CLSID *id);
 extern HRESULT WINAPI IFSFolder_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv);
 
 const WCHAR sShell32[12] = {'S','H','E','L','L','3','2','.','D','L','L','\0'};
