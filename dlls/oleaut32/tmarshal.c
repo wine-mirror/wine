@@ -898,13 +898,13 @@ serialize_LPVOID_ptr(
 	FIXME("ppvObject not expressed as VT_PTR -> VT_PTR -> VT_VOID?\n");
 	return E_FAIL;
     }
-    cookie = (*arg) ? 0x42424242: 0x0;
+    cookie = (*(DWORD*)*arg) ? 0x42424242: 0x0;
     if (writeit) {
 	hres = xbuf_add(buf, (LPVOID)&cookie, sizeof(cookie));
 	if (hres)
 	    return hres;
     }
-    if (!*arg) {
+    if (!*(DWORD*)*arg) {
 	if (debugout) TRACE_(olerelay)("<lpvoid NULL>");
 	return S_OK;
     }
@@ -1470,6 +1470,7 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
     BSTR		names[10];
     int			nrofnames;
     int			is_idispatch_getidsofnames = 0;
+    DWORD		remoteresult = 0;
 
     EnterCriticalSection(&tpinfo->crit);
 
@@ -1618,7 +1619,7 @@ afterserialize:
 	return hres;
     }
 
-    if (relaydeb) TRACE_(olerelay)(" = %08lx (",status);
+    if (relaydeb) TRACE_(olerelay)(" status = %08lx (",status);
     if (buf.base)
 	buf.base = HeapReAlloc(GetProcessHeap(),0,buf.base,msg.cbBuffer);
     else
@@ -1645,6 +1646,7 @@ afterserialize:
 
     /* generic deserializer using typelib description */
     xargs = args;
+    status = S_OK;
     for (i=0;i<fdesc->cParams;i++) {
 	ELEMDESC	*elem = fdesc->lprgelemdescParam+i;
 	BOOL	isdeserialized = FALSE;
@@ -1714,12 +1716,17 @@ afterserialize:
 	xargs += _argsize(elem->tdesc.vt);
     }
 after_deserialize:
-    if (relaydeb) TRACE_(olerelay)(")\n");
+    hres = xbuf_get(&buf, (LPBYTE)&remoteresult, sizeof(DWORD));
+    if (hres != S_OK)
+	return hres;
+    if (relaydeb) TRACE_(olerelay)(") = %08lx\n", remoteresult);
+
+    if (status != S_OK) /* OLE/COM internal error */
+	return status;
+
     HeapFree(GetProcessHeap(),0,buf.base);
-
     LeaveCriticalSection(&tpinfo->crit);
-
-    return status;
+    return remoteresult;
 }
 
 HRESULT WINAPI ProxyIUnknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
@@ -2137,11 +2144,15 @@ afterdeserialize:
 	}
     }
 afterserialize:
+    hres = xbuf_add (&buf, (LPBYTE)&res, sizeof(DWORD));
+    if (hres != S_OK)
+	return hres;
+   
     /* might need to use IRpcChannelBuffer_GetBuffer ? */
     xmsg->cbBuffer	= buf.curoff;
     xmsg->Buffer	= buf.base;
     HeapFree(GetProcessHeap(),0,args);
-    return res;
+    return S_OK;
 }
 
 static LPRPCSTUBBUFFER WINAPI
