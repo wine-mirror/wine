@@ -86,6 +86,8 @@ struct _dga_directdrawdata
 #ifdef HAVE_LIBXXF86DGA2
     int version;
     XDGADevice *dev;
+    XDGAMode *modes;
+    int num_modes;
 #endif /* define(HAVE_LIBXXF86DGA2) */
 };
 
