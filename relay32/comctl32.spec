@@ -26,13 +26,13 @@ init	ComCtl32LibMain
  18 stub CreatePropertySheetPage
  19 stub CreatePropertySheetPageA
  20 stub CreatePropertySheetPageW
- 21 stdcall CreateStatusWindow(long str long long) CreateStatusWindow32A
+ 21 stdcall CreateStatusWindow(long str long long) CreateStatusWindow32AW
  22 stdcall CreateStatusWindowW(long wstr long long) CreateStatusWindow32W
  23 stdcall CreateToolbarEx(long long long long long long ptr long long long long long long) CreateToolbarEx
  24 stub DestroyPropertySheetPage
  25 stdcall DllGetVersion(ptr) COMCTL32_DllGetVersion
  26 stub DllInstall
- 27 stdcall DrawStatusText(long ptr str long) DrawStatusText32A
+ 27 stdcall DrawStatusText(long ptr ptr long) DrawStatusText32AW
  28 stdcall DrawStatusTextW(long ptr wstr long) DrawStatusText32W
  29 stub FlatSB_EnableScrollBar
  30 stub FlatSB_GetScrollInfo

@@ -11,10 +11,12 @@
 #include "commctrl.h"
 #include "animate.h"
 #include "comboex.h"
+#include "datetime.h"
 #include "header.h"
 #include "hotkey.h"
 #include "ipaddress.h"
 #include "listview.h"
+#include "monthcal.h"
 #include "nativefont.h"
 #include "pager.h"
 #include "progress.h"
@@ -26,6 +28,7 @@
 #include "trackbar.h"
 #include "treeview.h"
 #include "updown.h"
+#include "winversion.h"
 #include "debug.h"
 #include "winerror.h"
 
@@ -82,10 +85,12 @@ ComCtl32LibMain (HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 		/* unregister all common control classes */
 		ANIMATE_Unregister ();
 		COMBOEX_Unregister ();
+		DATETIME_Unregister ();
 		HEADER_Unregister ();
 		HOTKEY_Unregister ();
 		IPADDRESS_Unregister ();
 		LISTVIEW_Unregister ();
+		MONTHCAL_Unregister ();
 		NATIVEFONT_Unregister ();
 		PAGER_Unregister ();
 		PROGRESS_Unregister ();
@@ -286,7 +291,7 @@ GetEffectiveClientRect (HWND32 hwnd, LPRECT32 lpRect, LPINT32 lpInfo)
 
 
 /***********************************************************************
- * DrawStatusText32A [COMCTL32.5][COMCTL32.27]
+ * DrawStatusText32A [COMCTL32.5]
  *
  * Draws text with borders, like in a status bar.
  *
@@ -350,7 +355,36 @@ DrawStatusText32W (HDC32 hdc, LPRECT32 lprc, LPCWSTR text, UINT32 style)
 
 
 /***********************************************************************
- * CreateStatusWindow32A [COMCTL32.6][COMCTL32.21] Creates a status bar
+ * DrawStatusText32AW [COMCTL32.27]
+ *
+ * Draws text with borders, like in a status bar.
+ *
+ * PARAMS
+ *     hdc   [I] handle to the window's display context
+ *     lprc  [I] pointer to a rectangle
+ *     text  [I] pointer to the text
+ *     style [I]
+ *
+ * RETURNS
+ *     No return value.
+ *
+ * NOTES
+ *     Calls DrawStatusText32A() or DrawStatusText32W().
+ */
+
+VOID WINAPI
+DrawStatusText32AW (HDC32 hdc, LPRECT32 lprc, LPVOID text, UINT32 style)
+{
+    if (VERSION_OsIsUnicode())
+	DrawStatusText32W (hdc, lprc, (LPCWSTR)text, style);
+    DrawStatusText32A (hdc, lprc, (LPCSTR)text, style);
+}
+
+
+/***********************************************************************
+ * CreateStatusWindow32A [COMCTL32.6]
+ *
+ * Creates a status bar
  *
  * PARAMS
  *     style  [I]
@@ -390,10 +424,33 @@ CreateStatusWindow32A (INT32 style, LPCSTR text, HWND32 parent, UINT32 wid)
 HWND32 WINAPI
 CreateStatusWindow32W (INT32 style, LPCWSTR text, HWND32 parent, UINT32 wid)
 {
-    return CreateWindow32W((LPCWSTR)STATUSCLASSNAME32W, text, style,
+    return CreateWindow32W(STATUSCLASSNAME32W, text, style,
 			   CW_USEDEFAULT32, CW_USEDEFAULT32,
 			   CW_USEDEFAULT32, CW_USEDEFAULT32,
 			   parent, wid, 0, 0);
+}
+
+
+/***********************************************************************
+ * CreateStatusWindow32AW [COMCTL32.21] Creates a status bar control
+ *
+ * PARAMS
+ *     style  [I]
+ *     text   [I]
+ *     parent [I] handle to the parent window
+ *     wid    [I] control id of the status bar
+ *
+ * RETURNS
+ *     Success: handle to the control
+ *     Failure: 0
+ */
+
+HWND32 WINAPI
+CreateStatusWindow32AW (INT32 style, LPVOID text, HWND32 parent, UINT32 wid)
+{
+    if (VERSION_OsIsUnicode())
+	return CreateStatusWindow32W (style, (LPCWSTR)text, parent, wid);
+    return CreateStatusWindow32A (style, (LPCSTR)text, parent, wid);
 }
 
 
@@ -509,8 +566,8 @@ InitCommonControlsEx (LPINITCOMMONCONTROLSEX lpInitCtrls)
 
 	    /* advanced classes - not included in Win95 */
 	    case ICC_DATE_CLASSES:
-		FIXME (commctrl, "No month calendar class implemented!\n");
-		FIXME (commctrl, "No date and time picker class implemented!\n");
+		MONTHCAL_Register ();
+		DATETIME_Register ();
 		break;
 
 	    case ICC_USEREX_CLASSES:
