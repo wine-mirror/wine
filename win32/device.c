@@ -282,7 +282,8 @@ HANDLE DEVICE_Open( LPCSTR filename, DWORD access,
             return FILE_CreateDevice( info->id | 0x10000, access, sa );
 
     FIXME( "Unknown VxD %s\n", filename);
-    return FILE_CreateDevice( 0x10000, access, sa );
+    SetLastError( ERROR_PATH_NOT_FOUND );
+    return HFILE_ERROR;
 }
 
 static const struct VxDInfo *DEVICE_GetInfo( HANDLE handle )
