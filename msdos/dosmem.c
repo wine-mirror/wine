@@ -581,89 +581,79 @@ BOOL DOSMEM_FreeBlock(void* ptr)
 
 /***********************************************************************
  *           DOSMEM_ResizeBlock
+ *
+ * Resize DOS memory block in place. Returns block size or -1 on error.
+ *
+ * If exact is TRUE, returned value is either old or requested block
+ * size. If exact is FALSE, block is expanded even if there is not
+ * enough space for full requested block size.
  */
-LPVOID DOSMEM_ResizeBlock(void* ptr, UINT size, UINT16* pseg)
+UINT DOSMEM_ResizeBlock(void *ptr, UINT size, BOOL exact)
 {
    char         *block = NULL;
    dosmem_info  *info_block = DOSMEM_InfoBlock();
+   dosmem_entry *dm;
+   dosmem_entry *next;
+   UINT blocksize;
+   UINT orgsize;
 
-   if( ptr >= (void*)(((char*)DOSMEM_RootBlock()) + sizeof(dosmem_entry)) &&
-       ptr < (void*)DOSMEM_MemoryTop() && !((((char*)ptr)
-                  - DOSMEM_dosmem) & 0xf) )
+   if( ptr < (void*)(((char*)DOSMEM_RootBlock()) + sizeof(dosmem_entry)) ||
+       (ptr >= (void*)DOSMEM_MemoryTop() &&
+        !((((char*)ptr) - DOSMEM_dosmem) & 0xf)))
+       return (UINT)-1;
+
+   dm = (dosmem_entry*)(((char*)ptr) - sizeof(dosmem_entry));
+   if( dm->size & (DM_BLOCK_FREE | DM_BLOCK_TERMINAL) )
+       return (UINT)-1;
+
+   next = NEXT_BLOCK(dm);
+   orgsize = dm->size & DM_BLOCK_MASK;
+
+   /* collapse free blocks */
+   while( next->size & DM_BLOCK_FREE )
    {
-       dosmem_entry  *dm = (dosmem_entry*)(((char*)ptr) - sizeof(dosmem_entry));
-
-       if( pseg ) *pseg = ((char*)ptr - DOSMEM_dosmem) >> 4;
-
-       if( !(dm->size & (DM_BLOCK_FREE | DM_BLOCK_TERMINAL))
-	 )
-       {
-	     dosmem_entry  *next = NEXT_BLOCK(dm);
-	     UINT blocksize, orgsize = dm->size & DM_BLOCK_MASK;
-
-	     while( next->size & DM_BLOCK_FREE ) /* collapse free blocks */
-	     {
-	         dm->size += sizeof(dosmem_entry) + (next->size & DM_BLOCK_MASK);
-	         next->size = (DM_BLOCK_FREE | DM_BLOCK_TERMINAL);
-	         next = NEXT_BLOCK(dm);
-	     }
-
-	     blocksize = dm->size & DM_BLOCK_MASK;
-	     if (blocksize >= size)
-	     {
-	         block = ((char*)dm) + sizeof(dosmem_entry);
-	         if( blocksize - size > 0x20 )
-	         {
-		     /* split dm so that the next one stays
-		      * paragraph-aligned (and next gains free bit) */
-
-	             dm->size = (((size + 0xf + sizeof(dosmem_entry)) & ~0xf) -
-			         	        sizeof(dosmem_entry));
-	             next = (dosmem_entry*)(((char*)dm) +
-	 		     sizeof(dosmem_entry) + dm->size);
-	             next->size = (blocksize - (dm->size +
-			     sizeof(dosmem_entry))) | DM_BLOCK_FREE
-						    ;
-	         } else dm->size &= DM_BLOCK_MASK;
-
-		 info_block->free += orgsize - dm->size;
-	     } else {
-		 /* the collapse didn't help, try getting a new block */
-		 block = DOSMEM_GetBlock(size, pseg);
-		 if (block) {
-		     /* we got one, copy the old data there (we do need to, right?) */
-		     memcpy(block, ((char*)dm) + sizeof(dosmem_entry),
-				   (size<orgsize) ? size : orgsize);
-		     /* free old block */
-		     info_block->blocks--;
-		     info_block->free += dm->size;
-
-		     dm->size |= DM_BLOCK_FREE;
-		 } else {
-		     /* and Bill Gates said 640K should be enough for everyone... */
-
-		     /* need to split original and collapsed blocks apart again,
-		      * and free the collapsed blocks again, before exiting */
-		     if( blocksize - orgsize > 0x20 )
-		     {
-			 /* split dm so that the next one stays
-			  * paragraph-aligned (and next gains free bit) */
-
-			 dm->size = (((orgsize + 0xf + sizeof(dosmem_entry)) & ~0xf) -
-						       sizeof(dosmem_entry));
-			 next = (dosmem_entry*)(((char*)dm) +
-				 sizeof(dosmem_entry) + dm->size);
-			 next->size = (blocksize - (dm->size +
-				 sizeof(dosmem_entry))) | DM_BLOCK_FREE
-							;
-		     } else dm->size &= DM_BLOCK_MASK;
-		 }
-	     }
-       }
+       dm->size += sizeof(dosmem_entry) + (next->size & DM_BLOCK_MASK);
+       next->size = (DM_BLOCK_FREE | DM_BLOCK_TERMINAL);
+       next = NEXT_BLOCK(dm);
    }
-   return (LPVOID)block;
-}
 
+   blocksize = dm->size & DM_BLOCK_MASK;
+
+   /*
+    * If collapse didn't help we either expand block to maximum
+    * available size (exact == FALSE) or give collapsed blocks
+    * back to free storage (exact == TRUE).
+    */
+   if (blocksize < size)
+       size = exact ? orgsize : blocksize;
+
+   block = ((char*)dm) + sizeof(dosmem_entry);
+   if( blocksize - size > 0x20 )
+   {
+       /*
+        * split dm so that the next one stays
+        * paragraph-aligned (and next gains free bit) 
+        */
+
+       dm->size = (((size + 0xf + sizeof(dosmem_entry)) & ~0xf) -
+                   sizeof(dosmem_entry));
+       next = (dosmem_entry*)(((char*)dm) +
+                              sizeof(dosmem_entry) + dm->size);
+       next->size = (blocksize - (dm->size +
+                                  sizeof(dosmem_entry))) | DM_BLOCK_FREE;
+   } 
+   else 
+   {
+       dm->size &= DM_BLOCK_MASK;
+   }
+
+   /*
+    * Adjust available memory if block size changes.
+    */
+   info_block->free += orgsize - dm->size;
+
+   return size;
+}
 
 /***********************************************************************
  *           DOSMEM_Available

@@ -308,7 +308,10 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
         if (!(pArena->flags & GA_MOVEABLE) ||
             !(pArena->flags & GA_DISCARDABLE) ||
             (pArena->lockCount > 0) || (pArena->pageLockCount > 0)) return 0;
-        HeapFree( GetProcessHeap(), 0, (void *)pArena->base );
+        if (pArena->flags & GA_DOSMEM)
+            DOSMEM_FreeBlock( (void *)pArena->base );
+        else
+            HeapFree( GetProcessHeap(), 0, (void *)pArena->base );
         pArena->base = 0;
 
         /* Note: we rely on the fact that SELECTOR_ReallocBlock won't
@@ -343,18 +346,43 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     if (ptr && (size == oldsize)) return handle;  /* Nothing to do */
 
     if (pArena->flags & GA_DOSMEM)
-        newptr = DOSMEM_ResizeBlock(ptr, size, NULL);
+    {
+        if (DOSMEM_ResizeBlock(ptr, size, TRUE) == size) 
+            newptr = ptr;
+        else if(pArena->pageLockCount > 0)
+            newptr = 0;
+        else
+        {
+            newptr = DOSMEM_GetBlock( size, 0 );
+            if (newptr)
+            {
+                memcpy( newptr, ptr, oldsize );
+                DOSMEM_FreeBlock( ptr );
+            }
+        }
+    }
     else
-        /* if more then one reader (e.g. some pointer has been given out by GetVDMPointer32W16),
-	   only try to realloc in place */
+    {
+        /*
+         * if more then one reader (e.g. some pointer has been 
+         * given out by GetVDMPointer32W16),
+         * only try to realloc in place 
+         */
         newptr = HeapReAlloc( GetProcessHeap(),
-                              (pArena->pageLockCount > 0)?HEAP_REALLOC_IN_PLACE_ONLY:0, ptr, size );
+                              (pArena->pageLockCount > 0) ? 
+                              HEAP_REALLOC_IN_PLACE_ONLY : 0, 
+                              ptr, size );
+    }
+
     if (!newptr)
     {
         FIXME("Realloc failed lock %d\n",pArena->pageLockCount);
         if (pArena->pageLockCount <1)
         {
-            HeapFree( GetProcessHeap(), 0, ptr );
+            if (pArena->flags & GA_DOSMEM)
+                DOSMEM_FreeBlock( (void *)pArena->base );
+            else
+                HeapFree( GetProcessHeap(), 0, ptr );
             SELECTOR_FreeBlock( sel );
             memset( pArena, 0, sizeof(GLOBALARENA) );
         }
@@ -367,15 +395,21 @@ HGLOBAL16 WINAPI GlobalReAlloc16(
     sel = SELECTOR_ReallocBlock( sel, ptr, size );
     if (!sel)
     {
-        HeapFree( GetProcessHeap(), 0, ptr );
+        if (pArena->flags & GA_DOSMEM)
+            DOSMEM_FreeBlock( (void *)pArena->base );
+        else
+            HeapFree( GetProcessHeap(), 0, ptr );
         memset( pArena, 0, sizeof(GLOBALARENA) );
         return 0;
     }
     selcount = (size + 0xffff) / 0x10000;
 
     if (!(pNewArena = GLOBAL_GetArena( sel, selcount )))
-    {
-        HeapFree( GetProcessHeap(), 0, ptr );
+    {        
+        if (pArena->flags & GA_DOSMEM)
+            DOSMEM_FreeBlock( (void *)pArena->base );
+        else
+            HeapFree( GetProcessHeap(), 0, ptr );
         SELECTOR_FreeBlock( sel );
         return 0;
     }

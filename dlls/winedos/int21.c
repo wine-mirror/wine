@@ -1365,7 +1365,33 @@ void WINAPI DOSVM_Int21Handler( CONTEXT86 *context )
         break;
 
     case 0x4a: /* RESIZE MEMORY BLOCK */
-        INT_Int21Handler( context );
+        TRACE( "RESIZE MEMORY segment %04lX to %d paragraphs\n", 
+               context->SegEs, BX_reg(context) );
+        {
+            DWORD newsize = (DWORD)BX_reg(context) << 4;
+            
+            if (!ISV86(context) && DOSVM_IsWin16())
+            {
+                FIXME( "Resize memory block - unsupported under Win16\n" );
+            }
+            else
+            {
+                LPVOID address = (void*)((DWORD)context->SegEs << 4);
+                UINT blocksize = DOSMEM_ResizeBlock( address, newsize, FALSE );
+
+                if (blocksize == (UINT)-1)
+                {
+                    SET_CFLAG( context );
+                    SET_AX( context, 0x0009 ); /* illegal address */
+                }
+                else if(blocksize != newsize)
+                {
+                    SET_CFLAG( context );
+                    SET_AX( context, 0x0008 );    /* insufficient memory */
+                    SET_BX( context, blocksize >> 4 ); /* new block size */
+                }
+            }
+        }
         break;
 
     case 0x4b: /* "EXEC" - LOAD AND/OR EXECUTE PROGRAM */

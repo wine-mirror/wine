@@ -169,7 +169,7 @@ extern void   DOSMEM_Tick(WORD timer);
 extern WORD   DOSMEM_AllocSelector(WORD);
 extern LPVOID DOSMEM_GetBlock(UINT size, WORD* p);
 extern BOOL DOSMEM_FreeBlock(void* ptr);
-extern LPVOID DOSMEM_ResizeBlock(void* ptr, UINT size, WORD* p);
+extern UINT DOSMEM_ResizeBlock(void* ptr, UINT size, BOOL exact);
 extern UINT DOSMEM_Available(void);
 extern LPVOID DOSMEM_MapRealToLinear(DWORD); /* real-mode to linear */
 extern LPVOID DOSMEM_MapDosToLinear(UINT); /* linear DOS to Wine */

@@ -1142,6 +1142,7 @@
 @ cdecl DOSMEM_FreeBlock(ptr) DOSMEM_FreeBlock
 @ cdecl DOSMEM_GetBlock(long ptr) DOSMEM_GetBlock
 @ cdecl DOSMEM_Init(long) DOSMEM_Init
+@ cdecl DOSMEM_ResizeBlock(ptr long long) DOSMEM_ResizeBlock
 @ cdecl DRIVE_OpenDevice(long long) DRIVE_OpenDevice
 @ stdcall INT_Int21Handler(ptr) INT_Int21Handler
 @ cdecl LOCAL_Alloc(long long long) LOCAL_Alloc

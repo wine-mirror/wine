@@ -1253,23 +1253,6 @@ void WINAPI INT_Int21Handler( CONTEXT86 *context )
         bSetDOSExtendedError = !INT21_GetCurrentDirectory(context);
         break;
 
-    case 0x4a: /* RESIZE MEMORY BLOCK */
-        TRACE("RESIZE MEMORY segment %04lX to %d paragraphs\n", context->SegEs, BX_reg(context));
-	if (!ISV86(context))
-	  FIXME("RESIZE MEMORY probably insufficient implementation. Expect crash soon\n");
-	{
-	    LPVOID *mem = DOSMEM_ResizeBlock(DOSMEM_MapDosToLinear(context->SegEs<<4),
-					     BX_reg(context)<<4,NULL);
-	    if (mem)
-		SET_AX( context, DOSMEM_MapLinearToDos(mem)>>4 );
-	    else {
-		SET_CFLAG(context);
-		SET_AX( context, 0x0008 ); /* insufficient memory */
-		SET_BX( context, DOSMEM_Available()>>4 ); /* not quite right */
-	    }
-	}
-        break;
-
     case 0x4e: /* "FINDFIRST" - FIND FIRST MATCHING FILE */
         TRACE("FINDFIRST mask 0x%04x spec %s\n",CX_reg(context),
 	      (LPCSTR)CTX_SEG_OFF_TO_LIN(context,  context->SegDs, context->Edx));
