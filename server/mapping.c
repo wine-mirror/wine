@@ -122,7 +122,8 @@ static struct file *get_shared_file( struct mapping *mapping )
 static int build_shared_mapping( struct mapping *mapping, int fd,
                                  IMAGE_SECTION_HEADER *sec, int nb_sec )
 {
-    int i, max_size, total_size, pos;
+    int i, max_size, total_size;
+    off_t shared_pos, read_pos, write_pos;
     char *buffer = NULL;
     int shared_fd;
     long toread;
@@ -154,24 +155,27 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
 
     /* copy the shared sections data into the temp file */
 
-    for (i = pos = 0; i < nb_sec; i++)
+    shared_pos = 0;
+    for (i = 0; i < nb_sec; i++)
     {
         if (!(sec[i].Characteristics & IMAGE_SCN_MEM_SHARED)) continue;
         if (!(sec[i].Characteristics & IMAGE_SCN_MEM_WRITE)) continue;
-        if (lseek( shared_fd, pos, SEEK_SET ) != pos) goto error;
-        pos += ROUND_SIZE( 0, sec[i].Misc.VirtualSize );
+        write_pos = shared_pos;
+        shared_pos += ROUND_SIZE( 0, sec[i].Misc.VirtualSize );
         if ((sec[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA) &&
             !(sec[i].Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA)) continue;
         if (!sec[i].PointerToRawData || !sec[i].SizeOfRawData) continue;
-        if (lseek( fd, sec[i].PointerToRawData, SEEK_SET ) != sec[i].PointerToRawData) goto error;
+        read_pos = sec[i].PointerToRawData;
         toread = sec[i].SizeOfRawData;
         while (toread)
         {
-            long res = read( fd, buffer + sec[i].SizeOfRawData - toread, toread );
+            long res = pread( fd, buffer + sec[i].SizeOfRawData - toread, toread, read_pos );
             if (res <= 0) goto error;
             toread -= res;
+            read_pos += res;
         }
-        if (write( shared_fd, buffer, sec[i].SizeOfRawData ) != sec[i].SizeOfRawData) goto error;
+        if (pwrite( shared_fd, buffer, sec[i].SizeOfRawData, write_pos ) != sec[i].SizeOfRawData)
+            goto error;
     }
     free( buffer );
     return 1;
@@ -190,29 +194,35 @@ static int get_image_params( struct mapping *mapping )
     IMAGE_NT_HEADERS nt;
     IMAGE_SECTION_HEADER *sec = NULL;
     struct fd *fd;
-    int unix_fd, filepos, size;
+    off_t pos;
+    int unix_fd, size;
 
     /* load the headers */
 
     if (!(fd = mapping_get_fd( &mapping->obj ))) return 0;
     unix_fd = get_unix_fd( fd );
-    filepos = lseek( unix_fd, 0, SEEK_SET );
-    if (read( unix_fd, &dos, sizeof(dos) ) != sizeof(dos)) goto error;
+    if (pread( unix_fd, &dos, sizeof(dos), 0 ) != sizeof(dos)) goto error;
     if (dos.e_magic != IMAGE_DOS_SIGNATURE) goto error;
-    if (lseek( unix_fd, dos.e_lfanew, SEEK_SET ) == -1) goto error;
+    pos = dos.e_lfanew;
 
-    if (read( unix_fd, &nt.Signature, sizeof(nt.Signature) ) != sizeof(nt.Signature)) goto error;
+    if (pread( unix_fd, &nt.Signature, sizeof(nt.Signature), pos ) != sizeof(nt.Signature))
+        goto error;
+    pos += sizeof(nt.Signature);
     if (nt.Signature != IMAGE_NT_SIGNATURE) goto error;
-    if (read( unix_fd, &nt.FileHeader, sizeof(nt.FileHeader) ) != sizeof(nt.FileHeader)) goto error;
+    if (pread( unix_fd, &nt.FileHeader, sizeof(nt.FileHeader), pos ) != sizeof(nt.FileHeader))
+        goto error;
+    pos += sizeof(nt.FileHeader);
     /* zero out Optional header in the case it's not present or partial */
     memset(&nt.OptionalHeader, 0, sizeof(nt.OptionalHeader));
-    if (read( unix_fd, &nt.OptionalHeader, nt.FileHeader.SizeOfOptionalHeader) != nt.FileHeader.SizeOfOptionalHeader) goto error;
+    if (pread( unix_fd, &nt.OptionalHeader, nt.FileHeader.SizeOfOptionalHeader,
+               pos ) != nt.FileHeader.SizeOfOptionalHeader) goto error;
+    pos += nt.FileHeader.SizeOfOptionalHeader;
 
     /* load the section headers */
 
     size = sizeof(*sec) * nt.FileHeader.NumberOfSections;
     if (!(sec = malloc( size ))) goto error;
-    if (read( unix_fd, sec, size ) != size) goto error;
+    if (pread( unix_fd, sec, size, pos ) != size) goto error;
 
     if (!build_shared_mapping( mapping, unix_fd, sec, nt.FileHeader.NumberOfSections )) goto error;
 
@@ -232,13 +242,11 @@ static int get_image_params( struct mapping *mapping )
     /* sanity check */
     if (mapping->header_size > mapping->size_low) goto error;
 
-    lseek( unix_fd, filepos, SEEK_SET );
     free( sec );
     release_object( fd );
     return 1;
 
  error:
-    lseek( unix_fd, filepos, SEEK_SET );
     if (sec) free( sec );
     release_object( fd );
     set_error( STATUS_INVALID_FILE_FOR_SECTION );

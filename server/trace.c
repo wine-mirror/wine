@@ -871,11 +871,6 @@ static void dump_get_handle_fd_reply( const struct get_handle_fd_reply *req )
     fprintf( stderr, " flags=%d", req->flags );
 }
 
-static void dump_truncate_file_request( const struct truncate_file_request *req )
-{
-    fprintf( stderr, " handle=%p", req->handle );
-}
-
 static void dump_flush_file_request( const struct flush_file_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
@@ -2561,7 +2556,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_file_request,
     (dump_func)dump_alloc_file_handle_request,
     (dump_func)dump_get_handle_fd_request,
-    (dump_func)dump_truncate_file_request,
     (dump_func)dump_flush_file_request,
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
@@ -2741,7 +2735,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_file_reply,
     (dump_func)dump_alloc_file_handle_reply,
     (dump_func)dump_get_handle_fd_reply,
-    (dump_func)0,
     (dump_func)dump_flush_file_reply,
     (dump_func)dump_lock_file_reply,
     (dump_func)0,
@@ -2921,7 +2914,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_file",
     "alloc_file_handle",
     "get_handle_fd",
-    "truncate_file",
     "flush_file",
     "lock_file",
     "unlock_file",

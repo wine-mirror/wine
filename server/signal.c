@@ -243,6 +243,8 @@ void init_signals(void)
     action.sa_handler = do_sigterm;
     sigaction( SIGQUIT, &action, NULL );
     sigaction( SIGTERM, &action, NULL );
+    action.sa_handler = SIG_IGN;
+    sigaction( SIGXFSZ, &action, NULL );
 #ifdef HAVE_SIGINFO_T_SI_FD
     action.sa_sigaction = do_sigio;
     action.sa_flags = SA_SIGINFO;

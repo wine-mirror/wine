@@ -362,6 +362,7 @@ void file_set_error(void)
     case ENOTEMPTY: set_error( STATUS_DIRECTORY_NOT_EMPTY ); break;
     case EIO:       set_error( STATUS_ACCESS_VIOLATION ); break;
     case ENOTDIR:   set_error( STATUS_NOT_A_DIRECTORY ); break;
+    case EFBIG:     set_error( STATUS_SECTION_TOO_BIG ); break;
 #ifdef EOVERFLOW
     case EOVERFLOW: set_error( STATUS_INVALID_PARAMETER ); break;
 #endif
@@ -387,8 +388,7 @@ static int extend_file( struct file *file, off_t size )
 
     /* extend the file one byte beyond the requested size and then truncate it */
     /* this should work around ftruncate implementations that can't extend files */
-    if ((lseek( unix_fd, size, SEEK_SET ) != -1) &&
-        (write( unix_fd, &zero, 1 ) != -1))
+    if (pwrite( unix_fd, &zero, 1, size ) != -1)
     {
         ftruncate( unix_fd, size );
         return 1;
@@ -397,31 +397,12 @@ static int extend_file( struct file *file, off_t size )
     return 0;
 }
 
-/* truncate file at current position */
-static int truncate_file( struct file *file )
-{
-    int ret = 0;
-    int unix_fd = get_file_unix_fd( file );
-    off_t pos = lseek( unix_fd, 0, SEEK_CUR );
-    off_t eof = lseek( unix_fd, 0, SEEK_END );
-
-    if (eof < pos) ret = extend_file( file, pos );
-    else
-    {
-        if (ftruncate( unix_fd, pos ) != -1) ret = 1;
-        else file_set_error();
-    }
-    lseek( unix_fd, pos, SEEK_SET );  /* restore file pos */
-    return ret;
-}
-
 /* try to grow the file to the specified size */
 int grow_file( struct file *file, int size_high, int size_low )
 {
-    int ret = 0;
     struct stat st;
     int unix_fd = get_file_unix_fd( file );
-    off_t old_pos, size = size_low + (((off_t)size_high)<<32);
+    off_t size = size_low + (((off_t)size_high)<<32);
 
     if (fstat( unix_fd, &st ) == -1)
     {
@@ -429,10 +410,7 @@ int grow_file( struct file *file, int size_high, int size_low )
         return 0;
     }
     if (st.st_size >= size) return 1;  /* already large enough */
-    old_pos = lseek( unix_fd, 0, SEEK_CUR );  /* save old pos */
-    ret = extend_file( file, size );
-    lseek( unix_fd, old_pos, SEEK_SET );  /* restore file pos */
-    return ret;
+    return extend_file( file, size );
 }
 
 /* create a file */
@@ -464,18 +442,6 @@ DECL_HANDLER(alloc_file_handle)
     if ((file = create_file_for_fd( fd, req->access, FILE_SHARE_READ | FILE_SHARE_WRITE )))
     {
         reply->handle = alloc_handle( current->process, file, req->access, req->inherit );
-        release_object( file );
-    }
-}
-
-/* truncate (or extend) a file */
-DECL_HANDLER(truncate_file)
-{
-    struct file *file;
-
-    if ((file = get_file_obj( current->process, req->handle, GENERIC_WRITE )))
-    {
-        truncate_file( file );
         release_object( file );
     }
 }

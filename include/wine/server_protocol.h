@@ -805,18 +805,6 @@ enum fd_type
 
 
 
-struct truncate_file_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-};
-struct truncate_file_reply
-{
-    struct reply_header __header;
-};
-
-
-
 struct flush_file_request
 {
     struct request_header __header;
@@ -3138,7 +3126,6 @@ enum request
     REQ_create_file,
     REQ_alloc_file_handle,
     REQ_get_handle_fd,
-    REQ_truncate_file,
     REQ_flush_file,
     REQ_lock_file,
     REQ_unlock_file,
@@ -3322,7 +3309,6 @@ union generic_request
     struct create_file_request create_file_request;
     struct alloc_file_handle_request alloc_file_handle_request;
     struct get_handle_fd_request get_handle_fd_request;
-    struct truncate_file_request truncate_file_request;
     struct flush_file_request flush_file_request;
     struct lock_file_request lock_file_request;
     struct unlock_file_request unlock_file_request;
@@ -3504,7 +3490,6 @@ union generic_reply
     struct create_file_reply create_file_reply;
     struct alloc_file_handle_reply alloc_file_handle_reply;
     struct get_handle_fd_reply get_handle_fd_reply;
-    struct truncate_file_reply truncate_file_reply;
     struct flush_file_reply flush_file_reply;
     struct lock_file_reply lock_file_reply;
     struct unlock_file_reply unlock_file_reply;
@@ -3644,6 +3629,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 139
+#define SERVER_PROTOCOL_VERSION 140
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -615,12 +615,6 @@ enum fd_type
 #define FD_FLAG_SEND_SHUTDOWN      0x08
 
 
-/* Truncate (or extend) a file */
-@REQ(truncate_file)
-    obj_handle_t handle;        /* handle to the file */
-@END
-
-
 /* Flush a file buffers */
 @REQ(flush_file)
     obj_handle_t handle;        /* handle to the file */
