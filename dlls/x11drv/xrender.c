@@ -64,7 +64,7 @@ typedef struct
 
 struct tagXRENDERINFO
 {
-    gsCacheEntry       *cacheEntry;
+    int                cache_index;
     Picture            pict;
     Picture            tile_pict;
     Pixmap             tile_xpm;
@@ -109,6 +109,9 @@ MAKE_FUNCPTR(XRenderFreePicture)
 MAKE_FUNCPTR(XRenderSetPictureClipRectangles)
 MAKE_FUNCPTR(XRenderQueryExtension)
 #undef MAKE_FUNCPTR
+
+static CRITICAL_SECTION xrender_cs = CRITICAL_SECTION_INIT("xrender_cs");
+
 
 /***********************************************************************
  *   X11DRV_XRender_Init
@@ -203,12 +206,14 @@ static void walk_cache(void)
 {
   int i;
 
+  EnterCriticalSection(&xrender_cs);
   for(i=mru; i >= 0; i = glyphsetCache[i].next)
     TRACE("item %d\n", i);
+  LeaveCriticalSection(&xrender_cs);
 }
 #endif
 
-static gsCacheEntry *LookupEntry(LFANDSIZE *plfsz)
+static int LookupEntry(LFANDSIZE *plfsz)
 {
   int i, prev_i = -1;
 
@@ -227,15 +232,15 @@ static gsCacheEntry *LookupEntry(LFANDSIZE *plfsz)
 	mru = i;
       }
       TRACE("found font in cache %d\n", i);
-      return glyphsetCache + i;
+      return i;
     }
     prev_i = i;
   }
   TRACE("font not in cache\n");
-  return NULL;
+  return -1;
 }
 
-static gsCacheEntry *AllocEntry(void)
+static int AllocEntry(void)
 {
   int best = -1, prev_best = -1, i, prev_i = -1;
 
@@ -249,7 +254,7 @@ static gsCacheEntry *AllocEntry(void)
     mru = best;
 
     TRACE("empty space at %d, next lastfree = %d\n", mru, lastfree);
-    return glyphsetCache + mru;
+    return mru;
   }
 
   for(i = mru; i >= 0; i = glyphsetCache[i].next) {
@@ -279,7 +284,7 @@ static gsCacheEntry *AllocEntry(void)
     } else {
       assert(mru == best);
     }
-    return glyphsetCache + mru;
+    return mru;
   }
 
   TRACE("Growing cache\n");
@@ -300,22 +305,24 @@ static gsCacheEntry *AllocEntry(void)
   glyphsetCache[best].next = mru;
   mru = best;
   TRACE("new free cache slot at %d\n", mru);
-  return glyphsetCache + mru;
+  return mru;
 }
 
-static gsCacheEntry *GetCacheEntry(LFANDSIZE *plfsz)
+static int GetCacheEntry(LFANDSIZE *plfsz)
 {
   XRenderPictFormat pf;
-  gsCacheEntry *ret;
+  int ret;
+  gsCacheEntry *entry;
 
-  if((ret = LookupEntry(plfsz)) != NULL) return ret;
+  if((ret = LookupEntry(plfsz)) != -1) return ret;
 
   ret = AllocEntry();
-  ret->lfsz = *plfsz;
-  assert(ret->nrealized == 0);
+  entry = glyphsetCache + ret;
+  entry->lfsz = *plfsz;
+  assert(entry->nrealized == 0);
 
 
-  if(antialias && abs(plfsz->lf.lfHeight) > 16) {
+  if(antialias && abs(plfsz->lf.lfHeight * plfsz->xform.eM22) > 16) {
     pf.depth = 8;
     pf.direct.alphaMask = 0xff;
   } else {
@@ -326,23 +333,24 @@ static gsCacheEntry *GetCacheEntry(LFANDSIZE *plfsz)
   pf.direct.alpha = 0;
 
   wine_tsx11_lock();
-  ret->font_format = pXRenderFindFormat(gdi_display,
+  entry->font_format = pXRenderFindFormat(gdi_display,
 					 PictFormatType |
 					 PictFormatDepth |
 					 PictFormatAlpha |
 					 PictFormatAlphaMask,
 					 &pf, 0);
 
-  ret->glyphset = pXRenderCreateGlyphSet(gdi_display, ret->font_format);
+  entry->glyphset = pXRenderCreateGlyphSet(gdi_display, entry->font_format);
   wine_tsx11_unlock();
   return ret;
 }
 
-static void dec_ref_cache(gsCacheEntry *entry)
+static void dec_ref_cache(int index)
 {
-  TRACE("dec'ing entry %d to %d\n", entry - glyphsetCache, entry->count - 1);
-  assert(entry->count > 0);
-  entry->count--;
+  assert(index >= 0);
+  TRACE("dec'ing entry %d to %d\n", index, glyphsetCache[index].count - 1);
+  assert(glyphsetCache[index].count > 0);
+  glyphsetCache[index].count--;
 }
 
 static void lfsz_calc_hash(LFANDSIZE *plfsz)
@@ -371,8 +379,10 @@ static void lfsz_calc_hash(LFANDSIZE *plfsz)
 void X11DRV_XRender_Finalize(void)
 {
     FIXME("Free cached glyphsets\n");
+#if 0
     if (xrender_handle) wine_dlclose(xrender_handle, NULL, 0);
     xrender_handle = NULL;
+#endif
 }
 
 
@@ -390,13 +400,16 @@ BOOL X11DRV_XRender_SelectFont(X11DRV_PDEVICE *physDev, HFONT hfont)
     lfsz.xform = physDev->dc->xformWorld2Vport;
     lfsz_calc_hash(&lfsz);
 
-    if(!physDev->xrender)
+    EnterCriticalSection(&xrender_cs);
+    if(!physDev->xrender) {
         physDev->xrender = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
 				     sizeof(*physDev->xrender));
-
-    else if(physDev->xrender->cacheEntry)
-        dec_ref_cache(physDev->xrender->cacheEntry);
-    physDev->xrender->cacheEntry = GetCacheEntry(&lfsz);
+	physDev->xrender->cache_index = -1;
+    }
+    else if(physDev->xrender->cache_index != -1)
+        dec_ref_cache(physDev->xrender->cache_index);
+    physDev->xrender->cache_index = GetCacheEntry(&lfsz);
+    LeaveCriticalSection(&xrender_cs);
     return 0;
 }
 
@@ -418,8 +431,10 @@ void X11DRV_XRender_DeleteDC(X11DRV_PDEVICE *physDev)
     }
     wine_tsx11_unlock();
 
-    if(physDev->xrender->cacheEntry)
-        dec_ref_cache(physDev->xrender->cacheEntry);
+    EnterCriticalSection(&xrender_cs);
+    if(physDev->xrender->cache_index != -1)
+        dec_ref_cache(physDev->xrender->cache_index);
+    LeaveCriticalSection(&xrender_cs);
 
     HeapFree(GetProcessHeap(), 0, physDev->xrender);
     physDev->xrender = NULL;
@@ -445,6 +460,11 @@ void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev)
     return;
 }
 
+/************************************************************************
+ *   UploadGlyph
+ *
+ * Helper to ExtTextOut.  Must be called inside xrender_cs
+ */
 static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
 {
     int buflen;
@@ -452,7 +472,7 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
     Glyph gid;
     GLYPHMETRICS gm;
     XGlyphInfo gi;
-    gsCacheEntry *entry = physDev->xrender->cacheEntry;
+    gsCacheEntry *entry = glyphsetCache + physDev->xrender->cache_index;
     UINT ggo_format = GGO_GLYPH_INDEX;
     BOOL aa;
 
@@ -463,7 +483,6 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
 				      entry->realized,
 				      entry->nrealized * sizeof(BOOL));
     }
-    entry->realized[glyph] = TRUE;
 
     if(entry->font_format->depth == 8) {
         aa = TRUE;
@@ -475,8 +494,12 @@ static BOOL UploadGlyph(X11DRV_PDEVICE *physDev, int glyph)
 
     buflen = GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, 0, NULL,
 			      NULL);
-    if(buflen == GDI_ERROR)
-        return FALSE;
+    if(buflen == GDI_ERROR) {
+        LeaveCriticalSection(&xrender_cs);
+	return FALSE;
+    }
+
+    entry->realized[glyph] = TRUE;
 
     buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buflen);
     GetGlyphOutlineW(physDev->hdc, glyph, ggo_format, &gm, buflen, buf, NULL);
@@ -572,6 +595,9 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     LOGFONTW lf;
     int render_op = PictOpOver;
     WORD *glyphs;
+    POINT pt;
+    gsCacheEntry *entry;
+    BOOL retv = FALSE;
     HDC hdc = physDev->hdc;
     DC *dc = physDev->dc;
 
@@ -617,10 +643,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    rc = *lprect;
 	}
 
-	rc.left = INTERNAL_XWPTODP(dc, rc.left, rc.top);
-	rc.top = INTERNAL_YWPTODP(dc, rc.left, rc.top);
-	rc.right = INTERNAL_XWPTODP(dc, rc.right, rc.bottom);
-	rc.bottom = INTERNAL_YWPTODP(dc, rc.right, rc.bottom);
+	LPtoDP(physDev->hdc, (POINT*)&rc, 2);
 
 	if(rc.left > rc.right) {INT tmp = rc.left; rc.left = rc.right; rc.right = tmp;}
 	if(rc.top > rc.bottom) {INT tmp = rc.top; rc.top = rc.bottom; rc.bottom = tmp;}
@@ -642,12 +665,15 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     }
 
     if(count == 0) {
-        X11DRV_UnlockDIBSection( physDev, TRUE );
-	return TRUE;
+	retv =  TRUE;
+        goto done;
     }
 
-    x = INTERNAL_XWPTODP( dc, x, y );
-    y = INTERNAL_YWPTODP( dc, x, y );
+    pt.x = x;
+    pt.y = y;
+    LPtoDP(physDev->hdc, &pt, 1);
+    x = pt.x;
+    y = pt.y;
 
     TRACE("real x,y %d,%d\n", x, y);
 
@@ -673,8 +699,11 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     switch( dc->textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) ) {
     case TA_LEFT:
         if (dc->textAlign & TA_UPDATECP) {
-	    dc->CursPosX = INTERNAL_XDPTOWP( dc, x + xwidth, y - ywidth );
-	    dc->CursPosY = INTERNAL_YDPTOWP( dc, x + xwidth, y - ywidth );
+	    pt.x = x + xwidth;
+	    pt.y = y - ywidth;
+	    DPtoLP(physDev->hdc, &pt, 1);
+	    dc->CursPosX = pt.x;
+	    dc->CursPosY = pt.y;
 	}
 	break;
 
@@ -687,8 +716,11 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         x -= xwidth;
 	y += ywidth;
 	if (dc->textAlign & TA_UPDATECP) {
-	    dc->CursPosX = INTERNAL_XDPTOWP( dc, x + xwidth, y - ywidth );
-	    dc->CursPosY = INTERNAL_YDPTOWP( dc, x + xwidth, y - ywidth );
+	    pt.x = x;
+	    pt.y = y;
+	    DPtoLP(physDev->hdc, &pt, 1);
+	    dc->CursPosX = pt.x;
+	    dc->CursPosY = pt.y;
 	}
 	break;
     }
@@ -802,9 +834,11 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     if((dc->bitsPerPixel == 1) && ((dc->textColor & 0xffffff) == 0))
         render_op = PictOpOutReverse; /* This gives us 'black' text */
 
+    EnterCriticalSection(&xrender_cs);
+    entry = glyphsetCache + physDev->xrender->cache_index;
+
     for(idx = 0; idx < count; idx++) {
-        if(glyphs[idx] >= physDev->xrender->cacheEntry->nrealized ||
-	   physDev->xrender->cacheEntry->realized[glyphs[idx]] == FALSE) {
+        if(glyphs[idx] >= entry->nrealized || entry->realized[glyphs[idx]] == FALSE) {
 	    UploadGlyph(physDev, glyphs[idx]);
 	}
     }
@@ -818,8 +852,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         pXRenderCompositeString16(gdi_display, render_op,
 				   physDev->xrender->tile_pict,
 				   physDev->xrender->pict,
-				   physDev->xrender->cacheEntry->font_format,
-				   physDev->xrender->cacheEntry->glyphset,
+				   entry->font_format, entry->glyphset,
 				   0, 0, physDev->org.x + x, physDev->org.y + y,
 				   glyphs, count);
 
@@ -829,8 +862,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    pXRenderCompositeString16(gdi_display, render_op,
 				       physDev->xrender->tile_pict,
 				       physDev->xrender->pict,
-				       physDev->xrender->cacheEntry->font_format,
-				       physDev->xrender->cacheEntry->glyphset,
+				       entry->font_format, entry->glyphset,
 				       0, 0, physDev->org.x + x + xoff,
 				       physDev->org.y + y + yoff,
 				       glyphs + idx, 1);
@@ -839,6 +871,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    yoff = offset * -sinEsc;
 	}
     }
+
+    LeaveCriticalSection(&xrender_cs);
 
     if(physDev->xrender->pict) {
         pXRenderFreePicture(gdi_display, physDev->xrender->pict);
@@ -849,9 +883,12 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     if (flags & ETO_CLIPPED)
         RestoreVisRgn16( hdc );
 
+    retv = TRUE;
+
+done:
     X11DRV_UnlockDIBSection( physDev, TRUE );
     if(glyphs != wstr) HeapFree(GetProcessHeap(), 0, glyphs);
-    return TRUE;
+    return retv;
 }
 
 #else /* HAVE_X11_EXTENSIONS_XRENDER_H */
