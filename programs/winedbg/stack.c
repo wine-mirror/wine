@@ -219,6 +219,9 @@ void stack_backtrace(DWORD tid, BOOL noisy)
             dbg_printf(")\n");
         }
         nf++;
+        /* we've probably gotten ourselves into an infinite loop so bail */
+        if (nf > 200)
+            break;
     }
 
     dbg_context = saved_dbg_context;
