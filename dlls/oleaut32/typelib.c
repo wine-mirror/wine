@@ -878,14 +878,14 @@ static void dump_TypeDesc(TYPEDESC *pTD,char *szVarType) {
     }
 }
 
-static void dump_ELEMDESC(ELEMDESC *edesc) {
+void dump_ELEMDESC(ELEMDESC *edesc) {
   char buf[200];
   dump_TypeDesc(&edesc->tdesc,buf);
   MESSAGE("\t\ttdesc.vartype %d (%s)\n",edesc->tdesc.vt,buf);
   MESSAGE("\t\tu.parmadesc.flags %x\n",edesc->u.paramdesc.wParamFlags);
   MESSAGE("\t\tu.parmadesc.lpex %p\n",edesc->u.paramdesc.pparamdescex);
 }
-static void dump_FUNCDESC(FUNCDESC *funcdesc) {
+void dump_FUNCDESC(FUNCDESC *funcdesc) {
   int i;
   MESSAGE("memid is %08lx\n",funcdesc->memid);
   for (i=0;i<funcdesc->cParams;i++) {
@@ -920,6 +920,45 @@ static void dump_FUNCDESC(FUNCDESC *funcdesc) {
   MESSAGE("\tcParamsOpt: %d\n", funcdesc->cParamsOpt);
   MESSAGE("\twFlags: %x\n", funcdesc->wFuncFlags);
 }
+
+void dump_IDLDESC(IDLDESC *idl) {
+  MESSAGE("\t\twIdlflags: %d\n",idl->wIDLFlags);
+}
+
+static char * typekind_desc[] =
+{
+	"TKIND_ENUM",
+	"TKIND_RECORD",
+	"TKIND_MODULE",
+	"TKIND_INTERFACE",
+	"TKIND_DISPATCH",
+	"TKIND_COCLASS",
+	"TKIND_ALIAS",
+	"TKIND_UNION",
+	"TKIND_MAX"
+};
+
+void dump_TYPEATTR(TYPEATTR *tattr) {
+  char buf[200];
+  MESSAGE("\tguid: %s\n",debugstr_guid(&tattr->guid));
+  MESSAGE("\tlcid: %ld\n",tattr->lcid);
+  MESSAGE("\tmemidConstructor: %ld\n",tattr->memidConstructor);
+  MESSAGE("\tmemidDestructor: %ld\n",tattr->memidDestructor);
+  MESSAGE("\tschema: %s\n",debugstr_w(tattr->lpstrSchema));
+  MESSAGE("\tsizeInstance: %ld\n",tattr->cbSizeInstance);
+  MESSAGE("\tkind:%s\n", typekind_desc[tattr->typekind]);
+  MESSAGE("\tcFuncs: %d\n", tattr->cFuncs);
+  MESSAGE("\tcVars: %d\n", tattr->cVars);
+  MESSAGE("\tcImplTypes: %d\n", tattr->cImplTypes);
+  MESSAGE("\tcbSizeVft: %d\n", tattr->cbSizeVft);
+  MESSAGE("\tcbAlignment: %d\n", tattr->cbAlignment);
+  MESSAGE("\twTypeFlags: %d\n", tattr->wTypeFlags);
+  MESSAGE("\tVernum: %d.%d\n", tattr->wMajorVerNum,tattr->wMinorVerNum);
+  dump_TypeDesc(&tattr->tdescAlias,buf);
+  MESSAGE("\ttypedesc: %s\n", buf);
+  dump_IDLDESC(&tattr->idldescType);
+}
+
 static void dump_TLBFuncDescOne(TLBFuncDesc * pfd)
 {
   int i;
@@ -1076,19 +1115,6 @@ static void dump_DispParms(DISPPARAMS * pdp)
     }
 }
 
-static char * typekind_desc[] =
-{
-	"TKIND_ENUM",
-	"TKIND_RECORD",
-	"TKIND_MODULE",
-	"TKIND_INTERFACE",
-	"TKIND_DISPATCH",
-	"TKIND_COCLASS",
-	"TKIND_ALIAS",
-	"TKIND_UNION",
-	"TKIND_MAX"
-};
-
 static void dump_TypeInfo(ITypeInfoImpl * pty)
 {
     TRACE("%p ref=%u\n", pty, pty->ref);
@@ -1101,6 +1127,16 @@ static void dump_TypeInfo(ITypeInfoImpl * pty)
     dump_TLBFuncDesc(pty->funclist);
     dump_TLBVarDesc(pty->varlist);
     dump_TLBImplType(pty->impltypelist);
+}
+
+void dump_VARDESC(VARDESC *v)
+{
+    MESSAGE("memid %ld\n",v->memid);
+    MESSAGE("lpstrSchema %s\n",debugstr_w(v->lpstrSchema));
+    MESSAGE("oInst %ld\n",v->u.oInst);
+    dump_ELEMDESC(&(v->elemdescVar));
+    MESSAGE("wVarFlags %x\n",v->wVarFlags);
+    MESSAGE("varkind %d\n",v->varkind);
 }
 
 static TYPEDESC stndTypeDesc[VT_LPWSTR+1]=
@@ -4010,6 +4046,16 @@ _invoke(LPVOID func,CALLCONV callconv, int nrargs, DWORD *args) {
 	case 7: {
 		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD) = func;
 		res = xfunc(args[0],args[1],args[2],args[3],args[4],args[5],args[6]);
+		break;
+	}
+	case 8: {
+		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD) = func;
+		res = xfunc(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7]);
+		break;
+	}
+	case 9: {
+		DWORD (WINAPI *xfunc)(DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD,DWORD) = func;
+		res = xfunc(args[0],args[1],args[2],args[3],args[4],args[5],args[6],args[7],args[8]);
 		break;
 	}
 	default:
