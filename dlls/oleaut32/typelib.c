@@ -4192,6 +4192,9 @@ _invoke(LPVOID func,CALLCONV callconv, int nrargs, DWORD *args) {
 
 extern int const _argsize(DWORD vt);
 
+/***********************************************************************
+ *		DispCallFunc (OLEAUT32.@)
+ */
 HRESULT WINAPI
 DispCallFunc(
     void* pvInstance, ULONG oVft, CALLCONV cc, VARTYPE vtReturn, UINT cActuals,
@@ -4309,7 +4312,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 		    argspos += arglen;
 		} else {
 		    TYPEDESC *tdesc = &(pFDesc->funcdesc.lprgelemdescParam[i].tdesc);
-		    FIXME("set %d to pointer for get (type is %d)\n",i,tdesc->vt);
+		    if (tdesc->vt != VT_PTR)
+		    	FIXME("set %d to pointer for get (type is %d)\n",i,tdesc->vt);
 		    /*FIXME: give pointers for the rest, so propertyget works*/
 		    args[argspos] = (DWORD)&args2[args2pos];
 
@@ -4418,6 +4422,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
  *
  * Retrieves the documentation string, the complete Help file name and path,
  * and the context ID for the Help topic for a specified type description.
+ *
+ * (Can be tested by the Visual Basic Editor in Word for instance.)
  */
 static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
         MEMBERID memid, BSTR  *pBstrName, BSTR  *pBstrDocString,
@@ -4452,8 +4458,13 @@ static HRESULT WINAPI ITypeInfo_fnGetDocumentation( ITypeInfo2 *iface,
         }
     for(pVDesc=This->varlist; pVDesc; pVDesc=pVDesc->next)
         if(pVDesc->vardesc.memid==memid){
-	    FIXME("Not implemented\n");
-            return S_OK;
+	    if(pBstrName)
+	      *pBstrName = SysAllocString(pVDesc->Name);
+	    if(pBstrDocString)
+	      *pBstrDocString=SysAllocString(pVDesc->HelpString);
+	    if(pdwHelpContext)
+	      *pdwHelpContext=pVDesc->HelpContext;
+	    return S_OK;
         }
     }
     return TYPE_E_ELEMENTNOTFOUND;
