@@ -1075,15 +1075,25 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
                            LPDWORD lpcbRead, LPDWORD lpcbAvail, LPDWORD lpcbMessage )
 {
 #ifdef FIONREAD
-    int avail=0,fd;
+    int avail=0, fd, ret, flags;
 
-    fd = FILE_GetUnixHandle(hPipe, GENERIC_READ);
-    if (fd == -1) return FALSE;
+    ret = wine_server_handle_to_fd( hPipe, GENERIC_READ, &fd, NULL, &flags );
+    if (ret)
+    {
+        SetLastError( RtlNtStatusToDosError(ret) );
+        return FALSE;
+    }
+    if (flags & FD_FLAG_RECV_SHUTDOWN)
+    {
+        wine_server_release_fd( hPipe, fd );
+        SetLastError ( ERROR_PIPE_NOT_CONNECTED );
+        return FALSE;
+    }
 
     if (ioctl(fd,FIONREAD, &avail ) != 0)
     {
         TRACE("FIONREAD failed reason: %s\n",strerror(errno));
-        close(fd);
+        wine_server_release_fd( hPipe, fd );
         return FALSE;
     }
     if (!avail)  /* check for closed pipe */
@@ -1101,12 +1111,12 @@ BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
             TRACE("POLLHUP | POLLERR\n");
             /* fall through */
         case -1:
-            close(fd);
+            wine_server_release_fd( hPipe, fd );
             SetLastError(ERROR_BROKEN_PIPE);
             return FALSE;
         }
     }
-    close(fd);
+    wine_server_release_fd( hPipe, fd );
     TRACE(" 0x%08x bytes available\n", avail );
     if (!lpvBuffer && lpcbAvail)
       {

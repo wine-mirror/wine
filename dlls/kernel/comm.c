@@ -94,7 +94,6 @@
 
 #include "wine/server.h"
 #include "async.h"
-#include "file.h"
 #include "heap.h"
 
 #include "wine/debug.h"
@@ -104,6 +103,23 @@
 #endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(comm);
+
+/* retrieve the Unix handle corresponding to a comm handle */
+static int get_comm_fd( HANDLE handle, DWORD access )
+{
+    int fd, ret;
+
+    ret = wine_server_handle_to_fd( handle, access, &fd, NULL, NULL );
+    if (ret) SetLastError( RtlNtStatusToDosError(ret) );
+    return fd;
+}
+
+/* release the Unix handle returned by get_comm_fd */
+static inline void release_comm_fd( HANDLE handle, int fd )
+{
+    wine_server_release_fd( handle, fd );
+}
+
 
 /***********************************************************************
  * Asynchronous I/O for asynchronous wait requests                     *
@@ -681,13 +697,10 @@ BOOL WINAPI SetCommBreak(
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
         int fd,result;
 
-	fd = FILE_GetUnixHandle( handle, GENERIC_READ );
-	if(fd<0) {
-	        TRACE("FILE_GetUnixHandle failed\n");
-		return FALSE;
-	}
+	fd = get_comm_fd( handle, GENERIC_READ );
+	if(fd<0) return FALSE;
 	result = ioctl(fd,TIOCSBRK,0);
-	close(fd);
+	release_comm_fd( handle, fd );
 	if (result ==-1)
 	  {
 	        TRACE("ioctl failed\n");
@@ -721,13 +734,10 @@ BOOL WINAPI ClearCommBreak(
 #if defined(TIOCSBRK) && defined(TIOCCBRK) /* check if available for compilation */
         int fd,result;
 
-	fd = FILE_GetUnixHandle( handle, GENERIC_READ );
-	if(fd<0) {
-	        TRACE("FILE_GetUnixHandle failed\n");
-		return FALSE;
-	}
+	fd = get_comm_fd( handle, GENERIC_READ );
+	if(fd<0) return FALSE;
 	result = ioctl(fd,TIOCCBRK,0);
-	close(fd);
+	release_comm_fd( handle, fd );
 	if (result ==-1)
 	  {
 	        TRACE("ioctl failed\n");
@@ -761,15 +771,12 @@ BOOL WINAPI EscapeCommFunction(
 	struct termios	port;
 
     	TRACE("handle %p, function=%d\n", handle, nFunction);
-	fd = FILE_GetUnixHandle( handle, GENERIC_READ );
-	if(fd<0) {
-		FIXME("handle %p not found.\n",handle);
-		return FALSE;
-	}
+	fd = get_comm_fd( handle, GENERIC_READ );
+	if(fd<0) return FALSE;
 
 	if (tcgetattr(fd,&port) == -1) {
 		COMM_SetCommError(handle,CE_IOE);
-		close(fd);
+		release_comm_fd( handle, fd );
 		return FALSE;
 	}
 
@@ -841,7 +848,7 @@ BOOL WINAPI EscapeCommFunction(
 
 	if (!direct)
 	  if (tcsetattr(fd, TCSADRAIN, &port) == -1) {
-		close(fd);
+		release_comm_fd( handle, fd );
 		COMM_SetCommError(handle,CE_IOE);
 		return FALSE;
 	  } else
@@ -856,7 +863,7 @@ BOOL WINAPI EscapeCommFunction(
 	    else
 	      result = TRUE;
 	  }
-	close(fd);
+	release_comm_fd( handle, fd );
 	return result;
 }
 
@@ -878,11 +885,8 @@ BOOL WINAPI PurgeComm(
 
      TRACE("handle %p, flags %lx\n", handle, flags);
 
-     fd = FILE_GetUnixHandle( handle, GENERIC_READ );
-     if(fd<0) {
-	FIXME("no handle %p found\n",handle);
-	return FALSE;
-     }
+     fd = get_comm_fd( handle, GENERIC_READ );
+     if(fd<0) return FALSE;
 
      /*
      ** not exactly sure how these are different
@@ -897,7 +901,7 @@ BOOL WINAPI PurgeComm(
          tcflush(fd,TCOFLUSH);
      if(flags&PURGE_RXCLEAR)
          tcflush(fd,TCIFLUSH);
-     close(fd);
+     release_comm_fd( handle, fd );
 
      return 1;
 }
@@ -919,12 +923,8 @@ BOOL WINAPI ClearCommError(
 {
     int fd;
 
-    fd=FILE_GetUnixHandle( handle, GENERIC_READ );
-    if(0>fd)
-    {
-	FIXME("no handle %p found\n",handle);
-        return FALSE;
-    }
+    fd=get_comm_fd( handle, GENERIC_READ );
+    if(0>fd) return FALSE;
 
     if (lpStat)
     {
@@ -953,7 +953,7 @@ BOOL WINAPI ClearCommError(
 	      handle, lpStat->cbInQue, lpStat->cbOutQue);
     }
 
-    close(fd);
+    release_comm_fd( handle, fd );
 
     COMM_GetCommError(handle, errors);
     COMM_SetCommError(handle, 0);
@@ -983,12 +983,9 @@ BOOL WINAPI SetupComm(
     int fd;
 
     FIXME("insize %ld outsize %ld unimplemented stub\n", insize, outsize);
-    fd=FILE_GetUnixHandle( handle, GENERIC_READ );
-    if(0>fd) {
-	FIXME("handle %p not found?\n",handle);
-        return FALSE;
-    }
-    close(fd);
+    fd=get_comm_fd( handle, GENERIC_READ );
+    if(0>fd) return FALSE;
+    release_comm_fd( handle, fd );
     return TRUE;
 }
 
@@ -1078,16 +1075,13 @@ BOOL WINAPI SetCommState(
      TRACE("%s %s\n",(lpdcb->fInX)?"IXON":"~IXON",
 	   (lpdcb->fOutX)?"IXOFF":"~IXOFF");
 
-     fd = FILE_GetUnixHandle( handle, GENERIC_READ );
-     if (fd < 0)  {
-	FIXME("no handle %p found\n",handle);
-	return FALSE;
-     }
+     fd = get_comm_fd( handle, GENERIC_READ );
+     if (fd < 0) return FALSE;
 
      if ((tcgetattr(fd,&port)) == -1) {
          int save_error = errno;
          COMM_SetCommError(handle,CE_IOE);
-         close( fd );
+         release_comm_fd( handle, fd );
          ERR("tcgetattr error '%s'\n", strerror(save_error));
          return FALSE;
      }
@@ -1194,7 +1188,7 @@ BOOL WINAPI SetCommState(
 
 
                         COMM_SetCommError(handle,IE_BAUDRATE);
-			close( fd );
+                        release_comm_fd( handle, fd );
 			ERR("baudrate %ld\n",lpdcb->BaudRate);
 			return FALSE;
 	}
@@ -1260,7 +1254,7 @@ BOOL WINAPI SetCommState(
 #endif
                 default:
                         COMM_SetCommError(handle,IE_BAUDRATE);
-                        close( fd );
+                        release_comm_fd( handle, fd );
 			ERR("baudrate %ld\n",lpdcb->BaudRate);
                         return FALSE;
         }
@@ -1303,7 +1297,7 @@ BOOL WINAPI SetCommState(
                             port.c_iflag &= ~INPCK;
                         } else {
                             COMM_SetCommError(handle,IE_BYTESIZE);
-                            close( fd );
+                            release_comm_fd( handle, fd );
                             ERR("Cannot set MARK Parity\n");
                             return FALSE;
                         }
@@ -1314,7 +1308,7 @@ BOOL WINAPI SetCommState(
                             port.c_iflag &= ~INPCK;
                         } else {
                             COMM_SetCommError(handle,IE_BYTESIZE);
-                            close( fd );
+                            release_comm_fd( handle, fd );
                             ERR("Cannot set SPACE Parity\n");
                             return FALSE;
                         }
@@ -1322,7 +1316,7 @@ BOOL WINAPI SetCommState(
 #endif
                default:
                         COMM_SetCommError(handle,IE_BYTESIZE);
-                        close( fd );
+                        release_comm_fd( handle, fd );
 			ERR("Parity\n");
                         return FALSE;
         }
@@ -1344,7 +1338,7 @@ BOOL WINAPI SetCommState(
 			break;
 		default:
                         COMM_SetCommError(handle,IE_BYTESIZE);
-                        close( fd );
+                        release_comm_fd( handle, fd );
 			ERR("ByteSize\n");
 			return FALSE;
 	}
@@ -1359,7 +1353,7 @@ BOOL WINAPI SetCommState(
 				break;
 		default:
                         COMM_SetCommError(handle,IE_BYTESIZE);
-                        close( fd );
+                        release_comm_fd( handle, fd );
 			ERR("StopBits\n");
 			return FALSE;
 	}
@@ -1390,12 +1384,12 @@ BOOL WINAPI SetCommState(
 	if (tcsetattr(fd,TCSANOW,&port)==-1) { /* otherwise it hangs with pending input*/
 	        int save_error=errno;
                 COMM_SetCommError(handle,CE_IOE);
-                close( fd );
+                release_comm_fd( handle, fd );
                 ERR("tcsetattr error '%s'\n", strerror(save_error));
 		return FALSE;
 	} else {
                 COMM_SetCommError(handle,0);
-                close( fd );
+                release_comm_fd( handle, fd );
 		return TRUE;
 	}
 }
@@ -1423,20 +1417,16 @@ BOOL WINAPI GetCommState(
 
      TRACE("handle %p, ptr %p\n", handle, lpdcb);
 
-     fd = FILE_GetUnixHandle( handle, GENERIC_READ );
-     if (fd < 0)
-       {
-	 ERR("FILE_GetUnixHandle failed\n");
-	 return FALSE;
-       }
+     fd = get_comm_fd( handle, GENERIC_READ );
+     if (fd < 0) return FALSE;
      if (tcgetattr(fd, &port) == -1) {
                 int save_error=errno;
                 ERR("tcgetattr error '%s'\n", strerror(save_error));
                 COMM_SetCommError(handle,CE_IOE);
-                close( fd );
+                release_comm_fd( handle, fd );
 		return FALSE;
 	}
-     close( fd );
+     release_comm_fd( handle, fd );
 #ifndef __EMX__
 #ifdef CBAUD
      speed= (port.c_cflag & CBAUD);
@@ -1625,21 +1615,9 @@ BOOL WINAPI TransmitCommChar(
     HANDLE hComm,      /* [in] The communication device in need of a command character. */
     CHAR   chTransmit) /* [in] The character to transmit. */
 {
-    BOOL r = FALSE;
-    int fd;
-
     WARN("(%p,'%c') not perfect!\n",hComm,chTransmit);
 
-    fd = FILE_GetUnixHandle( hComm, GENERIC_READ );
-    if ( fd < 0 )
-        SetLastError ( ERROR_INVALID_PARAMETER );
-    else
-    {
-        r = (1 == write(fd, &chTransmit, 1));
-        close(fd);
-    }
-
-    return r;
+    return WriteFile( hComm, &chTransmit, 1, NULL, NULL );
 }
 
 
@@ -1730,15 +1708,12 @@ BOOL WINAPI SetCommTimeouts(
     if (!ret) return FALSE;
 
     /* FIXME: move this stuff to the server */
-    fd = FILE_GetUnixHandle( hComm, GENERIC_READ );
-    if (fd < 0) {
-       FIXME("no fd for handle = %p!.\n",hComm);
-       return FALSE;
-    }
+    fd = get_comm_fd( hComm, GENERIC_READ );
+    if (fd < 0) return FALSE;
 
     if (-1==tcgetattr(fd,&tios)) {
         FIXME("tcgetattr on fd %d failed!\n",fd);
-        close(fd);
+        release_comm_fd( hComm, fd );
         return FALSE;
     }
 
@@ -1763,10 +1738,10 @@ BOOL WINAPI SetCommTimeouts(
 
     if (-1==tcsetattr(fd,0,&tios)) {
         FIXME("tcsetattr on fd %d failed!\n",fd);
-        close(fd);
+        release_comm_fd( hComm, fd );
         return FALSE;
     }
-    close(fd);
+    release_comm_fd( hComm, fd );
     return TRUE;
 }
 
@@ -1788,11 +1763,11 @@ BOOL WINAPI GetCommModemStatus(
 
 	*lpModemStat=0;
 #ifdef TIOCMGET
-	fd = FILE_GetUnixHandle( hFile, GENERIC_READ );
+	fd = get_comm_fd( hFile, GENERIC_READ );
 	if(fd<0)
 		return FALSE;
 	result = ioctl(fd, TIOCMGET, &mstat);
-	close(fd);
+	release_comm_fd( hFile, fd );
 	if (result == -1)
 	  {
 	    WARN("ioctl failed\n");
@@ -1868,20 +1843,20 @@ static BOOL COMM_WaitCommEvent(
     if(NtResetEvent(lpOverlapped->hEvent,NULL))
         return FALSE;
 
-    fd = FILE_GetUnixHandle( hFile, GENERIC_WRITE );
+    fd = get_comm_fd( hFile, GENERIC_WRITE );
     if(fd<0)
 	return FALSE;
 
     ovp = (async_commio*) HeapAlloc(GetProcessHeap(), 0, sizeof (async_commio));
     if(!ovp)
     {
-        close(fd);
+        release_comm_fd( hFile, fd );
         return FALSE;
     }
 
     ovp->async.ops = &commio_async_ops;
     ovp->async.handle = hFile;
-    ovp->async.fd = fd;
+    ovp->async.fd = fd;  /* FIXME */
     ovp->async.type = ASYNC_TYPE_WAIT;
     ovp->async.func = COMM_WaitCommEventService;
     ovp->async.event = lpOverlapped->hEvent;

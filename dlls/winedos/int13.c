@@ -129,8 +129,7 @@ static void INT13_ReadFloppyParams( CONTEXT86 *context )
         return;
     }
     r = ioctl(floppy_fd, FDGETDRVPRM, &floppy_parm);
-
-    close(floppy_fd);
+    wine_server_release_fd( h, floppy_fd );
     CloseHandle(h);
 
     if(r<0)

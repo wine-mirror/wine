@@ -202,40 +202,6 @@ void FILE_SetDosError(void)
 }
 
 
-/***********************************************************************
- *           FILE_GetUnixHandleType
- *
- * Retrieve the Unix handle corresponding to a file handle.
- * Returns -1 on failure.
- */
-static int FILE_GetUnixHandleType( HANDLE handle, DWORD access, enum fd_type *type, int *flags_ptr )
-{
-    int ret, flags, fd = -1;
-
-    ret = wine_server_handle_to_fd( handle, access, &fd, type, &flags );
-    if (flags_ptr) *flags_ptr = flags;
-    if (ret) SetLastError( RtlNtStatusToDosError(ret) );
-    else if (((access & GENERIC_READ)  && (flags & FD_FLAG_RECV_SHUTDOWN)) ||
-             ((access & GENERIC_WRITE) && (flags & FD_FLAG_SEND_SHUTDOWN)))
-    {
-        close (fd);
-        SetLastError ( ERROR_PIPE_NOT_CONNECTED );
-        return -1;
-    }
-    return fd;
-}
-
-/***********************************************************************
- *           FILE_GetUnixHandle
- *
- * Retrieve the Unix handle corresponding to a file handle.
- * Returns -1 on failure.
- */
-int FILE_GetUnixHandle( HANDLE handle, DWORD access )
-{
-    return FILE_GetUnixHandleType( handle, access, NULL, NULL );
-}
-
 /******************************************************************
  *		OpenConsoleW            (KERNEL32.@)
  *
