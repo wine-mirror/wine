@@ -29,7 +29,7 @@
 /* the ones with offsets at the end are the same as in Windows */
 struct _IMAGELIST
 {
-    DWORD	magic; 			/* 00:	'LMIH' */
+    DWORD	magic; 			/* 00:	'SAMX' */
     INT		cCurImage;		/* 04: ImageCount */
     INT		cMaxImage;		/* 08: maximages */
     DWORD	x3;
@@ -52,6 +52,8 @@ struct _IMAGELIST
     UINT    uBitsPixel;
     INT     nOvlIdx[15];
 };
+
+#define IMAGELIST_MAGIC 0x53414D58
 
 /* Header used by ImageList_Read() and ImageList_Write() */
 typedef struct _ILHEAD
