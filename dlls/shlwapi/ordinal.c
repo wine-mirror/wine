@@ -22,6 +22,7 @@
 #include "winreg.h"
 #include "winuser.h"
 #include "debugtools.h"
+#include "ordinal.h"
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -33,23 +34,14 @@ extern HMODULE SHLWAPI_hmpr;
 extern HMODULE SHLWAPI_hmlang;
 
 typedef struct {
-    INT     size;      /* [in]  (always 0x18)                       */
-    LPCWSTR ap1;       /* [out] start of area (maybe after spaces)  */
-    INT     sizep1;    /* [out] size of first part (until colon)    */
-    LPCWSTR ap2;       /* [out] pointer following first colon       */
-    INT     sizep2;    /* [out] size of remainder                   */
-    INT     fcncde;    /* [out] function match of p1 (0 if unknown) */ 
-} UNKNOWN_SHLWAPI_2;
+    INT    scheme_number;
+    LPCSTR scheme_name;
+} SHL_2_inet_scheme;
 
-typedef struct {
-    INT    protocol_number;
-    LPCSTR protocol_name;
-} SHL_2_inet_protocol;
-
-/* The following protocols were identified in the native version of
+/* The following schemes were identified in the native version of
  * SHLWAPI.DLL version 5.50
  */
-static const SHL_2_inet_protocol shlwapi_protocols[] = {
+static const SHL_2_inet_scheme shlwapi_schemes[] = {
   {1, "ftp"},
   {2, "http"},
   {3, "gopher"},
@@ -90,25 +82,68 @@ static const SHL_2_inet_protocol shlwapi_protocols[] = {
 
 /*************************************************************************
  *      @	[SHLWAPI.1]
+ *
+ * Identifies the Internet "scheme" in the passed string. ASCII based.
+ * Also determines start and length of item after the ':'
  */
-DWORD WINAPI SHLWAPI_1 (
-	LPSTR lpStr,
-	LPVOID x)
+DWORD WINAPI SHLWAPI_1 (LPCSTR x, UNKNOWN_SHLWAPI_1 *y)
 {
-	FIXME("(%p %s %p %s)\n",lpStr, debugstr_a(lpStr),x, debugstr_a(x));
-	return 0;
+    DWORD cnt;
+    const SHL_2_inet_scheme *inet_pro;
+
+    if (y->size != 0x18) return E_INVALIDARG;
+    /* FIXME: leading white space generates error of 0x80041001 which 
+     *        is undefined
+     */
+    if (*x <= ' ') return 0x80041001;
+    cnt = 0;
+    y->sizep1 = 0;
+    y->ap1 = x;
+    while (*x) {
+	if (*x == ':') {
+	    y->sizep1 = cnt;
+	    cnt = -1;
+	    y->ap2 = x+1;
+	    break;
+	}
+	x++;
+	cnt++;
+    }
+
+    /* check for no scheme in string start */
+    /* (apparently schemes *must* be larger than a single character)  */
+    if ((*x == '\0') || (y->sizep1 <= 1)) {
+	y->ap1 = 0;
+	return 0x80041001;
+    }
+
+    /* found scheme, set length of remainder */
+    y->sizep2 = lstrlenA(y->ap2);
+
+    /* see if known scheme and return indicator number */
+    y->fcncde = 0;
+    inet_pro = shlwapi_schemes;
+    while (inet_pro->scheme_number) {
+	if (!strncasecmp(inet_pro->scheme_name, y->ap1,
+		    min(y->sizep1, lstrlenA(inet_pro->scheme_name)))) {
+	    y->fcncde = inet_pro->scheme_number;
+	    break;
+	}
+	inet_pro++;
+    }
+    return S_OK;
 }
 
 /*************************************************************************
  *      @	[SHLWAPI.2]
  *
- * Identifies the Internet "protocol" requested in the passed string.
+ * Identifies the Internet "scheme" in the passed string. UNICODE based.
  * Also determines start and length of item after the ':'
  */
 DWORD WINAPI SHLWAPI_2 (LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
 {
     DWORD cnt;
-    const SHL_2_inet_protocol *inet_pro;
+    const SHL_2_inet_scheme *inet_pro;
     LPSTR cmpstr;
     INT len;
 
@@ -130,19 +165,27 @@ DWORD WINAPI SHLWAPI_2 (LPCWSTR x, UNKNOWN_SHLWAPI_2 *y)
 	x++;
 	cnt++;
     }
-    if (*x && y->sizep1) {
-	y->sizep2 = lstrlenW(y->ap2);
+
+    /* check for no scheme in string start */
+    /* (apparently schemes *must* be larger than a single character)  */
+    if ((*x == L'\0') || (y->sizep1 <= 1)) {
+	y->ap1 = 0;
+	return 0x80041001;
     }
 
+    /* found scheme, set length of remainder */
+    y->sizep2 = lstrlenW(y->ap2);
+
+    /* see if known scheme and return indicator number */
     len = WideCharToMultiByte(0, 0, y->ap1, y->sizep1, 0, 0, 0, 0);
     cmpstr = (LPSTR)HeapAlloc(GetProcessHeap(), 0, len+1);
     WideCharToMultiByte(0, 0, y->ap1, y->sizep1, cmpstr, len+1, 0, 0);
     y->fcncde = 0;
-    inet_pro = shlwapi_protocols;
-    while (inet_pro->protocol_number) {
-	if (!strncasecmp(inet_pro->protocol_name, cmpstr,
-		    min(len, lstrlenA(inet_pro->protocol_name)))) {
-	    y->fcncde = inet_pro->protocol_number;
+    inet_pro = shlwapi_schemes;
+    while (inet_pro->scheme_number) {
+	if (!strncasecmp(inet_pro->scheme_name, cmpstr,
+		    min(len, lstrlenA(inet_pro->scheme_name)))) {
+	    y->fcncde = inet_pro->scheme_number;
 	    break;
 	}
 	inet_pro++;
@@ -227,7 +270,7 @@ LONG WINAPI SHLWAPI_18 (
 	LPVOID x)
 {
 	FIXME("(%p %p)stub\n",w,x);
-	*w = 0;
+	*((LPDWORD)x) = 0;
 	return 0;
 }
 
