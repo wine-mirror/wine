@@ -237,6 +237,15 @@ static void thread_detach(void)
 }
 
 
+/**********************************************************************
+ *           process_detach
+ */
+static void process_detach(void)
+{
+    memset(&USER_Driver, 0, sizeof(USER_Driver));
+    FreeLibrary(graphics_driver);
+}
+
 /***********************************************************************
  *           UserClientDllInitialize  (USER32.@)
  *
@@ -250,6 +259,9 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     case DLL_PROCESS_ATTACH:
         user32_module = inst;
         ret = process_attach();
+        break;
+    case DLL_PROCESS_DETACH:
+        process_detach();
         break;
     case DLL_THREAD_DETACH:
         thread_detach();

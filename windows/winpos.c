@@ -829,7 +829,11 @@ BOOL WINAPI ShowWindowAsync( HWND hwnd, INT cmd )
     }
 
     if ((full_handle = WIN_IsCurrentThread( hwnd )))
-        return USER_Driver.pShowWindow( full_handle, cmd );
+    {
+        if (USER_Driver.pShowWindow)
+            return USER_Driver.pShowWindow( full_handle, cmd );
+        return FALSE;
+    }
     return SendNotifyMessageW( hwnd, WM_WINE_SHOWWINDOW, cmd, 0 );
 }
 
@@ -1207,7 +1211,12 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
     winpos.cx = cx;
     winpos.cy = cy;
     winpos.flags = flags;
-    if (WIN_IsCurrentThread( hwnd )) return USER_Driver.pSetWindowPos( &winpos );
+    if (WIN_IsCurrentThread( hwnd ))
+    {
+        if (USER_Driver.pSetWindowPos)
+            return USER_Driver.pSetWindowPos( &winpos );
+        return FALSE;
+    }
     return SendMessageW( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos );
 }
 
@@ -1337,7 +1346,7 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
     if (!pDWP) return FALSE;
     for (i = 0, winpos = pDWP->winPos; i < pDWP->actualCount; i++, winpos++)
     {
-        if (!(res = USER_Driver.pSetWindowPos( winpos ))) break;
+        if (!USER_Driver.pSetWindowPos || !(res = USER_Driver.pSetWindowPos( winpos ))) break;
     }
     USER_HEAP_FREE( hdwp );
     return res;

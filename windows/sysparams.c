@@ -875,7 +875,10 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
 
     case SPI_GETSCREENSAVEACTIVE:               /*     16 */
         if (!pvParam) return FALSE;
-	*(BOOL *)pvParam = USER_Driver.pGetScreenSaveActive();
+        if (USER_Driver.pGetScreenSaveActive)
+            *(BOOL *)pvParam = USER_Driver.pGetScreenSaveActive();
+        else
+            *(BOOL *)pvParam = FALSE;
         break;
 
     case SPI_SETSCREENSAVEACTIVE:               /*     17 */
@@ -883,7 +886,8 @@ BOOL WINAPI SystemParametersInfoW( UINT uiAction, UINT uiParam,
         WCHAR buf[5];
 
         wsprintfW(buf, CSu, uiParam);
-        USER_Driver.pSetScreenSaveActive( uiParam );
+        if (USER_Driver.pSetScreenSaveActive)
+            USER_Driver.pSetScreenSaveActive( uiParam );
         /* saved value does not affect Wine */
         SYSPARAMS_Save( SPI_SETSCREENSAVEACTIVE_REGKEY,
                         SPI_SETSCREENSAVEACTIVE_VALNAME,

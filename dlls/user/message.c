@@ -1112,7 +1112,9 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
     case WM_WINE_DESTROYWINDOW:
         return WIN_DestroyWindow( hwnd );
     case WM_WINE_SETWINDOWPOS:
-        return USER_Driver.pSetWindowPos( (WINDOWPOS *)lparam );
+        if (USER_Driver.pSetWindowPos)
+            return USER_Driver.pSetWindowPos( (WINDOWPOS *)lparam );
+        return 0;
     case WM_WINE_SHOWWINDOW:
         return ShowWindow( hwnd, wparam );
     case WM_WINE_SETPARENT:
@@ -2411,7 +2413,7 @@ BOOL WINAPI MessageBeep( UINT i )
 {
     BOOL active = TRUE;
     SystemParametersInfoA( SPI_GETBEEP, 0, &active, FALSE );
-    if (active) USER_Driver.pBeep();
+    if (active && USER_Driver.pBeep) USER_Driver.pBeep();
     return TRUE;
 }
 

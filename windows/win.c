@@ -649,7 +649,7 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
 	wndPtr->hSysMenu = 0;
     }
     DCE_FreeWindowDCE( hwnd );    /* Always do this to catch orphaned DCs */
-    USER_Driver.pDestroyWindow( hwnd );
+    if (USER_Driver.pDestroyWindow) USER_Driver.pDestroyWindow( hwnd );
     WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
     wndPtr->class = NULL;
     wndPtr->dwMagic = 0;  /* Mark it as invalid */
@@ -735,7 +735,7 @@ BOOL WIN_CreateDesktopWindow(void)
     }
     SERVER_END_REQ;
 
-    if (!USER_Driver.pCreateWindow( hwndDesktop, &cs, FALSE ))
+    if (!USER_Driver.pCreateWindow || !USER_Driver.pCreateWindow( hwndDesktop, &cs, FALSE ))
     {
         WIN_ReleaseWndPtr( pWndDesktop );
         return FALSE;
@@ -1168,7 +1168,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     else SetWindowLongPtrW( hwnd, GWLP_ID, (ULONG_PTR)cs->hMenu );
     WIN_ReleaseWndPtr( wndPtr );
 
-    if (!USER_Driver.pCreateWindow( hwnd, cs, unicode))
+    if (!USER_Driver.pCreateWindow || !USER_Driver.pCreateWindow( hwnd, cs, unicode))
     {
         WIN_DestroyWindow( hwnd );
         return 0;

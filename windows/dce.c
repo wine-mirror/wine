@@ -521,7 +521,8 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     if (bUpdateVisRgn) SetHookFlags16( HDC_16(hdc), DCHF_INVALIDATEVISRGN ); /* force update */
 
-    if (!USER_Driver.pGetDC( hwnd, hdc, hrgnClip, flags )) hdc = 0;
+    if (!USER_Driver.pGetDC || !USER_Driver.pGetDC( hwnd, hdc, hrgnClip, flags ))
+        hdc = 0;
 
     TRACE("(%p,%p,0x%lx): returning %p\n", hwnd, hrgnClip, flags, hdc);
 END:
@@ -619,7 +620,8 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
                /* Dirty bit has been cleared by caller, set it again so that
                 * pGetDC recomputes the visible region. */
                SetHookFlags16( hDC, DCHF_INVALIDATEVISRGN );
-               USER_Driver.pGetDC( dce->hwndCurrent, dce->hDC, dce->hClipRgn, dce->DCXflags );
+               if (USER_Driver.pGetDC)
+                    USER_Driver.pGetDC( dce->hwndCurrent, dce->hDC, dce->hClipRgn, dce->DCXflags );
            }
            else /* non-fatal but shouldn't happen */
 	     WARN("DC is not in use!\n");

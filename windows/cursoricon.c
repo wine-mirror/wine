@@ -1479,7 +1479,7 @@ HCURSOR WINAPI SetCursor( HCURSOR hCursor /* [in] Handle of cursor to show */ )
     hOldCursor = queue->cursor;
     queue->cursor = hCursor;
     /* Change the cursor shape only if it is visible */
-    if (queue->cursor_count >= 0)
+    if (queue->cursor_count >= 0 && USER_Driver.pSetCursor)
     {
         USER_Driver.pSetCursor( (CURSORICONINFO*)GlobalLock16(HCURSOR_16(hCursor)) );
         GlobalUnlock16(HCURSOR_16(hCursor));
@@ -1498,7 +1498,7 @@ INT WINAPI ShowCursor( BOOL bShow )
 
     if (bShow)
     {
-        if (++queue->cursor_count == 0)  /* Show it */
+        if (++queue->cursor_count == 0 && USER_Driver.pSetCursor) /* Show it */
         {
             USER_Driver.pSetCursor((CURSORICONINFO*)GlobalLock16(HCURSOR_16(queue->cursor)));
             GlobalUnlock16(HCURSOR_16(queue->cursor));
@@ -1506,7 +1506,7 @@ INT WINAPI ShowCursor( BOOL bShow )
     }
     else
     {
-        if (--queue->cursor_count == -1)  /* Hide it */
+        if (--queue->cursor_count == -1 && USER_Driver.pSetCursor) /* Hide it */
             USER_Driver.pSetCursor( NULL );
     }
     return queue->cursor_count;
