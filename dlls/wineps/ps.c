@@ -193,8 +193,10 @@ static const char psarraydef[] =
 "/%s %d array def\n";
 
 
-int PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, WORD cch)
+DWORD PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, DWORD cch)
 {
+    int num, num_left = cch;
+
     if(physDev->job.quiet) {
         TRACE("ignoring output\n");
 	return 0;
@@ -204,7 +206,16 @@ int PSDRV_WriteSpool(PSDRV_PDEVICE *physDev, LPCSTR lpData, WORD cch)
         if( !PSDRV_StartPage(physDev) )
 	    return 0;
     }
-    return WriteSpool16( physDev->job.hJob, (LPSTR)lpData, cch );
+
+    do {
+        num = min(num_left, 0x8000);
+        if(WriteSpool16( physDev->job.hJob, (LPSTR)lpData, num ) != num)
+            return 0;
+        lpData += num;
+        num_left -= num;
+    } while(num_left);
+
+    return cch;
 }
 
 
