@@ -293,3 +293,13 @@ char *getDialogItemText(HWND hDlg, WORD controlID) {
     if (GetWindowText(item, result, len) == 0) return NULL;
     return result;
 }
+
+void PRINTERROR(void)
+{
+        LPSTR msg;
+
+        FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER|FORMAT_MESSAGE_FROM_SYSTEM,
+                       0, GetLastError(), MAKELANGID(LANG_NEUTRAL,SUBLANG_DEFAULT),
+                       (LPSTR)&msg, 0, NULL);
+        WINE_TRACE("error: '%s'\n", msg);
+}

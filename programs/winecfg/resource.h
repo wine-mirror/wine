@@ -108,19 +108,21 @@
 #define IDC_STATIC_LABEL                1073
 #define IDC_ENABLE_DESKTOP              1074
 #define IDS_DRIVE_NO_C                  1075
+#define IDC_BUTTON_SHOW_HIDE_ADVANCED   1076
+#define IDC_STATIC_TYPE                 1077
 
 /* x11drv */
-#define IDC_ENABLE_MANAGED              1076
-#define IDC_SCREEN_DEPTH                1077
-#define IDC_DX_MOUSE_GRAB               1078
-#define IDC_USE_TAKE_FOCUS              1079
-#define IDC_DOUBLE_BUFFER               1080
+#define IDC_ENABLE_MANAGED              1100
+#define IDC_SCREEN_DEPTH                1101
+#define IDC_DX_MOUSE_GRAB               1102
+#define IDC_USE_TAKE_FOCUS              1103
+#define IDC_DOUBLE_BUFFER               1104
 
 /* applications tab */
-#define IDC_APP_TREEVIEW                1021
-#define IDC_APP_ADDAPP                  1081
-#define IDC_APP_REMOVEAPP               1082
+#define IDC_APP_TREEVIEW                1200
+#define IDC_APP_ADDAPP                  1201
+#define IDC_APP_REMOVEAPP               1202
 
 /* audio tab */
-#define IDC_AUDIO_AUTODETECT            1085
-#define IDC_AUDIO_DRIVER                1086
+#define IDC_AUDIO_AUTODETECT            1300
+#define IDC_AUDIO_DRIVER                1301

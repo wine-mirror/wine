@@ -118,6 +118,7 @@ INT_PTR CALLBACK AudioDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lPara
 char *getDialogItemText(HWND hDlg, WORD controlID);
 #define disable(id) EnableWindow(GetDlgItem(dialog, id), 0);
 #define enable(id) EnableWindow(GetDlgItem(dialog, id), 1);
+void PRINTERROR(void); /* WINE_TRACE() the plaintext error message from GetLastError() */
 
 #define WINE_KEY_ROOT "Software\\Wine\\Wine\\Config"
 
