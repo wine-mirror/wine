@@ -1,0 +1,17 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+MODULE    = mlang.dll
+IMPORTS   = ole32 user32 gdi32 advapi32 kernel32 ntdll
+EXTRALIBS = $(LIBUNICODE) -luuid
+EXTRADEFS = -DCOM_NO_WINDOWS_H
+
+C_SRCS = \
+	mlang.c
+
+SUBDIRS = tests
+
+@MAKE_DLL_RULES@
+
+### Dependencies:

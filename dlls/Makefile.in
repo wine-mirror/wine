@@ -66,6 +66,7 @@ BASEDIRS = \
 	kernel \
 	lzexpand \
 	mapi32 \
+	mlang \
 	mmdevldr.vxd \
 	monodebg.vxd \
 	mpr \
@@ -299,6 +300,7 @@ SYMLINKS_SO = \
 	mciseq.drv.so \
 	mciwave.drv.so \
 	midimap.drv.so \
+	mlang.dll.so \
 	mmdevldr.vxd.so \
 	monodebg.vxd.so \
 	mpr.dll.so \
@@ -611,6 +613,9 @@ mciwave.drv.so: winmm/mciwave/mciwave.drv.so
 
 midimap.drv.so: winmm/midimap/midimap.drv.so
 	$(RM) $@ && $(LN_S) winmm/midimap/midimap.drv.so $@
+
+mlang.dll.so: mlang/mlang.dll.so
+	$(RM) $@ && $(LN_S) mlang/mlang.dll.so $@
 
 mmdevldr.vxd.so: mmdevldr.vxd/mmdevldr.vxd.so
 	$(RM) $@ && $(LN_S) mmdevldr.vxd/mmdevldr.vxd.so $@
@@ -1006,6 +1011,7 @@ IMPORT_LIBS = \
 	libkernel32 \
 	liblz32 \
 	libmapi32 \
+	libmlang \
 	libmpr \
 	libmsacm32 \
 	libmsdmo \
@@ -1353,6 +1359,11 @@ libmapi32.def: mapi32/mapi32.spec.def
 	$(RM) $@ && $(LN_S) mapi32/mapi32.spec.def $@
 libmapi32.a: mapi32/mapi32.spec.def
 	$(DLLTOOL) -k -l $@ -d mapi32/mapi32.spec.def
+
+libmlang.def: mlang/mlang.spec.def
+	$(RM) $@ && $(LN_S) mlang/mlang.spec.def $@
+libmlang.a: mlang/mlang.spec.def
+	$(DLLTOOL) -k -l $@ -d mlang/mlang.spec.def
 
 libmpr.def: mpr/mpr.spec.def
 	$(RM) $@ && $(LN_S) mpr/mpr.spec.def $@
@@ -1748,6 +1759,7 @@ iphlpapi/iphlpapi.spec.def: $(WINEBUILD)
 kernel/kernel32.spec.def: $(WINEBUILD)
 lzexpand/lz32.spec.def: $(WINEBUILD)
 mapi32/mapi32.spec.def: $(WINEBUILD)
+mlang/mlang.spec.def: $(WINEBUILD)
 mpr/mpr.spec.def: $(WINEBUILD)
 msacm/msacm32.spec.def: $(WINEBUILD)
 msdmo/msdmo.spec.def: $(WINEBUILD)
@@ -1886,6 +1898,7 @@ winmm/mcicda/mcicda.drv.so: winmm/mcicda
 winmm/mciseq/mciseq.drv.so: winmm/mciseq
 winmm/mciwave/mciwave.drv.so: winmm/mciwave
 winmm/midimap/midimap.drv.so: winmm/midimap
+mlang/mlang.dll.so: mlang
 mmdevldr.vxd/mmdevldr.vxd.so: mmdevldr.vxd
 monodebg.vxd/monodebg.vxd.so: monodebg.vxd
 mpr/mpr.dll.so: mpr
