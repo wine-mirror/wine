@@ -12,6 +12,7 @@
 #include "wincon.h"
 #include "debug.h"
 #include "winuser.h"
+#include "miscemu.h"
 
 DEFAULT_DEBUG_CHANNEL(int16)
 
@@ -122,3 +123,20 @@ void WINAPI INT_Int16Handler( CONTEXT *context )
    }
 }
 
+int WINAPI INT_Int16AddChar(BYTE ascii,BYTE scan)
+{
+  BIOSDATA *data = DOSMEM_BiosData();
+  WORD CurOfs = data->FirstKbdCharPtr;
+  WORD NextOfs = CurOfs + 2;
+
+  if (NextOfs >= data->KbdBufferEnd) NextOfs = data->KbdBufferStart;
+  /* check if buffer is full */
+  if (NextOfs == data->NextKbdCharPtr) return 0;
+
+  /* okay, insert character in ring buffer */
+  ((BYTE*)data)[CurOfs] = ascii;
+  ((BYTE*)data)[CurOfs+1] = scan;
+
+  data->FirstKbdCharPtr = NextOfs;
+  return 1;
+}
