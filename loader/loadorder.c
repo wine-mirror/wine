@@ -30,6 +30,33 @@ static module_loadorder_t *module_loadorder = NULL;
 static int nmodule_loadorder = 0;
 static int nmodule_loadorder_alloc = 0;
 
+static struct tagDllOverride {
+	char *key,*value;
+} DefaultDllOverrides[] = {
+	{"kernel32,gdi32,user32",	"builtin"},
+	{"kernel,gdi,user",		"builtin"},
+	{"toolhelp",			"builtin"},
+	{"comdlg32,commdlg",		"elfdll,builtin,native"},
+	{"version,ver",			"elfdll,builtin,native"},
+	{"shell32,shell",		"builtin,native"},
+	{"lz32,lzexpand",		"builtin,native"},
+	{"commctrl,comctl32",		"builtin,native"},
+	{"wsock32,winsock",		"builtin"},
+	{"advapi32,crtdll,ntdll",	"builtin,native"},
+	{"mpr,winspool",		"builtin,native"},
+	{"ddraw,dinput,dsound",		"builtin,native"},
+	{"winmm, mmsystem",		"builtin"},
+	{"msvideo, msvfw32",		"builtin, native"},
+	{"mcicda.drv, mciseq.drv",	"builtin, native"},
+	{"mciwave.drv",			"builtin, native"},
+	{"mciavi.drv, mcianim.drv",	"native, builtin"},
+	{"w32skrnl",			"builtin"},
+	{"wnaspi32,wow32",		"builtin"},
+	{"system,display,wprocs	",	"builtin"},
+	{"wineps",			"builtin"},
+	{NULL,NULL},
+};
+
 /***************************************************************************
  *	cmp_sort_func	(internal, static)
  *
@@ -357,6 +384,16 @@ BOOL MODULE_InitLoadOrder(void)
 	if(!ParseLoadOrder(buffer, &default_loadorder))
 		return FALSE;
 	default_loadorder.modulename = "<none>";
+
+	{
+	    int i;
+	    for (i=0;DefaultDllOverrides[i].key;i++)
+		AddLoadOrderSet(
+		    DefaultDllOverrides[i].key,
+		    DefaultDllOverrides[i].value,
+		    FALSE
+		);
+	}
 
 	/* Read the explicitely defined orders for specific modules as an entire section */
 	nbuffer = PROFILE_GetWineIniString("DllOverrides", NULL, "", buffer, sizeof(buffer));
