@@ -44,3 +44,4 @@ long stub_USER_919(void) { fprintf(stderr, "Warning: USER_919: unimplemented stu
 long stub_USER_920(void) { fprintf(stderr, "Warning: USER_920: unimplemented stub\n"); return 0; }
 long stub_USER_922(void) { fprintf(stderr, "Warning: USER_922: unimplemented stub\n"); return 0; }
 long stub_USER_923(void) { fprintf(stderr, "Warning: USER_923: unimplemented stub\n"); return 0; }
+long stub_KERNEL_700(void) { fprintf(stderr, "Warning: KERNEL_700: unimplemented stub\n"); return 1; }

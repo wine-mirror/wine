@@ -5122,7 +5122,7 @@ INT16      SetEnvironment(LPCSTR,LPCSTR,UINT16);
 WORD       SetHookFlags(HDC16,WORD);
 HMETAFILE16 SetMetaFileBits(HGLOBAL16);
 VOID       SetPriority(HTASK16,INT16);
-FARPROC16  SetResourceHandler(HINSTANCE16,LPSTR,FARPROC16);
+FARPROC16  SetResourceHandler(HINSTANCE16,SEGPTR,FARPROC16);
 WORD       SetSelectorBase(WORD,DWORD);
 WORD       SetSelectorLimit(WORD,DWORD);
 LONG       SetSwapAreaSize(WORD);
@@ -6949,7 +6949,7 @@ BOOL16     RemoveDirectory16(LPCSTR);
 BOOL32     RemoveDirectory32A(LPCSTR);
 BOOL32     RemoveDirectory32W(LPCWSTR);
 #define    RemoveDirectory WINELIB_NAME_AW(RemoveDirectory)
-BOOL16     RemoveFontResource16(LPCSTR);
+BOOL16     RemoveFontResource16(SEGPTR);
 BOOL32     RemoveFontResource32A(LPCSTR);
 BOOL32     RemoveFontResource32W(LPCWSTR);
 #define    RemoveFontResource WINELIB_NAME_AW(RemoveFontResource)
@@ -7413,11 +7413,11 @@ BOOL16     WriteProfileString16(LPCSTR,LPCSTR,LPCSTR);
 BOOL32     WriteProfileString32A(LPCSTR,LPCSTR,LPCSTR);
 BOOL32     WriteProfileString32W(LPCWSTR,LPCWSTR,LPCWSTR);
 #define    WriteProfileString WINELIB_NAME_AW(WriteProfileString)
-SEGPTR     lstrcat16(SEGPTR,SEGPTR);
+SEGPTR     lstrcat16(SEGPTR,LPCSTR);
 LPSTR      lstrcat32A(LPSTR,LPCSTR);
 LPWSTR     lstrcat32W(LPWSTR,LPCWSTR);
 #define    lstrcat WINELIB_NAME_AW(lstrcat)
-SEGPTR     lstrcatn16(SEGPTR,SEGPTR,INT16);
+SEGPTR     lstrcatn16(SEGPTR,LPCSTR,INT16);
 LPSTR      lstrcatn32A(LPSTR,LPCSTR,INT32);
 LPWSTR     lstrcatn32W(LPWSTR,LPCWSTR,INT32);
 #define    lstrcatn WINELIB_NAME_AW(lstrcatn)
@@ -7429,11 +7429,11 @@ INT16      lstrcmpi16(LPCSTR,LPCSTR);
 INT32      lstrcmpi32A(LPCSTR,LPCSTR);
 INT32      lstrcmpi32W(LPCWSTR,LPCWSTR);
 #define    lstrcmpi WINELIB_NAME_AW(lstrcmpi)
-SEGPTR     lstrcpy16(SEGPTR,SEGPTR);
+SEGPTR     lstrcpy16(SEGPTR,LPCSTR);
 LPSTR      lstrcpy32A(LPSTR,LPCSTR);
 LPWSTR     lstrcpy32W(LPWSTR,LPCWSTR);
 #define    lstrcpy WINELIB_NAME_AW(lstrcpy)
-SEGPTR     lstrcpyn16(SEGPTR,SEGPTR,INT16);
+SEGPTR     lstrcpyn16(SEGPTR,LPCSTR,INT16);
 LPSTR      lstrcpyn32A(LPSTR,LPCSTR,INT32);
 LPWSTR     lstrcpyn32W(LPWSTR,LPCWSTR,INT32);
 #define    lstrcpyn WINELIB_NAME_AW(lstrcpyn)

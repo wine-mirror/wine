@@ -37,19 +37,23 @@ static BRUSHOBJ WhiteBrush =
 static BRUSHOBJ LtGrayBrush =
 {
     { 0, BRUSH_MAGIC, 1 },             /* header */
+/* FIXME : this should perhaps be BS_HATCHED, at least for 1 bitperpixel */
     { BS_SOLID, RGB(192,192,192), 0 }  /* logbrush */
 };
 
 static BRUSHOBJ GrayBrush =
 {
     { 0, BRUSH_MAGIC, 1 },             /* header */
+/* FIXME : this should perhaps be BS_HATCHED, at least for 1 bitperpixel */
     { BS_SOLID, RGB(128,128,128), 0 }  /* logbrush */
 };
 
 static BRUSHOBJ DkGrayBrush =
 {
     { 0, BRUSH_MAGIC, 1 },          /* header */
-    { BS_SOLID, RGB(64,64,64), 0 }  /* logbrush */
+/* This is BS_HATCHED, for 1 bitperpixel. This makes the spray work in pbrush */
+/* NB_HATCH_STYLES is an index into HatchBrushes */
+    { BS_HATCHED, RGB(0,0,0), NB_HATCH_STYLES }  /* logbrush */
 };
 
 static BRUSHOBJ BlackBrush =
@@ -106,7 +110,7 @@ static FONTOBJ AnsiVarFont =
 static FONTOBJ SystemFont =
 {
     { 0, FONT_MAGIC, 1 },
-    { 12, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
+    { 16, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
       0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "System" }
 };
 

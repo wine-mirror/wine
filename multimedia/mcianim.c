@@ -92,6 +92,9 @@ static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms
 	AnimDev[wDevID].dwTotalLen = 0;
 	AnimDev[wDevID].lpdwTrackLen = NULL;
 	AnimDev[wDevID].lpdwTrackPos = NULL;
+/*
+   Moved to mmsystem.c mciOpen routine 
+
 	if (dwFlags & MCI_NOTIFY) {
 		dprintf_mcianim(stddeb,
 			"ANIM_mciOpen // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
@@ -99,6 +102,7 @@ static DWORD ANIM_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			AnimDev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
+*/
  	return 0;
 #else
 	return MCIERR_HARDWARE;

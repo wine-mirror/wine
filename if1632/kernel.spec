@@ -41,7 +41,7 @@ type	win16
 38  pascal   SetTaskSignalProc(word segptr) SetTaskSignalProc
 41  return EnableDos 0 0
 42  return DisableDos 0 0
-45  pascal16 LoadModule(ptr ptr) LoadModule16
+45  pascal16 LoadModule(str ptr) LoadModule16
 46  pascal16 FreeModule(word) FreeModule16
 47  pascal16 GetModuleHandle(segptr) WIN16_GetModuleHandle
 48  pascal16 GetModuleUsage(word) GetModuleUsage
@@ -53,9 +53,9 @@ type	win16
 54  pascal16 GetInstanceData(word word word) GetInstanceData
 55  pascal16 Catch(ptr) Catch 
 56  pascal16 Throw(ptr word) Throw
-57  pascal16 GetProfileInt(ptr ptr s_word) GetProfileInt16
-58  pascal16 GetProfileString(ptr ptr ptr ptr word) GetProfileString16
-59  pascal16 WriteProfileString(ptr ptr ptr) WriteProfileString16
+57  pascal16 GetProfileInt(str str s_word) GetProfileInt16
+58  pascal16 GetProfileString(str str str ptr word) GetProfileString16
+59  pascal16 WriteProfileString(str str str) WriteProfileString16
 60  pascal16 FindResource(word segptr segptr) FindResource16
 61  pascal16 LoadResource(word word) LoadResource16
 62  pascal LockResource(word) WIN16_LockResource16
@@ -63,14 +63,14 @@ type	win16
 64  pascal16 AccessResource(word word) AccessResource16
 65  pascal SizeofResource(word word) SizeofResource16
 66  pascal16 AllocResource(word word long) AllocResource16
-67  pascal SetResourceHandler(word ptr ptr) SetResourceHandler
+67  pascal SetResourceHandler(word segptr ptr) SetResourceHandler
 68  pascal16 InitAtomTable(word) InitAtomTable16
 69  pascal16 FindAtom(segptr) FindAtom16
 70  pascal16 AddAtom(segptr) AddAtom16
 71  pascal16 DeleteAtom(word) DeleteAtom16
 72  pascal16 GetAtomName(word ptr word) GetAtomName16
 73  pascal16 GetAtomHandle(word) GetAtomHandle
-74  pascal16 OpenFile(ptr ptr word) OpenFile16
+74  pascal16 OpenFile(str ptr word) OpenFile16
 75  stub OpenPathName
 76  stub DeletePathName
 77 stub KERNEL_77		#RESERVED1
@@ -79,21 +79,21 @@ type	win16
 #80 RESERVED4
 81  pascal16 _lclose(word) _lclose16
 82  pascal16 _lread(word segptr word) WIN16_lread
-83  pascal16 _lcreat(ptr word) _lcreat16
+83  pascal16 _lcreat(str word) _lcreat16
 84  pascal   _llseek(word long word) _llseek16
-85  pascal16 _lopen(ptr word) _lopen16
+85  pascal16 _lopen(str word) _lopen16
 86  pascal16 _lwrite(word ptr word) _lwrite16
-87  pascal16 RESERVED5(ptr ptr) lstrcmp16
-88  pascal   lstrcpy(segptr segptr) lstrcpy16
-89  pascal   lstrcat(segptr segptr) lstrcat16
-90  pascal16 lstrlen(ptr) lstrlen16
+87  pascal16 RESERVED5(str str) lstrcmp16
+88  pascal   lstrcpy(segptr str) lstrcpy16
+89  pascal   lstrcat(segptr str) lstrcat16
+90  pascal16 lstrlen(str) lstrlen16
 91  register InitTask() InitTask
 92  pascal   GetTempDrive(byte) WIN16_GetTempDrive
 93  pascal16 GetCodeHandle(segptr) GetCodeHandle
 94  stub DefineHandleTable
-95  pascal16 LoadLibrary(ptr) LoadLibrary16
+95  pascal16 LoadLibrary(str) LoadLibrary16
 96  pascal16 FreeLibrary(word) FreeLibrary16
-97  pascal16 GetTempFileName(byte ptr word ptr) GetTempFileName16
+97  pascal16 GetTempFileName(byte str word ptr) GetTempFileName16
 98  return GetLastDiskChange 0 0
 99  stub GetLPErrMode
 100 return ValidateCodeSegments 0 0
@@ -111,7 +111,7 @@ type	win16
 112 pascal16 GlobalUnWire(word) GlobalUnWire16
 113 equate __AHSHIFT 3
 114 equate __AHINCR 8
-115 pascal16 OutputDebugString(ptr) OutputDebugString16
+115 pascal16 OutputDebugString(str) OutputDebugString16
 116 stub InitLib
 117 pascal16 OldYield() OldYield
 118 register GetTaskQueueDS() GetTaskQueueDS
@@ -123,10 +123,10 @@ type	win16
 124 return EnableKernel 0 0
 125 return DisableKernel 0 0
 126 stub MemoryFreed
-127 pascal16 GetPrivateProfileInt(ptr ptr s_word ptr) GetPrivateProfileInt16
-128 pascal16 GetPrivateProfileString(ptr ptr ptr ptr word ptr)
+127 pascal16 GetPrivateProfileInt(str str s_word str) GetPrivateProfileInt16
+128 pascal16 GetPrivateProfileString(str str str ptr word str)
              GetPrivateProfileString16
-129 pascal16 WritePrivateProfileString(ptr ptr ptr ptr)
+129 pascal16 WritePrivateProfileString(str str str str)
              WritePrivateProfileString16
 130 pascal FileCDR(ptr) FileCDR
 131 pascal GetDOSEnvironment() GetDOSEnvironment
@@ -135,7 +135,7 @@ type	win16
 134 pascal16 GetWindowsDirectory(ptr word) GetWindowsDirectory16
 135 pascal16 GetSystemDirectory(ptr word) GetSystemDirectory16
 136 pascal16 GetDriveType(byte) GetDriveType16
-137 pascal16 FatalAppExit(word ptr) FatalAppExit16
+137 pascal16 FatalAppExit(word str) FatalAppExit16
 138 pascal GetHeapSpaces(word) GetHeapSpaces
 139 stub DoSignal
 140 pascal16 SetSigHandler(segptr ptr ptr word word) SetSigHandler
@@ -163,7 +163,7 @@ type	win16
 163 pascal16 GlobalLRUOldest(word) GlobalLRUOldest
 164 pascal16 GlobalLRUNewest(word) GlobalLRUNewest
 165 return A20Proc 2 0
-166 pascal16 WinExec(ptr word) WinExec16
+166 pascal16 WinExec(str word) WinExec16
 167 pascal16 GetExpWinVer(word) GetExpWinVer
 168 pascal16 DirectResAlloc(word word word) DirectResAlloc
 169 pascal GetFreeSpace(word) GetFreeSpace16
@@ -268,8 +268,8 @@ type	win16
 349 pascal   _hread(word segptr long) WIN16_hread
 350 pascal   _hwrite(word ptr long) _hwrite16
 #351 BUNNY_351
-352 pascal   lstrcatn(segptr segptr word) lstrcatn16
-353 pascal   lstrcpyn(segptr segptr word) lstrcpyn16
+352 pascal   lstrcatn(segptr str word) lstrcatn16
+353 pascal   lstrcpyn(segptr str word) lstrcpyn16
 354 pascal   GetAppCompatFlags(word) GetAppCompatFlags16
 355 pascal16 GetWinDebugInfo(ptr word) GetWinDebugInfo
 356 pascal16 SetWinDebugInfo(ptr) SetWinDebugInfo
@@ -311,6 +311,7 @@ type	win16
 472 stub KERNEL_472
 473 stub KERNEL_473
 482 stub KERNEL_482
+485 stub KERNEL_485
 491 stub RegisterServiceProcess
 500 stub KERNEL_500
 502 stub KERNEL_502
@@ -338,4 +339,4 @@ type	win16
 630 stub KERNEL_630
 631 stub FUNC004	# shell hook
 651 stub KERNEL_651
-700 return KERNEL_700 0 1
+700 pascal KERNEL_700() stub_KERNEL_700

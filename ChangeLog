@@ -1,4 +1,73 @@
 ----------------------------------------------------------------------
+Thu Jun 26 02:14:03 1997  Slaven Rezic  <eserte@cs.tu-berlin.de>
+
+	* [Makefile.in]
+	New target install_includes.
+
+	* [rc/parser.h] [rc/parser.y] [rc/winerc.c]
+	Some bug fixes.
+
+Wed Jun 25 14:43:41 1997  Victor Schneider <vischne@ibm.net>
+
+	* [controls/edit.c]
+	Fixed WM_GETTEXT return value.
+
+Tue Jun 24 23:46:04 1997  Michiel van Loon <mfvl@xs4all.nl>
+
+	* [multimedia/*.c] [include/mmsystem.h]
+	Added more callback code, including (I hope) function callback.
+	Changed some linear pointers into segmented.
+
+	* [multimedia/audio.c]
+	Removed some bugs.
+
+Sat Jun 28 11:37:56 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [if1632/commdlg.spec][if1632/comdlg32.spec][misc/commdlg.c]
+	  [include/commdlg.h]
+	Implemented parts of comdlg32: GetOpenFileName32*,
+	GetSaveFileName32*, GetFileTitle32* using the 16 bit equivalents.
+
+	* [windows/event.c]
+	EVENT_QueryZOrder: check for children !=NULL (happens when
+	using -managed).
+
+	* [BUGS][DEVELOPER-HINTS]
+	Updated.
+
+	* [objects/text.c]
+	Added GetTextCharset... (stub mostly).
+
+Sat Jun 21 08:47:58 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* [if1632/kernel.spec] [if1632/gdi.spec] [include/windows.h]
+	  [loader/resource.c] [graphics/x11drv/xfont.c]
+	SetResourceHandler & RemoveFontResource prototypes fixed.
+
+	* [if1632/relay.c] [if1632/kernel.spec] [if1632/user.spec]
+	  [if1632/olesvr.spec] [if1632/commdlg.spec] [if1632/ddeml.spec]
+	  [if1632/gdi.spec] [if1632/lzexpand.spec] [if1632/shell.spec]
+	  [include/windows.h] [memory/string.c] [tools/build.c]
+	New type of parameter allowed in .spec files : str, printed
+	as a string with -debugmsg +relay. .spec files updated.
+
+	* [objects/dc.c]
+	In DC_SetupGCForPen, call BlackPixelOfScreen, not BlackPixel.
+	Likewise for WhitePixel.
+
+	* [objects/gdiobj.c] [graphics/x11drv/brush.c]
+	Use BS_HATCHED with an added entry in HatchBrushes for DkGrayBrush,
+ 	instead of BS_SOLID.
+
+Fri May 30 17:58:00 1997  Chris Faherty <chrisf@america.com>
+
+	* [windows/keyboard.c]
+	Added vkey to scancode translation table.
+	This was primarily to fix Citrix WinFrame client which
+	always needs scancodes in WM_KEYDOWN.
+	Tested with Exceed 5.1.0.1 & XFree86 3.1.2.
+
+----------------------------------------------------------------------
 Sat Jun 14 13:05:23 1997  Andreas Mohr <100.30936@germany.net>
 
 	* [include/mmsystem.h]

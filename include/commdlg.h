@@ -43,6 +43,9 @@ extern "C" {
 #define OFN_NOREADONLYRETURN         0x00008000
 #define OFN_NOTESTFILECREATE         0x00010000
 
+#define OFN_UNICODE		     0x40000000	/*to differ between 32W/A hook*/
+#define OFN_WINE32		     0x80000000	/* comdlg32 */
+
 #define OFN_SHAREFALLTHROUGH     2
 #define OFN_SHARENOWARN          1
 #define OFN_SHAREWARN            0
@@ -68,9 +71,56 @@ typedef struct {
 	LPARAM 		lCustData;
         WNDPROC16       lpfnHook;
 	SEGPTR 		lpTemplateName;
-	}   OPENFILENAME;
-typedef OPENFILENAME * LPOPENFILENAME;
+}   OPENFILENAME16,*LPOPENFILENAME16;
 
+typedef struct {
+	DWORD		lStructSize;
+	HWND32		hwndOwner;
+	HINSTANCE32	hInstance;
+	LPCSTR		lpstrFilter;
+	LPSTR		lpstrCustomFilter;
+	DWORD		nMaxCustFilter;
+	DWORD		nFilterIndex;
+	LPSTR		lpstrFile;
+	DWORD		nMaxFile;
+	LPSTR		lpstrFileTitle;
+	DWORD		nMaxFileTitle;
+	LPCSTR		lpstrInitialDir;
+	LPCSTR		lpstrTitle;
+	DWORD		Flags;
+	WORD		nFileOffset;
+	WORD		nFileExtension;
+	LPCSTR		lpstrDefExt;
+	LPARAM		lCustData;
+	WNDPROC32	lpfnHook;
+	LPCSTR		lpTemplateName;
+} OPENFILENAME32A,*LPOPENFILENAME32A;
+
+typedef struct {
+	DWORD		lStructSize;
+	HWND32		hwndOwner;
+	HINSTANCE32	hInstance;
+	LPCWSTR		lpstrFilter;
+	LPWSTR		lpstrCustomFilter;
+	DWORD		nMaxCustFilter;
+	DWORD		nFilterIndex;
+	LPWSTR		lpstrFile;
+	DWORD		nMaxFile;
+	LPWSTR		lpstrFileTitle;
+	DWORD		nMaxFileTitle;
+	LPCWSTR		lpstrInitialDir;
+	LPCWSTR		lpstrTitle;
+	DWORD		Flags;
+	WORD		nFileOffset;
+	WORD		nFileExtension;
+	LPCWSTR		lpstrDefExt;
+	LPARAM		lCustData;
+	WNDPROC32	lpfnHook;
+	LPCWSTR		lpTemplateName;
+} OPENFILENAME32W,*LPOPENFILENAME32W;
+
+DECL_WINELIB_TYPE_AW(OPENFILENAME);
+DECL_WINELIB_TYPE_AW(LPOPENFILENAME);
 
 typedef struct {
 	DWORD		lStructSize;
@@ -82,7 +132,7 @@ typedef struct {
 	LPARAM		lCustData;
         WNDPROC16       lpfnHook;
 	SEGPTR 		lpTemplateName;
-	} CHOOSECOLOR;
+} CHOOSECOLOR;
 typedef CHOOSECOLOR *LPCHOOSECOLOR;
 
 #define CC_RGBINIT               0x00000001
@@ -278,9 +328,18 @@ typedef DEVNAMES * LPDEVNAMES;
 BOOL16  ChooseColor(LPCHOOSECOLOR lpChCol);
 DWORD CommDlgExtendedError(void);
 HWND16 FindText( SEGPTR find);
-short GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf);
-BOOL16  GetOpenFileName(SEGPTR ofn);
-BOOL16  GetSaveFileName(SEGPTR ofn);
+INT16 GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf);
+INT16 GetFileTitle32A(LPCSTR lpFile, LPSTR lpTitle, UINT32 cbBuf);
+INT16 GetFileTitle32W(LPCWSTR lpFile, LPWSTR lpTitle, UINT32 cbBuf);
+#define GetFileTitle WINELIB_NAME_AW(GetFileTitle)
+BOOL16  GetOpenFileName16(SEGPTR ofn);
+BOOL32  GetOpenFileName32A(LPOPENFILENAME32A ofn);
+BOOL32  GetOpenFileName32W(LPOPENFILENAME32W ofn);
+#define GetOpenFileName WINELIB_NAME_AW(GetOpenFileName)
+BOOL16  GetSaveFileName16(SEGPTR ofn);
+BOOL32  GetSaveFileName32A(LPOPENFILENAME32A ofn);
+BOOL32  GetSaveFileName32W(LPOPENFILENAME32W ofn);
+#define GetSaveFileName WINELIB_NAME_AW(GetSaveFileName)
 BOOL16  PrintDlg( SEGPTR print);
 HWND16 ReplaceText( SEGPTR find);
 BOOL16  ChooseFont(LPCHOOSEFONT lpChFont);

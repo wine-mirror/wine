@@ -22,10 +22,9 @@
 #include <ctype.h>
 #include <sys/stat.h>
 #if defined(__NetBSD__) || defined(__FreeBSD__)
-#include <sys/ioctl.h>
-#else
-#include <sys/ioctl.h>
+#include <sys/filio.h>
 #endif
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 #include "windows.h"
@@ -35,6 +34,10 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "handle32.h"
+
+#ifndef TIOCINQ
+#define	TIOCINQ FIONREAD
+#endif
 
 /*
  * [RER] These are globals are wrong.  They should be in DosDeviceStruct

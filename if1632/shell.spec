@@ -1,22 +1,22 @@
 name	shell
 type	win16
 
-  1 pascal   RegOpenKey(long ptr ptr) RegOpenKey16
-  2 pascal   RegCreateKey(long ptr ptr) RegCreateKey16
+  1 pascal   RegOpenKey(long str ptr) RegOpenKey16
+  2 pascal   RegCreateKey(long str ptr) RegCreateKey16
   3 pascal   RegCloseKey(long) RegCloseKey
-  4 pascal   RegDeleteKey(long ptr) RegDeleteKey16
-  5 pascal   RegSetValue(long ptr long ptr long) RegSetValue16
-  6 pascal   RegQueryValue(long ptr ptr ptr) RegQueryValue16
+  4 pascal   RegDeleteKey(long str) RegDeleteKey16
+  5 pascal   RegSetValue(long str long str long) RegSetValue16
+  6 pascal   RegQueryValue(long str ptr ptr) RegQueryValue16
   7 pascal   RegEnumKey(long long ptr long) RegEnumKey16
   9 pascal16 DragAcceptFiles(word word) DragAcceptFiles
  11 pascal16 DragQueryFile(word s_word ptr s_word) DragQueryFile
  12 pascal16 DragFinish(word) DragFinish
  13 pascal16 DragQueryPoint(word ptr) DragQueryPoint
- 20 pascal16 ShellExecute(word ptr ptr ptr ptr s_word) ShellExecute16
- 21 pascal16 FindExecutable(ptr ptr ptr) FindExecutable16
+ 20 pascal16 ShellExecute(word str str str str s_word) ShellExecute16
+ 21 pascal16 FindExecutable(str str ptr) FindExecutable16
  22 pascal16 ShellAbout(word ptr ptr word) ShellAbout16
  33 pascal16 AboutDlgProc(word word word long) AboutDlgProc16
- 34 pascal16 ExtractIcon(word ptr s_word) ExtractIcon16
+ 34 pascal16 ExtractIcon(word str s_word) ExtractIcon16
  36 pascal16 ExtractAssociatedIcon(word ptr ptr) ExtractAssociatedIcon
  37 pascal   DoEnvironmentSubst(ptr word) DoEnvironmentSubst
  38 pascal   FindEnvironmentString(ptr) FindEnvironmentString

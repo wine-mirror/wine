@@ -134,7 +134,7 @@ base	1
 0126 stub GdiDeleteLocalDC
 0127 stub GdiDeleteLocalObject
 0128 stub GdiFlush
-0129 stub GdiGetBatchLimit
+0129 return GdiGetBatchLimit 0 1
 0130 stub GdiGetLocalBrush
 0131 stub GdiGetLocalDC
 0132 stub GdiGetLocalFont
@@ -193,7 +193,7 @@ base	1
 0185 stub GetGlyphOutline
 0186 stdcall GetGlyphOutlineA(long long long ptr long ptr ptr) GetGlyphOutline32A
 0187 stdcall GetGlyphOutlineW(long long long ptr long ptr ptr) GetGlyphOutline32W
-0188 stub GetGraphicsMode
+0188 return GetGraphicsMode 4 1 	# just return 1
 0189 stub GetICMProfileA
 0190 stub GetICMProfileW
 0191 stub GetKerningPairs
@@ -231,7 +231,7 @@ base	1
 0223 stdcall GetSystemPaletteUse() GetSystemPaletteUse32
 0224 stdcall GetTextAlign(long) GetTextAlign32
 0225 stdcall GetTextCharacterExtra(long) GetTextCharacterExtra32
-0226 stub GetTextCharset
+0226 stdcall GetTextCharset(long) GetTextCharset32
 0227 stdcall GetTextColor(long) GetTextColor32
 0228 stdcall GetTextExtentExPointA(long ptr long long ptr ptr ptr) GetTextExtentExPoint32A
 0229 stdcall GetTextExtentExPointW(long ptr long long ptr ptr ptr) GetTextExtentExPoint32W
@@ -249,7 +249,7 @@ base	1
 0241 stub GetWinMetaFileBits
 0242 stdcall GetWindowExtEx(long ptr) GetWindowExtEx32
 0243 stdcall GetWindowOrgEx(long ptr) GetWindowOrgEx32
-0244 stub GetWorldTransform
+0244 return GetWorldTransform 8 0
 0245 stdcall IntersectClipRect(long long long long long) IntersectClipRect32
 0246 stdcall InvertRgn(long long) InvertRgn32
 0247 stdcall LPtoDP(long ptr long) LPtoDP32
@@ -323,7 +323,7 @@ base	1
 0314 stub SetDeviceGammaRamp
 0315 stub SetEnhMetaFileBits
 0316 stub SetFontEnumeration
-0317 stub SetGraphicsMode
+0317 return SetGraphicsMode 8 1
 0318 stub SetICMMode
 0319 stub SetICMProfileA
 0320 stub SetICMProfileW

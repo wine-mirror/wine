@@ -107,20 +107,17 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 
       /* Compute text starting position */
 
-    XTextExtents( font, str, count, &dir, &ascent, &descent, &info );
-
-    if (lpDx) /* have explicit character cell x offsets */
+    if (lpDx) /* have explicit character cell x offsets in logical coordinates */
     {
-	/* sum lpDx array and add the width of last character */
-
-        info.width = XTextWidth( font, str + count - 1, 1) + dc->w.charExtra;
-        if (str[count-1] == dfBreakChar)
-            info.width += dc->w.breakExtra;
-
-        for (i = 0; i < count; i++) info.width += lpDx[i];
+	int extra = dc->wndExtX / 2;
+        for (i = info.width = 0; i < count; i++) info.width += lpDx[i];
+	info.width = (info.width * dc->vportExtX + extra ) / dc->wndExtX;
     }
     else
-       info.width += count*dc->w.charExtra + dc->w.breakExtra*dc->w.breakCount;
+    {
+	XTextExtents( font, str, count, &dir, &ascent, &descent, &info );
+        info.width += count*dc->w.charExtra + dc->w.breakExtra*dc->w.breakCount;
+    }
 
     switch( dc->w.textAlign & (TA_LEFT | TA_RIGHT | TA_CENTER) )
     {
@@ -200,32 +197,50 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 
         pitem = items = xmalloc( count * sizeof(XTextItem) );
         delta = i = 0;
-        while (i < count)
-        {
-	    /* initialize text item with accumulated delta */
+	if( lpDx ) /* explicit character widths */
+	{
+	    int extra = dc->wndExtX / 2;
 
-            pitem->chars  = (char *)str + i;
-	    pitem->delta  = delta; 
-            pitem->nchars = 0;
-            pitem->font   = None;
-            delta = 0;
+	    while (i < count)
+	    {
+		/* initialize text item with accumulated delta */
 
-	    /* stuff characters into the same XTextItem until new delta 
-	     * becomes  non-zero */
+		pitem->chars  = (char *)str + i;
+		pitem->delta  = delta;
+		pitem->nchars = 0;
+		pitem->font   = None;
+		delta = 0;
 
-	    do
+		/* add characters  to the same XTextItem until new delta
+		 * becomes  non-zero */
+
+		do
+		{
+		    delta += (lpDx[i] * dc->vportExtX + extra) / dc->wndExtX
+					    - XTextWidth( font, str + i, 1);
+		    pitem->nchars++;
+		} while ((++i < count) && !delta);
+		pitem++;
+	   }
+	}
+	else /* charExtra or breakExtra */
+	{
+            while (i < count)
             {
-                if (lpDx) delta += lpDx[i] - XTextWidth( font, str + i, 1);
-                else
+		pitem->chars  = (char *)str + i;
+		pitem->delta  = delta;
+		pitem->nchars = 0;
+		pitem->font   = None;
+		delta = 0;
+
+		do
                 {
                     delta += dc->w.charExtra;
-                    if (str[i] == (char)dfBreakChar)
-                        delta += dc->w.breakExtra;
-                }
-                pitem->nchars++;
+                    if (str[i] == (char)dfBreakChar) delta += dc->w.breakExtra;
+		    pitem->nchars++;
+                } while ((++i < count) && !delta);
+		pitem++;
             } 
-	    while ((++i < count) && !delta);
-            pitem++;
         }
 
         XDrawText( display, dc->u.x.drawable, dc->u.x.gc,

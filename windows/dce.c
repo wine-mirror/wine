@@ -461,27 +461,25 @@ HDC32 GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
     }
 
     if( flags & DCX_NOCLIPCHILDREN )
-      {
+    {
         flags |= DCX_CACHE;
         flags &= ~(DCX_PARENTCLIP | DCX_CLIPCHILDREN);
-      }
-
-    if (hwnd == GetDesktopWindow32() || !(wndPtr->dwStyle & WS_CHILD))
-        flags &= ~DCX_PARENTCLIP;
+    }
 
     if (flags & DCX_WINDOW) flags = (flags & ~DCX_CLIPCHILDREN) | DCX_CACHE;
 
-    if( flags & DCX_PARENTCLIP )
-      {
+    if (!(wndPtr->dwStyle & WS_CHILD) || !wndPtr->parent ) flags &= ~DCX_PARENTCLIP;
+    else if( flags & DCX_PARENTCLIP )
+    {
         flags |= DCX_CACHE;
         if( !(flags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN)) )
           if( (wndPtr->dwStyle & WS_VISIBLE) && (wndPtr->parent->dwStyle & WS_VISIBLE) )
-            {
+          {
               flags &= ~DCX_CLIPCHILDREN;
               if( wndPtr->parent->dwStyle & WS_CLIPSIBLINGS )
-                flags |= DCX_CLIPSIBLINGS;
-            }
-      }
+                  flags |= DCX_CLIPSIBLINGS;
+          }
+    }
 
     if (flags & DCX_CACHE)
     {
@@ -494,17 +492,17 @@ HDC32 GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
     {
         dce = (wndPtr->class->style & CS_OWNDC)?wndPtr->dce:wndPtr->class->dce;
 	if( dce->hwndCurrent == hwnd )
-	  {
+	{
 	    dprintf_dc(stddeb,"\tskipping hVisRgn update\n");
 	    need_update = FALSE;
-	  }
+	}
 
 	if( hrgnClip && dce->hClipRgn && !(dce->DCXflags & DCX_KEEPCLIPRGN))
-	  {
+	{
 	    fprintf(stdnimp,"GetDCEx: hClipRgn collision!\n");
             DeleteObject32( dce->hClipRgn ); 
 	    need_update = TRUE;
-	  }
+	}
     }
 
     dcx_flags = flags & ( DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN | DCX_CACHE | DCX_WINDOW | DCX_WINDOWPAINT);
@@ -561,7 +559,7 @@ HDC32 GetDCEx32( HWND32 hwnd, HRGN32 hrgnClip, DWORD flags )
     }
     else hrgnVisible = CreateRectRgn32( 0, 0, 0, 0 );
 
-    if ((flags & DCX_INTERSECTRGN) || (flags & DCX_EXCLUDERGN))
+    if( flags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN) )
     {
 	dce->DCXflags |= flags & (DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_EXCLUDERGN);
 	dce->hClipRgn = hrgnClip;

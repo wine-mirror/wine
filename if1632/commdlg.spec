@@ -1,8 +1,8 @@
 name	commdlg
 type	win16
 
-1   pascal16 GetOpenFileName(segptr) GetOpenFileName
-2   pascal16 GetSaveFileName(segptr) GetSaveFileName
+1   pascal16 GetOpenFileName(segptr) GetOpenFileName16
+2   pascal16 GetSaveFileName(segptr) GetSaveFileName16
 5   pascal16 ChooseColor(ptr) ChooseColor
 6   pascal   FileOpenDlgProc(word word word long) FileOpenDlgProc
 7   pascal   FileSaveDlgProc(word word word long) FileSaveDlgProc
@@ -22,7 +22,7 @@ type	win16
 #23  pascal  EDITINTEGERONLY exported, shared data
 #25  pascal  WANTARROWS exported, shared data
 26  pascal   CommDlgExtendedError() CommDlgExtendedError
-27  pascal16 GetFileTitle(ptr ptr word) GetFileTitle
+27  pascal16 GetFileTitle(str ptr word) GetFileTitle16
 #28  pascal  WEP exported, shared data
 #29  pascal  DWLBSUBCLASS exported, shared data
 #30  pascal  DWUPARROWHACK exported, shared data

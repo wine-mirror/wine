@@ -4,8 +4,8 @@ How To Convert Windows Fonts
 
 If you have access to Windows installation you should use 
 fnt2bdf utility (found in the 'tools)' directory to convert
-bitmap fonts (SYSTEM.FON, SSERIFE.FON, and SERIFE.FON) into 
-the format that X Window System can recognize.
+bitmap fonts (VGASYS.FON, SSERIFE.FON, and SERIFE.FON) into 
+the format that X Window System can recognize. 
 
 Step 1. Extract bitmap fonts with 'fnt2bdf'.
 
@@ -14,14 +14,25 @@ Step 2. Convert .bdf files produced by the Step 1 into
 
 Step 3. Copy .pcf files to the font server directory which
 	is usually /usr/lib/X11/fonts/misc (you will probably 
-        need superuser privileges).
+        need superuser privileges). If you want to create a new
+	font directory you will need to add it to the font path.
 
 Step 4. Run 'mkfontdir' for the directory you copied fonts to.
 	If you are already in X you should run 'xset fp rehash' 
         to make X server aware of the new fonts.
 
+Step 5. Edit wine.conf file to remove aliases for the fonts 
+	you've just installed.
+
 Wine can get by without these fonts but 'the look and feel'
-will be quite different. 
+will be quite different. Also, some applications try to load
+their custom fonts on the fly (WinWord 6.0) and since Wine does
+not implement this yet it instead prints out something like;
+
+STUB: AddFontResource( somefile.FON )
+
+You can convert this file too. Note that .FON file may not hold 
+any bitmap fonts and fnt2bdf will fail if this is the case.
 
 What to do with TrueType fonts? There are several commercial
 font tools that can convert them to the Type1 format but the 
@@ -87,7 +98,9 @@ installations, however X font table starts with whatever is the first line
 in the fonts.dir.  Therefore WINE uses the following entry to determine 
 which font to check first.
 
-Default = ...
+Example:
+
+Default = -adobe-times-
 
 Comments:
     It is better to have a scalable font family (bolds and italics included) 

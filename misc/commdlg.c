@@ -56,44 +56,71 @@ static BOOL32 FileDlg_Init()
 /***********************************************************************
  *           GetOpenFileName   (COMMDLG.1)
  */
-BOOL16 GetOpenFileName( SEGPTR ofn )
+BOOL16 GetOpenFileName16( SEGPTR ofn )
 {
     HINSTANCE16 hInst;
-    HANDLE16 hDlgTmpl = 0, hResInfo;
+    HANDLE32 hDlgTmpl = 0, hResInfo;
     BOOL32 bRet = FALSE, win32Format = FALSE;
     HWND32 hwndDialog;
-    LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(ofn);
+    LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(ofn);
     LPCVOID template;
 
     if (!lpofn || !FileDlg_Init()) return FALSE;
 
-    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE)
-    {
-        if (!(template = LockResource16( lpofn->hInstance )))
-        {
-            CommDlgLastError = CDERR_LOADRESFAILURE;
-            return FALSE;
-        }
-    }
-    else if (lpofn->Flags & OFN_ENABLETEMPLATE)
-    {
-        if (!(hResInfo = FindResource16(lpofn->hInstance,
-                                        lpofn->lpTemplateName, RT_DIALOG)))
-        {
-            CommDlgLastError = CDERR_FINDRESFAILURE;
-            return FALSE;
-        }
-        if (!(hDlgTmpl = LoadResource16( lpofn->hInstance, hResInfo )) ||
-            !(template = LockResource16( hDlgTmpl )))
-        {
-            CommDlgLastError = CDERR_LOADRESFAILURE;
-            return FALSE;
-        }
-    }
-    else
-    {
-        template = SYSRES_GetResPtr( SYSRES_DIALOG_OPEN_FILE );
-        win32Format = TRUE;
+    if (lpofn->Flags & OFN_WINE32) {
+	    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE)
+	    {
+		if (!(template = LockResource32( lpofn->hInstance )))
+		{
+		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    return FALSE;
+		}
+	    }
+	    else if (lpofn->Flags & OFN_ENABLETEMPLATE)
+	    {
+		if (!(hResInfo = FindResource32A(lpofn->hInstance,
+						PTR_SEG_TO_LIN(lpofn->lpTemplateName), (LPSTR)RT_DIALOG)))
+		{
+		    CommDlgLastError = CDERR_FINDRESFAILURE;
+		    return FALSE;
+		}
+		if (!(hDlgTmpl = LoadResource32( lpofn->hInstance, hResInfo )) ||
+		    !(template = LockResource32( hDlgTmpl )))
+		{
+		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    return FALSE;
+		}
+	    } else {
+		template = SYSRES_GetResPtr( SYSRES_DIALOG_OPEN_FILE );
+	    }
+	    win32Format = TRUE;
+    } else {
+	    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE)
+	    {
+		if (!(template = LockResource16( lpofn->hInstance )))
+		{
+		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    return FALSE;
+		}
+	    }
+	    else if (lpofn->Flags & OFN_ENABLETEMPLATE)
+	    {
+		if (!(hResInfo = FindResource16(lpofn->hInstance,
+						lpofn->lpTemplateName, RT_DIALOG)))
+		{
+		    CommDlgLastError = CDERR_FINDRESFAILURE;
+		    return FALSE;
+		}
+		if (!(hDlgTmpl = LoadResource16( lpofn->hInstance, hResInfo )) ||
+		    !(template = LockResource16( hDlgTmpl )))
+		{
+		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    return FALSE;
+		}
+	    } else {
+		template = SYSRES_GetResPtr( SYSRES_DIALOG_OPEN_FILE );
+		win32Format = TRUE;
+	    }
     }
 
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
@@ -103,7 +130,12 @@ BOOL16 GetOpenFileName( SEGPTR ofn )
                                         ofn, WIN_PROC_16 );
     if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpofn->hwndOwner );
 
-    if (hDlgTmpl) FreeResource16( hDlgTmpl );
+    if (hDlgTmpl) {
+	    if (lpofn->Flags & OFN_WINE32)
+		    FreeResource32( hDlgTmpl );
+	    else
+		    FreeResource16( hDlgTmpl );
+    }
 
     dprintf_commdlg(stddeb,"GetOpenFileName // return lpstrFile='%s' !\n", 
            (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
@@ -114,45 +146,74 @@ BOOL16 GetOpenFileName( SEGPTR ofn )
 /***********************************************************************
  *           GetSaveFileName   (COMMDLG.2)
  */
-BOOL16 GetSaveFileName( SEGPTR ofn)
+BOOL16 GetSaveFileName16( SEGPTR ofn)
 {
     HINSTANCE16 hInst;
-    HANDLE16 hDlgTmpl = 0;
+    HANDLE32 hDlgTmpl = 0;
     BOOL32 bRet = FALSE, win32Format = FALSE;
-    LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(ofn);
+    LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(ofn);
     LPCVOID template;
     HWND32 hwndDialog;
 
     if (!lpofn || !FileDlg_Init()) return FALSE;
 
-    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE)
-    {
-        if (!(template = LockResource16( lpofn->hInstance )))
-        {
-            CommDlgLastError = CDERR_LOADRESFAILURE;
-            return FALSE;
-        }
-    }
-    else if (lpofn->Flags & OFN_ENABLETEMPLATE)
-    {
-        HANDLE16 hResInfo;
-        if (!(hResInfo = FindResource16(lpofn->hInstance,
-                                        lpofn->lpTemplateName, RT_DIALOG)))
-        {
-            CommDlgLastError = CDERR_FINDRESFAILURE;
-            return FALSE;
-        }
-        if (!(hDlgTmpl = LoadResource16( lpofn->hInstance, hResInfo )) ||
-            !(template = LockResource16( hDlgTmpl )))
-        {
-            CommDlgLastError = CDERR_LOADRESFAILURE;
-            return FALSE;
-        }
-    }
-    else
-    {
-        template = SYSRES_GetResPtr( SYSRES_DIALOG_SAVE_FILE );
-        win32Format = TRUE;
+    if (lpofn->Flags & OFN_WINE32) {
+	    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE)
+	    {
+		if (!(template = LockResource32( lpofn->hInstance )))
+		{
+		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    return FALSE;
+		}
+	    }
+	    else if (lpofn->Flags & OFN_ENABLETEMPLATE)
+	    {
+		HANDLE32 hResInfo;
+		if (!(hResInfo = FindResource32A(lpofn->hInstance,
+						 PTR_SEG_TO_LIN(lpofn->lpTemplateName), (LPSTR)RT_DIALOG)))
+		{
+		    CommDlgLastError = CDERR_FINDRESFAILURE;
+		    return FALSE;
+		}
+		if (!(hDlgTmpl = LoadResource32(lpofn->hInstance,hResInfo)) ||
+		    !(template = LockResource32(hDlgTmpl)))
+		{
+		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    return FALSE;
+		}
+		win32Format= TRUE;
+	    } else {
+		template = SYSRES_GetResPtr( SYSRES_DIALOG_SAVE_FILE );
+		win32Format = TRUE;
+	    }
+    } else {
+	    if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE)
+	    {
+		if (!(template = LockResource16( lpofn->hInstance )))
+		{
+		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    return FALSE;
+		}
+	    }
+	    else if (lpofn->Flags & OFN_ENABLETEMPLATE)
+	    {
+		HANDLE16 hResInfo;
+		if (!(hResInfo = FindResource16(lpofn->hInstance,
+						lpofn->lpTemplateName, RT_DIALOG)))
+		{
+		    CommDlgLastError = CDERR_FINDRESFAILURE;
+		    return FALSE;
+		}
+		if (!(hDlgTmpl = LoadResource16( lpofn->hInstance, hResInfo )) ||
+		    !(template = LockResource16( hDlgTmpl )))
+		{
+		    CommDlgLastError = CDERR_LOADRESFAILURE;
+		    return FALSE;
+		}
+	} else {
+		template = SYSRES_GetResPtr( SYSRES_DIALOG_SAVE_FILE );
+		win32Format = TRUE;
+	}
     }
 
     hInst = WIN_GetWindowInstance( lpofn->hwndOwner );
@@ -163,7 +224,12 @@ BOOL16 GetSaveFileName( SEGPTR ofn)
                                         ofn, WIN_PROC_16 );
     if (hwndDialog) bRet = DIALOG_DoDialogBox( hwndDialog, lpofn->hwndOwner );
 
-    if (hDlgTmpl) FreeResource16( hDlgTmpl );
+    if (hDlgTmpl) {
+	    if (lpofn->Flags & OFN_WINE32)
+		    FreeResource32( hDlgTmpl );
+	    else
+		    FreeResource16( hDlgTmpl );
+    }
 
     dprintf_commdlg(stddeb, "GetSaveFileName // return lpstrFile='%s' !\n", 
             (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
@@ -342,7 +408,7 @@ static LONG FILEDLG_WMMeasureItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 /***********************************************************************
  *                              FILEDLG_HookCallChk             [internal]
  */
-static int FILEDLG_HookCallChk(LPOPENFILENAME lpofn)
+static int FILEDLG_HookCallChk(LPOPENFILENAME16 lpofn)
 {
  if (lpofn)
   if (lpofn->Flags & OFN_ENABLEHOOK)
@@ -351,6 +417,25 @@ static int FILEDLG_HookCallChk(LPOPENFILENAME lpofn)
  return 0;   
 } 
 
+static BOOL32 FILEDLG_CallWindowProc(LPOPENFILENAME16 lpofn,HWND32 hwnd,
+	UINT32 wMsg,WPARAM32 wParam,LPARAM lParam
+) {
+	if (!(lpofn->Flags & OFN_WINE32))
+		return (BOOL32)CallWindowProc16(
+			lpofn->lpfnHook,hwnd,(UINT16)wMsg,(WPARAM16)wParam,lParam
+		);
+	/* |OFN_WINE32 */
+	if (lpofn->Flags & OFN_UNICODE)
+		return (BOOL32)CallWindowProc32W(
+			(WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,lParam
+		);
+	/* ! |OFN_UNICODE */
+	return (BOOL32)CallWindowProc32A(
+		(WNDPROC32)lpofn->lpfnHook,hwnd,wMsg,wParam,lParam
+	);
+
+}
+
 /***********************************************************************
  *                              FILEDLG_WMInitDialog            [internal]
  */
@@ -358,11 +443,11 @@ static int FILEDLG_HookCallChk(LPOPENFILENAME lpofn)
 static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam) 
 {
   int i, n;
-  LPOPENFILENAME lpofn;
+  LPOPENFILENAME16 lpofn;
   char tmpstr[512];
   LPSTR pstr;
   SetWindowLong32A(hWnd, DWL_USER, lParam);
-  lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(lParam);
+  lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(lParam);
   if (lpofn->lpstrTitle) SetWindowText16( hWnd, lpofn->lpstrTitle );
   /* read custom filter information */
   if (lpofn->lpstrCustomFilter)
@@ -433,8 +518,7 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   if (lpofn->Flags & OFN_HIDEREADONLY)
     ShowWindow32(GetDlgItem32(hWnd, chx1), SW_HIDE); 
   if (FILEDLG_HookCallChk(lpofn))
-     return (BOOL16)CallWindowProc16(lpofn->lpfnHook, 
-                                     hWnd,  WM_INITDIALOG, wParam, lParam );
+     return (BOOL16)FILEDLG_CallWindowProc(lpofn,hWnd,WM_INITDIALOG,wParam,lParam );
   else  
      return TRUE;
 }
@@ -445,8 +529,8 @@ static LONG FILEDLG_WMInitDialog(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam) 
 {
   LONG lRet;
-  LPOPENFILENAME lpofn;
-  OPENFILENAME ofn2;
+  LPOPENFILENAME16 lpofn;
+  OPENFILENAME16 ofn2;
   char tmpstr[512], tmpstr2[512];
   LPSTR pstr, pstr2;
   UINT16 control,notification;
@@ -455,7 +539,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
   control = wParam;
   notification = HIWORD(lParam);
     
-  lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
+  lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
   switch (control)
     {
     case lst1: /* file list */
@@ -472,7 +556,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
           SEGPTR_FREE(pstr);
       }
       if (FILEDLG_HookCallChk(lpofn))
-       CallWindowProc16(lpofn->lpfnHook, hWnd,
+       FILEDLG_CallWindowProc(lpofn,hWnd,
                   RegisterWindowMessage32A( LBSELCHSTRING ),
                   control, MAKELONG(lRet,CD_LBSELCHANGE));       
       /* FIXME: for OFN_ALLOWMULTISELECT we need CD_LBSELSUB, CD_SELADD, CD_LBSELNOITEMS */                  
@@ -610,7 +694,7 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
 	}
       if (FILEDLG_HookCallChk(lpofn))
       {
-       lRet= (BOOL16)CallWindowProc16(lpofn->lpfnHook,
+       lRet= (BOOL16)FILEDLG_CallWindowProc(lpofn,
                hWnd, RegisterWindowMessage32A( FILEOKSTRING ), 0, lParam );
        if (lRet)       
        {
@@ -636,12 +720,12 @@ static LRESULT FILEDLG_WMCommand(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam)
  */
 LRESULT FileOpenDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam)
 {  
- LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
+ LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
  
  if (wMsg!=WM_INITDIALOG)
   if (FILEDLG_HookCallChk(lpofn))
   {
-   LRESULT  lRet=(BOOL16)CallWindowProc16(lpofn->lpfnHook, hWnd, wMsg, wParam, lParam);
+   LRESULT  lRet=(BOOL16)FILEDLG_CallWindowProc(lpofn,hWnd,wMsg,wParam,lParam);
    if (lRet)   
     return lRet;         /* else continue message processing */
   }             
@@ -679,12 +763,12 @@ LRESULT FileOpenDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam
  */
 LRESULT FileSaveDlgProc(HWND16 hWnd, UINT16 wMsg, WPARAM16 wParam, LPARAM lParam)
 {
- LPOPENFILENAME lpofn = (LPOPENFILENAME)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
+ LPOPENFILENAME16 lpofn = (LPOPENFILENAME16)PTR_SEG_TO_LIN(GetWindowLong32A(hWnd, DWL_USER));
  
  if (wMsg!=WM_INITDIALOG)
   if (FILEDLG_HookCallChk(lpofn))
   {
-   LRESULT  lRet=(BOOL16)CallWindowProc16(lpofn->lpfnHook, hWnd, wMsg, wParam, lParam);
+   LRESULT  lRet=(BOOL16)FILEDLG_CallWindowProc(lpofn,hWnd,wMsg,wParam,lParam);
    if (lRet)   
     return lRet;         /* else continue message processing */
   }             
@@ -1089,11 +1173,10 @@ DWORD CommDlgExtendedError(void)
   return CommDlgLastError;
 }
 
-
 /***********************************************************************
- *           GetFileTitle   (COMMDLG.27)
+ *           GetFileTitleA   (COMDLG32.8)
  */
-short GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf)
+short GetFileTitle32A(LPCSTR lpFile, LPSTR lpTitle, UINT32 cbBuf)
 {
     int i, len;
     dprintf_commdlg(stddeb,"GetFileTitle(%p %p %d); \n", lpFile, lpTitle, cbBuf);
@@ -1121,6 +1204,30 @@ short GetFileTitle(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf)
 
     strncpy(lpTitle, &lpFile[i], len);
     return 0;
+}
+
+
+/***********************************************************************
+ *           GetFileTitleA   (COMDLG32.8)
+ */
+short GetFileTitle32W(LPCWSTR lpFile, LPWSTR lpTitle, UINT32 cbBuf)
+{
+	LPSTR file = HEAP_strdupWtoA(GetProcessHeap(),0,lpFile);
+	LPSTR title = HeapAlloc(GetProcessHeap(),0,cbBuf);
+	short	ret;
+
+	ret = GetFileTitle32A(file,title,cbBuf);
+
+	lstrcpynAtoW(lpTitle,title,cbBuf);
+	HeapFree(GetProcessHeap(),0,file);
+	HeapFree(GetProcessHeap(),0,title);
+	return ret;
+}
+/***********************************************************************
+ *           GetFileTitle   (COMMDLG.27)
+ */
+short GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf) {
+    return GetFileTitle32A(lpFile,lpTitle,cbBuf);
 }
 
 
@@ -2873,3 +2980,183 @@ LRESULT FormatCharDlgProc(HWND16 hDlg, UINT16 message, WPARAM16 wParam, LPARAM l
     }
   return FALSE;
 }
+
+
+#define GET_XXX_FILENAME(xxx) 						\
+BOOL32 xxx##32A( LPOPENFILENAME32A ofn )				\
+{									\
+	BOOL16 ret;							\
+	LPOPENFILENAME16 ofn16 = SEGPTR_ALLOC(sizeof(OPENFILENAME16));	\
+									\
+	memset(ofn16,'\0',sizeof(*ofn16));				\
+	ofn16->lStructSize = sizeof(*ofn16);				\
+	ofn16->hwndOwner = ofn->hwndOwner;				\
+	ofn16->hInstance = ofn->hInstance;				\
+	if (ofn->lpstrFilter) {						\
+		LPSTR	s,x;						\
+									\
+		/* filter is a list...  title\0ext\0......\0\0 */	\
+		s = (LPSTR)ofn->lpstrFilter;				\
+		while (*s)						\
+			s = s+strlen(s)+1;				\
+		s++;							\
+		x = (LPSTR)SEGPTR_ALLOC(s-ofn->lpstrFilter);		\
+		memcpy(x,ofn->lpstrFilter,s-ofn->lpstrFilter);		\
+		ofn16->lpstrFilter = SEGPTR_GET(x);			\
+	}								\
+	if (ofn->lpstrCustomFilter) {					\
+		LPSTR	s,x;						\
+									\
+		/* filter is a list...  title\0ext\0......\0\0 */	\
+		s = (LPSTR)ofn->lpstrCustomFilter;			\
+		while (*s)						\
+			s = s+strlen(s)+1;				\
+		x = SEGPTR_ALLOC(s-ofn->lpstrCustomFilter);		\
+		s++;							\
+		memcpy(x,ofn->lpstrCustomFilter,s-ofn->lpstrCustomFilter);\
+		ofn16->lpstrCustomFilter = SEGPTR_GET(x);		\
+	}								\
+	ofn16->nMaxCustFilter = ofn->nMaxCustFilter;			\
+	ofn16->nFilterIndex = ofn->nFilterIndex;			\
+	ofn16->lpstrFile = SEGPTR_GET(SEGPTR_ALLOC(ofn->nMaxFile));	\
+	ofn16->nMaxFile = ofn->nMaxFile;				\
+	if (ofn->lpstrFileTitle)					\
+		ofn16->lpstrFileTitle= SEGPTR_GET(SEGPTR_STRDUP(ofn->lpstrFileTitle));\
+	ofn16->nMaxFileTitle = ofn->nMaxFileTitle;			\
+	if (ofn->lpstrInitialDir)					\
+		ofn16->lpstrInitialDir = SEGPTR_GET(SEGPTR_STRDUP(ofn->lpstrInitialDir));\
+	if (ofn->lpstrTitle)						\
+		ofn16->lpstrTitle = SEGPTR_GET(SEGPTR_STRDUP(ofn->lpstrTitle));\
+	ofn16->Flags = ofn->Flags|OFN_WINE32;				\
+	ofn16->nFileOffset = ofn->nFileOffset;				\
+	ofn16->nFileExtension = ofn->nFileExtension;			\
+	if (ofn->lpstrDefExt)						\
+		ofn16->lpstrDefExt = SEGPTR_GET(SEGPTR_STRDUP(ofn->lpstrDefExt));\
+	ofn16->lCustData = ofn->lCustData;				\
+	ofn16->lpfnHook = (WNDPROC16)ofn->lpfnHook;			\
+									\
+	if (ofn->lpTemplateName)					\
+		ofn16->lpTemplateName = SEGPTR_GET(SEGPTR_STRDUP(ofn->lpTemplateName));\
+									\
+	ret = xxx##16(SEGPTR_GET(ofn16));				\
+									\
+	if (ofn16->lpstrFilter)						\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFilter));	\
+	if (ofn16->lpTemplateName)					\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpTemplateName));	\
+	if (ofn16->lpstrDefExt)						\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrDefExt));	\
+	if (ofn16->lpstrTitle)						\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrTitle));		\
+	if (ofn16->lpstrInitialDir)					\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrInitialDir));	\
+	if (ofn16->lpstrCustomFilter)					\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrCustomFilter));	\
+									\
+	strcpy(ofn->lpstrFile,PTR_SEG_TO_LIN(ofn16->lpstrFile));	\
+	SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFile));			\
+									\
+	if (ofn16->lpstrFileTitle)					\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFileTitle));	\
+	SEGPTR_FREE(ofn16);						\
+	return ret;							\
+}									\
+									\
+BOOL32 xxx##32W( LPOPENFILENAME32W ofn )				\
+{									\
+	BOOL16 ret;							\
+	LPOPENFILENAME16 ofn16 = SEGPTR_ALLOC(sizeof(OPENFILENAME16));	\
+									\
+	memset(ofn16,'\0',sizeof(*ofn16));				\
+	ofn16->lStructSize = sizeof(*ofn16);				\
+	ofn16->hwndOwner = ofn->hwndOwner;				\
+	ofn16->hInstance = ofn->hInstance;				\
+	if (ofn->lpstrFilter) {						\
+		LPWSTR	s;						\
+		LPSTR	x,y;						\
+		int	n;						\
+									\
+		/* filter is a list...  title\0ext\0......\0\0 */	\
+		s = (LPWSTR)ofn->lpstrFilter;				\
+		while (*s)						\
+			s = s+lstrlen32W(s)+1;				\
+		s++;							\
+		n = s - ofn->lpstrFilter; /* already divides by 2. ptr magic */\
+		x = y = (LPSTR)SEGPTR_ALLOC(n);			\
+		s = (LPWSTR)ofn->lpstrFilter;				\
+		while (*s) {						\
+			lstrcpyWtoA(x,s);				\
+			x+=lstrlen32A(x)+1;				\
+			s+=lstrlen32W(s)+1;				\
+		}							\
+		*x=0;							\
+		ofn16->lpstrFilter = SEGPTR_GET(y);			\
+	}								\
+	if (ofn->lpstrCustomFilter) {					\
+		LPWSTR	s;						\
+		LPSTR	x,y;						\
+		int	n;						\
+									\
+		/* filter is a list...  title\0ext\0......\0\0 */	\
+		s = (LPWSTR)ofn->lpstrCustomFilter;			\
+		while (*s)						\
+			s = s+lstrlen32W(s)+1;				\
+		s++;							\
+		n = s - ofn->lpstrCustomFilter;				\
+		x = y = (LPSTR)SEGPTR_ALLOC(n);				\
+		s = (LPWSTR)ofn->lpstrCustomFilter;			\
+		while (*s) {						\
+			lstrcpyWtoA(x,s);				\
+			x+=lstrlen32A(x)+1;				\
+			s+=lstrlen32W(s)+1;				\
+		}							\
+		*x=0;							\
+		ofn16->lpstrCustomFilter = SEGPTR_GET(y);		\
+	}								\
+	ofn16->nMaxCustFilter = ofn->nMaxCustFilter;			\
+	ofn16->nFilterIndex = ofn->nFilterIndex;			\
+	ofn16->lpstrFile = SEGPTR_GET(SEGPTR_ALLOC(ofn->nMaxFile));	\
+	ofn16->nMaxFile = ofn->nMaxFile;				\
+	if (ofn->lpstrFileTitle)					\
+		ofn16->lpstrFileTitle= SEGPTR_GET(SEGPTR_STRDUP_WtoA(ofn->lpstrFileTitle));\
+	ofn16->nMaxFileTitle = ofn->nMaxFileTitle;			\
+	if (ofn->lpstrInitialDir)					\
+		ofn16->lpstrInitialDir = SEGPTR_GET(SEGPTR_STRDUP_WtoA(ofn->lpstrInitialDir));\
+	if (ofn->lpstrTitle)						\
+		ofn16->lpstrTitle = SEGPTR_GET(SEGPTR_STRDUP_WtoA(ofn->lpstrTitle));\
+	ofn16->Flags = ofn->Flags|OFN_WINE32|OFN_UNICODE;		\
+	ofn16->nFileOffset = ofn->nFileOffset;				\
+	ofn16->nFileExtension = ofn->nFileExtension;			\
+	if (ofn->lpstrDefExt)						\
+		ofn16->lpstrDefExt = SEGPTR_GET(SEGPTR_STRDUP_WtoA(ofn->lpstrDefExt));\
+	ofn16->lCustData = ofn->lCustData;				\
+	ofn16->lpfnHook = (WNDPROC16)ofn->lpfnHook;			\
+	if (ofn->lpTemplateName) {					\
+		ofn16->lpTemplateName = SEGPTR_GET(SEGPTR_STRDUP_WtoA(ofn->lpTemplateName));\
+	}								\
+	ret = xxx##16(SEGPTR_GET(ofn16));				\
+									\
+	if (ofn16->lpstrFilter)						\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFilter));	\
+	if (ofn16->lpTemplateName)					\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpTemplateName));	\
+	if (ofn16->lpstrDefExt)						\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrDefExt));	\
+	if (ofn16->lpstrTitle)						\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrTitle));		\
+	if (ofn16->lpstrInitialDir)					\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrInitialDir));	\
+	if (ofn16->lpstrCustomFilter)					\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrCustomFilter));	\
+									\
+	lstrcpyAtoW(ofn->lpstrFile,PTR_SEG_TO_LIN(ofn16->lpstrFile));	\
+	SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFile));			\
+									\
+	if (ofn16->lpstrFileTitle)					\
+		SEGPTR_FREE(PTR_SEG_TO_LIN(ofn16->lpstrFileTitle));	\
+	SEGPTR_FREE(ofn16);						\
+	return ret;							\
+}
+
+GET_XXX_FILENAME(GetOpenFileName)
+GET_XXX_FILENAME(GetSaveFileName)

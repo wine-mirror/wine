@@ -606,6 +606,7 @@ static void XFONT_GetTextMetric( fontObject* pfo, LPTEXTMETRIC32A pTM )
 
     pTM->tmCharSet = pdf->dfCharSet;
     pTM->tmPitchAndFamily = pdf->dfPitchAndFamily;
+
     pTM->tmDigitizedAspectX = pdf->dfHorizRes;
     pTM->tmDigitizedAspectY = pdf->dfVertRes;
 }
@@ -1147,10 +1148,10 @@ BOOL32 X11DRV_FONT_Init( DeviceCaps* pDevCaps )
 
 	if( !fr ) /* add new family */
 	{
-	   if( n_ff++ > MAX_FONT_FAMILIES ) break;
-
+	   if( n_ff >= MAX_FONT_FAMILIES ) break;
 	   if( !LFD_InitFontInfo( fi, lpstr) ) continue;
 
+	   n_ff++;
 	   fr = (fontResource*) HeapAlloc(SystemHeap, 0, sizeof(fontResource)); 
 	   memset(fr, 0, sizeof(fontResource));
 	   fr->resource = (char*) HeapAlloc(SystemHeap, 0, j + 1 );
@@ -1318,8 +1319,11 @@ static UINT32 XFONT_Match( fontMatch* pfm )
 
    pfm->flags = 0;
 
-   if( plf->lfCharSet != DEFAULT_CHARSET &&
-       plf->lfCharSet != pfi->df.dfCharSet ) penalty += 0x200;
+   if( plf->lfCharSet == DEFAULT_CHARSET )
+   {
+       if( (pfi->df.dfCharSet!= ANSI_CHARSET) && (pfi->df.dfCharSet!=DEFAULT_CHARSET) ) penalty += 0x200;
+   }
+   else if (plf->lfCharSet != pfi->df.dfCharSet) penalty += 0x200;
 
    /* TMPF_FIXED_PITCH means exactly the opposite */
 
@@ -1937,7 +1941,7 @@ BOOL32 X11DRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
 		    cs = &xfs->per_char[(i - xfs->min_char_or_byte2)]; 
 		    if (CI_NONEXISTCHAR(cs)) cs = def; 
   		} else cs = def;
-		*buffer++ = MAX( cs->width, 0 );
+		*buffer++ = MAX(cs->width, 0 );
 	    }
 	}
 	return TRUE;
@@ -1993,9 +1997,14 @@ INT32 AddFontResource32W( LPCWSTR str )
 /***********************************************************************
  *           RemoveFontResource16    (GDI.136)
  */
-BOOL16 RemoveFontResource16( LPCSTR str )
+BOOL16 RemoveFontResource16( SEGPTR str )
 {
-    return RemoveFontResource32A( str );
+    if (HIWORD(str))
+        fprintf( stdnimp, "STUB: RemoveFontResource('%s')\n",
+		(char *)PTR_SEG_TO_LIN( str) );
+    else
+        fprintf( stdnimp, "STUB: RemoveFontResource(%04x)\n", LOWORD(str) );
+    return TRUE;
 }
 
 

@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/ioctl.h>
 #include "windows.h"
 #include "win.h"
@@ -280,20 +281,19 @@ BOOL16 DriverCallback(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
 			dprintf_mmsys(stddeb, "DriverCallback() // CALLBACK_NULL !\n");
 			break;
 		case DCB_WINDOW:
-			dprintf_mmsys(stddeb, "DriverCallback() // CALLBACK_WINDOW = %04lX!\n",dwCallBack);
+			dprintf_mmsys(stddeb, "DriverCallback() // CALLBACK_WINDOW = %04lX handle = %04X!\n",dwCallBack,hDev);
 			if (!IsWindow32(dwCallBack)) return FALSE;
-			dprintf_mmsys(stddeb, "DriverCallback() // Device Handle = %04X\n", hDev);
 			lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hDev);
 			if (lpDesc == NULL) return FALSE;
 
-			dprintf_mmsys(stddeb, "DriverCallback() // Before PostMessage16\n");
 			PostMessage16((HWND16)dwCallBack, wMsg, hDev, dwParam1);
 			break;
 		case DCB_TASK:
 			dprintf_mmsys(stddeb, "DriverCallback() // CALLBACK_TASK !\n");
-			break;
+			return FALSE;
 		case DCB_FUNCTION:
 			dprintf_mmsys(stddeb, "DriverCallback() // CALLBACK_FUNCTION !\n");
+			CallTo16_word_wwlll((FARPROC16)dwCallBack,hDev,wMsg,dwUser,dwParam1,dwParam2);
 			break;
 		}
 	return TRUE;
@@ -715,7 +715,7 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lp16Parms)
 			uDevTyp = LOWORD((DWORD)lpParms->lpstrDeviceType);
  			GetOpenDrv(wDevID)->lpstrDeviceType=lpParms->lpstrDeviceType;
 		} else {
-			if (lpParms->lpstrDeviceType == NULL) return MCIERR_INTERNAL;
+			if (lpParms->lpstrDeviceType == (SEGPTR)NULL) return MCIERR_INTERNAL;
 			dprintf_mmsys(stddeb, "MCI_OPEN // Dev='%s' !\n",
                               (char*)PTR_SEG_TO_LIN(lpParms->lpstrDeviceType));
                         GetOpenDrv(wDevID)->lpstrDeviceType = SEGPTR_GET(
@@ -770,11 +770,14 @@ DWORD mciOpen(DWORD dwParam, LPMCI_OPEN_PARMS lp16Parms)
 	  return MCIERR_INVALID_DEVICE_NAME;
         }
 
+
+	if (dwParam&MCI_NOTIFY)
+	  mciDriverNotify(lpParms->dwCallback,wDevID,
+			  (dwret==0?MCI_NOTIFY_SUCCESSFUL:MCI_NOTIFY_FAILURE));
+
 	/* only handled devices fall through */
 	dprintf_mmsys(stddeb, "MCI_OPEN // wDevID = %04X wDeviceID = %d dwret = %ld\n",wDevID, lpParms->wDeviceID, dwret);
 	return dwret;
-
-/*	return MCIERR_INTERNAL; */
 }
 
 
@@ -811,6 +814,11 @@ DWORD mciClose(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms)
 			dwRet = MCIERR_DEVICE_NOT_INSTALLED;
 		}
 	GetDrv(wDevID)->wType = 0;
+
+	if (dwParam&MCI_NOTIFY)
+	  mciDriverNotify(lpParms->dwCallback,wDevID,
+			  (dwRet==0?MCI_NOTIFY_SUCCESSFUL:MCI_NOTIFY_FAILURE));
+
 	dprintf_mmsys(stddeb, "mciClose() // returns %ld\n",dwRet);
 	return dwRet;
 }
@@ -1046,7 +1054,7 @@ UINT16 midiOutGetNumDevs(void)
 UINT16 midiOutGetDevCaps(UINT16 uDeviceID, MIDIOUTCAPS * lpCaps, UINT16 uSize)
 {
 	dprintf_mmsys(stddeb, "midiOutGetDevCaps\n");
-	return 0;
+	return modMessage(uDeviceID,MODM_GETDEVCAPS,0,(DWORD)lpCaps,uSize);
 }
 
 /**************************************************************************
@@ -1307,7 +1315,7 @@ UINT16 midiInGetDevCaps(UINT16 uDeviceID,
     LPMIDIINCAPS lpCaps, UINT16 uSize)
 {
 	dprintf_mmsys(stddeb, "midiInGetDevCaps\n");
-	return 0;
+	return midMessage(uDeviceID,MIDM_GETDEVCAPS,0,(DWORD)lpCaps,uSize);;
 }
 
 /**************************************************************************
@@ -1592,6 +1600,7 @@ UINT16 waveOutOpen(HWAVEOUT16 * lphWaveOut, UINT16 uDeviceID,
 	lpDesc->lpFormat = lpFormat;  /* should the struct be copied iso pointer? */
 	lpDesc->dwCallBack = dwCallback;
 	lpDesc->dwInstance = dwInstance;
+	if (uDeviceID >= MAXWAVEDRIVERS) uDeviceID = 0;
 	while(uDeviceID < MAXWAVEDRIVERS) {
 		dwRet = wodMessage(uDeviceID, WODM_OPEN, 
 			lpDesc->dwInstance, (DWORD)lp16Desc, dwFlags);
@@ -1899,7 +1908,7 @@ UINT16 waveInOpen(HWAVEIN16 * lphWaveIn, UINT16 uDeviceID,
 	lpDesc->uDeviceID = uDeviceID;
 	if (dwFlags & WAVE_FORMAT_QUERY) {
 		dprintf_mmsys(stddeb, "waveInOpen	// End of WAVE_FORMAT_QUERY !\n");
-		waveInClose(hWaveIn);
+		dwRet = waveInClose(hWaveIn);
 		}
 	return dwRet;
 }
@@ -1934,7 +1943,7 @@ UINT16 waveInPrepareHeader(HWAVEIN16 hWaveIn,
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
 	if (lpWaveInHdr == NULL) return MMSYSERR_INVALHANDLE;
 	lp32WaveInHdr = PTR_SEG_TO_LIN(lpWaveInHdr);
-	lp32WaveInHdr->lpNext = NULL;
+	lp32WaveInHdr->lp16Next = (SEGPTR)NULL;
     lp32WaveInHdr->dwBytesRecorded = 0;
 	dprintf_mmsys(stddeb, "waveInPrepareHeader // lpData=%p size=%lu \n", 
 		lp32WaveInHdr->lpData, lp32WaveInHdr->dwBufferLength);
@@ -1960,7 +1969,7 @@ UINT16 waveInUnprepareHeader(HWAVEIN16 hWaveIn,
 	lp32WaveInHdr = PTR_SEG_TO_LIN(lpWaveInHdr);
 	USER_HEAP_FREE(HIWORD((DWORD)lp32WaveInHdr->lpData));
 	lp32WaveInHdr->lpData = NULL;
-	lp32WaveInHdr->lpNext = NULL;
+	lp32WaveInHdr->lp16Next = (SEGPTR)NULL;
 	return widMessage(lpDesc->uDeviceID, WIDM_UNPREPARE, lpDesc->dwInstance, 
 							(DWORD)lpWaveInHdr, uSize);
 }
@@ -1980,7 +1989,7 @@ UINT16 waveInAddBuffer(HWAVEIN16 hWaveIn,
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
 	if (lpWaveInHdr == NULL) return MMSYSERR_INVALHANDLE;
 	lp32WaveInHdr = PTR_SEG_TO_LIN(lpWaveInHdr);
-	lp32WaveInHdr->lpNext = NULL;
+	lp32WaveInHdr->lp16Next = (SEGPTR)NULL;
     lp32WaveInHdr->dwBytesRecorded = 0;
 	dprintf_mmsys(stddeb, "waveInAddBuffer // lpData=%p size=%lu \n", 
 		lp32WaveInHdr->lpData, lp32WaveInHdr->dwBufferLength);

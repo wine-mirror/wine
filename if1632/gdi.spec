@@ -63,7 +63,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 54  pascal16 CreateEllipticRgn(s_word s_word s_word s_word) CreateEllipticRgn16
 55  pascal16 CreateEllipticRgnIndirect(ptr) CreateEllipticRgnIndirect16
 56  pascal16 CreateFont(s_word s_word s_word s_word s_word word word word
-                        word word word word word ptr) CreateFont16
+                        word word word word word str) CreateFont16
 57  pascal16 CreateFontIndirect(ptr) CreateFontIndirect16
 58  pascal16 CreateHatchBrush(word long) CreateHatchBrush16
 60  pascal16 CreatePatternBrush(word) CreatePatternBrush16
@@ -76,7 +76,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 67  pascal16 DPtoLP(word ptr s_word) DPtoLP16
 68  pascal16 DeleteDC(word) DeleteDC16
 69  pascal16 DeleteObject(word) DeleteObject16
-70  pascal16 EnumFonts(word ptr segptr long) THUNK_EnumFonts16
+70  pascal16 EnumFonts(word str segptr long) THUNK_EnumFonts16
 71  pascal16 EnumObjects(word word segptr long) THUNK_EnumObjects16
 72  pascal16 EqualRgn(word word) EqualRgn16
 73  pascal16 ExcludeVisRect(word s_word s_word s_word s_word) ExcludeVisRect
@@ -115,28 +115,28 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 105 pascal16 SelectVisRgn(word word) SelectVisRgn
 106 pascal SetBitmapBits(word long ptr) SetBitmapBits16
 117 pascal SetDCOrg(word s_word s_word) SetDCOrg
-119 pascal16 AddFontResource(ptr) AddFontResource16
+119 pascal16 AddFontResource(str) AddFontResource16
 #121 pascal Death
 #122 pascal ReSurRection
 123 pascal16 PlayMetaFile(word word) PlayMetaFile16
-124 pascal16 GetMetaFile(ptr) GetMetaFile16
-125 pascal16 CreateMetaFile(ptr) CreateMetaFile16
+124 pascal16 GetMetaFile(str) GetMetaFile16
+125 pascal16 CreateMetaFile(str) CreateMetaFile16
 126 pascal16 CloseMetaFile(word) CloseMetaFile16
 127 pascal16 DeleteMetaFile(word) DeleteMetaFile16
 128 pascal16 MulDiv(s_word s_word s_word) MulDiv16
 129 pascal16 SaveVisRgn(word) SaveVisRgn
 130 pascal16 RestoreVisRgn(word) RestoreVisRgn
 131 pascal16 InquireVisRgn(word) InquireVisRgn
-132 pascal16 SetEnvironment(ptr ptr word) SetEnvironment
-133 pascal16 GetEnvironment(ptr ptr word) GetEnvironment
+132 pascal16 SetEnvironment(str str word) SetEnvironment
+133 pascal16 GetEnvironment(str str word) GetEnvironment
 134 pascal16 GetRgnBox(word ptr) GetRgnBox16
 #135 pascal ScanLr
-136 pascal16 RemoveFontResource(ptr) RemoveFontResource16
+136 pascal16 RemoveFontResource(segptr) RemoveFontResource16
 148 pascal SetBrushOrg(word s_word s_word) SetBrushOrg
 149 pascal GetBrushOrg(word) GetBrushOrg
 150 pascal16 UnrealizeObject(word) UnrealizeObject16
-151 pascal16 CopyMetaFile(word ptr) CopyMetaFile16
-153 pascal16 CreateIC(ptr ptr ptr ptr) CreateIC16
+151 pascal16 CopyMetaFile(word str) CopyMetaFile16
+153 pascal16 CreateIC(str str str ptr) CreateIC16
 154 pascal   GetNearestColor(word long) GetNearestColor16
 155 stub QueryAbort
 156 pascal16 CreateDiscardableBitmap(word word word) CreateDiscardableBitmap16
@@ -219,7 +219,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 307 pascal16 GetCharABCWidths(word word word ptr) GetCharABCWidths16
 308 stub GetOutLineTextMetrics
 309 pascal   GetGlyphOutline(word word word ptr long ptr ptr) GetGlyphOutline16
-310 pascal16 CreateScalableFontResource(word ptr ptr ptr) CreateScalableFontResource16
+310 pascal16 CreateScalableFontResource(word str str str) CreateScalableFontResource16
 311 stub GetFontData
 312 stub ConvertOutLineFontFile
 313 pascal16 GetRasterizerCaps(ptr word) GetRasterizerCaps16
@@ -227,7 +227,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 315 stub EngineRealizeFontExt
 316 stub EngineGetCharWidthStr
 317 stub EngineGetGlyphBmpExt
-330 pascal16 EnumFontFamilies(word ptr segptr long) THUNK_EnumFontFamilies16
+330 pascal16 EnumFontFamilies(word str segptr long) THUNK_EnumFontFamilies16
 332 pascal16 GetKerningPairs(word word ptr) GetKerningPairs16
 345 pascal16 GetTextAlign(word) GetTextAlign16
 346 pascal16 SetTextAlign(word word) SetTextAlign16
@@ -380,7 +380,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 609 stub GDIFreeResources
 610 stub GDISignalProc32
 611 stub GetRandomRgn
-612 stub GetTextCharSet
+612 pascal16 GetTextCharset(word) GetTextCharset16
 613 pascal16 EnumFontFamiliesEx(word ptr segptr long long) THUNK_EnumFontFamiliesEx16
 614 stub AddLpkToGDI
 615 stub GetCharacterPlacement

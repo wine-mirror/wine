@@ -6,6 +6,11 @@
 /* FIXME: special commands of device drivers should be handled by those drivers
  */
 
+/* FIXME: this current implementation does not allow commands like
+ * capability <filename> can play
+ * which is allowed by the MCI standard.
+ */
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,7 +62,8 @@ LONG ANIM_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 /* standard functionparameters for all functions */
 #define _MCISTR_PROTO_ \
 	WORD wDevID,WORD uDevTyp,LPSTR lpstrReturnString,UINT16 uReturnLength,\
-	LPCSTR dev,LPSTR *keywords,UINT16 nrofkeywords,DWORD dwFlags
+	LPCSTR dev,LPSTR *keywords,UINT16 nrofkeywords,DWORD dwFlags,\
+        HWND16 hwndCallback
 
 /* copy string to return pointer including necessary checks 
  * for use in mciSendString()
@@ -340,7 +346,7 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	}
 	GetDrv(wDevID)->wType		= uDevTyp;
 	GetDrv(wDevID)->wDeviceID	= 0;  /* FIXME? for multiple devices */
-	pU->openParams.dwCallback	= 0;
+	pU->openParams.dwCallback	= hwndCallback ;
 	pU->openParams.wDeviceID	= wDevID;
 	pU->ovlyopenParams.dwStyle	= 0; 
 	pU->animopenParams.dwStyle	= 0; 
@@ -543,7 +549,7 @@ MCISTR_Status(_MCISTR_PROTO_) {
 	MCI_STATUS_PARMS	*statusParams = SEGPTR_NEW(MCI_STATUS_PARMS);
 	int			type = 0,i,res,timef;
 
-	statusParams->dwCallback = 0;
+	statusParams->dwCallback = hwndCallback;
 	dwFlags	|= MCI_STATUS_ITEM;
 	res = _MCISTR_determine_timeformat(dev,wDevID,uDevTyp,&timef);
 	if (res) return res;
@@ -672,7 +678,7 @@ MCISTR_Set(_MCISTR_PROTO_) {
         union U *pU = SEGPTR_NEW(union U);
 	int	i,res;
 
-	pU->setParams.dwCallback = 0;
+	pU->setParams.dwCallback = hwndCallback;
 	i = 0;
 	while (i<nrofkeywords) {
 		FLAG2("door","open",MCI_SET_DOOR_OPEN);
@@ -931,7 +937,7 @@ MCISTR_Capability(_MCISTR_PROTO_) {
 	MCI_GETDEVCAPS_PARMS *gdcParams = SEGPTR_NEW(MCI_GETDEVCAPS_PARMS);
 	int	type=0,i,res;
 
-	gdcParams->dwCallback = 0;
+	gdcParams->dwCallback = hwndCallback;
 	if (!nrofkeywords)
 		return MCIERR_MISSING_STRING_ARGUMENT;
 	/* well , thats default */
@@ -995,7 +1001,7 @@ MCISTR_Resume(_MCISTR_PROTO_)
 {
     MCI_GENERIC_PARMS *genParams = SEGPTR_NEW(MCI_GENERIC_PARMS);
     int	res;
-    genParams->dwCallback = 0;
+    genParams->dwCallback = hwndCallback;
     _MCI_CALL_DRIVER( MCI_RESUME, SEGPTR_GET(genParams) );
     return res;
 }
@@ -1006,7 +1012,7 @@ MCISTR_Pause(_MCISTR_PROTO_)
 {
     MCI_GENERIC_PARMS *genParams = SEGPTR_NEW(MCI_GENERIC_PARMS);
     int res;
-    genParams->dwCallback = 0;
+    genParams->dwCallback = hwndCallback;
     _MCI_CALL_DRIVER( MCI_PAUSE, SEGPTR_GET(genParams) );
     return res;
 }
@@ -1017,7 +1023,7 @@ MCISTR_Stop(_MCISTR_PROTO_)
 {
     MCI_GENERIC_PARMS *genParams = SEGPTR_NEW(MCI_GENERIC_PARMS);
     int res;
-    genParams->dwCallback = 0;
+    genParams->dwCallback = hwndCallback;
     _MCI_CALL_DRIVER( MCI_STOP, SEGPTR_GET(genParams) );
     return res;
 }
@@ -1060,7 +1066,7 @@ MCISTR_Record(_MCISTR_PROTO_) {
 		nrargs=1;
 		break;
 	}
-	recordParams->dwCallback = 0;
+	recordParams->dwCallback = hwndCallback;
 	i = 0;
 	while (i<nrofkeywords) {
 		if (!strcmp(keywords[i],"to") && (i+1<nrofkeywords)) {
@@ -1149,7 +1155,7 @@ MCISTR_Play(_MCISTR_PROTO_) {
 		nrargs=1;
 		break;
 	}
-	pU->playParams.dwCallback=0;
+	pU->playParams.dwCallback=hwndCallback;
 	i=0;
 	while (i<nrofkeywords) {
 		if (!strcmp(keywords[i],"to") && (i+1<nrofkeywords)) {
@@ -1246,7 +1252,7 @@ MCISTR_Seek(_MCISTR_PROTO_) {
 		nrargs=1;
 		break;
 	}
-	seekParams->dwCallback=0;
+	seekParams->dwCallback=hwndCallback;
 	i=0;
 	while (i<nrofkeywords) {
 		if (	!STRCMP(keywords[i],"to") && (i+1<nrofkeywords)) {
@@ -2157,8 +2163,7 @@ DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 			continue;
 		}
 		if (!STRCMP(keywords[i],"notify")) {
-			/* how should we callback?  I don't know. */
-			/*dwFlags |= MCI_NOTIFY;*/
+		        dwFlags |= MCI_NOTIFY;
 			memcpy(keywords+i,keywords+(i+1),(nrofkeywords-i-1)*sizeof(char *));
 			nrofkeywords--;
 			continue;
@@ -2181,7 +2186,7 @@ DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 			if (!MMSYSTEM_DevIDValid(wDevID)) {
 				dprintf_mci(stddeb, __FILE__":mciSendString:MAXMCIDRIVERS reached!\n");
 				free(keywords);free(cmd);
-				return MCIERR_INTERNAL;
+				return MCIERR_INVALID_DEVICE_NAME;
 			}
 		}
 		uDevTyp=GetDrv(wDevID)->wType;
@@ -2192,7 +2197,7 @@ DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
  			res=MCISTR_cmdtable[i].fun(
  				wDevID,uDevTyp,lpstrReturnString,
  				uReturnLength,dev,(LPSTR*)keywords,nrofkeywords,
- 				dwFlags
+ 				dwFlags,hwndCallback
  			);
  			break;
  		}

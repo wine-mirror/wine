@@ -140,7 +140,7 @@ base	1
 0133 stdcall DestroyMenu(long) DestroyMenu32
 0134 stdcall DestroyWindow(long) DestroyWindow32
 0135 stdcall DialogBoxIndirectParamA(long ptr long ptr long) DialogBoxIndirectParam32A
-0136 stub DialogBoxIndirectParamAorW
+0136 stdcall DialogBoxIndirectParamAorW(long ptr long ptr long) DialogBoxIndirectParam32A
 0137 stdcall DialogBoxIndirectParamW(long ptr long ptr long) DialogBoxIndirectParam32W
 0138 stdcall DialogBoxParamA(long ptr long ptr long) DialogBoxParam32A
 0139 stdcall DialogBoxParamW(long ptr long ptr long) DialogBoxParam32W

@@ -171,7 +171,8 @@ typedef struct wavehdr_tag {
     DWORD       dwUser;                 /* for client's use */
     DWORD       dwFlags;                /* assorted flags (see defines) */
     DWORD       dwLoops;                /* loop control counter */
-    struct wavehdr_tag *lpNext;         /* reserved for driver */
+/*    struct wavehdr_tag *lpNext;*/         
+    SEGPTR      lp16Next;               /* reserved for driver */
     DWORD       reserved;               /* reserved for driver */
 } WAVEHDR, *LPWAVEHDR;
 

@@ -23,6 +23,7 @@ LDLIBS    = @LDLIBS@
 AR        = ar rc
 RANLIB    = @RANLIB@
 RM        = rm -f
+MKDIR     = mkdir
 SUBMAKE   = $(MAKE) 'CC=$(CC)' 'CFLAGS=$(CFLAGS)' 'OPTIONS=$(OPTIONS)'
 @SET_MAKE@
 
@@ -37,6 +38,7 @@ bindir          = @bindir@
 libdir          = @libdir@
 mandir          = @mandir@/man1
 manext          = .1
+includedir      = @includedir@/wine
 
 # Main target to build
 
@@ -118,14 +120,18 @@ libwine.a: $(COMMONSUBDIRS) $(LIBSUBDIRS) dummy
 	$(AR) $@ $(COMMONOBJS) $(LIBOBJS)
 	$(RANLIB) $@
 
-install_libwine.a: dummy
+install_libwine.a: install_includes
 	$(INSTALL_DATA) libwine.a $(libdir)
 
 libwine.so.1.0: $(COMMONSUBDIRS) $(LIBSUBDIRS) dummy
 	$(CC) -shared -Wl,-soname,libwine.so -o$@ $(COMMONOBJS) $(LIBOBJS) $(LDOPTIONS) $(X_LIBS) $(XPM_LIB) $(XLIB) $(LDLIBS)
 
-install_libwine.so.1.0: dummy
+install_libwine.so.1.0: install_includes
 	$(INSTALL_DATA) libwine.so.1.0 $(libdir)
+
+install_includes: dummy
+	if [ -d $(includedir) ]; then : ; else $(MKDIR) $(includedir); fi 
+	cd include; $(INSTALL_DATA) windows.h wintypes.h $(includedir)
 
 $(ALLSUBDIRS): dummy
 	@cd $@; $(SUBMAKE)
@@ -143,9 +149,8 @@ etags:
 
 clean:
 	for i in $(ALLSUBDIRS); do (cd $$i; $(MAKE) clean) || exit 1; done
-	$(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc
+	for i in . include documentation; do (cd $$i; $(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc); done
 	$(RM) wine wine.sym libwine.a libwine.so.1.0 TAGS
-	(cd include; $(RM) *.o \#*\# *~ *.bak *.orig *.rej *.flc)
 
 distclean: clean
 	$(RM) config.* Make.rules include/config.h

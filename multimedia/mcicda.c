@@ -270,6 +270,10 @@ static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpPa
 		dprintf_cdaudio(stddeb,"CDAUDIO_mciOpen // error reading TracksInfo !\n");
 /*		return MCIERR_INTERNAL; */
 		}
+
+/*
+   Moved to mmsystem.c mciOpen routine
+
 	if (dwFlags & MCI_NOTIFY) {
         	dprintf_cdaudio(stddeb,
 			"CDAUDIO_mciOpen // MCI_NOTIFY_SUCCESSFUL %08lX !\n", 
@@ -277,6 +281,7 @@ static DWORD CDAUDIO_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpPa
 		mciDriverNotify((HWND16)LOWORD(lpParms->dwCallback), 
 			CDADev[wDevID].wNotifyDeviceID, MCI_NOTIFY_SUCCESSFUL);
 		}
+*/
  	return 0;
 #else
 	return MCIERR_HARDWARE;

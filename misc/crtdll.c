@@ -913,6 +913,19 @@ CRTDLL_atexit(LPVOID x) {
 }
 
 /*********************************************************************
+ *                  mbstowcs           (CRTDLL.429)
+ * FIXME: check multibyte support
+ */
+INT32
+CRTDLL_mbstowcs(LPWSTR a,LPSTR b,INT32 nr) {
+	int	i;
+	for (i=0;(i<nr) && b[i];i++) {
+		a[i] = (WCHAR)b[i];
+	}
+	return i;
+}
+
+/*********************************************************************
  *                  mbtowc           (CRTDLL.430)
  * FIXME: check multibyte support
  */

@@ -3078,9 +3078,9 @@ static INT32 EDIT_WM_GetText(WND *wnd, EDITSTATE *es, INT32 count, LPSTR text)
 
 	if (count > len) {
 		lstrcpy32A(text, es->text);
-		return len + 1;
+		return len;
 	} else
-		return 0;
+		return -1;
 }
 
 

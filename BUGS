@@ -11,7 +11,7 @@ General:
 
  * TrueType, .FON rasterizer.
 
- * No thread/process/kernel-object support in Win32 code. 
+ * No thread/process scheduling support in Win32 code. 
 
  * Very alpha printing code. [john@division.co.uk]
 
@@ -20,15 +20,9 @@ General:
  * No MS Video support (perhaps interface with xanim, don't hold
    your breath for this one).
 
- * No COMDLG32 support. (Needed badly, the Windows95 comdlg32.dll
-   doesn't work with WINE.)
+ * COMDLG32 support not complete yet.
 
  * No COMMCTRL/COMCTL32 support.
-
- * No icon titles.
-	- Windows uses a special window class to display icon titles.
-	  Handles to these title windows are stored in the icon window
-	  properties.
 
  * No manual pages describing the various Windows calls.
 	- You can find information about most of the Win32 API calls
@@ -36,7 +30,9 @@ General:
 
 Miscellaneous:
 
- * New font mapping scheme can be improved.
+ * Text alignment problems in Word and Write (variable pitch fonts).
+
+ * Font mapper weights
 
  * "Cursor XXXX has more than 1 bpp!"
 

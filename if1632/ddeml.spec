@@ -20,9 +20,9 @@ type	win16
 18 stub DdeUnaccessData #(word) DdeUnaccessData
 19 stub DdeFreeDataHandle #(word) DdeFreeDataHandle
 20 stub DdeGetLastError #(long) DdeGetLastError
-21 stub DdeCreateStringHandle #(long ptr word) DdeCreateStringHandle
+21 stub DdeCreateStringHandle #(long str word) DdeCreateStringHandle
 22 stub DdeFreeStringHandle #(long word) DdeFreeStringHandle
-23 stub   DdeQueryString #(long word ptr long word) DdeQueryString
+23 stub DdeQueryString #(long word ptr long word) DdeQueryString
 24 stub DdeKeepStringHandle #(long word) DdeKeepStringHandle
 
 26 stub DdeEnableCallback #(long word word) DdeEnableCallback

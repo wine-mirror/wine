@@ -12,7 +12,7 @@ base	0
 0007 stub AddAce
 0008 stub AddAuditAccessAce
 0009 stub AdjustTokenGroups
-0010 stub AdjustTokenPrivileges
+0010 stdcall AdjustTokenPrivileges(long long ptr long ptr ptr) AdjustTokenPrivileges
 0011 stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr) AllocateAndInitializeSid
 0012 stdcall AllocateLocallyUniqueId(ptr) AllocateLocallyUniqueId
 0013 stub AreAllAccessesGranted
@@ -94,7 +94,7 @@ base	0
 0089 stub LookupPrivilegeDisplayNameW
 0090 stub LookupPrivilegeNameA
 0091 stub LookupPrivilegeNameW
-0092 stub LookupPrivilegeValueA
+0092 stdcall LookupPrivilegeValueA(ptr ptr ptr) LookupPrivilegeValue32A
 0093 stub LookupPrivilegeValueW
 0094 stub MakeAbsoluteSD
 0095 stub MakeSelfRelativeSD

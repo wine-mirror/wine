@@ -243,9 +243,12 @@ DEBUG_XXX's in include/stddebug.h or in a specific file.
 MORE INFO
 =========
 
-1. http://www.sonic.net/~undoc/bookstore.html
+1. There is a FREE online version of the MSDN library (including
+   documentation for the Win32 API) on http://www.microsoft.com/msdn/
 
-2. In 1993 Dr. Dobbs Journal published a column called "Undocumented Corner".
+2. http://www.sonic.net/~undoc/bookstore.html
 
-3. You might want to check out BYTE from December 1983 as well :-)
+3. In 1993 Dr. Dobbs Journal published a column called "Undocumented Corner".
+
+4. You might want to check out BYTE from December 1983 as well :-)
 

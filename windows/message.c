@@ -1012,8 +1012,9 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
 
     if (hwnd == HWND_BROADCAST)
     {
+        if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
+            return TRUE;
         dprintf_msg(stddeb,"SendMessage // HWND_BROADCAST !\n");
-        list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL );
         for (ppWnd = list; *ppWnd; ppWnd++)
         {
             wndPtr = *ppWnd;
@@ -1023,9 +1024,9 @@ LRESULT SendMessage16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam)
                 dprintf_msg(stddeb,"BROADCAST Message to hWnd=%04x m=%04X w=%04lX l=%08lX !\n",
                             wndPtr->hwndSelf, msg, (DWORD)wParam, lParam);
                 SendMessage16( wndPtr->hwndSelf, msg, wParam, lParam );
-	    }
+            }
         }
-	HeapFree( SystemHeap, 0, list );
+        HeapFree( SystemHeap, 0, list );
         dprintf_msg(stddeb,"SendMessage // End of HWND_BROADCAST !\n");
         return TRUE;
     }
@@ -1099,7 +1100,8 @@ LRESULT SendMessage32A(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 
     if (hwnd == HWND_BROADCAST)
     {
-        list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL );
+        if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
+            return TRUE;
         for (ppWnd = list; *ppWnd; ppWnd++)
         {
             wndPtr = *ppWnd;
@@ -1148,7 +1150,8 @@ LRESULT SendMessage32W(HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
 
     if (hwnd == HWND_BROADCAST)
     {
-        list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL );
+        if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL )))
+            return TRUE;
         for (ppWnd = list; *ppWnd; ppWnd++)
         {
             wndPtr = *ppWnd;

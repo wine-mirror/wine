@@ -370,6 +370,8 @@ static int ParseExportFunction( ORDDEF *odp )
             odp->u.func.arg_types[i] = 'l';
         else if (!strcmp(token, "ptr"))
             odp->u.func.arg_types[i] = 'p';
+	else if (!strcmp(token, "str"))
+	    odp->u.func.arg_types[i] = 't';
         else
         {
             fprintf(stderr, "%d: Unknown variable type '%s'\n", Line, token);
@@ -1442,6 +1444,7 @@ static int TransferArgs16To32( FILE *outfile, char *args )
             break;
 
         case 'p':  /* ptr */
+        case 't':  /* string */
             /* Get the selector */
             fprintf( outfile, "\tmovw %d(%%ebp),%%ax\n", pos16 + 2 );
             /* Get the selector base */
@@ -1574,7 +1577,7 @@ static void RestoreContext16( FILE *outfile )
  * Build a 16-bit-to-Wine callback function. The syntax of the function
  * profile is: type_xxxxx, where 'type' is one of 'regs', 'word' or
  * 'long' and each 'x' is an argument ('w'=word, 's'=signed word,
- * 'l'=long, 'p'=pointer).
+ * 'l'=long, 'p'=pointer, 't'=string).
  * For register functions, the arguments are ignored, but they are still
  * removed from the stack upon return.
  *
@@ -1736,6 +1739,7 @@ static void BuildCallFrom16Func( FILE *outfile, char *profile )
                 argsize += 2;
                 break;
             case 'p':
+            case 't':
             case 'l':
                 argsize += 4;
                 break;

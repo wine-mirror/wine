@@ -305,11 +305,11 @@ BOOL32 DC_SetupGCForPen( DC * dc )
     switch (dc->w.ROPmode)
     {
     case R2_BLACK :
-	val.foreground = BlackPixel(display, DefaultScreen(display));
+	val.foreground = BlackPixelOfScreen( screen );
 	val.function = GXcopy;
 	break;
     case R2_WHITE :
-	val.foreground = WhitePixel(display, DefaultScreen(display));
+	val.foreground = WhitePixelOfScreen( screen );
 	val.function = GXcopy;
 	break;
     case R2_XORPEN :
@@ -317,8 +317,8 @@ BOOL32 DC_SetupGCForPen( DC * dc )
 	/* It is very unlikely someone wants to XOR with 0 */
 	/* This fixes the rubber-drawings in paintbrush */
 	if (val.foreground == 0)
-	    val.foreground = BlackPixel(display, DefaultScreen(display))
-			    ^ WhitePixel(display, DefaultScreen(display));
+	    val.foreground = BlackPixelOfScreen( screen )
+			    ^ WhitePixelOfScreen( screen );
 	val.function = GXxor;
 	break;
     default :

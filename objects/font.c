@@ -797,6 +797,7 @@ BOOL32 GetTextMetrics32A( HDC32 hdc, TEXTMETRIC32A *metrics )
     Italic = % 3i\t LastChar = %03i\t\t MaxCharWidth = %i
     UnderLined = %01i\t DefaultChar = %03i\t Overhang = %i
     StruckOut = %01i\t BreakChar = %03i\t CharSet = %i
+    PitchAndFamily = %02x
     --------------------
     InternalLeading = %i
     Ascent = %i
@@ -806,6 +807,7 @@ BOOL32 GetTextMetrics32A( HDC32 hdc, TEXTMETRIC32A *metrics )
     metrics->tmItalic, metrics->tmLastChar, metrics->tmMaxCharWidth,
     metrics->tmUnderlined, metrics->tmDefaultChar, metrics->tmOverhang,
     metrics->tmStruckOut, metrics->tmBreakChar, metrics->tmCharSet,
+    metrics->tmPitchAndFamily,
     metrics->tmInternalLeading,
     metrics->tmAscent,
     metrics->tmDescent,
@@ -852,11 +854,11 @@ BOOL16 GetCharWidth16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
 	    HeapFree(SystemHeap, 0, obuf32);
 	}
     }
-    else
+    else /* happens quite often to warrant a special treatment */
     {
 	INT32 chWidth;
 	retVal = GetCharWidth32A(hdc, firstChar, lastChar, &chWidth );
-	*buffer = chWidth;
+       *buffer = chWidth;
     }
     return retVal;
 }
@@ -868,6 +870,7 @@ BOOL16 GetCharWidth16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
 BOOL32 GetCharWidth32A( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
                         LPINT32 buffer )
 {
+    UINT32 i, extra;
     DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
     if (!dc)
     {
@@ -878,6 +881,12 @@ BOOL32 GetCharWidth32A( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
     if (!dc->funcs->pGetCharWidth ||
         !dc->funcs->pGetCharWidth( dc, firstChar, lastChar, buffer))
         return FALSE;
+
+    /* convert device units to logical */
+
+    extra = dc->vportExtX >> 1;
+    for( i = firstChar; i <= lastChar; i++, buffer++ )
+         *buffer = (*buffer * dc->wndExtX + extra) / dc->vportExtX;
 
     return TRUE;
 }

@@ -431,7 +431,7 @@ base	1
 426 stub longjmp
 427 cdecl malloc(ptr) CRTDLL_malloc
 428 stub mblen
-429 stub mbstowcs
+429 cdecl mbstowcs(ptr ptr long) CRTDLL_mbstowcs
 430 cdecl mbtowc(long) CRTDLL_mbtowc
 431 cdecl memchr(ptr long long) memchr
 432 cdecl memcmp(ptr ptr long) memcmp

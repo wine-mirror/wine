@@ -1,0 +1,51 @@
+/*
+ * Help Viewer
+ * 
+ * Copyright 1996 Ulrich Schmid
+ *
+ * Rumantsch Ladin (Vallader) by mbaur@g26.ethz.ch
+ *
+ */
+
+/* This file is not yet complete !! */
+
+#define LANGUAGE_ID                  Rl
+#define LANGUAGE_NUMBER              C
+
+/* Menu */
+
+#define MENU_FILE                    "&Datoteca"
+#define MENU_FILE_OPEN               "&Rivir"
+#define MENU_FILE_PRINT              "&Stampar tema"
+#define MENU_FILE_PRINTER_SETUP      "&Installaziun dal stampader..."
+#define MENU_FILE_EXIT               "&Finir"
+
+#define MENU_EDIT                    "&Lavurar"
+#define MENU_EDIT_COPY_DIALOG        "&Capchar"
+#define MENU_EDIT_ANNOTATE           "&Annotaziun..."
+
+#define MENU_BOOKMARK                "&Marca"
+#define MENU_BOOKMARK_DEFINE         "&Definir..."
+
+#define MENU_HELP                    "&Agüd"
+#define MENU_HELP_ON_HELP            "&Douvrar l'agüd"
+#define MENU_HELP_ON_TOP             "Adüna da&vant"
+#define MENU_HELP_INFO               "I&nfuormaziuns"
+#define MENU_HELP_ABOUT_WINE         "Davart &WINE"
+
+/* Strings */
+
+#define STRING_WINE_HELP             "WINE agüd"
+#define STRING_ERROR                 "SBAGL"
+#define STRING_WARNING               "ATTENZIUN"
+#define STRING_INFO                  "INFUORMAZIUN"
+#define STRING_NOT_IMPLEMENTED       "Na implementa"
+#define STRING_HLPFILE_ERROR_s       "Sbagl cun leger la datoteca d'agüd `%s'"
+#define STRING_CONTENTS              "&Cuntgnü"
+#define STRING_SEARCH                "&Tscherchar"
+#define STRING_BACK                  "&Inavo"
+#define STRING_HISTORY               "&Fin qua"
+#define STRING_ALL_FILES             "Tuot las datotecas (*.*)"
+#define STRING_HELP_FILES_HLP        "Datotecas d'agüd (*.hlp)"
+
+#include "Xx.rc"

@@ -2,7 +2,7 @@ name	user
 type	win16
 heap	65520
 
-1   pascal16 MessageBox(word ptr ptr word) MessageBox16
+1   pascal16 MessageBox(word str str word) MessageBox16
 2   stub OldExitWindows
 3   stub EnableOEMLayer
 4   stub DisableOEMLayer
@@ -40,7 +40,7 @@ heap	65520
 38  pascal16 GetWindowTextLength(word) GetWindowTextLength16
 39  pascal16 BeginPaint(word ptr) BeginPaint16
 40  pascal16 EndPaint(word ptr) EndPaint16
-41  pascal16 CreateWindow(ptr ptr long s_word s_word s_word s_word
+41  pascal16 CreateWindow(str str long s_word s_word s_word s_word
 	                  word word word segptr) CreateWindow16
 42  pascal16 ShowWindow(word word) ShowWindow16
 43  pascal16 CloseWindow(word) CloseWindow16
@@ -50,7 +50,7 @@ heap	65520
 47  pascal16 IsWindow(word) IsWindow16
 48  pascal16 IsChild(word word) IsChild16
 49  pascal16 IsWindowVisible(word) IsWindowVisible16
-50  pascal16 FindWindow(segptr ptr) FindWindow16
+50  pascal16 FindWindow(segptr str) FindWindow16
 #51 BEAR51
 52  pascal16 AnyPopup() AnyPopup16
 53  pascal16 DestroyWindow(word) DestroyWindow16
@@ -170,7 +170,7 @@ heap	65520
 168 pascal16 SetCaretBlinkTime(word) SetCaretBlinkTime16
 169 pascal16 GetCaretBlinkTime() GetCaretBlinkTime16
 170 pascal16 ArrangeIconicWindows(word) ArrangeIconicWindows16
-171 pascal16 WinHelp(word ptr word long) WinHelp16
+171 pascal16 WinHelp(word str word long) WinHelp16
 172 pascal16 SwitchToThisWindow(word word) SwitchToThisWindow16
 173 pascal16 LoadCursor(word segptr) LoadCursor16
 174 pascal16 LoadIcon(word segptr) LoadIcon16
@@ -200,7 +200,7 @@ heap	65520
 197 pascal   GetTabbedTextExtent(word ptr word word ptr) GetTabbedTextExtent16
 198 pascal16 CascadeChildWindows(word word) CascadeChildWindows
 199 pascal16 TileChildWindows(word word) TileChildWindows
-200 pascal16 OpenComm(ptr word word) OpenComm
+200 pascal16 OpenComm(str word word) OpenComm
 201 pascal16 SetCommState(ptr) SetCommState16
 202 pascal16 GetCommState(word ptr) GetCommState16
 203 pascal16 GetCommError(word ptr) GetCommError
@@ -254,7 +254,7 @@ heap	65520
 249 pascal16 GetAsyncKeyState(word) GetAsyncKeyState16
 250 pascal16 GetMenuState(word word word) GetMenuState16
 251 pascal   SendDriverMessage(word word long long) SendDriverMessage
-252 pascal16 OpenDriver(ptr ptr long) OpenDriver
+252 pascal16 OpenDriver(str str long) OpenDriver
 253 pascal   CloseDriver(word long long) CloseDriver
 254 pascal16 GetDriverModuleHandle(word) GetDriverModuleHandle
 255 pascal   DefDriverProc(long word word long long) DefDriverProc
@@ -377,15 +377,15 @@ heap	65520
 427 pascal16 FindWindowEx(word word segptr ptr) FindWindowEx16
 428 stub TileWindows
 429 stub CascadeWindows
-430 pascal16 lstrcmp(ptr ptr) lstrcmp16
+430 pascal16 lstrcmp(str str) lstrcmp16
 431 pascal   AnsiUpper(segptr) AnsiUpper16
 432 pascal   AnsiLower(segptr) AnsiLower16
 433 pascal16 IsCharAlpha(byte) IsCharAlpha16
 434 pascal16 IsCharAlphanumeric(byte) IsCharAlphanumeric16
 435 pascal16 IsCharUpper(byte) IsCharUpper16
 436 pascal16 IsCharLower(byte) IsCharLower16
-437 pascal16 AnsiUpperBuff(ptr word) AnsiUpperBuff16
-438 pascal16 AnsiLowerBuff(ptr word) AnsiLowerBuff16
+437 pascal16 AnsiUpperBuff(str word) AnsiUpperBuff16
+438 pascal16 AnsiLowerBuff(str word) AnsiLowerBuff16
 441 stub InsertMenuItem
 443 stub GetMenuItemInfo
 445 pascal   DefFrameProc(word word word word long) DefFrameProc16
@@ -395,7 +395,7 @@ heap	65520
 449 stub DrawState
 450 stub CreateIconFromResourceEx
 451 pascal16 TranslateMDISysAccel(word ptr) TranslateMDISysAccel16
-452 pascal16 CreateWindowEx(long ptr ptr long s_word s_word s_word s_word
+452 pascal16 CreateWindowEx(long str str long s_word s_word s_word s_word
                             word word word segptr) CreateWindowEx16
 454 pascal16 AdjustWindowRectEx(ptr long word long) AdjustWindowRectEx16
 455 pascal16 GetIconID(word long) GetIconID
@@ -411,7 +411,7 @@ heap	65520
 465 pascal16 DragDetect(word long) DragDetect16
 466 pascal16 DrawFocusRect(word ptr) DrawFocusRect16
 470 stub StringFunc
-471 pascal16 lstrcmpi(ptr ptr) lstrcmpi16
+471 pascal16 lstrcmpi(str str) lstrcmpi16
 472 pascal   AnsiNext(segptr) AnsiNext16
 473 pascal   AnsiPrev(segptr segptr) AnsiPrev16
 475 pascal16 SetScrollInfo(word s_word ptr word) SetScrollInfo16

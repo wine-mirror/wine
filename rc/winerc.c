@@ -354,7 +354,16 @@ gen_res* dialog_class(char* cap, gen_res*attr)
 	return insert_string(attr,cap,dialog_get_class(attr),0);
 }
 
-gen_res* dialog_menu(char* cap, gen_res*attr)
+gen_res* dialog_menu_id(short nr, gen_res*attr)
+{
+	char c_nr[2];
+	int offs=dialog_get_menu(attr);
+	attr->res[offs] = 0xff;
+	if (win32) attr->res[offs+1] = 0xff;
+	put_WORD(c_nr,nr);
+	return insert_bytes(attr,c_nr,offs+(win32?2:1),2);
+}
+gen_res* dialog_menu_str(char* cap, gen_res*attr)
 {
 	return insert_string(attr,cap,dialog_get_menu(attr),0);
 }
@@ -415,10 +424,12 @@ gen_res* label_control_desc(char* label,gen_res* cd)
 gen_res* create_generic_control(char* label,int id,char* class,
 	rc_style*style,int x,int y,int cx,int cy)
 {	gen_res* ret=new_res();
+	int s=WS_VISIBLE|WS_CHILD; /*default styles for any control*/
+	if(style)s=(s|style->or)&style->and;
 	if(win32)
 	{
 		WORD cl;
-		put_DWORD(ret->res+0,style->or);
+		put_DWORD(ret->res+0,s);
 		/* FIXME */
 		/* put_DWORD(ret->res+4,exstyle->or); */
 		put_WORD(ret->res+8,x);
@@ -430,12 +441,12 @@ gen_res* create_generic_control(char* label,int id,char* class,
 		ret=insert_string(ret,label,20,0);
 		/* is it a predefined class? */
 		cl=0;
-		if(!strcmp(class,"BUTTON"))cl=CT_BUTTON;
-		if(!strcmp(class,"EDIT"))cl=CT_EDIT;
-		if(!strcmp(class,"STATIC"))cl=CT_STATIC;
-		if(!strcmp(class,"LISTBOX"))cl=CT_LISTBOX;
-		if(!strcmp(class,"SCROLLBAR"))cl=CT_SCROLLBAR;
-		if(!strcmp(class,"COMBOBOX"))cl=CT_COMBOBOX;
+		if(!strcasecmp(class,"BUTTON"))cl=CT_BUTTON;
+		if(!strcasecmp(class,"EDIT"))cl=CT_EDIT;
+		if(!strcasecmp(class,"STATIC"))cl=CT_STATIC;
+		if(!strcasecmp(class,"LISTBOX"))cl=CT_LISTBOX;
+		if(!strcasecmp(class,"SCROLLBAR"))cl=CT_SCROLLBAR;
+		if(!strcasecmp(class,"COMBOBOX"))cl=CT_COMBOBOX;
 		if(cl) {
 			char ffff[2]={0xff, 0xff};
 			ret=insert_bytes(ret,ffff,18,2);
@@ -451,17 +462,17 @@ gen_res* create_generic_control(char* label,int id,char* class,
 		put_WORD(ret->res+4,cx);
 		put_WORD(ret->res+6,cy);
 		put_WORD(ret->res+8,id);
-		put_DWORD(ret->res+10,style->or);
+		put_DWORD(ret->res+10,s);
 		ret->size=17;
 		ret=insert_string(ret,label,15,0);
 		/* is it a predefined class? */
 		cl=0;
-		if(!strcmp(class,"BUTTON"))cl=CT_BUTTON;
-		if(!strcmp(class,"EDIT"))cl=CT_EDIT;
-		if(!strcmp(class,"STATIC"))cl=CT_STATIC;
-		if(!strcmp(class,"LISTBOX"))cl=CT_LISTBOX;
-		if(!strcmp(class,"SCROLLBAR"))cl=CT_SCROLLBAR;
-		if(!strcmp(class,"COMBOBOX"))cl=CT_COMBOBOX;
+		if(!strcasecmp(class,"BUTTON"))cl=CT_BUTTON;
+		if(!strcasecmp(class,"EDIT"))cl=CT_EDIT;
+		if(!strcasecmp(class,"STATIC"))cl=CT_STATIC;
+		if(!strcasecmp(class,"LISTBOX"))cl=CT_LISTBOX;
+		if(!strcasecmp(class,"SCROLLBAR"))cl=CT_SCROLLBAR;
+		if(!strcasecmp(class,"COMBOBOX"))cl=CT_COMBOBOX;
 		if(cl)ret->res[14]=cl;
 		else ret=insert_string(ret,class,14,0);
 	}
@@ -583,7 +594,11 @@ gen_res *load_file(char* name)
 	gen_res *res;
 	struct stat st;
 	int f=open(name,O_RDONLY);
-	if(!f)perror(name);
+	if(f<0)
+	{
+	  perror(name);
+	  exit(1);
+	}
 	fstat(f,&st);
 	res=new_res();
 	while(res->space<st.st_size)res=grow(res);
@@ -656,7 +671,9 @@ void add_str_tbl_elm(int id,char* str)
   while(*elm && (*elm)->group<group) elm=&(*elm)->next;
   if(!*elm || (*elm)->group!=group)
   {
+    int i;
     str_tbl_elm* new=xmalloc(sizeof(str_tbl_elm));
+    for(i=0; i<16; i++) new->strings[i] = NULL;
     new->group=group;
     new->next=*elm;
     *elm=new;

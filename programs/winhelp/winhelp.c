@@ -21,6 +21,7 @@ VOID LIBWINE_Register_Fr(void);
 VOID LIBWINE_Register_It(void);
 VOID LIBWINE_Register_Ko(void);
 VOID LIBWINE_Register_Hu(void);
+VOID LIBWINE_Register_Va(void);
 
 static BOOL    WINHELP_RegisterWinClasses();
 static LRESULT WINHELP_MainWndProc(HWND, UINT, WPARAM, LPARAM);
@@ -62,6 +63,7 @@ int PASCAL WinMain (HANDLE hInstance, HANDLE prev, LPSTR cmdline, int show)
   LIBWINE_Register_It();
   LIBWINE_Register_Ko();
   LIBWINE_Register_Hu();
+  LIBWINE_Register_Va();
 #endif
 
   Globals.hInstance = hInstance;

@@ -40,8 +40,16 @@ DWORD
 DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile, LPDWORD lpType,
                   LPBYTE lpPrinterData, int cbData, LPDWORD lpNeeded)
 {
-    fprintf(stderr,"In DrvGetPrinterData printer %p profile %p lpType %p \n",
-           lpPrinter, lpProfile, lpType);
+    fprintf(stderr,"In DrvGetPrinterData ");
+    if (HIWORD(lpPrinter))
+	    fprintf(stderr,"printer %s ",lpPrinter);
+    else
+	    fprintf(stderr,"printer %p ",lpPrinter);
+    if (HIWORD(lpProfile))
+	    fprintf(stderr,"profile %s ",lpProfile);
+    else
+	    fprintf(stderr,"profile %p ",lpProfile);
+    fprintf(stderr,"lpType %p\n",lpType);
     return 0;
 }
 
@@ -51,8 +59,16 @@ DWORD
 DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile, LPDWORD lpType,
                   LPBYTE lpPrinterData, DWORD dwSize)
 {
-    fprintf(stderr,"In DrvSetPrinterData printer %p profile %p lpType %p \n",
-           lpPrinter, lpProfile, lpType);
+    fprintf(stderr,"In DrvSetPrinterData ");
+    if (HIWORD(lpPrinter))
+	    fprintf(stderr,"printer %s ",lpPrinter);
+    else
+	    fprintf(stderr,"printer %p ",lpPrinter);
+    if (HIWORD(lpProfile))
+	    fprintf(stderr,"profile %s ",lpProfile);
+    else
+	    fprintf(stderr,"profile %p ",lpProfile);
+    fprintf(stderr,"lpType %p\n",lpType);
     return 0;
 }
 

@@ -82,6 +82,7 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
             break;
         case 'l':
         case 'p':
+        case 't':
             args16 += 4;
             break;
         }
@@ -99,6 +100,14 @@ void RELAY_DebugCallFrom16( int func_type, char *args,
         case 'l':
             args16 -= 4;
             printf( "0x%08x", *(int *)args16 );
+            break;
+        case 't':
+            args16 -= 4;
+            if (HIWORD(*(int *)args16))
+                printf( "0x%08x \"%s\"", *(int *)args16,
+                        (char *)PTR_SEG_TO_LIN(*(int *)args16) );
+            else
+                printf( "0x%08x", *(int *)args16 );
             break;
         case 'p':
             args16 -= 4;
@@ -386,6 +395,7 @@ WIN16_CallProc32W() {
 	DWORD	argconvmask = win_stack[1];
 	FARPROC32	proc32 = (FARPROC32)win_stack[2];
 	DWORD	*args,ret;
+        STACK16FRAME stf16;
 	int	i;
 
 	fprintf(stderr,"CallProc32W(%ld,%ld,%p,args[",nrofargs,argconvmask,proc32);
@@ -419,6 +429,16 @@ WIN16_CallProc32W() {
 		ret = 0;
 		break;
 	}
+	/* POP nrofargs DWORD arguments and 3 DWORD parameters */
+	/* FIXME: this is a BAD hack, but I don't see any other way to
+	 * pop a variable number of arguments.  -MM
+	 * The -2 in the size is for not copying WORD args[0] (which would
+	 * overwrite the top WORD on the return stack)
+	 */
+	memcpy(&stf16,CURRENT_STACK16,sizeof(stf16)-2);
+	IF1632_Saved16_sp += (3+nrofargs)*sizeof(DWORD);
+	memcpy(CURRENT_STACK16,&stf16,sizeof(stf16)-2);
+
 	fprintf(stderr,"returns %08lx\n",ret);
 	free(args);
 	return ret;

@@ -601,3 +601,15 @@ DWORD GetTabbedTextExtent32W( HDC32 hdc, LPCWSTR lpstr, INT32 count,
     HeapFree( GetProcessHeap(), 0, p );
     return ret;
 }
+
+/***********************************************************************
+ *           GetTextCharset    (USER32.226) (USER.612)
+ */
+INT32 GetTextCharset32(HDC32 hdc) {
+    fprintf(stdnimp,"GetTextCharset(0x%x)\n",hdc);
+    return DEFAULT_CHARSET; /* FIXME */
+}
+
+INT16 GetTextCharset16(HDC16 hdc) {
+    return GetTextCharset32(hdc);
+}

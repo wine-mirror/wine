@@ -7,15 +7,15 @@ base	1
 0002 stub ChooseColorW
 0003 stub ChooseFontA
 0004 stub ChooseFontW
-0005 stub CommDlgExtendedError
+0005 stdcall CommDlgExtendedError() CommDlgExtendedError
 0006 stub FindTextA
 0007 stub FindTextW
-0008 stub GetFileTitleA
-0009 stub GetFileTitleW
-0010 stub GetOpenFileNameA
-0011 stub GetOpenFileNameW
-0012 stub GetSaveFileNameA
-0013 stub GetSaveFileNameW
+0008 stdcall GetFileTitleA(ptr ptr long) GetFileTitle32A
+0009 stdcall GetFileTitleW(ptr ptr long) GetFileTitle32W
+0010 stdcall GetOpenFileNameA(ptr) GetOpenFileName32A
+0011 stdcall GetOpenFileNameW(ptr) GetOpenFileName32W
+0012 stdcall GetSaveFileNameA(ptr) GetSaveFileName32A
+0013 stdcall GetSaveFileNameW(ptr) GetSaveFileName32A
 0014 stub LoadAlterBitmap
 0015 stub PageSetupDlgA
 0016 stub PageSetupDlgW

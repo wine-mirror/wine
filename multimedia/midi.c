@@ -91,14 +91,42 @@ static LINUX_MCIMIDI	MCIMidiDev[MAX_MCIMIDIDRV];
 static DWORD MIDI_NotifyClient(UINT16 wDevID, WORD wMsg, 
 				DWORD dwParam1, DWORD dwParam2)
 {
+	dprintf_midi(stddeb,"MIDI_NotifyClient // wDevID = %04X wMsg = %d dwParm1 = %04lX dwParam2 = %04lX\n",wDevID, wMsg, dwParam1, dwParam2);
+
 #if defined(linux) || defined(__FreeBSD__)
+
+	switch (wMsg) {
+	case MOM_OPEN:
+	case MOM_CLOSE:
+	case MOM_DONE:
+	  if (wDevID > MAX_MIDIOUTDRV) return MCIERR_INTERNAL;
+	  
+	  if (MidiOutDev[wDevID].wFlags != DCB_NULL && !DriverCallback(
+		MidiOutDev[wDevID].midiDesc.dwCallback, 
+		MidiOutDev[wDevID].wFlags, 
+		MidiOutDev[wDevID].midiDesc.hMidi, 
+                wMsg, 
+		MidiOutDev[wDevID].midiDesc.dwInstance, 
+                dwParam1, 
+                dwParam2)) {
+	    dprintf_midi(stddeb,"MIDI_NotifyClient // can't notify client !\n");
+	    return MMSYSERR_NOERROR;
+	  }
+	  break;
+
+	case MIM_OPEN:
+	case MIM_CLOSE:
+	  if (wDevID > MAX_MIDIINDRV) return MCIERR_INTERNAL;
+	  
 	if (MidiInDev[wDevID].wFlags != DCB_NULL && !DriverCallback(
 		MidiInDev[wDevID].midiDesc.dwCallback, MidiInDev[wDevID].wFlags, 
 		MidiInDev[wDevID].midiDesc.hMidi, wMsg, 
 		MidiInDev[wDevID].midiDesc.dwInstance, dwParam1, dwParam2)) {
-		dprintf_midi(stddeb, "MIDI_NotifyClient // can't notify client !\n");
+	    dprintf_mciwave(stddeb,"MIDI_NotifyClient // can't notify client !\n");
 		return MMSYSERR_NOERROR;
 		}
+	  break;
+	}
         return 0;
 #else
 	return MMSYSERR_NOTENABLED;
@@ -293,6 +321,7 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms
 		MCIMidiDev[wDevID].fShareable = dwFlags & MCI_OPEN_SHAREABLE;
 		MCIMidiDev[wDevID].hMidiHdr = USER_HEAP_ALLOC(sizeof(MIDIHDR));
 		}
+
 	dprintf_midi(stddeb, "MIDI_mciOpen // wDevID=%04X\n", wDevID);
 /*	lpParms->wDeviceID = wDevID;*/
 	dprintf_midi(stddeb, "MIDI_mciOpen // lpParms->wDevID=%04X\n", lpParms->wDeviceID);
@@ -352,14 +381,15 @@ static DWORD MIDI_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_OPEN_PARMS lpParms
 				(LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType,
 				ckMainRIFF.cksize);
 		}
+
 	dwRet = modMessage(wDevID, MODM_OPEN, 0, (DWORD)&MidiDesc, CALLBACK_NULL);
-/*	dwRet = midMessage(wDevID, MIDM_OPEN, 0, (DWORD)&MidiDesc, CALLBACK_NULL); */
+/*	dwRet = midMessage(wDevID, MIDM_OPEN, 0, (DWORD)&MidiDesc, CALLBACK_NULL);*/
+
 	return 0;
 #else
 	return MMSYSERR_NOTENABLED;
 #endif
 }
-
 
 /**************************************************************************
 * 				MIDI_mciStop			[internal]
@@ -868,7 +898,12 @@ static DWORD MIDI_mciInfo(UINT16 wDevID, DWORD dwFlags, LPMCI_INFO_PARMS lpParms
 static DWORD midGetDevCaps(WORD wDevID, LPMIDIINCAPS lpCaps, DWORD dwSize)
 {
 	dprintf_midi(stddeb, "midGetDevCaps(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
-	return MMSYSERR_NOTENABLED;
+	lpCaps->wMid = 0x00FF; 	        /* Manufac ID */
+	lpCaps->wPid = 0x0001; 	        /* Product ID */
+	lpCaps->vDriverVersion = 0x001; /* Product Version */
+	strcpy(lpCaps->szPname, "Linux MIDIIN Driver");
+
+	return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
@@ -1051,7 +1086,21 @@ DWORD midMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPS lpCaps, DWORD dwSize)
 {
 	dprintf_midi(stddeb, "modGetDevCaps(%04X, %p, %08lX);\n", wDevID, lpCaps, dwSize);
-	return MMSYSERR_NOTENABLED;
+	lpCaps->wMid = 0x00FF; 	/* Manufac ID */
+	lpCaps->wPid = 0x0001; 	/* Product ID */
+	lpCaps->vDriverVersion = 0x001; /* Product Version */
+	strcpy(lpCaps->szPname, "Linux MIDIOUT Driver version 0.01");
+/* FIXME
+   Values are the same as I get with Borland TC 4.5
+*/
+
+	lpCaps->wTechnology = MOD_FMSYNTH;
+	lpCaps->wVoices     = 14;       /* make it ioctl */
+	lpCaps->wNotes      = 14;       /* make it ioctl */
+	lpCaps->dwSupport   = MIDICAPS_VOLUME|MIDICAPS_LRVOLUME;
+	dprintf_midi(stddeb,"Linux modGetDevCaps // techn = %d voices=%d notes = %d support = %ld\n",lpCaps->wTechnology,lpCaps->wVoices,lpCaps->wNotes,lpCaps->dwSupport);
+
+	return MMSYSERR_NOERROR;
 }
 
 

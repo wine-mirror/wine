@@ -2,11 +2,11 @@ name	olesvr
 type	win16
 
 #1 WEP
-2  pascal OleRegisterServer(ptr ptr ptr word word) OleRegisterServer
+2  pascal OleRegisterServer(str ptr ptr word word) OleRegisterServer
 3  pascal OleRevokeServer(long) OleRevokeServer
 4  pascal OleBlockServer(long) OleBlockServer
 5  pascal OleUnblockServer(long ptr) OleUnblockServer
-6  pascal OleRegisterServerDoc(long ptr ptr ptr) OleRegisterServerDoc
+6  pascal OleRegisterServerDoc(long str ptr ptr) OleRegisterServerDoc
 7  pascal OleRevokeServerDoc(long) OleRevokeServerDoc
 8 stub OLERENAMESERVERDOC
 9 stub OLEREVERTSERVERDOC

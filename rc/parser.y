@@ -72,7 +72,7 @@ resource_definition:	accelerators {$$=$1;}
                 ;
 
 /* have to use tBEGIN because BEGIN is predefined */
-accelerators:	ACCELERATORS  tBEGIN  events tEND {$$=$3;$$->type=acc;}
+accelerators:	ACCELERATORS load_and_memoption tBEGIN  events tEND {$$=$4;$$->type=acc;}
 /* the events are collected in a gen_res, as the accelerator resource is just
    an array of events */
 events:		{$$=new_res();}
@@ -113,7 +113,9 @@ dlg_attributes:	{$$=new_dialog();}
 		| CLASS tSTRING dlg_attributes
 		  {$$=dialog_class($2,$3);}
 		| MENU tSTRING dlg_attributes
-		  {$$=dialog_menu($2,$3);}
+		  {$$=dialog_menu_str($2,$3);}
+		| MENU NUMBER dlg_attributes
+		  {$$=dialog_menu_id($2,$3);}
 
 /* the controls are collected into a gen_res, and finally the dialog header 
    is put at the beginning */

@@ -148,7 +148,7 @@ static BUILTIN_DLL BuiltinDLLs[] =
     /* Win32 DLLs */
     { &ADVAPI32_Descriptor, 0 },
     { &COMCTL32_Descriptor, DLL_FLAG_NOT_USED },
-    { &COMDLG32_Descriptor, DLL_FLAG_NOT_USED },
+    { &COMDLG32_Descriptor, 0 },
     { &CRTDLL_Descriptor,   0 },
     { &OLE32_Descriptor,    DLL_FLAG_NOT_USED },
     { &GDI32_Descriptor,    0 },

@@ -451,7 +451,7 @@ static BOOL32 EVENT_QueryZOrder( WND* pWndCheck )
 
     parent = __get_common_ancestor( pWndZ->window, pWnd->window,
                                       &children, &total );
-    if( parent )
+    if( parent && children )
     {
         w = __get_top_decoration( pWndCheck->window, parent );
         if( w != children[total - 1] )

@@ -64,9 +64,9 @@ void hmemcpy( LPVOID dst, LPCVOID src, LONG count )
 /***********************************************************************
  *           lstrcat16   (KERNEL.89)
  */
-SEGPTR lstrcat16( SEGPTR dst, SEGPTR src )
+SEGPTR lstrcat16( SEGPTR dst, LPCSTR src )
 {
-    lstrcat32A( (LPSTR)PTR_SEG_TO_LIN(dst), (LPCSTR)PTR_SEG_TO_LIN(src) );
+    lstrcat32A( (LPSTR)PTR_SEG_TO_LIN(dst), src );
     return dst;
 }
 
@@ -98,9 +98,9 @@ LPWSTR lstrcat32W( LPWSTR dst, LPCWSTR src )
 /***********************************************************************
  *           lstrcatn16   (KERNEL.352)
  */
-SEGPTR lstrcatn16( SEGPTR dst, SEGPTR src, INT16 n )
+SEGPTR lstrcatn16( SEGPTR dst, LPCSTR src, INT16 n )
 {
-    lstrcatn32A( (LPSTR)PTR_SEG_TO_LIN(dst), (LPCSTR)PTR_SEG_TO_LIN(src), n );
+    lstrcatn32A( (LPSTR)PTR_SEG_TO_LIN(dst), src, n );
     return dst;
 }
 
@@ -212,9 +212,9 @@ INT32 lstrcmpi32W( LPCWSTR str1, LPCWSTR str2 )
 /***********************************************************************
  *           lstrcpy16   (KERNEL.88)
  */
-SEGPTR lstrcpy16( SEGPTR dst, SEGPTR src )
+SEGPTR lstrcpy16( SEGPTR dst, LPCSTR src )
 {
-    lstrcpy32A( (LPSTR)PTR_SEG_TO_LIN(dst), (LPCSTR)PTR_SEG_TO_LIN(src) );
+    lstrcpy32A( (LPSTR)PTR_SEG_TO_LIN(dst), src );
     return dst;
 }
 
@@ -246,9 +246,9 @@ LPWSTR lstrcpy32W( LPWSTR dst, LPCWSTR src )
 /***********************************************************************
  *           lstrcpyn16   (KERNEL.353)
  */
-SEGPTR lstrcpyn16( SEGPTR dst, SEGPTR src, INT16 n )
+SEGPTR lstrcpyn16( SEGPTR dst, LPCSTR src, INT16 n )
 {
-    lstrcpyn32A( (LPSTR)PTR_SEG_TO_LIN(dst), (LPCSTR)PTR_SEG_TO_LIN(src), n );
+    lstrcpyn32A( (LPSTR)PTR_SEG_TO_LIN(dst), src, n );
     return dst;
 }
 

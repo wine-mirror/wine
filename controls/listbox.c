@@ -1731,9 +1731,12 @@ static LRESULT LISTBOX_HandleLButtonUp( WND *wnd, LB_DESCR *descr )
     if (LISTBOX_Timer != LB_TIMER_NONE)
         KillSystemTimer32( wnd->hwndSelf, LB_TIMER_ID );
     LISTBOX_Timer = LB_TIMER_NONE;
-    if (GetCapture32() == wnd->hwndSelf) ReleaseCapture();
-    if (descr->style & LBS_NOTIFY)
-        SEND_NOTIFICATION( wnd, descr, LBN_SELCHANGE );
+    if (GetCapture32() == wnd->hwndSelf)
+    {
+        ReleaseCapture();
+        if (descr->style & LBS_NOTIFY)
+            SEND_NOTIFICATION( wnd, descr, LBN_SELCHANGE );
+    }
     return 0;
 }
 

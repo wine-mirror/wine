@@ -26,10 +26,10 @@ QueryPerformanceCounter(LPLARGE_INTEGER counter) {
 
 /****************************************************************************
  *		DisableThreadLibraryCalls (KERNEL32.74)
+ * Don't call DllEntryPoint for DLL_THREAD_{ATTACH,DETACH} if set.
  */
 BOOL32
 DisableThreadLibraryCalls(HMODULE32 hModule) {
-	/* FIXME: stub for now */
     fprintf(stdnimp, "DisableThreadLibraryCalls Stub called!\n");
     return TRUE;
 }
