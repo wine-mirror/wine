@@ -3222,14 +3222,19 @@ static HRESULT WINAPI ICreateTypeLib2_fnSetLibFlags(ICreateTypeLib2 * iface, UIN
 
 static int ctl2_write_chunk(HANDLE hFile, void *segment, int length)
 {
-    if (!WriteFile(hFile, segment, length, NULL, 0)) {CloseHandle(hFile); return 0;}
+    DWORD dwWritten;
+    if (!WriteFile(hFile, segment, length, &dwWritten, 0)) {
+        CloseHandle(hFile);
+        return 0;
+    }
     return -1;
 }
 
 static int ctl2_write_segment(ICreateTypeLib2Impl *This, HANDLE hFile, int segment)
 {
+    DWORD dwWritten;
     if (!WriteFile(hFile, This->typelib_segment_data[segment],
-		   This->typelib_segdir[segment].length, NULL, 0)) {
+		   This->typelib_segdir[segment].length, &dwWritten, 0)) {
 	CloseHandle(hFile);
 	return 0;
     }
