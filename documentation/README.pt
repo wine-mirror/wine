@@ -1,0 +1,242 @@
+1. INTRODUÇÃO
+
+Wine é um programa que permite correr programas Microsoft Windows 
+(incluindo DOS, Windows 3.x e Win32 executáveis) em Unix.
+Consiste num carregador (loader), que carrega e executa um binário 
+Microsoft Windows, e uma livraria (chamada Winelib) que implementa 
+Windows API calls usando o Unix ou X11 equivalentes. A livraria também 
+pode ser usada para "porting" Win32 código para executáveis do nativo Unix .
+
+Wine é software grátis,autorizado segundo a GNU LGPL; ver o ficheiro 
+LICENÇA para os detalhes.
+
+2.ARRANQUE RÁPIDO
+
+Sempre que se compila da source, é recomendado que se use o Wine 
+Installer para construir e instalar o Wine. Desde a primeira directoria 
+do Wine source (que contém este ficheiro),corre:
+
+./tools/wineinstall
+
+Corre os programas conforme as "wine [options] program". Para mais 
+informações e resoçução de problemas. Lê o resto deste ficheiro, a Wine 
+man page, os ficheiros incluidos na directoria de documentação  do Wine 
+source (ver "DOCUMENTATION"), e especialmente a abundância de informação 
+encontrada em http://www.winehq.com.
+
+3.REQUERIMENTOS
+
+Para compilar e correr o Wine, deves ter o seguinte:
+
+		Linux version 2.0.36 ou superior
+		FreeBSD 4.x ou FreeBSD 5-CURRENT
+		Solaris x86 2.5 ou seguinte
+		NetBSD-current
+
+Linux info:
+Contudo o Linux versão 2.0.x irá sobretudo trabalhar, certos aspectos 
+(especificamente LDT      sharing) requesitado para propriamente 
+suportar  sequências Win32 não foram implementadas até a versão do 
+kernel 2.2. Se tiveres quebras (crashes) com uma certa sequência ou que 
+estejam relacionados, tu poderas querer fazer o upgrade pelo menos até a 
+versão 2.2.
+Também, alguns bugs foram arranjados e certas funcionalidades foram 
+tardiamente adicionadas nas séries do Linux 2.0.x, então se tiveres um 
+Linux Kernel muito antigo.será melhor fazer o upgrade até ao lançamento 
+da versão 2.0.x.
+
+FreeBSD info:
+Certificar-se que tem as opções USER_LDT, SYSVSHM, SYSVSEM; e SYSVMSG, 
+ligadas ao kernel. Mais informação
+encontra-se em: 
+ftp://ftp.freebsd.org/pub/FreeBSD/ports/ports/emulators/wine/
+
+
+Solaris info:
+Tu irás provavelmente ter que contruir o Wine com as ferramentas GNU 
+(gcc, gas, etc.). Aviso: ao instalar gas *não* assegura que será usado 
+pelo gcc. Recompilar o gcc depois de instalar o gas ou symking cc, as e 
+ld para as ferramentas gnu é dito que é necessário.
+
+NetBSD info:
+Certifica-te que tens as opções USER_LDT, SYSVSHM, SYSVSEM, e SYSVMSG 
+ligadas ao teu kernel.
+
+File systems info:
+O Wine deverá correr na maioria dos file systems. Contudo, o Wine falha 
+no aranque se umsdos é usado para a directoria /tmp. Alguns problemas de 
+compatibilidades foram relatados estando a usar ficheiros acessados 
+através do Samba. Também, como o NTFS apenas pode ser usado com 
+segurança com acesso readonly por agora, nós não recomendamos o uso de 
+NTFS. Como os programas de Windows precisam de acesso write em quase tudo.
+No caso de NTFS files, copia por cima para uma localização em que se 
+possa escrever.
+
+O Wine requer sequências kernel-level para poder correr. Actualmente, 
+apenas as versões 2.0 ou superiores do Linux. FreeBSD 4.x ou superiores, 
+Solaris x86 versão 2.5 ou superiores, e NetBSD-actual são suportados.
+Outros sistemas operativos que suportam sequências kernel, talvez venham 
+a ser suportados no futuro.
+
+Tu precisas de ter o X11 development que inclua fucheiros instalados 
+(chamados xlib6g-dev em Debian e Xfree86-devel no RedHat).
+Para usar o suporte do Wine para aplicacões multi-sequnciai, as tuas 
+livrarias X têm que ser reentrantes, que é provavelmente "defaul" por agora.
+Se tu tens o libc6 (glibc2), ou compilaste as librarias X por ti prório, 
+eles foram provavelmente compiladas com a opção de reentrância activada.
+
+Em sistemas x86 o gcc >= 2.7.2 é requerido.
+Versões anteriores à 2.7.2.3 poderão ter problemas quando certos 
+ficheiros são compilados com optimização, frequentemente devido a 
+problemas relacionados com as gestôes dos cabeçalhos dos ficheiros. 
+Actualmente o pgcc não trabalha com o Wine. A causa deste problema é 
+desconhecida.
+
+Claro que tambm precisas fazer "make" (geralmente como o GNU make).
+
+Tu também necessitas do flex versao 2.5 ou superior e o yacc.
+Bison irá trabalhar como substituição do yacc. Se estiveres a usar 
+RedHat ou Debian, instala os pacotes do flex e do bison.
+
+Para o processamento automático dos scripts de teste, tu também irás 
+precisar do libperl "development header support" (pacote libperl-dev em 
+Debian).
+
+Para os requesitos no caso de tu quereres contruir a documentação, ve a 
+secção "DOCUMENTAÇÃO".
+
+4.COMPILAÇÃO
+
+No caso de escolheres não usar wineinstall, corre os seguintes comandos 
+para contruir o Wine:
+
+./configure
+make depend
+make
+
+Isto irá contruir o programa "wine" e numerosos suportes livraris/binarios.
+O programa "wine" irá carregar e correr executaveis do Windows.
+A livraria "libwine" ("winelib") pode ser usada para compilar e ligar 
+Windows source code sob o Unix.
+
+Para ver as opções de compilação da configuração, faz ./configure -help.
+
+Para fazeres o upgrade de uma nova versão atravez de um ficheiro patch, 
+primeiro cd para a directoria top da distribuição (a que contem este 
+ficheiro README). A seguir faz um "make clean", e faz o patch da 
+distribuição com:
+
+	gunzip -c patch-file | patch -p1
+
+onde "patch-file" é o nome do ficheiro patch ( qualquer coisa como 
+Wine.yymmdd.diff.gz). Tu podes entao correr fazendo "./configure", e 
+depois corre "make depend && make"
+
+5.SETUP
+
+Uma vez o Wine contruido correctamente, tu podes entao fazer o "make 
+install"; isto irá instalar o wine executavel, o Wine man page, e alguns 
+outros ficheiros necessários.
+
+Não esquecer de primeiro desinstalar qualquer previo conflito relativo a 
+instalação do Wine.
+Tenta outro "dpkg -r wine" ou "rpm -e wine" ou "make uninstall" antes de 
+installar.
+
+O Wine requer um ficheiro de configuração chamado "config" na directoria 
+-/.wine. O formato deste ficheiro é explicado no ficheiro config man 
+page (documentation/wine.conf.man).
+O ficheiro documentation/samples/config contém um exemplo de ficheiro de 
+configuraçao o qual tem que ser adaptado e copiado para a localização 
+mencionada em cima.
+
+Ver http://www.winehq.com/support/ para mais informação sobre a 
+configuraçao.
+
+No caso da livraria carregar erros (e.g. "Error while loading shared 
+libraries: libntdll.so"), tem a certeza de adicionar o caminho da 
+livraria para /etc/ld.so.conf e correr ldconfig como root.
+
+Para verificar a correcção do ambiente, tu precisas para que o Wine 
+corra com sucesso, tu podes correr "./tools/winecheck | less".
+Tu irás obter uma percentagem do resultado indicando "Wine configuration 
+correctness".
+Como este programa é alpha, ainda não correu um verdadeiro e exaustivo 
+teste, onde, então deve ser levado apenas como um primeiro passo de 
+verificação.
+
+Ver wine.confman page, como se muda apenas para o suporte em modo texto 
+se desejado.
+
+6.CORRER PROGRAMAS
+
+Quando e invoca o Wine, tens que especificar o caminho (patch) complecto 
+do executavel, ou apenas o nome do ficheiro.
+
+Por exemplo:  para correr o Solitário:
+	wine sol			(usando o searchpatch para lozalizar o ficheiro)
+	wine sol.exe
+
+	wine c:\\windows\\sol.exe	(usando um nome de ficheiro DOS)
+
+	wine /usr/windows/sol.exe	(usando um nome de ficheiro Unix)
+
+Nota: o caminho do ficheiro também irá ser adicionado ao caminho(patch) 
+quando um nome complecto é fornecido na linha de comando.
+
+O Wine ainda não está complecto.então poderão vários programas 
+quebrar(crash). Providenciamos-te bem para que o winedbg esteja 
+correctamente e de acordo com a documentation/debugger.sgml, sera-te 
+dado um detector de erros (debugger) para que possas investigar e 
+corrigir os problemas.
+Para mais informação como em fazer isto ou aquilo, por favor lê o 
+ficheiro documentation/debugging.sgml.
+
+Tu deves fazer um backup de todos os teus ficheiros importantes em que 
+destes acesso ao Wine, ou usa uma especial cópia deles.tem havido casos 
+de certos users que têm feito relatos de ficheiros corronpidos. Não 
+corrar o Explorer, por exemplo, se não tiveres um backup próprio, que 
+por vezes renomeia e estraga algumas directorias. Nem todos os MS apps 
+como o e.g. Messenger são seguros, ao correrem o Explorer de alguma 
+maneira. Este caso particular de corrupeçao (!$!$!$!$.pfr) podem ao 
+menos parcialmente podem ser corrigidos usando
+http://home.nexgo.de/andi.mohr/download/decorrupt_explorer
+
+7.DOCUMENTAÇÃO
+
+Alguma documentação (vários giuas de Wineetc.) podem ser encontrados na 
+directoria documentation/ (aparte de também estar disponível em WineHQ).
+
+Se quiseres lá processar ficheiros SGML, então podes correr "make doc" 
+na directoria documentation/
+Fazer isto requer que os pacotes das ferramentas sgml (para db2html, 
+db2ps, db2pdf) chamados:
+Debian:		docbook-utils
+Mandrake: 		sgml-tools-A.B.C-DDmdk
+SuSe:		docbktls-A.BB.C-DD
+
+8.ARRANJAR MAIS INFORMAÇÃO
+
+www:	Uma grande quantidade de informação acerca do Wine está disponivel 
+        pelo WineHQ em http://www.winehq.com/ : varios guias Wine, base de  
+        dados de aplicações, localizaçao de erros. Isto é provavelmente o 
+        melhor ponto de começo.
+
+FAQ:	A Wine FAQ está localizada em http://www.winehq.com/FAQ
+
+Usenet:	Tu podes discutor tópicos relacionados de Wine e obter ajuda em
+	comp.emulators.ms-windows.wine.
+
+IRC:	Ajuda online está disponivel em #WineHQ on irc.freenode.net.
+
+
+CVS:	O currente desenvolvimento do Wine está disponivel por CVS.
+	Vai a http://www.winehq.com/cvs para mais informação.
+
+Mailing Lists:
+	Há algumas mailing list para responsaveis pelo desenvolvimento Wine; ver em
+	http://www.winehq.com/forums para mais informação.
+
+Se tu acrescentaste algo,ou corrigiste um bug, por favor envia um patch 
+(em 'diff -u' format) para wine-patches_at_winehq.com lista para inclusão 
+no próximo lançamento.
