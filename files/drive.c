@@ -130,7 +130,7 @@ static inline UINT DRIVE_GetDriveType( INT drive, LPCWSTR value )
  */
 int DRIVE_Init(void)
 {
-    int i, len, count = 0;
+    int i, len, symlink_count = 0, count = 0;
     WCHAR driveW[] = {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\',
                       'W','i','n','e','\\','W','i','n','e','\\',
                       'C','o','n','f','i','g','\\','D','r','i','v','e',' ','A',0};
@@ -144,6 +144,8 @@ int DRIVE_Init(void)
     DWORD dummy;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
+    char *root;
+    const char *config_dir = wine_get_config_dir();
 
     static const WCHAR PathW[] = {'P','a','t','h',0};
     static const WCHAR TypeW[] = {'T','y','p','e',0};
@@ -157,6 +159,45 @@ int DRIVE_Init(void)
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
+    /* get the root of the drives from symlinks */
+
+    root = NULL;
+    for (i = 0, drive = DOSDrives; i < MAX_DOS_DRIVES; i++, drive++)
+    {
+        if (!root)
+        {
+            root = HeapAlloc( GetProcessHeap(), 0, strlen(config_dir) + sizeof("/dosdevices/a:") );
+            strcpy( root, config_dir );
+            strcat( root, "/dosdevices/a:" );
+        }
+        root[strlen(root)-2] = 'a' + i;
+        if (stat( root, &drive_stat_buffer ))
+        {
+            if (!lstat( root, &drive_stat_buffer))
+                MESSAGE("Could not stat %s (%s), ignoring drive %c:\n",
+                        root, strerror(errno), 'a' + i);
+            continue;
+        }
+        if (!S_ISDIR(drive_stat_buffer.st_mode))
+        {
+            MESSAGE("%s is not a directory, ignoring drive %c:\n", root, 'a' + i );
+            continue;
+        }
+        drive->root     = root;
+        drive->dos_cwd  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(drive->dos_cwd[0]));
+        drive->unix_cwd = heap_strdup( "" );
+        drive->device   = NULL;
+        drive->flags    = 0;
+        drive->dev      = drive_stat_buffer.st_dev;
+        drive->ino      = drive_stat_buffer.st_ino;
+        drive->type     = DRIVE_FIXED;
+        root = NULL;
+        symlink_count++;
+    }
+    if (root) HeapFree( GetProcessHeap(), 0, root );
+
+    /* now get the parameters from the config file */
+
     for (i = 0, drive = DOSDrives; i < MAX_DOS_DRIVES; i++, drive++)
     {
         RtlInitUnicodeString( &nameW, driveW );
@@ -164,57 +205,64 @@ int DRIVE_Init(void)
         if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr ) != STATUS_SUCCESS) continue;
 
         /* Get the root path */
-        RtlInitUnicodeString( &nameW, PathW );
-        if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
+        if (!symlink_count)
         {
-            WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-            ExpandEnvironmentStringsW( data, path, sizeof(path)/sizeof(WCHAR) );
-
-            p = path + strlenW(path) - 1;
-            while ((p > path) && (*p == '/')) *p-- = '\0';
-
-            if (path[0] == '/')
+            RtlInitUnicodeString( &nameW, PathW );
+            if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
             {
-                len = WideCharToMultiByte(CP_UNIXCP, 0, path, -1, NULL, 0, NULL, NULL);
-                drive->root = HeapAlloc(GetProcessHeap(), 0, len);
-                WideCharToMultiByte(CP_UNIXCP, 0, path, -1, drive->root, len, NULL, NULL);
-            }
-            else
-            {
-                /* relative paths are relative to config dir */
-                const char *config = wine_get_config_dir();
-                len = strlen(config);
-                len += WideCharToMultiByte(CP_UNIXCP, 0, path, -1, NULL, 0, NULL, NULL) + 2;
-                drive->root = HeapAlloc( GetProcessHeap(), 0, len );
-                len -= sprintf( drive->root, "%s/", config );
-                WideCharToMultiByte(CP_UNIXCP, 0, path, -1,
-                                    drive->root + strlen(drive->root), len, NULL, NULL);
-            }
+                WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
+                ExpandEnvironmentStringsW( data, path, sizeof(path)/sizeof(WCHAR) );
 
-            if (stat( drive->root, &drive_stat_buffer ))
-            {
-                MESSAGE("Could not stat %s (%s), ignoring drive %c:\n",
-                        drive->root, strerror(errno), 'A' + i);
-                HeapFree( GetProcessHeap(), 0, drive->root );
-                drive->root = NULL;
-                goto next;
-            }
-            if (!S_ISDIR(drive_stat_buffer.st_mode))
-            {
-                MESSAGE("%s is not a directory, ignoring drive %c:\n",
-                        drive->root, 'A' + i );
-                HeapFree( GetProcessHeap(), 0, drive->root );
-                drive->root = NULL;
-                goto next;
-            }
+                p = path + strlenW(path) - 1;
+                while ((p > path) && (*p == '/')) *p-- = '\0';
 
-            drive->dos_cwd  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(drive->dos_cwd[0]));
-            drive->unix_cwd = heap_strdup( "" );
-            drive->device   = NULL;
-            drive->flags    = 0;
-            drive->dev      = drive_stat_buffer.st_dev;
-            drive->ino      = drive_stat_buffer.st_ino;
+                if (path[0] == '/')
+                {
+                    len = WideCharToMultiByte(CP_UNIXCP, 0, path, -1, NULL, 0, NULL, NULL);
+                    drive->root = HeapAlloc(GetProcessHeap(), 0, len);
+                    WideCharToMultiByte(CP_UNIXCP, 0, path, -1, drive->root, len, NULL, NULL);
+                }
+                else
+                {
+                    /* relative paths are relative to config dir */
+                    const char *config = wine_get_config_dir();
+                    len = strlen(config);
+                    len += WideCharToMultiByte(CP_UNIXCP, 0, path, -1, NULL, 0, NULL, NULL) + 2;
+                    drive->root = HeapAlloc( GetProcessHeap(), 0, len );
+                    len -= sprintf( drive->root, "%s/", config );
+                    WideCharToMultiByte(CP_UNIXCP, 0, path, -1,
+                                        drive->root + strlen(drive->root), len, NULL, NULL);
+                }
 
+                if (stat( drive->root, &drive_stat_buffer ))
+                {
+                    MESSAGE("Could not stat %s (%s), ignoring drive %c:\n",
+                            drive->root, strerror(errno), 'A' + i);
+                    HeapFree( GetProcessHeap(), 0, drive->root );
+                    drive->root = NULL;
+                    goto next;
+                }
+                if (!S_ISDIR(drive_stat_buffer.st_mode))
+                {
+                    MESSAGE("%s is not a directory, ignoring drive %c:\n",
+                            drive->root, 'A' + i );
+                    HeapFree( GetProcessHeap(), 0, drive->root );
+                    drive->root = NULL;
+                    goto next;
+                }
+
+                drive->dos_cwd  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(drive->dos_cwd[0]));
+                drive->unix_cwd = heap_strdup( "" );
+                drive->device   = NULL;
+                drive->flags    = 0;
+                drive->dev      = drive_stat_buffer.st_dev;
+                drive->ino      = drive_stat_buffer.st_ino;
+                drive->type     = DRIVE_FIXED;
+            }
+        }
+
+        if (drive->root)
+        {
             /* Get the drive type */
             RtlInitUnicodeString( &nameW, TypeW );
             if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
@@ -222,7 +270,6 @@ int DRIVE_Init(void)
                 WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
                 drive->type = DRIVE_GetDriveType( i, data );
             }
-            else drive->type = DRIVE_FIXED;
 
             /* Get the device */
             RtlInitUnicodeString( &nameW, DeviceW );
@@ -266,7 +313,7 @@ int DRIVE_Init(void)
         NtClose( hkey );
     }
 
-    if (!count)
+    if (!count && !symlink_count)
     {
         MESSAGE("Warning: no valid DOS drive found, check your configuration file.\n" );
         /* Create a C drive pointing to Unix root dir */

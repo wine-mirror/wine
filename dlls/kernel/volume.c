@@ -148,6 +148,30 @@ static char *get_dos_device_path( LPCWSTR name )
 }
 
 
+/* create symlinks for the DOS drives; helper for VOLUME_CreateDevices */
+static int create_drives(void)
+{
+    WCHAR name[3], rootW[MAX_PATHNAME_LEN];
+    int i, count = 0;
+
+    for (i = 0; i < 26; i++)
+    {
+        const char *root = DRIVE_GetRoot( i );
+        if (!root) continue;
+        name[0] = 'a' + i;
+        name[1] = ':';
+        name[2] = 0;
+        if (MultiByteToWideChar( CP_UNIXCP, 0, root, -1, rootW, MAX_PATHNAME_LEN ) &&
+            DefineDosDeviceW( DDD_RAW_TARGET_PATH, name, rootW ))
+        {
+            MESSAGE( "Created symlink %s/dosdevices/%c: -> %s\n", wine_get_config_dir(), 'a' + i, root );
+            count++;
+        }
+    }
+    return count;
+}
+
+
 /***********************************************************************
  *              VOLUME_CreateDevices
  *
@@ -161,7 +185,7 @@ void VOLUME_CreateDevices(void)
     int i, count = 0;
 
     if (!(buffer = HeapAlloc( GetProcessHeap(), 0,
-                              strlen(config_dir) + sizeof("/dosdevices") )))
+                              strlen(config_dir) + sizeof("/dosdevices") + 3 )))
         return;
 
     strcpy( buffer, config_dir );
@@ -245,10 +269,29 @@ void VOLUME_CreateDevices(void)
             }
             NtClose( hkey );
         }
-        if (count)
-            MESSAGE( "\nYou can now remove the [SerialPorts] and [ParallelPorts] sections\n"
-                     "in your configuration file, they are replaced by the above symlinks.\n\n" );
+        count += create_drives();
     }
+    else
+    {
+        struct stat st;
+        int i;
+
+        /* it is possible that the serial/parallel devices have been created but */
+        /* not the drives; check for at least one drive symlink to catch that case */
+        strcat( buffer, "/a:" );
+        for (i = 0; i < 26; i++)
+        {
+            buffer[strlen(buffer)-2] = 'a' + i;
+            if (!lstat( buffer, &st )) break;
+        }
+        if (i == 26) count += create_drives();
+    }
+
+    if (count)
+        MESSAGE( "\nYou can now remove the [SerialPorts] and [ParallelPorts] sections\n"
+                 "in your configuration file, as well as the \"Path=\" definitions in\n"
+                 "the drive sections, they are replaced by the above symlinks.\n\n" );
+
     HeapFree( GetProcessHeap(), 0, buffer );
 }
 
