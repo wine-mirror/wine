@@ -278,7 +278,7 @@ static ULONG WINAPI StdDispatch_AddRef(LPDISPATCH iface)
     StdDispatch *This = (StdDispatch *)iface;
     TRACE("()\n");
 
-    return ++This->ref;
+    return InterlockedIncrement(&This->ref);
 }
 
 /******************************************************************************
@@ -289,18 +289,18 @@ static ULONG WINAPI StdDispatch_AddRef(LPDISPATCH iface)
 static ULONG WINAPI StdDispatch_Release(LPDISPATCH iface)
 {
     StdDispatch *This = (StdDispatch *)iface;
-    ULONG ret;
+    ULONG ref;
     TRACE("(%p)->()\n", This);
 
-    ret = This->ref--;
+    ref = InterlockedDecrement(&This->ref);
 
-    if (This->ref == 0)
+    if (ref == 0)
     {
         ITypeInfo_Release(This->pTypeInfo);
         CoTaskMemFree(This);
     }
 
-    return ret;
+    return ref;
 }
 
 /******************************************************************************

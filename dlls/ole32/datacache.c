@@ -134,12 +134,12 @@ typedef struct DataCache DataCache;
  * There is a version to accomodate all of the VTables implemented
  * by this object.
  */
-#define _ICOM_THIS_From_IDataObject(class,name)       class* this = (class*)name;
-#define _ICOM_THIS_From_NDIUnknown(class, name)       class* this = (class*)(((char*)name)-sizeof(void*));
-#define _ICOM_THIS_From_IPersistStorage(class, name)  class* this = (class*)(((char*)name)-2*sizeof(void*));
-#define _ICOM_THIS_From_IViewObject2(class, name)     class* this = (class*)(((char*)name)-3*sizeof(void*));
-#define _ICOM_THIS_From_IOleCache2(class, name)       class* this = (class*)(((char*)name)-4*sizeof(void*));
-#define _ICOM_THIS_From_IOleCacheControl(class, name) class* this = (class*)(((char*)name)-5*sizeof(void*));
+#define _ICOM_THIS_From_IDataObject(class,name)       class* this = (class*)name
+#define _ICOM_THIS_From_NDIUnknown(class, name)       class* this = (class*)(((char*)name)-sizeof(void*))
+#define _ICOM_THIS_From_IPersistStorage(class, name)  class* this = (class*)(((char*)name)-2*sizeof(void*))
+#define _ICOM_THIS_From_IViewObject2(class, name)     class* this = (class*)(((char*)name)-3*sizeof(void*))
+#define _ICOM_THIS_From_IOleCache2(class, name)       class* this = (class*)(((char*)name)-4*sizeof(void*))
+#define _ICOM_THIS_From_IOleCacheControl(class, name) class* this = (class*)(((char*)name)-5*sizeof(void*))
 
 /*
  * Prototypes for the methods of the DataCache class.
@@ -968,10 +968,7 @@ static ULONG WINAPI DataCache_NDIUnknown_AddRef(
             IUnknown*      iface)
 {
   _ICOM_THIS_From_NDIUnknown(DataCache, iface);
-
-  this->ref++;
-
-  return this->ref;
+  return InterlockedIncrement(&this->ref);
 }
 
 /************************************************************************
@@ -986,23 +983,19 @@ static ULONG WINAPI DataCache_NDIUnknown_Release(
             IUnknown*      iface)
 {
   _ICOM_THIS_From_NDIUnknown(DataCache, iface);
+  ULONG ref;
 
   /*
    * Decrease the reference count on this object.
    */
-  this->ref--;
+  ref = InterlockedDecrement(&this->ref);
 
   /*
    * If the reference count goes down to 0, perform suicide.
    */
-  if (this->ref==0)
-  {
-    DataCache_Destroy(this);
+  if (ref == 0) DataCache_Destroy(this);
 
-    return 0;
-  }
-
-  return this->ref;
+  return ref;
 }
 
 /*********************************************************

@@ -217,19 +217,16 @@ StdMarshalImpl_QueryInterface(LPMARSHAL iface,REFIID riid,LPVOID *ppv) {
 static ULONG WINAPI
 StdMarshalImpl_AddRef(LPMARSHAL iface) {
   StdMarshalImpl *This = (StdMarshalImpl *)iface;
-  This->ref++;
-  return This->ref;
+  return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI
 StdMarshalImpl_Release(LPMARSHAL iface) {
   StdMarshalImpl *This = (StdMarshalImpl *)iface;
-  This->ref--;
+  ULONG ref = InterlockedDecrement(&This->ref);
 
-  if (This->ref)
-    return This->ref;
-  HeapFree(GetProcessHeap(),0,This);
-  return 0;
+  if (!ref) HeapFree(GetProcessHeap(),0,This);
+  return ref;
 }
 
 static HRESULT WINAPI

@@ -243,7 +243,7 @@ ULONG WINAPI CompositeMonikerImpl_AddRef(IMoniker* iface)
 
     TRACE("(%p)\n",This);
 
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 /******************************************************************************
@@ -253,23 +253,22 @@ ULONG WINAPI CompositeMonikerImpl_Release(IMoniker* iface)
 {
     CompositeMonikerImpl *This = (CompositeMonikerImpl *)iface;
     ULONG i;
+    ULONG ref;
 
     TRACE("(%p)\n",This);
 
-    This->ref--;
+    ref = InterlockedDecrement(&This->ref);
 
     /* destroy the object if there's no more reference on it */
-    if (This->ref==0){
+    if (ref == 0){
 
         /* release all the components before destroying this object */
         for (i=0;i<This->tabLastIndex;i++)
             IMoniker_Release(This->tabMoniker[i]);
 
         CompositeMonikerImpl_Destroy(This);
-
-        return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 /******************************************************************************
@@ -1527,7 +1526,7 @@ ULONG   WINAPI EnumMonikerImpl_AddRef(IEnumMoniker* iface)
 
     TRACE("(%p)\n",This);
 
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 
 }
 
@@ -1537,24 +1536,22 @@ ULONG   WINAPI EnumMonikerImpl_AddRef(IEnumMoniker* iface)
 ULONG   WINAPI EnumMonikerImpl_Release(IEnumMoniker* iface)
 {
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
-    ULONG i
-        ;
+    ULONG i;
+    ULONG ref;
     TRACE("(%p)\n",This);
 
-    This->ref--;
+    ref = InterlockedDecrement(&This->ref);
 
     /* destroy the object if there's no more reference on it */
-    if (This->ref==0){
+    if (ref == 0) {
 
         for(i=0;i<This->tabSize;i++)
             IMoniker_Release(This->tabMoniker[i]);
 
         HeapFree(GetProcessHeap(),0,This->tabMoniker);
         HeapFree(GetProcessHeap(),0,This);
-
-        return 0;
     }
-    return This->ref;
+    return ref;
 }
 
 /******************************************************************************

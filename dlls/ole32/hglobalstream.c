@@ -378,10 +378,7 @@ ULONG WINAPI HGLOBALStreamImpl_AddRef(
 		IStream* iface)
 {
   HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
-
-  This->ref++;
-
-  return This->ref;
+  return InterlockedIncrement(&This->ref);
 }
 
 /***
@@ -392,12 +389,9 @@ ULONG WINAPI HGLOBALStreamImpl_Release(
 		IStream* iface)
 {
   HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
-
   ULONG newRef;
 
-  This->ref--;
-
-  newRef = This->ref;
+  newRef = InterlockedDecrement(&This->ref);
 
   /*
    * If the reference count goes down to 0, perform suicide.

@@ -186,7 +186,7 @@ ULONG WINAPI AntiMonikerImpl_AddRef(IMoniker* iface)
 
     TRACE("(%p)\n",This);
 
-    return ++(This->ref);
+    return InterlockedIncrement(&This->ref);
 }
 
 /******************************************************************************
@@ -195,19 +195,16 @@ ULONG WINAPI AntiMonikerImpl_AddRef(IMoniker* iface)
 ULONG WINAPI AntiMonikerImpl_Release(IMoniker* iface)
 {
     AntiMonikerImpl *This = (AntiMonikerImpl *)iface;
+    ULONG ref;
 
     TRACE("(%p)\n",This);
 
-    This->ref--;
+    ref = InterlockedDecrement(&This->ref);
 
     /* destroy the object if there's no more reference on it */
-    if (This->ref==0){
+    if (ref == 0) AntiMonikerImpl_Destroy(This);
 
-        AntiMonikerImpl_Destroy(This);
-
-        return 0;
-    }
-    return This->ref;
+    return ref;
 }
 
 /******************************************************************************

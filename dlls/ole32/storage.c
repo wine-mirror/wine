@@ -986,7 +986,7 @@ HRESULT WINAPI IStream16_fnQueryInterface(
  */
 ULONG WINAPI IStream16_fnAddRef(IStream16* iface) {
 	IStream16Impl *This = (IStream16Impl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 /******************************************************************************
@@ -994,15 +994,15 @@ ULONG WINAPI IStream16_fnAddRef(IStream16* iface) {
  */
 ULONG WINAPI IStream16_fnRelease(IStream16* iface) {
 	IStream16Impl *This = (IStream16Impl *)iface;
+        ULONG ref;
 	FlushFileBuffers(This->hf);
-	This->ref--;
-	if (!This->ref) {
+        ref = InterlockedDecrement(&This->ref);
+	if (!ref) {
 		CloseHandle(This->hf);
                 UnMapLS( This->thisptr );
 		HeapFree( GetProcessHeap(), 0, This );
-		return 0;
 	}
-	return This->ref;
+	return ref;
 }
 
 /******************************************************************************
@@ -1480,7 +1480,7 @@ HRESULT WINAPI IStream_fnQueryInterface(
  */
 ULONG WINAPI IStream_fnAddRef(IStream* iface) {
 	IStream32Impl *This = (IStream32Impl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 /******************************************************************************
@@ -1488,14 +1488,14 @@ ULONG WINAPI IStream_fnAddRef(IStream* iface) {
  */
 ULONG WINAPI IStream_fnRelease(IStream* iface) {
 	IStream32Impl *This = (IStream32Impl *)iface;
+        ULONG ref;
 	FlushFileBuffers(This->hf);
-	This->ref--;
-	if (!This->ref) {
+        ref = InterlockedDecrement(&This->ref);
+	if (!ref) {
 		CloseHandle(This->hf);
 		HeapFree( GetProcessHeap(), 0, This );
-		return 0;
 	}
-	return This->ref;
+	return ref;
 }
 
 /* --- IStorage16 implementation */
@@ -1534,7 +1534,7 @@ HRESULT WINAPI IStorage16_fnQueryInterface(
  */
 ULONG WINAPI IStorage16_fnAddRef(IStorage16* iface) {
 	IStorage16Impl *This = (IStorage16Impl *)iface;
-	return ++(This->ref);
+	return InterlockedIncrement(&This->ref);
 }
 
 /******************************************************************************
@@ -1542,12 +1542,14 @@ ULONG WINAPI IStorage16_fnAddRef(IStorage16* iface) {
  */
 ULONG WINAPI IStorage16_fnRelease(IStorage16* iface) {
 	IStorage16Impl *This = (IStorage16Impl *)iface;
-	This->ref--;
-	if (This->ref)
-		return This->ref;
-        UnMapLS( This->thisptr );
-        HeapFree( GetProcessHeap(), 0, This );
-	return 0;
+        ULONG ref;
+        ref = InterlockedDecrement(&This->ref);
+        if (!ref)
+        {
+            UnMapLS( This->thisptr );
+            HeapFree( GetProcessHeap(), 0, This );
+        }
+        return ref;
 }
 
 /******************************************************************************
