@@ -36,6 +36,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_SYS_TIME_H
+# include <sys/time.h>
+#endif
+
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -91,6 +95,7 @@ static inline int have_cpuid(void)
 }
 
 static BYTE PF[64] = {0,};
+static ULONGLONG cpuHz = 1000000000; /* default to a 1GHz */
 
 static void create_registry_keys( const SYSTEM_INFO *info )
 {
@@ -102,6 +107,7 @@ static void create_registry_keys( const SYSTEM_INFO *info )
     static const WCHAR cpuW[] = {'C','e','n','t','r','a','l','P','r','o','c','e','s','s','o','r',0};
     static const WCHAR IdentifierW[] = {'I','d','e','n','t','i','f','i','e','r',0};
     static const WCHAR SysidW[] = {'A','T',' ','c','o','m','p','a','t','i','b','l','e',0};
+    static const WCHAR mhzKeyW[] = {'~','M','H','z',0};
 
     int i;
     HKEY hkey, system_key, cpu_key;
@@ -138,10 +144,14 @@ static void create_registry_keys( const SYSTEM_INFO *info )
             if (!NtCreateKey( &hkey, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ))
             {
                 WCHAR idW[20];
+                DWORD cpuMHz = cpuHz / 1000000;
 
                 sprintf( id, "CPU %ld", info->dwProcessorType );
                 RtlMultiByteToUnicodeN( idW, sizeof(idW), NULL, id, strlen(id)+1 );
                 NtSetValueKey( hkey, &valueW, 0, REG_SZ, idW, (strlenW(idW)+1)*sizeof(WCHAR) );
+
+                RtlInitUnicodeString( &valueW, mhzKeyW );
+                NtSetValueKey( hkey, &valueW, 0, REG_DWORD, &cpuMHz, sizeof(DWORD) );
                 NtClose( hkey );
             }
             RtlFreeUnicodeString( &nameW );
@@ -149,6 +159,49 @@ static void create_registry_keys( const SYSTEM_INFO *info )
         NtClose( cpu_key );
     }
     NtClose( system_key );
+}
+
+/****************************************************************************
+ *		QueryPerformanceCounter (KERNEL32.@)
+ */
+BOOL WINAPI QueryPerformanceCounter(PLARGE_INTEGER counter)
+{
+    struct timeval tv;
+
+#if defined(__i386__) && defined(__GNUC__)
+    if (IsProcessorFeaturePresent( PF_RDTSC_INSTRUCTION_AVAILABLE )) {
+	/* i586 optimized version */
+	__asm__ __volatile__ ( "rdtsc"
+			       : "=a" (counter->s.LowPart), "=d" (counter->s.HighPart) );
+	counter->QuadPart = counter->QuadPart / 1000; /* see below */
+	return TRUE;
+    }
+#endif
+
+    /* fall back to generic routine (ie, for i386, i486) */
+    gettimeofday( &tv, NULL );
+    counter->QuadPart = (LONGLONG)tv.tv_usec + (LONGLONG)tv.tv_sec * 1000000;
+    return TRUE;
+}
+
+
+/****************************************************************************
+ *		QueryPerformanceFrequency (KERNEL32.@)
+ */
+BOOL WINAPI QueryPerformanceFrequency(PLARGE_INTEGER frequency)
+{
+#if defined(__i386__) && defined(__GNUC__)
+    if (IsProcessorFeaturePresent( PF_RDTSC_INSTRUCTION_AVAILABLE )) {
+        /* The way Windows calculates this value is unclear, however simply using the CPU frequency
+           gives a value out by approximately a thousand. That can cause some applications to crash,
+           so we divide here to make our number more similar to the one Windows gives  */
+        frequency->QuadPart = cpuHz / 1000;
+        return TRUE;
+    }
+#endif
+    frequency->s.LowPart  = 1000000;
+    frequency->s.HighPart = 0;
+    return TRUE;
 }
 
 
@@ -179,6 +232,7 @@ VOID WINAPI GetSystemInfo(
 	static int cache = 0;
 	static SYSTEM_INFO cachedsi;
 
+	TRACE("si=0x%p\n", si);
 	if (cache) {
 		memcpy(si,&cachedsi,sizeof(*si));
 		return;
@@ -305,6 +359,14 @@ VOID WINAPI GetSystemInfo(
 
 			if (sscanf(value,"%d",&x))
 				cachedsi.wProcessorRevision = x;
+		}
+		if (!strncasecmp(line, "cpu MHz",strlen("cpu MHz"))) {
+			double cmz;
+			if (sscanf( value, "%lf", &cmz ) == 1) {
+				/* SYSTEMINFO doesn't have a slot for cpu speed, so store in a global */
+				cpuHz = cmz * 1000 * 1000;
+				TRACE("CPU speed read as %lld\n", cpuHz);
+			}
 		}
 		if (	!strncasecmp(line,"flags",strlen("flags"))	||
 			!strncasecmp(line,"features",strlen("features"))
