@@ -22,11 +22,11 @@ LANGUAGE LANG_THAI, SUBLANG_DEFAULT
 
 MAIN_MENU MENU
 {
- POPUP "ปรับแด่งนาฬิกา" {
+ POPUP "ปรับแต่งนาฬิกา" {
   MENUITEM "ธรรมดา", 0x100
-  MENUITEM "Digi&tal", 0x101
+  MENUITEM "ดิจิตัล", 0x101
   MENUITEM SEPARATOR
-  MENUITEM "รูปแบบดวยอักษร...", 0x103
+  MENUITEM "รูปแบบต้วอักษร...", 0x103
   MENUITEM SEPARATOR
   MENUITEM "แสดงแทบเมนู", 0x105
   MENUITEM SEPARATOR
@@ -43,5 +43,5 @@ MAIN_MENU MENU
 STRINGTABLE DISCARDABLE
 {
   CLOCK,       "นาฬิกา"
-  MENU_ON_TOP, "ยู่สูกข่างเสมอ"
+  MENU_ON_TOP, "ยูบนสุดเสมอ"
 }

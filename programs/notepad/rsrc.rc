@@ -53,5 +53,6 @@ ID_ACCEL ACCELERATORS
 #include "Si.rc"
 #include "Sk.rc"
 #include "Sw.rc"
+#include "Th.rc"
 #include "Wa.rc"
 #include "Zh.rc"
