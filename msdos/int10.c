@@ -86,6 +86,8 @@ void WINAPI INT_Int10Handler( CONTEXT *context )
         color_pallet[13] = CONSOLE_AllocColor(WINE_LIGHT_MAGENTA);
         color_pallet[14] = CONSOLE_AllocColor(WINE_YELLOW);
         color_pallet[15] = CONSOLE_AllocColor(WINE_WHITE);
+
+        registered_colors = TRUE;
     }
 
     switch(AH_reg(context)) {
