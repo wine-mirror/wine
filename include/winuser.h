@@ -2883,7 +2883,7 @@ VOID        WINAPI mouse_event(DWORD,DWORD,DWORD,DWORD,DWORD);
 /* Declarations for functions that are the same in Win16 and Win32 */
 VOID        WINAPI EndMenu(void);
 DWORD       WINAPI GetDialogBaseUnits(void);
-VOID        WINAPI GetKeyboardState(LPBYTE);
+BOOL        WINAPI GetKeyboardState(LPBYTE);
 DWORD       WINAPI GetMenuCheckMarkDimensions(void);
 LONG        WINAPI GetMessageExtraInfo(void);
 DWORD       WINAPI GetMessagePos(void);
@@ -2892,7 +2892,7 @@ DWORD       WINAPI GetTickCount(void);
 ATOM        WINAPI GlobalDeleteAtom(ATOM);
 DWORD       WINAPI OemKeyScan(WORD);
 BOOL        WINAPI ReleaseCapture(void);
-VOID        WINAPI SetKeyboardState(LPBYTE);
+BOOL        WINAPI SetKeyboardState(LPBYTE);
 VOID        WINAPI WaitMessage(VOID);
 
 

@@ -460,7 +460,7 @@ INT16 WINAPI GetKeyState(INT vkey)
  * keyboard-input message.  This function retrieves the state of the keyboard
  * at the time the input message was generated.  (SDK 3.1 Vol 2. p 387)
  */
-VOID WINAPI GetKeyboardState(LPBYTE lpKeyState)
+BOOL WINAPI GetKeyboardState(LPBYTE lpKeyState)
 {
     TRACE_(key)("(%p)\n", lpKeyState);
     if (lpKeyState != NULL) {
@@ -469,12 +469,14 @@ VOID WINAPI GetKeyboardState(LPBYTE lpKeyState)
 	QueueKeyStateTable[VK_RBUTTON] = MouseButtonsStates[2] ? 0x80 : 0;
 	memcpy(lpKeyState, QueueKeyStateTable, 256);
     }
+
+    return TRUE;
 }
 
 /**********************************************************************
  *          SetKeyboardState      (USER.223)(USER32.484)
  */
-VOID WINAPI SetKeyboardState(LPBYTE lpKeyState)
+BOOL WINAPI SetKeyboardState(LPBYTE lpKeyState)
 {
     TRACE_(key)("(%p)\n", lpKeyState);
     if (lpKeyState != NULL) {
@@ -483,6 +485,8 @@ VOID WINAPI SetKeyboardState(LPBYTE lpKeyState)
 	MouseButtonsStates[1] = (QueueKeyStateTable[VK_MBUTTON] != 0);
 	MouseButtonsStates[2] = (QueueKeyStateTable[VK_RBUTTON] != 0);
     }
+
+    return TRUE;
 }
 
 /**********************************************************************
