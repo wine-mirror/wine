@@ -8,7 +8,7 @@
 ## (c) 2000
 ##
 ## A few improovements and updates here and there
-## Copyright 2003-2004 Ivan Leo Murray-Smith
+## Copyright 2003-2004 Ivan Leo Puoti
 ##
 ## This library is free software; you can redistribute it and/or
 ## modify it under the terms of the GNU Lesser General Public
