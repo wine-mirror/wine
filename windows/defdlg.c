@@ -131,10 +131,12 @@ static HWND DEFDLG_FindDefButton( HWND hwndDlg )
  *
  * Set the new default button to be hwndNew.
  */
-static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
-                                   HWND hwndNew )
+static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo, WPARAM wParam )
 {
     DWORD dlgcode=0; /* initialize just to avoid a warning */
+    HWND hwndNew = GetDlgItem(hwndDlg, wParam);
+
+    dlgInfo->idResult = wParam;
     if (hwndNew &&
         !((dlgcode=SendMessageW(hwndNew, WM_GETDLGCODE, 0, 0 ))
             & (DLGC_UNDEFPUSHBUTTON | DLGC_BUTTON)))
@@ -143,16 +145,14 @@ static BOOL DEFDLG_SetDefButton( HWND hwndDlg, DIALOGINFO *dlgInfo,
     if (dlgInfo->idResult)  /* There's already a default pushbutton */
     {
         HWND hwndOld = GetDlgItem( hwndDlg, dlgInfo->idResult );
-        if (SendMessageA( hwndOld, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON)
+        if (hwndOld && (SendMessageA( hwndOld, WM_GETDLGCODE, 0, 0) & DLGC_DEFPUSHBUTTON))
             SendMessageA( hwndOld, BM_SETSTYLE, BS_PUSHBUTTON, TRUE );
     }
     if (hwndNew)
     {
         if(dlgcode==DLGC_UNDEFPUSHBUTTON)
             SendMessageA( hwndNew, BM_SETSTYLE, BS_DEFPUSHBUTTON, TRUE );
-        dlgInfo->idResult = GetDlgCtrlID( hwndNew );
     }
-    else dlgInfo->idResult = 0;
     return TRUE;
 }
 
@@ -214,7 +214,7 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
 
         case DM_SETDEFID:
             if (dlgInfo && !(dlgInfo->flags & DF_END))
-                DEFDLG_SetDefButton( hwnd, dlgInfo, wParam ? GetDlgItem( hwnd, wParam ) : 0 );
+                DEFDLG_SetDefButton( hwnd, dlgInfo, wParam );
             return 1;
 
         case DM_GETDEFID:
@@ -235,7 +235,7 @@ static LRESULT DEFDLG_Proc( HWND hwnd, UINT msg, WPARAM wParam,
                 if (!lParam)
                     hwndDest = GetNextDlgTabItem(hwnd, GetFocus(), wParam);
                 if (hwndDest) DEFDLG_SetFocus( hwnd, hwndDest );
-                DEFDLG_SetDefButton( hwnd, dlgInfo, hwndDest );
+                DEFDLG_SetDefButton( hwnd, dlgInfo, GetDlgCtrlID(hwndDest) );
             }
             return 0;
 
@@ -284,14 +284,55 @@ static LRESULT DEFDLG_Epilog(HWND hwnd, UINT msg, BOOL fResult)
 }
 
 /***********************************************************************
+*               DEFDLG_InitDlgInfo
+*
+* Allocate memory for DIALOGINFO structure and store in DWL_DIALOGINFO
+* structure. Also flag the window as a dialog type.
+*/
+static DIALOGINFO* DEFDLG_InitDlgInfo(HWND hwnd)
+{
+    WND* wndPtr;
+    DIALOGINFO* dlgInfo = DIALOG_get_info( hwnd );
+    if(!dlgInfo)
+    {
+        if (!(dlgInfo = HeapAlloc( GetProcessHeap(), 0, sizeof(*dlgInfo) ))) return NULL;
+        dlgInfo->hwndFocus   = 0;
+        dlgInfo->hUserFont   = 0;
+        dlgInfo->hMenu       = 0;
+        dlgInfo->xBaseUnit   = 0;
+        dlgInfo->yBaseUnit   = 0;
+        dlgInfo->idResult    = 0;
+        dlgInfo->flags       = 0;
+        dlgInfo->hDialogHeap = 0;
+        wndPtr = WIN_GetPtr( hwnd );
+        if (wndPtr && wndPtr != WND_OTHER_PROCESS)
+        {
+            wndPtr->flags |= WIN_ISDIALOG;
+            WIN_ReleasePtr( wndPtr );
+            SetWindowLongW( hwnd, DWL_WINE_DIALOGINFO, (LONG)dlgInfo );
+        }
+        else
+        {
+            HeapFree( GetProcessHeap(), 0, dlgInfo );
+            return NULL;
+        }
+    }
+    return dlgInfo;
+}
+
+/***********************************************************************
  *		DefDlgProc (USER.308)
  */
 LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
                              LPARAM lParam )
 {
+    DIALOGINFO *dlgInfo;
     WNDPROC16 dlgproc;
     HWND hwnd32 = WIN_Handle32( hwnd );
     BOOL result = FALSE;
+
+    /* Perform DIALOGINFO intialization if not done */
+    if(!(dlgInfo = DEFDLG_InitDlgInfo(hwnd32))) return -1;
 
     SetWindowLongW( hwnd32, DWL_MSGRESULT, 0 );
 
@@ -323,7 +364,7 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
             case WM_ENTERMENULOOP:
             case WM_LBUTTONDOWN:
             case WM_NCLBUTTONDOWN:
-                return DEFDLG_Proc( hwnd32, msg, (WPARAM)wParam, lParam, DIALOG_get_info(hwnd32) );
+                return DEFDLG_Proc( hwnd32, msg, (WPARAM)wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
             case WM_VKEYTOITEM:
             case WM_COMPAREITEM:
@@ -343,8 +384,12 @@ LRESULT WINAPI DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam,
  */
 LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
+    DIALOGINFO *dlgInfo;
     WNDPROC dlgproc;
     BOOL result = FALSE;
+
+    /* Perform DIALOGINFO initialization if not done */
+    if(!(dlgInfo = DEFDLG_InitDlgInfo(hwnd))) return -1;
 
     SetWindowLongW( hwnd, DWL_MSGRESULT, 0 );
 
@@ -376,7 +421,7 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
             case WM_ENTERMENULOOP:
             case WM_LBUTTONDOWN:
             case WM_NCLBUTTONDOWN:
-                 return DEFDLG_Proc( hwnd, msg, wParam, lParam, DIALOG_get_info(hwnd) );
+                 return DEFDLG_Proc( hwnd, msg, wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
             case WM_VKEYTOITEM:
             case WM_COMPAREITEM:
@@ -396,8 +441,12 @@ LRESULT WINAPI DefDlgProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
  */
 LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
+    DIALOGINFO *dlgInfo;
     BOOL result = FALSE;
     WNDPROC dlgproc;
+
+    /* Perform DIALOGINFO intialization if not done */
+    if(!(dlgInfo = DEFDLG_InitDlgInfo(hwnd))) return -1;
 
     SetWindowLongW( hwnd, DWL_MSGRESULT, 0 );
 
@@ -429,7 +478,7 @@ LRESULT WINAPI DefDlgProcW( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
             case WM_ENTERMENULOOP:
             case WM_LBUTTONDOWN:
             case WM_NCLBUTTONDOWN:
-                 return DEFDLG_Proc( hwnd, msg, wParam, lParam, DIALOG_get_info(hwnd) );
+                 return DEFDLG_Proc( hwnd, msg, wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
             case WM_VKEYTOITEM:
             case WM_COMPAREITEM:

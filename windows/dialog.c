@@ -490,32 +490,24 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
 {
     HWND hwnd;
     RECT rect;
-    WND * wndPtr;
     DLG_TEMPLATE template;
-    DIALOGINFO * dlgInfo;
+    DIALOGINFO * dlgInfo = NULL;
     DWORD units = GetDialogBaseUnits();
     BOOL ownerEnabled = TRUE;
+    HMENU hMenu = 0;
+    HFONT hUserFont = 0;
+    UINT flags = 0;
+    UINT xBaseUnit = LOWORD(units);
+    UINT yBaseUnit = HIWORD(units);
 
       /* Parse dialog template */
 
     if (!dlgTemplate) return 0;
     dlgTemplate = DIALOG_ParseTemplate32( dlgTemplate, &template );
 
-      /* Initialise dialog extra data */
-
-    if (!(dlgInfo = HeapAlloc( GetProcessHeap(), 0, sizeof(*dlgInfo) ))) return 0;
-    dlgInfo->hwndFocus   = 0;
-    dlgInfo->hUserFont   = 0;
-    dlgInfo->hMenu       = 0;
-    dlgInfo->xBaseUnit   = LOWORD(units);
-    dlgInfo->yBaseUnit   = HIWORD(units);
-    dlgInfo->idResult    = 0;
-    dlgInfo->flags       = 0;
-    dlgInfo->hDialogHeap = 0;
-
       /* Load menu */
 
-    if (template.menuName) dlgInfo->hMenu = LoadMenuW( hInst, template.menuName );
+    if (template.menuName) hMenu = LoadMenuW( hInst, template.menuName );
 
       /* Create custom font if needed */
 
@@ -527,33 +519,33 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         int pixels;
 	dc = GetDC(0);
 	pixels = MulDiv(template.pointSize, GetDeviceCaps(dc , LOGPIXELSY), 72);
-        dlgInfo->hUserFont = CreateFontW( -pixels, 0, 0, 0, template.weight,
+        hUserFont = CreateFontW( -pixels, 0, 0, 0, template.weight,
                                           template.italic, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
                                           PROOF_QUALITY, FF_DONTCARE,
                                           template.faceName );
-        if (dlgInfo->hUserFont)
+        if (hUserFont)
         {
             SIZE charSize;
-            if (DIALOG_GetCharSize( dc, dlgInfo->hUserFont, &charSize ))
+            if (DIALOG_GetCharSize( dc, hUserFont, &charSize ))
             {
-                dlgInfo->xBaseUnit = charSize.cx;
-                dlgInfo->yBaseUnit = charSize.cy;
+                xBaseUnit = charSize.cx;
+                yBaseUnit = charSize.cy;
             }
         }
         ReleaseDC(0, dc);
-        TRACE("units = %d,%d\n", dlgInfo->xBaseUnit, dlgInfo->yBaseUnit );
+        TRACE("units = %d,%d\n", xBaseUnit, yBaseUnit );
     }
 
     /* Create dialog main window */
 
     rect.left = rect.top = 0;
-    rect.right = MulDiv(template.cx, dlgInfo->xBaseUnit, 4);
-    rect.bottom =  MulDiv(template.cy, dlgInfo->yBaseUnit, 8);
+    rect.right = MulDiv(template.cx, xBaseUnit, 4);
+    rect.bottom =  MulDiv(template.cy, yBaseUnit, 8);
     if (template.style & WS_CHILD)
         template.style &= ~(WS_CAPTION|WS_SYSMENU);
     if (template.style & DS_MODALFRAME)
         template.exStyle |= WS_EX_DLGMODALFRAME;
-    AdjustWindowRectEx( &rect, template.style, (dlgInfo->hMenu != 0), template.exStyle );
+    AdjustWindowRectEx( &rect, template.style, (hMenu != 0), template.exStyle );
     rect.right -= rect.left;
     rect.bottom -= rect.top;
 
@@ -570,8 +562,8 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         }
         else
         {
-            rect.left += MulDiv(template.x, dlgInfo->xBaseUnit, 4);
-            rect.top += MulDiv(template.y, dlgInfo->yBaseUnit, 8);
+            rect.left += MulDiv(template.x, xBaseUnit, 4);
+            rect.top += MulDiv(template.y, yBaseUnit, 8);
         }
         if ( !(template.style & WS_CHILD) )
         {
@@ -594,7 +586,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     if (modal)
     {
         ownerEnabled = DIALOG_DisableOwner( owner );
-        if (ownerEnabled) dlgInfo->flags |= DF_OWNERENABLED;
+        if (ownerEnabled) flags |= DF_OWNERENABLED;
     }
 
     if (unicode)
@@ -602,7 +594,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         hwnd = CreateWindowExW(template.exStyle, template.className, template.caption,
                                template.style & ~WS_VISIBLE,
                                rect.left, rect.top, rect.right, rect.bottom,
-                               owner, dlgInfo->hMenu, hInst, NULL );
+                               owner, hMenu, hInst, NULL );
     }
     else
     {
@@ -624,25 +616,33 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         hwnd = CreateWindowExA(template.exStyle, class, caption,
                                template.style & ~WS_VISIBLE,
                                rect.left, rect.top, rect.right, rect.bottom,
-                               owner, dlgInfo->hMenu, hInst, NULL );
+                               owner, hMenu, hInst, NULL );
         if (HIWORD(class)) HeapFree( GetProcessHeap(), 0, class );
         if (HIWORD(caption)) HeapFree( GetProcessHeap(), 0, caption );
     }
 
     if (!hwnd)
     {
-        if (dlgInfo->hUserFont) DeleteObject( dlgInfo->hUserFont );
-        if (dlgInfo->hMenu) DestroyMenu( dlgInfo->hMenu );
-        if (modal && (dlgInfo->flags & DF_OWNERENABLED)) DIALOG_EnableOwner(owner);
-        HeapFree( GetProcessHeap(), 0, dlgInfo );
+        if (hUserFont) DeleteObject( hUserFont );
+        if (hMenu) DestroyMenu( hMenu );
+        if (modal && (flags & DF_OWNERENABLED)) DIALOG_EnableOwner(owner);
 	return 0;
     }
-    wndPtr = WIN_GetPtr( hwnd );
-    wndPtr->flags |= WIN_ISDIALOG;
-    WIN_ReleasePtr( wndPtr );
-
+   
+    /* moved this from the top of the method to here as DIALOGINFO structure
+    will be valid only after WM_CREATE message has been handled in DefDlgProc
+    All the members of the structure get filled here using temp variables */
+    dlgInfo = DIALOG_get_info(hwnd);
+    dlgInfo->hwndFocus   = 0;
+    dlgInfo->hUserFont   = hUserFont;
+    dlgInfo->hMenu       = hMenu;
+    dlgInfo->xBaseUnit   = xBaseUnit;
+    dlgInfo->yBaseUnit   = yBaseUnit;
+    dlgInfo->idResult    = 0;
+    dlgInfo->flags       = flags;
+    dlgInfo->hDialogHeap = 0;
+    
     if (template.helpId) SetWindowContextHelpId( hwnd, template.helpId );
-    SetWindowLongW( hwnd, DWL_WINE_DIALOGINFO, (LONG)dlgInfo );
 
     if (unicode) SetWindowLongW( hwnd, DWL_DLGPROC, (LONG)dlgProc );
     else SetWindowLongA( hwnd, DWL_DLGPROC, (LONG)dlgProc );
