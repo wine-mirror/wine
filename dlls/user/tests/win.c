@@ -1284,6 +1284,30 @@ static void test_children_zorder(HWND parent)
     test_window_tree(parent, complex_style, complex_order_5, 5);
 }
 
+static void test_SetFocus(HWND hwnd)
+{
+    HWND child;
+
+    /* check if we can set focus to non-visible windows */
+
+    ShowWindow(hwnd, SW_SHOW);
+    SetFocus(0);
+    SetFocus(hwnd);
+    ok( GetFocus() == hwnd, "Failed to set focus to visible window %p\n", hwnd );
+    ok( GetWindowLong(hwnd,GWL_STYLE) & WS_VISIBLE, "Window %p not visible\n", hwnd );
+    ShowWindow(hwnd, SW_HIDE);
+    SetFocus(0);
+    SetFocus(hwnd);
+    ok( GetFocus() == hwnd, "Failed to set focus to invisible window %p\n", hwnd );
+    ok( !(GetWindowLong(hwnd,GWL_STYLE) & WS_VISIBLE), "Window %p still visible\n", hwnd );
+    child = CreateWindowExA(0, "static", NULL, WS_CHILD, 0, 0, 0, 0, hwnd, 0, 0, NULL);
+    assert(child);
+    SetFocus(child);
+    ok( GetFocus() == child, "Failed to set focus to invisible child %p\n", child );
+    ok( !(GetWindowLong(child,GWL_STYLE) & WS_VISIBLE), "Child %p is visible\n", child );
+    DestroyWindow( child );
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -1313,6 +1337,7 @@ START_TEST(win)
     test_icons();
     test_SetWindowPos(hwndMain);
     test_SetMenu(hwndMain);
+    test_SetFocus(hwndMain);
 
     test_children_zorder(hwndMain);
 
