@@ -1821,6 +1821,7 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
 {
     int		  i;
     fontInfo*	  fi = NULL;
+    fontResource* fr, *pfr;
     int           n_ff = 0;
 
     MESSAGE("Building font metrics. This may take some time...\n");
@@ -1828,7 +1829,6 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
     {
 	char*         typeface;
 	LFD*          lfd;
-	fontResource* fr, *pfr;
 	int           j;
 	char          buffer[MAX_LFD_LENGTH];
 	char*	      lpstr;
@@ -1940,6 +1940,45 @@ static int XFONT_BuildMetrics(char** x_pattern, int res, unsigned x_checksum, in
     }
     if( fi ) HeapFree(GetProcessHeap(), 0, fi);
 
+    /* Scan through the font list and remove FontResorce(s) (fr) 
+     * that have no associated Fontinfo(s) (fi). 
+     * This code is necessary because XFONT_ReadCachedMetrics
+     * assumes that there is at least one fi associated with a fr.  
+     * This assumption is invalid for TT font
+     *  -altsys-ms outlook-medium-r-normal--0-0-0-0-p-0-microsoft-symbol.
+     */
+    
+    fr = fontList;
+    
+    while (!fr->fi_count) 
+    {
+       fontList = fr->next;
+    
+       HeapFree(GetProcessHeap(), 0, fr->resource);
+       HeapFree(GetProcessHeap(), 0, fr);
+       
+       fr = fontList;
+       n_ff--;
+    }
+    	    
+    fr = fontList;
+    
+    while (fr->next)
+    {
+      	if (!fr->next->fi_count)
+	{
+	    pfr = fr->next;
+	    fr->next = fr->next->next;
+			    
+	    HeapFree(GetProcessHeap(), 0, pfr->resource);
+	    HeapFree(GetProcessHeap(), 0, pfr);
+	
+	    n_ff--;
+	}
+	else 
+	    fr = fr->next; 
+    }  
+	  
     return n_ff;
 }
 
