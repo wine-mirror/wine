@@ -28,12 +28,68 @@ DEFAULT_DEBUG_CHANNEL(shell);
  */
 HRESULT WINAPI StrRetToStrNA (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
-        return StrRetToBufA( src, pidl, dest, len );
+	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
+
+	switch (src->uType)
+	{
+	  case STRRET_WSTR:
+	    WideCharToMultiByte(CP_ACP, 0, src->u.pOleStr, -1, (LPSTR)dest, len, NULL, NULL);
+/*	    SHFree(src->u.pOleStr);  FIXME: is this right? */
+	    break;
+
+	  case STRRET_CSTRA:
+	    lstrcpynA((LPSTR)dest, src->u.cStr, len);
+	    break;
+
+	  case STRRET_OFFSETA:
+	    lstrcpynA((LPSTR)dest, ((LPCSTR)&pidl->mkid)+src->u.uOffset, len);
+	    break;
+
+	  default:
+	    FIXME("unknown type!\n");
+	    if (len)
+	    {
+	      *(LPSTR)dest = '\0';
+	    }
+	    return(FALSE);
+	}
+	return S_OK;
 }
 
-HRESULT WINAPI StrRetToStrNW (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
+HRESULT WINAPI StrRetToStrNW (LPVOID dest1, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
 {
-        return StrRetToBufW( src, pidl, dest, len );
+    LPWSTR dest = (LPWSTR) dest1;
+	TRACE("dest=0x%p len=0x%lx strret=0x%p pidl=%p stub\n",dest,len,src,pidl);
+
+	switch (src->uType)
+	{
+	  case STRRET_WSTR:
+	    lstrcpynW((LPWSTR)dest, src->u.pOleStr, len);
+/*	    SHFree(src->u.pOleStr);  FIXME: is this right? */
+	    break;
+
+	  case STRRET_CSTRA:
+              if (!MultiByteToWideChar( CP_ACP, 0, src->u.cStr, -1, dest, len ) && len)
+                  dest[len-1] = 0;
+	    break;
+
+	  case STRRET_OFFSETA:
+	    if (pidl)
+	    {
+              if (!MultiByteToWideChar( CP_ACP, 0, ((LPCSTR)&pidl->mkid)+src->u.uOffset, -1,
+                                        dest, len ) && len)
+                  dest[len-1] = 0;
+	    }
+	    break;
+
+	  default:
+	    FIXME("unknown type!\n");
+	    if (len)
+	    { *(LPSTR)dest = '\0';
+	    }
+	    return(FALSE);
+	}
+	return S_OK;
 }
 
 HRESULT WINAPI StrRetToStrNAW (LPVOID dest, DWORD len, LPSTRRET src, const ITEMIDLIST *pidl)
