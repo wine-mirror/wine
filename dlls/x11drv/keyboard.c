@@ -354,6 +354,17 @@ static const char main_key_BG_phonetic[MAIN_LEN][4] =
  "<>" /* the phantom key */
 };
 
+/*** Belarusian standard keyboard layout (contributed by Hleb Valoska) */
+/*** It matches belarusian layout for XKB from Alexander Mikhailian    */
+static const char main_key_BY[MAIN_LEN][4] =
+{
+ "`~£³","1!","2@","3#","4$","5%","6^","7&","8*","9(","0)","-_","=+",
+ "qQÊê","wWÃã","eEÕõ","rRËë","tTÅå","yYÎî","uUÇç","iIÛû","oO®¾","pPÚú","[{Èè","]}''",
+ "aAÆæ","sSÙù","dD×÷","fFÁá","gGĞğ","hHÒò","jJÏï","kKÌì","lLÄä",";:Öö","'\"Üü","\\|/|",
+ "zZÑñ","xXŞş","cCÓó","vVÍí","bB¦¶","nNÔô","mMØø",",<Ââ",".>Àà","/?.,", "<>|¦",
+};
+
+
 /*** Russian keyboard layout (contributed by Pavel Roskin) */
 static const char main_key_RU[MAIN_LEN][4] =
 {
@@ -634,6 +645,7 @@ static const struct {
  {"Finnish keyboard layout", 28591, &main_key_FI, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Bulgarian bds keyboard layout", 1251, &main_key_BG_bds, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Bulgarian phonetic keyboard layout", 1251, &main_key_BG_phonetic, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {"Belarusian keyboard layout", 1251, &main_key_BY, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Russian keyboard layout", 20866, &main_key_RU, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Russian keyboard layout (phantom key version)", 20866, &main_key_RU_phantom, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {"Russian keyboard layout KOI8-R", 20866, &main_key_RU_koi8r, &main_key_scan_qwerty, &main_key_vkey_qwerty},
