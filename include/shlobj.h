@@ -375,7 +375,7 @@ typedef struct _SHELLVIEWDATA   /* idl */
   DWORD           viewmode;  /* NF_* enum */
 } SHELLVIEWDATA, * LPSHELLVIEWDATA;
 
-DWORD WINAPI SHGetMalloc(LPMALLOC *lpmal) ;
+HRESULT WINAPI SHGetMalloc(LPMALLOC *lpmal) ;
 
 /**********************************************************************
  * SHGetSetSettings ()

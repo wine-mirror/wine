@@ -423,7 +423,7 @@ static ICOM_VTABLE(IMalloc) VT_Shell_IMalloc32 =
  *  uses OLE32.CoGetMalloc if OLE32.DLL is already loaded.
  *  if not it uses a internal implementations as fallback.
  */
-DWORD WINAPI SHGetMalloc(LPMALLOC *lpmal)
+HRESULT WINAPI SHGetMalloc(LPMALLOC *lpmal)
 {
 	HRESULT (WINAPI *pCoGetMalloc)(DWORD,LPMALLOC *);
 	HMODULE hOle32;
