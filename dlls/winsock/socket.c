@@ -1376,15 +1376,11 @@ static int WS2_register_async_shutdown ( SOCKET s, int fd, int type )
     if ( (ret = register_new_async ( &wsa->async )) )
     {
         err = NtStatusToWSAError ( ret );
-        ws2_async_cleanup ( &wsa->async );
         goto out;
     }
     /* Try immediate completion */
-    if ( WSAGetOverlappedResult ( s, ovl, NULL, FALSE, NULL ) )
-        return 0;
-    if ( (err = WSAGetLastError ()) == WSA_IO_INCOMPLETE )
-        return 0;
-    return WSAEINVAL;
+    while ( WaitForSingleObjectEx ( ovl->hEvent, 0, TRUE ) == STATUS_USER_APC );
+    return 0;
 
 out_close:
     WSACloseEvent ( ovl->hEvent );
