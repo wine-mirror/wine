@@ -262,16 +262,20 @@ _FUNCTION_ {
                         nch = _GETC_(file);
                     }
 		    /* get first digit. */
-		    if (!_ISDIGIT_(nch)) break;
-		    cur = (nch - '0');
-                    nch = _GETC_(file);
-		    if (width>0) width--;
-                    /* read until no more digits */
-                    while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
+		    if ('.' != nch) {
+		      if (!_ISDIGIT_(nch)) break;
+		      cur = (nch - '0');
+		      nch = _GETC_(file);
+		      if (width>0) width--;
+		      /* read until no more digits */
+		      while (width!=0 && (nch!=_EOF_) && _ISDIGIT_(nch)) {
                         cur = cur*10 + (nch - '0');
                         nch = _GETC_(file);
 			if (width>0) width--;
-                    }
+		      }
+		    } else {
+		      cur = 0; /* MaxPayneDemo Fix: .8 -> 0.8 */
+		    }
 		    /* handle decimals */
                     if (width!=0 && nch == '.') {
                         float dec = 1;
