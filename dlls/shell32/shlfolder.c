@@ -98,11 +98,13 @@ BOOL SHELL32_GetCustomFolderAttribute(
         WCHAR wszDesktopIniPath[MAX_PATH];
         static const WCHAR wszDesktopIni[] =
             {'d','e','s','k','t','o','p','.','i','n','i',0};
+        static const WCHAR wszDefault[] =
+            {0};
         if (!SHGetPathFromIDListW(pidl, wszDesktopIniPath))
             return FALSE;
         PathAppendW(wszDesktopIniPath, wszDesktopIni);
         ret = GetPrivateProfileStringW(pwszHeading, pwszAttribute,
-            NULL, pwszValue, cchValue, wszDesktopIniPath);
+            wszDefault, pwszValue, cchValue, wszDesktopIniPath);
         if (!ret) return FALSE;
         return TRUE;
     }
