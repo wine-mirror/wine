@@ -1620,6 +1620,7 @@ dlls/uuid/Makefile
 dlls/uxtheme/Makefile
 dlls/vdhcp.vxd/Makefile
 dlls/version/Makefile
+dlls/version/tests/Makefile
 dlls/vmm.vxd/Makefile
 dlls/vnbt.vxd/Makefile
 dlls/vnetbios.vxd/Makefile

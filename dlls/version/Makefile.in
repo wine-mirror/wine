@@ -17,6 +17,8 @@ C_SRCS = \
 C_SRCS16 = \
 	ver16.c
 
+SUBDIRS = tests
+
 @MAKE_DLL_RULES@
 
 ### Dependencies:
