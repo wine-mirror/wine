@@ -1412,6 +1412,8 @@ LRESULT WINPROC_UnmapMsg16To32A( HWND16 hwnd, UINT msg, WPARAM wParam, LPARAM lP
 INT WINPROC_MapMsg16To32W( HWND16 hwnd, UINT16 msg16, WPARAM16 wParam16, UINT *pmsg32,
                              WPARAM *pwparam32, LPARAM *plparam )
 {
+    *pmsg32=(UINT)msg16;
+    *pwparam32 = (WPARAM)wParam16;
     switch(msg16)
     {
     case EM_GETLINE16:
