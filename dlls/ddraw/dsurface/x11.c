@@ -264,31 +264,6 @@ static void Xlib_copy_surface_on_screen(IDirectDrawSurface4Impl* This) {
 		    );
 }
 
-HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Unlock(
-    LPDIRECTDRAWSURFACE4 iface,LPVOID surface
-) {
-    ICOM_THIS(IDirectDrawSurface4Impl,iface);
-    DDPRIVATE(This->s.ddraw);
-    DSPRIVATE(This);
-    TRACE("(%p)->Unlock(%p)\n",This,surface);
-
-    /*if (!This->s.ddraw->d.paintable)
-	return DD_OK; */
-
-    /* Only redraw the screen when unlocking the buffer that is on screen */
-    if (dspriv->info.image && VISIBLE(This)) {
-	Xlib_copy_surface_on_screen(This);
-	if (This->s.palette) {
-    	    DPPRIVATE(This->s.palette);
-	    if(dppriv->cm)
-		TSXSetWindowColormap(display,ddpriv->drawable,dppriv->cm);
-	}
-    }
-    /* DO NOT Release the surface! Lock/Unlock are NOT guaranteed to come in 
-     * matched pairs! - Marcus Meissner 20000509 */
-    return DD_OK;
-}
-
 #ifdef HAVE_XVIDEO
 static void Xlib_copy_overlay_on_screen(IDirectDrawSurface4Impl* This) {
   DSPRIVATE(This);
@@ -338,6 +313,39 @@ static void Xlib_copy_overlay_on_screen(IDirectDrawSurface4Impl* This) {
 		   dspriv->info.overlay.dst_rect.bottom - dspriv->info.overlay.dst_rect.top);
 }
 #endif
+
+HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Unlock(
+    LPDIRECTDRAWSURFACE4 iface,LPVOID surface
+) {
+    ICOM_THIS(IDirectDrawSurface4Impl,iface);
+    DDPRIVATE(This->s.ddraw);
+    DSPRIVATE(This);
+    TRACE("(%p)->Unlock(%p)\n",This,surface);
+
+    /*if (!This->s.ddraw->d.paintable)
+	return DD_OK; */
+
+    /* Only redraw the screen when unlocking the buffer that is on screen */
+    if (dspriv->info.image && VISIBLE(This)) {
+	Xlib_copy_surface_on_screen(This);
+	if (This->s.palette) {
+    	    DPPRIVATE(This->s.palette);
+	    if(dppriv->cm)
+		TSXSetWindowColormap(display,ddpriv->drawable,dppriv->cm);
+	}
+    } else if (dspriv->is_overlay) {
+      /* Case of an overlay surface */
+#ifdef HAVE_XVIDEO
+      if (dspriv->info.overlay.shown)
+	Xlib_copy_overlay_on_screen(This);
+#else
+      ERR("Why was this code activated WITHOUT XVideo support ?\n");
+#endif
+    } 
+    /* DO NOT Release the surface! Lock/Unlock are NOT guaranteed to come in 
+     * matched pairs! - Marcus Meissner 20000509 */
+    return DD_OK;
+}
 
 HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_Flip(
     LPDIRECTDRAWSURFACE4 iface,LPDIRECTDRAWSURFACE4 flipto,DWORD dwFlags
@@ -634,8 +642,8 @@ HRESULT WINAPI Xlib_IDirectDrawSurface4Impl_UpdateOverlay(
       dspriv->info.overlay.dst_rect = *lpDestRect;
       dspriv->info.overlay.dest_surface = (LPDIRECTDRAWSURFACE) lpDDDestSurface;
 
-      /* Now the same for the backbuffers */
-      ctx.shown = TRUE;
+      /* Now the same for the backbuffers, except that they are NOT shown */
+      ctx.shown = FALSE;
       ctx.src_rect = lpSrcRect;
       ctx.dst_rect = lpDestRect;
       ctx.dest_surface = (LPDIRECTDRAWSURFACE) lpDDDestSurface;
