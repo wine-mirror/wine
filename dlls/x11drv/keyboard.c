@@ -1288,7 +1288,7 @@ void X11DRV_InitKeyboard( BYTE *key_state_table )
 	      int maxlen=0,maxval=-1,ok;
 	      for (i=0; i<syms; i++) {
 		keysym = XKeycodeToKeysym(display, keyc, i);
-		if ((keysym<0x800) && (keysym!=' '))
+		if ((keysym<0x8000) && (keysym!=' '))
                 {
 #ifdef HAVE_XKB
                     if (!is_xkb || !XkbTranslateKeySym(display, &keysym, 0, &ckey[i], 1, NULL))
