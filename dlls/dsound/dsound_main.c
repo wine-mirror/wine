@@ -2213,11 +2213,19 @@ static DWORD WINAPI DSOUND_thread(LPVOID arg)
 			WARN("DSOUND thread giving up.\n");
 			ExitThread(0);
 		}
+#if 0
+		/* EP: since the thread creating this thread can
+		 * die before the end of the DSOUND one, this
+		 * test is of no use
+		 * What shall be tested is whether the DSOUND thread 
+		 * is the last one in the process
+		 */
 		if (getppid()==1) {
 			WARN("DSOUND father died? Giving up.\n");
 			ExitThread(0);
 		}
-		/* RACE: dsound could be deleted */
+#endif
+ 		/* RACE: dsound could be deleted */
 		IDirectSound_AddRef((LPDIRECTSOUND)dsound);
 		if (primarybuf == NULL) {
 			/* Should never happen */
