@@ -307,7 +307,7 @@ typedef struct _POINTL
 {
     LONG x;
     LONG y;
-} POINTL;
+} POINTL, *PPOINTL;
 
 /* The POINTS structure */
 

@@ -150,7 +150,7 @@ typedef struct tagPOINT {
 typedef struct _POINTL {
     LONG x;
     LONG y;
-} POINTL;
+} POINTL, *PPOINTL;
 
 typedef struct tagRECT {
     LONG left;
