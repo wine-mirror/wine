@@ -466,6 +466,20 @@ static void process_unload_dll( struct process *process, void *base )
     set_error( STATUS_INVALID_PARAMETER );
 }
 
+/* kill all processes */
+void kill_all_processes( struct process *skip, int exit_code )
+{
+    for (;;)
+    {
+        struct process *process = first_process;
+
+        while (process && (!process->running_threads || process == skip))
+            process = process->next;
+        if (!process) break;
+        kill_process( process, NULL, exit_code );
+    }
+}
+
 /* kill all processes being attached to a console renderer */
 void kill_console_processes( struct thread *renderer, int exit_code )
 {

@@ -31,7 +31,7 @@
 
 #include "object.h"
 #include "thread.h"
-
+#include "process.h"
 
 struct timeout_user
 {
@@ -229,6 +229,14 @@ static void sigterm_handler()
     exit(1);
 }
 
+/* SIGINT handler */
+static void sigint_handler()
+{
+    kill_all_processes( NULL, 1 );
+    flush_registry();
+    exit(1);
+}
+
 /* server main loop */
 void select_loop(void)
 {
@@ -252,8 +260,9 @@ void select_loop(void)
     sigaction( SIGCHLD, &action, NULL );
     action.sa_handler = sighup_handler;
     sigaction( SIGHUP, &action, NULL );
-    action.sa_handler = sigterm_handler;
+    action.sa_handler = sigint_handler;
     sigaction( SIGINT, &action, NULL );
+    action.sa_handler = sigterm_handler;
     sigaction( SIGQUIT, &action, NULL );
     sigaction( SIGTERM, &action, NULL );
 

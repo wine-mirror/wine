@@ -60,6 +60,7 @@ extern void open_master_socket(void);
 extern void close_master_socket(void);
 extern void lock_master_socket( int locked );
 extern int wait_for_lock(void);
+extern int kill_lock_owner( int sig );
 
 extern void trace_request(void);
 extern void trace_reply( enum request req, const union generic_reply *reply );

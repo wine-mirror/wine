@@ -513,6 +513,28 @@ static void create_server_dir(void)
     free( server_dir );
 }
 
+/* create the lock file and return its file descriptor */
+static int create_server_lock(void)
+{
+    struct stat st;
+    int fd;
+
+    if (lstat( server_lock_name, &st ) == -1)
+    {
+        if (errno != ENOENT)
+            fatal_perror( "lstat %s/%s", wine_get_server_dir(), server_lock_name );
+    }
+    else
+    {
+        if (!S_ISREG(st.st_mode))
+            fatal_error( "%s/%s is not a regular file\n", wine_get_server_dir(), server_lock_name );
+    }
+
+    if ((fd = open( server_lock_name, O_CREAT|O_TRUNC|O_WRONLY, 0600 )) == -1)
+        fatal_perror( "error creating %s/%s", wine_get_server_dir(), server_lock_name );
+    return fd;
+}
+
 /* wait for the server lock */
 int wait_for_lock(void)
 {
@@ -520,8 +542,7 @@ int wait_for_lock(void)
     struct flock fl;
 
     create_server_dir();
-    if ((fd = open( server_lock_name, O_TRUNC|O_WRONLY, 0600 )) == -1)
-        return -1;
+    fd = create_server_lock();
 
     fl.l_type   = F_WRLCK;
     fl.l_whence = SEEK_SET;
@@ -533,28 +554,59 @@ int wait_for_lock(void)
     return r;
 }
 
+/* kill the wine server holding the lock */
+int kill_lock_owner( int sig )
+{
+    int fd, i, ret = 0;
+    pid_t pid = 0;
+    struct flock fl;
+
+    create_server_dir();
+    fd = create_server_lock();
+
+    for (i = 0; i < 10; i++)
+    {
+        fl.l_type   = F_WRLCK;
+        fl.l_whence = SEEK_SET;
+        fl.l_start  = 0;
+        fl.l_len    = 1;
+        if (fcntl( fd, F_GETLK, &fl ) == -1) goto done;
+        if (fl.l_type != F_WRLCK) goto done;  /* the file is not locked */
+        if (!pid)  /* first time around */
+        {
+            if (!(pid = fl.l_pid)) goto done;  /* shouldn't happen */
+            if (sig == -1)
+            {
+                if (kill( pid, SIGINT ) == -1) goto done;
+                kill( pid, SIGCONT );
+                ret = 1;
+            }
+            else  /* just send the specified signal and return */
+            {
+                ret = (kill( pid, sig ) != -1);
+                goto done;
+            }
+        }
+        else if (fl.l_pid != pid) goto done;  /* no longer the same process */
+        sleep( 1 );
+    }
+    /* waited long enough, now kill it */
+    kill( pid, SIGKILL );
+
+ done:
+    close( fd );
+    return ret;
+}
+
 /* acquire the main server lock */
 static void acquire_lock(void)
 {
-    const char *server_dir_name = wine_get_server_dir();
     struct sockaddr_un addr;
     struct stat st;
     struct flock fl;
     int fd, slen, got_lock = 0;
 
-    if (lstat( server_lock_name, &st ) == -1)
-    {
-        if (errno != ENOENT)
-            fatal_perror( "lstat %s/%s", server_dir_name, server_lock_name );
-    }
-    else
-    {
-        if (!S_ISREG(st.st_mode))
-            fatal_error( "%s/%s is not a regular file\n", server_dir_name, server_lock_name );
-    }
-
-    if ((fd = open( server_lock_name, O_CREAT|O_TRUNC|O_WRONLY, 0600 )) == -1)
-        fatal_perror( "error creating %s/%s", server_dir_name, server_lock_name );
+    fd = create_server_lock();
 
     fl.l_type   = F_WRLCK;
     fl.l_whence = SEEK_SET;
@@ -570,7 +622,7 @@ static void acquire_lock(void)
                      "Warning: a previous instance of the wine server seems to have crashed.\n"
                      "Please run 'gdb %s %s/core',\n"
                      "type 'backtrace' at the gdb prompt and report the results. Thanks.\n\n",
-                     server_argv0, server_dir_name );
+                     server_argv0, wine_get_server_dir() );
         }
         unlink( server_socket_name ); /* we got the lock, we can safely remove the socket */
         got_lock = 1;
@@ -590,7 +642,7 @@ static void acquire_lock(void)
         case EAGAIN:
             exit(2); /* we didn't get the lock, exit with special status */
         default:
-            fatal_perror( "fcntl %s/%s", server_dir_name, server_lock_name );
+            fatal_perror( "fcntl %s/%s", wine_get_server_dir(), server_lock_name );
         }
         /* it seems we can't use locks on this fs, so we will use the socket existence as lock */
         close( fd );

@@ -46,13 +46,14 @@ static void usage(void)
     fprintf(stderr, "   -d<n>  set debug level to <n>\n");
     fprintf(stderr, "   -p[n]  make server persistent, optionally for n seconds\n");
     fprintf(stderr, "   -w     wait until the current wineserver terminates\n");
+    fprintf(stderr, "   -k[n]  kill the current wineserver, optionally with signal n\n");
     fprintf(stderr, "   -h     display this help message\n");
     fprintf(stderr, "\n");
 }
 
 static void parse_args( int argc, char *argv[] )
 {
-    int i;
+    int i, ret;
 
     server_argv0 = argv[0];
     for (i = 1; i < argc; i++)
@@ -76,6 +77,10 @@ static void parse_args( int argc, char *argv[] )
             case 'w':
                 wait_for_lock();
                 exit(0);
+            case 'k':
+                if (isdigit(argv[i][2])) ret = kill_lock_owner( atoi(argv[i] + 2) );
+                else ret = kill_lock_owner(-1);
+                exit( !ret );
             default:
                 fprintf( stderr, "wineserver: unknown option '%s'\n", argv[i] );
                 usage();
