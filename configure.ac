@@ -147,8 +147,8 @@ then
               AC_DEFINE(HAVE_XKB, 1, [Define if you have the XKB extension]),,
               $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
             ],
-            AC_MSG_WARN([[Xkb extension not found, Wine will be built without it]])
-        )
+            AC_MSG_WARN([[Xkb extension not found, Wine will be built without it]]),
+            [#include <X11/Xlib.h>])
 
         dnl *** Check for X Shm extension
         AC_CHECK_HEADERS(X11/extensions/XShm.h,
@@ -160,6 +160,10 @@ then
             AC_MSG_WARN([[XShm extension not found, Wine will be built without it]]),
             [#include <X11/Xlib.h>])
 
+        dnl *** Check for Xutil
+        AC_CHECK_HEADERS(X11/Xutil.h,,,
+            [#include <X11/Xlib.h>])
+
         dnl *** Check for X shape extension
         AC_CHECK_HEADERS(X11/extensions/shape.h,
             [ dnl *** If X11/extensions/shape.h exists...
@@ -168,7 +172,10 @@ then
 	      $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
 	    ],
 	    AC_MSG_WARN([[XShape extension not found, Wine will be built without it]]),
-            [#include <X11/Xlib.h>])
+            [#include <X11/Xlib.h>
+             #ifdef HAVE_X11_XUTIL_H
+             # include <X11/Xutil.h>
+             #endif])
 
         dnl *** Check for XFree86 DGA / DGA 2.0 extension
         AC_CHECK_HEADERS(X11/extensions/xf86dga.h,
@@ -911,15 +918,12 @@ AC_CHECK_HEADERS(\
 	linux/param.h \
 	linux/serial.h \
 	linux/ucdrom.h \
-	net/if.h \
 	netdb.h \
 	netinet/in.h \
 	netinet/in_systm.h \
-	netinet/ip.h \
 	netinet/tcp.h \
 	pty.h \
 	pwd.h \
-	resolv.h \
 	sched.h \
 	scsi/sg.h \
 	socket.h \
@@ -962,6 +966,27 @@ AC_CHECK_HEADERS(\
 	unistd.h \
 )
 AC_HEADER_STAT()
+
+dnl *** Check for net/if.h
+AC_CHECK_HEADERS(net/if.h,,,
+    [#if HAVE_SYS_SOCKET_H
+     # include <sys/socket.h>
+     #endif])
+
+dnl *** Check for netinet/ip.h
+AC_CHECK_HEADERS(netinet/ip.h,,,
+    [#if HAVE_SYS_SOCKET_H
+     # include <sys/socket.h>
+     #endif
+     #if HAVE_NETINET_IN_SYSTM_H
+     # include <netinet/in_systm.h>
+     #endif])
+
+dnl *** Check for resolv.h
+AC_CHECK_HEADERS(resolv.h,,,
+    [#if HAVE_SYS_SOCKET_H
+     # include <sys/socket.h>
+     #endif])
 
 dnl **** Check for types ****
 
