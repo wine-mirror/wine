@@ -124,7 +124,7 @@ typedef struct async_fileio
     LPOVERLAPPED                     lpOverlapped;
     LPOVERLAPPED_COMPLETION_ROUTINE  completion_func;
     char                             *buffer;
-    int                              count;
+    unsigned int                     count;
     enum fd_type                     fd_type;
 } async_fileio;
 
@@ -141,8 +141,10 @@ static void fileio_set_async_status (async_private *ovp, const DWORD status)
 static DWORD fileio_get_async_count (const struct async_private *ovp)
 {
     async_fileio *fileio = (async_fileio*) ovp;
-    DWORD ret = fileio->count - fileio->lpOverlapped->InternalHigh;
-    return (ret < 0 ? 0 : ret);
+
+    if (fileio->count < fileio->lpOverlapped->InternalHigh)
+    	return 0;
+    return fileio->count - fileio->lpOverlapped->InternalHigh;
 }
 
 static void CALLBACK fileio_call_completion_func (ULONG_PTR data)
