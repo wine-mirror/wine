@@ -5,38 +5,24 @@ wrc \- Wine Resource Compiler
 .BI "wrc " "[options] " "[inputfile]"
 .SH DESCRIPTION
 .B wrc
-compiles resources from
-.I inputfile
-into win16 and win32 compatible
-binary format.
-.B wrc
-outputs the binary data either in a standard \fB.res\fR formatted binary
-file, or an assembly file.
-.B wrc
-is also capable of reading \fB.res\fR formatted files and convert them
-into an assembly file.
+compiles resources from \fBinputfile\fR
+into win16 and win32 compatible binary format.
 .PP
 The source\-file is preprocessed with a builtin ANSI\-C compatible
 preprocessor before the resources are compiled. See \fBPREPROCESSOR\fR
 below.
 .PP
 .B wrc
-takes only one \fBinputfile\fR as argument. The \fBinputfile\fR has
-extension \fB.rc\fR for resources in source form and \fB.res\fR for
-binary resources. The resources are read from standard input if no
-inputfile is given. If the outputfile is not specified with \fI-o\fR,
-then \fBwrc\fR will write the output to \fBinputfile.{s,res}\fR
-with \fB.rc\fR stripped, depending on the mode of compilation.
-The outputfile is named \fBwrc.tab.{s,res}\fR if no inputfile was
-given.
+takes only one \fBinputfile\fR as argument. The resources are read from 
+standard input if no inputfile is given. If the output file is not 
+specified with \fI-o\fR, then \fBwrc\fR will write the output to 
+\fBinputfile.res\fR with \fB.rc\fR stripped, or to \fBwrc.tab.res\fR if 
+no inputfile was given.
 .SH OPTIONS
 .TP
 .I \-a n
 Win16 only; set the alignment between resources n.  The alignment must
 be a power of 2. The default is 4.
-.TP
-.I \-b
-Create an assembly file from a binary \fB.res\fR file.
 .TP
 .I \-B x
 Win32 only; set output byte\-ordering, where \fIx\fR is one of n[ative],
@@ -67,10 +53,6 @@ this switch if old sources use win32 reserved names as resource names.
 Preprocess only. The output is written to standard output if no
 outputfile was selected. The output is compatible with what gcc would
 generate.
-.TP
-.I \-g
-Add symbols to the global C namespace. This makes all symbols available
-for linking by other modules.
 .TP
 .I \-h
 Prints a summary message and exits.
@@ -106,28 +88,19 @@ source\-files that contain overlapping type\-IDs, or when the format of the
 resource is not 100% compliant.
 .TP
 .I \-o file
-Write output to \fIfile\fR. Default is \fBinputfile.{res,s,h}\fR
-with \fB.rc\fR stripped or \fBwrc.tab.{s,h,res}\fR, depending on the
-compilation mode.
+Write output to \fIfile\fR. Default is \fBinputfile.res\fR
+with \fB.rc\fR stripped or \fBwrc.tab.res\fR if input is read
+from standard input.
 .TP
 .I \-O format
-Sets the output format. \fformat\fR can one either 'res' or 'asm'
-to generate a \fB.res\fR or \fB.s\fR file respectively.
-If not specified, \fBwrc\fR assumes 'res'.
-.TP
-.I \-p prefix
-Prefix all generated names with \fIprefix\fR. This is only relevant for
-names in the assembly code and header file. Resource names are not
-affected.
+Sets the output format. The only supported \fformat\fR is 'res', which
+is also the default format if this option is not specified. The option
+exists mainly for compatibility with \fBwindres\fR.
 .TP
 .I \-P program
 This option may be used to specify the preprocessor to use, including any 
 leading arguments. If not specified, \fBwrc\fR uses its builtin processor.
 To disable preprocessing, use \fB-P cat\fR.
-.TP
-.I \-s
-Add structure with win32/16 (PE/NE) resource directory to outputfile.
-This directory is always in native byteorder.
 .TP
 .I \-v
 Turns on verbose mode (equivalent to -d 1).

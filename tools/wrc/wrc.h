@@ -51,9 +51,6 @@ extern int debuglevel;
 extern int win32;
 extern int create_res;
 extern int extensions;
-extern int binary;
-extern int create_dir;
-extern int global;
 extern int alignment;
 extern int alignment_pwr;
 extern int create_s;
@@ -64,7 +61,6 @@ extern int preprocess_only;
 extern int no_preprocess;
 extern int remap;
 
-extern char *prefix;
 extern char *output_name;
 extern char *input_name;
 extern char *cmdline;

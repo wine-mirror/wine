@@ -65,7 +65,6 @@
 
 #include "wrc.h"
 #include "utils.h"
-#include "writeres.h"
 #include "readres.h"
 #include "dumpres.h"
 #include "genres.h"
@@ -86,7 +85,6 @@
 static char usage[] =
 	"Usage: wrc [options...] [infile[.rc|.res]] [outfile]\n"
 	"   -a n        Alignment of resource (win16 only, default is 4)\n"
-	"   -b          Create an assembly array from a binary .res file\n"
 	"   -B x        Set output byte-order x={n[ative], l[ittle], b[ig]}\n"
 	"               (win32 only; default is " ENDIAN "-endian)\n"
 	"   -C cp       Set the resource's codepage to cp (default is 0)\n"
@@ -95,18 +93,15 @@ static char usage[] =
 	"   -e          Disable recognition of win32 keywords in 16bit compile\n"
 	"   -E          Preprocess only\n"
 	"   -F target	Ignored for compatibility with windres\n"
-	"   -g          Add symbols to the global c namespace\n"
 	"   -h		Prints this summary.\n"
 	"   -i file	The name of the input file.\n"
 	"   -I path     Set include search dir to path (multiple -I allowed)\n"
 	"   -J		Do not search the standard include path\n"
 	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
 	"   -m          Do not remap numerical resource IDs\n"
-	"   -o file     Output to file (default is infile.[res|s]\n"
-	"   -O format	The output format: one of `res', 'asm'.\n"
-	"   -p prefix   Give a prefix for the generated names\n"
+	"   -o file     Output to file (default is infile.res)\n"
+	"   -O format	The output format (must be `res').\n"
 	"   -P program	Specifies the preprocessor to use, including arguments.\n"
-	"   -s          Add structure with win32/16 (PE/NE) resource directory\n"
 	"   -v          Enable verbose mode.\n"
 	"   -V          Print version and exit\n"
 	"   -w 16|32    Select win16 or win32 output (default is win32)\n"
@@ -136,7 +131,7 @@ static char usage[] =
 	"    * 0x10 Preprocessor lex messages\n"
 	"    * 0x20 Preprocessor yacc trace\n"
 	"If no input filename is given and the output name is not overridden\n"
-	"with -o, then the output is written to \"wrc.tab.{s,res}\"\n"
+	"with -o, then the output is written to \"wrc.tab.res\"\n"
 	;
 
 char version_string[] = "Wine Resource Compiler Version " WRC_FULLVERSION "\n"
@@ -144,20 +139,14 @@ char version_string[] = "Wine Resource Compiler Version " WRC_FULLVERSION "\n"
 			"          1994 Martin von Loewis\n";
 
 /*
- * Default prefix for resource names used in the C array.
- * Option '-p name' sets it to 'name'
+ * External functions
  */
-char *prefix = __ASM_NAME("_Resource");
+void write_resfile(char *outname, resource_t *top);
 
 /*
  * Set if compiling in 32bit mode (default).
  */
 int win32 = 1;
-
-/*
- * Output type (default res)
- */
-enum output_t { output_def, output_res, output_asm } output_type = output_def;
 
 /*
  * debuglevel == DEBUGLEVEL_NONE	Don't bother
@@ -175,22 +164,6 @@ int debuglevel = DEBUGLEVEL_NONE;
  * otherwise set with -e option.
  */
 int extensions = 1;
-
-/*
- * Set when creating C array from .res file (-b option).
- */
-int binary = 0;
-
-/*
- * Set when the NE/PE resource directory should be dumped into
- * the output file.
- */
-int create_dir = 0;
-
-/*
- * Set when all symbols should be added to the global namespace (-g option)
- */
-int global = 0;
 
 /*
  * NE segment resource aligment (-a option)
@@ -250,7 +223,7 @@ static void rm_tempfile(void);
 static void segvhandler(int sig);
 
 static const char* short_options = 
-	"a:AbB:cC:d:D:eEF:ghH:i:I:Jl:LmnNo:O:p:P:rstTvVw:W";
+	"a:AB:cC:d:D:eEF:hH:i:I:Jl:LmnNo:O:P:rtTvVw:W";
 #ifdef HAVE_GETOPT_LONG
 static struct option long_options[] = {
 	{ "input", 1, 0, 'i' },
@@ -320,9 +293,6 @@ int main(int argc,char *argv[])
 		case 'a':
 			alignment = atoi(optarg);
 			break;
-		case 'b':
-			binary = 1;
-			break;
 		case 'B':
 			switch(optarg[0])
 			{
@@ -361,9 +331,6 @@ int main(int argc,char *argv[])
 		case 'F':
 			/* ignored for compatibility with windres */
 			break;
-		case 'g':
-			global = 1;
-			break;
 		case 'h':
 			printf(usage);
 			exit(0);
@@ -394,19 +361,12 @@ int main(int argc,char *argv[])
 			else error("Too many output files.\n");
 			break;
 		case 'O':
-			if (strcmp(optarg, "res") == 0) output_type = output_res;
-			else if (strcmp(optarg, "asm") == 0) output_type = output_asm;
-			else error("Output format %s not supported.", optarg);
-			break;
-		case 'p':
-			prefix = xstrdup(optarg);
+			if (strcmp(optarg, "res")) 
+				error("Output format %s not supported.", optarg);
 			break;
 		case 'P':
 			if (strcmp(optarg, "cat") == 0) no_preprocess = 1;
 			else fprintf(stderr, "-P option not yet supported, ignored.\n");
-			break;
-		case 's':
-			create_dir = 1;
 			break;
 		case 'v':
 			debuglevel = DEBUGLEVEL_CHAT;
@@ -460,19 +420,6 @@ int main(int argc,char *argv[])
 		else error("Too many output files.\n");
 	}
 
-	/* Try to guess the output format based on output name */
-	if (output_type == output_def)
-	{
-		char *dotstr = output_name ? strrchr(output_name, '.') : 0;
-		
-		output_type = output_res; /* by default generate .res files */
-		if (dotstr)
-		{
-			if (strcmp(dotstr+1, "s") == 0) output_type = output_asm;
-		}
-	}
-
-
 	/* Check the command line options for invalid combinations */
 	if(win32)
 	{
@@ -480,51 +427,6 @@ int main(int argc,char *argv[])
 		{
 			warning("Option -e ignored with 32bit compile\n");
 			extensions = 1;
-		}
-	}
-
-	if(output_type == output_res)
-	{
-		if(global)
-		{
-			warning("Option -g ignored with compile to .res\n");
-			global = 0;
-		}
-
-		if(create_dir)
-		{
-			error("Option -r and -s cannot be used together\n");
-		}
-
-		if(binary)
-		{
-			error("Option -r and -b cannot be used together\n");
-		}
-	}
-
-	if(byteorder != WRC_BO_NATIVE)
-	{
-		if(binary)
-			error("Forced byteordering not supported for binary resources\n");
-	}
-
-	if(preprocess_only)
-	{
-		if(global)
-		{
-			warning("Option -g ignored with preprocess only\n");
-			global = 0;
-		}
-
-		if(create_dir)
-		{
-			warning("Option -s ignored with preprocess only\n");
-			create_dir = 0;
-		}
-
-		if(binary)
-		{
-			error("Option -E and -b cannot be used together\n");
 		}
 	}
 
@@ -575,21 +477,15 @@ int main(int argc,char *argv[])
 	if(!currentlanguage)
 		currentlanguage = new_language(0, 0);
 
-	if(binary && !input_name)
-	{
-		error("Binary mode requires .res file as input\n");
-	}
-
 	/* Generate appropriate outfile names */
 	if(!output_name && !preprocess_only)
 	{
-		output_name = dup_basename(input_name, binary ? ".res" : ".rc");
-		if (output_type == output_res) strcat(output_name, ".res");
-		else if (output_type == output_asm) strcat(output_name, ".s");
+		output_name = dup_basename(input_name, ".rc");
+		strcat(output_name, ".res");
 	}
 
 	/* Run the preprocessor on the input */
-	if(!no_preprocess && !binary)
+	if(!no_preprocess)
 	{
 		/*
 		 * Preprocess the input to a temp-file, or stdout if
@@ -626,54 +522,26 @@ int main(int argc,char *argv[])
 		input_name = temp_name;
 	}
 
-	if(!binary)
-	{
-		/* Go from .rc to .res or .s */
-		chat("Starting parse");
+	/* Go from .rc to .res */
+	chat("Starting parse");
 
-		if(!(yyin = fopen(input_name, "rb")))
-			error("Could not open %s for input\n", input_name);
+	if(!(yyin = fopen(input_name, "rb")))
+		error("Could not open %s for input\n", input_name);
 
-		ret = yyparse();
+	ret = yyparse();
 
-		if(input_name)
-			fclose(yyin);
+	if(input_name) fclose(yyin);
 
-		if(ret)
-		{
-			/* Error during parse */
-			exit(1);
-		}
+	if(ret) exit(1); /* Error during parse */
 
-		if(debuglevel & DEBUGLEVEL_DUMP)
-			dump_resources(resource_top);
+	if(debuglevel & DEBUGLEVEL_DUMP)
+		dump_resources(resource_top);
 
-		/* Convert the internal lists to binary data */
-		resources2res(resource_top);
+	/* Convert the internal lists to binary data */
+	resources2res(resource_top);
 
-		if(output_type == output_res)
-		{
-			chat("Writing .res-file");
-			write_resfile(output_name, resource_top);
-		}
-		else if(output_type == output_asm)
-		{
-			chat("Writing .s-file");
-			write_s_file(output_name, resource_top);
-		}
-
-	}
-	else
-	{
-		/* Go from .res to .s */
-		chat("Reading .res-file");
-		resource_top = read_resfile(input_name);
-		if(output_type == output_asm)
-		{
-			chat("Writing .s-file");
-			write_s_file(output_name, resource_top);
-		}
-	}
+	chat("Writing .res-file");
+	write_resfile(output_name, resource_top);
 
 	return 0;
 }
