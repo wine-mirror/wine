@@ -50,6 +50,7 @@
 #include "winerror.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winreg.h"
 #include "mmddk.h"
 #include "dsound.h"
 #include "dsdriver.h"
@@ -148,7 +149,7 @@ typedef struct {
     WAVEOUTCAPSA		caps;
 
     /* ALSA information (ALSA 0.9/1.x uses two different devices for playback/capture) */
-    char			device[32];
+    char*                      device;
     snd_pcm_t*                  p_handle;                 /* handle to ALSA playback device */
     snd_pcm_t*                  c_handle;                 /* handle to ALSA capture device */
     snd_pcm_hw_params_t *	hw_params;		/* ALSA Hw params */
@@ -192,7 +193,7 @@ typedef struct {
     WAVEOUTCAPSA		caps;
 
     /* ALSA information (ALSA 0.9/1.x uses two different devices for playback/capture) */
-    char			device[32];
+    char*                      device;
     snd_pcm_t*                  p_handle;                 /* handle to ALSA playback device */
     snd_pcm_t*                  c_handle;                 /* handle to ALSA capture device */
     snd_pcm_hw_params_t *	hw_params;		/* ALSA Hw params */
@@ -471,7 +472,46 @@ else \
 
 }
 
+/* return a string duplicated on the win32 process heap, free with HeapFree */
+static char* ALSA_strdup(char *s) {
+    char *result = HeapAlloc(GetProcessHeap(), 0, strlen(s)+1);
+    strcpy(result, s);
+    return result;
+}
 
+/******************************************************************
+ *             ALSA_GetDeviceFromReg
+ *
+ * Returns either "default" or reads the registry so the user can
+ * override the playback/record device used.
+ */
+char *ALSA_GetDeviceFromReg(char *value)
+{
+    DWORD res;
+    DWORD type;
+    HKEY playbackKey = 0;
+    char *result = NULL;
+    DWORD resultSize;
+
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\ALSA", 0, KEY_QUERY_VALUE, &playbackKey);
+    if (res != ERROR_SUCCESS) goto end;
+
+    res = RegQueryValueExA(playbackKey, value, NULL, &type, NULL, &resultSize);
+    if (res != ERROR_SUCCESS) goto end;
+
+    if (type != REG_SZ) {
+       ERR("Registry key [HKEY_LOCAL_MACHINE\\Software\\Wine\\Wine\\ALSA\\%s] must be a string\n", value);
+       goto end;
+    }
+
+    result = HeapAlloc(GetProcessHeap(), 0, resultSize);
+    res = RegQueryValueExA(playbackKey, value, NULL, NULL, result, &resultSize);
+
+end:
+    if (!result) result = ALSA_strdup("default");
+    if (playbackKey) RegCloseKey(playbackKey);
+    return result;
+}
 
 /******************************************************************
  *		ALSA_WaveInit
@@ -489,7 +529,9 @@ LONG ALSA_WaveInit(void)
     wwo = &WOutDev[0];
 
     /* FIXME: use better values */
-    strcpy(wwo->device, "hw");
+    wwo->device = ALSA_GetDeviceFromReg("PlaybackDevice");
+    TRACE("using waveout device \"%s\"\n", wwo->device);
+
     wwo->caps.wMid = 0x0002;
     wwo->caps.wPid = 0x0104;
     strcpy(wwo->caps.szPname, "SB16 Wave Out");
@@ -597,7 +639,9 @@ LONG ALSA_WaveInit(void)
     wwi = &WInDev[0];
 
     /* FIXME: use better values */
-    strcpy(wwi->device, "hw");
+    wwi->device = ALSA_GetDeviceFromReg("RecordDevice");
+    TRACE("using wavein device \"%s\"\n", wwi->device);
+
     wwi->caps.wMid = 0x0002;
     wwi->caps.wPid = 0x0104;
     strcpy(wwi->caps.szPname, "SB16 Wave In");
@@ -1513,6 +1557,8 @@ static DWORD wodClose(WORD wDevID)
 	wwo->p_handle = NULL;
 
 	ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
+
+       HeapFree(GetProcessHeap(), 0, wwo->device);
     }
 
     HeapFree(GetProcessHeap(), 0, wwo->ufds);
@@ -2998,6 +3044,8 @@ static DWORD widClose(WORD wDevID)
 	wwi->p_handle = NULL;
 
 	ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
+
+       HeapFree(GetProcessHeap(), 0, wwi->device);
     }
 
     HeapFree(GetProcessHeap(), 0, wwi->ufds);
