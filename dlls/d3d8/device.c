@@ -3446,11 +3446,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
             GLint wrapParm = GL_REPEAT;
             switch (Value) {
             case D3DTADDRESS_WRAP:   wrapParm = GL_REPEAT; break;
-            case D3DTADDRESS_CLAMP:  wrapParm = GL_CLAMP; break;      
-            case D3DTADDRESS_BORDER: wrapParm = GL_CLAMP_TO_EDGE; break;      
-
-            case D3DTADDRESS_MIRROR:      /* Unsupported in OpenGL? */
-            case D3DTADDRESS_MIRRORONCE:  /* Unsupported in OpenGL? */
+            case D3DTADDRESS_CLAMP:  wrapParm = GL_CLAMP_TO_EDGE; break;      
+            case D3DTADDRESS_BORDER: wrapParm = GL_REPEAT; break;      /* FIXME: Not right, but better */
+#if defined(GL_VERSION_1_3)
+            case D3DTADDRESS_MIRROR: wrapParm = GL_MIRRORED_REPEAT_ARB; break;
+            case D3DTADDRESS_MIRRORONCE:  /* Unsupported in OpenGL but pretent mirror */
+#else
+            case D3DTADDRESS_MIRROR:      /* Unsupported in OpenGL pre-1.4 */
+            case D3DTADDRESS_MIRRORONCE:  /* Unsupported in OpenGL         */
+#endif
             default:
                 FIXME("Unrecognized or unsupported D3DTADDRESS_* value %ld, state %d\n", Value, Type);
                 wrapParm = GL_REPEAT; 
