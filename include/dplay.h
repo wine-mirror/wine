@@ -342,7 +342,15 @@ typedef BOOL (CALLBACK* LPDPENUMDPCALLBACKA)(
     DWORD       dwMinorVersion, /* Minor # of driver spec in lpguidSP */ 
     LPVOID      lpContext);     /* User given */
 
+/* NOTE: This isn't in the dplay.h header file, but this shouldn't be 
+ *       a problem. We require this because we include all these header files
+ *       which declare GUIDs in guid.c
+ */
+#ifndef __LPCGUID_DEFINED__
+#define __LPCGUID_DEFINED__
 typedef const GUID   *LPCGUID;
+#endif
+
 typedef const DPNAME *LPCDPNAME;
 
 typedef BOOL (CALLBACK* LPDPENUMCONNECTIONSCALLBACK)(

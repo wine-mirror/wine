@@ -179,17 +179,49 @@ typedef const DSBPOSITIONNOTIFY *LPCDSBPOSITIONNOTIFY;
 #define DSSPEAKER_GEOMETRY_WIDE     0x00000014  /* 20 degrees */
 #define DSSPEAKER_GEOMETRY_MAX      0x000000B4  /* 180 degrees */
 
+typedef struct _DSCBUFFERDESC
+{
+  DWORD          dwSize;
+  DWORD          dwFlags;
+  DWORD          dwBufferBytes;
+  DWORD          dwReserved;
+  LPWAVEFORMATEX lpwfxFormat;
+} DSCBUFFERDESC, *LPDSCBUFFERDESC;
+typedef const DSCBUFFERDESC *LPCDSCBUFFERDESC;
+
+typedef struct _DSCCAPS
+{
+  DWORD DwSize;
+  DWORD dwFlags;
+  DWORD dwFormats;
+  DWORD dwChannels;
+} DSCCAPS, *LPDSCCAPS;
+typedef const DSCCAPS *LPCDSCCAPS;
+
+typedef struct _DSCBCAPS
+{
+  DWORD dwSize;
+  DWORD dwFlags;
+  DWORD dwBufferBytes;
+  DWORD dwReserved;
+} DSCBCAPS, *LPDSCBCAPS;
+typedef const DSCBCAPS *LPCDSCBCAPS;
+
+#ifndef __LPCGUID_DEFINED__
+#define __LPCGUID_DEFINED__
+typedef const GUID *LPCGUID;
+#endif 
 
 typedef LPVOID* LPLPVOID;
 
 typedef BOOL (CALLBACK *LPDSENUMCALLBACKW)(LPGUID,LPWSTR,LPWSTR,LPVOID);
 typedef BOOL (CALLBACK *LPDSENUMCALLBACKA)(LPGUID,LPSTR,LPSTR,LPVOID);
 
-extern HRESULT WINAPI DirectSoundCreate(REFGUID lpGUID,LPDIRECTSOUND * ppDS,IUnknown *pUnkOuter );
+extern HRESULT WINAPI DirectSoundCreate(LPCGUID lpGUID,LPDIRECTSOUND * ppDS,IUnknown *pUnkOuter );
 extern HRESULT WINAPI DirectSoundEnumerateA(LPDSENUMCALLBACKA, LPVOID);
 extern HRESULT WINAPI DirectSoundEnumerateW(LPDSENUMCALLBACKW, LPVOID);
 
-extern HRESULT WINAPI DirectSoundCaptureCreate(REFGUID, LPDIRECTSOUNDCAPTURE *, LPUNKNOWN);
+extern HRESULT WINAPI DirectSoundCaptureCreate(LPCGUID, LPDIRECTSOUNDCAPTURE *, LPUNKNOWN);
 extern HRESULT WINAPI DirectSoundCaptureEnumerateA(LPDSENUMCALLBACKA, LPVOID);
 extern HRESULT WINAPI DirectSoundCaptureEnumerateW(LPDSENUMCALLBACKW, LPVOID);
 
@@ -206,7 +238,7 @@ extern HRESULT WINAPI DirectSoundCaptureEnumerateW(LPDSENUMCALLBACKW, LPVOID);
     ICOM_METHOD (HRESULT,Compact) \
     ICOM_METHOD1(HRESULT,GetSpeakerConfig,     LPDWORD,lpdwSpeakerConfig) \
     ICOM_METHOD1(HRESULT,SetSpeakerConfig,     DWORD,dwSpeakerConfig) \
-    ICOM_METHOD1(HRESULT,Initialize,           LPGUID,lpGuid)
+    ICOM_METHOD1(HRESULT,Initialize,           LPCGUID,lpcGuid)
 #define IDirectSound_IMETHODS \
     IUnknown_IMETHODS \
     IDirectSound_METHODS
@@ -285,14 +317,57 @@ ICOM_DEFINE(IDirectSoundBuffer,IUnknown)
 /*****************************************************************************
  * IDirectSoundCapture interface
  */
-/* FIXME: not implemented yet */
+#define ICOM_INTERFACE IDirectSoundCapture
+#define IDirectSoundCapture_METHODS \
+    ICOM_METHOD3(HRESULT,CreateCaptureBuffer, LPCDSCBUFFERDESC,lpcDSCBufferDesc,LPDIRECTSOUNDCAPTUREBUFFER*,lplpDSCaptureBuffer, LPUNKNOWN,pUnk) \
+    ICOM_METHOD1(HRESULT,GetCaps,             LPDSCCAPS,lpDSCCaps) \
+    ICOM_METHOD1(HRESULT,Initialize,          LPCGUID,lpcGUID)
 
+#define IDirectSoundCapture_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectSoundCapture_METHODS
+ICOM_DEFINE(IDirectSoundCapture,IUnknown)
+#undef ICOM_INTERFACE
+
+#define IDirectSoundCapture_QueryInterface(p,a,b)        ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectSoundCapture_AddRef(p)                    ICOM_CALL (AddRef,p) 
+#define IDirectSoundCapture_Release(p)                   ICOM_CALL (Release,p) 
+#define IDirectSoundCapture_CreateCaptureBuffer(p,a,b,c) ICOM_CALL3(CreateCaptureBuffer,p,a,b,c)
+#define IDirectSoundCapture_GetCaps(p,a)                 ICOM_CALL (GetCaps,p,a)
+#define IDirectSoundCapture_Initialize(p,a)              ICOM_CALL (Initialize,p,a)
 
 /*****************************************************************************
  * IDirectSoundCaptureBuffer interface
  */
-/* FIXME: not implemented yet */
+#define ICOM_INTERFACE IDirectSoundCaptureBuffer
+#define IDirectSoundCaptureBuffer_METHODS \
+    ICOM_METHOD1(HRESULT,GetCaps,             LPDSCBCAPS,lpDSCBCaps) \
+    ICOM_METHOD2(HRESULT,GetCurrentPosition,  LPDWORD,lpdwCapturePosition,LPDWORD,lpdwReadPosition) \
+    ICOM_METHOD3(HRESULT,GetFormat,           LPWAVEFORMATEX,lpwfxFormat, DWORD,dwSizeAllocated, LPDWORD,lpdwSizeWritten) \
+    ICOM_METHOD1(HRESULT,GetStatus,           LPDWORD,lpdwStatus) \
+    ICOM_METHOD2(HRESULT,Initialize,          LPDIRECTSOUNDCAPTURE,lpDSC, LPCDSCBUFFERDESC,lpcDSCBDesc) \
+    ICOM_METHOD7(HRESULT,Lock,                DWORD,dwReadCusor, DWORD,dwReadBytes, LPVOID*,lplpvAudioPtr1, LPDWORD,lpdwAudioBytes1, LPVOID*,lplpvAudioPtr2, LPDWORD,lpdwAudioBytes2, DWORD,dwFlags) \
+    ICOM_METHOD1(HRESULT,Start,               DWORD,dwFlags) \
+    ICOM_METHOD (HRESULT,Stop) \
+    ICOM_METHOD4(HRESULT,Unlock,              LPVOID,lpvAudioPtr1, DWORD,dwAudioBytes1, LPVOID,lpvAudioPtr2, DWORD,dwAudioBytes2)               
 
+#define IDirectSoundCaptureBuffer_IMETHODS \
+    IUnknown_IMETHODS \
+    IDirectSoundCaptureBuffer_METHODS
+ICOM_DEFINE(IDirectSoundCaptureBuffer,IUnknown)
+#undef ICOM_INTERFACE
+
+#define IDirectSoundCaptureBuffer_QueryInterface(p,a,b)     ICOM_CALL2(QueryInterface,p,a,b)
+#define IDirectSoundCaptureBuffer_AddRef(p)                 ICOM_CALL (AddRef,p) 
+#define IDirectSoundCaptureBuffer_Release(p)                ICOM_CALL (Release,p) 
+#define IDirectSoundCaptureBuffer_GetCurrentPosition(p,a,b) ICOM_CALL2(GetCurrentPosition,p,a,b)
+#define IDirectSoundCaptureBuffer_GetFormat(p,a,b,c)        ICOM_CALL3(GetFormat,p,a,b,c) 
+#define IDirectSoundCaptureBuffer_GetStatus(p,a)            ICOM_CALL1(GetStatus,p,a) 
+#define IDirectSoundCaptureBuffer_Initialize(p,a,b)         ICOM_CALL2(Initialize,p,a,b) 
+#define IDirectSoundCaptureBuffer_Lock(p,a,b,c,d,e,f,g)     ICOM_CALL7(Lock,p,a,b,c,d,e,f,g)
+#define IDirectSoundCaptureBuffer_Start(p,a)                ICOM_CALL1(Start,p,a) 
+#define IDirectSoundCaptureBuffer_Stop(p)                   ICOM_CALL (Stop,p)
+#define IDirectSoundCaptureBuffer_Unlock(p,a,b,c,d)         ICOM_CALL4(Unlock,p,a,b,c,d)
 
 /*****************************************************************************
  * IDirectSoundNotify interface
