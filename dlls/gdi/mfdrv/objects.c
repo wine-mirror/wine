@@ -68,7 +68,7 @@ INT16 MFDRV_CreateBrushIndirect(PHYSDEV dev, HBRUSH hBrush )
 	    mr = HeapAlloc( GetProcessHeap(), 0, size );
 	    mr->rdSize = size / 2;
 	    mr->rdFunction = META_CREATEBRUSHINDIRECT;
-	    memcpy( mr->rdParm, &lb16, sizeof(LOGBRUSH));
+        memcpy( mr->rdParm, &lb16, sizeof(LOGBRUSH16));
 	    break;
 	}
     case BS_PATTERN:
