@@ -136,6 +136,13 @@ code
           to read.
         </para>
         </listitem>
+        <listitem>
+        <para>
+          If the patch fixes a bug in Bugzilla please provide a link to the 
+          bug in the comments of the patch. This will make it easier for the 
+          maintainers of Bugzilla.
+        </para>
+        </listitem>
       </itemizedlist>
       <sect2 id="Inline-Attachments-with-OE">
         <title>Inline attachments with Outlook Express</title>
