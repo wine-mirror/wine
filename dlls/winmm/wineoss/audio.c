@@ -161,8 +161,16 @@ LONG OSS_WaveInit(void)
     int		bytespersmpl;
     int 	caps;
     int		mask;
+	int 	i;
 
-    /* start with output device */
+    
+	/* start with output device */
+
+	/* initialize all device handles to -1 */
+	for (i = 0; i < MAX_WAVEOUTDRV; ++i)
+	{
+		WOutDev[i].unixdev = -1;
+	}
 
     /* FIXME: only one device is supported */
     memset(&WOutDev[0].caps, 0, sizeof(WOutDev[0].caps));
@@ -258,7 +266,14 @@ LONG OSS_WaveInit(void)
     /* then do input device */
     samplesize = 16;
     dsp_stereo = 1;
-    
+   
+	for (i = 0; i < MAX_WAVEINDRV; ++i)
+	{
+		WInDev[i].unixdev = -1;
+	}
+
+	memset(&WInDev[0].caps, 0, sizeof(WInDev[0].caps));
+
     if (access(SOUND_DEV,0) != 0 ||
 	(audio = open(SOUND_DEV, O_RDONLY|O_NDELAY, 0)) == -1) {
 	TRACE("Couldn't open in %s (%s)\n", SOUND_DEV, strerror(errno));
@@ -835,7 +850,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if (fragment_size == -1) {
 	WARN("IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
 	close(audio);
-	wwo->unixdev = 0;
+	wwo->unixdev = -1;
 	return MMSYSERR_NOTENABLED;
     }
     wwo->dwFragmentSize = fragment_size;
@@ -905,7 +920,7 @@ static DWORD wodClose(WORD wDevID)
 	}
 
 	close(wwo->unixdev);
-	wwo->unixdev = 0;
+	wwo->unixdev = -1;
 	wwo->dwFragmentSize = 0;
 	if (OSS_NotifyClient(wDevID, WOM_CLOSE, 0L, 0L) != MMSYSERR_NOERROR) {
 	    WARN("can't notify client !\n");
@@ -1668,52 +1683,127 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
     MSG			msg;
     DWORD		bytesRead;
 
+    audio_buf_info info;
+	
+	LPVOID		buffer = HeapAlloc(GetProcessHeap(), 
+		                           HEAP_ZERO_MEMORY, 
+       		                       wwi->dwFragmentSize);
+
+    LPVOID		pOffset = buffer;
+
     PeekMessageA(&msg, 0, 0, 0, 0);
     wwi->state = WINE_WS_STOPPED;
     wwi->dwTotalRecorded = 0;
 
     TRACE("imhere[0]\n");
     SetEvent(wwi->hEvent);
-
-    /* make sleep time to be # of ms to output a fragment */
+    
+	/* make sleep time to be # of ms to output a fragment */
     dwSleepTime = (wwi->dwFragmentSize * 1000) / wwi->format.wf.nAvgBytesPerSec;
 
-    for (;;) {
+    
+	for (; ; ) {
 	/* wait for dwSleepTime or an event in thread's queue */
 	/* FIXME: could improve wait time depending on queue state,
 	 * ie, number of queued fragments
 	 */
 	TRACE("imhere[1]\n");
 
-	if (wwi->lpQueuePtr != NULL) {
-	    lpWaveHdr = wwi->lpQueuePtr;
-	    TRACE("recording buf=%p size=%lu/read=%lu \n",
-		  lpWaveHdr->lpData, wwi->lpQueuePtr->dwBufferLength, lpWaveHdr->dwBytesRecorded);
+	if (wwi->lpQueuePtr != NULL && wwi->state == WINE_WS_PLAYING) {
+		lpWaveHdr = wwi->lpQueuePtr;
+			   
+	    ioctl(wwi->unixdev, SNDCTL_DSP_GETISPACE, &info);
+	   
+	    if (info.fragments > 1)
+		{
+		if (lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded > wwi->dwFragmentSize)
+	    {
+		    /* directly read fragment in wavehdr */
+		    bytesRead = read(wwi->unixdev, 
+					     lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded, 
+				    	 wwi->dwFragmentSize);
 
-	    bytesRead = read(wwi->unixdev, lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded, 
-			     lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
+		    if (bytesRead != (DWORD) -1)
+		    {
+				/* update number of bytes recorded in current buffer and by this device */
+			    lpWaveHdr->dwBytesRecorded += bytesRead;
+				wwi->dwTotalRecorded       += bytesRead;
+				
+				/* buffer is full. notify client */
+			    if (lpWaveHdr->dwBytesRecorded == lpWaveHdr->dwBufferLength) 
+			    {
+				    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+				    lpWaveHdr->dwFlags |=  WHDR_DONE;
 
-	    if (bytesRead != (DWORD) -1) {
-		TRACE("Read=%lu (%ld)\n", bytesRead, lpWaveHdr->dwBufferLength);
-		lpWaveHdr->dwBytesRecorded += bytesRead;
-		wwi->dwTotalRecorded += bytesRead;
-		if (lpWaveHdr->dwBytesRecorded == lpWaveHdr->dwBufferLength) {
-		    /* removes the current block from the queue */
-		    wwi->lpQueuePtr = lpWaveHdr->lpNext;
+				    if (OSS_NotifyClient(uDevID, 
+										 WIM_DATA, 
+										 (DWORD)lpWaveHdr, 
+										 lpWaveHdr->dwBytesRecorded) != MMSYSERR_NOERROR) 
+				    {
+						WARN("can't notify client !\n");
+				    }
+				    lpWaveHdr = wwi->lpQueuePtr = lpWaveHdr->lpNext;
+			    }
+    		}
+	    }
+	    else
+		{
+			/* read fragment in our local buffer */
+		    bytesRead = read(wwi->unixdev, buffer, wwi->dwFragmentSize);
+			pOffset = buffer;
 
-		    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
-		    lpWaveHdr->dwFlags |= WHDR_DONE;
-	
-		    if (OSS_NotifyClient(uDevID, WIM_DATA, (DWORD)lpWaveHdr, lpWaveHdr->dwBytesRecorded) != MMSYSERR_NOERROR) {
-			WARN("can't notify client !\n");
-		    }
+			/* copy data in client buffers */	
+		    while (bytesRead != (DWORD) -1 && bytesRead > 0)
+		    {
+				DWORD dwToCopy = min (bytesRead, lpWaveHdr->dwBufferLength - lpWaveHdr->dwBytesRecorded);
 
+				memcpy(lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
+				       pOffset,
+				       dwToCopy);
+
+				/* update number of bytes recorded in current buffer and by this device */
+				lpWaveHdr->dwBytesRecorded += dwToCopy;
+				wwi->dwTotalRecorded += dwToCopy;
+				bytesRead -= dwToCopy;
+				pOffset   += dwToCopy;
+				
+				/* client buffer is full. notify client */
+				if (lpWaveHdr->dwBytesRecorded == lpWaveHdr->dwBufferLength) 
+				{
+				    lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+				    lpWaveHdr->dwFlags |=  WHDR_DONE;
+
+				    if (OSS_NotifyClient(uDevID, 
+										 WIM_DATA, 
+										 (DWORD)lpWaveHdr, 
+										 lpWaveHdr->dwBytesRecorded) != MMSYSERR_NOERROR) 
+				    {
+						WARN("can't notify client !\n");
+				    }
+				   
+					if (lpWaveHdr->lpNext)
+					{	
+						lpWaveHdr = lpWaveHdr->lpNext;
+						wwi->lpQueuePtr = lpWaveHdr;
+					}
+					else
+					{
+						/* no more buffer to copy data to, but we did read more. 
+						 * what hasn't been copied will be dropped
+						 */ 
+						if (bytesRead) WARN("buffer over run! %lu bytes dropped.\n", bytesRead);
+						wwi->lpQueuePtr = NULL;
+						break;
+					}
+ 			    }
+			}
+		}	
 		}
-	    } else {
-		TRACE("No data (%s)\n", strerror(errno));
+		else {
+			TRACE("No data (%s)\n", strerror(errno));
 	    }
 	}
-
+	
 	MsgWaitForMultipleObjects(0, NULL, FALSE, dwSleepTime, QS_POSTMESSAGE);
 	TRACE("imhere[2] (q=%p)\n", wwi->lpQueuePtr);
 
@@ -1737,8 +1827,6 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		    for (wh = &(wwi->lpQueuePtr); *wh; wh = &((*wh)->lpNext));
 		    *wh = lpWaveHdr;
 		}
-		if (wwi->state == WINE_WS_STOPPED)
-		    wwi->state = WINE_WS_PLAYING;
 		break;
 	    case WINE_WM_RESETTING:
 		wwi->state = WINE_WS_STOPPED;
@@ -1760,6 +1848,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		wwi->hThread = 0;
 		wwi->state = WINE_WS_CLOSED;
 		SetEvent(wwi->hEvent);
+		HeapFree(GetProcessHeap(), 0, buffer); 
 		ExitThread(0);
 		/* shouldn't go here */
 	    default:
@@ -1861,7 +1950,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     if (fragment_size == -1) {
 	WARN("IOCTL can't 'SNDCTL_DSP_GETBLKSIZE' !\n");
 	close(audio);
-	wwi->unixdev = 0;
+	wwi->unixdev = -1;
 	return MMSYSERR_NOTENABLED;
     }
     wwi->dwFragmentSize = fragment_size;
@@ -1906,7 +1995,7 @@ static DWORD widClose(WORD wDevID)
     WaitForSingleObject(wwi->hEvent, INFINITE);
     CloseHandle(wwi->hEvent);
     close(wwi->unixdev);
-    wwi->unixdev = 0;
+    wwi->unixdev = -1;
     wwi->dwFragmentSize = 0;
     if (OSS_NotifyClient(wDevID, WIM_CLOSE, 0L, 0L) != MMSYSERR_NOERROR) {
 	WARN("can't notify client !\n");
@@ -1934,10 +2023,12 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 	TRACE("header already in use !\n");
 	return WAVERR_STILLPLAYING;
     }
+
     lpWaveHdr->dwFlags |= WHDR_INQUEUE;
     lpWaveHdr->dwFlags &= ~WHDR_DONE;
     lpWaveHdr->dwBytesRecorded = 0;
-    lpWaveHdr->lpNext = NULL;
+	lpWaveHdr->lpNext = NULL;
+	
     PostThreadMessageA(WInDev[wDevID].dwThreadID, WINE_WM_HEADER, 0, (DWORD)lpWaveHdr);
     return MMSYSERR_NOERROR;
 }
@@ -1988,10 +2079,9 @@ static DWORD widStart(WORD wDevID)
 	WARN("can't start recording !\n");
 	return MMSYSERR_INVALHANDLE;
     }
-    
+
     PostThreadMessageA(WInDev[wDevID].dwThreadID, WINE_WM_RESTARTING, 0, 0);
     WaitForSingleObject(WInDev[wDevID].hEvent, INFINITE);
-    
     return MMSYSERR_NOERROR;
 }
 
