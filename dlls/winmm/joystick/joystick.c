@@ -36,7 +36,9 @@
 #ifdef HAVE_SYS_ERRNO_H
 #include <sys/errno.h>
 #endif
+
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "mmddk.h"

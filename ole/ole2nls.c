@@ -11,7 +11,9 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <locale.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "wine/unicode.h"

@@ -124,6 +124,7 @@
 #include "preproc.h"
 #include "parser.h"
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 

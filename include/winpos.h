@@ -8,6 +8,7 @@
 #define __WINE_WINPOS_H
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 

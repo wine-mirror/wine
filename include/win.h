@@ -8,6 +8,7 @@
 #define __WINE_WIN_H
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winproc.h"
 #include "winuser.h"

@@ -8,7 +8,9 @@
 
 #include <time.h>
 #include <sys/time.h>
+
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "winemm.h"

@@ -7,9 +7,9 @@
  */
 
 #include "windef.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "winbase.h"
 #include "wine/winbase16.h"
 #include "debugtools.h"
 #include "vfw.h"

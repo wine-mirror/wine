@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "winnls.h"
 #include "wingdi.h"
 #include "winuser.h"

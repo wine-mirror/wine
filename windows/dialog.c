@@ -10,8 +10,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "windef.h"
 #include "winnls.h"
+#include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
 #include "windowsx.h"
