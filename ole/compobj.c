@@ -997,6 +997,18 @@ HRESULT WINAPI CoRegisterClassObject16(
 	return 0;
 }
 
+
+/******************************************************************************
+ *      CoRevokeClassObject16 [COMPOBJ.6]
+ *
+ */
+HRESULT WINAPI CoRevokeClassObject16(DWORD dwRegister /* token on class obj */)
+{
+    FIXME("(0x%08lx),stub!\n", dwRegister);
+    return 0;
+}
+
+
 /***
  * COM_GetRegisteredClassObject
  *

@@ -6,7 +6,7 @@ type	win16
 3 pascal CoUninitialize() CoUninitialize16
 4 pascal CoGetMalloc(long ptr) CoGetMalloc16
 5 pascal CoRegisterClassObject(ptr ptr long long ptr) CoRegisterClassObject16
-6 stub COREVOKECLASSOBJECT
+6 pascal CoRevokeClassObject(long) CoRevokeClassObject16
 7 pascal CoGetClassObject(ptr long ptr ptr ptr) CoGetClassObject
 8 stub COMARSHALINTERFACE
 9 stub COUNMARSHALINTERFACE
