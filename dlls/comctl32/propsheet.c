@@ -214,11 +214,11 @@ BOOL PROPSHEET_CollectPageInfo(LPCPROPSHEETPAGEA lppsp,
    * Process page template.
    */
   if (dwFlags & PSP_DLGINDIRECT)
-    pTemplate = (DLGTEMPLATE*)lppsp->u1.pResource;
+    pTemplate = (DLGTEMPLATE*)lppsp->u.pResource;
   else
   {
     HRSRC hResource = FindResourceA(lppsp->hInstance,
-                                    lppsp->u1.pszTemplate,
+                                    lppsp->u.pszTemplate,
                                     RT_DIALOGA);
     HGLOBAL hTemplate = LoadResource(lppsp->hInstance,
                                      hResource);
@@ -1017,11 +1017,11 @@ static int PROPSHEET_CreatePage(HWND hwndParent,
   TRACE("index %d\n", index);
 
   if (ppshpage->dwFlags & PSP_DLGINDIRECT)
-    pTemplate = (DLGTEMPLATE*)ppshpage->u1.pResource;
+    pTemplate = (DLGTEMPLATE*)ppshpage->u.pResource;
   else
   {
     HRSRC hResource = FindResourceA(ppshpage->hInstance,
-                                    ppshpage->u1.pszTemplate,
+                                    ppshpage->u.pszTemplate,
                                     RT_DIALOGA);
     HGLOBAL hTemplate = LoadResource(ppshpage->hInstance, hResource);
     pTemplate = (LPDLGTEMPLATEA)LockResource(hTemplate);
@@ -1976,8 +1976,8 @@ HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(
 
   *ppsp = *lpPropSheetPage;
 
-  if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) && HIWORD( ppsp->u1.pszTemplate ) )
-    ppsp->u1.pszTemplate = HEAP_strdupA( GetProcessHeap(), 0, lpPropSheetPage->u1.pszTemplate );
+  if ( !(ppsp->dwFlags & PSP_DLGINDIRECT) && HIWORD( ppsp->u.pszTemplate ) )
+    ppsp->u.pszTemplate = HEAP_strdupA( GetProcessHeap(), 0, lpPropSheetPage->u.pszTemplate );
 
   if ( (ppsp->dwFlags & PSP_USEICONID) && HIWORD( ppsp->u2.pszIcon ) )
       ppsp->u2.pszIcon = HEAP_strdupA( GetProcessHeap(), 0, lpPropSheetPage->u2.pszIcon );
@@ -2011,8 +2011,8 @@ BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage)
   if (!psp)
      return FALSE;
 
-  if ( !(psp->dwFlags & PSP_DLGINDIRECT) && HIWORD( psp->u1.pszTemplate ) )
-     HeapFree(GetProcessHeap(), 0, (LPVOID)psp->u1.pszTemplate);
+  if ( !(psp->dwFlags & PSP_DLGINDIRECT) && HIWORD( psp->u.pszTemplate ) )
+     HeapFree(GetProcessHeap(), 0, (LPVOID)psp->u.pszTemplate);
 
   if ( (psp->dwFlags & PSP_USEICONID) && HIWORD( psp->u2.pszIcon ) )
      HeapFree(GetProcessHeap(), 0, (LPVOID)psp->u2.pszIcon);
@@ -2116,18 +2116,18 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         if (psInfo->ppshheader.dwFlags & PSH_USEICONID)
           hIcon = LoadImageA(psInfo->ppshheader.hInstance,
-                             psInfo->ppshheader.u1.pszIcon,
+                             psInfo->ppshheader.u.pszIcon,
                              IMAGE_ICON,
                              icon_cx, icon_cy,
                              LR_DEFAULTCOLOR);
         else
-          hIcon = psInfo->ppshheader.u1.hIcon;
+          hIcon = psInfo->ppshheader.u.hIcon;
 
         SendMessageA(hwnd, WM_SETICON, 0, hIcon);
       }
       
       if (psInfo->ppshheader.dwFlags & PSH_USEHICON)
-        SendMessageA(hwnd, WM_SETICON, 0, psInfo->ppshheader.u1.hIcon);
+        SendMessageA(hwnd, WM_SETICON, 0, psInfo->ppshheader.u.hIcon);
 
       psInfo->strPropertiesFor = strCaption;
 

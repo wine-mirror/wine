@@ -334,7 +334,7 @@ BOOL SYSTRAY_Init(void)
 }
 
 /*************************************************************************
- * Shell_NotifyIconA			[SHELL32.297]
+ * Shell_NotifyIconA			[SHELL32.297][SHELL32.296]
  */
 BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
 {
@@ -356,7 +356,7 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid )
 }
 
 /*************************************************************************
- * Shell_NotifyIconW			[SHELL32.297]
+ * Shell_NotifyIconW			[SHELL32.298]
  */
 BOOL WINAPI Shell_NotifyIconW (DWORD dwMessage, PNOTIFYICONDATAW pnid )
 {
@@ -371,12 +371,4 @@ BOOL WINAPI Shell_NotifyIconW (DWORD dwMessage, PNOTIFYICONDATAW pnid )
 
 	HeapFree(GetProcessHeap(),0,p);
 	return ret;
-}
-
-/*************************************************************************
- * Shell_NotifyIcon			[SHELL32.296]
- */
-BOOL WINAPI Shell_NotifyIcon(DWORD dwMessage, PNOTIFYICONDATAA pnid)
-{
-  return Shell_NotifyIconA(dwMessage, pnid);
 }

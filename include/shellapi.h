@@ -235,6 +235,13 @@ typedef struct _NOTIFYICONDATAW
 	WCHAR szTip[64];
 } NOTIFYICONDATAW, *PNOTIFYICONDATAW;
 
+DECL_WINELIB_TYPE_AW(NOTIFYICONDATA)
+DECL_WINELIB_TYPE_AW(PNOTIFYICONDATA)
+
+BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA lpData);
+BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW lpData);
+
+#define Shell_NotifyIcon WINELIB_NAME_AW(Shell_NotifyIcon)
 
 /******************************************
  * Misc

@@ -450,10 +450,9 @@ typedef LRESULT CALLBACK (*WNDPROC)(HWND,UINT,WPARAM,LPARAM);
 /* The SIZE structure */
 typedef struct tagSIZE
 {
-    INT  cx;
-    INT  cy;
+    LONG cx;
+    LONG cy;
 } SIZE, *PSIZE, *LPSIZE;
-
 
 typedef SIZE SIZEL, *PSIZEL, *LPSIZEL;
 

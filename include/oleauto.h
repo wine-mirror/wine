@@ -517,4 +517,20 @@ HRESULT WINAPI LoadTypeLib(OLECHAR *szFile, ITypeLib **pptLib);
 HRESULT WINAPI LoadTypeLibEx(LPOLESTR szFile, REGKIND regKind, ITypeLib **pptLib);
 INT WINAPI DosDateTimeToVariantTime(USHORT,USHORT,DATE*);
 
+HRESULT WINAPI DispGetParam(DISPPARAMS* pdispparams, UINT position,
+            VARTYPE vtTarg, VARIANT* pvarResult, UINT* puArgErr);
+HRESULT WINAPI DispGetIDsOfNames(ITypeInfo* ptinfo, OLECHAR** rgszNames,
+            UINT cNames, DISPID* rgdispid);
+HRESULT WINAPI DispInvoke(void* _this, ITypeInfo* ptinfo, DISPID dispidMember,
+            WORD wFlags, DISPPARAMS* pparams, VARIANT* pvarResult,
+            EXCEPINFO* pexcepinfo, UINT* puArgErr);
+HRESULT WINAPI CreateDispTypeInfo(INTERFACEDATA* pidata, LCID lcid,
+            ITypeInfo** pptinfo);
+HRESULT WINAPI CreateStdDispatch(IUnknown* punkOuter, void* pvThis,
+            ITypeInfo* ptinfo, IUnknown** ppunkStdDisp);
+HRESULT WINAPI DispCallFunc(void* pvInstance, ULONG oVft, CALLCONV cc,
+            VARTYPE vtReturn, UINT  cActuals, VARTYPE* prgvt,
+            VARIANTARG** prgpvarg, VARIANT* pvargResult);
+
+
 #endif /*__WINE_OLEAUTO_H*/

@@ -13,6 +13,19 @@
 /* proper 4-byte packing */
 #include "pshpack4.h"
 
+#define WS_SO_GROUP_ID       0x2001
+#define WS_SO_GROUP_PRIORITY 0x2002
+#define WS_SO_MAX_MSG_SIZE   0x2003
+#define WS_SO_PROTOCOL_INFOA 0x2004
+#define WS_SO_PROTOCOL_INFOW 0x2005
+#define WS_SO_PROTOCOL_INFO WINELIB_NAME_AW(WS_SO_PROTOCOL_INFO)
+
+#define PVD_CONFIG            0x3001
+#define SO_CONDITIONAL_ACCEPT 0x3002
+
+
+/* option flags per socket */
+
 #define FD_MAX_EVENTS   10
 #define FD_READ_BIT	0
 #define FD_WRITE_BIT	1

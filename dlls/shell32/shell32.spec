@@ -244,7 +244,7 @@ import kernel32.dll
  292 stdcall ShellExecuteExA (long) ShellExecuteExA
  293 stdcall ShellExecuteExW (long) ShellExecuteExW
  294 stdcall ShellExecuteW (long wstr wstr wstr wstr long) ShellExecuteW
- 296 stdcall Shell_NotifyIcon(long ptr) Shell_NotifyIcon
+ 296 stdcall Shell_NotifyIcon(long ptr) Shell_NotifyIconA
  297 stdcall Shell_NotifyIconA(long ptr) Shell_NotifyIconA
  298 stdcall Shell_NotifyIconW(long ptr) Shell_NotifyIconW
  299 stub Shl1632_ThunkData32

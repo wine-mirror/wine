@@ -2766,6 +2766,93 @@ typedef enum tagSID_NAME_USE {
 /* ------------------------------ end registry ------------------------------ */
 
 
+typedef struct _RTL_CRITICAL_SECTION_DEBUG 
+{
+  WORD   Type;
+  WORD   CreatorBackTraceIndex;
+  struct _RTL_CRITICAL_SECTION *CriticalSection;
+  LIST_ENTRY ProcessLocksList;
+  DWORD EntryCount;
+  DWORD ContentionCount;
+  DWORD Spare[ 2 ];
+} RTL_CRITICAL_SECTION_DEBUG, *PRTL_CRITICAL_SECTION_DEBUG, RTL_RESOURCE_DEBUG, *PRTL_RESOURCE_DEBUG;
+
+typedef struct _RTL_CRITICAL_SECTION {
+    PRTL_CRITICAL_SECTION_DEBUG DebugInfo;
+    LONG LockCount;
+    LONG RecursionCount;
+    HANDLE OwningThread;
+    HANDLE LockSemaphore;
+    ULONG_PTR SpinCount;
+} RTL_CRITICAL_SECTION, *PRTL_CRITICAL_SECTION;
+
+
+#define EVENTLOG_SUCCESS                0x0000
+#define EVENTLOG_ERROR_TYPE             0x0001
+#define EVENTLOG_WARNING_TYPE           0x0002
+#define EVENTLOG_INFORMATION_TYPE       0x0004
+#define EVENTLOG_AUDIT_SUCCESS          0x0008
+#define EVENTLOG_AUDIT_FAILURE          0x0010
+
+#define SERVICE_BOOT_START   0x00000000
+#define SERVICE_SYSTEM_START 0x00000001
+#define SERVICE_AUTO_START   0x00000002
+#define SERVICE_DEMAND_START 0x00000003
+#define SERVICE_DISABLED     0x00000004
+
+#define SERVICE_ERROR_IGNORE   0x00000000
+#define SERVICE_ERROR_NORMAL   0x00000001
+#define SERVICE_ERROR_SEVERE   0x00000002
+#define SERVICE_ERROR_CRITICAL 0x00000003
+
+/* Service types */
+#define SERVICE_KERNEL_DRIVER      0x00000001
+#define SERVICE_FILE_SYSTEM_DRIVER 0x00000002
+#define SERVICE_ADAPTER            0x00000004
+#define SERVICE_RECOGNIZER_DRIVER  0x00000008
+
+#define SERVICE_DRIVER ( SERVICE_KERNEL_DRIVER | SERVICE_FILE_SYSTEM_DRIVER | \
+                         SERVICE_RECOGNIZER_DRIVER )
+
+#define SERVICE_WIN32_OWN_PROCESS   0x00000010
+#define SERVICE_WIN32_SHARE_PROCESS 0x00000020
+#define SERVICE_WIN32  (SERVICE_WIN32_OWN_PROCESS | SERVICE_WIN32_SHARE_PROCESS)
+
+#define SERVICE_INTERACTIVE_PROCESS 0x00000100
+
+#define SERVICE_TYPE_ALL ( SERVICE_WIN32 | SERVICE_ADAPTER | \
+                           SERVICE_DRIVER | SERVICE_INTERACTIVE_PROCESS )
+
+
+typedef enum _CM_SERVICE_NODE_TYPE 
+{
+  DriverType               = SERVICE_KERNEL_DRIVER,
+  FileSystemType           = SERVICE_FILE_SYSTEM_DRIVER,
+  Win32ServiceOwnProcess   = SERVICE_WIN32_OWN_PROCESS,
+  Win32ServiceShareProcess = SERVICE_WIN32_SHARE_PROCESS,
+  AdapterType              = SERVICE_ADAPTER,
+  RecognizerType           = SERVICE_RECOGNIZER_DRIVER
+} SERVICE_NODE_TYPE;
+
+typedef enum _CM_SERVICE_LOAD_TYPE 
+{
+  BootLoad    = SERVICE_BOOT_START,
+  SystemLoad  = SERVICE_SYSTEM_START,
+  AutoLoad    = SERVICE_AUTO_START,
+  DemandLoad  = SERVICE_DEMAND_START,
+  DisableLoad = SERVICE_DISABLED
+} SERVICE_LOAD_TYPE;
+
+typedef enum _CM_ERROR_CONTROL_TYPE 
+{
+  IgnoreError   = SERVICE_ERROR_IGNORE,
+  NormalError   = SERVICE_ERROR_NORMAL,
+  SevereError   = SERVICE_ERROR_SEVERE,
+  CriticalError = SERVICE_ERROR_CRITICAL
+} SERVICE_ERROR_TYPE;
+
+
+
 #define RtlEqualMemory(Destination, Source, Length) (!memcmp((Destination),(Source),(Length)))
 #define RtlMoveMemory(Destination, Source, Length) memmove((Destination),(Source),(Length))
 #define RtlCopyMemory(Destination, Source, Length) memcpy((Destination),(Source),(Length))

@@ -183,7 +183,7 @@ RegisterServiceCtrlHandlerW( LPCWSTR lpServiceName,
  */
 BOOL WINAPI
 SetServiceStatus( SERVICE_STATUS_HANDLE hService, LPSERVICE_STATUS lpStatus )
-{	FIXME("%lx %p\n",hService, lpStatus);
+{	FIXME("%x %p\n",hService, lpStatus);
 	TRACE("\tType:%lx\n",lpStatus->dwServiceType);
 	TRACE("\tState:%lx\n",lpStatus->dwCurrentState);
 	TRACE("\tControlAccepted:%lx\n",lpStatus->dwControlsAccepted);
@@ -371,7 +371,7 @@ OpenServiceW(SC_HANDLE hSCManager, LPCWSTR lpServiceName,
  * CreateServiceW [ADVAPI32.29]
  */
 SC_HANDLE WINAPI
-CreateServiceW( DWORD hSCManager, LPCWSTR lpServiceName,
+CreateServiceW( SC_HANDLE hSCManager, LPCWSTR lpServiceName,
                   LPCWSTR lpDisplayName, DWORD dwDesiredAccess, 
                   DWORD dwServiceType, DWORD dwStartType, 
                   DWORD dwErrorControl, LPCWSTR lpBinaryPathName,
@@ -379,7 +379,7 @@ CreateServiceW( DWORD hSCManager, LPCWSTR lpServiceName,
                   LPCWSTR lpDependencies, LPCWSTR lpServiceStartName, 
                   LPCWSTR lpPassword )
 {
-    FIXME("(%ld,%s,%s,...)\n", hSCManager, debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
+    FIXME("(%u,%s,%s,...)\n", hSCManager, debugstr_w(lpServiceName), debugstr_w(lpDisplayName));
     return FALSE;
 }
 
@@ -388,7 +388,7 @@ CreateServiceW( DWORD hSCManager, LPCWSTR lpServiceName,
  * CreateServiceA [ADVAPI32.28]
  */
 SC_HANDLE WINAPI
-CreateServiceA( DWORD hSCManager, LPCSTR lpServiceName,
+CreateServiceA( SC_HANDLE hSCManager, LPCSTR lpServiceName,
                   LPCSTR lpDisplayName, DWORD dwDesiredAccess, 
                   DWORD dwServiceType, DWORD dwStartType, 
                   DWORD dwErrorControl, LPCSTR lpBinaryPathName,
@@ -400,7 +400,7 @@ CreateServiceA( DWORD hSCManager, LPCSTR lpServiceName,
     LONG r;
     DWORD dp;
 
-    TRACE("(%ld,%s,%s,...)\n", hSCManager, debugstr_a(lpServiceName), debugstr_a(lpDisplayName));
+    TRACE("(%u,%s,%s,...)\n", hSCManager, debugstr_a(lpServiceName), debugstr_a(lpDisplayName));
 
     r = RegCreateKeyExA(hSCManager, lpServiceName, 0, NULL, 
                        REG_OPTION_NON_VOLATILE, dwDesiredAccess, NULL, &hKey, &dp);

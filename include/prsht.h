@@ -43,7 +43,7 @@ typedef struct _PROPSHEETPAGEA
     {
         LPCSTR           pszTemplate;
         LPCDLGTEMPLATEA  pResource;
-    }DUMMYUNIONNAME1;
+    }DUMMYUNIONNAME;
     union
     {
         HICON          hIcon;
@@ -69,7 +69,7 @@ typedef struct _PROPSHEETPAGEW
     {
         LPCWSTR          pszTemplate;
         LPCDLGTEMPLATEW  pResource;
-    }DUMMYUNIONNAME1;
+    }DUMMYUNIONNAME;
     union
     {
         HICON          hIcon;
@@ -97,7 +97,7 @@ typedef struct _PROPSHEETHEADERA
     {
       HICON                  hIcon;
       LPCSTR                   pszIcon;
-    }DUMMYUNIONNAME1;
+    }DUMMYUNIONNAME;
     LPCSTR                   pszCaption;
     UINT                   nPages;
     union

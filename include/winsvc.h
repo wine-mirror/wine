@@ -7,11 +7,83 @@ extern "C" {
 
 #include "windef.h"
 
+/* Controls */
+#define SERVICE_CONTROL_STOP                  0x00000001
+#define SERVICE_CONTROL_PAUSE                 0x00000002
+#define SERVICE_CONTROL_CONTINUE              0x00000003
+#define SERVICE_CONTROL_INTERROGATE           0x00000004
+#define SERVICE_CONTROL_SHUTDOWN              0x00000005
+#define SERVICE_CONTROL_PARAMCHANGE           0x00000006
+#define SERVICE_CONTROL_NETBINDADD            0x00000007
+#define SERVICE_CONTROL_NETBINDREMOVE         0x00000008
+#define SERVICE_CONTROL_NETBINDENABLE         0x00000009
+#define SERVICE_CONTROL_NETBINDDISABLE        0x0000000A
+#define SERVICE_CONTROL_DEVICEEVENT           0x0000000B
+#define SERVICE_CONTROL_HARDWAREPROFILECHANGE 0x0000000C
+#define SERVICE_CONTROL_POWEREVENT            0x0000000D
+
+/* Service State */
+#define SERVICE_STOPPED          0x00000001
+#define SERVICE_START_PENDING    0x00000002
+#define SERVICE_STOP_PENDING     0x00000003
+#define SERVICE_RUNNING          0x00000004
+#define SERVICE_CONTINUE_PENDING 0x00000005
+#define SERVICE_PAUSE_PENDING    0x00000006
+#define SERVICE_PAUSED           0x00000007
+
+/* Controls Accepted */
+#define SERVICE_ACCEPT_STOP                  0x00000001
+#define SERVICE_ACCEPT_PAUSE_CONTINUE        0x00000002
+#define SERVICE_ACCEPT_SHUTDOWN              0x00000004
+#define SERVICE_ACCEPT_PARAMCHANGE           0x00000008
+#define SERVICE_ACCEPT_NETBINDCHANGE         0x00000010
+#define SERVICE_ACCEPT_HARDWAREPROFILECHANGE 0x00000020
+#define SERVICE_ACCEPT_POWEREVENT            0x00000040
+
+/* Service Control Manager Object access types */
+#define SC_MANAGER_CONNECT            0x0001
+#define SC_MANAGER_CREATE_SERVICE     0x0002
+#define SC_MANAGER_ENUMERATE_SERVICE  0x0004
+#define SC_MANAGER_LOCK               0x0008
+#define SC_MANAGER_QUERY_LOCK_STATUS  0x0010
+#define SC_MANAGER_MODIFY_BOOT_CONFIG 0x0020
+#define SC_MANAGER_ALL_ACCESS         ( STANDARD_RIGHTS_REQUIRED      | \
+                                        SC_MANAGER_CONNECT            | \
+                                        SC_MANAGER_CREATE_SERVICE     | \
+                                        SC_MANAGER_ENUMERATE_SERVICE  | \
+                                        SC_MANAGER_LOCK               | \
+                                        SC_MANAGER_QUERY_LOCK_STATUS  | \
+                                        SC_MANAGER_MODIFY_BOOT_CONFIG )
+
+#define SERVICE_QUERY_CONFIG         0x0001
+#define SERVICE_CHANGE_CONFIG        0x0002
+#define SERVICE_QUERY_STATUS         0x0004
+#define SERVICE_ENUMERATE_DEPENDENTS 0x0008
+#define SERVICE_START                0x0010
+#define SERVICE_STOP                 0x0020
+#define SERVICE_PAUSE_CONTINUE       0x0040
+#define SERVICE_INTERROGATE          0x0080
+#define SERVICE_USER_DEFINED_CONTROL 0x0100
+
+#define SERVICE_ALL_ACCESS           ( STANDARD_RIGHTS_REQUIRED     | \
+                                       SERVICE_QUERY_CONFIG         | \
+                                       SERVICE_CHANGE_CONFIG        | \
+                                       SERVICE_QUERY_STATUS         | \
+                                       SERVICE_ENUMERATE_DEPENDENTS | \
+                                       SERVICE_START                | \
+                                       SERVICE_STOP                 | \
+                                       SERVICE_PAUSE_CONTINUE       | \
+                                       SERVICE_INTERROGATE          | \
+                                       SERVICE_USER_DEFINED_CONTROL )
+
+
+
 /* Handle types */
 
-typedef HANDLE SC_HANDLE, *LPSC_HANDLE;
+DECLARE_HANDLE(SC_HANDLE);
 
-typedef DWORD SERVICE_STATUS_HANDLE;
+DECLARE_HANDLE(SERVICE_STATUS_HANDLE);
+
 
 /* Service status structure */
 
@@ -71,9 +143,9 @@ typedef VOID (WINAPI *LPHANDLER_FUNCTION)(DWORD);
 
 BOOL        WINAPI CloseServiceHandle(SC_HANDLE);
 BOOL        WINAPI ControlService(SC_HANDLE,DWORD,LPSERVICE_STATUS);
-SC_HANDLE   WINAPI CreateServiceA(DWORD,LPCSTR,LPCSTR,DWORD,DWORD,DWORD,DWORD,LPCSTR,
+SC_HANDLE   WINAPI CreateServiceA(SC_HANDLE,LPCSTR,LPCSTR,DWORD,DWORD,DWORD,DWORD,LPCSTR,
                                   LPCSTR,LPDWORD,LPCSTR,LPCSTR,LPCSTR);
-SC_HANDLE   WINAPI CreateServiceW(DWORD,LPCWSTR,LPCWSTR,DWORD,DWORD,DWORD,DWORD,LPCWSTR,
+SC_HANDLE   WINAPI CreateServiceW(SC_HANDLE,LPCWSTR,LPCWSTR,DWORD,DWORD,DWORD,DWORD,LPCWSTR,
                                   LPCWSTR,LPDWORD,LPCWSTR,LPCWSTR,LPCWSTR);
 #define     CreateService WINELIB_NAME_AW(CreateService)
 BOOL        WINAPI DeleteService(SC_HANDLE);
