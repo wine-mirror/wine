@@ -153,6 +153,14 @@ Tells Wine which graphics driver to use. Normally you'd want to use
 x11drv (for X11). In case you want to run programs as text console/TTY only
 without having Wine rely on X11 support, then use ttydrv.
 .PP
+.I format: """ShowDirSymlinks""=""<0|1>"""
+.br
+default: "0"
+.br
+Wine doesn't pass directory symlinks to Windows programs by default.
+Enabling this may crash some programs that do recursive lookups of a whole
+subdir tree in case of a symlink pointing back to itself.
+.PP
 .I format: """ShowDotFiles""=""<0|1>"""
 .br
 default: "0"

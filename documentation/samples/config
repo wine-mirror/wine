@@ -63,9 +63,6 @@ WINE REGISTRY Version 2
 "Path" = "c:\\windows;c:\\windows\\system;e:\\;e:\\test;f:\\"
 "Profile" = "c:\\windows\\Profiles\\Administrator"
 "GraphicsDriver" = "x11drv"
-; Wine doesn't pass directory symlinks to Windows programs by default.
-; Enabling this may crash some programs that do recursive lookups of a whole
-; subdir tree in case of a symlink pointing back to itself.
 ;"ShowDirSymlinks" = "1"
 ;"ShowDotFiles" = "1"
 "ShellLinker" = "wineshelllink"
