@@ -660,6 +660,9 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
     unsigned char	 spec_type = color >> 24;
     PALETTEOBJ* 	 palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
 
+    /* palPtr can be NULL when DC is being destroyed */
+    if( !palPtr ) return 0;
+
     if ( X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED )
     {
         /* there is no colormap limitation; we are going to have to compute
@@ -724,10 +727,7 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
     else 
     {
 
-	/* palPtr can be NULL when DC is being destroyed */
-
-	if( !palPtr ) return 0;
-	else if( !palPtr->mapping ) 
+	if( !palPtr->mapping ) 
             WARN("Palette %04x is not realized\n", dc->w.hPalette);
 
 	switch(spec_type)	/* we have to peruse DC and system palette */
