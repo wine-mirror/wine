@@ -3970,8 +3970,8 @@ static HRESULT WINAPI DGA_IDirectDraw2Impl_GetDisplayMode(
         ICOM_THIS(IDirectDraw2Impl,iface);
 	TRACE(ddraw,"(%p)->(%p)\n",This,lpddsfd);
 	lpddsfd->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
-	lpddsfd->dwHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-	lpddsfd->dwWidth = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+	lpddsfd->dwHeight = This->d.height;
+	lpddsfd->dwWidth = This->d.width;
 	lpddsfd->lPitch = This->e.dga.fb_width*This->d.directdraw_pixelformat.x.dwRGBBitCount/8;
 	lpddsfd->dwBackBufferCount = 1;
 	lpddsfd->x.dwRefreshRate = 60;
@@ -3989,8 +3989,8 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_GetDisplayMode(
         ICOM_THIS(IDirectDraw2Impl,iface);
 	TRACE(ddraw,"(%p)->GetDisplayMode(%p)\n",This,lpddsfd);
 	lpddsfd->dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PITCH|DDSD_BACKBUFFERCOUNT|DDSD_PIXELFORMAT|DDSD_CAPS;
-	lpddsfd->dwHeight = MONITOR_GetHeight(&MONITOR_PrimaryMonitor);
-	lpddsfd->dwWidth = MONITOR_GetWidth(&MONITOR_PrimaryMonitor);
+	lpddsfd->dwHeight = This->d.height;
+	lpddsfd->dwWidth = This->d.width;
 	lpddsfd->lPitch = lpddsfd->dwWidth * This->d.directdraw_pixelformat.x.dwRGBBitCount/8;
 	lpddsfd->dwBackBufferCount = 1;
 	lpddsfd->x.dwRefreshRate = 60;
