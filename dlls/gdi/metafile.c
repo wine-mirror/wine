@@ -1215,7 +1215,12 @@ BOOL WINAPI PlayMetaFileRecord( HDC hdc,  HANDLETABLE *ht, METARECORD *mr, UINT 
         break;
 
     case META_SELECTCLIPREGION:
-        SelectClipRgn(hdc, *(ht->objectHandle + mr->rdParm[0]));
+        {
+            HRGN hrgn = 0;
+
+            if (mr->rdParm[0]) hrgn = *(ht->objectHandle + mr->rdParm[0]);
+            SelectClipRgn(hdc, hrgn);
+        }
         break;
 
     case META_DIBCREATEPATTERNBRUSH:
