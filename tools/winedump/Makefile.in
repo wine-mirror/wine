@@ -2,8 +2,10 @@ TOPSRCDIR = @top_srcdir@
 TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
+EXEEXT    = @EXEEXT@
 
-PROGRAMS = winedump
+PROGRAMS = winedump$(EXEEXT)
+
 MODULE   = none
 
 C_SRCS = \
@@ -21,15 +23,15 @@ all: $(PROGRAMS)
 
 @MAKE_RULES@
 
-winedump: $(OBJS)
-	$(CC) $(CFLAGS) -o winedump $(OBJS) $(LIBPORT) $(LDFLAGS)
+winedump$(EXEEXT): $(OBJS)
+	$(CC) $(CFLAGS) -o winedump$(EXEEXT) $(OBJS) $(LIBPORT) $(LDFLAGS)
 
 install:: $(PROGRAMS)
 	$(MKINSTALLDIRS) $(bindir)
-	$(INSTALL_PROGRAM) winedump $(bindir)/winedump
+	$(INSTALL_PROGRAM) winedump$(EXEEXT) $(bindir)/winedump$(EXEEXT)
 	$(INSTALL_SCRIPT) $(SRCDIR)/function_grep.pl $(bindir)/function_grep.pl
 
 uninstall::
-	$(RM) $(bindir)/function_grep.pl $(bindir)/winedump
+	$(RM) $(bindir)/function_grep.pl $(bindir)/winedump$(EXEEXT)
 
 ### Dependencies:
