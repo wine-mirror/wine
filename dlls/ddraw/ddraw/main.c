@@ -576,6 +576,10 @@ Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
 	/* DVIDEO.DLL does forget the DDSD_CAPS flag ... *sigh* */
     	pDDSD->dwFlags |= DDSD_CAPS;
     }
+    if (pDDSD->ddsCaps.dwCaps == 0) {
+	/* This has been checked on real Windows */
+	pDDSD->ddsCaps.dwCaps = DDSCAPS_LOCALVIDMEM | DDSCAPS_VIDEOMEMORY;
+    }
 
     if (pDDSD->ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD) {
         /* If the surface is of the 'alloconload' type, ignore the LPSURFACE field */
@@ -616,7 +620,7 @@ Main_DirectDraw_CreateSurface(LPDIRECTDRAW7 iface, LPDDSURFACEDESC2 pDDSD,
     else
     {
 	/* Otherwise, assume offscreenplain surface */
-	FIXME("App didn't request a valid surface type - assuming offscreenplain\n");
+	TRACE("App didn't request a valid surface type - assuming offscreenplain\n");
 	hr = create_offscreen(This, pDDSD, ppSurf, pUnkOuter);
     }
 

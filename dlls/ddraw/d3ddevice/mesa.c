@@ -38,8 +38,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 WINE_DECLARE_DEBUG_CHANNEL(ddraw_geom);
-
-#undef COMPUTE_FPS
+WINE_DECLARE_DEBUG_CHANNEL(ddraw_fps);
 
 /* x11drv GDI escapes */
 #define X11DRV_ESCAPE 6789
@@ -211,8 +210,7 @@ inline static Drawable get_drawable( HDC hdc )
     return drawable;
 }
 
-#ifdef COMPUTE_FPS
-
+/* This is unnecessarely complicated :-) */
 #define MEASUREMENT_WINDOW 5
 #define NUMBER_OF_WINDOWS 10
 
@@ -222,8 +220,6 @@ static LONGLONG prev_time = 0;
 static unsigned int current_window;
 static unsigned int measurements_in_window;
 static unsigned int valid_windows;
-
-#endif
 
 static BOOL opengl_flip( LPVOID dev, LPVOID drawable)
 {
@@ -240,8 +236,7 @@ static BOOL opengl_flip( LPVOID dev, LPVOID drawable)
     glXSwapBuffers(gl_d3d_dev->display, (Drawable)drawable);
     LEAVE_GL();
 
-#ifdef COMPUTE_FPS
-    {
+    if (TRACE_ON(ddraw_fps)) {
 	LONGLONG current_time;
 	LONGLONG frame_duration;
 	QueryPerformanceCounter((LARGE_INTEGER *) &current_time);
@@ -274,7 +269,7 @@ static BOOL opengl_flip( LPVOID dev, LPVOID drawable)
 		    }
 		}
 
-		DPRINTF("FPS : %9.5f\n", (double) (perf_freq * tot_meas) / (double) total_time);
+		TRACE_(ddraw_fps)(" %9.5f\n", (double) (perf_freq * tot_meas) / (double) total_time);
 		
 		if (current_window >= NUMBER_OF_WINDOWS) {
 		    current_window = 0;
@@ -291,7 +286,6 @@ static BOOL opengl_flip( LPVOID dev, LPVOID drawable)
 	    QueryPerformanceFrequency((LARGE_INTEGER *) &perf_freq);
 	}
     }
-#endif
     
     return TRUE;
 }

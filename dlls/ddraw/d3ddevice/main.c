@@ -840,7 +840,7 @@ Main_IDirect3DDeviceImpl_7_3T_GetTextureStageState(LPDIRECT3DDEVICE7 iface,
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
     TRACE("(%p/%p)->(%08lx,%08x,%p)\n", This, iface, dwStage, d3dTexStageStateType, lpdwState);
-    if (lpdwState && (dwStage < 8) && d3dTexStageStateType && (d3dTexStageStateType < HIGHEST_TEXTURE_STAGE_STATE) ) {
+    if (lpdwState && (dwStage < 8) && d3dTexStageStateType && (d3dTexStageStateType <= HIGHEST_TEXTURE_STAGE_STATE) ) {
         *lpdwState = This->state_block.texture_stage_state[dwStage][d3dTexStageStateType-1];
 	return DD_OK;
     }
