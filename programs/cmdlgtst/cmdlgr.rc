@@ -11,7 +11,7 @@ originally produced by Borland Resource Workshop, and then heavily edited
 #include <windows.h>
 #include "cmdlgtst.h"
 
-TestCommdlgMenu MENU 
+CmdlgtstMenu MENU 
 {
  POPUP "&File"
  {
@@ -172,19 +172,6 @@ FONT 8, "MS Sans Serif"
  CHECKBOX "PD_USEDEVMODECOPIES", I_PD_USEDEVMODECOPIES, 12, 264, 144, 12, BS_AUTOCHECKBOX | WS_TABSTOP
 }
 
-
-AboutDialog DIALOG 6, 15, 194, 119
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "About"
-FONT 8, "MS Sans Serif"
-{
- DEFPUSHBUTTON "OK", IDOK, 72, 96, 50, 14
- LTEXT "Common Dialog Test Jig Exerciser, version 1.10", -1, 13, 36, 168, 12
- LTEXT "(c) 1999, Eric Williams.  Rights are as granted under the WINE license.  Don't hoard code...share it!", -1, 18, 60, 157, 24
- ICON "AboutIcon", -1, 84, 12, 18, 20
-}
-
-
 AboutIcon ICON 
 {
  '00 00 01 00 01 00 20 20 10 00 00 00 00 00 E8 02'
@@ -237,23 +224,6 @@ AboutIcon ICON
  '00 00 00 00 00 00 00 00 00 00 00 00 00 00'
 }
 
-UsageDialog DIALOG 6, 15, 194, 169
-STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
-CAPTION "Usage"
-FONT 8, "MS Sans Serif"
-{
- DEFPUSHBUTTON "OK", IDOK, 72, 146, 50, 14
- LTEXT "Common Dialog Test Jig Exerciser, version 1.10", -1, 13, 36, 168, 12
- LTEXT "The Commdlg menu allows for testing of the COMMDLG.", -1, 13, 48, 168, 12
- LTEXT "The Flags menu allows for setting flags of the COMMDLG.", -1, 13, 60, 168, 12
- LTEXT "Color dialog changes background color.", -1, 13, 72, 168, 12
- LTEXT "Font dialog changes all fonts.", -1, 13, 72, 168, 12
- LTEXT "Upper left hand corner contains the current contents of.", -1, 13, 84, 168, 12
- LTEXT "the last successful OPEN or SAVE.", -1, 13, 92, 168, 12
- LTEXT "(c) 1999, Eric Williams.  Rights are as granted under the WINE license.  Don't hoard code...share it!", -1, 18, 110, 157, 24
- ICON "AboutIcon", -1, 84, 12, 18, 20
-}
-
 File_Flags_Dialog DIALOG 6, 15, 207, 227
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Open File/Save File Flags"
@@ -279,4 +249,32 @@ FONT 8, "MS Sans Serif"
  CHECKBOX "OFN_READONLY", I_OFN_READONLY, 12, 180, 132, 12, BS_AUTOCHECKBOX | WS_TABSTOP
  CHECKBOX "OFN_SHAREAWARE", I_OFN_SHAREAWARE, 12, 192, 132, 12, BS_AUTOCHECKBOX | WS_TABSTOP
  CHECKBOX "OFN_SHOWHELP", I_OFN_SHOWHELP, 12, 204, 132, 12, BS_AUTOCHECKBOX | WS_TABSTOP
+}
+
+AboutDialog DIALOG 6, 15, 194, 119
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "About"
+FONT 8, "MS Sans Serif"
+{
+ DEFPUSHBUTTON "OK", IDOK, 72, 96, 50, 14
+ LTEXT "Common Dialog Test Jig Exerciser, version 1.20", -1, 13, 36, 168, 12
+ LTEXT "(c) 1999-2000, Eric Williams.  Rights are as granted under the WINE license.  Don't hoard code...share it!", -1, 18, 60, 157, 24
+ ICON "AboutIcon", -1, 84, 12, 18, 20
+}
+
+UsageDialog DIALOG 183, 22, 190, 300
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Usage"
+FONT 8, "MS Sans Serif"
+{
+ DEFPUSHBUTTON "OK", IDOK, 70, 276, 50, 14
+ LTEXT "Common Dialog Test Jig Exerciser, version 1.20", -1, 13, 48, 168, 12
+ LTEXT "This tool tests COMMDLG for Wine.", -1, 12, 72, 168, 12
+ LTEXT "Flags are specified in the Flags menu.", -1, 12, 96, 168, 12
+ LTEXT "Color dialog changes background color.", -1, 12, 120, 168, 12
+ LTEXT "Font dialog changes all fonts, and font color if CF_EFFECTS is selected.", -1, 12, 144, 168, 24
+ LTEXT "Upper left hand corner indicate full pathname and title of the last successful Open or Save.", -1, 12, 180, 168, 24
+ LTEXT "(c) 1999-2000, Eric Williams.  Rights are as granted under the WINE license.  Don't hoard code...share it!", -1, 12, 228, 168, 36
+ ICON "AboutIcon", -1, 86, 12, 18, 20
+ CONTROL "", -1, "static", SS_BLACKRECT | WS_CHILD | WS_VISIBLE, 12, 216, 168, 2
 }

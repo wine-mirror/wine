@@ -1,10 +1,12 @@
-// (c) 1999 Eric Williams.  Rights as specified under the WINE
+// (c) 1999-2000 Eric Williams.  Rights as specified under the WINE
 // License.  Don't hoard code; share it!
 
 //
 // One might call this a Commdlg test jig.  Its sole function in life
-// is to call the Commdlg Common Dialogs; at present it doesn't even
-// do anything horribly interesting with the results.
+// is to call the Commdlg Common Dialogs.  The results of a call to
+// File Open or File Save are printed in the upper left corner;
+// Font adjusts the font of the printout, and Color adjusts the color
+// of the background.
 
 // Ideally it would also do event logging and be a bit less stupid
 // about displaying the results of the various requesters.  But hey,
@@ -13,6 +15,7 @@
 #include <windows.h>
 #include <commdlg.h>
 #include <stdio.h>
+#include <string.h>
 #include "cmdlgtst.h"
 
 // This structure is to set up flag / control associations for the custom
@@ -31,20 +34,12 @@ struct FlagTableEntry {
 	unsigned long ft_bit;
 };
 
-// #ifdef __WINE_WINDOWS_H
-// #define EXPORT
-// #define HWND HWND32
-// int ctx_debug = 0;
-// #else
-// #define EXPORT _export
-// #endif
-
 //#define FAR
 #define EXPORT
 
-static char menuName[] = "TestCommdlgMenu";
-static char className[] = "TestCommdlg";
-static char windowName[] = "TestCommdlg Window";
+static char menuName[] = "CmdlgtstMenu";
+static char className[] = "CmdlgtstClass";
+static char windowName[] = "Cmdlgtst Window";
 
 // global hInstance variable.  This makes the code non-threadable,
 // but wotthehell; this is Win32 anyway!  (Though it does work
@@ -62,6 +57,7 @@ static LOGFONT cf_lf;
 static CHOOSEFONT cf;
 static char ofn_filepat[] = "All Files (*.*)\0*.*\0Only Text Files (*.txt)\0*.txt\0";
 static char ofn_result[1024];
+static char ofn_titleresult[128];
 static OPENFILENAME ofn;
 
 // Stuff for find and replace.  These are modeless, so I have to put them here.
@@ -77,19 +73,33 @@ static char fromstring[1024], tostring[1024];
 // Stuff for the drawing of the window(s).  I put them here for convenience.
 
 static COLORREF fgColor = RGB(0, 0, 0); // not settable
-static COLORREF bgColor = RGB(255, 255, 255);
-static COLORREF txtColor = RGB(0, 0, 0); 
+static COLORREF bgColor = RGB(255, 255, 255); // COLOR dialog
+static COLORREF txtColor = RGB(0, 0, 0); // settable if one enables CF_EFFECTS
 
-// Utility routines.  Currently there is only one, and it's a nasty
-// reminder that I'm not done yet.
+// Utility routines.
 
 void nyi(HWND hWnd)
 {
+	// "Hi there!  I'm not yet implemented!"
 	MessageBox(hWnd, "Not yet implemented!", "NYI", MB_ICONEXCLAMATION | MB_OK);
 }
 
+UINT CALLBACK dummyfnHook(HWND hWnd, UINT msg, UINT wParam, UINT lParam)
+{
+	// If the user specifies something that needs an awfully stupid hook function,
+	// this is the one to use.  It's a no-op, and says "I didn't do anything."
 
-// Initial initialization code.  This code simply shoves in predefined
+	(void) hWnd;
+	(void) msg;
+	(void) wParam;
+	(void) lParam;
+
+	printf("dummyfnhook\n"); // visible under Wine, but Windows probably won't see it!
+
+	return 0;
+}
+
+// Initialization code.  This code simply shoves in predefined
 // data into the COMMDLG data structures; in the future, I might use
 // a series of loadable resources, or static initializers; of course,
 // if Microsoft decides to change the field ordering, I'd be screwed.
@@ -104,7 +114,7 @@ void mwi_Print(HWND hWnd)
 	pd.Flags = 0;
 	pd.nMinPage = 1;
 	pd.nMaxPage = 100;
-	pd.hInstance = 0;
+	pd.hInstance = g_hInstance;
 	pd.lCustData = 0;
 	pd.lpfnPrintHook = 0;
 	pd.lpfnSetupHook = 0;
@@ -112,7 +122,6 @@ void mwi_Print(HWND hWnd)
 	pd.lpSetupTemplateName = 0;
 	pd.hPrintTemplate = 0;
 	pd.hSetupTemplate = 0;
-
 }
 
 void mwi_Color(HWND hWnd)
@@ -126,7 +135,7 @@ void mwi_Color(HWND hWnd)
 
 	cc.lStructSize = sizeof(CHOOSECOLOR);
 	cc.hwndOwner = hWnd;
-	cc.hInstance = 0;
+	cc.hInstance = g_hInstance;
 	cc.rgbResult = RGB(0,0,0);
 	cc.lpCustColors = cc_cr;
 	cc.Flags = 0;
@@ -141,31 +150,33 @@ void mwi_Font(HWND hWnd)
 	cf.hwndOwner = hWnd;
 	cf.hDC = 0;
 	cf.lpLogFont = &cf_lf;
-	cf.Flags = 0;
+	cf.Flags = CF_SCREENFONTS; // something's needed for display; otherwise it craps out with an error
 	cf.rgbColors = RGB(0,0,0);  // what is *this* doing here??
 	cf.lCustData = 0;
 	cf.lpfnHook = 0;
 	cf.lpTemplateName = 0;
-	cf.hInstance = 0;
+	cf.hInstance = g_hInstance;
 	cf.lpszStyle = 0;
 	cf.nFontType = 0;
 	cf.nSizeMin = 8;
 	cf.nSizeMax = 72;
+
+	cf_lf.lfHeight = -18; // this can be positive or negative, but negative is usually used.
 }
 
 void mwi_File(HWND hWnd)
 {
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = hWnd;
-	ofn.hInstance = 0;
+	ofn.hInstance = g_hInstance;
 	ofn.lpstrFilter = (LPSTR) ofn_filepat;
 	ofn.lpstrCustomFilter = 0;
 	ofn.nMaxCustFilter = 0;
 	ofn.nFilterIndex = 0;
 	ofn.lpstrFile = ofn_result;
 	ofn.nMaxFile = sizeof(ofn_result);
-	ofn.lpstrFileTitle = 0;
-	ofn.nMaxFileTitle = 0;
+	ofn.lpstrFileTitle = ofn_titleresult;
+	ofn.nMaxFileTitle = sizeof(ofn_titleresult);
 	ofn.lpstrInitialDir = 0;
 	ofn.lpstrTitle = "Open File";
 	ofn.Flags = 0;
@@ -183,7 +194,7 @@ void mwi_FindReplace(HWND hWnd)
 {
 	frS.lStructSize = sizeof(FINDREPLACE);
 	frS.hwndOwner = hWnd;
-	frS.hInstance = 0;
+	frS.hInstance = g_hInstance;
 	frS.Flags = FR_DOWN;
 	frS.lpstrFindWhat = fromstring;
 	frS.lpstrReplaceWith = tostring;
@@ -222,6 +233,10 @@ void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	HFONT font;
 	HBRUSH brush;
 
+	(void) iMessage;
+	(void) wParam;
+	(void) lParam;
+
 	// Commence painting!
 
 	BeginPaint(hWnd, &ps);
@@ -231,8 +246,11 @@ void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	brush = (HBRUSH) SelectObject(ps.hdc, CreateSolidBrush(bgColor));
 	font = (HFONT) SelectObject(ps.hdc, CreateFontIndirect(&cf_lf));
 
-	// only need to draw the exposed bit.
-	Rectangle(ps.hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom);
+	// Ideally, we'd only need to draw the exposed bit.
+	// But something in BeginPaint is screwing up the rectangle.
+	// Either that, or Windows is drawing it wrong.  AARGH!
+	// Rectangle(ps.hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom);
+	Rectangle(ps.hdc, rect.left, rect.top, rect.right, rect.bottom);
 
 	// now draw a couple of lines, just for giggles.
 
@@ -248,7 +266,8 @@ void paintMainWindow(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
 	TextOut(ps.hdc, (rect.left+rect.right)/2, (rect.top+rect.bottom)/2, "Common Dialog Test Page", 23);
 
 	SetTextAlign(ps.hdc, TA_LEFT|TA_TOP);
-	TextOut(ps.hdc, rect.left, rect.top, ofn_result, strlen(ofn_result));
+	TextOut(ps.hdc, rect.left+10, rect.top+10, ofn_result, strlen(ofn_result));
+	TextOut(ps.hdc, rect.left+10, rect.top-cf_lf.lfHeight+10, ofn_titleresult, strlen(ofn_titleresult));
 
 	// set the HDC back to the old pen and brush,
 	// and delete the newly created objects.
@@ -419,6 +438,8 @@ unsigned long mwcd_GetFlags(HWND hWnd, struct FlagTableEntry * table)
 BOOL mwcd_Setup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 					 struct FlagTableEntry * table, unsigned long * flags)
 {
+	(void) lParam;
+
 	switch(uMsg)
 	{
 		case WM_INITDIALOG:
@@ -577,7 +598,7 @@ BOOL CALLBACK mwcd_FileSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{I_OFN_PATHMUSTEXIST, OFN_PATHMUSTEXIST},
 		{I_OFN_READONLY, OFN_READONLY},
 		{I_OFN_SHAREAWARE, OFN_SHAREAWARE},
-      {I_OFN_SHOWHELP, OFN_SHOWHELP},
+		{I_OFN_SHOWHELP, OFN_SHOWHELP},
 		{IDOK, 0},
 	};
 
@@ -586,6 +607,9 @@ BOOL CALLBACK mwcd_FileSetup(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 BOOL CALLBACK mwcd_About(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+	(void) wParam;
+	(void) lParam;
+
 	switch(uMsg) {
 		case WM_INITDIALOG: return TRUE; // let WINDOWS set the focus.
 		case WM_COMMAND: EndDialog(hWnd, 0); return TRUE; // it's our OK button.
@@ -806,8 +830,10 @@ HWND createMainWindow(HINSTANCE hInstance, int show)
 
 int messageLoop(HINSTANCE hInstance, HWND hWnd)
 {
-
 	MSG msg;
+
+	(void) hInstance;
+	(void) hWnd;
 
 	while(GetMessage(&msg, 0, 0, 0)) {
 		TranslateMessage(&msg);
@@ -831,6 +857,8 @@ int PASCAL WinMain(
 {
 	HWND hWnd;
 
+	(void) lpszCmdLine;
+
 	strcpy(ofn_result, "--- not yet set ---");
 
 	if(hPrevInstance==0) {
@@ -844,12 +872,11 @@ int PASCAL WinMain(
 	if(hWnd == 0)
 		return -1;
 
-
 	return messageLoop(hInstance, hWnd);
 }
 
 // And now the end of the program.  Enjoy.
 
-// (c) 1999 Eric Williams.  Rights as specified under the WINE
+// (c) 1999-2000 Eric Williams.  Rights as specified under the WINE
 // License.  Don't hoard code; share it!
 
