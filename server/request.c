@@ -41,7 +41,7 @@
 
  /* path names for server master Unix socket */
 #define CONFDIR    "/.wine"        /* directory for Wine config relative to $HOME */
-#define SERVERDIR  "/wineserver-"  /* server socket directory (hostname appended) */
+#define SERVERDIR  "wineserver-"   /* server socket directory (hostname appended) */
 #define SOCKETNAME "socket"        /* name of the socket file */
 
 struct master_socket
@@ -388,7 +388,6 @@ const char *get_config_dir(void)
             strcpy( confdir, home );
             strcat( confdir, CONFDIR );
         }
-        mkdir( confdir, 0755 );  /* just in case */
     }
     return confdir;
 }
@@ -403,11 +402,12 @@ static void create_server_dir(void)
 
     if (gethostname( hostname, sizeof(hostname) ) == -1) fatal_perror( "gethostname" );
 
-    if (!(serverdir = malloc( strlen(confdir) + strlen(SERVERDIR) + strlen(hostname) + 1 )))
+    if (!(serverdir = malloc( strlen(SERVERDIR) + strlen(hostname) + 1 )))
         fatal_error( "out of memory\n" );
 
-    strcpy( serverdir, confdir );
-    strcat( serverdir, SERVERDIR );
+    if (chdir( confdir ) == -1) fatal_perror( "chdir %s", confdir );
+
+    strcpy( serverdir, SERVERDIR );
     strcat( serverdir, hostname );
 
     if (chdir( serverdir ) == -1)

@@ -382,7 +382,6 @@ const char *get_config_dir(void)
             strcpy( confdir, home );
             strcat( confdir, CONFDIR );
         }
-        mkdir( confdir, 0755 );  /* just in case */
     }
     return confdir;
 }
