@@ -848,6 +848,19 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
             }
         }
     }
+    else
+    {
+	/* neither x nor cx are default. Check the y values .
+	 * In the trace we see Outlook and Outlook Express using 
+	 * cy set to CW_USEDEFAULT when opening the address book.
+	 */
+	if (cs->cy == CW_USEDEFAULT || cs->cy == CW_USEDEFAULT16) {
+	    RECT r;
+	    FIXME("Strange use of CW_USEDEFAULT in nHeight\n");
+	    SystemParametersInfoA( SPI_GETWORKAREA, 0, &r, 0);
+	    cs->cy = (((r.bottom - r.top) * 3) / 4) - cs->y;
+	}
+    }
 }
 
 /***********************************************************************
