@@ -431,6 +431,10 @@ XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
 
 #else  /* no OpenGL includes */
 
+void X11DRV_OpenGL_Init(Display *display)
+{
+}
+
 int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
 			     const PIXELFORMATDESCRIPTOR *ppfd) {
   ERR("No OpenGL support compiled in.\n");
