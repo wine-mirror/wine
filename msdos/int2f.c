@@ -186,6 +186,9 @@ void WINAPI INT_Int2fHandler( CONTEXT *context )
     case 0x7a:  /* NOVELL NetWare */
         switch (AL_reg(context))
         {
+	case 0x0:  /* Low-level Netware installation check AL=0 not installed.*/
+            AL_reg(context) = 0;    
+            break;
         case 0x20:  /* Get VLM Call Address */
             /* return nothing -> NetWare not installed */
             break;
