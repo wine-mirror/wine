@@ -23,6 +23,10 @@
 WINE_DEFAULT_DEBUG_CHANNEL(richedit);
 
 
+static BOOL
+ME_StreamOutRTFText(ME_TextEditor *editor, WCHAR *text, LONG nChars);
+
+
 static void
 ME_StreamOutInit(ME_TextEditor *editor, EDITSTREAM *stream)
 {
@@ -226,19 +230,17 @@ ME_StreamOutRTFFontAndColorTbl(ME_TextEditor *editor, ME_DisplayItem *pFirstRun,
     return FALSE;
   
   for (i = 0; i < editor->pStream->nFontTblLen; i++) {
-    char szFaceName[LF_FACESIZE];
-   
-    /* FIXME: Use ME_StreamOutText to emit the font name */
-    WideCharToMultiByte(editor->pStream->nCodePage, 0, table[i].szFaceName, -1,
-                        szFaceName, LF_FACESIZE, NULL, NULL);
     if (table[i].bCharSet) {
-      if (!ME_StreamOutPrint(editor, "{\\f%u\\fcharset%u %s;}\r\n",
-                             i, table[i].bCharSet, szFaceName))
+      if (!ME_StreamOutPrint(editor, "{\\f%u\\fcharset%u ", i, table[i].bCharSet))
         return FALSE;
     } else {
-      if (!ME_StreamOutPrint(editor, "{\\f%u %s;}\r\n", i, szFaceName))
+      if (!ME_StreamOutPrint(editor, "{\\f%u ", i))
         return FALSE;
     }
+    if (!ME_StreamOutRTFText(editor, table[i].szFaceName, -1))
+      return FALSE;
+    if (!ME_StreamOutPrint(editor, ";}\r\n"))
+      return FALSE;
   }
   if (!ME_StreamOutPrint(editor, "}"))
     return FALSE;
@@ -265,30 +267,134 @@ ME_StreamOutRTFFontAndColorTbl(ME_TextEditor *editor, ME_DisplayItem *pFirstRun,
 static BOOL
 ME_StreamOutRTFParaProps(ME_TextEditor *editor, ME_DisplayItem *para)
 {
-  char *keyword = NULL;
+  PARAFORMAT2 *fmt = para->member.para.pFmt;
+  char props[STREAMOUT_BUFFER_SIZE] = "";
+  int i;
 
   /* TODO: Don't emit anything if the last PARAFORMAT2 is inherited */
   if (!ME_StreamOutPrint(editor, "\\pard"))
     return FALSE;
-   
-  switch (para->member.para.pFmt->wAlignment) {
-    case PFA_LEFT:
-      /* Default alignment: not emitted */
-      break;
-    case PFA_RIGHT:
-      keyword = "\\qr";
-      break;
-    case PFA_CENTER:
-      keyword = "\\qc";
-      break;
-    case PFA_JUSTIFY:
-      keyword = "\\qj";
-      break;
+  
+  /* TODO: PFM_BORDER. M$ does not emit any keywords for these properties, and
+   * when streaming border keywords in, PFM_BORDER is set, but wBorder field is
+   * set very different from the documentation.
+   * (Tested with RichEdit 5.50.25.0601) */
+  
+  if (fmt->dwMask & PFM_ALIGNMENT) {
+    switch (fmt->wAlignment) {
+      case PFA_LEFT:
+        /* Default alignment: not emitted */
+        break;
+      case PFA_RIGHT:
+        strcat(props, "\\qr");
+        break;
+      case PFA_CENTER:
+        strcat(props, "\\qc");
+        break;
+      case PFA_JUSTIFY:
+        strcat(props, "\\qj");
+        break;
+    }
   }
-  if (keyword && !ME_StreamOutPrint(editor, keyword))
+  
+  if (fmt->dwMask & PFM_LINESPACING) {
+    /* FIXME: MSDN says that the bLineSpacingRule field is controlled by the
+     * PFM_SPACEAFTER flag. Is that true? I don't believe so. */
+    switch (fmt->bLineSpacingRule) {
+      case 0: /* Single spacing */
+        strcat(props, "\\sl-240\\slmult1");
+        break;
+      case 1: /* 1.5 spacing */
+        strcat(props, "\\sl-360\\slmult1");
+        break;
+      case 2: /* Double spacing */
+        strcat(props, "\\sl-480\\slmult1");
+        break;
+      case 3:
+        sprintf(props + strlen(props), "\\sl%ld\\slmult0", fmt->dyLineSpacing);
+        break;
+      case 4:
+        sprintf(props + strlen(props), "\\sl-%ld\\slmult0", fmt->dyLineSpacing);
+        break;
+      case 5:
+        sprintf(props + strlen(props), "\\sl-%ld\\slmult1", fmt->dyLineSpacing * 240 / 20);
+        break;
+    }
+  }
+
+  if (fmt->dwMask & PFM_DONOTHYPHEN && fmt->wEffects & PFE_DONOTHYPHEN)
+    strcat(props, "\\hyph0");
+  if (fmt->dwMask & PFM_KEEP && fmt->wEffects & PFE_KEEP)
+    strcat(props, "\\keep");
+  if (fmt->dwMask & PFM_KEEPNEXT && fmt->wEffects & PFE_KEEPNEXT)
+    strcat(props, "\\keepn");
+  if (fmt->dwMask & PFM_NOLINENUMBER && fmt->wEffects & PFE_NOLINENUMBER)
+    strcat(props, "\\noline");
+  if (fmt->dwMask & PFM_NOWIDOWCONTROL && fmt->wEffects & PFE_NOWIDOWCONTROL)
+    strcat(props, "\\nowidctlpar");
+  if (fmt->dwMask & PFM_PAGEBREAKBEFORE && fmt->wEffects & PFE_PAGEBREAKBEFORE)
+    strcat(props, "\\pagebb");
+  if (fmt->dwMask & PFM_RTLPARA && fmt->wEffects & PFE_RTLPARA)
+    strcat(props, "\\rtlpar");
+  if (fmt->dwMask & PFM_SIDEBYSIDE && fmt->wEffects & PFE_SIDEBYSIDE)
+    strcat(props, "\\sbys");
+  if (fmt->dwMask & PFM_TABLE && fmt->dwMask & PFE_TABLE)
+    strcat(props, "\\intbl");
+  
+  if (fmt->dwMask & PFM_OFFSET)
+    sprintf(props + strlen(props), "\\li%ld", fmt->dxOffset);
+  if (fmt->dwMask & PFM_OFFSETINDENT || fmt->dwMask & PFM_STARTINDENT)
+    sprintf(props + strlen(props), "\\fi%ld", fmt->dxStartIndent);
+  if (fmt->dwMask & PFM_RIGHTINDENT)
+    sprintf(props + strlen(props), "\\ri%ld", fmt->dxRightIndent);
+  if (fmt->dwMask & PFM_SPACEAFTER)
+    sprintf(props + strlen(props), "\\sa%ld", fmt->dySpaceAfter);
+  if (fmt->dwMask & PFM_SPACEBEFORE)
+    sprintf(props + strlen(props), "\\sb%ld", fmt->dySpaceBefore);
+  if (fmt->dwMask & PFM_STYLE)
+    sprintf(props + strlen(props), "\\s%d", fmt->sStyle);
+
+  if (fmt->dwMask & PFM_TABSTOPS) {
+    static const char *leader[6] = { "", "\\tldot", "\\tlhyph", "\\tlul", "\\tlth", "\\tleq" };
+    
+    for (i = 0; i < fmt->cTabCount; i++) {
+      switch ((fmt->rgxTabs[i] >> 24) & 0xF) {
+        case 1:
+          strcat(props, "\\tqc");
+          break;
+        case 2:
+          strcat(props, "\\tqr");
+          break;
+        case 3:
+          strcat(props, "\\tqdec");
+          break;
+        case 4:
+          /* Word bar tab (vertical bar). Handled below */
+          break;
+      }
+      if (fmt->rgxTabs[i] >> 28 <= 5)
+        strcat(props, leader[fmt->rgxTabs[i] >> 28]);
+    }
+  }
+    
+  
+  if (fmt->dwMask & PFM_SHADING) {
+    static const char *style[16] = { "", "\\bgdkhoriz", "\\bgdkvert", "\\bgdkfdiag",
+                                     "\\bgdkbdiag", "\\bgdkcross", "\\bgdkdcross",
+                                     "\\bghoriz", "\\bgvert", "\\bgfdiag",
+                                     "\\bgbdiag", "\\bgcross", "\\bgdcross",
+                                     "", "", "" };
+    if (fmt->wShadingWeight)
+      sprintf(props + strlen(props), "\\shading%d", fmt->wShadingWeight);
+    if (fmt->wShadingStyle & 0xF)
+      strcat(props, style[fmt->wShadingStyle & 0xF]);
+    sprintf(props + strlen(props), "\\cfpat%d\\cbpat%d",
+            (fmt->wShadingStyle >> 4) & 0xF, (fmt->wShadingStyle >> 8) & 0xF);
+  }
+  
+  if (*props && !ME_StreamOutPrint(editor, props))
     return FALSE;
 
-  /* TODO: Other properties */
   return TRUE;
 }
 
@@ -355,7 +461,7 @@ ME_StreamOutRTFCharProps(ME_TextEditor *editor, CHARFORMAT2W *fmt)
   /* TODO: CFM_REVISED CFM_REVAUTHOR - probably using rsidtbl? */
   if (fmt->dwMask & CFM_SHADOW && fmt->dwEffects & CFE_SHADOW)
     strcat(props, "\\shad");
-  if (fmt->dwMask & CFM_SIZE && fmt->yHeight / 10 != 24)
+  if (fmt->dwMask & CFM_SIZE)
     sprintf(props + strlen(props), "\\fs%ld", fmt->yHeight / 10);
   if (fmt->dwMask & CFM_SMALLCAPS && fmt->dwEffects & CFE_SMALLCAPS)
     strcat(props, "\\scaps");
@@ -430,7 +536,10 @@ ME_StreamOutRTFText(ME_TextEditor *editor, WCHAR *text, LONG nChars)
   char buffer[STREAMOUT_BUFFER_SIZE];
   int pos = 0;
   int fit, i;
- 
+
+  if (nChars == -1)
+    nChars = lstrlenW(text);
+  
   while (nChars) {
     if (editor->pStream->nCodePage == CP_UTF8) {
       /* 6 is the maximum character length in UTF-8 */
