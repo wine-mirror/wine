@@ -1316,8 +1316,9 @@ TOOLBAR_AutoSize (HWND hwnd)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     RECT parent_rect;
+    RECT window_rect;
     HWND parent;
-    /* INT32  x, y; */
+    INT  x, y;
     INT  cx, cy;
     UINT uPosFlags = 0;
 
@@ -1325,6 +1326,9 @@ TOOLBAR_AutoSize (HWND hwnd)
 
     parent = GetParent (hwnd);
     GetClientRect(parent, &parent_rect);
+
+    x = parent_rect.left;
+    y = parent_rect.top;
 
     if (dwStyle & CCS_NORESIZE) {
 	uPosFlags |= (SWP_NOSIZE | SWP_NOMOVE);
@@ -1337,6 +1341,12 @@ TOOLBAR_AutoSize (HWND hwnd)
 	InvalidateRect( hwnd, NULL, TRUE );
 	cy = infoPtr->nHeight;
 	cx = infoPtr->nWidth;
+
+	if (dwStyle & CCS_NOMOVEY) {
+		GetWindowRect(hwnd, &window_rect);
+		ScreenToClient(parent, (LPPOINT)&window_rect.left);
+		y = window_rect.top;
+	}
     }
 
     if (dwStyle & CCS_NOPARENTALIGN)
@@ -1346,8 +1356,7 @@ TOOLBAR_AutoSize (HWND hwnd)
 	cy += GetSystemMetrics(SM_CYEDGE);
 
     infoPtr->bAutoSize = TRUE;
-    SetWindowPos (hwnd, HWND_TOP, parent_rect.left, parent_rect.top,
-		    cx, cy, uPosFlags);
+    SetWindowPos (hwnd, HWND_TOP, x, y, cx, cy, uPosFlags);
 
     return 0;
 }
@@ -3333,8 +3342,9 @@ TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
     RECT parent_rect;
+    RECT window_rect;
     HWND parent;
-    /* INT32  x, y; */
+    INT  x, y;
     INT  cx, cy;
     INT  flags;
     UINT uPosFlags = 0;
@@ -3357,6 +3367,8 @@ TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	/* width and height don't apply */
 	parent = GetParent (hwnd);
 	GetClientRect(parent, &parent_rect);
+	x = parent_rect.left;
+	y = parent_rect.top;
 
 	if (dwStyle & CCS_NORESIZE) {
 	    uPosFlags |= (SWP_NOSIZE | SWP_NOMOVE);
@@ -3374,6 +3386,12 @@ TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    TOOLBAR_CalcToolbar (hwnd);
 	    cy = infoPtr->nHeight;
 	    cx = infoPtr->nWidth;
+
+	    if (dwStyle & CCS_NOMOVEY) {
+		GetWindowRect(hwnd, &window_rect);
+		ScreenToClient(parent, (LPPOINT)&window_rect.left);
+		y = window_rect.top;
+	    }
 	}
 
 	if (dwStyle & CCS_NOPARENTALIGN) {
@@ -3385,9 +3403,9 @@ TOOLBAR_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	if (!(dwStyle & CCS_NODIVIDER))
 	    cy += GetSystemMetrics(SM_CYEDGE);
 
-	SetWindowPos (hwnd, 0, parent_rect.left, parent_rect.top,
-			cx, cy, uPosFlags | SWP_NOZORDER);
+	SetWindowPos (hwnd, 0, x, y, cx, cy, uPosFlags | SWP_NOZORDER);
     }
+
     return 0;
 }
 
