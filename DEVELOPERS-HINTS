@@ -80,10 +80,10 @@ To implement this call, you need to do the following four things.
 
 1. Find the appropriate parameters for the call, and add a prototype to
 [include/windows.h]. In this case, it might look like
-  BOOL32 WINAPI PolyBezierTo32(HDC32, LPCVOID, DWORD);
-  #define       PolyBezierTo WINELIB_NAME(PolyBezierTo)
-Note the use of the #define for Winelib. See below for discussion of
-function naming conventions.
+  BOOL WINAPI PolyBezierTo(HDC, LPCVOID, DWORD);
+If the function has both an ASCII and a Unicode version, you need to
+define both and add a #define WINELIB_NAME_AW declaration. See below
+for discussion of function naming conventions.
   
 2. Modify the .spec file to tell Wine that the function has an
 implementation, what the parameters look like and what Wine function
@@ -91,13 +91,13 @@ to use for the implementation. In Win32, things are simple--everything
 is 32-bits. However, the relay code handles pointers and pointers to
 strings slightly differently, so you should use 'str' and 'wstr' for
 strings, 'ptr' for other pointer types, and 'long' for everything else.
-  269 stdcall PolyBezierTo(long ptr long) PolyBezierTo32
-The 'PolyBezierTo32' at the end of the line is which Wine function to use
+  269 stdcall PolyBezierTo(long ptr long) PolyBezierTo
+The 'PolyBezierTo' at the end of the line is which Wine function to use
 for the implementation.
 
 3. Implement the function as a stub. Once you add the function to the .spec
 file, you must add the function to the Wine source before it will link.
-Add a function called 'PolyBezierTo32' somewhere. Good things to put
+Add a function called 'PolyBezierTo' somewhere. Good things to put
 into a stub:
   o a correct prototype, including the WINAPI
   o header comments, including full documentation for the function and
@@ -106,12 +106,12 @@ into a stub:
     put in a stub.
 
   /************************************************************
-   *  PolyBezierTo32   (GDI32.269)  Draw many Bezier curves
+   *  PolyBezierTo   (GDI32.269)  Draw many Bezier curves
    *
    * BUGS
    *   Unimplemented
    */
-   BOOL32 WINAPI PolyBezierTo32(HDC32 hdc, LPCVOID p, DWORD count) {
+   BOOL WINAPI PolyBezierTo(HDC hdc, LPCVOID p, DWORD count) {
 	/* tell the user they've got a substandard implementation */
       FIXME(gdi, ":(%x,%p,%d): stub\n", hdc, p, count);
 	/* some programs may be able to compensate, 
@@ -195,47 +195,43 @@ code, the following convention must be used in naming all API
 functions and types. If the Windows API uses the name 'xxx', the Wine
 code must use:
 
- - 'xxx16' for the 16-bit version,
- - 'xxx32' for the 32-bit version when no ASCII/Unicode strings are
+ - 'xxx16' for the Win16 version,
+ - 'xxx'   for the Win32 version when no ASCII/Unicode strings are
    involved,
- - 'xxx32A' for the 32-bit version with ASCII strings,
- - 'xxx32W' for the 32-bit version with Unicode strings.
+ - 'xxxA'  for the Win32 version with ASCII strings,
+ - 'xxxW'  for the Win32 version with Unicode strings.
 
-You should then use the macros WINELIB_NAME[_AW](xxx) or
-DECL_WINELIB_TYPE[_AW](xxx) (defined in include/wintypes.h) to define
-the correct 'xxx' function or type for Winelib. When compiling Wine
-itself, 'xxx' is _not_ defined, meaning that code inside of Wine must
-always specify explicitly the 16-bit or 32-bit version.
+If the function has both ASCII and Unicode version, you should then
+use the macros WINELIB_NAME_AW(xxx) or DECL_WINELIB_TYPE_AW(xxx)
+(defined in include/wintypes.h) to define the correct 'xxx' function
+or type for Winelib. When compiling Wine itself, 'xxx' is _not_
+defined, meaning that code inside of Wine must always specify
+explicitly the ASCII or Unicode version.
 
-If 'xxx' is the same in Win16 and Win32, or if 'xxx' is Win16 only,
-you can simply use the same name as Windows, i.e. just 'xxx'.  If
-'xxx' is Win32 only, you can use 'xxx' if there are no strings
-involved, otherwise you must use the 'xxx32A' and 'xxx32W' forms.
+If 'xxx' is the same in Win16 and Win32, you can simply use the same
+name as Windows, i.e. just 'xxx'.  If 'xxx' is Win16 only, you could
+use the name as is, but it's preferable to use 'xxx16' to make it
+clear it is a Win16 function.
 
 Examples:
 
-typedef short INT16;
-typedef int INT32;
-DECL_WINELIB_TYPE(INT);
-
-typedef struct { /* Win32 ASCII data structure */ } WNDCLASS32A;
-typedef struct { /* Win32 Unicode data structure */ } WNDCLASS32W;
+typedef struct { /* Win32 ASCII data structure */ } WNDCLASSA;
+typedef struct { /* Win32 Unicode data structure */ } WNDCLASSW;
 typedef struct { /* Win16 data structure */ } WNDCLASS16;
 DECL_WINELIB_TYPE_AW(WNDCLASS);
 
 ATOM RegisterClass16( WNDCLASS16 * );
-ATOM RegisterClass32A( WNDCLASS32A * );
-ATOM RegisterClass32W( WNDCLASS32W * );
+ATOM RegisterClassA( WNDCLASSA * );
+ATOM RegisterClassW( WNDCLASSW * );
 #define RegisterClass WINELIB_NAME_AW(RegisterClass)
 
 The Winelib user can then say:
 
-    INT i;
     WNDCLASS wc = { ... };
     RegisterClass( &wc );
 
 and this will use the correct declaration depending on the definition
-of the symbols WINELIB and UNICODE.
+of the UNICODE symbol.
 
 
 API ENTRY POINTS
