@@ -97,7 +97,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "win.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/unicode.h"
