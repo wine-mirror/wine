@@ -96,9 +96,15 @@ avec l'optimisation, souvent dû à des problèmes de gestion d'en-tête de fichier.
 pgcc ne fonctionne pas actuellement avec Wine. La cause de ce problème est
 inconnue.
 
+Évidemment, vous aurez besoin de "make" (très probablement GNU make).
+
 Vous aurez également besoin de flex version 2.5 ou supérieure et yacc.
 Bison fonctionnera en replacement de yacc. Si vous utilisez RedHat ou Debian,
 installez les paquets flex et bison.
+
+Pour le traitement automatique des scripts de la série de tests, vous aurez
+également besoin des en-têtes de développement de libperl (package libperl-dev
+sous Debian).
 
 Pour la configuration nécessaire si vous avez l'intention de construire la
 documentation vous-même voyez la section "DOCUMENTATION".
@@ -239,9 +245,6 @@ Bugs:	Rapportez les bogues à Wine Bugzilla à http://bugs.winehq.com/.
 	des rapports de bogue à comp.emulators.ms-windows.wine.
 	SVP lisez le fichier documentation/bugs.sgml pour connaître les
 	informations nécessaires.
-
-HOWTO:	Le Wine HOWTO (hors date !) est disponible à
-	http://www.westfalen.de/witch/wine-HOWTO.txt .
 
 IRC:	L'aide en ligne est disponible sur le cannal #WineHQ sur
 	irc.openprojects.net.
