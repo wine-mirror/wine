@@ -159,7 +159,7 @@ typedef struct
 	{ /* Notify parent which has created this edit control */ \
 	    TRACE("notification " str " sent to hwnd=%p\n", es->hwndParent); \
 	    SendMessageW(es->hwndParent, WM_COMMAND, \
-		     MAKEWPARAM(GetWindowLongW((es->hwndSelf),GWL_ID), wNotifyCode), \
+		     MAKEWPARAM(GetWindowLongPtrW((es->hwndSelf),GWLP_ID), wNotifyCode), \
 		     (LPARAM)(es->hwndSelf)); \
 	} while(0)
 
@@ -1535,7 +1535,7 @@ static LPWSTR EDIT_GetPasswordPointer_SL(EDITSTATE *es)
  */
 static void EDIT_LockBuffer(EDITSTATE *es)
 {
-	HINSTANCE16 hInstance = GetWindowLongW( es->hwndSelf, GWL_HINSTANCE );
+	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
 	if (!es->text) {
 	    CHAR *textA = NULL;
 	    UINT countA = 0;
@@ -2202,7 +2202,7 @@ static void EDIT_SetRectNP(EDITSTATE *es, LPRECT rc)
  */
 static void EDIT_UnlockBuffer(EDITSTATE *es, BOOL force)
 {
-	HINSTANCE16 hInstance = GetWindowLongW( es->hwndSelf, GWL_HINSTANCE );
+	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
 
 	/* Edit window might be already destroyed */
 	if(!IsWindow(es->hwndSelf))
@@ -2512,7 +2512,7 @@ static HLOCAL EDIT_EM_GetHandle(EDITSTATE *es)
  */
 static HLOCAL16 EDIT_EM_GetHandle16(EDITSTATE *es)
 {
-	HINSTANCE16 hInstance = GetWindowLongW( es->hwndSelf, GWL_HINSTANCE );
+	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
 	CHAR *textA;
 	UINT countA, alloc_size;
 
@@ -3152,7 +3152,7 @@ static void EDIT_EM_ScrollCaret(EDITSTATE *es)
  */
 static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
 {
-	HINSTANCE16 hInstance = GetWindowLongW( es->hwndSelf, GWL_HINSTANCE );
+	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
 
 	if (!(es->style & ES_MULTILINE))
 		return;
@@ -3232,7 +3232,7 @@ static void EDIT_EM_SetHandle(EDITSTATE *es, HLOCAL hloc)
  */
 static void EDIT_EM_SetHandle16(EDITSTATE *es, HLOCAL16 hloc)
 {
-	HINSTANCE16 hInstance = GetWindowLongW( es->hwndSelf, GWL_HINSTANCE );
+	HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
 	INT countW, countA;
 	HLOCAL hloc32W_new;
 	WCHAR *textW;
@@ -3823,7 +3823,7 @@ static LRESULT EDIT_WM_Destroy(EDITSTATE *es)
 		LocalFree(es->hloc32A);
 	}
 	if (es->hloc16) {
-		HINSTANCE16 hInstance = GetWindowWord( es->hwndSelf, GWL_HINSTANCE );
+		HINSTANCE16 hInstance = GetWindowLongPtrW( es->hwndSelf, GWLP_HINSTANCE );
 		while (LOCAL_Unlock(hInstance, es->hloc16)) ;
 		LOCAL_Free(hInstance, es->hloc16);
 	}

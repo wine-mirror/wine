@@ -110,7 +110,7 @@ typedef struct
 
 #define SEND_NOTIFICATION(hwnd,descr,code) \
     (SendMessageW( (descr)->owner, WM_COMMAND, \
-     MAKEWPARAM( GetWindowLongA((hwnd),GWL_ID), (code)), (LPARAM)(hwnd) ))
+     MAKEWPARAM( GetWindowLongPtrW((hwnd),GWLP_ID), (code)), (LPARAM)(hwnd) ))
 
 #define ISWIN31 (LOWORD(GetVersion()) == 0x0a03)
 
@@ -166,7 +166,7 @@ const struct builtin_class_descr COMBOLBOX_builtin_class =
 /* check whether app is a Win 3.1 app */
 inline static BOOL is_old_app( HWND hwnd )
 {
-    return (GetExpWinVer16( GetWindowLongA(hwnd,GWL_HINSTANCE) ) & 0xFF00 ) == 0x0300;
+    return (GetExpWinVer16( GetWindowLongPtrW(hwnd,GWLP_HINSTANCE) ) & 0xFF00 ) == 0x0300;
 }
 
 
@@ -557,7 +557,7 @@ static void LISTBOX_PaintItem( HWND hwnd, LB_DESCR *descr, HDC hdc,
         DRAWITEMSTRUCT dis;
         RECT r;
         HRGN hrgn;
-        UINT id = GetWindowLongA( hwnd, GWL_ID );
+        UINT id = (UINT)GetWindowLongPtrW( hwnd, GWLP_ID );
 
 	if (!item)
 	{
@@ -823,7 +823,7 @@ static INT LISTBOX_FindStringPos( HWND hwnd, LB_DESCR *descr, LPCWSTR str,
         else
         {
             COMPAREITEMSTRUCT cis;
-            UINT id = GetWindowLongA( hwnd, GWL_ID );
+            UINT id = (UINT)GetWindowLongPtrW( hwnd, GWLP_ID );
 
             cis.CtlType    = ODT_LISTBOX;
             cis.CtlID      = id;
@@ -1528,7 +1528,7 @@ static LRESULT LISTBOX_InsertItem( HWND hwnd, LB_DESCR *descr, INT index,
     if (descr->style & LBS_OWNERDRAWVARIABLE)
     {
         MEASUREITEMSTRUCT mis;
-        UINT id = GetWindowLongA( hwnd, GWL_ID );
+        UINT id = (UINT)GetWindowLongPtrW( hwnd, GWLP_ID );
 
         mis.CtlType    = ODT_LISTBOX;
         mis.CtlID      = id;
@@ -1619,7 +1619,7 @@ static void LISTBOX_DeleteItem( HWND hwnd, LB_DESCR *descr, INT index )
     if (IS_OWNERDRAW(descr) || descr->items[index].data)
     {
         DELETEITEMSTRUCT dis;
-        UINT id = GetWindowLongA( hwnd, GWL_ID );
+        UINT id = (UINT)GetWindowLongPtrW( hwnd, GWLP_ID );
 
         dis.CtlType  = ODT_LISTBOX;
         dis.CtlID    = id;
@@ -2475,7 +2475,7 @@ static BOOL LISTBOX_Create( HWND hwnd, LPHEADCOMBO lphc )
 	}
 	else
 	{
-            UINT id = GetWindowLongA( hwnd, GWL_ID );
+            UINT id = (UINT)GetWindowLongPtrW( hwnd, GWLP_ID );
             mis.CtlType    = ODT_LISTBOX;
             mis.CtlID      = id;
             mis.itemID     = -1;

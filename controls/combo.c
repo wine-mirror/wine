@@ -49,7 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(combo);
 
 #define CB_NOTIFY( lphc, code ) \
     (SendMessageW((lphc)->owner, WM_COMMAND, \
-                  MAKEWPARAM(GetWindowLongA((lphc)->self,GWL_ID), (code)), (LPARAM)(lphc)->self))
+                  MAKEWPARAM(GetWindowLongPtrA((lphc)->self,GWLP_ID), (code)), (LPARAM)(lphc)->self))
 
 #define CB_DISABLED( lphc )   (!IsWindowEnabled((lphc)->self))
 #define CB_OWNERDRAWN( lphc ) ((lphc)->dwStyle & (CBS_OWNERDRAWFIXED | CBS_OWNERDRAWVARIABLE))
@@ -243,7 +243,7 @@ static INT CBGetTextAreaHeight(
     MEASUREITEMSTRUCT measureItem;
     RECT              clientRect;
     INT               originalItemHeight = iTextItemHeight;
-    UINT id = GetWindowLongA( lphc->self, GWL_ID );
+    UINT id = (UINT)GetWindowLongPtrA( lphc->self, GWLP_ID );
 
     /*
      * We use the client rect for the width of the item.
@@ -586,7 +586,7 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
                                            lphc->droppedRect.right - lphc->droppedRect.left,
                                            lphc->droppedRect.bottom - lphc->droppedRect.top,
                                            hwnd, (HMENU)ID_CB_LISTBOX,
-                                           (HINSTANCE)GetWindowLongA( hwnd, GWL_HINSTANCE ), lphc );
+                                           (HINSTANCE)GetWindowLongPtrA( hwnd, GWLP_HINSTANCE ), lphc );
       else
           lphc->hWndLBox = CreateWindowExA(lbeExStyle, "ComboLBox", NULL, lbeStyle,
                                            lphc->droppedRect.left,
@@ -594,7 +594,7 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
                                            lphc->droppedRect.right - lphc->droppedRect.left,
                                            lphc->droppedRect.bottom - lphc->droppedRect.top,
                                            hwnd, (HMENU)ID_CB_LISTBOX,
-                                           (HINSTANCE)GetWindowLongA( hwnd, GWL_HINSTANCE ), lphc );
+                                           (HINSTANCE)GetWindowLongPtrA( hwnd, GWLP_HINSTANCE ), lphc );
 
       if( lphc->hWndLBox )
       {
@@ -620,14 +620,14 @@ static LRESULT COMBO_Create( HWND hwnd, LPHEADCOMBO lphc, HWND hwndParent, LONG 
                                                    lphc->textRect.right - lphc->textRect.left,
                                                    lphc->textRect.bottom - lphc->textRect.top,
                                                    hwnd, (HMENU)ID_CB_EDIT,
-                                                   (HINSTANCE)GetWindowLongA( hwnd, GWL_HINSTANCE ), NULL );
+                                                   (HINSTANCE)GetWindowLongPtrA( hwnd, GWLP_HINSTANCE ), NULL );
               else
                   lphc->hWndEdit = CreateWindowExA(0, "Edit", NULL, lbeStyle,
                                                    lphc->textRect.left, lphc->textRect.top,
                                                    lphc->textRect.right - lphc->textRect.left,
                                                    lphc->textRect.bottom - lphc->textRect.top,
                                                    hwnd, (HMENU)ID_CB_EDIT,
-                                                   (HINSTANCE)GetWindowLongA( hwnd, GWL_HINSTANCE ), NULL );
+                                                   (HINSTANCE)GetWindowLongPtrA( hwnd, GWLP_HINSTANCE ), NULL );
 
 	      if( !lphc->hWndEdit )
 		bEdit = FALSE;
@@ -739,7 +739,7 @@ static void CBPaintText(
      {
        DRAWITEMSTRUCT dis;
        HRGN           clipRegion;
-       UINT ctlid = GetWindowLongA( lphc->self, GWL_ID );
+       UINT ctlid = (UINT)GetWindowLongPtrA( lphc->self, GWLP_ID );
 
        /* setup state for DRAWITEM message. Owner will highlight */
        if ( (lphc->wState & CBF_FOCUSED) &&
@@ -1402,7 +1402,7 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 static LRESULT COMBO_ItemOp( LPHEADCOMBO lphc, UINT msg, LPARAM lParam )
 {
    HWND hWnd = lphc->self;
-   UINT id = GetWindowLongA( hWnd, GWL_ID );
+   UINT id = (UINT)GetWindowLongPtrA( hWnd, GWLP_ID );
 
    TRACE("[%p]: ownerdraw op %04x\n", lphc->self, msg );
 

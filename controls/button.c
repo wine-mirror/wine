@@ -33,8 +33,8 @@
 /* GetWindowLong offsets for window extra information */
 #define STATE_GWL_OFFSET  0
 #define HFONT_GWL_OFFSET  (sizeof(LONG))
-#define HIMAGE_GWL_OFFSET (2*sizeof(LONG))
-#define NB_EXTRA_BYTES    (3*sizeof(LONG))
+#define HIMAGE_GWL_OFFSET (HFONT_GWL_OFFSET+sizeof(HFONT))
+#define NB_EXTRA_BYTES    (HIMAGE_GWL_OFFSET+sizeof(HANDLE))
 
   /* Button state values */
 #define BUTTON_UNCHECKED       0x00
@@ -125,12 +125,12 @@ inline static void set_button_state( HWND hwnd, LONG state )
 
 inline static HFONT get_button_font( HWND hwnd )
 {
-    return (HFONT)GetWindowLongA( hwnd, HFONT_GWL_OFFSET );
+    return (HFONT)GetWindowLongPtrA( hwnd, HFONT_GWL_OFFSET );
 }
 
 inline static void set_button_font( HWND hwnd, HFONT font )
 {
-    SetWindowLongA( hwnd, HFONT_GWL_OFFSET, (LONG)font );
+    SetWindowLongPtrA( hwnd, HFONT_GWL_OFFSET, (LONG_PTR)font );
 }
 
 inline static UINT get_button_type( LONG window_style )
@@ -248,7 +248,7 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
            btn_type == BS_OWNERDRAW)
         {
             SendMessageW( GetParent(hWnd), WM_COMMAND,
-                          MAKEWPARAM( GetWindowLongA(hWnd,GWL_ID), BN_DOUBLECLICKED ),
+                          MAKEWPARAM( GetWindowLongPtrA(hWnd,GWLP_ID), BN_DOUBLECLICKED ),
                           (LPARAM)hWnd);
             break;
         }
@@ -294,7 +294,7 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
                 break;
             }
             SendMessageW( GetParent(hWnd), WM_COMMAND,
-                          MAKEWPARAM( GetWindowLongA(hWnd,GWL_ID), BN_CLICKED ), (LPARAM)hWnd);
+                          MAKEWPARAM( GetWindowLongPtrA(hWnd,GWLP_ID), BN_CLICKED ), (LPARAM)hWnd);
         }
         break;
 
@@ -407,7 +407,7 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
 	return (LRESULT)oldHbitmap;
 
     case BM_GETIMAGE:
-        return GetWindowLongA( hWnd, HIMAGE_GWL_OFFSET );
+        return GetWindowLongPtrA( hWnd, HIMAGE_GWL_OFFSET );
 
     case BM_GETCHECK16:
     case BM_GETCHECK:
@@ -568,7 +568,7 @@ static UINT BUTTON_CalcLabelRect(HWND hwnd, HDC hdc, RECT *rc)
           break;
 
       case BS_ICON:
-         if (!GetIconInfo((HICON)GetWindowLongA( hwnd, HIMAGE_GWL_OFFSET ), &iconInfo))
+         if (!GetIconInfo((HICON)GetWindowLongPtrA( hwnd, HIMAGE_GWL_OFFSET ), &iconInfo))
             goto empty_rect;
 
          GetObjectW (iconInfo.hbmColor, sizeof(BITMAP), &bm);
@@ -581,7 +581,7 @@ static UINT BUTTON_CalcLabelRect(HWND hwnd, HDC hdc, RECT *rc)
          break;
 
       case BS_BITMAP:
-         if (!GetObjectW( (HANDLE)GetWindowLongA( hwnd, HIMAGE_GWL_OFFSET ), sizeof(BITMAP), &bm))
+         if (!GetObjectW( (HANDLE)GetWindowLongPtrA( hwnd, HIMAGE_GWL_OFFSET ), sizeof(BITMAP), &bm))
             goto empty_rect;
 
          r.right  = r.left + bm.bmWidth;
@@ -686,12 +686,12 @@ static void BUTTON_DrawLabel(HWND hwnd, HDC hdc, UINT dtFlags, RECT *rc)
 
       case BS_ICON:
          flags |= DST_ICON;
-         lp = GetWindowLongA( hwnd, HIMAGE_GWL_OFFSET );
+         lp = GetWindowLongPtrA( hwnd, HIMAGE_GWL_OFFSET );
          break;
 
       case BS_BITMAP:
          flags |= DST_BITMAP;
-         lp = GetWindowLongA( hwnd, HIMAGE_GWL_OFFSET );
+         lp = GetWindowLongPtrA( hwnd, HIMAGE_GWL_OFFSET );
          break;
 
       default:
@@ -1033,7 +1033,7 @@ static void OB_Paint( HWND hwnd, HDC hDC, UINT action )
     DRAWITEMSTRUCT dis;
     HRGN clipRegion;
     RECT clipRect;
-    UINT id = GetWindowLongA( hwnd, GWL_ID );
+    LONG_PTR id = GetWindowLongPtrA( hwnd, GWLP_ID );
     HWND parent;
 
     dis.CtlType    = ODT_BUTTON;

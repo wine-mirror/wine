@@ -1505,7 +1505,7 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
     /* NOTE: In Windows, top menu popup is not owned. */
     menu->hWnd = CreateWindowExW( 0, POPUPMENU_CLASS_ATOMW, NULL,
                                 WS_POPUP, x, y, width, height,
-                                hwndOwner, 0, (HINSTANCE)GetWindowLongW(hwndOwner, GWL_HINSTANCE),
+                                hwndOwner, 0, (HINSTANCE)GetWindowLongPtrW(hwndOwner, GWLP_HINSTANCE),
                                 (LPVOID)hmenu );
     if( !menu->hWnd ) return FALSE;
     if (!top_popup) top_popup = menu->hWnd;
@@ -2562,6 +2562,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
     fEndMenu = FALSE;
     if (!(menu = MENU_GetMenu( hmenu )))
     {
+        WARN("Invalid menu handle %p\n", hmenu);
         SetLastError(ERROR_INVALID_MENU_HANDLE);
         return FALSE;
     }
@@ -3648,7 +3649,7 @@ BOOL WINAPI SetSystemMenu( HWND hwnd, HMENU hMenu )
  */
 HMENU WINAPI GetMenu( HWND hWnd )
 {
-    HMENU retvalue = (HMENU)GetWindowLongW( hWnd, GWL_ID );
+    HMENU retvalue = (HMENU)GetWindowLongPtrW( hWnd, GWLP_ID );
     TRACE("for %p returning %p\n", hWnd, retvalue);
     return retvalue;
 }
@@ -3683,7 +3684,7 @@ BOOL MENU_SetMenu( HWND hWnd, HMENU hMenu )
         lpmenu->hWnd = hWnd;
         lpmenu->Height = 0;  /* Make sure we recalculate the size */
     }
-    SetWindowLongW( hWnd, GWL_ID, (LONG_PTR)hMenu );
+    SetWindowLongPtrW( hWnd, GWLP_ID, (LONG_PTR)hMenu );
     return TRUE;
 }
 
