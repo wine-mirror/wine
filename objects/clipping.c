@@ -497,3 +497,77 @@ INT16 WINAPI RestoreVisRgn16( HDC16 hdc16 )
     GDI_ReleaseObj( hdc );
     return ret;
 }
+
+
+/***********************************************************************
+ * GetRandomRgn [GDI32.@]
+ *
+ * NOTES
+ *     This function is documented in MSDN online for the case of
+ *     dwCode == SYSRGN (4).
+ *
+ *     For dwCode == 1 it should return the clip region
+ *                   2 "    "       "   the meta region
+ *                   3 "    "       "   the intersection of the clip with
+ *                                      the meta region (== 'Rao' region).
+ *
+ *     See http://www.codeproject.com/gdi/cliprgnguide.asp
+ */
+INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, DWORD dwCode)
+{
+    switch (dwCode)
+    {
+    case SYSRGN: /* == 4 */
+	{
+	    DC *dc = DC_GetDCPtr (hDC);
+	    if (!dc) return -1;
+
+	    CombineRgn (hRgn, dc->hVisRgn, 0, RGN_COPY);
+            GDI_ReleaseObj( hDC );
+	    /*
+	     *     On Windows NT/2000,
+	     *           the region returned is in screen coordinates.
+	     *     On Windows 95/98,
+	     *           the region returned is in window coordinates
+	     */
+            if (!(GetVersion() & 0x80000000))
+            {
+                POINT org;
+                GetDCOrgEx(hDC, &org);
+                OffsetRgn(hRgn, org.x, org.y);
+            }
+	    return 1;
+	}
+
+    case 1: /* clip region */
+            return GetClipRgn (hDC, hRgn);
+
+    default:
+        WARN("Unknown dwCode %ld\n", dwCode);
+        return -1;
+    }
+
+    return -1;
+}
+
+
+/***********************************************************************
+ *           GetMetaRgn    (GDI32.@)
+ */
+INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
+{
+    FIXME( "stub\n" );
+
+    return 0;
+}
+
+
+/***********************************************************************
+ *           SetMetaRgn    (GDI32.@)
+ */
+INT WINAPI SetMetaRgn( HDC hdc )
+{
+    FIXME( "stub\n" );
+
+    return ERROR;
+}

@@ -600,11 +600,12 @@ INT WINAPI GetRgnBox( HRGN hrgn, LPRECT rect )
     if (obj)
     {
 	INT ret;
-	TRACE(" %p\n", hrgn );
 	rect->left = obj->rgn->extents.left;
 	rect->top = obj->rgn->extents.top;
 	rect->right = obj->rgn->extents.right;
 	rect->bottom = obj->rgn->extents.bottom;
+	TRACE("%p (%ld,%ld-%ld,%ld)\n", hrgn,
+               rect->left, rect->top, rect->right, rect->bottom);
 	ret = get_region_type( obj );
 	GDI_ReleaseObj(hrgn);
 	return ret;
@@ -624,7 +625,7 @@ HRGN WINAPI CreateRectRgn(INT left, INT top, INT right, INT bottom)
 
     if (!(hrgn = REGION_CreateRegion(RGN_DEFAULT_RECTS)))
 	return 0;
-    TRACE("\n");
+    TRACE("%d,%d-%d,%d\n", left, top, right, bottom);
     SetRectRgn(hrgn, left, top, right, bottom);
     return hrgn;
 }
@@ -2705,71 +2706,4 @@ HRGN WINAPI CreatePolygonRgn( const POINT *points, INT count,
                                   INT mode )
 {
     return CreatePolyPolygonRgn( points, &count, 1, mode );
-}
-
-
-/***********************************************************************
- * GetRandomRgn [GDI32.@]
- *
- * NOTES
- *     This function is documented in MSDN online
- */
-INT WINAPI GetRandomRgn(HDC hDC, HRGN hRgn, DWORD dwCode)
-{
-    switch (dwCode)
-    {
-        case 4: /* == SYSRGN ? */
-	{
-	    DC *dc = DC_GetDCPtr (hDC);
-	    OSVERSIONINFOA vi;
-	    POINT org;
-
-	    if (!dc) return -1;
-	    CombineRgn (hRgn, dc->hVisRgn, 0, RGN_COPY);
-	    /*
-	     *     On Windows NT/2000,
-	     *           the region returned is in screen coordinates.
-	     *     On Windows 95/98,
-	     *           the region returned is in window coordinates
-	     */
-	    vi.dwOSVersionInfoSize = sizeof(vi);
-	    if (GetVersionExA( &vi ) && vi.dwPlatformId == VER_PLATFORM_WIN32_NT)
-		GetDCOrgEx(hDC, &org);
-	    else
-		org.x = org.y = 0;
-	    OffsetRgn (hRgn, org.x, org.y);
-            GDI_ReleaseObj( hDC );
-	    return 1;
-	}
-/*	case 1:
-	    return GetClipRgn (hDC, hRgn);
-*/
-	default:
-	    WARN("Unknown dwCode %ld\n", dwCode);
-	    return -1;
-    }
-
-    return -1;
-}
-
-
-/***********************************************************************
- *           GetMetaRgn    (GDI32.@)
- */
-INT WINAPI GetMetaRgn( HDC hdc, HRGN hRgn )
-{
-  FIXME( "stub\n" );
-
-  return 0;
-}
-
-
-/***********************************************************************
- *           SetMetaRgn    (GDI32.@)
- */
-INT WINAPI SetMetaRgn( HDC hdc )
-{
-  FIXME( "stub\n" );
-
-  return ERROR;
 }

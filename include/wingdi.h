@@ -1479,6 +1479,9 @@ typedef struct tagEXTLOGPEN
 #define RGN_COPY          5
 #define RGN_MIN           RGN_AND
 #define RGN_MAX           RGN_COPY
+
+#define SYSRGN            4
+
   /* Device contexts */
 
   /* Polygon modes */
