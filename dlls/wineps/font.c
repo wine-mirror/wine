@@ -264,36 +264,6 @@ BOOL PSDRV_GetTextMetrics(DC *dc, TEXTMETRICW *metrics)
     return TRUE;
 }
 
-#if 0
-/***********************************************************************
- *           PSDRV_UnicodeToANSI
- */
-char PSDRV_UnicodeToANSI(int u)
-{
-    if((u & 0xff) == u)
-        return u;
-    switch(u) {
-    case 0x2013: /* endash */
-        return 0x96;
-    case 0x2014: /* emdash */
-        return 0x97;
-    case 0x2018: /* quoteleft */
-        return 0x91;
-    case 0x2019: /* quoteright */
-        return 0x92;
-    case 0x201c: /* quotedblleft */
-       return 0x93;
-    case 0x201d: /* quotedblright */
-        return 0x94;
-    case 0x2022: /* bullet */
-        return 0x95;
-    default:
-        WARN("Umapped unicode char U%04x\n", u);
-	return 0xff;
-    }
-}
-#endif
-
 /******************************************************************************
  *  	PSDRV_UVMetrics
  *
@@ -336,31 +306,6 @@ const AFMMETRICS *PSDRV_UVMetrics(LONG UV, const AFM *afm)
 /***********************************************************************
  *           PSDRV_GetTextExtentPoint
  */
-#if 0
-BOOL PSDRV_GetTextExtentPoint( DC *dc, LPCWSTR str, INT count,
-                                  LPSIZE size )
-{
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    INT i;
-    float width;
-
-    width = 0.0;
-
-    for(i = 0; i < count && str[i]; i++) {
-        char c = PSDRV_UnicodeToANSI(str[i]);
-        width += physDev->font.afm->CharWidths[(int)(unsigned char)c];
-/*	TRACE(psdrv, "Width after %dth char '%c' = %f\n", i, str[i], width);*/
-    }
-    width *= physDev->font.scale;
-    TRACE("Width after scale (%f) is %f\n", physDev->font.scale, width);
-
-    size->cx = GDI_ROUND((FLOAT)width * dc->xformVport2World.eM11);
-    size->cy = GDI_ROUND((FLOAT)physDev->font.tm.tmHeight  * dc->xformVport2World.eM22);
-
-    return TRUE;
-}
-#endif
-
 BOOL PSDRV_GetTextExtentPoint(DC *dc, LPCWSTR str, INT count, LPSIZE size)
 {
     PSDRV_PDEVICE   *physDev = (PSDRV_PDEVICE *)dc->physDev;
@@ -386,23 +331,6 @@ BOOL PSDRV_GetTextExtentPoint(DC *dc, LPCWSTR str, INT count, LPSIZE size)
 /***********************************************************************
  *           PSDRV_GetCharWidth
  */
-#if 0
-BOOL PSDRV_GetCharWidth( DC *dc, UINT firstChar, UINT lastChar,
-			   LPINT buffer )
-{
-    PSDRV_PDEVICE *physDev = (PSDRV_PDEVICE *)dc->physDev;
-    UINT i;
-
-    TRACE("first = %d last = %d\n", firstChar, lastChar);
-
-    if(lastChar > 0xff) return FALSE;
-    for( i = firstChar; i <= lastChar; i++ )
-        *buffer++ = physDev->font.afm->CharWidths[i] * physDev->font.scale;
-
-    return TRUE;
-}
-#endif
-
 BOOL PSDRV_GetCharWidth(DC *dc, UINT firstChar, UINT lastChar, LPINT buffer)
 {
     PSDRV_PDEVICE   *physDev = (PSDRV_PDEVICE *)dc->physDev;

@@ -112,11 +112,6 @@ static char psrrectangle[] = /* x, y, width, height, -width */
 "%d 0 rlineto\n"
 "closepath\n";
 
-#if 0
-static char psshow[] = /* string */
-"(%s) show\n";
-#endif
-
 static const char psglyphshow[] = /* glyph name */
 "/%s glyphshow\n";
 
@@ -638,46 +633,6 @@ BOOL PSDRV_WriteReencodeFont(DC *dc)
     HeapFree(PSDRV_Heap, 0, buf);
     return TRUE;
 }    
-
-#if 0
-BOOL PSDRV_WriteShow(DC *dc, LPCWSTR str, INT count)
-{
-    char *buf, *buf1;
-    INT buflen = count + 10, i, done;
-
-    buf = (char *)HeapAlloc( PSDRV_Heap, 0, buflen );
-    
-    for(i = done = 0; i < count; i++) {
-        char c = PSDRV_UnicodeToANSI(str[i]);
-        if(!isprint(c)) {
-	    if(done + 4 >= buflen)
-	        buf = HeapReAlloc( PSDRV_Heap, 0, buf, buflen += 10 );
-	    sprintf(buf + done, "\\%03o", (int)(unsigned char)c);
-	    done += 4;
-	} else if(c == '\\' || c == '(' || c == ')' ) {
-	    if(done + 2 >= buflen)
-	        buf = HeapReAlloc( PSDRV_Heap, 0, buf, buflen += 10 );
-	    buf[done++] = '\\';
-	    buf[done++] = c;
-	} else {
-	    if(done + 1 >= buflen)
-	        buf = HeapReAlloc( PSDRV_Heap, 0, buf, buflen += 10 );
-	    buf[done++] = c;
-	}
-    }
-    buf[done] = '\0';
-
-    buf1 = (char *)HeapAlloc( PSDRV_Heap, 0, sizeof(psshow) + done);
-
-    sprintf(buf1, psshow, buf);
-
-    PSDRV_WriteSpool(dc, buf1, strlen(buf1));
-    HeapFree(PSDRV_Heap, 0, buf);
-    HeapFree(PSDRV_Heap, 0, buf1);
-
-    return TRUE;
-}    
-#endif
 
 BOOL PSDRV_WriteShow(DC *dc, LPCWSTR str, INT count)
 {
