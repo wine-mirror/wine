@@ -1051,42 +1051,42 @@ BOOL WINAPI SHGetPathFromIDListAW(LPCITEMIDLIST pidl,LPVOID pszPath)
  *  _ILCreateFolder() 
  *  _ILCreateValue()
  */
-LPITEMIDLIST WINAPI _ILCreateDesktop()
+LPITEMIDLIST _ILCreateDesktop()
 {	TRACE_(pidl)("()\n");
 	return _ILCreate(PT_DESKTOP, NULL, 0);
 }
 
-LPITEMIDLIST WINAPI _ILCreateMyComputer()
+LPITEMIDLIST _ILCreateMyComputer()
 {	TRACE_(pidl)("()\n");
 	return _ILCreate(PT_MYCOMP, &IID_MyComputer, sizeof(GUID));
 }
 
-LPITEMIDLIST WINAPI _ILCreateIExplore()
+LPITEMIDLIST _ILCreateIExplore()
 {	TRACE_(pidl)("()\n");
 	return _ILCreate(PT_MYCOMP, &IID_IExplore, sizeof(GUID));
 }
 
-LPITEMIDLIST WINAPI _ILCreateControl()
+LPITEMIDLIST _ILCreateControl()
 {	TRACE_(pidl)("()\n");
 	return _ILCreate(PT_SPECIAL, &IID_Control, sizeof(GUID));
 }
 
-LPITEMIDLIST WINAPI _ILCreatePrinter()
+LPITEMIDLIST _ILCreatePrinter()
 {	TRACE_(pidl)("()\n");
 	return _ILCreate(PT_SPECIAL, &IID_Printer, sizeof(GUID));
 }
 
-LPITEMIDLIST WINAPI _ILCreateNetwork()
+LPITEMIDLIST _ILCreateNetwork()
 {	TRACE_(pidl)("()\n");
 	return _ILCreate(PT_MYCOMP, &IID_Network, sizeof(GUID));
 }
 
-LPITEMIDLIST WINAPI _ILCreateBitBucket()
+LPITEMIDLIST _ILCreateBitBucket()
 {	TRACE_(pidl)("()\n");
 	return _ILCreate(PT_MYCOMP, &IID_BitBucket, sizeof(GUID));
 }
 
-LPITEMIDLIST WINAPI _ILCreateDrive( LPCSTR lpszNew)
+LPITEMIDLIST _ILCreateDrive( LPCSTR lpszNew)
 {	char sTemp[4];
 	lstrcpynA (sTemp,lpszNew,4);
 	sTemp[2]='\\';
@@ -1095,7 +1095,7 @@ LPITEMIDLIST WINAPI _ILCreateDrive( LPCSTR lpszNew)
 	return _ILCreate(PT_DRIVE,(LPVOID)&sTemp[0],4);
 }
 
-LPITEMIDLIST WINAPI _ILCreateFolder( WIN32_FIND_DATAA * stffile )
+LPITEMIDLIST _ILCreateFolder( WIN32_FIND_DATAA * stffile )
 {
 	char	buff[MAX_PATH + 14 +1]; /* see WIN32_FIND_DATA */
 	char *	pbuff = buff;
@@ -1135,7 +1135,7 @@ LPITEMIDLIST WINAPI _ILCreateFolder( WIN32_FIND_DATAA * stffile )
 	return pidl;
 }
 
-LPITEMIDLIST WINAPI _ILCreateValue(WIN32_FIND_DATAA * stffile)
+LPITEMIDLIST _ILCreateValue(WIN32_FIND_DATAA * stffile)
 {
 	char	buff[MAX_PATH + 14 +1]; /* see WIN32_FIND_DATA */
 	char *	pbuff = buff;
@@ -1175,7 +1175,7 @@ LPITEMIDLIST WINAPI _ILCreateValue(WIN32_FIND_DATAA * stffile)
 	return pidl;
 }
 
-LPITEMIDLIST WINAPI _ILCreateSpecial(LPCSTR szGUID)
+LPITEMIDLIST _ILCreateSpecial(LPCSTR szGUID)
 {
 	IID	iid;
 	CLSIDFromString16(szGUID,&iid);
@@ -1190,7 +1190,7 @@ LPITEMIDLIST WINAPI _ILCreateSpecial(LPCSTR szGUID)
  *  uInSize = size of data (raw)
  */
 
-LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT16 uInSize)
+LPITEMIDLIST _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT16 uInSize)
 {	LPITEMIDLIST   pidlOut = NULL, pidlTemp = NULL;
 	LPPIDLDATA     pData;
 	UINT16         uSize = 0;
@@ -1259,7 +1259,7 @@ LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE type, LPCVOID pIn, UINT16 uInSize)
  * RETURNS
  *  strlen (lpszText)
  */
-DWORD WINAPI _ILGetDrive(LPCITEMIDLIST pidl,LPSTR pOut, UINT16 uSize)
+DWORD _ILGetDrive(LPCITEMIDLIST pidl,LPSTR pOut, UINT16 uSize)
 {	TRACE_(pidl)("(%p,%p,%u)\n",pidl,pOut,uSize);
 
 	if(_ILIsMyComputer(pidl))
@@ -1284,12 +1284,12 @@ DWORD WINAPI _ILGetDrive(LPCITEMIDLIST pidl,LPSTR pOut, UINT16 uSize)
  *  _ILIsValue()
  *  _ILIsPidlSimple()
  */
-BOOL WINAPI _ILIsDesktop(LPCITEMIDLIST pidl)
+BOOL _ILIsDesktop(LPCITEMIDLIST pidl)
 {	TRACE_(pidl)("(%p)\n",pidl);
 	return ( !pidl || (pidl && pidl->mkid.cb == 0x00) );
 }
 
-BOOL WINAPI _ILIsMyComputer(LPCITEMIDLIST pidl)
+BOOL _ILIsMyComputer(LPCITEMIDLIST pidl)
 {
 	REFIID iid = _ILGetGUIDPointer(pidl);
 
@@ -1300,7 +1300,7 @@ BOOL WINAPI _ILIsMyComputer(LPCITEMIDLIST pidl)
 	return FALSE;
 }
 
-BOOL WINAPI _ILIsSpecialFolder (LPCITEMIDLIST pidl)
+BOOL _ILIsSpecialFolder (LPCITEMIDLIST pidl)
 {
 	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
 	TRACE_(pidl)("(%p)\n",pidl);
@@ -1309,7 +1309,7 @@ BOOL WINAPI _ILIsSpecialFolder (LPCITEMIDLIST pidl)
 			));
 }
 
-BOOL WINAPI _ILIsDrive(LPCITEMIDLIST pidl)
+BOOL _ILIsDrive(LPCITEMIDLIST pidl)
 {	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
 	TRACE_(pidl)("(%p)\n",pidl);
 	return (pidl && lpPData && (PT_DRIVE == lpPData->type ||
@@ -1318,13 +1318,13 @@ BOOL WINAPI _ILIsDrive(LPCITEMIDLIST pidl)
 				    PT_DRIVE3 == lpPData->type));
 }
 
-BOOL WINAPI _ILIsFolder(LPCITEMIDLIST pidl)
+BOOL _ILIsFolder(LPCITEMIDLIST pidl)
 {	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
 	TRACE_(pidl)("(%p)\n",pidl);
 	return (pidl && lpPData && (PT_FOLDER == lpPData->type || PT_FOLDER1 == lpPData->type));
 }
 
-BOOL WINAPI _ILIsValue(LPCITEMIDLIST pidl)
+BOOL _ILIsValue(LPCITEMIDLIST pidl)
 {	LPPIDLDATA lpPData = _ILGetDataPointer(pidl);
 	TRACE_(pidl)("(%p)\n",pidl);
 	return (pidl && lpPData && PT_VALUE == lpPData->type);
@@ -1333,7 +1333,7 @@ BOOL WINAPI _ILIsValue(LPCITEMIDLIST pidl)
 /**************************************************************************
  *	_ILIsPidlSimple
  */
-BOOL WINAPI _ILIsPidlSimple ( LPCITEMIDLIST pidl)
+BOOL _ILIsPidlSimple ( LPCITEMIDLIST pidl)
 {
 	BOOL ret = TRUE;
 
@@ -1361,7 +1361,7 @@ BOOL WINAPI _ILIsPidlSimple ( LPCITEMIDLIST pidl)
  *
  * returns the lenght of the string
  */
-DWORD WINAPI _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
+DWORD _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 {
 	LPPIDLDATA	pData;
 	DWORD		dwReturn=0; 
@@ -1424,7 +1424,7 @@ DWORD WINAPI _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
  **************************************************************************
  *  _ILGetDataPointer()
  */
-LPPIDLDATA WINAPI _ILGetDataPointer(LPITEMIDLIST pidl)
+LPPIDLDATA _ILGetDataPointer(LPITEMIDLIST pidl)
 {
 	if(pidl && pidl->mkid.cb != 0x00)
 	  return (LPPIDLDATA) &(pidl->mkid.abID);
@@ -1435,7 +1435,7 @@ LPPIDLDATA WINAPI _ILGetDataPointer(LPITEMIDLIST pidl)
  *  _ILGetTextPointer()
  * gets a pointer to the long filename string stored in the pidl
  */
-LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
+LPSTR _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
 {/*	TRACE(pidl,"(type=%x data=%p)\n", type, pidldata);*/
 
 	if(!pidldata)
@@ -1473,7 +1473,7 @@ LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
  *  _ILGetSTextPointer()
  * gets a pointer to the short filename string stored in the pidl
  */
-LPSTR WINAPI _ILGetSTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
+LPSTR _ILGetSTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
 {/*	TRACE(pidl,"(type=%x data=%p)\n", type, pidldata);*/
 
 	if(!pidldata)
@@ -1497,7 +1497,7 @@ LPSTR WINAPI _ILGetSTextPointer(PIDLTYPE type, LPPIDLDATA pidldata)
  *
  * returns reference to guid stored in some pidls
  */
-REFIID WINAPI _ILGetGUIDPointer(LPCITEMIDLIST pidl)
+REFIID _ILGetGUIDPointer(LPCITEMIDLIST pidl)
 {
 	LPPIDLDATA pdata =_ILGetDataPointer(pidl);
 
@@ -1546,7 +1546,7 @@ BOOL _ILGetFileDateTime(LPCITEMIDLIST pidl, FILETIME *pFt)
     return TRUE;
 }
 
-BOOL WINAPI _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
+BOOL _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 {	
 	FILETIME ft;
 	SYSTEMTIME time;
@@ -1574,7 +1574,7 @@ BOOL WINAPI _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
  *	pOut can be null when no string is needed
  *     
  */
-DWORD WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
+DWORD _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 {
 	LPPIDLDATA pdata =_ILGetDataPointer(pidl);
 	DWORD dwSize;
@@ -1588,7 +1588,7 @@ DWORD WINAPI _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 	return 0;
 }
 
-BOOL WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
+BOOL _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize)
 {
 	char szTemp[MAX_PATH];
 	const char * pPoint;

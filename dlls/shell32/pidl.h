@@ -114,66 +114,58 @@ typedef struct tagPIDLDATA
 #include "poppack.h"
 
 /*
- * getting string values from pidls
- *
- * return value is strlen()
- */
-DWORD WINAPI _ILGetDrive(LPCITEMIDLIST,LPSTR,UINT16);
-
-/*
  * getting special values from simple pidls
  */
-BOOL WINAPI _ILGetFileDate (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
-DWORD _ILGetFileSize (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
-BOOL WINAPI _ILGetExtension (LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
+DWORD	_ILSimpleGetText	(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
+BOOL	_ILGetFileDate 		(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
+DWORD	_ILGetFileSize		(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
+BOOL	_ILGetExtension		(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
+void	_ILGetFileType		(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
+BOOL	_ILGetAttributeStr	(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
 
+BOOL	_ILGetFileDateTime	(LPCITEMIDLIST pidl, FILETIME *ft);
+DWORD	_ILGetDrive		(LPCITEMIDLIST, LPSTR, UINT16);
 
 /*
  * testing simple pidls
  */
-BOOL WINAPI _ILIsDesktop(LPCITEMIDLIST);
-BOOL WINAPI _ILIsMyComputer(LPCITEMIDLIST);
-BOOL WINAPI _ILIsDrive(LPCITEMIDLIST);
-BOOL WINAPI _ILIsFolder(LPCITEMIDLIST);
-BOOL WINAPI _ILIsValue(LPCITEMIDLIST);
-BOOL WINAPI _ILIsSpecialFolder (LPCITEMIDLIST pidl);
-BOOL WINAPI _ILIsPidlSimple ( LPCITEMIDLIST pidl);
+BOOL	_ILIsDesktop		(LPCITEMIDLIST pidl);
+BOOL	_ILIsMyComputer		(LPCITEMIDLIST pidl);
+BOOL	_ILIsDrive		(LPCITEMIDLIST pidl);
+BOOL	_ILIsFolder		(LPCITEMIDLIST pidl);
+BOOL	_ILIsValue		(LPCITEMIDLIST pidl);
+BOOL	_ILIsSpecialFolder	(LPCITEMIDLIST pidl);
+BOOL	_ILIsPidlSimple		(LPCITEMIDLIST pidl);
 
 /*
  * simple pidls from strings
  */
-LPITEMIDLIST WINAPI _ILCreateDesktop(void);
-LPITEMIDLIST WINAPI _ILCreateMyComputer(void);
-LPITEMIDLIST WINAPI _ILCreateIExplore(void);
-LPITEMIDLIST WINAPI _ILCreateControl(void);
-LPITEMIDLIST WINAPI _ILCreatePrinter(void);
-LPITEMIDLIST WINAPI _ILCreateNetwork(void);
-LPITEMIDLIST WINAPI _ILCreateBitBucket(void);
-LPITEMIDLIST WINAPI _ILCreateDrive(LPCSTR);
-LPITEMIDLIST WINAPI _ILCreateFolder(WIN32_FIND_DATAA * stffile);
-LPITEMIDLIST WINAPI _ILCreateValue(WIN32_FIND_DATAA * stffile);
-LPITEMIDLIST WINAPI _ILCreateSpecial(LPCSTR szGUID);
+LPITEMIDLIST	_ILCreate	(PIDLTYPE,LPCVOID,UINT16);
 
-DWORD WINAPI _ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize);
-
-LPITEMIDLIST WINAPI _ILCreate(PIDLTYPE,LPCVOID,UINT16);
+LPITEMIDLIST	_ILCreateDesktop	(void);
+LPITEMIDLIST	_ILCreateMyComputer	(void);
+LPITEMIDLIST	_ILCreateIExplore	(void);
+LPITEMIDLIST	_ILCreateControl	(void);
+LPITEMIDLIST	_ILCreatePrinter	(void);
+LPITEMIDLIST	_ILCreateNetwork	(void);
+LPITEMIDLIST	_ILCreateBitBucket	(void);
+LPITEMIDLIST	_ILCreateDrive		(LPCSTR);
+LPITEMIDLIST	_ILCreateFolder		(WIN32_FIND_DATAA * stffile);
+LPITEMIDLIST	_ILCreateValue		(WIN32_FIND_DATAA * stffile);
+LPITEMIDLIST	_ILCreateSpecial	(LPCSTR szGUID);
 
 /*
  * helper functions (getting struct-pointer)
  */
-LPPIDLDATA WINAPI _ILGetDataPointer(LPCITEMIDLIST);
-LPSTR WINAPI _ILGetTextPointer(PIDLTYPE type, LPPIDLDATA pidldata);
-LPSTR WINAPI _ILGetSTextPointer(PIDLTYPE type, LPPIDLDATA pidldata);
-REFIID WINAPI _ILGetGUIDPointer(LPCITEMIDLIST pidl);
-
-void pdump (LPCITEMIDLIST pidl);
-BOOL pcheck (LPCITEMIDLIST pidl);
+LPPIDLDATA	_ILGetDataPointer	(LPCITEMIDLIST);
+LPSTR		_ILGetTextPointer	(PIDLTYPE type, LPPIDLDATA pidldata);
+LPSTR		_ILGetSTextPointer	(PIDLTYPE type, LPPIDLDATA pidldata);
+REFIID		_ILGetGUIDPointer	(LPCITEMIDLIST pidl);
 
 /* 
- * ItemIDList File helper functions
+ * debug helper 
  */
-void _ILGetFileType(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
-BOOL _ILGetFileDateTime(LPCITEMIDLIST pidl, FILETIME *ft);
-BOOL _ILGetAttributeStr(LPCITEMIDLIST pidl, LPSTR pOut, UINT uOutSize);
+void	pdump	(LPCITEMIDLIST pidl);
+BOOL	pcheck	(LPCITEMIDLIST pidl);
 
 #endif

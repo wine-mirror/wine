@@ -187,27 +187,8 @@ static HRESULT WINAPI ISVBgCm_fnInvokeCommand(
 	}
 	else
 	{
-	  switch(LOWORD(lpcmi->lpVerb))
-	  {
-	    case FCIDM_SHVIEW_BIGICON:
-	      SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_BIGICON,0),0 );
-	      break;
-
-	    case FCIDM_SHVIEW_SMALLICON:
-	      SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_SMALLICON,0),0 );
-
-	    case FCIDM_SHVIEW_LISTVIEW:
-	      SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_LISTVIEW,0),0 );
-	      break;
-
-	    case FCIDM_SHVIEW_REPORTVIEW:
-	      SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(FCIDM_SHVIEW_REPORTVIEW,0),0 );
-	      break;
-
-	    default:
-	      SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(LOWORD(lpcmi->lpVerb), 0),0 );
-	      break;
-	  }
+	  /* if it's a id just pass it to the parent shv */
+	  SendMessageA(hWndSV, WM_COMMAND, MAKEWPARAM(LOWORD(lpcmi->lpVerb), 0),0 );
 	}
 	
 	IShellView_Release(lpSV);	/* QueryActiveShellView does AddRef*/

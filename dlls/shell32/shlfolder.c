@@ -438,6 +438,8 @@ static HRESULT WINAPI IShellFolder_fnParseDisplayName(
 	This,hwndOwner,pbcReserved,lpszDisplayName,
 	debugstr_w(lpszDisplayName),pchEaten,ppidl,pdwAttributes);
 
+	if (!lpszDisplayName || !ppidl) return E_INVALIDARG;
+
 	if (pchEaten) *pchEaten = 0;	/* strange but like the original */
 	
 	if (*lpszDisplayName)
@@ -523,6 +525,8 @@ static HRESULT WINAPI IShellFolder_fnBindToObject( IShellFolder * iface, LPCITEM
 	WINE_StringFromCLSID(riid,xriid);
 
 	TRACE("(%p)->(pidl=%p,%p,\n\tIID:\t%s,%p)\n",This,pidl,pbcReserved,xriid,ppvOut);
+
+	if(!pidl || !ppvOut) return E_INVALIDARG;
 
 	*ppvOut = NULL;
 
@@ -1459,6 +1463,8 @@ static HRESULT WINAPI ISF_MyComputer_fnBindToObject( IShellFolder * iface, LPCIT
 	WINE_StringFromCLSID(riid,xriid);
 
 	TRACE("(%p)->(pidl=%p,%p,\n\tIID:\t%s,%p)\n",This,pidl,pbcReserved,xriid,ppvOut);
+
+	if(!pidl || !ppvOut) return E_INVALIDARG;
 
 	*ppvOut = NULL;
 
