@@ -41,145 +41,145 @@ debug_channels (shell)
 29  stub @
 30  stub @
 31  stub @
-32  stub @
+32  stdcall @(ptr) SHLWAPI_32
 33  stub @
 34  stub @
 35  stub @
 36  stub @
 37  forward @ user32.CallWindowProcW
-38  stdcall @(long) SHLWAPI_38
-39  stub @
-40  stub @
+38  forward @ user32.CharLowerW
+39  forward @ user32.CharLowerBuffW
+40  stdcall @(wstr) SHLWAPI_40
 41  stub @
 42  stub @
-43  stub @
-44  stub @
-45  stub @
-46  stub @
-47  stub @
-48  stub @
+43  forward @ user32.CharUpperW
+44  forward @ user32.CharUpperBuffW
+45  forward @ kernel32.CompareStringW
+46  forward @ user32.CopyAcceleratorTableW
+47  forward @ user32.CreateAcceleratorTableW
+48  forward @ gdi32.CreateDCW
 49  stub @
-50  stub @
-51  stub @
-52  stub @
-53  stub @
+50  forward @ kernel32.CreateDirectoryW
+51  forward @ kernel32.CreateEventW
+52  forward @ kernel32.CreateFileW
+53  forward @ gdi32.CreateFontIndirectW
 54  forward @ gdi32.CreateICW
 55  forward @ user32.CreateWindowExW
 56  forward @ user32.DefWindowProcW
-57  stub @
+57  forward @ kernel32.DeleteFileW
 58  stub @
 59  stub @
-60  stub @
+60  forward @ user32.DispatchMessageW
 61  stub @
-62  stub @
-63  stub @
-64  stub @
-65  stub @
-66  stub @
-67 forward @ user32.FindWindowW
-68 forward @ kernel32.FormatMessageW
-69 forward @ user32.GetClassInfoW
-70  stub @
-71  stub @
-72  stub @
-73  stub @
-74  stub @
-75  stub @
-76  stub @
-77  stub @
-78  stub @
-79  stub @
+62  forward @ gdi32.EnumFontFamiliesW
+63  forward @ gdi32.EnumFontFamiliesExW
+64  forward @ kernel32.EnumResourceNamesW
+65  forward @ kernel32.FindFirstFileW
+66  forward @ kernel32.FindResourceW
+67  forward @ user32.FindWindowW
+68  forward @ kernel32.FormatMessageW
+69  forward @ user32.GetClassInfoW
+70  forward @ user32.GetClassLongW
+71  forward @ user32.GetClassNameW
+72  forward @ user32.GetClipboardFormatNameW
+73  forward @ kernel32.GetCurrentDirectoryW
+74  stdcall @(long long wstr long) SHLWAPI_74
+75  forward @ kernel32.GetFileAttributesW
+76  forward @ kernel32.GetFullPathNameW
+77  forward @ kernel32.GetLocaleInfoW
+78  forward @ user32.GetMenuStringW
+79  forward @ user32.GetMessageW
 80  forward @ kernel32.GetModuleFileNameW
 81  forward @ kernel32.GetSystemDirectoryW
 82  forward @ kernel32.SearchPathW
 83  forward @ kernel32.GetModuleHandleW
-84  stub @
-85  stub @
-86  stub @
-87  stub @
-88  stub @
-89  stub @
-90  stub @
-91  stub @
-92  stub @
-93  stub @
+84  forward @ gdi32.GetObjectW
+85  forward @ kernel32.GetPrivateProfileIntW
+86  forward @ kernel32.GetProfileStringW
+87  forward @ user32.GetPropW
+88  forward @ kernel32.GetStringTypeExW
+89  forward @ kernel32.GetTempFileNameW
+90  forward @ kernel32.GetTempPathW
+91  forward @ gdi32.GetTextExtentPoint32W
+92  forward @ gdi32.GetTextFaceW
+93  forward @ gdi32.GetTextMetricsW
 94  forward @ user32.GetWindowLongW
-95  stub @
-96  stub @
-97  stub @
-98  stub @
-99  stub @
-100 stub @
-101 stub @
+95  forward @ user32.GetWindowTextW
+96  forward @ user32.GetWindowTextLengthW
+97  forward @ kernel32.GetWindowsDirectoryW
+98  forward @ user32.InsertMenuW
+99  forward @ user32.IsDialogMessageW
+100 forward @ user32.LoadAcceleratorsW
+101 forward @ user32.LoadBitmapW
 102 forward @ user32.LoadCursorW
-103 stub @
-104 stub @
-105 stub @
-106 stub @
+103 forward @ user32.LoadIconW
+104 forward @ user32.LoadImageW
+105 forward @ user32.LoadLibraryExW
+106 forward @ user32.LoadMenuW
 107 forward @ user32.LoadStringW
-108 stub @
-109 stub @
-110 stub @
-111 stub @
-112 stub @
-113 stub @
-114 stub @
-115 stub @
-116 stub @
-117 stub @
-118 stub @
-119 stub @
+108 forward @ user32.MessageBoxIndirectW
+109 forward @ user32.ModifyMenuW
+110 forward @ gdi32.GetCharWidth32W
+111 forward @ gdi32.GetCharacterPlacementW
+112 forward @ kernel32.CopyFileW
+113 forward @ kernel32.MoveFileW
+114 forward @ user32.OemToCharW
+115 forward @ kernel32.OutputDebugStringW
+116 forward @ user32.PeekMessageW
+117 forward @ user32.PostMessageW
+118 forward @ user32.PostThreadMessageW
+119 forward @ advapi32.RegCreateKeyW
 120 forward @ advapi32.RegCreateKeyExW
-121 stub @
-122 stub @
-123 stub @
-124 stub @
+121 forward @ advapi32.RegDeleteKeyW
+122 forward @ advapi32.RegEnumKeyW
+123 forward @ advapi32.RegEnumKeyExW
+124 forward @ dvapi32.RegOpenKeyW
 125 forward @ advapi32.RegOpenKeyExW
-126 stub @
-127 stub @
+126 forward @ advapi32.RegQueryInfoKeyW
+127 forward @ advapi32.RegQueryValueW
 128 forward @ advapi32.RegQueryValueExW
-129 stub @
-130 stub @
+129 forward @ advapi32.RegSetValueW
+130 forward @ advapi32.RegSetValueExW
 131 forward @ user32.RegisterClassW
 132 forward @ user32.RegisterClipboardFormatW
-133 stub @
-134 stub @
-135 stub @
-136 stub @
-137 stdcall @(long) SHLWAPI_137
+133 forward @ user32.RegisterWindowMessageW
+134 forward @ user32.RemovePropW
+135 forward @ user32.SendDlgItemMessageW
+136 forward @ user32.SendMessageW
+137 forward @ kernel32.SetCurrentDirectoryW
 138 stub @
 139 stub @
-140 stub @
+140 forward @ user32.SetPropW
 141 forward @ user32.SetWindowLongW
-142 stub @
+142 forward @ user32.SetWindowsHookExW
 143 stub @
-144 stub @
-145 stub @
-146 stub @
+144 forward @ gdi32.StartDocW
+145 forward @ user32.SystemParametersInfoW
+146 forward @ user32.TranslateAcceleratorW
 147 forward @ user32.UnregisterClassW
-148 stub @
-149 stub @
-150 stub @
+148 forward @ user32.VkKeyScanW
+149 forward @ user32.WinHelpW
+150 forward @ user32.wvsprintfW
 151 stdcall @() SHLWAPI_151
-152 stub @
+152 stdcall @(wstr wstr long) SHLWAPI_152
 153 stdcall @(long long long) SHLWAPI_153
 154 stub @
 155 stub @
 156 stdcall @(wstr wstr) SHLWAPI_156
 157 stub @
-158 stub @
-159 stub @
+158 stub @ #(wstr wstr) SHLWAPI_158
+159 forward @ kernel32.CompareStringW
 160 stub @
 161 stub @
-162 stub @
+162 stdcall @(str long) SHLWAPI_162
 163 stub @
 164 stub @
-165 stub @
+165 stdcall @(long long long long) SHLWAPI_165
 166 stub @
 167 stub @
 168 stub @
 169 stdcall @(long) SHLWAPI_169
-170 stub @
+170 stdcall @(str) SHLWAPI_170
 171 stub @
 172 stub @
 173 stub @
@@ -190,9 +190,9 @@ debug_channels (shell)
 178 stub @
 179 stub @
 180 stub @
-181 stub @
+181 stdcall @(long long long) SHLWAPI_181
 182 stub @
-183 stub @
+183 stdcall @(ptr) SHLWAPI_183
 184 stub @
 185 stub @
 186 stub @
@@ -214,8 +214,8 @@ debug_channels (shell)
 202 stub @
 203 stub @
 204 stub @
-205 stub @
-206 stub @
+205 stdcall @(long str str ptr ptr ptr) SHLWAPI_205
+206 stdcall @(long wstr wstr ptr ptr ptr) SHLWAPI_206
 207 stub @
 208 stub @
 209 stub @
@@ -226,8 +226,8 @@ debug_channels (shell)
 214 stub @
 215 stdcall @(long long long) SHLWAPI_215
 216 stub @
-217 stub @
-218 stub @
+217 stdcall @(wstr str ptr) SHLWAPI_217
+218 stdcall @(long wstr str ptr) SHLWAPI_218
 219 stdcall @(long long long long) SHLWAPI_219
 220 stub @
 221 stub @
@@ -249,7 +249,7 @@ debug_channels (shell)
 237 stdcall @(ptr) SHLWAPI_237
 238 stub @
 239 stub @
-240 stub @
+240 stdcall @(long long long long) SHLWAPI_240
 241 stdcall @() SHLWAPI_241
 242 stub @
 243 stub @
@@ -298,7 +298,7 @@ debug_channels (shell)
 286 stub @
 287 stub @
 288 stub @
-289 stub @
+289 stdcall @(wstr long long) SHLWAPI_289
 290 stub @
 291 stub @
 292 stub @
@@ -307,32 +307,32 @@ debug_channels (shell)
 295 stub @
 296 stub @
 297 stub @
-298 stub @
+298 forward @ kernel32.WritePrivateProfileStringW
 299 stub @
 300 stub @
-301 stub @
-302 stub @
-303 stub @
-304 stub @
-305 stub @
-306 stub @
-307 stub @
-308 stub @
+301 forward @ gdi32.DrawTextExW # FIXME CreateFontW
+302 forward @ user32.GetMenuItemInfoW
+303 forward @ user32.InsertMenuItemW
+304 forward @ gdi32.CreateMetaFileW
+305 forward @ kernel32.CreateMutexW
+306 forward @ kernel32.ExpandEnvironmentStringsW
+307 forward @ kernel32.CreateSemaphoreW
+308 forward @ kernel32.IsBadStringPtrW
 309 forward @ kernel32.LoadLibraryW
-310 stub @
-311 stub @
-312 stub @
-313 stub @
-314 stub @
-315 stub @
+310 forward @ kernel32.GetTimeFormatW
+311 forward @ kernel32.GetDateFormatW
+312 forward @ kernel32.specGetPrivateProfileStringW
+313 stdcall @(ptr long ptr long long) SHLWAPI_313
+314 forward @ user32.RegisterClassExW
+315 forward @ user32.GetClassInfoExW
 316 stub SHCreateStreamOnFileAOld
 317 stub SHCreateStreamOnFileWOld
-318 stub @
-319 stub @
-320 stub @
-321 stub @
-322 stub @
-323 stub @
+318 stdcall @(long long wstr long) SHLWAPI_318
+319 forward @ user32.FindWindowExW
+320 stdcall @(str str) SHLWAPI_320
+321 stdcall @(wstr wstr) SHLWAPI_321
+322 stdcall @(str) SHLWAPI_322
+323 stdcall @(wstr) SHLWAPI_323
 324 stub @
 325 stub @
 326 stub @
@@ -341,22 +341,22 @@ debug_channels (shell)
 329 stub @
 330 stub @
 331 stub @
-332 stub @
-333 stub @
-334 stub @
-335 stub @
-336 stub @
-337 stub @
-338 stub @
-339 stub @
-340 stub @
-341 stub @
+332 forward @ user32.CallMsgFilterW
+333 stdcall @(ptr) SHLWAPI_333
+334 stdcall @(ptr wstr) SHLWAPI_334
+335 stdcall @(ptr) SHLWAPI_335
+336 stdcall @(ptr) SHLWAPI_336
+337 stdcall @(wstr long ptr ptr long) SHLWAPI_337
+338 forward @ kernel32.SetFileAttributesW
+339 forward @ kernel32.GetNumberFormatW
+340 forward @ user32.specMessageBoxW
+341 forward @ kernel32.FindNextFileW
 342 stdcall @(long long long long) SHLWAPI_342
 343 stub @
 344 stub @
 345 stub @
 346 stdcall @(wstr ptr long) SHLWAPI_346
-347 stub @
+347 forward @ advapi32.RegDeleteValueW
 348 stub @
 349 stub @
 350 stub @
@@ -366,26 +366,26 @@ debug_channels (shell)
 354 stub @
 355 stub @
 356 stub @
-357 stub @
-358 stub @
-359 stub @
-360 stub @
-361 stub @
+357 stdcall @(wstr wstr wstr long long) SHLWAPI_357
+358 stdcall @(ptr ptr ptr ptr ptr ptr) SHLWAPI_358
+359 forward @ kernel32.OpenEventW
+360 forward @ kernel32.specRemoveDirectoryW
+361 forward @ kernel32.GetShortPathNameW
 362 stub @
 363 stub @
-364 stub @
+364 stdcall @(str str long) SHLWAPI_364
 365 stub @
-366 stub @
-367 stub @
-368 stub @
-369 stub @
-370 stub @
+366 forward @ advapi32.RegEnumValueW
+367 forward @ kernel32.WritePrivateProfileStructW
+368 forward @ kernel32.GetPrivateProfileStructW
+369 forward @ kernel32.CreateProcessW
+370 stdcall @(long wstr long) SHLWAPI_370
 371 stub @
 372 stub @
 373 stub @
 374 stub @
 375 stub @
-376 stdcall @(long) SHLWAPI_376
+376 stdcall @(long) SHLWAPI_376  # kernel32.GetUserDefaultUILanguage
 377 stdcall @(long long long) SHLWAPI_377
 378 stdcall @(long long long) SHLWAPI_378
 379 stub @
@@ -398,9 +398,9 @@ debug_channels (shell)
 386 stub ChrCmpIW
 387 stub ColorAdjustLuma
 388 stub @
-389 stub @
-390 stub @
-391 stub @
+389 stdcall @(ptr) SHLWAPI_389
+390 stdcall @(ptr ptr) SHLWAPI_390
+391 stdcall @(ptr ptr ptr ptr ptr ) SHLWAPI_391
 392 stub @
 393 stub @
 394 stub @
@@ -410,10 +410,10 @@ debug_channels (shell)
 398 stub @
 399 stub @
 400 stub @
-401 stub @
-402 stub @
-403 stub @
-404 stub @
+401 stdcall @(ptr) SHLWAPI_401
+402 stdcall @(ptr) SHLWAPI_402
+403 stdcall @(ptr) SHLWAPI_403
+404 stdcall ColorHLSToRGB(long long long) ColorHLSToRGB
 405 stub @
 406 stub @
 407 stub @
@@ -443,7 +443,7 @@ debug_channels (shell)
 431 stdcall @(long) SHLWAPI_431
 432 stub @
 433 stub @
-434 stub @
+434 forward @ user32.SendMessageTimeoutW
 435 stub @
 436 stub @
 437 stdcall @(long) SHLWAPI_437
@@ -451,15 +451,15 @@ debug_channels (shell)
 439 stub @
 440 stub @
 441 stub @
-442 stub @
-443 stub @
-444 stub @
-445 stub @
+442 forward @ kernel32.GetEnvironmentVariableW
+443 forward @ kernel32.GetSystemWindowsDirectoryA
+444 forward @ kernel32.GetSystemWindowsDirectoryW
+445 stub ColorRGBToHLS
 446 stub @
 
 @ stdcall DllGetVersion (ptr) SHLWAPI_DllGetVersion
-@ stub    GetMenuPosFromID
-@ stub    HashData
+@ stdcall GetMenuPosFromID(ptr long) GetMenuPosFromID
+@ stdcall HashData (ptr long ptr long) HashData
 @ stub    IntlStrEqWorkerA
 @ stub    IntlStrEqWorkerW
 @ stdcall PathAddBackslashA (str) PathAddBackslashA
@@ -522,10 +522,10 @@ debug_channels (shell)
 @ stdcall PathIsUNCW(wstr) PathIsUNCW
 @ stdcall PathIsURLA(str) PathIsURLA
 @ stdcall PathIsURLW(wstr) PathIsURLW
-@ stdcall PathMakePrettyA(str)PathMakePrettyA
-@ stdcall PathMakePrettyW(wstr)PathMakePrettyW
-@ stdcall PathMakeSystemFolderA(str)PathMakeSystemFolderA
-@ stdcall PathMakeSystemFolderW(wstr)PathMakeSystemFolderW
+@ stdcall PathMakePrettyA(str) PathMakePrettyA
+@ stdcall PathMakePrettyW(wstr) PathMakePrettyW
+@ stdcall PathMakeSystemFolderA(str) PathMakeSystemFolderA
+@ stdcall PathMakeSystemFolderW(wstr) PathMakeSystemFolderW
 @ stdcall PathMatchSpecA  (str str) PathMatchSpecA
 @ stdcall PathMatchSpecW  (wstr wstr) PathMatchSpecW
 @ stdcall PathParseIconLocationA (str) PathParseIconLocationA
@@ -550,12 +550,12 @@ debug_channels (shell)
 @ stdcall PathSearchAndQualifyW(wstr ptr long)PathSearchAndQualifyW
 @ stdcall PathSetDlgItemPathA (long long ptr) PathSetDlgItemPathA
 @ stdcall PathSetDlgItemPathW (long long ptr) PathSetDlgItemPathW
-@ stdcall PathSkipRootA(str)PathSkipRootA
-@ stdcall PathSkipRootW(wstr)PathSkipRootW
-@ stdcall PathStripPathA(str)PathStripPathA
-@ stdcall PathStripPathW(wstr)PathStripPathW
-@ stdcall PathStripToRootA(str)PathStripToRootA
-@ stdcall PathStripToRootW(wstr)PathStripToRootW
+@ stdcall PathSkipRootA(str) PathSkipRootA
+@ stdcall PathSkipRootW(wstr) PathSkipRootW
+@ stdcall PathStripPathA(str) PathStripPathA
+@ stdcall PathStripPathW(wstr) PathStripPathW
+@ stdcall PathStripToRootA(str) PathStripToRootA
+@ stdcall PathStripToRootW(wstr) PathStripToRootW
 @ stdcall PathUnmakeSystemFolderA(str)PathUnmakeSystemFolderA
 @ stdcall PathUnmakeSystemFolderW(wstr)PathUnmakeSystemFolderW
 @ stdcall PathUnquoteSpacesA (str) PathUnquoteSpacesA
@@ -677,7 +677,7 @@ debug_channels (shell)
 @ stub    UrlGetLocationW
 @ stub    UrlGetPartA
 @ stub    UrlGetPartW
-@ stub    UrlHashA
+@ stdcall UrlHashA(str ptr long) UrlHashA
 @ stub    UrlHashW
 @ stub    UrlIsA
 @ stub    UrlIsNoHistoryA
@@ -691,12 +691,37 @@ debug_channels (shell)
 @ varargs wnsprintfW(ptr long wstr)wnsprintfW
 
 
-# exported in later versions 
+# exported in later versions
 @ stdcall StrRetToBufA (ptr ptr ptr long) StrRetToBufA
 @ stdcall StrRetToBufW (ptr ptr ptr long) StrRetToBufW
 #@ stdcall StrRetToStrA (ptr ptr ptr) StrRetToStrA
 #@ stdcall StrRetToStrW (ptr ptr ptr) StrRetToStrW
 @ stdcall SHRegGetPathA(long str str ptr long)SHRegGetPathA
 @ stdcall SHRegGetPathW(long wstr wstr ptr long)SHRegGetPathW
+@ stub    PathIsDirectoryEmptyA
+@ stub    PathIsDirectoryEmptyW
+@ stub    PathIsNetworkPathA
+@ stub    PathIsNetworkPathW
+@ stub    PathIsLFNFileSpecA
+@ stub    PathIsLFNFileSpecW
+@ stub    PathFindSuffixArrayA
+@ stub    PathFindSuffixArrayW
+@ stdcall _SHGetInstanceExplorer@4(ptr) _SHGetInstanceExplorer
+@ stub    PathUndecorateA
+@ stub    PathUndecorateW
+@ stub    SHCopyKeyA
 @ stub    SHCopyKeyW
 @ stub    SHAutoComplete
+@ stub    SHCreateStreamOnFileA
+@ stub    SHCreateStreamOnFileW
+@ stub    SHCreateStreamWrapper
+@ stub    SHCreateThread
+@ stub    SHGetThreadRef
+@ stub    SHRegDuplicateHKey
+@ stub    SHSetThreadRef
+@ stub    SHSkipJunction
+@ stub    SHStrDupA
+@ stub    SHStrDupW
+@ stub    StrFormatByteSize64A
+@ stub    StrFormatKBSizeA
+@ stub    StrFormatKBSizeW

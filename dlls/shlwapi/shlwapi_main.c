@@ -13,6 +13,11 @@
 DEFAULT_DEBUG_CHANNEL(shell);
 
 HINSTANCE shlwapi_hInstance = 0; 
+HMODULE SHLWAPI_hshell32 = 0;
+HMODULE SHLWAPI_hwinmm = 0;
+HMODULE SHLWAPI_hcomdlg32 = 0;
+HMODULE SHLWAPI_hmpr = 0;
+HMODULE SHLWAPI_hmlang = 0;
 
 /*************************************************************************
  * SHLWAPI LibMain
@@ -27,6 +32,13 @@ BOOL WINAPI SHLWAPI_LibMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad
 	{
 	  case DLL_PROCESS_ATTACH:
 	    shlwapi_hInstance = hinstDLL;
+	    break;
+	  case DLL_PROCESS_DETACH:
+	    if (SHLWAPI_hshell32)  FreeLibrary(SHLWAPI_hshell32);
+	    if (SHLWAPI_hwinmm)    FreeLibrary(SHLWAPI_hwinmm);
+	    if (SHLWAPI_hcomdlg32) FreeLibrary(SHLWAPI_hcomdlg32);
+	    if (SHLWAPI_hmpr)      FreeLibrary(SHLWAPI_hmpr);
+	    if (SHLWAPI_hmlang)    FreeLibrary(SHLWAPI_hmlang);
 	    break;
 	}
 	return TRUE;
