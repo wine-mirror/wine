@@ -19,6 +19,7 @@ typedef struct tagTRACKBAR_INFO
     UINT32 uThumbLen;
     UINT32 uNumTics;
 	UINT32  uTicFreq;
+	HWND32 hwndNotify;
     HWND32 hwndToolTip;
     HWND32 hwndBuddyLA;
     HWND32 hwndBuddyRB;
@@ -30,13 +31,13 @@ typedef struct tagTRACKBAR_INFO
     RECT32 rcChannel;
     RECT32 rcSelection;
     RECT32 rcThumb;
-    INT32  dragPos;
+	INT32  dragPos;
     LPLONG tics;
 } TRACKBAR_INFO;
 
 
-#define TB_DRAG_TIMER       1
-#define TB_DRAG_DELAY       10
+#define TB_REFRESH_TIMER       1
+#define TB_REFRESH_DELAY       1
 
 
 
