@@ -404,11 +404,11 @@ BOOL WINAPI InternetGetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
  *    FALSE on failure
  *
  */
-BOOL WINAPI InternetGetCookieW(LPCSTR lpszUrl, LPCWSTR lpszCookieName,
+BOOL WINAPI InternetGetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     LPWSTR lpCookieData, LPDWORD lpdwSize)
 {
     FIXME("STUB\n");
-    TRACE("(%s,%s,%p)\n", debugstr_a(lpszUrl), debugstr_w(lpszCookieName),
+    TRACE("(%s,%s,%p)\n", debugstr_w(lpszUrl), debugstr_w(lpszCookieName),
         lpCookieData);
     return FALSE;
 }
@@ -483,11 +483,11 @@ BOOL WINAPI InternetSetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
  *    FALSE on failure
  *
  */
-BOOL WINAPI InternetSetCookieW(LPCSTR lpszUrl, LPCWSTR lpszCookieName,
+BOOL WINAPI InternetSetCookieW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
     LPCWSTR lpCookieData)
 {
     FIXME("STUB\n");
-    TRACE("(%s,%s,%s)\n", debugstr_a(lpszUrl),
+    TRACE("(%s,%s,%s)\n", debugstr_w(lpszUrl),
         debugstr_w(lpszCookieName), debugstr_w(lpCookieData));
     return FALSE;
 }

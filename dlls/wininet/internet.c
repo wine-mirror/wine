@@ -82,8 +82,8 @@ typedef struct
 } WITHREADERROR, *LPWITHREADERROR;
 
 BOOL WINAPI INTERNET_FindNextFileA(HINTERNET hFind, LPVOID lpvFindData);
-HINTERNET WINAPI INTERNET_InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
-					   LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext);
+HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
+					   LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext);
 VOID INTERNET_ExecuteWork();
 
 DWORD g_dwTlsErrIndex = TLS_OUT_OF_INDEXES;
@@ -647,15 +647,15 @@ BOOL WINAPI InternetGetConnectedStateExW(LPDWORD lpdwStatus, LPWSTR lpszConnecti
  *    NULL on failure
  *
  */
-HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
-    LPCSTR lpszServerName, INTERNET_PORT nServerPort,
-    LPCSTR lpszUserName, LPCSTR lpszPassword,
+HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
+    LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
+    LPCWSTR lpszUserName, LPCWSTR lpszPassword,
     DWORD dwService, DWORD dwFlags, DWORD dwContext)
 {
     HINTERNET rc = (HINTERNET) NULL;
 
-    TRACE("(%p, %s, %i, %s, %s, %li, %li, %li)\n", hInternet, debugstr_a(lpszServerName),
-	  nServerPort, debugstr_a(lpszUserName), debugstr_a(lpszPassword),
+    TRACE("(%p, %s, %i, %s, %s, %li, %li, %li)\n", hInternet, debugstr_w(lpszServerName),
+	  nServerPort, debugstr_w(lpszUserName), debugstr_w(lpszPassword),
 	  dwService, dwFlags, dwContext);
 
     /* Clear any error information */
@@ -684,7 +684,7 @@ HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
 
 
 /***********************************************************************
- *           InternetConnectW (WININET.@)
+ *           InternetConnectA (WININET.@)
  *
  * Open a ftp, gopher or http session
  *
@@ -693,46 +693,38 @@ HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
  *    NULL on failure
  *
  */
-HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
-    LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
-    LPCWSTR lpszUserName, LPCWSTR lpszPassword,
+HINTERNET WINAPI InternetConnectA(HINTERNET hInternet,
+    LPCSTR lpszServerName, INTERNET_PORT nServerPort,
+    LPCSTR lpszUserName, LPCSTR lpszPassword,
     DWORD dwService, DWORD dwFlags, DWORD dwContext)
 {
     HINTERNET rc = (HINTERNET)NULL;
-    INT lenServer = 0;
-    INT lenUser = 0;
-    INT lenPass = 0;
-    CHAR *szServerName = NULL;
-    CHAR *szUserName = NULL;
-    CHAR *szPassword = NULL;
+    INT len = 0;
+    LPWSTR szServerName = NULL;
+    LPWSTR szUserName = NULL;
+    LPWSTR szPassword = NULL;
 
     if (lpszServerName)
     {
-	lenServer = WideCharToMultiByte(CP_ACP, 0, lpszServerName, -1, NULL, 0,
-                            NULL, NULL);
-        szServerName = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenServer*sizeof(CHAR));
-        WideCharToMultiByte(CP_ACP, 0, lpszServerName, -1, szServerName, lenServer,
-                            NULL, NULL);
+	len = MultiByteToWideChar(CP_ACP, 0, lpszServerName, -1, NULL, 0);
+        szServerName = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpszServerName, -1, szServerName, len);
     }
     if (lpszUserName)
     {
-	lenUser = WideCharToMultiByte(CP_ACP, 0, lpszUserName, -1, NULL, 0,
-                            NULL, NULL);
-        szUserName = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenUser*sizeof(CHAR));
-        WideCharToMultiByte(CP_ACP, 0, lpszUserName, -1, szUserName, lenUser,
-                            NULL, NULL);
+	len = MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, NULL, 0);
+        szUserName = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpszUserName, -1, szUserName, len);
     }
     if (lpszPassword)
     {
-	lenPass = WideCharToMultiByte(CP_ACP, 0, lpszPassword, -1, NULL, 0,
-                            NULL, NULL);
-        szPassword = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenPass*sizeof(CHAR));
-        WideCharToMultiByte(CP_ACP, 0, lpszPassword, -1, szPassword, lenPass,
-                            NULL, NULL);
+	len = MultiByteToWideChar(CP_ACP, 0, lpszPassword, -1, NULL, 0);
+        szPassword = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, lpszPassword, -1, szPassword, len);
     }
 
 
-    rc = InternetConnectA(hInternet, szServerName, nServerPort,
+    rc = InternetConnectW(hInternet, szServerName, nServerPort,
         szUserName, szPassword, dwService, dwFlags, dwContext);
 
     if (szServerName) HeapFree(GetProcessHeap(), 0, szServerName);
@@ -931,12 +923,12 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
 		break;
 
 	    case WH_HHTTPSESSION:
-		HTTP_CloseHTTPSessionHandle((LPWININETHTTPSESSIONA) lpwh);
+		HTTP_CloseHTTPSessionHandle((LPWININETHTTPSESSIONW) lpwh);
 		retval = TRUE;
 		break;
 
 	    case WH_HHTTPREQ:
-		HTTP_CloseHTTPRequestHandle((LPWININETHTTPREQA) lpwh);
+		HTTP_CloseHTTPRequestHandle((LPWININETHTTPREQW) lpwh);
 		retval = TRUE;
 		break;
 
@@ -1519,7 +1511,7 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
             FIXME("This shouldn't be here! We don't support this kind"
                   " of connection anymore. Must use NETCON functions,"
                   " especially if using SSL\n");
-            nSocket = ((LPWININETHTTPREQA)lpwh)->netConnection.socketFD;
+            nSocket = ((LPWININETHTTPREQW)lpwh)->netConnection.socketFD;
             break;
 
         case WH_HFILE:
@@ -1568,7 +1560,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
     switch (lpwh->htype)
     {
         case WH_HHTTPREQ:
-            if (!NETCON_recv(&((LPWININETHTTPREQA)lpwh)->netConnection, lpBuffer,
+            if (!NETCON_recv(&((LPWININETHTTPREQW)lpwh)->netConnection, lpBuffer,
                              dwNumOfBytesToRead, 0, (int *)dwNumOfBytesRead))
             {
                 *dwNumOfBytesRead = 0;
@@ -1686,23 +1678,24 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             ULONG type = lpwhh->htype;
             if (type == WH_HHTTPREQ)
             {
-                LPWININETHTTPREQA lpreq = (LPWININETHTTPREQA) lpwhh;
-                char url[1023];
+                LPWININETHTTPREQW lpreq = (LPWININETHTTPREQW) lpwhh;
+                WCHAR url[1023];
+                WCHAR szFmt[] = {'h','t','t','p',':','/','/','%','s','%','s',0};
 
-                sprintf(url,"http://%s%s",lpreq->lpszHostName,lpreq->lpszPath);
-                TRACE("INTERNET_OPTION_URL: %s\n",url);
-                if (*lpdwBufferLength < strlen(url)+1)
+                sprintfW(url,szFmt,lpreq->lpszHostName,lpreq->lpszPath);
+                TRACE("INTERNET_OPTION_URL: %s\n",debugstr_w(url));
+                if (*lpdwBufferLength < strlenW(url)+1)
                     INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
                 else
                 {
-                    if(bIsUnicode)
+                    if(!bIsUnicode)
                     {
-                        *lpdwBufferLength=MultiByteToWideChar(CP_ACP,0,url,-1,lpBuffer,*lpdwBufferLength);
+                        *lpdwBufferLength=WideCharToMultiByte(CP_ACP,0,url,-1,lpBuffer,*lpdwBufferLength,NULL,NULL);
                     }
                     else
                     {
-                        memcpy(lpBuffer, url, strlen(url)+1);
-                        *lpdwBufferLength = strlen(url)+1;
+                        strcpyW(lpBuffer, url);
+                        *lpdwBufferLength = strlenW(url)+1;
                     }
                     bSuccess = TRUE;
                 }
@@ -2046,18 +2039,18 @@ BOOL WINAPI InternetCheckConnectionW(LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRes
  * RETURNS
  *   handle of connection or NULL on failure
  */
-HINTERNET WINAPI INTERNET_InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
-    LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
+HINTERNET WINAPI INTERNET_InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
+    LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
 {
-    URL_COMPONENTSA urlComponents;
-    char protocol[32], hostName[MAXHOSTNAME], userName[1024];
-    char password[1024], path[2048], extra[1024];
+    URL_COMPONENTSW urlComponents;
+    WCHAR protocol[32], hostName[MAXHOSTNAME], userName[1024];
+    WCHAR password[1024], path[2048], extra[1024];
     HINTERNET client = NULL, client1 = NULL;
     
-    TRACE("(%p, %s, %s, %08lx, %08lx, %08lx\n", hInternet, debugstr_a(lpszUrl), debugstr_a(lpszHeaders),
+    TRACE("(%p, %s, %s, %08lx, %08lx, %08lx\n", hInternet, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
 	  dwHeadersLength, dwFlags, dwContext);
     
-    urlComponents.dwStructSize = sizeof(URL_COMPONENTSA);
+    urlComponents.dwStructSize = sizeof(URL_COMPONENTSW);
     urlComponents.lpszScheme = protocol;
     urlComponents.dwSchemeLength = 32;
     urlComponents.lpszHostName = hostName;
@@ -2070,37 +2063,38 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
     urlComponents.dwUrlPathLength = 2048;
     urlComponents.lpszExtraInfo = extra;
     urlComponents.dwExtraInfoLength = 1024;
-    if(!InternetCrackUrlA(lpszUrl, strlen(lpszUrl), 0, &urlComponents))
+    if(!InternetCrackUrlW(lpszUrl, strlenW(lpszUrl), 0, &urlComponents))
 	return NULL;
     switch(urlComponents.nScheme) {
     case INTERNET_SCHEME_FTP:
 	if(urlComponents.nPort == 0)
 	    urlComponents.nPort = INTERNET_DEFAULT_FTP_PORT;
-	client = InternetConnectA(hInternet, hostName, urlComponents.nPort,
+	client = InternetConnectW(hInternet, hostName, urlComponents.nPort,
 				  userName, password, INTERNET_SERVICE_FTP, dwFlags, dwContext);
-	client1 = FtpOpenFileA(client, path, GENERIC_READ, dwFlags, dwContext);
+	client1 = FtpOpenFileW(client, path, GENERIC_READ, dwFlags, dwContext);
 	break;
 	
     case INTERNET_SCHEME_HTTP:
     case INTERNET_SCHEME_HTTPS: {
-	LPCSTR accept[2] = { "*/*", NULL };
+	WCHAR szStars[] = { '*','/','*', 0 };
+	LPCWSTR accept[2] = { szStars, NULL };
 	if(urlComponents.nPort == 0) {
 	    if(urlComponents.nScheme == INTERNET_SCHEME_HTTP)
 		urlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
 	    else
 		urlComponents.nPort = INTERNET_DEFAULT_HTTPS_PORT;
 	}
-	client = InternetConnectA(hInternet, hostName, urlComponents.nPort, userName,
+	client = InternetConnectW(hInternet, hostName, urlComponents.nPort, userName,
 				  password, INTERNET_SERVICE_HTTP, dwFlags, dwContext);
 	if(client == NULL)
 	    break;
-	client1 = HttpOpenRequestA(client, NULL, path, NULL, NULL, accept, dwFlags, dwContext);
+	client1 = HttpOpenRequestW(client, NULL, path, NULL, NULL, accept, dwFlags, dwContext);
 	if(client1 == NULL) {
 	    InternetCloseHandle(client);
 	    break;
 	}
-	HttpAddRequestHeadersA(client1, lpszHeaders, dwHeadersLength, HTTP_ADDREQ_FLAG_ADD);
-	if (!HTTP_HttpSendRequestA(client1, NULL, 0, NULL, 0)) {
+	HttpAddRequestHeadersW(client1, lpszHeaders, dwHeadersLength, HTTP_ADDREQ_FLAG_ADD);
+	if (!HTTP_HttpSendRequestW(client1, NULL, 0, NULL, 0)) {
 	    InternetCloseHandle(client1);
 	    InternetCloseHandle(client);
 	    client1 = NULL;
@@ -2127,13 +2121,13 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
  * RETURNS
  *   handle of connection or NULL on failure
  */
-HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
-    LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
+HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
+    LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
 {
     HINTERNET ret = NULL;
     LPWININETAPPINFOW hIC = NULL;
 
-    TRACE("(%p, %s, %s, %08lx, %08lx, %08lx\n", hInternet, debugstr_a(lpszUrl), debugstr_a(lpszHeaders),
+    TRACE("(%p, %s, %s, %08lx, %08lx, %08lx\n", hInternet, debugstr_w(lpszUrl), debugstr_w(lpszHeaders),
  	  dwHeadersLength, dwFlags, dwContext);
  
     hIC = (LPWININETAPPINFOW) WININET_GetObject( hInternet );
@@ -2144,17 +2138,17 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
     
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC) {
 	WORKREQUEST workRequest;
-	struct WORKREQ_INTERNETOPENURLA *req;
+	struct WORKREQ_INTERNETOPENURLW *req;
 	
-	workRequest.asyncall = INTERNETOPENURLA;
+	workRequest.asyncall = INTERNETOPENURLW;
 	workRequest.handle = hInternet;
-	req = &workRequest.u.InternetOpenUrlA;
+	req = &workRequest.u.InternetOpenUrlW;
 	if (lpszUrl)
-	    req->lpszUrl = WININET_strdup(lpszUrl);
+	    req->lpszUrl = WININET_strdupW(lpszUrl);
 	else
 	    req->lpszUrl = 0;
 	if (lpszHeaders)
-	    req->lpszHeaders = WININET_strdup(lpszHeaders);
+	    req->lpszHeaders = WININET_strdupW(lpszHeaders);
 	else
 	    req->lpszHeaders = 0;
 	req->dwHeadersLength = dwHeadersLength;
@@ -2167,7 +2161,7 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
 	 */
 	SetLastError(ERROR_IO_PENDING);
     } else {
-	ret = INTERNET_InternetOpenUrlA(hInternet, lpszUrl, lpszHeaders, dwHeadersLength, dwFlags, dwContext);
+	ret = INTERNET_InternetOpenUrlW(hInternet, lpszUrl, lpszHeaders, dwHeadersLength, dwFlags, dwContext);
     }
     
   lend:
@@ -2184,15 +2178,15 @@ HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
  * RETURNS
  *   handle of connection or NULL on failure
  */
-HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
-    LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
+HINTERNET WINAPI InternetOpenUrlA(HINTERNET hInternet, LPCSTR lpszUrl,
+    LPCSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
 {
     HINTERNET rc = (HINTERNET)NULL;
 
-    INT lenUrl = WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, NULL, 0, NULL, NULL);
-    INT lenHeaders = WideCharToMultiByte(CP_ACP, 0, lpszHeaders, -1, NULL, 0, NULL, NULL);
-    CHAR *szUrl = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenUrl*sizeof(CHAR));
-    CHAR *szHeaders = (CHAR *)HeapAlloc(GetProcessHeap(), 0, lenHeaders*sizeof(CHAR));
+    INT lenUrl = MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, NULL, 0 );
+    INT lenHeaders = MultiByteToWideChar(CP_ACP, 0, lpszHeaders, -1, NULL, 0 );
+    LPWSTR szUrl = HeapAlloc(GetProcessHeap(), 0, lenUrl*sizeof(WCHAR));
+    LPWSTR szHeaders = HeapAlloc(GetProcessHeap(), 0, lenHeaders*sizeof(WCHAR));
 
     TRACE("\n");
 
@@ -2205,12 +2199,10 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
         return (HINTERNET)NULL;
     }
 
-    WideCharToMultiByte(CP_ACP, 0, lpszUrl, -1, szUrl, lenUrl,
-        NULL, NULL);
-    WideCharToMultiByte(CP_ACP, 0, lpszHeaders, -1, szHeaders, lenHeaders,
-        NULL, NULL);
+    MultiByteToWideChar(CP_ACP, 0, lpszUrl, -1, szUrl, lenUrl);
+    MultiByteToWideChar(CP_ACP, 0, lpszHeaders, -1, szHeaders, lenHeaders);
 
-    rc = InternetOpenUrlA(hInternet, szUrl, szHeaders,
+    rc = InternetOpenUrlW(hInternet, szUrl, szHeaders,
         dwHeadersLength, dwFlags, dwContext);
 
     HeapFree(GetProcessHeap(), 0, szUrl);
@@ -2438,10 +2430,10 @@ VOID INTERNET_ExecuteWork()
 	    FE(FTPREMOVEDIRECTORYA),
 	    FE(FTPRENAMEFILEA),
 	    FE(INTERNETFINDNEXTA),
-	    FE(HTTPSENDREQUESTA),
-	    FE(HTTPOPENREQUESTA),
+	    FE(HTTPSENDREQUESTW),
+	    FE(HTTPOPENREQUESTW),
 	    FE(SENDCALLBACK),
-	    FE(INTERNETOPENURLA)
+	    FE(INTERNETOPENURLW)
 #undef FE
 	};
 	int i;
@@ -2571,22 +2563,22 @@ VOID INTERNET_ExecuteWork()
         }
 	break;
 
-    case HTTPSENDREQUESTA:
+    case HTTPSENDREQUESTW:
         {
-        struct WORKREQ_HTTPSENDREQUESTA *req = &workRequest.u.HttpSendRequestA;
+        struct WORKREQ_HTTPSENDREQUESTW *req = &workRequest.u.HttpSendRequestW;
 
-        HTTP_HttpSendRequestA(workRequest.handle, req->lpszHeader,
+        HTTP_HttpSendRequestW(workRequest.handle, req->lpszHeader,
                 req->dwHeaderLength, req->lpOptional, req->dwOptionalLength);
 
         HeapFree(GetProcessHeap(), 0, req->lpszHeader);
         }
         break;
 
-    case HTTPOPENREQUESTA:
+    case HTTPOPENREQUESTW:
         {
-        struct WORKREQ_HTTPOPENREQUESTA *req = &workRequest.u.HttpOpenRequestA;
+        struct WORKREQ_HTTPOPENREQUESTW *req = &workRequest.u.HttpOpenRequestW;
 
-        HTTP_HttpOpenRequestA(workRequest.handle, req->lpszVerb,
+        HTTP_HttpOpenRequestW(workRequest.handle, req->lpszVerb,
             req->lpszObjectName, req->lpszVersion, req->lpszReferrer,
             req->lpszAcceptTypes, req->dwFlags, req->dwContext);
 
@@ -2607,11 +2599,11 @@ VOID INTERNET_ExecuteWork()
         }
         break;
 
-    case INTERNETOPENURLA:
+    case INTERNETOPENURLW:
 	{
-	struct WORKREQ_INTERNETOPENURLA *req = &workRequest.u.InternetOpenUrlA;
+	struct WORKREQ_INTERNETOPENURLW *req = &workRequest.u.InternetOpenUrlW;
 	
-	INTERNET_InternetOpenUrlA(workRequest.handle, req->lpszUrl,
+	INTERNET_InternetOpenUrlW(workRequest.handle, req->lpszUrl,
 				  req->lpszHeaders, req->dwHeadersLength, req->dwFlags, req->dwContext);
 	HeapFree(GetProcessHeap(), 0, req->lpszUrl);
 	HeapFree(GetProcessHeap(), 0, req->lpszHeaders);
@@ -2705,12 +2697,12 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
                                 LPDWORD lpdwNumberOfBytesAvailble,
                                 DWORD dwFlags, DWORD dwConext)
 {
-    LPWININETHTTPREQA lpwhr;
+    LPWININETHTTPREQW lpwhr;
     INT retval = -1;
     char buffer[4048];
 
 
-    lpwhr = (LPWININETHTTPREQA) WININET_GetObject( hFile );
+    lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hFile );
     if (NULL == lpwhr)
     {
         SetLastError(ERROR_NO_MORE_FILES);

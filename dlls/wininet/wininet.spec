@@ -89,7 +89,7 @@
 @ stdcall GopherOpenFileA(ptr str str long long)
 @ stdcall GopherOpenFileW(ptr wstr wstr long long)
 @ stdcall HttpAddRequestHeadersA(ptr str long long)
-@ stub HttpAddRequestHeadersW
+@ stdcall HttpAddRequestHeadersW(ptr wstr long long)
 @ stdcall HttpEndRequestA(ptr ptr long long)
 @ stdcall HttpEndRequestW(ptr ptr long long)
 @ stdcall HttpOpenRequestA(ptr str str str str ptr long long)

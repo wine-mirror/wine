@@ -33,6 +33,7 @@
 #include "winbase.h"
 #include "wininet.h"
 #include "winerror.h"
+#include "winnls.h"
 
 #include "wine/debug.h"
 #include "internet.h"
@@ -41,17 +42,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
 #define TIME_STRING_LEN  30
 
-time_t ConvertTimeString(LPCSTR asctime)
+time_t ConvertTimeString(LPCWSTR asctime)
 {
-    char tmpChar[TIME_STRING_LEN];
-    char *tmpChar2;
+    WCHAR tmpChar[TIME_STRING_LEN];
+    WCHAR *tmpChar2;
     struct tm t;
-    int timelen = strlen(asctime);
+    int timelen = strlenW(asctime);
 
     if(!asctime || !timelen)
         return 0;
 
-    strncpy(tmpChar, asctime, TIME_STRING_LEN);
+    strncpyW(tmpChar, asctime, TIME_STRING_LEN);
 
     /* Assert that the string is the expected length */
     if (tmpChar[TIME_STRING_LEN] != '\0')
@@ -72,11 +73,11 @@ time_t ConvertTimeString(LPCSTR asctime)
     tmpChar[22]='\0';
     tmpChar[25]='\0';
 
-    t.tm_year = atoi(tmpChar+12) - 1900;
-    t.tm_mday = atoi(tmpChar+5);
-    t.tm_hour = atoi(tmpChar+17);
-    t.tm_min = atoi(tmpChar+20);
-    t.tm_sec = atoi(tmpChar+23);
+    t.tm_year = atoiW(tmpChar+12) - 1900;
+    t.tm_mday = atoiW(tmpChar+5);
+    t.tm_hour = atoiW(tmpChar+17);
+    t.tm_min = atoiW(tmpChar+20);
+    t.tm_sec = atoiW(tmpChar+23);
 
     /* and month */
     tmpChar2 = tmpChar + 8;
@@ -126,34 +127,36 @@ time_t ConvertTimeString(LPCSTR asctime)
 }
 
 
-BOOL GetAddress(LPCSTR lpszServerName, INTERNET_PORT nServerPort,
+BOOL GetAddress(LPCWSTR lpszServerName, INTERNET_PORT nServerPort,
 	struct hostent **phe, struct sockaddr_in *psa)
 {
-    char *found;
+    WCHAR *found;
+    char *name;
+    int len, sz;
 
-    TRACE("%s\n", lpszServerName);
+    TRACE("%s\n", debugstr_w(lpszServerName));
 
     /* Validate server name first
      * Check if there is sth. like
      * pinger.macromedia.com:80
      * if yes, eliminate the :80....
      */
-    found = strchr(lpszServerName, ':');
+    found = strchrW(lpszServerName, ':');
     if (found)
-    {
-        int len = found - lpszServerName;
-        char *new = HeapAlloc(GetProcessHeap(), 0, len + 1);
-        memcpy( new, lpszServerName, len );
-        new[len] = '\0';
-        TRACE("Found a ':' inside the server name, reparsed name: %s\n", new);
-        *phe = gethostbyname(new);
-        HeapFree( GetProcessHeap(), 0, new );
-    }
-    else *phe = gethostbyname(lpszServerName);
+        len = found - lpszServerName;
+    else
+        len = strlenW(lpszServerName);
+
+    sz = WideCharToMultiByte( CP_UNIXCP, 0, lpszServerName, len, NULL, 0, NULL, NULL );
+    name = HeapAlloc(GetProcessHeap(), 0, sz+1);
+    WideCharToMultiByte( CP_UNIXCP, 0, lpszServerName, len, name, sz, NULL, NULL );
+    name[sz] = 0;
+    *phe = gethostbyname(name);
+    HeapFree( GetProcessHeap(), 0, name );
 
     if (NULL == *phe)
     {
-        TRACE("Failed to get hostname: (%s)\n", lpszServerName);
+        TRACE("Failed to get hostname: (%s)\n", debugstr_w(lpszServerName) );
         return FALSE;
     }
 

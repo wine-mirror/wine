@@ -58,15 +58,15 @@ struct WININET_ErrorDlgParams
  */
 static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
 {
-    LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) hRequest;
-    LPWININETHTTPSESSIONA lpwhs = NULL;
+    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hRequest;
+    LPWININETHTTPSESSIONW lpwhs = NULL;
     LPWININETAPPINFOW hIC = NULL;
     LPWSTR p;
 
     if (NULL == lpwhr)
 	return FALSE;
 
-    lpwhs = (LPWININETHTTPSESSIONA) lpwhr->hdr.lpwhparent;
+    lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
     if (NULL == lpwhs)
 	return FALSE;
 
@@ -194,12 +194,12 @@ static BOOL WININET_GetSetPassword( HWND hdlg, LPCWSTR szServer,
 static BOOL WININET_SetProxyAuthorization( HINTERNET hRequest,
                                          LPWSTR username, LPWSTR password )
 {
-    LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) hRequest;
-    LPWININETHTTPSESSIONA lpwhs;
+    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hRequest;
+    LPWININETHTTPSESSIONW lpwhs;
     LPWININETAPPINFOW hIC;
     LPWSTR p;
 
-    lpwhs = (LPWININETHTTPSESSIONA) lpwhr->hdr.lpwhparent;
+    lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -272,7 +272,7 @@ static INT_PTR WINAPI WININET_ProxyPasswordDialog(
     case WM_COMMAND:
         if( wParam == IDOK )
         {
-            LPWININETHTTPREQA lpwhr = (LPWININETHTTPREQA) params->hRequest;
+            LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) params->hRequest;
             WCHAR username[0x20], password[0x20];
 
             username[0] = 0;
@@ -320,7 +320,7 @@ static INT WININET_GetConnectionStatus( HINTERNET hRequest )
 
     TRACE("%p\n", hRequest );
 
-    sz = sizeof(szStatus) / sizeof(WCHAR);
+    sz = sizeof szStatus;
     index = 0;
     if( !HttpQueryInfoW( hRequest, HTTP_QUERY_STATUS_CODE,
                     szStatus, &sz, &index))

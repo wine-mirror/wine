@@ -144,6 +144,15 @@ inline static LPSTR FTP_strdup( LPCSTR str )
     return ret;
 }
 
+inline static LPSTR FTP_strdup_WtoA( LPCWSTR str )
+{
+    int len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
+    LPSTR ret = HeapAlloc( GetProcessHeap(), 0, len );
+    if (ret)
+        WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL);
+    return ret;
+}
+
 /***********************************************************************
  *           FtpPutFileA (WININET.@)
  *
@@ -1475,9 +1484,9 @@ lend:
  *
  */
 
-HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
-	INTERNET_PORT nServerPort, LPCSTR lpszUserName,
-	LPCSTR lpszPassword, DWORD dwFlags, DWORD dwContext)
+HINTERNET FTP_Connect(HINTERNET hInternet, LPCWSTR lpszServerName,
+	INTERNET_PORT nServerPort, LPCWSTR lpszUserName,
+	LPCWSTR lpszPassword, DWORD dwFlags, DWORD dwContext)
 {
     struct sockaddr_in socketAddr;
     struct hostent *phe = NULL;
@@ -1488,8 +1497,8 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
     HINTERNET handle = NULL;
 
     TRACE("0x%08lx  Server(%s) Port(%d) User(%s) Paswd(%s)\n",
-	    (ULONG) hInternet, lpszServerName,
-	    nServerPort, lpszUserName, lpszPassword);
+	    (ULONG) hInternet, debugstr_w(lpszServerName),
+	    nServerPort, debugstr_w(lpszUserName), debugstr_w(lpszPassword));
 
     hIC = (LPWININETAPPINFOW) WININET_GetObject( hInternet );
     if ( (hIC == NULL) || (hIC->hdr.htype != WH_HINIT) )
@@ -1506,7 +1515,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 
     if (hIC->lpfnStatusCB)
         hIC->lpfnStatusCB(hInternet, dwContext, INTERNET_STATUS_RESOLVING_NAME,
-            (LPSTR) lpszServerName, strlen(lpszServerName));
+            (LPWSTR) lpszServerName, strlenW(lpszServerName));
 
     if (!GetAddress(lpszServerName, nServerPort, &phe, &socketAddr))
     {
@@ -1516,7 +1525,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
 
     if (hIC->lpfnStatusCB)
         hIC->lpfnStatusCB(hInternet, dwContext, INTERNET_STATUS_NAME_RESOLVED,
-            (LPSTR) lpszServerName, strlen(lpszServerName));
+            (LPWSTR) lpszServerName, strlenW(lpszServerName));
 
     nsocket = socket(AF_INET,SOCK_STREAM,0);
     if (nsocket == -1)
@@ -1558,7 +1567,7 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
         lpwfs->hdr.htype = WH_HFTPSESSION;
         lpwfs->hdr.dwFlags = dwFlags;
         lpwfs->hdr.dwContext = dwContext;
-        lpwfs->hdr.lpwhparent = &hIC->hdr;
+        lpwfs->hdr.lpwhparent = (LPWININETHANDLEHEADER)hInternet;
         lpwfs->sndSocket = nsocket;
 	lpwfs->download_in_progress = NULL;
 	sock_namelen = sizeof(lpwfs->socketAddress);
@@ -1572,8 +1581,8 @@ HINTERNET FTP_Connect(HINTERNET hInternet, LPCSTR lpszServerName,
         }
         else
         {
-            lpwfs->lpszUserName = FTP_strdup(lpszUserName);
-            lpwfs->lpszPassword = FTP_strdup(lpszPassword);
+            lpwfs->lpszUserName = FTP_strdup_WtoA(lpszUserName);
+            lpwfs->lpszPassword = FTP_strdup_WtoA(lpszPassword);
         }
 
         if (FTP_ConnectToHost(lpwfs))
@@ -2543,7 +2552,7 @@ HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONA lpwfs, INT nSocket,
             if( handle )
             {
                 lpwfn->hdr.htype = WH_HFINDNEXT;
-                lpwfn->hdr.lpwhparent = &lpwfs->hdr;
+                lpwfn->hdr.lpwhparent = (LPWININETHANDLEHEADER)lpwfs;
 	        lpwfn->hdr.dwContext = dwContext;
                 lpwfn->index = 1; /* Next index is 1 since we return index 0 */
                 lpwfn->size = dwSize;

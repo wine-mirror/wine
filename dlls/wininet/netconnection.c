@@ -26,7 +26,9 @@
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
-#include <sys/types.h>
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
 #ifdef HAVE_SYS_SOCKET_H
 # include <sys/socket.h>
 #endif
@@ -446,8 +448,8 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
     lend:             /* FIXME: don't use labels */
 	if (bSuccess)
 	{
-	    lpszBuffer[nRecv] = '\0';
-	    *dwBuffer = nRecv - 1;
+	    lpszBuffer[nRecv++] = '\0';
+	    *dwBuffer = nRecv;
 	    TRACE(":%d %s\n", nRecv, lpszBuffer);
             return TRUE;
 	}
@@ -487,8 +489,8 @@ BOOL NETCON_getNextLine(WININET_NETCONNECTION *connection, LPSTR lpszBuffer, LPD
         pSSL_CTX_set_timeout(ctx, prev_timeout);
 	if (success)
 	{
-	    lpszBuffer[nRecv] = '\0';
-	    *dwBuffer = nRecv - 1;
+	    lpszBuffer[nRecv++] = '\0';
+	    *dwBuffer = nRecv;
 	    TRACE("_SSL:%d %s\n", nRecv, lpszBuffer);
             return TRUE;
 	}

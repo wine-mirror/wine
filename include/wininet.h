@@ -1142,11 +1142,11 @@ BOOLAPI HttpQueryInfoW(HINTERNET ,DWORD ,LPVOID lpBuffer ,LPDWORD ,LPDWORD lpdwI
 #define HttpQueryInfo  WINELIB_NAME_AW(HttpQueryInfo)
 
 BOOLAPI InternetSetCookieA(LPCSTR ,LPCSTR ,LPCSTR);
-BOOLAPI InternetSetCookieW(LPCSTR ,LPCWSTR ,LPCWSTR);
+BOOLAPI InternetSetCookieW(LPCWSTR ,LPCWSTR ,LPCWSTR);
 #define InternetSetCookie  WINELIB_NAME_AW(InternetSetCookie)
 
 BOOLAPI InternetGetCookieA(LPCSTR ,LPCSTR ,LPSTR ,LPDWORD);
-BOOLAPI InternetGetCookieW(LPCSTR ,LPCWSTR ,LPWSTR ,LPDWORD);
+BOOLAPI InternetGetCookieW(LPCWSTR ,LPCWSTR ,LPWSTR ,LPDWORD);
 #define InternetGetCookie  WINELIB_NAME_AW(InternetGetCookie)
 
 INTERNETAPI DWORD WINAPI InternetAttemptConnect(DWORD);
