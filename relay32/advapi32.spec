@@ -53,7 +53,7 @@ type	win32
 0049 stdcall GetNumberOfEventLogRecords (long ptr) GetNumberOfEventLogRecords32
 0050 stdcall GetOldestEventLogRecord (long ptr) GetOldestEventLogRecord32
 0051 stub GetPrivateObjectSecurity
-0052 stub GetSecurityDescriptorControl
+0052 stdcall GetSecurityDescriptorControl (ptr ptr ptr) GetSecurityDescriptorControl32
 0053 stub GetSecurityDescriptorDacl
 0054 stdcall GetSecurityDescriptorGroup(ptr ptr ptr) GetSecurityDescriptorGroup
 0055 stdcall GetSecurityDescriptorLength(ptr) GetSecurityDescriptorLength

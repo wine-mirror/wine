@@ -621,6 +621,16 @@ NotifyBootConfigStatus( DWORD x1 )
 }
 
 /******************************************************************************
+ * GetSecurityDescriptorControl32			[ADVAPI32]
+ */
+
+BOOL32 GetSecurityDescriptorControl32 ( PSECURITY_DESCRIPTOR  pSecurityDescriptor,
+		 /* fixme: PSECURITY_DESCRIPTOR_CONTROL*/ LPVOID pControl, LPDWORD lpdwRevision)
+{	FIXME(advapi,"(%p,%p,%p),stub!\n",pSecurityDescriptor,pControl,lpdwRevision);
+	return 1;
+}		
+
+/******************************************************************************
  * RevertToSelf [ADVAPI32.180]
  *
  * PARAMS
