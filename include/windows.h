@@ -6616,7 +6616,7 @@ UINT16      WINAPI GetCommEventMask(INT16,UINT16);
 HBRUSH16    WINAPI GetControlBrush(HWND16,HDC16,UINT16);
 VOID        WINAPI GetCodeInfo(FARPROC16,SEGINFO*);
 HFONT16     WINAPI GetCurLogFont(HDC16);
-HANDLE16    WINAPI GetCurrentPDB(void);
+DWORD       WINAPI GetCurrentPDB(void);
 DWORD       WINAPI GetCurrentPosition(HDC16);
 HTASK16     WINAPI GetCurrentTask(void);
 DWORD       WINAPI GetDCHook(HDC16,FARPROC16*);

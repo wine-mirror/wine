@@ -459,9 +459,6 @@ void VXD_APM ( CONTEXT *context )
 
 void VXD_Win32s( CONTEXT *context )
 {
-    #define AppToWine(addr) ((addr)? ((LPBYTE)(addr)) + 0x10000 : NULL)
-    #define WineToApp(addr) ((addr)? ((DWORD) (addr)) - 0x10000 : 0)
-
     switch (AX_reg(context))
     {
     case 0x0000: /* Get Version */
@@ -570,7 +567,7 @@ void VXD_Win32s( CONTEXT *context )
 
         /* 
          * Mark process as Win32s, so that subsequent DPMI calls
-         * will perform the AppToWine/WineToApp address shift.
+         * will perform the W32S_APP2WINE/W32S_WINE2APP address shift.
          */
 
         PROCESS_Current()->flags |= PDB32_WIN32S_PROC;
@@ -682,7 +679,7 @@ void VXD_Win32s( CONTEXT *context )
          */
 
         struct Win32sModule *moduleTable = 
-                            (struct Win32sModule *)AppToWine(EDX_reg(context));
+                            (struct Win32sModule *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
         struct Win32sModule *module = moduleTable + ECX_reg(context);
 
         IMAGE_NT_HEADERS *nt_header = PE_HEADER(module->baseAddr);
@@ -774,7 +771,7 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: 1 if OK
          */
         
-        TRACE(vxd, "UnMapModule: %lx\n", (DWORD)AppToWine(EDX_reg(context)));
+        TRACE(vxd, "UnMapModule: %lx\n", (DWORD)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET));
 
         /* As we didn't map anything, there's nothing to unmap ... */
 
@@ -797,9 +794,9 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)AppToWine(EDX_reg(context));
-        DWORD *retv   = (DWORD *)AppToWine(stack[0]);
-        LPVOID base   = (LPVOID) AppToWine(stack[1]);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
+        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
         DWORD  size   = stack[2];
         DWORD  type   = stack[3];
         DWORD  prot   = stack[4];
@@ -822,8 +819,8 @@ void VXD_Win32s( CONTEXT *context )
 
         result = (DWORD)VirtualAlloc(base, size, type, prot);
 
-        if (WineToApp(result))
-            *retv            = WineToApp(result),
+        if (W32S_WINE2APP(result, W32S_OFFSET))
+            *retv            = W32S_WINE2APP(result, W32S_OFFSET),
             EAX_reg(context) = STATUS_SUCCESS;
         else
             *retv            = 0,
@@ -846,9 +843,9 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)AppToWine(EDX_reg(context));
-        DWORD *retv   = (DWORD *)AppToWine(stack[0]);
-        LPVOID base   = (LPVOID) AppToWine(stack[1]);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
+        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
         DWORD  size   = stack[2];
         DWORD  type   = stack[3];
         DWORD  result;
@@ -883,12 +880,12 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)AppToWine(EDX_reg(context));
-        DWORD *retv     = (DWORD *)AppToWine(stack[0]);
-        LPVOID base     = (LPVOID) AppToWine(stack[1]);
+        DWORD *stack    = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *retv     = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
+        LPVOID base     = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
         DWORD  size     = stack[2];
         DWORD  new_prot = stack[3];
-        DWORD *old_prot = (DWORD *)AppToWine(stack[4]);
+        DWORD *old_prot = (DWORD *)W32S_APP2WINE(stack[4], W32S_OFFSET);
         DWORD  result;
 
         TRACE(vxd, "VirtualProtect(%lx, %lx, %lx, %lx, %lx)\n", 
@@ -920,11 +917,11 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)AppToWine(EDX_reg(context));
-        DWORD *retv   = (DWORD *)AppToWine(stack[0]);
-        LPVOID base   = (LPVOID) AppToWine(stack[1]);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
+        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
         LPMEMORY_BASIC_INFORMATION info = 
-                        (LPMEMORY_BASIC_INFORMATION)AppToWine(stack[2]);
+                        (LPMEMORY_BASIC_INFORMATION)W32S_APP2WINE(stack[2], W32S_OFFSET);
         DWORD  len    = stack[3];
         DWORD  result;
 
@@ -1003,11 +1000,11 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)   AppToWine(EDX_reg(context));
-        HANDLE32 *retv  = (HANDLE32 *)AppToWine(stack[0]);
+        DWORD *stack    = (DWORD *)   W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        HANDLE32 *retv  = (HANDLE32 *)W32S_APP2WINE(stack[0], W32S_OFFSET);
         DWORD  flags1   = stack[1];
         DWORD  atom     = stack[2];
-        LARGE_INTEGER *size = (LARGE_INTEGER *)AppToWine(stack[3]);
+        LARGE_INTEGER *size = (LARGE_INTEGER *)W32S_APP2WINE(stack[3], W32S_OFFSET);
         DWORD  protect  = stack[4];
         DWORD  flags2   = stack[5];
         HFILE32 hFile   = HFILE16_TO_HFILE32(stack[6]);
@@ -1056,8 +1053,8 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)   AppToWine(EDX_reg(context));
-        HANDLE32 *retv  = (HANDLE32 *)AppToWine(stack[0]);
+        DWORD *stack    = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        HANDLE32 *retv  = (HANDLE32 *)W32S_APP2WINE(stack[0], W32S_OFFSET);
         DWORD  protect  = stack[1];
         DWORD  atom     = stack[2];
 
@@ -1099,9 +1096,9 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)AppToWine(EDX_reg(context));
+        DWORD *stack    = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
         HANDLE32 handle = stack[0];
-        DWORD *id       = (DWORD *)AppToWine(stack[1]);
+        DWORD *id       = (DWORD *)W32S_APP2WINE(stack[1], W32S_OFFSET);
 
         TRACE(vxd, "NtCloseSection(%lx, %lx)\n", (DWORD)handle, (DWORD)id);
 
@@ -1122,7 +1119,7 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack    = (DWORD *)AppToWine(EDX_reg(context));
+        DWORD *stack    = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
         HANDLE32 handle = stack[0];
 
         TRACE(vxd, "NtDupSection(%lx)\n", (DWORD)handle);
@@ -1153,19 +1150,20 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *  stack          = (DWORD *)AppToWine(EDX_reg(context));
+        DWORD *  stack          = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
         HANDLE32 SectionHandle  = stack[0];
         DWORD    ProcessHandle  = stack[1]; /* ignored */
-        DWORD *  BaseAddress    = (DWORD *)AppToWine(stack[2]);
+        DWORD *  BaseAddress    = (DWORD *)W32S_APP2WINE(stack[2], W32S_OFFSET);
         DWORD    ZeroBits       = stack[3];
         DWORD    CommitSize     = stack[4];
-        LARGE_INTEGER *SectionOffset = (LARGE_INTEGER *)AppToWine(stack[5]);
-        DWORD *  ViewSize       = (DWORD *)AppToWine(stack[6]);
+        LARGE_INTEGER *SectionOffset = (LARGE_INTEGER *)W32S_APP2WINE(stack[5], W32S_OFFSET);
+        DWORD *  ViewSize       = (DWORD *)W32S_APP2WINE(stack[6], W32S_OFFSET);
         DWORD    InheritDisposition = stack[7];
         DWORD    AllocationType = stack[8];
         DWORD    Protect        = stack[9];
 
-        LPBYTE address = (LPBYTE)(BaseAddress? AppToWine(*BaseAddress) : 0);
+        LPBYTE address = (LPBYTE)(BaseAddress?
+			W32S_APP2WINE(*BaseAddress, W32S_OFFSET) : 0);
         DWORD  access = 0, result;
 
         switch (Protect & ~(PAGE_GUARD|PAGE_NOCACHE))
@@ -1196,9 +1194,9 @@ void VXD_Win32s( CONTEXT *context )
 
         TRACE(vxd, "NtMapViewOfSection: result=%lx\n", result);
 
-        if (WineToApp(result))
+        if (W32S_WINE2APP(result, W32S_OFFSET))
         {
-            if (BaseAddress) *BaseAddress = WineToApp(result);
+            if (BaseAddress) *BaseAddress = W32S_WINE2APP(result, W32S_OFFSET);
             EAX_reg(context) = STATUS_SUCCESS;
         }
         else
@@ -1217,9 +1215,9 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack          = (DWORD *)AppToWine(EDX_reg(context));
+        DWORD *stack          = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
         DWORD  ProcessHandle  = stack[0]; /* ignored */
-        LPBYTE BaseAddress    = (LPBYTE)AppToWine(stack[1]);
+        LPBYTE BaseAddress    = (LPBYTE)W32S_APP2WINE(stack[1], W32S_OFFSET);
 
         TRACE(vxd, "NtUnmapViewOfSection(%lx, %lx)\n", 
                    ProcessHandle, (DWORD)BaseAddress);
@@ -1243,13 +1241,13 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack          = (DWORD *)AppToWine(EDX_reg(context));
+        DWORD *stack          = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
         DWORD  ProcessHandle  = stack[0]; /* ignored */
-        DWORD *BaseAddress    = (DWORD *)AppToWine(stack[1]);
-        DWORD *ViewSize       = (DWORD *)AppToWine(stack[2]);
-        DWORD *unknown        = (DWORD *)AppToWine(stack[3]);
+        DWORD *BaseAddress    = (DWORD *)W32S_APP2WINE(stack[1], W32S_OFFSET);
+        DWORD *ViewSize       = (DWORD *)W32S_APP2WINE(stack[2], W32S_OFFSET);
+        DWORD *unknown        = (DWORD *)W32S_APP2WINE(stack[3], W32S_OFFSET);
         
-        LPBYTE address = (LPBYTE)(BaseAddress? AppToWine(*BaseAddress) : 0);
+        LPBYTE address = (LPBYTE)(BaseAddress? W32S_APP2WINE(*BaseAddress, W32S_OFFSET) : 0);
         DWORD  size    = ViewSize? *ViewSize : 0;
 
         TRACE(vxd, "NtFlushVirtualMemory(%lx, %lx, %lx, %lx)\n", 
@@ -1350,9 +1348,9 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)AppToWine(EDX_reg(context));
-        DWORD *retv   = (DWORD *)AppToWine(stack[0]);
-        LPVOID base   = (LPVOID) AppToWine(stack[1]);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
+        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
         DWORD  size   = stack[2];
         DWORD  result;
 
@@ -1384,9 +1382,9 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  EAX: NtStatus
          */
     {
-        DWORD *stack  = (DWORD *)AppToWine(EDX_reg(context));
-        DWORD *retv   = (DWORD *)AppToWine(stack[0]);
-        LPVOID base   = (LPVOID) AppToWine(stack[1]);
+        DWORD *stack  = (DWORD *)W32S_APP2WINE(EDX_reg(context), W32S_OFFSET);
+        DWORD *retv   = (DWORD *)W32S_APP2WINE(stack[0], W32S_OFFSET);
+        LPVOID base   = (LPVOID) W32S_APP2WINE(stack[1], W32S_OFFSET);
         DWORD  size   = stack[2];
         DWORD  result;
 
@@ -1424,8 +1422,8 @@ void VXD_Win32s( CONTEXT *context )
          *       FIXME: What about other OSes ?
          */
 
-        ECX_reg(context) = WineToApp(0x00000000);
-        EDX_reg(context) = WineToApp(0xbfffffff);
+        ECX_reg(context) = W32S_WINE2APP(0x00000000, W32S_OFFSET);
+        EDX_reg(context) = W32S_WINE2APP(0xbfffffff, W32S_OFFSET);
         break;
 
 
@@ -1448,7 +1446,7 @@ void VXD_Win32s( CONTEXT *context )
         };
 
         struct Win32sMemoryInfo *info = 
-                       (struct Win32sMemoryInfo *)AppToWine(ESI_reg(context));
+                       (struct Win32sMemoryInfo *)W32S_APP2WINE(ESI_reg(context), W32S_OFFSET);
 
         FIXME(vxd, "KGlobalMemStat(%lx)\n", (DWORD)info);
 
@@ -1485,7 +1483,7 @@ void VXD_Win32s( CONTEXT *context )
     {
         DWORD *stack  = PTR_SEG_OFF_TO_LIN(LOWORD(EDX_reg(context)), 
                                            HIWORD(EDX_reg(context)));
-        LPVOID base   = (LPVOID)AppToWine(stack[0]);
+        LPVOID base   = (LPVOID)W32S_APP2WINE(stack[0], W32S_OFFSET);
         DWORD  size   = stack[1];
         DWORD  type   = stack[2];
         DWORD  prot   = stack[3];
@@ -1502,12 +1500,13 @@ void VXD_Win32s( CONTEXT *context )
 
         result = (DWORD)VirtualAlloc(base, size, type, prot);
 
-        if (WineToApp(result))
-            EDX_reg(context) = WineToApp(result),
+        if (W32S_WINE2APP(result, W32S_OFFSET))
+            EDX_reg(context) = W32S_WINE2APP(result, W32S_OFFSET),
             EAX_reg(context) = STATUS_SUCCESS;
         else
             EDX_reg(context) = 0,
             EAX_reg(context) = STATUS_NO_MEMORY;  /* FIXME */
+	TRACE(vxd, "VirtualAlloc16: returning base %lx\n", EDX_reg(context));
     }
     break;
 
@@ -1526,7 +1525,7 @@ void VXD_Win32s( CONTEXT *context )
     {
         DWORD *stack  = PTR_SEG_OFF_TO_LIN(LOWORD(EDX_reg(context)), 
                                            HIWORD(EDX_reg(context)));
-        LPVOID base   = (LPVOID)AppToWine(stack[0]);
+        LPVOID base   = (LPVOID)W32S_APP2WINE(stack[0], W32S_OFFSET);
         DWORD  size   = stack[1];
         DWORD  type   = stack[2];
         DWORD  result;
@@ -1556,7 +1555,7 @@ void VXD_Win32s( CONTEXT *context )
          * Output:  NtStatus
          */
     {
-        DWORD *ptr = (DWORD *)AppToWine(ECX_reg(context));
+        DWORD *ptr = (DWORD *)W32S_APP2WINE(ECX_reg(context), W32S_OFFSET);
         BOOL32 set = EDX_reg(context);
         
         TRACE(vxd, "FWorkingSetSize(%lx, %lx)\n", (DWORD)ptr, (DWORD)set);
@@ -1575,7 +1574,5 @@ void VXD_Win32s( CONTEXT *context )
 	VXD_BARF( context, "W32S" );
     }
 
-    #undef AppToWine
-    #undef WineToApp
 }
 

@@ -156,6 +156,7 @@ static const CALLBACKS_TABLE CALLBACK_EmulatorTable =
     (void *)CallTo16_word_lwww,            /* CallWordBreakProc */
     (void *)CallTo16_word_ww,              /* CallBootAppProc */
     (void *)CallTo16_word_www,             /* CallLoadAppSegProc */
+    (void *)CallTo16_word_www,             /* CallLocalNotifyFunc */
     (void *)CallTo16_word_,                /* CallSystemTimerProc */
     (void *)CallTo16_word_www,             /* CallResourceHandlerProc */
     (void *)CallTo16_word_wwwl,            /* CallPostAppMessageProc */

@@ -36,6 +36,7 @@ typedef struct
                                          INT16, INT16 );
     VOID (CALLBACK *CallBootAppProc)( FARPROC16, HANDLE16, HFILE16 );
     WORD (CALLBACK *CallLoadAppSegProc)( FARPROC16, HANDLE16, HFILE16, WORD );
+    WORD (CALLBACK *CallLocalNotifyFunc)( FARPROC16, WORD, HLOCAL16, WORD );
     VOID (CALLBACK *CallSystemTimerProc)( FARPROC16 );
     HGLOBAL16 (CALLBACK *CallResourceHandlerProc)( FARPROC16, HGLOBAL16, HMODULE16, HRSRC16 );
     BOOL16 (CALLBACK *CallPostAppMessageProc)( FARPROC16, HTASK16, UINT16, WPARAM16, LPARAM );

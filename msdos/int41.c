@@ -27,6 +27,7 @@ void WINAPI INT_Int41Handler( CONTEXT *context )
         /* Protected-mode debugger services */
         switch ( AX_reg(context) )
         {
+        case 0x4f:
         case 0x50:
         case 0x150:
         case 0x51:

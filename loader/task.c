@@ -1426,13 +1426,15 @@ DWORD WINAPI WIN16_GetCurrentTask(void)
 
 /***********************************************************************
  *           GetCurrentPDB   (KERNEL.37)
+ *
+ * UNDOC: returns PSP of KERNEL in high word
  */
-HANDLE16 WINAPI GetCurrentPDB(void)
+DWORD WINAPI GetCurrentPDB(void)
 {
     TDB *pTask;
 
     if (!(pTask = (TDB *)GlobalLock16( GetCurrentTask() ))) return 0;
-    return pTask->hPDB;
+    return MAKELONG(pTask->hPDB, 0); /* FIXME */
 }
 
 
@@ -1596,6 +1598,9 @@ WORD WINAPI SetSigHandler( FARPROC16 newhandler, FARPROC16* oldhandler,
 
 /***********************************************************************
  *           GlobalNotify   (KERNEL.154)
+ *
+ * Note that GlobalNotify does _not_ return the old NotifyProc
+ * -- contrary to LocalNotify !!
  */
 VOID WINAPI GlobalNotify( FARPROC16 proc )
 {

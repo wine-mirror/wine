@@ -486,9 +486,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
      *       shifted by 0x10000 relative to the OS linear address space.
      *       See the comment in msdos/vxd.c.
      */
-    DWORD offset = PROCESS_Current()->flags & PDB32_WIN32S_PROC ? 0x10000 : 0;
-    #define AppToWine(addr) ((addr)? ((DWORD)(addr)) + offset : 0)
-    #define WineToApp(addr) ((addr)? ((DWORD)(addr)) - offset : 0)
+    DWORD offset = W32S_APPLICATION() ? W32S_OFFSET : 0;
 
     DWORD dw;
     BYTE *ptr;
@@ -603,16 +601,16 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
                 if ((dw >= base) && (dw < base + 0x110000)) dw -= base;
             }
 #endif
-            CX_reg(context) = HIWORD(WineToApp(dw));
-            DX_reg(context) = LOWORD(WineToApp(dw));
+            CX_reg(context) = HIWORD(W32S_WINE2APP(dw, offset));
+            DX_reg(context) = LOWORD(W32S_WINE2APP(dw, offset));
         }
         break;
 
     case 0x0007:  /* Set selector base address */
     	TRACE(int31, "set selector base address (0x%04x,0x%08lx)\n",
                      BX_reg(context),
-                     AppToWine(MAKELONG(DX_reg(context),CX_reg(context))));
-        dw = AppToWine(MAKELONG(DX_reg(context), CX_reg(context)));
+                     W32S_APP2WINE(MAKELONG(DX_reg(context),CX_reg(context)), offset));
+        dw = W32S_APP2WINE(MAKELONG(DX_reg(context), CX_reg(context)), offset);
 #ifdef MZ_SUPPORTED
         /* well, what else could we possibly do? */
         if (pModule && pModule->lpDosTask) {
@@ -657,7 +655,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         {
             ldt_entry entry;
             LDT_GetEntry( SELECTOR_TO_ENTRY( BX_reg(context) ), &entry );
-            entry.base = WineToApp(entry.base);
+            entry.base = W32S_WINE2APP(entry.base, offset);
 
             /* FIXME: should use ES:EDI for 32-bit clients */
             LDT_EntryToBytes( PTR_SEG_OFF_TO_LIN( ES_reg(context),
@@ -671,7 +669,7 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             ldt_entry entry;
             LDT_BytesToEntry( PTR_SEG_OFF_TO_LIN( ES_reg(context),
                                                   DI_reg(context) ), &entry );
-            entry.base = AppToWine(entry.base);
+            entry.base = W32S_APP2WINE(entry.base, offset);
 
             LDT_SetEntry( SELECTOR_TO_ENTRY( BX_reg(context) ), &entry );
         }
@@ -784,31 +782,31 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
             AX_reg(context) = 0x8012;  /* linear memory not available */
             SET_CFLAG(context);
         } else {
-            BX_reg(context) = SI_reg(context) = HIWORD(WineToApp(ptr));
-            CX_reg(context) = DI_reg(context) = LOWORD(WineToApp(ptr));
+            BX_reg(context) = SI_reg(context) = HIWORD(W32S_WINE2APP(ptr, offset));
+            CX_reg(context) = DI_reg(context) = LOWORD(W32S_WINE2APP(ptr, offset));
         }
         break;
 
     case 0x0502:  /* Free memory block */
         TRACE(int31, "free memory block (0x%08lx)\n",
-                     AppToWine(MAKELONG(DI_reg(context),SI_reg(context))));
-	DPMI_xfree( (void *)AppToWine(MAKELONG(DI_reg(context), 
-                                               SI_reg(context))) );
+                     W32S_APP2WINE(MAKELONG(DI_reg(context),SI_reg(context)), offset));
+	DPMI_xfree( (void *)W32S_APP2WINE(MAKELONG(DI_reg(context), 
+                                               SI_reg(context)), offset) );
         break;
 
     case 0x0503:  /* Resize memory block */
         TRACE(int31, "resize memory block (0x%08lx,%ld)\n",
-                     AppToWine(MAKELONG(DI_reg(context),SI_reg(context))),
+                     W32S_APP2WINE(MAKELONG(DI_reg(context),SI_reg(context)), offset),
                      MAKELONG(CX_reg(context),BX_reg(context)));
         if (!(ptr = (BYTE *)DPMI_xrealloc(
-                (void *)AppToWine(MAKELONG(DI_reg(context),SI_reg(context))),
+                (void *)W32S_APP2WINE(MAKELONG(DI_reg(context),SI_reg(context)), offset),
                 MAKELONG(CX_reg(context),BX_reg(context)))))
         {
             AX_reg(context) = 0x8012;  /* linear memory not available */
             SET_CFLAG(context);
         } else {
-            BX_reg(context) = SI_reg(context) = HIWORD(WineToApp(ptr));
-            CX_reg(context) = DI_reg(context) = LOWORD(WineToApp(ptr));
+            BX_reg(context) = SI_reg(context) = HIWORD(W32S_WINE2APP(ptr, offset));
+            CX_reg(context) = DI_reg(context) = LOWORD(W32S_WINE2APP(ptr, offset));
         }
         break;
 
@@ -855,8 +853,8 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
          }
          else
          {
-             BX_reg(context) = HIWORD(WineToApp(ptr));
-             CX_reg(context) = LOWORD(WineToApp(ptr));
+             BX_reg(context) = HIWORD(W32S_WINE2APP(ptr, offset));
+             CX_reg(context) = LOWORD(W32S_WINE2APP(ptr, offset));
              RESET_CFLAG(context);
          }
          break;
@@ -868,6 +866,4 @@ void WINAPI INT_Int31Handler( CONTEXT *context )
         break;
     }
 
-    #undef AppToWine
-    #undef WineToApp
 }

@@ -10,6 +10,7 @@
 #include "miscemu.h"
 #include "selectors.h"
 #include "stackframe.h"
+#include "process.h"
 #include "debug.h"
 
 
@@ -301,6 +302,17 @@ void WINAPI LongPtrAdd( DWORD ptr, DWORD add )
 /***********************************************************************
  *           GetSelectorBase   (KERNEL.186)
  */
+DWORD WINAPI WIN16_GetSelectorBase( WORD sel )
+{
+    /*
+     * Note: For Win32s processes, the whole linear address space is
+     *       shifted by 0x10000 relative to the OS linear address space.
+     *       See the comment in msdos/vxd.c.
+     */
+
+    DWORD base = GetSelectorBase( sel );
+    return W32S_WINE2APP( base, W32S_APPLICATION() ? W32S_OFFSET : 0 );
+}
 DWORD WINAPI GetSelectorBase( WORD sel )
 {
     DWORD base = GET_SEL_BASE(sel);
@@ -315,6 +327,18 @@ DWORD WINAPI GetSelectorBase( WORD sel )
 /***********************************************************************
  *           SetSelectorBase   (KERNEL.187)
  */
+DWORD WINAPI WIN16_SetSelectorBase( WORD sel, DWORD base )
+{
+    /*
+     * Note: For Win32s processes, the whole linear address space is
+     *       shifted by 0x10000 relative to the OS linear address space.
+     *       See the comment in msdos/vxd.c.
+     */
+
+    SetSelectorBase( sel,
+	W32S_APP2WINE( base, W32S_APPLICATION() ? W32S_OFFSET : 0 ) );
+    return sel;
+}
 WORD WINAPI SetSelectorBase( WORD sel, DWORD base )
 {
     ldt_entry entry;

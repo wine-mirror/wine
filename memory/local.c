@@ -25,6 +25,7 @@
 #include "stackframe.h"
 #include "toolhelp.h"
 #include "debug.h"
+#include "callback.h"
 
 typedef struct
 {
@@ -43,6 +44,12 @@ typedef struct
   /* Arena types (stored in 'prev' field of the arena) */
 #define LOCAL_ARENA_FREE       0
 #define LOCAL_ARENA_FIXED      1
+
+/* LocalNotify() msgs */
+
+#define LN_OUTOFMEM	0
+#define LN_MOVE		1
+#define LN_DISCARD	2
 
 /* Layout of a handle entry table
  *
@@ -426,24 +433,29 @@ BOOL16 WINAPI LocalInit( HANDLE16 selector, WORD start, WORD end )
 /***********************************************************************
  *           LOCAL_GrowHeap
  */
-static void LOCAL_GrowHeap( HANDLE16 ds )
+static BOOL16 LOCAL_GrowHeap( HANDLE16 ds )
 {
-    HANDLE16 hseg = GlobalHandle16( ds );
-    LONG oldsize = GlobalSize16( hseg );
+    HANDLE16 hseg;
+    LONG oldsize;
     LONG end;
     LOCALHEAPINFO *pHeapInfo;
     WORD freeArena, lastArena;
     LOCALARENA *pArena, *pLastArena;
     char *ptr;
     
+    hseg = GlobalHandle16( ds );
+    /* maybe mem allocated by Virtual*() ? */
+    if (!hseg) return FALSE;
+
+    oldsize = GlobalSize16( hseg );
     /* if nothing can be gained, return */
-    if (oldsize > 0xfff0) return;
+    if (oldsize > 0xfff0) return FALSE;
     hseg = GlobalReAlloc16( hseg, 0x10000, GMEM_FIXED );
     ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     pHeapInfo = LOCAL_GetHeap( ds );
     if (pHeapInfo == NULL) {
 	ERR(local, "Heap not found\n" );
-	return;
+	return FALSE;
     }
     end = GlobalSize16( hseg );
     lastArena = (end - sizeof(LOCALARENA)) & ~3;
@@ -478,6 +490,7 @@ static void LOCAL_GrowHeap( HANDLE16 ds )
 
     TRACE(local, "Heap expanded\n" );
     LOCAL_PrintHeap( ds );
+    return TRUE;
 }
 
 
@@ -715,6 +728,9 @@ WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
                            movesize - ARENA_HEADER_SIZE );
                     /* Free the old location */  
                     LOCAL_FreeArena(ds, movearena);
+		    if (pInfo->notify)
+		        Callbacks->CallLocalNotifyFunc(pInfo->notify, LN_MOVE,
+			(WORD)((char *)pEntry - ptr), pEntry->addr);
                     /* Update handle table entry */
                     pEntry->addr = finalarena + ARENA_HEADER_SIZE + sizeof(HLOCAL16) ;
                 }
@@ -751,9 +767,11 @@ WORD LOCAL_Compact( HANDLE16 ds, UINT16 minfree, UINT16 flags )
                 TRACE(local, "Discarding handle %04x (block %04x).\n",
                               (char *)pEntry - ptr, pEntry->addr);
                 LOCAL_FreeArena(ds, ARENA_HEADER(pEntry->addr));
+		if (pInfo->notify)
+                    Callbacks->CallLocalNotifyFunc(pInfo->notify, LN_DISCARD,
+			(char *)pEntry - ptr, pEntry->flags);
                 pEntry->addr = 0;
                 pEntry->flags = (LMEM_DISCARDED >> 8);
-                /* Call localnotify proc */
             }
         }
         table = *(WORD *)pEntry;
@@ -814,6 +832,9 @@ static HLOCAL16 LOCAL_GetBlock( HANDLE16 ds, WORD size, WORD flags )
     size += ARENA_HEADER_SIZE;
     size = LALIGN( MAX( size, sizeof(LOCALARENA) ) );
 
+#if 0
+notify_done:
+#endif
       /* Find a suitable free block */
     arena = LOCAL_FindFreeBlock( ds, size );
     if (arena == 0) {
@@ -823,7 +844,15 @@ static HLOCAL16 LOCAL_GetBlock( HANDLE16 ds, WORD size, WORD flags )
     }
     if (arena == 0) {
 	/* still no space: try to grow the segment */
-	LOCAL_GrowHeap( ds );
+	if (!(LOCAL_GrowHeap( ds )))
+	{
+#if 0
+	    /* FIXME: doesn't work correctly yet */
+	    if ((pInfo->notify) && (Callbacks->CallLocalNotifyFunc(pInfo->notify, LN_OUTOFMEM, ds - 20, size))) /* FIXME: "size" correct ? (should indicate bytes needed) */
+		goto notify_done;
+#endif
+	    return 0;
+	}
 	ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
 	pInfo = LOCAL_GetHeap( ds );
 	arena = LOCAL_FindFreeBlock( ds, size );
@@ -839,6 +868,12 @@ static HLOCAL16 LOCAL_GetBlock( HANDLE16 ds, WORD size, WORD flags )
 	    ERR(local, "not enough space in local heap "
 			 "%04x for %d bytes\n", ds, size );
 	}
+#if 0
+        if ((pInfo->notify) &&
+        /* FIXME: "size" correct ? (should indicate bytes needed) */
+	(Callbacks->CallLocalNotifyFunc(pInfo->notify, LN_OUTOFMEM, ds, size)))
+	    goto notify_done;
+#endif
 	return 0;
     }
 
@@ -1563,6 +1598,21 @@ UINT16 WINAPI LocalCompact16( UINT16 minfree )
 
 /***********************************************************************
  *           LocalNotify   (KERNEL.14)
+ *
+ * Installs a callback function that is called for local memory events
+ * Callback function prototype is
+ * BOOL16 NotifyFunc(WORD wMsg, HLOCAL16 hMem, WORD wArg)
+ * wMsg:
+ * - LN_OUTOFMEM
+ *   NotifyFunc seems to be responsible for allocating some memory,
+ *   returns TRUE for success.
+ *   wArg = number of bytes needed additionally
+ * - LN_MOVE
+ *   hMem = handle; wArg = old mem location
+ * - LN_DISCARD
+ *   NotifyFunc seems to be strongly encouraged to return TRUE,
+ *   otherwise LogError() gets called.
+ *   hMem = handle; wArg = flags
  */
 FARPROC16 WINAPI LocalNotify( FARPROC16 func )
 {

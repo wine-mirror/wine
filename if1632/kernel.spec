@@ -12,13 +12,13 @@ file	krnl386.exe
 5   pascal16 LocalAlloc(word word) LocalAlloc16
 6   pascal16 LocalReAlloc(word word word) LocalReAlloc16
 7   pascal16 LocalFree(word) LocalFree16
-8   pascal16 LocalLock(word) LocalLock16
+8   pascal LocalLock(word) LocalLock16
 9   pascal16 LocalUnlock(word) LocalUnlock16
 10  pascal16 LocalSize(word) LocalSize16
 11  pascal16 LocalHandle(word) LocalHandle16
 12  pascal16 LocalFlags(word) LocalFlags16
 13  pascal16 LocalCompact(word) LocalCompact16
-14  pascal16 LocalNotify(long) LocalNotify
+14  pascal LocalNotify(long) LocalNotify
 15  pascal16 GlobalAlloc(word long) GlobalAlloc16
 16  pascal16 GlobalReAlloc(word long word) GlobalReAlloc16
 17  pascal16 GlobalFree(word) GlobalFree16
@@ -38,7 +38,7 @@ file	krnl386.exe
 31  pascal16 PostEvent(word) PostEvent
 32  pascal16 SetPriority(word s_word) SetPriority
 33  pascal16 LockCurrentTask(word) LockCurrentTask
-34  pascal SetTaskQueue(word word) SetTaskQueue
+34  pascal16 SetTaskQueue(word word) SetTaskQueue
 35  pascal16 GetTaskQueue(word) GetTaskQueue
 36  pascal   GetCurrentTask() WIN16_GetCurrentTask
 37  pascal GetCurrentPDB() GetCurrentPDB
@@ -188,8 +188,8 @@ file	krnl386.exe
 183 equate __0000H 0
 184 pascal GlobalDOSAlloc(long) GlobalDOSAlloc
 185 pascal16 GlobalDOSFree(word) GlobalDOSFree
-186 pascal GetSelectorBase(word) GetSelectorBase
-187 pascal16 SetSelectorBase(word long) SetSelectorBase
+186 pascal GetSelectorBase(word) WIN16_GetSelectorBase
+187 pascal16 SetSelectorBase(word long) WIN16_SetSelectorBase
 188 pascal GetSelectorLimit(word) GetSelectorLimit
 189 pascal16 SetSelectorLimit(word long) SetSelectorLimit
 190 equate __E000H 0
