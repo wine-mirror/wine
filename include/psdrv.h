@@ -299,6 +299,7 @@ extern BOOL PSDRV_WriteBytes(DC *dc, const BYTE *bytes, int number);
 extern BOOL PSDRV_WriteDIBits16(DC *dc, const WORD *words, int number);
 extern BOOL PSDRV_WriteDIBits24(DC *dc, const BYTE *bits, int number);
 extern BOOL PSDRV_WriteDIBits32(DC *dc, const BYTE *bits, int number);
+extern int PSDRV_WriteSpool(DC *dc, LPSTR lpData, WORD cch);
 
 
 

@@ -125,6 +125,10 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 	return FALSE;
     }
 
+    xDst = XLPTODP(dc, xDst);
+    yDst = YLPTODP(dc, yDst);
+    widthDst = XLSTODS(dc, widthDst);
+    heightDst = YLSTODS(dc, heightDst);
 
     switch(bpp) {
 
@@ -138,7 +142,6 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 	    FIXME(psdrv, "This won't work...\n");
         for(line = 0; line < heightSrc; line++, ptr += widthbytes)
 	    PSDRV_WriteBytes(dc, ptr + xSrc/8, widthSrc/8);
-	PSDRV_WriteGRestore(dc);
 	break;
 
     case 4:
@@ -151,7 +154,6 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 	    FIXME(psdrv, "This won't work...\n");
         for(line = 0; line < heightSrc; line++, ptr += widthbytes)
 	    PSDRV_WriteBytes(dc, ptr + xSrc/2, widthSrc/2);
-	PSDRV_WriteGRestore(dc);
 	break;
 
     case 8:
@@ -162,7 +164,6 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 	ptr += (ySrc * widthbytes);
         for(line = 0; line < heightSrc; line++, ptr += widthbytes)
 	    PSDRV_WriteBytes(dc, ptr + xSrc, widthSrc);
-	PSDRV_WriteGRestore(dc);
 	break;
 
     case 15:
@@ -175,7 +176,6 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 	ptr += (ySrc * widthbytes);
         for(line = 0; line < heightSrc; line++, ptr += widthbytes)
 	    PSDRV_WriteDIBits16(dc, (WORD *)ptr + xSrc, widthSrc);
-	PSDRV_WriteGRestore(dc);
 	break;
 
     case 24:
@@ -187,7 +187,6 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 	ptr += (ySrc * widthbytes);
         for(line = 0; line < heightSrc; line++, ptr += widthbytes)
 	    PSDRV_WriteDIBits24(dc, ptr + xSrc * 3, widthSrc);
-	PSDRV_WriteGRestore(dc);
 	break;
 
     case 32:
@@ -199,7 +198,6 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 	ptr += (ySrc * widthbytes);
         for(line = 0; line < heightSrc; line++, ptr += widthbytes)
 	    PSDRV_WriteDIBits32(dc, ptr + xSrc * 3, widthSrc);
-	PSDRV_WriteGRestore(dc);
 	break;
 
     default:
@@ -207,7 +205,10 @@ INT PSDRV_StretchDIBits( DC *dc, INT xDst, INT yDst, INT widthDst,
 	return FALSE;
 
     }
-
+    PSDRV_WriteSpool(dc, "%\n", 2);  /* some versions of ghostscript seem to
+					eat one too many chars after the image
+					operator */
+    PSDRV_WriteGRestore(dc);
     return TRUE;
 }
 
