@@ -6,11 +6,11 @@
  * Copyright 1997,2000 Uwe Bonnes
  * Copyright 2000 Jon Griffiths
  */
+
 #include <time.h>
 #include <sys/times.h>
-#include "msvcrt.h"
 
-#include "msvcrt/stdlib.h"
+#include "msvcrt.h"
 #include "msvcrt/sys/timeb.h"
 #include "msvcrt/time.h"
 
@@ -29,8 +29,6 @@ char* msvcrt_get_current_time(char* out, const char* format)
   if (time(&t) != bad_time && (_tm = localtime(&t)) &&
       strftime(out,9,format,_tm) == 8)
     retval = out;
-  if (_tm)
-    MSVCRT_free(_tm);
   return retval;
 }
 
