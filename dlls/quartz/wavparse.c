@@ -284,6 +284,8 @@ static HRESULT CWavParseImpl_InitAU( CParserImpl* pImpl, CWavParseImpl* This )
 	This->llDataStart = dataofs;
 	This->llBytesTotal = datalen;
 
+	TRACE("offset %lu, length %lu\n",dataofs,datalen);
+
 	return NOERROR;
 }
 
@@ -460,7 +462,7 @@ static HRESULT CWavParseImpl_GetNextRequest( CParserImpl* pImpl, ULONG* pnStream
 	llAvail = This->llBytesTotal - This->llBytesProcessed;
 	if ( llAvail > (LONGLONG)This->dwBlockSize )
 		llAvail = (LONGLONG)This->dwBlockSize;
-	llStart = This->llBytesProcessed;
+	llStart = This->llDataStart + This->llBytesProcessed;
 	llEnd = llStart + llAvail;
 	This->llBytesProcessed = llEnd;
 

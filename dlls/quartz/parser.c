@@ -18,6 +18,7 @@
 #include "strmif.h"
 #include "control.h"
 #include "vfwmsgs.h"
+#include "evcode.h"
 #include "uuids.h"
 
 #include "debugtools.h"
@@ -28,7 +29,6 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #include "mtype.h"
 #include "memalloc.h"
 
-#define	QUARTZ_MSG_FLUSH	(WM_APP+1)
 #define	QUARTZ_MSG_EXITTHREAD	(WM_APP+2)
 #define	QUARTZ_MSG_SEEK			(WM_APP+3)
 
@@ -36,6 +36,372 @@ HRESULT CParserOutPinImpl_InitIMediaSeeking( CParserOutPinImpl* This );
 void CParserOutPinImpl_UninitIMediaSeeking( CParserOutPinImpl* This );
 HRESULT CParserOutPinImpl_InitIMediaPosition( CParserOutPinImpl* This );
 void CParserOutPinImpl_UninitIMediaPosition( CParserOutPinImpl* This );
+
+/***************************************************************************
+ *
+ *	CParserImpl internal thread
+ *
+ */
+
+static
+void CParserImplThread_ClearAllRequests( CParserImpl* This )
+{
+	ULONG	nIndex;
+
+	TRACE("(%p)\n",This);
+
+	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
+	{
+		This->m_ppOutPins[nIndex]->m_bReqUsed = FALSE;
+		This->m_ppOutPins[nIndex]->m_pReqSample = NULL;
+	}
+}
+
+static
+void CParserImplThread_ReleaseAllRequests( CParserImpl* This )
+{
+	ULONG	nIndex;
+
+	TRACE("(%p)\n",This);
+
+	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
+	{
+		if ( This->m_ppOutPins[nIndex]->m_bReqUsed )
+		{
+			if ( This->m_ppOutPins[nIndex]->m_pReqSample != NULL )
+			{
+				IMediaSample_Release(This->m_ppOutPins[nIndex]->m_pReqSample);
+				This->m_ppOutPins[nIndex]->m_pReqSample = NULL;
+			}
+			This->m_ppOutPins[nIndex]->m_bReqUsed = FALSE;
+		}
+	}
+}
+
+static
+BOOL CParserImplThread_HasPendingSamples( CParserImpl* This )
+{
+	ULONG	nIndex;
+
+	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
+	{
+		if ( This->m_ppOutPins[nIndex]->m_bReqUsed &&
+			 This->m_ppOutPins[nIndex]->m_pReqSample != NULL )
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+static
+HRESULT CParserImplThread_FlushAllPendingSamples( CParserImpl* This )
+{
+	HRESULT hr;
+	IMediaSample*	pSample;
+	DWORD_PTR	dwContext;
+
+	TRACE("(%p)\n",This);
+
+	/* remove all samples from queue. */
+	hr = IAsyncReader_BeginFlush(This->m_pReader);
+	if ( FAILED(hr) )
+		return hr;
+	IAsyncReader_EndFlush(This->m_pReader);
+
+	/* remove all processed samples from queue. */
+	while ( 1 )
+	{
+		hr = IAsyncReader_WaitForNext(This->m_pReader,0,&pSample,&dwContext);
+		if ( hr != S_OK )
+			break;
+	}
+
+	CParserImplThread_ReleaseAllRequests(This);
+
+	return NOERROR;
+}
+
+static HRESULT CParserImplThread_SendEndOfStream( CParserImpl* This )
+{
+	ULONG	nIndex;
+	HRESULT hr;
+	HRESULT hrRet;
+	CParserOutPinImpl*	pOutPin;
+
+	TRACE("(%p)\n",This);
+	if ( This->m_bSendEOS )
+		return NOERROR;
+	This->m_bSendEOS = TRUE;
+
+	hrRet = S_OK;
+	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
+	{
+		pOutPin = This->m_ppOutPins[nIndex];
+		hr = CPinBaseImpl_SendEndOfStream(&pOutPin->pin);
+		if ( FAILED(hr) )
+		{
+			if ( SUCCEEDED(hrRet) )
+				hrRet = hr;
+		}
+		else
+		{
+			if ( hr != S_OK && hrRet == S_OK )
+				hrRet = hr;
+		}
+	}
+
+	return hrRet;
+}
+
+static HRESULT CParserImplThread_SendFlush( CParserImpl* This )
+{
+	ULONG	nIndex;
+	HRESULT hr;
+	HRESULT hrRet;
+	CParserOutPinImpl*	pOutPin;
+
+	TRACE("(%p)\n",This);
+	hrRet = S_OK;
+	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
+	{
+		pOutPin = This->m_ppOutPins[nIndex];
+		hr = CPinBaseImpl_SendBeginFlush(&pOutPin->pin);
+		if ( FAILED(hr) )
+		{
+			if ( SUCCEEDED(hrRet) )
+				hrRet = hr;
+		}
+		else
+		{
+			if ( hr != S_OK && hrRet == S_OK )
+				hrRet = hr;
+			hr = CPinBaseImpl_SendEndFlush(&pOutPin->pin);
+			if ( FAILED(hr) )
+				hrRet = hr;
+		}
+	}
+
+	return hrRet;
+}
+
+static void CParserImplThread_ErrorAbort( CParserImpl* This, HRESULT hr )
+{
+	CBaseFilterImpl_MediaEventNotify(
+		&This->basefilter,EC_ERRORABORT,(LONG_PTR)hr,(LONG_PTR)0);
+	CParserImplThread_SendEndOfStream(This);
+}
+
+static
+HRESULT CParserImplThread_ProcessNextSample( CParserImpl* This )
+{
+	IMediaSample*	pSample;
+	DWORD_PTR	dwContext;
+	ULONG	nIndex;
+	HRESULT hr;
+	CParserOutPinImpl*	pOutPin;
+	MSG	msg;
+
+	while ( 1 )
+	{
+		if ( PeekMessageA( &msg, (HWND)NULL, 0, 0, PM_REMOVE ) )
+		{
+			hr = NOERROR;
+			switch ( msg.message )
+			{
+			case QUARTZ_MSG_EXITTHREAD:
+				TRACE("(%p) EndThread\n",This);
+				CParserImplThread_FlushAllPendingSamples(This);
+				CParserImplThread_ClearAllRequests(This);
+				CParserImplThread_SendFlush(This);
+				CParserImplThread_SendEndOfStream(This);
+				TRACE("(%p) exit thread\n",This);
+				return S_FALSE;
+			case QUARTZ_MSG_SEEK:
+				FIXME("(%p) Seek\n",This);
+				CParserImplThread_FlushAllPendingSamples(This);
+				hr = CParserImplThread_SendFlush(This);
+				CParserImplThread_SendEndOfStream(This);
+				/* FIXME - process seeking. */
+				/* FIXME - Send NewSegment. */
+				break;
+			default:
+				FIXME( "invalid message %04u\n", (unsigned)msg.message );
+				hr = E_FAIL;
+				CParserImplThread_ErrorAbort(This,hr);
+			}
+
+			return hr;
+		}
+
+		hr = IAsyncReader_WaitForNext(This->m_pReader,PARSER_POLL_INTERVAL,&pSample,&dwContext);
+		nIndex = (ULONG)dwContext;
+		if ( hr != VFW_E_TIMEOUT )
+			break;
+	}
+	if ( FAILED(hr) )
+	{
+		CParserImplThread_ErrorAbort(This,hr);
+		return hr;
+	}
+
+	pOutPin = This->m_ppOutPins[nIndex];
+	if ( pOutPin != NULL && pOutPin->m_bReqUsed )
+	{
+		if ( This->m_pHandler->pProcessSample != NULL )
+			hr = This->m_pHandler->pProcessSample(This,nIndex,pOutPin->m_llReqStart,pOutPin->m_lReqLength,pOutPin->m_pReqSample);
+
+		if ( SUCCEEDED(hr) )
+		{
+			if ( pOutPin->m_pOutPinAllocator != NULL &&
+				 pOutPin->m_pOutPinAllocator != This->m_pAllocator )
+			{
+				/* if pin has its own allocator, sample must be copied */
+				hr = IMemAllocator_GetBuffer( This->m_pAllocator, &pSample, NULL, NULL, 0 );
+				if ( SUCCEEDED(hr) )
+				{
+					hr = QUARTZ_IMediaSample_Copy(
+						pSample, pOutPin->m_pReqSample, TRUE );
+					if ( SUCCEEDED(hr) )
+						hr = CPinBaseImpl_SendSample(&pOutPin->pin,pSample);
+					IMediaSample_Release(pSample);
+				}
+			}
+			else
+			{
+				hr = CPinBaseImpl_SendSample(&pOutPin->pin,pOutPin->m_pReqSample);
+			}
+		}
+
+		if ( FAILED(hr) )
+			CParserImplThread_ErrorAbort(This,hr);
+
+		IMediaSample_Release(pOutPin->m_pReqSample);
+		pOutPin->m_pReqSample = NULL;
+		pOutPin->m_bReqUsed = FALSE;
+	}
+
+	if ( SUCCEEDED(hr) )
+		hr = NOERROR;
+
+	TRACE("return %08lx\n",hr);
+
+	return hr;
+}
+
+static
+DWORD WINAPI CParserImplThread_Entry( LPVOID pv )
+{
+	CParserImpl*	This = (CParserImpl*)pv;
+	BOOL	bReqNext;
+	ULONG	nIndex = 0;
+	HRESULT hr;
+	REFERENCE_TIME	rtSampleTimeStart, rtSampleTimeEnd;
+	LONGLONG	llReqStart;
+	LONG	lReqLength;
+	REFERENCE_TIME	rtReqStart, rtReqStop;
+	IMediaSample*	pSample;
+	MSG	msg;
+
+	/* initialize the message queue. */
+	PeekMessageA( &msg, (HWND)NULL, 0, 0, PM_NOREMOVE );
+
+	CParserImplThread_ClearAllRequests(This);
+
+	/* resume the owner thread. */
+	SetEvent( This->m_hEventInit );
+
+	TRACE( "Enter message loop.\n" );
+
+	bReqNext = TRUE;
+	while ( 1 )
+	{
+		if ( bReqNext )
+		{
+			/* Get the next request.  */
+			hr = This->m_pHandler->pGetNextRequest( This, &nIndex, &llReqStart, &lReqLength, &rtReqStart, &rtReqStop );
+			if ( FAILED(hr) )
+			{
+				CParserImplThread_ErrorAbort(This,hr);
+				break;
+			}
+			if ( hr != S_OK )
+			{
+				/* Flush pending samples. */
+				hr = S_OK;
+				while ( CParserImplThread_HasPendingSamples(This) )
+				{
+					hr = CParserImplThread_ProcessNextSample(This);
+					if ( hr != S_OK )
+						break;
+				}
+				if ( hr != S_OK )
+				{
+					/* notification is already sent */
+					break;
+				}
+
+				/* Send End Of Stream. */
+				hr = CParserImplThread_SendEndOfStream(This);
+				if ( hr != S_OK )
+				{
+					/* notification is already sent */
+					break;
+				}
+
+				/* Blocking... */
+				hr = CParserImplThread_ProcessNextSample(This);
+				if ( hr != S_OK )
+				{
+					/* notification is already sent */
+					break;
+				}
+				continue;
+			}
+			if ( This->m_ppOutPins[nIndex]->pin.pPinConnectedTo == NULL )
+				continue;
+
+			rtSampleTimeStart = This->basefilter.rtStart + llReqStart * QUARTZ_TIMEUNITS;
+			rtSampleTimeEnd = (llReqStart + lReqLength) * QUARTZ_TIMEUNITS;
+			bReqNext = FALSE;
+		}
+
+		if ( !This->m_ppOutPins[nIndex]->m_bReqUsed )
+		{
+			hr = IMemAllocator_GetBuffer( This->m_pAllocator, &pSample, NULL, NULL, 0 );
+			if ( FAILED(hr) )
+			{
+				CParserImplThread_ErrorAbort(This,hr);
+				break;
+			}
+			hr = IMediaSample_SetTime(pSample,&rtSampleTimeStart,&rtSampleTimeEnd);
+			if ( SUCCEEDED(hr) )
+				hr = IAsyncReader_Request(This->m_pReader,pSample,nIndex);
+			if ( FAILED(hr) )
+			{
+				CParserImplThread_ErrorAbort(This,hr);
+				break;
+			}
+
+			This->m_ppOutPins[nIndex]->m_bReqUsed = TRUE;
+			This->m_ppOutPins[nIndex]->m_pReqSample = pSample;
+			This->m_ppOutPins[nIndex]->m_llReqStart = llReqStart;
+			This->m_ppOutPins[nIndex]->m_lReqLength = lReqLength;
+			This->m_ppOutPins[nIndex]->m_rtReqStart = rtSampleTimeStart;
+			This->m_ppOutPins[nIndex]->m_rtReqStop = rtSampleTimeEnd;
+			bReqNext = TRUE;
+			continue;
+		}
+
+		hr = CParserImplThread_ProcessNextSample(This);
+		if ( hr != S_OK )
+		{
+			/* notification is already sent */
+			break;
+		}
+	}
+
+	return 0;
+}
 
 /***************************************************************************
  *
@@ -126,358 +492,6 @@ void CParserImpl_ReleaseListOfOutPins( CParserImpl* This )
 	QUARTZ_CompList_Unlock( This->basefilter.pOutPins );
 }
 
-static
-void CParserImpl_ClearAllRequests( CParserImpl* This )
-{
-	ULONG	nIndex;
-
-	TRACE("(%p)\n",This);
-
-	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
-	{
-		This->m_ppOutPins[nIndex]->m_bReqUsed = FALSE;
-		This->m_ppOutPins[nIndex]->m_pReqSample = NULL;
-	}
-}
-
-static
-void CParserImpl_ReleaseAllRequests( CParserImpl* This )
-{
-	ULONG	nIndex;
-
-	TRACE("(%p)\n",This);
-
-	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
-	{
-		if ( This->m_ppOutPins[nIndex]->m_bReqUsed )
-		{
-			if ( This->m_ppOutPins[nIndex]->m_pReqSample != NULL )
-			{
-				IMediaSample_Release(This->m_ppOutPins[nIndex]->m_pReqSample);
-				This->m_ppOutPins[nIndex]->m_pReqSample = NULL;
-			}
-			This->m_ppOutPins[nIndex]->m_bReqUsed = FALSE;
-		}
-	}
-}
-
-static
-BOOL CParserImpl_HasPendingSamples( CParserImpl* This )
-{
-	ULONG	nIndex;
-
-	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
-	{
-		if ( This->m_ppOutPins[nIndex]->m_bReqUsed &&
-			 This->m_ppOutPins[nIndex]->m_pReqSample != NULL )
-			return TRUE;
-	}
-
-	return FALSE;
-}
-
-static
-HRESULT CParserImpl_FlushAllPendingSamples( CParserImpl* This )
-{
-	HRESULT hr;
-	IMediaSample*	pSample;
-	DWORD_PTR	dwContext;
-
-	TRACE("(%p)\n",This);
-
-	/* remove all samples from queue */
-	hr = IAsyncReader_BeginFlush(This->m_pReader);
-	if ( FAILED(hr) )
-		return hr;
-	IAsyncReader_EndFlush(This->m_pReader);
-
-	while ( 1 )
-	{
-		hr = IAsyncReader_WaitForNext(This->m_pReader,0,&pSample,&dwContext);
-		if ( hr != S_OK )
-			break;
-	}
-	CParserImpl_ReleaseAllRequests(This);
-
-	return NOERROR;
-}
-
-static HRESULT CParserImpl_SendEndOfStream( CParserImpl* This )
-{
-	ULONG	nIndex;
-	HRESULT hr;
-	HRESULT hrRet;
-	CParserOutPinImpl*	pOutPin;
-
-	TRACE("(%p)\n",This);
-	if ( This->m_bSendEOS )
-		return NOERROR;
-	This->m_bSendEOS = TRUE;
-
-	hrRet = S_OK;
-	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
-	{
-		pOutPin = This->m_ppOutPins[nIndex];
-		hr = CPinBaseImpl_SendEndOfStream(&pOutPin->pin);
-		if ( FAILED(hr) )
-		{
-			if ( SUCCEEDED(hrRet) )
-				hrRet = hr;
-		}
-		else
-		{
-			if ( hr != S_OK && hrRet == S_OK )
-				hrRet = hr;
-		}
-	}
-
-	return hrRet;
-}
-
-static HRESULT CParserImpl_SendFlush( CParserImpl* This )
-{
-	ULONG	nIndex;
-	HRESULT hr;
-	HRESULT hrRet;
-	CParserOutPinImpl*	pOutPin;
-
-	TRACE("(%p)\n",This);
-	hrRet = S_OK;
-	for ( nIndex = 0; nIndex < This->m_cOutStreams; nIndex++ )
-	{
-		pOutPin = This->m_ppOutPins[nIndex];
-		hr = CPinBaseImpl_SendBeginFlush(&pOutPin->pin);
-		if ( FAILED(hr) )
-		{
-			if ( SUCCEEDED(hrRet) )
-				hrRet = hr;
-		}
-		else
-		{
-			if ( hr != S_OK && hrRet == S_OK )
-				hrRet = hr;
-			hr = CPinBaseImpl_SendEndFlush(&pOutPin->pin);
-			if ( FAILED(hr) )
-				hrRet = hr;
-		}
-	}
-
-	return hrRet;
-}
-
-static
-HRESULT CParserImpl_ProcessNextSample( CParserImpl* This )
-{
-	IMediaSample*	pSample;
-	DWORD_PTR	dwContext;
-	ULONG	nIndex;
-	HRESULT hr;
-	CParserOutPinImpl*	pOutPin;
-	MSG	msg;
-
-	while ( 1 )
-	{
-		if ( PeekMessageA( &msg, (HWND)NULL, 0, 0, PM_REMOVE ) )
-		{
-			hr = NOERROR;
-			switch ( msg.message )
-			{
-			case QUARTZ_MSG_FLUSH:
-				TRACE("Flush\n");
-				CParserImpl_FlushAllPendingSamples(This);
-				hr = CParserImpl_SendFlush(This);
-				break;
-			case QUARTZ_MSG_EXITTHREAD:
-				TRACE("(%p) EndThread\n",This);
-				CParserImpl_FlushAllPendingSamples(This);
-				CParserImpl_ClearAllRequests(This);
-				CParserImpl_SendFlush(This);
-				CParserImpl_SendEndOfStream(This);
-				TRACE("(%p) exit thread\n",This);
-				return S_FALSE;
-			case QUARTZ_MSG_SEEK:
-				FIXME("Seek\n");
-				CParserImpl_FlushAllPendingSamples(This);
-				break;
-			default:
-				FIXME( "invalid message %04u\n", (unsigned)msg.message );
-				/* Notify (ABORT) */
-				hr = E_FAIL;
-			}
-
-			return hr;
-		}
-
-		hr = IAsyncReader_WaitForNext(This->m_pReader,PARSER_POLL_INTERVAL,&pSample,&dwContext);
-		nIndex = (ULONG)dwContext;
-		if ( hr != VFW_E_TIMEOUT )
-			break;
-	}
-	if ( FAILED(hr) )
-	{
-		return hr;
-	}
-
-	pOutPin = This->m_ppOutPins[nIndex];
-	if ( pOutPin != NULL && pOutPin->m_bReqUsed )
-	{
-		if ( This->m_pHandler->pProcessSample != NULL )
-			hr = This->m_pHandler->pProcessSample(This,nIndex,pOutPin->m_llReqStart,pOutPin->m_lReqLength,pOutPin->m_pReqSample);
-
-		if ( SUCCEEDED(hr) )
-		{
-			if ( pOutPin->m_pOutPinAllocator != NULL &&
-				 pOutPin->m_pOutPinAllocator != This->m_pAllocator )
-			{
-				/* if pin has its own allocator, sample must be copied */
-				hr = IMemAllocator_GetBuffer( This->m_pAllocator, &pSample, NULL, NULL, 0 );
-				if ( SUCCEEDED(hr) )
-				{
-					hr = QUARTZ_IMediaSample_Copy(
-						pSample, pOutPin->m_pReqSample, TRUE );
-					if ( SUCCEEDED(hr) )
-						hr = CPinBaseImpl_SendSample(&pOutPin->pin,pSample);
-					IMediaSample_Release(pSample);
-				}
-			}
-			else
-			{
-				hr = CPinBaseImpl_SendSample(&pOutPin->pin,pOutPin->m_pReqSample);
-			}
-		}
-
-		if ( FAILED(hr) )
-		{
-			/* Notify (ABORT) */
-		}
-
-		IMediaSample_Release(pOutPin->m_pReqSample);
-		pOutPin->m_pReqSample = NULL;
-		pOutPin->m_bReqUsed = FALSE;
-	}
-
-	if ( SUCCEEDED(hr) )
-		hr = NOERROR;
-
-	TRACE("return %08lx\n",hr);
-
-	return hr;
-}
-
-static
-DWORD WINAPI CParserImpl_ThreadEntry( LPVOID pv )
-{
-	CParserImpl*	This = (CParserImpl*)pv;
-	BOOL	bReqNext;
-	ULONG	nIndex = 0;
-	HRESULT hr;
-	REFERENCE_TIME	rtSampleTimeStart, rtSampleTimeEnd;
-	LONGLONG	llReqStart;
-	LONG	lReqLength;
-	REFERENCE_TIME	rtReqStart, rtReqStop;
-	IMediaSample*	pSample;
-	MSG	msg;
-
-	/* initialize the message queue. */
-	PeekMessageA( &msg, (HWND)NULL, 0, 0, PM_NOREMOVE );
-
-	CParserImpl_ClearAllRequests(This);
-
-	/* resume the owner thread. */
-	SetEvent( This->m_hEventInit );
-
-	TRACE( "Enter message loop.\n" );
-
-	bReqNext = TRUE;
-	while ( 1 )
-	{
-		if ( bReqNext )
-		{
-			/* Get the next request.  */
-			hr = This->m_pHandler->pGetNextRequest( This, &nIndex, &llReqStart, &lReqLength, &rtReqStart, &rtReqStop );
-			if ( FAILED(hr) )
-			{
-				/* Notify (ABORT) */
-				break;
-			}
-			if ( hr != S_OK )
-			{
-				/* Flush pending samples. */
-				hr = S_OK;
-				while ( CParserImpl_HasPendingSamples(This) )
-				{
-					hr = CParserImpl_ProcessNextSample(This);
-					if ( hr != S_OK )
-						break;
-				}
-				if ( hr != S_OK )
-				{
-					/* notification is already sent */
-					break;
-				}
-
-				/* Send End Of Stream. */
-				hr = CParserImpl_SendEndOfStream(This);
-				if ( hr != S_OK )
-				{
-					/* notification is already sent */
-					break;
-				}
-
-				/* Blocking... */
-				hr = CParserImpl_ProcessNextSample(This);
-				if ( hr != S_OK )
-				{
-					/* notification is already sent */
-					break;
-				}
-				continue;
-			}
-			if ( This->m_ppOutPins[nIndex]->pin.pPinConnectedTo == NULL )
-				continue;
-
-			rtSampleTimeStart = This->basefilter.rtStart + llReqStart * QUARTZ_TIMEUNITS;
-			rtSampleTimeEnd = (llReqStart + lReqLength) * QUARTZ_TIMEUNITS;
-			bReqNext = FALSE;
-		}
-
-		if ( !This->m_ppOutPins[nIndex]->m_bReqUsed )
-		{
-			hr = IMemAllocator_GetBuffer( This->m_pAllocator, &pSample, NULL, NULL, 0 );
-			if ( FAILED(hr) )
-			{
-				/* Notify (ABORT) */
-				break;
-			}
-			hr = IMediaSample_SetTime(pSample,&rtSampleTimeStart,&rtSampleTimeEnd);
-			if ( SUCCEEDED(hr) )
-				hr = IAsyncReader_Request(This->m_pReader,pSample,nIndex);
-			if ( FAILED(hr) )
-			{
-				/* Notify (ABORT) */
-				break;
-			}
-
-			This->m_ppOutPins[nIndex]->m_bReqUsed = TRUE;
-			This->m_ppOutPins[nIndex]->m_pReqSample = pSample;
-			This->m_ppOutPins[nIndex]->m_llReqStart = llReqStart;
-			This->m_ppOutPins[nIndex]->m_lReqLength = lReqLength;
-			This->m_ppOutPins[nIndex]->m_rtReqStart = rtSampleTimeStart;
-			This->m_ppOutPins[nIndex]->m_rtReqStop = rtSampleTimeEnd;
-			bReqNext = TRUE;
-			continue;
-		}
-
-		hr = CParserImpl_ProcessNextSample(This);
-		if ( hr != S_OK )
-		{
-			/* notification is already sent */
-			break;
-		}
-	}
-
-	return 0;
-}
 
 static
 HRESULT CParserImpl_BeginThread( CParserImpl* This )
@@ -496,7 +510,7 @@ HRESULT CParserImpl_BeginThread( CParserImpl* This )
 	/* create the processing thread. */
 	This->m_hThread = CreateThread(
 		NULL, 0,
-		CParserImpl_ThreadEntry,
+		CParserImplThread_Entry,
 		(LPVOID)This,
 		0, &This->m_dwThreadId );
 	if ( This->m_hThread == (HANDLE)NULL )

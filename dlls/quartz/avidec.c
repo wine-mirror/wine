@@ -1,8 +1,6 @@
 /*
  * Implements AVI Decompressor(CLSID_AVIDec).
  *
- * FIXME - insufficient buffer for ICDecompress!!!!
- *
  * hidenori@a2.ctktv.ne.jp
  */
 
@@ -219,7 +217,7 @@ static HRESULT AVIDec_GetOutputTypes( CTransformBaseImpl* pImpl, const AM_MEDIA_
 
 	memcpy( &This->m_mtOut.majortype, &MEDIATYPE_Video, sizeof(GUID) );
 	memcpy( &This->m_mtOut.formattype, &FORMAT_VideoInfo, sizeof(GUID) );
-	This->m_mtOut.cbFormat = sizeof(VIDEOINFOHEADER) + cbFmt;
+	This->m_mtOut.cbFormat = sizeof(VIDEOINFOHEADER) + cbFmt + sizeof(RGBQUAD)*256;
 	This->m_mtOut.pbFormat = (BYTE*)CoTaskMemAlloc(This->m_mtOut.cbFormat);
 	if ( This->m_mtOut.pbFormat == NULL )
 		return E_OUTOFMEMORY;
@@ -239,6 +237,31 @@ static HRESULT AVIDec_GetOutputTypes( CTransformBaseImpl* pImpl, const AM_MEDIA_
 
 	This->m_mtOut.bFixedSizeSamples = (pbiOut->bmiHeader.biCompression == 0) ? 1 : 0;
 	This->m_mtOut.lSampleSize = (pbiOut->bmiHeader.biCompression == 0) ? DIBSIZE(pbiOut->bmiHeader) : pbiOut->bmiHeader.biSizeImage;
+
+	/* get palette */
+	if ( pbiOut->bmiHeader.biBitCount <= 8 )
+	{
+		TRACE("(%p) - get palette\n",This);
+		if ( ICDecompressGetPalette( This->hicCached, pbiIn, pbiOut ) != ICERR_OK )
+		{
+			TRACE("(%p) - use the input palette\n",This);
+			if ( pbiIn->bmiHeader.biBitCount != pbiOut->bmiHeader.biBitCount )
+			{
+				FIXME( "no palette...fixme?\n" );
+				return E_FAIL;
+			}
+			if ( pbiOut->bmiHeader.biClrUsed == 0 )
+				pbiOut->bmiHeader.biClrUsed = 1<<pbiOut->bmiHeader.biBitCount;
+			if ( pbiOut->bmiHeader.biClrUsed > (1<<pbiOut->bmiHeader.biBitCount) )
+			{
+				ERR( "biClrUsed=%ld\n", pbiOut->bmiHeader.biClrUsed );
+				return E_FAIL;
+			}
+
+			memcpy( pbiOut->bmiColors, pbiIn->bmiColors,
+				sizeof(RGBQUAD) * pbiOut->bmiHeader.biClrUsed );
+		}
+	}
 
 	TRACE("(%p) - return format\n",This);
 	*ppmtAcceptTypes = &This->m_mtOut;
@@ -301,7 +324,7 @@ static HRESULT AVIDec_BeginTransform( CTransformBaseImpl* pImpl, const AM_MEDIA_
 	This->m_pbiOut = AVIDec_DuplicateBitmapInfo(pbiOut);
 	if ( This->m_pbiIn == NULL || This->m_pbiOut == NULL )
 		return E_OUTOFMEMORY;
-	if ( This->m_pbiOut->bmiHeader.biCompression == 0 )
+	if ( This->m_pbiOut->bmiHeader.biCompression == 0 || This->m_pbiOut->bmiHeader.biCompression == 3 )
 		This->m_pbiOut->bmiHeader.biSizeImage = DIBSIZE(This->m_pbiOut->bmiHeader);
 
 	if ( !bReuseSample )

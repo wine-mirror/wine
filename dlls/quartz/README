@@ -1,15 +1,28 @@
 
+quartz.dll is the basic library of ActiveMovie/DirectShow.
+
 TODO
 
-  - merge some C sources.
-  - implements all filters.
-  - handles plug-in distributor.
-  - implements some interfaces as plug-ins(???)
-  - implements ICM
-  - implements mciqtz(mci driver for quartz)
+  - avoid deadlock
+  - merge some C sources
+  - implement filters
+  - restruct color-space converter
+  - add FilterData to winedefault.reg for Connect() and Render()
+  - sort active filters in filter graph
+  - sort regfilters in Merit order
+  - fix deadlocks in Receive/EndOfStream
+  - handle plug-in distributor
+  - handle seeking
+  - implement some interfaces as plug-ins(???)
+  - implement ICM drivers (yuv converter)
+  - implement ACM drivers (g711)
+  - implement ACM wrapper (improve xform)
+  - implement mciqtz(mci driver for quartz)
+  - implement renderer
+  - handle notification correctly
 
 known BUGS
 
   - all FIXMEs.
-  - some filters crash at CoCreateInstance. (ole???)
+  - some filters crash at CoCreateInstance. (???)
 

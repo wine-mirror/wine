@@ -7,7 +7,7 @@
 #ifndef	QUARTZ_REGSVR_H
 #define	QUARTZ_REGSVR_H
 
-extern const WCHAR QUARTZ_wszREG_SZ[];
+extern const WCHAR QUARTZ_wszREG_SZ[7];
 extern const WCHAR QUARTZ_wszInprocServer32[];
 extern const WCHAR QUARTZ_wszThreadingModel[];
 extern const WCHAR QUARTZ_wszBoth[];
@@ -16,7 +16,14 @@ extern const WCHAR QUARTZ_wszFilterData[];
 extern const WCHAR QUARTZ_wszFriendlyName[];
 extern const WCHAR QUARTZ_wszInstance[];
 extern const WCHAR QUARTZ_wszMerit[];
+extern const WCHAR QUARTZ_wszMediaType[];
+extern const WCHAR QUARTZ_wszSubType[];
+extern const WCHAR QUARTZ_wszExtensions[];
+extern const WCHAR QUARTZ_wszSourceFilter[];
 
+
+void QUARTZ_CatPathSepW( WCHAR* pBuf );
+void QUARTZ_GUIDtoString( WCHAR* pBuf, const GUID* pguid );
 
 HRESULT QUARTZ_CreateCLSIDPath(
 	WCHAR* pwszBuf, DWORD dwBufLen,

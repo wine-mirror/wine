@@ -187,8 +187,9 @@ static HWND VIDREN_Create( HWND hwndOwner, CVideoRendererImpl* This )
 	HINSTANCE hInst = (HINSTANCE)GetModuleHandleA(NULL);
 	const VIDEOINFOHEADER* pinfo;
 	DWORD	dwExStyle = 0;
-	DWORD	dwStyle = WS_OVERLAPPED|WS_CAPTION|WS_MINIMIZEBOX|WS_MAXIMIZEBOX;
+	DWORD	dwStyle = WS_POPUP|WS_CAPTION|WS_CLIPCHILDREN;
 	RECT	rcWnd;
+	HWND	hwnd;
 
 	if ( !VIDREN_Register( hInst ) )
 		return (HWND)NULL;
@@ -206,14 +207,18 @@ static HWND VIDREN_Create( HWND hwndOwner, CVideoRendererImpl* This )
 	TRACE("window width %d,height %d\n",
 		rcWnd.right-rcWnd.left,rcWnd.bottom-rcWnd.top);
 
-	return CreateWindowExA(
+	hwnd = CreateWindowExA(
 		dwExStyle,
 		VIDREN_szWndClass, VIDREN_szWndName,
-		dwStyle | WS_VISIBLE,
+		dwStyle,
 		100,100, /* FIXME */
 		rcWnd.right-rcWnd.left, rcWnd.bottom-rcWnd.top,
 		hwndOwner, (HMENU)NULL,
 		hInst, (LPVOID)This );
+	if ( hwnd != (HWND)NULL )
+		ShowWindow(hwnd,SW_SHOW);
+
+	return hwnd;
 }
 
 static DWORD WINAPI VIDREN_ThreadEntry( LPVOID pv )

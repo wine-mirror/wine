@@ -99,8 +99,10 @@ IUnknown_fnRelease(IUnknown* iface)
 	if ( ref > 0 )
 		return (ULONG)ref;
 
+	This->ref ++;
 	if ( This->pOnFinalRelease != NULL )
 		(*(This->pOnFinalRelease))(iface);
+	This->ref --;
 
 	QUARTZ_FreeObj(This);
 

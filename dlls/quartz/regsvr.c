@@ -23,7 +23,7 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #define	NUMELEMS(elem)	(sizeof(elem)/sizeof((elem)[0]))
 #endif	/* NUMELEMS */
 
-const WCHAR QUARTZ_wszREG_SZ[] =
+const WCHAR QUARTZ_wszREG_SZ[7] =
 	{'R','E','G','_','S','Z',0};
 const WCHAR QUARTZ_wszInprocServer32[] =
 	{'I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
@@ -34,15 +34,22 @@ const WCHAR QUARTZ_wszBoth[] =
 const WCHAR QUARTZ_wszCLSID[] =
 	{'C','L','S','I','D',0};
 const WCHAR QUARTZ_wszFilterData[] =
-	{'F','i','l','t','e','r',' ','D','a','t','a',0};
+	{'F','i','l','t','e','r','D','a','t','a',0};
 const WCHAR QUARTZ_wszFriendlyName[] =
 	{'F','r','i','e','n','d','l','y','N','a','m','e',0};
 const WCHAR QUARTZ_wszInstance[] =
 	{'I','n','s','t','a','n','c','e',0};
 const WCHAR QUARTZ_wszMerit[] =
 	{'M','e','r','i','t',0};
+const WCHAR QUARTZ_wszMediaType[] =
+	{'M','e','d','i','a',' ','T','y','p','e',0};
+const WCHAR QUARTZ_wszSubType[] =
+	{'S','u','b','T','y','p','e',0};
+const WCHAR QUARTZ_wszExtensions[] =
+	{'E','x','t','e','n','s','i','o','n','s',0};
+const WCHAR QUARTZ_wszSourceFilter[] =
+	{'S','o','u','r','c','e',' ','F','i','l','t','e','r',0};
 
-static
 void QUARTZ_CatPathSepW( WCHAR* pBuf )
 {
 	int	len = lstrlenW(pBuf);
@@ -50,7 +57,6 @@ void QUARTZ_CatPathSepW( WCHAR* pBuf )
 	pBuf[len+1] = 0;
 }
 
-static
 void QUARTZ_GUIDtoString( WCHAR* pBuf, const GUID* pguid )
 {
 	/* W"{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}" */
@@ -365,6 +371,5 @@ HRESULT QUARTZ_RegisterAMovieFilter(
 
 	return NOERROR;
 }
-
 
 

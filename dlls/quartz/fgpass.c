@@ -165,7 +165,9 @@ IBasicAudio_fnput_Volume(IBasicAudio* iface,long lVol)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicAudio_put_Volume(pAudio,lVol);
+	hr = IBasicAudio_put_Volume(pAudio,lVol);
+	IBasicAudio_Release(pAudio);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -176,7 +178,9 @@ IBasicAudio_fnget_Volume(IBasicAudio* iface,long* plVol)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicAudio_get_Volume(pAudio,plVol);
+	hr = IBasicAudio_get_Volume(pAudio,plVol);
+	IBasicAudio_Release(pAudio);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -187,7 +191,9 @@ IBasicAudio_fnput_Balance(IBasicAudio* iface,long lBalance)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicAudio_put_Balance(pAudio,lBalance);
+	hr = IBasicAudio_put_Balance(pAudio,lBalance);
+	IBasicAudio_Release(pAudio);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -198,7 +204,9 @@ IBasicAudio_fnget_Balance(IBasicAudio* iface,long* plBalance)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicAudio_get_Balance(pAudio,plBalance);
+	hr = IBasicAudio_get_Balance(pAudio,plBalance);
+	IBasicAudio_Release(pAudio);
+	return hr;
 }
 
 
@@ -337,7 +345,9 @@ IBasicVideo2_fnget_AvgTimePerFrame(IBasicVideo2* iface,REFTIME* prefTime)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_get_AvgTimePerFrame(pVideo,prefTime);
+	hr = IBasicVideo_get_AvgTimePerFrame(pVideo,prefTime);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -348,7 +358,9 @@ IBasicVideo2_fnget_BitRate(IBasicVideo2* iface,long* plRate)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_get_BitRate(pVideo,plRate);
+	hr = IBasicVideo_get_BitRate(pVideo,plRate);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -359,7 +371,9 @@ IBasicVideo2_fnget_BitErrorRate(IBasicVideo2* iface,long* plRate)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_get_BitErrorRate(pVideo,plRate);
+	hr = IBasicVideo_get_BitErrorRate(pVideo,plRate);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -370,7 +384,9 @@ IBasicVideo2_fnget_VideoWidth(IBasicVideo2* iface,long* plWidth)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_get_VideoWidth(pVideo,plWidth);
+	hr = IBasicVideo_get_VideoWidth(pVideo,plWidth);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -381,7 +397,9 @@ IBasicVideo2_fnget_VideoHeight(IBasicVideo2* iface,long* plHeight)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_get_VideoHeight(pVideo,plHeight);
+	hr = IBasicVideo_get_VideoHeight(pVideo,plHeight);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -392,7 +410,9 @@ IBasicVideo2_fnput_SourceLeft(IBasicVideo2* iface,long lLeft)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_put_SourceLeft(pVideo,lLeft);
+	hr = IBasicVideo_put_SourceLeft(pVideo,lLeft);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -403,7 +423,9 @@ IBasicVideo2_fnget_SourceLeft(IBasicVideo2* iface,long* plLeft)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_get_SourceLeft(pVideo,plLeft);
+	hr = IBasicVideo_get_SourceLeft(pVideo,plLeft);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -414,7 +436,9 @@ IBasicVideo2_fnput_SourceWidth(IBasicVideo2* iface,long lWidth)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_put_SourceWidth(pVideo,lWidth);
+	hr = IBasicVideo_put_SourceWidth(pVideo,lWidth);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -425,7 +449,9 @@ IBasicVideo2_fnget_SourceWidth(IBasicVideo2* iface,long* plWidth)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_get_SourceWidth(pVideo,plWidth);
+	hr = IBasicVideo_get_SourceWidth(pVideo,plWidth);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -436,7 +462,9 @@ IBasicVideo2_fnput_SourceTop(IBasicVideo2* iface,long lTop)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_put_SourceTop(pVideo,lTop);
+	hr = IBasicVideo_put_SourceTop(pVideo,lTop);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -447,7 +475,9 @@ IBasicVideo2_fnget_SourceTop(IBasicVideo2* iface,long* plTop)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_get_SourceTop(pVideo,plTop);
+	hr = IBasicVideo_get_SourceTop(pVideo,plTop);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -458,7 +488,9 @@ IBasicVideo2_fnput_SourceHeight(IBasicVideo2* iface,long lHeight)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_put_SourceHeight(pVideo,lHeight);
+	hr = IBasicVideo_put_SourceHeight(pVideo,lHeight);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -469,7 +501,9 @@ IBasicVideo2_fnget_SourceHeight(IBasicVideo2* iface,long* plHeight)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_get_SourceHeight(pVideo,plHeight);
+	hr = IBasicVideo_get_SourceHeight(pVideo,plHeight);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -480,7 +514,9 @@ IBasicVideo2_fnput_DestinationLeft(IBasicVideo2* iface,long lLeft)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_put_DestinationLeft(pVideo,lLeft);
+	hr = IBasicVideo_put_DestinationLeft(pVideo,lLeft);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -491,7 +527,9 @@ IBasicVideo2_fnget_DestinationLeft(IBasicVideo2* iface,long* plLeft)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_get_DestinationLeft(pVideo,plLeft);
+	hr = IBasicVideo_get_DestinationLeft(pVideo,plLeft);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -502,7 +540,9 @@ IBasicVideo2_fnput_DestinationWidth(IBasicVideo2* iface,long lWidth)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_put_DestinationWidth(pVideo,lWidth);
+	hr = IBasicVideo_put_DestinationWidth(pVideo,lWidth);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -513,7 +553,9 @@ IBasicVideo2_fnget_DestinationWidth(IBasicVideo2* iface,long* plWidth)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_get_DestinationWidth(pVideo,plWidth);
+	hr = IBasicVideo_get_DestinationWidth(pVideo,plWidth);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -524,7 +566,9 @@ IBasicVideo2_fnput_DestinationTop(IBasicVideo2* iface,long lTop)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_put_DestinationTop(pVideo,lTop);
+	hr = IBasicVideo_put_DestinationTop(pVideo,lTop);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -535,7 +579,9 @@ IBasicVideo2_fnget_DestinationTop(IBasicVideo2* iface,long* plTop)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_get_DestinationTop(pVideo,plTop);
+	hr = IBasicVideo_get_DestinationTop(pVideo,plTop);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -546,7 +592,9 @@ IBasicVideo2_fnput_DestinationHeight(IBasicVideo2* iface,long lHeight)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_put_DestinationHeight(pVideo,lHeight);
+	hr = IBasicVideo_put_DestinationHeight(pVideo,lHeight);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -557,7 +605,9 @@ IBasicVideo2_fnget_DestinationHeight(IBasicVideo2* iface,long* plHeight)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_get_DestinationHeight(pVideo,plHeight);
+	hr = IBasicVideo_get_DestinationHeight(pVideo,plHeight);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -568,7 +618,9 @@ IBasicVideo2_fnSetSourcePosition(IBasicVideo2* iface,long lLeft,long lTop,long l
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_SetSourcePosition(pVideo,lLeft,lTop,lWidth,lHeight);
+	hr = IBasicVideo_SetSourcePosition(pVideo,lLeft,lTop,lWidth,lHeight);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -579,7 +631,9 @@ IBasicVideo2_fnGetSourcePosition(IBasicVideo2* iface,long* plLeft,long* plTop,lo
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_GetSourcePosition(pVideo,plLeft,plTop,plWidth,plHeight);
+	hr = IBasicVideo_GetSourcePosition(pVideo,plLeft,plTop,plWidth,plHeight);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -590,7 +644,9 @@ IBasicVideo2_fnSetDefaultSourcePosition(IBasicVideo2* iface)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_SetDefaultSourcePosition(pVideo);
+	hr = IBasicVideo_SetDefaultSourcePosition(pVideo);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -601,7 +657,9 @@ IBasicVideo2_fnSetDestinationPosition(IBasicVideo2* iface,long lLeft,long lTop,l
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_SetDestinationPosition(pVideo,lLeft,lTop,lWidth,lHeight);
+	hr = IBasicVideo_SetDestinationPosition(pVideo,lLeft,lTop,lWidth,lHeight);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -612,7 +670,9 @@ IBasicVideo2_fnGetDestinationPosition(IBasicVideo2* iface,long* plLeft,long* plT
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_GetDestinationPosition(pVideo,plLeft,plTop,plWidth,plHeight);
+	hr = IBasicVideo_GetDestinationPosition(pVideo,plLeft,plTop,plWidth,plHeight);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -623,7 +683,9 @@ IBasicVideo2_fnSetDefaultDestinationPosition(IBasicVideo2* iface)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_SetDefaultDestinationPosition(pVideo);
+	hr = IBasicVideo_SetDefaultDestinationPosition(pVideo);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -634,7 +696,9 @@ IBasicVideo2_fnGetVideoSize(IBasicVideo2* iface,long* plWidth,long* plHeight)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_GetVideoSize(pVideo,plWidth,plHeight);
+	hr = IBasicVideo_GetVideoSize(pVideo,plWidth,plHeight);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -645,7 +709,9 @@ IBasicVideo2_fnGetVideoPaletteEntries(IBasicVideo2* iface,long lStart,long lCoun
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_GetVideoPaletteEntries(pVideo,lStart,lCount,plRet,plPaletteEntry);
+	hr = IBasicVideo_GetVideoPaletteEntries(pVideo,lStart,lCount,plRet,plPaletteEntry);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -656,7 +722,9 @@ IBasicVideo2_fnGetCurrentImage(IBasicVideo2* iface,long* plBufferSize,long* plDI
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_GetCurrentImage(pVideo,plBufferSize,plDIBBuffer);
+	hr = IBasicVideo_GetCurrentImage(pVideo,plBufferSize,plDIBBuffer);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -667,7 +735,9 @@ IBasicVideo2_fnIsUsingDefaultSource(IBasicVideo2* iface)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_IsUsingDefaultSource(pVideo);
+	hr = IBasicVideo_IsUsingDefaultSource(pVideo);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -678,7 +748,9 @@ IBasicVideo2_fnIsUsingDefaultDestination(IBasicVideo2* iface)
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo_IsUsingDefaultDestination(pVideo);
+	hr = IBasicVideo_IsUsingDefaultDestination(pVideo);
+	IBasicVideo_Release(pVideo);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -689,7 +761,9 @@ IBasicVideo2_fnGetPreferredAspectRatio(IBasicVideo2* iface,long* plRateX,long* p
 
 	TRACE("(%p)->()\n",This);
 
-	return IBasicVideo2_GetPreferredAspectRatio(pVideo,plRateX,plRateY);
+	hr = IBasicVideo2_GetPreferredAspectRatio(pVideo,plRateX,plRateY);
+	IBasicVideo2_Release(pVideo);
+	return hr;
 }
 
 
@@ -854,7 +928,9 @@ IVideoWindow_fnput_Caption(IVideoWindow* iface,BSTR strCaption)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_Caption(pVidWin,strCaption);
+	hr = IVideoWindow_put_Caption(pVidWin,strCaption);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -865,7 +941,9 @@ IVideoWindow_fnget_Caption(IVideoWindow* iface,BSTR* pstrCaption)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_Caption(pVidWin,pstrCaption);
+	hr = IVideoWindow_get_Caption(pVidWin,pstrCaption);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -876,7 +954,9 @@ IVideoWindow_fnput_WindowStyle(IVideoWindow* iface,long lStyle)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_WindowStyle(pVidWin,lStyle);
+	hr = IVideoWindow_put_WindowStyle(pVidWin,lStyle);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -887,7 +967,9 @@ IVideoWindow_fnget_WindowStyle(IVideoWindow* iface,long* plStyle)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_WindowStyle(pVidWin,plStyle);
+	hr = IVideoWindow_get_WindowStyle(pVidWin,plStyle);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -898,7 +980,9 @@ IVideoWindow_fnput_WindowStyleEx(IVideoWindow* iface,long lExStyle)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_WindowStyleEx(pVidWin,lExStyle);
+	hr = IVideoWindow_put_WindowStyleEx(pVidWin,lExStyle);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -909,7 +993,9 @@ IVideoWindow_fnget_WindowStyleEx(IVideoWindow* iface,long* plExStyle)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_WindowStyleEx(pVidWin,plExStyle);
+	hr = IVideoWindow_get_WindowStyleEx(pVidWin,plExStyle);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -920,7 +1006,9 @@ IVideoWindow_fnput_AutoShow(IVideoWindow* iface,long lAutoShow)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_AutoShow(pVidWin,lAutoShow);
+	hr = IVideoWindow_put_AutoShow(pVidWin,lAutoShow);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -931,7 +1019,9 @@ IVideoWindow_fnget_AutoShow(IVideoWindow* iface,long* plAutoShow)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_AutoShow(pVidWin,plAutoShow);
+	hr = IVideoWindow_get_AutoShow(pVidWin,plAutoShow);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -942,7 +1032,9 @@ IVideoWindow_fnput_WindowState(IVideoWindow* iface,long lState)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_WindowState(pVidWin,lState);
+	hr = IVideoWindow_put_WindowState(pVidWin,lState);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -953,7 +1045,9 @@ IVideoWindow_fnget_WindowState(IVideoWindow* iface,long* plState)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_WindowState(pVidWin,plState);
+	hr = IVideoWindow_get_WindowState(pVidWin,plState);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -964,7 +1058,9 @@ IVideoWindow_fnput_BackgroundPalette(IVideoWindow* iface,long lBackPal)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_BackgroundPalette(pVidWin,lBackPal);
+	hr = IVideoWindow_put_BackgroundPalette(pVidWin,lBackPal);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -975,7 +1071,9 @@ IVideoWindow_fnget_BackgroundPalette(IVideoWindow* iface,long* plBackPal)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_BackgroundPalette(pVidWin,plBackPal);
+	hr = IVideoWindow_get_BackgroundPalette(pVidWin,plBackPal);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -986,7 +1084,9 @@ IVideoWindow_fnput_Visible(IVideoWindow* iface,long lVisible)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_Visible(pVidWin,lVisible);
+	hr = IVideoWindow_put_Visible(pVidWin,lVisible);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -997,7 +1097,9 @@ IVideoWindow_fnget_Visible(IVideoWindow* iface,long* plVisible)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_Visible(pVidWin,plVisible);
+	hr = IVideoWindow_get_Visible(pVidWin,plVisible);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1008,7 +1110,9 @@ IVideoWindow_fnput_Left(IVideoWindow* iface,long lLeft)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_Left(pVidWin,lLeft);
+	hr = IVideoWindow_put_Left(pVidWin,lLeft);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1019,7 +1123,9 @@ IVideoWindow_fnget_Left(IVideoWindow* iface,long* plLeft)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_Left(pVidWin,plLeft);
+	hr = IVideoWindow_get_Left(pVidWin,plLeft);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1030,7 +1136,9 @@ IVideoWindow_fnput_Width(IVideoWindow* iface,long lWidth)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_Width(pVidWin,lWidth);
+	hr = IVideoWindow_put_Width(pVidWin,lWidth);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1041,7 +1149,9 @@ IVideoWindow_fnget_Width(IVideoWindow* iface,long* plWidth)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_Width(pVidWin,plWidth);
+	hr =IVideoWindow_get_Width(pVidWin,plWidth);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1052,7 +1162,9 @@ IVideoWindow_fnput_Top(IVideoWindow* iface,long lTop)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_Top(pVidWin,lTop);
+	hr = IVideoWindow_put_Top(pVidWin,lTop);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1063,7 +1175,9 @@ IVideoWindow_fnget_Top(IVideoWindow* iface,long* plTop)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_Top(pVidWin,plTop);
+	hr = IVideoWindow_get_Top(pVidWin,plTop);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1074,7 +1188,9 @@ IVideoWindow_fnput_Height(IVideoWindow* iface,long lHeight)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_Height(pVidWin,lHeight);
+	hr = IVideoWindow_put_Height(pVidWin,lHeight);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1085,7 +1201,9 @@ IVideoWindow_fnget_Height(IVideoWindow* iface,long* plHeight)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_Height(pVidWin,plHeight);
+	hr = IVideoWindow_get_Height(pVidWin,plHeight);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1096,7 +1214,9 @@ IVideoWindow_fnput_Owner(IVideoWindow* iface,OAHWND hwnd)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_Owner(pVidWin,hwnd);
+	hr = IVideoWindow_put_Owner(pVidWin,hwnd);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1107,7 +1227,9 @@ IVideoWindow_fnget_Owner(IVideoWindow* iface,OAHWND* phwnd)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_Owner(pVidWin,phwnd);
+	hr = IVideoWindow_get_Owner(pVidWin,phwnd);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1118,7 +1240,9 @@ IVideoWindow_fnput_MessageDrain(IVideoWindow* iface,OAHWND hwnd)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_MessageDrain(pVidWin,hwnd);
+	hr = IVideoWindow_put_MessageDrain(pVidWin,hwnd);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1129,7 +1253,9 @@ IVideoWindow_fnget_MessageDrain(IVideoWindow* iface,OAHWND* phwnd)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_MessageDrain(pVidWin,phwnd);
+	hr = IVideoWindow_get_MessageDrain(pVidWin,phwnd);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1140,7 +1266,9 @@ IVideoWindow_fnget_BorderColor(IVideoWindow* iface,long* plColor)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_BorderColor(pVidWin,plColor);
+	hr = IVideoWindow_get_BorderColor(pVidWin,plColor);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1151,7 +1279,9 @@ IVideoWindow_fnput_BorderColor(IVideoWindow* iface,long lColor)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_BorderColor(pVidWin,lColor);
+	hr = IVideoWindow_put_BorderColor(pVidWin,lColor);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1162,7 +1292,9 @@ IVideoWindow_fnget_FullScreenMode(IVideoWindow* iface,long* plMode)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_get_FullScreenMode(pVidWin,plMode);
+	hr = IVideoWindow_get_FullScreenMode(pVidWin,plMode);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1173,7 +1305,9 @@ IVideoWindow_fnput_FullScreenMode(IVideoWindow* iface,long lMode)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_put_FullScreenMode(pVidWin,lMode);
+	hr = IVideoWindow_put_FullScreenMode(pVidWin,lMode);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1184,7 +1318,9 @@ IVideoWindow_fnSetWindowForeground(IVideoWindow* iface,long lFocus)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_SetWindowForeground(pVidWin,lFocus);
+	hr = IVideoWindow_SetWindowForeground(pVidWin,lFocus);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1195,7 +1331,9 @@ IVideoWindow_fnNotifyOwnerMessage(IVideoWindow* iface,OAHWND hwnd,long message,L
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_NotifyOwnerMessage(pVidWin,hwnd,message,wParam,lParam);
+	hr = IVideoWindow_NotifyOwnerMessage(pVidWin,hwnd,message,wParam,lParam);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1206,7 +1344,9 @@ IVideoWindow_fnSetWindowPosition(IVideoWindow* iface,long lLeft,long lTop,long l
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_SetWindowPosition(pVidWin,lLeft,lTop,lWidth,lHeight);
+	hr = IVideoWindow_SetWindowPosition(pVidWin,lLeft,lTop,lWidth,lHeight);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1217,7 +1357,9 @@ IVideoWindow_fnGetWindowPosition(IVideoWindow* iface,long* plLeft,long* plTop,lo
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_GetWindowPosition(pVidWin,plLeft,plTop,plWidth,plHeight);
+	hr = IVideoWindow_GetWindowPosition(pVidWin,plLeft,plTop,plWidth,plHeight);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1228,7 +1370,9 @@ IVideoWindow_fnGetMinIdealImageSize(IVideoWindow* iface,long* plWidth,long* plHe
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_GetMinIdealImageSize(pVidWin,plWidth,plHeight);
+	hr = IVideoWindow_GetMinIdealImageSize(pVidWin,plWidth,plHeight);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1239,7 +1383,9 @@ IVideoWindow_fnGetMaxIdealImageSize(IVideoWindow* iface,long* plWidth,long* plHe
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_GetMaxIdealImageSize(pVidWin,plWidth,plHeight);
+	hr = IVideoWindow_GetMaxIdealImageSize(pVidWin,plWidth,plHeight);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1250,7 +1396,9 @@ IVideoWindow_fnGetRestorePosition(IVideoWindow* iface,long* plLeft,long* plTop,l
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_GetRestorePosition(pVidWin,plLeft,plTop,plWidth,plHeight);
+	hr = IVideoWindow_GetRestorePosition(pVidWin,plLeft,plTop,plWidth,plHeight);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1261,7 +1409,9 @@ IVideoWindow_fnHideCursor(IVideoWindow* iface,long lHide)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_HideCursor(pVidWin,lHide);
+	hr = IVideoWindow_HideCursor(pVidWin,lHide);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -1272,7 +1422,9 @@ IVideoWindow_fnIsCursorHidden(IVideoWindow* iface,long* plHide)
 
 	TRACE("(%p)->()\n",This);
 
-	return IVideoWindow_IsCursorHidden(pVidWin,plHide);
+	hr = IVideoWindow_IsCursorHidden(pVidWin,plHide);
+	IVideoWindow_Release(pVidWin);
+	return hr;
 }
 
 

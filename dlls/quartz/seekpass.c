@@ -352,7 +352,9 @@ IMediaPosition_fnget_Duration(IMediaPosition* iface,REFTIME* prefTime)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaPosition_get_Duration(pPos,prefTime);
+	hr = IMediaPosition_get_Duration(pPos,prefTime);
+	IMediaPosition_Release(pPos);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -363,7 +365,9 @@ IMediaPosition_fnput_CurrentPosition(IMediaPosition* iface,REFTIME refTime)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaPosition_put_CurrentPosition(pPos,refTime);
+	hr = IMediaPosition_put_CurrentPosition(pPos,refTime);
+	IMediaPosition_Release(pPos);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -374,7 +378,9 @@ IMediaPosition_fnget_CurrentPosition(IMediaPosition* iface,REFTIME* prefTime)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaPosition_get_CurrentPosition(pPos,prefTime);
+	hr = IMediaPosition_get_CurrentPosition(pPos,prefTime);
+	IMediaPosition_Release(pPos);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -385,7 +391,9 @@ IMediaPosition_fnget_StopTime(IMediaPosition* iface,REFTIME* prefTime)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaPosition_get_StopTime(pPos,prefTime);
+	hr = IMediaPosition_get_StopTime(pPos,prefTime);
+	IMediaPosition_Release(pPos);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -396,7 +404,9 @@ IMediaPosition_fnput_StopTime(IMediaPosition* iface,REFTIME refTime)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaPosition_put_StopTime(pPos,refTime);
+	hr = IMediaPosition_put_StopTime(pPos,refTime);
+	IMediaPosition_Release(pPos);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -407,7 +417,9 @@ IMediaPosition_fnget_PrerollTime(IMediaPosition* iface,REFTIME* prefTime)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaPosition_get_PrerollTime(pPos,prefTime);
+	hr = IMediaPosition_get_PrerollTime(pPos,prefTime);
+	IMediaPosition_Release(pPos);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -418,7 +430,9 @@ IMediaPosition_fnput_PrerollTime(IMediaPosition* iface,REFTIME refTime)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaPosition_put_PrerollTime(pPos,refTime);
+	hr = IMediaPosition_put_PrerollTime(pPos,refTime);
+	IMediaPosition_Release(pPos);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -429,7 +443,9 @@ IMediaPosition_fnput_Rate(IMediaPosition* iface,double dblRate)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaPosition_put_Rate(pPos,dblRate);
+	hr = IMediaPosition_put_Rate(pPos,dblRate);
+	IMediaPosition_Release(pPos);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -440,7 +456,9 @@ IMediaPosition_fnget_Rate(IMediaPosition* iface,double* pdblRate)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaPosition_get_Rate(pPos,pdblRate);
+	hr = IMediaPosition_get_Rate(pPos,pdblRate);
+	IMediaPosition_Release(pPos);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -451,7 +469,9 @@ IMediaPosition_fnCanSeekForward(IMediaPosition* iface,LONG* pCanSeek)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaPosition_CanSeekForward(pPos,pCanSeek);
+	hr = IMediaPosition_CanSeekForward(pPos,pCanSeek);
+	IMediaPosition_Release(pPos);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -462,7 +482,9 @@ IMediaPosition_fnCanSeekBackward(IMediaPosition* iface,LONG* pCanSeek)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaPosition_CanSeekBackward(pPos,pCanSeek);
+	hr = IMediaPosition_CanSeekBackward(pPos,pCanSeek);
+	IMediaPosition_Release(pPos);
+	return hr;
 }
 
 
@@ -561,7 +583,9 @@ IMediaSeeking_fnGetCapabilities(IMediaSeeking* iface,DWORD* pdwCaps)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_GetCapabilities(pSeek,pdwCaps);
+	hr = IMediaSeeking_GetCapabilities(pSeek,pdwCaps);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -572,7 +596,9 @@ IMediaSeeking_fnCheckCapabilities(IMediaSeeking* iface,DWORD* pdwCaps)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_CheckCapabilities(pSeek,pdwCaps);
+	hr = IMediaSeeking_CheckCapabilities(pSeek,pdwCaps);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -583,7 +609,9 @@ IMediaSeeking_fnIsFormatSupported(IMediaSeeking* iface,const GUID* pidFormat)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_IsFormatSupported(pSeek,pidFormat);
+	hr = IMediaSeeking_IsFormatSupported(pSeek,pidFormat);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -594,7 +622,9 @@ IMediaSeeking_fnQueryPreferredFormat(IMediaSeeking* iface,GUID* pidFormat)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_QueryPreferredFormat(pSeek,pidFormat);
+	hr = IMediaSeeking_QueryPreferredFormat(pSeek,pidFormat);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -605,7 +635,9 @@ IMediaSeeking_fnGetTimeFormat(IMediaSeeking* iface,GUID* pidFormat)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_GetTimeFormat(pSeek,pidFormat);
+	hr = IMediaSeeking_GetTimeFormat(pSeek,pidFormat);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -616,7 +648,9 @@ IMediaSeeking_fnIsUsingTimeFormat(IMediaSeeking* iface,const GUID* pidFormat)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_IsUsingTimeFormat(pSeek,pidFormat);
+	hr = IMediaSeeking_IsUsingTimeFormat(pSeek,pidFormat);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -627,7 +661,9 @@ IMediaSeeking_fnSetTimeFormat(IMediaSeeking* iface,const GUID* pidFormat)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_SetTimeFormat(pSeek,pidFormat);
+	hr = IMediaSeeking_SetTimeFormat(pSeek,pidFormat);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -638,7 +674,9 @@ IMediaSeeking_fnGetDuration(IMediaSeeking* iface,LONGLONG* pllDuration)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_GetDuration(pSeek,pllDuration);
+	hr = IMediaSeeking_GetDuration(pSeek,pllDuration);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -649,7 +687,9 @@ IMediaSeeking_fnGetStopPosition(IMediaSeeking* iface,LONGLONG* pllPos)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_GetStopPosition(pSeek,pllPos);
+	hr = IMediaSeeking_GetStopPosition(pSeek,pllPos);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -660,7 +700,9 @@ IMediaSeeking_fnGetCurrentPosition(IMediaSeeking* iface,LONGLONG* pllPos)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_GetCurrentPosition(pSeek,pllPos);
+	hr = IMediaSeeking_GetCurrentPosition(pSeek,pllPos);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -671,7 +713,9 @@ IMediaSeeking_fnConvertTimeFormat(IMediaSeeking* iface,LONGLONG* pllOut,const GU
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_ConvertTimeFormat(pSeek,pllOut,pidFmtOut,llIn,pidFmtIn);
+	hr = IMediaSeeking_ConvertTimeFormat(pSeek,pllOut,pidFmtOut,llIn,pidFmtIn);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -682,7 +726,9 @@ IMediaSeeking_fnSetPositions(IMediaSeeking* iface,LONGLONG* pllCur,DWORD dwCurFl
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_SetPositions(pSeek,pllCur,dwCurFlags,pllStop,dwStopFlags);
+	hr = IMediaSeeking_SetPositions(pSeek,pllCur,dwCurFlags,pllStop,dwStopFlags);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -693,7 +739,9 @@ IMediaSeeking_fnGetPositions(IMediaSeeking* iface,LONGLONG* pllCur,LONGLONG* pll
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_GetPositions(pSeek,pllCur,pllStop);
+	hr = IMediaSeeking_GetPositions(pSeek,pllCur,pllStop);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -704,7 +752,9 @@ IMediaSeeking_fnGetAvailable(IMediaSeeking* iface,LONGLONG* pllFirst,LONGLONG* p
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_GetAvailable(pSeek,pllFirst,pllLast);
+	hr = IMediaSeeking_GetAvailable(pSeek,pllFirst,pllLast);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -715,7 +765,9 @@ IMediaSeeking_fnSetRate(IMediaSeeking* iface,double dblRate)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_SetRate(pSeek,dblRate);
+	hr = IMediaSeeking_SetRate(pSeek,dblRate);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -726,7 +778,9 @@ IMediaSeeking_fnGetRate(IMediaSeeking* iface,double* pdblRate)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_GetRate(pSeek,pdblRate);
+	hr = IMediaSeeking_GetRate(pSeek,pdblRate);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -737,7 +791,9 @@ IMediaSeeking_fnGetPreroll(IMediaSeeking* iface,LONGLONG* pllPreroll)
 
 	TRACE("(%p)->()\n",This);
 
-	return IMediaSeeking_GetPreroll(pSeek,pllPreroll);
+	hr = IMediaSeeking_GetPreroll(pSeek,pllPreroll);
+	IMediaSeeking_Release(pSeek);
+	return hr;
 }
 
 

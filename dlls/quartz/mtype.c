@@ -105,6 +105,11 @@ void QUARTZ_MediaType_Destroy(
 void QUARTZ_MediaSubType_FromFourCC(
 	GUID* psubtype, DWORD dwFourCC )
 {
+	TRACE( "FourCC %c%c%c%c\n",
+			(int)(dwFourCC>> 0)&0xff,
+			(int)(dwFourCC>> 8)&0xff,
+			(int)(dwFourCC>>16)&0xff,
+			(int)(dwFourCC>>24)&0xff );
 	memcpy( psubtype, &MEDIASUBTYPE_PCM, sizeof(GUID) );
 	psubtype->Data1 = dwFourCC;
 }
@@ -125,7 +130,7 @@ HRESULT QUARTZ_MediaSubType_FromBitmap(
 	HRESULT hr;
 	DWORD*	pdwBitf;
 
-	if ( (pbi->biCompression & 0xffff) != 0 )
+	if ( (pbi->biCompression & 0xffff0000) != 0 )
 		return S_FALSE;
 
 	if ( pbi->biWidth <= 0 || pbi->biHeight == 0 )
@@ -217,6 +222,25 @@ HRESULT QUARTZ_MediaSubType_FromBitmap(
 	}
 
 	return hr;
+}
+
+void QUARTZ_PatchBitmapInfoHeader( BITMAPINFOHEADER* pbi )
+{
+	switch ( pbi->biCompression )
+	{
+	case mmioFOURCC('R','G','B',' '):
+		pbi->biCompression = 0;
+		break;
+	case mmioFOURCC('R','L','E',' '):
+	case mmioFOURCC('M','R','L','E'):
+	case mmioFOURCC('R','L','E','8'):
+	case mmioFOURCC('R','L','E','4'):
+		if ( pbi->biBitCount == 4 )
+			pbi->biCompression = 2;
+		else
+			pbi->biCompression = 1;
+		break;
+	}
 }
 
 BOOL QUARTZ_BitmapHasFixedSample( const BITMAPINFOHEADER* pbi )

@@ -353,7 +353,7 @@ CPinBaseImpl_fnConnectionMediaType(IPin* iface,AM_MEDIA_TYPE* pmt)
 		ZeroMemory( pmt, sizeof(AM_MEDIA_TYPE) );
 		pmt->bFixedSizeSamples = TRUE;
 		pmt->lSampleSize = 1;
-		hr = NOERROR;
+		hr = VFW_E_NOT_CONNECTED;
 	}
 
 	LeaveCriticalSection( This->pcsPin );

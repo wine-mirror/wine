@@ -1217,7 +1217,8 @@ static HRESULT AsyncSourceFileImpl_Read( CAsyncSourceImpl* pImpl, LONGLONG llOfs
 
 	while ( lLength > 0 )
 	{
-		if ( WaitForSingleObject( hEventCancel, 0 ) == WAIT_OBJECT_0 )
+		if ( hEventCancel != (HANDLE)NULL &&
+			 WaitForSingleObject( hEventCancel, 0 ) == WAIT_OBJECT_0 )
 		{
 			hr = S_FALSE;
 			break;

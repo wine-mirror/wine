@@ -18,6 +18,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "strmif.h"
 #include "control.h"
 #include "uuids.h"
@@ -31,7 +32,12 @@ DEFAULT_DEBUG_CHANNEL(quartz);
 #include "fgraph.h"
 #include "enumunk.h"
 #include "sysclock.h"
+#include "regsvr.h"
 
+
+#ifndef NUMELEMS
+#define NUMELEMS(elem)	(sizeof(elem)/sizeof(elem[0]))
+#endif	/* NUMELEMS */
 
 static HRESULT CFilterGraph_DisconnectAllPins( IBaseFilter* pFilter )
 {
@@ -88,6 +94,289 @@ static HRESULT CFilterGraph_GraphChanged( CFilterGraph* This )
 
 	return NOERROR;
 }
+
+/***************************************************************************
+ *
+ *	CFilterGraph internal methods for IFilterGraph2::AddSourceFilter().
+ *
+ */
+
+static HRESULT QUARTZ_PeekFile(
+	const WCHAR* pwszFileName,
+	BYTE* pData, DWORD cbData, DWORD* pcbRead )
+{
+	HANDLE	hFile;
+	HRESULT hr = E_FAIL;
+
+	*pcbRead = 0;
+	hFile = CreateFileW( pwszFileName,
+		GENERIC_READ, FILE_SHARE_READ,
+		NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, (HANDLE)NULL );
+	if ( hFile == INVALID_HANDLE_VALUE )
+		return E_FAIL;
+	if ( ReadFile( hFile, pData, cbData, pcbRead, NULL ) )
+		hr = NOERROR;
+	CloseHandle( hFile );
+
+	return hr;
+}
+
+
+static const WCHAR* skip_space(const WCHAR* pwsz)
+{
+	if ( pwsz == NULL ) return NULL;
+	while ( *pwsz == (WCHAR)' ' ) pwsz++;
+	return pwsz;
+}
+
+static const WCHAR* get_dword(const WCHAR* pwsz,DWORD* pdw)
+{
+	DWORD	dw = 0;
+
+	*pdw = 0;
+	if ( pwsz == NULL ) return NULL;
+	while ( *pwsz >= (WCHAR)'0' && *pwsz <= (WCHAR)'9' )
+	{
+		dw = dw * 10 + (DWORD)(*pwsz-(WCHAR)'0');
+		pwsz ++;
+	}
+	*pdw = dw;
+	return pwsz;
+}
+
+static int wchar_to_hex(WCHAR wch)
+{
+	if ( wch >= (WCHAR)'0' && wch <= (WCHAR)'9' )
+		return (int)(wch - (WCHAR)'0');
+	if ( wch >= (WCHAR)'A' && wch <= (WCHAR)'F' )
+		return (int)(wch - (WCHAR)'A' + 10);
+	if ( wch >= (WCHAR)'a' && wch <= (WCHAR)'f' )
+		return (int)(wch - (WCHAR)'a' + 10);
+	return -1;
+}
+
+static const WCHAR* get_hex(const WCHAR* pwsz,BYTE* pb)
+{
+	int	hi,lo;
+
+	*pb = 0;
+	if ( pwsz == NULL ) return NULL;
+	hi = wchar_to_hex(*pwsz); if ( hi < 0 ) return NULL; pwsz++;
+	lo = wchar_to_hex(*pwsz); if ( lo < 0 ) return NULL; pwsz++;
+	*pb = (BYTE)( (hi << 4) | lo );
+	return pwsz;
+}
+
+static const WCHAR* skip_hex(const WCHAR* pwsz)
+{
+	if ( pwsz == NULL ) return NULL;
+	while ( 1 )
+	{
+		if ( wchar_to_hex(*pwsz) < 0 )
+			break;
+		pwsz++;
+	}
+	return pwsz;
+}
+
+static const WCHAR* next_token(const WCHAR* pwsz)
+{
+	if ( pwsz == NULL ) return NULL;
+	pwsz = skip_space(pwsz);
+	if ( *pwsz != (WCHAR)',' ) return NULL; pwsz++;
+	return skip_space(pwsz);
+}
+
+
+static HRESULT QUARTZ_SourceTypeIsMatch(
+	const BYTE* pData, DWORD cbData,
+	const WCHAR* pwszTempl, DWORD cchTempl )
+{
+	DWORD	dwOfs;
+	DWORD	n;
+	DWORD	cbLen;
+	const WCHAR*	pwszMask;
+	const WCHAR*	pwszValue;
+	BYTE	bMask;
+	BYTE	bValue;
+
+	TRACE("(%p,%lu,%s,%lu)\n",pData,cbData,debugstr_w(pwszTempl),cchTempl);
+
+	pwszTempl = skip_space(pwszTempl);
+	while ( 1 )
+	{
+		pwszTempl = get_dword(pwszTempl,&dwOfs);
+		pwszTempl = next_token(pwszTempl);
+		pwszTempl = get_dword(pwszTempl,&cbLen);
+		pwszMask = pwszTempl = next_token(pwszTempl);
+		pwszTempl = skip_hex(pwszTempl);
+		pwszValue = pwszTempl = next_token(pwszTempl);
+		pwszTempl = skip_hex(pwszValue);
+		pwszTempl = skip_space(pwszTempl);
+		if ( pwszValue == NULL )
+		{
+			WARN( "parse error\n" );
+			return S_FALSE;
+		}
+
+		if ( dwOfs >= cbData || ( (dwOfs+cbLen) >= cbData ) )
+		{
+			WARN( "length of given data is too short\n" );
+			return S_FALSE;
+		}
+
+		for ( n = 0; n < cbLen; n++ )
+		{
+			pwszMask = get_hex(pwszMask,&bMask);
+			if ( pwszMask == NULL ) bMask = 0xff;
+			pwszValue = get_hex(pwszValue,&bValue);
+			if ( pwszValue == NULL )
+			{
+				WARN( "parse error - invalid hex data\n" );
+				return S_FALSE;
+			}
+			if ( (pData[dwOfs+n]&bMask) != (bValue&bMask) )
+			{
+				TRACE( "not matched\n" );
+				return S_FALSE;
+			}
+		}
+
+		if ( *pwszTempl == 0 )
+			break;
+		pwszTempl = next_token(pwszTempl);
+		if ( pwszTempl == NULL )
+		{
+			WARN( "parse error\n" );
+			return S_FALSE;
+		}
+	}
+
+	TRACE( "matched\n" );
+	return NOERROR;
+}
+
+static HRESULT QUARTZ_GetSourceTypeFromData(
+	const BYTE* pData, DWORD cbData,
+	GUID* pidMajor, GUID* pidSub, CLSID* pidSource )
+{
+	HRESULT	hr = S_FALSE;
+	LONG	lr;
+	WCHAR	wszMajor[128];
+	WCHAR	wszSub[128];
+	WCHAR	wszSource[128];
+	WCHAR	wszSourceFilter[128];
+	WCHAR*	pwszLocalBuf = NULL;
+	WCHAR*	pwszTemp;
+	DWORD	cbLocalBuf = 0;
+	DWORD	cbPath;
+	DWORD	dwIndexMajor;
+	HKEY	hkMajor;
+	DWORD	dwIndexSub;
+	HKEY	hkSub;
+	DWORD	dwIndexSource;
+	HKEY	hkSource;
+	DWORD	dwRegType;
+	DWORD	cbRegData;
+	FILETIME	ftLastWrite;
+	static const WCHAR wszFmt[] = {'%','l','u',0};
+
+	if ( RegOpenKeyExW( HKEY_CLASSES_ROOT, QUARTZ_wszMediaType, 0, KEY_READ, &hkMajor ) == ERROR_SUCCESS )
+	{
+		dwIndexMajor = 0;
+		while ( hr == S_FALSE )
+		{
+			cbPath = NUMELEMS(wszMajor)-1;
+			lr = RegEnumKeyExW(
+				hkMajor, dwIndexMajor ++, wszMajor, &cbPath,
+				NULL, NULL, NULL, &ftLastWrite );
+			if ( lr != ERROR_SUCCESS )
+				break;
+			if ( RegOpenKeyExW( hkMajor, wszMajor, 0, KEY_READ, &hkSub ) == ERROR_SUCCESS )
+			{
+				dwIndexSub = 0;
+				while ( hr == S_FALSE )
+				{
+					cbPath = NUMELEMS(wszSub)-1;
+					lr = RegEnumKeyExW(
+						hkSub, dwIndexSub ++, wszSub, &cbPath,
+						NULL, NULL, NULL, &ftLastWrite );
+					if ( lr != ERROR_SUCCESS )
+						break;
+					if ( RegOpenKeyExW( hkSub, wszSub, 0, KEY_READ, &hkSource ) == ERROR_SUCCESS )
+					{
+						dwIndexSource = 0;
+						while ( hr == S_FALSE )
+						{
+							wsprintfW(wszSource,wszFmt,dwIndexSource++);
+							lr = RegQueryValueExW(
+								hkSource, wszSource, NULL,
+								&dwRegType, NULL, &cbRegData );
+							if ( lr != ERROR_SUCCESS )
+								break;
+							if ( cbLocalBuf < cbRegData )
+							{
+								pwszTemp = (WCHAR*)QUARTZ_ReallocMem( pwszLocalBuf, cbRegData+sizeof(WCHAR) );
+								if ( pwszTemp == NULL )
+								{
+									hr = E_OUTOFMEMORY;
+									break;
+								}
+								pwszLocalBuf = pwszTemp;
+								cbLocalBuf = cbRegData+sizeof(WCHAR);
+							}
+							cbRegData = cbLocalBuf;
+							lr = RegQueryValueExW(
+								hkSource, wszSource, NULL,
+								&dwRegType, (BYTE*)pwszLocalBuf, &cbRegData );
+							if ( lr != ERROR_SUCCESS )
+								break;
+
+							hr = QUARTZ_SourceTypeIsMatch(
+								pData, cbData,
+								pwszLocalBuf, cbRegData / sizeof(WCHAR) );
+							if ( hr == S_OK )
+							{
+								hr = CLSIDFromString(wszMajor,pidMajor);
+								if ( hr == NOERROR )
+									hr = CLSIDFromString(wszSub,pidSub);
+								if ( hr == NOERROR )
+								{
+									lstrcpyW(wszSource,QUARTZ_wszSourceFilter);
+									cbRegData = NUMELEMS(wszSourceFilter)-sizeof(WCHAR);
+									lr = RegQueryValueExW(
+										hkSource, wszSource, NULL,
+										&dwRegType,
+										(BYTE*)wszSourceFilter, &cbRegData );
+									if ( lr == ERROR_SUCCESS )
+									{
+										hr = CLSIDFromString(wszSourceFilter,pidSource);
+									}
+									else
+										hr = E_FAIL;
+								}
+
+								if ( hr != NOERROR && SUCCEEDED(hr) )
+									hr = E_FAIL;
+							}
+							if ( hr != S_FALSE )
+								break;
+						}
+						RegCloseKey( hkSource );
+					}
+				}
+				RegCloseKey( hkSub );
+			}
+		}
+		RegCloseKey( hkMajor );
+	}
+
+	if ( pwszLocalBuf != NULL )
+		QUARTZ_FreeMem(pwszLocalBuf);
+
+	return hr;
+}
+
 
 
 /***************************************************************************
@@ -178,7 +467,7 @@ IFilterGraph2_fnAddFilter(IFilterGraph2* iface,IBaseFilter* pFilter, LPCWSTR pNa
 		pItem = QUARTZ_CompList_SearchData(
 			This->m_pFilterList,
 			info.achName, sizeof(WCHAR)*(iLen+1) );
-		if ( pItem == NULL )
+		if ( iLen > 0 && pItem == NULL )
 		{
 			pName = info.achName;
 			goto name_ok;
@@ -210,7 +499,7 @@ IFilterGraph2_fnAddFilter(IFilterGraph2* iface,IBaseFilter* pFilter, LPCWSTR pNa
 	goto end;
 
 name_ok:
-	TRACE( "(%p) add this filter.\n",This );
+	TRACE( "(%p) add this filter - %s.\n",This,debugstr_w(pName) );
 
 	/* register this filter. */
 	hr = QUARTZ_CompList_AddComp(
@@ -511,6 +800,20 @@ static HRESULT WINAPI
 IFilterGraph2_fnConnect(IFilterGraph2* iface,IPin* pOut,IPin* pIn)
 {
 	CFilterGraph_THIS(iface,fgraph);
+	IFilterMapper2*	pMap2 = NULL;
+	IEnumMoniker*	pEnumMon = NULL;
+	IMoniker*	pMon = NULL;
+	IBaseFilter*	pFilter = NULL;
+	IEnumPins*	pEnumPin = NULL;
+	IPin*	pPinTry = NULL;
+	PIN_INFO	info;
+	PIN_DIRECTION	pindir;
+	ULONG	cReturned;
+	BOOL	bTryConnect;
+	BOOL	bConnected = FALSE;
+	CLSID	clsidOutFilter;
+	CLSID	clsidInFilter;
+	CLSID	clsid;
 	HRESULT	hr;
 
 	TRACE( "(%p)->(%p,%p)\n",This,pOut,pIn );
@@ -523,17 +826,232 @@ IFilterGraph2_fnConnect(IFilterGraph2* iface,IPin* pOut,IPin* pIn)
 	/* FIXME - try to connect indirectly. */
 	FIXME( "(%p)->(%p,%p) stub!\n",This,pOut,pIn );
 
+	info.pFilter = NULL;
+	hr = IPin_QueryPinInfo(pOut,&info);
+	if ( FAILED(hr) )
+		return hr;
+	if ( info.pFilter == NULL )
+		return E_FAIL;
+	hr = IBaseFilter_GetClassID(info.pFilter,&clsidOutFilter);
+	IBaseFilter_Release(info.pFilter);
+	if ( FAILED(hr) )
+		return hr;
 
-	return E_NOTIMPL;
+	info.pFilter = NULL;
+	hr = IPin_QueryPinInfo(pIn,&info);
+	if ( FAILED(hr) )
+		return hr;
+	if ( info.pFilter == NULL )
+		return E_FAIL;
+	hr = IBaseFilter_GetClassID(info.pFilter,&clsidInFilter);
+	IBaseFilter_Release(info.pFilter);
+	if ( FAILED(hr) )
+		return hr;
+
+	/* FIXME - try to connect with unused filters. */
+	/* FIXME - try to connect with cached filters. */
+	/* FIXME - enumerate transform filters and try to connect */
+	hr = CoCreateInstance(
+		&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
+		&IID_IFilterMapper2, (void**)&pMap2 );
+	if ( FAILED(hr) )
+		return hr;
+	hr = IFilterMapper2_EnumMatchingFilters(
+		pMap2,&pEnumMon,0,FALSE,MERIT_DO_NOT_USE+1,
+		TRUE,0,NULL,NULL,NULL,FALSE,
+		TRUE,0,NULL,NULL,NULL);
+	IFilterMapper2_Release(pMap2);
+	if ( FAILED(hr) )
+		return hr;
+	TRACE("try to connect indirectly\n");
+
+	if ( hr == S_OK )
+	{
+		while ( !bConnected && hr == S_OK )
+		{
+			hr = IEnumMoniker_Next(pEnumMon,1,&pMon,&cReturned);
+			if ( hr != S_OK )
+				break;
+			hr = IMoniker_BindToObject(pMon,NULL,NULL,&IID_IBaseFilter,(void**)&pFilter );
+			if ( hr == S_OK )
+			{
+				hr = IBaseFilter_GetClassID(pFilter,&clsid);
+				if ( hr == S_OK &&
+					 ( IsEqualGUID(&clsidOutFilter,&clsid) || IsEqualGUID(&clsidInFilter,&clsid) ) )
+					hr = S_FALSE;
+				else
+					hr = IFilterGraph2_AddFilter(iface,pFilter,NULL);
+				if ( hr == S_OK )
+				{
+					bTryConnect = FALSE;
+					hr = IBaseFilter_EnumPins(pFilter,&pEnumPin);
+					if ( hr == S_OK )
+					{
+						{
+							while ( !bTryConnect )
+							{
+								hr = IEnumPins_Next(pEnumPin,1,&pPinTry,&cReturned);
+								if ( hr != S_OK )
+									break;
+								hr = IPin_QueryDirection(pPinTry,&pindir);
+								if ( hr == S_OK && pindir == PINDIR_INPUT )
+								{
+									/* try to connect directly. */
+									hr = IFilterGraph2_ConnectDirect(iface,pOut,pPinTry,NULL);
+									if ( hr == S_OK )
+										bTryConnect = TRUE;
+									hr = S_OK;
+								}
+								IPin_Release(pPinTry); pPinTry = NULL;
+							}
+						}
+						IEnumPins_Release(pEnumPin); pEnumPin = NULL;
+					}
+					TRACE("TryConnect %d\n",bTryConnect);
+
+					if ( bTryConnect )
+					{
+						hr = IBaseFilter_EnumPins(pFilter,&pEnumPin);
+						if ( hr == S_OK )
+						{
+							while ( !bConnected )
+							{
+								hr = IEnumPins_Next(pEnumPin,1,&pPinTry,&cReturned);
+								if ( hr != S_OK )
+									break;
+								hr = IPin_QueryDirection(pPinTry,&pindir);
+								if ( hr == S_OK && pindir == PINDIR_OUTPUT )
+								{
+									/* try to connect indirectly. */
+									hr = IFilterGraph2_Connect(iface,pPinTry,pIn);
+									if ( hr == S_OK )
+										bConnected = TRUE;
+									hr = S_OK;
+								}
+								IPin_Release(pPinTry); pPinTry = NULL;
+							}
+							IEnumPins_Release(pEnumPin); pEnumPin = NULL;
+						}
+					}
+					if ( !bConnected )
+						hr = IFilterGraph2_RemoveFilter(iface,pFilter);
+				}
+				IBaseFilter_Release(pFilter); pFilter = NULL;
+				if ( SUCCEEDED(hr) )
+					hr = S_OK;
+			}
+			IMoniker_Release(pMon); pMon = NULL;
+		}
+		IEnumMoniker_Release(pEnumMon); pEnumMon = NULL;
+	}
+
+	if ( SUCCEEDED(hr) && !bConnected )
+		hr = VFW_E_CANNOT_CONNECT;
+
+	return hr;
 }
 
 static HRESULT WINAPI
 IFilterGraph2_fnRender(IFilterGraph2* iface,IPin* pOut)
 {
 	CFilterGraph_THIS(iface,fgraph);
+	HRESULT	hr;
+	IFilterMapper2*	pMap2 = NULL;
+	IEnumMoniker*	pEnumMon = NULL;
+	IMoniker*	pMon = NULL;
+	IBaseFilter*	pFilter = NULL;
+	IEnumPins*	pEnumPin = NULL;
+	IPin*	pPin = NULL;
+	PIN_DIRECTION	pindir;
+	BOOL	bRendered = FALSE;
+	ULONG	cReturned;
 
-	FIXME( "(%p)->(%p) stub!\n",This,pOut );
-	return E_NOTIMPL;
+	FIXME( "(%p)->(%p)\n",This,pOut );
+
+	/* FIXME - must be locked */
+	/*QUARTZ_CompList_Lock( This->m_pFilterList );*/
+
+	if ( pOut == NULL )
+		return E_POINTER;
+
+	hr = CoCreateInstance(
+		&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER,
+		&IID_IFilterMapper2, (void**)&pMap2 );
+	if ( FAILED(hr) )
+		return hr;
+	hr = IFilterMapper2_EnumMatchingFilters(
+		pMap2,&pEnumMon,0,FALSE,MERIT_DO_NOT_USE+1,
+		TRUE,0,NULL,NULL,NULL,TRUE,
+		FALSE,0,NULL,NULL,NULL);
+	IFilterMapper2_Release(pMap2);
+	if ( FAILED(hr) )
+		return hr;
+	TRACE("try to render pin\n");
+
+	if ( hr == S_OK )
+	{
+		/* try to render pin. */
+		while ( !bRendered && hr == S_OK )
+		{
+			hr = IEnumMoniker_Next(pEnumMon,1,&pMon,&cReturned);
+			if ( hr != S_OK )
+				break;
+			hr = IMoniker_BindToObject(pMon,NULL,NULL,&IID_IBaseFilter,(void**)&pFilter );
+			if ( hr == S_OK )
+			{
+				hr = IFilterGraph2_AddFilter(iface,pFilter,NULL);
+				if ( hr == S_OK )
+				{
+					hr = IBaseFilter_EnumPins(pFilter,&pEnumPin);
+					if ( hr == S_OK )
+					{
+						while ( !bRendered )
+						{
+							hr = IEnumPins_Next(pEnumPin,1,&pPin,&cReturned);
+							if ( hr != S_OK )
+								break;
+							hr = IPin_QueryDirection(pPin,&pindir);
+							if ( hr == S_OK && pindir == PINDIR_INPUT )
+							{
+								/* try to connect. */
+								hr = IFilterGraph2_Connect(iface,pOut,pPin);
+								if ( hr == S_OK )
+									bRendered = TRUE;
+								hr = S_OK;
+							}
+							IPin_Release(pPin); pPin = NULL;
+						}
+						IEnumPins_Release(pEnumPin); pEnumPin = NULL;
+					}
+					if ( !bRendered )
+						hr = IFilterGraph2_RemoveFilter(iface,pFilter);
+				}
+				IBaseFilter_Release(pFilter); pFilter = NULL;
+				if ( SUCCEEDED(hr) )
+					hr = S_OK;
+			}
+			IMoniker_Release(pMon); pMon = NULL;
+		}
+		IEnumMoniker_Release(pEnumMon); pEnumMon = NULL;
+	}
+
+	if ( bRendered )
+	{
+		/* successfully rendered(but may be partial now) */
+		hr = S_OK;
+
+		/* FIXME - try to render all inserted filters. */
+		/* hr = VFW_S_PARTIAL_RENDER; */
+	}
+	else
+	{
+		if ( SUCCEEDED(hr) )
+			hr = VFW_E_CANNOT_RENDER;
+	}
+
+	/*QUARTZ_CompList_Unlock( This->m_pFilterList );*/
+
+	return hr;
 }
 
 static HRESULT WINAPI
@@ -564,6 +1082,8 @@ IFilterGraph2_fnRenderFile(IFilterGraph2* iface,LPCWSTR lpFileName,LPCWSTR lpPla
 		hr = E_FAIL;
 		goto end;
 	}
+	TRACE("(%p) source filter %p\n",This,pFilter);
+
 	pEnum = NULL;
 	hr = IBaseFilter_EnumPins( pFilter, &pEnum );
 	if ( FAILED(hr) )
@@ -621,10 +1141,67 @@ static HRESULT WINAPI
 IFilterGraph2_fnAddSourceFilter(IFilterGraph2* iface,LPCWSTR lpFileName,LPCWSTR lpFilterName,IBaseFilter** ppBaseFilter)
 {
 	CFilterGraph_THIS(iface,fgraph);
+	HRESULT	hr;
+	BYTE	bStartData[512];
+	DWORD	cbStartData;
+	AM_MEDIA_TYPE	mt;
+	CLSID	clsidSource;
+	IFileSourceFilter*	pSource;
 
-	FIXME( "(%p)->(%s,%s,%p) stub!\n",This,
+	FIXME( "(%p)->(%s,%s,%p)\n",This,
 		debugstr_w(lpFileName),debugstr_w(lpFilterName),ppBaseFilter );
-	return E_NOTIMPL;
+
+	if ( lpFileName == NULL || ppBaseFilter == NULL )
+		return E_POINTER;
+	*ppBaseFilter = NULL;
+
+	hr = QUARTZ_PeekFile( lpFileName, bStartData, 512, &cbStartData );
+	if ( FAILED(hr) )
+	{
+		FIXME("cannot open %s (NOTE: URL is not implemented)\n", debugstr_w(lpFileName));
+		return hr;
+	}
+	ZeroMemory( &mt, sizeof(AM_MEDIA_TYPE) );
+	mt.bFixedSizeSamples = 1;
+	mt.lSampleSize = 1;
+	memcpy( &mt.majortype, &MEDIATYPE_Stream, sizeof(GUID) );
+	memcpy( &mt.subtype, &MEDIASUBTYPE_NULL, sizeof(GUID) );
+	memcpy( &mt.formattype, &FORMAT_None, sizeof(GUID) );
+	hr = QUARTZ_GetSourceTypeFromData(
+		bStartData, cbStartData,
+		&mt.majortype, &mt.subtype, &clsidSource );
+	if ( FAILED(hr) )
+	{
+		ERR("QUARTZ_GetSourceTypeFromData() failed - return %08lx\n",hr);
+		return hr;
+	}
+	if ( hr != S_OK )
+	{
+		FIXME( "file %s - unknown format\n", debugstr_w(lpFileName) );
+		return VFW_E_INVALID_FILE_FORMAT;
+	}
+
+	hr = CoCreateInstance(
+		&clsidSource, NULL, CLSCTX_INPROC_SERVER,
+		&IID_IBaseFilter, (void**)ppBaseFilter );
+	if ( FAILED(hr) )
+		return hr;
+	hr = IBaseFilter_QueryInterface(*ppBaseFilter,&IID_IFileSourceFilter,(void**)&pSource);
+	if ( SUCCEEDED(hr) )
+	{
+		hr = IFileSourceFilter_Load(pSource,lpFileName,&mt);
+		IFileSourceFilter_Release(pSource);
+	}
+	if ( SUCCEEDED(hr) )
+		hr = IFilterGraph2_AddFilter(iface,*ppBaseFilter,lpFilterName);
+	if ( FAILED(hr) )
+	{
+		IBaseFilter_Release(*ppBaseFilter);
+		*ppBaseFilter = NULL;
+		return hr;
+	}
+
+	return S_OK;
 }
 
 static HRESULT WINAPI

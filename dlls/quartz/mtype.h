@@ -25,6 +25,7 @@ BOOL QUARTZ_MediaSubType_IsFourCC(
 HRESULT QUARTZ_MediaSubType_FromBitmap(
 	GUID* psubtype, const BITMAPINFOHEADER* pbi );
 
+void QUARTZ_PatchBitmapInfoHeader( BITMAPINFOHEADER* pbi );
 BOOL QUARTZ_BitmapHasFixedSample( const BITMAPINFOHEADER* pbi );
 
 
