@@ -188,7 +188,7 @@ struct statvfs
 
 /* Macros to define assembler functions somewhat portably */
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__MINGW32__) 
 # define __ASM_GLOBAL_FUNC(name,code) \
       __asm__( ".text\n\t" \
                ".align 4\n\t" \
@@ -197,7 +197,7 @@ struct statvfs
                __ASM_NAME(#name) ":\n\t" \
                code \
                "\n\t.previous" );
-#else  /* __GNUC__ */
+#else  /* defined(__GNUC__) && !defined(__MINGW32__) */
 # define __ASM_GLOBAL_FUNC(name,code) \
       void __asm_dummy_##name(void) { \
           asm( ".align 4\n\t" \
