@@ -61,4 +61,14 @@ typedef unsigned long u_long;
 #define mode_t _mode_t
 #define off_t _off_t
 
+#ifndef _PID_T_DEFINED
+typedef int pid_t;
+#define _PID_T_DEFINED
+#endif
+
+#ifndef _SSIZE_T_DEFINED
+typedef int ssize_t;
+#define _SSIZE_T_DEFINED
+#endif
+
 #endif /* __WINE_SYS_TYPES_H */
