@@ -1,0 +1,129 @@
+The X11 driver
+--------------
+
+   Most Wine users run Wine under the windowing system known as X11.
+   During most of Wine's history, this was the only display driver
+   available, but in recent years, parts of Wine has been reorganized to
+   allow for other display drivers (although the only alternative
+   currently available is Patrik Stridvall's ncurses-based ttydrv, which
+   he claims works for displaying calc.exe). The display driver is chosen
+   with the "GraphicsDriver" option in the [wine] section of
+   wine.conf/.winerc, but I will only cover the x11drv in this article.
+   
+  x11drv modes of operation
+  
+   The x11drv consists of two conceptually distinct pieces, the graphics
+   driver (GDI part), and the windowing driver (USER part). Both of these
+   are linked into the libx11drv.so module, though (which you load with
+   the "GraphicsDriver" option). In Wine, running on X11, the graphics
+   driver must draw on drawables (window interiors) provided by the
+   windowing driver. This differs a bit from the Windows model, where the
+   windowing system creates and configures device contexts controlled by
+   the graphics driver, and applications are allowed to hook into this
+   relationship anywhere they like. Thus, to provide any reasonable
+   tradeoff between compatibility and usability, the x11drv has three
+   different modes of operation.
+   
+   Unmanaged/Normal
+          The default. Window-manager-independent (any running window
+          manager is ignored completely). Window decorations (title bars,
+          borders, etc) are drawn by Wine to look and feel like the real
+          Windows. This is compatible with applications that depend on
+          being able to compute the exact sizes of any such decorations,
+          or that want to draw their own.
+          
+   Managed
+          Specified by using the --managed command-line option or the
+          Managed wine.conf option (see below). Ordinary top-level frame
+          windows with thick borders, title bars, and system menus will
+          be managed by your window manager. This lets these applications
+          integrate better with the rest of your desktop, but may not
+          always work perfectly. (A rewrite of this mode of operation, to
+          make it more robust and less patchy, is highly desirable,
+          though, and is planned to be done before the Wine 1.0 release.)
+          
+   Desktop-in-a-Box
+          Specified by using the --desktop command-line option (with a
+          geometry, e.g. --desktop 800x600 for a such-sized desktop, or
+          even --desktop 800x600+0+0 to automatically position the
+          desktop at the upper-left corner of the display). This is the
+          mode most compatible with the Windows model. All application
+          windows will just be Wine-drawn windows inside the
+          Wine-provided desktop window (which will itself be managed by
+          your window manager), and Windows applications can roam freely
+          within this virtual workspace and think they own it all,
+          without disturbing your other X apps.
+          
+  The [x11drv] section
+  
+   AllocSystemColors
+          Applies only if you have a palette-based display, i.e. if your
+          X server is set to a depth of 8bpp, and if you haven't
+          requested a private color map. It specifies the maximum number
+          of shared colormap cells (palette entries) Wine should occupy.
+          The higher this value, the less colors will be available to
+          other applications.
+          
+   PrivateColorMap
+          Applies only if you have a palette-based display, i.e. if your
+          X server is set to a depth of 8bpp. It specifies that you don't
+          want to use the shared color map, but a private color map,
+          where all 256 colors are available. The disadvantage is that
+          Wine's private color map is only seen while the mouse pointer
+          is inside a Wine window, so psychedelic flashing and funky
+          colors will become routine if you use the mouse a lot.
+          
+   PerfectGraphics
+          This option only determines whether fast X11 routines or exact
+          Wine routines will be used for certain ROP codes in blit
+          operations. Most users won't notice any difference.
+          
+   ScreenDepth
+          Applies only to multi-depth displays. It specifies which of the
+          available depths Wine should use (and tell Windows apps about).
+          
+   Display
+          This specifies which X11 display to use, and if specified, will
+          override both the DISPLAY environment variable and the
+          --display command-line option.
+          
+   Managed
+          Wine can let frame windows be managed by your window manager.
+          This option specifies whether you want that by default.
+          
+   UseDGA
+          This specifies whether you want DirectDraw to use XFree86's
+          Direct Graphics Architecture (DGA), which is able to take over
+          the entire display and run the game full-screen at maximum
+          speed. (With DGA1 (XFree86 3.x), you still have to configure
+          the X server to the game's requested bpp first, but with DGA2
+          (XFree86 4.x), runtime depth-switching may be possible,
+          depending on your driver's capabilities.) But be aware that if
+          Wine crashes while in DGA mode, it may not be possible to
+          regain control over your computer without rebooting. DGA
+          normally requires either root privileges or read/write access
+          to /dev/mem.
+          
+   UseXShm
+          If you don't want DirectX to use DGA, you can at least use X
+          Shared Memory extensions (XShm). It is much slower than DGA,
+          since the app doesn't have direct access to the physical frame
+          buffer, but using shared memory to draw the frame is at least
+          faster than sending the data through the standard X11 socket,
+          even though Wine's XShm support is still known to crash
+          sometimes.
+          
+   DXGrab
+          If you don't use DGA, you may want an alternative means to
+          convince the mouse cursor to stay within the game window. This
+          option does that. Of course, as with DGA, if Wine crashes,
+          you're in trouble (although not as badly as in the DGA case,
+          since you can still use the keyboard to get out of X).
+          
+   DesktopDoubleBuffered
+          Applies only if you use the --desktop command-line option to
+          run in a desktop window. Specifies whether to create the
+          desktop window with a double-buffered visual, something most
+          OpenGL games need to run correctly.
+          
+                                                              - Ove Kåven
