@@ -219,7 +219,7 @@ LPOPENCONTEXT AddPacketToContextQueue(LPWTPACKET packet, HWND hwnd)
                 {
                     ptr->ActiveCursor = packet->pkCursor;
                     if (ptr->context.lcOptions & CXO_CSRMESSAGES)
-                        TABLET_PostTabletMessage(ptr, WT_CSRCHANGE,
+                        TABLET_PostTabletMessage(ptr, _WT_CSRCHANGE(ptr->context.lcMsgBase),
                           (WPARAM)packet->pkSerialNumber, (LPARAM)ptr->handle,
                             FALSE);
                 }
@@ -419,12 +419,12 @@ HCTX WINAPI WTOpenA(HWND hWnd, LPLOGCONTEXTA lpLogCtx, BOOL fEnable)
 
     pAttachEventQueueToTablet(hWnd);
 
-    TABLET_PostTabletMessage(newcontext, WT_CTXOPEN, (WPARAM)newcontext->handle,
+    TABLET_PostTabletMessage(newcontext, _WT_CTXOPEN(newcontext->context.lcMsgBase), (WPARAM)newcontext->handle,
                       newcontext->context.lcStatus, TRUE);
 
     newcontext->context.lcStatus = CXS_ONTOP;
 
-    TABLET_PostTabletMessage(newcontext, WT_CTXOVERLAP,
+    TABLET_PostTabletMessage(newcontext, _WT_CTXOVERLAP(newcontext->context.lcMsgBase),
                             (WPARAM)newcontext->handle,
                             newcontext->context.lcStatus, TRUE);
 
@@ -474,7 +474,7 @@ BOOL WINAPI WTClose(HCTX hCtx)
 
     LeaveCriticalSection(&csTablet);
 
-    TABLET_PostTabletMessage(context, WT_CTXCLOSE, (WPARAM)context->handle,
+    TABLET_PostTabletMessage(context, _WT_CTXCLOSE(context->context.lcMsgBase), (WPARAM)context->handle,
                       context->context.lcStatus,TRUE);
 
     HeapFree(GetProcessHeap(),0,context->PacketQueue);

@@ -123,17 +123,19 @@ static LRESULT WINAPI TABLET_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
                 LPOPENCONTEXT handler;
                 pGetCurrentPacket(&packet);
                 handler = AddPacketToContextQueue(&packet,(HWND)lParam);
-                if (handler)
-                    TABLET_PostTabletMessage(handler, WT_PACKET,
+                if (handler && handler->context.lcOptions & CXO_MESSAGES)
+                    TABLET_PostTabletMessage(handler, _WT_PACKET(handler->context.lcMsgBase),
                                 (WPARAM)packet.pkSerialNumber,
                                 (LPARAM)handler->handle, FALSE);
                 break;
             }
         case WT_PROXIMITY:
             {
+                WTPACKET packet;
                 LPOPENCONTEXT handler;
                 LPARAM prox;
-                handler = FindOpenContext((HWND)lParam);
+                pGetCurrentPacket(&packet);
+                handler = AddPacketToContextQueue(&packet,(HWND)lParam);
                 if (handler)
                 {
                     prox = MAKELPARAM( wParam, 1 );

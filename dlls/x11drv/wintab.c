@@ -647,9 +647,23 @@ int X11DRV_ProcessTabletEvent(HWND hwnd, XEvent *event)
     else if ((event->type == proximity_in_type) ||
              (event->type == proximity_out_type))
     {
+        XProximityNotifyEvent *proximity = (XProximityNotifyEvent *) event;
+
         TRACE_(event)("Received tablet proximity event\n");
         TRACE("Received tablet proximity event\n");
         gMsgPacket.pkStatus = (event->type==proximity_out_type)?TPS_PROXIMITY:0;
+        gMsgPacket.pkTime = proximity->time;
+        gMsgPacket.pkSerialNumber = gSerial++;
+        gMsgPacket.pkCursor = proximity->deviceid;
+        gMsgPacket.pkX = proximity->axis_data[0];
+        gMsgPacket.pkY = proximity->axis_data[1];
+        gMsgPacket.pkOrientation.orAzimuth =
+                    figure_deg(proximity->axis_data[3],proximity->axis_data[4]);
+        gMsgPacket.pkOrientation.orAltitude = 1000 - 15 * max
+                    (abs(proximity->axis_data[3]),abs(proximity->axis_data[4]));
+        gMsgPacket.pkNormalPressure = proximity->axis_data[2];
+        gMsgPacket.pkButtons = get_button_state(proximity->deviceid);
+
         SendMessageW(hwndTabletDefault, WT_PROXIMITY,
                      (event->type==proximity_out_type)?0:1, (LPARAM)hwnd);
     }
