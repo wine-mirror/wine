@@ -35,6 +35,7 @@ WORD
 
 int
 short
+signed char
 unsigned int
 
 %ptr

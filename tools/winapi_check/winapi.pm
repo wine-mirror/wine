@@ -351,7 +351,7 @@ sub parse_spec_file {
 	    } elsif($$function_module{$internal_name} !~ /$module/) {
 		$$function_module{$internal_name} .= " & $module";
 	    }
-	} elsif(/^(\d+|@)\s+forward\s+(\S+)\s+(\S+)\.(\S+)$/) {
+	} elsif(/^(\d+|@)\s+forward(?:\s+(?:-noimport|-norelay|-i386|-ret64))?\s+(\S+)\s+(\S+)\.(\S+)$/) {
 	    $ordinal = $1;
 
 	    my $external_name = $2;

@@ -50,7 +50,7 @@ sub check_function {
     }
     
     my $segmented = 0;
-    if($implemented_return_kind =~ /^segptr|segstr$/) {
+    if(defined($implemented_return_kind) && $implemented_return_kind =~ /^segptr|segstr$/) {
 	$segmented = 1;
     }
 
@@ -73,7 +73,7 @@ sub check_function {
 	} elsif($calling_convention =~ /^VFWAPIV|WINAPIV$/) {
 	    $implemented_calling_convention = "varargs";
 	} elsif($calling_convention =~ /^__stdcall|VFWAPI|WINAPI|CALLBACK$/) {
-	    if($implemented_return_kind =~ /^longlong$/) {
+	    if(defined($implemented_return_kind) && $implemented_return_kind =~ /^longlong$/) {
 		$implemented_calling_convention = "stdcall"; # FIXME: Check entry flags
 	    } else {
 		$implemented_calling_convention = "stdcall";

@@ -148,6 +148,8 @@ my %includes;
 		my $header = $1;
 		if(-e "$file_dir/$header") {
 		    $includes{$file}{includes}{"$file_dir/$header"}++;
+		} elsif(-e "$file_dir/../$header") { # FIXME: This is not correct
+		    $includes{$file}{includes}{"$file_dir/../$header"}++; # FIXME: This is not correct
 		} elsif(-e "$wine_dir/include/$header") {
 		    $includes{$file}{includes}{"include/$header"}++;
 		} else {
