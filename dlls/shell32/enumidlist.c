@@ -220,7 +220,7 @@ static BOOL32 WINAPI IEnumIDList_CreateEnumList(LPENUMIDLIST this, LPCSTR lpszPa
 
 	if (lpszPath && lpszPath[0]!='\0')
 	{ strcpy(szPath, lpszPath);
-	  PathAddBackslash(szPath);
+	  PathAddBackslash32A(szPath);
 	  strcat(szPath,"*.*");
 	}
 

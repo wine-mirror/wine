@@ -126,7 +126,7 @@ LPSHELLFOLDER IShellFolder_Constructor(LPSHELLFOLDER pParent,LPITEMIDLIST pidl)
 	  { *(sf->mlpszFolder)=0x00;
 	    if(sf->mpSFParent->mlpszFolder)		/* if the parent has a path, get it*/
 	    {  strcpy(sf->mlpszFolder, sf->mpSFParent->mlpszFolder);
-	       PathAddBackslash (sf->mlpszFolder);
+	       PathAddBackslash32A (sf->mlpszFolder);
 	    }
 	    _ILGetFolderText(sf->mpidl, sf->mlpszFolder+strlen(sf->mlpszFolder), dwSize-strlen(sf->mlpszFolder));
 	    TRACE(shell,"-- (%p)->(my path=%s)\n",sf, debugstr_a(sf->mlpszFolder));
@@ -218,21 +218,23 @@ static HRESULT WINAPI IShellFolder_ParseDisplayName(
 	LPSHELLFOLDER this,
 	HWND32 hwndOwner,
 	LPBC pbcReserved,
-    LPOLESTR32 lpszDisplayName,
-    DWORD *pchEaten,
-    LPITEMIDLIST *ppidl,
+	LPOLESTR32 lpszDisplayName,
+	DWORD *pchEaten,
+	LPITEMIDLIST *ppidl,
 	DWORD *pdwAttributes)
 {	HRESULT        hr=E_OUTOFMEMORY;
-  LPITEMIDLIST   pidlFull=NULL, pidlTemp = NULL, pidlOld = NULL;
-  LPSTR          pszNext=NULL;
-  CHAR           szElement[MAX_PATH];
-  BOOL32         bType;
-
-  DWORD          dwChars=lstrlen32W(lpszDisplayName) + 1;
-  LPSTR          pszTemp=(LPSTR)HeapAlloc(GetProcessHeap(),0,dwChars * sizeof(CHAR));
+	LPITEMIDLIST   pidlFull=NULL, pidlTemp = NULL, pidlOld = NULL;
+	LPSTR          pszTemp, pszNext=NULL;
+	CHAR           szElement[MAX_PATH];
+	BOOL32         bType;
+	DWORD          dwChars;
        
-  TRACE(shell,"(%p)->(HWND=0x%08x,%p,%p=%s,%p,pidl=%p,%p)\n",
-	this,hwndOwner,pbcReserved,lpszDisplayName,debugstr_w(lpszDisplayName),pchEaten,ppidl,pdwAttributes);
+	TRACE(shell,"(%p)->(HWND=0x%08x,%p,%p=%s,%p,pidl=%p,%p)\n",
+		this,hwndOwner,pbcReserved,lpszDisplayName,
+		debugstr_w(lpszDisplayName),pchEaten,ppidl,pdwAttributes);
+
+	dwChars=lstrlen32W(lpszDisplayName) + 1;
+	pszTemp=(LPSTR)HeapAlloc(GetProcessHeap(),0,dwChars);
 
 	if(pszTemp)
 	{ hr = E_FAIL;
@@ -647,7 +649,7 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	      strcat (szDrive,")"); 
 	    }
 	    else
-	    {  PathAddBackslash (szTemp);
+	    {  PathAddBackslash32A (szTemp);
 	       strcpy(szDrive,szTemp);
 	    }
 	  }
@@ -673,7 +675,7 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	        if (this->mlpszFolder && strlen (this->mlpszFolder))
 	        { if (strcmp(this->mlpszFolder,"My Computer"))
 	          { strcpy (szText,this->mlpszFolder);
-	            PathAddBackslash (szText);
+	            PathAddBackslash32A (szText);
 	          }
 	        }
 	        pidlTemp = ILFindLastID(pidl);
@@ -704,7 +706,7 @@ static HRESULT WINAPI IShellFolder_GetDisplayNameOf( LPSHELLFOLDER this, LPCITEM
 	if(!(lpName))
 	{  return E_OUTOFMEMORY;
 	}
-	lpName->uType = STRRET_CSTR;	
+	lpName->uType = STRRET_CSTRA;	
 	strcpy(lpName->u.cStr,szText);
 	return S_OK;
 }

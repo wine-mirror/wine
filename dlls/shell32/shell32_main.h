@@ -21,7 +21,11 @@ extern INT32 (CALLBACK* pImageList_AddIcon) (HIMAGELIST himl, HICON32 hIcon);
 extern INT32(CALLBACK* pImageList_ReplaceIcon) (HIMAGELIST, INT32, HICON32);
 extern HIMAGELIST (CALLBACK * pImageList_Create) (INT32,INT32,UINT32,INT32,INT32);
 extern HICON32 (CALLBACK * pImageList_GetIcon) (HIMAGELIST, INT32, UINT32);
-
+extern HDPA (CALLBACK* pDPA_Create) (INT32);  
+extern INT32 (CALLBACK* pDPA_InsertPtr) (const HDPA, INT32, LPVOID); 
+extern BOOL32 (CALLBACK* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
+extern LPVOID (CALLBACK* pDPA_GetPtr) (const HDPA, INT32);   
+extern BOOL32 (CALLBACK* pDPA_Destroy) (const HDPA); 
 /* FIXME should be moved to a header file. IsEqualGUID 
 is declared but not exported in compobj.c !!!*/
 #define IsEqualGUID(rguid1, rguid2) (!memcmp(rguid1, rguid2, sizeof(GUID)))

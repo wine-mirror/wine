@@ -483,6 +483,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	    tFolder=FT_DESKTOP;			
 	    break;
 	  case CSIDL_DESKTOPDIRECTORY:
+	  case CSIDL_COMMON_DESKTOPDIRECTORY:
 	    strcpy (buffer,"Desktop");
 	    break;
 	  case CSIDL_DRIVES:
@@ -496,10 +497,16 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	  case CSIDL_NETHOOD:
 	    strcpy (buffer,"NetHood");			
 	    break;
+	  case CSIDL_PRINTHOOD:
+	    strcpy (buffer,"PrintHood");			
+	    break;
 	  case CSIDL_NETWORK:
 	    strcpy (buffer,"xxx");				/*virtual folder*/
 	    TRACE (shell,"looking for Network\n");
 	    tFolder=FT_UNKNOWN;
+	    break;
+	  case CSIDL_APPDATA:
+	    strcpy (buffer,"Appdata");			
 	    break;
 	  case CSIDL_PERSONAL:
 	    strcpy (buffer,"Personal");			
@@ -510,6 +517,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	  case CSIDL_PRINTERS:
 	    strcpy (buffer,"PrintHood");
 	    break;
+	  case CSIDL_COMMON_PROGRAMS:
 	  case CSIDL_PROGRAMS:
 	    strcpy (buffer,"Programs");			
 	    break;
@@ -519,9 +527,11 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	  case CSIDL_SENDTO:
 	    strcpy (buffer,"SendTo");
 	    break;
+	  case CSIDL_COMMON_STARTMENU:
 	  case CSIDL_STARTMENU:
 	    strcpy (buffer,"Start Menu");
 	    break;
+	  case CSIDL_COMMON_STARTUP:  
 	  case CSIDL_STARTUP:
 	    strcpy (buffer,"Startup");			
 	    break;
@@ -529,7 +539,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	    strcpy (buffer,"Templates");			
 	    break;
 	  default:
-	    ERR (shell,"unknown CSIDL\n");
+	    ERR (shell,"unknown CSIDL 0x%08x\n", nFolder);
 	    tFolder=FT_UNKNOWN;			
 	    break;
 	}
@@ -544,9 +554,10 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 			create it and the directory*/
 	    if (RegQueryValueEx32A(key,buffer,NULL,&type,tpath,&tpathlen))
   	    { GetWindowsDirectory32A(npath,MAX_PATH);
-	      PathAddBackslash(npath);
+	      PathAddBackslash32A(npath);
 	      switch (nFolder)
 	      { case CSIDL_DESKTOPDIRECTORY:
+	        case CSIDL_COMMON_DESKTOPDIRECTORY:
       		  strcat (npath,"Desktop");
          	  break;
       		case CSIDL_FONTS:
@@ -554,6 +565,12 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
          	  break;
       		case CSIDL_NETHOOD:
          	  strcat (npath,"NetHood");			
+         	  break;
+		case CSIDL_PRINTHOOD:
+         	  strcat (npath,"PrintHood");			
+         	  break;
+	        case CSIDL_APPDATA:
+         	  strcat (npath,"Appdata");			
          	  break;
 	        case CSIDL_PERSONAL:
          	  strcpy (npath,"C:\\Personal");			
@@ -564,6 +581,7 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
 	        case CSIDL_PRINTERS:
          	  strcat (npath,"PrintHood");			
          	  break;
+	        case CSIDL_COMMON_PROGRAMS:
       		case CSIDL_PROGRAMS:
          	  strcat (npath,"Start Menu");			
          	  CreateDirectory32A(npath,NULL);
@@ -575,9 +593,11 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32 hwndOwner, INT32 nFolder, LPITE
       		case CSIDL_SENDTO:
          	  strcat (npath,"SendTo");
          	  break;
+	        case CSIDL_COMMON_STARTMENU:
       		case CSIDL_STARTMENU:
          	  strcat (npath,"Start Menu");
          	  break;
+	        case CSIDL_COMMON_STARTUP:  
       		case CSIDL_STARTUP:
          	  strcat (npath,"Start Menu");			
          	  CreateDirectory32A(npath,NULL);
@@ -887,7 +907,7 @@ DWORD WINAPI SHGetPathFromIDList32A (LPCITEMIDLIST pidl,LPSTR pszPath)
      strcpy (buffer,"Desktop");					/*registry name*/
      if ( RegQueryValueEx32A(key,buffer,NULL,&type,tpath,&tpathlen))
      { GetWindowsDirectory32A(tpath,MAX_PATH);
-       PathAddBackslash(tpath);
+       PathAddBackslash32A(tpath);
        strcat (tpath,"Desktop");				/*folder name*/
        RegSetValueEx32A(key,buffer,0,REG_SZ,tpath,tpathlen);
        CreateDirectory32A(tpath,NULL);
@@ -927,6 +947,11 @@ INT32 (CALLBACK* pImageList_AddIcon) (HIMAGELIST himl, HICON32 hIcon);
 INT32(CALLBACK* pImageList_ReplaceIcon) (HIMAGELIST, INT32, HICON32);
 HIMAGELIST (CALLBACK * pImageList_Create) (INT32,INT32,UINT32,INT32,INT32);
 HICON32 (CALLBACK * pImageList_GetIcon) (HIMAGELIST, INT32, UINT32);
+HDPA (CALLBACK* pDPA_Create) (INT32);  
+INT32 (CALLBACK* pDPA_InsertPtr) (const HDPA, INT32, LPVOID); 
+BOOL32 (CALLBACK* pDPA_Sort) (const HDPA, PFNDPACOMPARE, LPARAM); 
+LPVOID (CALLBACK* pDPA_GetPtr) (const HDPA, INT32);   
+BOOL32 (CALLBACK* pDPA_Destroy) (const HDPA); 
 
 /*************************************************************************
  * SHELL32 LibMain
@@ -950,7 +975,7 @@ BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRe
   shell32_hInstance = hinstDLL;
   
   GetWindowsDirectory32A(szShellPath,MAX_PATH);
-  PathAddBackslash(szShellPath);
+  PathAddBackslash32A(szShellPath);
   strcat(szShellPath,"system\\shell32.dll");
        
   if (fdwReason==DLL_PROCESS_ATTACH)
@@ -964,6 +989,13 @@ BOOL32 WINAPI Shell32LibMain(HINSTANCE32 hinstDLL, DWORD fdwReason, LPVOID lpvRe
       pImageList_AddIcon=GetProcAddress32(hComctl32,"ImageList_AddIcon");
       pImageList_ReplaceIcon=GetProcAddress32(hComctl32,"ImageList_ReplaceIcon");
       pImageList_GetIcon=GetProcAddress32(hComctl32,"ImageList_GetIcon");
+      /* imports by ordinal, pray that it works*/
+      pDPA_Create=GetProcAddress32(hComctl32, (LPCSTR)328L);
+      pDPA_Destroy=GetProcAddress32(hComctl32, (LPCSTR)329L);
+      pDPA_GetPtr=GetProcAddress32(hComctl32, (LPCSTR)332L);
+      pDPA_InsertPtr=GetProcAddress32(hComctl32, (LPCSTR)334L);
+      pDPA_Sort=GetProcAddress32(hComctl32, (LPCSTR)338L);
+
       FreeLibrary32(hComctl32);
     }
     else

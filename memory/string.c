@@ -408,6 +408,9 @@ INT32 WINAPI lstrncmpi32W( LPCWSTR str1, LPCWSTR str2, INT32 n )
 LPWSTR WINAPI lstrcpyAtoW( LPWSTR dst, LPCSTR src )
 {
     register LPWSTR p = dst;
+
+    TRACE(string,"%s\n",src);
+
     while ((*p++ = (WCHAR)(unsigned char)*src++));
     return dst;
 }
@@ -419,6 +422,9 @@ LPWSTR WINAPI lstrcpyAtoW( LPWSTR dst, LPCSTR src )
 LPSTR WINAPI lstrcpyWtoA( LPSTR dst, LPCWSTR src )
 {
     register LPSTR p = dst;
+
+    TRACE(string,"L%s\n",debugstr_w(src));
+
     while ((*p++ = (CHAR)*src++));
     return dst;
 }
@@ -432,6 +438,9 @@ LPSTR WINAPI lstrcpyWtoA( LPSTR dst, LPCWSTR src )
 LPWSTR WINAPI lstrcpynAtoW( LPWSTR dst, LPCSTR src, INT32 n )
 {
     LPWSTR p = dst;
+
+    TRACE(string,"%s %i\n",src, n);
+
     while ((n-- > 1) && *src) *p++ = (WCHAR)(unsigned char)*src++;
     if (n >= 0) *p = 0;
     return dst;
@@ -446,6 +455,9 @@ LPWSTR WINAPI lstrcpynAtoW( LPWSTR dst, LPCSTR src, INT32 n )
 LPSTR WINAPI lstrcpynWtoA( LPSTR dst, LPCWSTR src, INT32 n )
 {
     LPSTR p = dst;
+
+    TRACE(string,"L%s %i\n",debugstr_w(src), n);
+
     while ((n-- > 1) && *src) *p++ = (CHAR)*src++;
     if (n >= 0) *p = 0;
     return dst;
@@ -631,7 +643,7 @@ INT32 WINAPI WideCharToLocal32(
 		LPWSTR pWide, 
 		INT32 dwChars)
 { *pLocal = 0;
-  TRACE(string,"(%p, %s, %li)\n",	pLocal, debugstr_w(pWide),dwChars);
+  TRACE(string,"(%p, %s, %i)\n",	pLocal, debugstr_w(pWide),dwChars);
   WideCharToMultiByte(CP_ACP,0,pWide,-1,pLocal,dwChars,NULL,NULL);
   return strlen(pLocal);
 }
@@ -647,7 +659,7 @@ INT32 WINAPI LocalToWideChar32(
 		LPSTR pLocal, 
 		INT32 dwChars)
 { *pWide = 0;
-  TRACE(string,"(%p, %s, %li)\n",pWide,	pLocal, dwChars);
+  TRACE(string,"(%p, %s, %i)\n",pWide,	pLocal, dwChars);
 	MultiByteToWideChar(CP_ACP,0,pLocal,-1,pWide,dwChars); 
   return lstrlen32W(pWide);
 }

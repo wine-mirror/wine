@@ -283,25 +283,25 @@ static HRESULT ShellView_FillList(LPSHELLVIEW this)
         }
 
 	/* create a pointer array */	
-  	hdpa = DPA_Create(16);
+  	hdpa = pDPA_Create(16);
 	if (!hdpa)
 	{ return(E_OUTOFMEMORY);
 	}
 
 	/* copy the items into the array*/
 	while((S_OK == pEnumIDList->lpvtbl->fnNext(pEnumIDList,1, &pidl, &dwFetched)) && dwFetched)
-	{ if (DPA_InsertPtr(hdpa, 0x7fff, pidl) == -1)
+	{ if (pDPA_InsertPtr(hdpa, 0x7fff, pidl) == -1)
 	  { SHFree(pidl);
           } 
 	}
-	
+
 	/*sort the array*/
-	DPA_Sort(hdpa, ShellView_CompareItems, (LPARAM)this->pSFParent);
+	pDPA_Sort(hdpa, ShellView_CompareItems, (LPARAM)this->pSFParent);
 
 	/*turn the listview's redrawing off*/
  	SendMessage32A(this->hWndList, WM_SETREDRAW, FALSE, 0); 
 
-        for (i=0; i < DPA_GetPtrCount(hdpa); ++i)
+        for (i=0; i < DPA_GetPtrCount(hdpa); ++i) 	/* DPA_GetPtrCount is a macro*/
         { pidl = (LPITEMIDLIST)DPA_GetPtr(hdpa, i);
 	  if (IncludeObject(this, pidl) == S_OK)	/* in a commdlg this works as a filemask*/
 	  { ZeroMemory(&lvItem, sizeof(lvItem));	/* create the listviewitem*/
@@ -322,7 +322,7 @@ static HRESULT ShellView_FillList(LPSHELLVIEW this)
 	UpdateWindow32(this->hWndList);
 
 	pEnumIDList->lpvtbl->fnRelease(pEnumIDList); /* destroy the list*/
-	DPA_Destroy(hdpa);
+	pDPA_Destroy(hdpa);
 	
 	return S_OK;
 }
@@ -727,26 +727,21 @@ LRESULT ShellView_OnSettingChange(LPSHELLVIEW this, LPCSTR lpszSection)
 	}
 	return 0;
 }
-
 /**************************************************************************
-*   ShellView_DoContextMenu()
+*   ShellView_GetSelections()
+*
+* RETURNS
+*  number of selected items
 */   
-void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
-{	UINT32	uCommand, i;
-	DWORD	wFlags;
-	HMENU32 hMenu;
-	BOOL32  fExplore = FALSE;
-	HWND32  hwndTree = 0;
-	INT32          	nMenuIndex;
-	LVITEM32A	lvItem;
-	MENUITEMINFO32A	mii;
-	LPCONTEXTMENU	pContextMenu = NULL;
-	CMINVOKECOMMANDINFO32  cmi;
-	
-	TRACE(shell,"(%p)->(0x%08x 0x%08x 0x%08x) stub\n",this, x, y, fDefault);
+UINT32 ShellView_GetSelections(LPSHELLVIEW this)
+{	LVITEM32A	lvItem;
+	UINT32	i;
+
 	this->uSelected = ListView_GetSelectedCount(this->hWndList);
 	this->aSelectedItems = (LPITEMIDLIST*)SHAlloc(this->uSelected * sizeof(LPITEMIDLIST));
 
+	TRACE(shell,"selected=%i\n", this->uSelected);
+	
 	if(this->aSelectedItems)
 	{ TRACE(shell,"-- Items selected =%u\n", this->uSelected);
 	  ZeroMemory(&lvItem, sizeof(lvItem));
@@ -764,8 +759,30 @@ void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
 	    }
 	    lvItem.iItem++;
 	  }
+	}
+	return this->uSelected;
 
-	  this->pSFParent->lpvtbl->fnGetUIObjectOf(	this->pSFParent,
+}
+/**************************************************************************
+*   ShellView_DoContextMenu()
+*/   
+void ShellView_DoContextMenu(LPSHELLVIEW this, WORD x, WORD y, BOOL32 fDefault)
+{	UINT32	uCommand;
+	DWORD	wFlags;
+	HMENU32 hMenu;
+	BOOL32  fExplore = FALSE;
+	HWND32  hwndTree = 0;
+	INT32          	nMenuIndex;
+	MENUITEMINFO32A	mii;
+	LPCONTEXTMENU	pContextMenu = NULL;
+	CMINVOKECOMMANDINFO32  cmi;
+	
+	TRACE(shell,"(%p)->(0x%08x 0x%08x 0x%08x) stub\n",this, x, y, fDefault);
+	this->uSelected = ListView_GetSelectedCount(this->hWndList);
+	this->aSelectedItems = (LPITEMIDLIST*)SHAlloc(this->uSelected * sizeof(LPITEMIDLIST));
+
+	if(ShellView_GetSelections(this))
+	{ this->pSFParent->lpvtbl->fnGetUIObjectOf(	this->pSFParent,
 							this->hWndParent,
 							this->uSelected,
 							this->aSelectedItems,
@@ -953,9 +970,12 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 	          { WideCharToLocal32(lpdi->item.pszText, str.u.pOleStr, lpdi->item.cchTextMax);
 	            SHFree(str.u.pOleStr);
 	          }
-	          if(STRRET_CSTR == str.uType)
+	          else if(STRRET_CSTRA == str.uType)
 	          { strncpy(lpdi->item.pszText, str.u.cStr, lpdi->item.cchTextMax);
 	          }
+		  else
+		  { FIXME(shell,"type wrong\n");
+		  }
 	        }
 	      }
 
@@ -980,8 +1000,9 @@ LRESULT ShellView_OnNotify(LPSHELLVIEW this, UINT32 CtlID, LPNMHDR lpnmh)
 	    break;
 
 	  case LVN_ITEMCHANGED:
-	    WARN(shell,"-- LVN_ITEMCHANGED %p\n",this);
-	    OnStateChange(this, CDBOSC_SELCHANGE);  
+	    TRACE(shell,"-- LVN_ITEMCHANGED %p\n",this);
+	    ShellView_GetSelections(this);
+	    OnStateChange(this, CDBOSC_SELCHANGE);  /* the browser will get the IDataObject now */
 	    break;
 
 	  case LVN_DELETEALLITEMS:
@@ -1234,10 +1255,11 @@ static HRESULT WINAPI IShellView_ContextSensitiveHelp(LPSHELLVIEW this,BOOL32 fE
 */
 static HRESULT WINAPI IShellView_TranslateAccelerator(LPSHELLVIEW this,LPMSG32 lpmsg)
 {	FIXME(shell,"(%p)->(%p: hwnd=%x msg=%x lp=%lx wp=%x) stub\n",this,lpmsg, lpmsg->hwnd, lpmsg->message, lpmsg->lParam, lpmsg->wParam);
-/*	switch (lpmsg->message)
-	{ case WM_RBUTTONDOWN:		
-		return SendMessage32A ( lpmsg->hwnd, WM_NOTIFY, );
-	}*/
+
+	
+	switch (lpmsg->message)
+	{ case WM_KEYDOWN: 	TRACE(shell,"-- key=0x04%x",lpmsg->wParam) ;
+	}
 	return S_FALSE;
 }
 static HRESULT WINAPI IShellView_EnableModeless(LPSHELLVIEW this,BOOL32 fEnable)
@@ -1395,21 +1417,25 @@ static HRESULT WINAPI IShellView_SelectItem(LPSHELLVIEW this, LPCITEMIDLIST pidl
   return E_NOTIMPL;
 }
 static HRESULT WINAPI IShellView_GetItemObject(LPSHELLVIEW this, UINT32 uItem, REFIID riid, LPVOID *ppvOut)
-{ 	LPDATAOBJECT pDataObject;
+{ 	LPUNKNOWN	pObj = NULL; 
 	char    xriid[50];
-	HRESULT       hr;
 	
 	WINE_StringFromCLSID((LPCLSID)riid,xriid);
 	TRACE(shell,"(%p)->(uItem=0x%08x,\n\tIID=%s, ppv=%p)\n",this, uItem, xriid, ppvOut);
 
 	*ppvOut = NULL;
-	pDataObject = IDataObject_Constructor(this->hWndParent, this->pSFParent,this->aSelectedItems,this->uSelected);
-	if(!pDataObject)
-	  return E_OUTOFMEMORY;
-	hr = pDataObject->lpvtbl->fnQueryInterface(pDataObject, riid, ppvOut);
-	pDataObject->lpvtbl->fnRelease(pDataObject);
+	if(IsEqualIID(riid, &IID_IContextMenu))
+	{ TRACE(shell,"-- (%p)->IID_IContextMenu not implemented\n",this);       
+	  return(E_NOTIMPL);
+	}
+	else if (IsEqualIID(riid, &IID_IDataObject))
+	{ pObj =(LPUNKNOWN)IDataObject_Constructor(this->hWndParent, this->pSFParent,this->aSelectedItems,this->uSelected);
+	}
 
 	TRACE(shell,"-- (%p)->(interface=%p)\n",this, ppvOut);
 
-	return hr;
+	if(!pObj)
+	  return E_OUTOFMEMORY;
+	*ppvOut = pObj;
+	return S_OK;
 }

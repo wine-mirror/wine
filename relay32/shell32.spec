@@ -34,15 +34,15 @@ init	Shell32LibMain
   26 stub ILLoadFromStream@8
   27 stub ILSaveToStream@8
   28 stub SHILCreateFromPath@12
-  29 stdcall PathIsRoot(str) PathIsRoot
+  29 stdcall PathIsRoot(str) PathIsRoot32AW
   30 stdcall PathBuildRoot(ptr long) PathBuildRoot
-  31 stdcall PathFindExtension(str) PathFindExtension
-  32 stdcall PathAddBackslash(str) PathAddBackslash
+  31 stdcall PathFindExtension(str) PathFindExtension32AW
+  32 stdcall PathAddBackslash(str) PathAddBackslash32AW
   33 stdcall PathRemoveBlanks(str) PathRemoveBlanks
   34 stdcall PathFindFilename(str) PathFindFilename
   35 stdcall PathRemoveFileSpec(str) PathRemoveFileSpec
   36 stdcall PathAppend(str str) PathAppend
-  37 stdcall PathCombine(ptr str str) PathCombine
+  37 stdcall PathCombine(ptr str str) PathCombine32AW
   38 stub PathStripPath
   39 stdcall PathIsUNC(str) PathIsUNC
   40 stub PathIsRelative
@@ -163,7 +163,7 @@ init	Shell32LibMain
  155 stdcall ILFree(ptr) ILFree
  156 stub ILGlobalFree
  157 stdcall ILCreateFromPath (ptr) ILCreateFromPath
- 158 stdcall PathGetExtension(str long long) PathGetExtension
+ 158 stdcall PathGetExtension(str long long) PathGetExtension32AW
  159 stub PathIsDirectory
  160 stub SHNetConnectionDialog
  161 stdcall SHRunControlPanel (long long) SHRunControlPanel
@@ -285,9 +285,9 @@ init	Shell32LibMain
  276 stub SheFullPathA
  277 stub SheFullPathW
  278 stub SheGetCurDrive
- 279 stub SheGetDirA
- 280 stub SheGetDirExW
- 281 stub SheGetDirW
+ 279 stub SheGetDirA@8
+ 280 stub SheGetDirExW@12
+ 281 stdcall SheGetDirW (long long) SheGetDirW
  282 stub SheGetPathOffsetW
  283 stub SheRemoveQuotesA
  284 stub SheRemoveQuotesW
@@ -313,7 +313,7 @@ init	Shell32LibMain
  304 stdcall StrChrW (ptr ptr) StrChrW # proper ordinal unknown
  305 stub StrCmpNA # proper ordinal unknown
  306 stub StrCmpNIA # proper ordinal unknown
- 307 stub StrCmpNIW # proper ordinal unknown
+ 307 stdcall StrCmpNIW (wstr wstr long) StrCmpNIW  # proper ordinal unknown
  308 stub StrCmpNW # proper ordinal unknown
  309 stub StrCpyNA # proper ordinal unknown
  310 stub StrCpyNW # proper ordinal unknown
@@ -326,7 +326,7 @@ init	Shell32LibMain
  317 stub StrRChrA # proper ordinal unknown
  318 stub StrRChrIA # proper ordinal unknown
  319 stub StrRChrIW # proper ordinal unknown
- 320 stub StrRChrW # proper ordinal unknown
+ 320 stdcall StrRChrW (wstr wstr long) StrRChrW # proper ordinal unknown
  321 stub StrRStrA # proper ordinal unknown
  322 stub StrRStrIA # proper ordinal unknown
  323 stub StrRStrIW # proper ordinal unknown

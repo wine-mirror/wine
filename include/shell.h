@@ -227,10 +227,28 @@ HRESULT WINAPI SHGetSpecialFolderLocation(HWND32, INT32, LPITEMIDLIST *);
 /****************************************************************************
 *  string and path functions
 */
-LPSTR WINAPI PathAddBackslash(LPSTR path);	
-LPSTR WINAPI PathCombine(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile);
+LPSTR  WINAPI PathAddBackslash32A(LPSTR path);	
+LPWSTR WINAPI PathAddBackslash32W(LPWSTR path);	
+#define  PathAddBackslash WINELIB_NAME_AW(PathAddBackslash)
+LPVOID  WINAPI PathAddBackslash32AW(LPVOID path);	
+
+LPSTR  WINAPI PathCombine32A(LPSTR szDest, LPCSTR lpszDir, LPCSTR lpszFile);
+LPWSTR WINAPI PathCombine32W(LPWSTR szDest, LPCWSTR lpszDir, LPCWSTR lpszFile);
+#define  PathCombine WINELIB_NAME_AW(PathCombine)
+LPVOID WINAPI PathCombine32AW(LPVOID szDest, LPCVOID lpszDir, LPCVOID lpszFile);
+
+LPCSTR WINAPI PathFindExtension32A(LPCSTR path);
+LPCWSTR WINAPI PathFindExtension32W(LPCWSTR path);
+#define  PathFindExtension WINELIB_NAME_AW(PathFindExtension)
+LPCVOID WINAPI PathFindExtension32AW(LPCVOID path); 
+
+LPCSTR WINAPI PathGetExtension32A(LPCSTR path, DWORD y, DWORD x);
+LPCWSTR WINAPI PathGetExtension32W(LPCWSTR path, DWORD y, DWORD x);
+#define  PathGetExtension WINELIB_NAME_AW(PathGetExtension)
+LPCVOID WINAPI PathGetExtension32AW(LPCVOID path, DWORD y, DWORD x); 
+
 LPSTR WINAPI PathRemoveBlanks(LPSTR str);
-LPSTR WINAPI PathFindFilename(LPSTR fn);
+LPVOID WINAPI PathFindFilename(LPVOID fn);
 /****************************************************************************
 *  other functions
 */
@@ -261,6 +279,12 @@ DWORD WINAPI SHFree(LPVOID x);
 #define	CSIDL_NETHOOD		0x0013
 #define	CSIDL_FONTS		0x0014
 #define	CSIDL_TEMPLATES		0x0015
+#define CSIDL_COMMON_STARTMENU	0x0016
+#define CSIDL_COMMON_PROGRAMS	0X0017
+#define CSIDL_COMMON_STARTUP	0x0018
+#define CSIDL_COMMON_DESKTOPDIRECTORY	0x0019
+#define CSIDL_APPDATA		0x001a
+#define CSIDL_PRINTHOOD		0x001b
 
 
 #endif  /* __WINE_SHELL_H */

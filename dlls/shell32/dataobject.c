@@ -313,9 +313,11 @@ static HRESULT WINAPI IDataObject_GetData (LPDATAOBJECT this, LPFORMATETC32 pfor
 	    { return(E_UNEXPECTED);
 	    }
 	    pidl = this->lpill->lpvtbl->fnGetElement(this->lpill, 0);
+
+	    pdump(this->pidl);
 	    pdump(pidl);
 	    
-	    /*hack*/
+	    /*hack consider only the first item*/
 	    cItems = 2;
 	    size = sizeof(CIDA) + sizeof (UINT32)*(cItems-1);
 	    size1 = ILGetSize (this->pidl);

@@ -22,6 +22,7 @@
 #include "winnls.h"
 #include "winproc.h"
 #include "commctrl.h"
+#include "winversion.h"
 #include "shell32_main.h"
 
 #include "pidl.h"
@@ -313,17 +314,21 @@ DWORD WINAPI ILFree(LPVOID pidl)
  * ILCreateFromPath [SHELL32.157]
  *
  */
-LPITEMIDLIST WINAPI ILCreateFromPath(LPSTR path) 
+LPITEMIDLIST WINAPI ILCreateFromPath(LPVOID path) 
 {	LPSHELLFOLDER shellfolder;
 	LPITEMIDLIST pidlnew;
-	CHAR pszTemp[MAX_PATH*2];
-	LPWSTR lpszDisplayName = (LPWSTR)&pszTemp[0];
+	WCHAR lpszDisplayName[MAX_PATH];
 	DWORD pchEaten;
 	
-	TRACE(pidl,"(path=%s)\n",path);
-	
-	LocalToWideChar32(lpszDisplayName, path, MAX_PATH);
-  
+	if ( !VERSION_OsIsUnicode())
+	{ TRACE(pidl,"(path=%s)\n",(LPSTR)path);
+	  LocalToWideChar32(lpszDisplayName, path, MAX_PATH);
+  	}
+	else
+	{ TRACE(pidl,"(path=L%s)\n",debugstr_w(path));
+	  lstrcpy32W(lpszDisplayName, path);
+	}
+
 	if (SHGetDesktopFolder(&shellfolder)==S_OK)
 	{ shellfolder->lpvtbl->fnParseDisplayName(shellfolder,0, NULL,lpszDisplayName,&pchEaten,&pidlnew,NULL);
 	  shellfolder->lpvtbl->fnRelease(shellfolder);
@@ -532,7 +537,7 @@ DWORD WINAPI _ILGetFolderText(LPCITEMIDLIST pidl,LPSTR lpszPath, DWORD dwSize)
 	  }
 	  pText = _ILGetTextPointer(pData->type,pData);   
 	  strcat(lpszPath, pText);
-	  PathAddBackslash(lpszPath);
+	  PathAddBackslash32A(lpszPath);
 	  dwCopied += strlen(pText) + 1;
 	  pidlTemp = ILGetNext(pidlTemp);
 
@@ -873,7 +878,7 @@ static UINT32 WINAPI IDLList_GetState(LPIDLLIST this)
 }
 static LPITEMIDLIST WINAPI IDLList_GetElement(LPIDLLIST this, UINT32 nIndex)
 {	TRACE (shell,"(%p)->(index=%u)\n",this, nIndex);
-	return((LPITEMIDLIST)DPA_GetPtr(this->dpa, nIndex));
+	return((LPITEMIDLIST)pDPA_GetPtr(this->dpa, nIndex));
 }
 static UINT32 WINAPI IDLList_GetCount(LPIDLLIST this)
 {	TRACE (shell,"(%p)\n",this);
@@ -882,7 +887,7 @@ static UINT32 WINAPI IDLList_GetCount(LPIDLLIST this)
 static BOOL32 WINAPI IDLList_StoreItem(LPIDLLIST this, LPITEMIDLIST pidl)
 {	TRACE (shell,"(%p)->(pidl=%p)\n",this, pidl);
 	if (pidl)
-        { if (IDLList_InitList(this) && DPA_InsertPtr(this->dpa, 0x7fff, (LPSTR)pidl)>=0)
+        { if (IDLList_InitList(this) && pDPA_InsertPtr(this->dpa, 0x7fff, (LPSTR)pidl)>=0)
 	    return(TRUE);
 	  ILFree(pidl);
         }
@@ -910,7 +915,7 @@ static BOOL32 WINAPI IDLList_InitList(LPIDLLIST this)
 
 	  case State_UnInit:
 	  default:
-	    this->dpa = DPA_Create(this->uStep);
+	    this->dpa = pDPA_Create(this->uStep);
 	    this->uStep = 0;
 	    return(IDLList_InitList(this));
         }
@@ -933,6 +938,6 @@ static void WINAPI IDLList_CleanList(LPIDLLIST this)
         { ILFree(IDLList_GetElement(this,i));
         }
 
-        DPA_Destroy(this->dpa);
+        pDPA_Destroy(this->dpa);
         this->dpa=NULL;
 }        
