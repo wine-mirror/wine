@@ -310,6 +310,7 @@ NTSTATUS FILE_GetNtStatus(void)
 #endif
     case ENOTTY:
     case EOPNOTSUPP:return STATUS_NOT_SUPPORTED;
+    case ECONNRESET:return STATUS_PIPE_DISCONNECTED;
     case ENOEXEC:   /* ?? */
     case ESPIPE:    /* ?? */
     case EEXIST:    /* ?? */
