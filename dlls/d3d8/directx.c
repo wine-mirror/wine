@@ -55,6 +55,7 @@ static const D3DFORMAT device_formats[NUM_FORMATS] = {
   D3DFMT_X8R8G8B8
 };
 
+static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display);
 
 /* retrieve the X display to use on a given DC */
 inline static Display *get_display( HDC hdc )
@@ -456,6 +457,10 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
     } else {
         glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl_tex_size);
     }
+
+    /* If we dont know the device settings, go query them now */
+    if (This->isGLInfoValid == FALSE) IDirect3D8Impl_FillGLCaps(iface, NULL);
+
     pCaps->DeviceType = (DeviceType == D3DDEVTYPE_HAL) ? D3DDEVTYPE_HAL : D3DDEVTYPE_REF;  /* Not quite true, but use h/w supported by opengl I suppose */
     pCaps->AdapterOrdinal = Adapter;
 
@@ -630,14 +635,14 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Adapter, D
         pCaps->MaxActiveLights = gl_max;
         TRACE("GLCaps: GL_MAX_LIGHTS=%ld\n", pCaps->MaxActiveLights);
 
-#if defined(GL_ARB_vertex_blend)
-	glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
-	pCaps->MaxVertexBlendMatrices = gl_max;
-	pCaps->MaxVertexBlendMatrixIndex = 1;
-#else
-	pCaps->MaxVertexBlendMatrices = 0;
-	pCaps->MaxVertexBlendMatrixIndex = 1;
-#endif
+        if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
+	   glGetIntegerv(GL_MAX_VERTEX_UNITS_ARB, &gl_max);
+	   pCaps->MaxVertexBlendMatrices = gl_max;
+	   pCaps->MaxVertexBlendMatrixIndex = 1;
+        } else {
+           pCaps->MaxVertexBlendMatrices = 0;
+           pCaps->MaxVertexBlendMatrixIndex = 1;
+        }
 
 #if defined(GL_EXT_texture_filter_anisotropic)
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &gl_max);
@@ -847,29 +852,34 @@ static void IDirect3D8Impl_FillGLCaps(LPDIRECT3D8 iface, Display* display) {
     GL_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
 
-    GLX_Extensions = glXQueryExtensionsString(display, DefaultScreen(display));
-    FIXME("GLX_Extensions reported:\n");  
+    if (display != NULL) {
+        GLX_Extensions = glXQueryExtensionsString(display, DefaultScreen(display));
+        FIXME("GLX_Extensions reported:\n");  
     
-    if (NULL == GLX_Extensions) {
-      ERR("   GLX_Extensions returns NULL\n");      
-    } else {
-      while (*GLX_Extensions != 0x00) {
-        const char *Start = GLX_Extensions;
-        char ThisExtn[256];
-	
-        memset(ThisExtn, 0x00, sizeof(ThisExtn));
-        while (*GLX_Extensions != ' ' && *GLX_Extensions != 0x00) {
-	  GLX_Extensions++;
+        if (NULL == GLX_Extensions) {
+          ERR("   GLX_Extensions returns NULL\n");      
+        } else {
+          while (*GLX_Extensions != 0x00) {
+            const char *Start = GLX_Extensions;
+            char ThisExtn[256];
+           
+            memset(ThisExtn, 0x00, sizeof(ThisExtn));
+            while (*GLX_Extensions != ' ' && *GLX_Extensions != 0x00) {
+              GLX_Extensions++;
+            }
+            memcpy(ThisExtn, Start, (GLX_Extensions - Start));
+            FIXME("- %s\n", ThisExtn);
+            if (*GLX_Extensions == ' ') GLX_Extensions++;
+          }
         }
-        memcpy(ThisExtn, Start, (GLX_Extensions - Start));
-        FIXME("- %s\n", ThisExtn);
-        if (*GLX_Extensions == ' ') GLX_Extensions++;
-      }
     }
 
 #define USE_GL_FUNC(type, pfn) This->gl_info.pfn = (type) glXGetProcAddressARB(#pfn);
     GLX_EXT_FUNCS_GEN;
 #undef USE_GL_FUNC
+
+    /* Only save the values obtained when a display is provided */
+    if (display != NULL) This->isGLInfoValid = TRUE;
 
 }
 

@@ -273,6 +273,7 @@ struct IDirect3D8Impl
 
     /* IDirect3D8 fields */
     GL_Info                 gl_info;
+    BOOL                    isGLInfoValid;
     IDirect3D8Impl         *direct3d8;
 };
 
