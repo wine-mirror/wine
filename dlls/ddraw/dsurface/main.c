@@ -203,7 +203,11 @@ Main_DirectDrawSurface_QueryInterface(LPDIRECTDRAWSURFACE7 iface, REFIID riid,
     {
 	HRESULT ret_value = S_OK;
 
-	if ((This->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE) == 0) return E_NOINTERFACE;
+	/* Note: this is not exactly how Windows does it... But this seems not to hurt the only
+	         application I know creating a texture without this flag set and it will prevent
+		 bugs in other parts of Wine.
+	*/
+	This->surface_desc.ddsCaps.dwCaps |= DDSCAPS_TEXTURE;
 
 	/* In case the texture surface was created before the D3D creation */
 	if (This->tex_private == NULL) {
