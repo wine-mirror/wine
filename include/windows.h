@@ -1499,6 +1499,135 @@ typedef struct
 DECL_WINELIB_TYPE_AW(TEXTMETRIC)
 DECL_WINELIB_TYPE_AW(LPTEXTMETRIC)
 
+
+typedef struct tagPANOSE
+{
+    BYTE bFamilyType;
+    BYTE bSerifStyle;
+    BYTE bWeight;
+    BYTE bProportion;
+    BYTE bContrast;
+    BYTE bStrokeVariation;
+    BYTE bArmStyle;
+    BYTE bLetterform;
+    BYTE bMidline;
+    BYTE bXHeight;
+} PANOSE;
+
+
+typedef struct _OUTLINETEXTMETRIC32A
+{
+    UINT32          otmSize;
+    TEXTMETRIC32A   otmTextMetrics;
+    BYTE            otmFilter;
+    PANOSE          otmPanoseNumber;
+    UINT32          otmfsSelection;
+    UINT32          otmfsType;
+    INT32           otmsCharSlopeRise;
+    INT32           otmsCharSlopeRun;
+    INT32           otmItalicAngle;
+    UINT32          otmEMSquare;
+    INT32           otmAscent;
+    INT32           otmDescent;
+    UINT32          otmLineGap;
+    UINT32          otmsCapEmHeight;
+    UINT32          otmsXHeight;
+    RECT32          otmrcFontBox;
+    INT32           otmMacAscent;
+    INT32           otmMacDescent;
+    UINT32          otmMacLineGap;
+    UINT32          otmusMinimumPPEM;
+    POINT32         otmptSubscriptSize;
+    POINT32         otmptSubscriptOffset;
+    POINT32         otmptSuperscriptSize;
+    POINT32         otmptSuperscriptOffset;
+    UINT32          otmsStrikeoutSize;
+    INT32           otmsStrikeoutPosition;
+    INT32           otmsUnderscoreSize;
+    INT32           otmsUnderscorePosition;
+    LPSTR           otmpFamilyName;
+    LPSTR           otmpFaceName;
+    LPSTR           otmpStyleName;
+    LPSTR           otmpFullName;
+} OUTLINETEXTMETRIC32A, *LPOUTLINETEXTMETRIC32A;
+
+typedef struct _OUTLINETEXTMETRIC32W
+{
+    UINT32          otmSize;
+    TEXTMETRIC32W   otmTextMetrics;
+    BYTE            otmFilter;
+    PANOSE          otmPanoseNumber;
+    UINT32          otmfsSelection;
+    UINT32          otmfsType;
+    INT32           otmsCharSlopeRise;
+    INT32           otmsCharSlopeRun;
+    INT32           otmItalicAngle;
+    UINT32          otmEMSquare;
+    INT32           otmAscent;
+    INT32           otmDescent;
+    UINT32          otmLineGap;
+    UINT32          otmsCapEmHeight;
+    UINT32          otmsXHeight;
+    RECT32          otmrcFontBox;
+    INT32           otmMacAscent;
+    INT32           otmMacDescent;
+    UINT32          otmMacLineGap;
+    UINT32          otmusMinimumPPEM;
+    POINT32         otmptSubscriptSize;
+    POINT32         otmptSubscriptOffset;
+    POINT32         otmptSuperscriptSize;
+    POINT32         otmptSuperscriptOffset;
+    UINT32          otmsStrikeoutSize;
+    INT32           otmsStrikeoutPosition;
+    INT32           otmsUnderscoreSize;
+    INT32           otmsUnderscorePosition;
+    LPSTR           otmpFamilyName;
+    LPSTR           otmpFaceName;
+    LPSTR           otmpStyleName;
+    LPSTR           otmpFullName;
+} OUTLINETEXTMETRIC32W, *LPOUTLINETEXTMETRIC32W;
+
+typedef struct _OUTLINETEXTMETRIC16
+{
+    UINT16          otmSize;
+    TEXTMETRIC16    otmTextMetrics;
+    BYTE            otmFilter;
+    PANOSE          otmPanoseNumber;
+    UINT16          otmfsSelection;
+    UINT16          otmfsType;
+    INT16           otmsCharSlopeRise;
+    INT16           otmsCharSlopeRun;
+    INT16           otmItalicAngle;
+    UINT16          otmEMSquare;
+    INT16           otmAscent;
+    INT16           otmDescent;
+    UINT16          otmLineGap;
+    UINT16          otmsCapEmHeight;
+    UINT16          otmsXHeight;
+    RECT16          otmrcFontBox;
+    INT16           otmMacAscent;
+    INT16           otmMacDescent;
+    UINT16          otmMacLineGap;
+    UINT16          otmusMinimumPPEM;
+    POINT16         otmptSubscriptSize;
+    POINT16         otmptSubscriptOffset;
+    POINT16         otmptSuperscriptSize;
+    POINT16         otmptSuperscriptOffset;
+    UINT16          otmsStrikeoutSize;
+    INT16           otmsStrikeoutPosition;
+    INT16           otmsUnderscoreSize;
+    INT32           otmsUnderscorePosition;
+    LPSTR           otmpFamilyName;
+    LPSTR           otmpFaceName;
+    LPSTR           otmpStyleName;
+    LPSTR           otmpFullName;
+} OUTLINETEXTMETRIC16,*LPOUTLINETEXTMETRIC16;
+
+DECL_WINELIB_TYPE_AW(OUTLINETEXTMETRIC)
+DECL_WINELIB_TYPE_AW(LPOUTLINETEXTMETRIC)
+
+
+
 /* ntmFlags field flags */
 #define NTM_REGULAR     0x00000040L
 #define NTM_BOLD        0x00000020L
@@ -7964,10 +8093,9 @@ INT32       WINAPI GetObject32W(HANDLE32,INT32,LPVOID);
 HWND16      WINAPI GetOpenClipboardWindow16(void);
 HWND32      WINAPI GetOpenClipboardWindow32(void);
 #define     GetOpenClipboardWindow WINELIB_NAME(GetOpenClipboardWindow)
-/* FIXME: LPVOID should be LPOUTLINETEXTMETRIC{16,32A,32W} */
-UINT16      WINAPI GetOutlineTextMetrics16(HDC16,UINT16,LPVOID);
-UINT32      WINAPI GetOutlineTextMetrics32A(HDC32,UINT32,LPVOID);
-UINT32      WINAPI GetOutlineTextMetrics32W(HDC32,UINT32,LPVOID);
+UINT16      WINAPI GetOutlineTextMetrics16(HDC16,UINT16,LPOUTLINETEXTMETRIC16);
+UINT32      WINAPI GetOutlineTextMetrics32A(HDC32,UINT32,LPOUTLINETEXTMETRIC32A);
+UINT32      WINAPI GetOutlineTextMetrics32W(HDC32,UINT32,LPOUTLINETEXTMETRIC32W);
 #define     GetOutlineTextMetrics WINELIB_NAME_AW(GetOutlineTextMetrics)
 UINT16      WINAPI GetPaletteEntries16(HPALETTE16,UINT16,UINT16,LPPALETTEENTRY);
 UINT32      WINAPI GetPaletteEntries32(HPALETTE32,UINT32,UINT32,LPPALETTEENTRY);

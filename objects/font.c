@@ -930,11 +930,83 @@ BOOL32 WINAPI GetTextMetrics32W( HDC32 hdc, TEXTMETRIC32W *metrics )
 UINT16 WINAPI GetOutlineTextMetrics16(
     HDC16 hdc,    /* [in]  Handle of device context */
     UINT16 cbData, /* [in]  Size of metric data array */
-    void *lpOTM)  /* [out] Address of metric data array */
+    LPOUTLINETEXTMETRIC16 lpOTM)  /* [out] Address of metric data array */
 {
     FIXME(font, "(%04x,%04x,%p): stub\n", hdc,cbData,lpOTM);
     return 0;
 }
+
+
+/***********************************************************************
+ * GetOutlineTextMetrics [GDI.207]  Gets metrics for TrueType fonts.
+ *
+ *
+ * RETURNS
+ *    Success: Non-zero or size of required buffer
+ *    Failure: 0
+ */
+UINT32 WINAPI GetOutlineTextMetrics32A(
+    HDC32 hdc,    /* [in]  Handle of device context */
+    UINT32 cbData, /* [in]  Size of metric data array */
+    LPOUTLINETEXTMETRIC32A lpOTM)  /* [out] Address of metric data array */
+{
+
+
+    UINT32 rtn = FALSE;
+    LPTEXTMETRIC32A lptxtMetr;
+
+
+
+    if (lpOTM == 0)
+    {
+        
+        lpOTM = (LPOUTLINETEXTMETRIC32A)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(OUTLINETEXTMETRIC32A));
+        rtn = sizeof(OUTLINETEXTMETRIC32A);
+        cbData = rtn;
+    } else
+    {
+        cbData = sizeof(*lpOTM);
+        rtn = cbData;
+    };
+
+    lpOTM->otmSize = cbData;
+
+    lptxtMetr =HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(TEXTMETRIC32A));
+    
+    if (!GetTextMetrics32A(hdc,lptxtMetr))
+    {
+        return 0;
+    } else
+    {
+       memcpy(&(lpOTM->otmTextMetrics),lptxtMetr,sizeof(TEXTMETRIC32A));
+    };
+
+    HeapFree(GetProcessHeap(),HEAP_ZERO_MEMORY,lptxtMetr);
+    
+    lpOTM->otmFilter = 0;
+
+    lpOTM->otmPanoseNumber.bFamilyType  = 0;
+    lpOTM->otmPanoseNumber.bSerifStyle  = 0;
+    lpOTM->otmPanoseNumber.bWeight      = 0;
+    lpOTM->otmPanoseNumber.bProportion  = 0;
+    lpOTM->otmPanoseNumber.bContrast    = 0;
+    lpOTM->otmPanoseNumber.bStrokeVariation = 0;
+    lpOTM->otmPanoseNumber.bArmStyle    = 0;
+    lpOTM->otmPanoseNumber.bLetterform  = 0;
+    lpOTM->otmPanoseNumber.bMidline     = 0;
+    lpOTM->otmPanoseNumber.bXHeight     = 0;
+
+    lpOTM->otmfsSelection     = 0;
+    lpOTM->otmfsType          = 0;
+
+    /*
+     Further fill of the structure not implemented,
+     Needs real values for the structure members
+     */
+    
+    return rtn;
+}
+
 
 
 /***********************************************************************

@@ -218,7 +218,7 @@ file	gdi.exe
 305 stub ENGINEGETGLYPHBMP
 306 stub ENGINEMAKEFONTDIR
 307 pascal16 GetCharABCWidths(word word word ptr) GetCharABCWidths16
-308 pascal   GetOutlineTextMetrics(word word ptr) GetOutlineTextMetrics16
+308 pascal16 GetOutlineTextMetrics(word word ptr) GetOutlineTextMetrics16
 309 pascal   GetGlyphOutline(word word word ptr long ptr ptr) GetGlyphOutline16
 310 pascal16 CreateScalableFontResource(word str str str) CreateScalableFontResource16
 311 stub GetFontData

@@ -208,7 +208,7 @@ type	win32
 204 stdcall GetObjectA(long long ptr) GetObject32A
 205 stdcall GetObjectType(long) GetObjectType
 206 stdcall GetObjectW(long long ptr) GetObject32W
-207 stub GetOutlineTextMetricsA
+207 stdcall GetOutlineTextMetricsA(long long ptr) GetOutlineTextMetrics32A
 208 stub GetOutlineTextMetricsW
 209 stdcall GetPaletteEntries(long long long ptr) GetPaletteEntries32
 210 stdcall GetPath(long ptr ptr long) GetPath32
