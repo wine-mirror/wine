@@ -31,6 +31,9 @@
 #include "module.h"
 #include "debug.h"
 
+extern const WORD OLE2NLS_CT_CType3_LUT[]; /* FIXME: does not belong here */
+
+
 /* Funny to divide them between user and kernel. */
 
 /* be careful: always use functions from wctype.h if character > 255 */
@@ -446,7 +449,7 @@ LPWSTR WINAPI CharUpper32W(LPWSTR x)
  */
 BOOL32 WINAPI IsCharAlpha32A(CHAR x)
 {
-    return isalpha(x);
+    return (OLE2NLS_CT_CType3_LUT[(unsigned char)x] & C3_ALPHA);
 }
 
 /***********************************************************************
@@ -455,7 +458,7 @@ BOOL32 WINAPI IsCharAlpha32A(CHAR x)
  */
 BOOL32 WINAPI IsCharAlphaNumeric32A(CHAR x)
 {
-    return isalnum(x);
+    return IsCharAlpha32A(x) || isdigit(x) ;
 }
 
 /***********************************************************************
