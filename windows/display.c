@@ -15,60 +15,232 @@
 #include "windows.h"
 #include "win.h"
 #include "gdi.h"
+#include "display.h"
+#include "callback.h"
 #include "heap.h"
 #include "debug.h"
 #include "debugtools.h"
 
+Cursor DISPLAY_XCursor = None;    /* Current X cursor */
+
+BOOL32 DISPLAY_DisableWarpPointer = FALSE;  /* hack; see DISPLAY_MoveCursor */
+
 
 /***********************************************************************
- *           DisplayInquire			(DISPLAY.101)
+ *           DISPLAY_Inquire			(DISPLAY.101)
  */
-
-#pragma pack(1)
-typedef struct _CURSORINFO
+WORD WINAPI DISPLAY_Inquire(LPCURSORINFO lpCursorInfo) 
 {
-    WORD wXMickeys;
-    WORD wYMickeys;
-} CURSORINFO;
-#pragma pack(4)
-
-WORD WINAPI DisplayInquire(CURSORINFO *cursorInfo) 
-{
-    cursorInfo->wXMickeys = 1;
-    cursorInfo->wYMickeys = 1;
+    lpCursorInfo->wXMickeys = 1;
+    lpCursorInfo->wYMickeys = 1;
 
     return sizeof(CURSORINFO);
 }
 
 /***********************************************************************
- *           DisplaySetCursor			(DISPLAY.102)
+ *           DISPLAY_DoSetCursor
  */
-VOID WINAPI DisplaySetCursor( LPVOID cursorShape )
+static BOOL32 DISPLAY_DoSetCursor( CURSORICONINFO *ptr )
 {
-    FIXME(keyboard, "(%p): stub\n", cursorShape );
+    Pixmap pixmapBits, pixmapMask, pixmapAll;
+    XColor fg, bg;
+    Cursor cursor = None;
+
+    if (!ptr)  /* Create an empty cursor */
+    {
+        static const char data[] = { 0 };
+
+        bg.red = bg.green = bg.blue = 0x0000;
+        pixmapBits = XCreateBitmapFromData( display, rootWindow, data, 1, 1 );
+        if (pixmapBits)
+        {
+            cursor = XCreatePixmapCursor( display, pixmapBits, pixmapBits,
+                                          &bg, &bg, 0, 0 );
+            XFreePixmap( display, pixmapBits );
+        }
+    }
+    else  /* Create the X cursor from the bits */
+    {
+        XImage *image;
+
+        if (ptr->bPlanes * ptr->bBitsPerPixel != 1)
+        {
+            WARN(cursor, "Cursor has more than 1 bpp!\n" );
+            return FALSE;
+        }
+
+        /* Create a pixmap and transfer all the bits to it */
+
+        /* NOTE: Following hack works, but only because XFree depth
+         *       1 images really use 1 bit/pixel (and so the same layout
+         *       as the Windows cursor data). Perhaps use a more generic
+         *       algorithm here.
+         */
+        pixmapAll = XCreatePixmap( display, rootWindow,
+                                   ptr->nWidth, ptr->nHeight * 2, 1 );
+        image = XCreateImage( display, DefaultVisualOfScreen(screen),
+                              1, ZPixmap, 0, (char *)(ptr + 1), ptr->nWidth,
+                              ptr->nHeight * 2, 16, ptr->nWidthBytes);
+        if (image)
+        {
+            image->byte_order = MSBFirst;
+            image->bitmap_bit_order = MSBFirst;
+            image->bitmap_unit = 16;
+            _XInitImageFuncPtrs(image);
+            if (pixmapAll)
+                XPutImage( display, pixmapAll, BITMAP_monoGC, image,
+                           0, 0, 0, 0, ptr->nWidth, ptr->nHeight * 2 );
+            image->data = NULL;
+            XDestroyImage( image );
+        }
+
+        /* Now create the 2 pixmaps for bits and mask */
+
+        pixmapBits = XCreatePixmap( display, rootWindow,
+                                    ptr->nWidth, ptr->nHeight, 1 );
+        pixmapMask = XCreatePixmap( display, rootWindow,
+                                    ptr->nWidth, ptr->nHeight, 1 );
+
+        /* Make sure everything went OK so far */
+
+        if (pixmapBits && pixmapMask && pixmapAll)
+        {
+            /* We have to do some magic here, as cursors are not fully
+             * compatible between Windows and X11. Under X11, there
+             * are only 3 possible color cursor: black, white and
+             * masked. So we map the 4th Windows color (invert the
+             * bits on the screen) to black. This require some boolean
+             * arithmetic:
+             *
+             *         Windows          |          X11
+             * Xor    And      Result   |   Bits     Mask     Result
+             *  0      0     black      |    0        1     background
+             *  0      1     no change  |    X        0     no change
+             *  1      0     white      |    1        1     foreground
+             *  1      1     inverted   |    0        1     background
+             *
+             * which gives:
+             *  Bits = 'Xor' and not 'And'
+             *  Mask = 'Xor' or not 'And'
+             *
+             * FIXME: apparently some servers do support 'inverted' color.
+             * I don't know if it's correct per the X spec, but maybe
+             * we ought to take advantage of it.  -- AJ
+             */
+            XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
+                       0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
+            XCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
+                       0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
+            XSetFunction( display, BITMAP_monoGC, GXandReverse );
+            XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
+                       0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
+            XSetFunction( display, BITMAP_monoGC, GXorReverse );
+            XCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
+                       0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
+            XSetFunction( display, BITMAP_monoGC, GXcopy );
+            fg.red = fg.green = fg.blue = 0xffff;
+            bg.red = bg.green = bg.blue = 0x0000;
+            cursor = XCreatePixmapCursor( display, pixmapBits, pixmapMask,
+                                &fg, &bg, ptr->ptHotSpot.x, ptr->ptHotSpot.y );
+        }
+
+        /* Now free everything */
+
+        if (pixmapAll) XFreePixmap( display, pixmapAll );
+        if (pixmapBits) XFreePixmap( display, pixmapBits );
+        if (pixmapMask) XFreePixmap( display, pixmapMask );
+    }
+
+    if (cursor == None) return FALSE;
+    if (DISPLAY_XCursor != None) XFreeCursor( display, DISPLAY_XCursor );
+    DISPLAY_XCursor = cursor;
+
+    if (rootWindow != DefaultRootWindow(display) || !WIN_GetDesktop())
+    {
+        /* Set the cursor on the desktop window */
+        XDefineCursor( display, rootWindow, cursor );
+    }
+    else
+    {
+        /* FIXME: this won't work correctly with native USER !*/
+
+        /* Set the same cursor for all top-level windows */
+        HWND32 hwnd = GetWindow32( GetDesktopWindow32(), GW_CHILD );
+        while(hwnd)
+        {
+            Window win = WIN_GetXWindow( hwnd );
+            if (win && win!=DefaultRootWindow(display))
+                XDefineCursor( display, win, cursor );
+            hwnd = GetWindow32( hwnd, GW_HWNDNEXT );
+        }
+    }
+    return TRUE;
 }
 
 /***********************************************************************
- *           DisplayMoveCursor			(DISPLAY.103)
+ *           DISPLAY_SetCursor			(DISPLAY.102)
  */
-VOID WINAPI DisplayMoveCursor( WORD wAbsX, WORD wAbsY )
+VOID WINAPI DISPLAY_SetCursor( CURSORICONINFO *lpCursor )
 {
-    FIXME(keyboard, "(%d,%d): stub\n", wAbsX, wAbsY );
+    EnterCriticalSection( &X11DRV_CritSection );
+    CALL_LARGE_STACK( DISPLAY_DoSetCursor, lpCursor );
+    LeaveCriticalSection( &X11DRV_CritSection );
 }
 
 /***********************************************************************
- *           DisplayCheckCursor                  (DISPLAY.104)
+ *           DISPLAY_MoveCursor			(DISPLAY.103)
  */
-VOID WINAPI DisplayCheckCursor()
+VOID WINAPI DISPLAY_MoveCursor( WORD wAbsX, WORD wAbsY )
 {
-    FIXME(keyboard, "stub\n");
+    /* 
+     * We do not want the to create MotionNotify events here, 
+     * otherwise we will get an endless recursion:
+     * XMotionEvent -> MOUSEEVENTF_MOVE -> mouse_event -> DisplayMoveCursor
+     * -> XWarpPointer -> XMotionEvent -> ...
+     *
+     * Unfortunately, the XWarpPointer call does create a MotionNotify
+     * event. So, we use a hack: before MOUSE_SendEvent calls the mouse event
+     * procedure, it sets a global flag. If this flag is set, we skip the
+     * XWarpPointer call.  If we are *not* called from within MOUSE_SendEvent,
+     * we will call XWarpPointer, which will create a MotionNotify event.
+     * Strictly speaking, this is also wrong, but that should normally not
+     * have any negative effects ...
+     *
+     * But first of all, we check whether we already are at the position
+     * are supposed to move to; if so, we don't need to do anything.
+     */
+
+    Window root, child;
+    int rootX, rootY, winX, winY;
+    unsigned int xstate;
+
+    if (DISPLAY_DisableWarpPointer) return;
+
+    if (!TSXQueryPointer( display, rootWindow, &root, &child,
+                          &rootX, &rootY, &winX, &winY, &xstate ))
+        return;
+
+    if ( winX == wAbsX && winY == wAbsY )
+        return;
+
+    TRACE( cursor, "(%d,%d): moving from (%d,%d)\n", wAbsX, wAbsY, winX, winY );
+
+    TSXWarpPointer( display, rootWindow, rootWindow, 0, 0, 0, 0, wAbsX, wAbsY );
 }
 
 /***********************************************************************
- *           UserRepaintDisable			(DISPLAY.103)
+ *           DISPLAY_CheckCursor                  (DISPLAY.104)
+ */
+VOID WINAPI DISPLAY_CheckCursor()
+{
+    FIXME( cursor, "stub\n" );
+}
+
+/***********************************************************************
+ *           UserRepaintDisable			(DISPLAY.500)
  */
 VOID WINAPI UserRepaintDisable( BOOL16 disable )
 {
-    FIXME(keyboard, "(%d): stub\n", disable);
+    TRACE( cursor, "(%d): stub\n", disable );
 }
 

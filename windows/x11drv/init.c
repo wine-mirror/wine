@@ -9,7 +9,7 @@
 #include <X11/Xatom.h>
 #include "ts_xlib.h"
 #include "color.h"
-#include "cursoricon.h"
+#include "display.h"
 #include "dce.h"
 #include "options.h"
 #include "message.h"
@@ -25,6 +25,8 @@ WND_DRIVER X11DRV_WND_Driver =
     X11DRV_WND_CreateWindow,
     X11DRV_WND_SetParent
 };
+
+extern Cursor DISPLAY_XCursor;  /* Current X cursor */
 
 /**********************************************************************
  *		X11DRV_WND_CreateWindow	[Internal]
@@ -59,7 +61,7 @@ static BOOL32 X11DRV_WND_CreateWindow(WND *wndPtr, CLASS *classPtr, CREATESTRUCT
       win_attr.colormap      = COLOR_GetColormap();
       win_attr.backing_store = Options.backingstore ? WhenMapped : NotUseful;
       win_attr.save_under    = ((classPtr->style & CS_SAVEBITS) != 0);
-      win_attr.cursor        = CURSORICON_XCursor;
+      win_attr.cursor        = DISPLAY_XCursor;
       wndPtr->window = TSXCreateWindow( display, rootWindow, cs->x, cs->y,
                                         cs->cx, cs->cy, 0, CopyFromParent,
                                         InputOutput, CopyFromParent,

@@ -36,7 +36,6 @@
 #include "peexe.h"
 #include "color.h"
 #include "bitmap.h"
-#include "callback.h"
 #include "cursoricon.h"
 #include "sysmetrics.h"
 #include "global.h"
@@ -46,10 +45,10 @@
 #include "task.h"
 #include "user.h"
 #include "input.h"
-#include "x11drv.h"
+#include "display.h"
+#include "message.h"
 #include "winerror.h"
 
-Cursor CURSORICON_XCursor = None;    /* Current X cursor */
 static HCURSOR32 hActiveCursor = 0;  /* Active cursor */
 static INT32 CURSOR_ShowCount = 0;   /* Cursor display count */
 static RECT32 CURSOR_ClipRect;       /* Cursor clipping rect */
@@ -1099,151 +1098,6 @@ DWORD WINAPI DumpIcon( SEGPTR pInfo, WORD *lpLen,
 
 
 /***********************************************************************
- *           CURSORICON_SetCursor
- *
- * Change the X cursor. Helper function for SetCursor() and ShowCursor().
- * The Xlib critical section must be entered before calling this function.
- */
-static BOOL32 CURSORICON_SetCursor( HCURSOR16 hCursor )
-{
-    Pixmap pixmapBits, pixmapMask, pixmapAll;
-    XColor fg, bg;
-    Cursor cursor = None;
-
-    if (!hCursor)  /* Create an empty cursor */
-    {
-        static const char data[] = { 0 };
-
-        bg.red = bg.green = bg.blue = 0x0000;
-        pixmapBits = XCreateBitmapFromData( display, rootWindow, data, 1, 1 );
-        if (pixmapBits)
-        {
-            cursor = XCreatePixmapCursor( display, pixmapBits, pixmapBits,
-                                          &bg, &bg, 0, 0 );
-            XFreePixmap( display, pixmapBits );
-        }
-    }
-    else  /* Create the X cursor from the bits */
-    {
-        CURSORICONINFO *ptr;
-        XImage *image;
-
-        if (!(ptr = (CURSORICONINFO*)GlobalLock16( hCursor ))) return FALSE;
-        if (ptr->bPlanes * ptr->bBitsPerPixel != 1)
-        {
-            WARN(cursor, "Cursor %04x has more than 1 bpp!\n", hCursor );
-            return FALSE;
-        }
-
-        /* Create a pixmap and transfer all the bits to it */
-
-	/* NOTE: Following hack works, but only because XFree depth
-	 * 	 1 images really use 1 bit/pixel (and so the same layout
-	 *	 as the Windows cursor data). Perhaps use a more generic
-	 *	 algorithm here.
-	 */
-        pixmapAll = XCreatePixmap( display, rootWindow,
-                                   ptr->nWidth, ptr->nHeight * 2, 1 );
-        image = XCreateImage( display, DefaultVisualOfScreen(screen),
-                              1, ZPixmap, 0, (char *)(ptr + 1), ptr->nWidth,
-                              ptr->nHeight * 2, 16, ptr->nWidthBytes);
-        if (image)
-        {
-            image->byte_order = MSBFirst;
-            image->bitmap_bit_order = MSBFirst;
-            image->bitmap_unit = 16;
-            _XInitImageFuncPtrs(image);
-            if (pixmapAll)
-                XPutImage( display, pixmapAll, BITMAP_monoGC, image,
-                           0, 0, 0, 0, ptr->nWidth, ptr->nHeight * 2 );
-            image->data = NULL;
-            XDestroyImage( image );
-        }
-
-        /* Now create the 2 pixmaps for bits and mask */
-
-        pixmapBits = XCreatePixmap( display, rootWindow,
-                                    ptr->nWidth, ptr->nHeight, 1 );
-        pixmapMask = XCreatePixmap( display, rootWindow,
-                                    ptr->nWidth, ptr->nHeight, 1 );
-
-        /* Make sure everything went OK so far */
-
-        if (pixmapBits && pixmapMask && pixmapAll)
-        {
-            /* We have to do some magic here, as cursors are not fully
-             * compatible between Windows and X11. Under X11, there
-             * are only 3 possible color cursor: black, white and
-             * masked. So we map the 4th Windows color (invert the
-             * bits on the screen) to black. This require some boolean
-             * arithmetic:
-             *
-             *         Windows          |          X11
-             * Xor    And      Result   |   Bits     Mask     Result
-             *  0      0     black      |    0        1     background
-             *  0      1     no change  |    X        0     no change
-             *  1      0     white      |    1        1     foreground
-             *  1      1     inverted   |    0        1     background
-             *
-             * which gives:
-             *  Bits = 'Xor' and not 'And'
-             *  Mask = 'Xor' or not 'And'
-             *
-             * FIXME: apparently some servers do support 'inverted' color.
-             * I don't know if it's correct per the X spec, but maybe
-             * we ought to take advantage of it.  -- AJ
-             */
-            XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
-                       0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
-                       0, 0, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XSetFunction( display, BITMAP_monoGC, GXandReverse );
-            XCopyArea( display, pixmapAll, pixmapBits, BITMAP_monoGC,
-                       0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XSetFunction( display, BITMAP_monoGC, GXorReverse );
-            XCopyArea( display, pixmapAll, pixmapMask, BITMAP_monoGC,
-                       0, ptr->nHeight, ptr->nWidth, ptr->nHeight, 0, 0 );
-            XSetFunction( display, BITMAP_monoGC, GXcopy );
-            fg.red = fg.green = fg.blue = 0xffff;
-            bg.red = bg.green = bg.blue = 0x0000;
-            cursor = XCreatePixmapCursor( display, pixmapBits, pixmapMask,
-                                &fg, &bg, ptr->ptHotSpot.x, ptr->ptHotSpot.y );
-        }
-
-        /* Now free everything */
-
-        if (pixmapAll) XFreePixmap( display, pixmapAll );
-        if (pixmapBits) XFreePixmap( display, pixmapBits );
-        if (pixmapMask) XFreePixmap( display, pixmapMask );
-        GlobalUnlock16( hCursor );
-    }
-
-    if (cursor == None) return FALSE;
-    if (CURSORICON_XCursor != None) XFreeCursor( display, CURSORICON_XCursor );
-    CURSORICON_XCursor = cursor;
-
-    if (rootWindow != DefaultRootWindow(display))
-    {
-        /* Set the cursor on the desktop window */
-        XDefineCursor( display, rootWindow, cursor );
-    }
-    else
-    {
-        /* Set the same cursor for all top-level windows */
-        HWND32 hwnd = GetWindow32( GetDesktopWindow32(), GW_CHILD );
-        while(hwnd)
-        {
-            Window win = WIN_GetXWindow( hwnd );
-            if (win && win!=DefaultRootWindow(display))
-                XDefineCursor( display, win, cursor );
-            hwnd = GetWindow32( hwnd, GW_HWNDNEXT );
-        }
-    }
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           SetCursor16    (USER.69)
  */
 HCURSOR16 WINAPI SetCursor16( HCURSOR16 hCursor )
@@ -1269,9 +1123,8 @@ HCURSOR32 WINAPI SetCursor32(
     /* Change the cursor shape only if it is visible */
     if (CURSOR_ShowCount >= 0)
     {
-        EnterCriticalSection( &X11DRV_CritSection );
-        CALL_LARGE_STACK( CURSORICON_SetCursor, hActiveCursor );
-        LeaveCriticalSection( &X11DRV_CritSection );
+        DISPLAY_SetCursor( (CURSORICONINFO*)GlobalLock16( hActiveCursor ) );
+        GlobalUnlock16( hActiveCursor );
     }
     return hOldCursor;
 }
@@ -1291,8 +1144,7 @@ void WINAPI SetCursorPos16( INT16 x, INT16 y )
  */
 BOOL32 WINAPI SetCursorPos32( INT32 x, INT32 y )
 {
-    TRACE(cursor, "x=%d y=%d\n", x, y );
-    TSXWarpPointer( display, rootWindow, rootWindow, 0, 0, 0, 0, x, y );
+    DISPLAY_MoveCursor( x, y );
     return TRUE;
 }
 
@@ -1314,18 +1166,19 @@ INT32 WINAPI ShowCursor32( BOOL32 bShow )
     TRACE(cursor, "%d, count=%d\n",
                     bShow, CURSOR_ShowCount );
 
-    EnterCriticalSection( &X11DRV_CritSection );
     if (bShow)
     {
         if (++CURSOR_ShowCount == 0)  /* Show it */
-            CALL_LARGE_STACK( CURSORICON_SetCursor, hActiveCursor );
+        {
+            DISPLAY_SetCursor((CURSORICONINFO*)GlobalLock16( hActiveCursor ));
+            GlobalUnlock16( hActiveCursor );
+        }
     }
     else
     {
         if (--CURSOR_ShowCount == -1)  /* Hide it */
-            CALL_LARGE_STACK( CURSORICON_SetCursor, 0 );
+            DISPLAY_SetCursor( NULL );
     }
-    LeaveCriticalSection( &X11DRV_CritSection );
     return CURSOR_ShowCount;
 }
 
@@ -1375,27 +1228,24 @@ BOOL32 WINAPI ClipCursor32( const RECT32 *rect )
  */
 void WINAPI GetCursorPos16( POINT16 *pt )
 {
-    Window root, child;
-    int rootX, rootY, childX, childY;
-    unsigned int mousebut;
+    DWORD posX, posY, state;
 
     if (!pt) return;
-    if (!TSXQueryPointer( display, rootWindow, &root, &child,
-		        &rootX, &rootY, &childX, &childY, &mousebut ))
+    if (!EVENT_QueryPointer( &posX, &posY, &state ))
 	pt->x = pt->y = 0;
     else
     {
-	pt->x = childX;
-	pt->y = childY;
-        if (mousebut & Button1Mask)
+	pt->x = posX;
+	pt->y = posY;
+        if (state & MK_LBUTTON)
             AsyncMouseButtonsStates[0] = MouseButtonsStates[0] = TRUE;
         else
             MouseButtonsStates[0] = FALSE;
-        if (mousebut & Button2Mask)
+        if (state & MK_MBUTTON)
             AsyncMouseButtonsStates[1] = MouseButtonsStates[1] = TRUE;
         else       
             MouseButtonsStates[1] = FALSE;
-        if (mousebut & Button3Mask)
+        if (state & MK_RBUTTON)
             AsyncMouseButtonsStates[2] = MouseButtonsStates[2] = TRUE;
         else
             MouseButtonsStates[2] = FALSE;

@@ -7,7 +7,6 @@
 #ifndef __WINE_CURSORICON_H
 #define __WINE_CURSORICON_H
 
-#include "ts_xlib.h"
 #include "windows.h"
 
 #pragma pack(1)
@@ -77,6 +76,4 @@ extern HGLOBAL32 CURSORICON_Load32( HINSTANCE32 hInstance, LPCWSTR name,
                                     int width, int height, int colors,
                                     BOOL32 fCursor, UINT32 loadflags);
 				    
-extern Cursor CURSORICON_XCursor;  /* Current X cursor */
-
 #endif /* __WINE_CURSORICON_H */

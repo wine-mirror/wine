@@ -55,6 +55,7 @@ VOID WINAPI MOUSE_Disable(VOID)
 void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY, 
                       DWORD keyState, DWORD time, HWND32 hWnd )
 {
+    extern BOOL32 DISPLAY_DisableWarpPointer;
     WINE_MOUSEEVENT wme;
 
     if ( !DefMouseEventProc ) return;
@@ -70,6 +71,8 @@ void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
     wme.time     = time;
     wme.hWnd     = hWnd;
 
+    DISPLAY_DisableWarpPointer = TRUE;
     DefMouseEventProc( mouseStatus, posX, posY, 0, (DWORD)&wme );
+    DISPLAY_DisableWarpPointer = FALSE;
 }
 
