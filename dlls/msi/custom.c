@@ -67,6 +67,8 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
                                LPCWSTR target, const INT type, LPCWSTR action);
 static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
                                 LPCWSTR target, const INT type, LPCWSTR action);
+static UINT HANDLE_CustomType19(MSIPACKAGE *package, LPCWSTR source,
+                                LPCWSTR target, const INT type, LPCWSTR action);
 static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
                                 LPCWSTR target, const INT type, LPCWSTR action);
 static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
@@ -193,9 +195,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
             rc = HANDLE_CustomType18(package,source,target,type,action);
             break;
         case 19: /* Error that halts install */
-            deformat_string(package,target,&deformated);
-            MessageBoxW(NULL,deformated,NULL,MB_OK);
-            rc = ERROR_FUNCTION_FAILED;
+            rc = HANDLE_CustomType19(package,source,target,type,action);
             break;
         case 50: /*EXE file specified by a property value */
             rc = HANDLE_CustomType50(package,source,target,type,action);
@@ -622,6 +622,49 @@ static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
     prc = process_handle(package, type, info.hThread, info.hProcess, action);
 
     return prc;
+}
+
+static UINT HANDLE_CustomType19(MSIPACKAGE *package, LPCWSTR source,
+                                LPCWSTR target, const INT type, LPCWSTR action)
+{
+    static const WCHAR query[] = {
+      'S','E','L','E','C','T',' ','`','M','e','s','s','a','g','e','`',' ',
+      'F','R','O','M',' ','`','E','r','r','o','r','`',' ',
+      'W','H','E','R','E',' ','`','E','r','r','o','r','`',' ','=',' ','%','s',0
+    };
+    MSIQUERY *view = NULL;
+    MSIRECORD *row = 0;
+    UINT r;
+    LPWSTR deformated = NULL;
+
+    deformat_string( package, target, &deformated );
+
+    /* first try treat the error as a number */
+    r = MSI_OpenQuery( package->db, &view, query, deformated );
+    if( r == ERROR_SUCCESS )
+    {
+        r = MSI_ViewExecute( view, 0 );
+        if( r == ERROR_SUCCESS )
+        {
+            r = MSI_ViewFetch( view, &row );
+            if( r == ERROR_SUCCESS )
+            {
+                LPCWSTR error = MSI_RecordGetString( row, 1 );
+                MessageBoxW( NULL, error, NULL, MB_OK );
+                msiobj_release( &row->hdr );
+            }
+        }
+        MSI_ViewClose( view );
+        msiobj_release( &view->hdr );
+    }
+
+    if (r != ERROR_SUCCESS )
+    {
+        MessageBoxW( NULL, deformated, NULL, MB_OK );
+        HeapFree( GetProcessHeap(), 0, deformated );
+    }
+
+    return ERROR_FUNCTION_FAILED;
 }
 
 static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
