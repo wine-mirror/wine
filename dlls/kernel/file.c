@@ -1183,9 +1183,6 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
     static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
     static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
 
-    static const char * const creation_name[5] =
-        { "CREATE_NEW", "CREATE_ALWAYS", "OPEN_EXISTING", "OPEN_ALWAYS", "TRUNCATE_EXISTING" };
-
     static const UINT nt_disposition[5] =
     {
         FILE_CREATE,        /* CREATE_NEW */
@@ -1204,20 +1201,14 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         return INVALID_HANDLE_VALUE;
     }
 
-    if (creation < CREATE_NEW || creation > TRUNCATE_EXISTING)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return INVALID_HANDLE_VALUE;
-    }
-
-    TRACE("%s %s%s%s%s%s%s%s attributes 0x%lx\n", debugstr_w(filename),
+    TRACE("%s %s%s%s%s%s%s creation %ld attributes 0x%lx\n", debugstr_w(filename),
           (access & GENERIC_READ)?"GENERIC_READ ":"",
           (access & GENERIC_WRITE)?"GENERIC_WRITE ":"",
           (!access)?"QUERY_ACCESS ":"",
           (sharing & FILE_SHARE_READ)?"FILE_SHARE_READ ":"",
           (sharing & FILE_SHARE_WRITE)?"FILE_SHARE_WRITE ":"",
           (sharing & FILE_SHARE_DELETE)?"FILE_SHARE_DELETE ":"",
-          creation_name[creation - CREATE_NEW], attributes);
+          creation, attributes);
 
     /* Open a console for CONIN$ or CONOUT$ */
 
@@ -1273,6 +1264,12 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                 return INVALID_HANDLE_VALUE;
             }
         }
+    }
+
+    if (creation < CREATE_NEW || creation > TRUNCATE_EXISTING)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return INVALID_HANDLE_VALUE;
     }
 
     if (!RtlDosPathNameToNtPathName_U( filename, &nameW, NULL, NULL ))
