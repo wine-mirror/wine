@@ -308,17 +308,20 @@ static void setup_dos_mem( int dos_init )
 {
     int sys_offset = 0;
     int page_size = getpagesize();
-    void *addr = wine_anon_mmap( (void *)page_size, 0x110000-page_size,
-                                 PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
-    if (addr == (void *)page_size)  /* we got what we wanted */
+    void *addr = NULL;
+
+    if (wine_mmap_is_in_reserved_area( NULL, 0x110000 ) != 1)
+    {
+        addr = wine_anon_mmap( (void *)page_size, 0x110000-page_size,
+                               PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
+        if (addr == (void *)page_size) addr = NULL; /* we got what we wanted */
+        else munmap( addr, 0x110000 - page_size );
+    }
+
+    if (!addr)
     {
         /* now map from address 0 */
-        addr = wine_anon_mmap( NULL, 0x110000, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED );
-        if (addr)
-        {
-            ERR("MAP_FIXED failed at address 0 for DOS address space\n" );
-            ExitProcess(1);
-        }
+        wine_anon_mmap( NULL, 0x110000, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_FIXED );
 
         /* inform the memory manager that there is a mapping here */
         VirtualAlloc( addr, 0x110000, MEM_RESERVE | MEM_SYSTEM, PAGE_EXECUTE_READWRITE );
