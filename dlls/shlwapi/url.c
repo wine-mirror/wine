@@ -2078,7 +2078,7 @@ BOOL WINAPI PathIsURLA(LPCSTR lpstrPath)
     /* get protocol        */
     base.cbSize = sizeof(base);
     res1 = ParseURLA(lpstrPath, &base);
-    return (base.nScheme > 0);
+    return (base.nScheme != URL_SCHEME_INVALID);
 }
 
 /*************************************************************************
@@ -2096,7 +2096,7 @@ BOOL WINAPI PathIsURLW(LPCWSTR lpstrPath)
     /* get protocol        */
     base.cbSize = sizeof(base);
     res1 = ParseURLW(lpstrPath, &base);
-    return (base.nScheme > 0);
+    return (base.nScheme != URL_SCHEME_INVALID);
 }
 
 /*************************************************************************
