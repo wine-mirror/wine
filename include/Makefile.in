@@ -134,7 +134,8 @@ INSTALLED_INCLUDES = \
 	winver.h \
 	wnaspi32.h \
 	wownt32.h \
-	wtypes.h
+	wtypes.h \
+	zmouse.h
 
 EXTRASUBDIRS = bitmaps wine
 
