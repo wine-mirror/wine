@@ -46,6 +46,7 @@
 #include "wine/debug.h"
 #include "wine/exception.h"
 
+BOOL    WINAPI VerifyConsoleIoHandle(HANDLE);
 /*
  * Note:
  * - Most of the file related functions are wrong. NT's kernel32
@@ -2731,26 +2732,33 @@ static void INT21_Ioctl_Char( CONTEXT86 *context )
 {
     struct stat st;
     int status, i, fd;
+    int IsConsoleIOHandle = 0;
     HANDLE handle = DosFileHandleToWin32Handle(BX_reg(context));
 
     status = wine_server_handle_to_fd( handle, 0, &fd, NULL );
     if (status)
     {
-        SET_AX( context, RtlNtStatusToDosError(status) );
-        SET_CFLAG( context );
-        return;
-    }
-    fstat( fd, &st );
-    wine_server_release_fd( handle, fd );
-
-    for (i = 0; i < NB_MAGIC_DEVICES; i++)
-    {
-        if (!magic_devices[i].handle) continue;
-        if (magic_devices[i].dev == st.st_dev && magic_devices[i].ino == st.st_ino)
-        {
-            /* found it */
-            magic_devices[i].ioctl_handler( context );
+        if( VerifyConsoleIoHandle( handle))
+            IsConsoleIOHandle = 1;
+        else {
+            SET_AX( context, RtlNtStatusToDosError(status) );
+            SET_CFLAG( context );
             return;
+        }
+    } else {
+        fstat( fd, &st );
+        IsConsoleIOHandle = isatty( fd);
+        wine_server_release_fd( handle, fd );
+        for (i = 0; i < NB_MAGIC_DEVICES; i++)
+        {
+            if (!magic_devices[i].handle) continue;
+            if (magic_devices[i].dev == st.st_dev &&
+                    magic_devices[i].ino == st.st_ino)
+            {
+                /* found it */
+                magic_devices[i].ioctl_handler( context );
+                return;
+            }
         }
     }
 
@@ -2760,7 +2768,7 @@ static void INT21_Ioctl_Char( CONTEXT86 *context )
     {
     case 0x00: /* GET DEVICE INFORMATION */
         TRACE( "IOCTL - GET DEVICE INFORMATION - %d\n", BX_reg(context) );
-        if (S_ISCHR(st.st_mode))
+        if (IsConsoleIOHandle || S_ISCHR(st.st_mode))
         {
             /*
              * Returns attribute word in DX: 
@@ -2774,10 +2782,10 @@ static void INT21_Ioctl_Char( CONTEXT86 *context )
              *   Bit  4 - Device is special (uses int29).
              *   Bit  3 - Clock device.
              *   Bit  2 - NUL device.
-             *   Bit  1 - Standard output.
-             *   Bit  0 - Standard input.
+             *   Bit  1 - Console output device.
+             *   Bit  0 - Console input device.
              */
-            SET_DX( context, 0x80c0 /* FIXME */ );
+            SET_DX( context, IsConsoleIOHandle ? 0x80c3 : 0x80c0 /* FIXME */ );
         }
         else
         {
