@@ -416,7 +416,7 @@ void __wine_enter_vm86( CONTEXT *context )
  */
 void WINAPI DbgBreakPoint(void)
 {
-    /* FIXME */
+     kill(getpid(), SIGTRAP);
 }
 
 /**********************************************************************
@@ -424,7 +424,7 @@ void WINAPI DbgBreakPoint(void)
  */
 void WINAPI DbgUserBreakPoint(void)
 {
-    /* FIXME */
+     kill(getpid(), SIGTRAP);
 }
 
 #endif  /* __sparc__ */
