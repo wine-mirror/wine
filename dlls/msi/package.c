@@ -381,7 +381,7 @@ INT WINAPI MsiProcessMessage( MSIHANDLE hInstall, INSTALLMESSAGE eMessageType,
     DWORD total_size = 0;
     INT msg_field=1;
     INT i;
-    FIXME("STUB: %x \n",eMessageType);
+    TRACE("%x \n",eMessageType);
 
     if ((eMessageType & 0xff000000) == INSTALLMESSAGE_ERROR)
         log_type |= INSTALLLOGMODE_ERROR;

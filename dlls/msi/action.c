@@ -141,6 +141,7 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage);
 static UINT ACTION_CustomAction(MSIHANDLE hPackage,const WCHAR *action);
 static UINT ACTION_InstallInitialize(MSIHANDLE hPackage);
 static UINT ACTION_InstallValidate(MSIHANDLE hPackage);
+static UINT ACTION_ProcessComponents(MSIHANDLE hPackage);
 
 static UINT HANDLE_CustomType1(MSIHANDLE hPackage, const LPWSTR source, 
                                 const LPWSTR target, const INT type);
@@ -186,6 +187,8 @@ const static WCHAR szInstallValidate[] =
     {'I','n','s','t','a','l','l','V','a','l','i','d','a','t','e',0};
 const static WCHAR szLaunchConditions[] = 
     {'L','a','u','n','c','h','C','o','n','d','i','t','i','o','n','s',0};
+const static WCHAR szProcessComponents[] = 
+    {'P','r','o','c','e','s','s','C','o','m','p','o','n','e','n','t','s',0};
 
 
 /******************************************************** 
@@ -806,6 +809,8 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
         rc = ACTION_InstallValidate(hPackage);
 
     /* install block */
+    else if (strcmpW(action,szProcessComponents)==0)
+        rc = ACTION_ProcessComponents(hPackage);
     else if (strcmpW(action,szInstallInitialize)==0)
         rc = ACTION_InstallInitialize(hPackage);
     else if (strcmpW(action,szCreateFolders)==0)
@@ -818,64 +823,17 @@ UINT ACTION_PerformAction(MSIHANDLE hPackage, const WCHAR *action)
         rc = ACTION_WriteRegistryValues(hPackage);
 
     /*
-     Current called during itunes but unimplemented
+     Current called during itunes but unimplemented and seem important
 
-     AppSearch
-     FindRelatedProducts
-     CostInitialize
-     MigrateFeatureStates
      ResolveSource  (sets SourceDir)
      ValidateProductID (sets ProductID)
-     IsolateComponents (Empty)
-     SetODBCFolders 
-     MigrateFeatureStates
-     RemoveExistingProducts
-     AllocateRegistrySpace
-     ProcessComponents
-     UnpublishComponents
-     UnpublishFeatures
-     StopServices
-     DeleteServices
-     UnregisterComPlus
-     SelfUnregModules (Empty)
-     UnregisterTypeLibraries
-     RemoveODBC
-     UnregisterFonts
-     RemoveRegistryValues
-     UnregisterClassInfo
-     UnregisterExtensionInfo
-     UnregisterProgIdInfo
-     UnregisterMIMEInfo
-     RemoveIniValues
-     RemoveShortcuts
-     RemoveEnviromentStrings
-     RemoveDuplicateFiles
-     RemoveFiles (Empty)
-     MoveFiles (Empty)
-     RemoveRegistryValues (Empty)
-     SelfRegModules (Empty)
-     RemoveFolders
-     PatchFiles
-     BindImage (Empty)
      CreateShortcuts (would be nice to have soon)
      RegisterClassInfo
-     RegisterExtensionInfo (Empty)
      RegisterProgIdInfo (Lots to do)
-     RegisterMIMEInfo (Empty)
-     WriteIniValues (Empty)
-     WriteEnvironmentStrings (Empty)
-     RegisterFonts(Empty)
-     InstallODBC
      RegisterTypeLibraries
-     SelfRegModules
-     RegisterComPlus
      RegisterUser
      RegisterProduct
-     PublishComponents
-     PublishFeatures
-     PublishProduct
      InstallFinalize
-     .
      */
      else if ((rc = ACTION_CustomAction(hPackage,action)) != ERROR_SUCCESS)
      {
@@ -2381,7 +2339,10 @@ static UINT ACTION_InstallFiles(MSIHANDLE hPackage)
             ui_progress(hPackage,2,0,0,0);
 
             if (rc)
-                ERR("Unable to move file\n");
+            {
+                ERR("Unable to move file (error %li)\n",GetLastError());
+                rc = ERROR_SUCCESS;
+            }
             else
                 file->State = 4;
         }
@@ -2779,6 +2740,7 @@ static UINT ACTION_WriteRegistryValues(MSIHANDLE hPackage)
         HeapFree(GetProcessHeap(),0,value);
 
         MsiCloseHandle(row);
+        RegCloseKey(hkey);
     }
     MsiViewClose(view);
     MsiCloseHandle(view);
@@ -3033,6 +2995,123 @@ static UINT ACTION_LaunchConditions(MSIHANDLE hPackage)
     }
     MsiViewClose(view);
     MsiCloseHandle(view);
+    return rc;
+}
+
+static void resolve_keypath(MSIHANDLE hPackage, MSIPACKAGE* package, INT
+                            component_index, WCHAR *keypath)
+{
+    MSICOMPONENT* cmp = &package->components[component_index];
+
+    if (cmp->KeyPath[0]==0)
+    {
+        resolve_folder(hPackage,cmp->Directory,keypath,FALSE,FALSE,NULL);
+        return;
+    }
+    if ((cmp->Attributes & 0x4) || (cmp->Attributes & 0x20))
+    {
+        FIXME("UNIMPLEMENTED keypath as Registry or ODBC Source\n");
+        keypath[0]=0;
+    }
+    else
+    {
+        int j;
+        for (j = 0; j < package->loaded_files; j++)
+            if (strcmpW(package->files[j].File,cmp->KeyPath)==0)
+                break;
+        if (j < package->loaded_files)
+            strcpyW(keypath,package->files[j].TargetPath);
+    }
+}
+
+static UINT ACTION_ProcessComponents(MSIHANDLE hPackage)
+{
+    MSIPACKAGE* package;
+    WCHAR productcode[0x100];
+    WCHAR squished_pc[0x100];
+    WCHAR squished_cc[0x100];
+    DWORD sz;
+    UINT rc;
+    INT i;
+    HKEY hkey=0,hkey2=0,hkey3=0;
+    static const WCHAR szProductCode[]=
+{'P','r','o','d','u','c','t','C','o','d','e',0};
+    static const WCHAR szInstaller[] = {
+'S','o','f','t','w','a','r','e','\\',
+'M','i','c','r','o','s','o','f','t','\\',
+'W','i','n','d','o','w','s','\\',
+'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+'I','n','s','t','a','l','l','e','r',0 };
+    static const WCHAR szFeatures[] = {
+'F','e','a','t','u','r','e','s',0 };
+    static const WCHAR szComponents[] = {
+'C','o','m','p','o','n','e','n','t','s',0 };
+
+    package = msihandle2msiinfo(hPackage, MSIHANDLETYPE_PACKAGE);
+    if (!package)
+        return ERROR_INVALID_HANDLE;
+
+    /* writes the Component and Features values to the registry */
+    sz = 0x100;
+    rc = MsiGetPropertyW(hPackage,szProductCode,productcode,&sz);
+
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    squash_guid(productcode,squished_pc);
+    rc = RegCreateKeyW(HKEY_LOCAL_MACHINE,szInstaller,&hkey);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(hkey,szFeatures,&hkey2);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    rc = RegCreateKeyW(hkey2,squished_pc,&hkey3);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+
+    /* I have no idea what goes in here */
+    for (i = 0; i < package->loaded_features; i++)
+        RegSetValueExW(hkey3,package->features[i].Feature,0,REG_SZ,NULL,0);
+
+    RegCloseKey(hkey3);
+    RegCloseKey(hkey2);
+
+    rc = RegCreateKeyW(hkey,szComponents,&hkey2);
+    if (rc != ERROR_SUCCESS)
+        goto end;
+  
+    for (i = 0; i < package->loaded_components; i++)
+    {
+        if (package->components[i].ComponentId[0]!=0)
+        {
+            WCHAR keypath[0x1000];
+            MSIHANDLE uirow;
+
+            squash_guid(package->components[i].ComponentId,squished_cc);
+            rc = RegCreateKeyW(hkey2,squished_cc,&hkey3);
+            if (rc != ERROR_SUCCESS)
+                continue;
+           
+            resolve_keypath(hPackage,package,i,keypath);
+
+            RegSetValueExW(hkey3,squished_pc,0,REG_SZ,(LPVOID)keypath,
+                            (strlenW(keypath)+1)*sizeof(WCHAR));
+            RegCloseKey(hkey3);
+        
+            /* UI stuff */
+            uirow = MsiCreateRecord(3);
+            MsiRecordSetStringW(uirow,1,productcode);
+            MsiRecordSetStringW(uirow,2,package->components[i].ComponentId);
+            MsiRecordSetStringW(uirow,3,keypath);
+            ui_actiondata(hPackage,szProcessComponents,uirow);
+            MsiCloseHandle(uirow);
+        }
+    } 
+end:
+    RegCloseKey(hkey2);
+    RegCloseKey(hkey);
     return rc;
 }
 

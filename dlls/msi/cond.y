@@ -493,6 +493,19 @@ integer:
 %%
 
 
+static int COND_IsAlpha( WCHAR x )
+{
+    return( ( ( x >= 'A' ) && ( x <= 'Z' ) ) ||
+            ( ( x >= 'a' ) && ( x <= 'z' ) ) ||
+            ( ( x == '_' ) ) );
+}
+
+static int COND_IsNumber( WCHAR x )
+{
+    return( ( x >= '0' ) && ( x <= '9' ) );
+}
+
+
 /* the mess of comparison functions */
 
 static INT comp_lt_i(INT a, INT b)
@@ -544,43 +557,32 @@ static INT comp_end(LPWSTR a, LPWSTR b, BOOL casless)
 
 
 static INT comp_eq_m1(LPWSTR a, INT b)
-{ return atoiW(a)==b; }
+{ if (COND_IsNumber(a[0])) return atoiW(a)==b; else return 0;}
 static INT comp_ne_m1(LPWSTR a, INT b)
-{ return atoiW(a)!=b; }
+{ if (COND_IsNumber(a[0])) return atoiW(a)!=b; else return 1;}
 static INT comp_lt_m1(LPWSTR a, INT b)
-{ return atoiW(a)<b; }
+{ if (COND_IsNumber(a[0])) return atoiW(a)<b; else return 0;}
 static INT comp_gt_m1(LPWSTR a, INT b)
-{ return atoiW(a)>b; }
+{ if (COND_IsNumber(a[0])) return atoiW(a)>b; else return 0;}
 static INT comp_le_m1(LPWSTR a, INT b)
-{ return atoiW(a)<=b; }
+{ if (COND_IsNumber(a[0])) return atoiW(a)<=b; else return 0;}
 static INT comp_ge_m1(LPWSTR a, INT b)
-{ return atoiW(a)>=b; }
+{ if (COND_IsNumber(a[0])) return atoiW(a)>=b; else return 0;}
 
 static INT comp_eq_m2(INT a, LPWSTR b)
-{ return a == atoiW(b); }
+{ if (COND_IsNumber(b[0])) return a == atoiW(b); else return 0;}
 static INT comp_ne_m2(INT a, LPWSTR b)
-{ return a != atoiW(b); }
+{ if (COND_IsNumber(b[0])) return a != atoiW(b); else return 1;}
 static INT comp_lt_m2(INT a, LPWSTR b)
-{ return a < atoiW(b); }
+{ if (COND_IsNumber(b[0])) return a < atoiW(b); else return 0;}
 static INT comp_gt_m2(INT a, LPWSTR b)
-{ return a > atoiW(b); }
+{ if (COND_IsNumber(b[0])) return a > atoiW(b); else return 0;}
 static INT comp_le_m2(INT a, LPWSTR b)
-{ return a <= atoiW(b); }
+{ if (COND_IsNumber(b[0])) return a <= atoiW(b); else return 0;}
 static INT comp_ge_m2(INT a, LPWSTR b)
-{ return a >= atoiW(b); }
+{ if (COND_IsNumber(b[0])) return a >= atoiW(b); else return 0;}
 
 
-static int COND_IsAlpha( WCHAR x )
-{
-    return( ( ( x >= 'A' ) && ( x <= 'Z' ) ) ||
-            ( ( x >= 'a' ) && ( x <= 'z' ) ) ||
-            ( ( x == '_' ) ) );
-}
-
-static int COND_IsNumber( WCHAR x )
-{
-    return( ( x >= '0' ) && ( x <= '9' ) );
-}
 
 static int COND_IsIdent( WCHAR x )
 {

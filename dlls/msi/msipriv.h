@@ -235,6 +235,8 @@ extern UINT get_raw_stream( MSIHANDLE hdb, LPCWSTR stname, IStream **stm );
 extern UINT db_get_raw_stream( MSIDATABASE *db, LPCWSTR stname, IStream **stm );
 extern void enum_stream_names( IStorage *stg );
 
+BOOL unsquash_guid(LPCWSTR in, LPWSTR out);
+BOOL squash_guid(LPCWSTR in, LPWSTR out);
 
 /* UI globals */
 extern INSTALLUILEVEL gUILevel;
