@@ -771,11 +771,17 @@ LPVOID WINAPI VirtualAlloc(
 
     if ((type & MEM_RESERVE) || !base)
     {
-        view_size = size + (base ? 0 : granularity_mask + 1);
         if (type & MEM_SYSTEM)
-             ptr = base;
-        else
-            ptr = (UINT)wine_anon_mmap( (LPVOID)base, view_size, VIRTUAL_GetUnixProt( vprot ), 0 );
+        {
+            if (!(view = VIRTUAL_CreateView( base, size, VFLAG_VALLOC | VFLAG_SYSTEM, vprot, 0 )))
+            {
+                SetLastError( ERROR_OUTOFMEMORY );
+                return NULL;
+            }
+            return (LPVOID)base;
+        }
+        view_size = size + (base ? 0 : granularity_mask + 1);
+        ptr = (UINT)wine_anon_mmap( (LPVOID)base, view_size, VIRTUAL_GetUnixProt( vprot ), 0 );
         if (ptr == (UINT)-1)
         {
             SetLastError( ERROR_OUTOFMEMORY );
@@ -803,9 +809,7 @@ LPVOID WINAPI VirtualAlloc(
 	    SetLastError( ERROR_INVALID_ADDRESS );
 	    return NULL;
         }
-        if (!(view = VIRTUAL_CreateView( ptr, size,
-                                         VFLAG_VALLOC | ((type & MEM_SYSTEM) ? VFLAG_SYSTEM : 0),
-                                         vprot, 0 )))
+        if (!(view = VIRTUAL_CreateView( ptr, size, VFLAG_VALLOC, vprot, 0 )))
         {
             munmap( (void *)ptr, size );
             SetLastError( ERROR_OUTOFMEMORY );
