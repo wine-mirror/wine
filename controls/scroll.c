@@ -94,7 +94,7 @@ static BOOL SCROLL_MovingThumb = FALSE;
 static BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar,
 				    BOOL fShowH, BOOL fShowV );
 static INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
-				   const SCROLLINFO *info, INT *action );
+                                 const SCROLLINFO *info, BOOL bRedraw );
 static void SCROLL_DrawInterior_9x( HWND hwnd, HDC hdc, INT nBar,
 				    RECT *rect, INT arrowSize,
 				    INT thumbSize, INT thumbPos,
@@ -464,7 +464,7 @@ static void SCROLL_DrawInterior_9x( HWND hwnd, HDC hdc, INT nBar,
      */
     if (nBar == SB_CTL)
     {
-      hBrush = (HBRUSH)SendMessageA( GetParent(hwnd), WM_CTLCOLORSCROLLBAR,
+      hBrush = (HBRUSH)SendMessageW( GetParent(hwnd), WM_CTLCOLORSCROLLBAR,
 				     (WPARAM)hdc,(LPARAM)hwnd);
     }
     else
@@ -560,7 +560,7 @@ static void SCROLL_DrawInterior( HWND hwnd, HDC hdc, INT nBar,
      * to correctly setup default scrollbar colors
      */
     if (nBar == SB_CTL) {
-        hBrush = (HBRUSH)SendMessageA( GetParent(hwnd), WM_CTLCOLORSCROLLBAR,
+        hBrush = (HBRUSH)SendMessageW( GetParent(hwnd), WM_CTLCOLORSCROLLBAR,
                                        (WPARAM)hdc,(LPARAM)hwnd);
     } else {
         hBrush = DEFWND_ControlColor( hdc, CTLCOLOR_SCROLLBAR );
@@ -768,7 +768,7 @@ LPARAM lParam /* [in] Variable input including input point */)
     default: return;
     }
     SendMessageW(GetParent(hwnd),
-        ((GetWindowLongA( hwnd, GWL_STYLE ) & SBS_VERT) ?
+        ((GetWindowLongW( hwnd, GWL_STYLE ) & SBS_VERT) ?
             WM_VSCROLL : WM_HSCROLL), wParam, (LPARAM)hwnd);
 }
 
@@ -845,7 +845,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
           lastMousePos  = lastClickPos;
           trackThumbPos = thumbPos;
           prevPt = pt;
-          if (nBar == SB_CTL && (GetWindowLongA(hwnd, GWL_STYLE) & WS_TABSTOP)) SetFocus( hwnd );
+          if (nBar == SB_CTL && (GetWindowLongW(hwnd, GWL_STYLE) & WS_TABSTOP)) SetFocus( hwnd );
           SetCapture( hwnd );
           break;
 
@@ -885,7 +885,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
             {
-                SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
+                SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                                 SB_LINEUP, (LPARAM)hwndCtl );
 	    }
 
@@ -904,7 +904,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
             {
-                SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
+                SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                                 SB_PAGEUP, (LPARAM)hwndCtl );
             }
             SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
@@ -955,7 +955,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
                 SCROLL_TrackingVal = SCROLL_GetThumbVal( infoPtr, &rect,
                                                          vertical,
                                                          SCROLL_TrackingPos );
-                SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
+                SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                                 MAKEWPARAM( SB_THUMBTRACK, SCROLL_TrackingVal),
                                 (LPARAM)hwndCtl );
 		if (!SCROLL_MovingThumb)
@@ -973,7 +973,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
             {
-                SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
+                SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                                 SB_PAGEDOWN, (LPARAM)hwndCtl );
             }
             SetSystemTimer( hwnd, SCROLL_TIMER, (msg == WM_LBUTTONDOWN) ?
@@ -990,7 +990,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         {
             if ((msg == WM_LBUTTONDOWN) || (msg == WM_SYSTIMER))
             {
-                SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
+                SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                                 SB_LINEDOWN, (LPARAM)hwndCtl );
 	    }
 
@@ -1009,7 +1009,7 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         {
             UINT val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
                                  trackThumbPos + lastMousePos - lastClickPos );
-            SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
+            SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                             MAKEWPARAM( SB_THUMBTRACK, val ), (LPARAM)hwndCtl );
         }
     }
@@ -1023,10 +1023,10 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
         {
             UINT val = SCROLL_GetThumbVal( infoPtr, &rect, vertical,
                                  trackThumbPos + lastMousePos - lastClickPos );
-            SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
+            SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                             MAKEWPARAM( SB_THUMBPOSITION, val ), (LPARAM)hwndCtl );
         }
-        SendMessageA( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
+        SendMessageW( hwndOwner, vertical ? WM_VSCROLL : WM_HSCROLL,
                           SB_ENDSCROLL, (LPARAM)hwndCtl );
     }
 
@@ -1207,7 +1207,7 @@ LPINT lpMax /* [out] Where to store maximum value */)
     if (lpMin) *lpMin = infoPtr ? infoPtr->minVal : 0;
     if (lpMax) *lpMax = infoPtr ? infoPtr->maxVal : 0;
 
-    return infoPtr ? TRUE : FALSE;
+    return TRUE;
 }
 
 
@@ -1230,7 +1230,7 @@ static BOOL SCROLL_SetScrollRange(
         infoPtr->minVal = minVal;
         infoPtr->maxVal = maxVal;
     }
-    return infoPtr ? TRUE : FALSE;
+    return TRUE;
 }
 
 
@@ -1393,7 +1393,7 @@ static LRESULT WINAPI ScrollBarWndProc( HWND hwnd, UINT message, WPARAM wParam, 
         return EnableScrollBar( hwnd, SB_CTL, wParam );
 
     case SBM_SETSCROLLINFO:
-        return SetScrollInfo( hwnd, SB_CTL, (SCROLLINFO *)lParam, wParam );
+        return SCROLL_SetScrollInfo( hwnd, SB_CTL, (SCROLLINFO *)lParam, wParam );
 
     case SBM_GETSCROLLINFO:
         return SCROLL_GetScrollInfo(hwnd, SB_CTL, (SCROLLINFO *)lParam);
@@ -1440,27 +1440,16 @@ INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */,
 const SCROLLINFO *info /* [in] Specifies what to change and new values */,
 BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */)
 {
-    INT action;
-    INT retVal = SCROLL_SetScrollInfo( hwnd, nBar, info, &action );
+    TRACE("hwnd=%p nBar=%d info=%p, bRedraw=%d\n", hwnd, nBar, info, bRedraw);
 
-    if( action & SA_SSI_HIDE )
-	SCROLL_ShowScrollBar( hwnd, nBar, FALSE, FALSE );
+    /* Refer SB_CTL requests to the window */
+    if (nBar == SB_CTL)
+        return SendMessageW(hwnd, SBM_SETSCROLLINFO, bRedraw, (LPARAM)info);
     else
-    {
-	if( action & SA_SSI_SHOW )
-	    if( SCROLL_ShowScrollBar( hwnd, nBar, TRUE, TRUE ) )
-		return retVal; /* SetWindowPos() already did the painting */
-
-	if( bRedraw )
-	    SCROLL_RefreshScrollBar( hwnd, nBar, TRUE, TRUE );
-	else if( action & SA_SSI_REPAINT_ARROWS )
-	    SCROLL_RefreshScrollBar( hwnd, nBar, TRUE, FALSE );
-    }
-    return retVal;
+        return SCROLL_SetScrollInfo( hwnd, nBar, info, bRedraw );
 }
 
-INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
-			    const SCROLLINFO *info, INT *action  )
+static INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar, const SCROLLINFO *info, BOOL bRedraw )
 {
     /* Update the scrollbar state and set action flags according to
      * what has to be done graphics wise. */
@@ -1468,8 +1457,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
     SCROLLBAR_INFO *infoPtr;
     UINT new_flags;
     BOOL bChangeParams = FALSE; /* don't show/hide scrollbar if params don't change */
-
-   *action = 0;
+    INT action = 0;
 
     if (!(infoPtr = SCROLL_GetScrollBarInfo(hwnd, nBar))) return 0;
     if (info->fMask & ~(SIF_ALL | SIF_DISABLENOSCROLL)) return 0;
@@ -1492,7 +1480,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 	if( infoPtr->page != info->nPage )
 	{
             infoPtr->page = info->nPage;
-	   *action |= SA_SSI_REFRESH;
+            action |= SA_SSI_REFRESH;
            bChangeParams = TRUE;
 	}
     }
@@ -1504,7 +1492,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 	if( infoPtr->curVal != info->nPos )
 	{
 	    infoPtr->curVal = info->nPos;
-	   *action |= SA_SSI_REFRESH;
+            action |= SA_SSI_REFRESH;
 	}
     }
 
@@ -1525,7 +1513,7 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 	    if( infoPtr->minVal != info->nMin ||
 		infoPtr->maxVal != info->nMax )
 	    {
-                *action |= SA_SSI_REFRESH;
+                action |= SA_SSI_REFRESH;
                 infoPtr->minVal = info->nMin;
                 infoPtr->maxVal = info->nMax;
                 bChangeParams = TRUE;
@@ -1566,11 +1554,11 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
             if (info->fMask & SIF_DISABLENOSCROLL)
 	    {
                 new_flags = ESB_DISABLE_BOTH;
-	       *action |= SA_SSI_REFRESH;
+                action |= SA_SSI_REFRESH;
 	    }
             else if ((nBar != SB_CTL) && bChangeParams)
 	    {
-		*action = SA_SSI_HIDE;
+                action = SA_SSI_HIDE;
 		goto done;
             }
         }
@@ -1578,19 +1566,32 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
         {
 	    new_flags = 0;
             if ((nBar != SB_CTL) && bChangeParams)
-		*action |= SA_SSI_SHOW;
+                action |= SA_SSI_SHOW;
         }
 
         if (infoPtr->flags != new_flags) /* check arrow flags */
         {
             infoPtr->flags = new_flags;
-           *action |= SA_SSI_REPAINT_ARROWS;
+            action |= SA_SSI_REPAINT_ARROWS;
         }
     }
 
 done:
-    /* Return current position */
+    if( action & SA_SSI_HIDE )
+        SCROLL_ShowScrollBar( hwnd, nBar, FALSE, FALSE );
+    else
+    {
+        if( action & SA_SSI_SHOW )
+            if( SCROLL_ShowScrollBar( hwnd, nBar, TRUE, TRUE ) )
+                return infoPtr->curVal; /* SetWindowPos() already did the painting */
 
+        if( bRedraw )
+            SCROLL_RefreshScrollBar( hwnd, nBar, TRUE, TRUE );
+        else if( action & SA_SSI_REPAINT_ARROWS )
+            SCROLL_RefreshScrollBar( hwnd, nBar, TRUE, FALSE );
+    }
+
+    /* Return current position */
     return infoPtr->curVal;
 }
 
@@ -1612,9 +1613,11 @@ LPSCROLLINFO info /* [in/out] (fMask specifies which values to retrieve) */)
 
     /* Refer SB_CTL requests to the window */
     if (nBar == SB_CTL)
-        return SendMessageA(hwnd, SBM_GETSCROLLINFO, (WPARAM)0, (LPARAM)info);
+        SendMessageW(hwnd, SBM_GETSCROLLINFO, (WPARAM)0, (LPARAM)info);
     else
-        return SCROLL_GetScrollInfo(hwnd, nBar, info);
+        SCROLL_GetScrollInfo(hwnd, nBar, info);
+
+    return TRUE;
 }
 
 
@@ -1668,7 +1671,7 @@ INT nBar /* [in] One of SB_HORZ, SB_VERT, or SB_CTL */)
 
     /* Refer SB_CTL requests to the window */
     if (nBar == SB_CTL)
-        return SendMessageA(hwnd, SBM_GETPOS, (WPARAM)0, (LPARAM)0);
+        return SendMessageW(hwnd, SBM_GETPOS, (WPARAM)0, (LPARAM)0);
     else
         return SCROLL_GetScrollPos(hwnd, nBar);
 }
@@ -1686,22 +1689,16 @@ INT minVal, /* [in] New minimum value */
 INT maxVal, /* [in] New maximum value */
 BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */)
 {
-    BOOL ret;
-
-    TRACE("hwnd=%p nBar=%d min=%d max=%d\n", hwnd, nBar, minVal, maxVal);
-
-    /* Refer SB_CTL requests to the window */
-    if (nBar == SB_CTL)
-        ret = SendMessageW(hwnd, SBM_SETRANGE, minVal, maxVal);
-    else
-    {
-        ret = SCROLL_SetScrollRange(hwnd, nBar, minVal, maxVal);
-        ShowScrollBar(hwnd, nBar, minVal != maxVal);
-    }
-
-    if (bRedraw)
-        SCROLL_RefreshScrollBar( hwnd, nBar, TRUE, TRUE );
-    return ret;
+    SCROLLINFO info;
+ 
+    TRACE("hwnd=%p nBar=%d min=%d max=%d, bRedraw=%d\n", hwnd, nBar, minVal, maxVal, bRedraw);
+ 
+    info.cbSize = sizeof(info);
+    info.fMask  = SIF_RANGE;
+    info.nMin   = minVal;
+    info.nMax   = maxVal;
+    SetScrollInfo( hwnd, nBar, &info, bRedraw );
+    return TRUE;
 }
 
 
@@ -1713,7 +1710,6 @@ BOOL bRedraw /* [in] Should scrollbar be redrawn afterwards ? */)
 INT SCROLL_SetNCSbState(HWND hwnd, int vMin, int vMax, int vPos,
                         int hMin, int hMax, int hPos)
 {
-    INT vA, hA;
     SCROLLINFO vInfo, hInfo;
 
     vInfo.cbSize = hInfo.cbSize = sizeof(SCROLLINFO);
@@ -1725,19 +1721,9 @@ INT SCROLL_SetNCSbState(HWND hwnd, int vMin, int vMax, int vPos,
     hInfo.nPos   = hPos;
     vInfo.fMask  = hInfo.fMask = SIF_RANGE | SIF_POS;
 
-    SCROLL_SetScrollInfo( hwnd, SB_VERT, &vInfo, &vA );
-    SCROLL_SetScrollInfo( hwnd, SB_HORZ, &hInfo, &hA );
+    SCROLL_SetScrollInfo( hwnd, SB_VERT, &vInfo, TRUE );
+    SCROLL_SetScrollInfo( hwnd, SB_HORZ, &hInfo, TRUE );
 
-    if( !SCROLL_ShowScrollBar( hwnd, SB_BOTH,
-			      (hA & SA_SSI_SHOW),(vA & SA_SSI_SHOW) ) )
-    {
-	/* SetWindowPos() wasn't called, just redraw the scrollbars if needed */
-	if( vA & SA_SSI_REFRESH )
-	    SCROLL_RefreshScrollBar( hwnd, SB_VERT, FALSE, TRUE );
-
-	if( hA & SA_SSI_REFRESH )
-	    SCROLL_RefreshScrollBar( hwnd, SB_HORZ, FALSE, TRUE );
-    }
     return 0;
 }
 
@@ -1757,9 +1743,11 @@ LPINT lpMax /* [out] Where to store maximum value */)
 
     /* Refer SB_CTL requests to the window */
     if (nBar == SB_CTL)
-        return SendMessageA(hwnd, SBM_GETRANGE, (WPARAM)lpMin, (LPARAM)lpMax);
+        SendMessageW(hwnd, SBM_GETRANGE, (WPARAM)lpMin, (LPARAM)lpMax);
     else
-        return SCROLL_GetScrollRange(hwnd, nBar, lpMin, lpMax);
+        SCROLL_GetScrollRange(hwnd, nBar, lpMin, lpMax);
+
+    return TRUE;
 }
 
 

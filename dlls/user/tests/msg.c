@@ -54,6 +54,11 @@ struct message {
     LPARAM lParam;         /* expected value of lParam */
 };
 
+/* Empty message sequence */
+static const struct message WmEmptySeq[] =
+{
+    { 0 }
+};
 /* CreateWindow (for overlapped window, not initially visible) (16/32) */
 static const struct message WmCreateOverlappedSeq[] = {
     { HCBT_CREATEWND, hook },
@@ -186,10 +191,6 @@ static const struct message WmCreateInvisiblePopupSeq[] = {
     { WM_STYLECHANGED, sent },
     { WM_SIZE, sent },
     { WM_MOVE, sent },
-    { 0 }
-};
-/* ShowWindow (for a popup window with WS_VISIBLE style set) */
-static const struct message WmShowVisiblePopupSeq[] = {
     { 0 }
 };
 /* SetWindowPos(SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER)
@@ -641,6 +642,48 @@ static const struct message WmEnableWindowSeq[] =
 {
     { WM_CANCELMODE, sent },
     { WM_ENABLE, sent },
+    { 0 }
+};
+
+static const struct message WmGetScrollRangeSeq[] =
+{
+    { SBM_GETRANGE, sent },
+    { 0 }
+};
+static const struct message WmGetScrollInfoSeq[] =
+{
+    { SBM_GETSCROLLINFO, sent },
+    { 0 }
+};
+static const struct message WmSetScrollRangeSeq[] =
+{
+    /* MSDN claims that Windows sends SBM_SETRANGE message, but win2k SP4
+       sends SBM_SETSCROLLINFO.
+     */
+    { SBM_SETSCROLLINFO, sent },
+    { 0 }
+};
+/* SetScrollRange for a window without a non-client area */
+static const struct message WmSetScrollRangeHVSeq[] =
+{
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { 0 }
+};
+/* SetScrollRange for a window with a non-client area */
+static const struct message WmSetScrollRangeHV_NC_Seq[] =
+{
+    { WM_WINDOWPOSCHANGING, sent|wparam, 0 },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_NCPAINT, sent|optional },
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { WM_CTLCOLORDLG, sent|defwinproc|optional }, /* sent to a parent of the dialog */
+    { WM_WINDOWPOSCHANGED, sent|wparam, 0 },
+    { WM_SIZE, sent|defwinproc },
     { 0 }
 };
 
@@ -1173,6 +1216,172 @@ static INT_PTR CALLBACK TestModalDlgProcA(HWND hwnd, UINT message, WPARAM wParam
     return 0;
 }
 
+static void test_hv_scroll_1(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min, INT max)
+{
+    DWORD style, exstyle;
+    INT xmin, xmax;
+
+    exstyle = GetWindowLongA(hwnd, GWL_EXSTYLE);
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    /* do not be confused by WS_DLGFRAME set */
+    if ((style & WS_CAPTION) == WS_CAPTION) style &= ~WS_CAPTION;
+
+    if (clear) ok(style & clear, "style %08lx should be set\n", clear);
+    if (set) ok(!(style & set), "style %08lx should not be set\n", set);
+
+    ok(SetScrollRange(hwnd, ctl, min, max, FALSE), "SetScrollRange(%d) error %ld\n", ctl, GetLastError());
+    if ((style & (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME)) || (exstyle & WS_EX_DLGMODALFRAME))
+        ok_sequence(WmSetScrollRangeHV_NC_Seq, "SetScrollRange(SB_HORZ/SB_VERT) NC");
+    else
+        ok_sequence(WmSetScrollRangeHVSeq, "SetScrollRange(SB_HORZ/SB_VERT)");
+
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    if (set) ok(style & set, "style %08lx should be set\n", set);
+    if (clear) ok(!(style & clear), "style %08lx should not be set\n", clear);
+
+    /* a subsequent call should do nothing */
+    ok(SetScrollRange(hwnd, ctl, min, max, FALSE), "SetScrollRange(%d) error %ld\n", ctl, GetLastError());
+    ok_sequence(WmEmptySeq, "SetScrollRange(SB_HORZ/SB_VERT)");
+
+    xmin = 0xdeadbeef;
+    xmax = 0xdeadbeef;
+    trace("Ignore GetScrollRange error below if you are on Win9x\n");
+    ok(GetScrollRange(hwnd, ctl, &xmin, &xmax), "GetScrollRange(%d) error %ld\n", ctl, GetLastError());
+    ok_sequence(WmEmptySeq, "GetScrollRange(SB_HORZ/SB_VERT)");
+    ok(xmin == min, "unexpected min scroll value %d\n", xmin);
+    ok(xmax == max, "unexpected max scroll value %d\n", xmax);
+}
+
+static void test_hv_scroll_2(HWND hwnd, INT ctl, DWORD clear, DWORD set, INT min, INT max)
+{
+    DWORD style, exstyle;
+    SCROLLINFO si;
+
+    exstyle = GetWindowLongA(hwnd, GWL_EXSTYLE);
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    /* do not be confused by WS_DLGFRAME set */
+    if ((style & WS_CAPTION) == WS_CAPTION) style &= ~WS_CAPTION;
+
+    if (clear) ok(style & clear, "style %08lx should be set\n", clear);
+    if (set) ok(!(style & set), "style %08lx should not be set\n", set);
+
+    si.cbSize = sizeof(si);
+    si.fMask = SIF_RANGE;
+    si.nMin = min;
+    si.nMax = max;
+    SetScrollInfo(hwnd, ctl, &si, TRUE);
+    if ((style & (WS_DLGFRAME | WS_BORDER | WS_THICKFRAME)) || (exstyle & WS_EX_DLGMODALFRAME))
+        ok_sequence(WmSetScrollRangeHV_NC_Seq, "SetScrollInfo(SB_HORZ/SB_VERT) NC");
+    else
+        ok_sequence(WmSetScrollRangeHVSeq, "SetScrollInfo(SB_HORZ/SB_VERT)");
+
+    style = GetWindowLongA(hwnd, GWL_STYLE);
+    if (set) ok(style & set, "style %08lx should be set\n", set);
+    if (clear) ok(!(style & clear), "style %08lx should not be set\n", clear);
+
+    /* a subsequent call should do nothing */
+    SetScrollInfo(hwnd, ctl, &si, TRUE);
+    ok_sequence(WmEmptySeq, "SetScrollInfo(SB_HORZ/SB_VERT)");
+
+    si.fMask = SIF_PAGE;
+    si.nPage = 5;
+    SetScrollInfo(hwnd, ctl, &si, FALSE);
+    ok_sequence(WmEmptySeq, "SetScrollInfo(SB_HORZ/SB_VERT)");
+
+    si.fMask = SIF_POS;
+    si.nPos = max - 1;
+    SetScrollInfo(hwnd, ctl, &si, FALSE);
+    ok_sequence(WmEmptySeq, "SetScrollInfo(SB_HORZ/SB_VERT)");
+
+    si.fMask = SIF_RANGE;
+    si.nMin = 0xdeadbeef;
+    si.nMax = 0xdeadbeef;
+    ok(GetScrollInfo(hwnd, ctl, &si), "GetScrollInfo error %ld\n", GetLastError());
+    ok_sequence(WmEmptySeq, "GetScrollRange(SB_HORZ/SB_VERT)");
+    ok(si.nMin == min, "unexpected min scroll value %d\n", si.nMin);
+    ok(si.nMax == max, "unexpected max scroll value %d\n", si.nMax);
+}
+
+/* Win9x sends WM_USER+xxx while and NT versions send SBM_xxx messages */
+static void test_scroll_messages(HWND hwnd)
+{
+    SCROLLINFO si;
+    INT min, max;
+
+    min = 0xdeadbeef;
+    max = 0xdeadbeef;
+    ok(GetScrollRange(hwnd, SB_CTL, &min, &max), "GetScrollRange error %ld\n", GetLastError());
+    if (sequence->message != WmGetScrollRangeSeq[0].message)
+        trace("GetScrollRange(SB_CTL) generated unknown message %04x\n", sequence->message);
+    /* values of min and max are undefined */
+    flush_sequence();
+
+    ok(SetScrollRange(hwnd, SB_CTL, 10, 150, FALSE), "SetScrollRange error %ld\n", GetLastError());
+    if (sequence->message != WmSetScrollRangeSeq[0].message)
+        trace("SetScrollRange(SB_CTL) generated unknown message %04x\n", sequence->message);
+    flush_sequence();
+
+    min = 0xdeadbeef;
+    max = 0xdeadbeef;
+    ok(GetScrollRange(hwnd, SB_CTL, &min, &max), "GetScrollRange error %ld\n", GetLastError());
+    if (sequence->message != WmGetScrollRangeSeq[0].message)
+        trace("GetScrollRange(SB_CTL) generated unknown message %04x\n", sequence->message);
+    /* values of min and max are undefined */
+    flush_sequence();
+
+    si.cbSize = sizeof(si);
+    si.fMask = SIF_RANGE;
+    si.nMin = 20;
+    si.nMax = 160;
+    SetScrollInfo(hwnd, SB_CTL, &si, FALSE);
+    if (sequence->message != WmSetScrollRangeSeq[0].message)
+        trace("SetScrollInfo(SB_CTL) generated unknown message %04x\n", sequence->message);
+    flush_sequence();
+
+    si.fMask = SIF_PAGE;
+    si.nPage = 10;
+    SetScrollInfo(hwnd, SB_CTL, &si, FALSE);
+    if (sequence->message != WmSetScrollRangeSeq[0].message)
+        trace("SetScrollInfo(SB_CTL) generated unknown message %04x\n", sequence->message);
+    flush_sequence();
+
+    si.fMask = SIF_POS;
+    si.nPos = 20;
+    SetScrollInfo(hwnd, SB_CTL, &si, FALSE);
+    if (sequence->message != WmSetScrollRangeSeq[0].message)
+        trace("SetScrollInfo(SB_CTL) generated unknown message %04x\n", sequence->message);
+    flush_sequence();
+
+    si.fMask = SIF_RANGE;
+    si.nMin = 0xdeadbeef;
+    si.nMax = 0xdeadbeef;
+    ok(GetScrollInfo(hwnd, SB_CTL, &si), "GetScrollInfo error %ld\n", GetLastError());
+    if (sequence->message != WmGetScrollInfoSeq[0].message)
+        trace("GetScrollInfo(SB_CTL) generated unknown message %04x\n", sequence->message);
+    /* values of min and max are undefined */
+    flush_sequence();
+
+    /* set WS_HSCROLL */
+    test_hv_scroll_1(hwnd, SB_HORZ, 0, WS_HSCROLL, 10, 150);
+    /* clear WS_HSCROLL */
+    test_hv_scroll_1(hwnd, SB_HORZ, WS_HSCROLL, 0, 0, 0);
+
+    /* set WS_HSCROLL */
+    test_hv_scroll_2(hwnd, SB_HORZ, 0, WS_HSCROLL, 10, 150);
+    /* clear WS_HSCROLL */
+    test_hv_scroll_2(hwnd, SB_HORZ, WS_HSCROLL, 0, 0, 0);
+
+    /* set WS_VSCROLL */
+    test_hv_scroll_1(hwnd, SB_VERT, 0, WS_VSCROLL, 10, 150);
+    /* clear WS_VSCROLL */
+    test_hv_scroll_1(hwnd, SB_VERT, WS_VSCROLL, 0, 0, 0);
+
+    /* set WS_VSCROLL */
+    test_hv_scroll_2(hwnd, SB_VERT, 0, WS_VSCROLL, 10, 150);
+    /* clear WS_VSCROLL */
+    test_hv_scroll_2(hwnd, SB_VERT, WS_VSCROLL, 0, 0, 0);
+}
+
 /* test if we receive the right sequence of messages */
 static void test_messages(void)
 {
@@ -1214,6 +1423,9 @@ static void test_messages(void)
     ShowWindow(hwnd, SW_SHOW);
     test_WM_SETREDRAW(hwnd);
 
+    trace("testing scroll APIs on a visible top level window %p\n", hwnd);
+    test_scroll_messages(hwnd);
+
     DestroyWindow(hwnd);
     ok_sequence(WmDestroyOverlappedSeq, "DestroyWindow:overlapped");
 
@@ -1233,6 +1445,10 @@ static void test_messages(void)
                              0, 0, 10, 10, hparent, 0, 0, NULL);
     ok (hchild != 0, "Failed to create child window\n");
     ok_sequence(WmCreateVisibleChildSeq, "CreateWindow:visible child");
+
+    trace("testing scroll APIs on a visible child window %p\n", hchild);
+    test_scroll_messages(hchild);
+
     DestroyWindow(hchild);
     flush_sequence();
 
@@ -1298,7 +1514,7 @@ static void test_messages(void)
     ok(IsWindowVisible(hchild), "IsWindowVisible() should return TRUE\n");
     flush_sequence();
     ShowWindow(hchild, SW_SHOW);
-    ok_sequence(WmShowVisiblePopupSeq, "ShowWindow:show_visible_popup");
+    ok_sequence(WmEmptySeq, "ShowWindow:show_visible_popup");
     flush_sequence();
     SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
     ok_sequence(WmShowVisiblePopupSeq_2, "SetWindowPos:show_visible_popup_2");
@@ -1319,7 +1535,7 @@ static void test_messages(void)
     ok(IsWindowVisible(hchild), "IsWindowVisible() should return TRUE\n");
     flush_sequence();
     ShowWindow(hchild, SW_SHOW);
-    ok_sequence(WmShowVisiblePopupSeq, "ShowWindow:show_visible_popup");
+    ok_sequence(WmEmptySeq, "ShowWindow:show_visible_popup");
     flush_sequence();
     SetWindowPos(hchild, 0,0,0,0,0, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOACTIVATE|SWP_NOZORDER);
     ok_sequence(WmShowVisiblePopupSeq_2, "SetWindowPos:show_visible_popup_2");
@@ -1330,6 +1546,9 @@ static void test_messages(void)
                            0, 0, 100, 100, hparent, 0, 0, NULL);
     ok(hwnd != 0, "Failed to create custom dialog window\n");
     ok_sequence(WmCreateCustomDialogSeq, "CreateCustomDialog");
+
+    trace("testing scroll APIs on a visible dialog %p\n", hwnd);
+    test_scroll_messages(hwnd);
 
     flush_sequence();
     after_end_dialog = 1;
