@@ -37,7 +37,7 @@ init WS_LibMain
 29  stdcall  WSACloseEvent(long) WSACloseEvent
 30  stdcall  WSAConnect(long ptr long ptr ptr ptr ptr) WSAConnect
 31  stdcall  WSACreateEvent ()  WSACreateEvent
-32  stub     WSADuplicateSocketA
+32  stdcall  WSADuplicateSocketA(long long ptr) WSADuplicateSocketA
 33  stub     WSADuplicateSocketW
 34  stub     WSAEnumNameSpaceProvidersA
 35  stub     WSAEnumNameSpaceProvidersW

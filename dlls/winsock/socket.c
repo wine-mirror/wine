@@ -902,11 +902,19 @@ static const struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr,
     return NULL;
 }
 
-/* allocates a Unix sockaddr structure to receive the data */
+/* Allocates a Unix sockaddr structure to receive the data */
 inline struct sockaddr* ws_sockaddr_alloc(const struct WS_sockaddr* wsaddr, int* wsaddrlen, int* uaddrlen)
 {
     if (wsaddr==NULL)
-        return NULL;
+    {
+      ERR( "WINE shouldn't pass a NULL wsaddr! Attempting to continue\n" );
+
+      /* This is not strictly the right thing to do. Hope it works however */
+      *uaddrlen=0;
+
+      return NULL;
+    }
+
     if (*wsaddrlen==0)
         *uaddrlen=0;
     else
@@ -1640,12 +1648,21 @@ int WINAPI WSAConnect ( SOCKET s, const struct WS_sockaddr* name, int namelen,
  */
 int WINAPI WS_getpeername(SOCKET s, struct WS_sockaddr *name, int *namelen)
 {
-    int fd = _get_sock_fd(s);
+    int fd;
     int res;
 
     TRACE("socket: %04x, ptr %p, len %8x\n", s, name, *namelen);
 
-    res=SOCKET_ERROR;
+    /* Check if what we've received is valid. Should we use IsBadReadPtr? */
+    if( (name == NULL) || (namelen == NULL) )
+    {
+        SetLastError( WSAEFAULT );
+        return SOCKET_ERROR;
+    }
+
+    fd = _get_sock_fd(s);
+    res = SOCKET_ERROR;
+
     if (fd != -1)
     {
         struct sockaddr* uaddr;
@@ -1697,12 +1714,21 @@ INT16 WINAPI WINSOCK_getpeername16(SOCKET16 s, struct WS_sockaddr *name,
  */
 int WINAPI WS_getsockname(SOCKET s, struct WS_sockaddr *name, int *namelen)
 {
-    int fd = _get_sock_fd(s);
+    int fd;
     int res;
 
     TRACE("socket: %04x, ptr %p, len %8x\n", s, name, *namelen);
 
-    res=SOCKET_ERROR;
+    /* Check if what we've received is valid. Should we use IsBadReadPtr? */
+    if( (name == NULL) || (namelen == NULL) )
+    {
+        SetLastError( WSAEFAULT );
+        return SOCKET_ERROR;
+    }
+
+    fd = _get_sock_fd(s);
+    res = SOCKET_ERROR;
+
     if (fd != -1)
     {
         struct sockaddr* uaddr;
@@ -3337,6 +3363,13 @@ SOCKET WINAPI WSASocketA(int af, int type, int protocol,
    TRACE("af=%d type=%d protocol=%d protocol_info=%p group=%d flags=0x%lx\n",
          af, type, protocol, lpProtocolInfo, g, dwFlags );
 
+    /* hack for WSADuplicateSocket */
+    if (lpProtocolInfo && lpProtocolInfo->dwServiceFlags4 == 0xff00ff00) {
+      ret = lpProtocolInfo->dwCatalogEntryId;
+      TRACE("\tgot duplicate %04x\n", ret);
+      return ret;
+    }
+
     /* check the socket family */
     switch(af)
     {
@@ -4072,4 +4105,25 @@ int WINAPI WSAEnumProtocolsW(LPINT lpiProtocols, LPWSAPROTOCOL_INFOW lpProtocolB
     return 0;
 }
 
+/***********************************************************************
+ *              WSADuplicateSocketA                      (WS2_32.32)
+ */
+int WINAPI WSADuplicateSocketA( SOCKET s, DWORD dwProcessId, LPWSAPROTOCOL_INFOA lpProtocolInfo )
+{
+   HANDLE hProcess;
 
+   TRACE("(%d,%lx,%p)\n", s, dwProcessId, lpProtocolInfo);
+   memset(lpProtocolInfo, 0, sizeof(*lpProtocolInfo));
+   /* FIXME: WS_getsockopt(s, WS_SOL_SOCKET, SO_PROTOCOL_INFO, lpProtocolInfo, sizeof(*lpProtocolInfo)); */
+   /* I don't know what the real Windoze does next, this is a hack */
+   /* ...we could duplicate and then use ConvertToGlobalHandle on the duplicate, then let
+    * the target use the global duplicate, or we could copy a reference to us to the structure
+    * and let the target duplicate it from us, but let's do it as simple as possible */
+   hProcess = OpenProcess(PROCESS_DUP_HANDLE, FALSE, dwProcessId);
+   DuplicateHandle(GetCurrentProcess(), s,
+                   hProcess, (LPHANDLE)&lpProtocolInfo->dwCatalogEntryId,
+                   0, FALSE, DUPLICATE_SAME_ACCESS);
+   CloseHandle(hProcess);
+   lpProtocolInfo->dwServiceFlags4 = 0xff00ff00; /* magic */
+   return 0;
+}
