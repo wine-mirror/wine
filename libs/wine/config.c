@@ -277,7 +277,7 @@ void wine_exec_wine_binary( const char *name, char **argv, char **envp )
 {
     const char *path, *pos, *ptr;
 
-    if (!envp) envp = __wine_main_environ;
+    if (!envp) envp = environ;
     if (!name) name = argv0_name;
 
     /* first, try bin directory */
