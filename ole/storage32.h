@@ -29,7 +29,6 @@ static const ULONG OFFSET_BBDEPOTSTART	     = 0x0000004C;
 static const ULONG OFFSET_PS_NAME            = 0x00000000;
 static const ULONG OFFSET_PS_NAMELENGTH	     = 0x00000040;
 static const ULONG OFFSET_PS_PROPERTYTYPE    = 0x00000042;
-static const ULONG OFFSET_PS_BLOCKTYPE       = 0x00000043;
 static const ULONG OFFSET_PS_PREVIOUSPROP    = 0x00000044;
 static const ULONG OFFSET_PS_NEXTPROP        = 0x00000048;   
 static const ULONG OFFSET_PS_DIRPROP	     = 0x0000004C;
@@ -44,9 +43,10 @@ static const WORD  DEF_BIG_BLOCK_SIZE_BITS   = 0x0009;
 static const WORD  DEF_SMALL_BLOCK_SIZE_BITS = 0x0006;
 static const WORD  DEF_BIG_BLOCK_SIZE        = 0x0200;
 static const WORD  DEF_SMALL_BLOCK_SIZE      = 0x0040;
-static const ULONG BLOCK_SPECIAL	     = 0xFFFFFFFD;
-static const ULONG BLOCK_END_OF_CHAIN  	     = 0xFFFFFFFE;
-static const ULONG BLOCK_UNUSED		     = 0xFFFFFFFF;
+static const ULONG BLOCK_EXTBBDEPOT          = 0xFFFFFFFC;
+static const ULONG BLOCK_SPECIAL             = 0xFFFFFFFD;
+static const ULONG BLOCK_END_OF_CHAIN        = 0xFFFFFFFE;
+static const ULONG BLOCK_UNUSED              = 0xFFFFFFFF;
 static const ULONG PROPERTY_NULL             = 0xFFFFFFFF;
 
 #define PROPERTY_NAME_MAX_LEN    0x20
@@ -76,6 +76,7 @@ static const ULONG PROPERTY_NULL             = 0xFFFFFFFF;
 #define BIG_BLOCK_SIZE           0x200
 #define COUNT_BBDEPOTINHEADER    109
 #define LIMIT_TO_USE_SMALL_BLOCK 0x1000
+#define NUM_BLOCKS_PER_DEPOT_BLOCK 128
 
 /*
  * These are signatures to detect the type of Document file.
@@ -294,7 +295,10 @@ struct Storage32Impl
   ULONG extBigBlockDepotStart;
   ULONG extBigBlockDepotCount;
   ULONG bigBlockDepotStart[COUNT_BBDEPOTINHEADER];
-  
+
+  ULONG blockDepotCached[NUM_BLOCKS_PER_DEPOT_BLOCK];
+  ULONG indexBlockDepotCached;
+
   /*
    * Abstraction of the big block chains for the chains of the header.
    */
@@ -423,6 +427,20 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
                       Storage32Impl* This,
                       SmallBlockChainStream** ppsbChain);
 
+ULONG Storage32Impl_GetNextExtendedBlock(Storage32Impl* This,
+                                         ULONG blockIndex);
+
+void Storage32Impl_AddBlockDepot(Storage32Impl* This,
+                                 ULONG blockIndex);
+
+ULONG Storage32Impl_AddExtBlockDepot(Storage32Impl* This);
+
+ULONG Storage32Impl_GetExtDepotBlock(Storage32Impl* This,
+                                     ULONG depotIndex);
+
+void Storage32Impl_SetExtDepotBlock(Storage32Impl* This,
+                                    ULONG depotIndex,
+                                    ULONG blockIndex);
 /****************************************************************************
  * Storage32InternalImpl definitions.
  *

@@ -1916,12 +1916,17 @@ HRESULT Storage32Impl_Construct(
     Storage32Impl_ReleaseBigBlock(This, bigBlockBuffer);
   }
   else
-    {
-      /*
-       * Load the header for the file.
-       */
-      Storage32Impl_LoadFileHeader(This);
-    }
+  {
+    /*
+     * Load the header for the file.
+     */
+    Storage32Impl_LoadFileHeader(This);
+  }
+
+  /*
+   * There is no block depot cached yet.
+   */
+  This->indexBlockDepotCached = 0xFFFFFFFF;
   
   /*
    * Create the block chain abstractions.
@@ -2017,8 +2022,6 @@ void Storage32Impl_Destroy(
  * Returns the index of the next free big block.
  * If the big block depot is filled, this method will enlarge it.
  *
- * TODO: Handle the case when the big block depot becomes bigger
- *  than COUNT_BBDEPOTINHEADER.
  */
 ULONG Storage32Impl_GetNextFreeBigBlock(
   Storage32Impl* This)
@@ -2034,41 +2037,84 @@ ULONG Storage32Impl_GetNextFreeBigBlock(
   /*
    * Scan the entire big block depot until we find a block marked free
    */
-  while ( (depotIndex     <  COUNT_BBDEPOTINHEADER) && 
-          (nextBlockIndex != BLOCK_UNUSED))
+  while (nextBlockIndex != BLOCK_UNUSED)
   {
-    depotBlockIndexPos = This->bigBlockDepotStart[depotIndex];
-
-    if (depotBlockIndexPos == BLOCK_UNUSED)
+    if (depotIndex < COUNT_BBDEPOTINHEADER)
     {
+      depotBlockIndexPos = This->bigBlockDepotStart[depotIndex];
+
       /*
-       * No more space in the big block depot, we have to enlarge it
+       * Grow the primary depot.
        */
-      depotBlockIndexPos = depotIndex*blocksPerDepot;
-      depotBuffer = Storage32Impl_GetBigBlock(This, depotBlockIndexPos);
-
-      depotBlockOffset = 0;
-
-      /* mark this block as being part of the big block depot
-       */
-      StorageUtl_WriteDWord(depotBuffer, depotBlockOffset, BLOCK_SPECIAL);
-      depotBlockOffset += sizeof(ULONG);
-
-      /* initialize blocks as free
-       */
-      while ((depotBlockOffset < blocksPerDepot))
+      if (depotBlockIndexPos == BLOCK_UNUSED)
       {
-        StorageUtl_WriteDWord(depotBuffer, depotBlockOffset, BLOCK_UNUSED);
-        depotBlockOffset += sizeof(ULONG);
+        depotBlockIndexPos = depotIndex*blocksPerDepot;
+
+        /*
+         * Add a block depot.
+         */
+        Storage32Impl_AddBlockDepot(This, depotBlockIndexPos);
+        This->bigBlockDepotCount++;
+        This->bigBlockDepotStart[depotIndex] = depotBlockIndexPos;
+
+        /*
+         * Flag it as a block depot.
+         */
+        Storage32Impl_SetNextBlockInChain(This,
+                                          depotBlockIndexPos,
+                                          BLOCK_SPECIAL);
+
+        /* Save new header information.
+         */
+        Storage32Impl_SaveFileHeader(This);
       }
+    }
+    else
+    {
+      depotBlockIndexPos = Storage32Impl_GetExtDepotBlock(This, depotIndex);
 
-      Storage32Impl_ReleaseBigBlock(This, depotBuffer);
+      if (depotBlockIndexPos == BLOCK_UNUSED)
+      {
+        /*
+         * Grow the extended depot.
+         */
+        ULONG extIndex       = BLOCK_UNUSED;
+        ULONG numExtBlocks   = depotIndex - COUNT_BBDEPOTINHEADER;
+        ULONG extBlockOffset = numExtBlocks % (blocksPerDepot - 1);
 
-      /* Save the information to the file header
-       */
-      This->bigBlockDepotStart[depotIndex] = depotBlockIndexPos;
-      This->bigBlockDepotCount++;
-      Storage32Impl_SaveFileHeader(This);
+        if (extBlockOffset == 0)
+        {
+          /* We need an extended block.
+           */
+          extIndex = Storage32Impl_AddExtBlockDepot(This);
+          This->extBigBlockDepotCount++;
+          depotBlockIndexPos = extIndex + 1;
+        }
+        else
+          depotBlockIndexPos = depotIndex * blocksPerDepot;
+
+        /*
+         * Add a block depot and mark it in the extended block.
+         */
+        Storage32Impl_AddBlockDepot(This, depotBlockIndexPos);
+        This->bigBlockDepotCount++;
+        Storage32Impl_SetExtDepotBlock(This, depotIndex, depotBlockIndexPos);
+
+        /* Flag the block depot.
+         */
+        Storage32Impl_SetNextBlockInChain(This,
+                                          depotBlockIndexPos,
+                                          BLOCK_SPECIAL);
+
+        /* If necessary, flag the extended depot block.
+         */
+        if (extIndex != BLOCK_UNUSED)
+          Storage32Impl_SetNextBlockInChain(This, extIndex, BLOCK_EXTBBDEPOT);
+
+        /* Save header information.
+         */
+        Storage32Impl_SaveFileHeader(This);
+      }
     }
 
     depotBuffer = Storage32Impl_GetROBigBlock(This, depotBlockIndexPos);
@@ -2077,7 +2123,7 @@ ULONG Storage32Impl_GetNextFreeBigBlock(
     {
       depotBlockOffset = 0;
 
-      while ( ( (depotBlockOffset/sizeof(ULONG) ) < blocksPerDepot) && 
+      while ( ( (depotBlockOffset/sizeof(ULONG) ) < blocksPerDepot) &&
               ( nextBlockIndex != BLOCK_UNUSED))
       {
         StorageUtl_ReadDWord(depotBuffer, depotBlockOffset, &nextBlockIndex);
@@ -2095,6 +2141,168 @@ ULONG Storage32Impl_GetNextFreeBigBlock(
   }
 
   return blockNoInSequence;
+}
+
+/******************************************************************************
+ *      Storage32Impl_AddBlockDepot
+ *
+ * This will create a depot block, essentially it is a block initialized
+ * to BLOCK_UNUSEDs.
+ */
+void Storage32Impl_AddBlockDepot(Storage32Impl* This, ULONG blockIndex)
+{
+  BYTE* blockBuffer;
+
+  blockBuffer = Storage32Impl_GetBigBlock(This, blockIndex);
+
+  /*
+   * Initialize blocks as free
+   */
+  memset(blockBuffer, BLOCK_UNUSED, This->bigBlockSize);
+
+  Storage32Impl_ReleaseBigBlock(This, blockBuffer);
+}
+
+/******************************************************************************
+ *      Storage32Impl_GetExtDepotBlock
+ *
+ * Returns the index of the block that corresponds to the specified depot
+ * index. This method is only for depot indexes equal or greater than
+ * COUNT_BBDEPOTINHEADER.
+ */
+ULONG Storage32Impl_GetExtDepotBlock(Storage32Impl* This, ULONG depotIndex)
+{
+  ULONG depotBlocksPerExtBlock = (This->bigBlockSize / sizeof(ULONG)) - 1;
+  ULONG numExtBlocks           = depotIndex - COUNT_BBDEPOTINHEADER;
+  ULONG extBlockCount          = numExtBlocks / depotBlocksPerExtBlock;
+  ULONG extBlockOffset         = numExtBlocks % depotBlocksPerExtBlock;
+  ULONG blockIndex             = BLOCK_UNUSED;
+  ULONG extBlockIndex          = This->extBigBlockDepotStart;
+
+  assert(depotIndex >= COUNT_BBDEPOTINHEADER);
+
+  if (This->extBigBlockDepotStart == BLOCK_END_OF_CHAIN)
+    return BLOCK_UNUSED;
+
+  while (extBlockCount > 0)
+  {
+    extBlockIndex = Storage32Impl_GetNextExtendedBlock(This, extBlockIndex);
+    extBlockCount--;
+  }
+
+  if (extBlockIndex != BLOCK_UNUSED)
+  {
+    BYTE* depotBuffer;
+
+    depotBuffer = Storage32Impl_GetROBigBlock(This, extBlockIndex);
+
+    if (depotBuffer != 0)
+    {
+      StorageUtl_ReadDWord(depotBuffer,
+                           extBlockOffset * sizeof(ULONG),
+                           &blockIndex);
+
+      Storage32Impl_ReleaseBigBlock(This, depotBuffer);
+    }
+  }
+
+  return blockIndex;
+}
+
+/******************************************************************************
+ *      Storage32Impl_SetExtDepotBlock
+ *
+ * Associates the specified block index to the specified depot index.
+ * This method is only for depot indexes equal or greater than
+ * COUNT_BBDEPOTINHEADER.
+ */
+void Storage32Impl_SetExtDepotBlock(Storage32Impl* This,
+                                    ULONG depotIndex,
+                                    ULONG blockIndex)
+{
+  ULONG depotBlocksPerExtBlock = (This->bigBlockSize / sizeof(ULONG)) - 1;
+  ULONG numExtBlocks           = depotIndex - COUNT_BBDEPOTINHEADER;
+  ULONG extBlockCount          = numExtBlocks / depotBlocksPerExtBlock;
+  ULONG extBlockOffset         = numExtBlocks % depotBlocksPerExtBlock;
+  ULONG extBlockIndex          = This->extBigBlockDepotStart;
+
+  assert(depotIndex >= COUNT_BBDEPOTINHEADER);
+
+  while (extBlockCount > 0)
+  {
+    extBlockIndex = Storage32Impl_GetNextExtendedBlock(This, extBlockIndex);
+    extBlockCount--;
+  }
+
+  if (extBlockIndex != BLOCK_UNUSED)
+  {
+    BYTE* depotBuffer;
+
+    depotBuffer = Storage32Impl_GetBigBlock(This, extBlockIndex);
+
+    if (depotBuffer != 0)
+    {
+      StorageUtl_WriteDWord(depotBuffer,
+                            extBlockOffset * sizeof(ULONG),
+                            blockIndex);
+
+      Storage32Impl_ReleaseBigBlock(This, depotBuffer);
+    }
+  }
+}
+
+/******************************************************************************
+ *      Storage32Impl_AddExtBlockDepot
+ *
+ * Creates an extended depot block.
+ */
+ULONG Storage32Impl_AddExtBlockDepot(Storage32Impl* This)
+{
+  ULONG numExtBlocks           = This->extBigBlockDepotCount;
+  ULONG nextExtBlock           = This->extBigBlockDepotStart;
+  BYTE* depotBuffer            = NULL;
+  ULONG index                  = BLOCK_UNUSED;
+  ULONG nextBlockOffset        = This->bigBlockSize - sizeof(ULONG);
+  ULONG blocksPerDepotBlock    = This->bigBlockSize / sizeof(ULONG);
+  ULONG depotBlocksPerExtBlock = blocksPerDepotBlock - 1;
+
+  index = (COUNT_BBDEPOTINHEADER + (numExtBlocks * depotBlocksPerExtBlock)) *
+          blocksPerDepotBlock;
+
+  if ((numExtBlocks == 0) && (nextExtBlock == BLOCK_END_OF_CHAIN))
+  {
+    /*
+     * The first extended block.
+     */
+    This->extBigBlockDepotStart = index;
+  }
+  else
+  {
+    int i;
+    /*
+     * Follow the chain to the last one.
+     */
+    for (i = 0; i < (numExtBlocks - 1); i++)
+    {
+      nextExtBlock = Storage32Impl_GetNextExtendedBlock(This, nextExtBlock);
+    }
+
+    /*
+     * Add the new extended block to the chain.
+     */
+    depotBuffer = Storage32Impl_GetBigBlock(This, nextExtBlock);
+    StorageUtl_WriteDWord(depotBuffer, nextBlockOffset, index);
+    Storage32Impl_ReleaseBigBlock(This, depotBuffer);
+  }
+
+  /*
+   * Initialize this block.
+   */
+  depotBuffer = Storage32Impl_GetBigBlock(This, index);
+  memset(depotBuffer, BLOCK_UNUSED, This->bigBlockSize);
+  Storage32Impl_ReleaseBigBlock(This, depotBuffer);
+
+  return index;
 }
 
 /******************************************************************************
@@ -2127,9 +2335,11 @@ void  Storage32Impl_FreeBigBlock(
  *                                   a chain.
  *              BLOCK_UNUSED - If the block given was not past of a chain
  *                             and is available.
- *          
+ *              BLOCK_EXTBBDEPOT - This block is part of the extended
+ *                                 big block depot.
+ *
  * See Windows documentation for more details on IStorage methods.
- */        
+ */
 ULONG Storage32Impl_GetNextBlockInChain(
   Storage32Impl* This,
   ULONG          blockIndex)
@@ -2142,19 +2352,77 @@ ULONG Storage32Impl_GetNextBlockInChain(
   ULONG depotBlockIndexPos;
 
   assert(depotBlockCount < This->bigBlockDepotCount);
-  assert(depotBlockCount < COUNT_BBDEPOTINHEADER);
-  
-  depotBlockIndexPos = This->bigBlockDepotStart[depotBlockCount];
-  
-  depotBuffer = Storage32Impl_GetROBigBlock(This, depotBlockIndexPos);
+
+  /*
+   * Cache the currently accessed depot block.
+   */
+  if (depotBlockCount != This->indexBlockDepotCached)
+  {
+    This->indexBlockDepotCached = depotBlockCount;
+
+    if (depotBlockCount < COUNT_BBDEPOTINHEADER)
+    {
+      depotBlockIndexPos = This->bigBlockDepotStart[depotBlockCount];
+    }
+    else
+    {
+      /*
+       * We have to look in the extended depot.
+       */
+      depotBlockIndexPos = Storage32Impl_GetExtDepotBlock(This, depotBlockCount);
+    }
+
+    depotBuffer = Storage32Impl_GetROBigBlock(This, depotBlockIndexPos);
+
+    if (depotBuffer!=0)
+    {
+      int index;
+
+      for (index = 0; index < NUM_BLOCKS_PER_DEPOT_BLOCK; index++)
+      {
+        StorageUtl_ReadDWord(depotBuffer, index*sizeof(ULONG), &nextBlockIndex);
+        This->blockDepotCached[index] = nextBlockIndex;
+      }
+
+      Storage32Impl_ReleaseBigBlock(This, depotBuffer);
+    }
+  }
+
+  nextBlockIndex = This->blockDepotCached[depotBlockOffset/sizeof(ULONG)];
+
+  return nextBlockIndex;
+}
+
+/******************************************************************************
+ *      Storage32Impl_GetNextExtendedBlock
+ *
+ * Given an extended block this method will return the next extended block.
+ *
+ * NOTES:
+ * The last ULONG of an extended block is the block index of the next
+ * extended block. Extended blocks are marked as BLOCK_EXTBBDEPOT in the
+ * depot.
+ *
+ * Return values:
+ *    - The index of the next extended block
+ *    - BLOCK_UNUSED: there is no next extended block.
+ *    - Any other return values denotes failure.
+ */
+ULONG Storage32Impl_GetNextExtendedBlock(Storage32Impl* This, ULONG blockIndex)
+{
+  ULONG nextBlockIndex   = BLOCK_SPECIAL;
+  ULONG depotBlockOffset = This->bigBlockSize - sizeof(ULONG);
+  void* depotBuffer;
+
+  depotBuffer = Storage32Impl_GetROBigBlock(This, blockIndex);
 
   if (depotBuffer!=0)
   {
     StorageUtl_ReadDWord(depotBuffer, depotBlockOffset, &nextBlockIndex);
-    
+
     Storage32Impl_ReleaseBigBlock(This, depotBuffer);
   }
-  
+
   return nextBlockIndex;
 }
 
@@ -2184,9 +2452,18 @@ void  Storage32Impl_SetNextBlockInChain(
   void* depotBuffer;
 
   assert(depotBlockCount < This->bigBlockDepotCount);
-  assert(depotBlockCount < COUNT_BBDEPOTINHEADER);
 
-  depotBlockIndexPos = This->bigBlockDepotStart[depotBlockCount];
+  if (depotBlockCount < COUNT_BBDEPOTINHEADER)
+  {
+    depotBlockIndexPos = This->bigBlockDepotStart[depotBlockCount];
+  }
+  else
+  {
+    /*
+     * We have to look in the extended depot.
+     */
+    depotBlockIndexPos = Storage32Impl_GetExtDepotBlock(This, depotBlockCount);
+  }
 
   depotBuffer = Storage32Impl_GetBigBlock(This, depotBlockIndexPos);
 
@@ -2196,7 +2473,13 @@ void  Storage32Impl_SetNextBlockInChain(
     Storage32Impl_ReleaseBigBlock(This, depotBuffer);
   }
 
-  return;
+  /*
+   * Update the cached block depot, if necessary.
+   */
+  if (depotBlockCount == This->indexBlockDepotCached)
+  {
+    This->blockDepotCached[depotBlockOffset/sizeof(ULONG)] = nextBlock;
+  }
 }
 
 /******************************************************************************
@@ -2671,7 +2954,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
 {
   ULONG bbHeadOfChain = BLOCK_END_OF_CHAIN;
   ULARGE_INTEGER size, offset;
-  ULONG cbRead, cbWritten;
+  ULONG cbRead, cbWritten, cbTotalRead, cbTotalWritten;
   ULONG propertyIndex;
   BOOL32 successRead, successWrite;
   StgProperty chainProperty;
@@ -2700,6 +2983,8 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
    */
   offset.LowPart = 0;
   offset.HighPart = 0;
+  cbTotalRead = 0;
+  cbTotalWritten = 0;
 
   do
   {
@@ -2708,17 +2993,20 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
                                                sizeof(buffer),
                                                buffer,
                                                &cbRead);
-    
+    cbTotalRead += cbRead;
+
     successWrite = BlockChainStream_WriteAt(bbTempChain,
                                             offset,
-                                            sizeof(buffer),
+                                            cbRead,
                                             buffer,
                                             &cbWritten);
+    cbTotalWritten += cbWritten;
+
     offset.LowPart += This->smallBlockSize;
 
   } while (successRead && successWrite);
 
-  assert(cbRead == cbWritten);
+  assert(cbTotalRead == cbTotalWritten);
 
   /*
    * Destroy the small block chain.
