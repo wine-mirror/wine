@@ -1282,12 +1282,12 @@ sub _generate_config_h($) {
     print OUT "#define __ASM_NAME(name) name\n";
     print OUT "\n";
 
-    print OUT "/* Define to the assembler keyword used to specify a word value */";
-    print OUT "define __ASM_SHORT \".short\"";
+    print OUT "/* Define to the assembler keyword used to specify a word value */\n";
+    print OUT "#define __ASM_SHORT \".short\"\n";
     print OUT "\n";
 
-    print OUT "/* Define to the assembler keyword used to specify an ASCII string */";
-    print OUT "#define __ASM_STRING \".string\"";
+    print OUT "/* Define to the assembler keyword used to specify an ASCII string */\n";
+    print OUT "#define __ASM_STRING \".string\"\n";
     print OUT "\n";
 
     print OUT "/* Define to the address where bug reports for this package should be sent. */\n";
