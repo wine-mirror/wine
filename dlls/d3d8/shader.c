@@ -274,10 +274,10 @@ void vshader_frc(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
 }
 
 typedef FLOAT D3DMATRIX44[4][4];
-typedef FLOAT D3DMATRIX43[4][3];
-typedef FLOAT D3DMATRIX34[4][4];
-typedef FLOAT D3DMATRIX33[4][3];
-typedef FLOAT D3DMATRIX32[4][2];
+typedef FLOAT D3DMATRIX43[3][4];
+typedef FLOAT D3DMATRIX34[4][3];
+typedef FLOAT D3DMATRIX33[3][3];
+typedef FLOAT D3DMATRIX32[2][3];
 
 void vshader_m4x4(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, /*D3DSHADERVECTOR* mat1*/ D3DMATRIX44 mat) {
   /*
@@ -991,8 +991,8 @@ HRESULT WINAPI IDirect3DVertexShaderImpl_ExecuteSW(IDirect3DVertexShaderImpl* vs
   const DWORD* pToken = vshader->function;
   const SHADER_OPCODE* curOpcode = NULL;
   /** functions parameters */
-  D3DSHADERVECTOR* p[4];
-  D3DSHADERVECTOR* p_send[4];
+  D3DSHADERVECTOR* p[5];
+  D3DSHADERVECTOR* p_send[5];
   DWORD i;
 
   /** init temporary register */
