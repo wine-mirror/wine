@@ -3212,6 +3212,7 @@ TREEVIEW_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
   INT           iItem;
   TREEVIEW_ITEM *wineItem;
   TVHITTESTINFO ht;
+  DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
  
   ht.pt.x = (INT)LOWORD(lParam);
   ht.pt.y = (INT)HIWORD(lParam);
@@ -3230,6 +3231,53 @@ TREEVIEW_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
   wineItem = TREEVIEW_ValidItem(infoPtr, (HTREEITEM)iItem);
  
+  /* 
+   * if we are TVS_SINGLEEXPAND then we want this single click to 
+   * do a bunch of things.
+   */
+  if ((dwStyle & TVS_SINGLEEXPAND)&&
+      ( ht.flags & (TVHT_ONITEMLABEL | TVHT_ONITEMICON))&&
+      ( infoPtr->editItem == 0 ))
+  {
+    TREEVIEW_ITEM *SelItem;
+    /*
+     * Send the notification
+     */
+    TREEVIEW_SendTreeviewNotify (hwnd,TVN_SINGLEEXPAND,0,
+                                 (HTREEITEM)iItem,0);
+    /*
+     * Close the previous selection all the way to the root
+     * as long as the new selection is not a child
+     */
+    
+    if ((infoPtr->selectedItem)&&(infoPtr->selectedItem != (HTREEITEM)iItem))
+    {
+      BOOL closeit = TRUE;
+      SelItem = wineItem;
+
+      while (closeit && SelItem)
+      {
+        closeit = (SelItem->hItem != infoPtr->selectedItem);
+        SelItem = TREEVIEW_ValidItem(infoPtr,SelItem->parent);
+      }
+
+      if (closeit)
+      {
+        SelItem = TREEVIEW_ValidItem(infoPtr,infoPtr->selectedItem);
+        while ((SelItem)&&(SelItem->hItem != wineItem->hItem))
+        {
+          TREEVIEW_Expand (hwnd,(WPARAM)TVE_COLLAPSE,(LPARAM)SelItem->hItem);
+          SelItem = TREEVIEW_ValidItem(infoPtr,SelItem->parent);
+        }
+      }
+    }
+   
+    /*
+     * Expand the current item 
+     */
+    TREEVIEW_Expand (hwnd, (WPARAM) TVE_TOGGLE, (LPARAM) wineItem->hItem);
+  }
+
   infoPtr->uInternalStatus &= ~(TV_LDRAG | TV_LDRAGGING);
 
   /* 
@@ -3256,7 +3304,6 @@ TREEVIEW_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
   }
 
   if (ht.flags & TVHT_ONITEMSTATEICON) {
-	DWORD dwStyle = GetWindowLongA (hwnd, GWL_STYLE);
 
 	
 	if (dwStyle & TVS_CHECKBOXES) {      /* TVS_CHECKBOXES requires _us_ */
