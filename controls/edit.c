@@ -4467,11 +4467,11 @@ static void EDIT_WM_SetFont(WND *wnd, EDITSTATE *es, HFONT font, BOOL redraw)
  */
 static void EDIT_WM_SetText(WND *wnd, EDITSTATE *es, LPARAM lParam, BOOL unicode)
 {
-    LPWSTR text;
+    LPWSTR text = NULL;
 
     if(unicode)
 	text = (LPWSTR)lParam;
-    else
+    else if (lParam)
     {
 	LPCSTR textA = (LPCSTR)lParam;
 	INT countW = MultiByteToWideChar(CP_ACP, 0, textA, -1, NULL, 0);
