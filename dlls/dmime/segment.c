@@ -414,7 +414,7 @@ HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescriptor (LPDI
 										TRACE_(dmfile)(": %s chunk (size = 0x%04lx)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 										switch (Chunk.fccID) {
 											/* don't ask me why, but M$ puts INFO elements in UNFO list sometimes
-                                             (though strings seem to be valid unicode) */
+											   (though strings seem to be valid unicode) */
 											case mmioFOURCC('I','N','A','M'):
 											case DMUS_FOURCC_UNAM_CHUNK: {
 												TRACE_(dmfile)(": name chunk\n");
@@ -461,11 +461,29 @@ HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescriptor (LPDI
 									} while (ListCount[0] < ListSize[0]);
 									break;
 								}
-								default: {
-									TRACE_(dmfile)(": unknown (skipping)\n");
-									liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
-									IStream_Seek (pStream, liMove, STREAM_SEEK_CUR, NULL);
-									break;						
+								case DMUS_FOURCC_TRACK_LIST: {
+								  TRACE_(dmfile)(": TRACK list\n");
+								  do {
+								    IStream_Read (pStream, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
+								    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
+								    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
+								    switch (Chunk.fccID) {
+								    default: {
+								      TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+								      liMove.QuadPart = Chunk.dwSize;
+								      IStream_Seek (pStream, liMove, STREAM_SEEK_CUR, NULL);
+								      break;						
+								    }
+								    }
+								    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+								  } while (ListCount[0] < ListSize[0]);
+								  break;
+								}
+							        default: {
+								  TRACE_(dmfile)(": unknown (skipping)\n");
+								  liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
+								  IStream_Seek (pStream, liMove, STREAM_SEEK_CUR, NULL);
+								  break;						
 								}
 							}
 							break;
@@ -480,6 +498,10 @@ HRESULT WINAPI IDirectMusicSegment8Impl_IDirectMusicObject_ParseDescriptor (LPDI
 					TRACE_(dmfile)(": StreamCount[0] = %ld < StreamSize[0] = %ld\n", StreamCount, StreamSize);
 				} while (StreamCount < StreamSize);
 				break;
+			} else if (Chunk.fccID == mmioFOURCC('W','A','V','E')) {
+				TRACE_(dmfile)(": wave form, loading not yet implemented\n");
+				liMove.QuadPart = StreamSize;
+				IStream_Seek (pStream, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
 			} else {
 				TRACE_(dmfile)(": unexpected chunk; loading failed)\n");
 				liMove.QuadPart = StreamSize;
@@ -540,7 +562,8 @@ HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_IsDirty (LPPERSISTSTREAM 
 HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
 	ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
 	FOURCC chunkID;
-	DWORD chunkSize, StreamSize, StreamCount, ListSize[3], ListCount[3];
+	DWORD chunkSize;
+	DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
 	LARGE_INTEGER liMove; /* used when skipping chunks */
 
 	FIXME("(%p, %p): Loading not implemented yet\n", This, pStm);
@@ -595,7 +618,7 @@ HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTREAM ifa
 											TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (chunkID), chunkSize);
 											switch (chunkID) {
 												/* don't ask me why, but M$ puts INFO elements in UNFO list sometimes
-                                              (though strings seem to be valid unicode) */
+												   (though strings seem to be valid unicode) */
 												case mmioFOURCC('I','N','A','M'):
 												case DMUS_FOURCC_UNAM_CHUNK: {
 													TRACE_(dmfile)(": name chunk\n");
@@ -641,6 +664,25 @@ HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTREAM ifa
 											TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
 										} while (ListCount[0] < ListSize[0]);
 										break;
+									}
+								        case DMUS_FOURCC_TRACK_LIST: {
+									  TRACE_(dmfile)(": TRACK list\n");
+									  do {
+									    IStream_Read (pStm, &chunkID, sizeof(FOURCC), NULL);
+									    IStream_Read (pStm, &chunkSize, sizeof(FOURCC), NULL);
+									    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + chunkSize;
+									    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (chunkID), chunkSize);
+									    switch (chunkID) {
+									      default: {
+										TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+										liMove.QuadPart = chunkSize;
+										IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+										break;						
+									      }
+									    }
+									    TRACE_(dmfile)(": ListCount[0] = %ld < ListSize[0] = %ld\n", ListCount[0], ListSize[0]);
+									  } while (ListCount[0] < ListSize[0]);
+									  break;
 									}
 									default: {
 										TRACE_(dmfile)(": unknown (skipping)\n");

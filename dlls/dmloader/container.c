@@ -361,7 +361,8 @@ ULONG WINAPI IDirectMusicContainerImpl_IPersistStream_Release (LPPERSISTSTREAM i
 }
 
 HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-	return E_NOTIMPL;
+        *pClassID = CLSID_DirectMusicContainer;
+	return S_OK;
 }
 
 HRESULT WINAPI IDirectMusicContainerImpl_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {

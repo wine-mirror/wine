@@ -427,6 +427,8 @@ HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_Load (LPPERSISTSTREAM iface
 	DMUS_PRIVATE_CHUNK Chunk;
 	DWORD StreamSize, StreamCount, ListSize[3], ListCount[3];
 	LARGE_INTEGER liMove; /* used when skipping chunks */
+	LPDIRECTMUSICGETLOADER pGetLoader = NULL;
+	LPDIRECTMUSICLOADER pLoader = NULL;
 
 	FIXME("(%p, %p): Loading not implemented yet\n", This, pStm);
 	IStream_Read (pStm, &Chunk, sizeof(FOURCC)+sizeof(DWORD), NULL);
@@ -498,6 +500,51 @@ HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_Load (LPPERSISTSTREAM iface
 								IStream_Read (pStm, This->pDesc->wszCategory, Chunk.dwSize, NULL);
 								break;
 							}
+						        case FOURCC_RIFF: {
+								IDirectMusicObject* pObject = NULL;
+								DMUS_OBJECTDESC desc;
+								
+								desc.dwValidData = DMUS_OBJ_STREAM | DMUS_OBJ_CLASS;
+								desc.guidClass = CLSID_DirectMusicContainer;
+								desc.pStream = NULL;
+								IStream_Clone (pStm, &desc.pStream);
+
+								liMove.QuadPart = 0;
+								liMove.QuadPart -= (sizeof(FOURCC) + sizeof(DWORD));
+								IStream_Seek (desc.pStream, liMove, STREAM_SEEK_CUR, NULL);
+
+								IStream_QueryInterface (pStm, &IID_IDirectMusicGetLoader, (LPVOID*)&pGetLoader);
+								IDirectMusicGetLoader_GetLoader (pGetLoader, &pLoader);
+								IDirectMusicGetLoader_Release (pGetLoader);
+
+								if (SUCCEEDED(IDirectMusicLoader_GetObject (pLoader, &desc, &IID_IDirectMusicObject, (LPVOID*) &pObject))) {
+								  IDirectMusicObject_Release (pObject);
+								} else {
+								  ERR_(dmfile)("Error on GetObject while trying to load Scrip SubContainer\n");
+								}
+
+								IDirectMusicLoader_Release (pLoader); pLoader = NULL; /* release loader */
+								IStream_Release(desc.pStream); desc.pStream = NULL; /* release cloned stream */
+
+								liMove.QuadPart = Chunk.dwSize;
+								IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+								/*
+							        IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
+								TRACE_(dmfile)(": RIFF chunk of type %s", debugstr_fourcc(Chunk.fccID));
+								ListSize[0] = Chunk.dwSize - sizeof(FOURCC);
+								ListCount[0] = 0;
+
+								switch (Chunk.fccID) {
+								        default: {
+										TRACE_(dmfile)(": unknown (skipping)\n");
+										liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
+										IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+										break;						
+									}
+								}
+								*/
+								break;
+							}
 							case FOURCC_LIST: {
 								IStream_Read (pStm, &Chunk.fccID, sizeof(FOURCC), NULL);				
 								TRACE_(dmfile)(": LIST chunk of type %s", debugstr_fourcc(Chunk.fccID));
@@ -549,7 +596,7 @@ HRESULT WINAPI IDirectMusicScriptImpl_IPersistStream_Load (LPPERSISTSTREAM iface
 													break;
 												}
 												default: {
-													TRACE_(dmfile)(": unknown chunk (irrevelant & skipping)\n");
+													TRACE_(dmfile)(": unknown sub-chunk (irrevelant & skipping)\n");
 													liMove.QuadPart = Chunk.dwSize;
 													IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
 													break;						

@@ -444,7 +444,7 @@ HRESULT WINAPI IDirectMusicLoader8Impl_GetObject (LPDIRECTMUSICLOADER8 iface, LP
 			IDirectMusicObject_SetDescriptor (pObject, &GotDesc);
 			/* release all loading related stuff */
 			TRACE(": releasing all loading-related stuff\n");
-            IStream_Release (pStream);
+			IStream_Release (pStream);
 			IPersistStream_Release (pPersistStream);
 		} else {
 			return E_FAIL;
