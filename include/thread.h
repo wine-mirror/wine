@@ -94,10 +94,11 @@ typedef struct _TEB
     int          socket;         /* --3 204 Socket for server communication */
     void        *buffer;         /* --3 208 Buffer shared with server */
     int          buffer_size;    /* --3 20c Size of server buffer */
+    void        *debug_info;     /* --3 210 Info for debugstr functions */
     /* here is plenty space for wine specific fields (don't forget to change pad6!!) */
 
     /* the following are nt specific fields */
-    DWORD        pad6[634];                  /* --n 210 */
+    DWORD        pad6[633];                  /* --n 214 */
     UNICODE_STRING StaticUnicodeString;      /* -2- bf8 used by advapi32 */
     USHORT       StaticUnicodeBuffer[261];   /* -2- c00 used by advapi32 */
     DWORD        pad7;                       /* --n e0c */

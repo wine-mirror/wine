@@ -15,11 +15,10 @@
 #include "builtin16.h"
 #include "task.h"
 #include "syslevel.h"
-#include "debugstr.h"
 #include "debugtools.h"
 #include "main.h"
 
-DEFAULT_DEBUG_CHANNEL(relay)
+DEFAULT_DEBUG_CHANNEL(relay);
 
 /***********************************************************************
  *           RELAY_Init
@@ -143,20 +142,14 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
                 DPRINTF( "0x%08x", *(int *)args16 );
                 args16 += 4;
                 break;
-            case 't':
-                DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
-                if (HIWORD(*(SEGPTR *)args16))
-                    debug_dumpstr( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
-                args16 += 4;
-                break;
             case 'p':
                 DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
                 args16 += 4;
                 break;
+            case 't':
             case 'T':
-                DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
-                if (HIWORD( *(SEGPTR *)args16 ))
-                    debug_dumpstr( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
+                DPRINTF( "%04x:%04x %s", *(WORD *)(args16+2), *(WORD *)args16,
+                         debugres_a( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 )) );
                 args16 += 4;
                 break;
             }
@@ -199,9 +192,8 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
                 break;
             case 't':
                 args16 -= 4;
-                DPRINTF( "0x%08x", *(int *)args16 );
-                if (HIWORD(*(SEGPTR *)args16))
-                    debug_dumpstr( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
+                DPRINTF( "0x%08x %s", *(int *)args16,
+                         debugres_a( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 )));
                 break;
             case 'p':
                 args16 -= 4;
@@ -209,9 +201,8 @@ void RELAY_DebugCallFrom16( CONTEXT86 *context )
                 break;
             case 'T':
                 args16 -= 4;
-                DPRINTF( "%04x:%04x", *(WORD *)(args16+2), *(WORD *)args16 );
-                if (HIWORD( *(SEGPTR *)args16 ))
-                    debug_dumpstr( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 ));
+                DPRINTF( "%04x:%04x %s", *(WORD *)(args16+2), *(WORD *)args16,
+                         debugres_a( (LPSTR)PTR_SEG_TO_LIN(*(SEGPTR *)args16 )));
                 break;
             }
             args++;

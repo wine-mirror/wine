@@ -4,11 +4,14 @@
 
 #ifdef __WINE__  /* Debugging interface is internal to Wine */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include "config.h"
-#include "debugstr.h"
+#include "windef.h"
 
 #define DEBUG_RUNTIME
+
+struct _GUID;
 
 /* Internal definitions (do not use these directly) */
 
@@ -35,6 +38,25 @@ extern const char * const debug_ch_name[];
 
 
 /* Exported definitions and macros */
+
+/* These function return a printable version of a string, including
+   quotes.  The string will be valid for some time, but not indefinitely
+   as strings are re-used.  */
+extern LPSTR debugstr_an (LPCSTR s, int n);
+extern LPSTR debugstr_a (LPCSTR s);
+extern LPSTR debugstr_wn (LPCWSTR s, int n);
+extern LPSTR debugstr_w (LPCWSTR s);
+extern LPSTR debugres_a (LPCSTR res);
+extern LPSTR debugres_w (LPCWSTR res);
+extern LPSTR debugstr_guid( const struct _GUID *id );
+extern LPSTR debugstr_hex_dump (const void *ptr, int len);
+extern int dbg_vprintf( const char *format, va_list args );
+
+#ifdef __GNUC__
+extern int dbg_printf(const char *format, ...) __attribute__((format (printf,1,2)));
+#else
+extern int dbg_printf(const char *format, ...);
+#endif
 
 /* use configure to allow user to compile out debugging messages */
 #ifndef NO_TRACE_MSGS

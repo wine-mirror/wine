@@ -165,6 +165,7 @@ void CALLBACK THREAD_FreeTEB( ULONG_PTR arg )
     SELECTOR_FreeBlock( teb->teb_sel, 1 );
     close( teb->socket );
     if (teb->buffer) munmap( teb->buffer, teb->buffer_size );
+    if (teb->debug_info) HeapFree( GetProcessHeap(), 0, teb->debug_info );
     VirtualFree( teb->stack_base, 0, MEM_RELEASE );
     VirtualFree( teb, 0, MEM_FREE );
 }

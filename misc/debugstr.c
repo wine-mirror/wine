@@ -1,30 +1,46 @@
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <ctype.h>
 
-#include "debugstr.h"
 #include "debugtools.h"
 #include "wtypes.h"
-#include "xmalloc.h"
+#include "thread.h"
 
 /* ---------------------------------------------------------------------- */
 
-#define SAVE_STRING_COUNT 50
-static void *strings[SAVE_STRING_COUNT];
-static int nextstring;
+struct debug_info
+{
+    char *str_pos;       /* current position in strings buffer */
+    char *out_pos;       /* current position in output buffer */
+    char  strings[500];  /* buffer for temporary strings */
+    char  output[500];   /* current output line */
+};
+
+static inline struct debug_info *get_info(void)
+{
+    struct debug_info *info = NtCurrentTeb()->debug_info;
+    if (!info)
+    {
+        NtCurrentTeb()->debug_info = info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info) );
+        info->str_pos = info->strings;
+        info->out_pos = info->output;
+    }
+    return info;
+}
 
 /* ---------------------------------------------------------------------- */
 
 static void *
 gimme1 (int n)
 {
-  void *res;
-  if (strings[nextstring]) free (strings[nextstring]);
-  res = strings[nextstring] = xmalloc (n);
-  if (++nextstring == SAVE_STRING_COUNT) nextstring = 0;
-  return res;
+    struct debug_info *info = get_info();
+    char *res = info->str_pos;
+
+    if (res + n >= &info->strings[sizeof(info->strings)]) res = info->strings;
+    info->str_pos = res + n;
+    return res;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -176,39 +192,23 @@ LPSTR debugstr_guid( const GUID *id )
 
 /* ---------------------------------------------------------------------- */
 
-void debug_dumpstr (LPCSTR s)
+int dbg_vprintf( const char *format, va_list args )
 {
-  fputc ('"', stderr);
-  while (*s)
+    struct debug_info *info = get_info();
+
+    int ret = vsprintf( info->out_pos, format, args );
+    char *p = strrchr( info->out_pos, '\n' );
+    if (!p) info->out_pos += ret;
+    else
     {
-      switch (*s)
-	{
-	case '\\':
-	case '"':
-	  fputc ('\\', stderr);
-	  fputc (*s, stderr);
-	  break;
-	case '\n':
-	  fputc ('\\', stderr);
-	  fputc ('n', stderr);
-	  break;
-	case '\r':
-	  fputc ('\\', stderr);
-	  fputc ('r', stderr);
-	  break;
-	case '\t':
-	  fputc ('\\', stderr);
-	  fputc ('t', stderr);
-	  break;
-	default:
-	  if (*s<' ')
-	    fprintf (stderr, "\\0x%02x", *s);
-	  else
-	    fputc (*s, stderr);
-	}
-      s++;
+        char *pos = info->output;
+        p++;
+        write( 2, pos, p - pos );
+        /* move beginning of next line to start of buffer */
+        while ((*pos = *p++)) pos++;
+        info->out_pos = pos;
     }
-  fputc ('"', stderr);
+    return ret;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -219,7 +219,7 @@ int dbg_printf(const char *format, ...)
     va_list valist;
 
     va_start(valist, format);
-    ret = vfprintf(stderr, format, valist);
+    ret = dbg_vprintf( format, valist);
     va_end(valist);
     return ret;
 }
