@@ -1072,196 +1072,126 @@ POINT *GDI_Bezier( const POINT *Points, INT count, INT *nPtsOut )
 BOOL WINAPI GdiGradientFill( HDC hdc, TRIVERTEX *vert_array, ULONG nvert,
                           void * grad_array, ULONG ngrad, ULONG mode )
 {
-  int i,j,y,x,t;
-  GRADIENT_RECT *rect;
-  GRADIENT_TRIANGLE *triangle;
-  double ired,igreen,iblue;
-  double red, green,blue;
-  double dx1,dx2,dx3;
-  double dr1,dr2,dr3;
-  double dg1,dg2,dg3;
-  double db1,db2,db3;
-  double sx,sy,sr,sg,sb;
-  double ex,ey,er,eb,eg;
-  double px,py,pr,pb,pg;
+  int i;
 
-  TRACE("vert_array:0x%08lx nvert:%ld grad_array:0x%08lx ngrad:%ld\n",(long)vert_array,nvert,(long)grad_array,ngrad);
+  TRACE("vert_array:0x%08lx nvert:%ld grad_array:0x%08lx ngrad:%ld\n",
+        (long)vert_array, nvert, (long)grad_array, ngrad);
 
-  switch(mode) {
-  case GRADIENT_FILL_RECT_H:
-    for(i=0;i<ngrad;i++) {
-      rect = (GRADIENT_RECT*)((long)grad_array+i*sizeof(GRADIENT_RECT));
-      y = vert_array[rect->UpperLeft].y;
-      /* Precompute some stuffs to speed up a little bit */
-      ired   = (double)(vert_array[rect->LowerRight].Red - vert_array[rect->UpperLeft].Red) / (double)(vert_array[rect->LowerRight].x - vert_array[rect->UpperLeft].x);
-      igreen = (double)(vert_array[rect->LowerRight].Green - vert_array[rect->UpperLeft].Green) / (double)(vert_array[rect->LowerRight].x - vert_array[rect->UpperLeft].x);
-      iblue  = (double)(vert_array[rect->LowerRight].Blue - vert_array[rect->UpperLeft].Blue) / (double)(vert_array[rect->LowerRight].x - vert_array[rect->UpperLeft].x);
-      red = vert_array[rect->UpperLeft].Red;
-      green = vert_array[rect->UpperLeft].Green;
-      blue = vert_array[rect->UpperLeft].Blue;
-      /* Draw the first line */
-      for (j=vert_array[rect->UpperLeft].x; j<=vert_array[rect->LowerRight].x; j++) {	
-	SetPixel(hdc,j,y,RGB(((int)red)>>8,((int)green)>>8,((int)blue)>>8));
-	red   += ired;
-	green += igreen;
-	blue  += iblue;
-      }
-      /* Extends to the correct size */
-      StretchBlt(hdc,vert_array[rect->UpperLeft].x, y+1,(vert_array[rect->LowerRight].x - vert_array[rect->UpperLeft].x), (vert_array[rect->LowerRight].y - y - 1),
-		 hdc,vert_array[rect->UpperLeft].x, y , (vert_array[rect->LowerRight].x - vert_array[rect->UpperLeft].x), 1, SRCCOPY);
-    }
-    break;
-  case GRADIENT_FILL_RECT_V:
-    for(i=0;i<ngrad;i++) {
-      rect = (GRADIENT_RECT*)((long)grad_array+i*sizeof(GRADIENT_RECT));
-      x = vert_array[rect->UpperLeft].x;
-      /* Precompute some stuffs to speed up a little bit */
-      ired   = (double)(vert_array[rect->LowerRight].Red - vert_array[rect->UpperLeft].Red) / (double)(vert_array[rect->LowerRight].y - vert_array[rect->UpperLeft].y);
-      igreen = (double)(vert_array[rect->LowerRight].Green - vert_array[rect->UpperLeft].Green) / (double)(vert_array[rect->LowerRight].y - vert_array[rect->UpperLeft].y);
-      iblue  = (double)(vert_array[rect->LowerRight].Blue - vert_array[rect->UpperLeft].Blue) / (double)(vert_array[rect->LowerRight].y - vert_array[rect->UpperLeft].y);
-      red = vert_array[rect->UpperLeft].Red;
-      green = vert_array[rect->UpperLeft].Green;
-      blue = vert_array[rect->UpperLeft].Blue;
-      /* Draw the first line */
-      for (j=vert_array[rect->UpperLeft].y; j<=vert_array[rect->LowerRight].y; j++) {	
-	SetPixel(hdc,x,j,RGB(((int)red)>>8,((int)green)>>8,((int)blue)>>8));
-	red   += ired;
-	green += igreen;
-	blue  += iblue;
-      }
-      /* Extends to the correct size */
-      StretchBlt(hdc,x+1,vert_array[rect->UpperLeft].y,
-		 (vert_array[rect->LowerRight].x - vert_array[rect->UpperLeft].x) - 1, (vert_array[rect->LowerRight].y - vert_array[rect->UpperLeft].y),
-		 hdc, x, vert_array[rect->UpperLeft].y, 1, (vert_array[rect->LowerRight].y - vert_array[rect->UpperLeft].y), SRCCOPY);
-    }
-    break;
-  case GRADIENT_FILL_TRIANGLE:
-    /*
-     * Based on gouraud shading
-     * Do it for each triangle
-     */
-    for(i=0;i<ngrad;i++) {
-      triangle = (GRADIENT_TRIANGLE*)((long)grad_array+i*sizeof(GRADIENT_TRIANGLE));      
-      /* Sort the points */
-      if (vert_array[triangle->Vertex1].y>vert_array[triangle->Vertex2].y) {
-	/* swap 1 and 2 */
-	t = triangle->Vertex2;
-	triangle->Vertex2 = triangle->Vertex1;
-	triangle->Vertex1 = t;
-      }
-      if (vert_array[triangle->Vertex2].y>vert_array[triangle->Vertex3].y) {
-	/* swap 2 and 3 */
-	t = triangle->Vertex3;
-	triangle->Vertex3 = triangle->Vertex2;
-	triangle->Vertex2 = t;
-      }
-      if (vert_array[triangle->Vertex1].y>vert_array[triangle->Vertex2].y) {
-	/* swap 1 and 2 */
-	t = triangle->Vertex2;
-	triangle->Vertex2 = triangle->Vertex1;
-	triangle->Vertex1 = t;
-      }
-      /* precompute some interpolation stuffs */
-      if (vert_array[triangle->Vertex2].y>vert_array[triangle->Vertex1].y) {
-	dx1 = (double)(vert_array[triangle->Vertex2].x - vert_array[triangle->Vertex1].x) / (double)(vert_array[triangle->Vertex2].y - vert_array[triangle->Vertex1].y );
-	dr1 = (double)(vert_array[triangle->Vertex2].Red - vert_array[triangle->Vertex1].Red) / (double)(vert_array[triangle->Vertex2].y - vert_array[triangle->Vertex1].y );
-	dg1 = (double)(vert_array[triangle->Vertex2].Green - vert_array[triangle->Vertex1].Green) / (double)(vert_array[triangle->Vertex2].y - vert_array[triangle->Vertex1].y );
-	db1 = (double)(vert_array[triangle->Vertex2].Blue - vert_array[triangle->Vertex1].Blue) / (double)(vert_array[triangle->Vertex2].y - vert_array[triangle->Vertex1].y );
-      } else
-	dx1=dr1=dg1=db1=0;
-      
-      if (vert_array[triangle->Vertex3].y>vert_array[triangle->Vertex1].y) {
-	dx2 = (double)(vert_array[triangle->Vertex3].x - vert_array[triangle->Vertex1].x) / (double)(vert_array[triangle->Vertex3].y - vert_array[triangle->Vertex1].y );
-	dr2 = (double)(vert_array[triangle->Vertex3].Red - vert_array[triangle->Vertex1].Red) / (double)(vert_array[triangle->Vertex3].y - vert_array[triangle->Vertex1].y );
-	dg2 = (double)(vert_array[triangle->Vertex3].Green - vert_array[triangle->Vertex1].Green) / (double)(vert_array[triangle->Vertex3].y - vert_array[triangle->Vertex1].y );
-	db2 = (double)(vert_array[triangle->Vertex3].Blue - vert_array[triangle->Vertex1].Blue) / (double)(vert_array[triangle->Vertex3].y - vert_array[triangle->Vertex1].y );
-      } else
-	dx2=dr2=dg2=db2=0;
+  switch(mode) 
+    {
+    case GRADIENT_FILL_RECT_H:
+      for(i = 0; i < ngrad; i++) 
+        {
+          GRADIENT_RECT *rect = ((GRADIENT_RECT *)grad_array) + i;
+          TRIVERTEX *v1 = vert_array + rect->UpperLeft;
+          TRIVERTEX *v2 = vert_array + rect->LowerRight;
+          int y1 = v1->y < v2->y ? v1->y : v2->y;
+          int y2 = v2->y > v1->y ? v2->y : v1->y;
+          int x, y, dx;
+          if (v1->x > v2->x)
+            {
+              TRIVERTEX *t = v2;
+              v2 = v1;
+              v1 = t;
+            }
+          dx = v2->x - v1->x;
+          for (x = 0; x < dx; x++)
+            {
+              for (y = y1; y < y2; y++)
+                SetPixel (hdc, x + v1->x, y, RGB(
+                  (v1->Red   * (dx - x) + v2->Red   * x) / dx >> 8,
+                  (v1->Green * (dx - x) + v2->Green * x) / dx >> 8,
+                  (v1->Blue  * (dx - x) + v2->Blue  * x) / dx >> 8));
+            }
+        }
+      break;
+    case GRADIENT_FILL_RECT_V:
+      for(i = 0; i < ngrad; i++) 
+        {
+          GRADIENT_RECT *rect = ((GRADIENT_RECT *)grad_array) + i;
+          TRIVERTEX *v1 = vert_array + rect->UpperLeft;
+          TRIVERTEX *v2 = vert_array + rect->LowerRight;
+          int x1 = v1->x < v2->x ? v1->x : v2->x;
+          int x2 = v2->x > v1->x ? v2->x : v1->x;
+          int x, y, dy;
+          if (v1->y > v2->y)
+            {
+              TRIVERTEX *t = v2;
+              v2 = v1;
+              v1 = t;
+            }
+          dy = v2->y - v1->y;
+          for (y = 0; y < dy; y++)
+            {
+              for (x = x1; x < x2; x++)
+                SetPixel (hdc, x, y + v1->y, RGB(
+                  (v1->Red   * (dy - y) + v2->Red   * y) / dy >> 8,
+                  (v1->Green * (dy - y) + v2->Green * y) / dy >> 8,
+                  (v1->Blue  * (dy - y) + v2->Blue  * y) / dy >> 8));
+            }
+        }
+      break;
+    case GRADIENT_FILL_TRIANGLE:
+      for (i = 0; i < ngrad; i++)  
+        {
+          GRADIENT_TRIANGLE *tri = ((GRADIENT_TRIANGLE *)grad_array) + i;
+          TRIVERTEX *v1 = vert_array + tri->Vertex1;
+          TRIVERTEX *v2 = vert_array + tri->Vertex2;
+          TRIVERTEX *v3 = vert_array + tri->Vertex3;
+          int y, dy;
+          
+          if (v1->y > v2->y)
+            { TRIVERTEX *t = v1; v1 = v2; v2 = t; }
+          if (v2->y > v3->y)
+            {
+              TRIVERTEX *t = v2; v2 = v3; v3 = t;
+              if (v1->y > v2->y)
+                { t = v1; v1 = v2; v2 = t; }
+            }
+          /* v1->y <= v2->y <= v3->y */
 
-      if (vert_array[triangle->Vertex3].y>vert_array[triangle->Vertex2].y) {
-	dx3 = (double)(vert_array[triangle->Vertex3].x - vert_array[triangle->Vertex2].x) / (double)(vert_array[triangle->Vertex3].y - vert_array[triangle->Vertex2].y );
-	dr3 = (double)(vert_array[triangle->Vertex3].Red - vert_array[triangle->Vertex2].Red) / (double)(vert_array[triangle->Vertex3].y - vert_array[triangle->Vertex2].y );
-	dg3 = (double)(vert_array[triangle->Vertex3].Green - vert_array[triangle->Vertex2].Green) / (double)(vert_array[triangle->Vertex3].y - vert_array[triangle->Vertex2].y );
-	db3 = (double)(vert_array[triangle->Vertex3].Blue - vert_array[triangle->Vertex2].Blue) / (double)(vert_array[triangle->Vertex3].y - vert_array[triangle->Vertex2].y );
-      } else
-	dx3=dr3=dg3=db3=0;
+          dy = v3->y - v1->y;
+          for (y = 0; y < dy; y++)
+            {
+              /* v1->y <= y < v3->y */
+              TRIVERTEX *v = y < (v2->y - v1->y) ? v1 : v3;
+              /* (v->y <= y < v2->y) || (v2->y <= y < v->y) */
+              int dy2 = v2->y - v->y;
+              int y2 = y + v1->y - v->y;
 
-      /* backup the topmost point */
-      sx=vert_array[triangle->Vertex1].x;sy=vert_array[triangle->Vertex1].y;
-      sr=vert_array[triangle->Vertex1].Red;sg=vert_array[triangle->Vertex1].Green;sb=vert_array[triangle->Vertex1].Blue;
-      ex=sx;ey=sy;er=sr;eg=sg;eb=sb;
-
-      if (dx1 > dx2) {
-	for (;sy<vert_array[triangle->Vertex2].y;sy++,ey++) {
-	  if ((ex-sx)>0) {
-	    ired = (double)(er - sr) / (double)(ex - sx);
-	    igreen = (double)(eg - sg) / (double)(ex - sx);
-	    iblue = (double)(eb - sb) / (double)(ex - sx);
-	  } else
-	    ired=igreen=iblue=0;
-	  px=sx;py=sy;pr=sr;pg=sg;pb=sb;
-	  for(;px<ex;px++) {
-	    SetPixel(hdc,px,py,RGB((int)pr>>8,(int)pg>>8,(int)pb>>8));
-	    pr += ired; pg += igreen; pb += iblue;
-	  }
-	  sx+=dx2;sr+=dr2;sg+=dg2;sb+=db2;
-	  ex+=dx1;er+=dr1;eg+=dg1;eb+=db1;
-	}
-	ex=vert_array[triangle->Vertex2].x;ey=vert_array[triangle->Vertex2].y;
-	er=vert_array[triangle->Vertex2].Red;eg=vert_array[triangle->Vertex2].Green;eb=vert_array[triangle->Vertex2].Blue;
-	for (;sy<=vert_array[triangle->Vertex3].y;sy++,ey++) {
-	  if ((ex-sx)>0) {
-	    ired = (double)(er - sr) / (double)(ex - sx);
-	    igreen = (double)(eg - sg) / (double)(ex - sx);
-	    iblue = (double)(eb - sb) / (double)(ex - sx);
-	  } else
-	    ired=igreen=iblue=0;
-	  px=sx;py=sy;pr=sr;pg=sg;pb=sb;
-	  for(;px<ex;px++) {
-	    SetPixel(hdc,px,py,RGB((int)pr>>8,(int)pg>>8,(int)pb>>8));
-	    pr += ired; pg += igreen; pb += iblue;
-	  }
-	  sx+=dx2;sr+=dr2;sg+=dg2;sb+=db2;
-	  ex+=dx3;er+=dr3;eg+=dg3;eb+=db3;
-	}      
-      } else {
-	for (;sy<vert_array[triangle->Vertex2].y;sy++,ey++) {
-	  if ((ex-sx)>0) {
-	    ired = (double)(er - sr) / (double)(ex - sx);
-	    igreen = (double)(eg - sg) / (double)(ex - sx);
-	    iblue = (double)(eb - sb) / (double)(ex - sx);
-	  } else
-	    ired=igreen=iblue=0;
-	  px=ex;py=ey;pr=er;pg=eg;pb=eb;
-	  for(;px<ex;px++) {
-	    SetPixel(hdc,px,py,RGB((int)pr>>8,(int)pg>>8,(int)pb>>8));
-	    pr += ired; pg += igreen; pb += iblue;
-	  }
-	  sx+=dx1;sr+=dr1;sg+=dg1;sb+=db1;
-	  ex+=dx2;er+=dr2;eg+=dg2;eb+=db2;
-	}
-	sx=vert_array[triangle->Vertex2].x;sy=vert_array[triangle->Vertex2].y;
-	sr=vert_array[triangle->Vertex2].Red;sg=vert_array[triangle->Vertex2].Green;sb=vert_array[triangle->Vertex2].Blue;
-	for (;sy<=vert_array[triangle->Vertex3].y;sy++,ey++) {
-	  if ((ex-sx)<0) {
-	    ired = (double)(er - sr) / (double)(ex - sx);
-	    igreen = (double)(eg - sg) / (double)(ex - sx);
-	    iblue = (double)(eb - sb) / (double)(ex - sx);
-	  } else
-	    ired=igreen=iblue=0;
-	  px=ex;py=ey;pr=er;pg=eg;pb=eb;
-	  for(;px<sx;px++) {
-	    SetPixel(hdc,px,py,RGB((int)pr>>8,(int)pg>>8,(int)pb>>8));
-	    pr += ired; pg += igreen; pb += iblue;
-	  }
-	  sx+=dx3;sr+=dr3;sg+=dg3;sb+=db3;
-	  ex+=dx2;er+=dr2;eg+=dg2;eb+=db2;
-	}
-      }
-    }
-    break;
-  default:
-    return FALSE;
+              int x1 = (v3->x     * y  + v1->x     * (dy  - y )) / dy;
+              int x2 = (v2->x     * y2 + v-> x     * (dy2 - y2)) / dy2;
+              int r1 = (v3->Red   * y  + v1->Red   * (dy  - y )) / dy;
+              int r2 = (v2->Red   * y2 + v-> Red   * (dy2 - y2)) / dy2;
+              int g1 = (v3->Green * y  + v1->Green * (dy  - y )) / dy;
+              int g2 = (v2->Green * y2 + v-> Green * (dy2 - y2)) / dy2;
+              int b1 = (v3->Blue  * y  + v1->Blue  * (dy  - y )) / dy;
+              int b2 = (v2->Blue  * y2 + v-> Blue  * (dy2 - y2)) / dy2;
+               
+              int x;
+	      if (x1 < x2)
+                {
+                  int dx = x2 - x1;
+                  for (x = 0; x < dx; x++)
+                    SetPixel (hdc, x + x1, y + v1->y, RGB(
+                      (r1 * (dx - x) + r2 * x) / dx >> 8,
+                      (g1 * (dx - x) + g2 * x) / dx >> 8,
+                      (b1 * (dx - x) + b2 * x) / dx >> 8));
+                }
+              else
+                {
+                  int dx = x1 - x2;
+                  for (x = 0; x < dx; x++)
+                    SetPixel (hdc, x + x2, y + v1->y, RGB(
+                      (r2 * (dx - x) + r1 * x) / dx >> 8,
+                      (g2 * (dx - x) + g1 * x) / dx >> 8,
+                      (b2 * (dx - x) + b1 * x) / dx >> 8));
+                }
+            }
+        }
+      break;
+    default:
+      return FALSE;
   }
 
   return TRUE;
