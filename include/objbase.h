@@ -396,6 +396,7 @@ HRESULT WINAPI CoMarshalHresult(LPSTREAM pstm, HRESULT hresult);
 HRESULT WINAPI CoMarshalInterface(LPSTREAM pStm, REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags);
 HRESULT WINAPI CoMarshalInterThreadInterfaceInStream(REFIID riid, LPUNKNOWN pUnk, LPSTREAM* ppStm);
 HRESULT WINAPI CoReleaseMarshalData(LPSTREAM pStm);
+HRESULT WINAPI CoDisconnectObject(LPUNKNOWN lpUnk, DWORD reserved);
 HRESULT WINAPI CoUnmarshalHresult(LPSTREAM pstm, HRESULT* phresult);
 HRESULT WINAPI CoUnmarshalInterface(LPSTREAM pStm, REFIID riid, LPVOID* ppv);
 HRESULT WINAPI CoLockObjectExternal(LPUNKNOWN pUnk, BOOL fLock, BOOL fLastUnlockReleases);
@@ -424,6 +425,7 @@ BOOL WINAPI CoIsOle1Class(REFCLSID rclsid);
 BOOL WINAPI CoDosDateTimeToFileTime(WORD nDosDate, WORD nDosTime, FILETIME* lpFileTime);
 BOOL WINAPI CoFileTimeToDosDateTime(FILETIME* lpFileTime, WORD* lpDosDate, WORD* lpDosTime);
 HRESULT WINAPI CoFileTimeNow(FILETIME* lpFileTime);
+HRESULT WINAPI CoRegisterMessageFilter(LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter);
 
 /*****************************************************************************
  *	GUID API
