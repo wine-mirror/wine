@@ -1685,14 +1685,16 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
     
     TRACE("(%p)->(%08lx,%p,%08lx,%08lx,%f,%08lx)\n", This, dwCount, lpRects, dwFlags, dwColor, dvZ, dwStencil);
     if (TRACE_ON(ddraw)) {
-        int i;
-	TRACE(" rectangles : \n");
-	for (i = 0; i < dwCount; i++) {
-	    TRACE("  - %ld x %ld     %ld x %ld\n", lpRects[i].u1.x1, lpRects[i].u2.y1, lpRects[i].u3.x2, lpRects[i].u4.y2);
+	if (dwCount > 0) {
+	    int i;
+	    TRACE(" rectangles : \n");
+	    for (i = 0; i < dwCount; i++) {
+	        TRACE("  - %ld x %ld     %ld x %ld\n", lpRects[i].u1.x1, lpRects[i].u2.y1, lpRects[i].u3.x2, lpRects[i].u4.y2);
+	    }
 	}
     }
 
-    if (dwCount != 1) {
+    if (dwCount > 1) {
         WARN("  Warning, this function only for now clears the whole screen...\n");
     }
 
@@ -1743,6 +1745,29 @@ static HRESULT d3ddevice_clear(IDirect3DDeviceImpl *This,
     LEAVE_GL();
     
     return DD_OK;
+}
+
+HRESULT
+d3ddevice_blt(IDirectDrawSurfaceImpl *This, LPRECT rdst,
+	      LPDIRECTDRAWSURFACE7 src, LPRECT rsrc,
+	      DWORD dwFlags, LPDDBLTFX lpbltfx)
+{
+    if (dwFlags & DDBLT_COLORFILL) {
+        /* This is easy to handle for the D3D Device... */
+        DWORD color = lpbltfx->u5.dwFillColor;
+        TRACE(" executing D3D Device override.\n");
+	d3ddevice_clear(This->d3ddevice, 0, NULL, D3DCLEAR_TARGET, color, 0.0, 0x00000000);
+	return DD_OK;
+    }
+    return DDERR_INVALIDPARAMS;
+}
+
+HRESULT
+d3ddevice_bltfast(IDirectDrawSurfaceImpl *This, DWORD dstx,
+		  DWORD dsty, LPDIRECTDRAWSURFACE7 src,
+		  LPRECT rsrc, DWORD trans)
+{
+     return DDERR_INVALIDPARAMS;
 }
 
 
@@ -1916,6 +1941,9 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
 	    /* Override the Lock / Unlock function for all these surfaces */
 	    surf->lock_update = d3ddevice_lock_update;
 	    surf->unlock_update = d3ddevice_unlock_update;
+	    /* And install also the blt / bltfast overrides */
+	    surf->aux_blt = d3ddevice_blt;
+	    surf->aux_bltfast = d3ddevice_bltfast;
 	}
 	surf->d3ddevice = object;
     }

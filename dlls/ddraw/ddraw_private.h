@@ -294,7 +294,9 @@ struct IDirectDrawSurfaceImpl
     void (*aux_release)(LPVOID ctx, LPVOID data);
     BOOL (*aux_flip)(LPVOID ctx, LPVOID data);
     void (*aux_unlock)(LPVOID ctx, LPVOID data, LPRECT lpRect);
-    HRESULT (WINAPI *SetColorKey_cb)(struct IDirectDrawSurfaceImpl *texture, DWORD dwFlags, LPDDCOLORKEY ckey ) ;
+    HRESULT (*aux_blt)(struct IDirectDrawSurfaceImpl *This, LPRECT rdst, LPDIRECTDRAWSURFACE7 src, LPRECT rsrc, DWORD dwFlags, LPDDBLTFX lpbltfx);
+    HRESULT (*aux_bltfast)(struct IDirectDrawSurfaceImpl *This, DWORD dstx, DWORD dsty, LPDIRECTDRAWSURFACE7 src, LPRECT rsrc, DWORD trans);
+    HRESULT (*aux_setcolorkey_cb)(struct IDirectDrawSurfaceImpl *texture, DWORD dwFlags, LPDDCOLORKEY ckey );
     /* This is to get the D3DDevice object associated to this surface */
     struct IDirect3DDeviceImpl *d3ddevice;
     /* This is for texture */

@@ -60,7 +60,7 @@ static void snoop_texture(IDirectDrawSurfaceImpl *This) {
 /*******************************************************************************
  *			   IDirectSurface callback methods
  */
-HRESULT WINAPI gltex_setcolorkey_cb(IDirectDrawSurfaceImpl *texture, DWORD dwFlags, LPDDCOLORKEY ckey )
+HRESULT gltex_setcolorkey_cb(IDirectDrawSurfaceImpl *texture, DWORD dwFlags, LPDDCOLORKEY ckey )
 {
     DDSURFACEDESC *tex_d;
     GLuint current_texture;
@@ -689,7 +689,7 @@ HRESULT d3dtexture_create(IDirect3DImpl *d3d, IDirectDrawSurfaceImpl *surf, BOOL
 	surf->lock_update = gltex_lock_update;
 	surf->unlock_update = gltex_unlock_update;
 	surf->tex_private = private;
-	surf->SetColorKey_cb = gltex_setcolorkey_cb;
+	surf->aux_setcolorkey_cb = gltex_setcolorkey_cb;
 	
 	ENTER_GL();
 	if (surf->mipmap_level == 0) {

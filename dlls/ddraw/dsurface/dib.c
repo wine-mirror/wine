@@ -365,6 +365,11 @@ DIB_DirectDrawSurface_Blt(LPDIRECTDRAWSURFACE7 iface, LPRECT rdst,
 	}
     }
 
+    /* First, check if the possible override function handles this case */
+    if (This->aux_blt != NULL) {
+        if (This->aux_blt(This, rdst, src, rsrc, dwFlags, lpbltfx) == DD_OK) return DD_OK;
+    }
+
     DD_STRUCT_INIT(&ddesc);
     DD_STRUCT_INIT(&sdesc);
 
@@ -812,6 +817,11 @@ DIB_DirectDrawSurface_BltFast(LPDIRECTDRAWSURFACE7 iface, DWORD dstx,
 	  FIXME("\tsrcrect: %dx%d-%dx%d\n",rsrc->left,rsrc->top,rsrc->right,rsrc->bottom);
 	else
 	  FIXME(" srcrect: NULL\n");
+    }
+
+    /* First, check if the possible override function handles this case */
+    if (This->aux_bltfast != NULL) {
+        if (This->aux_bltfast(This, dstx, dsty, src, rsrc, trans) == DD_OK) return DD_OK;
     }
 
     /* We need to lock the surfaces, or we won't get refreshes when done. */
