@@ -142,8 +142,10 @@ INT32 WINAPI StretchDIBits32(HDC32 hdc, INT32 xDst, INT32 yDst, INT32 widthDst,
 				    bits, info, wUsage );
 	hdcMem = CreateCompatibleDC32( hdc );
 	hOldBitmap = SelectObject32( hdcMem, hBitmap );
-	StretchBlt32( hdc, xDst, yDst, widthDst, heightDst,
-		      hdcMem, xSrc, ySrc, widthSrc, heightSrc, dwRop );
+        /* Origin for DIBitmap is bottom left ! */
+        StretchBlt32( hdc, xDst, yDst, widthDst, heightDst,
+                      hdcMem, xSrc, info->bmiHeader.biHeight - heightSrc - ySrc, 
+                      widthSrc, heightSrc, dwRop );
 	SelectObject32( hdcMem, hOldBitmap );
 	DeleteDC32( hdcMem );
 	DeleteObject32( hBitmap );
