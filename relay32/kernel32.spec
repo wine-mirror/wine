@@ -569,8 +569,8 @@ type	win32
 552 stub PeekNamedPipe
 553 stub PostQueuedCompletionStatus
 554 stub PrepareTape
-555 stub Process32First
-556 stub Process32Next
+555 stdcall Process32First (ptr ptr) Process32First
+556 stdcall Process32Next (ptr ptr) Process32Next
 557 stdcall PulseEvent(long) PulseEvent
 558 stdcall PurgeComm(long long) PurgeComm
 559 register QT_Thunk() QT_Thunk

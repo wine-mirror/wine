@@ -896,3 +896,18 @@ void PROCESS_ResumeOtherThreads(void)
 
     SYSTEM_UNLOCK();
 }
+
+BOOL32 WINAPI Process32First(HANDLE32 hSnapshot, LPPROCESSENTRY32 lppe)
+{
+  FIXME (process, "(0x%08lx,0x%08lx), stub!\n", hSnapshot, lppe);
+  SetLastError (ERROR_NO_MORE_FILES);
+  return FALSE;
+}
+
+BOOL32 WINAPI Process32Next(HANDLE32 hSnapshot, LPPROCESSENTRY32 lppe)
+{
+  FIXME (process, "(0x%08lx,0x%08lx), stub!\n", hSnapshot, lppe);
+  SetLastError (ERROR_NO_MORE_FILES);
+  return FALSE;
+}
+ 
