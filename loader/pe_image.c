@@ -1034,6 +1034,17 @@ BOOL PE_InitDLL( WINE_MODREF *wm, DWORD type, LPVOID lpReserved )
  * Pointers in those structs are not RVAs but real pointers which have been
  * relocated by do_relocations() already.
  */
+static LPVOID
+_fixup_address(PIMAGE_OPTIONAL_HEADER opt,int delta,LPVOID addr) {
+	if (	((DWORD)addr>opt->ImageBase) &&
+		((DWORD)addr<opt->ImageBase+opt->SizeOfImage)
+	)
+		/* the address has not been relocated! */
+		return (LPVOID)(((DWORD)addr)+delta);
+	else
+		/* the address has been relocated already */
+		return addr;
+}
 void PE_InitTls( void )
 {
 	WINE_MODREF		*wm;
@@ -1057,22 +1068,21 @@ void PE_InitTls( void )
 		
 		
 		if ( pem->tlsindex == -1 ) {
+			LPDWORD xaddr;
 			pem->tlsindex = TlsAlloc();
-			if ((((DWORD)pdir->AddressOfIndex)>peh->OptionalHeader.ImageBase)
-			      &&(((DWORD)pdir->AddressOfIndex)<peh->OptionalHeader.ImageBase+peh->OptionalHeader.SizeOfImage)
-			)
-				*pdir->AddressOfIndex=pem->tlsindex;   
-			else
-				*(LPDWORD)((((char*)pdir->AddressOfIndex)+delta))=pem->tlsindex;
+			xaddr = _fixup_address(&(peh->OptionalHeader),delta,
+					pdir->AddressOfIndex
+			);
+			*xaddr=pem->tlsindex;
 		}
 		datasize= pdir->EndAddressOfRawData-pdir->StartAddressOfRawData;
 		size	= datasize + pdir->SizeOfZeroFill;
 		mem=VirtualAlloc(0,size,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
-		memcpy(mem,(LPVOID)pdir->StartAddressOfRawData,datasize);
+		memcpy(mem,_fixup_address(&(peh->OptionalHeader),delta,(LPVOID)pdir->StartAddressOfRawData),datasize);
 		if (pdir->AddressOfCallBacks) {
-		     PIMAGE_TLS_CALLBACK *cbs = 
-		       (PIMAGE_TLS_CALLBACK *)pdir->AddressOfCallBacks;
+		     PIMAGE_TLS_CALLBACK *cbs; 
 
+		     cbs = _fixup_address(&(peh->OptionalHeader),delta,pdir->AddressOfCallBacks);
 		     if (*cbs)
 		       FIXME_(win32)("TLS Callbacks aren't going to be called\n");
 		}
