@@ -52,6 +52,8 @@
 #include "wine/wingdi16.h"
 #include "bitmap.h"
 #include "wownt32.h"
+#include "winreg.h"
+#include "winternl.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(metafile);
@@ -418,7 +420,7 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
 
 
 /******************************************************************
- *         CopyMetaFileA   (GDI32.@)
+ *         CopyMetaFileW   (GDI32.@)
  *
  *  Copies the metafile corresponding to hSrcMetaFile to either
  *  a disk file, if a filename is given, or to a new memory based
@@ -432,15 +434,15 @@ HMETAFILE16 WINAPI CopyMetaFile16( HMETAFILE16 hSrcMetaFile, LPCSTR lpFilename)
  *
  *  Copying to disk returns NULL even if successful.
  */
-HMETAFILE WINAPI CopyMetaFileA(
+HMETAFILE WINAPI CopyMetaFileW(
 		   HMETAFILE hSrcMetaFile, /* [in] handle of metafile to copy */
-		   LPCSTR lpFilename       /* [in] filename if copying to a file */
+		   LPCWSTR lpFilename      /* [in] filename if copying to a file */
 ) {
     METAHEADER *mh = MF_GetMetaHeader( hSrcMetaFile );
     METAHEADER *mh2 = NULL;
     HANDLE hFile;
 
-    TRACE("(%p,%s)\n", hSrcMetaFile, lpFilename);
+    TRACE("(%p,%s)\n", hSrcMetaFile, debugstr_w(lpFilename));
 
     if(!mh) return 0;
 
@@ -452,14 +454,20 @@ HMETAFILE WINAPI CopyMetaFileA(
     }
 
     if(lpFilename) {         /* disk based metafile */
-        if((hFile = CreateFileA(lpFilename, GENERIC_WRITE, 0, NULL,
+        DWORD len;
+        LPSTR lpFilenameA;
+        if((hFile = CreateFileW(lpFilename, GENERIC_WRITE, 0, NULL,
 				CREATE_ALWAYS, 0, 0)) == INVALID_HANDLE_VALUE) {
 	    HeapFree( GetProcessHeap(), 0, mh2 );
 	    return 0;
 	}
 	WriteFile(hFile, mh2, mh2->mtSize * 2, NULL, NULL);
 	CloseHandle(hFile);
-	mh2 = MF_CreateMetaHeaderDisk(mh2, lpFilename);
+        len = WideCharToMultiByte(CP_ACP, 0, lpFilename, -1, NULL, 0, NULL, NULL);
+        lpFilenameA = HeapAlloc(GetProcessHeap(), 0, len);
+        WideCharToMultiByte(CP_ACP, 0, lpFilename, -1, lpFilenameA, len, NULL, NULL);
+        mh2 = MF_CreateMetaHeaderDisk(mh2, lpFilenameA);
+        HeapFree(GetProcessHeap(), 0, lpFilenameA);
     }
 
     return MF_Create_HMETAFILE( mh2 );
@@ -467,21 +475,21 @@ HMETAFILE WINAPI CopyMetaFileA(
 
 
 /******************************************************************
- *         CopyMetaFileW   (GDI32.@)
+ *         CopyMetaFileA   (GDI32.@)
  */
-HMETAFILE WINAPI CopyMetaFileW( HMETAFILE hSrcMetaFile,
-                                    LPCWSTR lpFilename )
+HMETAFILE WINAPI CopyMetaFileA( HMETAFILE hSrcMetaFile,
+                                    LPCSTR lpFilename )
 {
+    UNICODE_STRING lpFilenameW;
     HMETAFILE ret = 0;
-    DWORD len = WideCharToMultiByte( CP_ACP, 0, lpFilename, -1, NULL, 0, NULL, NULL );
-    LPSTR p = HeapAlloc( GetProcessHeap(), 0, len );
 
-    if (p)
-    {
-        WideCharToMultiByte( CP_ACP, 0, lpFilename, -1, p, len, NULL, NULL );
-        ret = CopyMetaFileA( hSrcMetaFile, p );
-        HeapFree( GetProcessHeap(), 0, p );
+    if (lpFilename) RtlCreateUnicodeStringFromAsciiz(&lpFilenameW, lpFilename);
+    else lpFilenameW.Buffer = NULL;
+
+    if (lpFilenameW.Buffer) {
+        ret = CopyMetaFileW( hSrcMetaFile, lpFilenameW.Buffer );
     }
+    RtlFreeUnicodeString(&lpFilenameW);
     return ret;
 }
 
