@@ -98,9 +98,10 @@ typedef struct
     INT idCommand;
     BYTE  fsState;
     BYTE  fsStyle;
+    BYTE  bHot;
+    BYTE  bDropDownPressed;
     DWORD dwData;
     INT iString;
-    BOOL bHot;
     INT nRow;
     RECT rect;
     INT cx; /* manually set size */
@@ -786,14 +787,16 @@ TOOLBAR_DrawFrame(const TOOLBAR_INFO *infoPtr, BOOL flat, const NMTBCUSTOMDRAW *
 }
 
 static void
-TOOLBAR_DrawSepDDArrow(const TOOLBAR_INFO *infoPtr, BOOL flat, const NMTBCUSTOMDRAW *tbcd, RECT *rcArrow)
+TOOLBAR_DrawSepDDArrow(const TOOLBAR_INFO *infoPtr, const NMTBCUSTOMDRAW *tbcd, RECT *rcArrow, BOOL bDropDownPressed)
 {
     HDC hdc = tbcd->nmcd.hdc;
     int offset = 0;
+    BOOL pressed = bDropDownPressed ||
+        (tbcd->nmcd.uItemState & (CDIS_SELECTED | CDIS_CHECKED));
 
-    if (flat)
+    if (infoPtr->dwStyle & TBSTYLE_FLAT)
     {
-        if ((tbcd->nmcd.uItemState & CDIS_SELECTED) || (tbcd->nmcd.uItemState & CDIS_CHECKED))
+        if (pressed)
             DrawEdge (hdc, rcArrow, BDR_SUNKENOUTER, BF_RECT);
         else if ( (tbcd->nmcd.uItemState & CDIS_HOT) &&
                  !(tbcd->nmcd.uItemState & CDIS_DISABLED) &&
@@ -802,14 +805,14 @@ TOOLBAR_DrawSepDDArrow(const TOOLBAR_INFO *infoPtr, BOOL flat, const NMTBCUSTOMD
     }
     else
     {
-        if ((tbcd->nmcd.uItemState & CDIS_SELECTED) || (tbcd->nmcd.uItemState & CDIS_CHECKED))
+        if (pressed)
             DrawEdge (hdc, rcArrow, EDGE_SUNKEN, BF_RECT | BF_MIDDLE);
         else
             DrawEdge (hdc, rcArrow, EDGE_RAISED,
               BF_SOFT | BF_RECT | BF_MIDDLE);
     }
 
-    if (tbcd->nmcd.uItemState & (CDIS_SELECTED | CDIS_CHECKED))
+    if (pressed)
         offset = (infoPtr->dwItemCDFlag & TBCDRF_NOOFFSET) ? 0 : 1;
 
     if (tbcd->nmcd.uItemState & (CDIS_DISABLED | CDIS_INDETERMINATE))
@@ -995,7 +998,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     TOOLBAR_DrawFrame(infoPtr, dwStyle & TBSTYLE_FLAT, &tbcd);
 
     if (drawSepDropDownArrow)
-        TOOLBAR_DrawSepDDArrow(infoPtr, dwStyle & TBSTYLE_FLAT, &tbcd, &rcArrow);
+        TOOLBAR_DrawSepDDArrow(infoPtr, &tbcd, &rcArrow, btnPtr->bDropDownPressed);
 
     if (!(infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) || (btnPtr->fsStyle & BTNS_SHOWTEXT))
         TOOLBAR_DrawString (infoPtr, &rcText, lpText, &tbcd);
@@ -5350,7 +5353,10 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    LRESULT res;
 
 	    /* draw in pressed state */
-	    btnPtr->fsState |= TBSTATE_PRESSED;
+	    if (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN)
+	        btnPtr->fsState |= TBSTATE_PRESSED;
+	    else
+	        btnPtr->bDropDownPressed = TRUE;
 	    RedrawWindow(hwnd,&btnPtr->rect,0,
 			RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
 
@@ -5368,7 +5374,10 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
                 MSG msg;
 
                 /* redraw button in unpressed state */
-       	        btnPtr->fsState &= ~TBSTATE_PRESSED;
+	        if (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN)
+       	            btnPtr->fsState &= ~TBSTATE_PRESSED;
+       	        else
+       	            btnPtr->bDropDownPressed = FALSE;
        	        InvalidateRect(hwnd, &btnPtr->rect, TRUE);
 
                 /* find and set hot item
@@ -5378,9 +5387,10 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
                 nHit = TOOLBAR_InternalHitTest(hwnd, &pt);
                 TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
                 
-                /* remove any left mouse button down messages so that we can
-                 * get a toggle effect on the button */
-                while (PeekMessageW(&msg, hwnd, WM_LBUTTONDOWN, WM_LBUTTONDOWN, PM_REMOVE))
+                /* remove any left mouse button down or double-click messages
+                 * so that we can get a toggle effect on the button */
+                while (PeekMessageW(&msg, hwnd, WM_LBUTTONDOWN, WM_LBUTTONDOWN, PM_REMOVE) ||
+                       PeekMessageW(&msg, hwnd, WM_LBUTTONDBLCLK, WM_LBUTTONDBLCLK, PM_REMOVE))
                     ;
 
 		return 0;
@@ -5656,20 +5666,24 @@ static LRESULT
 TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    TBUTTON_INFO *hotBtnPtr, *btnPtr;
-    RECT rc1;
+    TBUTTON_INFO *hotBtnPtr;
 
-    TOOLBAR_SetHotItemEx(infoPtr, -1, HICF_MOUSE);
+    hotBtnPtr = &infoPtr->buttons[infoPtr->nOldHit];
+
+    /* don't remove hot effects when in drop-down */
+    if (infoPtr->nOldHit < 0 || !hotBtnPtr->bDropDownPressed)
+        TOOLBAR_SetHotItemEx(infoPtr, -1, HICF_MOUSE);
 
     if (infoPtr->nOldHit < 0)
       return TRUE;
-
-    hotBtnPtr = &infoPtr->buttons[infoPtr->nOldHit];
 
     /* If the last button we were over is depressed then make it not */
     /* depressed and redraw it */
     if(infoPtr->nOldHit == infoPtr->nButtonDown)
     {
+      TBUTTON_INFO *btnPtr;
+      RECT rc1;
+
       btnPtr = &infoPtr->buttons[infoPtr->nButtonDown];
 
       btnPtr->fsState &= ~TBSTATE_PRESSED;
