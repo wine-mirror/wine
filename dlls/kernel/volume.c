@@ -66,34 +66,6 @@ enum fs_type
 };
 
 
-/* return default device to use for serial ports */
-/* result should not be more than 16 characters long */
-static BOOL get_default_com_device( char *buffer, int num )
-{
-    if (!num || num > 9) return FALSE;
-#ifdef linux
-    sprintf( buffer, "/dev/ttyS%d", num - 1 );
-    return TRUE;
-#else
-    FIXME( "no known default for device com%d\n", num );
-    return FALSE;
-#endif
-}
-
-/* return default device to use for parallel ports */
-/* result should not be more than 16 characters long */
-static BOOL get_default_lpt_device( char *buffer, int num )
-{
-    if (!num || num > 9) return FALSE;
-#ifdef linux
-    sprintf( buffer, "/dev/lp%d", num - 1 );
-    return TRUE;
-#else
-    FIXME( "no known default for device lpt%d\n", num );
-    return FALSE;
-#endif
-}
-
 /* read a Unix symlink; returned buffer must be freed by caller */
 static char *read_symlink( const char *path )
 {
@@ -327,62 +299,6 @@ void VOLUME_CreateDevices(void)
                  "the drive sections, they are replaced by the above symlinks.\n\n" );
 
     HeapFree( GetProcessHeap(), 0, buffer );
-}
-
-
-/******************************************************************
- *		VOLUME_OpenDevice
- */
-HANDLE VOLUME_OpenDevice( LPCWSTR name, DWORD access, DWORD sharing,
-                          LPSECURITY_ATTRIBUTES sa, DWORD attributes )
-{
-    char *buffer, *dev;
-    HANDLE ret;
-
-    if (!(buffer = get_dos_device_path( name ))) return 0;
-    dev = strrchr( buffer, '/' ) + 1;
-
-    for (;;)
-    {
-        TRACE("trying %s\n", buffer );
-
-        ret = FILE_CreateFile( buffer, access, sharing, sa, OPEN_EXISTING, attributes, 0 );
-        if (ret || GetLastError() != ERROR_FILE_NOT_FOUND) break;
-        if (!dev) break;
-
-        /* now try some defaults for it */
-        if (!strcmp( dev, "aux" ))
-        {
-            strcpy( dev, "com1" );
-            continue;
-        }
-        if (!strcmp( dev, "prn" ))
-        {
-            strcpy( dev, "lpt1" );
-            continue;
-        }
-        if (!strcmp( dev, "nul" ))
-        {
-            strcpy( buffer, "/dev/null" );
-            dev = NULL; /* last try */
-            continue;
-        }
-        if (!strncmp( dev, "com", 3 ) && get_default_com_device( buffer, dev[3] - '0' ))
-        {
-            dev = NULL; /* last try */
-            continue;
-        }
-        if (!strncmp( dev, "lpt", 3 ) && get_default_lpt_device( buffer, dev[3] - '0' ))
-        {
-            dev = NULL; /* last try */
-            continue;
-        }
-        break;
-    }
-
-    if (!ret) WARN( "could not open device %s err %ld\n", debugstr_w(name), GetLastError() );
-    HeapFree( GetProcessHeap(), 0, buffer );
-    return ret;
 }
 
 
@@ -1046,12 +962,15 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
     static const WCHAR prnW[] = {'P','R','N',0};
     static const WCHAR comW[] = {'C','O','M',0};
     static const WCHAR lptW[] = {'L','P','T',0};
-    static const WCHAR com0W[] = {'C','O','M','0',0};
+    static const WCHAR rootW[] = {'A',':','\\',0};
+    static const WCHAR com0W[] = {'\\','?','?','\\','C','O','M','0',0};
     static const WCHAR com1W[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','C','O','M','1',0,0};
     static const WCHAR lpt1W[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\','L','P','T','1',0,0};
 
-    char buffer[16];
-    struct stat st;
+    UNICODE_STRING nt_name;
+    ANSI_STRING unix_name;
+    WCHAR nt_buffer[10];
+    NTSTATUS status;
 
     if (!bufsize)
     {
@@ -1112,19 +1031,19 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
                 return ret;
             }
 
-            buffer[0] = 0;
-
-            if (!strcmpiW( name, nulW ))
-                strcpy( buffer, "/dev/null" );
-            else if (!strncmpiW( name, comW, 3 ))
-                get_default_com_device( buffer, name[3] - '0' );
-            else if (!strncmpiW( name, lptW, 3 ))
-                get_default_lpt_device( buffer, name[3] - '0' );
-
-            if (buffer[0] && !stat( buffer, &st ))
-                ret = MultiByteToWideChar( CP_UNIXCP, 0, buffer, -1, target, bufsize );
+            nt_buffer[0] = '\\';
+            nt_buffer[1] = '?';
+            nt_buffer[2] = '?';
+            nt_buffer[3] = '\\';
+            strcpyW( nt_buffer + 4, name );
+            RtlInitUnicodeString( &nt_name, nt_buffer );
+            status = wine_nt_to_unix_file_name( &nt_name, &unix_name, TRUE, TRUE );
+            if (status) SetLastError( RtlNtStatusToDosError(status) );
             else
-                SetLastError( ERROR_FILE_NOT_FOUND );
+            {
+                ret = MultiByteToWideChar( CP_UNIXCP, 0, unix_name.Buffer, -1, target, bufsize );
+                RtlFreeAnsiString( &unix_name );
+            }
         }
 
         if (ret)
@@ -1138,7 +1057,6 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
     else  /* return a list of all devices */
     {
         WCHAR *p = target;
-        char *path, *dev, buffer[16];
         int i;
 
         if (bufsize <= (sizeof(auxW)+sizeof(nulW)+sizeof(prnW))/sizeof(WCHAR))
@@ -1154,15 +1072,15 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
         memcpy( p, prnW, sizeof(prnW) );
         p += sizeof(prnW) / sizeof(WCHAR);
 
-        if (!(path = get_dos_device_path( com0W ))) return 0;
-        dev = strrchr( path, '/' ) + 1;
+        strcpyW( nt_buffer, com0W );
+        RtlInitUnicodeString( &nt_name, nt_buffer );
 
         for (i = 1; i <= 9; i++)
         {
-            sprintf( dev, "com%d", i );
-            if (!stat( path, &st ) ||
-                (get_default_com_device( buffer, i ) && !stat( buffer, &st )))
+            nt_buffer[7] = '0' + i;
+            if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, TRUE, TRUE ))
             {
+                RtlFreeAnsiString( &unix_name );
                 if (p + 5 >= target + bufsize)
                 {
                     SetLastError( ERROR_INSUFFICIENT_BUFFER );
@@ -1174,12 +1092,13 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
                 p += 5;
             }
         }
+        strcpyW( nt_buffer + 4, lptW );
         for (i = 1; i <= 9; i++)
         {
-            sprintf( dev, "lpt%d", i );
-            if (!stat( path, &st ) ||
-                (get_default_lpt_device( buffer, i ) && !stat( buffer, &st )))
+            nt_buffer[7] = '0' + i;
+            if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, TRUE, TRUE ))
             {
+                RtlFreeAnsiString( &unix_name );
                 if (p + 5 >= target + bufsize)
                 {
                     SetLastError( ERROR_INSUFFICIENT_BUFFER );
@@ -1191,11 +1110,16 @@ DWORD WINAPI QueryDosDeviceW( LPCWSTR devname, LPWSTR target, DWORD bufsize )
                 p += 5;
             }
         }
+
+        strcpyW( nt_buffer + 4, rootW );
+        RtlInitUnicodeString( &nt_name, nt_buffer );
+
         for (i = 0; i < 26; i++)
         {
-            sprintf( dev, "%c:", 'a' + i );
-            if (!stat( path, &st ))
+            nt_buffer[4] = 'a' + i;
+            if (!wine_nt_to_unix_file_name( &nt_name, &unix_name, TRUE, TRUE ))
             {
+                RtlFreeAnsiString( &unix_name );
                 if (p + 3 >= target + bufsize)
                 {
                     SetLastError( ERROR_INSUFFICIENT_BUFFER );

@@ -408,15 +408,10 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
 
     if (dosdev)
     {
-        static const WCHAR conW[] = {'C','O','N',0};
-        WCHAR dev[5];
+        static const WCHAR conW[] = {'C','O','N'};
 
-        memcpy( dev, filename + HIWORD(dosdev)/sizeof(WCHAR), LOWORD(dosdev) );
-        dev[LOWORD(dosdev)/sizeof(WCHAR)] = 0;
-
-        TRACE("opening device %s\n", debugstr_w(dev) );
-
-        if (!strcmpiW( dev, conW ))
+        if (LOWORD(dosdev) == sizeof(conW) &&
+            !memicmpW( filename + HIWORD(dosdev)/sizeof(WCHAR), conW, sizeof(conW)))
         {
             switch (access & (GENERIC_READ|GENERIC_WRITE))
             {
@@ -431,9 +426,6 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
                 return INVALID_HANDLE_VALUE;
             }
         }
-
-        ret = VOLUME_OpenDevice( dev, access, sharing, sa, attributes );
-        goto done;
     }
 
     if (!RtlDosPathNameToNtPathName_U( filename, &nameW, NULL, NULL ))
@@ -732,7 +724,6 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
 {
     static const WCHAR formatW[] = {'%','x','.','t','m','p',0};
 
-    DOS_FULL_NAME full_name;
     int i;
     LPWSTR p;
 
@@ -779,17 +770,6 @@ UINT WINAPI GetTempFileNameW( LPCWSTR path, LPCWSTR prefix, UINT unique,
         } while (unique != num);
     }
 
-    /* Get the full path name */
-
-    if (DOSFS_GetFullName( buffer, FALSE, &full_name ))
-    {
-        char *slash;
-        /* Check if we have write access in the directory */
-        if ((slash = strrchr( full_name.long_name, '/' ))) *slash = '\0';
-        if (access( full_name.long_name, W_OK ) == -1)
-            WARN("returns %s, which doesn't seem to be writeable.\n",
-                  debugstr_w(buffer) );
-    }
     TRACE("returning %s\n", debugstr_w(buffer) );
     return unique;
 }

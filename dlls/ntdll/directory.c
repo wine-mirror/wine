@@ -141,6 +141,54 @@ static inline off_t telldir_wrapper( DIR *dir, off_t pos, int count )
 
 
 /***********************************************************************
+ *           get_default_com_device
+ *
+ * Return the default device to use for serial ports.
+ */
+static char *get_default_com_device( int num )
+{
+    char *ret = NULL;
+
+    if (!num || num > 9) return ret;
+#ifdef linux
+    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/ttyS0") );
+    if (ret)
+    {
+        strcpy( ret, "/dev/ttyS0" );
+        ret[strlen(ret) - 1] = '0' + num - 1;
+    }
+#else
+    FIXME( "no known default for device com%d\n", num );
+#endif
+    return ret;
+}
+
+
+/***********************************************************************
+ *           get_default_lpt_device
+ *
+ * Return the default device to use for parallel ports.
+ */
+static char *get_default_lpt_device( int num )
+{
+    char *ret = NULL;
+
+    if (!num || num > 9) return ret;
+#ifdef linux
+    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/lp0") );
+    if (ret)
+    {
+        strcpy( ret, "/dev/lp0" );
+        ret[strlen(ret) - 1] = '0' + num - 1;
+    }
+#else
+    FIXME( "no known default for device lpt%d\n", num );
+#endif
+    return ret;
+}
+
+
+/***********************************************************************
  *           init_options
  *
  * Initialize the show_dir_symlinks and show_dot_files options.
@@ -776,6 +824,97 @@ not_found:
 }
 
 
+/******************************************************************************
+ *           get_dos_device
+ *
+ * Get the Unix path of a DOS device.
+ */
+static NTSTATUS get_dos_device( const WCHAR *name, UINT name_len, ANSI_STRING *unix_name_ret )
+{
+    const char *config_dir = wine_get_config_dir();
+    struct stat st;
+    char *unix_name, *dev;
+    int i, unix_len;
+
+    /* make sure the device name is ASCII */
+    for (i = 0; i < name_len; i++)
+        if (name[i] <= 32 || name[i] >= 127) return STATUS_OBJECT_NAME_NOT_FOUND;
+
+    unix_len = strlen(config_dir) + sizeof("/dosdevices/") + name_len;
+
+    if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
+        return STATUS_NO_MEMORY;
+
+    strcpy( unix_name, config_dir );
+    strcat( unix_name, "/dosdevices/" );
+    dev = unix_name + strlen(unix_name);
+
+    for (i = 0; i < name_len; i++) dev[i] = (char)tolowerW(name[i]);
+    dev[i] = 0;
+
+    /* special case for drive devices */
+    if (name_len == 2 && dev[1] == ':') dev[1] = '|';
+
+    for (;;)
+    {
+        if (!stat( unix_name, &st ))
+        {
+            TRACE( "%s -> %s\n", debugstr_wn(name,name_len), debugstr_a(unix_name) );
+            unix_name_ret->Buffer = unix_name;
+            unix_name_ret->Length = strlen(unix_name);
+            unix_name_ret->MaximumLength = unix_len;
+            return STATUS_SUCCESS;
+        }
+        if (!dev) break;
+
+        /* now try some defaults for it */
+        if (!strcmp( dev, "aux" ))
+        {
+            strcpy( dev, "com1" );
+            continue;
+        }
+        if (!strcmp( dev, "prn" ))
+        {
+            strcpy( dev, "lpt1" );
+            continue;
+        }
+        if (!strcmp( dev, "nul" ))
+        {
+            strcpy( unix_name, "/dev/null" );
+            dev = NULL; /* last try */
+            continue;
+        }
+        if (!strncmp( dev, "com", 3 ))
+        {
+            char *name = get_default_com_device( dev[3] - '0' );
+            if (name)
+            {
+                RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+                unix_name = name;
+                unix_len = strlen(name) + 1;
+                dev = NULL; /* last try */
+                continue;
+            }
+        }
+        if (!strncmp( dev, "lpt", 3 ))
+        {
+            char *name = get_default_lpt_device( dev[3] - '0' );
+            if (name)
+            {
+                RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+                unix_name = name;
+                unix_len = strlen(name) + 1;
+                dev = NULL; /* last try */
+                continue;
+            }
+        }
+        break;
+    }
+    RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+    return STATUS_OBJECT_NAME_NOT_FOUND;
+}
+
+
 /* return the length of the DOS namespace prefix if any */
 static inline int get_dos_prefix_len( const UNICODE_STRING *name )
 {
@@ -833,9 +972,13 @@ NTSTATUS wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *un
             return STATUS_OBJECT_NAME_NOT_FOUND;
         }
 
-        /* make sure we have a drive letter */
+        /* check for a drive letter with path */
         if (name_len < 3 || !isalphaW(name[0]) || name[1] != ':' || !IS_SEPARATOR(name[2]))
-            return STATUS_OBJECT_NAME_NOT_FOUND;
+        {
+            /* not a drive with path, try other DOS devices */
+            return get_dos_device( name, name_len, unix_name_ret );
+        }
+
         name += 2;  /* skip drive letter */
         name_len -= 2;
 
