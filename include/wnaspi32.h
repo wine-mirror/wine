@@ -5,6 +5,10 @@
 
 typedef union SRB * LPSRB;
 
+#define SS_INVALID_CMD 0x80
+#define SS_INVALID_HA 0x81
+#define SS_NO_DEVICE 0x82
+
 typedef struct tagSRB_HaInquiry {
  BYTE  SRB_Cmd;                 /* ASPI command code = SC_HA_INQUIRY */
  BYTE  SRB_Status;              /* ASPI command status byte */
