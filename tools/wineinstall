@@ -89,7 +89,7 @@
 #
 
 #--- defaults (change these if you are a packager)
-CONFARGS="--enable-opengl"    # configure args, e.g. --prefix=/usr --sysconfdir=/etc
+CONFARGS=""                   # configure args, e.g. --prefix=/usr --sysconfdir=/etc
 prefix=/usr/local             # installation prefix
 sysconfdir=$prefix/etc        # where wine.conf and the global registry are supposed to be
 bindir=$prefix/bin            # where winelib apps will be (or are) installed
