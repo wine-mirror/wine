@@ -695,6 +695,14 @@ int main(void) {
   then
     CFLAGS="$CFLAGS -mpreferred-stack-boundary=2"
   fi
+
+  dnl Check for -gstabs+ option
+  AC_CACHE_CHECK([for gcc -gstabs+ support], ac_cv_c_gcc_gstabs,
+      [WINE_TRY_CFLAGS([-gstabs+],ac_cv_c_gcc_gstabs="yes", ac_cv_c_gcc_gstabs="no")])
+  if test "$ac_cv_c_gcc_gstabs" = "yes"
+  then
+    CFLAGS="$CFLAGS -gstabs+"
+  fi
 fi
 
 dnl **** Check how to define a function in assembly code ****
