@@ -2966,6 +2966,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD Stage,IDirect3DBaseTexture8* pTexture) {
 
     IDirect3DBaseTexture8 *oldTxt;
+    BOOL reapplyStates = TRUE;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
     D3DRESOURCETYPE textureType;
@@ -2996,7 +2997,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
     }
 
     /* Decrement the count of the previous texture */
-    /* FIXME PERF: If old == new and not dirty then skip all this */
     if (oldTxt != NULL) {
         IDirect3DBaseTexture8Impl_Release(oldTxt);
     }
@@ -3008,8 +3008,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
         textureType = IDirect3DBaseTexture8Impl_GetType(pTexture);
 
         if (textureType == D3DRTYPE_TEXTURE) {
-            IDirect3DTexture8Impl *pTexture2 = (IDirect3DTexture8Impl *) pTexture;
-            int i;
+          IDirect3DTexture8Impl *pTexture2 = (IDirect3DTexture8Impl *) pTexture;
+          int i;
+
+          if (oldTxt == pTexture2 && pTexture2->Dirty == FALSE) {
+              TRACE("Skipping setting texture as old == new\n");
+              reapplyStates = FALSE;
+          } else {
 
             /* Standard 2D texture */
             TRACE("Standard 2d texture\n");
@@ -3062,7 +3067,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
                 }
 
             }
-
+          }
         } else if (textureType == D3DRTYPE_VOLUMETEXTURE) {
             IDirect3DVolumeTexture8Impl *pTexture2 = (IDirect3DVolumeTexture8Impl *) pTexture;
             int i;
@@ -3132,7 +3137,9 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTexture(LPDIRECT3DDEVICE8 iface, DWORD 
 
     /* Even if the texture has been set to null, reapply the stages as a null texture to directx requires
        a dummy texture in opengl, and we always need to ensure the current view of the TextureStates apply */
-    setupTextureStates (iface, Stage);
+    if (reapplyStates) {
+       setupTextureStates (iface, Stage);
+    }
        
     return D3D_OK;
 }
