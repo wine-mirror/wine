@@ -511,11 +511,18 @@ static	DWORD	MCI_LoadMciDriver(LPWINE_MM_IDATA iData, LPCSTR _strDevTyp,
     modp.lpstrParams = NULL;
     
     if (!MCI_OpenMciDriver(wmd, strDevTyp, (LPARAM)&modp)) {
-	FIXME("Couldn't load driver for type %s.\n"
-	      "If you don't have a windows installation accessible from Wine,\n"
-	      "you perhaps forgot to create a [mci] section in system.ini\n",
-	      strDevTyp);
-	dwRet = MCIERR_DEVICE_NOT_INSTALLED;
+	/* silence warning if all is used... some bogus program use commands like
+	 * 'open all'...
+	 */
+	if (strcasecmp(strDevTyp, "all") != 0) {
+	    dwRet = MCIERR_CANNOT_USE_ALL;
+	} else {
+	    FIXME("Couldn't load driver for type %s.\n"
+		  "If you don't have a windows installation accessible from Wine,\n"
+		  "you perhaps forgot to create a [mci] section in system.ini\n",
+		  strDevTyp);
+	    dwRet = MCIERR_DEVICE_NOT_INSTALLED;
+	}
 	goto errCleanUp;
     }
  
@@ -690,7 +697,7 @@ static	DWORD	MCI_ParseOptArgs(LPDWORD data, int _offset, LPCSTR lpCmd,
 	    flg = *(LPDWORD)lmem;
 	    eid = *(LPWORD)(lmem + sizeof(DWORD));
 	    lmem += sizeof(DWORD) + sizeof(WORD);
-/* EPP 	    TRACE("\tcmd='%s' inCst=%s\n", str, inCst ? "Y" : "N"); */
+/* EPP 	    TRACE("\tcmd='%s' inCst=%c eid=%04x\n", str, inCst ? 'Y' : 'N', eid); */
 	    
 	    switch (eid) {
 	    case MCI_CONSTANT:		
@@ -1077,7 +1084,7 @@ DWORD WINAPI mciExecute(LPCSTR lpstrCommand)
 
     TRACE("(%s)!\n", lpstrCommand);
 
-    ret = mciSendString16(lpstrCommand, strRet, sizeof(strRet), 0);
+    ret = mciSendStringA(lpstrCommand, strRet, sizeof(strRet), 0);
     if (ret != 0) {
 	if (!mciGetErrorStringA(ret, strRet, sizeof(strRet))) {
 	    sprintf(strRet, "Unknown MCI error (%ld)", ret);
@@ -1193,7 +1200,7 @@ BOOL WINAPI mciFreeCommandResource(UINT uTable)
 {
     TRACE("(%08x)!\n", uTable);
 
-    return mciFreeCommandResource16(uTable);
+    return MCI_DeleteCommandTable(uTable);
 }
 
 /**************************************************************************
