@@ -84,7 +84,18 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
     req->first   = 0;
     req->context = *epointers->ContextRecord;
     if (!server_call_noerr( REQ_EXCEPTION_EVENT )) *epointers->ContextRecord = req->context;
-    if (req->status == DBG_CONTINUE) return EXCEPTION_CONTINUE_EXECUTION;
+    switch (req->status)
+    {
+    case DBG_CONTINUE: 
+       return EXCEPTION_CONTINUE_EXECUTION;
+    case DBG_EXCEPTION_NOT_HANDLED: 
+       TerminateProcess( GetCurrentProcess(), epointers->ExceptionRecord->ExceptionCode );
+       break; /* not reached */
+    case 0: /* no debugger is present */
+       break;
+    default: 	
+       FIXME("Unsupported yet debug continue value %d (please report)\n", req->status);
+    }
 
     if (pdb->top_filter)
     {
@@ -142,7 +153,7 @@ DWORD WINAPI UnhandledExceptionFilter(PEXCEPTION_POINTERS epointers)
 	  WaitForSingleObject(hEvent, INFINITE);
 	  ret = EXCEPTION_CONTINUE_SEARCH;
        } else {
-	  ERR("Couldn't start debugger (%s)\n", buffer);
+	  ERR("Couldn't start debugger (%s) (%ld)\n", buffer, GetLastError());
        }
        CloseHandle(hEvent);
     } else {
