@@ -688,6 +688,12 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	    }
 	}
 	if (!dce) dce = (dceEmpty) ? dceEmpty : dceUnused;
+        
+        /* if there's no dce empty or unused, allocate a new one */
+        if (!dce)
+        {
+            dce = DCE_AllocDCE( 0, DCE_CACHE_DC );
+        }
     }
     else 
     {
