@@ -263,12 +263,7 @@ extern void WINAPI INT_Int3dHandler(CONTEXT86*);
 extern void WINAPI INT_Int3eHandler(CONTEXT86*);
 
 /* msdos/dpmi.c */
-typedef void (WINAPI *RMCBPROC)(CONTEXT86*);
-extern void WINAPI INT_Int31Handler(CONTEXT86*);
 extern BOOL DPMI_LoadDosSystem(void);
-extern FARPROC16 WINAPI DPMI_AllocInternalRMCB(RMCBPROC);
-extern void WINAPI DPMI_FreeInternalRMCB(FARPROC16);
-extern int DPMI_CallRMProc(CONTEXT86*,LPWORD,int,int);
 
 /* misc/ppdev.c */
 

@@ -1055,7 +1055,6 @@
 @ stdcall INT_Int25Handler(ptr) INT_Int25Handler
 @ stdcall INT_Int26Handler(ptr) INT_Int26Handler  
 @ stdcall INT_Int2fHandler(ptr) INT_Int2fHandler
-@ stdcall INT_Int31Handler(ptr) INT_Int31Handler
 @ stdcall NetBIOSCall16(ptr) NetBIOSCall16
 @ cdecl INT_SetPMHandler(long long) INT_SetPMHandler
 @ cdecl LOCAL_Alloc(long long long) LOCAL_Alloc

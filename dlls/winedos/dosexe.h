@@ -138,8 +138,12 @@ extern void WINAPI DOSVM_Int29Handler(CONTEXT86*);
 extern void WINAPI DOSVM_Int2aHandler(CONTEXT86*);
 
 /* int31.c */
+typedef void (WINAPI *RMCBPROC)(CONTEXT86*);
 extern void WINAPI DOSVM_Int31Handler(CONTEXT86*);
 extern BOOL DOSVM_IsDos32(void);
+extern FARPROC16 WINAPI DPMI_AllocInternalRMCB(RMCBPROC);
+extern void WINAPI DPMI_FreeInternalRMCB(FARPROC16);
+extern int DPMI_CallRMProc(CONTEXT86*,LPWORD,int,int);
 
 /* int33.c */
 extern void WINAPI DOSVM_Int33Handler(CONTEXT86*);

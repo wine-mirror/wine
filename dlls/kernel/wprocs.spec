@@ -8,7 +8,6 @@
 137 pascal -register  INT_Int25Handler() INT_Int25Handler
 138 pascal -register  INT_Int26Handler() INT_Int26Handler
 147 pascal -interrupt INT_Int2fHandler() INT_Int2fHandler
-149 pascal -interrupt INT_Int31Handler() INT_Int31Handler
 192 pascal -interrupt INT_Int5cHandler() NetBIOSCall16
 # default handler for unimplemented interrupts
 356 pascal -interrupt INT_DefaultHandler() INT_DefaultHandler

@@ -24,6 +24,7 @@
 #include "wine/winaspi.h"
 #include "wine/debug.h"
 #include "miscemu.h" /* DOSMEM_* */
+#include "dosexe.h"
 #include "winerror.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(aspi);
