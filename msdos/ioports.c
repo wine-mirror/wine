@@ -25,7 +25,12 @@
 static WORD tmr_8253_countmax[3] = {0xffff, 0x12, 1}; /* [2] needs to be 1 ! */
 /* if byte_toggle is TRUE, then hi byte has already been written */
 static BOOL16 tmr_8253_byte_toggle[3] = {FALSE, FALSE, FALSE};
+static WORD tmr_8253_latch[3] = {0, 0, 0};
+
+/* 4th contents are dummy */
+static BOOL16 tmr_8253_latched[4] = {FALSE, FALSE, FALSE, FALSE};
 static BYTE tmr_8253_ctrlbyte_ch[4] = {0x06, 0x44, 0x86, 0};
+
 static int dummy_ctr = 0;
 
 static BYTE parport_8255[4] = {0x4f, 0x20, 0xff, 0xff};
@@ -244,6 +249,8 @@ DWORD IO_inport( int port, int size )
 {
     DWORD res = 0;
 
+    TRACE(int, "%d-byte value from port 0x%02x\n", size, port );
+
 #ifdef DIRECT_IO_ACCESS    
     if ((do_direct_port_access)
         /* Make sure we have access to the port */
@@ -263,8 +270,6 @@ DWORD IO_inport( int port, int size )
     }
 #endif
 
-    TRACE(int, "%d-byte value from port 0x%02x\n", size, port );
-
     switch (port)
     {
     case 0x40:
@@ -274,12 +279,21 @@ DWORD IO_inport( int port, int size )
         BYTE chan = port & 3;
         WORD tempval = 0;
 
+        if (tmr_8253_latched[chan] == TRUE)
+        {
+            tempval = tmr_8253_latch[chan];
+            tmr_8253_latched[chan] = FALSE;
+        }
+        else
+        {
+            dummy_ctr -= 1+(int) (10.0*rand()/(RAND_MAX+1.0));
         if (chan == 0) /* System timer counter divisor */
-            tempval = (WORD)DOSVM_GetTimer();
+                /* FIXME: DOSVM_GetTimer() returns quite rigid values */
+				tempval = dummy_ctr+(WORD)DOSVM_GetTimer();
         else
         {   /* FIXME: intelligent hardware timer emulation needed */
-            dummy_ctr -= 10;
             tempval = dummy_ctr;
+        }
         }
         switch (tmr_8253_ctrlbyte_ch[chan] & 0x30)
         {
@@ -408,16 +422,28 @@ void IO_outport( int port, int size, DWORD value )
     }
     break;          
     case 0x43:
+        {
+          BYTE chan = ((BYTE)value & 0xc0) >> 6;
+
         /* ctrl byte for specific timer channel */
-        tmr_8253_ctrlbyte_ch[((BYTE)value & 0xc0) >> 6] = (BYTE)value;
-        if (((BYTE)value&0xc0)==0xc0) {
+          tmr_8253_ctrlbyte_ch[chan] = (BYTE)value;
+          if (chan == 3) {
             FIXME(int,"8254 timer readback not implemented yet\n");
-        } else
-            if (((BYTE)value&3)==0) {
-                FIXME(int,"timer counter latch not implemented yet\n");
             }
+          else
+          if (((BYTE)value&0x30)==0) { /* latch timer */
+            tmr_8253_latched[chan] = TRUE;
+            dummy_ctr -= 1+(int) (10.0*rand()/(RAND_MAX+1.0));
+            if (chan == 0) /* System timer divisor */
+              tmr_8253_latch[0] = dummy_ctr+(WORD)DOSVM_GetTimer();
+            else
+            {   /* FIXME: intelligent hardware timer emulation needed */
+              tmr_8253_latch[chan] = dummy_ctr;
+            }
+          }
         if ((value & 0x30) == 0x30) /* write lo byte, then hi byte */
             tmr_8253_byte_toggle[((BYTE)value & 0xc0) >> 6] = FALSE; /* init */
+        }
         break;
     case 0x61:
         parport_8255[1] = (BYTE)value;
