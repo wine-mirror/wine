@@ -2190,6 +2190,25 @@ static void dump_get_visible_region_reply( const struct get_visible_region_reply
     dump_varargs_rectangles( cur_size );
 }
 
+static void dump_get_window_region_request( const struct get_window_region_request *req )
+{
+    fprintf( stderr, " window=%p", req->window );
+}
+
+static void dump_get_window_region_reply( const struct get_window_region_reply *req )
+{
+    fprintf( stderr, " total_size=%d,", req->total_size );
+    fprintf( stderr, " region=" );
+    dump_varargs_rectangles( cur_size );
+}
+
+static void dump_set_window_region_request( const struct set_window_region_request *req )
+{
+    fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " region=" );
+    dump_varargs_rectangles( cur_size );
+}
+
 static void dump_set_window_property_request( const struct set_window_property_request *req )
 {
     fprintf( stderr, " window=%p,", req->window );
@@ -2660,6 +2679,8 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_inc_window_paint_count_request,
     (dump_func)dump_get_windows_offset_request,
     (dump_func)dump_get_visible_region_request,
+    (dump_func)dump_get_window_region_request,
+    (dump_func)dump_set_window_region_request,
     (dump_func)dump_set_window_property_request,
     (dump_func)dump_remove_window_property_request,
     (dump_func)dump_get_window_property_request,
@@ -2837,6 +2858,8 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_get_windows_offset_reply,
     (dump_func)dump_get_visible_region_reply,
+    (dump_func)dump_get_window_region_reply,
+    (dump_func)0,
     (dump_func)0,
     (dump_func)dump_remove_window_property_reply,
     (dump_func)dump_get_window_property_reply,
@@ -3014,6 +3037,8 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "inc_window_paint_count",
     "get_windows_offset",
     "get_visible_region",
+    "get_window_region",
+    "set_window_region",
     "set_window_property",
     "remove_window_property",
     "get_window_property",

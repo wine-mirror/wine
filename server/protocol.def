@@ -1849,6 +1849,22 @@ enum message_type
 @END
 
 
+/* Get the window region */
+@REQ(get_window_region)
+    user_handle_t  window;        /* handle to the window */
+@REPLY
+    size_t         total_size;    /* total size of the resulting region */
+    VARARG(region,rectangles);    /* list of rectangles for the region */
+@END
+
+
+/* Set the window region */
+@REQ(set_window_region)
+    user_handle_t  window;        /* handle to the window */
+    VARARG(region,rectangles);    /* list of rectangles for the region */
+@END
+
+
 /* Set a window property */
 @REQ(set_window_property)
     user_handle_t  window;        /* handle to the window */

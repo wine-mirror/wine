@@ -172,21 +172,51 @@ BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
 int WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
 {
     int nRet = ERROR;
-    WND *wndPtr = WIN_GetPtr( hwnd );
+    HRGN win_rgn = 0;
+    RGNDATA *data;
+    size_t size = 256;
+    BOOL retry = FALSE;
 
-    if (wndPtr == WND_OTHER_PROCESS)
+    do
     {
-        if (IsWindow( hwnd ))
-            FIXME( "not supported on other process window %p\n", hwnd );
-        wndPtr = NULL;
-    }
-    if (!wndPtr)
+        if (!(data = HeapAlloc( GetProcessHeap(), 0, sizeof(*data) + size - 1 )))
+        {
+            SetLastError( ERROR_OUTOFMEMORY );
+            return ERROR;
+        }
+        SERVER_START_REQ( get_window_region )
+        {
+            req->window = hwnd;
+            wine_server_set_reply( req, data->Buffer, size );
+            if (!wine_server_call_err( req ))
+            {
+                if (!reply->total_size) retry = FALSE;  /* no region at all */
+                else if (reply->total_size <= size)
+                {
+                    size_t reply_size = wine_server_reply_size( reply );
+                    data->rdh.dwSize   = sizeof(data->rdh);
+                    data->rdh.iType    = RDH_RECTANGLES;
+                    data->rdh.nCount   = reply_size / sizeof(RECT);
+                    data->rdh.nRgnSize = reply_size;
+                    win_rgn = ExtCreateRegion( NULL, size, data );
+                    retry = FALSE;
+                }
+                else
+                {
+                    size = reply->total_size;
+                    retry = TRUE;
+                }
+            }
+        }
+        SERVER_END_REQ;
+        HeapFree( GetProcessHeap(), 0, data );
+    } while (retry);
+
+    if (win_rgn)
     {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return ERROR;
+        nRet = CombineRgn( hrgn, win_rgn, 0, RGN_COPY );
+        DeleteObject( win_rgn );
     }
-    if (wndPtr->hrgnWnd) nRet = CombineRgn( hrgn, wndPtr->hrgnWnd, 0, RGN_COPY );
-    WIN_ReleasePtr( wndPtr );
     return nRet;
 }
 
@@ -196,21 +226,49 @@ int WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
  */
 int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
 {
-    RECT rect;
+    static const RECT empty_rect;
     WND *wndPtr;
+    BOOL ret;
 
-    if (hrgn) /* verify that region really exists */
+    if (hrgn)
     {
-        if (GetRgnBox( hrgn, &rect ) == ERROR) return FALSE;
+        RGNDATA *data;
+        DWORD size;
+
+        if (!(size = GetRegionData( hrgn, 0, NULL ))) return FALSE;
+        if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
+        if (!GetRegionData( hrgn, size, data ))
+        {
+            HeapFree( GetProcessHeap(), 0, data );
+            return FALSE;
+        }
+        SERVER_START_REQ( set_window_region )
+        {
+            req->window = hwnd;
+            if (data->rdh.nCount)
+                wine_server_add_data( req, data->Buffer, data->rdh.nCount * sizeof(RECT) );
+            else
+                wine_server_add_data( req, &empty_rect, sizeof(empty_rect) );
+            ret = !wine_server_call_err( req );
+        }
+        SERVER_END_REQ;
+    }
+    else  /* clear existing region */
+    {
+        SERVER_START_REQ( set_window_region )
+        {
+            req->window = hwnd;
+            ret = !wine_server_call_err( req );
+        }
+        SERVER_END_REQ;
     }
 
-    if (USER_Driver.pSetWindowRgn)
-        return USER_Driver.pSetWindowRgn( hwnd, hrgn, bRedraw );
+    if (!ret) return FALSE;
 
     if ((wndPtr = WIN_GetPtr( hwnd )) == WND_OTHER_PROCESS)
     {
         if (IsWindow( hwnd ))
-            FIXME( "not supported on other process window %p\n", hwnd );
+            FIXME( "not properly supported on other process window %p\n", hwnd );
         wndPtr = NULL;
     }
     if (!wndPtr)
@@ -224,7 +282,6 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
         WIN_ReleasePtr( wndPtr );
         return TRUE;
     }
-
     if (wndPtr->hrgnWnd)
     {
         /* delete previous region */
@@ -234,12 +291,11 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
     wndPtr->hrgnWnd = hrgn;
     WIN_ReleasePtr( wndPtr );
 
-    /* Size the window to the rectangle of the new region (if it isn't NULL) */
-    if (hrgn) SetWindowPos( hwnd, 0, rect.left, rect.top,
-                            rect.right  - rect.left, rect.bottom - rect.top,
-                            SWP_NOSIZE | SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOACTIVATE |
-                            SWP_NOZORDER | (bRedraw ? 0 : SWP_NOREDRAW) );
-    return TRUE;
+    if (USER_Driver.pSetWindowRgn)
+        ret = USER_Driver.pSetWindowRgn( hwnd, hrgn, bRedraw );
+
+    if (ret && bRedraw) RedrawWindow( hwnd, NULL, 0, RDW_FRAME | RDW_INVALIDATE | RDW_ERASE );
+    return ret;
 }
 
 

@@ -2630,6 +2630,33 @@ struct get_visible_region_reply
 
 
 
+struct get_window_region_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+};
+struct get_window_region_reply
+{
+    struct reply_header __header;
+    size_t         total_size;
+    /* VARARG(region,rectangles); */
+};
+
+
+
+struct set_window_region_request
+{
+    struct request_header __header;
+    user_handle_t  window;
+    /* VARARG(region,rectangles); */
+};
+struct set_window_region_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct set_window_property_request
 {
     struct request_header __header;
@@ -3206,6 +3233,8 @@ enum request
     REQ_inc_window_paint_count,
     REQ_get_windows_offset,
     REQ_get_visible_region,
+    REQ_get_window_region,
+    REQ_set_window_region,
     REQ_set_window_property,
     REQ_remove_window_property,
     REQ_get_window_property,
@@ -3387,6 +3416,8 @@ union generic_request
     struct inc_window_paint_count_request inc_window_paint_count_request;
     struct get_windows_offset_request get_windows_offset_request;
     struct get_visible_region_request get_visible_region_request;
+    struct get_window_region_request get_window_region_request;
+    struct set_window_region_request set_window_region_request;
     struct set_window_property_request set_window_property_request;
     struct remove_window_property_request remove_window_property_request;
     struct get_window_property_request get_window_property_request;
@@ -3566,6 +3597,8 @@ union generic_reply
     struct inc_window_paint_count_reply inc_window_paint_count_reply;
     struct get_windows_offset_reply get_windows_offset_reply;
     struct get_visible_region_reply get_visible_region_reply;
+    struct get_window_region_reply get_window_region_reply;
+    struct set_window_region_reply set_window_region_reply;
     struct set_window_property_reply set_window_property_reply;
     struct remove_window_property_reply remove_window_property_reply;
     struct get_window_property_reply get_window_property_reply;
@@ -3593,6 +3626,6 @@ union generic_reply
     struct set_global_windows_reply set_global_windows_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 144
+#define SERVER_PROTOCOL_VERSION 145
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

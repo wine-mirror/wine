@@ -68,6 +68,7 @@ struct window
     user_handle_t    last_active;     /* last active popup */
     rectangle_t      window_rect;     /* window rectangle */
     rectangle_t      client_rect;     /* client rectangle */
+    struct region   *win_region;      /* window region (for shaped windows) */
     unsigned int     style;           /* window style */
     unsigned int     ex_style;        /* window extended style */
     unsigned int     id;              /* window id */
@@ -261,6 +262,7 @@ static void destroy_window( struct window *win )
     free_user_handle( win->handle );
     destroy_properties( win );
     unlink_window( win );
+    if (win->win_region) free_region( win->win_region );
     release_class( win->class );
     if (win->text) free( win->text );
     memset( win, 0x55, sizeof(*win) );
@@ -299,6 +301,7 @@ static struct window *create_window( struct window *parent, struct window *owner
     win->class          = class;
     win->atom           = atom;
     win->last_active    = win->handle;
+    win->win_region     = NULL;
     win->style          = 0;
     win->ex_style       = 0;
     win->id             = 0;
@@ -463,6 +466,18 @@ user_handle_t find_window_to_repaint( user_handle_t parent, struct thread *threa
 }
 
 
+/* intersect the window region with the specified region, relative to the window parent */
+static struct region *intersect_window_region( struct region *region, struct window *win )
+{
+    /* make region relative to window rect */
+    offset_region( region, -win->window_rect.left, -win->window_rect.top );
+    if (!intersect_region( region, region, win->win_region )) return NULL;
+    /* make region relative to parent again */
+    offset_region( region, win->window_rect.left, win->window_rect.top );
+    return region;
+}
+
+
 /* clip all children of a given window out of the visible region */
 static struct region *clip_children( struct window *parent, struct window *last,
                                      struct region *region, int offset_x, int offset_y )
@@ -476,6 +491,11 @@ static struct region *clip_children( struct window *parent, struct window *last,
         if (!(ptr->style & WS_VISIBLE)) continue;
         if (ptr->ex_style & WS_EX_TRANSPARENT) continue;
         set_region_rect( tmp, &ptr->window_rect );
+        if (ptr->win_region && !intersect_window_region( tmp, ptr ))
+        {
+            free_region( tmp );
+            return NULL;
+        }
         offset_region( tmp, offset_x, offset_y );
         if (!(region = subtract_region( region, region, tmp ))) break;
         if (is_region_empty( region )) break;
@@ -491,7 +511,6 @@ static struct region *get_visible_region( struct window *win, struct window *top
 {
     struct region *tmp, *region;
     struct window *ptr;
-    rectangle_t rect;
     int offset_x, offset_y;
 
     if (!(region = create_empty_region())) return NULL;
@@ -501,32 +520,32 @@ static struct region *get_visible_region( struct window *win, struct window *top
     for (ptr = win; ptr != top_window; ptr = ptr->parent)
         if (!(ptr->style & WS_VISIBLE)) return region;  /* empty region */
 
-    /* retrieve window rectangle in parent coordinates */
+    /* create a region relative to the window itself */
 
     if ((flags & DCX_PARENTCLIP) && win->parent)
     {
+        rectangle_t rect;
         rect.left = rect.top = 0;
         rect.right = win->parent->client_rect.right - win->parent->client_rect.left;
         rect.bottom = win->parent->client_rect.bottom - win->parent->client_rect.top;
+        set_region_rect( region, &rect );
         offset_x = win->client_rect.left;
         offset_y = win->client_rect.top;
     }
     else if (flags & DCX_WINDOW)
     {
-        rect = win->window_rect;
+        set_region_rect( region, &win->window_rect );
+        if (win->win_region && !intersect_window_region( region, win )) goto error;
         offset_x = win->window_rect.left;
         offset_y = win->window_rect.top;
     }
     else
     {
-        rect = win->client_rect;
+        set_region_rect( region, &win->client_rect );
+        if (win->win_region && !intersect_window_region( region, win )) goto error;
         offset_x = win->client_rect.left;
         offset_y = win->client_rect.top;
     }
-
-    /* create a region relative to the window itself */
-
-    set_region_rect( region, &rect );
     offset_region( region, -offset_x, -offset_y );
 
     /* clip children */
@@ -557,7 +576,16 @@ static struct region *get_visible_region( struct window *win, struct window *top
             offset_y += win->client_rect.top;
             offset_region( region, win->client_rect.left, win->client_rect.top );
             set_region_rect( tmp, &win->client_rect );
-            if (!intersect_region( region, region, tmp )) goto error;
+            if (win->win_region && !intersect_window_region( tmp, win ))
+            {
+                free_region( tmp );
+                goto error;
+            }
+            if (!intersect_region( region, region, tmp ))
+            {
+                free_region( tmp );
+                goto error;
+            }
             if (is_region_empty( region )) break;
         }
         offset_region( region, -offset_x, -offset_y );  /* make it relative to target window again */
@@ -948,6 +976,40 @@ DECL_HANDLER(get_visible_region)
         rectangle_t *data = get_region_data_and_free( region, &reply->total_size );
         set_reply_data_ptr( data, min(reply->total_size,get_reply_max_size()) );
     }
+}
+
+
+/* get the window region */
+DECL_HANDLER(get_window_region)
+{
+    struct window *win = get_window( req->window );
+
+    if (!win) return;
+
+    reply->total_size = 0;
+    if (win->win_region)
+    {
+        rectangle_t *data = get_region_data( win->win_region, &reply->total_size );
+        set_reply_data_ptr( data, min( reply->total_size, get_reply_max_size() ) );
+    }
+}
+
+
+/* set the window region */
+DECL_HANDLER(set_window_region)
+{
+    struct region *region = NULL;
+    struct window *win = get_window( req->window );
+
+    if (!win) return;
+
+    if (get_req_data_size())  /* no data means remove the region completely */
+    {
+        if (!(region = create_region_from_req_data( get_req_data(), get_req_data_size() )))
+            return;
+    }
+    if (win->win_region) free_region( win->win_region );
+    win->win_region = region;
 }
 
 

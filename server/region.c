@@ -99,6 +99,8 @@ typedef int (*overlap_func_t)( struct region *reg, const rectangle_t *r1, const 
 typedef int (*non_overlap_func_t)( struct region *reg, const rectangle_t *r,
                                    const rectangle_t *rEnd, int top, int bottom );
 
+static const rectangle_t empty_rect;  /* all-zero rectangle for empty regions */
+
 /* add a rectangle to a region */
 static inline rectangle_t *add_rect( struct region *reg )
 {
@@ -578,6 +580,16 @@ struct region *create_region( const rectangle_t *rects, unsigned int nb_rects )
     return region;
 }
 
+/* create a region from request data */
+struct region *create_region_from_req_data( const void *data, size_t size )
+{
+    const rectangle_t *rects = data;
+    int nb_rects = size / sizeof(rectangle_t);
+
+    /* special case: empty region can be specified by a single all-zero rectangle */
+    if (nb_rects == 1 && !memcmp( rects, &empty_rect, sizeof(empty_rect) )) nb_rects = 0;
+    return create_region( rects, nb_rects );
+}
 
 /* free a region */
 void free_region( struct region *region )
@@ -607,7 +619,12 @@ void set_region_rect( struct region *region, const rectangle_t *rect )
 /* retrieve the region data for sending to the client */
 rectangle_t *get_region_data( const struct region *region, size_t *total_size )
 {
-    *total_size = region->num_rects * sizeof(rectangle_t);
+    if (!(*total_size = region->num_rects * sizeof(rectangle_t)))
+    {
+        /* return a single empty rect for empty regions */
+        *total_size = sizeof(empty_rect);
+        return memdup( &empty_rect, sizeof(empty_rect) );
+    }
     return memdup( region->rects, *total_size );
 }
 
@@ -615,7 +632,13 @@ rectangle_t *get_region_data( const struct region *region, size_t *total_size )
 rectangle_t *get_region_data_and_free( struct region *region, size_t *total_size )
 {
     rectangle_t *ret = region->rects;
-    *total_size = region->num_rects * sizeof(rectangle_t);
+
+    if (!(*total_size = region->num_rects * sizeof(rectangle_t)))
+    {
+        /* return a single empty rect for empty regions */
+        *total_size = sizeof(empty_rect);
+        ret = memdup( &empty_rect, sizeof(empty_rect) );
+    }
     free( region );
     return ret;
 }

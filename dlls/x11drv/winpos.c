@@ -1657,20 +1657,6 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
         return FALSE;
     }
 
-    if (wndPtr->hrgnWnd == hrgn)
-    {
-        WIN_ReleasePtr( wndPtr );
-        return TRUE;
-    }
-
-    if (wndPtr->hrgnWnd)
-    {
-        /* delete previous region */
-        DeleteObject(wndPtr->hrgnWnd);
-        wndPtr->hrgnWnd = 0;
-    }
-    wndPtr->hrgnWnd = hrgn;
-
 #ifdef HAVE_LIBXSHAPE
     {
         Display *display = thread_display();
@@ -1706,7 +1692,6 @@ int X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 #endif  /* HAVE_LIBXSHAPE */
 
     WIN_ReleasePtr( wndPtr );
-    if (redraw) RedrawWindow( hwnd, NULL, 0, RDW_FRAME | RDW_INVALIDATE | RDW_ERASE );
     return TRUE;
 }
 

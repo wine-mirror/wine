@@ -68,6 +68,7 @@ extern void post_message( user_handle_t win, unsigned int message,
 /* region functions */
 
 extern struct region *create_region( const rectangle_t *rects, unsigned int nb_rects );
+extern struct region *create_region_from_req_data( const void *data, size_t size );
 extern void free_region( struct region *region );
 extern void set_region_rect( struct region *region, const rectangle_t *rect );
 extern rectangle_t *get_region_data( const struct region *region, size_t *total_size );
