@@ -637,6 +637,7 @@ static void test_CreateFileW(void)
     WCHAR filename[MAX_PATH];
     static const WCHAR emptyW[]={'\0'};
     static const WCHAR prefix[] = {'p','f','x',0};
+    static const WCHAR bogus[] = { '\\', '\\', '.', '\\', 'B', 'O', 'G', 'U', 'S', 0 };
     DWORD ret;
 
     ret = GetTempPathW(MAX_PATH, temp_path);
@@ -665,6 +666,12 @@ static void test_CreateFileW(void)
                         CREATE_NEW, FILE_FLAG_RANDOM_ACCESS, 0);
     ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
        "CreateFileW(\"\") returned ret=%p error=%ld\n",hFile,GetLastError());
+
+    /* test the result of opening a non-existent driver name */
+    hFile = CreateFileW(bogus, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_NOT_FOUND,
+       "CreateFileW on invalid VxD name returned ret=%p error=%ld\n",hFile,GetLastError());
 }
 
 static void test_GetTempFileNameA()

@@ -182,7 +182,7 @@ HANDLE VXD_Open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa )
 
     if (!(GetVersion() & 0x80000000))  /* there are no VxDs on NT */
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        SetLastError( ERROR_FILE_NOT_FOUND );
         return 0;
     }
 
