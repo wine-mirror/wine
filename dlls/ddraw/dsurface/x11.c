@@ -18,6 +18,7 @@
 #include "x11_private.h"
 #include "bitmap.h"
 #include "win.h"
+#include "d3d.h"
 
 #ifdef HAVE_OPENGL
 /* for d3d texture stuff */
