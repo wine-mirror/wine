@@ -119,3 +119,6 @@
 # X11 locks
 @ cdecl -norelay wine_tsx11_lock()
 @ cdecl -norelay wine_tsx11_unlock()
+
+# XIM
+@ cdecl ForceXIMReset(long) X11DRV_ForceXIMReset

@@ -39,6 +39,7 @@ C_SRCS = \
 	x11drv_main.c \
 	xdnd.c \
 	xfont.c \
+	xim.c \
 	xrandr.c \
 	xrender.c \
 	xvidmode.c

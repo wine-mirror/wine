@@ -3,7 +3,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = imm32.dll
-IMPORTS   = user32 kernel32
+IMPORTS   = user32 gdi32 kernel32
 ALTNAMES  = imm.dll
 
 SPEC_SRCS16 = $(ALTNAMES:.dll=.spec)

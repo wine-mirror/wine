@@ -21,22 +21,23 @@
 @ stdcall ImmGetCompositionFontW(long ptr)
 @ stdcall ImmGetCompositionStringA (long long ptr long)
 @ stdcall ImmGetCompositionStringW (long long ptr long)
+@ stdcall ImmGetCompositionString (long long ptr long) ImmGetCompositionStringA
 @ stdcall ImmGetCompositionWindow(long ptr)
 @ stdcall ImmGetContext(long)
 @ stdcall ImmGetConversionListA(long long str ptr long long)
 @ stdcall ImmGetConversionListW(long long wstr ptr long long)
 @ stdcall ImmGetConversionStatus(long ptr ptr)
 @ stdcall ImmGetDefaultIMEWnd(long)
-@ stdcall ImmGetDescriptionA(long str long)
-@ stdcall ImmGetDescriptionW(long wstr long)
-@ stdcall ImmGetGuideLineA(long long str long)
-@ stdcall ImmGetGuideLineW(long long wstr long)
+@ stdcall ImmGetDescriptionA(long ptr long)
+@ stdcall ImmGetDescriptionW(long ptr long)
+@ stdcall ImmGetGuideLineA(long long ptr long)
+@ stdcall ImmGetGuideLineW(long long ptr long)
 @ stub ImmGetHotKey
 @ stub ImmGetIMCCLockCount
 @ stub ImmGetIMCCSize
 @ stub ImmGetIMCLockCount
-@ stdcall ImmGetIMEFileNameA(long str long)
-@ stdcall ImmGetIMEFileNameW(long wstr long)
+@ stdcall ImmGetIMEFileNameA(long ptr long)
+@ stdcall ImmGetIMEFileNameW(long ptr long)
 @ stdcall ImmGetOpenStatus(long)
 @ stdcall ImmGetProperty(long long)
 @ stdcall ImmGetRegisterWordStyleA(long long ptr)

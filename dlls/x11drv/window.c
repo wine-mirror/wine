@@ -789,16 +789,6 @@ static Window create_whole_window( Display *display, WND *win )
         return 0;
     }
 
-    if (is_top_level)
-    {
-        XIM xim = x11drv_thread_data()->xim;
-        if (xim) data->xic = XCreateIC( xim,
-                                        XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
-                                        XNClientWindow, data->whole_window,
-                                        XNFocusWindow, data->whole_window,
-                                        0 );
-    }
-
     /* non-maximized child must be at bottom of Z order */
     if ((win->dwStyle & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD)
     {
@@ -809,7 +799,12 @@ static Window create_whole_window( Display *display, WND *win )
 
     wine_tsx11_unlock();
 
-    if (is_top_level) X11DRV_set_wm_hints( display, win );
+    if (is_top_level)
+    {
+        XIM xim = x11drv_thread_data()->xim;
+        if (xim) data->xic = X11DRV_CreateIC( xim, display, data->whole_window );
+        X11DRV_set_wm_hints( display, win );
+    }
 
     return data->whole_window;
 }

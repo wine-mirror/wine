@@ -104,6 +104,8 @@ static void *err_callback_arg;               /* error callback argument */
 static int err_callback_result;              /* error callback result */
 static unsigned long err_serial;             /* serial number of first request */
 static int (*old_error_handler)( Display *, XErrorEvent * );
+static int use_xim = 1;
+static char input_style[20];
 
 #define IS_OPTION_TRUE(ch) \
     ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
@@ -308,6 +310,11 @@ static void setup_options(void)
     if (!get_config_key( hkey, appkey, "DesktopDoubleBuffered", buffer, sizeof(buffer) ))
         desktop_dbl_buf = IS_OPTION_TRUE( buffer[0] );
 
+    if (!get_config_key( hkey, appkey, "UseXIM", buffer, sizeof(buffer) ))
+        use_xim = IS_OPTION_TRUE( buffer[0] );
+
+    get_config_key( hkey, appkey, "InputStyle", input_style, sizeof(input_style) );
+
     if (appkey) RegCloseKey( appkey );
     RegCloseKey( hkey );
 }
@@ -460,15 +467,8 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
         MESSAGE( "x11drv: Can't open display: %s\n", XDisplayName(NULL) );
         ExitProcess(1);
     }
-    fcntl( ConnectionNumber(data->display), F_SETFD, 1 ); /* set close on exec flag */
 
-    if ((data->xim = XOpenIM( data->display, NULL, NULL, NULL )))
-    {
-        TRACE("X display of IM = %p\n", XDisplayOfIM(data->xim));
-        TRACE("Using %s locale of Input Method\n", XLocaleOfIM(data->xim));
-    }
-    else
-        WARN("Can't open input method\n");
+    fcntl( ConnectionNumber(data->display), F_SETFD, 1 ); /* set close on exec flag */
 
 #ifdef HAVE_XKB
     if (use_xkb)
@@ -480,6 +480,10 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
 
     if (synchronous) XSynchronize( data->display, True );
     wine_tsx11_unlock();
+
+    if (use_xim && !(data->xim = X11DRV_SetupXIM( data->display, input_style )))
+        WARN("Input Method is not available\n");
+
     if (wine_server_fd_to_handle( ConnectionNumber(data->display), GENERIC_READ | SYNCHRONIZE,
                                   FALSE, &data->display_fd ))
     {

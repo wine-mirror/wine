@@ -807,8 +807,8 @@ static const struct {
  {0x0424, "Slovenian keyboard layout", &main_key_SI, &main_key_scan_qwerty, &main_key_vkey_qwertz},
  {0x041a, "Croatian keyboard layout", &main_key_HR, &main_key_scan_qwerty, &main_key_vkey_qwertz},
  {0x041a, "Croatian keyboard layout (specific)", &main_key_HR_jelly, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {0x0411, "Japanese 106 keyboard layout", &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
- {0x0411, "Japanese pc98x1 keyboard layout", &main_key_JA_pc98x1, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0xe0010411, "Japanese 106 keyboard layout", &main_key_JA_jp106, &main_key_scan_qwerty, &main_key_vkey_qwerty},
+ {0xe0010411, "Japanese pc98x1 keyboard layout", &main_key_JA_pc98x1, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x041b, "Slovak keyboard layout", &main_key_SK, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x041b, "Slovak and Czech keyboard layout without dead keys", &main_key_SK_prog, &main_key_scan_qwerty, &main_key_vkey_qwerty},
  {0x0405, "Czech keyboard layout", &main_key_CS, &main_key_scan_qwerty, &main_key_vkey_qwerty},
@@ -1113,7 +1113,16 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
         return;
     }
 
-    TRACE_(key)("state = %X\n", event->state);
+    TRACE_(key)("state = %X nbyte = %d, status 0x%x\n", event->state, ascii_chars, status);
+
+    if (status == XBufferOverflow)
+        ERR("Buffer Overflow need %i!\n",ascii_chars);
+
+    if (status == XLookupChars)
+    {
+        X11DRV_XIMLookupChars( Str, ascii_chars );
+        return;
+    }
 
     /* If XKB extensions are used, the state mask for AltGr will use the group
        index instead of the modifier mask. The group index is set in bits
@@ -1560,7 +1569,7 @@ HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
      */
     langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
     if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
-        layout |= 0xe001 << 16; /* FIXME */
+        layout = 0xe001 << 16; /* FIXME */
 
     return (HKL)layout;
 }

@@ -54,6 +54,8 @@ WINE_DECLARE_DEBUG_CHANNEL(clipboard);
 /* X context to associate a hwnd to an X window */
 extern XContext winContext;
 
+extern BOOL ximInComposeMode;
+
 #define DndNotDnd       -1    /* OffiX drag&drop */
 #define DndUnknown      0
 #define DndRawData      1
@@ -532,6 +534,8 @@ static void EVENT_FocusOut( HWND hwnd, XFocusChangeEvent *event )
     TRACE( "win %p xwin %lx detail=%s\n", hwnd, event->window, focus_details[event->detail] );
 
     if (event->detail == NotifyPointer) return;
+    if (ximInComposeMode) return;
+
     x11drv_thread_data()->last_focus = hwnd;
     if ((xic = X11DRV_get_ic( hwnd )))
     {

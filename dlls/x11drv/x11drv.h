@@ -234,6 +234,11 @@ extern void X11DRV_XRender_UpdateDrawable(X11DRV_PDEVICE *physDev);
 extern void X11DRV_OpenGL_Init(Display *display);
 extern XVisualInfo *X11DRV_setup_opengl_visual(Display *display);
 
+/* XIM support */
+extern XIC X11DRV_CreateIC(XIM xim, Display *display, Window win);
+extern XIM X11DRV_SetupXIM(Display *display, const char *input_style);
+extern void X11DRV_XIMLookupChars( const char *str, DWORD count );
+
 extern int X11DRV_XDND_Event(HWND hWnd, XClientMessageEvent *event);
 
 /* exported dib functions for now */
