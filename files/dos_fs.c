@@ -1362,7 +1362,7 @@ DWORD WINAPI GetFullPathNameW( LPCWSTR name, DWORD len, LPWSTR buffer,
  */
 static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
 {
-    BYTE attr = info->attr | FA_UNUSED | FA_ARCHIVE | FA_RDONLY;
+    DWORD attr = info->attr | FA_UNUSED | FA_ARCHIVE | FA_RDONLY | FILE_ATTRIBUTE_SYMLINK;
     UINT flags = DRIVE_GetFlags( info->drive );
     char *p, buffer[MAX_PATHNAME_LEN];
     const char *drive_path;
@@ -1436,6 +1436,15 @@ static int DOSFS_FindNextEx( FIND_FIRST_INFO *info, WIN32_FIND_DATAA *entry )
             WARN("can't stat %s\n", buffer);
             continue;
         }
+        if ((fileinfo.dwFileAttributes & FILE_ATTRIBUTE_SYMLINK) &&
+            (fileinfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            static int show_dir_symlinks = -1;
+            if (show_dir_symlinks == -1)
+                show_dir_symlinks = PROFILE_GetWineIniBool("wine", "ShowDirSymlinks", 0);
+            if (!show_dir_symlinks) continue;
+        }
+
         if (fileinfo.dwFileAttributes & ~attr) continue;
 
         /* We now have a matching entry; fill the result and return */

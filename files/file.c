@@ -617,14 +617,24 @@ BOOL FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 {
     struct stat st;
 
-    if (!unixName || !info) return FALSE;
-
-    if (stat( unixName, &st ) == -1)
+    if (lstat( unixName, &st ) == -1)
     {
         FILE_SetDosError();
         return FALSE;
     }
-    FILE_FillInfo( &st, info );
+    if (!S_ISLNK(st.st_mode)) FILE_FillInfo( &st, info );
+    else
+    {
+        /* do a "real" stat to find out
+	   about the type of the symlink destination */
+        if (stat( unixName, &st ) == -1)
+        {
+            FILE_SetDosError();
+            return FALSE;
+        }
+        FILE_FillInfo( &st, info );
+        info->dwFileAttributes |= FILE_ATTRIBUTE_SYMLINK;
+    }
     return TRUE;
 }
 
