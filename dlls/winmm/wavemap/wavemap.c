@@ -404,18 +404,20 @@ static	DWORD	wodGetDevCaps(UINT wDevID, WAVEMAPDATA* wom, LPWAVEOUTCAPSA lpWaveC
         return MMSYSERR_BADDEVICEID;
     /* otherwise, return caps of mapper itself */
     if (wDevID == (UINT)-1 || wDevID == (UINT16)-1) {
-	lpWaveCaps->wMid = 0x00FF;
-	lpWaveCaps->wPid = 0x0001;
-	lpWaveCaps->vDriverVersion = 0x0100;
-	strcpy(lpWaveCaps->szPname, "Wine wave out mapper");
-	lpWaveCaps->dwFormats =
+        WAVEOUTCAPSA woc;
+	woc.wMid = 0x00FF;
+	woc.wPid = 0x0001;
+	woc.vDriverVersion = 0x0100;
+	strcpy(woc.szPname, "Wine wave out mapper");
+	woc.dwFormats =
             WAVE_FORMAT_96M08 | WAVE_FORMAT_96S08 | WAVE_FORMAT_96M16 | WAVE_FORMAT_96S16 |
             WAVE_FORMAT_48M08 | WAVE_FORMAT_48S08 | WAVE_FORMAT_48M16 | WAVE_FORMAT_48S16 |
 	    WAVE_FORMAT_4M08 | WAVE_FORMAT_4S08 | WAVE_FORMAT_4M16 | WAVE_FORMAT_4S16 |
 	    WAVE_FORMAT_2M08 | WAVE_FORMAT_2S08 | WAVE_FORMAT_2M16 | WAVE_FORMAT_2S16 |
 	    WAVE_FORMAT_1M08 | WAVE_FORMAT_1S08 | WAVE_FORMAT_1M16 | WAVE_FORMAT_1S16;
-	lpWaveCaps->wChannels = 2;
-	lpWaveCaps->dwSupport = WAVECAPS_VOLUME | WAVECAPS_LRVOLUME;
+	woc.wChannels = 2;
+	woc.dwSupport = WAVECAPS_VOLUME | WAVECAPS_LRVOLUME;
+        memcpy(lpWaveCaps, &woc, min(dwParam2, sizeof(woc)));
 
 	return MMSYSERR_NOERROR;
     }
@@ -647,14 +649,14 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         wfx.wFormatTag = WAVE_FORMAT_PCM;
         wfx.cbSize = 0; /* normally, this field is not used for PCM format, just in case */
         /* try some ACM stuff */
-        
+
 #define	TRY(sps,bps)    wfx.nSamplesPerSec = (sps); wfx.wBitsPerSample = (bps); \
                         switch (res=widOpenHelper(wim, i, lpDesc, &wfx, dwFlags | WAVE_FORMAT_DIRECT)) { \
                         case MMSYSERR_NOERROR: wim->avgSpeedInner = wfx.nAvgBytesPerSec; goto found; \
                         case WAVERR_BADFORMAT: break; \
                         default: goto error; \
                         }
-        
+
         for (i = ndlo; i < ndhi; i++) {
 	    wfx.nSamplesPerSec=lpDesc->lpFormat->nSamplesPerSec;
             /* first try with same stereo/mono option as source */
@@ -675,7 +677,7 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
             TRY(44100, 16);
             TRY(22050, 16);
             TRY(11025, 16);
-            
+
             /* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
             wfx.nChannels ^= 3;
             TRY(96000, 16);
@@ -691,7 +693,7 @@ static	DWORD	widOpen(LPDWORD lpdwUser, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
             TRY(44100, 8);
             TRY(22050, 8);
             TRY(11025, 8);
-            
+
             /* 2^3 => 1, 1^3 => 2, so if stereo, try mono (and the other way around) */
             wfx.nChannels ^= 3;
             TRY(96000, 8);
@@ -847,17 +849,20 @@ static	DWORD	widGetDevCaps(UINT wDevID, WAVEMAPDATA* wim, LPWAVEINCAPSA lpWaveCa
         return MMSYSERR_BADDEVICEID;
     /* otherwise, return caps of mapper itself */
     if (wDevID == (UINT)-1 || wDevID == (UINT16)-1) {
-	lpWaveCaps->wMid = 0x00FF;
-	lpWaveCaps->wPid = 0x0001;
-	lpWaveCaps->vDriverVersion = 0x0001;
-	strcpy(lpWaveCaps->szPname, "Wine wave in mapper");
-	lpWaveCaps->dwFormats =
+        WAVEINCAPSA wic;
+	wic.wMid = 0x00FF;
+	wic.wPid = 0x0001;
+	wic.vDriverVersion = 0x0001;
+	strcpy(wic.szPname, "Wine wave in mapper");
+	wic.dwFormats =
             WAVE_FORMAT_96M08 | WAVE_FORMAT_96S08 | WAVE_FORMAT_96M16 | WAVE_FORMAT_96S16 |
             WAVE_FORMAT_48M08 | WAVE_FORMAT_48S08 | WAVE_FORMAT_48M16 | WAVE_FORMAT_48S16 |
 	    WAVE_FORMAT_4M08 | WAVE_FORMAT_4S08 | WAVE_FORMAT_4M16 | WAVE_FORMAT_4S16 |
 	    WAVE_FORMAT_2M08 | WAVE_FORMAT_2S08 | WAVE_FORMAT_2M16 | WAVE_FORMAT_2S16 |
 	    WAVE_FORMAT_1M08 | WAVE_FORMAT_1S08 | WAVE_FORMAT_1M16 | WAVE_FORMAT_1S16;
-	lpWaveCaps->wChannels = 2;
+	wic.wChannels = 2;
+        memcpy(lpWaveCaps, &wic, min(dwParam2, sizeof(wic)));
+
 	return MMSYSERR_NOERROR;
     }
     ERR("This shouldn't happen\n");
