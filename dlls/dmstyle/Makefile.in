@@ -11,6 +11,7 @@ C_SRCS = \
 	chordtrack.c \
 	commandtrack.c \
 	dmstyle_main.c \
+	dmutils.c \
 	motiftrack.c \
 	mutetrack.c \
 	regsvr.c \

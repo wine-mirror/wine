@@ -899,7 +899,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
     StreamCount += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
     TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
     
-    hr = IDirectMusicImpl_IPersistStream_ParseDescGeneric(&Chunk, pStm, This->pDesc);
+    hr = IDirectMusicUtils_IPersistStream_ParseDescGeneric(&Chunk, pStm, This->pDesc);
     if (FAILED(hr)) return hr;
     
     if (hr == S_FALSE) {
@@ -961,7 +961,7 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
 	    ListCount[0] += sizeof(FOURCC) + sizeof(DWORD) + Chunk.dwSize;
 	    TRACE_(dmfile)(": %s chunk (size = %ld)", debugstr_fourcc (Chunk.fccID), Chunk.dwSize);
 
-	    hr = IDirectMusicImpl_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, This->pDesc);
+	    hr = IDirectMusicUtils_IPersistStream_ParseUNFOGeneric(&Chunk, pStm, This->pDesc);
 	    if (FAILED(hr)) return hr;
 	    
 	    if (hr == S_FALSE) {

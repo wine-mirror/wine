@@ -9,6 +9,7 @@ EXTRALIBS = -ldxguid -luuid
 C_SRCS = \
 	band.c \
 	bandtrack.c \
+	dmutils.c \
 	dmband_main.c \
 	regsvr.c
 

@@ -919,50 +919,7 @@ extern HRESULT WINAPI IDirectMusicWaveTrack_IPersistStream_GetSizeMax (LPPERSIST
 /*****************************************************************************
  * Misc.
  */
-/* for simpler reading */
-typedef struct _DMUS_PRIVATE_CHUNK {
-	FOURCC fccID; /* FOURCC ID of the chunk */
-	DWORD dwSize; /* size of the chunk */
-} DMUS_PRIVATE_CHUNK, *LPDMUS_PRIVATE_CHUNK;
 
-/* used for generic dumping (copied from ddraw) */
-typedef struct {
-    DWORD val;
-    const char* name;
-} flag_info;
-
-typedef struct {
-    const GUID *guid;
-    const char* name;
-} guid_info;
-
-/* used for initialising structs (primarily for DMUS_OBJECTDESC) */
-#define DM_STRUCT_INIT(x) 				\
-	do {								\
-		memset((x), 0, sizeof(*(x)));	\
-		(x)->dwSize = sizeof(*x);		\
-	} while (0)
-
-#define FE(x) { x, #x }	
-#define GE(x) { &x, #x }
-
-/* check whether the given DWORD is even (return 0) or odd (return 1) */
-extern int even_or_odd (DWORD number);
-/* FOURCC to string conversion for debug messages */
-extern const char *debugstr_fourcc (DWORD fourcc);
-/* DMUS_VERSION struct to string conversion for debug messages */
-extern const char *debugstr_dmversion (LPDMUS_VERSION version);
-/* returns name of given GUID */
-extern const char *debugstr_dmguid (const GUID *id);
-/* returns name of given error code */
-extern const char *debugstr_dmreturn (DWORD code);
-/* generic flags-dumping function */
-extern const char *debugstr_flags (DWORD flags, const flag_info* names, size_t num_names);
-extern const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask);
-/* dump whole DMUS_OBJECTDESC struct */
-extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
-
-HRESULT IDirectMusicImpl_IPersistStream_ParseDescGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc);
-HRESULT IDirectMusicImpl_IPersistStream_ParseUNFOGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc);
+#include "dmutils.h"
 
 #endif	/* __WINE_DMIME_PRIVATE_H */

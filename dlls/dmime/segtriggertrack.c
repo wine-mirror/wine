@@ -242,6 +242,9 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSIS
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
+  HRESULT hr;
+
+  IDirectMusicObject* pObject = NULL;
 
   if (pChunk->fccID != DMUS_FOURCC_SEGMENT_LIST) {
     ERR_(dmfile)(": %s chunk should be a SEGMENT list\n", debugstr_fourcc (pChunk->fccID));
@@ -277,13 +280,17 @@ static HRESULT IDirectMusicSegTriggerTrack_IPersistStream_ParseSegment (LPPERSIS
       ListSize[1] = Chunk.dwSize - sizeof(FOURCC);
       ListCount[1] = 0;
       switch (Chunk.fccID) { 
-	/**
-	 * should be a DMRF (DirectMusic Reference) list @TODO
-	 */
       case DMUS_FOURCC_REF_LIST: {
-	FIXME_(dmfile)(": DMRF (DM References) list, not yet handled\n");
-	liMove.QuadPart = Chunk.dwSize - sizeof(FOURCC);
-	IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
+	FIXME_(dmfile)(": DMRF (DM References) list\n");
+	hr = IDirectMusicUtils_IPersistStream_ParseReference (iface,  &Chunk, pStm, &pObject);
+	if (FAILED(hr)) {
+	  ERR(": could not load Reference\n");
+	  return hr;
+	}
+	/*
+	 * TODO: what to do with the new pObject ?
+	 * for now it leaks
+	 */
 	break;						
       }
       default: {

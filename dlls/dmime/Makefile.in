@@ -9,6 +9,7 @@ EXTRALIBS = -ldxguid -luuid
 C_SRCS = \
 	audiopath.c \
 	dmime_main.c \
+	dmutils.c \
 	graph.c \
 	lyricstrack.c \
 	markertrack.c \
