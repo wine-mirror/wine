@@ -19,6 +19,7 @@
 #include "winerror.h"
 #include "dde.h"
 #include "ddeml.h"
+#include "dde/dde_private.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ddeml);
@@ -54,6 +55,22 @@ typedef struct
     CONVCONTEXT16  ConvCtxt;
 } CONVINFO16, *LPCONVINFO16;
 
+/* ### start build ### */
+extern LONG CALLBACK WDML_CallTo16_long_llllllll    (FARPROC16,LONG,LONG,LONG,LONG,LONG,LONG,LONG,LONG);
+/* ### stop build ### */
+
+/******************************************************************
+ *		WDML_InvokeCallback16
+ *
+ *
+ */
+HDDEDATA	WDML_InvokeCallback16(PFNCALLBACK pfn, UINT uType, UINT uFmt, HCONV hConv,
+				      HSZ hsz1, HSZ hsz2, HDDEDATA hdata, 
+				      DWORD dwData1, DWORD dwData2)
+{
+	return WDML_CallTo16_long_llllllll((FARPROC16)pfn, uType, uFmt, hConv, 
+					   hsz1, hsz2, hdata, dwData1, dwData2);
+}
 
 /******************************************************************************
  *            DdeInitialize   (DDEML.2)
@@ -61,8 +78,7 @@ typedef struct
 UINT16 WINAPI DdeInitialize16(LPDWORD pidInst, PFNCALLBACK16 pfnCallback,
 			      DWORD afCmd, DWORD ulRes)
 {
-     return (UINT16)DdeInitializeA(pidInst,(PFNCALLBACK)pfnCallback,
-				   afCmd, ulRes);
+    return WDML_Initialize(pidInst, (PFNCALLBACK)pfnCallback, afCmd, ulRes, FALSE, TRUE);
 }
 
 /*****************************************************************
@@ -145,8 +161,7 @@ BOOL16 WINAPI DdeDisconnect16(HCONV hConv)
  */
 BOOL16 WINAPI DdeSetUserHandle16(HCONV hConv, DWORD id, DWORD hUser)
 {
-     FIXME("(%d,%ld,%ld): stub\n",hConv,id, hUser);
-     return 0;
+     return DdeSetUserHandle(hConv, id, hUser);
 }
 
 /*****************************************************************
@@ -167,7 +182,9 @@ HSZ WINAPI DdeCreateStringHandle16(DWORD idInst, LPCSTR str, INT16 codepage)
      if  (codepage)
      {
 	  return DdeCreateStringHandleA(idInst, str, codepage);
-     } else {
+     } 
+     else 
+     {
 	  TRACE("Default codepage supplied\n");
 	  return DdeCreateStringHandleA(idInst, str, CP_WINANSI);
      }
@@ -178,7 +195,7 @@ HSZ WINAPI DdeCreateStringHandle16(DWORD idInst, LPCSTR str, INT16 codepage)
  */
 BOOL16 WINAPI DdeFreeStringHandle16(DWORD idInst, HSZ hsz)
 {
-     FIXME("idInst %ld hsz 0x%x\n",idInst,hsz);
+     TRACE("idInst %ld hsz 0x%x\n",idInst,hsz);
      return (BOOL)DdeFreeStringHandle(idInst, hsz);
 }
 
@@ -218,8 +235,7 @@ HDDEDATA WINAPI DdeClientTransaction16(LPVOID pData, DWORD cbData,
 BOOL16 WINAPI DdeAbandonTransaction16(DWORD idInst, HCONV hConv, 
 				      DWORD idTransaction)
 {
-     FIXME("empty stub\n");
-     return TRUE;
+     return DdeAbandonTransaction(idInst, hConv, idTransaction);
 }
 
 /*****************************************************************
@@ -256,7 +272,8 @@ DWORD WINAPI DdeGetData16(
  */
 LPBYTE WINAPI DdeAccessData16(HDDEDATA hData, LPDWORD pcbDataSize)
 {
-     return DdeAccessData(hData, pcbDataSize);
+    /* FIXME: there's a memory leak here... */
+    return (LPBYTE)MapLS(DdeAccessData(hData, pcbDataSize));
 }
 
 /*****************************************************************
@@ -264,7 +281,7 @@ LPBYTE WINAPI DdeAccessData16(HDDEDATA hData, LPDWORD pcbDataSize)
  */
 BOOL16 WINAPI DdeUnaccessData16(HDDEDATA hData)
 {
-     return DdeUnaccessData(hData);
+    return DdeUnaccessData(hData);
 }
 
 /*****************************************************************
@@ -272,7 +289,7 @@ BOOL16 WINAPI DdeUnaccessData16(HDDEDATA hData)
  */
 BOOL16 WINAPI DdeEnableCallback16(DWORD idInst, HCONV hConv, UINT16 wCmd)
 {
-     return DdeEnableCallback(idInst, hConv, wCmd);
+    return DdeEnableCallback(idInst, hConv, wCmd);
 }
 
 /*****************************************************************
@@ -281,7 +298,7 @@ BOOL16 WINAPI DdeEnableCallback16(DWORD idInst, HCONV hConv, UINT16 wCmd)
 HDDEDATA WINAPI DdeNameService16(DWORD idInst, HSZ hsz1, HSZ hsz2,
 				 UINT16 afCmd)
 {
-     return DdeNameService(idInst, hsz1, hsz2, afCmd);
+    return DdeNameService(idInst, hsz1, hsz2, afCmd);
 }
 
 /*****************************************************************
@@ -289,7 +306,7 @@ HDDEDATA WINAPI DdeNameService16(DWORD idInst, HSZ hsz1, HSZ hsz2,
  */
 UINT16 WINAPI DdeGetLastError16(DWORD idInst)
 {
-     return (UINT16)DdeGetLastError(idInst);
+    return (UINT16)DdeGetLastError(idInst);
 }
 
 /*****************************************************************
@@ -297,7 +314,7 @@ UINT16 WINAPI DdeGetLastError16(DWORD idInst)
  */
 INT16 WINAPI DdeCmpStringHandles16(HSZ hsz1, HSZ hsz2)
 {
-     return DdeCmpStringHandles(hsz1, hsz2);
+    return DdeCmpStringHandles(hsz1, hsz2);
 }
 
 /******************************************************************

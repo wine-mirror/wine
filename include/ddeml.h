@@ -177,6 +177,8 @@ extern "C" {
 
 #define TIMEOUT_ASYNC           0xFFFFFFFF
 
+#define CADV_LATEACK		0xFFFF
+
 /**************************************************
 
 	End of Message Types Section
@@ -332,6 +334,7 @@ BOOL      WINAPI DdeFreeStringHandle(DWORD,HSZ);
 BOOL      WINAPI DdeFreeDataHandle(HDDEDATA);
 BOOL      WINAPI DdeKeepStringHandle(DWORD,HSZ);
 HDDEDATA  WINAPI DdeClientTransaction(LPBYTE,DWORD,HCONV,HSZ,UINT,UINT,DWORD,LPDWORD);
+BOOL	  WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction); 
 BOOL      WINAPI DdeImpersonateClient(HCONV);
 BOOL      WINAPI DdePostAdvise(DWORD,HSZ,HSZ);
 HDDEDATA  WINAPI DdeAddData(HDDEDATA,LPBYTE,DWORD,DWORD);

@@ -262,6 +262,9 @@ static void thread_detach(void)
 {
     HQUEUE16 hQueue = GetThreadQueue16( 0 );
 
+    extern void WDML_NotifyThreadDetach(void);
+    WDML_NotifyThreadDetach();
+
     if (hQueue)
     {
         TIMER_RemoveQueueTimers( hQueue );

@@ -26,7 +26,7 @@ debug_channels (accel caret class clipboard combo cursor dc dde ddeml dialog dri
 @ stdcall BringWindowToTop(long) BringWindowToTop
 @ stdcall BroadcastSystemMessage(long ptr long long long) BroadcastSystemMessage
 @ stdcall CalcChildScroll(long long) CalcChildScroll
-@ stub CallMsgFilter
+@ stdcall CallMsgFilter(ptr long) CallMsgFilterA
 @ stdcall CallMsgFilterA(ptr long) CallMsgFilterA
 @ stdcall CallMsgFilterW(ptr long) CallMsgFilterW
 @ stdcall CallNextHookEx(long long long long) CallNextHookEx
@@ -107,8 +107,8 @@ debug_channels (accel caret class clipboard combo cursor dc dde ddeml dialog dri
 @ stdcall DdeConnect(long long long ptr) DdeConnect
 @ stdcall DdeConnectList(long long long long ptr) DdeConnectList
 @ stdcall DdeCreateDataHandle(long ptr long long long long long) DdeCreateDataHandle
-@ stdcall DdeCreateStringHandleA(long str long) DdeCreateStringHandleA
-@ stdcall DdeCreateStringHandleW(long wstr long) DdeCreateStringHandleW
+@ stdcall DdeCreateStringHandleA(long ptr long) DdeCreateStringHandleA
+@ stdcall DdeCreateStringHandleW(long ptr long) DdeCreateStringHandleW
 @ stdcall DdeDisconnect(long) DdeDisconnect
 @ stdcall DdeDisconnectList(long) DdeDisconnectList
 @ stdcall DdeEnableCallback(long long long) DdeEnableCallback
