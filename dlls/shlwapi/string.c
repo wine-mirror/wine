@@ -1716,7 +1716,7 @@ static HRESULT WINAPI _SHStrDupAA(LPCSTR src, LPSTR * dest)
 	int len = 0;
 
 	if (src) {
-	    len = lstrlenA(src);
+     len = lstrlenA(src) + 1;
 	    *dest = CoTaskMemAlloc(len);
 	} else {
 	    *dest = NULL;
@@ -1753,7 +1753,7 @@ HRESULT WINAPI SHStrDupA(LPCSTR src, LPWSTR * dest)
 	int len = 0;
 
 	if (src) {
-	    len = (MultiByteToWideChar(0,0,src,-1,0,0) + 1)* sizeof(WCHAR);
+     len = MultiByteToWideChar(0,0,src,-1,0,0) * sizeof(WCHAR);
 	    *dest = CoTaskMemAlloc(len);
 	} else {
 	    *dest = NULL;
