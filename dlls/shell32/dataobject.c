@@ -7,8 +7,14 @@
  */
 #include "debug.h"
 #include "shlobj.h"
+#include "pidl.h"
 #include "winerror.h"
 #include "shell32_main.h"
+
+UINT32 cfShellIDList=0;
+UINT32 cfFileGroupDesc=0;
+UINT32 cfFileContents=0;
+
 /***********************************************************************
 *   IEnumFORMATETC implementation
 */
@@ -169,12 +175,24 @@ static struct IDataObject_VTable dtovt =
 /**************************************************************************
 *  IDataObject_Constructor
 */
-LPDATAOBJECT IDataObject_Constructor(HWND32 hwndOwner, LPSHELLFOLDER pcf, LPITEMIDLIST * apit, UINT32 cpit)
+LPDATAOBJECT IDataObject_Constructor(HWND32 hwndOwner, LPSHELLFOLDER psf, LPITEMIDLIST * apidl, UINT32 cidl)
 {	LPDATAOBJECT dto;
-	dto=(LPDATAOBJECT)HeapAlloc(GetProcessHeap(),0,sizeof(IDataObject));
+	if (!(dto = (LPDATAOBJECT)HeapAlloc(GetProcessHeap(),0,sizeof(IDataObject))))
+	  return NULL;
+	  
 	dto->ref=1;
 	dto->lpvtbl=&dtovt;
-	TRACE(shell,"(%p)->()\n",dto);
+	dto->psf=psf;
+	dto->pidl=ILClone(psf->mpidl); /* FIXME:add a reference and don't copy*/
+
+	/* fill the ItemID List List */
+	dto->lpill = IDLList_Constructor (8);
+	if (! dto->lpill )
+	  return NULL;
+	  
+	dto->lpill->lpvtbl->fnAddItems(dto->lpill, apidl, cidl); 
+	
+	TRACE(shell,"(%p)->(sf=%p apidl=%p cidl=%u)\n",dto, psf, apidl, cidl);
 	return dto;
 }
 /***************************************************************************
@@ -216,14 +234,121 @@ static ULONG WINAPI IDataObject_Release(LPDATAOBJECT this)
 {	TRACE(shell,"(%p)->()\n",this);
 	if (!--(this->ref)) 
 	{ TRACE(shell," destroying IDataObject(%p)\n",this);
+	  IDLList_Destructor(this->lpill);
 	  HeapFree(GetProcessHeap(),0,this);
 	  return 0;
 	}
 	return this->ref;
 }
+/**************************************************************************
+* DATAOBJECT_InitShellIDList (internal)
+*
+* NOTES
+*  get or register the "Shell IDList Array" clipformat
+*/
+static BOOL32 DATAOBJECT_InitShellIDList()
+{	if (cfShellIDList)
+        { return(TRUE);
+        }
+
+        cfShellIDList = RegisterClipboardFormat32A(CFSTR_SHELLIDLIST);
+        return(cfShellIDList != 0);
+}
+
+/**************************************************************************
+* DATAOBJECT_InitFileGroupDesc (internal)
+*
+* NOTES
+*  get or register the "FileGroupDescriptor" clipformat
+*/
+static BOOL32 DATAOBJECT_InitFileGroupDesc()
+{	if (cfFileGroupDesc)
+        { return(TRUE);
+        }
+
+        cfFileGroupDesc = RegisterClipboardFormat32A(CFSTR_FILEDESCRIPTORA);
+        return(cfFileGroupDesc != 0);
+}
+/**************************************************************************
+* DATAOBJECT_InitFileContents (internal)
+* 
+* NOTES
+ * get or register the "FileContents" clipformat
+*/
+static BOOL32 DATAOBJECT_InitFileContents()
+{	if (cfFileContents)
+        { return(TRUE);
+        }
+
+        cfFileContents = RegisterClipboardFormat32A(CFSTR_FILECONTENTS);
+        return(cfFileContents != 0);
+}
+
+
+/**************************************************************************
+* interface implementation
+*/
 static HRESULT WINAPI IDataObject_GetData (LPDATAOBJECT this, LPFORMATETC32 pformatetcIn, STGMEDIUM32 *pmedium)
-{	FIXME (shell, "(%p)->()\n", this);
-	return E_NOTIMPL;
+{	char	temp[256];
+	UINT32	cItems;
+	DWORD	size, size1, size2;
+	LPITEMIDLIST pidl;
+	LPCIDA pcida;
+	HGLOBAL32 hmem;
+	
+	GetClipboardFormatName32A (pformatetcIn->cfFormat, temp, 256);
+	FIXME (shell, "(%p)->(%p %p format=%s)\n", this, pformatetcIn, pmedium, temp);
+
+	if (!DATAOBJECT_InitShellIDList())	/* is the clipformat registred? */
+        { return(E_UNEXPECTED);
+        }
+	
+        if (pformatetcIn->cfFormat == cfShellIDList)
+        { if (pformatetcIn->ptd==NULL 
+		&& (pformatetcIn->dwAspect & DVASPECT_CONTENT) 
+		&& pformatetcIn->lindex==-1
+		&& (pformatetcIn->tymed&TYMED_HGLOBAL))
+	  { cItems = this->lpill->lpvtbl->fnGetCount(this->lpill);
+	    if (cItems < 1)
+	    { return(E_UNEXPECTED);
+	    }
+	    pidl = this->lpill->lpvtbl->fnGetElement(this->lpill, 0);
+	    pdump(pidl);
+	    
+	    /*hack*/
+	    cItems = 2;
+	    size = sizeof(CIDA) + sizeof (UINT32)*(cItems-1);
+	    size1 = ILGetSize (this->pidl);
+	    size2 = ILGetSize (pidl);
+	    hmem = GlobalAlloc32(GMEM_FIXED, size+size1+size2);
+	    pcida = GlobalLock32 (hmem);
+	    if (!pcida)
+	    { return(E_OUTOFMEMORY);
+	    }
+
+	    pcida->cidl = 1;
+	    pcida->aoffset[0] = size;
+	    pcida->aoffset[1] = size+size1;
+
+	    TRACE(shell,"-- %lu %lu %lu\n",size, size1, size2 );
+	    TRACE(shell,"-- %p %p\n",this->pidl, pidl);
+	    TRACE(shell,"-- %p %p %p\n",pcida, (void*)pcida+size,(void*)pcida+size+size1);
+	    
+	    memcpy ((void*)pcida+size, this->pidl, size1);
+	    memcpy ((void*)pcida+size+size1, pidl, size2);
+	    TRACE(shell,"-- after copy\n");
+
+	    GlobalUnlock32(hmem);
+	    
+	    pmedium->tymed = TYMED_HGLOBAL;
+	    pmedium->u.hGlobal = (HGLOBAL32)pcida;
+	    pmedium->pUnkForRelease = NULL;
+	    TRACE(shell,"-- ready\n");
+	    return(NOERROR);
+	  }
+	}
+	FIXME (shell, "-- clipformat not implemented\n");
+	return (E_INVALIDARG);
 }
 static HRESULT WINAPI IDataObject_GetDataHere(LPDATAOBJECT this, LPFORMATETC32 pformatetc, STGMEDIUM32 *pmedium)
 {	FIXME (shell, "(%p)->()\n", this);
