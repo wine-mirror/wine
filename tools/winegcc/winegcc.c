@@ -203,7 +203,7 @@ int main(int argc, char **argv)
 		    argv[j] = 0;
 		    break;
 		case 'l':
-		    strarray_add(gcc_argv, strcmp(argv[j], "-luuid") ? argv[j] : "-lwine_uuid"); 
+		    strarray_add(gcc_argv, argv[j]);
 		    argv[j] = 0;
 		    break;
 		default:
