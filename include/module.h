@@ -195,6 +195,7 @@ extern void MODULE_WalkModref( DWORD id );
 extern NE_MODULE *NE_GetPtr( HMODULE16 hModule );
 extern void NE_DumpModule( HMODULE16 hModule );
 extern void NE_WalkModules(void);
+extern void NE_InitResourceHandler( NE_MODULE *pModule );
 extern void NE_RegisterModule( NE_MODULE *pModule );
 extern WORD NE_GetOrdinal( HMODULE16 hModule, const char *name );
 extern FARPROC16 WINAPI NE_GetEntryPoint( HMODULE16 hModule, WORD ordinal );
@@ -205,13 +206,6 @@ extern DWORD NE_StartTask(void);
 
 /* loader/ne/resource.c */
 extern HGLOBAL16 WINAPI NE_DefResourceHandler(HGLOBAL16,HMODULE16,HRSRC16);
-extern BOOL NE_InitResourceHandler( HMODULE16 hModule );
-extern HRSRC NE_FindResource( NE_MODULE *pModule, LPCSTR name, LPCSTR type );
-extern DWORD NE_SizeofResource( NE_MODULE *pModule, HRSRC hRsrc );
-extern HGLOBAL16 NE_LoadResource( NE_MODULE *pModule, HRSRC16 hRsrc );
-extern BOOL16 NE_FreeResource( NE_MODULE *pModule, HGLOBAL16 handle );
-extern NE_TYPEINFO *NE_FindTypeSection( LPBYTE pResTab, NE_TYPEINFO *pTypeInfo, LPCSTR typeId );
-extern NE_NAMEINFO *NE_FindResourceFromType( LPBYTE pResTab, NE_TYPEINFO *pTypeInfo, LPCSTR resId );
 
 /* loader/ne/segment.c */
 extern BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum );
@@ -222,14 +216,9 @@ extern HINSTANCE16 NE_GetInstance( NE_MODULE *pModule );
 extern void NE_InitializeDLLs( HMODULE16 hModule );
 extern void NE_DllProcessAttach( HMODULE16 hModule );
 
-/* loader/ne/convert.c */
-HGLOBAL16 NE_LoadPEResource( NE_MODULE *pModule, WORD type, LPVOID bits, DWORD size );
-
 /* loader/pe_resource.c */
 extern HRSRC PE_FindResourceW(HMODULE,LPCWSTR,LPCWSTR);
 extern HRSRC PE_FindResourceExW(HMODULE,LPCWSTR,LPCWSTR,WORD);
-extern DWORD PE_SizeofResource(HRSRC);
-extern HGLOBAL PE_LoadResource(HMODULE,HRSRC);
 
 /* loader/pe_image.c */
 extern NTSTATUS PE_LoadLibraryExA(LPCSTR, DWORD, WINE_MODREF**);

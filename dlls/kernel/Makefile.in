@@ -32,6 +32,8 @@ C_SRCS = \
 	kernel_main.c \
 	lcformat.c \
 	locale.c \
+	resource.c \
+	resource16.c \
 	stress.c \
 	string.c \
 	sync.c \

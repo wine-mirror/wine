@@ -117,7 +117,7 @@ static HMODULE16 BUILTIN_DoLoadModule16( const BUILTIN16_DESCRIPTOR *descr )
         LocalInit16( GlobalHandleToSel16(pSegTable->hSeg),
 		pSegTable->minsize, minsize );
 
-    if (descr->rsrc) NE_InitResourceHandler(hModule);
+    if (descr->rsrc) NE_InitResourceHandler(pModule);
 
     NE_RegisterModule( pModule );
 

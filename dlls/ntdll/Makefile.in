@@ -22,11 +22,8 @@ C_SRCS = \
 	$(TOPOBJDIR)/loader/module.c \
 	$(TOPOBJDIR)/loader/pe_image.c \
 	$(TOPOBJDIR)/loader/pe_resource.c \
-	$(TOPOBJDIR)/loader/resource.c \
 	$(TOPOBJDIR)/loader/task.c \
-	$(TOPOBJDIR)/loader/ne/convert.c \
 	$(TOPOBJDIR)/loader/ne/module.c \
-	$(TOPOBJDIR)/loader/ne/resource.c \
 	$(TOPOBJDIR)/loader/ne/segment.c \
 	$(TOPOBJDIR)/memory/atom.c \
 	$(TOPOBJDIR)/memory/codepage.c \

@@ -259,6 +259,29 @@ void NE_RegisterModule( NE_MODULE *pModule )
 
 
 /***********************************************************************
+ *           NE_InitResourceHandler
+ *
+ * Fill in 'resloader' fields in the resource table.
+ */
+void NE_InitResourceHandler( NE_MODULE *pModule )
+{
+    static FARPROC16 proc;
+
+    NE_TYPEINFO *pTypeInfo = (NE_TYPEINFO *)((char *)pModule + pModule->res_table + 2);
+
+    TRACE("InitResourceHandler[%04x]\n", pModule->self );
+
+    if (!proc) proc = GetProcAddress16( GetModuleHandle16("KERNEL"), "DefResourceHandler" );
+
+    while(pTypeInfo->type_id)
+    {
+        memcpy_unaligned( &pTypeInfo->resloader, &proc, sizeof(FARPROC16) );
+        pTypeInfo = (NE_TYPEINFO *)((char*)(pTypeInfo + 1) + pTypeInfo->count * sizeof(NE_NAMEINFO));
+    }
+}
+
+
+/***********************************************************************
  *           NE_GetOrdinal
  *
  * Lookup the ordinal for a given name.
@@ -591,7 +614,7 @@ static HMODULE16 NE_LoadExeHeader( HANDLE handle, LPCSTR path )
                   pData ))
             return (HMODULE16)11;  /* invalid exe */
         pData += ne_header.ne_restab - ne_header.ne_rsrctab;
-	NE_InitResourceHandler( hModule );
+        NE_InitResourceHandler( pModule );
     }
     else pModule->res_table = 0;  /* No resource table */
 
