@@ -603,7 +603,7 @@ typedef struct
 #define MWT_IDENTITY      1
 #define MWT_LEFTMULTIPLY  2
 #define MWT_RIGHTMULTIPLY 3
-#define MWT_MIN           MWT_INDENTITY
+#define MWT_MIN           MWT_IDENTITY
 #define MWT_MAX           MWT_RIGHTMULTIPLY      
 
 /* Object Definitions for EnumObjects() */
