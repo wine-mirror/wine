@@ -1276,9 +1276,9 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     if (!wndPtr) return FALSE;
     hwnd = wndPtr->hwndSelf;  /* make it a full handle */
 
-    TRACE("hwnd=%p, cmd=%d\n", hwnd, cmd);
-
     wasVisible = (wndPtr->dwStyle & WS_VISIBLE) != 0;
+
+    TRACE("hwnd=%p, cmd=%d, wasVisible %d\n", hwnd, cmd, wasVisible);
 
     switch(cmd)
     {
@@ -1313,6 +1313,8 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
             swp |= SWP_NOACTIVATE | SWP_NOZORDER;
             /* fall through */
 	case SW_SHOW:
+            if (wasVisible) goto END;
+
 	    swp |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
 
 	    /*
