@@ -195,8 +195,10 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE2A iface)
 	TRACE("(this=%p)\n",This);
 
 	if (This->acquired == 1) {
+#if 0
 	  /* Restore the original configuration */
 	  USER_Driver.pSetKeyboardConfig(&(This->initial_config), 0xFFFFFFFF);
+#endif
 	  This->acquired = 0;
 	} else {
 	  ERR("Unacquiring a not-acquired device !!!\n");
