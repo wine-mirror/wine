@@ -35,9 +35,11 @@ static STRING str;
 
 /* Function ptrs for ntdll calls */
 static HMODULE hntdll = 0;
+static NTSTATUS (WINAPI *pRtlAppendUnicodeStringToString)(UNICODE_STRING *, const UNICODE_STRING *);
 static NTSTATUS (WINAPI *pRtlCharToInteger)(char *, ULONG, int *);
 static VOID     (WINAPI *pRtlCopyString)(STRING *, const STRING *);
 static BOOLEAN  (WINAPI *pRtlCreateUnicodeString)(PUNICODE_STRING, LPCWSTR);
+static NTSTATUS (WINAPI *pRtlDowncaseUnicodeString)(UNICODE_STRING *, const UNICODE_STRING *, BOOLEAN);
 static BOOLEAN  (WINAPI *pRtlEqualUnicodeString)(const UNICODE_STRING *, const UNICODE_STRING *, BOOLEAN);
 static VOID     (WINAPI *pRtlFreeAnsiString)(PSTRING);
 static VOID     (WINAPI *pRtlInitAnsiString)(PSTRING, LPCSTR);
@@ -91,9 +93,11 @@ static void InitFunctionPtrs(void)
     hntdll = LoadLibraryA("ntdll.dll");
     ok(hntdll != 0, "LoadLibrary failed");
     if (hntdll) {
+	pRtlAppendUnicodeStringToString = (void *)GetProcAddress(hntdll, "RtlAppendUnicodeStringToString");
 	pRtlCharToInteger = (void *)GetProcAddress(hntdll, "RtlCharToInteger");
 	pRtlCopyString = (void *)GetProcAddress(hntdll, "RtlCopyString");
 	pRtlCreateUnicodeString = (void *)GetProcAddress(hntdll, "RtlCreateUnicodeString");
+	pRtlDowncaseUnicodeString = (void *)GetProcAddress(hntdll, "RtlDowncaseUnicodeString");
 	pRtlEqualUnicodeString = (void *)GetProcAddress(hntdll, "RtlEqualUnicodeString");
 	pRtlFreeAnsiString = (void *)GetProcAddress(hntdll, "RtlFreeAnsiString");
 	pRtlInitAnsiString = (void *)GetProcAddress(hntdll, "RtlInitAnsiString");
@@ -305,6 +309,190 @@ static void test_RtlUpcaseUnicodeString(void)
 }
 
 
+static void test_RtlDowncaseUnicodeString(void)
+{
+    int i;
+    WCHAR ch;
+    WCHAR lower_ch;
+    WCHAR source_buf[1025];
+    WCHAR result_buf[1025];
+    WCHAR lower_buf[1025];
+    UNICODE_STRING source_str;
+    UNICODE_STRING result_str;
+    UNICODE_STRING lower_str;
+
+    for (i = 0; i <= 1024; i++) {
+	ch = (WCHAR) i;
+	if (ch >= 'A' && ch <= 'Z') {
+	    lower_ch = ch - 'A' + 'a';
+	} else if (ch >= 0xc0 && ch <= 0xde && ch != 0xd7) {
+	    lower_ch = ch + 0x20;
+	} else if (ch >= 0x391 && ch <= 0x3ab && ch != 0x3a2) {
+	    lower_ch = ch + 0x20;
+	} else {
+	    switch (ch) {
+		case 0x178: lower_ch = 0xff; break;
+		case 0x181: lower_ch = 0x253; break;
+		case 0x186: lower_ch = 0x254; break;
+		case 0x189: lower_ch = 0x256; break;
+		case 0x18a: lower_ch = 0x257; break;
+		case 0x18e: lower_ch = 0x1dd; break;
+		case 0x18f: lower_ch = 0x259; break;
+		case 0x190: lower_ch = 0x25b; break;
+		case 0x193: lower_ch = 0x260; break;
+		case 0x194: lower_ch = 0x263; break;
+		case 0x196: lower_ch = 0x269; break;
+		case 0x197: lower_ch = 0x268; break;
+		case 0x19c: lower_ch = 0x26f; break;
+		case 0x19d: lower_ch = 0x272; break;
+		case 0x19f: lower_ch = 0x275; break;
+		case 0x1a9: lower_ch = 0x283; break;
+		case 0x1ae: lower_ch = 0x288; break;
+		case 0x1b1: lower_ch = 0x28a; break;
+		case 0x1b2: lower_ch = 0x28b; break;
+		case 0x1b7: lower_ch = 0x292; break;
+		case 0x1c4: lower_ch = 0x1c6; break;
+		case 0x1c7: lower_ch = 0x1c9; break;
+		case 0x1ca: lower_ch = 0x1cc; break;
+		case 0x1f1: lower_ch = 0x1f3; break;
+		case 0x386: lower_ch = 0x3ac; break;
+		case 0x388: lower_ch = 0x3ad; break;
+		case 0x389: lower_ch = 0x3ae; break;
+		case 0x38a: lower_ch = 0x3af; break;
+		case 0x38c: lower_ch = 0x3cc; break;
+		case 0x38e: lower_ch = 0x3cd; break;
+		case 0x38f: lower_ch = 0x3ce; break;
+		case 0x400: lower_ch = 0x0; break;
+		default: lower_ch = ch; break;
+	    } /* switch */
+	} /* if */
+	source_buf[i] = ch;
+	result_buf[i] = '\0';
+	lower_buf[i] = lower_ch;
+    } /* for */
+    source_buf[i] = '\0';
+    result_buf[i] = '\0';
+    lower_buf[i] = '\0';
+    source_str.Length = 2048;
+    source_str.MaximumLength = 2048;
+    source_str.Buffer = source_buf;
+    result_str.Length = 2048;
+    result_str.MaximumLength = 2048;
+    result_str.Buffer = result_buf;
+    lower_str.Length = 2048;
+    lower_str.MaximumLength = 2048;
+    lower_str.Buffer = lower_buf;
+
+    pRtlDowncaseUnicodeString(&result_str, &source_str, 0);
+    for (i = 0; i <= 1024; i++) {
+	ok(result_str.Buffer[i] == lower_str.Buffer[i] || result_str.Buffer[i] == source_str.Buffer[i] + 1,
+	   "RtlDowncaseUnicodeString works wrong: '%c'[=0x%x] is converted to '%c'[=0x%x], expected: '%c'[=0x%x]",
+	   source_str.Buffer[i], source_str.Buffer[i],
+	   result_str.Buffer[i], result_str.Buffer[i],
+	   lower_str.Buffer[i], lower_str.Buffer[i]);
+    } /* for */
+}
+
+
+static void test_RtlAppendUnicodeStringToString(void)
+{
+    CHAR dest_buf[257];
+    CHAR src_buf[257];
+    UNICODE_STRING dest_str;
+    UNICODE_STRING src_str;
+    NTSTATUS result;
+
+    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
+    strcpy(src_buf, "nicodeStringZYXWVUTS");
+    dest_str.Length = 12;
+    dest_str.MaximumLength = 26;
+    dest_str.Buffer = (WCHAR *) dest_buf;
+    src_str.Length = 12;
+    src_str.MaximumLength = 12;
+    src_str.Buffer = (WCHAR *) src_buf;
+    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
+    ok(result == STATUS_SUCCESS,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
+       result);
+    ok(memcmp(dest_buf, "ThisisafakeUnicodeString\0\0efghij", 32) == 0,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
+       dest_buf);
+
+    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
+    dest_str.Length = 12;
+    dest_str.MaximumLength = 25;
+    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
+    ok(result == STATUS_SUCCESS,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
+       result);
+    ok(memcmp(dest_buf, "ThisisafakeUnicodeString\0\0efghij", 32) == 0,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
+       dest_buf);
+
+    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
+    dest_str.Length = 12;
+    dest_str.MaximumLength = 24;
+    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
+    ok(result == STATUS_SUCCESS,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
+       result);
+    ok(memcmp(dest_buf, "ThisisafakeUnicodeStringcdefghij", 32) == 0,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
+       dest_buf);
+
+    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
+    dest_str.Length = 12;
+    dest_str.MaximumLength = 23;
+    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
+    ok(result == STATUS_BUFFER_TOO_SMALL,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
+       result);
+    ok(memcmp(dest_buf, "ThisisafakeU0123456789abcdefghij", 32) == 0,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
+       dest_buf);
+
+    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
+    dest_str.Length = 12;
+    dest_str.MaximumLength = 0;
+    src_str.Length = 0;
+    src_str.MaximumLength = 0;
+    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
+    ok(result == STATUS_SUCCESS,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
+       result);
+    ok(memcmp(dest_buf, "ThisisafakeU0123456789abcdefghij", 32) == 0,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
+       dest_buf);
+
+    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
+    dest_str.Length = 12;
+    dest_str.MaximumLength = 22;
+    src_str.Length = 0;
+    src_str.MaximumLength = 0;
+    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
+    ok(result == STATUS_SUCCESS,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
+       result);
+    ok(memcmp(dest_buf, "ThisisafakeU0123456789abcdefghij", 32) == 0,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
+       dest_buf);
+
+    strcpy(dest_buf, "ThisisafakeU0123456789abcdefghij");
+    dest_str.Length = 12;
+    dest_str.MaximumLength = 22;
+    src_str.Length = 0;
+    src_str.MaximumLength = 0;
+    src_str.Buffer = NULL;
+    result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
+    ok(result == STATUS_SUCCESS,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has result %lx",
+       result);
+    ok(memcmp(dest_buf, "ThisisafakeU0123456789abcdefghij", 32) == 0,
+       "call failed: RtlAppendUnicodeStringToString(dest, src) has dest \"%s\"",
+       dest_buf);
+}
+
+
 typedef struct {
     int base;
     char *str;
@@ -321,6 +509,14 @@ static const str2int_t str2int[] = {
     { 0, "-+214",                 0, STATUS_SUCCESS},
     { 0, "++214",                 0, STATUS_SUCCESS},
     { 0, "+-214",                 0, STATUS_SUCCESS},
+    { 0, "\001\002\003\00411",   11, STATUS_SUCCESS}, /* whitespace char  1 to  4 */
+    { 0, "\005\006\007\01012",   12, STATUS_SUCCESS}, /* whitespace char  5 to  8 */
+    { 0, "\011\012\013\01413",   13, STATUS_SUCCESS}, /* whitespace char  9 to 12 */
+    { 0, "\015\016\017\02014",   14, STATUS_SUCCESS}, /* whitespace char 13 to 16 */
+    { 0, "\021\022\023\02415",   15, STATUS_SUCCESS}, /* whitespace char 17 to 20 */
+    { 0, "\025\026\027\03016",   16, STATUS_SUCCESS}, /* whitespace char 21 to 24 */
+    { 0, "\031\032\033\03417",   17, STATUS_SUCCESS}, /* whitespace char 25 to 28 */
+    { 0, "\035\036\037\04018",   18, STATUS_SUCCESS}, /* whitespace char 29 to 32 */
     { 0, " \n \r \t214",        214, STATUS_SUCCESS},
     { 0, " \n \r \t+214",       214, STATUS_SUCCESS}, /* Signs can be used after whitespace */
     { 0, " \n \r \t-214",      -214, STATUS_SUCCESS},
@@ -772,9 +968,11 @@ START_TEST(rtlstr)
 	test_RtlIntegerToChar();
 	test_RtlUpperChar();
 	test_RtlUpperString();
+	test_RtlAppendUnicodeStringToString();
     } /* if */
 	/*
 	 * test_RtlUpcaseUnicodeChar();
 	 * test_RtlUpcaseUnicodeString();
+	 * test_RtlDowncaseUnicodeString();
 	 */
 }

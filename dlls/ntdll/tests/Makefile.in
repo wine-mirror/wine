@@ -9,6 +9,7 @@ CTESTS = \
 	error.c \
 	generated.c \
 	large_int.c \
+	rtl.c \
 	rtlbitmap.c \
 	rtlstr.c \
 	string.c
