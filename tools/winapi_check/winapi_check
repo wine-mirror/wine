@@ -496,7 +496,7 @@ foreach my $file (@c_files) {
 
 		if($check_protection && $header) {
 		    if((-e "$wine_dir/include/$header" || -e "$wine_dir/$file_dir/$header")) {
-			if($header !~ /^ctype.h$/) {
+			if($header !~ /^(oleauto\.h|win(?:base|def|error|gdi|nls|nt|user)\.h)$/) {
 			    $output->write("$file: #include \<$header\> is a local include\n");
 			}
 		    }

@@ -156,7 +156,7 @@ sub new {
     }
 
     foreach my $spec_file (@spec_files) {
-	if(!$spec_file_found{$spec_file}) {
+	if(!$spec_file_found{$spec_file} && $spec_file !~ m%tests/[^/]+$%) {
 	    $output->write("modules.dat: $spec_file: exists but is not specified\n");
 	}
     }

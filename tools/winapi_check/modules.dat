@@ -65,19 +65,21 @@ dlls/dsound
 
 graphics
 
-% dlls/gdi/gdi.spec
+% dlls/gdi/gdi.exe.spec
 
 dlls/gdi
-graphics/metafiledrv
-graphics/win16drv
+dlls/gdi/enhmfdrv
+dlls/gdi/mfdrv
+dlls/gdi/win16drv
 graphics
 objects
 
 % dlls/gdi/gdi32.spec
 
 dlls/gdi
-graphics/enhmetafiledrv
-graphics/metafiledrv
+dlls/gdi/enhmfdrv
+dlls/gdi/mfdrv
+dlls/gdi/win16drv
 graphics
 objects
 
@@ -105,7 +107,7 @@ dlls/imm32
 
 % dlls/kernel/comm.spec
 
-% dlls/kernel/kernel.spec
+% dlls/kernel/krnl386.exe.spec
 
 dlls/kernel
 files
@@ -201,6 +203,10 @@ dlls/msacm
 % dlls/msacm/msacm32.spec
 
 dlls/msacm
+
+% dlls/msacm/imaadp32/imaadp32.acm.spec
+
+dlls/msacm/imaadp32
 
 % dlls/msacm/msg711/msg711.drv.spec
 
@@ -395,7 +401,7 @@ dlls/user
 
 dlls/url
 
-% dlls/user/user.spec
+% dlls/user/user.exe.spec
 
 controls
 dlls/user

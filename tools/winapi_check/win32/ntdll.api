@@ -32,6 +32,10 @@ UINT
 ULONG
 WCHAR
 
+%long --extension
+
+handle_t
+
 %long # --forbidden
 
 int
@@ -114,6 +118,8 @@ WCHAR ***
 char *
 char ***
 enum __WINE_DEBUG_CLASS
+enum fd_type *
+int *
 va_list
 
 %str
