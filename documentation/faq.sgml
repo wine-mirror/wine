@@ -485,19 +485,26 @@
       </question>
       <answer>
         <para>
-          Some people are working on getting Wine code to compile on Windows.
+          Some people are working on getting Wine code to compile on Windows
+          using one of the following projects as a basis:
         </para>
         <itemizedlist spacing="compact">
           <listitem> 
             <para>
-              Cygwin (<ulink url="http:/www.cygwin.com">
-              http://www.cygwin.com/</ulink>)
+              Cygwin
+              (<ulink url="http:/www.cygwin.com/">http://www.cygwin.com</>)
             </para>
           </listitem>
           <listitem>
             <para>
-              Reactos (<ulink url="http://www.reactos.com/">
-             http://www.reactos.com/</ulink>)
+              MinGW
+              (<ulink url="http:/www.mingw.org/">http://www.mingw.org</>)
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              ReactOS
+              (<ulink url="http://www.reactos.com/">http://www.reactos.com</>)
             </para>
           </listitem>
         </itemizedlist>
@@ -505,9 +512,21 @@
           There's some progress, so a Wine version that's usable on Windows
           might be available at some time.
         </para>
+        <para>
+          Part of the rationale for these projects is to find out areas where
+          Wine portability is lacking. This is especially true of the
+          ReactOS project which is a reimplementation of the Windows kernel
+          and should thus be able to reuse most of Wine dlls.
+        </para>
+        <para>
+          Another reason for pursuing these projects is to be able to
+          replace a single Windows dll with its Wine counterpart. Besides
+          being a good test for the Wine dll, this lets us detect cases where
+          we made incorrect assumptions about how the dlls interact.
+        </para>
       </answer>
       </qandaentry>
-  
+
     </qandadiv>
     <qandadiv id="What-do-I-need-in-order-to-use-Wine">
       <title>What do I need in order to use Wine?</title>
