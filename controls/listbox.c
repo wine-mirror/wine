@@ -3056,24 +3056,30 @@ static LRESULT WINAPI ComboLBWndProc_common( HWND hwnd, UINT msg,
                                              WPARAM wParam, LPARAM lParam, BOOL unicode )
 {
     LRESULT lRet = 0;
-    LB_DESCR *descr = (LB_DESCR *)GetWindowLongA( hwnd, 0 );
+    LB_DESCR *descr;
+    LPHEADCOMBO lphc;
+
+    if (!(descr = (LB_DESCR *)GetWindowLongA( hwnd, 0 )))
+    {
+        if (msg == WM_CREATE)
+        {
+            CREATESTRUCTA *lpcs = (CREATESTRUCTA *)lParam;
+            TRACE_(combo)("\tpassed parent handle = %p\n",lpcs->lpCreateParams);
+            lphc = (LPHEADCOMBO)(lpcs->lpCreateParams);
+            return LISTBOX_Create( hwnd, lphc );
+        }
+        /* Ignore all other messages before we get a WM_CREATE */
+        return unicode ? DefWindowProcW( hwnd, msg, wParam, lParam ) :
+                         DefWindowProcA( hwnd, msg, wParam, lParam );
+    }
 
     TRACE_(combo)("[%04x]: msg %s wp %08x lp %08lx\n",
                   hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam );
 
-    if( descr || msg == WM_CREATE )
+    if ((lphc = descr->lphc) != NULL)
     {
-        LPHEADCOMBO lphc = (descr) ? descr->lphc : NULL;
-
         switch( msg )
         {
-        case WM_CREATE:
-            {
-                CREATESTRUCTA *lpcs = (CREATESTRUCTA *)lParam;
-                TRACE_(combo)("\tpassed parent handle = %p\n",lpcs->lpCreateParams);
-                lphc = (LPHEADCOMBO)(lpcs->lpCreateParams);
-                return LISTBOX_Create( hwnd, lphc );
-            }
         case WM_MOUSEMOVE:
             if ( (TWEAK_WineLook > WIN31_LOOK) &&
                  (CB_GETTYPE(lphc) != CBS_SIMPLE) )
@@ -3111,14 +3117,9 @@ static LRESULT WINAPI ComboLBWndProc_common( HWND hwnd, UINT msg,
                 return 0;
 
             }
-            else
-            {
-                /*
-                 * If we are in Win3.1 look, go with the default behavior.
-                 */
-                return unicode ? ListBoxWndProcW( hwnd, msg, wParam, lParam ) :
-                    ListBoxWndProcA( hwnd, msg, wParam, lParam );
-            }
+            /* else we are in Win3.1 look, go with the default behavior. */
+            break;
+
         case WM_LBUTTONUP:
             if (TWEAK_WineLook > WIN31_LOOK)
             {
@@ -3180,15 +3181,13 @@ static LRESULT WINAPI ComboLBWndProc_common( HWND hwnd, UINT msg,
         case WM_NCDESTROY:
             if( CB_GETTYPE(lphc) != CBS_SIMPLE )
                 lphc->hWndLBox = 0;
-            /* fall through */
-
-        default:
-            return unicode ? ListBoxWndProcW( hwnd, msg, wParam, lParam ) :
-                ListBoxWndProcA( hwnd, msg, wParam, lParam );
+            break;
         }
     }
-    lRet = unicode ? DefWindowProcW( hwnd, msg, wParam, lParam ) :
-        DefWindowProcA( hwnd, msg, wParam, lParam );
+
+    /* default handling: call listbox wnd proc */
+    lRet = unicode ? ListBoxWndProcW( hwnd, msg, wParam, lParam ) :
+                     ListBoxWndProcA( hwnd, msg, wParam, lParam );
 
     TRACE_(combo)("\t default on msg [%04x]\n", (UINT16)msg );
 
