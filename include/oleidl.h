@@ -30,11 +30,11 @@
 #error DO NOT INCLUDE DIRECTLY
 #endif
 
+#include "objbase.h"
 #include "wine/obj_inplace.h"
 #include "wine/obj_cache.h"
 #include "wine/obj_oleobj.h"
 #include "wine/obj_oleview.h"
-#include "wine/obj_errorinfo.h"
 #include "wine/obj_dragdrop.h"
 
 #endif /* __WINE_OLEIDL_H */
