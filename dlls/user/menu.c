@@ -633,7 +633,7 @@ static void MENU_FreeItemData( MENUITEM* item )
  * not work for child windows and therefore should not be called for
  * an arbitrary system menu.
  */
-static MENUITEM *MENU_FindItemByCoords( POPUPMENU *menu,
+static MENUITEM *MENU_FindItemByCoords( const POPUPMENU *menu,
 					POINT pt, UINT *pos )
 {
     MENUITEM *item;
@@ -4500,15 +4500,14 @@ DWORD WINAPI GetMenuContextHelpId( HMENU hMenu )
 /**********************************************************************
  *         MenuItemFromPoint    (USER32.@)
  */
-UINT WINAPI MenuItemFromPoint(HWND hWnd, HMENU hMenu, POINT ptScreen)
+INT WINAPI MenuItemFromPoint(HWND hWnd, HMENU hMenu, POINT ptScreen)
 {
     POPUPMENU *menu = MENU_GetMenu(hMenu);
     UINT pos;
-    MENUITEM *item;
 
     /*FIXME: Do we have to handle hWnd here? */
-    item = MENU_FindItemByCoords(menu, ptScreen, &pos);
-
+    if (!menu) return -1;
+    if (!MENU_FindItemByCoords(menu, ptScreen, &pos)) return -1;
     return pos;
 }
 

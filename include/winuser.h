@@ -4336,7 +4336,7 @@ UINT        WINAPI MapVirtualKeyExW(UINT,UINT,HKL);
 #define     MapVirtualKeyEx WINELIB_NAME_AW(MapVirtualKeyEx)
 BOOL        WINAPI MapDialogRect(HWND,LPRECT);
 INT         WINAPI MapWindowPoints(HWND,HWND,LPPOINT,UINT);
-UINT        WINAPI MenuItemFromPoint(HWND,HMENU,POINT);
+INT         WINAPI MenuItemFromPoint(HWND,HMENU,POINT);
 BOOL        WINAPI MessageBeep(UINT);
 INT         WINAPI MessageBoxA(HWND,LPCSTR,LPCSTR,UINT);
 INT         WINAPI MessageBoxW(HWND,LPCWSTR,LPCWSTR,UINT);
