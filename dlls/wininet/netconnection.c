@@ -224,7 +224,7 @@ BOOL NETCON_create(WININET_NETCONNECTION *connection, int domain,
  */
 BOOL NETCON_close(WININET_NETCONNECTION *connection)
 {
-    if (!NETCON_connected) return FALSE;
+    if (!NETCON_connected(connection)) return FALSE;
     if (!connection->useSSL)
     {
         int result;
@@ -255,13 +255,17 @@ BOOL NETCON_close(WININET_NETCONNECTION *connection)
 BOOL NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *serv_addr,
 		    socklen_t addrlen)
 {
-    if (!NETCON_connected) return FALSE;
+    if (!NETCON_connected(connection)) return FALSE;
     if (!connection->useSSL)
     {
 	int result;
 	result = connect(connection->socketFD, serv_addr, addrlen);
 	if (result == -1)
+        {
+            close(connection->socketFD);
+            connection->socketFD = -1;
 	    return FALSE;
+        }
         return TRUE;
     }
     else
@@ -297,7 +301,7 @@ BOOL NETCON_connect(WININET_NETCONNECTION *connection, const struct sockaddr *se
 BOOL NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len, int flags,
 		int *sent /* out */)
 {
-    if (!NETCON_connected) return FALSE;
+    if (!NETCON_connected(connection)) return FALSE;
     if (!connection->useSSL)
     {
 	*sent = send(connection->socketFD, msg, len, flags);
@@ -328,7 +332,7 @@ BOOL NETCON_send(WININET_NETCONNECTION *connection, const void *msg, size_t len,
 BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int flags,
 		int *recvd /* out */)
 {
-    if (!NETCON_connected) return FALSE;
+    if (!NETCON_connected(connection)) return FALSE;
     if (!connection->useSSL)
     {
 	*recvd = recv(connection->socketFD, buf, len, flags);
