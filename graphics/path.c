@@ -1465,6 +1465,11 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 {
     INT i;
     POINT ptLastMove = {0,0};
+    POINT ptViewportOrg, ptWindowOrg;
+    SIZE szViewportExt, szWindowExt;
+    DWORD mapMode, graphicsMode;
+    XFORM xform;
+    BOOL ret = TRUE;
 
     if(dc->funcs->pStrokePath)
         return dc->funcs->pStrokePath(dc);
@@ -1472,10 +1477,20 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
     if(pPath->state != PATH_Closed)
         return FALSE;
 
-    SaveDC(dc->hSelf);
+    /* Save the mapping mode info */
+    mapMode=GetMapMode(dc->hSelf);
+    GetViewportExtEx(dc->hSelf, &szViewportExt);
+    GetViewportOrgEx(dc->hSelf, &ptViewportOrg);
+    GetWindowExtEx(dc->hSelf, &szWindowExt);
+    GetWindowOrgEx(dc->hSelf, &ptWindowOrg);
+    GetWorldTransform(dc->hSelf, &xform);
+      
+    /* Set MM_TEXT */
     SetMapMode(dc->hSelf, MM_TEXT);
     SetViewportOrgEx(dc->hSelf, 0, 0, NULL);
     SetWindowOrgEx(dc->hSelf, 0, 0, NULL);
+
+
     for(i = 0; i < pPath->numEntriesUsed; i++) {
         switch(pPath->pFlags[i]) {
 	case PT_MOVETO:
@@ -1495,20 +1510,36 @@ static BOOL PATH_StrokePath(DC *dc, GdiPath *pPath)
 	    if(pPath->pFlags[i+1] != PT_BEZIERTO || 
 	       (pPath->pFlags[i+2] & ~PT_CLOSEFIGURE) != PT_BEZIERTO) {
 	        ERR("Path didn't contain 3 successive PT_BEZIERTOs\n");
-		return FALSE;
+		ret = FALSE;
+		goto end;
 	    }
 	    PolyBezierTo(dc->hSelf, &pPath->pPoints[i], 3);
 	    i += 2;
 	    break;
 	default:
 	    ERR("Got path flag %d\n", (INT)pPath->pFlags[i]);
-	    return FALSE;
+	    ret = FALSE;
+	    goto end;
 	}
 	if(pPath->pFlags[i] & PT_CLOSEFIGURE)
 	    LineTo(dc->hSelf, ptLastMove.x, ptLastMove.y);
     }
-    RestoreDC(dc->hSelf , -1);
-    return TRUE;
+
+ end:
+
+    /* Restore the old mapping mode */
+    SetMapMode(dc->hSelf, mapMode);
+    SetViewportExtEx(dc->hSelf, szViewportExt.cx, szViewportExt.cy, NULL);
+    SetViewportOrgEx(dc->hSelf, ptViewportOrg.x, ptViewportOrg.y, NULL);
+    SetWindowExtEx(dc->hSelf, szWindowExt.cx, szWindowExt.cy, NULL);
+    SetWindowOrgEx(dc->hSelf, ptWindowOrg.x, ptWindowOrg.y, NULL);
+
+    /* Go to GM_ADVANCED temporarily to restore the world transform */
+    graphicsMode=GetGraphicsMode(dc->hSelf);
+    SetGraphicsMode(dc->hSelf, GM_ADVANCED);
+    SetWorldTransform(dc->hSelf, &xform);
+    SetGraphicsMode(dc->hSelf, graphicsMode);
+    return ret;
 }
 
 
