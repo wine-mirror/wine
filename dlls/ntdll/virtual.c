@@ -1542,3 +1542,66 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
     if (!msync( addr, *size_ptr, MS_SYNC )) return STATUS_SUCCESS;
     return STATUS_NOT_MAPPED_DATA;
 }
+
+
+/***********************************************************************
+ *             NtReadVirtualMemory   (NTDLL.@)
+ *             ZwReadVirtualMemory   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtReadVirtualMemory( HANDLE process, const void *addr, void *buffer,
+                                     SIZE_T size, SIZE_T *bytes_read )
+{
+    NTSTATUS status;
+
+    SERVER_START_REQ( read_process_memory )
+    {
+        req->handle = process;
+        req->addr   = (void *)addr;
+        wine_server_set_reply( req, buffer, size );
+        if ((status = wine_server_call( req ))) size = 0;
+    }
+    SERVER_END_REQ;
+    if (bytes_read) *bytes_read = size;
+    return status;
+}
+
+
+/***********************************************************************
+ *             NtWriteVirtualMemory   (NTDLL.@)
+ *             ZwWriteVirtualMemory   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtWriteVirtualMemory( HANDLE process, void *addr, const void *buffer,
+                                      SIZE_T size, SIZE_T *bytes_written )
+{
+    static const unsigned int zero;
+    unsigned int first_offset, last_offset, first_mask, last_mask;
+    NTSTATUS status;
+
+    if (!size) return STATUS_INVALID_PARAMETER;
+
+    /* compute the mask for the first int */
+    first_mask = ~0;
+    first_offset = (unsigned int)addr % sizeof(int);
+    memset( &first_mask, 0, first_offset );
+
+    /* compute the mask for the last int */
+    last_offset = (size + first_offset) % sizeof(int);
+    last_mask = 0;
+    memset( &last_mask, 0xff, last_offset ? last_offset : sizeof(int) );
+
+    SERVER_START_REQ( write_process_memory )
+    {
+        req->handle     = process;
+        req->addr       = (char *)addr - first_offset;
+        req->first_mask = first_mask;
+        req->last_mask  = last_mask;
+        if (first_offset) wine_server_add_data( req, &zero, first_offset );
+        wine_server_add_data( req, buffer, size );
+        if (last_offset) wine_server_add_data( req, &zero, sizeof(int) - last_offset );
+
+        if ((status = wine_server_call( req ))) size = 0;
+    }
+    SERVER_END_REQ;
+    if (bytes_written) *bytes_written = size;
+    return status;
+}

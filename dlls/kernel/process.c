@@ -405,18 +405,9 @@ BOOL WINAPI SetProcessPriorityBoost(HANDLE hprocess,BOOL disableboost)
 BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, SIZE_T size,
                                SIZE_T *bytes_read )
 {
-    DWORD res;
-
-    SERVER_START_REQ( read_process_memory )
-    {
-        req->handle = process;
-        req->addr   = (void *)addr;
-        wine_server_set_reply( req, buffer, size );
-        if ((res = wine_server_call_err( req ))) size = 0;
-    }
-    SERVER_END_REQ;
-    if (bytes_read) *bytes_read = size;
-    return !res;
+    NTSTATUS status = NtReadVirtualMemory( process, addr, buffer, size, bytes_read );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 
@@ -426,46 +417,9 @@ BOOL WINAPI ReadProcessMemory( HANDLE process, LPCVOID addr, LPVOID buffer, SIZE
 BOOL WINAPI WriteProcessMemory( HANDLE process, LPVOID addr, LPCVOID buffer, SIZE_T size,
                                 SIZE_T *bytes_written )
 {
-    static const int zero;
-    unsigned int first_offset, last_offset, first_mask, last_mask;
-    DWORD res;
-
-    if (!size)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
-    /* compute the mask for the first int */
-    first_mask = ~0;
-    first_offset = (unsigned int)addr % sizeof(int);
-    memset( &first_mask, 0, first_offset );
-
-    /* compute the mask for the last int */
-    last_offset = (size + first_offset) % sizeof(int);
-    last_mask = 0;
-    memset( &last_mask, 0xff, last_offset ? last_offset : sizeof(int) );
-
-    SERVER_START_REQ( write_process_memory )
-    {
-        req->handle     = process;
-        req->addr       = (char *)addr - first_offset;
-        req->first_mask = first_mask;
-        req->last_mask  = last_mask;
-        if (first_offset) wine_server_add_data( req, &zero, first_offset );
-        wine_server_add_data( req, buffer, size );
-        if (last_offset) wine_server_add_data( req, &zero, sizeof(int) - last_offset );
-
-        if ((res = wine_server_call_err( req ))) size = 0;
-    }
-    SERVER_END_REQ;
-    if (bytes_written) *bytes_written = size;
-    {
-        char dummy[32];
-        SIZE_T read;
-        ReadProcessMemory( process, addr, dummy, sizeof(dummy), &read );
-    }
-    return !res;
+    NTSTATUS status = NtWriteVirtualMemory( process, addr, buffer, size, bytes_written );
+    if (status) SetLastError( RtlNtStatusToDosError(status) );
+    return !status;
 }
 
 

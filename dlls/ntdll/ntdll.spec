@@ -186,7 +186,7 @@
 @ stub NtRaiseHardError
 @ stdcall NtReadFile(long long long long long long long long long)
 @ stub NtReadRequestData
-@ stub NtReadVirtualMemory
+@ stdcall NtReadVirtualMemory(long ptr ptr long ptr)
 @ stub NtRegisterNewDevice
 @ stdcall NtRegisterThreadTerminatePort(ptr)
 @ stub NtReleaseMutant
@@ -257,7 +257,7 @@
 @ stub NtWaitLowEventPair
 @ stdcall NtWriteFile(long long ptr ptr ptr ptr long ptr ptr)
 @ stub NtWriteRequestData
-@ stub NtWriteVirtualMemory
+@ stdcall NtWriteVirtualMemory(long ptr ptr long ptr)
 @ stub PfxFindPrefix
 @ stub PfxInitialize
 @ stub PfxInsertPrefix
@@ -717,7 +717,7 @@
 @ stub ZwRaiseHardError
 @ stdcall ZwReadFile(long long long long long long long long long) NtReadFile
 @ stub ZwReadRequestData
-@ stub ZwReadVirtualMemory
+@ stdcall ZwReadVirtualMemory(long ptr ptr long ptr) NtReadVirtualMemory
 @ stub ZwRegisterNewDevice
 @ stdcall ZwRegisterThreadTerminatePort(ptr) NtRegisterThreadTerminatePort
 @ stub ZwReleaseMutant
@@ -786,7 +786,7 @@
 @ stub ZwWaitLowEventPair
 @ stdcall ZwWriteFile(long long ptr ptr ptr ptr long ptr ptr) NtWriteFile
 @ stub ZwWriteRequestData
-@ stub ZwWriteVirtualMemory
+@ stdcall ZwWriteVirtualMemory(long ptr ptr long ptr) NtWriteVirtualMemory
 @ cdecl _CIpow() NTDLL__CIpow
 @ stub __eCommonExceptions
 @ stub __eEmulatorInit
