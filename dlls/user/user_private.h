@@ -99,7 +99,6 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pCreateWindow)(HWND,CREATESTRUCTA*,BOOL);
     BOOL   (*pDestroyWindow)(HWND);
     BOOL   (*pGetDC)(HWND,HDC,HRGN,DWORD);
-    void   (*pForceWindowRaise)(HWND);
     DWORD  (*pMsgWaitForMultipleObjectsEx)(DWORD,const HANDLE*,DWORD,DWORD,DWORD);
     void   (*pReleaseDC)(HWND,HDC);
     BOOL   (*pScrollDC)(HDC, INT, INT, const RECT *, const RECT *, HRGN, LPRECT);

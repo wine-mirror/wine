@@ -90,7 +90,6 @@
 @ cdecl EmptyClipboard(long) X11DRV_EmptyClipboard
 @ cdecl EndClipboardUpdate() X11DRV_EndClipboardUpdate
 @ cdecl EnumClipboardFormats(long) X11DRV_EnumClipboardFormats
-@ cdecl ForceWindowRaise(long) X11DRV_ForceWindowRaise
 @ cdecl GetClipboardData(long ptr ptr) X11DRV_GetClipboardData
 @ cdecl GetClipboardFormatName(long str long) X11DRV_GetClipboardFormatName
 @ cdecl GetDC(long long long long) X11DRV_GetDC
