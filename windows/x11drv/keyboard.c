@@ -1624,33 +1624,6 @@ INT X11DRV_ToUnicode(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 }
 
 /***********************************************************************
- *		GetBeepActive (X11DRV.@)
- */
-BOOL X11DRV_GetBeepActive(void)
-{
-  XKeyboardState  keyboard_state;
-
-  TSXGetKeyboardControl(display, &keyboard_state);
-
-  return keyboard_state.bell_percent != 0;
-}
-
-/***********************************************************************
- *		SetBeepActive (X11DRV.@)
- */
-void X11DRV_SetBeepActive(BOOL bActivate)
-{
-  XKeyboardControl keyboard_value;
-  
-  if(bActivate)
-    keyboard_value.bell_percent = -1;
-  else
-    keyboard_value.bell_percent = 0;
-  
-  TSXChangeKeyboardControl(display, KBBellPercent, &keyboard_value);
-}
-
-/***********************************************************************
  *		Beep (X11DRV.@)
  */
 void X11DRV_Beep(void)

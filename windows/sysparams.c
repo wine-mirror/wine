@@ -23,6 +23,8 @@
 
 DEFAULT_DEBUG_CHANNEL(system);
 
+static BOOL beep_active = TRUE;
+
 /***********************************************************************
  *		GetTimerResolution (USER.14)
  */
@@ -137,10 +139,10 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
     switch (uiAction)
     {
     case SPI_GETBEEP:				/*      1 */
-	*(BOOL *)pvParam = KEYBOARD_GetBeepActive();
+	*(BOOL *)pvParam = beep_active;
         break;
     case SPI_SETBEEP:				/*      2 */
-	KEYBOARD_SetBeepActive( uiParam );
+	beep_active = uiParam;
 	break;
 
     WINE_SPI_FIXME(SPI_GETMOUSE);		/*      3 */

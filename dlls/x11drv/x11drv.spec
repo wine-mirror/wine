@@ -17,8 +17,6 @@ debug_channels (bitblt bitmap clipboard cursor dinput event font gdi graphics
 @ cdecl MapVirtualKey(long long) X11DRV_MapVirtualKey
 @ cdecl GetKeyNameText(long str long) X11DRV_GetKeyNameText
 @ cdecl ToUnicode(long long ptr ptr long long) X11DRV_ToUnicode
-@ cdecl GetBeepActive() X11DRV_GetBeepActive
-@ cdecl SetBeepActive(long) X11DRV_SetBeepActive
 @ cdecl Beep() X11DRV_Beep
 @ cdecl GetDIState(long ptr) X11DRV_GetDIState
 @ cdecl GetDIData(ptr long ptr ptr long) X11DRV_GetDIData

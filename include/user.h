@@ -46,8 +46,6 @@ typedef struct tagUSER_DRIVER {
     UINT16 (*pMapVirtualKey)(UINT16, UINT16);
     INT16  (*pGetKeyNameText)(LONG, LPSTR, INT16);
     INT    (*pToUnicode)(UINT, UINT, LPBYTE, LPWSTR, int, UINT);
-    BOOL   (*pGetBeepActive)(void);
-    void   (*pSetBeepActive)(BOOL);
     void   (*pBeep)(void);
     BOOL   (*pGetDIState)(DWORD, LPVOID);
     BOOL   (*pGetDIData)(BYTE *, DWORD, struct DIDEVICEOBJECTDATA *, LPDWORD, DWORD);

@@ -17,8 +17,6 @@ debug_channels (ttydrv)
 @ cdecl MapVirtualKey(long long) TTYDRV_MapVirtualKey
 @ cdecl GetKeyNameText(long str long) TTYDRV_GetKeyNameText
 @ cdecl ToUnicode(long long ptr ptr long long) TTYDRV_ToUnicode
-@ cdecl GetBeepActive() TTYDRV_GetBeepActive
-@ cdecl SetBeepActive(long) TTYDRV_SetBeepActive
 @ cdecl Beep() TTYDRV_Beep
 @ cdecl GetDIState(long ptr) TTYDRV_GetDIState
 @ cdecl GetDIData(ptr long ptr ptr long) TTYDRV_GetDIData

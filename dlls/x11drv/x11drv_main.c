@@ -43,7 +43,6 @@ static int *ph_errno = &h_errno;
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
 
-static XKeyboardState keyboard_state;
 static void (*old_tsx11_lock)(void);
 static void (*old_tsx11_unlock)(void);
 
@@ -420,9 +419,6 @@ static void process_attach(void)
         ExitProcess(1);
     }
 
-    /* save keyboard setup */
-    TSXGetKeyboardControl(display, &keyboard_state);
-
     /* initialize event handling */
     X11DRV_EVENT_Init();
 
@@ -449,18 +445,6 @@ static void process_attach(void)
  */
 static void process_detach(void)
 {
-    /* restore keyboard setup */
-    XKeyboardControl keyboard_value;
-  
-    keyboard_value.key_click_percent = keyboard_state.key_click_percent;
-    keyboard_value.bell_percent      = keyboard_state.bell_percent;
-    keyboard_value.bell_pitch        = keyboard_state.bell_pitch;
-    keyboard_value.bell_duration     = keyboard_state.bell_duration;
-    keyboard_value.auto_repeat_mode  = keyboard_state.global_auto_repeat;
-
-    TSXChangeKeyboardControl(display, KBKeyClickPercent | KBBellPercent |
-                             KBBellPitch | KBBellDuration | KBAutoRepeatMode, &keyboard_value);
-
 #ifdef HAVE_OPENGL
     /* cleanup GLX */
     /*X11DRV_GLX_Cleanup();*/

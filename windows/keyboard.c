@@ -259,22 +259,6 @@ INT16 WINAPI ToAscii16(UINT16 virtKey,UINT16 scanCode, LPBYTE lpKeyState,
 }
 
 /***********************************************************************
- *		KEYBOARD_GetBeepActive
- */
-BOOL KEYBOARD_GetBeepActive()
-{
-    return USER_Driver.pGetBeepActive();
-}
-
-/***********************************************************************
- *		KEYBOARD_SetBeepActive
- */
-void KEYBOARD_SetBeepActive(BOOL bActivate)
-{
-    USER_Driver.pSetBeepActive(bActivate);
-}
-
-/***********************************************************************
  *		MessageBeep (USER.104)
  */
 void WINAPI MessageBeep16( UINT16 i )
@@ -287,6 +271,8 @@ void WINAPI MessageBeep16( UINT16 i )
  */
 BOOL WINAPI MessageBeep( UINT i )
 {
-    USER_Driver.pBeep();
+    BOOL active = TRUE;
+    SystemParametersInfoA( SPI_GETBEEP, 0, &active, FALSE );
+    if (active) USER_Driver.pBeep();
     return TRUE;
 }

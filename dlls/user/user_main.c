@@ -64,8 +64,6 @@ static BOOL load_driver(void)
     GET_USER_FUNC(MapVirtualKey);
     GET_USER_FUNC(GetKeyNameText);
     GET_USER_FUNC(ToUnicode);
-    GET_USER_FUNC(GetBeepActive);
-    GET_USER_FUNC(SetBeepActive);
     GET_USER_FUNC(Beep);
     GET_USER_FUNC(GetDIState);
     GET_USER_FUNC(GetDIData);

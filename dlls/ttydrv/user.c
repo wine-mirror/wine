@@ -64,21 +64,6 @@ INT TTYDRV_ToUnicode( UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 }
 
 /***********************************************************************
- *		TTYDRV_GetBeepActive
- */
-BOOL TTYDRV_GetBeepActive(void)
-{
-  return FALSE;
-}
-
-/***********************************************************************
- *		TTYDRV_SetBeepActive
- */
-void TTYDRV_SetBeepActive(BOOL bActivate)
-{
-}
-
-/***********************************************************************
  *		TTYDRV_Beep
  */
 void TTYDRV_Beep(void)
