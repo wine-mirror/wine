@@ -55,8 +55,11 @@ static inline int is_string( DWORD type )
  * 'len' is the total length of the data
  * 'count' is the size of the user-specified buffer
  * and is updated to reflect the length copied
+ *
+ * if the type is REG_SZ and data is not 0-terminated and there is enough space in the
+ * buffer nt appends a \0
  */
-static DWORD copy_data( void *data, const void *src, DWORD len, DWORD *count )
+static DWORD copy_data( void *data, const void *src, DWORD len, DWORD *count, DWORD type )
 {
     DWORD ret = ERROR_SUCCESS;
     if (data)
@@ -64,7 +67,12 @@ static DWORD copy_data( void *data, const void *src, DWORD len, DWORD *count )
         if (*count < len) ret = ERROR_MORE_DATA;
         else memcpy( data, src, len );
     }
-    if (count) *count = len;
+    if (count) 
+    {
+        if (is_string( type ) && len && (len < *count) && ((WCHAR *)data)[len-1])
+            ((WCHAR *)data)[len] = 0;
+        *count = len;
+    }
     return ret;
 }
 
@@ -79,7 +87,11 @@ static DWORD copy_data_WtoA( void *data, const void *src, DWORD len, DWORD *coun
         if (data)
         {
             if (*count < len) ret = ERROR_MORE_DATA;
-            else memcpyWtoA( data, src, len );
+            else if (len)
+            {
+                memcpyWtoA( data, src, len );
+                if ((len < *count) && ((char*)data)[len-1]) ((char *)data)[len] = 0;
+            }
         }
     }
     else if (data)
@@ -131,7 +143,7 @@ static inline DWORD copy_nameAtoW( LPWSTR dest, LPCSTR name )
  *    dispos     [O] Receives REG_CREATED_NEW_KEY or REG_OPENED_EXISTING_KEY
  *
  * NOTES
- *  in case of failing remains retkey untouched
+ *  in case of failing retkey remains untouched
  */
 DWORD WINAPI RegCreateKeyExW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR class,
                               DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa, 
@@ -746,7 +758,7 @@ DWORD WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDWOR
     if ((ret = server_call_noerr( REQ_GET_KEY_VALUE )) == ERROR_SUCCESS)
     {
         if (type) *type = req->type;
-        ret = copy_data( data, req->data, req->len, count );
+        ret = copy_data( data, req->data, req->len, count, req->type );
     }
     return ret;
 }
@@ -870,7 +882,7 @@ DWORD WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_co
     *val_count = len - 1;
 
     if (type) *type = req->type;
-    return copy_data( data, req->data, req->len, count );
+    return copy_data( data, req->data, req->len, count, req->type );
 }
 
 
