@@ -977,8 +977,18 @@ BOOL WINAPI CryptEnumProvidersA (DWORD dwIndex, DWORD *pdwReserved,
 	if (!pszProvName)
 	{
 		DWORD numkeys;
+		char *provName;
+		
 		RegQueryInfoKeyA(hKey, NULL, NULL, NULL, &numkeys, pcbProvName, NULL, NULL, NULL, NULL, NULL, NULL);
+		
+		if (!(provName = CRYPT_Alloc(*pcbProvName)))
+			CRYPT_ReturnLastError(ERROR_NOT_ENOUGH_MEMORY);
+				
+		RegEnumKeyExA(hKey, dwIndex, provName, pcbProvName, NULL, NULL, NULL, NULL);
 		(*pcbProvName)++;
+		
+		CRYPT_Free(provName);
+		
 		if (dwIndex >= numkeys)
 			CRYPT_ReturnLastError(ERROR_NO_MORE_ITEMS);
 	} else {
