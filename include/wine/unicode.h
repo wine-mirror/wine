@@ -8,6 +8,7 @@
 #define __WINE_UNICODE_H
 
 #include "windef.h"
+#include "winnls.h"
 
 /* code page info common to SBCS and DBCS */
 struct cp_info
@@ -79,6 +80,61 @@ static inline unsigned short get_char_typeW( WCHAR ch )
 {
     extern const unsigned short wctype_table[];
     return wctype_table[wctype_table[ch >> 8] + (ch & 0xff)];
+}
+
+inline static int iscntrlW( WCHAR wc )
+{
+    return get_char_typeW(wc) & C1_CNTRL;
+}
+
+inline static int ispunctW( WCHAR wc )
+{
+    return get_char_typeW(wc) & C1_PUNCT;
+}
+
+inline static int isspaceW( WCHAR wc )
+{
+    return get_char_typeW(wc) & C1_SPACE;
+}
+
+inline static int isdigitW( WCHAR wc )
+{
+    return get_char_typeW(wc) & C1_DIGIT;
+}
+
+inline static int isxdigitW( WCHAR wc )
+{
+    return get_char_typeW(wc) & C1_XDIGIT;
+}
+
+inline static int islowerW( WCHAR wc )
+{
+    return get_char_typeW(wc) & C1_LOWER;
+}
+
+inline static int isupperW( WCHAR wc )
+{
+    return get_char_typeW(wc) & C1_UPPER;
+}
+
+inline static int isalnumW( WCHAR wc )
+{
+    return get_char_typeW(wc) & (C1_ALPHA|C1_DIGIT|C1_LOWER|C1_UPPER);
+}
+
+inline static int isalphaW( WCHAR wc )
+{
+    return get_char_typeW(wc) & (C1_ALPHA|C1_LOWER|C1_UPPER);
+}
+
+inline static int isgraphW( WCHAR wc )
+{
+    return get_char_typeW(wc) & (C1_ALPHA|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
+}
+
+inline static int isprintW( WCHAR wc )
+{
+    return get_char_typeW(wc) & (C1_ALPHA|C1_BLANK|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
 }
 
 /* some useful string manipulation routines */

@@ -268,7 +268,7 @@ INT MSVCRT_wctomb( char *dst, WCHAR ch )
  */
 INT MSVCRT_iswalnum( WCHAR wc )
 {
-  return get_char_typeW(wc) & (C1_ALPHA|C1_DIGIT|C1_LOWER|C1_UPPER);
+    return isalnumW( wc );
 }
 
 /*********************************************************************
@@ -276,7 +276,7 @@ INT MSVCRT_iswalnum( WCHAR wc )
  */
 INT MSVCRT_iswalpha( WCHAR wc )
 {
-  return get_char_typeW(wc) & (C1_ALPHA|C1_LOWER|C1_UPPER);
+    return isalphaW( wc );
 }
 
 /*********************************************************************
@@ -284,7 +284,7 @@ INT MSVCRT_iswalpha( WCHAR wc )
  */
 INT MSVCRT_iswcntrl( WCHAR wc )
 {
-  return get_char_typeW(wc) & C1_CNTRL;
+    return iscntrlW( wc );
 }
 
 /*********************************************************************
@@ -292,7 +292,7 @@ INT MSVCRT_iswcntrl( WCHAR wc )
  */
 INT MSVCRT_iswdigit( WCHAR wc )
 {
-  return get_char_typeW(wc) & C1_DIGIT;
+    return isdigitW( wc );
 }
 
 /*********************************************************************
@@ -300,7 +300,7 @@ INT MSVCRT_iswdigit( WCHAR wc )
  */
 INT MSVCRT_iswgraph( WCHAR wc )
 {
-  return get_char_typeW(wc) & (C1_ALPHA|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
+    return isgraphW( wc );
 }
 
 /*********************************************************************
@@ -308,7 +308,7 @@ INT MSVCRT_iswgraph( WCHAR wc )
  */
 INT MSVCRT_iswlower( WCHAR wc )
 {
-  return get_char_typeW(wc) & C1_LOWER;
+    return islowerW( wc );
 }
 
 /*********************************************************************
@@ -316,7 +316,7 @@ INT MSVCRT_iswlower( WCHAR wc )
  */
 INT MSVCRT_iswprint( WCHAR wc )
 {
-  return get_char_typeW(wc) & (C1_ALPHA|C1_BLANK|C1_PUNCT|C1_DIGIT|C1_LOWER|C1_UPPER);
+    return isprintW( wc );
 }
 
 /*********************************************************************
@@ -324,7 +324,7 @@ INT MSVCRT_iswprint( WCHAR wc )
  */
 INT MSVCRT_iswpunct( WCHAR wc )
 {
-  return get_char_typeW(wc) & C1_PUNCT;
+    return ispunctW( wc );
 }
 
 /*********************************************************************
@@ -332,7 +332,7 @@ INT MSVCRT_iswpunct( WCHAR wc )
  */
 INT MSVCRT_iswspace( WCHAR wc )
 {
-  return get_char_typeW(wc) & C1_SPACE;
+    return isspaceW( wc );
 }
 
 /*********************************************************************
@@ -340,7 +340,7 @@ INT MSVCRT_iswspace( WCHAR wc )
  */
 INT MSVCRT_iswupper( WCHAR wc )
 {
-  return get_char_typeW(wc) & C1_UPPER;
+    return isupperW( wc );
 }
 
 /*********************************************************************
@@ -348,7 +348,7 @@ INT MSVCRT_iswupper( WCHAR wc )
  */
 INT MSVCRT_iswxdigit( WCHAR wc )
 {
-  return get_char_typeW(wc) & C1_XDIGIT;
+    return isxdigitW( wc );
 }
 
 /*********************************************************************

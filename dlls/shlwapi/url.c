@@ -88,7 +88,7 @@ static BOOL URL_NeedEscapeA(CHAR ch, DWORD dwFlags)
 static BOOL URL_NeedEscapeW(WCHAR ch, DWORD dwFlags)
 {
 
-    if (iswalnum(ch))
+    if (isalnumW(ch))
         return FALSE;
 
     if(dwFlags & URL_ESCAPE_SPACES_ONLY) {
@@ -136,7 +136,7 @@ static BOOL URL_JustLocation(LPCWSTR str)
     if (*str) {
 	while (*str && ((*str == L'-') ||
 			(*str == L'.') ||
-			iswalnum(*str))) str++;
+			isalnumW(*str))) str++;
 	if (*str == L'/') return FALSE;
     }
     return TRUE;
@@ -233,9 +233,9 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 	while (*wk1) {
 	    switch (state) {
 	    case 0:
-		if (!iswalnum(*wk1)) {state = 3; break;}
+		if (!isalnumW(*wk1)) {state = 3; break;}
 		*wk2++ = *wk1++;
-		if (!iswalnum(*wk1)) {state = 3; break;}
+		if (!isalnumW(*wk1)) {state = 3; break;}
 		*wk2++ = *wk1++;
 		state = 1;
 		break;
@@ -256,8 +256,8 @@ HRESULT WINAPI UrlCanonicalizeW(LPCWSTR pszUrl, LPWSTR pszCanonicalized,
 		wk2 += strlenW(wk2);
 		break;
 	    case 4:
-		if (!iswalnum(*wk1) && (*wk1 != L'-')) {state = 3; break;}
-		while(iswalnum(*wk1) || (*wk1 == L'-')) *wk2++ = *wk1++;
+		if (!isalnumW(*wk1) && (*wk1 != L'-')) {state = 3; break;}
+		while(isalnumW(*wk1) || (*wk1 == L'-')) *wk2++ = *wk1++;
 		state = 5;
 		break;
 	    case 5:
@@ -946,7 +946,7 @@ HRESULT WINAPI UrlUnescapeW(
 	   (*src == L'#' || *src == L'?')) {
 	    stop_unescapping = TRUE;
 	    next = *src;
-	} else if(*src == L'%' && iswxdigit(*(src + 1)) && iswxdigit(*(src + 2))
+	} else if(*src == L'%' && isxdigitW(*(src + 1)) && isxdigitW(*(src + 2))
 		  && stop_unescapping == FALSE) {
 	    INT ih;
 	    WCHAR buf[3];
