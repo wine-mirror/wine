@@ -46,18 +46,6 @@ typedef struct ITypeLib2 ITypeLib2,*LPTYPELIB2;
 DEFINE_OLEGUID(IID_ITypeInfo2,      0x00020412,0,0);
 typedef struct ITypeInfo2 ITypeInfo2,*LPTYPEINFO2;
 
-DEFINE_GUID(IID_IErrorInfo,         0x1CF2B120,0x547D,0x101B,0x8E,0x65,
-        0x08,0x00, 0x2B,0x2B,0xD1,0x19);
-typedef struct IErrorInfo IErrorInfo,*LPERRORINFO;
-
-DEFINE_GUID(IID_ICreateErrorInfo,   0x22F03340,0x547D,0x101B,0x8E,0x65,
-        0x08,0x00, 0x2B,0x2B,0xD1,0x19);
-typedef struct ICreateErrorInfo ICreateErrorInfo,*LPCREATEERRORINFO;
-
-DEFINE_GUID(IID_ISupportErrorInfo,  0xDF0B3D60,0x547D,0x101B,0x8E,0x65,
-        0x08,0x00, 0x2B,0x2B,0xD1,0x19);
-typedef struct ISupportErrorInfo ISupportErrorInfo,*LPSUPPORTERRORINFO;
-
 /*****************************************************************************
  * Automation data types
  */

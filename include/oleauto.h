@@ -3,6 +3,8 @@
 
 #include "wtypes.h"
 #include "wine/obj_oleaut.h"
+#include "wine/obj_errorinfo.h"
+
 #ifndef __WINE__
 #include "oaidl.h"
 #endif

@@ -107,7 +107,7 @@ typedef struct _TEB
     DWORD        pad8[3];                    /* --n f10 */
     PVOID        ReservedForNtRpc;           /* -2- f1c used by rpcrt4 */
     DWORD        pad9[24];                   /* --n f20 */
-    PVOID        ReservedForOle;             /* -2- f80 used by ole32 (IErrorInfo*) */
+    PVOID	 ErrorInfo;                  /* -2- f80 used by ole32 (IErrorInfo*) */
 } TEB;
 
 /* Thread exception flags */
