@@ -219,7 +219,7 @@ static inline BOOL UXTHEME_StretchBlt(HDC hdcDst, int nXOriginDst, int nYOriginD
                                       BOOL transparent, COLORREF transcolor)
 {
     if(transparent) {
-        /* Ensure we dont pass any negative values to TransparentBlt */
+        /* Ensure we don't pass any negative values to TransparentBlt */
         return TransparentBlt(hdcDst, nXOriginDst, nYOriginDst, abs(nWidthDst), abs(nHeightDst),
                               hdcSrc, nXOriginSrc, nYOriginSrc, abs(nWidthSrc), abs(nHeightSrc),
                               transcolor);

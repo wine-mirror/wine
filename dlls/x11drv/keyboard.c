@@ -1558,7 +1558,7 @@ HKL X11DRV_GetKeyboardLayout(DWORD dwThreadid)
     /* 
      * Microsoft Office expects this value to be something specific
      * for Japanese and Korean Windows with an IME the value is 0xe001
-     * We should probibly check to see if an IME exists and if so then
+     * We should probably check to see if an IME exists and if so then
      * set this word properly.
      */
     langid = PRIMARYLANGID(LANGIDFROMLCID(layout));

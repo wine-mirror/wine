@@ -1,8 +1,8 @@
 /*
  * RSABASE - RSA encryption for Wine
  *
- * Copyright 2004 Mike McCormack for Codeweavers
- * Copyright 2002 Transgaming Technologies
+ * Copyright 2004 Mike McCormack for CodeWeavers
+ * Copyright 2002 TransGaming Technologies
  *
  * David Hammerton
  *

@@ -974,7 +974,7 @@ BOOL WINAPI ImmIsIME(HKL hKL)
   FIXME("(%p): semi-stub\n", hKL);
   /*
    * Dead key locales will return TRUE here when they should not
-   * There is probibly a more proper way to check this.
+   * There is probably a more proper way to check this.
    */
   return (root_context != NULL);
 }
