@@ -130,6 +130,58 @@
       </qandaentry>
 
       <qandaentry>
+      <question id="Integrate-an-x86-emulator">
+        <para>When will Wine integrate an x86 CPU emulator so we can
+          run Windows applications on non-x86 machines?</para>
+      </question>
+      <answer>
+        <para>
+          The short answer is 'probably never'. Remember, Wine Is Not a
+          (CPU) Emulator. The long answer is that we probably don't want or
+          need to integrate one in the traditional sense.
+        </para>
+        <para>
+          Integrating a CPU emulator in Wine would be extremely hard,
+          due to the large number of Windows APIs and the complex
+          datatypes they exchange. It is not uncommon for a Windows API to
+          take three or more pointers to structures composed of many fields,
+          including pointers to other complex structures. For each of these
+          we would need a conversion routine to deal with the byte order and
+          alignment issues. Furthermore, Windows also contains many callback
+          mechanisms that constitute as many extra places where we would have
+          to handle these conversion issues. Wine already has to deal with
+          16 vs. 32 bit APIs and Ansi vs. Unicode APIs which both
+          introduce significant complexity. Adding support for a CPU emulator
+          inside Wine would introduce at least double that complexity and
+          only serve to slow down the development of Wine.
+        </para>
+        <para>
+          Fortunately another solution exists to run Windows applications
+          on non-x86 platforms: run both Wine and the application inside the
+          CPU emulator. As long as the emulator provides a standard Unix
+          environment, Wine should only need minimal modifications. What
+          performance you loose due to Wine running inside the emulator
+          rather than natively, you gain in complexity inside of Wine.
+          Furthermore, if the emulator is fast enough to run Windows
+          applications, Photoshop for instance, then it should be fast enough
+          to run that same Windows application plus Wine.
+        </para>
+        <para>
+          Two projects have started along those lines: <ulink
+          url="http://fabrice.bellard.free.fr/qemu/">QEMU</>, an
+          open-source project, and <ulink
+          url="http://www.transitives.com/tech_overview.htm">Dynamite</>,
+          a commercial CPU emulator environment from
+          <ulink url="http://www.transitives.com/">Transitives Technologies</>
+          which has been <ulink
+          url="http://www.transgaming.com/news.php?newsid=37">paired
+          with Wine</>.
+        </para>
+
+      </answer>
+      </qandaentry>
+
+      <qandaentry>
       <question id="Why-would-anyone-want-Wine-Windows-suck">
         <para>Why would anyone want Wine? Doesn't Windows suck?</para>
       </question>
