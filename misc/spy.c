@@ -508,15 +508,41 @@ static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
           NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
     "WM_COALESCE_LAST", 
+    
+    /* 0x03a0 */
+    "MM_JOY1MOVE", 
+    "MM_JOY2MOVE", 
+    "MM_JOY1ZMOVE", 
+    "MM_JOY2ZMOVE", 
+                            NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    /* 0x03b0 */
+    NULL, NULL, NULL, NULL, NULL, 
+    "MM_JOY1BUTTONDOWN", 
+    "MM_JOY2BUTTONDOWN", 
+    "MM_JOY1BUTTONUP",
+    "MM_JOY2BUTTONUP",
+    "MM_MCINOTIFY",
+                NULL, 
+    "MM_WOM_OPEN",
+    "MM_WOM_CLOSE",
+    "MM_WOM_DONE",
+    "MM_WIM_OPEN",
+    "MM_WIM_CLOSE",
 
     /* 0x03c0 */
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    "MM_WIM_DATA",
+    "MM_MIM_OPEN",
+    "MM_MIM_CLOSE",
+    "MM_MIM_DATA",
+    "MM_MIM_LONGDATA",
+    "MM_MIM_ERROR",
+    "MM_MIM_LONGERROR",
+    "MM_MOM_OPEN",
+    "MM_MOM_CLOSE",
+    "MM_MOM_DONE",
+                NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 
@@ -666,7 +692,7 @@ void SPY_ExitMessage( INT32 iFlag, HWND32 hWnd, UINT32 msg, LRESULT lReturn )
 int SPY_Init(void)
 {
     int i;
-    char buffer[512];
+    char buffer[1024];
 
     PROFILE_GetWineIniString( "Spy", "Include", "", buffer, sizeof(buffer) );
     if (buffer[0] && strcmp( buffer, "INCLUDEALL" ))

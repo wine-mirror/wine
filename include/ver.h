@@ -83,7 +83,7 @@
 	/* output (returned) */
 #define	VFF_CURNEDEST		0x0001
 #define	VFF_FILEINUSE		0x0002
-#define	VFF_BUFFTOSMALL		0x0003
+#define	VFF_BUFFTOOSMALL	0x0004
 
 /* VerInstallFile Flags */
 	/* input */

@@ -87,15 +87,39 @@ static DWORD WAVE_NotifyClient(UINT16 wDevID, WORD wMsg,
 {
 	dprintf_mciwave(stddeb,"WAVE_NotifyClient // wDevID = %04X wMsg = %d dwParm1 = %04lX dwParam2 = %04lX\n",wDevID, wMsg, dwParam1, dwParam2);
 
-	if (wDevID > MAX_WAVOUTDRV) return MCIERR_INTERNAL;
+	switch (wMsg) {
+	case WOM_OPEN:
+	case WOM_CLOSE:
+	case WOM_DONE:
+	  if (wDevID > MAX_WAVOUTDRV) return MCIERR_INTERNAL;
+	  
+	  if (WOutDev[wDevID].wFlags != DCB_NULL && !DriverCallback(
+		WOutDev[wDevID].waveDesc.dwCallBack, 
+		WOutDev[wDevID].wFlags, 
+		WOutDev[wDevID].waveDesc.hWave, 
+                wMsg, 
+		WOutDev[wDevID].waveDesc.dwInstance, 
+                dwParam1, 
+                dwParam2)) {
+	    dprintf_mciwave(stddeb,"WAVE_NotifyClient // can't notify client !\n");
+	    return MMSYSERR_NOERROR;
+	  }
+	  break;
 
-	if (WInDev[wDevID].wFlags != DCB_NULL && !DriverCallback(
+	case WIM_OPEN:
+	case WIM_CLOSE:
+	case WIM_DATA:
+	  if (wDevID > MAX_WAVINDRV) return MCIERR_INTERNAL;
+	  
+	  if (WInDev[wDevID].wFlags != DCB_NULL && !DriverCallback(
 		WInDev[wDevID].waveDesc.dwCallBack, WInDev[wDevID].wFlags, 
 		WInDev[wDevID].waveDesc.hWave, wMsg, 
 		WInDev[wDevID].waveDesc.dwInstance, dwParam1, dwParam2)) {
-		dprintf_mciwave(stddeb,"WAVE_NotifyClient // can't notify client !\n");
-		return MMSYSERR_NOERROR;
-		}
+	    dprintf_mciwave(stddeb,"WAVE_NotifyClient // can't notify client !\n");
+	    return MMSYSERR_NOERROR;
+	  }
+	  break;
+	}
         return 0;
 }
 
@@ -139,7 +163,7 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lp
 		lpstrElementName = (LPSTR)PTR_SEG_TO_LIN(lpParms->lpstrElementName);
 		dprintf_mciwave(stddeb,"WAVE_mciOpen // MCI_OPEN_ELEMENT '%s' !\n",
 						lpstrElementName);
-		if (strlen(lpstrElementName) > 0) {
+		if ( lpstrElementName && (strlen(lpstrElementName) > 0)) {
 			strcpy(str, lpstrElementName);
 			CharUpper32A(str);
 			MCIWavDev[wDevID].hFile = mmioOpen(str, NULL, 
@@ -156,7 +180,9 @@ static DWORD WAVE_mciOpen(UINT16 wDevID, DWORD dwFlags, LPMCI_WAVE_OPEN_PARMS lp
 	memcpy(&MCIWavDev[wDevID].openParms, lpParms, sizeof(MCI_WAVE_OPEN_PARMS));
 	MCIWavDev[wDevID].wNotifyDeviceID = lpParms->wDeviceID;
 	lpWaveFormat = &MCIWavDev[wDevID].WaveFormat;
+
 	hDesc = USER_HEAP_ALLOC(sizeof(WAVEOPENDESC));
+	if (hDesc == 0) return MCIERR_INTERNAL;   /* is this right ? */
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hDesc);
 	lpDesc->hWave = 0;
 /*
@@ -240,8 +266,8 @@ static DWORD WAVE_mciCue(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpPar
    MCI_WAVE_INPUT flag. No explicit check on MCI_WAVE_OUTPUT is done since that
    is the default.
 
-   The flags MCI_NOTIFY (and the callback parameter in lpParms) and MCI_WAIT are
-   ignored
+   The flags MCI_NOTIFY (and the callback parameter in lpParms) and MCI_WAIT
+   are ignored
 */
 
         DWORD          dwRet;
@@ -484,10 +510,17 @@ static DWORD WAVE_mciRecord(UINT16 wDevID, DWORD dwFlags, LPMCI_RECORD_PARMS lpP
 */
 static DWORD WAVE_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
+        DWORD dwRet;
+
 	dprintf_mciwave(stddeb,
 		"WAVE_mciStop(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
-	return 0;
+	if (MCIWavDev[wDevID].fInput)
+	  dwRet = widMessage(wDevID, WIDM_STOP, 0, dwFlags, (DWORD)lpParms);
+	else
+	  dwRet = wodMessage(wDevID, WODM_STOP, 0, dwFlags, (DWORD)lpParms);
+	  
+	return dwRet;
 }
 
 
@@ -496,10 +529,17 @@ static DWORD WAVE_mciStop(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpPa
 */
 static DWORD WAVE_mciPause(UINT16 wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
 {
+        DWORD dwRet;
+
 	dprintf_mciwave(stddeb,
 		"WAVE_mciPause(%u, %08lX, %p);\n", wDevID, dwFlags, lpParms);
 	if (lpParms == NULL) return MCIERR_INTERNAL;
-	return 0;
+	if (MCIWavDev[wDevID].fInput)
+	  dwRet = widMessage(wDevID, WIDM_PAUSE, 0, dwFlags, (DWORD)lpParms);
+	else
+	  dwRet = wodMessage(wDevID, WODM_PAUSE, 0, dwFlags, (DWORD)lpParms);
+
+	return dwRet;
 }
 
 
@@ -794,6 +834,7 @@ static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPS lpCaps, DWORD dwSize)
 	lpCaps->wPid = 0x0001; 	/* Product ID */
 	strcpy(lpCaps->szPname, "Linux WAVOUT Driver");
 #endif
+	lpCaps->vDriverVersion = 0x0100;
 	lpCaps->dwFormats = 0x00000000;
 	lpCaps->dwSupport = WAVECAPS_VOLUME;
 	lpCaps->wChannels = (IOCTL(audio, SNDCTL_DSP_STEREO, dsp_stereo) != 0) ? 1 : 2;
@@ -892,7 +933,6 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	memcpy(&WOutDev[wDevID].waveDesc, lpDesc, sizeof(WAVEOPENDESC));
 	dprintf_mciwave(stddeb,"Linux 'wodOpen' // lpDesc->lpFormat = %p\n",lpDesc->lpFormat);
         lpFormat = (LPWAVEFORMAT) PTR_SEG_TO_LIN(lpDesc->lpFormat); 
-/*	lpFormat = lpDesc->lpFormat; */
 	dprintf_mciwave(stddeb,"Linux 'wodOpen' // lpFormat = %p\n",lpFormat);
 	if (lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
 		dprintf_mciwave(stddeb,"Linux 'wodOpen' // Bad format %04X !\n",
@@ -941,6 +981,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 static DWORD wodClose(WORD wDevID)
 {
 	dprintf_mciwave(stddeb,"wodClose(%u);\n", wDevID);
+	if (wDevID > MAX_WAVOUTDRV) return MMSYSERR_INVALPARAM;
 	if (WOutDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'wodClose' // can't close !\n");
 		return MMSYSERR_NOTENABLED;
@@ -959,10 +1000,12 @@ static DWORD wodClose(WORD wDevID)
 /**************************************************************************
 * 				wodWrite			[internal]
 */
-static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
+static DWORD wodWrite(WORD wDevID, DWORD lpWH, DWORD dwSize)
 {
 	int		count;
-	LPSTR	lpData;
+	LPSTR	        lpData;
+	LPWAVEHDR       lpWaveHdr = (LPWAVEHDR)PTR_SEG_TO_LIN(lpWH);
+
 	dprintf_mciwave(stddeb,"wodWrite(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
 	if (WOutDev[wDevID].unixdev == 0) {
         dprintf_mciwave(stddeb,"Linux 'wodWrite' // can't play !\n");
@@ -988,7 +1031,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 	WOutDev[wDevID].dwTotalPlayed += count;
 	lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
 	lpWaveHdr->dwFlags |= WHDR_DONE;
-	if (WAVE_NotifyClient(wDevID, WOM_DONE, 0L, 0L) != MMSYSERR_NOERROR) {
+	if (WAVE_NotifyClient(wDevID, WOM_DONE, lpWH, 0) != MMSYSERR_NOERROR) {
 		dprintf_mciwave(stddeb,"Linux 'wodWrite' // can't notify client !\n");
 		return MMSYSERR_INVALPARAM;
 		}
@@ -1044,7 +1087,13 @@ static DWORD wodRestart(WORD wDevID)
 	if (WOutDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'wodRestart' // can't restart !\n");
 		return MMSYSERR_NOTENABLED;
-		}
+	}
+	/* FIXME: is NotifyClient with WOM_DONE right ? (Comet Busters 1.3.3 needs this notification) */
+       	if (WAVE_NotifyClient(wDevID, WOM_DONE, 0L, 0L) != MMSYSERR_NOERROR) {
+               	dprintf_mciwave(stddeb,"Linux 'wodRestart' // can't notify client !\n");
+               	return MMSYSERR_INVALPARAM;
+        }
+
 	return MMSYSERR_NOERROR;
 }
 
@@ -1181,8 +1230,10 @@ DWORD wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 		case WODM_CLOSE:
 			return wodClose(wDevID);
 		case WODM_WRITE:
-			return wodWrite(wDevID, (LPWAVEHDR)PTR_SEG_TO_LIN(dwParam1), dwParam2);
+			return wodWrite(wDevID, dwParam1, dwParam2);
 		case WODM_PAUSE:
+			return 0L;
+	        case WODM_STOP:
 			return 0L;
 		case WODM_GETPOS:
 			return wodGetPosition(wDevID, (LPMMTIME)PTR_SEG_TO_LIN(dwParam1), dwParam2);
@@ -1344,7 +1395,6 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	WInDev[wDevID].dwTotalRecorded = 0;
 	memcpy(&WInDev[wDevID].waveDesc, lpDesc, sizeof(WAVEOPENDESC));
         lpFormat = (LPWAVEFORMAT) PTR_SEG_TO_LIN(lpDesc->lpFormat); 
-/*        lpFormat = lpDesc->lpFormat; */
 	if (lpFormat->wFormatTag != WAVE_FORMAT_PCM) {
 		dprintf_mciwave(stddeb,"Linux 'widOpen' // Bad format %04X !\n",
 					lpFormat->wFormatTag);
@@ -1387,6 +1437,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 static DWORD widClose(WORD wDevID)
 {
 	dprintf_mciwave(stddeb,"widClose(%u);\n", wDevID);
+	if (wDevID > MAX_WAVINDRV) return MMSYSERR_INVALPARAM;
 	if (WInDev[wDevID].unixdev == 0) {
 		dprintf_mciwave(stddeb,"Linux 'widClose' // can't close !\n");
 		return MMSYSERR_NOTENABLED;
@@ -1521,6 +1572,9 @@ static DWORD widStart(WORD wDevID)
 		WInDev[wDevID].dwTotalRecorded += lpWIHdr->dwBytesRecorded;
 		lpWIHdr->dwFlags &= ~WHDR_INQUEUE;
 		lpWIHdr->dwFlags |= WHDR_DONE;
+
+/* FIXME here should be a segmented address in stead of lpWIHdr */
+
 		if (WAVE_NotifyClient(wDevID, WIM_DATA, (DWORD)lpWIHdr, 0L) != 
 			MMSYSERR_NOERROR) {
 			dprintf_mciwave(stddeb,	"Linux 'widStart' // can't notify client !\n");
@@ -1530,7 +1584,7 @@ static DWORD widStart(WORD wDevID)
 		count++;
 		}
 	dprintf_mciwave(stddeb,"widStart // end of recording !\n");
-	fflush(stdout);
+	fflush(stddeb);
 	return MMSYSERR_NOERROR;
 }
 
@@ -1658,6 +1712,8 @@ DWORD widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			return widReset(wDevID);
 		case WIDM_START:
 			return widStart(wDevID);
+		case WIDM_PAUSE:
+			return widStop(wDevID);
 		case WIDM_STOP:
 			return widStop(wDevID);
 		default:
@@ -1728,6 +1784,42 @@ LONG WAVE_DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 			return WAVE_mciGetDevCaps(dwDevID, dwParam1, (LPMCI_GETDEVCAPS_PARMS)PTR_SEG_TO_LIN(dwParam2));
 		case MCI_INFO:
 			return WAVE_mciInfo(dwDevID, dwParam1, (LPMCI_INFO_PARMS)PTR_SEG_TO_LIN(dwParam2));
+
+                case MCI_LOAD:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_SAVE:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_SEEK:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_FREEZE:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_PUT:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_REALIZE:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_UNFREEZE:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_UPDATE:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_WHERE:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_WINDOW:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_STEP:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_SPIN:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_ESCAPE:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_COPY:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_CUT:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_DELETE:
+			return MMSYSERR_NOTSUPPORTED;
+		case MCI_PASTE:
+			return MMSYSERR_NOTSUPPORTED;
+
 		default:
 			return DefDriverProc(dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 		}

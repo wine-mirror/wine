@@ -100,14 +100,14 @@ static FONTOBJ AnsiVarFont =
 {
     { 0, FONT_MAGIC, 1 },   /* header */
     { 12, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "" }
+      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "MS Sans Serif" }
 };
 
 static FONTOBJ SystemFont =
 {
-    { 0, FONT_MAGIC, 1 },   /* header */
+    { 0, FONT_MAGIC, 1 },
     { 12, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET,
-      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "" }
+      0, 0, DEFAULT_QUALITY, VARIABLE_PITCH | FF_SWISS, "System" }
 };
 
 static FONTOBJ DeviceDefaultFont =
@@ -142,7 +142,7 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
     (GDIOBJHDR *) &AnsiVarFont,
     (GDIOBJHDR *) &SystemFont,
     (GDIOBJHDR *) &DeviceDefaultFont,
-    NULL,            /* DEFAULT_PALETTE created by COLOR_Init */
+    NULL,            /* DEFAULT_PALETTE created by PALETTE_Init */
     (GDIOBJHDR *) &SystemFixedFont
 };
 
@@ -154,21 +154,26 @@ static GDIOBJHDR * StockObjects[NB_STOCK_OBJECTS] =
  */
 BOOL32 GDI_Init(void)
 {
-    HPALETTE16 hpalette;
     extern BOOL32 X11DRV_Init(void);
     extern BOOL32 DIB_Init(void);
 
     /* Initialize drivers */
 
-    if (!X11DRV_Init()) return FALSE;
-    if (!DIB_Init()) return FALSE;
+    DIB_Init();	/* always before X11DRV_Init() */
 
-      /* Create default palette */
+    if( X11DRV_Init() )
+    {
+	/* Create default palette */
 
-    if (!(hpalette = COLOR_Init())) return FALSE;
-    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *)GDI_HEAP_LIN_ADDR( hpalette );
+	HPALETTE16 hpalette = PALETTE_Init();
 
-    return TRUE;
+	if( hpalette )
+	{
+	    StockObjects[DEFAULT_PALETTE] = (GDIOBJHDR *)GDI_HEAP_LIN_ADDR( hpalette );
+	    return TRUE;
+	}
+    }
+    return FALSE;
 }
 
 

@@ -534,10 +534,11 @@ FormatMessage32A(
 		while (*f) {
 			if (*f=='%') {
 				int	insertnr;
-				char	*fmtstr,*sprintfbuf,*x;
+				char	*fmtstr,*sprintfbuf,*x,*lastf;
 				DWORD	*argliststart;
 
 				fmtstr = NULL;
+				lastf = f;
 				f++;
 				if (!*f) {
 					ADD_TO_T('%');
@@ -573,26 +574,35 @@ FormatMessage32A(
 						}
 					} else
 						fmtstr=HEAP_strdupA(GetProcessHeap(),0,"%s");
-					if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
-						argliststart=args+insertnr-1;
-					else
-						/* FIXME: not sure that this is
-						 * correct for unix-c-varargs.
+					if (args) {
+						if (dwFlags & FORMAT_MESSAGE_ARGUMENT_ARRAY)
+							argliststart=args+insertnr-1;
+						else
+							/* FIXME: not sure that this is
+							 * correct for unix-c-varargs.
+							 */
+							argliststart=((DWORD*)&args)+insertnr-1;
+
+						if (fmtstr[strlen(fmtstr)]=='s')
+							sprintfbuf=HeapAlloc(GetProcessHeap(),0,strlen((LPSTR)argliststart[0])+1);
+						else
+							sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
+
+						/* CMF - This makes a BIG assumption about va_list */
+						vsprintf(sprintfbuf, fmtstr, (va_list) argliststart);
+						x=sprintfbuf;
+						while (*x) {
+							ADD_TO_T(*x++);
+						}
+						HeapFree(GetProcessHeap(),0,sprintfbuf);
+					} else {
+						/* NULL args - copy formatstr 
+						 * (probably wrong)
 						 */
-						argliststart=((DWORD*)&args)+insertnr-1;
-
-					if (fmtstr[strlen(fmtstr)]=='s')
-						sprintfbuf=HeapAlloc(GetProcessHeap(),0,strlen((LPSTR)argliststart[0])+1);
-					else
-						sprintfbuf=HeapAlloc(GetProcessHeap(),0,100);
-
-					/* CMF - This makes a BIG assumption about va_list */
-					vsprintf(sprintfbuf, fmtstr, (va_list) argliststart);
-					x=sprintfbuf;
-					while (*x) {
-						ADD_TO_T(*x++);
+						while (lastf<f) {
+							ADD_TO_T(*lastf++);
+						}
 					}
-					HeapFree(GetProcessHeap(),0,sprintfbuf);
 					HeapFree(GetProcessHeap(),0,fmtstr);
 					break;
 				case 'n':

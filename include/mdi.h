@@ -23,12 +23,6 @@
 extern LRESULT MDIClientWndProc(HWND16 hwnd, UINT16 message, 
 				WPARAM16 wParam, LPARAM lParam); /* mdi.c */
 
-typedef struct tagMDIWCL
-{
-  HWND16	 	 hChild;
-  struct tagMDIWCL	*prev;
-} MDIWCL;
-
 typedef struct 
 {
     UINT16   	nActiveChildren;

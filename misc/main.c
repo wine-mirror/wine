@@ -817,6 +817,8 @@ DWORD GetWinFlags(void)
     fprintf(stderr, "Unknown mode set? This shouldn't happen. Check GetWinFlags()!\n");
     break;
   }
+  if (si.wProcessorLevel>=4)
+      result |= WF_HASCPUID;
   if( getVersionEx.dwPlatformId == VER_PLATFORM_WIN32_NT )
       result |= WF_WIN32WOW; /* undocumented WF_WINNT */
   return result;
@@ -1060,9 +1062,12 @@ BOOL16 SystemParametersInfo16( UINT16 uAction, UINT16 uParam,
 
 	        case SPI_GETICONTITLELOGFONT: 
 	        {
-                    /* FIXME GetProfileString32A( "?", "?", "?" ) */
                     LPLOGFONT16 lpLogFont = (LPLOGFONT16)lpvParam;
-                    lpLogFont->lfHeight = 10;
+
+		    GetProfileString32A("Desktop", "IconTitleFaceName", "Helvetica", 
+					lpLogFont->lfFaceName, LF_FACESIZE );
+                    lpLogFont->lfHeight = -GetProfileInt32A("Desktop","IconTitleSize", 8);
+
                     lpLogFont->lfWidth = 0;
                     lpLogFont->lfEscapement = lpLogFont->lfOrientation = 0;
                     lpLogFont->lfWeight = FW_NORMAL;

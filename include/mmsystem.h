@@ -186,9 +186,9 @@ typedef struct {
     UINT16    wPid;                  /* product ID */
     VERSION vDriverVersion;        /* version of the driver */
     char    szPname[MAXPNAMELEN];  /* product name (NULL terminated string) */
-    DWORD   dwFormats;             /* formats supported */
+    DWORD   dwFormats WINE_PACKED;             /* formats supported */
     UINT16    wChannels;             /* number of sources supported */
-    DWORD   dwSupport;             /* functionality supported by driver */
+    DWORD   dwSupport WINE_PACKED;             /* functionality supported by driver */
 } WAVEOUTCAPS, *LPWAVEOUTCAPS;
 
 #define WAVECAPS_PITCH          0x0001   /* supports pitch control */
@@ -202,7 +202,7 @@ typedef struct {
     UINT16    wPid;                    /* product ID */
     VERSION vDriverVersion;          /* version of the driver */
     char    szPname[MAXPNAMELEN];    /* product name (NULL terminated string) */
-    DWORD   dwFormats;               /* formats supported */
+    DWORD   dwFormats WINE_PACKED;               /* formats supported */
     UINT16    wChannels;               /* number of channels supported */
 } WAVEINCAPS, *LPWAVEINCAPS;
 
@@ -335,7 +335,7 @@ typedef struct {
     UINT16    wVoices;               /* # of voices (internal synth only) */
     UINT16    wNotes;                /* max # of notes (internal synth only) */
     UINT16    wChannelMask;          /* channels used (internal synth only) */
-    DWORD   dwSupport;             /* functionality supported by driver */
+    DWORD   dwSupport WINE_PACKED;             /* functionality supported by driver */
 } MIDIOUTCAPS, *LPMIDIOUTCAPS;
 
 #define MOD_MIDIPORT    1  /* output port */
@@ -423,7 +423,7 @@ typedef struct {
     VERSION vDriverVersion;        /* version of the driver */
     char    szPname[MAXPNAMELEN];  /* product name (NULL terminated string) */
     UINT16    wTechnology;           /* type of device */
-    DWORD   dwSupport;             /* functionality supported by driver */
+    DWORD   dwSupport WINE_PACKED;             /* functionality supported by driver */
 } AUXCAPS, *LPAUXCAPS;
 
 #define AUXCAPS_CDAUDIO    1       /* audio from internal CD-ROM drive */
@@ -1364,6 +1364,7 @@ typedef struct {
 #define WODM_GETPLAYBACKRATE  18
 #define WODM_SETPLAYBACKRATE  19
 #define WODM_BREAKLOOP        20
+#define WODM_STOP             21
 
 #define WIDM_GETNUMDEVS  50
 #define WIDM_GETDEVCAPS  51
@@ -1376,6 +1377,7 @@ typedef struct {
 #define WIDM_STOP        58
 #define WIDM_RESET       59
 #define WIDM_GETPOS      60
+#define WIDM_PAUSE       61
 
 #define MODM_GETNUMDEVS		1
 #define MODM_GETDEVCAPS		2

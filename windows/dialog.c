@@ -501,7 +501,7 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
           /* (see CreateFont() documentation in the Windows SDK).   */
 	hFont = CreateFont16( -template.pointSize, 0, 0, 0, FW_DONTCARE,
 			    FALSE, FALSE, FALSE, DEFAULT_CHARSET, 0, 0,
-			    DEFAULT_QUALITY, FF_DONTCARE,
+			    PROOF_QUALITY, FF_DONTCARE,
                             template.faceName );  /* FIXME: win32 */
 	if (hFont)
 	{
@@ -908,7 +908,7 @@ static BOOL32 DIALOG_IsDialogMessage( HWND32 hwnd, HWND32 hwndDlg,
     dlgCode = SendMessage32A( hwnd, WM_GETDLGCODE, 0, 0 );
     if (dlgCode & DLGC_WANTMESSAGE)
     {
-        *dispatch = TRUE;
+        *translate = *dispatch = TRUE;
         return TRUE;
     }
 

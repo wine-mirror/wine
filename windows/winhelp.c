@@ -76,7 +76,7 @@ BOOL32 WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
 			return FALSE;
 	}
 	if(lpHelpFile)
-		nlen =  strlen(lpHelpFile)+1;
+		nlen = strlen(lpHelpFile)+1;
 	else
 		nlen = 0;
 	size = sizeof(WINHELP) + nlen + dsize;
@@ -84,10 +84,12 @@ BOOL32 WinHelp32A( HWND32 hWnd, LPCSTR lpHelpFile, UINT32 wCommand,
 	lpwh = GlobalLock16(hwh);
 	lpwh->size = size;
 	lpwh->command = wCommand;
+	lpwh->data = dwData;
 	if(nlen) {
-		lpwh->ofsFilename = sizeof(WINHELP);
 		strcpy(((char*)lpwh) + sizeof(WINHELP),lpHelpFile);
-	}
+		lpwh->ofsFilename = sizeof(WINHELP);
+ 	} else
+		lpwh->ofsFilename = 0;
 	if(dsize) {
 		memcpy(((char*)lpwh)+sizeof(WINHELP)+nlen,(LPSTR)dwData,dsize);
 		lpwh->ofsData = sizeof(WINHELP)+nlen;

@@ -21,3 +21,15 @@ WNetGetCachedPassword(
 	);
 	return 0;
 }
+
+DWORD
+MultinetGetConnectionPerformance32A(
+	LPNETRESOURCE32A lpNetResource,
+	LPNETCONNECTINFOSTRUCT lpNetConnectInfoStruct
+) {
+	fprintf(stdnimp,"MultinetGetConnectionPerformance(%p,%p)\n",
+			lpNetResource,
+			lpNetConnectInfoStruct
+	);
+	return 1;
+}

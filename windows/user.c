@@ -18,6 +18,7 @@
 #include "debug.h"
 #include "toolhelp.h"
 #include "message.h"
+#include "shell.h"
 
 WORD USER_HeapSel = 0;
 
@@ -178,7 +179,7 @@ BOOL32 ExitWindowsEx( UINT32 flags, DWORD reserved )
         
     /* We have to build a list of all windows first, as in EnumWindows */
 
-    if (!(list = WIN_BuildWinArray( WIN_GetDesktop() ))) return FALSE;
+    if (!(list = WIN_BuildWinArray( WIN_GetDesktop(), 0, NULL ))) return FALSE;
 
     /* Send a WM_QUERYENDSESSION message to every window */
 

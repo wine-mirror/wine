@@ -95,6 +95,5 @@ extern int QUEUE_FindMsg( MESSAGEQUEUE * msgQueue, HWND32 hwnd,
 extern void QUEUE_RemoveMsg( MESSAGEQUEUE * msgQueue, int pos );
 extern void hardware_event( WORD message, WORD wParam, LONG lParam,
 			    int xPos, int yPos, DWORD time, DWORD extraInfo );
-extern void QUEUE_FlushMessages( HQUEUE16 hQueue );
 
 #endif  /* __WINE_QUEUE_H */

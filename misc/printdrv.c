@@ -40,7 +40,7 @@ DWORD
 DrvGetPrinterData(LPSTR lpPrinter, LPSTR lpProfile, LPDWORD lpType,
                   LPBYTE lpPrinterData, int cbData, LPDWORD lpNeeded)
 {
-    fprintf(stderr,"In DrvGetPrinterData printer %s profile %s lpType %p \n",
+    fprintf(stderr,"In DrvGetPrinterData printer %p profile %p lpType %p \n",
            lpPrinter, lpProfile, lpType);
     return 0;
 }
@@ -51,7 +51,7 @@ DWORD
 DrvSetPrinterData(LPSTR lpPrinter, LPSTR lpProfile, LPDWORD lpType,
                   LPBYTE lpPrinterData, DWORD dwSize)
 {
-    fprintf(stderr,"In DrvSetPrinterData printer %s profile %s lpType %p \n",
+    fprintf(stderr,"In DrvSetPrinterData printer %p profile %p lpType %p \n",
            lpPrinter, lpProfile, lpType);
     return 0;
 }

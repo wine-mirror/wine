@@ -30,11 +30,7 @@ typedef struct
 } X_PHYSBRUSH;
 
   /* X physical font */
-typedef struct
-{
-    XFontStruct * fstruct;
-    TEXTMETRIC16  metrics;
-} X_PHYSFONT;
+typedef UINT32	 X_PHYSFONT;
 
   /* X physical device */
 typedef struct
@@ -46,13 +42,18 @@ typedef struct
     X_PHYSBRUSH   brush;
 } X11DRV_PDEVICE;
 
+typedef INT32 (*DEVICEFONTENUMPROC)(LPENUMLOGFONT16,LPNEWTEXTMETRIC16,UINT16,LPARAM);
+
 /* Wine driver X11 functions */
 
 struct tagDC;
+struct tagDeviceCaps;
 
 extern BOOL32 X11DRV_BitBlt( struct tagDC *dcDst, INT32 xDst, INT32 yDst,
                              INT32 width, INT32 height, struct tagDC *dcSrc,
                              INT32 xSrc, INT32 ySrc, DWORD rop );
+extern BOOL32 X11DRV_EnumDeviceFonts( struct tagDC *dc, LPLOGFONT16 plf,
+				      DEVICEFONTENUMPROC dfeproc, LPARAM lp );
 extern BOOL32 X11DRV_GetCharWidth( struct tagDC *dc, UINT32 firstChar,
                                    UINT32 lastChar, LPINT32 buffer );
 extern BOOL32 X11DRV_GetTextExtentPoint( struct tagDC *dc, LPCSTR str,
@@ -60,7 +61,7 @@ extern BOOL32 X11DRV_GetTextExtentPoint( struct tagDC *dc, LPCSTR str,
 extern BOOL32 X11DRV_GetTextMetrics(struct tagDC *dc, TEXTMETRIC32A *metrics);
 extern BOOL32 X11DRV_PatBlt( struct tagDC *dc, INT32 left, INT32 top,
                              INT32 width, INT32 height, DWORD rop );
-extern VOID X11DRV_SetDeviceClipping(struct tagDC *dc);
+extern VOID   X11DRV_SetDeviceClipping(struct tagDC *dc);
 extern BOOL32 X11DRV_StretchBlt( struct tagDC *dcDst, INT32 xDst, INT32 yDst,
                                  INT32 widthDst, INT32 heightDst,
                                  struct tagDC *dcSrc, INT32 xSrc, INT32 ySrc,
@@ -105,6 +106,6 @@ extern BOOL32 X11DRV_ExtTextOut( struct tagDC *dc, INT32 x, INT32 y,
 
 extern BOOL32 X11DRV_BITMAP_Init(void);
 extern BOOL32 X11DRV_BRUSH_Init(void);
-extern BOOL32 X11DRV_FONT_Init(void);
+extern BOOL32 X11DRV_FONT_Init( struct tagDeviceCaps* );
 
 #endif  /* __WINE_X11DRV_H */

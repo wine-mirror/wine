@@ -886,7 +886,7 @@ base	0
 882 stub _wcsupr
 883 stub abs
 884 stub atan
-885 stub atoi
+885 stdcall atoi(ptr) CRTDLL_atoi
 886 stub atol
 887 stub ceil
 888 stub cos

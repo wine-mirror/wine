@@ -2,6 +2,8 @@
  * GDI region objects
  *
  * Copyright 1993, 1994, 1995 Alexandre Julliard
+ *
+ * RGNOBJ is documented in the Dr. Dobbs Journal March 1993.
  */
 
 #include <stdlib.h>

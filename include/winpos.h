@@ -25,7 +25,11 @@ typedef struct
     WINDOWPOS32 winPos[1];
 } DWP;
 
-extern void WINPOS_FindIconPos( HWND32 hwnd );
+extern BOOL32 WINPOS_RedrawIconTitle( HWND32 hWnd );
+extern BOOL32 WINPOS_ShowIconTitle( WND* pWnd, BOOL32 bShow );
+extern void   WINPOS_GetMinMaxInfo( WND* pWnd, POINT16 *maxSize, POINT16 *maxPos,
+                                    POINT16 *minTrack, POINT16 *maxTrack );
+extern UINT16 WINPOS_MinMaximize( WND* pWnd, UINT16 cmd, LPRECT16 lpPos);
 extern BOOL32 WINPOS_SetActiveWindow( HWND32 hWnd, BOOL32 fMouse,
                                       BOOL32 fChangeFocus );
 extern BOOL32 WINPOS_ChangeActiveWindow( HWND32 hwnd, BOOL32 mouseMsg );

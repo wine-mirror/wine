@@ -5,15 +5,16 @@
 #define __WINE_PEEXE_H
 
 #include "wintypes.h"
+#include "neexe.h"
 
 typedef struct _IMAGE_FILE_HEADER {
-	WORD	Machine;
-	WORD	NumberOfSections;
-	DWORD	TimeDateStamp;
-	DWORD	PointerToSymbolTable;
-	DWORD	NumberOfSymbols;
-	WORD	SizeOfOptionalHeader;
-	WORD	Characteristics;
+	WORD	Machine;			/* 00 */
+	WORD	NumberOfSections;		/* 02 */
+	DWORD	TimeDateStamp;			/* 04 */
+	DWORD	PointerToSymbolTable;		/* 08 */
+	DWORD	NumberOfSymbols;		/* 0c */
+	WORD	SizeOfOptionalHeader;		/* 10 */
+	WORD	Characteristics;		/* 12 */
 } IMAGE_FILE_HEADER,*LPIMAGE_FILE_HEADER;
 
 #define	IMAGE_SIZEOF_FILE_HEADER	20
@@ -328,17 +329,6 @@ typedef struct _IMAGE_BASE_RELOCATION
 	WORD	TypeOffset[1];
 } IMAGE_BASE_RELOCATION,*LPIMAGE_BASE_RELOCATION;
 
-typedef struct _IMAGE_DEBUG_DIRECTORY {
-	DWORD	Characteristics;
-	DWORD	TimeDateStamp;
-	WORD	MajorVersion;
-	WORD	MinorVersion;
-	DWORD	Type;
-	DWORD	SizeOfData;
-	DWORD	AddressOfRawData;
-	DWORD	PointerToRawData;
-} IMAGE_DEBUG_DIRECTORY,*LPIMAGE_DEBUG_DIRECTORY;
-
 typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY {
 	DWORD	Characteristics;
 	DWORD	TimeDateStamp;
@@ -373,17 +363,16 @@ typedef struct _IMAGE_TLS_DIRECTORY {
  * The IMAGE_DEBUG_DIRECTORY data directory points to an array of
  * these structures.
  */
-struct PE_Debug_dir
-{
-	u_long		flags;
-	u_long		timestamp;
-	u_short		major;
-	u_short		minor;
-	u_long		type;
-	u_long		dbgsize;
-	u_long		dbgptr;
-	u_long		dbgoff;
-};
+typedef struct _IMAGE_DEBUG_DIRECTORY {
+	DWORD	Characteristics;
+	DWORD	TimeDateStamp;
+	WORD	MajorVersion;
+	WORD	MinorVersion;
+	DWORD	Type;
+	DWORD	SizeOfData;
+	DWORD	AddressOfRawData;
+	DWORD	PointerToRawData;
+} IMAGE_DEBUG_DIRECTORY,*LPIMAGE_DEBUG_DIRECTORY;
 
 /*
  * The type field above can take these (plus a few other

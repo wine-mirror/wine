@@ -704,7 +704,7 @@ static int BuildModule16( FILE *outfile, int max_code_offset,
     buffer = xmalloc( 0x10000 );
 
     pModule = (NE_MODULE *)buffer;
-    pModule->magic = NE_SIGNATURE;
+    pModule->magic = IMAGE_OS2_SIGNATURE;
     pModule->count = 1;
     pModule->next = 0;
     pModule->flags = NE_FFLAGS_SINGLEDATA | NE_FFLAGS_BUILTIN | NE_FFLAGS_LIBMODULE;
@@ -887,7 +887,7 @@ static int BuildModule32( FILE *outfile )
     buffer = xmalloc( 0x10000 );
 
     pModule = (NE_MODULE *)buffer;
-    pModule->magic = NE_SIGNATURE;
+    pModule->magic = IMAGE_OS2_SIGNATURE;
     pModule->count = 1;
     pModule->next = 0;
     pModule->dgroup_entry = 0;

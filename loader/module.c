@@ -38,7 +38,7 @@ static HMODULE16 hCachedModule = 0;  /* Module cached by MODULE_OpenFile */
 NE_MODULE *MODULE_GetPtr( HMODULE16 hModule )
 {
     NE_MODULE *pModule = (NE_MODULE *)GlobalLock16( hModule );
-    if (!pModule || (pModule->magic != NE_SIGNATURE) ||
+    if (!pModule || (pModule->magic != IMAGE_OS2_SIGNATURE) ||
         (pModule->self != hModule)) return NULL;
     return pModule;
 }
@@ -47,7 +47,7 @@ NE_MODULE *MODULE_GetPtr( HMODULE16 hModule )
 /***********************************************************************
  *           MODULE_DumpModule
  */
-void MODULE_DumpModule( HMODULE16 hmodule )
+void MODULE_DumpModule( HMODULE16 hModule )
 {
     int i, ordinal;
     SEGTABLEENTRY *pSeg;
@@ -55,15 +55,15 @@ void MODULE_DumpModule( HMODULE16 hmodule )
     WORD *pword;
     NE_MODULE *pModule;
 
-    if (!(pModule = MODULE_GetPtr( hmodule )))
+    if (!(pModule = MODULE_GetPtr( hModule )))
     {
-        fprintf( stderr, "**** %04x is not a module handle\n", hmodule );
+        fprintf( stderr, "**** %04x is not a module handle\n", hModule );
         return;
     }
 
       /* Dump the module info */
 
-    printf( "Module %04x:\n", hmodule );
+    printf( "Module %04x:\n", hModule );
     printf( "count=%d flags=%04x heap=%d stack=%d\n",
             pModule->count, pModule->flags,
             pModule->heap_size, pModule->stack_size );
@@ -364,7 +364,7 @@ HMODULE16 MODULE_CreateDummyModule( const OFSTRUCT *ofs )
     HMODULE16 hModule;
     NE_MODULE *pModule;
     SEGTABLEENTRY *pSegment;
-    char *pStr;
+    char *pStr,*basename,*s;
 
     INT32 of_size = sizeof(OFSTRUCT) - sizeof(ofs->szPathName)
                     + strlen(ofs->szPathName) + 1;
@@ -385,7 +385,7 @@ HMODULE16 MODULE_CreateDummyModule( const OFSTRUCT *ofs )
     pModule = (NE_MODULE *)GlobalLock16( hModule );
 
     /* Set all used entries */
-    pModule->magic            = NE_SIGNATURE;
+    pModule->magic            = IMAGE_OS2_SIGNATURE;
     pModule->count            = 1;
     pModule->next             = 0;
     pModule->flags            = 0;
@@ -420,7 +420,19 @@ HMODULE16 MODULE_CreateDummyModule( const OFSTRUCT *ofs )
     /* Module name */
     pStr = (char *)pSegment;
     pModule->name_table = (int)pStr - (int)pModule;
-    strcpy( pStr, "\x08W32SXXXX" );
+    /* strcpy( pStr, "\x08W32SXXXX" ); */
+    basename = strrchr(ofs->szPathName,'\\');
+    if (!basename) 
+	    	basename=ofs->szPathName;
+    else
+	    	basename++;
+    basename=strdup(basename);
+    if ((s=strchr(basename,'.')))
+	    	*s='\0';
+    *pStr = strlen(basename);
+    if (*pStr>8) *pStr=8;
+    strncpy( pStr+1, basename, 8 );
+    free(basename);
     pStr += 9;
 
     /* All tables zero terminated */
@@ -437,8 +449,8 @@ HMODULE16 MODULE_CreateDummyModule( const OFSTRUCT *ofs )
  */
 static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
 {
-    struct mz_header_s mz_header;
-    struct ne_header_s ne_header;
+    IMAGE_DOS_HEADER mz_header;
+    IMAGE_OS2_HEADER ne_header;
     int size;
     HMODULE16 hModule;
     NE_MODULE *pModule;
@@ -456,15 +468,15 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
 
     _llseek32( hFile, 0, SEEK_SET );
     if ((_lread32(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
-        (mz_header.mz_magic != MZ_SIGNATURE))
+        (mz_header.e_magic != IMAGE_DOS_SIGNATURE))
         return (HMODULE16)11;  /* invalid exe */
 
-    _llseek32( hFile, mz_header.ne_offset, SEEK_SET );
+    _llseek32( hFile, mz_header.e_lfanew, SEEK_SET );
     if (_lread32( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
         return (HMODULE16)11;  /* invalid exe */
 
-    if (ne_header.ne_magic == PE_SIGNATURE) return (HMODULE16)21;  /* win32 exe */
-    if (ne_header.ne_magic != NE_SIGNATURE) return (HMODULE16)11;  /* invalid exe */
+    if (ne_header.ne_magic == IMAGE_NT_SIGNATURE) return (HMODULE16)21;  /* win32 exe */
+    if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE) return (HMODULE16)11;  /* invalid exe */
 
     /* We now have a valid NE header */
 
@@ -537,7 +549,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
         int i;
         struct ne_segment_table_entry_s *pSeg;
 
-        if (!READ( mz_header.ne_offset + ne_header.segment_tab_offset,
+        if (!READ( mz_header.e_lfanew + ne_header.segment_tab_offset,
              ne_header.n_segment_tab * sizeof(struct ne_segment_table_entry_s),
              buffer ))
         {
@@ -566,7 +578,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
     if (ne_header.resource_tab_offset < ne_header.rname_tab_offset)
     {
         pModule->res_table = (int)pData - (int)pModule;
-        if (!READ(mz_header.ne_offset + ne_header.resource_tab_offset,
+        if (!READ(mz_header.e_lfanew + ne_header.resource_tab_offset,
                   ne_header.rname_tab_offset - ne_header.resource_tab_offset,
                   pData )) return (HMODULE16)11;  /* invalid exe */
         pData += ne_header.rname_tab_offset - ne_header.resource_tab_offset;
@@ -576,7 +588,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
     /* Get the resident names table */
 
     pModule->name_table = (int)pData - (int)pModule;
-    if (!READ( mz_header.ne_offset + ne_header.rname_tab_offset,
+    if (!READ( mz_header.e_lfanew + ne_header.rname_tab_offset,
                ne_header.moduleref_tab_offset - ne_header.rname_tab_offset,
                pData ))
     {
@@ -591,7 +603,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
     if (ne_header.n_mod_ref_tab > 0)
     {
         pModule->modref_table = (int)pData - (int)pModule;
-        if (!READ( mz_header.ne_offset + ne_header.moduleref_tab_offset,
+        if (!READ( mz_header.e_lfanew + ne_header.moduleref_tab_offset,
                   ne_header.n_mod_ref_tab * sizeof(WORD),
                   pData ))
         {
@@ -606,7 +618,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
     /* Get the imported names table */
 
     pModule->import_table = (int)pData - (int)pModule;
-    if (!READ( mz_header.ne_offset + ne_header.iname_tab_offset, 
+    if (!READ( mz_header.e_lfanew + ne_header.iname_tab_offset, 
                ne_header.entry_tab_offset - ne_header.iname_tab_offset,
                pData ))
     {
@@ -619,7 +631,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
     /* Get the entry table */
 
     pModule->entry_table = (int)pData - (int)pModule;
-    if (!READ( mz_header.ne_offset + ne_header.entry_tab_offset,
+    if (!READ( mz_header.e_lfanew + ne_header.entry_tab_offset,
                ne_header.entry_tab_length,
                pData ))
     {
@@ -685,7 +697,7 @@ static HMODULE16 MODULE_LoadExeHeader( HFILE32 hFile, OFSTRUCT *ofs )
  */
 WORD MODULE_GetOrdinal( HMODULE16 hModule, const char *name )
 {
-    char buffer[256], *cpnt;
+    unsigned char buffer[256], *cpnt;
     BYTE len;
     NE_MODULE *pModule;
 
@@ -1452,6 +1464,8 @@ HINSTANCE32 WinExec32( LPCSTR lpCmdLine, UINT32 nCmdShow )
     char *p, *cmdline, filename[256];
     static int use_load_module = 1;
 
+    if (!lpCmdLine)
+        return 2;  /* File not found */
     if (!(cmdShowHandle = GlobalAlloc16( 0, 2 * sizeof(WORD) )))
         return 8;  /* Out of memory */
     if (!(cmdLineHandle = GlobalAlloc16( 0, 256 )))

@@ -1,0 +1,111 @@
+
+How To Convert Windows Fonts
+============================
+
+If you have access to Windows installation you should use 
+fnt2bdf utility (found in the 'tools)' directory to convert
+bitmap fonts (SYSTEM.FON, SSERIFE.FON, and SERIFE.FON) into 
+the format that X Window System can recognize.
+
+Step 1. Extract bitmap fonts with 'fnt2bdf'.
+
+Step 2. Convert .bdf files produced by the Step 1 into
+	.pcf files with 'bdftopcf'.
+
+Step 3. Copy .pcf files to the font server directory which
+	is usually /usr/lib/X11/fonts/misc (you will probably 
+        need superuser privileges).
+
+Step 4. Run 'mkfontdir' for the directory you copied fonts to.
+	If you are already in X you should run 'xset fp rehash' 
+        to make X server aware of the new fonts.
+
+Wine can get by without these fonts but 'the look and feel'
+will be quite different. 
+
+What to do with TrueType fonts? There are several commercial
+font tools that can convert them to the Type1 format but the 
+quality of the resulting fonts is far from stellar. The other
+way to use them is to get a font server capable of rendering 
+TrueType (Caldera has one).
+
+However, there is a possibility of the native TrueType support 
+via FreeType renderer in the future (hint, hint :-)
+
+
+WINE.CONF And Font Mapper
+=========================
+
+Many Windows applications assume that fonts included in original Windows 3.1 
+distribution (Arial, Times New Roman, MS Sans Serif, etc.) are always present. 
+In order to make font mapper choose a closely related font you can add aliases
+to the [fonts] section.
+
+AliasN = [Windows font], [X font] <, optional "mask X font" flag>
+
+Example:
+
+Alias0 = System, --international-, mask
+Alias1 = Arial, -adobe-helvetica-
+Alias2 = Times New Roman, -adobe-times-
+...
+
+Comments:
+    There must be no gaps in the sequence {0, ..., N} otherwise all aliases
+    after the first gap won't be read.
+
+    Usually font mapper translates X font names into font names visible to
+    Windows programs in the following fashion:
+
+    X font			Converted name
+
+    -adobe-helvetica-...	"Helvetica"
+    -adobe-utopia-...		"Utopia"
+    -misc-fixed-...		"Fixed"
+    -...
+    -sony-fixed-...		"Sony Fixed"  (already have "Fixed")
+    -...
+
+    Only converted names appear in the font selection dialogs. However, 
+    if there is an alias with the "mask" flag set converted name will be 
+    replaced by this alias.
+
+    --international-		"System"
+
+    Nonmasking aliases are translated only when program asks for a font
+    with the name that matches an alias.
+
+    If you do not have an access to Windows fonts mentioned in the first 
+    paragraph you should try to substitute them with similar X fonts.
+
+    Alias.. = System, ...bold font without serifs
+    Alias.. = MS Sans Serif, ...helvetica-like font
+
+Also, some Windows applications request fonts without specifying the 
+typeface name of the font. Font table starts with Arial in most Windows 
+installations, however X font table starts with whatever is the first line 
+in the fonts.dir.  Therefore WINE uses the following entry to determine 
+which font to check first.
+
+Default = ...
+
+Comments:
+    It is better to have a scalable font family (bolds and italics included) 
+    as the default choice because mapper checks all available fonts until 
+    requested height and other attributes match perfectly or the end of the 
+    font table is reached.
+
+
+Cached Font Metrics
+===================
+
+WINE stores detailed information about available fonts in the ~/.wine/.cachedmetrics
+file. You can copy it elsewhere and add this entry to the [fonts] section 
+in the WINE.CONF:
+
+FontMetrics = <file with metrics>
+
+If WINE detects changes in the X font configuration it will rebuild font
+metrics from scratch and then it will overwrite ~/.wine/.cachedmetrics with 
+the new information. This process can take a while.
+

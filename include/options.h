@@ -72,5 +72,6 @@ extern int PROFILE_GetWineIniString( const char *section, const char *key_name,
                                      const char *def, char *buffer, int len );
 extern int PROFILE_GetWineIniInt( const char *section, const char *key_name,
                                   int def );
+extern char* PROFILE_GetStringItem( char* );
 
 #endif  /* __WINE_OPTIONS_H */

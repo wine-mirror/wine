@@ -270,7 +270,7 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
 	    
 	  default:
 	    dprintf_fixup(stddeb,
-		   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04x,  ",
+		   "WARNING: %d: ADDR TYPE %d,  unknown TYPE %d,  OFFSET %04x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);
 	    dprintf_fixup(stddeb,"TARGET %04x %04x\n", 
@@ -283,9 +283,9 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
 
         /* Apparently, high bit of address_type is sometimes set; */
         /* we ignore it for now */
-	if (rep->address_type & 0x80)
-            fprintf( stderr, "Warning: reloc addr type = 0x%02x\n",
-                     rep->address_type );
+	if (rep->address_type > NE_RADDR_OFFSET32)
+            fprintf( stderr, "WARNING: module %s: unknown reloc addr type = 0x%02x. Please report.\n",
+                     MODULE_GetModuleName(hModule), rep->address_type );
 
 	switch (rep->address_type & 0x7f)
 	{
@@ -345,7 +345,7 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
 	    
 	  default:
 	    dprintf_fixup(stddeb,
-		   "%d: ADDR TYPE %d,  TYPE %d,  OFFSET %04x,  ",
+		   "WARNING: %d: unknown ADDR TYPE %d,  TYPE %d,  OFFSET %04x,  ",
 		   i + 1, rep->address_type, rep->relocation_type, 
 		   rep->offset);
 	    dprintf_fixup(stddeb,

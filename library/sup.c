@@ -14,15 +14,31 @@
 #define LOADSHORT(x) LOAD(x); TAB->x = CONV_SHORT (TAB->x);
 #define LOADLONG(x) LOAD(x);  TAB->x = CONV_LONG (TAB->x);
 
-void load_mz_header (int fd, struct mz_header_s *mz_header)
+void load_mz_header (int fd, LPIMAGE_DOS_HEADER mz_header)
 {
 #define TAB mz_header
-	LOAD (mz_magic);
-    LOAD (dont_care);
-    LOADSHORT (ne_offset);
+	LOAD(e_magic);
+	LOADSHORT(e_cblp);
+	LOADSHORT(e_cp);
+	LOADSHORT(e_crlc);
+	LOADSHORT(e_cparhdr);
+	LOADSHORT(e_minalloc);
+	LOADSHORT(e_maxalloc);
+	LOADSHORT(e_ss);
+	LOADSHORT(e_sp);
+	LOADSHORT(e_csum);
+	LOADSHORT(e_ip);
+	LOADSHORT(e_cs);
+	LOADSHORT(e_lfarlc);
+	LOADSHORT(e_ovno);
+	LOAD(e_res);
+	LOADSHORT(e_oemid);
+	LOADSHORT(e_oeminfo);
+	LOAD(e_res2);
+	LOADLONG(e_lfanew);
 }
 
-void load_ne_header (int fd, struct ne_header_s *ne_header)
+void load_ne_header (int fd, LPIMAGE_OS2_HEADER ne_header)
 {
 #undef TAB
 #define TAB ne_header

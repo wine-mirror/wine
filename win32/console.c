@@ -215,3 +215,25 @@ BOOL32 FlushConsoleInputBuffer(HANDLE32 hConsoleInput){
     fprintf(stderr,"FlushConsoleInputBuffer(%d)\n",hConsoleInput);
     return TRUE;
 }
+
+BOOL32
+SetConsoleCursorPosition(HANDLE32 hcons,COORD c) {
+    /* x are columns, y rows */
+    if (!c.y) {
+    	fprintf(stderr,"\r");
+	if (c.x)
+		fprintf(stderr,"[%dC",c.x);
+	return TRUE;
+    }
+    /* handle rest of the cases */
+    return FALSE;
+}
+
+/***********************************************************************
+ *            GetNumberOfConsoleInputEvents   (KERNEL32.246)
+ */
+BOOL32
+GetNumberOfConsoleInputEvents(HANDLE32 hcon,LPDWORD nrofevents) {
+	*nrofevents = 1;
+	return TRUE;
+}

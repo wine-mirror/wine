@@ -28,6 +28,7 @@
 #include "thread.h"
 #include "toolhelp.h"
 #include "winnt.h"
+#include "thread.h"
 #include "stddebug.h"
 #include "debug.h"
 #include "dde_proc.h"
@@ -71,14 +72,20 @@ static FARPROC16 TASK_RescheduleProc;
 static HGLOBAL16 TASK_CreateDOSEnvironment(void);
 static void	 TASK_YieldToSystem(TDB*);
 
+static THDB TASK_SystemTHDB;
 /***********************************************************************
  *           TASK_Init
  */
 BOOL32 TASK_Init(void)
 {
+
     TASK_RescheduleProc = MODULE_GetWndProcEntry16( "TASK_Reschedule" );
     if (!(hDOSEnvironment = TASK_CreateDOSEnvironment()))
         fprintf( stderr, "Not enough memory for DOS Environment\n" );
+    TASK_SystemTHDB.teb_sel = SELECTOR_AllocBlock( &TASK_SystemTHDB, 0x1000, SEGMENT_DATA, TRUE, FALSE );
+#ifndef WINELIB
+    __asm__ __volatile__("movw %w0,%%fs"::"r"(TASK_SystemTHDB.teb_sel));
+#endif
     return (hDOSEnvironment != 0);
 }
 
@@ -1429,13 +1436,13 @@ HMODULE16 GetExePtr( HANDLE16 handle )
       /* Check for module handle */
 
     if (!(ptr = GlobalLock16( handle ))) return 0;
-    if (((NE_MODULE *)ptr)->magic == NE_SIGNATURE) return handle;
+    if (((NE_MODULE *)ptr)->magic == IMAGE_OS2_SIGNATURE) return handle;
 
       /* Check the owner for module handle */
 
     owner = FarGetOwner( handle );
     if (!(ptr = GlobalLock16( owner ))) return 0;
-    if (((NE_MODULE *)ptr)->magic == NE_SIGNATURE) return owner;
+    if (((NE_MODULE *)ptr)->magic == IMAGE_OS2_SIGNATURE) return owner;
 
       /* Search for this handle and its owner inside all tasks */
 

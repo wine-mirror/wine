@@ -433,8 +433,8 @@ BOOL16 PRTDRV_EnumObj(LPPDEVICE lpDestDev, WORD iStyle,
  * RealizeObject (ordinal 10)
  */
 DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle, 
-		    LPVOID lpInObj, LPVOID lpOutObj,
-                    LPTEXTXFORM16 lpTextXForm)
+                           LPVOID lpInObj, LPVOID lpOutObj,
+                           SEGPTR lpTextXForm)
 {
     WORD dwRet = 0;
     LOADED_PRINTER_DRIVER *pLPD = NULL;
@@ -473,14 +473,7 @@ DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
 	
 	lP4 = (LONG)lpOutObj;
 
-	if (lpTextXForm != NULL)
-	{
-	    lP5 = SegPtr;
-	    nSize = sizeof(TEXTXFORM16);
-	    AddData(&SegPtr, lpTextXForm, nSize, Limit);	
-	}
-	else
-	  lP5 = 0L;
+        lP5 = lpTextXForm;
 
 	dwRet = CallTo16_long_lwlll(pLPD->fn[FUNC_REALIZEOBJECT], 
                                     lP1, wP2, lP3, lP4, lP5);
@@ -493,8 +486,8 @@ DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle,
 
 DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
                         RECT16 *lpClipRect, LPCSTR lpString, WORD wCount, 
-                        SEGPTR lpFontInfo, LPDRAWMODE lpDrawMode, 
-                        LPTEXTXFORM16 lpTextXForm, SHORT *lpCharWidths,
+                        SEGPTR lpFontInfo, SEGPTR lpDrawMode, 
+                        SEGPTR lpTextXForm, SHORT *lpCharWidths,
                         RECT16 *     lpOpaqueRect, WORD wOptions)
 {
     DWORD dwRet = 0;
@@ -550,27 +543,8 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 	
 	/* This should be realized by the driver, so in 16bit data area */
 	lP7 = lpFontInfo;
-	
-	if (lpDrawMode != NULL)
-	{
-	    lP8 = SegPtr;
-	    nSize = sizeof(DRAWMODE);
-            dprintf_win16drv(stddeb, "adding lpDrawMode\n");
-            
-	    AddData(&SegPtr, lpDrawMode, nSize, Limit);	
-	}
-	else
-	  lP8 = 0L;
-	
-	if (lpTextXForm != NULL)
-	{
-	    lP9 = SegPtr;
-	    nSize = sizeof(TEXTXFORM16);
-            dprintf_win16drv(stddeb, "Adding TextXForm\n");
-	    AddData(&SegPtr, lpTextXForm, nSize, Limit);	
-	}
-	else
-	  lP9 = 0L;
+        lP8 = lpDrawMode;
+        lP9 = lpTextXForm;
 	
 	if (lpCharWidths != NULL) 
 	  dprintf_win16drv(stddeb, "PRTDRV_ExtTextOut: Char widths not supported\n");
@@ -595,9 +569,9 @@ DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
                                            lP1, wP2, wP3, lP4, 
 					   lP5, iP6, lP7, lP8, lP9, lP10,
 					   lP11, wP12);
-        if (lpDrawMode)
-            GetParamData(lP8, lpDrawMode, sizeof(DRAWMODE));
     }
     dprintf_win16drv(stddeb, "PRTDRV_ExtTextOut: return %lx\n", dwRet);
     return dwRet;
 }
+
+

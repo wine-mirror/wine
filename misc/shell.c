@@ -476,23 +476,23 @@ BOOL32 ShellAbout32W( HWND32 hWnd, LPCWSTR szApp, LPCWSTR szOtherStuff,
 static BYTE* SHELL_GetResourceTable(HFILE32 hFile)
 {
   BYTE*              pTypeInfo = NULL;
-  struct mz_header_s mz_header;
-  struct ne_header_s ne_header;
+  IMAGE_DOS_HEADER	mz_header;
+  IMAGE_OS2_HEADER	ne_header;
   int		     size;
   
   _llseek32( hFile, 0, SEEK_SET );
   if ((_lread32(hFile,&mz_header,sizeof(mz_header)) != sizeof(mz_header)) ||
-      (mz_header.mz_magic != MZ_SIGNATURE)) return (BYTE*)-1;
+      (mz_header.e_magic != IMAGE_DOS_SIGNATURE)) return (BYTE*)-1;
 
-  _llseek32( hFile, mz_header.ne_offset, SEEK_SET );
+  _llseek32( hFile, mz_header.e_lfanew, SEEK_SET );
   if (_lread32( hFile, &ne_header, sizeof(ne_header) ) != sizeof(ne_header))
       return NULL;
 
-  if (ne_header.ne_magic == PE_SIGNATURE) 
+  if (ne_header.ne_magic == IMAGE_NT_SIGNATURE) 
      { fprintf(stdnimp,"Win32s FIXME: file %s line %i\n", __FILE__, __LINE__ );
        return NULL; }
 
-  if (ne_header.ne_magic != NE_SIGNATURE) return NULL;
+  if (ne_header.ne_magic != IMAGE_OS2_SIGNATURE) return NULL;
 
   size = ne_header.rname_tab_offset - ne_header.resource_tab_offset;
 
@@ -501,7 +501,7 @@ static BYTE* SHELL_GetResourceTable(HFILE32 hFile)
       pTypeInfo = (BYTE*)HeapAlloc( GetProcessHeap(), 0, size);
       if( pTypeInfo ) 
       {
-          _llseek32(hFile, mz_header.ne_offset+ne_header.resource_tab_offset, SEEK_SET);
+          _llseek32(hFile, mz_header.e_lfanew+ne_header.resource_tab_offset, SEEK_SET);
           if( _lread32( hFile, (char*)pTypeInfo, size) != size )
           { 
 	      HeapFree( GetProcessHeap(), 0, pTypeInfo); 

@@ -3,7 +3,7 @@ type win32
 
 0009 stub DllCanUnloadNow
 0010 stub DllGetClassObject
-0025 stub MultinetGetConnectionPerformanceA
+0025 stdcall MultinetGetConnectionPerformanceA(ptr ptr) MultinetGetConnectionPerformance32A
 0026 stub MultinetGetConnectionPerformanceW
 0027 stub MultinetGetErrorTextA
 0028 stub MultinetGetErrorTextW

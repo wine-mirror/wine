@@ -5,7 +5,10 @@
  */
 
 #include <stdio.h>
+#include <errno.h>
+#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -23,6 +26,7 @@
 #include <linux/soundcard.h>
 #elif __FreeBSD__
 #include <machine/soundcard.h>
+#include <sys/errno.h>
 #endif
 
 #if defined(linux) || defined(__FreeBSD__)

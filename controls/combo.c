@@ -152,7 +152,8 @@ static void CBCalcPlacement( LPHEADCOMBO lphc,
 
        if( lphc->hFont ) hPrevFont = SelectObject16( hDC, lphc->hFont );
    
-       GetTextExtentPoint16( hDC, "X", 1, &size);
+       GetTextExtentPoint16( hDC, "0", 1, &size);
+
        size.cy += size.cy / 4 + 4 * SYSMETRICS_CYBORDER;
 
        if( hPrevFont ) SelectObject16( hDC, hPrevFont );

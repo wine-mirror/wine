@@ -7,6 +7,7 @@
 #include <assert.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -373,15 +374,27 @@ BOOL32 VIRTUAL_Init(void)
 
 #ifdef linux
     {
-	FILE *f = fopen( "/proc/self/maps", "r" );
-        if (f)
+        /* Do not use stdio here since it may temporarily change the size
+         * of some segments (ie libc6 adds 0x1000 per open FILE)
+         */
+        int fd = open ("/proc/self/maps", O_RDONLY);
+        if (fd >= 0)
         {
             char buffer[80];
-            while (fgets( buffer, sizeof(buffer), f ))
+
+            for (;;)
             {
                 int start, end, offset;
                 char r, w, x, p;
                 BYTE vprot = VPROT_COMMITTED;
+
+                char * ptr = buffer;
+                int count = sizeof(buffer);
+                while (1 == read(fd, ptr, 1) && *ptr != '\n' && --count > 0)
+                    ptr++;
+
+                if (*ptr != '\n') break;
+                *ptr = '\0';
 
                 sscanf( buffer, "%x-%x %c%c%c%c %x",
                         &start, &end, &r, &w, &x, &p, &offset );
@@ -392,7 +405,7 @@ BOOL32 VIRTUAL_Init(void)
                 VIRTUAL_CreateView( start, end - start, 0,
                                     VFLAG_SYSTEM, vprot, NULL );
             }
-            fclose( f );
+            close (fd);
         }
     }
 #endif  /* linux */

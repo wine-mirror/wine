@@ -37,6 +37,14 @@ typedef struct tagTIMERENTRY {
 
 static LPTIMERENTRY lpTimerList = NULL;
 
+/*
+ * FIXME
+ * is this the minimum resolution ? 
+ */
+#define MMSYSTIME_MININTERVAL (33)
+#define MMSYSTIME_MAXINTERVAL (65535)
+
+
 /**************************************************************************
  *           TIME_MMSysTimeCallback
  */
@@ -44,7 +52,7 @@ static VOID TIME_MMSysTimeCallback( HWND32 hwnd, UINT32 msg,
                                     UINT32 id, DWORD dwTime )
 {
     LPTIMERENTRY lpTimer = lpTimerList;
-    mmSysTimeMS.u.ms += 33;
+    mmSysTimeMS.u.ms += MMSYSTIME_MININTERVAL;
     mmSysTimeSMPTE.u.smpte.frame++;
     while (lpTimer != NULL) {
 	lpTimer->wCurTime--;
@@ -99,7 +107,7 @@ static void StartMMTime()
 	mmSysTimeSMPTE.u.smpte.frame = 0;
 	mmSysTimeSMPTE.u.smpte.fps = 0;
 	mmSysTimeSMPTE.u.smpte.dummy = 0;
-	SetTimer32( 0, 1, 33, TIME_MMSysTimeCallback );
+	SetTimer32( 0, 1, MMSYSTIME_MININTERVAL, TIME_MMSysTimeCallback );
     }
 }
 
@@ -111,6 +119,8 @@ WORD timeGetSystemTime(LPMMTIME lpTime, WORD wSize)
     dprintf_mmsys(stddeb, "timeGetSystemTime(%p, %u);\n", lpTime, wSize);
     if (!mmTimeStarted)
 	StartMMTime();
+    lpTime->wType = TIME_MS;
+    lpTime->u.ms = mmSysTimeMS.u.ms;
     return 0;
 }
 
@@ -185,7 +195,11 @@ WORD timeKillEvent(WORD wID)
  */
 WORD timeGetDevCaps(LPTIMECAPS lpCaps, WORD wSize)
 {
-    dprintf_mmsys(stddeb, "timeGetDevCaps(%p, %u) !\n", lpCaps, wSize);
+    dprintf_mmtime(stddeb, "timeGetDevCaps(%p, %u) !\n", lpCaps, wSize);
+    if (!mmTimeStarted)
+	StartMMTime();
+    lpCaps->wPeriodMin = MMSYSTIME_MININTERVAL;
+    lpCaps->wPeriodMax = MMSYSTIME_MAXINTERVAL;
     return 0;
 }
 
@@ -194,9 +208,11 @@ WORD timeGetDevCaps(LPTIMECAPS lpCaps, WORD wSize)
  */
 WORD timeBeginPeriod(WORD wPeriod)
 {
-    dprintf_mmsys(stddeb, "timeBeginPeriod(%u) !\n", wPeriod);
+    dprintf_mmtime(stddeb, "timeBeginPeriod(%u) !\n", wPeriod);
     if (!mmTimeStarted)
 	StartMMTime();
+    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
+        return TIMERR_NOCANDO;
     return 0;
 }
 
@@ -205,7 +221,9 @@ WORD timeBeginPeriod(WORD wPeriod)
  */
 WORD timeEndPeriod(WORD wPeriod)
 {
-    dprintf_mmsys(stddeb, "timeEndPeriod(%u) !\n", wPeriod);
+    dprintf_mmtime(stddeb, "timeEndPeriod(%u) !\n", wPeriod);
+    if (wPeriod < MMSYSTIME_MININTERVAL || wPeriod > MMSYSTIME_MAXINTERVAL) 
+        return TIMERR_NOCANDO;
     return 0;
 }
 
@@ -214,8 +232,9 @@ WORD timeEndPeriod(WORD wPeriod)
  */
 DWORD timeGetTime()
 {
-    dprintf_mmsys(stddeb, "timeGetTime(); !\n");
+    dprintf_mmtime(stddeb, "timeGetTime(); !\n");
     if (!mmTimeStarted)
 	StartMMTime();
-    return 0;
+    dprintf_mmtime(stddeb, "timeGetTime() // Time = %ld\n",mmSysTimeMS.u.ms);
+    return mmSysTimeMS.u.ms;
 }

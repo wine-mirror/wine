@@ -41,7 +41,7 @@ base	0
 107 stub WSAAsyncGetServByName
 108 stub WSACancelAsyncRequest
 109 stdcall WSASetBlockingHook(ptr) WSASetBlockingHook32
-110 stub WSAUnhookBlockingHook
+110 stdcall WSAUnhookBlockingHook() WSAUnhookBlockingHook32
 111 stub WSAGetLastError
 112 stub WSASetLastError
 113 stub WSACancelBlockingCall

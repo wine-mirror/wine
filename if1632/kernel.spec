@@ -225,7 +225,7 @@ type	win16
 227 pascal   RegFlushKey(long) RegFlushKey
 228 stub K228
 229 stub K229
-230 stub GlobalSmartPageLock
+230 pascal GlobalSmartPageLock(word) GlobalPageLock #?
 231 stub GlobalSmartPageUnlock
 232 stub RegLoadKey
 233 stub RegUnloadKey
@@ -243,8 +243,8 @@ type	win16
 319 stub FlushCachedFileHandle
 320 pascal16 IsTask(word) IsTask
 323 return IsRomModule 2 0
-324 stub LogError
-325 stub LogParamError
+324 pascal16 LogError(word ptr) LogError
+325 pascal16 LogParamError(word ptr ptr) LogParamError
 326 return IsRomFile 2 0
 327 stub KERNEL_327
 328 stub _DebugOutput
@@ -320,7 +320,7 @@ type	win16
 514 stub FreeLibrary32W
 515 pascal GetProcAddress32W(long ptr) GetProcAddress32
 516 stub GetVDMPointer32W
-517 stub CallProc32W
+517 pascal CallProc32W() WIN16_CallProc32W
 518 stub CallProcEx32W
 519 stub KERNEL_519
 522 stub KERNEL_522

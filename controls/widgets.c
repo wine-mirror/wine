@@ -30,6 +30,8 @@ extern LRESULT ListBoxWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                                LPARAM lParam );
 extern LRESULT PopupMenuWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                                  LPARAM lParam );
+extern LRESULT IconTitleWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+				 LPARAM lParam );
 
 /* Win16 class info */
 
@@ -85,7 +87,10 @@ static WNDCLASS32A WIDGETS_BuiltinClasses32[BIC32_NB_CLASSES] =
       0, 0, IDC_ARROW, 0, 0, DESKTOP_CLASS_NAME },
     /* BIC32_DIALOG */
     { CS_GLOBALCLASS | CS_SAVEBITS, DefDlgProc32A, 0, DLGWINDOWEXTRA,
-      0, 0, IDC_ARROW, 0, 0, DIALOG_CLASS_NAME }
+      0, 0, IDC_ARROW, 0, 0, DIALOG_CLASS_NAME },
+    /* BIC32_ICONTITLE */
+    { CS_GLOBALCLASS, IconTitleWndProc, 0, 0, 
+      0, 0, IDC_ARROW, 0, 0, ICONTITLE_CLASS_NAME }
 };
 
 static ATOM bicAtomTable[BIC32_NB_CLASSES];

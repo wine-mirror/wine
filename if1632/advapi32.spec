@@ -1,6 +1,6 @@
 name	advapi32
 type	win32
-base	1
+base	0
 
 0000 stub AbortSystemShutdownA
 0001 stub AbortSystemShutdownW
@@ -14,7 +14,7 @@ base	1
 0009 stub AdjustTokenGroups
 0010 stub AdjustTokenPrivileges
 0011 stdcall AllocateAndInitializeSid(ptr long long long long long long long long long ptr) AllocateAndInitializeSid
-0012 stub AllocateLocallyUniqueId
+0012 stdcall AllocateLocallyUniqueId(ptr) AllocateLocallyUniqueId
 0013 stub AreAllAccessesGranted
 0014 stub AreAnyAccessesGranted
 0015 stub BackupEventLogA
@@ -68,7 +68,7 @@ base	1
 0063 stdcall GetSidLengthRequired(long) GetSidLengthRequired
 0064 stdcall GetSidSubAuthority(ptr long) GetSidSubAuthority
 0065 stdcall GetSidSubAuthorityCount(ptr) GetSidSubAuthorityCount
-0066 stub GetTokenInformation
+0066 stdcall GetTokenInformation(long long ptr long ptr) GetTokenInformation
 0067 stdcall GetUserNameA(ptr ptr) GetUserName32A
 0068 stdcall GetUserNameW(ptr ptr) GetUserName32W
 0069 stub ImpersonateLoggedOnUser
@@ -112,11 +112,11 @@ base	1
 0107 stub OpenEventLogA
 0108 stub OpenEventLogW
 0109 stdcall OpenProcessToken(long long ptr) OpenProcessToken
-0110 stub OpenSCManagerA
-0111 stub OpenSCManagerW
+0110 stdcall OpenSCManagerA(ptr ptr long) OpenSCManagerA
+0111 stdcall OpenSCManagerW(ptr ptr long) OpenSCManagerW
 0112 stub OpenServiceA
 0113 stub OpenServiceW
-0114 stub OpenThreadToken
+0114 stdcall OpenThreadToken(long long long ptr) OpenThreadToken
 0115 stub PrivilegeCheck
 0116 stub PrivilegedServiceAuditAlarmA
 0117 stub PrivilegedServiceAuditAlarmW
@@ -188,7 +188,7 @@ base	1
 0183 stub SetFileSecurityW
 0184 stub SetKernelObjectSecurity
 0185 stub SetPrivateObjectSecurity
-0186 stub SetSecurityDescriptorDacl
+0186 stdcall SetSecurityDescriptorDacl(ptr long ptr long) RtlSetDaclSecurityDescriptor
 0187 stub SetSecurityDescriptorGroup
 0188 stub SetSecurityDescriptorOwner
 0189 stub SetSecurityDescriptorSacl

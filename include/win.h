@@ -40,6 +40,7 @@ typedef enum
     BIC32_SCROLL,
     BIC32_DESKTOP,
     BIC32_DIALOG,
+    BIC32_ICONTITLE,
     BIC32_NB_CLASSES
 } BUILTIN_CLASS32;
 
@@ -62,9 +63,6 @@ typedef struct tagWND
     HINSTANCE16    hInstance;     /* Window hInstance (from CreateWindow) */
     RECT16         rectClient;    /* Client area rel. to parent client area */
     RECT16         rectWindow;    /* Whole window rel. to parent client area */
-    RECT16         rectNormal;    /* Window rect. when in normal state */
-    POINT16        ptIconPos;     /* Icon position */
-    POINT16        ptMaxPos;      /* Maximized window position */
     LPSTR          text;          /* Window text */
     void          *pVScroll;      /* Vertical scroll-bar info */
     void          *pHScroll;      /* Horizontal scroll-bar info */
@@ -83,6 +81,14 @@ typedef struct tagWND
     DWORD          wExtra[1];     /* Window extra bytes */
 } WND;
 
+typedef struct
+{
+    RECT16	   rectNormal;
+    POINT16	   ptIconPos;
+    POINT16	   ptMaxPos;
+    HWND16	   hwndIconTitle;
+} INTERNALPOS, *LPINTERNALPOS;
+
   /* WND flags values */
 #define WIN_NEEDS_BEGINPAINT   0x0001 /* WM_PAINT sent to window */
 #define WIN_NEEDS_ERASEBKGND   0x0002 /* WM_ERASEBKGND must be sent to window*/
@@ -97,33 +103,41 @@ typedef struct tagWND
 #define WIN_ISWIN32            0x0400 /* Understands Win32 messages */
 #define WIN_SAVEUNDER_OVERRIDE 0x0800
 
+  /* BuildWinArray() flags */
+#define BWA_SKIPDISABLED	0x0001
+#define BWA_SKIPHIDDEN		0x0002
+#define BWA_SKIPOWNED		0x0004
+#define BWA_SKIPICONIC		0x0008
+
   /* Window functions */
-extern WND *WIN_FindWndPtr( HWND32 hwnd );
-extern WND *WIN_GetDesktop(void);
-extern void WIN_DumpWindow( HWND32 hwnd );
-extern void WIN_WalkWindows( HWND32 hwnd, int indent );
+extern WND*   WIN_FindWndPtr( HWND32 hwnd );
+extern WND*   WIN_GetDesktop(void);
+extern void   WIN_DumpWindow( HWND32 hwnd );
+extern void   WIN_WalkWindows( HWND32 hwnd, int indent );
 extern Window WIN_GetXWindow( HWND32 hwnd );
 extern BOOL32 WIN_UnlinkWindow( HWND32 hwnd );
 extern BOOL32 WIN_LinkWindow( HWND32 hwnd, HWND32 hwndInsertAfter );
 extern HWND32 WIN_FindWinToRepaint( HWND32 hwnd, HQUEUE16 hQueue );
-extern void WIN_SendParentNotify( HWND32 hwnd, WORD event,
-                                  WORD idChild, LPARAM lValue );
-extern void WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew );
+extern void   WIN_SendParentNotify( HWND32 hwnd, WORD event,
+                                    WORD idChild, LPARAM lValue );
+extern void   WIN_ResetQueueWindows( WND* wnd, HQUEUE16 hQueue, HQUEUE16 hNew );
 extern BOOL32 WIN_CreateDesktopWindow(void);
 extern HWND32 WIN_GetTopParent( HWND32 hwnd );
 extern BOOL32 WIN_IsWindowDrawable(WND*, BOOL32 );
 extern HINSTANCE16 WIN_GetWindowInstance( HWND32 hwnd );
-extern WND **WIN_BuildWinArray( WND *wndPtr );
+extern WND**  WIN_BuildWinArray( WND *wndPtr, UINT32 bwa, UINT32* pnum );
 
-extern void DEFWND_SetText( WND *wndPtr, LPCSTR text );  /* windows/defwnd.c */
+extern void DEFWND_SetText( WND *wndPtr, LPCSTR text );		      /* windows/defwnd.c */
 
-extern void PROPERTY_RemoveWindowProps( WND *pWnd );   /* windows/property.c */
+extern void PROPERTY_RemoveWindowProps( WND *pWnd );  		      /* windows/property.c */
 
 extern BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
                                   HRGN32 hrgnUpdate, UINT32 flags,
-                                  UINT32 control );    /* windows/painting.c */
+                                  UINT32 control );		      /* windows/painting.c */
 
 extern BOOL32 WIDGETS_IsControl32( WND* pWnd, BUILTIN_CLASS32 cls );  /* controls/widgets.c */
+
+extern HWND32 ICONTITLE_Create( WND* );				      /* controls/icontitle.c */
 
 extern Display * display;
 extern Screen * screen;

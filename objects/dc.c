@@ -14,6 +14,7 @@
 #include "color.h"
 #include "debug.h"
 #include "font.h"
+#include "x11font.h"
 
 extern void CLIPPING_UpdateGCRegion( DC * dc );     /* objects/clipping.c */
 
@@ -301,17 +302,28 @@ BOOL32 DC_SetupGCForPen( DC * dc )
 
     if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc); 
 
-    if ((screenDepth <= 8) &&  /* FIXME: Should check for palette instead */
-        ((dc->w.ROPmode == R2_BLACK) || (dc->w.ROPmode == R2_WHITE)))
+    switch (dc->w.ROPmode)
     {
-        val.function   = GXcopy;
-        val.foreground = COLOR_ToPhysical( NULL, (dc->w.ROPmode == R2_BLACK) ?
-                                               RGB(0,0,0) : RGB(255,255,255) );
-    }
-    else
-    {
-        val.function   = DC_XROPfunction[dc->w.ROPmode-1];
-        val.foreground = dc->u.x.pen.pixel;
+    case R2_BLACK :
+	val.foreground = BlackPixel(display, DefaultScreen(display));
+	val.function = GXcopy;
+	break;
+    case R2_WHITE :
+	val.foreground = WhitePixel(display, DefaultScreen(display));
+	val.function = GXcopy;
+	break;
+    case R2_XORPEN :
+	val.foreground = dc->u.x.pen.pixel;
+	/* It is very unlikely someone wants to XOR with 0 */
+	/* This fixes the rubber-drawings in paintbrush */
+	if (val.foreground == 0)
+	    val.foreground = BlackPixel(display, DefaultScreen(display))
+			    ^ WhitePixel(display, DefaultScreen(display));
+	val.function = GXxor;
+	break;
+    default :
+	val.foreground = dc->u.x.pen.pixel;
+	val.function   = DC_XROPfunction[dc->w.ROPmode-1];
     }
     val.background = dc->w.backgroundPixel;
     val.fill_style = FillSolid;
@@ -341,25 +353,27 @@ BOOL32 DC_SetupGCForPen( DC * dc )
  */
 BOOL32 DC_SetupGCForText( DC * dc )
 {
-    XGCValues val;
+    XFontStruct* xfs = XFONT_GetFontStruct( dc->u.x.font );
 
-    if (!dc->u.x.font.fstruct)
+    if( xfs )
     {
-        fprintf( stderr, "DC_SetupGCForText: fstruct is NULL. Please report this\n" );
-        return FALSE;
-    }
-   
-    if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc);
+	XGCValues val;
 
-    val.function   = GXcopy;  /* Text is always GXcopy */
-    val.foreground = dc->w.textPixel;
-    val.background = dc->w.backgroundPixel;
-    val.fill_style = FillSolid;
-    val.font       = dc->u.x.font.fstruct->fid;
-    XChangeGC( display, dc->u.x.gc, 
-	       GCFunction | GCForeground | GCBackground | GCFillStyle |
-	       GCFont, &val );
-    return TRUE;
+	if (dc->w.flags & DC_DIRTY) CLIPPING_UpdateGCRegion(dc);
+
+	val.function   = GXcopy;  /* Text is always GXcopy */
+	val.foreground = dc->w.textPixel;
+	val.background = dc->w.backgroundPixel;
+	val.fill_style = FillSolid;
+	val.font       = xfs->fid;
+
+	XChangeGC( display, dc->u.x.gc,
+		   GCFunction | GCForeground | GCBackground | GCFillStyle |
+		   GCFont, &val );
+	return TRUE;
+    } 
+    fprintf( stderr, "DC_SetupGCForText: physical font failure\n" );
+    return FALSE;
 }
 
 

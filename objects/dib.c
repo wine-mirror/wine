@@ -49,6 +49,9 @@ int DIB_GetXImageWidthBytes( int width, int depth )
 {
     int		i;
 
+    if (!ximageDepthTable[0]) {
+	    DIB_Init();
+    }
     for( i = 0; bitmapDepthTable[i] ; i++ )
 	 if( bitmapDepthTable[i] == depth )
 	     return (4 * ((width * ximageDepthTable[i] + 31)/32));
@@ -97,14 +100,14 @@ int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse )
     if (info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
     {
         BITMAPCOREHEADER *core = (BITMAPCOREHEADER *)info;
-        colors = (core->bcBitCount != 24) ? 1 << core->bcBitCount : 0;
+        colors = (core->bcBitCount <= 8) ? 1 << core->bcBitCount : 0;
         return sizeof(BITMAPCOREHEADER) + colors *
              ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBTRIPLE) : sizeof(WORD));
     }
     else  /* assume BITMAPINFOHEADER */
     {
         colors = info->bmiHeader.biClrUsed;
-        if (!colors && (info->bmiHeader.biBitCount != 24))
+        if (!colors && (info->bmiHeader.biBitCount <= 8))
             colors = 1 << info->bmiHeader.biBitCount;
         return sizeof(BITMAPINFOHEADER) + colors *
                ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBQUAD) : sizeof(WORD));
@@ -590,10 +593,12 @@ static int DIB_SetImageBits( DC *dc, DWORD lines, WORD depth, LPSTR bits,
 
       /* Build the color mapping table */
 
-    if (infoBpp == 24) colorMapping = NULL;
-    else
+    if (infoBpp > 8) {
+	    	colorMapping = NULL;
+    } else {
         if (!(colorMapping = DIB_BuildColorMap( dc, coloruse, depth, info )))
             return 0;
+    }
 
     if( dc->w.flags & DC_DIRTY ) CLIPPING_UpdateGCRegion(dc);
 

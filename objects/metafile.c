@@ -304,18 +304,29 @@ BOOL16 EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,
 {
     METAHEADER *mh = (METAHEADER *)GlobalLock16(hmf);
     METARECORD *mr;
+    HANDLETABLE16 *ht;
     HGLOBAL16 hHT;
-    SEGPTR ht, spRecord;
+    SEGPTR spht, spRecord;
     int offset = 0;
-  
+    WORD i;
+    HPEN32 hPen;
+    HBRUSH32 hBrush;
+    HFONT32 hFont;
+    DC *dc;
+    
     dprintf_metafile(stddeb,"EnumMetaFile(%04x, %04x, %08lx, %08lx)\n",
 		     hdc, hmf, (DWORD)lpEnumFunc, lpData);
+
+    if (!(dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC ))) return 0;
+    hPen = dc->w.hPen;
+    hBrush = dc->w.hBrush;
+    hFont = dc->w.hFont;
    
     /* create the handle table */
     
     hHT = GlobalAlloc16(GMEM_MOVEABLE | GMEM_ZEROINIT,
 		     sizeof(HANDLETABLE16) * mh->mtNoObjects);
-    ht = WIN16_GlobalLock16(hHT);
+    spht = WIN16_GlobalLock16(hHT);
    
     offset = mh->mtHeaderSize * 2;
     
@@ -325,13 +336,24 @@ BOOL16 EnumMetaFile16( HDC16 hdc, HMETAFILE16 hmf, MFENUMPROC16 lpEnumFunc,
     while (offset < (mh->mtSize * 2))
     {
 	mr = (METARECORD *)((char *)mh + offset);
-        if (!lpEnumFunc( hdc, (HANDLETABLE16 *)ht,
+        if (!lpEnumFunc( hdc, (HANDLETABLE16 *)spht,
                          (METARECORD *)((UINT32)spRecord + offset),
                          mh->mtNoObjects, (LONG)lpData))
 	    break;
 
 	offset += (mr->rdSize * 2);
     }
+
+    SelectObject32(hdc, hBrush);
+    SelectObject32(hdc, hPen);
+    SelectObject32(hdc, hFont);
+
+    ht = (HANDLETABLE16 *)GlobalLock16(hHT);
+
+    /* free objects in handle table */
+    for(i = 0; i < mh->mtNoObjects; i++)
+      if(*(ht->objectHandle + i) != 0)
+        DeleteObject32(*(ht->objectHandle + i));
 
     /* free handle table */
     GlobalFree16(hHT);
@@ -1165,9 +1187,13 @@ BOOL32 MF_ExtTextOut(DC*dc, short x, short y, UINT16 flags, const RECT16 *rect,
     DWORD len;
     HGLOBAL16 hmr;
     METARECORD *mr;
-
+    
+    if((!flags && rect) || (flags && !rect))
+	fprintf(stderr, "MF_ExtTextOut: Inconsistent flags and rect\n");
     len = sizeof(METARECORD) + (((count + 1) >> 1) * 2) + 2 * sizeof(short)
-	    + sizeof(UINT16) + sizeof(RECT16);
+	    + sizeof(UINT16);
+    if(rect)
+        len += sizeof(RECT16);
     if (lpDx)
      len+=count*sizeof(INT16);
     if (!(hmr = GlobalAlloc16(GMEM_MOVEABLE, len)))
@@ -1182,9 +1208,10 @@ BOOL32 MF_ExtTextOut(DC*dc, short x, short y, UINT16 flags, const RECT16 *rect,
     *(mr->rdParam + 2) = count;
     *(mr->rdParam + 3) = flags;
     if (rect) memcpy(mr->rdParam + 4, rect, sizeof(RECT16));
-    memcpy(mr->rdParam + 8, str, count);
+    memcpy(mr->rdParam + (rect ? 8 : 4), str, count);
     if (lpDx)
-     memcpy(mr->rdParam + 8+ ((count + 1) >> 1),lpDx,count*sizeof(INT16));
+     memcpy(mr->rdParam + (rect ? 8 : 4) + ((count + 1) >> 1),lpDx,
+      count*sizeof(INT16));
     ret = MF_WriteRecord( dc, mr, mr->rdSize * 2);
     GlobalFree16(hmr);
     return ret;

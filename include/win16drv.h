@@ -165,13 +165,13 @@ extern WORD PRTDRV_EnumDFonts(LPPDEVICE lpDestDev, LPSTR lpFaceName,
 		       FARPROC16 lpCallbackFunc, LPVOID lpClientData);
 extern DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle, 
 				  LPVOID lpInObj, LPVOID lpOutObj,
-				  LPTEXTXFORM16 lpTextXForm);
+				  SEGPTR lpTextXForm);
 
 extern BOOL16 PRTDRV_EnumObj(LPPDEVICE lpDestDev, WORD iStyle, FARPROC16 lpfn, LPVOID lpb);
 extern DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
 			       RECT16 *lpClipRect, LPCSTR lpString, WORD wCount, 
-			       SEGPTR lpFontInfo, LPDRAWMODE lpDrawMode, 
-			       LPTEXTXFORM16 lpTextXForm, SHORT *lpCharWidths,
+			       SEGPTR lpFontInfo,SEGPTR lpDrawMode, 
+			       SEGPTR lpTextXForm, SHORT *lpCharWidths,
 			       RECT16 *     lpOpaqueRect, WORD wOptions);
 
 
@@ -190,5 +190,13 @@ extern BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 extern HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle );
 
 
+
+/*
+ * Wine 16bit driver global variables
+ */
+extern SEGPTR		win16drv_SegPtr_TextXForm;
+extern LPTEXTXFORM16 	win16drv_TextXFormP;
+extern SEGPTR		win16drv_SegPtr_DrawMode;
+extern LPDRAWMODE 	win16drv_DrawModeP;
 
 #endif  /* __WINE_WIN16DRV_H */

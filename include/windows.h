@@ -235,9 +235,11 @@ typedef struct
 DECL_WINELIB_TYPE_AW(MDICREATESTRUCT);
 DECL_WINELIB_TYPE_AW(LPMDICREATESTRUCT);
 
-#define MDITILE_VERTICAL    0    
-#define MDITILE_HORIZONTAL  1
-#define MDIS_ALLCHILDSTYLES 0x0001
+#define MDITILE_VERTICAL     0x0000   
+#define MDITILE_HORIZONTAL   0x0001
+#define MDITILE_SKIPDISABLED 0x0002
+
+#define MDIS_ALLCHILDSTYLES  0x0001
 
 typedef struct {
     DWORD   styleOld;
@@ -980,6 +982,10 @@ DECL_WINELIB_TYPE(LPLOGBRUSH);
 #define LF_FACESIZE     32
 #define LF_FULLFACESIZE 64
 
+#define RASTER_FONTTYPE     0x0001
+#define DEVICE_FONTTYPE     0x0002
+#define TRUETYPE_FONTTYPE   0x0004
+
 typedef struct
 {
     INT16  lfHeight;
@@ -1168,7 +1174,15 @@ typedef struct
 #define SYMBOL_CHARSET	      2
 #define SHIFTJIS_CHARSET      128
 #define HANGEUL_CHARSET       129
+#define GB2313_CHARSET        134
 #define CHINESEBIG5_CHARSET   136
+#define GREEK_CHARSET         161	/* CP1253 */
+#define TURKISH_CHARSET       162	/* CP1254, -iso8859-9 */
+#define HEBREW_CHARSET        177	/* CP1255 */
+#define ARABIC_CHARSET        178	/* CP1256 */
+#define BALTIC_CHARSET        186	/* CP1257 */
+#define RUSSIAN_CHARSET       204	/* CP1251 */
+#define EE_CHARSET	      238	/* CP1250, -iso8859-2 */
 #define OEM_CHARSET	      255
 
   /* lfOutPrecision values */
@@ -1405,8 +1419,8 @@ typedef INT32 (*FONTENUMPROCEX32A)(LPENUMLOGFONTEX32A,LPNEWTEXTMETRICEX32A,UINT3
 typedef INT32 (*FONTENUMPROCEX32W)(LPENUMLOGFONTEX32W,LPNEWTEXTMETRICEX32W,UINT32,LPARAM);
 DECL_WINELIB_TYPE_AW(FONTENUMPROCEX);
 
-  /* tmPitchAndFamily values */
-#define TMPF_FIXED_PITCH    1
+  /* tmPitchAndFamily bits */
+#define TMPF_FIXED_PITCH    1		/* means variable pitch */
 #define TMPF_VECTOR	    2
 #define TMPF_TRUETYPE	    4
 #define TMPF_DEVICE	    8
@@ -2304,6 +2318,7 @@ typedef struct tagCOMSTAT
 #define	WF_SMALLFRAME	0x0200
 #define	WF_80x87	0x0400
 #define	WF_PAGING	0x0800
+#define	WF_HASCPUID     0x2000
 #define	WF_WIN32WOW     0x4000	/* undoc */
 #define	WF_WLO          0x8000
 
@@ -2916,6 +2931,50 @@ typedef struct
 #define BF_DIAGONAL_ENDTOPLEFT      (BF_DIAGONAL | BF_TOP | BF_LEFT)
 #define BF_DIAGONAL_ENDBOTTOMLEFT   (BF_DIAGONAL | BF_BOTTOM | BF_LEFT)
 #define BF_DIAGONAL_ENDBOTTOMRIGHT  (BF_DIAGONAL | BF_BOTTOM | BF_RIGHT)
+
+/* DrawFrameControl() uType's */
+
+#define DFC_CAPTION             1
+#define DFC_MENU                2
+#define DFC_SCROLL              3
+#define DFC_BUTTON              4
+
+/* uState's */
+
+#define DFCS_CAPTIONCLOSE       0x0000
+#define DFCS_CAPTIONMIN         0x0001
+#define DFCS_CAPTIONMAX         0x0002
+#define DFCS_CAPTIONRESTORE     0x0003
+#define DFCS_CAPTIONHELP        0x0004		/* Windows 95 only */
+
+#define DFCS_MENUARROW          0x0000
+#define DFCS_MENUCHECK          0x0001
+#define DFCS_MENUBULLET         0x0002
+#define DFCS_MENUARROWRIGHT     0x0004
+
+#define DFCS_SCROLLUP            0x0000
+#define DFCS_SCROLLDOWN          0x0001
+#define DFCS_SCROLLLEFT          0x0002
+#define DFCS_SCROLLRIGHT         0x0003
+#define DFCS_SCROLLCOMBOBOX      0x0005
+#define DFCS_SCROLLSIZEGRIP      0x0008
+#define DFCS_SCROLLSIZEGRIPRIGHT 0x0010
+
+#define DFCS_BUTTONCHECK        0x0000
+#define DFCS_BUTTONRADIOIMAGE   0x0001
+#define DFCS_BUTTONRADIOMASK    0x0002		/* to draw nonsquare button */
+#define DFCS_BUTTONRADIO        0x0004
+#define DFCS_BUTTON3STATE       0x0008
+#define DFCS_BUTTONPUSH         0x0010
+
+/* additional state of the control */
+
+#define DFCS_INACTIVE           0x0100
+#define DFCS_PUSHED             0x0200
+#define DFCS_CHECKED            0x0400
+#define DFCS_ADJUSTRECT         0x2000		/* exclude surrounding edge */
+#define DFCS_FLAT               0x4000
+#define DFCS_MONO               0x8000
 
 /* Window Styles */
 #define WS_OVERLAPPED    0x00000000L
@@ -4093,6 +4152,98 @@ typedef INT16 (*MFENUMPROC16)(HDC16,HANDLETABLE16*,METARECORD*,INT16,LPARAM);
 typedef INT32 (*MFENUMPROC32)(HDC32,HANDLETABLE32*,METARECORD*,INT32,LPARAM);
 DECL_WINELIB_TYPE(MFENUMPROC);
 
+#ifndef NOLOGERROR
+
+/* LogParamError and LogError values */
+
+/* Error modifier bits */
+#define ERR_WARNING             0x8000
+#define ERR_PARAM               0x4000
+
+#define ERR_SIZE_MASK           0x3000
+#define ERR_BYTE                0x1000
+#define ERR_WORD                0x2000
+#define ERR_DWORD               0x3000
+
+/* LogParamError() values */
+
+/* Generic parameter values */
+#define ERR_BAD_VALUE           0x6001
+#define ERR_BAD_FLAGS           0x6002
+#define ERR_BAD_INDEX           0x6003
+#define ERR_BAD_DVALUE          0x7004
+#define ERR_BAD_DFLAGS          0x7005
+#define ERR_BAD_DINDEX          0x7006
+#define ERR_BAD_PTR             0x7007
+#define ERR_BAD_FUNC_PTR        0x7008
+#define ERR_BAD_SELECTOR        0x6009
+#define ERR_BAD_STRING_PTR      0x700a
+#define ERR_BAD_HANDLE          0x600b
+
+/* KERNEL parameter errors */
+#define ERR_BAD_HINSTANCE       0x6020
+#define ERR_BAD_HMODULE         0x6021
+#define ERR_BAD_GLOBAL_HANDLE   0x6022
+#define ERR_BAD_LOCAL_HANDLE    0x6023
+#define ERR_BAD_ATOM            0x6024
+#define ERR_BAD_HFILE           0x6025
+
+/* USER parameter errors */
+#define ERR_BAD_HWND            0x6040
+#define ERR_BAD_HMENU           0x6041
+#define ERR_BAD_HCURSOR         0x6042
+#define ERR_BAD_HICON           0x6043
+#define ERR_BAD_HDWP            0x6044
+#define ERR_BAD_CID             0x6045
+#define ERR_BAD_HDRVR           0x6046
+
+/* GDI parameter errors */
+#define ERR_BAD_COORDS          0x7060
+#define ERR_BAD_GDI_OBJECT      0x6061
+#define ERR_BAD_HDC             0x6062
+#define ERR_BAD_HPEN            0x6063
+#define ERR_BAD_HFONT           0x6064
+#define ERR_BAD_HBRUSH          0x6065
+#define ERR_BAD_HBITMAP         0x6066
+#define ERR_BAD_HRGN            0x6067
+#define ERR_BAD_HPALETTE        0x6068
+#define ERR_BAD_HMETAFILE       0x6069
+
+
+/* LogError() values */
+
+/* KERNEL errors */
+#define ERR_GALLOC              0x0001
+#define ERR_GREALLOC            0x0002
+#define ERR_GLOCK               0x0003
+#define ERR_LALLOC              0x0004
+#define ERR_LREALLOC            0x0005
+#define ERR_LLOCK               0x0006
+#define ERR_ALLOCRES            0x0007
+#define ERR_LOCKRES             0x0008
+#define ERR_LOADMODULE          0x0009
+
+/* USER errors */
+#define ERR_CREATEDLG           0x0040
+#define ERR_CREATEDLG2          0x0041
+#define ERR_REGISTERCLASS       0x0042
+#define ERR_DCBUSY              0x0043
+#define ERR_CREATEWND           0x0044
+#define ERR_STRUCEXTRA          0x0045
+#define ERR_LOADSTR             0x0046
+#define ERR_LOADMENU            0x0047
+#define ERR_NESTEDBEGINPAINT    0x0048
+#define ERR_BADINDEX            0x0049
+#define ERR_CREATEMENU          0x004a
+
+/* GDI errors */
+#define ERR_CREATEDC            0x0080
+#define ERR_CREATEMETA          0x0081
+#define ERR_DELOBJSELECTED      0x0082
+#define ERR_SELBITMAP           0x0083
+
+
+
 /* Debugging support (DEBUG SYSTEM ONLY) */
 typedef struct
 {
@@ -4140,6 +4291,8 @@ typedef struct
 #define DBF_PENWIN          0x0020
 #define DBF_APPLICATION     0x0008
 #define DBF_DRIVER          0x0010
+
+#endif /* NOLOGERROR */
 
 /* Win32-specific structures */
 
@@ -4532,6 +4685,8 @@ typedef struct _ULARGE_INTEGER
     DWORD    HighPart;
 } ULARGE_INTEGER,*LPULARGE_INTEGER;
 
+typedef LARGE_INTEGER LUID,*LPLUID; /* locally unique ids */
+
 /* SetLastErrorEx types */
 #define	SLE_ERROR	0x00000001
 #define	SLE_MINORERROR	0x00000002
@@ -4814,6 +4969,39 @@ typedef struct
 DECL_WINELIB_TYPE_AW(DOCINFO);
 DECL_WINELIB_TYPE_AW(LPDOCINFO);
 
+typedef struct {
+	DWORD	dwScope;
+	DWORD	dwType;
+	DWORD	dwDisplayType;
+	DWORD	dwUsage;
+	LPSTR	lpLocalName;
+	LPSTR	lpRemoteName;
+	LPSTR	lpComment ;
+	LPSTR	lpProvider;
+} NETRESOURCE32A,*LPNETRESOURCE32A;
+
+typedef struct {
+	DWORD	dwScope;
+	DWORD	dwType;
+	DWORD	dwDisplayType;
+	DWORD	dwUsage;
+	LPWSTR	lpLocalName;
+	LPWSTR	lpRemoteName;
+	LPWSTR	lpComment ;
+	LPWSTR	lpProvider;
+} NETRESOURCE32W,*LPNETRESOURCE32W;
+
+DECL_WINELIB_TYPE_AW(NETRESOURCE);
+DECL_WINELIB_TYPE_AW(LPNETRESOURCE);
+
+typedef struct {
+	DWORD	cbStructure;
+	DWORD	dwFlags;
+	DWORD	dwSpeed;
+	DWORD	dwDelay;
+	DWORD	dwOptDataSize;
+} NETCONNECTINFOSTRUCT,*LPNETCONNECTINFOSTRUCT;
+
 #pragma pack(4)
 
 /* Declarations for functions that exist only in Win16 */
@@ -4899,6 +5087,8 @@ BOOL16     IsSharedSelector(HANDLE16);
 BOOL16     IsTask(HTASK16);
 HTASK16    IsTaskLocked(void);
 BOOL16     IsValidMetaFile(HMETAFILE16);
+VOID       LogError(UINT16, LPVOID);
+VOID       LogParamError(UINT16,FARPROC16,LPVOID);
 BOOL16     LocalInit(HANDLE16,WORD,WORD);
 FARPROC16  LocalNotify(FARPROC16);
 HTASK16    LockCurrentTask(BOOL16);

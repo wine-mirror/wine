@@ -6,13 +6,15 @@
 
 #include <string.h>
 #include "x11drv.h"
+#include "color.h"
 #include "bitmap.h"
-#include "gdi.h"
-
 
 static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData );
 static BOOL32 X11DRV_DeleteDC( DC *dc );
+
+static INT32 X11DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
+                            SEGPTR lpInData, SEGPTR lpOutData );
 
 static const DC_FUNCTIONS X11DRV_Funcs =
 {
@@ -23,13 +25,13 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     X11DRV_DeleteDC,                 /* pDeleteDC */
     NULL,                            /* pDeleteObject */
     X11DRV_Ellipse,                  /* pEllipse */
-    NULL,                            /* pEnumDeviceFonts */
-    NULL,                            /* pEscape */
+    X11DRV_EnumDeviceFonts,          /* pEnumDeviceFonts */
+    X11DRV_Escape,                   /* pEscape */
     NULL,                            /* pExcludeClipRect */
     NULL,                            /* pExcludeVisRect */
     X11DRV_ExtFloodFill,             /* pExtFloodFill */
     X11DRV_ExtTextOut,               /* pExtTextOut */
-    NULL,                            /* pGetCharWidth */
+    X11DRV_GetCharWidth,             /* pGetCharWidth */
     X11DRV_GetPixel,                 /* pGetPixel */
     X11DRV_GetTextExtentPoint,       /* pGetTextExtentPoint */
     X11DRV_GetTextMetrics,           /* pGetTextMetrics */
@@ -79,13 +81,65 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL                             /* pStretchDIBits */
 };
 
-static DeviceCaps X11DRV_DevCaps;
+static DeviceCaps X11DRV_DevCaps = {
+/* version */		0, 
+/* technology */	DT_RASDISPLAY,
+/* size, resolution */	0, 0, 0, 0, 0, 
+/* device objects */	1, 16 + 6, 16, 0, 0, 100, 0,	
+/* curve caps */	CC_CIRCLES | CC_PIE | CC_CHORD | CC_ELLIPSES |
+			CC_WIDE | CC_STYLED | CC_WIDESTYLED | CC_INTERIORS | CC_ROUNDRECT,
+/* line caps */		LC_POLYLINE | LC_MARKER | LC_POLYMARKER | LC_WIDE |
+			LC_STYLED | LC_WIDESTYLED | LC_INTERIORS,
+/* polygon caps */	PC_POLYGON | PC_RECTANGLE | PC_WINDPOLYGON |
+			PC_SCANLINE | PC_WIDE | PC_STYLED | PC_WIDESTYLED | PC_INTERIORS,
+/* text caps */		0,
+/* regions */		CP_REGION,
+/* raster caps */	RC_BITBLT | RC_BANDING | RC_SCALING | RC_BITMAP64 |
+			RC_DI_BITMAP | RC_DIBTODEV | RC_BIGFONT | RC_STRETCHBLT | RC_STRETCHDIB | RC_DEVBITS,
+/* aspects */		36, 36, 51,
+/* pad1 */		{ 0 },
+/* log pixels */	0, 0, 
+/* pad2 */		{ 0 },
+/* palette size */	0,
+/* ..etc */		0, 0 };
 
 /**********************************************************************
  *	     X11DRV_Init
  */
 BOOL32 X11DRV_Init(void)
 {
+    extern BOOL32 COLOR_Init();
+
+    /* FIXME: colormap management should be merged with the X11DRV */
+
+    if( !COLOR_Init() ) return FALSE;
+
+    /* Finish up device caps */
+
+#if 0
+    printf("Display:\nHeight = %-4i pxl, %-4i mm\nWidth  = %-4i pxl, %-4i mm\n",
+	    HeightOfScreen(screen), HeightMMOfScreen(screen),
+	    WidthOfScreen(screen), WidthMMOfScreen(screen) );
+#endif
+
+    X11DRV_DevCaps.version = 0x300;
+    X11DRV_DevCaps.horzSize = WidthMMOfScreen(screen) * screenWidth / WidthOfScreen(screen);
+    X11DRV_DevCaps.vertSize = HeightMMOfScreen(screen) * screenHeight / HeightOfScreen(screen);
+    X11DRV_DevCaps.horzRes = screenWidth;
+    X11DRV_DevCaps.vertRes = screenHeight;
+    X11DRV_DevCaps.bitsPixel = screenDepth;
+
+    if( COLOR_GetSystemPaletteFlags() & COLOR_VIRTUAL ) 
+	X11DRV_DevCaps.sizePalette = 0;
+    else
+    {
+	X11DRV_DevCaps.rasterCaps |= RC_PALETTE;
+	X11DRV_DevCaps.sizePalette = DefaultVisual(display,DefaultScreen(display))->map_entries;
+    }
+
+    X11DRV_DevCaps.logPixelsX = (int)(X11DRV_DevCaps.horzRes * 25.4 / X11DRV_DevCaps.horzSize);
+    X11DRV_DevCaps.logPixelsY = (int)(X11DRV_DevCaps.vertRes * 25.4 / X11DRV_DevCaps.vertSize);
+
     /* Create default bitmap */
 
     if (!X11DRV_BITMAP_Init()) return FALSE;
@@ -94,13 +148,12 @@ BOOL32 X11DRV_Init(void)
 
     if (!X11DRV_BRUSH_Init()) return FALSE;
 
-    /* Initialize fonts */
+    /* Initialize fonts and text caps */
 
-    if (!X11DRV_FONT_Init()) return FALSE;
+    if (!X11DRV_FONT_Init( &X11DRV_DevCaps )) return FALSE;
 
     return DRIVER_RegisterDriver( "DISPLAY", &X11DRV_Funcs );
 }
-
 
 /**********************************************************************
  *	     X11DRV_CreateDC
@@ -109,8 +162,6 @@ static BOOL32 X11DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                LPCSTR output, const DEVMODE16* initData )
 {
     X11DRV_PDEVICE *physDev;
-
-    if (!X11DRV_DevCaps.version) DC_FillDevCaps( &X11DRV_DevCaps );
 
     physDev = &dc->u.x;  /* for now */
 
@@ -157,3 +208,24 @@ static BOOL32 X11DRV_DeleteDC( DC *dc )
     XFreeGC( display, physDev->gc );
     return TRUE;
 }
+
+/**********************************************************************
+ *           X11DRV_Escape
+ */
+static INT32 X11DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
+                            SEGPTR lpInData, SEGPTR lpOutData )
+{
+    switch( nEscape )
+    {
+	case GETSCALINGFACTOR:
+	     if( lpOutData )
+	     {
+		 LPPOINT16 lppt = (LPPOINT16)PTR_SEG_TO_LIN(lpOutData);
+		 lppt->x = lppt->y = 0;	/* no device scaling */
+		 return 1;
+	     }
+	     break;
+    }
+    return 0;
+}
+

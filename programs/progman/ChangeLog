@@ -1,3 +1,8 @@
+Tue Jun  3 07:34:26 1997  Marcel Baur <mbaur@g26.ethz.ch>
+
+	* [Va.rc] (new)
+	Added Vallader (Rumantsch Ladin) language support.
+
 Wed Feb 12 00:58:37 1997  Elker Cavina <elker@mail.asianet.it>
 
 	* [It.rc] (new)

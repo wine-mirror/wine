@@ -7,22 +7,44 @@
 #include "wintypes.h"
 
 /*
- * Old MZ header for DOS programs.  Actually just a couple of fields
- * from it, so that we can find the start of the NE header.
+ * Old MZ header for DOS programs.
+ * We check only the magic and the e_lfanew offset to the new executable
+ * header.
  */
-struct mz_header_s
+typedef struct
 {
-    WORD mz_magic;         /* MZ Header signature */
-    BYTE  dont_care[0x3a];  /* MZ Header stuff */
-    WORD ne_offset;        /* Offset to extended header */
-};
+	WORD	e_magic;	/* MZ Header signature */
+	WORD	e_cblp;		/* Bytes on last page of file */
+	WORD	e_cp;		/* Pages in file */
+	WORD	e_crlc;		/* Relocations */
+	WORD	e_cparhdr;	/* Size of header in paragraphs */
+	WORD	e_minalloc;	/* Minimum extra paragraphs needed */
+	WORD	e_maxalloc;	/* Maximum extra paragraphs needed */
+	WORD	e_ss;		/* Initial (relative) SS value */
+	WORD	e_sp;		/* Initial SP value */
+	WORD	e_csum;		/* Checksum */
+	WORD	e_ip;		/* Initial IP value */
+	WORD	e_cs;		/* Initial (relative) CS value */
+	WORD	e_lfarlc;	/* File address of relocation table */
+	WORD	e_ovno;		/* Overlay number */
+	WORD	e_res[4];	/* Reserved words */
+	WORD	e_oemid;	/* OEM identifier (for e_oeminfo) */
+	WORD	e_oeminfo;	/* OEM information; e_oemid specific */
+	WORD	e_res2[10];	/* Reserved words */
+	WORD	e_lfanew;	/* Offset to extended header */
+} IMAGE_DOS_HEADER,*LPIMAGE_DOS_HEADER;
 
-#define MZ_SIGNATURE  ('M' | ('Z' << 8))
+#define	IMAGE_DOS_SIGNATURE	0x5A4D		/* MZ */
+#define	IMAGE_OS2_SIGNATURE	0x454E		/* NE */
+#define	IMAGE_OS2_SIGNATURE_LE	0x454C		/* LE */
+#define	IMAGE_VXD_SIGNATURE	0x454C		/* LE */
+#define	IMAGE_NT_SIGNATURE	0x00004550	/* PE00 */
 
 /*
  * This is the Windows executable (NE) header.
+ * the name IMAGE_OS2_HEADER is misleading, but in the SDK this way.
  */
-struct ne_header_s
+typedef struct 
 {
     WORD  ne_magic;             /* 00 NE signature 'NE' */
     BYTE  linker_version;	/* 02 Linker version number */
@@ -56,10 +78,7 @@ struct ne_header_s
     WORD  fastload_length;	/* 3a Length of fast load area */
     WORD  reserved2;		/* 3c Reserved by Microsoft */
     WORD  expect_version;	/* 3e Expected Windows version number */
-};
-
-#define NE_SIGNATURE  ('N' | ('E' << 8))
-#define PE_SIGNATURE  ('P' | ('E' << 8))
+} IMAGE_OS2_HEADER,*LPIMAGE_OS2_HEADER;
 
 /*
  * NE Header FORMAT FLAGS

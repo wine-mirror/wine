@@ -34,6 +34,7 @@ extern char*   g_lpstrCharSet;
 char*	g_lpstrFileName = NULL;
 char*	g_lpstrCharSet = NULL;
 char*   g_lpstrInputFile = NULL;
+int     g_outputPoints = 0;
 
 static char*	errorDLLRead = "Unable to read Windows DLL.\n";
 static char*    errorFNTRead = "Unable to read .FNT file.\n";
@@ -47,9 +48,10 @@ static char*    errorEmpty = "No fonts found.\n";
 
 void usage()
 {
-    printf("Usage: font2bdf [-c charset] [-o basename] [input file]\n");
-    printf("  -c charset\tuse this charset name for OEM_CHARSET fonts\n");
+    printf("Usage: fnt2bdf [-t] [-c charset] [-o basename] [input file]\n");
+    printf("  -c charset\tcharset name for OEM_CHARSET fonts\n");
     printf("  -f basename\tbasic output filename\n");
+    printf("  -t \t\toutput files by point size instead of pixel height\n");
     printf("  input file\tMSWindows .fon, .fnt, .dll, or .exe file.\n");
     printf("\nExample:\n  fnt2bdf -c winsys vgasys.fnt\n\n");
     exit(-1);
@@ -110,7 +112,8 @@ char*   lpChar;
 
   lpChar = name + strlen( name );
   sprintf(lpChar, "%d-%d.bdf", return_data_value(dfShort, cpe_font_struct->hdr.dfWeight),
-                               return_data_value(dfShort, cpe_font_struct->hdr.dfPoints) );
+          (g_outputPoints) ? return_data_value(dfShort, cpe_font_struct->hdr.dfPoints)
+			   : return_data_value(dfShort, cpe_font_struct->hdr.dfPixHeight) );
   return 0;
 }
 
@@ -136,7 +139,7 @@ int parse_fnt_data(unsigned char* file_buffer, int length)
 
     int l_fchar = return_data_value(dfChar, cpe_font_struct.hdr.dfFirstChar),
         l_lchar = return_data_value(dfChar, cpe_font_struct.hdr.dfLastChar); 
-    int l_len   = l_lchar-l_fchar, l_ptr = MAP_BEG;
+    int l_len   = l_lchar - l_fchar + 1, l_ptr = MAP_BEG;
 
     /* malloc size = (# chars) * sizeof(WinCharS) */
 
@@ -174,7 +177,7 @@ int dump_bdf( fnt_fontS* cpe_font_struct, unsigned char* file_buffer)
   int     l_fchar = return_data_value(dfChar, cpe_font_struct->hdr.dfFirstChar), 
           l_lchar = return_data_value(dfChar, cpe_font_struct->hdr.dfLastChar); 
 
-  int     l_len = l_lchar-l_fchar,
+  int     l_len = l_lchar-l_fchar + 1,
           l_hgt = return_data_value(dfChar, cpe_font_struct->hdr.dfPixHeight); 
   int	  l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
   char    l_filename[256];
@@ -279,7 +282,7 @@ int dump_bdf_hdr(FILE* fs, fnt_fontS* cpe_font_struct, unsigned char* file_buffe
 {
 int     l_fchar = return_data_value(dfChar, cpe_font_struct->hdr.dfFirstChar), 
         l_lchar = return_data_value(dfChar, cpe_font_struct->hdr.dfLastChar);
-int     l_len = l_lchar - l_fchar;
+int     l_len = l_lchar - l_fchar + 1;
 int     l_nameoffset = return_data_value(dfLong, cpe_font_struct->hdr.dfFace);
 int 	l_cellheight = return_data_value(dfShort, cpe_font_struct->hdr.dfPixHeight);
 int     l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
@@ -333,7 +336,7 @@ int     l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
       /* spacing */
 
       if( return_data_value(dfShort, cpe_font_struct->hdr.dfPixWidth) ) fputs("c-", fs);
-      else fputs("m-", fs);
+      else fputs("p-", fs);
 	
       /* average width */
 
@@ -343,15 +346,27 @@ int     l_ascent = return_data_value(dfShort, cpe_font_struct->hdr.dfAscent);
 
       switch( cpe_font_struct->hdr.dfCharSet[0] )
       {
-	case ANSI_CHARSET: fputs("ansi-0\n", fs); break;
+	/* Microsoft just had to invent its own charsets! */
+
+	case ANSI_CHARSET: 	fputs("ansi-0\n", fs); break;
+	case GREEK_CHARSET: 	fputs("cp125-3\n", fs); break;
+	case TURKISH_CHARSET: 	fputs("iso8859-9", fs); break;
+	case HEBREW_CHARSET: 	fputs("cp125-5", fs); break;
+	case ARABIC_CHARSET: 	fputs("cp125-6", fs); break;
+	case BALTIC_CHARSET: 	fputs("cp125-7", fs); break;
+	case RUSSIAN_CHARSET: 	fputs("cp125-1", fs); break;
+	case EE_CHARSET: 	fputs("iso8859-2", fs); break; 
+	case SYMBOL_CHARSET: 	fputs("misc-fontspecific\n", fs); break;
+	case SHIFTJIS_CHARSET: 	fputs("jisx0208.1983-0\n", fs); break;
+	case DEFAULT_CHARSET:	fputs("iso8859-1\n", fs); break;
+
 	default:
-	case DEFAULT_CHARSET: fputs("iso8859-1\n", fs); break;
-	case SYMBOL_CHARSET: fputs("misc-fontspecific\n", fs); break;
-	case SHIFTJIS_CHARSET: fputs("jisx0208.1983-0\n", fs); break;
 	case OEM_CHARSET: 
 		if( !g_lpstrCharSet ) 
-		{ fputs("Undefined OEM charset, use -c option.\n", stderr); 
-		  return ERROR_DATA; }
+		{ 
+		    fputs("Undefined charset, use -c option.\n", stderr); 
+		    return ERROR_DATA; 
+		}
 	        fprintf(fs, "%s\n", g_lpstrCharSet);
       }
     }
@@ -397,14 +412,24 @@ void parse_options(int argc, char **argv)
     case 4:
     case 5:
     case 6:
+    case 7:
+    case 8:
 	 for( i = 1; i < argc - 1; i++ )
 	 {
 	   if( argv[i][0] != '-' ||
 	       strlen(argv[i]) != 2 ) break;
 
-	   if( argv[i][1] == 'c' ) { g_lpstrCharSet = argv[i+1]; }
+	   if( argv[i][1] == 'c' ) 
+	       g_lpstrCharSet = argv[i+1];
 	   else 
-	   if( argv[i][1] == 'f' ) { g_lpstrFileName = argv[i+1]; }
+	   if( argv[i][1] == 'f' ) 
+	       g_lpstrFileName = argv[i+1];
+	   else
+	   if( argv[i][1] == 't' )
+	   {
+	      g_outputPoints = 1;
+	      continue;
+	   }
 	   else
 	   usage();
 
@@ -424,8 +449,8 @@ void parse_options(int argc, char **argv)
 
 int get_resource_table(int fd, unsigned char** lpdata, int fsize)
 {
-  struct mz_header_s mz_header;
-  struct ne_header_s ne_header;
+  IMAGE_DOS_HEADER mz_header;
+  IMAGE_OS2_HEADER ne_header;
   short		     s, offset, size, retval;
 
  
@@ -434,11 +459,11 @@ int get_resource_table(int fd, unsigned char** lpdata, int fsize)
   if( read(fd, &mz_header, sizeof(mz_header)) != sizeof(mz_header) ) 
       return FILE_ERROR;
 
-  s = return_data_value(dfShort, &mz_header.mz_magic);
+  s = return_data_value(dfShort, &mz_header.e_magic);
 
-  if( s == MZ_SIGNATURE) 		/* looks like .dll file so far... */
+  if( s == IMAGE_DOS_SIGNATURE)		/* looks like .dll file so far... */
   {
-    s = return_data_value(dfShort, &mz_header.ne_offset);
+    s = return_data_value(dfShort, &mz_header.e_lfanew);
     lseek( fd, s, SEEK_SET );
 
     if( read(fd, &ne_header, sizeof(ne_header)) != sizeof(ne_header) )
@@ -446,12 +471,12 @@ int get_resource_table(int fd, unsigned char** lpdata, int fsize)
 
     s = return_data_value(dfShort, &ne_header.ne_magic);
 
-    if( s == PE_SIGNATURE)
+    if( s == IMAGE_NT_SIGNATURE)
     {
        fprintf( stderr, "Do not know how to handle 32-bit Windows DLLs.\n");
        return FILE_ERROR; 
     }
-    else if ( s != NE_SIGNATURE) return FILE_ERROR;
+    else if ( s != IMAGE_OS2_SIGNATURE) return FILE_ERROR;
 
     s = return_data_value(dfShort, &ne_header.resource_tab_offset);
     size = return_data_value(dfShort, &ne_header.rname_tab_offset);
@@ -459,14 +484,14 @@ int get_resource_table(int fd, unsigned char** lpdata, int fsize)
     if( size > fsize ) return FILE_ERROR;
 
     size -= s;
-    offset = s + return_data_value(dfShort, &mz_header.ne_offset);
+    offset = s + return_data_value(dfShort, &mz_header.e_lfanew);
 
     if( size <= sizeof(NE_TYPEINFO) ) return FILE_ERROR;
     retval = FILE_DLL;
   }
   else if( s == 0x300 || s == 0x200 )		/* maybe .fnt ? */
   {
-    size = return_data_value(dfLong, &mz_header.dont_care);
+    size = return_data_value(dfLong, (char*)&mz_header+2);
 
     if( size != fsize ) return FILE_ERROR;
     offset  = 0;

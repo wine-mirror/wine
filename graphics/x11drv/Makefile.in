@@ -10,7 +10,7 @@ C_SRCS = \
 	bitmap.c \
 	brush.c \
 	clipping.c \
-	font.c \
+	xfont.c \
 	graphics.c \
 	init.c \
 	objects.c \

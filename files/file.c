@@ -129,8 +129,10 @@ int FILE_GetUnixHandle( HFILE32 hFile )
  */
 void FILE_SetDosError(void)
 {
+    int save_errno = errno; /* errno gets overwritten by printf */
+
     dprintf_file(stddeb, "FILE_SetDosError: errno = %d\n", errno );
-    switch (errno)
+    switch (save_errno)
     {
     case EAGAIN:
         DOS_ERROR( ER_ShareViolation, EC_Temporary, SA_Retry, EL_Disk );
@@ -167,6 +169,7 @@ void FILE_SetDosError(void)
         DOS_ERROR( ER_GeneralFailure, EC_SystemFailure, SA_Abort, EL_Unknown );
         break;
     }
+    errno = save_errno;
 }
 
 
@@ -239,6 +242,9 @@ HFILE32 FILE_Open( LPCSTR path, INT32 mode )
     const char *unixName;
 
     dprintf_file(stddeb, "FILE_Open: '%s' %04x\n", path, mode );
+
+    if (!path) return HFILE_ERROR32;
+
     if ((unixName = DOSFS_IsDevice( path )) != NULL)
     {
         dprintf_file( stddeb, "FILE_Open: opening device '%s'\n", unixName );
@@ -270,6 +276,8 @@ static HFILE32 FILE_Create( LPCSTR path, int mode, int unique )
     DOS_FULL_NAME full_name;
 
     dprintf_file(stddeb, "FILE_Create: '%s' %04x %d\n", path, mode, unique );
+
+    if (!path) return INVALID_HANDLE_VALUE32;
 
     if ((unixName = DOSFS_IsDevice( path )) != NULL)
     {
@@ -338,6 +346,8 @@ BOOL32 FILE_Stat( LPCSTR unixName, BY_HANDLE_FILE_INFORMATION *info )
 {
     struct stat st;
 
+    if (!unixName || !info) return FALSE;
+
     if (stat( unixName, &st ) == -1)
     {
         FILE_SetDosError();
@@ -357,6 +367,8 @@ DWORD GetFileInformationByHandle( HFILE32 hFile,
     FILE_OBJECT *file;
     DWORD ret = 0;
     struct stat st;
+
+    if (!info) return 0;
 
     if (!(file = FILE_GetFile( hFile ))) return 0;
     if (fstat( file->unix_handle, &st ) == -1) FILE_SetDosError();
@@ -386,6 +398,8 @@ DWORD GetFileAttributes32A( LPCSTR name )
 {
     DOS_FULL_NAME full_name;
     BY_HANDLE_FILE_INFORMATION info;
+
+    if (name == NULL) return -1;
 
     if (!DOSFS_GetFullName( name, TRUE, &full_name )) return -1;
     if (!FILE_Stat( full_name.long_name, &info )) return -1;
@@ -436,6 +450,8 @@ BOOL32 GetFileTime( HFILE32 hFile, FILETIME *lpCreationTime,
  */
 INT32 CompareFileTime( LPFILETIME x, LPFILETIME y )
 {
+        if (!x || !y) return -1;
+
 	if (x->dwHighDateTime > y->dwHighDateTime)
 		return 1;
 	if (x->dwHighDateTime < y->dwHighDateTime)
@@ -521,7 +537,8 @@ UINT32 GetTempFileName32A( LPCSTR path, LPCSTR prefix, UINT32 unique,
     LPSTR p;
     UINT32 num = unique ? (unique & 0xffff) : time(NULL) & 0xffff;
 
-    if (!path) return 0;
+    if ( !path || !prefix || !buffer ) return 0;
+
     strcpy( buffer, path );
     p = buffer + strlen(buffer);
     /* add a \, if there isn't one ... */
@@ -604,6 +621,13 @@ static HFILE32 FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT32 mode,
     char *p;
     int unixMode;
 
+    if (!name || !ofs) return HFILE_ERROR32;
+
+    if (!name) {
+	fprintf(stderr, "ERROR: FILE_DoOpenFile() called with `name' set to NULL ! Please debug.\n");
+ 
+	return HFILE_ERROR32;
+    }
     ofs->cBytes = sizeof(OFSTRUCT);
     ofs->nErrCode = 0;
     if (mode & OF_REOPEN) name = ofs->szPathName;

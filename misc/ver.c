@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <unistd.h>
 #include "windows.h"
 #include "win.h"
 #include "winerror.h"
@@ -24,19 +25,156 @@
   if (sizeof(*what)!=LZRead32(lzfd,what,sizeof(*what))) return 0;
 #define LZTELL(lzfd) LZSeek32(lzfd, 0, SEEK_CUR);
 
+/******************************************************************************
+ *
+ *   void  dprintf_ver_string(
+ *      char const * prologue,
+ *      char const * teststring,
+ *      char const * epilogue )
+ *
+ *   This function will print via dprintf_ver to stddeb the prologue string,
+ *   followed by the address of teststring and the string it contains if
+ *   teststring is non-null or "(null)" otherwise, and then the epilogue
+ *   string.
+ *
+ *   Revision history
+ *      30-May-1997 Dave Cuthbert (dacut@ece.cmu.edu)
+ *         Original implementation
+ *
+ *****************************************************************************/
+
+static void  dprintf_ver_string(
+    char const * prologue,
+    char const * teststring,
+    char const * epilogue )
+{
+    dprintf_ver(stddeb, "%s", prologue);
+    
+    if(teststring)
+	dprintf_ver(stddeb, "%p (\"%s\")", (void const *) teststring,
+		    teststring);
+    else
+	dprintf_ver(stddeb, "(null)");
+
+    dprintf_ver(stddeb, "%s", epilogue);
+
+    return;
+}
+
+/******************************************************************************
+ *
+ *   int  testFileExistence(
+ *      char const * path,
+ *      char const * file )
+ *
+ *   Tests whether a given path/file combination exists.  If the file does
+ *   not exist, the return value is zero.  If it does exist, the return
+ *   value is non-zero.
+ *
+ *   Revision history
+ *      30-May-1997 Dave Cuthbert (dacut@ece.cmu.edu)
+ *         Original implementation
+ *
+ *****************************************************************************/
+
+static int  testFileExistence(
+   char const * path,
+   char const * file )
+{
+    char  filename[1024];
+    int  filenamelen;
+    OFSTRUCT  fileinfo;
+    int  retval;
+
+    fileinfo.cBytes = sizeof(OFSTRUCT);
+
+    strcpy(filename, path);
+    filenamelen = strlen(filename);
+
+    /* Add a trailing \ if necessary */
+    if(filenamelen) {
+	if(filename[filenamelen - 1] != '\\')
+	    strcat(filename, "\\");
+    }
+    else /* specify the current directory */
+	strcpy(filename, ".\\");
+
+    /* Create the full pathname */
+    strcat(filename, file);
+
+    if(OpenFile32(filename, &fileinfo, OF_EXIST) == HFILE_ERROR32)
+	retval = 0;
+    else
+	retval = 1;
+
+    return  retval;
+}
+
+/******************************************************************************
+ *
+ *   int  testFileExclusiveExistence(
+ *      char const * path,
+ *      char const * file )
+ *
+ *   Tests whether a given path/file combination exists and ensures that no
+ *   other programs have handles to the given file.  If the file does not
+ *   exist or is open, the return value is zero.  If it does exist, the
+ *   return value is non-zero.
+ *
+ *   Revision history
+ *      30-May-1997 Dave Cuthbert (dacut@ece.cmu.edu)
+ *         Original implementation
+ *
+ *****************************************************************************/
+
+static int  testFileExclusiveExistence(
+   char const * path,
+   char const * file )
+{
+    char  filename[1024];
+    int  filenamelen;
+    OFSTRUCT  fileinfo;
+    int  retval;
+
+    fileinfo.cBytes = sizeof(OFSTRUCT);
+
+    strcpy(filename, path);
+    filenamelen = strlen(filename);
+
+    /* Add a trailing \ if necessary */
+    if(filenamelen) {
+	if(filename[filenamelen - 1] != '\\')
+	    strcat(filename, "\\");
+    }
+    else /* specify the current directory */
+	strcpy(filename, ".\\");
+
+    /* Create the full pathname */
+    strcat(filename, file);
+
+    if(OpenFile32(filename, &fileinfo, OF_EXIST | OF_SHARE_EXCLUSIVE) ==
+       HFILE_ERROR32)
+	retval = 0;
+    else
+	retval = 1;
+
+    return retval;
+}
+
+
 int
-read_ne_header(HFILE32 lzfd,struct ne_header_s *nehd) {
-	struct	mz_header_s	mzh;
+read_ne_header(HFILE32 lzfd,LPIMAGE_OS2_HEADER nehd) {
+	IMAGE_DOS_HEADER	mzh;
 
 	LZSeek32(lzfd,0,SEEK_SET);
 	if (sizeof(mzh)!=LZRead32(lzfd,&mzh,sizeof(mzh)))
 		return 0;
-	if (mzh.mz_magic!=MZ_SIGNATURE)
+	if (mzh.e_magic!=IMAGE_DOS_SIGNATURE)
 		return 0;
-	LZSeek32(lzfd,mzh.ne_offset,SEEK_SET);
+	LZSeek32(lzfd,mzh.e_lfanew,SEEK_SET);
 	LZREAD(nehd);
-	if (nehd->ne_magic == NE_SIGNATURE) {
-		LZSeek32(lzfd,mzh.ne_offset,SEEK_SET);
+	if (nehd->ne_magic == IMAGE_OS2_SIGNATURE) {
+		LZSeek32(lzfd,mzh.e_lfanew,SEEK_SET);
 		return 1;
 	}
 	fprintf(stderr,"misc/ver.c:read_ne_header:can't handle PE files yet.\n");
@@ -47,7 +185,7 @@ read_ne_header(HFILE32 lzfd,struct ne_header_s *nehd) {
 
 int
 find_ne_resource(
-	HFILE32 lzfd,struct ne_header_s *nehd,SEGPTR typeid,SEGPTR resid,
+	HFILE32 lzfd,LPIMAGE_OS2_HEADER nehd,SEGPTR typeid,SEGPTR resid,
 	BYTE **resdata,int *reslen,DWORD *off
 ) {
 	NE_TYPEINFO	ti;
@@ -164,11 +302,11 @@ find_ne_resource(
 /* GetFileResourceSize				[VER.2] */
 DWORD
 GetFileResourceSize(LPCSTR filename,SEGPTR restype,SEGPTR resid,LPDWORD off) {
-	HFILE32	lzfd;
-	OFSTRUCT	ofs;
-	BYTE	*resdata;
-	int	reslen;
-	struct	ne_header_s	nehd;
+	HFILE32			lzfd;
+	OFSTRUCT		ofs;
+	BYTE			*resdata;
+	int			reslen;
+	IMAGE_OS2_HEADER	nehd;
 
 	dprintf_ver(stddeb,"GetFileResourceSize(%s,%lx,%lx,%p)\n",
 		filename,(LONG)restype,(LONG)resid,off
@@ -194,11 +332,11 @@ DWORD
 GetFileResource(LPCSTR filename,SEGPTR restype,SEGPTR resid,
 		DWORD off,DWORD datalen,LPVOID data
 ) {
-	HFILE32	lzfd;
-	OFSTRUCT	ofs;
-	BYTE	*resdata;
-	int	reslen=datalen;
-	struct	ne_header_s	nehd;
+	HFILE32			lzfd;
+	OFSTRUCT		ofs;
+	BYTE			*resdata;
+	int			reslen=datalen;
+	IMAGE_OS2_HEADER	nehd;
 	dprintf_ver(stddeb,"GetFileResource(%s,%lx,%lx,%ld,%ld,%p)\n",
 		filename,(LONG)restype,(LONG)resid,off,datalen,data
 	);
@@ -380,20 +518,175 @@ DWORD GetFileVersionInfo32W( LPCWSTR filename, DWORD handle, DWORD datasize,
     return ret;
 }
 
-/* VerFindFile				[VER.8] */
-DWORD
-VerFindFile16(
-	UINT16 flags,LPCSTR filename,LPCSTR windir,LPCSTR appdir,
-	LPSTR curdir,UINT16 *curdirlen,LPSTR destdir,UINT16 *destdirlen
-) {
-	dprintf_ver(stddeb,"VerFindFile(%x,%s,%s,%s,%p,%d,%p,%d)\n",
-		flags,filename,windir,appdir,curdir,*curdirlen,destdir,*destdirlen
-	);
-	strcpy(curdir,"Z:\\ROOT\\.WINE\\");/*FIXME*/
-	*curdirlen=strlen(curdir);
-	strcpy(destdir,"Z:\\ROOT\\.WINE\\");/*FIXME*/
-	*destdirlen=strlen(destdir);
-	return 0;
+/*****************************************************************************
+ *
+ *   VerFindFile() [VER.8]
+ *   Determines where to install a file based on whether it locates another
+ *   version of the file in the system.  The values VerFindFile returns are
+ *   used in a subsequent call to the VerInstallFile function.
+ *
+ *   Revision history:
+ *      30-May-1997   Dave Cuthbert (dacut@ece.cmu.edu)
+ *         Reimplementation of VerFindFile from original stub.
+ *
+ ****************************************************************************/
+
+DWORD VerFindFile16(
+    UINT16 flags,
+    LPCSTR lpszFilename,
+    LPCSTR lpszWinDir,
+    LPCSTR lpszAppDir,
+    LPSTR lpszCurDir,
+    UINT16 *lpuCurDirLen,
+    LPSTR lpszDestDir,
+    UINT16 *lpuDestDirLen )
+{
+    DWORD  retval;
+    char  curDir[256];
+    char  destDir[256];
+    unsigned int  curDirSizeReq;
+    unsigned int  destDirSizeReq;
+
+    retval = 0;
+
+    /* Print out debugging information */
+    dprintf_ver(stddeb, "VerFindFile() called with parameters:\n"
+		"\tflags = %x", flags);
+    if(flags & VFFF_ISSHAREDFILE)
+	dprintf_ver(stddeb, " (VFFF_ISSHAREDFILE)\n");
+    else
+	dprintf_ver(stddeb, "\n");
+
+    dprintf_ver_string("\tlpszFilename = ", lpszFilename, "\n");
+    dprintf_ver_string("\tlpszWinDir = ", lpszWinDir, "\n");
+    dprintf_ver_string("\tlpszAppDir = ", lpszAppDir, "\n");
+
+    dprintf_ver(stddeb, "\tlpszCurDir = %p\n", lpszCurDir);
+    if(lpuCurDirLen)
+	dprintf_ver(stddeb, "\tlpuCurDirLen = %p (%u)\n",
+		    lpuCurDirLen, *lpuCurDirLen);
+    else
+	dprintf_ver(stddeb, "\tlpuCurDirLen = (null)\n");
+
+    dprintf_ver(stddeb, "\tlpszDestDir = %p\n", lpszDestDir);
+    if(lpuDestDirLen)
+	dprintf_ver(stddeb, "\tlpuDestDirLen = %p (%u)\n",
+		    lpuDestDirLen, *lpuDestDirLen);
+
+    /* Figure out where the file should go; shared files default to the
+       system directory */
+
+    strcpy(curDir, "");
+    strcpy(destDir, "");
+
+    if(flags & VFFF_ISSHAREDFILE && !getuid()) {
+	GetSystemDirectory32A(destDir, 256);
+
+	/* Were we given a filename?  If so, try to find the file. */
+	if(lpszFilename) {
+	    if(testFileExistence(destDir, lpszFilename)) {
+		strcpy(curDir, destDir);
+
+		if(!testFileExclusiveExistence(destDir, lpszFilename))
+		    retval |= VFF_FILEINUSE;
+	    }
+	    else if(lpszAppDir && testFileExistence(lpszAppDir,
+						    lpszFilename)) {
+		strcpy(curDir, lpszAppDir);
+		retval |= VFF_CURNEDEST;
+
+		if(!testFileExclusiveExistence(lpszAppDir, lpszFilename))
+		    retval |= VFF_FILEINUSE;
+	    }
+	}
+    }
+    else if(!(flags & VFFF_ISSHAREDFILE)) { /* not a shared file */
+	if(lpszAppDir) {
+	    char  systemDir[256];
+	    GetSystemDirectory32A(systemDir, 256);
+
+	    strcpy(destDir, lpszAppDir);
+
+	    if(lpszFilename) {
+		if(testFileExistence(lpszAppDir, lpszFilename)) {
+		    strcpy(curDir, lpszAppDir);
+
+		    if(!testFileExclusiveExistence(lpszAppDir, lpszFilename))
+			retval |= VFF_FILEINUSE;
+		}
+		else if(testFileExistence(systemDir, lpszFilename)) {
+		    strcpy(curDir, systemDir);
+		    retval |= VFF_CURNEDEST;
+
+		    if(!testFileExclusiveExistence(systemDir, lpszFilename))
+			retval |= VFF_FILEINUSE;
+		}
+	    }
+	}
+    }
+
+    curDirSizeReq = strlen(curDir) + 1;
+    destDirSizeReq = strlen(destDir) + 1;
+
+
+
+    /* Make sure that the pointers to the size of the buffers are
+       valid; if not, do NOTHING with that buffer.  If that pointer
+       is valid, then make sure that the buffer pointer is valid, too! */
+
+    if(lpuDestDirLen && lpszDestDir) {
+	if(*lpuDestDirLen < destDirSizeReq) {
+	    retval |= VFF_BUFFTOOSMALL;
+	    strncpy(lpszDestDir, destDir, *lpuDestDirLen - 1);
+	    lpszDestDir[*lpuDestDirLen - 1] = '\0';
+	}
+	else
+	    strcpy(lpszDestDir, destDir);
+
+	*lpuDestDirLen = destDirSizeReq;
+    }
+    
+    if(lpuCurDirLen && lpszCurDir) {
+	if(*lpuCurDirLen < curDirSizeReq) {
+	    retval |= VFF_BUFFTOOSMALL;
+	    strncpy(lpszCurDir, curDir, *lpuCurDirLen - 1);
+	    lpszCurDir[*lpuCurDirLen - 1] = '\0';
+	}
+	else
+	    strcpy(lpszCurDir, curDir);
+
+	*lpuCurDirLen = curDirSizeReq;
+    }
+
+    dprintf_ver(stddeb, "VerFindFile() ret = %lu ",
+		retval);
+
+    if(retval) {
+	dprintf_ver(stddeb, "( ");
+
+	if(retval & VFF_CURNEDEST)
+	    dprintf_ver(stddeb, "VFF_CURNEDEST ");
+	if(retval & VFF_FILEINUSE)
+	    dprintf_ver(stddeb, "VFF_FILEINUSE ");
+	if(retval & VFF_BUFFTOOSMALL)
+	    dprintf_ver(stddeb, "VFF_BUFFTOOSMALL ");
+
+	dprintf_ver(stddeb, ")");
+    }
+
+    dprintf_ver_string("\n\t(Exit) lpszCurDir = ", lpszCurDir, "\n");
+    if(lpuCurDirLen)
+	dprintf_ver(stddeb, "\t(Exit) lpuCurDirLen = %p (%u)\n",
+		    lpuCurDirLen, *lpuCurDirLen);
+    else
+	dprintf_ver(stddeb, "\t(Exit) lpuCurDirLen = (null)\n");
+
+    dprintf_ver_string("\t(Exit) lpszDestDir = ", lpszDestDir, "\n");
+    if(lpuDestDirLen)
+	dprintf_ver(stddeb, "\t(Exit) lpuDestDirLen = %p (%u)\n",
+		    lpuDestDirLen, *lpuDestDirLen);
+
+    return retval;
 }
 
 /* VerFindFileA						[VERSION.5] */

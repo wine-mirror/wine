@@ -170,7 +170,7 @@ struct deferred_debug_info
 	char				* module_name;
 	char				* dbg_info;
 	int				  dbg_size;
-	struct PE_Debug_dir		* dbgdir;
+	LPIMAGE_DEBUG_DIRECTORY		  dbgdir;
 	struct pe_data			* pe;
         LPIMAGE_SECTION_HEADER            sectp;
 	int				  nsect;
@@ -189,7 +189,7 @@ struct CodeViewDebug
 test_pdbstuff()
 {
   struct deferred_debug_info deefer;
-  struct PE_Debug_dir	dinfo;
+  IMAGE_DEBUG_DIRECTORY dinfo;
   struct CodeViewDebug cdebug;
   IMAGE_SECTION_HEADER  sects[10];
 
@@ -199,7 +199,7 @@ test_pdbstuff()
   memset(&sects, 0, sizeof(sects));
 
   deefer.dbg_info = (char *) &cdebug;
-  dinfo.timestamp = 812932395;
+  dinfo.TimeStamp = 812932395;
   cdebug.cv_timestamp = 833392137  /* 841951397 */;
   deefer.dbgdir = &dinfo;
   deefer.sectp = sects;

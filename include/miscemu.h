@@ -32,6 +32,7 @@ extern FARPROC16 INT_GetHandler( BYTE intnum );
 extern void INT_SetHandler( BYTE intnum, FARPROC16 handler );
 
 /* msdos/ioports.c */
+extern void IO_port_init (void);
 extern DWORD IO_inport( int port, int count );
 extern void IO_outport( int port, int count, DWORD value );
 

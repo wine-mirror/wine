@@ -9,6 +9,7 @@
 #include "windows.h"
 #include "winerror.h"
 #include "shell.h"
+#include "heap.h"
 #include "stddebug.h"
 #include "debug.h"
 
@@ -55,6 +56,19 @@ OpenProcessToken(HANDLE32 process,DWORD desiredaccess,HANDLE32 *thandle)
 }
 
 /***********************************************************************
+ *           OpenThreadToken		[ADVAPI32.114]
+ */
+BOOL32
+OpenThreadToken(
+	HANDLE32 thread,DWORD desiredaccess,BOOL32 openasself,HANDLE32 *thandle
+) {
+	fprintf(stdnimp,"OpenThreadToken(%08x,%08lx,%d,%p),stub!\n",
+		thread,desiredaccess,openasself,thandle
+	);
+	return TRUE;
+}
+
+/***********************************************************************
  *           LookupPrivilegeValueA   [ADVAPI32.90]
  */
 BOOL32
@@ -70,5 +84,45 @@ AdjustTokenPrivileges(HANDLE32 TokenHandle,BOOL32 DisableAllPrivileges,
 	LPVOID NewState,DWORD BufferLength,LPVOID PreviousState,
 	LPDWORD ReturnLength )
 {
+	return TRUE;
+}
+
+/***********************************************************************
+ *           GetTokenInformation	[ADVAPI32.66]
+ */
+BOOL32
+GetTokenInformation(
+	HANDLE32 token,/*TOKEN_INFORMATION_CLASS*/ DWORD tokeninfoclass,LPVOID tokeninfo,
+	DWORD tokeninfolength,LPDWORD retlen
+) {
+	fprintf(stderr,"GetTokenInformation(%08lx,%d,%p,%ld,%p)\n",
+		token,tokeninfoclass,tokeninfo,tokeninfolength,retlen
+	);
+	return TRUE;
+}
+
+/*SC_HANDLE*/
+DWORD
+OpenSCManagerA(LPCSTR machine,LPCSTR dbname,DWORD desiredaccess)
+{
+	fprintf(stderr,"OpenSCManagerA(%s,%s,%08lx)\n",machine,dbname,desiredaccess);
+	return 0;
+}
+
+DWORD
+OpenSCManagerW(LPCWSTR machine,LPCWSTR dbname,DWORD desiredaccess)
+{
+	LPSTR	machineA = HEAP_strdupWtoA(GetProcessHeap(),0,machine);
+	LPSTR	dbnameA = HEAP_strdupWtoA(GetProcessHeap(),0,dbname);
+	fprintf(stderr,"OpenSCManagerW(%s,%s,%08lx)\n",machineA,dbnameA,desiredaccess);
+	HeapFree(GetProcessHeap(),0,machineA);
+	HeapFree(GetProcessHeap(),0,dbnameA);
+	return 0;
+}
+
+BOOL32
+AllocateLocallyUniqueId(LPLUID lpluid) {
+	lpluid->LowPart = time(NULL);
+	lpluid->HighPart = 0;
 	return TRUE;
 }

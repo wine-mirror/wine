@@ -809,6 +809,8 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
 
     dprintf_dosfs( stddeb, "GetFullPathName: converting %s\n", name );
 
+    if (!name || !result) return 0;
+
     if ((drive = DOSFS_GetPathDrive( &name )) == -1) return 0;
     p = buffer;
     *p++ = 'A' + drive;

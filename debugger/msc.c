@@ -2135,7 +2135,7 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
   char			      * codeview;
   struct CV4_DirHead	      * codeview_dir;
   struct CV4_DirEnt	      * codeview_dent;
-  struct PE_Debug_dir	      * dbghdr;
+  LPIMAGE_DEBUG_DIRECTORY	dbghdr;
   struct deferred_debug_info    deefer2;
   int				fd = -1;
   int				i;
@@ -2187,7 +2187,7 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
 
   fprintf(stderr, "Processing symbols from %s...\n", filename);
 
-  dbghdr = (struct PE_Debug_dir *) (  addr + sizeof(*pdbg) 
+  dbghdr = (LPIMAGE_DEBUG_DIRECTORY) (  addr + sizeof(*pdbg) 
 		 + pdbg->NumberOfSections * sizeof(IMAGE_SECTION_HEADER) 
 		 + pdbg->ExportedNamesSize);
 
@@ -2196,7 +2196,7 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
 
   for( i=0; i < pdbg->DebugDirectorySize / sizeof(*pdbg); i++, dbghdr++ )
     {
-      switch(dbghdr->type)
+      switch(dbghdr->Type)
 		{
 		case IMAGE_DEBUG_TYPE_COFF:
 		  /*
@@ -2204,8 +2204,8 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
 		   * COFF stuff embedded within the DBG file.
 		   */
 		  memset((char *) &deefer2, 0, sizeof(deefer2));
-		  deefer2.dbg_info = (addr + dbghdr->dbgoff);
-		  deefer2.dbg_size = dbghdr->dbgsize;
+		  deefer2.dbg_info = (addr + dbghdr->PointerToRawData);
+		  deefer2.dbg_size = dbghdr->SizeOfData;
 		  deefer2.load_addr = deefer->load_addr;
 
 		  DEBUG_ProcessCoff(&deefer2);
@@ -2218,7 +2218,7 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
 		   * have lots of internal similarities, but the overall
 		   * format and structure is quite different.
 		   */
-		  codeview = (addr + dbghdr->dbgoff);
+		  codeview = (addr + dbghdr->PointerToRawData);
 
 		  /*
 		   * The first thing in the codeview section should be

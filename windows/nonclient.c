@@ -150,86 +150,6 @@ BOOL32 AdjustWindowRectEx32( LPRECT32 rect, DWORD style,
 }
 
 
-/*******************************************************************
- *         NC_GetMinMaxInfo
- *
- * Get the minimized and maximized information for a window.
- */
-void NC_GetMinMaxInfo( WND *wndPtr, POINT16 *maxSize, POINT16 *maxPos,
-                       POINT16 *minTrack, POINT16 *maxTrack )
-{
-    MINMAXINFO16 *MinMax;
-    short xinc, yinc;
-
-    if (!(MinMax = SEGPTR_NEW(MINMAXINFO16))) return;
-
-      /* Compute default values */
-
-    MinMax->ptMaxSize.x = SYSMETRICS_CXSCREEN;
-    MinMax->ptMaxSize.y = SYSMETRICS_CYSCREEN;
-    MinMax->ptMinTrackSize.x = SYSMETRICS_CXMINTRACK;
-    MinMax->ptMinTrackSize.y = SYSMETRICS_CYMINTRACK;
-    MinMax->ptMaxTrackSize.x = SYSMETRICS_CXSCREEN;
-    MinMax->ptMaxTrackSize.y = SYSMETRICS_CYSCREEN;
-
-    if (wndPtr->flags & WIN_MANAGED) xinc = yinc = 0;
-    else if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
-    {
-        xinc = SYSMETRICS_CXDLGFRAME;
-        yinc = SYSMETRICS_CYDLGFRAME;
-    }
-    else
-    {
-        xinc = yinc = 0;
-	if (HAS_THICKFRAME(wndPtr->dwStyle))
-        {
-            xinc += SYSMETRICS_CXFRAME;
-            yinc += SYSMETRICS_CYFRAME;
-        }
-	if (wndPtr->dwStyle & WS_BORDER)
-        {
-            xinc += SYSMETRICS_CXBORDER;
-            yinc += SYSMETRICS_CYBORDER;
-        }
-    }
-    MinMax->ptMaxSize.x += 2 * xinc;
-    MinMax->ptMaxSize.y += 2 * yinc;
-
-    /* Note: The '+' in the following test should really be a ||, but
-     * that would cause gcc-2.7.0 to generate incorrect code.
-     */
-    if ((wndPtr->ptMaxPos.x != -1) + (wndPtr->ptMaxPos.y != -1))
-        MinMax->ptMaxPosition = wndPtr->ptMaxPos;
-    else
-    {
-        MinMax->ptMaxPosition.x = -xinc;
-        MinMax->ptMaxPosition.y = -yinc;
-    }
-
-    SendMessage16( wndPtr->hwndSelf, WM_GETMINMAXINFO, 0,
-                   (LPARAM)SEGPTR_GET(MinMax) );
-
-      /* Some sanity checks */
-
-    dprintf_nonclient(stddeb, 
-		      "NC_GetMinMaxInfo: %d %d / %d %d / %d %d / %d %d\n",
-		      MinMax->ptMaxSize.x, MinMax->ptMaxSize.y,
-                      MinMax->ptMaxPosition.x, MinMax->ptMaxPosition.y,
-		      MinMax->ptMaxTrackSize.x, MinMax->ptMaxTrackSize.y,
-		      MinMax->ptMinTrackSize.x, MinMax->ptMinTrackSize.y);
-    MinMax->ptMaxTrackSize.x = MAX( MinMax->ptMaxTrackSize.x,
-				   MinMax->ptMinTrackSize.x );
-    MinMax->ptMaxTrackSize.y = MAX( MinMax->ptMaxTrackSize.y,
-				   MinMax->ptMinTrackSize.y );
-    
-    if (maxSize) *maxSize = MinMax->ptMaxSize;
-    if (maxPos) *maxPos = MinMax->ptMaxPosition;
-    if (minTrack) *minTrack = MinMax->ptMinTrackSize;
-    if (maxTrack) *maxTrack = MinMax->ptMaxTrackSize;
-    SEGPTR_FREE(MinMax);
-}
-
-
 /***********************************************************************
  *           NC_HandleNCCalcSize
  *
@@ -664,15 +584,14 @@ static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
  *
  * Paint the non-client area. clip is currently unused.
  */
-void NC_DoNCPaint( HWND32 hwnd, HRGN32 clip, BOOL32 suppress_menupaint )
+void NC_DoNCPaint( WND* wndPtr, HRGN32 clip, BOOL32 suppress_menupaint )
 {
     HDC32 hdc;
     RECT32 rect;
     BOOL32 active;
+    HWND32 hwnd = wndPtr->hwndSelf;
 
-    WND *wndPtr = WIN_FindWndPtr( hwnd );
-
-    if (!wndPtr || wndPtr->dwStyle & WS_MINIMIZE ||
+    if ( wndPtr->dwStyle & WS_MINIMIZE ||
 	!WIN_IsWindowDrawable( wndPtr, 0 )) return; /* Nothing to do */
 
     active  = wndPtr->flags & WIN_NCACTIVATED;
@@ -757,7 +676,15 @@ void NC_DoNCPaint( HWND32 hwnd, HRGN32 clip, BOOL32 suppress_menupaint )
  */
 LONG NC_HandleNCPaint( HWND32 hwnd , HRGN32 clip)
 {
-    NC_DoNCPaint( hwnd, clip, FALSE );
+    WND* wndPtr = WIN_FindWndPtr( hwnd );
+
+    if( wndPtr && wndPtr->dwStyle & WS_VISIBLE )
+    {
+	if( wndPtr->dwStyle & WS_MINIMIZE )
+	    WINPOS_RedrawIconTitle( hwnd );
+	else 
+	    NC_DoNCPaint( wndPtr, clip, FALSE );
+    }
     return 0;
 }
 
@@ -776,13 +703,13 @@ LONG NC_HandleNCActivate( WND *wndPtr, WPARAM16 wParam )
 
     if( wStateChange )
     {
-      if (wParam) wndPtr->flags |= WIN_NCACTIVATED;
-      else wndPtr->flags &= ~WIN_NCACTIVATED;
+	if (wParam) wndPtr->flags |= WIN_NCACTIVATED;
+	else wndPtr->flags &= ~WIN_NCACTIVATED;
 
-      if( wndPtr->dwStyle & WS_MINIMIZE )
-	PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_ERASENOW, 0 );
-      else
-	NC_DoNCPaint( wndPtr->hwndSelf, (HRGN32)1, FALSE );
+	if( wndPtr->dwStyle & WS_MINIMIZE ) 
+	    WINPOS_RedrawIconTitle( wndPtr->hwndSelf );
+	else
+	    NC_DoNCPaint( wndPtr, (HRGN32)1, FALSE );
     }
     return TRUE;
 }
@@ -868,6 +795,7 @@ BOOL32 NC_GetSysPopupPos( WND* wndPtr, RECT32* rect )
  *           NC_TrackSysMenu
  *
  * Track a mouse button press on the system menu.
+ * TODO: Unify with NC_TrackMinMaxBox() (and without InternalGetMessage() calls).
  */
 static void NC_TrackSysMenu( HWND32 hwnd, POINT16 pt )
 {
@@ -1053,7 +981,7 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
 
       /* Get min/max info */
 
-    NC_GetMinMaxInfo( wndPtr, NULL, NULL, &minTrack, &maxTrack );
+    WINPOS_GetMinMaxInfo( wndPtr, NULL, NULL, &minTrack, &maxTrack );
     sizingRect = wndPtr->rectWindow;
     if (wndPtr->dwStyle & WS_CHILD)
 	GetClientRect16( wndPtr->parent->hwndSelf, &mouseRect );
@@ -1096,15 +1024,17 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
 
     if( iconic )
     {
-      HICON16 hIcon = (wndPtr->class->hIcon)
+	HICON16 hIcon = (wndPtr->class->hIcon)
                       ? wndPtr->class->hIcon
                       : (HICON16)SendMessage16( hwnd, WM_QUERYDRAGICON, 0, 0L);
-      if( hIcon )
-      {
-        hDragCursor =  CURSORICON_IconToCursor( hIcon, TRUE );
-        hOldCursor = SetCursor32(hDragCursor);
-        ShowCursor32( TRUE );
-      } else iconic = FALSE;
+	if( hIcon )
+	{
+	    hDragCursor =  CURSORICON_IconToCursor( hIcon, TRUE );
+	    hOldCursor = SetCursor32(hDragCursor);
+	    ShowCursor32( TRUE );
+	} 
+	else iconic = FALSE;
+	WINPOS_ShowIconTitle( wndPtr, FALSE );
     }
 
     if( !iconic ) NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
@@ -1158,8 +1088,8 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
 		else if (ON_BOTTOM_BORDER(hittest)) newRect.bottom += dy;
 		if( !iconic )
 		{
-		  NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
-		  NC_DrawMovingFrame( hdc, &newRect, thickframe );
+		    NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
+		    NC_DrawMovingFrame( hdc, &newRect, thickframe );
 		}
 		capturePoint = pt;
 		sizingRect = newRect;
@@ -1170,12 +1100,12 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
     ReleaseCapture();
     if( iconic )
     {
-      ShowCursor32( FALSE );
-      SetCursor32(hOldCursor);
-      if( hDragCursor ) DestroyCursor32( hDragCursor );
+	ShowCursor32( FALSE );
+	SetCursor32(hOldCursor);
+	if( hDragCursor ) DestroyCursor32( hDragCursor );
     }
     else
-      NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
+	NC_DrawMovingFrame( hdc, &sizingRect, thickframe );
 
     if (wndPtr->dwStyle & WS_CHILD)
         ReleaseDC32( wndPtr->parent->hwndSelf, hdc );
@@ -1204,22 +1134,21 @@ static void NC_DoSizeMove( HWND32 hwnd, WORD wParam, POINT16 pt )
 
     /* Single click brings up the system menu when iconized */
 
-    if (!moved && (wndPtr->dwStyle & WS_MINIMIZE))
+    if( moved )
     {
-        NC_TrackSysMenu( hwnd, pt );
-        return;
-    }
+	if ((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) return;
 
-      /* If Esc key, don't move the window */
-    if ((msg.message == WM_KEYDOWN) && (msg.wParam == VK_ESCAPE)) return;
-
-    if (hittest != HTCAPTION)
+	/* NOTE: SWP_NOACTIVATE prevents document window activation in Word 6 */
 	SetWindowPos32( hwnd, 0, sizingRect.left, sizingRect.top,
-		        sizingRect.right - sizingRect.left,
-		        sizingRect.bottom - sizingRect.top,
-		        SWP_NOACTIVATE | SWP_NOZORDER );
-    else SetWindowPos32( hwnd, 0, sizingRect.left, sizingRect.top, 0, 0,
-		         SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER );
+			sizingRect.right - sizingRect.left,
+			sizingRect.bottom - sizingRect.top,
+		      ( hittest == HTCAPTION ) ? SWP_NOSIZE : 0 );
+    }
+    if( wndPtr->dwStyle & WS_MINIMIZE )
+    {
+	WINPOS_ShowIconTitle( wndPtr, TRUE );
+	if( !moved ) NC_TrackSysMenu( hwnd, pt );
+    }
 }
 
 
@@ -1332,7 +1261,10 @@ LONG NC_HandleNCLButtonDown( HWND32 hwnd, WPARAM16 wParam, LPARAM lParam )
     switch(wParam)  /* Hit test */
     {
     case HTCAPTION:
-	SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );
+
+	if( WINPOS_SetActiveWindow(WIN_GetTopParent(hwnd), TRUE, TRUE)
+	    || (GetActiveWindow32() == WIN_GetTopParent(hwnd)) )
+		SendMessage16( hwnd, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lParam );
 	break;
 
     case HTSYSMENU:

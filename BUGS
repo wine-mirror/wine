@@ -5,12 +5,11 @@ done something for one of the problems. You are encouraged to
 add new entries and, more importantly, remove those for the 
 bugs you fixed ;-)
 ------------------------------------------------------------
-As of March 10 1997 -
+As of June 1997 -
 
 General:
 
- * Font mapping is too generic. No soft font loading, no rotated 
-   text support, incorrect metrics. [alex@amadeus.pharm.sunysb.edu]
+ * TrueType, .FON rasterizer.
 
  * No thread/process/kernel-object support in Win32 code. 
 
@@ -32,20 +31,23 @@ General:
 	  properties.
 
  * No manual pages describing the various Windows calls.
+	- You can find information about most of the Win32 API calls
+          on the www.microsoft.com (go to 'search').
 
 Miscellaneous:
+
+ * New font mapping scheme can be improved.
 
  * "Cursor XXXX has more than 1 bpp!"
 
  * 32-bit Freecell segfaults when started from the Progman (looks like
    a problem with cards.dll).
 
- * Edit controls are prone to show blank space when, in fact, there is a
-   text there.
+ * Margins in edit controls are too wide.
 
  * SGI window manager treats Wine windows as topmost.
 
- * Write shows blank space instead of Paintbrush OLE1 object.
+ * Write shows blank space instead of Paintbrush OLE1 object ( GetDIBits()? ).
 
  * AllocCSToDSAlias() shouldn't alloc alias for the same segment multiple
    times.

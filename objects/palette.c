@@ -4,6 +4,8 @@
  * Copyright 1993,1994 Alexandre Julliard
  * Copyright 1996 Alex Korobka
  *
+ * PALETTEOBJ is documented in the Dr. Dobbs Journal May 1993.
+ * Information in the "Undocumented Windows" is incorrect.
  */
 
 #include <stdlib.h>
@@ -26,6 +28,45 @@ static UINT32 SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
 static HPALETTE16 hPrimaryPalette = 0; /* used for WM_PALETTECHANGED */
 static HPALETTE16 hLastRealizedPalette = 0; /* UnrealizeObject() needs it */
 
+
+/***********************************************************************
+ *           PALETTE_Init
+ *
+ * Create the system palette.
+ */
+HPALETTE16 PALETTE_Init(void)
+{
+    extern const PALETTEENTRY* COLOR_GetSystemPaletteTemplate(void);
+
+    int                 i;
+    HPALETTE16          hpalette;
+    LOGPALETTE *        palPtr;
+    PALETTEOBJ*         palObj;
+    const PALETTEENTRY* __sysPalTemplate = COLOR_GetSystemPaletteTemplate();
+
+    /* create default palette (20 system colors) */
+
+    palPtr = xmalloc( sizeof(LOGPALETTE) + (NB_RESERVED_COLORS-1)*sizeof(PALETTEENTRY) );
+    if (!palPtr) return FALSE;
+
+    palPtr->palVersion = 0x300;
+    palPtr->palNumEntries = NB_RESERVED_COLORS;
+    for( i = 0; i < NB_RESERVED_COLORS; i ++ )
+    {
+        palPtr->palPalEntry[i].peRed = __sysPalTemplate[i].peRed;
+        palPtr->palPalEntry[i].peGreen = __sysPalTemplate[i].peGreen;
+        palPtr->palPalEntry[i].peBlue = __sysPalTemplate[i].peBlue;
+        palPtr->palPalEntry[i].peFlags = 0;
+    }
+    hpalette = CreatePalette16( palPtr );
+
+    palObj = (PALETTEOBJ*) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
+
+    palObj->mapping = xmalloc( sizeof(int) * 20 );
+
+    free( palPtr );
+    return hpalette;
+}
 
 /***********************************************************************
  *           PALETTE_ValidateFlags

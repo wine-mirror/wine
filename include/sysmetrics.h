@@ -53,13 +53,9 @@
 #ifdef WIN_95_LOOK
 #define SYSMETRICS_CXMINTRACK       112
 #define SYSMETRICS_CYMINTRACK        27
-#define SYSMETRICS_CXICONSPACING     75
-#define SYSMETRICS_CYICONSPACING     75
 #else
 #define SYSMETRICS_CXMINTRACK       100
 #define SYSMETRICS_CYMINTRACK        28
-#define SYSMETRICS_CXICONSPACING     20
-#define SYSMETRICS_CYICONSPACING     20
 #endif
 
   /* Some non-constant system metrics */
@@ -73,6 +69,8 @@
 #define SYSMETRICS_CXDOUBLECLK         sysMetrics[SM_CXDOUBLECLK]
 #define SYSMETRICS_CYDOUBLECLK         sysMetrics[SM_CYDOUBLECLK]
 #define SYSMETRICS_MENUDROPALIGNMENT   sysMetrics[SM_MENUDROPALIGNMENT]
+#define SYSMETRICS_CXICONSPACING       sysMetrics[SM_CXICONSPACING]
+#define SYSMETRICS_CYICONSPACING       sysMetrics[SM_CYICONSPACING]
 
 extern void SYSMETRICS_Init(void);
 extern short sysMetrics[SM_CMETRICS+1];

@@ -12,7 +12,7 @@
 #include "gdi.h"
 /*#include "callback.h"*/
 #include "heap.h"
-#include "x11drv.h"
+#include "x11font.h"
 #include "stddebug.h"
 /* #define DEBUG_TEXT */
 #include "debug.h"
@@ -32,21 +32,29 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
                    const RECT32 *lprect, LPCSTR str, UINT32 count,
                    const INT32 *lpDx )
 {
-    HRGN32	hRgnClip = 0;
-    int 	dir, ascent, descent, i;
-    XCharStruct info;
-    XFontStruct *font;
-    RECT32 	rect;
+    HRGN32		hRgnClip = 0;
+    int 		dir, ascent, descent, i;
+    fontObject*		pfo;
+    XCharStruct 	info;
+    XFontStruct*	font;
+    RECT32 		rect;
+    char		dfBreakChar, lfUnderline, lfStrikeOut;
 
     if (!DC_SetupGCForText( dc )) return TRUE;
-    font = dc->u.x.font.fstruct;
 
-    dprintf_text(stddeb,"ExtTextOut: hdc=%04x %d,%d '%.*s', %d  flags=%d\n",
-                 dc->hSelf, x, y, (int)count, str, count, flags);
+    pfo = XFONT_GetFontObject( dc->u.x.font );
+    font = pfo->fs;
+
+    dfBreakChar = (char)pfo->fi->df.dfBreakChar;
+    lfUnderline = (pfo->fo_flags & FO_SYNTH_UNDERLINE) ? 1 : 0;
+    lfStrikeOut = (pfo->fo_flags & FO_SYNTH_STRIKEOUT) ? 1 : 0;
+
+    dprintf_text(stddeb,"ExtTextOut: hdc=%04x df=%04x %d,%d '%.*s', %d  flags=%d\n",
+                 dc->hSelf, (UINT16)(dc->u.x.font), x, y, (int)count, str, count, flags);
+
     if (lprect != NULL) dprintf_text(stddeb, "\trect=(%d,%d- %d,%d)\n",
                                      lprect->left, lprect->top,
                                      lprect->right, lprect->bottom );
-
       /* Setup coordinates */
 
     if (dc->w.textAlign & TA_UPDATECP)
@@ -106,7 +114,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 	/* sum lpDx array and add the width of last character */
 
         info.width = XTextWidth( font, str + count - 1, 1) + dc->w.charExtra;
-        if (str[count-1] == (char)dc->u.x.font.metrics.tmBreakChar)
+        if (str[count-1] == dfBreakChar)
             info.width += dc->w.breakExtra;
 
         for (i = 0; i < count; i++) info.width += lpDx[i];
@@ -211,7 +219,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
                 else
                 {
                     delta += dc->w.charExtra;
-                    if (str[i] == (char)dc->u.x.font.metrics.tmBreakChar)
+                    if (str[i] == (char)dfBreakChar)
                         delta += dc->w.breakExtra;
                 }
                 pitem->nchars++;
@@ -227,9 +235,10 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 
       /* Draw underline and strike-out if needed */
 
-    if (dc->u.x.font.metrics.tmUnderlined)
+    if (lfUnderline)
     {
 	long linePos, lineWidth;       
+
 	if (!XGetFontProperty( font, XA_UNDERLINE_POSITION, &linePos ))
 	    linePos = font->descent-1;
 	if (!XGetFontProperty( font, XA_UNDERLINE_THICKNESS, &lineWidth ))
@@ -241,7 +250,7 @@ X11DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 		   dc->w.DCOrgX + x, dc->w.DCOrgY + y + linePos,
 		   dc->w.DCOrgX + x + info.width, dc->w.DCOrgY + y + linePos );
     }
-    if (dc->u.x.font.metrics.tmStruckOut)
+    if (lfStrikeOut)
     {
 	long lineAscent, lineDescent;
 	if (!XGetFontProperty( font, XA_STRIKEOUT_ASCENT, &lineAscent ))

@@ -2,6 +2,10 @@
  * Window painting functions
  *
  * Copyright 1993, 1994, 1995 Alexandre Julliard
+ *
+ * FIXME: Do not repaint full nonclient area all the time. Instead, compute 
+ *	  intersection with hrgnUpdate (which should be moved from client to 
+ *	  window coords as well, lookup 'the pain' comment in the winpos.c).
  */
 
 #include <stdio.h>
@@ -244,6 +248,8 @@ HBRUSH16 GetControlBrush( HWND16 hwnd, HDC16 hdc, UINT16 control )
  * wParam         = flags
  * LOWORD(lParam) = hrgnClip
  * HIWORD(lParam) = hwndSkip  (not used; always NULL)
+ *
+ * All in all, a prime candidate for a rewrite.
  */
 BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
                            HRGN32 hrgnUpdate, UINT32 flags, UINT32 control )
@@ -409,39 +415,43 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
                     return TRUE;
                 }
            }
-           list = WIN_BuildWinArray( wndPtr );
-           for (ppWnd = list; *ppWnd; ppWnd++)
-           {
-               wndPtr = *ppWnd;
-               if (!IsWindow32(wndPtr->hwndSelf)) continue;
-               if (wndPtr->dwStyle & WS_VISIBLE)
-	       {
-                   SetRectRgn32( hrgn, wndPtr->rectWindow.left,
-                                 wndPtr->rectWindow.top,
-                                 wndPtr->rectWindow.right,
-                                 wndPtr->rectWindow.bottom );
-                   if (!CombineRgn32( hrgn, hrgn, hrgnUpdate, RGN_AND ))
-                       continue;
-                   OffsetRgn32( hrgn, -wndPtr->rectClient.left,
-                                      -wndPtr->rectClient.top );
-                   PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, hrgn, flags,
-                                       RDW_C_USEHRGN );
-               }
+           if( (list = WIN_BuildWinArray( wndPtr, 0, NULL )) )
+	   {
+		for (ppWnd = list; *ppWnd; ppWnd++)
+		{
+		    wndPtr = *ppWnd;
+		    if (!IsWindow32(wndPtr->hwndSelf)) continue;
+		    if (wndPtr->dwStyle & WS_VISIBLE)
+		    {
+			SetRectRgn32( hrgn, 
+				wndPtr->rectWindow.left, wndPtr->rectWindow.top, 
+				wndPtr->rectWindow.right, wndPtr->rectWindow.bottom );
+			if (CombineRgn32( hrgn, hrgn, hrgnUpdate, RGN_AND ))
+			{
+			    OffsetRgn32( hrgn, -wndPtr->rectClient.left,
+                                        -wndPtr->rectClient.top );
+			    PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, hrgn, flags,
+                                         RDW_C_USEHRGN );
+			}
+		    }
+		}
+		HeapFree( SystemHeap, 0, list );
 	   }
-	   HeapFree( SystemHeap, 0, list );
 	   DeleteObject32( hrgn );
 	   if (control & RDW_C_DELETEHRGN) DeleteObject32( hrgnUpdate );
 	}
         else
         {
-           list = WIN_BuildWinArray( wndPtr );
-           for (ppWnd = list; *ppWnd; ppWnd++)
-           {
-               wndPtr = *ppWnd;
-               if (IsWindow32( wndPtr->hwndSelf ))
-                   PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, flags, 0 );
-	   }
-	   HeapFree( SystemHeap, 0, list );
+	    if( (list = WIN_BuildWinArray( wndPtr, 0, NULL )) )
+	    {
+		for (ppWnd = list; *ppWnd; ppWnd++)
+		{
+		    wndPtr = *ppWnd;
+		    if (IsWindow32( wndPtr->hwndSelf ))
+			PAINT_RedrawWindow( wndPtr->hwndSelf, NULL, 0, flags, 0 );
+		}
+	        HeapFree( SystemHeap, 0, list );
+	    }
 	}
 
     }

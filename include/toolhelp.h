@@ -274,7 +274,7 @@ BOOL16 NotifyRegister(HTASK16 htask,FARPROC16 lpfnCallback,WORD wFlags);
 #define NFY_UNKNOWN	0
 #define NFY_LOADSEG	1
 /* DATA is a pointer to following struct: */
-struct {
+typedef struct {
 	DWORD	dwSize;
 	WORD	wSelector;
 	WORD	wSegNum;
@@ -286,7 +286,7 @@ struct {
 
 /* called when loading/starting a DLL */
 #define NFY_STARTDLL	3
-struct {
+typedef struct {
     DWORD      dwSize;
     HMODULE16  hModule;
     WORD       wCS;
@@ -304,7 +304,7 @@ struct {
 
 /* RIP? debugevent */
 #define NFY_RIP		7
-struct {
+typedef struct {
 	DWORD	dwSize;
 	WORD	wIP;
 	WORD	wCS;
@@ -331,7 +331,7 @@ struct {
 
 /* log errors */
 #define NFY_LOGERROR	12
-struct {
+typedef struct {
 	DWORD	dwSize;
 	UINT16	wErrCode;
 	VOID   *lpInfo; /* depends on wErrCode */
@@ -339,7 +339,7 @@ struct {
 
 /* called for parameter errors? */
 #define NFY_LOGPARAMERROR	13
-struct {
+typedef struct {
     DWORD       dwSize;
     UINT16      wErrCode;
     FARPROC16   lpfnErrorAddr;

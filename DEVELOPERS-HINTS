@@ -239,3 +239,13 @@ not yet implemented functions.
 You have to start tools/make_debug only if you introduced a new macro,
 e.g.  dprintf_win32s - not if you just changed one of the #define
 DEBUG_XXX's in include/stddebug.h or in a specific file.
+
+MORE INFO
+=========
+
+1. http://www.sonic.net/~undoc/bookstore.html
+
+2. In 1993 Dr. Dobbs Journal published a column called "Undocumented Corner".
+
+3. You might want to check out BYTE from December 1983 as well :-)
+

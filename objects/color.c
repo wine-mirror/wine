@@ -31,8 +31,8 @@
  * because pixel values can be calculated without X server 
  * assistance.
  *
- * For some info about general Windows palette management read
- * http://198.105.232.5/MSDN/LIBRARY/TECHNOTE/CH3.HTM 
+ * Windows palette manager is described in the
+ * http://premium.microsoft.com/msdn/library/techart/f30/f34/f40/d4d/sa942.htm
  */
 
 typedef struct
@@ -41,7 +41,8 @@ typedef struct
     UINT16      size;
     UINT16      flags;
     INT32	monoPlane;	 /* bit plane different for white and black pixels */
-    BOOL32	bWhiteOn;	 /* monoPlane bit is 1 for the white pixel */
+
+    INT32	(*mapColor)( DC*, COLORREF );
 } CSPACE;
 
 static CSPACE cSpace = {0, 0, 0};
@@ -61,7 +62,6 @@ static int COLOR_Graymax    = 0;
  * currently inactive window it changes only DC palette mappings.
  */
 
-#define NB_RESERVED_COLORS  		20 /* number of fixed colors in system palette */
 #define NB_COLORCUBE_START_INDEX	63
 
 Visual* 		visual = NULL;
@@ -143,6 +143,11 @@ UINT16 COLOR_GetSystemPaletteFlags(void)
     return cSpace.flags;
 }
 
+const PALETTEENTRY* COLOR_GetSystemPaletteTemplate(void)
+{
+    return __sysPalTemplate;
+}
+
 COLORREF COLOR_GetSystemPaletteEntry(UINT32 i)
 {
  return *(COLORREF*)(COLOR_sysPal + i) & 0x00ffffff;
@@ -176,7 +181,10 @@ BOOL32 COLOR_CheckSysColor(COLORREF c)
   return 1;
 }
 
-void COLOR_FillDefaultColors(void)
+/***********************************************************************
+ *      Colormap Initialization
+ */
+static void COLOR_FillDefaultColors(void)
 {
  /* initialize unused entries to what Windows uses as a color 
   * cube - based on Greg Kreider's code. 
@@ -530,58 +538,6 @@ static BOOL32 COLOR_BuildSharedMap(CSPACE* cs)
    return TRUE;
 }
 
-
-/***********************************************************************
- *           COLOR_InitPalette
- *
- * Create the system palette.
- */
-static HPALETTE16 COLOR_InitPalette(void)
-{
-    int 		i;
-    HPALETTE16 		hpalette;
-    LOGPALETTE * 	palPtr;
-    PALETTEOBJ*         palObj;
-
-    memset(COLOR_freeList, 0, 256*sizeof(unsigned char));
-
-    if (cSpace.flags & COLOR_PRIVATE)
-	COLOR_BuildPrivateMap( &cSpace );
-    else
-	COLOR_BuildSharedMap( &cSpace );
-
-    /* Build free list */
-
-    if( COLOR_firstFree != -1 )
-	COLOR_FormatSystemPalette();
-
-    COLOR_FillDefaultColors();
-
-    /* create default palette (20 system colors) */
-
-    palPtr = xmalloc( sizeof(LOGPALETTE) + (NB_RESERVED_COLORS-1)*sizeof(PALETTEENTRY) );
-    if (!palPtr) return FALSE;
-
-    palPtr->palVersion = 0x300;
-    palPtr->palNumEntries = NB_RESERVED_COLORS;
-    for( i = 0; i < NB_RESERVED_COLORS; i ++ )
-    {
-        palPtr->palPalEntry[i].peRed = __sysPalTemplate[i].peRed;
-        palPtr->palPalEntry[i].peGreen = __sysPalTemplate[i].peGreen;
-        palPtr->palPalEntry[i].peBlue = __sysPalTemplate[i].peBlue;
-        palPtr->palPalEntry[i].peFlags = 0;  
-    }
-    hpalette = CreatePalette16( palPtr );
-
-    palObj = (PALETTEOBJ*) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
-
-    palObj->mapping = xmalloc( sizeof(int) * 20 );
-
-    free( palPtr );
-    return hpalette;
-}
-
-
 /***********************************************************************
  *	     COLOR_Computeshifts
  *
@@ -609,10 +565,9 @@ static void COLOR_Computeshifts(unsigned long maskbits, int *shift, int *max)
 /***********************************************************************
  *           COLOR_Init
  *
- * Initialize color map and system palette.
- *
+ * Initialize color management.
  */
-HPALETTE16 COLOR_Init(void)
+BOOL32 COLOR_Init(void)
 {
     int	mask, white, black;
 
@@ -680,7 +635,21 @@ HPALETTE16 COLOR_Init(void)
     dprintf_palette(stddeb," visual class %i (%i)\n", 
 		    visual->class, cSpace.monoPlane);
 
-    return COLOR_InitPalette();
+    memset(COLOR_freeList, 0, 256*sizeof(unsigned char));
+
+    if (cSpace.flags & COLOR_PRIVATE)
+        COLOR_BuildPrivateMap( &cSpace );
+    else
+        COLOR_BuildSharedMap( &cSpace );
+
+    /* Build free list */
+
+    if( COLOR_firstFree != -1 )
+        COLOR_FormatSystemPalette();
+
+    COLOR_FillDefaultColors();
+
+    return TRUE;
 }
 
 /***********************************************************************
@@ -868,31 +837,8 @@ COLORREF COLOR_ToLogical(int pixel)
 int COLOR_ToPhysical( DC *dc, COLORREF color )
 {
     WORD 		 index = 0;
-    unsigned char	 spec_type;
     HPALETTE16		 hPal = (dc)? dc->w.hPalette: STOCK_DEFAULT_PALETTE;
-
-    spec_type = color >> 24;
-
-    if( spec_type == 0xff )
-    {
-	spec_type = 0; /* 'write' seems to need that for 'Page 1' text */
-	color &= 0xffffff;
-    }
-
-    if( spec_type > 2 )
-    {  
-	dprintf_palette(stddeb, "COLOR_ToPhysical : invalid RGB specifier for: %08lx\n", color);
-	spec_type = 0;
-    }
-
-    if (dc && (dc->w.bitsPerPixel == 1) && (spec_type == 0))
-    {
-	/* monochrome */
-        if (((color >> 16) & 0xff) +
-            ((color >> 8) & 0xff) + (color & 0xff) > 255*3/2)
-             return 1;   /* white */
-        else return 0;   /* black */
-    }
+    unsigned char	 spec_type = color >> 24;
 
     if ( cSpace.flags & COLOR_FIXED )
     {
@@ -919,7 +865,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 
           case 1: /* PALETTEINDEX */
 
-            if ( (idx = color & 0xffff) >= palPtr->logpalette.palNumEntries)
+            if( (idx = color & 0xffff) >= palPtr->logpalette.palNumEntries)
             {
                 fprintf(stderr, "\tRGB(%lx) : idx %d is out of bounds, assuming black\n", color, idx);
                 return 0;
@@ -928,11 +874,16 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
             if( palPtr->mapping ) return palPtr->mapping[idx];
 
 	    color = *(COLORREF*)(palPtr->logpalette.palPalEntry + idx);
+	    break;
 
-	    /* fall through and out */
+	  default:
+	    color &= 0xffffff;
+	    /* fall through to RGB */
 
 	  case 0: /* RGB */
-	  default:
+	    if( dc && (dc->w.bitsPerPixel == 1) )
+		return (((color >> 16) & 0xff) +
+			((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? 1 : 0;
 	}
 
         red = GetRValue(color); green = GetGValue(color); blue = GetBValue(color);
@@ -965,7 +916,14 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 	switch(spec_type)	/* we have to peruse DC and system palette */
     	{
 	    default:
+		color &= 0xffffff;
+		/* fall through to RGB */
+
        	    case 0:  /* RGB */
+		if( dc && (dc->w.bitsPerPixel == 1) )
+		    return (((color >> 16) & 0xff) +
+			    ((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? 1 : 0;
+
 	    	index = COLOR_PaletteLookupPixel( COLOR_sysPal, 256, 
 						  COLOR_PaletteToPixel, color, FALSE);
 

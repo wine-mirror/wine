@@ -112,30 +112,30 @@ void CLIPBOARD_DisOwn(WND* pWnd)
 {
   LPCLIPFORMAT lpFormat = ClipFormats;
 
-  dprintf_clipboard(stddeb,"DisOwn: clipboard owner = %04x, sw = %08x\n", 
+  dprintf_clipboard(stddeb,"DisOwn: clipboard owner = %04x, selection = %08x\n", 
 				hWndClipOwner, (unsigned)selectionWindow);
 
   if( pWnd->hwndSelf == hWndClipOwner)
   {
-    SendMessage16(hWndClipOwner,WM_RENDERALLFORMATS,0,0L);
+      SendMessage16(hWndClipOwner,WM_RENDERALLFORMATS,0,0L);
 
-    /* check if all formats were rendered */
+      /* check if all formats were rendered */
 
-    while(lpFormat)
-    { 
-       if( lpFormat->wDataPresent && !lpFormat->hData )
+      while(lpFormat)
+      { 
+         if( lpFormat->wDataPresent && !lpFormat->hData )
 	 {
 	   dprintf_clipboard(stddeb,"\tdata missing for clipboard format %i\n", lpFormat->wFormatID); 
 	   lpFormat->wDataPresent = 0;
 	 }
-       lpFormat = lpFormat->NextFormat;
-    }
-    hWndClipOwner = 0;
+         lpFormat = lpFormat->NextFormat;
+      }
+      hWndClipOwner = 0;
   }
 
   /* now try to salvage current selection from being destroyed by X */
 
-  CLIPBOARD_CheckSelection(pWnd);
+  if( pWnd->window ) CLIPBOARD_CheckSelection(pWnd);
 }
 
 /**************************************************************************

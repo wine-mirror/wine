@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -27,19 +28,19 @@
 typedef struct
 {
   SHORT nSize;
-  LPVOID lpindata;
-  LPVOID lpFont;
-  LPVOID lpXForm;
-  LPVOID lpDrawMode;
+  SEGPTR lpindata;
+  SEGPTR lpFont;
+  SEGPTR lpXForm;
+  SEGPTR lpDrawMode;
 } EXTTEXTDATA, *LPEXTTEXTDATA;
 #pragma pack(4)
 
-#if 0
-static BOOL16 windrvExtTextOut16( DC *dc, INT16 x, INT16 y, UINT16 flags, const RECT16 * lprect,
-                                 LPCSTR str, UINT16 count, const INT16 *lpDx);
-#endif
+SEGPTR		win16drv_SegPtr_TextXForm;
+LPTEXTXFORM16 	win16drv_TextXFormP;
+SEGPTR		win16drv_SegPtr_DrawMode;
+LPDRAWMODE 	win16drv_DrawModeP;
 
-DRAWMODE DrawMode;
+
 static BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device,
                                  LPCSTR output, const DEVMODE16* initData );
 static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput, 
@@ -222,10 +223,8 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
     int nPDEVICEsize;
     PDEVICE_HEADER *pPDH;
     WIN16DRV_PDEVICE *physDev;
-    LPDRAWMODE lpDrawMode = &DrawMode;
 
     /* Realizing fonts */
-    TEXTXFORM16 TextXForm;
     int nSize;
     char printerEnabled[20];
     PROFILE_GetWineIniString( "wine", "printer", "off",
@@ -339,21 +338,24 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 	   &pLPD->paPrinterFonts[0].tm, 
 	   sizeof(TEXTMETRIC16));
 
+    win16drv_SegPtr_TextXForm = WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(TEXTXFORM16)));
+    win16drv_TextXFormP = PTR_SEG_TO_LIN(win16drv_SegPtr_TextXForm);
+    
+    InitTextXForm(win16drv_TextXFormP);
 #ifdef SUPPORT_REALIZED_FONTS
     /* TTD should calculate this */
-    InitTextXForm(&TextXForm);
     
     /* First get the size of the realized font */
     nSize = PRTDRV_RealizeObject(physDev->segptrPDEVICE, OBJ_FONT,
 				 &pLPD->paPrinterFonts[0], NULL, 
-				 NULL);
+				 0);
     
     physDev->segptrFontInfo = WIN16_GlobalLock16(GlobalAlloc16(GHND, nSize));
     /* Realize the font */
     PRTDRV_RealizeObject(physDev->segptrPDEVICE, OBJ_FONT,
 			 &pLPD->paPrinterFonts[0], 
 			 (LPVOID)physDev->segptrFontInfo, 
-			 &TextXForm);
+			 win16drv_SegPtr_TextXForm);
     /* Quick look at structure */
     if (physDev->segptrFontInfo)
     {  
@@ -368,7 +370,10 @@ BOOL32 WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,
 
 #endif
     /* TTD Lots more to do here */
-    InitDrawMode(lpDrawMode);
+    win16drv_SegPtr_DrawMode = WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(DRAWMODE)));
+    win16drv_DrawModeP = PTR_SEG_TO_LIN(win16drv_SegPtr_DrawMode);
+    
+    InitDrawMode(win16drv_DrawModeP);
 
     return TRUE;
 }
@@ -389,23 +394,29 @@ static INT32 WIN16DRV_Escape( DC *dc, INT32 nEscape, INT32 cbInput,
     {
 	switch(nEscape)
 	{
-	  case 0x9:
+	  case SETABORTPROC:
 	    printf("Escape: SetAbortProc ignored\n");
 	    break;
-	case 0x100:
+
+	  case GETEXTENDEDTEXTMETRICS:
 	  {
-	    LPEXTTEXTDATA textData =  PTR_SEG_TO_LIN(lpInData);
-	    printf("Got in data 0x%lx textData 0x%p\n",lpInData, textData);
-	    printf("size %d in 0x%p:0x%p font 0x%p:0x%p xform 0x%p:0x%p drawm 0x%p:0x%p\n",
-		   textData->nSize,
-		   textData->lpindata,PTR_SEG_TO_LIN(textData->lpindata),
-		   textData->lpFont,PTR_SEG_TO_LIN(textData->lpFont),
-		   textData->lpXForm,PTR_SEG_TO_LIN(textData->lpXForm),
-		   textData->lpDrawMode,PTR_SEG_TO_LIN(textData->lpDrawMode));
+	    SEGPTR newInData =  WIN16_GlobalLock16(GlobalAlloc16(GHND, sizeof(EXTTEXTDATA)));
+            EXTTEXTDATA *textData = (EXTTEXTDATA *)(PTR_SEG_TO_LIN(newInData));
+
+	    textData->nSize = cbInput;
+	    textData->lpindata = lpInData;
+	    textData->lpFont = physDev->segptrFontInfo;
+	    textData->lpXForm = win16drv_SegPtr_TextXForm;
+	    textData->lpDrawMode = win16drv_SegPtr_DrawMode;
+	    nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,
+				  newInData, lpOutData);
+	    GlobalFree16(newInData);
+            
 	  }
-	    break;
+        break;
+        
 	  default:
-	    nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape, 
+	    nRet = PRTDRV_Control(physDev->segptrPDEVICE, nEscape,
 				  lpInData, lpOutData);
 	}
     }
@@ -540,19 +551,58 @@ static PPRINTJOB FindPrintJobFromHandle(HANDLE16 hHandle)
 /* TTD Need to do some DOS->UNIX file conversion here */
 static int CreateSpoolFile(LPSTR pszOutput)
 {
-    int fd;
-    char szSpoolFile[32];
+    int fd=-1;
+    char psCmd[1024];
+    char *psCmdP = psCmd;
 
     /* TTD convert the 'output device' into a spool file name */
 
     if (pszOutput == NULL || *pszOutput == '\0')
-	strcpy(szSpoolFile,"lp.out");
-    else
-	strcpy(szSpoolFile, pszOutput);
+      return -1;
 
-    if ((fd = open(szSpoolFile, O_CREAT | O_TRUNC | O_WRONLY , 0600)) < 0)
+    PROFILE_GetWineIniString( "spooler", pszOutput, "",
+                              psCmd, sizeof(psCmd) );
+    printf("Got printerSpoolCOmmand \"%s\"\n",psCmd);
+    if (!*psCmd)
+        psCmdP = pszOutput;
+    else
     {
-	printf("Failed to create spool file %s, errno = %d\n", szSpoolFile, errno);
+        while (*psCmdP && isspace(*psCmdP))
+        {
+            psCmdP++;
+        };
+        if (!*psCmdP)
+            return -1;
+    }
+    if (*psCmdP == '|')
+    {
+        int fds[2];
+        if (pipe(fds))
+            return -1;
+        if (fork() == 0)
+        {
+            psCmdP++;
+
+            printf("In child need to exec %s\n",psCmdP);
+            close(0);
+            dup2(fds[0],0);
+            close (fds[1]);
+            system(psCmdP);
+            exit(0);
+            
+        }
+        close (fds[0]);
+        fd = fds[1];
+        printf("Need to execut a command and pipe the output to it\n");
+    }
+    else
+    {
+        printf("Just assume its a file\n");
+
+        if ((fd = open(psCmdP, O_CREAT | O_TRUNC | O_WRONLY , 0600)) < 0)
+        {
+            printf("Failed to create spool file %s, errno = %d\n", psCmdP, errno);
+        }
     }
     return fd;
 }

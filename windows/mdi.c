@@ -179,10 +179,8 @@ static HWND16 MDI_GetWindow(WND  *clientWnd, HWND16 hWnd, WORD wTo )
             break;
         }
 
-	/* we are not interested in owned popups */
-        if ( !pWnd->owner &&
-	     (pWnd->dwStyle & WS_VISIBLE) &&
-            !(pWnd->dwStyle & WS_DISABLED))  /* found one */
+        if ( !pWnd->owner && (pWnd->dwStyle & 
+			     (WS_VISIBLE | WS_DISABLED)) == WS_VISIBLE )
         {
             pWndLast = pWnd;
             if (!wTo) break;
@@ -606,60 +604,6 @@ static LONG MDI_ChildActivate( WND *clientPtr, HWND16 hWndChild )
     return 1;
 }
 
-/**********************************************************************
- *			MDI_BuildWCL
- *
- *  iTotal returns number of children available for tiling or cascading
- */
-static MDIWCL* MDI_BuildWCL(WND* clientWnd, UINT16* iTotal)
-{
-    MDIWCL *listTop,*listNext;
-    WND    *childWnd;
-
-    if (!(listTop = (MDIWCL*)malloc( sizeof(MDIWCL) ))) return NULL;
-
-    listTop->hChild = clientWnd->child ? clientWnd->child->hwndSelf : 0;
-    listTop->prev   = NULL;
-    *iTotal 	    = 1;
-
-    /* build linked list from top child to bottom */
-
-    childWnd  =  WIN_FindWndPtr( listTop->hChild );
-    while( childWnd && childWnd->next )
-    {
-	listNext = (MDIWCL*)xmalloc(sizeof(MDIWCL));
-	
-	/* FIXME: pay attention to MDITILE_SKIPDISABLED 
-	 *        when WIN_ISWIN32 is set.
-	 */
-	if( (childWnd->dwStyle & WS_DISABLED) ||
-	    (childWnd->dwStyle & WS_MINIMIZE) ||
-	    !(childWnd->dwStyle & WS_VISIBLE)   )
-	{
-	    listTop->hChild = 0;
-	    (*iTotal)--;
-	}
-
-	listNext->hChild = childWnd->next->hwndSelf;
-	listNext->prev   = listTop;
-	listTop          = listNext;
-	(*iTotal)++;
-
-	childWnd  =  childWnd->next;
-    }
-
-    if( (childWnd->dwStyle & WS_DISABLED) ||
-	(childWnd->dwStyle & WS_MINIMIZE) ||
-	!(childWnd->dwStyle & WS_VISIBLE)   )
-    {
-	listTop->hChild = 0;
-	(*iTotal)--;
-    }
- 
-    return listTop;
-}
-
-
 /* -------------------- MDI client window functions ------------------- */
 
 /**********************************************************************
@@ -695,142 +639,115 @@ static HBITMAP16 CreateMDIMenuBitmap(void)
  */
 static LONG MDICascade(WND* clientWnd, MDICLIENTINFO *ci)
 {
-	MDIWCL	*listTop,*listPrev;
-	INT16	delta = 0, n = 0;
-	UINT16	iToPosition = 0;
-	POINT16	pos[2];
+    WND**	ppWnd;
+    UINT32	total;
   
     if (ci->hwndChildMaximized)
         ShowWindow16( ci->hwndChildMaximized, SW_NORMAL);
 
     if (ci->nActiveChildren == 0) return 0;
 
-    if (!(listTop = MDI_BuildWCL(clientWnd,&iToPosition))) return 0;
-
-    if( iToPosition < ci->nActiveChildren ) 
-        delta = 2 * SYSMETRICS_CYICONSPACING + SYSMETRICS_CYICON;
-
-    /* walk list and move windows */
-    while ( listTop )
+    if ((ppWnd = WIN_BuildWinArray(clientWnd, BWA_SKIPHIDDEN | BWA_SKIPOWNED | 
+					      BWA_SKIPICONIC, &total)))
     {
-	dprintf_mdi(stddeb, "MDICascade: move %04x to (%d,%d) size [%d,%d]\n", 
-                    listTop->hChild, pos[0].x, pos[0].y, pos[1].x, pos[1].y);
+	WND**	heapPtr = ppWnd;
+	if( total )
+	{
+	    INT16	delta = 0, n = 0;
+	    POINT16	pos[2];
+	    if( total < ci->nActiveChildren )
+		delta = SYSMETRICS_CYICONSPACING + SYSMETRICS_CYICON;
 
-	if( listTop->hChild )
-        {
-            MDI_CalcDefaultChildPos(clientWnd, n++, pos, delta);
-            SetWindowPos32(listTop->hChild, 0, pos[0].x, pos[0].y, pos[1].x, pos[1].y,
-                           SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
-        }
+	    /* walk the list and move windows */
+	    while ( *ppWnd )
+	    {
+		dprintf_mdi(stddeb, "MDICascade: move %04x to (%d,%d) size [%d,%d]\n", 
+                            (*ppWnd)->hwndSelf, pos[0].x, pos[0].y, pos[1].x, pos[1].y);
 
-	listPrev = listTop->prev;
-	free(listTop);
-	listTop = listPrev;
+		MDI_CalcDefaultChildPos(clientWnd, n++, pos, delta);
+		SetWindowPos32((*ppWnd)->hwndSelf, 0, pos[0].x, pos[0].y, pos[1].x, pos[1].y,
+					      SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
+		ppWnd++;
+	    }
+	}
+	HeapFree( SystemHeap, 0, heapPtr );
     }
 
-    if( iToPosition < ci->nActiveChildren )
-        ArrangeIconicWindows32( clientWnd->hwndSelf );
-
+    if( total < ci->nActiveChildren ) ArrangeIconicWindows32( clientWnd->hwndSelf );
     return 0;
 }
 
 /**********************************************************************
  *					MDITile
- *
  */
 static LONG MDITile(WND* wndClient, MDICLIENTINFO *ci,WORD wParam)
 {
-    MDIWCL       *listTop,*listPrev;
-    RECT16        rect;
-    int           xsize, ysize;
-    int		  x, y;
-    int		  rows, columns;
-    int           r, c;
-    int           i;
-    UINT16	  iToPosition = 0;
+    WND**	ppWnd;
+    UINT32	total = 0;
 
     if (ci->hwndChildMaximized)
 	ShowWindow16(ci->hwndChildMaximized, SW_NORMAL);
 
     if (ci->nActiveChildren == 0) return 0;
 
-    listTop = MDI_BuildWCL(wndClient, &iToPosition);
+    ppWnd = WIN_BuildWinArray(wndClient, BWA_SKIPHIDDEN | BWA_SKIPOWNED | BWA_SKIPICONIC |
+	    ((wParam & MDITILE_SKIPDISABLED)? BWA_SKIPDISABLED : 0), &total );
 
-    dprintf_mdi(stddeb,"MDITile: %i windows to tile\n",iToPosition);
+    dprintf_mdi(stddeb,"MDITile: %u windows to tile\n", total);
 
-    if( !listTop ) return 0;
-
-    /* tile children */
-    if ( iToPosition )
+    if( ppWnd )
     {
-        rect = wndClient->rectClient;
-    	rows    = (int) sqrt((double) iToPosition);
-    	columns = iToPosition / rows;
+	WND**	heapPtr = ppWnd;
 
-        if (wParam == MDITILE_HORIZONTAL)  /* version >= 3.1 */
-        {
-            i=rows;
-            rows=columns;  /* exchange r and c */
-            columns=i;
-        }
+	if( total )
+	{
+	    RECT16	rect;
+	    int		x, y, xsize, ysize;
+	    int		rows, columns, r, c, i;
 
-    	/* hack */
-    	if( iToPosition != ci->nActiveChildren)
-        {
-            y = rect.bottom - 2 * SYSMETRICS_CYICONSPACING - SYSMETRICS_CYICON;
-            rect.bottom = ( y - SYSMETRICS_CYICON < rect.top )? rect.bottom: y;
-        }
+	    rect    = wndClient->rectClient;
+	    rows    = (int) sqrt((double)total);
+	    columns = total / rows;
 
-    	ysize   = rect.bottom / rows;
-    	xsize   = rect.right  / columns;
+	    if( wParam & MDITILE_HORIZONTAL )  /* version >= 3.1 */
+	    {
+	        i = rows;
+	        rows = columns;  /* exchange r and c */
+	        columns = i;
+	    }
+
+	    if( total != ci->nActiveChildren)
+	    {
+	        y = rect.bottom - 2 * SYSMETRICS_CYICONSPACING - SYSMETRICS_CYICON;
+	        rect.bottom = ( y - SYSMETRICS_CYICON < rect.top )? rect.bottom: y;
+	    }
+
+	    ysize   = rect.bottom / rows;
+	    xsize   = rect.right  / columns;
     
-    	x       = 0;
-    	i       = 0;
+	    for (x = i = 0, c = 1; c <= columns && *ppWnd; c++)
+	    {
+	        if (c == columns)
+		{
+		    rows  = total - i;
+		    ysize = rect.bottom / rows;
+		}
 
-    	for (c = 1; c <= columns; c++)
-    	{
-            if (c == columns)
-            {
-                rows  = iToPosition - i;
-                ysize = rect.bottom / rows;
-            }
-
-            y = 0;
-            for (r = 1; r <= rows; r++, i++)
-            {
-                /* shouldn't happen but... */
-                if( !listTop )
-                    break;
-                
-                /* skip iconized childs from tiling */
-                while (!listTop->hChild)
-                {
-    	            listPrev = listTop->prev;
-    	            free(listTop);
-    	            listTop = listPrev;
-    	        }                
-                SetWindowPos32(listTop->hChild, 0, x, y, xsize, ysize, 
-                               SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
-                y += ysize;
-    	        listPrev = listTop->prev;
-    	        free(listTop);
-    	        listTop = listPrev;
-            }
-            x += xsize;
-    	}
+		y = 0;
+		for (r = 1; r <= rows && *ppWnd; r++, i++)
+		{
+		    SetWindowPos32((*ppWnd)->hwndSelf, 0, x, y, xsize, ysize, 
+				   SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER);
+                    y += ysize;
+		    ppWnd++;
+		}
+		x += xsize;
+	    }
+	}
+	HeapFree( SystemHeap, 0, heapPtr );
     }
   
-    /* free the rest if any */
-    while( listTop )
-    {
-        listPrev = listTop->prev;
-        free(listTop);
-        listTop = listPrev;
-    }
-    
-    if (iToPosition < ci->nActiveChildren )
-        ArrangeIconicWindows32( wndClient->hwndSelf );
-
+    if( total < ci->nActiveChildren ) ArrangeIconicWindows32( wndClient->hwndSelf );
     return 0;
 }
 
@@ -1607,9 +1524,6 @@ BOOL32 TranslateMDISysAccel32( HWND32 hwndClient, LPMSG32 msg )
 BOOL16 TranslateMDISysAccel16( HWND16 hwndClient, LPMSG16 msg )
 {
     WND* clientWnd = WIN_FindWndPtr( hwndClient);
-    WND* wnd;
-    MDICLIENTINFO     *ci     = NULL;
-    WPARAM16	       wParam = 0;
 
     if( clientWnd && (msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN))
     {

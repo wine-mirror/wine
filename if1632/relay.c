@@ -10,6 +10,8 @@
 #include "module.h"
 #include "stackframe.h"
 #include "task.h"
+#include "callback.h"
+#include "xmalloc.h"
 #include "stddebug.h"
 /* #define DEBUG_RELAY */
 #include "debug.h"
@@ -372,4 +374,52 @@ INT16 Throw( LPCATCHBUF lpbuf, INT16 retval )
         pFrame->entry_ip = OFFSETOF(entryPoint);
     }
     return retval;
+}
+
+/**********************************************************************
+ *	     CallProc32W    (KERNEL.56)
+ */
+DWORD
+WIN16_CallProc32W() {
+	DWORD *win_stack = (DWORD *)CURRENT_STACK16->args;
+	DWORD	nrofargs = win_stack[0];
+	DWORD	argconvmask = win_stack[1];
+	FARPROC32	proc32 = (FARPROC32)win_stack[2];
+	DWORD	*args,ret;
+	int	i;
+
+	fprintf(stderr,"CallProc32W(%ld,%ld,%p,args[",nrofargs,argconvmask,proc32);
+	args = (DWORD*)xmalloc(sizeof(DWORD)*nrofargs);
+	for (i=nrofargs;i--;) {
+		if (argconvmask & (1<<i)) {
+			args[nrofargs-i] = (DWORD)PTR_SEG_TO_LIN(win_stack[3+i]);
+			fprintf(stderr,"%08lx(%p),",win_stack[3+i],PTR_SEG_TO_LIN(win_stack[3+i]));
+		} else {
+			args[nrofargs-i] = win_stack[3+i];
+			fprintf(stderr,"%ld,",win_stack[3+i]);
+		}
+	}
+	fprintf(stderr,"]) - ");
+	switch (nrofargs) {
+	case 0: ret = CallTo32_0(proc32);
+		break;
+	case 1:	ret = CallTo32_1(proc32,args[0]);
+		break;
+	case 2:	ret = CallTo32_2(proc32,args[0],args[1]);
+		break;
+	case 3:	ret = CallTo32_3(proc32,args[0],args[1],args[2]);
+		break;
+	case 4:	ret = CallTo32_4(proc32,args[0],args[1],args[2],args[3]);
+		break;
+	case 5:	ret = CallTo32_5(proc32,args[0],args[1],args[2],args[3],args[4]);
+		break;
+	default:
+		/* FIXME: should go up to 32  arguments */
+		fprintf(stderr,"CallProc32W: unsupported number of arguments %ld, please report.\n",nrofargs);
+		ret = 0;
+		break;
+	}
+	fprintf(stderr,"returns %08lx\n",ret);
+	free(args);
+	return ret;
 }

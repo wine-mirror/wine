@@ -204,7 +204,7 @@ void LZDone(void)
  */
 INT16 GetExpandedName16( LPCSTR in, LPSTR out )
 {
-    return GetExpandedName32A( in, out );
+    return (INT16)GetExpandedName32A( in, out );
 }
 
 
@@ -230,17 +230,16 @@ INT32 GetExpandedName32A( LPCSTR in, LPSTR out )
 	dprintf_file(stddeb,"GetExpandedName(%s)\n",in);
 	fd=OpenFile32(in,&ofs,OF_READ);
 	if (fd==HFILE_ERROR32)
-		return LZERROR_BADINHANDLE;
+		return (INT32)(INT16)LZERROR_BADINHANDLE;
+	strcpy(out,in);
 	ret=read_header(fd,&head);
 	if (ret<=0) {
+		/* not a LZ compressed file, so the expanded name is the same
+		 * as the input name */
 		_lclose32(fd);
-		return LZERROR_BADINHANDLE;
+		return 1;
 	}
 
-	/* This line will crash if the caller hasn't allocated enough memory
-	 * for us.
-	 */
-	strcpy(out,in);
 
 	/* look for directory prefix and skip it. */
 	s=out;

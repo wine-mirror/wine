@@ -4,6 +4,13 @@
  * Copyright 1996 Marcus Meissner
  * FIXME: use HFILEs instead of unixfds
  *	  the win32 functions here get HFILEs already.
+ *
+ * May 26, 1997.  Fixes and comments by Rick Richardson <rick@dgii.com> [RER]
+ * - ptr->fd wasn't getting cleared on close.
+ * - GetCommEventMask() and GetCommError() didn't do much of anything.
+ *   IMHO, they are still wrong, but they at least implement the RXCHAR
+ *   event and return I/O queue sizes, which makes the app I'm interested
+ *   in (analog devices EZKIT DSP development system) work.
  */
 
 #include <stdio.h>
@@ -16,6 +23,8 @@
 #include <sys/stat.h>
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 #include <sys/ioctl.h>
+#else
+#include <sys/ioctl.h>
 #endif
 #include <unistd.h>
 
@@ -27,6 +36,10 @@
 #include "debug.h"
 #include "handle32.h"
 
+/*
+ * [RER] These are globals are wrong.  They should be in DosDeviceStruct
+ * on a per port basis.
+ */
 int commerror = 0, eventmask = 0;
 
 struct DosDeviceStruct COM[MAX_PORTS];
@@ -445,7 +458,16 @@ INT16 OpenComm(LPCSTR device,UINT16 cbInQueue,UINT16 cbOutQueue)
  */
 INT16 CloseComm(INT16 fd)
 {
+	struct DosDeviceStruct *ptr;
+
     	dprintf_comm(stddeb,"CloseComm: fd %d\n", fd);
+	if ((ptr = GetDeviceStruct(fd)) == NULL) {
+		commerror = IE_BADID;
+		return -1;
+	}
+
+	ptr->fd = 0;	/* [RER] Really, -1 would be a better value */
+
 	if (close(fd) == -1) {
 		commerror = WinError();
 		return -1;
@@ -709,10 +731,26 @@ INT16 FlushComm(INT16 fd,INT16 fnQueue)
  */
 INT16 GetCommError(INT16 fd,LPCOMSTAT lpStat)
 {
-	int temperror;
+	int		temperror;
+	unsigned long	cnt;
+	int		rc;
+
+	lpStat->status = 0;
+
+	rc = ioctl(fd, TIOCOUTQ, &cnt);
+	lpStat->cbOutQue = cnt;
+
+	rc = ioctl(fd, TIOCINQ, &cnt);
+	lpStat->cbInQue = cnt;
 
     	dprintf_comm(stddeb,
-		"GetCommError: fd %d (current error %d)\n", fd, commerror);
+		"GetCommError: fd %d, error %d, lpStat %d %d %d\n",
+		fd, commerror,
+		lpStat->status, lpStat->cbInQue, lpStat->cbOutQue);
+	/*
+	 * [RER] I have no idea what the following is trying to accomplish.
+	 * [RER] It is certainly not what the reference manual suggests.
+	 */
 	temperror = commerror;
 	commerror = 0;
 	return(temperror);
@@ -747,10 +785,43 @@ UINT16	*SetCommEventMask(INT16 fd,UINT16 fuEvtMask)
  */
 UINT16 GetCommEventMask(INT16 fd,UINT16 fnEvtClear)
 {
+	int	events = 0;
+
     	dprintf_comm(stddeb,
 		"GetCommEventMask: fd %d, mask %d\n", fd, fnEvtClear);
+
+	/*
+	 *	Determine if any characters are available
+	 */
+	if (fnEvtClear & EV_RXCHAR)
+	{
+		int		rc;
+		unsigned long	cnt;
+
+		rc = ioctl(fd, TIOCINQ, &cnt);
+		if (cnt) events |= EV_RXCHAR;
+
+		dprintf_comm(stddeb,
+			"GetCommEventMask: rxchar %ld\n", cnt);
+	}
+
+	/*
+	 *	There are other events that need to be checked for
+	 */
+	/* TODO */
+
+	dprintf_comm(stddeb,
+		"GetCommEventMask: return events %d\n", events);
+	return events;
+
+	/*
+	 * [RER] The following was gibberish
+	 */
+#if 0
+	tempmask = eventmask;
 	eventmask &= ~fnEvtClear;
 	return eventmask;
+#endif
 }
 
 /*****************************************************************************

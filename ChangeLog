@@ -1,4 +1,171 @@
 ----------------------------------------------------------------------
+Sat Jun 14 13:05:23 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [include/mmsystem.h]
+	Avoided infinite loop in audio code when accessing
+ 	WAVEOUTCAPS/WAVEINCAPS/MIDIOUTCAPS/AUXCAPS with rigid variable
+ 	offsets (I applied WINE_PACKED).
+
+	* [*/*]
+	Added "WARNING:" and "ERROR:" to some printf's.
+	Just grep for them with '-debugmsg +all'.
+
+	* [multimedia/audio.c] [multimedia/mmsystem.c]
+	Implemented wave callbacks: window and function callback.
+	Fixed problem with WAVE_NotifyClient().
+	Misc fixes.
+
+	* [windows/winhelp.c]
+	Fixed problem with windows help telling "Help topic doesn't exist".
+	But this problem still remains when using Winword.
+
+Wed Jun 11 09:14:20 1997  Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [wine.ini]
+	New 'fonts' section format. Read documentation/fonts.
+
+	* [controls/icontitle.c] [windows/winpos.c] [windows/nonclient.c]
+	  [windows/win.c] [include/win.h]
+	Implemented icon titles.
+
+	* [graphics/x11drv/xfont.c] [objects/font.c] [objects/dc.c]
+	  [include/x11drv.h] [include/x11font.h] [documentation/fonts]
+	Rewrote font mapper from scratch.
+
+	* [tools/fnt2bdf.c]
+	Bug fixes. REPLACE FONTS CREATED BY THE PREVIOUS VERSIONS.
+
+	* [windows/defwnd.c] [windows/nonclient.c]
+	Word document window activation fix.
+
+	* [windows/mdi.c] [windows/win.c]
+	Replaced WCL lists with WIN_BuildWinArray().
+
+Mon Jun  9 23:51:16 1997  Andrew Taylor <andrew@riscan.com>
+
+	* [misc/error.c] [include/windows.h] [if1632/kernel.spec]
+	Implemented LogParamError, LogError functions.
+
+Tue Jun  3 23:46:04 1997  Michiel van Loon <mfvl@xs4all.nl>
+
+	* [include/mmsystem.h] [multimedia/audio.c]
+	Constants for asynchronous play and record.
+
+	* [multimedia/time.c]
+	Filled in some empty functions.
+
+	* [multimedia/mmsystem.c]
+	Fixed bugs in waveOutOpen.
+
+	* [multimedia/mmsystem.c] [multimedia/audio.c]
+	Implemented Window Callback for wave output at least.
+
+	* [files/file.c]
+	Corrected bug in FileDosSetError.
+	NULL pointer checking added.
+
+	* [misc/spy.c]
+	Added Multimedia messages to SPY_GetMsgName.
+
+Tue Jun 3 22:34:30 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [debugger/*.c][include/peexe.h][loader/*.c][tools/build.c]
+	  [tools/fnt2bdf.c][library/sup.c]
+	IMAGE_* structs/defines changed fit better to SDK naming
+	Don't load non-i386 PE executables.
+	%fs should already be initialised for the FIRST loaded PE module.
+
+	* [if1632/advapi.spec][win32/advapi.c]
+	Some small stubs added to bring win32 setup.exe a bit farther.
+
+	* [if1632/kernel32.spec][scheduler/process.c]
+	Adapted to match win95 kernel32.dll ordinals (NT doesn't use
+ 	ordinal import), some ordinal only exported functions added.
+
+	* [if1632/relay.c]
+	Added CallProc32W.
+
+	* [misc/lzexpand.c]
+	Fixed return values of GetExpandedName* (thanks to Andreas Mohr).
+
+	* [objects/dib.c]
+	Everything with more than 8 bit of color is a truecolor mode
+	and doesn't have a colormap.
+
+Tue Jun  3 09:24:53 1997  John Harvey <john@division.co.uk>
+
+	* [graphics/win16drv/font.c] [graphics/win16drv/init.c]
+	  [graphics/win16drv/prtdrv.c] [graphics/win16drv/text.c]
+	  [include/win16drv.h]
+	Changed some structures that are passed to and from the 16 bit
+ 	drivers to be allocated on the global heap.
+	Implemented Escape(Control) 0x100 GetExtTextData properly to
+	stop word from crashing.
+	Postscript driver now prints on complete page instead of top
+	left corner.
+	Print spooling implemented.
+
+	* [loader/module.c]
+	MODULE_GetOrdinal changed char buffer to unsigned char to stop
+	a loop that was happening when running the font control
+	program from the control panel.
+
+Sun Jun  1 19:05:02 1997  Peter Schlaile <up9n@rz.uni-karlsruhe.de>
+
+	* [include/miscemu.h] [loader/main.c] [msdos/ioports.c]
+	Added support for direct io port access.
+
+Fri May 30 16:18:35 1997  David A. Cuthbert <dacut@dssc3353.ece.cmu.edu>
+
+	* [misc/ver.c]
+	Implemented VerFindFile16.
+
+Tue May 27 22:00:39 1997  Rick Richardson <rick@dgii.com>
+
+	* [misc/comm.c]
+	Fixed GetCommError and GetCommEventMask.
+
+Tue May 27  9:10:53 1997  Georg Beyerle <gbeyerle@awi-potsdam.de>
+
+	* [scheduler/thread.c]
+	Minor fix in thread database initialization.
+
+Mon May 26 19:46:34 1997  Philippe De Muyter  <phdm@info.ucl.ac.be>
+
+	* [objects/dc.c]
+	In DC_SetupGCForPen, avoid to draw in GXxor mode with a 0 mask.
+
+Mon May 26 15:22:42 1997  Bruce Milner <Bruce.Milner@genetics.utah.edu>
+
+	* [loader/pe_image.c]
+	Add code for modules that co-reference each other. Photodex's
+	agds.exe (cpic32) has two dll's that make calls into each other.
+
+Mon May 26 13:38:16 1997  Jody Goldberg <jodyg@idt.net>
+
+	* [memory/virtual.c]
+	Dont use stdio when reading /proc/self/maps.  It causes problems
+	with libc6.
+
+	* [windows/dialog.c]
+	Translate messages in IsDialogMessage when DLGC_WANTMESSAGE
+	is used.
+
+Sun May 25 17:02:21 1997  Huw D M Davies <h.davies1@physics.oxford.ac.uk>
+
+	* [objects/metafile.c]
+	Resource cleanup in EnumMetaFile(). This was one reason Word was
+	crashing after long periods of use. (Thanks to Chris Underhill for
+	the logs)
+
+Sun May 25 14:59:33 1997  Jimen Ching  <jching@flex.com>
+
+	* [multimedia/mcistring.c]
+	Initial support for compound MCI commands.
+	Use case-insensitive compare for 'alias' and 'element' keywords.
+	Fixed pointer copy of args keywords array.
+
+----------------------------------------------------------------------
 Tue May 20 19:20:23 1997  Pablo Saratxaga <srtxg@linux.chanae.stben.be>
 
 	* [resources/sysres_Es.rc]

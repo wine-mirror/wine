@@ -116,7 +116,7 @@ static void PROFILE_Save( FILE *file, PROFILESECTION *section )
 
     for ( ; section; section = section->next)
     {
-        if (section->name) fprintf( file, "[%s]\r\n", section->name );
+        if (section->name) fprintf( file, "\r\n[%s]\r\n", section->name );
         for (key = section->key; key; key = key->next)
         {
             fprintf( file, "%s", key->name );
@@ -211,7 +211,7 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
         }
         key = HEAP_xalloc( SystemHeap, 0, sizeof(*key) );
         key->name  = HEAP_strdupA( SystemHeap, 0, p );
-        key->value = HEAP_strdupA( SystemHeap, 0, p2 );
+        key->value = p2 ? HEAP_strdupA( SystemHeap, 0, p2 ) : NULL;
         key->next  = NULL;
         *prev_key  = key;
         prev_key = &key->next;
@@ -639,6 +639,33 @@ int PROFILE_LoadWineIni(void)
     fprintf( stderr, "Can't open configuration file %s or $HOME%s\n",
              WINE_INI_GLOBAL, PROFILE_WineIniName );
     return 0;
+}
+
+
+/***********************************************************************
+ *           PROFILE_GetStringItem
+ *
+ *  Convenience function that turns a string 'xxx, yyy, zzz' into 
+ *  the 'xxx\0 yyy, zzz' and returns a pointer to the 'yyy, zzz'.
+ */
+char* PROFILE_GetStringItem( char* start )
+{
+    char* lpchX, *lpch;
+
+    for (lpchX = start, lpch = NULL; *lpchX != '\0'; lpchX++ )
+    {
+        if( isspace( *lpchX ) ) lpch = lpch ? lpch : lpchX;
+        else lpch = NULL;
+
+        if( *lpchX == ',' )
+        {
+            if( lpch ) *lpch = '\0'; else *lpchX = '\0';
+            while( *(++lpchX) )
+                if( !isspace(*lpchX) ) return lpchX;
+        }
+    }
+    if( lpch ) *lpch = '\0';
+    return NULL;
 }
 
 

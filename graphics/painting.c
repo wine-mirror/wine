@@ -478,7 +478,7 @@ void DrawFocusRect16( HDC16 hdc, const RECT16* rc )
 /***********************************************************************
  *           DrawFocusRect32    (USER32.155)
  *
- * FIXME: should use Rectangle32!
+ * FIXME: PatBlt(PATINVERT) with background brush.
  */
 void DrawFocusRect32( HDC32 hdc, const RECT32* rc )
 {
@@ -747,10 +747,10 @@ BOOL32 DrawEdge32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
 /**********************************************************************
  *          DrawFrameControl16  (USER.656)
  */
-BOOL16 DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
+BOOL16 DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 uType, UINT16 uState )
 {
     fprintf( stdnimp,"DrawFrameControl16(%x,%p,%d,%x), empty stub!\n",
-             hdc,rc,edge,flags );
+             hdc,rc,uType,uState );
     return TRUE;
 }
 
@@ -758,9 +758,9 @@ BOOL16 DrawFrameControl16( HDC16 hdc, LPRECT16 rc, UINT16 edge, UINT16 flags )
 /**********************************************************************
  *          DrawFrameControl32  (USER32.157)
  */
-BOOL32 DrawFrameControl32( HDC32 hdc, LPRECT32 rc, UINT32 edge, UINT32 flags )
+BOOL32 DrawFrameControl32( HDC32 hdc, LPRECT32 rc, UINT32 uType, UINT32 uState )
 {
     fprintf( stdnimp,"DrawFrameControl32(%x,%p,%d,%x), empty stub!\n",
-             hdc,rc,edge,flags );
+             hdc,rc,uType,uState );
     return TRUE;
 }

@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "windows.h"
+#include "win.h"
 #include "heap.h"
 #include "ldt.h"
 #include "user.h"
@@ -23,6 +24,7 @@
 #include "stddebug.h"
 #include "debug.h"
 #include "xmalloc.h"
+#include "callback.h"
 
 static int	InstalledCount;
 static int	InstalledListLen;
@@ -269,6 +271,8 @@ LRESULT DriverProc(DWORD dwDevID, HDRVR16 hDriv, WORD wMsg,
 BOOL16 DriverCallback(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev, 
 		WORD wMsg, DWORD dwUser, DWORD dwParam1, DWORD dwParam2)
 {
+	LPWAVEOPENDESC	lpDesc;
+
 	dprintf_mmsys(stddeb, "DriverCallback(%08lX, %04X, %04X, %04X, %08lX, %08lX, %08lX); !\n",
 		dwCallBack, uFlags, hDev, wMsg, dwUser, dwParam1, dwParam2);
 	switch(uFlags & DCB_TYPEMASK) {
@@ -276,7 +280,14 @@ BOOL16 DriverCallback(DWORD dwCallBack, UINT16 uFlags, HANDLE16 hDev,
 			dprintf_mmsys(stddeb, "DriverCallback() // CALLBACK_NULL !\n");
 			break;
 		case DCB_WINDOW:
-			dprintf_mmsys(stddeb, "DriverCallback() // CALLBACK_WINDOW !\n");
+			dprintf_mmsys(stddeb, "DriverCallback() // CALLBACK_WINDOW = %04lX!\n",dwCallBack);
+			if (!IsWindow32(dwCallBack)) return FALSE;
+			dprintf_mmsys(stddeb, "DriverCallback() // Device Handle = %04X\n", hDev);
+			lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hDev);
+			if (lpDesc == NULL) return FALSE;
+
+			dprintf_mmsys(stddeb, "DriverCallback() // Before PostMessage16\n");
+			PostMessage16((HWND16)dwCallBack, wMsg, hDev, dwParam1);
 			break;
 		case DCB_TASK:
 			dprintf_mmsys(stddeb, "DriverCallback() // CALLBACK_TASK !\n");
@@ -855,7 +866,8 @@ DWORD mciSysInfo(DWORD dwFlags, LPMCI_SYSINFO_PARMS lpParms)
 
 /**************************************************************************
 * 				mciSound				[internal]
-*/
+*  not used anymore ??
+
 DWORD mciSound(UINT16 wDevID, DWORD dwParam, LPMCI_SOUND_PARMS lpParms)
 {
 	if (lpParms == NULL) return MCIERR_INTERNAL;
@@ -863,7 +875,8 @@ DWORD mciSound(UINT16 wDevID, DWORD dwParam, LPMCI_SOUND_PARMS lpParms)
 		dprintf_mci(stddeb, "MCI_SOUND // file='%s' !\n", lpParms->lpstrSoundName);
 	return MCIERR_INVALID_DEVICE_ID;
 }
-
+*
+*/
 
 static const char *_mciCommandToString(UINT16 wMsg)
 {
@@ -1464,6 +1477,8 @@ UINT16 waveOutGetNumDevs()
 */
 UINT16 waveOutGetDevCaps(UINT16 uDeviceID, WAVEOUTCAPS * lpCaps, UINT16 uSize)
 {
+	if (uDeviceID > waveOutGetNumDevs() - 1) return MMSYSERR_BADDEVICEID;
+	if (uDeviceID == (UINT16)WAVE_MAPPER) return MMSYSERR_BADDEVICEID; /* FIXME: do we have a wave mapper ? */
 	dprintf_mmsys(stddeb, "waveOutGetDevCaps\n");
 	return wodMessage(uDeviceID, WODM_GETDEVCAPS, 0L, (DWORD)lpCaps, uSize);
 }
@@ -1579,17 +1594,17 @@ UINT16 waveOutOpen(HWAVEOUT16 * lphWaveOut, UINT16 uDeviceID,
 	lpDesc->dwInstance = dwInstance;
 	while(uDeviceID < MAXWAVEDRIVERS) {
 		dwRet = wodMessage(uDeviceID, WODM_OPEN, 
-			lpDesc->dwInstance, (DWORD)lp16Desc, 0L);
+			lpDesc->dwInstance, (DWORD)lp16Desc, dwFlags);
 		if (dwRet == MMSYSERR_NOERROR) break;
 		if (!bMapperFlg) break;
 		uDeviceID++;
 		dprintf_mmsys(stddeb, "waveOutOpen	// WAVE_MAPPER mode ! try next driver...\n");
 		}
+	lpDesc->uDeviceID = uDeviceID;  /* save physical Device ID */
 	if (dwFlags & WAVE_FORMAT_QUERY) {
 		dprintf_mmsys(stddeb, "waveOutOpen	// End of WAVE_FORMAT_QUERY !\n");
-		waveOutClose(hWaveOut);
+		dwRet = waveOutClose(hWaveOut);
 		}
-	lpDesc->uDeviceID = uDeviceID;  /* save physical Device ID */
 	return dwRet;
 }
 
@@ -1791,9 +1806,6 @@ UINT16 waveOutGetID(HWAVEOUT16 hWaveOut, UINT16 * lpuDeviceID)
 	lpDesc = (LPWAVEOPENDESC) USER_HEAP_LIN_ADDR(hWaveOut);
 	if (lpDesc == NULL) return MMSYSERR_INVALHANDLE;
 	if (lpuDeviceID == NULL) return MMSYSERR_INVALHANDLE;
-/*
-	*lpuDeviceID = lpParms->wDeviceID; 
-*/
 	*lpuDeviceID = lpDesc->uDeviceID;
         return 0;
 }
@@ -1884,6 +1896,7 @@ UINT16 waveInOpen(HWAVEIN16 * lphWaveIn, UINT16 uDeviceID,
 		uDeviceID++;
 		dprintf_mmsys(stddeb, "waveInOpen	// WAVE_MAPPER mode ! try next driver...\n");
 		}
+	lpDesc->uDeviceID = uDeviceID;
 	if (dwFlags & WAVE_FORMAT_QUERY) {
 		dprintf_mmsys(stddeb, "waveInOpen	// End of WAVE_FORMAT_QUERY !\n");
 		waveInClose(hWaveIn);
@@ -2074,7 +2087,13 @@ HMMIO16 mmioOpen(LPSTR szFileName, MMIOINFO * lpmmioinfo, DWORD dwOpenFlags)
 	HMMIO16		hmmio;
 	OFSTRUCT	ofs;
 	LPMMIOINFO	lpmminfo;
-	dprintf_mmsys(stddeb, "mmioOpen('%s', %p, %08lX);\n", szFileName, lpmmioinfo, dwOpenFlags);
+	dprintf_mmio(stddeb, "mmioOpen('%s', %p, %08lX);\n", szFileName, lpmmioinfo, dwOpenFlags);
+        if (!szFileName)
+        {
+            /* FIXME: should load memory file if szFileName == NULL */
+            fprintf(stderr, "WARNING: mmioOpen(): szFileName == NULL (memory file ???)\n");
+            return 0;
+ 	}
 	hFile = OpenFile32(szFileName, &ofs, dwOpenFlags);
 	if (hFile == -1) return 0;
 	hmmio = GlobalAlloc16(GMEM_MOVEABLE, sizeof(MMIOINFO));
@@ -2084,7 +2103,7 @@ HMMIO16 mmioOpen(LPSTR szFileName, MMIOINFO * lpmmioinfo, DWORD dwOpenFlags)
 	lpmminfo->hmmio = hmmio;
 	lpmminfo->dwReserved2 = hFile;
 	GlobalUnlock16(hmmio);
-	dprintf_mmsys(stddeb, "mmioOpen // return hmmio=%04X\n", hmmio);
+	dprintf_mmio(stddeb, "mmioOpen // return hmmio=%04X\n", hmmio);
 	return hmmio;
 }
 
@@ -2095,7 +2114,7 @@ HMMIO16 mmioOpen(LPSTR szFileName, MMIOINFO * lpmmioinfo, DWORD dwOpenFlags)
 UINT16 mmioClose(HMMIO16 hmmio, UINT16 uFlags)
 {
 	LPMMIOINFO	lpmminfo;
-	dprintf_mmsys(stddeb, "mmioClose(%04X, %04X);\n", hmmio, uFlags);
+	dprintf_mmio(stddeb, "mmioClose(%04X, %04X);\n", hmmio, uFlags);
 	lpmminfo = (LPMMIOINFO)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
 	_lclose32((HFILE32)lpmminfo->dwReserved2);
@@ -2131,7 +2150,7 @@ LONG mmioWrite(HMMIO16 hmmio, HPCSTR pch, LONG cch)
 {
 	LONG		count;
 	LPMMIOINFO	lpmminfo;
-	dprintf_mmsys(stddeb, "mmioWrite(%04X, %p, %ld);\n", hmmio, pch, cch);
+	dprintf_mmio(stddeb, "mmioWrite(%04X, %p, %ld);\n", hmmio, pch, cch);
 	lpmminfo = (LPMMIOINFO)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
 	count = _lwrite32(LOWORD(lpmminfo->dwReserved2), (LPSTR)pch, cch);
@@ -2146,10 +2165,10 @@ LONG mmioSeek(HMMIO16 hmmio, LONG lOffset, int iOrigin)
 {
 	int		count;
 	LPMMIOINFO	lpmminfo;
-	dprintf_mmsys(stddeb, "mmioSeek(%04X, %08lX, %d);\n", hmmio, lOffset, iOrigin);
+	dprintf_mmio(stddeb, "mmioSeek(%04X, %08lX, %d);\n", hmmio, lOffset, iOrigin);
 	lpmminfo = (LPMMIOINFO)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) {
-		dprintf_mmsys(stddeb, "mmioSeek // can't lock hmmio=%04X !\n", hmmio);
+		dprintf_mmio(stddeb, "mmioSeek // can't lock hmmio=%04X !\n", hmmio);
 		return 0;
 		}
 	count = _llseek32((HFILE32)lpmminfo->dwReserved2, lOffset, iOrigin);
@@ -2163,7 +2182,7 @@ LONG mmioSeek(HMMIO16 hmmio, LONG lOffset, int iOrigin)
 UINT16 mmioGetInfo(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT16 uFlags)
 {
 	LPMMIOINFO	lpmminfo;
-	dprintf_mmsys(stddeb, "mmioGetInfo\n");
+	dprintf_mmio(stddeb, "mmioGetInfo\n");
 	lpmminfo = (LPMMIOINFO)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
 	memcpy(lpmmioinfo, lpmminfo, sizeof(MMIOINFO));
@@ -2177,7 +2196,7 @@ UINT16 mmioGetInfo(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT16 uFlags)
 UINT16 mmioSetInfo(HMMIO16 hmmio, const MMIOINFO * lpmmioinfo, UINT16 uFlags)
 {
 	LPMMIOINFO	lpmminfo;
-	dprintf_mmsys(stddeb, "mmioSetInfo\n");
+	dprintf_mmio(stddeb, "mmioSetInfo\n");
 	lpmminfo = (LPMMIOINFO)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
 	GlobalUnlock16(hmmio);
@@ -2190,7 +2209,7 @@ UINT16 mmioSetInfo(HMMIO16 hmmio, const MMIOINFO * lpmmioinfo, UINT16 uFlags)
 UINT16 mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer, 
 						LONG cchBuffer, UINT16 uFlags)
 {
-	dprintf_mmsys(stddeb, "mmioSetBuffer // empty stub \n");
+	dprintf_mmio(stddeb, "mmioSetBuffer // empty stub \n");
 	return 0;
 }
 
@@ -2200,7 +2219,7 @@ UINT16 mmioSetBuffer(HMMIO16 hmmio, LPSTR pchBuffer,
 UINT16 mmioFlush(HMMIO16 hmmio, UINT16 uFlags)
 {
 	LPMMIOINFO	lpmminfo;
-	dprintf_mmsys(stddeb, "mmioFlush(%04X, %04X)\n", hmmio, uFlags);
+	dprintf_mmio(stddeb, "mmioFlush(%04X, %04X)\n", hmmio, uFlags);
 	lpmminfo = (LPMMIOINFO)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
 	GlobalUnlock16(hmmio);
@@ -2214,7 +2233,7 @@ UINT16 mmioAdvance(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT16 uFlags)
 {
 	int		count = 0;
 	LPMMIOINFO	lpmminfo;
-	dprintf_mmsys(stddeb, "mmioAdvance\n");
+	dprintf_mmio(stddeb, "mmioAdvance\n");
 	lpmminfo = (LPMMIOINFO)GlobalLock16(hmmio);
 	if (lpmminfo == NULL) return 0;
 	if (uFlags == MMIO_READ) {
@@ -2236,7 +2255,7 @@ UINT16 mmioAdvance(HMMIO16 hmmio, MMIOINFO * lpmmioinfo, UINT16 uFlags)
 */
 FOURCC mmioStringToFOURCC(LPCSTR sz, UINT16 uFlags)
 {
-	dprintf_mmsys(stddeb, "mmioStringToFOURCC // empty stub \n");
+	dprintf_mmio(stddeb, "mmioStringToFOURCC // empty stub \n");
 	return 0;
 }
 
@@ -2246,7 +2265,7 @@ FOURCC mmioStringToFOURCC(LPCSTR sz, UINT16 uFlags)
 LPMMIOPROC mmioInstallIOProc(FOURCC fccIOProc, 
 				LPMMIOPROC pIOProc, DWORD dwFlags)
 {
-	dprintf_mmsys(stddeb, "mmioInstallIOProc // empty stub \n");
+	dprintf_mmio(stddeb, "mmioInstallIOProc // empty stub \n");
 	return 0;
 }
 
@@ -2256,7 +2275,7 @@ LPMMIOPROC mmioInstallIOProc(FOURCC fccIOProc,
 LRESULT mmioSendMessage(HMMIO16 hmmio, UINT16 uMessage,
 					    LPARAM lParam1, LPARAM lParam2)
 {
-	dprintf_mmsys(stddeb, "mmioSendMessage // empty stub \n");
+	dprintf_mmio(stddeb, "mmioSendMessage // empty stub \n");
 	return 0;
 }
 
@@ -2275,6 +2294,7 @@ UINT16 mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 	if (lpmminfo == NULL) return 0;
 	dwfcc = lpck->ckid;
 	dprintf_mmio(stddeb, "mmioDescend // dwfcc=%08lX\n", dwfcc);
+	dprintf_mmio(stddeb, "mmioDescend // hfile = %ld\n", lpmminfo->dwReserved2);
 	dwOldPos = _llseek32((HFILE32)lpmminfo->dwReserved2, 0, SEEK_CUR);
 	dprintf_mmio(stddeb, "mmioDescend // dwOldPos=%ld\n", dwOldPos);
 	if (lpckParent != NULL) {
@@ -2282,14 +2302,26 @@ UINT16 mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 		dwOldPos = _llseek32((HFILE32)lpmminfo->dwReserved2,
 					lpckParent->dwDataOffset, SEEK_SET);
 		}
+/*
+
+   It seems to be that FINDRIFF should not be treated the same as the 
+   other FINDxxx so I treat it as a MMIO_FINDxxx
+
 	if ((uFlags & MMIO_FINDCHUNK) || (uFlags & MMIO_FINDRIFF) || 
 		(uFlags & MMIO_FINDLIST)) {
+*/
+	if ((uFlags & MMIO_FINDCHUNK) || (uFlags & MMIO_FINDLIST)) {
 		dprintf_mmio(stddeb, "mmioDescend // MMIO_FINDxxxx dwfcc=%08lX !\n", dwfcc);
 		while (TRUE) {
-			if (_lread32((HFILE32)lpmminfo->dwReserved2, (LPSTR)lpck, 
-					sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
+		        size_t ix;
+
+			ix =_lread32((HFILE32)lpmminfo->dwReserved2, (LPSTR)lpck, sizeof(MMCKINFO));
+			dprintf_mmio(stddeb, "mmioDescend // after _lread32 ix = %d req = %d, errno = %d\n",ix,sizeof(MMCKINFO),errno);
+			if (ix < sizeof(MMCKINFO)) {
+
 				_llseek32((HFILE32)lpmminfo->dwReserved2, dwOldPos, SEEK_SET);
 				GlobalUnlock16(hmmio);
+				dprintf_mmio(stddeb, "mmioDescend // return ChunkNotFound\n");
 				return MMIOERR_CHUNKNOTFOUND;
 				}
 			dprintf_mmio(stddeb, "mmioDescend // dwfcc=%08lX ckid=%08lX cksize=%08lX !\n", 
@@ -2306,6 +2338,7 @@ UINT16 mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 				sizeof(MMCKINFO)) < sizeof(MMCKINFO)) {
                     _llseek32((HFILE32)lpmminfo->dwReserved2, dwOldPos, SEEK_SET);
 			GlobalUnlock16(hmmio);
+ 		        dprintf_mmio(stddeb, "mmioDescend // return ChunkNotFound 2nd\n");
 			return MMIOERR_CHUNKNOTFOUND;
 			}
 		}
@@ -2317,7 +2350,7 @@ UINT16 mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 	GlobalUnlock16(hmmio);
 	dprintf_mmio(stddeb, "mmioDescend // lpck->ckid=%08lX lpck->cksize=%ld !\n", 
 								lpck->ckid, lpck->cksize);
-	dprintf_mmsys(stddeb, "mmioDescend // lpck->fccType=%08lX !\n", lpck->fccType);
+	dprintf_mmio(stddeb, "mmioDescend // lpck->fccType=%08lX !\n", lpck->fccType);
 	return 0;
 }
 
@@ -2326,7 +2359,7 @@ UINT16 mmioDescend(HMMIO16 hmmio, MMCKINFO * lpck,
 */
 UINT16 mmioAscend(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags)
 {
-	dprintf_mmsys(stddeb, "mmioAscend // empty stub !\n");
+	dprintf_mmio(stddeb, "mmioAscend // empty stub !\n");
 	return 0;
 }
 
@@ -2335,7 +2368,7 @@ UINT16 mmioAscend(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags)
 */
 UINT16 mmioCreateChunk(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags)
 {
-	dprintf_mmsys(stddeb, "mmioCreateChunk // empty stub \n");
+	dprintf_mmio(stddeb, "mmioCreateChunk // empty stub \n");
 	return 0;
 }
 
@@ -2346,7 +2379,7 @@ UINT16 mmioCreateChunk(HMMIO16 hmmio, MMCKINFO * lpck, UINT16 uFlags)
 UINT16 mmioRename(LPCSTR szFileName, LPCSTR szNewFileName,
      MMIOINFO * lpmmioinfo, DWORD dwRenameFlags)
 {
-	dprintf_mmsys(stddeb, "mmioRename('%s', '%s', %p, %08lX); // empty stub \n",
+	dprintf_mmio(stddeb, "mmioRename('%s', '%s', %p, %08lX); // empty stub \n",
 			szFileName, szNewFileName, lpmmioinfo, dwRenameFlags);
 	return 0;
 }

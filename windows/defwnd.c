@@ -171,7 +171,9 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
                                       WM_MOUSEACTIVATE, wParam, lParam );
 	    if (ret) return ret;
 	}
-	return MA_ACTIVATE;
+
+	/* Caption clicks are handled by the NC_HandleNCLButtonDown() */ 
+	return (LOWORD(lParam) == HTCAPTION) ? MA_NOACTIVATE : MA_ACTIVATE;
 
     case WM_ACTIVATE:
 	if (LOWORD(wParam) != WA_INACTIVE) SetFocus32( wndPtr->hwndSelf );
@@ -181,19 +183,6 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
     case WM_ICONERASEBKGND:
 	{
 	    if (!wndPtr->class->hbrBackground) return 0;
-
-	    /* FIXME: should fill icon text with hbrushActiveCaption 
-		      instead of this */
-
-	    if (wndPtr->dwStyle & WS_MINIMIZE )
-	    {
-		 if( wndPtr->flags & WIN_NCACTIVATED )
-		 {
-		   FillWindow( GetParent16(wndPtr->hwndSelf), wndPtr->hwndSelf,
-                               (HDC16)wParam, sysColorObjects.hbrushActiveCaption );
-		   return 1;
-		 }
-	    }
 
 	    if (wndPtr->class->hbrBackground <= (HBRUSH16)(COLOR_MAX+1))
             {
@@ -354,6 +343,9 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
                     return (LRESULT)hI;
         }
         break;
+
+    case WM_ISACTIVEICON:
+	return ((wndPtr->flags & WIN_NCACTIVATED) != 0);
 
     case WM_QUERYOPEN:
     case WM_QUERYENDSESSION:

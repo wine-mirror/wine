@@ -110,6 +110,9 @@ int MAIN_Init(void)
       /* Initialize communications */
     COMM_Init();
 
+      /* Initialize IO-port permissions */
+    IO_port_init();
+
       /* registry initialisation */
     SHELL_LoadRegistry();
     

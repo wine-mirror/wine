@@ -144,7 +144,7 @@ base	1
 0136 stub GdiPlayScript
 0137 stub GdiReleaseLocalDC
 0138 stub GdiSetAttrs
-0139 stub GdiSetBatchLimit
+0139 return GdiSetBatchLimit 4 1
 0140 stub GdiSetServerAttr
 0141 stub GetArcDirection
 0142 stub GetAspectRatioFilterEx

@@ -813,16 +813,16 @@ static void EVENT_SelectionRequest( WND *pWnd, XSelectionRequestEvent *event )
 	}
     }
 
-    if(rprop==None) 
+    if(rprop == None) 
        dprintf_event(stddeb,"Request for %s ignored\n", XGetAtomName(display,event->target));
 
-    result.type=SelectionNotify;
-    result.display=display;
-    result.requestor=request;
-    result.selection=event->selection;
-    result.property=rprop;
-    result.target=event->target;
-    result.time=event->time;
+    result.type = SelectionNotify;
+    result.display = display;
+    result.requestor = request;
+    result.selection = event->selection;
+    result.property = rprop;
+    result.target = event->target;
+    result.time = event->time;
     XSendEvent(display,event->requestor,False,NoEventMask,(XEvent*)&result);
 }
 

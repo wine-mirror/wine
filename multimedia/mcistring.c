@@ -350,13 +350,13 @@ MCISTR_Open(_MCISTR_PROTO_) {
 	i=0;
 	while (i<nrofkeywords) {
 		FLAG1("shareable",MCI_OPEN_SHAREABLE);
-		if (!strcmp(keywords[i],"alias") && (i+1<nrofkeywords)) {
+		if (!STRCMP(keywords[i],"alias") && (i+1<nrofkeywords)) {
 			dwFlags |= MCI_OPEN_ALIAS;
 			pU->openParams.lpstrAlias=SEGPTR_GET(SEGPTR_STRDUP(keywords[i+1]));
 			i+=2;
 			continue;
 		}
-		if (!strcmp(keywords[i],"element") && (i+1<nrofkeywords)) {
+		if (!STRCMP(keywords[i],"element") && (i+1<nrofkeywords)) {
 			dwFlags |= MCI_OPEN_ELEMENT;
 			pU->openParams.lpstrElementName=SEGPTR_GET(SEGPTR_STRDUP(keywords[i+1]));
 			i+=2;
@@ -2104,7 +2104,7 @@ struct	_MCISTR_cmdtable {
 DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString, 
 	UINT16 uReturnLength, HWND16 hwndCallback)
 {
-	char	*cmd,*dev,*args,**keywords;
+	char	*cmd,*dev,*args,**keywords,*filename;
 	WORD	uDevTyp=0,wDevID=0;
 	DWORD	dwFlags;
 	int	res=0,i,nrofkeywords;
@@ -2143,16 +2143,23 @@ DWORD mciSendString (LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 	}
 	dwFlags = 0; /* default flags */
 	for (i=0;i<nrofkeywords;) {
+		if (!STRCMP(keywords[i],"type")) {
+			filename = dev;
+			dev = keywords[i+1];
+			memcpy(keywords+i,keywords+(i+2),(nrofkeywords-i-2)*sizeof(char *));
+			nrofkeywords -= 2;
+			continue;
+		}
 		if (!STRCMP(keywords[i],"wait")) {
 			dwFlags |= MCI_WAIT;
-			memcpy(keywords+i,keywords+(i+1),nrofkeywords-i-1);
+			memcpy(keywords+i,keywords+(i+1),(nrofkeywords-i-1)*sizeof(char *));
 			nrofkeywords--;
 			continue;
 		}
 		if (!STRCMP(keywords[i],"notify")) {
 			/* how should we callback?  I don't know. */
 			/*dwFlags |= MCI_NOTIFY;*/
-			memcpy(keywords+i,keywords+(i+1),nrofkeywords-i-1);
+			memcpy(keywords+i,keywords+(i+1),(nrofkeywords-i-1)*sizeof(char *));
 			nrofkeywords--;
 			continue;
 		}

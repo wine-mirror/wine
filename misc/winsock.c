@@ -3,6 +3,13 @@
  * (ftp.microsoft.com:/Advsys/winsock/spec11/WINSOCK.TXT)
  * 
  * (C) 1993,1994,1996 John Brezak, Erik Bos, Alex Korobka.
+ *
+ * TODO: Merge Async...() handling with X event loop by adding 
+ *	 thread/task fdset to select(2) in windows/event.c.
+ *       Also fork dns lookup helper during the startup (with a pipe 
+ *	 for communication) and make it fork for a database request
+ *	 instead of forking the main process (i.e. something like 
+ *	 Netscape 4.0).
  */
  
 #include <stdio.h>
@@ -1446,7 +1453,7 @@ FARPROC16 WSASetBlockingHook16(FARPROC16 lpBlockFunc)
   FARPROC16		prev;
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
-  dprintf_winsock(stddeb, "WS_SetBlockingHook(%08x): hook %08x\n", 
+  dprintf_winsock(stddeb, "WS_SetBlockingHook16(%08x): hook %08x\n", 
 			  (unsigned)pwsi, (unsigned) lpBlockFunc);
 
   if( pwsi ) { 
@@ -1459,17 +1466,23 @@ FARPROC16 WSASetBlockingHook16(FARPROC16 lpBlockFunc)
 
 FARPROC32 WSASetBlockingHook32(FARPROC32 lpBlockFunc)
 {
-    fprintf( stderr, "Empty stub WSASetBlockingHook32(%p)\n", lpBlockFunc );
-    return NULL;
+  fprintf( stderr, "WSASetBlockingHook32(%p): empty stub\n", lpBlockFunc );
+  return NULL;
 }
 
-INT16 WSAUnhookBlockingHook(void)
+INT16 WSAUnhookBlockingHook16(void)
 {
   LPWSINFO              pwsi = wsi_find(GetCurrentTask());
 
   dprintf_winsock(stddeb, "WS_UnhookBlockingHook(%08x)\n", (unsigned)pwsi);
   if( pwsi ) return (INT16)(INT32)(pwsi->blocking_hook = (FARPROC16)NULL);
   return SOCKET_ERROR;
+}
+
+INT32 WSAUnhookBlockingHook32(void)
+{
+  fprintf( stderr, "WSAUnhookBlockingHook32(): empty stub\n");
+  return NULL;
 }
 
 VOID

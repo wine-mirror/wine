@@ -1,3 +1,13 @@
+KERNEL MODULE
+=============
+
+...
+
+GDI MODULE
+==========
+
+...
+
 USER MODULE
 ===========
 
@@ -20,11 +30,11 @@ located in windows/, controls/, and misc/ directories.
    ancestor link (wnd->parent) points to the desktop window.
 
    Desktop window			- root window
-    |     \      '-.
-    |      \        '-.
+    |     \      `-.
+    |      \        `-.
    popup -> wnd1  ->  wnd2		- top level windows    
-    |       \   '-.      '-.
-    |        \     '-.      '-.
+    |       \   `-.      `-.
+    |        \     `-.      `-.
    child1  child2 -> child3  child4     - child windows
   
    Horizontal arrows denote sibling relationship, vertical lines
@@ -36,7 +46,7 @@ located in windows/, controls/, and misc/ directories.
    sibling list (they are not topmost). Child windows are confined to the
    client area of their parent windows (client area is where window gets
    to do its own drawing, non-client area consists of caption, menu, borders,
-   intrinsic scrollbars, and minimize/maximize/close buttons). 
+   intrinsic scrollbars, and minimize/maximize/close/help buttons). 
   
    Another fairly important concept is "z-order". It is derived from
    the ancestor/child hierarchy and is used to determine "above/below"
@@ -50,7 +60,7 @@ located in windows/, controls/, and misc/ directories.
 
    Wine specifics: in default and managed mode each top-level window
    gets its own X counterpart with desktop window being basically a 
-   fake stub. In desktop mode, however, only desktop window has X
+   fake stub. In desktop mode, however, only desktop window has an X
    window associated with it.
 
 2. Messaging subsystem
@@ -213,4 +223,5 @@ located in windows/, controls/, and misc/ directories.
        and in this case SendMessage has to build some sort of message 
        queue for sent messages. Another issue is what to do with messages 
        sent to the sender when it is blocked inside its own SendMessage. 
+
 

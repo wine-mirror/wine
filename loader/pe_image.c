@@ -40,7 +40,7 @@ static void PE_InitDLL(HMODULE16 hModule, DWORD type, LPVOID lpReserved);
 
 void dump_exports(IMAGE_EXPORT_DIRECTORY * pe_exports, unsigned int load_addr)
 { 
-  char		*Module,*s;
+  char		*Module;
   int		i;
   u_short	*ordinal;
   u_long	*function,*functions;
@@ -76,7 +76,6 @@ void dump_exports(IMAGE_EXPORT_DIRECTORY * pe_exports, unsigned int load_addr)
 	  daddr.off=RVA(*functions);
 	  function++;
       }
-      while ((s=strchr(buffer,'.'))) *s='_';
       DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
   }
 }
@@ -360,7 +359,7 @@ static void do_relocations(struct pe_data *pe)
  *			PE_LoadImage
  * Load one PE format executable into memory
  */
-static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
+static void PE_LoadImage( struct pr_data **ret_pe, int fd, HMODULE16 hModule, WORD offset, OFSTRUCT *ofs )
 {
 	struct pe_data		*pe;
 	int			i, result;
@@ -368,6 +367,7 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
 	IMAGE_DATA_DIRECTORY	dir;
 	char			buffer[200];
 	DBG_ADDR		daddr;
+	char			*modname;
 
 	daddr.seg=0;
 	daddr.type = NULL;
@@ -378,6 +378,30 @@ static struct pe_data *PE_LoadImage( int fd, HMODULE16 hModule, WORD offset )
 	/* read PE header */
 	lseek( fd, offset, SEEK_SET);
 	read( fd, pe->pe_header, sizeof(IMAGE_NT_HEADERS));
+
+	if (pe->pe_header->FileHeader.Machine != IMAGE_FILE_MACHINE_I386) {
+		fprintf(stderr,"trying to load PE image for unsupported architecture (");
+		switch (pe->pe_header->FileHeader.Machine) {
+		case IMAGE_FILE_MACHINE_UNKNOWN:
+			fprintf(stderr,"Unknown");break;
+		case IMAGE_FILE_MACHINE_I860:
+			fprintf(stderr,"I860");break;
+		case IMAGE_FILE_MACHINE_R3000:
+			fprintf(stderr,"R3000");break;
+		case IMAGE_FILE_MACHINE_R4000:
+			fprintf(stderr,"R4000");break;
+		case IMAGE_FILE_MACHINE_R10000:
+			fprintf(stderr,"R10000");break;
+		case IMAGE_FILE_MACHINE_ALPHA:
+			fprintf(stderr,"Alpha");break;
+		case IMAGE_FILE_MACHINE_POWERPC:
+			fprintf(stderr,"PowerPC");break;
+		default:
+			fprintf(stderr,"Unknown-%04x",pe->pe_header->FileHeader.Machine);break;
+		}
+		fprintf(stderr,")\n");
+		return;
+	}
 
 /* FIXME: this is a *horrible* hack to make COMDLG32.DLL load OK. The
 problem needs to be fixed properly at some stage */
@@ -539,33 +563,39 @@ problem needs to be fixed properly at some stage */
 		dprintf_win32(stdnimp,"Unknown directory 15 ignored\n");
 
 	if(pe->pe_reloc) do_relocations(pe);
-	if(pe->pe_import) fixup_imports(pe, hModule);
-	if(pe->pe_export) dump_exports(pe->pe_export,load_addr);
-  		
-	if (pe->pe_export) {
-		char	*s;
 
-		/* add start of sections as debugsymbols */
-		for(i=0;i<pe->pe_header->FileHeader.NumberOfSections;i++) {
-			sprintf(buffer,"%s_%s",
-				(char*)RVA(pe->pe_export->Name),
-				pe->pe_seg[i].Name
-			);
-			daddr.off= RVA(pe->pe_seg[i].VirtualAddress);
-      			while ((s=strchr(buffer,'.'))) *s='_';
-			DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
-		}
-		/* add entry point */
-		sprintf(buffer,"%s_EntryPoint",(char*)RVA(pe->pe_export->Name));
-		daddr.off=RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint);
-      		while ((s=strchr(buffer,'.'))) *s='_';
-		DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
-		/* add start of DLL */
-		daddr.off=load_addr;
-		DEBUG_AddSymbol((char*) RVA(pe->pe_export->Name),&daddr,
-				NULL, SYM_WIN32 | SYM_FUNC);
+	/* Do exports before imports because fixup_imports
+	 * may load a module that references this module.
+	 */
+
+	if(pe->pe_export) dump_exports(pe->pe_export,load_addr);
+	*ret_pe = pe;	/* make export list available for GetProcAddress */
+	if(pe->pe_import) fixup_imports(pe, hModule);
+  		
+	if (pe->pe_export)
+		modname = (char*)RVA(pe->pe_export->Name);
+	else {
+		char *s;
+		modname = s = ofs->szPathName;
+		while (s=strchr(modname,'\\'))
+			modname = s+1;
+		if ((s=strchr(modname,'.')))
+			*s='\0';
 	}
-        return pe;
+
+	/* add start of sections as debugsymbols */
+	for(i=0;i<pe->pe_header->FileHeader.NumberOfSections;i++) {
+		sprintf(buffer,"%s_%s",modname,pe->pe_seg[i].Name);
+		daddr.off= RVA(pe->pe_seg[i].VirtualAddress);
+		DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
+	}
+	/* add entry point */
+	sprintf(buffer,"%s_EntryPoint",modname);
+	daddr.off=RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint);
+	DEBUG_AddSymbol(buffer,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
+	/* add start of DLL */
+	daddr.off=load_addr;
+	DEBUG_AddSymbol(modname,&daddr, NULL, SYM_WIN32 | SYM_FUNC);
 }
 
 HINSTANCE16 MODULE_CreateInstance(HMODULE16 hModule,LOADPARAMS *params);
@@ -575,7 +605,7 @@ HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LOADPARAMS* params )
     HMODULE16 hModule;
     HINSTANCE16 hInstance;
     NE_MODULE *pModule;
-    struct mz_header_s mz_header;
+    IMAGE_DOS_HEADER mz_header;
     int fd;
 
     if ((hModule = MODULE_CreateDummyModule( ofs )) < 32) return hModule;
@@ -588,7 +618,9 @@ HINSTANCE16 PE_LoadModule( HFILE32 hFile, OFSTRUCT *ofs, LOADPARAMS* params )
     lseek( fd, 0, SEEK_SET );
     read( fd, &mz_header, sizeof(mz_header) );
 
-    pModule->pe_module = PE_LoadImage( fd, hModule, mz_header.ne_offset );
+    PE_LoadImage( &pModule->pe_module, fd, hModule, mz_header.e_lfanew, ofs );
+    if (!pModule->pe_module)
+    	return 21;
     close( fd );
 
     hInstance = MODULE_CreateInstance( hModule, params );
