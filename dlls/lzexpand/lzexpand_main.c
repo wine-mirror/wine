@@ -16,9 +16,21 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- */
-/*
- * FIXME: return values might be wrong
+ *
+ * NOTES
+ *
+ * The LZ (Lempel Ziv) decompression was used in win16 installation programs.
+ * It is a simple tabledriven decompression engine, the algorithm is not
+ * documented as far as I know. WINE does not contain a compressor for
+ * this format.
+ *
+ * The implementation is complete and there have been no reports of failures
+ * for some time.
+ *
+ * TODO:
+ *
+ *   o Check whether the return values are correct
+ *
  */
 
 #include "config.h"
@@ -37,7 +49,6 @@
 #include "lzexpand.h"
 
 #include "wine/unicode.h"
-
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
