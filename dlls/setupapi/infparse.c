@@ -7,15 +7,15 @@
 #include "debugtools.h"
 #include "windef.h"
 #include "winbase.h"
+#include "heap.h"
 #include "wine/winbase16.h"
 #include "setupx16.h"
 
 DEFAULT_DEBUG_CHANNEL(setupx);
 
 WORD InfNumEntries = 0;
-INF_HANDLE *InfList = NULL;
-
-#define GET_INF_ENTRY(x) ((InfList - x)/4)
+INF_FILE *InfList = NULL;
+HINF16 IP_curr_handle = 0;
 
 RETERR16 IP_OpenInf(LPCSTR lpInfFileName, HINF16 *lphInf)
 {
@@ -24,25 +24,45 @@ RETERR16 IP_OpenInf(LPCSTR lpInfFileName, HINF16 *lphInf)
     if (!lphInf)
 	return IP_ERROR;
 
+    /* this could be improved by checking for already freed handles */
+    if (IP_curr_handle == 0xffff) 
+	return ERR_IP_OUT_OF_HANDLES; 
+
     if (hFile != HFILE_ERROR16)
     {
 	InfList = HeapReAlloc(GetProcessHeap(), 0, InfList, InfNumEntries+1);
+	InfList[InfNumEntries].hInf = IP_curr_handle++;
 	InfList[InfNumEntries].hInfFile = hFile;
-	InfList[InfNumEntries].lpInfFileName = lpInfFileName;
+	InfList[InfNumEntries].lpInfFileName = HEAP_strdupA(GetProcessHeap(), 0, lpInfFileName);
+        *lphInf = InfList[InfNumEntries].hInf;
 	InfNumEntries++;
-        *lphInf = &InfList[InfNumEntries-1] - InfList;
+	TRACE("ret handle %d.\n", *lphInf);
 	return OK;
     }
     *lphInf = 0xffff;
     return ERR_IP_INVALID_INFFILE;
 }
 
+BOOL IP_FindInf(HINF16 hInf, WORD *ret)
+{
+    WORD n;
+
+    for (n=0; n < InfNumEntries; n++)
+	if (InfList[n].hInf == hInf)
+	{
+	    *ret = n;
+	    return TRUE;
+	}
+    return FALSE;
+}
+	
+
 LPCSTR IP_GetFileName(HINF16 hInf)
 {
-    if ((hInf <= (InfNumEntries*sizeof(INF_HANDLE *)))
-    && ((hInf & 3) == 0)) /* aligned ? */
+    WORD n;
+    if (IP_FindInf(hInf, &n))
     {
-	return InfList[hInf/4].lpInfFileName;
+	return InfList[n].lpInfFileName;
     }
     return NULL;
 }
@@ -50,17 +70,18 @@ LPCSTR IP_GetFileName(HINF16 hInf)
 RETERR16 IP_CloseInf(HINF16 hInf)
 {
     int i;
+    WORD n;
     HFILE16 res = ERR_IP_INVALID_HINF;
 
-    if ((hInf <= (InfNumEntries*sizeof(INF_HANDLE *)))
-    && ((hInf & 3) == 0)) /* aligned ? */
+    if (IP_FindInf(hInf, &n))
     {
-	_lclose16(InfList[hInf/4].hInfFile);
-	res = OK;
-	for (i=hInf/4; i < InfNumEntries-1; i++)
+	_lclose16(InfList[n].hInfFile);
+	HeapFree(GetProcessHeap(), 0, InfList[n].lpInfFileName);
+	for (i=n; i < InfNumEntries-1; i++)
 	    InfList[i] = InfList[i+1];
 	InfNumEntries--;
 	InfList = HeapReAlloc(GetProcessHeap(), 0, InfList, InfNumEntries);
+	res = OK;
     }
     return res;
 }
@@ -88,6 +109,7 @@ RETERR16 WINAPI IpClose16(HINF16 hInf)
  */
 RETERR16 WINAPI IpGetProfileString16(HINF16 hInf, LPCSTR section, LPCSTR entry, LPSTR buffer, WORD buflen) 
 {
+    TRACE("'%s': section '%s' entry '%s'\n", IP_GetFileName(hInf), section, entry);
     GetPrivateProfileString16(section, entry, "", buffer, buflen, IP_GetFileName(hInf));
     return 0;
 }
