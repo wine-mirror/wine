@@ -980,7 +980,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     }
     if (cs->cy > 65535)
     {
-        ERR( "invalid window height %d\n", cs->cx );
+        ERR( "invalid window height %d\n", cs->cy );
         cs->cy = 65535;
     }
 
