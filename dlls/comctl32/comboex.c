@@ -899,6 +899,12 @@ COMBOEX_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return COMBOEX_SetItemHeight (hwnd, wParam, lParam);
 
 
+/*    Messages passed to parent */
+	case WM_COMMAND:
+	case WM_NOTIFY:
+	    return SendMessageA (GetParent (hwnd), uMsg, wParam, lParam);
+
+
 	case WM_CREATE:
 	    return COMBOEX_Create (hwnd, wParam, lParam);
 
