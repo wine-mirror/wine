@@ -195,8 +195,8 @@ DirectSoundCaptureEnumerateA(
 		    if (IsEqualGUID( &guid, &temp ) ) {
 			err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	    		if (err == DS_OK) {
-			    TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-		    		debugstr_guid(&DSDEVID_DefaultCapture),"Primary Sound Capture Driver",desc.szDrvName,lpContext);
+			    TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
+		    		"Primary Sound Capture Driver",desc.szDrvName,lpContext);
 			    if (lpDSEnumCallback(NULL, "Primary Sound Capture Driver", desc.szDrvName, lpContext) == FALSE)
 				return DS_OK;
 			}
@@ -264,8 +264,8 @@ DirectSoundCaptureEnumerateW(
 		    if (IsEqualGUID( &guid, &temp ) ) {
 			err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDDESC,(DWORD)&desc,0));
 	    		if (err == DS_OK) {
-			    TRACE("calling lpDSEnumCallback(%s,\"%s\",\"%s\",%p)\n",
-		    		debugstr_guid(&DSDEVID_DefaultCapture),"Primary Sound Capture Driver",desc.szDrvName,lpContext);
+			    TRACE("calling lpDSEnumCallback(NULL,\"%s\",\"%s\",%p)\n",
+		    		"Primary Sound Capture Driver",desc.szDrvName,lpContext);
 			    MultiByteToWideChar( CP_ACP, 0, "Primary Sound Capture Driver", -1, 
 			        wDesc, sizeof(wDesc)/sizeof(WCHAR) );
 			    MultiByteToWideChar( CP_ACP, 0, desc.szDrvName, -1, 
