@@ -65,7 +65,7 @@ static const WCHAR name_CURRENT_CONFIG[] =
     {'M','a','c','h','i','n','e','\\',
      'S','y','s','t','e','m','\\',
      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-     'H','a','r','d','w','a','r','e','P','r','o','f','i','l','e','s','\\',
+     'H','a','r','d','w','a','r','e',' ','P','r','o','f','i','l','e','s','\\',
      'C','u','r','r','e','n','t',0};
 static const WCHAR name_DYN_DATA[] =
     {'D','y','n','D','a','t','a',0};
