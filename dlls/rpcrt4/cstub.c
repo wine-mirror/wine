@@ -95,8 +95,10 @@ ULONG WINAPI NdrCStdStubBuffer_Release(LPRPCSTUBBUFFER iface,
   TRACE("(%p)->Release()\n",This);
 
   if (!--(This->RefCount)) {
-    IUnknown_Release(This->pvServerObject);
-    IPSFactoryBuffer_Release(This->pPSFactory);
+    if(This->pvServerObject)
+        IUnknown_Release(This->pvServerObject);
+    if(This->pPSFactory)
+        IPSFactoryBuffer_Release(This->pPSFactory);
     HeapFree(GetProcessHeap(),0,This);
     return 0;
   }
