@@ -54,7 +54,7 @@
 @ extern NlsAnsiCodePage NlsAnsiCodePage
 @ extern NlsMbCodePageTag NlsMbCodePageTag
 @ extern NlsMbOemCodePageTag NlsMbOemCodePageTag
-@ stdcall NtAcceptConnectPort(long long long long long long) NtAcceptConnectPort
+@ stdcall NtAcceptConnectPort(ptr long ptr long long ptr) NtAcceptConnectPort
 @ stdcall NtAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
 @ stub NtAccessCheckAndAuditAlarm
 @ stub NtAdjustGroupsToken
@@ -70,8 +70,8 @@
 @ stdcall NtClearEvent(long) NtClearEvent
 @ stdcall NtClose(long) NtClose
 @ stub NtCloseObjectAuditAlarm
-@ stdcall NtCompleteConnectPort(long) NtCompleteConnectPort
-@ stdcall NtConnectPort(long long long long long long long long) NtConnectPort
+@ stdcall NtCompleteConnectPort(ptr) NtCompleteConnectPort
+@ stdcall NtConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) NtConnectPort
 @ stub NtContinue
 @ stdcall NtCreateDirectoryObject(long long long) NtCreateDirectoryObject
 @ stdcall NtCreateEvent(long long long long long) NtCreateEvent
@@ -83,7 +83,7 @@
 @ stub NtCreateMutant
 @ stub NtCreateNamedPipeFile
 @ stdcall NtCreatePagingFile(long long long long) NtCreatePagingFile
-@ stdcall NtCreatePort(long long long long long) NtCreatePort
+@ stdcall NtCreatePort(ptr ptr long long long) NtCreatePort
 @ stub NtCreateProcess
 @ stub NtCreateProfile
 @ stdcall NtCreateSection(ptr long ptr ptr long long long) NtCreateSection
@@ -118,7 +118,7 @@
 @ stub NtImpersonateClientOfPort
 @ stub NtImpersonateThread
 @ stub NtInitializeRegistry
-@ stdcall NtListenPort(long long) NtListenPort
+@ stdcall NtListenPort(ptr ptr) NtListenPort
 @ stub NtLoadDriver
 @ stdcall NtLoadKey(ptr ptr) NtLoadKey
 @ stub NtLockFile
@@ -185,18 +185,18 @@
 @ stub NtReadRequestData
 @ stub NtReadVirtualMemory
 @ stub NtRegisterNewDevice
-@ stdcall NtRegisterThreadTerminatePort(long) NtRegisterThreadTerminatePort
+@ stdcall NtRegisterThreadTerminatePort(ptr) NtRegisterThreadTerminatePort
 @ stub NtReleaseMutant
 @ stub NtReleaseProcessMutant
 @ stdcall NtReleaseSemaphore(long long ptr) NtReleaseSemaphore
 @ stub NtRemoveIoCompletion
 @ stdcall NtReplaceKey(ptr long ptr) NtReplaceKey
 @ stub NtReplyPort
-@ stdcall NtReplyWaitReceivePort(long long long long) NtReplyWaitReceivePort
+@ stdcall NtReplyWaitReceivePort(ptr ptr ptr ptr) NtReplyWaitReceivePort
 @ stub NtReplyWaitReceivePortEx
 @ stub NtReplyWaitReplyPort
 @ stub NtRequestPort
-@ stdcall NtRequestWaitReplyPort(long long long) NtRequestWaitReplyPort
+@ stdcall NtRequestWaitReplyPort(ptr ptr ptr) NtRequestWaitReplyPort
 @ stdcall NtResetEvent(long ptr) NtResetEvent
 @ stdcall NtRestoreKey(long long long) NtRestoreKey
 @ stdcall NtResumeThread(long long) NtResumeThread
@@ -574,7 +574,7 @@
 @ stdcall RtlxUnicodeStringToAnsiSize(ptr) RtlUnicodeStringToAnsiSize
 @ stdcall RtlxUnicodeStringToOemSize(ptr) RtlUnicodeStringToOemSize
 @ stub SaveEm87Context
-@ stdcall ZwAcceptConnectPort(long long long long long long) NtAcceptConnectPort
+@ stdcall ZwAcceptConnectPort(ptr long ptr long long ptr) NtAcceptConnectPort
 @ stdcall ZwAccessCheck(ptr long long ptr ptr ptr ptr ptr) NtAccessCheck
 @ stub ZwAccessCheckAndAuditAlarm
 @ stdcall ZwAdjustGroupsToken(long long long long long long) NtAdjustPrivilegesToken
@@ -590,8 +590,8 @@
 @ stdcall ZwClearEvent(long) NtClearEvent
 @ stdcall ZwClose(long) NtClose
 @ stub ZwCloseObjectAuditAlarm
-@ stdcall ZwCompleteConnectPort(long) NtCompleteConnectPort
-@ stdcall ZwConnectPort(long long long long long long long long) NtConnectPort
+@ stdcall ZwCompleteConnectPort(ptr) NtCompleteConnectPort
+@ stdcall ZwConnectPort(ptr ptr ptr ptr ptr ptr ptr ptr) NtConnectPort
 @ stub ZwContinue
 @ stdcall ZwCreateDirectoryObject(long long long) NtCreateDirectoryObject
 @ stdcall ZwCreateEvent(long long long long long) NtCreateEvent
@@ -603,7 +603,7 @@
 @ stub ZwCreateMutant
 @ stub ZwCreateNamedPipeFile
 @ stdcall ZwCreatePagingFile(long long long long) NtCreatePagingFile
-@ stdcall ZwCreatePort(long long long long long) NtCreatePort
+@ stdcall ZwCreatePort(ptr ptr long long long) NtCreatePort
 @ stub ZwCreateProcess
 @ stub ZwCreateProfile
 @ stdcall ZwCreateSection(ptr long ptr ptr long long long) NtCreateSection
@@ -637,7 +637,7 @@
 @ stub ZwImpersonateClientOfPort
 @ stub ZwImpersonateThread
 @ stub ZwInitializeRegistry
-@ stdcall ZwListenPort(long long) NtListenPort
+@ stdcall ZwListenPort(ptr ptr) NtListenPort
 @ stub ZwLoadDriver
 @ stdcall ZwLoadKey(ptr ptr) NtLoadKey
 @ stub ZwLockFile
@@ -704,17 +704,17 @@
 @ stub ZwReadRequestData
 @ stub ZwReadVirtualMemory
 @ stub ZwRegisterNewDevice
-@ stdcall ZwRegisterThreadTerminatePort(long) NtRegisterThreadTerminatePort
+@ stdcall ZwRegisterThreadTerminatePort(ptr) NtRegisterThreadTerminatePort
 @ stub ZwReleaseMutant
 @ stub ZwReleaseProcessMutant
 @ stdcall ZwReleaseSemaphore(long long ptr) NtReleaseSemaphore
 @ stub ZwRemoveIoCompletion
 @ stdcall ZwReplaceKey(ptr long ptr) NtReplaceKey
 @ stub ZwReplyPort
-@ stdcall ZwReplyWaitReceivePort(long long long long) NtReplyWaitReceivePort
+@ stdcall ZwReplyWaitReceivePort(ptr ptr ptr ptr) NtReplyWaitReceivePort
 @ stub ZwReplyWaitReplyPort
 @ stub ZwRequestPort
-@ stdcall ZwRequestWaitReplyPort(long long long) NtRequestWaitReplyPort
+@ stdcall ZwRequestWaitReplyPort(ptr ptr ptr) NtRequestWaitReplyPort
 @ stdcall ZwResetEvent(long ptr) NtResetEvent
 @ stdcall ZwRestoreKey(long long long) NtRestoreKey
 @ stdcall ZwResumeThread(long long) NtResumeThread
