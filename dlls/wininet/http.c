@@ -467,7 +467,7 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
             lpwhr->lpszHostName = HTTP_strdup(UrlComponents.lpszHostName);
     } else if (NULL != hIC->lpszProxy && hIC->lpszProxy[0] != 0) {
         char buf[MAXHOSTNAME];
-        char proxy[MAXHOSTNAME + 13]; /* 13 == "http://" + sizeof(port#) + ":/\0" */
+        char proxy[MAXHOSTNAME + 15]; /* 15 == "http://" + sizeof(port#) + ":/\0" */
         URL_COMPONENTSA UrlComponents;
 
         UrlComponents.lpszExtraInfo = NULL;
@@ -481,8 +481,8 @@ HINTERNET WINAPI HTTP_HttpOpenRequestA(HINTERNET hHttpSession,
         sprintf(proxy, "http://%s/", hIC->lpszProxy);
         InternetCrackUrlA(proxy, 0, 0, &UrlComponents);
         if (strlen(UrlComponents.lpszHostName)) {
-			 /* for constant 13 see above */
-             char* url = HeapAlloc(GetProcessHeap(), 0, strlen(lpwhs->lpszServerName) + strlen(lpwhr->lpszPath) + 13);
+			 /* for constant 15 see above */
+             char* url = HeapAlloc(GetProcessHeap(), 0, strlen(lpwhs->lpszServerName) + strlen(lpwhr->lpszPath) + 15);
 
              if(UrlComponents.nPort == INTERNET_INVALID_PORT_NUMBER)
                  UrlComponents.nPort = INTERNET_DEFAULT_HTTP_PORT;
