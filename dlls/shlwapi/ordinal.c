@@ -94,6 +94,24 @@ DWORD WINAPI SHLWAPI_24 (
 }
 
 /*************************************************************************
+ *      SHLWAPI_151	[SHLWAPI.151]
+ */
+DWORD WINAPI SHLWAPI_151(void)
+{
+  FIXME(": stub\n");
+  return 0;
+}
+
+/*************************************************************************
+ *      SHLWAPI_153	[SHLWAPI.153]
+ */
+DWORD WINAPI SHLWAPI_153(DWORD dw1, DWORD dw2, DWORD dw3)
+{
+    FIXME("%08lx %08lx %08lx - stub\n", dw1, dw2, dw3);
+    return 0;
+}
+
+/*************************************************************************
  *      SHLWAPI_156	[SHLWAPI.156]
  *
  * FIXME: function guessed

@@ -157,9 +157,9 @@ import kernel32
 148 stub @
 149 stub @
 150 stub @
-151 stub @
+151 stdcall @() SHLWAPI_151
 152 stub @
-153 stub @
+153 stdcall @(long long long) SHLWAPI_153
 154 stub @
 155 stub @
 156 stdcall @(wstr wstr) SHLWAPI_156
