@@ -181,14 +181,13 @@ DEBUG_ResortSymbols(void)
  * Add a symbol to the table.
  */
 struct name_hash *
-DEBUG_AddSymbol( const char * name, const DBG_VALUE *value, const char * source,
-		 int flags)
+DEBUG_AddSymbol( const char * name, const DBG_VALUE *value, 
+		 const char * source, int flags)
 {
     struct name_hash  * new;
     struct name_hash *nh;
     static char  prev_source[PATH_MAX] = {'\0', };
     static char * prev_duped_source = NULL;
-    char * c;
     int hash;
 
     assert(value->cookie == DV_TARGET || value->cookie == DV_HOST);
@@ -284,24 +283,17 @@ DEBUG_AddSymbol( const char * name, const DBG_VALUE *value, const char * source,
      * calling things and the GCC way of calling things.  In general we
      * always want to step through.
      */
-    if( source != NULL )
-      {
-	c = strrchr(source, '.');
-	if( c != NULL && strcmp(c, ".s") == 0 )
-	  {
-	    c = strrchr(source, '/');
-	    if( c != NULL )
-	      {
-		c++;
-		if(    (strcmp(c, "callfrom16.s") == 0)
-		    || (strcmp(c, "callto16.s") == 0)
-		    || (strcmp(c, "call32.s") == 0) )
-		  {
+    if ( source != NULL ) {
+        int	len = strlen(source);
+
+	if (len > 2 && source[len-2] == '.' && source[len-1] == 's') {
+	    char* c = strrchr(source - 2, '/');
+	    if (c != NULL) {
+		if (strcmp(c + 1, "asmrelay.s") == 0)
 		    new->flags |= SYM_TRAMPOLINE;
-		  }
-	      }
-	  }
-      }
+	    }
+	}
+    }
 
     sortlist_valid = FALSE;
     return new;
@@ -341,52 +333,79 @@ BOOL DEBUG_Normalize(struct name_hash * nh )
  *
  * Get the address of a named symbol.
  */
-BOOL DEBUG_GetSymbolValue( const char * name, const int lineno, 
-			   DBG_VALUE *value, int bp_flag )
+static int    DEBUG_GSV_Helper(const char* name, const int lineno, 
+			       DBG_VALUE* value, int num, int bp_flag)
 {
-    struct name_hash *nh;
+   struct name_hash*	nh;
+   int			i = 0;
+   DBG_ADDR		addr;
 
-    for(nh = name_hash_table[name_hash(name)]; nh; nh = nh->next)
+   for (nh = name_hash_table[name_hash(name)]; nh; nh = nh->next)
+   {
+      if ((nh->flags & SYM_INVALID) != 0) continue;
+      if (!strcmp(nh->name, name) && DEBUG_GetLineNumberAddr( nh, lineno, &addr, bp_flag ))
       {
-	if( (nh->flags & SYM_INVALID) != 0 )
-	  {
-	    continue;
-	  }
-
-        if (!strcmp(nh->name, name)) break;
+	 if (i >= num) return num + 1;
+	 value[i].addr = addr;
+	 value[i].type = nh->value.type;
+	 value[i].cookie = nh->value.cookie;
+	 i++;
       }
+   }
+   return i;
+}
 
-    if (!nh && (name[0] != '_'))
-    {
-        char buffer[256];
+BOOL DEBUG_GetSymbolValue( const char * name, const int lineno, 
+			   DBG_VALUE *rtn, int bp_flag )
+{
+#define NUMDBGV 10
+   /* FIXME: NUMDBGV should be made variable */
+   DBG_VALUE 	value[NUMDBGV];
+   DBG_VALUE	vtmp;
+   int		num, i;
+
+   num = DEBUG_GSV_Helper(name, lineno, value, NUMDBGV, bp_flag);
+   if (!num && (name[0] != '_'))
+   {
+      char buffer[256];
 	
-	assert(strlen(name) < sizeof(buffer) - 2); /* one for '_', one for '\0' */
-        buffer[0] = '_';
-        strcpy(buffer+1, name);
-        for(nh = name_hash_table[name_hash(buffer)]; nh; nh = nh->next)
-	  {
-	    if( (nh->flags & SYM_INVALID) != 0 )
-	      {
-		continue;
-	      }
-            if (!strcmp(nh->name, buffer)) break;
-	  }
-    }
+      assert(strlen(name) < sizeof(buffer) - 2); /* one for '_', one for '\0' */
+      buffer[0] = '_';
+      strcpy(buffer + 1, name);
+      num = DEBUG_GSV_Helper(buffer, lineno, value, NUMDBGV, bp_flag);
+   }
 
-    /*
-     * If we don't have anything here, then try and see if this
-     * is a local symbol to the current stack frame.  No matter
-     * what, we have nothing more to do, so we let that function
-     * decide what we ultimately return.
-     */
-    if (!nh) 
-      {
-	return DEBUG_GetStackSymbolValue(name, value);
+   /* now get the local symbols if any */
+   if (DEBUG_GetStackSymbolValue(name, &vtmp) && num < NUMDBGV) 
+   {
+      value[num] = vtmp;
+      num++;
+   }
+
+   if (num == 0) {
+      return FALSE;
+   } else if (!DEBUG_interactiveP || num == 1) {
+      i = 0;
+   } else {
+      char*	ptr;
+      if (num == NUMDBGV+1) {
+	 DEBUG_Printf(DBG_CHN_MESG, "Too many addresses for symbol '%s', limiting the first %d\n", name, NUMDBGV);
+	 num = NUMDBGV;
       }
-
-    value->type = nh->value.type;
-    value->cookie = nh->value.cookie;
-    return DEBUG_GetLineNumberAddr( nh, lineno, &value->addr, bp_flag );
+      DEBUG_Printf(DBG_CHN_MESG, "Many symbols with name '%s', choose the one you want (<cr> to abort):\n", name);
+      for (i = 0; i < num; i++) {
+	 DEBUG_Printf(DBG_CHN_MESG, "[%d]: ", i + 1);
+	 DEBUG_PrintAddress( &value[i].addr, DEBUG_GetSelectorType(value[i].addr.seg), TRUE);
+	 DEBUG_Printf(DBG_CHN_MESG, "\n");
+      }
+      do {
+	 ptr = readline("=> ");
+	 if (!*ptr) return FALSE;
+	 i = atoi(ptr);
+      } while (i < 0 || i >= num);
+   }
+   *rtn = value[i];
+   return TRUE;
 }
 
 /***********************************************************************
@@ -495,6 +514,8 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
     int i;
     char linebuff[16];
     unsigned val;
+    DBG_MODULE*	module;
+    char modbuf[256];
 
     if( rtn != NULL )
       {
@@ -666,6 +687,16 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 	  }
       }
 
+    module = DEBUG_FindModuleByAddr((void*)DEBUG_ToLinear(addr), DMT_UNKNOWN);
+    if (module) {
+       char*	ptr = strrchr(module->module_name, '/');
+       
+       if (!ptr++) ptr = module->module_name;
+       sprintf( modbuf, " in %s", ptr);
+    }
+    else
+       modbuf[0] = '\0';
+
     if( (nearest->sourcefile != NULL) && (flag == TRUE)
 	&& (addr->off - nearest->value.addr.off < 0x100000) )
       {
@@ -702,25 +733,25 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
         sourcefile = strrchr( nearest->sourcefile, '/' );
         if (!sourcefile) sourcefile = nearest->sourcefile;
         else sourcefile++;
-
+	
 	if (addr->off == nearest->value.addr.off)
-	  sprintf( name_buffer, "%s%s [%s%s]", nearest->name, 
-		   arglist, sourcefile, lineinfo);
+	  sprintf( name_buffer, "%s%s [%s%s]%s", nearest->name, 
+		   arglist, sourcefile, lineinfo, modbuf);
 	else
-	  sprintf( name_buffer, "%s+0x%lx%s [%s%s]", nearest->name,
+	  sprintf( name_buffer, "%s+0x%lx%s [%s%s]%s", nearest->name,
 		   addr->off - nearest->value.addr.off, 
-		   arglist, sourcefile, lineinfo );
+		   arglist, sourcefile, lineinfo, modbuf );
       }
     else
       {
 	if (addr->off == nearest->value.addr.off)
-	  sprintf( name_buffer, "%s%s", nearest->name, arglist);
+	  sprintf( name_buffer, "%s%s%s", nearest->name, arglist, modbuf);
 	else {
 	  if (addr->seg && (nearest->value.addr.seg!=addr->seg))
 	      return NULL;
 	  else
-	      sprintf( name_buffer, "%s+0x%lx%s", nearest->name,
-		       addr->off - nearest->value.addr.off, arglist);
+	      sprintf( name_buffer, "%s+0x%lx%s%s", nearest->name,
+		       addr->off - nearest->value.addr.off, arglist, modbuf);
  	}
       }
     return name_buffer;
@@ -732,7 +763,7 @@ const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
  *
  * Read a symbol file into the hash table.
  */
-void DEBUG_ReadSymbolTable( const char * filename )
+void DEBUG_ReadSymbolTable( const char* filename )
 {
     FILE * symbolfile;
     DBG_VALUE value;

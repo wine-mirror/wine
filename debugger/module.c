@@ -76,10 +76,13 @@ DBG_MODULE*	DEBUG_FindModuleByAddr(void* addr, enum DbgModuleType type)
      for (i = 0; i < DEBUG_CurrProcess->num_modules; i++) {
 	 if ((type == DMT_UNKNOWN || type == amod[i]->type) &&
 	     (u_long)addr >= (u_long)amod[i]->load_addr &&
-	     (!res || res->load_addr < amod[i]->load_addr))
-	     res = amod[i];
+	     (u_long)addr < (u_long)amod[i]->load_addr + (u_long)amod[i]->size) {
+	     /* amod[i] contains it... check against res now */
+	     if (!res || res->load_addr < amod[i]->load_addr)
+		 res = amod[i];
+	 }
      }
-    return res;
+     return res;
 }
 
 /***********************************************************************
@@ -367,7 +370,7 @@ enum DbgInfoLoad	DEBUG_RegisterPEDebugInfo(DBG_MODULE* wmod, HANDLE hFile,
 	    ((names = DBG_alloc(sizeof(names[0]) * exports.NumberOfNames))) &&
 	    DEBUG_READ_MEM_VERBOSE((void*)(base + (DWORD)exports.AddressOfNames),
 				   names, sizeof(names[0]) * exports.NumberOfNames)) {
-	    
+
 	    for (i = 0; i < exports.NumberOfNames; i++) {
 		if (!names[i] ||
 		    !DEBUG_READ_MEM_VERBOSE((void*)(base + names[i]), bufstr, sizeof(bufstr)))

@@ -28,6 +28,7 @@ DBG_THREAD*	DEBUG_CurrThread = NULL;
 DWORD		DEBUG_CurrTid;
 DWORD		DEBUG_CurrPid;
 CONTEXT		DEBUG_context;
+BOOL		DEBUG_interactiveP = FALSE;
 int 		curr_frame = 0;
 static char*	DEBUG_LastCmdLine = NULL;
 
@@ -44,7 +45,7 @@ void	DEBUG_Output(int chn, const char* buffer, int len)
 
 int	DEBUG_Printf(int chn, const char* format, ...)
 {
-    char	buf[1024];
+static    char	buf[4*1024];
     va_list 	valist;
     int		len;
 
@@ -499,6 +500,7 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
 		 DEBUG_CurrThread->dbg_exec_mode, DEBUG_CurrThread->dbg_exec_count);
 
     if (DEBUG_ExceptionProlog(is_debug, force, rec->ExceptionCode)) {
+	DEBUG_interactiveP = TRUE;
 	while ((ret = DEBUG_Parser())) {
 	    if (DEBUG_ValidateRegisters()) {
 		if (DEBUG_CurrThread->dbg_exec_mode != EXEC_PASS || first_chance)
@@ -506,6 +508,7 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
 		DEBUG_Printf(DBG_CHN_MESG, "Cannot pass on last chance exception. You must use cont\n");
 	    }
 	}
+	DEBUG_interactiveP = FALSE;
     }
     *cont = DEBUG_ExceptionEpilog();
 
@@ -861,7 +864,7 @@ int DEBUG_main(int argc, char** argv)
     }
 
     DEBUG_Printf(DBG_CHN_MESG, "WineDbg starting... ");
-
+	
     if (argc == 3) {
 	HANDLE	hEvent;
 	DWORD	pid;

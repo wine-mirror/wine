@@ -407,7 +407,7 @@ void	DEBUG_AddBreakpointFromLineno(int lineno)
    DEBUG_AddBreakpoint( &value, NULL );
 }
 
- /***********************************************************************
+/***********************************************************************
  *           DEBUG_AddWatchpoint
  *
  * Add a watchpoint.
@@ -482,11 +482,11 @@ void DEBUG_AddWatchpoint( const DBG_VALUE *_value, BOOL is_write )
  *
  * Add a watchpoint from a symbol name (and eventually a line #)
  */
-void	DEBUG_AddWatchpointFromId(const char *name, int lineno)
+void	DEBUG_AddWatchpointFromId(const char *name)
 {
    DBG_VALUE value;
    
-   if( DEBUG_GetSymbolValue(name, lineno, &value, TRUE) )
+   if( DEBUG_GetSymbolValue(name, -1, &value, TRUE) )
       DEBUG_AddWatchpoint( &value, 1 );
    else
       DEBUG_Printf(DBG_CHN_MESG, "Unable to add watchpoint\n");
@@ -876,7 +876,7 @@ enum exec_mode DEBUG_RestartExecution( enum exec_mode mode, int count )
      * FIXME - we need to check for things like thunks or trampolines,
      * as the actual function may in fact have debug info.
      */
-    if( ch == 0xe8 )
+    if ( ch == 0xe8 )
       {
 	DEBUG_READ_MEM((void*)(instr + 1), &delta, sizeof(delta));
 	addr2 = addr;

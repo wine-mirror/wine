@@ -202,7 +202,7 @@ break_command:
 
 watch_command:
       tWATCH '*' expr_addr tEOL { DEBUG_AddWatchpoint( &$3, 1 ); DEBUG_FreeExprMem(); }
-    | tWATCH tIDENTIFIER tEOL   { DEBUG_AddWatchpointFromId($2, -1); }
+    | tWATCH tIDENTIFIER tEOL   { DEBUG_AddWatchpointFromId($2); }
 
 info_command:
       tINFO tBREAK tEOL         { DEBUG_InfoBreakpoints(); }

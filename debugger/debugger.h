@@ -208,6 +208,7 @@ extern	DBG_THREAD*	DEBUG_CurrThread;
 extern	DWORD		DEBUG_CurrTid;
 extern	DWORD		DEBUG_CurrPid;
 extern  CONTEXT		DEBUG_context;
+extern  BOOL		DEBUG_interactiveP;
 
 #define DEBUG_READ_MEM(addr, buf, len) \
       (ReadProcessMemory(DEBUG_CurrProcess->handle, (addr), (buf), (len), NULL))
@@ -230,7 +231,7 @@ typedef struct tagDBG_MODULE {
    char*			module_name;
    enum DbgInfoLoad		dil;
    enum DbgModuleType		type;
-   unsigned char		main;
+   unsigned short		main : 1;
    short int			dbg_index;
    HMODULE                      handle;
    struct tagMSC_DBG_INFO*	msc_info;
@@ -255,7 +256,7 @@ extern void DEBUG_AddBreakpoint( const DBG_VALUE *addr, BOOL (*func)(void) );
 extern void DEBUG_AddBreakpointFromId( const char *name, int lineno );
 extern void DEBUG_AddBreakpointFromLineno( int lineno );
 extern void DEBUG_AddWatchpoint( const DBG_VALUE *addr, int is_write );
-extern void DEBUG_AddWatchpointFromId( const char *name, int lineno );
+extern void DEBUG_AddWatchpointFromId( const char *name );
 extern void DEBUG_DelBreakpoint( int num );
 extern void DEBUG_EnableBreakpoint( int num, BOOL enable );
 extern void DEBUG_InfoBreakpoints(void);
@@ -314,8 +315,8 @@ extern struct name_hash * DEBUG_AddSymbol( const char *name,
 					   const DBG_VALUE *addr,
 					   const char *sourcefile,
 					   int flags);
-extern BOOL DEBUG_GetSymbolValue( const char * name, const int lineno,
-				  DBG_VALUE *addr, int );
+extern int DEBUG_GetSymbolValue( const char * name, const int lineno,
+				 DBG_VALUE *addr, int );
 extern BOOL DEBUG_SetSymbolValue( const char * name, const DBG_VALUE *addr );
 extern const char * DEBUG_FindNearestSymbol( const DBG_ADDR *addr, int flag,
 					     struct name_hash ** rtn,
@@ -390,6 +391,7 @@ extern DBG_MODULE* DEBUG_AddModule(const char* name, enum DbgModuleType type,
 				   void* mod_addr, u_long size, HMODULE hmod);
 extern DBG_MODULE* DEBUG_FindModuleByName(const char* name, enum DbgModuleType type);
 extern DBG_MODULE* DEBUG_FindModuleByHandle(HANDLE handle, enum DbgModuleType type);
+extern DBG_MODULE* DEBUG_FindModuleByAddr(void* addr, enum DbgModuleType type);
 extern DBG_MODULE* DEBUG_GetProcessMainModule(DBG_PROCESS* process);
 extern DBG_MODULE* DEBUG_RegisterPEModule(HMODULE, u_long load_addr, u_long size, 
 					  const char* name);
