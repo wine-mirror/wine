@@ -828,7 +828,9 @@ Main_IDirect3DDeviceImpl_7_Load(LPDIRECT3DDEVICE7 iface,
                                 DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%p,%p,%p,%p,%08lx): stub!\n", This, iface, lpDestTex, lpDestPoint, lpSrcTex, lprcSrcRect, dwFlags);
+    FIXME("(%p/%p)->(%p,%p,%p,%p,%08lx): Partially Implemented!\n", This, iface, lpDestTex, lpDestPoint, lpSrcTex, lprcSrcRect, dwFlags);
+    IDirect3DTexture2_Load(COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7, IDirect3DTexture2, lpDestTex),
+		            COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7, IDirect3DTexture2, lpSrcTex));
     return DD_OK;
 }
 
