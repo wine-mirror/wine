@@ -815,6 +815,17 @@ static int ctl2_encode_typedesc(
 	*alignment = 1;
 	break;
 
+    case VT_INT:
+	*encoded_tdesc = 0x80000000 | (VT_I4 << 16) | VT_INT;
+	if ((This->typelib_header.varflags & 0x0f) == SYS_WIN16) {
+	    *width = 2;
+	    *alignment = 2;
+	} else {
+	    *width = 4;
+	    *alignment = 4;
+	}
+	break;
+
     case VT_UINT:
 	*encoded_tdesc = 0x80000000 | (VT_UI4 << 16) | VT_UINT;
 	if ((This->typelib_header.varflags & 0x0f) == SYS_WIN16) {
@@ -827,6 +838,8 @@ static int ctl2_encode_typedesc(
 	break;
 
     case VT_UI2:
+    case VT_I2:
+    case VT_BOOL:
 	*encoded_tdesc = default_tdesc;
 	*width = 2;
 	*alignment = 2;
@@ -834,12 +847,19 @@ static int ctl2_encode_typedesc(
 
     case VT_I4:
     case VT_UI4:
+    case VT_R4:
     case VT_ERROR:
     case VT_BSTR:
     case VT_HRESULT:
 	*encoded_tdesc = default_tdesc;
 	*width = 4;
 	*alignment = 4;
+	break;
+
+    case VT_CY:
+	*encoded_tdesc = default_tdesc;
+	*width = 8;
+	*alignment = 4; /* guess? */
 	break;
 
     case VT_VOID:
