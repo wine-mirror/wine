@@ -41,14 +41,14 @@ static int strict;
         ok((received) == (expected), "%s: got " type " instead of " type "\n", (label),(received),(expected))
 
 
-#define SPI_SETBEEP_REGKEY           "Control Panel\\Sound"
-#define SPI_SETBEEP_VALNAME          "Beep"
-#define SPI_SETMOUSE_REGKEY             "Control Panel\\Mouse"
-#define SPI_SETMOUSE_VALNAME1           "MouseThreshold1"
-#define SPI_SETMOUSE_VALNAME2           "MouseThreshold2"
-#define SPI_SETMOUSE_VALNAME3           "MouseSpeed"
-#define SPI_SETBORDER_REGKEY         "Control Panel\\Desktop\\WindowMetrics"
-#define SPI_SETBORDER_VALNAME        "BorderWidth"
+#define SPI_SETBEEP_REGKEY                      "Control Panel\\Sound"
+#define SPI_SETBEEP_VALNAME                     "Beep"
+#define SPI_SETMOUSE_REGKEY                     "Control Panel\\Mouse"
+#define SPI_SETMOUSE_VALNAME1                   "MouseThreshold1"
+#define SPI_SETMOUSE_VALNAME2                   "MouseThreshold2"
+#define SPI_SETMOUSE_VALNAME3                   "MouseSpeed"
+#define SPI_SETBORDER_REGKEY                    "Control Panel\\Desktop\\WindowMetrics"
+#define SPI_SETBORDER_VALNAME                   "BorderWidth"
 #define SPI_SETKEYBOARDSPEED_REGKEY             "Control Panel\\Keyboard"
 #define SPI_SETKEYBOARDSPEED_VALNAME            "KeyboardSpeed"
 #define SPI_SETSCREENSAVETIMEOUT_REGKEY         "Control Panel\\Desktop"
@@ -77,14 +77,14 @@ static int strict;
 #define SPI_SETMOUSEBUTTONSWAP_VALNAME          "SwapMouseButtons"
 #define SPI_SETWORKAREA_REGKEY                  "Control Panel\\Desktop"
 #define SPI_SETWORKAREA_VALNAME                 "WINE_WorkArea"
-#define SPI_SETSHOWSOUNDS_REGKEY        "Control Panel\\Accessibility\\ShowSounds"
-#define SPI_SETSHOWSOUNDS_VALNAME       "On"
-#define SPI_SETKEYBOARDPREF_REGKEY      "Control Panel\\Accessibility\\Keyboard Preference"
-#define SPI_SETKEYBOARDPREF_VALNAME     "On"
-#define SPI_SETKEYBOARDPREF_REGKEY_LEGACY      "Control Panel\\Accessibility"
-#define SPI_SETKEYBOARDPREF_VALNAME_LEGACY     "Keyboard Preference"
-#define SPI_SETSCREENREADER_REGKEY      "Control Panel\\Accessibility\\Blind Access"
-#define SPI_SETSCREENREADER_VALNAME     "On"
+#define SPI_SETSHOWSOUNDS_REGKEY                "Control Panel\\Accessibility\\ShowSounds"
+#define SPI_SETSHOWSOUNDS_VALNAME               "On"
+#define SPI_SETKEYBOARDPREF_REGKEY              "Control Panel\\Accessibility\\Keyboard Preference"
+#define SPI_SETKEYBOARDPREF_VALNAME             "On"
+#define SPI_SETKEYBOARDPREF_REGKEY_LEGACY       "Control Panel\\Accessibility"
+#define SPI_SETKEYBOARDPREF_VALNAME_LEGACY      "Keyboard Preference"
+#define SPI_SETSCREENREADER_REGKEY              "Control Panel\\Accessibility\\Blind Access"
+#define SPI_SETSCREENREADER_VALNAME             "On"
 #define SPI_SETSCREENREADER_REGKEY_LEGACY       "Control Panel\\Accessibility"
 #define SPI_SETSCREENREADER_VALNAME_LEGACY      "Blind Access"
 #define SPI_SETLOWPOWERACTIVE_REGKEY            "Control Panel\\Desktop"
@@ -103,8 +103,8 @@ static int strict;
 #define SPI_SETMOUSESCROLLLINES_VALNAME         "WheelScrollLines"
 #define SPI_SETMENUSHOWDELAY_REGKEY             "Control Panel\\Desktop"
 #define SPI_SETMENUSHOWDELAY_VALNAME            "MenuShowDelay"
-#define SPI_SETDESKWALLPAPER_REGKEY		"Control Panel\\Desktop"
-#define SPI_SETDESKWALLPAPER_VALNAME		"Wallpaper"
+#define SPI_SETDESKWALLPAPER_REGKEY             "Control Panel\\Desktop"
+#define SPI_SETDESKWALLPAPER_VALNAME            "Wallpaper"
 
 /* volatile registry branch under CURRENT_USER_REGKEY for temporary values storage */
 #define WINE_CURRENT_USER_REGKEY     "Wine"
@@ -158,6 +158,34 @@ static void test_change_message( int action, int optional )
     ok( action == change_last_param,
         "Wrong action got %d expected %d\n", change_last_param, action );
     change_last_param = 0;
+}
+
+static BOOL test_error_msg ( int rc, char *name )
+{
+    DWORD last_error = GetLastError();
+
+    if (rc==0)
+    {
+        if (last_error==0xdeadbeef || last_error==ERROR_INVALID_SPI_VALUE)
+        {
+            trace("%s not supported on this platform. Skipping test\n", name);
+        }
+        else if (last_error==ERROR_ACCESS_DENIED)
+        {
+            trace("%s does not have privileges to run. Skipping test\n", name);
+        }
+        else
+        {
+            trace("%s failed for reason: %ld. Indicating test failure and skipping remainder of test\n",name,last_error);
+            ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,last_error);
+        }
+        return FALSE;
+    }
+    else
+    {
+        ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,last_error);
+        return TRUE;
+    }
 }
 
 /*
@@ -274,8 +302,10 @@ static void test_SPI_SETBEEP( void )                   /*      2 */
     BOOL curr_val;
 
     trace("testing SPI_{GET,SET}BEEP\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETBEEP, 0, &old_b, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_{GET,SET}BEEP"))
+        return;
 
     curr_val = TRUE;
     rc=SystemParametersInfoA( SPI_SETBEEP, curr_val, 0, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
@@ -425,8 +455,10 @@ static void test_SPI_SETMOUSE( void )                  /*      4 */
     int nchange = sizeof( req_change ) / sizeof( POINT );
 
     trace("testing SPI_{GET,SET}MOUSE\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETMOUSE, 0, old_mi, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_{GET,SET}MOUSE"))
+        return;
 
     run_spi_setmouse_test( curr_val, req_change, proj_change1, nchange );
 
@@ -505,8 +537,10 @@ static void test_SPI_SETBORDER( void )                 /*      6 */
         return;
 
     trace("testing SPI_{GET,SET}BORDER\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETBORDER, 0, &old_border, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_{GET,SET}BORDER"))
+        return;
 
     test_setborder(1);
     test_setborder(0);
@@ -530,8 +564,10 @@ static void test_SPI_SETKEYBOARDSPEED( void )          /*     10 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}KEYBOARDSPEED\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETKEYBOARDSPEED, 0, &old_speed, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_{GET,SET}KEYBOARDSPEED"))
+        return;
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -562,9 +598,11 @@ static void test_SPI_ICONHORIZONTALSPACING( void )     /*     13 */
     INT curr_val;
 
     trace("testing SPI_ICONHORIZONTALSPACING\n");
+    SetLastError(0xdeadbeef);
     /* default value: 75 */
     rc=SystemParametersInfoA( SPI_ICONHORIZONTALSPACING, 0, &old_spacing, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_ICONHORIZONTALSPACING"))
+        return;
 
     /* do not increase the value as it would upset the user's icon layout */
     curr_val = (old_spacing > 32 ? old_spacing-1 : 32);
@@ -605,8 +643,10 @@ static void test_SPI_SETSCREENSAVETIMEOUT( void )      /*     14 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}SCREENSAVETIMEOUT\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETSCREENSAVETIMEOUT, 0, &old_timeout, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_{GET,SET}SCREENSAVETIMEOUT"))
+        return;
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -639,8 +679,10 @@ static void test_SPI_SETSCREENSAVEACTIVE( void )       /*     17 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}SCREENSAVEACTIVE\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETSCREENSAVEACTIVE, 0, &old_b, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_{GET,SET}SCREENSAVEACTIVE"))
+        return;
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -676,8 +718,10 @@ static void test_SPI_SETKEYBOARDDELAY( void )          /*     23 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}KEYBOARDDELAY\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETKEYBOARDDELAY, 0, &old_delay, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_{GET,SET}KEYBOARDDELAY"))
+        return;
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -709,9 +753,11 @@ static void test_SPI_ICONVERTICALSPACING( void )       /*     24 */
     INT curr_val;
 
     trace("testing SPI_ICONVERTICALSPACING\n");
+    SetLastError(0xdeadbeef);
     /* default value: 75 */
     rc=SystemParametersInfoA( SPI_ICONVERTICALSPACING, 0, &old_spacing, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_ICONVERTICALSPACING"))
+        return;
 
     /* do not increase the value as it would upset the user's icon layout */
     curr_val = old_spacing-1;
@@ -760,15 +806,10 @@ static void test_SPI_SETICONTITLEWRAP( void )          /*     26 */
         return;
 
     trace("testing SPI_{GET,SET}ICONTITLEWRAP\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETICONTITLEWRAP, 0, &old_b, 0 );
-
-    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_CALL_NOT_IMPLEMENTED))
-    {
-        /* SPI_{GET,SET}ICONTITLEWRAP is not implemented on a standard Win98 SE */
-        trace("SPI_{GET,SET}ICONTITLEWRAP not supported on this platform\n");
+    if (!test_error_msg(rc,"SPI_{GET,SET}ICONTITLEWRAP"))
         return;
-    }
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -800,8 +841,10 @@ static void test_SPI_SETMENUDROPALIGNMENT( void )      /*     28 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}MENUDROPALIGNMENT\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETMENUDROPALIGNMENT, 0, &old_b, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_{GET,SET}MENUDROPALIGNMENT"))
+        return;
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -842,9 +885,12 @@ static void test_SPI_SETDOUBLECLKWIDTH( void )         /*     29 */
     {
         char buf[10];
 
+        SetLastError(0xdeadbeef);
         rc=SystemParametersInfoA( SPI_SETDOUBLECLKWIDTH, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-        ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
+        if (!test_error_msg(rc,"SPI_{GET,SET}DOUBLECLKWIDTH"))
+            return;
+
         test_change_message( SPI_SETDOUBLECLKWIDTH, 0 );
         sprintf( buf, "%d", vals[i] );
         test_reg_key_ex( SPI_SETDOUBLECLKWIDTH_REGKEY1,
@@ -873,9 +919,12 @@ static void test_SPI_SETDOUBLECLKHEIGHT( void )        /*     30 */
     {
         char buf[10];
 
+        SetLastError(0xdeadbeef);
         rc=SystemParametersInfoA( SPI_SETDOUBLECLKHEIGHT, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-        ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
+        if (!test_error_msg(rc,"SPI_{GET,SET}DOUBLECLKHEIGHT"))
+            return;
+
         test_change_message( SPI_SETDOUBLECLKHEIGHT, 0 );
         sprintf( buf, "%d", vals[i] );
         test_reg_key_ex( SPI_SETDOUBLECLKHEIGHT_REGKEY1,
@@ -902,9 +951,12 @@ static void test_SPI_SETDOUBLECLICKTIME( void )        /*     32 */
     old_time = GetDoubleClickTime();
 
     curr_val = 0;
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_SETDOUBLECLICKTIME, curr_val, 0,
                               SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_{GET,SET}DOUBLECLICKTIME"))
+        return;
+
     test_change_message( SPI_SETDOUBLECLICKTIME, 0 );
     sprintf( buf, "%d", curr_val );
     test_reg_key( SPI_SETDOUBLECLICKTIME_REGKEY,
@@ -955,9 +1007,12 @@ static void test_SPI_SETMOUSEBUTTONSWAP( void )        /*     33 */
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
+        SetLastError(0xdeadbeef);
         rc=SystemParametersInfoA( SPI_SETMOUSEBUTTONSWAP, vals[i], 0,
                                   SPIF_UPDATEINIFILE | SPIF_SENDCHANGE );
-        ok(rc!=0,"%d: rc=%d err=%ld\n",i,rc,GetLastError());
+        if (!test_error_msg(rc,"SPI_{GET,SET}MOUSEBUTTONSWAP"))
+            return;
+            
         test_change_message( SPI_SETMOUSEBUTTONSWAP, 0 );
         test_reg_key( SPI_SETMOUSEBUTTONSWAP_REGKEY,
                       SPI_SETMOUSEBUTTONSWAP_VALNAME,
@@ -977,8 +1032,11 @@ static void test_SPI_SETFASTTASKSWITCH( void )         /*     36 */
     BOOL v;
 
     trace("testing SPI_GETFASTTASKSWITCH\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETFASTTASKSWITCH, 0, &v, 0 );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_{GET,SET}FASTTASKSWITCH"))
+        return;
+
     /* there is not a single Windows platform on which SPI_GETFASTTASKSWITCH
      * works. That sure simplifies testing!
      */
@@ -992,14 +1050,12 @@ static void test_SPI_SETDRAGFULLWINDOWS( void )        /*     37 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}DRAGFULLWINDOWS\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETDRAGFULLWINDOWS, 0, &old_b, 0 );
-    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_CALL_NOT_IMPLEMENTED))
-    {
-        /* SPI_{GET,SET}DRAGFULLWINDOWS is not implemented on Win95 */
-        trace("SPI_{GET,SET}DRAGFULLWINDOWS not supported on this platform\n");
+
+    /* SPI_{GET,SET}DRAGFULLWINDOWS is not implemented on Win95 */
+    if (!test_error_msg(rc,"SPI_{GET,SET}DRAGFULLWINDOWS"))
         return;
-    }
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -1034,8 +1090,10 @@ static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
     lpMm_cur.cbSize = sizeof(MINIMIZEDMETRICS);
 
     trace("testing SPI_{GET,SET}MINIMIZEDMETRICS\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETMINIMIZEDMETRICS, sizeof(MINIMIZEDMETRICS), &lpMm_orig, FALSE );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_{GET,SET}MINIMIZEDMETRICS"))
+        return;
 
     lpMm_cur.iWidth = 180;
     lpMm_cur.iHorzGap = 1;
@@ -1086,8 +1144,10 @@ static void test_SPI_SETICONMETRICS( void )               /*     46 */
     im_cur.cbSize = sizeof(ICONMETRICSA);
 
     trace("testing SPI_{GET,SET}ICONMETRICS\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETICONMETRICS, sizeof(ICONMETRICSA), &im_orig, FALSE );
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_{GET,SET}ICONMETRICS"))
+        return;
 
     im_cur.iHorzSpacing = 65;
     im_cur.iVertSpacing = 65;
@@ -1152,13 +1212,15 @@ static void test_SPI_SETWORKAREA( void )               /*     47 */
     RECT curr_val;
 
     trace("testing SPI_{GET,SET}WORKAREA\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA(SPI_GETWORKAREA, 0, &old_area, 0);
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
+    if (!test_error_msg(rc,"SPI_{GET,SET}WORKAREA"))
+        return;
 
     /* Modify the work area only minimally as this causes the icons that
      * fall outside it to be moved around thus requiring the user to
      * reposition them manually one by one.
-     * Changing the work area by just one pixel should make this occurrence
+     * Changing the work area by just one pixel should make this occurence
      * reasonably unlikely.
      */
     curr_val.left = old_area.left;
@@ -1196,15 +1258,11 @@ static void test_SPI_SETSHOWSOUNDS( void )             /*     57 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}SHOWSOUNDS\n");
-    SetLastError(0);
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETSHOWSOUNDS, 0, &old_b, 0 );
-    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
-    {
-        /* SPI_{GET,SET}SHOWSOUNDS is completely broken on Win9x */
-        trace("SPI_{GET,SET}SHOWSOUNDS not supported on this platform\n");
+    /* SPI_{GET,SET}SHOWSOUNDS is completely broken on Win9x */
+    if (!test_error_msg(rc,"SPI_{GET,SET}SHOWSOUNDS"))
         return;
-    }
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -1237,14 +1295,10 @@ static void test_SPI_SETKEYBOARDPREF( void )           /*     69 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}KEYBOARDPREF\n");
-    SetLastError(0);
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETKEYBOARDPREF, 0, &old_b, 0 );
-    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
-    {
-        trace("SPI_{GET,SET}KEYBOARDPREF not supported on this platform\n");
+    if (!test_error_msg(rc,"SPI_{GET,SET}KEYBOARDPREF"))
         return;
-    }
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -1275,14 +1329,10 @@ static void test_SPI_SETSCREENREADER( void )           /*     71 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}SCREENREADER\n");
-    SetLastError(0);
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETSCREENREADER, 0, &old_b, 0 );
-    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
-    {
-        trace("SPI_{GET,SET}SCREENREADER not supported on this platform\n");
+    if (!test_error_msg(rc,"SPI_{GET,SET}SCREENREADER"))
         return;
-    }
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -1313,14 +1363,10 @@ static void test_SPI_SETLOWPOWERACTIVE( void )         /*     85 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}LOWPOWERACTIVE\n");
-    SetLastError(0);
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETLOWPOWERACTIVE, 0, &old_b, 0 );
-    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
-    {
-        trace("SPI_{GET,SET}LOWPOWERACTIVE not supported on this platform\n");
+    if (!test_error_msg(rc,"SPI_{GET,SET}LOWPOWERACTIVE"))
         return;
-    }
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -1351,14 +1397,10 @@ static void test_SPI_SETPOWEROFFACTIVE( void )         /*     86 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}POWEROFFACTIVE\n");
-    SetLastError(0);
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETPOWEROFFACTIVE, 0, &old_b, 0 );
-    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
-    {
-        trace("SPI_{GET,SET}POWEROFFACTIVE not supported on this platform\n");
+    if (!test_error_msg(rc,"SPI_{GET,SET}POWEROFFACTIVE"))
         return;
-    }
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -1391,18 +1433,11 @@ static void test_SPI_SETMOUSEHOVERWIDTH( void )      /*     99 */
     trace("testing SPI_{GET,SET}MOUSEHOVERWIDTH\n");
     SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETMOUSEHOVERWIDTH, 0, &old_width, 0 );
-    if (rc==0 && (GetLastError()==0xdeadbeef || 
-                  GetLastError()==ERROR_INVALID_SPI_VALUE ||
-                  GetLastError()==ERROR_CALL_NOT_IMPLEMENTED))
-    {
-        /* SPI_{GET,SET}MOUSEHOVERWIDTH does not seem to be supported on Win9x despite
-         * what MSDN states (Verified on Win98SE)
-         * rc=0, LastError is not changed (Verified on Win98SE)
-         */
-        trace("SPI_{GET,SET}MOUSEHOVERWIDTH not supported on this platform\n");
+    /* SPI_{GET,SET}MOUSEHOVERWIDTH does not seem to be supported on Win9x despite
+    * what MSDN states (Verified on Win98SE)
+    */
+    if (!test_error_msg(rc,"SPI_{GET,SET}MOUSEHOVERWIDTH"))
         return;
-    }
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
     
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -1437,18 +1472,11 @@ static void test_SPI_SETMOUSEHOVERHEIGHT( void )      /*     101 */
     trace("testing SPI_{GET,SET}MOUSEHOVERHEIGHT\n");
     SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETMOUSEHOVERHEIGHT, 0, &old_height, 0 );
-    if (rc==0 && (GetLastError()==0xdeadbeef || 
-                  GetLastError()==ERROR_INVALID_SPI_VALUE ||
-                  GetLastError()==ERROR_CALL_NOT_IMPLEMENTED))
-    {
-        /* SPI_{GET,SET}MOUSEHOVERWIDTH does not seem to be supported on Win9x despite
-         * what MSDN states (Verified on Win98SE)
-         * rc=0, LastError is not changed (Verified on Win98SE)
-         */
-        trace("SPI_{GET,SET}MOUSEHOVERHEIGHT not supported on this platform\n");
+    /* SPI_{GET,SET}MOUSEHOVERWIDTH does not seem to be supported on Win9x despite
+     * what MSDN states (Verified on Win98SE)
+     */
+    if (!test_error_msg(rc,"SPI_{GET,SET}MOUSEHOVERHEIGHT"))
         return;
-    }
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
     
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -1487,18 +1515,11 @@ static void test_SPI_SETMOUSEHOVERTIME( void )      /*     103 */
     trace("testing SPI_{GET,SET}MOUSEHOVERTIME\n");
     SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETMOUSEHOVERTIME, 0, &old_time, 0 );
-    if (rc==0 && (GetLastError()==0xdeadbeef || 
-                  GetLastError()==ERROR_INVALID_SPI_VALUE ||
-                  GetLastError()==ERROR_CALL_NOT_IMPLEMENTED))
-    {
-        /* SPI_{GET,SET}MOUSEHOVERWIDTH does not seem to be supported on Win9x despite
-         * what MSDN states (Verified on Win98SE)
-         * rc=0, LastError is not changed (Verified on Win98SE)
-         */
-        trace("SPI_{GET,SET}MOUSEHOVERTIME not supported on this platform\n");
+    /* SPI_{GET,SET}MOUSEHOVERWIDTH does not seem to be supported on Win9x despite
+     * what MSDN states (Verified on Win98SE)
+     */    
+    if (!test_error_msg(rc,"SPI_{GET,SET}MOUSEHOVERTIME"))
         return;
-    }
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
     
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -1531,14 +1552,12 @@ static void test_SPI_SETWHEELSCROLLLINES( void )      /*     105 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}WHEELSCROLLLINES\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETWHEELSCROLLLINES, 0, &old_lines, 0 );
-    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
-    {
-        /* SPI_{GET,SET}WHEELSCROLLLINES not supported on Windows 95 */
-        trace("SPI_{GET,SET}WHEELSCROLLLINES not supported on this platform\n");
+
+    /* SPI_{GET,SET}WHEELSCROLLLINES not supported on Windows 95 */
+    if (!test_error_msg(rc,"SPI_{GET,SET}WHEELSCROLLLINES"))
         return;
-    }
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -1571,14 +1590,12 @@ static void test_SPI_SETMENUSHOWDELAY( void )      /*     107 */
     unsigned int i;
 
     trace("testing SPI_{GET,SET}MENUSHOWDELAY\n");
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA( SPI_GETMENUSHOWDELAY, 0, &old_delay, 0 );
-    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
-    {
-        /* SPI_{GET,SET}MENUSHOWDELAY not supported on Windows 95 */
-        trace("SPI_{GET,SET}MENUSHOWDELAY not supported on this platform\n");
+
+    /* SPI_{GET,SET}MENUSHOWDELAY not supported on Windows 95 */
+    if (!test_error_msg(rc,"SPI_{GET,SET}MENUSHOWDELAY"))
         return;
-    }
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     for (i=0;i<sizeof(vals)/sizeof(*vals);i++)
     {
@@ -1610,17 +1627,13 @@ static void test_SPI_SETWALLPAPER( void )              /*   115 */
     char newval[260];
 
     trace("testing SPI_{GET,SET}DESKWALLPAPER\n");
-    SetLastError(0);
+    SetLastError(0xdeadbeef);
     rc=SystemParametersInfoA(SPI_GETDESKWALLPAPER, 260, oldval, 0);
-    if (rc==0 && (GetLastError()==0 || GetLastError()==ERROR_INVALID_SPI_VALUE))
-    {
-        /* SPI_{GET,SET}DESKWALLPAPER is completely broken on Win9x and
-         * unimplemented on NT4
-         */
-        trace("SPI_{GET,SET}DESKWALLPAPER not supported on this platform\n");
+    /* SPI_{GET,SET}DESKWALLPAPER is completely broken on Win9x and
+     * unimplemented on NT4
+     */
+    if (!test_error_msg(rc,"SPI_{GET,SET}DESKWALLPAPER"))
         return;
-    }
-    ok(rc!=0,"SystemParametersInfoA: rc=%d err=%ld\n",rc,GetLastError());
 
     strcpy(newval, "");
     rc=SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, newval, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
