@@ -4,7 +4,12 @@
 ##(c) 1998-1999
 ##Do not say this is yours without my express permisson, or I will
 ##hunt you down and kill you like the savage animal I am.
-##Released under the WINE licence
+##
+## Improvements by Gerald Pfeifer <pfeifer@dbai.tuwien.ac.at>
+## (c) 2000
+##
+## Released under the WINE licence.
+##
 ##Changelog: 
 ##August 29, 1999 - Work around for debugger exit (or lack thereof)
 ##                - Should now put debugging output in correct place
@@ -34,25 +39,24 @@ sub do_var {
 open STDERR, ">&SAVEERR"; open STDERR, ">&STDOUT"; 
 $ENV{'SHELL'}="/bin/bash";
 $var0 = qq{
-	Enter your level of WINE expertise: 1-newbie 2-intermediate 3-advanced
+	What is your level of WINE expertise? 1-newbie 2-intermediate 3-advanced
 	
 	1 - Makes a debug report as defined in the WINE documentation. Best
-	for new WINE users. If you're not sure what -debugmsg is, then use
-	this mode.
+	    for new WINE users. If you're not sure what -debugmsg is, then
+	    use this mode.
 	2 - Makes a debug report that is more customizable (Example: you can
-	choose what -debugmsg 's to use). You are asked more
-	questions in this mode. May intimidate newbies.
+	    choose what -debugmsg 's to use). You are asked more questions in
+	    this mode. May intimidate newbies.
 	3 - Just like 2, but not corner cutting. Assumes you know what you're
-	doing so it leaves out the long descriptions.
+	    doing so it leaves out the long descriptions.
 };
-print do_var($var0);
-$debuglevel=<STDIN>;
-chomp $debuglevel;
+print do_var($var0)."\n";
 until ($debuglevel == 1 or $debuglevel == 2 or $debuglevel == 3) {
-	print "Enter a number from 1-3!\n"; 
+	print "Enter your level of WINE expertise (1-3): ";
 	$debuglevel=<STDIN>;
 	chomp $debuglevel;
 } 
+
 if ($debuglevel < 3) {
 	$var1 = qq{
 	This program will make a debug report for WINE developers. It does this
@@ -79,7 +83,7 @@ if ($debuglevel < 3) {
 	};
 	print do_var($var2);
 }
-print "Enter filename for the formatted debug output (The first file):\n";
+print "Enter filename for the formatted debug output (the first file):\n";
 $outfile=<STDIN>;
 chomp $outfile;
 $var23 = qq{
@@ -90,7 +94,7 @@ while ($outfile =~ /^(\s)*$/) {
 	$outfile=<STDIN>;
 	chomp $outfile;
 }
-print "Enter the filename for the full debug output (The second file):\n";
+print "Enter the filename for the full debug output (the second file):\n";
 $dbgoutfile=<STDIN>;
 chomp $dbgoutfile;
 while ($dbgoutfile =~ /^(\s)*$/) {
@@ -114,6 +118,7 @@ if ($outfile ne "no file" and $dbgoutfile eq "no file") {
 		chomp $tmpoutfile;
 	}
 }
+
 print "Looking for wine...\n";
 $whereis=`whereis wine`;
 chomp $whereis;
@@ -204,7 +209,7 @@ What version of windows are you using with wine? 0-None, 1-Win3.x,
 };
 print do_var($var5);
 $winver=<STDIN>; 
-until ($winver == 0 or $winver == 1 or $winver == 2 or $winver == 3 or $winver == 4 or $winver == 5 or $winver == 6 or $winver == 7) {
+until ($winver >= 0 and $winver <= 7) {
 	$var6 = qq{
 	No! Enter a number from 0 to 7 that corresponds to your windows version! 
 	};
