@@ -123,7 +123,7 @@
 @ stub IEWriteErrorLog
 @ stub OpenURL
 @ stub SHGetIDispatchForFolder
-@ stub SetQueryNetSessionCount
+@ stdcall SetQueryNetSessionCount(long)
 @ stub SoftwareUpdateMessageBox
 @ stub URLQualifyA
 @ stub URLQualifyW

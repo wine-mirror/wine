@@ -459,7 +459,7 @@ HRESULT WINAPI SHDOCVW_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *p
 /***********************************************************************
  *              DllGetVersion (SHDOCVW.@)
  */
-HRESULT WINAPI SHDOCVW_DllGetVersion (DLLVERSIONINFO *info)
+HRESULT WINAPI SHDOCVW_DllGetVersion(DLLVERSIONINFO *info)
 {
     if (info->cbSize != sizeof(DLLVERSIONINFO)) FIXME("support DLLVERSIONINFO2\n");
 
@@ -541,4 +541,13 @@ DWORD WINAPI RunInstallUninstallStubs(void)
 {
     FIXME("(), stub!\n");
     return 0x0deadbee;
+}
+
+/***********************************************************************
+ *              SetQueryNetSessionCount (SHDOCVW.@)
+ */
+DWORD WINAPI SetQueryNetSessionCount(DWORD arg)
+{
+    FIXME("(%lu), stub!\n", arg);
+    return 0;
 }
