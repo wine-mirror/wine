@@ -99,6 +99,16 @@ static const char main_key_DE[MAIN_LEN][4] =
  "<>"
 };
 
+/*** Swiss German keyboard layout (contributed by Jonathan Naylor) */
+static const char main_key_SG[MAIN_LEN][4] =
+{
+ "§°","1+|","2\"@","3*#","4ç","5%","6&¬","7/¦","8(¢","9)","0=","'?´","^`~",
+ "qQ","wW","eE","rR","tT","zZ","uU","iI","oO","pP","üè[","¨!]",
+ "aA","sS","dD","fF","gG","hH","jJ","kK","lL","öé","äà{","$£}",
+ "yY","xX","cC","vV","bB","nN","mM",",;",".:","-_",
+ "<>\\"
+};
+
 /*** Norwegian keyboard layout (contributed by Ove Kåven) */
 static const char main_key_NO[MAIN_LEN][4] =
 {
@@ -158,6 +168,7 @@ static struct {
  {MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_UK), 1252, 850, &main_key_UK},
  {MAKELANGID(LANG_FRENCH,SUBLANG_DEFAULT),     1252, 850, &main_key_FR},
  {MAKELANGID(LANG_GERMAN,SUBLANG_DEFAULT),     1252, 850, &main_key_DE},
+ {MAKELANGID(LANG_GERMAN,SUBLANG_GERMAN_SWISS),1252, 850, &main_key_SG},
  {MAKELANGID(LANG_NORWEGIAN,SUBLANG_DEFAULT),  1252, 865, &main_key_NO},
  {MAKELANGID(LANG_DANISH,SUBLANG_DEFAULT),     1252, 865, &main_key_DA},
  {MAKELANGID(LANG_FRENCH,SUBLANG_FRENCH_CANADIAN),1252,863,&main_key_CF},
