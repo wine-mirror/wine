@@ -379,17 +379,20 @@ static BOOL TOOLHELP_Module32Next( HANDLE handle, LPMODULEENTRY32 lpme, BOOL fir
         wine_server_set_reply( req, exe, sizeof(exe) );
         if ((ret = !wine_server_call_err( req )))
         {
-            lpme->th32ModuleID   = 0;  /* toolhelp internal id, never used */
+            const char* ptr;
+            lpme->th32ModuleID   = 1; /* toolhelp internal id, never used */
             lpme->th32ProcessID  = reply->pid;
-            lpme->GlblcntUsage   = 0; /* FIXME */
-            lpme->ProccntUsage   = 0; /* FIXME */
+            lpme->GlblcntUsage   = 0xFFFF; /* FIXME */
+            lpme->ProccntUsage   = 0xFFFF; /* FIXME */
             lpme->modBaseAddr    = reply->base;
             lpme->modBaseSize    = reply->size;
             lpme->hModule        = reply->base;
-            lpme->szModule[0]    = 0;  /* FIXME */
             len = WideCharToMultiByte( CP_ACP, 0, exe, wine_server_reply_size(reply) / sizeof(WCHAR),
-                                       lpme->szExePath, sizeof(lpme->szExePath), NULL, NULL );
+                                       lpme->szExePath, sizeof(lpme->szExePath) - 1, NULL, NULL );
             lpme->szExePath[len] = 0;
+            if ((ptr = strrchr(lpme->szExePath, '\\'))) ptr++;
+            else ptr = lpme->szExePath;
+            lstrcpynA( lpme->szModule, ptr, sizeof(lpme->szModule) );
         }
     }
     SERVER_END_REQ;
