@@ -35,21 +35,21 @@ static void test_printer_directory(ivoid)
     buffer = HeapAlloc( GetProcessHeap(), 0, cbBuf*2);
 
     res = GetPrinterDriverDirectoryA(NULL, NULL, 1, buffer, cbBuf, &pcbNeeded);
-    ok( res, "expected result != 0, got %d", res);
-    ok( cbBuf == pcbNeeded, "pcbNeeded set to %ld instead of %ld",
+    ok( res, "expected result != 0, got %d\n", res);
+    ok( cbBuf == pcbNeeded, "pcbNeeded set to %ld instead of %ld\n",
                             pcbNeeded, cbBuf);
 
     res = GetPrinterDriverDirectoryA(NULL, NULL, 1, buffer, cbBuf*2, &pcbNeeded);
-    ok( res, "expected result != 0, got %d", res);
-    ok( cbBuf == pcbNeeded, "pcbNeeded set to %ld instead of %ld",
+    ok( res, "expected result != 0, got %d\n", res);
+    ok( cbBuf == pcbNeeded, "pcbNeeded set to %ld instead of %ld\n",
                             pcbNeeded, cbBuf);
  
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, buffer, cbBuf-1, &pcbNeeded);
-    ok( !res , "expected result == 0, got %d", res);
-    ok( cbBuf == pcbNeeded, "pcbNeeded set to %ld instead of %ld",
+    ok( !res , "expected result == 0, got %d\n", res);
+    ok( cbBuf == pcbNeeded, "pcbNeeded set to %ld instead of %ld\n",
                             pcbNeeded, cbBuf);
     ok( ERROR_INSUFFICIENT_BUFFER == GetLastError(),
-        "last error set to %ld instead of ERROR_INSUFFICIENT_BUFFER",
+        "last error set to %ld instead of ERROR_INSUFFICIENT_BUFFER\n",
         GetLastError());
  
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, cbBuf, &pcbNeeded);
@@ -58,13 +58,13 @@ static void test_printer_directory(ivoid)
          "expected either result == 0 and "
          "last error == ERROR_INVALID_USER_BUFFER "
          "or result != 0 and last error == ERROR_INVALID_PARAMETER "
-         "got result %d and last error == %ld", res, GetLastError());
+         "got result %d and last error == %ld\n", res, GetLastError());
 
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, buffer, cbBuf, NULL);
     ok( (!res && RPC_X_NULL_REF_POINTER == GetLastError()) || res,
          "expected either result == 0 and "
          "last error == RPC_X_NULL_REF_POINTER or result != 0 "
-         "got result %d and last error == %ld", res, GetLastError());
+         "got result %d and last error == %ld\n", res, GetLastError());
 
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, cbBuf, NULL);
     ok( (!res && RPC_X_NULL_REF_POINTER == GetLastError()) || 
@@ -72,7 +72,7 @@ static void test_printer_directory(ivoid)
          "expected either result == 0 and "
          "last error == RPC_X_NULL_REF_POINTER "
          "or result != 0 and last error == ERROR_INVALID_PARAMETER "
-         "got result %d and last error == %ld", res, GetLastError());
+         "got result %d and last error == %ld\n", res, GetLastError());
 
     HeapFree( GetProcessHeap(), 0, buffer);
 }

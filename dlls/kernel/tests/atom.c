@@ -39,13 +39,13 @@ static void test_add_atom(void)
 
     SetLastError( 0xdeadbeef );
     atom = GlobalAddAtomA( "foobar" );
-    ok( atom >= 0xc000, "bad atom id %x", atom );
-    ok( GetLastError() == 0xdeadbeef, "GlobalAddAtomA set last error" );
+    ok( atom >= 0xc000, "bad atom id %x\n", atom );
+    ok( GetLastError() == 0xdeadbeef, "GlobalAddAtomA set last error\n" );
 
     /* Verify that it can be found (or not) appropriately */
-    ok( GlobalFindAtomA( "foobar" ) == atom, "could not find atom foobar" );
-    ok( GlobalFindAtomA( "FOOBAR" ) == atom, "could not find atom FOOBAR" );
-    ok( !GlobalFindAtomA( "_foobar" ), "found _foobar" );
+    ok( GlobalFindAtomA( "foobar" ) == atom, "could not find atom foobar\n" );
+    ok( GlobalFindAtomA( "FOOBAR" ) == atom, "could not find atom FOOBAR\n" );
+    ok( !GlobalFindAtomA( "_foobar" ), "found _foobar\n" );
 
     /* Add the same atom, specifying string as unicode; should
      * find the first one, not add a new one */
@@ -58,16 +58,16 @@ static void test_add_atom(void)
 
     if (unicode_OS)
     {
-        ok( w_atom == atom, "Unicode atom does not match ASCII" );
-        ok( GetLastError() == 0xdeadbeef, "GlobalAddAtomW set last error" );
+        ok( w_atom == atom, "Unicode atom does not match ASCII\n" );
+        ok( GetLastError() == 0xdeadbeef, "GlobalAddAtomW set last error\n" );
     }
 
     /* Verify that it can be found (or not) appropriately via unicode name */
     if (unicode_OS)
     {
-        ok( GlobalFindAtomW( foobarW ) == atom, "could not find atom foobar" );
-        ok( GlobalFindAtomW( FOOBARW ) == atom, "could not find atom FOOBAR" );
-        ok( !GlobalFindAtomW( _foobarW ), "found _foobar" );
+        ok( GlobalFindAtomW( foobarW ) == atom, "could not find atom foobar\n" );
+        ok( GlobalFindAtomW( FOOBARW ) == atom, "could not find atom FOOBAR\n" );
+        ok( !GlobalFindAtomW( _foobarW ), "found _foobar\n" );
     }
 
     /* Test integer atoms
@@ -75,11 +75,11 @@ static void test_add_atom(void)
      * (0xc000 .. 0xffff) should be invalid */
 
     SetLastError( 0xdeadbeef );
-    ok( GlobalAddAtomA(0) == 0 && GetLastError() == 0xdeadbeef, "succeeded to add atom 0" );
+    ok( GlobalAddAtomA(0) == 0 && GetLastError() == 0xdeadbeef, "succeeded to add atom 0\n" );
     if (unicode_OS)
     {
         SetLastError( 0xdeadbeef );
-        ok( GlobalAddAtomW(0) == 0 && GetLastError() == 0xdeadbeef, "succeeded to add atom 0" );
+        ok( GlobalAddAtomW(0) == 0 && GetLastError() == 0xdeadbeef, "succeeded to add atom 0\n" );
     }
 
     SetLastError( 0xdeadbeef );
@@ -87,20 +87,20 @@ static void test_add_atom(void)
     {
         SetLastError( 0xdeadbeef );
         ok( GlobalAddAtomA((LPCSTR)i) == i && GetLastError() == 0xdeadbeef,
-            "failed to add atom %x", i );
+            "failed to add atom %x\n", i );
         if (unicode_OS)
         {
             SetLastError( 0xdeadbeef );
             ok( GlobalAddAtomW((LPCWSTR)i) == i && GetLastError() == 0xdeadbeef,
-                "failed to add atom %x", i );
+                "failed to add atom %x\n", i );
         }
     }
 
     for (i = 0xc000; i <= 0xffff; i++)
     {
-        ok( !GlobalAddAtomA((LPCSTR)i), "succeeded adding %x", i );
+        ok( !GlobalAddAtomA((LPCSTR)i), "succeeded adding %x\n", i );
         if (unicode_OS)
-            ok( !GlobalAddAtomW((LPCWSTR)i), "succeeded adding %x", i );
+            ok( !GlobalAddAtomW((LPCWSTR)i), "succeeded adding %x\n", i );
     }
 }
 
@@ -117,8 +117,8 @@ static void test_get_atom_name(void)
     /* Get the name of the atom we added above */
     memset( buf, '.', sizeof(buf) );
     len = GlobalGetAtomNameA( atom, buf, 10 );
-    ok( len == strlen("foobar"), "bad length %d", len );
-    ok( !memcmp( buf, "foobar\0...", 10 ), "bad buffer contents" );
+    ok( len == strlen("foobar"), "bad length %d\n", len );
+    ok( !memcmp( buf, "foobar\0...", 10 ), "bad buffer contents\n" );
 
     /* Repeat, unicode-style */
     if (unicode_OS)
@@ -126,23 +126,23 @@ static void test_get_atom_name(void)
         for (i = 0; i < 10; i++) bufW[i] = '.';
         SetLastError( 0xdeadbeef );
         len = GlobalGetAtomNameW( atom, bufW, 10 );
-        ok( len && GetLastError() == 0xdeadbeef, "GlobalGetAtomNameW failed" );
-        ok( len == lstrlenW(foobarW), "bad length %d", len );
-        ok( !memcmp( bufW, resultW, 10*sizeof(WCHAR) ), "bad buffer contents" );
+        ok( len && GetLastError() == 0xdeadbeef, "GlobalGetAtomNameW failed\n" );
+        ok( len == lstrlenW(foobarW), "bad length %d\n", len );
+        ok( !memcmp( bufW, resultW, 10*sizeof(WCHAR) ), "bad buffer contents\n" );
     }
 
     /* Check error code returns */
     memset(buf, '.', 10);
-    ok( !GlobalGetAtomNameA( atom, buf,  0 ), "succeeded" );
-    ok( !memcmp( buf, "..........", 10 ), "should not touch buffer" );
+    ok( !GlobalGetAtomNameA( atom, buf,  0 ), "succeeded\n" );
+    ok( !memcmp( buf, "..........", 10 ), "should not touch buffer\n" );
 
     if (unicode_OS)
     {
         static const WCHAR sampleW[10] = {'.','.','.','.','.','.','.','.','.','.'};
 
         for (i = 0; i < 10; i++) bufW[i] = '.';
-        ok( !GlobalGetAtomNameW( atom, bufW, 0 ), "succeeded" );
-        ok( !memcmp( bufW, sampleW, 10 * sizeof(WCHAR) ), "should not touch buffer" );
+        ok( !GlobalGetAtomNameW( atom, bufW, 0 ), "succeeded\n" );
+        ok( !memcmp( bufW, sampleW, 10 * sizeof(WCHAR) ), "should not touch buffer\n" );
     }
 
     /* Test integer atoms */
@@ -153,13 +153,13 @@ static void test_get_atom_name(void)
         if (i)
         {
             char res[20];
-            ok( (len > 1) && (len < 7), "bad length %d", len );
+            ok( (len > 1) && (len < 7), "bad length %d\n", len );
             sprintf( res, "#%d", i );
             memset( res + strlen(res) + 1, 'a', 10 );
-            ok( !memcmp( res, buf, 10 ), "bad buffer contents %s", buf );
+            ok( !memcmp( res, buf, 10 ), "bad buffer contents %s\n", buf );
         }
         else
-            ok( !len, "bad length %d", len );
+            ok( !len, "bad length %d\n", len );
     }
 }
 
@@ -171,15 +171,15 @@ static void test_error_handling(void)
 
     memset( buffer, 'a', 256 );
     buffer[256] = 0;
-    ok( !GlobalAddAtomA(buffer), "add succeeded" );
-    ok( !GlobalFindAtomA(buffer), "find succeeded" );
+    ok( !GlobalAddAtomA(buffer), "add succeeded\n" );
+    ok( !GlobalFindAtomA(buffer), "find succeeded\n" );
 
     if (unicode_OS)
     {
         for (i = 0; i < 256; i++) bufferW[i] = 'b';
         bufferW[256] = 0;
-        ok( !GlobalAddAtomW(bufferW), "add succeeded" );
-        ok( !GlobalFindAtomW(bufferW), "find succeeded" );
+        ok( !GlobalAddAtomW(bufferW), "add succeeded\n" );
+        ok( !GlobalFindAtomW(bufferW), "find succeeded\n" );
     }
 }
 

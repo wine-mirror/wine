@@ -47,13 +47,13 @@ static void test_negative_source_length(void)
     memset(buf,'x',sizeof(buf));
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -2002, buf, 10, NULL, NULL);
     ok(len == 7 && !lstrcmpA(buf, "foobar") && GetLastError() == 0xdeadbeef,
-       "WideCharToMultiByte(-2002): len=%d error=%ld",len,GetLastError());
+       "WideCharToMultiByte(-2002): len=%d error=%ld\n",len,GetLastError());
 
     SetLastError( 0xdeadbeef );
     memset(bufW,'x',sizeof(bufW));
     len = MultiByteToWideChar(CP_ACP, 0, "foobar", -2002, bufW, 10);
     ok(len == 7 && !mylstrcmpW(bufW, foobarW) && GetLastError() == 0xdeadbeef,
-       "MultiByteToWideChar(-2002): len=%d error=%ld",len,GetLastError());
+       "MultiByteToWideChar(-2002): len=%d error=%ld\n",len,GetLastError());
 }
 
 START_TEST(codepage)

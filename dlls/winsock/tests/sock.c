@@ -135,11 +135,11 @@ static void set_so_opentype ( BOOL overlapped )
 
     ok ( setsockopt ( INVALID_SOCKET, SOL_SOCKET, SO_OPENTYPE,
                       (LPVOID) &optval, sizeof (optval) ) == 0,
-         "setting SO_OPENTYPE failed" );
+         "setting SO_OPENTYPE failed\n" );
     ok ( getsockopt ( INVALID_SOCKET, SOL_SOCKET, SO_OPENTYPE,
                       (LPVOID) &newval, &len ) == 0,
-         "getting SO_OPENTYPE failed" );
-    ok ( optval == newval, "failed to set SO_OPENTYPE" );
+         "getting SO_OPENTYPE failed\n" );
+    ok ( optval == newval, "failed to set SO_OPENTYPE\n" );
 }
 
 static int set_blocking ( SOCKET s, BOOL blocking )
@@ -186,7 +186,7 @@ static int do_synchronous_send ( SOCKET s, char *buf, int buflen, int sendlen )
     int n = 1;
     for ( p = buf; n > 0 && p < last; p += n )
         n = send ( s, p, min ( sendlen, last - p ), 0 );
-    wsa_ok ( n, 0 <=, "do_synchronous_send (%lx): error %d" );
+    wsa_ok ( n, 0 <=, "do_synchronous_send (%lx): error %d\n" );
     return p - buf;
 }
 
@@ -196,7 +196,7 @@ static int do_synchronous_recv ( SOCKET s, char *buf, int buflen, int recvlen )
     int n = 1;
     for ( p = buf; n > 0 && p < last; p += n )
         n = recv ( s, p, min ( recvlen, last - p ), 0 );
-    wsa_ok ( n, 0 <=, "do_synchronous_recv (%lx): error %d:" );
+    wsa_ok ( n, 0 <=, "do_synchronous_recv (%lx): error %d:\n" );
     return p - buf;
 }
 
@@ -209,7 +209,7 @@ static void check_so_opentype (void)
     int tmp = 1, len;
     len = sizeof (tmp);
     getsockopt ( INVALID_SOCKET, SOL_SOCKET, SO_OPENTYPE, (LPVOID) &tmp, &len );
-    ok ( tmp == 0, "check_so_opentype: wrong startup value of SO_OPENTYPE: %d", tmp );
+    ok ( tmp == 0, "check_so_opentype: wrong startup value of SO_OPENTYPE: %d\n", tmp );
 }
 
 /**************** Server utility functions ***************/
@@ -242,7 +242,7 @@ static void server_start ( server_params *par )
     TlsSetValue ( tls, mem );
     mem->s = WSASocketA ( AF_INET, gen->sock_type, gen->sock_prot,
                           NULL, 0, par->sock_flags );
-    ok ( mem->s != INVALID_SOCKET, "Server: WSASocket failed" );
+    ok ( mem->s != INVALID_SOCKET, "Server: WSASocket failed\n" );
 
     mem->addr.sin_family = AF_INET;
     mem->addr.sin_addr.s_addr = inet_addr ( gen->inet_addr );
@@ -270,7 +270,7 @@ static void server_stop (void)
         if ( mem->sock[i].s != INVALID_SOCKET )
             closesocket ( mem->sock[i].s );
     }
-    ok ( closesocket ( mem->s ) == 0, "closesocket failed" );
+    ok ( closesocket ( mem->s ) == 0, "closesocket failed\n" );
     LocalFree ( (HANDLE) mem );
     ExitThread ( GetCurrentThreadId () );
 }
@@ -293,7 +293,7 @@ static void client_start ( client_params *par )
     mem->addr.sin_addr.s_addr = inet_addr ( gen->inet_addr );
     mem->addr.sin_port = htons ( gen->inet_port );
 
-    ok ( mem->s != INVALID_SOCKET, "Client: WSASocket failed" );
+    ok ( mem->s != INVALID_SOCKET, "Client: WSASocket failed\n" );
 
     mem->send_buf = (LPVOID) LocalAlloc ( LPTR, 2 * gen->n_chunks * gen->chunk_size );
     mem->recv_buf = mem->send_buf + gen->n_chunks * gen->chunk_size;
@@ -332,8 +332,8 @@ static VOID WINAPI simple_server ( server_params *par )
     server_start ( par );
     mem = TlsGetValue ( tls );
 
-    wsa_ok ( set_blocking ( mem->s, TRUE ), 0 ==, "simple_server (%lx): failed to set blocking mode: %d");
-    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "simple_server (%lx): listen failed: %d");
+    wsa_ok ( set_blocking ( mem->s, TRUE ), 0 ==, "simple_server (%lx): failed to set blocking mode: %d\n");
+    wsa_ok ( listen ( mem->s, SOMAXCONN ), 0 ==, "simple_server (%lx): listen failed: %d\n");
 
     trace ( "simple_server (%x) ready\n", id );
     SetEvent ( server_ready ); /* notify clients */
@@ -345,26 +345,26 @@ static VOID WINAPI simple_server ( server_params *par )
         /* accept a single connection */
         tmp = sizeof ( mem->sock[0].peer );
         mem->sock[0].s = accept ( mem->s, (struct sockaddr*) &mem->sock[0].peer, &tmp );
-        wsa_ok ( mem->sock[0].s, INVALID_SOCKET !=, "simple_server (%lx): accept failed: %d" );
+        wsa_ok ( mem->sock[0].s, INVALID_SOCKET !=, "simple_server (%lx): accept failed: %d\n" );
 
         ok ( mem->sock[0].peer.sin_addr.s_addr == inet_addr ( gen->inet_addr ),
-             "simple_server (%x): strange peer address", id );
+             "simple_server (%x): strange peer address\n", id );
 
         /* Receive data & check it */
         n_recvd = do_synchronous_recv ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen );
         ok ( n_recvd == n_expected,
-             "simple_server (%x): received less data then expected: %d of %d", id, n_recvd, n_expected );
+             "simple_server (%x): received less data than expected: %d of %d\n", id, n_recvd, n_expected );
         p = test_buffer ( mem->sock[0].buf, gen->chunk_size, gen->n_chunks );
-        ok ( p == NULL, "simple_server (%x): test pattern error: %d", id, p - mem->sock[0].buf);
+        ok ( p == NULL, "simple_server (%x): test pattern error: %d\n", id, p - mem->sock[0].buf);
 
         /* Echo data back */
         n_sent = do_synchronous_send ( mem->sock[0].s, mem->sock[0].buf, n_expected, par->buflen );
         ok ( n_sent == n_expected,
-             "simple_server (%x): sent less data then expected: %d of %d", id, n_sent, n_expected );
+             "simple_server (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
 
         /* cleanup */
         read_zero_bytes ( mem->sock[0].s );
-        wsa_ok ( closesocket ( mem->sock[0].s ),  0 ==, "simple_server (%lx): closesocket error: %d" );
+        wsa_ok ( closesocket ( mem->sock[0].s ),  0 ==, "simple_server (%lx): closesocket error: %d\n" );
         mem->sock[0].s = INVALID_SOCKET;
     }
 
@@ -397,27 +397,27 @@ static VOID WINAPI simple_client ( client_params *par )
 
     /* Connect */
     wsa_ok ( connect ( mem->s, (struct sockaddr*) &mem->addr, sizeof ( mem->addr ) ),
-             0 ==, "simple_client (%lx): connect error: %d" );
+             0 ==, "simple_client (%lx): connect error: %d\n" );
     ok ( set_blocking ( mem->s, TRUE ) == 0,
-         "simple_client (%x): failed to set blocking mode", id );
+         "simple_client (%x): failed to set blocking mode\n", id );
     trace ( "simple_client (%x) connected\n", id );
 
     /* send data to server */
     n_sent = do_synchronous_send ( mem->s, mem->send_buf, n_expected, par->buflen );
     ok ( n_sent == n_expected,
-         "simple_client (%x): sent less data then expected: %d of %d", id, n_sent, n_expected );
+         "simple_client (%x): sent less data than expected: %d of %d\n", id, n_sent, n_expected );
 
     /* shutdown send direction */
-    wsa_ok ( shutdown ( mem->s, SD_SEND ), 0 ==, "simple_client (%lx): shutdown failed: %d" );
+    wsa_ok ( shutdown ( mem->s, SD_SEND ), 0 ==, "simple_client (%lx): shutdown failed: %d\n" );
 
     /* Receive data echoed back & check it */
     n_recvd = do_synchronous_recv ( mem->s, mem->recv_buf, n_expected, par->buflen );
     ok ( n_recvd == n_expected,
-         "simple_client (%x): received less data then expected: %d of %d", id, n_recvd, n_expected );
+         "simple_client (%x): received less data than expected: %d of %d\n", id, n_recvd, n_expected );
 
     /* check data */
     p = test_buffer ( mem->recv_buf, gen->chunk_size, gen->n_chunks );
-    ok ( p == NULL, "simple_client (%x): test pattern error: %d", id, p - mem->recv_buf);
+    ok ( p == NULL, "simple_client (%x): test pattern error: %d\n", id, p - mem->recv_buf);
 
     /* cleanup */
     read_zero_bytes ( mem->s );
@@ -450,15 +450,15 @@ static void WINAPI event_client ( client_params *par )
     WSAEventSelect ( mem->s, event, FD_CONNECT );
     tmp = connect ( mem->s, (struct sockaddr*) &mem->addr, sizeof ( mem->addr ) );
     if ( tmp != 0 && ( err = WSAGetLastError () ) != WSAEWOULDBLOCK )
-        ok ( 0, "event_client (%x): connect error: %d", id, err );
+        ok ( 0, "event_client (%x): connect error: %d\n", id, err );
 
     tmp = WaitForSingleObject ( event, INFINITE );
-    ok ( tmp == WAIT_OBJECT_0, "event_client (%x): wait for connect event failed: %d", id, tmp );
+    ok ( tmp == WAIT_OBJECT_0, "event_client (%x): wait for connect event failed: %d\n", id, tmp );
     err = WSAEnumNetworkEvents ( mem->s, event, &wsa_events );
     wsa_ok ( err, 0 ==, "event_client (%lx): WSAEnumNetworkEvents error: %d\n" );
 
     err = wsa_events.iErrorCode[ FD_CONNECT_BIT ];
-    ok ( err == 0, "event_client (%x): connect error: %d", id, err );
+    ok ( err == 0, "event_client (%x): connect error: %d\n", id, err );
     if ( err ) goto out;
 
     trace ( "event_client (%x) connected\n", id );
@@ -473,7 +473,7 @@ static void WINAPI event_client ( client_params *par )
     while ( TRUE )
     {
         err = WaitForSingleObject ( event, INFINITE );
-        ok ( err == WAIT_OBJECT_0, "event_client (%x): wait failed", id );
+        ok ( err == WAIT_OBJECT_0, "event_client (%x): wait failed\n", id );
 
         err = WSAEnumNetworkEvents ( mem->s, event, &wsa_events );
         wsa_ok ( err, 0 ==, "event_client (%lx): WSAEnumNetworkEvents error: %d\n" );
@@ -540,13 +540,13 @@ static void WINAPI event_client ( client_params *par )
     }
 
     ok ( send_p == send_last,
-         "simple_client (%x): sent less data then expected: %d of %d",
+         "simple_client (%x): sent less data than expected: %d of %d\n",
          id, send_p - mem->send_buf, n_expected );
     ok ( recv_p == recv_last,
-         "simple_client (%x): received less data then expected: %d of %d",
+         "simple_client (%x): received less data than expected: %d of %d\n",
          id, recv_p - mem->recv_buf, n_expected );
     recv_p = test_buffer ( mem->recv_buf, gen->chunk_size, gen->n_chunks );
-    ok ( recv_p == NULL, "event_client (%x): test pattern error: %d", id, recv_p - mem->recv_buf);
+    ok ( recv_p == NULL, "event_client (%x): test pattern error: %d\n", id, recv_p - mem->recv_buf);
 
 out:
     WSACloseEvent ( event );
@@ -561,14 +561,14 @@ static void Init (void)
     WORD ver = MAKEWORD (2, 2);
     WSADATA data;
 
-    ok ( WSAStartup ( ver, &data ) == 0, "WSAStartup failed" );
+    ok ( WSAStartup ( ver, &data ) == 0, "WSAStartup failed\n" );
     tls = TlsAlloc();
 }
 
 static void Exit (void)
 {
     TlsFree ( tls );
-    ok ( WSACleanup() == 0, "WSACleanup failed" );
+    ok ( WSACleanup() == 0, "WSACleanup failed\n" );
 }
 
 static void StartServer (LPTHREAD_START_ROUTINE routine,
@@ -576,7 +576,7 @@ static void StartServer (LPTHREAD_START_ROUTINE routine,
 {
     par->general = general;
     thread[0] = CreateThread ( NULL, 0, routine, par, 0, &thread_id[0] );
-    ok ( thread[0] != NULL, "Failed to create server thread" );
+    ok ( thread[0] != NULL, "Failed to create server thread\n" );
 }
 
 static void StartClients (LPTHREAD_START_ROUTINE routine,
@@ -588,7 +588,7 @@ static void StartClients (LPTHREAD_START_ROUTINE routine,
     {
         client_id = i - 1;
         thread[i] = CreateThread ( NULL, 0, routine, par, 0, &thread_id[i] );
-        ok ( thread[i] != NULL, "Failed to create client thread" );
+        ok ( thread[i] != NULL, "Failed to create client thread\n" );
         /* Make sure the client is up and running */
         WaitForSingleObject ( client_ready[client_id], INFINITE );
     };
