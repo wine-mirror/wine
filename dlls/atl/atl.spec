@@ -2,19 +2,19 @@
 2 stub DllGetClassObject
 3 stdcall -private DllRegisterServer() ATL_DllRegisterServer
 4 stdcall -private DllUnregisterServer() ATL_DllUnregisterServer
-10 stub AtlAdvise
-11 stub AtlUnadvise
-12 stub AtlFreeMarshalStream
-13 stub AtlMarshalPtrInProc
-14 stub AtlUnmarshalPtr
-15 stub AtlModuleGetClassObject
+10 stdcall AtlAdvise(ptr ptr ptr ptr)
+11 stdcall AtlUnadvise(ptr ptr long)
+12 stdcall AtlFreeMarshalStream(ptr)
+13 stdcall AtlMarshalPtrInProc(ptr ptr ptr)
+14 stdcall AtlUnmarshalPtr(ptr ptr ptr)
+15 stdcall AtlModuleGetClassObject(ptr ptr ptr ptr)
 16 stdcall AtlModuleInit(ptr long long)
 17 stdcall AtlModuleRegisterClassObjects(ptr long long)
 18 stdcall AtlModuleRegisterServer(ptr long ptr)
-19 stub AtlModuleRegisterTypeLib
-20 stub AtlModuleRevokeClassObjects
+19 stdcall AtlModuleRegisterTypeLib(ptr wstr)
+20 stdcall AtlModuleRevokeClassObjects(ptr)
 21 stdcall AtlModuleTerm(ptr)
-22 stub AtlModuleUnregisterServer
+22 stdcall AtlModuleUnregisterServer(ptr ptr)
 23 stdcall AtlModuleUpdateRegistryFromResourceD(ptr wstr long ptr ptr)
 24 stub AtlWaitWithMessageLoop
 25 stub AtlSetErrorInfo

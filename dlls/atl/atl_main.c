@@ -189,3 +189,85 @@ HRESULT WINAPI AtlModuleRegisterServer(_ATL_MODULEW* pM, BOOL bRegTypeLib, const
     FIXME("%p %d %s\n", pM, bRegTypeLib, debugstr_guid(clsid));
     return S_OK;
 }
+
+/***********************************************************************
+ *           AtlAdvise         [ATL.@]
+ */
+HRESULT WINAPI AtlAdvise(IUnknown *pUnkCP, IUnknown *pUnk, const IID *iid, LPDWORD pdw)
+{
+    FIXME("%p %p %p %p\n", pUnkCP, pUnk, iid, pdw);
+    return E_FAIL;
+}
+
+/***********************************************************************
+ *           AtlUnadvise         [ATL.@]
+ */
+HRESULT WINAPI AtlUnadvise(IUnknown *pUnkCP, const IID *iid, DWORD dw)
+{
+    FIXME("%p %p %ld\n", pUnkCP, iid, dw);
+    return S_OK;
+}
+
+/***********************************************************************
+ *           AtlFreeMarshalStream         [ATL.@]
+ */
+HRESULT WINAPI AtlFreeMarshalStream(IStream *stm)
+{
+    FIXME("%p\n", stm);
+    return S_OK;
+}
+
+/***********************************************************************
+ *           AtlMarshalPtrInProc         [ATL.@]
+ */
+HRESULT WINAPI AtlMarshalPtrInProc(IUnknown *pUnk, const IID *iid, IStream **pstm)
+{
+    FIXME("%p %p %p\n", pUnk, iid, pstm);
+    return E_FAIL;
+}
+
+/***********************************************************************
+ *           AtlUnmarshalPtr              [ATL.@]
+ */
+HRESULT WINAPI AtlUnmarshalPtr(IStream *stm, const IID *iid, IUnknown **ppUnk)
+{
+    FIXME("%p %p %p\n", stm, iid, ppUnk);
+    return E_FAIL;
+}
+
+/***********************************************************************
+ *           AtlModuleGetClassObject              [ATL.@]
+ */
+HRESULT WINAPI AtlModuleGetClassObject(_ATL_MODULEW *pm, REFCLSID rclsid,
+                                       REFIID riid, LPVOID *ppv)
+{
+    FIXME("%p %p %p %p\n", pm, rclsid, riid, ppv);
+    return E_FAIL;
+}
+
+/***********************************************************************
+ *           AtlModuleGetClassObject              [ATL.@]
+ */
+HRESULT WINAPI AtlModuleRegisterTypeLib(_ATL_MODULEW *pm, LPCOLESTR lpszIndex)
+{
+    FIXME("%p %s\n", pm, debugstr_w(lpszIndex));
+    return E_FAIL;
+}
+
+/***********************************************************************
+ *           AtlModuleRevokeClassObjects          [ATL.@]
+ */
+HRESULT WINAPI AtlModuleRevokeClassObjects(_ATL_MODULEW *pm)
+{
+    FIXME("%p\n", pm);
+    return E_FAIL;
+}
+
+/***********************************************************************
+ *           AtlModuleUnregisterServer           [ATL.@]
+ */
+HRESULT WINAPI AtlModuleUnregisterServer(_ATL_MODULEW *pm, const CLSID *clsid)
+{
+    FIXME("%p %s\n", pm, debugstr_guid(clsid));
+    return E_FAIL;
+}
