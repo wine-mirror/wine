@@ -162,7 +162,12 @@ Main_IDirect3DDeviceImpl_7_3T_2T_SetRenderTarget(LPDIRECT3DDEVICE7 iface,
 						 DWORD dwFlags)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%p,%08lx): stub!\n", This, iface, lpNewRenderTarget, dwFlags);
+    IDirectDrawSurfaceImpl *target_impl = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, lpNewRenderTarget);
+
+    TRACE("(%p/%p)->(%p,%08lx)\n", This, iface, lpNewRenderTarget, dwFlags);
+    if (target_impl != This->surface) {
+        WARN(" Change of rendering target not handled yet !\n");
+    }
     return DD_OK;
 }
 
@@ -307,7 +312,15 @@ Main_IDirect3DDeviceImpl_7_GetMaterial(LPDIRECT3DDEVICE7 iface,
                                        LPD3DMATERIAL7 lpMat)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%p): stub!\n", This, iface, lpMat);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lpMat);
+    
+    *lpMat = This->current_material;
+
+    if (TRACE_ON(ddraw)) {
+        TRACE(" returning material : \n");
+	dump_D3DMATERIAL7(lpMat);
+    }
+
     return DD_OK;
 }
 
@@ -327,7 +340,16 @@ Main_IDirect3DDeviceImpl_7_GetLight(LPDIRECT3DDEVICE7 iface,
                                     LPD3DLIGHT7 lpLight)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%08lx,%p): stub!\n", This, iface, dwLightIndex, lpLight);
+    TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwLightIndex, lpLight);
+
+    if (dwLightIndex > MAX_LIGHTS) return DDERR_INVALIDPARAMS;
+    *lpLight = This->light_parameters[dwLightIndex];
+
+    if (TRACE_ON(ddraw)) {
+        TRACE(" returning light : \n");
+	dump_D3DLIGHT7(lpLight);
+    }
+
     return DD_OK;
 }
 
@@ -624,7 +646,13 @@ Main_IDirect3DDeviceImpl_7_GetLightEnable(LPDIRECT3DDEVICE7 iface,
                                           BOOL* pbEnable)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
-    FIXME("(%p/%p)->(%08lx,%p): stub!\n", This, iface, dwLightIndex, pbEnable);
+    TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwLightIndex, pbEnable);
+
+    if (dwLightIndex > MAX_LIGHTS) *pbEnable = 0;
+    else *pbEnable = ((0x00000001 << dwLightIndex) & This->active_lights) != 0;
+    
+    TRACE(" returning %d.\n", *pbEnable);
+
     return DD_OK;
 }
 

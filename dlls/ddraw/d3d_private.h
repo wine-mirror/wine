@@ -166,6 +166,7 @@ struct IDirect3DExecuteBufferImpl
  */
 
 #define MAX_TEXTURES 8
+#define MAX_LIGHTS  16
 
 struct IDirect3DDeviceImpl
 {
@@ -188,6 +189,13 @@ struct IDirect3DDeviceImpl
     D3DMATRIX *world_mat;
     D3DMATRIX *view_mat;
     D3DMATRIX *proj_mat;
+
+    /* Current material used in D3D7 mode */
+    D3DMATERIAL7 current_material;
+
+    /* Light parameters */
+    DWORD active_lights, set_lights;
+    D3DLIGHT7 light_parameters[MAX_LIGHTS];
 
     void (*set_context)(IDirect3DDeviceImpl*);
     HRESULT (*clear)(IDirect3DDeviceImpl *This,
@@ -215,6 +223,9 @@ struct IDirect3DVertexBufferImpl
 
 /* Various dump functions */
 extern const char *_get_renderstate(D3DRENDERSTATETYPE type);
+extern void dump_D3DMATERIAL7(LPD3DMATERIAL7 lpMat);
+extern void dump_D3DCOLORVALUE(D3DCOLORVALUE *lpCol);
+extern void dump_D3DLIGHT7(LPD3DLIGHT7 lpLight);
 
 #define dump_mat(mat) \
     TRACE("%f %f %f %f\n", (mat)->_11, (mat)->_12, (mat)->_13, (mat)->_14); \

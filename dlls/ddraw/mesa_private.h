@@ -69,6 +69,17 @@ typedef struct render_state {
     GLclampf alpha_ref;
     BOOLEAN alpha_blend_enable;
 
+    /* This is needed for the stencil stuff */
+    GLint stencil_ref;
+    GLuint stencil_mask;
+    GLenum stencil_func;
+    BOOLEAN stencil_enable;
+    GLenum stencil_fail, stencil_zfail, stencil_pass;
+  
+    /* This is needed for proper lighting */
+    BOOLEAN lighting_enable, specular_enable;
+    D3DMATERIALCOLORSOURCE color_diffuse, color_specular, color_ambient, color_emissive;
+
     /* This is needed to re-enable fogging when XYZRHW and XYZ primitives are mixed */
     BOOLEAN fog_on;
 } RenderState;
@@ -175,8 +186,7 @@ extern DWORD get_flexible_vertex_size(DWORD d3dvtVertexType, DWORD *elements);
 };
 
 #define _dump_colorvalue(s,v)                \
-    TRACE(" " s " : %f %f %f %f\n",          \
-    (v).u1.r, (v).u2.g, (v).u3.b, (v).u4.a);
+    DPRINTF(" - " s); dump_D3DCOLORVALUE(&v); DPRINTF("\n");
 
 /* This structure contains all the function pointers to OpenGL extensions
    that are used by Wine */

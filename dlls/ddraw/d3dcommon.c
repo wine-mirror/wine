@@ -163,3 +163,44 @@ const char *_get_renderstate(D3DRENDERSTATETYPE type) {
     if (type >= (sizeof(states) / sizeof(states[0]))) return "ERR";
     return states[type];
 }
+
+void
+dump_D3DCOLORVALUE(D3DCOLORVALUE *lpCol)
+{
+    DPRINTF("%f %f %f %f", lpCol->u1.r, lpCol->u2.g, lpCol->u3.b, lpCol->u4.a);
+}
+
+void
+dump_D3DVECTOR(D3DVECTOR *lpVec)
+{
+    DPRINTF("%f %f %f", lpVec->u1.x, lpVec->u2.y, lpVec->u3.z);
+}
+
+void
+dump_D3DMATERIAL7(LPD3DMATERIAL7 lpMat)
+{
+    DPRINTF(" - diffuse  : "); dump_D3DCOLORVALUE(&(lpMat->u.diffuse)); DPRINTF("\n");
+    DPRINTF(" - ambient  : "); dump_D3DCOLORVALUE(&(lpMat->u1.ambient)); DPRINTF("\n");
+    DPRINTF(" - specular : "); dump_D3DCOLORVALUE(&(lpMat->u2.specular)); DPRINTF("\n");
+    DPRINTF(" - emissive : "); dump_D3DCOLORVALUE(&(lpMat->u3.emissive)); DPRINTF("\n");
+    DPRINTF(" - power    : %f\n", lpMat->u4.power);
+}
+
+void
+dump_D3DLIGHT7(LPD3DLIGHT7 lpLight)
+{
+    DPRINTF(" - light type : %s\n", (lpLight->dltType == D3DLIGHT_POINT ? "D3DLIGHT_POINT" : 
+				     (lpLight->dltType == D3DLIGHT_SPOT ? "D3DLIGHT_SPOT" : 
+				      (lpLight->dltType == D3DLIGHT_DIRECTIONAL ? "D3DLIGHT_DIRECTIONAL" : 
+				       "UNSUPPORTED"))));
+    DPRINTF(" - diffuse       : "); dump_D3DCOLORVALUE(&(lpLight->dcvDiffuse)); DPRINTF("\n");
+    DPRINTF(" - specular      : "); dump_D3DCOLORVALUE(&(lpLight->dcvSpecular)); DPRINTF("\n");
+    DPRINTF(" - ambient       : "); dump_D3DCOLORVALUE(&(lpLight->dcvAmbient)); DPRINTF("\n");
+    DPRINTF(" - position      : "); dump_D3DVECTOR(&(lpLight->dvPosition)); DPRINTF("\n");
+    DPRINTF(" - direction     : "); dump_D3DVECTOR(&(lpLight->dvDirection)); DPRINTF("\n");
+    DPRINTF(" - dvRange       : %f\n", lpLight->dvRange);
+    DPRINTF(" - dvFalloff     : %f\n", lpLight->dvFalloff);
+    DPRINTF(" - dvAttenuation : %f %f %f\n", lpLight->dvAttenuation0, lpLight->dvAttenuation1, lpLight->dvAttenuation2);
+    DPRINTF(" - dvTheta       : %f\n", lpLight->dvTheta);
+    DPRINTF(" - dvPhi         : %f\n", lpLight->dvPhi);
+}

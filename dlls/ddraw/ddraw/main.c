@@ -840,7 +840,7 @@ Main_DirectDraw_GetCaps(LPDIRECTDRAW7 iface, LPDDCAPS pDriverCaps,
 			LPDDCAPS pHELCaps)
 {
     ICOM_THIS(IDirectDrawImpl,iface);
-    TRACE("(%p,%p,%p), stub\n",This,pDriverCaps,pHELCaps);
+    TRACE("(%p,%p,%p)\n",This,pDriverCaps,pHELCaps);
     if (pDriverCaps != NULL) {
 	DD_STRUCT_COPY_BYSIZE(pDriverCaps,&This->caps);
 	if (TRACE_ON(ddraw)) {

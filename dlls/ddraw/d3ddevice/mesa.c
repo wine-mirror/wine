@@ -538,6 +538,8 @@ GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 					  DWORD dwLightState)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice3, iface);
+    IDirect3DDeviceGLImpl *glThis = (IDirect3DDeviceGLImpl *) This;
+
     TRACE("(%p/%p)->(%08x,%08lx)\n", This, iface, dwLightStateType, dwLightState);
 
     switch (dwLightStateType) {
@@ -553,17 +555,10 @@ GL_IDirect3DDeviceImpl_3_2T_SetLightState(LPDIRECT3DDEVICE3 iface,
 	    }
 	} break;
 
-	case D3DLIGHTSTATE_AMBIENT: {   /* 2 */
-	    float light[4];
-
-	    light[0] = ((dwLightState >> 16) & 0xFF) / 255.0;
-	    light[1] = ((dwLightState >>  8) & 0xFF) / 255.0;
-	    light[2] = ((dwLightState >>  0) & 0xFF) / 255.0;
-	    light[3] = 1.0;
-	    ENTER_GL();
-	    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (float *) light);
-	    LEAVE_GL();
-	} break;
+	case D3DLIGHTSTATE_AMBIENT:     /* 2 */
+	    /* Call the render_state function... */
+	    set_render_state(D3DRENDERSTATE_AMBIENT, dwLightState, &(glThis->render_state));
+	    break;
 
 #define UNSUP(x) case D3DLIGHTSTATE_##x: FIXME("unsupported D3DLIGHTSTATE_" #x "!\n");break;
 	UNSUP(COLORMODEL);
@@ -1469,6 +1464,103 @@ GL_IDirect3DDeviceImpl_7_GetCaps(LPDIRECT3DDEVICE7 iface,
     return DD_OK;
 }
 
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_7_SetMaterial(LPDIRECT3DDEVICE7 iface,
+				     LPD3DMATERIAL7 lpMat)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    TRACE("(%p/%p)->(%p)\n", This, iface, lpMat);
+    
+    if (TRACE_ON(ddraw)) {
+        TRACE(" material is : \n");
+	dump_D3DMATERIAL7(lpMat);
+    }
+    
+    This->current_material = *lpMat;
+
+    glMaterialfv(GL_FRONT,
+		 GL_DIFFUSE,
+		 (float *) &(This->current_material.u.diffuse));
+    glMaterialfv(GL_FRONT,
+		 GL_AMBIENT,
+		 (float *) &(This->current_material.u1.ambient));
+    glMaterialfv(GL_FRONT,
+		 GL_SPECULAR,
+		 (float *) &(This->current_material.u2.specular));
+    glMaterialfv(GL_FRONT,
+		 GL_EMISSION,
+		 (float *) &(This->current_material.u3.emissive));
+    glMaterialf(GL_FRONT,
+		GL_SHININESS,
+		This->current_material.u4.power); /* Not sure about this... */
+
+    return DD_OK;
+}
+
+
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_7_SetLight(LPDIRECT3DDEVICE7 iface,
+				  DWORD dwLightIndex,
+				  LPD3DLIGHT7 lpLight)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    TRACE("(%p/%p)->(%08lx,%p)\n", This, iface, dwLightIndex, lpLight);
+    
+    if (TRACE_ON(ddraw)) {
+        TRACE(" setting light : \n");
+	dump_D3DLIGHT7(lpLight);
+    }
+    
+    if (dwLightIndex > MAX_LIGHTS) return DDERR_INVALIDPARAMS;
+    This->set_lights |= 0x00000001 << dwLightIndex;
+    This->light_parameters[dwLightIndex] = *lpLight;
+
+    switch (lpLight->dltType) {
+	case D3DLIGHT_DIRECTIONAL: {  /* 3 */
+	    float direction[4];
+
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_AMBIENT,  (float *) &(lpLight->dcvAmbient));
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_DIFFUSE,  (float *) &(lpLight->dcvDiffuse));
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_SPECULAR, (float *) &(lpLight->dcvSpecular));
+
+	    direction[0] = lpLight->dvDirection.u1.x;
+	    direction[1] = lpLight->dvDirection.u2.y;
+	    direction[2] = lpLight->dvDirection.u3.z;
+	    direction[3] = 0.0; /* This is a directional light */
+
+	    glLightfv(GL_LIGHT0 + dwLightIndex, GL_POSITION, (float *) direction);
+	} break;
+
+        default: WARN(" light type not handled yet...\n");
+    }
+
+    return DD_OK;
+}
+
+HRESULT WINAPI
+GL_IDirect3DDeviceImpl_7_LightEnable(LPDIRECT3DDEVICE7 iface,
+				     DWORD dwLightIndex,
+				     BOOL bEnable)
+{
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    TRACE("(%p/%p)->(%08lx,%d)\n", This, iface, dwLightIndex, bEnable);
+    
+    if (dwLightIndex > MAX_LIGHTS) return DDERR_INVALIDPARAMS;
+
+    if (bEnable) {
+        if (((0x00000001 << dwLightIndex) & This->set_lights) == 0) {
+	    /* Set the default parameters.. */
+	    TRACE(" setting default light parameters...\n");
+	    GL_IDirect3DDeviceImpl_7_SetLight(iface, dwLightIndex, &(This->light_parameters[dwLightIndex]));
+	}
+	glEnable(GL_LIGHT0 + dwLightIndex);
+    } else {
+        glDisable(GL_LIGHT0 + dwLightIndex);
+    }
+
+    return DD_OK;
+}
+
 #if !defined(__STRICT_ANSI__) && defined(__GNUC__)
 # define XCAST(fun)     (typeof(VTABLE_IDirect3DDevice7.fun))
 #else
@@ -1494,9 +1586,9 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
     XCAST(SetViewport) Main_IDirect3DDeviceImpl_7_SetViewport,
     XCAST(MultiplyTransform) Main_IDirect3DDeviceImpl_7_3T_2T_MultiplyTransform,
     XCAST(GetViewport) Main_IDirect3DDeviceImpl_7_GetViewport,
-    XCAST(SetMaterial) Main_IDirect3DDeviceImpl_7_SetMaterial,
+    XCAST(SetMaterial) GL_IDirect3DDeviceImpl_7_SetMaterial,
     XCAST(GetMaterial) Main_IDirect3DDeviceImpl_7_GetMaterial,
-    XCAST(SetLight) Main_IDirect3DDeviceImpl_7_SetLight,
+    XCAST(SetLight) GL_IDirect3DDeviceImpl_7_SetLight,
     XCAST(GetLight) Main_IDirect3DDeviceImpl_7_GetLight,
     XCAST(SetRenderState) GL_IDirect3DDeviceImpl_7_3T_2T_SetRenderState,
     XCAST(GetRenderState) Main_IDirect3DDeviceImpl_7_3T_2T_GetRenderState,
@@ -1522,7 +1614,7 @@ ICOM_VTABLE(IDirect3DDevice7) VTABLE_IDirect3DDevice7 =
     XCAST(DeleteStateBlock) Main_IDirect3DDeviceImpl_7_DeleteStateBlock,
     XCAST(CreateStateBlock) Main_IDirect3DDeviceImpl_7_CreateStateBlock,
     XCAST(Load) Main_IDirect3DDeviceImpl_7_Load,
-    XCAST(LightEnable) Main_IDirect3DDeviceImpl_7_LightEnable,
+    XCAST(LightEnable) GL_IDirect3DDeviceImpl_7_LightEnable,
     XCAST(GetLightEnable) Main_IDirect3DDeviceImpl_7_GetLightEnable,
     XCAST(SetClipPlane) Main_IDirect3DDeviceImpl_7_SetClipPlane,
     XCAST(GetClipPlane) Main_IDirect3DDeviceImpl_7_GetClipPlane,
@@ -1884,6 +1976,7 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     int num;
     XVisualInfo template;
     GLenum buffer;
+    int light;
     
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DDeviceGLImpl));
     if (object == NULL) return DDERR_OUTOFMEMORY;
@@ -1965,6 +2058,29 @@ d3ddevice_create(IDirect3DDeviceImpl **obj, IDirect3DImpl *d3d, IDirectDrawSurfa
     gl_object->render_state.alpha_func = GL_ALWAYS; /* Here either but it seems logical */
     gl_object->render_state.alpha_blend_enable = FALSE;
     gl_object->render_state.fog_on = FALSE;
+    gl_object->render_state.stencil_func = GL_ALWAYS;
+    gl_object->render_state.stencil_mask = 0xFFFFFFFF;
+    gl_object->render_state.stencil_ref = 0;
+    gl_object->render_state.stencil_enable = FALSE;
+    gl_object->render_state.stencil_fail = GL_KEEP;
+    gl_object->render_state.stencil_zfail = GL_KEEP;
+    gl_object->render_state.stencil_pass = GL_KEEP;
+    gl_object->render_state.lighting_enable = FALSE;
+    gl_object->render_state.specular_enable = FALSE;
+    gl_object->render_state.color_diffuse = D3DMCS_COLOR1;
+    gl_object->render_state.color_specular = D3DMCS_COLOR2;
+    gl_object->render_state.color_ambient = D3DMCS_COLOR2;
+    gl_object->render_state.color_emissive = D3DMCS_MATERIAL;
+
+    /* Set the various light parameters */
+    for (light = 0; light < MAX_LIGHTS; light++) {
+        /* Only set the fields that are not zero-created */
+        object->light_parameters[light].dltType = D3DLIGHT_DIRECTIONAL;
+	object->light_parameters[light].dcvDiffuse.u1.r = 1.0;
+	object->light_parameters[light].dcvDiffuse.u2.g = 1.0;
+	object->light_parameters[light].dcvDiffuse.u3.b = 1.0;
+	object->light_parameters[light].dvDirection.u3.z = 1.0;
+    }
     
     /* Allocate memory for the matrices */
     object->world_mat = (D3DMATRIX *) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 16 * sizeof(float));

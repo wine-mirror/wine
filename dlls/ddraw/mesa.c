@@ -46,6 +46,21 @@ GLenum convert_D3D_compare_to_GL(D3DCMPFUNC dwRenderState)
     return GL_ALWAYS;
 }
 
+GLenum convert_D3D_stencilop_to_GL(D3DSTENCILOP dwRenderState)
+{
+    switch (dwRenderState) {
+        case D3DSTENCILOP_KEEP: return GL_KEEP;
+        case D3DSTENCILOP_ZERO: return GL_ZERO;
+        case D3DSTENCILOP_REPLACE: return GL_REPLACE;
+        case D3DSTENCILOP_INCRSAT: return GL_INCR;
+        case D3DSTENCILOP_DECRSAT: return GL_DECR;
+        case D3DSTENCILOP_INVERT: return GL_INVERT;
+        case D3DSTENCILOP_INCR: WARN("D3DSTENCILOP_INCR not properly handled !\n"); return GL_INCR;
+        case D3DSTENCILOP_DECR: WARN("D3DSTENCILOP_DECR not properly handled !\n"); return GL_DECR;
+        default: ERR("Unexpected compare type %d !\n", dwRenderState);      
+    }
+    return GL_KEEP;
+}
 
 void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		      DWORD dwRenderState, RenderState *rs)
@@ -400,6 +415,47 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 	    case D3DRENDERSTATE_FLUSHBATCH:         /* 50 */
 	        break;
 
+	    case D3DRENDERSTATE_STENCILENABLE:    /* 52 */
+	        if (dwRenderState)
+		    glDisable(GL_STENCIL_TEST);
+		else
+		    glDisable(GL_STENCIL_TEST);
+		break;
+	    
+	    case D3DRENDERSTATE_STENCILFAIL:      /* 53 */
+	        rs->stencil_fail = convert_D3D_stencilop_to_GL(dwRenderState);
+		glStencilOp(rs->stencil_fail, rs->stencil_zfail, rs->stencil_pass);
+		break;
+
+	    case D3DRENDERSTATE_STENCILZFAIL:     /* 54 */
+	        rs->stencil_zfail = convert_D3D_stencilop_to_GL(dwRenderState);
+		glStencilOp(rs->stencil_fail, rs->stencil_zfail, rs->stencil_pass);
+		break;
+
+	    case D3DRENDERSTATE_STENCILPASS:      /* 55 */
+	        rs->stencil_pass = convert_D3D_stencilop_to_GL(dwRenderState);
+		glStencilOp(rs->stencil_fail, rs->stencil_zfail, rs->stencil_pass);
+		break;
+
+	    case D3DRENDERSTATE_STENCILFUNC:      /* 56 */
+	        rs->stencil_func = convert_D3D_compare_to_GL(dwRenderState);
+		glStencilFunc(rs->stencil_func, rs->stencil_ref, rs->stencil_mask);
+		break;
+
+	    case D3DRENDERSTATE_STENCILREF:       /* 57 */
+	        rs->stencil_ref = dwRenderState;
+		glStencilFunc(rs->stencil_func, rs->stencil_ref, rs->stencil_mask);
+		break;
+
+	    case D3DRENDERSTATE_STENCILMASK:      /* 58 */
+	        rs->stencil_mask = dwRenderState;
+		glStencilFunc(rs->stencil_func, rs->stencil_ref, rs->stencil_mask);
+		break;
+	  
+	    case D3DRENDERSTATE_STENCILWRITEMASK: /* 59 */
+	        glStencilMask(dwRenderState);
+	        break;
+
 	    case D3DRENDERSTATE_LIGHTING:    /* 137 */
 	        /* There will be more to do here once we really support D3D7 Lighting.
 		   Should be enough for now to prevent warnings :-) */
@@ -408,6 +464,33 @@ void set_render_state(D3DRENDERSTATETYPE dwRenderStateType,
 		else
 		    glDisable(GL_LIGHTING);
 	        break;
+		
+	    case D3DRENDERSTATE_AMBIENT: {            /* 139 */
+	        float light[4];
+
+		light[0] = ((dwRenderState >> 16) & 0xFF) / 255.0;
+		light[1] = ((dwRenderState >>  8) & 0xFF) / 255.0;
+		light[2] = ((dwRenderState >>  0) & 0xFF) / 255.0;
+		light[3] = ((dwRenderState >> 24) & 0xFF) / 255.0;
+		glLightModelfv(GL_LIGHT_MODEL_AMBIENT, (float *) light);
+	    } break;
+
+	    case D3DRENDERSTATE_LOCALVIEWER:          /* 142 */
+	        if (dwRenderState)
+		    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+		else
+		    glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
+		break;
+
+	    case D3DRENDERSTATE_NORMALIZENORMALS:     /* 143 */
+	        if (dwRenderState) {
+		    glEnable(GL_NORMALIZE);
+		    glEnable(GL_RESCALE_NORMAL);
+		} else {
+		    glDisable(GL_NORMALIZE);
+		    glDisable(GL_RESCALE_NORMAL);
+		}
+		break;
 
 	    default:
 	        ERR("Unhandled dwRenderStateType %s (%08x) !\n", _get_renderstate(dwRenderStateType), dwRenderStateType);
