@@ -7,8 +7,17 @@
 
 #include "windef.h"
 #include "winerror.h"
+#include "wine/obj_storage.h"
+#include "wine/obj_moniker.h"
+#include "wine/obj_base.h"
+#include "wine/obj_dragdrop.h"
+#include "wine/obj_inplace.h"
+#include "wine/obj_oleobj.h"
+#ifndef __WINE__
 #include "oleidl.h"
 #include "oleauto.h"
+#endif
+struct tagMSG;
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,12 +91,12 @@ HRESULT     WINAPI OleCreate(REFCLSID rclsid, REFIID riid, DWORD renderopt, LPFO
                 LPSTORAGE pStg, LPVOID* ppvObj);
 HRESULT     WINAPI OleFlushClipboard(void);
 HRESULT     WINAPI SetConvertStg(LPSTORAGE pStg, BOOL fConvert);
-BOOL        WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* lpwCmd);
+BOOL        WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, struct tagMSG* lpMsg, WORD* lpwCmd);
 HRESULT     WINAPI OleCreateLinkToFile(LPCOLESTR lpszFileName, REFIID riid, DWORD renderopt, LPFORMATETC lpFormatEtc,
                 LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj);
 HRESULT     WINAPI OleDuplicateData(HANDLE hSrc, CLIPFORMAT cfFormat, UINT uiFlags);
 HRESULT     WINAPI WriteFmtUserTypeStg(LPSTORAGE pstg, CLIPFORMAT cf, LPOLESTR lpszUserType);
-HRESULT     WINAPI OleTranslateAccelerator (LPOLEINPLACEFRAME lpFrame, LPOLEINPLACEFRAMEINFO lpFrameInfo, LPMSG lpmsg);
+HRESULT     WINAPI OleTranslateAccelerator (LPOLEINPLACEFRAME lpFrame, LPOLEINPLACEFRAMEINFO lpFrameInfo, struct tagMSG* lpmsg);
 HRESULT     WINAPI OleCreateFromData(LPDATAOBJECT pSrcDataObj, REFIID riid, DWORD renderopt, LPFORMATETC pFormatEtc,
                 LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj);
 HRESULT     WINAPI OleCreateDefaultHandler(REFCLSID  clsid,

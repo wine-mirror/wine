@@ -15,17 +15,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "winbase.h"
-#include "winerror.h"
-#include "wine/obj_storage.h"
-#include "wine/winestring.h"
-#include "crtdll.h"
-#include "tchar.h"
+#include "winbase.h" /* for lstrlenW() and the likes */
 #include "debugtools.h"
-#include "windef.h"
 
 #include "storage32.h"
-#include "ole2.h"
+#include "ole2.h"      /* For Write/ReadClassStm */
 
 DEFAULT_DEBUG_CHANNEL(storage)
 

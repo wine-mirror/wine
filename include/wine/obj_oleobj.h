@@ -8,9 +8,12 @@
 #define __WINE_WINE_OBJ_OLEOBJ_H
 
 
-#include "winbase.h"
-#include "winuser.h"
-#include "wine/obj_base.h"
+#include "wine/obj_moniker.h"
+#include "wine/obj_inplace.h"
+#include "wine/obj_dataobject.h"
+
+struct tagMSG;
+struct tagLOGPALETTE;
 
 #ifdef __cplusplus
 extern "C" {
@@ -88,7 +91,7 @@ typedef struct IEnumOLEVERB IEnumOLEVERB, *LPENUMOLEVERB;
 	ICOM_METHOD3(HRESULT,GetMoniker, DWORD,dwAssign, DWORD,dwWhichMoniker, IMoniker**,ppmk) \
 	ICOM_METHOD3(HRESULT,InitFromData, IDataObject*,pDataObject, BOOL,fCreation, DWORD,dwReserved) \
 	ICOM_METHOD2(HRESULT,GetClipboardData, DWORD,dwReserved, IDataObject**,ppDataObject) \
-	ICOM_METHOD6(HRESULT,DoVerb, LONG,iVerb, LPMSG,lpmsg, IOleClientSite*,pActiveSite, LONG,lindex, HWND,hwndParent, LPCRECT,lprcPosRect) \
+	ICOM_METHOD6(HRESULT,DoVerb, LONG,iVerb, struct tagMSG*,lpmsg, IOleClientSite*,pActiveSite, LONG,lindex, HWND,hwndParent, LPCRECT,lprcPosRect) \
 	ICOM_METHOD1(HRESULT,EnumVerbs, IEnumOLEVERB**,ppEnumOleVerb) \
 	ICOM_METHOD (HRESULT,Update) \
 	ICOM_METHOD (HRESULT,IsUpToDate) \
@@ -100,7 +103,7 @@ typedef struct IEnumOLEVERB IEnumOLEVERB, *LPENUMOLEVERB;
 	ICOM_METHOD1(HRESULT,Unadvise, DWORD,dwConnection) \
 	ICOM_METHOD1(HRESULT,EnumAdvise, IEnumSTATDATA**,ppenumAdvise) \
 	ICOM_METHOD2(HRESULT,GetMiscStatus, DWORD,dwAspect, DWORD*,pdwStatus) \
-	ICOM_METHOD1(HRESULT,SetColorScheme, LOGPALETTE*,pLogpal)
+	ICOM_METHOD1(HRESULT,SetColorScheme, struct tagLOGPALETTE*,pLogpal)
 #define IOleObject_IMETHODS \
 	IUnknown_IMETHODS \
 	IOleObject_METHODS

@@ -15,6 +15,7 @@
 #include "wine/obj_base.h"
 #include "wine/obj_shellfolder.h"
 #include "wine/obj_shellview.h"
+#include "wine/obj_oleview.h"
 #include "wine/obj_commdlgbrowser.h"
 #include "wine/obj_shellbrowser.h"
 #include "wine/obj_dockingwindowframe.h"

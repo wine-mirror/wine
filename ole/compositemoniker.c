@@ -3,15 +3,10 @@
  *
  *               Copyright 1999  Noomen Hamza
  ***************************************************************************************/
-
 #include <assert.h>
+#include "winbase.h"
 #include "winerror.h"
 #include "debugtools.h"
-#include "heap.h"
-#include "winuser.h"
-#include "file.h"
-#include "winreg.h"
-#include "objbase.h"
 #include "wine/obj_inplace.h"
 #include "ole2.h"
 

@@ -8,8 +8,7 @@
 #define __WINE_WINE_OBJ_INPLACE_H
 
 
-#include "winbase.h"
-#include "winuser.h"
+struct tagMSG;
 #include "wine/obj_moniker.h"
 
 #ifdef __cplusplus
@@ -206,7 +205,7 @@ ICOM_DEFINE(IOleInPlaceObject,IOleWindow)
  */
 #define ICOM_INTERFACE IOleInPlaceActiveObject
 #define IOleInPlaceActiveObject_METHODS \
-	ICOM_METHOD1(HRESULT,TranslateAccelerator, LPMSG,lpmsg) \
+	ICOM_METHOD1(HRESULT,TranslateAccelerator, struct tagMSG*,lpmsg) \
 	ICOM_METHOD1(HRESULT,OnFrameWindowActivate, BOOL,fActivate) \
 	ICOM_METHOD1(HRESULT,OnDocWindowActivate, BOOL,fActivate) \
 	ICOM_METHOD3(HRESULT,ResizeBorder, LPCRECT,prcBorder, IOleInPlaceUIWindow*,pUIWindow, BOOL,fWindowFrame) \
@@ -274,7 +273,7 @@ ICOM_DEFINE(IOleInPlaceUIWindow,IOleWindow)
 	ICOM_METHOD1 (HRESULT,RemoveMenus, HMENU,hemnuShared) \
 	ICOM_METHOD1 (HRESULT,SetStatusText, LPCOLESTR,pszStatusText) \
 	ICOM_METHOD1 (HRESULT,EnableModeless, BOOL,fEnable) \
-	ICOM_METHOD2 (HRESULT,TranslateAccelerator, LPMSG,lpmsg, WORD,wID)
+	ICOM_METHOD2 (HRESULT,TranslateAccelerator, struct tagMSG*,lpmsg, WORD,wID)
 #define IOleInPlaceFrame_IMETHODS \
 	IOleInPlaceUIWindow_IMETHODS \
 	IOleInPlaceFrame_METHODS

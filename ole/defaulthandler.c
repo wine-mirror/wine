@@ -32,9 +32,11 @@
  */
 #include <assert.h>
 
-#include "winuser.h"
+#include "winbase.h"
+#include "oleauto.h" /* for SysFreeString(BSTR) */
 #include "winerror.h"
 #include "ole2.h"
+#include "wine/obj_oleview.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
@@ -177,7 +179,7 @@ static HRESULT WINAPI DefaultHandler_GetClipboardData(
 static HRESULT WINAPI DefaultHandler_DoVerb(
 	    IOleObject*        iface, 
 	    LONG               iVerb, 
-	    LPMSG              lpmsg, 
+	    struct tagMSG*     lpmsg, 
 	    IOleClientSite*    pActiveSite, 
 	    LONG               lindex, 
 	    HWND               hwndParent, 
@@ -219,8 +221,8 @@ static HRESULT WINAPI DefaultHandler_GetMiscStatus(
 	    DWORD              dwAspect, 
 	    DWORD*             pdwStatus);
 static HRESULT WINAPI DefaultHandler_SetColorScheme(
-	    IOleObject*        iface,
-	    LOGPALETTE*        pLogpal);
+	    IOleObject*           iface,
+	    struct tagLOGPALETTE* pLogpal);
 
 /*
  * Prototypes for the methods of the DefaultHandler class
@@ -952,7 +954,7 @@ static HRESULT WINAPI DefaultHandler_GetClipboardData(
 static HRESULT WINAPI DefaultHandler_DoVerb(
 	    IOleObject*        iface, 
 	    LONG               iVerb, 
-	    LPMSG              lpmsg, 
+	    struct tagMSG*     lpmsg, 
 	    IOleClientSite*    pActiveSite, 
 	    LONG               lindex, 
 	    HWND               hwndParent, 
@@ -1246,8 +1248,8 @@ static HRESULT WINAPI DefaultHandler_GetMiscStatus(
  * See Windows documentation for more details on IOleObject methods.
  */
 static HRESULT WINAPI DefaultHandler_SetColorScheme(
-	    IOleObject*        iface,
-	    LOGPALETTE*        pLogpal)
+	    IOleObject*           iface,
+	    struct tagLOGPALETTE* pLogpal)
 {
   TRACE("(%p, %p))\n", iface, pLogpal);
   return OLE_E_NOTRUNNING;

@@ -6,11 +6,8 @@
 
 /*	At the moment, these are only empty stubs.
  */
-
-#include "winerror.h"
 #include "ole.h"
 #include "gdi.h"
-#include "objidl.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)

@@ -1247,7 +1247,7 @@ typedef struct
 DECL_WINELIB_TYPE_AW(WNDCLASSEX)
 DECL_WINELIB_TYPE_AW(LPWNDCLASSEX)
 
-typedef struct
+typedef struct tagMSG
 {
     HWND    hwnd;
     UINT    message;

@@ -31,10 +31,11 @@
  *     was stored but that's about it.
  */
 #include <assert.h>
-
-#include "winuser.h"
+#include "wingdi.h"
+#include "winbase.h"
 #include "winerror.h"
-#include "ole2.h"
+#include "wine/obj_oleview.h"
+#include "wine/obj_cache.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)

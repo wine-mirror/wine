@@ -4,14 +4,13 @@
  *           Copyright 1999  Noomen Hamza
  ***************************************************************************************/
 
+#include "wine/obj_base.h"
+#include "wine/obj_moniker.h"
+#include "winbase.h"
+
 #include <assert.h>
 #include "winerror.h"
 #include "debugtools.h"
-#include "heap.h"
-#include "winuser.h"
-#include "file.h"
-#include "winreg.h"
-#include "objbase.h"
 #include "wine/obj_inplace.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)

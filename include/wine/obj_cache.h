@@ -8,7 +8,9 @@
 #define __WINE_WINE_OBJ_CACHE_H
 
 
-#include "winbase.h"
+#include "wine/obj_storage.h"
+#include "wine/obj_moniker.h"
+#include "wine/obj_dataobject.h"
 
 #ifdef __cplusplus
 extern "C" {

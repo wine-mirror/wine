@@ -27,12 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "windef.h"
 #include "winerror.h"
-#include "winreg.h"
-#include "oleauto.h"
-#include "winnls.h"
-#include "wine/winbase16.h"
+#include "winreg.h"         /* for HKEY_LOCAL_MACHINE */
+#include "winnls.h"         /* for PRIMARYLANGID */
+#include "wine/winbase16.h" /* for RegQueryValue16(HKEY,LPSTR,LPSTR,LPDWORD) */
 #include "heap.h"
 #include "wine/obj_base.h"
 #include "debugtools.h"

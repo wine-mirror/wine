@@ -10,7 +10,7 @@
  *   initialization, copying, destroying and changing the type of VARIANTs.
  *
  * TODO:
- *   - The Variant APIs are do not support international languages, currency
+ *   - The Variant APIs do not support international languages, currency
  *     types, number formating and calendar.  They only support U.S. English format.
  *   - The Variant APIs do not the following types: IUknown, IDispatch, DECIMAL and SafeArray.
  *     The prototypes for these are commented out in the oleauto.h file.  They need

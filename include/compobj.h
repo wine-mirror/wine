@@ -3,7 +3,7 @@
 
 /* All private prototye functions used by OLE will be added to this header file */
 
-#include "objbase.h"
+#include "wtypes.h"
 
 /* This function initialize the Running Object Table */
 HRESULT WINAPI RunningObjectTableImpl_Initialize();

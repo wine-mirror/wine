@@ -5,14 +5,12 @@
  ***************************************************************************************/
 
 #include <assert.h>
+#include "winbase.h"
 #include "winerror.h"
 #include "debugtools.h"
-#include "heap.h"
-#include "winuser.h"
-#include "file.h"
-#include "winreg.h"
 #include "objbase.h"
 #include "wine/obj_storage.h"
+#include "wine/obj_moniker.h"
 #include "wine/obj_base.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)

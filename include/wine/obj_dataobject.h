@@ -1,11 +1,14 @@
 /*
  * Defines the COM interfaces and APIs related to IDataObject.
  *
- * Depends on 'obj_moniker.h', 'obj_storage.h' and 'obj_base.h'.
  */
 
 #ifndef __WINE_WINE_OBJ_DATAOBJECT_H
 #define __WINE_WINE_OBJ_DATAOBJECT_H
+
+#include "wine/obj_base.h"
+#include "wine/obj_moniker.h"
+#include "wine/obj_storage.h"
 
 #if defined(__cplusplus) && !defined(NONAMELESSUNION)
 #define DUMMYUNIONNAME

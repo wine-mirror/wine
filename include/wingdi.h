@@ -1338,7 +1338,7 @@ typedef struct tagPALETTEENTRY
 #define PC_EXPLICIT     0x02
 #define PC_NOCOLLAPSE   0x04
 
-typedef struct
+typedef struct tagLOGPALETTE
 { 
     WORD           palVersion;
     WORD           palNumEntries;

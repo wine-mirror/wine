@@ -3,10 +3,9 @@
  *
  *	Copyright 1995	Martin von Loewis
  */
-
 #include <string.h>
+#include "winuser.h"
 #include "winerror.h"
-#include "ole2.h"
 #include "oleauto.h"
 #include "wine/obj_base.h"
 #include "heap.h"

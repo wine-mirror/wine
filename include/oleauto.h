@@ -1,14 +1,20 @@
 #ifndef __WINE_OLEAUTO_H
 #define __WINE_OLEAUTO_H
 
+#include "wtypes.h"
+#include "wine/obj_oleaut.h"
+#ifndef __WINE__
+#include "oaidl.h"
+#endif
+
+struct tagSAFEARRAY;
+struct tagSAFEARRAYBOUND;
+struct tagVARIANT;
+
 #ifdef __cplusplus
 extern "C" {
 #endif 
 
-/*#include <ole.h> */
-#include "mapidefs.h"
-#include "wine/obj_oleaut.h"
-#include "oaidl.h"
 
 BSTR16 WINAPI SysAllocString16(LPCOLESTR16);
 BSTR WINAPI SysAllocString(const OLECHAR*);
@@ -28,67 +34,67 @@ int WINAPI SysStringLen(BSTR);
  */
 
 HRESULT WINAPI
-SafeArrayAllocDescriptor(UINT cDims, SAFEARRAY **ppsaOut);
+SafeArrayAllocDescriptor(UINT cDims, struct tagSAFEARRAY **ppsaOut);
 
 HRESULT WINAPI 
-SafeArrayAllocData(SAFEARRAY *psa);
+SafeArrayAllocData(struct tagSAFEARRAY *psa);
 
-SAFEARRAY* WINAPI 
-SafeArrayCreate(VARTYPE vt, UINT cDims, SAFEARRAYBOUND *rgsabound);
-
-HRESULT WINAPI 
-SafeArrayDestroyDescriptor(SAFEARRAY *psa);
+struct tagSAFEARRAY* WINAPI 
+SafeArrayCreate(VARTYPE vt, UINT cDims, struct tagSAFEARRAYBOUND *rgsabound);
 
 HRESULT WINAPI 
-SafeArrayPutElement(SAFEARRAY *psa, LONG *rgIndices, void *pv);
+SafeArrayDestroyDescriptor(struct tagSAFEARRAY *psa);
 
 HRESULT WINAPI 
-SafeArrayGetElement(SAFEARRAY *psa, LONG *rgIndices, void *pv);
+SafeArrayPutElement(struct tagSAFEARRAY *psa, LONG *rgIndices, void *pv);
 
 HRESULT WINAPI 
-SafeArrayLock(SAFEARRAY *psa);
+SafeArrayGetElement(struct tagSAFEARRAY *psa, LONG *rgIndices, void *pv);
 
 HRESULT WINAPI 
-SafeArrayUnlock(SAFEARRAY *psa);
+SafeArrayLock(struct tagSAFEARRAY *psa);
 
 HRESULT WINAPI 
-SafeArrayGetUBound(SAFEARRAY *psa, UINT nDim, LONG *plUbound);
+SafeArrayUnlock(struct tagSAFEARRAY *psa);
 
 HRESULT WINAPI 
-SafeArrayGetLBound(SAFEARRAY *psa, UINT nDim, LONG *plLbound);
+SafeArrayGetUBound(struct tagSAFEARRAY *psa, UINT nDim, LONG *plUbound);
+
+HRESULT WINAPI 
+SafeArrayGetLBound(struct tagSAFEARRAY *psa, UINT nDim, LONG *plLbound);
 
 UINT  WINAPI 
-SafeArrayGetDim(SAFEARRAY *psa);
+SafeArrayGetDim(struct tagSAFEARRAY *psa);
 
 UINT  WINAPI 
-SafeArrayGetElemsize(SAFEARRAY *psa);
+SafeArrayGetElemsize(struct tagSAFEARRAY *psa);
 
 HRESULT WINAPI 
-SafeArrayAccessData(SAFEARRAY *psa, void **ppvData);
+SafeArrayAccessData(struct tagSAFEARRAY *psa, void **ppvData);
 
 HRESULT WINAPI 
-SafeArrayUnaccessData(SAFEARRAY *psa);
+SafeArrayUnaccessData(struct tagSAFEARRAY *psa);
 
 HRESULT WINAPI 
-SafeArrayPtrOfIndex(SAFEARRAY *psa, LONG *rgIndices, void **ppvData);
+SafeArrayPtrOfIndex(struct tagSAFEARRAY *psa, LONG *rgIndices, void **ppvData);
 
 HRESULT WINAPI 
-SafeArrayCopyData(SAFEARRAY *psaSource, SAFEARRAY **psaTarget);
+SafeArrayCopyData(struct tagSAFEARRAY *psaSource, struct tagSAFEARRAY **psaTarget);
 
 HRESULT WINAPI 
-SafeArrayDestroyData(SAFEARRAY *psa);
+SafeArrayDestroyData(struct tagSAFEARRAY *psa);
 
 HRESULT WINAPI 
-SafeArrayDestroy(SAFEARRAY *psa);
+SafeArrayDestroy(struct tagSAFEARRAY *psa);
 
 HRESULT WINAPI 
-SafeArrayCopy(SAFEARRAY *psa, SAFEARRAY **ppsaOut);
+SafeArrayCopy(struct tagSAFEARRAY *psa, struct tagSAFEARRAY **ppsaOut);
 
-SAFEARRAY* WINAPI
+struct tagSAFEARRAY* WINAPI
 SafeArrayCreateVector(VARTYPE vt, LONG lLbound, ULONG cElements);
 
 HRESULT WINAPI 
-SafeArrayRedim(SAFEARRAY *psa, SAFEARRAYBOUND *psaboundNew);
+SafeArrayRedim(struct tagSAFEARRAY *psa, struct tagSAFEARRAYBOUND *psaboundNew);
 
 
 /* These are macros that help accessing the VARIANT date type.
@@ -151,13 +157,13 @@ SafeArrayRedim(SAFEARRAY *psa, SAFEARRAYBOUND *psaboundNew);
  * VARIANT API
  */
 
-void WINAPI VariantInit(VARIANTARG* pvarg);
-HRESULT WINAPI VariantClear(VARIANTARG* pvarg);
-HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc);
-HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc);
-HRESULT WINAPI VariantChangeType(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
+void WINAPI VariantInit(struct tagVARIANT* pvarg);
+HRESULT WINAPI VariantClear(struct tagVARIANT* pvarg);
+HRESULT WINAPI VariantCopy(struct tagVARIANT* pvargDest, struct tagVARIANT* pvargSrc);
+HRESULT WINAPI VariantCopyInd(struct tagVARIANT* pvargDest, struct tagVARIANT* pvargSrc);
+HRESULT WINAPI VariantChangeType(struct tagVARIANT* pvargDest, struct tagVARIANT* pvargSrc,
 						  USHORT wFlags, VARTYPE vt);
-HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
+HRESULT WINAPI VariantChangeTypeEx(struct tagVARIANT* pvargDest, struct tagVARIANT* pvargSrc,
 							LCID lcid, USHORT wFlags, VARTYPE vt);
 
 /*

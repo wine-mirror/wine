@@ -9,8 +9,9 @@
 #include <assert.h>
 #include <string.h>
 #include "winerror.h"
-#include "oleauto.h"
-#include "ocidl.h"
+#include "oleauto.h"    /* for SysAllocString(....) */
+#include "wine/obj_olefont.h"
+#include "wine/obj_storage.h"
 #include "olectl.h"
 #include "debugtools.h"
 #include "heap.h"

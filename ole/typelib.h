@@ -9,9 +9,7 @@
 #define _WINE_TYPELIB_H
 
 
-#include "ole2.h"
 #include "oleauto.h"
-#include "oaidl.h"
 
 
 #define TLBMAGIC2 "MSFT"

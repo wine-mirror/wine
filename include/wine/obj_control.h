@@ -10,6 +10,11 @@
 
 #include "winbase.h"
 #include "wine/obj_oleaut.h" /* for DISPID */
+#include "wine/obj_oleview.h"
+#include "wine/obj_inplace.h"
+#include "wine/obj_dragdrop.h"
+
+struct tagMSG;
 
 #ifdef __cplusplus
 extern "C" {
@@ -167,7 +172,7 @@ typedef struct IProvideClassInfo2 IProvideClassInfo2, *LPPROVIDECLASSINFO2;
 #define ICOM_INTERFACE IOleControl
 #define IOleControl_METHODS \
 	ICOM_METHOD1(HRESULT,GetControlInfo, CONTROLINFO*,pCI) \
-	ICOM_METHOD1(HRESULT,OnMnemonic, MSG*,pMsg) \
+	ICOM_METHOD1(HRESULT,OnMnemonic, struct tagMSG*,pMsg) \
 	ICOM_METHOD1(HRESULT,OnAmbientPropertyChange, DISPID,dispID) \
 	ICOM_METHOD1(HRESULT,FreezeEvents, BOOL,bFreeze)
 #define IOleControl_IMETHODS \
@@ -198,7 +203,7 @@ ICOM_DEFINE(IOleControl,IUnknown)
 	ICOM_METHOD1(HRESULT,LockInPlaceActive, BOOL,fLock) \
 	ICOM_METHOD1(HRESULT,GetExtendedControl, IDispatch**,ppDisp) \
 	ICOM_METHOD3(HRESULT,TransformCoords, POINTL*,pPtlHimetric, POINTF*,pPtfContainer, DWORD,dwFlags) \
-	ICOM_METHOD2(HRESULT,TranslateAccelerator, MSG*,pMsg, DWORD,grfModifiers) \
+	ICOM_METHOD2(HRESULT,TranslateAccelerator, struct tagMSG*,pMsg, DWORD,grfModifiers) \
 	ICOM_METHOD1(HRESULT,OnFocus, BOOL,fGotFocus) \
 	ICOM_METHOD (HRESULT,ShowPropertyFrame)
 #define IOleControlSite_IMETHODS \

@@ -7,6 +7,7 @@
 #ifndef __WINE_WINE_OBJ_OLEFONT_H
 #define __WINE_WINE_OBJ_OLEFONT_H
 
+#include "wine/obj_oleaut.h"
 #include "wine/obj_base.h"
 #include "wingdi.h"	/* TEXTMETRIC*/
 

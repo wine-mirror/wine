@@ -14,7 +14,6 @@
 #include "winerror.h"
 #include "ole2.h"
 #include "process.h"
-#include "hook.h"
 #include "commctrl.h"
 #include "wine/obj_clientserver.h"
 #include "wine/wingdi16.h"
