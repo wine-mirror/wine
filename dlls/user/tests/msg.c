@@ -165,6 +165,23 @@ static const struct message WmCreateChildSeq[] = {
     { WM_PARENTNOTIFY, sent|parent|wparam, 1 },
     { 0 }
 };
+/* CreateWindow (for maximized child window, not initially visible) */
+static const struct message WmCreateMaximizedChildSeq[] = {
+    { HCBT_CREATEWND, hook },
+    { WM_NCCREATE, sent }, 
+    { WM_NCCALCSIZE, sent|wparam, 0 },
+    { WM_CREATE, sent },
+    { WM_SIZE, sent },
+    { WM_MOVE, sent },
+    { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
+    { WM_GETMINMAXINFO, sent },
+    { WM_WINDOWPOSCHANGING, sent },
+    { WM_NCCALCSIZE, sent },
+    { WM_WINDOWPOSCHANGED, sent },
+    { WM_SIZE, sent|defwinproc },
+    { WM_PARENTNOTIFY, sent|parent|wparam, 1 },
+    { 0 }
+};
 /* ShowWindow (for child window) */
 static const struct message WmShowChildSeq[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
@@ -587,6 +604,13 @@ static void test_messages(void)
     ok (hparent != 0, "Failed to create parent window\n");
     flush_sequence();
 
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD | WS_MAXIMIZE,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    ok (hchild != 0, "Failed to create child window\n");
+    ok_sequence(WmCreateMaximizedChildSeq, "CreateWindow:maximized child");
+    DestroyWindow(hchild);
+    flush_sequence();
+
     hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILDWINDOW,
                              0, 0, 10, 10, hparent, 0, 0, NULL);
     ok (hchild != 0, "Failed to create child window\n");
@@ -710,6 +734,32 @@ static LRESULT WINAPI MsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam, LPAR
     msg.wParam = wParam;
     msg.lParam = lParam;
     add_message(&msg);
+
+    if (message == WM_GETMINMAXINFO && (GetWindowLongA(hwnd, GWL_STYLE) & WS_CHILD))
+    {
+	HWND parent = GetParent(hwnd);
+	RECT rc;
+	MINMAXINFO *minmax = (MINMAXINFO *)lParam;
+
+	GetClientRect(parent, &rc);
+	trace("parent %p client size = (%ld x %ld)\n", parent, rc.right, rc.bottom);
+
+	trace("ptReserved = (%ld,%ld)\n"
+	      "ptMaxSize = (%ld,%ld)\n"
+	      "ptMaxPosition = (%ld,%ld)\n"
+	      "ptMinTrackSize = (%ld,%ld)\n"
+	      "ptMaxTrackSize = (%ld,%ld)\n",
+	      minmax->ptReserved.x, minmax->ptReserved.y,
+	      minmax->ptMaxSize.x, minmax->ptMaxSize.y,
+	      minmax->ptMaxPosition.x, minmax->ptMaxPosition.y,
+	      minmax->ptMinTrackSize.x, minmax->ptMinTrackSize.y,
+	      minmax->ptMaxTrackSize.x, minmax->ptMaxTrackSize.y);
+
+	ok(minmax->ptMaxSize.x == rc.right, "default width of maximized child %ld != %ld\n",
+	   minmax->ptMaxSize.x, rc.right);
+	ok(minmax->ptMaxSize.y == rc.bottom, "default height of maximized child %ld != %ld\n",
+	   minmax->ptMaxSize.y, rc.bottom);
+    }
 
     defwndproc_counter++;
     ret = DefWindowProcA(hwnd, message, wParam, lParam);
