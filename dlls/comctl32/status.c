@@ -119,7 +119,7 @@ STATUSBAR_DrawSizeGrip (HDC hdc, LPRECT lpRect)
 
 
 static void 
-STATUSBAR_DrawPart (HDC hdc, STATUSWINDOWPART *part)
+STATUSBAR_DrawPart (HDC hdc, const STATUSWINDOWPART *part, const STATUSWINDOWINFO *infoPtr, int itemID)
 {
     RECT r = part->bound;
     UINT border = BDR_SUNKENOUTER;
@@ -132,20 +132,36 @@ STATUSBAR_DrawPart (HDC hdc, STATUSWINDOWPART *part)
 
     DrawEdge(hdc, &r, border, BF_RECT|BF_ADJUST);
 	
-    if (part->hIcon) {
-	INT cy = r.bottom - r.top;
+    if (part->style & SBT_OWNERDRAW)
+	{
+	    DRAWITEMSTRUCT dis;
 
-	r.left += 2; 
-	DrawIconEx (hdc, r.left, r.top, part->hIcon, cy, cy, 0, 0, DI_NORMAL);
-	r.left += cy;
+	    dis.CtlID = GetWindowLongW (infoPtr->Self, GWL_ID);
+	    dis.itemID = itemID;
+	    dis.hwndItem = infoPtr->Self;
+	    dis.hDC = hdc;
+	    dis.rcItem = r;
+	    dis.itemData = (INT)part->text;
+	    SendMessageW (GetParent (infoPtr->Self), WM_DRAWITEM,
+		    (WPARAM)dis.CtlID, (LPARAM)&dis);
+    } 
+    else
+	{
+	    if (part->hIcon)
+		{
+	        INT cy = r.bottom - r.top;
+
+	        r.left += 2; 
+	        DrawIconEx (hdc, r.left, r.top, part->hIcon, cy, cy, 0, 0, DI_NORMAL);
+	        r.left += cy;
+		}
+        DrawStatusTextW (hdc, &r, part->text, SBT_NOBORDERS);
     }
-
-    DrawStatusTextW (hdc, &r, part->text, SBT_NOBORDERS);
 }
 
 
 static void
-STATUSBAR_RefreshPart (STATUSWINDOWINFO *infoPtr, STATUSWINDOWPART *part, HDC hdc, int itemID)
+STATUSBAR_RefreshPart (const STATUSWINDOWINFO *infoPtr, const STATUSWINDOWPART *part, HDC hdc, int itemID)
 {
     HBRUSH hbrBk;
     HFONT  hOldFont;
@@ -157,37 +173,26 @@ STATUSBAR_RefreshPart (STATUSWINDOWINFO *infoPtr, STATUSWINDOWPART *part, HDC hd
     if (part->bound.right < part->bound.left) return;
 
     if (infoPtr->clrBk != CLR_DEFAULT)
-	hbrBk = CreateSolidBrush (infoPtr->clrBk);
+	    hbrBk = CreateSolidBrush (infoPtr->clrBk);
     else
-	hbrBk = GetSysColorBrush (COLOR_3DFACE);
+	    hbrBk = GetSysColorBrush (COLOR_3DFACE);
     FillRect(hdc, &part->bound, hbrBk);
 
     hOldFont = SelectObject (hdc, infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont);
 
-    if (part->style & SBT_OWNERDRAW) {
-	DRAWITEMSTRUCT dis;
-
-	dis.CtlID = GetWindowLongW (infoPtr->Self, GWL_ID);
-	dis.itemID = itemID;
-	dis.hwndItem = infoPtr->Self;
-	dis.hDC = hdc;
-	dis.rcItem = part->bound;
-	dis.itemData = (INT)part->text;
-	SendMessageW (GetParent (infoPtr->Self), WM_DRAWITEM,
-		(WPARAM)dis.CtlID, (LPARAM)&dis);
-    } else
-	STATUSBAR_DrawPart (hdc, part);
+	STATUSBAR_DrawPart (hdc, part, infoPtr, itemID);
 
     SelectObject (hdc, hOldFont);
 
     if (infoPtr->clrBk != CLR_DEFAULT)
-	DeleteObject (hbrBk);
+	    DeleteObject (hbrBk);
 
-    if (GetWindowLongW (infoPtr->Self, GWL_STYLE) & SBARS_SIZEGRIP) {
-	RECT rect;
+    if (GetWindowLongW (infoPtr->Self, GWL_STYLE) & SBARS_SIZEGRIP)
+	{
+	    RECT rect;
 
-	GetClientRect (infoPtr->Self, &rect);
-	STATUSBAR_DrawSizeGrip (hdc, &rect);
+	    GetClientRect (infoPtr->Self, &rect);
+	    STATUSBAR_DrawSizeGrip (hdc, &rect);
     }
 }
 
@@ -209,40 +214,28 @@ STATUSBAR_Refresh (STATUSWINDOWINFO *infoPtr, HDC hdc)
     GetClientRect (infoPtr->Self, &rect);
 
     if (infoPtr->clrBk != CLR_DEFAULT)
-	hbrBk = CreateSolidBrush (infoPtr->clrBk);
+	    hbrBk = CreateSolidBrush (infoPtr->clrBk);
     else
-	hbrBk = GetSysColorBrush (COLOR_3DFACE);
+	    hbrBk = GetSysColorBrush (COLOR_3DFACE);
     FillRect(hdc, &rect, hbrBk);
 
     hOldFont = SelectObject (hdc, infoPtr->hFont ? infoPtr->hFont : infoPtr->hDefaultFont);
 
     if (infoPtr->simple) {
-	STATUSBAR_RefreshPart (infoPtr, &infoPtr->part0, hdc, 0);
+	    STATUSBAR_RefreshPart (infoPtr, &infoPtr->part0, hdc, 0);
     } else {
-	for (i = 0; i < infoPtr->numParts; i++) {
-	    if (infoPtr->parts[i].style & SBT_OWNERDRAW) {
-		DRAWITEMSTRUCT dis;
-
-		dis.CtlID = GetWindowLongW (infoPtr->Self, GWL_ID);
-		dis.itemID = i;
-		dis.hwndItem = infoPtr->Self;
-		dis.hDC = hdc;
-		dis.rcItem = infoPtr->parts[i].bound;
-		dis.itemData = (INT)infoPtr->parts[i].text;
-		SendMessageW (GetParent (infoPtr->Self), WM_DRAWITEM,
-			(WPARAM)dis.CtlID, (LPARAM)&dis);
-	    } else
-		STATUSBAR_RefreshPart (infoPtr, &infoPtr->parts[i], hdc, i);
-	}
+	    for (i = 0; i < infoPtr->numParts; i++) {
+		    STATUSBAR_RefreshPart (infoPtr, &infoPtr->parts[i], hdc, i);
+	    }
     }
 
     SelectObject (hdc, hOldFont);
 
     if (infoPtr->clrBk != CLR_DEFAULT)
-	DeleteObject (hbrBk);
+	    DeleteObject (hbrBk);
 
     if (GetWindowLongW (infoPtr->Self, GWL_STYLE) & SBARS_SIZEGRIP)
-	STATUSBAR_DrawSizeGrip (hdc, &rect);
+	    STATUSBAR_DrawSizeGrip (hdc, &rect);
 
     return 0;
 }
@@ -636,7 +629,7 @@ STATUSBAR_SetTextT (STATUSWINDOWINFO *infoPtr, INT nPart, WORD style,
     if (nPart == 0x00ff) {
 	part = &infoPtr->part0;
     } else {
-	if (infoPtr->parts && (nPart < 0 || nPart >= infoPtr->numParts)) {
+	if (infoPtr->parts && nPart >= 0 && nPart < infoPtr->numParts) {
 	    part = &infoPtr->parts[nPart];
 	}
     }
