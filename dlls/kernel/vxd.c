@@ -91,23 +91,41 @@ static CRITICAL_SECTION vxd_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 static HANDLE open_vxd_handle( LPCWSTR name )
 {
     const char *dir = wine_get_server_dir();
-    char *unix_name;
-    int len1, len2;
+    int len;
     HANDLE ret;
+    NTSTATUS status;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    IO_STATUS_BLOCK io;
 
-    len1 = strlen( dir );
-    len2 = WideCharToMultiByte( CP_UNIXCP, 0, name, -1, NULL, 0, NULL, NULL);
-    if (!(unix_name = HeapAlloc( GetProcessHeap(), 0, len1 + len2 + 1 )))
+    len = MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, NULL, 0 );
+    nameW.Length = (len + 1 + strlenW( name )) * sizeof(WCHAR);
+    nameW.MaximumLength = nameW.Length + sizeof(WCHAR);
+    if (!(nameW.Buffer = HeapAlloc( GetProcessHeap(), 0, nameW.Length )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return 0;
     }
-    strcpy( unix_name, dir );
-    unix_name[len1] = '/';
-    WideCharToMultiByte( CP_UNIXCP, 0, name, -1, unix_name + len1 + 1, len2, NULL, NULL);
-    ret = FILE_CreateFile( unix_name, 0, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
-                           OPEN_ALWAYS, 0, 0 );
-    HeapFree( GetProcessHeap(), 0, unix_name );
+    MultiByteToWideChar( CP_UNIXCP, 0, dir, -1, nameW.Buffer, len );
+    nameW.Buffer[len-1] = '/';
+    strcpyW( nameW.Buffer + len, name );
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.Attributes = 0;
+    attr.ObjectName = &nameW;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtCreateFile( &ret, 0, &attr, &io, NULL, 0,
+                           FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN_IF,
+                           FILE_SYNCHRONOUS_IO_ALERT, NULL, 0 );
+    if (status)
+    {
+        ret = 0;
+        SetLastError( RtlNtStatusToDosError(status) );
+    }
+    RtlFreeUnicodeString( &nameW );
     return ret;
 }
 
