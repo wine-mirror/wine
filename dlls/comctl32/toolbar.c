@@ -566,13 +566,13 @@ TOOLBAR_DrawArrow (HDC hdc, INT left, INT top, INT colorRef)
  *      an image list
  */
 static void
-TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
-		    HDC hdc, DWORD dwStyle,
-                    RECT *rcText, LPWSTR lpText, NMTBCUSTOMDRAW *tbcd)
+TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, RECT *rcText, LPWSTR lpText,
+                    NMTBCUSTOMDRAW *tbcd)
 {
     HFONT  hOldFont = 0;
     COLORREF clrOld = 0;
     UINT state = tbcd->nmcd.uItemState;
+    HDC hdc = tbcd->nmcd.hdc;
 
     /* draw text */
     if (lpText) {
@@ -605,12 +605,15 @@ TOOLBAR_DrawString (TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr,
 
 
 static void
-TOOLBAR_DrawPattern (HDC hdc, LPRECT lpRect)
+TOOLBAR_DrawPattern (LPRECT lpRect, NMTBCUSTOMDRAW *tbcd)
 {
+    HDC hdc = tbcd->nmcd.hdc;
     HBRUSH hbr = SelectObject (hdc, COMCTL32_hPattern55AABrush);
     INT cx = lpRect->right - lpRect->left;
     INT cy = lpRect->bottom - lpRect->top;
-    PatBlt (hdc, lpRect->left, lpRect->top, cx, cy, 0x00FA0089);
+    SetTextColor(hdc, tbcd->clrBtnHighlight);
+    SetBkColor(hdc, tbcd->clrBtnFace);
+    PatBlt (hdc, lpRect->left, lpRect->top, cx, cy, PATCOPY);
     SelectObject (hdc, hbr);
 }
 
@@ -802,9 +805,10 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     /* NOTE: applications can and do alter this to customize their  */
     /* toolbars */
     tbcd.nmcd.uItemState = TOOLBAR_TranslateState(btnPtr);
+    tbcd.nmcd.hdc = hdc;
+    tbcd.hbrMonoDither = COMCTL32_hPattern55AABrush;
 
     /* FIXME: what should these be set to ????? */
-    tbcd.hbrMonoDither = 0;
     tbcd.hbrLines = 0;
     tbcd.hpenLines = 0;
 
@@ -814,7 +818,6 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
     if (infoPtr->dwBaseCustDraw & CDRF_NOTIFYITEMDRAW)
     {
 	tbcd.nmcd.dwDrawStage = CDDS_ITEMPREPAINT;
-	tbcd.nmcd.hdc = hdc;
 	tbcd.nmcd.rc = rc;
 	tbcd.nmcd.dwItemSpec = btnPtr->idCommand;
 	tbcd.nmcd.lItemlParam = btnPtr->dwData;
@@ -897,7 +900,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	    TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rcBitmap.left, rcBitmap.top);
 
 	if (!(infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) || (btnPtr->fsStyle & BTNS_SHOWTEXT))
-	    TOOLBAR_DrawString (infoPtr, btnPtr, hdc, dwStyle, &rcText, lpText, &tbcd);
+	    TOOLBAR_DrawString (infoPtr, &rcText, lpText, &tbcd);
 	goto FINALNOTIFY;
     }
 
@@ -928,7 +931,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 			       ILD_NORMAL);
 
 	if (!(infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) || (btnPtr->fsStyle & BTNS_SHOWTEXT))
-	    TOOLBAR_DrawString (infoPtr, btnPtr, hdc, dwStyle, &rcText, lpText, &tbcd);
+	    TOOLBAR_DrawString (infoPtr, &rcText, lpText, &tbcd);
 	goto FINALNOTIFY;
     }
 
@@ -945,14 +948,14 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 			  BF_RECT | BF_MIDDLE | BF_ADJUST);
 	}
 
-	TOOLBAR_DrawPattern (hdc, &rc);
+	TOOLBAR_DrawPattern (&rc, &tbcd);
 
 	TOOLBAR_DrawImageList (infoPtr, btnPtr, IMAGE_LIST_DEFAULT,
 			       hdc, rcBitmap.left+1, rcBitmap.top+1,
 			       ILD_NORMAL);
 
 	if (!(infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) || (btnPtr->fsStyle & BTNS_SHOWTEXT))
-	    TOOLBAR_DrawString (infoPtr, btnPtr, hdc, dwStyle, &rcText, lpText, &tbcd);
+	    TOOLBAR_DrawString (infoPtr, &rcText, lpText, &tbcd);
 	goto FINALNOTIFY;
     }
 
@@ -962,10 +965,10 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 	    DrawEdge (hdc, &rc, EDGE_RAISED,
 		      BF_SOFT | BF_RECT | BF_MIDDLE | BF_ADJUST);
 
-	TOOLBAR_DrawPattern (hdc, &rc);
+	TOOLBAR_DrawPattern (&rc, &tbcd);
 	TOOLBAR_DrawMasked (infoPtr, btnPtr, hdc, rcBitmap.left, rcBitmap.top);
 	if (!(infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) || (btnPtr->fsStyle & BTNS_SHOWTEXT))
-	    TOOLBAR_DrawString (infoPtr, btnPtr, hdc, dwStyle, &rcText, lpText, &tbcd);
+	    TOOLBAR_DrawString (infoPtr, &rcText, lpText, &tbcd);
 	goto FINALNOTIFY;
     }
 
@@ -1012,7 +1015,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc)
 
 
     if (!(infoPtr->dwExStyle & TBSTYLE_EX_MIXEDBUTTONS) || (btnPtr->fsStyle & BTNS_SHOWTEXT))
-        TOOLBAR_DrawString (infoPtr, btnPtr, hdc, dwStyle, &rcText, lpText, &tbcd);
+        TOOLBAR_DrawString (infoPtr, &rcText, lpText, &tbcd);
 
  FINALNOTIFY:
     if (infoPtr->dwItemCustDraw & CDRF_NOTIFYPOSTPAINT)
