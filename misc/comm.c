@@ -6,6 +6,9 @@
  * Mar 31, 1999. Ove Kåven <ovek@arcticnet.no>
  * - Implemented buffers and EnableCommNotification.
  *
+ * Apr 3, 1999.  Lawson Whitney <lawson_whitney@juno.com>
+ * - Fixed the modem control part of EscapeCommFunction16.
+ *
  * Mar 3, 1999. Ove Kåven <ovek@arcticnet.no>
  * - Use port indices instead of unixfds for win16
  * - Moved things around (separated win16 and win32 routines)
@@ -212,6 +215,16 @@ static unsigned comm_outbuf(struct DosDeviceStruct *ptr)
     + ptr->obuf_head - ptr->obuf_tail;
 }
 
+static int COMM_WhackModem(int fd, unsigned int andy, unsigned int orrie)
+{
+    unsigned int mstat, okay;
+    okay = ioctl(fd, TIOCMGET, &mstat);
+    if (okay) return okay;
+    if (andy) mstat &= andy;
+    mstat |= orrie;
+    return ioctl(fd, TIOCMSET, &mstat);
+}
+	
 static void comm_notification(int fd,void*private)
 {
   struct DosDeviceStruct *ptr = (struct DosDeviceStruct *)private;
@@ -577,24 +590,21 @@ LONG WINAPI EscapeCommFunction16(UINT16 cid,UINT16 nFunction)
 
 #ifdef TIOCM_DTR
 		case CLRDTR:
-			port.c_cflag &= TIOCM_DTR;
-			break;
+			return COMM_WhackModem(ptr->fd, ~TIOCM_DTR, 0);
 #endif
-
 #ifdef TIOCM_RTS
 		case CLRRTS:
-			port.c_cflag &= TIOCM_RTS;
-			break;
+			return COMM_WhackModem(ptr->fd, ~TIOCM_RTS, 0);
 #endif
 	
-#ifdef CRTSCTS
+#ifdef TIOCM_DTR
 		case SETDTR:
-			port.c_cflag |= CRTSCTS;
-			break;
+			return COMM_WhackModem(ptr->fd, 0, TIOCM_DTR);
+#endif
 
+#ifdef TIOCM_RTS			
 		case SETRTS:
-			port.c_cflag |= CRTSCTS;
-			break;
+			return COMM_WhackModem(ptr->fd, 0, TIOCM_RTS);
 #endif
 
 		case SETXOFF:
