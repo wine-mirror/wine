@@ -978,6 +978,35 @@ static void X11DRV_DIB_SetImageBits_8( int lines, const BYTE *srcbits,
 	}
 	break;
 #endif
+    case 24:
+#if defined(__i386__) && defined(__GNUC__)
+	if (lines && (dstwidth!=left) && (bmpImage->bits_per_pixel == 32))
+	{
+	    for (h = lines ; h--; ) {
+		int _cl1,_cl2; /* temp outputs for asm below */
+		/* Borrowed from DirectDraw */
+		__asm__ __volatile__(
+		"xor %%eax,%%eax\n"
+		"cld\n"
+		"1:\n"
+		"    lodsb\n"
+		"    movl (%%edx,%%eax,4),%%eax\n"
+		"    stosl\n"
+		"      xor %%eax,%%eax\n"
+		"    loop 1b\n"
+		:"=S" (bits), "=D" (_cl1), "=c" (_cl2)
+		:"S" (bits),
+		 "D" (bmpImage->data+h*bmpImage->bytes_per_line+left*4),
+		 "c" (dstwidth-left),
+		 "d" (colors)
+		:"eax", "cc", "memory"
+		);
+		bits = (srcbits += linebytes) + left;
+	    }
+	    return;
+	}
+	break;
+#endif
     default:
     	break; /* use slow generic case below */
     }
