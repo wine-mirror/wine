@@ -970,27 +970,37 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
     char buffer[MAX_PATHNAME_LEN];
     int drive;
     char *p;
+    DWORD ret;
+    
+    /* last possible position for a char != 0 */
+    char *endchar = buffer + sizeof(buffer) - 2;
+    *endchar = '\0';
+    
+    TRACE(dosfs, "converting '%s'\n", name );
 
-    TRACE(dosfs, "converting %s\n", name );
+    if (!name || !result || ((drive = DOSFS_GetPathDrive( &name )) == -1) )
+    {   SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
 
-    if (!name || !result) return 0;
-
-    if ((drive = DOSFS_GetPathDrive( &name )) == -1) return 0;
     p = buffer;
     *p++ = 'A' + drive;
     *p++ = ':';
     if (IS_END_OF_NAME(*name) && (*name))  /* Absolute path */
     {
-        while ((*name == '\\') || (*name == '/')) name++;
+        while (((*name == '\\') || (*name == '/')) && (!*endchar) )
+	    *p++ = *name++;
     }
     else  /* Relative path or empty path */
     {
         *p++ = '\\';
-        lstrcpyn32A( p, DRIVE_GetDosCwd(drive), sizeof(buffer) - 3 );
-        if (*p) p += strlen(p); else p--;
+        lstrcpyn32A( p, DRIVE_GetDosCwd(drive), sizeof(buffer) - 4 );
+        if ( *p )
+        {
+            p += strlen(p);
+	    *p++ = '\\';
+        }
     }
-    if (!*name) /* empty path */
-      *p++ = '\\';
     *p = '\0';
 
     while (*name)
@@ -1007,41 +1017,54 @@ static DWORD DOSFS_DoGetFullPathName( LPCSTR name, DWORD len, LPSTR result,
             {
                 name += 2;
                 while ((*name == '\\') || (*name == '/')) name++;
-                while ((p > buffer + 2) && (*p != '\\')) p--;
-                *p = '\0';  /* Remove trailing separator */
+
+		if (p < buffer + 3) /* no previous dir component */
+		    continue;
+		p--; /* skip previously added '\\' */
+		while ((*p == '\\') || (*p == '/')) p--;
+		/* skip previous dir component */
+                while ((*p != '\\') && (*p != '/')) p--;
+                p++;
                 continue;
             }
         }
-        if (p >= buffer + sizeof(buffer) - 1)
-        {
-            DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
+        if ( *endchar )
+        {   DOS_ERROR( ER_PathNotFound, EC_NotFound, SA_Abort, EL_Disk );
             return 0;
         }
-        *p++ = '\\';
-        while (!IS_END_OF_NAME(*name) && (p < buffer + sizeof(buffer) - 1))
+        while (!IS_END_OF_NAME(*name) && (!*endchar) )
             *p++ = *name++;
-        *p = '\0';
-        while ((*name == '\\') || (*name == '/')) name++;
+        while (((*name == '\\') || (*name == '/')) && (!*endchar) )
+	    *p++ = *name++;
     }
+    *p = '\0';
 
-    if (!buffer[2])
-    {
-        buffer[2] = '\\';
-        buffer[3] = '\0';
-    }
     if (!(DRIVE_GetFlags(drive) & DRIVE_CASE_PRESERVING))
         CharUpper32A( buffer );
+       
+    if (unicode)
+        lstrcpynAtoW( (LPWSTR)result, buffer, len );
+    else
+        lstrcpyn32A( result, buffer, len );
 
-    if (unicode) lstrcpynAtoW( (LPWSTR)result, buffer, len );
-    else lstrcpyn32A( result, buffer, len );
+    TRACE(dosfs, "returning '%s'\n", buffer );
 
-    TRACE(dosfs, "returning %s\n", buffer );
-    return strlen(buffer);
+    /* If the lpBuffer buffer is too small, the return value is the 
+    size of the buffer, in characters, required to hold the path. */
+
+    ret = strlen(buffer);
+
+    if (ret >= len )
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+
+    return ret;
 }
 
 
 /***********************************************************************
  *           GetFullPathName32A   (KERNEL32.272)
+ * NOTES
+ *   if the path closed with '\', *lastpart is 0 
  */
 DWORD WINAPI GetFullPathName32A( LPCSTR name, DWORD len, LPSTR buffer,
                                  LPSTR *lastpart )
@@ -1051,7 +1074,6 @@ DWORD WINAPI GetFullPathName32A( LPCSTR name, DWORD len, LPSTR buffer,
     {
         LPSTR p = buffer + strlen(buffer);
 
-	/* if the path closed with '\', *lastpart is 0 */
 	if (*p != '\\')
         {
 	  while ((p > buffer + 2) && (*p != '\\')) p--;
@@ -1075,8 +1097,12 @@ DWORD WINAPI GetFullPathName32W( LPCWSTR name, DWORD len, LPWSTR buffer,
     if (ret && lastpart)
     {
         LPWSTR p = buffer + lstrlen32W(buffer);
-        while ((p > buffer + 2) && (*p != '\\')) p--;
-        *lastpart = p + 1;
+        if (*p != (WCHAR)'\\')
+        {
+            while ((p > buffer + 2) && (*p != (WCHAR)'\\')) p--;
+            *lastpart = p + 1;
+        }
+        else *lastpart = NULL;  
     }
     return ret;
 }
