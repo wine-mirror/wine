@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "docobj.h"
+#include "shlguid.h"
 #include "windef.h"
 #include "winnls.h"
 #include "winbase.h"
@@ -37,12 +39,16 @@
 #include "wine/obj_base.h"
 #include "wine/obj_inplace.h"
 #include "wine/obj_serviceprovider.h"
+#include "wine/obj_control.h"
+#include "wine/obj_connection.h"
+#include "wine/obj_property.h"
 #include "wingdi.h"
 #include "winreg.h"
 #include "winuser.h"
 #include "wine/debug.h"
 #include "ordinal.h"
 #include "shlwapi.h"
+
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
@@ -141,6 +147,7 @@ static DWORD   (WINAPI *pGetFileVersionInfoSizeW)(LPCWSTR,LPDWORD);
 static BOOL    (WINAPI *pGetFileVersionInfoW)(LPCWSTR,DWORD,DWORD,LPVOID);
 static WORD    (WINAPI *pVerQueryValueW)(LPVOID,LPCWSTR,LPVOID*,UINT*);
 static BOOL    (WINAPI *pCOMCTL32_417)(HDC,INT,INT,UINT,const RECT*,LPCWSTR,UINT,const INT*);
+static HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO*);
 
 /*
  NOTES: Most functions exported by ordinal seem to be superflous.
@@ -559,13 +566,27 @@ HSHARED WINAPI SHLWAPI_11(HSHARED hShared, DWORD dwDstProcId, DWORD dwSrcProcId,
 
 /*************************************************************************
  *      @	[SHLWAPI.13]
- * (Used by IE4 during startup)
+ *
+ * Create and register a clipboard enumerator for a web browser.
+ *
+ * PARAMS
+ *  lpBC      [I] Binding context
+ *  lpUnknown [I] An object exposing the IWebBrowserApp interface
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: An HRESULT error code.
+ *
+ * NOTES
+ *  The enumerator is stored as a property of the web browser. If it does not
+ *  yet exist, it is created and set before being registered.
+ *
+ * BUGS
+ *  Unimplemented.
  */
-HRESULT WINAPI SHLWAPI_13 (
-	LPVOID w,
-	LPVOID x)
+HRESULT WINAPI SHLWAPI_13(LPBC lpBC, IUnknown *lpUnknown)
 {
-	FIXME("(%p %p)stub\n",w,x);
+	FIXME("(%p,%p) stub\n", lpBC, lpUnknown);
 	return 1;
 #if 0
 	/* pseudo code extracted from relay trace */
@@ -630,9 +651,16 @@ HRESULT WINAPI SHLWAPI_13 (
 /*************************************************************************
  *      @	[SHLWAPI.14]
  *
- * Function:
- *    Retrieves IE "AcceptLanguage" value from registry. ASCII mode.
+ * Get Explorers "AcceptLanguage" setting.
  *
+ * PARAMS
+ *  langbuf [O] Destination for language string
+ *  buflen  [I] Length of langbuf
+ *
+ * RETURNS
+ *  Success: S_OK.   langbuf is set to the language string found.
+ *  Failure: E_FAIL, If any arguments are invalid, error occurred, or Explorer
+ *           does not contain the setting.
  */
 HRESULT WINAPI SHLWAPI_14 (
 	LPSTR langbuf,
@@ -683,9 +711,7 @@ HRESULT WINAPI SHLWAPI_14 (
 /*************************************************************************
  *      @	[SHLWAPI.15]
  *
- * Function:
- *    Retrieves IE "AcceptLanguage" value from registry. UNICODE mode.
- *
+ * Unicode version of SHLWAPI_14.
  */
 HRESULT WINAPI SHLWAPI_15 (
 	LPWSTR langbuf,
@@ -886,7 +912,17 @@ BOOL WINAPI SHLWAPI_35(LPVOID p1, DWORD dw2, LPVOID p3)
 /*************************************************************************
  *      @	[SHLWAPI.36]
  *
- * Insert a bitmap menu item into a menu.
+ * Insert a bitmap menu item at the bottom of a menu.
+ *
+ * PARAMS
+ *  hMenu [I] Menu to insert into
+ *  flags [I] Flags for insertion
+ *  id    [I] Menu ID of the item
+ *  str   [I] Menu text for the item
+ *
+ * RETURNS
+ *  Success: TRUE,  the item is inserted into the menu
+ *  Failure: FALSE, if any parameter is invalid
  */
 BOOL WINAPI SHLWAPI_36(HMENU hMenu, UINT flags, UINT id, LPCWSTR str)
 {
@@ -898,6 +934,16 @@ BOOL WINAPI SHLWAPI_36(HMENU hMenu, UINT flags, UINT id, LPCWSTR str)
  *      @	[SHLWAPI.74]
  *
  * Get the text from a given dialog item.
+ *
+ * PARAMS
+ *  hWnd     [I] Handle of dialog
+ *  nItem    [I] Index of item
+ *  lpsDest  [O] Buffer for receiving window text
+ *  nDestLen [I] Length of buffer.
+ *
+ * RETURNS
+ *  Success: The length of the returned text.
+ *  Failure: 0.
  */
 INT WINAPI SHLWAPI_74(HWND hWnd, INT nItem, LPWSTR lpsDest,INT nDestLen)
 {
@@ -913,7 +959,16 @@ INT WINAPI SHLWAPI_74(HWND hWnd, INT nItem, LPWSTR lpsDest,INT nDestLen)
 /*************************************************************************
  *      @   [SHLWAPI.138]
  *
- * Set the text of a dialog item if it exists.
+ * Set the text of a given dialog item.
+ *
+ * PARAMS
+ *  hWnd     [I] Handle of dialog
+ *  iItem    [I] Index of item
+ *  lpszText [O] Text to set
+ *
+ * RETURNS
+ *  Success: TRUE.  The text of the dialog is set to lpszText.
+ *  Failure: FALSE, Otherwise.
  */
 BOOL WINAPI SHLWAPI_138(HWND hWnd, INT iItem, LPCWSTR lpszText)
 {
@@ -1007,7 +1062,15 @@ DWORD WINAPI SHLWAPI_158 (LPCWSTR str1, LPCWSTR str2)
 /*************************************************************************
  *      @	[SHLWAPI.162]
  *
- * Ensure a multibyte character string doesn't end in a hanging lead byte.
+ * Remove a hanging lead byte from the end of a string, if present.
+ *
+ * PARAMS
+ *  lpStr [I] String to check for a hanging lead byte
+ *  size  [I] Length of lpszStr
+ *
+ * RETURNS
+ *  Success: The new size of the string. Any hanging lead bytes are removed.
+ *  Failure: 0, if any parameters are invalid.
  */
 DWORD WINAPI SHLWAPI_162(LPSTR lpStr, DWORD size)
 {
@@ -1031,43 +1094,104 @@ DWORD WINAPI SHLWAPI_162(LPSTR lpStr, DWORD size)
 /*************************************************************************
  *      @	[SHLWAPI.163]
  *
- * _IUnknown_QueryStatus
+ * Call IOleCommandTarget::QueryStatus() on an object.
+ *
+ * PARAMS
+ *  lpUnknown     [I] Object supporting the IOleCommandTarget interface
+ *  pguidCmdGroup [I] GUID for the command group
+ *  cCmds         [I]
+ *  prgCmds       [O] Commands
+ *  pCmdText      [O] Command text
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: E_FAIL, if lpUnknown is NULL.
+ *           E_NOINTERFACE, if lpUnknown does not support IOleCommandTarget.
+ *           Otherwise, an error code from IOleCommandTarget::QueryStatus().
  */
-DWORD WINAPI SHLWAPI_163 (
-	LPVOID v,
-	LPVOID w,
-	LPVOID x,
-	LPVOID y,
-	LPVOID z)
+HRESULT WINAPI SHLWAPI_163(IUnknown* lpUnknown, REFGUID pguidCmdGroup,
+                           ULONG cCmds, OLECMD *prgCmds, OLECMDTEXT* pCmdText)
 {
-        TRACE("(%p %p %p %p %p) stub\n", v,w,x,y,z);
-	return 0;
-}
+  HRESULT hRet = E_FAIL;
 
+  TRACE("(%p,%p,%ld,%p,%p)\n",lpUnknown, pguidCmdGroup, cCmds, prgCmds, pCmdText);
+
+  if (lpUnknown)
+  {
+    IOleCommandTarget* lpOle;
+
+    hRet = IUnknown_QueryInterface(lpUnknown, &IID_IOleCommandTarget,
+                                   (void**)&lpOle);
+
+    if (SUCCEEDED(hRet) && lpOle)
+    {
+      hRet = IOleCommandTarget_QueryStatus(lpOle, pguidCmdGroup, cCmds,
+                                           prgCmds, pCmdText);
+      IOleCommandTarget_Release(lpOle);
+    }
+  }
+  return hRet;
+}
 
 /*************************************************************************
  *      @		[SHLWAPI.164]
  *
- * _IUnknown_Exec
+ * Call IOleCommandTarget::Exec() on an object.
+ *
+ * PARAMS
+ *  lpUnknown     [I] Object supporting the IOleCommandTarget interface
+ *  pguidCmdGroup [I] GUID for the command group
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: E_FAIL, if lpUnknown is NULL.
+ *           E_NOINTERFACE, if lpUnknown does not support IOleCommandTarget.
+ *           Otherwise, an error code from IOleCommandTarget::Exec().
  */
-DWORD WINAPI SHLWAPI_164 (
-	LPVOID u,
-	LPVOID v,
-	LPVOID w,
-	LPVOID x,
-	LPVOID y,
-	LPVOID z)
+HRESULT WINAPI SHLWAPI_164(IUnknown* lpUnknown, REFGUID pguidCmdGroup,
+                           DWORD nCmdID, DWORD nCmdexecopt, VARIANT* pvaIn,
+                           VARIANT* pvaOut)
 {
-        TRACE("(%p %p %p %p %p %p) stub\n",u,v,w,x,y,z);
-	return 0x80004002;    /* E_NOINTERFACE */
+  HRESULT hRet = E_FAIL;
+
+  TRACE("(%p,%p,%ld,%ld,%p,%p)\n",lpUnknown, pguidCmdGroup, nCmdID,
+        nCmdexecopt, pvaIn, pvaOut);
+
+  if (lpUnknown)
+  {
+    IOleCommandTarget* lpOle;
+
+    hRet = IUnknown_QueryInterface(lpUnknown, &IID_IOleCommandTarget,
+                                   (void**)&lpOle);
+    if (SUCCEEDED(hRet) && lpOle)
+    {
+      hRet = IOleCommandTarget_Exec(lpOle, pguidCmdGroup, nCmdID,
+                                    nCmdexecopt, pvaIn, pvaOut);
+      IOleCommandTarget_Release(lpOle);
+    }
+  }
+  return hRet;
 }
 
 /*************************************************************************
  *      @	[SHLWAPI.165]
  *
- * SetWindowLongA with mask.
+ * Retrieve, modify, and re-set a value from a window.
+ *
+ * PARAMS
+ *  hWnd   [I] Windows to get value from
+ *  offset [I] Offset of value
+ *  wMask  [I] Mask for uiFlags
+ *  wFlags [I] Bits to set in window value
+ *
+ * RETURNS
+ *  The new value as it was set, or 0 if any parameter is invalid.
+ *
+ * NOTES
+ *  Any bits set in uiMask are cleared from the value, then any bits set in
+ *  uiFlags are set in the value.
  */
-LONG WINAPI SHLWAPI_165(HWND hwnd, INT offset, UINT wFlags, UINT wMask)
+LONG WINAPI SHLWAPI_165(HWND hwnd, INT offset, UINT wMask, UINT wFlags)
 {
   LONG ret = GetWindowLongA(hwnd, offset);
   UINT newFlags = (wFlags & wMask) | (ret & ~wFlags);
@@ -1080,20 +1204,95 @@ LONG WINAPI SHLWAPI_165(HWND hwnd, INT offset, UINT wFlags, UINT wMask)
 /*************************************************************************
  *      @	[SHLWAPI.167]
  *
- * _SHSetParentHwnd
+ * Change a windows parent.
+ *
+ * PARAMS
+ *  hWnd       [I] Window to change parent of
+ *  hWndParent [I] New parent window
+ *
+ * RETURNS
+ *  Nothing.
+ *
+ * NOTES
+ *  If hWndParent is NULL (desktop), the window style is changed to WS_POPUP.
  */
-DWORD WINAPI SHLWAPI_167(HWND hWnd, LPVOID y)
+DWORD WINAPI SHLWAPI_167(HWND hWnd, HWND hWndParent)
 {
-	FIXME("0x%08x %p\n", hWnd,y);
+	FIXME("0x%08x,0x%08x\n", hWnd, hWndParent);
 	return 0;
+}
+
+/*************************************************************************
+ *      @       [SHLWAPI.168]
+ *
+ * Locate and advise a connection point in an IConnectionPointContainer.
+ *
+ * PARAMS
+ *  lpUnkSink   [I] Sink for the connection point advise call
+ *  riid        [I] REFIID of connection point to advise
+ *  bAdviseOnly [I] TRUE = Advise only, FALSE = Unadvise first
+ *  lpUnknown   [I] Object supporting the IConnectionPointContainer interface
+ *  lpCookie    [O] Pointer to connection point cookie
+ *  lppCP       [O] Destination for the IConnectionPoint found
+ *
+ * RETURNS
+ *  Success: S_OK. If lppCP is non-NULL, it is filled with the IConnectionPoint
+ *           that was advised. The caller is responsable for releasing it.
+ *  Failure: E_FAIL, if any arguments are invalid.
+ *           E_NOINTERFACE, if lpUnknown isn't an IConnectionPointContainer,
+ *           Or an HRESULT error code if any call fails.
+ */
+HRESULT WINAPI SHLWAPI_168(IUnknown* lpUnkSink, REFIID riid, BOOL bAdviseOnly,
+                           IUnknown* lpUnknown, LPDWORD lpCookie,
+                           IConnectionPoint **lppCP)
+{
+  HRESULT hRet;
+  IConnectionPointContainer* lpContainer;
+  IConnectionPoint *lpCP;
+
+  if(!lpUnknown || (bAdviseOnly && !lpUnkSink))
+    return E_FAIL;
+
+  if(lppCP)
+    *lppCP = NULL;
+
+  hRet = IUnknown_QueryInterface(lpUnknown, &IID_IConnectionPointContainer,
+                                 (void**)&lpContainer);
+  if (SUCCEEDED(hRet))
+  {
+    hRet = IConnectionPointContainer_FindConnectionPoint(lpContainer, riid, &lpCP);
+
+    if (SUCCEEDED(hRet))
+    {
+      if(!bAdviseOnly)
+        hRet = IConnectionPoint_Unadvise(lpCP, *lpCookie);
+      hRet = IConnectionPoint_Advise(lpCP, lpUnkSink, lpCookie);
+
+      if (FAILED(hRet))
+        *lpCookie = 0;
+
+      if (lppCP && SUCCEEDED(hRet))
+        *lppCP = lpCP; /* Caller keeps the interface */
+      else
+        IConnectionPoint_Release(lpCP); /* Release it */
+    }
+
+    IUnknown_Release(lpContainer);
+  }
+  return hRet;
 }
 
 /*************************************************************************
  *	@	[SHLWAPI.169]
  *
- * _IUnknown_AtomicRelease
  *
- * Do IUnknown::Release on passed object.
+ * Release an interface.
+ *
+ * PARAMS
+ *  lpUnknown [I] Object to release
+ *
+ * RETURNS
+ *  Nothing.
  */
 DWORD WINAPI SHLWAPI_169 (IUnknown ** lpUnknown)
 {
@@ -1110,7 +1309,14 @@ DWORD WINAPI SHLWAPI_169 (IUnknown ** lpUnknown)
 /*************************************************************************
  *      @	[SHLWAPI.170]
  *
- * Skip URL '//' sequence.
+ * Skip '//' if present in a string.
+ *
+ * PARAMS
+ *  lpszSrc [I] String to check for '//'
+ *
+ * RETURNS
+ *  Success: The next character after the '//' or the string if not present
+ *  Failure: NULL, if lpszStr is NULL.
  */
 LPCSTR WINAPI SHLWAPI_170(LPCSTR lpszSrc)
 {
@@ -1133,29 +1339,60 @@ BOOL WINAPI SHLWAPI_171(LPVOID x, LPVOID y)
 /*************************************************************************
  *      @	[SHLWAPI.172]
  *
- * _IUnknown_GetWindow
+ * Get the window handle of an object.
  *
- * Get window handle of OLE object
+ * PARAMS
+ *  lpUnknown [I] Object to get the window handle of
+ *  lphWnd    [O] Destination for window handle
+ *
+ * RETURNS
+ *  Success: S_OK. lphWnd contains the objects window handle.
+ *  Failure: An HRESULT error code.
+ *
+ * NOTES
+ *  lpUnknown is expected to support one of the following interfaces:
+ *   IOleWindow
+ *   IInternetSecurityMgrSite
+ *   IShellView
  */
-DWORD WINAPI SHLWAPI_172 (
-	IUnknown *pUnk,       /* [in]   OLE object interface */
-	LPHWND hWnd)          /* [out]  location to put window handle */
+HRESULT WINAPI SHLWAPI_172(IUnknown *lpUnknown, LPHWND lphWnd)
 {
-        DWORD ret = E_FAIL;
-	IOleWindow *pOleWnd;
+  /* FIXME: Wine has no header for this object */
+  static const GUID IID_IInternetSecurityMgrSite = { 0x79eac9ed,
+    0xbaf9, 0x11ce, { 0x8c, 0x82, 0x00, 0xaa, 0x00, 0x4b, 0xa9, 0x0b }};
+  IUnknown *lpOle;
+  HRESULT hRet = E_FAIL;
 
-        TRACE("(%p %p)\n",pUnk,hWnd);
+  TRACE("(%p,%p)\n", lpUnknown, lphWnd);
 
-	if (pUnk) {
-	    ret = IUnknown_QueryInterface(pUnk, &IID_IOleWindow,(LPVOID *)&pOleWnd);
-	    if (SUCCEEDED(ret)) {
-	        ret = IOleWindow_GetWindow(pOleWnd, hWnd);
-	        IOleWindow_Release(pOleWnd);
-	        TRACE("result hwnd=%08x\n", *hWnd);
-	    }
-	}
+  if (!lpUnknown)
+    return hRet;
 
-	return ret;
+  hRet = IUnknown_QueryInterface(lpUnknown, &IID_IOleWindow, (void**)&lpOle);
+
+  if (FAILED(hRet))
+  {
+    hRet = IUnknown_QueryInterface(lpUnknown,&IID_IShellView, (void**)&lpOle);
+
+    if (FAILED(hRet))
+    {
+      hRet = IUnknown_QueryInterface(lpUnknown, &IID_IInternetSecurityMgrSite,
+                                      (void**)&lpOle);
+    }
+  }
+
+  if (SUCCEEDED(hRet))
+  {
+    /* Lazyness here - Since GetWindow() is the first method for the above 3
+     * interfaces, we use the same call for them all.
+     */
+    hRet = IOleWindow_GetWindow((IOleWindow*)lpOle, lphWnd);
+    IUnknown_Release(lpOle);
+    if (lphWnd)
+      TRACE("Returning HWND=%08x\n", *lphWnd);
+  }
+
+  return hRet;
 }
 
 /*************************************************************************
@@ -1203,54 +1440,101 @@ DWORD WINAPI SHLWAPI_174(
 /*************************************************************************
  *      @	[SHLWAPI.175]
  *
- *	NOTE:
- *	  Param1 can be an IShellFolder Object
+ * Call IPersist::GetClassID on an object.
+ *
+ * PARAMS
+ *  lpUnknown [I] Object supporting the IPersist interface
+ *  lpClassId [O] Destination for Class Id
+ *
+ * RETURNS
+ *  Success: S_OK. lpClassId contains the Class Id requested.
+ *  Failure: E_FAIL, If lpUnknown is NULL,
+ *           E_NOINTERFACE If lpUnknown does not support IPersist,
+ *           Or an HRESULT error code.
  */
-HRESULT WINAPI SHLWAPI_175 (LPVOID x, LPVOID y)
+HRESULT WINAPI SHLWAPI_175 (IUnknown *lpUnknown, CLSID* lpClassId)
 {
-	FIXME("(%p %p) stub\n", x,y);
-	return E_FAIL;
+  IPersist* lpPersist;
+  HRESULT hRet = E_FAIL;
+
+  TRACE("(%p,%p)\n", lpUnknown, debugstr_guid(lpClassId));
+
+  if (lpUnknown)
+  {
+    hRet = IUnknown_QueryInterface(lpUnknown,&IID_IPersist,(void**)&lpPersist);
+    if (SUCCEEDED(hRet))
+    {
+      IPersist_GetClassID(lpPersist, lpClassId);
+      IPersist_Release(lpPersist);
+    }
+  }
+  return hRet;
 }
+
 /*************************************************************************
  *      @	[SHLWAPI.176]
  *
- * _IUnknown_QueryService
+ * Retrieve a Service Interface from an object.
+ *
+ * PARAMS
+ *  lpUnknown [I] Object to get an IServiceProvider interface from
+ *  sid       [I] Service ID for QueryService call
+ *  riid      [I] Function requested for QueryService call
+ *  lppOut    [O] Destination for the service interface pointer
  *
  * Function appears to be interface to IServiceProvider::QueryService
  *
- * NOTE:
- *   returns E_NOINTERFACE
- *           E_FAIL  if w == 0
- *           S_OK    if _219 called successfully
+ * RETURNS
+ *  Success: S_OK. lppOut contains an object providing the requested service
+ *  Failure: An HRESULT error code
+ *
+ * NOTES
+ *  lpUnknown is expected to support the IServiceProvider interface.
  */
-DWORD WINAPI SHLWAPI_176 (
-	IUnknown* unk,    /* [in]    object to give Service Provider */
-	REFGUID   sid,    /* [in]    Service ID                      */
-        REFIID    riid,   /* [in]    Function requested              */
-	LPVOID    *ppv)   /* [out]   place to save interface pointer */
+HRESULT WINAPI SHLWAPI_176(IUnknown* lpUnknown, REFGUID sid, REFIID riid,
+                           LPVOID *lppOut)
 {
-    HRESULT ret = E_FAIL;
-    IServiceProvider *pSP;
-    *ppv = 0;
+  IServiceProvider* pService = NULL;
+  HRESULT hRet;
 
-    TRACE("%p, %s, %s, %p\n", unk, debugstr_guid(sid), debugstr_guid(riid), ppv);
+  if (!lppOut)
+    return E_FAIL;
 
-    if (unk) {
-        ret = IUnknown_QueryInterface(unk, &IID_IServiceProvider,(LPVOID*) &pSP);
-        TRACE("did IU_QI retval=%08lx, aa=%p\n", ret, pSP);
-        if (SUCCEEDED(ret)) {
-            ret = IServiceProvider_QueryService(pSP, sid, riid, (LPVOID*)ppv);
-            TRACE("did ISP_QS retval=%08lx, *z=%p\n", ret, *ppv);
-            IServiceProvider_Release(pSP);
-        }
-    }
-    return ret;
+  *lppOut = NULL;
+
+  if (!lpUnknown)
+    return E_FAIL;
+
+  /* Get an IServiceProvider interface from the object */
+  hRet = IUnknown_QueryInterface(lpUnknown, &IID_IServiceProvider,
+                                 (LPVOID*)&pService);
+
+  if (!hRet && pService)
+  {
+    TRACE("QueryInterface returned (IServiceProvider*)%p\n", pService);
+
+    /* Get a Service interface from the object */
+    hRet = IServiceProvider_QueryService(pService, sid, riid, lppOut);
+
+    TRACE("(IServiceProvider*)%p returned (IUnknown*)%p\n", pService, *lppOut);
+
+    /* Release the IServiceProvider interface */
+    IUnknown_Release(pService);
+  }
+  return hRet;
 }
 
 /*************************************************************************
  *      @	[SHLWAPI.180]
  *
- *      Remove all sub-menus from a menu.
+ * Remove all sub-menus from a menu.
+ *
+ * PARAMS
+ *  hMenu [I] Menu to remove sub-menus from
+ *
+ * RETURNS
+ *  Success: 0.  All sub-menus under hMenu are removed
+ *  Failure: -1, if any parameter is invalid
  */
 DWORD WINAPI SHLWAPI_180(HMENU hMenu)
 {
@@ -1268,7 +1552,15 @@ DWORD WINAPI SHLWAPI_180(HMENU hMenu)
 /*************************************************************************
  *      @	[SHLWAPI.181]
  *
- *	Enable or disable a menu item.
+ * Enable or disable a menu item.
+ *
+ * PARAMS
+ *  hMenu   [I] Menu holding menu item
+ *  uID     [I] ID of menu item to enable/disable
+ *  bEnable [I] Whether to enable (TRUE) or disable (FALSE) the item.
+ *
+ * RETURNS
+ *  The return code from CheckMenuItem.
  */
 UINT WINAPI SHLWAPI_181(HMENU hMenu, UINT wItemID, BOOL bEnable)
 {
@@ -1276,9 +1568,33 @@ UINT WINAPI SHLWAPI_181(HMENU hMenu, UINT wItemID, BOOL bEnable)
 }
 
 /*************************************************************************
+ * @	[SHLWAPI.182]
+ *
+ * Check or uncheck a menu item.
+ *
+ * PARAMS
+ *  hMenu  [I] Menu holding menu item
+ *  uID    [I] ID of menu item to check/uncheck
+ *  bCheck [I] Whether to check (TRUE) or uncheck (FALSE) the item.
+ *
+ * RETURNS
+ *  The return code from CheckMenuItem.
+ */
+DWORD WINAPI SHLWAPI_182(HMENU hMenu, UINT uID, BOOL bCheck)
+{
+  return CheckMenuItem(hMenu, uID, bCheck ? MF_CHECKED : 0);
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.183]
  *
  * Register a window class if it isn't already.
+ *
+ * PARAMS
+ *  lpWndClass [I] Window class to register
+ *
+ * RETURNS
+ *  The result of the RegisterClassA call.
  */
 DWORD WINAPI SHLWAPI_183(WNDCLASSA *wndclass)
 {
@@ -1286,6 +1602,39 @@ DWORD WINAPI SHLWAPI_183(WNDCLASSA *wndclass)
   if (GetClassInfoA(wndclass->hInstance, wndclass->lpszClassName, &wca))
     return TRUE;
   return (DWORD)RegisterClassA(wndclass);
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.187]
+ *
+ * Call IPersistPropertyBag::Load on an object.
+ *
+ * PARAMS
+ *  lpUnknown [I] Object supporting the IPersistPropertyBag interface
+ *  lpPropBag [O] Destination for loaded IPropertyBag
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: An HRESULT error code, or E_FAIL if lpUnknown is NULL.
+ */
+DWORD WINAPI SHLWAPI_187(IUnknown *lpUnknown, IPropertyBag* lpPropBag)
+{
+  IPersistPropertyBag* lpPPBag;
+  HRESULT hRet = E_FAIL;
+
+  TRACE("(%p,%p)\n", lpUnknown, lpPropBag);
+
+  if (lpUnknown)
+  {
+    hRet = IUnknown_QueryInterface(lpUnknown, &IID_IPersistPropertyBag,
+                                   (void**)&lpPPBag);
+    if (SUCCEEDED(hRet) && lpPPBag)
+    {
+      hRet = IPersistPropertyBag_Load(lpPPBag, lpPropBag, NULL);
+      IPersistPropertyBag_Release(lpPPBag);
+    }
+  }
+  return hRet;
 }
 
 /*************************************************************************
@@ -1301,6 +1650,14 @@ DWORD WINAPI SHLWAPI_189(LPVOID x, LPVOID y)
 
 /*************************************************************************
  *      @	[SHLWAPI.193]
+ *
+ * Get the color depth of the primary display.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  The color depth of the primary display.
  */
 DWORD WINAPI SHLWAPI_193 ()
 {
@@ -1319,6 +1676,14 @@ DWORD WINAPI SHLWAPI_193 ()
  *      @       [SHLWAPI.197]
  *
  * Blank out a region of text by drawing the background only.
+ *
+ * PARAMS
+ *  hDC   [I] Device context to draw in
+ *  pRect [I] Area to draw in
+ *  cRef  [I] Color to draw in
+ *
+ * RETURNS
+ *  Nothing.
  */
 DWORD WINAPI SHLWAPI_197(HDC hDC, LPCRECT pRect, COLORREF cRef)
 {
@@ -1332,21 +1697,59 @@ DWORD WINAPI SHLWAPI_197(HDC hDC, LPCRECT pRect, COLORREF cRef)
  *      @	[SHLWAPI.199]
  *
  * Copy interface pointer
+ *
+ * PARAMS
+ *   lppDest   [O] Destination for copy
+ *   lpUnknown [I] Source for copy
+ *
+ * RETURNS
+ *  Nothing.
  */
-DWORD WINAPI SHLWAPI_199 (
-	IUnknown **dest,   /* [out] pointer to copy of interface ptr */
-	IUnknown *src)     /* [in]  interface pointer */
+VOID WINAPI SHLWAPI_199(IUnknown **lppDest, IUnknown *lpUnknown)
 {
-        TRACE("(%p %p)\n",dest,src);
-	if (*dest != src) {
-	    if (*dest)
-		IUnknown_Release(*dest);
-	    if (src) {
-		IUnknown_AddRef(src);
-		*dest = src;
-	    }
-	}
-	return 4;
+  TRACE("(%p,%p)\n", lppDest, lpUnknown);
+
+  if (lppDest)
+    SHLWAPI_169(lppDest); /* Release existing interface */
+
+  if (lpUnknown)
+  {
+    /* Copy */
+    IUnknown_AddRef(lpUnknown);
+    *lppDest = lpUnknown;
+  }
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.201]
+ *
+ */
+HRESULT WINAPI SHLWAPI_201(IUnknown* lpUnknown, INT iUnk, REFGUID pguidCmdGroup,
+                           DWORD nCmdID, DWORD nCmdexecopt, VARIANT* pvaIn,
+                           VARIANT* pvaOut)
+{
+  FIXME("(%p,%d,%p,%ld,%ld,%p,%p) - stub!\n", lpUnknown, iUnk, pguidCmdGroup,
+        nCmdID, nCmdexecopt, pvaIn, pvaOut);
+  return DRAGDROP_E_NOTREGISTERED;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.202]
+ *
+ */
+HRESULT WINAPI SHLWAPI_202(REFGUID pguidCmdGroup,ULONG cCmds, OLECMD *prgCmds)
+{
+  FIXME("(%p,%ld,%p) - stub!\n", pguidCmdGroup, cCmds, prgCmds);
+  return DRAGDROP_E_NOTREGISTERED;
+}
+
+/*************************************************************************
+ *      @	[SHLWAPI.203]
+ *
+ */
+VOID WINAPI SHLWAPI_203(LPCSTR lpszStr)
+{
+  FIXME("(%s) - stub!\n", debugstr_a(lpszStr));
 }
 
 /*************************************************************************
@@ -1670,7 +2073,16 @@ DWORD WINAPI SHLWAPI_239(HINSTANCE hInstance, LPVOID p2, DWORD dw3)
 /*************************************************************************
  *      @	[SHLWAPI.240]
  *
- *	Calls ASCII or Unicode WindowProc for the given window.
+ * Call The correct (ASCII/Unicode) default window procedure for a window.
+ *
+ * PARAMS
+ *  hWnd     [I] Window to call the default proceedure for
+ *  uMessage [I] Message ID
+ *  wParam   [I] WPARAM of message
+ *  lParam   [I] LPARAM of message
+ *
+ * RETURNS
+ *  The result of calling the window proceedure.
  */
 LRESULT CALLBACK SHLWAPI_240(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam)
 {
@@ -1738,42 +2150,84 @@ HRESULT WINAPI SHLWAPI_267 (
 
 /*************************************************************************
  *      @	[SHLWAPI.268]
- * NOTES
- *   pInner is returned by SHLWAPI_267 as ppv
+ *
+ * Move a reference from one interface to another.
+ *
+ * PARAMS
+ *   lpDest     [O] Destination to receive the reference
+ *   lppUnknown [O] Source to give up the reference to lpDest
+ *
+ * RETURNS
+ *  Nothing.
  */
-DWORD WINAPI SHLWAPI_268 (
-	IUnknown * pUnk,
-	IUnknown ** pInner)
+VOID WINAPI SHLWAPI_268(IUnknown *lpDest, IUnknown **lppUnknown)
 {
-	DWORD ret = 0;
+  TRACE("(%p,%p)\n", lpDest, lppUnknown);
 
-	TRACE("(pUnk=%p pInner=%p)\n",pUnk,pInner);
-
-	IUnknown_AddRef(pUnk);
-	if (pInner && *pInner) {
-	  ret = IUnknown_Release(*pInner);
-	  *pInner = NULL;
-	}
-	TRACE("-- count=%lu\n",ret);
-	return ret;
+  if (*lppUnknown)
+  {
+    /* Copy Reference*/
+    IUnknown_AddRef(lpDest);
+    SHLWAPI_169(lppUnknown); /* Release existing interface */
+  }
 }
 
 /*************************************************************************
  *      @	[SHLWAPI.276]
  *
- * on first call process does following:  other calls just returns 2
- *  instance = LoadLibraryA("SHELL32.DLL");
- *  func = GetProcAddress(instance, "DllGetVersion");
- *  ret = RegOpenKeyExA(80000002, "Software\\Microsoft\\Internet Explorer",00000000,0002001f, newkey);
- *  ret = RegQueryValueExA(newkey, "IntegratedBrowser",00000000,00000000,4052588c,40525890);
- *  RegCloseKey(newkey);
- *  FreeLibrary(instance);
- *  return 2;
+ * Determine if the browser is integrated into the shell, and set a registry
+ * key accordingly.
+ *
+ * PARAMS
+ *  None.
+ *
+ * RETURNS
+ *  1, If the browser is not integrated.
+ *  2, If the browser is integrated.
+ *
+ * NOTES
+ *  The key HKLM\Software\Microsoft\Internet Explorer\IntegratedBrowser is
+ *  either set to TRUE, or removed depending on whether the browser is deemed
+ *  to be integrated.
  */
-DWORD WINAPI SHLWAPI_276 ()
+DWORD WINAPI SHLWAPI_276()
 {
-	FIXME("()stub\n");
-	return /* 0xabba1244 */ 2;
+  static LPCSTR szIntegratedBrowser = "IntegratedBrowser";
+  static DWORD dwState = 0;
+  HKEY hKey;
+  DWORD dwRet, dwData, dwSize;
+
+  if (dwState)
+    return dwState;
+
+  /* If shell32 exports DllGetVersion(), the browser is integrated */
+  GET_FUNC(pDllGetVersion, shell32, "DllGetVersion", 1);
+  dwState = pDllGetVersion ? 2 : 1;
+
+  /* Set or delete the key accordinly */
+  dwRet = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+                        "Software\\Microsoft\\Internet Explorer", 0,
+                         KEY_ALL_ACCESS, &hKey);
+  if (!dwRet)
+  {
+    dwRet = RegQueryValueExA(hKey, szIntegratedBrowser, 0, 0,
+                             (LPBYTE)&dwData, &dwSize);
+
+    if (!dwRet && dwState == 1)
+    {
+      /* Value exists but browser is not integrated */
+      RegDeleteValueA(hKey, szIntegratedBrowser);
+    }
+    else if (dwRet && dwState == 2)
+    {
+      /* Browser is integrated but value does not exist */
+      dwData = TRUE;
+      RegSetValueExA(hKey, szIntegratedBrowser, 0, REG_DWORD,
+                     (LPBYTE)&dwData, sizeof(dwData));
+    }
+    RegCloseKey(hKey);
+  }
+  return dwState;
 }
 
 /*************************************************************************
@@ -2450,19 +2904,19 @@ DWORD WINAPI SHLWAPI_436 (LPWSTR idstr, CLSID *id)
 /*************************************************************************
  *      @	[SHLWAPI.437]
  *
- * NOTES
- *  In the real shlwapi, One time initialisation calls GetVersionEx and reads
- *  the registry to determine what O/S & Service Pack level is running, and
- *  therefore which functions are available. Currently we always run as NT,
- *  since this means that we don't need extra code to emulate Unicode calls,
- *  they are forwarded directly to the appropriate API call instead.
- *  Since the flags for whether to call or emulate Unicode are internal to
- *  the dll, this function does not need a full implementation.
+ * Determine if the OS supports a given feature.
+ *
+ * PARAMS
+ *  dwFeature [I] Feature requested (undocumented)
+ *
+ * RETURNS
+ *  TRUE  If the feature is available.
+ *  FALSE If the feature is not available.
  */
-DWORD WINAPI SHLWAPI_437 (DWORD functionToCall)
+DWORD WINAPI SHLWAPI_437 (DWORD feature)
 {
-	FIXME("(0x%08lx)stub\n", functionToCall);
-	return /* 0xabba1247 */ 0;
+  FIXME("(0x%08lx) stub\n", feature);
+  return FALSE;
 }
 
 /*************************************************************************
@@ -2528,4 +2982,42 @@ INT WINAPI GetMenuPosFromID(HMENU hMenu, UINT wID)
    nIter++;
  }
  return -1;
+}
+
+/*************************************************************************
+ * SHSkipJunction	[SHLWAPI.@]
+ *
+ * Determine if a bind context can be bound to an object
+ *
+ * PARAMS
+ *  pbc    [I] Bind context to check
+ *  pclsid [I] CLSID of object to be bound to
+ *
+ * RETURNS
+ *  TRUE: If it is safe to bind
+ *  FALSE: If pbc is invalid or binding would not be safe
+ *
+ */
+BOOL WINAPI SHSkipJunction(IBindCtx *pbc, const CLSID *pclsid)
+{
+  static WCHAR szSkipBinding[] = { 'S','k','i','p',' ',
+    'B','i','n','d','i','n','g',' ','C','L','S','I','D','\0' };
+  BOOL bRet = FALSE;
+
+  if (pbc)
+  {
+    IUnknown* lpUnk;
+
+    if (SUCCEEDED(IBindCtx_GetObjectParam(pbc, szSkipBinding, &lpUnk)))
+    {
+      CLSID clsid;
+
+      if (SUCCEEDED(SHLWAPI_175(lpUnk, &clsid)) &&
+          IsEqualGUID(pclsid, &clsid))
+        bRet = TRUE;
+
+      IUnknown_Release(lpUnk);
+    }
+  }
+  return bRet;
 }
