@@ -387,20 +387,20 @@ HRESULT WINAPI ItemMonikerImpl_Construct(ItemMonikerImpl* This, LPCOLESTR lpszDe
     This->itemName=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(sizeStr1+1));
     if (!This->itemName)
 	return E_OUTOFMEMORY;
-    strcpyW(This->itemName,lpszItem);
+    lstrcpyW(This->itemName,lpszItem);
 
     if (!lpszDelim)
 	FIXME("lpszDelim is NULL. Using empty string which is possibly wrong.\n");
 
     delim = lpszDelim ? lpszDelim : emptystr;
 
-    sizeStr2=strlenW(delim);
+    sizeStr2=lstrlenW(delim);
     This->itemDelimiter=HeapAlloc(GetProcessHeap(),0,sizeof(WCHAR)*(sizeStr2+1));
     if (!This->itemDelimiter) {
 	HeapFree(GetProcessHeap(),0,This->itemName);
 	return E_OUTOFMEMORY;
     }
-    strcpyW(This->itemDelimiter,delim);
+    lstrcpyW(This->itemDelimiter,delim);
     return S_OK;
 }
 
@@ -611,32 +611,28 @@ HRESULT WINAPI ItemMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker
     CLSID clsid;
     LPOLESTR dispName1,dispName2;
     IBindCtx* bind;
-    HRESULT res;
+    HRESULT res = S_FALSE;
 
     TRACE("(%p,%p)\n",iface,pmkOtherMoniker);
 
-    if (pmkOtherMoniker==NULL)
-        return S_FALSE;
+    if (!pmkOtherMoniker) return S_FALSE;
 
-    /* This method returns S_OK if both monikers are item monikers and their display names are */
-    /* identical (using a case-insensitive comparison); otherwise, the method returns S_FALSE. */
 
-    IMoniker_GetClassID(pmkOtherMoniker,&clsid);
+    /* check if both are ItemMoniker */
+    if(FAILED (IMoniker_GetClassID(pmkOtherMoniker,&clsid))) return S_FALSE;
+    if(!IsEqualCLSID(&clsid,&CLSID_ItemMoniker)) return S_FALSE;
 
-    if (!IsEqualCLSID(&clsid,&CLSID_ItemMoniker))
-        return S_FALSE;
-
-    res=CreateBindCtx(0,&bind);
-    if (FAILED(res))
-        return res;
-
-    IMoniker_GetDisplayName(iface,bind,NULL,&dispName1);
-    IMoniker_GetDisplayName(pmkOtherMoniker,bind,NULL,&dispName2);
-
-    if (lstrcmpW(dispName1,dispName2)!=0)
-        return S_FALSE;
-
-    return S_OK;
+    /* check if both displaynames are the same */
+    if(SUCCEEDED ((res = CreateBindCtx(0,&bind)))) {
+        if(SUCCEEDED (IMoniker_GetDisplayName(iface,bind,NULL,&dispName1))) {
+	    if(SUCCEEDED (IMoniker_GetDisplayName(pmkOtherMoniker,bind,NULL,&dispName2))) {
+                if(lstrcmpW(dispName1,dispName2)==0) res = S_OK;
+                CoTaskMemFree(dispName2);
+            }
+            CoTaskMemFree(dispName1);
+	}
+    }
+    return res;
 }
 
 /******************************************************************************
@@ -842,8 +838,8 @@ HRESULT WINAPI ItemMonikerImpl_GetDisplayName(IMoniker* iface,
     if (*ppszDisplayName==NULL)
         return E_OUTOFMEMORY;
 
-    strcpyW(*ppszDisplayName,This->itemDelimiter);
-    strcatW(*ppszDisplayName,This->itemName);
+    lstrcpyW(*ppszDisplayName,This->itemDelimiter);
+    lstrcatW(*ppszDisplayName,This->itemName);
 
     return S_OK;
 }

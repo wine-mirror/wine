@@ -870,21 +870,18 @@ HRESULT WINAPI FileMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker
     IMoniker_GetClassID(pmkOtherMoniker,&clsid);
 
     if (!IsEqualCLSID(&clsid,&CLSID_FileMoniker))
-
         return S_FALSE;
 
-    res=CreateBindCtx(0,&bind);
-    if (FAILED(res))
-        return res;
+    res = CreateBindCtx(0,&bind);
+    if (FAILED(res)) return res;
 
-    IMoniker_GetDisplayName(pmkOtherMoniker,bind,NULL,&filePath);
+    if (SUCCEEDED(IMoniker_GetDisplayName(pmkOtherMoniker,bind,NULL,&filePath))) {
+	int result = lstrcmpiW(filePath, This->filePathName);
+	CoTaskMemFree(filePath);
+        if ( result == 0 ) return S_OK;
+    }
+    return S_FALSE;
 
-    if (lstrcmpiW(filePath,
-                  This->filePathName)!=0)
-
-        return S_FALSE;
-
-    return S_OK;
 }
 
 /******************************************************************************
