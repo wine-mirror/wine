@@ -1269,7 +1269,7 @@ static LRESULT LISTBOX_SetSelection( WND *wnd, LB_DESCR *descr, INT index,
         if (oldsel != -1) descr->items[oldsel].selected = FALSE;
         if (index != -1) descr->items[index].selected = TRUE;
         descr->selected_item = index;
-        if (oldsel != -1) LISTBOX_RepaintItem( wnd, descr, oldsel, 0 );
+        if (oldsel != -1) LISTBOX_RepaintItem( wnd, descr, oldsel, ODA_SELECT );
         if (index != -1) LISTBOX_RepaintItem( wnd, descr, index, ODA_SELECT );
         if (send_notify && descr->nb_items) SEND_NOTIFICATION( wnd, descr,
                                (index != -1) ? LBN_SELCHANGE : LBN_SELCANCEL );
@@ -1294,8 +1294,8 @@ static void LISTBOX_MoveCaret( WND *wnd, LB_DESCR *descr, INT index,
     {
         if (descr->anchor_item != -1)
         {
-            INT first = MIN( descr->focus_item, descr->anchor_item );
-            INT last  = MAX( descr->focus_item, descr->anchor_item );
+            INT first = min( descr->focus_item, descr->anchor_item );
+            INT last  = max( descr->focus_item, descr->anchor_item );
             if (first > 0)
                 LISTBOX_SelectItemRange( wnd, descr, 0, first - 1, FALSE );
             LISTBOX_SelectItemRange( wnd, descr, last + 1, -1, FALSE );
