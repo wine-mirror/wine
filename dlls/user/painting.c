@@ -441,11 +441,15 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
     {
         DWORD size;
         RGNDATA *data = NULL;
+        static const RECT empty;
 
         if (!(size = GetRegionData( hrgn, 0, NULL ))) return FALSE;
         if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
         GetRegionData( hrgn, size, data );
-        ret = redraw_window_rects( hwnd, flags, (RECT *)data->Buffer, data->rdh.nCount );
+        if (!data->rdh.nCount)  /* empty region -> use a single all-zero rectangle */
+            ret = redraw_window_rects( hwnd, flags, &empty, 1 );
+        else
+            ret = redraw_window_rects( hwnd, flags, (const RECT *)data->Buffer, data->rdh.nCount );
         HeapFree( GetProcessHeap(), 0, data );
     }
 
