@@ -737,7 +737,6 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(
 ) {
 	HRESULT hres = DS_OK;
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
-	LONG oldPan;
 
 	TRACE("(%p,%ld)\n",This,pan);
 
@@ -756,10 +755,8 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(
 	/* **** */
 	EnterCriticalSection(&(This->lock));
 
-	oldPan = This->volpan.lPan;
-	This->volpan.lPan = pan;
-
-	if (pan != oldPan) {
+	if (This->volpan.lPan != pan) {
+		This->volpan.lPan = pan;
 		DSOUND_RecalcVolPan(&(This->volpan));
 
 		if (This->hwbuf) {
