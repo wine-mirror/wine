@@ -1496,7 +1496,16 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Lock(
 	assert(audiobytes1!=audiobytes2);
 	assert(lplpaudioptr1!=lplpaudioptr2);
 
-	This->probably_valid_to = writecursor;
+	if ((writebytes == This->buflen) &&
+	    ((This->state == STATE_STARTING) ||
+	     (This->state == STATE_PLAYING)))
+		/* some games, like Half-Life, tries to be clever (not) and
+		 * keeps one secondary buffer, and mixes sounds into it itself,
+		 * locking the entire buffer every time... so we can just forget
+		 * about tracking the last-written-to-position... */
+		This->probably_valid_to = (DWORD)-1;
+	else
+		This->probably_valid_to = writecursor;
 
 	if (This->dsbd.dwFlags & DSBCAPS_PRIMARYBUFFER)
 		capf = DSDDESC_DONTNEEDPRIMARYLOCK;
@@ -1600,7 +1609,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 	LPDIRECTSOUNDBUFFER iface,LPVOID p1,DWORD x1,LPVOID p2,DWORD x2
 ) {
 	ICOM_THIS(IDirectSoundBufferImpl,iface);
-	DWORD capf;
+	DWORD capf, probably_valid_to;
 
 	TRACE("(%p,%p,%ld,%p,%ld):stub\n", This,p1,x1,p2,x2);
 
@@ -1620,10 +1629,16 @@ static HRESULT WINAPI IDirectSoundBufferImpl_Unlock(
 		IDsDriverBuffer_Unlock(This->hwbuf, p1, x1, p2, x2);
 	}
 
-	if (p2) This->probably_valid_to = (((LPBYTE)p2)-This->buffer) + x2;
-	else This->probably_valid_to = (((LPBYTE)p1)-This->buffer) + x1;
-	while (This->probably_valid_to >= This->buflen)
-		This->probably_valid_to -= This->buflen;
+	if (p2) probably_valid_to = (((LPBYTE)p2)-This->buffer) + x2;
+	else probably_valid_to = (((LPBYTE)p1)-This->buffer) + x1;
+	while (probably_valid_to >= This->buflen)
+		probably_valid_to -= This->buflen;
+	if ((probably_valid_to == 0) && ((x1+x2) == This->buflen) &&
+	    ((This->state == STATE_STARTING) ||
+	     (This->state == STATE_PLAYING)))
+		/* see IDirectSoundBufferImpl_Lock */
+		probably_valid_to = (DWORD)-1;
+	This->probably_valid_to = probably_valid_to;
 
 	return DS_OK;
 }
@@ -2796,9 +2811,9 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	}
 	TRACE("new primary_mixpos=%ld, primary_advbase=%ld\n", dsb->primary_mixpos, primarybuf->buf_mixpos);
 	TRACE("mixed data len=%ld, still_behind=%d\n", mixlen-len, still_behind);
-	if (still_behind) return 0;
 	/* return how far we think the primary buffer can
 	 * advance its underrun detector...*/
+	if (still_behind) return 0;
 	if ((mixlen - len) < primary_done) return 0;
 	slen = ((dsb->primary_mixpos < primarybuf->buf_mixpos) ?
 		primarybuf->buflen : 0) + dsb->primary_mixpos -
@@ -2962,7 +2977,7 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 			while (primarybuf->buf_mixpos >= primarybuf->buflen)
 				primarybuf->buf_mixpos -= primarybuf->buflen;
 
-			if (inq) {
+			if (frag) {
 				/* buffers have been filled, restart playback */
 				if (primarybuf->state == STATE_STARTING) {
 					IDsDriverBuffer_Play(primarybuf->hwbuf, 0, 0, DSBPLAY_LOOPING);
@@ -3066,6 +3081,7 @@ static void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw
 		}
 		LeaveCriticalSection(&(primarybuf->lock));
 	}
+	TRACE("completed processing\n");
 	LeaveCriticalSection(&(dsound->lock));
 }
 
