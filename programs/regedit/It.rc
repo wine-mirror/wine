@@ -236,7 +236,6 @@ BEGIN
     IDS_DELETE_BOX_TEXT     "Sei sicuro di voler cancellare il valore '%s'?"
     IDS_NEWKEY              "Nuova Chiave #%d"
     IDS_NEWVALUE            "Nuovo Valore #%d"
-
 END
 
 /*****************************************************************/
