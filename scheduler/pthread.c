@@ -123,6 +123,11 @@ int *__h_errno_location(void)
     return &descr->thread_h_errno;
 }
 
+struct __res_state *__res_state(void)
+{
+    pthread_descr descr = __pthread_thread_self();
+    return &descr->res_state;
+}
 
 static inline void writejump( const char *symbol, void *dest )
 {
@@ -259,12 +264,6 @@ static int *(*libc_pthread_init)( const struct pthread_functions *funcs );
 static struct pthread_functions libc_pthread_functions;
 
 strong_alias(__pthread_thread_self, pthread_thread_self);
-
-struct __res_state *__res_state(void)
-{
-    pthread_descr descr = __pthread_thread_self();
-    return &descr->res_state;
-}
 
 /* redefine this to prevent libpthread from overriding our function pointers */
 int *__libc_pthread_init( const struct pthread_functions *funcs )
