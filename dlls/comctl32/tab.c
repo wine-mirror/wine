@@ -2,6 +2,7 @@
  * Tab control
  *
  * Copyright 1998 Anders Carlsson
+ * Copyright 1999 Alex Priem <alexp@sci.kun.nl>
  *
  * TODO:
  *  Image list support
@@ -9,8 +10,7 @@
  *  Unicode support
  *  Updown control support
  *  Look and feel
- *  Messages to be added in commctrl.h
- *  ...
+ *
  */
 
 #include "windows.h"
@@ -25,6 +25,7 @@
 
 
 
+static void TAB_Refresh (WND *wndPtr, HDC32 hdc);
 
 
 static BOOL32
@@ -40,12 +41,49 @@ TAB_SendSimpleNotify (WND *wndPtr, UINT32 code)
 				    (WPARAM32) nmhdr.idFrom, (LPARAM) &nmhdr);
 }
 
+
+static VOID
+TAB_RelayEvent (HWND32 hwndTip, HWND32 hwndMsg, UINT32 uMsg,
+            WPARAM32 wParam, LPARAM lParam)
+{
+    MSG32 msg;
+
+    msg.hwnd = hwndMsg;
+    msg.message = uMsg;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    msg.time = GetMessageTime ();
+    msg.pt.x = LOWORD(GetMessagePos ());
+    msg.pt.y = HIWORD(GetMessagePos ());
+
+    SendMessage32A (hwndTip, TTM_RELAYEVENT, 0, (LPARAM)&msg);
+}
+
+
+
 static LRESULT
 TAB_GetCurSel (WND *wndPtr)
 {
     TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
  
     return infoPtr->iSelected;
+}
+
+static LRESULT
+TAB_GetCurFocus (WND *wndPtr)
+{
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+ 
+    return infoPtr->uFocus;
+}
+
+static LRESULT
+TAB_GetToolTips (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+
+    if (infoPtr == NULL) return 0;
+    return infoPtr->hwndToolTip;
 }
 
 
@@ -65,39 +103,132 @@ TAB_SetCurSel (WND *wndPtr,WPARAM32 wParam)
 }
 
 static LRESULT
+TAB_SetCurFocus (WND *wndPtr,WPARAM32 wParam)
+{
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+	INT32 iItem=(INT32) wParam;
+	HDC32 hdc;
+ 
+	if ((iItem < 0) || (iItem > infoPtr->uNumItem)) return 0;
+
+   	infoPtr->uFocus=iItem;
+	if (wndPtr->dwStyle & TCS_BUTTONS) {
+		FIXME (tab,"Should set input focus\n");
+	} else { 
+		if (infoPtr->iSelected != iItem) {
+	    	if (TAB_SendSimpleNotify(wndPtr, TCN_SELCHANGING)!=TRUE)  {
+				infoPtr->iSelected = iItem;
+				TAB_SendSimpleNotify(wndPtr, TCN_SELCHANGE);
+    			hdc = GetDC32 (wndPtr->hwndSelf);
+    			TAB_Refresh (wndPtr, hdc);
+    			ReleaseDC32 (wndPtr->hwndSelf, hdc);
+			}
+		}
+	}
+  return 0;
+}
+
+static LRESULT
+TAB_SetToolTips (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+
+    if (infoPtr == NULL) return 0;
+    infoPtr->hwndToolTip = (HWND32)wParam;
+    return 0;
+}
+
+
+static HWND32 TAB_InternalHitTest (TAB_INFO *infoPtr, POINT32 pt, 
+									UINT32 *flags)
+
+{
+  RECT32 rect;
+  int iCount; 
+  
+  for (iCount = 0; iCount < infoPtr->uNumItem; iCount++) {
+	    rect = infoPtr->items[iCount].rect;
+	    if (PtInRect32 (&rect, pt)) return iCount;
+	}
+  *flags=TCHT_NOWHERE;
+  return -1;
+}
+
+static LRESULT
+TAB_HitTest (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+	LPTCHITTESTINFO lptest=(LPTCHITTESTINFO) lParam;
+ 
+    return TAB_InternalHitTest (infoPtr,lptest->pt,&lptest->flags);
+}
+
+
+static LRESULT
+TAB_LButtonDown (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+
+	if (infoPtr->hwndToolTip)
+    TAB_RelayEvent (infoPtr->hwndToolTip, wndPtr->hwndSelf,
+                WM_LBUTTONDOWN, wParam, lParam);
+
+	if (wndPtr->dwStyle & TCS_FOCUSONBUTTONDOWN ) {
+		SetFocus32 (wndPtr->hwndSelf);
+	}
+	return 0;
+}
+
+static LRESULT
 TAB_LButtonUp (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
     TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
     POINT32 pt;
-    RECT32 rect;
-    INT32 iCount;
+    INT32 newItem,dummy;
+	HDC32 hdc;
+
+	if (infoPtr->hwndToolTip)
+    TAB_RelayEvent (infoPtr->hwndToolTip, wndPtr->hwndSelf,
+                WM_LBUTTONDOWN, wParam, lParam);
 
     pt.x = (INT32)LOWORD(lParam);
     pt.y = (INT32)HIWORD(lParam);
 
-    GetClientRect32 (wndPtr->hwndSelf, &rect);
-
-    if (PtInRect32 (&rect, pt))
-    {
-	for (iCount = 0; iCount < infoPtr->uNumItem; iCount++) {
-	    rect = infoPtr->items[iCount].rect;
-	    if (PtInRect32 (&rect, pt)) {
-		TRACE(tab, "On Tab, item %d\n", iCount);
+	newItem=TAB_InternalHitTest (infoPtr,pt,&dummy);
+	if (!newItem) return 0;
+	TRACE(tab, "On Tab, item %d\n", newItem);
 		
-		if (infoPtr->iSelected != iCount) {
-			infoPtr->iSelected = iCount;
-
+	if (infoPtr->iSelected != newItem) {
+	    if (TAB_SendSimpleNotify(wndPtr, TCN_SELCHANGING)!=TRUE)  {
+			infoPtr->iSelected = newItem;
 			TAB_SendSimpleNotify(wndPtr, TCN_SELCHANGE);
+    		hdc = GetDC32 (wndPtr->hwndSelf);
+    		TAB_Refresh (wndPtr, hdc);
+    		ReleaseDC32 (wndPtr->hwndSelf, hdc);
 		}
-		
-		return 0;
-	    }
 	}
-    }
+	TAB_SendSimpleNotify(wndPtr, NM_CLICK);
 
     return 0;
 }
 
+static LRESULT
+TAB_RButtonDown (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+	TAB_SendSimpleNotify(wndPtr, NM_RCLICK);
+	return 0;
+}
+
+static LRESULT
+TAB_MouseMove (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+{
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+
+    if (infoPtr->hwndToolTip)
+    TAB_RelayEvent (infoPtr->hwndToolTip, wndPtr->hwndSelf,
+                WM_LBUTTONDOWN, wParam, lParam);
+	return 0;
+}
 
 static LRESULT
 TAB_AdjustRect (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
@@ -124,6 +255,7 @@ TAB_SetItemBounds (WND *wndPtr)
 
     /* FIXME: Is this needed? */
     GetClientRect32 (wndPtr->hwndSelf, &rect);
+	left += (size.cx + 11);
     
     hdc = GetDC32(wndPtr->hwndSelf); 
     
@@ -134,15 +266,20 @@ TAB_SetItemBounds (WND *wndPtr)
     
     for (i = 0; i < infoPtr->uNumItem; i++)
     {
+	if (wndPtr->dwStyle & TCS_BOTTOM) {
+    	infoPtr->items[i].rect.bottom = rect.bottom;
+		infoPtr->items[i].rect.top    = rect.bottom-20;
+	} else {
+		infoPtr->items[i].rect.top    = rect.top;
+    	infoPtr->items[i].rect.bottom = rect.top + 20;
+	}
 	infoPtr->items[i].rect.left = left;
-	infoPtr->items[i].rect.top = infoPtr->rect.top;
 
 	GetTextExtentPoint32A(hdc, 
 			     infoPtr->items[i].pszText, 
 			     lstrlen32A(infoPtr->items[i].pszText), &size);
 	infoPtr->items[i].rect.right = left + size.cx+2*5;
-        infoPtr->items[i].rect.bottom = infoPtr->rect.top + 20;
-	TRACE(tab, "TextSize: %i - ", size.cx);
+	TRACE(tab, "TextSize: %i\n ", size.cx);
 	TRACE(tab, "Rect: T %i, L %i, B %i, R %i\n", 
 	      infoPtr->items[i].rect.top,
 	      infoPtr->items[i].rect.left,
@@ -161,7 +298,8 @@ TAB_DrawItem (WND *wndPtr, HDC32 hdc, INT32 iItem)
     TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
     TAB_ITEM *pti = &infoPtr->items[iItem];
     RECT32 r;
-    INT32 oldBkMode;
+    INT32 oldBkMode,cx,cy;
+  HBRUSH32 hbr = CreateSolidBrush32 (COLOR_BACKGROUND);
    
     HPEN32	hwPen  = GetSysColorPen32 (COLOR_3DHILIGHT);
     HPEN32	hbPen  = GetSysColorPen32 (COLOR_BTNSHADOW);
@@ -170,26 +308,50 @@ TAB_DrawItem (WND *wndPtr, HDC32 hdc, INT32 iItem)
 
     CopyRect32(&r, &pti->rect);
 
+/* demo */
+    FillRect32(hdc, &r, hbr);
+	
+	
+
+
     htmpPen = hwPen;
     htmpPen = SelectObject32 (hdc, htmpPen);
-    MoveToEx32 (hdc, r.left, r.bottom, NULL);
-    LineTo32 (hdc, r.left, r.top + 2);
-    LineTo32 (hdc, r.left +2, r.top);
+	if (wndPtr->dwStyle & TCS_BOTTOM) {
+    	MoveToEx32 (hdc, r.left, r.top, NULL);
+    	LineTo32 (hdc, r.left, r.bottom - 2);
+    	LineTo32 (hdc, r.left +2, r.bottom);
+    	LineTo32 (hdc, r.right -1, r.bottom);
+    	htmpPen = SelectObject32 (hdc, hbPen); 
+    	MoveToEx32 (hdc, r.right-1, r.top, NULL);
+    	LineTo32 (hdc,r.right-1, r.bottom-1);
+    	hbPen = SelectObject32 (hdc, hsdPen);
+    	MoveToEx32 (hdc, r.right, r.top+1, NULL);
+    	LineTo32(hdc, r.right,r.bottom);
+    } else {
+    	MoveToEx32 (hdc, r.left, r.bottom, NULL);
+    	LineTo32 (hdc, r.left, r.top + 2);
+    	LineTo32 (hdc, r.left +2, r.top);
+    	LineTo32 (hdc, r.right -1, r.top);
+    	htmpPen = SelectObject32 (hdc, hbPen); 
+    	MoveToEx32 (hdc, r.right-1, r.bottom, NULL);
+    	LineTo32 (hdc,r.right-1, r.top+1);
+    	hbPen = SelectObject32 (hdc, hsdPen);
+    	MoveToEx32 (hdc, r.right, r.bottom-1, NULL);
+    	LineTo32(hdc, r.right,r.top);
+	}
 
-    LineTo32 (hdc, r.right -1, r.top);
-    htmpPen = SelectObject32 (hdc, htmpPen);
+   	hsdPen = SelectObject32(hdc,htmpPen); 
 
-    htmpPen = SelectObject32 (hdc, hbPen);
-    MoveToEx32 (hdc, r.right-1, r.top, NULL);
-    LineTo32 (hdc,r.right-1, r.bottom-1);
-    hbPen = SelectObject32 (hdc, hsdPen);
-    MoveToEx32 (hdc, r.right, r.top+1, NULL);
-    LineTo32(hdc, r.right,r.bottom);
-    hsdPen = SelectObject32(hdc,htmpPen); 
-
-    oldBkMode = SetBkMode32(hdc, TRANSPARENT);
+    oldBkMode = SetBkMode32(hdc, TRANSPARENT); 
     r.left += 3;
     r.right -= 3;
+
+	if (infoPtr->himl) {
+		ImageList_Draw (infoPtr->himl, iItem, hdc, 
+						r.left, r.top+1, ILD_NORMAL);
+		ImageList_GetIconSize (infoPtr->himl, &cx, &cy);
+		r.left+=cx+3;
+		}
     SetTextColor32 (hdc, COLOR_BTNTEXT);
     DrawText32A(hdc, pti->pszText, lstrlen32A(pti->pszText),
 	&r, DT_LEFT|DT_SINGLELINE|DT_VCENTER);
@@ -233,6 +395,8 @@ TAB_Refresh (WND *wndPtr, HDC32 hdc)
     HFONT32 hOldFont;
     INT32 i;
 
+	if (!infoPtr->DoRedraw) return;
+
     TAB_DrawBorder (wndPtr, hdc);
 
 	hOldFont = SelectObject32 (hdc, infoPtr->hFont);
@@ -240,6 +404,15 @@ TAB_Refresh (WND *wndPtr, HDC32 hdc)
 	TAB_DrawItem (wndPtr, hdc, i);
     }
 	SelectObject32 (hdc, hOldFont);
+}
+
+static LRESULT
+TAB_SetRedraw (WND *wndPtr, WPARAM32 wParam)
+{
+    TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr);
+	
+	infoPtr->DoRedraw=(BOOL32) wParam;
+	return 0;
 }
 
 static LRESULT
@@ -263,6 +436,11 @@ TAB_InsertItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     TCITEM32A *pti;
     HDC32  hdc;
     INT32 iItem, len;
+    RECT32 rect;
+
+    GetClientRect32 (wndPtr->hwndSelf, &rect);
+	TRACE(tab, "Rect: %x T %i, L %i, B %i, R %i\n", wndPtr->hwndSelf,
+	      rect.top, rect.left, rect.bottom, rect.right);	
 
     pti = (TCITEM32A *)lParam;
     iItem = (INT32)wParam;
@@ -404,11 +582,10 @@ TAB_GetItem32A (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 static LRESULT 
 TAB_DeleteItem (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
-    /* TAB_INFO *infoPtr = TAB_GetInfoPtr(wndPtr); */
-
 	FIXME (tab,"stub \n");
 	return TRUE;
 }
+
 static LRESULT 
 TAB_DeleteAllItems (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
@@ -479,6 +656,40 @@ TAB_SetImageList (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     return (LRESULT)himlPrev;
 }
 
+
+static LRESULT
+TAB_Size (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
+
+{
+  RECT32 parent_rect;
+  HWND32 parent;
+  HDC32 hdc;
+  UINT32 uPosFlags,cx,cy;
+
+  uPosFlags=0;
+  if (!wParam) {
+  	parent = GetParent32 (wndPtr->hwndSelf);
+  	GetClientRect32(parent, &parent_rect);
+  	cx=LOWORD (lParam);
+  	cy=HIWORD (lParam);
+  	if (wndPtr->dwStyle & CCS_NORESIZE) 
+        uPosFlags |= (SWP_NOSIZE | SWP_NOMOVE);
+
+  	SetWindowPos32 (wndPtr->hwndSelf, 0, parent_rect.left, parent_rect.top,
+            cx, cy, uPosFlags | SWP_NOZORDER);
+	} else {
+    FIXME (tab,"WM_SIZE flag %x %lx not handled\n", wParam, lParam);
+  } 
+
+  TAB_SetItemBounds (wndPtr);
+  hdc = GetDC32 (wndPtr->hwndSelf);
+  TAB_Refresh (wndPtr, hdc);
+  ReleaseDC32 (wndPtr->hwndSelf, hdc);
+
+  return 0;
+}
+
+
 static LRESULT 
 TAB_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 {
@@ -492,8 +703,32 @@ TAB_Create (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
     infoPtr->items = 0;
     infoPtr->hcurArrow = LoadCursor32A (0, IDC_ARROW32A);
     infoPtr->iSelected = -1;  
+	infoPtr->hwndToolTip=0;
   
     TRACE(tab, "Created tab control, hwnd [%04x]\n", wndPtr->hwndSelf); 
+    if (wndPtr->dwStyle & TCS_TOOLTIPS) {
+    /* Create tooltip control */
+    infoPtr->hwndToolTip =
+        CreateWindowEx32A (0, TOOLTIPS_CLASS32A, NULL, 0,
+                   CW_USEDEFAULT32, CW_USEDEFAULT32,
+                   CW_USEDEFAULT32, CW_USEDEFAULT32,
+                   wndPtr->hwndSelf, 0, 0, 0);
+
+    /* Send NM_TOOLTIPSCREATED notification */
+    if (infoPtr->hwndToolTip) {
+        NMTOOLTIPSCREATED nmttc;
+
+        nmttc.hdr.hwndFrom = wndPtr->hwndSelf;
+        nmttc.hdr.idFrom = wndPtr->wIDmenu;
+        nmttc.hdr.code = NM_TOOLTIPSCREATED;
+        nmttc.hwndToolTips = infoPtr->hwndToolTip;
+
+        SendMessage32A (GetParent32 (wndPtr->hwndSelf), WM_NOTIFY,
+                (WPARAM32)wndPtr->wIDmenu, (LPARAM)&nmttc);
+    }
+    }
+
+
     return 0;
 }
 
@@ -511,8 +746,10 @@ TAB_Destroy (WND *wndPtr, WPARAM32 wParam, LPARAM lParam)
 	COMCTL32_Free (infoPtr->items);
     }
 
+	if (infoPtr->hwndToolTip) 
+		  DestroyWindow32 (infoPtr->hwndToolTip);
+
     COMCTL32_Free (infoPtr);
- 
     return 0;
 }
 
@@ -560,6 +797,9 @@ TAB_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	case TCM_GETCURSEL:
 	   return TAB_GetCurSel (wndPtr);
 
+	case TCM_HITTEST:
+	   return TAB_HitTest (wndPtr, wParam, lParam);
+
 	case TCM_SETCURSEL:
 	   return TAB_SetCurSel (wndPtr, wParam);
 
@@ -594,20 +834,16 @@ TAB_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
 	   return 0;
 
 	case TCM_GETTOOLTIPS:
-	   FIXME (tab, "Unimplemented msg TCM_GETTOOLTIPS\n");
-	   return 0;
+	   return TAB_GetToolTips (wndPtr, wParam, lParam);
 
 	case TCM_SETTOOLTIPS:
-	   FIXME (tab, "Unimplemented msg TCM_SETTOOLTIPS\n");
-	   return 0;
+	   return TAB_SetToolTips (wndPtr, wParam, lParam);
 
 	case TCM_GETCURFOCUS:
-	   FIXME (tab, "Unimplemented msg TCM_GETCURFOCUS\n");
-	   return 0;
+    	return TAB_GetCurFocus (wndPtr);
 
 	case TCM_SETCURFOCUS:
-	   FIXME (tab, "Unimplemented msg TCM_SETCURFOCUS\n");
-	   return 0;
+    	return TAB_SetCurFocus (wndPtr, wParam);
 
 	case TCM_SETMINTTABWIDTH:
 	   FIXME (tab, "Unimplemented msg TCM_SETMINTTABWIDTH\n");
@@ -632,11 +868,25 @@ TAB_WindowProc (HWND32 hwnd, UINT32 uMsg, WPARAM32 wParam, LPARAM lParam)
     case WM_GETDLGCODE:
             return DLGC_WANTARROWS | DLGC_WANTCHARS;
 
+	case WM_LBUTTONDOWN:
+	    return TAB_LButtonDown (wndPtr, wParam, lParam);
+
 	case WM_LBUTTONUP:
 	    return TAB_LButtonUp (wndPtr, wParam, lParam);
 
+	case WM_RBUTTONDOWN:
+	    return TAB_RButtonDown (wndPtr, wParam, lParam);
+
+	case WM_MOUSEMOVE:
+	    return TAB_MouseMove (wndPtr, wParam, lParam);
+
 	case WM_PAINT:
 	    return TAB_Paint (wndPtr, wParam);
+	case WM_SIZE:
+		return TAB_Size (wndPtr, wParam, lParam);
+	
+	case WM_SETREDRAW:
+	    return TAB_SetRedraw (wndPtr, wParam);
 	
 	
 	default:

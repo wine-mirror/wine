@@ -25,10 +25,13 @@ typedef struct tagTAB_INFO
     HFONT32	    hFont;		/* handle to the current font */
     HCURSOR32	hcurArrow;	/* handle to the current cursor */
 	HIMAGELIST  himl;       /* handle to a image list (may be 0) */
+	HWND32		hwndToolTip; /* handle to tab's tooltip */
 	UINT32		cchTextMax;
     INT32	    iSelected;	/* the currently selected item */
+    INT32	    uFocus;		/* item which has the focus */
     TAB_ITEM	*items;		/* pointer to an array of TAB_ITEM's */
     RECT32	    rect;
+    BOOL32	    DoRedraw;	/* flag for redrawing when tab contents is changed*/
 } TAB_INFO;
 
 
