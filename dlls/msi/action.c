@@ -133,6 +133,7 @@ typedef struct tagMSIFILE
 static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran);
 static UINT ACTION_ProcessUISequence(MSIPACKAGE *package);
 
+static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq);
 UINT ACTION_PerformAction(MSIPACKAGE *package, const WCHAR *action);
 
 static UINT ACTION_LaunchConditions(MSIPACKAGE *package);
@@ -807,9 +808,92 @@ UINT ACTION_DoTopLevelINSTALL(MSIPACKAGE *package, LPCWSTR szPackagePath,
     else
         rc = ACTION_ProcessExecSequence(package,FALSE);
 
+    /* process the ending type action */
+    if (rc == ERROR_SUCCESS)
+        rc = ACTION_PerformActionSequence(package,-1);
+    else if (rc == ERROR_FUNCTION_FAILED) 
+        rc = ACTION_PerformActionSequence(package,-3);
+    
     return rc;
 }
 
+static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq)
+{
+    MSIQUERY * view;
+    UINT rc;
+    WCHAR buffer[0x100];
+    DWORD sz = 0x100;
+    MSIRECORD * row = 0;
+    static const WCHAR ExecSeqQuery[] =  {
+   's','e','l','e','c','t',' ','*',' ',
+   'f','r','o','m',' ',
+       'I','n','s','t','a','l','l','E','x','e','c','u','t','e',
+       'S','e','q','u','e','n','c','e',' ',
+   'w','h','e','r','e',' ','S','e','q','u','e','n','c','e',' ',
+       '=',' ','%','i',0};
+
+    rc = ACTION_OpenQuery(package->db, &view, ExecSeqQuery, -1);
+
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_ViewExecute(view, 0);
+
+        if (rc != ERROR_SUCCESS)
+        {
+            MSI_ViewClose(view);
+            msiobj_release(&view->hdr);
+            goto end;
+        }
+       
+        TRACE("Running the actions\n"); 
+
+        rc = MSI_ViewFetch(view,&row);
+        if (rc != ERROR_SUCCESS)
+        {
+            rc = ERROR_SUCCESS;
+            goto end;
+        }
+
+        /* check conditions */
+        if (!MSI_RecordIsNull(row,2))
+        {
+            LPWSTR cond = NULL;
+            cond = load_dynamic_stringW(row,2);
+
+            if (cond)
+            {
+                /* this is a hack to skip errors in the condition code */
+                if (MSI_EvaluateConditionW(package, cond) == MSICONDITION_FALSE)
+                {
+                    HeapFree(GetProcessHeap(),0,cond);
+                    msiobj_release(&row->hdr);
+                    goto end;
+                }
+                else
+                    HeapFree(GetProcessHeap(),0,cond);
+            }
+        }
+
+        sz=0x100;
+        rc =  MSI_RecordGetStringW(row,1,buffer,&sz);
+        if (rc != ERROR_SUCCESS)
+        {
+            ERR("Error is %x\n",rc);
+            msiobj_release(&row->hdr);
+            goto end;
+        }
+
+        rc = ACTION_PerformAction(package,buffer);
+        msiobj_release(&row->hdr);
+end:
+        MSI_ViewClose(view);
+        msiobj_release(&view->hdr);
+    }
+    else
+        rc = ERROR_SUCCESS;
+
+    return rc;
+}
 
 static UINT ACTION_ProcessExecSequence(MSIPACKAGE *package, BOOL UIran)
 {
