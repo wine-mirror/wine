@@ -1086,6 +1086,7 @@
 	advantages over directly invoking the wine binary.
 	See the <link linkend=binfiles>Executable Files</link> section
 	for details.
+        </para>
 
         <sect2 id=opt><title>The question of /opt/wine</title>
         <para>
