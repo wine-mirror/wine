@@ -4065,15 +4065,15 @@ BOOL16 WINAPI SetMenu16( HWND16 hWnd, HMENU16 hMenu )
 BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
 {
     WND * wndPtr = WIN_FindWndPtr(hWnd);
+    BOOL res = FALSE;
 
     TRACE("(%04x, %04x);\n", hWnd, hMenu);
 
     if (hMenu && !IsMenu(hMenu))
     {
 	WARN("hMenu is not a menu handle\n");
-	return FALSE;
+	goto exit;
     }
-	
 
     if (wndPtr && !(wndPtr->dwStyle & WS_CHILD))
     {
@@ -4085,10 +4085,8 @@ BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
 	    LPPOPUPMENU lpmenu;
 
             if (!(lpmenu = MENU_GetMenu(hMenu)))
-            {
-                WIN_ReleaseWndPtr(wndPtr);
-                return FALSE;
-            }
+		goto exit;
+
             lpmenu->hWnd = hWnd;
             lpmenu->wFlags &= ~MF_POPUP;  /* Can't be a popup */
             lpmenu->Height = 0;  /* Make sure we recalculate the size */
@@ -4096,11 +4094,11 @@ BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
 	if (IsWindowVisible(hWnd))
             SetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
                         SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
-        WIN_ReleaseWndPtr(wndPtr);
-	return TRUE;
+	res = TRUE;
     }
+exit:
     WIN_ReleaseWndPtr(wndPtr);
-    return FALSE;
+    return res;
 }
 
 
