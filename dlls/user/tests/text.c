@@ -36,7 +36,7 @@ static void test_DrawTextCalcRect(void)
     LOGFONTA lf;
     const char text[] = "Example text for testing DrawText in "
       "MM_HIENGLISH mode";
-    INT len;
+    INT textlen,textheight;
     RECT rect = { 0, 0, 100, 0 };
     BOOL ret;
 
@@ -47,7 +47,7 @@ static void test_DrawTextCalcRect(void)
     hdc = GetDC(hwnd);
     ok(hdc != 0, "GetDC error %lu\n", GetLastError());
     trace("hdc %p\n", hdc);
-    len = lstrlenA(text);
+    textlen = lstrlenA(text);
 
     /* LOGFONT initialization */
     memset(&lf, 0, sizeof(lf));
@@ -66,10 +66,10 @@ static void test_DrawTextCalcRect(void)
        GetLastError());
     hOldFont = SelectObject(hdc, hFont);
 
-    len = DrawTextA(hdc, text, len, &rect, DT_CALCRECT |
+    textheight = DrawTextA(hdc, text, textlen, &rect, DT_CALCRECT |
        DT_EXTERNALLEADING | DT_WORDBREAK | DT_NOCLIP | DT_LEFT |
        DT_NOPREFIX);
-    ok( len, "DrawTextA error %lu\n", GetLastError());
+    ok( textheight, "DrawTextA error %lu\n", GetLastError());
 
     trace("MM_HIENGLISH rect.bottom %ld\n", rect.bottom);
     todo_wine ok(rect.bottom < 0, "In MM_HIENGLISH, DrawText with "
@@ -90,10 +90,10 @@ static void test_DrawTextCalcRect(void)
        GetLastError());
     hOldFont = SelectObject(hdc, hFont);
 
-    len = DrawTextA(hdc, text, len, &rect, DT_CALCRECT |
+    textheight = DrawTextA(hdc, text, textlen, &rect, DT_CALCRECT |
        DT_EXTERNALLEADING | DT_WORDBREAK | DT_NOCLIP | DT_LEFT |
        DT_NOPREFIX);
-    ok( len, "DrawTextA error %lu\n", GetLastError());
+    ok( textheight, "DrawTextA error %lu\n", GetLastError());
 
     trace("MM_TEXT rect.bottom %ld\n", rect.bottom);
     ok(rect.bottom > 0, "In MM_TEXT, DrawText with DT_CALCRECT "
