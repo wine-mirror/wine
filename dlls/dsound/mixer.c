@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#define _GNU_SOURCE     /* for round() in math.h */
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -54,6 +55,7 @@ void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan)
 	double temp;
 	TRACE("(%p)\n",volpan);
 
+	TRACE("Vol=%ld Pan=%ld\n", volpan->lVolume, volpan->lPan);
 	/* the AmpFactors are expressed in 16.16 fixed point */
 	volpan->dwVolAmpFactor = (ULONG) (pow(2.0, volpan->lVolume / 600.0) * 0xffff);
 	/* FIXME: dwPan{Left|Right}AmpFactor */
@@ -65,6 +67,39 @@ void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan)
 	volpan->dwTotalRightAmpFactor = (ULONG) (pow(2.0, temp / 600.0) * 0xffff);
 
 	TRACE("left = %lx, right = %lx\n", volpan->dwTotalLeftAmpFactor, volpan->dwTotalRightAmpFactor);
+}
+
+void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan)
+{
+    double left,right;
+    TRACE("(%p)\n",volpan);
+
+    TRACE("left=%lx, right=%lx\n",volpan->dwTotalLeftAmpFactor,volpan->dwTotalRightAmpFactor);
+    if (volpan->dwTotalLeftAmpFactor==0)
+        left=-10000;
+    else
+        left=600 * log(((double)volpan->dwTotalLeftAmpFactor) / 0xffff) / log(2);
+    if (volpan->dwTotalRightAmpFactor==0)
+        right=-10000;
+    else
+        right=600 * log(((double)volpan->dwTotalRightAmpFactor) / 0xffff) / log(2);
+    if (left<right)
+    {
+        volpan->lVolume=round(right);
+        volpan->dwVolAmpFactor=volpan->dwTotalRightAmpFactor;
+    }
+    else
+    {
+        volpan->lVolume=round(left);
+        volpan->dwVolAmpFactor=volpan->dwTotalLeftAmpFactor;
+    }
+    if (volpan->lVolume < -10000)
+        volpan->lVolume=-10000;
+    volpan->lPan=round(right-left);
+    if (volpan->lPan < -10000)
+        volpan->lPan=-10000;
+
+    TRACE("Vol=%ld Pan=%ld\n", volpan->lVolume, volpan->lPan);
 }
 
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)

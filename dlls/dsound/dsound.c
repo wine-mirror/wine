@@ -922,10 +922,6 @@ HRESULT WINAPI IDirectSoundImpl_Create(
         pDS->drvcaps.dwPrimaryBuffers = 1;
     }
 
-    pDS->volpan.lVolume = 0;
-    pDS->volpan.lPan = 0;
-    DSOUND_RecalcVolPan(&(pDS->volpan));
-
     InitializeCriticalSection(&(pDS->mixlock));
     RtlInitializeResource(&(pDS->lock));
 

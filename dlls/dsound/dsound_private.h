@@ -91,7 +91,6 @@ struct IDirectSoundImpl
     IDirectSoundBufferImpl**    buffers;
     RTL_RWLOCK                  lock;
     CRITICAL_SECTION            mixlock;
-    DSVOLUMEPAN                 volpan;
     PrimaryBufferImpl*          primary;
     DSBUFFERDESC                dsbd;
     DWORD                       speaker_config;
@@ -450,6 +449,7 @@ extern IClassFactoryImpl DSOUND_CAPTURE_CF;
 extern IClassFactoryImpl DSOUND_FULLDUPLEX_CF;
 
 void DSOUND_RecalcVolPan(PDSVOLUMEPAN volpan);
+void DSOUND_AmpFactorToVolPan(PDSVOLUMEPAN volpan);
 void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb);
 
 /* primary.c */

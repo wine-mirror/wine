@@ -74,8 +74,6 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 	HRESULT err = DS_OK;
 	TRACE("(%p)\n",This);
 
-	DSOUND_RecalcVolPan(&(This->volpan));
-
 	/* are we using waveOut stuff? */
 	if (!This->driver) {
 		LPBYTE newbuf;
@@ -135,11 +133,6 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 		}
 		if ((err == DS_OK) && (merr != DS_OK))
 			err = merr;
-
-		if (!err) {
-			DWORD vol = (This->volpan.dwTotalLeftAmpFactor & 0xffff) | (This->volpan.dwTotalRightAmpFactor << 16);
-			err = mmErr(waveOutSetVolume(This->hwo, vol));
-		}
 	} else {
 		if (!This->hwbuf) {
 			err = IDsDriver_CreateSoundBuffer(This->driver,&(This->wfx),
@@ -154,7 +147,6 @@ static HRESULT DSOUND_PrimaryOpen(IDirectSoundImpl *This)
 			if (dsound->state == STATE_PLAYING) dsound->state = STATE_STARTING;
 			else if (dsound->state == STATE_STOPPING) dsound->state = STATE_STOPPED;
 		}
-		err = IDsDriverBuffer_SetVolumePan(This->hwbuf, &(This->volpan));
 	}
 
 	return err;
@@ -458,7 +450,8 @@ static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
 ) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	IDirectSoundImpl* dsound = This->dsound;
-	LONG oldVol;
+	DWORD ampfactors;
+	DSVOLUMEPAN volpan;
 
 	TRACE("(%p,%ld)\n",This,vol);
 
@@ -475,24 +468,26 @@ static HRESULT WINAPI PrimaryBufferImpl_SetVolume(
 	/* **** */
 	EnterCriticalSection(&(dsound->mixlock));
 
-	oldVol = dsound->volpan.lVolume;
-	dsound->volpan.lVolume = vol;
-	DSOUND_RecalcVolPan(&dsound->volpan);
-
-	if (vol != oldVol) {
-		if (dsound->hwbuf) {
-			HRESULT hres;
-			hres = IDsDriverBuffer_SetVolumePan(dsound->hwbuf, &(dsound->volpan));
-			if (hres != DS_OK) {
-				LeaveCriticalSection(&(dsound->mixlock));
-				WARN("IDsDriverBuffer_SetVolumePan failed\n");
-				return hres;
-			}
-		} else {
-			DWORD vol = (dsound->volpan.dwTotalLeftAmpFactor & 0xffff) | (dsound->volpan.dwTotalRightAmpFactor << 16);
-			waveOutSetVolume(dsound->hwo, vol);
-		}
-	}
+        waveOutGetVolume(dsound->hwo, &ampfactors);
+        volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
+        volpan.dwTotalRightAmpFactor=ampfactors >> 16;
+        DSOUND_AmpFactorToVolPan(&volpan);
+        if (vol != volpan.lVolume) {
+            volpan.lVolume=vol;
+            DSOUND_RecalcVolPan(&volpan);
+            if (dsound->hwbuf) {
+                HRESULT hres;
+                hres = IDsDriverBuffer_SetVolumePan(dsound->hwbuf, &volpan);
+                if (hres != DS_OK) {
+                    LeaveCriticalSection(&(dsound->mixlock));
+                    WARN("IDsDriverBuffer_SetVolumePan failed\n");
+                    return hres;
+                }
+            } else {
+                ampfactors = (volpan.dwTotalLeftAmpFactor & 0xffff) | (volpan.dwTotalRightAmpFactor << 16);
+                waveOutSetVolume(dsound->hwo, ampfactors);
+            }
+        }
 
 	LeaveCriticalSection(&(dsound->mixlock));
 	/* **** */
@@ -504,6 +499,8 @@ static HRESULT WINAPI PrimaryBufferImpl_GetVolume(
 	LPDIRECTSOUNDBUFFER8 iface,LPLONG vol
 ) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
+	DWORD ampfactors;
+	DSVOLUMEPAN volpan;
 	TRACE("(%p,%p)\n",This,vol);
 
 	if (!(This->dsound->dsbd.dwFlags & DSBCAPS_CTRLVOLUME)) {
@@ -516,7 +513,11 @@ static HRESULT WINAPI PrimaryBufferImpl_GetVolume(
 		return DSERR_INVALIDPARAM;
 	}
 
-	*vol = This->dsound->volpan.lVolume;
+	waveOutGetVolume(dsound->hwo, &ampfactors);
+	volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
+	volpan.dwTotalRightAmpFactor=ampfactors >> 16;
+	DSOUND_AmpFactorToVolPan(&volpan);
+	*vol = volpan.lVolume;
 	return DS_OK;
 }
 
@@ -769,7 +770,8 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(
 ) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
 	IDirectSoundImpl* dsound = This->dsound;
-	LONG oldPan;
+	DWORD ampfactors;
+	DSVOLUMEPAN volpan;
 
 	TRACE("(%p,%ld)\n",This,pan);
 
@@ -786,25 +788,27 @@ static HRESULT WINAPI PrimaryBufferImpl_SetPan(
 	/* **** */
 	EnterCriticalSection(&(dsound->mixlock));
 
-	oldPan = dsound->volpan.lPan;
-	dsound->volpan.lPan = pan;
-	DSOUND_RecalcVolPan(&dsound->volpan);
-
-	if (pan != oldPan) {
-		if (dsound->hwbuf) {
-			HRESULT hres;
-			hres = IDsDriverBuffer_SetVolumePan(dsound->hwbuf, &(dsound->volpan));
-			if (hres != DS_OK) {
-				LeaveCriticalSection(&(dsound->mixlock));
-				WARN("IDsDriverBuffer_SetVolumePan failed\n");
-				return hres;
-			}
-		}
-		else {
-			DWORD vol = (dsound->volpan.dwTotalLeftAmpFactor & 0xffff) | (dsound->volpan.dwTotalRightAmpFactor << 16);
-			waveOutSetVolume(dsound->hwo, vol);
-		}
-	}
+        waveOutGetVolume(dsound->hwo, &ampfactors);
+        volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
+        volpan.dwTotalRightAmpFactor=ampfactors >> 16;
+        DSOUND_AmpFactorToVolPan(&volpan);
+        if (pan != volpan.lPan) {
+            volpan.lPan=pan;
+            DSOUND_RecalcVolPan(&volpan);
+            if (dsound->hwbuf) {
+                HRESULT hres;
+                hres = IDsDriverBuffer_SetVolumePan(dsound->hwbuf, &volpan);
+                if (hres != DS_OK) {
+                    LeaveCriticalSection(&(dsound->mixlock));
+                    WARN("IDsDriverBuffer_SetVolumePan failed\n");
+                    return hres;
+                }
+            }
+            else {
+                ampfactors = (volpan.dwTotalLeftAmpFactor & 0xffff) | (volpan.dwTotalRightAmpFactor << 16);
+                waveOutSetVolume(dsound->hwo, ampfactors);
+            }
+        }
 
 	LeaveCriticalSection(&(dsound->mixlock));
 	/* **** */
@@ -816,6 +820,8 @@ static HRESULT WINAPI PrimaryBufferImpl_GetPan(
 	LPDIRECTSOUNDBUFFER8 iface,LPLONG pan
 ) {
 	ICOM_THIS(PrimaryBufferImpl,iface);
+	DWORD ampfactors;
+	DSVOLUMEPAN volpan;
 	TRACE("(%p,%p)\n",This,pan);
 
 	if (!(This->dsound->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
@@ -828,8 +834,11 @@ static HRESULT WINAPI PrimaryBufferImpl_GetPan(
 		return DSERR_INVALIDPARAM;
 	}
 
-	*pan = This->dsound->volpan.lPan;
-
+	waveOutGetVolume(dsound->hwo, &ampfactors);
+	volpan.dwTotalLeftAmpFactor=ampfactors & 0xffff;
+	volpan.dwTotalRightAmpFactor=ampfactors >> 16;
+	DSOUND_AmpFactorToVolPan(&volpan);
+	*pan = volpan.lPan;
 	return DS_OK;
 }
 
