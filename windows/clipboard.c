@@ -189,7 +189,7 @@ void CLIPBOARD_DeleteRecord(LPWINE_CLIPFORMAT lpFormat, BOOL bChange)
       if (lpFormat->hData32)
 	DeleteObject(lpFormat->hData32);
       if (lpFormat->hData16)
-	DeleteObject16(lpFormat->hData16);
+	DeleteObject(lpFormat->hData16);
     }
     else if( lpFormat->wFormatID == CF_METAFILEPICT )
     {

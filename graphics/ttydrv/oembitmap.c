@@ -11,9 +11,9 @@
 DEFAULT_DEBUG_CHANNEL(ttydrv)
 
 /**********************************************************************
- *		TTYDRV_DC_LoadOEMBitmap
+ *		TTYDRV_LoadOEMBitmap
  */
-static HANDLE TTYDRV_DC_LoadOEMBitmap(WORD resid)
+static HANDLE TTYDRV_LoadOEMBitmap(WORD resid)
 {
   HBITMAP hbitmap;
 
@@ -26,31 +26,29 @@ static HANDLE TTYDRV_DC_LoadOEMBitmap(WORD resid)
 }
 
 /**********************************************************************
- *		TTYDRV_DC_LoadOEMCursorIcon
+ *		TTYDRV_LoadOEMCursorIcon
  */
-static HANDLE TTYDRV_DC_LoadOEMCursorIcon(WORD resid, BOOL bCursor)
+static HANDLE TTYDRV_LoadOEMCursorIcon(WORD resid, BOOL bCursor)
 {
   return (HANDLE) NULL;
 }
 
 /**********************************************************************
- *		TTYDRV_DC_LoadOEMResource
+ *		TTYDRV_LoadOEMResource
  */
-HANDLE TTYDRV_DC_LoadOEMResource(WORD resid, WORD type)
+HANDLE TTYDRV_LoadOEMResource(WORD resid, WORD type)
 {
   switch(type)
   {
     case OEM_BITMAP:
-      return TTYDRV_DC_LoadOEMBitmap(resid);
+      return TTYDRV_LoadOEMBitmap(resid);
     case OEM_CURSOR:
-      return TTYDRV_DC_LoadOEMCursorIcon(resid, TRUE);
+      return TTYDRV_LoadOEMCursorIcon(resid, TRUE);
     case OEM_ICON:
-      return TTYDRV_DC_LoadOEMCursorIcon(resid, FALSE);
+      return TTYDRV_LoadOEMCursorIcon(resid, FALSE);
     default:
       ERR("unknown type (%d)\n", type);
   }
 
   return (HANDLE) NULL;
 }
-
-

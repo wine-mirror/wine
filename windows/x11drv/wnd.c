@@ -21,6 +21,7 @@
 #include "color.h"
 #include "debugtools.h"
 #include "dce.h"
+#include "dc.h"
 #include "options.h"
 #include "message.h"
 #include "heap.h"
@@ -755,12 +756,15 @@ void X11DRV_WND_PostSizeMove(WND *wndPtr)
  *
  * Copies rect to (rect.left + dx, rect.top + dy). 
  */
-void X11DRV_WND_SurfaceCopy(WND* wndPtr, DC *dcPtr, INT dx, INT dy, 
+void X11DRV_WND_SurfaceCopy(WND* wndPtr, HDC hdc, INT dx, INT dy, 
 			    const RECT *rect, BOOL bUpdate)
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dcPtr->physDev;
+    X11DRV_PDEVICE *physDev;
     POINT dst, src;
-  
+    DC *dcPtr = DC_GetDCPtr( hdc );
+
+    if (!dcPtr) return;
+    physDev = (X11DRV_PDEVICE *)dcPtr->physDev;
     dst.x = (src.x = dcPtr->w.DCOrgX + rect->left) + dx;
     dst.y = (src.y = dcPtr->w.DCOrgY + rect->top) + dy;
   
@@ -777,6 +781,7 @@ void X11DRV_WND_SurfaceCopy(WND* wndPtr, DC *dcPtr, INT dx, INT dy,
 
     if (bUpdate) /* Make sure exposure events have been processed */
 	EVENT_Synchronize();
+    GDI_HEAP_UNLOCK( hdc );
 }
 
 /***********************************************************************
@@ -785,12 +790,15 @@ void X11DRV_WND_SurfaceCopy(WND* wndPtr, DC *dcPtr, INT dx, INT dy,
  * Set the drawable, origin and dimensions for the DC associated to
  * a given window.
  */
-void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin)
+void X11DRV_WND_SetDrawable(WND *wndPtr, HDC hdc, WORD flags, BOOL bSetClipOrigin)
 {
-    X11DRV_PDEVICE *physDev = (X11DRV_PDEVICE *)dc->physDev;
+    DC *dc = DC_GetDCPtr( hdc );
+    X11DRV_PDEVICE *physDev;
     INT dcOrgXCopy = 0, dcOrgYCopy = 0;
     BOOL offsetClipRgn = FALSE;
 
+    if (!dc) return;
+    physDev = (X11DRV_PDEVICE *)dc->physDev;
     if (!wndPtr)  /* Get a DC for the whole screen */
     {
         dc->w.DCOrgX = 0;
@@ -855,6 +863,7 @@ void X11DRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin
 	    TSXSetClipOrigin( display, physDev->gc, dc->w.DCOrgX, dc->w.DCOrgY );
 #endif
     }
+    GDI_HEAP_UNLOCK( hdc );
 }
 
 /***********************************************************************

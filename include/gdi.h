@@ -214,7 +214,6 @@ typedef struct tagDC_FUNCS
     INT      (*pIntersectClipRect)(DC*,INT,INT,INT,INT);
     BOOL     (*pInvertRgn)(DC*,HRGN);    
     BOOL     (*pLineTo)(DC*,INT,INT);
-    HANDLE   (*pLoadOEMResource)(WORD,WORD);
     BOOL     (*pMoveToEx)(DC*,INT,INT,LPPOINT);
     INT      (*pOffsetClipRgn)(DC*,INT,INT);
     BOOL     (*pOffsetViewportOrg)(DC*,INT,INT);

@@ -1137,7 +1137,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	    else 
 	    {
 	        SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
-	        MoveTo16( hdc, rect.left, 0 );
+	        MoveToEx( hdc, rect.left, 0, NULL );
 	        LineTo( hdc, rect.left, height );
 	    }
         }
@@ -1156,7 +1156,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	    else 
 	    {
 	        SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
-	        MoveTo16( hdc, rect.left, rect.top + SEPARATOR_HEIGHT/2 );
+	        MoveToEx( hdc, rect.left, rect.top + SEPARATOR_HEIGHT/2, NULL );
 	        LineTo( hdc, rect.right, rect.top + SEPARATOR_HEIGHT/2 );
 	    }
 	    return;
@@ -1185,7 +1185,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	/* helper lines for debugging */
 /*	FrameRect(hdc, &rect, GetStockObject(BLACK_BRUSH));
 	SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
-	MoveTo16( hdc, rect.left, (rect.top + rect.bottom)/2 );
+	MoveToEx( hdc, rect.left, (rect.top + rect.bottom)/2, NULL );
 	LineTo( hdc, rect.right, (rect.top + rect.bottom)/2 );
 */
 
@@ -1479,13 +1479,13 @@ UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect, HWND hwnd,
     if (TWEAK_WineLook == WIN31_LOOK) 
     {
 	SelectObject( hDC, GetSysColorPen(COLOR_WINDOWFRAME) );
-	MoveTo16( hDC, lprect->left, lprect->bottom );
+	MoveToEx( hDC, lprect->left, lprect->bottom, NULL );
 	LineTo( hDC, lprect->right, lprect->bottom );
     }
     else 
     {
 	SelectObject( hDC, GetSysColorPen(COLOR_3DFACE));
-	MoveTo16( hDC, lprect->left, lprect->bottom );
+	MoveToEx( hDC, lprect->left, lprect->bottom, NULL );
 	LineTo( hDC, lprect->right, lprect->bottom );
     }
 

@@ -161,12 +161,12 @@ static BOOL DIALOG_GetCharSize( HFONT hFont, SIZE * pSize )
  */
 BOOL DIALOG_Init(void)
 {
-    HDC16 hdc;
+    HDC hdc;
     SIZE size;
 
       /* Calculate the dialog base units */
 
-    if (!(hdc = CreateDC16( "DISPLAY", NULL, NULL, NULL ))) return FALSE;
+    if (!(hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL ))) return FALSE;
     if (!DIALOG_GetCharSizeFromDC( hdc, 0, &size )) return FALSE;
     DeleteDC( hdc );
     xBaseUnit = size.cx;
@@ -681,11 +681,11 @@ HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCSTR dlgTemplate,
 				 PROOF_QUALITY, FF_DONTCARE,
 				 (LPCWSTR)template.faceName );
 	else
-	    hFont = CreateFont16( -pixels, 0, 0, 0, FW_DONTCARE,
-				  FALSE, FALSE, FALSE,
-				  DEFAULT_CHARSET, 0, 0,
-				  PROOF_QUALITY, FF_DONTCARE,
-				  template.faceName );
+	    hFont = CreateFontA( -pixels, 0, 0, 0, FW_DONTCARE,
+                                 FALSE, FALSE, FALSE,
+                                 DEFAULT_CHARSET, 0, 0,
+                                 PROOF_QUALITY, FF_DONTCARE,
+                                 template.faceName );
         if (hFont)
         {
             SIZE charSize;

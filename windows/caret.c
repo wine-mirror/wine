@@ -152,8 +152,8 @@ BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap,
 
     if (bitmap && (bitmap != 1))
     {
-        BITMAP16 bmp;
-        if (!GetObject16( bitmap, sizeof(bmp), &bmp )) return FALSE;
+        BITMAP bmp;
+        if (!GetObjectA( bitmap, sizeof(bmp), &bmp )) return FALSE;
         Caret.width = bmp.bmWidth;
         Caret.height = bmp.bmHeight;
         /* FIXME: we should make a copy of the bitmap instead of a brush */

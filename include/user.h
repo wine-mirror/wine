@@ -66,6 +66,8 @@ typedef struct tagUSER_DRIVER {
     void   (*pSetScreenSaveActive)(BOOL);
     int    (*pGetScreenSaveTimeout)(void);
     void   (*pSetScreenSaveTimeout)(int);
+    /* resource functions */
+    HANDLE   (*pLoadOEMResource)(WORD,WORD);
     /* windowing functions */
     BOOL   (*pIsSingleWindow)(void);
 } USER_DRIVER;

@@ -988,7 +988,7 @@ void WINAPI PlayMetaFileRecord16(
 	break;
 
     case META_SELECTPALETTE:
-	SelectPalette16(hdc, *(ht->objectHandle + *(mr->rdParm+1)),
+	SelectPalette(hdc, *(ht->objectHandle + *(mr->rdParm+1)),
 			*(mr->rdParm));
 	break;
 
@@ -997,7 +997,7 @@ void WINAPI PlayMetaFileRecord16(
 	break;
 
     case META_REALIZEPALETTE:
-	RealizePalette16(hdc);
+	RealizePalette(hdc);
 	break;
 
     case META_ESCAPE:

@@ -82,7 +82,7 @@ static BOOL COMBO_Init()
 
       TRACE("combo bitmap [%i,%i]\n", CBitWidth, CBitHeight );
 
-      hPrevB = SelectObject16( hDC, hComboBmp);
+      hPrevB = SelectObject( hDC, hComboBmp);
       SetRect( &r, 0, 0, CBitWidth, CBitHeight );
       InvertRect( hDC, &r );
       SelectObject( hDC, hPrevB );

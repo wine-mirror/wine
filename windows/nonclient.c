@@ -1489,14 +1489,14 @@ static void NC_DrawCaption( HDC hdc, RECT *rect, HWND hwnd,
 	SelectObject( hdc, hbrushOld );
     }
     WIN_ReleaseWndPtr(wndPtr);
-    MoveTo16( hdc, r.left, r.bottom );
+    MoveToEx( hdc, r.left, r.bottom, NULL );
     LineTo( hdc, r.right, r.bottom );
 
     if (style & WS_SYSMENU)
     {
 	NC_DrawSysButton( hwnd, hdc, FALSE );
 	r.left += GetSystemMetrics(SM_CXSIZE) + 1;
-	MoveTo16( hdc, r.left - 1, r.top );
+	MoveToEx( hdc, r.left - 1, r.top, NULL );
 	LineTo( hdc, r.left - 1, r.bottom );
     }
     if (style & WS_MAXIMIZEBOX)

@@ -59,7 +59,6 @@ static const DC_FUNCTIONS TTYDRV_DC_Driver =
   NULL,                /* pIntersectClipRect */
   NULL,                /* pIntersectVisRect */
   TTYDRV_DC_LineTo,    /* pLineTo */
-  TTYDRV_DC_LoadOEMResource, /* pLoadOEMResource */
   NULL,                /* pMoveToEx */
   NULL,                /* pOffsetClipRgn */
   NULL,                /* pOffsetViewportOrg (optional) */

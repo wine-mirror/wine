@@ -268,9 +268,29 @@ copyrgn:
  */
 HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps ) 
 {
+    PAINTSTRUCT ps;
+
+    BeginPaint( hwnd, &ps );
+    lps->hdc            = ps.hdc;
+    lps->fErase         = ps.fErase;
+    lps->rcPaint.top    = ps.rcPaint.top;
+    lps->rcPaint.left   = ps.rcPaint.left;
+    lps->rcPaint.right  = ps.rcPaint.right;
+    lps->rcPaint.bottom = ps.rcPaint.bottom;
+    lps->fRestore       = ps.fRestore;
+    lps->fIncUpdate     = ps.fIncUpdate;
+    return lps->hdc;
+}
+
+
+/***********************************************************************
+ *           BeginPaint    (USER32.10)
+ */
+HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
+{
     BOOL bIcon;
     HRGN hrgnUpdate;
-    RECT16 clipRect, clientRect;
+    RECT clipRect, clientRect;
     WND *wndPtr = WIN_FindWndPtr( hwnd );
     if (!wndPtr) return 0;
 
@@ -306,7 +326,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
         /* Don't clip the output to the update region for CS_PARENTDC window */
 	if( hrgnUpdate ) 
 	    DeleteObject(hrgnUpdate);
-        lps->hdc = GetDCEx16( hwnd, 0, DCX_WINDOWPAINT | DCX_USESTYLE |
+        lps->hdc = GetDCEx( hwnd, 0, DCX_WINDOWPAINT | DCX_USESTYLE |
                               (bIcon ? DCX_WINDOW : 0) );
     }
     else
@@ -314,7 +334,7 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
 	if( hrgnUpdate ) /* convert to client coordinates */
 	    OffsetRgn( hrgnUpdate, wndPtr->rectWindow.left - wndPtr->rectClient.left,
 			           wndPtr->rectWindow.top - wndPtr->rectClient.top );
-        lps->hdc = GetDCEx16(hwnd, hrgnUpdate, DCX_INTERSECTRGN |
+        lps->hdc = GetDCEx(hwnd, hrgnUpdate, DCX_INTERSECTRGN |
                              DCX_WINDOWPAINT | DCX_USESTYLE | (bIcon ? DCX_WINDOW : 0) );
 	/* ReleaseDC() in EndPaint() will delete the region */
     }
@@ -333,13 +353,13 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
        than the window itself, so we need to intersect the cliprect with
        the window  */
     
-    GetClipBox16( lps->hdc, &clipRect );
-    GetClientRect16( hwnd, &clientRect );
+    GetClipBox( lps->hdc, &clipRect );
+    GetClientRect( hwnd, &clientRect );
 
     /* The rect obtained by GetClipBox is in logical, so make the client in logical to*/
-    DPtoLP16(lps->hdc, (LPPOINT16) &clientRect, 2);    
+    DPtoLP(lps->hdc, (LPPOINT)&clientRect, 2);    
 
-    IntersectRect16(&lps->rcPaint, &clientRect, &clipRect);
+    IntersectRect(&lps->rcPaint, &clientRect, &clipRect);
 
     TRACE("box = (%i,%i - %i,%i)\n", lps->rcPaint.left, lps->rcPaint.top,
 		    lps->rcPaint.right, lps->rcPaint.bottom );
@@ -347,33 +367,12 @@ HDC16 WINAPI BeginPaint16( HWND16 hwnd, LPPAINTSTRUCT16 lps )
     if (wndPtr->flags & WIN_NEEDS_ERASEBKGND)
     {
         wndPtr->flags &= ~WIN_NEEDS_ERASEBKGND;
-        lps->fErase = !SendMessage16(hwnd, (bIcon) ? WM_ICONERASEBKGND
-                                                   : WM_ERASEBKGND,
-                                     (WPARAM16)lps->hdc, 0 );
+        lps->fErase = !SendMessageA(hwnd, (bIcon) ? WM_ICONERASEBKGND : WM_ERASEBKGND,
+                                    (WPARAM16)lps->hdc, 0 );
     }
     else lps->fErase = TRUE;
 
     WIN_ReleaseWndPtr(wndPtr);
-    return lps->hdc;
-}
-
-
-/***********************************************************************
- *           BeginPaint    (USER32.10)
- */
-HDC WINAPI BeginPaint( HWND hwnd, PAINTSTRUCT *lps )
-{
-    PAINTSTRUCT16 ps;
-
-    BeginPaint16( hwnd, &ps );
-    lps->hdc            = (HDC)ps.hdc;
-    lps->fErase         = ps.fErase;
-    lps->rcPaint.top    = ps.rcPaint.top;
-    lps->rcPaint.left   = ps.rcPaint.left;
-    lps->rcPaint.right  = ps.rcPaint.right;
-    lps->rcPaint.bottom = ps.rcPaint.bottom;
-    lps->fRestore       = ps.fRestore;
-    lps->fIncUpdate     = ps.fIncUpdate;
     return lps->hdc;
 }
 
@@ -405,10 +404,12 @@ BOOL WINAPI EndPaint( HWND hwnd, const PAINTSTRUCT *lps )
  */
 void WINAPI FillWindow16( HWND16 hwndParent, HWND16 hwnd, HDC16 hdc, HBRUSH16 hbrush )
 {
-    RECT16 rect;
-    GetClientRect16( hwnd, &rect );
-    DPtoLP16( hdc, (LPPOINT16)&rect, 2 );
-    PaintRect16( hwndParent, hwnd, hdc, hbrush, &rect );
+    RECT rect;
+    RECT16 rc16;
+    GetClientRect( hwnd, &rect );
+    DPtoLP( hdc, (LPPOINT)&rect, 2 );
+    CONV_RECT32TO16( &rect, &rc16 );
+    PaintRect16( hwndParent, hwnd, hdc, hbrush, &rc16 );
 }
 
 
@@ -1240,16 +1241,16 @@ INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
  */
 INT16 WINAPI FillRect16( HDC16 hdc, const RECT16 *rect, HBRUSH16 hbrush )
 {
-    HBRUSH16 prevBrush;
+    HBRUSH prevBrush;
 
     /* coordinates are logical so we cannot fast-check 'rect',
      * it will be done later in the PatBlt().
      */
 
-    if (!(prevBrush = SelectObject16( hdc, hbrush ))) return 0;
+    if (!(prevBrush = SelectObject( hdc, hbrush ))) return 0;
     PatBlt( hdc, rect->left, rect->top,
               rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
-    SelectObject16( hdc, prevBrush );
+    SelectObject( hdc, prevBrush );
     return 1;
 }
 
@@ -1641,3 +1642,20 @@ BOOL16 WINAPI DrawState16(HDC16 hdc, HBRUSH16 hbr,
 }
 
 
+/***********************************************************************
+ *           SelectPalette16    (USER.282)
+ */
+HPALETTE16 WINAPI SelectPalette16( HDC16 hDC, HPALETTE16 hPal,
+                                   BOOL16 bForceBackground )
+{
+    return SelectPalette( hDC, hPal, bForceBackground );
+}
+
+
+/***********************************************************************
+ *           RealizePalette16    (USER.283)
+ */
+UINT16 WINAPI RealizePalette16( HDC16 hDC )
+{
+    return RealizePalette( hDC );
+}

@@ -128,8 +128,8 @@ typedef struct tagWND_DRIVER
     void   (*pSetFocus)(WND *);
     void   (*pPreSizeMove)(WND *);
     void   (*pPostSizeMove)(WND *);
-    void   (*pSurfaceCopy)(WND *, struct tagDC *, INT, INT, const RECT *, BOOL);
-    void   (*pSetDrawable)(WND *, struct tagDC *, WORD, BOOL);
+    void   (*pSurfaceCopy)(WND *, HDC, INT, INT, const RECT *, BOOL);
+    void   (*pSetDrawable)(WND *, HDC, WORD, BOOL);
     BOOL   (*pSetHostAttr)(WND *, INT haKey, INT value);
     BOOL (*pIsSelfClipping)(WND *);
     void   (*pSetWindowRgn)(WND *, const HRGN);

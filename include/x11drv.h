@@ -156,7 +156,6 @@ extern INT X11DRV_DeviceBitmapBits( struct tagDC *dc, HBITMAP hbitmap,
 				      WORD fGet, UINT startscan,
 				      UINT lines, LPSTR bits,
 				      LPBITMAPINFO info, UINT coloruse );
-extern HANDLE X11DRV_LoadOEMResource( WORD id, WORD type );
 
 /* OpenGL / X11 driver functions */
 extern int X11DRV_ChoosePixelFormat(DC *dc, const PIXELFORMATDESCRIPTOR *pppfd) ;
@@ -336,6 +335,7 @@ extern BOOL X11DRV_GetScreenSaveActive(void);
 extern void X11DRV_SetScreenSaveActive(BOOL bActivate);
 extern int X11DRV_GetScreenSaveTimeout(void);
 extern void X11DRV_SetScreenSaveTimeout(int nTimeout);
+extern HANDLE X11DRV_LoadOEMResource( WORD id, WORD type );
 extern BOOL X11DRV_IsSingleWindow(void);
 
 /* X11 clipboard driver */
@@ -429,8 +429,8 @@ extern void X11DRV_WND_SetText(struct tagWND *wndPtr, LPCWSTR text);
 extern void X11DRV_WND_SetFocus(struct tagWND *wndPtr);
 extern void X11DRV_WND_PreSizeMove(struct tagWND *wndPtr);
 extern void X11DRV_WND_PostSizeMove(struct tagWND *wndPtr);
-extern void X11DRV_WND_SurfaceCopy(struct tagWND *wndPtr, struct tagDC *dcPtr, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
-extern void X11DRV_WND_SetDrawable(struct tagWND *wndPtr, struct tagDC *dc, WORD flags, BOOL bSetClipOrigin);
+extern void X11DRV_WND_SurfaceCopy(struct tagWND *wndPtr, HDC hdc, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
+extern void X11DRV_WND_SetDrawable(struct tagWND *wndPtr, HDC hdc, WORD flags, BOOL bSetClipOrigin);
 extern BOOL X11DRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);
 extern BOOL X11DRV_WND_IsSelfClipping(struct tagWND *wndPtr);
 extern void X11DRV_WND_DockWindow(struct tagWND *wndPtr);

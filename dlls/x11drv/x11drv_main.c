@@ -59,6 +59,8 @@ static USER_DRIVER user_driver =
     X11DRV_SetScreenSaveActive,
     X11DRV_GetScreenSaveTimeout,
     X11DRV_SetScreenSaveTimeout,
+    /* resource functions */
+    X11DRV_LoadOEMResource,
     /* windowing functions */
     X11DRV_IsSingleWindow
 };

@@ -65,7 +65,6 @@ static const DC_FUNCTIONS PSDRV_Funcs =
     NULL,                            /* pIntersectClipRect */
     NULL,                            /* pInvertRgn */
     PSDRV_LineTo,                    /* pLineTo */
-    NULL,                            /* pLoadOEMResource */
     NULL,                            /* pMoveToEx */
     NULL,                            /* pOffsetClipRgn */
     NULL,                            /* pOffsetViewportOrg (optional) */

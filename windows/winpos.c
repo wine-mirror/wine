@@ -2319,7 +2319,6 @@ nocopy:
      {
 	 RECT rClip;
 	 HDC hDC;
-	 DC* dc;
 
 	 /* get DC and clip rect with drawable rect to avoid superfluous expose events
 	    from copying clipped areas */
@@ -2339,14 +2338,12 @@ nocopy:
 	 }
 	 rClip.left = rClip.top = 0;    
 
-	 if( (dc = (DC *)GDI_GetObjPtr(hDC, DC_MAGIC)) )
-	 {
-	    if( oh > nh ) r.bottom = r.top  + nh;
-	    if( ow < nw ) r.right = r.left  + nw;
+         if( oh > nh ) r.bottom = r.top  + nh;
+         if( ow < nw ) r.right = r.left  + nw;
 
-	    if( IntersectRect( &r, &r, &rClip ) )
-            {
-	        Wnd->pDriver->pSurfaceCopy( Wnd->parent, dc, dx, dy, &r, TRUE );
+         if( IntersectRect( &r, &r, &rClip ) )
+         {
+	        Wnd->pDriver->pSurfaceCopy( Wnd->parent, hDC, dx, dy, &r, TRUE );
 
                  /* When you copy the bits without repainting, parent doesn't
                     get validated appropriately. Therefore, we have to validate
@@ -2358,9 +2355,6 @@ nocopy:
                   OffsetRect(&r, dx, dy);
                   ValidateRect(Wnd->parent->hwndSelf, &r);
                 }
-            }
-
-	    GDI_HEAP_UNLOCK( hDC );
 	 }
          ReleaseDC( (uFlags & SWP_EX_PAINTSELF) ? 
 		     Wnd->hwndSelf :  Wnd->parent->hwndSelf, hDC); 

@@ -46,6 +46,8 @@ static USER_DRIVER user_driver =
     TTYDRV_SetScreenSaveActive,
     TTYDRV_GetScreenSaveTimeout,
     TTYDRV_SetScreenSaveTimeout,
+    /* resource functions */
+    TTYDRV_LoadOEMResource,
     /* windowing functions */
     TTYDRV_IsSingleWindow
 };

@@ -88,7 +88,6 @@ extern COLORREF TTYDRV_DC_GetPixel(struct tagDC *dc, INT x, INT y);
 extern BOOL TTYDRV_DC_GetTextExtentPoint(struct tagDC *dc, LPCWSTR str, INT count, LPSIZE size);
 extern BOOL TTYDRV_DC_GetTextMetrics(struct tagDC *dc, TEXTMETRICA *metrics);
 extern BOOL TTYDRV_DC_LineTo(struct tagDC *dc, INT x, INT y);
-extern HANDLE TTYDRV_DC_LoadOEMResource(WORD resid, WORD type);
 extern BOOL TTYDRV_DC_PaintRgn(struct tagDC *dc, HRGN hrgn);
 extern BOOL TTYDRV_DC_PatBlt(struct tagDC *dc, INT left, INT top, INT width, INT height, DWORD rop);
 extern BOOL TTYDRV_DC_Pie(struct tagDC *dc, INT left, INT top, INT right, INT bottom, INT xstart, INT ystart, INT xend, INT yend);
@@ -184,6 +183,8 @@ typedef struct tagTTYDRV_WND_DATA {
 
 WINDOW *TTYDRV_WND_GetCursesWindow(struct tagWND *wndPtr);
 
+extern HANDLE TTYDRV_LoadOEMResource(WORD resid, WORD type);
+
 extern void TTYDRV_WND_Initialize(struct tagWND *wndPtr);
 extern void TTYDRV_WND_Finalize(struct tagWND *wndPtr);
 extern BOOL TTYDRV_WND_CreateDesktopWindow(struct tagWND *wndPtr, struct tagCLASS *classPtr, BOOL bUnicode);
@@ -196,8 +197,8 @@ extern void TTYDRV_WND_SetText(struct tagWND *wndPtr, LPCWSTR text);
 extern void TTYDRV_WND_SetFocus(struct tagWND *wndPtr);
 extern void TTYDRV_WND_PreSizeMove(struct tagWND *wndPtr);
 extern void TTYDRV_WND_PostSizeMove(struct tagWND *wndPtr);
-extern void TTYDRV_WND_ScrollWindow(struct tagWND *wndPtr, struct tagDC *dcPtr, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
-extern void TTYDRV_WND_SetDrawable(struct tagWND *wndPtr, struct tagDC *dc, WORD flags, BOOL bSetClipOrigin);
+extern void TTYDRV_WND_ScrollWindow(struct tagWND *wndPtr, HDC hdc, INT dx, INT dy, const RECT *clipRect, BOOL bUpdate);
+extern void TTYDRV_WND_SetDrawable(struct tagWND *wndPtr, HDC hdc, WORD flags, BOOL bSetClipOrigin);
 extern BOOL TTYDRV_WND_SetHostAttr(struct tagWND *wndPtr, INT haKey, INT value);
 extern BOOL TTYDRV_WND_IsSelfClipping(struct tagWND *wndPtr);
 extern void TTYDRV_WND_SetWindowRgn(struct tagWND *wndPtr, HRGN hrgnWnd);

@@ -40,8 +40,6 @@
 #include "color.h"
 #include "bitmap.h"
 #include "cursoricon.h"
-#include "dc.h"
-#include "gdi.h"
 #include "global.h"
 #include "module.h"
 #include "debugtools.h"
@@ -429,7 +427,7 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 {
     int sizeAnd, sizeXor;
     HBITMAP hAndBits = 0, hXorBits = 0; /* error condition for later */
-    BITMAPOBJ *bmpXor, *bmpAnd;
+    BITMAP bmpXor, bmpAnd;
     POINT16 hotspot;
     BITMAPINFO *bmi;
     HDC hdc;
@@ -583,10 +581,10 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
     }
 
     /* Now create the CURSORICONINFO structure */
-    bmpXor = (BITMAPOBJ *) GDI_GetObjPtr( hXorBits, BITMAP_MAGIC );
-    bmpAnd = (BITMAPOBJ *) GDI_GetObjPtr( hAndBits, BITMAP_MAGIC );
-    sizeXor = bmpXor->bitmap.bmHeight * bmpXor->bitmap.bmWidthBytes;
-    sizeAnd = bmpAnd->bitmap.bmHeight * bmpAnd->bitmap.bmWidthBytes;
+    GetObjectA( hXorBits, sizeof(bmpXor), &bmpXor );
+    GetObjectA( hAndBits, sizeof(bmpAnd), &bmpAnd );
+    sizeXor = bmpXor.bmHeight * bmpXor.bmWidthBytes;
+    sizeAnd = bmpAnd.bmHeight * bmpAnd.bmWidthBytes;
 
     if (hObj) hObj = GlobalReAlloc16( hObj, 
 		     sizeof(CURSORICONINFO) + sizeXor + sizeAnd, GMEM_MOVEABLE );
@@ -602,11 +600,11 @@ static HGLOBAL16 CURSORICON_CreateFromResource( HINSTANCE16 hInstance, HGLOBAL16
 	info = (CURSORICONINFO *)GlobalLock16( hObj );
 	info->ptHotSpot.x   = hotspot.x;
 	info->ptHotSpot.y   = hotspot.y;
-	info->nWidth        = bmpXor->bitmap.bmWidth;
-	info->nHeight       = bmpXor->bitmap.bmHeight;
-	info->nWidthBytes   = bmpXor->bitmap.bmWidthBytes;
-	info->bPlanes       = bmpXor->bitmap.bmPlanes;
-	info->bBitsPerPixel = bmpXor->bitmap.bmBitsPixel;
+	info->nWidth        = bmpXor.bmWidth;
+	info->nHeight       = bmpXor.bmHeight;
+	info->nWidthBytes   = bmpXor.bmWidthBytes;
+	info->bPlanes       = bmpXor.bmPlanes;
+	info->bBitsPerPixel = bmpXor.bmBitsPixel;
 
 	/* Transfer the bitmap bits to the CURSORICONINFO structure */
 
@@ -693,7 +691,6 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
     else if ( !hInstance )  /* Load OEM cursor/icon */
     {
         WORD resid;
-        HDC hdc;
 
         if ( HIWORD(name) )
         {
@@ -710,14 +707,7 @@ HGLOBAL CURSORICON_Load( HINSTANCE hInstance, LPCWSTR name,
             }
         }
         else resid = LOWORD(name);
-	hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
-	if (hdc) {
-	    DC *dc = DC_GetDCPtr( hdc );
-	    if (dc->funcs->pLoadOEMResource)
-	        h = dc->funcs->pLoadOEMResource( resid, fCursor ? OEM_CURSOR : OEM_ICON );
-	    GDI_HEAP_UNLOCK( hdc );
-	    DeleteDC(  hdc );
-	}
+        h = USER_Driver->pLoadOEMResource( resid, fCursor ? OEM_CURSOR : OEM_ICON );
     }
 
     else  /* Load from resource */
@@ -1819,16 +1809,17 @@ BOOL WINAPI GetIconInfo(HICON hIcon,LPICONINFO iconinfo) {
 /**********************************************************************
  *          CreateIconIndirect		(USER32.78)
  */
-HICON WINAPI CreateIconIndirect(LPICONINFO iconinfo) {
-    BITMAPOBJ *bmpXor,*bmpAnd;
+HICON WINAPI CreateIconIndirect(LPICONINFO iconinfo)
+{
+    BITMAP bmpXor,bmpAnd;
     HICON hObj;
     int	sizeXor,sizeAnd;
 
-    bmpXor = (BITMAPOBJ *) GDI_GetObjPtr( iconinfo->hbmColor, BITMAP_MAGIC );
-    bmpAnd = (BITMAPOBJ *) GDI_GetObjPtr( iconinfo->hbmMask, BITMAP_MAGIC );
+    GetObjectA( iconinfo->hbmColor, sizeof(bmpXor), &bmpXor );
+    GetObjectA( iconinfo->hbmMask, sizeof(bmpAnd), &bmpAnd );
 
-    sizeXor = bmpXor->bitmap.bmHeight * bmpXor->bitmap.bmWidthBytes;
-    sizeAnd = bmpAnd->bitmap.bmHeight * bmpAnd->bitmap.bmWidthBytes;
+    sizeXor = bmpXor.bmHeight * bmpXor.bmWidthBytes;
+    sizeAnd = bmpAnd.bmHeight * bmpAnd.bmWidthBytes;
 
     hObj = GlobalAlloc16( GMEM_MOVEABLE, 
 		     sizeof(CURSORICONINFO) + sizeXor + sizeAnd );
@@ -1850,11 +1841,11 @@ HICON WINAPI CreateIconIndirect(LPICONINFO iconinfo) {
 	  info->ptHotSpot.y   = iconinfo->yHotspot;
 	}
 
-	info->nWidth        = bmpXor->bitmap.bmWidth;
-	info->nHeight       = bmpXor->bitmap.bmHeight;
-	info->nWidthBytes   = bmpXor->bitmap.bmWidthBytes;
-	info->bPlanes       = bmpXor->bitmap.bmPlanes;
-	info->bBitsPerPixel = bmpXor->bitmap.bmBitsPixel;
+	info->nWidth        = bmpXor.bmWidth;
+	info->nHeight       = bmpXor.bmHeight;
+	info->nWidthBytes   = bmpXor.bmWidthBytes;
+	info->bPlanes       = bmpXor.bmPlanes;
+	info->bBitsPerPixel = bmpXor.bmBitsPixel;
 
 	/* Transfer the bitmap bits to the CURSORICONINFO structure */
 
@@ -2104,18 +2095,8 @@ static HBITMAP BITMAP_Load( HINSTANCE instance,LPCWSTR name, UINT loadflags )
     if (!(loadflags & LR_LOADFROMFILE)) {
       if (!instance)  /* OEM bitmap */
       {
-          HDC hdc;
-	  DC *dc;
-
 	  if (HIWORD((int)name)) return 0;
-	  hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
-	  dc = DC_GetDCPtr( hdc );
-	  if(dc->funcs->pLoadOEMResource)
-	      hbitmap = dc->funcs->pLoadOEMResource( LOWORD((int)name), 
-						     OEM_BITMAP );
-	  GDI_HEAP_UNLOCK( hdc );
-	  DeleteDC( hdc );
-	  return hbitmap;
+          return USER_Driver->pLoadOEMResource( LOWORD((int)name), OEM_BITMAP );
       }
 
       if (!(hRsrc = FindResourceW( instance, name, RT_BITMAPW ))) return 0;

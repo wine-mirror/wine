@@ -80,7 +80,7 @@ DCE *DCE_AllocDCE( HWND hWnd, DCE_TYPE type )
     WND* wnd;
     
     if (!(dce = HeapAlloc( SystemHeap, 0, sizeof(DCE) ))) return NULL;
-    if (!(dce->hDC = CreateDC16( "DISPLAY", NULL, NULL, NULL )))
+    if (!(dce->hDC = CreateDCA( "DISPLAY", NULL, NULL, NULL )))
     {
         HeapFree( SystemHeap, 0, dce );
 	return 0;
@@ -806,7 +806,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     bUpdateVisRgn = bUpdateVisRgn || (dc->w.flags & DC_DIRTY);
 
     /* recompute visible region */
-    wndPtr->pDriver->pSetDrawable( wndPtr, dc, flags, bUpdateClipOrigin );
+    wndPtr->pDriver->pSetDrawable( wndPtr, hdc, flags, bUpdateClipOrigin );
 
     if( bUpdateVisRgn )
     {
@@ -975,7 +975,6 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
     BOOL retv = TRUE;
     HRGN hVisRgn;
     DCE *dce = (DCE *)data;
-    DC  *dc;
     WND *wndPtr;
 
     TRACE("hDC = %04x, %i\n", hDC, code);
@@ -1000,9 +999,7 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 
                /* Update stale DC in DCX */
                wndPtr = WIN_FindWndPtr( dce->hwndCurrent);
-	       dc = (DC *) GDI_GetObjPtr( dce->hDC, DC_MAGIC);
-	       if( dc && wndPtr)
-		 wndPtr->pDriver->pSetDrawable( wndPtr, dc,dce->DCXflags,TRUE);
+	       if (wndPtr) wndPtr->pDriver->pSetDrawable( wndPtr, hDC, dce->DCXflags, TRUE);
 
 	       SetHookFlags16(hDC, DCHF_VALIDATEVISRGN);
 	       hVisRgn = DCE_GetVisRgn(dce->hwndCurrent, dce->DCXflags, 0, 0);

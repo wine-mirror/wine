@@ -192,20 +192,21 @@ void TTYDRV_WND_PostSizeMove(WND *wndPtr)
 /*****************************************************************
  *		 TTYDRV_WND_ScrollWindow
  */
-void TTYDRV_WND_ScrollWindow(
-  WND *wndPtr, DC *dcPtr, INT dx, INT dy, 
-  const RECT *clipRect, BOOL bUpdate)
+void TTYDRV_WND_ScrollWindow( WND *wndPtr, HDC hdc, INT dx, INT dy, 
+                              const RECT *clipRect, BOOL bUpdate)
 {
-  FIXME("(%p, %p, %d, %d, %p, %d): stub\n", 
-	wndPtr, dcPtr, dx, dy, clipRect, bUpdate);
+  FIXME("(%p, %x, %d, %d, %p, %d): stub\n", 
+	wndPtr, hdc, dx, dy, clipRect, bUpdate);
 }
 
 /***********************************************************************
  *		TTYDRV_WND_SetDrawable
  */
-void TTYDRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin)
+void TTYDRV_WND_SetDrawable(WND *wndPtr, HDC hdc, WORD flags, BOOL bSetClipOrigin)
 {
-  TRACE("(%p, %p, %d, %d)\n", wndPtr, dc, flags, bSetClipOrigin);
+    DC *dc = DC_GetDCPtr( hdc );
+    if (!dc) return;
+    TRACE("(%p, %p, %d, %d)\n", wndPtr, dc, flags, bSetClipOrigin);
 
   /* FIXME: Should be done in the common code instead */
   if(!wndPtr)  {
@@ -220,6 +221,7 @@ void TTYDRV_WND_SetDrawable(WND *wndPtr, DC *dc, WORD flags, BOOL bSetClipOrigin
       dc->w.DCOrgY = wndPtr->rectClient.top;
     }
   }
+  GDI_HEAP_UNLOCK( hdc );
 }
 
 /***********************************************************************
