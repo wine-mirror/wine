@@ -25,7 +25,7 @@
  * The test specifically does not test all possibilities at this time since
  * there are several cases where the Windows behaviour is rather strange and
  * significant work would be required to get the Wine code to duplicate the
- * strangeness, especially since most are in situations that would not 
+ * strangeness, especially since most are in situations that would not
  * normally be met.
  */
 
@@ -45,6 +45,8 @@ static int numwnds=1; /* 0 is reserved for null */
 /* Global handles */
 static HINSTANCE g_hinst;                          /* This application's HINSTANCE */
 static HWND g_hwndMain, g_hwndButton1, g_hwndButton2, g_hwndButtonCancel;
+static HWND g_hwndTestDlg, g_hwndTestDlgBut1, g_hwndTestDlgBut2, g_hwndTestDlgEdit;
+
 static int g_terminated;
 
 typedef struct {
@@ -64,7 +66,7 @@ static const h_entry hierarchy [] = {
     {  8,  2,  WS_CHILD | WS_VISIBLE | WS_DISABLED | WS_TABSTOP, WS_EX_CONTROLPARENT},
     { 85,  8,  WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_GROUP, 0},
     {  9,  8,  WS_CHILD, WS_EX_CONTROLPARENT},
-    { 86,  9,  WS_CHILD | WS_VISIBLE, 0}, 
+    { 86,  9,  WS_CHILD | WS_VISIBLE, 0},
     { 87,  9,  WS_CHILD | WS_VISIBLE, 0},
     { 31,  8,  WS_CHILD | WS_VISIBLE | WS_GROUP, 0},
     { 10,  2,  WS_CHILD | WS_VISIBLE, WS_EX_CONTROLPARENT},
@@ -181,7 +183,7 @@ static BOOL CreateWindows (HINSTANCE hinst)
         }
 
         /* Check that the styles are as we specified (except the main one
-         * which is quite frequently messed up).  If this keeps breaking then 
+         * which is quite frequently messed up).  If this keeps breaking then
          * we could mask out the bits that don't concern us.
          */
         if (p->parent)
@@ -307,20 +309,20 @@ static int id (HWND h)
  *  26. Prev Group of an inaccessible control begins searching at the highest
  *      level ancestor that did not permit recursion down the hierarchy
  *  27. Next Tab of an inaccessible control is as if it were accessible
- *  28. Prev Tab of an inaccessible control begins searching at the highest 
+ *  28. Prev Tab of an inaccessible control begins searching at the highest
  *      level ancestor that did not permit recursion down the hierarchy.
  *
  * Tests 29- are the basic Tab tests
  *
- *  29. Next Tab of a control is the next visible enabled control with the 
+ *  29. Next Tab of a control is the next visible enabled control with the
  *      Tabstop style (N.B. skips disabled, invisible and non-tabstop)
  *  30. Prev Tab of a control is the previous visible enabled control with the
  *      Tabstop style (N.B. skips disabled, invisible and non-tabstop)
- *  31. Next Tab test with at least two layers of descent and finding the 
+ *  31. Next Tab test with at least two layers of descent and finding the
  *      result not at the first control.
  *  32. Next Tab test with at least two layers of descent with the descent and
  *      control at the start of each level.
- *  33. Prev Tab test with at least two layers of descent and finding the 
+ *  33. Prev Tab test with at least two layers of descent and finding the
  *      result not at the last control.
  *  34. Prev Tab test with at least two layers of descent with the descent and
  *      control at the end of each level.
@@ -333,7 +335,7 @@ static int id (HWND h)
 
 static void GetNextDlgItemTest (void)
 {
-    static test_record test [] = 
+    static test_record test [] =
     {
         /* isok test dlg  ctl  tab  prev res  */
 
@@ -424,6 +426,37 @@ static BOOL OnMainWindowCreate (HWND hwnd, LPCREATESTRUCT lpcs)
 }
 
 
+/*
+ *  OnTestDlgCreate
+ */
+
+static BOOL OnTestDlgCreate (HWND hwnd, LPCREATESTRUCT lpcs)
+{
+    g_hwndTestDlgEdit = CreateWindowEx ( WS_EX_LEFT | WS_EX_LTRREADING |
+            WS_EX_RIGHTSCROLLBAR | WS_EX_NOPARENTNOTIFY | WS_EX_CLIENTEDGE,
+            TEXT("Edit"), TEXT("Edit"),
+            WS_CHILDWINDOW | WS_VISIBLE | WS_TABSTOP | ES_LEFT | ES_AUTOHSCROLL,
+            16,33,184,24, hwnd, (HMENU)101, g_hinst, 0);
+    if (!g_hwndTestDlgEdit) return FALSE;
+
+    g_hwndTestDlgBut1 = CreateWindowEx ( WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR
+            | WS_EX_NOPARENTNOTIFY,
+            TEXT("button"), TEXT("Button &1"),
+            WS_CHILDWINDOW | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON | BS_TEXT,
+            204,33,30,24, hwnd, (HMENU)201, g_hinst, 0);
+    if (!g_hwndTestDlgBut1) return FALSE;
+
+    g_hwndTestDlgBut2 = CreateWindowEx ( WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR
+            | WS_EX_NOPARENTNOTIFY, TEXT("button"),
+            TEXT("Button &2"),
+            WS_CHILDWINDOW | WS_VISIBLE | WS_TABSTOP | BS_PUSHBUTTON | BS_TEXT,
+            90,102,80,24, hwnd, (HMENU)IDCANCEL, g_hinst, 0);
+    if (!g_hwndTestDlgBut2) return FALSE;
+
+    return TRUE;
+}
+
+
 static LRESULT CALLBACK main_window_procA (HWND hwnd, UINT uiMsg, WPARAM wParam,
         LPARAM lParam)
 {
@@ -452,6 +485,26 @@ static LRESULT CALLBACK main_window_procA (HWND hwnd, UINT uiMsg, WPARAM wParam,
     return result;
 }
 
+static LRESULT CALLBACK testDlgWinProc (HWND hwnd, UINT uiMsg, WPARAM wParam,
+        LPARAM lParam)
+{
+    LRESULT result;
+    switch (uiMsg)
+    {
+        /* Add blank case statements for these to ensure we don't use them
+         * by mistake.
+         */
+        case DM_GETDEFID: break;
+        case DM_SETDEFID: break;
+
+        case WM_CREATE:
+            return (OnTestDlgCreate (hwnd,
+                    (LPCREATESTRUCTA) lParam) ? 0 : (LRESULT) -1);
+    }
+
+    result=DefWindowProcA (hwnd, uiMsg, wParam, lParam);
+    return result;
+}
 
 static BOOL RegisterWindowClasses (void)
 {
@@ -475,7 +528,118 @@ static BOOL RegisterWindowClasses (void)
 
     if (!RegisterClassA (&cls)) return FALSE;
 
+    GetClassInfoA(0, "#32770", &cls);
+    cls.lpfnWndProc = testDlgWinProc;
+    cls.lpszClassName = "WM_NEXTDLGCTLWndClass";
+    if (!RegisterClassA (&cls)) return FALSE;
+
     return TRUE;
+}
+
+static void WM_NEXTDLGCTLTest(void)
+{
+    DWORD dwVal;
+
+    g_hwndTestDlg = CreateWindowEx( WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR
+              | WS_EX_DLGMODALFRAME | WS_EX_WINDOWEDGE | WS_EX_CONTROLPARENT | WS_EX_APPWINDOW,
+              "WM_NEXTDLGCTLWndClass",
+              "WM_NEXTDLGCTL Message test window",
+              WS_POPUPWINDOW | WS_CLIPSIBLINGS | WS_DLGFRAME | WS_OVERLAPPED |
+              WS_MINIMIZEBOX | WS_MAXIMIZEBOX | DS_3DLOOK | DS_SETFONT | DS_MODALFRAME,
+              0, 0, 235, 135,
+              NULL, NULL, g_hinst, 0);
+
+    assert (g_hwndTestDlg);
+    assert (g_hwndTestDlgBut1);
+    assert (g_hwndTestDlgBut2);
+    assert (g_hwndTestDlgEdit);
+
+    /*
+     * Test message DM_SETDEFID
+     */
+
+    DefDlgProcA( g_hwndTestDlg, DM_SETDEFID, IDCANCEL, 0 );
+    DefDlgProcA( g_hwndTestDlgBut1, BM_SETSTYLE, BS_DEFPUSHBUTTON, FALSE );
+    dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
+
+    ok ( IDCANCEL == (LOWORD(dwVal)), "Did not set default ID" );
+
+    /*
+     * Check whether message WM_NEXTDLGCTL is changing the focus to next control and if
+     * the destination control is a button, style of the button should be changed to
+     * BS_DEFPUSHBUTTON with out making it default.
+     */
+
+    /*
+     * Keep the focus on Edit control.
+     */
+
+    if ( SetFocus( g_hwndTestDlgEdit ) )
+    {
+         ok ((GetFocus() == g_hwndTestDlgEdit), "Focus didn't set on Edit control\n");
+
+        /*
+         * Test message WM_NEXTDLGCTL
+         */
+        DefDlgProcA( g_hwndTestDlg, WM_NEXTDLGCTL, 0, 0 );
+        ok ((GetFocus() == g_hwndTestDlgBut1), "Focus didn't move to first button\n");
+
+        /*
+         * Check whether the default button ID got changed by sending message "WM_NEXTDLGCTL"
+         */
+        dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
+        todo_wine ok ( IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
+
+        /*
+         * Check whether the style of the button which got the focus, changed to BS_DEFPUSHBUTTON and
+         * the style of default button changed to BS_PUSHBUTTON.
+         */
+        if ( IDCANCEL == (LOWORD(dwVal)) )
+        {
+                ok ( ((GetWindowLong( g_hwndTestDlgBut1, GWL_STYLE)) & BS_DEFPUSHBUTTON),
+                        "Button1 style not set to BS_DEFPUSHBUTTON\n" );
+
+                ok ( !((GetWindowLong( g_hwndTestDlgBut2, GWL_STYLE)) & BS_DEFPUSHBUTTON),
+                        "Button2's style not chaged to BS_PUSHBUTTON\n" );
+        }
+
+        /*
+         * Move focus to Button2 using "WM_NEXTDLGCTL"
+         */
+        DefDlgProcA( g_hwndTestDlg, WM_NEXTDLGCTL, 0, 0 );
+        ok ((GetFocus() == g_hwndTestDlgBut2), "Focus didn't move to second button\n");
+
+        /*
+         * Check whether the default button ID got changed by sending message "WM_NEXTDLGCTL"
+         */
+        dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
+        ok ( IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
+
+        /*
+         * Check whether the style of the button which got the focus, changed to BS_DEFPUSHBUTTON and
+         * the style of button which lost the focus changed to BS_PUSHBUTTON.
+         */
+        if ( IDCANCEL == (LOWORD(dwVal)) )
+        {
+            todo_wine ok ( ((GetWindowLong( g_hwndTestDlgBut2, GWL_STYLE)) & BS_DEFPUSHBUTTON),
+                        "Button2 style not set to BS_DEFPUSHBUTTON\n" );
+
+                ok ( !((GetWindowLong( g_hwndTestDlgBut1, GWL_STYLE)) & BS_DEFPUSHBUTTON),
+                        "Button1's style not chaged to BS_PUSHBUTTON\n" );
+        }
+
+        /*
+         * Move focus to Edit control using "WM_NEXTDLGCTL"
+         */
+        DefDlgProcA( g_hwndTestDlg, WM_NEXTDLGCTL, 0, 0 );
+        ok ((GetFocus() == g_hwndTestDlgEdit), "Focus didn't move to Edit control\n");
+
+        /*
+         * Check whether the default button ID got changed by sending message "WM_NEXTDLGCTL"
+         */
+        dwVal = DefDlgProcA(g_hwndTestDlg, DM_GETDEFID, 0, 0);
+        todo_wine ok ( IDCANCEL == (LOWORD(dwVal)), "WM_NEXTDLGCTL changed default button\n");
+    }
 }
 
 static void IsDialogMessageWTest (void)
@@ -515,4 +679,5 @@ START_TEST(dialog)
 
     GetNextDlgItemTest();
     IsDialogMessageWTest();
+    WM_NEXTDLGCTLTest();
 }
