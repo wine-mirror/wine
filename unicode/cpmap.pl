@@ -91,7 +91,8 @@ $DEF_CHAR = ord '?';
     [ 28600, "ISO8859/8859-10.TXT",               "ISO 8859-10 Latin 6 (Nordic)" ],
     [ 28603, "ISO8859/8859-13.TXT",               "ISO 8859-13 Latin 7 (Baltic)" ],
     [ 28604, "ISO8859/8859-14.TXT",               "ISO 8859-14 Latin 8 (Celtic)" ],
-    [ 28605, "ISO8859/8859-15.TXT",               "ISO 8859-15 Latin 9 (Euro)" ]
+    [ 28605, "ISO8859/8859-15.TXT",               "ISO 8859-15 Latin 9 (Euro)" ],
+    [ 28606, "ISO8859/8859-16.TXT",               "ISO 8859-16 Latin 10 (Balkan)" ]
 );
 
 
