@@ -1565,6 +1565,87 @@ monitor mem           displays memory mapping of debugged process
       </sect2>
 
       <sect2>
+	<title>Graphical frontends to gdb</title>
+
+	<para>
+          This section will describe how you can debug wine using the
+          GDB mode of winedbg and some graphical front ends to GDB for
+          those of you who really like graphical debuggers.
+        </para>
+
+	<sect3>
+	  <title>DDD</title>
+	  
+	  <para>
+            Use the following steps, in this order:
+<orderedlist>
+	      <listitem>
+		<para>
+Start the wine debugger with a command line
+like:
+<screen>
+	winedbg -- --gdb --no-start &lt;name_of_exe_to_debug.exe&gt;
+</screen>
+</para>
+	      </listitem>
+	      <listitem>
+		<para>Start ddd</para>
+	      </listitem>
+	      <listitem>
+		<para>In ddd, use the 'Open File' or 'Open Program' to
+                  point to the wine executable</para>
+	      </listitem>
+	      <listitem>
+		<para>In the output of 1/, there's a line like 
+<screen>
+	target remote localhost:32878
+</screen>
+copy that line and paste into ddd command pane (the one with the (gdb)
+prompt)
+</para>
+	      </listitem>
+	    </orderedlist>
+The program should now be loaded and up and running. If you want, you
+can also add in 1/ after the name of the exec all the needed
+parameters
+          </para>
+	</sect3>
+	<sect3>
+	  <title>kdbg</title>
+	  
+	  <para>
+            Use the following steps, in this order:
+            <orderedlist>
+	      <listitem>
+		<para>
+                  Start the wine debugger with a command line like:
+<screen>
+	winedbg -- --gdb --no-start &lt;name_of_exe_to_debug.exe&gt;
+</screen>
+</para>
+	      </listitem>
+	      <listitem>
+		<para>In the output of 1/, there's a line like 
+<screen>
+	target remote localhost:32878
+</screen>
+Start kdbg with
+<screen>
+kdbg -r localhost:32878 wine
+</screen>
+localhost:32878 is not a fixed value, but has been printed in step
+1/. 'wine' should also be the full path to the wine executable.
+</para>
+	      </listitem>
+	    </orderedlist>
+The program should now be loaded and up and running. If you want, you
+can also add in 1/ after the name of the exec all the needed
+parameters
+          </para>
+	</sect3>
+      </sect2>
+	
+      <sect2>
         <title>Using other Unix debuggers</title>
 
         <para>
