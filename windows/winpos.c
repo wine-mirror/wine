@@ -2846,11 +2846,10 @@ Pos:  /* -----------------------------------------------------------------------
 		    }
 		    wndPtr->pDriver->pSetHostAttr(wndPtr, HAK_BITGRAVITY, BGNorthWest );
 	 	}
-		else
-		    wndPtr->pDriver->pSetHostAttr(wndPtr, HAK_BITGRAVITY, BGForget );
 	    }
 
 	    wndPtr->pDriver->pSetWindowPos(wndPtr, &winpos, bChangePos);
+	    wndPtr->pDriver->pSetHostAttr(wndPtr, HAK_BITGRAVITY, BGForget );
 	    winpos.hwndInsertAfter = tempInsertAfter;
 	}
 
