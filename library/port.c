@@ -164,8 +164,14 @@ int clone( int (*fn)(void *), void *stack, int flags, void *arg )
 #ifndef HAVE_STRCASECMP
 int strcasecmp( const char *str1, const char *str2 )
 {
-    while (*str1 && toupper(*str1) == toupper(*str2)) { str1++; str2++; }
-    return toupper(*str1) - toupper(*str2);
+    const unsigned char *ustr1 = (const unsigned char *)str1;
+    const unsigned char *ustr2 = (const unsigned char *)str2;
+
+    while (*ustr1 && toupper(*ustr1) == toupper(*ustr2)) {
+        ustr1++;
+	ustr2++;
+    }
+    return toupper(*ustr1) - toupper(*ustr2);
 }
 #endif /* HAVE_STRCASECMP */
 
@@ -175,11 +181,17 @@ int strcasecmp( const char *str1, const char *str2 )
 #ifndef HAVE_STRNCASECMP
 int strncasecmp( const char *str1, const char *str2, size_t n )
 {
+    const unsigned char *ustr1 = (const unsigned char *)str1;
+    const unsigned char *ustr2 = (const unsigned char *)str2;
     int res;
+
     if (!n) return 0;
-    while ((--n > 0) && *str1)
-      if ((res = toupper(*str1++) - toupper(*str2++))) return res;
-    return toupper(*str1) - toupper(*str2);
+    while ((--n > 0) && *ustr1) {
+	if ((res = toupper(*ustr1) - toupper(*ustr2))) return res;
+	ustr1++;
+	ustr2++;
+    }
+    return toupper(*ustr1) - toupper(*ustr2);
 }
 #endif /* HAVE_STRNCASECMP */
 
@@ -197,9 +209,9 @@ int wine_openpty(int *master, int *slave, char *name,
                  struct termios *term, struct winsize *winsize)
 {
 #ifdef HAVE_OPENPTY
-    return openpty(master,slave,name,term,winsize);
+    return openpty(master, slave, name, term, winsize);
 #else
-    char *ptr1, *ptr2;
+    const char *ptr1, *ptr2;
     char pts_name[512];
 
     strcpy (pts_name, "/dev/ptyXY");
@@ -218,6 +230,7 @@ int wine_openpty(int *master, int *slave, char *name,
             pts_name[5] = 't';
             if ((*slave = open(pts_name, O_RDWR)) < 0) {
                 pts_name[5] = 'p';
+		close (*master);
                 continue;
             }
 
@@ -230,6 +243,7 @@ int wine_openpty(int *master, int *slave, char *name,
             return *slave;
         }
     }
+    errno = EMFILE;
     return -1;
 #endif
 }
@@ -405,13 +419,16 @@ void *wine_anon_mmap( void *start, size_t size, int prot, int flags )
         }
     }
 #endif  /* MAP_ANON */
-    /* Linux EINVAL's on us if we don't pass MAP_PRIVATE to an anon mmap */
+
 #ifdef MAP_SHARED
     flags &= ~MAP_SHARED;
 #endif
+
+    /* Linux EINVAL's on us if we don't pass MAP_PRIVATE to an anon mmap */
 #ifdef MAP_PRIVATE
     flags |= MAP_PRIVATE;
 #endif
+
     return mmap( start, size, prot, flags, fdzero, 0 );
 }
 
