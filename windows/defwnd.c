@@ -481,6 +481,9 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 
             return result;
         }
+    case WM_HELP:
+	SendMessageA( wndPtr->parent->hwndSelf, msg, wParam, lParam );
+	break;
     }
 
     return 0;
