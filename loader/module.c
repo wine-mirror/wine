@@ -50,6 +50,14 @@ WINE_MODREF *MODULE_modref_list = NULL;
 WINE_MODREF *exe_modref;
 int process_detaching = 0;  /* set on process detach to avoid deadlocks with thread detach */
 
+inline static HMODULE get_exe_module(void)
+{
+    HMODULE mod;
+    /* FIXME: should look into PEB */
+    LdrGetDllHandle( 0, 0, NULL, &mod );
+    return mod;
+}
+
 /***********************************************************************
  *           wait_input_idle
  *
@@ -922,46 +930,24 @@ DWORD WINAPI GetModuleFileNameA(
 	LPSTR lpFileName,	/* [out] filenamebuffer */
         DWORD size )		/* [in] size of filenamebuffer */
 {
-    DWORD       len = 0;
+    LPWSTR filenameW = HeapAlloc( GetProcessHeap(), 0, size * sizeof(WCHAR) );
 
-    lpFileName[0] = 0;
-
-    RtlEnterCriticalSection( &loader_section );
-    if (!hModule && !(NtCurrentTeb()->tibflags & TEBF_WIN32))
+    if (!filenameW)
     {
-        /* 16-bit task - get current NE module name */
-        NE_MODULE *pModule = NE_GetPtr( GetCurrentTask() );
-        if (pModule) len = GetLongPathNameA(NE_MODULE_NAME(pModule), lpFileName, size);
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return 0;
     }
-    else if (hModule || LdrGetDllHandle( 0, 0, NULL, &hModule ) == STATUS_SUCCESS)
-    {
-        LDR_MODULE* pldr;
-        NTSTATUS    nts;
-
-        nts = LdrFindEntryForAddress( hModule, &pldr );
-        if (nts == STATUS_SUCCESS)
-        {
-            WideCharToMultiByte( CP_ACP, 0, 
-                                 pldr->FullDllName.Buffer, pldr->FullDllName.Length,
-                                 lpFileName, size, NULL, NULL );
-            len = min(size, pldr->FullDllName.Length / sizeof(WCHAR));
-        }
-        else SetLastError( RtlNtStatusToDosError( nts ) );
-    }
-    RtlLeaveCriticalSection( &loader_section );
-
-    TRACE( "%s\n", debugstr_an(lpFileName, len) );
-    return len;
+    GetModuleFileNameW( hModule, filenameW, size );
+    WideCharToMultiByte( CP_ACP, 0, filenameW, -1, lpFileName, size, NULL, NULL );
+    HeapFree( GetProcessHeap(), 0, filenameW );
+    return strlen( lpFileName );
 }
-
 
 /***********************************************************************
  *              GetModuleFileNameW      (KERNEL32.@)
  */
 DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size )
 {
-    DWORD       len = 0;
-
     lpFileName[0] = 0;
 
     RtlEnterCriticalSection( &loader_section );
@@ -973,30 +959,25 @@ DWORD WINAPI GetModuleFileNameW( HMODULE hModule, LPWSTR lpFileName, DWORD size 
         {
             WCHAR    path[MAX_PATH];
 
-            MultiByteToWideChar( CP_ACP, 0, NE_MODULE_NAME(pModule), -1, 
-                                 path, MAX_PATH );
-            len = GetLongPathNameW(path, lpFileName, size);
+            MultiByteToWideChar( CP_ACP, 0, NE_MODULE_NAME(pModule), -1, path, MAX_PATH );
+            GetLongPathNameW(path, lpFileName, size);
         }
     }
-    else if (hModule || LdrGetDllHandle( 0, 0, NULL, &hModule ) == STATUS_SUCCESS)
+    else
     {
         LDR_MODULE* pldr;
         NTSTATUS    nts;
 
+        if (!hModule) hModule = get_exe_module();
         nts = LdrFindEntryForAddress( hModule, &pldr );
-        if (nts == STATUS_SUCCESS)
-        {
-            len = min(size, pldr->FullDllName.Length / sizeof(WCHAR));
-            strncpyW(lpFileName, pldr->FullDllName.Buffer, len);
-            if (len < size) lpFileName[len] = 0;
-        }
+        if (nts == STATUS_SUCCESS) lstrcpynW(lpFileName, pldr->FullDllName.Buffer, size);
         else SetLastError( RtlNtStatusToDosError( nts ) );
 
     }
     RtlLeaveCriticalSection( &loader_section );
 
-    TRACE( "%s\n", debugstr_wn(lpFileName, len) );
-    return len;
+    TRACE( "%s\n", debugstr_w(lpFileName) );
+    return strlenW(lpFileName);
 }
 
 /******************************************************************
