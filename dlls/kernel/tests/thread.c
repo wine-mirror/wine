@@ -474,14 +474,14 @@ VOID test_GetThreadTimes(DWORD version)
      kernelTime.dwLowDateTime=99;   kernelTime.dwHighDateTime=99;
      userTime.dwLowDateTime=99;     userTime.dwHighDateTime=99;
 /* GetThreadTimes should set all of the parameters passed to it */
+     error=GetThreadTimes(thread,&creationTime,&exitTime,
+                          &kernelTime,&userTime);
+     ok(error!=0,"GetThreadTimes failed");
+     ok(creationTime.dwLowDateTime!=99 || creationTime.dwHighDateTime!=99,
+        "creationTime was invalid");
+     ok(exitTime.dwLowDateTime!=99 || exitTime.dwHighDateTime!=99,
+        "exitTime was invalid");
      todo_wine {
-       error=GetThreadTimes(thread,&creationTime,&exitTime,
-                            &kernelTime,&userTime);
-       ok(error!=0,"GetThreadTimes failed");
-       ok(creationTime.dwLowDateTime!=99 || creationTime.dwHighDateTime!=99,
-          "creationTime was invalid");
-       ok(exitTime.dwLowDateTime!=99 || exitTime.dwHighDateTime!=99,
-          "exitTime was invalid");
        ok(kernelTime.dwLowDateTime!=99 || kernelTime.dwHighDateTime!=99,
           "kernelTime was invalid");
        ok(userTime.dwLowDateTime!=99 || userTime.dwHighDateTime!=99,
