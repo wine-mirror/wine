@@ -112,6 +112,6 @@ BOOL WINAPI wglUseFontOutlines(HDC hdc,
 			       FLOAT extrusion,
 			       int format,
 			       LPGLYPHMETRICSFLOAT lpgmf) ;
+const char * WINAPI wglGetExtensionsStringARB(HDC hdc) ;
 
 #endif /* __DLLS_OPENGL32_WGL_H */
-

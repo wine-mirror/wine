@@ -653,7 +653,7 @@ static BOOL process_attach(void)
 }
 
 /* Some WGL extensions... */
-static const char *WGL_extensions = "";
+static const char *WGL_extensions = "WGL_ARB_extensions_string WGL_EXT_extensions_string";
 
 const char * WINAPI wglGetExtensionsStringEXT(void) {
     TRACE("() returning \"%s\"\n", WGL_extensions);
@@ -665,6 +665,15 @@ static void process_detach(void)
 {
   glXDestroyContext(default_display, default_cx);
 }
+
+/***********************************************************************
+ *              wglGetExtensionsStringARB(OPENGL32.@)
+ */
+const char * WINAPI wglGetExtensionsStringARB(HDC hdc) {
+
+  return wglGetExtensionsStringEXT();
+}
+
 
 /***********************************************************************
  *           OpenGL initialisation routine
