@@ -1826,6 +1826,7 @@ LPSTR _ILGetTextPointer(LPCITEMIDLIST pidl)
 	    case PT_FOLDER1:
 	    case PT_VALUE:
 	    case PT_IESPECIAL1:
+	    case PT_RAS_FOLDER:
 	    case PT_IESPECIAL2:
 	      return (LPSTR)&(pdata->u.file.szNames);
 
@@ -1856,6 +1857,7 @@ LPSTR _ILGetSTextPointer(LPCITEMIDLIST pidl)
 	    case PT_FOLDER:
 	    case PT_VALUE:
 	    case PT_IESPECIAL1:
+	    case PT_RAS_FOLDER:
 	    case PT_IESPECIAL2:
 	      return (LPSTR)(pdata->u.file.szNames + strlen (pdata->u.file.szNames) + 1);
 

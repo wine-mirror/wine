@@ -83,6 +83,7 @@ LPSTR _dbg_ILGetTextPointer(LPCITEMIDLIST pidl)
 	    case PT_FOLDER1:
 	    case PT_VALUE:
 	    case PT_IESPECIAL1:
+	    case PT_RAS_FOLDER:
 	    case PT_IESPECIAL2:
 	      return (LPSTR)&(pdata->u.file.szNames);
 
@@ -108,6 +109,7 @@ LPSTR _dbg_ILGetSTextPointer(LPCITEMIDLIST pidl)
 	    case PT_FOLDER:
 	    case PT_VALUE:
 	    case PT_IESPECIAL1:
+	    case PT_RAS_FOLDER:
 	    case PT_IESPECIAL2:
 	      return (LPSTR)(pdata->u.file.szNames + strlen (pdata->u.file.szNames) + 1);
 
@@ -239,8 +241,10 @@ BOOL pcheck (LPCITEMIDLIST pidl)
 	      case PT_FOLDER1:
 	      case PT_WORKGRP:
 	      case PT_COMP:
+	      case PT_NETPROVIDER:
 	      case PT_NETWORK:
 	      case PT_IESPECIAL1:
+	      case PT_RAS_FOLDER:
 	      case PT_IESPECIAL2:
 	      case PT_SHARE:
 		break;

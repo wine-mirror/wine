@@ -100,6 +100,7 @@
 #define PT_NETPROVIDER  0x46
 #define PT_NETWORK	0x47
 #define PT_IESPECIAL1	0x61
+#define PT_RAS_FOLDER	0x70
 #define PT_IESPECIAL2	0xb1
 #define PT_SHARE	0xc3
 
