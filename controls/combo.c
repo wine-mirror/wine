@@ -1195,6 +1195,7 @@ static void COMBO_LButtonDown( LPHEADCOMBO lphc, LPARAM lParam )
        {
 	   /* got a click to cancel selection */
 
+           lphc->wState &= ~CBF_BUTTONDOWN;
            CBRollUp( lphc, TRUE, FALSE );
 	   if( !IsWindow( hWnd ) ) return;
 
@@ -1203,7 +1204,6 @@ static void COMBO_LButtonDown( LPHEADCOMBO lphc, LPARAM lParam )
                lphc->wState &= ~CBF_CAPTURE;
                ReleaseCapture();
            }
-           lphc->wState &= ~CBF_BUTTONDOWN;
        }
        else
        {
