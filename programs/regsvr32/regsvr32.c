@@ -37,7 +37,11 @@
  * support.
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <stdio.h>
+#include <string.h>
 #include <windows.h>
 
 typedef HRESULT (*DLLREGISTER)          (void);
@@ -173,11 +177,11 @@ int main(int argc, char* argv[])
 
     for(i = 1; i < argc; i++)
     {
-        if (!stricmp(argv[i], "/u"))
+        if (!strcasecmp(argv[i], "/u"))
                 Unregister = TRUE;
-        else if (!stricmp(argv[i], "/s"))
+        else if (!strcasecmp(argv[i], "/s"))
                 Silent = 1;
-        else if (!strnicmp(argv[i], "/i", strlen("/i")))
+        else if (!strncasecmp(argv[i], "/i", strlen("/i")))
         {
             CHAR* command_line = argv[i] + strlen("/i");
 
@@ -219,7 +223,7 @@ int main(int argc, char* argv[])
                 wsCommandLine = EmptyLine;
             }
         }
-        else if(!stricmp(argv[i], "/n"))
+        else if(!strcasecmp(argv[i], "/n"))
             CallRegister = FALSE;
         else if (argv[i][0] == '/' && (!argv[i][2] || argv[i][2] == ':'))
             printf("Unrecognized switch %s\n", argv[i]);
