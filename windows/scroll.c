@@ -354,16 +354,18 @@ rect?rect->left:0, rect?rect->top:0, rect ?rect->right:0, rect ?rect->bottom:0, 
 	    if( dy > 0 ) dst.y = (src.y = dc->w.DCOrgY + cliprc.top) + dy;
 	    else src.y = (dst.y = dc->w.DCOrgY + cliprc.top) - dy;
 
-	    if( bUpdate ) /* handles non-Wine windows hanging over the scrolled area */
-		TSXSetGraphicsExposures( display, dc->u.x.gc, True );
-
-	    TSXSetFunction( display, dc->u.x.gc, GXcopy );
-	    TSXCopyArea( display, dc->u.x.drawable, dc->u.x.drawable, dc->u.x.gc, 
-		       src.x, src.y, cliprc.right - cliprc.left - abs(dx),
-		       cliprc.bottom - cliprc.top - abs(dy), dst.x, dst.y );
-
-	    if( bUpdate )
-		TSXSetGraphicsExposures( display, dc->u.x.gc, False );
+            if ((cliprc.right - cliprc.left > abs(dx)) &&
+                (cliprc.bottom - cliprc.top > abs(dy)))
+            {
+                if (bUpdate) /* handles non-Wine windows hanging over the scrolled area */
+                    TSXSetGraphicsExposures( display, dc->u.x.gc, True );
+                TSXSetFunction( display, dc->u.x.gc, GXcopy );
+                TSXCopyArea( display, dc->u.x.drawable, dc->u.x.drawable, dc->u.x.gc, 
+                             src.x, src.y, cliprc.right - cliprc.left - abs(dx),
+                             cliprc.bottom - cliprc.top - abs(dy), dst.x, dst.y );
+                if (bUpdate)
+                    TSXSetGraphicsExposures( display, dc->u.x.gc, False );
+            }
 
 	    if( dc->w.hVisRgn && bUpdate )
 	    {
