@@ -53,10 +53,6 @@ struct modify_ldt_s
     unsigned int  useable:1;
 };
 
-#ifndef SYS_set_thread_area
-#define SYS_set_thread_area 243
-#endif
-
 static inline void fill_modify_ldt_struct( struct modify_ldt_s *ptr, const LDT_ENTRY *entry )
 {
     ptr->base_addr       = (unsigned long)wine_ldt_get_base(entry);
@@ -94,7 +90,7 @@ static inline int set_thread_area( struct modify_ldt_s *ptr )
                           "int $0x80\n\t"
                           "popl %%ebx"
                           : "=a" (res)
-                          : "0" (SYS_set_thread_area), "r" (ptr) );
+                          : "0" (243) /* SYS_set_thread_area */, "r" (ptr) );
     if (res >= 0) return res;
     errno = -res;
     return -1;
