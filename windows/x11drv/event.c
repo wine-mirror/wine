@@ -1737,7 +1737,10 @@ void EVENT_MapNotify( HWND hWnd, XMapEvent *event )
   WND *wndFocus = WIN_FindWndPtr(hwndFocus);
   WND *pWnd = WIN_FindWndPtr(hWnd);
   if (pWnd->flags & WIN_MANAGED)
+  {
       pWnd->dwStyle &= ~WS_MINIMIZE;
+      ShowOwnedPopups(hWnd,TRUE);
+  }
   WIN_ReleaseWndPtr(pWnd);
 
   if (hwndFocus && IsChild( hWnd, hwndFocus ))
@@ -1759,7 +1762,10 @@ void EVENT_UnmapNotify( HWND hWnd, XUnmapEvent *event )
   {
       EndMenu();
       if( pWnd->dwStyle & WS_VISIBLE )
+      {
 	  pWnd->dwStyle |= WS_MINIMIZE;
+          ShowOwnedPopups(hWnd,FALSE);
+      }
   }
   WIN_ReleaseWndPtr(pWnd);
 }

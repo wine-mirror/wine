@@ -2729,14 +2729,20 @@ LONG NC_HandleSysCommand( HWND hwnd, WPARAM16 wParam, POINT16 pt )
 	break;
 
     case SC_MINIMIZE:
+        if (hwnd == GetForegroundWindow())
+            ShowOwnedPopups(hwnd,FALSE);
 	ShowWindow( hwnd, SW_MINIMIZE ); 
 	break;
 
     case SC_MAXIMIZE:
+        if (IsIconic(hwnd) && hwnd == GetForegroundWindow())
+            ShowOwnedPopups(hwnd,TRUE);
 	ShowWindow( hwnd, SW_MAXIMIZE );
 	break;
 
     case SC_RESTORE:
+        if (IsIconic(hwnd) && hwnd == GetForegroundWindow())
+            ShowOwnedPopups(hwnd,TRUE);
 	ShowWindow( hwnd, SW_RESTORE );
 	break;
 
