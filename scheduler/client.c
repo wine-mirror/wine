@@ -225,18 +225,14 @@ static unsigned int wait_reply_fd( int *fd )
 
 
 /***********************************************************************
- *           server_call
+ *           server_call_noerr
  *
  * Perform a server call.
  */
-unsigned int server_call( enum request req )
+unsigned int server_call_noerr( enum request req )
 {
-    unsigned int res;
-
     send_request( req );
-    res = wait_reply();
-    if (res) SetLastError( res );
-    return res;  /* error code */
+    return wait_reply();
 }
 
 

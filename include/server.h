@@ -922,6 +922,10 @@ enum request
 
 /* client communication functions */
 
+extern unsigned int server_call_noerr( enum request req );
+extern unsigned int server_call_fd( enum request req, int fd_out, int *fd_in );
+extern void server_protocol_error( const char *err, ... );
+
 /* get a pointer to the request buffer */
 static inline void * WINE_UNUSED get_req_buffer(void)
 {
@@ -934,9 +938,13 @@ static inline int WINE_UNUSED server_remaining( const void *ptr )
     return (char *)NtCurrentTeb()->buffer + NtCurrentTeb()->buffer_size - (char *)ptr;
 }
 
-extern unsigned int server_call( enum request req );
-extern unsigned int server_call_fd( enum request req, int fd_out, int *fd_in );
-extern void server_protocol_error( const char *err, ... );
+/* do a server call and set the last error code */
+static inline int server_call( enum request req )
+{
+    unsigned int res = server_call_noerr( req );
+    if (res) SetLastError( res );
+    return res;
+}
 
 extern int CLIENT_InitServer(void);
 extern int CLIENT_SetDebug( int level );
