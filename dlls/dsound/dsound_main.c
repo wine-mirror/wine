@@ -468,10 +468,6 @@ static ULONG WINAPI IDirectSoundImpl_Release(LPDIRECTSOUND8 iface) {
 		DeleteCriticalSection(&This->mixlock);
 		if (This->driver) {
 			IDsDriver_Close(This->driver);
-		} else {
-			unsigned c;
-			for (c=0; c<DS_HEL_FRAGS; c++)
-				HeapFree(GetProcessHeap(),0,This->pwave[c]);
 		}
 		if (This->drvdesc.dwFlags & DSDDESC_DOMMSYSTEMOPEN) {
 			waveOutClose(This->hwo);
@@ -683,28 +679,11 @@ HRESULT WINAPI DirectSoundCreate8(REFGUID lpGUID,LPDIRECTSOUND8 *ppDS,IUnknown *
 	if (drv) {
 		IDsDriver_GetCaps(drv,&((*ippDS)->drvcaps));
 	} else {
-		unsigned c;
-
 		/* FIXME: We should check the device capabilities */
 		(*ippDS)->drvcaps.dwFlags =
 			DSCAPS_PRIMARY16BIT | DSCAPS_PRIMARYSTEREO;
 		if (ds_emuldriver)
 		    (*ippDS)->drvcaps.dwFlags |= DSCAPS_EMULDRIVER;
-
-		/* Allocate memory for HEL buffer headers */
-		for (c=0; c<DS_HEL_FRAGS; c++) {
-			(*ippDS)->pwave[c] = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEHDR));
-			if (!(*ippDS)->pwave[c]) {
-				/* Argh, out of memory */
-				while (c--) {
-					HeapFree(GetProcessHeap(),0,(*ippDS)->pwave[c]);
-					waveOutClose((*ippDS)->hwo);
-					HeapFree(GetProcessHeap(),0,*ippDS);
-					*ippDS = NULL;
-					return DSERR_OUTOFMEMORY;
-				}
-			}
-		}
 	}
 
 	DSOUND_RecalcVolPan(&((*ippDS)->volpan));

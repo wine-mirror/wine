@@ -1374,15 +1374,10 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     OSS_InitRingMessage(&wwo->msgRing);
 
-    if (!(dwFlags & WAVE_DIRECTSOUND)) {
-	wwo->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
-	wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
-	WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
-	CloseHandle(wwo->hStartUpEvent);
-    } else {
-	wwo->hThread = INVALID_HANDLE_VALUE;
-	wwo->dwThreadID = 0;
-    }
+    wwo->hStartUpEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+    wwo->hThread = CreateThread(NULL, 0, wodPlayer, (LPVOID)(DWORD)wDevID, 0, &(wwo->dwThreadID));
+    WaitForSingleObject(wwo->hStartUpEvent, INFINITE);
+    CloseHandle(wwo->hStartUpEvent);
     wwo->hStartUpEvent = INVALID_HANDLE_VALUE;
 
     TRACE("fd=%d fragmentSize=%ld\n",
@@ -1785,7 +1780,7 @@ static HRESULT DSDB_MapPrimary(IDsDriverBufferImpl *dsdb)
 	wwo->mapping = mmap(NULL, wwo->maplen, PROT_WRITE, MAP_SHARED,
 			    wwo->ossdev->fd, 0);
 	if (wwo->mapping == (LPBYTE)-1) {
-	    ERR("(%p): Could not map sound device for direct access (%s)\n", dsdb, strerror(errno));
+	    TRACE("(%p): Could not map sound device for direct access (%s)\n", dsdb, strerror(errno));
 	    return DSERR_GENERIC;
 	}
 	TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dsdb, wwo->mapping, wwo->maplen);

@@ -176,6 +176,21 @@ HRESULT DSOUND_PrimaryCreate(IDirectSoundImpl *This)
 						  &(This->buflen),&(This->buffer),
 						  (LPVOID*)&(This->hwbuf));
 	}
+	if (!This->hwbuf) {
+		/* Allocate memory for HEL buffer headers */
+		unsigned c;
+		for (c=0; c<DS_HEL_FRAGS; c++) {
+			This->pwave[c] = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(WAVEHDR));
+			if (!This->pwave[c]) {
+				/* Argh, out of memory */
+				while (c--) {
+					HeapFree(GetProcessHeap(),0,This->pwave[c]);
+				}
+				err=DSERR_OUTOFMEMORY;
+				break;
+			}
+		}
+	}
 	if (err == DS_OK)
 		err = DSOUND_PrimaryOpen(This);
 	if (err != DS_OK)
@@ -191,6 +206,11 @@ HRESULT DSOUND_PrimaryDestroy(IDirectSoundImpl *This)
 	DSOUND_PrimaryClose(This);
 	if (This->hwbuf) {
 		IDsDriverBuffer_Release(This->hwbuf);
+	} else {
+		unsigned c;
+		for (c=0; c<DS_HEL_FRAGS; c++) {
+			HeapFree(GetProcessHeap(),0,This->pwave[c]);
+		}
 	}
 	return DS_OK;
 }
