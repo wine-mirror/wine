@@ -28,6 +28,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -42,6 +43,7 @@
 #include "winerror.h"
 #include "winuser.h"
 #include "wine/unicode.h"
+#include "wine/server.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
 
@@ -244,6 +246,29 @@ typedef struct
 #define EL_Network           0x03
 #define EL_Serial            0x04
 #define EL_Memory            0x05
+
+
+struct magic_device
+{
+    WCHAR  name[10];
+    HANDLE handle;
+    dev_t  dev;
+    ino_t  ino;
+    void (*ioctl_handler)(CONTEXT86 *);
+};
+
+static void INT21_IoctlScsiMgrHandler( CONTEXT86 * );
+static void INT21_IoctlEMSHandler( CONTEXT86 * );
+static void INT21_IoctlHPScanHandler( CONTEXT86 * );
+
+static struct magic_device magic_devices[] =
+{
+    { {'s','c','s','i','m','g','r','$',0}, NULL, 0, 0, INT21_IoctlScsiMgrHandler },
+    { {'e','m','m','x','x','x','x','0',0}, NULL, 0, 0, INT21_IoctlEMSHandler },
+    { {'h','p','s','c','a','n',0},         NULL, 0, 0, INT21_IoctlHPScanHandler },
+};
+
+#define NB_MAGIC_DEVICES  (sizeof(magic_devices)/sizeof(magic_devices[0]))
 
 
 /* Many calls translate a drive argument like this:
@@ -769,6 +794,88 @@ static BOOL INT21_SetCurrentDirectory( CONTEXT86 *context )
     return result;
 }
 
+/***********************************************************************
+ *           INT21_CreateMagicDeviceHandle
+ *
+ * Create a dummy file handle for a "magic" device.
+ */
+static HANDLE INT21_CreateMagicDeviceHandle( LPCWSTR name )
+{
+    const char *dir = wine_get_server_dir();
+    char *unix_name;
+    int len1, len2;
+    HANDLE ret = 0;
+
+    len1 = strlen( dir );
+    len2 = WideCharToMultiByte( CP_UNIXCP, 0, name, -1, NULL, 0, NULL, NULL);
+    if (!(unix_name = HeapAlloc( GetProcessHeap(), 0, len1 + len2 + 1 )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return 0;
+    }
+    strcpy( unix_name, dir );
+    unix_name[len1] = '/';
+    WideCharToMultiByte( CP_UNIXCP, 0, name, -1, unix_name + len1 + 1, len2, NULL, NULL);
+
+    SERVER_START_REQ( create_file )
+    {
+        req->access     = GENERIC_READ|GENERIC_WRITE;
+        req->inherit    = 0;
+        req->sharing    = FILE_SHARE_READ|FILE_SHARE_WRITE;
+        req->create     = OPEN_ALWAYS;
+        req->attrs      = 0;
+        req->removable  = 0;
+        wine_server_add_data( req, unix_name, strlen(unix_name) );
+        SetLastError(0);
+        if (!wine_server_call_err( req )) ret = reply->handle;
+    }
+    SERVER_END_REQ;
+    HeapFree( GetProcessHeap(), 0, unix_name );
+    return ret;
+}
+
+
+/***********************************************************************
+ *           INT21_OpenMagicDevice
+ *
+ * Open a file handle for "magic" devices like EMMXXXX0.
+ */
+static HANDLE INT21_OpenMagicDevice( LPCWSTR name, DWORD access )
+{
+    int i;
+    const WCHAR *p;
+    HANDLE handle;
+
+    if (name[0] && (name[1] == ':')) name += 2;
+    if ((p = strrchrW( name, '/' ))) name = p + 1;
+    if ((p = strrchrW( name, '\\' ))) name = p + 1;
+
+    for (i = 0; i < NB_MAGIC_DEVICES; i++)
+    {
+        int len = strlenW( magic_devices[i].name );
+        if (!strncmpiW( magic_devices[i].name, name, len ) &&
+            (!name[len] || name[len] == '.' || name[len] == ':')) break;
+    }
+    if (i == NB_MAGIC_DEVICES) return 0;
+
+    if (!magic_devices[i].handle) /* need to open it */
+    {
+        int fd;
+        struct stat st;
+
+        if (!(handle = INT21_CreateMagicDeviceHandle( magic_devices[i].name ))) return 0;
+        wine_server_handle_to_fd( handle, 0, &fd, NULL, NULL );
+        fstat( fd, &st );
+        wine_server_release_fd( handle, fd );
+        magic_devices[i].dev = st.st_dev;
+        magic_devices[i].ino = st.st_ino;
+        magic_devices[i].handle = handle;
+    }
+    if (!DuplicateHandle( GetCurrentProcess(), magic_devices[i].handle,
+                          GetCurrentProcess(), &handle, access, FALSE, 0 )) handle = 0;
+    return handle;
+}
+
 
 /***********************************************************************
  *           INT21_CreateFile
@@ -924,38 +1031,45 @@ static BOOL INT21_CreateFile( CONTEXT86 *context,
      */
     MultiByteToWideChar(CP_OEMCP, 0, pathA, -1, pathW, MAX_PATH);
 
-    winHandle = CreateFileW( pathW, winAccess, winSharing, NULL, 
-                             winMode, winAttributes, 0 );
-
-    if (winHandle == INVALID_HANDLE_VALUE)
-        return FALSE;
-
-    /*
-     * Determine DOS file status.
-     *
-     * 1 = file opened
-     * 2 = file created
-     * 3 = file replaced
-     */
-    switch(winMode)
+    if ((winHandle = INT21_OpenMagicDevice( pathW, winAccess )))
     {
-    case OPEN_EXISTING:
         dosStatus = 1;
-        break;
-    case TRUNCATE_EXISTING:
-        dosStatus = 3; 
-        break;
-    case CREATE_NEW:
-        dosStatus = 2;
-        break;
-    case OPEN_ALWAYS:
-        dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 1 : 2;
-        break;
-    case CREATE_ALWAYS:
-        dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 3 : 2;
-        break;
-    default:
-        dosStatus = 0;
+    }
+    else
+    {
+        winHandle = CreateFileW( pathW, winAccess, winSharing, NULL,
+                                 winMode, winAttributes, 0 );
+
+        if (winHandle == INVALID_HANDLE_VALUE)
+            return FALSE;
+
+        /*
+         * Determine DOS file status.
+         *
+         * 1 = file opened
+         * 2 = file created
+         * 3 = file replaced
+         */
+        switch(winMode)
+        {
+        case OPEN_EXISTING:
+            dosStatus = 1;
+            break;
+        case TRUNCATE_EXISTING:
+            dosStatus = 3;
+            break;
+        case CREATE_NEW:
+            dosStatus = 2;
+            break;
+        case OPEN_ALWAYS:
+            dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 1 : 2;
+            break;
+        case CREATE_ALWAYS:
+            dosStatus = (GetLastError() == ERROR_ALREADY_EXISTS) ? 3 : 2;
+            break;
+        default:
+            dosStatus = 0;
+        }
     }
 
     /*
@@ -2438,35 +2552,120 @@ static void INT21_Ioctl_Block( CONTEXT86 *context )
 
 
 /***********************************************************************
+ *           INT21_IoctlScsiMgrHandler
+ *
+ * IOCTL handler for the SCSIMGR device.
+ */
+static void INT21_IoctlScsiMgrHandler( CONTEXT86 *context )
+{
+    switch (AL_reg(context))
+    {
+    case 0x00: /* GET DEVICE INFORMATION */
+        SET_DX( context, 0xc0c0 );
+        break;
+
+    case 0x02: /* READ FROM CHARACTER DEVICE CONTROL CHANNEL */
+        DOSVM_ASPIHandler(context);
+        break;
+
+    case 0x0a: /* CHECK IF HANDLE IS REMOTE */
+        SET_DX( context, 0 );
+        break;
+
+    case 0x01: /* SET DEVICE INFORMATION */
+    case 0x03: /* WRITE TO CHARACTER DEVICE CONTROL CHANNEL */
+    case 0x06: /* GET INPUT STATUS */
+    case 0x07: /* GET OUTPUT STATUS */
+    case 0x0c: /* GENERIC CHARACTER DEVICE REQUEST */
+    case 0x10: /* QUERY GENERIC IOCTL CAPABILITY */
+    default:
+        INT_BARF( context, 0x21 );
+        break;
+    }
+}
+
+
+/***********************************************************************
+ *           INT21_IoctlEMSHandler
+ *
+ * IOCTL handler for the EMXXXX0 device.
+ */
+static void INT21_IoctlEMSHandler( CONTEXT86 *context )
+{
+    EMS_Ioctl_Handler(context);
+}
+
+
+/***********************************************************************
+ *           INT21_IoctlHPScanHandler
+ *
+ * IOCTL handler for the HPSCAN device.
+ */
+static void INT21_IoctlHPScanHandler( CONTEXT86 *context )
+{
+    switch (AL_reg(context))
+    {
+    case 0x00: /* GET DEVICE INFORMATION */
+        SET_DX( context, 0xc0c0 );
+        break;
+
+    case 0x0a: /* CHECK IF HANDLE IS REMOTE */
+        SET_DX( context, 0 );
+        break;
+
+    case 0x01: /* SET DEVICE INFORMATION */
+    case 0x02: /* READ FROM CHARACTER DEVICE CONTROL CHANNEL */
+    case 0x03: /* WRITE TO CHARACTER DEVICE CONTROL CHANNEL */
+    case 0x06: /* GET INPUT STATUS */
+    case 0x07: /* GET OUTPUT STATUS */
+    case 0x0c: /* GENERIC CHARACTER DEVICE REQUEST */
+    case 0x10: /* QUERY GENERIC IOCTL CAPABILITY */
+    default:
+        INT_BARF( context, 0x21 );
+        break;
+    }
+}
+
+
+/***********************************************************************
  *           INT21_Ioctl_Char
  *
  * Handler for character device IOCTLs.
  */
 static void INT21_Ioctl_Char( CONTEXT86 *context )
 {
-    static const WCHAR emmxxxx0W[] = {'E','M','M','X','X','X','X','0',0};
-    static const WCHAR scsimgrW[] = {'S','C','S','I','M','G','R','$',0};
-
+    struct stat st;
+    int status, i, fd;
     HANDLE handle = DosFileHandleToWin32Handle(BX_reg(context));
-    const DOS_DEVICE *dev = DOSFS_GetDeviceByHandle(handle);
 
-    if (dev && !strcmpiW( dev->name, emmxxxx0W )) 
+    status = wine_server_handle_to_fd( handle, 0, &fd, NULL, NULL );
+    if (status)
     {
-        EMS_Ioctl_Handler(context);
+        SET_AX( context, RtlNtStatusToDosError(status) );
+        SET_CFLAG( context );
         return;
     }
+    fstat( fd, &st );
+    wine_server_release_fd( handle, fd );
 
-    if (dev && !strcmpiW( dev->name, scsimgrW ) && AL_reg(context) == 2)
+    for (i = 0; i < NB_MAGIC_DEVICES; i++)
     {
-        DOSVM_ASPIHandler(context);
-        return;
+        if (!magic_devices[i].handle) continue;
+        if (magic_devices[i].dev == st.st_dev && magic_devices[i].ino == st.st_ino)
+        {
+            /* found it */
+            magic_devices[i].ioctl_handler( context );
+            return;
+        }
     }
+
+    /* no magic device found, do default handling */
 
     switch (AL_reg(context))
     {
     case 0x00: /* GET DEVICE INFORMATION */
         TRACE( "IOCTL - GET DEVICE INFORMATION - %d\n", BX_reg(context) );
-        if (dev)
+        if (S_ISCHR(st.st_mode))
         {
             /*
              * Returns attribute word in DX: 
@@ -2483,7 +2682,7 @@ static void INT21_Ioctl_Char( CONTEXT86 *context )
              *   Bit  1 - Standard output.
              *   Bit  0 - Standard input.
              */
-            SET_DX( context, dev->flags );
+            SET_DX( context, 0x80c0 /* FIXME */ );
         }
         else
         {
@@ -2505,14 +2704,6 @@ static void INT21_Ioctl_Char( CONTEXT86 *context )
         }
         break;
 
-    case 0x01: /* SET DEVICE INFORMATION */
-    case 0x02: /* READ FROM CHARACTER DEVICE CONTROL CHANNEL */
-    case 0x03: /* WRITE TO CHARACTER DEVICE CONTROL CHANNEL */
-    case 0x06: /* GET INPUT STATUS */
-    case 0x07: /* GET OUTPUT STATUS */
-        INT_BARF( context, 0x21 );
-        break;
-
     case 0x0a: /* CHECK IF HANDLE IS REMOTE */
         TRACE( "IOCTL - CHECK IF HANDLE IS REMOTE - %d\n", BX_reg(context) );
         /*
@@ -2525,10 +2716,16 @@ static void INT21_Ioctl_Char( CONTEXT86 *context )
         SET_DX( context, 0 );
         break;
 
+    case 0x01: /* SET DEVICE INFORMATION */
+    case 0x02: /* READ FROM CHARACTER DEVICE CONTROL CHANNEL */
+    case 0x03: /* WRITE TO CHARACTER DEVICE CONTROL CHANNEL */
+    case 0x06: /* GET INPUT STATUS */
+    case 0x07: /* GET OUTPUT STATUS */
     case 0x0c: /* GENERIC CHARACTER DEVICE REQUEST */
     case 0x10: /* QUERY GENERIC IOCTL CAPABILITY */
     default:
         INT_BARF( context, 0x21 );
+        break;
     }
 }
 
