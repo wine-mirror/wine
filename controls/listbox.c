@@ -988,7 +988,6 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC hdc )
             if (!IS_OWNERDRAW(descr))
             {
                 /* Clear the bottom of the column */
-                SetBkColor( hdc, GetSysColor( COLOR_WINDOW ) );
                 if (rect.top < descr->height)
                 {
                     rect.bottom = descr->height;
@@ -1018,7 +1017,6 @@ static LRESULT LISTBOX_Paint( WND *wnd, LB_DESCR *descr, HDC hdc )
     if (!IS_OWNERDRAW(descr))
     {
         /* Clear the remainder of the client area */
-        SetBkColor( hdc, GetSysColor( COLOR_WINDOW ) );
         if (rect.top < descr->height)
         {
             rect.bottom = descr->height;
