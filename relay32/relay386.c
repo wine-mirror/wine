@@ -49,9 +49,9 @@ int RELAY_ShowDebugmsgRelay(const char *func) {
     term += 2;
     for(; *listitem; listitem++) {
       itemlen = strlen(*listitem);
-      if((itemlen == len && !strncmp(*listitem, func, len)) ||
-         (itemlen == len2 && !strncmp(*listitem, func, len2)) ||
-         !strcmp(*listitem, term)) {
+      if((itemlen == len && !lstrncmpiA(*listitem, func, len)) ||
+         (itemlen == len2 && !lstrncmpiA(*listitem, func, len2)) ||
+         !lstrcmpiA(*listitem, term)) {
         show = !show;
        break;
       }
