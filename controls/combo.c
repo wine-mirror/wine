@@ -1211,6 +1211,11 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL ok, BOOL bButton )
 
 	   lphc->wState &= ~CBF_DROPPED;
 	   ShowWindow( lphc->hWndLBox, SW_HIDE );
+           if(GetCapture() == lphc->hWndLBox)
+           {
+               ReleaseCapture();
+           }
+
 
 	   if( CB_GETTYPE(lphc) == CBS_DROPDOWN )
 	   {
@@ -1737,6 +1742,8 @@ static void COMBO_LButtonUp( LPHEADCOMBO lphc, LPARAM lParam )
 	   CBUpdateEdit( lphc, index );
        }
        ReleaseCapture();
+       SetCapture(lphc->hWndLBox);
+
    }
 
    if( lphc->wState & CBF_BUTTONDOWN )

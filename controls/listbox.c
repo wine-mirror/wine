@@ -1806,6 +1806,100 @@ static LRESULT LISTBOX_HandleLButtonDown( WND *wnd, LB_DESCR *descr,
 }
 
 
+/*************************************************************************
+ * LISTBOX_HandleLButtonDownCombo [Internal] 
+ *
+ * Process LButtonDown message for the ComboListBox
+ *
+ * PARAMS
+ *     pWnd       [I] The windows internal structure
+ *     pDescr     [I] The ListBox internal structure
+ *     wParam     [I] Key Flag (WM_LBUTTONDOWN doc for more info)
+ *     x          [I] X Mouse Coordinate
+ *     y          [I] Y Mouse Coordinate
+ *
+ * RETURNS
+ *     0 since we are processing the WM_LBUTTONDOWN Message
+ *
+ * NOTES
+ *  This function is only to be used when a ListBox is a ComboListBox
+ */
+
+static LRESULT LISTBOX_HandleLButtonDownCombo( WND *pWnd, LB_DESCR *pDescr,
+                                               WPARAM wParam, INT x, INT y)
+{
+    RECT clientRect, screenRect;
+    POINT mousePos;
+
+    mousePos.x = x;
+    mousePos.y = y;
+
+    GetClientRect(pWnd->hwndSelf, &clientRect);
+
+    if(PtInRect(&clientRect, mousePos))
+    {  
+        /* MousePos is in client, resume normal processing */
+        return LISTBOX_HandleLButtonDown( pWnd, pDescr, wParam, x, y);
+    }
+    else
+    {
+        POINT screenMousePos;
+        HWND hWndOldCapture;
+
+        /* Check the Non-Client Area */
+        screenMousePos = mousePos;
+        hWndOldCapture = GetCapture();
+        ReleaseCapture();
+        GetWindowRect(pWnd->hwndSelf, &screenRect);
+        ClientToScreen(pWnd->hwndSelf, &screenMousePos);
+
+        if(!PtInRect(&screenRect, screenMousePos))
+        { 
+            /* Close The Drop Down */
+            SEND_NOTIFICATION( pWnd, pDescr, LBN_SELCANCEL );
+            return 0;
+        }
+        else
+        {
+            /* Check to see the NC is a scrollbar */
+            INT nHitTestType=0;
+            /* Check Vertical scroll bar */
+            if (pWnd->dwStyle & WS_VSCROLL)
+            {
+                clientRect.right += GetSystemMetrics(SM_CXVSCROLL);
+                if (PtInRect( &clientRect, mousePos )) 
+                {
+                    nHitTestType = HTVSCROLL;
+                }
+            }
+              /* Check horizontal scroll bar */
+            if (pWnd->dwStyle & WS_HSCROLL)
+            {
+                clientRect.bottom += GetSystemMetrics(SM_CYHSCROLL);
+                if (PtInRect( &clientRect, mousePos ))
+                {
+                    nHitTestType = HTHSCROLL;
+                }
+            }
+            /* Windows sends this message when a scrollbar is clicked 
+             */
+            
+            if(nHitTestType != 0)
+            {
+                SendMessageA(pWnd->hwndSelf, WM_NCLBUTTONDOWN, nHitTestType, 
+                    MAKELONG(screenMousePos.x, screenMousePos.y));
+            }
+            /* Resume the Capture after scrolling is complete 
+             */
+            if(hWndOldCapture != 0)
+            {
+                SetCapture(hWndOldCapture);
+            }
+        }
+    }
+    return 0;
+}
+
 /***********************************************************************
  *           LISTBOX_HandleLButtonUp
  */
@@ -2686,27 +2780,27 @@ static inline LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
 			* If we are in a dropdown combobox, we simulate that
 			* the mouse is captured to show the tracking of the item.
 			*/
-		       captured = descr->captured;
-		       descr->captured = TRUE;			 
-		       
-		       LISTBOX_HandleMouseMove( wnd, 
-						descr, 
-						mousePos.x, mousePos.y);
-		       
-		       descr->captured = captured;
-
-		       /*
-			* However, when tracking, it is important that we do not
-			* perform a selection if the cursor is outside the list.
-			*/
 		       GetClientRect(hwnd, &clientRect);
 
-		       if (!PtInRect( &clientRect, mousePos ))
+		       if (PtInRect( &clientRect, mousePos ))
 		       {
-			 LISTBOX_MoveCaret( wnd, descr, -1, FALSE );
-		       }
+		           captured = descr->captured;
+		           descr->captured = TRUE;			 
+		           
+		           LISTBOX_HandleMouseMove( wnd, descr, 
+						    mousePos.x, mousePos.y);
+
+                           descr->captured = captured;
+
+                       }
+                       else
+                       {
+		           LISTBOX_HandleMouseMove( wnd, descr, 
+						    mousePos.x, mousePos.y);
+                       }
 
 		       return 0;
+
 		     }
 		     else
 		     {
@@ -2748,10 +2842,9 @@ static inline LRESULT WINAPI ComboLBWndProc_locked( WND* wnd, UINT msg,
 		     }
 		     return LISTBOX_HandleLButtonUp( wnd, descr );
 		case WM_LBUTTONDOWN:
-		     return LISTBOX_HandleLButtonDown( wnd, descr, wParam,
-                             (INT16)LOWORD(lParam), (INT16)HIWORD(lParam));
-		/* avoid activation at all costs */
-
+                     return LISTBOX_HandleLButtonDownCombo(wnd, descr, wParam, 
+                                          (INT16)LOWORD(lParam),
+                                          (INT16)HIWORD(lParam) );
 		case WM_MOUSEACTIVATE:
 		     return MA_NOACTIVATE;
                 case WM_NCACTIVATE:
