@@ -18,9 +18,10 @@
 #include "wingdi.h"
 #include "ddrawi.h"
 #include "debugtools.h"
-#include "options.h"
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
+
+extern int usedga;
 
 LPDDHALMODEINFO xf86dga2_modes;
 unsigned xf86dga2_mode_count;
@@ -52,7 +53,7 @@ void X11DRV_XF86DGA2_Init(void)
   /* if in desktop mode, don't use DGA */
   if (X11DRV_GetXRootWindow() != DefaultRootWindow(display)) return;
 
-  if (!PROFILE_GetWineIniBool("x11drv", "UseDGA", 1)) return;
+  if (!usedga) return;
 
   if (!TSXDGAQueryExtension(display, &dga_event, &dga_error)) return;
 

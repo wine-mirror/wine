@@ -18,9 +18,12 @@
 #include "wingdi.h"
 #include "ddrawi.h"
 #include "bitmap.h"
+#include "win.h"
 #include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(x11drv);
+
+extern int dxgrab;
 
 LPDDRAWI_DDRAWSURFACE_LCL X11DRV_DD_Primary;
 LPDDRAWI_DDRAWSURFACE_GBL X11DRV_DD_PrimaryGbl;
@@ -43,6 +46,28 @@ static void SetPrimaryDIB(HBITMAP hBmp)
   }
 }
 
+static void GrabPointer(HWND hWnd)
+{
+  if (hWnd) {
+    WND *tmpWnd;
+    Window win;
+    /* find the X11 window that ddraw uses */
+    tmpWnd = WIN_FindWndPtr(hWnd);
+    win = X11DRV_WND_GetXWindow(tmpWnd);
+    TRACE("WND: %p win: %ld\n", tmpWnd, win);
+    WIN_ReleaseWndPtr(tmpWnd);
+    if (!win) {
+      TRACE("host off desktop\n");
+      tmpWnd = WIN_FindWndPtr(GetDesktopWindow());
+      win = X11DRV_WND_GetXWindow(tmpWnd);
+      TRACE("Owner WND: %p win: %ld\n", tmpWnd, win);
+      WIN_ReleaseWndPtr(tmpWnd);
+    }
+    TSXGrabPointer(display, win, True, 0, GrabModeAsync, GrabModeAsync, win, None, CurrentTime);
+  }
+  else TSXUngrabPointer(display, CurrentTime);
+}
+
 static DWORD PASCAL X11DRV_DDHAL_DestroyDriver(LPDDHAL_DESTROYDRIVERDATA data)
 {
   data->ddRVal = DD_OK;
@@ -57,6 +82,7 @@ static DWORD PASCAL X11DRV_DDHAL_CreateSurface(LPDDHAL_CREATESURFACEDATA data)
     X11DRV_DD_PrimaryGbl = X11DRV_DD_Primary->lpGbl;
     SetPrimaryDIB(GET_LPDDRAWSURFACE_GBL_MORE(X11DRV_DD_PrimaryGbl)->hKernelSurface);
     X11DRV_DD_UserClass = GlobalFindAtomA("WINE_DDRAW");
+    if (dxgrab) GrabPointer(X11DRV_DD_PrimaryWnd);
   }
   data->ddRVal = DD_OK;
   return DDHAL_DRIVER_NOTHANDLED;
@@ -94,6 +120,7 @@ static DWORD PASCAL X11DRV_DDHAL_DestroySurface(LPDDHAL_DESTROYSURFACEDATA data)
     X11DRV_DD_PrimaryGbl = NULL;
     SetPrimaryDIB(0);
     X11DRV_DD_UserClass = 0;
+    if (dxgrab) GrabPointer(0);
   }
   data->ddRVal = DD_OK;
   return DDHAL_DRIVER_HANDLED;

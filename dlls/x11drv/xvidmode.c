@@ -116,7 +116,11 @@ void X11DRV_XF86VM_SetCurrentMode(int mode)
   if (!xf86vm_modes) return; /* no XVidMode */
 
   TSXF86VidModeSwitchToMode(display, DefaultScreen(display), modes[mode]);
+#if 0 /* it is said that SetViewPort causes problems with some X servers */
   TSXF86VidModeSetViewPort(display, DefaultScreen(display), 0, 0);
+#else
+  TSXWarpPointer(display, None, DefaultRootWindow(display), 0, 0, 0, 0, 0, 0);
+#endif
   TSXSync(display, False);
 }
 
