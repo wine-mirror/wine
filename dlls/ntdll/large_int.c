@@ -115,7 +115,7 @@ LONGLONG WINAPI RtlEnlargedIntegerMultiply( INT a, INT b )
 /******************************************************************************
  *        RtlEnlargedUnsignedMultiply   (NTDLL.@)
  */
-LONGLONG WINAPI RtlEnlargedUnsignedMultiply( UINT a, UINT b )
+ULONGLONG WINAPI RtlEnlargedUnsignedMultiply( UINT a, UINT b )
 {
     return (ULONGLONG)a * b;
 }
@@ -180,3 +180,48 @@ LONGLONG WINAPI RtlExtendedIntegerMultiply( LONGLONG a, INT b )
  *     return 0;
  * }
  */
+
+
+/******************************************************************************
+ *        _alldiv   (NTDLL.@)
+ */
+LONGLONG WINAPI _alldiv( LONGLONG a, LONGLONG b )
+{
+    return a / b;
+}
+
+
+/******************************************************************************
+ *        _allmul   (NTDLL.@)
+ */
+LONGLONG WINAPI _allmul( LONGLONG a, LONGLONG b )
+{
+    return a * b;
+}
+
+
+/******************************************************************************
+ *        _allrem   (NTDLL.@)
+ */
+LONGLONG WINAPI _allrem( LONGLONG a, LONGLONG b )
+{
+    return a % b;
+}
+
+
+/******************************************************************************
+ *        _aulldiv   (NTDLL.@)
+ */
+ULONGLONG WINAPI _aulldiv( ULONGLONG a, ULONGLONG b )
+{
+    return a / b;
+}
+
+
+/******************************************************************************
+ *        _aullrem   (NTDLL.@)
+ */
+ULONGLONG WINAPI _aullrem( ULONGLONG a, ULONGLONG b )
+{
+    return a % b;
+}

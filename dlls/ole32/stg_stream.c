@@ -15,6 +15,7 @@
 
 #include "winbase.h"
 #include "winerror.h"
+#include "ntddk.h"
 #include "debugtools.h"
 
 #include "storage32.h"
@@ -534,52 +535,7 @@ HRESULT WINAPI StgStreamImpl_Seek(
       return STG_E_INVALIDFUNCTION;
   }
 
-#if SIZEOF_LONG_LONG >= 8
-  plibNewPosition->QuadPart += dlibMove.QuadPart;
-#else
-  /*
-   * do some multiword arithmetic:
-   *    treat HighPart as a signed value
-   *    treat LowPart as unsigned
-   *  NOTE: this stuff is two's complement specific!
-   */
-  if (dlibMove.s.HighPart < 0) { /* dlibMove is < 0 */
-      /* calculate the absolute value of dlibMove ... */
-      dlibMove.s.HighPart = -dlibMove.s.HighPart;
-      dlibMove.s.LowPart ^= -1;
-      /* ... and subtract with carry */
-      if (dlibMove.s.LowPart > plibNewPosition->s.LowPart) {
-	  /* carry needed, This accounts for any underflows at [1]*/
-	  plibNewPosition->s.HighPart -= 1; 
-      }
-      plibNewPosition->s.LowPart -= dlibMove.s.LowPart; /* [1] */
-      plibNewPosition->s.HighPart -= dlibMove.s.HighPart; 
-  } else {
-      /* add directly */
-      int initialLowPart = plibNewPosition->s.LowPart;
-      plibNewPosition->s.LowPart += dlibMove.s.LowPart;
-      if((plibNewPosition->s.LowPart < initialLowPart) ||
-	 (plibNewPosition->s.LowPart < dlibMove.s.LowPart)) {
-	  /* LowPart has rolled over => add the carry digit to HighPart */
-	  plibNewPosition->s.HighPart++;
-      }
-      plibNewPosition->s.HighPart += dlibMove.s.HighPart; 
-  }
-  /*
-   * Check if we end-up before the beginning of the file. That should 
-   * trigger an error.
-   */
-  if (plibNewPosition->s.HighPart < 0) {
-      return STG_E_INVALIDPOINTER;
-  }
-
-    /*
-   * We currently don't support files with offsets of >32 bits.  
-   * Note that we have checked for a negative offset already
-     */
-  assert(plibNewPosition->s.HighPart <= 0);
-
-#endif
+  plibNewPosition->QuadPart = RtlLargeIntegerAdd( plibNewPosition->QuadPart, dlibMove.QuadPart );
 
   /*
    * tell the caller what we calculated

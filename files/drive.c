@@ -39,6 +39,7 @@
 #endif
 
 #include "winbase.h"
+#include "ntddk.h"
 #include "wine/winbase16.h"   /* for GetCurrentTask */
 #include "wine/winestring.h"  /* for lstrcpyAtoW */
 #include "winerror.h"
@@ -860,7 +861,6 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
 			       PULARGE_INTEGER available )
 {
     struct statfs info;
-    unsigned long long  bigsize,bigavail=0;
 
     if (!DRIVE_IsValid(drive))
     {
@@ -880,30 +880,19 @@ static int DRIVE_GetFreeSpace( int drive, PULARGE_INTEGER size,
         return 0;
     }
 
-    bigsize = (unsigned long long)info.f_bsize 
-      * (unsigned long long)info.f_blocks;
+    size->QuadPart = RtlEnlargedUnsignedMultiply( info.f_bsize, info.f_blocks );
 #ifdef STATFS_HAS_BAVAIL
-    bigavail = (unsigned long long)info.f_bavail 
-      * (unsigned long long)info.f_bsize;
+    available->QuadPart = RtlEnlargedUnsignedMultiply( info.f_bavail, info.f_bsize );
 #else
 # ifdef STATFS_HAS_BFREE
-    bigavail = (unsigned long long)info.f_bfree 
-      * (unsigned long long)info.f_bsize;
+    available->QuadPart = RtlEnlargedUnsignedMultiply( info.f_bfree, info.f_bsize );
 # else
 #  error "statfs has no bfree/bavail member!"
 # endif
 #endif
-    size->s.LowPart = (DWORD)bigsize;
-    size->s.HighPart = (DWORD)(bigsize>>32);
     if (DRIVE_GetType(drive) == TYPE_CDROM)
     { /* ALWAYS 0, even if no real CD-ROM mounted there !! */
-	available->s.LowPart = 0;
-	available->s.HighPart = 0;
-    }
-    else
-    {
-	available->s.LowPart = (DWORD)bigavail;
-	available->s.HighPart = (DWORD)(bigavail>>32);
+        available->QuadPart = 0;
     }
     return 1;
 }

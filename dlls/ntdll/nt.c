@@ -598,35 +598,6 @@ NTSTATUS WINAPI NtDisplayString ( PUNICODE_STRING string )
 }
 
 /******************************************************************************
- *  _alldiv					[NTDLL.937] 
- * 
- *
- */
-long long WINAPI _alldiv(LARGE_INTEGER a,  LARGE_INTEGER b)
-{
-#if SIZEOF_LONG_LONG==8
-	return (*(long long*)&a / *(long long*)&b);
-#else
-	FIXME("stub\n");
-	return 0;
-#endif
-}
-/******************************************************************************
- *  _allmul					[NTDLL.938] 
- * 
- *
- */
-long long WINAPI _allmul(LARGE_INTEGER a,  LARGE_INTEGER b)
-{
-#if SIZEOF_LONG_LONG==8
-	return (*(long long*)&a * *(long long*)&b);
-#else
-	FIXME("stub\n");
-	return 0;
-#endif
-}
-
-/******************************************************************************
  *  NtPowerInformation				[NTDLL] 
  * 
  */

@@ -214,26 +214,11 @@ VOID WINAPI GetSystemTimeAsFileTime( LPFILETIME time )
  *          1) Divided by CLK_TCK
  *          2) Time is relative. There is no 'starting date', so there is 
  *             no need in offset correction, like in UnixTimeToFileTime
- *      FIXME: This function should be moved to a more appropriate .c file
- *      FIXME: On floating point operations, it is assumed that
- *             floating values are truncated on conversion to integer.
  */
 static void TIME_ClockTimeToFileTime(clock_t unix_time, LPFILETIME filetime)
 {
-    double td = (unix_time*10000000.0)/CLK_TCK;
-    /* Yes, double, because long int might overflow here. */
-#if SIZEOF_LONG_LONG >= 8
-    unsigned long long t = td;
-    filetime->dwLowDateTime  = (UINT) t;
-    filetime->dwHighDateTime = (UINT) (t >> 32);
-#else
-    double divider = 1. * (1 << 16) * (1 << 16);
-    filetime->dwHighDateTime = (UINT) (td / divider);
-    filetime->dwLowDateTime  = (UINT) (td - filetime->dwHighDateTime*divider);
-    /* using floor() produces wierd results, better leave this as it is 
-     * ( with (UINT32) convertion )
-     */
-#endif
+    LONGLONG secs = RtlEnlargedUnsignedMultiply( unix_time, 10000000 );
+    ((LARGE_INTEGER *)filetime)->QuadPart = RtlExtendedLargeIntegerDivide( secs, CLK_TCK, NULL );
 }
 
 /*********************************************************************

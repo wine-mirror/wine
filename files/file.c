@@ -1943,11 +1943,11 @@ BOOL WINAPI SetFileTime( HANDLE hFile,
         struct set_file_time_request *req = server_alloc_req( sizeof(*req), 0 );
         req->handle = hFile;
         if (lpLastAccessTime)
-            req->access_time = DOSFS_FileTimeToUnixTime(lpLastAccessTime, NULL);
+            RtlTimeToSecondsSince1970( lpLastAccessTime, (DWORD *)&req->access_time );
         else
             req->access_time = 0; /* FIXME */
         if (lpLastWriteTime)
-            req->write_time = DOSFS_FileTimeToUnixTime(lpLastWriteTime, NULL);
+            RtlTimeToSecondsSince1970( lpLastWriteTime, (DWORD *)&req->write_time );
         else
             req->write_time = 0; /* FIXME */
         ret = !server_call( REQ_SET_FILE_TIME );

@@ -865,7 +865,12 @@ type	win32
 @ stub __eFYL2X
 @ stub __eFYL2XP1
 @ stub __eGetStatusWord
+@ stdcall64 _alldiv(long long long long) _alldiv
+@ stdcall64 _allmul(long long long long) _allmul
 @ register _alloca_probe() NTDLL_alloca_probe
+@ stdcall64 _allrem(long long long long) _allrem
+@ stdcall64 _aulldiv(long long long long) _aulldiv
+@ stdcall64 _aullrem(long long long long) _aullrem
 @ register _chkstk() NTDLL_chkstk
 @ stub _fltused
 @ cdecl _ftol() NTDLL__ftol

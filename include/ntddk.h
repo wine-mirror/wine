@@ -754,7 +754,6 @@ VOID WINAPI RtlReleasePebLock(void);
 /*	mathematics */
 LONGLONG  WINAPI RtlConvertLongToLargeInteger( LONG a );
 LONGLONG  WINAPI RtlEnlargedIntegerMultiply( INT a, INT b );
-LONGLONG  WINAPI RtlEnlargedUnsignedMultiply( UINT a, UINT b );
 LONGLONG  WINAPI RtlExtendedMagicDivide( LONGLONG a, LONGLONG b, INT shift );
 LONGLONG  WINAPI RtlExtendedIntegerMultiply( LONGLONG a, INT b );
 LONGLONG  WINAPI RtlExtendedLargeIntegerDivide( LONGLONG a, INT b, INT *rem );
@@ -764,6 +763,7 @@ LONGLONG  WINAPI RtlLargeIntegerNegate( LONGLONG a );
 LONGLONG  WINAPI RtlLargeIntegerShiftLeft( LONGLONG a, INT count );
 LONGLONG  WINAPI RtlLargeIntegerShiftRight( LONGLONG a, INT count );
 LONGLONG  WINAPI RtlLargeIntegerSubtract( LONGLONG a, LONGLONG b );
+ULONGLONG WINAPI RtlEnlargedUnsignedMultiply( UINT a, UINT b );
 UINT      WINAPI RtlEnlargedUnsignedDivide( ULONGLONG a, UINT b, UINT *remptr );
 ULONGLONG WINAPI RtlConvertUlongToLargeInteger( ULONG a );
 ULONGLONG WINAPI RtlLargeIntegerDivide( ULONGLONG a, ULONGLONG b, ULONGLONG *rem );
