@@ -861,7 +861,7 @@ int COLOR_ToPhysical( DC *dc, COLORREF color )
 
     if( spec_type > 2 )
     {  
-	fprintf(stderr, "COLOR_ToPhysical : invalid RGB specifier for: %08lx\n", color);
+	dprintf_palette(stddeb, "COLOR_ToPhysical : invalid RGB specifier for: %08lx\n", color);
 	spec_type = 0;
     }
 

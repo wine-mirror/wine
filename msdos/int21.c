@@ -1073,8 +1073,8 @@ void DOS3Call( CONTEXT *context )
 		break;
 
 	      case 0x05: /* GET BOOT DRIVE */
-		DL_reg(context) = 2;
-		/* c: is Wine's bootdrive */
+		DL_reg(context) = 3;
+		/* c: is Wine's bootdrive (a: is 1)*/
 		break;
 				
 	      case 0x06: /* GET TRUE VERSION NUMBER */
@@ -1354,8 +1354,6 @@ void DOS3Call( CONTEXT *context )
             AX_reg(context) = DOS_ExtendedError;
             SET_CFLAG(context);
         }
-        else AX_reg(context) = 0x0100; 
-        /* intlist: many Microsoft products for Windows rely on this */
         break;
 	
     case 0x48: /* ALLOCATE MEMORY */
@@ -1634,12 +1632,53 @@ void DOS3Call( CONTEXT *context )
                 SET_CFLAG(context);
             }
             break;
+        case 0x43:  /* Get/Set file attributes */
+        switch (BL_reg(context))
+        {
+        case 0x00: /* Get file attributes */
+            CX_reg(context) = (WORD)GetFileAttributes32A(
+                                          PTR_SEG_OFF_TO_LIN(DS_reg(context),
+                                                             DX_reg(context)));
+            if (CX_reg(context) == 0xffff)
+            {
+                AX_reg(context) = DOS_ExtendedError;
+                SET_CFLAG(context);
+            }
+            break;
+        case 0x01:
+            if (!SetFileAttributes32A( PTR_SEG_OFF_TO_LIN(DS_reg(context),
+                                                          DX_reg(context)),
+                                       CX_reg(context) ))
+            {
+                AX_reg(context) = DOS_ExtendedError;
+                SET_CFLAG(context);
+            }
+            break;
+	default:
+	  fprintf( stderr, 
+		   "Unimplemented int21 long file name function:\n");
+	  INT_BARF( context, 0x21 );
+	  SET_CFLAG(context);
+	  AL_reg(context) = 0;
+	  break;
+	}
+	break;
+        case 0x47:  /* Get current directory */
+	  if (!INT21_GetCurrentDirectory(context))
+	    {
+	      AX_reg(context) = DOS_ExtendedError;
+	      SET_CFLAG(context);
+	    }
+	  else AX_reg(context) = 0x0100; 
+        /* intlist: many Microsoft products for Windows rely on this */
+        break;
         case 0x4e:  /* Find first file */
             /* FIXME: use attributes in CX */
-            if (!(AX_reg(context) = FindFirstFile16(
+            if ((AX_reg(context) = FindFirstFile16(
                    PTR_SEG_OFF_TO_LIN(DS_reg(context),DX_reg(context)),
                    (WIN32_FIND_DATA32A *)PTR_SEG_OFF_TO_LIN(ES_reg(context),
-                                                            DI_reg(context)))))
+                                                            DI_reg(context))))
+		== INVALID_HANDLE_VALUE16)
             {
                 AX_reg(context) = DOS_ExtendedError;
                 SET_CFLAG(context);
@@ -1663,12 +1702,37 @@ void DOS3Call( CONTEXT *context )
             break;
 	case 0xa0:
 	    break;
+        case 0x60:  
+	  switch(CL_reg(context))
+	    {
+	    case 0x02:  /*Get canonical long filename or path */
+	      if (!GetFullPathName32A
+		  ( PTR_SEG_OFF_TO_LIN(DS_reg(context),
+				       SI_reg(context)), 128,
+		    PTR_SEG_OFF_TO_LIN(ES_reg(context),
+				       DI_reg(context)),NULL))
+		{
+		  AX_reg(context) = DOS_ExtendedError;
+		  SET_CFLAG(context);
+		}
+	      else AX_reg(context) = 0;
+	      break;
+	    default:
+	      fprintf( stderr, 
+		       "Unimplemented int21 long file name function:\n");
+	      INT_BARF( context, 0x21 );
+	      SET_CFLAG(context);
+	      AL_reg(context) = 0;
+	      break;
+	    }
+	    break;
+        case 0x6c:  /* Create or open file */
+	  /* translate Dos 7 action to Dos 6 action */
+	    ExtendedOpenCreateFile(context);
+	    break;
         case 0x3b:  /* Change directory */
         case 0x41:  /* Delete file */
-        case 0x43:  /* Get/Set file attributes */
-        case 0x47:  /* Get current directory */
         case 0x56:  /* Move (rename) file */
-        case 0x6c:  /* Create/Open file */
         default:
             fprintf( stderr, "Unimplemented int21 long file name function:\n");
             INT_BARF( context, 0x21 );

@@ -4,6 +4,8 @@
  * Copyright 1993 Alexandre Julliard
  */
 
+#include <assert.h>
+
 #include "win.h"
 #include "commctrl.h"
 #include "button.h"
@@ -20,6 +22,10 @@
 
 extern LRESULT EditWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                             LPARAM lParam );
+extern LRESULT ComboWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+                             LPARAM lParam );
+extern LRESULT ComboLBWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
+                               LPARAM lParam );
 extern LRESULT ListBoxWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                                LPARAM lParam );
 extern LRESULT PopupMenuWndProc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
@@ -42,10 +48,6 @@ static const BUILTIN_CLASS_INFO16 WIDGETS_BuiltinClasses16[] =
 {
     { CS_GLOBALCLASS | CS_PARENTDC,
        sizeof(STATICINFO), 0, "StaticWndProc", "Static" },
-    { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS,
-      8, 0, "ComboBoxWndProc", "ComboBox" },
-    { CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS,
-      8, 0, "ComboLBoxWndProc", "ComboLBox" },
     { CS_GLOBALCLASS, sizeof(MDICLIENTINFO),
       STOCK_LTGRAY_BRUSH, "MDIClientWndProc", "MDIClient" }
 };
@@ -55,27 +57,38 @@ static const BUILTIN_CLASS_INFO16 WIDGETS_BuiltinClasses16[] =
 
 /* Win32 built-in classes */
 
-static WNDCLASS32A WIDGETS_BuiltinClasses32[] =
+static WNDCLASS32A WIDGETS_BuiltinClasses32[BIC32_NB_CLASSES] =
 {
+    /* BIC32_BUTTON */
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
       ButtonWndProc, 0, sizeof(BUTTONINFO), 0, 0, 0, 0, 0, "Button" },
+    /* BIC32_EDIT */
     { CS_GLOBALCLASS | CS_DBLCLKS /*| CS_PARENTDC*/,
       EditWndProc, 0, sizeof(void *), 0, 0, 0, 0, 0, "Edit" },
+    /* BIC32_LISTBOX */
     { CS_GLOBALCLASS | CS_DBLCLKS /*| CS_PARENTDC*/,
       ListBoxWndProc, 0, sizeof(void *), 0, 0, 0, 0, 0, "ListBox" },
+    /* BIC32_COMBO */
+    { CS_GLOBALCLASS | CS_PARENTDC | CS_DBLCLKS, 
+      ComboWndProc, 0, sizeof(void *), 0, 0, 0, 0, 0, "ComboBox" },
+    /* BIC32_COMBOLB */
+    { CS_GLOBALCLASS | CS_DBLCLKS | CS_SAVEBITS,
+      ComboLBWndProc, 0, sizeof(void *), 0, 0, 0, 0, 0, "ComboLBox" },
+    /* BIC32_POPUPMENU */
     { CS_GLOBALCLASS | CS_SAVEBITS, PopupMenuWndProc,
       0, sizeof(HMENU32), 0, 0, 0, 0, 0, POPUPMENU_CLASS_NAME },
+    /* BIC32_SCROLL */
     { CS_GLOBALCLASS | CS_DBLCLKS | CS_VREDRAW | CS_HREDRAW | CS_PARENTDC,
       ScrollBarWndProc, 0, sizeof(SCROLLBAR_INFO), 0, 0, 0, 0, 0, "ScrollBar"},
+    /* BIC32_DESKTOP */
     { CS_GLOBALCLASS, DesktopWndProc, 0, sizeof(DESKTOPINFO),
       0, 0, 0, 0, 0, DESKTOP_CLASS_NAME },
+    /* BIC32_DIALOG */
     { CS_GLOBALCLASS | CS_SAVEBITS, DefDlgProc32A, 0, DLGWINDOWEXTRA,
       0, 0, 0, 0, 0, DIALOG_CLASS_NAME }
 };
 
-#define NB_BUILTIN_CLASSES32 \
-         (sizeof(WIDGETS_BuiltinClasses32)/sizeof(WIDGETS_BuiltinClasses32[0]))
-
+static ATOM bicAtomTable[BIC32_NB_CLASSES];
 
 /* Win32 common controls */
 
@@ -124,13 +137,13 @@ BOOL32 WIDGETS_Init(void)
 
     /* Create 32-bit classes */
 
-    for (i = 0; i < NB_BUILTIN_CLASSES32; i++, class32++)
+    for (i = 0; i < BIC32_NB_CLASSES; i++, class32++)
     {
         /* Just to make sure the string is > 0x10000 */
         strcpy( name, (char *)class32->lpszClassName );
         class32->lpszClassName = name;
         class32->hCursor = LoadCursor16( 0, IDC_ARROW );
-        if (!RegisterClass32A( class32 )) return FALSE;
+        if (!(bicAtomTable[i] = RegisterClass32A( class32 ))) return FALSE;
     }
 
     SEGPTR_FREE(name);
@@ -155,4 +168,16 @@ void InitCommonControls(void)
         class32->hCursor = LoadCursor16( 0, IDC_ARROW );
         RegisterClass32A( class32 );
     }
+}
+
+
+/***********************************************************************
+ *           WIDGETS_IsControl32
+ *
+ * Check whether pWnd is a built-in control or not.
+ */
+BOOL32	WIDGETS_IsControl32( WND* pWnd, BUILTIN_CLASS32 cls )
+{
+    assert( cls < BIC32_NB_CLASSES );
+    return (pWnd->class->atomName == bicAtomTable[cls]);
 }

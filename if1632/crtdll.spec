@@ -53,7 +53,7 @@ base	1
 048 stub _cabs
 049 stub _cexit
 050 stub _cgets
-051 stub _chdir
+051 cdecl _chdir(ptr) CRTDLL__chdir
 052 cdecl _chdrive(long) CRTDLL__chdrive
 053 stub _chgsign
 054 stub _chmod
@@ -236,7 +236,7 @@ base	1
 231 stub _mbsupr
 232 stub _memccpy
 233 stub _memicmp
-234 stub _mkdir
+234 cdecl _mkdir(ptr) CRTDLL__mkdir
 235 stub _mktemp
 236 stub _msize
 237 stub _nextafter

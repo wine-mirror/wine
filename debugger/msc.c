@@ -1843,6 +1843,11 @@ DEBUG_ProcessPDBFile(struct deferred_debug_info * deefer, char * full_filename)
    */
   addr = mmap(0, statbuf.st_size, PROT_READ, 
 	      MAP_PRIVATE, fd, 0);
+  if( addr == (char *) 0xffffffff )
+    {
+      fprintf(stderr, "Unable to mmap .DBG file %s\n", filename);
+      goto leave;
+    }
 
   /*
    * Now that we have the formalities over and done with, we need
@@ -2166,6 +2171,11 @@ DEBUG_ProcessDBGFile(struct deferred_debug_info * deefer, char * filename)
    */
   addr = mmap(0, statbuf.st_size, PROT_READ, 
 	      MAP_PRIVATE, fd, 0);
+  if( addr == (char *) 0xffffffff )
+    {
+      fprintf(stderr, "Unable to mmap .DBG file %s\n", filename);
+      goto leave;
+    }
 
   pdbg = (LPIMAGE_SEPARATE_DEBUG_HEADER) addr;
 

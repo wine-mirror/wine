@@ -18,6 +18,12 @@ BOOL32 WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
                                     LPSIZE32 size )
 {
     WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    DWORD dwRet;
+    extern DRAWMODE DrawMode;
+    LPDRAWMODE lpDrawMode = &DrawMode;
+    TEXTXFORM16 TextXForm;
+    LPTEXTXFORM16 lpTextXForm = &TextXForm;
+    InitTextXForm(lpTextXForm);
     
     printf("LPGDI_GetTextExtPoint: %04x %s %d %p\n", dc->hSelf, str, count, size);
 
@@ -25,7 +31,16 @@ BOOL32 WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
 	/* Assume fixed font */
     size->cx = count * physDev->tm.tmAveCharWidth;
     size->cy = physDev->tm.tmHeight;
+
+
     printf("LPGDI_GetTextExtPoint: cx=%d, cy=%d\n", size->cx,size->cy);
+
+    dwRet = PRTDRV_ExtTextOut(physDev->segptrPDEVICE, 0, 0, 
+			      NULL, str, 
+			      -count,  physDev->segptrFontInfo, lpDrawMode, 
+			      lpTextXForm, NULL, NULL, 0);
+    printf("LPGDI_GetTextExtPoint: cx=0x%x, cy=0x%x Ret 0x%x\n", size->cx,size->cy,dwRet);
+
     return TRUE;
 }
 
@@ -79,3 +94,20 @@ HFONT32 WIN16DRV_FONT_SelectObject( DC * dc, HFONT32 hfont, FONTOBJ * font)
     printf("In WIN16DRV_FONT_SelectObject\n");
     return GetStockObject32(SYSTEM_FIXED_FONT);
 }
+
+/***********************************************************************
+ *           GetCharWidth32A    (GDI32.155)
+ */
+BOOL32 WIN16DRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
+			    LPINT32 buffer )
+{
+    int i;
+    WIN16DRV_PDEVICE *physDev = (WIN16DRV_PDEVICE *)dc->physDev;
+    /* TTD Need to cope with PS fonts */    
+    for (i = firstChar; i <= lastChar; i++)
+         *buffer++ = physDev->tm.tmAveCharWidth;
+    return TRUE;
+}
+
+
+

@@ -304,32 +304,39 @@ static MENUITEM *MENU_FindItemByCoords( POPUPMENU *menu, INT32 x, INT32 y,
  * Find the menu item selected by a key press.
  * Return item id, -1 if none, -2 if we should close the menu.
  */
-static UINT32 MENU_FindItemByKey( HWND32 hwndOwner, HMENU32 hmenu, UINT32 key )
+static UINT32 MENU_FindItemByKey( HWND32 hwndOwner, HMENU32 hmenu, 
+				  UINT32 key, BOOL32 forceMenuChar )
 {
-    POPUPMENU *menu;
-    MENUITEM *item;
-    UINT32 i;
-    LONG menuchar;
+    dprintf_menu(stddeb,"\tlooking for '%c' in [%04x]\n", (char)key, (UINT16)hmenu );
 
     if (!IsMenu32( hmenu )) hmenu = WIN_FindWndPtr(hwndOwner)->hSysMenu;
-    if (!hmenu) return -1;
 
-    menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu );
-    item = menu->items;
-    key = toupper(key);
-    for (i = 0; i < menu->nItems; i++, item++)
+    if (hmenu)
     {
-	if (IS_STRING_ITEM(item->item_flags))
+	POPUPMENU *menu = (POPUPMENU *) USER_HEAP_LIN_ADDR( hmenu );
+	MENUITEM *item = menu->items;
+	LONG menuchar;
+
+	if( !forceMenuChar )
 	{
-	    char *p = strchr( item->text, '&' );
-	    if (p && (p[1] != '&') && (toupper(p[1]) == key)) return i;
+	     UINT32 i;
+
+	     key = toupper(key);
+	     for (i = 0; i < menu->nItems; i++, item++)
+	     {
+		if (IS_STRING_ITEM(item->item_flags))
+		{
+		    char *p = strchr( item->text, '&' );
+		    if (p && (p[1] != '&') && (toupper(p[1]) == key)) return i;
+		}
+	     }
 	}
+	menuchar = SendMessage32A( hwndOwner, WM_MENUCHAR, 
+                                   MAKEWPARAM( key, menu->wFlags ), hmenu );
+	if (HIWORD(menuchar) == 2) return LOWORD(menuchar);
+	if (HIWORD(menuchar) == 1) return (UINT32)(-2);
     }
-    menuchar = SendMessage32A( hwndOwner, WM_MENUCHAR, 
-                               MAKEWPARAM( key, menu->wFlags ), hmenu );
-    if (HIWORD(menuchar) == 2) return LOWORD(menuchar);
-    if (HIWORD(menuchar) == 1) return -2;
-    return -1;
+    return (UINT32)(-1);
 }
 
 
@@ -868,7 +875,7 @@ static BOOL32 MENU_ShowPopup( HWND32 hwndOwner, HMENU32 hmenu, UINT32 id,
       /* Display the window */
 
     SetWindowPos32( menu->hWnd, HWND_TOP, 0, 0, 0, 0,
-		    SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE);
+		    SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
     UpdateWindow32( menu->hWnd );
     return TRUE;
 }
@@ -1310,7 +1317,7 @@ static BOOL32 MENU_ExecFocusedItem( HWND32 hwndOwner, HMENU32 hmenu,
 	if (!(item->item_flags & (MF_GRAYED | MF_DISABLED)))
 	{
 	    PostMessage16( hwndOwner, (menu->wFlags & MF_SYSMENU) ? 
-                           WM_SYSCOMMAND : WM_COMMAND, item->item_id, 0 );
+			WM_SYSCOMMAND : WM_COMMAND, item->item_id, 0 );
 	    return FALSE;
 	}
 	else return TRUE;
@@ -1787,7 +1794,7 @@ static BOOL32 MENU_TrackMenu( HMENU32 hmenu, UINT32 wFlags, INT32 x, INT32 y,
 		      /* Hack to avoid control chars. */
 		      /* We will find a better way real soon... */
 		    if ((msg.wParam <= 32) || (msg.wParam >= 127)) break;
-		    pos = MENU_FindItemByKey( hwnd, hmenuCurrent, msg.wParam );
+		    pos = MENU_FindItemByKey( hwnd, hmenuCurrent, msg.wParam, FALSE );
 		    if (pos == (UINT32)-2) fClosed = TRUE;
 		    else if (pos == (UINT32)-1) MessageBeep32(0);
 		    else
@@ -1859,6 +1866,18 @@ static void MENU_TrackSysPopup( WND* pWnd )
 }
 
 /***********************************************************************
+ *           MENU_InitTracking
+ */
+static BOOL32 MENU_InitTracking(HWND32 hWnd, HMENU32 hMenu)
+{
+    HideCaret32(0);
+    SendMessage16( hWnd, WM_ENTERMENULOOP, 0, 0 );
+    SendMessage16( hWnd, WM_SETCURSOR, hWnd, HTCAPTION );
+    SendMessage16( hWnd, WM_INITMENU, hMenu, 0 );
+    return TRUE;
+}
+
+/***********************************************************************
  *           MENU_TrackMouseMenuBar
  *
  * Menu-bar tracking upon a mouse event. Called from NC_HandleSysCommand().
@@ -1872,9 +1891,7 @@ void MENU_TrackMouseMenuBar( WND* wndPtr, INT32 ht, POINT32 pt )
 
     if (IsMenu32(hMenu))
     {
-	HideCaret32(0);
-	SendMessage16( hWnd, WM_ENTERMENULOOP, 0, 0 );
-	SendMessage16( hWnd, WM_INITMENU, hMenu, 0 );
+	MENU_InitTracking( hWnd, hMenu );
 	if( bTrackSys )
 	    MENU_TrackSysPopup( wndPtr );
 	else
@@ -1904,28 +1921,30 @@ void MENU_TrackKbdMenuBar( WND* wndPtr, UINT32 wParam, INT32 vkey)
           
     if( !wndPtr->wIDmenu && !(wndPtr->dwStyle & WS_SYSMENU) ) return;
 
-    htMenu = ((wndPtr->dwStyle & (WS_CHILD | WS_MINIMIZE)) || 
-	      !wndPtr->wIDmenu) ? HTSYSMENU : HTMENU;
-    hTrackMenu = ( htMenu == HTSYSMENU ) ? wndPtr->hSysMenu : wndPtr->wIDmenu;
+    if((wndPtr->dwStyle & (WS_CHILD | WS_MINIMIZE)) || !wndPtr->wIDmenu) 
+    {
+	hTrackMenu = wndPtr->hSysMenu;
+	htMenu = HTSYSMENU;
+    }
+    else
+    {
+	hTrackMenu = wndPtr->wIDmenu;
+	htMenu = HTMENU;
+    }
 
     if (IsMenu32( hTrackMenu ))
     {
-        HideCaret32(0);
-        SendMessage16( wndPtr->hwndSelf, WM_ENTERMENULOOP, 0, 0 );
-        SendMessage16( wndPtr->hwndSelf, WM_INITMENU, hTrackMenu, 0 );
-
-        /* find suitable menu entry */
+	MENU_InitTracking( wndPtr->hwndSelf, hTrackMenu );
 
         if( vkey == VK_SPACE )
             uItem = SYSMENU_SELECTED;
         else if( vkey )
         {
-            uItem = ( htMenu == HTSYSMENU )
-		    ? 0xFFFE	/* only VK_SPACE in this case */
-		    : MENU_FindItemByKey( wndPtr->hwndSelf, wndPtr->wIDmenu, vkey );
-	    if( uItem >= 0xFFFE )
+            uItem = MENU_FindItemByKey( wndPtr->hwndSelf, hTrackMenu, 
+					vkey, (htMenu == HTSYSMENU) );
+	    if( uItem >= (UINT32)(-2) )
 	    {
-	        if( uItem == 0xFFFF ) MessageBeep32(0);
+	        if( uItem == (UINT32)(-1) ) MessageBeep32(0);
 		htMenu = 0;
 	    }
         }
@@ -2172,25 +2191,36 @@ BOOL16 EnableMenuItem16( HMENU16 hMenu, UINT16 wItemID, UINT16 wFlags )
  */
 BOOL32 EnableMenuItem32( HMENU32 hMenu, UINT32 wItemID, UINT32 wFlags )
 {
-    MENUITEM *item;
-    dprintf_menu(stddeb,"EnableMenuItem (%04x, %04X, %04X) !\n", 
-		 hMenu, wItemID, wFlags);
-    if (!(item = MENU_FindItem( &hMenu, &wItemID, wFlags ))) return FALSE;
+    BOOL32    bRet = FALSE;
+    MENUITEM *item, *first = NULL;
 
-      /* We can't have MF_GRAYED and MF_DISABLED together */
-    if (wFlags & MF_GRAYED)
+    dprintf_menu(stddeb,"EnableMenuItem (%04x, %04X, %04X) !\n", 
+		                        hMenu, wItemID, wFlags);
+
+    while( (item = MENU_FindItem( &hMenu, &wItemID, wFlags )) )
     {
-	item->item_flags = (item->item_flags & ~MF_DISABLED) | MF_GRAYED;
+      if( !(item->item_flags & MF_POPUP) )
+      {
+           /* We can't have MF_GRAYED and MF_DISABLED together */
+           if (wFlags & MF_GRAYED)
+           {
+  	     item->item_flags = (item->item_flags & ~MF_DISABLED) | MF_GRAYED;
+           }
+           else if (wFlags & MF_DISABLED)
+           {
+	     item->item_flags = (item->item_flags & ~MF_GRAYED) | MF_DISABLED;
+           }
+           else   /* MF_ENABLED */
+           {
+	     item->item_flags &= ~(MF_GRAYED | MF_DISABLED);
+           } 
+	   bRet = TRUE;
+	   break;
+      }
+      if( !first ) first = item;
+      else if( first == item ) break;
     }
-    else if (wFlags & MF_DISABLED)
-    {
-	item->item_flags = (item->item_flags & ~MF_GRAYED) | MF_DISABLED;
-    }
-    else   /* MF_ENABLED */
-    {
-	item->item_flags &= ~(MF_GRAYED | MF_DISABLED);
-    }
-    return TRUE;
+    return bRet;
 }
 
 

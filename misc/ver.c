@@ -577,7 +577,7 @@ VerInstallFile32A(
     	buf1 = _fetch_versioninfo(destfn);
 	if (buf1) {
 	    buf2 = _fetch_versioninfo(tmpfn);
-	    if (!buf2) {
+	    if (buf2) {
 	    	char	*tbuf1,*tbuf2;
 		VS_FIXEDFILEINFO *destvffi,*tmpvffi;
 		UINT32	len1,len2;

@@ -87,7 +87,7 @@ static void TIMER_ClearTimer( TIMER * pTimer )
     pTimer->msg     = 0;
     pTimer->id      = 0;
     pTimer->timeout = 0;
-    WINPROC_FreeProc( pTimer->proc );
+    WINPROC_FreeProc( pTimer->proc, WIN_PROC_TIMER );
 }
 
 
@@ -235,9 +235,10 @@ static UINT32 TIMER_SetTimer( HWND32 hwnd, UINT32 id, UINT32 timeout,
               /* Got one: set new values and return */
             TIMER_RemoveTimer( pTimer );
             pTimer->timeout = timeout;
-            WINPROC_FreeProc( pTimer->proc );
+            WINPROC_FreeProc( pTimer->proc, WIN_PROC_TIMER );
             pTimer->proc = (HWINDOWPROC)0;
-            if (proc) WINPROC_SetProc( &pTimer->proc, proc, type );
+            if (proc) WINPROC_SetProc( &pTimer->proc, proc,
+                                       type, WIN_PROC_TIMER );
             pTimer->expires = GetTickCount() + timeout;
             TIMER_InsertTimer( pTimer );
             return id;
@@ -262,7 +263,7 @@ static UINT32 TIMER_SetTimer( HWND32 hwnd, UINT32 id, UINT32 timeout,
     pTimer->timeout = timeout;
     pTimer->expires = GetTickCount() + timeout;
     pTimer->proc    = (HWINDOWPROC)0;
-    if (proc) WINPROC_SetProc( &pTimer->proc, proc, type );
+    if (proc) WINPROC_SetProc( &pTimer->proc, proc, type, WIN_PROC_TIMER );
     dprintf_timer( stddeb, "Timer added: %p, %04x, %04x, %04x, %08lx\n", 
 		   pTimer, pTimer->hwnd, pTimer->msg, pTimer->id,
                    (DWORD)pTimer->proc );

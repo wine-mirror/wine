@@ -114,8 +114,6 @@ static BOOL32 DEFDLG_SetDefButton( HWND32 hwndDlg, DIALOGINFO *dlgInfo,
 static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                             LPARAM lParam, DIALOGINFO *dlgInfo )
 {
-    HWND32 hwndDefId;
-
     switch(msg)
     {
         case WM_ERASEBKGND:
@@ -147,9 +145,9 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 	    }
 
             /* Delete window procedure */
-            WINPROC_FreeProc( dlgInfo->dlgProc );
+            WINPROC_FreeProc( dlgInfo->dlgProc, WIN_PROC_WINDOW );
             dlgInfo->dlgProc = (HWINDOWPROC)0;
-	    dlgInfo->fEnd    = TRUE;	/* just in case */
+            dlgInfo->flags |= DF_END;  /* just in case */
 
 	      /* Window clean-up */
 	    return DefWindowProc32A( hwnd, msg, wParam, lParam );
@@ -168,18 +166,20 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 	    return 0;
 
         case DM_SETDEFID:
-            if (dlgInfo->fEnd) return 1;
+            if (dlgInfo->flags & DF_END) return 1;
             DEFDLG_SetDefButton( hwnd, dlgInfo,
                                  wParam ? GetDlgItem32( hwnd, wParam ) : 0 );
             return 1;
 
         case DM_GETDEFID:
-            if (dlgInfo->fEnd) return 0;
-	    if (dlgInfo->idResult)
-	      return MAKELONG( dlgInfo->idResult, DC_HASDEFID );
-	    hwndDefId = DEFDLG_FindDefButton( hwnd );
-	    if (hwndDefId)
-	      return MAKELONG( GetDlgCtrlID32( hwndDefId ), DC_HASDEFID);
+            {
+                HWND32 hwndDefId;
+                if (dlgInfo->flags & DF_END) return 0;
+                if (dlgInfo->idResult)
+                    return MAKELONG( dlgInfo->idResult, DC_HASDEFID );
+                if ((hwndDefId = DEFDLG_FindDefButton( hwnd )))
+                    return MAKELONG( GetDlgCtrlID32( hwndDefId ), DC_HASDEFID);
+            }
 	    return 0;
 
 	case WM_NEXTDLGCTL:
@@ -191,6 +191,32 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
                 DEFDLG_SetDefButton( hwnd, dlgInfo, hwndDest );
             }
             return 0;
+
+        case WM_ENTERMENULOOP:
+        case WM_LBUTTONDOWN:
+        case WM_NCLBUTTONDOWN:
+            {
+                HWND32 hwndFocus = GetFocus32();
+                if (hwndFocus)
+                {
+                    WND *wnd = WIN_FindWndPtr( hwndFocus );
+
+                    if( wnd )
+                    {
+                        /* always make combo box hide its listbox control */
+
+                        if( WIDGETS_IsControl32( wnd, BIC32_COMBO ) )
+                            SendMessage32A( hwndFocus, CB_SHOWDROPDOWN32,
+                                            FALSE, 0 );
+                        else if( WIDGETS_IsControl32( wnd, BIC32_EDIT ) &&
+                                 WIDGETS_IsControl32( wnd->parent,
+                                                      BIC32_COMBO ))
+                            SendMessage32A( wnd->parent->hwndSelf, 
+                                            CB_SHOWDROPDOWN32, FALSE, 0 );
+                    }
+                }
+            }
+	    return DefWindowProc32A( hwnd, msg, wParam, lParam );
 
 	case WM_GETFONT: 
 	    return dlgInfo->hUserFont;
@@ -204,9 +230,9 @@ static LRESULT DEFDLG_Proc( HWND32 hwnd, UINT32 msg, WPARAM32 wParam,
 }
 
 /***********************************************************************
- *           DEFDLG_Signoff
+ *           DEFDLG_Epilog
  */
-static LRESULT DEFDLG_Signoff(DIALOGINFO* dlgInfo, UINT32 msg, BOOL16 fResult)
+static LRESULT DEFDLG_Epilog(DIALOGINFO* dlgInfo, UINT32 msg, BOOL16 fResult)
 {
     /* see SDK 3.1 */
 
@@ -254,6 +280,9 @@ LRESULT DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam )
             case WM_GETFONT:
             case WM_CLOSE:
             case WM_NCDESTROY:
+            case WM_ENTERMENULOOP:
+            case WM_LBUTTONDOWN:
+            case WM_NCLBUTTONDOWN:
                 return DEFDLG_Proc( (HWND32)hwnd, msg, 
                                     (WPARAM32)wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
@@ -266,7 +295,7 @@ LRESULT DefDlgProc16( HWND16 hwnd, UINT16 msg, WPARAM16 wParam, LPARAM lParam )
                 return DefWindowProc16( hwnd, msg, wParam, lParam );
         }
     }   
-    return DEFDLG_Signoff(dlgInfo, msg, result);
+    return DEFDLG_Epilog(dlgInfo, msg, result);
 }
 
 
@@ -305,6 +334,9 @@ LRESULT DefDlgProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
             case WM_GETFONT:
             case WM_CLOSE:
             case WM_NCDESTROY:
+            case WM_ENTERMENULOOP:
+            case WM_LBUTTONDOWN:
+            case WM_NCLBUTTONDOWN:
                  return DEFDLG_Proc( (HWND32)hwnd, msg,
                                      (WPARAM32)wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
@@ -317,7 +349,7 @@ LRESULT DefDlgProc32A( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
                  return DefWindowProc32A( hwnd, msg, wParam, lParam );
         }
     }
-    return DEFDLG_Signoff(dlgInfo, msg, result);
+    return DEFDLG_Epilog(dlgInfo, msg, result);
 }
 
 
@@ -356,6 +388,9 @@ LRESULT DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
             case WM_GETFONT:
             case WM_CLOSE:
             case WM_NCDESTROY:
+            case WM_ENTERMENULOOP:
+            case WM_LBUTTONDOWN:
+            case WM_NCLBUTTONDOWN:
                  return DEFDLG_Proc( (HWND32)hwnd, msg,
                                      (WPARAM32)wParam, lParam, dlgInfo );
             case WM_INITDIALOG:
@@ -368,5 +403,5 @@ LRESULT DefDlgProc32W( HWND32 hwnd, UINT32 msg, WPARAM32 wParam, LPARAM lParam)
                  return DefWindowProc32W( hwnd, msg, wParam, lParam );
         }
     }
-    return DEFDLG_Signoff(dlgInfo, msg, result);
+    return DEFDLG_Epilog(dlgInfo, msg, result);
 }

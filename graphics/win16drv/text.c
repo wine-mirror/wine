@@ -70,13 +70,14 @@ BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
 				  physDev->segptrFontInfo, lpDrawMode, 
 				  lpTextXForm, NULL, NULL, 0);
 */
+#ifdef NOTDEF
 	lpClipRect->left = lprect->left ;
 	lpClipRect->top = lprect->top;
 	lpClipRect->right = lprect->right;
 	lpClipRect->bottom = lprect->bottom;
         dprintf_win16drv(stddeb, "WIN16DRV_ExtTextOut Clip rect left %d top %d rigt %d bottom %d\n",
                          lpClipRect->left,lpClipRect->top,lpClipRect->right,lpClipRect->bottom);
-        
+#endif
 	lpClipRect->left = 0;
 	lpClipRect->top = 0;
 	lpClipRect->right = 0x3fc;

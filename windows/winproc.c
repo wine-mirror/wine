@@ -17,7 +17,9 @@
 #include "stddebug.h"
 #include "debug.h"
 
-/* Window procedure 16-bit thunk; see BuildSpec16Files() in tools/build.c */
+/* Window procedure 16--to-32-bit thunk,
+ * see BuildSpec16Files() in tools/build.c */
+
 typedef struct
 {
     BYTE       popl_eax;             /* popl  %eax (return address) */
@@ -28,11 +30,13 @@ typedef struct
     BYTE       pushl_thunk;          /* pushl $thunkfrom16 */
     void     (*thunk32)() WINE_PACKED;
     BYTE       lcall;                /* lcall cs:relay */
-    void     (*relay)() WINE_PACKED;
+    void     (*relay)() WINE_PACKED; /* WINPROC_CallProc16To32A/W() */
     WORD       cs WINE_PACKED;
 } WINPROC_THUNK_FROM16;
 
-/* Window procedure 32-bit thunk; see BuildSpec32Files() in tools/build.c */
+/* Window procedure 32-to-16-bit thunk,
+ * see BuildSpec32Files() in tools/build.c */
+
 typedef struct
 {
     BYTE       popl_eax;             /* popl  %eax (return address) */
@@ -45,7 +49,7 @@ typedef struct
     BYTE       pushl_thunk;          /* pushl $thunkfrom32 */
     void     (*thunk32)() WINE_PACKED;
     BYTE       jmp;                  /* jmp   relay (relative jump)*/
-    void     (*relay)() WINE_PACKED;
+    void     (*relay)() WINE_PACKED; /* WINPROC_CallProc32ATo16() */
 } WINPROC_THUNK_FROM32;
 
 /* Simple jmp to call 32-bit procedure directly */
@@ -68,6 +72,7 @@ typedef struct tagWINDOWPROC
     struct tagWINDOWPROC *next;     /* Next window proc */
     UINT32                magic;    /* Magic number */
     WINDOWPROCTYPE        type;     /* Function type */
+    WINDOWPROCUSER        user;     /* Function user */
 } WINDOWPROC;
 
 #define WINPROC_MAGIC  ('W' | ('P' << 8) | ('R' << 16) | ('C' << 24))
@@ -162,7 +167,8 @@ static WINDOWPROC *WINPROC_GetPtr( WNDPROC16 handle )
  *
  * Allocate a new window procedure.
  */
-static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type )
+static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type,
+                                         WINDOWPROCUSER user )
 {
     WINDOWPROC *proc, *oldproc;
 
@@ -220,6 +226,7 @@ static WINDOWPROC *WINPROC_AllocWinProc( WNDPROC16 func, WINDOWPROCTYPE type )
         }
         proc->magic = WINPROC_MAGIC;
         proc->type  = type;
+        proc->user  = user;
     }
     proc->next  = NULL;
     dprintf_win( stddeb, "WINPROC_AllocWinProc(%08x,%d): returning %08x\n",
@@ -257,11 +264,28 @@ WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type )
 /**********************************************************************
  *	     WINPROC_SetProc
  *
- * Set the window procedure for a window or class.
+ * Set the window procedure for a window or class. There are
+ * three tree classes of winproc callbacks:
+ *
+ * 1) class  -> wp                 	-	not subclassed
+ *    class  -> wp -> wp -> wp -> wp 	-	SetClassLong()
+ *             /           /
+ * 2) window -'           /		-	not subclassed
+ *    window -> wp -> wp '           	-	SetWindowLong()
+ *
+ * 3) timer  -> wp                   	-	SetTimer()
+ *
+ * Initially, winproc of the window points to the current winproc 
+ * thunk of its class. Subclassing prepends a new thunk to the 
+ * window winproc chain at the head of the list. Thus, window thunk 
+ * list includes class thunks and the latter are preserved when the 
+ * window is destroyed.
+ *
  */
 BOOL32 WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
-                        WINDOWPROCTYPE type )
+                        WINDOWPROCTYPE type, WINDOWPROCUSER user )
 {
+    BOOL32 bRecycle = FALSE;
     WINDOWPROC *proc, **ppPrev;
 
     /* Check if function is already in the list */
@@ -272,18 +296,38 @@ BOOL32 WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
     {
         if (proc)
         {
-            if (*ppPrev == proc) break;
+            if (*ppPrev == proc)
+            {
+                if ((*ppPrev)->user != user)
+		{
+		    /* terminal thunk is being restored */
+
+		    WINPROC_FreeProc( *pFirst, (*ppPrev)->user );
+		    *(WINDOWPROC **)pFirst = *ppPrev;
+		    return TRUE;
+		}
+		bRecycle = TRUE;
+		break;
+	    }
         }
         else
         {
             if (((*ppPrev)->type == type) &&
-                (func == WINPROC_THUNKPROC(*ppPrev))) break;
+                (func == WINPROC_THUNKPROC(*ppPrev)))
+            {
+                bRecycle = TRUE;
+                break;
+            }
         }
+            
+        /* WPF_CLASS thunk terminates window thunk list */
+        if ((*ppPrev)->user != user) break;
         ppPrev = &(*ppPrev)->next;
     }
 
-    if (*ppPrev)  /* Remove it from the list */
+    if (bRecycle)
     {
+        /* Extract this thunk from the list */
         proc = *ppPrev;
         *ppPrev = proc->next;
     }
@@ -294,7 +338,7 @@ BOOL32 WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
             type = proc->type;
             func = WINPROC_THUNKPROC(proc);
         }
-        proc = WINPROC_AllocWinProc( func, type );
+        proc = WINPROC_AllocWinProc( func, type, user );
         if (!proc) return FALSE;
     }
 
@@ -313,11 +357,12 @@ BOOL32 WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
  *
  * Free a list of win procs.
  */
-void WINPROC_FreeProc( HWINDOWPROC proc )
+void WINPROC_FreeProc( HWINDOWPROC proc, WINDOWPROCUSER user )
 {
     while (proc)
     {
         WINDOWPROC *next = ((WINDOWPROC *)proc)->next;
+        if (((WINDOWPROC *)proc)->user != user) break;
         dprintf_win( stddeb, "WINPROC_FreeProc: freeing %08x\n", (UINT32)proc);
         HeapFree( WinProcHeap, 0, proc );
         proc = next;
@@ -987,6 +1032,40 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
     case BM_SETSTYLE32:
         *pmsg16 = (UINT16)msg32 + (BM_GETCHECK16 - BM_GETCHECK32);
         return 0;
+
+    case EM_GETSEL32:
+    case EM_GETRECT32:
+    case EM_SETRECT32:
+    case EM_SETRECTNP32:
+    case EM_SCROLL32:
+    case EM_LINESCROLL32:
+    case EM_SCROLLCARET32:
+    case EM_GETMODIFY32:
+    case EM_SETMODIFY32:
+    case EM_GETLINECOUNT32:
+    case EM_LINEINDEX32:
+    case EM_SETHANDLE32:
+    case EM_GETHANDLE32:
+    case EM_GETTHUMB32:
+    case EM_LINELENGTH32:
+    case EM_REPLACESEL32:
+    case EM_GETLINE32:
+    case EM_LIMITTEXT32:
+    case EM_CANUNDO32:
+    case EM_UNDO32:
+    case EM_FMTLINES32:
+    case EM_LINEFROMCHAR32:
+    case EM_SETTABSTOPS32:
+    case EM_SETPASSWORDCHAR32:
+    case EM_EMPTYUNDOBUFFER32:
+    case EM_GETFIRSTVISIBLELINE32:
+    case EM_SETREADONLY32:
+    case EM_SETWORDBREAKPROC32:
+    case EM_GETWORDBREAKPROC32:
+    case EM_GETPASSWORDCHAR32:
+        *pmsg16 = (UINT16)msg32 + (EM_GETSEL16 - EM_GETSEL32);
+        return 0;
+
     case LB_CARETOFF32:
     case LB_CARETON32:
     case LB_DELETESTRING32:
@@ -1015,6 +1094,27 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
     case LB_SETTOPINDEX32:
         *pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING32);
         return 0;
+    case CB_DELETESTRING32:
+    case CB_GETCOUNT32:
+    case CB_GETLBTEXTLEN32:
+    case CB_LIMITTEXT32:
+    case CB_RESETCONTENT32:
+    case CB_SETEDITSEL32:
+    case CB_GETCURSEL32:
+    case CB_SETCURSEL32:
+    case CB_SHOWDROPDOWN32:
+    case CB_SETITEMDATA32:
+    case CB_SETITEMHEIGHT32:
+    case CB_GETITEMHEIGHT32:
+    case CB_SETEXTENDEDUI32:
+    case CB_GETEXTENDEDUI32:
+    case CB_GETDROPPEDSTATE32:
+	*pmsg16 = (UINT16)msg32 + (CB_GETEDITSEL16 - CB_GETEDITSEL32);
+	return 0;
+    case CB_GETEDITSEL32:
+	*pmsg16 = CB_GETEDITSEL16;
+	return 1;
+
     case LB_ADDSTRING32:
     case LB_FINDSTRING32:
     case LB_FINDSTRINGEXACT32:
@@ -1022,7 +1122,6 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
     case LB_SELECTSTRING32:
     case LB_DIR32:
     case LB_ADDFILE32:
-/*    case LB_GETTEXT32: FIXME */
         {
             LPSTR str = SEGPTR_STRDUP( (LPSTR)*plparam );
             if (!str) return -1;
@@ -1030,6 +1129,21 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
         }
         *pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING32);
         return 1;
+
+    case CB_ADDSTRING32:
+    case CB_FINDSTRING32:
+    case CB_FINDSTRINGEXACT32:
+    case CB_INSERTSTRING32:
+    case CB_SELECTSTRING32:
+    case CB_DIR32:
+	{
+	    LPSTR str = SEGPTR_STRDUP( (LPSTR)*plparam );
+	    if (!str) return -1;
+	    *plparam = (LPARAM)SEGPTR_GET(str);
+	}
+	*pmsg16 = (UINT16)msg32 + (CB_GETEDITSEL16 - CB_GETEDITSEL32);
+	return 1;
+
     case LB_GETITEMRECT32:
         {
             RECT16 *rect;
@@ -1038,6 +1152,7 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
             *(LPARAM *)(rect + 1) = *plparam;  /* Store the previous lParam */
             *plparam = (LPARAM)SEGPTR_GET(rect);
         }
+	*pmsg16 = LB_GETITEMRECT16;
         return 1;
     case LB_GETSELITEMS32:
         {
@@ -1048,6 +1163,7 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
             *((LPARAM *)items)++ = *plparam;  /* Store the previous lParam */
             *plparam = (LPARAM)SEGPTR_GET(items);
         }
+	*pmsg16 = LB_GETSELITEMS16;
         return 1;
     case LB_SETTABSTOPS32:
         if (wParam32)
@@ -1063,6 +1179,34 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
         }
         *pmsg16 = LB_SETTABSTOPS16;
         return 0;
+
+    case CB_GETDROPPEDCONTROLRECT32:
+        {
+	    RECT16 *rect;
+	    rect = (RECT16 *)SEGPTR_ALLOC( sizeof(RECT16) + sizeof(LPARAM) );
+	    if (!rect) return -1;
+	    *(LPARAM *)(rect + 1) = *plparam;  /* Store the previous lParam */
+	    *plparam = (LPARAM)SEGPTR_GET(rect);
+        }
+	*pmsg16 = CB_GETDROPPEDCONTROLRECT16;
+        return 1;
+
+    case LB_GETTEXT32:
+	*plparam = (LPARAM)MapLS( (LPVOID)(*plparam) );
+	*pmsg16 = LB_GETTEXT16;
+	return 1;
+
+    case CB_GETLBTEXT32:
+	*plparam = (LPARAM)MapLS( (LPVOID)(*plparam) );
+	*pmsg16 = CB_GETLBTEXT16;
+	return 1;
+
+    case EM_SETSEL32:
+	*pwparam16 = 0;
+	*plparam = MAKELONG( (INT16)(INT32)wParam32, (INT16)*plparam );
+	*pmsg16 = EM_SETSEL16;
+	return 0;
+
     case WM_ACTIVATE:
     case WM_CHARTOITEM:
     case WM_COMMAND:
@@ -1272,7 +1416,8 @@ INT32 WINPROC_MapMsg32ATo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
  *
  * Unmap a message that was mapped from 32-bit Ansi to 16-bit.
  */
-void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam, LPARAM lParam )
+void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam, 
+					  LPARAM lParam, LRESULT lResult )
 {
     switch(msg)
     {
@@ -1284,12 +1429,20 @@ void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam, LPARAM lParam )
     case LB_INSERTSTRING32:
     case LB_SELECTSTRING32:
     case LB_SETTABSTOPS32:
+    case CB_ADDSTRING32:
+    case CB_FINDSTRING32:
+    case CB_FINDSTRINGEXACT32:
+    case CB_INSERTSTRING32:
+    case CB_SELECTSTRING32:
+    case CB_DIR32:
     case WM_COMPAREITEM:
     case WM_DELETEITEM:
     case WM_DRAWITEM:
     case WM_SETTEXT:
         SEGPTR_FREE( PTR_SEG_TO_LIN(lParam) );
         break;
+
+    case CB_GETDROPPEDCONTROLRECT32:
     case LB_GETITEMRECT32:
         {
             RECT16 *rect = (RECT16 *)PTR_SEG_TO_LIN(lParam);
@@ -1307,6 +1460,21 @@ void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam, LPARAM lParam )
             SEGPTR_FREE( (LPARAM *)items - 1 );
         }
         break;
+
+    case CB_GETEDITSEL32:
+/*
+	if( wParam )
+	    *((LPUINT32)wParam) = LOWORD(lResult);
+	if( lParam )
+	    *((LPUINT32)lParam) = HIWORD(lResult);
+*/
+	break;
+
+    case LB_GETTEXT32:
+    case CB_GETLBTEXT32:
+	UnMapLS( (SEGPTR)lParam );
+	break;
+
     case WM_MEASUREITEM:
         {
             MEASUREITEMSTRUCT16 *mis = (MEASUREITEMSTRUCT16 *)PTR_SEG_TO_LIN(lParam);
@@ -1401,11 +1569,27 @@ INT32 WINPROC_MapMsg32WTo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
         {
             LPSTR str = SEGPTR_STRDUP_WtoA( (LPWSTR)*plparam );
             if (!str) return -1;
-            *pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING32);
             *pwparam16 = (WPARAM16)LOWORD(wParam32);
             *plparam   = (LPARAM)SEGPTR_GET(str);
         }
+	*pmsg16 = (UINT16)msg32 + (LB_ADDSTRING16 - LB_ADDSTRING32);
         return 1;
+
+    case CB_ADDSTRING32:
+    case CB_FINDSTRING32:
+    case CB_FINDSTRINGEXACT32:
+    case CB_INSERTSTRING32:
+    case CB_SELECTSTRING32:
+    case CB_DIR32:
+        {
+            LPSTR str = SEGPTR_STRDUP_WtoA( (LPWSTR)*plparam );
+            if (!str) return -1;
+            *pwparam16 = (WPARAM16)LOWORD(wParam32);
+            *plparam   = (LPARAM)SEGPTR_GET(str);
+        }
+	*pmsg16 = (UINT16)msg32 + (CB_ADDSTRING16 - CB_ADDSTRING32);
+        return 1;
+
     case WM_NCCREATE:
     case WM_CREATE:
         {
@@ -1462,7 +1646,8 @@ INT32 WINPROC_MapMsg32WTo16( UINT32 msg32, WPARAM32 wParam32, UINT16 *pmsg16,
  *
  * Unmap a message that was mapped from 32-bit Unicode to 16-bit.
  */
-void WINPROC_UnmapMsg32WTo16( UINT32 msg, WPARAM16 wParam, LPARAM lParam )
+void WINPROC_UnmapMsg32WTo16( UINT32 msg, WPARAM16 wParam, 
+					  LPARAM lParam, LRESULT lResult )
 {
     switch(msg)
     {
@@ -1475,7 +1660,7 @@ void WINPROC_UnmapMsg32WTo16( UINT32 msg, WPARAM16 wParam, LPARAM lParam )
         }
         break;
     default:
-        WINPROC_UnmapMsg32ATo16( msg, wParam, lParam );
+        WINPROC_UnmapMsg32ATo16( msg, wParam, lParam, lResult );
         break;
     }
 }
@@ -1579,7 +1764,7 @@ static LRESULT WINPROC_CallProc32ATo16( WNDPROC16 func, HWND32 hwnd,
     if (wndPtr) CURRENT_DS = wndPtr->hInstance;
     result = CallWndProc16( func, hwnd, msg16, wParam16, lParam );
     CURRENT_DS = ds;
-    WINPROC_UnmapMsg32ATo16( msg, wParam16, lParam );
+    WINPROC_UnmapMsg32ATo16( msg, wParam16, lParam, result );
     return result;
 }
 
@@ -1604,7 +1789,7 @@ static LRESULT WINPROC_CallProc32WTo16( WNDPROC16 func, HWND32 hwnd,
     if (wndPtr) CURRENT_DS = wndPtr->hInstance;
     result = CallWndProc16( func, hwnd, msg16, wParam16, lParam );
     CURRENT_DS = ds;
-    WINPROC_UnmapMsg32WTo16( msg, wParam16, lParam );
+    WINPROC_UnmapMsg32WTo16( msg, wParam16, lParam, result );
     return result;
 }
 

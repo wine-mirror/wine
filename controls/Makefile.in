@@ -12,7 +12,6 @@ C_SRCS = \
 	edit.c \
 	listbox.c \
 	menu.c \
-	oldlbox.c \
 	scroll.c \
 	static.c \
 	status.c \

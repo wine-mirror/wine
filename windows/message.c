@@ -606,7 +606,7 @@ static LRESULT MSG_SendMessage( HQUEUE16 hDestQueue, HWND16 hwnd, UINT16 msg,
       queue->wakeBits &= ~QS_SMRESULT;
 
       if( queue->smResult != &qCtrl )
-	  dprintf_msg(stddeb,"%*ssm: weird scenes inside the goldmine!\n", prevSMRL, "");
+	  dprintf_sendmsg(stddeb,"%*ssm: weird scenes inside the goldmine!\n", prevSMRL, "");
     }
     queue->smResultInit = NULL;
     
@@ -675,8 +675,6 @@ static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
     mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
     if (first || last)
     {
-        /* MSWord gets stuck if we do not check for nonclient mouse messages */
-
         if ((first <= WM_KEYLAST) && (last >= WM_KEYFIRST)) mask |= QS_KEY;
         if ( ((first <= WM_MOUSELAST) && (last >= WM_MOUSEFIRST)) ||
              ((first <= WM_NCMOUSELAST) && (last >= WM_NCMOUSEFIRST)) ) mask |= QS_MOUSE;
@@ -700,11 +698,7 @@ static BOOL32 MSG_PeekMessage( LPMSG16 msg, HWND16 hwnd, WORD first, WORD last,
 	while (msgQueue->wakeBits & QS_SENDMESSAGE)
             QUEUE_ReceiveMessage( msgQueue );
 
-        /* Now handle a WM_QUIT message 
-	 *
-	 * FIXME: PostQuitMessage() should post WM_QUIT and 
-	 *	  set QS_POSTMESSAGE wakebit instead of this.
-	 */
+        /* Now handle a WM_QUIT message */
 
         if (msgQueue->wPostQMsg &&
 	   (!first || WM_QUIT >= first) && 
@@ -1419,7 +1413,6 @@ LONG DispatchMessage16( const MSG16* msg )
     {
 	if (msg->lParam)
         {
-/*            HOOK_CallHooks16( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
 	    return CallWindowProc16( (WNDPROC16)msg->lParam, msg->hwnd,
                                    msg->message, msg->wParam, GetTickCount() );
         }
@@ -1430,7 +1423,6 @@ LONG DispatchMessage16( const MSG16* msg )
     if (!wndPtr->winproc) return 0;
     painting = (msg->message == WM_PAINT);
     if (painting) wndPtr->flags |= WIN_NEEDS_BEGINPAINT;
-/*    HOOK_CallHooks16( WH_CALLWNDPROC, HC_ACTION, 0, FIXME ); */
 
     SPY_EnterMessage( SPY_DISPATCHMESSAGE16, msg->hwnd, msg->message,
                       msg->wParam, msg->lParam );

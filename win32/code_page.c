@@ -67,6 +67,22 @@ UINT32 GetOEMCP(void)
 }
 
 /***********************************************************************
+ *           IsValidCodePage   (KERNEL32.360)
+ */
+BOOL32 IsValidCodePage(UINT32 CodePage)
+{
+    switch ( CodePage )
+    {
+    case 1252 :
+    case 437 :
+        return TRUE;
+    default :
+        return FALSE;
+    }
+}
+
+
+/***********************************************************************
  *              MultiByteToWideChar                (KERNEL32.392)
  */
 int MultiByteToWideChar(UINT32 page, DWORD flags, char *src, int srclen,

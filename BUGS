@@ -5,23 +5,21 @@ done something for one of the problems. You are encouraged to
 add new entries and, more importantly, remove those for the 
 bugs you fixed ;-)
 ------------------------------------------------------------
-As of Dec 22 1996 -
+As of March 10 1997 -
 
 General:
 
- * Combobox code is very inadequate (no notification messages,
-   dropdown listboxes often stay visible, etc... ).
-
  * Font mapping is too generic. No soft font loading, no rotated 
-   text support. [alex@amadeus.pharm.sunysb.edu]
+   text support, incorrect metrics. [alex@amadeus.pharm.sunysb.edu]
 
  * No thread/process/kernel-object support in Win32 code. 
 
  * Very alpha printing code. [john@division.co.uk]
 
- * No OLE and OLE32 support (including OLE interfaces etc.).
+ * No OLE2 and OLE32 support (including OLE2 interfaces etc.).
 
- * No MS Video support (perhaps interface with xanim).
+ * No MS Video support (perhaps interface with xanim, don't hold
+   your breath for this one).
 
  * No COMDLG32 support. (Needed badly, the Windows95 comdlg32.dll
    doesn't work with WINE.)
@@ -33,14 +31,26 @@ General:
 	  Handles to these title windows are stored in the icon window
 	  properties.
 
+ * No manual pages describing the various Windows calls.
+
 Miscellaneous:
 
- * Simple OLE actions were working in October release, got
-   broken in November (in Winword "Insert Object" now results in 
-   segfault right after the call to LoadModule()).
+ * "Cursor XXXX has more than 1 bpp!"
+
+ * 32-bit Freecell segfaults when started from the Progman (looks like
+   a problem with cards.dll).
+
+ * Word 6.0 often segfaults when system menu is double-clicked. 
+
+ * Edit controls are prone to show blank space when, in fact, there is a
+   text there.
+
+ * SGI window manager treats Wine windows as topmost.
+
+ * Write shows blank space instead of Paintbrush OLE1 object.
+
  * AllocCSToDSAlias() shouldn't alloc alias for the same segment multiple
    times.
- * ScrollWindowEx() is outdated.
 
 Where to look in source files:
 

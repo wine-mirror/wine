@@ -462,3 +462,43 @@ DWORD MemoryWrite( WORD sel, DWORD offset, void *buffer, DWORD count )
     memcpy( ((char *)GET_SEL_BASE(sel)) + offset, buffer, count );
     return count;
 }
+
+/************************************* Win95 pointer mapping functions *
+ *
+ * NOTE: MapSLFix and UnMapSLFixArray are probably needed to prevent
+ * unexpected linear address change when GlobalCompact() shuffles
+ * moveable blocks.
+ */
+
+/***********************************************************************
+ *           MapSL   (KERNEL32.662)
+ *
+ * Maps fixed segmented pointer to linear.
+ */
+LPVOID MapSL( SEGPTR sptr )
+{
+    return (LPVOID)PTR_SEG_TO_LIN(sptr);
+}
+
+
+/***********************************************************************
+ *           MapLS   (KERNEL32.679)
+ *
+ * Maps linear pointer to segmented.
+ */
+SEGPTR MapLS( LPVOID ptr )
+{
+    WORD sel = SELECTOR_AllocBlock( ptr, 0x10000, SEGMENT_DATA, FALSE, FALSE );
+    return PTR_SEG_OFF_TO_SEGPTR( sel, 0 );
+}
+
+
+/***********************************************************************
+ *           UnMapLS   (KERNEL32.680)
+ *
+ * Free mapped selector.
+ */
+void UnMapLS( SEGPTR sptr )
+{
+    if (!__winelib) SELECTOR_FreeBlock( SELECTOROF(sptr), 1 );
+}

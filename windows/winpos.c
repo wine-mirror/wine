@@ -157,6 +157,24 @@ UINT32 ArrangeIconicWindows32( HWND32 parent )
 
 
 /***********************************************************************
+ *             SwitchToThisWindow16   (USER.172)
+ */
+void SwitchToThisWindow16( HWND16 hwnd, BOOL16 restore )
+{
+    SwitchToThisWindow32( hwnd, restore );
+}
+
+
+/***********************************************************************
+ *             SwitchToThisWindow32   (USER32.538)
+ */
+void SwitchToThisWindow32( HWND32 hwnd, BOOL32 restore )
+{
+    ShowWindow32( hwnd, restore ? SW_RESTORE : SW_SHOWMINIMIZED );
+}
+
+
+/***********************************************************************
  *           GetWindowRect16   (USER.32)
  */
 void GetWindowRect16( HWND16 hwnd, LPRECT16 rect ) 

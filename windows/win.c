@@ -363,7 +363,7 @@ static WND* WIN_DestroyWindow( WND* wndPtr )
     if (wndPtr->window) EVENT_DestroyWindow( wndPtr );
     if (wndPtr->class->style & CS_OWNDC) DCE_FreeDCE( wndPtr->dce );
 
-    WINPROC_FreeProc( wndPtr->winproc );
+    WINPROC_FreeProc( wndPtr->winproc, WIN_PROC_WINDOW );
 
     wndPtr->class->cWindows--;
     wndPtr->class = NULL;
@@ -415,7 +415,6 @@ BOOL32 WIN_CreateDesktopWindow(void)
     pWndDesktop->parent            = NULL;
     pWndDesktop->owner             = NULL;
     pWndDesktop->class             = class;
-    pWndDesktop->winproc           = NULL;
     pWndDesktop->dwMagic           = WND_MAGIC;
     pWndDesktop->hwndSelf          = hwndDesktop;
     pWndDesktop->hInstance         = 0;
@@ -446,7 +445,8 @@ BOOL32 WIN_CreateDesktopWindow(void)
     pWndDesktop->hSysMenu          = 0;
     pWndDesktop->userdata          = 0;
 
-    WINPROC_SetProc( &pWndDesktop->winproc, (WNDPROC16)class->winproc, 0 );
+    pWndDesktop->winproc = (WNDPROC16)class->winproc;
+
     EVENT_RegisterWindow( pWndDesktop );
     SendMessage32A( hwndDesktop, WM_NCCREATE, 0, 0 );
     pWndDesktop->flags |= WIN_NEEDS_ERASEBKGND;
@@ -550,7 +550,7 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 
     wndPtr->window         = 0;
     wndPtr->class          = classPtr;
-    wndPtr->winproc        = NULL;
+    wndPtr->winproc        = classPtr->winproc;
     wndPtr->dwMagic        = WND_MAGIC;
     wndPtr->hwndSelf       = hwnd;
     wndPtr->hInstance      = cs->hInstance;
@@ -592,10 +592,9 @@ static HWND32 WIN_CreateWindowEx( CREATESTRUCT32A *cs, ATOM classAtom,
 	}
     }
 
-    /* Set the window procedure */
+    /* Increment class window counter */
 
     classPtr->cWindows++;
-    WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)classPtr->winproc, 0 );
 
     /* Correct the window style */
 
@@ -1509,7 +1508,8 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
         if ((offset == DWL_DLGPROC) && (wndPtr->flags & WIN_ISDIALOG))
         {
             retval = (LONG)WINPROC_GetProc( (HWINDOWPROC)*ptr, type );
-            WINPROC_SetProc( (HWINDOWPROC *)ptr, (WNDPROC16)newval, type );
+            WINPROC_SetProc( (HWINDOWPROC *)ptr, (WNDPROC16)newval, 
+                             type, WIN_PROC_WINDOW );
             return retval;
         }
     }
@@ -1520,7 +1520,8 @@ static LONG WIN_SetWindowLong( HWND32 hwnd, INT32 offset, LONG newval,
             return SetWindowWord32( hwnd, offset, (WORD)newval );
 	case GWL_WNDPROC:
             retval = (LONG)WINPROC_GetProc( wndPtr->winproc, type );
-            WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval, type );
+            WINPROC_SetProc( &wndPtr->winproc, (WNDPROC16)newval, 
+						type, WIN_PROC_WINDOW );
             return retval;
 	case GWL_STYLE:
 
@@ -1814,26 +1815,22 @@ BOOL32 IsWindowVisible32( HWND32 hwnd )
 
 /***********************************************************************
  *           WIN_IsWindowDrawable
- * 
- * hwnd is drawable when it is visible, all parents are not 
- * minimized, and it is itself not minimized unless we are 
+ *
+ * hwnd is drawable when it is visible, all parents are not
+ * minimized, and it is itself not minimized unless we are
  * trying to draw icon and the default class icon is set.
  */
 BOOL32 WIN_IsWindowDrawable( WND* wnd , BOOL32 icon )
 {
-  HWND32 hwnd = wnd->hwndSelf;
-  BOOL32 yes = TRUE;
-
-  while(wnd && yes)
-  { 
-    if( wnd->dwStyle & WS_MINIMIZE )
-	if( wnd->hwndSelf != hwnd ) break;
-	else if( icon && wnd->class->hIcon ) break;
-
-    yes = yes && (wnd->dwStyle & WS_VISIBLE);
-    wnd = wnd->parent; }      
-  return (!wnd && yes);
+  if( (wnd->dwStyle & WS_MINIMIZE &&
+       icon && wnd->class->hIcon) ||
+     !(wnd->dwStyle & WS_VISIBLE) ) return FALSE;
+  for(wnd = wnd->parent; wnd; wnd = wnd->parent)
+    if( wnd->dwStyle & WS_MINIMIZE ||
+      !(wnd->dwStyle & WS_VISIBLE) ) break;
+  return (wnd == NULL);
 }
+
 
 /*******************************************************************
  *         GetTopWindow16    (USER.229)

@@ -171,7 +171,7 @@ heap	65520
 169 pascal16 GetCaretBlinkTime() GetCaretBlinkTime16
 170 pascal16 ArrangeIconicWindows(word) ArrangeIconicWindows16
 171 pascal16 WinHelp(word ptr word long) WinHelp16
-172 stub SwitchToThisWindow
+172 pascal16 SwitchToThisWindow(word word) SwitchToThisWindow16
 173 pascal16 LoadCursor(word segptr) LoadCursor16
 174 pascal16 LoadIcon(word segptr) LoadIcon16
 175 pascal16 LoadBitmap(word segptr) LoadBitmap16
@@ -297,7 +297,7 @@ heap	65520
 291 pascal   SetWindowsHookEx(s_word segptr word word) THUNK_SetWindowsHookEx16
 292 pascal16 UnhookWindowsHookEx(segptr) THUNK_UnhookWindowsHookEx16
 293 pascal   CallNextHookEx(segptr s_word word long) CallNextHookEx16
-294 stub LockWindowUpdate
+294 pascal16 LockWindowUpdate(word) LockWindowUpdate16
 299 register Mouse_Event() Mouse_Event
 300 stub UnloadInstalledDrivers
 #301 BOZOSLIVEHERE :-))	<- this is actually EditWndProc

@@ -874,6 +874,8 @@ HANDLE32 CreateFileMapping32A( HFILE32 hFile, LPSECURITY_ATTRIBUTES attr,
     }
 
     if (!(mapping = HeapAlloc( SystemHeap, 0, sizeof(*mapping) ))) goto error;
+    mapping->header.type = K32OBJ_MEM_MAPPED_FILE;
+    mapping->header.refcount = 1;
     mapping->protect   = VIRTUAL_GetProt( protect ) | VPROT_COMMITTED;
     mapping->size_high = size_high;
     mapping->size_low  = size_low;

@@ -158,6 +158,7 @@ typedef struct tagDC_FUNCS
     INT32      (*pExcludeVisRect)(DC*,INT32,INT32,INT32,INT32);
     BOOL32     (*pExtFloodFill)(DC*,INT32,INT32,COLORREF,UINT32);
     BOOL32     (*pExtTextOut)(DC*,INT32,INT32,UINT32,const RECT32*,LPCSTR,UINT32,const INT32*);
+    BOOL32     (*pGetCharWidth)(DC*,UINT32,UINT32,LPINT32);
     COLORREF   (*pGetPixel)(DC*,INT32,INT32);
     BOOL32     (*pGetTextExtentPoint)(DC*,LPCSTR,INT32,LPSIZE32);
     BOOL32     (*pGetTextMetrics)(DC*,TEXTMETRIC32A*);

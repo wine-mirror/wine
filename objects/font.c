@@ -868,31 +868,23 @@ BOOL32 GetCharABCWidths32W( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
 BOOL16 GetCharWidth16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
                        LPINT16 buffer )
 {
-    int i, width;
-    XFontStruct *xfont;
-    XCharStruct *cs, *def;
-
-    DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
-    if (!dc) return FALSE;
-    xfont = dc->u.x.font.fstruct;
-    
-    /* fixed font? */
-    if (xfont->per_char == NULL)
+    LPINT32	 buf32 = (LPINT32)xmalloc(sizeof(INT32)*(1 + (lastChar-firstChar)));
+    LPINT32	 obuf32;
+    BOOL32	 retVal;
+    int		 i;
+    if (!buf32)
+      return FALSE;
+    obuf32 = buf32;
+    retVal = GetCharWidth32A(hdc, firstChar, lastChar, buf32);
+    if (retVal)
     {
 	for (i = firstChar; i <= lastChar; i++)
-	    *buffer++ = xfont->max_bounds.width;
-	return TRUE;
+	{
+	    *buffer++ = *buf32++;
+	}
     }
-
-    CI_GET_DEFAULT_INFO(xfont, def);
-	
-    for (i = firstChar; i <= lastChar; i++)
-    {
-	CI_GET_CHAR_INFO( xfont, i, def, cs );
-        width = cs ? cs->width : xfont->max_bounds.width;
-        *buffer++ = MAX( width, 0 );
-    }
-    return TRUE;
+    free (obuf32);
+    return retVal;
 }
 
 
@@ -902,30 +894,17 @@ BOOL16 GetCharWidth16( HDC16 hdc, UINT16 firstChar, UINT16 lastChar,
 BOOL32 GetCharWidth32A( HDC32 hdc, UINT32 firstChar, UINT32 lastChar,
                         LPINT32 buffer )
 {
-    int i, width;
-    XFontStruct *xfont;
-    XCharStruct *cs, *def;
-
-    DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
-    if (!dc) return FALSE;
-    xfont = dc->u.x.font.fstruct;
-    
-    /* fixed font? */
-    if (xfont->per_char == NULL)
+    DC * dc = (DC *) GDI_GetObjPtr( hdc, DC_MAGIC );
+    if (!dc)
     {
-	for (i = firstChar; i <= lastChar; i++)
-	    *buffer++ = xfont->max_bounds.width;
-	return TRUE;
+	if (!(dc = (DC *)GDI_GetObjPtr( hdc, METAFILE_DC_MAGIC )))
+            return FALSE;
     }
 
-    CI_GET_DEFAULT_INFO(xfont, def);
-	
-    for (i = firstChar; i <= lastChar; i++)
-    {
-	CI_GET_CHAR_INFO( xfont, i, def, cs );
-        width = cs ? cs->width : xfont->max_bounds.width;
-        *buffer++ = MAX( width, 0 );
-    }
+    if (!dc->funcs->pGetCharWidth ||
+        !dc->funcs->pGetCharWidth( dc, firstChar, lastChar, buffer))
+        return FALSE;
+
     return TRUE;
 }
 

@@ -582,13 +582,14 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
       /* Initialise dialog extra data */
 
     dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
-    WINPROC_SetProc( &dlgInfo->dlgProc, dlgProc, procType );
+    WINPROC_SetProc( &dlgInfo->dlgProc, dlgProc, procType, WIN_PROC_WINDOW );
     dlgInfo->hUserFont = hFont;
     dlgInfo->hMenu     = hMenu;
     dlgInfo->xBaseUnit = xUnit;
     dlgInfo->yBaseUnit = yUnit;
-    dlgInfo->msgResult = 0; 
+    dlgInfo->msgResult = 0;
     dlgInfo->idResult  = 0;
+    dlgInfo->flags     = 0;
     dlgInfo->hDialogHeap = 0;
 
     if (dlgInfo->hUserFont)
@@ -596,21 +597,21 @@ HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,
 
     /* Create controls */
 
-    if (!DIALOG_CreateControls( wndPtr, dlgTemplate, template.nbItems,
+    if (DIALOG_CreateControls( wndPtr, dlgTemplate, template.nbItems,
                                 hInst, win32Template ))
     {
-        DestroyWindow32( hwnd );
-        return 0;
+       /* Send initialisation messages and set focus */
+
+       dlgInfo->hwndFocus = GetNextDlgTabItem32( hwnd, 0, FALSE );
+       if (SendMessage32A( hwnd, WM_INITDIALOG,
+                           (WPARAM32)dlgInfo->hwndFocus, param ))
+           SetFocus32( dlgInfo->hwndFocus );
+       if (template.style & WS_VISIBLE) ShowWindow32( hwnd, SW_SHOW );
+       return hwnd;
     }
 
-    /* Send initialisation messages and set focus */
-
-    dlgInfo->hwndFocus = GetNextDlgTabItem32( hwnd, 0, FALSE );
-    if (SendMessage32A( hwnd, WM_INITDIALOG,
-                        (WPARAM32)dlgInfo->hwndFocus, param ))
-	SetFocus32( dlgInfo->hwndFocus );
-    if (template.style & WS_VISIBLE) ShowWindow32( hwnd, SW_SHOW );
-    return hwnd;
+    if( IsWindow32(hwnd) ) DestroyWindow32( hwnd );
+    return 0;
 }
 
 
@@ -750,7 +751,7 @@ INT32 DIALOG_DoDialogBox( HWND32 hwnd, HWND32 owner )
 	    TranslateMessage16( &msg );
 	    DispatchMessage16( &msg );
 	}
-	if (dlgInfo->fEnd) break;
+	if (dlgInfo->flags & DF_END) break;
     }
     retval = dlgInfo->idResult;
     EnableWindow32( owner, TRUE );
@@ -874,9 +875,14 @@ BOOL32 EndDialog32( HWND32 hwnd, INT32 retval )
 {
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     DIALOGINFO * dlgInfo = (DIALOGINFO *)wndPtr->wExtra;
-    dlgInfo->idResult = retval;
-    dlgInfo->fEnd = TRUE;
+
     dprintf_dialog(stddeb, "EndDialog: %04x %d\n", hwnd, retval );
+
+    if( dlgInfo )
+    {
+        dlgInfo->idResult = retval;
+        dlgInfo->flags |= DF_END;
+    }
     return TRUE;
 }
 

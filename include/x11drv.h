@@ -53,6 +53,8 @@ struct tagDC;
 extern BOOL32 X11DRV_BitBlt( struct tagDC *dcDst, INT32 xDst, INT32 yDst,
                              INT32 width, INT32 height, struct tagDC *dcSrc,
                              INT32 xSrc, INT32 ySrc, DWORD rop );
+extern BOOL32 X11DRV_GetCharWidth( struct tagDC *dc, UINT32 firstChar,
+                                   UINT32 lastChar, LPINT32 buffer );
 extern BOOL32 X11DRV_GetTextExtentPoint( struct tagDC *dc, LPCSTR str,
                                          INT32 count, LPSIZE32 size );
 extern BOOL32 X11DRV_GetTextMetrics(struct tagDC *dc, TEXTMETRIC32A *metrics);

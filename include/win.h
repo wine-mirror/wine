@@ -28,6 +28,21 @@
 #define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
 #define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
 
+/* Built-in 32-bit classes */
+typedef enum
+{
+    BIC32_BUTTON,
+    BIC32_EDIT,
+    BIC32_LISTBOX,
+    BIC32_COMBO,
+    BIC32_COMBOLB,
+    BIC32_POPUPMENU,
+    BIC32_SCROLL,
+    BIC32_DESKTOP,
+    BIC32_DIALOG,
+    BIC32_NB_CLASSES
+} BUILTIN_CLASS32;
+
   /* PAINT_RedrawWindow() control flags */
 #define RDW_C_USEHRGN		0x0001
 #define RDW_C_DELETEHRGN	0x0002
@@ -107,6 +122,8 @@ extern void PROPERTY_RemoveWindowProps( WND *pWnd );   /* windows/property.c */
 extern BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
                                   HRGN32 hrgnUpdate, UINT32 flags,
                                   UINT32 control );    /* windows/painting.c */
+
+extern BOOL32 WIDGETS_IsControl32( WND* pWnd, BUILTIN_CLASS32 cls );  /* controls/widgets.c */
 
 extern Display * display;
 extern Screen * screen;

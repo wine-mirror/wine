@@ -369,12 +369,12 @@ RtlInitUnicodeString(LPUNICODE_STRING target,LPCWSTR source) {
 }
 
 /**************************************************************************
- *                 RtlInitUnicodeString			[NTDLL]
+ *                 RtlFreeUnicodeString			[NTDLL]
  */
 VOID
 RtlFreeUnicodeString(LPUNICODE_STRING str) {
 	if (str->Buffer)
-		HeapFree(GetProcessHeap(),0,str);
+		HeapFree(GetProcessHeap(),0,str->Buffer);
 }
 
 /**************************************************************************
@@ -399,7 +399,22 @@ RtlUnicodeToOemN(LPSTR oemstr,DWORD oemlen,LPDWORD reslen,LPWSTR unistr,DWORD un
  *                 RtlUnicodeStringToOemString		[NTDLL]
  */
 DWORD /* NTSTATUS */
-RtlUnicodeStringToOemString(LPUNICODE_STRING uni,LPANSI_STRING oem,BOOL32 alloc)
+RtlUnicodeStringToOemString(LPANSI_STRING oem,LPUNICODE_STRING uni,BOOL32 alloc)
+{
+	if (alloc) {
+		oem->Buffer = (LPSTR)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,uni->Length/2)+1;
+		oem->MaximumLength = uni->Length/2+1;
+	}
+	oem->Length = uni->Length/2;
+	lstrcpynWtoA(oem->Buffer,uni->Buffer,uni->Length/2+1);
+	return 0;
+}
+
+/**************************************************************************
+ *                 RtlUnicodeStringToAnsiString		[NTDLL]
+ */
+DWORD /* NTSTATUS */
+RtlUnicodeStringToAnsiString(LPUNICODE_STRING uni,LPANSI_STRING oem,BOOL32 alloc)
 {
 	if (alloc) {
 		oem->Buffer = (LPSTR)HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,uni->Length/2)+1;
@@ -447,11 +462,9 @@ RtlUpcaseUnicodeString(LPUNICODE_STRING dest,LPUNICODE_STRING src,BOOL32 doalloc
 	if (dest->MaximumLength < len)
 		return STATUS_BUFFER_OVERFLOW;
 	s=dest->Buffer;t=src->Buffer;
-	for (i=0;i<len;i++) {
+	/* len is in bytes */
+	for (i=0;i<len/2;i++)
 		s[i]=toupper(t[i]);
-		s++;
-		t++;
-	}
 	return STATUS_SUCCESS;
 }
 

@@ -19,7 +19,8 @@ SYSRES_SRCS = \
 	sysres_It.c \
 	sysres_Ko.c \
 	sysres_No.c \
-	sysres_Pl.c
+	sysres_Pl.c \
+	sysres_Po.c
 
 C_SRCS = sysres.c
 GEN_C_SRCS = $(SYSRES_SRCS)

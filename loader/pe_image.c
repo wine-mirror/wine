@@ -32,6 +32,9 @@
 #include "debugger.h"
 #include "xmalloc.h"
 
+static void PE_InitDLL(HMODULE16 hModule, DWORD type, LPVOID lpReserved);
+
+
 /* convert PE image VirtualAddress to Real Address */
 #define RVA(x) ((unsigned int)load_addr+(unsigned int)(x))
 
@@ -406,8 +409,7 @@ problem needs to be fixed properly at some stage */
 	load_addr = pe->load_addr = (int)xmalloc(pe->vma_size);
 	memset( load_addr, 0, pe->vma_size);
 #else
-	load_addr = (int) VirtualAlloc( NULL, pe->vma_size, MEM_COMMIT,
-                                         PAGE_EXECUTE_READWRITE );
+	load_addr = (int) VirtualAlloc( (void*)pe->base_addr, pe->vma_size, MEM_RESERVE|MEM_COMMIT, PAGE_EXECUTE_READWRITE );
         pe->load_addr = load_addr;
 #endif
 
@@ -601,7 +603,12 @@ int PE_UnloadImage( HMODULE16 hModule )
 	return 1;
 }
 
-static void PE_InitDLL(HMODULE16 hModule)
+/* Called if the library is loaded or freed.
+ * NOTE: if a thread attaches a DLL, the current thread will only do
+ * DLL_PROCESS_ATTACH. Only new created threads do DLL_THREAD_ATTACH
+ * (SDK)
+ */
+static void PE_InitDLL(HMODULE16 hModule, DWORD type,LPVOID lpReserved)
 {
     NE_MODULE *pModule;
     PE_MODULE *pe;
@@ -612,8 +619,11 @@ static void PE_InitDLL(HMODULE16 hModule)
     if (!(pModule->flags & NE_FFLAGS_WIN32) || !(pe = pModule->pe_module))
         return;
 
-    /* FIXME: What is the correct value for parameter 3? 
-     *	      (the MSDN library JAN96 says 'reserved for future use')
+    /*  DLL_ATTACH_PROCESS:
+     *		lpreserved is NULL for dynamic loads, not-NULL for static loads
+     *  DLL_DETACH_PROCESS:
+     *		lpreserved is NULL if called by FreeLibrary, not-NULL otherwise
+     *  the SDK doesn't mention anything for DLL_THREAD_*
      */
         
     /* Is this a library? And has it got an entrypoint? */
@@ -625,13 +635,13 @@ static void PE_InitDLL(HMODULE16 hModule)
 	CallDLLEntryProc32( 
 	    (FARPROC32)RVA(pe->pe_header->OptionalHeader.AddressOfEntryPoint),
 	    hModule,
-	    DLL_PROCESS_ATTACH,
-	    -1
+	    type,
+	    (DWORD)lpReserved
 	);
     }
 }
 
-void PE_InitializeDLLs(HMODULE16 hModule)
+void PE_InitializeDLLs(HMODULE16 hModule,DWORD type,LPVOID lpReserved)
 {
 	NE_MODULE *pModule;
 	HMODULE16 *pDLL;
@@ -640,14 +650,15 @@ void PE_InitializeDLLs(HMODULE16 hModule)
 	{
 		HGLOBAL16 to_init = pModule->dlls_to_init;
 		pModule->dlls_to_init = 0;
+	
 		for (pDLL = (HMODULE16 *)GlobalLock16( to_init ); *pDLL; pDLL++)
 		{
-			PE_InitializeDLLs( *pDLL );
-			PE_InitDLL( *pDLL );
+			PE_InitializeDLLs( *pDLL, type, lpReserved);
+			PE_InitDLL( *pDLL, type, lpReserved );
 		}
 		GlobalFree16( to_init );
 	}
-	PE_InitDLL( hModule );
+	PE_InitDLL( hModule, type, lpReserved );
 }
 
 void PE_InitTls( PE_MODULE *module )

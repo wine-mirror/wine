@@ -35,26 +35,31 @@
 #include "xmalloc.h"
 
 const char people[] = "Wine is available thanks to the work of "
-"Bob Amstadt, Dag Asheim, Martin Ayotte, Ross Biro, Uwe Bonnes, Erik Bos, "
-"Fons Botman, John Brezak, Andrew Bulhak, John Burton, "
-"Niels de Carpentier, Roman Dolejsi, Frans van Dorsselaer, Paul Falstad, "
-"Olaf Flebbe, Peter Galbavy, Ramon Garcia, Hans de Graaff, "
-"Charles M. Hannum, John Harvey, Cameron Heide, Jochen Hoenicke, "
-"Onno Hovers, Jeffrey Hsu, Miguel de Icaza, Jukka Iivonen, "
-"Alexandre Julliard, Jochen Karrer, Andreas Kirschbaum, Albrecht Kleine, "
+"Bob Amstadt, Dag Asheim, Martin Ayotte, Peter Bajusz, Ross Biro, "
+"Uwe Bonnes, Erik Bos, Fons Botman, John Brezak, Andrew Bulhak, "
+"John Burton, Niels de Carpentier, Jimen Ching, Huw D. M. Davies, "
+"Roman Dolejsi, Frans van Dorsselaer, Paul Falstad, David Faure, "
+"Olaf Flebbe, Peter Galbavy, Ramon Garcia, Matthew Ghio, "
+"Hans de Graaff, Charles M. Hannum, John Harvey, Cameron Heide, "
+"Jochen Hoenicke, Onno Hovers, Jeffrey Hsu, Miguel de Icaza, "
+"Jukka Iivonen, Lee Jaekil, Alexandre Julliard, Bang Jun-Young, "
+"Pavel Kankovsky, Jochen Karrer, Andreas Kirschbaum, Albrecht Kleine, "
 "Jon Konrath, Alex Korobka, Greg Kreider, Anand Kumria, Scott A. Laird, "
-"Martin von Loewis, Kenneth MacDonald, Peter MacDonald, William Magro, "
-"Juergen Marquardt, Marcus Meissner, Graham Menhennitt, David Metcalfe, "
-"Steffen Moeller, Philippe De Muyter, Itai Nahshon, Michael Patra, "
-"Jim Peterson, Robert Pouliot, Keith Reynolds, John Richardson, "
-"Johannes Ruscheinski, Thomas Sandford, Constantine Sapuntzakis, "
-"Daniel Schepler, Ulrich Schmid, Bernd Schmidt, Yngvi Sigurjonsson, "
-"Rick Sladkey, William Smith, Erik Svendsen, Tristan Tarrant, "
-"Andrew Taylor, Duncan C Thomson, Goran Thyni, Jimmy Tirtawangsa, "
-"Jon Tombs, Linus Torvalds, Gregory Trubetskoy, Michael Veksler, "
-"Sven Verdoolaege, Eric Warnke, Manfred Weichel, Morten Welinder, "
+"Andrew Lewycky, Martin von Loewis, Kenneth MacDonald, Peter MacDonald, "
+"William Magro, Juergen Marquardt, Ricardo Massaro, Marcus Meissner, "
+"Graham Menhennitt, David Metcalfe, Bruce Milner, Steffen Moeller, "
+"Andreas Mohr, Philippe De Muyter, Itai Nahshon, Michael Patra, "
+"Jim Peterson, Robert Pouliot, Keith Reynolds, Slaven Rezic, "
+"John Richardson, Johannes Ruscheinski, Thomas Sandford, "
+"Constantine Sapuntzakis, Pablo Saratxaga, Daniel Schepler, "
+"Ulrich Schmid, Bernd Schmidt, Yngvi Sigurjonsson, Stephen Simmons, "
+"Rick Sladkey, William Smith, Dominik Strasser, Vadim Strizhevsky, "
+"Erik Svendsen, Tristan Tarrant, Andrew Taylor, Duncan C Thomson, "
+"Goran Thyni, Jimmy Tirtawangsa, Jon Tombs, Linus Torvalds, "
+"Gregory Trubetskoy, Petri Tuomola, Michael Veksler, Sven Verdoolaege, "
+"Ronan Waide, Eric Warnke, Manfred Weichel, Morten Welinder, "
 "Jan Willamowius, Carl Williams, Karl Guenter Wuensch, Eric Youngdale, "
-"and James Youngman. ";
+"James Youngman, Mikolaj Zalewski, and John Zero.";
 
 const WINE_LANGUAGE_DEF Languages[] =
 {
@@ -71,6 +76,7 @@ const WINE_LANGUAGE_DEF Languages[] =
     {"Ko",0x0412},	/* LANG_Ko */
     {"Hu",0x0436},	/* LANG_Hu */
     {"Pl",0x0415},      /* LANG_Pl */
+    {"Po",0x0416},      /* LANG_Po */
     {NULL,0}
 };
 
@@ -163,7 +169,7 @@ static XrmOptionDescRec optionsTable[] =
   "    -fixedmap       Use a \"standard\" color map\n" \
   "    -iconic         Start as an icon\n" \
   "    -ipc            Enable IPC facilities\n" \
-  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It,Ko,\n                    Hu,Pl)\n" \
+  "    -language xx    Set the language (one of En,Es,De,No,Fr,Fi,Da,Cz,Eo,It,Ko,\n                    Hu,Pl,Po)\n" \
   "    -managed        Allow the window manager to manage created windows\n" \
   "    -mode mode      Start Wine in a particular mode (standard or enhanced)\n" \
   "    -name name      Set the application name\n" \

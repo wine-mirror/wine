@@ -28,14 +28,16 @@ typedef struct
     HWND16      hwndFocus;   /* Current control with focus */
     HFONT16     hUserFont;   /* Dialog font */
     HMENU16     hMenu;       /* Dialog menu */
-    WORD        xBaseUnit;   /* Dialog units (depends on the font) */
-    WORD        yBaseUnit;
+    UINT16      xBaseUnit;   /* Dialog units (depends on the font) */
+    UINT16      yBaseUnit;
     INT32	idResult;    /* EndDialog() result / default pushbutton ID */
-    WORD        fEnd;        /* EndDialog() called for this dialog */
+    UINT16      flags;       /* EndDialog() called for this dialog */
     HGLOBAL16   hDialogHeap;
 } DIALOGINFO;
 
 #pragma pack(4)
+
+#define DF_END  0x0001
 
 extern BOOL32 DIALOG_Init(void);
 extern HWND32 DIALOG_CreateIndirect( HINSTANCE32 hInst, LPCSTR dlgTemplate,

@@ -378,7 +378,7 @@ base	0
 374 stdcall RtlFreeHeap(long long long) HeapFree
 375 stub RtlFreeOemString
 376 stub RtlFreeSid
-377 stub RtlFreeUnicodeString
+377 stdcall RtlFreeUnicodeString(ptr) RtlFreeUnicodeString
 378 stub RtlGenerate8dot3Name
 379 stub RtlGetAce
 380 stub RtlGetCallersAddress
@@ -508,7 +508,7 @@ base	0
 504 stub RtlTimeToSecondsSince1980
 505 stub RtlTimeToTimeFields
 506 stub RtlUnicodeStringToAnsiSize
-507 stub RtlUnicodeStringToAnsiString
+507 stdcall RtlUnicodeStringToAnsiString(ptr ptr long) RtlUnicodeStringToAnsiString
 508 stub RtlUnicodeStringToCountedOemString
 509 stub RtlUnicodeStringToInteger
 510 stub RtlUnicodeStringToOemSize

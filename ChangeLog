@@ -1,4 +1,127 @@
 ----------------------------------------------------------------------
+Fri Mar 28 14:18:32 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
+
+	* [misc/main.c] [ANNOUNCE]
+	Update the list of contributors. Please let me know if I forgot
+	someone.
+
+	* [controls/combo.c]
+	Fixed bug in CB_DIR16 handling.
+	Use correct text color in CBPaintText.
+
+	* [controls/listbox.c]
+	Fixed WM_CTLCOLOR handling.
+
+	* [windows/winproc.c]
+	Added translation for EM_*32 messages.
+
+Mon Mar 24 01:31:52 1997  Steffen Moeller <moeller@mpimg-berlin-dahlem.mpg.de>
+
+	* [files/drive.c]
+	Added information on device and inode numbers to the DOSDRIVE
+	struct, using it to find DOS drives in a path even if it contains
+	symbolic links, eliminating annoying messages at startup.  
+	Edited functions DRIVE_Init and rewrote DRIVE_FindDriveRoot.
+
+Wed Mar 19 16:31:18 1997  John Harvey <john@division.co.uk>
+
+	* [graphics/win16drv/font.c] [graphics/win16drv/init.c]
+	  [graphics/x11drv/font.c] [objects/font.c] [include/gdi.h]
+	  [include/win16drv.h] [include/x11drv.h]
+	Implemented GetCharWidth via graphics drivers.
+
+	* [graphics/win16drv/Makefile.in] [graphics/win16drv/prtdrv.c]
+	Moved printer driver interfaces into a separate file.
+
+	* [graphics/win16drv/text.c]
+	Fixed bugs that seg-faulted write.
+
+Wed Mar 19 13:52:41 1997  Alex Korobka <alex@trantor.pharm.sunysb.edu>
+
+	* [BUGS]
+	Update.
+
+	* [controls/edit.c]
+	Removed useless parameters from a lot of functions.
+
+	* [controls/menu.c]
+	Improved keyboard shortcuts. Added check for entries with popup 
+	menu in EnableMenuItem().
+
+	* [windows/winproc.c] [windows/win.c] [memory/selector.c]
+	Do not allocate separate thunks for new windows.
+
+	* [misc/clipboard.c] [windows/painting.c]
+	Fixed problems with ClipBook.
+
+        * [controls/combo.c] [controls/edit.c] [controls/listbox.c]
+	  [controls/widgets.c] [windows/graphics.c] [windows/defdlg.c]
+        Combo rewrite.
+
+	* [objects/dib.c]
+	Slight improvements.
+
+Wed Mar 19 11:21:17 1997  Marcus Meissner <msmeissn@cip.informatik.uni-erlangen.de>
+
+	* [misc/crtdll.c]
+	Added chdir/mkdir.
+
+	* [misc/ntdll.c]
+	Fixed some bugs, added RtlUnicodeStringToAnsiString.
+
+	* [win32/process.c]
+	Added initialisation of events/semaphores/mutices.
+
+Wed Mar 19 01:55:40 1997  Ricardo R. Massaro <massaro@ime.usp.br>
+
+	* [resources/sysres_Po.rc]
+	Added support for Portuguese language.
+
+Sat Mar 18 18:00:14 1997  Uwe Bonnes  <bon@elektron.ikp.physik.th-darmstadt.de>
+
+	* [windows/winpos.c] [if1632/user.spec] [if1632/user32.spec]
+	Implemented SwitchToThisWindow().
+	
+	* [misc/ver.c]
+	Corrected a flaw in VerInstallFile32A.
+	
+	* [msdos/int21.c]
+	Corrected wrong number in Int21 3305
+	Corrected Int21 714e, implemented Int21 7160,CL=2, 7143 and 7147
+	
+Sun Mar 16 09:53:04 1997  Andreas Mohr <100.30936@germany.net>
+
+	* [loader/ne_module.c]
+	Fixed NE_LoadSegments() to set size to pSeg->minsize rather than
+	setting it to 0x10000 if pSeg->size is 0.
+
+Thu Mar 13 12:15:00 1997  Anand Kumria <akumria@ozemail.com.au>
+
+	* [ANNOUNCE]
+	Added ftp.progsoc.uts.edu.au as a mirror of Wine.
+
+	* [memory/global.c]
+	Removed MemManInfo sizeof check.
+
+Mon Mar 10 10:35:44 MET 1997 Sven Verdoolaege <skimo@breughel.ufsia.ac.be>
+
+	* [files/dos_fs.c]
+	Pick up kernel dirent on glibc systems.
+
+	* [loader/signal.c]
+	Pick up kernel sigaction on glibc systems.
+
+Sat Mar  8 21:05:37 1997  Jimen Ching  <jching@aloha.com>
+
+	* [debugger/stabs.c] [debugger/msc.c]
+	Check return value of mmap.
+
+Fri Mar  7 05:42:03 1997  Lee Jaekil <juria@seodu.co.kr>
+
+	* [win32/code_page.c]
+	Added IsValidCodePage.
+
+----------------------------------------------------------------------
 Sun Mar  2 14:57:37 1997  Alexandre Julliard  <julliard@lrc.epfl.ch>
 
 	* [*/*]

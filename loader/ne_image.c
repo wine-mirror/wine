@@ -60,7 +60,9 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
     dprintf_module( stddeb, "Loading segment %d, selector=%04x\n",
                     segnum, pSeg->selector );
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
-    size = pSeg->size ? pSeg->size : 0x10000;
+    if (pSeg->size) size = pSeg->size;
+    else if (pSeg->minsize) size = pSeg->minsize;
+    else size = 0x10000;
     mem = GlobalLock16(pSeg->selector);
     if (pModule->flags & NE_FFLAGS_SELFLOAD && segnum > 1)
     {
@@ -236,7 +238,7 @@ BOOL32 NE_LoadSegment( HMODULE16 hModule, WORD segnum )
 	    break;
 	    
 	  case NE_RELTYPE_INTERNAL:
-	    if (rep->target1 == 0x00ff)
+	    if ((rep->target1 & 0xff) == 0xff)
 	    {
 		address  = MODULE_GetEntryPoint( hModule, rep->target2 );
 	    }

@@ -794,7 +794,11 @@ BOOL16 MemManInfo( MEMMANINFO *info )
 {
     MEMORYSTATUS status;
 
-    if (info->dwSize < sizeof(MEMMANINFO)) return FALSE;
+    /*
+     * Not unsurprisingly although the documention says you 
+     * _must_ provide the size in the dwSize field, this function
+     * (under Windows) always fills the structure and returns true.
+     */
     GlobalMemoryStatus( &status );
 #ifdef __svr4__
     info->wPageSize            = sysconf(_SC_PAGESIZE);

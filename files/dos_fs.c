@@ -33,6 +33,15 @@
 /* FIXME: is it possible to get this to work on other systems? */
 #ifdef linux
 #define VFAT_IOCTL_READDIR_BOTH  _IOR('r', 1, long)
+/* We want the real kernel dirent structure, not the libc one */
+typedef struct
+{
+    long d_ino;
+    long d_off;
+    unsigned short d_reclen;
+    char d_name[256];
+} KERNEL_DIRENT;
+
 #else   /* linux */
 #undef VFAT_IOCTL_READDIR_BOTH  /* just in case... */
 #endif  /* linux */
@@ -83,7 +92,7 @@ typedef struct
 #ifdef VFAT_IOCTL_READDIR_BOTH
     int            fd;
     char           short_name[12];
-    struct dirent  dirent[2];
+    KERNEL_DIRENT  dirent[2];
 #endif
 } DOS_DIR;
 
@@ -948,16 +957,11 @@ int DOSFS_FindNext( const char *path, const char *short_mask,
         if (dir) DOSFS_CloseDir(dir);
         if (!*path) path = "/";
         if (!(dir = DOSFS_OpenDir(path))) return 0;
-        drive_path = path;
-        drive_root = 0;
-        if (DRIVE_FindDriveRoot( &drive_path ) != -1)
-        {
-            while ((*drive_path == '/') || (*drive_path == '\\')) drive_path++;
-            if (!*drive_path) drive_root = 1;
-        }
+        drive_path = path + strlen(DRIVE_GetRoot(drive));
+        while ((*drive_path == '/') || (*drive_path == '\\')) drive_path++;
+        drive_root = !*drive_path;
         dprintf_dosfs(stddeb, "DOSFS_FindNext: drive_root = %d\n", drive_root);
         lstrcpyn32A( buffer, path, sizeof(buffer) - 1 );
-        
     }
     strcat( buffer, "/" );
     p = buffer + strlen(buffer);

@@ -1,7 +1,11 @@
 #ifndef WINELIB
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef __GLIBC__
+#include <linux/signal.h>
+#else
 #include <signal.h>
+#endif
 #include <string.h>
 #include <errno.h>
 #include <time.h>

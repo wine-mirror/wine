@@ -750,6 +750,17 @@ HMETAFILE16 SetMetaFileBits( HGLOBAL16 hMem )
 }
 
 /******************************************************************
+ *         SetMetaFileBitsBetter   (GDI.196)
+ */
+HMETAFILE16 SetMetaFileBitsBetter( HMETAFILE16 hMeta )
+{
+   if( IsValidMetaFile( hMeta ) )
+       return (HMETAFILE16)GlobalReAlloc16( hMeta, 0, 
+			   GMEM_SHARE | GMEM_NODISCARD | GMEM_MODIFY);
+   return (HMETAFILE16)0;
+}
+
+/******************************************************************
  *         MF_WriteRecord
  *
  * Warning: this function can change the metafile handle.

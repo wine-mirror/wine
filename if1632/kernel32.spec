@@ -45,8 +45,8 @@ base	1
 0040 stdcall CreateDirectoryExA(ptr ptr ptr) CreateDirectoryEx32A
 0041 stdcall CreateDirectoryExW(ptr ptr ptr) CreateDirectoryEx32W
 0042 stdcall CreateDirectoryW(ptr ptr) CreateDirectory32W
-0043 	stdcall CreateEventA(ptr long long ptr) CreateEventA
-0044 stub CreateEventW
+0043 stdcall CreateEventA(ptr long long ptr) CreateEvent32A
+0044 stdcall CreateEventW(ptr long long ptr) CreateEvent32W
 0045 stdcall CreateFileA(ptr long long ptr long long long) CreateFile32A
 0046 stdcall CreateFileMappingA(long ptr long long long ptr) CreateFileMapping32A
 0047 stdcall CreateFileMappingW(long ptr long long long ptr) CreateFileMapping32W
@@ -54,16 +54,16 @@ base	1
 0049 stub CreateIoCompletionPort
 0050 stub CreateMailslotA
 0051 stub CreateMailslotW
-0052 	stdcall CreateMutexA(ptr long ptr) CreateMutexA
-0053 stub CreateMutexW
+0052 stdcall CreateMutexA(ptr long ptr) CreateMutex32A
+0053 stdcall CreateMutexW(ptr long ptr) CreateMutex32W
 0054 stub CreateNamedPipeA
 0055 stub CreateNamedPipeW
 0056 stub CreatePipe
-0057 stub CreateProcessA
+0057 stdcall CreateProcessA(ptr ptr ptr ptr long long ptr ptr ptr ptr) CreateProcess32A
 0058 stub CreateProcessW
 0059 stub CreateRemoteThread
-0060 stub CreateSemaphoreA
-0061 stub CreateSemaphoreW
+0060 stdcall CreateSemaphoreA(ptr long long ptr) CreateSemaphore32A
+0061 stdcall CreateSemaphoreW(ptr long long ptr) CreateSemaphore32W
 0062 stub CreateTapePartition
 0063 stdcall CreateThread(ptr long ptr long long ptr) CreateThread
 0064 stub CreateVirtualBuffer
@@ -134,7 +134,7 @@ base	1
 0129 stdcall FindResourceExA(long ptr ptr long) FindResourceEx32A
 0130 stdcall FindResourceExW(long ptr ptr long) FindResourceEx32W
 0131 stdcall FindResourceW(long ptr ptr) FindResource32W
-0132 stub FlushConsoleInputBuffer
+0132 stdcall FlushConsoleInputBuffer(long) FlushConsoleInputBuffer
 0133 stdcall FlushFileBuffers(long) FlushFileBuffers
 0134 stub FlushInstructionCache
 0135 stub FlushViewOfFile
@@ -362,7 +362,7 @@ base	1
 0357 stdcall IsBadWritePtr(ptr long) IsBadWritePtr32
 0358 stdcall IsDBCSLeadByte(long) IsDBCSLeadByte32
 0359 stdcall IsDBCSLeadByteEx(long long) IsDBCSLeadByteEx
-0360 stub IsValidCodePage
+0360 stdcall IsValidCodePage(long) IsValidCodePage
 0361 stdcall IsValidLocale(long long) IsValidLocale
 0362 stub LCMapStringA
 0363 stub LCMapStringW
@@ -396,17 +396,17 @@ base	1
 0391 stdcall MulDiv(long long long) MulDiv32
 0392 stdcall MultiByteToWideChar(long long ptr long ptr long) MultiByteToWideChar
 0393 stub OpenConsoleW
-0394 stub OpenEventA
-0395 stub OpenEventW
+0394 stdcall OpenEventA(long long ptr) OpenEvent32A
+0395 stdcall OpenEventW(long long ptr) OpenEvent32W
 0396 stdcall OpenFile(ptr ptr long) OpenFile32
 0397 stdcall OpenFileMappingA(long long ptr) OpenFileMapping32A
 0398 stdcall OpenFileMappingW(long long ptr) OpenFileMapping32W
-0399 stub OpenMutexA
-0400 stub OpenMutexW
+0399 stdcall OpenMutexA(long long ptr) OpenMutex32A
+0400 stdcall OpenMutexW(long long ptr) OpenMutex32W
 0401 stub OpenProcess
 0402 stub OpenProfileUserMapping
-0403 stub OpenSemaphoreA
-0404 stub OpenSemaphoreW
+0403 stdcall OpenSemaphoreA(long long ptr) OpenSemaphore32A
+0404 stdcall OpenSemaphoreW(long long ptr) OpenSemaphore32W
 0405 stdcall OutputDebugStringA(ptr) OutputDebugString32A
 0406 stub OutputDebugStringW
 0407 stub PeekConsoleInputA
@@ -438,7 +438,7 @@ base	1
 0433 stub RegisterWowBaseHandlers
 0434 stub RegisterWowExec
 0435 	stdcall ReleaseMutex(long) ReleaseMutex
-0436 stub ReleaseSemaphore
+0436 stdcall ReleaseSemaphore(long long ptr) ReleaseSemaphore
 0437 stdcall RemoveDirectoryA(ptr) RemoveDirectory32A
 0438 stdcall RemoveDirectoryW(ptr) RemoveDirectory32W
 0439 	stdcall ResetEvent(long) ResetEvent
@@ -665,7 +665,7 @@ base	1
 0659 stub SUnMapLS_IP_EBP_8
 0660 stub SUnMapLS_IP_EBP_16
 0661 stub SUnMapLS_IP_EBP_20
-0662 stub MapSL
+0662 stdcall MapSL(long) MapSL
 0663 stub K32Thk1632Epilog
 0664 stub K32Thk1632Prolog
 0665 stub GetProcessFlags
@@ -680,3 +680,8 @@ base	1
 0674 stub FreeSLCallback
 0675 stub AllocSLCallback
 0676 stub Callback28
+0677 stub UninitializeCriticalSection
+0678 stub FT_Exit4
+0679 stdcall MapLS(ptr) MapLS
+0680 stdcall UnMapLS(long) UnMapLS
+0681 stub OpenVxDHandle

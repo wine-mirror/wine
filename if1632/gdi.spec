@@ -162,7 +162,7 @@ heap	65488  # 65536 - 16 (instance data) - 32 (stock objects)
 193 stub SetBoundsRect
 194 stub GetBoundsRect
 195 stub SelectBitmap
-196 stub SetMetaFileBitsBetter
+196 pascal16 SetMetaFileBitsBetter(word) SetMetaFileBitsBetter
 201 stub DMBITBLT
 202 stub DMCOLORINFO
 206 stub DMENUMDFONTS

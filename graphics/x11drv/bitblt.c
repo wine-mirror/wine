@@ -1207,11 +1207,23 @@ BOOL32 BITBLT_InternalStretchBlt( DC *dcDst, INT32 xDst, INT32 yDst,
 
     case PATINVERT:  /* 0x5a */
 	if (Options.perfectGraphics) break;
-        if (!DC_SetupGCForBrush( dcDst )) return TRUE;
-        XSetFunction( display, dcDst->u.x.gc, GXxor );
-        XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
-                        visRectDst.left, visRectDst.top, width, height );
+        if (DC_SetupGCForBrush( dcDst ))
+        {
+            XSetFunction( display, dcDst->u.x.gc, GXxor );
+            XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+			    visRectDst.left, visRectDst.top, width, height );
+        }
         return TRUE;
+
+    case 0xa50065:
+	if (Options.perfectGraphics) break;
+	if (DC_SetupGCForBrush( dcDst ))
+	{
+	    XSetFunction( display, dcDst->u.x.gc, GXequiv );
+	    XFillRectangle( display, dcDst->u.x.drawable, dcDst->u.x.gc,
+			    visRectDst.left, visRectDst.top, width, height );
+	}
+	return TRUE;
 
     case SRCCOPY:  /* 0xcc */
         if (dcSrc->w.bitsPerPixel == dcDst->w.bitsPerPixel)

@@ -1103,6 +1103,10 @@ DEBUG_ProcessElfObject(char * filename, unsigned int load_offset)
    */
   addr = mmap(0, statbuf.st_size, PROT_READ, 
 	      MAP_PRIVATE, fd, 0);
+  if( addr == (char *) 0xffffffff )
+    {
+      goto leave;
+    }
 
   /*
    * Give a nice status message here...
@@ -1337,6 +1341,10 @@ DEBUG_ReadExecutableDbgInfo(void)
    */
   addr = mmap(0, statbuf.st_size, PROT_READ, 
 	      MAP_PRIVATE, fd, 0);
+  if( addr == (char *) 0xffffffff )
+    {
+      goto leave;
+    }
 
   ahdr = (struct exec *) addr;
 

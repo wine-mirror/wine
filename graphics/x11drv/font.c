@@ -23,6 +23,33 @@ struct FontStructure {
 } FontNames[32];
 int FontSize;
 
+#define CI_NONEXISTCHAR(cs) (((cs)->width == 0) && \
+			     (((cs)->rbearing|(cs)->lbearing| \
+			       (cs)->ascent|(cs)->descent) == 0))
+
+/* 
+ * CI_GET_CHAR_INFO - return the charinfo struct for the indicated 8bit
+ * character.  If the character is in the column and exists, then return the
+ * appropriate metrics (note that fonts with common per-character metrics will
+ * return min_bounds).  If none of these hold true, try again with the default
+ * char.
+ */
+#define CI_GET_CHAR_INFO(fs,col,def,cs) \
+{ \
+    cs = def; \
+    if (col >= fs->min_char_or_byte2 && col <= fs->max_char_or_byte2) { \
+	if (fs->per_char == NULL) { \
+	    cs = &fs->min_bounds; \
+	} else { \
+	    cs = &fs->per_char[(col - fs->min_char_or_byte2)]; \
+	    if (CI_NONEXISTCHAR(cs)) cs = def; \
+	} \
+    } \
+}
+
+#define CI_GET_DEFAULT_INFO(fs,cs) \
+  CI_GET_CHAR_INFO(fs, fs->default_char, NULL, cs)
+
 
 /***********************************************************************
  *           X11DRV_FONT_Init
@@ -456,3 +483,37 @@ HFONT32 X11DRV_FONT_SelectObject( DC * dc, HFONT32 hfont, FONTOBJ * font )
     }
     return prevHandle;
 }
+
+/***********************************************************************
+ *           GetCharWidth32A    (GDI32.155)
+ */
+BOOL32 X11DRV_GetCharWidth( DC *dc, UINT32 firstChar, UINT32 lastChar,
+			    LPINT32 buffer )
+{
+    int i, width;
+    XFontStruct *xfont;
+    XCharStruct *cs, *def;
+
+    xfont = dc->u.x.font.fstruct;
+    
+    /* fixed font? */
+    if (xfont->per_char == NULL)
+    {
+	for (i = firstChar; i <= lastChar; i++)
+	    *buffer++ = xfont->max_bounds.width;
+	return TRUE;
+    }
+
+    CI_GET_DEFAULT_INFO(xfont, def);
+	
+    for (i = firstChar; i <= lastChar; i++)
+    {
+	CI_GET_CHAR_INFO( xfont, i, def, cs );
+        width = cs ? cs->width : xfont->max_bounds.width;
+        *buffer++ = MAX( width, 0 );
+    }
+    return TRUE;
+}
+
+
+

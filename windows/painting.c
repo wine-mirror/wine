@@ -235,7 +235,7 @@ HBRUSH16 GetControlBrush( HWND16 hwnd, HDC16 hdc, UINT16 control )
 /***********************************************************************
  *           PAINT_RedrawWindow
  *
- * Note: Windows uses WM_SYNCPAINT to cut down the number of intertask
+ * FIXME: Windows uses WM_SYNCPAINT to cut down the number of intertask
  * SendMessage() calls. From SDK:
  *   This message avoids lots of inter-app message traffic
  *   by switching to the other task and continuing the
@@ -256,8 +256,8 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
 
     if (!hwnd) hwnd = GetDesktopWindow32();
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
-    if (!IsWindowVisible32(hwnd) || (wndPtr->flags & WIN_NO_REDRAW))
-        return TRUE;  /* No redraw needed */
+    if (!WIN_IsWindowDrawable( wndPtr, !(flags & RDW_FRAME) ) 
+	|| (wndPtr->flags & WIN_NO_REDRAW)) return TRUE;  /* No redraw needed */
 
     bIcon = (wndPtr->dwStyle & WS_MINIMIZE && wndPtr->class->hIcon);
     if (rectUpdate)
@@ -455,13 +455,7 @@ BOOL32 PAINT_RedrawWindow( HWND32 hwnd, const RECT32 *rectUpdate,
 BOOL32 RedrawWindow32( HWND32 hwnd, const RECT32 *rectUpdate,
                        HRGN32 hrgnUpdate, UINT32 flags )
 {
-    WND* wnd = WIN_FindWndPtr( hwnd );
-
-    /* check if there is something to redraw */
-
-    return ( wnd && WIN_IsWindowDrawable( wnd, !(flags & RDW_FRAME) ) )
-           ? PAINT_RedrawWindow( hwnd, rectUpdate, hrgnUpdate, flags, 0 )
-	   : 1;
+    return PAINT_RedrawWindow( hwnd, rectUpdate, hrgnUpdate, flags, 0 );
 }
 
 
@@ -477,7 +471,8 @@ BOOL16 RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
         CONV_RECT16TO32( rectUpdate, &r );
         return (BOOL16)RedrawWindow32( (HWND32)hwnd, &r, hrgnUpdate, flags );
     }
-    return (BOOL16)RedrawWindow32( (HWND32)hwnd, NULL, hrgnUpdate, flags );
+    return (BOOL16)PAINT_RedrawWindow( (HWND32)hwnd, NULL, 
+				       (HRGN32)hrgnUpdate, flags, 0 );
 }
 
 
@@ -486,25 +481,24 @@ BOOL16 RedrawWindow16( HWND16 hwnd, const RECT16 *rectUpdate,
  */
 void UpdateWindow16( HWND16 hwnd )
 {
-    RedrawWindow32( hwnd, NULL, 0, RDW_UPDATENOW | RDW_NOCHILDREN );
+    PAINT_RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_NOCHILDREN, 0 );
 }
-
 
 /***********************************************************************
  *           UpdateWindow32   (USER32.566)
  */
 void UpdateWindow32( HWND32 hwnd )
 {
-    RedrawWindow32( hwnd, NULL, 0, RDW_UPDATENOW | RDW_NOCHILDREN );
+    PAINT_RedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_NOCHILDREN, 0 );
 }
-
 
 /***********************************************************************
  *           InvalidateRgn16   (USER.126)
  */
 void InvalidateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
 {
-    RedrawWindow32(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
+    PAINT_RedrawWindow((HWND32)hwnd, NULL, (HRGN32)hrgn, 
+		       RDW_INVALIDATE | (erase ? RDW_ERASE : 0), 0 );
 }
 
 
@@ -513,7 +507,7 @@ void InvalidateRgn16( HWND16 hwnd, HRGN16 hrgn, BOOL16 erase )
  */
 void InvalidateRgn32( HWND32 hwnd, HRGN32 hrgn, BOOL32 erase )
 {
-    RedrawWindow32(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
+    PAINT_RedrawWindow(hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0), 0 );
 }
 
 
@@ -531,7 +525,8 @@ void InvalidateRect16( HWND16 hwnd, const RECT16 *rect, BOOL16 erase )
  */
 void InvalidateRect32( HWND32 hwnd, const RECT32 *rect, BOOL32 erase )
 {
-    RedrawWindow32( hwnd, rect, 0, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
+    PAINT_RedrawWindow( hwnd, rect, 0, 
+			RDW_INVALIDATE | (erase ? RDW_ERASE : 0), 0 );
 }
 
 
@@ -540,7 +535,8 @@ void InvalidateRect32( HWND32 hwnd, const RECT32 *rect, BOOL32 erase )
  */
 void ValidateRgn16( HWND16 hwnd, HRGN16 hrgn )
 {
-    RedrawWindow32( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
+    PAINT_RedrawWindow( (HWND32)hwnd, NULL, (HRGN32)hrgn, 
+			RDW_VALIDATE | RDW_NOCHILDREN, 0 );
 }
 
 
@@ -549,7 +545,7 @@ void ValidateRgn16( HWND16 hwnd, HRGN16 hrgn )
  */
 void ValidateRgn32( HWND32 hwnd, HRGN32 hrgn )
 {
-    RedrawWindow32( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN );
+    PAINT_RedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE | RDW_NOCHILDREN, 0 );
 }
 
 
@@ -567,7 +563,7 @@ void ValidateRect16( HWND16 hwnd, const RECT16 *rect )
  */
 void ValidateRect32( HWND32 hwnd, const RECT32 *rect )
 {
-    RedrawWindow32( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN );
+    PAINT_RedrawWindow( hwnd, rect, 0, RDW_VALIDATE | RDW_NOCHILDREN, 0 );
 }
 
 

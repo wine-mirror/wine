@@ -29,15 +29,18 @@ int DIB_GetImageWidthBytes( int width, int depth )
 
     switch(depth)
     {
-    case 1:  words = (width + 31) / 32; break;
-    case 4:  words = (width + 7) / 8; break;
-    case 8:  words = (width + 3) / 4; break;
-    case 15:
-    case 16: words = (width + 1) / 2; break;
-    case 24: words = width; break;
-    default:
-        fprintf(stderr, "DIB: unsupported depth %d.\n", depth );
-        exit(1);
+	case 1:  words = (width + 31) / 32; break;
+	case 4:  words = (width + 7) / 8; break;
+	case 8:  words = (width + 3) / 4; break;
+	case 15:
+	case 16: words = (width + 1) / 2; break;
+	case 24: words = (width * 3 + 3)/4; break;
+
+	default:
+        	fprintf(stderr, "DIB: unsupported depth %d.\n", depth );
+	/* fall through */
+	case 32:
+	        words = width;
     }
     return 4 * words;
 }
@@ -67,29 +70,6 @@ int DIB_BitmapInfoSize( BITMAPINFO * info, WORD coloruse )
         return sizeof(BITMAPINFOHEADER) + colors *
                ((coloruse == DIB_RGB_COLORS) ? sizeof(RGBQUAD) : sizeof(WORD));
     }
-}
-
-
-/***********************************************************************
- *           DIB_DIBmpToImage
- *
- * Create an XImage pointing to the bitmap data.
- */
-static XImage *DIB_DIBmpToImage( BITMAPINFOHEADER * bmp, void * bmpData )
-{
-    extern void _XInitImageFuncPtrs( XImage* );
-    XImage * image;
-
-    image = XCreateImage(display, DefaultVisualOfScreen( screen ),
-                         bmp->biBitCount, ZPixmap, 0, bmpData,
-                         bmp->biWidth, bmp->biHeight, 32,
-                         DIB_GetImageWidthBytes(bmp->biWidth,bmp->biBitCount));
-    if (!image) return 0;
-    image->byte_order = MSBFirst;
-    image->bitmap_bit_order = MSBFirst;
-    image->bitmap_unit = 16;
-    _XInitImageFuncPtrs(image);
-    return image;
 }
 
 
@@ -809,30 +789,95 @@ INT32 GetDIBits32( HDC32 hdc, HBITMAP32 hbitmap, UINT32 startscan,
 	else ((WORD *)info->bmiColors)[i] = (WORD)i;
     }
     
-      /* Transfer the pixels (very slow...) */
-
     if (bits)
     {	
+	BYTE*	bbits = bits;
+	int	pad, yend, xend = bmp->bitmap.bmWidth;
+
+        dprintf_bitmap(stddeb, "GetDIBits: %u scanlines of (%i,%i) -> (%i,%i) starting from %u\n",
+			    lines, bmp->bitmap.bmWidth, bmp->bitmap.bmHeight,
+			    (int)info->bmiHeader.biWidth, (int)info->bmiHeader.biHeight, startscan );
+
+	/* adjust number of scanlines to copy */
+
+	if( lines > info->bmiHeader.biHeight ) lines = info->bmiHeader.biHeight;
+	yend = startscan + lines;
+	if( startscan >= bmp->bitmap.bmHeight ) 
+	    return FALSE;
+	if( yend > bmp->bitmap.bmHeight ) yend = bmp->bitmap.bmHeight;
+
+	/* adjust scanline width */
+
+	pad = info->bmiHeader.biWidth - bmp->bitmap.bmWidth;
+	if( pad < 0 ) 
+	{
+	    /* bitmap is wider than DIB, copy only a part */
+
+	    pad = 0; xend = info->bmiHeader.biWidth;
+	}
+
 	bmpImage = (XImage *)CallTo32_LargeStack( (int (*)())XGetImage, 8, 
 		               display, bmp->pixmap, 0, 0, bmp->bitmap.bmWidth,
 		               bmp->bitmap.bmHeight, AllPlanes, ZPixmap );
-	dibImage = DIB_DIBmpToImage( &info->bmiHeader, bits );
 
-	for (y = 0; y < lines; y++)
+	switch( info->bmiHeader.biBitCount )
 	{
-	    for (x = 0; x < info->bmiHeader.biWidth; x++)
-	    {
-		XPutPixel( dibImage, x, y,
-		  XGetPixel(bmpImage, x, bmp->bitmap.bmHeight-startscan-y-1) );
-		
-	    }
+	   case 8:
+
+		pad += (4 - (info->bmiHeader.biWidth & 3)) & 3;
+		for( y = yend - 1; (int)y >= (int)startscan; y-- )
+		{
+		   for( x = 0; x < xend; x++ )
+			*bbits++ = XGetPixel( bmpImage, x, y );
+		   bbits += pad;
+		}
+		break;
+
+/* add more bpp-specific shortcuts here */
+
+	   default:
+
+		dibImage = XCreateImage(display, DefaultVisualOfScreen( screen ),
+			   info->bmiHeader.biBitCount, ZPixmap, 0, bits,
+			   info->bmiHeader.biWidth, info->bmiHeader.biHeight,
+			   32, DIB_GetImageWidthBytes( info->bmiHeader.biWidth,
+                                                info->bmiHeader.biBitCount ) );
+		if( dibImage )
+		{
+		    extern void _XInitImageFuncPtrs( XImage* );
+
+		    dibImage->byte_order = MSBFirst;
+		    dibImage->bitmap_bit_order = MSBFirst;
+		    dibImage->bitmap_unit = 16;
+		    _XInitImageFuncPtrs( dibImage );
+
+		    for (y = yend - 1; (int)y >= (int)startscan; y--)
+		        for (x = 0; x < xend; x++)
+			    XPutPixel( dibImage, x, yend - y + 1, 
+				       XGetPixel( bmpImage, x, y ));
+		    dibImage->data = NULL;
+		    XDestroyImage( dibImage );
+		}
 	}
-	
-	dibImage->data = NULL;
-	XDestroyImage( dibImage );
+
 	XDestroyImage( bmpImage );
+
+	info->bmiHeader.biCompression = 0;
     }
-    info->bmiHeader.biCompression = 0;
+    else if( info->bmiHeader.biSize >= sizeof(BITMAPINFOHEADER) ) 
+    {
+	/* fill in struct members */
+	
+	info->bmiHeader.biWidth = bmp->bitmap.bmWidth;
+	info->bmiHeader.biHeight = bmp->bitmap.bmHeight;
+	info->bmiHeader.biPlanes = 1;
+	info->bmiHeader.biBitCount = bmp->bitmap.bmBitsPixel;
+	info->bmiHeader.biSizeImage = bmp->bitmap.bmHeight *
+                             DIB_GetImageWidthBytes( bmp->bitmap.bmWidth,
+                                                     bmp->bitmap.bmBitsPixel );
+	info->bmiHeader.biCompression = 0;
+    }
+
     return lines;
 }
 

@@ -185,7 +185,7 @@ static BOOL32 CLASS_FreeClass( CLASS *classPtr )
     if (classPtr->hbrBackground) DeleteObject32( classPtr->hbrBackground );
     GlobalDeleteAtom( classPtr->atomName );
     CLASS_SetMenuNameA( classPtr, NULL );
-    WINPROC_FreeProc( classPtr->winproc );
+    WINPROC_FreeProc( classPtr->winproc, WIN_PROC_CLASS );
     HeapFree( SystemHeap, 0, classPtr );
     return TRUE;
 }
@@ -291,7 +291,7 @@ static CLASS *CLASS_RegisterClass( ATOM atom, HINSTANCE32 hInstance,
     classPtr->dce         = (style & CS_CLASSDC) ?
                                  DCE_AllocDCE( 0, DCE_CLASS_DC ) : NULL;
 
-    WINPROC_SetProc( &classPtr->winproc, wndProc, wndProcType );
+    WINPROC_SetProc( &classPtr->winproc, wndProc, wndProcType, WIN_PROC_CLASS);
 
     /* Other values must be set by caller */
 
@@ -743,7 +743,7 @@ LONG SetClassLong16( HWND16 hwnd, INT16 offset, LONG newval )
         if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
         retval = (LONG)WINPROC_GetProc( wndPtr->class->winproc, WIN_PROC_16 );
         WINPROC_SetProc( &wndPtr->class->winproc, (WNDPROC16)newval,
-                         WIN_PROC_16 );
+                         WIN_PROC_16, WIN_PROC_CLASS );
         return retval;
     case GCL_MENUNAME:
         return SetClassLong32A( hwnd, offset, (LONG)PTR_SEG_TO_LIN(newval) );
@@ -783,7 +783,7 @@ LONG SetClassLong32A( HWND32 hwnd, INT32 offset, LONG newval )
             retval = (LONG)WINPROC_GetProc( wndPtr->class->winproc,
                                             WIN_PROC_32A );
             WINPROC_SetProc( &wndPtr->class->winproc, (WNDPROC16)newval,
-                             WIN_PROC_32A );
+                             WIN_PROC_32A, WIN_PROC_CLASS );
             return retval;
         case GCL_HBRBACKGROUND:
         case GCL_HCURSOR:
@@ -819,7 +819,7 @@ LONG SetClassLong32W( HWND32 hwnd, INT32 offset, LONG newval )
         if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;
         retval = (LONG)WINPROC_GetProc( wndPtr->class->winproc, WIN_PROC_32W );
         WINPROC_SetProc( &wndPtr->class->winproc, (WNDPROC16)newval,
-                         WIN_PROC_32W );
+                         WIN_PROC_32W, WIN_PROC_CLASS );
         return retval;
     case GCL_MENUNAME:
         if (!(wndPtr = WIN_FindWndPtr(hwnd))) return 0;

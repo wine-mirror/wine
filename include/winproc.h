@@ -17,13 +17,20 @@ typedef enum
     WIN_PROC_32W
 } WINDOWPROCTYPE;
 
+typedef enum
+{
+    WIN_PROC_CLASS,
+    WIN_PROC_WINDOW,
+    WIN_PROC_TIMER
+} WINDOWPROCUSER;
+
 typedef void *HWINDOWPROC;  /* Really a pointer to a WINDOWPROC */
 
 extern BOOL32 WINPROC_Init(void);
 extern WNDPROC16 WINPROC_GetProc( HWINDOWPROC proc, WINDOWPROCTYPE type );
 extern BOOL32 WINPROC_SetProc( HWINDOWPROC *pFirst, WNDPROC16 func,
-                               WINDOWPROCTYPE type );
-extern void WINPROC_FreeProc( HWINDOWPROC proc );
+                               WINDOWPROCTYPE type, WINDOWPROCUSER user );
+extern void WINPROC_FreeProc( HWINDOWPROC proc, WINDOWPROCUSER user );
 extern WINDOWPROCTYPE WINPROC_GetProcType( HWINDOWPROC proc );
 
 extern INT32 WINPROC_MapMsg32ATo32W( UINT32 msg, WPARAM32 wParam,
@@ -51,8 +58,8 @@ extern void WINPROC_UnmapMsg16To32A( UINT32 msg, WPARAM32 wParam,
 extern void WINPROC_UnmapMsg16To32W( UINT32 msg, WPARAM32 wParam,
                                      LPARAM lParam );
 extern void WINPROC_UnmapMsg32ATo16( UINT32 msg, WPARAM16 wParam,
-                                     LPARAM lParam );
+                                     LPARAM lParam, LRESULT lResult );
 extern void WINPROC_UnmapMsg32WTo16( UINT32 msg, WPARAM16 wParam,
-                                     LPARAM lParam );
+                                     LPARAM lParam, LRESULT lResult );
 
 #endif  /* __WINE_WINPROC_H */

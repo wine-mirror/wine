@@ -97,10 +97,10 @@ void K32OBJ_DecCount( K32OBJ *ptr )
  */
 BOOL32 K32OBJ_AddName( K32OBJ *obj, LPCSTR name )
 {
-    NAME_ENTRY *entry = K32OBJ_FirstEntry;
+    NAME_ENTRY *entry;
     UINT32 len = strlen( name );
 
-    if (!(entry = HeapAlloc( SystemHeap, 0, sizeof(entry) + len )))
+    if (!(entry = HeapAlloc( SystemHeap, 0, sizeof(NAME_ENTRY) + len )))
     {
         SetLastError( ERROR_OUTOFMEMORY );
         return FALSE;

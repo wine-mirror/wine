@@ -4,7 +4,6 @@ type	win16
 1  pascal WINPROC_CallProc16To32A(word word word long long) WINPROC_CallProc16To32A
 2  pascal StaticWndProc(word word word long) StaticWndProc
 3  pascal ScrollBarWndProc(word word word long) ScrollBarWndProc
-5  pascal ComboBoxWndProc(word word word long) ComboBoxWndProc
 10 pascal MDIClientWndProc(word word word long) MDIClientWndProc
 14 pascal FileOpenDlgProc(word word word long) FileOpenDlgProc
 15 pascal FileSaveDlgProc(word word word long) FileSaveDlgProc
@@ -13,7 +12,6 @@ type	win16
 18 pascal ReplaceTextDlgProc(word word word long) ReplaceTextDlgProc
 19 pascal PrintSetupDlgProc(word word word long) PrintSetupDlgProc
 20 pascal PrintDlgProc(word word word long) PrintDlgProc
-22 pascal ComboLBoxWndProc(word word word long) ComboLBoxWndProc
 24 pascal16 TASK_Reschedule() TASK_Reschedule
 27 pascal EntryAddrProc(word word) MODULE_GetEntryPoint
 28 pascal MyAlloc(word word word) MODULE_AllocateSegment

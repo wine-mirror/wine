@@ -43,6 +43,8 @@ typedef struct
     DWORD     serial;    /* drive serial number */
     DRIVETYPE type;      /* drive type */
     UINT32    flags;     /* drive flags */
+    dev_t     dev;       /* unix device number */
+    ino_t     ino;       /* unix inode number */
 } DOSDRIVE;
 
 
@@ -124,6 +126,7 @@ int DRIVE_Init(void)
     char name[] = "Drive A";
     char path[MAX_PATHNAME_LEN];
     char buffer[20];
+    struct stat drive_stat_buffer;
     char *p;
     DOSDRIVE *drive;
 
@@ -134,14 +137,28 @@ int DRIVE_Init(void)
         {
             p = path + strlen(path) - 1;
             while ((p > path) && ((*p == '/') || (*p == '\\'))) *p-- = '\0';
-            if (strlen(path))
-                drive->root = HEAP_strdupA( SystemHeap, 0, path );
-            else
-                drive->root = HEAP_strdupA( SystemHeap, 0, "/" );
+            if (!path[0]) strcpy( path, "/" );
+
+            if (stat( path, &drive_stat_buffer ))
+            {
+                fprintf( stderr, "Could not stat %s, ignoring drive %c:\n",
+                         path, 'A' + i );
+                continue;
+            }
+            if (!S_ISDIR(drive_stat_buffer.st_mode))
+            {
+                fprintf( stderr, "%s is not a directory, ignoring drive %c:\n",
+                         path, 'A' + i );
+                continue;
+            }
+
+            drive->root = HEAP_strdupA( SystemHeap, 0, path );
             drive->dos_cwd  = HEAP_strdupA( SystemHeap, 0, "" );
             drive->unix_cwd = HEAP_strdupA( SystemHeap, 0, "" );
             drive->type     = DRIVE_GetDriveType( name );
             drive->flags    = 0;
+            drive->dev      = drive_stat_buffer.st_dev;
+            drive->ino      = drive_stat_buffer.st_ino;
 
             /* Get the drive label */
             PROFILE_GetWineIniString( name, "Label", name, drive->label, 12 );
@@ -167,9 +184,10 @@ int DRIVE_Init(void)
                 DRIVE_CurDrive = i;
 
             count++;
-            dprintf_dosfs( stddeb, "%s: path=%s type=%s label='%s' serial=%08lx flags=%08x\n",
+            dprintf_dosfs( stddeb, "%s: path=%s type=%s label='%s' serial=%08lx flags=%08x dev=%x ino=%x\n",
                            name, path, DRIVE_Types[drive->type],
-                           drive->label, drive->serial, drive->flags );
+                           drive->label, drive->serial, drive->flags,
+                           (int)drive->dev, (int)drive->ino );
         }
         else dprintf_dosfs( stddeb, "%s: not defined\n", name );
     }
@@ -252,51 +270,54 @@ int DRIVE_SetCurrentDrive( int drive )
  * This can be used to translate a Unix path into a drive + DOS path.
  * Return value is the drive, or -1 on error. On success, path is modified
  * to point to the beginning of the DOS path.
- * FIXME: this only does a textual comparison of the path names, and won't
- *        work well in the presence of symbolic links.
  */
 int DRIVE_FindDriveRoot( const char **path )
 {
+    /* idea: check at all '/' positions.
+     * If the device and inode of that path is identical with the
+     * device and inode of the current drive then we found a solution.
+     * If there is another drive pointing to a deeper position in
+     * the file tree, we want to find that one, not the earlier solution.
+     */
     int drive, rootdrive = -1;
-    const char *p1, *p2;
+    char buffer[MAX_PATHNAME_LEN];
+    char *next = buffer;
+    const char *p = *path;
+    struct stat st;
 
-    dprintf_dosfs( stddeb, "DRIVE_FindDriveRoot: searching '%s'\n", *path );
-    for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
+    strcpy( buffer, "/" );
+    for (;;)
     {
-        if (!DOSDrives[drive].root ||
-            (DOSDrives[drive].flags & DRIVE_DISABLED)) continue;
-        p1 = *path;
-        p2 = DOSDrives[drive].root;
-        dprintf_dosfs( stddeb, "DRIVE_FindDriveRoot: checking %c: '%s'\n",
-                       'A' + drive, p2 );
-        
-        while (*p2 == '/') p2++;
-        if (!*p2)
+        if (stat( buffer, &st ) || !S_ISDIR( st.st_mode )) break;
+
+        /* Find the drive */
+
+        for (drive = 0; drive < MAX_DOS_DRIVES; drive++)
         {
-            rootdrive = drive;
-            continue;  /* Look if there's a better match */
+           if (!DOSDrives[drive].root ||
+               (DOSDrives[drive].flags & DRIVE_DISABLED)) continue;
+
+           if ((DOSDrives[drive].dev == st.st_dev) &&
+               (DOSDrives[drive].ino == st.st_ino))
+           {
+               rootdrive = drive;
+               *path = p;
+           }
         }
-        for (;;)
-        {
-            while ((*p1 == '\\') || (*p1 == '/')) p1++;
-            while (*p2 == '/') p2++;
-            while ((*p1 == *p2) && (*p2) && (*p2 != '/')) p1++, p2++;
-            if (!*p2)
-            {
-                if (IS_END_OF_NAME(*p1)) /* OK, found it */
-                {
-                    *path = p1;
-                    return drive;
-                }
-            }
-            else if (*p2 == '/')
-            {
-                if (IS_END_OF_NAME(*p1))
-                    continue;  /* Go to next path element */
-            }
-            break;  /* No match, go to next drive */
-        }
+
+        /* Get the next path component */
+
+        *next++ = '/';
+        while ((*p == '/') || (*p == '\\')) p++;
+        if (!*p) break;
+        while (!IS_END_OF_NAME(*p)) *next++ = *p++;
+        *next = 0;
     }
+
+    if (rootdrive != -1)
+        dprintf_dosfs( stddeb, "DRIVE_FindDriveRoot: %s -> drive %c:, root='%s', name='%s'\n",
+                       buffer, 'A' + rootdrive,
+                       DOSDrives[rootdrive].root, *path );
     return rootdrive;
 }
 

@@ -28,6 +28,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     NULL,                            /* pExcludeVisRect */
     MFDRV_ExtFloodFill,              /* pExtFloodFill */
     MFDRV_ExtTextOut,                /* pExtTextOut */
+    NULL,                            /* pGetCharWidth */
     NULL /* no implementation */,    /* pGetPixel */
     NULL,                            /* pGetTextExtentPoint */
     NULL,                            /* pGetTextMetrics */

@@ -9,6 +9,7 @@ C_SRCS = \
 	font.c \
 	init.c \
 	objects.c \
+	prtdrv.c \
 	text.c
 
 all: $(MODULE).o

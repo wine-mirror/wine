@@ -727,3 +727,21 @@ BOOL16 DCHook( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
   return 0;
 }
 
+
+/***********************************************************************
+ *           LockWindowUpdate16   (USER.294)
+ */
+BOOL16 LockWindowUpdate16( HWND16 hwnd )
+{
+    return LockWindowUpdate32( hwnd );
+}
+
+
+/***********************************************************************
+ *           LockWindowUpdate32   (USER32.377)
+ */
+BOOL32 LockWindowUpdate32( HWND32 hwnd )
+{
+    /* FIXME? DCX_LOCKWINDOWUPDATE is unimplemented */
+    return TRUE;
+}

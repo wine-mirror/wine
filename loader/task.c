@@ -365,7 +365,7 @@ static void TASK_CallToStart(void)
         InitTask( NULL );
         InitApp( pTask->hModule );
         __asm__ __volatile__("movw %w0,%%fs"::"r" (pCurrentThread->teb_sel));
-        PE_InitializeDLLs( pTask->hModule );
+        PE_InitializeDLLs( pTask->hModule, DLL_PROCESS_ATTACH, (LPVOID)-1 );
         exit_code = CallTaskStart32((FARPROC32)(pModule->pe_module->load_addr + 
                 pModule->pe_module->pe_header->OptionalHeader.AddressOfEntryPoint) );
         TASK_KillCurrentTask( exit_code );

@@ -543,7 +543,7 @@ WORD GetAsyncKeyState32(INT32 nKey)
 	break;
      default:
 	retval = AsyncKeyStateTable[nKey] | 
-	(InputKeyStateTable[nKey] ? 0x8000 : 0);
+	  	((InputKeyStateTable[nKey] & 0x80) ? 0x8000 : 0); 
 	break;
     }
 

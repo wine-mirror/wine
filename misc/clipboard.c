@@ -75,7 +75,7 @@ static CLIPFORMAT ClipFormats[16]  = {
 /**************************************************************************
  *                      CLIPBOARD_CheckSelection
  */
-void CLIPBOARD_CheckSelection(WND* pWnd)
+static void CLIPBOARD_CheckSelection(WND* pWnd)
 {
   dprintf_clipboard(stddeb,"\tchecking %08x\n", (unsigned)pWnd->window);
 
@@ -141,7 +141,7 @@ void CLIPBOARD_DisOwn(WND* pWnd)
 /**************************************************************************
  *			CLIPBOARD_DeleteRecord
  */
-void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat)
+static void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat, BOOL32 bChange)
 {
   if( lpFormat->wFormatID >= CF_GDIOBJFIRST &&
       lpFormat->wFormatID <= CF_GDIOBJLAST )
@@ -152,13 +152,13 @@ void CLIPBOARD_DeleteRecord(LPCLIPFORMAT lpFormat)
   lpFormat->wDataPresent = 0; 
   lpFormat->hData = 0;
 
-  bClipChanged = TRUE;
+  if( bChange ) bClipChanged = TRUE;
 }
 
 /**************************************************************************
  *			CLIPBOARD_RequestXSelection
  */
-BOOL32 CLIPBOARD_RequestXSelection()
+static BOOL32 CLIPBOARD_RequestXSelection()
 {
   HWND32 hWnd = (hWndClipWindow) ? hWndClipWindow : GetActiveWindow32();
 
@@ -291,7 +291,7 @@ BOOL32 EmptyClipboard32(void)
     while(lpFormat) 
       {
 	if ( lpFormat->wDataPresent || lpFormat->hData )
-	     CLIPBOARD_DeleteRecord( lpFormat );
+	     CLIPBOARD_DeleteRecord( lpFormat, TRUE );
 
 	lpFormat = lpFormat->NextFormat;
       }
@@ -368,16 +368,16 @@ HANDLE16 SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
 
     if ( lpFormat->wDataPresent || lpFormat->hData ) 
     {
-	CLIPBOARD_DeleteRecord(lpFormat);
+	CLIPBOARD_DeleteRecord(lpFormat, TRUE);
 
 	/* delete existing CF_TEXT/CF_OEMTEXT aliases */
 
 	if( wFormat == CF_TEXT && ClipFormats[CF_OEMTEXT-1].hData
 	    && !ClipFormats[CF_OEMTEXT-1].wDataPresent )
-	    CLIPBOARD_DeleteRecord(&ClipFormats[CF_OEMTEXT-1]);
+	    CLIPBOARD_DeleteRecord(&ClipFormats[CF_OEMTEXT-1], TRUE);
         if( wFormat == CF_OEMTEXT && ClipFormats[CF_TEXT-1].hData
 	    && !ClipFormats[CF_TEXT-1].wDataPresent )
-	    CLIPBOARD_DeleteRecord(&ClipFormats[CF_TEXT-1]);
+	    CLIPBOARD_DeleteRecord(&ClipFormats[CF_TEXT-1], TRUE);
     }
 
     bClipChanged = TRUE;
@@ -401,7 +401,7 @@ HANDLE32 SetClipboardData32( UINT32 wFormat, HANDLE32 hData )
 /**************************************************************************
  *                      CLIPBOARD_RenderFormat
  */
-BOOL32 CLIPBOARD_RenderFormat(LPCLIPFORMAT lpFormat)
+static BOOL32 CLIPBOARD_RenderFormat(LPCLIPFORMAT lpFormat)
 {
  if( lpFormat->wDataPresent && !lpFormat->hData )
    if( IsWindow32(hWndClipOwner) )
@@ -420,7 +420,7 @@ BOOL32 CLIPBOARD_RenderFormat(LPCLIPFORMAT lpFormat)
 /**************************************************************************
  *                      CLIPBOARD_RenderText
  */
-BOOL32 CLIPBOARD_RenderText(LPCLIPFORMAT lpTarget, LPCLIPFORMAT lpSource)
+static BOOL32 CLIPBOARD_RenderText(LPCLIPFORMAT lpTarget, LPCLIPFORMAT lpSource)
 {
   UINT16 size = GlobalSize16( lpSource->hData );
   LPCSTR	lpstrS = (LPSTR)GlobalLock16(lpSource->hData);
@@ -909,10 +909,10 @@ void CLIPBOARD_ReadSelection(Window w,Atom prop)
    {
      lpFormat = &ClipFormats[CF_TEXT-1];
      if (lpFormat->wDataPresent || lpFormat->hData) 
-         CLIPBOARD_DeleteRecord(lpFormat);
+         CLIPBOARD_DeleteRecord(lpFormat, !(hWndClipWindow));
      lpFormat = &ClipFormats[CF_OEMTEXT-1];
      if (lpFormat->wDataPresent || lpFormat->hData) 
-         CLIPBOARD_DeleteRecord(lpFormat);
+         CLIPBOARD_DeleteRecord(lpFormat, !(hWndClipWindow));
 
      lpFormat->wDataPresent = 1;
      lpFormat->hData = hText;

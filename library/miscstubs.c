@@ -46,8 +46,6 @@ int CallTo32_LargeStack( int (*func)(), int nbargs, ...)
 }
 
 extern LRESULT ColorDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
-extern LRESULT ComboBoxWndProc(HWND16,UINT16,WPARAM16,LPARAM);
-extern LRESULT ComboLBoxWndProc(HWND16,UINT16,WPARAM16,LPARAM);
 extern LRESULT FileOpenDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
 extern LRESULT FileSaveDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
 extern LRESULT FindTextDlgProc(HWND16,UINT16,WPARAM16,LPARAM);
@@ -68,8 +66,6 @@ FARPROC16 MODULE_GetWndProcEntry16( char *name )
 {
 #define MAP_STR_TO_PROC(str,proc) if(!strcmp(name,str))return (FARPROC16)proc
   MAP_STR_TO_PROC("ColorDlgProc",ColorDlgProc);
-  MAP_STR_TO_PROC("ComboBoxWndProc",ComboBoxWndProc);
-  MAP_STR_TO_PROC("ComboLBoxWndProc",ComboLBoxWndProc);
   MAP_STR_TO_PROC("FileOpenDlgProc",FileOpenDlgProc);
   MAP_STR_TO_PROC("FileSaveDlgProc",FileSaveDlgProc);
   MAP_STR_TO_PROC("FindTextDlgProc",FindTextDlgProc);

@@ -28,6 +28,7 @@ static const DC_FUNCTIONS X11DRV_Funcs =
     NULL,                            /* pExcludeVisRect */
     X11DRV_ExtFloodFill,             /* pExtFloodFill */
     X11DRV_ExtTextOut,               /* pExtTextOut */
+    NULL,                            /* pGetCharWidth */
     X11DRV_GetPixel,                 /* pGetPixel */
     X11DRV_GetTextExtentPoint,       /* pGetTextExtentPoint */
     X11DRV_GetTextMetrics,           /* pGetTextMetrics */

@@ -207,3 +207,11 @@ BOOL32 SetConsoleTitle32W( LPCWSTR title )
     HeapFree( GetProcessHeap(), 0, titleA );
     return TRUE;
 }
+
+/***********************************************************************
+ *            FlushConsoleInputBuffer   (KERNEL32.132)
+ */
+BOOL32 FlushConsoleInputBuffer(HANDLE32 hConsoleInput){
+    fprintf(stderr,"FlushConsoleInputBuffer(%d)\n",hConsoleInput);
+    return TRUE;
+}

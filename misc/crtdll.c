@@ -946,6 +946,26 @@ CRTDLL__chdrive(INT32 newdrive) {
 }
 
 /*********************************************************************
+ *                  _chdir           (CRTDLL.51)
+ */
+INT32
+CRTDLL__chdir(LPCSTR newdir) {
+	if (!SetCurrentDirectory32A(newdir))
+		return -1;
+	return 0;
+}
+
+/*********************************************************************
+ *                  _mkdir           (CRTDLL.234)
+ */
+INT32
+CRTDLL__mkdir(LPCSTR newdir) {
+	if (!CreateDirectory32A(newdir,NULL))
+		return -1;
+	return 0;
+}
+
+/*********************************************************************
  *                  _errno           (CRTDLL.52)
  * Yes, this is a function.
  */

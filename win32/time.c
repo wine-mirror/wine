@@ -123,10 +123,10 @@ BOOL32 SetTimeZoneInformation(const LPTIME_ZONE_INFORMATION tzinfo)
     struct timezone tz;
 
     tz.tz_minuteswest = tzinfo->Bias;
-#ifdef __EMX__ /* FIXME */
-    tz.tz_dsttime = 0;
-#else
+#ifdef DST_NONE
     tz.tz_dsttime = DST_NONE;
+#else
+    tz.tz_dsttime = 0;
 #endif
     return !settimeofday(NULL, &tz);
 }

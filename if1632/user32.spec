@@ -381,7 +381,7 @@ base	1
 0374 stdcall LoadStringA(long long ptr long) LoadString32A
 0375 stdcall LoadStringW(long long ptr long) LoadString32W
 0376 stub LockWindowStation
-0377 stub LockWindowUpdate
+0377 stdcall LockWindowUpdate(long) LockWindowUpdate32
 0378 stub LookupIconIdFromDirectory
 0379 stub LookupIconIdFromDirectoryEx
 0380 stub MBToWCSEx
@@ -542,7 +542,7 @@ base	1
 0535 stdcall SubtractRect(ptr ptr ptr) SubtractRect32
 0536 stdcall SwapMouseButton(long) SwapMouseButton32
 0537 stub SwitchDesktop
-0538 stub SwitchToThisWindow
+0538 stdcall SwitchToThisWindow(long long) SwitchToThisWindow32
 0539 stdcall SystemParametersInfoA(long long ptr long) SystemParametersInfo32A
 0540 stdcall SystemParametersInfoW(long long ptr long) SystemParametersInfo32W
 0541 stdcall TabbedTextOutA(long long long ptr long long ptr long) TabbedTextOut32A
@@ -605,3 +605,4 @@ base	1
 0597 stub ToUnicodeEx
 0598 stub DrawCaptionTempA
 0599 stub RegisterNetworkCapabilities
+0600 stub WNDPROC_CALLBACK

@@ -263,7 +263,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 
     case WM_SYSKEYDOWN:
 	if( HIWORD(lParam) & KEYDATA_ALT )
-	  {
+	{
 	    /* if( HIWORD(lParam) & ~KEYDATA_PREVSTATE ) */
 	      if( wParam == VK_MENU && !iMenuSysKey )
 		iMenuSysKey = 1;
@@ -272,13 +272,20 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT32 msg, WPARAM32 wParam,
 	    
 	    iF10Key = 0;
 
-	  } 
+	    if( wParam == VK_F4 )	/* try to close the window */
+	    {
+		HWND32 hWnd = WIN_GetTopParent( wndPtr->hwndSelf );
+		wndPtr = WIN_FindWndPtr( hWnd );
+		if( wndPtr && !(wndPtr->class->style & CS_NOCLOSE) )
+		    PostMessage16( hWnd, WM_SYSCOMMAND, SC_CLOSE, 0 );
+	    }
+	} 
 	else if( wParam == VK_F10 )
-	         iF10Key = 1;
+	        iF10Key = 1;
 	     else
-	         if( wParam == VK_ESCAPE && (GetKeyState32(VK_SHIFT) & 0x8000))
-		     SendMessage16( wndPtr->hwndSelf, WM_SYSCOMMAND,
-                                    (WPARAM16)SC_KEYMENU, (LPARAM)VK_SPACE);
+	        if( wParam == VK_ESCAPE && (GetKeyState32(VK_SHIFT) & 0x8000))
+		    SendMessage16( wndPtr->hwndSelf, WM_SYSCOMMAND,
+                                  (WPARAM16)SC_KEYMENU, (LPARAM)VK_SPACE);
 	break;
 
     case WM_KEYUP:

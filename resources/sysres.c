@@ -22,6 +22,7 @@
 #include "sysres_Ko.h"
 #include "sysres_Hu.h"
 #include "sysres_Pl.h"
+#include "sysres_Po.h"
 
 static const struct resource * const * SYSRES_Resources[] =
 {
@@ -37,7 +38,8 @@ static const struct resource * const * SYSRES_Resources[] =
     sysres_It_Table,  /* LANG_It */
     sysres_Ko_Table,  /* LANG_Ko */
     sysres_Hu_Table,  /* LANG_Hu */
-    sysres_Pl_Table   /* LANG_Pl */
+    sysres_Pl_Table,  /* LANG_Pl */
+    sysres_Po_Table   /* LANG_Po */
 };
 
 

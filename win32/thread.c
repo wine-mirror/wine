@@ -160,7 +160,7 @@ void InitializeCriticalSection(CRITICAL_SECTION *pcritical)
 
 void DeleteCriticalSection(CRITICAL_SECTION *pcritical)
 {
-   semctl((int) pcritical->LockSemaphore,0,IPC_RMID,NULL);
+   semctl((int) pcritical->LockSemaphore,0,IPC_RMID,(union semun)NULL);
    pcritical->Reserved=-1;
 }
 

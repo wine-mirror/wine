@@ -500,10 +500,10 @@ static void NC_DrawMinButton( HWND32 hwnd, HDC16 hdc, BOOL32 down )
  * Draw a window frame inside the given rectangle, and update the rectangle.
  * The correct pen for the frame must be selected in the DC.
  */
-static void NC_DrawFrame( HDC16 hdc, RECT16 *rect, BOOL32 dlgFrame,
+static void NC_DrawFrame( HDC32 hdc, RECT32 *rect, BOOL32 dlgFrame,
                           BOOL32 active )
 {
-    short width, height, tmp;
+    INT32 width, height;
 
     if (dlgFrame)
     {
@@ -532,43 +532,45 @@ static void NC_DrawFrame( HDC16 hdc, RECT16 *rect, BOOL32 dlgFrame,
 
     if (dlgFrame)
     {
-	InflateRect16( rect, -width, -height );
-	return;
-    }
+	InflateRect32( rect, -width, -height );
+    } 
+    else
+    {
+	POINT32 lpt[16];
     
       /* Draw inner rectangle */
-    MoveTo( hdc, rect->left+width, rect->top+height );
-    LineTo32( hdc, rect->right-width-1, rect->top+height );
-    LineTo32( hdc, rect->right-width-1, rect->bottom-height-1 );
-    LineTo32( hdc, rect->left+width, rect->bottom-height-1 );
-    LineTo32( hdc, rect->left+width, rect->top+height );
+
+	GRAPH_DrawRectangle( hdc, rect->left + width,
+                                  rect->top + height,
+                                  rect->right - rect->left - 2*width ,
+                                  rect->bottom - rect->top - 2*height,
+                                  (HPEN32)0 );
 
       /* Draw the decorations */
-    tmp = rect->top + SYSMETRICS_CYFRAME + SYSMETRICS_CYSIZE;
-    MoveTo( hdc, rect->left, tmp);
-    LineTo32( hdc, rect->left+width, tmp );
-    MoveTo( hdc, rect->right-width-1, tmp );
-    LineTo32( hdc, rect->right-1, tmp );
 
-    tmp = rect->bottom - 1 - SYSMETRICS_CYFRAME - SYSMETRICS_CYSIZE;
-    MoveTo( hdc, rect->left, tmp );
-    LineTo32( hdc, rect->left+width, tmp );
-    MoveTo( hdc, rect->right-width-1, tmp );
-    LineTo32( hdc, rect->right-1, tmp );
+	lpt[4].x = lpt[0].x = rect->left;
+	lpt[5].x = lpt[1].x = rect->left + width;
+	lpt[6].x = lpt[2].x = rect->right - width - 1;
+	lpt[7].x = lpt[3].x = rect->right - 1;
 
-    tmp = rect->left + SYSMETRICS_CXFRAME + SYSMETRICS_CXSIZE;
-    MoveTo( hdc, tmp, rect->top );
-    LineTo32( hdc, tmp, rect->top+height );
-    MoveTo( hdc, tmp, rect->bottom-height-1 );
-    LineTo32( hdc, tmp, rect->bottom-1 );
+	lpt[0].y = lpt[1].y = lpt[2].y = lpt[3].y = 
+		  rect->top + SYSMETRICS_CYFRAME + SYSMETRICS_CYSIZE;
+	lpt[4].y = lpt[5].y = lpt[6].y = lpt[7].y =
+		  rect->bottom - 1 - SYSMETRICS_CYFRAME - SYSMETRICS_CYSIZE;
 
-    tmp = rect->right - 1 - SYSMETRICS_CXFRAME - SYSMETRICS_CYSIZE;
-    MoveTo( hdc, tmp, rect->top );
-    LineTo32( hdc, tmp, rect->top+height );
-    MoveTo( hdc, tmp, rect->bottom-height-1 );
-    LineTo32( hdc, tmp, rect->bottom-1 );
+        lpt[8].x = lpt[9].x = lpt[10].x = lpt[11].x =
+		  rect->left + SYSMETRICS_CXFRAME + SYSMETRICS_CXSIZE;
+	lpt[12].x = lpt[13].x = lpt[14].x = lpt[15].x = 
+		  rect->right - 1 - SYSMETRICS_CXFRAME - SYSMETRICS_CYSIZE;
 
-    InflateRect16( rect, -width-1, -height-1 );
+	lpt[12].y = lpt[8].y = rect->top; 
+	lpt[13].y = lpt[9].y = rect->top + height;
+	lpt[14].y = lpt[10].y = rect->bottom - height - 1; 
+	lpt[15].y = lpt[11].y = rect->bottom - 1;
+
+	GRAPH_DrawLines( hdc, lpt, 8, (HPEN32)0 );	/* 8 is the maximum */
+	InflateRect32( rect, -width - 1, -height - 1 );
+    }
 }
 
 
@@ -591,10 +593,10 @@ static void NC_DrawMovingFrame( HDC16 hdc, RECT16 *rect, BOOL32 thickframe )
  * Draw the window caption.
  * The correct pen for the window frame must be selected in the DC.
  */
-static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND32 hwnd,
+static void NC_DrawCaption( HDC32 hdc, RECT32 *rect, HWND32 hwnd,
 			    DWORD style, BOOL32 active )
 {
-    RECT16 r = *rect;
+    RECT32 r = *rect;
     WND * wndPtr = WIN_FindWndPtr( hwnd );
     char buffer[256];
 
@@ -644,7 +646,7 @@ static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND32 hwnd,
 	r.right -= SYSMETRICS_CXSIZE + 1;
     }
 
-    FillRect16( hdc, &r, active ? sysColorObjects.hbrushActiveCaption : 
+    FillRect32( hdc, &r, active ? sysColorObjects.hbrushActiveCaption : 
 	                          sysColorObjects.hbrushInactiveCaption );
 
     if (GetWindowText32A( hwnd, buffer, sizeof(buffer) ))
@@ -652,8 +654,8 @@ static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND32 hwnd,
 	if (active) SetTextColor32( hdc, GetSysColor32( COLOR_CAPTIONTEXT ) );
 	else SetTextColor32( hdc, GetSysColor32( COLOR_INACTIVECAPTIONTEXT ) );
 	SetBkMode32( hdc, TRANSPARENT );
-	DrawText16( hdc, buffer, -1, &r,
-                    DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_NOPREFIX );
+	DrawText32A( hdc, buffer, -1, &r,
+                     DT_SINGLELINE | DT_CENTER | DT_VCENTER | DT_NOPREFIX );
     }
 }
 
@@ -666,7 +668,7 @@ static void NC_DrawCaption( HDC16 hdc, RECT16 *rect, HWND32 hwnd,
 void NC_DoNCPaint( HWND32 hwnd, HRGN32 clip, BOOL32 suppress_menupaint )
 {
     HDC32 hdc;
-    RECT16 rect;
+    RECT32 rect;
     BOOL32 active;
 
     WND *wndPtr = WIN_FindWndPtr( hwnd );
@@ -701,12 +703,9 @@ void NC_DoNCPaint( HWND32 hwnd, HRGN32 clip, BOOL32 suppress_menupaint )
         if ((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) ||
             (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
         {
-            MoveTo( hdc, 0, 0 );
-            LineTo32( hdc, rect.right-1, 0 );
-            LineTo32( hdc, rect.right-1, rect.bottom-1 );
-            LineTo32( hdc, 0, rect.bottom-1 );
-            LineTo32( hdc, 0, 0 );
-            InflateRect16( &rect, -1, -1 );
+            GRAPH_DrawRectangle( hdc, 0, 0,
+                                 rect.right, rect.bottom, (HPEN32)0 );
+            InflateRect32( &rect, -1, -1 );
         }
 
         if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
@@ -716,7 +715,7 @@ void NC_DoNCPaint( HWND32 hwnd, HRGN32 clip, BOOL32 suppress_menupaint )
 
         if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
         {
-            RECT16 r = rect;
+            RECT32 r = rect;
             r.bottom = rect.top + SYSMETRICS_CYSIZE;
             rect.top += SYSMETRICS_CYSIZE + SYSMETRICS_CYBORDER;
             NC_DrawCaption( hdc, &r, hwnd, wndPtr->dwStyle, active );
@@ -725,8 +724,7 @@ void NC_DoNCPaint( HWND32 hwnd, HRGN32 clip, BOOL32 suppress_menupaint )
 
     if (HAS_MENU(wndPtr))
     {
-	RECT32 r;
-        CONV_RECT16TO32( &rect, &r );
+	RECT32 r = rect;
 	r.bottom = rect.top + SYSMETRICS_CYMENU;  /* default height */
 	rect.top += MENU_DrawMenuBar( hdc, &r, hwnd, suppress_menupaint );
     }
@@ -742,10 +740,10 @@ void NC_DoNCPaint( HWND32 hwnd, HRGN32 clip, BOOL32 suppress_menupaint )
 
     if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL))
     {
-        RECT16 r = rect;
+        RECT32 r = rect;
         r.left = r.right - SYSMETRICS_CXVSCROLL + 1;
         r.top  = r.bottom - SYSMETRICS_CYHSCROLL + 1;
-        FillRect16( hdc, &r, sysColorObjects.hbrushScrollbar );
+        FillRect32( hdc, &r, sysColorObjects.hbrushScrollbar );
     }    
 
     ReleaseDC32( hwnd, hdc );

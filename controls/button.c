@@ -472,23 +472,19 @@ static void GB_Paint( WND *wndPtr, HDC32 hDC, WORD action )
 
     if (action != ODA_DRAWENTIRE) return;
 
-    if (infoPtr->hFont) SelectObject32( hDC, infoPtr->hFont );
     BUTTON_SEND_CTLCOLOR( wndPtr, hDC );
-    SelectObject32( hDC, sysColorObjects.hpenWindowFrame );
 
     GetClientRect16( wndPtr->hwndSelf, &rc);
-
-    MoveTo( hDC, rc.left, rc.top+2 );
-    LineTo32( hDC, rc.right-1, rc.top+2 );
-    LineTo32( hDC, rc.right-1, rc.bottom-1 );
-    LineTo32( hDC, rc.left, rc.bottom-1 );
-    LineTo32( hDC, rc.left, rc.top+2 );
-
-    if (!wndPtr->text) return;
-    if (wndPtr->dwStyle & WS_DISABLED)
-        SetTextColor32( hDC, GetSysColor32(COLOR_GRAYTEXT) );
-    rc.left += 10;
-    DrawText16( hDC, wndPtr->text, -1, &rc, DT_SINGLELINE | DT_NOCLIP );
+    GRAPH_DrawRectangle( hDC, rc.left, rc.top + 2, rc.right - 1, rc.bottom - 1,
+					     sysColorObjects.hpenWindowFrame );
+    if (wndPtr->text)
+    {
+	if (infoPtr->hFont) SelectObject32( hDC, infoPtr->hFont );
+        if (wndPtr->dwStyle & WS_DISABLED)
+            SetTextColor32( hDC, GetSysColor32(COLOR_GRAYTEXT) );
+        rc.left += 10;
+        DrawText16( hDC, wndPtr->text, -1, &rc, DT_SINGLELINE | DT_NOCLIP );
+    }
 }
 
 

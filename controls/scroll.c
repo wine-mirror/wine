@@ -421,11 +421,7 @@ static void SCROLL_DrawInterior( HWND32 hwnd, HDC32 hdc, INT32 nBar,
 
       /* Draw the scroll bar frame */
 
-    MoveTo( hdc, r.left, r.top );
-    LineTo32( hdc, r.right-1, r.top );
-    LineTo32( hdc, r.right-1, r.bottom-1 );
-    LineTo32( hdc, r.left, r.bottom-1 );
-    LineTo32( hdc, r.left, r.top );
+    GRAPH_DrawRectangle( hdc, r.left, r.top, r.right - 1, r.bottom - 1, 0);
 
       /* Draw the scroll rectangles and thumb */
 

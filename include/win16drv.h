@@ -152,7 +152,33 @@ typedef struct
     SEGPTR	segptrFontInfo; /* Current font realized by printer driver */
 } WIN16DRV_PDEVICE;
 
+/*
+ * Printer driver functions
+ */
+typedef SEGPTR LPPDEVICE;
+LOADED_PRINTER_DRIVER *LoadPrinterDriver(const char *pszDriver);
+
+extern INT16 PRTDRV_Control(LPPDEVICE lpDestDev, WORD wfunction, SEGPTR lpInData, SEGPTR lpOutData);
+extern WORD PRTDRV_Enable(LPVOID lpDevInfo, WORD wStyle, LPCSTR  lpDestDevType, 
+                          LPCSTR lpDeviceName, LPCSTR lpOutputFile, LPVOID lpData);
+extern WORD PRTDRV_EnumDFonts(LPPDEVICE lpDestDev, LPSTR lpFaceName,  
+		       FARPROC16 lpCallbackFunc, LPVOID lpClientData);
+extern DWORD PRTDRV_RealizeObject(LPPDEVICE lpDestDev, WORD wStyle, 
+				  LPVOID lpInObj, LPVOID lpOutObj,
+				  LPTEXTXFORM16 lpTextXForm);
+
+extern BOOL16 PRTDRV_EnumObj(LPPDEVICE lpDestDev, WORD iStyle, FARPROC16 lpfn, LPVOID lpb);
+extern DWORD PRTDRV_ExtTextOut(LPPDEVICE lpDestDev, WORD wDestXOrg, WORD wDestYOrg,
+			       RECT16 *lpClipRect, LPCSTR lpString, WORD wCount, 
+			       SEGPTR lpFontInfo, LPDRAWMODE lpDrawMode, 
+			       LPTEXTXFORM16 lpTextXForm, SHORT *lpCharWidths,
+			       RECT16 *     lpOpaqueRect, WORD wOptions);
+
+
 /* Wine driver functions */
+
+extern BOOL32 WIN16DRV_GetCharWidth( struct tagDC *dc, UINT32 firstChar, UINT32 lastChar,
+				   LPINT32 buffer );
 
 extern BOOL32 WIN16DRV_GetTextExtentPoint( DC *dc, LPCSTR str, INT32 count,
                                            LPSIZE32 size );
@@ -162,6 +188,7 @@ extern BOOL32 WIN16DRV_ExtTextOut( DC *dc, INT32 x, INT32 y, UINT32 flags,
                                   const RECT32 *lprect, LPCSTR str, UINT32 count,
                                   const INT32 *lpDx );
 extern HGDIOBJ32 WIN16DRV_SelectObject( DC *dc, HGDIOBJ32 handle );
+
 
 
 #endif  /* __WINE_WIN16DRV_H */
