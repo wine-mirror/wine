@@ -122,6 +122,13 @@ static struct wine_preload_info preload_info[] =
 #define PT_TLS 7
 #endif
 
+#ifndef AT_SYSINFO
+#define AT_SYSINFO 32
+#endif
+#ifndef AT_SYSINFO_EHDR
+#define AT_SYSINFO_EHDR 33
+#endif
+
 static unsigned int page_size, page_mask;
 static char *preloader_start, *preloader_end;
 
