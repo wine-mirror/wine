@@ -1071,6 +1071,8 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom,
     wndPtr->pVScroll       = NULL;
     wndPtr->pHScroll       = NULL;
     wndPtr->userdata       = 0;
+    wndPtr->hIcon          = 0;
+    wndPtr->hIconSmall     = 0;
     wndPtr->hSysMenu       = (wndPtr->dwStyle & WS_SYSMENU) ? MENU_GetSysMenu( hwnd, 0 ) : 0;
 
     /* Correct the window style - stage 2 */

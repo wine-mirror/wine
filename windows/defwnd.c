@@ -653,19 +653,60 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 	return 1;
 
     case WM_SETICON:
-        if (USER_Driver.pSetWindowIcon)
-            return (LRESULT)USER_Driver.pSetWindowIcon( hwnd, (HICON)lParam, (wParam != ICON_SMALL) );
-        else
-	{
-            HICON hOldIcon = (HICON)SetClassLongW( hwnd, (wParam != ICON_SMALL) ? GCL_HICON : GCL_HICONSM,
-                                            lParam);
+        {
+            HICON ret;
+            WND *wndPtr = WIN_GetPtr( hwnd );
+
+            switch(wParam)
+            {
+            case ICON_SMALL:
+                ret = wndPtr->hIconSmall;
+                wndPtr->hIconSmall = (HICON)lParam;
+                break;
+            case ICON_BIG:
+                ret = wndPtr->hIcon;
+                wndPtr->hIcon = (HICON)lParam;
+                break;
+            default:
+                ret = 0;
+                break;
+            }
+            WIN_ReleasePtr( wndPtr );
+
+            if (USER_Driver.pSetWindowIcon)
+                USER_Driver.pSetWindowIcon( hwnd, wParam, (HICON)lParam );
+
             SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE |
                          SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER);
-            return (LRESULT)hOldIcon;
-	}
+
+            return (LRESULT)ret;
+        }
 
     case WM_GETICON:
-        return GetClassLongW( hwnd, (wParam != ICON_SMALL) ? GCL_HICON : GCL_HICONSM );
+        {
+            HICON ret;
+            WND *wndPtr = WIN_GetPtr( hwnd );
+
+            switch(wParam)
+            {
+            case ICON_SMALL:
+                ret = wndPtr->hIconSmall;
+                break;
+            case ICON_BIG:
+                ret = wndPtr->hIcon;
+                break;
+            case ICON_SMALL2:
+                ret = wndPtr->hIconSmall;
+                if (!ret) ret = (HICON)GetClassLongA( hwnd, GCL_HICONSM );
+                /* FIXME: should have a default here if class icon is null */
+                break;
+            default:
+                ret = 0;
+                break;
+            }
+            WIN_ReleasePtr( wndPtr );
+            return (LRESULT)ret;
+        }
 
     case WM_HELP:
         SendMessageW( GetParent(hwnd), msg, wParam, lParam );

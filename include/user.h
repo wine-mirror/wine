@@ -119,7 +119,7 @@ typedef struct tagUSER_DRIVER {
     HWND   (*pSetParent)(HWND,HWND);
     BOOL   (*pSetWindowPos)(WINDOWPOS *);
     int    (*pSetWindowRgn)(HWND,HRGN,BOOL);
-    HICON  (*pSetWindowIcon)(HWND,HICON,BOOL);
+    void   (*pSetWindowIcon)(HWND,UINT,HICON);
     void   (*pSetWindowStyle)(HWND,DWORD);
     BOOL   (*pSetWindowText)(HWND,LPCWSTR);
     BOOL   (*pShowWindow)(HWND,INT);

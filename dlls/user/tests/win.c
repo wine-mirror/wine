@@ -845,6 +845,68 @@ static void test_mdi(void)
 */
 }
 
+static void test_icons(void)
+{
+    WNDCLASSEXA cls;
+    HWND hwnd;
+    HICON icon = LoadIconA(0, (LPSTR)IDI_APPLICATION);
+    HICON icon2 = LoadIconA(0, (LPSTR)IDI_QUESTION);
+    HICON small_icon = LoadImageA(0, (LPSTR)IDI_APPLICATION, IMAGE_ICON,
+                                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_SHARED );
+    HICON res;
+
+    cls.cbSize = sizeof(cls);
+    cls.style = 0;
+    cls.lpfnWndProc = DefWindowProcA;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = 0;
+    cls.hIcon = LoadIconA(0, (LPSTR)IDI_HAND);
+    cls.hIconSm = small_icon;
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "IconWindowClass";
+
+    RegisterClassExA(&cls);
+
+    hwnd = CreateWindowExA(0, "IconWindowClass", "icon test", 0,
+                           100, 100, CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, NULL, NULL);
+    assert( hwnd );
+
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_BIG, 0 );
+    ok( res == 0, "wrong big icon %p/0\n", res );
+    res = (HICON)SendMessageA( hwnd, WM_SETICON, ICON_BIG, (LPARAM)icon );
+    ok( res == 0, "wrong previous big icon %p/0\n", res );
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_BIG, 0 );
+    ok( res == icon, "wrong big icon after set %p/%p\n", res, icon );
+    res = (HICON)SendMessageA( hwnd, WM_SETICON, ICON_BIG, (LPARAM)icon2 );
+    ok( res == icon, "wrong previous big icon %p/%p\n", res, icon );
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_BIG, 0 );
+    ok( res == icon2, "wrong big icon after set %p/%p\n", res, icon2 );
+
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL, 0 );
+    ok( res == 0, "wrong small icon %p/0\n", res );
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
+    ok( res != 0, "wrong small icon %p\n", res );
+    res = (HICON)SendMessageA( hwnd, WM_SETICON, ICON_SMALL, (LPARAM)icon );
+    ok( res == 0, "wrong previous small icon %p/0\n", res );
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL, 0 );
+    ok( res == icon, "wrong small icon after set %p/%p\n", res, icon );
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
+    ok( res == icon, "wrong small icon after set %p/%p\n", res, icon );
+    res = (HICON)SendMessageA( hwnd, WM_SETICON, ICON_SMALL, (LPARAM)small_icon );
+    ok( res == icon, "wrong previous small icon %p/%p\n", res, icon );
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL, 0 );
+    ok( res == small_icon, "wrong small icon after set %p/%p\n", res, small_icon );
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_SMALL2, 0 );
+    ok( res == small_icon, "wrong small icon after set %p/%p\n", res, small_icon );
+
+    /* make sure the big icon hasn't changed */
+    res = (HICON)SendMessageA( hwnd, WM_GETICON, ICON_BIG, 0 );
+    ok( res == icon2, "wrong big icon after set %p/%p\n", res, icon2 );
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -871,6 +933,7 @@ START_TEST(win)
     test_shell_window();
 
     test_mdi();
+    test_icons();
 
     UnhookWindowsHookEx(hhook);
 }

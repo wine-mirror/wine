@@ -61,6 +61,8 @@ typedef struct tagWND
     DWORD          helpContext;   /* Help context ID */
     UINT           flags;         /* Misc. flags (see below) */
     HMENU          hSysMenu;      /* window's copy of System Menu */
+    HICON          hIcon;         /* window's icon */
+    HICON          hIconSmall;    /* window's small icon */
     int            cbWndExtra;    /* class cbWndExtra at window creation */
     int            irefCount;     /* window's reference count*/
     DWORD          userdata;      /* User private data */

@@ -281,10 +281,9 @@ inline static void destroy_icon_window( Display *display, WND *win )
  *
  * Set the icon wm hints
  */
-static void set_icon_hints( Display *display, WND *wndPtr, XWMHints *hints )
+static void set_icon_hints( Display *display, WND *wndPtr, XWMHints *hints, HICON hIcon )
 {
     X11DRV_WND_DATA *data = wndPtr->pDriverData;
-    HICON hIcon = (HICON)GetClassLongA( wndPtr->hwndSelf, GCL_HICON );
 
     if (data->hWMIconBitmap) DeleteObject( data->hWMIconBitmap );
     if (data->hWMIconMask) DeleteObject( data->hWMIconMask);
@@ -473,7 +472,7 @@ void X11DRV_set_wm_hints( Display *display, WND *win )
         wm_hints->flags = InputHint | StateHint | WindowGroupHint;
         wm_hints->input = !(win->dwStyle & WS_DISABLED);
 
-        set_icon_hints( display, win, wm_hints );
+        set_icon_hints( display, win, wm_hints, (HICON)GetClassLongA( win->hwndSelf, GCL_HICON ));
 
         wm_hints->initial_state = (win->dwStyle & WS_MINIMIZE) ? IconicState : NormalState;
         wm_hints->window_group = group_leader;
@@ -1312,16 +1311,14 @@ void X11DRV_SetFocus( HWND hwnd )
  * This is not entirely correct, may need to create
  * an icon window and set the pixmap as a background
  */
-HICON X11DRV_SetWindowIcon( HWND hwnd, HICON icon, BOOL small )
+void X11DRV_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
 {
     WND *wndPtr;
     Display *display = thread_display();
-    HICON old = (HICON)SetClassLongW(hwnd, small ? GCL_HICONSM : GCL_HICON, (LONG)icon );
 
-    SetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOSIZE |
-                  SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );
+    if (type != ICON_BIG) return;  /* nothing to do here */
 
-    if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return old;
+    if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return;
 
     if (wndPtr->dwExStyle & WS_EX_MANAGED)
     {
@@ -1333,7 +1330,7 @@ HICON X11DRV_SetWindowIcon( HWND hwnd, HICON icon, BOOL small )
         wine_tsx11_unlock();
         if (wm_hints)
         {
-            set_icon_hints( display, wndPtr, wm_hints );
+            set_icon_hints( display, wndPtr, wm_hints, icon );
             wine_tsx11_lock();
             XSetWMHints( display, win, wm_hints );
             XFree( wm_hints );
@@ -1341,5 +1338,4 @@ HICON X11DRV_SetWindowIcon( HWND hwnd, HICON icon, BOOL small )
         }
     }
     WIN_ReleasePtr( wndPtr );
-    return old;
 }

@@ -241,7 +241,16 @@ NC_AdjustRectInner95 (LPRECT rect, DWORD style, DWORD exStyle)
 
 static HICON NC_IconForWindow( HWND hwnd )
 {
-    HICON hIcon = (HICON) GetClassLongA( hwnd, GCL_HICONSM );
+    HICON hIcon = 0;
+    WND *wndPtr = WIN_GetPtr( hwnd );
+
+    if (wndPtr && wndPtr != WND_OTHER_PROCESS)
+    {
+        hIcon = wndPtr->hIconSmall;
+        if (!hIcon) hIcon = wndPtr->hIcon;
+        WIN_ReleasePtr( wndPtr );
+    }
+    if (!hIcon) hIcon = (HICON) GetClassLongA( hwnd, GCL_HICONSM );
     if (!hIcon) hIcon = (HICON) GetClassLongA( hwnd, GCL_HICON );
 
     /* If there is no hIcon specified and this is a modal dialog,
