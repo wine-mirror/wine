@@ -709,6 +709,9 @@ static void BITBLT_StretchImage( XImage *srcImage, XImage *dstImage,
     if ((widthSrc < widthDst) && (heightSrc < heightDst))
         mode = STRETCH_DELETESCANS;
 
+    if (mode == STRETCH_HALFTONE) /* FIXME */
+        mode = STRETCH_DELETESCANS;
+
     if (mode != STRETCH_DELETESCANS)
         memset( rowDst, (mode == STRETCH_ANDSCANS) ? 0xff : 0x00,
                 widthDst*sizeof(int) );
