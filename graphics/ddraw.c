@@ -4669,25 +4669,25 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
   XVisualInfo *vi;
   XPixmapFormatValues *pf;
   XVisualInfo vt;
-  int nvisuals, npixmap, i, emu;
+  int xbpp, nvisuals, npixmap, i, emu;
   int has_mode[]  = { 0,  0,  0,  0 };
   int has_depth[] = { 8, 15, 16, 24 };
   DDSURFACEDESC	ddsfd;
   static struct {
-    int w,h;
+	int w,h;
   } modes[] = { /* some of the usual modes */
-    {512,384},
-    {640,400},
-    {640,480},
-    {800,600},
-    {1024,768},
-    {1280,1024}
+	{512,384},
+	{640,400},
+	{640,480},
+	{800,600},
+	{1024,768},
+	{1280,1024}
   };
   DWORD maxWidth, maxHeight;
 
   TRACE("(%p)->(0x%08lx,%p,%p,%p)\n",This,dwFlags,lpddsfd,context,modescb);
   ddsfd.dwSize = sizeof(ddsfd);
-  ddsfd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_CAPS;
+  ddsfd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_CAPS|DDSD_PITCH;
   if (dwFlags & DDEDM_REFRESHRATES) {
     ddsfd.dwFlags |= DDSD_REFRESHRATE;
     ddsfd.u.dwRefreshRate = 60;
@@ -4700,8 +4700,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 
   i = 0;
   emu = 0;
-  while ((i < npixmap) ||
-	 (emu != 4)) {
+  while ((i < npixmap) || (emu != 4)) {
     int mode_index = 0;
     int send_mode = 0;
     int j;
@@ -4721,45 +4720,47 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 
       if (has_mode[mode_index] == 0) {
 	if (mode_index == 0) {
-      send_mode = 1;
+	  send_mode = 1;
 
-      ddsfd.ddsCaps.dwCaps = DDSCAPS_PALETTE;
-      ddsfd.ddpfPixelFormat.dwSize = sizeof(ddsfd.ddpfPixelFormat);
-      ddsfd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8;
-      ddsfd.ddpfPixelFormat.dwFourCC = 0;
-      ddsfd.ddpfPixelFormat.u.dwRGBBitCount = 8;
-      ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0;
-      ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0;
-      ddsfd.ddpfPixelFormat.u3.dwBBitMask = 0;
-      ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
-      
+	  ddsfd.ddsCaps.dwCaps = DDSCAPS_PALETTE;
+	  ddsfd.ddpfPixelFormat.dwSize = sizeof(ddsfd.ddpfPixelFormat);
+	  ddsfd.ddpfPixelFormat.dwFlags = DDPF_PALETTEINDEXED8;
+	  ddsfd.ddpfPixelFormat.dwFourCC = 0;
+	  ddsfd.ddpfPixelFormat.u.dwRGBBitCount = 8;
+	  ddsfd.ddpfPixelFormat.u1.dwRBitMask = 0;
+	  ddsfd.ddpfPixelFormat.u2.dwGBitMask = 0;
+	  ddsfd.ddpfPixelFormat.u3.dwBBitMask = 0;
+	  ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
+
+	  xbpp = 1;
+	  
 	  has_mode[mode_index] = 1;
 	} else {
       /* All the 'true color' depths (15, 16 and 24)
 	 First, find the corresponding visual to extract the bit masks */
-      for (j = 0; j < nvisuals; j++) {
-	if (vi[j].depth == pf[i].depth) {
-	  ddsfd.ddsCaps.dwCaps = 0;
-	  ddsfd.ddpfPixelFormat.dwSize = sizeof(ddsfd.ddpfPixelFormat);
-	  ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB;
-	  ddsfd.ddpfPixelFormat.dwFourCC = 0;
-	  ddsfd.ddpfPixelFormat.u.dwRGBBitCount = pf[i].bits_per_pixel;
-	  ddsfd.ddpfPixelFormat.u1.dwRBitMask = vi[j].red_mask;
-	  ddsfd.ddpfPixelFormat.u2.dwGBitMask = vi[j].green_mask;
-	  ddsfd.ddpfPixelFormat.u3.dwBBitMask = vi[j].blue_mask;
-	  ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
+	  for (j = 0; j < nvisuals; j++) {
+	    if (vi[j].depth == pf[i].depth) {
+	      ddsfd.ddsCaps.dwCaps = 0;
+	      ddsfd.ddpfPixelFormat.dwSize = sizeof(ddsfd.ddpfPixelFormat);
+	      ddsfd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+	      ddsfd.ddpfPixelFormat.dwFourCC = 0;
+	      ddsfd.ddpfPixelFormat.u.dwRGBBitCount = pf[i].bits_per_pixel;
+	      ddsfd.ddpfPixelFormat.u1.dwRBitMask = vi[j].red_mask;
+	      ddsfd.ddpfPixelFormat.u2.dwGBitMask = vi[j].green_mask;
+	      ddsfd.ddpfPixelFormat.u3.dwBBitMask = vi[j].blue_mask;
+	      ddsfd.ddpfPixelFormat.u4.dwRGBAlphaBitMask= 0;
 
-	  send_mode = 1;
-	      has_mode[mode_index] = 1;
-	  break;
+	      xbpp = pf[i].bits_per_pixel/8;
+
+	      send_mode = 1;
+		  has_mode[mode_index] = 1;
+	      break;
+	    }
+	  }
+	  if (j == nvisuals)
+	    ERR("Did not find visual corresponding the the pixmap format !\n");
 	}
       }
-      
-      if (j == nvisuals)
-	ERR("Did not find visual corresponding the the pixmap format !\n");
-	}
-      }
-
       i++;
     } else {
       /* Now to emulated modes */
@@ -4804,7 +4805,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 		}
 	      }
 	    }
-    }
+          }
 	}
       }
 
@@ -4826,7 +4827,8 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 	  break;
 
 	ddsfd.dwWidth = modes[mode].w;
-	ddsfd.dwHeight = modes[mode].h;
+	ddsfd.dwHeight= modes[mode].h;
+	ddsfd.lPitch  = ddsfd.dwWidth * xbpp;
 	
 	/* Now, send the mode description to the application */
 	TRACE(" - mode %4ld - %4ld\n", ddsfd.dwWidth, ddsfd.dwHeight);
@@ -4838,12 +4840,12 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 	/* modeX is not standard VGA */
 	ddsfd.dwWidth = 320;
 	ddsfd.dwHeight = 200;
+	ddsfd.lPitch  = 320 * xbpp;
 	if (!modescb(&ddsfd, context))
 	  goto exit_enum;
       }
     }
   }
-  
  exit_enum:
   TSXFree(vi);
   TSXFree(pf);
