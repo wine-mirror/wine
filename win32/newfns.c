@@ -310,13 +310,17 @@ BOOL WINAPI IsDebuggerPresent() {
  *
  * NOTES
  *    Return type should be HDESK
+ *
+ *    Not supported on Win9x - returns NULL and calls SetLastError.
  */
 HANDLE WINAPI OpenDesktopA( LPCSTR lpszDesktop, DWORD dwFlags, 
                                 BOOL fInherit, DWORD dwDesiredAccess )
 {
     FIXME_(win32)("(%s,%lx,%i,%lx): stub\n",debugstr_a(lpszDesktop),dwFlags,
           fInherit,dwDesiredAccess);
-    return 1;
+
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return NULL;
 }
 
 
