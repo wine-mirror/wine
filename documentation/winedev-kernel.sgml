@@ -448,8 +448,7 @@ if (res != ERROR_SUCCESS) return res;
 	    in turn implies that any code which could possibly block
 	    (for instance by using a critical section) needs it. The
 	    TEB also holds the SEH exception handler chain as the
-	    first element, so if when disassembling you see code like
-	    this:
+	    first element, so if disassembling you see code like this:
 	  </para>
 
 	  <programlisting> movl %esp, %fs:0 </programlisting>
@@ -690,7 +689,7 @@ if (res != ERROR_SUCCESS) return res;
 	<para>
 	  The actual wine binary that the user runs does not do very much, in fact it is only
 	  responsible for checking the threading model in use (NPTL vs LinuxThreads) and then invoking
-	  a new binary which performs the next stage in the startup sequence. See the threading chapter
+	  a new binary which performs the next stage in the startup sequence. See the beginning of this chapter 
 	  for more information on this check and why it's necessary. You can find this code in
 	  <filename>loader/glibc.c</filename>. The result of this check is an exec of either
 	  wine-pthread or wine-kthread, potentially (on Linux) via
@@ -773,7 +772,7 @@ if (res != ERROR_SUCCESS) return res;
 	<para>
 	  This function is responsible for initializing the primary Win32 environment. In thread_init(),
 	  it sets up the TEB, the wineserver connection for the main thread and the process heap. See
-	  the threading chapter for more information on this.
+	  the beginning of this chapter for more information on this.
 	</para>
 
 	<para>
