@@ -462,14 +462,6 @@ static INT32 SIC_IconAppend (LPCSTR sSourceFile, INT32 dwSourceIndex, HICON32 hS
 	lpsice->sSourceFile = HEAP_strdupA (GetProcessHeap(),0,sSourceFile);
 	lpsice->dwSourceIndex = dwSourceIndex;
 	
-/*	index = pDPA_Search (hdpa, lpsice, -1, SIC_CompareEntrys, 0, 0);
-
-	if ( INVALID_INDEX != index )
-	{ TRACE(shell, "-- allready inserted\n");
-	  SHFree(lpsice);
-	  return index;
-	}
-*/
 	index = pDPA_InsertPtr(hdpa, 0x7fff, lpsice);
 	if ( INVALID_INDEX == index )
 	{ SHFree(lpsice);
@@ -512,16 +504,18 @@ static INT32 SIC_LoadIcon (LPCSTR sSourceFile, INT32 dwSourceIndex)
 *  look in the cache for a proper icon. if not available the icon is taken
 *  from the file and cached
 */
-INT32 SIC_GetIconIndex (LPCSTR sSourceFile, INT32 dwSourceIndex )
+static INT32 SIC_GetIconIndex (LPCSTR sSourceFile, INT32 dwSourceIndex )
 {	SIC_ENTRY sice;
-	INT32 index;
+	INT32 index = INVALID_INDEX;
 		
 	TRACE(shell,"%s %i\n", sSourceFile, dwSourceIndex);
 
 	sice.sSourceFile = sSourceFile;
 	sice.dwSourceIndex = dwSourceIndex;
 	
-	index = pDPA_Search (hdpa, &sice, -1, SIC_CompareEntrys, 0, 0);
+	if (NULL != pDPA_GetPtr (hdpa, 0))
+	{ index = pDPA_Search (hdpa, &sice, -1L, SIC_CompareEntrys, 0, 0);
+	}
 
 	if ( INVALID_INDEX == index )
 	{  return SIC_LoadIcon (sSourceFile, dwSourceIndex);
