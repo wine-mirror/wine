@@ -697,7 +697,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
 
     if (TRACE_ON(relay))
     {
-        size_t len = max( wm->ldr.BaseDllName.Length, sizeof(mod_name)-sizeof(WCHAR) );
+        size_t len = min( wm->ldr.BaseDllName.Length, sizeof(mod_name)-sizeof(WCHAR) );
         memcpy( mod_name, wm->ldr.BaseDllName.Buffer, len );
         mod_name[len / sizeof(WCHAR)] = 0;
         DPRINTF("%04lx:Call PE DLL (proc=%p,module=%p %s,reason=%s,res=%p)\n",
@@ -1779,7 +1779,6 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, void *CreateFileW_ptr, ULONG u
     NTSTATUS status;
     WINE_MODREF *wm;
     LPCWSTR load_path;
-    LPTHREAD_START_ROUTINE entry;
     PEB *peb = NtCurrentTeb()->Peb;
     UNICODE_STRING *main_exe_name = &peb->ProcessParameters->ImagePathName;
     IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
@@ -1798,7 +1797,6 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, void *CreateFileW_ptr, ULONG u
         goto error;
     }
     wm->ldr.LoadCount = -1;  /* can't unload main exe */
-    entry = wm->ldr.EntryPoint;
 
     /* Install signal handlers; this cannot be done before, since we cannot
      * send exceptions to the debugger before the create process event that
@@ -1813,7 +1811,7 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, void *CreateFileW_ptr, ULONG u
     {
         req->module      = peb->ImageBaseAddress;
         req->module_size = wm->ldr.SizeOfImage;
-        req->entry       = entry;
+        req->entry       = wm->ldr.EntryPoint;
         /* API requires a double indirection */
         req->name        = &main_exe_name->Buffer;
         req->exe_file    = main_file;
@@ -1835,14 +1833,7 @@ void WINAPI LdrInitializeThunk( HANDLE main_file, void *CreateFileW_ptr, ULONG u
     if ((status = process_attach( wm, (LPVOID)1 )) != STATUS_SUCCESS) goto error;
 
     RtlLeaveCriticalSection( &loader_section );
-
-    if (TRACE_ON(relay))
-        DPRINTF( "%04lx:Starting process %s (entryproc=%p)\n", GetCurrentThreadId(),
-                 debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), entry );
-
-    NtCurrentTeb()->last_error = 0;  /* clear error code */
-    if (peb->BeingDebugged) DbgBreakPoint();
-    NtTerminateProcess( GetCurrentProcess(), entry( peb ) );
+    return;
 
 error:
     ERR( "Main exe initialization failed, status %lx\n", status );
