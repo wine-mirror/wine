@@ -123,7 +123,7 @@ LINTS  = $(C_SRCS:.c=.ln)
 	$(LDPATH) $(WMC) -i -U -H /dev/null -o $@ $<
 
 .rc.res:
-	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -r $<
+	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ $<
 
 .res.res.o:
 	$(WINDRES) -i $< -o $@

@@ -98,19 +98,15 @@ static char usage[] =
 	"   -E          Preprocess only\n"
 	"   -F target	Ignored for compatibility with windres\n"
 	"   -g          Add symbols to the global c namespace\n"
-	"   -h          Also generate a .h file\n"
-	"   -H file     Same as -h but written to file\n"
 	"   -i file	The name of the input file.\n"
 	"   -I path     Set include search dir to path (multiple -I allowed)\n"
 	"   -J		Do not search the standard include path\n"
 	"   -l lan      Set default language to lan (default is neutral {0, 0})\n"
 	"   -m          Do not remap numerical resource IDs\n"
-	"   -n          Do not generate .s file\n"
 	"   -N          Do not preprocess input\n"
 	"   -o file     Output to file (default is infile.[res|s|h]\n"
-	"   -O format	The output format to generate. format may be `res' only.\n"
+	"   -O format	The output format: one of `res', 'asm', 'hdr'.\n"
 	"   -p prefix   Give a prefix for the generated names\n"
-	"   -r          Create binary .res file (compile only)\n"
 	"   -s          Add structure with win32/16 (PE/NE) resource directory\n"
 	"   -t          Generate indirect loadable resource tables\n"
 	"   -T          Generate only indirect loadable resources tables\n"
@@ -167,9 +163,9 @@ int win32 = 1;
 int constant = 0;
 
 /*
- * Create a .res file from the source and exit (-r option).
+ * Output type (default res)
  */
-int create_res = 0;
+enum output_t { output_def, output_res, output_asm, output_hdr } output_type = output_def;
 
 /*
  * debuglevel == DEBUGLEVEL_NONE	Don't bother
@@ -192,11 +188,6 @@ int extensions = 1;
  * Set when creating C array from .res file (-b option).
  */
 int binary = 0;
-
-/*
- * Set when an additional C-header is to be created in compile (-h option).
- */
-int create_header = 0;
 
 /*
  * Set when the NE/PE resource directory should be dumped into
@@ -224,11 +215,6 @@ int indirect_only = 0;
  */
 int alignment = 4;
 int alignment_pwr;
-
-/*
- * Cleared when the assembly file must be suppressed (-n option)
- */
-int create_s = 1;
 
 /*
  * Language setting for resources (-l option)
@@ -272,7 +258,6 @@ int remap = 1;
 
 char *output_name;		/* The name given by the -o option */
 char *input_name;		/* The name given on the command-line */
-char *header_name;		/* The name given by the -H option */
 char *temp_name;		/* Temporary file for preprocess pipe */
 
 int line_number = 1;		/* The current line */
@@ -402,12 +387,6 @@ int main(int argc,char *argv[])
 		case 'g':
 			global = 1;
 			break;
-		case 'H':
-			header_name = strdup(optarg);
-			/* Fall through */
-		case 'h':
-			create_header = 1;
-			break;
 		case 'i':
 			if (!input_name) input_name = strdup(optarg);
 			else error("Too many input files.\n");
@@ -430,9 +409,6 @@ int main(int argc,char *argv[])
 		case 'm':
 			remap = 0;
 			break;
-		case 'n':
-			create_s = 0;
-			break;
 		case 'N':
 			no_preprocess = 1;
 			break;
@@ -441,14 +417,13 @@ int main(int argc,char *argv[])
 			else error("Too many output files.\n");
 			break;
 		case 'O':
-			if (strcmp(optarg, "res"))
-				error("Output format %s not supported.", optarg);
+			if (strcmp(optarg, "res") == 0) output_type = output_res;
+			else if (strcmp(optarg, "asm") == 0) output_type = output_asm;
+			else if (strcmp(optarg, "hdr") == 0) output_type = output_hdr;
+			else error("Output format %s not supported.", optarg);
 			break;
 		case 'p':
 			prefix = xstrdup(optarg);
-			break;
-		case 'r':
-			create_res = 1;
 			break;
 		case 's':
 			create_dir = 1;
@@ -509,12 +484,16 @@ int main(int argc,char *argv[])
 	}
 
 	/* Try to guess the output format based on output name */
-	if (output_name)
+	if (output_type == output_def)
 	{
-		char *dotstr = strrchr(output_name, '.');
-		if (dotstr && (strcmp(dotstr+1, "res") == 0 ||
-			       strcmp(dotstr+1, "o") == 0))
-			create_res = 1;
+		char *dotstr = output_name ? strrchr(output_name, '.') : 0;
+		
+		output_type = output_res; /* by default generate .res files */
+		if (dotstr)
+		{
+			if (strcmp(dotstr+1, "s") == 0) output_type = output_asm;
+			else if(strcmp(dotstr+1, "h") == 0) output_type = output_hdr;
+		}
 	}
 
 
@@ -528,18 +507,12 @@ int main(int argc,char *argv[])
 		}
 	}
 
-	if(create_res)
+	if(output_type == output_res)
 	{
 		if(constant)
 		{
 			warning("Option -c ignored with compile to .res\n");
 			constant = 0;
-		}
-
-		if(create_header)
-		{
-			warning("Option -[h|H] ignored with compile to .res\n");
-			create_header = 0;
 		}
 
 		if(indirect)
@@ -583,12 +556,6 @@ int main(int argc,char *argv[])
 		{
 			warning("Option -c ignored with preprocess only\n");
 			constant = 0;
-		}
-
-		if(create_header)
-		{
-			warning("Option -[h|H] ignored with preprocess only\n");
-			create_header = 0;
 		}
 
 		if(indirect)
@@ -689,13 +656,9 @@ int main(int argc,char *argv[])
 	if(!output_name && !preprocess_only)
 	{
 		output_name = dup_basename(input_name, binary ? ".res" : ".rc");
-		strcat(output_name, create_res ? ".res" : ".s");
-	}
-
-	if(!header_name && !create_res)
-	{
-		header_name = dup_basename(input_name, binary ? ".res" : ".rc");
-		strcat(header_name, ".h");
+		if (output_type == output_res) strcat(output_name, ".res");
+		else if (output_type == output_asm) strcat(output_name, ".s");
+		else if (output_type == output_hdr) strcat(output_name, ".h");
 	}
 
 	/* Run the preprocessor on the input */
@@ -761,23 +724,20 @@ int main(int argc,char *argv[])
 		/* Convert the internal lists to binary data */
 		resources2res(resource_top);
 
-		if(create_res)
+		if(output_type == output_res)
 		{
 			chat("Writing .res-file");
 			write_resfile(output_name, resource_top);
 		}
-		else
+		else if(output_type == output_asm)
 		{
-			if(create_s)
-			{
-				chat("Writing .s-file");
-				write_s_file(output_name, resource_top);
-			}
-			if(create_header)
-			{
-				chat("Writing .h-file");
-				write_h_file(header_name, resource_top);
-			}
+			chat("Writing .s-file");
+			write_s_file(output_name, resource_top);
+		}
+		else if(output_type == output_hdr)
+		{
+			chat("Writing .h-file");
+			write_h_file(output_name, resource_top);
 		}
 
 	}
@@ -786,15 +746,15 @@ int main(int argc,char *argv[])
 		/* Go from .res to .s */
 		chat("Reading .res-file");
 		resource_top = read_resfile(input_name);
-		if(create_s)
+		if(output_type == output_asm)
 		{
 			chat("Writing .s-file");
 			write_s_file(output_name, resource_top);
 		}
-		if(create_header)
+		else if(output_type == output_hdr)
 		{
 			chat("Writing .h-file");
-			write_h_file(header_name, resource_top);
+			write_h_file(output_name, resource_top);
 		}
 	}
 

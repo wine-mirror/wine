@@ -56,6 +56,6 @@ krnl386.exe.spec.c: krnl386.exe.spec version16.res
 	$(LDPATH) $(WINEBUILD) $(DEFS) -N kernel -o $@ -M $(MODULE) -r version16.res --spec $(SRCDIR)/krnl386.exe.spec
 
 version16.res: version16.rc
-	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -w16 -r $(SRCDIR)/version16.rc
+	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -w16 $(SRCDIR)/version16.rc
 
 ### Dependencies:
