@@ -597,6 +597,9 @@ then
 	#include <linux/joystick.h>
 
 	struct js_event blub;
+	#if !defined(JS_EVENT_AXIS) || !defined(JS_EVENT_BUTTON)
+	#error "no 2.2 header"
+	#endif
 	],/*empty*/,
 	wine_cv_linux_joystick_22_api=yes,
 	wine_cv_linux_joystick_22_api=no,
