@@ -67,6 +67,13 @@ typedef struct
 } X11DRV_DIB_IMAGEBITS_DESCR;
 
 
+enum Rle_EscapeCodes
+{
+  RLE_EOL   = 0, /* End of line */
+  RLE_END   = 1, /* End of bitmap */
+  RLE_DELTA = 2  /* Delta */
+};
+
 /***********************************************************************
  *           X11DRV_DIB_GetXImageWidthBytes
  *
@@ -855,70 +862,44 @@ static void X11DRV_DIB_SetImageBits_RLE4( int lines, const BYTE *bits,
 					  int left, int *colors,
 					  XImage *bmpImage )
 {
-    int x = 0, c, length;
+    int x = 0, y = lines - 1, c, length;
     const BYTE *begin = bits;
 
-    lines--;
-
-    while ((int)lines >= 0) {
+    while (y >= 0)
+    {
         length = *bits++;
 	if (length) {	/* encoded */
 	    c = *bits++;
 	    while (length--) {
-		if(x >= width) {
-		    x = 0;
-		    if(--lines < 0)
-		        return;
-		}
-	        XPutPixel(bmpImage, x++, lines, colors[c >>4]);
-		if (length) {
-		    length--;
-		    if(x >= width) {
-		        x = 0;
-			if(--lines < 0)
-			    return;
-		    }
-		    XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
-		}
+                if (x >= width) break;
+                XPutPixel(bmpImage, x++, y, colors[c >> 4]);
+                if (!length--) break;
+                if (x >= width) break;
+                XPutPixel(bmpImage, x++, y, colors[c & 0xf]);
 	    }
 	} else {
 	    length = *bits++;
-	    switch (length) {
-	    case 0: /* eol */
-	        x = 0;
-		lines--;
-		continue;
+	    switch (length)
+            {
+            case RLE_EOL:
+                x = 0;
+                y--;
+                break;
 
-	    case 1: /* eopicture */
+            case RLE_END:
 	        return;
 
-	    case 2: /* delta */
-	        x += *bits++;
-		if(x >= width) {
-		   FIXME_(x11drv)("x-delta is too large?\n");
-		   return;
-		}
-		lines -= *bits++;
-		continue;
+            case RLE_DELTA:
+                x += *bits++;
+                y -= *bits++;
+                break;
 
 	    default: /* absolute */
 	        while (length--) {
 		    c = *bits++;
-		    if(x >= width) {
-		        x = 0;
-			if(--lines < 0)
-			    return;
-		    }
-		    XPutPixel(bmpImage, x++, lines, colors[c >> 4]);
-		    if (length) {
-		        length--;
-			if(x >= width) {
-			    x = 0;
-			    if(--lines < 0)
-			        return;
-			}
-			XPutPixel(bmpImage, x++, lines, colors[c & 0xf]);
-		    }
+                    if (x < width) XPutPixel(bmpImage, x++, y, colors[c >> 4]);
+                    if (!length--) break;
+                    if (x < width) XPutPixel(bmpImage, x++, y, colors[c & 0xf]);
 		}
 		if ((bits - begin) & 1)
 		    bits++;
@@ -1272,172 +1253,99 @@ static void X11DRV_DIB_GetImageBits_8( int lines, BYTE *dstbits,
  *			James A. Youngman <mbcstjy@afs.man.ac.uk>
  *						[JAY]
  */
-
-enum Rle8_EscapeCodes		
-{
-  /* 
-   * Apologies for polluting your file's namespace...
-   */
-  RleEol 	= 0,		/* End of line */
-  RleEnd 	= 1,		/* End of bitmap */
-  RleDelta	= 2		/* Delta */
-};
-  
 static void X11DRV_DIB_SetImageBits_RLE8( int lines, const BYTE *bits,
 					  DWORD width, DWORD dstwidth,
 					  int left, int *colors,
 					  XImage *bmpImage )
 {
     int x;			/* X-positon on each line.  Increases. */
-    int line;			/* Line #.  Starts at lines-1, decreases */
+    int y;			/* Line #.  Starts at lines-1, decreases */
     const BYTE *pIn = bits;     /* Pointer to current position in bits */
     BYTE length;		/* The length pf a run */
-    BYTE color_index;		/* index into colors[] as read from bits */
     BYTE escape_code;		/* See enum Rle8_EscapeCodes.*/
-    int color;			/* value of colour[color_index] */
-    
-    if (lines == 0)		/* Let's hope this doesn't happen. */
-      return;
-    
+
     /*
      * Note that the bitmap data is stored by Windows starting at the
      * bottom line of the bitmap and going upwards.  Within each line,
      * the data is stored left-to-right.  That's the reason why line
      * goes from lines-1 to 0.			[JAY]
      */
-    
-    x = 0;
-    line = lines-1;
-    do
-      {
-	  length = *pIn++;
-	  
-	  /* 
-	   * If the length byte is not zero (which is the escape value),
-	   * We have a run of length pixels all the same colour.  The colour 
-	   * index is stored next. 
-	   *
-	   * If the length byte is zero, we need to read the next byte to
-	   * know what to do.			[JAY]
-	   */
-	  if (length != 0) 
-	    {                                   
-		/* 
-		 * [Run-Length] Encoded mode 
-		 */
-		color_index = (*pIn++); /* Get the colour index. */
-		color = colors[color_index];
 
-		while(length--)
-		  {
-		    if (x>=dstwidth)
-		      {
-			x=0;
-			line--;
-		      }
-		    XPutPixel(bmpImage, x++, line, color);
-		  }
-	    }
-	  else 
-	    {    
-		/* 
-		 * Escape codes (may be an absolute sequence though)
-		 */
-		escape_code = (*pIn++);
-		switch(escape_code)
-		  {
-		    case RleEol: /* =0, end of line */
-		      {
-			  x = 0;  
-			  line--;  
-			  break;
-		      }
-		      
-		    case RleEnd: /* =1, end of bitmap */
-		      {
-			  /*
-			   * Not all RLE8 bitmaps end with this 
-			   * code.  For example, Paint Shop Pro 
-			   * produces some that don't.  That's (I think)
-			   * what caused the previous implementation to 
-			   * fail.			[JAY]
-			   */
-			  line=-1; /* Cause exit from do loop. */
-			  break;
-		      }
-		      
-		    case RleDelta: /* =2, a delta */
-		      {
-			  /* 
-			   * Note that deltaing to line 0 
-			   * will cause an exit from the loop, 
-			   * which may not be what is intended. 
-			   * The fact that there is a delta in the bits
-			   * almost certainly implies that there is data
-			   * to follow.  You may feel that we should 
-			   * jump to the top of the loop to avoid exiting
-			   * in this case.  
-			   *
-			   * TODO: Decide what to do here in that case. [JAY]
-			   */
-			  x 	+= (*pIn++); 
-			  line 	-= (*pIn++);
-			  if (line == 0)
-			    {
-			      TRACE("Delta to last line of bitmap "
-                                    "(wrongly?) causes loop exit\n");
-			    }
-			  break;
-		      }
-		      
-		    default:	/* >2, switch to absolute mode */
-		      {
-			  /* 
-			   * Absolute Mode 
-			   */
-			  length = escape_code;
-			  while(length--)
-			    {
-				color_index = (*pIn++);
-				if (x>=dstwidth)
-				  {
-				    x=0;
-				    line--;
-				  }
-				XPutPixel(bmpImage, x++, line, 
-					  colors[color_index]);
-			    }
-			  
-			  /*
-			   * If you think for a moment you'll realise that the
-			   * only time we could ever possibly read an odd
-			   * number of bytes is when there is a 0x00 (escape),
-			   * a value >0x02 (absolute mode) and then an odd-
-			   * length run.  Therefore this is the only place we
-			   * need to worry about it.  Everywhere else the
-			   * bytes are always read in pairs.  [JAY]
-			   */
-			  if (escape_code & 1) 
-			    pIn++; /* Throw away the pad byte. */
-			  break;
-		      }
-		  } /* switch (escape_code) : Escape sequence */
-	    }  /* process either an encoded sequence or an escape sequence */
-	  
-	  /* We expect to come here more than once per line. */
-      } while (line >= 0);  /* Do this until the bitmap is filled */
-    
-    /*
-     * Everybody comes here at the end.
-     * Check how we exited the loop and print a message if it's a bit odd.
-     *						[JAY]
-     */
-    if ( (*(pIn-2) != 0/*escape*/) || (*(pIn-1)!= RleEnd) )
-      {
-	TRACE("End-of-bitmap without (strictly) proper escape code.  Last two "
-              "bytes were: %02X %02X.\n", (int)*(pIn-2),(int)*(pIn-1));
-      }
-}  
+    x = 0;
+    y = lines - 1;
+    while (y >= 0)
+    {
+        length = *pIn++;
+
+        /* 
+         * If the length byte is not zero (which is the escape value),
+         * We have a run of length pixels all the same colour.  The colour 
+         * index is stored next. 
+         *
+         * If the length byte is zero, we need to read the next byte to
+         * know what to do.			[JAY]
+         */
+        if (length != 0)
+        {
+            /* 
+             * [Run-Length] Encoded mode 
+             */
+            int color = colors[*pIn++];
+            while (length-- && x < dstwidth) XPutPixel(bmpImage, x++, y, color);
+        }
+        else
+        {
+            /* 
+             * Escape codes (may be an absolute sequence though)
+             */
+            escape_code = (*pIn++);
+            switch(escape_code)
+            {
+            case RLE_EOL:
+                x = 0;
+                y--;
+                break;
+
+            case RLE_END:
+                /* Not all RLE8 bitmaps end with this code.  For
+                 * example, Paint Shop Pro produces some that don't.
+                 * That's (I think) what caused the previous
+                 * implementation to fail.  [JAY]
+                 */
+                return;
+
+            case RLE_DELTA:
+                x += (*pIn++);
+                y -= (*pIn++);
+                break;
+
+            default:  /* switch to absolute mode */
+                length = escape_code;
+                while (length--)
+                {
+                    int color = colors[*pIn++];
+                    if (x >= dstwidth)
+                    {
+                        pIn += length;
+                        break;
+                    }
+                    XPutPixel(bmpImage, x++, y, color);
+                }
+                /*
+                 * If you think for a moment you'll realise that the
+                 * only time we could ever possibly read an odd
+                 * number of bytes is when there is a 0x00 (escape),
+                 * a value >0x02 (absolute mode) and then an odd-
+                 * length run.  Therefore this is the only place we
+                 * need to worry about it.  Everywhere else the
+                 * bytes are always read in pairs.  [JAY]
+                 */
+                if (escape_code & 1) pIn++; /* Throw away the pad byte. */
+                break;
+            } /* switch (escape_code) : Escape sequence */
+        }
+    }
+}
 
 
 /***********************************************************************
