@@ -1277,7 +1277,10 @@ BOOL WineEngGetTextMetrics(GdiFont font, LPTEXTMETRICW ptm)
         ptm->tmPitchAndFamily |= TMPF_VECTOR;
     if(FT_IS_SFNT(ft_face))
         ptm->tmPitchAndFamily |= TMPF_TRUETYPE;
-    ptm->tmPitchAndFamily |= FF_ROMAN;
+    if (ptm->tmPitchAndFamily & TMPF_FIXED_PITCH)
+        ptm->tmPitchAndFamily |= FF_ROMAN;
+    else
+        ptm->tmPitchAndFamily |= FF_MODERN;
 
     ptm->tmCharSet = font->charset;
     return TRUE;
