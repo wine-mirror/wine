@@ -797,18 +797,12 @@ static HINSTANCE16 NE_DoLoadModule( NE_MODULE *pModule )
 
     if (!NE_CreateSegments( pModule ) ||
         !(hInstance = NE_CreateInstance( pModule, NULL, FALSE )))
-    {
-        GlobalFreeAll16( pModule->self );
         return 8;  /* Insufficient memory */
-    }
 
     /* Load the referenced DLLs */
 
     if (!NE_LoadDLLs( pModule ))
-    {
-        NE_FreeModule( pModule->self, 0 );
         return 2;
-    }
 
     /* Load the segments */
 
@@ -845,6 +839,7 @@ HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL implicit, BOOL lib_only )
 {
     NE_MODULE *pModule;
     HMODULE16 hModule;
+    HINSTANCE16 hInstance;
     HFILE16 hFile;
     OFSTRUCT ofs;
 
@@ -872,7 +867,14 @@ HINSTANCE16 NE_LoadModule( LPCSTR name, BOOL implicit, BOOL lib_only )
     if ( !lib_only && !( pModule->flags & NE_FFLAGS_LIBMODULE ) )
         return hModule;
 
-    return NE_DoLoadModule( pModule );
+    hInstance = NE_DoLoadModule( pModule );
+    if ( hInstance < 32 )
+    {
+        /* cleanup ... */
+        NE_FreeModule( hModule, 0 );
+    }
+
+    return hInstance;
 }
 
 
@@ -1179,12 +1181,14 @@ BOOL NE_InitProcess( NE_MODULE *pModule  )
 
         hInstance = NE_DoLoadModule( pModule );
         hPrevInstance = 0;
+    }
 
-        if ( hInstance < 32 )
-        {
-            SetLastError( hInstance );
-            retv = FALSE;
-        }
+    if ( hInstance < 32 )
+    {
+        SYSLEVEL_LeaveWin16Lock();
+
+        SetLastError( hInstance );
+        return FALSE;
     }
 
     /* Enter instance handles into task struct */
