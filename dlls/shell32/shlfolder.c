@@ -1489,9 +1489,20 @@ static HRESULT WINAPI ISFHelper_fnDeleteItems(
 	_ICOM_THIS_From_ISFHelper(IGenericSFImpl,iface)
 	int i;
 	char szPath[MAX_PATH];
+        BOOL bConfirm = TRUE;
 
 	TRACE("(%p)(%u %p)\n", This, cidl, apidl);
 	
+	/* deleting multiple items so give a slightly different warning */
+	if(cidl != 1)
+	{
+          char tmp[8]; 
+          snprintf(tmp, sizeof(tmp), "%d", cidl);
+	  if(!SHELL_WarnItemDelete(ASK_DELETE_MULTIPLE_ITEM, tmp))
+            return E_FAIL;
+          bConfirm = FALSE;
+	}
+
 	for(i=0; i< cidl; i++)
 	{
 	  strcpy(szPath, This->sMyPath);
@@ -1501,9 +1512,12 @@ static HRESULT WINAPI ISFHelper_fnDeleteItems(
 	  if (_ILIsFolder(apidl[i]))
 	  {
 	    LPITEMIDLIST pidl;
-
-	    MESSAGE("delete %s\n", szPath);
-	    if (! SHELL_DeleteDirectoryA(szPath, TRUE)) return E_FAIL;
+	    TRACE("delete %s\n", szPath);
+	    if (! SHELL_DeleteDirectoryA(szPath, bConfirm))
+	    {
+              TRACE("delete %s failed, bConfirm=%d", szPath, bConfirm);
+	      return E_FAIL;
+	    }
 	    pidl = ILCombine(This->absPidl, apidl[i]);
 	    SHChangeNotifyA(SHCNE_RMDIR, SHCNF_IDLIST, pidl, NULL);
 	    SHFree(pidl); 
@@ -1512,8 +1526,12 @@ static HRESULT WINAPI ISFHelper_fnDeleteItems(
 	  {
 	    LPITEMIDLIST pidl;
 
-	    MESSAGE("delete %s\n", szPath);
-	    if (! DeleteFileA(szPath)) return E_FAIL;
+	    TRACE("delete %s\n", szPath);
+	    if (! SHELL_DeleteFileA(szPath, bConfirm))
+	    {
+              TRACE("delete %s failed, bConfirm=%d", szPath, bConfirm);
+	      return E_FAIL;
+	    }
 	    pidl = ILCombine(This->absPidl, apidl[i]);
 	    SHChangeNotifyA(SHCNE_DELETE, SHCNF_IDLIST, pidl, NULL);
 	    SHFree(pidl); 

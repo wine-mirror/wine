@@ -13,16 +13,39 @@
 
 DEFAULT_DEBUG_CHANNEL(shell);
 
-#define ASK_DELETE_FILE 1
-#define ASK_DELETE_FOLDER 2
-#define ASK_DELETE_MULTIPLE_FILE 3
-
-static BOOL SHELL_WarnFolderDelete (int nKindOfDialog, LPCSTR szDir)
+BOOL SHELL_WarnItemDelete (int nKindOfDialog, LPCSTR szDir)
 {
 	char szCaption[255], szText[255], szBuffer[MAX_PATH + 256];
 
-	LoadStringA(shell32_hInstance, IDS_DELETEFOLDER_TEXT, szText, sizeof(szText));
-	LoadStringA(shell32_hInstance, IDS_DELETEFOLDER_CAPTION, szCaption, sizeof(szCaption));
+        if(nKindOfDialog == ASK_DELETE_FILE)
+        {
+	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_TEXT, szText, 
+		sizeof(szText));
+	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_CAPTION, 
+		szCaption, sizeof(szCaption));
+	}
+        else if(nKindOfDialog == ASK_DELETE_FOLDER)
+        {
+	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_TEXT, szText, 
+		sizeof(szText));
+	  LoadStringA(shell32_hInstance, IDS_DELETEFOLDER_CAPTION, 
+		szCaption, sizeof(szCaption));
+        }
+        else if(nKindOfDialog == ASK_DELETE_MULTIPLE_ITEM)
+        {
+	  LoadStringA(shell32_hInstance, IDS_DELETEMULTIPLE_TEXT, szText, 
+		sizeof(szText));
+	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_CAPTION, 
+		szCaption, sizeof(szCaption));
+        }
+	else {
+          FIXME("Called without a valid nKindOfDialog specified!");
+	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_TEXT, szText, 
+		sizeof(szText));
+	  LoadStringA(shell32_hInstance, IDS_DELETEITEM_CAPTION, 
+		szCaption, sizeof(szCaption));
+	}          
+
 	FormatMessageA(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
 	    szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)&szDir);
 
@@ -46,7 +69,8 @@ BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI)
 	PathAddBackslashA(szTemp);
 	strcat(szTemp, "*.*");
 	
-	if (bShowUI && !SHELL_WarnFolderDelete(ASK_DELETE_FOLDER, pszDir)) return FALSE;
+	if (bShowUI && !SHELL_WarnItemDelete(ASK_DELETE_FOLDER, pszDir))
+	  return FALSE;
 	
 	if(INVALID_HANDLE_VALUE != (hFind = FindFirstFileA(szTemp, &wfd)))
 	{
@@ -70,6 +94,18 @@ BOOL SHELL_DeleteDirectoryA(LPCSTR pszDir, BOOL bShowUI)
 	}
 
 	return ret;
+}
+
+/**************************************************************************
+ *	SHELL_DeleteFileA()
+ */
+
+BOOL SHELL_DeleteFileA(LPCSTR pszFile, BOOL bShowUI)
+{
+	if (bShowUI && !SHELL_WarnItemDelete(ASK_DELETE_FILE, pszFile))
+		return FALSE;
+ 
+        return DeleteFileA(pszFile);
 }
 
 /*************************************************************************
