@@ -466,6 +466,9 @@ static LRESULT COMBO_WindowPosChanging(
      */
     if (posChanging->cy != newComboHeight)
     {
+	TRACE("posChanging->cy=%d, newComboHeight=%d, oldbot=%d, oldtop=%d\n",
+	      posChanging->cy, newComboHeight, lphc->droppedRect.bottom,
+	      lphc->droppedRect.top);
       lphc->droppedRect.bottom = lphc->droppedRect.top + posChanging->cy - newComboHeight;
 
       posChanging->cy = newComboHeight;
@@ -1428,6 +1431,17 @@ static LRESULT COMBO_Command( LPHEADCOMBO lphc, WPARAM wParam, HWND hWnd )
 		else lphc->wState &= ~CBF_NOROLLUP;
 
 		CB_NOTIFY( lphc, CBN_SELCHANGE );
+
+		/* added due to traces from native */
+		if( CB_OWNERDRAWN(lphc) ) 
+		{
+		    HDC hDC;
+
+		    hDC = GetDC( hWnd );
+		    CBPaintText( lphc, hDC, lphc->textRect);
+		    ReleaseDC( hWnd, hDC );
+		}
+		/* end of added due to traces from native */
 
 		/* fall through */
 
