@@ -1237,7 +1237,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 
 	if (src1Obj)
 	{
-	    TRACE("dump:\n");
+	    TRACE("dump src1Obj:\n");
 	    if(TRACE_ON(region)) 
 	      REGION_DumpRegion(src1Obj->rgn);
 	    if (mode == RGN_COPY)
@@ -1251,7 +1251,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 
 		if (src2Obj)
 		{
-		    TRACE("dump:\n");
+		    TRACE("dump src2Obj:\n");
 		    if(TRACE_ON(region)) 
 		        REGION_DumpRegion(src2Obj->rgn);
 		    switch (mode)
@@ -1275,7 +1275,7 @@ INT WINAPI CombineRgn(HRGN hDest, HRGN hSrc1, HRGN hSrc2, INT mode)
 	    }
 	    GDI_ReleaseObj( hSrc1 );
 	}
-	TRACE("dump:\n");
+	TRACE("dump destObj:\n");
 	if(TRACE_ON(region)) 
 	  REGION_DumpRegion(destObj->rgn);
 

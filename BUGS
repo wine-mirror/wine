@@ -1,3 +1,5 @@
+***** this file is horribly outdated - please update ! *****
+
 For information on how to post a useful bug report, please
 read documentation/bugreports.
 
@@ -20,14 +22,14 @@ General:
 
  * Very alpha printing code using win16 drivers.
 
- * Very alpha internal PostScript driver. [h.davies1@physics.ox.ac.uk]
+ * internal PostScript driver not finished. [h.davies1@physics.ox.ac.uk]
 
  * Extremely alpha Win95 interface code (some apps, like Opera, choke on it).
 
  * No OLE2 and OLE32 support (including OLE2 interfaces etc.).
 	 (started work on pidl-handling, IShellFolders IEnumIdLists 
 	 and SH* functions juergen.schmied@metronet.de)	
-	(Corel is working on it)
+	(Corel has been working on it)
 
  * No MS Video support. [just started, marcus@jet.franken.de]
 

@@ -2032,44 +2032,44 @@ typedef struct _IMAGE_OPTIONAL_HEADER {
 
   /* Standard fields */
 
-  WORD  Magic;
+  WORD  Magic; /* 0x10b or 0x107 */	/* 0x00 */
   BYTE  MajorLinkerVersion;
   BYTE  MinorLinkerVersion;
   DWORD SizeOfCode;
   DWORD SizeOfInitializedData;
   DWORD SizeOfUninitializedData;
-  DWORD AddressOfEntryPoint;
+  DWORD AddressOfEntryPoint;		/* 0x10 */
   DWORD BaseOfCode;
   DWORD BaseOfData;
 
   /* NT additional fields */
 
   DWORD ImageBase;
-  DWORD SectionAlignment;
+  DWORD SectionAlignment;		/* 0x20 */
   DWORD FileAlignment;
   WORD  MajorOperatingSystemVersion;
   WORD  MinorOperatingSystemVersion;
   WORD  MajorImageVersion;
   WORD  MinorImageVersion;
-  WORD  MajorSubsystemVersion;
+  WORD  MajorSubsystemVersion;		/* 0x30 */
   WORD  MinorSubsystemVersion;
   DWORD Win32VersionValue;
   DWORD SizeOfImage;
   DWORD SizeOfHeaders;
-  DWORD CheckSum;
+  DWORD CheckSum;			/* 0x40 */
   WORD  Subsystem;
   WORD  DllCharacteristics;
   DWORD SizeOfStackReserve;
   DWORD SizeOfStackCommit;
-  DWORD SizeOfHeapReserve;
+  DWORD SizeOfHeapReserve;		/* 0x50 */
   DWORD SizeOfHeapCommit;
   DWORD LoaderFlags;
   DWORD NumberOfRvaAndSizes;
-  IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
+  IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES]; /* 0x60 */
 } IMAGE_OPTIONAL_HEADER, *PIMAGE_OPTIONAL_HEADER;
 
 typedef struct _IMAGE_NT_HEADERS {
-  DWORD Signature;
+  DWORD Signature; /* "PE"\0\0 */
   IMAGE_FILE_HEADER FileHeader;
   IMAGE_OPTIONAL_HEADER OptionalHeader;
 } IMAGE_NT_HEADERS, *PIMAGE_NT_HEADERS;

@@ -169,15 +169,16 @@ static void    processQueryValue(LPSTR cmdline);
  */
 static char helpText[] =
 "NAME\n"
-"          regapi - provide a command line interface to the wine registry.\n"
+"          regapi - perform certain actions on the wine registry.\n"
 "\n"
 "SYNOPSIS\n"
 "          regapi commandName [-force] < file\n"
 "\n"
 "DESCRIPTION\n"
-"          regapi allows editing the wine registry.  It processes the given\n"
-"          commandName for every line in the stdin data stream.  Input data\n"
-"          format may vary depending on the commandName see INPUT FILE FORMAT.\n"
+"          regapi modifies settings in the wine registry.  It processes\n"
+"          the given commandName for every line in the stdin data stream.\n"
+"          Input data format may vary depending on the commandName\n"
+"          (see INPUT FILE FORMAT).\n"
 "\n"
 "OPTIONS\n"
 "          commandName\n"
@@ -997,8 +998,8 @@ static void doUnregisterDLL(LPSTR stdInput) {
 }
 
 /******************************************************************************
- * MAIN - The main simply validate the first parameter (command to perform)
- *        It then read the STDIN lines by lines forwarding their processing
+ * MAIN - WinMain simply validates the first parameter (command to perform)
+ *        It then reads the STDIN lines by lines forwarding their processing
  *        to the appropriate method.
  */
 int PASCAL WinMain (HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)

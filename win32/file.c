@@ -103,7 +103,8 @@ BOOL WINAPI SetFileAttributesA(LPCSTR lpFileName, DWORD attributes)
     if (-1==chmod(full_name.long_name,buf.st_mode))
     {
         FILE_SetDosError();
-        MESSAGE("Wine ERROR: Couldn't set file attributes for existing file \"%s\". Check permissions or set VFAT \"quiet\" flag !\n", full_name.long_name);
+        MESSAGE("Wine ERROR: Couldn't set file attributes for existing file \"%s\".\n"
+                "Check permissions or set VFAT \"quiet\" mount flag\n", full_name.long_name);
         return TRUE;
     }
     return TRUE;
