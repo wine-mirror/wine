@@ -41,6 +41,8 @@ static BOOL         (WINAPI *pFPropCompareProp)(LPSPropValue,ULONG,LPSPropValue)
 static LONG         (WINAPI *pLPropCompareProp)(LPSPropValue,LPSPropValue);
 static LPSPropValue (WINAPI *pPpropFindProp)(LPSPropValue,ULONG,ULONG);
 static SCODE        (WINAPI *pScCountProps)(INT,LPSPropValue,ULONG*);
+static SCODE        (WINAPI *pScCopyProps)(int,LPSPropValue,LPVOID,ULONG*);
+static SCODE        (WINAPI *pScRelocProps)(int,LPSPropValue,LPVOID,LPVOID,ULONG*);
 static LPSPropValue (WINAPI *pLpValFindProp)(ULONG,ULONG,LPSPropValue);
 static BOOL         (WINAPI *pFBadRglpszA)(LPSTR*,ULONG);
 static BOOL         (WINAPI *pFBadRglpszW)(LPWSTR*,ULONG);
@@ -779,6 +781,68 @@ static void test_ScCountProps(void)
 
 }
 
+static void test_ScCopyRelocProps(void)
+{
+    static const char* szTestA = "Test";
+    char buffer[512], buffer2[512], *lppszA[1];
+    SPropValue pvProp, *lpResProp = (LPSPropValue)buffer;
+    ULONG ulCount;
+    SCODE sc;
+       
+    pScCopyProps = (void*)GetProcAddress(hMapi32, "ScCopyProps@16");
+    pScRelocProps = (void*)GetProcAddress(hMapi32, "ScRelocProps@20");
+
+    if (!pScCopyProps || !pScRelocProps)
+        return;
+
+    pvProp.ulPropTag = PROP_TAG(PT_MV_STRING8, 1u);
+        
+    lppszA[0] = (char *)szTestA;
+    pvProp.Value.MVszA.cValues = 1;
+    pvProp.Value.MVszA.lppszA = lppszA;
+    ulCount = 0;
+    
+    sc = pScCopyProps(1, &pvProp, buffer, &ulCount);    
+    ok(sc == S_OK && lpResProp->ulPropTag == pvProp.ulPropTag &&
+       lpResProp->Value.MVszA.cValues == 1 && 
+       lpResProp->Value.MVszA.lppszA[0] == buffer + sizeof(SPropValue) + sizeof(char*) &&
+       !strcmp(lpResProp->Value.MVszA.lppszA[0], szTestA) &&
+       ulCount == sizeof(SPropValue) + sizeof(char*) + 5,
+       "CopyProps(str): Expected 0 {1,%lx,%p,%s} %d got 0x%08lx {%ld,%lx,%p,%s} %ld\n",
+       pvProp.ulPropTag, buffer + sizeof(SPropValue) + sizeof(char*),
+       szTestA, sizeof(SPropValue) + sizeof(char*) + 5, sc, 
+       lpResProp->Value.MVszA.cValues, lpResProp->ulPropTag,
+       lpResProp->Value.MVszA.lppszA[0], lpResProp->Value.MVszA.lppszA[0], ulCount);
+
+    memcpy(buffer2, buffer, sizeof(buffer));
+    
+    /* Clear the data in the source buffer. Since pointers in the copied buffer
+     * refer to the source buffer, this proves that native always assumes that
+     * the copied buffers pointers are bad (needing to be relocated first).
+     */
+    memset(buffer, 0, sizeof(buffer));
+    ulCount = 0;
+       
+    sc = pScRelocProps(1, (LPSPropValue)buffer2, buffer, buffer2, &ulCount);
+    lpResProp = (LPSPropValue)buffer2;
+    ok(sc == S_OK && lpResProp->ulPropTag == pvProp.ulPropTag &&
+       lpResProp->Value.MVszA.cValues == 1 && 
+       lpResProp->Value.MVszA.lppszA[0] == buffer2 + sizeof(SPropValue) + sizeof(char*) &&
+       !strcmp(lpResProp->Value.MVszA.lppszA[0], szTestA) &&
+       /* Native has a bug whereby it calculates the size correctly when copying
+        * but when relocating does not (presumably it uses UlPropSize() which
+        * ignores multivalue pointers). Wine returns the correct value.
+        */
+       (ulCount == sizeof(SPropValue) + sizeof(char*) + 5 || ulCount == sizeof(SPropValue) + 5),
+       "RelocProps(str): Expected 0 {1,%lx,%p,%s} %d got 0x%08lx {%ld,%lx,%p,%s} %ld\n",
+       pvProp.ulPropTag, buffer2 + sizeof(SPropValue) + sizeof(char*),
+       szTestA, sizeof(SPropValue) + sizeof(char*) + 5, sc, 
+       lpResProp->Value.MVszA.cValues, lpResProp->ulPropTag,
+       lpResProp->Value.MVszA.lppszA[0], lpResProp->Value.MVszA.lppszA[0], ulCount);
+
+    /* Native crashes with lpNew or lpOld set to NULL so skip testing this */   
+}
+
 static void test_LpValFindProp(void)
 {
     SPropValue pvProp, *pRet;
@@ -1062,6 +1126,7 @@ START_TEST(prop)
     test_LPropCompareProp();
     test_PpropFindProp();
     test_ScCountProps();
+    test_ScCopyRelocProps();
     test_LpValFindProp();
     test_FBadRglpszA();
     test_FBadRglpszW();

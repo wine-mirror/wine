@@ -108,8 +108,8 @@
 165 stub ScCopyNotifications@16
 166 stub ScRelocNotifications@20
 170 stdcall ScCountProps@12(long ptr ptr) ScCountProps
-171 stub ScCopyProps@16
-172 stub ScRelocProps@20
+171 stdcall ScCopyProps@16(long ptr ptr ptr) ScCopyProps
+172 stdcall ScRelocProps@20(long ptr ptr ptr ptr) ScRelocProps
 173 stdcall LpValFindProp@12(long long ptr) LpValFindProp
 174 stub ScDupPropset@16
 175 stdcall FBadRglpszA@8(ptr long) FBadRglpszA

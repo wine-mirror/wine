@@ -160,7 +160,7 @@ SCODE WINAPI PropCopyMore(LPSPropValue lpDest, LPSPropValue lpSrc,
                     ULONG ulStrLen = strlenW(lpSrc->Value.MVszW.lppszW[i]) + 1u;
                     
                     lpDest->Value.MVszW.lppszW[i] = lpNextStr;
-                    memcpy(lpNextStr, lpSrc->Value.MVszA.lppszA[i], ulStrLen * sizeof(WCHAR));
+                    memcpy(lpNextStr, lpSrc->Value.MVszW.lppszW[i], ulStrLen * sizeof(WCHAR));
                     lpNextStr += ulStrLen;
                 }                    
                 break;
@@ -624,6 +624,281 @@ SCODE WINAPI ScCountProps(INT iCount, LPSPropValue lpProps, ULONG *pcBytes)
     if (pcBytes)
         *pcBytes = ulBytes;
     
+    return S_OK;
+}
+
+/*************************************************************************
+ * ScCopyProps@16 (MAPI32.171)
+ *
+ * Copy an array of property values into a buffer suited for serialisation.
+ *
+ * PARAMS
+ *  cValues   [I] Number of properties in lpProps
+ *  lpProps   [I] Property array to copy
+ *  lpDst     [O] Destination for the serialised data
+ *  lpCount   [O] If non-NULL, destination for the number of bytes of data written to lpDst
+ *
+ * RETURNS
+ *  Success: S_OK. lpDst contains the serialised data from lpProps.
+ *  Failure: MAPI_E_INVALID_PARAMETER, if any parameter is invalid.
+ *
+ * NOTES
+ *  The resulting property value array is stored in a contigous block starting at lpDst.
+ */
+SCODE WINAPI ScCopyProps(int cValues, LPSPropValue lpProps, LPVOID lpDst, ULONG *lpCount)
+{
+    LPSPropValue lpDest = (LPSPropValue)lpDst;
+    char *lpDataDest = (char *)(lpDest + cValues);
+    ULONG ulLen, i;
+    
+    TRACE("(%d,%p,%p,%p)\n", cValues, lpProps, lpDst, lpCount);
+    
+    if (!lpProps || cValues < 0 || !lpDest)
+        return MAPI_E_INVALID_PARAMETER;
+
+    memcpy(lpDst, lpProps, cValues * sizeof(SPropValue));
+    
+    for (i = 0; i < cValues; i++)
+    {
+        switch (PROP_TYPE(lpProps->ulPropTag))
+        {
+        case PT_CLSID:
+            lpDest->Value.lpguid = (LPGUID)lpDataDest;
+            memcpy(lpDest->Value.lpguid, lpProps->Value.lpguid, sizeof(GUID));
+            lpDataDest += sizeof(GUID);
+            break;
+        case PT_STRING8:
+            ulLen = lstrlenA(lpProps->Value.lpszA) + 1u;
+            lpDest->Value.lpszA = lpDataDest;
+            memcpy(lpDest->Value.lpszA, lpProps->Value.lpszA, ulLen);
+            lpDataDest += ulLen;
+            break;
+        case PT_UNICODE:
+            ulLen = (strlenW(lpProps->Value.lpszW) + 1u) * sizeof(WCHAR);
+            lpDest->Value.lpszW = (LPWSTR)lpDataDest;
+            memcpy(lpDest->Value.lpszW, lpProps->Value.lpszW, ulLen);
+            lpDataDest += ulLen;
+            break;
+        case PT_BINARY:
+            lpDest->Value.bin.lpb = (LPBYTE)lpDataDest;
+            memcpy(lpDest->Value.bin.lpb, lpProps->Value.bin.lpb, lpProps->Value.bin.cb);
+            lpDataDest += lpProps->Value.bin.cb;
+            break;
+        default:
+            if (lpProps->ulPropTag & MV_FLAG)
+            {
+                lpDest->Value.MVi.cValues = lpProps->Value.MVi.cValues;
+                /* Note: Assignment uses lppszA but covers all cases by union aliasing */
+                lpDest->Value.MVszA.lppszA = (char**)lpDataDest;
+
+                switch (PROP_TYPE(lpProps->ulPropTag))
+                {
+                case PT_MV_STRING8:
+                {
+                    lpDataDest += lpProps->Value.MVszA.cValues * sizeof(char *);
+                
+                    for (i = 0; i < lpProps->Value.MVszA.cValues; i++)
+                    {
+                        ULONG ulStrLen = lstrlenA(lpProps->Value.MVszA.lppszA[i]) + 1u;
+                    
+                        lpDest->Value.MVszA.lppszA[i] = lpDataDest;
+                        memcpy(lpDataDest, lpProps->Value.MVszA.lppszA[i], ulStrLen);
+                        lpDataDest += ulStrLen;
+                    }
+                    break;
+                }
+                case PT_MV_UNICODE:
+                {
+                    lpDataDest += lpProps->Value.MVszW.cValues * sizeof(WCHAR *);
+                
+                    for (i = 0; i < lpProps->Value.MVszW.cValues; i++)
+                    {
+                        ULONG ulStrLen = (strlenW(lpProps->Value.MVszW.lppszW[i]) + 1u) * sizeof(WCHAR);
+                    
+                        lpDest->Value.MVszW.lppszW[i] = (LPWSTR)lpDataDest;
+                        memcpy(lpDataDest, lpProps->Value.MVszW.lppszW[i], ulStrLen);
+                        lpDataDest += ulStrLen;
+                    }                    
+                    break;
+                }
+                case PT_MV_BINARY:
+                {
+                    lpDataDest += lpProps->Value.MVszW.cValues * sizeof(SBinary);
+                
+                    for (i = 0; i < lpProps->Value.MVszW.cValues; i++)
+                    {
+                        lpDest->Value.MVbin.lpbin[i].cb = lpProps->Value.MVbin.lpbin[i].cb;
+                        lpDest->Value.MVbin.lpbin[i].lpb = (LPBYTE)lpDataDest;
+                        memcpy(lpDataDest, lpProps->Value.MVbin.lpbin[i].lpb, lpDest->Value.MVbin.lpbin[i].cb);
+                        lpDataDest += lpDest->Value.MVbin.lpbin[i].cb;
+                    }                    
+                    break;
+                }
+                default:
+                    /* No embedded pointers, just copy the data over */
+                    ulLen = UlPropSize(lpProps);
+                    memcpy(lpDest->Value.MVi.lpi, lpProps->Value.MVi.lpi, ulLen);
+                    lpDataDest += ulLen;
+                    break;
+                }
+                break;
+            }
+        }
+        lpDest++;
+        lpProps++;
+    }
+    if (lpCount)
+        *lpCount = lpDataDest - (char *)lpDst;
+        
+    return S_OK;
+}
+ 
+/*************************************************************************
+ * ScRelocProps@20 (MAPI32.172)
+ *
+ * Relocate the pointers in an array of property values after it has been copied.
+ *
+ * PARAMS
+ *  cValues   [I] Number of properties in lpProps
+ *  lpProps   [O] Property array to relocate the pointers in.
+ *  lpOld     [I] Position where the data was copied from
+ *  lpNew     [I] Position where the data was copied to
+ *  lpCount   [O] If non-NULL, destination for the number of bytes of data at lpDst
+ *
+ * RETURNS
+ *  Success: S_OK. Any pointers in lpProps are relocated.
+ *  Failure: MAPI_E_INVALID_PARAMETER, if any parameter is invalid.
+ *
+ * NOTES
+ *  MSDN states that this function can be used for serialisation by passing
+ *  NULL as either lpOld or lpNew, thus converting any pointers in lpProps
+ *  between offsets and pointers. This does not work in native (it crashes),
+ *  and cannot be made to work in Wine because the original interface design 
+ *  is deficient. The only use left for this function is to remap pointers
+ *  in a contigous property array that has been copied with memcpy() to another
+ *  memory location.
+ */
+SCODE WINAPI ScRelocProps(int cValues, LPSPropValue lpProps, LPVOID lpOld, 
+                          LPVOID lpNew, ULONG *lpCount)
+{
+    static const BOOL bBadPtr = TRUE; /* Windows bug - Assumes source is bad */
+    LPSPropValue lpDest = (LPSPropValue)lpProps;
+    ULONG ulCount = cValues * sizeof(SPropValue);    
+    ULONG ulLen, i;
+    
+    TRACE("(%d,%p,%p,%p,%p)\n", cValues, lpProps, lpOld, lpNew, lpCount);
+    
+    if (!lpProps || cValues < 0 || !lpOld || !lpNew)
+        return MAPI_E_INVALID_PARAMETER;
+
+    /* The reason native doesn't work as MSDN states is that it assumes that
+     * the lpProps pointer contains valid pointers. This is obviously not
+     * true if the array is being read back from serialisation (the pointers
+     * are just offsets). Native can't actually work converting the pointers to
+     * offsets either, because it converts any array pointers to offsets then
+     * _dereferences the offset_ in order to convert the array elements!
+     *
+     * The code below would handle both cases except that the design of this
+     * function makes it impossible to know when the pointers in lpProps are
+     * valid. If both lpOld and lpNew are non-NULL, native reads the pointers
+     * after converting them, so we must do the same. Its seems this 
+     * functionality was never tested by MS.
+     */
+ 
+#define RELOC_PTR(p) (((char*)(p)) - (char*)lpOld + (char*)lpNew)
+        
+    for (i = 0; i < cValues; i++)
+    {
+        switch (PROP_TYPE(lpDest->ulPropTag))
+        {
+        case PT_CLSID:
+            lpDest->Value.lpguid = (LPGUID)RELOC_PTR(lpDest->Value.lpguid);
+            ulCount += sizeof(GUID);
+            break;
+        case PT_STRING8:
+            ulLen = bBadPtr ? 0 : lstrlenA(lpDest->Value.lpszA) + 1u;
+            lpDest->Value.lpszA = (LPSTR)RELOC_PTR(lpDest->Value.lpszA);
+            if (bBadPtr)
+                ulLen = lstrlenA(lpDest->Value.lpszA) + 1u;
+            ulCount += ulLen;
+            break;
+        case PT_UNICODE:
+            ulLen = bBadPtr ? 0 : (lstrlenW(lpDest->Value.lpszW) + 1u) * sizeof(WCHAR);
+            lpDest->Value.lpszW = (LPWSTR)RELOC_PTR(lpDest->Value.lpszW);
+            if (bBadPtr)
+                ulLen = (strlenW(lpDest->Value.lpszW) + 1u) * sizeof(WCHAR);
+            ulCount += ulLen;
+            break;
+        case PT_BINARY:
+            lpDest->Value.bin.lpb = (LPBYTE)RELOC_PTR(lpDest->Value.bin.lpb);
+            ulCount += lpDest->Value.bin.cb;
+            break;
+        default:
+            if (lpDest->ulPropTag & MV_FLAG)
+            {
+                /* Since we have to access the array elements, don't map the
+                 * array unless it is invalid (otherwise, map it at the end)
+                 */
+                if (bBadPtr)
+                    lpDest->Value.MVszA.lppszA = (LPSTR*)RELOC_PTR(lpDest->Value.MVszA.lppszA);
+                
+                switch (PROP_TYPE(lpProps->ulPropTag))
+                {
+                case PT_MV_STRING8:
+                {
+                    ulCount += lpDest->Value.MVszA.cValues * sizeof(char *);
+
+                    for (i = 0; i < lpDest->Value.MVszA.cValues; i++)
+                    {
+                        ULONG ulStrLen = bBadPtr ? 0 : lstrlenA(lpDest->Value.MVszA.lppszA[i]) + 1u;
+                        
+                        lpDest->Value.MVszA.lppszA[i] = (LPSTR)RELOC_PTR(lpDest->Value.MVszA.lppszA[i]);
+                        if (bBadPtr)
+                            ulStrLen = lstrlenA(lpDest->Value.MVszA.lppszA[i]) + 1u;
+                        ulCount += ulStrLen;
+                    }
+                    break;
+                }
+                case PT_MV_UNICODE:
+                {
+                    ulCount += lpDest->Value.MVszW.cValues * sizeof(WCHAR *);
+                
+                    for (i = 0; i < lpDest->Value.MVszW.cValues; i++)
+                    {
+                        ULONG ulStrLen = bBadPtr ? 0 : (strlenW(lpDest->Value.MVszW.lppszW[i]) + 1u) * sizeof(WCHAR);
+                    
+                        lpDest->Value.MVszW.lppszW[i] = (LPWSTR)RELOC_PTR(lpDest->Value.MVszW.lppszW[i]);
+                        if (bBadPtr)
+                            ulStrLen = (strlenW(lpDest->Value.MVszW.lppszW[i]) + 1u) * sizeof(WCHAR);
+                        ulCount += ulStrLen;
+                    }                    
+                    break;
+                }
+                case PT_MV_BINARY:
+                {
+                    ulCount += lpDest->Value.MVszW.cValues * sizeof(SBinary);
+                
+                    for (i = 0; i < lpDest->Value.MVszW.cValues; i++)
+                    {
+                        lpDest->Value.MVbin.lpbin[i].lpb = (LPBYTE)RELOC_PTR(lpDest->Value.MVbin.lpbin[i].lpb);
+                        ulCount += lpDest->Value.MVbin.lpbin[i].cb;
+                    }                    
+                    break;
+                }
+                default:
+                    ulCount += UlPropSize(lpDest);
+                    break;
+                }
+                if (!bBadPtr)
+                    lpDest->Value.MVszA.lppszA = (LPSTR*)RELOC_PTR(lpDest->Value.MVszA.lppszA);
+                break;
+            }
+        }
+        lpDest++;
+    }
+    if (lpCount)
+        *lpCount = ulCount;
+        
     return S_OK;
 }
 
