@@ -1883,6 +1883,86 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
 }
 
 
+static int may_use_dibsection(HDC hdc) {
+    int bitspixel = GetDeviceCaps(hdc,BITSPIXEL)*GetDeviceCaps(hdc,PLANES);
+    if (bitspixel>8)
+	return TRUE;
+    if (bitspixel<=4)
+	return FALSE;
+    return GetDeviceCaps(hdc,94) & 0x10;
+}
+
+static HBITMAP _read_bitmap(LPSTREAM pstm,int x) {
+    HDC			xdc = 0;
+    BITMAPFILEHEADER	bmfh;
+    BITMAPINFOHEADER	bmih;
+    int			bitsperpixel,palspace,longsperline,width,height;
+    LPBITMAPINFOHEADER	bmihc = NULL;
+    int			result = 0;
+    HBITMAP		hbitmap = 0;
+    LPBYTE		bits = NULL;
+
+    if (!SUCCEEDED(IStream_Read ( pstm, &bmfh, sizeof(bmfh), NULL))	||
+    	(bmfh.bfType != (('M'<<8)|'B'))					||
+    	!SUCCEEDED(IStream_Read ( pstm, &bmih, sizeof(bmih), NULL))	||
+    	(bmih.biSize != sizeof(bmih))
+    )
+	return 0;
+
+    bitsperpixel = bmih.biPlanes * bmih.biBitCount;
+    if (bitsperpixel<=8)
+    	palspace = (1<<bitsperpixel)*sizeof(RGBQUAD);
+    else
+    	palspace = 0;
+    width = bmih.biWidth;
+    height = bmih.biHeight;
+    bmihc = (LPBITMAPINFOHEADER)LocalAlloc(LMEM_ZEROINIT,sizeof(bmih)+palspace);
+    memcpy(bmihc,&bmih,sizeof(bmih));
+    longsperline	= ((width*bitsperpixel+31)&~0x1f)>>5;
+    bmihc->biSizeImage	= (longsperline*height)<<2;
+
+    /* read the palette right after the end of the bitmapinfoheader */
+    if (!SUCCEEDED(IStream_Read ( pstm, bmihc+1, palspace, NULL)))
+	goto ret1;
+
+    xdc = GetDC(0);
+    if ((bitsperpixel>1) &&
+	((x!=0xfe) && (!x || may_use_dibsection(xdc)))
+     ) {
+	hbitmap = CreateDIBSection(xdc,(BITMAPINFO*)bmihc,0,(LPVOID*)&bits,0,0);
+	if (!hbitmap)
+	    goto ret1;
+	if (!SUCCEEDED(IStream_Read( pstm, bits, bmihc->biSizeImage, NULL)))
+	    goto ret1;
+	bits = NULL;
+	result = 1;
+    } else {
+	if (bitsperpixel==1)
+	    hbitmap = CreateBitmap(width,height,1,1,NULL);
+	else
+	    hbitmap = CreateCompatibleBitmap(xdc,width,height);
+
+	/* Might be a bit excessive memory use here */
+	bits = (LPBYTE)LocalAlloc(0,longsperline*4*height);
+	if (!SUCCEEDED(IStream_Read ( pstm, bits, longsperline*4*height, NULL)))
+		goto ret1;
+	if (!SetDIBits(xdc,hbitmap,0,height,bits,(BITMAPINFO*)bmihc,0))
+		goto ret1;
+	result = 1;
+    }
+ret1:
+    if (xdc)	ReleaseDC(0,xdc);
+    if (bmihc)	LocalFree((HLOCAL)bmihc);
+    if (bits)	LocalFree((HLOCAL)bits);
+    if (!result) {
+	if (hbitmap) {
+	    DeleteObject(hbitmap);
+	    hbitmap = 0;
+	}
+    }
+    return hbitmap;
+}
+
 /*************************************************************************
  * ImageList_Read [COMCTL32.66]
  *
@@ -1895,31 +1975,67 @@ ImageList_Merge (HIMAGELIST himl1, INT i1, HIMAGELIST himl2, INT i2,
  *     Success: handle to image list
  *     Failure: NULL
  *
- * NOTES
- *     This function can not be implemented yet, because
- *     IStream32::Read is not implemented yet.
- *
  * BUGS
- *     empty stub.
+ *     still not complete functional
  */
-
 HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
 {
-    HRESULT errCode;
-    ULONG ulRead;
-    ILHEAD ilHead;
-    HIMAGELIST himl;
+    ILHEAD	ilHead;
+    HIMAGELIST	himl;
+    HBITMAP	hbmColor=0,hbmMask=0;
+    int		i;
 
+    if (!SUCCEEDED(IStream_Read (pstm, &ilHead, sizeof(ILHEAD), NULL)))
+    	return NULL;
+    if (ilHead.usMagic != (('L' << 8) | 'I'))
+	return NULL;
+    if (ilHead.usVersion != 0x101) /* probably version? */
+	return NULL;
 
-    FIXME("empty stub!\n");
+#if 0
+    FIXME("	ilHead.cCurImage = %d\n",ilHead.cCurImage);
+    FIXME("	ilHead.cMaxImage = %d\n",ilHead.cMaxImage);
+    FIXME("	ilHead.grow = %d\n",ilHead.grow);
+    FIXME("	ilHead.cx = %d\n",ilHead.cx);
+    FIXME("	ilHead.cy = %d\n",ilHead.cy);
+    FIXME("	ilHead.flags = %x\n",ilHead.flags);
+    FIXME("	ilHead.ovls[0] = %d\n",ilHead.ovls[0]);
+    FIXME("	ilHead.ovls[1] = %d\n",ilHead.ovls[1]);
+    FIXME("	ilHead.ovls[2] = %d\n",ilHead.ovls[2]);
+    FIXME("	ilHead.ovls[3] = %d\n",ilHead.ovls[3]);
+#endif
 
-    errCode = IStream_Read (pstm, &ilHead, sizeof(ILHEAD), &ulRead);
-    if (errCode != S_OK)
-    return NULL;
+    hbmColor = _read_bitmap(pstm,ilHead.flags & 0xfe);
+    if (!hbmColor)
+	return NULL;
+    if (ilHead.flags & 1) {
+	hbmMask = _read_bitmap(pstm,0);
+	if (!hbmMask) {
+	    DeleteObject(hbmColor);
+	    return NULL;
+	}
+    }
 
-    FIXME("Magic: 0x%x\n", ilHead.usMagic);
+    himl = ImageList_Create (
+		    ilHead.cx,
+		    ilHead.cy,
+		    ilHead.flags,
+		    1,		/* initial */
+		    ilHead.grow
+    );
+    if (!himl) {
+	DeleteObject(hbmColor);
+	DeleteObject(hbmMask);
+	return NULL;
+   }
 
-    himl = ImageList_Create (32, 32, ILD_NORMAL, 2, 2);
+    himl->hbmImage = hbmColor;
+    himl->hbmMask = hbmMask;
+
+    ImageList_SetBkColor(himl,ilHead.bkcolor);
+
+    for (i=0;i<4;i++)
+    	ImageList_SetOverlayImage(himl,ilHead.ovls[i],i+1);
 
     return himl;
 }
