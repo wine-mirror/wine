@@ -1157,6 +1157,13 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
                             /* and bump it on to next */
                             SendMessageA( hwndDlg, WM_NEXTDLGCTL, 0, 0);
                         }
+                        else if (dlgCode & DLGC_BUTTON)
+                        {
+                            /* send command message as from the control */
+                            SendMessageA( hwndDlg, WM_COMMAND, 
+                                MAKEWPARAM( LOWORD(wndPtr->wIDmenu), BN_CLICKED ),
+                                (LPARAM)hwndControl );
+                        }
 
                         RetVal = TRUE;
 			WIN_ReleaseWndPtr(wndPtr);
