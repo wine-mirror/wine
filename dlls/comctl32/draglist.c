@@ -18,7 +18,7 @@
 #include "debug.h"
 
 
-BOOL32 MakeDragList (HWND32 hwndLB)
+BOOL32 WINAPI MakeDragList (HWND32 hwndLB)
 {
     FIXME (commctrl, "(0x%x)\n", hwndLB);
 
@@ -27,7 +27,7 @@ BOOL32 MakeDragList (HWND32 hwndLB)
 }
 
 
-VOID DrawInsert (HWND32 hwndParent, HWND32 hwndLB, INT32 nItem)
+VOID WINAPI DrawInsert (HWND32 hwndParent, HWND32 hwndLB, INT32 nItem)
 {
     FIXME (commctrl, "(0x%x 0x%x %d)\n", hwndParent, hwndLB, nItem);
 
@@ -35,7 +35,7 @@ VOID DrawInsert (HWND32 hwndParent, HWND32 hwndLB, INT32 nItem)
 }
 
 
-INT32 LBItemFromPt (HWND32 hwndLB, POINT32 pt, BOOL32 bAutoScroll)
+INT32 WINAPI LBItemFromPt (HWND32 hwndLB, POINT32 pt, BOOL32 bAutoScroll)
 {
     FIXME (commctrl, "(0x%x %dx %d %s)\n",
 	   hwndLB, pt.x, pt.y, bAutoScroll ? "TRUE" : "FALSE");
