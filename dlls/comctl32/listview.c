@@ -54,7 +54,7 @@ DEFAULT_DEBUG_CHANNEL(listview)
  */
 
 /* maximum size of a label */
-#define DISP_TEXT_SIZE 128
+#define DISP_TEXT_SIZE 512
 
 /* padding for items in list and small icon display modes */
 #define WIDTH_PADDING 12
@@ -99,6 +99,7 @@ HWND CreateEditLabel(LPCSTR text, DWORD style, INT x, INT y,
 /* 
  * forward declarations 
  */
+static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal);
 static INT LISTVIEW_HitTestItem(HWND, LPLVHITTESTINFO);
 static INT LISTVIEW_GetCountPerRow(HWND);
 static INT LISTVIEW_GetCountPerColumn(HWND);
@@ -1777,7 +1778,7 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
   lvItem.iSubItem = nSubItem;
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
-  ListView_GetItemA(hwnd, &lvItem);
+  LISTVIEW_GetItemA(hwnd, &lvItem, TRUE);
 
   /* set item colors */
   SetBkColor(hdc, infoPtr->clrTextBk);
@@ -1821,7 +1822,7 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem)
   lvItem.iSubItem = 0;
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
-  ListView_GetItemA(hwnd, &lvItem);
+  LISTVIEW_GetItemA(hwnd, &lvItem, TRUE);
 
   /* state icons */
   if (infoPtr->himlState != NULL)
@@ -1942,7 +1943,7 @@ bottom=%d)\n", hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right,
   lvItem.iSubItem = 0;
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
-  ListView_GetItemA(hwnd, &lvItem);
+  LISTVIEW_GetItemA(hwnd, &lvItem, TRUE);
 
   if (lvItem.state & LVIS_SELECTED)
   {
@@ -3151,7 +3152,7 @@ static LRESULT LISTVIEW_FindItem(HWND hwnd, INT nStart,
         
         lvItem.iItem = nItem;
         lvItem.iSubItem = 0;
-        if (ListView_GetItemA(hwnd, &lvItem) != FALSE)
+        if (LISTVIEW_GetItemA(hwnd, &lvItem, TRUE) != FALSE)
         {
           if (lvItem.mask & LVIF_TEXT)
           {
@@ -3530,196 +3531,150 @@ static LRESULT LISTVIEW_GetImageList(HWND hwnd, INT nImageList)
  * PARAMETER(S):
  * [I] HWND : window handle
  * [IO] LPLVITEMA : item info
+ * [I] internal : if true then we will use tricks that avoid copies
+ *               but are not compatible with the regular interface
  * 
  * RETURN:
  *   SUCCESS : TRUE 
  *   FAILURE : FALSE
  */
-static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem)
+static LRESULT LISTVIEW_GetItemA(HWND hwnd, LPLVITEMA lpLVItem, BOOL internal)
 {
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0);
   LONG lCtrlId = GetWindowLongA(hwnd, GWL_ID);
-  BOOL bResult = FALSE;
   NMLVDISPINFOA dispInfo;
   LISTVIEW_SUBITEM *lpSubItem;
   LISTVIEW_ITEM *lpItem;
+  INT* piImage;
+  LPSTR* ppszText;
   HDPA hdpaSubItems;
+  /* In the following:
+   * lpLVItem describes the information requested by the user
+   * lpItem/lpSubItem is what we have
+   * dispInfo is a structure we use to request the missing 
+   *     information from the application
+   */
 
   TRACE("(hwnd=%x, lpLVItem=%p)\n", hwnd, lpLVItem);
 
-  if (lpLVItem != NULL)
+  if ((lpLVItem == NULL) ||
+      (lpLVItem->iItem < 0) ||
+      (lpLVItem->iItem >= GETITEMCOUNT(infoPtr))
+     )
+    return FALSE;
+
+  hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
+  if (hdpaSubItems == NULL)
+    return FALSE;
+
+  lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
+  if (lpItem == NULL)
+    return FALSE;
+
+  ZeroMemory(&dispInfo, sizeof(NMLVDISPINFOA));
+  if (lpLVItem->iSubItem == 0)
   {
-    if ((lpLVItem->iItem >= 0) && (lpLVItem->iItem < GETITEMCOUNT(infoPtr)))
+    piImage=&lpItem->iImage;
+    ppszText=&lpItem->pszText;
+    if ((infoPtr->uCallbackMask != 0) && (lpLVItem->mask & LVIF_STATE))
+    {        
+      dispInfo.item.mask |= LVIF_STATE;
+      dispInfo.item.stateMask = infoPtr->uCallbackMask; 
+    }
+  }
+  else
+  {
+    lpSubItem = LISTVIEW_GetSubItemPtr(hdpaSubItems, lpLVItem->iSubItem);
+    if (lpSubItem != NULL)
     {
-      ZeroMemory(&dispInfo, sizeof(NMLVDISPINFOA));
-      hdpaSubItems = (HDPA)DPA_GetPtr(infoPtr->hdpaItems, lpLVItem->iItem);
-      if (hdpaSubItems != NULL)
-      {
-        lpItem = (LISTVIEW_ITEM *)DPA_GetPtr(hdpaSubItems, 0);
-        if (lpItem != NULL)
-        {
-          bResult = TRUE;
-          if (lpLVItem->iSubItem == 0)
-          {
-            if ((lpItem->iImage == I_IMAGECALLBACK) &&
-                (lpLVItem->mask & LVIF_IMAGE))
-            {
-              dispInfo.item.mask |= LVIF_IMAGE;
-            }
-            
-            if ((lpItem->pszText == LPSTR_TEXTCALLBACKA) && 
-                (lpLVItem->mask & LVIF_TEXT))
-            {
-              dispInfo.item.mask |= LVIF_TEXT;
-              ZeroMemory(lpLVItem->pszText, sizeof(CHAR)*lpLVItem->cchTextMax);
-              dispInfo.item.pszText = lpLVItem->pszText;
-              dispInfo.item.cchTextMax = lpLVItem->cchTextMax;
-            }
-            
-            if ((infoPtr->uCallbackMask != 0) && (lpLVItem->mask & LVIF_STATE))
-            {        
-              dispInfo.item.mask |= LVIF_STATE;
-              dispInfo.item.stateMask = infoPtr->uCallbackMask; 
-            }
-            
-            if (dispInfo.item.mask != 0)
-            {
-              dispInfo.hdr.hwndFrom = hwnd;
-              dispInfo.hdr.idFrom = lCtrlId;
-              dispInfo.hdr.code = LVN_GETDISPINFOA;
-              dispInfo.item.iItem = lpLVItem->iItem;
-              dispInfo.item.iSubItem = 0;
-              dispInfo.item.lParam = lpItem->lParam;
-              ListView_Notify(GetParent(hwnd), lCtrlId, &dispInfo);
-            }
-            
-            if (dispInfo.item.mask & LVIF_IMAGE)
-            {
-              lpLVItem->iImage = dispInfo.item.iImage;
-            }
-            else if (lpLVItem->mask & LVIF_IMAGE)
-            {
-              lpLVItem->iImage = lpItem->iImage;
-            }
-            
-            if (dispInfo.item.mask & LVIF_TEXT)
-            {
-              if (dispInfo.item.mask & LVIF_DI_SETITEM)
-              {
-                Str_SetPtrA(&lpItem->pszText, dispInfo.item.pszText);
-              }
-              strncpy(lpLVItem->pszText, dispInfo.item.pszText, lpLVItem->cchTextMax);
-              lpLVItem->pszText[lpLVItem->cchTextMax-1]='\0';
-            }
-            else if (lpLVItem->mask & LVIF_TEXT)
-            {
-              strncpy(lpLVItem->pszText, lpItem->pszText, lpLVItem->cchTextMax);
-              lpLVItem->pszText[lpLVItem->cchTextMax-1]='\0';
-            }
-            
-            if (dispInfo.item.mask & LVIF_STATE)
-            {
-              lpLVItem->state = lpItem->state;
-              lpLVItem->state &= ~dispInfo.item.stateMask;
-              lpLVItem->state |= (dispInfo.item.state & 
-                                  dispInfo.item.stateMask);
-            }
-            else if (lpLVItem->mask & LVIF_STATE)
-            {
-              lpLVItem->state = lpItem->state & lpLVItem->stateMask;
-            }
-
-            if (lpLVItem->mask & LVIF_PARAM)
-            {
-              lpLVItem->lParam = lpItem->lParam;
-            }
-            
-            if (lpLVItem->mask & LVIF_INDENT)
-            {
-              lpLVItem->iIndent = lpItem->iIndent;
-            }
-          }
-          else
-          {
-            lpSubItem = LISTVIEW_GetSubItemPtr(hdpaSubItems, 
-                                               lpLVItem->iSubItem);
-            if (lpSubItem != NULL)
-            {
-              if ((lpSubItem->iImage == I_IMAGECALLBACK) &&
-                  (lpLVItem->mask & LVIF_IMAGE))
-              {
-                dispInfo.item.mask |= LVIF_IMAGE;
-              }
-              
-              if ((lpSubItem->pszText == LPSTR_TEXTCALLBACKA) && 
-                  (lpLVItem->mask & LVIF_TEXT))
-              {
-                dispInfo.item.mask |= LVIF_TEXT;
-                ZeroMemory(lpLVItem->pszText, 
-                           sizeof(CHAR)*lpLVItem->cchTextMax);
-                dispInfo.item.pszText = lpLVItem->pszText;
-                dispInfo.item.cchTextMax = lpLVItem->cchTextMax;
-              }
-            }
-            else
-            {
-              if (lpLVItem->mask & LVIF_IMAGE)
-              {
-                dispInfo.item.mask |= LVIF_IMAGE;
-              }
-          
-              if (lpLVItem->mask & LVIF_TEXT)
-              {
-                dispInfo.item.mask |= LVIF_TEXT;
-                ZeroMemory(lpLVItem->pszText, 
-                           sizeof(CHAR)*lpLVItem->cchTextMax);
-                dispInfo.item.pszText = lpLVItem->pszText;
-                dispInfo.item.cchTextMax = lpLVItem->cchTextMax;
-              }
-            }
-
-            if (dispInfo.item.mask != 0)
-            {
-              dispInfo.hdr.hwndFrom = hwnd;
-              dispInfo.hdr.idFrom = lCtrlId;
-              dispInfo.hdr.code = LVN_GETDISPINFOA;
-              dispInfo.item.iItem = lpLVItem->iItem;
-              dispInfo.item.iSubItem = lpLVItem->iSubItem;
-              dispInfo.item.lParam = lpItem->lParam;
-              ListView_Notify(GetParent(hwnd), lCtrlId, &dispInfo);
-            }
-
-            if (dispInfo.item.mask & LVIF_IMAGE)
-            {
-              lpLVItem->iImage = dispInfo.item.iImage;
-            }
-            else if (lpLVItem->mask & LVIF_IMAGE)
-            {
-              lpLVItem->iImage = lpItem->iImage;
-            }
-
-            if (dispInfo.item.mask & LVIF_TEXT)
-            {
-              if (dispInfo.item.mask & LVIF_DI_SETITEM)
-              {
-                if (lpSubItem)
-                  Str_SetPtrA(&lpSubItem->pszText, dispInfo.item.pszText);
-              }
-              strncpy(lpLVItem->pszText, dispInfo.item.pszText, lpLVItem->cchTextMax);
-              lpLVItem->pszText[lpLVItem->cchTextMax-1]='\0';
-            }
-            else if (lpLVItem->mask & LVIF_TEXT)
-            {
-              strncpy(lpLVItem->pszText, lpSubItem->pszText, lpLVItem->cchTextMax);
-              lpLVItem->pszText[lpLVItem->cchTextMax-1]='\0';
-            }
-          }
-        }
-      }
+      piImage=&lpItem->iImage;
+      ppszText=&lpItem->pszText;
+    }
+    else
+    {
+      piImage=NULL;
+      ppszText=NULL;
     }
   }
 
-  return bResult;
+  if ((lpLVItem->mask & LVIF_IMAGE) &&
+      ((piImage==NULL) || (*piImage == I_IMAGECALLBACK)))
+  {
+    dispInfo.item.mask |= LVIF_IMAGE;
+  }
+
+  if ((lpLVItem->mask & LVIF_TEXT) &&
+      ((ppszText==NULL) || (*ppszText == LPSTR_TEXTCALLBACKA)))
+  {
+    dispInfo.item.mask |= LVIF_TEXT;
+    dispInfo.item.pszText = lpLVItem->pszText;
+    dispInfo.item.cchTextMax = lpLVItem->cchTextMax;
+  }
+
+  if (dispInfo.item.mask != 0)
+  {
+    /* We don't have all the requested info, query the application */
+    dispInfo.hdr.hwndFrom = hwnd;
+    dispInfo.hdr.idFrom = lCtrlId;
+    dispInfo.hdr.code = LVN_GETDISPINFOA;
+    dispInfo.item.iItem = lpLVItem->iItem;
+    dispInfo.item.iSubItem = lpLVItem->iSubItem;
+    dispInfo.item.lParam = lpItem->lParam;
+    ListView_Notify(GetParent(hwnd), lCtrlId, &dispInfo);
+  }
+
+  if (dispInfo.item.mask & LVIF_IMAGE)
+  {
+    lpLVItem->iImage = dispInfo.item.iImage;
+  }
+  else if (lpLVItem->mask & LVIF_IMAGE)
+  {
+    lpLVItem->iImage = *piImage;
+  }
+
+  if (dispInfo.item.mask & LVIF_TEXT)
+  {
+    if ((dispInfo.item.mask & LVIF_DI_SETITEM) && (ppszText != NULL))
+    {
+      Str_SetPtrA(ppszText, dispInfo.item.pszText);
+    }
+    /* Here lpLVItem->pszText==dispInfo.item.pszText so a copy is unnecessary */
+  }
+  else if (lpLVItem->mask & LVIF_TEXT)
+  {
+    if (internal==TRUE)
+    {
+      lpLVItem->pszText=*ppszText;
+    } else {
+      lstrcpynA(lpLVItem->pszText, *ppszText, lpLVItem->cchTextMax);
+    }
+  }
+
+  if (lpLVItem->iSubItem == 0)
+  {
+    if (dispInfo.item.mask & LVIF_STATE)
+    {
+      lpLVItem->state = lpItem->state;
+      lpLVItem->state &= ~dispInfo.item.stateMask;
+      lpLVItem->state |= (dispInfo.item.state & dispInfo.item.stateMask);
+    }
+    else if (lpLVItem->mask & LVIF_STATE)
+    {
+      lpLVItem->state = lpItem->state & lpLVItem->stateMask;
+    }
+
+    if (lpLVItem->mask & LVIF_PARAM)
+    {
+      lpLVItem->lParam = lpItem->lParam;
+    }
+
+    if (lpLVItem->mask & LVIF_INDENT)
+    {
+      lpLVItem->iIndent = lpItem->iIndent;
+    }
+  }
+
+  return TRUE;
 }
 
 /* LISTVIEW_GetItemW */
@@ -4207,7 +4162,7 @@ static INT LISTVIEW_GetLabelWidth(HWND hwnd, INT nItem)
   lvItem.iItem = nItem;
   lvItem.cchTextMax = DISP_TEXT_SIZE;
   lvItem.pszText = szDispText;
-  if (ListView_GetItemA(hwnd, &lvItem) != FALSE)
+  if (LISTVIEW_GetItemA(hwnd, &lvItem, TRUE) != FALSE)
   {
     nLabelWidth = ListView_GetStringWidthA(hwnd, lvItem.pszText); 
   }
@@ -4268,7 +4223,7 @@ static LRESULT LISTVIEW_GetItemState(HWND hwnd, INT nItem, UINT uMask)
     lvItem.iItem = nItem;
     lvItem.stateMask = uMask;
     lvItem.mask = LVIF_STATE;
-    if (ListView_GetItemA(hwnd, &lvItem) != FALSE)
+    if (LISTVIEW_GetItemA(hwnd, &lvItem, TRUE) != FALSE)
     {
       uState = lvItem.state;
     }
@@ -4301,7 +4256,7 @@ static LRESULT LISTVIEW_GetItemTextA(HWND hwnd, INT nItem, LPLVITEMA lpLVItem)
     {
       lpLVItem->mask = LVIF_TEXT;
       lpLVItem->iItem = nItem;
-      if (ListView_GetItemA(hwnd, lpLVItem) != FALSE)
+      if (LISTVIEW_GetItemA(hwnd, lpLVItem, FALSE) != FALSE)
       {
         nLength = lstrlenA(lpLVItem->pszText);
       }
@@ -7085,7 +7040,7 @@ static LRESULT WINAPI LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 /*	case LVM_GETISEARCHSTRING: */
 
   case LVM_GETITEMA:
-    return LISTVIEW_GetItemA(hwnd, (LPLVITEMA)lParam);
+    return LISTVIEW_GetItemA(hwnd, (LPLVITEMA)lParam, FALSE);
 
 /*	case LVM_GETITEMW: */
 
