@@ -35,6 +35,7 @@
 #include "winpos.h"
 #include "file.h"
 #include "windef.h"
+#include "winreg.h"
 #include "x11drv.h"
 #include "shellapi.h"
 
@@ -727,7 +728,19 @@ static Atom EVENT_SelectionRequest_STRING( Display *display, Window requestor,
     int xRc;
 
     if(text_cp == (UINT)-1)
-	text_cp = PROFILE_GetWineIniInt("x11drv", "TextCP", CP_ACP);
+    {
+	HKEY hkey;
+	/* default value */
+	text_cp = CP_ACP;
+	if(!RegOpenKeyA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Wine\\Config\\x11drv", &hkey))
+	{
+	    char buf[20];
+	    DWORD type, count = sizeof(buf);
+	    if(!RegQueryValueExA(hkey, "TextCP", 0, &type, buf, &count))
+		text_cp = atoi(buf);
+	    RegCloseKey(hkey);
+	  }
+    }
 
     /*
      * Map the requested X selection property type atom name to a
