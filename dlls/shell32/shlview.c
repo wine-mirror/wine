@@ -1383,7 +1383,7 @@ static LRESULT ShellView_OnNotify(IShellViewImpl * This, UINT CtlID, LPNMHDR lpn
 	    break;
 
 	  default:
-	    FIXME("-- %p WM_COMMAND %x unhandled\n", This, lpnmh->code);
+	    TRACE("-- %p WM_COMMAND %x unhandled\n", This, lpnmh->code);
 	    break;
 	}
 	return 0;
