@@ -2780,6 +2780,7 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
   LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongA(hwnd, 0); 
   CHAR szDispText[DISP_TEXT_SIZE];
   LVITEMA lvItem;
+  UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
 
   TRACE("(hwnd=%x, hdc=%x, nItem=%d, nSubItem=%d)\n", hwnd, hdc, 
         nItem, nSubItem);
@@ -2802,11 +2803,21 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
   }
   else
   {
-    SetBkColor(hdc, infoPtr->clrTextBk);
+    if ( (infoPtr->clrTextBk == CLR_DEFAULT) || (infoPtr->clrTextBk == CLR_NONE) )
+    {
+       SetBkMode(hdc, TRANSPARENT);
+       textoutOptions &= ~ETO_OPAQUE;
+   }
+   else
+   {
+      SetBkMode(hdc, OPAQUE);
+      SetBkColor(hdc, infoPtr->clrTextBk);
+   }
+
     SetTextColor(hdc, infoPtr->clrText);
   }
- 
-  ExtTextOutA(hdc, rcItem.left, rcItem.top, ETO_OPAQUE | ETO_CLIPPED, 
+
+  ExtTextOutA(hdc, rcItem.left, rcItem.top, textoutOptions, 
               &rcItem, lvItem.pszText, lstrlenA(lvItem.pszText), NULL);
 
   if (Selected)
@@ -2818,13 +2829,13 @@ static VOID LISTVIEW_DrawSubItem(HWND hwnd, HDC hdc, INT nItem, INT nSubItem,
       CopyRect(&rec,&rcItem);
       rec.left = rec.right;
       rec.right = rec.left+REPORT_MARGINX;
-      ExtTextOutA(hdc, rec.left , rec.top, ETO_OPAQUE | ETO_CLIPPED, 
+      ExtTextOutA(hdc, rec.left , rec.top, textoutOptions,
         &rec, NULL, 0, NULL);
     }
     CopyRect(&rec,&rcItem);
     rec.right = rec.left;
     rec.left = rec.left - REPORT_MARGINX;
-    ExtTextOutA(hdc, rec.left , rec.top, ETO_OPAQUE | ETO_CLIPPED, 
+    ExtTextOutA(hdc, rec.left , rec.top, textoutOptions,
     &rec, NULL, 0, NULL);
   }
 }
@@ -2853,6 +2864,8 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
   DWORD dwBkColor;
   DWORD dwTextColor,dwTextX;
   BOOL bImage = FALSE;
+  INT   iBkMode = -1;
+  UINT  textoutOptions = ETO_OPAQUE | ETO_CLIPPED;
 
 
   TRACE("(hwnd=%x, hdc=%x, nItem=%d)\n", hwnd, hdc, nItem);
@@ -2940,7 +2953,18 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
   else
   {
     /* set item colors */
-    dwBkColor = SetBkColor(hdc, infoPtr->clrTextBk);
+    if ( (infoPtr->clrTextBk == CLR_DEFAULT) || (infoPtr->clrTextBk == CLR_NONE) )
+    {
+      dwBkColor = GetBkColor(hdc);
+      iBkMode = SetBkMode(hdc, TRANSPARENT);
+      textoutOptions &= ~ETO_OPAQUE;
+    }
+    else
+    {
+      dwBkColor = SetBkColor(hdc, infoPtr->clrTextBk);
+      iBkMode = SetBkMode(hdc, OPAQUE);
+    }
+
     dwTextColor = SetTextColor(hdc, infoPtr->clrText);
     /* set raster mode */
     nMixMode = SetROP2(hdc, R2_COPYPEN);
@@ -2959,7 +2983,8 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
   dwTextX = rcItem.left + 1;
   if (bImage)
     dwTextX += IMAGE_PADDING;
-  ExtTextOutA(hdc, dwTextX, rcItem.top, ETO_OPAQUE | ETO_CLIPPED,
+
+  ExtTextOutA(hdc, dwTextX, rcItem.top, textoutOptions,
               &rcItem, lvItem.pszText, lstrlenA(lvItem.pszText), NULL);
 
   if ((FullSelect)&&(Header_GetItemCount(infoPtr->hwndHeader) > 1))
@@ -2969,7 +2994,7 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
     CopyRect(&rec,&rcItem);
     rec.left = rec.right;
     rec.right = rec.left+REPORT_MARGINX;
-    ExtTextOutA(hdc, rec.left , rec.top, ETO_OPAQUE | ETO_CLIPPED, 
+    ExtTextOutA(hdc, rec.left , rec.top, textoutOptions, 
     &rec, NULL, 0, NULL);
   }
   
@@ -2979,8 +3004,10 @@ static VOID LISTVIEW_DrawItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem, BOOL F
   if (nMixMode != 0)
   {
     SetROP2(hdc, R2_COPYPEN);
-    SetBkColor(hdc, infoPtr->clrTextBk);
-    SetTextColor(hdc, infoPtr->clrText);
+    SetBkColor(hdc, dwBkColor);
+    SetTextColor(hdc, dwTextColor);
+    if (iBkMode != -1)
+      SetBkMode(hdc, iBkMode);
   }
 }
 
@@ -3007,6 +3034,7 @@ static VOID LISTVIEW_DrawLargeItem(HWND hwnd, HDC hdc, INT nItem, RECT rcItem,
   INT nLabelWidth, rcWidth;
   TEXTMETRICA tm;
   LVITEMA lvItem;
+  UINT textoutOptions = ETO_CLIPPED | ETO_OPAQUE;
 
   TRACE("(hwnd=%x, hdc=%x, nItem=%d, left=%d, top=%d, right=%d, \
 bottom=%d)\n", hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right, 
@@ -3033,7 +3061,17 @@ bottom=%d)\n", hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right,
   else
   {
     /* set item colors */
-    SetBkColor(hdc, infoPtr->clrTextBk);
+    if ( (infoPtr->clrTextBk == CLR_DEFAULT) || (infoPtr->clrTextBk == CLR_NONE) )
+    {
+       SetBkMode(hdc, TRANSPARENT);
+       textoutOptions &= ~ETO_OPAQUE;
+    }
+    else
+    {
+      SetBkMode(hdc, OPAQUE);
+      SetBkColor(hdc, infoPtr->clrTextBk);
+    }
+
     SetTextColor(hdc, infoPtr->clrText);
     /* set raster mode */
     SetROP2(hdc, R2_COPYPEN);
@@ -3102,7 +3140,8 @@ bottom=%d)\n", hwnd, hdc, nItem, rcItem.left, rcItem.top, rcItem.right,
 
   /* draw label */  
   rcItem.bottom = rcItem.top + tm.tmHeight + HEIGHT_PADDING; 
-  ExtTextOutA(hdc, rcItem.left + CAPTION_BORDER, rcItem.top, ETO_OPAQUE | ETO_CLIPPED, 
+
+  ExtTextOutA(hdc, rcItem.left + CAPTION_BORDER, rcItem.top, textoutOptions, 
               &rcItem, lvItem.pszText, lstrlenA(lvItem.pszText), NULL);
         
 
@@ -7417,7 +7456,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
   /* initialize color information  */
   infoPtr->clrBk = GetSysColor(COLOR_WINDOW);
   infoPtr->clrText = GetSysColor(COLOR_WINDOWTEXT);
-  infoPtr->clrTextBk = GetSysColor(COLOR_WINDOW); 
+  infoPtr->clrTextBk = CLR_DEFAULT;
 
   /* set default values */
   infoPtr->uCallbackMask = 0;
