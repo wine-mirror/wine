@@ -501,7 +501,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
         r = 0;
 
         /* output a unicode string */
-        if( ( flags.Format == 's' && flags.WideString ) ||
+        if( ( flags.Format == 's' && (flags.WideString || flags.IntegerLength == 'l' )) ||
             ( !out->unicode && flags.Format == 'S' ) ||
             ( out->unicode && flags.Format == 's' ) )
         {

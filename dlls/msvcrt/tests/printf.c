@@ -131,6 +131,16 @@ static void test_sprintf( void )
     ok(!strcmp(buffer,"-s"), "failed\n");
     ok( r==2, "return count wrong\n");
 
+    format = "%ls";
+    r = sprintf(buffer, format, wide );
+    ok(!strcmp(buffer,"wide"), "failed\n");
+    ok( r==4, "return count wrong\n");
+
+    format = "%Ls";
+    r = sprintf(buffer, format, "not wide" );
+    ok(!strcmp(buffer,"not wide"), "failed\n");
+    ok( r==8, "return count wrong\n");
+
     format = "%b";
     r = sprintf(buffer, format);
     ok(!strcmp(buffer,"b"), "failed\n");
