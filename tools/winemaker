@@ -242,6 +242,10 @@ my $TF_NOMFC=8;
 my $TF_NODLLS=16;
 
 ##
+# --nomsvcrt option: Do not link with msvcrt
+my $TF_NOMSVCRT=32;
+
+##
 # Initialize a target:
 # - set the target type to TT_SETTINGS, i.e. no real target will
 #   be generated.
@@ -468,6 +472,8 @@ sub source_set_options($$)
       @$target[$T_FLAGS]|=$TF_NOMFC;
     } elsif ($option =~ /^--nodlls/) {
       @$target[$T_FLAGS]|=$TF_NODLLS;
+    } elsif ($option =~ /^--nomsvcrt/) {
+      @$target[$T_FLAGS]|=$TF_NOMSVCRT;
     } else {
       print STDERR "error: unknown option \"$option\"\n";
       return 0;
@@ -804,6 +810,9 @@ sub source_scan_directory($$$$)
       @$target[$T_DLLS]=[];
       @$target[$T_LIBRARIES]=[];
     }
+    if ((@$target[$T_FLAGS] & $TF_NOMSVCRT) == 0) {
+        push @{@$target[$T_DLLS]},"msvcrt";
+    }
     push @{@$project[$P_TARGETS]},$target;
 
     # Ask for target-specific options
@@ -903,6 +912,9 @@ sub source_scan_directory($$$$)
 
   if (@$project_settings[$T_FLAGS] & $TF_MFC) {
     push @{@$project_settings[$T_INCLUDE_PATH]},"\$(MFC_INCLUDE_PATH)";
+  }
+  if ((@$project_settings[$T_FLAGS] & $TF_NOMSVCRT)==0) {
+    push @{@$project_settings[$T_INCLUDE_PATH]},"-I\$(WINE_INCLUDE_ROOT)/msvcrt";
   }
   # The sources that did not match, if any, go to the extra
   # source list of the project settings
@@ -2167,7 +2179,7 @@ sub usage()
   print STDERR "                 [--guiexe|--windows|--cuiexe|--console|--dll]\n";
   print STDERR "                 [--wrap|--nowrap] [--mfc|--nomfc]\n";
   print STDERR "                 [-Dmacro[=defn]] [-Idir] [-Pdir] [-idll] [-Ldir] [-llibrary]\n";
-  print STDERR "                 [--nodlls] [--interactive] [--single-target name]\n";
+  print STDERR "                 [--nodlls] [--nomsvcrt] [--interactive] [--single-target name]\n";
   print STDERR "                 [--generated-files|--nogenerated-files] [--nogenerated-specs]\n";
   print STDERR "                 work_directory\n";
   print STDERR "\nWinemaker is designed to recursively convert all the Windows sources found in\n";
@@ -2250,6 +2262,8 @@ while (@ARGV>0) {
     $needs_mfc=0;
   } elsif ($arg eq "--nodlls") {
     $opt_flags|=$TF_NODLLS;
+  } elsif ($arg eq "--nomsvcrt") {
+    $opt_flags|=$TF_NOMSVCRT;
 
   # Catch errors
   } else {
