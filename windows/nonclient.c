@@ -45,26 +45,23 @@ static HBITMAP16 hbitmapRestoreD = 0;
   /* Some useful macros */
 #define HAS_DLGFRAME(style,exStyle) \
     (((exStyle) & WS_EX_DLGMODALFRAME) || \
-     (((style) & WS_DLGFRAME) && !((style) & WS_BORDER)))
+     (((style) & WS_DLGFRAME) && !((style) & WS_THICKFRAME)))
 
-#define HAS_THICKFRAME(style) \
+#define HAS_THICKFRAME(style,exStyle) \
     (((style) & WS_THICKFRAME) && \
-     !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
+     !((exStyle) & WS_EX_DLGMODALFRAME))
 
-#define HAS_FIXEDFRAME(style,exStyle) \
-   (((((exStyle) & WS_EX_DLGMODALFRAME) || \
-      ((style) & WS_DLGFRAME)) && ((style) & WS_BORDER)) && \
-     !((style) & WS_THICKFRAME))
+#define HAS_THINFRAME(style) \
+    (((style) & WS_BORDER) || !((style) & (WS_CHILD | WS_POPUP)))
 
-/* win31 style (simple border) in win95 look */
-#define HAS_CLASSICBORDER(style,exStyle) \
-    (!((exStyle) & WS_EX_STATICEDGE) && !((exStyle) & WS_EX_CLIENTEDGE) && \
-    !((style) & WS_THICKFRAME) && !((style) & WS_DLGFRAME) && \
-    ((style) & WS_BORDER))
+#define HAS_BIGFRAME(style,exStyle) \
+    (((style) & (WS_THICKFRAME | WS_DLGFRAME)) || \
+     ((exStyle) & WS_EX_DLGMODALFRAME))
 
-#define HAS_SIZEFRAME(style) \
-    (((style) & WS_THICKFRAME) && \
-     !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
+#define HAS_ANYFRAME(style,exStyle) \
+    (((style) & (WS_THICKFRAME | WS_DLGFRAME | WS_BORDER)) || \
+     ((exStyle) & WS_EX_DLGMODALFRAME) || \
+     !((style) & (WS_CHILD | WS_POPUP)))
 
 #define HAS_MENU(w)  (!((w)->dwStyle & WS_CHILD) && ((w)->wIDmenu != 0))
 
@@ -95,15 +92,14 @@ static void NC_AdjustRect( LPRECT16 rect, DWORD style, BOOL menu,
           ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
            (exStyle & WS_EX_DLGMODALFRAME))))
     {
-        if (HAS_DLGFRAME( style, exStyle ))
-            InflateRect16(rect, GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) );
+        if (HAS_THICKFRAME( style, exStyle ))
+            InflateRect16( rect, GetSystemMetrics(SM_CXFRAME), GetSystemMetrics(SM_CYFRAME) );
         else
-        {
-            if (HAS_THICKFRAME(style))
-                InflateRect16( rect, GetSystemMetrics(SM_CXFRAME), GetSystemMetrics(SM_CYFRAME) );
-            if (style & WS_BORDER)
-                InflateRect16( rect, GetSystemMetrics(SM_CXBORDER), GetSystemMetrics(SM_CYBORDER));
-        }
+        if (HAS_DLGFRAME( style, exStyle ))
+            InflateRect16( rect, GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) );
+        else
+        if (HAS_THINFRAME( style ))
+            InflateRect16( rect, GetSystemMetrics(SM_CXBORDER), GetSystemMetrics(SM_CYBORDER));
 
         if ((style & WS_CAPTION) == WS_CAPTION)
             rect->top -= GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYBORDER);
@@ -112,13 +108,13 @@ static void NC_AdjustRect( LPRECT16 rect, DWORD style, BOOL menu,
 
     if (style & WS_VSCROLL) {
       rect->right  += GetSystemMetrics(SM_CXVSCROLL) - 1;
-      if(!(style & WS_BORDER))
+      if(!HAS_ANYFRAME( style, exStyle ))
 	 rect->right++;
     }
 
     if (style & WS_HSCROLL) {
       rect->bottom += GetSystemMetrics(SM_CYHSCROLL) - 1;
-      if(!(style & WS_BORDER))
+      if(!HAS_ANYFRAME( style, exStyle ))
 	 rect->bottom++;
     }
 }
@@ -149,6 +145,9 @@ static void NC_AdjustRect( LPRECT16 rect, DWORD style, BOOL menu,
  *        Split NC_AdjustRect95 into NC_AdjustRectOuter95 and
  *        NC_AdjustRectInner95 and added handling of Win95 styles.
  *
+ *     28-Jul-1999 Ove Kåven (ovek@arcticnet.no)
+ *        Streamlined window style checks.
+ *
  *****************************************************************************/
 
 static void
@@ -161,17 +160,14 @@ NC_AdjustRectOuter95 (LPRECT16 rect, DWORD style, BOOL menu, DWORD exStyle)
           ((style & (WS_DLGFRAME | WS_THICKFRAME)) ||
            (exStyle & WS_EX_DLGMODALFRAME))))
     {
-        if (HAS_FIXEDFRAME( style, exStyle ))
+        if (HAS_THICKFRAME( style, exStyle ))
+            InflateRect16( rect, GetSystemMetrics(SM_CXFRAME), GetSystemMetrics(SM_CYFRAME) );
+        else
+        if (HAS_DLGFRAME( style, exStyle ))
             InflateRect16(rect, GetSystemMetrics(SM_CXDLGFRAME), GetSystemMetrics(SM_CYDLGFRAME) );
         else
-        {
-            if (HAS_SIZEFRAME(style))
-                InflateRect16( rect, GetSystemMetrics(SM_CXFRAME), GetSystemMetrics(SM_CYFRAME) );
-#if 0
-            if (style & WS_BORDER)
-                InflateRect16( rect, GetSystemMetrics(SM_CXBORDER), GetSystemMetrics(SM_CYBORDER));
-#endif
-        }
+        if (HAS_THINFRAME( style ))
+            InflateRect16( rect, GetSystemMetrics(SM_CXBORDER), GetSystemMetrics(SM_CYBORDER));
 
         if ((style & WS_CAPTION) == WS_CAPTION)
         {
@@ -223,9 +219,6 @@ NC_AdjustRectInner95 (LPRECT16 rect, DWORD style, DWORD exStyle)
 
     if (exStyle & WS_EX_STATICEDGE)
 	InflateRect16 (rect, GetSystemMetrics(SM_CXBORDER), GetSystemMetrics(SM_CYBORDER));
-
-    if (HAS_CLASSICBORDER(style, exStyle))
-        InflateRect16( rect, GetSystemMetrics(SM_CXBORDER), GetSystemMetrics(SM_CYBORDER ));
 
     if (style & WS_VSCROLL) rect->right  += GetSystemMetrics(SM_CXVSCROLL);
     if (style & WS_HSCROLL) rect->bottom += GetSystemMetrics(SM_CYHSCROLL);
@@ -566,19 +559,19 @@ static void NC_GetInsideRect( HWND hwnd, RECT *rect )
     if ((wndPtr->dwStyle & WS_ICONIC) || (wndPtr->flags & WIN_MANAGED)) goto END;
 
     /* Remove frame from rectangle */
+    if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+	InflateRect( rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME) );
+    else
     if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
     {
 	InflateRect( rect, -GetSystemMetrics(SM_CXDLGFRAME), -GetSystemMetrics(SM_CYDLGFRAME));
+	/* FIXME: this isn't in NC_AdjustRect? why not? */
 	if (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME)
             InflateRect( rect, -1, 0 );
     }
     else
-    {
-	if (HAS_THICKFRAME( wndPtr->dwStyle ))
-	    InflateRect( rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME) );
-	if (wndPtr->dwStyle & WS_BORDER)
-	    InflateRect( rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER) );
-    }
+    if (HAS_THINFRAME( wndPtr->dwStyle ))
+	InflateRect( rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER) );
 END:
     WIN_ReleaseWndPtr(wndPtr);
     return;
@@ -605,16 +598,17 @@ NC_GetInsideRect95 (HWND hwnd, RECT *rect)
     if ((wndPtr->dwStyle & WS_ICONIC) || (wndPtr->flags & WIN_MANAGED)) goto END;
 
     /* Remove frame from rectangle */
-    if (HAS_FIXEDFRAME (wndPtr->dwStyle, wndPtr->dwExStyle ))
+    if (HAS_THICKFRAME (wndPtr->dwStyle, wndPtr->dwExStyle))
+    {
+	InflateRect( rect, -GetSystemMetrics(SM_CXSIZEFRAME), -GetSystemMetrics(SM_CYSIZEFRAME) );
+    }
+    else if (HAS_DLGFRAME (wndPtr->dwStyle, wndPtr->dwExStyle ))
     {
 	InflateRect( rect, -GetSystemMetrics(SM_CXFIXEDFRAME), -GetSystemMetrics(SM_CYFIXEDFRAME));
     }
-    else if (HAS_SIZEFRAME (wndPtr->dwStyle))
+    else if (HAS_THINFRAME (wndPtr->dwStyle))
     {
-	InflateRect( rect, -GetSystemMetrics(SM_CXSIZEFRAME), -GetSystemMetrics(SM_CYSIZEFRAME) );
-
-/*	if (wndPtr->dwStyle & WS_BORDER)
-          InflateRect32( rect, -GetSystemMetrics(SM_CXBORDER, -GetSystemMetrics(SM_CYBORDER );*/
+        InflateRect( rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER) );
     }
 
     if (wndPtr->dwStyle & WS_CHILD) {
@@ -651,11 +645,9 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
     if (!(wndPtr->flags & WIN_MANAGED))
     {
         /* Check borders */
-        if (HAS_THICKFRAME( wndPtr->dwStyle ))
+        if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
         {
             InflateRect16( &rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME) );
-            if (wndPtr->dwStyle & WS_BORDER)
-                InflateRect16(&rect,-GetSystemMetrics(SM_CXBORDER),-GetSystemMetrics(SM_CYBORDER));
             if (!PtInRect16( &rect, pt ))
             {
                 /* Check top sizing border */
@@ -692,7 +684,7 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
         {
             if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
                 InflateRect16(&rect, -GetSystemMetrics(SM_CXDLGFRAME), -GetSystemMetrics(SM_CYDLGFRAME));
-            else if (wndPtr->dwStyle & WS_BORDER)
+            else if (HAS_THINFRAME( wndPtr->dwStyle ))
                 InflateRect16(&rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
             if (!PtInRect16( &rect, pt )) return HTBORDER;
         }
@@ -701,7 +693,7 @@ static LONG NC_DoNCHitTest (WND *wndPtr, POINT16 pt )
 
         if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
         {
-            rect.top += GetSystemMetrics(SM_CYCAPTION) - 1;
+            rect.top += GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYBORDER);
             if (!PtInRect16( &rect, pt ))
             {
                 /* Check system menu */
@@ -787,11 +779,9 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
     if (!(wndPtr->flags & WIN_MANAGED))
     {
         /* Check borders */
-        if (HAS_SIZEFRAME( wndPtr->dwStyle ))
+        if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
         {
             InflateRect16( &rect, -GetSystemMetrics(SM_CXFRAME), -GetSystemMetrics(SM_CYFRAME) );
-/*            if (wndPtr->dwStyle & WS_BORDER) */
-/*                InflateRect16(&rect,-GetSystemMetrics(SM_CXBORDER),-GetSystemMetrics(SM_CYBORDER)); */
             if (!PtInRect16( &rect, pt ))
             {
                 /* Check top sizing border */
@@ -826,10 +816,10 @@ NC_DoNCHitTest95 (WND *wndPtr, POINT16 pt )
         }
         else  /* No thick frame */
         {
-            if (HAS_FIXEDFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+            if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
                 InflateRect16(&rect, -GetSystemMetrics(SM_CXDLGFRAME), -GetSystemMetrics(SM_CYDLGFRAME));
-/*            else if (wndPtr->dwStyle & WS_BORDER) */
-/*                InflateRect16(&rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER)); */
+            else if (HAS_THINFRAME( wndPtr->dwStyle ))
+                InflateRect16(&rect, -GetSystemMetrics(SM_CXBORDER), -GetSystemMetrics(SM_CYBORDER));
             if (!PtInRect16( &rect, pt )) return HTBORDER;
         }
 
@@ -1225,8 +1215,8 @@ static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame,
     }
     else
     {
-	width = GetSystemMetrics(SM_CXFRAME) - 1;
-	height = GetSystemMetrics(SM_CYFRAME) - 1;
+	width = GetSystemMetrics(SM_CXFRAME) - 2;
+	height = GetSystemMetrics(SM_CYFRAME) - 2;
         SelectObject( hdc, GetSysColorBrush(active ? COLOR_ACTIVEBORDER :
 						COLOR_INACTIVEBORDER) );
     }
@@ -1247,8 +1237,8 @@ static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame,
     } 
     else
     {
-        INT decYOff = GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXSIZE);
-	INT decXOff = GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYSIZE);
+        INT decYOff = GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXSIZE) - 1;
+	INT decXOff = GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CYSIZE) - 1;
 
       /* Draw inner rectangle */
 
@@ -1308,6 +1298,8 @@ static void NC_DrawFrame( HDC hdc, RECT *rect, BOOL dlgFrame,
  *             Original implementation (based on NC_DrawFrame)
  *        02-Jun-1998 Eric Kohl (ekohl@abo.rhein-zeitung.de)
  *             Some minor fixes.
+ *        29-Jun-1999 Ove Kåven (ovek@arcticnet.no)
+ *             Fixed a fix or something.
  *
  *****************************************************************************/
 
@@ -1340,7 +1332,7 @@ static void  NC_DrawFrame95(
               width, rect->bottom - rect->top, PATCOPY );
     PatBlt( hdc, rect->left, rect->bottom - 1,
               rect->right - rect->left, -height, PATCOPY );
-    PatBlt( hdc, rect->right - 1, rect->top - 1,
+    PatBlt( hdc, rect->right - 1, rect->top,
               -width, rect->bottom - rect->top, PATCOPY );
 
     InflateRect( rect, -width, -height );
@@ -1591,18 +1583,17 @@ static void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
 
     if (!(wndPtr->flags & WIN_MANAGED))
     {
-        if ((wndPtr->dwStyle & WS_BORDER) || (wndPtr->dwStyle & WS_DLGFRAME) ||
-            (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME))
-        {
+        if (HAS_ANYFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+	{
 	    SelectObject( hdc, GetStockObject(NULL_BRUSH) );
             Rectangle( hdc, 0, 0, rect.right, rect.bottom );
             InflateRect( &rect, -1, -1 );
         }
 
-        if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
-            NC_DrawFrame( hdc, &rect, TRUE, active );
-        else if (wndPtr->dwStyle & WS_THICKFRAME)
+	if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
             NC_DrawFrame(hdc, &rect, FALSE, active );
+	else if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
+            NC_DrawFrame( hdc, &rect, TRUE, active );
 
         if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
         {
@@ -1664,6 +1655,8 @@ static void NC_DoNCPaint( WND* wndPtr, HRGN clip, BOOL suppress_menupaint )
  *             Original implementation
  *        10-Jun-1998 Eric Kohl (ekohl@abo.rhein-zeitung.de)
  *             Fixed some bugs.
+ *        29-Jun-1999 Ove Kåven (ovek@arcticnet.no)
+ *             Streamlined window style checks.
  *
  *****************************************************************************/
 
@@ -1719,19 +1712,17 @@ static void  NC_DoNCPaint95(
     SelectObject( hdc, GetSysColorPen(COLOR_WINDOWFRAME) );
 
     if(!(wndPtr->flags & WIN_MANAGED)) {
-        if ((wndPtr->dwStyle & WS_BORDER) && ((wndPtr->dwStyle & WS_DLGFRAME) ||
-	    (wndPtr->dwExStyle & WS_EX_DLGMODALFRAME) || (wndPtr->dwStyle & WS_THICKFRAME))) {
+        if (HAS_BIGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle)) {
             DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT | BF_ADJUST);
         }
-        else if (HAS_CLASSICBORDER(wndPtr->dwStyle, wndPtr->dwExStyle))
-        {
+	if (HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle ))
+            NC_DrawFrame95(hdc, &rect, FALSE, active );
+        else if (HAS_DLGFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
+            NC_DrawFrame95( hdc, &rect, TRUE, active );
+	else if (HAS_THINFRAME( wndPtr->dwStyle )) {
             SelectObject( hdc, GetStockObject(NULL_BRUSH) );
             Rectangle( hdc, 0, 0, rect.right, rect.bottom );
-        }
-        if (HAS_FIXEDFRAME( wndPtr->dwStyle, wndPtr->dwExStyle )) 
-            NC_DrawFrame95( hdc, &rect, TRUE, active );
-        else if (wndPtr->dwStyle & WS_THICKFRAME)
-            NC_DrawFrame95(hdc, &rect, FALSE, active );
+	}
 
         if ((wndPtr->dwStyle & WS_CAPTION) == WS_CAPTION)
         {
@@ -2031,7 +2022,7 @@ static void NC_DoSizeMove( HWND hwnd, WORD wParam )
     POINT minTrack, maxTrack;
     POINT16 capturePoint, pt;
     WND *     wndPtr = WIN_FindWndPtr( hwnd );
-    BOOL    thickframe = HAS_THICKFRAME( wndPtr->dwStyle );
+    BOOL    thickframe = HAS_THICKFRAME( wndPtr->dwStyle, wndPtr->dwExStyle );
     BOOL    iconic = wndPtr->dwStyle & WS_MINIMIZE;
     BOOL    moved = FALSE;
     DWORD     dwPoint = GetMessagePos ();
