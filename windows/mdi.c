@@ -1750,8 +1750,15 @@ LRESULT WINAPI DefMDIChildProc16( HWND16 hwnd, UINT16 message,
 
 	    TRACE("maximizing child %04x\n", hwnd );
 
+	    /*
+	     * Keep track of the maximized window.
+	     */
 	    ci->hwndChildMaximized = hwnd; /* !!! */
-	    ci->hwndActiveChild = hwnd;
+
+	    /*
+	     * The maximized window should also be the active window
+	     */
+	    MDI_ChildActivate(clientWnd, hwnd);
 
 	    MDI_AugmentFrameMenu( ci, clientWnd->parent, hwnd);
 	    MDI_UpdateFrameText( clientWnd->parent, ci->self,
