@@ -20,6 +20,6 @@ OLESTATUS WINAPI CoDisconnectObject(
 	LPUNKNOWN lpUnk,
 	DWORD reserved)
 {
-    dprintf_ole(stdnimp,"CoDisconnectObject:%x %x\n",lpUnk,reserved);
+    dprintf_ole(stdnimp,"CoDisconnectObject:%p %lx\n",lpUnk,reserved);
     return OLE_OK;
 }

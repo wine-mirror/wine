@@ -56,6 +56,14 @@ BOOL NE_LoadSegment( HMODULE hModule, WORD segnum )
     lseek( fd, pSeg->filepos << pModule->alignment, SEEK_SET );
     read( fd, GlobalLock( pSeg->selector ), pSeg->size ? pSeg->size : 0x10000);
 
+    if ( pModule->heap_size && pModule->dgroup == segnum )
+    {
+        /* Initialize the local heap */
+        WORD heapstart = pSeg->minsize;
+        if (pModule->ss == pModule->dgroup) heapstart += pModule->stack_size;
+        LocalInit( pSeg->selector, heapstart, heapstart + pModule->heap_size );
+    }    
+
     if (!(pSeg->flags & NE_SEGFLAGS_RELOC_DATA))
         return TRUE;  /* No relocation data, we are done */
 
@@ -413,12 +421,15 @@ void NE_InitializeDLLs( HMODULE hModule )
     WORD *pDLL;
 
     pModule = (NE_MODULE *)GlobalLock( hModule );
-    if (!pModule->dlls_to_init) return;
-    for (pDLL = (WORD *)GlobalLock( pModule->dlls_to_init ); *pDLL; pDLL++)
+    if (pModule->dlls_to_init)
     {
-        NE_InitDLL( *pDLL );
-        NE_InitializeDLLs( *pDLL );
+        for (pDLL = (WORD *)GlobalLock( pModule->dlls_to_init ); *pDLL; pDLL++)
+        {
+            NE_InitDLL( *pDLL );
+            NE_InitializeDLLs( *pDLL );
+        }
+        GlobalFree( pModule->dlls_to_init );
+        pModule->dlls_to_init = 0;
     }
-    GlobalFree( pModule->dlls_to_init );
-    pModule->dlls_to_init = 0;
+    NE_InitDLL( hModule );
 }

@@ -139,7 +139,7 @@ HGLOBAL GLOBAL_Alloc( WORD flags, DWORD size, HGLOBAL hOwner,
 
       /* Fixup the size */
 
-    if (size >= GLOBAL_MAX_ALLOC_SIZE - 0x0f) return 0;
+    if (size >= GLOBAL_MAX_ALLOC_SIZE - 0x1f) return 0;
     if (size == 0) size = 0x20;
     else size = (size + 0x1f) & ~0x1f;
 

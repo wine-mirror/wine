@@ -32,7 +32,7 @@ id	1
 30  pascal16 WaitEvent(word) WaitEvent
 31  pascal16 PostEvent(word) PostEvent
 32  pascal16 SetPriority(word s_word) SetPriority
-33  stub LockCurrentTask
+33  pascal16 LockCurrentTask(word) LockCurrentTask
 34  pascal SetTaskQueue(word word) SetTaskQueue
 35  pascal16 GetTaskQueue(word) GetTaskQueue
 36  pascal GetCurrentTask() GetCurrentTask
@@ -49,7 +49,7 @@ id	1
 51  pascal MakeProcInstance(segptr word) MakeProcInstance
 52  pascal16 FreeProcInstance(segptr) FreeProcInstance
 53  stub CallProcInstance
-54  stub GetInstanceData
+54  pascal16 GetInstanceData(word word word) GetInstanceData
 55  pascal16 Catch(ptr) Catch 
 56  pascal16 Throw(ptr word) Throw
 57  pascal16 GetProfileInt(ptr ptr word) GetProfileInt
@@ -98,7 +98,7 @@ id	1
 100 stub ValidateCodeSegments
 101 stub NoHookDosCall
 102 register DOS3Call() DOS3Call
-103 stub NetBiosCall
+103 register NetBIOSCall() NetBIOSCall
 104 stub GetCodeInfo
 105 stub GetExeVersion
 106 pascal SetSwapAreaSize(word) SetSwapAreaSize
@@ -117,7 +117,7 @@ id	1
 119 stub GetTaskQueueES
 120 stub UndefDynLink
 121 pascal16 LocalShrink(word word) LocalShrink
-122 stub IsTaskLocked
+122 pascal16 IsTaskLocked() IsTaskLocked
 123 stub KbdRst
 124 return EnableKernel 0 0
 125 return DisableKernel 0 0
@@ -156,7 +156,7 @@ id	1
 165 stub A20Proc
 166 pascal16 WinExec(ptr word) WinExec
 167 stub GetExpWinVer
-168 stub DirectResAlloc
+168 pascal16 DirectResAlloc(word word word) DirectResAlloc
 169 pascal GetFreeSpace(word) GetFreeSpace
 170 pascal16 AllocCStoDSAlias(word) AllocCStoDSAlias
 171 pascal16 AllocDStoCSAlias(word) AllocDStoCSAlias

@@ -1,4 +1,98 @@
 ----------------------------------------------------------------------
+Tue Jun  6 12:11:41 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
+
+	* [controls/menu.c]
+	Fixed bug with drawing multi-column menus with vertical separator.
+
+	* [debugger/debug.l]
+	Fixed NULL-pointer reference after readline().
+
+	* [if1632/winprocs.spec] [miscemu/int21.c] [miscemu/interrupts.c]
+	Added interrupt vector emulation. Allows to retrieve an interrupt
+	vector and jump to it without crashing.
+
+	* [loader/ldt.c]
+	Moved ldt.c to memory directory.
+
+	* [loader/task.c]
+	Implemented LockCurrentTask() and GetInstanceData().
+
+	* [objects/bitblt.c]
+	Fixed a bug that caused StretchBlt() to use wrong colors when
+	stretching a monochrome bitmap to a color display.
+
+	* [objects/bitmap.c]
+	Fixed a segmented pointer bug in CreateBitmapIndirect().
+
+	* [tools/build.c]
+	Added possibility to have arguments for register functions; used
+	by interrupt vectors to remove the flags from the stack.
+	Generate a new function CallTo32_LargeStack(), that allows calling
+	a 32-bit function using the original 32-bit stack, for functions
+	that need more that 64k of stack.
+
+Tue May 30 10:29:56 1995  Martin von Loewis  <martin@informatik.hu-berlin.de>
+
+	* [if1632/shell.spec] [misc/shell.c]
+	DoEnvironmentSubst: fixed prototype
+
+	* [if1632/gdi.spec] [objects/palette.c]
+	SetSystemPaletteUse: new function
+
+	* [if1632/kernel.spec] [loader/resource.c]
+	DirectResAlloc: new function
+
+	* [if1632/user.spec] [windows/keyboard.c]
+	SetKeyboardState: new function
+
+Mon May 29 12:58:28 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+        
+	* [tools/build.c]
+        Prevent interrupts from destroying the args for a 32 bit function
+        by loading the correct value into %esp directly after %ss.
+
+	* [loader/ne_image.c] [loader/module.c]
+	The new instance must be created earlier in LoadModule(), so that
+	fixups referencing it will be handled correctly.
+        Initialize the local heap for a DGROUP in NE_LoadSegment().
+	
+	* [objects/dib.c]
+	Like RLE8 bitmaps, RLE4 bitmaps don't always end with a proper code.
+	This used to crash Wine. Fixed.
+
+        * [objects/text.c]
+	Fix possible null pointer dereference in debugging output.
+	
+	* [misc/commdlg.c]
+	Handle user input in the edit control better. Some bugs fixed.
+	
+	* [memory/local.c]
+	Started implementing moveable blocks. This is unfinished (!), but
+	at least it does not seem to break things.
+
+Wed May 24 13:26:36 1995   Bernd Schmidt <crux@pool.informatik.rwth-aachen.de>
+        
+	* [loader/module.c]
+	LoadModule(): DLLs occasionally have a data segment, and they work
+	much better if it is loaded :-)
+	LoadLibrary(): pass HMODULE instead of HINSTANCE to NE_InitializeDLLs.
+	FindModule(): also strip off the last backslash of the pathnames
+	(Winhelp tried to load C:\WINDOWS\SYSTEM\COMMDLG.DLL).
+	GetModuleHandle(): just call MODULE_FindModule, it does the same job,
+	only better.
+	
+	* [loader/ne_image.c]
+	LocalInit() the heap of a DLL in NE_InitDLL. (This is probably
+	not really correct, it seems that all programs and DLLs try to do
+	this themselves. But they pass weird parameters.)
+	NE_InitializeDLLs should also call NE_InitDLL for the passed hModule.
+	
+	* [loader/task.c] [misc/user.c]
+	Finish global initializations in InitTask instead of InitApp, or
+	all the DLLs will be initialized in InitTask without any available
+	window classes!
+
+----------------------------------------------------------------------
 Sun May 21 12:30:30 1995  Alexandre Julliard  (julliard@sunsite.unc.edu)
 
 	* [debugger/hash.c] [debugger/info.c]

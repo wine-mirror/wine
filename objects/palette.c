@@ -21,6 +21,8 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1993,1994";
 /* #define DEBUG_PALETTE */
 #include "debug.h"
 
+static WORD SystemPaletteUse = SYSPAL_STATIC;	/* currently not considered */
+
 /***********************************************************************
  *           CreatePalette    (GDI.360)
  */
@@ -80,13 +82,26 @@ WORD SetPaletteEntries( HPALETTE hpalette, WORD start, WORD count,
 
 
 /***********************************************************************
+ *           SetSystemPaletteUse    (GDI.373)
+ *	Should this be per DC rather than system wide?
+ *  Currently, it does not matter as the use is only set and returned,
+ *  but not taken into account
+ */
+WORD SetSystemPaletteUse( HDC hdc, WORD use)
+{
+	 WORD old=SystemPaletteUse;
+	 printf("SetSystemPaletteUse(%04X,%04X) // empty stub !!!\n", hdc, use);
+	 SystemPaletteUse=use;
+	 return old;
+}
+
+/***********************************************************************
  *           GetSystemPaletteUse    (GDI.374)
  */
 WORD GetSystemPaletteUse( HDC hdc )
 {
 	printf("GetSystemPaletteUse(%04X) // empty stub !!!\n", hdc);
-	/* Assuming there is remaining system colors ... */
-	return SYSPAL_STATIC;
+	return SystemPaletteUse;
 }
 
 

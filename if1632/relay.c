@@ -60,6 +60,7 @@ WORD IF1632_Saved16_sp = 0;
   /* Saved 32-bit stack */
 DWORD IF1632_Saved32_esp = 0;
 SEGPTR IF1632_Stack32_base = 0;
+DWORD IF1632_Original32_esp = 0;
 
 /***********************************************************************
  *           RELAY_Init

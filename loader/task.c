@@ -12,6 +12,7 @@
 #include "callback.h"
 #include "global.h"
 #include "instance.h"
+#include "miscemu.h"
 #include "module.h"
 #include "neexe.h"
 #include "selectors.h"
@@ -31,6 +32,7 @@
 static HTASK hFirstTask = 0;
 static HTASK hCurrentTask = 0;
 static HTASK hTaskToKill = 0;
+static HTASK hLockedTask = 0;
 static WORD nTaskCount = 0;
 
   /* TASK_Reschedule() 16-bit entry point */
@@ -281,12 +283,11 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
       /* Fill the PDB */
 
     pTask->pdb.int20 = 0x20cd;
-    pTask->pdb.dispatcher[0] = 0x9a;
+    pTask->pdb.dispatcher[0] = 0x9a;  /* ljmp */
     *(DWORD *)&pTask->pdb.dispatcher[1] = MODULE_GetEntryPoint( GetModuleHandle("KERNEL"), 102 );  /* KERNEL.102 is DOS3Call() */
-    pTask->pdb.savedint22 = MODULE_GetEntryPoint( GetModuleHandle("KERNEL"),
-                                    137 );  /* KERNEL.137 is FatalAppExit() */
-    pTask->pdb.savedint23 = pTask->pdb.savedint22;
-    pTask->pdb.savedint24 = pTask->pdb.savedint22;
+    pTask->pdb.savedint22 = INT_GetHandler( 0x22 );
+    pTask->pdb.savedint23 = INT_GetHandler( 0x23 );
+    pTask->pdb.savedint24 = INT_GetHandler( 0x24 );
     pTask->pdb.environment = hEnvironment;
     strncpy( pTask->pdb.cmdLine + 1, cmdLine, 126 );
     pTask->pdb.cmdLine[127] = '\0';
@@ -347,8 +348,8 @@ HTASK TASK_CreateTask( HMODULE hModule, HANDLE hInstance, HANDLE hPrevInstance,
     frame16->saved_sp = pTask->sp;
     frame16->ds = pTask->hInstance;
     frame16->entry_point = 0;
-    frame16->ordinal_number = 1;
-    frame16->dll_id = 1;
+    frame16->ordinal_number = 24;  /* WINPROCS.24 is TASK_Reschedule */
+    frame16->dll_id = 24; /* WINPROCS */
     frame16->bp = 0;
     frame16->ip = LOWORD( CALL16_RetAddr_word );
     frame16->cs = HIWORD( CALL16_RetAddr_word );
@@ -431,6 +432,7 @@ void TASK_KillCurrentTask( int exitCode )
     TASK_UnlinkTask( hCurrentTask );
     
     hTaskToKill = hCurrentTask;
+    hLockedTask = 0;
     Yield();
     /* We never return from Yield() */
 }
@@ -453,6 +455,10 @@ void TASK_Reschedule(void)
 
     if (hTaskToKill && (hTaskToKill != hCurrentTask))
         TASK_DeleteTask( hTaskToKill );
+
+      /* If current task is locked, simply return */
+
+    if (hLockedTask) return;
 
       /* Find a task to yield to */
 
@@ -496,6 +502,7 @@ void TASK_Reschedule(void)
         pOldTask->sp  = IF1632_Saved16_sp;
         pOldTask->esp = IF1632_Saved32_esp;
     }
+    else IF1632_Original32_esp = IF1632_Saved32_esp;
 
      /* Make the task the last in the linked list (round-robin scheduling) */
 
@@ -519,12 +526,29 @@ void TASK_Reschedule(void)
  */
 void InitTask( struct sigcontext_struct context )
 {
+    static int firstTask = 1;
     TDB *pTask;
     NE_MODULE *pModule;
 
     context.sc_eax = 0;
     if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return;
     if (!(pModule = (NE_MODULE *)GlobalLock( pTask->hModule ))) return;
+
+    if (firstTask)
+    {
+        extern BOOL WIDGETS_Init(void);
+        extern BOOL WIN_CreateDesktopWindow(void);
+
+        /* Perform global initialisations that need a task context */
+
+          /* Initialize built-in window classes */
+        if (!WIDGETS_Init()) return;
+
+          /* Create desktop window */
+        if (!WIN_CreateDesktopWindow()) return;
+
+        firstTask = 0;
+    }
 
     NE_InitializeDLLs( pTask->hModule );
 
@@ -598,6 +622,26 @@ void SetPriority( HTASK hTask, int delta )
     TASK_UnlinkTask( hTask );
     TASK_LinkTask( hTask );
     pTask->priority--;
+}
+
+
+/***********************************************************************
+ *           LockCurrentTask  (KERNEL.33)
+ */
+HTASK LockCurrentTask( BOOL bLock )
+{
+    if (bLock) hLockedTask = hCurrentTask;
+    else hLockedTask = 0;
+    return hLockedTask;
+}
+
+
+/***********************************************************************
+ *           IsTaskLocked  (KERNEL.122)
+ */
+WORD IsTaskLocked(void)
+{
+    return hLockedTask;
 }
 
 
@@ -743,6 +787,19 @@ WORD GetCurrentPDB(void)
 
     if (!(pTask = (TDB *)GlobalLock( hCurrentTask ))) return 0;
     return pTask->hPDB;
+}
+
+
+/***********************************************************************
+ *           GetInstanceData   (KERNEL.54)
+ */
+int GetInstanceData( HANDLE instance, WORD buffer, int len )
+{
+    char *ptr = (char *)GlobalLock( instance );
+    if (!ptr || !len) return 0;
+    if ((int)buffer + len >= 0x10000) len = 0x10000 - buffer;
+    memcpy( ptr + buffer, (char *)GlobalLock( CURRENT_DS ) + buffer, len );
+    return len;
 }
 
 

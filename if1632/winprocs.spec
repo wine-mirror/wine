@@ -25,3 +25,23 @@ id	24
 22 pascal ComboLBoxWndProc(word word word long) ComboLBoxWndProc
 23 pascal16 CARET_Callback(word word word long) CARET_Callback
 24 pascal16 TASK_Reschedule() TASK_Reschedule
+
+# Interrupt vectors 0-255 are ordinals 100-355
+# Undefined functions are mapped to the dummy handler (ordinal 356)
+# The 'word' parameter are the flags pushed on the stack by the interrupt
+
+116 register INT_Int10Handler(word) INT_Int10Handler
+119 register INT_Int13Handler(word) INT_Int13Handler
+121 register INT_Int15Handler(word) INT_Int15Handler
+122 register INT_Int16Handler(word) INT_Int16Handler
+126 register INT_Int1aHandler(word) INT_Int1aHandler
+133 register INT_Int21Handler(word) INT_Int21Handler
+137 register INT_Int25Handler(word) INT_Int25Handler
+138 register INT_Int26Handler(word) INT_Int26Handler
+142 register INT_Int2aHandler(word) INT_Int2aHandler
+147 register INT_Int2fHandler(word) INT_Int2fHandler
+149 register INT_Int31Handler(word) INT_Int31Handler
+192 register INT_Int5cHandler(word) INT_Int5cHandler
+
+# Dummy interrupt vector
+356 register INT_DummyHandler(word) INT_DummyHandler

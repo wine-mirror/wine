@@ -210,7 +210,7 @@ static void WIN_DestroyWindow( HWND hwnd )
  *
  * Create the desktop window.
  */
-BOOL WIN_CreateDesktopWindow()
+BOOL WIN_CreateDesktopWindow(void)
 {
     WND *wndPtr;
     HCLASS hclass;

@@ -18,6 +18,7 @@
 #include "dos_fs.h"
 #include "prototypes.h"
 #include "miscemu.h"
+#include "registers.h"
 #include "win.h"
 
 #if !defined(BSD4_4) || defined(linux) || defined(__FreeBSD__)
@@ -44,57 +45,59 @@ wine_sigaction(int sig,struct sigaction * new, struct sigaction * old)
 }
 #endif
 
-int do_int(int intnum, struct sigcontext_struct *scp)
+int do_int(int intnum, struct sigcontext_struct *context)
 {
 	switch(intnum)
 	{
-	      case 0x10: return do_int10(scp);
+	      case 0x10: return do_int10(context);
 
 	      case 0x11:  
-		scp->sc_eax = (scp->sc_eax & 0xffff0000L) | DOS_GetEquipment();
+		AX = DOS_GetEquipment();
 		return 1;
 
 	      case 0x12:               
-		scp->sc_eax = (scp->sc_eax & 0xffff0000L) | 640L; 
+		AX = 640;
 		return 1;	/* get base mem size */                
 
-              case 0x13: return do_int13(scp);
-	      case 0x15: return do_int15(scp);
-	      case 0x16: return do_int16(scp);
-	      case 0x1a: return do_int1a(scp);
-	      case 0x21: return do_int21(scp);
+              case 0x13: return do_int13(context);
+	      case 0x15: return do_int15(context);
+	      case 0x16: return do_int16(context);
+	      case 0x1a: return do_int1a(context);
+	      case 0x21: return do_int21(context);
 
 	      case 0x22:
-		scp->sc_eax = 0x1234;
-		scp->sc_ebx = 0x5678;
-		scp->sc_ecx = 0x9abc;
-		scp->sc_edx = 0xdef0;
+		AX = 0x1234;
+		BX = 0x5678;
+		CX = 0x9abc;
+		DX = 0xdef0;
 		return 1;
 
-              case 0x25: return do_int25(scp);
-              case 0x26: return do_int26(scp);
-              case 0x2a: return do_int2a(scp);
-	      case 0x2f: return do_int2f(scp);
-	      case 0x31: return do_int31(scp);
+              case 0x25: return do_int25(context);
+              case 0x26: return do_int26(context);
+              case 0x2a: return do_int2a(context);
+	      case 0x2f: return do_int2f(context);
+	      case 0x31: return do_int31(context);
+	      case 0x5c: return do_int5c(context);
 
               default:
-                printf("int%02x: Unimplemented!\n", intnum);
+                fprintf(stderr,"int%02x: Unimplemented!\n", intnum);
                 break;
 	}
 	return 0;
 }
 
 #ifdef linux
-static void win_fault(int signal, struct sigcontext_struct context)
+static void win_fault(int signal, struct sigcontext_struct context_struct)
 {
-    struct sigcontext_struct *scp = &context;
+    struct sigcontext_struct *context = &context_struct;
 #else
-static void win_fault(int signal, int code, struct sigcontext *scp)
+static void win_fault(int signal, int code, struct sigcontext *context)
 {
 #endif
     unsigned char * instr;
+    WORD *stack;
 #if !(defined (linux) || defined (__NetBSD__))
-	int i, *dump;
+    int i, *dump;
 #endif
 
 	/* First take care of a few preliminaries */
@@ -112,7 +115,7 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 
     /* And back up over the int3 instruction. */
     if(signal == SIGTRAP) {
-      scp->sc_eip--;
+      EIP--;
       goto oops;
     }
 #endif
@@ -126,76 +129,83 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
     if(signal != SIGBUS && signal != SIGSEGV && signal != SIGTRAP) 
 	exit(1);
 #endif
-    if (scp->sc_cs == WINE_CODE_SELECTOR)
+    if (CS == WINE_CODE_SELECTOR)
     {
 	fprintf(stderr,
 		"Segmentation fault in Wine program (%x:%lx)."
-		"  Please debug\n",
-		scp->sc_cs, scp->sc_eip);
+		"  Please debug\n", CS, EIP );
 	goto oops;
     }
 
     /*  Now take a look at the actual instruction where the program
 	bombed */
-    instr = (unsigned char *) PTR_SEG_OFF_TO_LIN(scp->sc_cs, scp->sc_eip);
+    instr = (unsigned char *) PTR_SEG_OFF_TO_LIN( CS, EIP );
 
     switch(*instr)
     {
       case 0xcd: /* int <XX> */
             instr++;
-	    if (!do_int(*instr, scp)) {
+	    if (!do_int(*instr, context)) {
 		fprintf(stderr,"Unexpected Windows interrupt %x\n", *instr);
 		goto oops;
 	    }
-	    scp->sc_eip += 2;  /* Bypass the int instruction */
+	    EIP += 2;  /* Bypass the int instruction */
             break;
-            
+
+      case 0xcf: /* iret */
+            stack = (WORD *)PTR_SEG_OFF_TO_LIN( SS, SP );
+            EIP = *stack++;
+            CS  = *stack++;
+            EFL = *stack;
+            SP += 6;  /* Pop the return address and flags */
+            break;
+
       case 0xe4: /* inb al,XX */
-            inportb_abs(scp);
-	    scp->sc_eip += 2;
+            inportb_abs(context);
+	    EIP += 2;
             break;
 
       case 0xe5: /* in ax,XX */
-            inport_abs(scp);
-	    scp->sc_eip += 2;
+            inport_abs(context);
+	    EIP += 2;
             break;
 
       case 0xe6: /* outb XX,al */
-            outportb_abs(scp);
-	    scp->sc_eip += 2;
+            outportb_abs(context);
+	    EIP += 2;
             break;
 
       case 0xe7: /* out XX,ax */
-            outport_abs(scp);
-	    scp->sc_eip += 2;
+            outport_abs(context);
+	    EIP += 2;
             break;
 
       case 0xec: /* inb al,dx */
-            inportb(scp);
-	    scp->sc_eip++;
+            inportb(context);
+	    EIP++;
             break;
 
       case 0xed: /* in ax,dx */
-            inport(scp);
-	    scp->sc_eip++;  
+            inport(context);
+	    EIP++;  
             break;
 
       case 0xee: /* outb dx,al */
-            outportb(scp);
-	    scp->sc_eip++;
+            outportb(context);
+	    EIP++;
             break;
       
       case 0xef: /* out dx,ax */
-            outport(scp);
-	    scp->sc_eip++;
+            outport(context);
+	    EIP++;
             break;
 
       case 0xfa: /* cli, ignored */
-	    scp->sc_eip++;
+	    EIP++;
             break;
 
       case 0xfb: /* sti, ignored */
-	    scp->sc_eip++;
+	    EIP++;
             break;
 
       default:
@@ -210,14 +220,14 @@ static void win_fault(int signal, int code, struct sigcontext *scp)
 
   oops:
     XUngrabPointer(display, CurrentTime);
-	XUngrabServer(display);
-	XFlush(display);
-    fprintf(stderr,"In win_fault %x:%lx\n", scp->sc_cs, scp->sc_eip);
+    XUngrabServer(display);
+    XFlush(display);
+    fprintf(stderr,"In win_fault %x:%lx\n", CS, EIP );
 #if defined(linux) || defined(__NetBSD__) || defined(__FreeBSD__)
-    wine_debug(signal, (int *)scp);  /* Enter our debugger */
+    wine_debug(signal, (int *)context);  /* Enter our debugger */
 #else
-    fprintf(stderr,"Stack: %x:%x\n", scp->sc_ss, scp->sc_esp);
-    dump = (int*) scp;
+    fprintf(stderr,"Stack: %x:%x\n", SS, ESP );
+    dump = (int*) context;
     for(i=0; i<22; i++) 
     {
 	fprintf(stderr," %8.8x", *dump++);

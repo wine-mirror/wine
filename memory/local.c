@@ -17,6 +17,7 @@
 #include "ldt.h"
 #include "instance.h"
 #include "local.h"
+#include "module.h"
 #include "stackframe.h"
 #include "toolhelp.h"
 #include "stddebug.h"
@@ -39,13 +40,15 @@ typedef struct
 } LOCALARENA;
 
 #define ARENA_HEADER_SIZE      4
+#define ARENA_HEADER( handle) ( ((handle) & ~3) - ARENA_HEADER_SIZE)
 
   /* Arena types (stored in 'prev' field of the arena) */
 #define LOCAL_ARENA_FREE       0
 #define LOCAL_ARENA_FIXED      1
 #define LOCAL_ARENA_MOVEABLE   3
 
-
+#define LMEM_NOCOMPACT 0x0010
+#define LMEM_NODISCARD 0x0020
 
 typedef struct
 {
@@ -93,6 +96,9 @@ typedef struct
 #define ARENA_NEXT(ptr,arena)      (ARENA_PTR(ptr,arena)->next)
 #define ARENA_FLAGS(ptr,arena)     (ARENA_PTR(ptr,arena)->prev & 3)
 
+  /* determine whether the handle belongs to a fixed or a moveable block */
+#define HANDLE_FIXED(handle) (((handle) & 3) == 0)
+#define HANDLE_MOVEABLE(handle) (((handle) & 3) == 2)
 
 /***********************************************************************
  *           LOCAL_GetHeap
@@ -103,6 +109,7 @@ static LOCALHEAPINFO *LOCAL_GetHeap( WORD ds )
 {
     LOCALHEAPINFO *pInfo;
     INSTANCEDATA *ptr = (INSTANCEDATA *)PTR_SEG_OFF_TO_LIN( ds, 0 );
+    dprintf_local( stddeb, "Heap at %04x\n", ptr->heap );
     if (!ptr->heap) return 0;
     pInfo = (LOCALHEAPINFO*)((char*)ptr + ptr->heap);
     if (pInfo->magic != LOCAL_HEAP_MAGIC) return NULL;
@@ -138,6 +145,7 @@ static void LOCAL_AddFreeBlock( char *baseptr, WORD block )
         next = pNext->next;
     }
 
+    dprintf_local( stddeb, "Local_AddFreeBlock %04x, next %04x\n", block, next );
       /* Insert the free block in the free-list */
 
     pArena->free_prev = pNext->free_prev;
@@ -202,6 +210,7 @@ static void LOCAL_RemoveBlock( char *baseptr, WORD block )
 
       /* Remove the block from the free-list */
 
+    dprintf_local( stddeb, "Local_RemoveBlock\n");
     pArena = ARENA_PTR( baseptr, block );
     if ((pArena->prev & 3) == LOCAL_ARENA_FREE)
         LOCAL_RemoveFreeBlock( baseptr, block );
@@ -229,6 +238,7 @@ static void LOCAL_PrintHeap( WORD ds )
     LOCALHEAPINFO *pInfo = LOCAL_GetHeap( ds );
     WORD arena;
 
+    if (!debugging_local) return;
     if (!pInfo)
     {
         printf( "Local Heap corrupted!  ds=%04x\n", ds );
@@ -266,7 +276,8 @@ static void LOCAL_PrintHeap( WORD ds )
         }
         if ((ARENA_PTR(ptr,pArena->next)->prev & ~3) != arena)
         {
-            printf( "*** arena->next->prev != arena\n" );
+            printf( "*** arena->next->prev != arena (%04x, %04x)\n",
+		   pArena->next, ARENA_PTR(ptr,pArena->next)->prev);
             break;
         }
         arena = pArena->next;
@@ -283,7 +294,8 @@ HLOCAL LocalInit( WORD selector, WORD start, WORD end )
     WORD heapInfoArena, freeArena, lastArena;
     LOCALHEAPINFO *pHeapInfo;
     LOCALARENA *pArena, *pFirstArena, *pLastArena;
-
+    NE_MODULE *pModule;
+    
       /* The initial layout of the heap is: */
       /* - first arena         (FIXED)      */
       /* - heap info structure (FIXED)      */
@@ -295,14 +307,24 @@ HLOCAL LocalInit( WORD selector, WORD start, WORD end )
     ptr = PTR_SEG_OFF_TO_LIN( selector, 0 );
     pHeapInfo = LOCAL_GetHeap(selector);
       /* If there's already a local heap in this segment, */
-      /* we simply return TRUE. Helps some programs, but  */
-      /* does not seem to be 100% correct yet (there are  */
-      /* still some "heap corrupted" messages in LocalAlloc */
+      /* we simply return TRUE. This helps some programs. */
     if (pHeapInfo)  {
       dprintf_local(stddeb,"LocalInit: Heap %04x initialized twice.\n",selector);
       if (debugging_local) LOCAL_PrintHeap(selector);
       return TRUE;
     }
+
+#if 0
+      /* Check if the segment is the DGROUP of a module */
+
+    if ((pModule = (NE_MODULE *)GlobalLock( GetExePtr( selector ) )))
+    {
+        SEGTABLEENTRY *pSeg = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
+        if (pModule->dgroup && (pSeg->selector == selector))
+            start = max( start, pSeg->minsize );
+    }
+#endif
+
     start = LALIGN( max( start, sizeof(INSTANCEDATA) ) );
     heapInfoArena = LALIGN(start + sizeof(LOCALARENA) );
     freeArena = LALIGN( heapInfoArena + ARENA_HEADER_SIZE
@@ -335,6 +357,7 @@ HLOCAL LocalInit( WORD selector, WORD start, WORD end )
     pHeapInfo->items   = 4;
     pHeapInfo->first   = start;
     pHeapInfo->last    = lastArena;
+    pHeapInfo->htable  = 0;
     pHeapInfo->hdelta  = 0x20;
     pHeapInfo->extra   = 0x200;
     pHeapInfo->minsize = lastArena - freeArena;
@@ -352,7 +375,7 @@ HLOCAL LocalInit( WORD selector, WORD start, WORD end )
       /* Initialise the last block */
 
     pLastArena = ARENA_PTR( ptr, lastArena );
-    pLastArena->prev      = heapInfoArena | LOCAL_ARENA_FREE;
+    pLastArena->prev      = freeArena | LOCAL_ARENA_FREE;
     pLastArena->next      = lastArena;  /* this one */
     pLastArena->size      = LALIGN(sizeof(LOCALARENA));
     pLastArena->free_prev = freeArena;
@@ -361,49 +384,80 @@ HLOCAL LocalInit( WORD selector, WORD start, WORD end )
       /* Store the local heap address in the instance data */
 
     ((INSTANCEDATA *)ptr)->heap = heapInfoArena + ARENA_HEADER_SIZE;
+    LOCAL_PrintHeap( selector );
     return TRUE;
 }
 
+/***********************************************************************
+ *           LOCAL_Compact
+ */
+static WORD LOCAL_Compact( WORD ds, WORD minfree, WORD flags )
+{
+    if (flags & LMEM_NOCOMPACT) return 0;
+    
+    return 0;
+}
 
 /***********************************************************************
- *           LOCAL_Alloc
- *
- * Implementation of LocalAlloc().
+ *           LOCAL_FindFreeBlock
  */
-HLOCAL LOCAL_Alloc( WORD ds, WORD flags, WORD size )
+static HLOCAL LOCAL_FindFreeBlock( WORD ds, WORD size )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALHEAPINFO *pInfo;
     LOCALARENA *pArena;
     WORD arena;
 
-    dprintf_local( stddeb, "LocalAlloc: %04x %d ds=%04x\n", flags, size, ds );
-
-      /* Find a suitable free block */
-
     if (!(pInfo = LOCAL_GetHeap( ds ))) {
-      dprintf_local( stddeb, "LocalAlloc: Heap not found\n");
-      LOCAL_PrintHeap(ds);
-      return 0;
+	dprintf_local( stddeb, "Local_FindFreeBlock: Local heap not found\n" );
+	LOCAL_PrintHeap(ds);
+	return 0;
     }
-    size += ARENA_HEADER_SIZE;
-    size = LALIGN( max( size, sizeof(LOCALARENA) ) );
+
     arena = pInfo->first;
     pArena = ARENA_PTR( ptr, arena );
-    for (;;)
-    {
-        if (arena == pArena->free_next) {
-	  fprintf(stderr, "Local heap full\n");
-	  if (debugging_local) LOCAL_PrintHeap(ds);
-          return 0;  /* not found */
-	}
+    while (arena != pArena->free_next) {
         arena = pArena->free_next;
         pArena = ARENA_PTR( ptr, arena );
-        if (pArena->size >= size) break;
+        if (pArena->size >= size) return arena;
+    }
+    dprintf_local( stddeb, "Local_FindFreeBlock: not enough space\n" );
+    if (debugging_local) LOCAL_PrintHeap(ds);
+    return 0;
+}
+
+/***********************************************************************
+ *           LOCAL_GetBlock
+ */
+static HLOCAL LOCAL_GetBlock( WORD ds, WORD size, WORD flags )
+{
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    LOCALHEAPINFO *pInfo;
+    LOCALARENA *pArena;
+    WORD arena;
+
+    if (!(pInfo = LOCAL_GetHeap( ds ))) {
+	dprintf_local( stddeb, "Local_GetBlock: Local heap not found\n");
+	LOCAL_PrintHeap(ds);
+	return 0;
+    }
+    
+    size += ARENA_HEADER_SIZE;
+    size = LALIGN( max( size, sizeof(LOCALARENA) ) );
+
+      /* Find a suitable free block */
+    arena = LOCAL_FindFreeBlock( ds, size );
+    if (arena == 0) {
+	LOCAL_Compact( ds, size, flags );
+	arena = LOCAL_FindFreeBlock( ds, size );
+    }
+    if (arena == 0) {
+	fprintf( stderr, "Local_GetBlock: not enough space!\n" );
     }
 
+    dprintf_local( stddeb, "LOCAL_GetBlock size = %04x\n", size );
       /* Make a block out of the free arena */
-
+    pArena = ARENA_PTR( ptr, arena );
     if (pArena->size > size + LALIGN(sizeof(LOCALARENA)))
     {
         LOCAL_AddBlock( ptr, arena, arena+size );
@@ -412,97 +466,78 @@ HLOCAL LOCAL_Alloc( WORD ds, WORD flags, WORD size )
     }
     LOCAL_RemoveFreeBlock( ptr, arena );
 
-    dprintf_local( stddeb, "LocalAlloc: returning %04x\n",
-                   arena + ARENA_HEADER_SIZE );
+    dprintf_local( stddeb, "Local_GetBlock: arena at %04x\n", arena );
     return arena + ARENA_HEADER_SIZE;
 }
 
-
 /***********************************************************************
- *           LOCAL_ReAlloc
- *
- * Implementation of LocalReAlloc().
+ *           LOCAL_NewHTable
  */
-HLOCAL LOCAL_ReAlloc( WORD ds, HLOCAL handle, WORD size, WORD flags )
+static BOOL LOCAL_NewHTable( WORD ds )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALHEAPINFO *pInfo;
-    LOCALARENA *pArena, *pNext;
-    WORD arena, newhandle;
+    HLOCAL handle;
 
-    dprintf_local( stddeb, "LocalReAlloc: %04x %d %04x ds=%04x\n",
-                   handle, size, flags, ds );
-    if (!(pInfo = LOCAL_GetHeap( ds ))) return 0;
-    arena = handle - ARENA_HEADER_SIZE;
-    pArena = ARENA_PTR( ptr, arena );
-    if (flags & LMEM_MODIFY) {
-      dprintf_local( stddeb, "LMEM_MODIFY set\n");
-      return handle;
-    }
-    if (!size) size = 1;
-    size = LALIGN( size );
-
-      /* Check for size reduction */
-
-    if (size < pArena->next - handle)
-    {
-        if (handle + size < pArena->next - LALIGN(sizeof(LOCALARENA)))
-        {
-              /* It is worth making a new free block */
-            LOCAL_AddBlock( ptr, arena, handle + size );
-            LOCAL_AddFreeBlock( ptr, handle + size );
-            pInfo->items++;
-        }
-        dprintf_local( stddeb, "LocalReAlloc: returning %04x\n", handle );
-        return handle;
+    dprintf_local( stddeb, "Local_NewHTable\n" );
+    if (!(pInfo = LOCAL_GetHeap( ds ))) {
+      dprintf_local( stddeb, "Local heap not found\n");
+      LOCAL_PrintHeap(ds);
+      return FALSE;
     }
 
-      /* Check if the next block is free */
-
-    pNext = ARENA_PTR( ptr, pArena->next );
-    if (((pNext->prev & 3) == LOCAL_ARENA_FREE) &&
-        (size <= pNext->next - handle))
-    {
-        LOCAL_RemoveBlock( ptr, pArena->next );
-        if (handle + size < pArena->next - LALIGN(sizeof(LOCALARENA)))
-        {
-              /* It is worth making a new free block */
-            LOCAL_AddBlock( ptr, arena, handle + size );
-            LOCAL_AddFreeBlock( ptr, handle + size );
-            pInfo->items++;
-        }
-        dprintf_local( stddeb, "LocalReAlloc: returning %04x\n", handle );
-        return handle;
-    }
-
-      /* Now we have to allocate a new block */
-
-    newhandle = LOCAL_Alloc( ds, flags, size );
-    if (!newhandle) return 0;
-    memcpy( ptr + newhandle, ptr + handle, pArena->next - handle );
-    LOCAL_Free( ds, handle );
-    dprintf_local( stddeb, "LocalReAlloc: returning %04x\n", newhandle );
-    return newhandle;
+    handle = LOCAL_GetBlock( ds, pInfo->hdelta*4 + 2, LMEM_FIXED );
+    if (handle == 0) return FALSE;
+    *(WORD *)(ptr + handle) = 0; /* no handles in this block yet */
+    pInfo->htable = handle;
+    return TRUE;
 }
 
+/***********************************************************************
+ *           LOCAL_GetNewHandle
+ */
+static HLOCAL LOCAL_GetNewHandle( WORD ds )
+{
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    LOCALHEAPINFO *pInfo;
+    WORD count;
+    
+    if (!(pInfo = LOCAL_GetHeap( ds ))) {
+	dprintf_local( stddeb, "LOCAL_GetNewHandle: Local heap not found\n");
+	LOCAL_PrintHeap(ds);
+	return 0;
+    }
+    /* Check if we need a new handle table */
+    if (pInfo->htable == 0) 
+        if (!LOCAL_NewHTable( ds )) return 0;
+    if (*(WORD *)(ptr + pInfo->htable) == pInfo->hdelta) 
+        if (!LOCAL_NewHTable( ds )) return 0;
+
+    /* increase count */
+    count = (*(WORD *)(ptr + pInfo->htable))++;
+    dprintf_local( stddeb, "Local_GetNewHandle: %04x\n", pInfo->htable + 2 + 4*count );
+    return pInfo->htable + 2 + 4*count;
+}
 
 /***********************************************************************
- *           LOCAL_Free
- *
- * Implementation of LocalFree().
+ *           LOCAL_FreeArena
  */
-HLOCAL LOCAL_Free( WORD ds, HLOCAL handle )
+HLOCAL LOCAL_FreeArena( WORD ds, WORD arena )
 {
     char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
     LOCALHEAPINFO *pInfo;
     LOCALARENA *pArena, *pPrev, *pNext;
-    WORD arena;
 
-    dprintf_local( stddeb, "LocalFree: %04x ds=%04x\n", handle, ds );
-    if (!(pInfo = LOCAL_GetHeap( ds ))) return handle;
-    arena = handle - ARENA_HEADER_SIZE;
+    dprintf_local( stddeb, "LocalFreeArena: %04x ds=%04x\n", arena, ds );
+    if (!(pInfo = LOCAL_GetHeap( ds ))) return arena;
+
     pArena = ARENA_PTR( ptr, arena );
-    if ((pArena->prev & 3) == LOCAL_ARENA_FREE) return handle;
+    if ((pArena->prev & 3) == LOCAL_ARENA_FREE) {
+	/* shouldn't happen */
+	fprintf( stderr, "LocalFreeArena: Trying to free a block twice!\n" );
+	LOCAL_PrintHeap( ds );
+	return arena;
+    }
 
       /* Check if we can merge with the previous block */
 
@@ -529,6 +564,153 @@ HLOCAL LOCAL_Free( WORD ds, HLOCAL handle )
         pInfo->items--;
     }
     return 0;
+}
+
+
+/***********************************************************************
+ *           LOCAL_Free
+ *
+ * Implementation of LocalFree().
+ */
+HLOCAL LOCAL_Free( WORD ds, HLOCAL handle )
+{
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    WORD arena;
+
+    dprintf_local( stddeb, "LocalFree: %04x ds=%04x\n", handle, ds );
+    
+    if (HANDLE_FIXED( handle )) {
+	arena = ARENA_HEADER( handle );
+    } else {
+	arena = ARENA_HEADER( *(WORD *)(ptr + handle) );
+	dprintf_local( stddeb, "LocalFree: real block at %04x\n", arena);
+    }
+    arena = LOCAL_FreeArena( ds, arena );
+    if (arena != 0) return handle; /* couldn't free it */
+    return 0;
+}
+
+
+/***********************************************************************
+ *           LOCAL_Alloc
+ *
+ * Implementation of LocalAlloc().
+ */
+HLOCAL LOCAL_Alloc( WORD ds, WORD flags, WORD size )
+{
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    HLOCAL handle;
+    
+    dprintf_local( stddeb, "LocalAlloc: %04x %d ds=%04x\n", flags, size, ds );
+
+    if (flags & LMEM_MOVEABLE) {
+	LOCALHANDLEENTRY *plhe;
+	HLOCAL hmem;
+	
+	hmem = LOCAL_GetBlock( ds, size + 2, flags );
+	if (hmem == 0) return 0;
+	handle = LOCAL_GetNewHandle( ds );
+	if (handle == 0) {
+	    fprintf( stderr, "LocalAlloc: couldn't get handle\n");
+	    LOCAL_FreeArena( ds, ARENA_HEADER(hmem) );
+	    return 0;
+	}
+	*(WORD *)(ptr + hmem) = handle;
+	plhe = (LOCALHANDLEENTRY *)(ptr + handle);
+	plhe->addr = hmem + 2;
+	plhe->lock = 0;
+    } else {
+	handle = LOCAL_GetBlock( ds, size, flags );
+    }
+    return handle;
+}
+
+
+/***********************************************************************
+ *           LOCAL_ReAlloc
+ *
+ * Implementation of LocalReAlloc().
+ */
+HLOCAL LOCAL_ReAlloc( WORD ds, HLOCAL handle, WORD size, WORD flags )
+{
+    char *ptr = PTR_SEG_OFF_TO_LIN( ds, 0 );
+    LOCALHEAPINFO *pInfo;
+    LOCALARENA *pArena, *pNext;
+    WORD arena, newhandle, blockhandle, nextarena;
+
+    dprintf_local( stddeb, "LocalReAlloc: %04x %d %04x ds=%04x\n",
+                   handle, size, flags, ds );
+    if (!(pInfo = LOCAL_GetHeap( ds ))) return 0;
+    
+    if (HANDLE_FIXED( handle )) {
+	blockhandle = handle;
+    } else {
+	size += 2;
+	blockhandle = *(WORD *)(ptr + handle);
+	dprintf_local( stddeb, "  blockhandle %04x (%04x)\n", blockhandle,
+		      *(WORD *)(ptr + blockhandle - 2));
+    }
+    arena = ARENA_HEADER( blockhandle );
+    dprintf_local( stddeb, "LocalReAlloc: arena is %04x\n", arena );
+    pArena = ARENA_PTR( ptr, arena );
+    
+    if (flags & LMEM_MODIFY) {
+      dprintf_local( stddeb, "LMEM_MODIFY set\n");
+      return handle;
+    }
+    if (!size) size = 1;
+    size = LALIGN( size );
+    nextarena = LALIGN(blockhandle + size);
+
+      /* Check for size reduction */
+
+    if (nextarena < pArena->next)
+    {
+        if (nextarena < pArena->next - LALIGN(sizeof(LOCALARENA)))
+        {
+	    dprintf_local( stddeb, "size reduction, making new free block\n");
+              /* It is worth making a new free block */
+            LOCAL_AddBlock( ptr, arena, nextarena );
+            LOCAL_AddFreeBlock( ptr, nextarena );
+            pInfo->items++;
+        }
+        dprintf_local( stddeb, "LocalReAlloc: returning %04x\n", handle );
+        return handle;
+    }
+
+      /* Check if the next block is free */
+
+    pNext = ARENA_PTR( ptr, pArena->next );
+    if (((pNext->prev & 3) == LOCAL_ARENA_FREE) &&
+        (nextarena <= pNext->next))
+    {
+        LOCAL_RemoveBlock( ptr, pArena->next );
+        if (nextarena < pArena->next - LALIGN(sizeof(LOCALARENA)))
+        {
+	    dprintf_local( stddeb, "size increase, making new free block\n");
+              /* It is worth making a new free block */
+            LOCAL_AddBlock( ptr, arena, nextarena );
+            LOCAL_AddFreeBlock( ptr, nextarena );
+            pInfo->items++;
+        }
+        dprintf_local( stddeb, "LocalReAlloc: returning %04x\n", handle );
+        return handle;
+    }
+
+      /* Now we have to allocate a new block */
+
+    newhandle = LOCAL_GetBlock( ds, size, flags );
+    if (newhandle == 0) return 0;
+    memcpy( ptr + newhandle, ptr + (arena + ARENA_HEADER_SIZE), size );
+    LOCAL_FreeArena( ds, arena );
+    if (HANDLE_MOVEABLE( handle )) {
+	newhandle += 2;
+	dprintf_local( stddeb, "LocalReAlloc: fixing handle\n");
+	*(WORD *)(ptr + handle) = newhandle;
+	newhandle = handle;
+    }
+    dprintf_local( stddeb, "LocalReAlloc: returning %04x\n", newhandle );
+    return newhandle;
 }
 
 
@@ -589,6 +771,11 @@ HLOCAL LocalFree( HLOCAL handle )
  */
 WORD LocalLock( HLOCAL handle )
 {
+    char *ptr = PTR_SEG_OFF_TO_LIN( CURRENT_DS, 0 );
+
+    if (HANDLE_MOVEABLE(handle)) {
+	handle = *(WORD *)(ptr + handle);
+    }
     return handle;
 }
 
@@ -616,7 +803,12 @@ WORD LocalSize( HLOCAL handle )
  */
 HLOCAL LocalHandle( WORD addr )
 {
+    char *ptr = PTR_SEG_OFF_TO_LIN( CURRENT_DS, 0 );
+
     dprintf_local( stddeb, "LocalHandle: %04x\n", addr );
+    if (HANDLE_MOVEABLE( addr )) {
+	addr = *(WORD *)(ptr + addr - 2);
+    }
     return addr;
 }
 

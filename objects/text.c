@@ -302,9 +302,12 @@ BOOL ExtTextOut( HDC hdc, short x, short y, WORD flags, LPRECT lprect,
     if (!DC_SetupGCForText( dc )) return TRUE;
     font = dc->u.x.font.fstruct;
 
-    dprintf_text(stddeb,"ExtTextOut: %d,%d '%*.*s', %d  flags=%d rect=%d,%d,%d,%d\n",
-            x, y, count, count, str, count, flags,
-            lprect->left, lprect->top, lprect->right, lprect->bottom );
+    dprintf_text(stddeb,"ExtTextOut: %d,%d '%*.*s', %d  flags=%d\n",
+            x, y, count, count, str, count, flags);
+    if (lprect != NULL) {
+      dprintf_text(stddeb, "rect %d %d %d %d\n",
+		   lprect->left, lprect->top, lprect->right, lprect->bottom );
+    }
 
       /* Setup coordinates */
 

@@ -173,34 +173,27 @@ dbg_read(char * buf, int size){
 	do{
 		flush_symbols();
 		line = readline ("Wine-dbg>");
+                if (!line) return 0;
 		len = strlen(line);
-				
-		if (!line)
-		{
-			return 0;
-		}
-		else
-		{
-			/* Remove leading and trailing whitespace from the line.
-			   Then, if there is anything left, add it to the history list
-			   and execute it. */
-			stripwhite (line);
-			
-			if (*line)
-			{
-				add_history (line);
-				if(size < len + 1){
-					fprintf(stderr,"Fatal readline goof.\n");
-					exit(0);
-				};
-				strcpy(buf, line);
-				buf[len] = '\n';
-				buf[len+1] = 0;
-				free(line);
-				return len + 1;
-			}
-		}
 
+                /* Remove leading and trailing whitespace from the line.
+                   Then, if there is anything left, add it to the history list
+                   and execute it. */
+                stripwhite (line);
+			
+                if (*line)
+                {
+                    add_history (line);
+                    if(size < len + 1){
+                        fprintf(stderr,"Fatal readline goof.\n");
+                        exit(0);
+                    }
+                    strcpy(buf, line);
+                    buf[len] = '\n';
+                    buf[len+1] = 0;
+                    free(line);
+                    return len + 1;
+                }
 	} while (1==1);
 }
 

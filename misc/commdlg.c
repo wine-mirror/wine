@@ -15,6 +15,8 @@
 #include "dlgs.h"
 #include "selectors.h"
 #include "../rc/sysres.h"
+#include "dos_fs.h"
+#include "stackframe.h"
 
 #define OPENFILEDLG2			11
 #define SAVEFILEDLG2			12
@@ -27,128 +29,28 @@ static	HBITMAP		hFloppy = 0;
 static	HBITMAP		hHDisk = 0;
 static	HBITMAP		hCDRom = 0;
 
-int DOS_GetDefaultDrive(void);
-void DOS_SetDefaultDrive(int drive);
-char *DOS_GetCurrentDir(int drive);
-int DOS_ChangeDir(int drive, char *dirname);
-
-BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam);
-BOOL FileSaveDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam);
-BOOL ColorDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam);
-BOOL PrintDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam);
-BOOL PrintSetupDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam);
-BOOL ReplaceTextDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam);
-BOOL FindTextDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam);
-
-/***********************************************************************
- * COMMDLG_IsPathName [internal]
- */
-
-static BOOL COMMDLG_IsPathName(LPSTR str)
-{
-  if (str[strlen(str)-1] == ':' && strlen(str) == 2) return TRUE;
-  if (str[strlen(str)-1] == '\\') return TRUE;
-  if (strchr(str,'*') != NULL) return TRUE;
-  return FALSE;
-}
-
 /***********************************************************************
  * 				FileDlg_Init			[internal]
  */
 static BOOL FileDlg_Init()
 {
-  if (!hFolder) hFolder = LoadBitmap(0, MAKEINTRESOURCE(OBM_FOLDER));
-  if (!hFolder2) hFolder2 = LoadBitmap(0, MAKEINTRESOURCE(OBM_FOLDER2));
-  if (!hFloppy) hFloppy = LoadBitmap(0, MAKEINTRESOURCE(OBM_FLOPPY));
-  if (!hHDisk) hHDisk = LoadBitmap(0, MAKEINTRESOURCE(OBM_HDISK));
-  if (!hCDRom) hCDRom = LoadBitmap(0, MAKEINTRESOURCE(OBM_CDROM));
-  if (hFolder == 0 || hFolder2 == 0 || hFloppy == 0 || 
-      hHDisk == 0 || hCDRom == 0)
-  fprintf(stderr, "FileDlg_Init // Error loading bitmaps !");
-  return TRUE;
-}
-
-/***********************************************************************
- *                              OpenDlg_FixDirName              [internal]
- */
-void OpenDlg_FixDirName(LPSTR dirname)
-{
-  char temp[512];
-  char* strp1;
-  char* strp2;
-
-  strp1=dirname;
-  if( dirname[1] != ':'){
-    temp[0]=(char)((char)DOS_GetDefaultDrive()+'A');
-    temp[1]=':';
-    temp[2]='\\';
-    temp[3]= '\0';
-    strcat(temp, DOS_GetCurrentDir(DOS_GetDefaultDrive()));
-    if(dirname[0]=='.' && dirname[1]=='.') {
-      strp2 = strrchr(temp, '\\');
-      if (strp2 != NULL){
-	*strp2='\0';
-	strp1+=2;
-      }
-    }
-    strcat(temp, "\\");
-    strcat(temp, strp1);
-    strcpy(dirname, temp);
-  } 
-}
-  
-
-/***********************************************************************
- * 				OpenDlg_ScanDir			[internal]
- */
-static BOOL OpenDlg_ScanDir(HWND hWnd, LPSTR newPath)
-{
-  static HANDLE hStr = 0;
-  static LPSTR  str  = NULL;
-  static SEGPTR str16 = 0;
-  LPSTR strp;
-
-  OpenDlg_FixDirName(newPath);
-  if (str == NULL)  {
-    hStr = GlobalAlloc(0,512);
-    str = GlobalLock(hStr);
-    str16 = WIN16_GlobalLock(hStr);
-  }
-
-  strcpy(str,newPath);
-  DlgDirList(hWnd, str, lst1, 0, 0x0000);
-  strp = strrchr(str,'\\');
-  if (strp == NULL)  {
-    if (str[1] == ':') {
-      strp = str+2;
-    } else  {
-      strp = str;
-    }
-  } else strp++;
-  strcpy(str,strp);
-  SendDlgItemMessage(hWnd,edt1,WM_SETTEXT, 0, str16);
-  strcpy(str,"*.*");
-  DlgDirList(hWnd, str, lst2, stc1, 0x8010);
-  
-  return TRUE;
-}
-
-/***********************************************************************
- * 				OpenDlg_GetFileType		[internal]
- */
-static LPSTR OpenDlg_GetFileType(LPCSTR types, WORD index)
-{
-	int		n;
-	int		i = 1;
-	LPSTR 	ptr = (LPSTR) types;
-	if	(ptr == NULL) return NULL;
-	while((n = strlen(ptr)) != 0) {
-		ptr += ++n;
-		if (i++ == index) return ptr;
-		n = strlen(ptr);
-		ptr += ++n;
+    static BOOL initialized = 0;
+    
+    if (!initialized) {
+	if (!hFolder) hFolder = LoadBitmap(0, MAKEINTRESOURCE(OBM_FOLDER));
+	if (!hFolder2) hFolder2 = LoadBitmap(0, MAKEINTRESOURCE(OBM_FOLDER2));
+	if (!hFloppy) hFloppy = LoadBitmap(0, MAKEINTRESOURCE(OBM_FLOPPY));
+	if (!hHDisk) hHDisk = LoadBitmap(0, MAKEINTRESOURCE(OBM_HDISK));
+	if (!hCDRom) hCDRom = LoadBitmap(0, MAKEINTRESOURCE(OBM_CDROM));
+	if (hFolder == 0 || hFolder2 == 0 || hFloppy == 0 || 
+	    hHDisk == 0 || hCDRom == 0)
+	{	
+	    fprintf(stderr, "FileDlg_Init // Error loading bitmaps !");
+	    return FALSE;
 	}
-	return NULL;
+	initialized = TRUE;
+    }
+    return TRUE;
 }
 
 /***********************************************************************
@@ -162,6 +64,8 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
   BOOL 	    bRet;
   LPCSTR    dlgTemplate;
   
+  if (!FileDlg_Init()) return FALSE;
+    
   if (lpofn == NULL) return FALSE;
   if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) {
     dlgTemplate = GlobalLock(lpofn->hInstance);
@@ -190,7 +94,7 @@ BOOL GetOpenFileName(LPOPENFILENAME lpofn)
   hInst = GetWindowWord(lpofn->hwndOwner, GWW_HINSTANCE);
   bRet = DialogBoxIndirectParamPtr(hInst, dlgTemplate, lpofn->hwndOwner,
 				   GetWndProcEntry16("FileOpenDlgProc"),
-				   (DWORD)lpofn); 
+				   (DWORD)lpofn);
   
   printf("GetOpenFileName // return lpstrFile='%s' !\n", 
 	 (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFile));
@@ -209,6 +113,8 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
   BOOL	    bRet;
   LPCSTR    dlgTemplate;
   
+  if (!FileDlg_Init()) return FALSE;
+
   if (lpofn == NULL) return FALSE;
   if (lpofn->Flags & OFN_ENABLETEMPLATEHANDLE) {
     dlgTemplate = GlobalLock(lpofn->hInstance);
@@ -243,100 +149,210 @@ BOOL GetSaveFileName(LPOPENFILENAME lpofn)
   return bRet;
 }
 
-
 /***********************************************************************
- * 				ChooseColor				[COMMDLG.5]
+ *                              FILEDLG_StripEditControl        [internal]
+ * Strip pathnames off the contents of the edit control.
  */
-BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
+static void FILEDLG_StripEditControl(HWND hwnd)
 {
-        WND     *wndPtr;
-	BOOL	bRet;
-        wndPtr = WIN_FindWndPtr(lpChCol->hwndOwner);
-	bRet = DialogBoxIndirectParamPtr(wndPtr->hInstance, sysres_DIALOG_8,
-		lpChCol->hwndOwner, GetWndProcEntry16("ColorDlgProc"), 
-		(DWORD)lpChCol);
-	return bRet;
+    char temp[512], *cp;
+
+    SendDlgItemMessage(hwnd, edt1, WM_GETTEXT, 511, MAKE_SEGPTR(temp));
+    cp = strrchr(temp, '\\');
+    if (cp != NULL) {
+	strcpy(temp, cp+1);
+    }
+    cp = strrchr(temp, ':');
+    if (cp != NULL) {
+	strcpy(temp, cp+1);
+    }
 }
 
+/***********************************************************************
+ * 				FILEDLG_ScanDir			[internal]
+ */
+static BOOL FILEDLG_ScanDir(HWND hWnd, LPSTR newPath)
+{
+  char str[512],str2[512];
+
+  strcpy(str,newPath);
+  SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 511, MAKE_SEGPTR(str2));
+  strcat(str, str2);
+  if (!DlgDirList(hWnd, str, lst1, 0, 0x0000)) return FALSE;
+  DlgDirList(hWnd, "*.*", lst2, stc1, 0x8010);
+  
+  return TRUE;
+}
 
 /***********************************************************************
- * 				FileOpenDlgProc			[COMMDLG.6]
+ * 				FILEDLG_GetFileType		[internal]
  */
-BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
+static LPSTR FILEDLG_GetFileType(LPSTR ptr, WORD index)
 {
-  int		n;
-  LPSTR	  ptr;
-  LPSTR	  fspec;
-  WORD	  wRet;
-  LONG    lRet;
-  HBRUSH  hBrush;
-  HDC 	  hMemDC;
-  HBITMAP hBitmap;
-  BITMAP  bm;
-  LPMEASUREITEMSTRUCT lpmeasure;
-  LPDRAWITEMSTRUCT lpdis;
-  int  nDrive;
-  static LPOPENFILENAME lpofn;/* FIXME - this won't multitask */
-  
-  SEGPTR tempsegp;
-  
-  static HANDLE hStr  = 0;
-  static LPSTR  str   = NULL;
-  static SEGPTR str16 = 0;
-  
-  if (str == NULL)  {
-    hStr = GlobalAlloc(0,512);
-    str = GlobalLock(hStr);
-    str16 = WIN16_GlobalLock(hStr);
-  }
-  
-  switch (wMsg) {
-   case WM_INITDIALOG:
-    printf("FileOpenDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
-    if (!FileDlg_Init()) return TRUE;
-    SendDlgItemMessage(hWnd, cmb1, CB_RESETCONTENT, 0, 0);
-    lpofn = (LPOPENFILENAME)lParam;
-    ptr = (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFilter);
-    tempsegp = lpofn->lpstrFilter;
-    while(*ptr) {
-      n = strlen(ptr);
-      SendDlgItemMessage(hWnd, cmb1, CB_ADDSTRING, 0, tempsegp);
-      ptr += n + 1; tempsegp += n + 1;
-      n = strlen(ptr);
-      ptr += n + 1; tempsegp += n + 1;
+    int n, i;
+    
+    if	(ptr == NULL) return NULL;
+    
+    for (i = 1;;i++) {
+	n = strlen(ptr);
+	if (n == 0) break;
+	ptr += n + 1;
+	if (i == index) return ptr;
+	n = strlen(ptr);
+	ptr += n + 1;
     }
+    return NULL;
+}
+
+/***********************************************************************
+ *                              FILEDLG_WMDrawItem              [internal]
+ */
+static LONG FILEDLG_WMDrawItem(HWND hWnd, WORD wParam, LONG lParam)
+{
+    LPDRAWITEMSTRUCT lpdis = (LPDRAWITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
+    LPSTR str;
+    HBRUSH hBrush;
+    HBITMAP hBitmap, hPrevBitmap;
+    BITMAP bm;
+    HDC hMemDC;
+    
+    if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst1) {
+	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
+	SelectObject(lpdis->hDC, hBrush);
+	FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
+	str = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
+	if (str != NULL)  {
+	    TextOut(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
+		    str, strlen(str));
+	    if (lpdis->itemState != 0) {
+		InvertRect(lpdis->hDC, &lpdis->rcItem);
+	    }
+	}
+	return TRUE;
+    }
+    
+    if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst2) {
+	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
+	SelectObject(lpdis->hDC, hBrush);
+	FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
+	str = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
+	if (str != NULL)  {
+	    hBitmap = hFolder;
+	    GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
+	    TextOut(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
+		    lpdis->rcItem.top, str, strlen(str));
+	    hMemDC = CreateCompatibleDC(lpdis->hDC);
+	    hPrevBitmap = SelectObject(hMemDC, hBitmap);
+	    BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
+		   bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+	    SelectObject(hMemDC, hPrevBitmap);
+	    DeleteDC(hMemDC);
+	    if (lpdis->itemState != 0) {
+		InvertRect(lpdis->hDC, &lpdis->rcItem);
+	    }
+	}
+	return TRUE;
+    }
+    if (lpdis->CtlType == ODT_COMBOBOX && lpdis->CtlID == cmb2) {
+	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
+	SelectObject(lpdis->hDC, hBrush);
+	FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
+	str = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
+	if (str != NULL) {
+	    switch(str[2]) {
+	     case 'a': case 'b':
+		hBitmap = hFloppy;
+		break;
+	     default:
+		hBitmap = hHDisk;
+		break;
+	    }
+	    GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
+	    TextOut(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
+		    lpdis->rcItem.top, str, strlen(str));
+	    hMemDC = CreateCompatibleDC(lpdis->hDC);
+	    hPrevBitmap = SelectObject(hMemDC, hBitmap);
+	    BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
+		   bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
+	    SelectObject(hMemDC, hPrevBitmap);
+	    DeleteDC(hMemDC);
+	    if (lpdis->itemState != 0) {
+		InvertRect(lpdis->hDC, &lpdis->rcItem);
+	    }
+	}
+	return TRUE;
+    }
+    return FALSE;
+}
+
+/***********************************************************************
+ *                              FILEDLG_WMMeasureItem           [internal]
+ */
+static LONG FILEDLG_WMMeasureItem(HWND hWnd, WORD wParam, LONG lParam) 
+{
+    BITMAP bm;
+    LPMEASUREITEMSTRUCT lpmeasure;
+    
+    GetObject(hFolder2, sizeof(BITMAP), (LPSTR)&bm);
+    lpmeasure = (LPMEASUREITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
+    lpmeasure->itemHeight = bm.bmHeight;
+    return TRUE;
+}
+
+/***********************************************************************
+ *                              FILEDLG_WMInitDialog            [internal]
+ */
+static LONG FILEDLG_WMInitDialog(HWND hWnd, WORD wParam, LONG lParam) 
+{
+    int n;
+    LPOPENFILENAME lpofn;
+    char tmpstr[512];
+    LPSTR pstr;
+    
+    SetWindowLong(hWnd, DWL_USER, lParam);
+    lpofn = (LPOPENFILENAME)lParam;
+    
+    /* read filter information */
+    pstr = (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFilter);
+    while(*pstr) {
+      n = strlen(pstr);
+      strcpy(tmpstr, pstr);
+      SendDlgItemMessage(hWnd, cmb1, CB_ADDSTRING, 0, MAKE_SEGPTR(tmpstr));
+      pstr += n + 1;
+      n = strlen(pstr);
+      pstr += n + 1;
+    }
+      
     /* set default filter */
     SendDlgItemMessage(hWnd, cmb1, CB_SETCURSEL,
-		       lpofn->nFilterIndex - 1, 0L);
-    /* get drive information into combo 2 */
-    strcpy(str,"");
-    DlgDirListComboBox(hWnd, str16, cmb2, 0, 0xC000);
-    
-    if (PTR_SEG_TO_LIN(lpofn->lpstrInitialDir) != NULL) { 
-      strcpy(str, PTR_SEG_TO_LIN(lpofn->lpstrInitialDir));
-      if (str[strlen(str)-1] != '\\' && str[strlen(str)-1] != ':') {
-        strcat(str,"\\");
-      }
-    } else  {
-      strcpy(str,"");
+		       lpofn->nFilterIndex - 1, 0);
+    strcpy(tmpstr, FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrFilter), 
+				       lpofn->nFilterIndex));
+    SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr));
+      
+    /* get drive list */
+    strcpy(tmpstr,"");
+    DlgDirListComboBox(hWnd, MAKE_SEGPTR(tmpstr), cmb2, 0, 0xC000);
+
+    /* read initial directory */
+    if (PTR_SEG_TO_LIN(lpofn->lpstrInitialDir) != NULL) {
+	strcpy(tmpstr, PTR_SEG_TO_LIN(lpofn->lpstrInitialDir));
+	if (strlen(tmpstr) > 0 && tmpstr[strlen(tmpstr)-1] != '\\' 
+	    && tmpstr[strlen(tmpstr)-1] != ':')
+	{
+	    strcat(tmpstr,"\\");
+	}
+    } else {
+	strcpy(tmpstr,"");
     }
-    lRet = SendDlgItemMessage(hWnd, cmb1, CB_GETCURSEL, 0, 0);
-    if (lRet == LB_ERR) return FALSE;
-    fspec = OpenDlg_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrFilter), lRet + 1);
-    strcat(str,fspec);
+    if (!FILEDLG_ScanDir(hWnd, tmpstr)) {
+	fprintf(stderr, "FileDlg: couldn't read initial directory!\n");
+    } 
+
+    /* select current drive in combo 2 */
+    n = DOS_GetDefaultDrive();
+    SendDlgItemMessage(hWnd, cmb2, CB_SETCURSEL, n, 0);
     
-    if (!OpenDlg_ScanDir(hWnd, str)) {
-      printf("OpenDlg_ScanDir // ChangeDir Error !\n");
-    }
-    /* select current drive in combo */
-    nDrive = DOS_GetDefaultDrive();
-    SendDlgItemMessage(hWnd, cmb2, CB_SETCURSEL, nDrive, 0L);
-    
-    ShowWindow(hWnd, SW_SHOWNORMAL);
-    return TRUE;
-    
-   case WM_SHOWWINDOW:
-    if (wParam == 0) break;
     if (!(lpofn->Flags & OFN_SHOWHELP)) {
       ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);
     }
@@ -344,162 +360,157 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
       ShowWindow(GetDlgItem(hWnd, chx1), SW_HIDE); 
     }
     return TRUE;
+}
 
-   case WM_MEASUREITEM:
-    GetObject(hFolder2, sizeof(BITMAP), (LPSTR)&bm);
-    lpmeasure = (LPMEASUREITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
-    lpmeasure->itemHeight = bm.bmHeight;
-    return TRUE;
+/***********************************************************************
+ *                              FILEDLG_WMCommand               [internal]
+ */
+static LONG FILEDLG_WMCommand(HWND hWnd, WORD wParam, LONG lParam) 
+{
+    LONG lRet;
+    LPOPENFILENAME lpofn;
+    char tmpstr[512], tmpstr2[512];
+    LPSTR pstr, pstr2;
     
-   case WM_DRAWITEM:
-    if (lParam == 0L) break;
-    lpdis = (LPDRAWITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
-    if ((lpdis->CtlType == ODT_LISTBOX) && (lpdis->CtlID == lst1)) {
-      hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
-      SelectObject(lpdis->hDC, hBrush);
-      FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
-      ptr = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
-      if (ptr == NULL) break;
-      TextOut(lpdis->hDC, lpdis->rcItem.left,	lpdis->rcItem.top,
-	      ptr, strlen(ptr));
-      if (lpdis->itemState != 0) {
-	InvertRect(lpdis->hDC, &lpdis->rcItem);
-      }
-      return TRUE;
-    }
-    if ((lpdis->CtlType == ODT_LISTBOX) && (lpdis->CtlID == lst2)) {
-      hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
-      SelectObject(lpdis->hDC, hBrush);
-      FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
-      ptr = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
-      if (ptr == NULL) break;
-      hBitmap = hFolder;
-      GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
-      TextOut(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
-	      lpdis->rcItem.top, ptr, strlen(ptr));
-      hMemDC = CreateCompatibleDC(lpdis->hDC);
-      SelectObject(hMemDC, hBitmap);
-      BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
-	     bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-      DeleteDC(hMemDC);
-      if (lpdis->itemState != 0) {
-	InvertRect(lpdis->hDC, &lpdis->rcItem);
-      }
-      return TRUE;
-    }
-    if ((lpdis->CtlType == ODT_COMBOBOX) && (lpdis->CtlID == cmb2)) {
-      hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
-      SelectObject(lpdis->hDC, hBrush);
-      FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
-      ptr = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
-      if (ptr == NULL) break;
-      switch(ptr[2]) {
-       case 'a': case 'b':
-	hBitmap = hFloppy;
-	break;
-       default:
-	hBitmap = hHDisk;
-	break;
-      }
-      GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
-      TextOut(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
-	      lpdis->rcItem.top, ptr, strlen(ptr));
-      hMemDC = CreateCompatibleDC(lpdis->hDC);
-      SelectObject(hMemDC, hBitmap);
-      BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
-	     bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-      DeleteDC(hMemDC);
-      if (lpdis->itemState != 0) {
-	InvertRect(lpdis->hDC, &lpdis->rcItem);
-      }
-      return TRUE;
-    }
-    break;
-    
-   case WM_COMMAND:
+    lpofn = (LPOPENFILENAME)GetWindowLong(hWnd, DWL_USER);
     switch (wParam) {
      case lst1:
-      if (HIWORD(lParam) == LBN_DBLCLK) {
-	lRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0L);
-	if (lRet == LB_ERR) return 0;
-	SendDlgItemMessage(hWnd, lst1, LB_GETTEXT, lRet, str16);
-	SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, str16);
-	return SendMessage(hWnd, WM_COMMAND, IDOK, 0);
-      }
-      break;
-     case lst2:
-      if (HIWORD(lParam) == LBN_DBLCLK) {
-	lRet = SendDlgItemMessage(hWnd, lst2, LB_GETCURSEL, 0, 0L);
-	if (lRet == LB_ERR) return 0;
-	SendDlgItemMessage(hWnd, lst2, LB_GETTEXT, lRet, str16);
-
-	if (str[0] == '[') {
-	  str[strlen(str) - 1] = 0;
-	  strcpy(str,str+1);
+	FILEDLG_StripEditControl(hWnd);
+	if (HIWORD(lParam) == LBN_DBLCLK) {
+	    lRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0);
+	    if (lRet == LB_ERR) return TRUE;
+	    SendDlgItemMessage(hWnd, lst1, LB_GETTEXT, lRet, MAKE_SEGPTR(tmpstr));
+	    SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr));
+	    return SendMessage(hWnd, WM_COMMAND, IDOK, 0);
 	}
-	strcat(str,"\\"); 
-	lRet = SendDlgItemMessage(hWnd, cmb1, CB_GETCURSEL, 0, 0);
-	if (lRet == LB_ERR) return FALSE;
-	fspec = OpenDlg_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrFilter), lRet + 1);
-	strcat(str,"\\"); strcat(str,fspec);
-	SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, str16);
-	return SendMessage(hWnd, WM_COMMAND, IDOK, 0);
-      }
-      break;
+	return TRUE;
+     case lst2:
+	FILEDLG_StripEditControl(hWnd);
+	if (HIWORD(lParam) == LBN_DBLCLK) {
+	    lRet = SendDlgItemMessage(hWnd, lst2, LB_GETCURSEL, 0, 0);
+	    if (lRet == LB_ERR) return TRUE;
+	    SendDlgItemMessage(hWnd, lst2, LB_GETTEXT, lRet, MAKE_SEGPTR(tmpstr));
+	    
+	    if (tmpstr[0] == '[') {
+		tmpstr[strlen(tmpstr) - 1] = 0;
+		strcpy(tmpstr,tmpstr+1);
+	    }
+	    strcat(tmpstr, "\\");
+	    FILEDLG_ScanDir(hWnd, tmpstr);
+	}
+	return TRUE;
+	
      case cmb1:
-      if (HIWORD(lParam) == CBN_SELCHANGE) {
-	lRet = SendDlgItemMessage(hWnd, cmb1, CB_GETCURSEL, 0, 0L);
-	if (lRet == LB_ERR) return FALSE;
-	fspec = OpenDlg_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrFilter), lRet + 1);
-	strcpy(str,fspec);
-	SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, str16);
-	return SendMessage(hWnd, WM_COMMAND, IDOK, 0);	
-      }
-      break;
+	if (HIWORD(lParam) == CBN_SELCHANGE) {
+	    lRet = SendDlgItemMessage(hWnd, cmb1, CB_GETCURSEL, 0, 0);
+	    if (lRet == LB_ERR) return TRUE;
+	    strcpy(tmpstr, FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrFilter), 
+					       lRet + 1));
+	    SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr));
+	    FILEDLG_ScanDir(hWnd, "");
+	}
+	return TRUE;
+	
      case cmb2:
-      wRet = SendDlgItemMessage(hWnd, cmb2, CB_GETCURSEL, 0, 0L);
-      if (wRet == (WORD)LB_ERR) return 0;
-      SendDlgItemMessage(hWnd, cmb2, CB_GETLBTEXT, wRet, str16);
-      str[0] = str[2]; str[1] = ':'; str[2] = 0;
-      lRet = SendDlgItemMessage(hWnd, cmb1, CB_GETCURSEL, 0, 0L);
-      if (lRet == LB_ERR) return FALSE;
-      fspec = OpenDlg_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrFilter), lRet + 1);
-      strcat(str,fspec);
-      SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, str16);
-      return SendMessage(hWnd, WM_COMMAND, IDOK, 0);	
-      break;
+	FILEDLG_StripEditControl(hWnd);
+	lRet = SendDlgItemMessage(hWnd, cmb2, CB_GETCURSEL, 0, 0L);
+	if (lRet == LB_ERR) return 0;
+	SendDlgItemMessage(hWnd, cmb2, CB_GETLBTEXT, lRet, MAKE_SEGPTR(tmpstr));
+	sprintf(tmpstr, "%c:", tmpstr[2]);
+	FILEDLG_ScanDir(hWnd, tmpstr);
+	return TRUE;
+	
      case chx1:
-#ifdef DEBUG_OPENDLG
-      printf("FileOpenDlgProc // read-only toggled !\n");
-#endif
-      break;
+	return TRUE;
+	
      case pshHelp:
-#ifdef DEBUG_OPENDLG
-      printf("FileOpenDlgProc // pshHelp pressed !\n");
-#endif
-      break;
+	return TRUE;
+
      case IDOK:
-      SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 511, str16);
-      if (COMMDLG_IsPathName(str)) {
-	OpenDlg_ScanDir(hWnd, str);
-      } else  {	
-	ShowWindow(hWnd, SW_HIDE); 
-	strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFile), str);
+	SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 511, MAKE_SEGPTR(tmpstr));
+
+	pstr = strrchr(tmpstr, '\\');
+	if (pstr == NULL) pstr = strrchr(tmpstr, ':');
+	
+	if (strchr(tmpstr,'*') != NULL || strchr(tmpstr,'?') != NULL) {
+	    /* edit control contains wildcards */
+	    if (pstr != NULL) {
+		strcpy(tmpstr2, pstr+1);
+		*(pstr+1) = 0;
+	    } else {
+		strcpy(tmpstr2, tmpstr);
+		strcpy(tmpstr, "");
+	    }
+	    printf("commdlg: %s, %s\n", tmpstr, tmpstr2);
+	    SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr2));
+	    FILEDLG_ScanDir(hWnd, tmpstr);
+	    return TRUE;
+	}
+
+	/* no wildcards, we might have a directory or a filename */
+	/* try appending a wildcard and reading the directory */
+	pstr2 = tmpstr + strlen(tmpstr);
+	if (pstr == NULL || *(pstr+1) != 0) {
+	    strcat(tmpstr, "\\");
+	}
+	lRet = SendDlgItemMessage(hWnd, cmb1, CB_GETCURSEL, 0, 0);
+	if (lRet == LB_ERR) return TRUE;
+	strcpy(tmpstr2, FILEDLG_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrFilter),
+					    lRet + 1));
+	SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr2));
+	/* if ScanDir succeeds, we have changed the directory */
+	if (FILEDLG_ScanDir(hWnd, tmpstr)) return TRUE;
+	
+	/* if not, this must be a filename */
+	*pstr2 = 0;
+	
+	if (pstr != NULL) {
+	    /* strip off the pathname */
+	    *pstr = 0;
+	    strcpy(tmpstr2, pstr+1);
+	    SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr2));
+	    /* Should we MessageBox() if this fails? */
+	    if (!FILEDLG_ScanDir(hWnd, tmpstr)) return TRUE;
+	    strcpy(tmpstr, tmpstr2);
+	} else {
+	    SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, MAKE_SEGPTR(tmpstr));
+	}
+	
+	ShowWindow(hWnd, SW_HIDE);
+	strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFile), tmpstr);
 	lpofn->nFileOffset = 0;
 	lpofn->nFileExtension = strlen(PTR_SEG_TO_LIN(lpofn->lpstrFile)) - 3;
 	if (PTR_SEG_TO_LIN(lpofn->lpstrFileTitle) != NULL) {
-	  wRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0L);
-	  SendDlgItemMessage(hWnd, lst1, LB_GETTEXT, wRet, str16);
-	  strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFileTitle), str);
+	    lRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0);
+	    SendDlgItemMessage(hWnd, lst1, LB_GETTEXT, lRet, MAKE_SEGPTR(tmpstr));
+	    strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFileTitle), tmpstr);
 	}
 	EndDialog(hWnd, TRUE);
-      }
-      return TRUE;
+	return TRUE;
      case IDCANCEL:
-      EndDialog(hWnd, FALSE);
-      return TRUE;
+	EndDialog(hWnd, FALSE);
+	return TRUE;
     }
-/*    return FALSE;*/
+    return FALSE;
+}
+
+/***********************************************************************
+ * 				FileOpenDlgProc			[COMMDLG.6]
+ */
+BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
+{  
+  switch (wMsg) {
+   case WM_INITDIALOG:
+      return FILEDLG_WMInitDialog(hWnd, wParam, lParam);
+      
+   case WM_MEASUREITEM:
+      return FILEDLG_WMMeasureItem(hWnd, wParam, lParam);
+    
+   case WM_DRAWITEM:
+      return FILEDLG_WMDrawItem(hWnd, wParam, lParam);
+
+   case WM_COMMAND:
+      return FILEDLG_WMCommand(hWnd, wParam, lParam);
   }
   
   /*
@@ -526,244 +537,19 @@ BOOL FileOpenDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
  */
 BOOL FileSaveDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
 {
-  int		n;
-  LPSTR	  ptr;
-  LPSTR	  fspec;
-  WORD	  wRet;
-  LONG    lRet;
-  HBRUSH  hBrush;
-  HDC 	  hMemDC;
-  HBITMAP hBitmap;
-  BITMAP  bm;
-  LPMEASUREITEMSTRUCT lpmeasure;
-  LPDRAWITEMSTRUCT lpdis;
-  int  nDrive;
-  static LPOPENFILENAME lpofn;/* FIXME - this won't multitask */
-  
-  SEGPTR tempsegp;
-  
-  static HANDLE hStr  = 0;
-  static LPSTR  str   = NULL;
-  static SEGPTR str16 = 0;
-  
-  if (str == NULL)  {
-    hStr = GlobalAlloc(0,512);
-    str = GlobalLock(hStr);
-    str16 = WIN16_GlobalLock(hStr);
-  }
-  
   switch (wMsg) {
    case WM_INITDIALOG:
-    printf("FileSaveDlgProc // WM_INITDIALOG lParam=%08lX\n", lParam);
-    if (!FileDlg_Init()) return TRUE;
-    SendDlgItemMessage(hWnd, cmb1, CB_RESETCONTENT, 0, 0);
-    lpofn = (LPOPENFILENAME)lParam;
-    ptr = (LPSTR)PTR_SEG_TO_LIN(lpofn->lpstrFilter);
-    tempsegp = lpofn->lpstrFilter;
-    while(*ptr) {
-      n = strlen(ptr);
-      SendDlgItemMessage(hWnd, cmb1, CB_ADDSTRING, 0, tempsegp);
-      ptr += n + 1; tempsegp += n + 1;
-      n = strlen(ptr);
-      ptr += n + 1; tempsegp += n + 1;
-    }
-    /* set default filter */
-    SendDlgItemMessage(hWnd, cmb1, CB_SETCURSEL,
-		       lpofn->nFilterIndex - 1, 0L);
-    /* get drive information into combo 2 */
-    strcpy(str,"");
-    DlgDirListComboBox(hWnd, str16, cmb2, 0, 0xC000);
-    
-    if (PTR_SEG_TO_LIN(lpofn->lpstrInitialDir) != NULL) { 
-      strcpy(str, PTR_SEG_TO_LIN(lpofn->lpstrInitialDir));
-      if (str[strlen(str)-1] != '\\' && str[strlen(str)-1] != ':') {
-        strcat(str,"\\");
-      }
-    } else  {
-      strcpy(str,"");
-    }
-    lRet = SendDlgItemMessage(hWnd, cmb1, CB_GETCURSEL, 0, 0);
-    if (lRet == LB_ERR) return FALSE;
-    fspec = OpenDlg_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrFilter), lRet + 1);
-    strcat(str,fspec);
-    
-    if (!OpenDlg_ScanDir(hWnd, str)) {
-      printf("SaveDlg_ScanDir // ChangeDir Error !\n");
-    } 
-    /* select current drive in combo */
-    nDrive = DOS_GetDefaultDrive();
-    SendDlgItemMessage(hWnd, cmb2, CB_SETCURSEL, nDrive, 0L);
-    
-    ShowWindow(hWnd, SW_SHOWNORMAL);
-    return TRUE;
-    
-   case WM_SHOWWINDOW:
-    if (wParam == 0) break;
-    if (!(lpofn->Flags & OFN_SHOWHELP)) {
-      ShowWindow(GetDlgItem(hWnd, pshHelp), SW_HIDE);
-    }
-    if (lpofn->Flags & OFN_HIDEREADONLY) {
-      ShowWindow(GetDlgItem(hWnd, chx1), SW_HIDE); 
-    }
-    return TRUE;
-
+      return FILEDLG_WMInitDialog(hWnd, wParam, lParam);
+      
    case WM_MEASUREITEM:
-    GetObject(hFolder2, sizeof(BITMAP), (LPSTR)&bm);
-    lpmeasure = (LPMEASUREITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
-    lpmeasure->itemHeight = bm.bmHeight;
-    return TRUE;
+      return FILEDLG_WMMeasureItem(hWnd, wParam, lParam);
     
    case WM_DRAWITEM:
-    if (lParam == 0L) break;
-    lpdis = (LPDRAWITEMSTRUCT)PTR_SEG_TO_LIN(lParam);
-    if ((lpdis->CtlType == ODT_LISTBOX) && (lpdis->CtlID == lst1)) {
-      hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
-      SelectObject(lpdis->hDC, hBrush);
-      FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
-      ptr = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
-      if (ptr == NULL) break;
-      TextOut(lpdis->hDC, lpdis->rcItem.left,	lpdis->rcItem.top,
-	      ptr, strlen(ptr));
-      if (lpdis->itemState != 0) {
-	InvertRect(lpdis->hDC, &lpdis->rcItem);
-      }
-      return TRUE;
-    }
-    if ((lpdis->CtlType == ODT_LISTBOX) && (lpdis->CtlID == lst2)) {
-      hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
-      SelectObject(lpdis->hDC, hBrush);
-      FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
-      ptr = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
-      if (ptr == NULL) break;
-      hBitmap = hFolder;
-      GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
-      TextOut(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
-	      lpdis->rcItem.top, ptr, strlen(ptr));
-      hMemDC = CreateCompatibleDC(lpdis->hDC);
-      SelectObject(hMemDC, hBitmap);
-      BitBlt(lpdis->hDC, lpdis->rcItem.left,	lpdis->rcItem.top,
-	     bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-      DeleteDC(hMemDC);
-      if (lpdis->itemState != 0) {
-	InvertRect(lpdis->hDC, &lpdis->rcItem);
-      }
-      return TRUE;
-    }
-    if ((lpdis->CtlType == ODT_COMBOBOX) && (lpdis->CtlID == cmb2)) {
-      hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
-      SelectObject(lpdis->hDC, hBrush);
-      FillRect(lpdis->hDC, &lpdis->rcItem, hBrush);
-      ptr = (LPSTR) PTR_SEG_TO_LIN(lpdis->itemData);
-      if (ptr == NULL) break;
-      switch(ptr[2]) {
-       case 'a': case 'b':
-	hBitmap = hFloppy;
-	break;
-       default:
-	hBitmap = hHDisk;
-	break;
-      }
-      GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm);
-      TextOut(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
-	      lpdis->rcItem.top, ptr, strlen(ptr));
-      hMemDC = CreateCompatibleDC(lpdis->hDC);
-      SelectObject(hMemDC, hBitmap);
-      BitBlt(lpdis->hDC, lpdis->rcItem.left,	lpdis->rcItem.top,
-	     bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-      DeleteDC(hMemDC);
-      if (lpdis->itemState != 0) {
-	InvertRect(lpdis->hDC, &lpdis->rcItem);
-      }
-      return TRUE;
-    }
-    break;
-    
-   case WM_COMMAND:
-    switch (wParam) {
-     case lst1:
-      if (HIWORD(lParam) == LBN_DBLCLK) {
-	lRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0L);
-	if (lRet == LB_ERR) return 0;
-	SendDlgItemMessage(hWnd, lst1, LB_GETTEXT, lRet, str16);
-	SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, str16);
-	return SendMessage(hWnd, WM_COMMAND, IDOK, 0);
-      }
-      break;
-     case lst2:
-      if (HIWORD(lParam) == LBN_DBLCLK) {
-	lRet = SendDlgItemMessage(hWnd, lst2, LB_GETCURSEL, 0, 0L);
-	if (lRet == LB_ERR) return 0;
-	SendDlgItemMessage(hWnd, lst2, LB_GETTEXT, lRet, str16);
+      return FILEDLG_WMDrawItem(hWnd, wParam, lParam);
 
-	if (str[0] == '[') {
-	  str[strlen(str) - 1] = 0;
-	  strcpy(str,str+1);
-	}
-	strcat(str,"\\"); 
-	lRet = SendDlgItemMessage(hWnd, cmb1, CB_GETCURSEL, 0, 0);
-	if (lRet == LB_ERR) return FALSE;
-	fspec = OpenDlg_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrFilter), lRet + 1);
-	strcat(str,"\\"); strcat(str,fspec);
-	SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, str16);
-	return SendMessage(hWnd, WM_COMMAND, IDOK, 0);
-      }
-      break;
-     case cmb1:
-      if (HIWORD(lParam) == CBN_SELCHANGE) {
-	lRet = SendDlgItemMessage(hWnd, cmb1, CB_GETCURSEL, 0, 0L);
-	if (lRet == LB_ERR) return FALSE;
-	fspec = OpenDlg_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrFilter), lRet + 1);
-	strcpy(str,fspec);
-	SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, str16);
-	return SendMessage(hWnd, WM_COMMAND, IDOK, 0);	
-      }
-      break;
-     case cmb2:
-      wRet = SendDlgItemMessage(hWnd, cmb2, CB_GETCURSEL, 0, 0L);
-      if (wRet == (WORD)LB_ERR) return 0;
-      SendDlgItemMessage(hWnd, cmb2, CB_GETLBTEXT, wRet, str16);
-      str[0] = str[2]; str[1] = ':'; str[2] = 0;
-      lRet = SendDlgItemMessage(hWnd, cmb1, CB_GETCURSEL, 0, 0L);
-      if (lRet == LB_ERR) return FALSE;
-      fspec = OpenDlg_GetFileType(PTR_SEG_TO_LIN(lpofn->lpstrFilter), lRet + 1);
-      strcat(str,fspec);
-      SendDlgItemMessage(hWnd, edt1, WM_SETTEXT, 0, str16);
-      return SendMessage(hWnd, WM_COMMAND, IDOK, 0);	
-      break;
-     case chx1:
-#ifdef DEBUG_OPENDLG
-      printf("FileSaveDlgProc // read-only toggled !\n");
-#endif
-      break;
-     case pshHelp:
-#ifdef DEBUG_OPENDLG
-      printf("FileSaveDlgProc // pshHelp pressed !\n");
-#endif
-      break;
-     case IDOK:
-      SendDlgItemMessage(hWnd, edt1, WM_GETTEXT, 511, str16);
-      if (COMMDLG_IsPathName(str)) {
-	OpenDlg_ScanDir(hWnd, str);
-      } else  {	
-	ShowWindow(hWnd, SW_HIDE); 
-	strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFile), str);
-	lpofn->nFileOffset = 0;
-	lpofn->nFileExtension = strlen(PTR_SEG_TO_LIN(lpofn->lpstrFile)) - 3;
-	if (PTR_SEG_TO_LIN(lpofn->lpstrFileTitle) != NULL) {
-	  wRet = SendDlgItemMessage(hWnd, lst1, LB_GETCURSEL, 0, 0L);
-	  SendDlgItemMessage(hWnd, lst1, LB_GETTEXT, wRet, str16);
-	  strcpy(PTR_SEG_TO_LIN(lpofn->lpstrFileTitle), str);
-	}
-	EndDialog(hWnd, TRUE);
-      }
-      return TRUE;
-     case IDCANCEL:
-      EndDialog(hWnd, FALSE);
-      return TRUE;
-    }
-/*    return FALSE;*/
+   case WM_COMMAND:
+      return FILEDLG_WMCommand(hWnd, wParam, lParam);
   }
-  
   
   /*
   case WM_CTLCOLOR:
@@ -781,6 +567,21 @@ BOOL FileSaveDlgProc(HWND hWnd, WORD wMsg, WORD wParam, LONG lParam)
    
    */
   return FALSE;
+}
+
+
+/***********************************************************************
+ * 				ChooseColor				[COMMDLG.5]
+ */
+BOOL ChooseColor(LPCHOOSECOLOR lpChCol)
+{
+        WND     *wndPtr;
+	BOOL	bRet;
+        wndPtr = WIN_FindWndPtr(lpChCol->hwndOwner);
+	bRet = DialogBoxIndirectParamPtr(wndPtr->hInstance, sysres_DIALOG_8,
+		lpChCol->hwndOwner, GetWndProcEntry16("ColorDlgProc"), 
+		(DWORD)lpChCol);
+	return bRet;
 }
 
 

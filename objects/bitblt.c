@@ -9,6 +9,7 @@
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
 #include "bitmap.h"
+#include "callback.h"
 #include "color.h"
 #include "dc.h"
 #include "metafile.h"
@@ -581,7 +582,7 @@ static void BITBLT_GetRow( XImage *image, int *pdata, short row,
     register short i;
 
     pdata += swap ? start+width-1 : start;
-    if (image->depth == depthDst)
+    if (image->depth == depthDst)  /* color -> color */
     {
         if (COLOR_PixelToPalette && (depthDst != 1))
             if (swap) for (i = 0; i < width; i++)
@@ -596,16 +597,25 @@ static void BITBLT_GetRow( XImage *image, int *pdata, short row,
     }
     else
     {
-        if (image->depth == 1)
+        if (image->depth == 1)  /* monochrome -> color */
+        {
+            if (COLOR_PixelToPalette)
+            {
+                fg = COLOR_PixelToPalette[fg];
+                bg = COLOR_PixelToPalette[bg];
+            }
             if (swap) for (i = 0; i < width; i++)
                 *pdata-- = XGetPixel( image, i, row ) ? bg : fg;
             else for (i = 0; i < width; i++)
                 *pdata++ = XGetPixel( image, i, row ) ? bg : fg;
-        else
+        }
+        else  /* color -> monochrome */
+        {
             if (swap) for (i = 0; i < width; i++)
                 *pdata-- = (XGetPixel( image, i, row ) == bg) ? 1 : 0;
             else for (i = 0; i < width; i++)
                 *pdata++ = (XGetPixel( image, i, row ) == bg) ? 1 : 0;
+        }
     }
 }
 
@@ -1203,8 +1213,9 @@ BOOL PatBlt( HDC hdc, short left, short top,
     dprintf_bitblt(stddeb, "PatBlt: %d %d,%d %dx%d %06lx\n",
 	    hdc, left, top, width, height, rop );
 
-    return BITBLT_InternalStretchBlt( dc, left, top, width, height,
-                                      NULL, 0, 0, 0, 0, rop );
+    return CallTo32_LargeStack( (int(*)())BITBLT_InternalStretchBlt, 11,
+                                 dc, left, top, width, height,
+                                 NULL, 0, 0, 0, 0, rop );
 }
 
 
@@ -1231,8 +1242,9 @@ BOOL BitBlt( HDC hdcDst, short xDst, short yDst, short width, short height,
                 hdcDst, xDst, yDst, width, height, dcDst->w.bitsPerPixel, rop);
     dprintf_bitblt(stddeb,"        src org=%d,%d  dst org=%d,%d\n",
                 dcSrc->w.DCOrgX, dcSrc->w.DCOrgY, dcDst->w.DCOrgX, dcDst->w.DCOrgY );
-    return BITBLT_InternalStretchBlt( dcDst, xDst, yDst, width, height,
-                                      dcSrc, xSrc, ySrc, width, height, rop );
+    return CallTo32_LargeStack( (int(*)())BITBLT_InternalStretchBlt, 11,
+                                dcDst, xDst, yDst, width, height,
+                                dcSrc, xSrc, ySrc, width, height, rop );
 }
 
 
@@ -1261,7 +1273,7 @@ BOOL StretchBlt( HDC hdcDst, short xDst, short yDst,
                    dcSrc ? dcSrc->w.bitsPerPixel : 0, hdcDst, xDst, yDst,
                    widthDst, heightDst, dcDst->w.bitsPerPixel, rop );
 
-    return BITBLT_InternalStretchBlt( dcDst, xDst, yDst, widthDst, heightDst,
-                                      dcSrc, xSrc, ySrc, widthSrc, heightSrc,
-                                      rop );
+    return CallTo32_LargeStack( (int(*)())BITBLT_InternalStretchBlt, 11,
+                                dcDst, xDst, yDst, widthDst, heightDst,
+                                dcSrc, xSrc, ySrc, widthSrc, heightSrc, rop );
 }

@@ -234,6 +234,7 @@ id	3
 368 stub ResizePalette
 370 pascal16 GetNearestPaletteIndex(word long) GetNearestPaletteIndex
 372 pascal16 ExtFloodFill(word s_word s_word long word) ExtFloodFill
+373 pascal16 SetSystemPaletteUse(word word) SetSystemPaletteUse
 374 pascal16 GetSystemPaletteUse(word) GetSystemPaletteUse
 375 pascal16 GetSystemPaletteEntries(word word word ptr)
              GetSystemPaletteEntries

@@ -10,6 +10,7 @@
 #include <X11/Xutil.h>
 #include "dc.h"
 #include "bitmap.h"
+#include "callback.h"
 #include "palette.h"
 #include "icon.h"
 #include "stackframe.h"
@@ -172,9 +173,10 @@ static void DIB_SetImageBits_RLE4( WORD lines, BYTE *bits, WORD width,
 {
 	int x = 0, c, length;
 	BYTE *begin = bits;
-	
-	lines--;
-	while (1) {
+
+        lines--;
+	while ((INT)lines >= 0)
+        {
 		length = *bits++;
 		if (length) {	/* encoded */
 			c = *bits++;
@@ -562,9 +564,11 @@ int SetDIBits( HDC hdc, HBITMAP hbitmap, WORD startscan, WORD lines,
     if (startscan+lines > info->bmiHeader.biHeight)
 	lines = info->bmiHeader.biHeight - startscan;
 
-    return DIB_SetImageBits( dc, lines, bmp->bitmap.bmBitsPixel,
-			     bits, info, coloruse, bmp->pixmap, BITMAP_GC(bmp),
-			     0, 0, 0, startscan, bmp->bitmap.bmWidth, lines );
+    return CallTo32_LargeStack( (int(*)())DIB_SetImageBits, 14,
+                                dc, lines, bmp->bitmap.bmBitsPixel,
+                                bits, info, coloruse, bmp->pixmap,
+                                BITMAP_GC(bmp), 0, 0, 0, startscan,
+                                bmp->bitmap.bmWidth, lines );
 }
 
 
@@ -592,13 +596,13 @@ int SetDIBitsToDevice( HDC hdc, short xDest, short yDest, WORD cx, WORD cy,
 
     DC_SetupGCForText( dc );  /* To have the correct colors */
     XSetFunction( display, dc->u.x.gc, DC_XROPfunction[dc->w.ROPmode-1] );
-    return DIB_SetImageBits( dc, lines, dc->w.bitsPerPixel,
-			     bits, info, coloruse,
-			     dc->u.x.drawable, dc->u.x.gc,
-			     xSrc, ySrc - startscan,
-			     dc->w.DCOrgX + XLPTODP( dc, xDest ),
-			     dc->w.DCOrgY + YLPTODP( dc, yDest ),
-			     cx, cy );
+    return CallTo32_LargeStack( (int(*)())DIB_SetImageBits, 14,
+                                dc, lines, dc->w.bitsPerPixel, bits, info,
+                                coloruse, dc->u.x.drawable, dc->u.x.gc,
+                                xSrc, ySrc - startscan,
+                                dc->w.DCOrgX + XLPTODP( dc, xDest ),
+                                dc->w.DCOrgY + YLPTODP( dc, yDest ),
+                                cx, cy );
 }
 
 

@@ -4,7 +4,6 @@ MODULE = loader
 
 SRCS = \
 	dump.c \
-	ldt.c \
 	main.c \
 	module.c \
 	ne_image.c \

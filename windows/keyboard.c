@@ -43,6 +43,18 @@ void GetKeyboardState(BYTE FAR *lpKeyState)
 }
 
 /**********************************************************************
+ *      SetKeyboardState            [USER.223]
+ */
+void SetKeyboardState(BYTE FAR *lpKeyState)
+{
+	if (lpKeyState != NULL) {
+	memcpy(KeyStateTable, lpKeyState, 256);
+	MouseButtonsStates[0] = KeyStateTable[VK_LBUTTON];
+	MouseButtonsStates[1] = KeyStateTable[VK_MBUTTON];
+	MouseButtonsStates[2] = KeyStateTable[VK_RBUTTON];
+	}
+}
+/**********************************************************************
  *            GetAsyncKeyState        (USER.249)
  *
  *	Determine if a key is or was pressed.  retval has high-order 

@@ -221,7 +221,7 @@ id	2
 220 pascal LoadMenuIndirect(ptr) LoadMenuIndirect
 221 pascal ScrollDC(word s_word s_word ptr ptr word ptr) ScrollDC
 222 pascal16 GetKeyboardState(ptr) GetKeyboardState
-223 stub SetKeyboardState
+223 pascal16 SetKeyboardState(ptr) SetKeyboardState
 224 pascal16 GetWindowTask(word) GetWindowTask
 225 pascal EnumTaskWindows(word segptr long) EnumTaskWindows
 226 stub LockInput

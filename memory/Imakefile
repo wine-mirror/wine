@@ -5,6 +5,7 @@ MODULE = memory
 SRCS = \
 	selector.c \
 	global.c \
+	ldt.c \
 	local.c
 
 OBJS = $(SRCS:.c=.o)

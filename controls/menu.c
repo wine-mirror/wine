@@ -344,6 +344,7 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, HWND hwndOwner )
 	    if ((i != start) &&
 		(lpitem->item_flags & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
 	    MENU_CalcItemSize( hdc, lpitem, hwndOwner, orgX, orgY, FALSE );
+            if (lpitem->item_flags & MF_MENUBARBREAK) orgX++;
 	    maxX = max( maxX, lpitem->rect.right );
 	    orgY = lpitem->rect.bottom;
 	    if (lpitem->xTab)

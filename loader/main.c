@@ -10,12 +10,12 @@ static char Copyright[] = "Copyright  Robert J. Amstadt, 1993";
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include "neexe.h"
+#include "windows.h"
 #include "dos_fs.h"
 #include "dlls.h"
-#include "windows.h"
+#include "miscemu.h"
+#include "neexe.h"
 #include "wineopts.h"
-#include "wine.h"
 #include "task.h"
 #include "options.h"
 #include "pe_image.h"
@@ -45,6 +45,9 @@ int MAIN_Init(void)
 
       /* Initialize tasks */
     if (!TASK_Init()) return 0;
+
+      /* Initialize interrupt vectors */
+    if (!INT_Init()) return 0;
 
       /* Initialize the DOS file system */
     DOS_InitFS();

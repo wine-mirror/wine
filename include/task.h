@@ -21,9 +21,9 @@ typedef struct
     WORD   nextParagraph;    /* Segment of next paragraph */
     BYTE   reserved1;
     BYTE   dispatcher[5];    /* Long call to DOS */
-    DWORD  savedint22;       /* Saved int 22h handler */
-    DWORD  savedint23;       /* Saved int 23h handler */
-    DWORD  savedint24;       /* Saved int 24h handler */
+    SEGPTR savedint22;       /* Saved int 22h handler */
+    SEGPTR savedint23;       /* Saved int 23h handler */
+    SEGPTR savedint24;       /* Saved int 24h handler */
     WORD   parentPSP;        /* Selector of parent PSP */
     BYTE   fileHandles[20];  /* Open file handles */
     HANDLE environment;      /* Selector of environment */

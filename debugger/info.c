@@ -284,12 +284,10 @@ void dbg_bt(){
   while((cs & 3) == 3) {
     /* See if in 32 bit mode or not.  Assume GDT means 32 bit. */
     if ((cs & 7) != 7) {
-      extern int main();
       fprintf(stderr,"%d ",frameno++);
       print_address(frame->u.win32.saved_ip,stderr,32);
       fprintf( stderr, "\n" );
-      if (frame->u.win32.saved_ip >= ((unsigned long)main) &&
-          frame->u.win32.saved_ip <= ((unsigned long)main+1000)) break;
+      if (!frame->u.win32.saved_ip) break;
       frame = (struct frame *) frame->u.win32.saved_bp;
     } else {
       if (frame->u.win16.saved_bp & 1) cs = frame->u.win16.saved_cs;

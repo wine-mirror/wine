@@ -458,13 +458,10 @@ HICON ExtractAssociatedIcon(HINSTANCE hInst,LPSTR lpIconPath, LPWORD lpiIcon)
 
 /*************************************************************************
  *              DoEnvironmentSubst      [SHELL.37]
- * I couldn't find any reference, so even the number of bytes on the
- * stack might be wrong
  */
-WORD DoEnvironmentSubst(LPSTR a,WORD b,WORD c)
+DWORD DoEnvironmentSubst(LPSTR str,WORD len)
 {
-    printf(stderr, "DoEnvironmentSubst: Unknown argument count\n");
-    dprintf_reg(stdnimp, "DoEnvironmentSubst %x %x %x\n",a,b,c);
+    dprintf_reg(stdnimp, "DoEnvironmentSubst(%s,%x): Empyt Stub !!!\n",str,len);
     return 0;
 }
 

@@ -16,6 +16,7 @@
 #include "windows.h"
 #include "gdi.h"
 #include "bitmap.h"
+#include "global.h"
 #include "neexe.h"
 #include "icon.h"
 #include "accel.h"
@@ -219,6 +220,23 @@ HGLOBAL AllocResource( HMODULE hModule, HRSRC hRsrc, DWORD size )
       default:
         return 0;
     }
+}
+
+/**********************************************************************
+ *      DirectResAlloc    (KERNEL.168)
+ * Check Schulman, p. 232 for details
+ */
+HANDLE DirectResAlloc(HANDLE hInstance, WORD wType, WORD wSize)
+{
+	HANDLE hModule;
+	dprintf_resource(stddeb,"DirectResAlloc(%x,%x,%x)\n",hInstance,wType,wSize);
+	hModule = GetExePtr(hInstance);
+	if(!hModule)return 0;
+	if(wType != 0x10)	/* 0x10 is the only observed value, passed from
+                           CreateCursorIndirect. */
+		fprintf(stderr, "DirectResAlloc: wType = %x\n", wType);
+	/* This hopefully does per-module allocation rather than per-instance */
+	return GLOBAL_Alloc(GMEM_FIXED, wSize, hModule, FALSE, FALSE, FALSE);
 }
 
 

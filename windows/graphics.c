@@ -14,6 +14,7 @@
 #endif
 #include "dc.h"
 #include "bitmap.h"
+#include "callback.h"
 #include "metafile.h"
 #include "syscolor.h"
 #include "stddebug.h"
@@ -883,13 +884,45 @@ static void GRAPH_InternalFloodFill( XImage *image, DC *dc,
 
 
 /**********************************************************************
+ *          GRAPH_DoFloodFill
+ *
+ * Main flood-fill routine.
+ */
+static BOOL GRAPH_DoFloodFill( DC *dc, RECT *rect, INT x, INT y,
+                               COLORREF color, WORD fillType )
+{
+    XImage *image;
+
+    if (!(image = XGetImage( display, dc->u.x.drawable,
+                             dc->w.DCOrgX + rect->left,
+                             dc->w.DCOrgY + rect->top,
+                             rect->right - rect->left,
+                             rect->bottom - rect->top,
+                             AllPlanes, ZPixmap ))) return FALSE;
+
+    if (DC_SetupGCForBrush( dc ))
+    {
+          /* ROP mode is always GXcopy for flood-fill */
+        XSetFunction( display, dc->u.x.gc, GXcopy );
+        GRAPH_InternalFloodFill( image, dc,
+                                 XLPTODP(dc,x) - rect->left,
+                                 YLPTODP(dc,y) - rect->top,
+                                 dc->w.DCOrgX + rect->left,
+                                 dc->w.DCOrgY + rect->top,
+                                 COLOR_ToPhysical( dc, color ), fillType );
+    }
+
+    XDestroyImage( image );
+    return TRUE;
+}
+
+
+/**********************************************************************
  *          ExtFloodFill  (GDI.372)
  */
 BOOL ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, WORD fillType )
 {
     RECT rect;
-    Pixel pixel;
-    XImage *image;
     DC *dc;
 
     dprintf_graphics( stddeb, "ExtFloodFill %x %d,%d %06lx %d\n",
@@ -906,28 +939,9 @@ BOOL ExtFloodFill( HDC hdc, INT x, INT y, COLORREF color, WORD fillType )
 
     if (!PtVisible( hdc, x, y )) return FALSE;
     if (GetRgnBox( dc->w.hGCClipRgn, &rect ) == ERROR) return FALSE;
-    pixel = COLOR_ToPhysical( dc, color );
 
-    if (!(image = XGetImage( display, dc->u.x.drawable,
-                             dc->w.DCOrgX + rect.left, dc->w.DCOrgY + rect.top,
-                             rect.right - rect.left, rect.bottom - rect.top,
-                             AllPlanes, ZPixmap ))) return FALSE;
-
-    if (DC_SetupGCForBrush( dc ))
-    {
-          /* ROP mode is always GXcopy for flood-fill */
-        XSetFunction( display, dc->u.x.gc, GXcopy );
-          /* We can pass anything except 0 as a region */
-        GRAPH_InternalFloodFill( image, dc,
-                                 XLPTODP(dc,x) - rect.left,
-                                 YLPTODP(dc,y) - rect.top,
-                                 dc->w.DCOrgX + rect.left,
-                                 dc->w.DCOrgY + rect.top,
-                                 pixel, fillType );
-    }
-
-    XDestroyImage( image );
-    return TRUE;
+    return CallTo32_LargeStack( (int(*)())GRAPH_DoFloodFill, 6,
+                                dc, &rect, x, y, color, fillType );
 }
 
 

@@ -292,7 +292,7 @@ int MODULE_OpenFile( HMODULE hModule )
 /***********************************************************************
  *           MODULE_CreateSegments
  */
-BOOL MODULE_CreateSegments( HMODULE hModule )
+static BOOL MODULE_CreateSegments( HMODULE hModule )
 {
     SEGTABLEENTRY *pSegment;
     NE_MODULE *pModule;
@@ -308,9 +308,8 @@ BOOL MODULE_CreateSegments( HMODULE hModule )
         {
             /* FIXME: this is needed because heap growing is not implemented */
             pModule->heap_size = 0x10000 - minsize;
-            /* For tasks, the DGROUP is allocated by MODULE_MakeNewInstance */
-            minsize = 0x10000;
-            if (!(pModule->flags & NE_FFLAGS_LIBMODULE)) continue;
+            /* The DGROUP is allocated by MODULE_CreateInstance */
+            continue;
         }
         pSegment->selector = GLOBAL_Alloc( GMEM_ZEROINIT | GMEM_FIXED,
                                       minsize, hModule,
@@ -323,6 +322,57 @@ BOOL MODULE_CreateSegments( HMODULE hModule )
     pModule->dgroup_entry = pModule->dgroup ? pModule->seg_table +
                             (pModule->dgroup - 1) * sizeof(SEGTABLEENTRY) : 0;
     return TRUE;
+}
+
+
+/***********************************************************************
+ *           MODULE_GetInstance
+ */
+static HINSTANCE MODULE_GetInstance( HMODULE hModule )
+{
+    SEGTABLEENTRY *pSegment;
+    NE_MODULE *pModule;
+    
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (pModule->dgroup == 0) return hModule;
+
+    pSegment = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
+    
+    return pSegment->selector;
+}
+
+
+/***********************************************************************
+ *           MODULE_CreateInstance
+ */
+static HINSTANCE MODULE_CreateInstance( HMODULE hModule, LOADPARAMS *params )
+{
+    SEGTABLEENTRY *pSegment;
+    NE_MODULE *pModule;
+    int minsize;
+    HINSTANCE hNewInstance, hPrevInstance;
+
+    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
+    if (pModule->dgroup == 0) return hModule;
+
+    pSegment = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
+    hPrevInstance = pSegment->selector;
+
+      /* if it's a library, create a new instance only the first time */
+    if (hPrevInstance)
+    {
+        if (pModule->flags & NE_FFLAGS_LIBMODULE) return hPrevInstance;
+        if (params == (LOADPARAMS*)-1) return hPrevInstance;
+    }
+
+    minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
+    if (pModule->ss == pModule->dgroup) minsize += pModule->stack_size;
+    minsize += pModule->heap_size;
+    hNewInstance = GLOBAL_Alloc( GMEM_ZEROINIT | GMEM_FIXED,
+                                 minsize, hModule, FALSE, FALSE, FALSE );
+    if (!hNewInstance) return 0;
+    pSegment->selector = hNewInstance;
+    return hNewInstance;
 }
 
 
@@ -514,62 +564,6 @@ HMODULE MODULE_LoadExeHeader( int fd, OFSTRUCT *ofs )
     pModule->next = hFirstModule;
     hFirstModule = hModule;
     return hModule;
-}
-
-
-/***********************************************************************
- *           MODULE_MakeNewInstance
- *
- * Create a new instance of the specified module.
- */
-HINSTANCE MODULE_MakeNewInstance( HMODULE hModule, LOADPARAMS *params )
-{
-    NE_MODULE *pModule;
-    SEGTABLEENTRY *pSegment;
-    HINSTANCE hNewInstance, hPrevInstance;
-    int minsize;
-
-    if (!(pModule = (NE_MODULE *)GlobalLock( hModule ))) return 0;
-    if (!pModule->dgroup) return hModule;  /* No DGROUP -> return the module */
-
-    pSegment = NE_SEG_TABLE( pModule ) + pModule->dgroup - 1;
-    hPrevInstance = pSegment->selector;
-
-      /* Don't create a new instance if it's a library */
-
-    if (pModule->flags & NE_FFLAGS_LIBMODULE) return hPrevInstance;
-    if (params == (LOADPARAMS*)-1) return hPrevInstance;
-
-      /* Allocate the new data segment */
-
-    minsize = pSegment->minsize ? pSegment->minsize : 0x10000;
-    if (pModule->ss == pModule->dgroup) minsize += pModule->stack_size;
-    minsize += pModule->heap_size;
-    hNewInstance = GLOBAL_Alloc( GMEM_ZEROINIT | GMEM_FIXED,
-                                 minsize, hModule, FALSE, FALSE, FALSE );
-    if (!hNewInstance) return 0;
-    pSegment->selector = hNewInstance;
-    NE_LoadSegment( hModule, pModule->dgroup );
-
-      /* Create a new task for this instance */
-    if (!TASK_CreateTask( hModule, hNewInstance, hPrevInstance,
-                          params->hEnvironment,
-                          (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
-                          *((WORD *)PTR_SEG_TO_LIN(params->showCmd)+1) ))
-    {
-        GlobalFree( hNewInstance );
-        return 0;
-    }
-
-      /* Initialize the local heap */
-
-    if (pModule->heap_size)
-    {
-        WORD heapstart = pSegment->minsize;
-        if (pModule->ss == pModule->dgroup) heapstart += pModule->stack_size;
-        LocalInit( hNewInstance, heapstart, heapstart + pModule->heap_size );
-    }
-    return hNewInstance;
 }
 
 
@@ -800,6 +794,7 @@ HMODULE MODULE_FindModule( LPCSTR path )
     BYTE len, *name_table;
 
     if (!(filename = strrchr( path, '\\' ))) filename = path;
+    else filename++;
     if ((dotptr = strrchr( filename, '.' )) != NULL)
         len = (BYTE)(dotptr - filename);
     else len = strlen( filename );
@@ -811,6 +806,7 @@ HMODULE MODULE_FindModule( LPCSTR path )
         modulepath = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
         if (!(modulename = strrchr( modulepath, '\\' )))
             modulename = modulepath;
+        else modulename++;
         if (!strcasecmp( modulename, filename )) return hModule;
 
         name_table = (BYTE *)pModule + pModule->name_table;
@@ -878,8 +874,9 @@ static void MODULE_FreeModule( HMODULE hModule )
 HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
 {
     HMODULE hModule;
-    HANDLE hInstance;
+    HANDLE hInstance, hPrevInstance;
     NE_MODULE *pModule;
+    LOADPARAMS *params = (LOADPARAMS *)paramBlock;
     WORD *pModRef, *pDLLs;
     int i, fd;
 
@@ -905,6 +902,9 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
           /* Allocate the segments for this module */
 
         MODULE_CreateSegments( hModule );
+
+        hPrevInstance = 0;
+        hInstance = MODULE_CreateInstance( hModule, (LOADPARAMS*)paramBlock );
 
           /* Load the referenced DLLs */
 
@@ -950,14 +950,9 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
             }
         }
 
-          /* Load the segments (except the DGROUP) */
+          /* Load the segments */
 
-        for (i = 1; i <= pModule->seg_count; i++)
-            if (i != pModule->dgroup) NE_LoadSegment( hModule, i );
-
-          /* Create an instance for this module */
-
-        hInstance = MODULE_MakeNewInstance( hModule, (LOADPARAMS*)paramBlock );
+        for (i = 1; i <= pModule->seg_count; i++) NE_LoadSegment( hModule, i );
 
           /* Fixup the functions prologs */
 
@@ -971,8 +966,21 @@ HINSTANCE LoadModule( LPCSTR name, LPVOID paramBlock )
     else
     {
         pModule = (NE_MODULE *)GlobalLock( hModule );
-        hInstance = MODULE_MakeNewInstance( hModule, (LOADPARAMS*)paramBlock );
+        hPrevInstance = MODULE_GetInstance( hModule );
+        hInstance = MODULE_CreateInstance( hModule, params );
+        if (hInstance != hPrevInstance)  /* not a library */
+            NE_LoadSegment( hModule, pModule->dgroup );
         pModule->count++;
+    }
+
+      /* Create a task for this instance */
+
+    if (!(pModule->flags & NE_FFLAGS_LIBMODULE) && (paramBlock != (LPVOID)-1))
+    {
+        TASK_CreateTask( hModule, hInstance, hPrevInstance,
+                         params->hEnvironment,
+                         (LPSTR)PTR_SEG_TO_LIN( params->cmdLine ),
+                         *((WORD *)PTR_SEG_TO_LIN(params->showCmd)+1) );
     }
 
     return hInstance;
@@ -999,20 +1007,7 @@ BOOL FreeModule( HANDLE hModule )
  */
 HMODULE GetModuleHandle( LPCSTR name )
 {
-    BYTE len = strlen(name);
-    HMODULE hModule = hFirstModule;
-
-    while( hModule )
-    {
-        NE_MODULE *pModule = (NE_MODULE *)GlobalLock( hModule );
-        char *pname = (char *)pModule + pModule->name_table;
-        if (((BYTE)*pname == len) && !strncasecmp( pname+1, name, len ))
-            break;
-        hModule = pModule->next;
-    }
-    dprintf_module( stddeb, "GetModuleHandle('%s'): returning %04x\n",
-                    name, hModule );
-    return hModule;
+    return MODULE_FindModule( name );
 }
 
 
@@ -1044,6 +1039,7 @@ int GetModuleFileName( HANDLE hModule, LPSTR lpFileName, short nSize )
     name = ((LOADEDFILEINFO*)((char*)pModule + pModule->fileinfo))->filename;
     strncpy( lpFileName, name, nSize );
     lpFileName[nSize-1] = '\0';
+    dprintf_module( stddeb, "GetModuleFilename: %s\n", lpFileName );
     return strlen(lpFileName);
 }
 
@@ -1056,6 +1052,8 @@ HANDLE LoadLibrary( LPCSTR libname )
     HANDLE handle;
 
     dprintf_module( stddeb, "LoadLibrary: (%08x) %s\n", (int)libname, libname);
+    if ((handle = MODULE_FindModule( libname )) != 0) return handle;
+
     handle = LoadModule( libname, (LPVOID)-1 );
     if (handle == 2)  /* file not found */
     {
@@ -1064,7 +1062,7 @@ HANDLE LoadLibrary( LPCSTR libname )
         strcat( buffer, ".dll" );
         handle = LoadModule( buffer, (LPVOID)-1 );
     }
-    if (handle >= 32) NE_InitializeDLLs( handle );
+    if (handle >= 32) NE_InitializeDLLs( GetExePtr(handle) );
     return handle;
 }
 

@@ -2,9 +2,7 @@
  * GDI functions
  *
  * Copyright 1993 Alexandre Julliard
- *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-*/
+ */
 
 #include <stdlib.h>
 #include <stdio.h>

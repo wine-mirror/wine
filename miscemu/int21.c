@@ -1324,10 +1324,7 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 		
 	  case 0x25: /* SET INTERRUPT VECTOR */
-	    /* Ignore any attempt to set a segment vector */
- 		dprintf_int(stddeb,
-			"int21: set interrupt vector %2x (%04x:%04x)\n",
-			AL, DS, DX);
+            INT_SetHandler( AL, MAKELONG( DX, DS ) );
             break;
 
 	  case 0x2a: /* GET SYSTEM DATE */
@@ -1396,12 +1393,11 @@ int do_int21(struct sigcontext_struct * context)
 	    break;
 
 	  case 0x35: /* GET INTERRUPT VECTOR */
-	    /* Return a NULL segment selector - this will bomb, 
-	    		if anyone ever tries to use it */
-	    dprintf_int(stddeb, "int21: get interrupt vector %2x\n",
-		AX & 0xff);
-	    ES = 0;
-	    BX = 0;
+            {
+                SEGPTR addr = INT_GetHandler( AL );
+                ES = SELECTOROF(addr);
+                BX = OFFSETOF(addr);
+            }
 	    break;
 
 	  case 0x36: /* GET FREE DISK SPACE */
@@ -1734,8 +1730,9 @@ int do_int21(struct sigcontext_struct * context)
     return 1;
 }
 
-/**********************************************************************
- *			DOS3Call
+
+/***********************************************************************
+ *           DOS3Call  (KERNEL.102)
  */
 void DOS3Call( struct sigcontext_struct context )
 {

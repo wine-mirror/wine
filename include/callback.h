@@ -14,6 +14,9 @@
 
 #ifndef WINELIB
 
+extern int CallTo32_LargeStack( int (*func)(), int nbargs, ... );
+
+
 /* List of the 16-bit callback functions. This list is used  */
 /* by the build program to generate the file if1632/call16.S */
 

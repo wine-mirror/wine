@@ -2,15 +2,14 @@
  * GDI bitmap objects
  *
  * Copyright 1993 Alexandre Julliard
- *
-static char Copyright[] = "Copyright  Alexandre Julliard, 1993";
-*/
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include "gdi.h"
 #include "arch.h"
+#include "callback.h"
 #include "dc.h"
 #include "bitmap.h"
 #include "prototypes.h"
@@ -81,10 +80,43 @@ static XImage *BITMAP_BmpToImage( BITMAP * bmp, void * bmpData )
 HBITMAP CreateBitmap( short width, short height, 
 		      BYTE planes, BYTE bpp, LPSTR bits )
 {
-    BITMAP bitmap = { 0, width, height, 0, planes, bpp, bits };
-    dprintf_gdi(stddeb, "CreateBitmap: %dx%d, %d colors\n", 
-	     width, height, 1 << (planes*bpp) );
-    return CreateBitmapIndirect( &bitmap );
+    BITMAPOBJ * bmpObjPtr;
+    HBITMAP hbitmap;
+
+    dprintf_gdi( stddeb, "CreateBitmap: %dx%d, %d colors\n", 
+                 width, height, 1 << (planes*bpp) );
+
+      /* Check parameters */
+    if (!height || !width || planes != 1) return 0;
+    if ((bpp != 1) && (bpp != screenDepth)) return 0;
+    if (height < 0) height = -height;
+    if (width < 0) width = -width;
+
+      /* Create the BITMAPOBJ */
+    hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC );
+    if (!hbitmap) return 0;
+    bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_LIN_ADDR( hbitmap );
+
+    bmpObjPtr->size.cx = 0;
+    bmpObjPtr->size.cy = 0;
+    bmpObjPtr->bitmap.bmType = 0;
+    bmpObjPtr->bitmap.bmWidth = width;
+    bmpObjPtr->bitmap.bmHeight = height;
+    bmpObjPtr->bitmap.bmPlanes = planes;
+    bmpObjPtr->bitmap.bmBitsPixel = bpp;
+    bmpObjPtr->bitmap.bmWidthBytes = (width * bpp + 15) / 16 * 2;
+    bmpObjPtr->bitmap.bmBits = NULL;
+
+      /* Create the pixmap */
+    bmpObjPtr->pixmap = XCreatePixmap(display, rootWindow, width, height, bpp);
+    if (!bmpObjPtr->pixmap)
+    {
+	GDI_HEAP_FREE( hbitmap );
+	hbitmap = 0;
+    }
+    else if (bits)  /* Set bitmap bits */
+	SetBitmapBits( hbitmap, height * bmpObjPtr->bitmap.bmWidthBytes, bits);
+    return hbitmap;
 }
 
 
@@ -106,43 +138,8 @@ HBITMAP CreateCompatibleBitmap( HDC hdc, short width, short height )
  */
 HBITMAP CreateBitmapIndirect( BITMAP * bmp )
 {
-    BITMAPOBJ * bmpObjPtr;
-    HBITMAP hbitmap;
-
-      /* Check parameters */
-    if (!bmp->bmHeight || !bmp->bmWidth) return 0;
-    if (bmp->bmPlanes != 1) return 0;
-    if ((bmp->bmBitsPixel != 1) && (bmp->bmBitsPixel != screenDepth)) return 0;
-
-    if (bmp->bmHeight < 0)
-	bmp->bmHeight = -bmp->bmHeight;
-    
-    if (bmp->bmWidth < 0)
-	bmp->bmWidth = -bmp->bmWidth;
-    
-
-      /* Create the BITMAPOBJ */
-    hbitmap = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC );
-    if (!hbitmap) return 0;
-    bmpObjPtr = (BITMAPOBJ *) GDI_HEAP_LIN_ADDR( hbitmap );
-
-    bmpObjPtr->size.cx = 0;
-    bmpObjPtr->size.cy = 0;
-    bmpObjPtr->bitmap  = *bmp;
-    bmpObjPtr->bitmap.bmBits = NULL;
-    bmpObjPtr->bitmap.bmWidthBytes = (bmp->bmWidth*bmp->bmBitsPixel+15)/16 * 2;
-
-      /* Create the pixmap */
-    bmpObjPtr->pixmap = XCreatePixmap( display, rootWindow, bmp->bmWidth,
-				       bmp->bmHeight, bmp->bmBitsPixel );
-    if (!bmpObjPtr->pixmap)
-    {
-	GDI_HEAP_FREE( hbitmap );
-	hbitmap = 0;
-    }
-    else if (bmp->bmBits)  /* Set bitmap bits */
-	SetBitmapBits( hbitmap, bmpObjPtr->bitmap.bmHeight*bmpObjPtr->bitmap.bmWidthBytes, bmp->bmBits );
-    return hbitmap;
+    return CreateBitmap( bmp->bmWidth, bmp->bmHeight, bmp->bmPlanes,
+                         bmp->bmBitsPixel, PTR_SEG_TO_LIN( bmp->bmBits ) );
 }
 
 
@@ -167,8 +164,9 @@ LONG GetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
     if (!height) return 0;
     
     if (!(image = BITMAP_BmpToImage( &bmp->bitmap, buffer ))) return 0;
-    XGetSubImage( display, bmp->pixmap, 0, 0, bmp->bitmap.bmWidth, height,
-		  AllPlanes, ZPixmap, image, 0, 0 );
+    CallTo32_LargeStack( (int(*)())XGetSubImage, 11,
+                         display, bmp->pixmap, 0, 0, bmp->bitmap.bmWidth,
+                         height, AllPlanes, ZPixmap, image, 0, 0 );
     image->data = NULL;
     XDestroyImage( image );
     return height * bmp->bitmap.bmWidthBytes;
@@ -197,8 +195,9 @@ LONG SetBitmapBits( HBITMAP hbitmap, LONG count, LPSTR buffer )
     if (!height) return 0;
     	
     if (!(image = BITMAP_BmpToImage( &bmp->bitmap, buffer ))) return 0;
-    XPutImage( display, bmp->pixmap, BITMAP_GC(bmp), image, 0, 0,
-	       0, 0, bmp->bitmap.bmWidth, height );
+    CallTo32_LargeStack( XPutImage, 10,
+                         display, bmp->pixmap, BITMAP_GC(bmp), image, 0, 0,
+                         0, 0, bmp->bitmap.bmWidth, height );
     image->data = NULL;
     XDestroyImage( image );
     return height * bmp->bitmap.bmWidthBytes;

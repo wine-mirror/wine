@@ -295,12 +295,6 @@ static int ParseExportFunction(int ordinal, int type)
     }
     fdp->arg_types[i] = '\0';
 
-    if ((type == TYPE_REGISTER) && (i > 0))
-    {
-        fprintf( stderr, "%d: Register function can't have arguments\n", Line);
-        exit(1);
-    }
-
     strcpy(fdp->internal_name, GetToken());
     return 0;
 }
@@ -946,6 +940,110 @@ static void BuildSpec16Files( char *specname )
 
 
 /*******************************************************************
+ *         BuildCall32LargeStack
+ *
+ * Build the function used to switch to the original 32-bit stack
+ * before calling a 32-bit function from 32-bit code. This is used for
+ * functions that need a large stack, like X bitmaps functions.
+ *
+ * The generated function has the following prototype:
+ *   int CallTo32_LargeStack( int (*func)(), int nbargs, ... )
+ *
+ * Stack layout:
+ *   ...     ...
+ * (ebp+20)  arg2
+ * (ebp+16)  arg1
+ * (ebp+12)  nbargs
+ * (ebp+8)   func
+ * (ebp+4)   ret addr
+ * (ebp)     ebp
+ */
+static void BuildCall32LargeStack(void)
+{
+    /* Function header */
+
+    printf( "/**********\n" );
+    printf( " * " PREFIX "CallTo32_LargeStack\n" );
+    printf( " **********/\n" );
+    printf( "\t.align 4\n" );
+    printf( "\t.globl " PREFIX "CallTo32_LargeStack\n\n" );
+    printf( PREFIX "CallTo32_LargeStack:\n" );
+    
+    /* Entry code */
+
+    printf( "\tpushl %%ebp\n" );
+    printf( "\tmovl %%esp,%%ebp\n" );
+
+    /* Save registers */
+
+    printf( "\tpushl %%ecx\n" );
+    printf( "\tpushl %%esi\n" );
+    printf( "\tpushl %%edi\n" );
+
+    /* Switch to the new stack (if any) */
+
+    printf( "\tleal 16(%%ebp),%%esi\n" );
+    printf( "\tmovl " PREFIX "IF1632_Original32_esp, %%ecx\n" );
+    printf( "\tjcxz 0f\n" );
+    printf( "\tmovl %%ecx,%%esp\n" );
+
+    /* Transfer the arguments */
+
+    printf( "\tmovl 12(%%ebp),%%ecx\n" );
+    printf( "\tjcxz 1f\n" );
+    printf( "\tshl $2,%%ecx\n" );
+    printf( "\tsubl %%ecx,%%esp\n" );
+    printf( "\tmovl %%esp,%%edi\n" );
+    printf( "\tshr $2,%%ecx\n" );
+    printf( "\trep; movsl\n" );
+    printf( "1:\n" );
+
+    /* Call the function */
+
+    printf( "\tcall 8(%%ebp)\n" );
+
+    /* Switch back to the normal stack */
+
+    printf( "\tleal -12(%%ebp),%%esp\n" );
+
+    /* Restore registers and return */
+
+    printf( "\tpopl %%edi\n" );
+    printf( "\tpopl %%esi\n" );
+    printf( "\tpopl %%ecx\n" );
+
+    printf( "\tpopl %%ebp\n" );
+    printf( "\tret\n" );
+
+    /* We get here if IF1632_Original32_esp is 0, i.e. we have not */
+    /* switched to another 32-bit stack yet. */
+
+    printf( "0:\n" );
+
+    /* Restore the registers */
+
+    printf( "\tpopl %%edi\n" );
+    printf( "\tpopl %%esi\n" );
+    printf( "\tpopl %%ecx\n" );
+
+    /* Move the return address up the stack */
+
+    printf( "\tmovl 4(%%ebp),%%eax\n" );
+    printf( "\tmovl %%eax,12(%%ebp)\n" );
+
+    /* Restore ebp and remove old return address */
+
+    printf( "\tpopl %%ebp\n" );
+    printf( "\taddl $4,%%esp\n" );
+
+    /* Now jump to the routine, leaving the original return address and */
+    /* the arguments on the stack. */
+
+    printf( "\tret\n" );
+}
+
+
+/*******************************************************************
  *         TransferArgs16To32
  *
  * Get the arguments from the 16-bit stack and push them on the 32-bit stack.
@@ -1100,6 +1198,8 @@ static void RestoreContext(void)
  * profile is: type_xxxxx, where 'type' is one of 'regs', 'word' or
  * 'long' and each 'x' is an argument ('w'=word, 's'=signed word,
  * 'l'=long, 'p'=pointer).
+ * For register functions, the arguments are ignored, but they are still
+ * removed from the stack upon return.
  *
  * Stack layout upon entry to the callback function:
  *  ...      ...
@@ -1174,19 +1274,15 @@ static void BuildCall32Func( char *profile )
 
     /* Switch to the 32-bit stack */
 
+    printf( "\tmovl " PREFIX "IF1632_Saved32_esp,%%ebp\n" );
     printf( "\tpushw %%ds\n" );
     printf( "\tpopw %%ss\n" );
-    printf( "\tmovl " PREFIX "IF1632_Saved32_esp,%%esp\n" );
+    printf( "\tleal -%d(%%ebp),%%esp\n",
+            reg_func ? sizeof(struct sigcontext_struct) : 4 * strlen(args) );
 
     /* Setup %ebp to point to the previous stack frame (built by CallTo16) */
 
-    printf( "\tmovl %%esp,%%ebp\n" );
     printf( "\taddl $24,%%ebp\n" );
-
-    if (reg_func)
-        printf( "\tsubl $%d,%%esp\n", sizeof(struct sigcontext_struct) );
-    else if (*args)
-        printf( "\tsubl $%d,%%esp\n", 4 * strlen(args) );
 
     /* Call the entry point */
 
@@ -1226,6 +1322,25 @@ static void BuildCall32Func( char *profile )
     {
         /* Restore registers from the context structure */
         RestoreContext();
+        
+        /* Calc the arguments size */
+        while (*args)
+        {
+            switch(*args)
+            {
+            case 'w':
+            case 's':
+                argsize += 2;
+                break;
+            case 'p':
+            case 'l':
+                argsize += 4;
+                break;
+            default:
+                fprintf( stderr, "Unknown arg type '%c'\n", *args );
+            }
+            args++;
+        }
     }
     else  /* Store the return value in dx:ax if needed */
     {
@@ -1501,6 +1616,10 @@ int main(int argc, char **argv)
 
         printf( "/* File generated automatically. Do no edit! */\n\n" );
         printf( "\t.text\n" );
+
+        /* Build the 32-bit large stack callback */
+
+        BuildCall32LargeStack();
 
         /* Build the callback functions */
 
