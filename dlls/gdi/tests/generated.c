@@ -1672,6 +1672,17 @@ static void test_pack_GLYPHMETRICS(void)
     TEST_FIELD(GLYPHMETRICS, SHORT, gmCellIncY, 18, 2, 2);
 }
 
+static void test_pack_GLYPHMETRICSFLOAT(void)
+{
+    /* GLYPHMETRICSFLOAT (pack 4) */
+    TEST_TYPE(GLYPHMETRICSFLOAT, 24, 4);
+    TEST_FIELD(GLYPHMETRICSFLOAT, FLOAT, gmfBlackBoxX, 0, 4, 4);
+    TEST_FIELD(GLYPHMETRICSFLOAT, FLOAT, gmfBlackBoxY, 4, 4, 4);
+    TEST_FIELD(GLYPHMETRICSFLOAT, POINTFLOAT, gmfptGlyphOrigin, 8, 8, 4);
+    TEST_FIELD(GLYPHMETRICSFLOAT, FLOAT, gmfCellIncX, 16, 4, 4);
+    TEST_FIELD(GLYPHMETRICSFLOAT, FLOAT, gmfCellIncY, 20, 4, 4);
+}
+
 static void test_pack_GOBJENUMPROC(void)
 {
     /* GOBJENUMPROC */
@@ -1721,6 +1732,36 @@ static void test_pack_KERNINGPAIR(void)
     TEST_FIELD(KERNINGPAIR, WORD, wFirst, 0, 2, 2);
     TEST_FIELD(KERNINGPAIR, WORD, wSecond, 2, 2, 2);
     TEST_FIELD(KERNINGPAIR, INT, iKernAmount, 4, 4, 4);
+}
+
+static void test_pack_LAYERPLANEDESCRIPTOR(void)
+{
+    /* LAYERPLANEDESCRIPTOR (pack 4) */
+    TEST_TYPE(LAYERPLANEDESCRIPTOR, 32, 4);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, WORD, nSize, 0, 2, 2);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, WORD, nVersion, 2, 2, 2);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, DWORD, dwFlags, 4, 4, 4);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, iPixelType, 8, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cColorBits, 9, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cRedBits, 10, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cRedShift, 11, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cGreenBits, 12, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cGreenShift, 13, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cBlueBits, 14, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cBlueShift, 15, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cAlphaBits, 16, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cAlphaShift, 17, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cAccumBits, 18, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cAccumRedBits, 19, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cAccumGreenBits, 20, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cAccumBlueBits, 21, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cAccumAlphaBits, 22, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cDepthBits, 23, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cStencilBits, 24, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, cAuxBuffers, 25, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, iLayerPlane, 26, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, BYTE, bReserved, 27, 1, 1);
+    TEST_FIELD(LAYERPLANEDESCRIPTOR, COLORREF, crTransparent, 28, 4, 4);
 }
 
 static void test_pack_LCSCSTYPE(void)
@@ -2069,6 +2110,13 @@ static void test_pack_LPGLYPHMETRICS(void)
     TEST_TYPE_POINTER(LPGLYPHMETRICS, 20, 4);
 }
 
+static void test_pack_LPGLYPHMETRICSFLOAT(void)
+{
+    /* LPGLYPHMETRICSFLOAT */
+    TEST_TYPE(LPGLYPHMETRICSFLOAT, 4, 4);
+    TEST_TYPE_POINTER(LPGLYPHMETRICSFLOAT, 24, 4);
+}
+
 static void test_pack_LPGRADIENT_RECT(void)
 {
     /* LPGRADIENT_RECT */
@@ -2095,6 +2143,13 @@ static void test_pack_LPKERNINGPAIR(void)
     /* LPKERNINGPAIR */
     TEST_TYPE(LPKERNINGPAIR, 4, 4);
     TEST_TYPE_POINTER(LPKERNINGPAIR, 8, 4);
+}
+
+static void test_pack_LPLAYERPLANEDESCRIPTOR(void)
+{
+    /* LPLAYERPLANEDESCRIPTOR */
+    TEST_TYPE(LPLAYERPLANEDESCRIPTOR, 4, 4);
+    TEST_TYPE_POINTER(LPLAYERPLANEDESCRIPTOR, 32, 4);
 }
 
 static void test_pack_LPLOCALESIGNATURE(void)
@@ -3480,6 +3535,13 @@ static void test_pack_PFONTSIGNATURE(void)
     TEST_TYPE_POINTER(PFONTSIGNATURE, 24, 4);
 }
 
+static void test_pack_PGLYPHMETRICSFLOAT(void)
+{
+    /* PGLYPHMETRICSFLOAT */
+    TEST_TYPE(PGLYPHMETRICSFLOAT, 4, 4);
+    TEST_TYPE_POINTER(PGLYPHMETRICSFLOAT, 24, 4);
+}
+
 static void test_pack_PGRADIENT_RECT(void)
 {
     /* PGRADIENT_RECT */
@@ -3531,6 +3593,13 @@ static void test_pack_PIXELFORMATDESCRIPTOR(void)
     TEST_FIELD(PIXELFORMATDESCRIPTOR, DWORD, dwLayerMask, 28, 4, 4);
     TEST_FIELD(PIXELFORMATDESCRIPTOR, DWORD, dwVisibleMask, 32, 4, 4);
     TEST_FIELD(PIXELFORMATDESCRIPTOR, DWORD, dwDamageMask, 36, 4, 4);
+}
+
+static void test_pack_PLAYERPLANEDESCRIPTOR(void)
+{
+    /* PLAYERPLANEDESCRIPTOR */
+    TEST_TYPE(PLAYERPLANEDESCRIPTOR, 4, 4);
+    TEST_TYPE_POINTER(PLAYERPLANEDESCRIPTOR, 32, 4);
 }
 
 static void test_pack_PLOCALESIGNATURE(void)
@@ -3587,6 +3656,14 @@ static void test_pack_PNEWTEXTMETRICW(void)
     /* PNEWTEXTMETRICW */
     TEST_TYPE(PNEWTEXTMETRICW, 4, 4);
     TEST_TYPE_POINTER(PNEWTEXTMETRICW, 76, 4);
+}
+
+static void test_pack_POINTFLOAT(void)
+{
+    /* POINTFLOAT (pack 4) */
+    TEST_TYPE(POINTFLOAT, 8, 4);
+    TEST_FIELD(POINTFLOAT, FLOAT, x, 0, 4, 4);
+    TEST_FIELD(POINTFLOAT, FLOAT, y, 4, 4, 4);
 }
 
 static void test_pack_POINTFX(void)
@@ -3649,6 +3726,13 @@ static void test_pack_PPIXELFORMATDESCRIPTOR(void)
     /* PPIXELFORMATDESCRIPTOR */
     TEST_TYPE(PPIXELFORMATDESCRIPTOR, 4, 4);
     TEST_TYPE_POINTER(PPIXELFORMATDESCRIPTOR, 40, 4);
+}
+
+static void test_pack_PPOINTFLOAT(void)
+{
+    /* PPOINTFLOAT */
+    TEST_TYPE(PPOINTFLOAT, 4, 4);
+    TEST_TYPE_POINTER(PPOINTFLOAT, 8, 4);
 }
 
 static void test_pack_PPOLYTEXTA(void)
@@ -3999,6 +4083,7 @@ static void test_pack(void)
     test_pack_GCP_RESULTSA();
     test_pack_GCP_RESULTSW();
     test_pack_GLYPHMETRICS();
+    test_pack_GLYPHMETRICSFLOAT();
     test_pack_GOBJENUMPROC();
     test_pack_GRADIENT_RECT();
     test_pack_GRADIENT_TRIANGLE();
@@ -4006,6 +4091,7 @@ static void test_pack(void)
     test_pack_ICMENUMPROCA();
     test_pack_ICMENUMPROCW();
     test_pack_KERNINGPAIR();
+    test_pack_LAYERPLANEDESCRIPTOR();
     test_pack_LCSCSTYPE();
     test_pack_LCSGAMUTMATCH();
     test_pack_LINEDDAPROC();
@@ -4049,10 +4135,12 @@ static void test_pack(void)
     test_pack_LPGCP_RESULTSA();
     test_pack_LPGCP_RESULTSW();
     test_pack_LPGLYPHMETRICS();
+    test_pack_LPGLYPHMETRICSFLOAT();
     test_pack_LPGRADIENT_RECT();
     test_pack_LPGRADIENT_TRIANGLE();
     test_pack_LPHANDLETABLE();
     test_pack_LPKERNINGPAIR();
+    test_pack_LPLAYERPLANEDESCRIPTOR();
     test_pack_LPLOCALESIGNATURE();
     test_pack_LPLOGBRUSH();
     test_pack_LPLOGCOLORSPACEA();
@@ -4232,10 +4320,12 @@ static void test_pack(void)
     test_pack_PEXTLOGFONTW();
     test_pack_PEXTLOGPEN();
     test_pack_PFONTSIGNATURE();
+    test_pack_PGLYPHMETRICSFLOAT();
     test_pack_PGRADIENT_RECT();
     test_pack_PGRADIENT_TRIANGLE();
     test_pack_PHANDLETABLE();
     test_pack_PIXELFORMATDESCRIPTOR();
+    test_pack_PLAYERPLANEDESCRIPTOR();
     test_pack_PLOCALESIGNATURE();
     test_pack_PLOGBRUSH();
     test_pack_PLOGFONTA();
@@ -4244,6 +4334,7 @@ static void test_pack(void)
     test_pack_PMETARECORD();
     test_pack_PNEWTEXTMETRICA();
     test_pack_PNEWTEXTMETRICW();
+    test_pack_POINTFLOAT();
     test_pack_POINTFX();
     test_pack_POLYTEXTA();
     test_pack_POLYTEXTW();
@@ -4251,6 +4342,7 @@ static void test_pack(void)
     test_pack_POUTLINETEXTMETRICW();
     test_pack_PPELARRAY();
     test_pack_PPIXELFORMATDESCRIPTOR();
+    test_pack_PPOINTFLOAT();
     test_pack_PPOLYTEXTA();
     test_pack_PPOLYTEXTW();
     test_pack_PRGNDATA();
