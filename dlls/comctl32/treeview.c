@@ -3919,7 +3919,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
         }
     }
 
-    if (TREEVIEW_SendSimpleNotify(infoPtr, NM_CLICK))
+    if (bTrack && TREEVIEW_SendSimpleNotify(infoPtr, NM_CLICK))
         goto setfocus;
 
     /*
