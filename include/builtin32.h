@@ -28,6 +28,7 @@ extern ENTRYPOINT32 BUILTIN32_GetEntryPoint( char *buffer, void *relay,
 extern void BUILTIN32_Unimplemented( const BUILTIN32_DESCRIPTOR *descr,
                                      int ordinal );
 extern void BUILTIN32_PrintDLLs(void);
+extern void BUILTIN32_SwitchRelayDebug(int onoff);
 extern int BUILTIN32_EnableDLL( const char *name, int len, int enable );
 
 #endif /* __WINE_BUILTIN32_H */

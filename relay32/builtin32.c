@@ -110,6 +110,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { NULL, FALSE }
 };
 
+extern void RELAY_CallFrom32();
 
 /***********************************************************************
  *           BUILTIN32_DoLoadImage
@@ -118,7 +119,6 @@ static BUILTIN32_DLL BuiltinDLLs[] =
  */
 static HMODULE32 BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
 {
-    extern void RELAY_CallFrom32();
 
     IMAGE_DATA_DIRECTORY *dir;
     IMAGE_DOS_HEADER *dos;
@@ -140,7 +140,7 @@ static HMODULE32 BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
             + dll->descr->nb_funcs * sizeof(LPVOID)
             + dll->descr->nb_names * sizeof(LPSTR));
 #ifdef __i386__
-    if (TRACE_ON(relay))
+    if (WARN_ON(relay) || TRACE_ON(relay))
         size += dll->descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
 #endif
     addr  = VirtualAlloc( NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE );
@@ -206,7 +206,7 @@ static HMODULE32 BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
     strcpy( sec->Name, ".code" );
     sec->SizeOfRawData = 0;
 #ifdef __i386__
-    if (TRACE_ON(relay))
+    if (WARN_ON(relay) || TRACE_ON(relay))
         sec->SizeOfRawData += dll->descr->nb_funcs * sizeof(DEBUG_ENTRY_POINT);
 #endif
     sec->Misc.VirtualSize = sec->SizeOfRawData;
@@ -235,7 +235,7 @@ static HMODULE32 BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
         if (!dll->descr->functions[i]) continue;
         *funcs = (LPVOID)((BYTE *)dll->descr->functions[i] - addr);
 #ifdef __i386__
-        if (!TRACE_ON(relay)) continue;
+	if (!(WARN_ON(relay) || TRACE_ON(relay))) continue;
 	for (j=0;j<dll->descr->nb_names;j++)
 	    if (dll->descr->ordinals[j] == i)
 		break;
@@ -260,11 +260,17 @@ static HMODULE32 BUILTIN32_DoLoadImage( BUILTIN32_DLL *dll )
         case 0xff:  /* stub or extern */
             break;
         default:  /* normal function (stdcall or cdecl) */
-            debug->call       = 0xe8;
-            debug->callfrom32 = (DWORD)RELAY_CallFrom32 -
-                                (DWORD)&debug->ret;
-            debug->ret        = (args & 0x80) ? 0xc3 : 0xc2; /*ret/ret $n*/
-            debug->args       = (args & 0x7f) * sizeof(int);
+	    if (TRACE_ON(relay)) {
+		debug->call       = 0xe8; /* lcall relative */
+		debug->callfrom32 = (DWORD)RELAY_CallFrom32 -
+				    (DWORD)&debug->ret;
+	    } else {
+		debug->call       = 0xe9; /* ljmp relative */
+		debug->callfrom32 = (DWORD)dll->descr->functions[i] -
+				    (DWORD)&debug->ret;
+	    }
+	    debug->ret        = (args & 0x80) ? 0xc3 : 0xc2; /*ret/ret $n*/
+	    debug->args       = (args & 0x7f) * sizeof(int);
             *funcs = (LPVOID)((BYTE *)debug - addr);
             break;
         }
@@ -360,6 +366,43 @@ ENTRYPOINT32 BUILTIN32_GetEntryPoint( char *buffer, void *relay,
     return dll->descr->functions[ordinal];
 }
 
+/***********************************************************************
+ *           BUILTIN32_SwitchRelayDebug
+ *
+ * FIXME: enhance to do it module relative.
+ */
+void BUILTIN32_SwitchRelayDebug(BOOL32 onoff) {
+    BUILTIN32_DLL *dll;
+    HMODULE32 hModule;
+    int i;
+
+    if (!(TRACE_ON(relay) || WARN_ON(relay)))
+    	return;
+    for (dll = BuiltinDLLs; dll->descr; dll++) {
+	IMAGE_SECTION_HEADER *sec;
+	DEBUG_ENTRY_POINT *debug;
+        if (!dll->used || !(hModule = GetModuleHandle32A(dll->descr->name)))
+	    continue;
+
+	sec = PE_SECTIONS(hModule);
+	debug = (DEBUG_ENTRY_POINT *)((DWORD)hModule + sec[1].VirtualAddress);
+	for (i = 0; i < dll->descr->nb_funcs; i++,debug++) {
+	    if (!dll->descr->functions[i]) continue;
+	    if ((dll->descr->args[i]==0xff) || (dll->descr->args[i]==0xfe))
+	    	continue;
+	    if (onoff) {
+                debug->call       = 0xe8; /* lcall relative */
+                debug->callfrom32 = (DWORD)RELAY_CallFrom32 -
+                                    (DWORD)&debug->ret;
+	    } else {
+                debug->call       = 0xe9; /* ljmp relative */
+                debug->callfrom32 = (DWORD)dll->descr->functions[i] -
+                                    (DWORD)&debug->ret;
+	    }
+        }
+    }
+    return;
+}
 
 /***********************************************************************
  *           BUILTIN32_Unimplemented

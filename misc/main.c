@@ -28,6 +28,7 @@
 #include "process.h"
 #include "shell.h"
 #include "winbase.h"
+#include "builtin32.h"
 #include "debug.h"
 #include "debugdefs.h"
 #include "xmalloc.h"
@@ -234,7 +235,7 @@ BOOL32 MAIN_ParseDebugOptions(char *options)
   extern char **debug_snoop_includelist;
   extern char **debug_snoop_excludelist;
 
-  int l, cls;
+  int l, cls, dotracerelay = TRACE_ON(relay);
 
   l = strlen(options);
   if (l<3)
@@ -330,6 +331,11 @@ BOOL32 MAIN_ParseDebugOptions(char *options)
     options+=l;
   }
   while((*options==',')&&(*(++options)));
+
+  /* special handling for relay debugging */
+  if (dotracerelay != TRACE_ON(relay))
+  	BUILTIN32_SwitchRelayDebug( TRACE_ON(relay) );
+
   if (*options)
     return FALSE;
   else
