@@ -61,7 +61,7 @@ typedef LRESULT (CALLBACK *DRIVERPROC)(DWORD_PTR,HDRVR,UINT,LPARAM,LPARAM);
 #define MAXMIXERDRIVERS	10
 
 #define MAXPNAMELEN      32     /* max product name length (including NULL) */
-#define MAXERRORLENGTH   128    /* max error text length (including NULL) */
+#define MAXERRORLENGTH   256    /* max error text length (including NULL) */
 #define MAX_JOYSTICKOEMVXDNAME	260
 
 #ifndef _MCIERROR_
@@ -75,7 +75,7 @@ typedef UINT	MCIDEVICEID;
 #endif
 typedef	UINT	MMRESULT;
 
-typedef struct {
+typedef struct mmtime_tag {
     UINT    wType;
     union {
 	DWORD ms;
@@ -95,7 +95,7 @@ typedef struct {
 	    DWORD songptrpos;
 	} midi;
     } u;
-} MMTIME,  *LPMMTIME;
+} MMTIME, *PMMTIME, *LPMMTIME;
 
 #define TIME_MS         0x0001  /* time in milliseconds */
 #define TIME_SAMPLES    0x0002  /* number of wave samples */
@@ -153,19 +153,29 @@ typedef struct {
 #define MCI_WAVE_OFFSET        1152
 #define MCI_SEQ_OFFSET         1216
 
-#define MMSYSERR_NOERROR      	0                    /* no error */
-#define MMSYSERR_ERROR        	(MMSYSERR_BASE + 1)  /* unspecified error */
-#define MMSYSERR_BADDEVICEID  	(MMSYSERR_BASE + 2)  /* device ID out of range */
-#define MMSYSERR_NOTENABLED   	(MMSYSERR_BASE + 3)  /* driver failed enable */
-#define MMSYSERR_ALLOCATED    	(MMSYSERR_BASE + 4)  /* device already allocated */
-#define MMSYSERR_INVALHANDLE  	(MMSYSERR_BASE + 5)  /* device handle is invalid */
-#define MMSYSERR_NODRIVER     	(MMSYSERR_BASE + 6)  /* no device driver present */
-#define MMSYSERR_NOMEM        	(MMSYSERR_BASE + 7)  /* memory allocation error */
-#define MMSYSERR_NOTSUPPORTED 	(MMSYSERR_BASE + 8)  /* function isn't supported */
-#define MMSYSERR_BADERRNUM    	(MMSYSERR_BASE + 9)  /* error value out of range */
-#define MMSYSERR_INVALFLAG    	(MMSYSERR_BASE + 10) /* invalid flag passed */
-#define MMSYSERR_INVALPARAM   	(MMSYSERR_BASE + 11) /* invalid parameter passed */
-#define MMSYSERR_LASTERROR    	(MMSYSERR_BASE + 11) /* last error in range */
+#define MMSYSERR_NOERROR      0
+#define MMSYSERR_ERROR        (MMSYSERR_BASE + 1)
+#define MMSYSERR_BADDEVICEID  (MMSYSERR_BASE + 2)
+#define MMSYSERR_NOTENABLED   (MMSYSERR_BASE + 3)
+#define MMSYSERR_ALLOCATED    (MMSYSERR_BASE + 4)
+#define MMSYSERR_INVALHANDLE  (MMSYSERR_BASE + 5)
+#define MMSYSERR_NODRIVER     (MMSYSERR_BASE + 6)
+#define MMSYSERR_NOMEM        (MMSYSERR_BASE + 7)
+#define MMSYSERR_NOTSUPPORTED (MMSYSERR_BASE + 8)
+#define MMSYSERR_BADERRNUM    (MMSYSERR_BASE + 9)
+#define MMSYSERR_INVALFLAG    (MMSYSERR_BASE + 10)
+#define MMSYSERR_INVALPARAM   (MMSYSERR_BASE + 11)
+#define MMSYSERR_HANDLEBUSY   (MMSYSERR_BASE + 12)
+#define MMSYSERR_INVALIDALIAS (MMSYSERR_BASE + 13)
+#define MMSYSERR_BADDB        (MMSYSERR_BASE + 14)
+#define MMSYSERR_KEYNOTFOUND  (MMSYSERR_BASE + 15)
+#define MMSYSERR_READERROR    (MMSYSERR_BASE + 16)
+#define MMSYSERR_WRITEERROR   (MMSYSERR_BASE + 17)
+#define MMSYSERR_DELETEERROR  (MMSYSERR_BASE + 18)
+#define MMSYSERR_VALNOTFOUND  (MMSYSERR_BASE + 19)
+#define MMSYSERR_NODRIVERCB   (MMSYSERR_BASE + 20)
+#define MMSYSERR_MOREDATA     (MMSYSERR_BASE + 21)
+#define MMSYSERR_LASTERROR    (MMSYSERR_BASE + 21)
 
 #define CALLBACK_TYPEMASK   	0x00070000l    	/* callback type mask */
 #define CALLBACK_NULL       	0x00000000l    	/* no callback */
@@ -207,7 +217,7 @@ typedef struct {
 #define GND_FORWARD  		0x00000000
 #define GND_REVERSE    		0x00000002
 
-typedef struct {
+typedef struct tagDRVCONFIGINFO {
     DWORD   			dwDCISize;
     LPCWSTR  			lpszDCISectionName;
     LPCWSTR  			lpszDCIAliasName;
@@ -447,7 +457,7 @@ DECL_WINELIB_TYPE_AW(LPWAVEINCAPS2)
 #define WAVE_FORMAT_96S16      0x00080000    /* 96     kHz, Stereo, 16-bit */
 
 /* General format structure common to all formats, same for Win16 and Win32 */
-typedef struct {
+typedef struct waveformat_tag {
     WORD	wFormatTag;
     WORD	nChannels;
     DWORD	nSamplesPerSec;
@@ -457,7 +467,7 @@ typedef struct {
 
 #define WAVE_FORMAT_PCM     1
 
-typedef struct {
+typedef struct pcmwaveformat_tag {
     WAVEFORMAT	wf;
     WORD	wBitsPerSample;
 } PCMWAVEFORMAT, *LPPCMWAVEFORMAT;
@@ -465,7 +475,7 @@ typedef struct {
 #ifndef _WAVEFORMATEX_
 #define _WAVEFORMATEX_
 /* dito same for Win16 / Win32 */
-typedef struct {
+typedef struct tWAVEFORMATEX {
     WORD	wFormatTag;
     WORD	nChannels;
     DWORD	nSamplesPerSec;
@@ -520,13 +530,15 @@ UINT 		WINAPI  waveInGetPosition(HWAVEIN,LPMMTIME,UINT);
 UINT 		WINAPI  waveInGetID(HWAVEIN,UINT*);
 UINT           WINAPI  waveInMessage(HWAVEIN,UINT,DWORD_PTR,DWORD_PTR);
 
-#define MIDIERR_UNPREPARED    (MIDIERR_BASE + 0)   /* header not prepared */
-#define MIDIERR_STILLPLAYING  (MIDIERR_BASE + 1)   /* still something playing */
-#define MIDIERR_NOMAP         (MIDIERR_BASE + 2)   /* no current map */
-#define MIDIERR_NOTREADY      (MIDIERR_BASE + 3)   /* hardware is still busy */
-#define MIDIERR_NODEVICE      (MIDIERR_BASE + 4)   /* port no longer connected */
-#define MIDIERR_INVALIDSETUP  (MIDIERR_BASE + 5)   /* invalid setup */
-#define MIDIERR_LASTERROR     (MIDIERR_BASE + 5)   /* last error in range */
+#define MIDIERR_UNPREPARED    (MIDIERR_BASE + 0)
+#define MIDIERR_STILLPLAYING  (MIDIERR_BASE + 1)
+#define MIDIERR_NOMAP         (MIDIERR_BASE + 2)
+#define MIDIERR_NOTREADY      (MIDIERR_BASE + 3)
+#define MIDIERR_NODEVICE      (MIDIERR_BASE + 4)
+#define MIDIERR_INVALIDSETUP  (MIDIERR_BASE + 5)
+#define MIDIERR_BADOPENMODE   (MIDIERR_BASE + 6)
+#define MIDIERR_DONT_CONTINUE (MIDIERR_BASE + 7)
+#define MIDIERR_LASTERROR     (MIDIERR_BASE + 7)
 
 typedef LPDRVCALLBACK LPMIDICALLBACK;
 #define MIDIPATCHSIZE   128
@@ -699,12 +711,12 @@ typedef struct midihdr_tag {
 #define MHDR_INQUEUE    0x00000004       /* reserved for driver */
 #define MHDR_ISSTRM	0x00000008	 /* data is sent by Stream functions */
 
-typedef struct {
+typedef struct midiproptempo_tag {
     DWORD		cbStruct;
     DWORD		dwTempo;
 } MIDIPROPTEMPO, *LPMIDIPROPTEMPO;
 
-typedef struct {
+typedef struct midiproptimediv_tag {
     DWORD		cbStruct;
     DWORD		dwTimeDiv;
 } MIDIPROPTIMEDIV, *LPMIDIPROPTIMEDIV;
@@ -714,7 +726,7 @@ typedef struct {
 #define MIDIPROP_TEMPO		0x00000002
 #define MIDIPROP_TIMEDIV	0x00000001
 
-typedef struct {
+typedef struct midievent_tag {
     DWORD dwDeltaTime;	/* Time, in MIDI ticks, between the previous
 			 * event and the current event. */
     DWORD dwStreamID;	/* Reserved; must be zero. */
@@ -1204,7 +1216,7 @@ DECL_WINELIB_TYPE_AW(LPMIXERCAPS2)
 #define	MIXERLINE_TARGETTYPE_MIDIIN	4
 #define MIXERLINE_TARGETTYPE_AUX	5
 
-typedef struct {
+typedef struct tagMIXERLINEA {
     DWORD	cbStruct;
     DWORD	dwDestination;
     DWORD	dwSource;
@@ -1227,7 +1239,7 @@ typedef struct {
     } Target;
 } MIXERLINEA, *LPMIXERLINEA;
 
-typedef struct {
+typedef struct tagMIXERLINEW {
     DWORD	cbStruct;
     DWORD	dwDestination;
     DWORD	dwSource;
@@ -1324,7 +1336,7 @@ DECL_WINELIB_TYPE_AW(LPMIXERLINE)
 #define MIXERCONTROL_CONTROLTYPE_MILLITIME	(MIXERCONTROL_CT_CLASS_TIME | MIXERCONTROL_CT_SC_TIME_MILLISECS | MIXERCONTROL_CT_UNITS_UNSIGNED)
 
 
-typedef struct {
+typedef struct tagMIXERCONTROLA {
     DWORD		cbStruct;
     DWORD		dwControlID;
     DWORD		dwControlType;
@@ -1350,7 +1362,7 @@ typedef struct {
     } Metrics;
 } MIXERCONTROLA, *LPMIXERCONTROLA;
 
-typedef struct {
+typedef struct MIXERCONTROLW {
     DWORD		cbStruct;
     DWORD		dwControlID;
     DWORD		dwControlType;
@@ -1379,7 +1391,7 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MIXERCONTROL)
 DECL_WINELIB_TYPE_AW(LPMIXERCONTROL)
 
-typedef struct {
+typedef struct tagMIXERLINECONTROLSA {
     DWORD	cbStruct;
     DWORD	dwLineID;
     union {
@@ -1391,7 +1403,7 @@ typedef struct {
     LPMIXERCONTROLA	pamxctrl;
 } MIXERLINECONTROLSA, *LPMIXERLINECONTROLSA;
 
-typedef struct {
+typedef struct tagMIXERLINECONTROLSW {
     DWORD	cbStruct;
     DWORD	dwLineID;
     union {
@@ -1406,7 +1418,7 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MIXERLINECONTROLS)
 DECL_WINELIB_TYPE_AW(LPMIXERLINECONTROLS)
 
-typedef struct {
+typedef struct tMIXERCONTROLDETAILS {
     DWORD	cbStruct;
     DWORD	dwControlID;
     DWORD	cChannels;
@@ -1418,13 +1430,13 @@ typedef struct {
     LPVOID	paDetails;
 } MIXERCONTROLDETAILS,*LPMIXERCONTROLDETAILS;
 
-typedef struct {
+typedef struct tagMIXERCONTROLDETAILS_LISTTEXTA {
     DWORD	dwParam1;
     DWORD	dwParam2;
     CHAR	szName[MIXER_LONG_NAME_CHARS];
 } MIXERCONTROLDETAILS_LISTTEXTA,*LPMIXERCONTROLDETAILS_LISTTEXTA;
 
-typedef struct {
+typedef struct tagMIXERCONTROLDETAILS_LISTTEXTW {
     DWORD	dwParam1;
     DWORD	dwParam2;
     WCHAR	szName[MIXER_LONG_NAME_CHARS];
@@ -1507,7 +1519,7 @@ typedef DWORD           FOURCC;         /* a four character code */
 typedef LRESULT (CALLBACK *LPMMIOPROC)  (LPSTR lpmmioinfo, UINT uMessage,
 					 LPARAM lParam1, LPARAM lParam2);
 
-typedef struct {
+typedef struct _MMIOINFO {
         DWORD		dwFlags;
         FOURCC		fccIOProc;
         LPMMIOPROC	pIOProc;
@@ -1916,11 +1928,11 @@ YIELDPROC      WINAPI  mciGetYieldProc(MCIDEVICEID,DWORD*);
 
 #define MCI_LOAD_FILE                   0x00000100L
 
-typedef struct {
+typedef struct tagMCI_GENERIC_PARMS {
        DWORD_PTR dwCallback;
 } MCI_GENERIC_PARMS, *LPMCI_GENERIC_PARMS;
 
-typedef struct {
+typedef struct tagMCI_OPEN_PARMSA {
        DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPSTR		lpstrDeviceType;
@@ -1928,7 +1940,7 @@ typedef struct {
 	LPSTR		lpstrAlias;
 } MCI_OPEN_PARMSA, *LPMCI_OPEN_PARMSA;
 
-typedef struct {
+typedef struct tagMCI_OPEN_PARMSW {
        DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPWSTR		lpstrDeviceType;
@@ -1939,31 +1951,31 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_OPEN_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_OPEN_PARMS)
 
-typedef struct {
+typedef struct tagMCI_PLAY_PARMS{
        DWORD_PTR dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
 } MCI_PLAY_PARMS, *LPMCI_PLAY_PARMS;
 
-typedef struct {
+typedef struct tagMCI_SEEK_PARMS {
        DWORD_PTR dwCallback;
 	DWORD   dwTo;
 } MCI_SEEK_PARMS, *LPMCI_SEEK_PARMS;
 
-typedef struct {
+typedef struct tagMCI_STATUS_PARMS {
        DWORD_PTR dwCallback;
 	DWORD   dwReturn;
 	DWORD   dwItem;
 	DWORD   dwTrack;
 } MCI_STATUS_PARMS, *LPMCI_STATUS_PARMS;
 
-typedef struct {
+typedef struct tagMCI_INFO_PARMSA {
        DWORD_PTR dwCallback;
 	LPSTR   lpstrReturn;
 	DWORD   dwRetSize;
 } MCI_INFO_PARMSA, *LPMCI_INFO_PARMSA;
 
-typedef struct {
+typedef struct tagMCI_INFO_PARMSW {
        DWORD_PTR dwCallback;
 	LPSTR   lpstrReturn;
 	DWORD   dwRetSize;
@@ -1972,13 +1984,13 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_INFO_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_INFO_PARMS)
 
-typedef struct {
+typedef struct tagMCI_GETDEVCAPS_PARMS {
        DWORD_PTR dwCallback;
 	DWORD   dwReturn;
 	DWORD   dwItem;
 } MCI_GETDEVCAPS_PARMS, *LPMCI_GETDEVCAPS_PARMS;
 
-typedef struct {
+typedef struct tagMCI_GETDEVCAPS_PARMSA {
        DWORD_PTR dwCallback;
 	LPSTR	lpstrReturn;
 	DWORD	dwRetSize;
@@ -1986,7 +1998,7 @@ typedef struct {
 	UINT	wDeviceType;
 } MCI_SYSINFO_PARMSA, *LPMCI_SYSINFO_PARMSA;
 
-typedef struct {
+typedef struct tagMCI_GETDEVCAPS_PARMSW {
        DWORD_PTR dwCallback;
 	LPWSTR	lpstrReturn;
 	DWORD	dwRetSize;
@@ -1997,35 +2009,35 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_SYSINFO_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_SYSINFO_PARMS)
 
-typedef struct {
+typedef struct tagMCI_SET_PARMS {
        DWORD_PTR dwCallback;
 	DWORD   dwTimeFormat;
 	DWORD   dwAudio;
 } MCI_SET_PARMS, *LPMCI_SET_PARMS;
 
-typedef struct {
+typedef struct tagMCI_BREAK_PARMS {
        DWORD_PTR dwCallback;
 	INT	nVirtKey;
 	HWND	hwndBreak;
 } MCI_BREAK_PARMS, *LPMCI_BREAK_PARMS;
 
 
-typedef struct {
+typedef struct tagMCI_SOUND_PARMS {
        DWORD_PTR dwCallback;
 	LPCSTR  lpstrSoundName;
 } MCI_SOUND_PARMS, *LPMCI_SOUND_PARMS;
 
-typedef struct {
+typedef struct tagMCI_SAVE_PARMS {
        DWORD_PTR dwCallback;
 	LPCSTR  lpfilename;
 } MCI_SAVE_PARMS, *LPMCI_SAVE_PARMS;
 
-typedef struct {
+typedef struct tagMCI_LOAD_PARMSA {
        DWORD_PTR dwCallback;
 	LPCSTR	lpfilename;
 } MCI_LOAD_PARMSA, *LPMCI_LOAD_PARMSA;
 
-typedef struct {
+typedef struct tagMCI_LOAD_PARMSW {
        DWORD_PTR dwCallback;
 	LPCWSTR	lpfilename;
 } MCI_LOAD_PARMSW, *LPMCI_LOAD_PARMSW;
@@ -2033,7 +2045,7 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_LOAD_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_LOAD_PARMS)
 
-typedef struct {
+typedef struct tagMCI_RECORD_PARMS {
        DWORD_PTR dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
@@ -2082,24 +2094,24 @@ typedef struct {
 
 #define MCI_VD_ESCAPE_STRING            0x00000100L
 
-typedef struct {
+typedef struct tagMCI_VD_PLAY_PARMS {
        DWORD_PTR dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
 	DWORD   dwSpeed;
 } MCI_VD_PLAY_PARMS, *LPMCI_VD_PLAY_PARMS;
 
-typedef struct {
+typedef struct tagMCI_VD_STEP_PARMS {
        DWORD_PTR dwCallback;
 	DWORD   dwFrames;
 } MCI_VD_STEP_PARMS, *LPMCI_VD_STEP_PARMS;
 
-typedef struct {
+typedef struct tagMCI_VD_ESCAPE_PARMSA {
        DWORD_PTR dwCallback;
 	LPCSTR	lpstrCommand;
 } MCI_VD_ESCAPE_PARMSA, *LPMCI_VD_ESCAPE_PARMSA;
 
-typedef struct {
+typedef struct tagMCI_VD_ESCAPE_PARMSW {
        DWORD_PTR dwCallback;
 	LPCWSTR	lpstrCommand;
 } MCI_VD_ESCAPE_PARMSW, *LPMCI_VD_ESCAPE_PARMSW;
@@ -2133,7 +2145,7 @@ DECL_WINELIB_TYPE_AW(LPMCI_VD_ESCAPE_PARMS)
 #define MCI_WAVE_GETDEVCAPS_INPUTS      0x00004001L
 #define MCI_WAVE_GETDEVCAPS_OUTPUTS     0x00004002L
 
-typedef struct {
+typedef struct tagMCI_WAVE_OPEN_PARMSA {
        DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPCSTR		lpstrDeviceType;
@@ -2142,7 +2154,7 @@ typedef struct {
 	DWORD   	dwBufferSeconds;
 } MCI_WAVE_OPEN_PARMSA, *LPMCI_WAVE_OPEN_PARMSA;
 
-typedef struct {
+typedef struct tagMCI_WAVE_OPEN_PARMSW {
        DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPCWSTR		lpstrDeviceType;
@@ -2154,13 +2166,13 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_WAVE_OPEN_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_WAVE_OPEN_PARMS)
 
-typedef struct {
+typedef struct tagMCI_WAVE_DELETE_PARMS {
        DWORD_PTR dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
 } MCI_WAVE_DELETE_PARMS, *LPMCI_WAVE_DELETE_PARMS;
 
-typedef struct {
+typedef struct tagMCI_WAVE_SET_PARMS {
        DWORD_PTR dwCallback;
 	DWORD	dwTimeFormat;
 	DWORD	dwAudio;
@@ -2200,7 +2212,7 @@ typedef struct {
 #define MCI_SEQ_SET_MASTER              0x00080000L
 #define MCI_SEQ_SET_OFFSET              0x01000000L
 
-typedef struct {
+typedef struct tagMCI_SEQ_SET_PARMS {
        DWORD_PTR dwCallback;
 	DWORD   dwTimeFormat;
 	DWORD   dwAudio;
@@ -2260,7 +2272,7 @@ typedef struct {
 
 #define MCI_ANIM_UPDATE_HDC             0x00020000L
 
-typedef struct {
+typedef struct tagMCI_ANIM_OPEN_PARMSA {
        DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPCSTR		lpstrDeviceType;
@@ -2270,7 +2282,7 @@ typedef struct {
 	HWND		hWndParent;
 } MCI_ANIM_OPEN_PARMSA, *LPMCI_ANIM_OPEN_PARMSA;
 
-typedef struct {
+typedef struct tagMCI_ANIM_OPEN_PARMSW {
        DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPCWSTR		lpstrDeviceType;
@@ -2283,26 +2295,26 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_ANIM_OPEN_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_ANIM_OPEN_PARMS)
 
-typedef struct {
+typedef struct tagMCI_ANIM_PLAY_PARMS {
        DWORD_PTR dwCallback;
 	DWORD   dwFrom;
 	DWORD   dwTo;
 	DWORD   dwSpeed;
 } MCI_ANIM_PLAY_PARMS, *LPMCI_ANIM_PLAY_PARMS;
 
-typedef struct {
+typedef struct tagMCI_ANIM_STEP_PARMS {
        DWORD_PTR dwCallback;
 	DWORD   dwFrames;
 } MCI_ANIM_STEP_PARMS, *LPMCI_ANIM_STEP_PARMS;
 
-typedef struct {
+typedef struct tagMCI_ANIM_WINDOW_PARMSA {
        DWORD_PTR dwCallback;
 	HWND	hWnd;
 	UINT	nCmdShow;
 	LPCSTR	lpstrText;
 } MCI_ANIM_WINDOW_PARMSA, *LPMCI_ANIM_WINDOW_PARMSA;
 
-typedef struct {
+typedef struct tagMCI_ANIM_WINDOW_PARMSW {
        DWORD_PTR dwCallback;
 	HWND	hWnd;
 	UINT	nCmdShow;
@@ -2312,7 +2324,7 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_ANIM_WINDOW_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_ANIM_WINDOW_PARMS)
 
-typedef struct {
+typedef struct tagMCI_ANIM_RECT_PARMS {
        DWORD_PTR dwCallback;
 #ifdef MCI_USE_OFFEXT
 	POINT	ptOffset;
@@ -2323,7 +2335,7 @@ typedef struct {
 } MCI_ANIM_RECT_PARMS, *LPMCI_ANIM_RECT_PARMS;
 
 
-typedef struct {
+typedef struct tagMCI_ANIM_UPDATE_PARMS {
        DWORD_PTR dwCallback;
 	RECT  rc;
 	HDC   hDC;
@@ -2361,7 +2373,7 @@ typedef struct {
 #define MCI_OVLY_WHERE_FRAME            0x00080000L
 #define MCI_OVLY_WHERE_VIDEO            0x00100000L
 
-typedef struct {
+typedef struct tagMCI_OVLY_OPEN_PARMSA {
        DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPCSTR		lpstrDeviceType;
@@ -2371,7 +2383,7 @@ typedef struct {
 	HWND		hWndParent;
 } MCI_OVLY_OPEN_PARMSA, *LPMCI_OVLY_OPEN_PARMSA;
 
-typedef struct {
+typedef struct tagMCI_OVLY_OPEN_PARMSW {
        DWORD_PTR       dwCallback;
 	MCIDEVICEID	wDeviceID;
 	LPCWSTR		lpstrDeviceType;
@@ -2384,14 +2396,14 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_OVLY_OPEN_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_OVLY_OPEN_PARMS)
 
-typedef struct {
+typedef struct tagMCI_OVLY_WINDOW_PARMSA {
        DWORD_PTR dwCallback;
 	HWND	hWnd;
 	UINT	nCmdShow;
 	LPCSTR	lpstrText;
 } MCI_OVLY_WINDOW_PARMSA, *LPMCI_OVLY_WINDOW_PARMSA;
 
-typedef struct {
+typedef struct tagMCI_OVLY_WINDOW_PARMSW {
        DWORD_PTR dwCallback;
 	HWND	hWnd;
 	UINT	nCmdShow;
@@ -2401,7 +2413,7 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_OVLY_WINDOW_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_OVLY_WINDOW_PARMS)
 
-typedef struct {
+typedef struct tagMCI_OVLY_RECT_PARMS {
        DWORD_PTR dwCallback;
 #ifdef MCI_USE_OFFEXT
 	POINT ptOffset;
@@ -2412,13 +2424,13 @@ typedef struct {
 } MCI_OVLY_RECT_PARMS, *LPMCI_OVLY_RECT_PARMS;
 
 
-typedef struct {
+typedef struct tagMCI_OVLY_SAVE_PARMSA {
        DWORD_PTR dwCallback;
 	LPCSTR  lpfilename;
 	RECT  rc;
 } MCI_OVLY_SAVE_PARMSA, *LPMCI_OVLY_SAVE_PARMSA;
 
-typedef struct {
+typedef struct tagMCI_OVLY_SAVE_PARMSW {
        DWORD_PTR dwCallback;
 	LPCWSTR  lpfilename;
 	RECT  rc;
@@ -2427,13 +2439,13 @@ typedef struct {
 DECL_WINELIB_TYPE_AW(MCI_OVLY_SAVE_PARMS)
 DECL_WINELIB_TYPE_AW(LPMCI_OVLY_SAVE_PARMS)
 
-typedef struct {
+typedef struct tagMCI_OVLY_LOAD_PARMSA {
        DWORD_PTR dwCallback;
 	LPCSTR	lpfilename;
 	RECT	rc;
 } MCI_OVLY_LOAD_PARMSA, *LPMCI_OVLY_LOAD_PARMSA;
 
-typedef struct {
+typedef struct tagMCI_OVLY_LOAD_PARMSW {
        DWORD_PTR dwCallback;
 	LPCWSTR	lpfilename;
 	RECT	rc;
