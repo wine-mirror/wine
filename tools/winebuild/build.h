@@ -136,6 +136,7 @@ extern char *xstrdup( const char *str );
 extern char *strupper(char *s);
 extern void fatal_error( const char *msg, ... );
 extern void fatal_perror( const char *msg, ... );
+extern void error( const char *msg, ... );
 extern void warning( const char *msg, ... );
 extern void output_standard_file_header( FILE *outfile );
 extern FILE *open_input_file( const char *srcdir, const char *name );
@@ -156,7 +157,7 @@ extern void load_res16_file( const char *name );
 extern int output_res16_data( FILE *outfile );
 extern int output_res16_directory( unsigned char *buffer );
 extern void output_dll_init( FILE *outfile, const char *constructor, const char *destructor );
-extern void parse_debug_channels( const char *srcdir, const char *filename );
+extern int parse_debug_channels( const char *srcdir, const char *filename );
 
 extern void BuildGlue( FILE *outfile, const char *srcdir, char **argv );
 extern void BuildRelays16( FILE *outfile );
@@ -165,7 +166,7 @@ extern void BuildSpec16File( FILE *outfile );
 extern void BuildSpec32File( FILE *outfile );
 extern void BuildDef32File( FILE *outfile );
 extern void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv );
-extern void ParseTopLevel( FILE *file );
+extern int ParseTopLevel( FILE *file );
 
 /* global variables */
 
@@ -180,6 +181,7 @@ extern int debugging;
 extern int stack_size;
 extern int nb_debug_channels;
 extern int nb_lib_paths;
+extern int nb_errors;
 extern int display_warnings;
 extern int kill_at;
 

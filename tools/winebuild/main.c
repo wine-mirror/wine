@@ -49,6 +49,7 @@ int nb_entry_points = 0;
 int nb_names = 0;
 int nb_debug_channels = 0;
 int nb_lib_paths = 0;
+int nb_errors = 0;
 int display_warnings = 0;
 int kill_at = 0;
 
@@ -467,7 +468,7 @@ int main(int argc, char **argv)
     {
     case MODE_SPEC:
         load_resources( argv + 1 );
-        ParseTopLevel( input_file );
+        if (!ParseTopLevel( input_file )) break;
         switch (SpecType)
         {
             case SPEC_WIN16:
@@ -491,7 +492,7 @@ int main(int argc, char **argv)
     case MODE_DEF:
         if (argv[1]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[1] );
         if (SpecType == SPEC_WIN16) fatal_error( "Cannot yet build .def file for 16-bit dlls\n" );
-        ParseTopLevel( input_file );
+        if (!ParseTopLevel( input_file )) break;
         BuildDef32File( output_file );
         break;
     case MODE_DEBUG:
@@ -512,6 +513,7 @@ int main(int argc, char **argv)
         do_usage();
         break;
     }
+    if (nb_errors) exit(1);
     if (output_file_name)
     {
         fclose( output_file );

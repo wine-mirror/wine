@@ -104,6 +104,22 @@ void fatal_perror( const char *msg, ... )
     exit(1);
 }
 
+void error( const char *msg, ... )
+{
+    va_list valist;
+    va_start( valist, msg );
+    if (input_file_name)
+    {
+        fprintf( stderr, "%s:", input_file_name );
+        if (current_line)
+            fprintf( stderr, "%d:", current_line );
+        fputc( ' ', stderr );
+    }
+    vfprintf( stderr, msg, valist );
+    va_end( valist );
+    nb_errors++;
+}
+
 void warning( const char *msg, ... )
 {
     va_list valist;

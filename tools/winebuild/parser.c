@@ -76,17 +76,41 @@ inline static int is_token_separator( char ch )
     return (ch == '(' || ch == ')' || ch == '-');
 }
 
-static const char * GetTokenInLine(void)
+/* get the next line from the input file, or return 0 if at eof */
+static int get_next_line(void)
+{
+    ParseNext = ParseBuffer;
+    current_line++;
+    return (fgets(ParseBuffer, sizeof(ParseBuffer), input_file) != NULL);
+}
+
+static const char * GetToken( int allow_eol )
 {
     char *p = ParseNext;
     char *token = TokenBuffer;
 
-    /*
-     * Remove initial white space.
-     */
-    while (isspace(*p)) p++;
+    for (;;)
+    {
+        /* remove initial white space */
+        p = ParseNext;
+        while (isspace(*p)) p++;
 
-    if ((*p == '\0') || (*p == '#')) return NULL;
+        if (*p == '\\' && p[1] == '\n')  /* line continuation */
+        {
+            if (!get_next_line())
+            {
+                if (!allow_eol) error( "Unexpected end of file\n" );
+                return NULL;
+            }
+        }
+        else break;
+    }
+
+    if ((*p == '\0') || (*p == '#'))
+    {
+        if (!allow_eol) error( "Declaration not terminated properly\n" );
+        return NULL;
+    }
 
     /*
      * Find end of token.
@@ -106,30 +130,13 @@ static const char * GetTokenInLine(void)
     return TokenBuffer;
 }
 
-static const char * GetToken( int allow_eof )
-{
-    const char *token;
-
-    while ((token = GetTokenInLine()) == NULL)
-    {
-	ParseNext = ParseBuffer;
-        current_line++;
-        if (fgets(ParseBuffer, sizeof(ParseBuffer), input_file) == NULL)
-        {
-            if (!allow_eof) fatal_error( "Unexpected end of file\n" );
-            return NULL;
-        }
-    }
-    return token;
-}
-
 
 /*******************************************************************
  *         ParseVariable
  *
  * Parse a variable definition.
  */
-static void ParseVariable( ORDDEF *odp )
+static int ParseVariable( ORDDEF *odp )
 {
     char *endptr;
     int *value_array;
@@ -138,10 +145,17 @@ static void ParseVariable( ORDDEF *odp )
     const char *token;
 
     if (SpecType == SPEC_WIN32)
-        fatal_error( "'variable' not supported in Win32, use 'extern' instead\n" );
+    {
+        error( "'variable' not supported in Win32, use 'extern' instead\n" );
+        return 0;
+    }
 
-    token = GetToken(0);
-    if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
+    if (!(token = GetToken(0))) return 0;
+    if (*token != '(')
+    {
+        error( "Expected '(' got '%s'\n", token );
+        return 0;
+    }
 
     n_values = 0;
     value_array_size = 25;
@@ -149,7 +163,11 @@ static void ParseVariable( ORDDEF *odp )
 
     for (;;)
     {
-        token = GetToken(0);
+        if (!(token = GetToken(0)))
+        {
+            free( value_array );
+            return 0;
+        }
 	if (*token == ')')
 	    break;
 
@@ -162,11 +180,16 @@ static void ParseVariable( ORDDEF *odp )
 	}
 
 	if (endptr == NULL || *endptr != '\0')
-	    fatal_error( "Expected number value, got '%s'\n", token );
+        {
+            error( "Expected number value, got '%s'\n", token );
+            free( value_array );
+            return 0;
+        }
     }
 
     odp->u.var.n_values = n_values;
     odp->u.var.values = xrealloc(value_array, sizeof(*value_array) * n_values);
+    return 1;
 }
 
 
@@ -175,7 +198,7 @@ static void ParseVariable( ORDDEF *odp )
  *
  * Parse a function definition.
  */
-static void ParseExportFunction( ORDDEF *odp )
+static int ParseExportFunction( ORDDEF *odp )
 {
     const char *token;
     unsigned int i;
@@ -184,26 +207,42 @@ static void ParseExportFunction( ORDDEF *odp )
     {
     case SPEC_WIN16:
         if (odp->type == TYPE_STDCALL)
-            fatal_error( "'stdcall' not supported for Win16\n" );
+        {
+            error( "'stdcall' not supported for Win16\n" );
+            return 0;
+        }
         if (odp->type == TYPE_VARARGS)
-	    fatal_error( "'varargs' not supported for Win16\n" );
+        {
+            error( "'varargs' not supported for Win16\n" );
+            return 0;
+        }
         break;
     case SPEC_WIN32:
         if ((odp->type == TYPE_PASCAL) || (odp->type == TYPE_PASCAL_16))
-            fatal_error( "'pascal' not supported for Win32\n" );
+        {
+            error( "'pascal' not supported for Win32\n" );
+            return 0;
+        }
         if (odp->flags & FLAG_INTERRUPT)
-            fatal_error( "'interrupt' not supported for Win32\n" );
+        {
+            error( "'interrupt' not supported for Win32\n" );
+            return 0;
+        }
         break;
     default:
         break;
     }
 
-    token = GetToken(0);
-    if (*token != '(') fatal_error( "Expected '(' got '%s'\n", token );
+    if (!(token = GetToken(0))) return 0;
+    if (*token != '(')
+    {
+        error( "Expected '(' got '%s'\n", token );
+        return 0;
+    }
 
     for (i = 0; i < sizeof(odp->u.func.arg_types); i++)
     {
-	token = GetToken(0);
+        if (!(token = GetToken(0))) return 0;
 	if (*token == ')')
 	    break;
 
@@ -226,7 +265,11 @@ static void ParseExportFunction( ORDDEF *odp )
             odp->u.func.arg_types[i++] = 'l';
             if (i < sizeof(odp->u.func.arg_types)) odp->u.func.arg_types[i] = 'l';
         }
-        else fatal_error( "Unknown variable type '%s'\n", token );
+        else
+        {
+            error( "Unknown argument type '%s'\n", token );
+            return 0;
+        }
 
         if (SpecType == SPEC_WIN32)
         {
@@ -236,22 +279,44 @@ static void ParseExportFunction( ORDDEF *odp )
                 strcmp(token, "wstr") &&
                 strcmp(token, "double"))
             {
-                fatal_error( "Type '%s' not supported for Win32\n", token );
+                error( "Type '%s' not supported for Win32\n", token );
+                return 0;
             }
         }
     }
     if ((*token != ')') || (i >= sizeof(odp->u.func.arg_types)))
-        fatal_error( "Too many arguments\n" );
+    {
+        error( "Too many arguments\n" );
+        return 0;
+    }
 
     odp->u.func.arg_types[i] = '\0';
     if (odp->type == TYPE_VARARGS)
         odp->flags |= FLAG_NORELAY;  /* no relay debug possible for varags entry point */
-    odp->link_name = xstrdup( GetToken(0) );
-    if (strchr( odp->link_name, '.' ))
+
+    if (!(token = GetToken(1)))
     {
-        if (SpecType == SPEC_WIN16) fatal_error( "Forwarded functions not supported for Win16\n" );
-        odp->flags |= FLAG_FORWARD;
+        if (!strcmp( odp->name, "@" ))
+        {
+            error( "Missing handler name for anonymous function\n" );
+            return 0;
+        }
+        odp->link_name = xstrdup( odp->name );
     }
+    else
+    {
+        odp->link_name = xstrdup( token );
+        if (strchr( odp->link_name, '.' ))
+        {
+            if (SpecType == SPEC_WIN16)
+            {
+                error( "Forwarded functions not supported for Win16\n" );
+                return 0;
+            }
+            odp->flags |= FLAG_FORWARD;
+        }
+    }
+    return 1;
 }
 
 
@@ -260,17 +325,26 @@ static void ParseExportFunction( ORDDEF *odp )
  *
  * Parse an 'equate' definition.
  */
-static void ParseEquate( ORDDEF *odp )
+static int ParseEquate( ORDDEF *odp )
 {
     char *endptr;
+    int value;
+    const char *token;
 
-    const char *token = GetToken(0);
-    int value = strtol(token, &endptr, 0);
-    if (endptr == NULL || *endptr != '\0')
-	fatal_error( "Expected number value, got '%s'\n", token );
     if (SpecType == SPEC_WIN32)
-        fatal_error( "'equate' not supported for Win32\n" );
+    {
+        error( "'equate' not supported for Win32\n" );
+        return 0;
+    }
+    if (!(token = GetToken(0))) return 0;
+    value = strtol(token, &endptr, 0);
+    if (endptr == NULL || *endptr != '\0')
+    {
+        error( "Expected number value, got '%s'\n", token );
+        return 0;
+    }
     odp->u.abs.value = value;
+    return 1;
 }
 
 
@@ -279,10 +353,11 @@ static void ParseEquate( ORDDEF *odp )
  *
  * Parse a 'stub' definition.
  */
-static void ParseStub( ORDDEF *odp )
+static int ParseStub( ORDDEF *odp )
 {
     odp->u.func.arg_types[0] = '\0';
     odp->link_name = xstrdup("");
+    return 1;
 }
 
 
@@ -291,12 +366,30 @@ static void ParseStub( ORDDEF *odp )
  *
  * Parse an 'extern' definition.
  */
-static void ParseExtern( ORDDEF *odp )
+static int ParseExtern( ORDDEF *odp )
 {
+    const char *token;
+
     if (SpecType == SPEC_WIN16)
-        fatal_error( "'extern' not supported for Win16, use 'variable' instead\n" );
-    odp->link_name = xstrdup( GetToken(0) );
-    if (strchr( odp->link_name, '.' )) odp->flags |= FLAG_FORWARD;
+    {
+        error( "'extern' not supported for Win16, use 'variable' instead\n" );
+        return 0;
+    }
+    if (!(token = GetToken(1)))
+    {
+        if (!strcmp( odp->name, "@" ))
+        {
+            error( "Missing handler name for anonymous extern\n" );
+            return 0;
+        }
+        odp->link_name = xstrdup( odp->name );
+    }
+    else
+    {
+        odp->link_name = xstrdup( token );
+        if (strchr( odp->link_name, '.' )) odp->flags |= FLAG_FORWARD;
+    }
+    return 1;
 }
 
 
@@ -312,13 +405,17 @@ static const char *ParseFlags( ORDDEF *odp )
 
     do
     {
-        token = GetToken(0);
+        if (!(token = GetToken(0))) break;
         for (i = 0; FlagNames[i]; i++)
             if (!strcmp( FlagNames[i], token )) break;
-        if (!FlagNames[i]) fatal_error( "Unknown flag '%s'\n", token );
+        if (!FlagNames[i])
+        {
+            error( "Unknown flag '%s'\n", token );
+            return NULL;
+        }
         odp->flags |= 1 << i;
         token = GetToken(0);
-    } while (*token == '-');
+    } while (token && *token == '-');
 
     return token;
 }
@@ -342,7 +439,7 @@ static void fix_export_name( char *name )
  *
  * Parse an ordinal definition.
  */
-static void ParseOrdinal(int ordinal)
+static int ParseOrdinal(int ordinal)
 {
     const char *token;
 
@@ -350,17 +447,20 @@ static void ParseOrdinal(int ordinal)
     memset( odp, 0, sizeof(*odp) );
     EntryPoints[nb_entry_points++] = odp;
 
-    token = GetToken(0);
+    if (!(token = GetToken(0))) goto error;
 
     for (odp->type = 0; odp->type < TYPE_NBTYPES; odp->type++)
         if (TypeNames[odp->type] && !strcmp( token, TypeNames[odp->type] ))
             break;
 
     if (odp->type >= TYPE_NBTYPES)
-        fatal_error( "Expected type after ordinal, found '%s' instead\n", token );
+    {
+        error( "Expected type after ordinal, found '%s' instead\n", token );
+        goto error;
+    }
 
-    token = GetToken(0);
-    if (*token == '-') token = ParseFlags( odp );
+    if (!(token = GetToken(0))) goto error;
+    if (*token == '-' && !(token = ParseFlags( odp ))) goto error;
 
     odp->name = xstrdup( token );
     fix_export_name( odp->name );
@@ -370,23 +470,23 @@ static void ParseOrdinal(int ordinal)
     switch(odp->type)
     {
     case TYPE_VARIABLE:
-        ParseVariable( odp );
+        if (!ParseVariable( odp )) goto error;
         break;
     case TYPE_PASCAL_16:
     case TYPE_PASCAL:
     case TYPE_STDCALL:
     case TYPE_VARARGS:
     case TYPE_CDECL:
-        ParseExportFunction( odp );
+        if (!ParseExportFunction( odp )) goto error;
         break;
     case TYPE_ABS:
-        ParseEquate( odp );
+        if (!ParseEquate( odp )) goto error;
         break;
     case TYPE_STUB:
-        ParseStub( odp );
+        if (!ParseStub( odp )) goto error;
         break;
     case TYPE_EXTERN:
-        ParseExtern( odp );
+        if (!ParseExtern( odp )) goto error;
         break;
     default:
         assert( 0 );
@@ -398,14 +498,22 @@ static void ParseOrdinal(int ordinal)
         /* ignore this entry point on non-Intel archs */
         EntryPoints[--nb_entry_points] = NULL;
         free( odp );
-        return;
+        return 1;
     }
 #endif
 
     if (ordinal != -1)
     {
-        if (!ordinal) fatal_error( "Ordinal 0 is not valid\n" );
-        if (ordinal >= MAX_ORDINALS) fatal_error( "Ordinal number %d too large\n", ordinal );
+        if (!ordinal)
+        {
+            error( "Ordinal 0 is not valid\n" );
+            goto error;
+        }
+        if (ordinal >= MAX_ORDINALS)
+        {
+            error( "Ordinal number %d too large\n", ordinal );
+            goto error;
+        }
         if (ordinal > Limit) Limit = ordinal;
         if (ordinal < Base) Base = ordinal;
         odp->ordinal = ordinal;
@@ -415,14 +523,27 @@ static void ParseOrdinal(int ordinal)
     if (!strcmp( odp->name, "@" ) || odp->flags & FLAG_NONAME)
     {
         if (ordinal == -1)
-            fatal_error( "Nameless function needs an explicit ordinal number\n" );
+        {
+            error( "Nameless function needs an explicit ordinal number\n" );
+            goto error;
+        }
         if (SpecType != SPEC_WIN32)
-            fatal_error( "Nameless functions not supported for Win16\n" );
+        {
+            error( "Nameless functions not supported for Win16\n" );
+            goto error;
+        }
         if (!strcmp( odp->name, "@" )) free( odp->name );
         else odp->export_name = odp->name;
         odp->name = NULL;
     }
     else Names[nb_names++] = odp;
+    return 1;
+
+error:
+    EntryPoints[--nb_entry_points] = NULL;
+    free( odp->name );
+    free( odp );
+    return 0;
 }
 
 
@@ -453,9 +574,9 @@ static void sort_names(void)
         if (!strcmp( Names[i]->name, Names[i+1]->name ))
         {
             current_line = max( Names[i]->lineno, Names[i+1]->lineno );
-            fatal_error( "'%s' redefined\n%s:%d: First defined here\n",
-                         Names[i]->name, input_file_name,
-                         min( Names[i]->lineno, Names[i+1]->lineno ) );
+            error( "'%s' redefined\n%s:%d: First defined here\n",
+                   Names[i]->name, input_file_name,
+                   min( Names[i]->lineno, Names[i+1]->lineno ) );
         }
     }
 }
@@ -466,31 +587,40 @@ static void sort_names(void)
  *
  * Parse a spec file.
  */
-void ParseTopLevel( FILE *file )
+int ParseTopLevel( FILE *file )
 {
     const char *token;
 
     input_file = file;
     current_line = 0;
 
-    while ((token = GetToken(1)) != NULL)
+    while (get_next_line())
     {
+        if (!(token = GetToken(1))) continue;
         if (strcmp(token, "@") == 0)
-	{
+        {
             if (SpecType != SPEC_WIN32)
-                fatal_error( "'@' ordinals not supported for Win16\n" );
-	    ParseOrdinal( -1 );
-	}
-	else if (IsNumberString(token))
-	{
-	    ParseOrdinal( atoi(token) );
-	}
-	else
-            fatal_error( "Expected ordinal declaration\n" );
+            {
+                error( "'@' ordinals not supported for Win16\n" );
+                continue;
+            }
+            if (!ParseOrdinal( -1 )) continue;
+        }
+        else if (IsNumberString(token))
+        {
+            if (!ParseOrdinal( atoi(token) )) continue;
+        }
+        else
+        {
+            error( "Expected ordinal declaration, got '%s'\n", token );
+            continue;
+        }
+        if ((token = GetToken(1))) error( "Syntax error near '%s'\n", token );
     }
 
     current_line = 0;  /* no longer parsing the input file */
     sort_names();
+    return !nb_errors;
 }
 
 
@@ -514,7 +644,7 @@ static void add_debug_channel( const char *name )
  *
  * Parse a source file and extract the debug channel definitions.
  */
-void parse_debug_channels( const char *srcdir, const char *filename )
+int parse_debug_channels( const char *srcdir, const char *filename )
 {
     FILE *file;
     int eol_seen = 1;
@@ -540,21 +670,32 @@ void parse_debug_channels( const char *srcdir, const char *filename )
             p += 26;
             while (isspace(*p)) p++;
             if (*p != '(')
-                fatal_error( "invalid debug channel specification '%s'\n", ParseBuffer );
+            {
+                error( "invalid debug channel specification '%s'\n", ParseBuffer );
+                goto next;
+            }
             p++;
             while (isspace(*p)) p++;
             if (!isalpha(*p))
-                fatal_error( "invalid debug channel specification '%s'\n", ParseBuffer );
+            {
+                error( "invalid debug channel specification '%s'\n", ParseBuffer );
+                goto next;
+            }
             channel = p;
             while (isalnum(*p) || *p == '_') p++;
             end = p;
             while (isspace(*p)) p++;
             if (*p != ')')
-                fatal_error( "invalid debug channel specification '%s'\n", ParseBuffer );
+            {
+                error( "invalid debug channel specification '%s'\n", ParseBuffer );
+                goto next;
+            }
             *end = 0;
             add_debug_channel( channel );
         }
+    next:
         current_line++;
     }
     close_input_file( file );
+    return !nb_errors;
 }

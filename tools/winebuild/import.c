@@ -281,10 +281,18 @@ static int read_import_lib( const char *name, struct import *imp )
 
         if (!strcmp( name, "LIBRARY" ))
         {
-            if (!p) fatal_error( "Expected name after LIBRARY\n" );
+            if (!p)
+            {
+                error( "Expected name after LIBRARY\n" );
+                goto next;
+            }
             name = p;
             p = next_token( name );
-            if (p) fatal_error( "Garbage after LIBRARY statement\n" );
+            if (p)
+            {
+                error( "Garbage after LIBRARY statement\n" );
+                goto next;
+            }
             if (is_already_imported( name ))
             {
                 close_input_file( f );
@@ -297,11 +305,22 @@ static int read_import_lib( const char *name, struct import *imp )
         if (!strcmp( name, "EXPORTS" )) goto next;
 
         /* check for ordinal */
-        if (!p) fatal_error( "Expected ordinal after function name\n" );
+        if (!p)
+        {
+            error( "Expected ordinal after function name\n" );
+            goto next;
+        }
         if (*p != '@' || !isdigit(p[1]))
-            fatal_error( "Expected ordinal after function name '%s'\n", name );
+        {
+            error( "Expected ordinal after function name '%s'\n", name );
+            goto next;
+        }
         ordinal = strtol( p+1, &p, 10 );
-        if (ordinal >= MAX_ORDINALS) fatal_error( "Invalid ordinal number %d\n", ordinal );
+        if (ordinal >= MAX_ORDINALS)
+        {
+            error( "Invalid ordinal number %d\n", ordinal );
+            goto next;
+        }
 
         /* check for optional flags */
         while (p && (p = skip_whitespace(p)))
@@ -311,14 +330,22 @@ static int read_import_lib( const char *name, struct import *imp )
             if (!strcmp( flags, "NONAME" ))
             {
                 ord_only = 1;
-                if (!ordinal) fatal_error( "Invalid ordinal number %d\n", ordinal );
+                if (!ordinal)
+                {
+                    error( "Invalid ordinal number %d\n", ordinal );
+                    goto next;
+                }
             }
             else if (!strcmp( flags, "CONSTANT" ) || !strcmp( flags, "DATA" ))
             {
                 /* we don't support importing non-function entry points */
                 goto next;
             }
-            else fatal_error( "Garbage after ordinal declaration\n" );
+            else
+            {
+                error( "Garbage after ordinal declaration\n" );
+                goto next;
+            }
         }
 
         if (imp->nb_exports == size)
@@ -338,7 +365,7 @@ static int read_import_lib( const char *name, struct import *imp )
     close_input_file( f );
     if (imp->nb_exports)
         qsort( imp->exports, imp->nb_exports, sizeof(*imp->exports), func_cmp );
-    return 1;
+    return !nb_errors;
 }
 
 /* add a dll to the list of imports */
@@ -371,7 +398,11 @@ void add_import_dll( const char *name, int delay )
         dll_imports = xrealloc( dll_imports, (nb_imports+1) * sizeof(*dll_imports) );
         dll_imports[nb_imports++] = imp;
     }
-    else free_imports( imp );
+    else
+    {
+        free_imports( imp );
+        if (nb_errors) exit(1);
+    }
 }
 
 /* remove an imported dll, based on its index in the dll_imports array */

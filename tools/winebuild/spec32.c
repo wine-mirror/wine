@@ -868,7 +868,10 @@ void BuildDebugFile( FILE *outfile, const char *srcdir, char **argv )
     int nr_debug;
     char *prefix, *p;
 
-    while (*argv) parse_debug_channels( srcdir, *argv++ );
+    while (*argv)
+    {
+        if (!parse_debug_channels( srcdir, *argv++ )) exit(1);
+    }
 
     output_standard_file_header( outfile );
     nr_debug = output_debug( outfile );

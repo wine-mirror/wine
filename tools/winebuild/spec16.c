@@ -451,14 +451,17 @@ static void BuildCallFrom16Func( FILE *outfile, const char *profile, const char 
  * routines by yourself.
  *
  */
-static void BuildCallTo16Func( FILE *outfile, const char *profile, const char *prefix )
+static int BuildCallTo16Func( FILE *outfile, const char *profile, const char *prefix )
 {
     const char *args = profile + 5;
     int i, argsize = 0, short_ret = 0;
 
     if (!strncmp( "word_", profile, 5 )) short_ret = 1;
     else if (strncmp( "long_", profile, 5 ))
-        fatal_error( "Invalid function name '%s'\n", profile );
+    {
+        error( "Invalid function name '%s'\n", profile );
+        return 0;
+    }
 
     fprintf( outfile, "unsigned %s __stdcall %s_CallTo16_%s( void (*proc)()",
              short_ret? "short" : "int", prefix, profile );
@@ -470,7 +473,9 @@ static void BuildCallTo16Func( FILE *outfile, const char *profile, const char *p
         {
         case 'w': fprintf( outfile, "unsigned short" ); argsize += 2; break;
         case 'l': fprintf( outfile, "unsigned int" ); argsize += 4; break;
-        default: fatal_error( "Invalid letter '%c' in function name '%s'\n", args[i], profile );
+        default:
+            error( "Invalid letter '%c' in function name '%s'\n", args[i], profile );
+            return 0;
         }
         fprintf( outfile, " arg%d", i+1 );
     }
@@ -509,6 +514,7 @@ static void BuildCallTo16Func( FILE *outfile, const char *profile, const char *p
 #else  /* __i386__ */
     fprintf( outfile, "    assert(0);\n}\n\n" );
 #endif  /* __i386__ */
+    return 1;
 }
 
 
