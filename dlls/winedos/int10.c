@@ -543,10 +543,34 @@ void WINAPI DOSVM_Int10Handler( CONTEXT86 *context )
                " - Not Supported\n");
             break;
         case 0x10: /* SET INDIVIDUAL DAC REGISTER */
-            FIXME("Set Individual DAC register - Not Supported\n");
+            {
+                PALETTEENTRY paldat;
+
+                TRACE("Set Individual DAC register\n");
+                paldat.peRed   = DH_reg(context);
+                paldat.peGreen = CH_reg(context);
+                paldat.peBlue  = CL_reg(context);
+                paldat.peFlags = 0;
+                VGA_SetPalette(&paldat,BX_reg(context)&0xFF,1);
+            }
             break;
         case 0x12: /* SET BLOCK OF DAC REGISTERS */
-            FIXME("Set Block of DAC registers - Not Supported\n");
+            {
+                int i;
+                PALETTEENTRY paldat;
+                BYTE *pt;
+
+                TRACE("Set Block of DAC registers\n");
+		pt = (BYTE*)CTX_SEG_OFF_TO_LIN(context,context->SegEs,context->Edx);
+		for (i=0;i<CX_reg(context);i++)
+                {
+                    paldat.peRed   = (*(pt+i*3+0)) << 2;
+                    paldat.peGreen = (*(pt+i*3+1)) << 2;
+                    paldat.peBlue  = (*(pt+i*3+2)) << 2;
+                    paldat.peFlags = 0;
+                    VGA_SetPalette(&paldat,(BX_reg(context)+i)&0xFF,1);
+                }
+            }
             break;
         case 0x13: /* SELECT VIDEO DAC COLOR PAGE */
             FIXME("Select video DAC color page - Not Supported\n");
