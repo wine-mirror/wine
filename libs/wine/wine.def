@@ -52,8 +52,6 @@ EXPORTS
     wine_ldt_init_locking
     wine_ldt_realloc_entries
     wine_ldt_set_entry
-    wine_pthread_init_process
-    wine_pthread_init_thread
     wine_set_fs
     wine_set_gs
     wine_switch_to_stack
