@@ -733,6 +733,7 @@ BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput,
     );
 
     GetConsoleScreenBufferInfo(hConsoleOutput, &csbi);
+    sprintf(sbuf,"%c7",27);SADD(sbuf);
 
     /* Step 1. Make (Bottom,Right) offset of intersection with
        Screen Buffer                                              */
@@ -809,7 +810,7 @@ BOOL WINAPI WriteConsoleOutputA( HANDLE hConsoleOutput,
 	    CADD(lpBuffer[off].Char.AsciiChar);
 	}
     }
-    sprintf(sbuf,"%c[0m",27);SADD(sbuf);
+    sprintf(sbuf,"%c[0m%c8",27,27);SADD(sbuf);
     WriteFile(hConsoleOutput,buffer,bufused,&res,NULL);
     HeapFree(GetProcessHeap(),0,buffer);
     return TRUE;
