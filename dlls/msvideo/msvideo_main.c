@@ -59,7 +59,7 @@ DWORD WINAPI VideoCapDriverDescAndVer(WORD nr,LPVOID buf1,WORD buf1len,LPVOID bu
 BOOL VFWAPI ICInfo(
 	DWORD fccType,		/* [in] type of compressor ('vidc') */
 	DWORD fccHandler,	/* [in] <n>th compressor */
-				   ICINFO *lpicinfo)	/* [out] information about compressor */
+	ICINFO *lpicinfo)	/* [out] information about compressor */
 {
 	char	type[5],buf[2000];
 
@@ -298,10 +298,9 @@ HIC VFWAPI ICLocate(
 			if (!strncasecmp(type,s,5)) {
 				char *s2 = s;
 				while (*s2 != '\0' && *s2 != '.') s2++;
-				if (*s2) {
+				if (*s2++) {
 					HIC h;
 
-					*s2++ = '\0';
 					h = ICOpen(fccType,*(DWORD*)s2,wMode);
 					if (h) {
 						if (!ICSendMessage(h,querymsg,(DWORD)lpbiIn,(DWORD)lpbiOut))
@@ -322,7 +321,7 @@ HIC VFWAPI ICLocate(
 	}
 
 	type[4] = handler[4] = '\0';
-	FIXME("(%.4s,%.4s,%p,%p,0x%04x),unhandled!\n",type,handler,lpbiIn,lpbiOut,wMode);
+	WARN("(%.4s,%.4s,%p,%p,0x%04x) not found!\n",type,handler,lpbiIn,lpbiOut,wMode);
 	return 0;
 }
 
@@ -342,7 +341,6 @@ HIC VFWAPI ICGetDisplayFormat(
 	INT depth,INT dx,INT dy)
 {
 	HIC	tmphic = hic; 
-	LRESULT	lres;
 
 	FIXME("(0x%08lx,%p,%p,%d,%d,%d),stub!\n",(DWORD)hic,lpbiIn,lpbiOut,depth,dx,dy);
 	if (!tmphic) {
@@ -350,16 +348,24 @@ HIC VFWAPI ICGetDisplayFormat(
 		if (!tmphic)
 			return tmphic;
 	}
-	if ((dy == lpbiIn->biHeight) || (dx == lpbiIn->biWidth))
+	if ((dy == lpbiIn->biHeight) && (dx == lpbiIn->biWidth))
 		dy = dx = 0; /* no resize needed */
+
 	/* Can we decompress it ? */
-	lres = ICDecompressQuery(tmphic,lpbiIn,NULL);
-	if (lres)
+	if (ICDecompressQuery(tmphic,lpbiIn,NULL) != 0)
 		goto errout; /* no, sorry */
+
 	ICDecompressGetFormat(tmphic,lpbiIn,lpbiOut);
-	*lpbiOut=*lpbiIn;
-	lpbiOut->biCompression = 0;
-	lpbiOut->biSize = sizeof(*lpbiOut);
+
+	if (lpbiOut->biCompression != 0) {
+	   FIXME("Ooch, how come decompressor outputs compressed data (%ld)??\n",
+			 lpbiOut->biCompression);
+	}
+	if (lpbiOut->biSize < sizeof(*lpbiOut)) {
+	   FIXME("Ooch, size of output BIH is too small (%ld)\n",
+			 lpbiOut->biSize);
+	   lpbiOut->biSize = sizeof(*lpbiOut);
+	}
 	if (!depth) {
 		HDC	hdc;
 
@@ -717,6 +723,9 @@ LPVOID MSVIDEO_MapMsg16To32(UINT msg, LPDWORD lParam1, LPDWORD lParam2) {
 			*lParam2 = sizeof(ICDRAW);
 		}
 		break;
+	case ICM_DRAW_START:
+	case ICM_DRAW_STOP:
+		break;
 	default:
 		FIXME("%d is not yet handled. Expect a crash.\n",msg);
 	}
@@ -849,6 +858,8 @@ LRESULT MSVIDEO_SendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2, BOOL b
 	}
 
 #undef XX
+
+	if (!whic) return ICERR_BADHANDLE;
 
 	if (whic->driverproc) { /* IC is a function */
 		bDrv32 = whic->private;
