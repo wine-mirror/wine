@@ -298,7 +298,12 @@ DWORD WINAPI LoadLibraryEx32W16( LPCSTR lpszLibFile, DWORD hFile, DWORD dwFlags 
     HMODULE hModule;
     DOS_FULL_NAME full_name; 
 
-    if ( ! DIR_SearchPath ( NULL, lpszLibFile, ".DLL", &full_name, FALSE ) ) return 0; 
+    /* if the file can not be found, call LoadLibraryExA anyway, since it might be
+       a buildin module. This case is handled in MODULE_LoadLibraryExA */
+
+    if ( ! DIR_SearchPath ( NULL, lpszLibFile, ".DLL", &full_name, FALSE ) ) {
+      strcpy ( full_name.short_name, lpszLibFile );
+    }
 
     SYSLEVEL_ReleaseWin16Lock();
     hModule = LoadLibraryExA( full_name.short_name, (HANDLE)hFile, dwFlags );
