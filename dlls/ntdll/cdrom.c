@@ -43,6 +43,10 @@
 #ifdef HAVE_SCSI_SG_H
 # include <scsi/sg.h>
 #endif
+#ifdef HAVE_SCSI_SCSI_H
+# include <scsi/scsi.h>
+# undef REASSIGN_BLOCKS  /* avoid conflict with winioctl.h */
+#endif
 #ifdef HAVE_SCSI_SCSI_IOCTL_H
 # include <scsi/scsi_ioctl.h>
 #endif

@@ -428,6 +428,9 @@
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H
 
+/* Define to 1 if you have the <scsi/scsi.h> header file. */
+#undef HAVE_SCSI_SCSI_H
+
 /* Define to 1 if you have the <scsi/scsi_ioctl.h> header file. */
 #undef HAVE_SCSI_SCSI_IOCTL_H
 

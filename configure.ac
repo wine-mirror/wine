@@ -1021,6 +1021,7 @@ AC_CHECK_HEADERS(\
 	regex.h \
 	sched.h \
 	scsi/sg.h \
+	scsi/scsi.h \
 	scsi/scsi_ioctl.h \
 	socket.h \
 	stdint.h \
