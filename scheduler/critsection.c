@@ -16,6 +16,7 @@
 #include "thread.h"
 
 DEFAULT_DEBUG_CHANNEL(win32)
+DECLARE_DEBUG_CHANNEL(relay)
 
 
 /***********************************************************************
@@ -26,9 +27,8 @@ void WINAPI InitializeCriticalSection( CRITICAL_SECTION *crit )
     crit->LockCount      = -1;
     crit->RecursionCount = 0;
     crit->OwningThread   = 0;
-    crit->LockSemaphore  = 0;
     crit->LockSemaphore  = CreateSemaphoreA( NULL, 0, 1, NULL );
-    crit->Reserved       = (DWORD)-1;
+    crit->Reserved       = GetCurrentProcessId();
 }
 
 
@@ -41,11 +41,13 @@ void WINAPI DeleteCriticalSection( CRITICAL_SECTION *crit )
     {
         if (crit->RecursionCount)  /* Should not happen */
             MSG("Deleting owned critical section (%p)\n", crit );
+
         crit->LockCount      = -1;
         crit->RecursionCount = 0;
         crit->OwningThread   = 0;
         CloseHandle( crit->LockSemaphore );
         crit->LockSemaphore  = 0;
+        crit->Reserved       = (DWORD)-1;
     }
 }
 
@@ -71,8 +73,24 @@ void WINAPI EnterCriticalSection( CRITICAL_SECTION *crit )
         }
         /* Now wait for it */
 
-        res = WaitForSingleObject( crit->LockSemaphore, 2000 );
-        if (res == STATUS_TIMEOUT) res = WaitForSingleObject( crit->LockSemaphore, 2000 );
+        if ( crit->Reserved && crit->Reserved != GetCurrentProcessId() )
+        {
+            FIXME( win32, "Crst %p belongs to process %ld, current is %ld!\n", 
+                          crit, crit->Reserved, GetCurrentProcessId() );
+            return;
+        }
+
+        res = WaitForSingleObject( crit->LockSemaphore, 5000L );
+        if ( res == WAIT_TIMEOUT )
+        {
+            ERR( win32, "Critical section %p wait timed out, retrying (60 sec)\n", crit );
+            res = WaitForSingleObject( crit->LockSemaphore, 60000L );
+        }
+        if ( res == WAIT_TIMEOUT && TRACE_ON(relay) )
+        {
+            ERR( win32, "Critical section %p wait timed out, retrying (5 min)\n", crit );
+            res = WaitForSingleObject( crit->LockSemaphore, 300000L );
+        }
         if (res != STATUS_WAIT_0)
         {
             ERR(win32, "Critical section %p wait failed err=%lx\n", crit, res );
@@ -133,6 +151,7 @@ void WINAPI LeaveCriticalSection( CRITICAL_SECTION *crit )
 void WINAPI MakeCriticalSectionGlobal( CRITICAL_SECTION *crit )
 {
     crit->LockSemaphore = ConvertToGlobalHandle( crit->LockSemaphore );
+    crit->Reserved      = 0L;
 }
 
 
@@ -141,8 +160,16 @@ void WINAPI MakeCriticalSectionGlobal( CRITICAL_SECTION *crit )
  */
 void WINAPI ReinitializeCriticalSection( CRITICAL_SECTION *crit )
 {
-    DeleteCriticalSection( crit );
-    InitializeCriticalSection( crit );
+    if ( !crit->LockSemaphore )
+        InitializeCriticalSection( crit );
+
+    else if ( crit->Reserved && crit->Reserved != GetCurrentProcessId() )
+    {
+        FIXME( win32, "(%p) called for %08lx first, %08lx now: making global\n", 
+               crit, crit->Reserved, GetCurrentProcessId() );
+
+        MakeCriticalSectionGlobal( crit );
+    }
 }
 
 
@@ -151,6 +178,13 @@ void WINAPI ReinitializeCriticalSection( CRITICAL_SECTION *crit )
  */
 void WINAPI UninitializeCriticalSection( CRITICAL_SECTION *crit )
 {
-    FIXME(win32, "(%p) half a stub\n", crit);
-    DeleteCriticalSection( crit );
+    if ( crit->LockSemaphore )
+    {
+        if ( crit->Reserved )  /* not global */
+            DeleteCriticalSection( crit );
+        else
+            FIXME( win32, "(%p) for %08lx: Crst is global, don't know whether to delete\n", 
+                   crit, GetCurrentProcessId() );
+    }
 }
+
