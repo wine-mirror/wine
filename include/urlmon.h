@@ -72,6 +72,7 @@ typedef struct _tagBINDINFO {
     ULONG cbSize;
     LPWSTR szExtraInfo;
     STGMEDIUM stgmedData;
+    DWORD grfBindInfoF;
     DWORD dwBindVerb;
     LPWSTR szCustomVerb;
     DWORD cbStgmedData;
