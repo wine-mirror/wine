@@ -279,7 +279,7 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
         break;
 
     case WM_MOUSEMOVE:
-        if (GetCapture() == hWnd)
+        if ((wParam & MK_LBUTTON) && GetCapture() == hWnd)
         {
             GetClientRect( hWnd, &rect );
             SendMessageW( hWnd, BM_SETSTATE, PtInRect(&rect, pt), 0 );
