@@ -861,24 +861,41 @@ DEBUG_Print( const DBG_VALUE *value, int count, char format, int level )
       size = DEBUG_GetObjectSize(value->type->un.array.basictype);
       if( size == 1 )
 	{
+          char  ach[16];
+          int   len, clen;
+
 	  /*
 	   * Special handling for character arrays.
 	   */
 	  pnt = (char *) value->addr.off;
-	  DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "\"");
-	  for( i=value->type->un.array.start; i < value->type->un.array.end; i++ )
-	    {
-	      DEBUG_Output(DBG_CHN_MESG, pnt++, 1);
-	      DEBUG_nchar++;
-	      if( DEBUG_nchar > DEBUG_maxchar )
-		{
-		  DEBUG_Printf(DBG_CHN_MESG, "...\"");
-		  goto leave;
-		}
-	    }
-	  DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "\"");
-	  break;
-	}
+          len = value->type->un.array.end - value->type->un.array.start + 1;
+          clen = (DEBUG_nchar + len < DEBUG_maxchar) 
+              ? len : (DEBUG_maxchar - DEBUG_nchar);
+
+          DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "\"");
+          switch (value->cookie)
+          {
+          case DV_TARGET:
+              for (i = clen; i > 0; i -= sizeof(ach))
+              {
+                  DEBUG_READ_MEM(pnt, ach, min(sizeof(ach), i));
+                  DEBUG_Output(DBG_CHN_MESG, ach, min(sizeof(ach), i));
+              }
+              break;
+          case DV_HOST:
+              DEBUG_Output(DBG_CHN_MESG, pnt, clen);
+              break;
+          default: assert(0);
+          }
+          DEBUG_nchar += clen;
+          if (clen != len) 
+          {
+              DEBUG_Printf(DBG_CHN_MESG, "...\"");
+              goto leave;
+          }
+          DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "\"");
+          break;
+        }
       val1 = *value;
       val1.type = value->type->un.array.basictype;
       DEBUG_nchar += DEBUG_Printf(DBG_CHN_MESG, "{");
