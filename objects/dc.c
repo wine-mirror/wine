@@ -841,9 +841,12 @@ INT WINAPI GetDeviceCaps( HDC hdc, INT cap )
                   hdc,cap );
         if ((dc = DC_GetDCPtr( hdc )))
         {
-            ret = *(WORD *)(((char *)dc->devCaps) + cap);
+            if (dc->devCaps)
+            {
+                ret = *(WORD *)(((char *)dc->devCaps) + cap);
+                if ((cap == NUMCOLORS) && (ret == 0xffff)) ret = -1;
+            }
             GDI_ReleaseObj( hdc );
-            if ((cap == NUMCOLORS) && (ret == 0xffff)) ret = -1;
         }
         break;
     }
