@@ -19,6 +19,7 @@ extern "C" {
 #include "winnls.h"
 #include "objbase.h"
 #include "mmsystem.h"
+#include "winspool.h"
 
 #if 0
   Where does this belong? Nobody uses this stuff anyway.
