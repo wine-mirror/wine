@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -40,6 +41,7 @@ static const char * const server_dir_prefix = "/server-";      /* prefix for ser
 static char *config_dir;
 static char *server_dir;
 static char *user_name;
+static char *argv0_path;
 
 #ifdef __GNUC__
 static void fatal_error( const char *err, ... )  __attribute__((noreturn,format(printf,1,2)));
@@ -178,6 +180,43 @@ static void init_paths(void)
         sprintf( server_dir + strlen(server_dir), "%lx", (unsigned long)st.st_ino );
 }
 
+/* initialize the argv0 path */
+void init_argv0_path( const char *argv0 )
+{
+    size_t size, len;
+    const char *p;
+    char *cwd;
+
+    if (!(p = strrchr( argv0, '/' )))
+        return;  /* if argv0 doesn't contain a path, don't do anything */
+
+    len = p - argv0 + 1;
+    if (argv0[0] == '/')  /* absolute path */
+    {
+        argv0_path = xmalloc( len + 1 );
+        memcpy( argv0_path, argv0, len );
+        argv0_path[len] = 0;
+        return;
+    }
+
+    /* relative path, make it absolute */
+    for (size = 256 + len; ; size *= 2)
+    {
+        if (!(cwd = malloc( size ))) break;
+        if (getcwd( cwd, size - len ))
+        {
+            argv0_path = cwd;
+            cwd += strlen(cwd);
+            *cwd++ = '/';
+            memcpy( cwd, argv0, len );
+            cwd[len] = 0;
+            return;
+        }
+        free( cwd );
+        if (errno != ERANGE) break;
+    }
+}
+
 /* return the configuration directory ($WINEPREFIX or $HOME/.wine) */
 const char *wine_get_config_dir(void)
 {
@@ -197,4 +236,10 @@ const char *wine_get_user_name(void)
 {
     if (!user_name) init_paths();
     return user_name;
+}
+
+/* return the path of argv[0], including a trailing slash */
+const char *wine_get_argv0_path(void)
+{
+    return argv0_path;
 }

@@ -32,6 +32,7 @@
 extern const char *wine_get_config_dir(void);
 extern const char *wine_get_server_dir(void);
 extern const char *wine_get_user_name(void);
+extern const char *wine_get_argv0_path(void);
 
 /* dll loading */
 

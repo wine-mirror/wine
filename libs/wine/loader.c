@@ -46,6 +46,8 @@ int __wine_main_argc = 0;
 char **__wine_main_argv = NULL;
 WCHAR **__wine_main_wargv = NULL;
 
+extern void init_argv0_path( const char *argv0 );  /* config.c */
+
 #define MAX_DLLS 100
 
 static struct
@@ -63,7 +65,6 @@ static load_dll_callback_t load_dll_callback;
 static const char **dll_paths;
 static int nb_dll_paths;
 static int dll_path_maxlen;
-static int init_done;
 
 
 /* build the dll load path from the WINEDLLPATH variable */
@@ -72,8 +73,6 @@ static void build_dll_path(void)
     static const char * const dlldir = DLLDIR;
     int len, count = 0;
     char *p, *path = getenv( "WINEDLLPATH" );
-
-    init_done = 1;
 
     if (path)
     {
@@ -131,8 +130,6 @@ static void *dlopen_dll( const char *name, char *error, int errorsize,
     int i, namelen = strlen(name);
     char *buffer, *p;
     void *ret = NULL;
-
-    if (!init_done) build_dll_path();
 
     buffer = malloc( dll_path_maxlen + namelen + 5 );
 
@@ -421,6 +418,8 @@ void wine_init( int argc, char *argv[], char *error, int error_size )
     void *kernel;
     void (*init_func)(int, char **);
 
+    build_dll_path();
+    init_argv0_path( argv[0] );
     if (!dlopen_dll( "ntdll.dll", error, error_size, 0, &file_exists )) return;
     /* make sure kernel32 is loaded too */
     if (!(kernel = dlopen_dll( "kernel32.dll", error, error_size, 0, &file_exists ))) return;
