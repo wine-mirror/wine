@@ -29,7 +29,7 @@ void FOCUS_SwitchFocus( HWND32 hFocusFrom, HWND32 hFocusTo )
      * intertask at this time */
     if (hFocusFrom) SendMessage16( hFocusFrom, WM_KILLFOCUS, hFocusTo, 0 );
 #endif
-    if( !hFocusTo || hFocusTo != hwndFocus )
+    if( !pFocusTo || hFocusTo != hwndFocus )
 	return;
 
     /* According to API docs, the WM_SETFOCUS message is sent AFTER the window
