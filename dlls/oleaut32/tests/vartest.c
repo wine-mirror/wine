@@ -4227,6 +4227,23 @@ static void test_VarNot(void)
     }
 }
 
+static void test_VarSub(void)
+{
+    VARIANT va, vb, vc;
+    HRESULT hr;
+
+    V_VT(&va) = VT_DATE;
+    V_DATE(&va) = 200000.0;
+    V_VT(&vb) = VT_DATE;
+    V_DATE(&vb) = 100000.0;
+    
+    hr = VarSub(&va, &vb, &vc);
+    ok(hr == S_OK,"VarSub of VT_DATE - VT_DATE failed with %lx\n", hr);
+    ok(V_VT(&vc) == VT_R8,"VarSub of VT_DATE - VT_DATE returned vt 0x%x\n", V_VT(&vc));
+    ok(((V_R8(&vc) >  99999.9) && (V_R8(&vc) < 100000.1)),"VarSub of VT_DATE - VT_DATE  should return 100000.0, but returned %g\n", V_R8(&vc));
+    /* fprintf(stderr,"VarSub of 10000-20000 returned: %g\n", V_R8(&vc)); */
+}
+
 START_TEST(vartest)
 {
   hOleaut32 = LoadLibraryA("oleaut32.dll");
@@ -4248,4 +4265,5 @@ START_TEST(vartest)
   test_VarFormat();
   test_VarAbs();
   test_VarNot();
+  test_VarSub();
 }

@@ -30,6 +30,7 @@
 #ifdef HAVE_STDLIB_H
 # include <stdlib.h>
 #endif
+#include <math.h>
 #include <stdarg.h>
 
 #define NONAMELESSUNION
@@ -2612,6 +2613,7 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     if ((V_VT(right)&VT_TYPEMASK) == VT_EMPTY)
     	return VariantCopy(result,left);
 
+    /* check if we add doubles */
     if (((V_VT(left)&VT_TYPEMASK) == VT_R8) || ((V_VT(right)&VT_TYPEMASK) == VT_R8)) {
         BOOL         lOk        = TRUE;
         BOOL         rOk        = TRUE;
@@ -2658,6 +2660,58 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
             rc = S_OK;
         } else {
 	    FIXME("Unhandled type pair %d / %d in double addition.\n", 
+        	(V_VT(left)&VT_TYPEMASK),
+        	(V_VT(right)&VT_TYPEMASK)
+	    );
+	}
+	return rc;
+    }
+
+    /* now check if we add floats. VT_R8 can no longer happen here! */
+    if (((V_VT(left)&VT_TYPEMASK) == VT_R4) || ((V_VT(right)&VT_TYPEMASK) == VT_R4)) {
+        BOOL         lOk        = TRUE;
+        BOOL         rOk        = TRUE;
+        float        lVal = -1;
+        float        rVal = -1;
+        float        res  = -1;
+
+        lOk = TRUE;
+        switch (V_VT(left)&VT_TYPEMASK) {
+        case VT_I1   : lVal = V_UNION(left,cVal);   break;
+        case VT_I2   : lVal = V_UNION(left,iVal);   break;
+        case VT_I4   : lVal = V_UNION(left,lVal);   break;
+        case VT_INT  : lVal = V_UNION(left,lVal);   break;
+        case VT_UI1  : lVal = V_UNION(left,bVal);   break;
+        case VT_UI2  : lVal = V_UNION(left,uiVal);  break;
+        case VT_UI4  : lVal = V_UNION(left,ulVal);  break;
+        case VT_UINT : lVal = V_UNION(left,ulVal);  break;
+        case VT_R4   : lVal = V_UNION(left,fltVal);  break;
+	case VT_NULL : lVal = 0.0;  break;
+        default: lOk = FALSE;
+        }
+
+        rOk = TRUE;
+        switch (V_VT(right)&VT_TYPEMASK) {
+        case VT_I1   : rVal = V_UNION(right,cVal);  break;
+        case VT_I2   : rVal = V_UNION(right,iVal);  break;
+        case VT_I4   : rVal = V_UNION(right,lVal);  break;
+        case VT_INT  : rVal = V_UNION(right,lVal);  break;
+        case VT_UI1  : rVal = V_UNION(right,bVal);  break;
+        case VT_UI2  : rVal = V_UNION(right,uiVal); break;
+        case VT_UI4  : rVal = V_UNION(right,ulVal); break;
+        case VT_UINT : rVal = V_UNION(right,ulVal); break;
+        case VT_R4   : rVal = V_UNION(right,fltVal);break;
+	case VT_NULL : rVal = 0.0; break;
+        default: rOk = FALSE;
+        }
+
+        if (lOk && rOk) {
+            res = (lVal + rVal);
+            V_VT(result) = VT_R4;
+            V_UNION(result,fltVal)  = res;
+            rc = S_OK;
+        } else {
+	    FIXME("Unhandled type pair %d / %d in float addition.\n", 
         	(V_VT(left)&VT_TYPEMASK),
         	(V_VT(right)&VT_TYPEMASK)
 	    );
@@ -2863,7 +2917,7 @@ HRESULT WINAPI VarSub(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     lvt = V_VT(left)&VT_TYPEMASK;
     rvt = V_VT(right)&VT_TYPEMASK;
     found = FALSE;resvt = VT_VOID;
-    if (((1<<lvt) | (1<<rvt)) & ((1<<VT_R4)|(1<<VT_R8))) {
+    if (((1<<lvt) | (1<<rvt)) & ((1<<VT_DATE)|(1<<VT_R4)|(1<<VT_R8))) {
 	found = TRUE;
 	resvt = VT_R8;
     }
@@ -3176,4 +3230,58 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 {
     FIXME("%p %p %p\n", left, right, result);
     return E_FAIL;
+}
+
+/**********************************************************************
+ *              VarPow [OLEAUT32.158]
+ *
+ */
+HRESULT WINAPI VarPow(LPVARIANT left, LPVARIANT right, LPVARIANT result)
+{
+    HRESULT hr;
+    VARIANT dl,dr;
+
+    TRACE("(%p,%p,%p)\n", left, right, result);
+    TRACE("left var:\n"); dump_Variant(left);
+    TRACE("right var:\n"); dump_Variant(right);
+
+    hr = VariantChangeType(&dl,left,0,VT_R8);
+    if (!SUCCEEDED(hr)) {
+	ERR("Could not change passed left argument to VT_R8, handle it differently.\n");
+	return E_FAIL;
+    }
+    hr = VariantChangeType(&dr,right,0,VT_R8);
+    if (!SUCCEEDED(hr)) {
+	ERR("Could not change passed right argument to VT_R8, handle it differently.\n");
+	return E_FAIL;
+    }
+    V_VT(result) = VT_R8;
+    V_R8(result) = pow(V_R8(&dl),V_R8(&dr));
+    return S_OK;
+}
+
+/**********************************************************************
+ *              VarInt [OLEAUT32.172]
+ *
+ */
+HRESULT WINAPI VarInt(LPVARIANT var, LPVARIANT result)
+{
+    TRACE("(%p,%p)\n",var,result);
+    TRACE("Var:\n");
+    dump_Variant(var);
+
+    switch(V_VT(var)) {
+    case VT_R4:
+	V_VT(result) = VT_I4;
+	V_I4(result) = floor(V_R4(var));
+	break;
+    case VT_R8:
+	V_VT(result) = VT_I4;
+	V_I4(result) = floor(V_R8(var));
+	break;
+    default:
+	FIXME("Unhandled variant type 0x%x\n", V_VT(var));
+	return DISP_E_TYPEMISMATCH;
+    }
+    return S_OK;
 }

@@ -153,7 +153,7 @@
 155 stdcall VarMod(ptr ptr ptr)
 156 stdcall VarMul(ptr ptr ptr)
 157 stdcall VarOr(ptr ptr ptr)
-158 stub VarPow # stdcall (ptr ptr ptr)
+158 stdcall VarPow(ptr ptr ptr)
 159 stdcall VarSub(ptr ptr ptr)
 160 stdcall CreateTypeLib(long wstr ptr)
 161 stdcall LoadTypeLib (wstr ptr)
@@ -167,7 +167,7 @@
 169 stub VarFix # stdcall (ptr ptr)
 170 stdcall OaBuildVersion()
 171 stub ClearCustData
-172 stub VarInt # stdcall (ptr ptr)
+172 stdcall VarInt(ptr ptr)
 173 stub VarNeg # stdcall (ptr ptr)
 174 stdcall VarNot(ptr ptr)
 175 stub VarRound # stdcall (ptr long ptr)
