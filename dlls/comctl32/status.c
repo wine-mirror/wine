@@ -422,7 +422,7 @@ STATUSBAR_GetTextW (HWND hwnd, WPARAM wParam, LPARAM lParam)
     else {
 	result = part->text ? lstrlenW (part->text) : 0;
 	result |= (part->style << 16);
-	if (lParam)
+	if (part->text && lParam)
 	    strcpyW ((LPWSTR)lParam, part->text);
     }
     return result;
