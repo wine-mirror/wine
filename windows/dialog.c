@@ -1040,8 +1040,6 @@ static INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
             }
             else if (!GetMessageW( &msg, 0, 0, 0 )) break;
 
-            if (CallMsgFilterW( &msg, MSGF_DIALOGBOX )) continue;
-
             if (!IsWindow( hwnd )) return -1;
             if (!(dlgInfo->flags & DF_END) && !IsDialogMessageW( hwnd, &msg))
             {
@@ -1242,7 +1240,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT retval )
 /***********************************************************************
  *           DIALOG_IsAccelerator
  */
-static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
+static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM wParam )
 {
     HWND hwndControl = hwnd;
     HWND hwndNext;
@@ -1260,8 +1258,6 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
             {
                 /* find the accelerator key */
                 LPWSTR p = buffer - 2;
-                char a_char = vKey;
-                WCHAR w_char = 0;
 
                 do
                 {
@@ -1270,8 +1266,7 @@ static BOOL DIALOG_IsAccelerator( HWND hwnd, HWND hwndDlg, WPARAM vKey )
                 while (p != NULL && p[1] == '&');
 
                 /* and check if it's the one we're looking for */
-                MultiByteToWideChar(CP_ACP, 0, &a_char, 1, &w_char, 1);
-                if (p != NULL && toupperW( p[1] ) == toupperW( w_char ) )
+                if (p != NULL && toupperW( p[1] ) == toupperW( wParam ) )
                 {
                     if ((dlgCode & DLGC_STATIC) || (style & 0x0f) == BS_GROUPBOX )
                     {
@@ -1352,47 +1347,31 @@ static HWND DIALOG_FindMsgDestination( HWND hwndDlg )
 }
 
 /***********************************************************************
- *           DIALOG_IsDialogMessage
+ *		IsDialogMessageW (USER32.@)
  */
-static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
-                                      UINT message, WPARAM wParam,
-                                      LPARAM lParam, BOOL *translate,
-                                      BOOL *dispatch, INT dlgCode )
+BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
 {
-    *translate = *dispatch = FALSE;
+    INT dlgCode = 0;
 
-    if (message == WM_PAINT)
-    {
-        /* Apparently, we have to handle this one as well */
-        *dispatch = TRUE;
-        return TRUE;
-    }
+    if (CallMsgFilterW( msg, MSGF_DIALOGBOX )) return TRUE;
 
-      /* Only the key messages get special processing */
-    if ((message != WM_KEYDOWN) &&
-        (message != WM_SYSKEYDOWN) &&
-        (message != WM_SYSCHAR) &&
-	(message != WM_CHAR))
-        return FALSE;
-
-    if (dlgCode & DLGC_WANTMESSAGE)
-    {
-        *translate = *dispatch = TRUE;
-        return TRUE;
-    }
+    hwndDlg = WIN_GetFullHandle( hwndDlg );
+    if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd )) return FALSE;
 
     hwndDlg = DIALOG_FindMsgDestination(hwndDlg);
 
-    switch(message)
+    switch(msg->message)
     {
     case WM_KEYDOWN:
-        switch(wParam)
+        dlgCode = SendMessageW( msg->hwnd, WM_GETDLGCODE, msg->wParam, (LPARAM)msg );
+        if (dlgCode & DLGC_WANTMESSAGE) break;
+
+        switch(msg->wParam)
         {
         case VK_TAB:
             if (!(dlgCode & DLGC_WANTTAB))
             {
-                SendMessageA( hwndDlg, WM_NEXTDLGCTL,
-                                (GetKeyState(VK_SHIFT) & 0x8000), 0 );
+                SendMessageW( hwndDlg, WM_NEXTDLGCTL, (GetKeyState(VK_SHIFT) & 0x8000), 0 );
                 return TRUE;
             }
             break;
@@ -1403,140 +1382,55 @@ static BOOL DIALOG_IsDialogMessage( HWND hwnd, HWND hwndDlg,
         case VK_UP:
             if (!(dlgCode & DLGC_WANTARROWS))
             {
-                BOOL fPrevious = (wParam == VK_LEFT || wParam == VK_UP);
-                HWND hwndNext =
-                    GetNextDlgGroupItem (hwndDlg, GetFocus(), fPrevious );
-                SendMessageA( hwndDlg, WM_NEXTDLGCTL, (WPARAM)hwndNext, 1 );
+                BOOL fPrevious = (msg->wParam == VK_LEFT || msg->wParam == VK_UP);
+                HWND hwndNext = GetNextDlgGroupItem (hwndDlg, GetFocus(), fPrevious );
+                SendMessageW( hwndDlg, WM_NEXTDLGCTL, (WPARAM)hwndNext, 1 );
                 return TRUE;
             }
             break;
 
+        case VK_CANCEL:
         case VK_ESCAPE:
-            SendMessageA( hwndDlg, WM_COMMAND, IDCANCEL,
-                            (LPARAM)GetDlgItem( hwndDlg, IDCANCEL ) );
+            SendMessageW( hwndDlg, WM_COMMAND, IDCANCEL, (LPARAM)GetDlgItem( hwndDlg, IDCANCEL ) );
             return TRUE;
 
+        case VK_EXECUTE:
         case VK_RETURN:
             {
                 DWORD dw = SendMessageW( hwndDlg, DM_GETDEFID, 0, 0 );
                 if (HIWORD(dw) == DC_HASDEFID)
                 {
-                    SendMessageA( hwndDlg, WM_COMMAND,
-                                    MAKEWPARAM( LOWORD(dw), BN_CLICKED ),
+                    SendMessageW( hwndDlg, WM_COMMAND, MAKEWPARAM( LOWORD(dw), BN_CLICKED ),
                                     (LPARAM)GetDlgItem(hwndDlg, LOWORD(dw)));
                 }
                 else
                 {
-                    SendMessageA( hwndDlg, WM_COMMAND, IDOK,
-                                    (LPARAM)GetDlgItem( hwndDlg, IDOK ) );
+                    SendMessageW( hwndDlg, WM_COMMAND, IDOK, (LPARAM)GetDlgItem( hwndDlg, IDOK ) );
 
                 }
             }
             return TRUE;
         }
-        *translate = TRUE;
-        break; /* case WM_KEYDOWN */
+        break;
 
     case WM_CHAR:
-        if (dlgCode & DLGC_WANTCHARS) break;
+        dlgCode = SendMessageW( msg->hwnd, WM_GETDLGCODE, msg->wParam, (LPARAM)msg );
+        if (dlgCode & (DLGC_WANTCHARS|DLGC_WANTMESSAGE)) break;
+        if (msg->wParam == '\t' && (dlgCode & DLGC_WANTTAB)) break;
         /* drop through */
 
     case WM_SYSCHAR:
-        if (DIALOG_IsAccelerator( WIN_GetFullHandle(hwnd), hwndDlg, wParam ))
+        if (DIALOG_IsAccelerator( WIN_GetFullHandle(msg->hwnd), hwndDlg, msg->wParam ))
         {
             /* don't translate or dispatch */
             return TRUE;
         }
         break;
-
-    case WM_SYSKEYDOWN:
-        *translate = TRUE;
-        break;
     }
 
-    /* If we get here, the message has not been treated specially */
-    /* and can be sent to its destination window. */
-    *dispatch = TRUE;
+    TranslateMessage( msg );
+    DispatchMessageW( msg );
     return TRUE;
-}
-
-
-/***********************************************************************
- *		IsDialogMessage (USER.90)
- */
-BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, SEGPTR msg16 )
-{
-    LPMSG16 msg = MapSL(msg16);
-    BOOL ret, translate, dispatch;
-    INT dlgCode = 0;
-
-    if ((hwndDlg != msg->hwnd) && !IsChild16( hwndDlg, msg->hwnd ))
-        return FALSE;
-
-    if ((msg->message == WM_KEYDOWN) ||
-        (msg->message == WM_CHAR))
-    {
-       dlgCode = SendMessage16( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg16);
-    }
-    ret = DIALOG_IsDialogMessage( WIN_Handle32(msg->hwnd), WIN_Handle32(hwndDlg),
-                                  msg->message, msg->wParam, msg->lParam,
-                                  &translate, &dispatch, dlgCode );
-    if (translate) TranslateMessage16( msg );
-    if (dispatch) DispatchMessage16( msg );
-    return ret;
-}
-
-
-/***********************************************************************
- *		IsDialogMessage  (USER32.@)
- *		IsDialogMessageA (USER32.@)
- */
-BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG msg )
-{
-    BOOL ret, translate, dispatch;
-    INT dlgCode = 0;
-
-    hwndDlg = WIN_GetFullHandle( hwndDlg );
-    if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd ))
-        return FALSE;
-
-    if ((msg->message == WM_KEYDOWN) ||
-        (msg->message == WM_CHAR))
-    {
-        dlgCode = SendMessageA( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg);
-    }
-    ret = DIALOG_IsDialogMessage( msg->hwnd, hwndDlg, msg->message,
-                                  msg->wParam, msg->lParam,
-                                  &translate, &dispatch, dlgCode );
-    if (translate) TranslateMessage( msg );
-    if (dispatch) DispatchMessageA( msg );
-    return ret;
-}
-
-
-/***********************************************************************
- *		IsDialogMessageW (USER32.@)
- */
-BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
-{
-    BOOL ret, translate, dispatch;
-    INT dlgCode = 0;
-
-    hwndDlg = WIN_GetFullHandle( hwndDlg );
-    if ((hwndDlg != msg->hwnd) && !IsChild( hwndDlg, msg->hwnd ))
-        return FALSE;
-
-    if ((msg->message == WM_KEYDOWN) ||
-        (msg->message == WM_CHAR))
-    {
-        dlgCode = SendMessageW( msg->hwnd, WM_GETDLGCODE, 0, (LPARAM)msg);
-    }
-    ret = DIALOG_IsDialogMessage( msg->hwnd, hwndDlg, msg->message,
-                                  msg->wParam, msg->lParam,
-                                  &translate, &dispatch, dlgCode );
-    if (translate) TranslateMessage( msg );
-    if (dispatch) DispatchMessageW( msg );
-    return ret;
 }
 
 

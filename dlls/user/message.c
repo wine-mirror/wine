@@ -2202,6 +2202,18 @@ BOOL WINAPI GetMessageA( MSG *msg, HWND hwnd, UINT first, UINT last )
 
 
 /***********************************************************************
+ *		IsDialogMessage  (USER32.@)
+ *		IsDialogMessageA (USER32.@)
+ */
+BOOL WINAPI IsDialogMessageA( HWND hwndDlg, LPMSG pmsg )
+{
+    MSG msg = *pmsg;
+    msg.wParam = map_wparam_AtoW( msg.message, msg.wParam );
+    return IsDialogMessageW( hwndDlg, &msg );
+}
+
+
+/***********************************************************************
  *		SetMessageQueue (USER32.@)
  */
 BOOL WINAPI SetMessageQueue( INT size )

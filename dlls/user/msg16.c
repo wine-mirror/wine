@@ -348,6 +348,31 @@ LONG WINAPI DispatchMessage32_16( const MSG32_16 *msg16, BOOL16 wHaveParamHigh )
 
 
 /***********************************************************************
+ *		IsDialogMessage (USER.90)
+ */
+BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, MSG16 *msg16 )
+{
+    MSG msg;
+
+    switch(msg16->message)
+    {
+    case WM_KEYDOWN:
+    case WM_CHAR:
+    case WM_SYSCHAR:
+        msg.hwnd   = WIN_Handle32(msg16->hwnd);
+        msg.lParam = msg16->lParam;
+        WINPROC_MapMsg16To32W( msg.hwnd, msg16->message, msg16->wParam,
+                               &msg.message, &msg.wParam, &msg.lParam );
+        /* these messages don't need an unmap */
+        return IsDialogMessageW( WIN_Handle32(hwndDlg), &msg );
+    }
+    TranslateMessage16( msg16 );
+    DispatchMessage16( msg16 );
+    return TRUE;
+}
+
+
+/***********************************************************************
  *		MsgWaitForMultipleObjects  (USER.640)
  */
 DWORD WINAPI MsgWaitForMultipleObjects16( DWORD count, CONST HANDLE *handles,
