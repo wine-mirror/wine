@@ -27,7 +27,8 @@ extern int duplicate_handle( struct process *src, int src_handle, struct process
                              unsigned int access, int inherit, int options );
 extern int open_object( const char *name, const struct object_ops *ops,
                         unsigned int access, int inherit );
-extern int copy_handle_table( struct process *process, struct process *parent );
-extern void free_handles( struct process *process );
+extern struct object *alloc_handle_table( struct process *process, int count );
+extern struct object *copy_handle_table( struct process *process, struct process *parent );
+extern void close_global_handles(void);
 
 #endif  /* __WINE_SERVER_HANDLE_H */

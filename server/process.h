@@ -15,8 +15,6 @@
 
 /* process structures */
 
-struct handle_entry;
-
 struct process
 {
     struct object        obj;             /* object header */
@@ -26,9 +24,7 @@ struct process
     struct process      *debug_next;      /* per-debugger process list */
     struct process      *debug_prev;
     struct thread       *debugger;        /* thread debugging this process */
-    struct handle_entry *entries;         /* handle entries */
-    int                  handle_last;     /* last valid handle */
-    int                  handle_count;    /* allocated table entries */
+    struct object       *handles;         /* handle entries */
     int                  exit_code;       /* process exit code */
     int                  running_threads; /* number of threads running in this process */
     struct timeval       start_time;      /* absolute time at process start */

@@ -23,7 +23,17 @@ struct handle_entry
     unsigned int   access;
 };
 
-static struct process *initial_process;
+struct handle_table
+{
+    struct object        obj;         /* object header */
+    struct process      *process;     /* process owning this table */
+    int                  count;       /* number of allocated entries */
+    int                  last;        /* last used entry */
+    int                  free;        /* first entry that may be free */
+    struct handle_entry *entries;     /* handle entries */
+};
+
+static struct handle_table *global_table;
 
 /* reserved handle access rights */
 #define RESERVED_SHIFT         25
@@ -39,67 +49,169 @@ static struct process *initial_process;
 
 #define MIN_HANDLE_ENTRIES  32
 
+
+static void handle_table_dump( struct object *obj, int verbose );
+static void handle_table_destroy( struct object *obj );
+
+static const struct object_ops handle_table_ops =
+{
+    handle_table_dump,
+    no_add_queue,
+    NULL,  /* should never get called */
+    NULL,  /* should never get called */
+    NULL,  /* should never get called */
+    no_read_fd,
+    no_write_fd,
+    no_flush,
+    no_get_file_info,
+    handle_table_destroy
+};
+
+/* dump a handle table */
+static void handle_table_dump( struct object *obj, int verbose )
+{
+    int i;
+    struct handle_table *table = (struct handle_table *)obj;
+    struct handle_entry *entry = table->entries;
+
+    assert( obj->ops == &handle_table_ops );
+
+    fprintf( stderr, "Handle table last=%d count=%d process=%p\n",
+             table->last, table->count, table->process );
+    if (!verbose) return;
+    entry = table->entries;
+    for (i = 0; i <= table->last; i++, entry++)
+    {
+        if (!entry->ptr) continue;
+        fprintf( stderr, "%9d: %p %08x ", i + 1, entry->ptr, entry->access );
+        entry->ptr->ops->dump( entry->ptr, 0 );
+    }
+}
+
+/* destroy a handle table */
+static void handle_table_destroy( struct object *obj )
+{
+    int i;
+    struct handle_table *table = (struct handle_table *)obj;
+    struct handle_entry *entry = table->entries;
+
+    assert( obj->ops == &handle_table_ops );
+
+    for (i = 0; i <= table->last; i++, entry++)
+    {
+        struct object *obj = entry->ptr;
+        entry->ptr = NULL;
+        if (obj) release_object( obj );
+    }
+    free( table->entries );
+    free( table );
+}
+
+/* allocate a new handle table */
+struct object *alloc_handle_table( struct process *process, int count )
+{
+    struct handle_table *table;
+
+    if (count < MIN_HANDLE_ENTRIES) count = MIN_HANDLE_ENTRIES;
+    if (!(table = alloc_object( sizeof(*table), &handle_table_ops, NULL )))
+        return NULL;
+    table->process = process;
+    table->count   = count;
+    table->last    = -1;
+    table->free    = 0;
+    if ((table->entries = mem_alloc( count * sizeof(*table->entries) ))) return &table->obj;
+    release_object( table );
+    return NULL;
+}
+
 /* grow a handle table */
-/* return 1 if OK, 0 on error */
-static int grow_handle_table( struct process *process )
+static int grow_handle_table( struct handle_table *table )
 {
     struct handle_entry *new_entries;
-    int count = process->handle_count;
+    int count = table->count;
 
     if (count >= INT_MAX / 2) return 0;
     count *= 2;
-    if (!(new_entries = realloc( process->entries, count * sizeof(struct handle_entry) )))
+    if (!(new_entries = realloc( table->entries, count * sizeof(struct handle_entry) )))
     {
         SET_ERROR( ERROR_OUTOFMEMORY );
         return 0;
     }
-    process->handle_count = count;
-    process->entries      = new_entries;
+    table->entries = new_entries;
+    table->count   = count;
     return 1;
+}
+
+/* find the first free entry in the handle table */
+static struct handle_entry *get_free_entry( struct handle_table *table, int *phandle )
+{
+    struct handle_entry *entry = table->entries + table->free;
+    int handle;
+
+    for (handle = table->free; handle <= table->last; handle++, entry++)
+        if (!entry->ptr) goto found;
+    if (handle >= table->count)
+    {
+        if (!grow_handle_table( table )) return NULL;
+        entry = table->entries + handle;  /* the entries may have moved */
+    }
+    table->last = handle;
+ found:
+    table->free = *phandle = handle + 1;  /* avoid handle 0 */
+    return entry;
 }
 
 /* allocate a handle for an object, incrementing its refcount */
 /* return the handle, or -1 on error */
 int alloc_handle( struct process *process, void *obj, unsigned int access, int inherit )
 {
+    struct handle_table *table = (struct handle_table *)process->handles;
     struct handle_entry *entry;
     int handle;
 
+    assert( table );
     assert( !(access & RESERVED_ALL) );
     if (inherit) access |= RESERVED_INHERIT;
 
-    /* find the first free entry */
-
-    if (!(entry = process->entries)) return -1;
-    for (handle = 0; handle <= process->handle_last; handle++, entry++)
-        if (!entry->ptr) goto found;
-
-    if (handle >= process->handle_count)
-    {
-        if (!grow_handle_table( process )) return -1;
-        entry = process->entries + handle;  /* the table may have moved */
-    }
-    process->handle_last = handle;
-
- found:
+    if (!(entry = get_free_entry( table, &handle ))) return -1;
     entry->ptr    = grab_object( obj );
     entry->access = access;
-    return handle + 1;  /* avoid handle 0 */
+    return handle;
+}
+
+/* allocate a global handle for an object, incrementing its refcount */
+/* return the handle, or -1 on error */
+static int alloc_global_handle( void *obj, unsigned int access )
+{
+    struct handle_entry *entry;
+    int handle;
+
+    if (!global_table)
+    {
+        if (!(global_table = (struct handle_table *)alloc_handle_table( NULL, 0 ))) return -1;
+    }
+    if (!(entry = get_free_entry( global_table, &handle ))) return -1;
+    entry->ptr    = grab_object( obj );
+    entry->access = access;
+    return HANDLE_LOCAL_TO_GLOBAL(handle);
 }
 
 /* return an handle entry, or NULL if the handle is invalid */
 static struct handle_entry *get_handle( struct process *process, int handle )
 {
+    struct handle_table *table = (struct handle_table *)process->handles;
     struct handle_entry *entry;
 
     if (HANDLE_IS_GLOBAL(handle))
     {
         handle = HANDLE_GLOBAL_TO_LOCAL(handle);
-        process = initial_process;
+        table = global_table;
     }
+    if (!table) goto error;
     handle--;  /* handles start at 1 */
-    if ((handle < 0) || (handle > process->handle_last)) goto error;
-    entry = process->entries + handle;
+    if (handle < 0) goto error;
+    if (handle > table->last) goto error;
+    entry = table->entries + handle;
     if (!entry->ptr) goto error;
     return entry;
 
@@ -109,59 +221,45 @@ static struct handle_entry *get_handle( struct process *process, int handle )
 }
 
 /* attempt to shrink a table */
-/* return 1 if OK, 0 on error */
-static int shrink_handle_table( struct process *process )
+static void shrink_handle_table( struct handle_table *table )
 {
+    struct handle_entry *entry = table->entries + table->last;
     struct handle_entry *new_entries;
-    struct handle_entry *entry = process->entries + process->handle_last;
-    int count = process->handle_count;
+    int count = table->count;
 
-    while (process->handle_last >= 0)
+    while (table->last >= 0)
     {
         if (entry->ptr) break;
-        process->handle_last--;
+        table->last--;
         entry--;
     }
-    if (process->handle_last >= count / 4) return 1;  /* no need to shrink */
-    if (count < MIN_HANDLE_ENTRIES * 2) return 1;  /* too small to shrink */
+    if (table->last >= count / 4) return;  /* no need to shrink */
+    if (count < MIN_HANDLE_ENTRIES * 2) return;  /* too small to shrink */
     count /= 2;
-    if (!(new_entries = realloc( process->entries,
-                                 count * sizeof(struct handle_entry) )))
-        return 0;
-    process->handle_count = count;
-    process->entries      = new_entries;
-    return 1;
+    if (!(new_entries = realloc( table->entries, count * sizeof(*new_entries) ))) return;
+    table->count   = count;
+    table->entries = new_entries;
 }
 
 /* copy the handle table of the parent process */
 /* return 1 if OK, 0 on error */
-int copy_handle_table( struct process *process, struct process *parent )
+struct object *copy_handle_table( struct process *process, struct process *parent )
 {
-    struct handle_entry *ptr;
-    int i, count, last;
+    struct handle_table *parent_table = (struct handle_table *)parent->handles;
+    struct handle_table *table;
+    int i;
 
-    if (!parent)  /* first process */
-    {
-        if (!initial_process) initial_process = process;
-        count = MIN_HANDLE_ENTRIES;
-        last  = -1;
-    }
-    else
-    {
-        assert( parent->entries );
-        count = parent->handle_count;
-        last  = parent->handle_last;
-    }
+    assert( parent_table );
+    assert( parent_table->obj.ops == &handle_table_ops );
 
-    if (!(ptr = mem_alloc( count * sizeof(struct handle_entry)))) return 0;
-    process->entries      = ptr;
-    process->handle_count = count;
-    process->handle_last  = last;
+    if (!(table = (struct handle_table *)alloc_handle_table( process, parent_table->count )))
+        return NULL;
 
-    if (last >= 0)
+    if ((table->last = parent_table->last) >= 0)
     {
-        memcpy( ptr, parent->entries, (last + 1) * sizeof(struct handle_entry) );
-        for (i = 0; i <= last; i++, ptr++)
+        struct handle_entry *ptr = table->entries;
+        memcpy( ptr, parent_table->entries, (table->last + 1) * sizeof(struct handle_entry) );
+        for (i = 0; i <= table->last; i++, ptr++)
         {
             if (!ptr->ptr) continue;
             if (ptr->access & RESERVED_INHERIT) grab_object( ptr->ptr );
@@ -169,29 +267,37 @@ int copy_handle_table( struct process *process, struct process *parent )
         }
     }
     /* attempt to shrink the table */
-    shrink_handle_table( process );
-    return 1;
+    shrink_handle_table( table );
+    return &table->obj;
 }
 
 /* close a handle and decrement the refcount of the associated object */
 /* return 1 if OK, 0 on error */
 int close_handle( struct process *process, int handle )
 {
+    struct handle_table *table;
     struct handle_entry *entry;
     struct object *obj;
 
-    if (HANDLE_IS_GLOBAL(handle))
-    {
-        handle = HANDLE_GLOBAL_TO_LOCAL(handle);
-        process = initial_process;
-    }
     if (!(entry = get_handle( process, handle ))) return 0;
     if (entry->access & RESERVED_CLOSE_PROTECT) return 0;  /* FIXME: error code */
     obj = entry->ptr;
     entry->ptr = NULL;
-    if (handle-1 == process->handle_last) shrink_handle_table( process );
+    table = HANDLE_IS_GLOBAL(handle) ? global_table : (struct handle_table *)process->handles;
+    if (entry < table->entries + table->free) table->free = entry - table->entries;
+    if (entry == table->entries + table->last) shrink_handle_table( table );
     release_object( obj );
     return 1;
+}
+
+/* close all the global handles */
+void close_global_handles(void)
+{
+    if (global_table)
+    {
+        release_object( global_table );
+        global_table = NULL;
+    }
 }
 
 /* retrieve the object corresponding to a handle, incrementing its refcount */
@@ -259,31 +365,13 @@ int duplicate_handle( struct process *src, int src_handle, struct process *dst,
             CLEAR_ERROR();
         }
     }
-    if (options & DUP_HANDLE_MAKE_GLOBAL) dst = initial_process;
     access &= ~RESERVED_ALL;
-    res = alloc_handle( dst, obj, access, inherit );
+    if (options & DUP_HANDLE_MAKE_GLOBAL)
+        res = alloc_global_handle( obj, access );
+    else
+        res = alloc_handle( dst, obj, access, inherit );
     release_object( obj );
-    if ((options & DUP_HANDLE_MAKE_GLOBAL) && (res != -1)) res = HANDLE_LOCAL_TO_GLOBAL(res);
     return res;
-}
-
-/* free the process handle entries */
-void free_handles( struct process *process )
-{
-    struct handle_entry *entry;
-    int handle;
-
-    if (!(entry = process->entries)) return;
-    for (handle = 0; handle <= process->handle_last; handle++, entry++)
-    {
-        struct object *obj = entry->ptr;
-        entry->ptr = NULL;
-        if (obj) release_object( obj );
-    }
-    free( process->entries );
-    process->handle_count = 0;
-    process->handle_last  = -1;
-    process->entries      = NULL;
 }
 
 /* open a new handle to an existing object */
@@ -303,22 +391,6 @@ int open_object( const char *name, const struct object_ops *ops,
         return -1;
     }
     return alloc_handle( current->process, obj, access, inherit );
-}
-
-/* dump a handle table on stdout */
-void dump_handles( struct process *process )
-{
-    struct handle_entry *entry;
-    int i;
-
-    if (!process->entries) return;
-    entry = process->entries;
-    for (i = 0; i <= process->handle_last; i++, entry++)
-    {
-        if (!entry->ptr) continue;
-        printf( "%5d: %p %08x ", i + 1, entry->ptr, entry->access );
-        entry->ptr->ops->dump( entry->ptr, 0 );
-    }
 }
 
 /* close a handle */

@@ -74,8 +74,7 @@ static const struct object_ops thread_ops =
     destroy_thread
 };
 
-static struct thread initial_thread;
-static struct thread *first_thread = &initial_thread;
+static struct thread *first_thread;
 
 /* initialization of a thread structure */
 static void init_thread( struct thread *thread, int fd )
@@ -104,12 +103,14 @@ static void init_thread( struct thread *thread, int fd )
 /* create the initial thread and start the main server loop */
 void create_initial_thread( int fd )
 {
-    current = &initial_thread;
-    init_thread( &initial_thread, fd );
-    initial_thread.process = create_initial_process(); 
-    add_process_thread( initial_thread.process, &initial_thread );
-    initial_thread.client = add_client( fd, &initial_thread );
-    grab_object( &initial_thread ); /* so that we never free it */
+    first_thread = mem_alloc( sizeof(*first_thread) );
+    assert( first_thread );
+
+    current = first_thread;
+    init_thread( first_thread, fd );
+    first_thread->process = create_initial_process(); 
+    add_process_thread( first_thread->process, first_thread );
+    first_thread->client = add_client( fd, first_thread );
     select_loop();
 }
 
@@ -131,8 +132,7 @@ static struct thread *create_thread( int fd, void *pid, int suspend, int inherit
 
     if (suspend) thread->suspend++;
 
-    thread->next = first_thread;
-    first_thread->prev = thread;
+    if ((thread->next = first_thread) != NULL) thread->next->prev = thread;
     first_thread = thread;
     add_process_thread( process, thread );
 
@@ -146,7 +146,7 @@ static struct thread *create_thread( int fd, void *pid, int suspend, int inherit
     return thread;
 
  error:
-    if (current) close_handle( current->process, *handle );
+    close_handle( current->process, *handle );
     remove_process_thread( process, thread );
     release_object( thread );
     return NULL;
@@ -174,8 +174,8 @@ static void dump_thread( struct object *obj, int verbose )
     struct thread *thread = (struct thread *)obj;
     assert( obj->ops == &thread_ops );
 
-    fprintf( stderr, "Thread pid=%d teb=%p client=%p\n",
-             thread->unix_pid, thread->teb, thread->client );
+    fprintf( stderr, "Thread pid=%d teb=%p state=%d\n",
+             thread->unix_pid, thread->teb, thread->state );
 }
 
 static int thread_signaled( struct object *obj, struct thread *thread )
