@@ -209,7 +209,7 @@ static VOID PROPSHEET_UnImplementedFlags(DWORD dwFlags)
     if (string[0] != '\0')
 	FIXME("%s\n", string);
 }
-#undef add_flag()
+#undef add_flag
 
 /******************************************************************************
  *            PROPSHEET_CollectSheetInfoA
