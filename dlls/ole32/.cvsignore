@@ -10,3 +10,4 @@ ole32.spec.c
 ole32.spec.def
 ole32res.res
 storage.spec.c
+version.res

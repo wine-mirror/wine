@@ -263,3 +263,4 @@
 263 stub WdtpInterfacePointer_UserMarshal
 264 stub WdtpInterfacePointer_UserSize
 265 stub WdtpInterfacePointer_UserUnmarshal
+@ stdcall DllUnregisterServer() OLE32_DllUnregisterServer

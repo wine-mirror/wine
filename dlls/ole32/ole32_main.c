@@ -51,11 +51,4 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
     return TRUE;
 }
 
-/***********************************************************************
- *		DllRegisterServer (OLE32.194)
- */
-HRESULT WINAPI OLE32_DllRegisterServer() {
-    /* FIXME: what Interfaces should we register ... */
-    FIXME("(), stub!\n");
-    return S_OK;
-}
+/* NOTE: DllRegisterServer and DllUnregisterServer are in regsvr.c */

@@ -38,6 +38,7 @@ C_SRCS = \
 	ole32_main.c \
 	oleobj.c \
 	oleproxy.c \
+	regsvr.c \
 	rpc.c \
 	stg_bigblockfile.c \
 	stg_stream.c \
@@ -46,7 +47,7 @@ C_SRCS = \
 
 C_SRCS16 = ole2nls.c
 
-RC_SRCS = ole32res.rc
+RC_SRCS = ole32res.rc version.rc
 
 @MAKE_DLL_RULES@
 
