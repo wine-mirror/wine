@@ -457,7 +457,7 @@ static UINT msi_string2id( string_table *st, LPCWSTR buffer, UINT *id )
 
 static LPWSTR strdupW( LPCWSTR str )
 {
-    UINT len = lstrlenW( str );
+    UINT len = lstrlenW( str ) + 1;
     LPWSTR ret = HeapAlloc( GetProcessHeap(), 0, len*sizeof (WCHAR) );
     if( ret )
         lstrcpyW( ret, str );
