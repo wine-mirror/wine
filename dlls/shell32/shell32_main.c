@@ -225,9 +225,11 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  return FALSE;
 
 	/* windows initializes this values regardless of the flags */
-	psfi->szDisplayName[0] = '\0';
-	psfi->szTypeName[0] = '\0';
-	psfi->iIcon = 0;
+        if (psfi != NULL) {
+	    psfi->szDisplayName[0] = '\0';
+	    psfi->szTypeName[0] = '\0';
+	    psfi->iIcon = 0;
+        }
 
        if (!(flags & SHGFI_PIDL)){
             /* SHGitFileInfo should work with absolute and relative paths */
@@ -297,6 +299,9 @@ DWORD WINAPI SHGetFileInfoA(LPCSTR path,DWORD dwFileAttributes,
 	  return 0;
       }
 
+      /* psfi is NULL normally to query EXE type, if not none of the below makes 
+           sense anyway. Windows allows this and just returns FALSE              */
+      if (psfi != NULL) return FALSE;
 
 	/* translate the path into a pidl only when SHGFI_USEFILEATTRIBUTES
     	 * is not specified.
@@ -496,22 +501,24 @@ DWORD WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
 	  WideCharToMultiByte(CP_ACP, 0, path, -1, temppath, len, NULL, NULL);
 	}
 
-       if(flags & SHGFI_ATTR_SPECIFIED)
+       if(psfi && (flags & SHGFI_ATTR_SPECIFIED))
                temppsfi.dwAttributes=psfi->dwAttributes;
 
-	ret = SHGetFileInfoA(temppath, dwFileAttributes, &temppsfi, sizeof(temppsfi), flags);
+	ret = SHGetFileInfoA(temppath, dwFileAttributes, (psfi == NULL)? NULL : &temppsfi, sizeof(temppsfi), flags);
 
-       if(flags & SHGFI_ICON)
-               psfi->hIcon=temppsfi.hIcon;
-       if(flags & (SHGFI_SYSICONINDEX|SHGFI_ICON|SHGFI_ICONLOCATION))
-               psfi->iIcon=temppsfi.iIcon;
-       if(flags & SHGFI_ATTRIBUTES)
-               psfi->dwAttributes=temppsfi.dwAttributes;
-       if(flags & (SHGFI_DISPLAYNAME|SHGFI_ICONLOCATION))
-               MultiByteToWideChar(CP_ACP, 0, temppsfi.szDisplayName, -1, psfi->szDisplayName, sizeof(psfi->szDisplayName));
-       if(flags & SHGFI_TYPENAME)
-               MultiByteToWideChar(CP_ACP, 0, temppsfi.szTypeName, -1, psfi->szTypeName, sizeof(psfi->szTypeName));
-
+        if (psfi)
+        {
+            if(flags & SHGFI_ICON)
+                psfi->hIcon=temppsfi.hIcon;
+            if(flags & (SHGFI_SYSICONINDEX|SHGFI_ICON|SHGFI_ICONLOCATION))
+                psfi->iIcon=temppsfi.iIcon;
+            if(flags & SHGFI_ATTRIBUTES)
+                psfi->dwAttributes=temppsfi.dwAttributes;
+            if(flags & (SHGFI_DISPLAYNAME|SHGFI_ICONLOCATION))
+                MultiByteToWideChar(CP_ACP, 0, temppsfi.szDisplayName, -1, psfi->szDisplayName, sizeof(psfi->szDisplayName));
+            if(flags & SHGFI_TYPENAME)
+                MultiByteToWideChar(CP_ACP, 0, temppsfi.szTypeName, -1, psfi->szTypeName, sizeof(psfi->szTypeName));
+        }
         if(!(flags & SHGFI_PIDL)) HeapFree(GetProcessHeap(), 0, temppath);
 	return ret;
 }
