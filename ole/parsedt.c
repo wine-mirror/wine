@@ -66,6 +66,12 @@ char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
 "Thursday", "Friday", "Saturday", NULL};
 
+/* those three vars are useless, and not even initialized, so 
+ * I'd rather remove them all (EPP)
+ */
+int	DateStyle; 
+bool	EuroDates;
+int	CTimeZone;
 
 #define UTIME_MINYEAR (1901)
 #define UTIME_MINMONTH (12)

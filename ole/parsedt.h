@@ -145,9 +145,9 @@ typedef uint32 bool32;			/* >= 32 bits */
 #define USE_SQL_DATES			2
 #define USE_GERMAN_DATES		3
 
-int	DateStyle;
-bool EuroDates;
-int	CTimeZone;
+extern	int	DateStyle;
+extern	bool	EuroDates;
+extern	int	CTimeZone;
 
 typedef double float8;
 
