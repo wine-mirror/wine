@@ -41,10 +41,9 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
     segout	= (SEGPTR)lpvOutData;
     switch (nEscape) {
     	/* Escape(hdc,QUERYESCSUPPORT,LPINT,NULL) */
-        /* Escape(hdc,SETLINECAP,LPINT,NULL) */
+        /* Escape(hdc,CLIP_TO_PATH,LPINT,NULL) */
     case QUERYESCSUPPORT:
-    case SETLINECAP:
-    case SETLINEJOIN:
+    case CLIP_TO_PATH:
       {
     	LPINT16 x = (LPINT16)SEGPTR_NEW(INT16);
 	*x = *(INT*)lpszInData;
@@ -77,6 +76,19 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 	break;
       }
 
+        /* Escape(hdc,SETLINECAP,LPINT,LPINT) */
+    case SETLINECAP:
+    case SETLINEJOIN:
+    case SETMITERLIMIT:
+      {
+    	LPINT16 new = (LPINT16)SEGPTR_NEW(INT16);
+    	LPINT16 old = (LPINT16)SEGPTR_NEW(INT16);
+	*new = *(INT*)lpszInData;
+	segin = SEGPTR_GET(new);
+	segout = SEGPTR_GET(old);
+ 	cbInput = sizeof(INT16);
+	break;
+      }
       /* Escape(hdc,GETTECHNOLOGY,NULL,LPSTR); */
     case GETTECHNOLOGY: {
         segout = SEGPTR_GET(SEGPTR_ALLOC(200)); /* enough I hope */
@@ -117,6 +129,15 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
         SetAbortProc(hdc, (ABORTPROC)lpszInData);
 	break;
 
+      /* Escape(hdc,END_PATH,PATHINFO,NULL); */
+    case END_PATH:
+      {
+        BYTE *p = SEGPTR_ALLOC(cbInput);
+	memcpy(p, lpszInData, cbInput);
+	segin = SEGPTR_GET(p);
+	break;
+      }
+
     default:
         break;
 
@@ -130,9 +151,13 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
 		TRACE("target DC implements Escape %d\n",nEscape);
     	SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
 	break;
+
     case SETLINECAP:
     case SETLINEJOIN:
+    case SETMITERLIMIT:
+        *(LPINT)lpvOutData = *(LPINT16)PTR_SEG_TO_LIN(segout);
         SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
+	SEGPTR_FREE(PTR_SEG_TO_LIN(segout));
 	break;
     case GETSCALINGFACTOR:
     case GETPRINTINGOFFSET:
@@ -169,6 +194,8 @@ INT WINAPI Escape( HDC hdc, INT nEscape, INT cbInput,
         break;
     }
     case STARTDOC:
+    case CLIP_TO_PATH:
+    case END_PATH:
         SEGPTR_FREE(PTR_SEG_TO_LIN(segin));
 	break;
 

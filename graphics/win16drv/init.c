@@ -168,6 +168,9 @@ void InitDrawMode(LPDRAWMODE lpDrawMode)
     lpDrawMode->CharExtra	= 0x0000;  
     lpDrawMode->LbkColor	= 0x00ffffff;   
     lpDrawMode->LTextColor	= 0x00000000;     
+    lpDrawMode->ICMCXform       = 0; /* ? */
+    lpDrawMode->StretchBltMode  = STRETCH_ANDSCANS;
+    lpDrawMode->eMiterLimit     = 1;
 }
 
 BOOL WIN16DRV_CreateDC( DC *dc, LPCSTR driver, LPCSTR device, LPCSTR output,

@@ -125,7 +125,10 @@ typedef struct DRAWMODE
     SHORT    BreakCount; 
     SHORT    CharExtra;  
     COLORREF LbkColor;   
-    COLORREF LTextColor; 
+    COLORREF LTextColor;
+    DWORD    ICMCXform;
+    SHORT    StretchBltMode;
+    DWORD    eMiterLimit;
 } DRAWMODE, *LPDRAWMODE;
 
 
