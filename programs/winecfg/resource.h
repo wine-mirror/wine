@@ -28,7 +28,7 @@
 #define IDS_TAB_DRIVES                  4
 #define IDD_MAINDLG                     101
 #define IDB_WINE                        104
-#define IDD_GENERALCFG                  107
+#define IDD_ABOUTCFG                    107
 #define IDD_APPCFG                      108
 #define IDD_AUDIOCFG                    109
 #define IDD_X11DRVCFG                   110
@@ -116,11 +116,9 @@
 #define IDC_DOUBLE_BUFFER               1080
 
 /* applications tab */
-#define IDC_LIST_APPS                   1021
-#define IDC_EDITING_GLOBAL              1081
-#define IDC_EDITING_APP                 1082
-#define IDC_ADD_APPDEFAULT              1083
-#define IDC_REMOVE_APPDEFAULT           1084
+#define IDC_APP_TREEVIEW                1021
+#define IDC_APP_ADDAPP                  1081
+#define IDC_APP_REMOVEAPP               1082
 
 /* audio tab */
 #define IDC_AUDIO_AUTODETECT            1085

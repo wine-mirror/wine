@@ -119,7 +119,6 @@ char *getDialogItemText(HWND hDlg, WORD controlID);
 #define disable(id) EnableWindow(GetDlgItem(dialog, id), 0);
 #define enable(id) EnableWindow(GetDlgItem(dialog, id), 1);
 
-
 #define WINE_KEY_ROOT "Software\\Wine\\Wine\\Config"
 
 #endif

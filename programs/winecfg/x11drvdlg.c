@@ -39,6 +39,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
 int updatingUI;
 
+int appSettings = EDITING_GLOBAL; /* start by editing global */
+char *currentApp; /* the app we are currently editing, or NULL if editing global */
+
+char *getSectionForApp(char *pSection)
+{
+    static char *lastResult = NULL;
+    if (lastResult) HeapFree(GetProcessHeap(), 0, lastResult);
+    lastResult = HeapAlloc(GetProcessHeap(), 0, strlen("AppDefaults\\") + strlen(currentApp) + 2 /* \\ */ + strlen(pSection) + 1 /* terminator */);
+    sprintf(lastResult, "AppDefaults\\%s\\%s", currentApp, pSection);
+    return lastResult;
+}
+
 void updateGUIForDesktopMode(HWND dialog) {
     WINE_TRACE("\n");
 

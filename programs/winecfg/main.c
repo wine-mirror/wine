@@ -36,10 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winecfg);
 
-
-#define versionSection (appSettings == EDITING_GLOBAL ? "Version" : (getSectionForApp("Version")))
-#define tweakSection (appSettings == EDITING_GLOBAL ? "Tweak.Layout" : (getSectionForApp("Tweak.Layout")))
-
 void CALLBACK
 PropSheetCallback (HWND hWnd, UINT uMsg, LPARAM lParam)
 {
@@ -59,67 +55,8 @@ PropSheetCallback (HWND hWnd, UINT uMsg, LPARAM lParam)
     }
 }
 
-void
-initGeneralDlg (HWND hDlg)
-{
-    int i;
-    const VERSION_DESC *pVer = NULL;
-    char *curWinVer = getConfigValue(versionSection, "Windows", "win98");
-    char *curDOSVer = getConfigValue(versionSection, "DOS", "6.22");
-    char *curWineLook = getConfigValue(tweakSection, "WineLook", "win95");
-
-    /* normalize the version strings */
-    if (!strcmp(curWinVer, "win2000") || !strcmp(curWinVer, "nt2k") || !strcmp(curWinVer, "nt2000")) {
-	free(curWinVer);
-	curWinVer = strdup("win2k");
-    }
-
-    if (!strcmp(curWinVer, "win2k3")) {
-	free(curWinVer);
-	curWinVer = strdup("win2003");
-    }
-    
-    if ((pVer = getWinVersions ()))
-    {
-	for (i = 0; *pVer->szVersion; i++, pVer++)
-	{
-	    SendDlgItemMessage (hDlg, IDC_WINVER, CB_ADDSTRING,
-				0, (LPARAM) pVer->szDescription);
-	    if (!strcmp (pVer->szVersion, curWinVer))
-		SendDlgItemMessage (hDlg, IDC_WINVER, CB_SETCURSEL,
-				    (WPARAM) i, 0);
-	}
-    }
-    if ((pVer = getDOSVersions ()))
-    {
-	for (i = 0; *pVer->szVersion; i++, pVer++)
-	{
-	    SendDlgItemMessage (hDlg, IDC_DOSVER, CB_ADDSTRING,
-				0, (LPARAM) pVer->szDescription);
-	    if (!strcmp (pVer->szVersion, curDOSVer))
-		SendDlgItemMessage (hDlg, IDC_DOSVER, CB_SETCURSEL,
-				    (WPARAM) i, 0);
-	}
-    }
-    if ((pVer = getWinelook ()))
-    {
-	for (i = 0; *pVer->szVersion; i++, pVer++)
-	{
-	    SendDlgItemMessage (hDlg, IDC_WINELOOK, CB_ADDSTRING,
-				0, (LPARAM) pVer->szDescription);
-	    if (!strcmp (pVer->szVersion, curWineLook))
-		SendDlgItemMessage (hDlg, IDC_WINELOOK, CB_SETCURSEL,
-				    (WPARAM) i, 0);
-	}
-    }
-
-    free(curWinVer);
-    free(curDOSVer);
-    free(curWineLook);
-}
-
 INT_PTR CALLBACK
-GeneralDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg) {
 
@@ -127,47 +64,9 @@ GeneralDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    if (((LPNMHDR)lParam)->code != PSN_SETACTIVE) break;
 	    /* otherwise fall through, we want to refresh the page as well */
 	case WM_INITDIALOG:
-	    initGeneralDlg (hDlg);
 	    break;
 
 	case WM_COMMAND:
-	    switch (LOWORD(wParam)) {
-		case IDC_WINVER: if (HIWORD(wParam) == CBN_SELCHANGE) {
-		    /* user changed the wine version combobox */
-		    int selection = SendDlgItemMessage( hDlg, IDC_WINVER, CB_GETCURSEL, 0, 0);
-		    VERSION_DESC *desc = getWinVersions();
-
-		    while (selection > 0) {
-			desc++; selection--;
-		    }
-		    addTransaction(versionSection, "Windows", ACTION_SET, desc->szVersion);
-		}
-	        break;
-
-		case IDC_WINELOOK: if (HIWORD(wParam) == CBN_SELCHANGE) {
-		    /* user changed the wine look combo box */
-		    int selection = SendDlgItemMessage( hDlg, IDC_WINELOOK, CB_GETCURSEL, 0, 0);
-		    VERSION_DESC *desc = getWinelook();
-
-		    while (selection > 0) {
-			desc++; selection--;
-		    }
-		    addTransaction(tweakSection, "WineLook", ACTION_SET, desc->szVersion);
-		}
-		break;
-
-		case IDC_DOSVER: if (HIWORD(wParam) == CBN_SELCHANGE) {
-		    /* user changed the dos version combo box */
-		    int selection = SendDlgItemMessage( hDlg, IDC_WINELOOK, CB_GETCURSEL, 0, 0);
-		    VERSION_DESC *desc = getDOSVersions();
-
-		    while (selection > 0) {
-			desc++; selection--;
-		    }
-		    addTransaction(versionSection, "DOS", ACTION_SET, desc->szVersion);
-		    
-		}
-	    }
 	    break;
 	    
 	default:
@@ -184,77 +83,84 @@ doPropertySheet (HINSTANCE hInstance, HWND hOwner)
 {
     PROPSHEETPAGE psp[NUM_PROPERTY_PAGES];
     PROPSHEETHEADER psh;
-
-    /*
-     * Fill out the (General) PROPSHEETPAGE data structure 
-     * for the property sheet
-     */
-    psp[0].dwSize = sizeof (PROPSHEETPAGE);
-    psp[0].dwFlags = PSP_USETITLE;
-    psp[0].hInstance = hInstance;
-    psp[0].u.pszTemplate = MAKEINTRESOURCE (IDD_GENERALCFG);
-    psp[0].u2.pszIcon = NULL;
-    psp[0].pfnDlgProc = GeneralDlgProc;
-    psp[0].pszTitle = "General";
-    psp[0].lParam = 0;
+    int pg = 0; /* start with page 0 */
 
     /*
      * Fill out the (Applications) PROPSHEETPAGE data structure 
      * for the property sheet
      */
-    psp[1].dwSize = sizeof (PROPSHEETPAGE);
-    psp[1].dwFlags = PSP_USETITLE;
-    psp[1].hInstance = hInstance;
-    psp[1].u.pszTemplate = MAKEINTRESOURCE (IDD_APPCFG);
-    psp[1].u2.pszIcon = NULL;
-    psp[1].pfnDlgProc = AppDlgProc;
-    psp[1].pszTitle = "Applications";
-    psp[1].lParam = 0;
+    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwFlags = PSP_USETITLE;
+    psp[pg].hInstance = hInstance;
+    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_APPCFG);
+    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pfnDlgProc = AppDlgProc;
+    psp[pg].pszTitle = "Applications";
+    psp[pg].lParam = 0;
+    pg++;
 
     /*
      * Fill out the (Libraries) PROPSHEETPAGE data structure 
      * for the property sheet
      */
-    psp[2].dwSize = sizeof (PROPSHEETPAGE);
-    psp[2].dwFlags = PSP_USETITLE;
-    psp[2].hInstance = hInstance;
-    psp[2].u.pszTemplate = MAKEINTRESOURCE (IDD_DLLCFG);
-    psp[2].u2.pszIcon = NULL;
-    psp[2].pfnDlgProc = LibrariesDlgProc;
-    psp[2].pszTitle = "Libraries";
-    psp[2].lParam = 0;
+    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwFlags = PSP_USETITLE;
+    psp[pg].hInstance = hInstance;
+    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_DLLCFG);
+    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pfnDlgProc = LibrariesDlgProc;
+    psp[pg].pszTitle = "Libraries";
+    psp[pg].lParam = 0;
+    pg++;
     
     /*
      * Fill out the (X11Drv) PROPSHEETPAGE data structure 
      * for the property sheet
      */
-    psp[3].dwSize = sizeof (PROPSHEETPAGE);
-    psp[3].dwFlags = PSP_USETITLE;
-    psp[3].hInstance = hInstance;
-    psp[3].u.pszTemplate = MAKEINTRESOURCE (IDD_X11DRVCFG);
-    psp[3].u2.pszIcon = NULL;
-    psp[3].pfnDlgProc = X11DrvDlgProc;
-    psp[3].pszTitle = "X11 Driver";
-    psp[3].lParam = 0;
+    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwFlags = PSP_USETITLE;
+    psp[pg].hInstance = hInstance;
+    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_X11DRVCFG);
+    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pfnDlgProc = X11DrvDlgProc;
+    psp[pg].pszTitle = "X11 Driver";
+    psp[pg].lParam = 0;
+    pg++;
 
-    psp[4].dwSize = sizeof (PROPSHEETPAGE);
-    psp[4].dwFlags = PSP_USETITLE;
-    psp[4].hInstance = hInstance;
-    psp[4].u.pszTemplate = MAKEINTRESOURCE (IDD_DRIVECFG);
-    psp[4].u2.pszIcon = NULL;
-    psp[4].pfnDlgProc = DriveDlgProc;
-    psp[4].pszTitle = "Drives";
-    psp[4].lParam = 0;
+    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwFlags = PSP_USETITLE;
+    psp[pg].hInstance = hInstance;
+    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_DRIVECFG);
+    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pfnDlgProc = DriveDlgProc;
+    psp[pg].pszTitle = "Drives";
+    psp[pg].lParam = 0;
+    pg++;
 
-    psp[5].dwSize = sizeof (PROPSHEETPAGE);
-    psp[5].dwFlags = PSP_USETITLE;
-    psp[5].hInstance = hInstance;
-    psp[5].u.pszTemplate = MAKEINTRESOURCE (IDD_AUDIOCFG);
-    psp[5].u2.pszIcon = NULL;
-    psp[5].pfnDlgProc = AudioDlgProc;
-    psp[5].pszTitle = "Audio";
-    psp[5].lParam = 0;
-    
+    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwFlags = PSP_USETITLE;
+    psp[pg].hInstance = hInstance;
+    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_AUDIOCFG);
+    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pfnDlgProc = AudioDlgProc;
+    psp[pg].pszTitle = "Audio";
+    psp[pg].lParam = 0;
+    pg++;
+
+    /*
+     * Fill out the (General) PROPSHEETPAGE data structure 
+     * for the property sheet
+     */
+    psp[pg].dwSize = sizeof (PROPSHEETPAGE);
+    psp[pg].dwFlags = PSP_USETITLE;
+    psp[pg].hInstance = hInstance;
+    psp[pg].u.pszTemplate = MAKEINTRESOURCE (IDD_ABOUTCFG);
+    psp[pg].u2.pszIcon = NULL;
+    psp[pg].pfnDlgProc = AboutDlgProc;
+    psp[pg].pszTitle = "About";
+    psp[pg].lParam = 0;
+    pg++;
+
     /*
      * Fill out the PROPSHEETHEADER
      */

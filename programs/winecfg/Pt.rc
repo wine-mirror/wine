@@ -48,18 +48,6 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         "Configurações globais",IDC_EDITING_GLOBAL,
-                    "Button",BS_AUTORADIOBUTTON,8,8,244,10 
-    CONTROL         "Configurações específicas da aplicação",IDC_EDITING_APP,
-	            "Button",BS_AUTORADIOBUTTON,8,18,244,10
-
-    LTEXT           "Sobreescreva aqui as configurações padrões para cada aplicação:",
-                    IDC_STATIC,8,35,244,20
-		    
-    LISTBOX         IDC_LIST_APPS,8,48,244,176,WS_TABSTOP | WS_VSCROLL		    
-		    
-    PUSHBUTTON	    "Adionar nova aplicação...",IDC_ADD_APPDEFAULT,170,226,82,14
-    PUSHBUTTON	    "Remover",IDC_REMOVE_APPDEFAULT,130,226,37,14
 END
 
 IDD_X11DRVCFG DIALOG DISCARDABLE  0, 0, 260, 250

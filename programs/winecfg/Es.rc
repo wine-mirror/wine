@@ -49,11 +49,6 @@ IDD_APPCFG DIALOG DISCARDABLE  0, 0, 260, 250
 STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Sans Serif"
 BEGIN
-    CONTROL         "List2",IDC_LIST_APPS,"SysListView32",LVS_LIST | 
-                    LVS_NOLABELWRAP | WS_BORDER | WS_TABSTOP,16,39,226,108
-    GROUPBOX        "Configuración específica de aplicaciones",IDC_STATIC,8,4,244,151
-    LTEXT           "Esta configuración le permite sobreponerse a la configuración por defecto de Wine (como está especificada en otras pestañas de configuración) para aplicaciones concretas.",
-                    IDC_STATIC,15,17,228,20
 END
 
 IDD_X11DRVCFG DIALOG DISCARDABLE  0, 0, 260, 250
