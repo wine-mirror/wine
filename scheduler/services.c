@@ -13,10 +13,6 @@
 
 DEFAULT_DEBUG_CHANNEL(timer)
 
-#define SERVICE_USE_OBJECT      0x0001
-#define SERVICE_USE_TIMEOUT     0x0002
-#define SERVICE_DISABLED        0x8000
-
 typedef struct _SERVICE
 {
    struct _SERVICE 	*next;
@@ -25,13 +21,8 @@ typedef struct _SERVICE
    PAPCFUNC       	callback;
    ULONG_PTR      	callback_arg;
 
-   int            	flags;
-
+   BOOL                 disabled;
    HANDLE         	object;
-   long           	rate;
-
-   struct timeval 	expire;
-
 } SERVICE;
 
 typedef struct _SERVICETABLE
@@ -44,32 +35,12 @@ typedef struct _SERVICETABLE
 } SERVICETABLE;
  
 /***********************************************************************
- *           SERVICE_AddTimeval
- */
-static void SERVICE_AddTimeval( struct timeval *time, long delta )
-{
-    delta += time->tv_usec;
-    time->tv_sec += delta / 1000000L;
-    time->tv_usec = delta % 1000000L;
-}
-
-/***********************************************************************
- *           SERVICE_DiffTimeval
- */
-static long SERVICE_DiffTimeval( struct timeval *time1, struct timeval *time2 )
-{
-    return   ( time1->tv_sec  - time2->tv_sec  ) * 1000000L
-           + ( time1->tv_usec - time2->tv_usec ); 
-}
-
-/***********************************************************************
  *           SERVICE_Loop
  */
 static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
 {
     HANDLE 	handles[MAXIMUM_WAIT_OBJECTS];
     int 	count = 0;
-    DWORD 	timeout = INFINITE;
     DWORD 	retval = WAIT_FAILED;
 
     while ( TRUE )
@@ -80,44 +51,24 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
 
         /* Check whether some condition is fulfilled */
 
-        struct timeval curTime;
-        gettimeofday( &curTime, NULL );
-
         HeapLock( GetProcessHeap() );
 
         callback = NULL;
         callback_arg = 0L;
         for ( s = service->first; s; s = s->next )
         {
-            if ( s->flags & SERVICE_DISABLED )
-                continue;
+            if (s->disabled) continue;
 
-            if ( s->flags & SERVICE_USE_OBJECT ) 
-	    {
-                if ( retval >= WAIT_OBJECT_0 && retval < WAIT_OBJECT_0 + count )
-		{
-                    if ( handles[retval - WAIT_OBJECT_0] == s->object )
-                    {
-                        retval = WAIT_TIMEOUT;
-                        callback = s->callback;
-                        callback_arg = s->callback_arg;
-                        break;
-                    }
-		}
-	    }
-
-            if ( s->flags & SERVICE_USE_TIMEOUT )
+            if ( retval >= WAIT_OBJECT_0 && retval < WAIT_OBJECT_0 + count )
             {
-                if ((s->expire.tv_sec < curTime.tv_sec) ||
-                    ((s->expire.tv_sec == curTime.tv_sec) &&
-                     (s->expire.tv_usec <= curTime.tv_usec)))
+                if ( handles[retval - WAIT_OBJECT_0] == s->object )
                 {
-                    SERVICE_AddTimeval( &s->expire, s->rate );
+                    retval = WAIT_TIMEOUT;
                     callback = s->callback;
                     callback_arg = s->callback_arg;
                     break;
                 }
-	    }
+            }
         }
 
         HeapUnlock( GetProcessHeap() );
@@ -135,23 +86,12 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
         HeapLock( GetProcessHeap() );
 
         count = 0;
-        timeout = INFINITE;
         for ( s = service->first; s; s = s->next )
         {
-            if ( s->flags & SERVICE_DISABLED )
-                continue;
+            if (s->disabled) continue;
 
-            if ( s->flags & SERVICE_USE_OBJECT )
-                if ( count < MAXIMUM_WAIT_OBJECTS )
-                    handles[count++] = s->object;
-
-            if ( s->flags & SERVICE_USE_TIMEOUT )
-            {
-                long delta = SERVICE_DiffTimeval( &s->expire, &curTime );
-                long time  = (delta + 999L) / 1000L;
-                if ( time < 1 ) time = 1; 
-                if ( time < timeout ) timeout =  time;
-            }
+            if ( count < MAXIMUM_WAIT_OBJECTS )
+                handles[count++] = s->object;
         }
 
         HeapUnlock( GetProcessHeap() );
@@ -159,11 +99,9 @@ static DWORD CALLBACK SERVICE_Loop( SERVICETABLE *service )
 
         /* Wait until some condition satisfied */
 
-        TRACE("Waiting for %d objects with timeout %ld\n", 
-                      count, timeout );
+        TRACE("Waiting for %d objects\n", count );
 
-        retval = WaitForMultipleObjectsEx( count, handles, 
-                                           FALSE, timeout, TRUE );
+        retval = WaitForMultipleObjectsEx( count, handles, FALSE, INFINITE, TRUE );
 
         TRACE("Wait returned: %ld\n", retval );
     }
@@ -233,7 +171,7 @@ HANDLE SERVICE_AddObject( HANDLE object,
     s->callback = callback;
     s->callback_arg = callback_arg;
     s->object = object;
-    s->flags = SERVICE_USE_OBJECT;
+    s->disabled = FALSE;
 
     HeapLock( GetProcessHeap() );
 
@@ -254,39 +192,30 @@ HANDLE SERVICE_AddObject( HANDLE object,
 HANDLE SERVICE_AddTimer( LONG rate, 
                          PAPCFUNC callback, ULONG_PTR callback_arg )
 {
-    SERVICE 		*s;
-    SERVICETABLE 	*service_table;
-    HANDLE 		handle;
+    HANDLE handle, ret;
+    LARGE_INTEGER when;
 
     if ( !rate || !callback ) 
         return INVALID_HANDLE_VALUE;
 
-    if (PROCESS_Current()->service_table == 0 && !SERVICE_CreateServiceTable())
-       return INVALID_HANDLE_VALUE;
-    service_table = PROCESS_Current()->service_table;
+    handle = CreateWaitableTimerA( NULL, FALSE, NULL );
+    if (!handle) return INVALID_HANDLE_VALUE;
 
-    s = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SERVICE) );
-    if ( !s ) return INVALID_HANDLE_VALUE;
+    rate = (rate + 500) / 1000;  /* us -> ms */
+    if (!rate) rate = 1;
+    when.s.LowPart = when.s.HighPart = 0;
+    if (!SetWaitableTimer( handle, &when, rate, NULL, NULL, FALSE ))
+    {
+        CloseHandle( handle );
+        return INVALID_HANDLE_VALUE;
+    }
 
-    s->callback = callback;
-    s->callback_arg = callback_arg;
-    s->rate = rate;
-    s->flags = SERVICE_USE_TIMEOUT;
-
-    gettimeofday( &s->expire, NULL );
-    SERVICE_AddTimeval( &s->expire, s->rate );
-            
-    HeapLock( GetProcessHeap() );
-
-    s->self = handle = (HANDLE)++service_table->counter;
-    s->next = service_table->first;
-    service_table->first = s;
-
-    HeapUnlock( GetProcessHeap() );
-
-    QueueUserAPC( NULL, service_table->thread, 0L );
-
-    return handle;
+    if ((ret = SERVICE_AddObject( handle, callback, callback_arg )) == INVALID_HANDLE_VALUE)
+    {
+        CloseHandle( handle );
+        return INVALID_HANDLE_VALUE;
+    }
+    return ret;
 }
 
 /***********************************************************************
@@ -309,9 +238,7 @@ BOOL SERVICE_Delete( HANDLE service )
     {
         if ( (*s)->self == service )
         {
-            if ( (*s)->flags & SERVICE_USE_OBJECT )
-                handle = (*s)->object;
-
+            handle = (*s)->object;
             next = (*s)->next;
             HeapFree( GetProcessHeap(), 0, *s );
             *s = next;
@@ -349,22 +276,7 @@ BOOL SERVICE_Enable( HANDLE service )
     {
         if ( s->self == service )
         {
-            if ( s->flags & SERVICE_DISABLED )
-            {
-                s->flags &= ~SERVICE_DISABLED;
-
-                if ( s->flags & SERVICE_USE_TIMEOUT )
-                {
-                    long delta;
-                    struct timeval curTime;
-                    gettimeofday( &curTime, NULL );
-
-                    delta = SERVICE_DiffTimeval( &s->expire, &curTime );
-                    if ( delta > 0 )
-                        SERVICE_AddTimeval( &s->expire, 
-                                           (delta / s->rate) * s->rate );
-                }
-            }
+            s->disabled = FALSE;
             retv = TRUE;
             break;
         }
@@ -396,7 +308,7 @@ BOOL SERVICE_Disable( HANDLE service )
     {
         if ( s->self == service )
         {
-            s->flags |= SERVICE_DISABLED;
+            s->disabled = TRUE;
             retv = TRUE;
             break;
         }

@@ -89,8 +89,9 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
 
     if (when->s.HighPart < 0)  /* relative time */
     {
-        DWORD low = ft.dwLowDateTime;
+        DWORD low;
         GetSystemTimeAsFileTime( &ft );
+        low = ft.dwLowDateTime;
         ft.dwLowDateTime -= when->s.LowPart;
         ft.dwHighDateTime -= when->s.HighPart;
         if (low < ft.dwLowDateTime) ft.dwHighDateTime--; /* overflow */
@@ -100,9 +101,19 @@ BOOL WINAPI SetWaitableTimer( HANDLE handle, const LARGE_INTEGER *when, LONG per
         ft.dwLowDateTime = when->s.LowPart;
         ft.dwHighDateTime = when->s.HighPart;
     }
+
+    if (!ft.dwLowDateTime && !ft.dwHighDateTime)
+    {
+        /* special case to start timeout on now+period without too many calculations */
+        req->sec  = 0;
+        req->usec = 0;
+    }
+    else
+    {
+        req->sec  = DOSFS_FileTimeToUnixTime( &ft, &remainder );
+        req->usec = remainder / 10;  /* convert from 100-ns to us units */
+    }
     req->handle   = handle;
-    req->sec      = DOSFS_FileTimeToUnixTime( &ft, &remainder );
-    req->usec     = remainder / 10;  /* convert from 100-ns to us units */
     req->period   = period;
     req->callback = callback;
     req->arg      = arg;
