@@ -1,17 +1,16 @@
-This is release 20001202 of Wine, a free implementation of Windows on
+This is release 20001222 of Wine, a free implementation of Windows on
 Unix.  This is still a developers only release.  There are many bugs
 and unimplemented features.  Most applications still do not work
 correctly.
 
-Patches should be submitted to "julliard@winehq.com".  Please don't
+Patches should be submitted to "wine-patches@winehq.com".  Please don't
 forget to include a ChangeLog entry.
 
-WHAT'S NEW with Wine-20001202: (see ChangeLog for details)
-	- New 'winemaker' script to automate source porting.
-	- New dll import mechanism to replace ELF linking of .so files.
-	- Many internationalization fixes.
-	- A lot of portability fixes.
-	- Builtin crtdll much improved.
+WHAT'S NEW with Wine-20001222: (see ChangeLog for details)
+	- Several DIB bitblt optimizations.
+	- New configuration file format and location.
+	- Faster initial registry loading.
+	- Unicode edit control.
 	- Lots of bug fixes.
 
 See the README file in the distribution for installation instructions.
@@ -20,10 +19,10 @@ Because of lags created by using mirror, this message may reach you before
 the release is available at the ftp sites.  The sources will be available
 from the following locations:
 
-  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20001202.tar.gz
-  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20001202.tar.gz
-  ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/Wine-20001202.tar.gz
-  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20001202.tar.gz
+  http://www.ibiblio.org/pub/Linux/ALPHA/wine/development/Wine-20001222.tar.gz
+  ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/ALPHA/wine/development/Wine-20001222.tar.gz
+  ftp://ftp.fu-berlin.de/unix/linux/mirrors/sunsite.unc.edu/ALPHA/wine/development/Wine-20001222.tar.gz
+  ftp://orcus.progsoc.uts.edu.au/pub/Wine/development/Wine-20001222.tar.gz
 
 It should also be available from any other site that mirrors ibiblio.org.
 For more download locations, see http://ftpsearch.lycos.com.
@@ -37,6 +36,8 @@ included in the new release.
 If you want to get the new releases faster, you can subscribe to the
 wine-patches mailing list by sending a mail containing 'subscribe
 wine-patches your_address' to majordomo@tiger.informatik.hu-berlin.de.
+You will get a patch against the previous release when a new one is
+released.
 
 Wine is available thanks to the work of many people. See the file
 AUTHORS in the distribution for the complete list.
