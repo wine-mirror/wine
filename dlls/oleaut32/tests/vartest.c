@@ -77,6 +77,10 @@ static HRESULT (WINAPI *pVarFormat)(LPVARIANT,LPOLESTR,int,int,ULONG,BSTR*);
 
 #define SKIPTESTS(a)  if((a > VT_CLSID+10) && (a < VT_BSTR_BLOB-10)) continue;
 
+/* Allow our test macros to work for VT_NULL and VT_EMPTY too */
+#define V_EMPTY(v) V_I4(v)
+#define V_NULL(v) V_I4(v)
+
 static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
 {
     while (*str1 && (*str1 == *str2)) { str1++; str2++; }
@@ -841,9 +845,11 @@ static void test_VarParseNumFromStr(void)
 
   /* VB oct char bigger than 7 */
   CONVERT("&o128", NUMPRS_HEX_OCT);
+/*
+  Native versions 2.x of oleaut32 allow this to succeed: later versions and Wine don't
   EXPECTFAIL;
   EXPECTRGB(0,FAILDIG);
-
+*/
   /** NUMPRS_PARENS **/
 
   /* Empty parens = error */
@@ -1025,8 +1031,10 @@ static HRESULT (WINAPI *pVarNumFromParseNum)(NUMPARSE*,BYTE*,ULONG,VARIANT*);
 #define CONVERT(a,b,c,d,e,f,bits) \
     np.cDig = (a); np.dwInFlags = (b); np.dwOutFlags = (c); np.cchUsed = (d); \
     np.nBaseShift = (e); np.nPwr10 = (f); hres = pVarNumFromParseNum(&np, rgb, bits, &vOut)
-#define EXPECT_OVERFLOW ok(hres == (HRESULT)DISP_E_OVERFLOW, "Expected overflow, hres = %08lx\n", hres)
-#define EXPECT_OK ok(hres == (HRESULT)S_OK, "Call failed, hres = %08lx\n", hres); \
+static const char *szFailOverflow = "Expected overflow, hres = %08lx\n";
+#define EXPECT_OVERFLOW ok(hres == (HRESULT)DISP_E_OVERFLOW, szFailOverflow, hres)
+static const char *szFailOk = "Call failed, hres = %08lx\n";
+#define EXPECT_OK ok(hres == (HRESULT)S_OK, szFailOk, hres); \
   if (hres == (HRESULT)S_OK)
 #define EXPECT_TYPE(typ) ok(V_VT(&vOut) == typ,"Expected Type = " #typ ", got %d\n", V_VT(&vOut))
 #define EXPECT_I1(val) EXPECT_OK { EXPECT_TYPE(VT_I1); \
@@ -1137,14 +1145,15 @@ static void test_VarNumFromParseNum(void)
   SETRGB(0, 1); CONVERT(1,0,0,1,0,0, VTBIT_CY|VTBIT_DECIMAL); EXPECT_CY(1);
 }
 
+static const char* szUdateFromDateFail = "%.16g expected %lx, %d,%d,%d,%d,%d,%d,%d  %d %d"
+                                         ", got %lx, %d,%d,%d,%d,%d,%d,%d  %d %d\n";
 #define DT2UD(dt,flags,r,d,m,y,h,mn,s,ms,dw,dy) \
   memset(&ud, 0, sizeof(ud)); \
   res = pVarUdateFromDate(dt, flags, &ud); \
   ok(r == res && (FAILED(r) || (ud.st.wYear == y && ud.st.wMonth == m && ud.st.wDay == d && \
      ud.st.wHour == h && ud.st.wMinute == mn && ud.st.wSecond == s && \
      ud.st.wMilliseconds == ms && ud.st.wDayOfWeek == dw && ud.wDayOfYear == dy)), \
-     "%.16g expected %lx, %d,%d,%d,%d,%d,%d,%d  %d %d, got %lx, %d,%d,%d,%d,%d,%d,%d  %d %d\n", \
-     dt, r, d, m, y, h, mn, s, ms, dw, dy, res, ud.st.wDay, ud.st.wMonth, \
+     szUdateFromDateFail, dt, r, d, m, y, h, mn, s, ms, dw, dy, res, ud.st.wDay, ud.st.wMonth, \
      ud.st.wYear, ud.st.wHour, ud.st.wMinute, ud.st.wSecond, \
      ud.st.wMilliseconds, ud.st.wDayOfWeek, ud.wDayOfYear)
 
@@ -1173,7 +1182,6 @@ static void test_VarUdateFromDate(void)
   DT2UD(29221.5,0,S_OK,1,1,1980,12,0,0,0,2,1);           /* 12 AM */
   DT2UD(29221.9888884444,0,S_OK,1,1,1980,23,44,0,0,2,1); /* 11:44 PM */
   DT2UD(29221.7508765432,0,S_OK,1,1,1980,18,1,16,0,2,1); /* 6:18:02 PM */
-
 }
 
 #define UD2T(d,m,y,h,mn,s,ms,dw,dy,flags,r,dt) \
@@ -1250,12 +1258,13 @@ static void test_VariantTimeToSystemTime(void)
 #define MKDOSDATE(d,m,y) ((d & 0x1f) | ((m & 0xf) << 5) | (((y-1980) & 0x7f) << 9))
 #define MKDOSTIME(h,m,s) (((s>>1) & 0x1f) | ((m & 0x3f) << 5) | ((h & 0x1f) << 11))
 
+static const char *szDosDateToVarTimeFail = "expected %d, %.16g, got %d, %.16g\n";
 #define DOS2DT(d,m,y,h,mn,s,r,dt) out = 0.0; \
   dosDate = MKDOSDATE(d,m,y); \
   dosTime = MKDOSTIME(h,mn,s); \
   res = pDosDateTimeToVariantTime(dosDate, dosTime, &out); \
   ok(r == res && (!r || fabs(out-dt) < 1.0e-11), \
-     "expected %d, %.16g, got %d, %.16g\n", r, dt, res, out)
+     szDosDateToVarTimeFail, r, dt, res, out)
 
 static void test_DosDateTimeToVariantTime(void)
 {
@@ -1386,6 +1395,7 @@ static void test_VarFormatNumber(void)
 
 #define SIGNED_VTBITS (VTBIT_I1|VTBIT_I2|VTBIT_I4|VTBIT_I8|VTBIT_R4|VTBIT_R8)
 
+static const char *szVarFmtFail = "VT %d|0x%04x Format %s: expected 0x%08lx, '%s', got 0x%08lx, '%s'\n";
 #define VARFMT(vt,v,val,fmt,ret,str) do { \
   if (out) SysFreeString(out); out = NULL; \
   V_VT(&in) = (vt); v(&in) = val; \
@@ -1394,7 +1404,7 @@ static void test_VarFormatNumber(void)
   if (SUCCEEDED(hres)) WideCharToMultiByte(CP_ACP, 0, out, -1, buff, sizeof(buff),0,0); \
   else buff[0] = '\0'; \
   ok(hres == ret && (FAILED(ret) || !strcmp(buff, str)), \
-     "VT %d|0x%04x Format %s: expected 0x%08lx, '%s', got 0x%08lx, '%s'\n", \
+     szVarFmtFail, \
      (vt)&VT_TYPEMASK,(vt)&~VT_TYPEMASK,fmt?fmt:"<null>",ret,str,hres,buff); \
   } while(0)
 
@@ -1599,10 +1609,11 @@ static void test_VarFormat(void)
 
 static HRESULT (WINAPI *pVarAbs)(LPVARIANT,LPVARIANT);
 
+static const char *szVarAbsFail = "VarAbs: expected 0x0,%d,%d, got 0x%lX,%d,%d\n";
 #define VARABS(vt,val,rvt,rval) V_VT(&v) = VT_##vt; V_##vt(&v) = val; \
         memset(&vDst,0,sizeof(vDst)); hres = pVarAbs(&v,&vDst); \
         ok(hres == S_OK && V_VT(&vDst) == VT_##rvt && V_##rvt(&vDst) == (rval), \
-           "VarAbs: expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##rvt, (int)(rval), \
+           szVarAbsFail, VT_##rvt, (int)(rval), \
            hres, V_VT(&vDst), (int)V_##rvt(&vDst))
 
 static void test_VarAbs(void)
@@ -1659,6 +1670,10 @@ static void test_VarAbs(void)
     /* BOOL->I2, BSTR->R8, all others remain the same */
     VARABS(BOOL,VARIANT_TRUE,I2,-VARIANT_TRUE);
     VARABS(BOOL,VARIANT_FALSE,I2,VARIANT_FALSE);
+    VARABS(EMPTY,0,I2,0);
+    VARABS(EMPTY,1,I2,0);
+    VARABS(NULL,0,NULL,0);
+    VARABS(NULL,1,NULL,0);
     VARABS(I2,1,I2,1);
     VARABS(I2,-1,I2,1);
     VARABS(I4,1,I4,1);
@@ -1668,6 +1683,14 @@ static void test_VarAbs(void)
     VARABS(R4,-1,R4,1);
     VARABS(R8,1,R8,1);
     VARABS(R8,-1,R8,1);
+    VARABS(DATE,1,DATE,1);
+    VARABS(DATE,-1,DATE,1);
+    V_VT(&v) = VT_CY;
+    V_CY(&v).int64 = -10000;
+    memset(&vDst,0,sizeof(vDst));
+    hres = pVarAbs(&v,&vDst);
+    ok(hres == S_OK && V_VT(&vDst) == VT_CY && V_CY(&vDst).int64 == 10000,
+       "VarAbs(CY): expected 0x0 got 0x%lX\n", hres);
     GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, buff, sizeof(buff)/sizeof(char));
     if (buff[0] != '.' || buff[1])
     {
@@ -1684,10 +1707,11 @@ static void test_VarAbs(void)
 
 static HRESULT (WINAPI *pVarNot)(LPVARIANT,LPVARIANT);
 
+static const char *szVarNotFail = "VarNot: expected 0x0,%d,%d, got 0x%lX,%d,%d\n";
 #define VARNOT(vt,val,rvt,rval) V_VT(&v) = VT_##vt; V_##vt(&v) = val; \
         memset(&vDst,0,sizeof(vDst)); hres = pVarNot(&v,&vDst); \
         ok(hres == S_OK && V_VT(&vDst) == VT_##rvt && V_##rvt(&vDst) == (rval), \
-        "VarNot: expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##rvt, (int)(rval), \
+        szVarNotFail, VT_##rvt, (int)(rval), \
         hres, V_VT(&vDst), (int)V_##rvt(&vDst))
 
 static void test_VarNot(void)
@@ -1748,9 +1772,15 @@ static void test_VarNot(void)
                hExpected, hres, vt, ExtraFlags[i]);
         }
     }
-    /* R4,R8,BSTR,DECIMAL,CY->I4, all others remain the same */
+    /* Test the values returned by all cases that can succeed */
+    VARNOT(EMPTY,0,I2,-1);
+    VARNOT(EMPTY,1,I2,-1);
+    VARNOT(NULL,0,NULL,0);
+    VARNOT(NULL,1,NULL,0);
     VARNOT(BOOL,VARIANT_TRUE,BOOL,VARIANT_FALSE);
     VARNOT(BOOL,VARIANT_FALSE,BOOL,VARIANT_TRUE);
+    VARNOT(I1,-1,I4,0);
+    VARNOT(I1,0,I4,-1);
     VARNOT(I2,-1,I2,0);
     VARNOT(I2,0,I2,-1);
     VARNOT(I2,1,I2,-2);
@@ -1758,12 +1788,31 @@ static void test_VarNot(void)
     VARNOT(I4,0,I4,-1);
     VARNOT(UI1,1,UI1,254);
     VARNOT(UI1,0,UI1,255);
+    VARNOT(UI2,0,I4,-1);
+    VARNOT(UI2,1,I4,-2);
+    VARNOT(UI4,0,I4,-1);
+    VARNOT(UI4,1,I4,-2);
+    VARNOT(INT,0,I4,-1);
+    VARNOT(INT,1,I4,-2);
+    VARNOT(UINT,0,I4,-1);
+    VARNOT(UINT,1,I4,-2);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARNOT(I8,1,I8,-2);
+        VARNOT(I8,0,I8,-1);
+        VARNOT(UI8,0,I4,-1);
+        VARNOT(UI8,1,I4,-2);
+    }
     VARNOT(R4,1,I4,-2);
     VARNOT(R4,0,I4,-1);
     VARNOT(R8,1,I4,-2);
     VARNOT(R8,0,I4,-1);
+    VARNOT(DATE,1,I4,-2);
+    VARNOT(DATE,0,I4,-1);
     VARNOT(BSTR,(BSTR)szNum0,I4,-1);
+    ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) == szNum0, "VarNot(0): changed input\n");
     VARNOT(BSTR,(BSTR)szNum1,I4,-2);
+    ok(V_VT(&v) == VT_BSTR && V_BSTR(&v) == szNum1, "VarNot(1): changed input\n");
 
     V_VT(&v) = VT_DECIMAL;
     pdec->u.s.sign = DECIMAL_NEG;
@@ -1803,19 +1852,21 @@ static void test_VarSub(void)
     /* fprintf(stderr,"VarSub of 10000-20000 returned: %g\n", V_R8(&vc)); */
 }
 
+static const char *szVarModFail = "VarMod: expected 0x%lx,%d(%s),%d, got 0x%lX,%d(%s),%d\n";
 #define VARMOD(vt1,vt2,val1,val2,rvt,rval,hexpected) V_VT(&v1) = VT_##vt1; V_##vt1(&v1) = val1; \
 	V_VT(&v2) = VT_##vt2; V_##vt2(&v2) = val2;                  \
         memset(&vDst,0,sizeof(vDst)); hres = pVarMod(&v1,&v2,&vDst);			\
         ok(hres == hexpected && V_VT(&vDst) == VT_##rvt && V_##rvt(&vDst) == (rval), \
-	   "VarMod: expected 0x%lx,%d(%s),%d, got 0x%lX,%d(%s),%d\n", hexpected, VT_##rvt, vtstr(VT_##rvt), (int)(rval), \
-	   hres, V_VT(&vDst), vtstr(V_VT(&vDst)), (int)V_##rvt(&vDst))
+        szVarModFail, hexpected, VT_##rvt, vtstr(VT_##rvt), (int)(rval), \
+        hres, V_VT(&vDst), vtstr(V_VT(&vDst)), (int)V_##rvt(&vDst))
 
+static const char *szVarMod2Fail = "VarMod: expected 0x%lx,%d(%s),%d, got 0x%lX,%d(%s),%d\n";
 #define VARMOD2(vt1,vt2,val1,val2,rvt,rval,hexpected) V_VT(&v1) = VT_##vt1; V_I4(&v1) = val1; \
 	V_VT(&v2) = VT_##vt2; V_I4(&v2) = val2;                                \
         memset(&vDst,0,sizeof(vDst)); hres = pVarMod(&v1,&v2,&vDst);                     \
         ok(hres == hexpected && V_VT(&vDst) == VT_##rvt && V_I4(&vDst) == (rval), \
-	   "VarMod: expected 0x%lx,%d(%s),%d, got 0x%lX,%d(%s),%d\n", hexpected, VT_##rvt, vtstr(VT_##rvt), (int)(rval), \
-	   hres, V_VT(&vDst), vtstr(V_VT(&vDst)), (int)V_I4(&vDst))
+        szVarMod2Fail, hexpected, VT_##rvt, vtstr(VT_##rvt), (int)(rval), \
+        hres, V_VT(&vDst), vtstr(V_VT(&vDst)), (int)V_I4(&vDst))
 
 static HRESULT (WINAPI *pVarMod)(LPVARIANT,LPVARIANT,LPVARIANT);
 
@@ -2262,10 +2313,11 @@ static void test_VarMod(void)
 
 static HRESULT (WINAPI *pVarFix)(LPVARIANT,LPVARIANT);
 
+static const char *szVarFixFail = "VarFix: expected 0x0,%d,%d, got 0x%lX,%d,%d\n";
 #define VARFIX(vt,val,rvt,rval) V_VT(&v) = VT_##vt; V_##vt(&v) = val; \
         memset(&vDst,0,sizeof(vDst)); hres = pVarFix(&v,&vDst); \
         ok(hres == S_OK && V_VT(&vDst) == VT_##rvt && V_##rvt(&vDst) == (rval), \
-        "VarFix: expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##rvt, (int)(rval), \
+        szVarFixFail, VT_##rvt, (int)(rval), \
         hres, V_VT(&vDst), (int)V_##rvt(&vDst))
 
 static void test_VarFix(void)
@@ -2378,10 +2430,11 @@ static void test_VarFix(void)
 
 static HRESULT (WINAPI *pVarInt)(LPVARIANT,LPVARIANT);
 
+static const char *szVarIntFail = "VarInt: expected 0x0,%d,%d, got 0x%lX,%d,%d\n";
 #define VARINT(vt,val,rvt,rval) V_VT(&v) = VT_##vt; V_##vt(&v) = val; \
         memset(&vDst,0,sizeof(vDst)); hres = pVarInt(&v,&vDst); \
         ok(hres == S_OK && V_VT(&vDst) == VT_##rvt && V_##rvt(&vDst) == (rval), \
-        "VarInt: expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##rvt, (int)(rval), \
+        szVarIntFail, VT_##rvt, (int)(rval), \
         hres, V_VT(&vDst), (int)V_##rvt(&vDst))
 
 static void test_VarInt(void)
@@ -2494,10 +2547,11 @@ static void test_VarInt(void)
 
 static HRESULT (WINAPI *pVarNeg)(LPVARIANT,LPVARIANT);
 
+static const char *szVarNegFail = "VarNeg: expected 0x0,%d,%d, got 0x%lX,%d,%d\n";
 #define VARNEG(vt,val,rvt,rval) V_VT(&v) = VT_##vt; V_##vt(&v) = val; \
         memset(&vDst,0,sizeof(vDst)); hres = pVarNeg(&v,&vDst); \
         ok(hres == S_OK && V_VT(&vDst) == VT_##rvt && V_##rvt(&vDst) == (rval), \
-        "VarNeg: expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##rvt, (int)(rval), \
+        szVarNegFail, VT_##rvt, (int)(rval), \
         hres, V_VT(&vDst), (int)V_##rvt(&vDst))
 
 static void test_VarNeg(void)
@@ -2742,17 +2796,34 @@ static void test_VarRound(void)
 
 static HRESULT (WINAPI *pVarXor)(LPVARIANT,LPVARIANT,LPVARIANT);
 
+static const char *szVarXorFail = "VarXor(%d,%d): expected 0x0,%d,%d, got 0x%lX,%d,%d\n";
 #define VARXOR(vt1,val1,vt2,val2,rvt,rval) \
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1; \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         memset(&result,0,sizeof(result)); hres = pVarXor(&left,&right,&result); \
         ok(hres == S_OK && V_VT(&result) == VT_##rvt && V_##rvt(&result) == (rval), \
-        "VarXor(%d,%d): expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##vt1, VT_##vt2, \
-        VT_##rvt, (int)(rval), hres, V_VT(&result), (int)V_##rvt(&result))
+        szVarXorFail, VT_##vt1, VT_##vt2, \
+        VT_##rvt, (int)(rval), hres, V_VT(&result), (int)V_##rvt(&result)); \
+        ok(V_VT(&left) == VT_##vt1 && V_##vt1(&left) == val1 && \
+           V_VT(&right) == VT_##vt2 && V_##vt2(&right) == val2, \
+           "VarXor(%d,%d): Modified input arguments\n",VT_##vt1,VT_##vt2)
+#define VARXORCY(vt1,val1,val2,rvt,rval) \
+        V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1; \
+        V_VT(&right) = VT_CY; V_CY(&right).int64 = val2; \
+        memset(&result,0,sizeof(result)); hres = pVarXor(&left,&right,&result); \
+        ok(hres == S_OK && V_VT(&result) == VT_##rvt && V_##rvt(&result) == (rval), \
+        "VarXor(%d,%d): expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##vt1, VT_CY, \
+        VT_##rvt, (int)(rval), hres, V_VT(&result), (int)V_##rvt(&result)); \
+        ok(V_VT(&left) == VT_##vt1 && V_##vt1(&left) == val1 && \
+           V_VT(&right) == VT_CY && V_CY(&right).int64 == val2, \
+           "VarXor(%d,%d): Modified input arguments\n",VT_##vt1,VT_CY)
 
 static void test_VarXor(void)
 {
+    static const WCHAR szFalse[] = { '#','F','A','L','S','E','#','\0' };
+    static const WCHAR szTrue[] = { '#','T','R','U','E','#','\0' };
     VARIANT left, right, result;
+    BSTR lbstr, rbstr;
     VARTYPE i;
     HRESULT hres;
 
@@ -2765,14 +2836,15 @@ static void test_VarXor(void)
 
         for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
         {
-            SKIPTESTS(leftvt);
 
+            SKIPTESTS(leftvt);
+                    
             for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
             {
                 BOOL bFail = FALSE;
 
                 SKIPTESTS(rightvt);
-
+                
                 if (leftvt == VT_BSTR || rightvt == VT_BSTR ||
                     leftvt == VT_DISPATCH || rightvt == VT_DISPATCH ||
                     leftvt == VT_UNKNOWN || rightvt == VT_UNKNOWN)
@@ -2858,40 +2930,1301 @@ static void test_VarXor(void)
         }
     }
 
-    /* Test returned values */
-    VARXOR(BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE,BOOL,VARIANT_FALSE);
-    VARXOR(BOOL,VARIANT_FALSE,BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE);
-    VARXOR(BOOL,TRUE,BOOL,TRUE,BOOL,VARIANT_FALSE);
-    VARXOR(BOOL,FALSE,BOOL,FALSE,BOOL,VARIANT_FALSE);
-    VARXOR(BOOL,TRUE,BOOL,FALSE,BOOL,1);
-    VARXOR(BOOL,FALSE,BOOL,TRUE,BOOL,1);
-    VARXOR(BOOL,6,BOOL,7,BOOL,1);
-    VARXOR(BOOL,6,BOOL,6,BOOL,VARIANT_FALSE);
-    VARXOR(BOOL,VARIANT_TRUE,I2,VARIANT_TRUE,I2,VARIANT_FALSE);
-    VARXOR(BOOL,VARIANT_TRUE,I2,VARIANT_FALSE,I2,VARIANT_TRUE);
-    VARXOR(BOOL,6,I2,7,I2,1);
-    VARXOR(UI1,1,UI1,1,UI1,0);
-    VARXOR(UI1,1,UI1,0,UI1,1);
-    VARXOR(UI1,0,UI1,1,UI1,1);
+    /* Test returned values
+     * FIXME: Test VT_DECIMAL/VT_DISPATCH
+     */
+    VARXOR(EMPTY,0,EMPTY,0,I2,0);
+    VARXOR(EMPTY,1,EMPTY,0,I2,0);
+    VARXOR(EMPTY,0,NULL,0,NULL,0);
+    VARXOR(EMPTY,0,I1,0,I4,0);
+    VARXOR(EMPTY,0,I1,1,I4,1);
+    VARXOR(EMPTY,0,UI1,0,I2,0);
+    VARXOR(EMPTY,0,UI1,1,I2,1);
+    VARXOR(EMPTY,0,I2,0,I2,0);
+    VARXOR(EMPTY,0,I2,1,I2,1);
+    VARXOR(EMPTY,0,UI2,0,I4,0);
+    VARXOR(EMPTY,0,UI2,1,I4,1);
+    VARXOR(EMPTY,0,I4,0,I4,0);
+    VARXOR(EMPTY,0,I4,1,I4,1);
+    VARXOR(EMPTY,0,UI4,0,I4,0);
+    VARXOR(EMPTY,0,UI4,1,I4,1);
     if (HAVE_OLEAUT32_I8)
     {
-        VARXOR(UI4,VARIANT_FALSE,I8,VARIANT_FALSE,I8,VARIANT_FALSE);
-        VARXOR(UI4,5,I8,19,I8,22);
-        VARXOR(UI4,VARIANT_FALSE,UI8,VARIANT_FALSE,I4,VARIANT_FALSE);
+        VARXOR(EMPTY,0,I8,0,I8,0);
+        VARXOR(EMPTY,0,I8,1,I8,1);
+        VARXOR(EMPTY,0,UI8,0,I4,0);
+        VARXOR(EMPTY,0,UI8,1,I4,1);
+    }
+    VARXOR(EMPTY,0,INT,0,I4,0);
+    VARXOR(EMPTY,0,INT,1,I4,1);
+    VARXOR(EMPTY,0,UINT,0,I4,0);
+    VARXOR(EMPTY,0,UINT,1,I4,1);
+    VARXOR(EMPTY,0,BOOL,0,I2,0);
+    VARXOR(EMPTY,0,BOOL,1,I2,1);
+    VARXOR(EMPTY,0,R4,0,I4,0);
+    VARXOR(EMPTY,0,R4,1,I4,1);
+    VARXOR(EMPTY,0,R8,0,I4,0);
+    VARXOR(EMPTY,0,R8,1,I4,1);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(EMPTY,0,BSTR,rbstr,I2,0);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(EMPTY,0,BSTR,rbstr,I2,-1);
+    VARXORCY(EMPTY,0,10000,I4,1);
+
+    /* NULL OR 0 = NULL. NULL OR n = n */
+    VARXOR(NULL,0,NULL,0,NULL,0);
+    VARXOR(NULL,1,NULL,0,NULL,0);
+    VARXOR(NULL,0,I1,0,NULL,0);
+    VARXOR(NULL,0,I1,1,NULL,0);
+    VARXOR(NULL,0,UI1,0,NULL,0);
+    VARXOR(NULL,0,UI1,1,NULL,0);
+    VARXOR(NULL,0,I2,0,NULL,0);
+    VARXOR(NULL,0,I2,1,NULL,0);
+    VARXOR(NULL,0,UI2,0,NULL,0);
+    VARXOR(NULL,0,UI2,1,NULL,0);
+    VARXOR(NULL,0,I4,0,NULL,0);
+    VARXOR(NULL,0,I4,1,NULL,0);
+    VARXOR(NULL,0,UI4,0,NULL,0);
+    VARXOR(NULL,0,UI4,1,NULL,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARXOR(NULL,0,I8,0,NULL,0);
+        VARXOR(NULL,0,I8,1,NULL,0);
+        VARXOR(NULL,0,UI8,0,NULL,0);
+        VARXOR(NULL,0,UI8,1,NULL,0);
+    }
+    VARXOR(NULL,0,INT,0,NULL,0);
+    VARXOR(NULL,0,INT,1,NULL,0);
+    VARXOR(NULL,0,UINT,0,NULL,0);
+    VARXOR(NULL,0,UINT,1,NULL,0);
+    VARXOR(NULL,0,BOOL,0,NULL,0);
+    VARXOR(NULL,0,BOOL,1,NULL,0);
+    VARXOR(NULL,0,R4,0,NULL,0);
+    VARXOR(NULL,0,R4,1,NULL,0);
+    VARXOR(NULL,0,R8,0,NULL,0);
+    VARXOR(NULL,0,R8,1,NULL,0);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(NULL,0,BSTR,rbstr,NULL,0);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(NULL,0,BSTR,rbstr,NULL,0);
+    VARXORCY(NULL,0,10000,NULL,0);
+    VARXORCY(NULL,0,0,NULL,0);
+
+    VARXOR(BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE,BOOL,VARIANT_FALSE);
+    VARXOR(BOOL,VARIANT_TRUE,BOOL,VARIANT_FALSE,BOOL,VARIANT_TRUE);
+    VARXOR(BOOL,VARIANT_FALSE,BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE);
+    VARXOR(BOOL,VARIANT_FALSE,BOOL,VARIANT_FALSE,BOOL,VARIANT_FALSE);
+    /* Assume x,y & y,x are the same from now on to reduce the number of tests */
+    VARXOR(BOOL,VARIANT_TRUE,I1,-1,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,I1,0,I4,-1);
+    VARXOR(BOOL,VARIANT_FALSE,I1,0,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,UI1,255,I2,-256);
+    VARXOR(BOOL,VARIANT_TRUE,UI1,0,I2,-1);
+    VARXOR(BOOL,VARIANT_FALSE,UI1,0,I2,0);
+    VARXOR(BOOL,VARIANT_TRUE,I2,-1,I2,0);
+    VARXOR(BOOL,VARIANT_TRUE,I2,0,I2,-1);
+    VARXOR(BOOL,VARIANT_FALSE,I2,0,I2,0);
+    VARXOR(BOOL,VARIANT_TRUE,UI2,65535,I4,-65536);
+    VARXOR(BOOL,VARIANT_TRUE,UI2,0,I4,-1);
+    VARXOR(BOOL,VARIANT_FALSE,UI2,0,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,I4,-1,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,I4,0,I4,-1);
+    VARXOR(BOOL,VARIANT_FALSE,I4,0,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,UI4,0xffffffff,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,UI4,0,I4,-1);
+    VARXOR(BOOL,VARIANT_FALSE,UI4,0,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,R4,-1,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,R4,0,I4,-1);
+    VARXOR(BOOL,VARIANT_FALSE,R4,0,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,R8,-1,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,R8,0,I4,-1);
+    VARXOR(BOOL,VARIANT_FALSE,R8,0,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,DATE,-1,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,DATE,0,I4,-1);
+    VARXOR(BOOL,VARIANT_FALSE,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARXOR(BOOL,VARIANT_TRUE,I8,-1,I8,0);
+        VARXOR(BOOL,VARIANT_TRUE,I8,0,I8,-1);
+        VARXOR(BOOL,VARIANT_FALSE,I8,0,I8,0);
+        /* This returns DISP_E_OVERFLOW which indicates that a conversion
+         * to I4 is performed.
+         */
+        /* VARXOR(BOOL,VARIANT_TRUE,UI8,-1,I4,-1); */
+        VARXOR(BOOL,VARIANT_TRUE,UI8,0,I4,-1);
+        VARXOR(BOOL,VARIANT_FALSE,UI8,0,I4,0);
+    }
+    VARXOR(BOOL,VARIANT_TRUE,INT,-1,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,INT,0,I4,-1);
+    VARXOR(BOOL,VARIANT_FALSE,INT,0,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,UINT,0xffffffff,I4,0);
+    VARXOR(BOOL,VARIANT_TRUE,UINT,0,I4,-1);
+    VARXOR(BOOL,VARIANT_FALSE,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(BOOL,VARIANT_FALSE,BSTR,rbstr,BOOL,VARIANT_FALSE);
+    VARXOR(BOOL,VARIANT_TRUE,BSTR,rbstr,BOOL,VARIANT_TRUE);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(BOOL,VARIANT_FALSE,BSTR,rbstr,BOOL,VARIANT_TRUE);
+    VARXOR(BOOL,VARIANT_TRUE,BSTR,rbstr,BOOL,VARIANT_FALSE);
+    VARXORCY(BOOL,VARIANT_TRUE,10000,I4,-2);
+    VARXORCY(BOOL,VARIANT_TRUE,0,I4,-1);
+    VARXORCY(BOOL,VARIANT_FALSE,0,I4,0);
+
+    VARXOR(I1,-1,I1,-1,I4,0);
+    VARXOR(I1,-1,I1,0,I4,-1);
+    VARXOR(I1,0,I1,0,I4,0);
+    VARXOR(I1,-1,UI1,255,I4,-256);
+    VARXOR(I1,-1,UI1,0,I4,-1);
+    VARXOR(I1,0,UI1,0,I4,0);
+    VARXOR(I1,-1,I2,-1,I4,0);
+    VARXOR(I1,-1,I2,0,I4,-1);
+    VARXOR(I1,0,I2,0,I4,0);
+    VARXOR(I1,-1,UI2,65535,I4,-65536);
+    VARXOR(I1,-1,UI2,0,I4,-1);
+    VARXOR(I1,0,UI2,0,I4,0);
+    VARXOR(I1,-1,I4,-1,I4,0);
+    VARXOR(I1,-1,I4,0,I4,-1);
+    VARXOR(I1,0,I4,0,I4,0);
+    VARXOR(I1,-1,UI4,0xffffffff,I4,0);
+    VARXOR(I1,-1,UI4,0,I4,-1);
+    VARXOR(I1,0,UI4,0,I4,0);
+    VARXOR(I1,-1,R4,-1,I4,0);
+    VARXOR(I1,-1,R4,0,I4,-1);
+    VARXOR(I1,0,R4,0,I4,0);
+    VARXOR(I1,-1,R8,-1,I4,0);
+    VARXOR(I1,-1,R8,0,I4,-1);
+    VARXOR(I1,0,R8,0,I4,0);
+    VARXOR(I1,-1,DATE,-1,I4,0);
+    VARXOR(I1,-1,DATE,0,I4,-1);
+    VARXOR(I1,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARXOR(I1,-1,I8,-1,I8,0);
+        VARXOR(I1,-1,I8,0,I8,-1);
+        VARXOR(I1,0,I8,0,I8,0);
+        VARXOR(I1,-1,UI8,0,I4,-1);
+        VARXOR(I1,0,UI8,0,I4,0);
+    }
+    VARXOR(I1,-1,INT,-1,I4,0);
+    VARXOR(I1,-1,INT,0,I4,-1);
+    VARXOR(I1,0,INT,0,I4,0);
+    VARXOR(I1,-1,UINT,0xffffffff,I4,0);
+    VARXOR(I1,-1,UINT,0,I4,-1);
+    VARXOR(I1,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(I1,0,BSTR,rbstr,I4,0);
+    VARXOR(I1,-1,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(I1,0,BSTR,rbstr,I4,-1);
+    VARXOR(I1,-1,BSTR,rbstr,I4,0);
+    VARXORCY(I1,-1,10000,I4,-2);
+    VARXORCY(I1,-1,0,I4,-1);
+    VARXORCY(I1,0,0,I4,0);
+
+    VARXOR(UI1,255,UI1,255,UI1,0);
+    VARXOR(UI1,255,UI1,0,UI1,255);
+    VARXOR(UI1,0,UI1,0,UI1,0);
+    VARXOR(UI1,255,I2,-1,I2,-256);
+    VARXOR(UI1,255,I2,0,I2,255);
+    VARXOR(UI1,0,I2,0,I2,0);
+    VARXOR(UI1,255,UI2,65535,I4,65280);
+    VARXOR(UI1,255,UI2,0,I4,255);
+    VARXOR(UI1,0,UI2,0,I4,0);
+    VARXOR(UI1,255,I4,-1,I4,-256);
+    VARXOR(UI1,255,I4,0,I4,255);
+    VARXOR(UI1,0,I4,0,I4,0);
+    VARXOR(UI1,255,UI4,0xffffffff,I4,-256);
+    VARXOR(UI1,255,UI4,0,I4,255);
+    VARXOR(UI1,0,UI4,0,I4,0);
+    VARXOR(UI1,255,R4,-1,I4,-256);
+    VARXOR(UI1,255,R4,0,I4,255);
+    VARXOR(UI1,0,R4,0,I4,0);
+    VARXOR(UI1,255,R8,-1,I4,-256);
+    VARXOR(UI1,255,R8,0,I4,255);
+    VARXOR(UI1,0,R8,0,I4,0);
+    VARXOR(UI1,255,DATE,-1,I4,-256);
+    VARXOR(UI1,255,DATE,0,I4,255);
+    VARXOR(UI1,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARXOR(UI1,255,I8,-1,I8,-256);
+        VARXOR(UI1,255,I8,0,I8,255);
+        VARXOR(UI1,0,I8,0,I8,0);
+        VARXOR(UI1,255,UI8,0,I4,255);
+        VARXOR(UI1,0,UI8,0,I4,0);
+    }
+    VARXOR(UI1,255,INT,-1,I4,-256);
+    VARXOR(UI1,255,INT,0,I4,255);
+    VARXOR(UI1,0,INT,0,I4,0);
+    VARXOR(UI1,255,UINT,0xffffffff,I4,-256);
+    VARXOR(UI1,255,UINT,0,I4,255);
+    VARXOR(UI1,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(UI1,0,BSTR,rbstr,I2,0);
+    VARXOR(UI1,255,BSTR,rbstr,I2,255);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(UI1,0,BSTR,rbstr,I2,-1);
+    VARXOR(UI1,255,BSTR,rbstr,I2,-256);
+    VARXORCY(UI1,255,10000,I4,254);
+    VARXORCY(UI1,255,0,I4,255);
+    VARXORCY(UI1,0,0,I4,0);
+
+    VARXOR(I2,-1,I2,-1,I2,0);
+    VARXOR(I2,-1,I2,0,I2,-1);
+    VARXOR(I2,0,I2,0,I2,0);
+    VARXOR(I2,-1,UI2,65535,I4,-65536);
+    VARXOR(I2,-1,UI2,0,I4,-1);
+    VARXOR(I2,0,UI2,0,I4,0);
+    VARXOR(I2,-1,I4,-1,I4,0);
+    VARXOR(I2,-1,I4,0,I4,-1);
+    VARXOR(I2,0,I4,0,I4,0);
+    VARXOR(I2,-1,UI4,0xffffffff,I4,0);
+    VARXOR(I2,-1,UI4,0,I4,-1);
+    VARXOR(I2,0,UI4,0,I4,0);
+    VARXOR(I2,-1,R4,-1,I4,0);
+    VARXOR(I2,-1,R4,0,I4,-1);
+    VARXOR(I2,0,R4,0,I4,0);
+    VARXOR(I2,-1,R8,-1,I4,0);
+    VARXOR(I2,-1,R8,0,I4,-1);
+    VARXOR(I2,0,R8,0,I4,0);
+    VARXOR(I2,-1,DATE,-1,I4,0);
+    VARXOR(I2,-1,DATE,0,I4,-1);
+    VARXOR(I2,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARXOR(I2,-1,I8,-1,I8,0);
+        VARXOR(I2,-1,I8,0,I8,-1);
+        VARXOR(I2,0,I8,0,I8,0);
+        VARXOR(I2,-1,UI8,0,I4,-1);
+        VARXOR(I2,0,UI8,0,I4,0);
+    }
+    VARXOR(I2,-1,INT,-1,I4,0);
+    VARXOR(I2,-1,INT,0,I4,-1);
+    VARXOR(I2,0,INT,0,I4,0);
+    VARXOR(I2,-1,UINT,0xffffffff,I4,0);
+    VARXOR(I2,-1,UINT,0,I4,-1);
+    VARXOR(I2,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(I2,0,BSTR,rbstr,I2,0);
+    VARXOR(I2,-1,BSTR,rbstr,I2,-1);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(I2,0,BSTR,rbstr,I2,-1);
+    VARXOR(I2,-1,BSTR,rbstr,I2,0);
+    VARXORCY(I2,-1,10000,I4,-2);
+    VARXORCY(I2,-1,0,I4,-1);
+    VARXORCY(I2,0,0,I4,0);
+
+    VARXOR(UI2,65535,UI2,65535,I4,0);
+    VARXOR(UI2,65535,UI2,0,I4,65535);
+    VARXOR(UI2,0,UI2,0,I4,0);
+    VARXOR(UI2,65535,I4,-1,I4,-65536);
+    VARXOR(UI2,65535,I4,0,I4,65535);
+    VARXOR(UI2,0,I4,0,I4,0);
+    VARXOR(UI2,65535,UI4,0xffffffff,I4,-65536);
+    VARXOR(UI2,65535,UI4,0,I4,65535);
+    VARXOR(UI2,0,UI4,0,I4,0);
+    VARXOR(UI2,65535,R4,-1,I4,-65536);
+    VARXOR(UI2,65535,R4,0,I4,65535);
+    VARXOR(UI2,0,R4,0,I4,0);
+    VARXOR(UI2,65535,R8,-1,I4,-65536);
+    VARXOR(UI2,65535,R8,0,I4,65535);
+    VARXOR(UI2,0,R8,0,I4,0);
+    VARXOR(UI2,65535,DATE,-1,I4,-65536);
+    VARXOR(UI2,65535,DATE,0,I4,65535);
+    VARXOR(UI2,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARXOR(UI2,65535,I8,-1,I8,-65536);
+        VARXOR(UI2,65535,I8,0,I8,65535);
+        VARXOR(UI2,0,I8,0,I8,0);
+        VARXOR(UI2,65535,UI8,0,I4,65535);
+        VARXOR(UI2,0,UI8,0,I4,0);
+    }
+    VARXOR(UI2,65535,INT,-1,I4,-65536);
+    VARXOR(UI2,65535,INT,0,I4,65535);
+    VARXOR(UI2,0,INT,0,I4,0);
+    VARXOR(UI2,65535,UINT,0xffffffff,I4,-65536);
+    VARXOR(UI2,65535,UINT,0,I4,65535);
+    VARXOR(UI2,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(UI2,0,BSTR,rbstr,I4,0);
+    VARXOR(UI2,65535,BSTR,rbstr,I4,65535);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(UI2,0,BSTR,rbstr,I4,-1);
+    VARXOR(UI2,65535,BSTR,rbstr,I4,-65536);
+    VARXORCY(UI2,65535,10000,I4,65534);
+    VARXORCY(UI2,65535,0,I4,65535);
+    VARXORCY(UI2,0,0,I4,0);
+
+    VARXOR(I4,-1,I4,-1,I4,0);
+    VARXOR(I4,-1,I4,0,I4,-1);
+    VARXOR(I4,0,I4,0,I4,0);
+    VARXOR(I4,-1,UI4,0xffffffff,I4,0);
+    VARXOR(I4,-1,UI4,0,I4,-1);
+    VARXOR(I4,0,UI4,0,I4,0);
+    VARXOR(I4,-1,R4,-1,I4,0);
+    VARXOR(I4,-1,R4,0,I4,-1);
+    VARXOR(I4,0,R4,0,I4,0);
+    VARXOR(I4,-1,R8,-1,I4,0);
+    VARXOR(I4,-1,R8,0,I4,-1);
+    VARXOR(I4,0,R8,0,I4,0);
+    VARXOR(I4,-1,DATE,-1,I4,0);
+    VARXOR(I4,-1,DATE,0,I4,-1);
+    VARXOR(I4,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARXOR(I4,-1,I8,-1,I8,0);
+        VARXOR(I4,-1,I8,0,I8,-1);
+        VARXOR(I4,0,I8,0,I8,0);
+        VARXOR(I4,-1,UI8,0,I4,-1);
+        VARXOR(I4,0,UI8,0,I4,0);
+    }
+    VARXOR(I4,-1,INT,-1,I4,0);
+    VARXOR(I4,-1,INT,0,I4,-1);
+    VARXOR(I4,0,INT,0,I4,0);
+    VARXOR(I4,-1,UINT,0xffffffff,I4,0);
+    VARXOR(I4,-1,UINT,0,I4,-1);
+    VARXOR(I4,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(I4,0,BSTR,rbstr,I4,0);
+    VARXOR(I4,-1,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(I4,0,BSTR,rbstr,I4,-1);
+    VARXOR(I4,-1,BSTR,rbstr,I4,0);
+    VARXORCY(I4,-1,10000,I4,-2);
+    VARXORCY(I4,-1,0,I4,-1);
+    VARXORCY(I4,0,0,I4,0);
+
+    VARXOR(UI4,0xffffffff,UI4,0xffffffff,I4,0);
+    VARXOR(UI4,0xffffffff,UI4,0,I4,-1);
+    VARXOR(UI4,0,UI4,0,I4,0);
+    VARXOR(UI4,0xffffffff,R4,-1,I4,0);
+    VARXOR(UI4,0xffffffff,R4,0,I4,-1);
+    VARXOR(UI4,0,R4,0,I4,0);
+    VARXOR(UI4,0xffffffff,R8,-1,I4,0);
+    VARXOR(UI4,0xffffffff,R8,0,I4,-1);
+    VARXOR(UI4,0,R8,0,I4,0);
+    VARXOR(UI4,0xffffffff,DATE,-1,I4,0);
+    VARXOR(UI4,0xffffffff,DATE,0,I4,-1);
+    VARXOR(UI4,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARXOR(UI4,0xffffffff,I8,0,I8,0xffffffff);
+        VARXOR(UI4,VARIANT_FALSE,I8,VARIANT_FALSE,I8,0);
+        VARXOR(UI4,0,I8,0,I8,0);
+        VARXOR(UI4,0xffffffff,UI8,0,I4,-1);
+        VARXOR(UI4,0,UI8,0,I4,0);
+    }
+    VARXOR(UI4,0xffffffff,INT,-1,I4,0);
+    VARXOR(UI4,0xffffffff,INT,0,I4,-1);
+    VARXOR(UI4,0,INT,0,I4,0);
+    VARXOR(UI4,0xffffffff,UINT,0xffffffff,I4,0);
+    VARXOR(UI4,0xffffffff,UINT,0,I4,-1);
+    VARXOR(UI4,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(UI4,0,BSTR,rbstr,I4,0);
+    VARXOR(UI4,0xffffffff,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(UI4,0,BSTR,rbstr,I4,-1);
+    VARXOR(UI4,0xffffffff,BSTR,rbstr,I4,0);
+    VARXORCY(UI4,0xffffffff,10000,I4,-2);
+    VARXORCY(UI4,0xffffffff,0,I4,-1);
+    VARXORCY(UI4,0,0,I4,0);
+
+    VARXOR(R4,-1,R4,-1,I4,0);
+    VARXOR(R4,-1,R4,0,I4,-1);
+    VARXOR(R4,0,R4,0,I4,0);
+    VARXOR(R4,-1,R8,-1,I4,0);
+    VARXOR(R4,-1,R8,0,I4,-1);
+    VARXOR(R4,0,R8,0,I4,0);
+    VARXOR(R4,-1,DATE,-1,I4,0);
+    VARXOR(R4,-1,DATE,0,I4,-1);
+    VARXOR(R4,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARXOR(R4,-1,I8,-1,I8,0);
+        VARXOR(R4,-1,I8,0,I8,-1);
+        VARXOR(R4,0,I8,0,I8,0);
+        VARXOR(R4,-1,UI8,0,I4,-1);
+        VARXOR(R4,0,UI8,0,I4,0);
+    }
+    VARXOR(R4,-1,INT,-1,I4,0);
+    VARXOR(R4,-1,INT,0,I4,-1);
+    VARXOR(R4,0,INT,0,I4,0);
+    VARXOR(R4,-1,UINT,0xffffffff,I4,0);
+    VARXOR(R4,-1,UINT,0,I4,-1);
+    VARXOR(R4,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(R4,0,BSTR,rbstr,I4,0);
+    VARXOR(R4,-1,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(R4,0,BSTR,rbstr,I4,-1);
+    VARXOR(R4,-1,BSTR,rbstr,I4,0);
+    VARXORCY(R4,-1,10000,I4,-2);
+    VARXORCY(R4,-1,0,I4,-1);
+    VARXORCY(R4,0,0,I4,0);
+
+    VARXOR(R8,-1,R8,-1,I4,0);
+    VARXOR(R8,-1,R8,0,I4,-1);
+    VARXOR(R8,0,R8,0,I4,0);
+    VARXOR(R8,-1,DATE,-1,I4,0);
+    VARXOR(R8,-1,DATE,0,I4,-1);
+    VARXOR(R8,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARXOR(R8,-1,I8,-1,I8,0);
+        VARXOR(R8,-1,I8,0,I8,-1);
+        VARXOR(R8,0,I8,0,I8,0);
+        VARXOR(R8,-1,UI8,0,I4,-1);
+        VARXOR(R8,0,UI8,0,I4,0);
+    }
+    VARXOR(R8,-1,INT,-1,I4,0);
+    VARXOR(R8,-1,INT,0,I4,-1);
+    VARXOR(R8,0,INT,0,I4,0);
+    VARXOR(R8,-1,UINT,0xffffffff,I4,0);
+    VARXOR(R8,-1,UINT,0,I4,-1);
+    VARXOR(R8,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(R8,0,BSTR,rbstr,I4,0);
+    VARXOR(R8,-1,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(R8,0,BSTR,rbstr,I4,-1);
+    VARXOR(R8,-1,BSTR,rbstr,I4,0);
+    VARXORCY(R8,-1,10000,I4,-2);
+    VARXORCY(R8,-1,0,I4,-1);
+    VARXORCY(R8,0,0,I4,0);
+
+    VARXOR(DATE,-1,DATE,-1,I4,0);
+    VARXOR(DATE,-1,DATE,0,I4,-1);
+    VARXOR(DATE,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARXOR(DATE,-1,I8,-1,I8,0);
+        VARXOR(DATE,-1,I8,0,I8,-1);
+        VARXOR(DATE,0,I8,0,I8,0);
+        VARXOR(DATE,-1,UI8,0,I4,-1);
+        VARXOR(DATE,0,UI8,0,I4,0);
+    }
+    VARXOR(DATE,-1,INT,-1,I4,0);
+    VARXOR(DATE,-1,INT,0,I4,-1);
+    VARXOR(DATE,0,INT,0,I4,0);
+    VARXOR(DATE,-1,UINT,0xffffffff,I4,0);
+    VARXOR(DATE,-1,UINT,0,I4,-1);
+    VARXOR(DATE,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(DATE,0,BSTR,rbstr,I4,0);
+    VARXOR(DATE,-1,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(DATE,0,BSTR,rbstr,I4,-1);
+    VARXOR(DATE,-1,BSTR,rbstr,I4,0);
+    VARXORCY(DATE,-1,10000,I4,-2);
+    VARXORCY(DATE,-1,0,I4,-1);
+    VARXORCY(DATE,0,0,I4,0);
+
+    if (HAVE_OLEAUT32_I8)
+    {
+        VARXOR(I8,-1,I8,-1,I8,0);
+        VARXOR(I8,-1,I8,0,I8,-1);
+        VARXOR(I8,0,I8,0,I8,0);
+        VARXOR(I8,-1,UI8,0,I8,-1);
+        VARXOR(I8,0,UI8,0,I8,0);
+        VARXOR(I8,-1,UINT,0,I8,-1);
+        VARXOR(I8,0,UINT,0,I8,0);
+        rbstr = SysAllocString(szFalse);
+        VARXOR(I8,0,BSTR,rbstr,I8,0);
+        VARXOR(I8,-1,BSTR,rbstr,I8,-1);
+        rbstr = SysAllocString(szTrue);
+        VARXOR(I8,0,BSTR,rbstr,I8,-1);
+        VARXOR(I8,-1,BSTR,rbstr,I8,0);
+        VARXORCY(I8,-1,10000,I8,-2);
+        VARXORCY(I8,-1,0,I8,-1);
+        VARXORCY(I8,0,0,I8,0);
+
+        VARXOR(UI8,0xffff,UI8,0xffff,I4,0);
+        VARXOR(UI8,0xffff,UI8,0,I4,0xffff);
+        VARXOR(UI8,0,UI8,0,I4,0);
+        VARXOR(UI8,0xffff,INT,-1,I4,-65536);
+        VARXOR(UI8,0xffff,INT,0,I4,0xffff);
+        VARXOR(UI8,0,INT,0,I4,0);
+        VARXOR(UI8,0xffff,UINT,0xffff,I4,0);
+        VARXOR(UI8,0xffff,UINT,0,I4,0xffff);
+        VARXOR(UI8,0,UINT,0,I4,0);
+        rbstr = SysAllocString(szFalse);
+        VARXOR(UI8,0,BSTR,rbstr,I4,0);
+        VARXOR(UI8,0xffff,BSTR,rbstr,I4,0xffff);
+        rbstr = SysAllocString(szTrue);
+        VARXOR(UI8,0,BSTR,rbstr,I4,-1);
+        VARXOR(UI8,0xffff,BSTR,rbstr,I4,-65536);
+        VARXORCY(UI8,0xffff,10000,I4,65534);
+        VARXORCY(UI8,0xffff,0,I4,0xffff);
+        VARXORCY(UI8,0,0,I4,0);
     }
 
+    VARXOR(INT,-1,INT,-1,I4,0);
+    VARXOR(INT,-1,INT,0,I4,-1);
+    VARXOR(INT,0,INT,0,I4,0);
+    VARXOR(INT,-1,UINT,0xffff,I4,-65536);
+    VARXOR(INT,-1,UINT,0,I4,-1);
+    VARXOR(INT,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(INT,0,BSTR,rbstr,I4,0);
+    VARXOR(INT,-1,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(INT,0,BSTR,rbstr,I4,-1);
+    VARXOR(INT,-1,BSTR,rbstr,I4,0);
+    VARXORCY(INT,-1,10000,I4,-2);
+    VARXORCY(INT,-1,0,I4,-1);
+    VARXORCY(INT,0,0,I4,0);
+
+    VARXOR(UINT,0xffff,UINT,0xffff,I4,0);
+    VARXOR(UINT,0xffff,UINT,0,I4,0xffff);
+    VARXOR(UINT,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(UINT,0,BSTR,rbstr,I4,0);
+    VARXOR(UINT,0xffff,BSTR,rbstr,I4,0xffff);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(UINT,0,BSTR,rbstr,I4,-1);
+    VARXOR(UINT,0xffff,BSTR,rbstr,I4,-65536);
+    VARXORCY(UINT,0xffff,10000,I4,65534);
+    VARXORCY(UINT,0xffff,0,I4,0xffff);
+    VARXORCY(UINT,0,0,I4,0);
+
+    lbstr = SysAllocString(szFalse);
+    rbstr = SysAllocString(szFalse);
+    VARXOR(BSTR,lbstr,BSTR,rbstr,BOOL,0);
+    rbstr = SysAllocString(szTrue);
+    VARXOR(BSTR,lbstr,BSTR,rbstr,BOOL,VARIANT_TRUE);
+    lbstr = SysAllocString(szTrue);
+    VARXOR(BSTR,lbstr,BSTR,rbstr,BOOL,VARIANT_FALSE);
+    VARXORCY(BSTR,lbstr,10000,I4,-2);
+    lbstr = SysAllocString(szFalse);
+    VARXORCY(BSTR,lbstr,10000,I4,1);
 }
 
+static HRESULT (WINAPI *pVarOr)(LPVARIANT,LPVARIANT,LPVARIANT);
 
+static const char *szVarOrFail = "VarOr(%d,%d): expected 0x0,%d,%d, got 0x%lX,%d,%d\n";
+static const char *szVarOrChanged = "VarOr(%d,%d): Modified input arguments\n";
+#define VAROR(vt1,val1,vt2,val2,rvt,rval) \
+        V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1; \
+        V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
+        memset(&result,0,sizeof(result)); hres = pVarOr(&left,&right,&result); \
+        ok(hres == S_OK && V_VT(&result) == VT_##rvt && V_##rvt(&result) == (rval), \
+        szVarOrFail, VT_##vt1, VT_##vt2, \
+        VT_##rvt, (int)(rval), hres, V_VT(&result), (int)V_##rvt(&result)); \
+        ok(V_VT(&left) == VT_##vt1 && V_##vt1(&left) == val1 && \
+           V_VT(&right) == VT_##vt2 && V_##vt2(&right) == val2, \
+           szVarOrChanged,VT_##vt1,VT_##vt2)
+#define VARORCY(vt1,val1,val2,rvt,rval) \
+        V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1; \
+        V_VT(&right) = VT_CY; V_CY(&right).int64 = val2; \
+        memset(&result,0,sizeof(result)); hres = pVarOr(&left,&right,&result); \
+        ok(hres == S_OK && V_VT(&result) == VT_##rvt && V_##rvt(&result) == (rval), \
+        "VarOr(%d,%d): expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##vt1, VT_CY, \
+        VT_##rvt, (int)(rval), hres, V_VT(&result), (int)V_##rvt(&result)); \
+        ok(V_VT(&left) == VT_##vt1 && V_##vt1(&left) == val1 && \
+           V_VT(&right) == VT_CY && V_CY(&right).int64 == val2, \
+           "VarOr(%d,%d): Modified input arguments\n",VT_##vt1,VT_CY)
+
+static void test_VarOr(void)
+{
+    static const WCHAR szFalse[] = { '#','F','A','L','S','E','#','\0' };
+    static const WCHAR szTrue[] = { '#','T','R','U','E','#','\0' };
+    VARIANT left, right, result;
+    BSTR lbstr, rbstr;
+    VARTYPE i;
+    HRESULT hres;
+
+    CHECKPTR(VarOr);
+
+    /* Test all possible flag/vt combinations & the resulting vt type */
+    for (i = 0; i < sizeof(ExtraFlags)/sizeof(ExtraFlags[0]); i++)
+    {
+        VARTYPE leftvt, rightvt, resvt;
+
+        for (leftvt = 0; leftvt <= VT_BSTR_BLOB; leftvt++)
+        {
+        
+            SKIPTESTS(leftvt);
+        
+            for (rightvt = 0; rightvt <= VT_BSTR_BLOB; rightvt++)
+            {
+                BOOL bFail = FALSE;
+
+                SKIPTESTS(rightvt);
+                
+                if (leftvt == VT_BSTR || rightvt == VT_BSTR ||
+                    leftvt == VT_DISPATCH || rightvt == VT_DISPATCH ||
+                    leftvt == VT_UNKNOWN || rightvt == VT_UNKNOWN)
+                    continue;
+
+                memset(&left, 0, sizeof(left));
+                memset(&right, 0, sizeof(right));
+                V_VT(&left) = leftvt | ExtraFlags[i];
+                V_VT(&right) = rightvt | ExtraFlags[i];
+                V_VT(&result) = VT_EMPTY;
+                resvt = VT_I4;
+
+                if (ExtraFlags[i] & VT_ARRAY || ExtraFlags[i] & VT_BYREF ||
+                    !IsValidVariantClearVT(leftvt, ExtraFlags[i]) ||
+                    !IsValidVariantClearVT(rightvt, ExtraFlags[i]) ||
+                    leftvt == VT_CLSID || rightvt == VT_CLSID ||
+                    leftvt == VT_RECORD || rightvt == VT_RECORD ||
+                    leftvt == VT_VARIANT || rightvt == VT_VARIANT ||
+                    leftvt == VT_ERROR || rightvt == VT_ERROR)
+                {
+                    bFail = TRUE;
+                }
+                if (leftvt == VT_EMPTY || rightvt == VT_EMPTY)
+                {
+                    if (leftvt == rightvt ||
+                        leftvt == VT_I2 || rightvt == VT_I2 ||
+                        leftvt == VT_UI1 || rightvt == VT_UI1 ||
+                        leftvt == VT_BOOL || rightvt == VT_BOOL)
+                        resvt = VT_I2;
+                    else if (leftvt == VT_NULL || rightvt == VT_NULL)
+                        resvt = VT_NULL;
+                    else if (leftvt == VT_I8 || rightvt == VT_I8)
+                        resvt = VT_I8;
+                }
+                else if (leftvt == VT_NULL || rightvt == VT_NULL)
+                {
+                    resvt = VT_NULL;
+                }
+                else if (leftvt == VT_UI1 || rightvt == VT_UI1)
+                {
+                    if (leftvt == rightvt)
+                        resvt = VT_UI1;
+                    else if (leftvt == rightvt ||
+                        leftvt == VT_I2 || rightvt == VT_I2 ||
+                        leftvt == VT_BOOL || rightvt == VT_BOOL)
+                    {
+                        resvt = VT_I2;
+                    }
+                    else if (leftvt == VT_I8 || rightvt == VT_I8)
+                        resvt = VT_I8;
+                }
+                else if (leftvt == VT_I2 || rightvt == VT_I2)
+                {
+                    if (leftvt == rightvt ||
+                        leftvt == VT_BOOL || rightvt == VT_BOOL)
+                        resvt = VT_I2;
+                    else if (leftvt == VT_I8 || rightvt == VT_I8)
+                        resvt = VT_I8;
+                }
+                else if (leftvt == VT_BOOL && rightvt == VT_BOOL)
+                {
+                    resvt = VT_BOOL;
+                }
+                else if (leftvt == VT_I8 || rightvt == VT_I8)
+                {
+                    if (leftvt == VT_INT || rightvt == VT_INT)
+                        bFail = TRUE;
+                    else
+                        resvt = VT_I8;
+                }
+                hres = pVarOr(&left, &right, &result);
+                if (bFail)
+                    ok(hres == DISP_E_TYPEMISMATCH || hres == DISP_E_BADVARTYPE,
+                       "VarOr: %d|0x%X, %d|0x%X: Expected failure, got 0x%lX vt %d\n",
+                       leftvt, ExtraFlags[i], rightvt, ExtraFlags[i], hres,
+                       V_VT(&result));
+                else
+                    ok(hres == S_OK && V_VT(&result) == resvt,
+                       "VarOr: %d|0x%X, %d|0x%X: expected S_OK, vt %d, got 0x%lX vt %d\n",
+                       leftvt, ExtraFlags[i], rightvt, ExtraFlags[i], resvt, hres,
+                       V_VT(&result));
+            }
+        }
+    }
+
+    /* Test returned values. Since we know the returned type is correct
+     * and that we handle all combinations of invalid types, just check
+     * that good type combinations produce the desired value.
+     * FIXME: Test VT_DECIMAL/VT_DISPATCH
+     */
+    VAROR(EMPTY,0,EMPTY,0,I2,0);
+    VAROR(EMPTY,1,EMPTY,0,I2,0);
+    VAROR(EMPTY,0,NULL,0,NULL,0);
+    VAROR(EMPTY,0,I1,0,I4,0);
+    VAROR(EMPTY,0,I1,1,I4,1);
+    VAROR(EMPTY,0,UI1,0,I2,0);
+    VAROR(EMPTY,0,UI1,1,I2,1);
+    VAROR(EMPTY,0,I2,0,I2,0);
+    VAROR(EMPTY,0,I2,1,I2,1);
+    VAROR(EMPTY,0,UI2,0,I4,0);
+    VAROR(EMPTY,0,UI2,1,I4,1);
+    VAROR(EMPTY,0,I4,0,I4,0);
+    VAROR(EMPTY,0,I4,1,I4,1);
+    VAROR(EMPTY,0,UI4,0,I4,0);
+    VAROR(EMPTY,0,UI4,1,I4,1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAROR(EMPTY,0,I8,0,I8,0);
+        VAROR(EMPTY,0,I8,1,I8,1);
+        VAROR(EMPTY,0,UI8,0,I4,0);
+        VAROR(EMPTY,0,UI8,1,I4,1);
+    }
+    VAROR(EMPTY,0,INT,0,I4,0);
+    VAROR(EMPTY,0,INT,1,I4,1);
+    VAROR(EMPTY,0,UINT,0,I4,0);
+    VAROR(EMPTY,0,UINT,1,I4,1);
+    VAROR(EMPTY,0,BOOL,0,I2,0);
+    VAROR(EMPTY,0,BOOL,1,I2,1);
+    VAROR(EMPTY,0,R4,0,I4,0);
+    VAROR(EMPTY,0,R4,1,I4,1);
+    VAROR(EMPTY,0,R8,0,I4,0);
+    VAROR(EMPTY,0,R8,1,I4,1);
+    rbstr = SysAllocString(szFalse);
+    VAROR(EMPTY,0,BSTR,rbstr,I2,0);
+    rbstr = SysAllocString(szTrue);
+    VAROR(EMPTY,0,BSTR,rbstr,I2,-1);
+    VARORCY(EMPTY,0,10000,I4,1);
+
+    /* NULL OR 0 = NULL. NULL OR n = n */
+    VAROR(NULL,0,NULL,0,NULL,0);
+    VAROR(NULL,1,NULL,0,NULL,0);
+    VAROR(NULL,0,I1,0,NULL,0);
+    VAROR(NULL,0,I1,1,I4,1);
+    VAROR(NULL,0,UI1,0,NULL,0);
+    VAROR(NULL,0,UI1,1,UI1,1);
+    VAROR(NULL,0,I2,0,NULL,0);
+    VAROR(NULL,0,I2,1,I2,1);
+    VAROR(NULL,0,UI2,0,NULL,0);
+    VAROR(NULL,0,UI2,1,I4,1);
+    VAROR(NULL,0,I4,0,NULL,0);
+    VAROR(NULL,0,I4,1,I4,1);
+    VAROR(NULL,0,UI4,0,NULL,0);
+    VAROR(NULL,0,UI4,1,I4,1);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAROR(NULL,0,I8,0,NULL,0);
+        VAROR(NULL,0,I8,1,I8,1);
+        VAROR(NULL,0,UI8,0,NULL,0);
+        VAROR(NULL,0,UI8,1,I4,1);
+    }
+    VAROR(NULL,0,INT,0,NULL,0);
+    VAROR(NULL,0,INT,1,I4,1);
+    VAROR(NULL,0,UINT,0,NULL,0);
+    VAROR(NULL,0,UINT,1,I4,1);
+    VAROR(NULL,0,BOOL,0,NULL,0);
+    VAROR(NULL,0,BOOL,1,BOOL,1);
+    VAROR(NULL,0,R4,0,NULL,0);
+    VAROR(NULL,0,R4,1,I4,1);
+    VAROR(NULL,0,R8,0,NULL,0);
+    VAROR(NULL,0,R8,1,I4,1);
+    rbstr = SysAllocString(szFalse);
+    VAROR(NULL,0,BSTR,rbstr,NULL,0);
+    rbstr = SysAllocString(szTrue);
+    VAROR(NULL,0,BSTR,rbstr,BOOL,VARIANT_TRUE);
+    VARORCY(NULL,0,10000,I4,1);
+    VARORCY(NULL,0,0,NULL,0);
+
+    VAROR(BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE);
+    VAROR(BOOL,VARIANT_TRUE,BOOL,VARIANT_FALSE,BOOL,VARIANT_TRUE);
+    VAROR(BOOL,VARIANT_FALSE,BOOL,VARIANT_TRUE,BOOL,VARIANT_TRUE);
+    VAROR(BOOL,VARIANT_FALSE,BOOL,VARIANT_FALSE,BOOL,VARIANT_FALSE);
+    /* Assume x,y & y,x are the same from now on to reduce the number of tests */
+    VAROR(BOOL,VARIANT_TRUE,I1,-1,I4,-1);
+    VAROR(BOOL,VARIANT_TRUE,I1,0,I4,-1);
+    VAROR(BOOL,VARIANT_FALSE,I1,0,I4,0);
+    VAROR(BOOL,VARIANT_TRUE,UI1,255,I2,-1);
+    VAROR(BOOL,VARIANT_TRUE,UI1,0,I2,-1);
+    VAROR(BOOL,VARIANT_FALSE,UI1,0,I2,0);
+    VAROR(BOOL,VARIANT_TRUE,I2,-1,I2,-1);
+    VAROR(BOOL,VARIANT_TRUE,I2,0,I2,-1);
+    VAROR(BOOL,VARIANT_FALSE,I2,0,I2,0);
+    VAROR(BOOL,VARIANT_TRUE,UI2,65535,I4,-1);
+    VAROR(BOOL,VARIANT_TRUE,UI2,0,I4,-1);
+    VAROR(BOOL,VARIANT_FALSE,UI2,0,I4,0);
+    VAROR(BOOL,VARIANT_TRUE,I4,-1,I4,-1);
+    VAROR(BOOL,VARIANT_TRUE,I4,0,I4,-1);
+    VAROR(BOOL,VARIANT_FALSE,I4,0,I4,0);
+    VAROR(BOOL,VARIANT_TRUE,UI4,0xffffffff,I4,-1);
+    VAROR(BOOL,VARIANT_TRUE,UI4,0,I4,-1);
+    VAROR(BOOL,VARIANT_FALSE,UI4,0,I4,0);
+    VAROR(BOOL,VARIANT_TRUE,R4,-1,I4,-1);
+    VAROR(BOOL,VARIANT_TRUE,R4,0,I4,-1);
+    VAROR(BOOL,VARIANT_FALSE,R4,0,I4,0);
+    VAROR(BOOL,VARIANT_TRUE,R8,-1,I4,-1);
+    VAROR(BOOL,VARIANT_TRUE,R8,0,I4,-1);
+    VAROR(BOOL,VARIANT_FALSE,R8,0,I4,0);
+    VAROR(BOOL,VARIANT_TRUE,DATE,-1,I4,-1);
+    VAROR(BOOL,VARIANT_TRUE,DATE,0,I4,-1);
+    VAROR(BOOL,VARIANT_FALSE,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAROR(BOOL,VARIANT_TRUE,I8,-1,I8,-1);
+        VAROR(BOOL,VARIANT_TRUE,I8,0,I8,-1);
+        VAROR(BOOL,VARIANT_FALSE,I8,0,I8,0);
+        /* This returns DISP_E_OVERFLOW which indicates that a conversion
+         * to I4 is performed.
+         */
+        /* VAROR(BOOL,VARIANT_TRUE,UI8,-1,I4,-1); */
+        VAROR(BOOL,VARIANT_TRUE,UI8,0,I4,-1);
+        VAROR(BOOL,VARIANT_FALSE,UI8,0,I4,0);
+    }
+    VAROR(BOOL,VARIANT_TRUE,INT,-1,I4,-1);
+    VAROR(BOOL,VARIANT_TRUE,INT,0,I4,-1);
+    VAROR(BOOL,VARIANT_FALSE,INT,0,I4,0);
+    VAROR(BOOL,VARIANT_TRUE,UINT,0xffffffff,I4,-1);
+    VAROR(BOOL,VARIANT_TRUE,UINT,0,I4,-1);
+    VAROR(BOOL,VARIANT_FALSE,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VAROR(BOOL,VARIANT_FALSE,BSTR,rbstr,BOOL,VARIANT_FALSE);
+    VAROR(BOOL,VARIANT_TRUE,BSTR,rbstr,BOOL,VARIANT_TRUE);
+    rbstr = SysAllocString(szTrue);
+    VAROR(BOOL,VARIANT_FALSE,BSTR,rbstr,BOOL,VARIANT_TRUE);
+    VAROR(BOOL,VARIANT_TRUE,BSTR,rbstr,BOOL,VARIANT_TRUE);
+    VARORCY(BOOL,VARIANT_TRUE,10000,I4,-1);
+    VARORCY(BOOL,VARIANT_TRUE,0,I4,-1);
+    VARORCY(BOOL,VARIANT_FALSE,0,I4,0);
+
+    VAROR(I1,-1,I1,-1,I4,-1);
+    VAROR(I1,-1,I1,0,I4,-1);
+    VAROR(I1,0,I1,0,I4,0);
+    VAROR(I1,-1,UI1,255,I4,-1);
+    VAROR(I1,-1,UI1,0,I4,-1);
+    VAROR(I1,0,UI1,0,I4,0);
+    VAROR(I1,-1,I2,-1,I4,-1);
+    VAROR(I1,-1,I2,0,I4,-1);
+    VAROR(I1,0,I2,0,I4,0);
+    VAROR(I1,-1,UI2,65535,I4,-1);
+    VAROR(I1,-1,UI2,0,I4,-1);
+    VAROR(I1,0,UI2,0,I4,0);
+    VAROR(I1,-1,I4,-1,I4,-1);
+    VAROR(I1,-1,I4,0,I4,-1);
+    VAROR(I1,0,I4,0,I4,0);
+    VAROR(I1,-1,UI4,0xffffffff,I4,-1);
+    VAROR(I1,-1,UI4,0,I4,-1);
+    VAROR(I1,0,UI4,0,I4,0);
+    VAROR(I1,-1,R4,-1,I4,-1);
+    VAROR(I1,-1,R4,0,I4,-1);
+    VAROR(I1,0,R4,0,I4,0);
+    VAROR(I1,-1,R8,-1,I4,-1);
+    VAROR(I1,-1,R8,0,I4,-1);
+    VAROR(I1,0,R8,0,I4,0);
+    VAROR(I1,-1,DATE,-1,I4,-1);
+    VAROR(I1,-1,DATE,0,I4,-1);
+    VAROR(I1,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAROR(I1,-1,I8,-1,I8,-1);
+        VAROR(I1,-1,I8,0,I8,-1);
+        VAROR(I1,0,I8,0,I8,0);
+        VAROR(I1,-1,UI8,0,I4,-1);
+        VAROR(I1,0,UI8,0,I4,0);
+    }
+    VAROR(I1,-1,INT,-1,I4,-1);
+    VAROR(I1,-1,INT,0,I4,-1);
+    VAROR(I1,0,INT,0,I4,0);
+    VAROR(I1,-1,UINT,0xffffffff,I4,-1);
+    VAROR(I1,-1,UINT,0,I4,-1);
+    VAROR(I1,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VAROR(I1,0,BSTR,rbstr,I4,0);
+    VAROR(I1,-1,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VAROR(I1,0,BSTR,rbstr,I4,-1);
+    VAROR(I1,-1,BSTR,rbstr,I4,-1);
+    VARORCY(I1,-1,10000,I4,-1);
+    VARORCY(I1,-1,0,I4,-1);
+    VARORCY(I1,0,0,I4,0);
+
+    VAROR(UI1,255,UI1,255,UI1,255);
+    VAROR(UI1,255,UI1,0,UI1,255);
+    VAROR(UI1,0,UI1,0,UI1,0);
+    VAROR(UI1,255,I2,-1,I2,-1);
+    VAROR(UI1,255,I2,0,I2,255);
+    VAROR(UI1,0,I2,0,I2,0);
+    VAROR(UI1,255,UI2,65535,I4,65535);
+    VAROR(UI1,255,UI2,0,I4,255);
+    VAROR(UI1,0,UI2,0,I4,0);
+    VAROR(UI1,255,I4,-1,I4,-1);
+    VAROR(UI1,255,I4,0,I4,255);
+    VAROR(UI1,0,I4,0,I4,0);
+    VAROR(UI1,255,UI4,0xffffffff,I4,-1);
+    VAROR(UI1,255,UI4,0,I4,255);
+    VAROR(UI1,0,UI4,0,I4,0);
+    VAROR(UI1,255,R4,-1,I4,-1);
+    VAROR(UI1,255,R4,0,I4,255);
+    VAROR(UI1,0,R4,0,I4,0);
+    VAROR(UI1,255,R8,-1,I4,-1);
+    VAROR(UI1,255,R8,0,I4,255);
+    VAROR(UI1,0,R8,0,I4,0);
+    VAROR(UI1,255,DATE,-1,I4,-1);
+    VAROR(UI1,255,DATE,0,I4,255);
+    VAROR(UI1,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAROR(UI1,255,I8,-1,I8,-1);
+        VAROR(UI1,255,I8,0,I8,255);
+        VAROR(UI1,0,I8,0,I8,0);
+        VAROR(UI1,255,UI8,0,I4,255);
+        VAROR(UI1,0,UI8,0,I4,0);
+    }
+    VAROR(UI1,255,INT,-1,I4,-1);
+    VAROR(UI1,255,INT,0,I4,255);
+    VAROR(UI1,0,INT,0,I4,0);
+    VAROR(UI1,255,UINT,0xffffffff,I4,-1);
+    VAROR(UI1,255,UINT,0,I4,255);
+    VAROR(UI1,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VAROR(UI1,0,BSTR,rbstr,I2,0);
+    VAROR(UI1,255,BSTR,rbstr,I2,255);
+    rbstr = SysAllocString(szTrue);
+    VAROR(UI1,0,BSTR,rbstr,I2,-1);
+    VAROR(UI1,255,BSTR,rbstr,I2,-1);
+    VARORCY(UI1,255,10000,I4,255);
+    VARORCY(UI1,255,0,I4,255);
+    VARORCY(UI1,0,0,I4,0);
+
+    VAROR(I2,-1,I2,-1,I2,-1);
+    VAROR(I2,-1,I2,0,I2,-1);
+    VAROR(I2,0,I2,0,I2,0);
+    VAROR(I2,-1,UI2,65535,I4,-1);
+    VAROR(I2,-1,UI2,0,I4,-1);
+    VAROR(I2,0,UI2,0,I4,0);
+    VAROR(I2,-1,I4,-1,I4,-1);
+    VAROR(I2,-1,I4,0,I4,-1);
+    VAROR(I2,0,I4,0,I4,0);
+    VAROR(I2,-1,UI4,0xffffffff,I4,-1);
+    VAROR(I2,-1,UI4,0,I4,-1);
+    VAROR(I2,0,UI4,0,I4,0);
+    VAROR(I2,-1,R4,-1,I4,-1);
+    VAROR(I2,-1,R4,0,I4,-1);
+    VAROR(I2,0,R4,0,I4,0);
+    VAROR(I2,-1,R8,-1,I4,-1);
+    VAROR(I2,-1,R8,0,I4,-1);
+    VAROR(I2,0,R8,0,I4,0);
+    VAROR(I2,-1,DATE,-1,I4,-1);
+    VAROR(I2,-1,DATE,0,I4,-1);
+    VAROR(I2,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAROR(I2,-1,I8,-1,I8,-1);
+        VAROR(I2,-1,I8,0,I8,-1);
+        VAROR(I2,0,I8,0,I8,0);
+        VAROR(I2,-1,UI8,0,I4,-1);
+        VAROR(I2,0,UI8,0,I4,0);
+    }
+    VAROR(I2,-1,INT,-1,I4,-1);
+    VAROR(I2,-1,INT,0,I4,-1);
+    VAROR(I2,0,INT,0,I4,0);
+    VAROR(I2,-1,UINT,0xffffffff,I4,-1);
+    VAROR(I2,-1,UINT,0,I4,-1);
+    VAROR(I2,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VAROR(I2,0,BSTR,rbstr,I2,0);
+    VAROR(I2,-1,BSTR,rbstr,I2,-1);
+    rbstr = SysAllocString(szTrue);
+    VAROR(I2,0,BSTR,rbstr,I2,-1);
+    VAROR(I2,-1,BSTR,rbstr,I2,-1);
+    VARORCY(I2,-1,10000,I4,-1);
+    VARORCY(I2,-1,0,I4,-1);
+    VARORCY(I2,0,0,I4,0);
+
+    VAROR(UI2,65535,UI2,65535,I4,65535);
+    VAROR(UI2,65535,UI2,0,I4,65535);
+    VAROR(UI2,0,UI2,0,I4,0);
+    VAROR(UI2,65535,I4,-1,I4,-1);
+    VAROR(UI2,65535,I4,0,I4,65535);
+    VAROR(UI2,0,I4,0,I4,0);
+    VAROR(UI2,65535,UI4,0xffffffff,I4,-1);
+    VAROR(UI2,65535,UI4,0,I4,65535);
+    VAROR(UI2,0,UI4,0,I4,0);
+    VAROR(UI2,65535,R4,-1,I4,-1);
+    VAROR(UI2,65535,R4,0,I4,65535);
+    VAROR(UI2,0,R4,0,I4,0);
+    VAROR(UI2,65535,R8,-1,I4,-1);
+    VAROR(UI2,65535,R8,0,I4,65535);
+    VAROR(UI2,0,R8,0,I4,0);
+    VAROR(UI2,65535,DATE,-1,I4,-1);
+    VAROR(UI2,65535,DATE,0,I4,65535);
+    VAROR(UI2,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAROR(UI2,65535,I8,-1,I8,-1);
+        VAROR(UI2,65535,I8,0,I8,65535);
+        VAROR(UI2,0,I8,0,I8,0);
+        VAROR(UI2,65535,UI8,0,I4,65535);
+        VAROR(UI2,0,UI8,0,I4,0);
+    }
+    VAROR(UI2,65535,INT,-1,I4,-1);
+    VAROR(UI2,65535,INT,0,I4,65535);
+    VAROR(UI2,0,INT,0,I4,0);
+    VAROR(UI2,65535,UINT,0xffffffff,I4,-1);
+    VAROR(UI2,65535,UINT,0,I4,65535);
+    VAROR(UI2,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VAROR(UI2,0,BSTR,rbstr,I4,0);
+    VAROR(UI2,65535,BSTR,rbstr,I4,65535);
+    rbstr = SysAllocString(szTrue);
+    VAROR(UI2,0,BSTR,rbstr,I4,-1);
+    VAROR(UI2,65535,BSTR,rbstr,I4,-1);
+    VARORCY(UI2,65535,10000,I4,65535);
+    VARORCY(UI2,65535,0,I4,65535);
+    VARORCY(UI2,0,0,I4,0);
+
+    VAROR(I4,-1,I4,-1,I4,-1);
+    VAROR(I4,-1,I4,0,I4,-1);
+    VAROR(I4,0,I4,0,I4,0);
+    VAROR(I4,-1,UI4,0xffffffff,I4,-1);
+    VAROR(I4,-1,UI4,0,I4,-1);
+    VAROR(I4,0,UI4,0,I4,0);
+    VAROR(I4,-1,R4,-1,I4,-1);
+    VAROR(I4,-1,R4,0,I4,-1);
+    VAROR(I4,0,R4,0,I4,0);
+    VAROR(I4,-1,R8,-1,I4,-1);
+    VAROR(I4,-1,R8,0,I4,-1);
+    VAROR(I4,0,R8,0,I4,0);
+    VAROR(I4,-1,DATE,-1,I4,-1);
+    VAROR(I4,-1,DATE,0,I4,-1);
+    VAROR(I4,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAROR(I4,-1,I8,-1,I8,-1);
+        VAROR(I4,-1,I8,0,I8,-1);
+        VAROR(I4,0,I8,0,I8,0);
+        VAROR(I4,-1,UI8,0,I4,-1);
+        VAROR(I4,0,UI8,0,I4,0);
+    }
+    VAROR(I4,-1,INT,-1,I4,-1);
+    VAROR(I4,-1,INT,0,I4,-1);
+    VAROR(I4,0,INT,0,I4,0);
+    VAROR(I4,-1,UINT,0xffffffff,I4,-1);
+    VAROR(I4,-1,UINT,0,I4,-1);
+    VAROR(I4,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VAROR(I4,0,BSTR,rbstr,I4,0);
+    VAROR(I4,-1,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VAROR(I4,0,BSTR,rbstr,I4,-1);
+    VAROR(I4,-1,BSTR,rbstr,I4,-1);
+    VARORCY(I4,-1,10000,I4,-1);
+    VARORCY(I4,-1,0,I4,-1);
+    VARORCY(I4,0,0,I4,0);
+
+    VAROR(UI4,0xffffffff,UI4,0xffffffff,I4,-1);
+    VAROR(UI4,0xffffffff,UI4,0,I4,-1);
+    VAROR(UI4,0,UI4,0,I4,0);
+    VAROR(UI4,0xffffffff,R4,-1,I4,-1);
+    VAROR(UI4,0xffffffff,R4,0,I4,-1);
+    VAROR(UI4,0,R4,0,I4,0);
+    VAROR(UI4,0xffffffff,R8,-1,I4,-1);
+    VAROR(UI4,0xffffffff,R8,0,I4,-1);
+    VAROR(UI4,0,R8,0,I4,0);
+    VAROR(UI4,0xffffffff,DATE,-1,I4,-1);
+    VAROR(UI4,0xffffffff,DATE,0,I4,-1);
+    VAROR(UI4,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAROR(UI4,0xffffffff,I8,-1,I8,-1);
+        VAROR(UI4,0xffffffff,I8,0,I8,0xffffffff);
+        VAROR(UI4,0,I8,0,I8,0);
+        VAROR(UI4,0xffffffff,UI8,0,I4,-1);
+        VAROR(UI4,0,UI8,0,I4,0);
+    }
+    VAROR(UI4,0xffffffff,INT,-1,I4,-1);
+    VAROR(UI4,0xffffffff,INT,0,I4,-1);
+    VAROR(UI4,0,INT,0,I4,0);
+    VAROR(UI4,0xffffffff,UINT,0xffffffff,I4,-1);
+    VAROR(UI4,0xffffffff,UINT,0,I4,-1);
+    VAROR(UI4,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VAROR(UI4,0,BSTR,rbstr,I4,0);
+    VAROR(UI4,0xffffffff,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VAROR(UI4,0,BSTR,rbstr,I4,-1);
+    VAROR(UI4,0xffffffff,BSTR,rbstr,I4,-1);
+    VARORCY(UI4,0xffffffff,10000,I4,-1);
+    VARORCY(UI4,0xffffffff,0,I4,-1);
+    VARORCY(UI4,0,0,I4,0);
+
+    VAROR(R4,-1,R4,-1,I4,-1);
+    VAROR(R4,-1,R4,0,I4,-1);
+    VAROR(R4,0,R4,0,I4,0);
+    VAROR(R4,-1,R8,-1,I4,-1);
+    VAROR(R4,-1,R8,0,I4,-1);
+    VAROR(R4,0,R8,0,I4,0);
+    VAROR(R4,-1,DATE,-1,I4,-1);
+    VAROR(R4,-1,DATE,0,I4,-1);
+    VAROR(R4,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAROR(R4,-1,I8,-1,I8,-1);
+        VAROR(R4,-1,I8,0,I8,-1);
+        VAROR(R4,0,I8,0,I8,0);
+        VAROR(R4,-1,UI8,0,I4,-1);
+        VAROR(R4,0,UI8,0,I4,0);
+    }
+    VAROR(R4,-1,INT,-1,I4,-1);
+    VAROR(R4,-1,INT,0,I4,-1);
+    VAROR(R4,0,INT,0,I4,0);
+    VAROR(R4,-1,UINT,0xffffffff,I4,-1);
+    VAROR(R4,-1,UINT,0,I4,-1);
+    VAROR(R4,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VAROR(R4,0,BSTR,rbstr,I4,0);
+    VAROR(R4,-1,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VAROR(R4,0,BSTR,rbstr,I4,-1);
+    VAROR(R4,-1,BSTR,rbstr,I4,-1);
+    VARORCY(R4,-1,10000,I4,-1);
+    VARORCY(R4,-1,0,I4,-1);
+    VARORCY(R4,0,0,I4,0);
+
+    VAROR(R8,-1,R8,-1,I4,-1);
+    VAROR(R8,-1,R8,0,I4,-1);
+    VAROR(R8,0,R8,0,I4,0);
+    VAROR(R8,-1,DATE,-1,I4,-1);
+    VAROR(R8,-1,DATE,0,I4,-1);
+    VAROR(R8,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAROR(R8,-1,I8,-1,I8,-1);
+        VAROR(R8,-1,I8,0,I8,-1);
+        VAROR(R8,0,I8,0,I8,0);
+        VAROR(R8,-1,UI8,0,I4,-1);
+        VAROR(R8,0,UI8,0,I4,0);
+    }
+    VAROR(R8,-1,INT,-1,I4,-1);
+    VAROR(R8,-1,INT,0,I4,-1);
+    VAROR(R8,0,INT,0,I4,0);
+    VAROR(R8,-1,UINT,0xffffffff,I4,-1);
+    VAROR(R8,-1,UINT,0,I4,-1);
+    VAROR(R8,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VAROR(R8,0,BSTR,rbstr,I4,0);
+    VAROR(R8,-1,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VAROR(R8,0,BSTR,rbstr,I4,-1);
+    VAROR(R8,-1,BSTR,rbstr,I4,-1);
+    VARORCY(R8,-1,10000,I4,-1);
+    VARORCY(R8,-1,0,I4,-1);
+    VARORCY(R8,0,0,I4,0);
+
+    VAROR(DATE,-1,DATE,-1,I4,-1);
+    VAROR(DATE,-1,DATE,0,I4,-1);
+    VAROR(DATE,0,DATE,0,I4,0);
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAROR(DATE,-1,I8,-1,I8,-1);
+        VAROR(DATE,-1,I8,0,I8,-1);
+        VAROR(DATE,0,I8,0,I8,0);
+        VAROR(DATE,-1,UI8,0,I4,-1);
+        VAROR(DATE,0,UI8,0,I4,0);
+    }
+    VAROR(DATE,-1,INT,-1,I4,-1);
+    VAROR(DATE,-1,INT,0,I4,-1);
+    VAROR(DATE,0,INT,0,I4,0);
+    VAROR(DATE,-1,UINT,0xffffffff,I4,-1);
+    VAROR(DATE,-1,UINT,0,I4,-1);
+    VAROR(DATE,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VAROR(DATE,0,BSTR,rbstr,I4,0);
+    VAROR(DATE,-1,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VAROR(DATE,0,BSTR,rbstr,I4,-1);
+    VAROR(DATE,-1,BSTR,rbstr,I4,-1);
+    VARORCY(DATE,-1,10000,I4,-1);
+    VARORCY(DATE,-1,0,I4,-1);
+    VARORCY(DATE,0,0,I4,0);
+
+    if (HAVE_OLEAUT32_I8)
+    {
+        VAROR(I8,-1,I8,-1,I8,-1);
+        VAROR(I8,-1,I8,0,I8,-1);
+        VAROR(I8,0,I8,0,I8,0);
+        VAROR(I8,-1,UI8,0,I8,-1);
+        VAROR(I8,0,UI8,0,I8,0);
+        /* These overflow under native and Wine
+        VAROR(I8,-1,INT,-1,I4,-1);
+        VAROR(I8,-1,INT,0,I4,-1);
+        VAROR(I8,0,INT,0,I4,0); */
+        VAROR(I8,-1,UINT,0xffffffff,I8,-1);
+        VAROR(I8,-1,UINT,0,I8,-1);
+        VAROR(I8,0,UINT,0,I8,0);
+        rbstr = SysAllocString(szFalse);
+        VAROR(I8,0,BSTR,rbstr,I8,0);
+        VAROR(I8,-1,BSTR,rbstr,I8,-1);
+        rbstr = SysAllocString(szTrue);
+        VAROR(I8,0,BSTR,rbstr,I8,-1);
+        VAROR(I8,-1,BSTR,rbstr,I8,-1);
+        VARORCY(I8,-1,10000,I8,-1);
+        VARORCY(I8,-1,0,I8,-1);
+        VARORCY(I8,0,0,I8,0);
+
+        VAROR(UI8,0xffff,UI8,0xffff,I4,0xffff);
+        VAROR(UI8,0xffff,UI8,0,I4,0xffff);
+        VAROR(UI8,0,UI8,0,I4,0);
+        VAROR(UI8,0xffff,INT,-1,I4,-1);
+        VAROR(UI8,0xffff,INT,0,I4,0xffff);
+        VAROR(UI8,0,INT,0,I4,0);
+        VAROR(UI8,0xffff,UINT,0xffff,I4,0xffff);
+        VAROR(UI8,0xffff,UINT,0,I4,0xffff);
+        VAROR(UI8,0,UINT,0,I4,0);
+        rbstr = SysAllocString(szFalse);
+        VAROR(UI8,0,BSTR,rbstr,I4,0);
+        VAROR(UI8,0xffff,BSTR,rbstr,I4,0xffff);
+        rbstr = SysAllocString(szTrue);
+        VAROR(UI8,0,BSTR,rbstr,I4,-1);
+        VAROR(UI8,0xffff,BSTR,rbstr,I4,-1);
+        VARORCY(UI8,0xffff,10000,I4,0xffff);
+        VARORCY(UI8,0xffff,0,I4,0xffff);
+        VARORCY(UI8,0,0,I4,0);
+    }
+
+    VAROR(INT,-1,INT,-1,I4,-1);
+    VAROR(INT,-1,INT,0,I4,-1);
+    VAROR(INT,0,INT,0,I4,0);
+    VAROR(INT,-1,UINT,0xffff,I4,-1);
+    VAROR(INT,-1,UINT,0,I4,-1);
+    VAROR(INT,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VAROR(INT,0,BSTR,rbstr,I4,0);
+    VAROR(INT,-1,BSTR,rbstr,I4,-1);
+    rbstr = SysAllocString(szTrue);
+    VAROR(INT,0,BSTR,rbstr,I4,-1);
+    VAROR(INT,-1,BSTR,rbstr,I4,-1);
+    VARORCY(INT,-1,10000,I4,-1);
+    VARORCY(INT,-1,0,I4,-1);
+    VARORCY(INT,0,0,I4,0);
+
+    VAROR(UINT,0xffff,UINT,0xffff,I4,0xffff);
+    VAROR(UINT,0xffff,UINT,0,I4,0xffff);
+    VAROR(UINT,0,UINT,0,I4,0);
+    rbstr = SysAllocString(szFalse);
+    VAROR(UINT,0,BSTR,rbstr,I4,0);
+    VAROR(UINT,0xffff,BSTR,rbstr,I4,0xffff);
+    rbstr = SysAllocString(szTrue);
+    VAROR(UINT,0,BSTR,rbstr,I4,-1);
+    VAROR(UINT,0xffff,BSTR,rbstr,I4,-1);
+    VARORCY(UINT,0xffff,10000,I4,0xffff);
+    VARORCY(UINT,0xffff,0,I4,0xffff);
+    VARORCY(UINT,0,0,I4,0);
+
+    lbstr = SysAllocString(szFalse);
+    rbstr = SysAllocString(szFalse);
+    VAROR(BSTR,lbstr,BSTR,rbstr,BOOL,0);
+    rbstr = SysAllocString(szTrue);
+    VAROR(BSTR,lbstr,BSTR,rbstr,BOOL,VARIANT_TRUE);
+    lbstr = SysAllocString(szTrue);
+    VAROR(BSTR,lbstr,BSTR,rbstr,BOOL,VARIANT_TRUE);
+    VARORCY(BSTR,lbstr,10000,I4,-1);
+    lbstr = SysAllocString(szFalse);
+    VARORCY(BSTR,lbstr,10000,I4,1);
+}
 
 static HRESULT (WINAPI *pVarEqv)(LPVARIANT,LPVARIANT,LPVARIANT);
 
+static const char *szVarEqvFail = "VarEqv(%d,%d): expected 0x0,%d,%d, got 0x%lX,%d,%d\n";
 #define VAREQV(vt1,val1,vt2,val2,rvt,rval) \
         V_VT(&left) = VT_##vt1; V_##vt1(&left) = val1; \
         V_VT(&right) = VT_##vt2; V_##vt2(&right) = val2; \
         memset(&result,0,sizeof(result)); hres = pVarEqv(&left,&right,&result); \
         ok(hres == S_OK && V_VT(&result) == VT_##rvt && V_##rvt(&result) == (rval), \
-        "VarEqv(%d,%d): expected 0x0,%d,%d, got 0x%lX,%d,%d\n", VT_##vt1, VT_##vt2, \
+        szVarEqvFail, VT_##vt1, VT_##vt2, \
         VT_##rvt, (int)(rval), hres, V_VT(&result), (int)V_##rvt(&result))
 
 static void test_VarEqv(void)
@@ -3052,5 +4385,6 @@ START_TEST(vartest)
   test_VarNeg();
   test_VarRound();
   test_VarXor();
+  test_VarOr();
   test_VarEqv();
 }
