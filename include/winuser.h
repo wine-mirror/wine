@@ -4234,8 +4234,13 @@ BOOL        WINAPI GetWindowInfo(HWND, PWINDOWINFO);
 LONG        WINAPI GetWindowLongA(HWND,INT);
 LONG        WINAPI GetWindowLongW(HWND,INT);
 #define     GetWindowLong WINELIB_NAME_AW(GetWindowLong)
+#ifdef _WIN64
+LONG_PTR    WINAPI GetWindowLongPtrA(HWND,INT);
+LONG_PTR    WINAPI GetWindowLongPtrW(HWND,INT);
+#else
 #define     GetWindowLongPtrA GetWindowLongA
 #define     GetWindowLongPtrW GetWindowLongW
+#endif
 #define     GetWindowLongPtr WINELIB_NAME_AW(GetWindowLongPtr)
 UINT        WINAPI GetWindowModuleFileNameA(HWND,LPSTR,UINT);
 UINT        WINAPI GetWindowModuleFileNameW(HWND,LPWSTR,UINT);
@@ -4460,10 +4465,15 @@ BOOL        WINAPI SetUserObjectSecurity(HANDLE,PSECURITY_INFORMATION,PSECURITY_
 LONG        WINAPI SetWindowLongA(HWND,INT,LONG);
 LONG        WINAPI SetWindowLongW(HWND,INT,LONG);
 #define     SetWindowLong WINELIB_NAME_AW(SetWindowLong)
+#ifdef _WIN64
+LONG_PTR    WINAPI SetWindowLongPtrA(HWND,INT,LONG_PTR);
+LONG_PTR    WINAPI SetWindowLongPtrW(HWND,INT,LONG_PTR);
+#else
 #define     SetWindowLongPtrA SetWindowLongA
 #define     SetWindowLongPtrW SetWindowLongW
+#endif
 #define     SetWindowLongPtr WINELIB_NAME_AW(SetWindowLongPtr)
-BOOL      WINAPI SetWindowPlacement(HWND,const WINDOWPLACEMENT*);
+BOOL        WINAPI SetWindowPlacement(HWND,const WINDOWPLACEMENT*);
 HHOOK       WINAPI SetWindowsHookA(INT,HOOKPROC);
 HHOOK       WINAPI SetWindowsHookW(INT,HOOKPROC);
 #define     SetWindowsHook WINELIB_NAME_AW(SetWindowsHook)
