@@ -84,7 +84,7 @@ typedef struct
 } HEADER_INFO;
 
 
-#define VERT_BORDER     4
+#define VERT_BORDER     3
 #define DIVIDER_WIDTH  10
 
 #define HEADER_GetInfoPtr(hwnd) ((HEADER_INFO *)GetWindowLongA(hwnd,0))
@@ -1239,7 +1239,6 @@ HEADER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     infoPtr->hwndNotify = GetParent(hwnd);
     infoPtr->uNumItem = 0;
-    infoPtr->nHeight = 20;
     infoPtr->hFont = 0;
     infoPtr->items = 0;
     infoPtr->bRectsValid = FALSE;
