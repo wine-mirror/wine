@@ -1731,13 +1731,17 @@ HWND WINAPI GetNextDlgGroupItem( HWND hwndDlg, HWND hwndCtrl,
         if (!pWnd || (pWnd->dwStyle & WS_GROUP))
         {
             /* Wrap-around to the beginning of the group */
-            WND *pWndStart = WIN_LockWndPtr(pWndDlg->child);
-            for (WIN_UpdateWndPtr(&pWnd,pWndStart); pWnd;WIN_UpdateWndPtr(&pWnd,pWnd->next))
+            WND *pWndTemp;
+
+            WIN_UpdateWndPtr( &pWnd, pWndDlg->child );
+            for ( pWndTemp = WIN_LockWndPtr( pWnd ); 
+                  pWndTemp;
+                  WIN_UpdateWndPtr( &pWndTemp, pWndTemp->next) )
             {
-                if (pWnd->dwStyle & WS_GROUP) pWndStart = pWnd;
-                if (pWnd == pWndCtrl) break;
+                if (pWndTemp->dwStyle & WS_GROUP) WIN_UpdateWndPtr( &pWnd, pWndTemp );
+                if (pWndTemp == pWndCtrl) break;
             }
-            pWnd = pWndStart;
+            WIN_ReleaseWndPtr( pWndTemp );
         }
         if (pWnd == pWndCtrl) break;
 	if ((pWnd->dwStyle & WS_VISIBLE) && !(pWnd->dwStyle & WS_DISABLED))
