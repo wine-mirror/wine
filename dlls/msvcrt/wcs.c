@@ -112,6 +112,52 @@ MSVCRT_wchar_t* _wcsset( MSVCRT_wchar_t* str, MSVCRT_wchar_t c )
 }
 
 /*********************************************************************
+ *		wcstod (MSVCRT.@)
+ */
+double MSVCRT_wcstod(const MSVCRT_wchar_t* lpszStr, MSVCRT_wchar_t** end)
+{
+  const MSVCRT_wchar_t* str = lpszStr;
+  int negative = 0;
+  double ret = 0, divisor = 10.0;
+
+  TRACE("(%s,%p) semi-stub\n", debugstr_w(lpszStr), end);
+
+  /* FIXME:
+   * - Should set errno on failure
+   * - Should fail on overflow
+   * - Need to check which input formats are allowed
+   */
+  while (isspaceW(*str))
+    str++;
+
+  if (*str == '-')
+  {
+    negative = 1;
+    str++;
+  }
+
+  while (isdigitW(*str))
+  {
+    ret = ret * 10.0 + (*str - '0');
+    str++;
+  }
+  if (*str == '.')
+    str++;
+  while (isdigitW(*str))
+  {
+    ret = ret + (*str - '0') / divisor;
+    divisor *= 10;
+    str++;
+  }
+
+  if (end)
+    *end = (MSVCRT_wchar_t*)str;
+
+  TRACE("returning %g\n", ret);
+  return ret;
+}
+
+/*********************************************************************
  *		_vsnwprintf (MSVCRT.@)
  */
 int _vsnwprintf(MSVCRT_wchar_t *str, unsigned int len,

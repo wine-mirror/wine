@@ -753,7 +753,7 @@
 @ cdecl wcsrchr(wstr long) ntdll.wcsrchr
 @ cdecl wcsspn(wstr wstr) ntdll.wcsspn
 @ cdecl wcsstr(wstr wstr) ntdll.wcsstr
-@ stub wcstod #(wstr ptr)
+@ cdecl wcstod(wstr ptr) MSVCRT_wcstod
 @ cdecl wcstok(wstr wstr) ntdll.wcstok
 @ cdecl wcstol(wstr ptr long) ntdll.wcstol
 @ cdecl wcstombs(ptr ptr long) ntdll.wcstombs
