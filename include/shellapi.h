@@ -238,6 +238,8 @@ typedef struct _SHNAMEMAPPINGW
 DECL_WINELIB_TYPE_AW(SHNAMEMAPPING)
 DECL_WINELIB_TYPE_AW(LPSHNAMEMAPPING)
 
+void WINAPI SHFreeNameMappings(HANDLE hNameMappings);
+
 /******************************************
  * ShellExecute
  */
