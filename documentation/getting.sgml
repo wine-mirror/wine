@@ -116,7 +116,8 @@
           packages among the various systems' methods of packaging and package 
           management in this guide, however, up to date installation notes for 
           particular distributions can be found at the WineHQ website in the 
-          howto, at <ulink url=""></ulink>.  If you need further help figuring 
+          <ulink url="http://www.winehq.org/site/howto">HowTo</ulink>.
+          If you need further help figuring 
           out how to simply install a Wine package, we suggest consulting your 
           distribution's documentation, support forums, or IRC channels.
         </para>
