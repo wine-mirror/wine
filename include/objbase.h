@@ -350,7 +350,7 @@ HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid);
 HRESULT WINAPI CoSuspendClassObjects(void);
 HRESULT WINAPI CoResumeClassObjects(void);
 ULONG WINAPI CoAddRefServerProcess(void);
-HRESULT WINAPI CoReleaseServerProcess(void);
+ULONG WINAPI CoReleaseServerProcess(void);
 
 /* marshalling */
 HRESULT WINAPI CoCreateFreeThreadedMarshaler(LPUNKNOWN punkOuter, LPUNKNOWN* ppunkMarshal);
@@ -417,27 +417,22 @@ HRESULT WINAPI CreateDataCache(LPUNKNOWN pUnkOuter, REFCLSID rclsid, REFIID iid,
 /*****************************************************************************
  *	Moniker API
  */
-HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid);
-
-HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC* ppbc);
-
-HRESULT WINAPI CreateFileMoniker(LPCOLESTR lpszPathName, LPMONIKER* ppmk);
-
-HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim, LPCOLESTR  lpszItem, LPMONIKER* ppmk);
-
-HRESULT WINAPI CreateAntiMoniker(LPMONIKER * ppmk);
-
-HRESULT WINAPI CreateGenericComposite(LPMONIKER pmkFirst, LPMONIKER pmkRest, LPMONIKER* ppmkComposite);
-
 HRESULT WINAPI BindMoniker(LPMONIKER pmk, DWORD grfOpt, REFIID iidResult, LPVOID* ppvResult);
-
+HRESULT WINAPI CoGetObject(LPCWSTR pszName, BIND_OPTS *pBindOptions, REFIID riid, void **ppv);
+HRESULT WINAPI CreateAntiMoniker(LPMONIKER * ppmk);
+HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC* ppbc);
 HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, LPMONIKER* ppmk);
-
+HRESULT WINAPI CreateFileMoniker(LPCOLESTR lpszPathName, LPMONIKER* ppmk);
+HRESULT WINAPI CreateGenericComposite(LPMONIKER pmkFirst, LPMONIKER pmkRest, LPMONIKER* ppmkComposite);
+HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim, LPCOLESTR  lpszItem, LPMONIKER* ppmk);
+HRESULT WINAPI CreateObjrefMoniker(LPUNKNOWN punk, LPMONIKER * ppmk);
+HRESULT WINAPI CreatePointerMoniker(LPUNKNOWN punk, LPMONIKER * ppmk);
 HRESULT WINAPI CreatePointerMoniker(LPUNKNOWN punk, LPMONIKER* ppmk);
-
-HRESULT WINAPI MonikerCommonPrefixWith(IMoniker* pmkThis,IMoniker* pmkOther,IMoniker** ppmkCommon);
-
+HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid);
 HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot);
+HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szUserName, ULONG * pchEaten, LPMONIKER * ppmk);
+HRESULT WINAPI MonikerCommonPrefixWith(IMoniker* pmkThis,IMoniker* pmkOther,IMoniker** ppmkCommon);
+HRESULT WINAPI MonikerRelativePathTo(LPMONIKER pmkSrc, LPMONIKER pmkDest, LPMONIKER * ppmkRelPath, BOOL dwReserved);
 
 /*****************************************************************************
  *	Storage API

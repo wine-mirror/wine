@@ -2249,3 +2249,21 @@ HRESULT WINAPI CoSuspendClassObjects(void)
     FIXME("\n");
     return S_OK;
 }
+
+/***********************************************************************
+ *           CoAddRefServerProcess [OLE32.@]
+ */
+ULONG WINAPI CoAddRefServerProcess(void)
+{
+    FIXME("\n");
+    return 2;
+}
+
+/***********************************************************************
+ *           CoReleaseServerProcess [OLE32.@]
+ */
+ULONG WINAPI CoReleaseServerProcess(void)
+{
+    FIXME("\n");
+    return 1;
+}
