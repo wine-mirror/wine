@@ -3485,27 +3485,27 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
        /*        QOS SQOS, GQOS; */
        GROUP g;
        SOCKET cs;
-       SOCKADDR s_addr, d_addr;
+       SOCKADDR src_addr, dst_addr;
 
        TRACE("Socket  %ui, sockaddr %p, addrlen %p, fnCondition %p, dwCallbackD ata %ld\n",
                s, addr, addrlen, lpfnCondition, dwCallbackData);
 
        
-       size = sizeof(s_addr);
-       cs = WS_accept(s, &s_addr, &size);
+       size = sizeof(src_addr);
+       cs = WS_accept(s, &src_addr, &size);
        
        if (cs == SOCKET_ERROR) return SOCKET_ERROR;
 
-       CallerId.buf = (char *)&s_addr;
-       CallerId.len = sizeof(s_addr);  
+       CallerId.buf = (char *)&src_addr;
+       CallerId.len = sizeof(src_addr);  
 
        CallerData.buf = NULL;
        CallerData.len = (ULONG)NULL;   
 
-       WS_getsockname(cs, &d_addr, &size);
+       WS_getsockname(cs, &dst_addr, &size);
 
-       CalleeId.buf = (char *)&d_addr;
-       CalleeId.len = sizeof(d_addr);  
+       CalleeId.buf = (char *)&dst_addr;
+       CalleeId.len = sizeof(dst_addr);  
 
        
        ret = (*lpfnCondition)(&CallerId, &CallerData, NULL, NULL,
@@ -3515,7 +3515,7 @@ SOCKET WINAPI WSAAccept( SOCKET s, struct WS_sockaddr *addr, LPINT addrlen,
        {
                case CF_ACCEPT:
                        if (addr && addrlen)
-                               addr = memcpy(addr, &s_addr, (*addrlen > size) ?  size : *addrlen );
+                               addr = memcpy(addr, &src_addr, (*addrlen > size) ?  size : *addrlen );
                        return cs;
                case CF_DEFER:
                        SetLastError(WSATRY_AGAIN);
