@@ -34,6 +34,11 @@ static inline int strcmpW( const WCHAR *str1, const WCHAR *str2 )
     return *str1 - *str2;
 }
 
+#ifndef HAVE_WCTYPE_H
+/* FIXME */
+#define towupper(ch) (HIBYTE(ch) ? ch : (WCHAR)toupper(LOBYTE(ch)))
+#endif
+
 static inline int strcmpiW( const WCHAR *str1, const WCHAR *str2 ) 
 {
     while (*str1 && (towupper(*str1) == towupper(*str2))) { str1++; str2++; }
