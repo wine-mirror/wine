@@ -137,7 +137,7 @@ CUPS_LoadPrinters(void) {
 
 	hadprinter = TRUE;
 
-	if (!strcmp(def,printers[i]))
+	if (def && !strcmp(def,printers[i]))
 	        WINSPOOL_SetDefaultPrinter(printers[i],printers[i],FALSE);
 	memset(&pinfo2a,0,sizeof(pinfo2a));
 	pinfo2a.pPrinterName	= printers[i];
