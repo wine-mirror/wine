@@ -448,20 +448,35 @@ static void destroy_hash(OBJECTHDR *pCryptHash)
  *  pKeyContainer [I] Pointer to the key container the hash object belongs to.
  *  pCryptHash    [I] The hash object to be initialized.
  */
-static inline BOOL init_hash(KEYCONTAINER *pKeyContainer, CRYPTHASH *pCryptHash) {
+static inline BOOL init_hash(CRYPTHASH *pCryptHash) {
     DWORD dwLen;
-    const PROV_ENUMALGS_EX *pAlgInfo;
         
     switch (pCryptHash->aiAlgid) 
     {
         case CALG_HMAC:
             if (pCryptHash->pHMACInfo) { 
+                const PROV_ENUMALGS_EX *pAlgInfo;
+                KEYCONTAINER *pKeyContainer;
+
+                if (!lookup_handle(&handle_table, pCryptHash->hProv, RSAENH_MAGIC_CONTAINER, 
+                                   (OBJECTHDR**)&pKeyContainer))
+                {
+                    SetLastError(NTE_FAIL);
+                    return FALSE;
+                }
                 pAlgInfo = get_algid_info(pKeyContainer, pCryptHash->pHMACInfo->HashAlgid);
-                if (pAlgInfo) pCryptHash->dwHashSize = pAlgInfo->dwDefaultLen >> 3;
-                return init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->context);
+                if (!pAlgInfo) {
+                    SetLastError(NTE_BAD_ALGID);
+                    return FALSE;
+                }
+                pCryptHash->dwHashSize = pAlgInfo->dwDefaultLen >> 3;
+                init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->context);
+                update_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->context,
+                                 pCryptHash->pHMACInfo->pbInnerString, 
+                                 pCryptHash->pHMACInfo->cbInnerString);
             }
             return TRUE;
-
+            
         case CALG_MAC:
             dwLen = sizeof(DWORD);
             RSAENH_CPGetKeyParam(pCryptHash->hProv, pCryptHash->hKey, KP_BLOCKLEN, 
@@ -524,9 +539,21 @@ static inline void finalize_hash(CRYPTHASH *pCryptHash) {
     switch (pCryptHash->aiAlgid)
     {
         case CALG_HMAC:
-            if (pCryptHash->pHMACInfo)
+            if (pCryptHash->pHMACInfo) {
+                BYTE abHashValue[RSAENH_MAX_HASH_SIZE];
+
                 finalize_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->context, 
                                    pCryptHash->abHashValue);
+                memcpy(abHashValue, pCryptHash->abHashValue, pCryptHash->dwHashSize);
+                init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->context);
+                update_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->context,
+                                 pCryptHash->pHMACInfo->pbOuterString, 
+                                 pCryptHash->pHMACInfo->cbOuterString);
+                update_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->context,
+                                 abHashValue, pCryptHash->dwHashSize);
+                finalize_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->context,
+                                   pCryptHash->abHashValue);
+            } 
             break;
 
         case CALG_MAC:
@@ -1173,7 +1200,7 @@ BOOL WINAPI RSAENH_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, 
     pCryptHash->pHMACInfo = (PHMAC_INFO)NULL;
     pCryptHash->dwHashSize = peaAlgidInfo->dwDefaultLen >> 3;
     
-    return init_hash(pKeyContainer, pCryptHash);
+    return init_hash(pCryptHash);
 }
 
 /******************************************************************************
@@ -2045,7 +2072,6 @@ BOOL WINAPI RSAENH_CPGetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
 {
     CRYPTHASH *pCryptHash;
     KEYCONTAINER *pKeyContainer;
-    BYTE abHashValue[RSAENH_MAX_HASH_SIZE];
         
     TRACE("(hProv=%08lx, hHash=%08lx, dwParam=%08lx, pbData=%p, pdwDataLen=%p, dwFlags=%08lx)\n", 
         hProv, hHash, dwParam, pbData, pdwDataLen, dwFlags);
@@ -2095,15 +2121,6 @@ BOOL WINAPI RSAENH_CPGetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
             if (pbData && (pCryptHash->dwState != RSAENH_HASHSTATE_FINISHED))
             {
                 finalize_hash(pCryptHash);
-                if (pCryptHash->aiAlgid == CALG_HMAC) {
-                    memcpy(abHashValue, pCryptHash->abHashValue, pCryptHash->dwHashSize);
-                    init_hash(pKeyContainer, pCryptHash);
-                    update_hash(pCryptHash, pCryptHash->pHMACInfo->pbOuterString, 
-                                pCryptHash->pHMACInfo->cbOuterString);
-                    update_hash(pCryptHash, abHashValue, pCryptHash->dwHashSize);
-                    finalize_hash(pCryptHash);
-                } 
-                        
                 pCryptHash->dwState = RSAENH_HASHSTATE_FINISHED;
             }
             
@@ -2485,12 +2502,12 @@ BOOL WINAPI RSAENH_CPDeriveKey(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTHASH hBaseD
             pad2[i] = RSAENH_HMAC_DEF_OPAD_CHAR ^ (i<dwLen ? abHashValue[i] : 0);
         }
                 
-        init_hash(pKeyContainer, pCryptHash);
+        init_hash(pCryptHash);
         update_hash(pCryptHash, pad1, RSAENH_HMAC_DEF_PAD_LEN);
         finalize_hash(pCryptHash);
         memcpy(abHashValue, pCryptHash->abHashValue, pCryptHash->dwHashSize);
 
-        init_hash(pKeyContainer, pCryptHash);
+        init_hash(pCryptHash);
         update_hash(pCryptHash, pad2, RSAENH_HMAC_DEF_PAD_LEN);
         finalize_hash(pCryptHash);
         memcpy(abHashValue+pCryptHash->dwHashSize, pCryptHash->abHashValue, 
@@ -2767,7 +2784,6 @@ BOOL WINAPI RSAENH_CPSetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
         case HP_HMAC_INFO:
             free_hmac_info(pCryptHash->pHMACInfo);
             if (!copy_hmac_info(&pCryptHash->pHMACInfo, (PHMAC_INFO)pbData)) return FALSE;
-            init_hash(pKeyContainer, pCryptHash);
 
             if (!lookup_handle(&handle_table, pCryptHash->hKey, RSAENH_MAGIC_KEY, 
                                (OBJECTHDR**)&pCryptKey)) 
@@ -2783,8 +2799,8 @@ BOOL WINAPI RSAENH_CPSetHashParam(HCRYPTPROV hProv, HCRYPTHASH hHash, DWORD dwPa
                 pCryptHash->pHMACInfo->pbOuterString[i] ^= pCryptKey->abKeyValue[i];
             }
             
-            return RSAENH_CPHashData(hProv, hHash, pCryptHash->pHMACInfo->pbInnerString, 
-                                     pCryptHash->pHMACInfo->cbInnerString, 0);
+            init_hash(pCryptHash);
+            return TRUE;
 
         case HP_HASHVAL:
             memcpy(pCryptHash->abHashValue, pbData, pCryptHash->dwHashSize);
