@@ -306,8 +306,8 @@ typedef struct
 #endif  /* svr4 || SCO_DS */
 
 
-/* exception code definitions (already defined by FreeBSD) */
-#ifndef __FreeBSD__  /* FIXME: other BSDs? */
+/* exception code definitions (already defined by FreeBSD/NetBSD) */
+#if !defined(__FreeBSD__) && !defined(__NetBSD__) /* FIXME: other BSDs? */
 #define T_DIVIDE        0   /* Division by zero exception */
 #define T_TRCTRAP       1   /* Single-step exception */
 #define T_NMI           2   /* NMI interrupt */
@@ -328,6 +328,9 @@ typedef struct
 #define T_ALIGNFLT      17  /* Alignment check exception */
 #define T_MCHK          18  /* Machine check exception */
 #define T_CACHEFLT      19  /* Cache flush exception */
+#endif
+#if defined(__NetBSD__)
+#define T_MCHK          19  /* Machine check exception */
 #endif
 
 #define T_UNKNOWN     (-1)  /* Unknown fault (TRAP_sig not defined) */
