@@ -12,7 +12,7 @@
 #include "winnls.h"
 #include "wine/unicode.h"
 #include "nspapi.h"
-#include "winsock.h"
+#include "winsock2.h"
 #include "wsipx.h"
 #include "wshisotp.h"
 

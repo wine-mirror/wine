@@ -16,7 +16,6 @@
 #include "wingdi.h"
 #include "winnt.h"
 #include "winuser.h"
-#include "winsock.h"
 
 #include "wine/winbase16.h"
 #include "drive.h"

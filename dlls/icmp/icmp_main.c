@@ -46,7 +46,7 @@
 #include "windef.h"
 #include "winbase.h"
 #ifdef ICMP_WIN
-#include "winsock.h"
+#include "winsock2.h"
 #endif
 
 #include "winerror.h"
