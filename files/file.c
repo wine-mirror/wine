@@ -1554,19 +1554,43 @@ BOOL WINAPI GetOverlappedResult(
         return FALSE;
     }
 
-    do {
-        TRACE("waiting on %p\n",lpOverlapped);
-        r = WaitForSingleObjectEx(lpOverlapped->hEvent, bWait?INFINITE:0, TRUE);
-        TRACE("wait on %p returned %ld\n",lpOverlapped,r);
-    } while (r==STATUS_USER_APC);
+    if ( bWait )
+    {
+        do {
+            TRACE("waiting on %p\n",lpOverlapped);
+            r = WaitForSingleObjectEx(lpOverlapped->hEvent, INFINITE, TRUE);
+            TRACE("wait on %p returned %ld\n",lpOverlapped,r);
+        } while (r==STATUS_USER_APC);
+    }
+    else if ( lpOverlapped->Internal == STATUS_PENDING )
+    {
+        /* Wait in order to give APCs a chance to run. */
+        /* This is cheating, so we must set the event again in case of success -
+           it may be a non-manual reset event. */
+        do {
+            TRACE("waiting on %p\n",lpOverlapped);
+            r = WaitForSingleObjectEx(lpOverlapped->hEvent, INFINITE, TRUE);
+            TRACE("wait on %p returned %ld\n",lpOverlapped,r);
+        } while (r==STATUS_USER_APC);
+        if ( r == WAIT_OBJECT_0 )
+            NtSetEvent ( lpOverlapped->hEvent, NULL );
+    }
 
     if(lpTransferred)
         *lpTransferred = lpOverlapped->InternalHigh;
 
-    SetLastError ( lpOverlapped->Internal == STATUS_PENDING ?
-                   ERROR_IO_INCOMPLETE : RtlNtStatusToDosError ( lpOverlapped->Internal ) );
-
-    return (r==WAIT_OBJECT_0);
+    switch ( lpOverlapped->Internal )
+    {
+    case STATUS_SUCCESS:
+        return TRUE;
+    case STATUS_PENDING:
+        SetLastError ( ERROR_IO_INCOMPLETE );
+        if ( bWait ) ERR ("PENDING status after waiting!\n");
+        return FALSE;
+    default:
+        SetLastError ( RtlNtStatusToDosError ( lpOverlapped->Internal ) );
+        return FALSE;
+    }
 }
 
 /***********************************************************************

@@ -3266,22 +3266,38 @@ BOOL WINAPI WSAGetOverlappedResult ( SOCKET s, LPWSAOVERLAPPED lpOverlapped,
         return FALSE;
     }
 
-    do {
-        r = WaitForSingleObjectEx (lpOverlapped->hEvent, fWait ? INFINITE : 0, TRUE);
-    } while (r == STATUS_USER_APC);
-
+    if ( fWait )
+    {
+        while ( WaitForSingleObjectEx (lpOverlapped->hEvent, INFINITE, TRUE) == STATUS_USER_APC );
+    }
+    else if ( lpOverlapped->Internal == STATUS_PENDING )
+    {
+        /* Wait in order to give APCs a chance to run. */
+        /* This is cheating, so we must set the event again in case of success -
+           it may be a non-manual reset event. */
+        while ( (r = WaitForSingleObjectEx (lpOverlapped->hEvent, 0, TRUE)) == STATUS_USER_APC );
+        if ( r == WAIT_OBJECT_0 )
+            NtSetEvent ( lpOverlapped->hEvent, NULL );
+    }
+    
     if ( lpcbTransfer )
         *lpcbTransfer = lpOverlapped->InternalHigh;
 
     if ( lpdwFlags )
         *lpdwFlags = lpOverlapped->Offset;
 
-    if ( r == WAIT_OBJECT_0 )
+    switch ( lpOverlapped->Internal )
+    {
+    case STATUS_SUCCESS:
         return TRUE;
-
-    WSASetLastError ( lpOverlapped->Internal == STATUS_PENDING ?
-                      WSA_IO_INCOMPLETE : NtStatusToWSAError ( lpOverlapped->Internal ) );
-    return FALSE;
+    case STATUS_PENDING:
+        WSASetLastError ( WSA_IO_INCOMPLETE );
+        if (fWait) ERR ("PENDING status after waiting!\n");
+        return FALSE;
+    default:
+        WSASetLastError ( NtStatusToWSAError ( lpOverlapped->Internal ));
+        return FALSE;
+    }
 }
 
 
