@@ -621,8 +621,7 @@ WINE_MODREF *PE_CreateModule( HMODULE hModule, LPCSTR filename, DWORD flags,
         pModule->flags |= NE_FFLAGS_BUILTIN;
         wm->flags |= WINE_MODREF_INTERNAL;
     }
-
-    if ( flags & DONT_RESOLVE_DLL_REFERENCES )
+    else if ( flags & DONT_RESOLVE_DLL_REFERENCES )
         wm->flags |= WINE_MODREF_DONT_RESOLVE_REFS;
 
     wm->find_export = PE_FindExportedFunction;
