@@ -65,8 +65,8 @@ extern const BUILTIN32_DESCRIPTOR IMM32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR KERNEL32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR LZ32_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MPR_Descriptor;
-extern const BUILTIN32_DESCRIPTOR MCIAVI_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MCIANIM_Descriptor;
+extern const BUILTIN32_DESCRIPTOR MCIAVI_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MCICDA_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MCISEQ_Descriptor;
 extern const BUILTIN32_DESCRIPTOR MCIWAVE_Descriptor;
@@ -96,6 +96,7 @@ extern const BUILTIN32_RESOURCE comctl32_ResourceDescriptor;
 extern const BUILTIN32_RESOURCE comdlg32_ResourceDescriptor;
 extern const BUILTIN32_RESOURCE shell32_ResourceDescriptor;
 extern const BUILTIN32_RESOURCE user32_ResourceDescriptor;
+extern const BUILTIN32_RESOURCE winmm_ResourceDescriptor;
 
 static BUILTIN32_DLL BuiltinDLLs[] =
 {
@@ -137,7 +138,7 @@ static BUILTIN32_DLL BuiltinDLLs[] =
     { &USER32_Descriptor,   0, 0, &user32_ResourceDescriptor },
     { &VERSION_Descriptor,  0, 0, NULL },
     { &W32SKRNL_Descriptor, 0, 0, NULL },
-    { &WINMM_Descriptor,    BI32_DANGER, 0, NULL },
+    { &WINMM_Descriptor,    0, 0, &winmm_ResourceDescriptor },
     { &WINSPOOL_Descriptor, 0, 0, NULL },
     { &WNASPI32_Descriptor, 0, 0, NULL },
     { &WOW32_Descriptor,    0, 0, NULL },
