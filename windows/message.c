@@ -90,7 +90,7 @@ static void MSG_SendParentNotify(WND* wndPtr, WORD event, WORD idChild, LPARAM l
 /***********************************************************************
  *           MSG_TranslateMouseMsg
  *
- * Translate an mouse hardware event into a real mouse message.
+ * Translate a mouse hardware event into a real mouse message.
  *
  * Returns:
  *

@@ -5,7 +5,7 @@
  * Copyright 1996 Alexandre Julliard
  *
  * TODO:
- *    Fix the CopyFileEx methods to implement the "extented" functionality.
+ *    Fix the CopyFileEx methods to implement the "extended" functionality.
  *    Right now, they simply call the CopyFile method.
  */
 
@@ -151,7 +151,7 @@ static BOOL FILE_ShareDeny( int mode, int oldmode)
     {
     case OF_SHARE_COMPAT:
       if (sharemode == OF_SHARE_COMPAT) return FALSE;
-      if (openmode  == OF_READ) goto test_ro_err05 ;
+      if (openmode  == OF_READ) goto test_ro_err05;
       goto fail_error05;
     case OF_SHARE_EXCLUSIVE:
       if (sharemode == OF_SHARE_COMPAT) goto fail_int24;
@@ -165,13 +165,13 @@ static BOOL FILE_ShareDeny( int mode, int oldmode)
       switch (sharemode)
 	{
 	case OF_SHARE_COMPAT:
-	  if (oldopenmode == OF_READ) goto test_ro_int24 ;
+	  if (oldopenmode == OF_READ) goto test_ro_int24;
 	  goto fail_int24;
-	case OF_SHARE_DENY_NONE : 
+	case OF_SHARE_DENY_NONE: 
 	  return FALSE;
-	case OF_SHARE_DENY_WRITE :
+	case OF_SHARE_DENY_WRITE:
 	  if (oldopenmode == OF_READ) return FALSE;
-	case OF_SHARE_DENY_READ :
+	case OF_SHARE_DENY_READ:
 	  if (oldopenmode == OF_WRITE) return FALSE;
 	case OF_SHARE_EXCLUSIVE:
 	default:
@@ -188,11 +188,11 @@ static BOOL FILE_ShareDeny( int mode, int oldmode)
 	{
 	case OF_SHARE_COMPAT:
 	  goto fail_int24;
-	case OF_SHARE_DENY_NONE : 
+	case OF_SHARE_DENY_NONE: 
 	  return FALSE;
-	case OF_SHARE_DENY_WRITE :
+	case OF_SHARE_DENY_WRITE:
 	  if (oldopenmode == OF_READ) return FALSE;
-	case OF_SHARE_DENY_READ :
+	case OF_SHARE_DENY_READ:
 	  if (oldopenmode == OF_WRITE) return FALSE;
 	case OF_SHARE_EXCLUSIVE:
 	default:
@@ -204,11 +204,11 @@ static BOOL FILE_ShareDeny( int mode, int oldmode)
 	{
 	case OF_SHARE_COMPAT:
 	  goto fail_int24;
-	case OF_SHARE_DENY_NONE : 
+	case OF_SHARE_DENY_NONE: 
 	  return FALSE;
-	case OF_SHARE_DENY_WRITE :
+	case OF_SHARE_DENY_WRITE:
 	  if (oldopenmode == OF_READ) return FALSE;
-	case OF_SHARE_DENY_READ :
+	case OF_SHARE_DENY_READ:
 	  if (oldopenmode == OF_WRITE) return FALSE;
 	case OF_SHARE_EXCLUSIVE:
 	default:
@@ -1007,7 +1007,7 @@ success:  /* We get here if the open was successful */
     return hFileRet;
 
 not_found:  /* We get here if the file does not exist */
-    WARN("'%s' not found\n", name );
+    WARN("'%s' not found or sharing violation\n", name );
     SetLastError( ERROR_FILE_NOT_FOUND );
     /* fall through */
 

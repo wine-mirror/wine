@@ -430,6 +430,6 @@ owner	gdi32
 821 stub ICMDeleteTransform
 822 stub ICMTranslateRGB
 823 stub ICMTranslateRGBs
-824 stub ICMCheckCOlorsInGamut
+824 stub ICMCheckColorsInGamut
 1000 pascal16 SetLayout(word long) SetLayout16
 1001 stub GetLayout

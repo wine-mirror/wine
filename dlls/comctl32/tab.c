@@ -692,7 +692,7 @@ TAB_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 /******************************************************************************
  * TAB_AdjustRect
  *
- * Calculates the tab control's display area given the windows rectangle or
+ * Calculates the tab control's display area given the window rectangle or
  * the window rectangle given the requested display rectangle.
  */
 static LRESULT TAB_AdjustRect(
@@ -825,10 +825,6 @@ static void TAB_SetupScrolling(
      */
     if (infoPtr->hwndUpDown==0)
     {
-      /*
-       * I use a scrollbar since it seems to be more stable than the Updown
-       * control.
-       */
       infoPtr->hwndUpDown = CreateWindowA("msctls_updown32",
 					  "",
 					  WS_VISIBLE | WS_CHILD | UDS_HORZ,
@@ -2156,7 +2152,7 @@ TAB_Size (HWND hwnd, WPARAM wParam, LPARAM lParam)
     SetWindowPos (hwnd, 0, parent_rect.left, parent_rect.top,
             cx, cy, uPosFlags | SWP_NOZORDER);
   } else {
-    FIXME (tab,"WM_SIZE flag %x %lx not handled\n", wParam, lParam);
+    FIXME("WM_SIZE flag %x %lx not handled\n", wParam, lParam);
   } */
 
   /*
@@ -2204,7 +2200,7 @@ TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   TRACE("Created tab control, hwnd [%04x]\n", hwnd); 
 
   /* The tab control always has the WS_CLIPSIBLINGS style. Even 
-     if you don't specify in CreateWindow. This is necesary in 
+     if you don't specify it in CreateWindow. This is necessary in 
      order for paint to work correctly. This follows windows behaviour. */
   dwStyle = GetWindowLongA(hwnd, GWL_STYLE);
   SetWindowLongA(hwnd, GWL_STYLE, dwStyle|WS_CLIPSIBLINGS);

@@ -427,7 +427,10 @@ static	BOOL	DEBUG_HandleException(EXCEPTION_RECORD *rec, BOOL first_chance, BOOL
             DEBUG_Printf(DBG_CHN_MESG, "critical section %08lx wait failed", 
 			  rec->ExceptionInformation[0]);
 	    if (!DBG_IVAR(BreakOnCritSectTimeOut))
+	    {
+		DEBUG_Printf(DBG_CHN_MESG, "\n");
 		return TRUE;
+	    }
             break;
         default:
             DEBUG_Printf(DBG_CHN_MESG, "%08lx", rec->ExceptionCode);

@@ -748,7 +748,7 @@ static HRESULT WINAPI Xlib_IDirectDraw2Impl_EnumDisplayModes(
 	    }
 	  }
 	  if (j == nvisuals)
-	    WARN("Did not find visual corresponding the the pixmap format !\n");
+	    WARN("Did not find visual corresponding to the pixmap format !\n");
 	}
       }
       i++;

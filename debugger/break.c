@@ -466,13 +466,15 @@ void DEBUG_AddWatchpoint( const DBG_VALUE *_value, BOOL is_write )
       DEBUG_Printf(DBG_CHN_MESG, "Bad address. Watchpoint not set\n");
       breakpoints[num].refcount = 0;
    }
+   else
+   {
+      breakpoints[num].u.w.rw = (is_write) ? TRUE : FALSE;
+      breakpoints[reg].u.w.reg = reg;
    
-   breakpoints[num].u.w.rw = (is_write) ? TRUE : FALSE;
-   breakpoints[reg].u.w.reg = reg;
-   
-   DEBUG_Printf( DBG_CHN_MESG, "Watchpoint %d at ", num );
-   DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? 32:16, TRUE );
-   DEBUG_Printf( DBG_CHN_MESG, "\n" );
+      DEBUG_Printf( DBG_CHN_MESG, "Watchpoint %d at ", num );
+      DEBUG_PrintAddress( &breakpoints[num].addr, breakpoints[num].is32 ? 32:16, TRUE );
+      DEBUG_Printf( DBG_CHN_MESG, "\n" );
+   }
 }
 
 /***********************************************************************

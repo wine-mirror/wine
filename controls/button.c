@@ -241,7 +241,7 @@ static inline LRESULT WINAPI ButtonWndProc_locked(WND* wndPtr, UINT uMsg,
             !(SendMessageA(hWnd, BM_GETCHECK, 0, 0) & BST_CHECKED))
 	{
             /* The notification is sent when the button (BS_AUTORADIOBUTTON) 
-               is unckecked and the focus was not given by a mouse click. */
+               is unchecked and the focus was not given by a mouse click. */
 	    if (style == BS_AUTORADIOBUTTON)
 		    SendMessageA( hWnd, BM_SETCHECK, BUTTON_CHECKED, 0 );
             SendMessageA( GetParent(hWnd), WM_COMMAND,
@@ -437,7 +437,7 @@ static void BUTTON_DrawPushButton(
 	   rc.right++, rc.bottom++;
 	   DrawEdge( hDC, &rc, EDGE_RAISED, BF_RECT );
 
-	   /* To place de bitmap correctly */
+	   /* To place the bitmap correctly */
 	   xBorderOffset += GetSystemMetrics(SM_CXEDGE);
 	   yBorderOffset += GetSystemMetrics(SM_CYEDGE);
 
@@ -549,7 +549,7 @@ static void BUTTON_DrawPushButton(
 	xOffset = (((rc.right - rc.left) - 2*xBorderOffset) - imageWidth ) / 2;
 	yOffset = (((rc.bottom - rc.top) - 2*yBorderOffset) - imageHeight) / 2;
 
-	/* If the image is too big for the button then create a region*/
+	/* If the image is too big for the button then create a region */
         if(xOffset < 0 || yOffset < 0)
 	{
             HRGN hBitmapRgn = 0;

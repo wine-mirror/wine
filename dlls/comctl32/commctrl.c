@@ -180,7 +180,7 @@ COMCTL32_LibMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  *     This is the correct documentation:
  *
  *     uMsg:
- *     MenuHelp() does NOT handle WM_COMMAND messages! It only handes
+ *     MenuHelp() does NOT handle WM_COMMAND messages! It only handles
  *     WM_MENUSELECT messages.
  *
  *     lpwIDs:

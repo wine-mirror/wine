@@ -40,7 +40,7 @@ PDB current_process;
 
 static char **main_exe_argv;
 static char main_exe_name[MAX_PATH];
-static HFILE main_exe_file = -1;
+static HFILE main_exe_file = INVALID_HANDLE_VALUE;
 
 
 /***********************************************************************

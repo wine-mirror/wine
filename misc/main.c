@@ -180,7 +180,7 @@ void MAIN_ParseDebugOptions( const char *arg )
 /***********************************************************************
  *           MAIN_WineInit
  *
- * Wine initialisation and command-line parsing
+ * Wine initialisation
  */
 void MAIN_WineInit(void)
 {
