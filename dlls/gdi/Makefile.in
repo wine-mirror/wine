@@ -15,10 +15,6 @@ SPEC_SRCS16 = \
 	wing.spec
 
 C_SRCS = \
-	$(TOPOBJDIR)/graphics/bitblt.c \
-	$(TOPOBJDIR)/graphics/mapping.c \
-	$(TOPOBJDIR)/graphics/painting.c \
-	$(TOPOBJDIR)/graphics/path.c \
 	$(TOPOBJDIR)/objects/bitmap.c \
 	$(TOPOBJDIR)/objects/brush.c \
 	$(TOPOBJDIR)/objects/clipping.c \
@@ -35,6 +31,7 @@ C_SRCS = \
 	$(TOPOBJDIR)/objects/region.c \
 	$(TOPOBJDIR)/objects/text.c \
 	bidi.c \
+	bitblt.c \
 	driver.c \
 	enhmfdrv/bitblt.c \
 	enhmfdrv/dc.c \
@@ -45,6 +42,7 @@ C_SRCS = \
 	freetype.c \
 	gdi_main.c \
 	icm.c \
+	mapping.c \
 	mfdrv/bitblt.c \
 	mfdrv/dc.c \
 	mfdrv/graphics.c \
@@ -52,6 +50,8 @@ C_SRCS = \
 	mfdrv/mapping.c \
 	mfdrv/objects.c \
 	mfdrv/text.c \
+	painting.c \
+	path.c \
 	printdrv.c
 
 C_SRCS16 = \
@@ -67,7 +67,6 @@ RC_SRCS16 = version16.rc
 SUBDIRS = tests
 
 EXTRASUBDIRS = \
-	$(TOPOBJDIR)/graphics \
 	$(TOPOBJDIR)/objects \
 	enhmfdrv \
 	mfdrv
