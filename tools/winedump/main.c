@@ -124,6 +124,30 @@ static void do_end (const char *arg)
 }
 
 
+static void do_symfile (const char *arg)
+{
+  FILE *f;
+  char symstring[256];    /* keep count with "%<width>s" below */
+  search_symbol *symbolp,**symbolptail = &globals.search_symbol;
+
+  if (!(f = fopen(arg, "rt")))
+    fatal ("Cannot open <symfile>");
+  while (1 == fscanf(f, "%255s", symstring))    /* keep count with [<width>] above */
+  {
+    symstring[sizeof(symstring)-1] = '\0';
+    if (!(symbolp = malloc(sizeof(*symbolp) + strlen(symstring))))
+      fatal ("Out of memory");
+    strcpy(symbolp->symbolname, symstring);
+    symbolp->found = 0;
+    symbolp->next = NULL;
+    *symbolptail = symbolp;
+    symbolptail = &symbolp->next;
+  }
+  if (fclose(f))
+    fatal ("Cannot close <symfile>");
+}
+
+
 static void do_verbose (void)
 {
   globals.do_verbose = 1;
@@ -173,6 +197,7 @@ static const struct option option_table[] = {
   {"-C",    SPEC, 0, do_cdecl,    "-C           Assume __cdecl calls (default: __stdcall)"},
   {"-s",    SPEC, 1, do_start,    "-s num       Start prototype search after symbol 'num'"},
   {"-e",    SPEC, 1, do_end,      "-e num       End prototype search after symbol 'num'"},
+  {"-S",    SPEC, 1, do_symfile,  "-S symfile   Search only prototype names found in 'symfile'"},
   {"-q",    SPEC, 0, do_quiet,    "-q           Don't show progress (quiet)."},
   {"-v",    SPEC, 0, do_verbose,  "-v           Show lots of detail while working (verbose)."},
   {"dump",  DUMP, 0, do_dump,     "dump <mod>   Dumps the content of the module (dll, exe...) named <mod>"},
@@ -290,6 +315,54 @@ static void set_module_name(unsigned setUC)
     OUTPUT_UC_DLL_NAME = (setUC) ? str_toupper( strdup (OUTPUT_DLL_NAME)) : "";
 }
 
+/* Marks the symbol as 'found'! */
+/* return: perform-search */
+static int symbol_searched(int count, const char *symbolname)
+{
+    search_symbol *search_symbol;
+
+    if (!(count >= globals.start_ordinal
+          && (!globals.end_ordinal || count <= globals.end_ordinal)))
+        return 0;
+    if (!globals.search_symbol)
+        return 1;
+    for (search_symbol = globals.search_symbol;
+         search_symbol;
+         search_symbol = search_symbol->next)
+    {
+        if (!strcmp(symbolname, search_symbol->symbolname))
+        {
+            search_symbol->found = 1;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* return: some symbols weren't found */
+static int symbol_finish(void)
+{
+    const search_symbol *search_symbol;
+    int started = 0;
+
+    for (search_symbol = globals.search_symbol;
+         search_symbol;
+         search_symbol = search_symbol->next)
+    {
+        if (search_symbol->found)
+            continue;
+        if (!started)
+        {
+            /* stderr? not a practice here */
+            puts("These requested <symfile> symbols weren't found:");
+            started = 1;
+        }
+        printf("\t%s\n",search_symbol->symbolname);
+        return 1;
+    }
+    return started;
+}
+
 /*******************************************************************
  *         main
  */
@@ -344,8 +417,7 @@ int   main (int argc, char *argv[])
 		printf ("Export %3d - '%s' ...%c", count, symbol.symbol,
 			VERBOSE ? '\n' : ' ');
 
-	    if (globals.do_code && count >= globals.start_ordinal
-		&& (!globals.end_ordinal || count <= globals.end_ordinal))
+	    if (globals.do_code && symbol_searched(count, symbol.symbol))
 	    {
 		/* Attempt to get information about the symbol */
 		int result = symbol_demangle (&symbol);
@@ -375,6 +447,8 @@ int   main (int argc, char *argv[])
 
 	if (VERBOSE)
 	    puts ("Finished, Cleaning up...");
+        if (symbol_finish())
+            return 1;
 	break;
     case NONE:
 	do_usage();

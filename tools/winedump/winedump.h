@@ -91,6 +91,14 @@ typedef struct __parsed_symbol
   char *arg_name [MAX_FUNCTION_ARGS];
 } parsed_symbol;
 
+/* FIXME: Replace with some hash such as GHashTable */
+typedef struct __search_symbol
+{
+  struct __search_symbol *next;
+  int found;
+  char symbolname[1];    /* static string, be ANSI C compliant by [1] */
+} search_symbol;
+
 /* All globals */
 typedef struct __globals
 {
@@ -117,6 +125,7 @@ typedef struct __globals
   /* Option arguments: spec mode */
   int   start_ordinal;     /* -s */
   int   end_ordinal;       /* -e */
+  search_symbol *search_symbol; /* -S */
   const char *directory;   /* -I */
   const char *forward_dll; /* -f */
   const char *dll_name;    /* -o */
