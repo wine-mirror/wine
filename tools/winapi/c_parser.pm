@@ -633,7 +633,7 @@ sub parse_c_declaration {
 	if(s/\)//) {
 	    $column++;
 	}
-    } elsif(s/^(?:DECLARE_OLD_HANDLE|DEFINE_AVIGUID|DEFINE_OLEGUID)\s*(?=\()//s) { # FIXME: Wine specific kludge
+    } elsif(s/^(?:DEFINE_AVIGUID|DEFINE_OLEGUID)\s*(?=\()//s) { # FIXME: Wine specific kludge
 	$self->_update_c_position($&, \$line, \$column);
 
 	my @arguments;
