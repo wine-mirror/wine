@@ -287,9 +287,10 @@ union codeview_type
     short int		id;
     short int		elemtype;
     short int		idxtype;
-    unsigned char	arrlen;
-    unsigned char	namelen;
+    unsigned short int	arrlen;     /* numeric leaf */
+#if 0
     unsigned char	name[1];
+#endif
   } array;
 
   struct
@@ -298,9 +299,10 @@ union codeview_type
     short int		id;
     unsigned int	elemtype;
     unsigned int	idxtype;
-    unsigned char	arrlen;
-    unsigned char	namelen;
+    unsigned short int	arrlen;    /* numeric leaf */
+#if 0
     unsigned char	name[1];
+#endif
   } array32;
 
   struct
@@ -312,9 +314,10 @@ union codeview_type
     short int		property;
     short int		derived;
     short int		vshape;
-    unsigned short	structlen;
-    unsigned char	namelen;
+    unsigned short int	structlen;  /* numeric leaf */
+#if 0
     unsigned char	name[1];
+#endif
   } structure;
 
   struct
@@ -326,9 +329,10 @@ union codeview_type
     unsigned int	fieldlist;
     unsigned int	derived;
     unsigned int	vshape;
-    unsigned short	structlen;
-    unsigned char	namelen;
+    unsigned short int	structlen;  /* numeric leaf */
+#if 0
     unsigned char	name[1];
+#endif
   } structure32;
 
   struct
@@ -336,11 +340,12 @@ union codeview_type
     short int		len;
     short int		id;
     short int		count;
-    short int		field;
+    short int		fieldlist;
     short int		property;
-    unsigned short	un_len;
-    unsigned char	namelen;
+    unsigned short int	un_len;     /* numeric leaf */
+#if 0
     unsigned char	name[1];
+#endif
   } t_union;
 
   struct
@@ -349,10 +354,11 @@ union codeview_type
     short int		id;
     short int		count;
     short int		property;
-    unsigned int	field;
-    unsigned short	un_len;
-    unsigned char	namelen;
+    unsigned int	fieldlist;
+    unsigned short int	un_len;     /* numeric leaf */
+#if 0
     unsigned char	name[1];
+#endif
   } t_union32;
 
   struct
@@ -363,7 +369,6 @@ union codeview_type
     short int		type;
     short int		field;
     short int		property;
-    unsigned char	namelen;
     unsigned char	name[1];
   } enumeration;
 
@@ -375,27 +380,98 @@ union codeview_type
     short int		property;
     unsigned int	type;
     unsigned int	field;
-    unsigned char	namelen;
     unsigned char	name[1];
   } enumeration32;
 
   struct
   {
+    short int		len;
     short int		id;
-    short int		attribute;
-    unsigned short int	value;
-    unsigned char	namelen;
-    unsigned char	name[1];
-  } enumerate;
+    unsigned char	list[1];
+  } fieldlist;
+};
+
+union codeview_fieldtype
+{
+  struct
+  {
+    short int		id;
+  } generic;
 
   struct
   {
     short int		id;
     short int		type;
     short int		attribute;
-    unsigned short int	offset;
-    unsigned char	namelen;
+    unsigned short int	offset;     /* numeric leaf */
+  } bclass;
+
+  struct
+  {
+    short int		id;
+    short int		attribute;
+    unsigned int	type;
+    unsigned short int	offset;     /* numeric leaf */
+  } bclass32;
+
+  struct
+  {
+    short int		id;
+    short int		btype;
+    short int		vbtype;
+    short int		attribute;
+    unsigned short int	vbpoff;     /* numeric leaf */
+#if 0
+    unsigned short int	vboff;      /* numeric leaf */
+#endif
+  } vbclass;
+
+  struct
+  {
+    short int		id;
+    short int		attribute;
+    unsigned int	btype;
+    unsigned int	vbtype;
+    unsigned short int	vbpoff;     /* numeric leaf */
+#if 0
+    unsigned short int	vboff;      /* numeric leaf */
+#endif
+  } vbclass32;
+
+  struct
+  {
+    short int		id;
+    short int		attribute;
+    unsigned short int	value;     /* numeric leaf */
+#if 0
     unsigned char	name[1];
+#endif
+  } enumerate;
+
+  struct
+  {
+    short int		id;
+    short int		type;
+    unsigned char	name[1];
+  } friendfcn;
+
+  struct
+  {
+    short int		id;
+    short int		_pad0;
+    unsigned int	type;
+    unsigned char	name[1];
+  } friendfcn32;
+
+  struct
+  {
+    short int		id;
+    short int		type;
+    short int		attribute;
+    unsigned short int	offset;    /* numeric leaf */
+#if 0
+    unsigned char	name[1];
+#endif
   } member;
 
   struct
@@ -403,10 +479,156 @@ union codeview_type
     short int		id;
     short int		attribute;
     unsigned int	type;
-    unsigned short int	offset;
-    unsigned char	namelen;
+    unsigned short int	offset;    /* numeric leaf */
+#if 0
     unsigned char	name[1];
+#endif
   } member32;
+
+  struct
+  {
+    short int		id;
+    short int		type;
+    short int		attribute;
+    unsigned char	name[1];
+  } stmember;
+
+  struct
+  {
+    short int		id;
+    short int		attribute;
+    unsigned int	type;
+    unsigned char	name[1];
+  } stmember32;
+
+  struct
+  {
+    short int		id;
+    short int		count;
+    short int		mlist;
+    unsigned char	name[1];
+  } method;
+
+  struct
+  {
+    short int		id;
+    short int		count;
+    unsigned int	mlist;
+    unsigned char	name[1];
+  } method32;
+
+  struct
+  {
+    short int		id;
+    short int		index;
+    unsigned char	name[1];
+  } nesttype;
+
+  struct
+  {
+    short int		id;
+    short int		_pad0;
+    unsigned int	index;
+    unsigned char	name[1];
+  } nesttype32;
+
+  struct
+  {
+    short int		id;
+    short int		type;
+  } vfunctab;
+
+  struct
+  {
+    short int		id;
+    short int		_pad0;
+    unsigned int	type;
+  } vfunctab32;
+
+  struct
+  {
+    short int		id;
+    short int		type;
+  } friendcls;
+
+  struct
+  {
+    short int		id;
+    short int		_pad0;
+    unsigned int	type;
+  } friendcls32;
+
+
+  struct
+  {
+    short int		id;
+    short int		attribute;
+    short int		type;
+    unsigned char	name[1];
+  } onemethod;
+  struct
+  {
+    short int		id;
+    short int		attribute;
+    short int		type;
+    unsigned int	vtab_offset;
+    unsigned char	name[1];
+  } onemethod_virt;
+
+  struct
+  {
+    short int		id;
+    short int		attribute;
+    unsigned int 	type;
+    unsigned char	name[1];
+  } onemethod32;
+  struct
+  {
+    short int		id;
+    short int		attribute;
+    unsigned int	type;
+    unsigned int	vtab_offset;
+    unsigned char	name[1];
+  } onemethod32_virt;
+
+  struct
+  {
+    short int		id;
+    short int		type;
+    unsigned int	offset;
+  } vfuncoff;
+
+  struct
+  {
+    short int		id;
+    short int		_pad0;
+    unsigned int	type;
+    unsigned int	offset;
+  } vfuncoff32;
+
+  struct
+  {
+    short int		id;
+    short int		attribute;
+    short int		index;
+    unsigned char	name[1];
+  } nesttypeex;
+
+  struct
+  {
+    short int		id;
+    short int		attribute;
+    unsigned int	index;
+    unsigned char	name[1];
+  } nesttypeex32;
+
+  struct
+  {
+    short int		id;
+    short int		attribute;
+    unsigned int	type;
+    unsigned char	name[1];
+  } membermodify;
 };
 
 #define S_COMPILE       0x0001
@@ -601,6 +823,24 @@ union codeview_type
 #define LF_VFUNCOFF_32  0x140c
 #define LF_NESTTYPEEX_32 0x140d
 
+#define LF_NUMERIC      0x8000    /* numeric leaf types */
+#define LF_CHAR         0x8000
+#define LF_SHORT        0x8001
+#define LF_USHORT       0x8002
+#define LF_LONG         0x8003
+#define LF_ULONG        0x8004
+#define LF_REAL32       0x8005
+#define LF_REAL64       0x8006
+#define LF_REAL80       0x8007
+#define LF_REAL128      0x8008
+#define LF_QUADWORD     0x8009
+#define LF_UQUADWORD    0x800a
+#define LF_REAL48       0x800b
+#define LF_COMPLEX32    0x800c
+#define LF_COMPLEX64    0x800d
+#define LF_COMPLEX80    0x800e
+#define LF_COMPLEX128   0x800f
+#define LF_VARSTRING    0x8010
 
 
 
@@ -719,523 +959,602 @@ struct codeview_linetab_hdr
 };
 
 
+
+/*
+ * CodeView type information parsing 
+ */
+
+static int
+numeric_leaf( int *value, unsigned short int *leaf )
+{
+    unsigned short int type = *leaf++;
+    int length = 2;
+
+    if ( type < LF_NUMERIC )
+    {
+        *value = type;
+    }
+    else
+    { 
+        switch ( type )
+        {
+        case LF_CHAR:
+            length += 1;
+            *value = *(char *)leaf;
+            break;
+
+        case LF_SHORT:
+            length += 2;
+            *value = *(short *)leaf;
+            break;
+
+        case LF_USHORT:
+            length += 2;
+            *value = *(unsigned short *)leaf;
+            break;
+
+        case LF_LONG:
+            length += 4;
+            *value = *(int *)leaf;
+            break;
+
+        case LF_ULONG:
+            length += 4;
+            *value = *(unsigned int *)leaf;
+            break;
+
+        case LF_QUADWORD:
+        case LF_UQUADWORD:
+            length += 8;
+            *value = 0;    /* FIXME */
+            break;
+
+        case LF_REAL32:
+            length += 4;
+            *value = 0;    /* FIXME */
+            break;
+
+        case LF_REAL48:
+            length += 6;
+            *value = 0;    /* FIXME */
+            break;
+
+        case LF_REAL64:
+            length += 8;
+            *value = 0;    /* FIXME */
+            break;
+
+        case LF_REAL80:
+            length += 10;
+            *value = 0;    /* FIXME */
+            break;
+
+        case LF_REAL128:
+            length += 16;
+            *value = 0;    /* FIXME */
+            break;
+
+        case LF_COMPLEX32:
+            length += 4;
+            *value = 0;    /* FIXME */
+            break;
+
+        case LF_COMPLEX64:
+            length += 8;
+            *value = 0;    /* FIXME */
+            break;
+
+        case LF_COMPLEX80:
+            length += 10;
+            *value = 0;    /* FIXME */
+            break;
+
+        case LF_COMPLEX128:
+            length += 16;
+            *value = 0;    /* FIXME */
+            break;
+
+        case LF_VARSTRING:
+            length += 2 + *leaf;
+            *value = 0;    /* FIXME */
+            break;
+
+        default:
+	    DEBUG_Printf( DBG_CHN_MESG, "Unknown numeric leaf type %04x\n", type );
+            *value = 0;
+            break;
+        }
+    }
+
+    return length;
+}
+
+static char *
+terminate_string( unsigned char *name )
+{
+    static char symname[256];
+
+    int namelen = name[0];
+    assert( namelen >= 0 && namelen < 256 );
+
+    memcpy( symname, name+1, namelen );
+    symname[namelen] = '\0';
+
+    if ( !*symname || strcmp( symname, "__unnamed" ) == 0 )
+        return NULL;
+    else
+        return symname;
+}
+
 static 
 struct datatype * DEBUG_GetCVType(unsigned int typeno)
 {
-  struct datatype * dt = NULL;
+    struct datatype * dt = NULL;
 
-  /*
-   * Convert Codeview type numbers into something we can grok internally.
-   * Numbers < 0x1000 are all fixed builtin types.  Numbers from 0x1000 and
-   * up are all user defined (structs, etc).
-   */
-  if( typeno < 0x1000 )
+    /*
+     * Convert Codeview type numbers into something we can grok internally.
+     * Numbers < 0x1000 are all fixed builtin types.  Numbers from 0x1000 and
+     * up are all user defined (structs, etc).
+     */
+    if ( typeno < 0x1000 )
     {
-      if( typeno < MAX_BUILTIN_TYPES )
-	{
-	  dt = cv_basic_types[typeno];
-	}
+        if ( typeno < MAX_BUILTIN_TYPES )
+	    dt = cv_basic_types[typeno];
     }
-  else
+    else
     {
-      if( typeno - 0x1000 < num_cv_defined_types )
-	{
-	  dt = cv_defined_types[typeno - 0x1000];
-	} 
+        if ( typeno - 0x1000 < num_cv_defined_types )
+	    dt = cv_defined_types[typeno - 0x1000];
     }
 
-  return dt;
+    return dt;
 }
 
 static int
-DEBUG_ParseTypeTable(char * table, int len)
+DEBUG_AddCVType( unsigned int typeno, struct datatype *dt )
 {
-  int				  arr_max;
-  int				  curr_type;
-  enum debug_type		  fieldtype;
-  int				  elem_size;
-  union any_size		  ptr;
-  union any_size		  ptr2;
-  struct datatype		* subtype;
-  char				  symname[256];
-  union codeview_type		* type;
-  union codeview_type		* type2;
-  struct datatype		* typeptr;
-
-  curr_type = 0x1000;
-
-  ptr.c = table;
-  while( ptr.c - table < len )
+    while ( typeno - 0x1000 >= num_cv_defined_types )
     {
-      type = (union codeview_type *) ptr.c;
+        num_cv_defined_types += 0x100;
+        cv_defined_types = (struct datatype **) 
+            DBG_realloc( cv_defined_types,
+		         num_cv_defined_types * sizeof(struct datatype *) );
 
-      if( curr_type - 0x1000 >= num_cv_defined_types )
-	{
-	  num_cv_defined_types += 0x100;
-	  cv_defined_types = (struct datatype **) DBG_realloc(cv_defined_types,
-		  num_cv_defined_types * sizeof(struct datatype *));
-	  memset(cv_defined_types + num_cv_defined_types - 0x100,
-		 0,
-		 0x100 * sizeof(struct datatype *));
-	  if( cv_defined_types == NULL )
-	    {
-	      return FALSE;
-	    }
-	}
+        memset( cv_defined_types + num_cv_defined_types - 0x100,
+		0,
+		0x100 * sizeof(struct datatype *) );
 
-      switch(type->generic.id)
-	{
-	case LF_POINTER:
-	  cv_defined_types[curr_type - 0x1000] = 
-	    DEBUG_FindOrMakePointerType(DEBUG_GetCVType(type->pointer.datatype));
-	  break;
-	case LF_POINTER_32:
-	  cv_defined_types[curr_type - 0x1000] = 
-	    DEBUG_FindOrMakePointerType(DEBUG_GetCVType(type->pointer32.datatype));
-	  break;
-	case LF_ARRAY:
-	  if( type->array.arrlen >= 0x8000 )
-	    {
-	      /*
-	       * This is a numeric leaf, I am too lazy to handle this right
-	       * now.
-	       */
-	      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
-	      break;
-	    }
-	  if( type->array.namelen != 0 )
-	    {
-	      memset(symname, 0, sizeof(symname));
-	      memcpy(symname, type->array.name, type->array.namelen);
-	      typeptr = DEBUG_NewDataType(DT_ARRAY, symname);
-	    }
-	  else
-	    {
-	      typeptr = DEBUG_NewDataType(DT_ARRAY, NULL);
-	    }
-	  cv_defined_types[curr_type - 0x1000] = typeptr;
-
-	  subtype = DEBUG_GetCVType(type->array.elemtype);
-	  if(    (subtype == NULL)
-	      || (elem_size = DEBUG_GetObjectSize(subtype)) == 0 )
-	    {
-	      arr_max = 0;
-	    }
-	  else
-	    {
-	      arr_max = type->array.arrlen / DEBUG_GetObjectSize(subtype);
-	    }
-
-	  DEBUG_SetArrayParams(typeptr, 0, arr_max, subtype);
-	  break;
-	case LF_ARRAY_32:
-	  if( type->array32.arrlen >= 0x8000 )
-	    {
-	      /*
-	       * This is a numeric leaf, I am too lazy to handle this right
-	       * now.
-	       */
-	      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
-	      break;
-	    }
-	  if( type->array32.namelen != 0 )
-	    {
-	      memset(symname, 0, sizeof(symname));
-	      memcpy(symname, type->array32.name, type->array32.namelen);
-	      typeptr = DEBUG_NewDataType(DT_ARRAY, symname);
-	    }
-	  else
-	    {
-	      typeptr = DEBUG_NewDataType(DT_ARRAY, NULL);
-	    }
-	  cv_defined_types[curr_type - 0x1000] = typeptr;
-
-	  subtype = DEBUG_GetCVType(type->array32.elemtype);
-	  if(    (subtype == NULL)
-	      || (elem_size = DEBUG_GetObjectSize(subtype)) == 0 )
-	    {
-	      arr_max = 0;
-	    }
-	  else
-	    {
-	      arr_max = type->array32.arrlen / DEBUG_GetObjectSize(subtype);
-	    }
-
-	  DEBUG_SetArrayParams(typeptr, 0, arr_max, subtype);
-	  break;
-	case LF_FIELDLIST:
-	  /*
-	   * This is where the basic list of fields is defined for
-	   * structures and classes.
-	   *
-	   * First, we need to look ahead and see whether we are building
-	   * a fieldlist for an enum or a struct.
-	   */
-	  ptr2.i = ptr.i + 1;
-	  type2 = (union codeview_type *) ptr2.c;
-	  if( type2->member.id == LF_MEMBER )
-	    {
-	      typeptr = DEBUG_NewDataType(DT_STRUCT, NULL);
-	      fieldtype = DT_STRUCT;
-	    }
-	  else if( type2->member.id == LF_ENUMERATE )
-	    {
-	      typeptr = DEBUG_NewDataType(DT_ENUM, NULL);
-	      fieldtype = DT_ENUM;
-	    }
-	  else
-	    {
-	      break;
-	    }
-
-	  cv_defined_types[curr_type - 0x1000] = typeptr;
-	  while( ptr2.c < (ptr.c + ((type->generic.len + 3) & ~3)) )
-	    {
-	      type2 = (union codeview_type *) ptr2.c;
-	      if( type2->member.id == LF_MEMBER && fieldtype == DT_STRUCT )
-		{
-		  memset(symname, 0, sizeof(symname));
-		  memcpy(symname, type2->member.name, type2->member.namelen);
-		  
-		  subtype = DEBUG_GetCVType(type2->member.type);
-		  elem_size = 0;
-		  if( subtype != NULL )
-		    {
-		      elem_size = DEBUG_GetObjectSize(subtype);
-		    }
-		  
-		  if( type2->member.offset >= 0x8000 )
-		    {
-		      /*
-		       * This is a numeric leaf, I am too lazy to handle this right
-		       * now.
-		       */
-		      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
-		    }
-		  else
-		    {
-		      DEBUG_AddStructElement(typeptr, symname, subtype, 
-					     type2->member.offset << 3,
-					     elem_size << 3);
-		    }
-		}
-	      else if( type2->member.id == LF_ENUMERATE && fieldtype == DT_ENUM )
-		{
-		  memset(symname, 0, sizeof(symname));
-		  memcpy(symname, type2->enumerate.name, type2->enumerate.namelen);
-		  
-		  if( type2->enumerate.value >= 0x8000 )
-		    {
-		      /*
-		       * This is a numeric leaf, I am too lazy to handle this right
-		       * now.
-		       */
-		      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
-		    }
-		  else
-		    {
-		      DEBUG_AddStructElement(typeptr, symname, NULL, 
-					     type2->enumerate.value, 0);
-		    }
-		}
-	      else
-		{
-		  /*
-		   * Something else I have never seen before.  Either wrong type of
-		   * object in the fieldlist, or some other problem which I wouldn't
-		   * really know how to handle until it came up.
-		   */
-		  DEBUG_Printf(DBG_CHN_MESG, "Unexpected entry in fieldlist\n");
-		  break;
-		}
-
-
-	      ptr2.c += ((type2->member.namelen + 9 + 3) & ~3);
-	    }
-	  break;
-	case LF_FIELDLIST_32:
-	  /*
-	   * This is where the basic list of fields is defined for
-	   * structures and classes.
-	   *
-	   * First, we need to look ahead and see whether we are building
-	   * a fieldlist for an enum or a struct.
-	   */
-	  ptr2.i = ptr.i + 1;
-	  type2 = (union codeview_type *) ptr2.c;
-	  if( type2->member32.id == LF_MEMBER_32 )
-	    {
-	      typeptr = DEBUG_NewDataType(DT_STRUCT, NULL);
-	      fieldtype = DT_STRUCT;
-	    }
-	  else if( type2->member32.id == LF_ENUMERATE )
-	    {
-	      typeptr = DEBUG_NewDataType(DT_ENUM, NULL);
-	      fieldtype = DT_ENUM;
-	    }
-	  else
-	    {
-	      break;
-	    }
-
-	  cv_defined_types[curr_type - 0x1000] = typeptr;
-	  while( ptr2.c < (ptr.c + ((type->generic.len + 3) & ~3)) )
-	    {
-	      type2 = (union codeview_type *) ptr2.c;
-	      if( type2->member.id == LF_MEMBER_32 && fieldtype == DT_STRUCT )
-		{
-		  memset(symname, 0, sizeof(symname));
-		  memcpy(symname, type2->member32.name, type2->member32.namelen);
-		  
-		  subtype = DEBUG_GetCVType(type2->member32.type);
-		  elem_size = 0;
-		  if( subtype != NULL )
-		    {
-		      elem_size = DEBUG_GetObjectSize(subtype);
-		    }
-		  
-		  if( type2->member32.offset >= 0x8000 )
-		    {
-		      /*
-		       * This is a numeric leaf, I am too lazy to handle this right
-		       * now.
-		       */
-		      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
-		    }
-		  else
-		    {
-		      DEBUG_AddStructElement(typeptr, symname, subtype, 
-					     type2->member32.offset << 3,
-					     elem_size << 3);
-		    }
-		}
-	      else if( type2->member32.id == LF_ENUMERATE && fieldtype == DT_ENUM )
-		{
-		  memset(symname, 0, sizeof(symname));
-		  memcpy(symname, type2->enumerate.name, type2->enumerate.namelen);
-		  
-		  if( type2->enumerate.value >= 0x8000 )
-		    {
-		      /*
-		       * This is a numeric leaf, I am too lazy to handle this right
-		       * now.
-		       */
-		      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
-		    }
-		  else
-		    {
-		      DEBUG_AddStructElement(typeptr, symname, NULL, 
-					     type2->enumerate.value, 0);
-		    }
-		}
-	      else
-		{
-		  /*
-		   * Something else I have never seen before.  Either wrong type of
-		   * object in the fieldlist, or some other problem which I wouldn't
-		   * really know how to handle until it came up.
-		   */
-		  DEBUG_Printf(DBG_CHN_MESG, "Unexpected entry in fieldlist\n");
-		  break;
-		}
-
-
-	      ptr2.c += ((type2->member32.namelen + 9 + 3) & ~3);
-	    }
-	  break;
-	case LF_STRUCTURE:
-	case LF_CLASS:
-	  if( type->structure.structlen >= 0x8000 )
-	    {
-	      /*
-	       * This is a numeric leaf, I am too lazy to handle this right
-	       * now.
-	       */
-	      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
-	      break;
-	    }
-	  memset(symname, 0, sizeof(symname));
-	  memcpy(symname, type->structure.name, type->structure.namelen);
-	  if( strcmp(symname, "__unnamed") == 0 )
-	    {
-	      typeptr = DEBUG_NewDataType(DT_STRUCT, NULL);
-	    }
-	  else
-	    {
-	      typeptr = DEBUG_NewDataType(DT_STRUCT, symname);
-	    }
-	  cv_defined_types[curr_type - 0x1000] = typeptr;
-
-	  /*
-	   * Now copy the relevant bits from the fieldlist that we specified.
-	   */
-	  subtype = DEBUG_GetCVType(type->structure.fieldlist);
-
-	  if( subtype != NULL )
-	    {
-	      DEBUG_SetStructSize(typeptr, type->structure.structlen);
-	      DEBUG_CopyFieldlist(typeptr, subtype);
-	    }
-	  break;
-	case LF_STRUCTURE_32:
-	case LF_CLASS_32:
-	  if( type->structure32.structlen >= 0x8000 )
-	    {
-	      /*
-	       * This is a numeric leaf, I am too lazy to handle this right
-	       * now.
-	       */
-	      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
-	      break;
-	    }
-	  memset(symname, 0, sizeof(symname));
-	  memcpy(symname, type->structure32.name, type->structure32.namelen);
-	  if( strcmp(symname, "__unnamed") == 0 )
-	    {
-	      typeptr = DEBUG_NewDataType(DT_STRUCT, NULL);
-	    }
-	  else
-	    {
-	      typeptr = DEBUG_NewDataType(DT_STRUCT, symname);
-	    }
-	  cv_defined_types[curr_type - 0x1000] = typeptr;
-
-	  /*
-	   * Now copy the relevant bits from the fieldlist that we specified.
-	   */
-	  subtype = DEBUG_GetCVType(type->structure32.fieldlist);
-
-	  if( subtype != NULL )
-	    {
-	      DEBUG_SetStructSize(typeptr, type->structure32.structlen);
-	      DEBUG_CopyFieldlist(typeptr, subtype);
-	    }
-	  break;
-	case LF_UNION:
-	  if( type->t_union.un_len >= 0x8000 )
-	    {
-	      /*
-	       * This is a numeric leaf, I am too lazy to handle this right
-	       * now.
-	       */
-	      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
-	      break;
-	    }
-	  memset(symname, 0, sizeof(symname));
-	  memcpy(symname, type->t_union.name, type->t_union.namelen);
-
-	  if( strcmp(symname, "__unnamed") == 0 )
-	    {
-	      typeptr = DEBUG_NewDataType(DT_STRUCT, NULL);
-	    }
-	  else
-	    {
-	      typeptr = DEBUG_NewDataType(DT_STRUCT, symname);
-	    }
-
-	  cv_defined_types[curr_type - 0x1000] = typeptr;
-
-	  /*
-	   * Now copy the relevant bits from the fieldlist that we specified.
-	   */
-	  subtype = DEBUG_GetCVType(type->t_union.field);
-
-	  if( subtype != NULL )
-	    {
-	      DEBUG_SetStructSize(typeptr, type->t_union.un_len);
-	      DEBUG_CopyFieldlist(typeptr, subtype);
-	    }
-	  break;
-	case LF_UNION_32:
-	  if( type->t_union32.un_len >= 0x8000 )
-	    {
-	      /*
-	       * This is a numeric leaf, I am too lazy to handle this right
-	       * now.
-	       */
-	      DEBUG_Printf(DBG_CHN_MESG, "Ignoring large numberic leaf.\n");
-	      break;
-	    }
-	  memset(symname, 0, sizeof(symname));
-	  memcpy(symname, type->t_union32.name, type->t_union32.namelen);
-
-	  if( strcmp(symname, "__unnamed") == 0 )
-	    {
-	      typeptr = DEBUG_NewDataType(DT_STRUCT, NULL);
-	    }
-	  else
-	    {
-	      typeptr = DEBUG_NewDataType(DT_STRUCT, symname);
-	    }
-
-	  cv_defined_types[curr_type - 0x1000] = typeptr;
-
-	  /*
-	   * Now copy the relevant bits from the fieldlist that we specified.
-	   */
-	  subtype = DEBUG_GetCVType(type->t_union32.field);
-
-	  if( subtype != NULL )
-	    {
-	      DEBUG_SetStructSize(typeptr, type->t_union32.un_len);
-	      DEBUG_CopyFieldlist(typeptr, subtype);
-	    }
-	  break;
-	case LF_BITFIELD:
-	  typeptr = DEBUG_NewDataType(DT_BITFIELD, NULL);
-	  cv_defined_types[curr_type - 0x1000] = typeptr;
-	  DEBUG_SetBitfieldParams(typeptr, type->bitfield.bitoff,
-				  type->bitfield.nbits, 
-				  DEBUG_GetCVType(type->bitfield.type));
-	  break;
-	case LF_BITFIELD_32:
-	  typeptr = DEBUG_NewDataType(DT_BITFIELD, NULL);
-	  cv_defined_types[curr_type - 0x1000] = typeptr;
-	  DEBUG_SetBitfieldParams(typeptr, type->bitfield32.bitoff,
-				  type->bitfield32.nbits, 
-				  DEBUG_GetCVType(type->bitfield32.type));
-	  break;
-	case LF_ENUM:
-	  memset(symname, 0, sizeof(symname));
-	  memcpy(symname, type->enumeration.name, type->enumeration.namelen);
-	  typeptr = DEBUG_NewDataType(DT_ENUM, symname);
-	  cv_defined_types[curr_type - 0x1000] = typeptr;
-
-	  /*
-	   * Now copy the relevant bits from the fieldlist that we specified.
-	   */
-	  subtype = DEBUG_GetCVType(type->enumeration.field);
-
-	  if( subtype != NULL )
-	    {
-	      DEBUG_CopyFieldlist(typeptr, subtype);
-	    }
-	  break;
-	case LF_ENUM_32:
-	  memset(symname, 0, sizeof(symname));
-	  memcpy(symname, type->enumeration32.name, type->enumeration32.namelen);
-	  typeptr = DEBUG_NewDataType(DT_ENUM, symname);
-	  cv_defined_types[curr_type - 0x1000] = typeptr;
-
-	  /*
-	   * Now copy the relevant bits from the fieldlist that we specified.
-	   */
-	  subtype = DEBUG_GetCVType(type->enumeration32.field);
-
-	  if( subtype != NULL )
-	    {
-	      DEBUG_CopyFieldlist(typeptr, subtype);
-	    }
-	  break;
-	default:
-	  break;
-	}
-      curr_type++;
-      ptr.c += (type->generic.len + 3) & ~3;
+        if ( cv_defined_types == NULL )
+            return FALSE;
     }
 
-  return TRUE;
+    cv_defined_types[ typeno - 0x1000 ] = dt;
+    return TRUE;
 }
+
+static void
+DEBUG_ClearTypeTable( void )
+{
+    if ( cv_defined_types )
+        DBG_free( cv_defined_types );
+
+    cv_defined_types = NULL;
+    num_cv_defined_types = 0;
+}
+
+static int
+DEBUG_AddCVType_Pointer( unsigned int typeno, unsigned int datatype )
+{
+    struct datatype *dt = 
+	    DEBUG_FindOrMakePointerType( DEBUG_GetCVType( datatype ) );
+
+    return DEBUG_AddCVType( typeno, dt );
+}
+  
+static int
+DEBUG_AddCVType_Array( unsigned int typeno, char *name,
+                       unsigned int elemtype, unsigned int arr_len )
+{
+    struct datatype *dt    = DEBUG_NewDataType( DT_ARRAY, name );
+    struct datatype *elem  = DEBUG_GetCVType( elemtype );
+    unsigned int elem_size = elem? DEBUG_GetObjectSize( elem ) : 0;
+    unsigned int arr_max   = elem_size? arr_len / elem_size : 0;
+
+    DEBUG_SetArrayParams( dt, 0, arr_max, elem );
+    return DEBUG_AddCVType( typeno, dt );
+}    
+
+static int
+DEBUG_AddCVType_Bitfield( unsigned int typeno, 
+                          unsigned int bitoff, unsigned int nbits,
+                          unsigned int basetype )
+{
+    struct datatype *dt   = DEBUG_NewDataType( DT_BITFIELD, NULL );
+    struct datatype *base = DEBUG_GetCVType( basetype );
+
+    DEBUG_SetBitfieldParams( dt, bitoff, nbits, base );
+    return DEBUG_AddCVType( typeno, dt );
+}
+  
+static int
+DEBUG_AddCVType_EnumFieldList( unsigned int typeno, unsigned char *list, int len )
+{
+    struct datatype *dt = DEBUG_NewDataType( DT_ENUM, NULL );
+    unsigned char *ptr = list;
+
+    while ( ptr - list < len )
+    {
+        union codeview_fieldtype *type = (union codeview_fieldtype *)ptr;
+
+        if ( *ptr >= 0xf0 )       /* LF_PAD... */
+        {
+            ptr += *ptr & 0x0f;
+            continue;
+        }
+
+        switch ( type->generic.id )
+        {
+        case LF_ENUMERATE:
+        {
+            int value, vlen = numeric_leaf( &value, &type->enumerate.value );
+            unsigned char *name = (unsigned char *)&type->enumerate.value + vlen;
+
+            DEBUG_AddStructElement( dt, terminate_string( name ), 
+                                        NULL, value, 0 );
+
+            ptr += 2 + 2 + vlen + (1 + name[0]);
+            break;
+        }
+
+        default:
+            DEBUG_Printf( DBG_CHN_MESG, "Unhandled type %04x in ENUM field list\n",
+                                         type->generic.id );
+            return FALSE;
+        }
+    }
+
+    return DEBUG_AddCVType( typeno, dt );
+}
+  
+static int
+DEBUG_AddCVType_StructFieldList( unsigned int typeno, unsigned char *list, int len )
+{
+    struct datatype *dt = DEBUG_NewDataType( DT_STRUCT, NULL );
+    unsigned char *ptr = list;
+
+    while ( ptr - list < len )
+    {
+        union codeview_fieldtype *type = (union codeview_fieldtype *)ptr;
+
+        if ( *ptr >= 0xf0 )       /* LF_PAD... */
+        {
+            ptr += *ptr & 0x0f;
+            continue;
+        }
+
+        switch ( type->generic.id )
+        {
+        case LF_BCLASS:
+        {
+            int offset, olen = numeric_leaf( &offset, &type->bclass.offset );
+
+            /* FIXME: ignored for now */
+
+            ptr += 2 + 2 + 2 + olen;
+            break;
+        }
+
+        case LF_BCLASS_32:
+        {
+            int offset, olen = numeric_leaf( &offset, &type->bclass32.offset );
+
+            /* FIXME: ignored for now */
+
+            ptr += 2 + 2 + 4 + olen;
+            break;
+        }
+
+        case LF_VBCLASS:
+        case LF_IVBCLASS:
+        {
+            int vbpoff, vbplen = numeric_leaf( &vbpoff, &type->vbclass.vbpoff );
+            unsigned short int *p_vboff = (unsigned short int *)((char *)&type->vbclass.vbpoff + vbpoff);
+            int vpoff, vplen = numeric_leaf( &vpoff, p_vboff );
+
+            /* FIXME: ignored for now */
+
+            ptr += 2 + 2 + 2 + 2 + vbplen + vplen;
+            break;
+        }
+
+        case LF_VBCLASS_32:
+        case LF_IVBCLASS_32:
+        {
+            int vbpoff, vbplen = numeric_leaf( &vbpoff, &type->vbclass32.vbpoff );
+            unsigned short int *p_vboff = (unsigned short int *)((char *)&type->vbclass32.vbpoff + vbpoff);
+            int vpoff, vplen = numeric_leaf( &vpoff, p_vboff );
+
+            /* FIXME: ignored for now */
+
+            ptr += 2 + 2 + 4 + 4 + vbplen + vplen;
+            break;
+        }
+
+        case LF_MEMBER:
+        {
+            int offset, olen = numeric_leaf( &offset, &type->member.offset );
+            unsigned char *name = (unsigned char *)&type->member.offset + olen;
+
+            struct datatype *subtype = DEBUG_GetCVType( type->member.type );
+            int elem_size = subtype? DEBUG_GetObjectSize( subtype ) : 0;
+
+            DEBUG_AddStructElement( dt, terminate_string( name ), 
+                                        subtype, offset << 3, elem_size << 3 );
+
+            ptr += 2 + 2 + 2 + olen + (1 + name[0]);
+            break;
+        }
+
+        case LF_MEMBER_32:
+        {
+            int offset, olen = numeric_leaf( &offset, &type->member32.offset );
+            unsigned char *name = (unsigned char *)&type->member32.offset + olen;
+
+            struct datatype *subtype = DEBUG_GetCVType( type->member32.type );
+            int elem_size = subtype? DEBUG_GetObjectSize( subtype ) : 0;
+
+            DEBUG_AddStructElement( dt, terminate_string( name ), 
+                                        subtype, offset << 3, elem_size << 3 );
+
+            ptr += 2 + 2 + 4 + olen + (1 + name[0]);
+            break;
+        }
+
+        case LF_STMEMBER:
+            /* FIXME: ignored for now */
+            ptr += 2 + 2 + 2 + (1 + type->stmember.name[0]);
+            break;
+
+        case LF_STMEMBER_32:
+            /* FIXME: ignored for now */
+            ptr += 2 + 4 + 2 + (1 + type->stmember32.name[0]);
+            break;
+
+        case LF_METHOD:
+            /* FIXME: ignored for now */
+            ptr += 2 + 2 + 2 + (1 + type->method.name[0]);
+            break;
+
+        case LF_METHOD_32:
+            /* FIXME: ignored for now */
+            ptr += 2 + 2 + 4 + (1 + type->method32.name[0]);
+            break;
+
+        case LF_NESTTYPE:
+            /* FIXME: ignored for now */
+            ptr += 2 + 2 + (1 + type->nesttype.name[0]);
+            break;
+
+        case LF_NESTTYPE_32:
+            /* FIXME: ignored for now */
+            ptr += 2 + 2 + 4 + (1 + type->nesttype32.name[0]);
+            break;
+
+        case LF_VFUNCTAB:
+            /* FIXME: ignored for now */
+            ptr += 2 + 2;
+            break;
+        
+        case LF_VFUNCTAB_32:
+            /* FIXME: ignored for now */
+            ptr += 2 + 2 + 4;
+            break;
+
+        case LF_ONEMETHOD:
+            /* FIXME: ignored for now */
+            switch ( (type->onemethod.attribute >> 2) & 7 )
+            {
+            case 4: case 6: /* (pure) introducing virtual method */
+                ptr += 2 + 2 + 2 + 4 + (1 + type->onemethod_virt.name[0]);
+                break;
+
+            default:
+                ptr += 2 + 2 + 2 + (1 + type->onemethod.name[0]);
+                break;
+            }
+            break;
+
+        case LF_ONEMETHOD_32:
+            /* FIXME: ignored for now */
+            switch ( (type->onemethod32.attribute >> 2) & 7 )
+            {
+            case 4: case 6: /* (pure) introducing virtual method */
+                ptr += 2 + 2 + 4 + 4 + (1 + type->onemethod32_virt.name[0]);
+                break;
+           
+            default:
+                ptr += 2 + 2 + 4 + (1 + type->onemethod32.name[0]);
+                break;
+            }
+            break;
+
+        default:
+            DEBUG_Printf( DBG_CHN_MESG, "Unhandled type %04x in STRUCT field list\n",
+                                        type->generic.id );
+            return FALSE;
+        }
+    }
+
+    return DEBUG_AddCVType( typeno, dt );
+}
+  
+static int
+DEBUG_AddCVType_Enum( unsigned int typeno, char *name, unsigned int fieldlist )
+{
+    struct datatype *dt   = DEBUG_NewDataType( DT_ENUM, name );
+    struct datatype *list = DEBUG_GetCVType( fieldlist );
+
+    if ( list )
+        DEBUG_CopyFieldlist( dt, list );
+
+    return DEBUG_AddCVType( typeno, dt );
+}
+
+static int
+DEBUG_AddCVType_Struct( unsigned int typeno, char *name, int structlen, unsigned int fieldlist )
+{
+    struct datatype *dt   = DEBUG_NewDataType( DT_STRUCT, name );
+    struct datatype *list = DEBUG_GetCVType( fieldlist );
+
+    if ( list )
+    {
+        DEBUG_SetStructSize( dt, structlen );
+        DEBUG_CopyFieldlist( dt, list );
+    }
+
+    return DEBUG_AddCVType( typeno, dt );
+}
+
+static int
+DEBUG_ParseTypeTable( char *table, int len )
+{
+    unsigned int curr_type = 0x1000;
+    char *ptr = table;
+
+    while ( ptr - table < len )
+    {
+        union codeview_type *type = (union codeview_type *) ptr;
+        int retv = TRUE;
+
+        switch ( type->generic.id )
+        {
+        case LF_POINTER:
+            retv = DEBUG_AddCVType_Pointer( curr_type, type->pointer.datatype );
+            break;
+        case LF_POINTER_32:
+            retv = DEBUG_AddCVType_Pointer( curr_type, type->pointer32.datatype );
+            break;
+
+        case LF_ARRAY:
+        {
+            int arrlen, alen = numeric_leaf( &arrlen, &type->array.arrlen );
+            unsigned char *name = (unsigned char *)&type->array.arrlen + alen;
+
+            retv = DEBUG_AddCVType_Array( curr_type, terminate_string( name ),
+                                          type->array.elemtype, arrlen );
+            break;
+        }
+        case LF_ARRAY_32:
+        {
+            int arrlen, alen = numeric_leaf( &arrlen, &type->array32.arrlen );
+            unsigned char *name = (unsigned char *)&type->array32.arrlen + alen;
+
+            retv = DEBUG_AddCVType_Array( curr_type, terminate_string( name ),
+                                          type->array32.elemtype, type->array32.arrlen );
+            break;
+        }
+
+        case LF_BITFIELD:
+            retv = DEBUG_AddCVType_Bitfield( curr_type, type->bitfield.bitoff, 
+                                                        type->bitfield.nbits,
+                                                        type->bitfield.type );
+            break;
+        case LF_BITFIELD_32:
+            retv = DEBUG_AddCVType_Bitfield( curr_type, type->bitfield32.bitoff, 
+                                                        type->bitfield32.nbits,
+                                                        type->bitfield32.type );
+            break;
+
+        case LF_FIELDLIST:
+        case LF_FIELDLIST_32:
+        {
+            /*
+             * A 'field list' is a CodeView-specific data type which doesn't
+             * directly correspond to any high-level data type.  It is used
+             * to hold the collection of members of a struct, class, union
+             * or enum type.  The actual definition of that type will follow
+             * later, and refer to the field list definition record.
+             *
+             * As we don't have a field list type ourselves, we look ahead
+             * in the field list to try to find out whether this field list
+             * will be used for an enum or struct type, and create a dummy
+             * type of the corresponding sort.  Later on, the definition of
+             * the 'real' type will copy the member / enumeration data.
+             */
+
+            char *list = type->fieldlist.list;
+            int   len  = (ptr + type->generic.len + 2) - list;
+
+            if ( ((union codeview_fieldtype *)list)->generic.id == LF_ENUMERATE )
+                retv = DEBUG_AddCVType_EnumFieldList( curr_type, list, len );
+            else
+                retv = DEBUG_AddCVType_StructFieldList( curr_type, list, len );
+            break;
+        }
+
+        case LF_STRUCTURE:
+        case LF_CLASS:
+        {
+            int structlen, slen = numeric_leaf( &structlen, &type->structure.structlen );
+            unsigned char *name = (unsigned char *)&type->structure.structlen + slen;
+
+            retv = DEBUG_AddCVType_Struct( curr_type, terminate_string( name ),
+                                           structlen, type->structure.fieldlist );
+            break;
+        }
+        case LF_STRUCTURE_32:
+        case LF_CLASS_32:
+        {
+            int structlen, slen = numeric_leaf( &structlen, &type->structure32.structlen );
+            unsigned char *name = (unsigned char *)&type->structure32.structlen + slen;
+
+            retv = DEBUG_AddCVType_Struct( curr_type, terminate_string( name ),
+                                           structlen, type->structure32.fieldlist );
+            break;
+        }
+
+        case LF_UNION:
+        {
+            int un_len, ulen = numeric_leaf( &un_len, &type->t_union.un_len );
+            unsigned char *name = (unsigned char *)&type->t_union.un_len + ulen;
+
+            retv = DEBUG_AddCVType_Struct( curr_type, terminate_string( name ),
+                                           un_len, type->t_union.fieldlist );
+            break;
+        }
+        case LF_UNION_32:
+        {
+            int un_len, ulen = numeric_leaf( &un_len, &type->t_union32.un_len );
+            unsigned char *name = (unsigned char *)&type->t_union32.un_len + ulen;
+
+            retv = DEBUG_AddCVType_Struct( curr_type, terminate_string( name ),
+                                           un_len, type->t_union32.fieldlist );
+            break;
+        }
+
+        case LF_ENUM:
+            retv = DEBUG_AddCVType_Enum( curr_type, terminate_string( type->enumeration.name ),
+                                         type->enumeration.field );
+            break;
+        case LF_ENUM_32:
+            retv = DEBUG_AddCVType_Enum( curr_type, terminate_string( type->enumeration32.name ),
+                                         type->enumeration32.field );
+            break;
+
+        default:
+            break;
+        }
+
+        if ( !retv )
+            return FALSE;
+
+        curr_type++;
+        ptr += type->generic.len + 2;
+    }
+  
+    return TRUE;
+}
+
 
 void
 DEBUG_InitCVDataTypes(void)
@@ -2732,6 +3051,8 @@ static int DEBUG_ProcessPDBFile( DBG_MODULE* module, const char *full_filename )
     /*
      * Cleanup
      */
+
+    DEBUG_ClearTypeTable();
 
     if ( symbols_image ) pdb_free( symbols_image );
     if ( types_image ) pdb_free( types_image );

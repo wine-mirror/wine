@@ -632,7 +632,7 @@ DEBUG_AddStructElement(struct datatype * dt, char * name, struct datatype * type
        * If the base type is bitfield, then adjust the offsets here so that we
        * are able to look things up without lots of falter-all.
        */
-      if( type->type == DT_BITFIELD )
+      if( type && type->type == DT_BITFIELD )
 	{
 	  m->offset += m->type->un.bitfield.bitoff;
 	  m->size = m->type->un.bitfield.nbits;
