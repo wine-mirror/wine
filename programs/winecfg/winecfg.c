@@ -65,7 +65,7 @@ void set_window_title(HWND dialog)
 
 
 /**
- * getkey: Retrieves a configuration value from the registry
+ * get_config_key: Retrieves a configuration value from the registry
  *
  * char *subkey : the name of the config section
  * char *name : the name of the config value
@@ -75,7 +75,7 @@ void set_window_title(HWND dialog)
  * not. Caller is responsible for releasing the result.
  *
  */
-static char *getkey (char *subkey, char *name, char *def)
+static char *get_config_key (char *subkey, char *name, char *def)
 {
     LPBYTE buffer = NULL;
     DWORD len;
@@ -123,7 +123,7 @@ end:
 }
 
 /**
- * setkey: convenience wrapper to set a key/value pair
+ * set_config_key: convenience wrapper to set a key/value pair
  *
  * const char *subKey : the name of the config section
  * const char *valueName : the name of the config value
@@ -133,7 +133,7 @@ end:
  *
  * If valueName or value is NULL, an empty section will be created
  */
-int setkey(const char *subkey, const char *name, const char *value) {
+int set_config_key(const char *subkey, const char *name, const char *value) {
     DWORD res = 1;
     HKEY key = NULL;
 
@@ -252,7 +252,7 @@ char *get(char *path, char *name, char *def)
     }
 
     /* no, so get from the registry */
-    val = getkey(path, name, def);
+    val = get_config_key(path, name, def);
 
     WINE_TRACE("returning %s\n", val);
 
@@ -439,7 +439,7 @@ static void process_setting(struct setting *s)
     if (s->value)
     {
 	WINE_TRACE("Setting %s:%s to '%s'\n", s->path, s->name, s->value);
-        setkey(s->path, s->name, s->value);
+        set_config_key(s->path, s->name, s->value);
     }
     else
     {
