@@ -1761,8 +1761,8 @@ START_TEST(vartest)
 	 */
 	trace( "======== Testing VarUI1FromXXX ========\n");
 
-#define XOK "should return S_OK"
-#define XOV "should return DISP_E_OVERFLOW"
+#define XOK "should return S_OK\n"
+#define XOV "should return DISP_E_OVERFLOW\n"
 	/* Crashes on Win95: VarUI1FromI2( 0, NULL ) */
 
 	ok(VarUI1FromStr(NULL, lcid, 0, pByte) == DISP_E_TYPEMISMATCH,"should return DISP_E_TYPEMISMATCH");

@@ -35,7 +35,7 @@
 static int strict;
 
 #define eq(received, expected, label, type) \
-        ok((received) == (expected), "%s: got " type " instead of " type, (label),(received),(expected))
+        ok((received) == (expected), "%s: got " type " instead of " type "\n", (label),(received),(expected))
 
 
 #define SPI_SETBEEP_REGKEY           "Control Panel\\Sound"

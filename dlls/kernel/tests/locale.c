@@ -29,7 +29,7 @@
 #include "winnls.h"
 
 #define eq(received, expected, label, type) \
-        ok((received) == (expected), "%s: got " type " instead of " type, (label),(received),(expected))
+        ok((received) == (expected), "%s: got " type " instead of " type "\n", (label),(received),(expected))
 
 #define BUFFER_SIZE		128
 /* Buffer used by callback function */

@@ -156,6 +156,7 @@ void winetest_set_location( const char* file, int line )
 int winetest_ok( int condition, const char *msg, ... )
 {
     va_list valist;
+    int len;
     tls_data* data=get_tls_data();
 
     if (data->todo_level)
@@ -164,14 +165,16 @@ int winetest_ok( int condition, const char *msg, ... )
         {
             fprintf( stdout, "%s:%d: Test succeeded inside todo block",
                      data->current_file, data->current_line );
-            if (msg && msg[0])
+            if (msg[0])
             {
                 va_start(valist, msg);
                 fprintf(stdout,": ");
                 vfprintf(stdout, msg, valist);
                 va_end(valist);
             }
-            fputc( '\n', stdout );
+            len=strlen(msg);
+            if (len==0 || msg[len-1]!='\n')
+                fputc( '\n', stdout );
             InterlockedIncrement(&todo_failures);
             return 0;
         }
@@ -183,14 +186,16 @@ int winetest_ok( int condition, const char *msg, ... )
         {
             fprintf( stdout, "%s:%d: Test failed",
                      data->current_file, data->current_line );
-            if (msg && msg[0])
+            if (msg[0])
             {
                 va_start(valist, msg);
                 fprintf( stdout,": ");
                 vfprintf(stdout, msg, valist);
                 va_end(valist);
             }
-            fputc( '\n', stdout );
+            len=strlen(msg);
+            if (len==0 || msg[len-1]!='\n')
+                fputc( '\n', stdout );
             InterlockedIncrement(&failures);
             return 0;
         }
