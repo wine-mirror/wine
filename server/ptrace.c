@@ -64,10 +64,10 @@ void wait4_thread( struct thread *thread, int signal )
             if (!thread)
                 if (!(thread = get_thread_from_pid( pid ))) break;
             if (!(thread->process->suspend + thread->suspend))
-                ptrace( PTRACE_CONT, pid, 0, sig );
+                ptrace( PTRACE_CONT, pid, 1, sig );
             break;
         default:  /* ignore other signals for now */
-            ptrace( PTRACE_CONT, pid, 0, sig );
+            ptrace( PTRACE_CONT, pid, 1, sig );
             break;
         }
         if (signal && sig != signal) goto restart;
@@ -114,7 +114,7 @@ void detach_thread( struct thread *thread )
     {
         wait4_thread( thread, SIGTERM );
         if (debug_level) fprintf( stderr, "ptrace: detaching from %d\n", thread->unix_pid );
-        ptrace( PTRACE_DETACH, thread->unix_pid, 0, SIGTERM );
+        ptrace( PTRACE_DETACH, thread->unix_pid, 1, SIGTERM );
         thread->attached = 0;
     }
 }
@@ -137,7 +137,7 @@ void continue_thread( struct thread *thread )
 {
     if (!thread->unix_pid) return;
     if (!thread->attached) kill( thread->unix_pid, SIGCONT );
-    else ptrace( PTRACE_CONT, thread->unix_pid, 0, SIGSTOP );
+    else ptrace( PTRACE_CONT, thread->unix_pid, 1, SIGSTOP );
 }
 
 /* read an int from a thread address space */
