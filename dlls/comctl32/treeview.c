@@ -3821,7 +3821,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 {
     HWND hwnd = infoPtr->hwnd;
     TVHITTESTINFO ht;
-    BOOL bTrack;
+    BOOL bTrack, bDoLabelEdit;
     HTREEITEM tempItem;
 
     /* If Edit control is active - kill it and return.
@@ -3853,6 +3853,13 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
 
     bTrack = (ht.flags & TVHT_ONITEM)
 	&& !(infoPtr->dwStyle & TVS_DISABLEDRAGDROP);
+
+    /*
+     * If the style allows editing and the node is already selected
+     * and the click occurred on the item label...
+     */
+    bDoLabelEdit = (infoPtr->dwStyle & TVS_EDITLABELS) &&
+        (ht.flags & TVHT_ONITEMLABEL) && (infoPtr->selectedItem == ht.hItem);
 
     /* Send NM_CLICK right away */
     if (!bTrack)
@@ -3890,12 +3897,7 @@ TREEVIEW_LButtonDown(TREEVIEW_INFO *infoPtr, LPARAM lParam)
     if (bTrack && TREEVIEW_SendSimpleNotify(infoPtr, NM_CLICK))
         goto setfocus;
 
-    /*
-     * If the style allows editing and the node is already selected
-     * and the click occurred on the item label...
-     */
-    if ((infoPtr->dwStyle & TVS_EDITLABELS) &&
-	        (ht.flags & TVHT_ONITEMLABEL) && (infoPtr->selectedItem == ht.hItem))
+    if (bDoLabelEdit)
     {
 	if (infoPtr->Timer & TV_EDIT_TIMER_SET)
 	    KillTimer(hwnd, TV_EDIT_TIMER);
