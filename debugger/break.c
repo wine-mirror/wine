@@ -328,7 +328,18 @@ void DEBUG_AddBreakpoint( const DBG_VALUE *_value, BOOL (*func)(void) )
     int num;
     BYTE ch;
 
-    if( !DEBUG_GrabAddress(&value, TRUE) ) return;
+    if( value.type != NULL && value.type == DEBUG_TypeIntConst )
+    {
+        /*
+         * We know that we have the actual offset stored somewhere
+         * else in 32-bit space.  Grab it, and we
+         * should be all set.
+         */
+        unsigned int seg2 = value.addr.seg;
+        value.addr.seg = 0;
+        value.addr.off = DEBUG_GetExprValue(&value, NULL);
+        value.addr.seg = seg2;
+    }
 
     if ((num = DEBUG_FindBreakpoint(&value.addr, DBG_BREAK)) >= 1) 
     {
@@ -337,7 +348,10 @@ void DEBUG_AddBreakpoint( const DBG_VALUE *_value, BOOL (*func)(void) )
     }
 
     if (!DEBUG_READ_MEM_VERBOSE((void*)DEBUG_ToLinear( &value.addr ), &ch, sizeof(ch)))
-	return;
+    {
+       DEBUG_Printf( DBG_CHN_MESG, "Invalid address, can't set breakpoint\n");
+       return;
+    }
 
     if ((num = DEBUG_InitXPoint(DBG_BREAK, &value.addr)) == -1)
        return;
