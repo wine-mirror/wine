@@ -33,7 +33,12 @@
 #include "shlwapi.h"
 #include "shtypes.h"
 
-static HRESULT (WINAPI *ptr_StrRetToBSTR) (STRRET*, void*, BSTR*);
+static HMODULE hShlwapi;
+static LPSTR   (WINAPI *pStrCpyNXA)(LPSTR,LPCSTR,int);
+static LPWSTR  (WINAPI *pStrCpyNXW)(LPWSTR,LPCWSTR,int);
+static HRESULT (WINAPI *pStrRetToBSTR)(STRRET*,void*,BSTR*);
+static DWORD   (WINAPI *pSHAnsiToAnsi)(LPCSTR,LPSTR,int);
+static DWORD   (WINAPI *pSHUnicodeToUnicode)(LPCWSTR,LPWSTR,int);
 
 static inline int strcmpW(const WCHAR *str1, const WCHAR *str2)
 {
@@ -592,22 +597,19 @@ static WCHAR *CoDupStrW(const char* src)
 
 static void test_StrRetToBSTR(void)
 {
-    HMODULE module;
     static const WCHAR szTestW[] = { 'T','e','s','t','\0' };
     ITEMIDLIST iidl[10];
     BSTR bstr;
     STRRET strret;
     HRESULT ret;
 
-    module = GetModuleHandleA("shlwapi");
-    if (!module) return;
-    ptr_StrRetToBSTR = (void *)GetProcAddress(module, "StrRetToBSTR");
-    if (!ptr_StrRetToBSTR) return;
+    pStrRetToBSTR = (void *)GetProcAddress(hShlwapi, "StrRetToBSTR");
+    if (!pStrRetToBSTR) return;
 
     strret.uType = STRRET_WSTR;
     strret.u.pOleStr = CoDupStrW("Test");
     bstr = 0;
-    ret = ptr_StrRetToBSTR(&strret, NULL, &bstr);
+    ret = pStrRetToBSTR(&strret, NULL, &bstr);
     ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
        "STRRET_WSTR: dup failed, ret=0x%08lx, bstr %p\n", ret, bstr);
     if (bstr)
@@ -615,7 +617,7 @@ static void test_StrRetToBSTR(void)
 
     strret.uType = STRRET_CSTR;
     lstrcpyA(strret.u.cStr, "Test");
-    ret = ptr_StrRetToBSTR(&strret, NULL, &bstr);
+    ret = pStrRetToBSTR(&strret, NULL, &bstr);
     ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
        "STRRET_CSTR: dup failed, ret=0x%08lx, bstr %p\n", ret, bstr);
     if (bstr)
@@ -624,7 +626,7 @@ static void test_StrRetToBSTR(void)
     strret.uType = STRRET_OFFSET;
     strret.u.uOffset = 1;
     strcpy((char*)&iidl, " Test");
-    ret = ptr_StrRetToBSTR(&strret, iidl, &bstr);
+    ret = pStrRetToBSTR(&strret, iidl, &bstr);
     ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
        "STRRET_OFFSET: dup failed, ret=0x%08lx, bstr %p\n", ret, bstr);
     if (bstr)
@@ -633,9 +635,84 @@ static void test_StrRetToBSTR(void)
     /* Native crashes if str is NULL */
 }
 
+static void test_StrCpyNXA(void)
+{
+  LPCSTR lpSrc = "hello";
+  LPSTR lpszRes;
+  char dest[8];
+
+  pStrCpyNXA = (void *)GetProcAddress(hShlwapi, (LPSTR)399);
+  if (!pStrCpyNXA)
+    return;
+
+  memset(dest, '\n', sizeof(dest));
+  lpszRes = pStrCpyNXA(dest, lpSrc, sizeof(dest)/sizeof(dest[0]));
+  ok(lpszRes == dest + 5 && !memcmp(dest, "hello\0\n\n", sizeof(dest)),
+       "StrCpyNXA: expected %p, \"hello\\0\\n\\n\", got %p, \"%d,%d,%d,%d,%d,%d,%d,%d\"\n",
+       dest + 5, lpszRes, dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+}
+
+static void test_StrCpyNXW(void)
+{
+  static const WCHAR lpInit[] = { '\n','\n','\n','\n','\n','\n','\n','\n' };
+  static const WCHAR lpSrc[] = { 'h','e','l','l','o','\0' };
+  static const WCHAR lpRes[] = { 'h','e','l','l','o','\0','\n','\n' };
+  LPWSTR lpszRes;
+  WCHAR dest[8];
+
+  pStrCpyNXW = (void *)GetProcAddress(hShlwapi, (LPSTR)400);
+  if (!pStrCpyNXW)
+    return;
+
+  memcpy(dest, lpInit, sizeof(lpInit));
+  lpszRes = pStrCpyNXW(dest, lpSrc, sizeof(dest)/sizeof(dest[0]));
+  ok(lpszRes == dest + 5 && !memcmp(dest, lpRes, sizeof(dest)),
+       "StrCpyNXA: expected %p, \"hello\\0\\n\\n\", got %p, \"%d,%d,%d,%d,%d,%d,%d,%d\"\n",
+       dest + 5, lpszRes, dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+}
+
+static void test_SHAnsiToAnsi(void)
+{
+  char dest[8];
+  DWORD dwRet;
+
+  pSHAnsiToAnsi = (void *)GetProcAddress(hShlwapi, (LPSTR)345);
+  if (!pSHAnsiToAnsi)
+    return;
+
+  memset(dest, '\n', sizeof(dest));
+  dwRet = pSHAnsiToAnsi("hello", dest, sizeof(dest)/sizeof(dest[0]));
+  ok(dwRet == 6 && !memcmp(dest, "hello\0\n\n", sizeof(dest)),
+     "SHAnsiToAnsi: expected 6, \"hello\\0\\n\\n\", got %ld, \"%d,%d,%d,%d,%d,%d,%d,%d\"\n",
+     dwRet, dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+}
+
+static void test_SHUnicodeToUnicode(void)
+{
+  static const WCHAR lpInit[] = { '\n','\n','\n','\n','\n','\n','\n','\n' };
+  static const WCHAR lpSrc[] = { 'h','e','l','l','o','\0' };
+  static const WCHAR lpRes[] = { 'h','e','l','l','o','\0','\n','\n' };
+  WCHAR dest[8];
+  DWORD dwRet;
+
+  pSHUnicodeToUnicode = (void *)GetProcAddress(hShlwapi, (LPSTR)346);
+  if (!pSHUnicodeToUnicode)
+    return;
+
+  memcpy(dest, lpInit, sizeof(lpInit));
+  dwRet = pSHUnicodeToUnicode(lpSrc, dest, sizeof(dest)/sizeof(dest[0]));
+  ok(dwRet == 6 && !memcmp(dest, lpRes, sizeof(dest)),
+     "SHUnicodeToUnicode: expected 6, \"hello\\0\\n\\n\", got %ld, \"%d,%d,%d,%d,%d,%d,%d,%d\"\n",
+     dwRet, dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
+}
+
 START_TEST(string)
 {
   CoInitialize(0);
+
+  hShlwapi = GetModuleHandleA("shlwapi");
+  if (!hShlwapi)
+     return;
 
   test_StrChrA();
   test_StrChrW();
@@ -656,4 +733,8 @@ START_TEST(string)
   test_StrCmpA();
   test_StrCmpW();
   test_StrRetToBSTR();
+  test_StrCpyNXA();
+  test_StrCpyNXW();
+  test_SHAnsiToAnsi();
+  test_SHUnicodeToUnicode();
 }

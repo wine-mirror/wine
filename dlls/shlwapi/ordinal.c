@@ -1829,6 +1829,30 @@ DWORD WINAPI SHRegisterClassA(WNDCLASSA *wndclass)
 }
 
 /*************************************************************************
+ *      @	[SHLWAPI.186]
+ */
+BOOL WINAPI SHSimulateDrop(IDropTarget *pDrop, IDataObject *pDataObj,
+                           DWORD grfKeyState, PPOINTL lpPt, DWORD* pdwEffect)
+{
+  DWORD dwEffect = DROPEFFECT_LINK | DROPEFFECT_MOVE | DROPEFFECT_COPY;
+  POINTL pt = { 0, 0 };
+
+  if (!lpPt)
+    lpPt = &pt;
+
+  if (!pdwEffect)
+    pdwEffect = &dwEffect;
+
+  IDropTarget_DragEnter(pDrop, pDataObj, grfKeyState, *lpPt, pdwEffect);
+
+  if (*pdwEffect)
+    return IDropTarget_Drop(pDrop, pDataObj, grfKeyState, *lpPt, pdwEffect);
+
+  IDropTarget_DragLeave(pDrop);
+  return TRUE;
+}
+
+/*************************************************************************
  *      @	[SHLWAPI.187]
  *
  * Call IPersistPropertyBag_Load() on an object.
@@ -2997,19 +3021,6 @@ UINT WINAPI ExtractIconExWrapW(LPCWSTR lpszFile, INT nIconIndex, HICON *phiconLa
 LONG WINAPI SHInterlockedCompareExchange( PLONG dest, LONG xchg, LONG compare)
 {
         return InterlockedCompareExchange(dest, xchg, compare);
-}
-
-/*************************************************************************
- *      @	[SHLWAPI.346]
- */
-DWORD WINAPI SHUnicodeToUnicode(
-	LPCWSTR src,
-	LPWSTR dest,
-	int len)
-{
-	FIXME("(%s %p 0x%08x)stub\n",debugstr_w(src),dest,len);
-	lstrcpynW(dest, src, len);
-	return lstrlenW(dest)+1;
 }
 
 /*************************************************************************

@@ -183,7 +183,7 @@
 183 stdcall -noname SHRegisterClassA(ptr)
 184 stdcall @(ptr ptr long) SHLWAPI_184
 185 stdcall -noname SHMessageBoxCheckA(ptr str str long long str)
-186 stub -noname SHSimulateDrop
+186 stdcall -noname SHSimulateDrop(ptr ptr long ptr ptr)
 187 stdcall -noname SHLoadFromPropertyBag(ptr ptr)
 188 stub -noname IUnknown_TranslateAcceleratorOCS
 189 stdcall -noname IUnknown_OnFocusOCS(ptr ptr)
@@ -327,8 +327,8 @@
 327 stdcall -noname UnregisterExtensionForMIMETypeW(wstr)
 328 stdcall -noname GetMIMETypeSubKeyA(str ptr long)
 329 stdcall -noname GetMIMETypeSubKeyW(wstr ptr long)
-330 stub -noname MIME_GetExtensionA
-331 stub -noname MIME_GetExtensionW
+330 stdcall -noname MIME_GetExtensionA(str ptr long)
+331 stdcall -noname MIME_GetExtensionW(wstr ptr long)
 332 stdcall @(ptr long) user32.CallMsgFilterW
 333 stdcall -noname SHBrowseForFolderWrapW(ptr)
 334 stdcall -noname SHGetPathFromIDListWrapW(ptr ptr)
@@ -342,7 +342,7 @@
 342 stdcall -noname SHInterlockedCompareExchange(ptr long long)
 343 stdcall -noname SHRegGetCLSIDKeyA(ptr str long long ptr)
 344 stdcall -noname SHRegGetCLSIDKeyW(ptr wstr long long ptr)
-345 stub -noname SHAnsiToAnsi
+345 stdcall -noname SHAnsiToAnsi(str ptr long)
 346 stdcall -noname SHUnicodeToUnicode(wstr ptr long)
 347 stdcall @(long wstr) advapi32.RegDeleteValueW
 348 stub -noname SHGetFileDescriptionW
