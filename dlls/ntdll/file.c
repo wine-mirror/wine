@@ -222,33 +222,32 @@ static void fileio_async_cleanup( struct async_private *ovp )
 NTSTATUS FILE_GetNtStatus(void)
 {
     int err = errno;
-    DWORD nt;
 
     TRACE( "errno = %d\n", errno );
     switch (err)
     {
-    case EAGAIN:       nt = STATUS_SHARING_VIOLATION;       break;
-    case EBADF:        nt = STATUS_INVALID_HANDLE;          break;
-    case ENOSPC:       nt = STATUS_DISK_FULL;               break;
+    case EAGAIN:    return STATUS_SHARING_VIOLATION;
+    case EBADF:     return STATUS_INVALID_HANDLE;
+    case ENOSPC:    return STATUS_DISK_FULL;
     case EPERM:
     case EROFS:
-    case EACCES:       nt = STATUS_ACCESS_DENIED;           break;
-    case ENOENT:       nt = STATUS_OBJECT_NAME_NOT_FOUND;   break;
-    case EISDIR:       nt = STATUS_FILE_IS_A_DIRECTORY;     break;
+    case EACCES:    return STATUS_ACCESS_DENIED;
+    case ENOTDIR:   return STATUS_OBJECT_PATH_NOT_FOUND;
+    case ENOENT:    return STATUS_OBJECT_NAME_NOT_FOUND;
+    case EISDIR:    return STATUS_FILE_IS_A_DIRECTORY;
     case EMFILE:
-    case ENFILE:       nt = STATUS_NO_MORE_FILES;           break;
-    case EINVAL:
-    case ENOTEMPTY:    nt = STATUS_DIRECTORY_NOT_EMPTY;     break;
-    case EPIPE:        nt = STATUS_PIPE_BROKEN;             break;
-    case EIO:          nt = STATUS_DEVICE_NOT_READY;        break;
-    case ENOEXEC:      /* ?? */
-    case ESPIPE:       /* ?? */
-    case EEXIST:       /* ?? */
+    case ENFILE:    return STATUS_TOO_MANY_OPENED_FILES;
+    case EINVAL:    return STATUS_INVALID_PARAMETER;
+    case ENOTEMPTY: return STATUS_DIRECTORY_NOT_EMPTY;
+    case EPIPE:     return STATUS_PIPE_BROKEN;
+    case EIO:       return STATUS_DEVICE_NOT_READY;
+    case ENOEXEC:   /* ?? */
+    case ESPIPE:    /* ?? */
+    case EEXIST:    /* ?? */
     default:
         FIXME( "Converting errno %d to STATUS_UNSUCCESSFUL\n", err );
-        nt = STATUS_UNSUCCESSFUL;
+        return STATUS_UNSUCCESSFUL;
     }
-    return nt;
 }
 
 /***********************************************************************

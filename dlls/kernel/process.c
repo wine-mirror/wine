@@ -1129,7 +1129,7 @@ static int fork_and_exec( const char *filename, const WCHAR *cmdline,
 
     if (pipe(fd) == -1)
     {
-        FILE_SetDosError();
+        SetLastError( ERROR_TOO_MANY_OPEN_FILES );
         return -1;
     }
     fcntl( fd[1], F_SETFD, 1 );  /* set close on exec */
@@ -1247,14 +1247,14 @@ static BOOL create_process( HANDLE hFile, LPCWSTR filename, LPWSTR cmd_line, LPW
 
     if (pipe( startfd ) == -1)
     {
-        FILE_SetDosError();
+        SetLastError( ERROR_TOO_MANY_OPEN_FILES );
         RtlDestroyProcessParameters( params );
         if (extra_env) HeapFree( GetProcessHeap(), 0, extra_env );
         return FALSE;
     }
     if (pipe( execfd ) == -1)
     {
-        FILE_SetDosError();
+        SetLastError( ERROR_TOO_MANY_OPEN_FILES );
         close( startfd[0] );
         close( startfd[1] );
         RtlDestroyProcessParameters( params );

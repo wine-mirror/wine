@@ -3115,7 +3115,6 @@ static const char *get_status_name( unsigned int status )
         NAME(TIMEOUT),
         NAME(USER_APC),
         NAME(WAS_LOCKED),
-        NAME_WIN32(ERROR_CANNOT_MAKE),
         NAME_WIN32(ERROR_INVALID_INDEX),
         NAME_WIN32(ERROR_NEGATIVE_SEEK),
         NAME_WIN32(ERROR_SEEK),

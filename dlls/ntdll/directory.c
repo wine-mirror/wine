@@ -711,7 +711,11 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
     }
 #endif /* VFAT_IOCTL_READDIR_BOTH */
 
-    if (!(dir = opendir( unix_name ))) return FILE_GetNtStatus();
+    if (!(dir = opendir( unix_name )))
+    {
+        if (errno == ENOENT) return STATUS_OBJECT_PATH_NOT_FOUND;
+        else return FILE_GetNtStatus();
+    }
     unix_name[pos - 1] = '/';
     str.Buffer = buffer;
     str.MaximumLength = sizeof(buffer);
@@ -756,7 +760,7 @@ not_found:
         }
     }
     unix_name[pos - 1] = 0;
-    return is_last ? STATUS_NO_SUCH_FILE : STATUS_OBJECT_PATH_NOT_FOUND;
+    return is_last ? STATUS_OBJECT_NAME_NOT_FOUND : STATUS_OBJECT_PATH_NOT_FOUND;
 }
 
 
@@ -789,9 +793,9 @@ NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret
     static const WCHAR uncW[] = {'U','N','C','\\'};
     static const WCHAR invalid_charsW[] = { INVALID_NT_CHARS, 0 };
 
-    NTSTATUS status = STATUS_NO_SUCH_FILE;
+    NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
     const char *config_dir = wine_get_config_dir();
-    const WCHAR *end, *name, *p;
+    const WCHAR *name, *p;
     struct stat st;
     char *unix_name;
     int pos, ret, name_len, unix_len, used_default;
@@ -810,12 +814,12 @@ NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret
         if (name_len > 4 && !memicmpW( name, uncW, 4 ))
         {
             FIXME( "UNC name %s not supported\n", debugstr_us(nameW) );
-            return STATUS_NO_SUCH_FILE;
+            return STATUS_OBJECT_NAME_NOT_FOUND;
         }
 
         /* make sure we have a drive letter */
         if (name_len < 3 || !isalphaW(name[0]) || name[1] != ':' || !IS_SEPARATOR(name[2]))
-            return STATUS_NO_SUCH_FILE;
+            return STATUS_OBJECT_NAME_NOT_FOUND;
         name += 2;  /* skip drive letter */
         name_len -= 2;
 
@@ -835,7 +839,7 @@ NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret
     }
     else  /* no DOS prefix, assume NT native name, map directly to Unix */
     {
-        if (!name_len || !IS_SEPARATOR(name[0])) return STATUS_NO_SUCH_FILE;
+        if (!name_len || !IS_SEPARATOR(name[0])) return STATUS_OBJECT_NAME_INVALID;
         unix_len = ntdll_wcstoumbs( 0, name, name_len, NULL, 0, NULL, NULL );
         unix_len += MAX_DIR_ENTRY_LEN + 3;
         if (!(unix_name = RtlAllocateHeap( GetProcessHeap(), 0, unix_len )))
@@ -854,25 +858,33 @@ NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret
         for (p = unix_name + pos ; *p; p++) if (*p == '\\') *p = '/';
         if (!stat( unix_name, &st )) goto done;
     }
+
+    while (name_len && IS_SEPARATOR(*name))
+    {
+        name++;
+        name_len--;
+    }
+    if (!name_len)  /* empty name -> drive root doesn't exist */
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, unix_name );
+        return STATUS_OBJECT_PATH_NOT_FOUND;
+    }
     if (check_case && check_last)
     {
         RtlFreeHeap( GetProcessHeap(), 0, unix_name );
-        return STATUS_NO_SUCH_FILE;
+        return STATUS_OBJECT_NAME_NOT_FOUND;
     }
 
     /* now do it component by component */
 
-    for (;;)
+    while (name_len)
     {
-        while (name_len && IS_SEPARATOR(*name))
-        {
-            name++;
-            name_len--;
-        }
-        if (!name_len) break;
+        const WCHAR *end, *next;
 
         end = name;
         while (end < name + name_len && !IS_SEPARATOR(*end)) end++;
+        next = end;
+        while (next < name + name_len && IS_SEPARATOR(*next)) next++;
 
         /* grow the buffer if needed */
 
@@ -889,7 +901,7 @@ NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret
         }
 
         status = find_file_in_dir( unix_name, pos, name, end - name,
-                                   (end - name == name_len), check_last, check_case );
+                                   (next - name == name_len), check_last, check_case );
         if (status != STATUS_SUCCESS)
         {
             /* couldn't find it at all, fail */
@@ -899,8 +911,8 @@ NTSTATUS DIR_nt_to_unix( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret
         }
 
         pos += strlen( unix_name + pos );
-        name_len -= end - name;
-        name = end;
+        name_len -= next - name;
+        name = next;
     }
 
     WARN( "%s -> %s required a case-insensitive search\n",
