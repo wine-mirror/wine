@@ -133,7 +133,7 @@ void WINAPI SHGetSettings(LPSHELLFLAGSTATE lpsfs, DWORD dwMask, DWORD dwx)
 	DWORD	dwData;
 	DWORD	dwDataSize = sizeof (DWORD);
 
-	TRACE(shell,"(%p 0x%08lx 0x%08x)\n",lpsfs,dwMask, dwx);
+	TRACE(shell,"(%p 0x%08lx 0x%08lx)\n",lpsfs,dwMask, dwx);
 	
 	if (RegCreateKeyExA(HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
 				 0, 0, 0, KEY_ALL_ACCESS, 0, &hKey, 0))
@@ -1119,6 +1119,6 @@ int WINAPI StrToOleStr (LPWSTR lpWideCharStr, LPCSTR lpMultiByteString)
  *
  */
 HRESULT SHValidateUNC (DWORD x, DWORD y, DWORD z)
-{	FIXME(shell,"0x%08lx 0x%08lx 0x%08x stub\n",x,y,z);
+{	FIXME(shell,"0x%08lx 0x%08lx 0x%08lx stub\n",x,y,z);
 	return 0;
 }
