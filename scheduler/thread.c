@@ -123,6 +123,12 @@ static BOOL THREAD_InitTEB( TEB *teb, DWORD stack_size, BOOL alloc_stack16,
 
     if (!(teb->event = CreateEventA( NULL, FALSE, FALSE, NULL ))) goto error;
     teb->event = ConvertToGlobalHandle( teb->event );
+
+    /* StaticUnicodeString */
+
+    teb->StaticUnicodeString.MaximumLength = sizeof(teb->StaticUnicodeBuffer);
+    teb->StaticUnicodeString.Buffer = (PWSTR)teb->StaticUnicodeBuffer;
+    
     return TRUE;
 
 error:
