@@ -83,8 +83,6 @@
 #include "ntddstor.h"
 #include "ntddcdrm.h"
 #include "ntddscsi.h"
-#include "drive.h"
-#include "file.h"
 #include "wine/debug.h"
 
 /* Non-Linux systems do not have linux/cdrom.h and the like, and thus
@@ -189,6 +187,7 @@ struct cdrom_cache {
     char toc_good; /* if false, will reread TOC from disk */
     CDROM_TOC toc;
     SUB_Q_CURRENT_POSITION CurrentPosition;
+    const char *device;
 };
 static struct cdrom_cache cdrom_cache[26];
 
@@ -450,7 +449,7 @@ static int CDROM_GetInterfaceInfo(int fd, int* port, int* iface, int* device,int
  * NOTE: programs usually read these registry entries after sending the
  *       IOCTL_SCSI_GET_ADDRESS ioctl to the cdrom
  */
-void CDROM_InitRegistry(int fd)
+void CDROM_InitRegistry(int fd, int device_id, const char *device )
 {
     int portnum, busid, targetid, lun;
     OBJECT_ATTRIBUTES attr;
@@ -465,6 +464,8 @@ void CDROM_InitRegistry(int fd)
     HKEY busKey;
     HKEY targetKey;
     DWORD disp;
+
+    cdrom_cache[device_id].device = device;
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -590,18 +591,14 @@ static NTSTATUS CDROM_Open(HANDLE hDevice, DWORD clientID, int* dev)
 
     if (!cdrom_cache[*dev].count)
     {
-        char root[4];
         const char *device;
 
-        strcpy(root, "A:\\");
-        root[0] += *dev;
-        if (GetDriveTypeA(root) != DRIVE_CDROM) return STATUS_NO_SUCH_DEVICE;
-        if (!(device = DRIVE_GetDevice(*dev))) return STATUS_NO_SUCH_DEVICE;
+        if (!(device = cdrom_cache[*dev].device)) return STATUS_NO_SUCH_DEVICE;
         cdrom_cache[*dev].fd = open(device, O_RDONLY|O_NONBLOCK);
         if (cdrom_cache[*dev].fd == -1)
         {
-            FIXME("Can't open configured CD-ROM drive at %s (device %s): %s\n", 
-                  root, DRIVE_GetDevice(*dev), strerror(errno));
+            FIXME("Can't open configured CD-ROM drive %c: (device %s): %s\n",
+                  'A' + *dev, device, strerror(errno));
             return STATUS_NO_SUCH_DEVICE;
         }
     }

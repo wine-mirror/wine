@@ -38,7 +38,6 @@
 #include "wine/server.h"
 #include "async.h"
 #include "ntdll_misc.h"
-#include "file.h" /* FIXME */
 #include "../files/smb.h"
 
 #include "winternl.h"
@@ -74,8 +73,6 @@ NTSTATUS WINAPI NtOpenFile(
 {
 	LPWSTR filename;
 	static const WCHAR szDosDevices[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\',0};
-	DOS_FULL_NAME full_name;
-	NTSTATUS r;
 
 	FIXME("(%p,0x%08lx,%p,%p,0x%08lx,0x%08lx) partial stub\n",
 		FileHandle, DesiredAccess, ObjectAttributes,
@@ -97,28 +94,10 @@ NTSTATUS WINAPI NtOpenFile(
 		return STATUS_OBJECT_NAME_NOT_FOUND;
 
 	/* FIXME: this calls SetLastError() -> bad */
-	if(!DOSFS_GetFullName(&filename[strlenW(szDosDevices)], TRUE,
-				&full_name))
-		return STATUS_OBJECT_NAME_NOT_FOUND;
-
-	/* FIXME: modify server protocol so
-                  create file takes an OBJECT_ATTRIBUTES structure */
-        SERVER_START_REQ( create_file )
-        {
-            req->access     = DesiredAccess;
-            req->inherit    = 0;
-            req->sharing    = ShareAccess;
-            req->create     = OPEN_EXISTING;
-            req->attrs      = 0;
-            req->drive_type = GetDriveTypeW( full_name.short_name );
-            wine_server_add_data( req, full_name.long_name, strlen(full_name.long_name) );
-            SetLastError(0);
-            r = wine_server_call( req );
-            *FileHandle = reply->handle;
-        }
-        SERVER_END_REQ;
-
-	return r;
+        *FileHandle = CreateFileW( &filename[strlenW(szDosDevices)], DesiredAccess, ShareAccess,
+                                   NULL, OPEN_EXISTING, 0, 0 );
+        if (*FileHandle == INVALID_HANDLE_VALUE) return STATUS_OBJECT_NAME_NOT_FOUND;
+        return STATUS_SUCCESS;
 }
 
 /**************************************************************************
@@ -683,7 +662,6 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE DeviceHandle, HANDLE hEvent,
                                       ULONG OutputBufferSize)
 {
     DWORD               clientID = 0;
-    char                str[3];
 
     TRACE("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx)\n",
           DeviceHandle, hEvent, UserApcRoutine, UserApcContext,
@@ -699,24 +677,20 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE DeviceHandle, HANDLE hEvent,
     SERVER_END_REQ;
 
     if (!clientID) return STATUS_INVALID_PARAMETER;
-    strcpy(str,  "A:");
-    str[0] += LOBYTE(clientID);
-    
-    /* FIXME: should use the NTDLL equivalent */
-    if (GetDriveTypeA(str) == DRIVE_CDROM)
+
+    if (CDROM_DeviceIoControl(clientID, DeviceHandle, hEvent,
+                              UserApcRoutine, UserApcContext,
+                              IoStatusBlock, IoControlCode,
+                              InputBuffer, InputBufferSize,
+                              OutputBuffer, OutputBufferSize) == STATUS_NO_SUCH_DEVICE)
     {
-        return CDROM_DeviceIoControl(clientID, DeviceHandle, hEvent, 
-                                     UserApcRoutine, UserApcContext, 
-                                     IoStatusBlock, IoControlCode,
-                                     InputBuffer, InputBufferSize,
-                                     OutputBuffer, OutputBufferSize);
+        /* it wasn't a CDROM */
+        FIXME("Unimplemented dwIoControlCode=%08lx\n", IoControlCode);
+        IoStatusBlock->u.Status = STATUS_NOT_IMPLEMENTED;
+        IoStatusBlock->Information = 0;
+        if (hEvent) NtSetEvent(hEvent, NULL);
     }
-    
-    FIXME("Unimplemented dwIoControlCode=%08lx\n", IoControlCode);
-    IoStatusBlock->u.Status = STATUS_NOT_IMPLEMENTED;
-    IoStatusBlock->Information = 0;
-    if (hEvent) NtSetEvent(hEvent, NULL);
-    return STATUS_NOT_IMPLEMENTED;
+    return IoStatusBlock->u.Status;
 }
 
 /******************************************************************************

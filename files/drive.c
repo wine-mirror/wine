@@ -144,7 +144,7 @@ inline static char *heap_strdup( const char *str )
 
 #define IS_OPTION_TRUE(ch) ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
 
-extern void CDROM_InitRegistry(int dev);
+extern void CDROM_InitRegistry(int dev, int id, const char *device);
 
 /***********************************************************************
  *           DRIVE_GetDriveType
@@ -329,7 +329,7 @@ int DRIVE_Init(void)
             if (!NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, tmp, sizeof(tmp), &dummy ))
             {
                 WCHAR *data = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)tmp)->Data;
-                len = WideCharToMultiByte(CP_ACP, 0, data, -1, NULL, 0, NULL, NULL);
+                len = WideCharToMultiByte(drive->codepage, 0, data, -1, NULL, 0, NULL, NULL);
                 drive->device = HeapAlloc(GetProcessHeap(), 0, len);
                 WideCharToMultiByte(drive->codepage, 0, data, -1, drive->device, len, NULL, NULL);
 
@@ -346,7 +346,7 @@ int DRIVE_Init(void)
                     int cd_fd;
                     if ((cd_fd = open(drive->device, O_RDONLY|O_NONBLOCK)) != -1)
                     {
-                        CDROM_InitRegistry(cd_fd);
+                        CDROM_InitRegistry(cd_fd, i, drive->device);
                         close(cd_fd);
                     }
                 }
