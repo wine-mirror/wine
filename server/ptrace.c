@@ -139,10 +139,11 @@ static int wait4_thread( struct thread *thread, int signal )
 {
     int res, status;
 
-    do
+    for (;;)
     {
         if ((res = wait4_wrapper( get_ptrace_pid(thread), &status, WUNTRACED, NULL )) == -1)
         {
+            if (errno == EINTR) continue;
             if (errno == ECHILD)  /* must have died */
             {
                 thread->unix_pid = -1;
@@ -153,7 +154,8 @@ static int wait4_thread( struct thread *thread, int signal )
             return 0;
         }
         res = handle_child_status( thread, res, status, signal );
-    } while (res && res != signal);
+        if (!res || res == signal) break;
+    }
     return (thread->unix_pid != -1);
 }
 
