@@ -1,6 +1,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
 #include "debugstr.h"
 #include "debugtools.h"
@@ -197,4 +199,108 @@ int dbg_printf(const char *format, ...)
     va_end(valist);
     return ret;
 }
+
+
+
+/*--< Function >---------------------------------------------------------
+**  
+**              debugstr_hex_dump
+**              
+**  Description:
+**      This function creates a hex dump, with a readable ascii
+**  section, for displaying memory.
+**  
+**  Parameters:
+**      1.  ptr             Pointer to memory
+**      2.  len             How much to dump.
+**
+**  Returns:
+**    Temporarily allocated buffer, with the hex dump in it.
+**  Don't rely on this pointer being around for very long, just
+**  long enough to use it in a TRACE statement; e.g.:
+**  TRACE("struct dump is \n%s", debugstr_hex_dump(&x, sizeof(x)));
+**          
+**-------------------------------------------------------------------------*/
+LPSTR 
+debugstr_hex_dump (const void *ptr, int len)
+{
+    /* Locals */
+    char          dumpbuf[59];
+    char          charbuf[20];
+    char          tempbuf[8];
+    const char    *p;
+    int           i;
+    unsigned int  nosign;
+    LPSTR         dst;
+    LPSTR         outptr;
+
+/* Begin function dbg_hex_dump */
+
+    /*-----------------------------------------------------------------------
+    **  Allocate an output buffer
+    **      A reasonable value is one line overhand (80 chars), and
+    **      then one line (80) for every 16 bytes.
+    **---------------------------------------------------------------------*/
+    outptr = dst = gimme1 ((len * (80 / 16)) + 80);
+
+    /*-----------------------------------------------------------------------
+    **  Loop throught the input buffer, one character at a time
+    **---------------------------------------------------------------------*/
+    for (i = 0, p = ptr; (i < len); i++, p++)
+    {
+
+        /*-------------------------------------------------------------------
+        **  If we're just starting a line, 
+        **      we need to possibly flush the old line, and then
+        **      intialize the line buffer.
+        **-----------------------------------------------------------------*/
+        if ((i % 16) == 0)
+        {
+            if (i)
+            {
+                sprintf(outptr, "  %-43.43s   %-16.16s\n", dumpbuf, charbuf);
+                outptr += strlen(outptr);
+            }
+            sprintf (dumpbuf, "%04x: ", i);
+            strcpy (charbuf, "");
+        }
+
+        /*-------------------------------------------------------------------
+        **  Add the current data byte to the dump section.
+        **-----------------------------------------------------------------*/
+        nosign = (unsigned char) *p;
+        sprintf (tempbuf, "%02X", nosign);
+
+        /*-------------------------------------------------------------------
+        **  If we're two DWORDS through, add a hyphen for readability,
+        **      if it's a DWORD boundary, add a space for more
+        **      readability.
+        **-----------------------------------------------------------------*/
+        if ((i % 16) == 7)
+            strcat(tempbuf, " - ");
+        else if ( (i % 4) == 3)
+            strcat(tempbuf, " ");
+        strcat (dumpbuf, tempbuf);
+
+        /*-------------------------------------------------------------------
+        **  Add the current byte to the character display part of the
+        **      hex dump
+        **-----------------------------------------------------------------*/
+        sprintf (tempbuf, "%c", isprint(*p) ? *p : '.');
+        strcat (charbuf, tempbuf);
+    }
+
+    /*-----------------------------------------------------------------------
+    **  Flush the last line, if any
+    **---------------------------------------------------------------------*/
+    if (i > 0)
+    {
+        sprintf(outptr, "  %-43.43s   %-16.16s\n", dumpbuf, charbuf);
+        outptr += strlen(outptr);
+    }
+
+    return(dst);
+} /* End function dbg_hex_dump */
+
+
 

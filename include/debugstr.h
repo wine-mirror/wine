@@ -14,11 +14,13 @@ extern LPSTR debugstr_w (LPCWSTR s);
 extern LPSTR debugres_a (LPCSTR res);
 extern LPSTR debugres_w (LPCWSTR res);
 extern void debug_dumpstr (LPCSTR s);
+extern LPSTR debugstr_hex_dump (const void *ptr, int len);
 
 #ifdef __GNUC__
 extern int dbg_printf(const char *format, ...) __attribute__((format (printf,1,2)));
 #else
 extern int dbg_printf(const char *format, ...);
 #endif
+
 
 #endif /* __WINE_DEBUGSTR_H */
