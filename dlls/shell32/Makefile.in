@@ -4,7 +4,7 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = shell32
-WRCEXTRA  = -A -p $*
+WRCEXTRA  = -g -c
 
 C_SRCS = \
 	classes.c \
@@ -22,8 +22,11 @@ C_SRCS = \
 	shlfolder.c \
 	shlview.c
 
-# RC_SRCS = \
-#	shres.rc
+RC_SRCS= \
+	shres.rc
+
+#GEN_ASM_SRCS = \
+#	shellres.s
 
 all: check_wrc $(MODULE).o
 

@@ -1,21 +1,29 @@
-#include "shresdef.h"
+#include "shlobj.h"
 
-// we have to find a solution for the icons
-// IDI_FOLDER              ICON    DISCARDABLE     "folder.ico"
-// IDI_FOLDEROPEN          ICON    DISCARDABLE     "folderop.ico"
-
-STRINGTABLE DISCARDABLE 
+MENU_001 MENU DISCARDABLE
 BEGIN
-    IDS_FILE_TITLE      	"Files: "
-    IDS_MI_FILE         	"&Files"
-    IDS_MI_VIEW_FILES       "&View Files"
-    IDS_TB_VIEW_FILES       "View Filess"
-    IDS_MI_VIEW_IDW         "Show &Docking Window"
-    IDS_TB_VIEW_IDW         "Show Docking Window"
-    IDS_COLUMN1             "Name"
-    IDS_COLUMN2             "Date"
-    IDS_COLUMN3             "Size"
-    IDS_COLUMN4             "Attributes"
+	MENUITEM "Lar&ge Icons",	FCIDM_SHVIEW_BIGICON
+	MENUITEM "S&mall Icons",	FCIDM_SHVIEW_SMALLICON
+	MENUITEM "&List",		FCIDM_SHVIEW_LISTVIEW
+	MENUITEM "&Details",		FCIDM_SHVIEW_REPORTVIEW
 END
 
-
+MENU_002 MENU DISCARDABLE
+BEGIN
+	POPUP""
+	BEGIN
+	  POPUP "&View"
+	  BEGIN
+	    MENUITEM "Lar&ge Icons",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "S&mall Icons",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&List",		FCIDM_SHVIEW_LISTVIEW
+	    MENUITEM "&Details",	FCIDM_SHVIEW_REPORTVIEW
+	  END
+	  MENUITEM SEPARATOR
+	  POPUP "Arrange &Icons"
+	  BEGIN
+	    MENUITEM "&Auto Arrange",	FCIDM_SHVIEW_AUTOARRANGE
+	  END
+	  MENUITEM "Lin&e up Icons",	FCIDM_SHVIEW_SNAPTOGRID
+	END
+END
