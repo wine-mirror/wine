@@ -30,6 +30,7 @@ hex	0x{hexd}+
 uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
 
 %x QUOTE
+%x pp_line
 
 %{
 
@@ -69,6 +70,8 @@ static int kw_token(const char *kw);
 #define MAX_IMPORT_DEPTH 10
 struct {
   YY_BUFFER_STATE state;
+  char *input_name;
+  int   line_number;
   char *temp_name;
 } import_stack[MAX_IMPORT_DEPTH];
 int import_stack_ptr = 0;
@@ -103,7 +106,26 @@ static UUID* parse_uuid(const char*u)
  **************************************************************************
  */
 %%
-^#.*
+<INITIAL>^{ws}*\#{ws}*	yy_push_state(pp_line);
+<pp_line>[^\n]*         {
+                            int lineno;
+                            char *cptr, *fname;
+                            yy_pop_state();
+                            lineno = (int)strtol(yytext, &cptr, 10);
+                            if(!lineno)
+                                yyerror("Malformed '#...' line-directive; invalid linenumber");
+                            fname = strchr(cptr, '"');
+                            if(!fname)
+                                yyerror("Malformed '#...' line-directive; missing filename");
+                            fname++;
+                            cptr = strchr(fname, '"');
+                            if(!cptr)
+                                yyerror("Malformed '#...' line-directive; missing terminating \"");
+                            *cptr = '\0';
+                            line_number = lineno - 1;  /* We didn't read the newline */
+                            free( input_name );
+                            input_name = xstrdup(fname);
+                        }
 \"			yy_push_state(QUOTE); cbufidx = 0;
 <QUOTE>\"		{
 				yy_pop_state();
@@ -127,7 +149,7 @@ static UUID* parse_uuid(const char*u)
 				return aNUM;
 			}
 {cident}		return kw_token(yytext);
-\n
+\n			line_number++;
 {ws}
 \<\<			return SHL;
 \>\>			return SHR;
@@ -314,6 +336,9 @@ static void pop_import(void)
 		free(temp_name);
 	}
 	temp_name = import_stack[ptr].temp_name;
+	free( input_name );
+	input_name = import_stack[ptr].input_name;
+	line_number = import_stack[ptr].line_number;
 	import_stack_ptr--;
 }
 
@@ -325,14 +350,15 @@ struct imports {
 int do_import(char *fname)
 {
 	FILE *f;
-	char *hname, *path;
+	char *hname, *path, *p;
 	struct imports *import;
 	int ptr = import_stack_ptr;
 	int ret;
 
 	if (!parse_only) {
 		hname = dup_basename(fname, ".idl");
-		strcat(hname, ".h");
+                p = hname + strlen(hname) - 2;
+                if (p <= hname || strcmp( p, ".h" )) strcat(hname, ".h");
 
 		fprintf(header, "#include \"%s\"\n", hname);
 		free(hname);
@@ -352,10 +378,13 @@ int do_import(char *fname)
             yyerror("Unable to open include file %s", fname);
 
 	import_stack[ptr].temp_name = temp_name;
+	import_stack[ptr].input_name = input_name;
+	import_stack[ptr].line_number = line_number;
 	import_stack_ptr++;
+        input_name = path;
+        line_number = 1;
 
         ret = wpp_parse_temp( path, NULL, &temp_name );
-        free( path );
         if (ret) exit(1);
 
 	if((f = fopen(temp_name, "r")) == NULL)

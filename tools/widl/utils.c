@@ -50,7 +50,7 @@ void make_print(char *str)
 
 static void generic_msg(const char *s, const char *t, const char *n, va_list ap)
 {
-	fprintf(stderr, "%s:%d:%d: %s: ", input_name ? input_name : "stdin", line_number, char_number, t);
+	fprintf(stderr, "%s:%d: %s: ", input_name ? input_name : "stdin", line_number, t);
 	vfprintf(stderr, s, ap);
 #ifdef WANT_NEAR_INDICATION
 	{

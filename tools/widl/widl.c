@@ -99,7 +99,6 @@ char *proxy_token;
 char *temp_name;
 
 int line_number = 1;
-int char_number = 1;
 
 FILE *header;
 FILE *proxy;
@@ -180,7 +179,7 @@ int main(int argc,char *argv[])
   }
 
   if(optind < argc) {
-    input_name = argv[optind];
+    input_name = xstrdup(argv[optind]);
   }
   else {
     fprintf(stderr, usage);
@@ -266,7 +265,7 @@ int main(int argc,char *argv[])
   if(ret) {
     exit(1);
   }
-
+  header_name = NULL;
   return 0;
 }
 
@@ -275,6 +274,8 @@ static void rm_tempfile(void)
   abort_import();
   if(temp_name)
     unlink(temp_name);
+  if (header_name)
+    unlink( header_name );
 }
 
 static void segvhandler(int sig)
