@@ -557,7 +557,7 @@ static BOOL MODULE_GetBinaryType( HFILE hfile, OFSTRUCT *ofs,
              * field.
              */
             if ( (mz_header.e_cparhdr<<4) >= sizeof(IMAGE_DOS_HEADER) )
-                if ( ( mz_header.e_crlc == 0 && mz_header.e_lfarlc == 0 ) ||
+                if ( ( mz_header.e_crlc == 0 ) ||
                      ( mz_header.e_lfarlc >= sizeof(IMAGE_DOS_HEADER) ) )
                     if ( mz_header.e_lfanew >= sizeof(IMAGE_DOS_HEADER) &&
                          _llseek( hfile, mz_header.e_lfanew, SEEK_SET ) >= 0 &&
