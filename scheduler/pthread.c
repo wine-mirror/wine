@@ -112,8 +112,7 @@ strong_alias(__pthread_once, pthread_once);
 
 void __pthread_kill_other_threads_np(void)
 {
-  /* FIXME: this is supposed to be preparation for exec() */
-  if (init_done) P_OUTPUT("fixme:pthread_kill_other_threads_np\n");
+    /* we don't need to do anything here */
 }
 strong_alias(__pthread_kill_other_threads_np, pthread_kill_other_threads_np);
 
