@@ -2361,25 +2361,6 @@ int main(void) {
   fi
 fi
 
-dnl **** Check for underscore on external symbols ****
-
-AC_CACHE_CHECK("whether external symbols need an underscore prefix",
-               ac_cv_c_extern_prefix,
-[saved_libs=$LIBS
-LIBS="conftest_asm.s $LIBS"
-cat > conftest_asm.s <<EOF
-	.globl _ac_test
-_ac_test:
-	.long 0
-EOF
-AC_TRY_LINK([extern int ac_test;],[if (ac_test) return 1],
-            ac_cv_c_extern_prefix="yes",ac_cv_c_extern_prefix="no")
-LIBS=$saved_libs])
-if test "$ac_cv_c_extern_prefix" = "yes"
-then
-  AC_DEFINE(NEED_UNDERSCORE_PREFIX)
-fi
-
 dnl **** Check for working dll ****
 
 LDSHARED=""
@@ -2474,14 +2455,6 @@ then
     CFLAGS="$CFLAGS -D__sun__"
     CXXFLAGS="$CXXFLAGS -D__sun__"
 fi
-
-dnl $GCC is set by autoconf
-GCC_NO_BUILTIN=""
-if test "$GCC" = "yes"
-then
-    GCC_NO_BUILTIN="-fno-builtin"
-fi
-AC_SUBST(GCC_NO_BUILTIN)
 
 dnl **** Test Winelib-related features of the C++ compiler
 AC_LANG_CPLUSPLUS()
@@ -2810,14 +2783,6 @@ AC_PATH_LIBRARY(WINE_DLL_ROOT,[-lntdll.dll],[$WINE_LIBRARY_PATH -lwine -lwine_un
 ],[$WINE_DLL_ROOT])
 WINE_DLL_PATH="-L$WINE_DLL_ROOT/wine"
 
-if test -n "$LDPATH"
-then
-  LDPATH="$LDPATH:$WINE_DLL_ROOT"
-else
-  LDPATH="$WINE_DLL_ROOT"
-fi
-LDPATH="LD_LIBRARY_PATH=\"$LDPATH:\$\$LD_LIBRARY_PATH\""
-
 if test -z "$WINE_TOOL_PATH"
 then
   WINE_TOOL_PATH="$PATH:/usr/local/bin:/opt/wine/bin"
@@ -2838,6 +2803,7 @@ then
   AC_MSG_ERROR([Could not find Wine's wrc tool])
 fi
 
+LDPATH="LD_LIBRARY_PATH=\"$LDPATH:\$\$LD_LIBRARY_PATH\""
 AC_SUBST(LDPATH)
 AC_SUBST(WINE_INCLUDE_PATH)
 AC_SUBST(WINE_LIBRARY_PATH)
