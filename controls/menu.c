@@ -3859,17 +3859,7 @@ BOOL WINAPI SetSystemMenu( HWND hwnd, HMENU hMenu )
  */
 HMENU16 WINAPI GetMenu16( HWND16 hWnd ) 
 {
-    HMENU16 retvalue;
-    WND * wndPtr = WIN_FindWndPtr(hWnd);
-    if (wndPtr && !(wndPtr->dwStyle & WS_CHILD)) 
-    {
-        retvalue = (HMENU16)wndPtr->wIDmenu;
-        goto END;
-}
-    retvalue = 0;
-END:
-    WIN_ReleaseWndPtr(wndPtr);
-    return retvalue;
+    return (HMENU16)GetMenu(hWnd);
 }
 
 
@@ -3909,6 +3899,13 @@ BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
     WND * wndPtr = WIN_FindWndPtr(hWnd);
 
     TRACE("(%04x, %04x);\n", hWnd, hMenu);
+
+    if (hMenu && !IsMenu(hMenu))
+    {
+	WARN("hMenu is not a menu handle\n");
+	return FALSE;
+    }
+	
 
     if (wndPtr && !(wndPtr->dwStyle & WS_CHILD))
     {
