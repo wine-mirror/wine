@@ -1,9 +1,0 @@
-%long
-
-HRESULT
-
-%ptr
-
-REFCLSID
-REFIID
-LPVOID *

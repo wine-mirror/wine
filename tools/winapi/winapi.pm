@@ -29,11 +29,7 @@ require Exporter;
 
 use vars qw($win16api $win32api @winapis);
 
-use config qw(
-    &file_type
-    &get_api_files
-    $current_dir $wine_dir
-);
+use config qw($current_dir $wine_dir $winapi_dir);
 use modules qw($modules);
 use options qw($options);
 use output qw($output);
@@ -76,14 +72,7 @@ sub new {
 	$self->parse_spec_file("$wine_dir/$file");
     }
 
-    foreach my $file (get_api_files($$name)) {
-	my $module = $file;
-	$module =~ s/.*?\/([^\/]*?)\.api$/$1/;
-
-	if($modules->is_allowed_module($module)) {
-	    $self->parse_api_file($file,$module);
-	}
-    }
+    $self->parse_api_file("$$name.api");
 
     foreach my $forward_name (sort(keys(%$function_forward))) {
 	$$function_forward{$forward_name} =~ /^(\S*):(\S*)\.(\S*)$/;
@@ -116,8 +105,8 @@ sub parse_api_file {
     my $type_format = \%{$self->{TYPE_FORMAT}};
 
     my $file = shift;
-    my $module = shift;
 
+    my $module;
     my $kind;
     my $format;
     my $extension = 0;
@@ -125,14 +114,19 @@ sub parse_api_file {
 
     $output->lazy_progress("$file");
 
-    open(IN, "< $wine_dir/$file") || die "$wine_dir/$file: $!\n";
+    open(IN, "< $winapi_dir/$file") || die "$winapi_dir/$file: $!\n";
     $/ = "\n";
     while(<IN>) {
 	s/^\s*?(.*?)\s*$/$1/; # remove whitespace at begin and end of line
 	s/^(.*?)\s*#.*$/$1/;  # remove comments
 	/^$/ && next;         # skip empty lines
 
-	if(s/^%(\S+)\s*//) {
+	if(/^%%(\S+)$/) {
+	    $module = $1;
+	    $module =~ s/\.dll$//; # FIXME: Kludge
+	} elsif(!$modules->is_allowed_module($module)) {
+	    # Nothing
+	} elsif(s/^%(\S+)\s*//) {
 	    $kind = $1;
 	    $format = undef;
 	    $forbidden = 0;
@@ -229,11 +223,13 @@ sub parse_spec_file {
     $file =~ s%^\./%%;
 
     my %ordinals;
-    my $type;
     my $module;
     my $module_file;
 
     $output->lazy_progress("$file");
+
+    $module = $file;
+    $module =~ s/^.*?([^\/]*)\.spec$/$1/;
 
     open(IN, "< $file") || die "$file: $!\n";
     $/ = "\n";
@@ -248,7 +244,6 @@ sub parse_spec_file {
 	if($header)  {
 	    if(/^name\s*(\S*)/) { $module = $1; }
 	    if(/^file\s*(\S*)/) { $module_file = $1; }
-	    if(/^type\s*(\w+)/) { $type = $1; }
 	    if(/^\d+|@/) { $header = 0; $lookahead = 1; }
 	    next;
 	}
@@ -344,16 +339,7 @@ sub parse_spec_file {
 
 	    $ordinal = $1;
 
-	    my $internal_name;
-	    if(0 && $type eq "win16") {
-		if($external_name =~ /\d$/) {
-		    $internal_name = $external_name . "_16";
-		} else {
-		    $internal_name = $external_name . "16";
-		}
-	    } else {
-		$internal_name = $external_name;
-	    }
+	    my $internal_name = $external_name;
 
 	    $$function_stub{$module}{$external_name} = 1;
 	    if(!$$function_internal_name{$external_name}) {

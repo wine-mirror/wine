@@ -592,7 +592,7 @@ foreach my $file (@c_files) {
 				$include2info{$name}{used}++;
 			    }
 			}
-		    } elsif(-e "$wine_dir/$file_dir/../$header") {
+		    } elsif(-e "$file_dir/../$header") {
 			if($file_dir =~ m%^(.*?)/[^/]+$%) {
 			    $include2info{"$1/$header"}{used}++;
 			    foreach my $name (keys(%{$include2info{"$1/$header"}{includes}})) {

@@ -40,6 +40,10 @@ dlls/crtdll
 
 dlls/crypt32
 
+% dlls/d3d8/d3d8.spec
+
+dlls/d3d8
+
 % dlls/dciman32/dciman32.spec
 
 dlls/dciman32
@@ -56,6 +60,10 @@ dlls/devenum
 % dlls/dinput/dinput.spec
 
 dlls/dinput
+
+% dlls/dinput8/dinput8.spec
+
+dlls/dinput8
 
 % dlls/dplay/dplay.spec
 
@@ -522,6 +530,10 @@ dlls/winmm/wavemap
 % dlls/winmm/winearts/winearts.drv.spec
 
 dlls/winmm/winearts
+
+% dlls/winmm/winealsa/winealsa.drv.spec
+
+dlls/winmm/winealsa
 
 % dlls/winmm/wineoss/wineoss.drv.spec
 

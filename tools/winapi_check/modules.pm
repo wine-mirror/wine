@@ -49,15 +49,24 @@ sub get_spec_file_type {
 
     open(IN, "< $file") || die "$file: $!\n";
     local $/ = "\n";
-    while(<IN>) {
+    my $header = 1;
+    my $lookahead = 0;
+    while($lookahead || defined($_ = <IN>)) {
+	$lookahead = 0;
 	s/^\s*(.*?)\s*$/$1/;
 	s/^(.*?)\s*#.*$/$1/;
 	/^$/ && next;
 
-	if(/^name\s*(\S*)/) { $module = $1; }
-	if(/^type\s*(\w+)/) { $type = $1; }
+	if($header)  {
+	    if(/^name\s*(\S*)/) { $module = $1; }
+	    if(/^\d+|@/) { $header = 0; $lookahead = 1; }
+	    next;
+	}
 
-	if(defined($module) && defined($type)) { last; }
+	if(/^(\d+|@)\s+pascal(?:16)?/) {
+	    $type = "win16";
+	    last;
+	}
     }
     close(IN);
 
@@ -67,7 +76,7 @@ sub get_spec_file_type {
     }
 
     if(!defined($type)) {
-	$type = "";
+	$type = "win32";
     }
 
     return ($type, $module);
@@ -142,8 +151,6 @@ sub new {
     @$spec_files32 = ();
     foreach my $spec_file (@spec_files) {
 	(my $type, my $module) = get_spec_file_type("$wine_dir/$spec_file");
-
-	if(!$type) { $type = "win32"; }
 
 	$$spec_file2module{$spec_file} = $module;
 	$$module2spec_file{$module} = $spec_file;

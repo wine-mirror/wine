@@ -1,9 +1,0 @@
-%long
-
-HRESULT
-
-%ptr
-
-CLSID *
-IID *
-void **

@@ -1,7 +1,0 @@
-%long
-
-HRESULT
-
-%ptr
-
-DLLVERSIONINFO *

@@ -1,9 +1,0 @@
-%long
-
-HWND
-LONG
-
-%ptr
-
-GUID *
-LPVOID

@@ -76,6 +76,8 @@ sub check_documentation {
 	    {
 		my $found_name = 0;
 		my $found_ordinal = 0;
+
+		$module =~ s/\.(acm|dll|drv|exe|ocx)$//; # FIXME: Kludge
 		foreach (split(/\n/, $documentation)) {
 		    if(/^(\s*)\*(\s*)(\@|\S+)(\s*)([\(\[])(\w+)\.(\@|\d+)([\)\]])/) {
 			my $external_name2 = $3;
@@ -120,12 +122,19 @@ sub check_documentation {
 		my $module = $2;
 		my $ordinal = $3;
 
+		if(!$options->documentation_pedantic && $ordinal ne "@") {
+		    $ordinal = int($ordinal);
+		}
+
 		my $found = 0;
 		foreach my $entry2 (winapi::get_all_module_internal_ordinal($internal_name)) {
 		    (my $external_name2, my $module2, my $ordinal2) = @$entry2;
 
+		    my $_module2 = $module2;
+		    $_module2 =~ s/\.(acm|dll|drv|exe|ocx)$//; # FIXME: Kludge
+
 		    if($external_name eq $external_name2 &&
-		       lc($module) eq $module2 &&
+		       lc($module) eq $_module2 &&
 		       $ordinal eq $ordinal2 &&
 		       ($external_name2 eq "@" ||
 			($win16api->is_module($module2) && !$win16api->is_function_stub_in_module($module2, $external_name2)) ||
@@ -133,6 +142,7 @@ sub check_documentation {
 			$modules->is_allowed_module_in_file($module2, "$current_dir/$file"))
 		    {
 			$found = 1;
+			last;
 		    }
 		}
 		if(!$found) {

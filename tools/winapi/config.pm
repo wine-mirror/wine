@@ -31,7 +31,7 @@ require Exporter;
     &file_directory
     &file_type &files_filter
     &file_skip &files_skip
-    &get_api_files &get_c_files &get_h_files &get_spec_files
+    &get_c_files &get_h_files &get_spec_files
 );
 @EXPORT_OK = qw(
     $current_dir $wine_dir $winapi_dir $winapi_check_dir
@@ -174,10 +174,6 @@ sub _get_files {
     return @files;
 }
 
-sub get_api_files {
-    my $name = shift;
-    return _get_files("api", undef, "$winapi_check_dir/$name");
-}
 sub get_c_files { return _get_files("c", @_); }
 sub get_h_files { return _get_files("h", @_); }
 sub get_spec_files { return _get_files("spec", @_); }
