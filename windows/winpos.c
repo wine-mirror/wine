@@ -1377,7 +1377,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
         {
             HWND hOldFocus = PERQDATA_GetFocusWnd( pNewActiveQueue->pQData );
 
-            if ( hOldFocus && GetAncestor( hOldFocus, GA_ROOT ) != hwndActive )
+            if ( !hOldFocus || GetAncestor( hOldFocus, GA_ROOT ) != hwndActive )
                 FOCUS_SwitchFocus( pNewActiveQueue, hOldFocus, 
                                    (wndPtr && (wndPtr->dwStyle & WS_MINIMIZE))?
                                    0 : hwndActive );
