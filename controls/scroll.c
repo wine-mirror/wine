@@ -1355,6 +1355,11 @@ INT SCROLL_SetScrollInfo( HWND hwnd, INT nBar,
 		 infoPtr->Page, infoPtr->CurVal,
 		 infoPtr->MinVal, infoPtr->MaxVal );
 
+    /* don't change the scrollbar state if SetScrollInfo 
+     * is just called with SIF_DISABLENOSCROLL
+     */
+    if(!(info->fMask & SIF_ALL)) goto done;
+
     /* Check if the scrollbar should be hidden or disabled */
 
     if (info->fMask & (SIF_RANGE | SIF_PAGE | SIF_DISABLENOSCROLL))
