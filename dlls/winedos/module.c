@@ -158,6 +158,7 @@ static void MZ_FillPSP( LPVOID lpPSP, LPCSTR cmdtail, int length )
 static WORD MZ_InitEnvironment( LPCSTR env, LPCSTR name )
 {
  unsigned sz=0;
+ unsigned i=0;
  WORD seg;
  LPSTR envblk;
 
@@ -171,6 +172,16 @@ static WORD MZ_InitEnvironment( LPCSTR env, LPCSTR name )
  if (env) {
   memcpy(envblk,env,sz);
  } else envblk[0]=0;
+ /* DOS environment variables are uppercase */
+ while (envblk[i]){
+  while (envblk[i] != '='){
+   if (envblk[i]>='a' && envblk[i] <= 'z'){
+    envblk[i] -= 32;
+   }
+   i++;
+  }
+  i += strlen(envblk+i) + 1;
+ }
  /* DOS 3.x: the block contains 1 additional string */
  *(WORD*)(envblk+sz)=1;
  /* being the program name itself */
