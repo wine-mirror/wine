@@ -288,9 +288,9 @@ void winestat(){
 		    perc = implemented * 100.00 / used;
 	    else
 		    perc = 0.0;
-	    printf("%s: %d %d %3.1f\n", dll_builtin_table[i].dll_name, implemented, used, perc);
+	    printf("%s: %d of %d (%3.1f %%)\n", dll_builtin_table[i].dll_name, implemented, used, perc);
     };
 	perc = timplemented * 100.00 / tused;
-	printf("TOTAL: %d %d %3.1f\n",timplemented, tused, perc);
+	printf("TOTAL: %d of %d implemented (%3.1f %%)\n",timplemented, tused, perc);
 }
 #endif /* WINESTAT */

@@ -422,6 +422,21 @@ BOOL GrayString(HDC hdc, HBRUSH hbr, FARPROC gsprc, LPARAM lParam,
 }
 
 /***********************************************************************
+ *			TabbedTextOut		[USER.196]
+ */
+LONG TabbedTextOut(HDC hDC, short x, short y, LPSTR lpStr, short nCount, 
+		short nTabCount, LPINT lpTabPos, short nTabOrg)
+{
+	WORD 	width, height;
+	printf("EMPTY STUB !!! TabbedTextOut(); ! call TextOut() for now !\n");
+	height = HIWORD(GetTextExtent(hDC, lpStr, nCount));
+	width = LOWORD(GetTextExtent(hDC, lpStr, nCount));
+	TextOut(hDC, x, y, lpStr, nCount);
+	return MAKELONG(width, height);
+}
+
+
+/***********************************************************************
  *			ExtTextOut			[GDI.351]
  */
 BOOL ExtTextOut(HDC hDC, short x, short y, WORD wOptions, LPRECT lprect,
@@ -431,4 +446,5 @@ BOOL ExtTextOut(HDC hDC, short x, short y, WORD wOptions, LPRECT lprect,
 	TextOut(hDC, x, y, str, count);
 	return FALSE;
 }
+
 

@@ -15,9 +15,7 @@ static char Copyright[] = "Copyright  David W. Metcalfe, 1994";
 #include "class.h"
 #include "user.h"
 
-/*
-#define DEBUG_EDIT
-*/
+#define DEBUG_EDIT /* */
 
 #define NOTIFY_PARENT(hWndCntrl, wNotifyCode) \
 	SendMessage(GetParent(hWndCntrl), WM_COMMAND, \
@@ -1993,7 +1991,7 @@ LONG EDIT_SetTextMsg(HWND hwnd, LONG lParam)
 	es->hText = EDIT_HEAP_REALLOC(es->hText, len + 3);
 	text = EDIT_HEAP_ADDR(es->hText);
 	strcpy(text, (char *)lParam);
-	text[len] = '\n';
+/*	text[len] = '\n'; */ /* Removed by Bob Amstadt */
 	text[len + 1] = '\0';
 	text[len + 2] = '\0';
 	EDIT_BuildTextPointers(hwnd);

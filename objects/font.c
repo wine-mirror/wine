@@ -47,7 +47,8 @@ static XFontStruct * FONT_MatchFont( LOGFONT * font )
       case FF_DECORATIVE: family = "*"; break;
       default:            family = "*"; break;
     }
-    AnsiLower(family);
+    else 
+	AnsiLower(family);
     
 	while (TRUE) {
 	    /* Width==0 seems not to be a valid wildcard on SGI's, using * instead */
@@ -111,7 +112,7 @@ void FONT_GetMetrics( LOGFONT * logfont, XFontStruct * xfont,
     metrics->tmDigitizedAspectX = 1;
     metrics->tmDigitizedAspectY = 1;
 
-    if (xfont->per_char) average = metrics->tmMaxCharWidth;
+    if (!xfont->per_char) average = metrics->tmMaxCharWidth;
     else
     {
 	XCharStruct * charPtr = xfont->per_char;

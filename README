@@ -38,9 +38,9 @@ You must have one of:
 	NetBSD-current
 	FreeBSD-current or FreeBSD 1.1
 
-To build Wine, first do a "./Configure" and then a "make".  The
-executable "wine" will be built.  "wine" will load and run 16-bit
-Windows' executables. 
+To build Wine, first do a "./Configure" and then a "make" (or "gmake"
+if you're running *BSD).  The executable "wine" will be built.  "wine"
+will load and run 16-bit Windows' executables. 
 
 
 

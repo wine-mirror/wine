@@ -540,7 +540,6 @@ static LONG CB_LButtonDown(HWND hWnd, WORD wParam, LONG lParam)
     delta = (rc.bottom - rc.top - tm.tmHeight) >> 1;
     rc.top += delta;
     rc.bottom = tm.tmHeight + delta;
-    rc.right = tm.tmHeight;
     if (PtInRect(&rc, MAKEPOINT(lParam)))
     {
 	SetFocus(hWnd);
@@ -569,7 +568,6 @@ static LONG CB_LButtonUp(HWND hWnd, WORD wParam, LONG lParam)
     delta = (rc.bottom - rc.top - tm.tmHeight) >> 1;
     rc.top += delta;
     rc.bottom = tm.tmHeight + delta;
-    rc.right = tm.tmHeight;
 
     if (PtInRect(&rc, MAKEPOINT(lParam)))
     {
@@ -625,7 +623,6 @@ static LONG CB_LButtonDblClk(HWND hWnd, WORD wParam, LONG lParam)
     delta = (rc.bottom - rc.top - tm.tmHeight) >> 1;
     rc.top += delta;
     rc.bottom = tm.tmHeight + delta;
-    rc.right = tm.tmHeight;
     if (PtInRect(&rc, MAKEPOINT(lParam)))
 	NOTIFY_PARENT(hWnd, BN_DOUBLECLICKED);
 }
@@ -744,7 +741,6 @@ static LONG RB_LButtonDown(HWND hWnd, WORD wParam, LONG lParam)
     delta = (rc.bottom - rc.top - tm.tmHeight) >> 1;
     rc.top += delta;
     rc.bottom = tm.tmHeight + delta;
-    rc.right = tm.tmHeight;
     if (PtInRect(&rc, MAKEPOINT(lParam)))
     {
 	SetFocus(hWnd);
@@ -773,7 +769,6 @@ static LONG RB_LButtonUp(HWND hWnd, WORD wParam, LONG lParam)
     delta = (rc.bottom - rc.top - tm.tmHeight) >> 1;
     rc.top += delta;
     rc.bottom = tm.tmHeight + delta;
-    rc.right = tm.tmHeight;
 
     if (PtInRect(&rc, MAKEPOINT(lParam)))
     {
@@ -801,7 +796,6 @@ static LONG RB_LButtonDblClk(HWND hWnd, WORD wParam, LONG lParam)
     delta = (rc.bottom - rc.top - tm.tmHeight) >> 1;
     rc.top += delta;
     rc.bottom = tm.tmHeight + delta;
-    rc.right = tm.tmHeight;
     if (PtInRect(&rc, MAKEPOINT(lParam)))
 	NOTIFY_PARENT(hWnd, BN_DOUBLECLICKED);
 }

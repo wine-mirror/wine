@@ -599,22 +599,24 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 		if (lpMenu->Height == 0) lpMenu->Height = SYSMETRICS_CYMENU + 1;
 		oldHeight = lpMenu->Height;
 		rect2.bottom = rect2.top + oldHeight; 
-/*		printf("NC_DoNCPaint // menubar old Height=%d\n", oldHeight); */
 		StdDrawMenuBar(hdc, &rect2, lpMenu, suppress_menupaint);
-		GlobalUnlock(wndPtr->wIDmenu);
-/*		printf("NC_DoNCPaint // menubar new Height=%d\n", lpMenu->Height); */
 		if (oldHeight != lpMenu->Height) {
+			printf("NC_DoNCPaint // menubar changed oldHeight=%d != lpMenu->Height=%d\n",
+									oldHeight, lpMenu->Height);
 			/* Reduce ClientRect according to MenuBar height */
 			wndPtr->rectClient.top -= oldHeight;
 			wndPtr->rectClient.top += lpMenu->Height;
 			}
+		GlobalUnlock(wndPtr->wIDmenu);
 		}
 	}
 
     if (wndPtr->dwStyle & (WS_VSCROLL | WS_HSCROLL)) {
- 	if (wndPtr->dwStyle & WS_VSCROLL) {
+ 	if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->VScroll != NULL) &&
+	    (wndPtr->scroll_flags & 0x0001)) {
  	    int bottom = rect.bottom;
- 	    if (wndPtr->dwStyle & WS_HSCROLL) bottom -= SYSMETRICS_CYHSCROLL;
+ 	    if ((wndPtr->dwStyle & WS_HSCROLL) && (wndPtr->scroll_flags & 0x0001))
+			bottom -= SYSMETRICS_CYHSCROLL;
 	    SetRect(&rect2, rect.right - SYSMETRICS_CXVSCROLL, 
 	    	rect.top, rect.right, bottom); 
 	    if (wndPtr->dwStyle & WS_CAPTION) rect.top += SYSMETRICS_CYSIZE;
@@ -622,21 +624,23 @@ void NC_DoNCPaint( HWND hwnd, HRGN hrgn, BOOL active, BOOL suppress_menupaint )
 	    	rect2.top += SYSMETRICS_CYMENU + 1;
  	    StdDrawScrollBar(hwnd, hdc, SB_VERT, &rect2, (LPHEADSCROLL)wndPtr->VScroll);
  	    }
-	if (wndPtr->dwStyle & WS_HSCROLL) {
+ 	if ((wndPtr->dwStyle & WS_HSCROLL) && wndPtr->HScroll != NULL &&
+	    (wndPtr->scroll_flags & 0x0002)) {
 	    int right = rect.right;
-	    if (wndPtr->dwStyle & WS_VSCROLL) right -= SYSMETRICS_CYVSCROLL;
+	    if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->scroll_flags & 0x0001))
+			right -= SYSMETRICS_CYVSCROLL;
 	    SetRect(&rect2, rect.left, rect.bottom - SYSMETRICS_CYHSCROLL,
 		    right, rect.bottom);
 	    StdDrawScrollBar(hwnd, hdc, SB_HORZ, &rect2, (LPHEADSCROLL)wndPtr->HScroll);
 	    }
 
-	if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL))
-	{
-	    RECT r = rect;
-	    r.left = r.right - SYSMETRICS_CXVSCROLL;
-	    r.top  = r.bottom - SYSMETRICS_CYHSCROLL;
-	    FillRect( hdc, &r, sysColorObjects.hbrushScrollbar );
-	}
+	if ((wndPtr->dwStyle & WS_VSCROLL) && (wndPtr->dwStyle & WS_HSCROLL) &&
+	    (wndPtr->scroll_flags & 0x0003) == 0x0003) {
+		RECT r = rect;
+		r.left = r.right - SYSMETRICS_CXVSCROLL;
+		r.top  = r.bottom - SYSMETRICS_CYHSCROLL;
+		FillRect( hdc, &r, sysColorObjects.hbrushScrollbar );
+		}
     }    
 
     ReleaseDC( hwnd, hdc );

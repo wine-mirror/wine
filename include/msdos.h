@@ -30,10 +30,11 @@ struct dosdirent {
 #define CS context->sc_cs
 #define DS context->sc_ds
 #define ES context->sc_es
+#define SS context->sc_ss
 
 #define DI context->sc_edi
 #define SI context->sc_esi
-
+#define SP context->sc_esp
 #define EFL context->sc_efl
 
 #define SetCflag	(EFL |= 0x00000001L)
@@ -43,8 +44,8 @@ struct dosdirent {
 #define segment(a) 	((DWORD)a >> 16)
 #define offset(a)	((DWORD)a & 0xffff)
 
-#define setword(a,b)	*(BYTE*)a	= b & 0xff; \
-			*((BYTE*)a + 1) = (b>>8) & 0xff;
+#define setword(a,b)	*(BYTE*)(a)	= b & 0xff; \
+			*((BYTE*)(a + 1)) = (b>>8) & 0xff;
 			
 #define setdword(a,b)	*(BYTE*)a	= b & 0xff; \
 			*((BYTE*)a + 1) = (b>>8) & 0xff; \

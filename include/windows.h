@@ -161,7 +161,7 @@ typedef PAINTSTRUCT *LPPAINTSTRUCT;
 #ifdef WINELIB
 typedef LONG (*WNDPROC)(HWND, UINT, WPARAM, LPARAM);
 #else
-typedef LONG	(* WNDPROC)() WINE_PACKED;
+typedef LONG	(* WNDPROC)();
 #endif
 
 typedef struct {
@@ -3008,7 +3008,7 @@ Fg(int,SetDIBits,HDC,a,HANDLE,a2,WORD,b,WORD,c,LPSTR,d,LPBITMAPINFO,e,WORD,f)
 Fg(BOOL,SetWindowPos,HWND,a,HWND,b,short,c,short,d,short,e,short,f,WORD,g)
 Fh(BOOL,ExtTextOut,HDC,a,short,b,short,c,WORD,d,LPRECT,e,LPSTR,f,WORD,g,LPINT,h)
 Fh(HANDLE,DeferWindowPos,HANDLE,hWinPosInfo,HWND,hWnd,HWND,hWndInsertAfter,int,x,int,y,int,cx,int,cy,WORD,wFlags)
-Fh(LONG,TabbedTextOut,HDC,a,int,b,int,c,LPSTR,d,int,e,int,f,LPINT,g,int,h)
+Fh(LONG,TabbedTextOut,HDC,a,short,b,short,c,LPSTR,d,short,e,short,f,LPINT,g,short,h)
 Fh(int,ScrollWindowEx,HWND,a,short,b,short,c,LPRECT,d,LPRECT,e,HRGN,f,LPRECT,g,WORD,h)
 Fi(BOOL,Arc,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)
 Fi(BOOL,Chord,HDC,a,int,xLeft,int,yTop,int,xRight,int,yBottom,int,xStart,int,yStart,int,xEnd,int,yEnd)

@@ -23,5 +23,10 @@ int do_int26(struct sigcontext_struct *context)
 		" buffer %d\n", EAX & 0xff, begin, length, (int) dataptr);
 
 	ResetCflag;
+
+	/* push flags on stack */
+	SP -= sizeof(WORD);
+	setword(pointer(SS,SP), (WORD) EFL);
+
 	return 1;
 }

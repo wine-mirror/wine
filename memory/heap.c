@@ -245,8 +245,24 @@ HEAP_Free(MDESC **free_list, void *block)
      * Validate pointer.
      */
     m_free = (MDESC *) block - 1;
-    if (m_free->prev != m_free || m_free->next != m_free || 
-	((int) m_free & 0xffff0000) != ((int) *free_list & 0xffff0000))
+    if (m_free->prev != m_free || m_free->next != m_free)
+    {
+#ifdef DEBUG_HEAP
+	printf("Attempt to free bad pointer,"
+	       "m_free = %08x, *free_list = %08x\n",
+	       m_free, free_list);
+#endif
+	return -1;
+    }
+
+    if (*free_list == NULL)
+    {
+	*free_list = m_free;
+	(*free_list)->next = NULL;
+	(*free_list)->prev = NULL;
+	return 0;
+    }
+    else if (((int) m_free & 0xffff0000) != ((int) *free_list & 0xffff0000))
     {
 #ifdef DEBUG_HEAP
 	printf("Attempt to free bad pointer,"

@@ -43,6 +43,14 @@ int WNetGetConnection(LPSTR lpLocalName,
 }
 
 /**************************************************************************
+ *				WNetGetCaps		[USER.513]
+ */
+int WNetGetCaps(WORD capability)
+{
+	return 0;
+}
+
+/**************************************************************************
  *				WNetGetUser			[USER.516]
  */
 UINT WNetGetUser(LPSTR lpLocalName, LPSTR lpUserName, DWORD *lpSize)

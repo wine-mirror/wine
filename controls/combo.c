@@ -103,6 +103,14 @@ LONG ComboBoxWndProc( HWND hwnd, WORD message, WORD wParam, LONG lParam )
 		printf("Combo WM_DESTROY %lX !\n", lphc);
 #endif
 		return DefWindowProc( hwnd, message, wParam, lParam );
+	case WM_SHOWWINDOW:
+#ifdef DEBUG_COMBO
+		printf("ComboBox WM_SHOWWINDOW hWnd=%04X !\n", hwnd);
+#endif
+		if (!(wParam == 0 && lParam == 0L)) {
+			InvalidateRect(hwnd, NULL, TRUE);
+			}
+	    break;
 	
     case WM_COMMAND:
 		wndPtr = WIN_FindWndPtr(hwnd);

@@ -833,6 +833,10 @@ int ListBoxInsertString(HWND hwnd, UINT uIndex, LPSTR newstr)
 	HANDLE	hTemp;
 	LPSTR	str;
 	UINT	Count;
+#ifdef DEBUG_LISTBOX
+    printf("ListBoxInsertString(%04X, %d, %08X);\n", hwnd, uIndex, newstr);
+#endif
+	if (uIndex == (UINT)-1) return ListBoxAddString(hwnd, newstr);
 	lphl = ListBoxGetWindowAndStorage(hwnd, &wndPtr);
 	if (lphl == NULL) return LB_ERR;
 	if (uIndex >= lphl->ItemsCount) return LB_ERR;
@@ -846,7 +850,7 @@ int ListBoxInsertString(HWND hwnd, UINT uIndex, LPSTR newstr)
 	hTemp = USER_HEAP_ALLOC(GMEM_MOVEABLE, sizeof(LISTSTRUCT));
 	lplsnew = (LPLISTSTRUCT) USER_HEAP_ADDR(hTemp);
     if (lplsnew == NULL) {
-		printf("ListBoxAddString() // Bad allocation of new item !\n");
+		printf("ListBoxInsertString() // Bad allocation of new item !\n");
 		return LB_ERRSPACE;
 		}
 	ListBoxDefaultItem(hwnd, wndPtr, lphl, lplsnew);
@@ -862,6 +866,9 @@ int ListBoxInsertString(HWND hwnd, UINT uIndex, LPSTR newstr)
 			if (str == NULL) return LB_ERRSPACE;
 			strcpy(str, newstr);
 			newstr = str;
+#ifdef DEBUG_LISTBOX
+		    printf("ListBoxInsertString // after strcpy '%s'\n", str);
+#endif
 			}
 		}
 	lplsnew->lpNext = NULL;
@@ -886,6 +893,9 @@ int ListBoxInsertString(HWND hwnd, UINT uIndex, LPSTR newstr)
 		InvalidateRect(hwnd, NULL, TRUE);
 		UpdateWindow(hwnd);
 		}
+#ifdef DEBUG_LISTBOX
+    printf("ListBoxInsertString // count=%d\n", lphl->ItemsCount);
+#endif
 	return lphl->ItemsCount;
 }
 

@@ -35,6 +35,7 @@ static XContext winContext = 0;
   /* State variables */
 BOOL MouseButtonsStates[NB_BUTTONS] = { FALSE, FALSE, FALSE };
 BOOL AsyncMouseButtonsStates[NB_BUTTONS] = { FALSE, FALSE, FALSE };
+BYTE KeyStateTable[256];
 static WORD ALTKeyState;
 static HWND captureWnd = 0;
 Window winHasCursor = 0;
@@ -164,6 +165,16 @@ void EVENT_ProcessEvent( XEvent *event )
 	break;
 
     case MotionNotify:
+        /* Wine between two fast machines across the overloaded campus
+	   ethernet gets very boged down in MotionEvents. The following
+	   simply finds the last motion event in the queue and drops
+	   the rest. On a good link events are servered before they build
+	   up so this doesn't take place. On a slow link this may cause
+	   problems if the event order is important. I'm not yet seen
+	   of any problems. Jon 7/6/96.
+	 */
+        while (XCheckTypedWindowEvent(display, ((XAnyEvent *)event)->window,
+			  MotionNotify, event));    
 	EVENT_MotionNotify( (XMotionEvent*)event );
 	break;
 
@@ -310,6 +321,7 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
     if (event->type == KeyPress)
     {
 	if (vkey == VK_MENU) ALTKeyState = TRUE;
+	KeyStateTable[vkey] = 1;
 	keylp.lp1.count = 1;
 	keylp.lp1.code = LOBYTE(event->keycode);
 	keylp.lp1.extended = (extended ? 1 : 0);
@@ -341,6 +353,7 @@ static void EVENT_key( HWND hwnd, XKeyEvent *event )
     else
     {
 	if (vkey == VK_MENU) ALTKeyState = FALSE;
+	KeyStateTable[vkey] = 1;
 	keylp.lp1.count = 1;
 	keylp.lp1.code = LOBYTE(event->keycode);
 	keylp.lp1.extended = (extended ? 1 : 0);
@@ -462,6 +475,7 @@ HWND SetCapture(HWND wnd)
 
     if (rv == GrabSuccess)
     {
+	winHasCursor = wnd_p->window;
 	captureWnd = wnd;
 	return old_capture_wnd;
     }

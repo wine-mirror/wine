@@ -57,6 +57,7 @@ int do_int(int intnum, struct sigcontext_struct *scp)
 		return 1;	/* get base mem size */                
 
 	      case 0x15: return do_int15(scp);
+	      case 0x16: return do_int16(scp);
 	      case 0x1A: return do_int1A(scp);
 	      case 0x21: return do_int21(scp);
 

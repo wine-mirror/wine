@@ -553,3 +553,17 @@ int EnumObjects(HDC hDC, int nObjType, FARPROC lpEnumFunc, LPSTR lpData)
 	printf("EnumObjects // End of enumeration !\n");
 	return 0;
 }
+
+/***********************************************************************
+ *		IsGDIObject(GDI.462)
+ */
+BOOL IsGDIObject(HANDLE handle)
+{
+	GDIOBJHDR *object;
+
+	object = (GDIOBJHDR *) GDI_HEAP_ADDR( handle );
+	if (object)
+		return TRUE;
+	else
+		return FALSE;
+}

@@ -673,24 +673,31 @@ static BOOL FloodFill_rec(XImage *image, int x, int y,
 	if (x > endx || x < orgx || y > endy || y < orgy)
 		return FALSE;
 	XPutPixel(image, x, y, fillp);
-
-	testp = XGetPixel(image, x+1, y+1);
-	if (testp != borderp && testp != fillp)
-		FloodFill_rec(image, x+1, y+1, orgx, orgy, 
-				endx, endy, borderp, fillp);
-
-	testp = XGetPixel(image, x+1, y-1);
-	if (testp != borderp && testp != fillp)
+	
+	if ((x+1 <= endx) && (y+1 <= endy)) {
+	  testp = XGetPixel(image, x+1, y+1);
+	  if (testp != borderp && testp != fillp)
+	    FloodFill_rec(image, x+1, y+1, orgx, orgy, 
+			  endx, endy, borderp, fillp);
+	}
+	if ((x+1 <= endx) && (y-1 >= orgy)) {
+	  testp = XGetPixel(image, x+1, y-1);
+	  if (testp != borderp && testp != fillp)
 		FloodFill_rec(image, x+1, y-1, orgx, orgy, 
 				endx, endy, borderp, fillp);
-	testp = XGetPixel(image, x-1, y+1); 
-	if (testp != borderp && testp != fillp)
-		FloodFill_rec(image, x-1, y+1, orgx, orgy,
-				endx, endy, borderp, fillp);
-	testp = XGetPixel(image, x-1, y-1);
- 	if (testp != borderp && testp != fillp) 
-		FloodFill_rec(image, x-1, y-1, orgx, orgy, 
-				endx, endy, borderp, fillp);
+	}
+	if ((x-1 >= orgx) && (y+1 <= endy)) {
+	  testp = XGetPixel(image, x-1, y+1); 
+	  if (testp != borderp && testp != fillp)
+	    FloodFill_rec(image, x-1, y+1, orgx, orgy,
+			  endx, endy, borderp, fillp);
+	}
+	if ((x-1 >= orgx) && (y-1 >= orgy)) {
+	  testp = XGetPixel(image, x-1, y-1);
+	  if (testp != borderp && testp != fillp) 
+	    FloodFill_rec(image, x-1, y-1, orgx, orgy, 
+			  endx, endy, borderp, fillp);
+	}
 	return TRUE;
 }
 
@@ -737,8 +744,8 @@ BOOL FloodFill(HDC hdc, short x, short y, DWORD crColor)
 	return FALSE;
     if (!FloodFill_rec(image, x, y, 
 		       0, 0, 
-		       dc->w.DCOrgX + dc->w.DCSizeX, 
-		       dc->w.DCOrgY + dc->w.DCSizeY, 
+		       dc->w.DCSizeX-1, 
+		       dc->w.DCSizeY-1, 
 		       boundrypixel, dc->u.x.brush.pixel)) {
 	XDestroyImage(image);
 	return FALSE;

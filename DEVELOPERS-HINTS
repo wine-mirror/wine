@@ -1,16 +1,10 @@
 This is intend to be a document to help new developers get started.
 Existing developers should feel free to add there comments.
 
-RESERVING WINE PROJECT ARES:
-
-If you wish to work on a specific set of API functions.  Send
-mail to wine-project@amscons.com.  The automatic mail handler
-will provide you with instructions.
-
 SUBMITTING YOUR WORK:
 
 Submissions of code for inclussion into Wine should be sent to
-bob@amscons.com (Bob Amstadt).  You MUST provide a suitable
+wine-new@amscons.com (Bob Amstadt).  You MUST provide a suitable
 ChangeLog entry for any work that you submit.  I prefer new code
 to be submitted as unified diffs (diff -u) off of the latest release.  
 Releases are every Tuesday evening (approximately 17:00 PST or 

@@ -1,3 +1,107 @@
+----------------------------------------------------------------------
+Tue Jun 14 08:09:14 1994  Bob Amstadt  (bob@pooh)
+
+	* loader/selector.c (GetCurrentPDB): 
+	Added trivial function GetCurrentPDB() which returns the program
+	segment prefix selector.
+
+	* memory/heap.c (HEAP_Free): 
+	If free list is empty, make the freed block the free list.
+
+Fri Jun 10 07:56:49 1994  Bob Amstadt  (bob@pooh)
+
+	* controls/edit.c (EDIT_SetTextMsg): 
+	Do not append a newline at the end of the last line.
+
+	* windows/event.c (SetCapture): 
+	Set winHasCursor if mouse capture succeeds.
+
+Jun 6, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
+
+	* [controls/listbox.c]
+	Fix bug in listbox : InsertString should call AddString if -1.
+
+	* [controls/menu.c]
+	New function GetMenuState().
+
+	* [controls/scroll.c] [windows/nonclient.c]
+	Try to make ShowScrollBar() recalc NC_ regions. Not finished !
+
+	* [objects/text.c]
+	Add Stub for TabbedTextOut(), which temporarely call Textout().
+
+	* [windows/keyboard.c] [windows/event.c]
+	New function GetKeyBoardState() with an KeyStateTable array
+		& associated handling in function EVENT_key().
+
+Mon Jun 13 16:45:24 MET DST 1994 (erik@hacktic.nl)
+
+        * [controls/menu.c]
+        IsMenu() added.
+
+        * [loader/library.c]
+        ModuleFirst(), ModuleNext(), ModuleFindName(), ModuleFindHandle()
+        added.
+
+        * [object/gdiobj.c]
+        IsGDIObject() added.
+
+        * [miscemu/int2[56].c]
+        bugfix: both didn't leave flags pushed on 16bit-stack.
+        (winfile gets a bit further)
+
+        * [miscemu/int16.c]
+        Added (empty).
+
+Sat Jun 11 22:56:48 1994 Jon Tombs (jon@esix2.us.es)
+	* windows/event.c:
+	Added code to drop redundant motion Events in the XEvent queue.
+
+Thu Jun  9 10:55:55 MET DST 1994  Jochen Hein ( Hein@Student.TU-Clausthal.de )
+
+	* [misc/main.c misc/message.c include/texts.h]
+	Removed the text-constants from message.c into variables
+	which may be changed from X-resources.
+
+	* [misc/main.c misc/message.c]
+	added <locale.h> and setlocale() to main.c, used toupper() in message.c
+
+Mon, 13 Jun 94 09:41:16 -0500 Paul Bramel <paulbr@comm.mot.com>
+
+        * controls/button.c ( [CR]B_LButton* ) 
+        left rc.right at full window width so click on label also 
+        activates the control (MSWin behavior)
+
+Sat Jun 11 19:05:40 1994  Olaf Flebbe  (flebbe@tat.physik.uni-tuebingen.de)
+
+        * include/windows.h:
+          functions pointers can not be packed.
+          (annoying warnings with forthcomming gcc-2.6.x)
+        
+        * loader/main.c (InitDLL): 
+          Fixed a printf statement. (for control.exe) 
+
+          (InitializeLoadedDLLs): 
+          deleted shadow definition of  *wpnt.
+          (Breaks many programs, because now COMMDLG will be
+           initialized :-(
+
+        * windows/win.c (SetWindowText): 
+          added missing breaks; (PENSATE starts) 
+
+        * windows/graphics.c (FloodFill): 
+          Proper boundarys. (BANGBANG starts) FloodFile_rec should
+          be rewritten.
+
+        * objects/font.c (FONT_GetMetrics): 
+          TYPO: use font->perchar only if it is defined. (WRITE starts)
+
+Sun June 12, Peter Broadhurst (pbr@ua.nwl.ac.uk)
+        controls/scroll.c:
+        Fixes for improved behaviour when dragging thumb;
+        Added SB_THUMBPOSITION message when thumb is released.
+
+----------------------------------------------------------------------
 Tue Jun  7 08:41:27 1994  Bob Amstadt  (bob@pooh)
 
 	* loader/selector.c (FixupFunctionPrologs): 
@@ -69,7 +173,7 @@ Sun Jun  5 17:34:24 1994  Erik Bos (erik@hacktic.nl)
 
 Jun 6, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
 
-	* [tools/.c]
+	* [tools/build.c]
 	Change MAX_ORDINALS	define to higher value, 1299 entries.
 	(MMSYSTEM doesn't have succesive numbers, some are around 1200).
 
@@ -82,9 +186,6 @@ Jun 6, 94 martin2@trgcorp.solucorp.qc.ca (Martin Ayotte)
 
 	* [misc/message.c] [controls/combo.c]
 	Add an InvalidateRect() in WM_SHOWWINDOW to statisfy the new 'saveunder'.
-
-	* [windows/winpos.c]
-	Bug fix in SetWindowPos(), (redraw was done if SWP_NOREDRAW set).
 
 	* [windows/win.c]
 	In CreateWindowEx(), do SetMenu() calls after window creation,

@@ -20,9 +20,13 @@ static char Copyright[] = "Copyright  Martin Ayotte, 1994";
 #include "wine.h"
 #include "dlls.h"
 #include "task.h"
+#include "toolhelp.h"
 
 extern struct  w_files *wine_files;
 extern struct dll_name_table_entry_s dll_builtin_table[];
+
+struct w_files *GetFileInfo(HANDLE);
+char *GetDosFileName(char *);
 
 #define IS_BUILTIN_DLL(handle) ((handle >> 8) == 0xff) 
 
@@ -53,12 +57,17 @@ HANDLE GetModuleHandle(LPSTR lpModuleName)
 {
 	register struct w_files *w = wine_files;
 	int 	i;
+	char dllname[256];
+
+	if ((int) lpModuleName & 0xffff0000)
+		ExtractDLLName(lpModuleName, dllname);
+
 	if ((int) lpModuleName & 0xffff0000)
 	 	printf("GetModuleHandle('%s');\n", lpModuleName);
 	else
 	 	printf("GetModuleHandle('%x');\n", lpModuleName);
 
- 	printf("GetModuleHandle // searching in builtin libraries\n");
+/* 	printf("GetModuleHandle // searching in builtin libraries\n");*/
 	for (i = 0; i < N_BUILTINS; i++) {
 		if (dll_builtin_table[i].dll_name == NULL) break;
 		if (((int) lpModuleName & 0xffff0000) == 0) {
@@ -68,7 +77,7 @@ HANDLE GetModuleHandle(LPSTR lpModuleName)
 				return 0xFF00 + i;
 				}
 			}
-		else if (strcasecmp(dll_builtin_table[i].dll_name, lpModuleName) == 0) {
+		else if (strcasecmp(dll_builtin_table[i].dll_name, dllname) == 0) {
 			printf("GetModuleHandle('%x') return %04X \n", 
 							lpModuleName, 0xFF00 + i);
 			return (0xFF00 + i);
@@ -85,7 +94,7 @@ HANDLE GetModuleHandle(LPSTR lpModuleName)
 				return w->hinstance;
 				}
 			}
-		else if (strcasecmp(w->name, lpModuleName) == 0) {
+		else if (strcasecmp(w->name, dllname) == 0) {
 			printf("GetModuleHandle('%s') return %04X \n", 
 							lpModuleName, w->hinstance);
 			return w->hinstance;
@@ -309,3 +318,97 @@ FARPROC GetProcAddress(HANDLE hModule, char *proc_name)
 
 #endif /* ifndef WINELIB */
 
+/* internal dlls */
+static void 
+FillModStructBuiltIn(MODULEENTRY *lpModule, struct dll_name_table_entry_s *dll)
+{
+	lpModule->dwSize = dll->dll_table_length * 1024;
+	strcpy(lpModule->szModule, dll->dll_name);
+	lpModule->hModule = 0xff00 + dll->dll_number;
+	lpModule->wcUsage = GetModuleUsage(lpModule->hModule);
+	GetModuleFileName(lpModule->hModule, lpModule->szExePath, MAX_PATH + 1);
+	lpModule->wNext = 0;
+}
+
+/* loaded dlls */
+static void 
+FillModStructLoaded(MODULEENTRY *lpModule, struct w_files *dll)
+{
+	lpModule->dwSize = 16384;
+	strcpy(lpModule->szModule, dll->name);
+	lpModule->hModule = dll->hinstance;
+	lpModule->wcUsage = GetModuleUsage(lpModule->hModule);
+	GetModuleFileName(lpModule->hModule, lpModule->szExePath, MAX_PATH + 1);
+	lpModule->wNext = 0;
+}
+
+/**********************************************************************
+ *		ModuleFirst [TOOHELP.59]
+ */
+BOOL ModuleFirst(MODULEENTRY *lpModule)
+{
+	printf("ModuleFirst(%08X)\n", lpModule);
+	
+	FillModStructBuiltIn(lpModule, &dll_builtin_table[0]);
+	return TRUE;
+}
+
+/**********************************************************************
+ *		ModuleNext [TOOHELP.60]
+ */
+BOOL ModuleNext(MODULEENTRY *lpModule)
+{
+	struct w_files *w;
+
+	printf("ModuleNext(%08X)\n", lpModule);
+
+	if (IS_BUILTIN_DLL(lpModule->hModule)) {
+		/* last built-in ? */
+		if ((lpModule->hModule & 0xff) == (N_BUILTINS - 1) ) {
+			if (wine_files) {
+				FillModStructLoaded(lpModule, wine_files);
+				return TRUE;
+			} else
+				return FALSE;
+		}
+		FillModStructBuiltIn(lpModule, &dll_builtin_table[(lpModule->hModule & 0xff)+1]);
+		return TRUE;
+	}
+	w = GetFileInfo(lpModule->hModule);
+	if (w->next) {
+		FillModStructLoaded(lpModule, w->next);
+		return TRUE;
+	}
+	return FALSE;
+}
+
+/**********************************************************************
+ *		ModuleFindHandle [TOOHELP.62]
+ */
+HMODULE ModuleFindHandle(MODULEENTRY *lpModule, HMODULE hModule)
+{
+	struct w_files *w;
+
+	printf("ModuleFindHandle(%08X, %04X)\n", lpModule, hModule);
+
+	/* built-in dll ? */
+	if (IS_BUILTIN_DLL(hModule)) {
+		FillModStructBuiltIn(lpModule, &dll_builtin_table[hModule & 0xff]);
+		return hModule;
+	}
+
+	/* check loaded dlls */
+	if ((w = GetFileInfo(hModule)) == NULL)
+	    	return (HMODULE) NULL;
+	
+	FillModStructLoaded(lpModule, w);
+	return w->hinstance;
+}
+
+/**********************************************************************
+ *		ModuleFindName [TOOHELP.61]
+ */
+HMODULE ModuleFindName(MODULEENTRY *lpModule, LPCSTR lpstrName)
+{
+	return (ModuleFindHandle(lpModule, GetModuleHandle((char*)lpstrName)));
+}

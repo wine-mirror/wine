@@ -279,7 +279,7 @@ length	490
 #452 pascal GDISEEGDIDO
 #460 pascal GDITASKTERMINATION
 461 return SetObjectOwner 4 0
-#462 pascal ISGDIOBJECT
+462 pascal IsGDIObject(word) IsGDIObject(1)
 #463 pascal MAKEOBJECTPRIVATE
 #464 pascal FIXUPBOGUSPUBLISHERMETAFILE
 465 pascal RectVisible(word ptr) RectVisible(1 2)

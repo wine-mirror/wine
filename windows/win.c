@@ -201,6 +201,7 @@ BOOL WIN_CreateDesktopWindow()
     wndPtr->hdce              = 0;
     wndPtr->VScroll           = NULL;
     wndPtr->HScroll           = NULL;
+    wndPtr->scroll_flags      = 0;
     wndPtr->wIDmenu           = 0;
     wndPtr->hText             = 0;
     wndPtr->flags             = 0;
@@ -318,6 +319,7 @@ HWND CreateWindowEx( DWORD exStyle, LPSTR className, LPSTR windowName,
     wndPtr->flags             = 0;
     wndPtr->VScroll           = NULL;
     wndPtr->HScroll           = NULL;
+    wndPtr->scroll_flags      = 0;
     wndPtr->hSysMenu          = 0;
     wndPtr->hProp	          = 0;
     wndPtr->hTask	          = 0;
@@ -692,8 +694,11 @@ LONG SetWindowLong( HWND hwnd, short offset, LONG newval )
     else switch(offset)
     {
 	case GWL_STYLE:   ptr = &wndPtr->dwStyle;
+	  break;
         case GWL_EXSTYLE: ptr = &wndPtr->dwExStyle;
+	  break;
 	case GWL_WNDPROC: ptr = (LONG *)(&wndPtr->lpfnWndProc);
+	  break;
 	default: return 0;
     }
     retval = *ptr;

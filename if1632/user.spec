@@ -199,7 +199,8 @@ length	540
 193 pascal IsClipboardFormatAvailable(word) IsClipboardFormatAvailable(1)
 194  pascal DlgDirSelectComboBox(word ptr word) DlgDirSelectComboBox(1 2 3)
 195 pascal DlgDirListComboBox(word ptr word word word) DlgDirListComboBox(1 2 3 4 5)
-#196 TABBEDTEXTOUT
+196 pascal TabbedTextOut(word s_word s_word ptr s_word s_word ptr s_word)
+		TabbedTextOut(1 2 3 4 5 6 7 8)
 #197 GETTABBEDTEXTEXTENT
 #198 CASCADECHILDWINDOWS
 #199 TILECHILDWINDOWS
@@ -227,7 +228,7 @@ length	540
 220 pascal LoadMenuIndirect(ptr) LoadMenuIndirect(1)
 221 pascal ScrollDC(word s_word s_word ptr ptr word ptr) 
 	   ScrollDC(1 2 3 4 5 6 7)
-#222 GETKEYBOARDSTATE
+222 pascal GetKeyboardState(ptr) GetKeyboardState(1)
 #223 SETKEYBOARDSTATE
 224 pascal GetWindowTask(word) GetWindowTask(1)
 225 pascal EnumTaskWindows(word ptr long) EnumTaskWindows(1 2 3)
@@ -259,7 +260,7 @@ length	540
 247 pascal GetCursor() GetCursor()
 248 pascal GetOpenClipboardWindow() GetOpenClipboardWindow()
 249 pascal GetAsyncKeyState(word) GetAsyncKeyState(1)
-#250 GETMENUSTATE
+250 pascal GetMenuState(word word word) GetMenuState(1 2 3)
 #251 SENDDRIVERMESSAGE
 #252 OPENDRIVER
 #253 CLOSEDRIVER
@@ -328,7 +329,7 @@ length	540
 #343 GETFILEPORTNAME
 #356 LOADDIBCURSORHANDLER
 #357 LOADDIBICONHANDLER
-#358 ISMENU
+358 pascal IsMenu(word) IsMenu(1)
 359 pascal GetDCEx(word word long) GetDCEx(1 2 3)
 #362 DCHOOK
 #368 COPYICON
@@ -414,7 +415,7 @@ length	540
 #510 WNETLOCKQUEUEDATA
 #511 WNETUNLOCKQUEUEDATA
 512 pascal WNetGetConnection(ptr ptr ptr) WNetGetConnection(1 2 3)
-#513 WNETGETCAPS
+513 pascal WNetGetCaps(word) WNetGetCaps(1)
 #514 WNETDEVICEMODE
 #515 WNETBROWSEDIALOG
 516 pascal WNetGetUser(ptr ptr ptr) WNetGetUser(1 2 3)

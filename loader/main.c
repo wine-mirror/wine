@@ -132,7 +132,7 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
     char buffer[256], header[2], modulename[64], *fullname;
 
     ExtractDLLName(module, modulename);
-
+    printf("%sLoadImage \n", module);
     /* built-in one ? */
     if (FindDLLTable(modulename)) {
 	return GetModuleHandle(modulename);
@@ -212,7 +212,8 @@ HINSTANCE LoadImage(char *module, int filetype, int change_dir)
     wpnt->mz_header = (struct mz_header_s *) malloc(sizeof(struct mz_header_s));;
     status = lseek(wpnt->fd, 0, SEEK_SET);
     load_mz_header (wpnt->fd, wpnt->mz_header);
-    if (wpnt->mz_header->must_be_0x40 != 0x40)
+    if (wpnt->mz_header->must_be_0x40 != 0x40 &&
+	wpnt->mz_header->must_be_0x40 != 0x1e)
 	myerror("This is not a Windows program");
 
     /* read first two bytes to determine filetype */
@@ -361,7 +362,8 @@ void InitializeLoadedDLLs(struct w_files *wpnt)
 {
     static flagReadyToRun = 0;
     struct w_files *final_wpnt;
-    struct w_files * wpnt;
+
+    printf("InitializeLoadedDLLs %08X\n", wpnt);
 
     if (wpnt == NULL)
     {

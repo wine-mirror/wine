@@ -9,6 +9,7 @@ typedef struct tagHEADSSCROLL {
     short	MaxVal;
     short	MaxPix;
     short	CurPix;
+    short      ThumbVal;
     RECT	rect;
     RECT	rectUp;
     RECT	rectDown;

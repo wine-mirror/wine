@@ -9,6 +9,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
@@ -17,6 +18,7 @@ static char Copyright[] = "Copyright  Alexandre Julliard, 1994";
 #include "windows.h"
 #include "options.h"
 #include "prototypes.h"
+#include "texts.h"
 
 #define WINE_CLASS    "Wine"    /* Class name for resources */
 
@@ -32,6 +34,7 @@ int screenDepth = 0;  /* Screen depth to use */
 int desktopX = 0, desktopY = 0;  /* Desktop window position (if any) */
 
 char *ProgramName;		/* Used by resource.c with WINELIB */
+extern ButtonTexts ButtonText;
 
 struct options Options =
 {  /* default options */
@@ -141,6 +144,54 @@ static int MAIN_GetResource( XrmDatabase db, char *name, XrmValue *value )
 
 
 /***********************************************************************
+ *           MAIN_GetButtonText
+ *
+ * Fetch the value of resource 'name' using the correct instance name.
+ * 'name' must begin with '.' or '*'
+ *
+ * The address of the string got from the XResoure is stored in Button.Label.
+ * The corresponding hotkey is taken from this string.
+ */
+
+static void MAIN_GetButtonText( XrmDatabase db, char *name, ButtonDesc *Button)
+{
+    XrmValue value;
+    char Hotkey;
+    char *i;
+
+    if (MAIN_GetResource( db, name, &value))
+      {
+       Button->Label = value.addr;
+       i = strchr(Button->Label,'&');
+       if ( i == NULL )
+         Button->Hotkey = '\0';
+       else if ( i++ == '\0' )
+         Button->Hotkey = '\0';
+       else
+         Button->Hotkey = *i;
+      }
+    Button->Hotkey = toupper(Button->Hotkey);
+}
+
+/***********************************************************************
+ *           MAIN_GetAllButtonTexts
+ *
+ * Read all Button-labels from X11-resources if they exist.
+ */
+
+static void MAIN_GetAllButtonTexts(XrmDatabase db)
+{
+  MAIN_GetButtonText(db, ".YesLabel",    &ButtonText.Yes);
+  MAIN_GetButtonText(db, ".NoLabel",     &ButtonText.No);
+  MAIN_GetButtonText(db, ".OkLabel",     &ButtonText.Ok);
+  MAIN_GetButtonText(db, ".CancelLabel", &ButtonText.Cancel);
+  MAIN_GetButtonText(db, ".AbortLabel",  &ButtonText.Abort);
+  MAIN_GetButtonText(db, ".RetryLabel",  &ButtonText.Retry);
+  MAIN_GetButtonText(db, ".IgnoreLabel", &ButtonText.Ignore);
+  MAIN_GetButtonText(db, ".CancelLabel", &ButtonText.Cancel);
+}
+
+/***********************************************************************
  *           MAIN_ParseOptions
  *
  * Parse command line options and open display.
@@ -152,10 +203,10 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
     XrmDatabase db = NULL;
 
       /* Parse command line */
-
     Options.programName = MAIN_GetProgramName( *argc, argv );
     XrmParseCommand( &db, optionsTable, NB_OPTIONS,
 		     Options.programName, argc, argv );
+
 #ifdef WINELIB
     /* Need to assemble command line and pass it to WinMain */
 #else
@@ -175,8 +226,10 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	exit(1);
     }
 
-      /* Get all options */
+      /* Use app-defaults */
+    display->db = db;
 
+      /* Get all options */
     if (MAIN_GetResource( db, ".iconic", &value ))
 	Options.cmdShow = SW_SHOWMINIMIZED;
     if (MAIN_GetResource( db, ".privatemap", &value ))
@@ -197,6 +250,9 @@ static void MAIN_ParseOptions( int *argc, char *argv[] )
 	screenDepth = atoi( value.addr );
     if (MAIN_GetResource( db, ".desktop", &value))
 	Options.desktopGeometry = value.addr;
+
+/*    MAIN_GetAllButtonTexts(db); */
+ 
 }
 
 
@@ -311,7 +367,9 @@ int main( int argc, char *argv[] )
     int ret_val;
     int depth_count, i;
     int *depth_list;
-    
+
+    setlocale(LC_CTYPE,"");
+
     XrmInitialize();
     
     MAIN_ParseOptions( &argc, argv );

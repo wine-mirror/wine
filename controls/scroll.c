@@ -1,8 +1,10 @@
-/*
+/*		
  * Interface code to SCROLLBAR widget
  *
  * Copyright  Martin Ayotte, 1993
  *
+ * Small fixes and implemented SB_THUMBPOSITION
+ * by Peter Broadhurst, 940611
  */
 
 /*
@@ -58,6 +60,8 @@ LONG ScrollBarWndProc( HWND hWnd, WORD message, WORD wParam, LONG lParam )
 	RECT 	rect, rect2;
 	LPCREATESTRUCT lpCreat;
 	static RECT rectsel;
+	POINT *pt;
+	pt=(POINT*)&lParam;
 	switch(message) {
     case WM_CREATE:
 		lpCreat = (LPCREATESTRUCT)lParam;
@@ -95,15 +99,15 @@ LONG ScrollBarWndProc( HWND hWnd, WORD message, WORD wParam, LONG lParam )
 	
 	case WM_LBUTTONDOWN:
 		SetCapture(hWnd);
-		ScrollBarButtonDown(hWnd, SB_CTL, LOWORD(lParam), HIWORD(lParam));
+		ScrollBarButtonDown(hWnd, SB_CTL, pt->x,pt->y);
 		break;
 	case WM_LBUTTONUP:
 		ReleaseCapture();
-		ScrollBarButtonUp(hWnd, SB_CTL, LOWORD(lParam), HIWORD(lParam));
+		ScrollBarButtonUp(hWnd, SB_CTL, pt->x,pt->y);
 		break;
 
 	case WM_MOUSEMOVE:
-		ScrollBarMouseMove(hWnd, SB_CTL, wParam, LOWORD(lParam), HIWORD(lParam));
+		ScrollBarMouseMove(hWnd, SB_CTL, wParam, pt->x,pt->y);
 		break;
 	case WM_KEYDOWN:
 	case WM_KEYUP:
@@ -297,7 +301,24 @@ void ScrollBarButtonUp(HWND hWnd, int nBar, int x, int y)
 	printf("ScrollBarButtonUp // x=%d y=%d\n", x, y); 
 #endif
 	lphs = GetScrollObjectStruct(hWnd, nBar);
-	lphs->ThumbActive = FALSE;
+	if(lphs->ThumbActive)
+	  {
+	    HWND hWndOwner,hWndParent;
+	    if (nBar == SB_CTL) {
+		hWndParent = GetParent(hWnd);
+		hWndOwner = lphs->hWndOwner;
+		}
+	    else {
+		hWndParent = hWnd;
+		hWndOwner = 0;
+		}
+
+	
+	    SendMessage(hWndParent, lphs->Direction, 
+			SB_THUMBPOSITION, MAKELONG(lphs->ThumbVal, hWndOwner));
+	    lphs->ThumbActive = FALSE;
+	  }
+	  
 	if (lphs->ButtonDown != 0) {
 		lphs->ButtonDown = 0;
 		if (nBar == SB_CTL) {
@@ -337,21 +358,38 @@ void ScrollBarMouseMove(HWND hWnd, int nBar, WORD wParam, int x, int y)
 		printf("ScrollBarButtonMove SB_?SCROLL // x=%d y=%d\n", x, y);
 #endif
 		}
-	if (lphs->Direction == WM_VSCROLL) {
-		int butsiz = lphs->rect.right - lphs->rect.left;
-		y = y - butsiz - (butsiz >> 1);
-		}
-	else {
-		int butsiz = lphs->rect.bottom - lphs->rect.top;
-		y = x - butsiz - (butsiz >> 1);
-		}
-	x = (y * (lphs->MaxVal - lphs->MinVal) / 
-			lphs->MaxPix) + lphs->MinVal;
+
+	if(x<lphs->rect.left||x>lphs->rect.right||
+	   y<lphs->rect.top||y>lphs->rect.bottom)
+	  {
+
 #ifdef DEBUG_SCROLL
-	printf("Scroll WM_MOUSEMOVE val=%d pix=%d\n", x, y);
+	    printf("Rejecting thumb position !\n");
+#endif
+	    lphs->ThumbVal=lphs->CurVal;/*revert to last set position*/
+	  }
+	else
+	  {
+	
+	    if (lphs->Direction == WM_VSCROLL) {
+	      int butsiz = lphs->rect.right - lphs->rect.left;
+	      y = y - butsiz - (butsiz >> 1);
+	    }
+	    else {
+	      int butsiz = lphs->rect.bottom - lphs->rect.top;
+	      y = x - butsiz - (butsiz >> 1);
+	    }
+	    if(y<0)y=0;
+	    if(y>lphs->MaxPix)y=lphs->MaxPix;
+	    lphs->ThumbVal = (y * (lphs->MaxVal - lphs->MinVal) / 
+			      lphs->MaxPix) + lphs->MinVal;
+	  }
+
+#ifdef DEBUG_SCROLL
+	printf("Scroll WM_MOUSEMOVE val=%d pix=%d\n", lphs->ThumbVal, y);
 #endif
 	SendMessage(hWndParent, lphs->Direction, 
-		SB_THUMBTRACK, MAKELONG(x, hWndOwner));
+		SB_THUMBTRACK, MAKELONG(lphs->ThumbVal, hWndOwner));
 }
 
 
@@ -442,9 +480,11 @@ void StdDrawScrollBar(HWND hWnd, HDC hDC, int nBar, LPRECT lprect, LPHEADSCROLL 
 		lphs->rectDown.left = rect.right - w2;
 		}
 	if (lphs->MaxVal != lphs->MinVal)
-	lphs->CurPix = lphs->MaxPix * (abs((short)lphs->CurVal) - abs(lphs->MinVal)) / 
-    		(abs(lphs->MaxVal) - abs(lphs->MinVal));
+	lphs->CurPix = lphs->MaxPix * (lphs->CurVal - lphs->MinVal) / 
+    		(lphs->MaxVal - lphs->MinVal);
+	if(lphs->CurPix <0)lphs->CurPix=0;
 	if (lphs->CurPix > lphs->MaxPix)  lphs->CurPix = lphs->MaxPix;
+
 	hMemDC = CreateCompatibleDC(hDC);
 	if (lphs->Direction == WM_VSCROLL) {
 		GetObject(hUpArrow, sizeof(BITMAP), (LPSTR)&bm);
@@ -597,6 +637,7 @@ void NC_CreateScrollBars(HWND hWnd)
 		lphs->rect.right = width;
 		lphs->hWndOwner = hWnd;
 		wndPtr->VScroll = lphs;
+	    wndPtr->scroll_flags |= 0x0001;
 		if (wndPtr->dwStyle & WS_HSCROLL) height += SYSMETRICS_CYHSCROLL;
 		}
 	if (wndPtr->dwStyle & WS_HSCROLL) {
@@ -609,6 +650,7 @@ void NC_CreateScrollBars(HWND hWnd)
 		lphs->rect.bottom = height;
 		lphs->hWndOwner = hWnd;
 		wndPtr->HScroll = lphs;
+	    wndPtr->scroll_flags |= 0x0002;
 		}
 }
 
@@ -642,8 +684,10 @@ int SetScrollPos(HWND hWnd, int nBar, int nPos, BOOL bRedraw)
 	nRet = lphs->CurVal;
 	lphs->CurVal = (short)nPos;
 	if (lphs->MaxVal != lphs->MinVal)
-	lphs->CurPix = lphs->MaxPix * (abs((short)nPos) - abs(lphs->MinVal)) / 
-    		(abs(lphs->MaxVal) - abs(lphs->MinVal));
+	lphs->CurPix = lphs->MaxPix * (lphs->CurVal - lphs->MinVal) / 
+    		(lphs->MaxVal - lphs->MinVal);
+	if(lphs->CurPix <0)lphs->CurPix=0;
+
     if (lphs->CurPix > lphs->MaxPix)  lphs->CurPix = lphs->MaxPix;
 #ifdef DEBUG_SCROLL
     printf("SetScrollPos val=%d pixval=%d pixmax%d\n",
@@ -691,12 +735,15 @@ void SetScrollRange(HWND hWnd, int nBar, int MinPos, int MaxPos, BOOL bRedraw)
 	HDC		hDC;
     lphs = GetScrollObjectStruct(hWnd, nBar);
     if (lphs == NULL) return;
+
+/*    should a bad range be rejected here? 
+ */
     lphs->MinVal = (short)MinPos;
     lphs->MaxVal = (short)MaxPos;
     if (lphs->MaxVal != lphs->MinVal)
-	lphs->CurPix = abs(lphs->MaxVal) * 
-		(abs(lphs->CurVal) - abs(lphs->MinVal)) / 
-    		(abs(lphs->MaxVal) - abs(lphs->MinVal));
+      lphs->CurPix = lphs->MaxPix * (lphs->CurVal - lphs->MinVal) / 
+	  (lphs->MaxVal - lphs->MinVal);
+    if(lphs->CurPix <0)lphs->CurPix=0;
     if (lphs->CurPix > lphs->MaxPix)  lphs->CurPix = lphs->MaxPix;
 #ifdef DEBUG_SCROLL
     printf("SetScrollRange min=%d max=%d\n", lphs->MinVal, lphs->MaxVal);
@@ -737,32 +784,32 @@ void GetScrollRange(HWND hWnd, int nBar, LPINT lpMin, LPINT lpMax)
  */
 void ShowScrollBar(HWND hWnd, WORD wBar, BOOL bFlag)
 {
-    WND  *wndPtr;
+	WND  *wndPtr;
+	printf("ShowScrollBar hWnd=%04X wBar=%d bFlag=%d\n", hWnd, wBar, bFlag);
 #ifdef DEBUG_SCROLL
-    printf("ShowScrollBar hWnd=%04X wBar=%d bFlag=%d\n", hWnd, wBar, bFlag);
+	printf("ShowScrollBar hWnd=%04X wBar=%d bFlag=%d\n", hWnd, wBar, bFlag);
 #endif
-    if (wBar == SB_CTL) {
-    	if (bFlag)
-	    ShowWindow(hWnd, SW_SHOW);
-	else
-	    ShowWindow(hWnd, SW_HIDE);
-	return;
-	}
-    wndPtr = WIN_FindWndPtr(hWnd);
-/*
-    if ((wBar == SB_VERT) || (wBar == SB_BOTH)) {
-    	if (bFlag)
-	    wndPtr->dwStyle |= WS_VSCROLL;
-	else
-	    wndPtr->dwStyle &= 0xFFFFFFFFL ^ WS_VSCROLL;
-	}
-    if ((wBar == SB_HORZ) || (wBar == SB_BOTH)) {
-    	if (bFlag)
-	    wndPtr->dwStyle |= WS_HSCROLL;
-	else
-	    wndPtr->dwStyle &= 0xFFFFFFFFL ^ WS_HSCROLL;
-	}
-*/
+	if (wBar == SB_CTL) {
+		if (bFlag)
+			ShowWindow(hWnd, SW_SHOW);
+		else
+			ShowWindow(hWnd, SW_HIDE);
+		return;
+		}
+	wndPtr = WIN_FindWndPtr(hWnd);
+	if ((wBar == SB_VERT) || (wBar == SB_BOTH)) {
+		if (bFlag)
+			wndPtr->scroll_flags != 0x0001;
+		else
+			wndPtr->scroll_flags &= 0xFFFE;
+		}
+	if ((wBar == SB_HORZ) || (wBar == SB_BOTH)) {
+		if (bFlag)
+			wndPtr->scroll_flags != 0x0002;
+		else
+			wndPtr->scroll_flags &= 0xFFFD;
+		}
+	SetWindowPos(hWnd, 0, 0, 0, 0, 0, 
+		SWP_NOZORDER | SWP_NOMOVE | 
+		SWP_NOSIZE | SWP_FRAMECHANGED);
 }
-
-

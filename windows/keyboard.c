@@ -11,9 +11,10 @@ static char Copyright[] = "Copyright  Bob Amstadt, 1993";
 
 extern BOOL MouseButtonsStates[3];
 extern BOOL AsyncMouseButtonsStates[3];
+extern BYTE KeyStateTable[256];
 
 /**********************************************************************
- *		GetKeyState	(USER.106)
+ *		GetKeyState			[USER.106]
  */
 int GetKeyState(int keycode)
 {
@@ -29,6 +30,15 @@ int GetKeyState(int keycode)
 		}
 }
 
+/**********************************************************************
+ *		GetKeyboardState			[USER.222]
+ */
+void GetKeyboardState(BYTE FAR *lpKeyState)
+{
+	if (lpKeyState != NULL) {
+		memcpy(lpKeyState, KeyStateTable, 256);
+		}
+}
 
 /**********************************************************************
  *

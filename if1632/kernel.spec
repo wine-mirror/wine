@@ -39,7 +39,7 @@ length	415
 34  pascal SetTaskQueue(word word) SetTaskQueue(1 2)
 35  pascal GetTaskQueue(word) GetTaskQueue(1)
 36  pascal GetCurrentTask() GetCurrentTask()
-#37 GETCURRENTPDB
+37  pascal GetCurrentPDB() GetCurrentPDB()
 #38 SETTASKSIGNALPROC
 #41 ENABLEDOS
 #42 DISABLEDOS

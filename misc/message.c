@@ -19,6 +19,21 @@ static char Copyright[] = "Copyright Martin Ayotte, 1993";
 #include "prototypes.h"
 #include "heap.h"
 #include "win.h"
+#include "texts.h"
+ 
+/*
+ * Defaults for button-texts
+ */
+
+ButtonTexts ButtonText = {
+  "&Yes",    'Y',
+  "&No",     'N',
+  "&Ok",     'O',
+  "&Cancel", 'C',
+  "&Abort",  'A',
+  "&Retry",  'R',
+  "&Ignore", 'I'
+};
 
 extern HINSTANCE hSysRes;
 extern HBITMAP hUpArrow;
@@ -175,7 +190,7 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	switch(message) {
 	case WM_CREATE:
 #ifdef DEBUG_MSGBOX
-		printf("MessageBox WM_CREATE !\n");
+		printf("MessageBox WM_CREATE hWnd=%04X !\n", hWnd);
 #endif
 		wndPtr = WIN_FindWndPtr(hWnd);
 		createStruct = (CREATESTRUCT *)lParam;
@@ -191,55 +206,55 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 		lpmb->rectStr.bottom -= 32;
 		switch(lpmb->wType & MB_TYPEMASK) {
 		case MB_OK :
-			lpmb->hWndYes = CreateWindow("BUTTON", "&Ok", 
+		        lpmb->hWndYes = CreateWindow("BUTTON", ButtonText.Ok.Label,
 				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 				rect.right / 2 - 30, rect.bottom - 25, 
 				60, 18, hWnd, IDOK, wndPtr->hInstance, 0L);
 			break;
 		case MB_OKCANCEL :
-			lpmb->hWndYes = CreateWindow("BUTTON", "&Ok", 
+			lpmb->hWndYes = CreateWindow("BUTTON", ButtonText.Ok.Label,
 				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 				rect.right / 2 - 65, rect.bottom - 25, 
 				60, 18, hWnd, IDOK, wndPtr->hInstance, 0L);
-			lpmb->hWndCancel = CreateWindow("BUTTON", "&Cancel", 
+			lpmb->hWndCancel = CreateWindow("BUTTON", ButtonText.Cancel.Label,
 				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 				rect.right / 2 + 5, rect.bottom - 25, 
 				60, 18, hWnd, IDCANCEL, wndPtr->hInstance, 0L);
 			break;
 		case MB_ABORTRETRYIGNORE :
-			lpmb->hWndYes = CreateWindow("BUTTON", "&Retry", 
+			lpmb->hWndYes = CreateWindow("BUTTON", ButtonText.Retry.Label,
 				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 				rect.right / 2 - 100, rect.bottom - 25, 
 				60, 18, hWnd, IDRETRY, wndPtr->hInstance, 0L);
-			lpmb->hWndNo = CreateWindow("BUTTON", "&Ignore", 
+			lpmb->hWndNo = CreateWindow("BUTTON", ButtonText.Ignore.Label,
 				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 				rect.right / 2 - 30, rect.bottom - 25, 
 				60, 18, hWnd, IDIGNORE, wndPtr->hInstance, 0L);
-			lpmb->hWndCancel = CreateWindow("BUTTON", "&Abort", 
+			lpmb->hWndCancel = CreateWindow("BUTTON", ButtonText.Abort.Label,
 				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 				rect.right / 2 + 40, rect.bottom - 25, 
 				60, 18, hWnd, IDABORT, wndPtr->hInstance, 0L);
 			break;
 		case MB_YESNO :
-			lpmb->hWndYes = CreateWindow("BUTTON", "&Yes", 
+			lpmb->hWndYes = CreateWindow("BUTTON", ButtonText.Yes.Label,
 				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 				rect.right / 2 - 65, rect.bottom - 25, 
 				60, 18, hWnd, IDYES, wndPtr->hInstance, 0L);
-			lpmb->hWndNo = CreateWindow("BUTTON", "&No", 
+			lpmb->hWndNo = CreateWindow("BUTTON", ButtonText.No.Label,
 				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 				rect.right / 2 + 5, rect.bottom - 25, 
 				60, 18, hWnd, IDNO, wndPtr->hInstance, 0L);
 			break;
 		case MB_YESNOCANCEL :
-			lpmb->hWndYes = CreateWindow("BUTTON", "&Yes", 
+			lpmb->hWndYes = CreateWindow("BUTTON", ButtonText.Yes.Label,
 				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 				rect.right / 2 - 100, rect.bottom - 25, 
 				60, 18, hWnd, IDYES, wndPtr->hInstance, 0L);
-			lpmb->hWndNo = CreateWindow("BUTTON", "&No", 
+			lpmb->hWndNo = CreateWindow("BUTTON", ButtonText.No.Label,
 				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 				rect.right / 2 - 30, rect.bottom - 25, 
 				60, 18, hWnd, IDNO, wndPtr->hInstance, 0L);
-			lpmb->hWndCancel = CreateWindow("BUTTON", "&Cancel", 
+			lpmb->hWndCancel = CreateWindow("BUTTON", ButtonText.Cancel.Label,
 				WS_CHILD | WS_CLIPCHILDREN | WS_VISIBLE | BS_PUSHBUTTON,
 				rect.right / 2 + 40, rect.bottom - 25, 
 				60, 18, hWnd, IDCANCEL, wndPtr->hInstance, 0L);
@@ -271,6 +286,9 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 			}
 	    break;
 	case WM_SHOWWINDOW:
+#ifdef DEBUG_MSGBOX
+		printf("MessageBox WM_SHOWWINDOW hWnd=%04X !\n", hWnd);
+#endif
 		if (!(wParam == 0 && lParam == 0L)) {
 			InvalidateRect(hWnd, NULL, TRUE);
 			}
@@ -281,7 +299,12 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 #endif
 		lpmb = MsgBoxGetStorageHeader(hWnd);
 		if (lpmb == NULL) break;
+		if (!lpmb->ActiveFlg) break;
 		hDC = BeginPaint(hWnd, &ps);
+		if (hDC == 0) {
+			printf("MessageBox WM_PAINT // BeginPaint returned BAD hDC !\n");
+			break;
+			}
 		GetClientRect(hWnd, &rect);
 		FillRect(hDC, &rect, GetStockObject(WHITE_BRUSH));
 		CopyRect(&rect, &lpmb->rectStr);
@@ -307,7 +330,6 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	    ReleaseCapture();
 	    lpmb = MsgBoxGetStorageHeader(hWnd);
 		if (lpmb == NULL) break;
-	    lpmb->ActiveFlg = FALSE;
 	    if (lpmb->hIcon) DestroyIcon(lpmb->hIcon);
 	    if (lpmb->hWndYes) DestroyWindow(lpmb->hWndYes);
 	    if (lpmb->hWndNo) DestroyWindow(lpmb->hWndNo);
@@ -315,6 +337,7 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 #ifdef DEBUG_MSGBOX
 	    printf("MessageBox WM_DESTROY end !\n");
 #endif
+	    lpmb->ActiveFlg = FALSE;
 	    break;
 	case WM_COMMAND:
 	    lpmb = MsgBoxGetStorageHeader(hWnd);
@@ -328,36 +351,28 @@ LONG SystemMessageBoxProc(HWND hWnd, WORD message, WORD wParam, LONG lParam)
 	    break;
 	case WM_CHAR:
 	    lpmb = MsgBoxGetStorageHeader(hWnd);
+/*          if (wParam >= 'a' || wParam <= 'z') wParam -= 'a' - 'A'; */
+		wParam = toupper(wParam);
+	    if (wParam == ButtonText.Yes.Hotkey)
+                lpmb->wRetVal = IDYES;
+            else if (wParam == ButtonText.Ok.Hotkey)
+                lpmb->wRetVal = IDOK;
+            else if (wParam == ButtonText.Retry.Hotkey)
+                lpmb->wRetVal = IDRETRY;
+            else if (wParam == ButtonText.Abort.Hotkey)
+                lpmb->wRetVal = IDABORT;
+            else if (wParam == ButtonText.No.Hotkey)
+                lpmb->wRetVal = IDNO;
+            else if (wParam == ButtonText.Ignore.Hotkey)
+                 lpmb->wRetVal = IDIGNORE;
+            else if ((wParam == ButtonText.Ok.Hotkey) || (wParam == VK_ESCAPE))
+                lpmb->wRetVal = IDCANCEL;
+	    else
+		return 0;
 		if (lpmb == NULL) break;
-		if (wParam >= 'a' || wParam <= 'z') wParam -= 'a' - 'A';
-		switch(wParam) {
-			case 'Y':
-			    lpmb->wRetVal = IDYES;
-				break;
-			case 'O':
-			    lpmb->wRetVal = IDOK;
-				break;
-			case 'R':
-			    lpmb->wRetVal = IDRETRY;
-				break;
-			case 'A':
-			    lpmb->wRetVal = IDABORT;
-				break;
-			case 'N':
-			    lpmb->wRetVal = IDNO;
-				break;
-			case 'I':
-			    lpmb->wRetVal = IDIGNORE;
-				break;
-			case 'C':
-			case VK_ESCAPE:
-			    lpmb->wRetVal = IDCANCEL;
-				break;
-			default:
-			    return 0;
-			}
-	    PostMessage(hWnd, WM_CLOSE, 0, 0L);
-	    break;
+		ShowWindow(hWnd, SW_HIDE);
+		PostMessage(hWnd, WM_CLOSE, 0, 0L);
+		break;
 	default:
 	    return DefWindowProc(hWnd, message, wParam, lParam );
     }
