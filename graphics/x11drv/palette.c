@@ -671,21 +671,6 @@ int X11DRV_PALETTE_ToPhysical( DC *dc, COLORREF color )
 
 	switch(spec_type)
         {
-          case 2: /* PALETTERGB - not sure if we really need to search palette */
-	
-	    idx = COLOR_PaletteLookupPixel( palPtr->logpalette.palPalEntry,
-					    palPtr->logpalette.palNumEntries,
-					    NULL, color, FALSE);
-
-            if( palPtr->mapping )
-	    {
-	        GDI_HEAP_UNLOCK( hPal );
-		return palPtr->mapping[idx];
-	    }
-
-	    color = *(COLORREF*)(palPtr->logpalette.palPalEntry + idx);
-	    break;
-
           case 1: /* PALETTEINDEX */
 
             if( (idx = color & 0xffff) >= palPtr->logpalette.palNumEntries)
