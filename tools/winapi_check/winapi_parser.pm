@@ -135,7 +135,9 @@ sub parse_c_file {
 	    if(defined($comments[$n]) && $n >= 0) {
 		$documentation = $comments[$n];
 		for(my $m=$n+1; $m <= $#comments; $m++) {
-		    if($comments[$m] =~ /^\/\*\*+\/$/) {
+		    if($comments[$m] =~ /^\/\*\*+\/$/ ||
+		       $comments[$m] =~ /^\/\*\s*(?:\!)?defined/) # FIXME: Kludge
+		    {
 			@argument_documentations = ();
 			next;
 		    }

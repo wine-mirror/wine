@@ -26,8 +26,6 @@ dlls/commdlg
 
 % dlls/crtdll/crtdll.spec
 
-dlls/crtdll
-
 % dlls/dciman32/dciman32.spec
 
 dlls/dciman32
@@ -85,8 +83,6 @@ dlls/imagehlp
 
 % dlls/imm32/imm.spec
 
-dlls/imm32
-
 % dlls/imm32/imm32.spec
 
 dlls/imm32
@@ -117,6 +113,10 @@ misc
 ole
 scheduler
 win32
+
+% dlls/msvcrt/msvcrt.spec
+
+dlls/msvcrt
 
 % dlls/kernel/stress.spec
 
@@ -292,6 +292,10 @@ dlls/shell32
 
 dlls/shell32
 
+% dlls/shdocvw/shdocvw.spec
+
+dlls/shdocvw
+
 % dlls/shfolder/shfolder.spec
 
 % dlls/shlwapi/shlwapi.spec
@@ -376,6 +380,10 @@ dlls/winaspi
 
 dlls/winaspi
 
+% dlls/winedos/winedos.spec
+
+dlls/winedos
+
 % dlls/wineps/wineps.spec
 
 % dlls/wineps/wineps16.spec
@@ -436,11 +444,7 @@ dlls/winmm
 
 % dlls/winnls/winnls.spec
 
-dlls/winnls
-
 % dlls/winnls/winnls32.spec
-
-dlls/winnls
 
 % dlls/winsock/winsock.spec
 

@@ -1,0 +1,15 @@
+%long
+
+BOOL
+HRESULT
+
+%ptr
+
+DLLVERSIONINFO *
+LPVOID *
+REFCLSID
+REFIID
+
+%wstr
+
+LPCWSTR

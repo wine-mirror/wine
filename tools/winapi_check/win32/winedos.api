@@ -1,0 +1,22 @@
+%long
+
+BOOL
+BYTE
+HANDLE
+UINT
+WORD
+int
+
+%ptr
+
+CONTEXT86 *
+LPDOSTASK
+LPVOID
+
+%str
+
+LPCSTR
+
+%void
+
+void

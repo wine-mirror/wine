@@ -328,7 +328,7 @@ sub parse_spec_file {
 		    }
 		}
 	    }
-	} elsif(/^(\d+|@)\s+stub\s+(\S+)$/) {
+	} elsif(/^(\d+|@)\s+stub(?:\s+(?:-noimport|-norelay|-i386|-ret64))?\s+(\S+)$/) {
 	    my $external_name = $2;
 
 	    $ordinal = $1;

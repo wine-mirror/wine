@@ -244,6 +244,8 @@ if($options->headers) {
 }
 
 my %comment_width;
+my %comment_indent;
+my %comment_spacing;
 my %module_pseudo_stub_count16;
 my %module_pseudo_stub_count32;
 
@@ -493,8 +495,24 @@ foreach my $file ($options->c_files) {
 		    $external_name = $internal_name;
 		}
 
-		if($documentation !~ /\b(\Q$external_name\E|$internal_name|$name1|$name2)\b/) {
-		    $output->write("documentation: wrong or missing name \\\n$documentation\n");
+		if($options->documentation_pedantic) {
+		    my $n = 0;
+		    if((++$n && defined($module16) && defined($external_name16) &&
+			$external_name16 ne "@" && $documentation !~ /\b\Q$external_name16\E\b/) ||
+		       (++$n && defined($module16) && defined($external_name16) &&
+			$external_name16 eq "@" && $documentation !~ /\@/) ||
+		       (++$n && defined($module32) && defined($external_name32) &&
+			$external_name32 ne "@" && $documentation !~ /\b\Q$external_name32\E\b/) ||
+		       (++$n && defined($module32) && defined($external_name32) &&
+			$external_name32 eq "@" && $documentation !~ /\@/))
+		    {
+			my $external_name = ($external_name16, $external_name32)[($n-1)/2];
+			$output->write("documentation: wrong or missing name ($external_name) \\\n$documentation\n");
+		    }
+		} else {
+		    if($documentation !~ /\b(?:\Q$external_name\E|$internal_name|$name1|$name2)\b/) {
+			$output->write("documentation: wrong or missing name \\\n$documentation\n");
+		    }
 		}
 
 		if($options->documentation_ordinal) {
@@ -523,7 +541,7 @@ foreach my $file ($options->c_files) {
 			    foreach my $uc_module32 (@uc_modules32) {
 				if($documentation !~ /\b$uc_module32\.\Q$ordinal32\E/) {
 				    $output->write("documentation: wrong or missing ordinal " .
-						   "expected (\U$module32\E.$ordinal32)\\\n$documentation\n");
+						   "expected (\U$module32\E.$ordinal32) \\\n$documentation\n");
 				}
 			    }
 			}
@@ -531,13 +549,35 @@ foreach my $file ($options->c_files) {
 		}
 
 		if($options->documentation_pedantic) {
-		    if($documentation !~ /^ \*\t\t\w+(?: \(\w+\.(?:\@|\d+)\))+/m) {
+		    if($documentation !~ /^ \*\t\t(?:\@|\w+)(?: \(\w+\.(?:\@|\d+)\))+/m) {
 			$output->write("documentation: pedantic check failed \\\n$documentation\n");
 		    }
 		}
 
-		if($options->documentation_width) {		
-		    if($documentation =~ /(\/\**)/) {
+		if($options->documentation_comment_indent) {
+		    if($documentation =~ /^ \*(\s*)\w+(\s*)([\(\[])\s*\w+\.\s*(?:\@|\d+)\s*([\)\]])/m) {
+			my $indent = $1;
+			my $spacing = $2;
+			my $left = $3;
+			my $right = $4;
+
+			$indent =~ s/\t/        /g;
+			$indent = length($indent);
+			
+			$spacing =~ s/\t/        /g;
+			$spacing = length($spacing);
+
+			$comment_indent{$indent}++;
+			if($indent >= 20) {
+			    $output->write("documentation: comment indent is $indent\n");
+			}
+
+			$comment_spacing{$spacing}++;
+		    }
+		}
+
+		if($options->documentation_comment_width) {		
+		    if($documentation =~ /(^\/\*\*+)/) {
 			my $width = length($1);
 			
 			$comment_width{$width}++;
@@ -689,7 +729,14 @@ foreach my $file ($options->c_files) {
 $output->hide_progress;
 
 if($options->global) {
-    if($options->documentation_width) {
+    if($options->documentation_comment_indent) {
+	foreach my $indent (sort(keys(%comment_indent))) {
+	    my $count = $comment_indent{$indent};
+	    $output->write("*.c: $count functions have comment that is indented $indent\n");
+	}
+    }
+
+    if($options->documentation_comment_width) {
 	foreach my $width (sort(keys(%comment_width))) {
 	    my $count = $comment_width{$width};
 	    $output->write("*.c: $count functions have comments of width $width\n");

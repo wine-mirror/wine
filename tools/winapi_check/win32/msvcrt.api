@@ -1,0 +1,96 @@
+%double
+
+double
+
+%long
+
+DWORD
+HANDLE
+INT
+LONG
+MSVCRT_complex
+ULONG
+WCHAR
+clock_t
+int
+long
+unsigned int
+unsigned long
+size_t
+time_t
+
+%longlong
+
+LONGLONG
+ULONGLONG
+
+%ptr
+
+CHAR *
+DWORD *
+LPCVOID
+LPDWORD *
+LPINT
+LPTHREAD_START_ROUTINE
+LPVOID
+MSVCRT__INITTERMFUN *
+MSVCRT_EXCEPTION_FRAME *
+MSVCRT_FILE *
+MSVCRT_HEAPINFO *
+MSVCRT_atexit_func
+MSVCRT_atexit_func **
+MSVCRT_comp_func
+MSVCRT_diskfree_t *
+MSVCRT_finddata_t *
+MSVCRT_fpos_t *
+MSVCRT_matherr_func
+MSVCRT_new_handler_func
+MSVCRT_sig_handler_func
+MSVCRT_timeb *
+MSVCRT_wfinddata_t *
+PCONTEXT
+PEXCEPTION_FRAME
+PEXCEPTION_FRAME *
+PEXCEPTION_POINTERS
+PEXCEPTION_RECORD
+WCHAR *
+WCHAR **
+WCHAR ***
+WORD **
+__non_rtti_object *
+bad_cast *
+bad_typeid *
+char *
+char **
+char ***
+exception *
+int *
+jmp_buf
+struct _stat *
+struct _utimbuf *
+time_t *
+type_info *
+unsigned char *
+unsigned int *
+va_list
+void *
+
+%str
+
+LPSTR
+LPCSTR
+
+%unknown
+
+div_t
+ldiv_t
+
+%void
+
+void
+VOID
+
+%wstr
+
+LPCWSTR
+LPWSTR

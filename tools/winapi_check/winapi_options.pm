@@ -69,15 +69,40 @@ my %options = (
      },
     "cross-call-unicode-ascii" => { 
 	default => 0, parent => "cross-call", description => "check for cross calls between Unicode and ASCII" 
-     },
+    },
     "debug-messages" => { default => 0, parent => "statements", description => "check for debug messages inconsistances" },
-    "documentation" => { default => 1, parent => "local", description => "check for documentation inconsistances\n" },
-    "documentation-pedantic" => { default => 0, parent => "documentation", description => "be pendantic when checking for documentation inconsistances\n" },
-    "documentation-width" => { default => 0, parent => "documentation", description => "check for documentation width inconsistances\n" },
-    "documentation-arguments" => { default => 1, parent => "documentation", description => "check for arguments documentation inconsistances\n" },
-    "documentation-ordinal" => { default => 0, parent => "documentation", description => "check for ordinal documentation inconsistances\n" },
-    "prototype" => { default => 0, parent => ["local", "headers"], description => "prototype checking" },
 
+    "documentation" => {
+	default => 1,
+	parent => "local", 
+	description => "check for documentation inconsistances"
+	},
+    "documentation-pedantic" => { 
+	default => 0, 
+	parent => "documentation", 
+	description => "be pendantic when checking for documentation inconsistances"
+	},
+
+    "documentation-arguments" => {
+	default => 1,
+	parent => "documentation",
+	description => "check for arguments documentation inconsistances\n"
+	},
+    "documentation-comment-indent" => {
+	default => 0, 
+	parent => "documentation", description => "check for documentation comment indent inconsistances"
+	},
+    "documentation-comment-width" => {
+	default => 0, 
+	parent => "documentation", description => "check for documentation comment width inconsistances"
+	},
+    "documentation-ordinal" => {
+	default => 0,
+	parent => "documentation",
+	description => "check for documentation ordinal inconsistances\n"
+	},
+
+    "prototype" => {default => 0, parent => ["local", "headers"], description => "prototype checking" },
     "global" => { default => 1, description => "global checking" },
     "declared" => { default => 1, parent => "global", description => "declared checking" },
     "implemented" => { default => 0, parent => "local", description => "implemented checking" },
