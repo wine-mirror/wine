@@ -918,7 +918,7 @@ void QUEUE_ReceiveMessage( MESSAGEQUEUE *queue )
 
     TRACE_(sendmsg)("queue %04x\n", queue->self );
 
-    if ( !(queue->wakeBits & QS_SENDMESSAGE) && queue->smPending )
+    if ( !((queue->wakeBits & QS_SENDMESSAGE) && queue->smPending) )
     {
         TRACE_(sendmsg)("\trcm: nothing to do\n");
         return;
