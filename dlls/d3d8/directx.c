@@ -159,7 +159,7 @@ UINT     WINAPI  IDirect3D8Impl_GetAdapterModeCount        (LPDIRECT3D8 iface,
         FIXME("Adapter not primary display\n");
     }
 
-    return D3D_OK;
+    return 0;
 }
 
 HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
@@ -195,7 +195,8 @@ HRESULT  WINAPI  IDirect3D8Impl_EnumAdapterModes           (LPDIRECT3D8 iface,
 
         switch (bpp) {
         case  8: pMode->Format       = D3DFMT_R3G3B2;   break;
-        case 16: pMode->Format       = D3DFMT_A4R4G4B4; break;
+	/*case 16: pMode->Format       = D3DFMT_A4R4G4B4; break;*/
+	case 16: pMode->Format       = D3DFMT_R5G6B5;   break;
         case 24: pMode->Format       = D3DFMT_R8G8B8;   break;
         case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
         default: pMode->Format       = D3DFMT_UNKNOWN;
@@ -232,7 +233,8 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterDisplayMode      (LPDIRECT3D8 iface,
 
         switch (bpp) {
         case  8: pMode->Format       = D3DFMT_R3G3B2;   break;
-        case 16: pMode->Format       = D3DFMT_A4R4G4B4; break;
+	case 16: pMode->Format       = D3DFMT_R5G6B5;   break;
+	/*case 16: pMode->Format       = D3DFMT_A4R4G4B4; break;*/
         case 24: pMode->Format       = D3DFMT_R8G8B8;   break;
         case 32: pMode->Format       = D3DFMT_A8R8G8B8; break;
         default: pMode->Format       = D3DFMT_UNKNOWN;
@@ -242,7 +244,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetAdapterDisplayMode      (LPDIRECT3D8 iface,
         FIXME("Adapter not primary display\n");
     }
 
-    TRACE("returning w:%d, h:%d, ref:%d, fmt:%d\n", pMode->Width,
+    TRACE("returning w:%d, h:%d, ref:%d, fmt:%x\n", pMode->Width,
           pMode->Height, pMode->RefreshRate, pMode->Format);
     return D3D_OK;
 }
@@ -290,7 +292,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
 
 
     /* NOTE: Most of the values here are complete garbage for now */
-    pCaps->DeviceType = D3DDEVTYPE_HAL;  /* Not quite true, but use h/w supported by opengl I suppose */
+    pCaps->DeviceType = (DeviceType == D3DDEVTYPE_HAL) ? D3DDEVTYPE_HAL : D3DDEVTYPE_REF;  /* Not quite true, but use h/w supported by opengl I suppose */
     pCaps->AdapterOrdinal = Adapter;
 
     pCaps->Caps = 0;
@@ -367,7 +369,7 @@ HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps              (LPDIRECT3D8 iface,
     pCaps->MaxStreamStride = 1024;
 
     pCaps->VertexShaderVersion = 01;
-    pCaps->MaxVertexShaderConst = 1;
+    pCaps->MaxVertexShaderConst = D3D8_VSHADER_MAX_CONSTANTS;
 
     pCaps->PixelShaderVersion = 01;
     pCaps->MaxPixelShaderValue = 1.0;
@@ -466,9 +468,8 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
 	    return D3DERR_NOTAVAILABLE;
 	  }
 	}
-
         object->glCtx = glXCreateContext(object->display, object->visInfo, NULL, GL_TRUE);
-	if (NULL == object->visInfo) {
+	if (NULL == object->glCtx) {
 	  ERR("cannot create glxContext\n"); 
 	  LEAVE_GL();
 	  return D3DERR_NOTAVAILABLE;
@@ -524,6 +525,8 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     */
 
     ENTER_GL();
+
+    /*TRACE("hereeee. %x %x %x\n", object->display, object->win, object->glCtx);*/
     if (glXMakeCurrent(object->display, object->win, object->glCtx) == False) {
       ERR("Error in setting current context (context %p drawable %ld)!\n", object->glCtx, object->win);
     }
@@ -555,26 +558,26 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     if (NULL == GL_Extensions) {
       ERR("   GL_Extensions returns NULL\n");      
     } else {
-      while (*GL_Extensions!=0x00) {
+      while (*GL_Extensions != 0x00) {
         const char *Start = GL_Extensions;
         char ThisExtn[256];
 
         memset(ThisExtn, 0x00, sizeof(ThisExtn));
-        while (*GL_Extensions!=' ' && *GL_Extensions!=0x00) {
-            GL_Extensions++;
+        while (*GL_Extensions != ' ' && *GL_Extensions != 0x00) {
+	  GL_Extensions++;
         }
-        memcpy(ThisExtn, Start, (GL_Extensions-Start));
+        memcpy(ThisExtn, Start, (GL_Extensions - Start));
         TRACE ("   %s\n", ThisExtn);
 
-        if (strcmp(ThisExtn, "GL_ARB_multitexture")==0) {
-            GLint gl_max_texture_units_arb;
-            glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max_texture_units_arb);
-            object->isMultiTexture = TRUE;
-            object->TextureUnits   = min(8, gl_max_texture_units_arb);
-            TRACE("FOUND: Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max_texture_units_arb);
+        if (strcmp(ThisExtn, "GL_ARB_multitexture") == 0) {
+	  GLint gl_max_texture_units_arb;
+	  glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB, &gl_max_texture_units_arb);
+	  object->isMultiTexture = TRUE;
+	  object->TextureUnits   = min(8, gl_max_texture_units_arb);
+	  TRACE("FOUND: Multitexture support - GL_MAX_TEXTURE_UNITS_ARB=%d\n", gl_max_texture_units_arb);
         }
 
-        if (*GL_Extensions==' ') GL_Extensions++;
+        if (*GL_Extensions == ' ') GL_Extensions++;
       }
     }
 
@@ -584,17 +587,17 @@ HRESULT  WINAPI  IDirect3D8Impl_CreateDevice               (LPDIRECT3D8 iface,
     if (NULL == GLX_Extensions) {
       ERR("   GLX_Extensions returns NULL\n");      
     } else {
-      while (*GLX_Extensions!=0x00) {
+      while (*GLX_Extensions != 0x00) {
         const char *Start = GLX_Extensions;
         char ThisExtn[256];
-
+	
         memset(ThisExtn, 0x00, sizeof(ThisExtn));
-        while (*GLX_Extensions!=' ' && *GLX_Extensions!=0x00) {
-            GLX_Extensions++;
+        while (*GLX_Extensions != ' ' && *GLX_Extensions != 0x00) {
+	  GLX_Extensions++;
         }
-        memcpy(ThisExtn, Start, (GLX_Extensions-Start));
+        memcpy(ThisExtn, Start, (GLX_Extensions - Start));
         TRACE ("   %s\n", ThisExtn);
-        if (*GLX_Extensions==' ') GLX_Extensions++;
+        if (*GLX_Extensions == ' ') GLX_Extensions++;
       }
     }
 

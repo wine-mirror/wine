@@ -63,7 +63,7 @@ extern void (*wine_tsx11_unlock_ptr)(void);
 #define HIGHEST_TRANSFORMSTATE 512
 #define D3DSBT_RECORDED 0xfffffffe
 
-/* Direct38 Interfaces: */
+/* Direct3D8 Interfaces: */
 typedef struct IDirect3DBaseTexture8Impl IDirect3DBaseTexture8Impl;
 typedef struct IDirect3DVolumeTexture8Impl IDirect3DVolumeTexture8Impl;
 typedef struct IDirect3D8Impl IDirect3D8Impl;
@@ -152,51 +152,63 @@ typedef struct STATEBLOCK {
 
 } STATEBLOCK;
 
-typedef struct SHADER8Vector {
+typedef struct D3DSHADERVECTOR {
   float x;
   float y;
   float z;
   float w;
-} SHADER8Vector;
+} D3DSHADERVECTOR;
 
-typedef struct SHADER8Scalar {
+typedef struct D3DSHADERSCALAR {
   float x;
-} SHADER8Scalar;
+} D3DSHADERSCALAR;
 
-#define SHADER_MAX_CONSTANTS 96
-#define VSHADER_MAX_CONSTANTS 96
-#define PSHADER_MAX_CONSTANTS 96
-typedef SHADER8Vector SHADER8Constants[SHADER_MAX_CONSTANTS];
+#define D3D8_VSHADER_MAX_CONSTANTS 96
+#define D3D8_PSHADER_MAX_CONSTANTS 96
+typedef D3DSHADERVECTOR VSHADERCONSTANTS8[D3D8_VSHADER_MAX_CONSTANTS];
 
-typedef struct SHADER8Data {
+typedef struct SHADERDATA8 {
   /** Run Time Shader Function Constants */
   /*D3DXBUFFER* constants;*/
-  SHADER8Constants C;
+  VSHADERCONSTANTS8 C;
   /** Shader Code as char ... */
   CONST DWORD* code;
   UINT codeLength;
-} SHADER8Data;
+} SHADERDATA8;
 
 typedef struct VERTEXSHADER8 { /* TODO: Vertex Shader */
-  CONST DWORD* decl;
-  CONST DWORD* function;
+  DWORD* decl;
+  DWORD* function;
   DWORD usage; /* 0 || D3DUSAGE_SOFTWAREPROCESSING */
   UINT declLength;
   UINT functionLength;
- 
   DWORD fvf;
-
+  DWORD version;
   /* run time datas */
-  SHADER8Data* data;
+  SHADERDATA8* data;
 } VERTEXSHADER8;
 
 typedef struct PIXELSHADER8 { /* TODO: Pixel Shader */
   CONST DWORD* function;
   UINT functionLength;
-
+  DWORD version;
   /* run time datas */
-  SHADER8Data* data;
+  SHADERDATA8* data;
 } PIXELSHADER8;
+
+/** temporary here waiting for buffer code */
+typedef struct VSHADERINPUTDATA8 {
+  D3DSHADERVECTOR V[16];
+} VSHADERINPUTDATA8;
+
+/** temporary here waiting for buffer code */
+typedef struct VSHADEROUTPUTDATA8 {
+  D3DSHADERVECTOR oPos;
+  D3DSHADERVECTOR oD[2];
+  D3DSHADERVECTOR oT[4];
+  D3DSHADERVECTOR oFog;
+  D3DSHADERVECTOR oPts;
+} VSHADEROUTPUTDATA8;
 
 /*
  * External prototypes
@@ -916,6 +928,6 @@ extern HRESULT  WINAPI        IDirect3DVolumeTexture8Impl_AddDirtyBox(LPDIRECT3D
  */
 DWORD vshader_decl_parse(VERTEXSHADER8* vshader);
 DWORD vshader_program_parse(VERTEXSHADER8* vshader);
-
+BOOL  vshader_program_execute_SW(VERTEXSHADER8* vshader, VSHADERINPUTDATA8* input, VSHADEROUTPUTDATA8* output);
 
 #endif /* __WINE_D3DX8_PRIVATE_H */

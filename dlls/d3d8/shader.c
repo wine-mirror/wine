@@ -30,163 +30,214 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
-typedef void (*shader_fct0_t)(void);
-typedef void (*shader_fct1_t)(SHADER8Vector*);
-typedef void (*shader_fct2_t)(SHADER8Vector*,SHADER8Vector*);
-typedef void (*shader_fct3_t)(SHADER8Vector*,SHADER8Vector*,SHADER8Vector*);
-typedef void (*shader_fct4_t)(SHADER8Vector*,SHADER8Vector*,SHADER8Vector*,SHADER8Vector*);
+/**
+ * DirectX9 SDK download
+ *  http://msdn.microsoft.com/library/default.asp?url=/downloads/list/directx.asp
+ *
+ * Exploring D3DX
+ *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dndrive/html/directx07162002.asp
+ *
+ * Using Vertex Shaders
+ *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dndrive/html/directx02192001.asp
+ *
+ * Dx9 New
+ *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/whatsnew.asp
+ *
+ * Dx9 Shaders
+ *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/Shaders/VertexShader2_0/VertexShader2_0.asp
+ *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/Shaders/VertexShader2_0/Instructions/Instructions.asp
+ *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/programmingguide/GettingStarted/VertexDeclaration/VertexDeclaration.asp
+ *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/Shaders/VertexShader3_0/VertexShader3_0.asp
+ *
+ * Dx9 D3DX
+ *  http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/programmingguide/advancedtopics/VertexPipe/matrixstack/matrixstack.asp
+ *
+ * FVF
+ *  http://msdn.microsoft.com/library/en-us/directx9_c/directx/graphics/programmingguide/GettingStarted/VertexFormats/vformats.asp
+ */
 
-/*
-typedef union shader_fct {
-  shader_fct0_t fct0;
-  shader_fct1_t fct1;
-  shader_fct2_t fct2;
-  shader_fct3_t fct3;
-  shader_fct4_t fct4;
-} shader_fct;
-*/
-typedef void (*shader_fct)();
+typedef void (*shader_fct_t)();
 
-typedef struct shader_opcode {
-  CONST BYTE  opcode;
-  const char* name;
-  CONST UINT  num_params;
-  shader_fct  soft_fct;
-  /*
-  union {
-    shader_fct0_t fct0;
-    shader_fct1_t fct1;
-    shader_fct2_t fct2;
-    shader_fct3_t fct3;
-    shader_fct4_t fct4;
-  } shader_fct;
-  */
-} shader_opcode;
+typedef struct SHADER_OPCODE {
+  CONST BYTE    opcode;
+  const char*   name;
+  CONST UINT    num_params;
+  shader_fct_t  soft_fct;
+} SHADER_OPCODE;
 
-typedef struct vshader_input_data {
-  /*SHADER8Vector V[16];//0-15*/
-  SHADER8Vector V[16];
-} vshader_input_data;
+/** Vertex Shader Declaration data types tokens */
+static CONST char* VertexShaderDeclDataTypes [] = {
+  "D3DVSDT_FLOAT1",
+  "D3DVSDT_FLOAT2",
+  "D3DVSDT_FLOAT3",
+  "D3DVSDT_FLOAT4",
+  "D3DVSDT_D3DCOLOR",
+  "D3DVSDT_UBYTE4",
+  "D3DVSDT_SHORT2",
+  "D3DVSDT_SHORT4",
+  NULL
+};
 
-typedef struct vshader_output_data {
-  SHADER8Vector oPos;
-  /*SHADER8Vector oD[2];//0-1*/
-  SHADER8Vector oD[2];
-  /*SHADER8Vector oT[4];//0-3*/
-  SHADER8Vector oT[4];
-  /*SHADER8Scalar oFog;*/
-  /*SHADER8Scalar oPts;*/
-  SHADER8Vector oFog;
-  SHADER8Vector oPts;
-} vshader_output_data;
+static CONST char* VertexShaderDeclRegister [] = {
+  "D3DVSDE_POSITION",
+  "D3DVSDE_BLENDWEIGHT",
+  "D3DVSDE_BLENDINDICES",
+  "D3DVSDE_NORMAL",
+  "D3DVSDE_PSIZE",
+  "D3DVSDE_DIFFUSE",
+  "D3DVSDE_SPECULAR",
+  "D3DVSDE_TEXCOORD0",
+  "D3DVSDE_TEXCOORD1",
+  "D3DVSDE_TEXCOORD2",
+  "D3DVSDE_TEXCOORD3",
+  "D3DVSDE_TEXCOORD4",
+  "D3DVSDE_TEXCOORD5",
+  "D3DVSDE_TEXCOORD6",
+  "D3DVSDE_TEXCOORD7",
+  "D3DVSDE_POSITION2",
+  "D3DVSDE_NORMAL2",
+  NULL
+};
 
 /*******************************
  * vshader functions software VM
  */
 
-void vshader_add(SHADER8Vector* d, SHADER8Vector* s0, SHADER8Vector* s1) {
+void vshader_add(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1) {
   d->x = s0->x + s1->x;
   d->y = s0->y + s1->y;
   d->z = s0->z + s1->z;
   d->w = s0->w + s1->w;
 }
 
-void vshader_dp3(SHADER8Vector* d, SHADER8Vector* s0, SHADER8Vector* s1) {
+void vshader_dp3(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1) {
   d->x = d->y = d->z = d->w = s0->x * s1->x + s0->y * s1->y + s0->z * s1->z;
 }
 
-void vshader_dp4(SHADER8Vector* d, SHADER8Vector* s0, SHADER8Vector* s1) {
+void vshader_dp4(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1) {
   d->x = d->y = d->z = d->w = s0->x * s1->x + s0->y * s1->y + s0->z * s1->z + s0->w * s1->w;
+
+  /*
+  DPRINTF("executing dp4: s0=(%f, %f, %f, %f) s1=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
+	  s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w);
+  */
 }
 
-void vshader_dst(SHADER8Vector* d, SHADER8Vector* s0, SHADER8Vector* s1) {
-  d->x = 1;
+void vshader_dst(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1) {
+  d->x = 1.0f;
   d->y = s0->y * s1->y;
   d->z = s0->z;
   d->w = s1->w;
+
+  /*
+  DPRINTF("executing dst: s0=(%f, %f, %f, %f) s1=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
+	  s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w);
+  */
 }
 
-void vshader_expp(SHADER8Vector* d, SHADER8Vector* s0) {
+void vshader_expp(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
   float tmp_f = floorf(s0->w);
-  d->x = pow(2, tmp_f);
+  d->x = powf(2.0f, tmp_f);
   d->y = s0->w - tmp_f;
-  d->z = pow(2, s0->w);
-  d->w = 1;
+  d->z = powf(2.0f, s0->w);
+  d->w = 1.0f;
+
+  /*
+  DPRINTF("executing exp: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
+          s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w);
+  */
 }
 
-void vshader_lit(SHADER8Vector* d, SHADER8Vector* s0) {
-  d->x = 1;
-  d->y = (0 < s0->x) ? s0->x : 0;
-  d->z = (0 < s0->x && 0 < s0->y) ? pow(s0->y, s0->w) : 0;
-  d->w = 1;
+void vshader_lit(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
+  d->x = 1.0f;
+  d->y = (0.0f < s0->x) ? s0->x : 0.0f;
+  d->z = (0.0f < s0->x && 0.0f < s0->y) ? powf(s0->y, s0->w) : 0.0f;
+  d->w = 1.0f;
+
+  /*
+  DPRINTF("executing lit: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
+	  s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w);
+  */
 }
 
-void vshader_logp(SHADER8Vector* d, SHADER8Vector* s0) {
-  d->x = d->y = d->z = d->w = (0 != s0->w) ? log(fabsf(s0->w))/log(2) : HUGE;
+void vshader_logp(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
+  float tmp_f = fabsf(s0->w); 
+  d->x = d->y = d->z = d->w = (0.0f != tmp_f) ? logf(tmp_f) / logf(2.0f) : -HUGE;
 }
 
-void vshader_mad(SHADER8Vector* d, SHADER8Vector* s0, SHADER8Vector* s1, SHADER8Vector* s2) {
+void vshader_mad(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1, D3DSHADERVECTOR* s2) {
   d->x = s0->x * s1->x + s2->x;
   d->y = s0->y * s1->y + s2->y;
   d->z = s0->z * s1->z + s2->z;
   d->w = s0->w * s1->w + s2->w;
 }
 
-void vshader_max(SHADER8Vector* d, SHADER8Vector* s0, SHADER8Vector* s1) {
+void vshader_max(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1) {
   d->x = (s0->x >= s1->x) ? s0->x : s1->x;
   d->y = (s0->y >= s1->y) ? s0->y : s1->y;
   d->z = (s0->z >= s1->z) ? s0->z : s1->z;
   d->w = (s0->w >= s1->w) ? s0->w : s1->w;
 }
 
-void vshader_min(SHADER8Vector* d, SHADER8Vector* s0, SHADER8Vector* s1) {
+void vshader_min(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1) {
   d->x = (s0->x < s1->x) ? s0->x : s1->x;
   d->y = (s0->y < s1->y) ? s0->y : s1->y;
   d->z = (s0->z < s1->z) ? s0->z : s1->z;
   d->w = (s0->w < s1->w) ? s0->w : s1->w;
 }
 
-void vshader_mov(SHADER8Vector* d, SHADER8Vector* s0) {
+void vshader_mov(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
   d->x = s0->x;
   d->y = s0->y;
   d->z = s0->z;
   d->w = s0->w;
+
+  /*
+  DPRINTF("executing mov: s0=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
+	  s0->x, s0->y, s0->z, s0->w, d->x, d->y, d->z, d->w);
+  */
 }
 
-void vshader_mul(SHADER8Vector* d, SHADER8Vector* s0, SHADER8Vector* s1) {
+void vshader_mul(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1) {
   d->x = s0->x * s1->x;
   d->y = s0->y * s1->y;
   d->z = s0->z * s1->z;
   d->w = s0->w * s1->w;
+
+  /*
+  DPRINTF("executing mul: s0=(%f, %f, %f, %f) s1=(%f, %f, %f, %f) => d=(%f, %f, %f, %f)\n",
+          s0->x, s0->y, s0->z, s0->w, s1->x, s1->y, s1->z, s1->w, d->x, d->y, d->z, d->w);
+  */
 }
 
 void vshader_nop(void) {
   /* NOPPPP ahhh too easy ;) */
 }
 
-void vshader_rcp(SHADER8Vector* d, SHADER8Vector* s0) {
-  d->x = d->y = d->z = d->w = (0 == s0->w) ? HUGE : 1 / s0->w;
+void vshader_rcp(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
+  d->x = d->y = d->z = d->w = (0.0f == s0->w) ? HUGE : 1.0f / s0->w;
 }
 
-void vshader_rsq(SHADER8Vector* d, SHADER8Vector* s0) {
-  d->x = d->y = d->z = d->w = (0 == s0->w) ? HUGE : 1 / sqrt(fabsf(s0->w));
+void vshader_rsq(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0) {
+  float tmp_f = fabsf(s0->w);
+  d->x = d->y = d->z = d->w = (0.0f == tmp_f) ? HUGE : ((1.0f != tmp_f) ? 1.0f / sqrtf(tmp_f) : 1.0f);
 }
 
-void vshader_sge(SHADER8Vector* d, SHADER8Vector* s0, SHADER8Vector* s1) {
-  d->x = (s0->x >= s1->x) ? 1 : 0;
-  d->y = (s0->y >= s1->y) ? 1 : 0;
-  d->z = (s0->z >= s1->z) ? 1 : 0;
-  d->w = (s0->w >= s1->w) ? 1 : 0;
+void vshader_sge(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1) {
+  d->x = (s0->x >= s1->x) ? 1.0f : 0.0f;
+  d->y = (s0->y >= s1->y) ? 1.0f : 0.0f;
+  d->z = (s0->z >= s1->z) ? 1.0f : 0.0f;
+  d->w = (s0->w >= s1->w) ? 1.0f : 0.0f;
 }
 
-void vshader_slt(SHADER8Vector* d, SHADER8Vector* s0, SHADER8Vector* s1) {
-  d->x = (s0->x < s1->x) ? 1 : 0;
-  d->y = (s0->y < s1->y) ? 1 : 0;
-  d->z = (s0->z < s1->z) ? 1 : 0;
-  d->w = (s0->w < s1->w) ? 1 : 0;
+void vshader_slt(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1) {
+  d->x = (s0->x < s1->x) ? 1.0f : 0.0f;
+  d->y = (s0->y < s1->y) ? 1.0f : 0.0f;
+  d->z = (s0->z < s1->z) ? 1.0f : 0.0f;
+  d->w = (s0->w < s1->w) ? 1.0f : 0.0f;
 }
 
-void vshader_sub(SHADER8Vector* d, SHADER8Vector* s0, SHADER8Vector* s1) {
+void vshader_sub(D3DSHADERVECTOR* d, D3DSHADERVECTOR* s0, D3DSHADERVECTOR* s1) {
   d->x = s0->x - s1->x;
   d->y = s0->y - s1->y;
   d->z = s0->z - s1->z;
@@ -195,10 +246,8 @@ void vshader_sub(SHADER8Vector* d, SHADER8Vector* s0, SHADER8Vector* s1) {
 
 /**
  * log, exp, frc, m*x* seems to be macros ins ... to see
- *
- * @TODO: find this fucking really opcodes values
  */
-static CONST shader_opcode vshader_ins [] = {
+static CONST SHADER_OPCODE vshader_ins [] = {
   {D3DSIO_MOV,  "mov",  2, vshader_mov},
   {D3DSIO_MAX,  "max",  3, vshader_max},
   {D3DSIO_MIN,  "min",  3, vshader_min},
@@ -221,8 +270,9 @@ static CONST shader_opcode vshader_ins [] = {
 };
 
 
-const shader_opcode* vshader_program_get_opcode(const DWORD code) {
+const SHADER_OPCODE* vshader_program_get_opcode(const DWORD code) {
   DWORD i = 0;
+  /** TODO: use dichotomic search */
   while (NULL != vshader_ins[i].name) {
     if ((code & D3DSI_OPCODE_MASK) == vshader_ins[i].opcode) {
       return &vshader_ins[i];
@@ -307,7 +357,7 @@ void vshader_program_dump_param(const DWORD param, int input) {
  */
 DWORD vshader_program_parse(VERTEXSHADER8* vshader) {
   const DWORD* pToken = vshader->function;
-  const shader_opcode* curOpcode = NULL;
+  const SHADER_OPCODE* curOpcode = NULL;
   DWORD len = 0;  
   DWORD i;
 
@@ -339,7 +389,7 @@ DWORD vshader_program_parse(VERTEXSHADER8* vshader) {
 	DPRINTF("\n");
       }
     }
-    vshader->functionLength = len * sizeof(DWORD);
+    vshader->functionLength = (len + 1) * sizeof(DWORD);
   } else {
     vshader->functionLength = 1; /* no Function defined use fixed function vertex processing */
   }
@@ -347,8 +397,8 @@ DWORD vshader_program_parse(VERTEXSHADER8* vshader) {
 }
 
 BOOL vshader_program_execute_HAL(VERTEXSHADER8* vshader,
-				 const vshader_input_data* input,
-				 vshader_output_data* output) {
+				 VSHADERINPUTDATA8* input,
+				 VSHADEROUTPUTDATA8* output) {
   /** 
    * TODO: use the NV_vertex_program (or 1_1) extension 
    *  and specifics vendors (ARB_vertex_program??) variants for it 
@@ -356,51 +406,73 @@ BOOL vshader_program_execute_HAL(VERTEXSHADER8* vshader,
   return TRUE;
 }
 
+#define TRACE_VECTOR(name) DPRINTF( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w)
+
 BOOL vshader_program_execute_SW(VERTEXSHADER8* vshader,
-				vshader_input_data* input,
-				vshader_output_data* output) {
+				VSHADERINPUTDATA8* input,
+				VSHADEROUTPUTDATA8* output) {
   /** Vertex Shader Temporary Registers */
-  SHADER8Vector R[12];
-  /*SHADER8Scalar A0;*/
-  SHADER8Vector A[1];
+  D3DSHADERVECTOR R[12];
+  /*D3DSHADERSCALAR A0;*/
+  D3DSHADERVECTOR A[1];
   /** temporary Vector for modifier management */
-  SHADER8Vector d;
-  SHADER8Vector s[3];
+  D3DSHADERVECTOR d;
+  D3DSHADERVECTOR s[3];
   /** parser datas */
   const DWORD* pToken = vshader->function;
-  const shader_opcode* curOpcode = NULL;
+  const SHADER_OPCODE* curOpcode = NULL;
   /** functions parameters */
-  SHADER8Vector* p[4];
-  SHADER8Vector* p_send[4];
-
+  D3DSHADERVECTOR* p[4];
+  D3DSHADERVECTOR* p_send[4];
   DWORD i;
+
+  memset(R, 0, 12 * sizeof(D3DSHADERVECTOR));
+  /* vshader_program_parse(vshader); */
+  /*
+  TRACE_VECTOR(vshader->data->C[0]);
+  TRACE_VECTOR(vshader->data->C[1]);
+  TRACE_VECTOR(vshader->data->C[2]);
+  TRACE_VECTOR(vshader->data->C[3]);
+  TRACE_VECTOR(vshader->data->C[4]);
+  TRACE_VECTOR(vshader->data->C[5]);
+  TRACE_VECTOR(input->V[D3DVSDE_POSITION]);
+  TRACE_VECTOR(input->V[D3DVSDE_BLENDWEIGHT]);
+  TRACE_VECTOR(input->V[D3DVSDE_BLENDINDICES]);
+  TRACE_VECTOR(input->V[D3DVSDE_NORMAL]);
+  TRACE_VECTOR(input->V[D3DVSDE_PSIZE]);
+  TRACE_VECTOR(input->V[D3DVSDE_DIFFUSE]);
+  TRACE_VECTOR(input->V[D3DVSDE_SPECULAR]);
+  TRACE_VECTOR(input->V[D3DVSDE_TEXCOORD0]);
+  TRACE_VECTOR(input->V[D3DVSDE_TEXCOORD1]);
+  */
 
   /* the first dword is the version tag */
   /* TODO: parse it */
   
-  ++pToken;
   while (D3DVS_END() != *pToken) {
     curOpcode = vshader_program_get_opcode(*pToken);
     ++pToken;
     if (NULL == curOpcode) {
       /* unkown current opcode ... */
       while (*pToken & 0x80000000) {
-	DPRINTF("unrecognized opcode: %08lX\n", *pToken);
+	DPRINTF("unrecognized opcode: pos=%d token=%08lX\n", pToken - vshader->function, *pToken);
 	++pToken;
       }
       /*return FALSE;*/
     } else {     
-      if (curOpcode->num_params > 0) {
-	
+      if (curOpcode->num_params > 0) {	
+	/*DPRINTF(">> execting opcode: pos=%d opcode_name=%s token=%08lX\n", pToken - vshader->function, curOpcode->name, *pToken);*/
 	for (i = 0; i < curOpcode->num_params; ++i) {
 	  DWORD reg = pToken[i] & 0x00001FFF;
 	  DWORD regtype = ((pToken[i] & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT);
 
 	  switch (regtype << D3DSP_REGTYPE_SHIFT) {
 	  case D3DSPR_TEMP:
+	    /*DPRINTF("p[%d]=R[%d]\n", i, reg);*/
 	    p[i] = &R[reg];
 	    break;
 	  case D3DSPR_INPUT:
+	    /*DPRINTF("p[%d]=V[%s]\n", i, VertexShaderDeclRegister[reg]);*/
 	    p[i] = &input->V[reg];
 	    break;
 	  case D3DSPR_CONST:
@@ -411,8 +483,11 @@ BOOL vshader_program_execute_SW(VERTEXSHADER8* vshader,
 	    }
 	    break;
 	  case D3DSPR_ADDR: /*case D3DSPR_TEXTURE:*/
-	    if (0 != reg)
-	      ERR("cannot handle address registers != a0");
+	    if (0 != reg) {
+	      ERR("cannot handle address registers != a0, forcing use of a0\n");
+	      reg = 0;
+	    }
+	    /*DPRINTF("p[%d]=A[%d]\n", i, reg);*/
 	    p[i] = &A[reg];
 	    break;
 	  case D3DSPR_RASTOUT:
@@ -429,29 +504,35 @@ BOOL vshader_program_execute_SW(VERTEXSHADER8* vshader,
 	    }
 	    break;
 	  case D3DSPR_ATTROUT:
+	    /*DPRINTF("p[%d]=oD[%d]\n", i, reg);*/
 	    p[i] = &output->oD[reg];
 	    break;
 	  case D3DSPR_TEXCRDOUT:
+	    /*DPRINTF("p[%d]=oT[%d]\n", i, reg);*/
 	    p[i] = &output->oT[reg];
 	    break;
 	  default:
 	    break;
 	  }
 	  
-	  if (i > 1) { /* input reg */
+	  if (i > 0) { /* input reg */
 	    DWORD swizzle = (pToken[i] & D3DVS_SWIZZLE_MASK) >> D3DVS_SWIZZLE_SHIFT;
-	    DWORD swizzle_x = swizzle & 0x03;
-	    DWORD swizzle_y = (swizzle >> 2) & 0x03;
-	    DWORD swizzle_z = (swizzle >> 4) & 0x03;
-	    DWORD swizzle_w = (swizzle >> 6) & 0x03;
-	    if ((D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) == swizzle) {
+	    UINT isNegative = ((*pToken & D3DSP_SRCMOD_MASK) == D3DSPSM_NEG);
+
+	    if (!isNegative && (D3DVS_NOSWIZZLE >> D3DVS_SWIZZLE_SHIFT) == swizzle) {
+	      /*DPRINTF("p[%d] not swizzled\n", i);*/
 	      p_send[i] = p[i];
 	    } else {
+	      DWORD swizzle_x = swizzle & 0x03;
+	      DWORD swizzle_y = (swizzle >> 2) & 0x03;
+	      DWORD swizzle_z = (swizzle >> 4) & 0x03;
+	      DWORD swizzle_w = (swizzle >> 6) & 0x03;
+	      /*DPRINTF("p[%d] swizzled\n", i);*/
 	      float* tt = (float*) p[i];
-	      s[i].x = tt[swizzle_x];
-	      s[i].y = tt[swizzle_y];
-	      s[i].z = tt[swizzle_z];
-	      s[i].w = tt[swizzle_w];
+	      s[i].x = (isNegative) ? -tt[swizzle_x] : tt[swizzle_x];
+	      s[i].y = (isNegative) ? -tt[swizzle_y] : tt[swizzle_y];
+	      s[i].z = (isNegative) ? -tt[swizzle_z] : tt[swizzle_z];
+	      s[i].w = (isNegative) ? -tt[swizzle_w] : tt[swizzle_w];
 	      p_send[i] = &s[i];
 	    }
 	  } else { /* output reg */
@@ -492,6 +573,19 @@ BOOL vshader_program_execute_SW(VERTEXSHADER8* vshader,
 	if (pToken[0] & D3DSP_WRITEMASK_3) p[0]->w = d.w; 
       }
       
+      /*
+      TRACE_VECTOR(output->oPos);
+      TRACE_VECTOR(output->oD[0]);
+      TRACE_VECTOR(output->oD[1]);
+      TRACE_VECTOR(output->oT[0]);
+      TRACE_VECTOR(output->oT[1]);
+      TRACE_VECTOR(R[0]);
+      TRACE_VECTOR(R[1]);
+      TRACE_VECTOR(R[2]);
+      TRACE_VECTOR(R[3]);
+      TRACE_VECTOR(R[4]);
+      */
+
       /* to next opcode token */
       pToken += curOpcode->num_params;
     }
@@ -502,41 +596,6 @@ BOOL vshader_program_execute_SW(VERTEXSHADER8* vshader,
 /************************************
  * Vertex Shader Declaration Parser First draft ...
  */
-
-/** Vertex Shader Declaration data types tokens */
-static CONST char* VertexShaderDeclDataTypes [] = {
-  "D3DVSDT_FLOAT1",
-  "D3DVSDT_FLOAT2",
-  "D3DVSDT_FLOAT3",
-  "D3DVSDT_FLOAT4",
-  "D3DVSDT_D3DCOLOR",
-  "D3DVSDT_UBYTE4",
-  "D3DVSDT_SHORT2",
-  "D3DVSDT_SHORT4",
-  NULL
-};
-
-static CONST char* VertexShaderDeclRegister [] = {
-  "D3DVSDE_POSITION",
-  "D3DVSDE_BLENDWEIGHT",
-  "D3DVSDE_BLENDINDICES",
-  "D3DVSDE_NORMAL",
-  "D3DVSDE_PSIZE",
-  "D3DVSDE_DIFFUSE",
-  "D3DVSDE_SPECULAR",
-  "D3DVSDE_TEXCOORD0",
-  "D3DVSDE_TEXCOORD1",
-  "D3DVSDE_TEXCOORD2",
-  "D3DVSDE_TEXCOORD3",
-  "D3DVSDE_TEXCOORD4",
-  "D3DVSDE_TEXCOORD5",
-  "D3DVSDE_TEXCOORD6",
-  "D3DVSDE_TEXCOORD7",
-  "D3DVSDE_POSITION2",
-  "D3DVSDE_NORMAL2",
-  NULL
-};
-
 
 /** todo check decl validity */
 DWORD vshader_decl_parse_token(const DWORD* pToken) {
@@ -622,6 +681,7 @@ DWORD vshader_decl_parse(VERTEXSHADER8* vshader) {
   DWORD token;
   DWORD tokenlen;
   DWORD tokentype;
+  DWORD tex = D3DFVF_TEX0;
 
   while (D3DVSD_END() != *pToken) {
     token = *pToken;
@@ -632,55 +692,107 @@ DWORD vshader_decl_parse(VERTEXSHADER8* vshader) {
     if (D3DVSD_TOKEN_STREAMDATA == tokentype && 0 == (0x10000000 & tokentype)) {
       DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
       DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
+
       switch (reg) {
-      case D3DVSDE_POSITION:     fvf |= D3DFVF_XYZ;             break;
+      case D3DVSDE_POSITION:     
+	switch (type) {
+	case D3DVSDT_FLOAT3:     fvf |= D3DFVF_XYZ;             break;
+	case D3DVSDT_FLOAT4:     fvf |= D3DFVF_XYZRHW;          break;
+	default: /** errooooorr what to do ? */
+	  ERR("Error in VertexShader declaration of D3DVSDE_POSITION register: unsupported type %lu\n", type);	  
+	}
+	break;
+
       case D3DVSDE_BLENDWEIGHT:
 	switch (type) {
 	case D3DVSDT_FLOAT1:     fvf |= D3DFVF_XYZB1;           break;
 	case D3DVSDT_FLOAT2:     fvf |= D3DFVF_XYZB2;           break;
 	case D3DVSDT_FLOAT3:     fvf |= D3DFVF_XYZB3;           break;
 	case D3DVSDT_FLOAT4:     fvf |= D3DFVF_XYZB4;           break;
-	default:
-	  /** errooooorr what to do ? */
+	default: /** errooooorr what to do ? */
 	  ERR("Error in VertexShader declaration of D3DVSDE_BLENDWEIGHT register: unsupported type %lu\n", type);
 	}
 	break;
 
-      case D3DVSDE_BLENDINDICES: fvf |= D3DFVF_LASTBETA_UBYTE4; break;
-      case D3DVSDE_NORMAL:       fvf |= D3DFVF_NORMAL;          break;
-      case D3DVSDE_PSIZE:        fvf |= D3DFVF_PSIZE;           break;
-      case D3DVSDE_DIFFUSE:      fvf |= D3DFVF_DIFFUSE;         break;
-      case D3DVSDE_SPECULAR:     fvf |= D3DFVF_SPECULAR;        break;
-      case D3DVSDE_TEXCOORD0:    fvf |= D3DFVF_TEX1;            break;
-      case D3DVSDE_TEXCOORD1:    fvf |= D3DFVF_TEX2;            break;
-      case D3DVSDE_TEXCOORD2:    fvf |= D3DFVF_TEX3;            break;
-      case D3DVSDE_TEXCOORD3:    fvf |= D3DFVF_TEX4;            break;
-      case D3DVSDE_TEXCOORD4:    fvf |= D3DFVF_TEX5;            break;
-      case D3DVSDE_TEXCOORD5:    fvf |= D3DFVF_TEX6;            break;
-      case D3DVSDE_TEXCOORD6:    fvf |= D3DFVF_TEX7;            break;
-      case D3DVSDE_TEXCOORD7:    fvf |= D3DFVF_TEX8;            break;
+      case D3DVSDE_BLENDINDICES: /* seem to be B5 as said in MSDN Dx9SDK ??  */
+	switch (type) {
+	case D3DVSDT_UBYTE4:     fvf |= D3DFVF_LASTBETA_UBYTE4;           break;
+	default: /** errooooorr what to do ? */
+	  ERR("Error in VertexShader declaration of D3DVSDE_BLENDINDINCES register: unsupported type %lu\n", type);
+	}
+	break; 
+
+      case D3DVSDE_NORMAL: /* TODO: only FLOAT3 supported ... another choice possible ? */
+	switch (type) {
+	case D3DVSDT_FLOAT3:     fvf |= D3DFVF_NORMAL;          break;
+	default: /** errooooorr what to do ? */
+	  ERR("Error in VertexShader declaration of D3DVSDE_NORMAL register: unsupported type %lu\n", type);
+	}
+	break; 
+
+      case D3DVSDE_PSIZE:  /* TODO: only FLOAT1 supported ... another choice possible ? */
+	switch (type) {
+        case D3DVSDT_FLOAT1:     fvf |= D3DFVF_PSIZE;           break;
+	default: /** errooooorr what to do ? */
+	  ERR("Error in VertexShader declaration of D3DVSDE_PSIZE register: unsupported type %lu\n", type);
+	}
+	break;
+
+      case D3DVSDE_DIFFUSE:  /* TODO: only D3DCOLOR supported */
+	switch (type) {
+	case D3DVSDT_D3DCOLOR:   fvf |= D3DFVF_DIFFUSE;         break;
+	default: /** errooooorr what to do ? */
+	  ERR("Error in VertexShader declaration of D3DVSDE_DIFFUSE register: unsupported type %lu\n", type);
+	}
+	break;
+
+      case D3DVSDE_SPECULAR:  /* TODO: only D3DCOLOR supported */
+	switch (type) {
+	case D3DVSDT_D3DCOLOR:	 fvf |= D3DFVF_SPECULAR;        break;
+	default: /** errooooorr what to do ? */
+	  ERR("Error in VertexShader declaration of D3DVSDE_SPECULAR register: unsupported type %lu\n", type);
+	}
+	break;
+
+	/**
+	 * TODO: for TEX* only FLOAT2 supported
+	 *  by default using texture type info
+	 */
+      case D3DVSDE_TEXCOORD0:    tex = max(tex, D3DFVF_TEX1);   break; 
+      case D3DVSDE_TEXCOORD1:    tex = max(tex, D3DFVF_TEX2);   break;
+      case D3DVSDE_TEXCOORD2:    tex = max(tex, D3DFVF_TEX3);   break;
+      case D3DVSDE_TEXCOORD3:    tex = max(tex, D3DFVF_TEX4);   break;
+      case D3DVSDE_TEXCOORD4:    tex = max(tex, D3DFVF_TEX5);   break;
+      case D3DVSDE_TEXCOORD5:    tex = max(tex, D3DFVF_TEX6);   break;
+      case D3DVSDE_TEXCOORD6:    tex = max(tex, D3DFVF_TEX7);   break;
+      case D3DVSDE_TEXCOORD7:    tex = max(tex, D3DFVF_TEX8);   break;
       case D3DVSDE_POSITION2:   /* maybe D3DFVF_XYZRHW instead D3DFVF_XYZ (of D3DVDE_POSITION) ... to see */
       case D3DVSDE_NORMAL2:     /* FIXME i don't know what to do here ;( */
 	FIXME("[%lu] registers in VertexShader declaration not supported yet (token:0x%08lx)\n", reg, token);
 	break;
       }
+      /*TRACE("VertexShader declaration define %x as current FVF\n", fvf);*/
     }
     len += tokenlen;
     pToken += tokenlen;
   }
+  if (tex > 0) {
+    /*TRACE("VertexShader declaration define %x as texture level\n", tex);*/
+    fvf |= tex;
+  }   
   /* here D3DVSD_END() */
   len += vshader_decl_parse_token(pToken);
-  if (NULL == vshader->function) vshader->fvf = fvf;
+  vshader->fvf = fvf;
   vshader->declLength = len * sizeof(DWORD);
   return len * sizeof(DWORD);
 }
 
-HRESULT WINAPI ValidateVertexShader(void) {
-  FIXME("(void): stub\n");
-  return 0;
+BOOL WINAPI ValidateVertexShader(LPVOID what, LPVOID toto) {
+  FIXME("(void): stub: %p\n", what);
+  return TRUE;
 }
 
-HRESULT WINAPI ValidatePixelShader(void) {
-  FIXME("(void): stub\n");
-  return 0;
+BOOL WINAPI ValidatePixelShader(LPVOID what, LPVOID toto) {
+  FIXME("(void): stub: %p\n", what);
+  return TRUE;
 }

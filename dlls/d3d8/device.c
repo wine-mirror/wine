@@ -53,6 +53,11 @@ static PIXELSHADER8*  PixelShaders[64];
     memcpy(gl_mat, (mat), 16 * sizeof(float));      \
 };
 
+#define VERTEX_SHADER(Handle) \
+  ((Handle <= VS_HIGHESTFIXEDFXF) ? ((Handle >= sizeof(VertexShaders) / sizeof(VERTEXSHADER8*)) ? NULL : VertexShaders[Handle]) : VertexShaders[Handle - VS_HIGHESTFIXEDFXF])
+
+#define TRACE_VECTOR(name) TRACE( #name "=(%f, %f, %f, %f)\n", name.x, name.y, name.z, name.w);
+
 /*
  * Globals
  */
@@ -67,6 +72,7 @@ static const float idmatrix[16] = {
     0.0, 0.0, 1.0, 0.0,
     0.0, 0.0, 0.0, 1.0
 };
+
 
 /* Routine common to the draw primitive and draw indexed primitive routines
    Doesnt use gl pointer arrays as I dont believe we can support the blending
@@ -89,17 +95,32 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 
     int vx_index;
     int NumVertexes = NumPrimitives;
+    VERTEXSHADER8* vertex_shader = NULL;
+    VSHADERINPUTDATA8 vertex_shader_input;
+    BOOL useVertexShaderFunction = FALSE;
 
     ICOM_THIS(IDirect3DDevice8Impl,iface);
 
     /* Dont understand how to handle multiple streams, but if a fixed
        FVF is passed in rather than a handle, it must use stream 0 */
-
+    
     if (This->StateBlock.VertexShader > VS_HIGHESTFIXEDFXF) {
-        FIXME("Cant handle created shaders yet\n");
-        return;
-    } else {
+      vertex_shader = VERTEX_SHADER(This->StateBlock.VertexShader);
+      if (NULL == vertex_shader) {
+	ERR("trying to use unitialised vertex shader: %lu\n", This->StateBlock.VertexShader);
+	return ;
+      }
+      if (NULL == vertex_shader->function) {
+	TRACE("vertex shader declared without program, using FVF pure mode\n");
+      } else {
+	useVertexShaderFunction = TRUE;
+      }
+      fvf = (D3DFORMAT) vertex_shader->fvf;
+      TRACE("vertex shader declared FVF: %lx\n", vertex_shader->fvf);
+      memset(&vertex_shader_input, 0, sizeof(VSHADERINPUTDATA8));
+    }
 
+    {
         int                         skip = This->StateBlock.stream_stride[0];
 
         BOOL                        normal;
@@ -107,6 +128,8 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         BOOL                        isPtSize;
         BOOL                        isDiffuse;
         BOOL                        isSpecular;
+	int                         numBlends;
+	BOOL                        isLastUByte4;
         int                         numTextures;
         int                         textureNo;
         const void                 *curVtx = NULL;
@@ -133,16 +156,19 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
         normal        = fvf & D3DFVF_NORMAL;
         isRHW         = fvf & D3DFVF_XYZRHW;
         /*numBlends     = 5 - ((~fvf) & 0xe);*/  /* There must be a simpler way? */
+	numBlends     = ((fvf & D3DFVF_POSITION_MASK) >> 1) - 2; /* WARNING can be < 0 because -2 */
+	isLastUByte4  = fvf & D3DFVF_LASTBETA_UBYTE4;
         isPtSize      = fvf & D3DFVF_PSIZE;
         isDiffuse     = fvf & D3DFVF_DIFFUSE;
         isSpecular    = fvf & D3DFVF_SPECULAR;
-        numTextures =  (fvf & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
+        numTextures   = (fvf & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
 
-        TRACE("Drawing with FVF = %x, (n?%d, rhw?%d, ptSize(%d), diffuse?%d, specular?%d, numTextures=%d)\n",
-              fvf, normal, isRHW, isPtSize, isDiffuse, isSpecular, numTextures);
+
+        TRACE("Drawing with FVF = %x, (n?%d, rhw?%d, ptSize(%d), diffuse?%d, specular?%d, numTextures=%d, numBlends=%d)\n",
+              fvf, normal, isRHW, isPtSize, isDiffuse, isSpecular, numTextures, numBlends);
 
         /* If no normals, DISABLE lighting otherwise, dont touch lighing as it is 
-           set by the appropriate render state                                    */
+           set by the appropriate render state */
         if (!normal) {
             isLightingOn = glIsEnabled(GL_LIGHTING);
             glDisable(GL_LIGHTING);
@@ -151,14 +177,12 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
 
 
         if (isRHW) {
-
             double height, width, minZ, maxZ;
-
             /*
-	         * Already transformed vertex do not need transform
-	         * matrices. Reset all matrices to identity.
-	         * Leave the default matrix in world mode.
-	        */
+	     * Already transformed vertex do not need transform
+	     * matrices. Reset all matrices to identity.
+	     * Leave the default matrix in world mode.
+	     */
             glMatrixMode(GL_PROJECTION);
             checkGLcall("glMatrixMode");
             glLoadIdentity();
@@ -174,13 +198,11 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
             TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
             glOrtho(0.0, width, height, 0.0, -minZ, -maxZ);
             checkGLcall("glOrtho");
-
         } else {
             glMatrixMode(GL_PROJECTION);
             checkGLcall("glMatrixMode");
             glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_PROJECTION].u.m[0][0]);
             checkGLcall("glLoadMatrixf");
-
             glMatrixMode(GL_MODELVIEW);
             checkGLcall("glMatrixMode");
             glLoadMatrixf((float *) &This->StateBlock.transforms[D3DTS_VIEW].u.m[0][0]);
@@ -257,18 +279,51 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
             curPos = curPos + sizeof(float);
             z = *(float *)curPos;
             curPos = curPos + sizeof(float);
-            TRACE("x,y,z=%f,%f,%f\n", x,y,z);
+            /*TRACE("x,y,z=%f,%f,%f\n", x,y,z);*/
 
+	    if (TRUE == useVertexShaderFunction) {
+	      vertex_shader_input.V[D3DVSDE_POSITION].x = x;
+	      vertex_shader_input.V[D3DVSDE_POSITION].y = y;
+	      vertex_shader_input.V[D3DVSDE_POSITION].z = z;
+	      vertex_shader_input.V[D3DVSDE_POSITION].w = 1.0f;
+	    }
             /* RHW follows, only if transformed */
             if (isRHW) {
-                rhw = *(float *)curPos;
-                curPos = curPos + sizeof(float);
-                TRACE("rhw=%f\n", rhw);
+	      rhw = *(float *)curPos;
+	      curPos = curPos + sizeof(float);
+	      /*TRACE("rhw=%f\n", rhw);*/
+	      
+	      if (TRUE == useVertexShaderFunction) {
+		vertex_shader_input.V[D3DVSDE_POSITION].w = rhw;
+	      }
             }
-
-
             /* FIXME: Skip Blending data */
-
+	    if (numBlends > 0) {
+	      UINT i;
+	      D3DSHADERVECTOR skippedBlend = { 0.0f, 0.0f, 0.0f, 0.0f };
+	      DWORD skippedBlendLastUByte4 = 0;
+	      for (i = 0; i < ((FALSE == isLastUByte4) ? numBlends : numBlends - 1); ++i) {
+		((float*)&skippedBlend)[i] =  *(float *)curPos; 
+		curPos = curPos + sizeof(float);
+	      }
+	      if (isLastUByte4) {
+		skippedBlendLastUByte4 =  *(DWORD*)curPos; 
+		curPos = curPos + sizeof(DWORD);		
+	      }
+	      
+	      if (TRUE == useVertexShaderFunction) {
+		vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].x = skippedBlend.x;
+		vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].y = skippedBlend.y;
+		vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].z = skippedBlend.z;
+		vertex_shader_input.V[D3DVSDE_BLENDWEIGHT].w = skippedBlend.w;
+		if (isLastUByte4) {
+		  vertex_shader_input.V[D3DVSDE_BLENDINDICES].x = (float) skippedBlendLastUByte4;
+		  vertex_shader_input.V[D3DVSDE_BLENDINDICES].y = (float) skippedBlendLastUByte4;
+		  vertex_shader_input.V[D3DVSDE_BLENDINDICES].z = (float) skippedBlendLastUByte4;
+		  vertex_shader_input.V[D3DVSDE_BLENDINDICES].w = (float) skippedBlendLastUByte4;
+		}
+	      }
+	    }
             /* Vertex Normal Data (untransformed only) */
             if (normal) {
                 nx = *(float *)curPos;
@@ -277,101 +332,252 @@ void DrawPrimitiveI(LPDIRECT3DDEVICE8 iface,
                 curPos = curPos + sizeof(float);
                 nz = *(float *)curPos;
                 curPos = curPos + sizeof(float);
-                TRACE("nx,ny,nz=%f,%f,%f\n", nx,ny,nz);
-            }
-
+                /*TRACE("nx,ny,nz=%f,%f,%f\n", nx,ny,nz);*/
+            
+		if (TRUE == useVertexShaderFunction) {
+		  vertex_shader_input.V[D3DVSDE_NORMAL].x = nx;
+		  vertex_shader_input.V[D3DVSDE_NORMAL].y = ny;
+		  vertex_shader_input.V[D3DVSDE_NORMAL].z = nz;
+		  vertex_shader_input.V[D3DVSDE_NORMAL].w = 1.0f;
+		}		
+	    }
             if (isPtSize) {
                 ptSize = *(float *)curPos;
+                /*TRACE("ptSize=%f\n", ptSize);*/
                 curPos = curPos + sizeof(float);
-                TRACE("ptSize=%f\n", ptSize);
+
+		if (TRUE == useVertexShaderFunction) {
+		  vertex_shader_input.V[D3DVSDE_PSIZE].x = ptSize;
+		  vertex_shader_input.V[D3DVSDE_PSIZE].y = 0.0f;
+		  vertex_shader_input.V[D3DVSDE_PSIZE].z = 0.0f;
+		  vertex_shader_input.V[D3DVSDE_PSIZE].w = 1.0f;
+		}
             }
             if (isDiffuse) {
                 diffuseColor = *(DWORD *)curPos;
-                TRACE("diffuseColor=%lx\n", diffuseColor);
+                /*TRACE("diffuseColor=%lx\n", diffuseColor);*/
                 curPos = curPos + sizeof(DWORD);
+
+		if (TRUE == useVertexShaderFunction) {
+		  vertex_shader_input.V[D3DVSDE_DIFFUSE].x = (float) (((diffuseColor >> 16) & 0xFF) / 255.0f);
+		  vertex_shader_input.V[D3DVSDE_DIFFUSE].y = (float) (((diffuseColor >>  8) & 0xFF) / 255.0f);
+		  vertex_shader_input.V[D3DVSDE_DIFFUSE].z = (float) (((diffuseColor >>  0) & 0xFF) / 255.0f);
+		  vertex_shader_input.V[D3DVSDE_DIFFUSE].w = (float) (((diffuseColor >> 24) & 0xFF) / 255.0f);
+		}
             }
             if (isSpecular) {
                 specularColor = *(DWORD *)curPos;
-                TRACE("specularColor=%lx\n", specularColor);
+                /*TRACE("specularColor=%lx\n", specularColor);*/
                 curPos = curPos + sizeof(DWORD);
+
+		if (TRUE == useVertexShaderFunction) {
+		  vertex_shader_input.V[D3DVSDE_SPECULAR].x = (float) (((specularColor >> 16) & 0xFF) / 255.0f);
+		  vertex_shader_input.V[D3DVSDE_SPECULAR].y = (float) (((specularColor >>  8) & 0xFF) / 255.0f);
+		  vertex_shader_input.V[D3DVSDE_SPECULAR].z = (float) (((specularColor >>  0) & 0xFF) / 255.0f);
+		  vertex_shader_input.V[D3DVSDE_SPECULAR].w = (float) (((specularColor >> 24) & 0xFF) / 255.0f);
+		}
             }
 
             /* ToDo: Texture coords */
-            for (textureNo = 0;textureNo<numTextures; textureNo++) {
+            for (textureNo = 0; textureNo < numTextures; ++textureNo) {
+                float s, t, r, q;
 
-                float s,t,r,q;
-
-                if (!(This->isMultiTexture) && textureNo>0) {
-                    FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
-                    continue;
-                }
-
+                if (!(This->isMultiTexture) && textureNo > 0) {
+		  FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+		  continue ;
+                } 
+		if (textureNo > This->TextureUnits) {
+		  FIXME("Program using more concurrent textures than this opengl implementation support\n");
+		  break ;
+		}
                 /* Query tex coords */
                 if (This->StateBlock.textures[textureNo] != NULL) {
-                    switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock.textures[textureNo])) {
-                    case D3DRTYPE_TEXTURE:
-                        s = *(float *)curPos;
-                        curPos = curPos + sizeof(float);
-                        t = *(float *)curPos;
-                        curPos = curPos + sizeof(float);
-                        TRACE("tex:%d, s,t=%f,%f\n", textureNo, s,t);
-                        if (This->isMultiTexture) {
-                            glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
-                        } else {
-                            glTexCoord2f(s, t);
-                        }
-                        break;
+		  switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock.textures[textureNo])) {
+		  case D3DRTYPE_TEXTURE:
+		    s = *(float *)curPos;
+		    curPos = curPos + sizeof(float);
+		    t = *(float *)curPos;
+		    curPos = curPos + sizeof(float);
+		    TRACE("tex:%d, s,t=%f,%f\n", textureNo, s,t);
 
-                    case D3DRTYPE_VOLUMETEXTURE:
-                        s = *(float *)curPos;
-                        curPos = curPos + sizeof(float);
-                        t = *(float *)curPos;
-                        curPos = curPos + sizeof(float);
-                        r = *(float *)curPos;
-                        curPos = curPos + sizeof(float);
-                        TRACE("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r);
-                        if (This->isMultiTexture) {
-                            glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
-                        } else {
-                            glTexCoord3f(s, t, r);
-                        }
-                        break;
-
-                    default:
-                        r=0;q=0; /* Avoid compiler warnings, need these vars later for other textures */
-                        FIXME("Unhandled texture type\n");
-                    }
+		    if (TRUE == useVertexShaderFunction) {
+		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].x = s;
+		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].y = t;
+		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].z = 0.0f;
+		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].w = 1.0f;
+		    } else { 
+		      if (This->isMultiTexture) {
+			glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
+		      } else {
+			glTexCoord2f(s, t);
+		      }
+		    }
+		    break;
+		    
+		  case D3DRTYPE_VOLUMETEXTURE:
+		    s = *(float *)curPos;
+		    curPos = curPos + sizeof(float);
+		    t = *(float *)curPos;
+		    curPos = curPos + sizeof(float);
+		    r = *(float *)curPos;
+		    curPos = curPos + sizeof(float);
+		    TRACE("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r);
+		    
+		    if (TRUE == useVertexShaderFunction) {
+		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].x = s;
+		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].y = t;
+		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].z = r;
+		      vertex_shader_input.V[D3DVSDE_TEXCOORD0 + textureNo].w = 1.0f;
+		    } else {
+		       if (This->isMultiTexture) {
+			 glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r);
+		       } else {
+			 glTexCoord3f(s, t, r);
+		       }
+		    }
+		    break;
+		    
+		  default:
+		    r = 0.0f; q = 0.0f; /* Avoid compiler warnings, need these vars later for other textures */
+		    FIXME("Unhandled texture type\n");
+		  }
                 } else {
-                    /* Note I have seen a program actually do this, so just hide it and continue */
-                    TRACE("Very odd - texture requested in FVF but not bound!\n");
+		  /* Note I have seen a program actually do this, so just hide it and continue */
+		  TRACE("Very odd - texture requested in FVF but not bound!\n");
                 }
 
             }
 
-            /* Handle these vertexes */
-            if (isDiffuse) {
-                glColor4f(((diffuseColor >> 16) & 0xFF) / 255.0,
-                          ((diffuseColor >>  8) & 0xFF) / 255.0,
-                          ((diffuseColor >>  0) & 0xFF) / 255.0,
-                          ((diffuseColor >> 24) & 0xFF) / 255.0);
-                TRACE("glColor4f: r,g,b,a=%f,%f,%f,%f\n", ((diffuseColor >> 16) & 0xFF) / 255.0, ((diffuseColor >>  8) & 0xFF) / 255.0,
-                       ((diffuseColor >>  0) & 0xFF) / 255.0, ((diffuseColor >> 24) & 0xFF) / 255.0);
-            }
+	    /** if vertex shader program specified ... using it */
+	    if (TRUE == useVertexShaderFunction) {
+	      VSHADEROUTPUTDATA8 vs_o;
+	      memset(&vs_o, 0, sizeof(VSHADEROUTPUTDATA8));
+	      vshader_program_execute_SW(vertex_shader, &vertex_shader_input, &vs_o);
+	      /*
+	      TRACE_VECTOR(vs_o.oPos);
+	      TRACE_VECTOR(vs_o.oD[0]);
+	      TRACE_VECTOR(vs_o.oT[0]);
+	      TRACE_VECTOR(vs_o.oT[1]);
+	      */
+	      x = vs_o.oPos.x;
+	      y = vs_o.oPos.y;
+	      z = vs_o.oPos.z;
+	      
+	      if (1.0f != vs_o.oPos.w || isRHW) {
+		rhw = vs_o.oPos.w;
+	      }
+	      /*TRACE_VECTOR(vs_o.oPos);*/
+	      if (isDiffuse) {
+		/*diffuseColor = D3DCOLOR_COLORVALUE(vs_o.oD[0].x, vs_o.oD[0].y, vs_o.oD[0].z, vs_o.oD[0].w);*/
+		/*TRACE_VECTOR(vs_o.oD[0]);*/
+		/*glColor4f(vs_o.oD[0].x, vs_o.oD[0].y, vs_o.oD[0].z, vs_o.oD[0].w); */
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, (float*) &vs_o.oD[0]);
+		checkGLcall("glMaterialfv");
+	      }
+	      if (isSpecular) {
+		/*specularColor = D3DCOLOR_COLORVALUE(vs_o.oD[1].x, vs_o.oD[1].y, vs_o.oD[1].z, vs_o.oD[1].w);*/
+		/*TRACE_VECTOR(vs_o.oD[1]);*/
+		glMaterialfv(GL_FRONT, GL_SPECULAR, (float*) &vs_o.oD[1]);
+		checkGLcall("glMaterialfv");
+	      }
+	      /** reupdate textures coords binding using vs_o.oT[0->3] */  
+	      for (textureNo = 0; textureNo < 4/*min(numTextures, 4)*/; ++textureNo) {
+		float s, t, r, q;
 
-            if (normal) {
-                TRACE("Vertex: glVertex:x,y,z=%f,%f,%f  /  glNormal:nx,ny,nz=%f,%f,%f\n", x,y,z,nx,ny,nz);
+		if (!(This->isMultiTexture) && textureNo > 0) {
+		  FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+		  continue ;
+                }
+		/* Query tex coords */
+                if (This->StateBlock.textures[textureNo] != NULL) {
+		  switch (IDirect3DBaseTexture8Impl_GetType((LPDIRECT3DBASETEXTURE8) This->StateBlock.textures[textureNo])) {
+		  case D3DRTYPE_TEXTURE:
+		    /*TRACE_VECTOR(vs_o.oT[textureNo]);*/
+		    s = vs_o.oT[textureNo].x;
+		    t = vs_o.oT[textureNo].y;
+		    TRACE("tex:%d, s,t=%f,%f\n", textureNo, s,t);
+		    if (This->isMultiTexture) {
+		      glMultiTexCoord2fARB(GL_TEXTURE0_ARB + textureNo, s, t);
+		      checkGLcall("glMultiTexCoord2fARB");
+		    } else {
+		      glTexCoord2f(s, t);
+		      checkGLcall("gTexCoord2f");
+		    }
+		    break;
+		    
+		  case D3DRTYPE_VOLUMETEXTURE:
+		    /*TRACE_VECTOR(vs_o.oT[textureNo]);*/
+		    s = vs_o.oT[textureNo].x;
+		    t = vs_o.oT[textureNo].y;
+		    r = vs_o.oT[textureNo].z;
+		    TRACE("tex:%d, s,t,r=%f,%f,%f\n", textureNo, s,t,r);
+		    if (This->isMultiTexture) {
+		      glMultiTexCoord3fARB(GL_TEXTURE0_ARB + textureNo, s, t, r); 
+		      checkGLcall("glMultiTexCoord2fARB");
+		    } else {
+		      glTexCoord3f(s, t, r);
+		      checkGLcall("gTexCoord3f");
+		    }
+		    break;
+		    
+		  default:
+		    /* Avoid compiler warnings, need these vars later for other textures */
+		    r = 0.0f; q = 0.0f; 
+		    FIXME("Unhandled texture type\n");
+		  }
+		}
+	      }
+
+	      if (1.0f == rhw || rhw < 0.01f) {
+		/*TRACE("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z);*/
+		glVertex3f(x, y, z);
+		checkGLcall("glVertex3f");
+	      } else {
+		/*TRACE("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw);*/
+		glVertex4f(x / rhw, y / rhw, z / rhw, 1.0f / rhw);
+		checkGLcall("glVertex4f");
+	      }
+	    } else { 
+	      /** 
+	       * FALSE == useVertexShaderFunction 
+	       *  using std FVF code
+	       */
+
+	      /* Handle these vertexes */
+	      if (isDiffuse) {
+                /*
+		glColor4f(((diffuseColor >> 16) & 0xFF) / 255.0f,
+                          ((diffuseColor >>  8) & 0xFF) / 255.0f,
+                          ((diffuseColor >>  0) & 0xFF) / 255.0f,
+                          ((diffuseColor >> 24) & 0xFF) / 255.0f);
+		*/
+		glColor4ub((diffuseColor >> 16) & 0xFF,
+			   (diffuseColor >>  8) & 0xFF,
+			   (diffuseColor >>  0) & 0xFF,
+			   (diffuseColor >> 24) & 0xFF);
+		/*
+		TRACE("glColor4f: r,g,b,a=%f,%f,%f,%f\n", 
+		      ((diffuseColor >> 16) & 0xFF) / 255.0f, 
+		      ((diffuseColor >>  8) & 0xFF) / 255.0f,
+		      ((diffuseColor >>  0) & 0xFF) / 255.0f, 
+		      ((diffuseColor >> 24) & 0xFF) / 255.0f);
+		*/
+	      }
+	    
+	      if (normal) {
+                /*TRACE("Vertex: glVertex:x,y,z=%f,%f,%f  /  glNormal:nx,ny,nz=%f,%f,%f\n", x,y,z,nx,ny,nz);*/
                 glNormal3f(nx, ny, nz);
                 glVertex3f(x, y, z);
-
-            } else {
-                if (rhw < 0.01) {
-                    TRACE("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z);
-                    glVertex3f(x, y, z);
+	      } else {
+                if (1.0f == rhw || rhw < 0.01f) {
+		  /*TRACE("Vertex: glVertex:x,y,z=%f,%f,%f\n", x,y,z);*/
+		  glVertex3f(x, y, z);
                 } else {
-                    TRACE("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw);
-                    glVertex4f(x / rhw, y / rhw, z / rhw, 1.0 / rhw);
+		  /*TRACE("Vertex: glVertex:x,y,z=%f,%f,%f / rhw=%f\n", x,y,z,rhw);*/
+		  glVertex4f(x / rhw, y / rhw, z / rhw, 1.0f / rhw);
                 }
-            }
+	      }
+	    }
 
             if (!isIndexed) {
                 curVtx = curVtx + skip;
@@ -411,8 +617,6 @@ SHORT bytesPerPixel(D3DFORMAT fmt) {
         FIXME("Unhandled fmt %d\n", fmt);
         retVal = 4;
     }
-
-
     TRACE("bytes/Pxl for fmt %d = %d\n", fmt, retVal);
     return retVal;
 }
@@ -465,8 +669,6 @@ DWORD fmt2glType(D3DFORMAT fmt) {
         FIXME("Unhandled fmt %d\n", fmt);
         retVal = 4;
     }
-
-
     TRACE("fmt2glType for fmt %d = %x\n", fmt, retVal);
     return retVal;
 }
@@ -551,7 +753,7 @@ void setupTextureStates(LPDIRECT3DDEVICE8 iface, DWORD Stage) {
     if (This->isMultiTexture) {
         glActiveTextureARB(GL_TEXTURE0_ARB + Stage);
         checkGLcall("glActiveTextureARB");
-    } else if (Stage>0) {
+    } else if (Stage > 0) {
         FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
     }
 
@@ -610,7 +812,6 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_TestCooperativeLevel(LPDIRECT3DDEVICE8 ifa
     TRACE("(%p) : stub\n", This);    /* No way of notifying yet! */
     return D3D_OK;
 }
-
 
 UINT     WINAPI  IDirect3DDevice8Impl_GetAvailableTextureMem(LPDIRECT3DDEVICE8 iface) {
     ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -1918,15 +2119,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetRenderState(LPDIRECT3DDEVICE8 iface, D3
             checkGLcall("glBlendColor");
 
             /* And now the default texture color as well */
-            for (i=0; i<This->TextureUnits; i++) {
+            for (i = 0; i < This->TextureUnits; i++) {
 
                 /* Note the D3DRS value applies to all textures, but GL has one
                    per texture, so apply it now ready to be used!               */
                 if (This->isMultiTexture) {
-                    glActiveTextureARB(GL_TEXTURE0_ARB + i);
-                    checkGLcall("Activate texture.. to update const color");
+		  glActiveTextureARB(GL_TEXTURE0_ARB + i);
+		  checkGLcall("Activate texture.. to update const color");
                 } else if (i>0) {
-                    FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
+		  FIXME("Program using multiple concurrent textures which this opengl implementation doesnt support\n");
                 }
 
                 glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
@@ -2304,16 +2505,15 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_ApplyStateBlock(LPDIRECT3DDEVICE8 iface, D
         }
 
         /* Texture */
-        for (j=0; j<This->TextureUnits; j++) {
-            for (i=0; i<HIGHEST_TEXTURE_STATE; i++) {
-
-                if (pSB->Set.texture_state[j][i] && pSB->Changed.texture_state[j][i])
-                    IDirect3DDevice8Impl_SetTextureStageState(iface, j, i, pSB->texture_state[j][i]);
-            }
-
-            if (pSB->Set.textures[j] && pSB->Changed.textures[j]) {
-                IDirect3DDevice8Impl_SetTexture(iface, j, pSB->textures[j]);
-            } 
+        for (j = 0; j < This->TextureUnits; j++) {
+	  for (i = 0; i < HIGHEST_TEXTURE_STATE; i++) {
+	    if (pSB->Set.texture_state[j][i] && pSB->Changed.texture_state[j][i]) {
+	      IDirect3DDevice8Impl_SetTextureStageState(iface, j, i, pSB->texture_state[j][i]);
+	    }
+	  } 
+	  if (pSB->Set.textures[j] && pSB->Changed.textures[j]) {
+	    IDirect3DDevice8Impl_SetTexture(iface, j, pSB->textures[j]);
+	  } 
         }
 
 
@@ -2946,7 +3146,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetTextureStageState(LPDIRECT3DDEVICE8 ifa
                         glDisable(GL_TEXTURE_3D);
                         checkGLcall("Disable GL_TEXTURE_3D");
                     }
-                }
+		}
 
                 /* Now set up the operand correctly */
                 switch (Value) {
@@ -3173,27 +3373,25 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface
     }
 
     object->usage = Usage;
-    object->data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SHADER8Data));
+    object->data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SHADERDATA8));
 
     VertexShaders[i] = object;
     *pHandle = VS_HIGHESTFIXEDFXF + i;
 
-    object->decl = pDeclaration;
-    object->function = pFunction;
+    object->decl = (DWORD*) pDeclaration;
+    object->function = (DWORD*) pFunction;
 
-    /*
-    for (i = 0; 0xFFFFFFFF != pDeclaration[i]; ++i) ;
-    object->declLength = i + 1;
-    if (NULL != pFunction) {
-      for (i = 0; 0xFFFFFFFF != pFunction[i]; ++i) ;
-      object->functionLength = i + 1;
-    } else {
-      object->functionLength = 1; // no Function defined use fixed function vertex processing
-    }
-    */
     vshader_decl_parse(object);
     vshader_program_parse(object);
 
+    /* copy the function ... because it will certainly be released by application */
+    if (NULL != pFunction) {
+      object->function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->functionLength);
+      memcpy(object->function, pFunction, object->functionLength);
+    }
+    /* copy the declaration too */
+    object->decl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->declLength);
+    memcpy(object->decl, pDeclaration, object->declLength);
     return D3D_OK;
 }
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 iface, DWORD Handle) {
@@ -3236,13 +3434,13 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE8 iface
     }
     TRACE("(%p) : freing VertexShader %p\n", This, object);
     /* TODO: check validity of object */
-    if (NULL != object->data) HeapFree(GetProcessHeap(), 0, (void *)object->data);
+    if (NULL != object->function) HeapFree(GetProcessHeap(), 0, (void *)object->function);
+    HeapFree(GetProcessHeap(), 0, (void *)object->decl);
+    HeapFree(GetProcessHeap(), 0, (void *)object->data);
     HeapFree(GetProcessHeap(), 0, (void *)object);
     VertexShaders[Handle - VS_HIGHESTFIXEDFXF] = NULL;
     return D3D_OK;
 }
-
-#define VERTEX_SHADER(Handle) ((Handle <= VS_HIGHESTFIXEDFXF) ? ((Handle >= sizeof(VertexShaders) / sizeof(VERTEXSHADER8*)) ? NULL : VertexShaders[Handle]) : VertexShaders[Handle - VS_HIGHESTFIXEDFXF])
 
 HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 iface, DWORD Register, CONST void* pConstantData, DWORD ConstantCount) {
   ICOM_THIS(IDirect3DDevice8Impl,iface);
@@ -3250,7 +3448,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 
   DWORD Handle = This->UpdateStateBlock->VertexShader;
 
   /* FIXME("(%p) : VertexShader_SetConstant not fully supported yet\n", This); */
-  if (Register + ConstantCount > VSHADER_MAX_CONSTANTS) {
+  if (Register + ConstantCount > D3D8_VSHADER_MAX_CONSTANTS) {
     return D3DERR_INVALIDCALL;
   }
   object = VERTEX_SHADER(Handle);
@@ -3261,7 +3459,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_SetVertexShaderConstant(LPDIRECT3DDEVICE8 
     FIXME("(%p) : VertexShader_SetConstant not fully supported yet\n", This);
     return D3DERR_INVALIDCALL;
   }
-  memcpy(object->data->C + Register, pConstantData, ConstantCount * sizeof(SHADER8Vector));
+  memcpy(object->data->C + Register, pConstantData, ConstantCount * sizeof(D3DSHADERVECTOR));
 
   return D3D_OK;
 }
@@ -3272,7 +3470,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderConstant(LPDIRECT3DDEVICE8 
 
   FIXME("(%p) : VertexShader_GetConstant not fully supported yet\n", This);
 
-  if (Register + ConstantCount > VSHADER_MAX_CONSTANTS) {
+  if (Register + ConstantCount > D3D8_VSHADER_MAX_CONSTANTS) {
     return D3DERR_INVALIDCALL;
   }
   object = VERTEX_SHADER(Handle);
@@ -3282,7 +3480,7 @@ HRESULT  WINAPI  IDirect3DDevice8Impl_GetVertexShaderConstant(LPDIRECT3DDEVICE8 
   if (NULL == object->data) { /* temporary while datas not supported */
     return D3DERR_INVALIDCALL;
   }
-  memcpy(pConstantData, object->data->C + Register, ConstantCount * sizeof(SHADER8Vector));
+  memcpy(pConstantData, object->data->C + Register, ConstantCount * sizeof(D3DSHADERVECTOR));
 
   return D3D_OK;
 }

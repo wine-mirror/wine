@@ -63,41 +63,41 @@
 /*****************************************************************************
  * Predeclare the interfaces
  */
-DEFINE_GUID(IID_IDirect3D8,             0x1DD9E8DA,0x1C77,0x4D40,0xB0,0xCF,0x98,0xFE,0xFD,0xFF,0x95,0x12);
-typedef struct IDirect3D8              IDirect3D8, *LPDIRECT3D8;
+DEFINE_GUID(IID_IDirect3D8,              0x1DD9E8DA,0x1C77,0x4D40,0xB0,0xCF,0x98,0xFE,0xFD,0xFF,0x95,0x12);
+typedef struct IDirect3D8                IDirect3D8, *LPDIRECT3D8;
 
-DEFINE_GUID(IID_IDirect3DDevice8,       0X7385E5DF,0X8FE8,0X41D5,0X86,0XB6,0XD7,0XB4,0X85,0X47,0XB6,0XCF);
-typedef struct IDirect3DDevice8        IDirect3DDevice8, *LPDIRECT3DDEVICE8;
+DEFINE_GUID(IID_IDirect3DDevice8,        0x7385E5DF,0x8FE8,0x41D5,0x86,0xB6,0xD7,0xB4,0x85,0x47,0xB6,0xCF);
+typedef struct IDirect3DDevice8          IDirect3DDevice8, *LPDIRECT3DDEVICE8;
 
-DEFINE_GUID(IID_IDirect3DResource8,     0X1B36BB7B,0X09B7,0X410A,0XB4,0X45,0X7D,0X14,0X30,0XD7,0XB3,0X3F);
-typedef struct IDirect3DResource8      IDirect3DResource8, *LPDIRECT3DRESOURCE8, *PDIRECT3DRESOURCE8;
+DEFINE_GUID(IID_IDirect3DResource8,      0x1B36BB7B,0x09B7,0x410A,0xB4,0x45,0x7D,0x14,0x30,0xD7,0xB3,0x3F);
+typedef struct IDirect3DResource8        IDirect3DResource8, *LPDIRECT3DRESOURCE8, *PDIRECT3DRESOURCE8;
 
-DEFINE_GUID(IID_IDirect3DVertexBuffer8, 0X8AEEEAC7,0X05F9,0X44D4,0XB5,0X91,0X00,0X0B,0X0D,0XF1,0XCB,0X95);
-typedef struct IDirect3DVertexBuffer8  IDirect3DVertexBuffer8, *LPDIRECT3DVERTEXBUFFER8, *PDIRECT3DVERTEXBUFFER8;
+DEFINE_GUID(IID_IDirect3DVertexBuffer8,  0x8AEEEAC7,0x05F9,0x44D4,0xB5,0x91,0x00,0x0B,0x0D,0xF1,0xCB,0x95);
+typedef struct IDirect3DVertexBuffer8    IDirect3DVertexBuffer8, *LPDIRECT3DVERTEXBUFFER8, *PDIRECT3DVERTEXBUFFER8;
 
-DEFINE_GUID(IID_IDirect3DVolume8,       0XBD7349F5,0X14F1,0X42E4,0X9C,0X79,0X97,0X23,0X80,0XDB,0X40,0XC0);
-typedef struct IDirect3DVolume8        IDirect3DVolume8, *LPDIRECT3DVOLUME8, *PDIRECT3DVOLUME8;
+DEFINE_GUID(IID_IDirect3DVolume8,        0xBD7349F5,0x14F1,0x42E4,0x9C,0x79,0x97,0x23,0x80,0xDB,0x40,0xC0);
+typedef struct IDirect3DVolume8          IDirect3DVolume8, *LPDIRECT3DVOLUME8, *PDIRECT3DVOLUME8;
 
-DEFINE_GUID(IID_IDirect3DSwapChain8,    0X928C088B,0X76B9,0X4C6B,0XA5,0X36,0XA5,0X90,0X85,0X38,0X76,0XCD);
-typedef struct IDirect3DSwapChain8     IDirect3DSwapChain8, *LPDIRECT3DSWAPCHAIN8, *PDIRECT3DSWAPCHAIN8;
+DEFINE_GUID(IID_IDirect3DSwapChain8,     0x928C088B,0x76B9,0x4C6B,0xA5,0x36,0xA5,0x90,0x85,0x38,0x76,0xCD);
+typedef struct IDirect3DSwapChain8       IDirect3DSwapChain8, *LPDIRECT3DSWAPCHAIN8, *PDIRECT3DSWAPCHAIN8;
 
-DEFINE_GUID(IID_IDirect3DSurface8,      0XB96EEBCA,0XB326,0X4EA5,0X88,0X2F,0X2F,0XF5,0XBA,0XE0,0X21,0XDD);
-typedef struct IDirect3DSurface8       IDirect3DSurface8, *LPDIRECT3DSURFACE8, *PDIRECT3DSURFACE8;
+DEFINE_GUID(IID_IDirect3DSurface8,       0xB96EEBCA,0xB326,0x4EA5,0x88,0x2F,0x2F,0xF5,0xBA,0xE0,0x21,0xDD);
+typedef struct IDirect3DSurface8         IDirect3DSurface8, *LPDIRECT3DSURFACE8, *PDIRECT3DSURFACE8;
 
-DEFINE_GUID(IID_IDirect3DIndexBuffer8,  0X0E689C9A,0X053D,0X44A0,0X9D,0X92,0XDB,0X0E,0X3D,0X75,0X0F,0X86);
-typedef struct IDirect3DIndexBuffer8   IDirect3DIndexBuffer8, *LPDIRECT3DINDEXBUFFER8, *PDIRECT3DINDEXBUFFER8;
+DEFINE_GUID(IID_IDirect3DIndexBuffer8,   0x0E689C9A,0x053D,0x44A0,0x9D,0x92,0xDB,0x0E,0x3D,0x75,0x0F,0x86);
+typedef struct IDirect3DIndexBuffer8     IDirect3DIndexBuffer8, *LPDIRECT3DINDEXBUFFER8, *PDIRECT3DINDEXBUFFER8;
 
-DEFINE_GUID(IID_IDirect3DBaseTexture8,  0XB4211CFA,0X51B9,0X4A9F,0XAB,0X78,0XDB,0X99,0XB2,0XBB,0X67,0X8E);
-typedef struct IDirect3DBaseTexture8   IDirect3DBaseTexture8, *LPDIRECT3DBASETEXTURE8, *PDIRECT3DBASETEXTURE8;
+DEFINE_GUID(IID_IDirect3DBaseTexture8,   0xB4211CFA,0x51B9,0x4A9F,0xAB,0x78,0xDB,0x99,0xB2,0xBB,0x67,0x8E);
+typedef struct IDirect3DBaseTexture8     IDirect3DBaseTexture8, *LPDIRECT3DBASETEXTURE8, *PDIRECT3DBASETEXTURE8;
 
-DEFINE_GUID(IID_IDirect3DTexture8,      0XE4CDD575,0X2866,0X4F01,0XB1,0X2E,0X7E,0XEC,0XE1,0XEC,0X93,0X58);
-typedef struct IDirect3DTexture8       IDirect3DTexture8, *LPDIRECT3DTEXTURE8, *PDIRECT3DTEXTURE8;
+DEFINE_GUID(IID_IDirect3DTexture8,       0xE4CDD575,0x2866,0x4F01,0xB1,0x2E,0x7E,0xEC,0xE1,0xEC,0x93,0x58);
+typedef struct IDirect3DTexture8         IDirect3DTexture8, *LPDIRECT3DTEXTURE8, *PDIRECT3DTEXTURE8;
 
-DEFINE_GUID(IID_IDirect3DCubeTexture8,  0X3EE5B968,0X2ACA,0X4C34,0X8B,0XB5,0X7E,0X0C,0X3D,0X19,0XB7,0X50);
-typedef struct IDirect3DCubeTexture8   IDirect3DCubeTexture8, *LPDIRECT3DCUBETEXTURE8, *PDIRECT3DCUBETEXTURE8;
+DEFINE_GUID(IID_IDirect3DCubeTexture8,   0x3EE5B968,0x2ACA,0x4C34,0x8B,0xB5,0x7E,0x0C,0x3D,0x19,0xB7,0x50);
+typedef struct IDirect3DCubeTexture8     IDirect3DCubeTexture8, *LPDIRECT3DCUBETEXTURE8, *PDIRECT3DCUBETEXTURE8;
 
-DEFINE_GUID(IID_IDirect3DVolumeTexture8,0X4B8AAAFA,0X140F,0X42BA,0X91,0X31,0X59,0X7E,0XAF,0XAA,0X2E,0XAD);
-typedef struct IDirect3DVolumeTexture8 IDirect3DVolumeTexture8, *LPDIRECT3DVOLUMETEXTURE8, *PDIRECT3DVOLUMETEXTURE8;
+DEFINE_GUID(IID_IDirect3DVolumeTexture8, 0x4B8AAAFA,0x140F,0x42BA,0x91,0x31,0x59,0x7E,0xAF,0xAA,0x2E,0xAD);
+typedef struct IDirect3DVolumeTexture8   IDirect3DVolumeTexture8, *LPDIRECT3DVOLUMETEXTURE8, *PDIRECT3DVOLUMETEXTURE8;
 
 /*****************************************************************************
  * IDirect3D8 interface
@@ -728,7 +728,15 @@ ICOM_DEFINE(IDirect3DVolumeTexture8,IDirect3DBaseTexture8)
 #define IDirect3DVolumeTexture8_UnlockBox(p,a)               ICOM_CALL1(UnlockBox,p,a)
 #define IDirect3DVolumeTexture8_AddDirtyBox(p,a)             ICOM_CALL1(AddDirtyBox,p,a)
 
+#ifdef __cplusplus
+extern "C" {
+#endif  /* defined(__cplusplus) */
+
 /* Define the main entrypoint as well */
 IDirect3D8* WINAPI Direct3DCreate8(UINT SDKVersion);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* defined(__cplusplus) */
 
 #endif /* __WINE_D3D8_H */
