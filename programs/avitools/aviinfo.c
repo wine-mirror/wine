@@ -46,9 +46,9 @@ HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size)
 
 #define XX(x) fn##x = (void*)GetProcAddress(avifil32,#x);assert(fn##x);
 #ifdef UNICODE
-# define XXT(x) fn##x = (void*)GetProcAddress(avifil32,#x##"W");assert(fn##x);
+# define XXT(x) fn##x = (void*)GetProcAddress(avifil32,#x"W");assert(fn##x);
 #else
-# define XXT(x) fn##x = (void*)GetProcAddress(avifil32,#x##"A");assert(fn##x);
+# define XXT(x) fn##x = (void*)GetProcAddress(avifil32,#x"A");assert(fn##x);
 #endif
 	/* Non character dependent routines: */
 	XX (AVIFileInit);
@@ -80,13 +80,13 @@ HRESULT (WINAPI *fnAVIStreamInfo)(PAVISTREAM iface,AVISTREAMINFO *afi,LONG size)
     }
     fprintf(stderr,"AVI File Info:\n");
     fprintf(stderr,"\tdwMaxBytesPerSec: %ld\n",afi.dwMaxBytesPerSec);
-#define FF(x) if (afi.dwFlags & AVIFILEINFO_##x) fprintf(stderr,#x##",");
+#define FF(x) if (afi.dwFlags & AVIFILEINFO_##x) fprintf(stderr,#x",");
     fprintf(stderr,"\tdwFlags: 0x%lx (",afi.dwFlags);
     FF(HASINDEX);FF(MUSTUSEINDEX);FF(ISINTERLEAVED);FF(WASCAPTUREFILE);
     FF(COPYRIGHTED);
     fprintf(stderr,")\n");
 #undef FF
-#define FF(x) if (afi.dwCaps & AVIFILECAPS_##x) fprintf(stderr,#x##",");
+#define FF(x) if (afi.dwCaps & AVIFILECAPS_##x) fprintf(stderr,#x",");
     fprintf(stderr,"\tdwCaps: 0x%lx (",afi.dwCaps);
     FF(CANREAD);FF(CANWRITE);FF(ALLKEYFRAMES);FF(NOCOMPRESSION);
     fprintf(stderr,")\n");

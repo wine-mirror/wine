@@ -77,9 +77,9 @@ HRESULT (WINAPI *fnAVIStreamGetFrameClose)(PGETFRAME pg);
 
 #define XX(x) fn##x = (void*)GetProcAddress(avifil32,#x);assert(fn##x);
 #ifdef UNICODE
-# define XXT(x) fn##x = (void*)GetProcAddress(avifil32,#x##"W");assert(fn##x);
+# define XXT(x) fn##x = (void*)GetProcAddress(avifil32,#x"W");assert(fn##x);
 #else
-# define XXT(x) fn##x = (void*)GetProcAddress(avifil32,#x##"A");assert(fn##x);
+# define XXT(x) fn##x = (void*)GetProcAddress(avifil32,#x"A");assert(fn##x);
 #endif
 	/* non character dependend routines: */
 	XX (AVIFileInit);
