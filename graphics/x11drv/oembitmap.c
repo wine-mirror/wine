@@ -34,11 +34,6 @@ typedef unsigned long Pixel;
 #include "x11drv.h"
 
   /* Include OEM pixmaps */
-#include "bitmaps/obm_cdrom"
-#include "bitmaps/obm_harddisk"
-#include "bitmaps/obm_drive"
-#include "bitmaps/obm_folder2"
-#include "bitmaps/obm_folder"
 #include "bitmaps/obm_lfarrowi"
 #include "bitmaps/obm_rgarrowi"
 #include "bitmaps/obm_dnarrowi"
@@ -97,11 +92,6 @@ static struct
     { obm_closed_95,TRUE},      /* OBM_CLOSED */
     { obm_radiocheck, FALSE },	/* OBM_RADIOCHECK */
     { obm_trtype, TRUE },	/* OBM_TRTYPE */    
-    { obm_cdrom, TRUE },        /* OBM_CDROM    */
-    { obm_harddisk, TRUE },     /* OBM_HARDDISK */
-    { obm_drive, TRUE },        /* OBM_DRIVE    */
-    { obm_folder2, TRUE },      /* OBM_FOLDER2  */
-    { obm_folder, TRUE },       /* OBM_FOLDER   */
     { obm_lfarrowi, TRUE },     /* OBM_LFARROWI */
     { obm_rgarrowi, TRUE },     /* OBM_RGARROWI */
     { obm_dnarrowi, TRUE },     /* OBM_DNARROWI */
@@ -152,9 +142,15 @@ static struct
 #include "bitmaps/oic_ques_95"
 #include "bitmaps/oic_bang_95"
 #include "bitmaps/oic_note_95"
+#include "bitmaps/oic_folder"
+#include "bitmaps/oic_folder2"
+#include "bitmaps/oic_floppy"
+#include "bitmaps/oic_cdrom"
+#include "bitmaps/oic_hdisk"
+#include "bitmaps/oic_network"
 
 #define OIC_FIRST  OIC_SAMPLE      /* First OEM icon */
-#define OIC_LAST   OIC_WINEICON   /* Last OEM icon */
+#define OIC_LAST   OIC_NETWORK     /* Last OEM icon */
 
 static char **OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
 {
@@ -165,7 +161,13 @@ static char **OBM_Icons_Data[OIC_LAST-OIC_FIRST+1] =
     oic_note,      /* OIC_NOTE */
     oic_portrait,  /* OIC_PORTRAIT */
     oic_landscape, /* OIC_LANDSCAPE */
-    oic_wineicon   /* OIC_WINEICON */
+    oic_wineicon,  /* OIC_WINEICON */
+    oic_folder,    /* OIC_FOLDER */
+    oic_folder2,   /* OIC_FOLDER2 */
+    oic_floppy,    /* OIC_FLOPPY */
+    oic_cdrom,     /* OIC_CDROM */
+    oic_hdisk,     /* OIC_HDISK */
+    oic_network    /* OIC_NETWORK */
 };
 
 

@@ -209,52 +209,43 @@ typedef struct
 #define ES_NUMBER       0x00002000
 
 /* OEM Resource Ordinal Numbers */
-#define OBM_CLOSE           32754
-#define OBM_UPARROW         32753
-#define OBM_DNARROW         32752
-#define OBM_RGARROW         32751
-#define OBM_LFARROW         32750
-#define OBM_REDUCE          32749
-#define OBM_ZOOM            32748
-#define OBM_RESTORE         32747
-#define OBM_REDUCED         32746
-#define OBM_ZOOMD           32745
-#define OBM_RESTORED        32744
-#define OBM_UPARROWD        32743
-#define OBM_DNARROWD        32742
-#define OBM_RGARROWD        32741
-#define OBM_LFARROWD        32740
-#define OBM_MNARROW         32739
-#define OBM_COMBO           32738
-#define OBM_UPARROWI        32737
-#define OBM_DNARROWI        32736
-#define OBM_RGARROWI        32735
+#define OBM_CLOSED          32731
+#define OBM_RADIOCHECK      32732
+#define OBM_TRTYPE          32733
 #define OBM_LFARROWI        32734
-
-#define OBM_FOLDER          32733
-#define OBM_FOLDER2         32732
-#define OBM_FLOPPY          32731
-#define OBM_HDISK           32730
-#define OBM_CDROM           32729
-#define OBM_TRTYPE          32728
-
-/* Wine extension, I think.  */
-#define OBM_CLOSED          32726
-#define OBM_RADIOCHECK      32727
-
-#define OBM_OLD_CLOSE       32767
-#define OBM_SIZE            32766
-#define OBM_OLD_UPARROW     32765
-#define OBM_OLD_DNARROW     32764
-#define OBM_OLD_RGARROW     32763
-#define OBM_OLD_LFARROW     32762
-#define OBM_BTSIZE          32761
-#define OBM_CHECK           32760
-#define OBM_CHECKBOXES      32759
-#define OBM_BTNCORNERS      32758
-#define OBM_OLD_REDUCE      32757
-#define OBM_OLD_ZOOM        32756
+#define OBM_RGARROWI        32735
+#define OBM_DNARROWI        32736
+#define OBM_UPARROWI        32737
+#define OBM_COMBO           32738
+#define OBM_MNARROW         32739
+#define OBM_LFARROWD        32740
+#define OBM_RGARROWD        32741
+#define OBM_DNARROWD        32742
+#define OBM_UPARROWD        32743
+#define OBM_RESTORED        32744
+#define OBM_ZOOMD           32745
+#define OBM_REDUCED         32746
+#define OBM_RESTORE         32747
+#define OBM_ZOOM            32748
+#define OBM_REDUCE          32749
+#define OBM_LFARROW         32750
+#define OBM_RGARROW         32751
+#define OBM_DNARROW         32752
+#define OBM_UPARROW         32753
+#define OBM_CLOSE           32754
 #define OBM_OLD_RESTORE     32755
+#define OBM_OLD_ZOOM        32756
+#define OBM_OLD_REDUCE      32757
+#define OBM_BTNCORNERS      32758
+#define OBM_CHECKBOXES      32759
+#define OBM_CHECK           32760
+#define OBM_BTSIZE          32761
+#define OBM_OLD_LFARROW     32762
+#define OBM_OLD_RGARROW     32763
+#define OBM_OLD_DNARROW     32764
+#define OBM_OLD_UPARROW     32765
+#define OBM_SIZE            32766
+#define OBM_OLD_CLOSE       32767
 
 #define OCR_BUMMER	    100
 #define OCR_DRAGOBJECT	    101
@@ -284,6 +275,12 @@ typedef struct
 #define OIC_PORTRAIT        32517
 #define OIC_LANDSCAPE       32518
 #define OIC_WINEICON        32519
+#define OIC_FOLDER          32520
+#define OIC_FOLDER2         32521
+#define OIC_FLOPPY          32522
+#define OIC_CDROM           32523
+#define OIC_HDISK           32524
+#define OIC_NETWORK         32525
 
 /* Edit control messages */
 #define EM_GETSEL                0x00b0

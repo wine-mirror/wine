@@ -28,11 +28,14 @@
 
 extern DWORD      CommDlgLastError;
 
-static HBITMAP16 hFolder = 0;
-static HBITMAP16 hFolder2 = 0;
-static HBITMAP16 hFloppy = 0;
-static HBITMAP16 hHDisk = 0;
-static HBITMAP16 hCDRom = 0;
+static HICON16 hFolder = 0;
+static HICON16 hFolder2 = 0;
+static HICON16 hFloppy = 0;
+static HICON16 hHDisk = 0;
+static HICON16 hCDRom = 0;
+static HICON16 hNet = 0;
+static int fldrHeight = 0;
+static int fldrWidth = 0;
 
 static const char defaultfilter[]=" \0\0";
 
@@ -42,19 +45,30 @@ static const char defaultfilter[]=" \0\0";
 static BOOL FileDlg_Init(void)
 {
     static BOOL initialized = 0;
+    CURSORICONINFO *fldrInfo;
     
     if (!initialized) {
-	if (!hFolder) hFolder = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_FOLDER));
-	if (!hFolder2) hFolder2 = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_FOLDER2));
-	if (!hFloppy) hFloppy = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_FLOPPY));
-	if (!hHDisk) hHDisk = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_HDISK));
-	if (!hCDRom) hCDRom = LoadBitmap16(0, MAKEINTRESOURCE16(OBM_CDROM));
+	if (!hFolder) hFolder = LoadIcon16(0, MAKEINTRESOURCE16(OIC_FOLDER));
+	if (!hFolder2) hFolder2 = LoadIcon16(0, MAKEINTRESOURCE16(OIC_FOLDER2));
+	if (!hFloppy) hFloppy = LoadIcon16(0, MAKEINTRESOURCE16(OIC_FLOPPY));
+	if (!hHDisk) hHDisk = LoadIcon16(0, MAKEINTRESOURCE16(OIC_HDISK));
+	if (!hCDRom) hCDRom = LoadIcon16(0, MAKEINTRESOURCE16(OIC_CDROM));
+	if (!hNet) hNet = LoadIcon16(0, MAKEINTRESOURCE16(OIC_NETWORK));
 	if (hFolder == 0 || hFolder2 == 0 || hFloppy == 0 || 
-	    hHDisk == 0 || hCDRom == 0)
-	{	
-	    WARN(commdlg, "Error loading bitmaps !\nprin");
+	    hHDisk == 0 || hCDRom == 0 || hNet == 0)
+	{
+	    ERR(commdlg, "Error loading icons !\n");
 	    return FALSE;
 	}
+	fldrInfo = (CURSORICONINFO *) GlobalLock16( hFolder2 );
+	if (!fldrInfo)
+	{	
+	    ERR(commdlg, "Error measuring icons !\n");
+	    return FALSE;
+	}
+	fldrHeight = fldrInfo -> nHeight;
+	fldrWidth = fldrInfo -> nWidth;
+	GlobalUnlock16( hFolder2 );
 	initialized = TRUE;
     }
     return TRUE;
@@ -400,7 +414,7 @@ static BOOL FILEDLG_ScanDir(HWND16 hWnd, LPSTR newPath)
 	 }
 
     strcpy(buffer, "*.*");
-    return DlgDirListA(hWnd, buffer, lst2, stc1, 0x8010);
+    return DlgDirListA(hWnd, buffer, lst2, stc1, DDL_EXCLUSIVE | DDL_DIRECTORY);
 }
 
 /***********************************************************************
@@ -437,87 +451,94 @@ static LONG FILEDLG_WMDrawItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam,int s
 {
     LPDRAWITEMSTRUCT16 lpdis = (LPDRAWITEMSTRUCT16)PTR_SEG_TO_LIN(lParam);
     char *str;
-    HBRUSH hBrush;
-    HBITMAP16 hBitmap, hPrevBitmap;
-    BITMAP16 bm;
-    HDC hMemDC;
+    HICON16 hIcon;
+    COLORREF oldText = 0, oldBk = 0;
 
     if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst1)
     {
         if (!(str = SEGPTR_ALLOC(512))) return FALSE;
-	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
-	SelectObject(lpdis->hDC, hBrush);
-	FillRect16(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage16(lpdis->hwndItem, LB_GETTEXT16, lpdis->itemID, 
                       (LPARAM)SEGPTR_GET(str));
 
-	if (savedlg)       /* use _gray_ text in FileSaveDlg */
-        {
-	  if (!lpdis->itemState)
+	if ((lpdis->itemState & ODS_SELECTED) && !savedlg)
+	{
+	    oldBk = SetBkColor( lpdis->hDC, GetSysColor( COLOR_HIGHLIGHT ) );
+	    oldText = SetTextColor( lpdis->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
+	}
+	if (savedlg)
 	    SetTextColor(lpdis->hDC,GetSysColor(COLOR_GRAYTEXT) );
-	  else  
-	    SetTextColor(lpdis->hDC,GetSysColor(COLOR_WINDOWTEXT) );
-	    /* inversion of gray would be bad readable */	  	  
-        }
 
-	TextOut16(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
-                  str, strlen(str));
-	if (lpdis->itemState != 0) {
-	    InvertRect16(lpdis->hDC, &lpdis->rcItem);
+	ExtTextOut16(lpdis->hDC, lpdis->rcItem.left + 1,
+                  lpdis->rcItem.top + 1, ETO_OPAQUE | ETO_CLIPPED,
+                  &(lpdis->rcItem), str, strlen(str), NULL);
+
+	if (lpdis->itemState & ODS_SELECTED)
+	    DrawFocusRect16( lpdis->hDC, &(lpdis->rcItem) );
+
+	if ((lpdis->itemState & ODS_SELECTED) && !savedlg)
+	{
+	    SetBkColor( lpdis->hDC, oldBk );
+	    SetTextColor( lpdis->hDC, oldText );
 	}
         SEGPTR_FREE(str);
 	return TRUE;
     }
-    
+
     if (lpdis->CtlType == ODT_LISTBOX && lpdis->CtlID == lst2)
     {
         if (!(str = SEGPTR_ALLOC(512))) return FALSE;
-	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
-	SelectObject(lpdis->hDC, hBrush);
-	FillRect16(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage16(lpdis->hwndItem, LB_GETTEXT16, lpdis->itemID, 
                       (LPARAM)SEGPTR_GET(str));
 
-	hBitmap = hFolder;
-	GetObject16( hBitmap, sizeof(bm), &bm );
-	TextOut16(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
-                  lpdis->rcItem.top, str, strlen(str));
-	hMemDC = CreateCompatibleDC(lpdis->hDC);
-	hPrevBitmap = SelectObject(hMemDC, hBitmap);
-	BitBlt(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
-                 bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY);
-	SelectObject(hMemDC, hPrevBitmap);
-	DeleteDC(hMemDC);
-	if (lpdis->itemState != 0) InvertRect16(lpdis->hDC, &lpdis->rcItem);
+	if (lpdis->itemState & ODS_SELECTED)
+	{
+	    oldBk = SetBkColor( lpdis->hDC, GetSysColor( COLOR_HIGHLIGHT ) );
+	    oldText = SetTextColor( lpdis->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
+	}
+	ExtTextOut16(lpdis->hDC, lpdis->rcItem.left + fldrWidth,
+                  lpdis->rcItem.top + 1, ETO_OPAQUE | ETO_CLIPPED,
+                  &(lpdis->rcItem), str, strlen(str), NULL);
+
+	if (lpdis->itemState & ODS_SELECTED)
+	    DrawFocusRect16( lpdis->hDC, &(lpdis->rcItem) );
+
+	if (lpdis->itemState & ODS_SELECTED)
+	{
+	    SetBkColor( lpdis->hDC, oldBk );
+	    SetTextColor( lpdis->hDC, oldText );
+	}
+	DrawIcon(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top, hFolder);
         SEGPTR_FREE(str);
 	return TRUE;
     }
     if (lpdis->CtlType == ODT_COMBOBOX && lpdis->CtlID == cmb2)
     {
         if (!(str = SEGPTR_ALLOC(512))) return FALSE;
-	hBrush = SelectObject(lpdis->hDC, GetStockObject(LTGRAY_BRUSH));
-	SelectObject(lpdis->hDC, hBrush);
-	FillRect16(lpdis->hDC, &lpdis->rcItem, hBrush);
 	SendMessage16(lpdis->hwndItem, CB_GETLBTEXT16, lpdis->itemID, 
                       (LPARAM)SEGPTR_GET(str));
         switch(DRIVE_GetType( str[2] - 'a' ))
         {
-        case TYPE_FLOPPY:  hBitmap = hFloppy; break;
-        case TYPE_CDROM:   hBitmap = hCDRom; break;
+        case TYPE_FLOPPY:  hIcon = hFloppy; break;
+        case TYPE_CDROM:   hIcon = hCDRom; break;
+        case TYPE_NETWORK: hIcon = hNet; break;
         case TYPE_HD:
-        case TYPE_NETWORK:
-        default:           hBitmap = hHDisk; break;
+        default:           hIcon = hHDisk; break;
         }
-	GetObject16( hBitmap, sizeof(bm), &bm );
-	TextOut16(lpdis->hDC, lpdis->rcItem.left + bm.bmWidth, 
-                  lpdis->rcItem.top, str, strlen(str));
-	hMemDC = CreateCompatibleDC(lpdis->hDC);
-	hPrevBitmap = SelectObject(hMemDC, hBitmap);
-	BitBlt( lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top,
-                  bm.bmWidth, bm.bmHeight, hMemDC, 0, 0, SRCCOPY );
-	SelectObject(hMemDC, hPrevBitmap);
-	DeleteDC(hMemDC);
-	if (lpdis->itemState != 0) InvertRect16(lpdis->hDC, &lpdis->rcItem);
+	if (lpdis->itemState & ODS_SELECTED)
+	{
+	    oldBk = SetBkColor( lpdis->hDC, GetSysColor( COLOR_HIGHLIGHT ) );
+	    oldText = SetTextColor( lpdis->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
+	}
+	ExtTextOut16(lpdis->hDC, lpdis->rcItem.left + fldrWidth,
+                  lpdis->rcItem.top + 1, ETO_OPAQUE | ETO_CLIPPED,
+                  &(lpdis->rcItem), str, strlen(str), NULL);
+
+	if (lpdis->itemState & ODS_SELECTED)
+	{
+	    SetBkColor( lpdis->hDC, oldBk );
+	    SetTextColor( lpdis->hDC, oldText );
+	}
+	DrawIcon(lpdis->hDC, lpdis->rcItem.left, lpdis->rcItem.top, hIcon);
         SEGPTR_FREE(str);
 	return TRUE;
     }
@@ -529,12 +550,10 @@ static LONG FILEDLG_WMDrawItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam,int s
  */
 static LONG FILEDLG_WMMeasureItem(HWND16 hWnd, WPARAM16 wParam, LPARAM lParam) 
 {
-    BITMAP16 bm;
     LPMEASUREITEMSTRUCT16 lpmeasure;
     
-    GetObject16( hFolder2, sizeof(bm), &bm );
     lpmeasure = (LPMEASUREITEMSTRUCT16)PTR_SEG_TO_LIN(lParam);
-    lpmeasure->itemHeight = bm.bmHeight;
+    lpmeasure->itemHeight = fldrHeight;
     return TRUE;
 }
 
