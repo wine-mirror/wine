@@ -1442,8 +1442,9 @@ static HMODULE16 GetModuleFromPath(LPCSTR name)
 	{
 check_path:
 		lookforit.dwSize=sizeof(MODULEENTRY);
-		for(ModuleFirst16(&lookforit); ModuleNext16(&lookforit); )
-		{
+		if (!ModuleFirst16(&lookforit)) return 0;
+                do
+                {
 			pModule = NE_GetPtr(lookforit.hModule);
 			if(!pModule) 
 				break;
@@ -1459,7 +1460,7 @@ check_path:
 					break;
 				}
 			}
-		}
+                } while (ModuleNext16(&lookforit));
 	}
 
 	if(TRACE_ON(module) && hmod)
