@@ -19,7 +19,7 @@
 #include "message.h"
 #include "clipboard.h"
 #include "xmalloc.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(clipboard)
 
@@ -173,7 +173,7 @@ BOOL WINAPI OpenClipboard( HWND hWnd )
 {
     BOOL bRet;
 
-    TRACE(clipboard,"(%04x)...\n", hWnd);
+    TRACE("(%04x)...\n", hWnd);
 
     if (!hqClipLock)
     {
@@ -184,7 +184,7 @@ BOOL WINAPI OpenClipboard( HWND hWnd )
     }
     else bRet = FALSE;
 
-    TRACE(clipboard,"   returning %i\n", bRet);
+    TRACE("   returning %i\n", bRet);
     return bRet;
 }
 
@@ -203,7 +203,7 @@ BOOL16 WINAPI CloseClipboard16(void)
  */
 BOOL WINAPI CloseClipboard(void)
 {
-    TRACE(clipboard,"!\n");
+    TRACE("!\n");
 
     if (hqClipLock == GetFastQueue16())
     {
@@ -233,7 +233,7 @@ BOOL WINAPI EmptyClipboard(void)
 {
     LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
 
-    TRACE(clipboard,"(void)\n");
+    TRACE("(void)\n");
 
     if (hqClipLock != GetFastQueue16()) return FALSE;
 
@@ -283,7 +283,7 @@ HANDLE16 WINAPI SetClipboardData16( UINT16 wFormat, HANDLE16 hData )
 {
     LPWINE_CLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
 
-    TRACE(clipboard, "(%04X, %04x) !\n", wFormat, hData);
+    TRACE("(%04X, %04x) !\n", wFormat, hData);
 
     /* NOTE: If the hData is zero and current owner doesn't match
      * the window that opened the clipboard then this application
@@ -331,7 +331,7 @@ HANDLE WINAPI SetClipboardData( UINT wFormat, HANDLE hData )
 {
     LPWINE_CLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
 
-    TRACE(clipboard, "(%08X, %08x) !\n", wFormat, hData);
+    TRACE("(%08X, %08x) !\n", wFormat, hData);
 
     /* NOTE: If the hData is zero and current owner doesn't match
      * the window that opened the clipboard then this application
@@ -384,7 +384,7 @@ static BOOL CLIPBOARD_RenderFormat(LPWINE_CLIPFORMAT lpFormat)
 		    (WPARAM16)lpFormat->wFormatID,0L);
     else
     {
-      WARN(clipboard, "\thWndClipOwner (%04x) is lost!\n", 
+      WARN("\thWndClipOwner (%04x) is lost!\n", 
 	   hWndClipOwner);
       hWndClipOwner = 0; lpFormat->wDataPresent = 0;
       return FALSE;
@@ -419,7 +419,7 @@ static BOOL CLIPBOARD_RenderText(LPWINE_CLIPFORMAT lpTarget, LPWINE_CLIPFORMAT l
     }
 
     if( !lpstrS ) return FALSE;
-    TRACE(clipboard,"\tconverting from '%s' to '%s', %i chars\n",
+    TRACE("\tconverting from '%s' to '%s', %i chars\n",
 			   	      lpSource->Name, lpTarget->Name, size);
 
     lpTarget->hData32 = GlobalAlloc(GMEM_ZEROINIT, size); 
@@ -431,7 +431,7 @@ static BOOL CLIPBOARD_RenderText(LPWINE_CLIPFORMAT lpTarget, LPWINE_CLIPFORMAT l
 	    CharToOemBuffA(lpstrS, lpstrT, size);
 	else
 	    OemToCharBuffA(lpstrS, lpstrT, size);
-	TRACE(clipboard,"\tgot %s\n", lpstrT);
+	TRACE("\tgot %s\n", lpstrT);
 	GlobalUnlock(lpTarget->hData32);
 	if (lpSource->hData32)
 	  GlobalUnlock(lpSource->hData32);
@@ -458,7 +458,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
 
     if (hqClipLock != GetFastQueue16()) return 0;
 
-    TRACE(clipboard,"(%04X)\n", wFormat);
+    TRACE("(%04X)\n", wFormat);
 
     if( wFormat == CF_TEXT && !lpRender[CF_TEXT-1].wDataPresent 
 			   &&  lpRender[CF_OEMTEXT-1].wDataPresent )
@@ -466,7 +466,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
 	lpRender = &ClipFormats[CF_OEMTEXT-1];
 	lpUpdate = &ClipFormats[CF_TEXT-1];
 
-	TRACE(clipboard,"\tOEMTEXT -> TEXT\n");
+	TRACE("\tOEMTEXT -> TEXT\n");
     }
     else if( wFormat == CF_OEMTEXT && !lpRender[CF_OEMTEXT-1].wDataPresent
 				   &&  lpRender[CF_TEXT-1].wDataPresent )
@@ -474,7 +474,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
         lpRender = &ClipFormats[CF_TEXT-1];
 	lpUpdate = &ClipFormats[CF_OEMTEXT-1];
 	
-	TRACE(clipboard,"\tTEXT -> OEMTEXT\n");
+	TRACE("\tTEXT -> OEMTEXT\n");
     }
     else
     {
@@ -495,13 +495,13 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
 	size = GlobalSize(lpUpdate->hData32);
       lpUpdate->hData16 = GlobalAlloc16(GMEM_ZEROINIT, size);
       if( !lpUpdate->hData16 )
-	ERR(clipboard, "(%04X) -- not enough memory in 16b heap\n", wFormat);
+	ERR("(%04X) -- not enough memory in 16b heap\n", wFormat);
       else
       {
       if( lpUpdate->wFormatID == CF_METAFILEPICT )
       {
-	FIXME(clipboard,"\timplement function CopyMetaFilePict32to16\n");
-	FIXME(clipboard,"\tin the appropriate file.\n");
+	FIXME("\timplement function CopyMetaFilePict32to16\n");
+	FIXME("\tin the appropriate file.\n");
 #ifdef SOMEONE_IMPLEMENTED_ME
 	CopyMetaFilePict32to16( GlobalLock16(lpUpdate->hData16), 
 			        GlobalLock(lpUpdate->hData32) );
@@ -518,7 +518,7 @@ HANDLE16 WINAPI GetClipboardData16( UINT16 wFormat )
       }
     }
 
-    TRACE(clipboard,"\treturning %04x (type %i)\n", 
+    TRACE("\treturning %04x (type %i)\n", 
 			      lpUpdate->hData16, lpUpdate->wFormatID);
     return lpUpdate->hData16;
 }
@@ -534,7 +534,7 @@ HANDLE WINAPI GetClipboardData( UINT wFormat )
 
     if (hqClipLock != GetFastQueue16()) return 0;
 
-    TRACE(clipboard,"(%08X)\n", wFormat);
+    TRACE("(%08X)\n", wFormat);
 
     if( wFormat == CF_TEXT && !lpRender[CF_TEXT-1].wDataPresent 
 			   &&  lpRender[CF_OEMTEXT-1].wDataPresent )
@@ -542,7 +542,7 @@ HANDLE WINAPI GetClipboardData( UINT wFormat )
 	lpRender = &ClipFormats[CF_OEMTEXT-1];
 	lpUpdate = &ClipFormats[CF_TEXT-1];
 
-	TRACE(clipboard,"\tOEMTEXT -> TEXT\n");
+	TRACE("\tOEMTEXT -> TEXT\n");
     }
     else if( wFormat == CF_OEMTEXT && !lpRender[CF_OEMTEXT-1].wDataPresent
 				   &&  lpRender[CF_TEXT-1].wDataPresent )
@@ -550,7 +550,7 @@ HANDLE WINAPI GetClipboardData( UINT wFormat )
         lpRender = &ClipFormats[CF_TEXT-1];
 	lpUpdate = &ClipFormats[CF_OEMTEXT-1];
 	
-	TRACE(clipboard,"\tTEXT -> OEMTEXT\n");
+	TRACE("\tTEXT -> OEMTEXT\n");
     }
     else
     {
@@ -572,8 +572,8 @@ HANDLE WINAPI GetClipboardData( UINT wFormat )
       lpUpdate->hData32 = GlobalAlloc(GMEM_ZEROINIT, size); 
       if( lpUpdate->wFormatID == CF_METAFILEPICT )
       {
-	FIXME(clipboard,"\timplement function CopyMetaFilePict16to32\n");
-	FIXME(clipboard,"\tin the appropriate file.\n");
+	FIXME("\timplement function CopyMetaFilePict16to32\n");
+	FIXME("\tin the appropriate file.\n");
 #ifdef SOMEONE_IMPLEMENTED_ME
 	CopyMetaFilePict16to32( GlobalLock16(lpUpdate->hData32), 
 			        GlobalLock(lpUpdate->hData16) );
@@ -589,7 +589,7 @@ HANDLE WINAPI GetClipboardData( UINT wFormat )
       GlobalUnlock16(lpUpdate->hData16);
     }
 
-    TRACE(clipboard,"\treturning %04x (type %i)\n", 
+    TRACE("\treturning %04x (type %i)\n", 
 			      lpUpdate->hData32, lpUpdate->wFormatID);
     return lpUpdate->hData32;
 }
@@ -611,7 +611,7 @@ INT WINAPI CountClipboardFormats(void)
     INT FormatCount = 0;
     LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
 
-    TRACE(clipboard,"(void)\n");
+    TRACE("(void)\n");
 
     while(TRUE) 
     {
@@ -622,7 +622,7 @@ INT WINAPI CountClipboardFormats(void)
  
 	if (lpFormat->wDataPresent) 
 	{
-            TRACE(clipboard, "\tdata found for format %i\n", lpFormat->wFormatID);
+            TRACE("\tdata found for format %i\n", lpFormat->wFormatID);
 	    FormatCount++;
 	}
 	lpFormat = lpFormat->NextFormat;
@@ -633,7 +633,7 @@ INT WINAPI CountClipboardFormats(void)
     FormatCount += abs(ClipFormats[CF_TEXT-1].wDataPresent -
                        ClipFormats[CF_OEMTEXT-1].wDataPresent);
 
-    TRACE(clipboard,"\ttotal %d\n", FormatCount);
+    TRACE("\ttotal %d\n", FormatCount);
     return FormatCount;
 }
 
@@ -654,7 +654,7 @@ UINT WINAPI EnumClipboardFormats( UINT wFormat )
 {
     LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
 
-    TRACE(clipboard,"(%04X)\n", wFormat);
+    TRACE("(%04X)\n", wFormat);
 
     if( hqClipLock != GetFastQueue16() ) return 0;
 
@@ -700,7 +700,7 @@ UINT16 WINAPI RegisterClipboardFormat16( LPCSTR FormatName )
 
     if (FormatName == NULL) return 0;
 
-    TRACE(clipboard,"('%s') !\n", FormatName);
+    TRACE("('%s') !\n", FormatName);
 
     /* walk format chain to see if it's already registered */
 
@@ -774,12 +774,12 @@ INT WINAPI GetClipboardFormatNameA( UINT wFormat, LPSTR retStr, INT maxlen )
 {
     LPWINE_CLIPFORMAT lpFormat = __lookup_format( ClipFormats, wFormat );
 
-    TRACE(clipboard, "(%04X, %p, %d) !\n", wFormat, retStr, maxlen);
+    TRACE("(%04X, %p, %d) !\n", wFormat, retStr, maxlen);
 
     if (lpFormat == NULL || lpFormat->Name == NULL || 
 	lpFormat->wFormatID < CF_REGFORMATBASE) return 0;
 
-    TRACE(clipboard, "Name='%s' !\n", lpFormat->Name);
+    TRACE("Name='%s' !\n", lpFormat->Name);
 
     lstrcpynA( retStr, lpFormat->Name, maxlen );
     return strlen(retStr);
@@ -815,7 +815,7 @@ HWND WINAPI SetClipboardViewer( HWND hWnd )
 {
     HWND hwndPrev = hWndViewer;
 
-    TRACE(clipboard,"(%04x): returning %04x\n", hWnd, hwndPrev);
+    TRACE("(%04x): returning %04x\n", hWnd, hwndPrev);
 
     hWndViewer = hWnd;
     return hwndPrev;
@@ -855,13 +855,13 @@ BOOL WINAPI ChangeClipboardChain(HWND hWnd, HWND hWndNext)
 {
     BOOL bRet = 0;
 
-    FIXME(clipboard, "(0x%04x, 0x%04x): stub?\n", hWnd, hWndNext);
+    FIXME("(0x%04x, 0x%04x): stub?\n", hWnd, hWndNext);
 
     if( hWndViewer )
 	bRet = !SendMessage16( hWndViewer, WM_CHANGECBCHAIN,
                              (WPARAM16)hWnd, (LPARAM)hWndNext);   
     else
-	WARN(clipboard, "hWndViewer is lost\n");
+	WARN("hWndViewer is lost\n");
 
     if( hWnd == hWndViewer ) hWndViewer = hWndNext;
 
@@ -884,7 +884,7 @@ BOOL16 WINAPI IsClipboardFormatAvailable16( UINT16 wFormat )
  */
 BOOL WINAPI IsClipboardFormatAvailable( UINT wFormat )
 {
-    TRACE(clipboard,"(%04X) !\n", wFormat);
+    TRACE("(%04X) !\n", wFormat);
 
     CLIPBOARD_Driver->pGetData( (wFormat == CF_TEXT) ? CF_OEMTEXT : wFormat );
 
@@ -915,7 +915,7 @@ HWND WINAPI GetOpenClipboardWindow(void)
  */
 INT16 WINAPI GetPriorityClipboardFormat16( UINT16 *lpPriorityList, INT16 nCount)
 {
-    FIXME(clipboard, "(%p,%d): stub\n", lpPriorityList, nCount );
+    FIXME("(%p,%d): stub\n", lpPriorityList, nCount );
     return 0;
 }
 

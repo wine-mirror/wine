@@ -9,7 +9,7 @@
 #include "wine/winuser16.h"
 #include "win.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(prop)
 
@@ -80,10 +80,10 @@ HANDLE WINAPI GetPropA( HWND hwnd, LPCSTR str )
     PROPERTY *prop = PROP_FindProp( hwnd, str );
 
     if (HIWORD(str))
-        TRACE(prop, "(%08x,'%s'): returning %08x\n",
+        TRACE("(%08x,'%s'): returning %08x\n",
                       hwnd, str, prop ? prop->handle : 0 );
     else
-        TRACE(prop, "(%08x,#%04x): returning %08x\n",
+        TRACE("(%08x,#%04x): returning %08x\n",
                       hwnd, LOWORD(str), prop ? prop->handle : 0 );
 
     return prop ? prop->handle : 0;
@@ -123,9 +123,9 @@ BOOL WINAPI SetPropA( HWND hwnd, LPCSTR str, HANDLE handle )
     PROPERTY *prop;
 
     if (HIWORD(str))
-        TRACE(prop, "%04x '%s' %08x\n", hwnd, str, handle );
+        TRACE("%04x '%s' %08x\n", hwnd, str, handle );
     else
-        TRACE(prop, "%04x #%04x %08x\n",
+        TRACE("%04x #%04x %08x\n",
                       hwnd, LOWORD(str), handle );
 
     if (!(prop = PROP_FindProp( hwnd, str )))
@@ -191,9 +191,9 @@ HANDLE WINAPI RemovePropA( HWND hwnd, LPCSTR str )
     WND *pWnd = WIN_FindWndPtr( hwnd );
 
     if (HIWORD(str))
-      TRACE(prop, "%04x '%s'\n", hwnd, str );
+      TRACE("%04x '%s'\n", hwnd, str );
     else
-      TRACE(prop, "%04x #%04x\n", hwnd, LOWORD(str));
+      TRACE("%04x #%04x\n", hwnd, LOWORD(str));
 
 
     if (!pWnd) return (HANDLE)0;
@@ -277,7 +277,7 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
     WND *pWnd;
     INT16 ret = -1;
 
-    TRACE(prop, "%04x %08x\n", hwnd, (UINT)func );
+    TRACE("%04x %08x\n", hwnd, (UINT)func );
     if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
     for (prop = pWnd->pProp; (prop); prop = next)
     {
@@ -285,7 +285,7 @@ INT16 WINAPI EnumProps16( HWND16 hwnd, PROPENUMPROC16 func )
         /* function removes the current property.    */
         next = prop->next;
 
-        TRACE(prop, "  Callback: handle=%08x str='%s'\n",
+        TRACE("  Callback: handle=%08x str='%s'\n",
                       prop->handle, prop->string );
         ret = func( hwnd, SEGPTR_GET(prop->string), prop->handle );
         if (!ret) break;
@@ -322,7 +322,7 @@ INT WINAPI EnumPropsExA(HWND hwnd, PROPENUMPROCEXA func, LPARAM lParam)
     WND *pWnd;
     INT ret = -1;
 
-    TRACE(prop, "%04x %08x %08lx\n",
+    TRACE("%04x %08x %08lx\n",
                   hwnd, (UINT)func, lParam );
     if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
     for (prop = pWnd->pProp; (prop); prop = next)
@@ -331,7 +331,7 @@ INT WINAPI EnumPropsExA(HWND hwnd, PROPENUMPROCEXA func, LPARAM lParam)
         /* function removes the current property.    */
         next = prop->next;
 
-        TRACE(prop, "  Callback: handle=%08x str='%s'\n",
+        TRACE("  Callback: handle=%08x str='%s'\n",
                       prop->handle, prop->string );
         ret = func( hwnd, prop->string, prop->handle, lParam );
         if (!ret) break;
@@ -350,7 +350,7 @@ INT WINAPI EnumPropsExW(HWND hwnd, PROPENUMPROCEXW func, LPARAM lParam)
     WND *pWnd;
     INT ret = -1;
 
-    TRACE(prop, "%04x %08x %08lx\n",
+    TRACE("%04x %08x %08lx\n",
                   hwnd, (UINT)func, lParam );
     if (!(pWnd = WIN_FindWndPtr( hwnd ))) return -1;
     for (prop = pWnd->pProp; (prop); prop = next)
@@ -359,7 +359,7 @@ INT WINAPI EnumPropsExW(HWND hwnd, PROPENUMPROCEXW func, LPARAM lParam)
         /* function removes the current property.    */
         next = prop->next;
 
-        TRACE(prop, "  Callback: handle=%08x str='%s'\n",
+        TRACE("  Callback: handle=%08x str='%s'\n",
                       prop->handle, prop->string );
         if (HIWORD(prop->string))
         {

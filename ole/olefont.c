@@ -12,7 +12,7 @@
 #include "oleauto.h"
 #include "ocidl.h"
 #include "olectl.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
@@ -405,7 +405,7 @@ HRESULT WINAPI OLEFontImpl_QueryInterface(
 
     WINE_StringFromCLSID((LPCLSID)riid,clsid);
     
-    WARN(ole, 
+    WARN(
 	 "() : asking for un supported interface %s\n", 
 	 clsid);
 
@@ -571,7 +571,7 @@ static HRESULT WINAPI OLEFontImpl_get_Bold(
   IFont*  iface, 
   BOOL* pbold)
 {
-  FIXME(ole,"():Stub\n");
+  FIXME("():Stub\n");
   return E_NOTIMPL;
 }
 
@@ -584,7 +584,7 @@ static HRESULT WINAPI OLEFontImpl_put_Bold(
   IFont* iface,
   BOOL bold)
 {
-  FIXME(ole,"():Stub\n");
+  FIXME("():Stub\n");
   return E_NOTIMPL;
 }
 
@@ -882,7 +882,7 @@ static HRESULT WINAPI OLEFontImpl_IsEqual(
   IFont* iface, 
   IFont* pFontOther)
 {
-  FIXME(ole,"():Stub\n");
+  FIXME("():Stub\n");
   return E_NOTIMPL;
 }
 
@@ -913,7 +913,7 @@ static HRESULT      WINAPI OLEFontImpl_QueryTextMetrics(
   IFont*         iface, 
   TEXTMETRICOLE* ptm)
 {
-  FIXME(ole,"():Stub\n");
+  FIXME("():Stub\n");
   return E_NOTIMPL;
 }
 
@@ -975,7 +975,7 @@ static HRESULT WINAPI OLEFontImpl_SetHdc(
   IFont* iface,
   HDC  hdc)
 {
-  FIXME(ole,"():Stub\n");
+  FIXME("():Stub\n");
   return E_NOTIMPL;
 }
 
@@ -1029,7 +1029,7 @@ static HRESULT WINAPI OLEFontImpl_GetTypeInfoCount(
   IDispatch*    iface, 
   unsigned int* pctinfo)
 {
-  FIXME(ole,"():Stub\n");
+  FIXME("():Stub\n");
 
   return E_NOTIMPL;
 }
@@ -1045,7 +1045,7 @@ static HRESULT WINAPI OLEFontImpl_GetTypeInfo(
   LCID        lcid, 
   ITypeInfo** ppTInfo)
 {
-  FIXME(ole,"():Stub\n");
+  FIXME("():Stub\n");
 
   return E_NOTIMPL;
 }
@@ -1063,7 +1063,7 @@ static HRESULT WINAPI OLEFontImpl_GetIDsOfNames(
   LCID        lcid,
   DISPID*     rgDispId)
 {
-  FIXME(ole,"():Stub\n");
+  FIXME("():Stub\n");
 
   return E_NOTIMPL;
 }
@@ -1084,7 +1084,7 @@ static HRESULT WINAPI OLEFontImpl_Invoke(
   EXCEPINFO*  pExepInfo,
   UINT*     puArgErr)
 {
-  FIXME(ole,"():Stub\n");
+  FIXME("():Stub\n");
 
   return E_NOTIMPL;
 }

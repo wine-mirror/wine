@@ -11,7 +11,7 @@
 #include "winproc.h"
 #include "services.h"
 #include "message.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(timer)
 
@@ -136,7 +136,7 @@ static void CALLBACK TIMER_CheckTimer( ULONG_PTR timer_ptr )
 
     if ( !pTimer->expired )
     {
-        TRACE(timer, "Timer expired: %04x, %04x, %04x, %08lx\n", 
+        TRACE("Timer expired: %04x, %04x, %04x, %08lx\n", 
                      pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
 
         pTimer->expired = TRUE;
@@ -177,7 +177,7 @@ BOOL TIMER_GetTimerMsg( MSG *msg, HWND hwnd,
         return FALSE; /* No timer */
     }
     
-    TRACE(timer, "Timer got message: %04x, %04x, %04x, %08lx\n", 
+    TRACE("Timer got message: %04x, %04x, %04x, %08lx\n", 
 		   pTimer->hwnd, pTimer->msg, pTimer->id, (DWORD)pTimer->proc);
 
     if (remove)	
@@ -251,7 +251,7 @@ static UINT TIMER_SetTimer( HWND hwnd, UINT id, UINT timeout,
     pTimer->hService = SERVICE_AddTimer( timeout * 1000L, 
                                          TIMER_CheckTimer, (ULONG_PTR)pTimer );
 
-    TRACE(timer, "Timer added: %p, %04x, %04x, %04x, %08lx\n", 
+    TRACE("Timer added: %p, %04x, %04x, %04x, %08lx\n", 
 		   pTimer, pTimer->hwnd, pTimer->msg, pTimer->id,
                    (DWORD)pTimer->proc );
 
@@ -303,7 +303,7 @@ static BOOL TIMER_KillTimer( HWND hwnd, UINT id, BOOL sys )
 UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
                           TIMERPROC16 proc )
 {
-    TRACE(timer, "%04x %d %d %08lx\n",
+    TRACE("%04x %d %d %08lx\n",
                    hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
                            WIN_PROC_16, FALSE );
@@ -316,7 +316,7 @@ UINT16 WINAPI SetTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 UINT WINAPI SetTimer( HWND hwnd, UINT id, UINT timeout,
                           TIMERPROC proc )
 {
-    TRACE(timer, "%04x %d %d %08lx\n",
+    TRACE("%04x %d %d %08lx\n",
                    hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
                            WIN_PROC_32A, FALSE );
@@ -329,7 +329,7 @@ UINT WINAPI SetTimer( HWND hwnd, UINT id, UINT timeout,
 UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
                                 TIMERPROC16 proc )
 {
-    TRACE(timer, "%04x %d %d %08lx\n", 
+    TRACE("%04x %d %d %08lx\n", 
                    hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
                            WIN_PROC_16, TRUE );
@@ -342,7 +342,7 @@ UINT16 WINAPI SetSystemTimer16( HWND16 hwnd, UINT16 id, UINT16 timeout,
 UINT WINAPI SetSystemTimer( HWND hwnd, UINT id, UINT timeout,
                                 TIMERPROC proc )
 {
-    TRACE(timer, "%04x %d %d %08lx\n", 
+    TRACE("%04x %d %d %08lx\n", 
                    hwnd, id, timeout, (LONG)proc );
     return TIMER_SetTimer( hwnd, id, timeout, (WNDPROC16)proc,
                            WIN_PROC_32A, TRUE );
@@ -354,7 +354,7 @@ UINT WINAPI SetSystemTimer( HWND hwnd, UINT id, UINT timeout,
  */
 BOOL16 WINAPI KillTimer16( HWND16 hwnd, UINT16 id )
 {
-    TRACE(timer, "%04x %d\n", hwnd, id );
+    TRACE("%04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, FALSE );
 }
 
@@ -364,7 +364,7 @@ BOOL16 WINAPI KillTimer16( HWND16 hwnd, UINT16 id )
  */
 BOOL WINAPI KillTimer( HWND hwnd, UINT id )
 {
-    TRACE(timer, "%04x %d\n", hwnd, id );
+    TRACE("%04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, FALSE );
 }
 
@@ -374,7 +374,7 @@ BOOL WINAPI KillTimer( HWND hwnd, UINT id )
  */
 BOOL16 WINAPI KillSystemTimer16( HWND16 hwnd, UINT16 id )
 {
-    TRACE(timer, "%04x %d\n", hwnd, id );
+    TRACE("%04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, TRUE );
 }
 
@@ -384,6 +384,6 @@ BOOL16 WINAPI KillSystemTimer16( HWND16 hwnd, UINT16 id )
  */
 BOOL WINAPI KillSystemTimer( HWND hwnd, UINT id )
 {
-    TRACE(timer, "%04x %d\n", hwnd, id );
+    TRACE("%04x %d\n", hwnd, id );
     return TIMER_KillTimer( hwnd, id, TRUE );
 }

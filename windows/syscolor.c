@@ -15,7 +15,7 @@
 #include "sysmetrics.h"
 #include "winbase.h"
 #include "winuser.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "tweak.h"
 #include "winreg.h"
 #include "winversion.h"
@@ -251,7 +251,7 @@ HBRUSH WINAPI GetSysColorBrush( INT index )
 {
     if (0 <= index && index < NUM_SYS_COLORS)
         return SysColorBrushes[index];
-    WARN(syscolor, "Unknown index(%d)\n", index );
+    WARN("Unknown index(%d)\n", index );
     return GetStockObject(LTGRAY_BRUSH);
 }
 

@@ -11,7 +11,7 @@
 #include "ts_xlib.h"
 
 #include "callback.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "mouse.h"
 #include "win.h"
 #include "windef.h"
@@ -53,7 +53,7 @@ static BOOL X11DRV_MOUSE_DoSetCursor( CURSORICONINFO *ptr )
 
         if (ptr->bPlanes * ptr->bBitsPerPixel != 1)
         {
-            WARN(cursor, "Cursor has more than 1 bpp!\n" );
+            WARN("Cursor has more than 1 bpp!\n" );
             return FALSE;
         }
 
@@ -220,7 +220,7 @@ void X11DRV_MOUSE_MoveCursor(WORD wAbsX, WORD wAbsY)
   if ( winX == wAbsX && winY == wAbsY )
     return;
   
-  TRACE( cursor, "(%d,%d): moving from (%d,%d)\n", wAbsX, wAbsY, winX, winY );
+  TRACE("(%d,%d): moving from (%d,%d)\n", wAbsX, wAbsY, winX, winY );
   
   TSXWarpPointer( display, X11DRV_GetXRootWindow(), X11DRV_GetXRootWindow(), 
 		  0, 0, 0, 0, wAbsX, wAbsY );

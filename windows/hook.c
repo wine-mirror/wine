@@ -25,7 +25,7 @@
 #include "heap.h"
 #include "struct32.h"
 #include "winproc.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(hook)
 
@@ -227,7 +227,7 @@ static void HOOK_Map16To32Common(INT id, INT code, WPARAM *pwParam,
 	case WH_HARDWARE: 
 	case WH_FOREGROUNDIDLE: 
 	case WH_CALLWNDPROCRET:
-	    FIXME(hook, "\t[%i] 16to32 translation unimplemented\n", id);
+	    FIXME("\t[%i] 16to32 translation unimplemented\n", id);
     }
 }
 
@@ -331,7 +331,7 @@ static void HOOK_UnMap16To32Common(INT id, INT code, WPARAM wParamOrig,
         case WH_HARDWARE:
 	case WH_FOREGROUNDIDLE:
 	case WH_CALLWNDPROCRET:
-	    FIXME(hook, "\t[%i] skipping unmap\n", id);
+	    FIXME("\t[%i] skipping unmap\n", id);
   	    break;
     }
 }
@@ -495,7 +495,7 @@ static void HOOK_Map32To16Common(INT id, INT code, WPARAM *pwParam,
       case WH_HARDWARE:
       case WH_FOREGROUNDIDLE:
       case WH_CALLWNDPROCRET:
-	FIXME(hook,"\t[%i] 32to16 translation unimplemented\n", id);
+	FIXME("\t[%i] 32to16 translation unimplemented\n", id);
     }
 }
 
@@ -645,7 +645,7 @@ static void HOOK_UnMap32To16Common(INT id, INT code, WPARAM wParamOrig,
       case WH_HARDWARE:
       case WH_FOREGROUNDIDLE:
       case WH_CALLWNDPROCRET:
-	FIXME(hook, "\t[%i] skipping unmap\n", id);
+	FIXME("\t[%i] skipping unmap\n", id);
     }
 }
 
@@ -859,7 +859,7 @@ static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT type,
 
     if ((id < WH_MINHOOK) || (id > WH_MAXHOOK)) return 0;
 
-    TRACE(hook, "Setting hook %d: %08x %04x %08lx\n",
+    TRACE("Setting hook %d: %08x %04x %08lx\n",
                   id, (UINT)proc, hModule, dwThreadId );
 
     /* Create task queue if none present */
@@ -899,7 +899,7 @@ static HHOOK HOOK_SetHook( INT16 id, LPVOID proc, INT type,
         data->next = HOOK_systemHooks[id - WH_MINHOOK];
         HOOK_systemHooks[id - WH_MINHOOK] = handle;
     }
-    TRACE(hook, "Setting hook %d: ret=%04x [next=%04x]\n", 
+    TRACE("Setting hook %d: ret=%04x [next=%04x]\n", 
 			   id, handle, data->next );
 
     return (HHOOK)( handle? MAKELONG( handle, HOOK_MAGIC ) : 0 );
@@ -916,13 +916,13 @@ static BOOL HOOK_RemoveHook( HANDLE16 hook )
     HOOKDATA *data;
     HANDLE16 *prevHook;
 
-    TRACE(hook, "Removing hook %04x\n", hook );
+    TRACE("Removing hook %04x\n", hook );
 
     if (!(data = (HOOKDATA *)USER_HEAP_LIN_ADDR(hook))) return FALSE;
     if (data->flags & HOOK_INUSE)
     {
         /* Mark it for deletion later on */
-        WARN(hook, "Hook still running, deletion delayed\n" );
+        WARN("Hook still running, deletion delayed\n" );
         data->proc = (HOOKPROC)0;
         return TRUE;
     }
@@ -998,7 +998,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
     queue->hCurHook = hook;
     data->flags |= HOOK_INUSE;
 
-    TRACE(hook, "Calling hook %04x: %d %08x %08lx\n",
+    TRACE("Calling hook %04x: %d %08x %08lx\n",
                   hook, code, wParam, lParam );
 
     /* Suspend window structure locks before calling user code */
@@ -1017,7 +1017,7 @@ static LRESULT HOOK_CallHook( HANDLE16 hook, INT fromtype, INT code,
 
     WIN_RestoreWndsLock(iWndsLocks);
 
-    TRACE(hook, "Ret hook %04x = %08lx\n", hook, ret );
+    TRACE("Ret hook %04x = %08lx\n", hook, ret );
 
     data->flags &= ~HOOK_INUSE;
     queue->hCurHook = prevHook;
@@ -1238,7 +1238,7 @@ HHOOK WINAPI SetWindowsHookEx16( INT16 id, HOOKPROC16 proc, HINSTANCE16 hInst,
 {
     if (id == WH_DEBUG)
     {
-	FIXME(hook, "WH_DEBUG is broken in 16-bit Windows.\n");
+	FIXME("WH_DEBUG is broken in 16-bit Windows.\n");
 	return 0;
     }
     return HOOK_SetHook( id, proc, HOOK_WIN16, GetExePtr(hInst), (DWORD)hTask );
@@ -1278,7 +1278,7 @@ BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
 {
     HANDLE16 hook = HOOK_GetHook( id, GetFastQueue16() );
 
-    TRACE(hook, "%d %08lx\n", id, (DWORD)proc );
+    TRACE("%d %08lx\n", id, (DWORD)proc );
 
     while (hook)
     {
@@ -1346,7 +1346,7 @@ LRESULT WINAPI CallNextHookEx( HHOOK hhook, INT code, WPARAM wParam,
     fromtype = oldhook->flags & HOOK_MAPTYPE;
 
     if (fromtype == HOOK_WIN16)
-      ERR(hook, "called from 16bit hook!\n");
+      ERR("called from 16bit hook!\n");
 
     return HOOK_CallHook( next, fromtype, code, wParam, lParam );
 }

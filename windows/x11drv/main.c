@@ -21,7 +21,7 @@
 
 #include "clipboard.h"
 #include "console.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "desktop.h"
 #include "keyboard.h"
 #include "main.h"
@@ -203,7 +203,7 @@ void X11DRV_USER_ParseOptions(int *argc, char *argv[])
   
   if (!(display = TSXOpenDisplay( display_name )))
     {
-      MSG( "%s: Can't open display: %s\n",
+      MESSAGE( "%s: Can't open display: %s\n",
 	   argv[0], display_name ? display_name : "(none specified)" );
       exit(1);
     }
@@ -259,7 +259,7 @@ void X11DRV_USER_ParseOptions(int *argc, char *argv[])
   if (X11DRV_USER_GetResource( db, ".debugmsg", &value))
     {
 #ifndef DEBUG_RUNTIME
-      MSG("%s: Option \"-debugmsg\" not implemented.\n" \
+      MESSAGE("%s: Option \"-debugmsg\" not implemented.\n" \
           "    Recompile with DEBUG_RUNTIME in include/debugtools.h defined.\n",
 	  argv[0]);
       exit(1);
@@ -275,7 +275,7 @@ void X11DRV_USER_ParseOptions(int *argc, char *argv[])
           /* don't overwrite previous value. Should we
            * automatically add the ',' between multiple DLLs ?
            */
-          MSG("Only one -dll flag is allowed. Use ',' between multiple DLLs\n");
+          MESSAGE("Only one -dll flag is allowed. Use ',' between multiple DLLs\n");
       }
       else Options.dllFlags = xstrdup((char *)value.addr);
   }
@@ -313,7 +313,7 @@ void X11DRV_USER_Create()
   if (Options.desktopGeometry && Options.managed)
     {
 #if 0
-      MSG( "%s: -managed and -desktop options cannot be used together\n",
+      MESSAGE( "%s: -managed and -desktop options cannot be used together\n",
 	   Options.programName );
       exit(1);
 #else

@@ -20,7 +20,7 @@
 #include "winpos.h"
 #include "dce.h"
 #include "nonclient.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "local.h"
 #include "ldt.h"
 
@@ -91,7 +91,7 @@ void WINPOS_CheckInternalPos( WND* wndPtr )
     pMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( wndPtr->hmemTaskQ );
     if ( !pMsgQ )
     {
-        WARN( win, "\tMessage queue not found. Exiting!\n" );
+        WARN("\tMessage queue not found. Exiting!\n" );
         return;
     }
 
@@ -100,7 +100,7 @@ void WINPOS_CheckInternalPos( WND* wndPtr )
     if( hwnd == PERQDATA_GetActiveWnd( pMsgQ->pQData ) )
     {
         PERQDATA_SetActiveWnd( pMsgQ->pQData, 0 );
-	WARN(win, "\tattempt to activate destroyed window!\n");
+	WARN("\tattempt to activate destroyed window!\n");
     }
 
     if( lpPos )
@@ -274,13 +274,13 @@ BOOL WINAPI GetWindowRgn ( HWND hwnd, HRGN hrgn )
   WND * wndPtr = WIN_FindWndPtr( hwnd ); 
   if (!wndPtr) return (ERROR);
 
-  FIXME (win, "GetWindowRgn: doesn't really do regions\n"); 
+  FIXME("GetWindowRgn: doesn't really do regions\n"); 
   
   memset (&rect, 0, sizeof(rect));
 
   GetWindowRect ( hwnd, &rect );
 
-  FIXME (win, "Check whether a valid region here\n");
+  FIXME("Check whether a valid region here\n");
 
   SetRectRgn ( hrgn, rect.left, rect.top, rect.right, rect.bottom );
 
@@ -295,7 +295,7 @@ INT WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn,BOOL bRedraw)
 
 {
 
-  FIXME (win, "SetWindowRgn: stub\n"); 
+  FIXME("SetWindowRgn: stub\n"); 
   return TRUE;
 }
 
@@ -306,7 +306,7 @@ INT16 WINAPI SetWindowRgn16( HWND16 hwnd, HRGN16 hrgn,BOOL16 bRedraw)
 
 {
 
-  FIXME (win, "SetWindowRgn16: stub\n"); 
+  FIXME("SetWindowRgn16: stub\n"); 
   return TRUE;
 }
 
@@ -656,7 +656,7 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo,
     {
         if (!(wndPtr = WIN_FindWndPtr( hwndFrom )))
         {
-            ERR(win,"bad hwndFrom = %04x\n",hwndFrom);
+            ERR("bad hwndFrom = %04x\n",hwndFrom);
             return;
         }
         while (wndPtr->parent)
@@ -673,7 +673,7 @@ static void WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo,
     {
         if (!(wndPtr = WIN_FindWndPtr( hwndTo )))
         {
-            ERR(win,"bad hwndTo = %04x\n", hwndTo );
+            ERR("bad hwndTo = %04x\n", hwndTo );
             return;
         }
         while (wndPtr->parent)
@@ -789,7 +789,7 @@ HWND WINAPI GetActiveWindow(void)
     /* Get the messageQ for the current thread */
     if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
 {
-        WARN( win, "\tCurrent message queue not found. Exiting!\n" );
+        WARN("\tCurrent message queue not found. Exiting!\n" );
         return 0;
     }
 
@@ -839,7 +839,7 @@ HWND WINAPI SetActiveWindow( HWND hwnd )
     /* Get the messageQ for the current thread */
     if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
     {
-        WARN( win, "\tCurrent message queue not found. Exiting!\n" );
+        WARN("\tCurrent message queue not found. Exiting!\n" );
         goto CLEANUP;
     }
     
@@ -847,7 +847,7 @@ HWND WINAPI SetActiveWindow( HWND hwnd )
     pMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( wndPtr->hmemTaskQ );
     if ( !pMsgQ )
     {
-        WARN( win, "\tWindow message queue not found. Exiting!\n" );
+        WARN("\tWindow message queue not found. Exiting!\n" );
         goto CLEANUP;
     }
 
@@ -935,7 +935,7 @@ HWND16 WINAPI GetShellWindow16(void)
  *         SetShellWindow    (USER32.504)
  */
 HWND WINAPI SetShellWindow(HWND hwndshell)
-{   WARN(win, "(hWnd=%08x) semi stub\n",hwndshell );
+{   WARN("(hWnd=%08x) semi stub\n",hwndshell );
 
     hGlobalShellWindow = hwndshell;
     return hGlobalShellWindow;
@@ -946,7 +946,7 @@ HWND WINAPI SetShellWindow(HWND hwndshell)
  *         GetShellWindow    (USER32.287)
  */
 HWND WINAPI GetShellWindow(void)
-{   WARN(win, "(hWnd=%x) semi stub\n",hGlobalShellWindow );
+{   WARN("(hWnd=%x) semi stub\n",hGlobalShellWindow );
 
     return hGlobalShellWindow;
 }
@@ -988,7 +988,7 @@ BOOL WINAPI MoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy,
 {    
     int flags = SWP_NOZORDER | SWP_NOACTIVATE;
     if (!repaint) flags |= SWP_NOREDRAW;
-    TRACE(win, "%04x %d,%d %dx%d %d\n", 
+    TRACE("%04x %d,%d %dx%d %d\n", 
 	    hwnd, x, y, cx, cy, repaint );
     return SetWindowPos( hwnd, 0, x, y, cx, cy, flags );
 }
@@ -1054,7 +1054,7 @@ BOOL WINPOS_ShowIconTitle( WND* pWnd, BOOL bShow )
     {
 	HWND16 hWnd = lpPos->hwndIconTitle;
 
-	TRACE(win,"0x%04x %i\n", pWnd->hwndSelf, (bShow != 0) );
+	TRACE("0x%04x %i\n", pWnd->hwndSelf, (bShow != 0) );
 
 	if( !hWnd )
 	    lpPos->hwndIconTitle = hWnd = ICONTITLE_Create( pWnd );
@@ -1133,7 +1133,7 @@ void WINPOS_GetMinMaxInfo( WND *wndPtr, POINT *maxSize, POINT *maxPos,
 
       /* Some sanity checks */
 
-    TRACE(win,"%ld %ld / %ld %ld / %ld %ld / %ld %ld\n",
+    TRACE("%ld %ld / %ld %ld / %ld %ld / %ld %ld\n",
                       MinMax.ptMaxSize.x, MinMax.ptMaxSize.y,
                       MinMax.ptMaxPosition.x, MinMax.ptMaxPosition.y,
                       MinMax.ptMaxTrackSize.x, MinMax.ptMaxTrackSize.y,
@@ -1162,7 +1162,7 @@ UINT WINPOS_MinMaximize( WND* wndPtr, UINT16 cmd, LPRECT16 lpRect )
     POINT pt, size;
     LPINTERNALPOS lpPos;
 
-    TRACE(win,"0x%04x %u\n", wndPtr->hwndSelf, cmd );
+    TRACE("0x%04x %u\n", wndPtr->hwndSelf, cmd );
 
     size.x = wndPtr->rectWindow.left; size.y = wndPtr->rectWindow.top;
     lpPos = WINPOS_InitInternalPos( wndPtr, size, &wndPtr->rectWindow );
@@ -1289,7 +1289,7 @@ BOOL WINAPI ShowWindow( HWND hwnd, INT cmd )
 
     if (!wndPtr) return FALSE;
 
-    TRACE(win,"hwnd=%04x, cmd=%d\n", hwnd, cmd);
+    TRACE("hwnd=%04x, cmd=%d\n", hwnd, cmd);
 
     wasVisible = (wndPtr->dwStyle & WS_VISIBLE) != 0;
 
@@ -1653,7 +1653,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
     HWND     hwndActive = 0;
     BOOL     bRet = 0;
 
-    TRACE( win, "(%04x, %d, %d)\n", hWnd, fMouse, fChangeFocus );
+    TRACE("(%04x, %d, %d)\n", hWnd, fMouse, fChangeFocus );
 
     /* Get current active window from the active queue */
     if ( hActiveQueue )
@@ -1679,7 +1679,7 @@ BOOL WINPOS_SetActiveWindow( HWND hWnd, BOOL fMouse, BOOL fChangeFocus)
         WIN_ReleaseWndPtr(wndTemp);
     }
     else
-	TRACE(win,"no current active window.\n");
+	TRACE("no current active window.\n");
 
     /* call CBT hook chain */
     if ((cbtStruct = SEGPTR_NEW(CBTACTIVATESTRUCT16)))
@@ -2011,7 +2011,7 @@ LONG WINPOS_SendNCCalcSize( HWND hwnd, BOOL calcValidRect,
     }
     result = SendMessageA( hwnd, WM_NCCALCSIZE, calcValidRect,
                              (LPARAM)&params );
-    TRACE(win, "%d,%d-%d,%d\n",
+    TRACE("%d,%d-%d,%d\n",
                  params.rgrc[0].left, params.rgrc[0].top,
                  params.rgrc[0].right, params.rgrc[0].bottom );
     *newClientRect = params.rgrc[0];
@@ -2075,7 +2075,7 @@ static HWND SWP_DoOwnedPopups(WND* pDesktop, WND* wndPtr, HWND hwndInsertAfter, 
 {
     WND* 	w = WIN_LockWndPtr(pDesktop->child);
 
-    WARN(win, "(%04x) hInsertAfter = %04x\n", wndPtr->hwndSelf, hwndInsertAfter );
+    WARN("(%04x) hInsertAfter = %04x\n", wndPtr->hwndSelf, hwndInsertAfter );
 
     if( (wndPtr->dwStyle & WS_POPUP) && wndPtr->owner )
     {
@@ -2138,12 +2138,12 @@ static UINT SWP_CopyValidBits( WND* Wnd, HRGN* pVisRgn,
  HRGN newVisRgn, dirtyRgn;
  INT  my = COMPLEXREGION;
 
- TRACE(win,"\tnew wnd=(%i %i-%i %i) old wnd=(%i %i-%i %i), %04x\n",
+ TRACE("\tnew wnd=(%i %i-%i %i) old wnd=(%i %i-%i %i), %04x\n",
 	      Wnd->rectWindow.left, Wnd->rectWindow.top,
 	      Wnd->rectWindow.right, Wnd->rectWindow.bottom,
 	      lpOldWndRect->left, lpOldWndRect->top,
 	      lpOldWndRect->right, lpOldWndRect->bottom, *pVisRgn);
- TRACE(win,"\tnew client=(%i %i-%i %i) old client=(%i %i-%i %i)\n",
+ TRACE("\tnew client=(%i %i-%i %i) old client=(%i %i-%i %i)\n",
 	      Wnd->rectClient.left, Wnd->rectClient.top,
 	      Wnd->rectClient.right, Wnd->rectClient.bottom,
 	      lpOldClientRect->left, lpOldClientRect->top,
@@ -2162,7 +2162,7 @@ static UINT SWP_CopyValidBits( WND* Wnd, HRGN* pVisRgn,
  {
 nocopy:
 
-     TRACE(win,"\twon't copy anything!\n");
+     TRACE("\twon't copy anything!\n");
 
      /* set dirtyRgn to the sum of old and new visible regions 
       * in parent client coordinates */
@@ -2237,7 +2237,7 @@ nocopy:
      else
 	OffsetRect( &r, -lpOldWndRect->left, -lpOldWndRect->top );
 
-     TRACE(win,"\tcomputing dirty region!\n");
+     TRACE("\tcomputing dirty region!\n");
 
      /* Compute combined dirty region (old + new - valid) */
      CombineRgn( *pVisRgn, *pVisRgn, newVisRgn, RGN_OR);
@@ -2471,7 +2471,7 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
         }
     }
 
-    TRACE(win,"hwnd %04x, swp (%i,%i)-(%i,%i) flags %08x\n", 
+    TRACE("hwnd %04x, swp (%i,%i)-(%i,%i) flags %08x\n", 
 						 hwnd, x, y, x+cx, y+cy, flags);  
 
     bChangePos = !(flags & SWP_WINE_NOHOSTMOVE);
@@ -2485,7 +2485,7 @@ BOOL WINAPI SetWindowPos( HWND hwnd, HWND hwndInsertAfter,
     if (hwnd == GetDesktopWindow()) return FALSE;
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return FALSE;
 
-    TRACE(win,"\tcurrent (%i,%i)-(%i,%i), style %08x\n", wndPtr->rectWindow.left, wndPtr->rectWindow.top,
+    TRACE("\tcurrent (%i,%i)-(%i,%i), style %08x\n", wndPtr->rectWindow.left, wndPtr->rectWindow.top,
 			  wndPtr->rectWindow.right, wndPtr->rectWindow.bottom, (unsigned)wndPtr->dwStyle );
 
       /* Fix redundant flags */
@@ -2870,7 +2870,7 @@ Pos:  /* -----------------------------------------------------------------------
 
       /* And last, send the WM_WINDOWPOSCHANGED message */
 
-    TRACE(win,"\tstatus flags = %04x\n", winpos.flags & SWP_AGG_STATUSFLAGS);
+    TRACE("\tstatus flags = %04x\n", winpos.flags & SWP_AGG_STATUSFLAGS);
 
     if ( resync ||
         (((winpos.flags & SWP_AGG_STATUSFLAGS) != SWP_AGG_NOPOSCHANGE) && 
@@ -3060,7 +3060,7 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
  */
 void WINAPI TileChildWindows16( HWND16 parent, WORD action )
 {
-    FIXME(win, "(%04x, %d): stub\n", parent, action);
+    FIXME("(%04x, %d): stub\n", parent, action);
 }
 
 /***********************************************************************
@@ -3068,7 +3068,7 @@ void WINAPI TileChildWindows16( HWND16 parent, WORD action )
  */
 void WINAPI CascadeChildWindows16( HWND16 parent, WORD action )
 {
-    FIXME(win, "(%04x, %d): stub\n", parent, action);
+    FIXME("(%04x, %d): stub\n", parent, action);
 }
 
 /***********************************************************************
@@ -3101,7 +3101,7 @@ HRESULT WINAPI GetProgmanWindow ( )
  */
 HRESULT WINAPI SetShellWindowEx ( HWND hwndProgman, HWND hwndListView )
 {
-	FIXME(win,"0x%08x 0x%08x stub\n",hwndProgman ,hwndListView );
+	FIXME("0x%08x 0x%08x stub\n",hwndProgman ,hwndListView );
 	hGlobalShellWindow = hwndProgman;
 	return hGlobalShellWindow;
 

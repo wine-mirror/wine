@@ -27,7 +27,7 @@
 #include "region.h"
 #include "heap.h"
 #include "local.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "wine/winuser16.h"
 
 DEFAULT_DEBUG_CHANNEL(dc)
@@ -51,10 +51,10 @@ static void DCE_DumpCache(void)
     WIN_LockWnds();
     dce = firstDCE;
     
-    DUMP("DCE:\n");
+    DPRINTF("DCE:\n");
     while( dce )
     {
-	DUMP("\t[0x%08x] hWnd 0x%04x, dcx %08x, %s %s\n",
+	DPRINTF("\t[0x%08x] hWnd 0x%04x, dcx %08x, %s %s\n",
 	     (unsigned)dce, dce->hwndCurrent, (unsigned)dce->DCXflags, 
 	     (dce->DCXflags & DCX_CACHE) ? "Cache" : "Owned", 
 	     (dce->DCXflags & DCX_DCEBUSY) ? "InUse" : "" );
@@ -169,7 +169,7 @@ void DCE_FreeWindowDCE( WND* pWnd )
 		}
 		else if( pDCE->DCXflags & DCX_DCEBUSY ) /* shared cache DCE */
 		{
-		    ERR(dc,"[%04x] GetDC() without ReleaseDC()!\n", 
+		    ERR("[%04x] GetDC() without ReleaseDC()!\n", 
 			pWnd->hwndSelf);
 		    DCE_ReleaseDC( pDCE );
 		}
@@ -201,7 +201,7 @@ static void DCE_DeleteClipRgn( DCE* dce )
 
     dce->hClipRgn = 0;
 
-    TRACE(dc,"\trestoring VisRgn\n");
+    TRACE("\trestoring VisRgn\n");
 
     RestoreVisRgn16(dce->hDC);
 }
@@ -257,7 +257,7 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
     {
 	DCE *dce;
 
-	TRACE(dc,"scope hwnd = %04x, (%i,%i - %i,%i)\n",
+	TRACE("scope hwnd = %04x, (%i,%i - %i,%i)\n",
 		     wndScope->hwndSelf, pRectUpdate->left,pRectUpdate->top,
 		     pRectUpdate->right,pRectUpdate->bottom);
 	if(TRACE_ON(dc)) 
@@ -310,7 +310,7 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
 				{
 				    /* Don't bother with visible regions of unused DCEs */
 
-				    TRACE(dc,"\tpurged %08x dce [%04x]\n", 
+				    TRACE("\tpurged %08x dce [%04x]\n", 
 						(unsigned)dce, wndCurrent->hwndSelf);
 
 				    dce->hwndCurrent = 0;
@@ -321,7 +321,7 @@ BOOL DCE_InvalidateDCE(WND* pWnd, const RECT* pRectUpdate)
 				{
 				    /* Set dirty bits in the hDC and DCE structs */
 
-				    TRACE(dc,"\tfixed up %08x dce [%04x]\n", 
+				    TRACE("\tfixed up %08x dce [%04x]\n", 
 						(unsigned)dce, wndCurrent->hwndSelf);
 
 				    dce->DCXflags |= DCX_DCEDIRTY;
@@ -655,7 +655,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     BOOL	bUpdateVisRgn = TRUE;
     BOOL	bUpdateClipOrigin = FALSE;
 
-    TRACE(dc,"hwnd %04x, hrgnClip %04x, flags %08x\n", 
+    TRACE("hwnd %04x, hrgnClip %04x, flags %08x\n", 
 				hwnd, hrgnClip, (unsigned)flags);
     
     if (!(wndPtr = WIN_FindWndPtr( hwnd ))) return 0;
@@ -734,7 +734,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 		   ((dce->DCXflags & (DCX_CLIPSIBLINGS | DCX_CLIPCHILDREN |
 				      DCX_CACHE | DCX_WINDOW | DCX_PARENTCLIP)) == dcxFlags))
 		{
-		    TRACE(dc,"\tfound valid %08x dce [%04x], flags %08x\n", 
+		    TRACE("\tfound valid %08x dce [%04x], flags %08x\n", 
 					(unsigned)dce, hwnd, (unsigned)dcxFlags );
 		    bUpdateVisRgn = FALSE; 
 		    bUpdateClipOrigin = TRUE;
@@ -756,7 +756,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
         dce = (wndPtr->class->style & CS_OWNDC) ? wndPtr->dce : wndPtr->class->dce;
 	if( dce->hwndCurrent == hwnd )
 	{
-	    TRACE(dc,"\tskipping hVisRgn update\n");
+	    TRACE("\tskipping hVisRgn update\n");
 	    bUpdateVisRgn = FALSE; /* updated automatically, via DCHook() */
 
 	    if( (dce->DCXflags & (DCX_EXCLUDERGN | DCX_INTERSECTRGN)) &&
@@ -766,7 +766,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
 		if( dce->hClipRgn != hrgnClip )
 		{
-		    FIXME(dc,"new hrgnClip[%04x] smashes the previous[%04x]\n",
+		    FIXME("new hrgnClip[%04x] smashes the previous[%04x]\n",
 			  hrgnClip, dce->hClipRgn );
 		    DCE_DeleteClipRgn( dce );
 		}
@@ -798,7 +798,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
     wndPtr->pDriver->pSetDrawable( wndPtr, dc, flags, bUpdateClipOrigin );
     if( bUpdateVisRgn )
     {
-	TRACE(dc,"updating visrgn for %08x dce, hwnd [%04x]\n", (unsigned)dce, hwnd);
+	TRACE("updating visrgn for %08x dce, hwnd [%04x]\n", (unsigned)dce, hwnd);
 
 	if (flags & DCX_PARENTCLIP)
         {
@@ -839,7 +839,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	SelectVisRgn16( hdc, hrgnVisible );
     }
     else
-	TRACE(dc,"no visrgn update %08x dce, hwnd [%04x]\n", (unsigned)dce, hwnd);
+	TRACE("no visrgn update %08x dce, hwnd [%04x]\n", (unsigned)dce, hwnd);
 
     /* apply additional region operation (if any) */
 
@@ -850,7 +850,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 	dce->DCXflags |= flags & (DCX_KEEPCLIPRGN | DCX_INTERSECTRGN | DCX_EXCLUDERGN);
 	dce->hClipRgn = hrgnClip;
 
-	TRACE(dc, "\tsaved VisRgn, clipRgn = %04x\n", hrgnClip);
+	TRACE("\tsaved VisRgn, clipRgn = %04x\n", hrgnClip);
 
 	SaveVisRgn16( hdc );
         CombineRgn( hrgnVisible, hrgnClip, 0, RGN_COPY );
@@ -862,7 +862,7 @@ HDC WINAPI GetDCEx( HWND hwnd, HRGN hrgnClip, DWORD flags )
 
     if( hrgnVisible ) DeleteObject( hrgnVisible );
 
-    TRACE(dc, "(%04x,%04x,0x%lx): returning %04x\n", 
+    TRACE("(%04x,%04x,0x%lx): returning %04x\n", 
 	       hwnd, hrgnClip, flags, hdc);
 END:
     WIN_ReleaseWndPtr(wndPtr);
@@ -940,7 +940,7 @@ INT WINAPI ReleaseDC(
     WIN_LockWnds();
     dce = firstDCE;
     
-    TRACE(dc, "%04x %04x\n", hwnd, hdc );
+    TRACE("%04x %04x\n", hwnd, hdc );
         
     while (dce && (dce->hDC != hdc)) dce = dce->next;
 
@@ -966,7 +966,7 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
     DC  *dc;
     WND *wndPtr;
 
-    TRACE(dc,"hDC = %04x, %i\n", hDC, code);
+    TRACE("hDC = %04x, %i\n", hDC, code);
 
     if (!dce) return 0;
     assert(dce->hDC == hDC);
@@ -995,7 +995,7 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 	       SetHookFlags16(hDC, DCHF_VALIDATEVISRGN);
 	       hVisRgn = DCE_GetVisRgn(dce->hwndCurrent, dce->DCXflags, 0, 0);
 
-	       TRACE(dc,"\tapplying saved clipRgn\n");
+	       TRACE("\tapplying saved clipRgn\n");
   
 	       /* clip this region with saved clipping region */
 
@@ -1017,7 +1017,7 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
               WIN_ReleaseWndPtr( wndPtr );  /* Release WIN_FindWndPtr lock */
 	   }
            else /* non-fatal but shouldn't happen */
-	     WARN(dc, "DC is not in use!\n");
+	     WARN("DC is not in use!\n");
 	   break;
 
       case DCHC_DELETEDC:
@@ -1028,13 +1028,13 @@ BOOL16 WINAPI DCHook16( HDC16 hDC, WORD code, DWORD data, LPARAM lParam )
 
            if ( dce->DCXflags & DCX_DCEBUSY )
            {
-               WARN(dc, "Application trying to delete a busy DC\n");
+               WARN("Application trying to delete a busy DC\n");
                retv = FALSE;
            }
 	   break;
 
       default:
-	   FIXME(dc,"unknown code\n");
+	   FIXME("unknown code\n");
     }
 
   WIN_UnlockWnds();  /* Release the wnd lock */

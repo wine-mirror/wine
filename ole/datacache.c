@@ -35,7 +35,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "ole2.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
 
@@ -449,7 +449,7 @@ HRESULT WINAPI CreateDataCache(
   WINE_StringFromCLSID((LPCLSID)rclsid,xclsid);
   WINE_StringFromCLSID((LPCLSID)riid,xriid);
 
-  TRACE(ole, "(%s, %p, %s, %p)\n", xclsid, pUnkOuter, xriid, ppvObj);
+  TRACE("(%s, %p, %s, %p)\n", xclsid, pUnkOuter, xriid, ppvObj);
 
   /*
    * Sanity check
@@ -550,7 +550,7 @@ static DataCache* DataCache_Construct(
 static void DataCache_Destroy(
   DataCache* ptrToDestroy)
 {
-  TRACE(ole, "()\n");
+  TRACE("()\n");
 
   if (ptrToDestroy->sinkInterface != NULL)
   {
@@ -650,7 +650,7 @@ static void DataCache_FireOnViewChange(
   DWORD      aspect,
   LONG       lindex)
 {
-  TRACE(ole, "(%p, %lx, %ld)\n", this, aspect, lindex);
+  TRACE("(%p, %lx, %ld)\n", this, aspect, lindex);
 
   /*
    * The sink supplies a filter when it registers
@@ -888,7 +888,7 @@ static HRESULT WINAPI DataCache_NDIUnknown_QueryInterface(
 
     WINE_StringFromCLSID((LPCLSID)riid,clsid);
     
-    WARN(ole, 
+    WARN(
 	 "() : asking for un supported interface %s\n", 
 	 clsid);
 
@@ -1004,7 +1004,7 @@ static HRESULT WINAPI DataCache_GetData(
 	    LPFORMATETC      pformatetcIn, 
 	    STGMEDIUM*       pmedium)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
@@ -1013,7 +1013,7 @@ static HRESULT WINAPI DataCache_GetDataHere(
 	    LPFORMATETC      pformatetc,
 	    STGMEDIUM*       pmedium)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
@@ -1021,7 +1021,7 @@ static HRESULT WINAPI DataCache_QueryGetData(
 	    IDataObject*     iface,
 	    LPFORMATETC      pformatetc)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
@@ -1037,7 +1037,7 @@ static HRESULT WINAPI DataCache_GetCanonicalFormatEtc(
 	    LPFORMATETC      pformatectIn, 
 	    LPFORMATETC      pformatetcOut)
 {
-  TRACE(ole,"()\n");
+  TRACE("()\n");
   return E_NOTIMPL;
 }
 
@@ -1057,7 +1057,7 @@ static HRESULT WINAPI DataCache_IDataObject_SetData(
   IOleCache2* oleCache = NULL;
   HRESULT     hres;
 
-  TRACE(ole,"(%p, %p, %p, %d)\n", iface, pformatetc, pmedium, fRelease);
+  TRACE("(%p, %p, %p, %d)\n", iface, pformatetc, pmedium, fRelease);
 
   hres = IDataObject_QueryInterface(iface, &IID_IOleCache2, (void**)&oleCache);
 
@@ -1083,7 +1083,7 @@ static HRESULT WINAPI DataCache_EnumFormatEtc(
 	    DWORD            dwDirection,
 	    IEnumFORMATETC** ppenumFormatEtc)
 {
-  TRACE(ole,"()\n");
+  TRACE("()\n");
   return E_NOTIMPL;
 }
 
@@ -1101,7 +1101,7 @@ static HRESULT WINAPI DataCache_DAdvise(
 	    IAdviseSink*     pAdvSink, 
 	    DWORD*           pdwConnection)
 {
-  TRACE(ole,"()\n");
+  TRACE("()\n");
   return OLE_E_ADVISENOTSUPPORTED;
 }
 
@@ -1116,7 +1116,7 @@ static HRESULT WINAPI DataCache_DUnadvise(
 	    IDataObject*     iface,
 	    DWORD            dwConnection)
 {
-  TRACE(ole,"()\n");
+  TRACE("()\n");
   return OLE_E_NOCONNECTION;
 }
 
@@ -1131,7 +1131,7 @@ static HRESULT WINAPI DataCache_EnumDAdvise(
 	    IDataObject*     iface,
 	    IEnumSTATDATA**  ppenumAdvise)
 {
-  TRACE(ole,"()\n");
+  TRACE("()\n");
   return OLE_E_ADVISENOTSUPPORTED;
 }
 
@@ -1192,7 +1192,7 @@ static HRESULT WINAPI DataCache_GetClassID(
             const IPersistStorage* iface,
 	    CLSID*           pClassID)
 {
-  TRACE(ole,"(%p, %p)\n", iface, pClassID);
+  TRACE("(%p, %p)\n", iface, pClassID);
   return E_NOTIMPL;
 }
 
@@ -1207,7 +1207,7 @@ static HRESULT WINAPI DataCache_GetClassID(
 static HRESULT WINAPI DataCache_IsDirty( 
             IPersistStorage* iface)
 {
-  TRACE(ole,"(%p)\n", iface);
+  TRACE("(%p)\n", iface);
 
   return S_FALSE;
 }
@@ -1224,7 +1224,7 @@ static HRESULT WINAPI DataCache_InitNew(
             IPersistStorage* iface, 
 	    IStorage*        pStg)
 {
-  TRACE(ole, "(%p, %p)\n", iface, pStg);
+  TRACE("(%p, %p)\n", iface, pStg);
 
   return DataCache_Load(iface, pStg);
 }
@@ -1245,7 +1245,7 @@ static HRESULT WINAPI DataCache_Load(
 {
   _ICOM_THIS_From_IPersistStorage(DataCache, iface);
 
-  TRACE(ole, "(%p, %p)\n", iface, pStg);
+  TRACE("(%p, %p)\n", iface, pStg);
 
   if (this->presentationStorage != NULL)
   {
@@ -1279,7 +1279,7 @@ static HRESULT WINAPI DataCache_Save(
 {
   _ICOM_THIS_From_IPersistStorage(DataCache, iface);
 
-  TRACE(ole, "(%p, %p, %d)\n", iface, pStg, fSameAsLoad);
+  TRACE("(%p, %p, %d)\n", iface, pStg, fSameAsLoad);
 
   if ( (!fSameAsLoad) && 
        (this->presentationStorage!=NULL) )
@@ -1306,7 +1306,7 @@ static HRESULT WINAPI DataCache_SaveCompleted(
             IPersistStorage* iface,  
 	    IStorage*        pStgNew)
 {
-  TRACE(ole, "(%p, %p)\n", iface, pStgNew);
+  TRACE("(%p, %p)\n", iface, pStgNew);
 
   /*
    * First, make sure we get our hands off any storage we have.
@@ -1334,7 +1334,7 @@ static HRESULT WINAPI DataCache_HandsOffStorage(
 {
   _ICOM_THIS_From_IPersistStorage(DataCache, iface);
 
-  TRACE(ole,"(%p)\n", iface);
+  TRACE("(%p)\n", iface);
 
   if (this->presentationStorage != NULL)
   {
@@ -1418,7 +1418,7 @@ static HRESULT WINAPI DataCache_Draw(
 
   _ICOM_THIS_From_IViewObject2(DataCache, iface);
 
-  TRACE(ole,"(%p, %lx, %ld, %p, %x, %x, %p, %p, %p, %lx)\n",
+  TRACE("(%p, %lx, %ld, %p, %x, %x, %p, %p, %p, %lx)\n",
 	iface,
 	dwDrawAspect,
 	lindex,
@@ -1515,7 +1515,7 @@ static HRESULT WINAPI DataCache_GetColorSet(
 	    HDC             hicTargetDevice, 
 	    LOGPALETTE**    ppColorSet)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
@@ -1526,7 +1526,7 @@ static HRESULT WINAPI DataCache_Freeze(
 	    void*           pvAspect, 
 	    DWORD*          pdwFreeze)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
@@ -1534,7 +1534,7 @@ static HRESULT WINAPI DataCache_Unfreeze(
             IViewObject2*   iface,
 	    DWORD           dwFreeze)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
@@ -1554,7 +1554,7 @@ static HRESULT WINAPI DataCache_SetAdvise(
 {
   _ICOM_THIS_From_IViewObject2(DataCache, iface);
 
-  TRACE(ole,"(%p, %lx, %lx, %p)\n", iface, aspects, advf, pAdvSink);
+  TRACE("(%p, %lx, %lx, %p)\n", iface, aspects, advf, pAdvSink);
 
   /*
    * A call to this function removes the previous sink
@@ -1609,7 +1609,7 @@ static HRESULT WINAPI DataCache_GetAdvise(
 {
   _ICOM_THIS_From_IViewObject2(DataCache, iface);
 
-  TRACE(ole,"(%p, %p, %p, %p)\n", iface, pAspects, pAdvf, ppAdvSink);
+  TRACE("(%p, %p, %p, %p)\n", iface, pAspects, pAdvf, ppAdvSink);
 
   /*
    * Just copy all the requested values.
@@ -1649,7 +1649,7 @@ static HRESULT WINAPI DataCache_GetExtent(
 
   _ICOM_THIS_From_IViewObject2(DataCache, iface);
 
-  TRACE(ole, "(%p, %lx, %ld, %p, %p)\n", 
+  TRACE("(%p, %lx, %ld, %p, %p)\n", 
 	iface, dwDrawAspect, lindex, ptd, lpsizel);
 
   /*
@@ -1668,14 +1668,14 @@ static HRESULT WINAPI DataCache_GetExtent(
    * This flag should be set to -1.
    */
   if (lindex!=-1)
-    FIXME(ole, "Unimplemented flag lindex = %ld\n", lindex);
+    FIXME("Unimplemented flag lindex = %ld\n", lindex);
 
   /*
    * Right now, we suport only the callback from
    * the default handler.
    */
   if (ptd!=NULL)
-    FIXME(ole, "Unimplemented ptd = %p\n", ptd);
+    FIXME("Unimplemented ptd = %p\n", ptd);
   
   /*
    * Get the presentation information from the 
@@ -1753,7 +1753,7 @@ static HRESULT WINAPI DataCache_Cache(
 	    DWORD           advf,
 	    DWORD*          pdwConnection)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
@@ -1761,7 +1761,7 @@ static HRESULT WINAPI DataCache_Uncache(
 	    IOleCache2*     iface,
 	    DWORD           dwConnection)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
@@ -1769,7 +1769,7 @@ static HRESULT WINAPI DataCache_EnumCache(
             IOleCache2*     iface,
 	    IEnumSTATDATA** ppenumSTATDATA)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
@@ -1777,7 +1777,7 @@ static HRESULT WINAPI DataCache_InitCache(
 	    IOleCache2*     iface,
 	    IDataObject*    pDataObject)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
@@ -1787,7 +1787,7 @@ static HRESULT WINAPI DataCache_IOleCache2_SetData(
 	    STGMEDIUM*      pmedium,
 	    BOOL            fRelease)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
@@ -1797,7 +1797,7 @@ static HRESULT WINAPI DataCache_UpdateCache(
 	    DWORD           grfUpdf,
 	    LPVOID          pReserved)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
@@ -1805,7 +1805,7 @@ static HRESULT WINAPI DataCache_DiscardCache(
             IOleCache2*     iface,
 	    DWORD           dwDiscardOptions)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
@@ -1860,14 +1860,14 @@ static HRESULT WINAPI DataCache_OnRun(
 	    IOleCacheControl* iface,
 	    LPDATAOBJECT      pDataObject)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 
 static HRESULT WINAPI DataCache_OnStop(
 	    IOleCacheControl* iface)
 {
-  FIXME(ole,"stub\n");
+  FIXME("stub\n");
   return E_NOTIMPL;
 }
 

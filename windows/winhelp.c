@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "debug.h"
+#include "debugtools.h"
 #include "wine/winuser16.h"
 #include "wine/winbase16.h"
 #include "heap.h"
@@ -86,7 +86,7 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand,
 			dsize = ((LPHELPWININFO)dwData)->wStructSize;
 			break;
 		default:
-			WARN( win,"Unknown help command %d\n",wCommand);
+			WARN("Unknown help command %d\n",wCommand);
 			return FALSE;
 	}
 	if(lpHelpFile)

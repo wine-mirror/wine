@@ -15,7 +15,7 @@
 #include "thread.h"
 #include "heap.h"
 #include "server.h"
-#include "debug.h"
+#include "debugtools.h"
 
 
 /****************************************************************************

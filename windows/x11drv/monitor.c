@@ -14,7 +14,7 @@
 #include "ts_xlib.h"
 #include "ts_xutil.h"
 
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 #include "monitor.h"
 #include "options.h"
@@ -101,7 +101,7 @@ static void X11DRV_MONITOR_CreateDesktop(MONITOR *pMonitor)
   class_hints = TSXAllocClassHint();
   if (!size_hints || !wm_hints || !class_hints)
     {
-      MSG("Not enough memory for window manager hints.\n" );
+      MESSAGE("Not enough memory for window manager hints.\n" );
       exit(1);
     }
   size_hints->min_width = size_hints->max_width = width;
@@ -158,7 +158,7 @@ void X11DRV_MONITOR_Initialize(MONITOR *pMonitor)
       TSXFree( depth_list );
       if (i >= depth_count)
 	{
-	  MSG( "%s: Depth %d not supported on this screen.\n",
+	  MESSAGE( "%s: Depth %d not supported on this screen.\n",
 	       Options.programName, pX11Monitor->depth );
 	  exit(1);
 	}

@@ -41,7 +41,7 @@
 #include "task.h"
 #include "async.h"
 #include "wincon.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "server.h"
 
@@ -210,10 +210,10 @@ static BOOL FILE_ShareDeny( int mode, int oldmode)
 	  goto fail_error05;
 	}
     default:
-      ERR(file,"unknown mode\n");
+      ERR("unknown mode\n");
     }
-  ERR(file,"shouldn't happen\n");
-  ERR(file,"Please report to bon@elektron.ikp.physik.tu-darmstadt.de\n");
+  ERR("shouldn't happen\n");
+  ERR("Please report to bon@elektron.ikp.physik.tu-darmstadt.de\n");
   return TRUE;
   
 test_ro_int24:
@@ -221,7 +221,7 @@ test_ro_int24:
     return FALSE;
   /* Fall through */
 fail_int24:
-  FIXME(file,"generate INT24 missing\n");
+  FIXME("generate INT24 missing\n");
   /* Is this the right error? */
   SetLastError( ERROR_ACCESS_DENIED );
   return TRUE;
@@ -231,7 +231,7 @@ test_ro_err05:
     return FALSE;
   /* fall through */
 fail_error05:
-  TRACE(file,"Access Denied, oldmode 0x%02x mode 0x%02x\n",oldmode,mode);
+  TRACE("Access Denied, oldmode 0x%02x mode 0x%02x\n",oldmode,mode);
   SetLastError( ERROR_ACCESS_DENIED );
   return TRUE;
 }
@@ -247,7 +247,7 @@ void FILE_SetDosError(void)
 {
     int save_errno = errno; /* errno gets overwritten by printf */
 
-    TRACE(file, "errno = %d %s\n", errno, strerror(errno));
+    TRACE("errno = %d %s\n", errno, strerror(errno));
     switch (save_errno)
     {
     case EAGAIN:
@@ -408,7 +408,7 @@ HFILE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
         SetLastError( ERROR_INVALID_PARAMETER );
         return HFILE_ERROR;
     }
-    TRACE(file,"%s %s%s%s%s%s%s%s\n",filename,
+    TRACE("%s %s%s%s%s%s%s%s\n",filename,
 	  ((access & GENERIC_READ)==GENERIC_READ)?"GENERIC_READ ":"",
 	  ((access & GENERIC_WRITE)==GENERIC_WRITE)?"GENERIC_WRITE ":"",
 	  (!access)?"QUERY_ACCESS ":"",
@@ -427,7 +427,7 @@ HFILE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
         filename += 4;
 	if (!strncmp(filename, "UNC\\", 4))
 	{
-            FIXME( file, "UNC name (%s) not supported.\n", filename );
+            FIXME("UNC name (%s) not supported.\n", filename );
             SetLastError( ERROR_PATH_NOT_FOUND );
             return HFILE_ERROR;
 	}
@@ -439,7 +439,7 @@ HFILE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
     /* If the name still starts with '\\', it's a UNC name. */
     if (!strncmp(filename, "\\\\", 2))
     {
-        FIXME( file, "UNC name (%s) not supported.\n", filename );
+        FIXME("UNC name (%s) not supported.\n", filename );
         SetLastError( ERROR_PATH_NOT_FOUND );
         return HFILE_ERROR;
     }
@@ -452,13 +452,13 @@ HFILE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
     {
     	HFILE	ret;
 
-        TRACE(file, "opening device '%s'\n", filename );
+        TRACE("opening device '%s'\n", filename );
 
 	if (HFILE_ERROR!=(ret=DOSFS_OpenDevice( filename, access )))
 		return ret;
 
 	/* Do not silence this please. It is a critical error. -MM */
-        ERR(file, "Couldn't open device '%s'!\n",filename);
+        ERR("Couldn't open device '%s'!\n",filename);
         SetLastError( ERROR_FILE_NOT_FOUND );
         return HFILE_ERROR;
     }
@@ -659,7 +659,7 @@ UINT16 WINAPI GetTempFileName16( BYTE drive, LPCSTR prefix, UINT16 unique,
         !DRIVE_IsValid( toupper(drive & ~TF_FORCEDRIVE) - 'A' ))
     {
         drive &= ~TF_FORCEDRIVE;
-        WARN(file, "invalid drive %d specified\n", drive );
+        WARN("invalid drive %d specified\n", drive );
     }
 
     if (drive & TF_FORCEDRIVE)
@@ -708,7 +708,7 @@ UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
                                             CREATE_NEW, FILE_ATTRIBUTE_NORMAL, -1 );
             if (handle != INVALID_HANDLE_VALUE)
             {  /* We created it */
-                TRACE(file, "created %s\n",
+                TRACE("created %s\n",
 			      buffer);
                 CloseHandle( handle );
                 break;
@@ -727,10 +727,10 @@ UINT WINAPI GetTempFileNameA( LPCSTR path, LPCSTR prefix, UINT unique,
         /* Check if we have write access in the directory */
         if ((p = strrchr( full_name.long_name, '/' ))) *p = '\0';
         if (access( full_name.long_name, W_OK ) == -1)
-            WARN(file, "returns '%s', which doesn't seem to be writeable.\n",
+            WARN("returns '%s', which doesn't seem to be writeable.\n",
 		 buffer);
     }
-    TRACE(file, "returning %s\n", buffer );
+    TRACE("returning %s\n", buffer );
     return unique ? unique : num;
 }
 
@@ -773,7 +773,7 @@ static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode,
 
     if (!ofs) return HFILE_ERROR;
     
-    TRACE(file,"%s %s %s %s%s%s%s%s%s%s%s%s\n",name,
+    TRACE("%s %s %s %s%s%s%s%s%s%s%s%s\n",name,
 	  ((mode & 0x3 )==OF_READ)?"OF_READ":
 	  ((mode & 0x3 )==OF_WRITE)?"OF_WRITE":
 	  ((mode & 0x3 )==OF_READWRITE)?"OF_READWRITE":"unknown",
@@ -799,11 +799,11 @@ static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode,
     if (mode & OF_REOPEN) name = ofs->szPathName;
 
     if (!name) {
-	ERR(file, "called with `name' set to NULL ! Please debug.\n");
+	ERR("called with `name' set to NULL ! Please debug.\n");
 	return HFILE_ERROR;
     }
 
-    TRACE(file, "%s %04x\n", name, mode );
+    TRACE("%s %04x\n", name, mode );
 
     /* the watcom 10.6 IDE relies on a valid path returned in ofs->szPathName
        Are there any cases where getting the path here is wrong? 
@@ -818,7 +818,7 @@ static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode,
     {
         ofs->fFixedDisk = (GetDriveType16( ofs->szPathName[0]-'A' )
                            != DRIVE_REMOVABLE);
-        TRACE(file, "(%s): OF_PARSE, res = '%s'\n",
+        TRACE("(%s): OF_PARSE, res = '%s'\n",
                       name, ofs->szPathName );
         return 0;
     }
@@ -853,7 +853,7 @@ static HFILE FILE_DoOpenFile( LPCSTR name, OFSTRUCT *ofs, UINT mode,
     if (!DIR_SearchPath( NULL, name, NULL, &full_name, win32 )) goto not_found;
 
 found:
-    TRACE(file, "found %s = %s\n",
+    TRACE("found %s = %s\n",
                   full_name.long_name, full_name.short_name );
     lstrcpynA( ofs->szPathName, full_name.short_name,
                  sizeof(ofs->szPathName) );
@@ -875,7 +875,7 @@ found:
 	  last = full_name.long_name - 1;
 	if (GetModuleHandle16(last+1))
 	  {
-	    TRACE(file,"Denying shared open for %s\n",full_name.long_name);
+	    TRACE("Denying shared open for %s\n",full_name.long_name);
 	    return HFILE_ERROR;
 	  }
       }
@@ -883,7 +883,7 @@ found:
     if (mode & OF_DELETE)
     {
         if (unlink( full_name.long_name ) == -1) goto not_found;
-        TRACE(file, "(%s): OF_DELETE return = OK\n", name);
+        TRACE("(%s): OF_DELETE return = OK\n", name);
         return 1;
     }
 
@@ -898,7 +898,7 @@ found:
         if (memcmp( ofs->reserved, filedatetime, sizeof(ofs->reserved) ))
         {
             CloseHandle( hFileRet );
-            WARN(file, "(%s): OF_VERIFY failed\n", name );
+            WARN("(%s): OF_VERIFY failed\n", name );
             /* FIXME: what error here? */
             SetLastError( ERROR_FILE_NOT_FOUND );
             goto error;
@@ -907,7 +907,7 @@ found:
     memcpy( ofs->reserved, filedatetime, sizeof(ofs->reserved) );
 
 success:  /* We get here if the open was successful */
-    TRACE(file, "(%s): OK, return = %d\n", name, hFileRet );
+    TRACE("(%s): OK, return = %d\n", name, hFileRet );
     if (win32)
     {
         if (mode & OF_EXIST) /* Return the handle, but close it first */
@@ -923,13 +923,13 @@ success:  /* We get here if the open was successful */
     return hFileRet;
 
 not_found:  /* We get here if the file does not exist */
-    WARN(file, "'%s' not found\n", name );
+    WARN("'%s' not found\n", name );
     SetLastError( ERROR_FILE_NOT_FOUND );
     /* fall through */
 
 error:  /* We get here if there was an error opening the file */
     ofs->nErrCode = GetLastError();
-    WARN(file, "(%s): return = HFILE_ERROR error= %d\n", 
+    WARN("(%s): return = HFILE_ERROR error= %d\n", 
 		  name,ofs->nErrCode );
     return HFILE_ERROR;
 }
@@ -998,7 +998,7 @@ HFILE16 FILE_AllocDosHandle( HANDLE handle )
         if (!*ptr)
         {
             *ptr = handle;
-            TRACE( file, "Got %d for h32 %d\n", i, handle );
+            TRACE("Got %d for h32 %d\n", i, handle );
             return i;
         }
 error:
@@ -1043,7 +1043,7 @@ HFILE16 FILE_Dup2( HFILE16 hFile1, HFILE16 hFile2 )
     }
     if (hFile2 < 5)
     {
-        FIXME( file, "stdio handle closed, need proper conversion\n" );
+        FIXME("stdio handle closed, need proper conversion\n" );
         SetLastError( ERROR_INVALID_HANDLE );
         return HFILE_ERROR16;
     }
@@ -1066,7 +1066,7 @@ HFILE16 WINAPI _lclose16( HFILE16 hFile )
 
     if (hFile < 5)
     {
-        FIXME( file, "stdio handle closed, need proper conversion\n" );
+        FIXME("stdio handle closed, need proper conversion\n" );
         SetLastError( ERROR_INVALID_HANDLE );
         return HFILE_ERROR16;
     }
@@ -1075,7 +1075,7 @@ HFILE16 WINAPI _lclose16( HFILE16 hFile )
         SetLastError( ERROR_INVALID_HANDLE );
         return HFILE_ERROR16;
     }
-    TRACE( file, "%d (handle32=%d)\n", hFile, table[hFile] );
+    TRACE("%d (handle32=%d)\n", hFile, table[hFile] );
     CloseHandle( table[hFile] );
     table[hFile] = 0;
     return 0;
@@ -1087,7 +1087,7 @@ HFILE16 WINAPI _lclose16( HFILE16 hFile )
  */
 HFILE WINAPI _lclose( HFILE hFile )
 {
-    TRACE(file, "handle %d\n", hFile );
+    TRACE("handle %d\n", hFile );
     return CloseHandle( hFile ) ? 0 : HFILE_ERROR;
 }
 
@@ -1101,7 +1101,7 @@ BOOL WINAPI ReadFile( HANDLE hFile, LPVOID buffer, DWORD bytesToRead,
     struct get_read_fd_request *req = get_req_buffer();
     int unix_handle, result;
 
-    TRACE(file, "%d %p %ld\n", hFile, buffer, bytesToRead );
+    TRACE("%d %p %ld\n", hFile, buffer, bytesToRead );
 
     if (bytesRead) *bytesRead = 0;  /* Do this before anything else */
     if (!bytesToRead) return TRUE;
@@ -1132,7 +1132,7 @@ BOOL WINAPI WriteFile( HANDLE hFile, LPCVOID buffer, DWORD bytesToWrite,
     struct get_write_fd_request *req = get_req_buffer();
     int unix_handle, result;
 
-    TRACE(file, "%d %p %ld\n", hFile, buffer, bytesToWrite );
+    TRACE("%d %p %ld\n", hFile, buffer, bytesToWrite );
 
     if (bytesWritten) *bytesWritten = 0;  /* Do this before anything else */
     if (!bytesToWrite) return TRUE;
@@ -1164,7 +1164,7 @@ LONG WINAPI WIN16_hread( HFILE16 hFile, SEGPTR buffer, LONG count )
 {
     LONG maxlen;
 
-    TRACE(file, "%d %08lx %ld\n",
+    TRACE("%d %08lx %ld\n",
                   hFile, (DWORD)buffer, count );
 
     /* Some programs pass a count larger than the allocated buffer */
@@ -1219,7 +1219,7 @@ HFILE WINAPI _lcreat( LPCSTR path, INT attr )
 {
     /* Mask off all flags not explicitly allowed by the doc */
     attr &= FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
-    TRACE(file, "%s %02x\n", path, attr );
+    TRACE("%s %02x\n", path, attr );
     return CreateFileA( path, GENERIC_READ | GENERIC_WRITE,
                         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                         CREATE_ALWAYS, attr, -1 );
@@ -1236,11 +1236,11 @@ DWORD WINAPI SetFilePointer( HFILE hFile, LONG distance, LONG *highword,
 
     if (highword && *highword)
     {
-        FIXME(file, "64-bit offsets not supported yet\n");
+        FIXME("64-bit offsets not supported yet\n");
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0xffffffff;
     }
-    TRACE(file, "handle %d offset %ld origin %ld\n",
+    TRACE("handle %d offset %ld origin %ld\n",
           hFile, distance, method );
 
     req->handle = hFile;
@@ -1294,7 +1294,7 @@ HFILE WINAPI _lopen( LPCSTR path, INT mode )
 {
     DWORD access, sharing;
 
-    TRACE(file, "('%s',%04x)\n", path, mode );
+    TRACE("('%s',%04x)\n", path, mode );
     FILE_ConvertOFMode( mode, &access, &sharing );
     return CreateFileA( path, access, sharing, NULL, OPEN_EXISTING, 0, -1 );
 }
@@ -1358,7 +1358,7 @@ LONG WINAPI _hwrite( HFILE handle, LPCSTR buffer, LONG count )
 {
     DWORD result;
 
-    TRACE(file, "%d %p %ld\n", handle, buffer, count );
+    TRACE("%d %p %ld\n", handle, buffer, count );
 
     if (!count)
     {
@@ -1381,7 +1381,7 @@ UINT16 WINAPI SetHandleCount16( UINT16 count )
     PDB16 *pdb = (PDB16 *)GlobalLock16( hPDB );
     BYTE *files = PTR_SEG_TO_LIN( pdb->fileHandlesPtr );
 
-    TRACE(file, "(%d)\n", count );
+    TRACE("(%d)\n", count );
 
     if (count < 20) count = 20;  /* No point in going below 20 */
     else if (count > 254) count = 254;
@@ -1471,16 +1471,16 @@ BOOL WINAPI DeleteFileA( LPCSTR path )
 {
     DOS_FULL_NAME full_name;
 
-    TRACE(file, "'%s'\n", path );
+    TRACE("'%s'\n", path );
 
     if (!*path)
     {
-        ERR(file, "Empty path passed\n");
+        ERR("Empty path passed\n");
         return FALSE;
     }
     if (DOSFS_GetDevice( path ))
     {
-        WARN(file, "cannot remove DOS device '%s'!\n", path);
+        WARN("cannot remove DOS device '%s'!\n", path);
         SetLastError( ERROR_FILE_NOT_FOUND );
         return FALSE;
     }
@@ -1520,7 +1520,7 @@ LPVOID FILE_dommap( int unix_handle, LPVOID start,
     LPVOID ret;
 
     if (size_high || offset_high)
-        FIXME(file, "offsets larger than 4Gb not supported\n");
+        FIXME("offsets larger than 4Gb not supported\n");
 
     if (unix_handle == -1)
     {
@@ -1593,7 +1593,7 @@ LPVOID FILE_dommap( int unix_handle, LPVOID start,
 int FILE_munmap( LPVOID start, DWORD size_high, DWORD size_low )
 {
     if (size_high)
-      FIXME(file, "offsets larger than 4Gb not supported\n");
+      FIXME("offsets larger than 4Gb not supported\n");
     return munmap( start, size_low );
 }
 
@@ -1618,7 +1618,7 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
     DOS_FULL_NAME full_name1, full_name2;
     int mode=0; /* mode == 1: use copy */
 
-    TRACE(file, "(%s,%s,%04lx)\n", fn1, fn2, flag);
+    TRACE("(%s,%s,%04lx)\n", fn1, fn2, flag);
 
     if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
     if (fn2) { /* !fn2 means delete fn1 */
@@ -1645,7 +1645,7 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
     else /* fn2 == NULL means delete source */
       if (flag & MOVEFILE_DELAY_UNTIL_REBOOT) {
 	if (flag & MOVEFILE_COPY_ALLOWED) {  
-	  WARN(file, "Illegal flag\n");
+	  WARN("Illegal flag\n");
 	  SetLastError( ERROR_GEN_FAILURE );
 	  return FALSE;
 	}
@@ -1653,7 +1653,7 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 	   Perhaps we should queue these command and execute it 
 	   when exiting... What about using on_exit(2)
 	   */
-	FIXME(file, "Please delete file '%s' when Wine has finished\n",
+	FIXME("Please delete file '%s' when Wine has finished\n",
 	      full_name1.long_name);
 	return TRUE;
       }
@@ -1669,7 +1669,7 @@ BOOL WINAPI MoveFileExA( LPCSTR fn1, LPCSTR fn2, DWORD flag )
 	   Perhaps we should queue these command and execute it 
 	   when exiting... What about using on_exit(2)
 	   */
-	FIXME(file,"Please move existing file '%s' to file '%s'"
+	FIXME("Please move existing file '%s' to file '%s'"
 	      "when Wine has finished\n", 
 	      full_name1.long_name, full_name2.long_name);
 	return TRUE;
@@ -1711,7 +1711,7 @@ BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
     DOS_FULL_NAME full_name1, full_name2;
     struct stat fstat;
 
-    TRACE(file, "(%s,%s)\n", fn1, fn2 );
+    TRACE("(%s,%s)\n", fn1, fn2 );
 
     if (!DOSFS_GetFullName( fn1, TRUE, &full_name1 )) return FALSE;
     if (DOSFS_GetFullName( fn2, TRUE, &full_name2 )) 
@@ -1729,7 +1729,7 @@ BOOL WINAPI MoveFileA( LPCSTR fn1, LPCSTR fn2 )
     else /*copy */ {
       if (stat(  full_name1.long_name, &fstat ))
 	{
-	  WARN(file, "Invalid source file %s\n",
+	  WARN("Invalid source file %s\n",
 			full_name1.long_name);
 	  FILE_SetDosError();
 	  return FALSE;
@@ -1928,14 +1928,14 @@ BOOL WINAPI LockFileEx( HANDLE hFile, DWORD flags, DWORD reserved,
 		      DWORD nNumberOfBytesToLockLow, DWORD nNumberOfBytesToLockHigh,
 		      LPOVERLAPPED pOverlapped )
 {
-    FIXME(file, "hFile=%d,flags=%ld,reserved=%ld,lowbytes=%ld,highbytes=%ld,overlapped=%p: stub.\n",
+    FIXME("hFile=%d,flags=%ld,reserved=%ld,lowbytes=%ld,highbytes=%ld,overlapped=%p: stub.\n",
 	  hFile, flags, reserved, nNumberOfBytesToLockLow, nNumberOfBytesToLockHigh,
 	  pOverlapped);
     if (reserved == 0)
 	SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     else
     {
-	ERR(file, "reserved == %ld: Supposed to be 0??\n", reserved);
+	ERR("reserved == %ld: Supposed to be 0??\n", reserved);
 	SetLastError(ERROR_INVALID_PARAMETER);
     }
 
@@ -1971,14 +1971,14 @@ BOOL WINAPI UnlockFileEx(
 		LPOVERLAPPED lpOverlapped
 )
 {
-	FIXME(file, "hFile=%d,reserved=%ld,lowbytes=%ld,highbytes=%ld,overlapped=%p: stub.\n",
+	FIXME("hFile=%d,reserved=%ld,lowbytes=%ld,highbytes=%ld,overlapped=%p: stub.\n",
 	  hFile, dwReserved, nNumberOfBytesToUnlockLow, nNumberOfBytesToUnlockHigh,
 	  lpOverlapped);
 	if (dwReserved == 0)
 		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 	else
 	{
-		ERR(file, "reserved == %ld: Supposed to be 0??\n", dwReserved);
+		ERR("reserved == %ld: Supposed to be 0??\n", dwReserved);
 		SetLastError(ERROR_INVALID_PARAMETER);
 	}
 
@@ -2098,12 +2098,12 @@ BOOL WINAPI LockFile(
   struct flock f;
   FILE_OBJECT *file;
 
-  TRACE(file, "handle %d offsetlow=%ld offsethigh=%ld nbyteslow=%ld nbyteshigh=%ld\n",
+  TRACE("handle %d offsetlow=%ld offsethigh=%ld nbyteslow=%ld nbyteshigh=%ld\n",
 	       hFile, dwFileOffsetLow, dwFileOffsetHigh,
 	       nNumberOfBytesToLockLow, nNumberOfBytesToLockHigh);
 
   if (dwFileOffsetHigh || nNumberOfBytesToLockHigh) {
-    FIXME(file, "Unimplemented bytes > 32bits\n");
+    FIXME("Unimplemented bytes > 32bits\n");
     return FALSE;
   }
 
@@ -2149,12 +2149,12 @@ BOOL WINAPI UnlockFile(
   FILE_OBJECT *file;
   struct flock f;
 
-  TRACE(file, "handle %d offsetlow=%ld offsethigh=%ld nbyteslow=%ld nbyteshigh=%ld\n",
+  TRACE("handle %d offsetlow=%ld offsethigh=%ld nbyteslow=%ld nbyteshigh=%ld\n",
 	       hFile, dwFileOffsetLow, dwFileOffsetHigh,
 	       nNumberOfBytesToUnlockLow, nNumberOfBytesToUnlockHigh);
 
   if (dwFileOffsetHigh || nNumberOfBytesToUnlockHigh) {
-    WARN(file, "Unimplemented bytes > 32bits\n");
+    WARN("Unimplemented bytes > 32bits\n");
     return FALSE;
   }
 
@@ -2206,7 +2206,7 @@ BOOL WINAPI GetFileAttributesExA(
 	lpFad->nFileSizeLow     = info.nFileSizeLow;
     }
     else {
-	FIXME (file, "invalid info level %d!\n", fInfoLevelId);
+	FIXME("invalid info level %d!\n", fInfoLevelId);
 	return FALSE;
     }
 

@@ -11,7 +11,7 @@
 #include "winerror.h"
 #include "objbase.h"
 
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
 

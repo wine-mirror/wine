@@ -18,7 +18,7 @@
 #include <string.h>
 #include "bitmap.h"
 #include "color.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "display.h"
 #include "dce.h"
 #include "options.h"
@@ -132,12 +132,12 @@ void X11DRV_WND_Finalize(WND *wndPtr)
     (X11DRV_WND_DATA *) wndPtr->pDriverData;
 
   if (!wndPtr->pDriverData) {
-     ERR(win,"Trying to destroy window again. Not good.\n");
+     ERR("Trying to destroy window again. Not good.\n");
      return;
   }
   if(pWndDriverData->window)
     {
-      ERR(win, 
+      ERR(
 	  "WND destroyed without destroying "
 	  "the associated X Window (%ld)\n", 
 	  pWndDriverData->window

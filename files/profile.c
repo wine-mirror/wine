@@ -17,7 +17,7 @@
 #include "winnls.h"
 #include "file.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "options.h"
 
 DEFAULT_DEBUG_CHANNEL(profile)
@@ -208,7 +208,7 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
         {
             if (!(p2 = strrchr( p, ']' )))
             {
-                WARN(profile, "Invalid section header at line %d: '%s'\n",
+                WARN("Invalid section header at line %d: '%s'\n",
 		     line, p );
             }
             else
@@ -224,7 +224,7 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
                 next_key      = &section->key;
                 prev_key      = NULL;
 
-                TRACE(profile, "New section: '%s'\n",section->name);
+                TRACE("New section: '%s'\n",section->name);
 
                 continue;
             }
@@ -251,7 +251,7 @@ static PROFILESECTION *PROFILE_Load( FILE *file )
            next_key   = &key->next;
            prev_key   = key;
 
-           TRACE(profile, "New key: name='%s', value='%s'\n",key->name,key->value?key->value:"(none)");
+           TRACE("New key: name='%s', value='%s'\n",key->name,key->value?key->value:"(none)");
           }
     }
     return first_section;
@@ -368,7 +368,7 @@ static BOOL PROFILE_FlushFile(void)
 
     if(!CurProfile)
     {
-        WARN(profile, "No current profile!\n");
+        WARN("No current profile!\n");
         return FALSE;
     }
 
@@ -391,11 +391,11 @@ static BOOL PROFILE_FlushFile(void)
     
     if (!file)
     {
-        WARN(profile, "could not save profile file %s\n", CurProfile->dos_name);
+        WARN("could not save profile file %s\n", CurProfile->dos_name);
         return FALSE;
     }
 
-    TRACE(profile, "Saving '%s' into '%s'\n", CurProfile->dos_name, unix_name );
+    TRACE("Saving '%s' into '%s'\n", CurProfile->dos_name, unix_name );
     PROFILE_Save( file, CurProfile->section );
     fclose( file );
     CurProfile->changed = FALSE;
@@ -463,10 +463,10 @@ static BOOL PROFILE_Open( LPCSTR filename )
              CurProfile=tempProfile;
             }
           if(!stat(CurProfile->unix_name,&buf) && CurProfile->mtime==buf.st_mtime)
-             TRACE(profile, "(%s): already opened (mru=%d)\n",
+             TRACE("(%s): already opened (mru=%d)\n",
                               filename, i );
           else
-              TRACE(profile, "(%s): already opened, needs refreshing (mru=%d)\n",
+              TRACE("(%s): already opened, needs refreshing (mru=%d)\n",
                              filename, i );
 	  return TRUE;
          }
@@ -515,7 +515,7 @@ static BOOL PROFILE_Open( LPCSTR filename )
         CharLowerA( p );
         if ((file = fopen( buffer, "r" )))
         {
-            TRACE(profile, "(%s): found it in %s\n",
+            TRACE("(%s): found it in %s\n",
                              filename, buffer );
             CurProfile->unix_name = HEAP_strdupA( SystemHeap, 0, buffer );
         }
@@ -526,7 +526,7 @@ static BOOL PROFILE_Open( LPCSTR filename )
         CurProfile->unix_name = HEAP_strdupA( SystemHeap, 0,
                                              full_name.long_name );
         if ((file = fopen( full_name.long_name, "r" )))
-            TRACE(profile, "(%s): found it in %s\n",
+            TRACE("(%s): found it in %s\n",
                              filename, full_name.long_name );
     }
 
@@ -540,7 +540,7 @@ static BOOL PROFILE_Open( LPCSTR filename )
     else
     {
         /* Does not exist yet, we will create it in PROFILE_FlushFile */
-        WARN(profile, "profile file %s not found\n", newdos_name );
+        WARN("profile file %s not found\n", newdos_name );
     }
     return TRUE;
 }
@@ -637,7 +637,7 @@ static INT PROFILE_GetString( LPCSTR section, LPCSTR key_name,
         key = PROFILE_Find( &CurProfile->section, section, key_name, FALSE );
         PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def_val,
                            len, FALSE );
-        TRACE(profile, "('%s','%s','%s'): returning '%s'\n",
+        TRACE("('%s','%s','%s'): returning '%s'\n",
                          section, key_name, def_val, buffer );
         return strlen( buffer );
     }
@@ -659,7 +659,7 @@ static BOOL PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
 {
     if (!key_name)  /* Delete a whole section */
     {
-        TRACE(profile, "('%s')\n", section_name);
+        TRACE("('%s')\n", section_name);
         CurProfile->changed |= PROFILE_DeleteSection( &CurProfile->section,
                                                       section_name );
         return TRUE;         /* Even if PROFILE_DeleteSection() has failed,
@@ -667,7 +667,7 @@ static BOOL PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
     }
     else if (!value)  /* Delete a key */
     {
-        TRACE(profile, "('%s','%s')\n",
+        TRACE("('%s','%s')\n",
                          section_name, key_name );
         CurProfile->changed |= PROFILE_DeleteKey( &CurProfile->section,
                                                   section_name, key_name );
@@ -677,20 +677,20 @@ static BOOL PROFILE_SetString( LPCSTR section_name, LPCSTR key_name,
     {
         PROFILEKEY *key = PROFILE_Find( &CurProfile->section, section_name,
                                         key_name, TRUE );
-        TRACE(profile, "('%s','%s','%s'): \n",
+        TRACE("('%s','%s','%s'): \n",
                          section_name, key_name, value );
         if (!key) return FALSE;
         if (key->value)
         {
             if (!strcmp( key->value, value ))
             {
-                TRACE(profile, "  no change needed\n" );
+                TRACE("  no change needed\n" );
                 return TRUE;  /* No change needed */
             }
-            TRACE(profile, "  replacing '%s'\n", key->value );
+            TRACE("  replacing '%s'\n", key->value );
             HeapFree( SystemHeap, 0, key->value );
         }
-        else TRACE(profile, "  creating key\n" );
+        else TRACE("  creating key\n" );
         key->value = HEAP_strdupA( SystemHeap, 0, value );
         CurProfile->changed = TRUE;
     }
@@ -715,7 +715,7 @@ int PROFILE_GetWineIniString( const char *section, const char *key_name,
         PROFILEKEY *key = PROFILE_Find(&PROFILE_WineProfile, section, key_name, FALSE);
         PROFILE_CopyEntry( buffer, (key && key->value) ? key->value : def,
                            len, TRUE );
-        TRACE(profile, "('%s','%s','%s'): returning '%s'\n",
+        TRACE("('%s','%s','%s'): returning '%s'\n",
                          section, key_name, def, buffer );
         ret = strlen( buffer );
     } 
@@ -865,7 +865,7 @@ int  PROFILE_GetWineIniBool(
 	retval = def;
     }
 
-    TRACE(profile, "(\"%s\", \"%s\", %s), "
+    TRACE("(\"%s\", \"%s\", %s), "
 		    "[%c], ret %s.\n", section, key_name,
 		    def ? "TRUE" : "FALSE", key_value[0],
 		    retval ? "TRUE" : "FALSE");
@@ -916,7 +916,7 @@ int PROFILE_LoadWineIni(void)
             return 1;
         }
     }
-    else WARN(profile, "could not get $HOME value for config file.\n" );
+    else WARN("could not get $HOME value for config file.\n" );
 
     /* Try global file */
 
@@ -927,7 +927,7 @@ int PROFILE_LoadWineIni(void)
 	strncpy(PROFILE_WineIniUsed,WINE_INI_GLOBAL,MAX_PATHNAME_LEN-1);
         return 1;
     }
-    MSG( "Can't open configuration file %s or $HOME%s\n",
+    MESSAGE( "Can't open configuration file %s or $HOME%s\n",
 	 WINE_INI_GLOBAL, PROFILE_WineIniName );
     return 0;
 }
@@ -942,13 +942,13 @@ int PROFILE_LoadWineIni(void)
  */
 void PROFILE_UsageWineIni(void)
 {
-    MSG("Perhaps you have not properly edited or created "
+    MESSAGE("Perhaps you have not properly edited or created "
 	"your Wine configuration file.\n");
-    MSG("This is either %s or $HOME%s\n",WINE_INI_GLOBAL,PROFILE_WineIniName);
-    MSG("  or it is determined by the -config option or from\n"
+    MESSAGE("This is either %s or $HOME%s\n",WINE_INI_GLOBAL,PROFILE_WineIniName);
+    MESSAGE("  or it is determined by the -config option or from\n"
         "  the WINE_INI environment variable.\n");
     if (*PROFILE_WineIniUsed)
-	MSG("Wine has used %s as configuration file.\n", PROFILE_WineIniUsed);
+	MESSAGE("Wine has used %s as configuration file.\n", PROFILE_WineIniUsed);
     /* RTFM, so to say */
 }
 
@@ -1314,11 +1314,11 @@ BOOL WINAPI WritePrivateProfileSectionA( LPCSTR section,
 {
     char *p =(char*)string;
 
-    FIXME(profile, "WritePrivateProfileSection32A empty stub\n");
+    FIXME("WritePrivateProfileSection32A empty stub\n");
     if (TRACE_ON(profile)) {
-      TRACE(profile, "(%s) => [%s]\n", filename, section);
+      TRACE("(%s) => [%s]\n", filename, section);
       while (*(p+1)) {
-	TRACE(profile, "%s\n", p);
+	TRACE("%s\n", p);
         p += strlen(p);
 	p += 1;
       }

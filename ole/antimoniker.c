@@ -6,7 +6,7 @@
 
 #include <assert.h>
 #include "winerror.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 #include "winuser.h"
 #include "file.h"
@@ -128,7 +128,7 @@ HRESULT WINAPI AntiMonikerImpl_QueryInterface(IMoniker* iface,REFIID riid,void**
 {
     ICOM_THIS(AntiMonikerImpl,iface);
   
-  TRACE(ole,"(%p,%p,%p)\n",This,riid,ppvObject);
+  TRACE("(%p,%p,%p)\n",This,riid,ppvObject);
 
   /* Perform a sanity check on the parameters.*/
     if ( (This==0) || (ppvObject==0) )
@@ -164,7 +164,7 @@ ULONG WINAPI AntiMonikerImpl_AddRef(IMoniker* iface)
 {
     ICOM_THIS(AntiMonikerImpl,iface);
 
-    TRACE(ole,"(%p)\n",This);
+    TRACE("(%p)\n",This);
 
     return ++(This->ref);
 }
@@ -176,7 +176,7 @@ ULONG WINAPI AntiMonikerImpl_Release(IMoniker* iface)
 {
     ICOM_THIS(AntiMonikerImpl,iface);
 
-    TRACE(ole,"(%p)\n",This);
+    TRACE("(%p)\n",This);
 
     This->ref--;
 
@@ -195,7 +195,7 @@ ULONG WINAPI AntiMonikerImpl_Release(IMoniker* iface)
  ******************************************************************************/
 HRESULT WINAPI AntiMonikerImpl_GetClassID(const IMoniker* iface,CLSID *pClassID)
 {
-    TRACE(ole,"(%p,%p),stub!\n",iface,pClassID);
+    TRACE("(%p,%p),stub!\n",iface,pClassID);
 
     if (pClassID==NULL)
         return E_POINTER;
@@ -214,7 +214,7 @@ HRESULT WINAPI AntiMonikerImpl_IsDirty(IMoniker* iface)
        method in the OLE-provided moniker interfaces always return S_FALSE because
        their internal state never changes. */
 
-    TRACE(ole,"(%p)\n",iface);
+    TRACE("(%p)\n",iface);
 
     return S_FALSE;
 }
@@ -256,7 +256,7 @@ HRESULT WINAPI AntiMonikerImpl_Save(IMoniker* iface,IStream* pStm,BOOL fClearDir
 HRESULT WINAPI AntiMonikerImpl_GetSizeMax(IMoniker* iface,
                                           ULARGE_INTEGER* pcbSize)/* Pointer to size of stream needed to save object */
 {
-    TRACE(ole,"(%p,%p)\n",iface,pcbSize);
+    TRACE("(%p,%p)\n",iface,pcbSize);
 
     if (pcbSize!=NULL)
         return E_POINTER;
@@ -278,7 +278,7 @@ HRESULT WINAPI AntiMonikerImpl_GetSizeMax(IMoniker* iface,
 HRESULT WINAPI AntiMonikerImpl_Construct(AntiMonikerImpl* This)
 {
 
-    TRACE(ole,"(%p)\n",This);
+    TRACE("(%p)\n",This);
 
     /* Initialize the virtual fgunction table. */
     This->lpvtbl1      = &VT_AntiMonikerImpl;
@@ -293,7 +293,7 @@ HRESULT WINAPI AntiMonikerImpl_Construct(AntiMonikerImpl* This)
  *******************************************************************************/
 HRESULT WINAPI AntiMonikerImpl_Destroy(AntiMonikerImpl* This)
 {
-    TRACE(ole,"(%p)\n",This);
+    TRACE("(%p)\n",This);
 
     return HeapFree(GetProcessHeap(),0,This);
 }
@@ -307,7 +307,7 @@ HRESULT WINAPI AntiMonikerImpl_BindToObject(IMoniker* iface,
                                             REFIID riid,
                                             VOID** ppvResult)
 {
-    TRACE(ole,"(%p,%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,riid,ppvResult);
+    TRACE("(%p,%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,riid,ppvResult);
     return E_NOTIMPL;
 }
 
@@ -320,7 +320,7 @@ HRESULT WINAPI AntiMonikerImpl_BindToStorage(IMoniker* iface,
                                              REFIID riid,
                                              VOID** ppvResult)
 {
-    TRACE(ole,"(%p,%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,riid,ppvResult);
+    TRACE("(%p,%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,riid,ppvResult);
     return E_NOTIMPL;
 }
 
@@ -333,7 +333,7 @@ HRESULT WINAPI AntiMonikerImpl_Reduce(IMoniker* iface,
                                       IMoniker** ppmkToLeft,
                                       IMoniker** ppmkReduced)
 {
-    TRACE(ole,"(%p,%p,%ld,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
+    TRACE("(%p,%p,%ld,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
 
     if (ppmkReduced==NULL)
         return E_POINTER;
@@ -353,7 +353,7 @@ HRESULT WINAPI AntiMonikerImpl_ComposeWith(IMoniker* iface,
                                            IMoniker** ppmkComposite)
 {
 
-    TRACE(ole,"(%p,%p,%d,%p)\n",iface,pmkRight,fOnlyIfNotGeneric,ppmkComposite);
+    TRACE("(%p,%p,%d,%p)\n",iface,pmkRight,fOnlyIfNotGeneric,ppmkComposite);
 
     if ((ppmkComposite==NULL)||(pmkRight==NULL))
 	return E_POINTER;
@@ -371,7 +371,7 @@ HRESULT WINAPI AntiMonikerImpl_ComposeWith(IMoniker* iface,
  ******************************************************************************/
 HRESULT WINAPI AntiMonikerImpl_Enum(IMoniker* iface,BOOL fForward, IEnumMoniker** ppenumMoniker)
 {
-    TRACE(ole,"(%p,%d,%p)\n",iface,fForward,ppenumMoniker);
+    TRACE("(%p,%d,%p)\n",iface,fForward,ppenumMoniker);
 
     if (ppenumMoniker == NULL)
         return E_POINTER;
@@ -388,7 +388,7 @@ HRESULT WINAPI AntiMonikerImpl_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker
 {
     DWORD mkSys;
     
-    TRACE(ole,"(%p,%p)\n",iface,pmkOtherMoniker);
+    TRACE("(%p,%p)\n",iface,pmkOtherMoniker);
 
     if (pmkOtherMoniker==NULL)
         return S_FALSE;
@@ -425,7 +425,7 @@ HRESULT WINAPI AntiMonikerImpl_IsRunning(IMoniker* iface,
     IRunningObjectTable* rot;
     HRESULT res;
 
-    TRACE(ole,"(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,pmkNewlyRunning);
+    TRACE("(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,pmkNewlyRunning);
 
     if (pbc==NULL)
         return E_INVALIDARG;
@@ -450,7 +450,7 @@ HRESULT WINAPI AntiMonikerImpl_GetTimeOfLastChange(IMoniker* iface,
                                                    IMoniker* pmkToLeft,
                                                    FILETIME* pAntiTime)
 {
-    TRACE(ole,"(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,pAntiTime);
+    TRACE("(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,pAntiTime);
     return E_NOTIMPL;
 }
 
@@ -459,7 +459,7 @@ HRESULT WINAPI AntiMonikerImpl_GetTimeOfLastChange(IMoniker* iface,
  ******************************************************************************/
 HRESULT WINAPI AntiMonikerImpl_Inverse(IMoniker* iface,IMoniker** ppmk)
 {
-    TRACE(ole,"(%p,%p)\n",iface,ppmk);
+    TRACE("(%p,%p)\n",iface,ppmk);
 
     if (ppmk==NULL)
         return E_POINTER;
@@ -497,7 +497,7 @@ HRESULT WINAPI AntiMonikerImpl_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOth
  ******************************************************************************/
 HRESULT WINAPI AntiMonikerImpl_RelativePathTo(IMoniker* iface,IMoniker* pmOther, IMoniker** ppmkRelPath)
 {
-    TRACE(ole,"(%p,%p,%p)\n",iface,pmOther,ppmkRelPath);
+    TRACE("(%p,%p,%p)\n",iface,pmOther,ppmkRelPath);
 
     if (ppmkRelPath==NULL)
         return E_POINTER;
@@ -519,13 +519,13 @@ HRESULT WINAPI AntiMonikerImpl_GetDisplayName(IMoniker* iface,
 {
     WCHAR back[]={'\\','.','.',0};
     
-    TRACE(ole,"(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,ppszDisplayName);
+    TRACE("(%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,ppszDisplayName);
 
     if (ppszDisplayName==NULL)
         return E_POINTER;
 
     if (pmkToLeft!=NULL){
-        FIXME(ole,"() pmkToLeft!=NULL not implemented \n");
+        FIXME("() pmkToLeft!=NULL not implemented \n");
         return E_NOTIMPL;
     }
 
@@ -549,7 +549,7 @@ HRESULT WINAPI AntiMonikerImpl_ParseDisplayName(IMoniker* iface,
                                                 ULONG* pchEaten,
                                                 IMoniker** ppmkOut)
 {
-    TRACE(ole,"(%p,%p,%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,pszDisplayName,pchEaten,ppmkOut);
+    TRACE("(%p,%p,%p,%p,%p,%p)\n",iface,pbc,pmkToLeft,pszDisplayName,pchEaten,ppmkOut);
     return E_NOTIMPL;
 }
 
@@ -558,7 +558,7 @@ HRESULT WINAPI AntiMonikerImpl_ParseDisplayName(IMoniker* iface,
  ******************************************************************************/
 HRESULT WINAPI AntiMonikerImpl_IsSystemMoniker(IMoniker* iface,DWORD* pwdMksys)
 {
-    TRACE(ole,"(%p,%p)\n",iface,pwdMksys);
+    TRACE("(%p,%p)\n",iface,pwdMksys);
 
     if (!pwdMksys)
         return E_POINTER;
@@ -576,7 +576,7 @@ HRESULT WINAPI AntiMonikerROTDataImpl_QueryInterface(IROTData *iface,REFIID riid
 
     ICOM_THIS_From_IROTData(IMoniker, iface);
 
-    TRACE(ole,"(%p,%p,%p)\n",iface,riid,ppvObject);
+    TRACE("(%p,%p,%p)\n",iface,riid,ppvObject);
 
     return AntiMonikerImpl_QueryInterface(This, riid, ppvObject);
 }
@@ -588,7 +588,7 @@ ULONG   WINAPI AntiMonikerROTDataImpl_AddRef(IROTData *iface)
 {
     ICOM_THIS_From_IROTData(IMoniker, iface);
 
-    TRACE(ole,"(%p)\n",iface);
+    TRACE("(%p)\n",iface);
 
     return AntiMonikerImpl_AddRef(This);
 }
@@ -600,7 +600,7 @@ ULONG   WINAPI AntiMonikerROTDataImpl_Release(IROTData* iface)
 {
     ICOM_THIS_From_IROTData(IMoniker, iface);
     
-    TRACE(ole,"(%p)\n",iface);
+    TRACE("(%p)\n",iface);
 
     return AntiMonikerImpl_Release(This);
 }
@@ -613,7 +613,7 @@ HRESULT WINAPI AntiMonikerROTDataImpl_GetComparaisonData(IROTData* iface,
                                                          ULONG cbMax,
                                                          ULONG* pcbData)
 {
-    FIXME(ole,"(),stub!\n");
+    FIXME("(),stub!\n");
     return E_NOTIMPL;
 }
 
@@ -626,7 +626,7 @@ HRESULT WINAPI CreateAntiMoniker(LPMONIKER * ppmk)
     HRESULT        hr = S_OK;
     IID riid=IID_IMoniker;
     
-    TRACE(ole,"(%p)\n",ppmk);
+    TRACE("(%p)\n",ppmk);
 
     newAntiMoniker = HeapAlloc(GetProcessHeap(), 0, sizeof(AntiMonikerImpl));
 

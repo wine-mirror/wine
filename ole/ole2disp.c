@@ -11,7 +11,7 @@
 #include "wine/obj_base.h"
 #include "heap.h"
 #include "ldt.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
 
@@ -300,7 +300,7 @@ HRESULT WINAPI CreateDispTypeInfo16(
 	LCID lcid,
 	ITypeInfo **pptinfo
 ) {
-	FIXME(ole,"(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
+	FIXME("(%p,%ld,%p),stub\n",pidata,lcid,pptinfo);
 	return 0;
 }
 
@@ -312,7 +312,7 @@ HRESULT WINAPI RegisterActiveObject16(
 ) {
 	char	buf[80];
 	WINE_StringFromCLSID(rclsid,buf);
-	FIXME(ole,"(%p,%s,0x%08lx,%p):stub\n",punk,buf,dwFlags,pdwRegister);
+	FIXME("(%p,%s,0x%08lx,%p):stub\n",punk,buf,dwFlags,pdwRegister);
 	return 0;
 }
 
@@ -332,7 +332,7 @@ INT WINAPI OleTranslateColor(
   COLORREF colorref;
   BYTE b = HIBYTE(HIWORD(clr));
 
-  TRACE(ole,"(%08lx, %d, %p):stub\n", clr, hpal, pColorRef);
+  TRACE("(%08lx, %d, %p):stub\n", clr, hpal, pColorRef);
 
   /*
    * In case pColorRef is NULL, provide our own to simplify the code.

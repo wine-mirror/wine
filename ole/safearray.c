@@ -14,7 +14,7 @@
 #include "winbase.h"
 #include "oleauto.h"
 #include "wine/obj_base.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
 
@@ -121,7 +121,7 @@ HRESULT WINAPI SafeArrayAllocDescriptor(
         GetProcessHeap(), HEAP_ZERO_MEMORY, allocSize)) == NULL){
     return(E_UNEXPECTED);
   }
-  TRACE(ole,"SafeArray: %lu bytes allocated for descriptor.\n", allocSize);
+  TRACE("SafeArray: %lu bytes allocated for descriptor.\n", allocSize);
 
   return(S_OK);
 }
@@ -144,7 +144,7 @@ HRESULT WINAPI SafeArrayAllocData(
         psa->cbElements*ulWholeArraySize)) == NULL)
     return(E_UNEXPECTED);
 
-  TRACE(ole, "SafeArray: %lu bytes allocated for data at %p (%lu objects).\n", 
+  TRACE("SafeArray: %lu bytes allocated for data at %p (%lu objects).\n", 
     psa->cbElements*ulWholeArraySize, psa->pvData, ulWholeArraySize);
 
   return(S_OK);
@@ -187,7 +187,7 @@ SAFEARRAY* WINAPI SafeArrayCreate(
   /* allocate memory for the data... */ 
   if( FAILED( hRes = SafeArrayAllocData(psa))) {
     SafeArrayDestroyDescriptor(psa); 
-    ERR(ole,"() : Failed to allocate the Safe Array data\n");
+    ERR("() : Failed to allocate the Safe Array data\n");
     return NULL;
   }
 
@@ -293,11 +293,11 @@ HRESULT WINAPI SafeArrayPutElement(
     }
 
   } else {
-    ERR(ole, "SafeArray: Cannot lock array....\n");
+    ERR("SafeArray: Cannot lock array....\n");
     return E_UNEXPECTED; /* UNDOC error condition */
   }
 
-  TRACE(ole,"SafeArray: item put at adress %p.\n",elementStorageAddress);
+  TRACE("SafeArray: item put at adress %p.\n",elementStorageAddress);
   return SafeArrayUnlock(psa);  
 }
 
@@ -343,7 +343,7 @@ HRESULT WINAPI SafeArrayGetElement(
       memcpy(pv, elementStorageAddress, SafeArrayGetElemsize(psa) );
 
   } else {
-    ERR(ole, "SafeArray: Cannot lock array....\n");
+    ERR("SafeArray: Cannot lock array....\n");
     return E_UNEXPECTED; /* UNDOC error condition */
   }
 
@@ -873,7 +873,7 @@ static ULONG calcDisplacement(
     res += ((coor[iterDim]-mat[iterDim].lLbound) * 
             endOfDim(coor, mat, iterDim+1, dim));
 
-  TRACE(ole, "SafeArray: calculated displacement is %lu.\n", res);
+  TRACE("SafeArray: calculated displacement is %lu.\n", res);
   return(res);
 }
 

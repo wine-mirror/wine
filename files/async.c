@@ -40,7 +40,7 @@
 #include "selectors.h"
 #include "sig_context.h"
 #include "async.h"
-#include "debug.h"
+#include "debugtools.h"
 
 typedef struct _async_fd {
 	int	unixfd;

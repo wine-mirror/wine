@@ -16,7 +16,7 @@
 #include "gdi.h"
 #include "dce.h"
 #include "region.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(scroll)
 
@@ -81,7 +81,7 @@ BOOL WINAPI ScrollDC( HDC hdc, INT dx, INT dy, const RECT *rc,
     POINT src, dest;
     DC *dc = (DC *)GDI_GetObjPtr(hdc, DC_MAGIC);
 
-    TRACE(scroll,"%04x %d,%d hrgnUpdate=%04x rcUpdate = %p cliprc = (%d,%d-%d,%d), rc=(%d,%d-%d,%d)\n",
+    TRACE("%04x %d,%d hrgnUpdate=%04x rcUpdate = %p cliprc = (%d,%d-%d,%d), rc=(%d,%d-%d,%d)\n",
                    (HDC16)hdc, dx, dy, hrgnUpdate, rcUpdate, 
 		   prLClip ? prLClip->left : 0, prLClip ? prLClip->top : 0, prLClip ? prLClip->right : 0, prLClip ? prLClip->bottom : 0,
 		   rc ? rc->left : 0, rc ? rc->top : 0, rc ? rc->right : 0, rc ? rc->bottom : 0 );
@@ -259,7 +259,7 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
         HRGN  hrgnTemp = CreateRectRgnIndirect(&rc);
         RECT  caretrc;
 
-TRACE(scroll,"%04x, %d,%d hrgnUpdate=%04x rcUpdate = %p \
+TRACE("%04x, %d,%d hrgnUpdate=%04x rcUpdate = %p \
 cliprc = (%d,%d-%d,%d), rc=(%d,%d-%d,%d) %04x\n",             
 (HWND16)hwnd, dx, dy, hrgnUpdate, rcUpdate,
 clipRect?clipRect->left:0, clipRect?clipRect->top:0, clipRect?clipRect->right:0, clipRect?clipRect->bottom:0,

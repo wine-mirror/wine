@@ -21,7 +21,7 @@
 #include "wine/winestring.h"
 #include "crtdll.h"
 #include "tchar.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "windef.h"
 
 #include "storage32.h"
@@ -284,7 +284,7 @@ HRESULT WINAPI StorageBaseImpl_OpenStream(
   StgProperty       currentProperty;
   ULONG             foundPropertyIndex;
 
-  TRACE(storage, "(%p, %s, %p, %lx, %ld, %p)\n", 
+  TRACE("(%p, %s, %p, %lx, %ld, %p)\n", 
 	iface, debugstr_w(pwcsName), reserved1, grfMode, reserved2, ppstm);
 
   /*
@@ -381,7 +381,7 @@ HRESULT WINAPI StorageBaseImpl_OpenStorage(
   StgProperty            currentProperty;
   ULONG                  foundPropertyIndex;
 
-  TRACE(storage, "(%p, %s, %p, %lx, %p, %ld, %p)\n", 
+  TRACE("(%p, %s, %p, %lx, %p, %ld, %p)\n", 
 	iface, debugstr_w(pwcsName), pstgPriority, 
 	grfMode, snbExclude, reserved, ppstg);
   
@@ -480,7 +480,7 @@ HRESULT WINAPI StorageBaseImpl_EnumElements(
   ICOM_THIS(StorageBaseImpl,iface);
   IEnumSTATSTGImpl* newEnum;
 
-  TRACE(storage, "(%p, %ld, %p, %ld, %p)\n", 
+  TRACE("(%p, %ld, %p, %ld, %p)\n", 
 	iface, reserved1, reserved2, reserved3, ppenum);
 
   /*
@@ -528,7 +528,7 @@ HRESULT WINAPI StorageBaseImpl_Stat(
   StgProperty    curProperty;
   BOOL         readSucessful;
 
-  TRACE(storage, "(%p, %p, %lx)\n", 
+  TRACE("(%p, %p, %lx)\n", 
 	iface, pstatstg, grfStatFlag);
 
   /*
@@ -579,7 +579,7 @@ HRESULT WINAPI StorageBaseImpl_RenameElement(
   StgProperty       currentProperty;
   ULONG             foundPropertyIndex;
 
-  TRACE(storage, "(%p, %s, %s)\n", 
+  TRACE("(%p, %s, %s)\n", 
 	iface, debugstr_w(pwcsOldName), debugstr_w(pwcsNewName));
 
   /*
@@ -734,7 +734,7 @@ HRESULT WINAPI StorageBaseImpl_CreateStream(
   StgProperty       currentProperty, newStreamProperty;
   ULONG             foundPropertyIndex, newPropertyIndex;
 
-  TRACE(storage, "(%p, %s, %lx, %ld, %ld, %p)\n", 
+  TRACE("(%p, %s, %lx, %ld, %ld, %p)\n", 
 	iface, debugstr_w(pwcsName), grfMode, 
 	reserved1, reserved2, ppstm);
 
@@ -883,7 +883,7 @@ HRESULT WINAPI StorageBaseImpl_SetClass(
   StgProperty curProperty;
   BOOL success;
 
-  TRACE(storage, "(%p, %p)\n", iface, clsid);
+  TRACE("(%p, %p)\n", iface, clsid);
   
   success = StorageImpl_ReadProperty(This->ancestorStorage,
                                        This->rootPropertySetIndex,
@@ -930,7 +930,7 @@ HRESULT WINAPI StorageImpl_CreateStorage(
   ULONG            newPropertyIndex;
   HRESULT          hr;
 
-  TRACE(storage, "(%p, %s, %lx, %ld, %ld, %p)\n", 
+  TRACE("(%p, %s, %lx, %ld, %ld, %p)\n", 
 	iface, debugstr_w(pwcsName), grfMode, 
 	reserved1, reserved2, ppstg);
   
@@ -1303,9 +1303,9 @@ HRESULT WINAPI StorageImpl_CopyTo(
   IStream      *pstrTmp, *pstrChild;
 
   if ((ciidExclude != 0) || (rgiidExclude != NULL) || (snbExclude != NULL))
-    FIXME( storage, "Exclude option not implemented\n");
+    FIXME("Exclude option not implemented\n");
 
-  TRACE(storage, "(%p, %ld, %p, %p, %p)\n", 
+  TRACE("(%p, %ld, %p, %p, %p)\n", 
 	iface, ciidExclude, rgiidExclude, 
 	snbExclude, pstgDest);
 
@@ -1439,7 +1439,7 @@ HRESULT WINAPI StorageImpl_CopyTo(
     }
     else
     {
-      WARN(storage, "unknown element type: %ld\n", curElement.type);
+      WARN("unknown element type: %ld\n", curElement.type);
     }
 
   } while (hr == S_OK);
@@ -1462,7 +1462,7 @@ HRESULT WINAPI StorageImpl_MoveElementTo(
   const OLECHAR *pwcsNewName,/* [string][in] */ 
   DWORD           grfFlags)    /* [in] */ 
 {
-  FIXME(storage, "not implemented!\n");
+  FIXME("not implemented!\n");
   return E_NOTIMPL;
 }
         
@@ -1473,7 +1473,7 @@ HRESULT WINAPI StorageImpl_Commit(
   IStorage*   iface,
   DWORD         grfCommitFlags)/* [in] */ 
 {
-  FIXME(storage, "(%ld): stub!\n", grfCommitFlags);
+  FIXME("(%ld): stub!\n", grfCommitFlags);
   return S_OK;
 }
         
@@ -1483,7 +1483,7 @@ HRESULT WINAPI StorageImpl_Commit(
 HRESULT WINAPI StorageImpl_Revert( 
   IStorage* iface)
 {
-  FIXME(storage, "not implemented!\n");
+  FIXME("not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -1513,7 +1513,7 @@ HRESULT WINAPI StorageImpl_DestroyElement(
   ULONG             typeOfRelation;
   ULONG             parentPropertyId;
 
-  TRACE(storage, "(%p, %s)\n", 
+  TRACE("(%p, %s)\n", 
 	iface, debugstr_w(pwcsName));
 
   /*
@@ -2007,7 +2007,7 @@ HRESULT WINAPI StorageImpl_SetElementTimes(
   const FILETIME  *patime,  /* [in] */ 
   const FILETIME  *pmtime)  /* [in] */ 
 {
-  FIXME(storage, "not implemented!\n");
+  FIXME("not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -2019,7 +2019,7 @@ HRESULT WINAPI StorageImpl_SetStateBits(
   DWORD         grfStateBits,/* [in] */ 
   DWORD         grfMask)     /* [in] */ 
 {
-  FIXME(storage, "not implemented!\n");
+  FIXME("not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -2218,7 +2218,7 @@ HRESULT StorageImpl_Construct(
 void StorageImpl_Destroy(
   StorageImpl* This)
 {
-  TRACE(storage, "(%p)\n", This);
+  TRACE("(%p)\n", This);
 
   BlockChainStream_Destroy(This->smallBlockRootChain);
   BlockChainStream_Destroy(This->rootBlockChain);
@@ -5204,7 +5204,7 @@ HRESULT WINAPI StgCreateDocfile(
   DWORD          fileAttributes;
   WCHAR          tempFileName[MAX_PATH];
 
-  TRACE(storage, "(%s, %lx, %ld, %p)\n", 
+  TRACE("(%s, %lx, %ld, %p)\n", 
 	debugstr_w(pwcsName), grfMode, 
 	reserved, ppstgOpen);
 
@@ -5253,7 +5253,7 @@ HRESULT WINAPI StgCreateDocfile(
     fileAttributes = FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS;
 
   if (grfMode & STGM_TRANSACTED)
-    FIXME(storage, "Transacted mode not implemented.\n");
+    FIXME("Transacted mode not implemented.\n");
 
   /*
    * Initialize the "out" parameter.
@@ -5322,7 +5322,7 @@ HRESULT WINAPI StgOpenStorage(
   DWORD          shareMode;
   DWORD          accessMode;
 
-  TRACE(storage, "(%s, %p, %lx, %p, %ld, %p)\n", 
+  TRACE("(%s, %p, %lx, %p, %ld, %p)\n", 
 	debugstr_w(pwcsName), pstgPriority, grfMode,
 	snbExclude, reserved, ppstgOpen);
 
@@ -5555,7 +5555,7 @@ HRESULT WINAPI ReadClassStg(IStorage *pstg,CLSID *pclsid){
     STATSTG pstatstg;
     HRESULT hRes;
     
-    TRACE(storage,"()\n");
+    TRACE("()\n");
 
     if(pclsid==NULL)
         return E_POINTER;
@@ -5580,7 +5580,7 @@ HRESULT  WINAPI OleLoadFromStream(IStream *pStm,REFIID iidInterface,void** ppvOb
     CLSID clsid;
     HRESULT res;
 
-    FIXME(storage,"(),stub!\n");
+    FIXME("(),stub!\n");
 
     res=ReadClassStm(pStm,&clsid);
 
@@ -5607,7 +5607,7 @@ HRESULT  WINAPI OleSaveToStream(IPersistStream *pPStm,IStream *pStm)
     CLSID clsid;
     HRESULT res;
     
-    TRACE(storage,"(%p,%p)\n",pPStm,pStm);
+    TRACE("(%p,%p)\n",pPStm,pStm);
 
     res=IPersistStream_GetClassID(pPStm,&clsid);
 
@@ -5797,11 +5797,11 @@ static DWORD GetCreationModeFromSTGM(DWORD stgm)
   if ( stgm & STGM_CREATE)
     return CREATE_ALWAYS;
   if (stgm & STGM_CONVERT) {
-    FIXME(storage, "STGM_CONVERT not implemented!\n");
+    FIXME("STGM_CONVERT not implemented!\n");
     return CREATE_NEW;
   }
   /* All other cases */
   if (stgm & ~ (STGM_CREATE|STGM_CONVERT))
-  	FIXME(storage,"unhandled storage mode : 0x%08lx\n",stgm & ~ (STGM_CREATE|STGM_CONVERT));
+  	FIXME("unhandled storage mode : 0x%08lx\n",stgm & ~ (STGM_CREATE|STGM_CONVERT));
   return CREATE_NEW;
 }

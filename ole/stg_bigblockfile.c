@@ -30,7 +30,7 @@
 
 #include "storage32.h"
 
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(storage)
 
@@ -209,7 +209,7 @@ static BOOL BIGBLOCKFILE_MemInit(LPBIGBLOCKFILE This, ILockBytes* plkbyt)
    */
   if (GetHGlobalFromILockBytes(plkbyt, &(This->hbytearray)) != S_OK)
   {
-    FIXME(storage, "May not be an ILockBytes on HGLOBAL\n");
+    FIXME("May not be an ILockBytes on HGLOBAL\n");
     return FALSE;
   }
 

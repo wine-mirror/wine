@@ -18,7 +18,7 @@
 #include "commctrl.h"
 #include "wine/obj_clientserver.h"
 #include "wine/wingdi16.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "ole2ver.h"
 #include "winreg.h"
 
@@ -138,7 +138,7 @@ static DWORD OLEDD_GetButtonState();
  */
 DWORD WINAPI OleBuildVersion(void)
 {
-    TRACE(ole,"(void)\n");
+    TRACE("(void)\n");
     return (rmm<<16)+rup;
 }
 
@@ -149,7 +149,7 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
 {
   HRESULT hr;
 
-  TRACE(ole, "(%p)\n", reserved);
+  TRACE("(%p)\n", reserved);
 
   /*
    * The first duty of the OleInitialize is to initialize the COM libraries.
@@ -176,7 +176,7 @@ HRESULT WINAPI OleInitialize(LPVOID reserved)
     /* 
      * Initialize the libraries.
      */
-    TRACE(ole, "() - Initializing the OLE libraries\n");
+    TRACE("() - Initializing the OLE libraries\n");
 
     /*
      * Drag and Drop
@@ -212,7 +212,7 @@ DWORD WINAPI CoGetCurrentProcess(void) {
  */
 void WINAPI OleUninitialize(void)
 {
-  TRACE(ole, "()\n");
+  TRACE("()\n");
 
   /*
    * Decrease the lock count on the OLE module.
@@ -227,7 +227,7 @@ void WINAPI OleUninitialize(void)
     /*
      * Actually free the libraries.
      */
-    TRACE(ole, "() - Freeing the last reference count\n");
+    TRACE("() - Freeing the last reference count\n");
 
     /*
      * Drag and Drop
@@ -259,7 +259,7 @@ HRESULT WINAPI OleFlushClipboard16(void)
  */
 HRESULT WINAPI OleSetClipboard(LPVOID pDataObj)
 {
-    FIXME(ole,"(%p), stub!\n", pDataObj);
+    FIXME("(%p), stub!\n", pDataObj);
     return S_OK;
 }
 
@@ -270,7 +270,7 @@ HRESULT WINAPI CoRegisterMessageFilter(
     LPMESSAGEFILTER lpMessageFilter,	/* Pointer to interface */
     LPMESSAGEFILTER *lplpMessageFilter	/* Indirect pointer to prior instance if non-NULL */
 ) {
-    FIXME(ole,"stub\n");
+    FIXME("stub\n");
     if (lplpMessageFilter) {
 	*lplpMessageFilter = NULL;
     }
@@ -281,7 +281,7 @@ HRESULT WINAPI CoRegisterMessageFilter(
  *		OleInitializeWOW	[OLE32.109]
  */
 HRESULT WINAPI OleInitializeWOW(DWORD x) {
-        FIXME(ole,"(0x%08lx),stub!\n",x);
+        FIXME("(0x%08lx),stub!\n",x);
         return 0;
 }
 
@@ -292,7 +292,7 @@ HRESULT WINAPI RegisterDragDrop16(
 	HWND16 hwnd,
 	LPDROPTARGET pDropTarget
 ) {
-	FIXME(ole,"(0x%04x,%p),stub!\n",hwnd,pDropTarget);
+	FIXME("(0x%04x,%p),stub!\n",hwnd,pDropTarget);
 	return S_OK;
 }
 
@@ -305,7 +305,7 @@ HRESULT WINAPI RegisterDragDrop(
 {
   DropTargetNode* dropTargetInfo;
 
-  TRACE(ole,"(0x%x,%p)\n", hwnd, pDropTarget);
+  TRACE("(0x%x,%p)\n", hwnd, pDropTarget);
 
   /*
    * First, check if the window is already registered.
@@ -345,7 +345,7 @@ HRESULT WINAPI RegisterDragDrop(
 HRESULT WINAPI RevokeDragDrop16(
 	HWND16 hwnd
 ) {
-	FIXME(ole,"(0x%04x),stub!\n",hwnd);
+	FIXME("(0x%04x),stub!\n",hwnd);
 	return S_OK;
 }
 
@@ -357,7 +357,7 @@ HRESULT WINAPI RevokeDragDrop(
 {
   DropTargetNode* dropTargetInfo;
 
-  TRACE(ole,"(0x%x)\n", hwnd);
+  TRACE("(0x%x)\n", hwnd);
 
   /*
    * First, check if the window is already registered.
@@ -414,7 +414,7 @@ HRESULT WINAPI OleRegGetUserType(
   strcat(keyName, xclsid);
   strcat(keyName, "\\");
 
-  TRACE(ole,"(%s, %ld, %p)\n", keyName, dwFormOfType, pszUserType);
+  TRACE("(%s, %ld, %p)\n", keyName, dwFormOfType, pszUserType);
 
   /*
    * Open the class id Key
@@ -488,7 +488,7 @@ HRESULT WINAPI DoDragDrop (
   HWND            hwndTrackWindow;
   MSG             msg;
 
-  TRACE(ole,"(DataObject %p, DropSource %p)\n", pDataObject, pDropSource);
+  TRACE("(DataObject %p, DropSource %p)\n", pDataObject, pDropSource);
 
   /*
    * Setup the drag n drop tracking window.
@@ -572,7 +572,7 @@ HRESULT WINAPI DoDragDrop (
 HRESULT WINAPI OleQueryLinkFromData(
   IDataObject* pSrcDataObject)
 {
-  FIXME(ole,"(%p),stub!\n", pSrcDataObject);
+  FIXME("(%p),stub!\n", pSrcDataObject);
   return S_OK;
 }
 
@@ -605,7 +605,7 @@ HRESULT WINAPI OleRegGetMiscStatus(
   strcat(keyName, xclsid);
   strcat(keyName, "\\");
 
-  TRACE(ole,"(%s, %ld, %p)\n", keyName, dwAspect, pdwStatus);
+  TRACE("(%s, %ld, %p)\n", keyName, dwAspect, pdwStatus);
 
   /*
    * Open the class id Key
@@ -670,7 +670,7 @@ HRESULT WINAPI OleSetContainedObject(
   IRunnableObject* runnable = NULL;
   HRESULT          hres;
 
-  TRACE(ole,"(%p,%x), stub!\n", pUnknown, fContained);
+  TRACE("(%p,%x), stub!\n", pUnknown, fContained);
 
   hres = IUnknown_QueryInterface(pUnknown,
 				 &IID_IRunnableObject,
@@ -702,7 +702,7 @@ HRESULT WINAPI OleLoad(
   STATSTG          storageInfo;
   HRESULT          hres;
 
-  TRACE(ole,"(%p,%p,%p,%p)\n", pStg, riid, pClientSite, ppvObj);
+  TRACE("(%p,%p,%p,%p)\n", pStg, riid, pClientSite, ppvObj);
   
   /*
    * TODO, Conversion ... OleDoAutoConvert
@@ -784,7 +784,7 @@ HRESULT WINAPI OleSave(
   HRESULT hres;
   CLSID   objectClass;
 
-  TRACE(ole,"(%p,%p,%x)\n", pPS, pStg, fSameAsLoad);
+  TRACE("(%p,%p,%x)\n", pPS, pStg, fSameAsLoad);
 
   /*
    * First, we transfer the class ID (if available)
@@ -818,7 +818,7 @@ HRESULT WINAPI OleSave(
 HRESULT WINAPI OleGetClipboard(
   IDataObject** ppDataObj)
 {
-  FIXME(ole,"(%p),stub!\n", ppDataObj);
+  FIXME("(%p),stub!\n", ppDataObj);
 
   if (ppDataObj)
     *ppDataObj=0;
@@ -1091,7 +1091,7 @@ LRESULT CALLBACK OLEMenu_CallWndProc(INT code, WPARAM wParam, LPARAM lParam)
   OleMenuHookItem *pHookItem = NULL;
   WORD fuFlags;
   
-  TRACE(ole,"%i, %04x, %08x\n", code, wParam, (unsigned)lParam );
+  TRACE("%i, %04x, %08x\n", code, wParam, (unsigned)lParam );
 
   /* Check if we're being asked to process the message */
   if ( HC_ACTION != code )
@@ -1175,7 +1175,7 @@ NEXTHOOK:
   if ( !( pHookItem = OLEMenu_IsHookInstalled( GetCurrentThreadId(), NULL ) ) )
   {
     /* This should never fail!! */
-    WARN(ole, "could not retrieve hHook for current thread!\n" );
+    WARN("could not retrieve hHook for current thread!\n" );
     return 0;
   }
   
@@ -1196,7 +1196,7 @@ LRESULT CALLBACK OLEMenu_GetMsgProc(INT code, WPARAM wParam, LPARAM lParam)
   OleMenuHookItem *pHookItem = NULL;
   WORD wCode;
   
-  TRACE(ole,"%i, %04x, %08x\n", code, wParam, (unsigned)lParam );
+  TRACE("%i, %04x, %08x\n", code, wParam, (unsigned)lParam );
 
   /* Check if we're being asked to process a  messages */
   if ( HC_ACTION != code )
@@ -1249,7 +1249,7 @@ NEXTHOOK:
   if ( !( pHookItem = OLEMenu_IsHookInstalled( GetCurrentThreadId(), NULL ) ) )
   {
     /* This should never fail!! */
-    WARN(ole, "could not retrieve hHook for current thread!\n" );
+    WARN("could not retrieve hHook for current thread!\n" );
     return FALSE;
   }
   
@@ -1343,7 +1343,7 @@ HRESULT WINAPI OleSetMenuDescriptor(
 
   if ( lpFrame || lpActiveObject )
   {
-     FIXME(ole,"(%x, %x, %x, %p, %p), Context sensitive help filtering not implemented!\n",
+     FIXME("(%x, %x, %x, %p, %p), Context sensitive help filtering not implemented!\n",
 	(unsigned int)hOleMenu,
 	hwndFrame,
 	hwndActiveObject,
@@ -2120,7 +2120,7 @@ HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
     HGLOBAL16 hmf;
     HDC16 hdc;
 
-    FIXME(ole, "(%04x, '%s', '%s', %d): incorrect metrics, please try to correct them !\n\n\n", hIcon, lpszLabel, lpszSourceFile, iIconIndex);
+    FIXME("(%04x, '%s', '%s', %d): incorrect metrics, please try to correct them !\n\n\n", hIcon, lpszLabel, lpszSourceFile, iIconIndex);
 
     if (!hIcon) {
         if (lpszSourceFile) {

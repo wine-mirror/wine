@@ -8,7 +8,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "oledlg.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "ole2.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
@@ -20,7 +20,7 @@ BOOL WINAPI OleUIAddVerbMenuA(
   HMENU hMenu, UINT uPos, UINT uIDVerbMin, UINT uIDVerbMax,
   BOOL bAddConvert, UINT idConvert, HMENU *lphMenu)
 {
-  FIXME(ole, "(%p, %s, 0x%08x, %d, %d, %d, %d, %d, %p): stub\n",
+  FIXME("(%p, %s, 0x%08x, %d, %d, %d, %d, %d, %p): stub\n",
     lpOleObj, debugstr_a(lpszShortType),
     hMenu, uPos, uIDVerbMin, uIDVerbMax,
     bAddConvert, idConvert, lphMenu
@@ -37,7 +37,7 @@ BOOL WINAPI OleUIAddVerbMenuW(
   HMENU hMenu, UINT uPos, UINT uIDVerbMin, UINT uIDVerbMax,
   BOOL bAddConvert, UINT idConvert, HMENU *lphMenu)
 {
-  FIXME(ole, "(%p, %s, 0x%08x, %d, %d, %d, %d, %d, %p): stub\n",
+  FIXME("(%p, %s, 0x%08x, %d, %d, %d, %d, %d, %p): stub\n",
     lpOleObj, debugstr_w(lpszShortType),
     hMenu, uPos, uIDVerbMin, uIDVerbMax,
     bAddConvert, idConvert, lphMenu
@@ -52,7 +52,7 @@ BOOL WINAPI OleUIAddVerbMenuW(
 BOOL WINAPI OleUICanConvertOrActivateAs(
     REFCLSID rClsid, BOOL fIsLinkedObject, WORD wFormat)
 {
-  FIXME(ole, "(%p, %d, %hd): stub\n",
+  FIXME("(%p, %d, %hd): stub\n",
     rClsid, fIsLinkedObject, wFormat
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -64,7 +64,7 @@ BOOL WINAPI OleUICanConvertOrActivateAs(
  */
 UINT WINAPI OleUIInsertObjectA(LPOLEUIINSERTOBJECTA lpOleUIInsertObject)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIInsertObject);
+  FIXME("(%p): stub\n", lpOleUIInsertObject);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -74,7 +74,7 @@ UINT WINAPI OleUIInsertObjectA(LPOLEUIINSERTOBJECTA lpOleUIInsertObject)
  */
 UINT WINAPI OleUIInsertObjectW(LPOLEUIINSERTOBJECTW lpOleUIInsertObject)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIInsertObject);
+  FIXME("(%p): stub\n", lpOleUIInsertObject);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -84,7 +84,7 @@ UINT WINAPI OleUIInsertObjectW(LPOLEUIINSERTOBJECTW lpOleUIInsertObject)
  */
 UINT WINAPI OleUIPasteSpecialA(LPOLEUIPASTESPECIALA lpOleUIPasteSpecial)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIPasteSpecial);
+  FIXME("(%p): stub\n", lpOleUIPasteSpecial);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -94,7 +94,7 @@ UINT WINAPI OleUIPasteSpecialA(LPOLEUIPASTESPECIALA lpOleUIPasteSpecial)
  */
 UINT WINAPI OleUIPasteSpecialW(LPOLEUIPASTESPECIALW lpOleUIPasteSpecial)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIPasteSpecial);
+  FIXME("(%p): stub\n", lpOleUIPasteSpecial);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -104,7 +104,7 @@ UINT WINAPI OleUIPasteSpecialW(LPOLEUIPASTESPECIALW lpOleUIPasteSpecial)
  */
 UINT WINAPI OleUIEditLinksA(LPOLEUIEDITLINKSA lpOleUIEditLinks)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIEditLinks);
+  FIXME("(%p): stub\n", lpOleUIEditLinks);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -114,7 +114,7 @@ UINT WINAPI OleUIEditLinksA(LPOLEUIEDITLINKSA lpOleUIEditLinks)
  */
 UINT WINAPI OleUIEditLinksW(LPOLEUIEDITLINKSW lpOleUIEditLinks)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIEditLinks);
+  FIXME("(%p): stub\n", lpOleUIEditLinks);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -125,7 +125,7 @@ UINT WINAPI OleUIEditLinksW(LPOLEUIEDITLINKSW lpOleUIEditLinks)
 UINT WINAPI OleUIChangeIconA(
   LPOLEUICHANGEICONA lpOleUIChangeIcon)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIChangeIcon);
+  FIXME("(%p): stub\n", lpOleUIChangeIcon);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -136,7 +136,7 @@ UINT WINAPI OleUIChangeIconA(
 UINT WINAPI OleUIChangeIconW(
   LPOLEUICHANGEICONW lpOleUIChangeIcon)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIChangeIcon);
+  FIXME("(%p): stub\n", lpOleUIChangeIcon);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -146,7 +146,7 @@ UINT WINAPI OleUIChangeIconW(
  */
 UINT WINAPI OleUIConvertA(LPOLEUICONVERTA lpOleUIConvert)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIConvert);
+  FIXME("(%p): stub\n", lpOleUIConvert);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -156,7 +156,7 @@ UINT WINAPI OleUIConvertA(LPOLEUICONVERTA lpOleUIConvert)
  */
 UINT WINAPI OleUIConvertW(LPOLEUICONVERTW lpOleUIConvert)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIConvert);
+  FIXME("(%p): stub\n", lpOleUIConvert);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -166,7 +166,7 @@ UINT WINAPI OleUIConvertW(LPOLEUICONVERTW lpOleUIConvert)
  */
 UINT WINAPI OleUIBusyA(LPOLEUIBUSYA lpOleUIBusy)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIBusy);
+  FIXME("(%p): stub\n", lpOleUIBusy);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -176,7 +176,7 @@ UINT WINAPI OleUIBusyA(LPOLEUIBUSYA lpOleUIBusy)
  */
 UINT WINAPI OleUIBusyW(LPOLEUIBUSYW lpOleUIBusy)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIBusy);
+  FIXME("(%p): stub\n", lpOleUIBusy);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -188,7 +188,7 @@ BOOL WINAPI OleUIUpdateLinksA(
   LPOLEUILINKCONTAINERA lpOleUILinkCntr,
   HWND hwndParent, LPSTR lpszTitle, INT cLinks)
 {
-  FIXME(ole,"(%p, 0x%08x, %s, %d): stub\n",
+  FIXME("(%p, 0x%08x, %s, %d): stub\n",
     lpOleUILinkCntr, hwndParent, debugstr_a(lpszTitle), cLinks
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -205,7 +205,7 @@ BOOL WINAPI OleUIUpdateLinksW(
   LPOLEUILINKCONTAINERW lpOleUILinkCntr,
   HWND hwndParent, LPWSTR lpszTitle, INT cLinks)
 {
-  FIXME(ole, "(%p, 0x%08x, %s, %d): stub\n",
+  FIXME("(%p, 0x%08x, %s, %d): stub\n",
     lpOleUILinkCntr, hwndParent, debugstr_w(lpszTitle), cLinks
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -218,7 +218,7 @@ BOOL WINAPI OleUIUpdateLinksW(
 INT __cdecl OleUIPromptUserA(
   INT nTemplate, HWND hwndParent, ...)
 {
-  FIXME(ole, "(%d, 0x%08x, ...): stub\n", nTemplate, hwndParent);
+  FIXME("(%d, 0x%08x, ...): stub\n", nTemplate, hwndParent);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -229,7 +229,7 @@ INT __cdecl OleUIPromptUserA(
 INT __cdecl OleUIPromptUserW(
   INT nTemplate, HWND hwndParent, ...)
 {
-  FIXME(ole, "(%d, 0x%08x, ...): stub\n", nTemplate, hwndParent);
+  FIXME("(%d, 0x%08x, ...): stub\n", nTemplate, hwndParent);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -240,7 +240,7 @@ INT __cdecl OleUIPromptUserW(
 UINT WINAPI OleUIObjectPropertiesA(
   LPOLEUIOBJECTPROPSA lpOleUIObjectProps)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIObjectProps);
+  FIXME("(%p): stub\n", lpOleUIObjectProps);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -251,7 +251,7 @@ UINT WINAPI OleUIObjectPropertiesA(
 UINT WINAPI OleUIObjectPropertiesW(
   LPOLEUIOBJECTPROPSW lpOleUIObjectProps)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIObjectProps);
+  FIXME("(%p): stub\n", lpOleUIObjectProps);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -262,7 +262,7 @@ UINT WINAPI OleUIObjectPropertiesW(
 UINT WINAPI OleUIChangeSourceA(
   LPOLEUICHANGESOURCEA lpOleUIChangeSource)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIChangeSource);
+  FIXME("(%p): stub\n", lpOleUIChangeSource);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }
@@ -273,7 +273,7 @@ UINT WINAPI OleUIChangeSourceA(
 UINT WINAPI OleUIChangeSourceW(
   LPOLEUICHANGESOURCEW lpOleUIChangeSource)
 {
-  FIXME(ole, "(%p): stub\n", lpOleUIChangeSource);
+  FIXME("(%p): stub\n", lpOleUIChangeSource);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return OLEUI_FALSE;
 }

@@ -11,7 +11,7 @@
 #include "dlgs.h"
 #include "heap.h"
 #include "ldt.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "debugstr.h"
 #include "tweak.h"
 
@@ -190,7 +190,7 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
 
    default:
      /* Ok. Ignore all the other messages */
-     TRACE (dialog, "Message number %i is being ignored.\n", message);
+     TRACE("Message number %i is being ignored.\n", message);
     break;
   }
   return 0;
@@ -202,7 +202,7 @@ static LRESULT CALLBACK MSGBOX_DlgProc( HWND hwnd, UINT message,
  */
 INT16 WINAPI MessageBox16( HWND16 hwnd, LPCSTR text, LPCSTR title, UINT16 type)
 {
-    WARN(dialog,"Messagebox\n");
+    WARN("Messagebox\n");
     return MessageBoxA( hwnd, text, title, type );
 }
 
@@ -220,7 +220,7 @@ INT WINAPI MessageBoxA(HWND hWnd, LPCSTR text, LPCSTR title, UINT type)
     HRSRC hRes;
     MSGBOXPARAMSA mbox;
 
-    WARN(dialog,"Messagebox\n");
+    WARN("Messagebox\n");
 
     if(!(hRes = FindResourceA(GetModuleHandleA("USER32"), "MSGBOX", RT_DIALOGA)))
         return 0;
@@ -248,7 +248,7 @@ INT WINAPI MessageBoxW( HWND hwnd, LPCWSTR text, LPCWSTR title,
     LPSTR textA  = HEAP_strdupWtoA( GetProcessHeap(), 0, text );
     INT ret;
     
-    WARN(dialog,"Messagebox\n");
+    WARN("Messagebox\n");
 
     ret = MessageBoxA( hwnd, textA, titleA, type );
     HeapFree( GetProcessHeap(), 0, titleA );
@@ -263,7 +263,7 @@ INT WINAPI MessageBoxW( HWND hwnd, LPCWSTR text, LPCWSTR title,
 INT WINAPI MessageBoxExA( HWND hWnd, LPCSTR text, LPCSTR title,
                               UINT type, WORD langid )
 {
-    WARN(dialog,"Messagebox\n");
+    WARN("Messagebox\n");
     /* ignore language id for now */
     return MessageBoxA(hWnd,text,title,type);
 }
@@ -274,7 +274,7 @@ INT WINAPI MessageBoxExA( HWND hWnd, LPCSTR text, LPCSTR title,
 INT WINAPI MessageBoxExW( HWND hWnd, LPCWSTR text, LPCWSTR title,
                               UINT type, WORD langid )
 {
-    WARN(dialog,"Messagebox\n");
+    WARN("Messagebox\n");
     /* ignore language id for now */
     return MessageBoxW(hWnd,text,title,type);
 }
@@ -288,7 +288,7 @@ INT16 WINAPI MessageBoxIndirect16( LPMSGBOXPARAMS16 msgbox )
     HRSRC hRes;
     MSGBOXPARAMSA msgbox32;
 
-    WARN(dialog,"Messagebox\n");    
+    WARN("Messagebox\n");    
     
     if(!(hRes = FindResourceA(GetModuleHandleA("USER32"), "MSGBOX", RT_DIALOGA)))
         return 0;
@@ -319,7 +319,7 @@ INT WINAPI MessageBoxIndirectA( LPMSGBOXPARAMSA msgbox )
     LPVOID template;
     HRSRC hRes;
 
-    WARN(dialog,"Messagebox\n");
+    WARN("Messagebox\n");
 
     if(!(hRes = FindResourceA(GetModuleHandleA("USER32"), "MSGBOX", RT_DIALOGA)))
         return 0;
@@ -337,7 +337,7 @@ INT WINAPI MessageBoxIndirectA( LPMSGBOXPARAMSA msgbox )
 INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
 {
     MSGBOXPARAMSA	msgboxa;
-    WARN(dialog,"Messagebox\n");
+    WARN("Messagebox\n");
 
     memcpy(&msgboxa,msgbox,sizeof(msgboxa));
     if (msgbox->lpszCaption)	
@@ -354,7 +354,7 @@ INT WINAPI MessageBoxIndirectW( LPMSGBOXPARAMSW msgbox )
  */
 void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
 {
-    WARN(dialog,"AppExit\n");
+    WARN("AppExit\n");
     FatalAppExitA( action, str );
 }
 
@@ -364,7 +364,7 @@ void WINAPI FatalAppExit16( UINT16 action, LPCSTR str )
  */
 void WINAPI FatalAppExitA( UINT action, LPCSTR str )
 {
-    WARN(dialog,"AppExit\n");
+    WARN("AppExit\n");
     MessageBoxA( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
     ExitProcess(0);
 }
@@ -375,7 +375,7 @@ void WINAPI FatalAppExitA( UINT action, LPCSTR str )
  */
 void WINAPI FatalAppExitW( UINT action, LPCWSTR str )
 {
-    WARN(dialog,"AppExit\n");
+    WARN("AppExit\n");
     MessageBoxW( 0, str, NULL, MB_SYSTEMMODAL | MB_OK );
     ExitProcess(0);
 }

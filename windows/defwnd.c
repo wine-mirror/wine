@@ -13,7 +13,7 @@
 #include "nonclient.h"
 #include "winpos.h"
 #include "dce.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "spy.h"
 #include "tweak.h"
 #include "cache.h"
@@ -121,7 +121,7 @@ static void DEFWND_SetRedraw( WND* wndPtr, WPARAM wParam )
 {
     BOOL bVisible = wndPtr->dwStyle & WS_VISIBLE;
 
-    TRACE(win,"%04x %i\n", wndPtr->hwndSelf, (wParam!=0) );
+    TRACE("%04x %i\n", wndPtr->hwndSelf, (wParam!=0) );
 
     if( wParam )
     {
@@ -166,7 +166,7 @@ static void DEFWND_Print(
        (uFlags & PRF_OWNED)    ||
        (uFlags & PRF_NONCLIENT) )
   {
-    WARN(win,"WM_PRINT message with unsupported flags\n");
+    WARN("WM_PRINT message with unsupported flags\n");
   }
 
   /*
@@ -224,7 +224,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 	    TrackPopupMenu32(wndPtr->hSysMenu,TPM_LEFTALIGN | TPM_RETURNCMD,LOWORD(lParam),HIWORD(lParam),0,wndPtr->hwndSelf,NULL);
 	    DestroyMenu32(wndPtr->hSysMenu);
 	    */
-	    FIXME(win,"Display default popup menu\n");
+	    FIXME("Display default popup menu\n");
 	  /* Track system popup if click was in the caption area. */
 	  }
 	break;
@@ -257,7 +257,7 @@ static LRESULT DEFWND_DefWinProc( WND *wndPtr, UINT msg, WPARAM wParam,
 			GetSystemMetrics(SM_CXICON))/2;
 	        int y = (wndPtr->rectWindow.bottom - wndPtr->rectWindow.top -
 			GetSystemMetrics(SM_CYICON))/2;
-		TRACE(win,"Painting class icon: vis rect=(%i,%i - %i,%i)\n",
+		TRACE("Painting class icon: vis rect=(%i,%i - %i,%i)\n",
 		ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom );
 	        DrawIcon( hdc, x, y, wndPtr->class->hIcon );
 	      }

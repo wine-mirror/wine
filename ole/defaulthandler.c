@@ -35,7 +35,7 @@
 #include "winuser.h"
 #include "winerror.h"
 #include "ole2.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
 
@@ -387,7 +387,7 @@ HRESULT WINAPI OleCreateDefaultHandler(
   WINE_StringFromCLSID((LPCLSID)clsid,xclsid);
   WINE_StringFromCLSID((LPCLSID)riid,xriid);
 
-  TRACE(ole, "(%s, %p, %s, %p)\n", xclsid, pUnkOuter, xriid, ppvObj);
+  TRACE("(%s, %p, %s, %p)\n", xclsid, pUnkOuter, xriid, ppvObj);
 
   /*
    * Sanity check
@@ -623,7 +623,7 @@ static HRESULT WINAPI DefaultHandler_NDIUnknown_QueryInterface(
 
     WINE_StringFromCLSID((LPCLSID)riid,clsid);
     
-    WARN(ole, 
+    WARN(
 	 "() : asking for un supported interface %s\n", 
 	 clsid);
 
@@ -748,7 +748,7 @@ static HRESULT WINAPI DefaultHandler_SetClientSite(
 {
   _ICOM_THIS_From_IOleObject(DefaultHandler, iface);
 
-  TRACE(ole, "(%p, %p)\n", iface, pClientSite);
+  TRACE("(%p, %p)\n", iface, pClientSite);
 
   /*
    * Make sure we release the previous client site if there
@@ -814,7 +814,7 @@ static HRESULT WINAPI DefaultHandler_SetHostNames(
 {
   _ICOM_THIS_From_IOleObject(DefaultHandler, iface);
 
-  TRACE(ole, "(%p, %s, %s)\n",
+  TRACE("(%p, %s, %s)\n",
 	iface,
 	debugstr_w(szContainerApp), 
 	debugstr_w(szContainerObj));
@@ -858,7 +858,7 @@ static HRESULT WINAPI DefaultHandler_Close(
 	    IOleObject*        iface, 
 	    DWORD              dwSaveOption)
 {
-  TRACE(ole, "()\n");
+  TRACE("()\n");
   return S_OK;
 }
 
@@ -874,7 +874,7 @@ static HRESULT WINAPI DefaultHandler_SetMoniker(
 	    DWORD              dwWhichMoniker,
 	    IMoniker*          pmk)
 {
-  TRACE(ole, "(%p, %ld, %p)\n",
+  TRACE("(%p, %ld, %p)\n",
 	iface, 
 	dwWhichMoniker, 
 	pmk);
@@ -897,7 +897,7 @@ static HRESULT WINAPI DefaultHandler_GetMoniker(
 {
   _ICOM_THIS_From_IOleObject(DefaultHandler, iface);
 
-  TRACE(ole, "(%p, %ld, %ld, %p)\n",
+  TRACE("(%p, %ld, %ld, %p)\n",
 	iface, dwAssign, dwWhichMoniker, ppmk);
 
   if (this->clientSite)
@@ -925,7 +925,7 @@ static HRESULT WINAPI DefaultHandler_InitFromData(
 	    BOOL               fCreation,
 	    DWORD              dwReserved)
 {
-  TRACE(ole, "(%p, %p, %d, %ld)\n",
+  TRACE("(%p, %p, %d, %ld)\n",
 	iface, pDataObject, fCreation, dwReserved);
 
   return OLE_E_NOTRUNNING;
@@ -943,7 +943,7 @@ static HRESULT WINAPI DefaultHandler_GetClipboardData(
 	    DWORD              dwReserved, 
 	    IDataObject**      ppDataObject)
 {
-  TRACE(ole, "(%p, %ld, %p)\n",
+  TRACE("(%p, %ld, %p)\n",
 	iface, dwReserved, ppDataObject);
 
   return OLE_E_NOTRUNNING;
@@ -958,7 +958,7 @@ static HRESULT WINAPI DefaultHandler_DoVerb(
 	    HWND               hwndParent, 
 	    LPCRECT            lprcPosRect)
 {
-  FIXME(ole, ": Stub\n");
+  FIXME(": Stub\n");
   return E_NOTIMPL;
 }
 
@@ -976,7 +976,7 @@ static HRESULT WINAPI DefaultHandler_EnumVerbs(
 {
   _ICOM_THIS_From_IOleObject(DefaultHandler, iface);
 
-  TRACE(ole, "(%p, %p)\n", iface, ppEnumOleVerb);
+  TRACE("(%p, %p)\n", iface, ppEnumOleVerb);
 
   return OleRegEnumVerbs(&this->clsid, ppEnumOleVerb);
 }
@@ -984,7 +984,7 @@ static HRESULT WINAPI DefaultHandler_EnumVerbs(
 static HRESULT WINAPI DefaultHandler_Update(
 	    IOleObject*        iface)
 {
-  FIXME(ole, ": Stub\n");
+  FIXME(": Stub\n");
   return E_NOTIMPL;
 }
 
@@ -998,7 +998,7 @@ static HRESULT WINAPI DefaultHandler_Update(
 static HRESULT WINAPI DefaultHandler_IsUpToDate(
 	    IOleObject*        iface)
 {
-  TRACE(ole, "(%p)\n", iface);
+  TRACE("(%p)\n", iface);
 
   return OLE_E_NOTRUNNING;
 }
@@ -1016,7 +1016,7 @@ static HRESULT WINAPI DefaultHandler_GetUserClassID(
 {
   _ICOM_THIS_From_IOleObject(DefaultHandler, iface);
 
-  TRACE(ole, "(%p, %p)\n", iface, pClsid);
+  TRACE("(%p, %p)\n", iface, pClsid);
 
   /*
    * Sanity check.
@@ -1044,7 +1044,7 @@ static HRESULT WINAPI DefaultHandler_GetUserType(
 {
   _ICOM_THIS_From_IOleObject(DefaultHandler, iface);
 
-  TRACE(ole, "(%p, %ld, %p)\n", iface, dwFormOfType, pszUserType);
+  TRACE("(%p, %ld, %p)\n", iface, dwFormOfType, pszUserType);
 
   return OleRegGetUserType(&this->clsid, dwFormOfType, pszUserType);
 }
@@ -1061,7 +1061,7 @@ static HRESULT WINAPI DefaultHandler_SetExtent(
 	    DWORD              dwDrawAspect, 
 	    SIZEL*             psizel)
 {
-  TRACE(ole, "(%p, %lx, (%d,%d))\n", iface, dwDrawAspect, psizel->cx, psizel->cy);
+  TRACE("(%p, %lx, (%d,%d))\n", iface, dwDrawAspect, psizel->cx, psizel->cy);
   return OLE_E_NOTRUNNING;
 }
 
@@ -1084,7 +1084,7 @@ static HRESULT WINAPI DefaultHandler_GetExtent(
 
   _ICOM_THIS_From_IOleObject(DefaultHandler, iface);  
 
-  TRACE(ole, "(%p, %lx, %p)\n", iface, dwDrawAspect, psizel);
+  TRACE("(%p, %lx, %p)\n", iface, dwDrawAspect, psizel);
 
   hres = IUnknown_QueryInterface(this->dataCache, &IID_IViewObject2, (void**)&cacheView);
 
@@ -1131,7 +1131,7 @@ static HRESULT WINAPI DefaultHandler_Advise(
   HRESULT hres = S_OK;
   _ICOM_THIS_From_IOleObject(DefaultHandler, iface);  
 
-  TRACE(ole, "(%p, %p, %p)\n", iface, pAdvSink, pdwConnection);
+  TRACE("(%p, %p, %p)\n", iface, pAdvSink, pdwConnection);
 
   /*
    * Make sure we have an advise holder before we start.
@@ -1165,7 +1165,7 @@ static HRESULT WINAPI DefaultHandler_Unadvise(
 {
   _ICOM_THIS_From_IOleObject(DefaultHandler, iface);  
 
-  TRACE(ole, "(%p, %ld)\n", iface, dwConnection);
+  TRACE("(%p, %ld)\n", iface, dwConnection);
 
   /*
    * If we don't have an advise holder yet, it means we don't have
@@ -1192,7 +1192,7 @@ static HRESULT WINAPI DefaultHandler_EnumAdvise(
 {
   _ICOM_THIS_From_IOleObject(DefaultHandler, iface);  
 
-  TRACE(ole, "(%p, %p)\n", iface, ppenumAdvise);
+  TRACE("(%p, %p)\n", iface, ppenumAdvise);
 
   /*
    * Sanity check
@@ -1228,7 +1228,7 @@ static HRESULT WINAPI DefaultHandler_GetMiscStatus(
   HRESULT hres;
   _ICOM_THIS_From_IOleObject(DefaultHandler, iface);
 
-  TRACE(ole, "(%p, %lx, %p)\n", iface, dwAspect, pdwStatus);
+  TRACE("(%p, %lx, %p)\n", iface, dwAspect, pdwStatus);
 
   hres = OleRegGetMiscStatus(&(this->clsid), dwAspect, pdwStatus);
 
@@ -1249,7 +1249,7 @@ static HRESULT WINAPI DefaultHandler_SetColorScheme(
 	    IOleObject*        iface,
 	    LOGPALETTE*        pLogpal)
 {
-  TRACE(ole, "(%p, %p))\n", iface, pLogpal);
+  TRACE("(%p, %p))\n", iface, pLogpal);
   return OLE_E_NOTRUNNING;
 }
 
@@ -1304,7 +1304,7 @@ static HRESULT WINAPI DefaultHandler_GetData(
 	    LPFORMATETC      pformatetcIn, 
 	    STGMEDIUM*       pmedium)
 {
-  FIXME(ole, ": Stub\n");
+  FIXME(": Stub\n");
   return E_NOTIMPL;
 }
 
@@ -1313,7 +1313,7 @@ static HRESULT WINAPI DefaultHandler_GetDataHere(
 	    LPFORMATETC      pformatetc,
 	    STGMEDIUM*       pmedium)
 {
-  FIXME(ole, ": Stub\n");
+  FIXME(": Stub\n");
   return E_NOTIMPL;
 }
 
@@ -1334,7 +1334,7 @@ static HRESULT WINAPI DefaultHandler_QueryGetData(
 
   _ICOM_THIS_From_IDataObject(DefaultHandler, iface);
 
-  TRACE(ole, "(%p, %p)\n", iface, pformatetc);
+  TRACE("(%p, %p)\n", iface, pformatetc);
 
   hres = IUnknown_QueryInterface(this->dataCache, 
 				 &IID_IDataObject,
@@ -1363,7 +1363,7 @@ static HRESULT WINAPI DefaultHandler_GetCanonicalFormatEtc(
 	    LPFORMATETC      pformatectIn, 
 	    LPFORMATETC      pformatetcOut)
 {
-  FIXME(ole, "(%p, %p, %p)\n", iface, pformatectIn, pformatetcOut);
+  FIXME("(%p, %p, %p)\n", iface, pformatectIn, pformatetcOut);
 
   return OLE_E_NOTRUNNING;
 }
@@ -1387,7 +1387,7 @@ static HRESULT WINAPI DefaultHandler_SetData(
 
   _ICOM_THIS_From_IDataObject(DefaultHandler, iface);
 
-  TRACE(ole, "(%p, %p, %p, %d)\n", iface, pformatetc, pmedium, fRelease);
+  TRACE("(%p, %p, %p, %d)\n", iface, pformatetc, pmedium, fRelease);
 
   hres = IUnknown_QueryInterface(this->dataCache, 
 				 &IID_IDataObject,
@@ -1422,7 +1422,7 @@ static HRESULT WINAPI DefaultHandler_EnumFormatEtc(
   HRESULT hres;
   _ICOM_THIS_From_IDataObject(DefaultHandler, iface);
 
-  TRACE(ole, "(%p, %lx, %p)\n", iface, dwDirection, ppenumFormatEtc);
+  TRACE("(%p, %lx, %p)\n", iface, dwDirection, ppenumFormatEtc);
 
   hres = OleRegEnumFormatEtc(&(this->clsid), dwDirection, ppenumFormatEtc);
 
@@ -1447,7 +1447,7 @@ static HRESULT WINAPI DefaultHandler_DAdvise(
   HRESULT hres = S_OK;
   _ICOM_THIS_From_IDataObject(DefaultHandler, iface);  
 
-  TRACE(ole, "(%p, %p, %ld, %p, %p)\n", 
+  TRACE("(%p, %p, %ld, %p, %p)\n", 
 	iface, pformatetc, advf, pAdvSink, pdwConnection);
 
   /*
@@ -1485,7 +1485,7 @@ static HRESULT WINAPI DefaultHandler_DUnadvise(
 {
   _ICOM_THIS_From_IDataObject(DefaultHandler, iface);  
 
-  TRACE(ole, "(%p, %ld)\n", iface, dwConnection);
+  TRACE("(%p, %ld)\n", iface, dwConnection);
 
   /*
    * If we don't have a data advise holder yet, it means that
@@ -1514,7 +1514,7 @@ static HRESULT WINAPI DefaultHandler_EnumDAdvise(
 {
   _ICOM_THIS_From_IDataObject(DefaultHandler, iface);  
 
-  TRACE(ole, "(%p, %p)\n", iface, ppenumAdvise);
+  TRACE("(%p, %p)\n", iface, ppenumAdvise);
 
   /*
    * Sanity check
@@ -1598,7 +1598,7 @@ static HRESULT WINAPI DefaultHandler_GetRunningClass(
             IRunnableObject*     iface,   
 	    LPCLSID              lpClsid)
 {
-  TRACE(ole, "()\n");
+  TRACE("()\n");
   return S_OK;
 }
 
@@ -1606,7 +1606,7 @@ static HRESULT WINAPI DefaultHandler_Run(
             IRunnableObject*     iface,
 	    IBindCtx*            pbc)
 {
-  FIXME(ole, ": Stub\n");
+  FIXME(": Stub\n");
   return E_NOTIMPL;
 }
 
@@ -1622,7 +1622,7 @@ static HRESULT WINAPI DefaultHandler_Run(
 static BOOL    WINAPI DefaultHandler_IsRunning( 
             IRunnableObject*     iface)
 {
-  TRACE(ole, "()\n");
+  TRACE("()\n");
   return S_FALSE;
 }
 
@@ -1640,7 +1640,7 @@ static HRESULT WINAPI DefaultHandler_LockRunning(
 	    BOOL                 fLock, 
 	    BOOL                 fLastUnlockCloses)
 {
-  TRACE(ole, "()\n");
+  TRACE("()\n");
   return S_OK;
 }
 
@@ -1657,7 +1657,7 @@ static HRESULT WINAPI DefaultHandler_SetContainedObject(
             IRunnableObject*     iface, 
 	    BOOL                 fContained)
 {
-  TRACE(ole, "()\n");
+  TRACE("()\n");
   return S_OK;
 }
 

@@ -10,7 +10,7 @@
 #include "vfw.h"
 #include "wine/winestring.h"
 #include "driver.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(msvideo)
 
@@ -40,7 +40,7 @@ ICInfo(
 	char	type[5],buf[2000];
 
 	memcpy(type,&fccType,4);type[4]=0;
-	TRACE(msvideo,"(%s,%ld,%p).\n",type,fccHandler,lpicinfo);
+	TRACE("(%s,%ld,%p).\n",type,fccHandler,lpicinfo);
 	/* does OpenDriver/CloseDriver */
 	lpicinfo->dwSize = sizeof(ICINFO);
 	lpicinfo->fccType = fccType;
@@ -73,7 +73,7 @@ ICOpen(DWORD fccType,DWORD fccHandler,UINT wMode) {
 
 	memcpy(type,&fccType,4);type[4]=0;
 	memcpy(handler,&fccHandler,4);handler[4]=0;
-	TRACE(msvideo,"(%s,%s,0x%08lx)\n",type,handler,(DWORD)wMode);
+	TRACE("(%s,%s,0x%08lx)\n",type,handler,(DWORD)wMode);
 	sprintf(codecname,"%s.%s",type,handler);
 
 	/* Well, lParam2 is in fact a LPVIDEO_OPEN_PARMS, but it has the 
@@ -108,7 +108,7 @@ FARPROC lpfnHandler) {
 
 	memcpy(type,&fccType,4);type[4]=0;
 	memcpy(handler,&fccHandler,4);handler[4]=0;
-	FIXME(msvideo,"(%s,%s,%d,%p), stub!\n",type,handler,wMode,lpfnHandler);
+	FIXME("(%s,%s,%d,%p), stub!\n",type,handler,wMode,lpfnHandler);
 	hic = ICOpen(fccType,fccHandler,wMode);
 	if (!hic)
 		return hic;
@@ -122,9 +122,9 @@ LRESULT WINAPI
 ICGetInfo(HIC hic,ICINFO *picinfo,DWORD cb) {
 	LRESULT		ret;
 
-	TRACE(msvideo,"(0x%08lx,%p,%ld)\n",(DWORD)hic,picinfo,cb);
+	TRACE("(0x%08lx,%p,%ld)\n",(DWORD)hic,picinfo,cb);
 	ret = ICSendMessage(hic,ICM_GETINFO,(DWORD)picinfo,cb);
-	TRACE(msvideo,"	-> 0x%08lx\n",ret);
+	TRACE("	-> 0x%08lx\n",ret);
 	return ret;
 }
 
@@ -150,7 +150,7 @@ ICLocate(
 		querymsg = ICM_DRAW_QUERY;
 		break;
 	default:
-		FIXME(msvideo,"Unknown mode (%d)\n",wMode);
+		FIXME("Unknown mode (%d)\n",wMode);
 		return 0;
 	}
 
@@ -168,7 +168,7 @@ ICLocate(
 		if (hic)
 			return hic;
 	}
-	FIXME(msvideo,"(%s,%s,%p,%p,0x%04x),unhandled!\n",type,handler,lpbiIn,lpbiOut,wMode);
+	FIXME("(%s,%s,%p,%p,0x%04x),unhandled!\n",type,handler,lpbiIn,lpbiOut,wMode);
 	return 0;
 }
 
@@ -179,7 +179,7 @@ HIC VFWAPI ICGetDisplayFormat(
 	HIC	tmphic = hic; 
 	LRESULT	lres;
 
-	FIXME(msvideo,"(0x%08lx,%p,%p,%d,%d,%d),stub!\n",(DWORD)hic,lpbiIn,lpbiOut,depth,dx,dy);
+	FIXME("(0x%08lx,%p,%p,%d,%d,%d),stub!\n",(DWORD)hic,lpbiIn,lpbiOut,depth,dx,dy);
 	if (!tmphic) {
 		tmphic=ICLocate(ICTYPE_VIDEO,0,lpbiIn,NULL,ICMODE_DECOMPRESS);
 		if (!tmphic)
@@ -260,7 +260,7 @@ ICSendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2) {
 	LRESULT		ret;
 	WINE_HIC	*whic = (WINE_HIC*)hic;
 
-#define XX(x) case x: TRACE(msvideo,"(0x%08lx,"#x",0x%08lx,0x%08lx)\n",(DWORD)hic,lParam1,lParam2);break;
+#define XX(x) case x: TRACE("(0x%08lx,"#x",0x%08lx,0x%08lx)\n",(DWORD)hic,lParam1,lParam2);break;
 
 	switch (msg) {
 	XX(ICM_ABOUT)
@@ -304,16 +304,16 @@ ICSendMessage(HIC hic,UINT msg,DWORD lParam1,DWORD lParam2) {
 	XX(ICM_DECOMPRESSEX_END)
 	XX(ICM_SET_STATUS_PROC)
 	default:
-		FIXME(msvideo,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx)\n",(DWORD)hic,(DWORD)msg,lParam1,lParam2);
+		FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx)\n",(DWORD)hic,(DWORD)msg,lParam1,lParam2);
 	}
 #if 0
 	if (whic->driverproc) {
-		FIXME(msvideo,"(0x%08lx,0x%08lx,0x%08lx,0x%08lx), calling %p\n",(DWORD)hic,(DWORD)msg,lParam1,lParam2,whic->driverproc);
+		FIXME("(0x%08lx,0x%08lx,0x%08lx,0x%08lx), calling %p\n",(DWORD)hic,(DWORD)msg,lParam1,lParam2,whic->driverproc);
 		ret = whic->driverproc(whic->hdrv,1,msg,lParam1,lParam2);
 	} else
 #endif
 		ret = SendDriverMessage(whic->hdrv,msg,lParam1,lParam2);
-	TRACE(msvideo,"	-> 0x%08lx\n",ret);
+	TRACE("	-> 0x%08lx\n",ret);
 	return ret;
 }
 
@@ -370,7 +370,7 @@ DWORD VFWAPIV ICDraw(
 
 LRESULT WINAPI ICClose(HIC hic) {
 	WINE_HIC	*whic = (WINE_HIC*)hic;
-	TRACE(msvideo,"(%d).\n",hic);
+	TRACE("(%d).\n",hic);
 	/* FIXME: correct? */
 	CloseDriver(whic->hdrv,0,0);
 	HeapFree(GetProcessHeap(),0,whic);
@@ -379,7 +379,7 @@ LRESULT WINAPI ICClose(HIC hic) {
 
 HANDLE /* HDRAWDIB */ WINAPI
 DrawDibOpen( void ) {
-	FIXME(msvideo,"stub!\n");
+	FIXME("stub!\n");
 	return 0xdead;
 }
 
@@ -391,7 +391,7 @@ BOOL VFWAPI DrawDibBegin(HANDLE /*HDRAWDIB*/ hdd,
                                     INT      dxSrc,
                                     INT      dySrc,
                                     UINT     wFlags) {
-	FIXME(msvideo,"(%d,0x%lx,%d,%d,%p,%d,%d,0x%08lx), stub!\n",
+	FIXME("(%d,0x%lx,%d,%d,%p,%d,%d,0x%08lx), stub!\n",
 		hdd,(DWORD)hdc,dxDst,dyDst,lpbi,dxSrc,dySrc,(DWORD)wFlags
 	);
 	return TRUE;
@@ -400,28 +400,28 @@ BOOL VFWAPI DrawDibBegin(HANDLE /*HDRAWDIB*/ hdd,
 
 BOOL VFWAPI
 DrawDibSetPalette(HANDLE /*HDRAWDIB*/ hdd, HPALETTE hpal) {
-	FIXME(msvideo,"(%d,%d),stub!\n",hdd,hpal);
+	FIXME("(%d,%d),stub!\n",hdd,hpal);
 	return TRUE;
 }
 
 UINT VFWAPI DrawDibRealize(HANDLE /*HDRAWDIB*/ hdd, HDC hdc, BOOL fBackground) {
-	FIXME(msvideo,"(0x%08lx,0x%08lx,%d),stub!\n",(DWORD)hdd,(DWORD)hdc,fBackground);
+	FIXME("(0x%08lx,0x%08lx,%d),stub!\n",(DWORD)hdd,(DWORD)hdc,fBackground);
 	return 0;
 }
 
 
 HWND VFWAPIV MCIWndCreate (HWND hwndParent, HINSTANCE hInstance,
                       DWORD dwStyle,LPVOID szFile)
-{	FIXME(msvideo,"%x %x %lx %p\n",hwndParent, hInstance, dwStyle, szFile);
+{	FIXME("%x %x %lx %p\n",hwndParent, hInstance, dwStyle, szFile);
 	return 0;
 }
 HWND VFWAPIV MCIWndCreateA(HWND hwndParent, HINSTANCE hInstance,
                       DWORD dwStyle,LPCSTR szFile)
-{	FIXME(msvideo,"%x %x %lx %s\n",hwndParent, hInstance, dwStyle, szFile);
+{	FIXME("%x %x %lx %s\n",hwndParent, hInstance, dwStyle, szFile);
 	return 0;
 }
 HWND VFWAPIV MCIWndCreateW(HWND hwndParent, HINSTANCE hInstance,
                       DWORD dwStyle,LPCWSTR szFile)
-{	FIXME(msvideo,"%x %x %lx %s\n",hwndParent, hInstance, dwStyle, debugstr_w(szFile));
+{	FIXME("%x %x %lx %s\n",hwndParent, hInstance, dwStyle, debugstr_w(szFile));
 	return 0;
 }

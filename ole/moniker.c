@@ -8,7 +8,7 @@
 #include <assert.h>
 #include "winerror.h"
 #include "wine/obj_moniker.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
@@ -82,7 +82,7 @@ HRESULT WINAPI RunningObjectTableImpl_QueryInterface(IRunningObjectTable* iface,
 {
     ICOM_THIS(RunningObjectTableImpl,iface);
 
-    TRACE(ole,"(%p,%p,%p)\n",This,riid,ppvObject);
+    TRACE("(%p,%p,%p)\n",This,riid,ppvObject);
 
     /* validate arguments*/
     if (This==0)
@@ -114,7 +114,7 @@ ULONG   WINAPI RunningObjectTableImpl_AddRef(IRunningObjectTable* iface)
 {
     ICOM_THIS(RunningObjectTableImpl,iface);
 
-    TRACE(ole,"(%p)\n",This);
+    TRACE("(%p)\n",This);
 
     return ++(This->ref);
 }
@@ -124,7 +124,7 @@ ULONG   WINAPI RunningObjectTableImpl_AddRef(IRunningObjectTable* iface)
  */
 HRESULT WINAPI RunningObjectTableImpl_Destroy()
 {
-    TRACE(ole,"()\n");
+    TRACE("()\n");
     
     if (runningObjectTableInstance==NULL)
         return E_INVALIDARG;
@@ -146,7 +146,7 @@ ULONG   WINAPI RunningObjectTableImpl_Release(IRunningObjectTable* iface)
     DWORD i;
     ICOM_THIS(RunningObjectTableImpl,iface);
 
-    TRACE(ole,"(%p)\n",This);
+    TRACE("(%p)\n",This);
 
     This->ref--;
 
@@ -180,7 +180,7 @@ ULONG   WINAPI RunningObjectTableImpl_Release(IRunningObjectTable* iface)
  */
 HRESULT WINAPI RunningObjectTableImpl_Initialize()
 {
-    TRACE(ole,"()\n");
+    TRACE("()\n");
 
     /* create the unique instance of the RunningObjectTableImpl structure */
     runningObjectTableInstance = HeapAlloc(GetProcessHeap(), 0, sizeof(RunningObjectTableImpl));
@@ -214,7 +214,7 @@ HRESULT WINAPI RunningObjectTableImpl_Initialize()
  */
 HRESULT WINAPI RunningObjectTableImpl_UnInitialize()
 {
-    TRACE(ole,"()\n");
+    TRACE("()\n");
 
     if (runningObjectTableInstance==NULL)
         return E_POINTER;
@@ -238,7 +238,7 @@ HRESULT WINAPI RunningObjectTableImpl_Register(IRunningObjectTable* iface,
     HRESULT res=S_OK;
     ICOM_THIS(RunningObjectTableImpl,iface);
 
-    TRACE(ole,"(%p,%ld,%p,%p,%p)\n",This,grfFlags,punkObject,pmkObjectName,pdwRegister);
+    TRACE("(%p,%ld,%p,%p,%p)\n",This,grfFlags,punkObject,pmkObjectName,pdwRegister);
 
     /* there's only tow types of register : strong and or weak registration (only one must be passed on parameter) */
     if ( ( (grfFlags & ROTFLAGS_REGISTRATIONKEEPSALIVE) || !(grfFlags & ROTFLAGS_ALLOWANYCLIENT)) &&
@@ -265,7 +265,7 @@ HRESULT WINAPI RunningObjectTableImpl_Register(IRunningObjectTable* iface,
 
     if (This->runObjTabRegister == 0xFFFFFFFF){
 
-        FIXME(ole,"runObjTabRegister: %ld is out of data limite \n",This->runObjTabRegister);
+        FIXME("runObjTabRegister: %ld is out of data limite \n",This->runObjTabRegister);
 	return E_FAIL;
 }
     This->runObjTabRegister++;
@@ -298,7 +298,7 @@ HRESULT WINAPI RunningObjectTableImpl_Revoke(  IRunningObjectTable* iface,
     DWORD index,j;
     ICOM_THIS(RunningObjectTableImpl,iface);
 
-    TRACE(ole,"(%p,%ld)\n",This,dwRegister);
+    TRACE("(%p,%ld)\n",This,dwRegister);
 
     /* verify if the object to be revoked was registred befor or not */
     if (RunningObjectTableImpl_GetObjectIndex(This,dwRegister,NULL,&index)==S_FALSE)
@@ -328,7 +328,7 @@ HRESULT WINAPI RunningObjectTableImpl_IsRunning(  IRunningObjectTable* iface,
 {    
     ICOM_THIS(RunningObjectTableImpl,iface);
 
-    TRACE(ole,"(%p,%p)\n",This,pmkObjectName);
+    TRACE("(%p,%p)\n",This,pmkObjectName);
 
     return RunningObjectTableImpl_GetObjectIndex(This,-1,pmkObjectName,NULL);
 }
@@ -343,7 +343,7 @@ HRESULT WINAPI RunningObjectTableImpl_GetObject(  IRunningObjectTable* iface,
     DWORD index;
     ICOM_THIS(RunningObjectTableImpl,iface);
 
-    TRACE(ole,"(%p,%p,%p)\n",This,pmkObjectName,ppunkObject);
+    TRACE("(%p,%p,%p)\n",This,pmkObjectName,ppunkObject);
 
     if (ppunkObject==NULL)
         return E_POINTER;
@@ -371,7 +371,7 @@ HRESULT WINAPI RunningObjectTableImpl_NoteChangeTime(IRunningObjectTable* iface,
     DWORD index=-1;
     ICOM_THIS(RunningObjectTableImpl,iface);
 
-    TRACE(ole,"(%p,%ld,%p)\n",This,dwRegister,pfiletime);
+    TRACE("(%p,%ld,%p)\n",This,dwRegister,pfiletime);
 
     /* verify if the object to be changed was registred befor or not */
     if (RunningObjectTableImpl_GetObjectIndex(This,dwRegister,NULL,&index)==S_FALSE)
@@ -393,7 +393,7 @@ HRESULT WINAPI RunningObjectTableImpl_GetTimeOfLastChange(IRunningObjectTable* i
     DWORD index=-1;
     ICOM_THIS(RunningObjectTableImpl,iface);
 
-    TRACE(ole,"(%p,%p,%p)\n",This,pmkObjectName,pfiletime);
+    TRACE("(%p,%p,%p)\n",This,pmkObjectName,pfiletime);
 
     if (pmkObjectName==NULL || pfiletime==NULL)
         return E_INVALIDARG;
@@ -413,7 +413,7 @@ HRESULT WINAPI RunningObjectTableImpl_GetTimeOfLastChange(IRunningObjectTable* i
 HRESULT WINAPI RunningObjectTableImpl_EnumRunning(IRunningObjectTable* iface,
                                                   IEnumMoniker **ppenumMoniker) /* Address of output variable that receives the IEnumMoniker interface pointer */
 {
-    FIXME(ole,"(%p,%p) needs the IEnumMoniker implementation  \n",iface,ppenumMoniker);
+    FIXME("(%p,%p) needs the IEnumMoniker implementation  \n",iface,ppenumMoniker);
     return E_NOTIMPL;
 }
 
@@ -428,7 +428,7 @@ HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl* Thi
 
     DWORD i;
 
-    TRACE(ole,"(%p,%ld,%p,%p)\n",This,identReg,pmk,indx);
+    TRACE("(%p,%ld,%p,%p)\n",This,identReg,pmk,indx);
 
     if (pmk!=NULL)
         /* search object identified by a moniker*/
@@ -449,7 +449,7 @@ HRESULT WINAPI RunningObjectTableImpl_GetObjectIndex(RunningObjectTableImpl* Thi
  */
 HRESULT WINAPI GetRunningObjectTable16(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot)
 {
-	FIXME(ole,"(%ld,%p),stub!\n",reserved,pprot);
+	FIXME("(%ld,%p),stub!\n",reserved,pprot);
     return E_NOTIMPL;
 }
 
@@ -461,7 +461,7 @@ HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot
     IID riid=IID_IRunningObjectTable;
     HRESULT res;
 
-    TRACE(ole,"()\n");
+    TRACE("()\n");
 
     if (reserved!=0)
         return E_UNEXPECTED;

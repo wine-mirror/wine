@@ -5,7 +5,7 @@
  */
 
 #include "ole2.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
 
@@ -17,7 +17,7 @@ HRESULT WINAPI OleCreateFromData(LPDATAOBJECT pSrcDataObj, REFIID riid,
                 LPOLECLIENTSITE pClientSite, LPSTORAGE pStg,
                 LPVOID* ppvObj)
 {
-    FIXME(ole,"(%p,%p,%li,%p,%p,%p,%p), stub!\n", pSrcDataObj,riid,renderopt,pFormatEtc,pClientSite,pStg,ppvObj);
+    FIXME("(%p,%p,%li,%p,%p,%p,%p), stub!\n", pSrcDataObj,riid,renderopt,pFormatEtc,pClientSite,pStg,ppvObj);
     return S_OK;
 }
 
@@ -29,7 +29,7 @@ HRESULT WINAPI  OleCreateLinkToFile(LPCOLESTR lpszFileName, REFIID riid,
 	  		DWORD renderopt, LPFORMATETC lpFormatEtc,
 			LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj)
 {
-    FIXME(ole,"(%p,%p,%li,%p,%p,%p,%p), stub!\n",lpszFileName, riid, renderopt, lpFormatEtc, pClientSite, pStg, ppvObj);
+    FIXME("(%p,%p,%li,%p,%p,%p,%p), stub!\n",lpszFileName, riid, renderopt, lpFormatEtc, pClientSite, pStg, ppvObj);
     return S_OK;
 }
 
@@ -40,7 +40,7 @@ HRESULT WINAPI  OleCreateLinkToFile(LPCOLESTR lpszFileName, REFIID riid,
 HRESULT WINAPI OleDuplicateData(HANDLE hSrc, CLIPFORMAT cfFormat,
 	                          UINT uiFlags)
 {
-    FIXME(ole,"(%x,%x,%x), stub!\n", hSrc, cfFormat, uiFlags);
+    FIXME("(%x,%x,%x), stub!\n", hSrc, cfFormat, uiFlags);
     return S_OK;
 }
 
@@ -51,7 +51,7 @@ HRESULT WINAPI OleDuplicateData(HANDLE hSrc, CLIPFORMAT cfFormat,
 HRESULT WINAPI WriteFmtUserTypeStg(
 	  LPSTORAGE pstg, CLIPFORMAT cf, LPOLESTR lpszUserType)
 {
-    FIXME(ole,"(%p,%x,%p) stub!\n",pstg,cf,lpszUserType);
+    FIXME("(%p,%x,%p) stub!\n",pstg,cf,lpszUserType);
     return S_OK;
 }
 
@@ -61,7 +61,7 @@ HRESULT WINAPI WriteFmtUserTypeStg(
 HRESULT WINAPI OleTranslateAccelerator (LPOLEINPLACEFRAME lpFrame,
                    LPOLEINPLACEFRAMEINFO lpFrameInfo, LPMSG lpmsg)
 {
-    FIXME(ole,"(%p,%p,%p),stub!\n", lpFrame, lpFrameInfo, lpmsg);
+    FIXME("(%p,%p,%p),stub!\n", lpFrame, lpFrameInfo, lpmsg);
     return S_OK;
 }
 
@@ -70,7 +70,7 @@ HRESULT WINAPI OleTranslateAccelerator (LPOLEINPLACEFRAME lpFrame,
  */
 HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
 {
-  FIXME(ole,"(%p,%p), stub!\n", clsidOld, clsidNew);
+  FIXME("(%p,%p), stub!\n", clsidOld, clsidNew);
   return S_OK;
 }
 
@@ -80,7 +80,7 @@ HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew)
  */
 BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* lpwCmd)
 {
-  FIXME(ole,"(%x,%i,%p,%p), stub!\n", hAccel, cAccelEntries, lpMsg, lpwCmd);
+  FIXME("(%x,%i,%p,%p), stub!\n", hAccel, cAccelEntries, lpMsg, lpwCmd);
   return TRUE;
 }
 
@@ -89,7 +89,7 @@ BOOL WINAPI IsAccelerator(HACCEL hAccel, int cAccelEntries, LPMSG lpMsg, WORD* l
  */
 HRESULT WINAPI SetConvertStg(LPSTORAGE pStg, BOOL fConvert)
 {
-  FIXME(ole,"(%p,%x), stub!\n", pStg, fConvert);
+  FIXME("(%p,%x), stub!\n", pStg, fConvert);
   return S_OK;
 }
 
@@ -98,7 +98,7 @@ HRESULT WINAPI SetConvertStg(LPSTORAGE pStg, BOOL fConvert)
  */
 HRESULT WINAPI OleFlushClipboard()
 {
-  FIXME(ole,"(), stub!\n");
+  FIXME("(), stub!\n");
   return S_OK;
 }
 
@@ -108,7 +108,7 @@ HRESULT WINAPI OleFlushClipboard()
 HRESULT WINAPI OleCreate(REFCLSID rclsid, REFIID riid, DWORD renderopt, LPFORMATETC pFormatEtc, LPOLECLIENTSITE pClientSite,
                 LPSTORAGE pStg, LPVOID* ppvObj)
 {
-  FIXME(ole,"(not shown), stub!\n");
+  FIXME("(not shown), stub!\n");
   return S_OK;
 }
 
@@ -118,7 +118,7 @@ HRESULT WINAPI OleCreate(REFCLSID rclsid, REFIID riid, DWORD renderopt, LPFORMAT
 HRESULT WINAPI OleCreateLink(LPMONIKER pmkLinkSrc, REFIID riid, DWORD renderopt, LPFORMATETC lpFormatEtc,
                 LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj)
 {
-  FIXME(ole,"(not shown), stub!\n");
+  FIXME("(not shown), stub!\n");
   return S_OK;
 }
 
@@ -128,7 +128,7 @@ HRESULT WINAPI OleCreateLink(LPMONIKER pmkLinkSrc, REFIID riid, DWORD renderopt,
 HRESULT WINAPI OleCreateFromFile(REFCLSID rclsid, LPCOLESTR lpszFileName, REFIID riid,
             DWORD renderopt, LPFORMATETC lpFormatEtc, LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj)
 {
-  FIXME(ole,"(not shown), stub!\n");
+  FIXME("(not shown), stub!\n");
   return S_OK;
 }
 
@@ -137,7 +137,7 @@ HRESULT WINAPI OleCreateFromFile(REFCLSID rclsid, LPCOLESTR lpszFileName, REFIID
  */
 HRESULT WINAPI OleLockRunning(LPUNKNOWN pUnknown, BOOL fLock, BOOL fLastUnlockCloses) 
 {
-  FIXME(ole,"(%p,%x,%x), stub!\n", pUnknown, fLock, fLastUnlockCloses);
+  FIXME("(%p,%x,%x), stub!\n", pUnknown, fLock, fLastUnlockCloses);
   return S_OK;
 }
 
@@ -146,7 +146,7 @@ HRESULT WINAPI OleLockRunning(LPUNKNOWN pUnknown, BOOL fLock, BOOL fLastUnlockCl
  */
 HGLOBAL WINAPI OleGetIconOfClass(REFCLSID rclsid, LPOLESTR lpszLabel, BOOL fUseTypeAsLabel)
 {
-  FIXME(ole,"(%p,%p,%x), stub!\n", rclsid, lpszLabel, fUseTypeAsLabel);
+  FIXME("(%p,%p,%x), stub!\n", rclsid, lpszLabel, fUseTypeAsLabel);
   return S_OK;
 }
 
@@ -155,7 +155,7 @@ HGLOBAL WINAPI OleGetIconOfClass(REFCLSID rclsid, LPOLESTR lpszLabel, BOOL fUseT
  */
 HRESULT WINAPI OleQueryCreateFromData(LPDATAOBJECT pSrcDataObject)
 {
-  FIXME(ole,"(%p), stub!\n", pSrcDataObject);
+  FIXME("(%p), stub!\n", pSrcDataObject);
   return S_OK;
 }
 
@@ -164,7 +164,7 @@ HRESULT WINAPI OleQueryCreateFromData(LPDATAOBJECT pSrcDataObject)
  */
 HRESULT WINAPI ReadFmtUserTypeStg (LPSTORAGE pstg, CLIPFORMAT* pcf, LPOLESTR* lplpszUserType)
 {
-  FIXME(ole,"(%p,%p,%p), stub!\n", pstg, pcf, lplpszUserType);
+  FIXME("(%p,%p,%p), stub!\n", pstg, pcf, lplpszUserType);
   return S_OK;
 }
 
@@ -175,7 +175,7 @@ HRESULT     WINAPI OleCreateStaticFromData(LPDATAOBJECT pSrcDataObj, REFIID iid,
                 DWORD renderopt, LPFORMATETC pFormatEtc, LPOLECLIENTSITE pClientSite,
                 LPSTORAGE pStg, LPVOID* ppvObj)
 {
-  FIXME(ole,"(not shown), stub!\n");
+  FIXME("(not shown), stub!\n");
   return S_OK;
 }
 
@@ -184,7 +184,7 @@ HRESULT     WINAPI OleCreateStaticFromData(LPDATAOBJECT pSrcDataObj, REFIID iid,
  */
 HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
 {
-  FIXME(ole,"(%p), stub!\n", pUnknown);
+  FIXME("(%p), stub!\n", pUnknown);
   return S_OK;
 }
 
@@ -197,7 +197,7 @@ HRESULT WINAPI  OleCreateLinkFromData(LPDATAOBJECT pSrcDataObj, REFIID riid,
                 LPOLECLIENTSITE pClientSite, LPSTORAGE pStg,
                 LPVOID* ppvObj)
 {
-  FIXME(ole,"(not shown), stub!\n");
+  FIXME("(not shown), stub!\n");
   return S_OK;
 }
 
@@ -206,7 +206,7 @@ HRESULT WINAPI  OleCreateLinkFromData(LPDATAOBJECT pSrcDataObj, REFIID riid,
  */
 BOOL WINAPI OleIsRunning(LPOLEOBJECT pObject)
 {
-  FIXME(ole,"(%p), stub!\n", pObject);
+  FIXME("(%p), stub!\n", pObject);
   return TRUE;
 }
 
@@ -215,7 +215,7 @@ BOOL WINAPI OleIsRunning(LPOLEOBJECT pObject)
  */
 HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
 {
-    FIXME(ole,"(%p,%p), stub!\n", clsid, ppenum);
+    FIXME("(%p,%p), stub!\n", clsid, ppenum);
     return S_OK;
 }
 
@@ -227,7 +227,7 @@ HRESULT     WINAPI OleRegEnumFormatEtc (
   DWORD    dwDirection,
   LPENUMFORMATETC* ppenumFormatetc)
 {
-    FIXME(ole,"(%p, %ld, %p), stub!\n", clsid, dwDirection, ppenumFormatetc);
+    FIXME("(%p, %ld, %p), stub!\n", clsid, dwDirection, ppenumFormatetc);
 
     return S_OK;
 }

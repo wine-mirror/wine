@@ -10,7 +10,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "oleidl.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
 
@@ -194,7 +194,7 @@ static HRESULT WINAPI OleAdviseHolderImpl_Advise(
   
   ICOM_THIS(OleAdviseHolderImpl, iface); 
 
-  TRACE(ole, "(%p, %p, %p)\n", This, pAdvise, pdwConnection);
+  TRACE("(%p, %p, %p)\n", This, pAdvise, pdwConnection);
 
   /*
    * Sanity check
@@ -258,7 +258,7 @@ static HRESULT WINAPI OleAdviseHolderImpl_Unadvise(
 {
   ICOM_THIS(OleAdviseHolderImpl, iface); 
 
-  TRACE(ole, "(%p, %lu)\n", This, dwConnection);
+  TRACE("(%p, %lu)\n", This, dwConnection);
 
   /*
    * So we don't return 0 as a cookie, the index was 
@@ -293,7 +293,7 @@ static HRESULT WINAPI
 OleAdviseHolderImpl_EnumAdvise (LPOLEADVISEHOLDER iface, IEnumSTATDATA **ppenumAdvise)
 {
 		ICOM_THIS(OleAdviseHolderImpl, iface); 
-    FIXME (ole, "(%p)->(%p)\n", This, ppenumAdvise);
+    FIXME("(%p)->(%p)\n", This, ppenumAdvise);
 
     *ppenumAdvise = NULL;
 
@@ -307,7 +307,7 @@ static HRESULT WINAPI
 OleAdviseHolderImpl_SendOnRename (LPOLEADVISEHOLDER iface, IMoniker *pmk)
 {
 		ICOM_THIS(OleAdviseHolderImpl, iface); 
-    FIXME (ole, "(%p)->(%p)\n", This, pmk);
+    FIXME("(%p)->(%p)\n", This, pmk);
 
 
     return S_OK;
@@ -320,7 +320,7 @@ static HRESULT WINAPI
 OleAdviseHolderImpl_SendOnSave (LPOLEADVISEHOLDER iface)
 {
 		ICOM_THIS(OleAdviseHolderImpl, iface); 
-    FIXME (ole, "(%p)\n", This);
+    FIXME("(%p)\n", This);
 
 
     return S_OK;
@@ -333,7 +333,7 @@ static HRESULT WINAPI
 OleAdviseHolderImpl_SendOnClose (LPOLEADVISEHOLDER iface)
 {
   ICOM_THIS(OleAdviseHolderImpl, iface); 
-    FIXME (ole, "(%p)\n", This);
+    FIXME("(%p)\n", This);
 
 
     return S_OK;
@@ -524,7 +524,7 @@ static HRESULT WINAPI DataAdviseHolder_Advise(
   IAdviseSink*            pAdvise, 
   DWORD*                  pdwConnection)
 {
-  FIXME(ole, "(): stub\n");
+  FIXME("(): stub\n");
   return E_NOTIMPL;
 }
 
@@ -532,7 +532,7 @@ static HRESULT WINAPI     DataAdviseHolder_Unadvise(
   IDataAdviseHolder*      iface,
   DWORD                   dwConnection)
 {
-  FIXME(ole, "(): stub\n");
+  FIXME("(): stub\n");
   return E_NOTIMPL;
 }
 
@@ -540,7 +540,7 @@ static HRESULT WINAPI     DataAdviseHolder_EnumAdvise(
   IDataAdviseHolder*      iface,       
   IEnumSTATDATA**         ppenumAdvise)
 {
-  FIXME(ole, "(): stub\n");
+  FIXME("(): stub\n");
   return E_NOTIMPL;
 }
 
@@ -550,7 +550,7 @@ static HRESULT WINAPI     DataAdviseHolder_SendOnDataChange(
   DWORD                   dwReserved, 
   DWORD                   advf)
 {
-  FIXME(ole, "(): stub\n");
+  FIXME("(): stub\n");
   return E_NOTIMPL;
 }
 
@@ -564,7 +564,7 @@ static HRESULT WINAPI     DataAdviseHolder_SendOnDataChange(
 HRESULT WINAPI CreateOleAdviseHolder(
   LPOLEADVISEHOLDER *ppOAHolder)
 {
-  TRACE(ole, "(%p)\n", ppOAHolder);
+  TRACE("(%p)\n", ppOAHolder);
 
   /*
    * Sanity check,
@@ -586,7 +586,7 @@ HRESULT WINAPI CreateOleAdviseHolder(
 HRESULT WINAPI CreateDataAdviseHolder(
   LPDATAADVISEHOLDER* ppDAHolder)
 {
-  TRACE(ole,"(%p)\n", ppDAHolder);
+  TRACE("(%p)\n", ppDAHolder);
 
   /*
    * Sanity check,

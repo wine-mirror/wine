@@ -10,7 +10,7 @@
 #include "module.h"
 #include "win.h"
 #include "winuser.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(caret)
 
@@ -82,7 +82,7 @@ static void CARET_DisplayCaret( DISPLAY_CARET status )
  */
 static VOID CALLBACK CARET_Callback( HWND hwnd, UINT msg, UINT id, DWORD ctime)
 {
-    TRACE(caret,"hwnd=%04x, timerid=%d, caret=%d\n",
+    TRACE("hwnd=%04x, timerid=%d, caret=%d\n",
                   hwnd, id, Caret.on);
     CARET_DisplayCaret(CARET_TOGGLE);
 }
@@ -141,7 +141,7 @@ void WINAPI CreateCaret16( HWND16 hwnd, HBITMAP16 bitmap,
 BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap,
                              INT width, INT height )
 {
-    TRACE(caret,"hwnd=%04x\n", hwnd);
+    TRACE("hwnd=%04x\n", hwnd);
 
     if (!hwnd) return FALSE;
 
@@ -193,7 +193,7 @@ BOOL WINAPI DestroyCaret(void)
 {
     if (!Caret.hwnd) return FALSE;
 
-    TRACE(caret,"hwnd=%04x, timerid=%d\n",
+    TRACE("hwnd=%04x, timerid=%d\n",
 		Caret.hwnd, Caret.timerid);
 
     CARET_KillTimer();
@@ -221,7 +221,7 @@ BOOL WINAPI SetCaretPos( INT x, INT y)
     if (!Caret.hwnd) return FALSE;
     if ((x == Caret.x) && (y == Caret.y)) return TRUE;
 
-    TRACE(caret,"x=%d, y=%d\n", x, y);
+    TRACE("x=%d, y=%d\n", x, y);
 
     CARET_KillTimer();
     CARET_DisplayCaret(CARET_OFF);
@@ -253,7 +253,7 @@ BOOL WINAPI HideCaret( HWND hwnd )
     if (!Caret.hwnd) return FALSE;
     if (hwnd && (Caret.hwnd != hwnd)) return FALSE;
 
-    TRACE(caret,"hwnd=%04x, hidden=%d\n",
+    TRACE("hwnd=%04x, hidden=%d\n",
                   hwnd, Caret.hidden);
 
     CARET_KillTimer();
@@ -280,7 +280,7 @@ BOOL WINAPI ShowCaret( HWND hwnd )
     if (!Caret.hwnd) return FALSE;
     if (hwnd && (Caret.hwnd != hwnd)) return FALSE;
 
-    TRACE(caret,"hwnd=%04x, hidden=%d\n",
+    TRACE("hwnd=%04x, hidden=%d\n",
 		hwnd, Caret.hidden);
 
     if (Caret.hidden)
@@ -311,7 +311,7 @@ BOOL WINAPI SetCaretBlinkTime( UINT msecs )
 {
     if (!Caret.hwnd) return FALSE;
 
-    TRACE(caret,"hwnd=%04x, msecs=%d\n",
+    TRACE("hwnd=%04x, msecs=%d\n",
 		Caret.hwnd, msecs);
 
     Caret.timeout = msecs;
@@ -345,7 +345,7 @@ VOID WINAPI GetCaretPos16( LPPOINT16 pt )
 {
     if (!Caret.hwnd || !pt) return;
 
-    TRACE(caret,"hwnd=%04x, pt=%p, x=%d, y=%d\n",
+    TRACE("hwnd=%04x, pt=%p, x=%d, y=%d\n",
                   Caret.hwnd, pt, Caret.x, Caret.y);
     pt->x = (INT16)Caret.x;
     pt->y = (INT16)Caret.y;

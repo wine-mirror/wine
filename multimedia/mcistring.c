@@ -27,7 +27,7 @@
 #include "user.h"
 #include "driver.h"
 #include "callback.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "xmalloc.h"
 
 DEFAULT_DEBUG_CHANNEL(mci)
@@ -50,10 +50,10 @@ DEFAULT_DEBUG_CHANNEL(mci)
  */
 #define _MCI_STR(s) 						\
 do {								\
-    TRACE(mci, "-> returns '%s'\n", s);				\
+    TRACE("-> returns '%s'\n", s);				\
     if (lpstrReturnString) {					\
 	lstrcpynA(lpstrReturnString, s, uReturnLength);		\
-	TRACE(mci, "--> '%s'\n", lpstrReturnString);		\
+	TRACE("--> '%s'\n", lpstrReturnString);		\
     }								\
 } while(0)
 
@@ -103,7 +103,7 @@ _MCISTR_printtf(char *buf, UINT16 uDevType, DWORD timef, DWORD val)
 		MCI_TMSF_FRAME(val));
 	break;
     default:
-	FIXME(mci, "missing timeformat for %ld, report.\n", timef);
+	FIXME("missing timeformat for %ld, report.\n", timef);
 	strcpy(buf, "0"); /* hmm */
 	break;
     }
@@ -139,7 +139,7 @@ _MCISTR_convreturn(int type, DWORD dwReturn, LPSTR lpstrReturnString,
 	case MCI_SEQ_SMPTE:	_MCI_STR("smpte");	break;
 	case MCI_SEQ_FILE:	_MCI_STR("file");	break;
 	case MCI_SEQ_MIDI:	_MCI_STR("midi");	break;
-	default:FIXME(mci, "missing sequencer mode %ld\n", dwReturn);
+	default:FIXME("missing sequencer mode %ld\n", dwReturn);
 	}
 	break;
     case _MCISTR_mode:
@@ -182,7 +182,7 @@ _MCISTR_convreturn(int type, DWORD dwReturn, LPSTR lpstrReturnString,
 	case MCI_FORMAT_MSF:		_MCI_STR("msf");		break;
 	case MCI_FORMAT_TMSF:		_MCI_STR("tmsf");		break;
 	default:
-	    FIXME(mci, "missing timefmt for %d, report.\n", timef);
+	    FIXME("missing timefmt for %d, report.\n", timef);
 	    break;
 	}
 	break;
@@ -207,12 +207,12 @@ _MCISTR_convreturn(int type, DWORD dwReturn, LPSTR lpstrReturnString,
 	case MCI_DEVTYPE_OTHER:		_MCI_STR("other");		break;
 	case MCI_DEVTYPE_WAVEFORM_AUDIO:_MCI_STR("waveform audio");	break;
 	case MCI_DEVTYPE_SEQUENCER:	_MCI_STR("sequencer");		break;
-	default:FIXME(mci, "unknown device type %ld, report.\n",
+	default:FIXME("unknown device type %ld, report.\n",
 		      dwReturn);break;
 	}
 	break;
     default:
-	FIXME(mci, "unknown resulttype %d, report.\n", type);
+	FIXME("unknown resulttype %d, report.\n", type);
 	break;
     }
 }
@@ -361,7 +361,7 @@ MCISTR_Open(_MCISTR_PROTO_)
 		} else if (sscanf(keywords[i+1], "%ld", &st)) {
 		    pU->animopenParams.dwStyle |= st; 
 		} else
-		    FIXME(mci, "unknown 'style' keyword %s, please report.\n", keywords[i+1]);
+		    FIXME("unknown 'style' keyword %s, please report.\n", keywords[i+1]);
 		i += 2;
 		continue;
 	    }
@@ -387,7 +387,7 @@ MCISTR_Open(_MCISTR_PROTO_)
 		} else if (sscanf(keywords[i+1], "%ld", &st)) {
 		    pU->dgvopenParams.dwStyle |= st; 
 		} else
-		    FIXME(mci, "unknown 'style' keyword %s, please report.\n", keywords[i+1]);
+		    FIXME("unknown 'style' keyword %s, please report.\n", keywords[i+1]);
 		i += 2;
 		continue;
 	    }
@@ -419,13 +419,13 @@ MCISTR_Open(_MCISTR_PROTO_)
 		} else if (sscanf(keywords[i+1], "%ld", &st)) {
 		    pU->ovlyopenParams.dwStyle |= st; 
 		} else
-		    FIXME(mci, "unknown 'style' keyword %s, please report.\n", keywords[i+1]);
+		    FIXME("unknown 'style' keyword %s, please report.\n", keywords[i+1]);
 		i += 2;
 		continue;
 	    }
 	    break;
 	}
-	FIXME(mci, "unknown parameter passed %s, please report.\n",
+	FIXME("unknown parameter passed %s, please report.\n",
 	      keywords[i]);
 	i++;
     }
@@ -775,7 +775,7 @@ MCISTR_Status(_MCISTR_PROTO_) {
 	    ITEM2("window", "maximized",MCI_DGV_STATUS_WINDOW_MAXIMIZED , _MCISTR_bool);
 	    break;
 	}
-	FIXME(mci, "unknown keyword '%s'\n", keywords[i]);
+	FIXME("unknown keyword '%s'\n", keywords[i]);
 	i++;
     }
     if (!pU->statusParams.dwItem) 
@@ -1251,7 +1251,7 @@ MCISTR_Record(_MCISTR_PROTO_) {
 	parsestr="%d:%d:%d:%d";
 	nrargs=4;
 	break;
-    default:FIXME(mci, "unknown timeformat %d, please report.\n", timef);
+    default:FIXME("unknown timeformat %d, please report.\n", timef);
 	parsestr="%d";
 	nrargs=1;
 	break;
@@ -1345,7 +1345,7 @@ MCISTR_Play(_MCISTR_PROTO_) {
 	parsestr="%d:%d:%d:%d";
 	nrargs=4;
 	break;
-    default:FIXME(mci, "unknown timeformat %d, please report.\n", timef);
+    default:FIXME("unknown timeformat %d, please report.\n", timef);
 	parsestr="%d";
 	nrargs=1;
 	break;
@@ -1448,7 +1448,7 @@ MCISTR_Seek(_MCISTR_PROTO_) {
 	nrargs=4;
 	break;
     default:
-	FIXME(mci, "unknown timeformat %d, please report.\n", timef);
+	FIXME("unknown timeformat %d, please report.\n", timef);
 	parsestr="%d";
 	nrargs=1;
 	break;
@@ -1775,7 +1775,7 @@ MCISTR_Delete(_MCISTR_PROTO_) {
 	parsestr="%d:%d:%d:%d";
 	nrargs=4;
 	break;
-    default:FIXME(mci, "unknown timeformat %d, please report.\n", timef);
+    default:FIXME("unknown timeformat %d, please report.\n", timef);
 	parsestr="%d";
 	nrargs=1;
 	break;
@@ -2542,7 +2542,7 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
     DWORD	dwFlags;
     int		res = 0, i, nrofkeywords;
     
-    TRACE(mci, "('%s', %p, %d, %X)\n", 
+    TRACE("('%s', %p, %d, %X)\n", 
 	  lpstrCommand, lpstrReturnString, uReturnLength, hwndCallback);
 
     /* format is <command> <device> <optargs> */
@@ -2591,7 +2591,7 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 		*s = '\0';
 		while (*++s == ' ');
 	    }
-	    TRACE(mci, "[%d] => '%s'\n", i-1, keywords[i-1]);
+	    TRACE("[%d] => '%s'\n", i-1, keywords[i-1]);
 	}
 	keywords[i] = NULL;
     } else {
@@ -2620,7 +2620,7 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
     if (STRCMP(cmd, "open") != 0) {
 	wDevID = mciGetDeviceIDA(dev);
 	if (wDevID == 0) {
-	    TRACE(mci, "Device '%s' not found!\n", dev);
+	    TRACE("Device '%s' not found!\n", dev);
 	    res = MCIERR_INVALID_DEVICE_NAME;
 	    goto the_end;
 	}
@@ -2639,7 +2639,7 @@ DWORD WINAPI mciSendString16(LPCSTR lpstrCommand, LPSTR lpstrReturnString,
 	}
     }
     if (MCISTR_cmdtable[i].cmd == NULL) {
-	FIXME(mci, "('%s', %p, %u, %X): unimplemented, please report.\n", 
+	FIXME("('%s', %p, %u, %X): unimplemented, please report.\n", 
 	      lpstrCommand, lpstrReturnString, uReturnLength, hwndCallback);
 	res = MCIERR_MISSING_COMMAND_STRING;
     }
@@ -2681,7 +2681,7 @@ DWORD WINAPI mciExecute(LPCSTR lpstrCommand)
     char	strRet[256];
     DWORD	ret;
 
-    TRACE(mci, "(%s)!\n", lpstrCommand);
+    TRACE("(%s)!\n", lpstrCommand);
 
     ret = mciSendString16(lpstrCommand, strRet, sizeof(strRet), 0);
     if (ret != 0) {

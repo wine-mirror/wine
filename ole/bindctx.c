@@ -8,7 +8,7 @@
 #include <assert.h>
 #include "winerror.h"
 #include "wine/obj_moniker.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "heap.h"
 
 DEFAULT_DEBUG_CHANNEL(ole)
@@ -91,7 +91,7 @@ HRESULT WINAPI BindCtxImpl_QueryInterface(IBindCtx* iface,REFIID riid,void** ppv
 {
   ICOM_THIS(BindCtxImpl,iface);
 
-  TRACE(ole,"(%p,%p,%p)\n",This,riid,ppvObject);
+  TRACE("(%p,%p,%p)\n",This,riid,ppvObject);
 
   /* Perform a sanity check on the parameters.*/
   if ( (This==0) || (ppvObject==0) )
@@ -124,7 +124,7 @@ ULONG WINAPI BindCtxImpl_AddRef(IBindCtx* iface)
 {
     ICOM_THIS(BindCtxImpl,iface);
 
-    TRACE(ole,"(%p)\n",This);
+    TRACE("(%p)\n",This);
 
     return ++(This->ref);
 }
@@ -136,7 +136,7 @@ ULONG WINAPI BindCtxImpl_Release(IBindCtx* iface)
 {
     ICOM_THIS(BindCtxImpl,iface);
 
-    TRACE(ole,"(%p)\n",This);
+    TRACE("(%p)\n",This);
 
     This->ref--;
 
@@ -158,7 +158,7 @@ ULONG WINAPI BindCtxImpl_Release(IBindCtx* iface)
  *******************************************************************************/
 HRESULT WINAPI BindCtxImpl_Construct(BindCtxImpl* This)
 {
-    TRACE(ole,"(%p)\n",This);
+    TRACE("(%p)\n",This);
 
     /* Initialize the virtual function table.*/
     This->lpvtbl       = &VT_BindCtxImpl;
@@ -191,7 +191,7 @@ HRESULT WINAPI BindCtxImpl_Construct(BindCtxImpl* This)
  *******************************************************************************/
 HRESULT WINAPI BindCtxImpl_Destroy(BindCtxImpl* This)
 {
-    TRACE(ole,"(%p)\n",This);
+    TRACE("(%p)\n",This);
 
     /* free the table space memory */
     HeapFree(GetProcessHeap(),0,This->bindCtxTable);
@@ -213,7 +213,7 @@ HRESULT WINAPI BindCtxImpl_RegisterObjectBound(IBindCtx* iface,IUnknown* punk)
     DWORD lastIndex=This->bindCtxTableLastIndex;
     BindCtxObject cell;
 
-    TRACE(ole,"(%p,%p)\n",This,punk);
+    TRACE("(%p,%p)\n",This,punk);
 
     if (punk==NULL)
         return E_POINTER;
@@ -230,7 +230,7 @@ HRESULT WINAPI BindCtxImpl_RegisterObjectBound(IBindCtx* iface,IUnknown* punk)
     if (lastIndex == This->bindCtxTableSize){ /* the table is full so it must be resized */
 
         if (This->bindCtxTableSize > (MAX_TAB_SIZE-BLOCK_TAB_SIZE)){
-            FIXME(ole,"This->bindCtxTableSize: %ld is out of data limite \n",This->bindCtxTableSize);
+            FIXME("This->bindCtxTableSize: %ld is out of data limite \n",This->bindCtxTableSize);
             return E_FAIL;
 }
 
@@ -253,7 +253,7 @@ HRESULT WINAPI BindCtxImpl_RevokeObjectBound(IBindCtx* iface, IUnknown* punk)
 
     ICOM_THIS(BindCtxImpl,iface);
 
-    TRACE(ole,"(%p,%p)\n",This,punk);
+    TRACE("(%p,%p)\n",This,punk);
 
     /* check if the object was registred or not */
     if (BindCtxImpl_GetObjectIndex(This,punk,NULL,&index)==S_FALSE)
@@ -280,7 +280,7 @@ HRESULT WINAPI BindCtxImpl_ReleaseBoundObjects(IBindCtx* iface)
 
     ICOM_THIS(BindCtxImpl,iface);
 
-    TRACE(ole,"(%p)\n",This);
+    TRACE("(%p)\n",This);
 
     for(i=0;i<This->bindCtxTableLastIndex;i++)
        IUnknown_Release(This->bindCtxTable[i].pObj);
@@ -297,7 +297,7 @@ HRESULT WINAPI BindCtxImpl_SetBindOptions(IBindCtx* iface,LPBIND_OPTS2 pbindopts
 {
     ICOM_THIS(BindCtxImpl,iface);
 
-    TRACE(ole,"(%p,%p)\n",This,pbindopts);
+    TRACE("(%p,%p)\n",This,pbindopts);
 
     if (pbindopts==NULL)
         return E_POINTER;
@@ -314,7 +314,7 @@ HRESULT WINAPI BindCtxImpl_GetBindOptions(IBindCtx* iface,LPBIND_OPTS2 pbindopts
 {
     ICOM_THIS(BindCtxImpl,iface);
 
-    TRACE(ole,"(%p,%p)\n",This,pbindopts);
+    TRACE("(%p,%p)\n",This,pbindopts);
 
     if (pbindopts==NULL)
         return E_POINTER;
@@ -333,7 +333,7 @@ HRESULT WINAPI BindCtxImpl_GetRunningObjectTable(IBindCtx* iface,IRunningObjectT
 
     ICOM_THIS(BindCtxImpl,iface);
 
-    TRACE(ole,"(%p,%p)\n",This,pprot);
+    TRACE("(%p,%p)\n",This,pprot);
 
     if (pprot==NULL)
         return E_POINTER;
@@ -350,7 +350,7 @@ HRESULT WINAPI BindCtxImpl_RegisterObjectParam(IBindCtx* iface,LPOLESTR pszkey, 
 {
     ICOM_THIS(BindCtxImpl,iface);
 
-    TRACE(ole,"(%p,%p,%p)\n",This,pszkey,punk);
+    TRACE("(%p,%p,%p)\n",This,pszkey,punk);
 
     if (punk==NULL)
         return E_INVALIDARG;
@@ -381,7 +381,7 @@ HRESULT WINAPI BindCtxImpl_RegisterObjectParam(IBindCtx* iface,LPOLESTR pszkey, 
         This->bindCtxTableSize+=BLOCK_TAB_SIZE; /* new table size */
 
         if (This->bindCtxTableSize > (MAX_TAB_SIZE-BLOCK_TAB_SIZE)){
-            FIXME(ole,"This->bindCtxTableSize: %ld is out of data limite \n",This->bindCtxTableSize);
+            FIXME("This->bindCtxTableSize: %ld is out of data limite \n",This->bindCtxTableSize);
             return E_FAIL;
         }
         This->bindCtxTable = HeapReAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,This->bindCtxTable,
@@ -399,7 +399,7 @@ HRESULT WINAPI BindCtxImpl_GetObjectParam(IBindCtx* iface,LPOLESTR pszkey, IUnkn
     DWORD index;
     ICOM_THIS(BindCtxImpl,iface);
 
-    TRACE(ole,"(%p,%p,%p)\n",This,pszkey,punk);
+    TRACE("(%p,%p,%p)\n",This,pszkey,punk);
 
     if (punk==NULL)
         return E_POINTER;
@@ -425,7 +425,7 @@ HRESULT WINAPI BindCtxImpl_RevokeObjectParam(IBindCtx* iface,LPOLESTR ppenum)
 
     ICOM_THIS(BindCtxImpl,iface);
 
-    TRACE(ole,"(%p,%p)\n",This,ppenum);
+    TRACE("(%p,%p)\n",This,ppenum);
 
     if (BindCtxImpl_GetObjectIndex(This,NULL,ppenum,&index)==S_FALSE)
         return E_FAIL;
@@ -447,7 +447,7 @@ HRESULT WINAPI BindCtxImpl_RevokeObjectParam(IBindCtx* iface,LPOLESTR ppenum)
  ******************************************************************************/
 HRESULT WINAPI BindCtxImpl_EnumObjectParam(IBindCtx* iface,IEnumString** pszkey)
 {
-    FIXME(ole,"(%p,%p),stub!\n",iface,pszkey);
+    FIXME("(%p,%p),stub!\n",iface,pszkey);
     return E_NOTIMPL;
 }
 
@@ -463,7 +463,7 @@ HRESULT WINAPI BindCtxImpl_GetObjectIndex(BindCtxImpl* This,
     DWORD i;
     BYTE found=0;
     
-    TRACE(ole,"(%p,%p,%p,%p)\n",This,punk,pszkey,index);
+    TRACE("(%p,%p,%p,%p)\n",This,punk,pszkey,index);
 
     if (punk==NULL)
         /* search object identified by a register key */
@@ -501,7 +501,7 @@ HRESULT WINAPI BindCtxImpl_GetObjectIndex(BindCtxImpl* This,
  ******************************************************************************/
 HRESULT WINAPI CreateBindCtx16(DWORD reserved, LPBC * ppbc)
 {
-    FIXME(ole,"(%ld,%p),stub!\n",reserved,ppbc);
+    FIXME("(%ld,%p),stub!\n",reserved,ppbc);
     return E_NOTIMPL;
 }
 
@@ -514,7 +514,7 @@ HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC * ppbc)
     HRESULT hr;
     IID riid=IID_IBindCtx;
 
-    TRACE(ole,"(%ld,%p)\n",reserved,ppbc);
+    TRACE("(%ld,%p)\n",reserved,ppbc);
 
     newBindCtx = HeapAlloc(GetProcessHeap(), 0, sizeof(BindCtxImpl));
 

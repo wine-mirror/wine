@@ -5,7 +5,7 @@
  * 
  */
 
-#include "debug.h"
+#include "debugtools.h"
 #include "mouse.h"
 #include "monitor.h"
 #include "winuser.h"
@@ -67,7 +67,7 @@ void MOUSE_SendEvent( DWORD mouseStatus, DWORD posX, DWORD posY,
 
     if ( !DefMouseEventProc ) return;
 
-    TRACE( event, "(%04lX,%ld,%ld)\n", mouseStatus, posX, posY );
+    TRACE("(%04lX,%ld,%ld)\n", mouseStatus, posX, posY );
 
     mouseStatus |= MOUSEEVENTF_ABSOLUTE;
     posX = (((long)posX << 16) + width-1)  / width;

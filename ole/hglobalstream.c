@@ -13,7 +13,7 @@
 
 #include "winbase.h"
 #include "winerror.h"
-#include "debug.h"
+#include "debugtools.h"
 
 #include "objbase.h"
 
@@ -279,7 +279,7 @@ HGLOBALStreamImpl* HGLOBALStreamImpl_Construct(
  */
 void HGLOBALStreamImpl_Destroy(HGLOBALStreamImpl* This)
 {
-  TRACE(storage, "(%p)\n", This);
+  TRACE("(%p)\n", This);
 
   /*
    * Release the HGlobal if the constructor asked for that.
@@ -406,7 +406,7 @@ HRESULT WINAPI HGLOBALStreamImpl_Read(
   ULONG bytesReadBuffer;
   ULONG bytesToReadFromBuffer;
 
-  TRACE(storage, "(%p, %p, %ld, %p)\n", iface,
+  TRACE("(%p, %p, %ld, %p)\n", iface,
 	pv, cb, pcbRead);
   
   /* 
@@ -477,7 +477,7 @@ HRESULT WINAPI HGLOBALStreamImpl_Write(
   ULARGE_INTEGER newSize;
   ULONG          bytesWritten = 0;
 
-  TRACE(storage, "(%p, %p, %ld, %p)\n", iface,
+  TRACE("(%p, %p, %ld, %p)\n", iface,
 	pv, cb, pcbWritten);
   
   /*
@@ -549,7 +549,7 @@ HRESULT WINAPI HGLOBALStreamImpl_Seek(
 
   ULARGE_INTEGER newPosition;
 
-  TRACE(storage, "(%p, %ld, %ld, %p)\n", iface,
+  TRACE("(%p, %ld, %ld, %p)\n", iface,
 	dlibMove.LowPart, dwOrigin, plibNewPosition);
 
   /* 
@@ -625,7 +625,7 @@ HRESULT WINAPI HGLOBALStreamImpl_SetSize(
 {
   HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
 
-  TRACE(storage, "(%p, %ld)\n", iface, libNewSize.LowPart);
+  TRACE("(%p, %ld)\n", iface, libNewSize.LowPart);
 
   /*
    * As documented.
@@ -668,7 +668,7 @@ HRESULT WINAPI HGLOBALStreamImpl_CopyTo(
   ULARGE_INTEGER totalBytesRead;
   ULARGE_INTEGER totalBytesWritten;
 
-  TRACE(storage, "(%p, %p, %ld, %p, %p)\n", iface, pstm, 
+  TRACE("(%p, %p, %ld, %p, %p)\n", iface, pstm, 
 	cb.LowPart, pcbRead, pcbWritten);
 
   /*
@@ -823,6 +823,6 @@ HRESULT WINAPI HGLOBALStreamImpl_Clone(
 		  IStream*     iface,
 		  IStream**    ppstm) /* [out] */ 
 {
-  FIXME(storage, "not implemented!\n");
+  FIXME("not implemented!\n");
   return E_NOTIMPL;
 }

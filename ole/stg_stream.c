@@ -15,7 +15,7 @@
 
 #include "winbase.h"
 #include "winerror.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "wine/obj_storage.h"
 
 #include "storage32.h"
@@ -114,7 +114,7 @@ StgStreamImpl* StgStreamImpl_Construct(
  */
 void StgStreamImpl_Destroy(StgStreamImpl* This)
 {
-  TRACE(storage, "(%p)\n", This);
+  TRACE("(%p)\n", This);
 
   /*
    * Release the reference we are holding on the parent storage.
@@ -318,7 +318,7 @@ HRESULT WINAPI StgStreamImpl_Read(
   ULONG bytesReadBuffer;
   ULONG bytesToReadFromBuffer;
 
-  TRACE(storage, "(%p, %p, %ld, %p)\n",
+  TRACE("(%p, %p, %ld, %p)\n",
 	iface, pv, cb, pcbRead);
 
   /* 
@@ -401,7 +401,7 @@ HRESULT WINAPI StgStreamImpl_Write(
   ULARGE_INTEGER newSize;
   ULONG bytesWritten = 0;
 
-  TRACE(storage, "(%p, %p, %ld, %p)\n",
+  TRACE("(%p, %p, %ld, %p)\n",
 	iface, pv, cb, pcbWritten);
   
   /*
@@ -485,7 +485,7 @@ HRESULT WINAPI StgStreamImpl_Seek(
 
   ULARGE_INTEGER newPosition;
 
-  TRACE(storage, "(%p, %ld, %ld, %p)\n",
+  TRACE("(%p, %ld, %ld, %p)\n",
 	iface, dlibMove.LowPart, dwOrigin, plibNewPosition);
 
   /* 
@@ -564,7 +564,7 @@ HRESULT WINAPI StgStreamImpl_SetSize(
   StgProperty    curProperty;
   BOOL         Success;
 
-  TRACE(storage, "(%p, %ld)\n", iface, libNewSize.LowPart);
+  TRACE("(%p, %ld)\n", iface, libNewSize.LowPart);
 
   /*
    * As documented.
@@ -669,7 +669,7 @@ HRESULT WINAPI StgStreamImpl_CopyTo(
   ULARGE_INTEGER totalBytesRead;
   ULARGE_INTEGER totalBytesWritten;
 
-  TRACE(storage, "(%p, %p, %ld, %p, %p)\n", 
+  TRACE("(%p, %p, %ld, %p, %p)\n", 
 	iface, pstm, cb.LowPart, pcbRead, pcbWritten);
 
   /*
@@ -768,7 +768,7 @@ HRESULT WINAPI StgStreamImpl_LockRegion(
 					ULARGE_INTEGER cb,          /* [in] */ 
 					DWORD          dwLockType)  /* [in] */ 
 {
-  FIXME(storage, "not implemented!\n");
+  FIXME("not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -778,7 +778,7 @@ HRESULT WINAPI StgStreamImpl_UnlockRegion(
 					  ULARGE_INTEGER cb,          /* [in] */ 
 					  DWORD          dwLockType)  /* [in] */ 
 {
-  FIXME(storage, "not implemented!\n");
+  FIXME("not implemented!\n");
   return E_NOTIMPL;
 }
 
@@ -823,6 +823,6 @@ HRESULT WINAPI StgStreamImpl_Clone(
 				   IStream*     iface,
 				   IStream**    ppstm) /* [out] */ 
 {
-  FIXME(storage, "not implemented!\n");
+  FIXME("not implemented!\n");
   return E_NOTIMPL;
 }

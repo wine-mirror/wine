@@ -14,7 +14,7 @@
 
 #include "wine/winuser16.h"
 #include "clipboard.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "message.h"
 #include "win.h"
 #include "windef.h"
@@ -38,7 +38,7 @@ static Window selectionPrevWindow = None;
  */
 static void X11DRV_CLIPBOARD_CheckSelection(WND* pWnd)
 {
-    TRACE(clipboard,"\tchecking %08x\n",
+    TRACE("\tchecking %08x\n",
         (unsigned) X11DRV_WND_GetXWindow(pWnd)
     );
 
@@ -54,7 +54,7 @@ static void X11DRV_CLIPBOARD_CheckSelection(WND* pWnd)
              if( pWnd->parent->child != pWnd ) 
                  selectionWindow = X11DRV_WND_GetXWindow(pWnd->parent->child);
 
-	TRACE(clipboard,"\tswitching selection from %08x to %08x\n", 
+	TRACE("\tswitching selection from %08x to %08x\n", 
                     (unsigned)selectionPrevWindow, (unsigned)selectionWindow);
 
 	if( selectionWindow != None )
@@ -74,7 +74,7 @@ static void X11DRV_CLIPBOARD_ReadSelection(Window w, Atom prop)
     HANDLE 	 hText = 0;
     LPWINE_CLIPFORMAT lpFormat = ClipFormats; 
 
-    TRACE(clipboard,"Reading X selection...\n");
+    TRACE("Reading X selection...\n");
 
     if(prop != None)
     {
@@ -83,16 +83,16 @@ static void X11DRV_CLIPBOARD_ReadSelection(Window w, Atom prop)
 	unsigned long 	nitems,remain;
 	unsigned char*	val=NULL;
 
-        TRACE(clipboard,"\tgot property %s\n",TSXGetAtomName(display,prop));
+        TRACE("\tgot property %s\n",TSXGetAtomName(display,prop));
 
         /* TODO: Properties longer than 64K */
 
 	if(TSXGetWindowProperty(display,w,prop,0,0x3FFF,True,XA_STRING,
 	    &atype, &aformat, &nitems, &remain, &val) != Success)
-	    WARN(clipboard, "\tcouldn't read property\n");
+	    WARN("\tcouldn't read property\n");
 	else
 	{
-           TRACE(clipboard,"\tType %s,Format %d,nitems %ld,value %s\n",
+           TRACE("\tType %s,Format %d,nitems %ld,value %s\n",
 		             TSXGetAtomName(display,atype),aformat,nitems,val);
 
 	   if(atype == XA_STRING && aformat == 8)
@@ -100,7 +100,7 @@ static void X11DRV_CLIPBOARD_ReadSelection(Window w, Atom prop)
 	      int 	i,inlcount = 0;
 	      char*	lpstr;
 
-	      TRACE(clipboard,"\tselection is '%s'\n",val);
+	      TRACE("\tselection is '%s'\n",val);
 
 	      for(i=0; i <= nitems; i++)
 		  if( val[i] == '\n' ) inlcount++;
@@ -150,7 +150,7 @@ void X11DRV_CLIPBOARD_ReleaseSelection(Window w, HWND hwnd)
      * selectionPrevWindow is nonzero if CheckSelection() was called. 
      */
 
-    TRACE(clipboard,"\tevent->window = %08x (sw = %08x, spw=%08x)\n", 
+    TRACE("\tevent->window = %08x (sw = %08x, spw=%08x)\n", 
 	  (unsigned)w, (unsigned)selectionWindow, (unsigned)selectionPrevWindow );
 
     if( selectionAcquired )
@@ -188,7 +188,7 @@ void X11DRV_CLIPBOARD_Empty()
 	selectionPrevWindow = selectionWindow;
 	selectionWindow     = None;
       
-	TRACE(clipboard, "\tgiving up selection (spw = %08x)\n", 
+	TRACE("\tgiving up selection (spw = %08x)\n", 
 	     (unsigned)selectionPrevWindow);
       
 	EnterCriticalSection(&X11DRV_CritSection);
@@ -222,7 +222,7 @@ void X11DRV_CLIPBOARD_SetData(UINT wFormat)
 	    selectionAcquired = True;
 	    selectionWindow = owner;
 
-	    TRACE(clipboard,"Grabbed X selection, owner=(%08x)\n", 
+	    TRACE("Grabbed X selection, owner=(%08x)\n", 
 						(unsigned) owner);
 	}
         WIN_ReleaseWndPtr(tmpWnd);
@@ -248,7 +248,7 @@ BOOL X11DRV_CLIPBOARD_GetData(UINT wFormat)
 	XEvent xe;
 	Window w = X11DRV_WND_FindXWindow(wnd);
 
-	TRACE(clipboard, "Requesting XA_STRING selection...\n");
+	TRACE("Requesting XA_STRING selection...\n");
 
 	EnterCriticalSection( &X11DRV_CritSection );
 	XConvertSelection(display, XA_PRIMARY, XA_STRING,
@@ -275,7 +275,7 @@ BOOL X11DRV_CLIPBOARD_GetData(UINT wFormat)
 
 	bRet = (BOOL)ClipFormats[CF_OEMTEXT-1].wDataPresent;
 
-	TRACE(clipboard,"\tpresent CF_OEMTEXT = %i\n", bRet );
+	TRACE("\tpresent CF_OEMTEXT = %i\n", bRet );
 	WIN_ReleaseWndPtr(wnd);
     }
     return bRet;
@@ -296,7 +296,7 @@ void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL bFooBar)
     if(!bFooBar && !X11DRV_WND_GetXWindow(pWnd))
       return;
 
-    TRACE(clipboard,"clipboard owner = %04x, selection = %08x\n", 
+    TRACE("clipboard owner = %04x, selection = %08x\n", 
 				hWndClipOwner, (unsigned)selectionWindow);
 
     if( pWnd->hwndSelf == hWndClipOwner)
@@ -309,7 +309,7 @@ void X11DRV_CLIPBOARD_ResetOwner(WND *pWnd, BOOL bFooBar)
 	{
 	    if( lpFormat->wDataPresent && !lpFormat->hData16 && !lpFormat->hData32 )
 	    {
-		TRACE(clipboard,"\tdata missing for clipboard format %i\n", 
+		TRACE("\tdata missing for clipboard format %i\n", 
 				   lpFormat->wFormatID); 
 		lpFormat->wDataPresent = 0;
 	    }

@@ -5,7 +5,7 @@
  *
  */
 
-#include "debug.h"
+#include "debugtools.h"
 #include "display.h"
 #include "mouse.h"
 #include "windef.h"
@@ -46,7 +46,7 @@ VOID WINAPI DISPLAY_MoveCursor( WORD wAbsX, WORD wAbsY )
  */
 VOID WINAPI DISPLAY_CheckCursor( void )
 {
-    TRACE( cursor, "stub\n" );
+    TRACE("stub\n" );
 }
 
 /***********************************************************************

@@ -13,7 +13,7 @@
 #include "hook.h"
 #include "message.h"
 #include "task.h"
-#include "debug.h"
+#include "debugtools.h"
 
 DEFAULT_DEBUG_CHANNEL(win)
 
@@ -78,7 +78,7 @@ HWND WINAPI SetFocus( HWND hwnd )
     /* Get the messageQ for the current thread */
     if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
     {
-        WARN( win, "\tCurrent message queue not found. Exiting!\n" );
+        WARN("\tCurrent message queue not found. Exiting!\n" );
         goto CLEANUP;
     }
 
@@ -99,7 +99,7 @@ HWND WINAPI SetFocus( HWND hwnd )
         pMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( wndPtr->hmemTaskQ );
         if ( !pMsgQ )
         {
-            WARN( win, "\tMessage queue not found. Exiting!\n" );
+            WARN("\tMessage queue not found. Exiting!\n" );
             goto CLEANUP;
         }
 
@@ -187,7 +187,7 @@ HWND WINAPI GetFocus(void)
     /* Get the messageQ for the current thread */
     if (!(pCurMsgQ = (MESSAGEQUEUE *)QUEUE_Lock( GetFastQueue16() )))
     {
-        WARN( win, "\tCurrent message queue not found. Exiting!\n" );
+        WARN("\tCurrent message queue not found. Exiting!\n" );
         return 0;
     }
 

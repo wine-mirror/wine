@@ -23,7 +23,7 @@
 #include "windef.h"
 #include "oleauto.h"
 #include "heap.h"
-#include "debug.h"
+#include "debugtools.h"
 #include "winerror.h"
 #include "parsedt.h"
 
@@ -504,7 +504,7 @@ static int SizeOfVariantData( VARIANT* parg )
     case( VT_UNKNOWN ):
     case( VT_DECIMAL ):
     default:
-        FIXME(ole,"Add size information for type vt=%d\n", parg->vt & VT_TYPEMASK );
+        FIXME("Add size information for type vt=%d\n", parg->vt & VT_TYPEMASK );
         break;
     }
 
@@ -934,7 +934,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			/*res = VarI1FromDec32( ps->u.decVal, &(pd->u.cVal) );*/
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to %d\n", vtFrom, vt );
 			break;
 		}
 		break;
@@ -987,7 +987,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			/*res = VarI2FromDec32( ps->u.deiVal, &(pd->u.iVal) );*/
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to %d\n", vtFrom, vt );
 			break;
 		}
 		break;
@@ -1041,7 +1041,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			/*res = VarI4FromDec32( ps->u.deiVal, &(pd->u.lVal) );*/
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to %d\n", vtFrom, vt );
 			break;
 		}
 		break;
@@ -1094,7 +1094,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			/*res = VarUI1FromDec32( ps->u.deiVal, &(pd->u.bVal) );*/
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to %d\n", vtFrom, vt );
 			break;
 		}
 		break;
@@ -1147,7 +1147,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			/*res = VarUI2FromDec32( ps->u.deiVal, &(pd->u.uiVal) );*/
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to %d\n", vtFrom, vt );
 			break;
 		}
 		break;
@@ -1200,7 +1200,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			/*res = VarUI4FromDec32( ps->u.deiVal, &(pd->u.ulVal) );*/
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to %d\n", vtFrom, vt );
 			break;
 		}
 		break;
@@ -1253,7 +1253,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			/*res = VarR4FromDec32( ps->u.deiVal, &(pd->u.fltVal) );*/
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to %d\n", vtFrom, vt );
 			break;
 		}
 		break;
@@ -1306,7 +1306,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			/*res = VarR8FromDec32( ps->u.deiVal, &(pd->u.dblVal) );*/
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to %d\n", vtFrom, vt );
 			break;
 		}
 		break;
@@ -1363,7 +1363,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			/*res = VarDateFromDec32( ps->u.deiVal, &(pd->u.date) );*/
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to %d\n", vtFrom, vt );
 			break;
 		}
 		break;
@@ -1420,7 +1420,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			/*res = VarBoolFromDec32( ps->u.deiVal, &(pd->u.boolVal) );*/
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to %d\n", vtFrom, vt );
 			break;
 		}
 		break;
@@ -1477,7 +1477,7 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 			/*res = VarBstrFromDec32( ps->u.deiVal, lcid, dwFlags, &(pd->u.bstrVal) );*/
 		default:
 			res = DISP_E_TYPEMISMATCH;
-			FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+			FIXME("Coercion from %d to %d\n", vtFrom, vt );
 			break;
 		}
 		break;
@@ -1534,14 +1534,14 @@ static HRESULT Coerce( VARIANTARG* pd, LCID lcid, ULONG dwFlags, VARIANTARG* ps,
 	     /*res = VarCyFromDec32( ps->u.deiVal, &(pd->u.boolVal) );*/
 	  default:
 	     res = DISP_E_TYPEMISMATCH;
-	     FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+	     FIXME("Coercion from %d to %d\n", vtFrom, vt );
 	     break;
 	  }
 	break;
 
 	default:
 		res = DISP_E_TYPEMISMATCH;
-		FIXME(ole,"Coercion from %d to %d\n", vtFrom, vt );
+		FIXME("Coercion from %d to %d\n", vtFrom, vt );
 		break;
 	}
 	
@@ -1645,7 +1645,7 @@ static HRESULT WINAPI ValidateVt( VARTYPE vt )
  */
 void WINAPI VariantInit(VARIANTARG* pvarg)
 {
-  TRACE(ole,"(%p),stub\n",pvarg);
+  TRACE("(%p),stub\n",pvarg);
 
   memset(pvarg, 0, sizeof (VARIANTARG));
   pvarg->vt = VT_EMPTY;
@@ -1664,7 +1664,7 @@ void WINAPI VariantInit(VARIANTARG* pvarg)
 HRESULT WINAPI VariantClear(VARIANTARG* pvarg)
 {
   HRESULT res = S_OK;
-  TRACE(ole,"(%p)\n",pvarg);
+  TRACE("(%p)\n",pvarg);
 
   res = ValidateVariantType( pvarg->vt );
   if( res == S_OK )
@@ -1719,7 +1719,7 @@ HRESULT WINAPI VariantCopy(VARIANTARG* pvargDest, VARIANTARG* pvargSrc)
 {
   HRESULT res = S_OK;
 
-  TRACE(ole,"(%p, %p)\n", pvargDest, pvargSrc);
+  TRACE("(%p, %p)\n", pvargDest, pvargSrc);
 
   res = ValidateVariantType( pvargSrc->vt );
 
@@ -1796,7 +1796,7 @@ HRESULT WINAPI VariantCopyInd(VARIANT* pvargDest, VARIANTARG* pvargSrc)
 {
   HRESULT res = S_OK;
 
-  TRACE(ole,"(%p, %p)\n", pvargDest, pvargSrc);
+  TRACE("(%p, %p)\n", pvargDest, pvargSrc);
 
   res = ValidateVariantType( pvargSrc->vt );
 
@@ -1931,7 +1931,7 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
 	VARIANTARG varg;
 	VariantInit( &varg );
 	
-	TRACE(ole,"(%p, %p, %ld, %u, %u),stub\n", pvargDest, pvargSrc, lcid, wFlags, vt);
+	TRACE("(%p, %p, %ld, %u, %u),stub\n", pvargDest, pvargSrc, lcid, wFlags, vt);
 
 	/* validate our source argument.
 	 */
@@ -2004,7 +2004,7 @@ HRESULT WINAPI VariantChangeTypeEx(VARIANTARG* pvargDest, VARIANTARG* pvargSrc,
  */
 HRESULT WINAPI VarUI1FromI2(short sIn, BYTE* pbOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", sIn, pbOut );
+	TRACE("( %d, %p ), stub\n", sIn, pbOut );
 
 	/* Check range of value.
 	 */
@@ -2023,7 +2023,7 @@ HRESULT WINAPI VarUI1FromI2(short sIn, BYTE* pbOut)
  */
 HRESULT WINAPI VarUI1FromI4(LONG lIn, BYTE* pbOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", lIn, pbOut );
+	TRACE("( %ld, %p ), stub\n", lIn, pbOut );
 
 	/* Check range of value.
 	 */
@@ -2043,7 +2043,7 @@ HRESULT WINAPI VarUI1FromI4(LONG lIn, BYTE* pbOut)
  */
 HRESULT WINAPI VarUI1FromR4(FLOAT fltIn, BYTE* pbOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", fltIn, pbOut );
+	TRACE("( %f, %p ), stub\n", fltIn, pbOut );
 
 	/* Check range of value.
      */
@@ -2063,7 +2063,7 @@ HRESULT WINAPI VarUI1FromR4(FLOAT fltIn, BYTE* pbOut)
  */
 HRESULT WINAPI VarUI1FromR8(double dblIn, BYTE* pbOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dblIn, pbOut );
+	TRACE("( %f, %p ), stub\n", dblIn, pbOut );
 
 	/* Check range of value.
      */
@@ -2083,7 +2083,7 @@ HRESULT WINAPI VarUI1FromR8(double dblIn, BYTE* pbOut)
  */
 HRESULT WINAPI VarUI1FromDate(DATE dateIn, BYTE* pbOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dateIn, pbOut );
+	TRACE("( %f, %p ), stub\n", dateIn, pbOut );
 
 	/* Check range of value.
      */
@@ -2103,7 +2103,7 @@ HRESULT WINAPI VarUI1FromDate(DATE dateIn, BYTE* pbOut)
  */
 HRESULT WINAPI VarUI1FromBool(VARIANT_BOOL boolIn, BYTE* pbOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", boolIn, pbOut );
+	TRACE("( %d, %p ), stub\n", boolIn, pbOut );
 
 	*pbOut = (BYTE) boolIn;
 
@@ -2115,7 +2115,7 @@ HRESULT WINAPI VarUI1FromBool(VARIANT_BOOL boolIn, BYTE* pbOut)
  */
 HRESULT WINAPI VarUI1FromI1(CHAR cIn, BYTE* pbOut)
 {
-	TRACE( ole, "( %c, %p ), stub\n", cIn, pbOut );
+	TRACE("( %c, %p ), stub\n", cIn, pbOut );
 
 	*pbOut = cIn;
 
@@ -2127,7 +2127,7 @@ HRESULT WINAPI VarUI1FromI1(CHAR cIn, BYTE* pbOut)
  */
 HRESULT WINAPI VarUI1FromUI2(USHORT uiIn, BYTE* pbOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", uiIn, pbOut );
+	TRACE("( %d, %p ), stub\n", uiIn, pbOut );
 
 	/* Check range of value.
 	 */
@@ -2146,7 +2146,7 @@ HRESULT WINAPI VarUI1FromUI2(USHORT uiIn, BYTE* pbOut)
  */
 HRESULT WINAPI VarUI1FromUI4(ULONG ulIn, BYTE* pbOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pbOut );
+	TRACE("( %ld, %p ), stub\n", ulIn, pbOut );
 
 	/* Check range of value.
 	 */
@@ -2169,7 +2169,7 @@ HRESULT WINAPI VarUI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, BYTE* pbO
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
 
-	TRACE( ole, "( %p, 0x%08lx, 0x%08lx, %p ), stub\n", strIn, lcid, dwFlags, pbOut );
+	TRACE("( %p, 0x%08lx, 0x%08lx, %p ), stub\n", strIn, lcid, dwFlags, pbOut );
 
 	/* Check if we have a valid argument
 	 */
@@ -2219,7 +2219,7 @@ HRESULT WINAPI VarUI1FromCy(CY cyIn, BYTE* pbOut) {
  */
 HRESULT WINAPI VarI2FromUI1(BYTE bIn, short* psOut)
 {
-	TRACE( ole, "( 0x%08x, %p ), stub\n", bIn, psOut );
+	TRACE("( 0x%08x, %p ), stub\n", bIn, psOut );
 
 	*psOut = (short) bIn;
 	
@@ -2231,7 +2231,7 @@ HRESULT WINAPI VarI2FromUI1(BYTE bIn, short* psOut)
  */
 HRESULT WINAPI VarI2FromI4(LONG lIn, short* psOut)
 {
-	TRACE( ole, "( %lx, %p ), stub\n", lIn, psOut );
+	TRACE("( %lx, %p ), stub\n", lIn, psOut );
 
 	/* Check range of value.
 	 */
@@ -2250,7 +2250,7 @@ HRESULT WINAPI VarI2FromI4(LONG lIn, short* psOut)
  */
 HRESULT WINAPI VarI2FromR4(FLOAT fltIn, short* psOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", fltIn, psOut );
+	TRACE("( %f, %p ), stub\n", fltIn, psOut );
 
 	/* Check range of value.
      */
@@ -2270,7 +2270,7 @@ HRESULT WINAPI VarI2FromR4(FLOAT fltIn, short* psOut)
  */
 HRESULT WINAPI VarI2FromR8(double dblIn, short* psOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dblIn, psOut );
+	TRACE("( %f, %p ), stub\n", dblIn, psOut );
 
 	/* Check range of value.
      */
@@ -2290,7 +2290,7 @@ HRESULT WINAPI VarI2FromR8(double dblIn, short* psOut)
  */
 HRESULT WINAPI VarI2FromDate(DATE dateIn, short* psOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dateIn, psOut );
+	TRACE("( %f, %p ), stub\n", dateIn, psOut );
 
 	/* Check range of value.
      */
@@ -2310,7 +2310,7 @@ HRESULT WINAPI VarI2FromDate(DATE dateIn, short* psOut)
  */
 HRESULT WINAPI VarI2FromBool(VARIANT_BOOL boolIn, short* psOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", boolIn, psOut );
+	TRACE("( %d, %p ), stub\n", boolIn, psOut );
 
 	*psOut = (short) boolIn;
 
@@ -2322,7 +2322,7 @@ HRESULT WINAPI VarI2FromBool(VARIANT_BOOL boolIn, short* psOut)
  */
 HRESULT WINAPI VarI2FromI1(CHAR cIn, short* psOut)
 {
-	TRACE( ole, "( %c, %p ), stub\n", cIn, psOut );
+	TRACE("( %c, %p ), stub\n", cIn, psOut );
 
 	*psOut = (short) cIn;
 
@@ -2334,7 +2334,7 @@ HRESULT WINAPI VarI2FromI1(CHAR cIn, short* psOut)
  */
 HRESULT WINAPI VarI2FromUI2(USHORT uiIn, short* psOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", uiIn, psOut );
+	TRACE("( %d, %p ), stub\n", uiIn, psOut );
 
 	/* Check range of value.
 	 */
@@ -2353,7 +2353,7 @@ HRESULT WINAPI VarI2FromUI2(USHORT uiIn, short* psOut)
  */
 HRESULT WINAPI VarI2FromUI4(ULONG ulIn, short* psOut)
 {
-	TRACE( ole, "( %lx, %p ), stub\n", ulIn, psOut );
+	TRACE("( %lx, %p ), stub\n", ulIn, psOut );
 
 	/* Check range of value.
 	 */
@@ -2375,7 +2375,7 @@ HRESULT WINAPI VarI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, short* psO
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
 
-	TRACE( ole, "( %p, 0x%08lx, 0x%08lx, %p ), stub\n", strIn, lcid, dwFlags, psOut );
+	TRACE("( %p, 0x%08lx, 0x%08lx, %p ), stub\n", strIn, lcid, dwFlags, psOut );
 
 	/* Check if we have a valid argument
 	 */
@@ -2425,7 +2425,7 @@ HRESULT WINAPI VarI2FromCy(CY cyIn, short* psOut) {
  */
 HRESULT WINAPI VarI4FromUI1(BYTE bIn, LONG* plOut)
 {
-	TRACE( ole, "( %X, %p ), stub\n", bIn, plOut );
+	TRACE("( %X, %p ), stub\n", bIn, plOut );
 
 	*plOut = (LONG) bIn;
 
@@ -2438,7 +2438,7 @@ HRESULT WINAPI VarI4FromUI1(BYTE bIn, LONG* plOut)
  */
 HRESULT WINAPI VarI4FromR4(FLOAT fltIn, LONG* plOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", fltIn, plOut );
+	TRACE("( %f, %p ), stub\n", fltIn, plOut );
 
 	/* Check range of value.
      */
@@ -2458,7 +2458,7 @@ HRESULT WINAPI VarI4FromR4(FLOAT fltIn, LONG* plOut)
  */
 HRESULT WINAPI VarI4FromR8(double dblIn, LONG* plOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dblIn, plOut );
+	TRACE("( %f, %p ), stub\n", dblIn, plOut );
 
 	/* Check range of value.
      */
@@ -2478,7 +2478,7 @@ HRESULT WINAPI VarI4FromR8(double dblIn, LONG* plOut)
  */
 HRESULT WINAPI VarI4FromDate(DATE dateIn, LONG* plOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dateIn, plOut );
+	TRACE("( %f, %p ), stub\n", dateIn, plOut );
 
 	/* Check range of value.
      */
@@ -2498,7 +2498,7 @@ HRESULT WINAPI VarI4FromDate(DATE dateIn, LONG* plOut)
  */
 HRESULT WINAPI VarI4FromBool(VARIANT_BOOL boolIn, LONG* plOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", boolIn, plOut );
+	TRACE("( %d, %p ), stub\n", boolIn, plOut );
 
 	*plOut = (LONG) boolIn;
 
@@ -2510,7 +2510,7 @@ HRESULT WINAPI VarI4FromBool(VARIANT_BOOL boolIn, LONG* plOut)
  */
 HRESULT WINAPI VarI4FromI1(CHAR cIn, LONG* plOut)
 {
-	TRACE( ole, "( %c, %p ), stub\n", cIn, plOut );
+	TRACE("( %c, %p ), stub\n", cIn, plOut );
 
 	*plOut = (LONG) cIn;
 
@@ -2522,7 +2522,7 @@ HRESULT WINAPI VarI4FromI1(CHAR cIn, LONG* plOut)
  */
 HRESULT WINAPI VarI4FromUI2(USHORT uiIn, LONG* plOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", uiIn, plOut );
+	TRACE("( %d, %p ), stub\n", uiIn, plOut );
 
 	*plOut = (LONG) uiIn;
 
@@ -2534,7 +2534,7 @@ HRESULT WINAPI VarI4FromUI2(USHORT uiIn, LONG* plOut)
  */
 HRESULT WINAPI VarI4FromUI4(ULONG ulIn, LONG* plOut)
 {
-	TRACE( ole, "( %lx, %p ), stub\n", ulIn, plOut );
+	TRACE("( %lx, %p ), stub\n", ulIn, plOut );
 
 	/* Check range of value.
 	 */
@@ -2553,7 +2553,7 @@ HRESULT WINAPI VarI4FromUI4(ULONG ulIn, LONG* plOut)
  */
 HRESULT WINAPI VarI4FromI2(short sIn, LONG* plOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", sIn, plOut );
+	TRACE("( %d, %p ), stub\n", sIn, plOut );
 
 	*plOut = (LONG) sIn;
 
@@ -2568,7 +2568,7 @@ HRESULT WINAPI VarI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, LONG* plOu
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
 
-	TRACE( ole, "( %p, 0x%08lx, 0x%08lx, %p ), stub\n", strIn, lcid, dwFlags, plOut );
+	TRACE("( %p, 0x%08lx, 0x%08lx, %p ), stub\n", strIn, lcid, dwFlags, plOut );
 
 	/* Check if we have a valid argument
 	 */
@@ -2618,7 +2618,7 @@ HRESULT WINAPI VarI4FromCy(CY cyIn, LONG* plOut) {
  */
 HRESULT WINAPI VarR4FromUI1(BYTE bIn, FLOAT* pfltOut)
 {
-	TRACE( ole, "( %X, %p ), stub\n", bIn, pfltOut );
+	TRACE("( %X, %p ), stub\n", bIn, pfltOut );
 
 	*pfltOut = (FLOAT) bIn;
 
@@ -2630,7 +2630,7 @@ HRESULT WINAPI VarR4FromUI1(BYTE bIn, FLOAT* pfltOut)
  */
 HRESULT WINAPI VarR4FromI2(short sIn, FLOAT* pfltOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", sIn, pfltOut );
+	TRACE("( %d, %p ), stub\n", sIn, pfltOut );
 
 	*pfltOut = (FLOAT) sIn;
 
@@ -2642,7 +2642,7 @@ HRESULT WINAPI VarR4FromI2(short sIn, FLOAT* pfltOut)
  */
 HRESULT WINAPI VarR4FromI4(LONG lIn, FLOAT* pfltOut)
 {
-	TRACE( ole, "( %lx, %p ), stub\n", lIn, pfltOut );
+	TRACE("( %lx, %p ), stub\n", lIn, pfltOut );
 
 	*pfltOut = (FLOAT) lIn;
 
@@ -2654,7 +2654,7 @@ HRESULT WINAPI VarR4FromI4(LONG lIn, FLOAT* pfltOut)
  */
 HRESULT WINAPI VarR4FromR8(double dblIn, FLOAT* pfltOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dblIn, pfltOut );
+	TRACE("( %f, %p ), stub\n", dblIn, pfltOut );
 
 	/* Check range of value.
 	 */
@@ -2673,7 +2673,7 @@ HRESULT WINAPI VarR4FromR8(double dblIn, FLOAT* pfltOut)
  */
 HRESULT WINAPI VarR4FromDate(DATE dateIn, FLOAT* pfltOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dateIn, pfltOut );
+	TRACE("( %f, %p ), stub\n", dateIn, pfltOut );
 
 	/* Check range of value.
 	 */
@@ -2692,7 +2692,7 @@ HRESULT WINAPI VarR4FromDate(DATE dateIn, FLOAT* pfltOut)
  */
 HRESULT WINAPI VarR4FromBool(VARIANT_BOOL boolIn, FLOAT* pfltOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", boolIn, pfltOut );
+	TRACE("( %d, %p ), stub\n", boolIn, pfltOut );
 
 	*pfltOut = (FLOAT) boolIn;
 
@@ -2704,7 +2704,7 @@ HRESULT WINAPI VarR4FromBool(VARIANT_BOOL boolIn, FLOAT* pfltOut)
  */
 HRESULT WINAPI VarR4FromI1(CHAR cIn, FLOAT* pfltOut)
 {
-	TRACE( ole, "( %c, %p ), stub\n", cIn, pfltOut );
+	TRACE("( %c, %p ), stub\n", cIn, pfltOut );
 
 	*pfltOut = (FLOAT) cIn;
 
@@ -2716,7 +2716,7 @@ HRESULT WINAPI VarR4FromI1(CHAR cIn, FLOAT* pfltOut)
  */
 HRESULT WINAPI VarR4FromUI2(USHORT uiIn, FLOAT* pfltOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", uiIn, pfltOut );
+	TRACE("( %d, %p ), stub\n", uiIn, pfltOut );
 
 	*pfltOut = (FLOAT) uiIn;
 
@@ -2728,7 +2728,7 @@ HRESULT WINAPI VarR4FromUI2(USHORT uiIn, FLOAT* pfltOut)
  */
 HRESULT WINAPI VarR4FromUI4(ULONG ulIn, FLOAT* pfltOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pfltOut );
+	TRACE("( %ld, %p ), stub\n", ulIn, pfltOut );
 
 	*pfltOut = (FLOAT) ulIn;
 
@@ -2743,7 +2743,7 @@ HRESULT WINAPI VarR4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, FLOAT* pfl
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
 
-	TRACE( ole, "( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pfltOut );
+	TRACE("( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pfltOut );
 
 	/* Check if we have a valid argument
 	 */
@@ -2789,7 +2789,7 @@ HRESULT WINAPI VarR4FromCy(CY cyIn, FLOAT* pfltOut) {
  */
 HRESULT WINAPI VarR8FromUI1(BYTE bIn, double* pdblOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", bIn, pdblOut );
+	TRACE("( %d, %p ), stub\n", bIn, pdblOut );
 
 	*pdblOut = (double) bIn;
 
@@ -2801,7 +2801,7 @@ HRESULT WINAPI VarR8FromUI1(BYTE bIn, double* pdblOut)
  */
 HRESULT WINAPI VarR8FromI2(short sIn, double* pdblOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", sIn, pdblOut );
+	TRACE("( %d, %p ), stub\n", sIn, pdblOut );
 
 	*pdblOut = (double) sIn;
 
@@ -2813,7 +2813,7 @@ HRESULT WINAPI VarR8FromI2(short sIn, double* pdblOut)
  */
 HRESULT WINAPI VarR8FromI4(LONG lIn, double* pdblOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", lIn, pdblOut );
+	TRACE("( %ld, %p ), stub\n", lIn, pdblOut );
 
 	*pdblOut = (double) lIn;
 
@@ -2825,7 +2825,7 @@ HRESULT WINAPI VarR8FromI4(LONG lIn, double* pdblOut)
  */
 HRESULT WINAPI VarR8FromR4(FLOAT fltIn, double* pdblOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", fltIn, pdblOut );
+	TRACE("( %f, %p ), stub\n", fltIn, pdblOut );
 
 	*pdblOut = (double) fltIn;
 
@@ -2837,7 +2837,7 @@ HRESULT WINAPI VarR8FromR4(FLOAT fltIn, double* pdblOut)
  */
 HRESULT WINAPI VarR8FromDate(DATE dateIn, double* pdblOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dateIn, pdblOut );
+	TRACE("( %f, %p ), stub\n", dateIn, pdblOut );
 
 	*pdblOut = (double) dateIn;
 
@@ -2849,7 +2849,7 @@ HRESULT WINAPI VarR8FromDate(DATE dateIn, double* pdblOut)
  */
 HRESULT WINAPI VarR8FromBool(VARIANT_BOOL boolIn, double* pdblOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", boolIn, pdblOut );
+	TRACE("( %d, %p ), stub\n", boolIn, pdblOut );
 
 	*pdblOut = (double) boolIn;
 
@@ -2861,7 +2861,7 @@ HRESULT WINAPI VarR8FromBool(VARIANT_BOOL boolIn, double* pdblOut)
  */
 HRESULT WINAPI VarR8FromI1(CHAR cIn, double* pdblOut)
 {
-	TRACE( ole, "( %c, %p ), stub\n", cIn, pdblOut );
+	TRACE("( %c, %p ), stub\n", cIn, pdblOut );
 
 	*pdblOut = (double) cIn;
 
@@ -2873,7 +2873,7 @@ HRESULT WINAPI VarR8FromI1(CHAR cIn, double* pdblOut)
  */
 HRESULT WINAPI VarR8FromUI2(USHORT uiIn, double* pdblOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", uiIn, pdblOut );
+	TRACE("( %d, %p ), stub\n", uiIn, pdblOut );
 
 	*pdblOut = (double) uiIn;
 
@@ -2885,7 +2885,7 @@ HRESULT WINAPI VarR8FromUI2(USHORT uiIn, double* pdblOut)
  */
 HRESULT WINAPI VarR8FromUI4(ULONG ulIn, double* pdblOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pdblOut );
+	TRACE("( %ld, %p ), stub\n", ulIn, pdblOut );
 
 	*pdblOut = (double) ulIn;
 
@@ -2900,7 +2900,7 @@ HRESULT WINAPI VarR8FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, double* pd
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
 
-	TRACE( ole, "( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pdblOut );
+	TRACE("( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pdblOut );
 
 	/* Check if we have a valid argument
 	 */
@@ -2939,7 +2939,7 @@ HRESULT WINAPI VarR8FromCy(CY cyIn, double* pdblOut) {
  */
 HRESULT WINAPI VarDateFromUI1(BYTE bIn, DATE* pdateOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", bIn, pdateOut );
+	TRACE("( %d, %p ), stub\n", bIn, pdateOut );
 
 	*pdateOut = (DATE) bIn;
 
@@ -2951,7 +2951,7 @@ HRESULT WINAPI VarDateFromUI1(BYTE bIn, DATE* pdateOut)
  */
 HRESULT WINAPI VarDateFromI2(short sIn, DATE* pdateOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", sIn, pdateOut );
+	TRACE("( %d, %p ), stub\n", sIn, pdateOut );
 
 	*pdateOut = (DATE) sIn;
 
@@ -2963,7 +2963,7 @@ HRESULT WINAPI VarDateFromI2(short sIn, DATE* pdateOut)
  */
 HRESULT WINAPI VarDateFromI4(LONG lIn, DATE* pdateOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", lIn, pdateOut );
+	TRACE("( %ld, %p ), stub\n", lIn, pdateOut );
 
 	if( lIn < DATE_MIN || lIn > DATE_MAX )
 	{
@@ -2980,7 +2980,7 @@ HRESULT WINAPI VarDateFromI4(LONG lIn, DATE* pdateOut)
  */
 HRESULT WINAPI VarDateFromR4(FLOAT fltIn, DATE* pdateOut)
 {
-    TRACE( ole, "( %f, %p ), stub\n", fltIn, pdateOut );
+    TRACE("( %f, %p ), stub\n", fltIn, pdateOut );
 
     if( ceil(fltIn) < DATE_MIN || floor(fltIn) > DATE_MAX )
 	{
@@ -2997,7 +2997,7 @@ HRESULT WINAPI VarDateFromR4(FLOAT fltIn, DATE* pdateOut)
  */
 HRESULT WINAPI VarDateFromR8(double dblIn, DATE* pdateOut)
 {
-    TRACE( ole, "( %f, %p ), stub\n", dblIn, pdateOut );
+    TRACE("( %f, %p ), stub\n", dblIn, pdateOut );
 
 	if( ceil(dblIn) < DATE_MIN || floor(dblIn) > DATE_MAX )
 	{
@@ -3039,7 +3039,7 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
 	HRESULT ret = S_OK;
     struct tm TM = { 0,0,0,0,0,0,0,0,0 };
 
-    TRACE( ole, "( %p, %lx, %lx, %p ), stub\n", strIn, lcid, dwFlags, pdateOut );
+    TRACE("( %p, %lx, %lx, %p ), stub\n", strIn, lcid, dwFlags, pdateOut );
 
     if( DateTimeStringToTm( strIn, lcid, &TM ) )
     {
@@ -3062,7 +3062,7 @@ HRESULT WINAPI VarDateFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, DATE* pd
  */
 HRESULT WINAPI VarDateFromI1(CHAR cIn, DATE* pdateOut)
 {
-	TRACE( ole, "( %c, %p ), stub\n", cIn, pdateOut );
+	TRACE("( %c, %p ), stub\n", cIn, pdateOut );
 
 	*pdateOut = (DATE) cIn;
 
@@ -3074,7 +3074,7 @@ HRESULT WINAPI VarDateFromI1(CHAR cIn, DATE* pdateOut)
  */
 HRESULT WINAPI VarDateFromUI2(USHORT uiIn, DATE* pdateOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", uiIn, pdateOut );
+	TRACE("( %d, %p ), stub\n", uiIn, pdateOut );
 
 	if( uiIn > DATE_MAX )
 	{
@@ -3091,7 +3091,7 @@ HRESULT WINAPI VarDateFromUI2(USHORT uiIn, DATE* pdateOut)
  */
 HRESULT WINAPI VarDateFromUI4(ULONG ulIn, DATE* pdateOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pdateOut );
+	TRACE("( %ld, %p ), stub\n", ulIn, pdateOut );
 
 	if( ulIn < DATE_MIN || ulIn > DATE_MAX )
 	{
@@ -3108,7 +3108,7 @@ HRESULT WINAPI VarDateFromUI4(ULONG ulIn, DATE* pdateOut)
  */
 HRESULT WINAPI VarDateFromBool(VARIANT_BOOL boolIn, DATE* pdateOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", boolIn, pdateOut );
+	TRACE("( %d, %p ), stub\n", boolIn, pdateOut );
 
 	*pdateOut = (DATE) boolIn;
 
@@ -3131,7 +3131,7 @@ HRESULT WINAPI VarDateFromCy(CY cyIn, DATE* pdateOut) {
  */
 HRESULT WINAPI VarBstrFromUI1(BYTE bVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
-	TRACE( ole, "( %d, %ld, %ld, %p ), stub\n", bVal, lcid, dwFlags, pbstrOut );
+	TRACE("( %d, %ld, %ld, %p ), stub\n", bVal, lcid, dwFlags, pbstrOut );
 	sprintf( pBuffer, "%d", bVal );
 
 	*pbstrOut =  StringDupAtoBstr( pBuffer );
@@ -3144,7 +3144,7 @@ HRESULT WINAPI VarBstrFromUI1(BYTE bVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOu
  */
 HRESULT WINAPI VarBstrFromI2(short iVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
-	TRACE( ole, "( %d, %ld, %ld, %p ), stub\n", iVal, lcid, dwFlags, pbstrOut );
+	TRACE("( %d, %ld, %ld, %p ), stub\n", iVal, lcid, dwFlags, pbstrOut );
 	sprintf( pBuffer, "%d", iVal );
 	*pbstrOut = StringDupAtoBstr( pBuffer );
 
@@ -3156,7 +3156,7 @@ HRESULT WINAPI VarBstrFromI2(short iVal, LCID lcid, ULONG dwFlags, BSTR* pbstrOu
  */
 HRESULT WINAPI VarBstrFromI4(LONG lIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
-	TRACE( ole, "( %ld, %ld, %ld, %p ), stub\n", lIn, lcid, dwFlags, pbstrOut );
+	TRACE("( %ld, %ld, %ld, %p ), stub\n", lIn, lcid, dwFlags, pbstrOut );
 
 	sprintf( pBuffer, "%ld", lIn );
 	*pbstrOut = StringDupAtoBstr( pBuffer );
@@ -3169,7 +3169,7 @@ HRESULT WINAPI VarBstrFromI4(LONG lIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
  */
 HRESULT WINAPI VarBstrFromR4(FLOAT fltIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
-	TRACE( ole, "( %f, %ld, %ld, %p ), stub\n", fltIn, lcid, dwFlags, pbstrOut );
+	TRACE("( %f, %ld, %ld, %p ), stub\n", fltIn, lcid, dwFlags, pbstrOut );
 
 	sprintf( pBuffer, "%.7g", fltIn );
 	*pbstrOut = StringDupAtoBstr( pBuffer );
@@ -3182,7 +3182,7 @@ HRESULT WINAPI VarBstrFromR4(FLOAT fltIn, LCID lcid, ULONG dwFlags, BSTR* pbstrO
  */
 HRESULT WINAPI VarBstrFromR8(double dblIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
-	TRACE( ole, "( %f, %ld, %ld, %p ), stub\n", dblIn, lcid, dwFlags, pbstrOut );
+	TRACE("( %f, %ld, %ld, %p ), stub\n", dblIn, lcid, dwFlags, pbstrOut );
 
 	sprintf( pBuffer, "%.15g", dblIn );
 	*pbstrOut = StringDupAtoBstr( pBuffer );
@@ -3232,7 +3232,7 @@ HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbst
 {
 		struct tm TM = {0,0,0,0,0,0,0,0,0};
 	 
-    TRACE( ole, "( %f, %ld, %ld, %p ), stub\n", dateIn, lcid, dwFlags, pbstrOut );
+    TRACE("( %f, %ld, %ld, %p ), stub\n", dateIn, lcid, dwFlags, pbstrOut );
 
     if( DateToTm( dateIn, lcid, &TM ) == FALSE )
 			{
@@ -3256,7 +3256,7 @@ HRESULT WINAPI VarBstrFromDate(DATE dateIn, LCID lcid, ULONG dwFlags, BSTR* pbst
  */
 HRESULT WINAPI VarBstrFromBool(VARIANT_BOOL boolIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
-	TRACE( ole, "( %d, %ld, %ld, %p ), stub\n", boolIn, lcid, dwFlags, pbstrOut );
+	TRACE("( %d, %ld, %ld, %p ), stub\n", boolIn, lcid, dwFlags, pbstrOut );
 
 	if( boolIn == VARIANT_FALSE )
 	{
@@ -3277,7 +3277,7 @@ HRESULT WINAPI VarBstrFromBool(VARIANT_BOOL boolIn, LCID lcid, ULONG dwFlags, BS
  */
 HRESULT WINAPI VarBstrFromI1(CHAR cIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
-	TRACE( ole, "( %c, %ld, %ld, %p ), stub\n", cIn, lcid, dwFlags, pbstrOut );
+	TRACE("( %c, %ld, %ld, %p ), stub\n", cIn, lcid, dwFlags, pbstrOut );
 	sprintf( pBuffer, "%d", cIn );
 	*pbstrOut = StringDupAtoBstr( pBuffer );
 
@@ -3289,7 +3289,7 @@ HRESULT WINAPI VarBstrFromI1(CHAR cIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
  */
 HRESULT WINAPI VarBstrFromUI2(USHORT uiIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
-	TRACE( ole, "( %d, %ld, %ld, %p ), stub\n", uiIn, lcid, dwFlags, pbstrOut );
+	TRACE("( %d, %ld, %ld, %p ), stub\n", uiIn, lcid, dwFlags, pbstrOut );
 	sprintf( pBuffer, "%d", uiIn );
 	*pbstrOut = StringDupAtoBstr( pBuffer );
 
@@ -3301,7 +3301,7 @@ HRESULT WINAPI VarBstrFromUI2(USHORT uiIn, LCID lcid, ULONG dwFlags, BSTR* pbstr
  */
 HRESULT WINAPI VarBstrFromUI4(ULONG ulIn, LCID lcid, ULONG dwFlags, BSTR* pbstrOut)
 {
-	TRACE( ole, "( %ld, %ld, %ld, %p ), stub\n", ulIn, lcid, dwFlags, pbstrOut );
+	TRACE("( %ld, %ld, %ld, %p ), stub\n", ulIn, lcid, dwFlags, pbstrOut );
 	sprintf( pBuffer, "%ld", ulIn );
 	*pbstrOut = StringDupAtoBstr( pBuffer );
 
@@ -3313,7 +3313,7 @@ HRESULT WINAPI VarBstrFromUI4(ULONG ulIn, LCID lcid, ULONG dwFlags, BSTR* pbstrO
  */
 HRESULT WINAPI VarBoolFromUI1(BYTE bIn, VARIANT_BOOL* pboolOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", bIn, pboolOut );
+	TRACE("( %d, %p ), stub\n", bIn, pboolOut );
 
 	if( bIn == 0 )
 	{
@@ -3332,7 +3332,7 @@ HRESULT WINAPI VarBoolFromUI1(BYTE bIn, VARIANT_BOOL* pboolOut)
  */
 HRESULT WINAPI VarBoolFromI2(short sIn, VARIANT_BOOL* pboolOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", sIn, pboolOut );
+	TRACE("( %d, %p ), stub\n", sIn, pboolOut );
 
 	if( sIn == 0 )
 	{
@@ -3351,7 +3351,7 @@ HRESULT WINAPI VarBoolFromI2(short sIn, VARIANT_BOOL* pboolOut)
  */
 HRESULT WINAPI VarBoolFromI4(LONG lIn, VARIANT_BOOL* pboolOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", lIn, pboolOut );
+	TRACE("( %ld, %p ), stub\n", lIn, pboolOut );
 
 	if( lIn == 0 )
 	{
@@ -3370,7 +3370,7 @@ HRESULT WINAPI VarBoolFromI4(LONG lIn, VARIANT_BOOL* pboolOut)
  */
 HRESULT WINAPI VarBoolFromR4(FLOAT fltIn, VARIANT_BOOL* pboolOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", fltIn, pboolOut );
+	TRACE("( %f, %p ), stub\n", fltIn, pboolOut );
 
 	if( fltIn == 0.0 )
 	{
@@ -3389,7 +3389,7 @@ HRESULT WINAPI VarBoolFromR4(FLOAT fltIn, VARIANT_BOOL* pboolOut)
  */
 HRESULT WINAPI VarBoolFromR8(double dblIn, VARIANT_BOOL* pboolOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dblIn, pboolOut );
+	TRACE("( %f, %p ), stub\n", dblIn, pboolOut );
 
 	if( dblIn == 0.0 )
 	{
@@ -3408,7 +3408,7 @@ HRESULT WINAPI VarBoolFromR8(double dblIn, VARIANT_BOOL* pboolOut)
  */
 HRESULT WINAPI VarBoolFromDate(DATE dateIn, VARIANT_BOOL* pboolOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dateIn, pboolOut );
+	TRACE("( %f, %p ), stub\n", dateIn, pboolOut );
 
 	if( dateIn == 0.0 )
 	{
@@ -3430,7 +3430,7 @@ HRESULT WINAPI VarBoolFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, VARIANT_
 	HRESULT ret = S_OK;
 	char* pNewString = NULL;
 
-	TRACE( ole, "( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pboolOut );
+	TRACE("( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pboolOut );
 
     pNewString = HEAP_strdupWtoA( GetProcessHeap(), 0, strIn );
 
@@ -3480,7 +3480,7 @@ HRESULT WINAPI VarBoolFromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, VARIANT_
  */
 HRESULT WINAPI VarBoolFromI1(CHAR cIn, VARIANT_BOOL* pboolOut)
 {
-	TRACE( ole, "( %c, %p ), stub\n", cIn, pboolOut );
+	TRACE("( %c, %p ), stub\n", cIn, pboolOut );
 
 	if( cIn == 0 )
 	{
@@ -3499,7 +3499,7 @@ HRESULT WINAPI VarBoolFromI1(CHAR cIn, VARIANT_BOOL* pboolOut)
  */
 HRESULT WINAPI VarBoolFromUI2(USHORT uiIn, VARIANT_BOOL* pboolOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", uiIn, pboolOut );
+	TRACE("( %d, %p ), stub\n", uiIn, pboolOut );
 
 	if( uiIn == 0 )
 	{
@@ -3518,7 +3518,7 @@ HRESULT WINAPI VarBoolFromUI2(USHORT uiIn, VARIANT_BOOL* pboolOut)
  */
 HRESULT WINAPI VarBoolFromUI4(ULONG ulIn, VARIANT_BOOL* pboolOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pboolOut );
+	TRACE("( %ld, %p ), stub\n", ulIn, pboolOut );
 
 	if( ulIn == 0 )
 	{
@@ -3548,7 +3548,7 @@ HRESULT WINAPI VarBoolFromCy(CY cyIn, VARIANT_BOOL* pboolOut) {
  */
 HRESULT WINAPI VarI1FromUI1(BYTE bIn, CHAR* pcOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", bIn, pcOut );
+	TRACE("( %d, %p ), stub\n", bIn, pcOut );
 
 	/* Check range of value.
 	 */
@@ -3567,7 +3567,7 @@ HRESULT WINAPI VarI1FromUI1(BYTE bIn, CHAR* pcOut)
  */
 HRESULT WINAPI VarI1FromI2(short uiIn, CHAR* pcOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", uiIn, pcOut );
+	TRACE("( %d, %p ), stub\n", uiIn, pcOut );
 
 	if( uiIn > CHAR_MAX )
 	{
@@ -3584,7 +3584,7 @@ HRESULT WINAPI VarI1FromI2(short uiIn, CHAR* pcOut)
  */
 HRESULT WINAPI VarI1FromI4(LONG lIn, CHAR* pcOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", lIn, pcOut );
+	TRACE("( %ld, %p ), stub\n", lIn, pcOut );
 
 	if( lIn < CHAR_MIN || lIn > CHAR_MAX )
 	{
@@ -3601,7 +3601,7 @@ HRESULT WINAPI VarI1FromI4(LONG lIn, CHAR* pcOut)
  */
 HRESULT WINAPI VarI1FromR4(FLOAT fltIn, CHAR* pcOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", fltIn, pcOut );
+	TRACE("( %f, %p ), stub\n", fltIn, pcOut );
 
     fltIn = round( fltIn );
 	if( fltIn < CHAR_MIN || fltIn > CHAR_MAX )
@@ -3619,7 +3619,7 @@ HRESULT WINAPI VarI1FromR4(FLOAT fltIn, CHAR* pcOut)
  */
 HRESULT WINAPI VarI1FromR8(double dblIn, CHAR* pcOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dblIn, pcOut );
+	TRACE("( %f, %p ), stub\n", dblIn, pcOut );
 
     dblIn = round( dblIn );
     if( dblIn < CHAR_MIN || dblIn > CHAR_MAX )
@@ -3637,7 +3637,7 @@ HRESULT WINAPI VarI1FromR8(double dblIn, CHAR* pcOut)
  */
 HRESULT WINAPI VarI1FromDate(DATE dateIn, CHAR* pcOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dateIn, pcOut );
+	TRACE("( %f, %p ), stub\n", dateIn, pcOut );
 
     dateIn = round( dateIn );
 	if( dateIn < CHAR_MIN || dateIn > CHAR_MAX )
@@ -3658,7 +3658,7 @@ HRESULT WINAPI VarI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, CHAR* pcOu
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
 
-	TRACE( ole, "( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pcOut );
+	TRACE("( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pcOut );
 
 	/* Check if we have a valid argument
 	 */
@@ -3695,7 +3695,7 @@ HRESULT WINAPI VarI1FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, CHAR* pcOu
  */
 HRESULT WINAPI VarI1FromBool(VARIANT_BOOL boolIn, CHAR* pcOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", boolIn, pcOut );
+	TRACE("( %d, %p ), stub\n", boolIn, pcOut );
 
 	*pcOut = (CHAR) boolIn;
 
@@ -3707,7 +3707,7 @@ HRESULT WINAPI VarI1FromBool(VARIANT_BOOL boolIn, CHAR* pcOut)
  */
 HRESULT WINAPI VarI1FromUI2(USHORT uiIn, CHAR* pcOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", uiIn, pcOut );
+	TRACE("( %d, %p ), stub\n", uiIn, pcOut );
 
 	if( uiIn > CHAR_MAX )
 	{
@@ -3724,7 +3724,7 @@ HRESULT WINAPI VarI1FromUI2(USHORT uiIn, CHAR* pcOut)
  */
 HRESULT WINAPI VarI1FromUI4(ULONG ulIn, CHAR* pcOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", ulIn, pcOut );
+	TRACE("( %ld, %p ), stub\n", ulIn, pcOut );
 
 	if( ulIn > CHAR_MAX )
 	{
@@ -3754,7 +3754,7 @@ HRESULT WINAPI VarI1FromCy(CY cyIn, CHAR* pcOut) {
  */
 HRESULT WINAPI VarUI2FromUI1(BYTE bIn, USHORT* puiOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", bIn, puiOut );
+	TRACE("( %d, %p ), stub\n", bIn, puiOut );
 
 	*puiOut = (USHORT) bIn;
 
@@ -3766,7 +3766,7 @@ HRESULT WINAPI VarUI2FromUI1(BYTE bIn, USHORT* puiOut)
  */
 HRESULT WINAPI VarUI2FromI2(short uiIn, USHORT* puiOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", uiIn, puiOut );
+	TRACE("( %d, %p ), stub\n", uiIn, puiOut );
 
 	if( uiIn < UI2_MIN )
 	{
@@ -3783,7 +3783,7 @@ HRESULT WINAPI VarUI2FromI2(short uiIn, USHORT* puiOut)
  */
 HRESULT WINAPI VarUI2FromI4(LONG lIn, USHORT* puiOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", lIn, puiOut );
+	TRACE("( %ld, %p ), stub\n", lIn, puiOut );
 
 	if( lIn < UI2_MIN || lIn > UI2_MAX )
 	{
@@ -3800,7 +3800,7 @@ HRESULT WINAPI VarUI2FromI4(LONG lIn, USHORT* puiOut)
  */
 HRESULT WINAPI VarUI2FromR4(FLOAT fltIn, USHORT* puiOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", fltIn, puiOut );
+	TRACE("( %f, %p ), stub\n", fltIn, puiOut );
 
     fltIn = round( fltIn );
 	if( fltIn < UI2_MIN || fltIn > UI2_MAX )
@@ -3818,7 +3818,7 @@ HRESULT WINAPI VarUI2FromR4(FLOAT fltIn, USHORT* puiOut)
  */
 HRESULT WINAPI VarUI2FromR8(double dblIn, USHORT* puiOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dblIn, puiOut );
+	TRACE("( %f, %p ), stub\n", dblIn, puiOut );
 
     dblIn = round( dblIn );
     if( dblIn < UI2_MIN || dblIn > UI2_MAX )
@@ -3836,7 +3836,7 @@ HRESULT WINAPI VarUI2FromR8(double dblIn, USHORT* puiOut)
  */
 HRESULT WINAPI VarUI2FromDate(DATE dateIn, USHORT* puiOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dateIn, puiOut );
+	TRACE("( %f, %p ), stub\n", dateIn, puiOut );
 
     dateIn = round( dateIn );
 	if( dateIn < UI2_MIN || dateIn > UI2_MAX )
@@ -3857,7 +3857,7 @@ HRESULT WINAPI VarUI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, USHORT* p
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
 
-	TRACE( ole, "( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, puiOut );
+	TRACE("( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, puiOut );
 
 	/* Check if we have a valid argument
 	 */
@@ -3894,7 +3894,7 @@ HRESULT WINAPI VarUI2FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, USHORT* p
  */
 HRESULT WINAPI VarUI2FromBool(VARIANT_BOOL boolIn, USHORT* puiOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", boolIn, puiOut );
+	TRACE("( %d, %p ), stub\n", boolIn, puiOut );
 
 	*puiOut = (USHORT) boolIn;
 
@@ -3906,7 +3906,7 @@ HRESULT WINAPI VarUI2FromBool(VARIANT_BOOL boolIn, USHORT* puiOut)
  */
 HRESULT WINAPI VarUI2FromI1(CHAR cIn, USHORT* puiOut)
 {
-	TRACE( ole, "( %c, %p ), stub\n", cIn, puiOut );
+	TRACE("( %c, %p ), stub\n", cIn, puiOut );
 
 	*puiOut = (USHORT) cIn;
 
@@ -3918,7 +3918,7 @@ HRESULT WINAPI VarUI2FromI1(CHAR cIn, USHORT* puiOut)
  */
 HRESULT WINAPI VarUI2FromUI4(ULONG ulIn, USHORT* puiOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", ulIn, puiOut );
+	TRACE("( %ld, %p ), stub\n", ulIn, puiOut );
 
 	if( ulIn < UI2_MIN || ulIn > UI2_MAX )
 	{
@@ -3938,7 +3938,7 @@ HRESULT WINAPI VarUI4FromStr(OLECHAR* strIn, LCID lcid, ULONG dwFlags, ULONG* pu
 	double dValue = 0.0;
 	LPSTR pNewString = NULL;
 
-	TRACE( ole, "( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pulOut );
+	TRACE("( %p, %ld, %ld, %p ), stub\n", strIn, lcid, dwFlags, pulOut );
 
 	/* Check if we have a valid argument
 	 */
@@ -3989,7 +3989,7 @@ HRESULT WINAPI VarUI2FromCy(CY cyIn, USHORT* pusOut) {
  */
 HRESULT WINAPI VarUI4FromUI1(BYTE bIn, ULONG* pulOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", bIn, pulOut );
+	TRACE("( %d, %p ), stub\n", bIn, pulOut );
 
 	*pulOut = (USHORT) bIn;
 
@@ -4001,7 +4001,7 @@ HRESULT WINAPI VarUI4FromUI1(BYTE bIn, ULONG* pulOut)
  */
 HRESULT WINAPI VarUI4FromI2(short uiIn, ULONG* pulOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", uiIn, pulOut );
+	TRACE("( %d, %p ), stub\n", uiIn, pulOut );
 
 	if( uiIn < UI4_MIN )
 	{
@@ -4018,7 +4018,7 @@ HRESULT WINAPI VarUI4FromI2(short uiIn, ULONG* pulOut)
  */
 HRESULT WINAPI VarUI4FromI4(LONG lIn, ULONG* pulOut)
 {
-	TRACE( ole, "( %ld, %p ), stub\n", lIn, pulOut );
+	TRACE("( %ld, %p ), stub\n", lIn, pulOut );
 
 	if( lIn < UI4_MIN )
 	{
@@ -4051,7 +4051,7 @@ HRESULT WINAPI VarUI4FromR4(FLOAT fltIn, ULONG* pulOut)
  */
 HRESULT WINAPI VarUI4FromR8(double dblIn, ULONG* pulOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dblIn, pulOut );
+	TRACE("( %f, %p ), stub\n", dblIn, pulOut );
 
     dblIn = round( dblIn );
 	if( dblIn < UI4_MIN || dblIn > UI4_MAX )
@@ -4069,7 +4069,7 @@ HRESULT WINAPI VarUI4FromR8(double dblIn, ULONG* pulOut)
  */
 HRESULT WINAPI VarUI4FromDate(DATE dateIn, ULONG* pulOut)
 {
-	TRACE( ole, "( %f, %p ), stub\n", dateIn, pulOut );
+	TRACE("( %f, %p ), stub\n", dateIn, pulOut );
 
     dateIn = round( dateIn );
     if( dateIn < UI4_MIN || dateIn > UI4_MAX )
@@ -4087,7 +4087,7 @@ HRESULT WINAPI VarUI4FromDate(DATE dateIn, ULONG* pulOut)
  */
 HRESULT WINAPI VarUI4FromBool(VARIANT_BOOL boolIn, ULONG* pulOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", boolIn, pulOut );
+	TRACE("( %d, %p ), stub\n", boolIn, pulOut );
 
 	*pulOut = (ULONG) boolIn;
 
@@ -4099,7 +4099,7 @@ HRESULT WINAPI VarUI4FromBool(VARIANT_BOOL boolIn, ULONG* pulOut)
  */
 HRESULT WINAPI VarUI4FromI1(CHAR cIn, ULONG* pulOut)
 {
-	TRACE( ole, "( %c, %p ), stub\n", cIn, pulOut );
+	TRACE("( %c, %p ), stub\n", cIn, pulOut );
 
 	*pulOut = (ULONG) cIn;
 
@@ -4111,7 +4111,7 @@ HRESULT WINAPI VarUI4FromI1(CHAR cIn, ULONG* pulOut)
  */
 HRESULT WINAPI VarUI4FromUI2(USHORT uiIn, ULONG* pulOut)
 {
-	TRACE( ole, "( %d, %p ), stub\n", uiIn, pulOut );
+	TRACE("( %d, %p ), stub\n", uiIn, pulOut );
 
 	*pulOut = (ULONG) uiIn;
 
@@ -4274,7 +4274,7 @@ INT WINAPI DosDateTimeToVariantTime(USHORT wDosDate, USHORT wDosTime,
 {
     struct tm t;
 
-    TRACE( ole, "( 0x%x, 0x%x, 0x%p ), stub\n", wDosDate, wDosTime, pvtime );
+    TRACE("( 0x%x, 0x%x, 0x%p ), stub\n", wDosDate, wDosTime, pvtime );
     
     t.tm_sec = (wDosTime & 0x001f) * 2;
     t.tm_min = (wDosTime & 0x07e0) >> 5;

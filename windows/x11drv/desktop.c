@@ -9,7 +9,7 @@
 
 #ifndef X_DISPLAY_MISSING
 
-#include "debug.h"
+#include "debugtools.h"
 #include "desktop.h"
 #include "monitor.h"
 #include "options.h"
