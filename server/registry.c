@@ -11,9 +11,13 @@
  */
 
 #include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <pwd.h>
 #include "object.h"
@@ -88,6 +92,21 @@ static int current_level;
 static int saving_level;
 
 static int saving_version = 1;  /* file format version */
+
+static struct timeval next_save_time;           /* absolute time of next periodic save */
+static int save_period;                         /* delay between periodic saves (ms) */
+static struct timeout_user *save_timeout_user;  /* saving timer */
+
+/* information about where to save a registry branch */
+struct save_branch_info
+{
+    struct key  *key;
+    char        *path;
+};
+
+#define MAX_SAVE_BRANCH_INFO 8
+static int save_branch_count;
+static struct save_branch_info save_branch_info[MAX_SAVE_BRANCH_INFO];
 
 
 /* information about a file being loaded */
@@ -886,16 +905,6 @@ static struct key *create_root_key( int hkey )
     return key;
 }
 
-/* close the top-level keys; used on server exit */
-void close_registry(void)
-{
-    int i;
-    for (i = 0; i < NB_ROOT_KEYS; i++)
-    {
-        if (root_keys[i]) release_object( root_keys[i] );
-    }
-}
-
 /* get the registry key corresponding to an hkey handle */
 static struct key *get_hkey_obj( int hkey, unsigned int access )
 {
@@ -1361,6 +1370,136 @@ static void save_registry( struct key *key, int handle )
     }
 }
 
+/* register a key branch for being saved on exit */
+static void register_branch_for_saving( struct key *key, const char *path, size_t len )
+{
+    if (save_branch_count >= MAX_SAVE_BRANCH_INFO)
+    {
+        set_error( STATUS_NO_MORE_ENTRIES );
+        return;
+    }
+    if (!(save_branch_info[save_branch_count].path = memdup( path, len+1 ))) return;
+    save_branch_info[save_branch_count].path[len] = 0;
+    save_branch_info[save_branch_count].key = (struct key *)grab_object( key );
+    save_branch_count++;
+}
+
+/* save a registry branch to a file */
+static int save_branch( struct key *key, const char *path )
+{
+    char *p, *real, *tmp = NULL;
+    int fd, count = 0, ret = 0;
+    FILE *f;
+
+    /* get the real path */
+
+    if (!(real = malloc( PATH_MAX ))) return 0;
+    if (!realpath( path, real ))
+    {
+        free( real );
+        real = NULL;
+    }
+    else path = real;
+
+    /* test the file type */
+
+    if ((fd = open( path, O_WRONLY )) != -1)
+    {
+        struct stat st;
+        /* if file is not a regular file or has multiple links,
+           write directly into it; otherwise use a temp file */
+        if (!fstat( fd, &st ) && (!S_ISREG(st.st_mode) || st.st_nlink > 1))
+        {
+            ftruncate( fd, 0 );
+            goto save;
+        }
+        close( fd );
+    }
+
+    /* create a temp file in the same directory */
+
+    if (!(tmp = malloc( strlen(path) + 20 ))) goto done;
+    strcpy( tmp, path );
+    if ((p = strrchr( tmp, '/' ))) p++;
+    else p = tmp;
+    for (;;)
+    {
+        sprintf( p, "reg%x%04x.tmp", getpid(), count++ );
+        if ((fd = open( tmp, O_CREAT | O_EXCL | O_WRONLY, 0666 )) != -1) break;
+        if (errno != EEXIST) goto done;
+        close( fd );
+    }
+
+    /* now save to it */
+
+ save:
+    if (!(f = fdopen( fd, "w" )))
+    {
+        if (tmp) unlink( tmp );
+        close( fd );
+        goto done;
+    }
+
+    if (debug_level > 1)
+    {
+        fprintf( stderr, "%s: ", path );
+        dump_operation( key, NULL, "saving" );
+    }
+
+    fprintf( f, "WINE REGISTRY Version %d\n", saving_version );
+    if (saving_version == 2) save_subkeys( key, key, f );
+    else
+    {
+        update_level( key );
+        save_subkeys_v1( key, 0, f );
+    }
+    ret = !fclose(f);
+
+    if (tmp)
+    {
+        /* if successfully written, rename to final name */
+        if (ret) ret = !rename( tmp, path );
+        if (!ret) unlink( tmp );
+        free( tmp );
+    }
+
+done:
+    if (real) free( real );
+    return ret;
+}
+
+/* periodic saving of the registry */
+static void periodic_save( void *arg )
+{
+    int i;
+    for (i = 0; i < save_branch_count; i++)
+        save_branch( save_branch_info[i].key, save_branch_info[i].path );
+    add_timeout( &next_save_time, save_period );
+    save_timeout_user = add_timeout_user( &next_save_time, periodic_save, 0 );
+}
+
+/* save the registry and close the top-level keys; used on server exit */
+void close_registry(void)
+{
+    int i;
+
+    for (i = 0; i < save_branch_count; i++)
+    {
+        if (!save_branch( save_branch_info[i].key, save_branch_info[i].path ))
+        {
+            fprintf( stderr, "wineserver: could not save registry branch to %s",
+                     save_branch_info[i].path );
+            perror( " " );
+        }
+        release_object( save_branch_info[i].key );
+    }
+    for (i = 0; i < NB_ROOT_KEYS; i++)
+    {
+        if (root_keys[i]) release_object( root_keys[i] );
+    }
+}
+
+
 /* create a registry key */
 DECL_HANDLER(create_key)
 {
@@ -1544,5 +1683,31 @@ DECL_HANDLER(set_registry_levels)
     current_level  = req->current;
     saving_level   = req->saving;
     saving_version = req->version;
+
+    /* set periodic save timer */
+
+    if (save_timeout_user)
+    {
+        remove_timeout_user( save_timeout_user );
+        save_timeout_user = NULL;
+    }
+    if ((save_period = req->period))
+    {
+        if (save_period < 10000) save_period = 10000;  /* limit rate */
+        gettimeofday( &next_save_time, 0 );
+        add_timeout( &next_save_time, save_period );
+        save_timeout_user = add_timeout_user( &next_save_time, periodic_save, 0 );
+    }
 }
 
+/* save a registry branch at server exit */
+DECL_HANDLER(save_registry_atexit)
+{
+    struct key *key;
+
+    if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE | KEY_ENUMERATE_SUB_KEYS )))
+    {
+        register_branch_for_saving( key, req->file, get_req_strlen( req, req->file ) );
+        release_object( key );
+    }
+}

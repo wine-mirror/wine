@@ -97,8 +97,6 @@ BOOL MAIN_MainInit( int argc, char *argv[], BOOL win32 )
 
     if (!LoadLibraryA( "x11drv" )) return FALSE;
 
-    SHELL_InitRegistrySaving();
-
     return TRUE;
 }
 
@@ -180,8 +178,6 @@ void WINAPI ExitKernel16( void )
     /* Do the clean-up stuff */
 
     WriteOutProfiles16();
-    SHELL_SaveRegistry();
-
     TerminateProcess( GetCurrentProcess(), 0 );
 }
 

@@ -14,8 +14,6 @@ extern "C" {
 * shell 16
 */
 extern void SHELL_LoadRegistry(void);
-extern void SHELL_SaveRegistry(void);
-extern void SHELL_InitRegistrySaving(void);
 
 /* global functions used from shell32 */
 extern HINSTANCE SHELL_FindExecutable(LPCSTR,LPCSTR ,LPSTR);

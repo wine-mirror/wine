@@ -1167,11 +1167,19 @@ static void dump_save_registry_request( const struct save_registry_request *req 
     fprintf( stderr, " file=%d", req->file );
 }
 
+static void dump_save_registry_atexit_request( const struct save_registry_atexit_request *req )
+{
+    fprintf( stderr, " hkey=%d,", req->hkey );
+    fprintf( stderr, " file=" );
+    dump_string( req, req->file );
+}
+
 static void dump_set_registry_levels_request( const struct set_registry_levels_request *req )
 {
     fprintf( stderr, " current=%d,", req->current );
     fprintf( stderr, " saving=%d,", req->saving );
-    fprintf( stderr, " version=%d", req->version );
+    fprintf( stderr, " version=%d,", req->version );
+    fprintf( stderr, " period=%d", req->period );
 }
 
 static void dump_create_timer_request( const struct create_timer_request *req )
@@ -1375,6 +1383,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_delete_key_value_request,
     (dump_func)dump_load_registry_request,
     (dump_func)dump_save_registry_request,
+    (dump_func)dump_save_registry_atexit_request,
     (dump_func)dump_set_registry_levels_request,
     (dump_func)dump_create_timer_request,
     (dump_func)dump_open_timer_request,
@@ -1474,6 +1483,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)dump_get_key_value_reply,
     (dump_func)dump_enum_key_value_reply,
+    (dump_func)0,
     (dump_func)0,
     (dump_func)0,
     (dump_func)0,
@@ -1579,6 +1589,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "delete_key_value",
     "load_registry",
     "save_registry",
+    "save_registry_atexit",
     "set_registry_levels",
     "create_timer",
     "open_timer",

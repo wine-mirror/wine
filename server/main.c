@@ -77,10 +77,10 @@ int main( int argc, char *argv[] )
 
     if (debug_level) fprintf( stderr, "Server: starting (pid=%ld)\n", (long) getpid() );
     select_loop();
+    close_registry();
     if (debug_level) fprintf( stderr, "Server: exiting (pid=%ld)\n", (long) getpid() );
 
 #ifdef DEBUG_OBJECTS
-    close_registry();
     close_atom_table();
     dump_objects();  /* dump any remaining objects */
 #endif

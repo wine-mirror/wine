@@ -149,155 +149,6 @@ static void REGISTRY_Init(void) {
 }
 
 
-/************************ SAVE Registry Function ****************************/
-
-#define REGISTRY_SAVE_VERSION	0x00000001
-
-/* Registry saveformat:
- * If you change it, increase above number by 1, which will flush
- * old registry database files.
- * 
- * Global:
- * 	"WINE REGISTRY Version %d"
- * 	subkeys....
- * Subkeys:
- * 	keyname
- *		valuename=lastmodified,type,data
- *		...
- *		subkeys
- *	...
- * keyname,valuename,stringdata:
- *	the usual ascii characters from 0x00-0xff (well, not 0x00)
- *	and \uXXXX as UNICODE value XXXX with XXXX>0xff
- *	( "=\\\t" escaped in \uXXXX form.)
- * type,lastmodified: 
- *	int
- * 
- * FIXME: doesn't save 'class' (what does it mean anyway?), nor flags.
- *
- * [HKEY_CURRENT_USER\\Software\\The WINE team\\WINE\\Registry]
- * SaveOnlyUpdatedKeys=yes
- */
-
-/* Same as RegSaveKey but with Unix pathnames */
-static void save_key( HKEY hkey, const char *filename )
-{
-    struct save_registry_request *req = get_req_buffer();
-    int count = 0;
-    DWORD ret;
-    HANDLE handle;
-    char *p;
-    char *rname = HeapAlloc( GetProcessHeap(), 0, PATH_MAX );
-    char *name;
-
-    /* use realpath to resolve any symlinks
-     * I assume that rname is filled in correctly if the error is ENOENT */
-    if ((realpath(filename, rname) == NULL) && (errno != ENOENT))
-    {
-        ERR( "Failed to find real path of %s: ", filename );
-        perror( "realpath" );
-        HeapFree( GetProcessHeap(), 0, rname );
-        return;
-    }
-
-    name = HeapAlloc( GetProcessHeap(), 0, strlen(rname) + 20 );
-
-    if (!name) return;
-    strcpy( name, rname );
-    if ((p = strrchr( name, '/' ))) p++;
-    else p = name;
-
-    for (;;)
-    {
-        sprintf( p, "reg%04x.tmp", count++ );
-        handle = FILE_CreateFile( name, GENERIC_WRITE, 0, NULL,
-                                  CREATE_NEW, FILE_ATTRIBUTE_NORMAL, -1, TRUE );
-        if (handle != INVALID_HANDLE_VALUE) break;
-        if ((ret = GetLastError()) != ERROR_ALREADY_EXISTS) break;
-    }
-
-    if (handle != INVALID_HANDLE_VALUE)
-    {
-        req->hkey = hkey;
-        req->file = handle;
-        ret = server_call_noerr( REQ_SAVE_REGISTRY );
-        CloseHandle( handle );
-        if (ret) unlink( name );
-        else if (rename( name, rname ) == -1)
-        {
-            ERR( "Failed to move %s to %s: ", name, rname );
-            perror( "rename" );
-            unlink( name );
-        }
-    }
-    else ERR( "Failed to save registry to %s, err %ld\n", name, GetLastError() );
-
-    HeapFree( GetProcessHeap(), 0, rname );
-    HeapFree( GetProcessHeap(), 0, name );
-}
-
-
-/******************************************************************************
- * SHELL_SaveRegistry [Internal]
- */
-void SHELL_SaveRegistry( void )
-{
-    const char *confdir = get_config_dir();
-    struct set_registry_levels_request *req = get_req_buffer();
-    char *fn;
-
-    int all = PROFILE_GetWineIniBool( "registry", "SaveOnlyUpdatedKeys", 1 );
-    int version = PROFILE_GetWineIniBool( "registry", "UseNewFormat", 1 ) ? 2 : 1;
-
-    /* set saving level (0 for saving everything, 1 for saving only modified keys) */
-    req->current = 1;
-    req->saving  = !all;
-    req->version = version;
-    server_call( REQ_SET_REGISTRY_LEVELS );
-
-    if (!(fn = HeapAlloc( GetProcessHeap(), 0, MAX_PATHNAME_LEN )))
-    {
-        ERR( "Not enough memory to save registry\n" );
-        return;
-    }
- 
-    if (PROFILE_GetWineIniBool("registry","WritetoAltRegistries",1))
-    {
-        if (PROFILE_GetWineIniString( "registry", "AltCurrentUserFile", "", fn, MAX_PATHNAME_LEN ))
-            save_key( HKEY_CURRENT_USER, fn );
-        if (PROFILE_GetWineIniString( "Registry", "AltLocalMachineFile", "", fn, MAX_PATHNAME_LEN ))
-            save_key( HKEY_LOCAL_MACHINE, fn );
-        if (PROFILE_GetWineIniString( "Registry", "AltUserFile", "", fn, MAX_PATHNAME_LEN ))
-            save_key( HKEY_USERS, fn );
-
-    }
-
-    if (PROFILE_GetWineIniBool("registry","WritetoHomeRegistries",1))
-    {
-        char *str;
-        strcpy( fn, confdir );
-        str = fn + strlen(fn);
-        *str++ = '/';
-
-        strcpy( str, SAVE_CURRENT_USER );
-        save_key( HKEY_CURRENT_USER, fn );
-
-        strcpy( str, SAVE_LOCAL_MACHINE );
-        save_key( HKEY_LOCAL_MACHINE, fn );
-
-        strcpy( str, SAVE_LOCAL_USERS_DEFAULT );
-        save_key( HKEY_USERS, fn );
-    }
-
-    HeapFree( GetProcessHeap(), 0, fn );
-}
-
-/* Periodic save callback */
-static void CALLBACK periodic_save( ULONG_PTR dummy )
-{
-    SHELL_SaveRegistry();
-}
-
 /************************ LOAD Registry Function ****************************/
 
 
@@ -554,7 +405,7 @@ static int _wine_loadsubreg( FILE *F, HKEY hkey, const char *fn )
 		free(buf);
 		return 0;
 	}
-	if (ver!=REGISTRY_SAVE_VERSION) {
+	if (ver!=1) {
             if (ver == 2)  /* new version */
             {
                 HANDLE file;
@@ -1482,6 +1333,53 @@ void _w31_loadreg(void) {
 	return;
 }
 
+
+/* configure save files and start the periodic saving timer */
+static void SHELL_InitRegistrySaving(void)
+{
+    struct set_registry_levels_request *req = get_req_buffer();
+
+    int all = PROFILE_GetWineIniBool( "registry", "SaveOnlyUpdatedKeys", 1 );
+    int version = PROFILE_GetWineIniBool( "registry", "UseNewFormat", 1 ) ? 2 : 1;
+    int period = PROFILE_GetWineIniInt( "registry", "PeriodicSave", 0 );
+
+    /* set saving level (0 for saving everything, 1 for saving only modified keys) */
+    req->current = 1;
+    req->saving  = !all;
+    req->version = version;
+    req->period  = period * 1000;
+    server_call( REQ_SET_REGISTRY_LEVELS );
+
+    if (PROFILE_GetWineIniBool("registry","WritetoHomeRegistries",1))
+    {
+        struct save_registry_atexit_request *req = get_req_buffer();
+        const char *confdir = get_config_dir();
+        char *str = req->file + strlen(confdir);
+
+        if (str + 20 > req->file + server_remaining(req->file))
+        {
+            ERR("config dir '%s' too long\n", confdir );
+            return;
+        }
+
+        strcpy( req->file, confdir );
+        strcpy( str, "/" SAVE_CURRENT_USER );
+        req->hkey = HKEY_CURRENT_USER;
+        server_call( REQ_SAVE_REGISTRY_ATEXIT );
+
+        strcpy( req->file, confdir );
+        strcpy( str, "/" SAVE_LOCAL_MACHINE );
+        req->hkey = HKEY_LOCAL_MACHINE;
+        server_call( REQ_SAVE_REGISTRY_ATEXIT );
+
+        strcpy( req->file, confdir );
+        strcpy( str, "/" SAVE_LOCAL_USERS_DEFAULT );
+        req->hkey = HKEY_USERS;
+        server_call( REQ_SAVE_REGISTRY_ATEXIT );
+    }
+}
+
+
 /**********************************************************************************
  * SetLoadLevel [Internal]
  *
@@ -1495,6 +1393,7 @@ static void SetLoadLevel(int level)
 	req->current = level;
 	req->saving  = 0;
 	req->version = 1;
+        req->period  = 0;
 	server_call( REQ_SET_REGISTRY_LEVELS );
 }
 
@@ -1693,45 +1592,9 @@ void SHELL_LoadRegistry( void )
           if (fn != path) HeapFree( GetProcessHeap(), 0, fn );
       }
   }
-  
-  /* 
-   * Load HKCU, get the registry location from the config 
-   * file, if exist, load and keep going.
-   */      
-  if (PROFILE_GetWineIniBool ( "registry", "LoadAltRegistryFiles", 1))
-  {
-      if (PROFILE_GetWineIniString( "registry", "AltCurrentUserFile", "", path, sizeof(path) ))
-         _wine_loadreg( HKEY_CURRENT_USER, path );
 
-      /*
-       * Load HKU, get the registry location from the config
-       * file, if exist, load and keep going.
-       */
-      if (PROFILE_GetWineIniString ( "registry", "AltUserFile", "", path, sizeof(path) ))
-          _wine_loadreg( HKEY_USERS, path );
-
-      /*
-       * Load HKLM, get the registry location from the config
-       * file, if exist, load and keep going.
-       */
-      if (PROFILE_GetWineIniString ( "registry", "AltLocalMachineFile", "", path, sizeof(path) ))
-          _wine_loadreg( HKEY_LOCAL_MACHINE, path );
-  }
+  SHELL_InitRegistrySaving();
 }
-
-/* start the periodic saving timer */
-void SHELL_InitRegistrySaving(void)
-{
-  int	save_timeout;
-
-  if (!CLIENT_IsBootThread()) return;
-
-  if ((save_timeout = PROFILE_GetWineIniInt( "registry", "PeriodicSave", 0 )))
-  {
-      SERVICE_AddTimer( save_timeout * 1000000, periodic_save, 0 );
-  }
-}
-
 
 /********************* API FUNCTIONS ***************************************/
 

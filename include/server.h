@@ -996,12 +996,21 @@ struct save_registry_request
 };
 
 
+/* Save a registry branch at server exit */
+struct save_registry_atexit_request
+{
+    IN  int          hkey;         /* key to save */
+    IN  char         file[1];      /* file to save to */
+};
+
+
 /* Set the current and saving level for the registry */
 struct set_registry_levels_request
 {
     IN  int          current;      /* new current level */
     IN  int          saving;       /* new saving level */
     IN  int          version;      /* file format version for saving */
+    IN  int          period;       /* duration between periodic saves (milliseconds) */
 };
 
 
@@ -1194,6 +1203,7 @@ enum request
     REQ_DELETE_KEY_VALUE,
     REQ_LOAD_REGISTRY,
     REQ_SAVE_REGISTRY,
+    REQ_SAVE_REGISTRY_ATEXIT,
     REQ_SET_REGISTRY_LEVELS,
     REQ_CREATE_TIMER,
     REQ_OPEN_TIMER,
@@ -1209,7 +1219,7 @@ enum request
     REQ_NB_REQUESTS
 };
 
-#define SERVER_PROTOCOL_VERSION 7
+#define SERVER_PROTOCOL_VERSION 8
 
 /* ### make_requests end ### */
 /* Everything above this line is generated automatically by tools/make_requests */
