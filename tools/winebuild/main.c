@@ -30,6 +30,9 @@
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
+#ifdef HAVE_GETOPT_H
+# include <getopt.h>
+#endif
 
 #include "build.h"
 
@@ -60,9 +63,9 @@ int debugging = 1;
 int debugging = 0;
 #endif
 
-char DLLName[80];
-char DLLFileName[80];
-char owner_name[80];
+char *owner_name = NULL;
+char *dll_name = NULL;
+char *dll_file_name = NULL;
 char *init_func = NULL;
 char **debug_channels = NULL;
 char **lib_path = NULL;
@@ -77,7 +80,7 @@ static int nb_res_files;
 static char **res_files;
 
 /* execution mode */
-static enum
+enum exec_mode_values
 {
     MODE_NONE,
     MODE_SPEC,
@@ -87,20 +90,23 @@ static enum
     MODE_DEBUG,
     MODE_RELAY16,
     MODE_RELAY32
-} exec_mode = MODE_NONE;
+};
+
+static enum exec_mode_values exec_mode = MODE_NONE;
 
 /* set the dll file name from the input file name */
 static void set_dll_file_name( const char *name )
 {
     char *p;
 
-    if (*DLLFileName) return;
+    if (dll_file_name) return;
 
     if ((p = strrchr( name, '\\' ))) name = p + 1;
     if ((p = strrchr( name, '/' ))) name = p + 1;
-    strcpy( DLLFileName, name );
-    if ((p = strrchr( DLLFileName, '.' )) && !strcmp( p, ".spec" )) *p = 0;
-    if (!strchr( DLLFileName, '.' )) strcat( DLLFileName, ".dll" );
+    dll_file_name = xmalloc( strlen(name) + 5 );
+    strcpy( dll_file_name, name );
+    if ((p = strrchr( dll_file_name, '.' )) && !strcmp( p, ".spec" )) *p = 0;
+    if (!strchr( dll_file_name, '.' )) strcat( dll_file_name, ".dll" );
 }
 
 /* cleanup on program exit */
@@ -113,316 +119,232 @@ static void cleanup(void)
 /*******************************************************************
  *         command-line option handling
  */
+static const char usage_str[] =
+"Usage: winebuild [OPTIONS] [FILES]\n\n"
+"Options:\n"
+"    -C --source-dir=DIR     Look for source files in DIR\n"
+"    -d --delay-lib=LIB      Import the specified library in delayed mode\n"
+"    -D SYM                  Ignored for C flags compatibility\n"
+"    -e --entry=FUNC         Set the DLL entry point function (default: DllMain)\n"
+"    -f FLAGS                Compiler flags (only -fPIC is supported)\n"
+"    -F --filename=DLLFILE   Set the DLL filename (default: from input file name)\n"
+"    -h --help               Display this help message\n"
+"    -H --heap=SIZE          Set the heap size for a Win16 dll\n"
+"    -i --ignore=SYM[,SYM]   Ignore specified symbols when resolving imports\n"
+"    -I DIR                  Ignored for C flags compatibility\n"
+"    -k --kill-at            Kill stdcall decorations in generated .def files\n"
+"    -K FLAGS                Compiler flags (only -KPIC is supported)\n"
+"    -l --library=LIB        Import the specified library\n"
+"    -L --library-path=DIR   Look for imports libraries in DIR\n"
+"    -m --exe-mode=MODE      Set the executable mode (cui|gui|cuiw|guiw)\n"
+"    -M --main-module=MODULE Set the name of the main module for a Win16 dll\n"
+"    -N --dll-name=DLLNAME   Set the DLL name (default: from input file name)\n"
+"    -o --output=NAME        Set the output file name (default: stdout)\n"
+"    -r --res=RSRC.RES       Load resources from RSRC.RES\n"
+"       --version            Print the version and exit\n"
+"    -w --warnings           Turn on warnings\n"
+"\nMode options:\n"
+"       --spec=FILE.SPEC     Build a .c file from a spec file\n"
+"       --def=FILE.SPEC      Build a .def file from a spec file\n"
+"       --exe=NAME           Build a .c file for the named executable\n"
+"       --debug [FILES]      Build a .c file with the debug channels declarations\n"
+"       --glue [FILES]       Build the 16-bit glue for the source files\n"
+"       --relay16            Build the 16-bit relay assembly routines\n"
+"       --relay32            Build the 32-bit relay assembly routines\n\n"
+"The mode options are mutually exclusive; you must specify one and only one.\n\n";
 
-struct option_descr
+enum long_options_values
 {
-    const char *name;
-    int         has_arg;
-    void      (*func)();
-    const char *usage;
+    LONG_OPT_SPEC = 1,
+    LONG_OPT_DEF,
+    LONG_OPT_EXE,
+    LONG_OPT_DEBUG,
+    LONG_OPT_GLUE,
+    LONG_OPT_RELAY16,
+    LONG_OPT_RELAY32,
+    LONG_OPT_VERSION
 };
 
-static void do_output( const char *arg );
-static void do_usage(void);
-static void do_warnings(void);
-static void do_f_flags( const char *arg );
-static void do_define( const char *arg );
-static void do_include( const char *arg );
-static void do_k_flags( const char *arg );
-static void do_ignore( const char *arg );
-static void do_kill_at(void);
-static void do_exe_mode( const char *arg );
-static void do_module( const char *arg );
-static void do_heap( const char *arg );
-static void do_name( const char *arg );
-static void do_file( const char *arg );
-static void do_entry( const char *arg );
-static void do_spec( const char *arg );
-static void do_def( const char *arg );
-static void do_exe( const char *arg );
-static void do_glue(void);
-static void do_relay16(void);
-static void do_relay32(void);
-static void do_debug(void);
-static void do_chdir( const char *arg );
-static void do_lib( const char *arg );
-static void do_import( const char *arg );
-static void do_dimport( const char *arg );
-static void do_rsrc( const char *arg );
+static const char short_options[] = "C:D:F:H:I:K:L:M:N:d:e:f:hi:kl:m:o:r:w";
 
-static const struct option_descr option_table[] =
+static const struct option long_options[] =
 {
-    { "-h",        0, do_usage,   "-h               Display this help message" },
-    { "-w",        0, do_warnings,"-w               Turn on warnings" },
-    { "-C",        1, do_chdir,   "-C dir           Change directory to <dir> before opening source files" },
-    { "-f",        1, do_f_flags, "-f flags         Compiler flags (only -fPIC is supported)" },
-    { "-D",        1, do_define,  "-D sym           Ignored for C flags compatibility" },
-    { "-I",        1, do_include, "-I dir           Ignored for C flags compatibility" },
-    { "-K",        1, do_k_flags, "-K flags         Compiler flags (only -KPIC is supported)" },
-    { "-i",        1, do_ignore,  "-i sym[,sym]     Ignore specified symbols when resolving imports" },
-    { "-k",        0, do_kill_at, "-k               Kill stdcall decorations in generated .def files" },
-    { "-m",        1, do_exe_mode,"-m mode          Set the executable mode (cui|gui|cuiw|guiw)" },
-    { "-M",        1, do_module,  "-M module        Set the name of the main (Win32) module for a Win16 dll" },
-    { "-L",        1, do_lib,     "-L directory     Look for imports libraries in 'directory'" },
-    { "-l",        1, do_import,  "-l lib.dll       Import the specified library" },
-    { "-d",        1, do_dimport, "-d lib.dll       Delay-import the specified library" },
-    { "-H",        1, do_heap,    "-H size          Set the heap size for a Win16 dll" },
-    { "-N",        1, do_name,    "-N dllname       Set the DLL name (default: set from input file name)" },
-    { "-F",        1, do_file,    "-F dllfile       Set the DLL filename (default: set from input file name)" },
-    { "-e",        1, do_entry,   "-e function      Set the DLL entry point function (default: DllMain)" },
-    { "-r",        1, do_rsrc,    "-r rsrc.res      Load resources from rsrc.res" },
-    { "-res",      1, do_rsrc,    NULL },  /* for backwards compatibility, will disappear */
-    { "-o",        1, do_output,  "-o name          Set the output file name (default: stdout)\n" },
-    { "--spec",    1, do_spec,    "--spec file.spec Build a .c file from a spec file" },
-    { "--def",     1, do_def,     "--def file.spec  Build a .def file from a spec file" },
-    { "--exe",     1, do_exe,     "--exe name       Build a .c file for the named executable" },
-    { "--debug",   0, do_debug,   "--debug [files]  Build a .c file containing debug channels declarations" },
-    { "--glue",    0, do_glue,    "--glue [files]   Build the 16-bit glue for the source files" },
-    { "--relay16", 0, do_relay16, "--relay16        Build the 16-bit relay assembly routines" },
-    { "--relay32", 0, do_relay32, "--relay32        Build the 32-bit relay assembly routines" },
-    { NULL,       0, NULL,      NULL }
+    { "spec",     1, 0, LONG_OPT_SPEC },
+    { "def",      1, 0, LONG_OPT_DEF },
+    { "exe",      1, 0, LONG_OPT_EXE },
+    { "debug",    0, 0, LONG_OPT_DEBUG },
+    { "glue",     0, 0, LONG_OPT_GLUE },
+    { "relay16",  0, 0, LONG_OPT_RELAY16 },
+    { "relay32",  0, 0, LONG_OPT_RELAY32 },
+    { "version",  0, 0, LONG_OPT_VERSION },
+    /* aliases for short options */
+    { "source-dir",    1, 0, 'C' },
+    { "delay-lib",     1, 0, 'd' },
+    { "entry",         1, 0, 'e' },
+    { "filename",      1, 0, 'F' },
+    { "help",          0, 0, 'h' },
+    { "heap",          1, 0, 'H' },
+    { "ignore",        1, 0, 'i' },
+    { "kill-at",       0, 0, 'k' },
+    { "library",       1, 0, 'l' },
+    { "library-path",  1, 0, 'L' },
+    { "exe-mode",      1, 0, 'm' },
+    { "main-module",   1, 0, 'M' },
+    { "dll-name",      1, 0, 'N' },
+    { "output",        1, 0, 'o' },
+    { "res",           1, 0, 'r' },
+    { "warnings",      0, 0, 'w' },
+    { NULL,            0, 0, 0 }
 };
 
-static void do_output( const char *arg )
+static void usage( int exit_code )
 {
-    if ( ( unlink ( arg ) ) == -1 && ( errno != ENOENT ) )
-    {
-        fprintf ( stderr, "Unable to create output file '%s'\n", arg );
-        exit (1);
-    }
-    if (!(output_file = fopen( arg, "w" )))
-    {
-        fprintf( stderr, "Unable to create output file '%s'\n", arg );
-        exit(1);
-    }
-    output_file_name = arg;
-    atexit( cleanup );  /* make sure we remove the output file on exit */
+    fprintf( stderr, "%s", usage_str );
+    exit( exit_code );
 }
 
-static void do_usage(void)
+static void set_exec_mode( enum exec_mode_values mode )
 {
-    const struct option_descr *opt;
-    fprintf( stderr, "Usage: winebuild [options]\n\n" );
-    fprintf( stderr, "Options:\n" );
-    for (opt = option_table; opt->name; opt++)
-        if (opt->usage) fprintf( stderr, "   %s\n", opt->usage );
-
-    fprintf( stderr, "\nExactly one of --spec, --def, --exe, --debug, --glue, --relay16 or --relay32 must be specified.\n\n" );
-    exit(1);
-}
-
-static void do_warnings(void)
-{
-    display_warnings = 1;
-}
-
-static void do_f_flags( const char *arg )
-{
-    if (!strcmp( arg, "PIC" )) UsePIC = 1;
-    /* ignore all other flags */
-}
-
-static void do_define( const char *arg )
-{
-    /* nothing */
-}
-
-static void do_include( const char *arg )
-{
-    /* nothing */
-}
-
-static void do_k_flags( const char *arg )
-{
-    /* Ignored, because cc generates correct code. */
-    /* if (!strcmp( arg, "PIC" )) UsePIC = 1; */
-    /* ignore all other flags */
-}
-
-static void do_ignore( const char *arg )
-{
-    char *str = xstrdup( arg );
-    char *token = strtok( str, "," );
-    while (token)
-    {
-        add_ignore_symbol( token );
-        token = strtok( NULL, "," );
-    }
-    free( str );
-}
-
-static void do_kill_at(void)
-{
-    kill_at = 1;
-}
-
-static void do_heap( const char *arg )
-{
-    if (!isdigit(arg[0]))
-        fatal_error( "Expected number argument with -H option instead of '%s'\n", arg );
-    DLLHeapSize = atoi(arg);
-    if (DLLHeapSize > 65535) fatal_error( "Invalid heap size %d, maximum is 65535\n", DLLHeapSize );
-}
-
-static void do_name( const char *arg )
-{
-    strncpy( DLLName, arg, sizeof(DLLName) );
-    DLLName[sizeof(DLLName) - 1] = 0;
-}
-
-static void do_file( const char *arg )
-{
-    strncpy( DLLFileName, arg, sizeof(DLLFileName) );
-    DLLFileName[sizeof(DLLFileName) - 1] = 0;
-}
-
-static void do_entry( const char *arg )
-{
-    init_func = xstrdup( arg );
-}
-
-static void do_spec( const char *arg )
-{
-    if (exec_mode != MODE_NONE || !arg[0]) do_usage();
-    exec_mode = MODE_SPEC;
-    input_file = open_input_file( NULL, arg );
-    set_dll_file_name( arg );
-}
-
-static void do_def( const char *arg )
-{
-    if (exec_mode != MODE_NONE || !arg[0]) do_usage();
-    exec_mode = MODE_DEF;
-    input_file = open_input_file( NULL, arg );
-    set_dll_file_name( arg );
-}
-
-static void do_exe( const char *arg )
-{
-    const char *p;
-
-    if (exec_mode != MODE_NONE || !arg[0]) do_usage();
-    exec_mode = MODE_EXE;
-    if ((p = strrchr( arg, '/' ))) p++;
-    else p = arg;
-    strcpy( DLLFileName, p );
-    if (!strchr( DLLFileName, '.' )) strcat( DLLFileName, ".exe" );
-    if (SpecMode == SPEC_MODE_DLL) SpecMode = SPEC_MODE_GUIEXE;
-}
-
-static void do_exe_mode( const char *arg )
-{
-    if (!strcmp( arg, "gui" )) SpecMode = SPEC_MODE_GUIEXE;
-    else if (!strcmp( arg, "cui" )) SpecMode = SPEC_MODE_CUIEXE;
-    else if (!strcmp( arg, "guiw" )) SpecMode = SPEC_MODE_GUIEXE_UNICODE;
-    else if (!strcmp( arg, "cuiw" )) SpecMode = SPEC_MODE_CUIEXE_UNICODE;
-    else do_usage();
-}
-
-static void do_module( const char *arg )
-{
-    strcpy( owner_name, arg );
-    SpecType = SPEC_WIN16;
-}
-
-static void do_glue(void)
-{
-    if (exec_mode != MODE_NONE) do_usage();
-    exec_mode = MODE_GLUE;
-}
-
-static void do_debug(void)
-{
-    if (exec_mode != MODE_NONE) do_usage();
-    exec_mode = MODE_DEBUG;
-}
-
-static void do_chdir( const char *arg )
-{
-    current_src_dir = arg;
-}
-
-static void do_relay16(void)
-{
-    if (exec_mode != MODE_NONE) do_usage();
-    exec_mode = MODE_RELAY16;
-}
-
-static void do_relay32(void)
-{
-    if (exec_mode != MODE_NONE) do_usage();
-    exec_mode = MODE_RELAY32;
-}
-
-static void do_lib( const char *arg )
-{
-    lib_path = xrealloc( lib_path, (nb_lib_paths+1) * sizeof(*lib_path) );
-    lib_path[nb_lib_paths++] = xstrdup( arg );
-}
-
-static void do_import( const char *arg )
-{
-    add_import_dll( arg, 0 );
-}
-
-static void do_dimport( const char *arg )
-{
-    add_import_dll( arg, 1 );
-}
-
-static void do_rsrc( const char *arg )
-{
-    res_files = xrealloc( res_files, (nb_res_files+1) * sizeof(*res_files) );
-    res_files[nb_res_files++] = xstrdup( arg );
+    if (exec_mode != MODE_NONE) usage(1);
+    exec_mode = mode;
 }
 
 /* parse options from the argv array and remove all the recognized ones */
-static void parse_options( char *argv[] )
+static char **parse_options( int argc, char **argv )
 {
-    const struct option_descr *opt;
-    char **ptr, **last;
-    const char* arg=NULL;
+    const char *p;
+    int optc;
 
-    for (ptr = last = argv; *ptr; ptr++)
+    while ((optc = getopt_long( argc, argv, short_options, long_options, NULL )) != -1)
     {
-        /* first check the exact option name */
-        for (opt = option_table; opt->name; opt++)
+        switch(optc)
         {
-            if (!strcmp( *ptr, opt->name ) ||
-                /* for long option check without the first dash too */
-                (opt->name[1] == '-' && !strcmp( *ptr, opt->name+1 )))
+        case 'C':
+            current_src_dir = optarg;
+            break;
+        case 'D':
+            /* ignored */
+            break;
+        case 'F':
+            dll_file_name = xstrdup( optarg );
+            break;
+        case 'H':
+            if (!isdigit(optarg[0]))
+                fatal_error( "Expected number argument with -H option instead of '%s'\n", optarg );
+            DLLHeapSize = atoi(optarg);
+            if (DLLHeapSize > 65535)
+                fatal_error( "Invalid heap size %d, maximum is 65535\n", DLLHeapSize );
+            break;
+        case 'I':
+            /* ignored */
+            break;
+        case 'K':
+            /* ignored, because cc generates correct code. */
+            break;
+        case 'L':
+            lib_path = xrealloc( lib_path, (nb_lib_paths+1) * sizeof(*lib_path) );
+            lib_path[nb_lib_paths++] = xstrdup( optarg );
+            break;
+        case 'M':
+            owner_name = xstrdup( optarg );
+            SpecType = SPEC_WIN16;
+            break;
+        case 'N':
+            dll_name = xstrdup( optarg );
+            break;
+        case 'd':
+            add_import_dll( optarg, 1 );
+            break;
+        case 'e':
+            init_func = xstrdup( optarg );
+            break;
+        case 'f':
+            if (!strcmp( optarg, "PIC") || !strcmp( optarg, "pic")) UsePIC = 1;
+            /* ignore all other flags */
+            break;
+        case 'h':
+            usage(0);
+            break;
+        case 'i':
             {
-                if (opt->has_arg) arg = *(++ptr);
-                else arg = NULL;
-                break;
-            }
-        }
-
-        /* now check for option name concatenated with argument */
-        if (!opt->name)
-        {
-            for (opt = option_table; opt->name; opt++)
-            {
-                if (opt->has_arg && !strncmp( *ptr, opt->name, strlen(opt->name) ))
+                char *str = xstrdup( optarg );
+                char *token = strtok( str, "," );
+                while (token)
                 {
-                    arg = *ptr + strlen(opt->name);
-                    break;
+                    add_ignore_symbol( token );
+                    token = strtok( NULL, "," );
                 }
+                free( str );
             }
-        }
-
-        if (opt->name)
-        {
-            if (opt->has_arg && arg != NULL) opt->func( arg );
-            else opt->func( "" );
-        }
-        else  /* keep this argument */
-        {
-            if (last != ptr) *last = *ptr;
-            last++;
+            break;
+        case 'k':
+            kill_at = 1;
+            break;
+        case 'l':
+            add_import_dll( optarg, 0 );
+            break;
+        case 'm':
+            if (!strcmp( optarg, "gui" )) SpecMode = SPEC_MODE_GUIEXE;
+            else if (!strcmp( optarg, "cui" )) SpecMode = SPEC_MODE_CUIEXE;
+            else if (!strcmp( optarg, "guiw" )) SpecMode = SPEC_MODE_GUIEXE_UNICODE;
+            else if (!strcmp( optarg, "cuiw" )) SpecMode = SPEC_MODE_CUIEXE_UNICODE;
+            else usage(1);
+            break;
+        case 'o':
+            if (unlink( optarg ) == -1 && errno != ENOENT)
+                fatal_error( "Unable to create output file '%s'\n", optarg );
+            if (!(output_file = fopen( optarg, "w" )))
+                fatal_error( "Unable to create output file '%s'\n", optarg );
+            output_file_name = xstrdup(optarg);
+            atexit( cleanup );  /* make sure we remove the output file on exit */
+            break;
+        case 'r':
+            res_files = xrealloc( res_files, (nb_res_files+1) * sizeof(*res_files) );
+            res_files[nb_res_files++] = xstrdup( optarg );
+            break;
+        case 'w':
+            display_warnings = 1;
+            break;
+        case LONG_OPT_SPEC:
+            set_exec_mode( MODE_SPEC );
+            input_file = open_input_file( NULL, optarg );
+            set_dll_file_name( optarg );
+            break;
+        case LONG_OPT_DEF:
+            set_exec_mode( MODE_DEF );
+            input_file = open_input_file( NULL, optarg );
+            set_dll_file_name( optarg );
+            break;
+        case LONG_OPT_EXE:
+            set_exec_mode( MODE_EXE );
+            if ((p = strrchr( optarg, '/' ))) p++;
+            else p = optarg;
+            dll_file_name = xmalloc( strlen(p) + 5 );
+            strcpy( dll_file_name, p );
+            if (!strchr( dll_file_name, '.' )) strcat( dll_file_name, ".exe" );
+            if (SpecMode == SPEC_MODE_DLL) SpecMode = SPEC_MODE_GUIEXE;
+            break;
+        case LONG_OPT_DEBUG:
+            set_exec_mode( MODE_DEBUG );
+            break;
+        case LONG_OPT_GLUE:
+            set_exec_mode( MODE_GLUE );
+            break;
+        case LONG_OPT_RELAY16:
+            set_exec_mode( MODE_RELAY16 );
+            break;
+        case LONG_OPT_RELAY32:
+            set_exec_mode( MODE_RELAY32 );
+            break;
+        case LONG_OPT_VERSION:
+            printf( "winebuild version " PACKAGE_VERSION "\n" );
+            exit(0);
+        case '?':
+            usage(1);
+            break;
         }
     }
-    *last = NULL;
+    return &argv[optind];
 }
 
 
@@ -462,22 +384,22 @@ static void load_resources( char *argv[] )
 int main(int argc, char **argv)
 {
     output_file = stdout;
-    parse_options( argv + 1 );
+    argv = parse_options( argc, argv );
 
     switch(exec_mode)
     {
     case MODE_SPEC:
-        load_resources( argv + 1 );
+        load_resources( argv );
         if (!ParseTopLevel( input_file )) break;
         switch (SpecType)
         {
             case SPEC_WIN16:
-                if (argv[1])
-                    fatal_error( "file argument '%s' not allowed in this mode\n", argv[1] );
+                if (argv[0])
+                    fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
                 BuildSpec16File( output_file );
                 break;
             case SPEC_WIN32:
-                read_undef_symbols( argv + 1 );
+                read_undef_symbols( argv );
                 BuildSpec32File( output_file );
                 break;
             default: assert(0);
@@ -485,32 +407,32 @@ int main(int argc, char **argv)
         break;
     case MODE_EXE:
         if (SpecType == SPEC_WIN16) fatal_error( "Cannot build 16-bit exe files\n" );
-        load_resources( argv + 1 );
-        read_undef_symbols( argv + 1 );
+        load_resources( argv );
+        read_undef_symbols( argv );
         BuildSpec32File( output_file );
         break;
     case MODE_DEF:
-        if (argv[1]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[1] );
+        if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
         if (SpecType == SPEC_WIN16) fatal_error( "Cannot yet build .def file for 16-bit dlls\n" );
         if (!ParseTopLevel( input_file )) break;
         BuildDef32File( output_file );
         break;
     case MODE_DEBUG:
-        BuildDebugFile( output_file, current_src_dir, argv + 1 );
+        BuildDebugFile( output_file, current_src_dir, argv );
         break;
     case MODE_GLUE:
-        BuildGlue( output_file, current_src_dir, argv + 1 );
+        BuildGlue( output_file, current_src_dir, argv );
         break;
     case MODE_RELAY16:
-        if (argv[1]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[1] );
+        if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
         BuildRelays16( output_file );
         break;
     case MODE_RELAY32:
-        if (argv[1]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[1] );
+        if (argv[0]) fatal_error( "file argument '%s' not allowed in this mode\n", argv[0] );
         BuildRelays32( output_file );
         break;
     default:
-        do_usage();
+        usage(1);
         break;
     }
     if (nb_errors) exit(1);

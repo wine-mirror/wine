@@ -31,12 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_ASM_STRING
-# define STRING ".string"
-#else
-# define STRING ".ascii"
-#endif
-
 typedef enum
 {
     TYPE_VARIABLE,     /* variable */
@@ -185,9 +179,9 @@ extern int nb_errors;
 extern int display_warnings;
 extern int kill_at;
 
-extern char DLLName[80];
-extern char DLLFileName[80];
-extern char owner_name[80];
+extern char *owner_name;
+extern char *dll_name;
+extern char *dll_file_name;
 extern char *init_func;
 extern char *input_file_name;
 extern const char *output_file_name;

@@ -21,7 +21,7 @@ $(MODULE): $(ALL_OBJS)
 	$(CC) -o $@ $(ALL_OBJS) -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(LIBWINE) $(LIBUNICODE) $(LIBPORT) $(LIBS) $(LDFLAGS)
 
 wine.spec.c: $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --exe wine -mgui -e wine_initial_task -L$(DLLDIR) $(IMPORTS:%=-l%)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --exe wine --exe-mode gui --entry wine_initial_task -L$(DLLDIR) $(IMPORTS:%=-l%)
 
 install:: $(MODULE)
 	$(MKINSTALLDIRS) $(bindir)

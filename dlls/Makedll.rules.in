@@ -26,7 +26,7 @@ all: $(MODULE)$(DLLEXT) $(SUBDIRS)
 # Rules for .so files
 
 $(MAINSPEC).c: $(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(IMPORTLIBS) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(DLLMAIN:%=-e %) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --spec $(SRCDIR)/$(MAINSPEC) $(RC_SRCS:.rc=.res) $(SYMBOLFILE) $(DLLMAIN:%=--entry %) -L$(DLLDIR) $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 $(MODULE).so: $(MAINSPEC).o $(ALL_OBJS) Makefile.in
 	$(LDSHARED) $(LDDLLFLAGS) $(MAINSPEC).o $(ALL_OBJS) -o $@ -L$(DLLDIR) $(LDIMPORTS:%=-l%) $(ALL_LIBS) -lc

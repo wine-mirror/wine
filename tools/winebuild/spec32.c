@@ -53,13 +53,13 @@ static const char *make_internal_name( const ORDDEF *odp, const char *prefix )
     if (odp->name || odp->export_name)
     {
         char *p;
-        sprintf( buffer, "__wine_%s_%s_%s", prefix, DLLFileName,
+        sprintf( buffer, "__wine_%s_%s_%s", prefix, dll_file_name,
                  odp->name ? odp->name : odp->export_name );
         /* make sure name is a legal C identifier */
         for (p = buffer; *p; p++) if (!isalnum(*p) && *p != '_') break;
         if (!*p) return buffer;
     }
-    sprintf( buffer, "__wine_%s_%s_%d", prefix, make_c_identifier(DLLFileName), odp->ordinal );
+    sprintf( buffer, "__wine_%s_%s_%d", prefix, make_c_identifier(dll_file_name), odp->ordinal );
     return buffer;
 }
 
@@ -495,7 +495,7 @@ void BuildSpec32File( FILE *outfile )
     fprintf( outfile, "}\n" );
     fprintf( outfile, "#endif\n" );
 
-    fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", DLLFileName );
+    fprintf( outfile, "static const char dllname[] = \"%s\";\n\n", dll_file_name );
     fprintf( outfile, "extern int __wine_spec_exports[];\n\n" );
 
 #ifdef __i386__
@@ -773,7 +773,7 @@ void BuildSpec32File( FILE *outfile )
 
     /* Output the DLL constructor */
 
-    sprintf( constructor, "__wine_spec_%s_init", make_c_identifier(DLLFileName) );
+    sprintf( constructor, "__wine_spec_%s_init", make_c_identifier(dll_file_name) );
     output_dll_init( outfile, constructor, NULL );
 
     fprintf( outfile,
@@ -783,7 +783,7 @@ void BuildSpec32File( FILE *outfile )
              "    extern void *__wine_dbg_register( char * const *, int );\n"
              "    __wine_dll_register( &nt_header, \"%s\" );\n"
              "}\n",
-             constructor, DLLFileName );
+             constructor, dll_file_name );
 }
 
 
@@ -802,7 +802,7 @@ void BuildDef32File(FILE *outfile)
     fprintf(outfile, "; File generated automatically from %s; do not edit!\n\n",
             input_file_name );
 
-    fprintf(outfile, "LIBRARY %s\n\n", DLLFileName);
+    fprintf(outfile, "LIBRARY %s\n\n", dll_file_name);
 
     fprintf(outfile, "EXPORTS\n");
 

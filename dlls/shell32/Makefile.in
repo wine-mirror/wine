@@ -69,6 +69,6 @@ version16.res: version16.rc
 	$(LDPATH) $(WRC) $(WRCFLAGS) $(DIVINCL) -o $@ -w16 $(SRCDIR)/version16.rc
 
 shell.spec.c: shell.spec version16.res
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -M $(MODULE) -r version16.res --spec $(SRCDIR)/shell.spec
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --main-module $(MODULE) --res version16.res --spec $(SRCDIR)/shell.spec
 
 ### Dependencies:

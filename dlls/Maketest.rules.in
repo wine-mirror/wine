@@ -34,7 +34,7 @@ all: $(TESTPROGRAM)
 # Rule for main module spec file
 
 $(MODULE).spec.c: $(RC_SRCS:.rc=.res) $(OBJS) $(IMPORTLIBS) $(WINEBUILD)
-	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ -exe $(MODULE) -mcui $(RC_SRCS:.rc=.res) $(OBJS) -L$(DLLDIR) -L.. $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
+	$(LDPATH) $(WINEBUILD) $(DEFS) -o $@ --exe $(MODULE) --exe-mode cui $(RC_SRCS:.rc=.res) $(OBJS) -L$(DLLDIR) -L.. $(DELAYIMPORTS:%=-d%) $(IMPORTS:%=-l%)
 
 # Rules for .so main module
 

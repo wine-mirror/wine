@@ -1,5 +1,5 @@
 .\" -*- nroff -*-
-.TH WINEBUILD 1 "December 2002" "@PACKAGE_STRING@" "Wine dll builder"
+.TH WINEBUILD 1 "March 2003" "@PACKAGE_STRING@" "Wine dll builder"
 .SH NAME
 winebuild \- Wine dll builder
 .SH SYNOPSIS
@@ -19,7 +19,7 @@ option can be specified, as described in the \fBOPTIONS\fR section.
 You have to specify exactly one of the following options, depending on
 what you want winebuild to generate.
 .TP
-.BI \--spec\  file.spec
+.BI \--spec=\  file.spec
 Build a C file from a spec file (see \fBSPEC FILE SYNTAX\fR for
 details). The resulting C file must be compiled and linked to the
 other object files to build a working Wine dll.
@@ -32,7 +32,7 @@ final dll, to allow
 to get the list of all undefined symbols that need to be imported from
 other dlls.
 .TP
-.BI \--exe\  name
+.BI \--exe=\  name
 Build a C file for the named executable. This is basically the same as
 the --spec mode except that it doesn't require a .spec file as input,
 since an executable doesn't export functions. The resulting C file
@@ -41,7 +41,7 @@ working Wine executable, and all the other object files must be listed
 as
 .I input files.
 .TP
-.BI \--def\  file.spec
+.BI \--def=\  file.spec
 Build a .def file from a spec file. This is used when building dlls
 with a PE (Win32) compiler.
 .TP
@@ -69,7 +69,7 @@ Generate the assembly code for the 32-bit relay routines. This is for
 Wine internal usage only, you should never need to use this option.
 .SH OPTIONS
 .TP
-.BI \-C\  directory
+.BI \-C,\ --source-dir= directory
 Change to the specified directory before reading source files. Only
 meaningful in
 .BR \--debug\  and\  --glue\  modes.
@@ -77,7 +77,7 @@ meaningful in
 .BI \-D\  symbol
 Ignored for compatibility with the C compiler.
 .TP
-.BI \-e\  function
+.BI \-e,\ --entry= function
 Specify the module entry point function; if not specified, the default
 is
 .B DllMain
@@ -91,21 +91,18 @@ modules.
 .BI \-f\  flags
 Ignored for compatibility with the C compiler.
 .TP
-.BI \-F\  filename
+.BI \-F,\ --filename= filename
 Set the file name of the module. The default is to use the base name
 of the spec file (without any extension).
 .TP
-.B \-h
+.B \-h, --help
 Display a usage message and exit.
 .TP
-.BI \-H\  size
+.BI \-H,\ --heap= size
 Specify the size of the module local heap in bytes (only valid for
 Win16 modules); default is no local heap.
 .TP
-.BI \-I\  directory
-Ignored for compatibility with the C compiler.
-.TP
-.BI \-i\  [-]symbol[,[-]symbol]
+.BI \-i,\ --ignore= [-]symbol[,[-]symbol]
 Specify a list of symbols that should be ignored when resolving
 undefined symbols against the imported libraries. This forces these
 symbols to be resolved from the Unix C library (or from another Unix
@@ -113,33 +110,36 @@ library linked with the application). If a symbol is prefixed by '-'
 it is removed from the list instead of being added; a stand-alone '-'
 clears the whole list.
 .TP
-.BI \-K\  flags
+.BI \-I\  directory
 Ignored for compatibility with the C compiler.
 .TP
-.BI \-k
+.B \-k, --kill-at
 Remove the stdcall decorations from the symbol names in the
 generated .def file. Only meaningful in \fB--def\fR mode.
 .TP
-.BI \-L\  directory
+.BI \-K\  flags
+Ignored for compatibility with the C compiler.
+.TP
+.BI \-L,\ --library-path= directory
 Append the specified directory to the list of directories that are
 searched for import libraries.
 .TP
-.BI \-l\  lib.dll
+.BI \-l,\ --library= name
 Import the specified library, looking for a corresponding
-\fIlib.dll.so\fR file in the directories specified with the \fB-L\fR
+\fIlibname.def\fR file in the directories specified with the \fB-L\fR
 option.
 .TP
-.BI \-dl\  lib.dll
+.BI \-d,\ --delay-lib= name
 Same as the \fB-l\fR option, but import the specified library in
 delayed mode (i.e. the library won't be loaded until a function
 imported from it is actually called).
 .TP
-.BI \-M\  module
+.BI \-M,\ --main-module= module
 Specify that we are building a 16-bit dll, that will ultimately be
 linked together with the 32-bit dll specified in \fImodule\fR.  Only
 meaningful in \fB--spec\fR mode.
 .TP
-.BI \-m\  mode
+.BI \-m,\ --exe-mode= mode
 Set the executable mode, which can be one of the following:
 .br
 .B cui
@@ -161,16 +161,16 @@ passed to the entry point.
 .br
 This option is only meaningful in \fB--exe\fR mode.
 .TP
-.BI \-N\  dllname
+.BI \-N,\ --dll-name= dllname
 Set the internal name of the module. It is only used in Win16
 modules. The default is to use the base name of the spec file (without
 any extension). This is used for KERNEL, since it lives in
 KRNL386.EXE. It shouldn't be needed otherwise.
 .TP
-.BI \-o\  file
+.BI \-o,\ --output= file
 Set the name of the output file (default is standard output).
 .TP
-.BI \-r\  rsrc.res
+.BI \-r,\ --res= rsrc.res
 Load resources from the specified binary resource file. The
 \fIrsrc.res\fR can be produced from a source resource file with
 .BR wrc(1)
@@ -183,7 +183,10 @@ and will automatically be handled correctly (though the
 .B \-r
 option will also work for Win32 files).
 .TP
-.B \-w
+.B \--version
+Display the program version and exit.
+.TP
+.B \-w, --warnings
 Turn on warnings.
 .SH "SPEC FILE SYNTAX"
 .SS "General syntax"
