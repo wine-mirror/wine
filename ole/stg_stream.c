@@ -28,24 +28,20 @@
  */
 static ICOM_VTABLE(IStream32) StgStreamImpl_Vtbl =
 {
-  {
-    {
-      VTABLE_FUNC(StgStreamImpl_QueryInterface),
-      VTABLE_FUNC(StgStreamImpl_AddRef),
-      VTABLE_FUNC(StgStreamImpl_Release)
-    },
-    VTABLE_FUNC(StgStreamImpl_Read),
-    VTABLE_FUNC(StgStreamImpl_Write)
-  },
-  VTABLE_FUNC(StgStreamImpl_Seek),
-  VTABLE_FUNC(StgStreamImpl_SetSize),
-  VTABLE_FUNC(StgStreamImpl_CopyTo),
-  VTABLE_FUNC(StgStreamImpl_Commit),
-  VTABLE_FUNC(StgStreamImpl_Revert),
-  VTABLE_FUNC(StgStreamImpl_LockRegion),
-  VTABLE_FUNC(StgStreamImpl_UnlockRegion),
-  VTABLE_FUNC(StgStreamImpl_Stat),
-  VTABLE_FUNC(StgStreamImpl_Clone)
+    StgStreamImpl_QueryInterface,
+    StgStreamImpl_AddRef,
+    StgStreamImpl_Release,
+    StgStreamImpl_Read,
+    StgStreamImpl_Write,
+    StgStreamImpl_Seek,
+    StgStreamImpl_SetSize,
+    StgStreamImpl_CopyTo,
+    StgStreamImpl_Commit,
+    StgStreamImpl_Revert,
+    StgStreamImpl_LockRegion,
+    StgStreamImpl_UnlockRegion,
+    StgStreamImpl_Stat,
+    StgStreamImpl_Clone
 };
 
 /******************************************************************************
@@ -80,7 +76,7 @@ StgStreamImpl* StgStreamImpl_Construct(
      * stream out-lives the storage in the client application.
      */
     newStream->parentStorage = parentStorage;
-    IStorage32_AddRef(newStream->parentStorage);
+    IStorage32_AddRef((IStorage32*)newStream->parentStorage);
     
     newStream->ownerProperty = ownerProperty;
     
@@ -120,7 +116,7 @@ void StgStreamImpl_Destroy(StgStreamImpl* This)
   /*
    * Release the reference we are holding on the parent storage.
    */
-  IStorage32_Release(This->parentStorage);
+  IStorage32_Release((IStorage32*)This->parentStorage);
   This->parentStorage = 0;
 
   /*
@@ -149,10 +145,12 @@ void StgStreamImpl_Destroy(StgStreamImpl* This)
  * class
  */
 HRESULT WINAPI StgStreamImpl_QueryInterface(
-		  StgStreamImpl* This,
+		  IStream32*     iface,
 		  REFIID         riid,	      /* [in] */          
 		  void**         ppvObject)   /* [iid_is][out] */ 
 {
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
+
   /*
    * Perform a sanity check on the parameters.
    */
@@ -186,7 +184,7 @@ HRESULT WINAPI StgStreamImpl_QueryInterface(
    * Query Interface always increases the reference count by one when it is
    * successful
    */
-  StgStreamImpl_AddRef(This);
+  StgStreamImpl_AddRef(iface);
   
   return S_OK;;
 }
@@ -196,8 +194,10 @@ HRESULT WINAPI StgStreamImpl_QueryInterface(
  * class
  */
 ULONG WINAPI StgStreamImpl_AddRef(
-		StgStreamImpl* This)
+		IStream32* iface)
 {
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
+
   This->ref++;
   
   return This->ref;
@@ -208,8 +208,10 @@ ULONG WINAPI StgStreamImpl_AddRef(
  * class
  */
 ULONG WINAPI StgStreamImpl_Release(
-		StgStreamImpl* This)
+		IStream32* iface)
 {
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
+
   ULONG newRef;
   
   This->ref--;
@@ -303,11 +305,13 @@ void StgStreamImpl_OpenBlockChain(
  * See the documentation of ISequentialStream for more info.
  */
 HRESULT WINAPI StgStreamImpl_Read( 
-		  StgStreamImpl* This,
+		  IStream32*     iface,
 		  void*          pv,        /* [length_is][size_is][out] */
 		  ULONG          cb,        /* [in] */                     
 		  ULONG*         pcbRead)   /* [out] */                    
 {
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
+
   ULONG bytesReadBuffer;
   ULONG bytesToReadFromBuffer;
   
@@ -381,11 +385,13 @@ HRESULT WINAPI StgStreamImpl_Read(
  * See the documentation of ISequentialStream for more info.
  */
 HRESULT WINAPI StgStreamImpl_Write(
-	          StgStreamImpl* This,
+	          IStream32*     iface,
 		  const void*    pv,          /* [size_is][in] */ 
 		  ULONG          cb,          /* [in] */          
 		  ULONG*         pcbWritten)  /* [out] */         
 {
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
+
   ULARGE_INTEGER newSize;
   ULONG bytesWritten = 0;
   
@@ -412,7 +418,7 @@ HRESULT WINAPI StgStreamImpl_Write(
   if (newSize.LowPart > This->streamSize.LowPart)
   {
     /* grow stream */
-    StgStreamImpl_SetSize(This, newSize);
+    StgStreamImpl_SetSize(iface, newSize);
   }
   
   /*
@@ -456,11 +462,13 @@ HRESULT WINAPI StgStreamImpl_Write(
  * See the documentation of IStream for more info.
  */        
 HRESULT WINAPI StgStreamImpl_Seek( 
-		  StgStreamImpl*  This,
+		  IStream32*      iface,
 		  LARGE_INTEGER   dlibMove,         /* [in] */ 
 		  DWORD           dwOrigin,         /* [in] */ 
 		  ULARGE_INTEGER* plibNewPosition) /* [out] */
 {
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
+
   ULARGE_INTEGER newPosition;
 
   /* 
@@ -531,9 +539,11 @@ HRESULT WINAPI StgStreamImpl_Seek(
  * See the documentation of IStream for more info.
  */
 HRESULT WINAPI StgStreamImpl_SetSize( 
-				     StgStreamImpl*  This,
+				     IStream32*      iface,
 				     ULARGE_INTEGER  libNewSize)   /* [in] */ 
 {
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
+
   StgProperty    curProperty;
   BOOL32         Success;
 
@@ -621,7 +631,7 @@ HRESULT WINAPI StgStreamImpl_SetSize(
 }
         
 HRESULT WINAPI StgStreamImpl_CopyTo( 
-				    StgStreamImpl*  This,
+				    IStream32*      iface,
 				    IStream32*      pstm,         /* [unique][in] */ 
 				    ULARGE_INTEGER  cb,           /* [in] */         
 				    ULARGE_INTEGER* pcbRead,      /* [out] */        
@@ -639,7 +649,7 @@ HRESULT WINAPI StgStreamImpl_CopyTo(
  * See the documentation of IStream for more info.
  */        
 HRESULT WINAPI StgStreamImpl_Commit( 
-		  StgStreamImpl*  This,
+		  IStream32*      iface,
 		  DWORD           grfCommitFlags)  /* [in] */ 
 {
   return S_OK;
@@ -654,13 +664,13 @@ HRESULT WINAPI StgStreamImpl_Commit(
  * See the documentation of IStream for more info.
  */        
 HRESULT WINAPI StgStreamImpl_Revert( 
-		  StgStreamImpl*  This)
+		  IStream32* iface)
 {
   return S_OK;
 }
 
 HRESULT WINAPI StgStreamImpl_LockRegion( 
-					StgStreamImpl*  This,
+					IStream32*     iface,
 					ULARGE_INTEGER libOffset,   /* [in] */ 
 					ULARGE_INTEGER cb,          /* [in] */ 
 					DWORD          dwLockType)  /* [in] */ 
@@ -669,7 +679,7 @@ HRESULT WINAPI StgStreamImpl_LockRegion(
 }
 
 HRESULT WINAPI StgStreamImpl_UnlockRegion( 
-					  StgStreamImpl* This,
+					  IStream32*     iface,
 					  ULARGE_INTEGER libOffset,   /* [in] */ 
 					  ULARGE_INTEGER cb,          /* [in] */ 
 					  DWORD          dwLockType)  /* [in] */ 
@@ -686,10 +696,12 @@ HRESULT WINAPI StgStreamImpl_UnlockRegion(
  * See the documentation of IStream for more info.
  */        
 HRESULT WINAPI StgStreamImpl_Stat( 
-		  StgStreamImpl* This,
+		  IStream32*     iface,
 		  STATSTG*       pstatstg,     /* [out] */
 		  DWORD          grfStatFlag)  /* [in] */ 
 {
+  StgStreamImpl* const This=(StgStreamImpl*)iface;
+
   StgProperty    curProperty;
   BOOL32         readSucessful;
   
@@ -713,7 +725,7 @@ HRESULT WINAPI StgStreamImpl_Stat(
 }
         
 HRESULT WINAPI StgStreamImpl_Clone( 
-				   StgStreamImpl* This,
+				   IStream32*     iface,
 				   IStream32**    ppstm) /* [out] */ 
 {
   return E_NOTIMPL;

@@ -69,16 +69,6 @@ static const ULONG PROPERTY_NULL             = 0xFFFFFFFF;
 #define PROPTYPE_ROOT    0x05
 
 /*
- * This define allows me to assign a function to a vtable without having the 
- * nasty warning about incompatible types.
- *
- * This is necessary because of the usage of implementation classes pointers
- * as the first parameter of the interface functions instead of the pointer
- * to the interface
- */
-#define VTABLE_FUNC(a) ((void*)a)
-
-/*
  * These defines assume a hardcoded blocksize. The code will assert
  * if the blocksize is different. Some changes will have to be done if it
  * becomes the case.
@@ -206,18 +196,18 @@ struct Storage32BaseImpl
  * Prototypes for the methods of the Storage32BaseImpl class.
  */
 HRESULT WINAPI Storage32BaseImpl_QueryInterface(
-            Storage32BaseImpl* This,
+            IStorage32*        iface,
             REFIID             riid,
             void**             ppvObject);
         
 ULONG WINAPI Storage32BaseImpl_AddRef( 
-            Storage32BaseImpl* This);
+            IStorage32*        iface);
         
 ULONG WINAPI Storage32BaseImpl_Release( 
-            Storage32BaseImpl* This);
+            IStorage32*        iface);
         
 HRESULT WINAPI Storage32BaseImpl_OpenStream( 
-            Storage32BaseImpl* This,
+            IStorage32*        iface,
             const OLECHAR32*   pwcsName,  /* [string][in] */
             void*              reserved1, /* [unique][in] */
             DWORD              grfMode,   /* [in] */        
@@ -225,7 +215,7 @@ HRESULT WINAPI Storage32BaseImpl_OpenStream(
             IStream32**        ppstm);    /* [out] */   
     
 HRESULT WINAPI Storage32BaseImpl_OpenStorage( 
-            Storage32BaseImpl* This,
+            IStorage32*        iface,
             const OLECHAR32*   pwcsName,      /* [string][unique][in] */ 
             IStorage32*        pstgPriority,  /* [unique][in] */         
             DWORD              grfMode,       /* [in] */                 
@@ -234,24 +224,24 @@ HRESULT WINAPI Storage32BaseImpl_OpenStorage(
             IStorage32**       ppstg);        /* [out] */                
           
 HRESULT WINAPI Storage32BaseImpl_EnumElements( 
-            Storage32BaseImpl* This,
+            IStorage32*        iface,
             DWORD              reserved1, /* [in] */                  
             void*              reserved2, /* [size_is][unique][in] */ 
             DWORD              reserved3, /* [in] */                  
             IEnumSTATSTG**     ppenum);   /* [out] */   
 
 HRESULT WINAPI Storage32BaseImpl_Stat( 
-            Storage32BaseImpl* This,
+            IStorage32*        iface,
             STATSTG*           pstatstg,     /* [out] */ 
             DWORD              grfStatFlag); /* [in] */  
 
 HRESULT WINAPI Storage32BaseImpl_RenameElement(
-            Storage32BaseImpl* This,
+            IStorage32*        iface,
             const OLECHAR32*   pwcsOldName,  /* [string][in] */
             const OLECHAR32*   pwcsNewName); /* [string][in] */
 
 HRESULT WINAPI Storage32BaseImpl_CreateStream(
-            Storage32BaseImpl* This,
+            IStorage32*        iface,
             const OLECHAR32*   pwcsName,  /* [string][in] */
             DWORD              grfMode,   /* [in] */
             DWORD              reserved1, /* [in] */
@@ -259,7 +249,7 @@ HRESULT WINAPI Storage32BaseImpl_CreateStream(
             IStream32**        ppstm);    /* [out] */
 
 HRESULT WINAPI Storage32BaseImpl_SetClass(
-            Storage32BaseImpl* This,
+            IStorage32*        iface,
             REFCLSID           clsid);  /* [in] */
 
 /****************************************************************************
@@ -320,7 +310,7 @@ struct Storage32Impl
  */        
 
 HRESULT WINAPI Storage32Impl_CreateStorage( 
-            Storage32Impl*   This,
+            IStorage32*      iface,
             const OLECHAR32* pwcsName,  /* [string][in] */ 
             DWORD            grfMode,   /* [in] */ 
             DWORD            dwStgFmt,  /* [in] */ 
@@ -328,39 +318,39 @@ HRESULT WINAPI Storage32Impl_CreateStorage(
             IStorage32**     ppstg);    /* [out] */ 
         
 HRESULT WINAPI Storage32Impl_CopyTo( 
-            Storage32Impl* This,
+            IStorage32*      iface,
             DWORD          ciidExclude,  /* [in] */ 
             const IID*     rgiidExclude, /* [size_is][unique][in] */ 
             SNB32            snbExclude, /* [unique][in] */ 
             IStorage32*    pstgDest);    /* [unique][in] */ 
         
 HRESULT WINAPI Storage32Impl_MoveElementTo( 
-            Storage32Impl*   This,
+            IStorage32*      iface,
             const OLECHAR32* pwcsName,    /* [string][in] */ 
             IStorage32*      pstgDest,    /* [unique][in] */ 
             const OLECHAR32* pwcsNewName, /* [string][in] */ 
             DWORD            grfFlags);   /* [in] */ 
         
 HRESULT WINAPI Storage32Impl_Commit( 
-            Storage32Impl* This,
+            IStorage32*      iface,
             DWORD          grfCommitFlags); /* [in] */ 
         
 HRESULT WINAPI Storage32Impl_Revert( 
-            Storage32Impl* This);
+            IStorage32*      iface);
         
 HRESULT WINAPI Storage32Impl_DestroyElement( 
-            Storage32Impl*   This,
+            IStorage32*      iface,
             const OLECHAR32* pwcsName); /* [string][in] */ 
         
 HRESULT WINAPI Storage32Impl_SetElementTimes( 
-            Storage32Impl*   This,
+            IStorage32*      iface,
             const OLECHAR32* pwcsName, /* [string][in] */ 
             const FILETIME*  pctime,   /* [in] */ 
             const FILETIME*  patime,   /* [in] */ 
             const FILETIME*  pmtime);  /* [in] */ 
 
 HRESULT WINAPI Storage32Impl_SetStateBits( 
-            Storage32Impl* This,
+            IStorage32*      iface,
             DWORD          grfStateBits, /* [in] */ 
             DWORD          grfMask);     /* [in] */ 
         
@@ -467,11 +457,11 @@ void Storage32InternalImpl_Destroy(
        	    Storage32InternalImpl* This);
 
 HRESULT WINAPI Storage32InternalImpl_Commit( 
-	    Storage32InternalImpl* This,
+	    IStorage32*            iface,
 	    DWORD                  grfCommitFlags); /* [in] */ 
 
 HRESULT WINAPI Storage32InternalImpl_Revert( 
-     	    Storage32InternalImpl* This);
+     	    IStorage32*            iface);
 
 
 /****************************************************************************
@@ -506,31 +496,31 @@ struct IEnumSTATSTGImpl
  * Method definitions for the IEnumSTATSTGImpl class.
  */
 HRESULT WINAPI IEnumSTATSTGImpl_QueryInterface(
-	    IEnumSTATSTGImpl* This,
+	    IEnumSTATSTG*     iface,
 	    REFIID            riid,
 	    void**            ppvObject);
         
 ULONG WINAPI IEnumSTATSTGImpl_AddRef(
-            IEnumSTATSTGImpl* This); 
+            IEnumSTATSTG*     iface); 
         
 ULONG WINAPI IEnumSTATSTGImpl_Release(
-            IEnumSTATSTGImpl* This);
+            IEnumSTATSTG*     iface);
         
 HRESULT WINAPI IEnumSTATSTGImpl_Next(
-            IEnumSTATSTGImpl* This,
+            IEnumSTATSTG*     iface,
 	    ULONG             celt,
 	    STATSTG*          rgelt,
 	    ULONG*            pceltFetched);
         
 HRESULT WINAPI IEnumSTATSTGImpl_Skip(
-            IEnumSTATSTGImpl* This,
+            IEnumSTATSTG*     iface,
 	    ULONG             celt);
         
 HRESULT WINAPI IEnumSTATSTGImpl_Reset(
-            IEnumSTATSTGImpl* This);
+            IEnumSTATSTG* iface);
         
 HRESULT WINAPI IEnumSTATSTGImpl_Clone(
-            IEnumSTATSTGImpl* This,
+            IEnumSTATSTG*     iface,
 	    IEnumSTATSTG**    ppenum);
 
 IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
@@ -620,71 +610,71 @@ void StgStreamImpl_OpenBlockChain(
                 StgStreamImpl* This);
 
 HRESULT WINAPI StgStreamImpl_QueryInterface(
-		StgStreamImpl* This,
+		IStream32*      iface,
 		REFIID         riid,		/* [in] */          
 		void**         ppvObject);  /* [iid_is][out] */ 
         
 ULONG WINAPI StgStreamImpl_AddRef(
-		StgStreamImpl* This);
+		IStream32*      iface);
         
 ULONG WINAPI StgStreamImpl_Release(
-		StgStreamImpl* This);
+		IStream32*      iface);
         
 HRESULT WINAPI StgStreamImpl_Read( 
-	        StgStreamImpl* This,
+	        IStream32*      iface,
 		void*          pv,        /* [length_is][size_is][out] */
 		ULONG          cb,        /* [in] */                     
 		ULONG*         pcbRead);  /* [out] */                    
         
 HRESULT WINAPI StgStreamImpl_Write(
-		StgStreamImpl* This,
+		IStream32*      iface,
 		const void*    pv,          /* [size_is][in] */ 
 		ULONG          cb,          /* [in] */          
 		ULONG*         pcbWritten); /* [out] */         
         
 HRESULT WINAPI StgStreamImpl_Seek( 
-		StgStreamImpl*  This,
+		IStream32*      iface,
 		LARGE_INTEGER   dlibMove,         /* [in] */ 
 		DWORD           dwOrigin,         /* [in] */ 
 		ULARGE_INTEGER* plibNewPosition); /* [out] */
         
 HRESULT WINAPI StgStreamImpl_SetSize( 
-		StgStreamImpl*  This,
+	        IStream32*      iface,
 		ULARGE_INTEGER  libNewSize);  /* [in] */ 
         
 HRESULT WINAPI StgStreamImpl_CopyTo( 
-		StgStreamImpl*  This,
+		IStream32*      iface,
 		IStream32*      pstm,         /* [unique][in] */ 
 		ULARGE_INTEGER  cb,           /* [in] */         
 		ULARGE_INTEGER* pcbRead,      /* [out] */        
 		ULARGE_INTEGER* pcbWritten);  /* [out] */        
 
 HRESULT WINAPI StgStreamImpl_Commit( 
-	    	StgStreamImpl*  This,
+	    	IStream32*      iface,
 		DWORD           grfCommitFlags); /* [in] */ 
         
 HRESULT WINAPI StgStreamImpl_Revert( 
-		StgStreamImpl*  This);
+		IStream32*  iface);
         
 HRESULT WINAPI StgStreamImpl_LockRegion( 
-		StgStreamImpl*  This,
+		IStream32*     iface,
 		ULARGE_INTEGER libOffset,   /* [in] */ 
 		ULARGE_INTEGER cb,          /* [in] */ 
 		DWORD          dwLockType); /* [in] */ 
         
 HRESULT WINAPI StgStreamImpl_UnlockRegion( 
-		StgStreamImpl* This,
+		IStream32*     iface,
 		ULARGE_INTEGER libOffset,   /* [in] */ 
 	        ULARGE_INTEGER cb,          /* [in] */ 
 		DWORD          dwLockType); /* [in] */ 
         
 HRESULT WINAPI StgStreamImpl_Stat( 
-		StgStreamImpl* This,
+		IStream32*     iface,
 	        STATSTG*       pstatstg,     /* [out] */
 	        DWORD          grfStatFlag); /* [in] */ 
         
 HRESULT WINAPI StgStreamImpl_Clone( 
-		StgStreamImpl* This,
+		IStream32*     iface,
 		IStream32**    ppstm);       /* [out] */ 
 
 

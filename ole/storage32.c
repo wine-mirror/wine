@@ -89,55 +89,51 @@ static DWORD GetCreationModeFromSTGM(DWORD stgm);
 /*
  * Virtual function table for the IStorage32Impl class.
  */
-static ICOM_VTABLE(IStorage32) Storage32Impl_VTable =
+static ICOM_VTABLE(IStorage32) Storage32Impl_Vtbl =
 {
-  {
-    VTABLE_FUNC(Storage32BaseImpl_QueryInterface),
-    VTABLE_FUNC(Storage32BaseImpl_AddRef),
-    VTABLE_FUNC(Storage32BaseImpl_Release)
-  },
-  VTABLE_FUNC(Storage32BaseImpl_CreateStream),
-  VTABLE_FUNC(Storage32BaseImpl_OpenStream),
-  VTABLE_FUNC(Storage32Impl_CreateStorage),
-  VTABLE_FUNC(Storage32BaseImpl_OpenStorage),
-  VTABLE_FUNC(Storage32Impl_CopyTo),
-  VTABLE_FUNC(Storage32Impl_MoveElementTo),
-  VTABLE_FUNC(Storage32Impl_Commit),
-  VTABLE_FUNC(Storage32Impl_Revert),
-  VTABLE_FUNC(Storage32BaseImpl_EnumElements),
-  VTABLE_FUNC(Storage32Impl_DestroyElement),
-  VTABLE_FUNC(Storage32BaseImpl_RenameElement),
-  VTABLE_FUNC(Storage32Impl_SetElementTimes),
-  VTABLE_FUNC(Storage32BaseImpl_SetClass),
-  VTABLE_FUNC(Storage32Impl_SetStateBits),
-  VTABLE_FUNC(Storage32BaseImpl_Stat)
+    Storage32BaseImpl_QueryInterface,
+    Storage32BaseImpl_AddRef,
+    Storage32BaseImpl_Release,
+    Storage32BaseImpl_CreateStream,
+    Storage32BaseImpl_OpenStream,
+    Storage32Impl_CreateStorage,
+    Storage32BaseImpl_OpenStorage,
+    Storage32Impl_CopyTo,
+    Storage32Impl_MoveElementTo,
+    Storage32Impl_Commit,
+    Storage32Impl_Revert,
+    Storage32BaseImpl_EnumElements,
+    Storage32Impl_DestroyElement,
+    Storage32BaseImpl_RenameElement,
+    Storage32Impl_SetElementTimes,
+    Storage32BaseImpl_SetClass,
+    Storage32Impl_SetStateBits,
+    Storage32BaseImpl_Stat
 };
 
 /*
  * Virtual function table for the Storage32InternalImpl class.
  */
-static ICOM_VTABLE(IStorage32) Storage32InternalImpl_VTable =
-{
+static ICOM_VTABLE(IStorage32) Storage32InternalImpl_Vtbl =
   {
-    VTABLE_FUNC(Storage32BaseImpl_QueryInterface),
-    VTABLE_FUNC(Storage32BaseImpl_AddRef),
-    VTABLE_FUNC(Storage32BaseImpl_Release)
-  },
-  VTABLE_FUNC(Storage32BaseImpl_CreateStream),
-  VTABLE_FUNC(Storage32BaseImpl_OpenStream),
-  VTABLE_FUNC(Storage32Impl_CreateStorage),
-  VTABLE_FUNC(Storage32BaseImpl_OpenStorage),
-  VTABLE_FUNC(Storage32Impl_CopyTo),
-  VTABLE_FUNC(Storage32Impl_MoveElementTo),
-  VTABLE_FUNC(Storage32InternalImpl_Commit),
-  VTABLE_FUNC(Storage32InternalImpl_Revert),
-  VTABLE_FUNC(Storage32BaseImpl_EnumElements),
-  VTABLE_FUNC(Storage32Impl_DestroyElement),
-  VTABLE_FUNC(Storage32BaseImpl_RenameElement),
-  VTABLE_FUNC(Storage32Impl_SetElementTimes),
-  VTABLE_FUNC(Storage32BaseImpl_SetClass),
-  VTABLE_FUNC(Storage32Impl_SetStateBits),
-  VTABLE_FUNC(Storage32BaseImpl_Stat)
+    Storage32BaseImpl_QueryInterface,
+    Storage32BaseImpl_AddRef,
+    Storage32BaseImpl_Release,
+    Storage32BaseImpl_CreateStream,
+    Storage32BaseImpl_OpenStream,
+    Storage32Impl_CreateStorage,
+    Storage32BaseImpl_OpenStorage,
+    Storage32Impl_CopyTo,
+    Storage32Impl_MoveElementTo,
+    Storage32InternalImpl_Commit,
+    Storage32InternalImpl_Revert,
+    Storage32BaseImpl_EnumElements,
+    Storage32Impl_DestroyElement,
+    Storage32BaseImpl_RenameElement,
+    Storage32Impl_SetElementTimes,
+    Storage32BaseImpl_SetClass,
+    Storage32Impl_SetStateBits,
+    Storage32BaseImpl_Stat
 };
 
 /*
@@ -145,15 +141,13 @@ static ICOM_VTABLE(IStorage32) Storage32InternalImpl_VTable =
  */
 static ICOM_VTABLE(IEnumSTATSTG) IEnumSTATSTGImpl_Vtbl =
 {
-  {
-    VTABLE_FUNC(IEnumSTATSTGImpl_QueryInterface),
-    VTABLE_FUNC(IEnumSTATSTGImpl_AddRef),
-    VTABLE_FUNC(IEnumSTATSTGImpl_Release)
-  },
-  VTABLE_FUNC(IEnumSTATSTGImpl_Next),
-  VTABLE_FUNC(IEnumSTATSTGImpl_Skip),
-  VTABLE_FUNC(IEnumSTATSTGImpl_Reset),
-  VTABLE_FUNC(IEnumSTATSTGImpl_Clone)
+    IEnumSTATSTGImpl_QueryInterface,
+    IEnumSTATSTGImpl_AddRef,
+    IEnumSTATSTGImpl_Release,
+    IEnumSTATSTGImpl_Next,
+    IEnumSTATSTGImpl_Skip,
+    IEnumSTATSTGImpl_Reset,
+    IEnumSTATSTGImpl_Clone
 };
 
 
@@ -173,10 +167,11 @@ static ICOM_VTABLE(IEnumSTATSTG) IEnumSTATSTGImpl_Vtbl =
  * See Windows documentation for more details on IUnknown methods.
  */
 HRESULT WINAPI Storage32BaseImpl_QueryInterface(
-  Storage32BaseImpl* This,
+  IStorage32*        iface,
   REFIID             riid,
   void**             ppvObject)
 {
+  ICOM_THIS(Storage32BaseImpl,iface);
   /*
    * Perform a sanity check on the parameters.
    */
@@ -210,9 +205,9 @@ HRESULT WINAPI Storage32BaseImpl_QueryInterface(
    * Query Interface always increases the reference count by one when it is
    * successful
    */
-  Storage32BaseImpl_AddRef(This);
+  Storage32BaseImpl_AddRef(iface);
 
-  return S_OK;;
+  return S_OK;
 }
         
 /************************************************************************
@@ -224,8 +219,9 @@ HRESULT WINAPI Storage32BaseImpl_QueryInterface(
  * See Windows documentation for more details on IUnknown methods.
  */
 ULONG WINAPI Storage32BaseImpl_AddRef( 
-            Storage32BaseImpl* This)
+            IStorage32* iface)
 {
+  ICOM_THIS(Storage32BaseImpl,iface);
   This->ref++;
 
   return This->ref;
@@ -240,8 +236,9 @@ ULONG WINAPI Storage32BaseImpl_AddRef(
  * See Windows documentation for more details on IUnknown methods.
  */
 ULONG WINAPI Storage32BaseImpl_Release( 
-      Storage32BaseImpl* This)
+      IStorage32* iface)
 {
+  ICOM_THIS(Storage32BaseImpl,iface);
   /*
    * Decrease the reference count on this object.
    */
@@ -273,13 +270,14 @@ ULONG WINAPI Storage32BaseImpl_Release(
  * See Windows documentation for more details on IStorage methods.
  */
 HRESULT WINAPI Storage32BaseImpl_OpenStream( 
-  Storage32BaseImpl* This,
+  IStorage32*        iface,
   const OLECHAR32*   pwcsName,  /* [string][in] */
   void*              reserved1, /* [unique][in] */
   DWORD              grfMode,   /* [in]  */        
   DWORD              reserved2, /* [in]  */        
   IStream32**        ppstm)     /* [out] */       
 {
+  ICOM_THIS(Storage32BaseImpl,iface);
   IEnumSTATSTGImpl* propertyEnumeration;
   StgStreamImpl*    newStream;
   StgProperty       currentProperty;
@@ -340,13 +338,13 @@ HRESULT WINAPI Storage32BaseImpl_OpenStream(
     
     if (newStream!=0)
     {
+      *ppstm = (IStream32*)newStream;
+
       /*
        * Since we are returning a pointer to the interface, we have to 
        * nail down the reference.
        */
-      StgStreamImpl_AddRef(newStream);
-      
-      *ppstm = (IStream32*)newStream;
+      StgStreamImpl_AddRef(*ppstm);
       
       return S_OK;
     }
@@ -365,7 +363,7 @@ HRESULT WINAPI Storage32BaseImpl_OpenStream(
  * See Windows documentation for more details on IStorage methods.
  */        
 HRESULT WINAPI Storage32BaseImpl_OpenStorage( 
-  Storage32BaseImpl* This,
+  IStorage32*        iface,
   const OLECHAR32*   pwcsName,      /* [string][unique][in] */ 
   IStorage32*        pstgPriority,  /* [unique][in] */         
   DWORD              grfMode,       /* [in] */                 
@@ -373,6 +371,7 @@ HRESULT WINAPI Storage32BaseImpl_OpenStorage(
   DWORD              reserved,      /* [in] */                 
   IStorage32**       ppstg)         /* [out] */                        
 {
+  ICOM_THIS(Storage32BaseImpl,iface);
   Storage32InternalImpl* newStorage;
   IEnumSTATSTGImpl*      propertyEnumeration;
   StgProperty            currentProperty;
@@ -438,13 +437,13 @@ HRESULT WINAPI Storage32BaseImpl_OpenStorage(
     
     if (newStorage != 0)
     {
+      *ppstg = (IStorage32*)newStorage;
+
       /*
        * Since we are returning a pointer to the interface, 
        * we have to nail down the reference.
        */
-      Storage32BaseImpl_AddRef((Storage32BaseImpl*)newStorage);
-      
-      *ppstg = (IStorage32*)newStorage;
+      Storage32BaseImpl_AddRef(*ppstg);
       
       return S_OK;
     }
@@ -464,12 +463,13 @@ HRESULT WINAPI Storage32BaseImpl_OpenStorage(
  * See Windows documentation for more details on IStorage methods.
  */        
 HRESULT WINAPI Storage32BaseImpl_EnumElements( 
-  Storage32BaseImpl* This,
+  IStorage32*        iface,
   DWORD              reserved1, /* [in] */                  
   void*              reserved2, /* [size_is][unique][in] */ 
   DWORD              reserved3, /* [in] */                  
   IEnumSTATSTG**     ppenum)    /* [out] */                 
 {
+  ICOM_THIS(Storage32BaseImpl,iface);
   IEnumSTATSTGImpl* newEnum;
 
   /*
@@ -487,13 +487,13 @@ HRESULT WINAPI Storage32BaseImpl_EnumElements(
 
   if (newEnum!=0)
   {
+    *ppenum = (IEnumSTATSTG*)newEnum;
+
     /*
      * Don't forget to nail down a reference to the new object before
      * returning it.
      */
-    IEnumSTATSTGImpl_AddRef(newEnum);
-    
-    *ppenum = (IEnumSTATSTG*)newEnum;
+    IEnumSTATSTGImpl_AddRef(*ppenum);
     
     return S_OK;
   }
@@ -509,10 +509,11 @@ HRESULT WINAPI Storage32BaseImpl_EnumElements(
  * See Windows documentation for more details on IStorage methods.
  */        
 HRESULT WINAPI Storage32BaseImpl_Stat( 
-  Storage32BaseImpl* This,
+  IStorage32*        iface,
   STATSTG*           pstatstg,     /* [out] */ 
   DWORD              grfStatFlag)  /* [in] */  
 {
+  ICOM_THIS(Storage32BaseImpl,iface);
   StgProperty    curProperty;
   BOOL32         readSucessful;
 
@@ -555,10 +556,11 @@ HRESULT WINAPI Storage32BaseImpl_Stat(
  *    perform a DestroyElement of the old StgProperty.
  */
 HRESULT WINAPI Storage32BaseImpl_RenameElement(
-            Storage32BaseImpl* This,
+            IStorage32*        iface,
             const OLECHAR32*   pwcsOldName,  /* [in] */
             const OLECHAR32*   pwcsNewName)  /* [in] */
 {
+  ICOM_THIS(Storage32BaseImpl,iface);
   IEnumSTATSTGImpl* propertyEnumeration;
   StgProperty       currentProperty;
   ULONG             foundPropertyIndex;
@@ -585,7 +587,7 @@ HRESULT WINAPI Storage32BaseImpl_RenameElement(
     return STG_E_FILEALREADYEXISTS;
   }
 
-  IEnumSTATSTGImpl_Reset(propertyEnumeration);
+  IEnumSTATSTGImpl_Reset((IEnumSTATSTG*)propertyEnumeration);
 
   /*
    * Search the enumeration for the old property name
@@ -680,7 +682,7 @@ HRESULT WINAPI Storage32BaseImpl_RenameElement(
      * Invoke Destroy to get rid of the ole property and automatically redo 
      * the linking of it's previous and next members... 
      */ 
-    Storage32Impl_DestroyElement(This->ancestorStorage, pwcsOldName); 
+    Storage32Impl_DestroyElement((IStorage32*)This->ancestorStorage, pwcsOldName); 
 
   }
   else
@@ -702,13 +704,14 @@ HRESULT WINAPI Storage32BaseImpl_RenameElement(
  * See Windows documentation for more details on IStorage methods.
  */
 HRESULT WINAPI Storage32BaseImpl_CreateStream(
-            Storage32BaseImpl* This,
+            IStorage32*        iface,
             const OLECHAR32*   pwcsName,  /* [string][in] */
             DWORD              grfMode,   /* [in] */
             DWORD              reserved1, /* [in] */
             DWORD              reserved2, /* [in] */
             IStream32**        ppstm)     /* [out] */
 {
+  ICOM_THIS(Storage32BaseImpl,iface);
   IEnumSTATSTGImpl* propertyEnumeration;
   StgStreamImpl*    newStream;
   StgProperty       currentProperty, newStreamProperty;
@@ -760,7 +763,7 @@ HRESULT WINAPI Storage32BaseImpl_CreateStream(
      * An element with this name already exists 
      */
     if (grfMode & STGM_CREATE)
-      Storage32Impl_DestroyElement(This->ancestorStorage, pwcsName); 
+      Storage32Impl_DestroyElement((IStorage32*)This->ancestorStorage, pwcsName); 
     else 
       return STG_E_FILEALREADYEXISTS;
   }
@@ -824,13 +827,13 @@ HRESULT WINAPI Storage32BaseImpl_CreateStream(
 
   if (newStream != 0)
   {
+    *ppstm = (IStream32*)newStream;
+
     /*
      * Since we are returning a pointer to the interface, we have to nail down
      * the reference.
      */
-    StgStreamImpl_AddRef(newStream);
-
-    *ppstm = (IStream32*)newStream;
+    StgStreamImpl_AddRef(*ppstm);
   }
   else
   {
@@ -849,9 +852,10 @@ HRESULT WINAPI Storage32BaseImpl_CreateStream(
  * See Windows documentation for more details on IStorage methods.
  */
 HRESULT WINAPI Storage32BaseImpl_SetClass(
-  Storage32BaseImpl* This,
+  IStorage32*        iface,
   REFCLSID           clsid) /* [in] */
 {
+  ICOM_THIS(Storage32BaseImpl,iface);
   HRESULT hRes = E_FAIL;
   StgProperty curProperty;
   BOOL32 success;
@@ -878,20 +882,22 @@ HRESULT WINAPI Storage32BaseImpl_SetClass(
 */
         
 /************************************************************************
- * Storage32Impl_CreateStorage 
+ * Storage32Impl_CreateStorage (IStorage)
  *
  * This method will create the storage object within the provided storage.
  *
  * See Windows documentation for more details on IStorage methods.
  */
 HRESULT WINAPI Storage32Impl_CreateStorage( 
-  Storage32Impl    *This,
+  IStorage32*      iface,
   const OLECHAR32  *pwcsName, /* [string][in] */ 
   DWORD            grfMode,   /* [in] */ 
   DWORD            reserved1, /* [in] */ 
   DWORD            reserved2, /* [in] */ 
   IStorage32       **ppstg)   /* [out] */ 
 {
+  Storage32Impl* const This=(Storage32Impl*)iface;
+
   IEnumSTATSTGImpl *propertyEnumeration;
   StgProperty      currentProperty;
   StgProperty      newProperty;
@@ -937,7 +943,7 @@ HRESULT WINAPI Storage32Impl_CreateStorage(
      * An element with this name already exists 
      */
     if (grfMode & STGM_CREATE)
-      Storage32Impl_DestroyElement(This->ancestorStorage, pwcsName); 
+      Storage32Impl_DestroyElement((IStorage32*)This->ancestorStorage, pwcsName); 
     else 
       return STG_E_FILEALREADYEXISTS;
   }
@@ -997,7 +1003,7 @@ HRESULT WINAPI Storage32Impl_CreateStorage(
    * Open it to get a pointer to return.
    */
   hr = Storage32BaseImpl_OpenStorage(
-         (Storage32BaseImpl*)This,
+         iface,
          (OLECHAR32*)pwcsName,
          0,
          grfMode,
@@ -1250,8 +1256,11 @@ static void updatePropertyChain(
 }
 
       
+/*************************************************************************
+ * CopyTo (IStorage)
+ */
 HRESULT WINAPI Storage32Impl_CopyTo( 
-  Storage32Impl *This,
+  IStorage32*   iface,
   DWORD         ciidExclude,  /* [in] */ 
   const IID     *rgiidExclude,/* [size_is][unique][in] */ 
   SNB32         snbExclude,   /* [unique][in] */ 
@@ -1260,8 +1269,11 @@ HRESULT WINAPI Storage32Impl_CopyTo(
   return E_NOTIMPL;
 }
         
+/*************************************************************************
+ * MoveElementTo (IStorage)
+ */
 HRESULT WINAPI Storage32Impl_MoveElementTo( 
-  Storage32Impl   *This,
+  IStorage32*     iface,
   const OLECHAR32 *pwcsName,   /* [string][in] */ 
   IStorage32      *pstgDest,   /* [unique][in] */ 
   const OLECHAR32 *pwcsNewName,/* [string][in] */ 
@@ -1270,25 +1282,31 @@ HRESULT WINAPI Storage32Impl_MoveElementTo(
   return E_NOTIMPL;
 }
         
+/*************************************************************************
+ * Commit (IStorage)
+ */
 HRESULT WINAPI Storage32Impl_Commit( 
-  Storage32Impl *This,
+  IStorage32*   iface,
   DWORD         grfCommitFlags)/* [in] */ 
 {
   FIXME(ole, "(%ld): stub!\n", grfCommitFlags);
   return S_OK;
 }
         
+/*************************************************************************
+ * Revert (IStorage)
+ */
 HRESULT WINAPI Storage32Impl_Revert( 
-  Storage32Impl* This)
+  IStorage32* iface)
 {
   return E_NOTIMPL;
 }
 
 /*************************************************************************
- * DestroyElement.
+ * DestroyElement (IStorage)
  *
  * Stategy: This implementation is build this way for simplicity not for speed. 
- *          I allways delete the top most element of the enumeration and adjust
+ *          I always delete the top most element of the enumeration and adjust
  *          the deleted element pointer all the time.  This takes longer to 
  *          do but allow to reinvoke DestroyElement whenever we encounter a 
  *          storage object.  The optimisation reside in the usage of another
@@ -1296,9 +1314,11 @@ HRESULT WINAPI Storage32Impl_Revert(
  *          first. (postfix order)
  */
 HRESULT WINAPI Storage32Impl_DestroyElement( 
-  Storage32Impl   *This,
+  IStorage32*     iface,
   const OLECHAR32 *pwcsName)/* [string][in] */ 
 {
+  Storage32Impl* const This=(Storage32Impl*)iface;
+
   IEnumSTATSTGImpl* propertyEnumeration;
   HRESULT           hr = S_OK;
   BOOL32            res;
@@ -1434,7 +1454,7 @@ static HRESULT deleteStorageProperty(
    * Open the storage and enumerate it
    */
   hr = Storage32BaseImpl_OpenStorage(
-        (Storage32BaseImpl*)parentStorage,
+        (IStorage32*)parentStorage,
         propertyToDeleteName,
         0,
         STGM_SHARE_EXCLUSIVE,
@@ -1461,7 +1481,7 @@ static HRESULT deleteStorageProperty(
     if (hr==S_OK)
     {
       destroyHr = Storage32Impl_DestroyElement(
-                    (Storage32Impl*)childStorage, 
+                    (IStorage32*)childStorage, 
                     (OLECHAR32*)currentElement.pwcsName);
 
       CoTaskMemFree(currentElement.pwcsName);
@@ -1501,7 +1521,7 @@ static HRESULT deleteStreamProperty(
   size.LowPart = 0;
 
   hr = Storage32BaseImpl_OpenStream(
-         (Storage32BaseImpl*)parentStorage,
+         (IStorage32*)parentStorage,
          (OLECHAR32*)propertyToDelete.name,
          NULL,
          STGM_SHARE_EXCLUSIVE,
@@ -1785,8 +1805,11 @@ static HRESULT adjustPropertyChain(
 }
 
 
+/******************************************************************************
+ * SetElementTimes (IStorage)
+ */
 HRESULT WINAPI Storage32Impl_SetElementTimes( 
-  Storage32Impl   *This,
+  IStorage32*     iface,
   const OLECHAR32 *pwcsName,/* [string][in] */ 
   const FILETIME  *pctime,  /* [in] */ 
   const FILETIME  *patime,  /* [in] */ 
@@ -1795,8 +1818,11 @@ HRESULT WINAPI Storage32Impl_SetElementTimes(
   return E_NOTIMPL;
 }
 
+/******************************************************************************
+ * SetStateBits (IStorage)
+ */
 HRESULT WINAPI Storage32Impl_SetStateBits( 
-  Storage32Impl *This,
+  IStorage32*   iface,
   DWORD         grfStateBits,/* [in] */ 
   DWORD         grfMask)     /* [in] */ 
 {
@@ -1821,7 +1847,7 @@ HRESULT Storage32Impl_Construct(
   /*
    * Initialize the virtual fgunction table.
    */
-  This->lpvtbl       = &Storage32Impl_VTable;
+  This->lpvtbl       = &Storage32Impl_Vtbl;
   This->v_destructor = &Storage32Impl_Destroy;
   
   /*
@@ -2743,14 +2769,14 @@ Storage32InternalImpl* Storage32InternalImpl_Construct(
     /*
      * Initialize the virtual function table.
      */
-    newStorage->lpvtbl       = &Storage32InternalImpl_VTable;
+    newStorage->lpvtbl       = &Storage32InternalImpl_Vtbl;
     newStorage->v_destructor = &Storage32InternalImpl_Destroy;
 
     /*
      * Keep the ancestor storage pointer and nail a reference to it.
      */
     newStorage->ancestorStorage = ancestorStorage;
-    Storage32BaseImpl_AddRef((Storage32BaseImpl*)(newStorage->ancestorStorage));
+    Storage32BaseImpl_AddRef((IStorage32*)(newStorage->ancestorStorage));
 
     /*
      * Keep the index of the root property set for this storage,
@@ -2777,7 +2803,7 @@ void Storage32InternalImpl_Destroy(
 ** does nothing.
 */
 HRESULT WINAPI Storage32InternalImpl_Commit( 
-  Storage32InternalImpl* This,
+  IStorage32*            iface,
   DWORD                  grfCommitFlags)  /* [in] */ 
 {
   return S_OK;
@@ -2791,7 +2817,7 @@ HRESULT WINAPI Storage32InternalImpl_Commit(
 ** does nothing.
 */
 HRESULT WINAPI Storage32InternalImpl_Revert( 
-  Storage32InternalImpl* This)
+  IStorage32*            iface)
 {
   return S_OK;
 }
@@ -2821,7 +2847,7 @@ IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
      * enumeration out-lives the storage in the client application.
      */
     newEnumeration->parentStorage = parentStorage;
-    IStorage32_AddRef(newEnumeration->parentStorage);
+    IStorage32_AddRef((IStorage32*)newEnumeration->parentStorage);
     
     newEnumeration->firstPropertyNode   = firstPropertyNode;
     
@@ -2836,7 +2862,7 @@ IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
     /*
      * Make sure the current node of the iterator is the first one.
      */
-    IEnumSTATSTGImpl_Reset(newEnumeration);
+    IEnumSTATSTGImpl_Reset((IEnumSTATSTG*)newEnumeration);
   }
   
   return newEnumeration;
@@ -2844,16 +2870,18 @@ IEnumSTATSTGImpl* IEnumSTATSTGImpl_Construct(
 
 void IEnumSTATSTGImpl_Destroy(IEnumSTATSTGImpl* This)
 {
-  IStorage32_Release(This->parentStorage);
+  IStorage32_Release((IStorage32*)This->parentStorage);
   HeapFree(GetProcessHeap(), 0, This->stackToVisit);
   HeapFree(GetProcessHeap(), 0, This);
 }
 
 HRESULT WINAPI IEnumSTATSTGImpl_QueryInterface(
-  IEnumSTATSTGImpl* This,
+  IEnumSTATSTG*     iface,
   REFIID            riid,
   void**            ppvObject)
 {
+  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+
   /*
    * Perform a sanity check on the parameters.
    */
@@ -2887,21 +2915,25 @@ HRESULT WINAPI IEnumSTATSTGImpl_QueryInterface(
    * Query Interface always increases the reference count by one when it is
    * successful
    */
-  IEnumSTATSTGImpl_AddRef(This);
+  IEnumSTATSTGImpl_AddRef((IEnumSTATSTG*)This);
 
-  return S_OK;;
+  return S_OK;
 }
         
 ULONG   WINAPI IEnumSTATSTGImpl_AddRef(
-  IEnumSTATSTGImpl* This)
+  IEnumSTATSTG* iface)
 {
+  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+
   This->ref++;
   return This->ref;
 }
         
 ULONG   WINAPI IEnumSTATSTGImpl_Release(
-  IEnumSTATSTGImpl* This)
+  IEnumSTATSTG* iface)
 {
+  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+
   ULONG newRef;
 
   This->ref--;
@@ -2919,11 +2951,13 @@ ULONG   WINAPI IEnumSTATSTGImpl_Release(
 }
 
 HRESULT WINAPI IEnumSTATSTGImpl_Next(
-  IEnumSTATSTGImpl* This,
+  IEnumSTATSTG* iface,
   ULONG             celt,
   STATSTG*          rgelt,
   ULONG*            pceltFetched)
 {
+  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+
   StgProperty currentProperty;
   STATSTG*    currentReturnStruct = rgelt;
   ULONG       objectFetched       = 0;
@@ -3000,9 +3034,11 @@ HRESULT WINAPI IEnumSTATSTGImpl_Next(
 
         
 HRESULT WINAPI IEnumSTATSTGImpl_Skip(
-  IEnumSTATSTGImpl* This,
+  IEnumSTATSTG* iface,
   ULONG             celt)
 {
+  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+
   StgProperty currentProperty;
   ULONG       objectFetched       = 0;
   ULONG       currentSearchNode;
@@ -3050,8 +3086,10 @@ HRESULT WINAPI IEnumSTATSTGImpl_Skip(
 }
         
 HRESULT WINAPI IEnumSTATSTGImpl_Reset(
-  IEnumSTATSTGImpl* This)
+  IEnumSTATSTG* iface)
 {
+  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+
   StgProperty rootProperty;
   BOOL32      readSucessful;
 
@@ -3082,9 +3120,11 @@ HRESULT WINAPI IEnumSTATSTGImpl_Reset(
 }
         
 HRESULT WINAPI IEnumSTATSTGImpl_Clone(
-  IEnumSTATSTGImpl* This,
+  IEnumSTATSTG* iface,
   IEnumSTATSTG**    ppenum)
 {
+  IEnumSTATSTGImpl* const This=(IEnumSTATSTGImpl*)iface;
+
   IEnumSTATSTGImpl* newClone;
 
   /*
@@ -3111,13 +3151,13 @@ HRESULT WINAPI IEnumSTATSTGImpl_Clone(
     This->stackToVisit, 
     sizeof(ULONG) * newClone->stackSize);
 
+  *ppenum = (IEnumSTATSTG*)newClone;
+
   /*
    * Don't forget to nail down a reference to the clone before
    * returning it.
    */
-  IEnumSTATSTGImpl_AddRef(newClone);
-
-  *ppenum = (IEnumSTATSTG*)newClone;
+  IEnumSTATSTGImpl_AddRef(*ppenum);
 
   return S_OK;
 }
@@ -4609,7 +4649,7 @@ HRESULT WINAPI StgCreateDocfile32(
    * Get an "out" pointer for the caller.
    */
   hr = Storage32BaseImpl_QueryInterface(
-         (Storage32BaseImpl*)newStorage,
+         (IStorage32*)newStorage,
          (REFIID)&IID_IStorage,
          (void**)ppstgOpen);
 
@@ -4690,7 +4730,7 @@ HRESULT WINAPI StgOpenStorage32(
    * Get an "out" pointer for the caller.
    */
   hr = Storage32BaseImpl_QueryInterface(
-         (Storage32BaseImpl*)newStorage,
+         (IStorage32*)newStorage,
          (REFIID)&IID_IStorage,
          (void**)ppstgOpen);
   

@@ -48,7 +48,7 @@ LPPERSISTFILE IPersistFile_Constructor(void)
  *  IPersistFile_QueryInterface
  */
 static HRESULT WINAPI IPersistFile_fnQueryInterface(
-  LPUNKNOWN iface, REFIID riid, LPVOID *ppvObj)
+  IPersistFile* iface, REFIID riid, LPVOID *ppvObj)
 {
 	ICOM_THIS(IPersistFileImpl,iface);
 	char    xriid[50];
@@ -75,7 +75,7 @@ static HRESULT WINAPI IPersistFile_fnQueryInterface(
 /******************************************************************************
  * IPersistFile_AddRef
  */
-static ULONG WINAPI IPersistFile_fnAddRef(LPUNKNOWN iface)
+static ULONG WINAPI IPersistFile_fnAddRef(IPersistFile* iface)
 {
 	ICOM_THIS(IPersistFileImpl,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
@@ -86,7 +86,7 @@ static ULONG WINAPI IPersistFile_fnAddRef(LPUNKNOWN iface)
 /******************************************************************************
  * IPersistFile_Release
  */
-static ULONG WINAPI IPersistFile_fnRelease(LPUNKNOWN iface)
+static ULONG WINAPI IPersistFile_fnRelease(IPersistFile* iface)
 {
 	ICOM_THIS(IPersistFileImpl,iface);
 	TRACE(shell,"(%p)->(count=%lu)\n",This,This->ref);
@@ -101,7 +101,7 @@ static ULONG WINAPI IPersistFile_fnRelease(LPUNKNOWN iface)
 	return This->ref;
 }
 
-static HRESULT WINAPI IPersistFile_fnGetClassID(const IPersist* iface, CLSID *pClassID)
+static HRESULT WINAPI IPersistFile_fnGetClassID(const IPersistFile* iface, CLSID *pClassID)
 {
 	ICOM_CTHIS(IPersistFile,iface);
 	FIXME(shell,"(%p)\n",This);
@@ -140,14 +140,10 @@ static HRESULT WINAPI IPersistFile_fnGetCurFile(const IPersistFile* iface, LPOLE
   
 static struct ICOM_VTABLE(IPersistFile) pfvt = 
 {
-    {
-        {
-            IPersistFile_fnQueryInterface,
-            IPersistFile_fnAddRef,
-            IPersistFile_fnRelease
-        },
-        IPersistFile_fnGetClassID
-    },
+    IPersistFile_fnQueryInterface,
+    IPersistFile_fnAddRef,
+    IPersistFile_fnRelease,
+    IPersistFile_fnGetClassID,
     IPersistFile_fnIsDirty,
     IPersistFile_fnLoad,
     IPersistFile_fnSave,

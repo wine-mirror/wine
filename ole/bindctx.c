@@ -24,50 +24,50 @@ typedef struct BindCtxImpl{
 } BindCtxImpl;
 
 
-HRESULT WINAPI BindCtxImpl_QueryInterface(BindCtxImpl* This,REFIID riid,void** ppvObject);
-ULONG   WINAPI BindCtxImpl_AddRef(BindCtxImpl* This);
-ULONG   WINAPI BindCtxImpl_Release(BindCtxImpl* This);
-HRESULT WINAPI BindCtxImpl_Construct(BindCtxImpl* This);
-HRESULT WINAPI BindCtxImpl_destroy(BindCtxImpl* This);
-HRESULT WINAPI BindCtxImpl_RegisterObjectBound(BindCtxImpl* This,IUnknown* punk);
-HRESULT WINAPI BindCtxImpl_RevokeObjectBound(BindCtxImpl* This, IUnknown* punk);
-HRESULT WINAPI BindCtxImpl_ReleaseObjects(BindCtxImpl* This);
-HRESULT WINAPI BindCtxImpl_SetBindOptions(BindCtxImpl* This,LPBIND_OPTS2 pbindopts);
-HRESULT WINAPI BindCtxImpl_GetBindOptions(BindCtxImpl* This,LPBIND_OPTS2 pbindopts);
-HRESULT WINAPI BindCtxImpl_GetRunningObjectTable(BindCtxImpl* This,IRunningObjectTable** pprot);
-HRESULT WINAPI BindCtxImpl_RegisterObjectParam(BindCtxImpl* This,LPOLESTR32 pszkey, IUnknown* punk);
-HRESULT WINAPI BindCtxImpl_GetObjectParam(BindCtxImpl* This,LPOLESTR32 pszkey, IUnknown* punk);
-HRESULT WINAPI BindCtxImpl_EnumObjectParam(BindCtxImpl* This,IEnumString** ppenum);
-HRESULT WINAPI BindCtxImpl_RevokeObjectParam(BindCtxImpl* This,LPOLESTR32 pszkey);
+HRESULT WINAPI BindCtxImpl_QueryInterface(IBindCtx* iface,REFIID riid,void** ppvObject);
+ULONG   WINAPI BindCtxImpl_AddRef(IBindCtx* iface);
+ULONG   WINAPI BindCtxImpl_Release(IBindCtx* iface);
+HRESULT WINAPI BindCtxImpl_RegisterObjectBound(IBindCtx* iface,IUnknown* punk);
+HRESULT WINAPI BindCtxImpl_RevokeObjectBound(IBindCtx* iface, IUnknown* punk);
+HRESULT WINAPI BindCtxImpl_ReleaseObjects(IBindCtx* iface);
+HRESULT WINAPI BindCtxImpl_SetBindOptions(IBindCtx* iface,LPBIND_OPTS2 pbindopts);
+HRESULT WINAPI BindCtxImpl_GetBindOptions(IBindCtx* iface,LPBIND_OPTS2 pbindopts);
+HRESULT WINAPI BindCtxImpl_GetRunningObjectTable(IBindCtx* iface,IRunningObjectTable** pprot);
+HRESULT WINAPI BindCtxImpl_RegisterObjectParam(IBindCtx* iface,LPOLESTR32 pszkey, IUnknown* punk);
+HRESULT WINAPI BindCtxImpl_GetObjectParam(IBindCtx* iface,LPOLESTR32 pszkey, IUnknown* punk);
+HRESULT WINAPI BindCtxImpl_EnumObjectParam(IBindCtx* iface,IEnumString** ppenum);
+HRESULT WINAPI BindCtxImpl_RevokeObjectParam(IBindCtx* iface,LPOLESTR32 pszkey);
+
 HRESULT WINAPI CreateBindCtx16(DWORD reserved, LPBC * ppbc);
 HRESULT WINAPI CreateBindCtx32(DWORD reserved, LPBC * ppbc);
 
-#define VTABLE_FUNC(a) (void*)(a)
+HRESULT WINAPI BindCtxImpl_Construct(BindCtxImpl* This);
+HRESULT WINAPI BindCtxImpl_Destroy(BindCtxImpl* This);
+
 // Virtual function table for the BindCtx class.
 static ICOM_VTABLE(IBindCtx) VT_BindCtxImpl =
-{
     {
-      VTABLE_FUNC(BindCtxImpl_QueryInterface),
-      VTABLE_FUNC(BindCtxImpl_AddRef),
-      VTABLE_FUNC(BindCtxImpl_Release)
-    },
-    VTABLE_FUNC(BindCtxImpl_RegisterObjectBound),
-    VTABLE_FUNC(BindCtxImpl_RevokeObjectBound),
-    VTABLE_FUNC(BindCtxImpl_ReleaseObjects),
-    VTABLE_FUNC(BindCtxImpl_SetBindOptions),
-    VTABLE_FUNC(BindCtxImpl_GetBindOptions),
-    VTABLE_FUNC(BindCtxImpl_GetRunningObjectTable),
-    VTABLE_FUNC(BindCtxImpl_RegisterObjectParam),
-    VTABLE_FUNC(BindCtxImpl_GetObjectParam),
-    VTABLE_FUNC(BindCtxImpl_EnumObjectParam),
-    VTABLE_FUNC(BindCtxImpl_RevokeObjectParam)
+    BindCtxImpl_QueryInterface,
+    BindCtxImpl_AddRef,
+    BindCtxImpl_Release,
+    BindCtxImpl_RegisterObjectBound,
+    BindCtxImpl_RevokeObjectBound,
+    BindCtxImpl_ReleaseObjects,
+    BindCtxImpl_SetBindOptions,
+    BindCtxImpl_GetBindOptions,
+    BindCtxImpl_GetRunningObjectTable,
+    BindCtxImpl_RegisterObjectParam,
+    BindCtxImpl_GetObjectParam,
+    BindCtxImpl_EnumObjectParam,
+    BindCtxImpl_RevokeObjectParam
 };
 
 /*******************************************************************************
  *        BindCtx_QueryInterface
  *******************************************************************************/
-HRESULT WINAPI BindCtxImpl_QueryInterface(BindCtxImpl* This,REFIID riid,void** ppvObject){
-
+HRESULT WINAPI BindCtxImpl_QueryInterface(IBindCtx* iface,REFIID riid,void** ppvObject)
+{
+  ICOM_THIS(BindCtxImpl,iface);
   TRACE(ole,"(%p,%p,%p)\n",This,riid,ppvObject);
   // Perform a sanity check on the parameters.
   if ( (This==0) || (ppvObject==0) )    return E_INVALIDARG;
@@ -86,7 +86,7 @@ HRESULT WINAPI BindCtxImpl_QueryInterface(BindCtxImpl* This,REFIID riid,void** p
   if ((*ppvObject)==0)        return E_NOINTERFACE;
   
    // Query Interface always increases the reference count by one when it is successful
-  BindCtxImpl_AddRef(This);
+  BindCtxImpl_AddRef(iface);
 
   return S_OK;
 }
@@ -94,8 +94,9 @@ HRESULT WINAPI BindCtxImpl_QueryInterface(BindCtxImpl* This,REFIID riid,void** p
 /******************************************************************************
  *       BindCtx_ _AddRef
  ******************************************************************************/
-ULONG WINAPI BindCtxImpl_AddRef(BindCtxImpl* This){
-
+ULONG WINAPI BindCtxImpl_AddRef(IBindCtx* iface)
+{
+    ICOM_THIS(BindCtxImpl,iface);
     TRACE(ole,"(%p)\n",This);
 
     return ++(This->ref);
@@ -104,14 +105,15 @@ ULONG WINAPI BindCtxImpl_AddRef(BindCtxImpl* This){
 /******************************************************************************
  *        BindCtx_Release
  ******************************************************************************/
-ULONG WINAPI BindCtxImpl_Release(BindCtxImpl* This){
-
+ULONG WINAPI BindCtxImpl_Release(IBindCtx* iface)
+{
+    ICOM_THIS(BindCtxImpl,iface);
     TRACE(ole,"(%p)\n",This);
 
     This->ref--;
 
     if (This->ref==0){
-        BindCtxImpl_destroy(This);
+        BindCtxImpl_Destroy(This);
         return 0;
     }
     return This->ref;;
@@ -119,10 +121,10 @@ ULONG WINAPI BindCtxImpl_Release(BindCtxImpl* This){
 
 
 /******************************************************************************
- *         BindCtx_Constructor
+ *         BindCtx_Construct
  *******************************************************************************/
-HRESULT WINAPI BindCtxImpl_Construct(BindCtxImpl* This){
-
+HRESULT WINAPI BindCtxImpl_Construct(BindCtxImpl* This)
+{
     FIXME(ole,"(%p),stub!\n",This);
 
     memset(This, 0, sizeof(BindCtxImpl));
@@ -134,10 +136,10 @@ HRESULT WINAPI BindCtxImpl_Construct(BindCtxImpl* This){
 }
 
 /******************************************************************************
- *        BindCtx_destructor
+ *        BindCtx_Destroy
  *******************************************************************************/
-HRESULT WINAPI BindCtxImpl_destroy(BindCtxImpl* This){
-
+HRESULT WINAPI BindCtxImpl_Destroy(BindCtxImpl* This)
+{
     FIXME(ole,"(%p),stub!\n",This);
 
     SEGPTR_FREE(This);
@@ -149,8 +151,9 @@ HRESULT WINAPI BindCtxImpl_destroy(BindCtxImpl* This){
 /******************************************************************************
  *        BindCtx_RegisterObjectBound
  ******************************************************************************/
-HRESULT WINAPI BindCtxImpl_RegisterObjectBound(BindCtxImpl* This,IUnknown* punk){
-
+HRESULT WINAPI BindCtxImpl_RegisterObjectBound(IBindCtx* iface,IUnknown* punk)
+{
+    ICOM_THIS(BindCtxImpl,iface);
     FIXME(ole,"(%p,%p),stub!\n",This,punk);
 
     return E_NOTIMPL;
@@ -159,8 +162,9 @@ HRESULT WINAPI BindCtxImpl_RegisterObjectBound(BindCtxImpl* This,IUnknown* punk)
 /******************************************************************************
  *        BindCtx_RevokeObjectBound
  ******************************************************************************/
-HRESULT WINAPI BindCtxImpl_RevokeObjectBound(BindCtxImpl* This, IUnknown* punk){
-
+HRESULT WINAPI BindCtxImpl_RevokeObjectBound(IBindCtx* iface, IUnknown* punk)
+{
+    ICOM_THIS(BindCtxImpl,iface);
     FIXME(ole,"(%p,%p),stub!\n",This,punk);
 
     return E_NOTIMPL;
@@ -169,8 +173,9 @@ HRESULT WINAPI BindCtxImpl_RevokeObjectBound(BindCtxImpl* This, IUnknown* punk){
 /******************************************************************************
  *        BindCtx_ReleaseObjects
  ******************************************************************************/
-HRESULT WINAPI BindCtxImpl_ReleaseObjects(BindCtxImpl* This){
-
+HRESULT WINAPI BindCtxImpl_ReleaseObjects(IBindCtx* iface)
+{
+    ICOM_THIS(BindCtxImpl,iface);
     FIXME(ole,"(%p),stub!\n",This);
 
     return E_NOTIMPL;
@@ -179,8 +184,9 @@ HRESULT WINAPI BindCtxImpl_ReleaseObjects(BindCtxImpl* This){
 /******************************************************************************
  *        BindCtx_SetBindOptions
  ******************************************************************************/
-HRESULT WINAPI BindCtxImpl_SetBindOptions(BindCtxImpl* This,LPBIND_OPTS2 pbindopts){
-
+HRESULT WINAPI BindCtxImpl_SetBindOptions(IBindCtx* iface,LPBIND_OPTS2 pbindopts)
+{
+    ICOM_THIS(BindCtxImpl,iface);
     FIXME(ole,"(%p,%p),stub!\n",This,pbindopts);
 
     return E_NOTIMPL;
@@ -189,8 +195,9 @@ HRESULT WINAPI BindCtxImpl_SetBindOptions(BindCtxImpl* This,LPBIND_OPTS2 pbindop
 /******************************************************************************
  *        BindCtx_GetBindOptions
  ******************************************************************************/
-HRESULT WINAPI BindCtxImpl_GetBindOptions(BindCtxImpl* This,LPBIND_OPTS2 pbindopts){
-
+HRESULT WINAPI BindCtxImpl_GetBindOptions(IBindCtx* iface,LPBIND_OPTS2 pbindopts)
+{
+    ICOM_THIS(BindCtxImpl,iface);
     FIXME(ole,"(%p,%p),stub!\n",This,pbindopts);
 
     return E_NOTIMPL;
@@ -199,8 +206,9 @@ HRESULT WINAPI BindCtxImpl_GetBindOptions(BindCtxImpl* This,LPBIND_OPTS2 pbindop
 /******************************************************************************
  *        BindCtx_GetRunningObjectTable
  ******************************************************************************/
-HRESULT WINAPI BindCtxImpl_GetRunningObjectTable(BindCtxImpl* This,IRunningObjectTable** pprot){
-
+HRESULT WINAPI BindCtxImpl_GetRunningObjectTable(IBindCtx* iface,IRunningObjectTable** pprot)
+{
+    ICOM_THIS(BindCtxImpl,iface);
     FIXME(ole,"(%p,%p),stub!\n",This,pprot);
 
     return E_NOTIMPL;
@@ -209,8 +217,9 @@ HRESULT WINAPI BindCtxImpl_GetRunningObjectTable(BindCtxImpl* This,IRunningObjec
 /******************************************************************************
  *        BindCtx_RegisterObjectParam
  ******************************************************************************/
-HRESULT WINAPI BindCtxImpl_RegisterObjectParam(BindCtxImpl* This,LPOLESTR32 pszkey, IUnknown* punk){
-
+HRESULT WINAPI BindCtxImpl_RegisterObjectParam(IBindCtx* iface,LPOLESTR32 pszkey, IUnknown* punk)
+{
+    ICOM_THIS(BindCtxImpl,iface);
     FIXME(ole,"(%p,%p,%p),stub!\n",This,pszkey,punk);
 
     return E_NOTIMPL;
@@ -219,8 +228,9 @@ HRESULT WINAPI BindCtxImpl_RegisterObjectParam(BindCtxImpl* This,LPOLESTR32 pszk
 /******************************************************************************
  *        BindCtx_GetObjectParam
  ******************************************************************************/
-HRESULT WINAPI BindCtxImpl_GetObjectParam(BindCtxImpl* This,LPOLESTR32 pszkey, IUnknown* punk){
-
+HRESULT WINAPI BindCtxImpl_GetObjectParam(IBindCtx* iface,LPOLESTR32 pszkey, IUnknown* punk)
+{
+    ICOM_THIS(BindCtxImpl,iface);
     FIXME(ole,"(%p,%p,%p),stub!\n",This,pszkey,punk);
 
     return E_NOTIMPL;
@@ -229,8 +239,9 @@ HRESULT WINAPI BindCtxImpl_GetObjectParam(BindCtxImpl* This,LPOLESTR32 pszkey, I
 /******************************************************************************
  *        BindCtx_EnumObjectParam
  ******************************************************************************/
-HRESULT WINAPI BindCtxImpl_EnumObjectParam(BindCtxImpl* This,IEnumString** ppenum){
-
+HRESULT WINAPI BindCtxImpl_EnumObjectParam(IBindCtx* iface,IEnumString** ppenum)
+{
+    ICOM_THIS(BindCtxImpl,iface);
     FIXME(ole,"(%p,%p),stub!\n",This,ppenum);
 
     return E_NOTIMPL;
@@ -239,8 +250,9 @@ HRESULT WINAPI BindCtxImpl_EnumObjectParam(BindCtxImpl* This,IEnumString** ppenu
 /******************************************************************************
  *        BindCtx_RevokeObjectParam
  ******************************************************************************/
-HRESULT WINAPI BindCtxImpl_RevokeObjectParam(BindCtxImpl* This,LPOLESTR32 pszkey){
-
+HRESULT WINAPI BindCtxImpl_RevokeObjectParam(IBindCtx* iface,LPOLESTR32 pszkey)
+{
+    ICOM_THIS(BindCtxImpl,iface);
     FIXME(ole,"(%p,%p),stub!\n",This,pszkey);
 
     return E_NOTIMPL;
@@ -250,8 +262,8 @@ HRESULT WINAPI BindCtxImpl_RevokeObjectParam(BindCtxImpl* This,LPOLESTR32 pszkey
 /******************************************************************************
  *        CreateBindCtx16
  ******************************************************************************/
-HRESULT WINAPI CreateBindCtx16(DWORD reserved, LPBC * ppbc){
-
+HRESULT WINAPI CreateBindCtx16(DWORD reserved, LPBC * ppbc)
+{
     FIXME(ole,"(%ld,%p),stub!\n",reserved,ppbc);
 
     return E_NOTIMPL;
@@ -260,8 +272,8 @@ HRESULT WINAPI CreateBindCtx16(DWORD reserved, LPBC * ppbc){
 /******************************************************************************
  *        CreateBindCtx32
  ******************************************************************************/
-HRESULT WINAPI CreateBindCtx32(DWORD reserved, LPBC * ppbc){
-
+HRESULT WINAPI CreateBindCtx32(DWORD reserved, LPBC * ppbc)
+{
     BindCtxImpl* newBindCtx = 0;
     HRESULT        hr = S_OK;
 
@@ -277,7 +289,7 @@ HRESULT WINAPI CreateBindCtx32(DWORD reserved, LPBC * ppbc){
     if (FAILED(hr))
         return hr;
 
-    hr = BindCtxImpl_QueryInterface(newBindCtx,&IID_IBindCtx,(void**)ppbc);
+    hr = BindCtxImpl_QueryInterface((IBindCtx*)newBindCtx,&IID_IBindCtx,(void**)ppbc);
 
     return hr;
 }
