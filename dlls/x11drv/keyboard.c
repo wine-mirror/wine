@@ -990,10 +990,6 @@ void X11DRV_KeyEvent( HWND hwnd, XKeyEvent *event )
     XIC xic = X11DRV_get_ic( hwnd );
     DWORD event_time = event->time - X11DRV_server_startticks;
 
-    /* this allows support for dead keys */
-    if ((event->keycode >> 8) == 0x10)
-	event->keycode=(event->keycode & 0xff);
-
     wine_tsx11_lock();
     if (xic)
         ascii_chars = XmbLookupString(xic, event, Str, sizeof(Str), &keysym, NULL);
