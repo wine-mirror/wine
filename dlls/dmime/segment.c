@@ -1156,6 +1156,35 @@ static HRESULT IDirectMusicSegment8Impl_IPersistStream_ParseSegmentForm (LPPERSI
   return S_OK;
 }
 
+static HRESULT IDirectMusicSegment8Impl_IPersistStream_LoadWave (LPPERSISTSTREAM iface, IStream* pClonedStream, IDirectMusicObject** ppWaveObject) {
+
+  HRESULT hr = E_FAIL;
+  IPersistStream* pPersistStream = NULL;
+  
+  hr = CoCreateInstance (&CLSID_DirectSoundWave, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicObject, (LPVOID*) ppWaveObject);
+  if (FAILED(hr)) {
+    ERR(": could not create object\n");
+    return hr;
+  }
+  /* acquire PersistStream interface */
+  hr = IDirectMusicTrack_QueryInterface (*ppWaveObject, &IID_IPersistStream, (LPVOID*) &pPersistStream);
+  if (FAILED(hr)) {
+    ERR(": could not acquire IPersistStream\n");
+    return hr;
+  }
+  /* load */
+  hr = IPersistStream_Load (pPersistStream, pClonedStream);
+  if (FAILED(hr)) {
+    ERR(": failed to load object\n");
+    return hr;
+  }
+  
+  /* release all loading-related stuff */
+  IPersistStream_Release (pPersistStream);
+
+  return S_OK;
+}
+
 HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
   ICOM_THIS_MULTI(IDirectMusicSegment8Impl, PersistStreamVtbl, iface);
   
@@ -1183,7 +1212,26 @@ HRESULT WINAPI IDirectMusicSegment8Impl_IPersistStream_Load (LPPERSISTSTREAM ifa
       break;
     }
     case mmioFOURCC('W','A','V','E'): {
-      FIXME_(dmfile)(": WAVE form (loading not yet implemented)\n");
+      LPSTREAM pClonedStream = NULL;	
+      IDirectMusicObject* pWave = NULL;
+
+      FIXME_(dmfile)(": WAVE form (loading to be checked)\n");
+
+      IStream_Clone (pStm, &pClonedStream);
+	
+      liMove.QuadPart = 0;
+      liMove.QuadPart -= sizeof(FOURCC) + (sizeof(FOURCC)+sizeof(DWORD));
+      IStream_Seek (pClonedStream, liMove, STREAM_SEEK_CUR, NULL);
+	
+      hr = IDirectMusicSegment8Impl_IPersistStream_LoadWave (iface, pClonedStream, &pWave);
+      if (FAILED(hr)) {
+	ERR(": could not load track\n");
+	return hr;
+      }
+      IStream_Release (pClonedStream);
+      
+      IDirectMusicTrack_Release(pWave); pWave = NULL; /* now we can release at as it inserted */
+
       liMove.QuadPart = StreamSize;
       IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL); /* skip the rest of the chunk */
       break;      
